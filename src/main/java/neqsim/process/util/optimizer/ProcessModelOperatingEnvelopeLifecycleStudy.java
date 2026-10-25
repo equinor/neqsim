@@ -102,8 +102,28 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
   public ProcessModelOperatingEnvelopeLifecycleStudy addPeriod(String periodId, String periodName, double elapsedTime,
       String configurationProvenance, ProcessModelOperatingEnvelopeStudy study, OperatingPointSearchResult search,
       SliceResult... slices) {
-    return addPeriod(periodId, periodName, elapsedTime, configurationProvenance,
-        Collections.<AcceptedStateMetric>emptyList(), study, search, slices);
+    return addPeriodInternal(periodId, periodName, elapsedTime, configurationProvenance,
+        Collections.<AcceptedStateMetric>emptyList(), null, study, search, slices);
+  }
+
+  /**
+   * Adds one validated period with declared installed-capacity coverage frozen at the accepted replay.
+   *
+   * @param periodId unique stable period identifier
+   * @param periodName human-readable period name
+   * @param elapsedTime non-negative elapsed time from the lifecycle origin
+   * @param configurationProvenance period-specific engineering basis
+   * @param acceptedCoverage complete declared coverage built from the accepted replay evidence
+   * @param study exact runtime envelope study
+   * @param search accepted mixed operating-point search from the same evaluator
+   * @param slices one or more complete accepted-point slices from the same study
+   * @return this study
+   */
+  public ProcessModelOperatingEnvelopeLifecycleStudy addPeriod(String periodId, String periodName, double elapsedTime,
+      String configurationProvenance, UtilizationCoverageReport acceptedCoverage,
+      ProcessModelOperatingEnvelopeStudy study, OperatingPointSearchResult search, SliceResult... slices) {
+    return addPeriodInternal(periodId, periodName, elapsedTime, configurationProvenance,
+        Collections.<AcceptedStateMetric>emptyList(), acceptedCoverage, study, search, slices);
   }
 
   /**
@@ -129,6 +149,37 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
   public ProcessModelOperatingEnvelopeLifecycleStudy addPeriod(String periodId, String periodName, double elapsedTime,
       String configurationProvenance, List<AcceptedStateMetric> acceptedStateMetrics,
       ProcessModelOperatingEnvelopeStudy study, OperatingPointSearchResult search, SliceResult... slices) {
+    return addPeriodInternal(periodId, periodName, elapsedTime, configurationProvenance, acceptedStateMetrics, null,
+        study, search, slices);
+  }
+
+  /**
+   * Adds one validated period with accepted state metrics and accepted-replay capacity coverage.
+   *
+   * @param periodId unique stable period identifier
+   * @param periodName human-readable period name
+   * @param elapsedTime non-negative elapsed time from the lifecycle origin
+   * @param configurationProvenance period-specific engineering basis
+   * @param acceptedStateMetrics ordered accepted physical-state metrics
+   * @param acceptedCoverage complete declared coverage built from the accepted replay evidence
+   * @param study exact runtime envelope study
+   * @param search accepted mixed operating-point search from the same evaluator
+   * @param slices one or more complete accepted-point slices from the same study
+   * @return this study
+   */
+  public ProcessModelOperatingEnvelopeLifecycleStudy addPeriod(String periodId, String periodName, double elapsedTime,
+      String configurationProvenance, List<AcceptedStateMetric> acceptedStateMetrics,
+      UtilizationCoverageReport acceptedCoverage, ProcessModelOperatingEnvelopeStudy study,
+      OperatingPointSearchResult search, SliceResult... slices) {
+    return addPeriodInternal(periodId, periodName, elapsedTime, configurationProvenance, acceptedStateMetrics,
+        acceptedCoverage, study, search, slices);
+  }
+
+  /** Performs common validation and freezes one lifecycle period. */
+  private ProcessModelOperatingEnvelopeLifecycleStudy addPeriodInternal(String periodId, String periodName,
+      double elapsedTime, String configurationProvenance, List<AcceptedStateMetric> acceptedStateMetrics,
+      UtilizationCoverageReport acceptedCoverage, ProcessModelOperatingEnvelopeStudy study,
+      OperatingPointSearchResult search, SliceResult... slices) {
     String validatedId = requireText(periodId, "Lifecycle period identifier");
     String validatedName = requireText(periodName, "Lifecycle period name");
     String validatedConfiguration = requireText(configurationProvenance, "Lifecycle period configuration provenance");
@@ -148,6 +199,10 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     }
     Map<String, Object> envelopeEvidence = study.getAcceptedPointEnvelopeEvidence(validatedId, search, slices);
     LeadingConstraintEvidence bottleneck = study.getAcceptedPointBottleneck(search);
+    validateAcceptedCoverage(acceptedCoverage, search);
+    if (!periods.isEmpty() && (periods.get(0).getAcceptedCoverage() == null) != (acceptedCoverage == null)) {
+      throw new IllegalStateException("Lifecycle periods must consistently include declared capacity coverage");
+    }
     List<String> actionIds = stringList(envelopeEvidence.get("accepted_action_ids"), "accepted action identifiers");
     if (acceptedActionIds != null && !acceptedActionIds.equals(actionIds)) {
       throw new IllegalStateException("Lifecycle periods must retain identical ordered action identifiers");
@@ -160,9 +215,58 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
 
     PeriodEvidence period = new PeriodEvidence(validatedId, validatedName, elapsedTime, timeUnit,
         validatedConfiguration, study.getId(), study.getCandidateEvaluator().getId(), bottleneck,
-        frozenEnvelopeEvidence, search.getAcceptedCandidateValues(), stateMetrics, slices);
+        frozenEnvelopeEvidence, search.getAcceptedCandidateValues(), stateMetrics, acceptedCoverage, slices);
     periods.add(period);
     return this;
+  }
+
+  /** Verifies that declared coverage is complete and exactly bound to the accepted replay snapshot. */
+  private static void validateAcceptedCoverage(UtilizationCoverageReport coverage, OperatingPointSearchResult search) {
+    if (coverage == null) {
+      return;
+    }
+    if (!coverage.isComplete() || coverage.getExpectedConstraintIds().isEmpty()) {
+      throw new IllegalStateException("Accepted capacity coverage must declare complete constraint evidence");
+    }
+    if (search == null || search.getAcceptedPointReplay() == null
+        || search.getAcceptedPointReplay().getEvaluation() == null) {
+      throw new IllegalStateException("Accepted capacity coverage requires an accepted-point replay");
+    }
+    Map<String, InstalledEquipmentCapacityEvidence> replay = new LinkedHashMap<String, InstalledEquipmentCapacityEvidence>();
+    for (InstalledEquipmentCapacityEvidence item : search.getAcceptedPointReplay().getEvaluation()
+        .getInstalledEquipmentCapacityEvidence()) {
+      String id = PlantConstraintScope.equipment(coverage.getModelName(), item.getAreaName(), item.getEquipmentName())
+          .getStableId() + "#" + PlantConstraintScope.escape(item.getConstraintName());
+      replay.put(id, item);
+    }
+    for (UtilizationCoverageReport.Row row : coverage.getRows()) {
+      InstalledEquipmentCapacityEvidence item = replay.get(row.getQualifiedConstraintId());
+      String replayProvenance = item == null ? "" : item.getApplicableLimitSourceReference();
+      if (item != null && isMissingSource(replayProvenance)) {
+        replayProvenance = item.getDataSource();
+      }
+      if (item == null || row.isEnabled() != item.isEnabled() || row.isMinimumConstraint() != item.isMinimumConstraint()
+          || row.getOrigin() != item.getConstraintOrigin() || !row.getUnit().equals(item.getPhysicalUnit())
+          || (coverage.getRegistryIdentityDigest().isEmpty()
+              && (!row.getBasis().equals(item.getDesignBasis()) || !row.getProvenance().equals(replayProvenance)))
+          || !sameNumber(row.getCurrentValue(), item.getCurrentValue())
+          || !sameNumber(row.getApplicableLimit(), item.getApplicableLimit())
+          || !sameNumber(row.getNormalizedUtilization(), item.getNormalizedUtilization())) {
+        throw new IllegalStateException(
+            "Accepted capacity coverage is not bound to replay evidence " + row.getQualifiedConstraintId());
+      }
+    }
+  }
+
+  /** Exact finite/NaN-safe scalar equality for frozen evidence. */
+  private static boolean sameNumber(double first, double second) {
+    return Double.doubleToLongBits(first) == Double.doubleToLongBits(second);
+  }
+
+  /** Returns whether provenance text is absent or an explicit unset marker. */
+  private static boolean isMissingSource(String value) {
+    return value == null || value.trim().isEmpty() || "default".equalsIgnoreCase(value)
+        || "not_set".equalsIgnoreCase(value);
   }
 
   /** @return immutable snapshot of accepted lifecycle periods */
@@ -247,7 +351,7 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     }
     Map<String, Object> evidence = new LinkedHashMap<String, Object>();
     boolean hasStateMetrics = acceptedStateMetricIds != null && !acceptedStateMetricIds.isEmpty();
-    evidence.put("schema_version", Integer.valueOf(8));
+    evidence.put("schema_version", Integer.valueOf(periods.get(0).getAcceptedCoverage() == null ? 8 : 9));
     evidence.put("cycle_id", currentCycleId);
     evidence.put("lifecycle_study_id", id);
     evidence.put("lifecycle_study_name", name);
@@ -283,7 +387,7 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
    * </p>
    *
    * @param cycleId current living-task cycle identifier and lifecycle period identifier
-   * @return compact JSON containing the exact schema-v8 evidence
+   * @return compact JSON containing exact schema-v8 or replay-coverage schema-v9 evidence
    * @throws IllegalStateException if the current cycle is not an accepted lifecycle period
    */
   public String toEvidenceJson(String cycleId) {
@@ -382,12 +486,14 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     private final Map<String, Object> envelopeEvidence;
     private final double[] acceptedCandidateValues;
     private final List<AcceptedStateMetric> acceptedStateMetrics;
+    private final UtilizationCoverageReport acceptedCoverage;
     private final List<SliceResult> slices;
 
     private PeriodEvidence(String periodId, String periodName, double elapsedTime, String timeUnit,
         String configurationProvenance, String envelopeStudyId, String candidateEvaluatorId,
         LeadingConstraintEvidence acceptedBottleneck, Map<String, Object> envelopeEvidence,
-        double[] acceptedCandidateValues, List<AcceptedStateMetric> acceptedStateMetrics, SliceResult[] slices) {
+        double[] acceptedCandidateValues, List<AcceptedStateMetric> acceptedStateMetrics,
+        UtilizationCoverageReport acceptedCoverage, SliceResult[] slices) {
       this.periodId = periodId;
       this.periodName = periodName;
       this.elapsedTime = elapsedTime;
@@ -400,6 +506,7 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       this.acceptedCandidateValues = Arrays.copyOf(acceptedCandidateValues, acceptedCandidateValues.length);
       this.acceptedStateMetrics = Collections
           .unmodifiableList(new ArrayList<AcceptedStateMetric>(acceptedStateMetrics));
+      this.acceptedCoverage = acceptedCoverage;
       this.slices = Collections.unmodifiableList(new ArrayList<SliceResult>(Arrays.asList(slices)));
     }
 
@@ -458,6 +565,11 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       return acceptedStateMetrics;
     }
 
+    /** @return accepted replay-bound declared capacity coverage, or null for legacy periods */
+    public UtilizationCoverageReport getAcceptedCoverage() {
+      return acceptedCoverage;
+    }
+
     /** @return defensive accepted action-value vector */
     private double[] getAcceptedCandidateValues() {
       return Arrays.copyOf(acceptedCandidateValues, acceptedCandidateValues.length);
@@ -486,6 +598,9 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
           metrics.add(metric.toEvidenceMap());
         }
         evidence.put("accepted_state_metrics", Collections.unmodifiableList(metrics));
+      }
+      if (acceptedCoverage != null) {
+        evidence.put("utilization_coverage", freezeMap(acceptedCoverage.toEvidenceMap()));
       }
       evidence.put("envelope_evidence", envelopeEvidence);
       return Collections.unmodifiableMap(evidence);

@@ -1,8506 +1,2529 @@
-"""
-generate_report.py - Generate Word/HTML reports and scientific papers for this task.
-
-Usage:
-    pip install python-docx matplotlib   (one-time setup)
-    python step3_report/generate_report.py            # Technical report only
-    python step3_report/generate_report.py --paper     # Also generate scientific paper
-    python step3_report/generate_report.py --paper-only  # Scientific paper only
-    python step3_report/generate_report.py --template "C:/â€¦/company template.docx"
-    python step3_report/generate_report.py --no-template  # ignore the saved template
-    python step3_report/generate_report.py --keep-template-content
-    python step3_report/generate_report.py --title "..." --author "..."
-    python step3_report/generate_report.py --language nb
-    python devtools/task_template/step3_report/generate_report.py --task-dir PATH
-
-The canonical copy of this script lives in devtools/task_template/. Run it
-against any task folder with `neqsim report <task folder>` (or --task-dir /
-NEQSIM_TASK_DIR) so a fix here applies to task folders created earlier.
-
-The report language is English unless another is configured. Resolution order:
---language CODE, NEQSIM_REPORT_LANGUAGE, then `report.language` in
-study_config.yaml. It sets the section headings, cover labels, and caption
-prefixes the generator owns, and the document language of the .docx and .html
-so Word spell-checks in that language; authored content is written in that
-language by the study author. The scientific paper (--paper) stays English.
-
-The report title is the STUDY title, and the task is stated at the top of the
-report. Title/author resolution order:
-    --title / --author  >  NEQSIM_REPORT_TITLE / NEQSIM_REPORT_AUTHOR  >
-    study_config.yaml (study.title, study.author)  >  the first heading of
-    task_spec.md  >  a task-local generate_report.py copy  >  the folder name.
-The task statement comes from results.json ("task_statement" / "objective"),
-else the Objective/Task Description section of task_spec.md, else study.title.
-
-Report.docx is built from a Word template when one is configured, so company
-fonts, colours, styles, headers, and footers apply. Resolution order:
---template PATH, NEQSIM_REPORT_TEMPLATE, then the saved `report_template` in
-~/.neqsim/task_defaults.json (set once with `neqsim --set-report-template PATH`).
-The template's own body text is dropped unless --keep-template-content is given;
-page setup, headers, footers, and styles are always inherited. Paper.docx keeps
-journal formatting and ignores the template.
-
-This script AUTO-READS data from the task folder:
-    - study_config.yaml                    -> defines depth, notebook plan, quality gates
-  - step1_scope_and_research/task_spec.md  -> populates Scope & Standards
-  - results.json (task root)               -> populates Results + Validation
-  - results.json "lifecycle_envelope_evidence" -> guarded per-period envelope evidence
-  - figures/*.png                          -> embeds all plots
-  - results.json "equations"               -> renders equations (KaTeX/images)
-  - results.json "figure_captions"         -> custom captions for figures
-
-It produces (file names are the report title, so a deliverable is identifiable
-outside its task folder â€” e.g. "Hydrate margin for the export line" becomes
-Hydrate_margin_for_the_export_line.docx):
-  - step3_report/<Title>.docx        (Word document for formal distribution)
-  - step3_report/<Title>.html        (navigable HTML with sidebar, KaTeX equations)
-  - step3_report/<Title>_Paper.docx  (scientific paper in Word format, with --paper)
-  - step3_report/<Title>_Paper.html  (scientific paper in HTML format, with --paper)
-Report files written under an earlier title are removed, so a renamed study does
-not leave a superseded deliverable beside the current one.
-
-If results.json or task_spec.md are missing, the report uses placeholder text.
-Hand-written content goes in step3_report/report_sections.json (see
-_load_report_sections); do not fork or edit this script per task.
-"""
-import os
-import re
-import sys
-import glob
-import json
-import base64
-import hashlib
-import io
-import math
-import shutil
-import sqlite3
-import subprocess
-from datetime import date
-
-try:
-    from docx import Document
-    from docx.shared import Inches, Pt, RGBColor
-    from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK, WD_TAB_ALIGNMENT
-    from docx.enum.table import WD_TABLE_ALIGNMENT, WD_CELL_VERTICAL_ALIGNMENT
-    from docx.enum.section import WD_ORIENT, WD_SECTION
-    from docx.enum.style import WD_STYLE_TYPE
-    from docx.text.paragraph import Paragraph
-    from docx.oxml.ns import nsdecls, qn
-    from docx.oxml import OxmlElement, parse_xml
-except ImportError:
-    print("ERROR: python-docx not installed. Run: pip install python-docx")
-    sys.exit(1)
-
-# Optional: matplotlib for rendering equations to images (Word report)
-try:
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-    from matplotlib.transforms import Bbox
-    HAS_MATPLOTLIB = True
-except ImportError:
-    HAS_MATPLOTLIB = False
-
-
-def _load_report_kit():
-    """Import report_kit.py from beside this script, else from the NeqSim toolkit.
-
-    A task folder may hold a lone copy of this script, so the helper module is
-    also looked up through NEQSIM_PROJECT_ROOT, the saved project root, the
-    pip-installed toolkit and a walk up to a NeqSim checkout.
-    """
-    import importlib.util
-    here = os.path.dirname(os.path.abspath(__file__))
-    relative = os.path.join("devtools", "task_template", "step3_report")
-    candidates = [here]
-    saved = ""
-    try:
-        with open(os.path.join(os.path.expanduser("~"), ".neqsim", "task_defaults.json"),
-                  "r", encoding="utf-8-sig") as handle:
-            saved = json.load(handle).get("project_root") or ""
-    except (OSError, ValueError, AttributeError):
-        pass
-    for root in (os.environ.get("NEQSIM_PROJECT_ROOT"), saved):
-        if root:
-            candidates.append(os.path.join(root, relative))
-    try:
-        spec = importlib.util.find_spec("task_template")
-        for location in (spec.submodule_search_locations or []) if spec else []:
-            candidates.append(os.path.join(location, "step3_report"))
-    except (ImportError, ValueError):
-        pass
-    parent = here
-    for _ in range(8):
-        parent = os.path.dirname(parent)
-        if os.path.isfile(os.path.join(parent, "pom.xml")):
-            candidates.append(os.path.join(parent, relative))
-    for folder in candidates:
-        path = os.path.join(folder, "report_kit.py")
-        if os.path.isfile(path):
-            spec = importlib.util.spec_from_file_location("neqsim_report_kit", path)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-            return module
-    print("ERROR: report_kit.py not found beside generate_report.py or in the NeqSim "
-          "toolkit. Copy it from devtools/task_template/step3_report/ or set "
-          "NEQSIM_PROJECT_ROOT.")
-    sys.exit(1)
-
-
-KIT = _load_report_kit()
-# Word equations as editable OMML; set False to keep rendered images only.
-EQUATIONS_AS_OMML = True
-
-# â”€â”€ Word typography â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-# Floors applied to the template's own styles (see _apply_readable_typography).
-BODY_PT = 11.0
-HEADING1_PT = 16.0
-HEADING2_PT = 13.0
-HEADING3_PT = 11.5
-TABLE_PT = 10.0
-CAPTION_PT = 9.5
-BODY_SPACE_AFTER_PT = 6.0
-
-# Equation images are rendered at EQ_FONT_PT and then placed at their NATURAL
-# size, so the maths comes out at EQ_FONT_PT in the document. Forcing a fixed
-# picture width instead magnifies a short equation to the width of the page.
-EQ_FONT_PT = 13.0
-EQ_RENDER_DPI = 300
-# Inline maths ($...$ inside a sentence) is rendered at body size so it sits
-# on the line like a normal word instead of towering over the surrounding text.
-INLINE_EQ_FONT_PT = BODY_PT
-
-# â”€â”€ Page measure â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-# A corporate .dotx is frequently LANDSCAPE because it is built for forms and
-# presentations. An engineering report set on that 9.5 in measure runs to ~140
-# characters per line, roughly twice the readable optimum, and every figure and
-# table sized for a portrait page leaves a third of the width empty.
-# "template" keeps whatever the template declares.
-REPORT_ORIENTATION = "portrait"   # portrait | landscape | template
-REPORT_FRONT_LISTS = "auto"      # auto | always | never (lists of figures and tables)
-FRONT_LISTS_MIN_ITEMS = 20        # auto: only list when figures + tables reach this
-MAX_MEASURE_IN = 6.7              # widest column we set continuous prose on
-MIN_SIDE_MARGIN_IN = 0.79         # 20 mm â€” never narrower when widening margins
-# Room left under a full-width figure for its caption and the following gap.
-FIGURE_CAPTION_ALLOWANCE_IN = 0.9
-# ISO 80000-1 digit grouping: a non-breaking space, not a comma.
-THOUSANDS_SEP = "\u00a0"
-
-# â”€â”€ Report language â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-# Resolved from --language, NEQSIM_REPORT_LANGUAGE, or study_config.yaml
-# (report.language). English is the default. This sets the report furniture the
-# generator owns â€” section headings, cover labels, caption prefixes, navigation
-# â€” and the document language of the .docx and .html, so Word spell-checks in
-# the right language. Authored content (results.json, task_spec.md, the manual
-# sections) is written in that language by the study author.
-DEFAULT_REPORT_LANGUAGE = "en"
-REPORT_LANGUAGE = DEFAULT_REPORT_LANGUAGE
-
-# Spellings a user may reasonably write in study_config.yaml.
-LANGUAGE_ALIASES = {
-    "en": "en", "eng": "en", "english": "en", "en-gb": "en", "en-us": "en",
-    "no": "nb", "nb": "nb", "nb-no": "nb", "nn": "nb", "norsk": "nb",
-    "norwegian": "nb", "bokmal": "nb", "bokmÃ¥l": "nb",
-}
-
-# Written into the .docx (w:lang) and the HTML lang attribute.
-LANGUAGE_LOCALES = {
-    "en": "en-GB",
-    "nb": "nb-NO",
-    "da": "da-DK",
-    "sv": "sv-SE",
-    "de": "de-DE",
-    "fr": "fr-FR",
-    "nl": "nl-NL",
-    "es": "es-ES",
-    "pt": "pt-PT",
-    "it": "it-IT",
-}
-
-# Fixed report wording, keyed by the English phrase used in the code. A language
-# without a table here still gets its document language set; only the furniture
-# stays English, and the generator says so.
-REPORT_STRINGS = {
-    "nb": {
-        # Section headings
-        "Executive Summary": "Sammendrag",
-        "Problem Description": "Problembeskrivelse",
-        "Safety Study Readiness": "Grunnlag for sikkerhetsstudie",
-        "Scope and Standards": "Omfang og standarder",
-        "Information Sources and Evidence Basis":
-            "Informasjonskilder og dokumentasjonsgrunnlag",
-        "Approach": "FremgangsmÃ¥te",
-        "Solution Workflow": "Arbeidsflyt for lÃ¸sningen",
-        "Results": "Resultater",
-        "Discussion": "Diskusjon",
-        "Analytical Depth": "Analytisk dybde",
-        "Validation Summary": "Valideringssammendrag",
-        "Report Consistency Review": "Konsistenskontroll av rapporten",
-        "Study Configuration Warnings": "Advarsler fra studiekonfigurasjonen",
-        "Benchmark Validation": "Referansevalidering",
-        "Uncertainty Analysis": "Usikkerhetsanalyse",
-        "Risk Assessment": "Risikovurdering",
-        "Assumptions and Data Gaps": "Forutsetninger og datamangler",
-        "Evidence Gaps and Design-Grade Blockers":
-            "Dokumentasjonsmangler og hindringer for designgrunnlag",
-        "Recommendations": "Anbefalinger",
-        "Tooling Improvements Delivered": "Leverte verktÃ¸yforbedringer",
-        "Conclusions and Recommendations": "Konklusjoner og anbefalinger",
-        "References": "Referanser",
-        # Front matter and furniture
-        "NeqSim Engineering Report": "NeqSim ingeniÃ¸rrapport",
-        "Table of Contents": "Innholdsfortegnelse",
-        "List of Figures": "Figurliste",
-        "List of Tables": "Tabelliste",
-        "Key Equations": "Sentrale ligninger",
-        "Appendix": "Vedlegg",
-        "Report Quality Checks": "Kvalitetskontroll av rapporten",
-        "Reproducing the Results": "Reprodusere resultatene",
-        "Complete Numerical Results": "Alle numeriske resultater",
-        "Report build": "Rapportbygg",
-        "Complete numerical results": "Alle numeriske resultater",
-        "See": "Se",
-        "Appendix A. Report Quality Checks": "Vedlegg A. Kvalitetskontroll av rapporten",
-        "Appendix B. Report Quality Checks": "Vedlegg B. Kvalitetskontroll av rapporten",
-        "Appendix A. Reproducing the Results": "Vedlegg A. Reprodusere resultatene",
-        "Software and environment": "Programvare og miljÃ¸",
-        "Steps": "Trinn",
-        "Checks after a rerun": "Kontroller etter ny kjÃ¸ring",
-        "Changing a case": "Endre et tilfelle",
-        "Consistency review": "Konsistenskontroll",
-        "Study configuration": "Studiekonfigurasjon",
-        "automatic equation typesetting unavailable":
-            "automatisk ligningssetting ikke tilgjengelig",
-        "Test": "Test",
-        "Reference": "Referanse",
-        "Reference value": "Referanseverdi",
-        "NeqSim value": "NeqSim-verdi",
-        "Unit": "Enhet",
-        "Deviation [%]": "Avvik [%]",
-        "Tolerance [%]": "Toleranse [%]",
-        "Status": "Status",
-        "Notes": "Merknader",
-        "Contents": "Innhold",
-        "Revision History": "Revisjonshistorikk",
-        "Document Number": "Dokumentnummer",
-        "Document No.": "Dokumentnr.",
-        "Revision": "Revisjon",
-        "Rev": "Rev",
-        "Date": "Dato",
-        "Description": "Beskrivelse",
-        "Author": "Forfatter",
-        "Classification": "Klassifisering",
-        "Initial issue": "FÃ¸rste utgivelse",
-        "(not specified)": "(ikke angitt)",
-        "Task": "Oppgave",
-        "Figure": "Figur",
-        "Table": "Tabell",
-        "Equation": "Ligning",
-        # Sub-headings
-        "Key results": "Hovedresultater",
-        "Validation checks": "Valideringskontroller",
-        "Applicable Standards": "Gjeldende standarder",
-        "Calculation Methods": "Beregningsmetoder",
-        "Acceptance Criteria": "Akseptkriterier",
-        "Source systems read": "Kildesystemer som er lest",
-        "Assumptions the results depend on": "Forutsetninger resultatene hviler pÃ¥",
-        "Information sought but not available, and what was assumed in its place":
-            "Informasjon som ble sÃ¸kt, men ikke funnet, og hva som ble antatt i stedet",
-        "Input Parameter Ranges": "Spenn i inngangsparametere",
-        "Output Distribution (P10 / P50 / P90)": "Resultatfordeling (P10 / P50 / P90)",
-        "Sensitivity Ranking (Tornado)": "Sensitivitetsrangering (tornado)",
-        "Contributors ranked on a common basis": "Bidragsytere rangert pÃ¥ felles grunnlag",
-        "Which effects actually carry the result, largest first.":
-            "Hvilke effekter som faktisk bÃ¦rer resultatet, stÃ¸rst fÃ¸rst.",
-        "Verdict on each source recommendation": "Vurdering av hver kildeanbefaling",
-        "Supported, supported with correction, or challenged \u2014 with the basis.":
-            "StÃ¸ttet, stÃ¸ttet med korreksjon eller utfordret \u2014 med begrunnelse.",
-        "Hypotheses ruled out quantitatively": "Hypoteser utelukket kvantitativt",
-        "What was excluded, by which test, and with how much margin.":
-            "Hva som ble utelukket, med hvilken test og med hvor stor margin.",
-        "Robustness and crossover": "Robusthet og vippepunkt",
-        "How far an input can move before the conclusion flips.":
-            "Hvor langt en inngangsverdi kan flytte seg fÃ¸r konklusjonen snur.",
-        "Direction of each conservatism": "Retning pÃ¥ hver konservatisme",
-        "Whether each assumption bounds the answer from above or below.":
-            "Om hver antakelse avgrenser svaret ovenfra eller nedenfra.",
-        "Cheapest discriminating test": "Billigste avgjÃ¸rende test",
-        "The one measurement that would separate the surviving explanations.":
-            "Den ene mÃ¥lingen som skiller forklaringene som gjenstÃ¥r.",
-        "Evidence that does not fit": "Evidens som ikke passer",
-        "Observations the accepted explanation does not account for.":
-            "Observasjoner som den aksepterte forklaringen ikke dekker.",
-        # Table furniture inside generated sections
-        "Operating Envelope": "DriftsomrÃ¥de",
-        "Operating envelope": "DriftsomrÃ¥de",
-        "System": "System",
-        "Scope read": "Omfang lest",
-        "Access": "Tilgang",
-        "Captured evidence": "Lagret dokumentasjon",
-        "not recorded": "ikke registrert",
-        "missing": "mangler",
-        "Source system": "Kildesystem",
-        "Documents": "Dokumenter",
-        "Content": "Innhold",
-        "Documents sought but not obtained:": "Dokumenter som ble sÃ¸kt etter, men ikke funnet:",
-        "Assumption": "Forutsetning",
-        "Basis": "Grunnlag",
-        "Effect on the result": "Effekt pÃ¥ resultatet",
-        "Information sought": "Informasjon sÃ¸kt",
-        "Source": "Kilde",
-        "Assumed instead": "Antatt i stedet",
-        "Effect if wrong": "Effekt hvis feil",
-        "Each gap above is an open item: the conclusion holds only while the stated substitute assumption holds.":
-            "Hver mangel over er et Ã¥pent punkt: konklusjonen gjelder bare sÃ¥ lenge den angitte erstatningsforutsetningen holder.",
-        "Observation": "Observasjon",
-        "Physical Mechanism": "Fysisk mekanisme",
-        "Engineering Implication": "IngeniÃ¸rmessig betydning",
-        "Recommendation": "Anbefaling",
-        "Linked results": "Koblede resultater",
-        "Parameter": "Parameter",
-        "Value": "Verdi",
-        "Check": "Kontroll",
-        "Result": "Resultat",
-        "{} document(s) were collected from {} source system(s) and are stored with this task in step1_scope_and_research/references/.":
-            "{} dokument(er) ble hentet fra {} kildesystem(er) og er lagret med oppgaven i step1_scope_and_research/references/.",
-        "Standards and literature cited are listed in the References section; the per-file origin, retrieval date, and relevance of every collected document are in step1_scope_and_research/references/SOURCES.md.":
-            "Standarder og litteratur er listet under Referanser; opprinnelse, hentedato og relevans for hvert dokument stÃ¥r i step1_scope_and_research/references/SOURCES.md.",
-        "(Right-click and select 'Update Field' to populate)":
-            "(HÃ¸yreklikk og velg Â«Oppdater feltÂ» for Ã¥ fylle ut)",
-        "Reference source": "Referansekilde",
-        "Task type": "Oppgavetype",
-        "Scale": "Omfang",
-        "Mode": "Modus",
-        "AACE class": "AACE-klasse",
-        "FEL stage": "FEL-fase",
-    },
-}
-
-
-def _t(text):
-    """Translate fixed report wording into REPORT_LANGUAGE.
-
-    Returns the English phrase unchanged when the language has no table or no
-    entry for it, so adding a heading never breaks a translated report.
-    """
-    return REPORT_STRINGS.get(REPORT_LANGUAGE, {}).get(text, text)
-
-
-def _report_locale():
-    """Return the document locale (``nb-NO``) for the report language."""
-    return LANGUAGE_LOCALES.get(REPORT_LANGUAGE, REPORT_LANGUAGE or "en")
-
-# â”€â”€ Paths â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-def _resolve_task_dir() -> str:
-    """Return the task folder: --task-dir, NEQSIM_TASK_DIR, else this file's parent.
-
-    Allowing an external task folder lets the canonical devtools copy of this
-    script serve any task, so a fix here reaches task folders that were created
-    with an older vendored copy (`neqsim report <task folder>`).
-    """
-    if "--task-dir" in sys.argv:
-        index = sys.argv.index("--task-dir") + 1
-        if index >= len(sys.argv):
-            print("ERROR: --task-dir requires a path")
-            sys.exit(2)
-        return os.path.abspath(sys.argv[index])
-    env_dir = os.environ.get("NEQSIM_TASK_DIR")
-    if env_dir:
-        return os.path.abspath(os.path.expandvars(os.path.expanduser(env_dir)))
-    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-
-def _resolve_output_dir(task_report_dir):
-    """Return ``--output-dir`` or the task's ordinary report directory.
-
-    Continuous-task finalization uses this option to run the exact canonical
-    renderer into an immutable revision folder without replacing the ordinary
-    current-best Task Solver report.
-    """
-    if "--output-dir" not in sys.argv:
-        return task_report_dir
-    index = sys.argv.index("--output-dir") + 1
-    if index >= len(sys.argv):
-        print("ERROR: --output-dir requires a path")
-        sys.exit(2)
-    return os.path.abspath(sys.argv[index])
-
-
-TASK_DIR = _resolve_task_dir()
-FIG_DIR = os.path.join(TASK_DIR, "figures")
-TASK_REPORT_DIR = os.path.join(TASK_DIR, "step3_report")
-REPORT_DIR = _resolve_output_dir(TASK_REPORT_DIR)
-REPORT_BASENAME = "Report"      # replaced by the report title in __main__
-DOCX_FILE = os.path.join(REPORT_DIR, "Report.docx")
-HTML_FILE = os.path.join(REPORT_DIR, "Report.html")
-PDF_FILE = os.path.join(REPORT_DIR, "Report.pdf")
-PAPER_DOCX_FILE = os.path.join(REPORT_DIR, "Paper.docx")
-PAPER_HTML_FILE = os.path.join(REPORT_DIR, "Paper.html")
-PAPER_PDF_FILE = os.path.join(REPORT_DIR, "Paper.pdf")
-RESULTS_FILE = os.path.join(TASK_DIR, "results.json")
-TASK_SPEC_FILE = os.path.join(TASK_DIR, "step1_scope_and_research", "task_spec.md")
-STUDY_CONFIG_FILE = os.path.join(TASK_DIR, "study_config.yaml")
-OUTPUT_MANIFEST_FILE = os.path.join(REPORT_DIR, ".report_outputs.json")
-LEGACY_OUTPUT_NAMES = ("Report.docx", "Report.html", "Report.pdf",
-                       "Paper.docx", "Paper.html", "Paper.pdf")
-REPORT_NAME_MAX_CHARS = 120
-
-if not os.path.isdir(REPORT_DIR):
-    os.makedirs(REPORT_DIR)
-
-
-def slugify_report_name(title, fallback="Report"):
-    """Return a filesystem-safe file base name derived from the report title.
-
-    Parameters
-    ----------
-    title : str
-        The report (study) title.
-    fallback : str
-        Name used when the title yields nothing usable.
-
-    Returns
-    -------
-    str
-        Title with path-hostile characters removed and spaces as underscores.
-    """
-    text = str(title or "")
-    text = re.sub(r"[\\/:*?\"<>|\r\n\t]+", " ", text)
-    text = re.sub(r"[^0-9A-Za-z\u00C0-\u024F &()+,._-]+", " ", text)
-    text = re.sub(r"\s+", " ", text).strip(" .-_")
-    if not text:
-        return fallback
-    name = re.sub(r"_+", "_", text.replace(" ", "_")).strip("_")
-    if len(name) > REPORT_NAME_MAX_CHARS:
-        name = name[:REPORT_NAME_MAX_CHARS].rstrip("_-")
-    return name or fallback
-
-
-def apply_report_output_names(title):
-    """Name the generated report files after the report title.
-
-    Every task ships deliverables whose file name is the study title, so a
-    report is identifiable outside its task folder.
-
-    Parameters
-    ----------
-    title : str
-        Resolved report title.
-
-    Returns
-    -------
-    str
-        The base name used for the generated files.
-    """
-    global REPORT_BASENAME, DOCX_FILE, HTML_FILE, PDF_FILE
-    global PAPER_DOCX_FILE, PAPER_HTML_FILE, PAPER_PDF_FILE
-    REPORT_BASENAME = slugify_report_name(title)
-    DOCX_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + ".docx")
-    HTML_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + ".html")
-    PDF_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + ".pdf")
-    PAPER_DOCX_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + "_Paper.docx")
-    PAPER_HTML_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + "_Paper.html")
-    PAPER_PDF_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + "_Paper.pdf")
-    return REPORT_BASENAME
-
-
-def _docx_to_pdf_word(docx_path, pdf_path):
-    """Convert through Microsoft Word COM automation (Windows only).
-
-    Preferred backend: Word renders its own format, so the corporate template's
-    fonts, headers, footers and numbering survive the conversion intact.
-
-    Parameters
-    ----------
-    docx_path : str
-        Absolute path of the source Word document.
-    pdf_path : str
-        Absolute path of the PDF to write.
-
-    Returns
-    -------
-    str or None
-        ``None`` on success, otherwise the reason the backend was unusable.
-    """
-    try:
-        import pythoncom
-        import win32com.client
-    except ImportError:
-        return "pywin32 is not installed"
-    wd_export_format_pdf = 17
-    pythoncom.CoInitialize()
-    word = None
-    document = None
-    try:
-        word = win32com.client.DispatchEx("Word.Application")
-        word.Visible = False
-        word.DisplayAlerts = 0
-        document = word.Documents.Open(docx_path, ReadOnly=True, Visible=False)
-        document.ExportAsFixedFormat(pdf_path, wd_export_format_pdf,
-                                     CreateBookmarks=1, IncludeDocProps=True,
-                                     DocStructureTags=True)
-    except Exception as error:  # pragma: no cover - COM surfaces many types
-        return "Word automation failed ({})".format(error)
-    finally:
-        if document is not None:
-            try:
-                document.Close(0)
-            except Exception:
-                pass
-        if word is not None:
-            try:
-                word.Quit()
-            except Exception:
-                pass
-        pythoncom.CoUninitialize()
-    return None
-
-
-def _docx_to_pdf_libreoffice(docx_path, pdf_path):
-    """Convert through a headless LibreOffice installation.
-
-    Cross-platform fallback. Fidelity to a Word template is good but not exact,
-    so this is only used when Word automation is unavailable.
-
-    Parameters
-    ----------
-    docx_path : str
-        Absolute path of the source Word document.
-    pdf_path : str
-        Absolute path of the PDF to write.
-
-    Returns
-    -------
-    str or None
-        ``None`` on success, otherwise the reason the backend was unusable.
-    """
-    executable = shutil.which("soffice") or shutil.which("libreoffice")
-    if not executable:
-        return "LibreOffice (soffice) is not on PATH"
-    outdir = os.path.dirname(pdf_path)
-    try:
-        completed = subprocess.run(
-            [executable, "--headless", "--convert-to",
-             'pdf:writer_pdf_Export:{"UseTaggedPDF":{"type":"boolean","value":"true"}}',
-             "--outdir", outdir, docx_path],
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=300)
-    except (OSError, subprocess.SubprocessError) as error:
-        return "LibreOffice call failed ({})".format(error)
-    if completed.returncode != 0:
-        return "LibreOffice exited {}".format(completed.returncode)
-    produced = os.path.join(
-        outdir, os.path.splitext(os.path.basename(docx_path))[0] + ".pdf")
-    if produced != pdf_path and os.path.isfile(produced):
-        shutil.move(produced, pdf_path)
-    return None
-
-
-def convert_docx_to_pdf(docx_path, pdf_path, label="Report"):
-    """Render a generated Word report to PDF for distribution.
-
-    The PDF is produced from the DOCX rather than from the HTML so that it
-    inherits the configured corporate Word template. Backends are tried in
-    descending order of fidelity, and a failure is reported rather than raised:
-    a missing PDF must not discard an otherwise complete report run.
-
-    Parameters
-    ----------
-    docx_path : str
-        Path of the Word report produced by this run.
-    pdf_path : str
-        Path of the PDF to write.
-    label : str, optional
-        Human-readable name used in console messages.
-
-    Returns
-    -------
-    bool
-        True when the PDF was written.
-    """
-    docx_path = os.path.abspath(docx_path)
-    pdf_path = os.path.abspath(pdf_path)
-    if not os.path.isfile(docx_path):
-        print("NOTE: {} PDF skipped, source document is missing: {}".format(
-            label, docx_path))
-        return False
-    reasons = []
-    for backend in (_docx_to_pdf_word, _docx_to_pdf_libreoffice):
-        reason = backend(docx_path, pdf_path)
-        if reason is None and os.path.isfile(pdf_path):
-            print("{} PDF saved: {}".format(label, pdf_path))
-            return True
-        reasons.append(reason or "backend reported success but wrote no file")
-    print("NOTE: {} PDF could not be generated. Tried: {}.".format(
-        label, "; ".join(reasons)))
-    print("      Install Microsoft Word with pywin32, or LibreOffice, "
-          "or export the .docx manually.")
-    return False
-
-
-def want_pdf_output(study_config):
-    """Decide whether this run should also emit PDF.
-
-    Parameters
-    ----------
-    study_config : dict
-        Parsed ``study_config.yaml``.
-
-    Returns
-    -------
-    bool
-        True when ``--pdf`` was passed or ``report.formats`` lists ``pdf``.
-    """
-    if "--pdf" in sys.argv:
-        return True
-    if "--no-pdf" in sys.argv:
-        return False
-    formats = (study_config or {}).get("report", {}).get("formats") or []
-    return any(str(fmt).strip().lower() == "pdf" for fmt in formats)
-
-
-def resolve_report_orientation(study_config):
-    """Resolve the page orientation for the report body.
-
-    Order: ``--orientation VALUE`` > ``report.orientation`` in
-    ``study_config.yaml`` > portrait. ``template`` keeps whatever the corporate
-    template declares, which is usually landscape.
-    """
-    allowed = ("portrait", "landscape", "template")
-    value = _cli_option("--orientation")
-    if not value:
-        value = (study_config or {}).get("report", {}).get("orientation")
-    value = str(value or "portrait").strip().lower()
-    if value not in allowed:
-        print("NOTE: unknown report.orientation '{}'; using portrait.".format(value))
-        return "portrait"
-    return value
-
-
-def resolve_front_matter_lists(study_config):
-    """``report.front_matter_lists``: auto (long reports only) | always | never."""
-    value = str((study_config or {}).get("report", {}).get("front_matter_lists") or "auto").strip().lower()
-    return value if value in ("auto", "always", "never") else "auto"
-
-
-def resolve_report_language(study_config):
-    """Resolve the language the report is written in.
-
-    Order: ``--language CODE`` > ``NEQSIM_REPORT_LANGUAGE`` >
-    ``report.language`` (then ``study.language``) in ``study_config.yaml`` >
-    English.
-
-    Parameters
-    ----------
-    study_config : dict
-        Parsed ``study_config.yaml``.
-
-    Returns
-    -------
-    str
-        Normalized language code, e.g. ``en`` or ``nb``.
-    """
-    value = _cli_option("--language") or os.environ.get("NEQSIM_REPORT_LANGUAGE", "")
-    if not value:
-        config = study_config or {}
-        value = (config.get("report", {}).get("language")
-                 or config.get("study", {}).get("language") or "")
-    value = str(value or "").strip().lower()
-    if value in ("", "auto", "default"):
-        return DEFAULT_REPORT_LANGUAGE
-    code = LANGUAGE_ALIASES.get(value, value)
-    if code != DEFAULT_REPORT_LANGUAGE and code not in REPORT_STRINGS:
-        print("NOTE: no translation table for report language '{}'. Section "
-              "headings and cover labels stay English; the document language "
-              "is set to {}.".format(value, LANGUAGE_LOCALES.get(code, code)))
-    return code
-
-
-def prune_superseded_outputs(current_files):
-    """Delete report files this generator wrote under an earlier title.
-
-    Without this, renaming a study leaves the superseded deliverable beside the
-    current one and a reader cannot tell which is live.
-
-    Parameters
-    ----------
-    current_files : list of str
-        Paths written by this run.
-    """
-    current = set(os.path.abspath(path) for path in current_files
-                  if path and os.path.exists(path))
-    previous = list(LEGACY_OUTPUT_NAMES)
-    if os.path.exists(OUTPUT_MANIFEST_FILE):
-        try:
-            with open(OUTPUT_MANIFEST_FILE, encoding="utf-8-sig") as manifest:
-                previous.extend(json.load(manifest).get("files", []))
-        except (OSError, ValueError) as error:
-            print("NOTE: could not read report output manifest; "
-                  "checking legacy output names only ({}).".format(error), file=sys.stderr)
-    for name in previous:
-        stale = os.path.abspath(os.path.join(REPORT_DIR, os.path.basename(name)))
-        if stale in current or not os.path.isfile(stale):
-            continue
-        try:
-            os.remove(stale)
-            print("Removed superseded report file: {}".format(os.path.basename(stale)))
-        except OSError as error:
-            print("NOTE: could not remove {}: {}".format(stale, error))
-    try:
-        with open(OUTPUT_MANIFEST_FILE, "w", encoding="utf-8") as manifest:
-            json.dump({"files": sorted(os.path.basename(p) for p in current)},
-                      manifest, indent=2)
-    except OSError as error:
-        print("NOTE: could not save report output manifest; cleanup tracking "
-              "may be incomplete next run ({}).".format(error), file=sys.stderr)
-
-# â”€â”€ Word template (corporate branding) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-# Resolution order: --template PATH, NEQSIM_REPORT_TEMPLATE, the saved
-# `report_template` in ~/.neqsim/task_defaults.json (neqsim --set-report-template),
-# then built-in styling. Word documents are then built on the template so the
-# company fonts, colours, styles, headers, and footers apply.
-TASK_DEFAULTS_FILE = os.path.expanduser("~/.neqsim/task_defaults.json")
-REPORT_TEMPLATE_EXTENSIONS = (".docx", ".dotx")
-REPORT_TEMPLATE = None          # set in __main__ from CLI/env/settings
-KEEP_TEMPLATE_CONTENT = False   # --keep-template-content keeps the template body
-TEMPLATE_NUMBERS_HEADINGS = False  # template Heading styles carry their own numbering
-
-
-def resolve_report_template(explicit=None, allow_saved=True, configured=None):
-    """Resolve the Word template reports are built from, or None if unset.
-
-    Parameters
-    ----------
-    explicit : str or None
-        Template path from --template; overrides everything else.
-    allow_saved : bool
-        When False (--no-template), study_config, environment and the saved
-        user setting are all ignored.
-    configured : str or None
-        ``report.template`` from study_config.yaml; relative paths resolve from
-        the task folder and ``none`` selects the built-in styling. Overrides
-        the environment and the saved user setting.
-
-    Returns
-    -------
-    str or None
-        Absolute path to an existing .docx/.dotx file, or None.
-
-    Raises
-    ------
-    ValueError
-        If a template is configured but is not a readable Word file.
-    """
-    configured = (configured or "").strip()
-    if not explicit and allow_saved and configured:
-        if configured.lower() in ("none", "off", "builtin", "built-in"):
-            return None
-        explicit = (configured if os.path.isabs(os.path.expanduser(configured))
-                    else os.path.join(TASK_DIR, configured))
-    selected = explicit or os.environ.get("NEQSIM_REPORT_TEMPLATE")
-    if not selected and allow_saved and os.path.exists(TASK_DEFAULTS_FILE):
-        with open(TASK_DEFAULTS_FILE, encoding="utf-8-sig") as source:
-            selected = json.load(source).get("report_template")
-    if not selected:
-        return None
-    if not isinstance(selected, str) or not selected.strip():
-        raise ValueError("Report template must be a path to a .docx or .dotx file")
-    path = os.path.abspath(os.path.expandvars(os.path.expanduser(selected)))
-    if os.path.splitext(path)[1].lower() not in REPORT_TEMPLATE_EXTENSIONS:
-        raise ValueError("Report template must be a .docx or .dotx file: {}".format(path))
-    if not os.path.isfile(path):
-        raise ValueError("Report template not found: {}".format(path))
-    return path
-
-
-def _clear_document_body(doc):
-    """Drop the template's own body content, keeping page setup and headers."""
-    body = doc.element.body
-    for child in list(body):
-        if child.tag == qn("w:sectPr"):
-            continue
-        body.remove(child)
-
-
-def _ensure_paragraph_style(doc, name, size_pt=None, bold=False):
-    """Create a minimal stand-in when the template lacks a style we write to."""
-    try:
-        doc.styles[name]
-        return
-    except KeyError:
-        pass
-    style = doc.styles.add_style(name, WD_STYLE_TYPE.PARAGRAPH)
-    try:
-        style.base_style = doc.styles["Normal"]
-    except KeyError:
-        pass
-    if size_pt:
-        style.font.size = Pt(size_pt)
-    style.font.bold = bold
-
-
-def _apply_readable_typography(doc):
-    """Raise style sizes that fall below the readable floor.
-
-    Only ever increases a size, so a template whose body text and headings are
-    already reasonable keeps its own design. Corporate templates built for
-    dense forms often ship Normal at 9-9.5 pt with all heading levels at the
-    same size, which leaves the report body small and the section hierarchy
-    invisible once the template body is cleared.
-    """
-    floors = (
-        ("Normal", BODY_PT),
-        ("Heading 1", HEADING1_PT),
-        ("Heading 2", HEADING2_PT),
-        ("Heading 3", HEADING3_PT),
-    )
-    for name, floor_pt in floors:
-        try:
-            style = doc.styles[name]
-        except KeyError:
-            continue
-        current = style.font.size.pt if style.font.size else None
-        if current is None or current < floor_pt:
-            style.font.size = Pt(floor_pt)
-        if name.startswith("Heading"):
-            style.font.bold = True
-    # A form template often sets space_after = 0, which glues consecutive
-    # paragraphs together and hides the paragraph structure entirely.
-    try:
-        body = doc.styles["Normal"].paragraph_format
-        if body.space_after is None or body.space_after < Pt(BODY_SPACE_AFTER_PT):
-            body.space_after = Pt(BODY_SPACE_AFTER_PT)
-        body.widow_control = True
-    except KeyError:
-        pass
-    _ensure_caption_style(doc)
-
-
-def _ensure_caption_style(doc):
-    """Give figure and table captions a real Caption style.
-
-    Captions written as ad-hoc italic runs cannot be collected into a list of
-    figures, and Word is free to break the page between a figure and its
-    caption. A styled caption fixes both.
-    """
-    _ensure_paragraph_style(doc, "Caption", CAPTION_PT)
-    try:
-        style = doc.styles["Caption"]
-    except KeyError:
-        return
-    style.font.size = Pt(CAPTION_PT)
-    style.font.italic = True
-    style.font.bold = False
-    style.font.color.rgb = RGBColor(90, 90, 90)
-    style.paragraph_format.space_after = Pt(BODY_SPACE_AFTER_PT)
-    style.paragraph_format.keep_with_next = False
-
-
-def _set_run_language(r_pr, locale):
-    """Set ``w:lang`` on a run-properties element, replacing any existing one."""
-    for existing in r_pr.findall(qn("w:lang")):
-        r_pr.remove(existing)
-    r_pr.append(parse_xml(
-        '<w:lang {} w:val="{}" w:eastAsia="{}"/>'.format(
-            nsdecls("w"), locale, locale)))
-
-
-def _apply_document_language(doc):
-    """Set the document language so Word spell-checks in the report language.
-
-    A template built in one language otherwise marks every word of a report
-    written in another as a spelling error.
-    """
-    locale = _report_locale()
-    styles = doc.styles.element
-    defaults = styles.find(qn("w:docDefaults"))
-    if defaults is not None:
-        r_pr_default = defaults.find(qn("w:rPrDefault"))
-        if r_pr_default is None:
-            r_pr_default = parse_xml(
-                '<w:rPrDefault {}/>'.format(nsdecls("w")))
-            defaults.insert(0, r_pr_default)
-        r_pr = r_pr_default.find(qn("w:rPr"))
-        if r_pr is None:
-            r_pr = parse_xml('<w:rPr {}/>'.format(nsdecls("w")))
-            r_pr_default.append(r_pr)
-        _set_run_language(r_pr, locale)
-    try:
-        normal = doc.styles["Normal"].element
-    except KeyError:
-        return
-    r_pr = normal.find(qn("w:rPr"))
-    if r_pr is None:
-        r_pr = parse_xml('<w:rPr {}/>'.format(nsdecls("w")))
-        normal.append(r_pr)
-    _set_run_language(r_pr, locale)
-
-
-def _anchor_header_drawings_to_right_margin(doc):
-    """Keep right-hand header/footer drawings (logo) on the page after a flip.
-
-    Corporate templates place the logo with a fixed offset from the left
-    column. Rotating a landscape template to portrait leaves that offset
-    beyond the page edge, so the logo vanishes. Re-expressing the offset
-    relative to the right margin keeps the same gap in either orientation.
-    """
-    seen = set()
-    for section in doc.sections:
-        left = section.left_margin or 0
-        right = section.right_margin or 0
-        page_w = section.page_width
-        parts = (section.header, section.first_page_header,
-                 section.even_page_header, section.footer,
-                 section.first_page_footer, section.even_page_footer)
-        for part in parts:
-            if part.is_linked_to_previous:
-                continue
-            root = part._element
-            if id(root) in seen:
-                continue
-            seen.add(id(root))
-            for anchor in root.iter(qn("wp:anchor")):
-                pos_h = anchor.find(qn("wp:positionH"))
-                extent = anchor.find(qn("wp:extent"))
-                if pos_h is None or extent is None:
-                    continue
-                offset = pos_h.find(qn("wp:posOffset"))
-                if offset is None:
-                    continue
-                base = {"column": left, "margin": left, "leftMargin": left,
-                        "page": 0}.get(pos_h.get("relativeFrom"))
-                if base is None:
-                    continue
-                x_left = base + int(offset.text)
-                if x_left + int(extent.get("cx")) / 2.0 < page_w / 2.0:
-                    continue
-                pos_h.set("relativeFrom", "rightMargin")
-                offset.text = str(int(x_left - (page_w - right)))
-
-
-def _normalize_page_setup(doc):
-    """Set the body on a readable measure, whatever the template declares."""
-    if REPORT_ORIENTATION == "template":
-        return
-    want_landscape = REPORT_ORIENTATION == "landscape"
-    _anchor_header_drawings_to_right_margin(doc)
-    for section in doc.sections:
-        if (section.page_width > section.page_height) != want_landscape:
-            section.page_width, section.page_height = (
-                section.page_height, section.page_width)
-            section.orientation = (WD_ORIENT.LANDSCAPE if want_landscape
-                                   else WD_ORIENT.PORTRAIT)
-        measure = (section.page_width - section.left_margin
-                   - section.right_margin) / 914400.0
-        if measure <= MAX_MEASURE_IN:
-            continue
-        extra = Inches((measure - MAX_MEASURE_IN) / 2.0)
-        floor = Inches(MIN_SIDE_MARGIN_IN)
-        section.left_margin = max(section.left_margin + extra, floor)
-        section.right_margin = max(section.right_margin + extra, floor)
-
-
-def _text_width_in(doc):
-    """Printable width of the current section, in inches."""
-    section = doc.sections[-1]
-    return max(2.0, (section.page_width - section.left_margin
-                     - section.right_margin) / 914400.0)
-
-
-def _text_height_in(doc):
-    """Printable height of the current section, in inches."""
-    section = doc.sections[-1]
-    return max(2.0, (section.page_height - section.top_margin
-                     - section.bottom_margin) / 914400.0)
-
-
-def _new_document():
-    """Return a Word document based on the configured template, if any."""
-    global TEMPLATE_NUMBERS_HEADINGS
-    if not REPORT_TEMPLATE:
-        doc = Document()
-        _apply_readable_typography(doc)
-        _apply_document_language(doc)
-        _normalize_page_setup(doc)
-        return doc
-    doc = Document(REPORT_TEMPLATE)
-    if not KEEP_TEMPLATE_CONTENT:
-        _clear_document_body(doc)
-    for name, size_pt in (("Title", 28), ("Heading 1", HEADING1_PT),
-                          ("Heading 2", HEADING2_PT),
-                          ("Heading 3", HEADING3_PT), ("List Bullet", None)):
-        _ensure_paragraph_style(doc, name, size_pt, bold=size_pt is not None)
-    _apply_readable_typography(doc)
-    _apply_document_language(doc)
-    _normalize_page_setup(doc)
-    return doc
-
-
-def _style_numbering_active(doc, style_name, _seen=None):
-    """Return true when a heading style carries automatic Word numbering.
-
-    A corporate template usually numbers its heading styles itself. Writing our
-    own "7. " prefix into such a heading produces "8   7. Solution Workflow" â€”
-    two numbering schemes that also disagree, because Word counts the cover and
-    contents headings too.
-    """
-    if _seen is None:
-        _seen = set()
-    if style_name in _seen:
-        return False
-    _seen.add(style_name)
-    try:
-        style = doc.styles[style_name]
-    except KeyError:
-        return False
-    element = style.element
-    if element.find(qn("w:pPr")) is not None:
-        if element.find(qn("w:pPr")).find(qn("w:numPr")) is not None:
-            return True
-    based_on = element.find(qn("w:basedOn"))
-    if based_on is not None:
-        parent = based_on.get(qn("w:val"))
-        if parent:
-            return _style_numbering_active(doc, parent, _seen)
-    return False
-
-
-_HEADING_NUMBERING_CACHE = {}
-_MANUAL_HEADING_NUMBER = re.compile(r"^\s*\d+(?:\.\d+)*[.)]?\s+")
-
-
-def _heading_numbering_active(doc, level):
-    """Cache the numbering check per document and heading level."""
-    key = (id(doc), level)
-    if key not in _HEADING_NUMBERING_CACHE:
-        _HEADING_NUMBERING_CACHE[key] = _style_numbering_active(
-            doc, "Heading {}".format(level))
-    return _HEADING_NUMBERING_CACHE[key]
-
-
-def _suppress_paragraph_numbering(paragraph):
-    """Remove list numbering from a single paragraph (numId 0)."""
-    p_pr = paragraph._p.get_or_add_pPr()
-    for existing in p_pr.findall(qn("w:numPr")):
-        p_pr.remove(existing)
-    p_pr.append(parse_xml(
-        '<w:numPr {}><w:ilvl w:val="0"/><w:numId w:val="0"/></w:numPr>'.format(
-            nsdecls("w"))))
-
-
-_MANUAL_SUBSECTION_STATE = {}
-_LEADING_CHAPTER_NUMBER = re.compile(r"^\s*(\d+)[.)]?\s+")
-
-
-def _add_heading(doc, text, level=1, numbered=True):
-    """Add a heading that does not fight the template's own numbering.
-
-    When the template numbers headings, our manual "N. " prefix is dropped so
-    Word supplies the single authoritative number; headings that must stay
-    unnumbered (contents, front matter) have numbering suppressed instead.
-    Without template numbering, level-2 headings get a manual "N.k" so the
-    built-in layout matches a numbered corporate template.
-    """
-    text = str(text)
-    if _heading_numbering_active(doc, level):
-        if numbered:
-            text = _MANUAL_HEADING_NUMBER.sub("", text)
-        heading = doc.add_heading(text, level=level)
-        if not numbered:
-            _suppress_paragraph_numbering(heading)
-    else:
-        state = _MANUAL_SUBSECTION_STATE.setdefault(id(doc), {"chapter": None, "sub": 0})
-        if level == 1:
-            match = _LEADING_CHAPTER_NUMBER.match(text) if numbered else None
-            state["chapter"], state["sub"] = (match.group(1) if match else None), 0
-        elif level == 2 and numbered and state["chapter"] \
-                and not _MANUAL_HEADING_NUMBER.match(text):
-            state["sub"] += 1
-            text = "{}.{} {}".format(state["chapter"], state["sub"], text)
-        heading = doc.add_heading(text, level=level)
-    # A heading stranded at the foot of a page is the most visible layout fault
-    # in an otherwise clean report.
-    heading.paragraph_format.keep_with_next = True
-    heading.paragraph_format.page_break_before = False
-    return heading
-
-
-def _repeat_header_row(table):
-    """Mark row 1 as a header so it repeats when the table breaks across pages."""
-    tr_pr = table.rows[0]._tr.get_or_add_trPr()
-    if tr_pr.find(qn("w:tblHeader")) is None:
-        tr_pr.append(parse_xml('<w:tblHeader {}/>'.format(nsdecls("w"))))
-
-
-def _keep_rows_intact(table):
-    """Stop Word splitting a single table row across a page break."""
-    for row in table.rows:
-        tr_pr = row._tr.get_or_add_trPr()
-        if tr_pr.find(qn("w:cantSplit")) is None:
-            tr_pr.append(parse_xml('<w:cantSplit {}/>'.format(nsdecls("w"))))
-
-
-_NUMERIC_CELL = re.compile(
-    r"^[\s\u00a0]*[<>\u2264\u2265\u00b1~]?[\s\u00a0]*[-+]?[\d\u00a0,. ]*\d"
-    r"(?:[eE][-+]?\d+)?[\s\u00a0]*%?[\s\u00a0]*$")
-
-
-def _align_numeric_cells(table):
-    """Right-align the cells that hold numbers so digits line up by place value."""
-    for row in table.rows[1:]:
-        for cell in row.cells:
-            text = cell.text.strip()
-            if not text or not _NUMERIC_CELL.match(text):
-                continue
-            for paragraph in cell.paragraphs:
-                paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-
-
-def _set_table_style(table, name="Table Grid"):
-    """Apply a table style, falling back to explicit borders if it is missing."""
-    try:
-        table.style = name
-        return
-    except KeyError:
-        pass
-    borders = "".join(
-        '<w:{} w:val="single" w:sz="4" w:color="999999"/>'.format(edge)
-        for edge in ("top", "left", "bottom", "right", "insideH", "insideV")
-    )
-    table._tbl.tblPr.append(
-        parse_xml('<w:tblBorders {}>{}</w:tblBorders>'.format(nsdecls("w"), borders))
-    )
-
-# â”€â”€ Configuration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-# TITLE and AUTHOR are resolved at run time by resolve_report_identity():
-#   --title / --author  >  study_config.yaml (study.title, study.author)  >
-#   task_spec.md heading  >  a task-local generate_report.py copy  >  folder name.
-# The values below are only the last-resort fallbacks.
-TITLE = "Task Report"
-AUTHOR = ""
-TASK_DATE = date.today().isoformat()
-TASK_STATEMENT = ""             # resolved from study_config/task_spec/results
-STUDY_BADGES = []               # [(label, value)] shown under the title
-
-# â”€â”€ Paper-specific configuration (edit for scientific paper output) â”€â”€
-PAPER_TITLE = ""                # <-- Leave empty to use TITLE
-PAPER_AUTHORS = []              # <-- e.g. [{"name": "J. Doe", "affiliation": "NTNU"}]
-PAPER_KEYWORDS = []             # <-- e.g. ["thermodynamics", "process simulation"]
-PAPER_JOURNAL = ""              # <-- e.g. "Journal of Natural Gas Science and Engineering"
-PAPER_ACKNOWLEDGMENTS = ""      # <-- e.g. "Funded by Research Council of Norway"
-
-# â”€â”€ Report metadata (cover page and revision history) â”€â”€â”€â”€
-DOC_NUMBER = ""                 # <-- e.g. "REP-2026-001" (auto-generated from task folder if blank)
-REVISION = "0"                  # <-- Current revision number
-REVISION_HISTORY = [
-    # {"rev": "0", "date": "2026-07-04", "description": "Initial issue", "author": ""},
-]
-CLASSIFICATION = "Open"         # <-- "Open", "Internal", "Confidential"
-
-# â”€â”€ Manual sections (edit content for your specific task) â”€
-# These are used when auto-read data is not available.
-# If results.json exists, sections 5-6 are auto-populated.
-MANUAL_SECTIONS = {
-    "executive_summary": (
-        "[Replace with a 3-5 sentence summary of the task, approach, "
-        "and key findings.]"
-    ),
-    "problem_description": (
-        "[Describe the engineering question or task that was solved.]"
-    ),
-    "approach": (
-        "[Describe the methodology: EOS used, process configuration, "
-        "simulation setup, key assumptions.]"
-    ),
-    "conclusions": (
-        "[Summarize key findings and provide recommendations.]"
-    ),
-    "references": (
-        "[List references from step1_scope_and_research/notes.md.]"
-    ),
-}
-
-# â”€â”€ Scientific paper sections (edit for paper output) â”€â”€â”€â”€
-# These map to standard engineering paper sections.
-# Auto-populated fields from results.json override placeholders.
-PAPER_SECTIONS = {
-    "abstract": (
-        "[Replace with a 150-300 word abstract summarizing the problem, "
-        "methodology, key results, and conclusions.]"
-    ),
-    "introduction": (
-        "[Replace with 2-4 paragraphs covering:\n"
-        "- Background and motivation\n"
-        "- Brief literature review\n"
-        "- Problem statement and objectives\n"
-        "- Paper organization (optional)]"
-    ),
-    "methodology": (
-        "[Replace with a description of the methodology:\n"
-        "- Thermodynamic model and equation of state\n"
-        "- Process simulation setup and assumptions\n"
-        "- Numerical methods and convergence criteria\n"
-        "- Key equations and correlations used]"
-    ),
-    "results_discussion": (
-        "[Replace with results discussion if auto-populated "
-        "data from results.json is insufficient.]"
-    ),
-    "conclusions": (
-        "[Replace with concise, numbered conclusions and "
-        "recommendations for future work.]"
-    ),
-    "acknowledgments": (
-        ""
-    ),
-}
-
-
-# â”€â”€ Task-local overrides â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-# Hand-written report content lives in step3_report/report_sections.json, not
-# in a forked copy of this script. Keys: title, author, classification,
-# doc_number, revision, manual_sections, appendix_sections, paper_sections, paper_* metadata.
-REPORT_SECTIONS_FILE = os.path.join(TASK_REPORT_DIR, "report_sections.json")
-
-
-def _load_report_sections():
-    """Return the task's hand-written report overrides, or an empty dict."""
-    if not os.path.isfile(REPORT_SECTIONS_FILE):
-        return {}
-    try:
-        with open(REPORT_SECTIONS_FILE, "r", encoding="utf-8-sig") as source:
-            data = json.load(source)
-    except (OSError, ValueError) as error:
-        print("WARNING: could not read {}: {}".format(REPORT_SECTIONS_FILE, error))
-        return {}
-    return data if isinstance(data, dict) else {}
-
-
-REPORT_SECTIONS = _load_report_sections()
-# Sections a human wrote by hand; these outrank auto-generated prose.
-AUTHORED_SECTIONS = set()
-
-for _key, _value in (REPORT_SECTIONS.get("manual_sections") or {}).items():
-    if isinstance(_value, str) and _value.strip():
-        MANUAL_SECTIONS[_key] = _value
-        AUTHORED_SECTIONS.add(_key)
-for _key, _value in (REPORT_SECTIONS.get("paper_sections") or {}).items():
-    if isinstance(_value, str) and _value.strip():
-        PAPER_SECTIONS[_key] = _value
-for _key, _global in (("doc_number", "DOC_NUMBER"), ("revision", "REVISION"),
-                      ("paper_title", "PAPER_TITLE"),
-                      ("paper_journal", "PAPER_JOURNAL"),
-                      ("paper_acknowledgments", "PAPER_ACKNOWLEDGMENTS")):
-    if isinstance(REPORT_SECTIONS.get(_key), str) and REPORT_SECTIONS[_key].strip():
-        globals()[_global] = REPORT_SECTIONS[_key]
-for _key, _global in (("revision_history", "REVISION_HISTORY"),
-                      ("paper_authors", "PAPER_AUTHORS"),
-                      ("paper_keywords", "PAPER_KEYWORDS")):
-    if isinstance(REPORT_SECTIONS.get(_key), list) and REPORT_SECTIONS[_key]:
-        globals()[_global] = REPORT_SECTIONS[_key]
-
-
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-# Auto-read functions
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-
-_PASS_STATUSES = {"PASS", "PASSED", "OK", "MET"}
-_FAIL_STATUSES = {"FAIL", "FAILED", "NOT MET", "NOT_MET"}
-
-
-def _status_word(status):
-    """Map a validation-row status to PASS, FAIL or its own upper-cased text."""
-    if isinstance(status, bool):
-        return "PASS" if status else "FAIL"
-    word = str(status if status is not None else "").strip().upper()
-    if word in _PASS_STATUSES:
-        return "PASS"
-    if word in _FAIL_STATUSES:
-        return "FAIL"
-    return word or "N/A"
-
-
-def _normalize_validation(data):
-    """Accept a list of check rows as `validation` by folding it into the dict shape used here."""
-    validation = data.get("validation")
-    if isinstance(validation, list):
-        data["validation_rows"] = validation
-        folded = {}
-        for index, row in enumerate(validation):
-            if not isinstance(row, dict):
-                continue
-            name = str(row.get("check", index))
-            if name in folded:
-                name = "{} ({})".format(name, index + 1)
-            # Status words, not booleans: a boolean would be inverted for names such as "error".
-            folded[name] = _status_word(row.get("status", row.get("passed", row.get("pass"))))
-        data["validation"] = folded
-    elif validation is not None and not isinstance(validation, dict):
-        data["validation"] = {}
-    return data
-
-
-def _expand_pvt_tuning_tables(data):
-    """Turn results['pvt_tuning_quality'] into report tables (before/after, tuned parameters, exclusions).
-
-    The tables are appended to ``data['tables']`` so that the HTML and Word renderers show the fluid-tuning
-    quality without block-specific code. Existing tables with the same title are kept as they are.
-    """
-    block = data.get("pvt_tuning_quality") if isinstance(data, dict) else None
-    if not isinstance(block, dict):
-        return data
-    tables = data.setdefault("tables", [])
-    if not isinstance(tables, list):
-        return data
-    have = {t.get("title") for t in tables if isinstance(t, dict)}
-
-    def fmt(value):
-        if value is None or value == "":
-            return "n/a"
-        if isinstance(value, bool):
-            return "yes" if value else "no"
-        if isinstance(value, float):
-            return "{:.4g}".format(value)
-        return str(value)
-
-    exps = [e for e in block.get("experiments", []) if isinstance(e, dict)]
-    title = "PVT tuning quality: error before and after tuning"
-    if exps and title not in have:
-        tables.append({"title": title,
-                       "headers": ["Sample", "Experiment", "Metric", "Before", "After", "Unit"],
-                       "rows": [[fmt(e.get("sample")), fmt(e.get("type")), fmt(e.get("metric")), fmt(e.get("before")),
-                                 fmt(e.get("after")), fmt(e.get("unit"))] for e in exps]})
-    params = [p for p in block.get("parameters", []) if isinstance(p, dict)]
-    title = "PVT tuning quality: tuned parameters and bounds"
-    if params and title not in have:
-        tables.append({"title": title,
-                       "headers": ["Parameter", "Initial", "Tuned", "Lower", "Upper", "At bound"],
-                       "rows": [[fmt(p.get("name")), fmt(p.get("initial")), fmt(p.get("tuned")), fmt(p.get("lower")),
-                                 fmt(p.get("upper")), fmt(p.get("at_bound"))] for p in params]})
-    excl = [x for x in block.get("exclusions", []) if isinstance(x, dict)]
-    title = "PVT tuning quality: data excluded from the tuning"
-    if excl and title not in have:
-        tables.append({"title": title, "headers": ["Sample or data", "Reason"],
-                       "rows": [[fmt(x.get("sample")), fmt(x.get("reason"))] for x in excl]})
-    return data
-
-
-def load_results():
-    """Load results.json if it exists. Returns dict or None."""
-    if os.path.exists(RESULTS_FILE):
-        with open(RESULTS_FILE, "r", encoding="utf-8") as f:
-            data = _expand_pvt_tuning_tables(_normalize_validation(json.load(f)))
-        print("  Loaded results.json ({} keys)".format(len(data)))
-        return data
-    print("  No results.json found (using manual sections)")
-    return None
-
-
-def load_task_spec():
-    """Load task_spec.md and extract standards/methods/criteria sections."""
-    if not os.path.exists(TASK_SPEC_FILE):
-        print("  No task_spec.md found (using placeholder for scope)")
-        return None
-    with open(TASK_SPEC_FILE, "r", encoding="utf-8") as f:
-        content = f.read()
-    print("  Loaded task_spec.md ({} chars)".format(len(content)))
-    return content
-
-
-def _strip_yaml_comment(line):
-    """Strip YAML comments while preserving hashes inside quoted strings."""
-    result = []
-    quote = None
-    for character in line:
-        if character in ('"', "'"):
-            if quote == character:
-                quote = None
-            elif quote is None:
-                quote = character
-        if character == "#" and quote is None:
-            break
-        result.append(character)
-    return "".join(result).rstrip()
-
-
-def _parse_yaml_value(value):
-    """Parse the simple scalar values used by study_config.yaml."""
-    cleaned = _strip_yaml_comment(value).strip()
-    if not cleaned:
-        return ""
-    if ((cleaned.startswith('"') and cleaned.endswith('"'))
-            or (cleaned.startswith("'") and cleaned.endswith("'"))):
-        return cleaned[1:-1]
-    lowered = cleaned.lower()
-    if lowered == "true":
-        return True
-    if lowered == "false":
-        return False
-    try:
-        return int(cleaned)
-    except ValueError:
-        return cleaned
-
-
-def _section_lines(config_text, section):
-    """Return lines belonging to a top-level YAML section."""
-    lines = config_text.splitlines()
-    section_marker = "{}:".format(section)
-    capturing = False
-    result = []
-    for line in lines:
-        stripped = line.strip()
-        if stripped == section_marker and not line.startswith(" "):
-            capturing = True
-            continue
-        if capturing and stripped and not line.startswith(" "):
-            break
-        if capturing:
-            result.append(line)
-    return result
-
-
-def _parse_section_scalars(lines):
-    """Parse scalar keys directly under a YAML section."""
-    parsed = {}
-    child_indents = [len(line) - len(line.lstrip()) for line in lines
-                     if line.strip() and line.startswith(" ")]
-    if not child_indents:
-        return parsed
-    child_indent = min(child_indents)
-    for line in lines:
-        cleaned = _strip_yaml_comment(line)
-        if not cleaned.strip() or not cleaned.startswith(" "):
-            continue
-        indent = len(cleaned) - len(cleaned.lstrip())
-        if indent != child_indent:
-            continue
-        if ":" not in cleaned:
-            continue
-        key, value = cleaned.strip().split(":", 1)
-        value = value.strip()
-        if value:
-            parsed[key] = _parse_yaml_value(value)
-    return parsed
-
-
-def _parse_scalar_list(lines, key):
-    """Parse a scalar list under an indented YAML key."""
-    values = []
-    capturing = False
-    key_indent = 0
-    for line in lines:
-        cleaned = _strip_yaml_comment(line)
-        stripped = cleaned.strip()
-        if stripped == "{}:".format(key):
-            capturing = True
-            key_indent = len(cleaned) - len(cleaned.lstrip())
-            continue
-        if capturing:
-            indent = len(cleaned) - len(cleaned.lstrip())
-            if stripped and indent <= key_indent:
-                break
-            if stripped.startswith("- "):
-                values.append(_parse_yaml_value(stripped[2:]))
-    return values
-
-
-def _parse_notebook_plan(lines):
-    """Parse notebooks.plan entries from study_config.yaml."""
-    plan = []
-    current = None
-    capturing = False
-    plan_indent = 0
-    for line in lines:
-        cleaned = _strip_yaml_comment(line)
-        stripped = cleaned.strip()
-        if stripped == "plan:":
-            capturing = True
-            plan_indent = len(cleaned) - len(cleaned.lstrip())
-            continue
-        if capturing:
-            indent = len(cleaned) - len(cleaned.lstrip())
-            if stripped and indent <= plan_indent:
-                break
-            if stripped.startswith("- file:"):
-                if current:
-                    plan.append(current)
-                current = {"file": _parse_yaml_value(stripped.split(":", 1)[1])}
-            elif current and stripped.startswith("purpose:"):
-                current["purpose"] = _parse_yaml_value(stripped.split(":", 1)[1])
-    if current:
-        plan.append(current)
-    return plan
-
-
-def _parse_mapping_list(lines, key):
-    """Parse a list of simple mappings under an indented YAML key."""
-    values = []
-    current = None
-    capturing = False
-    key_indent = 0
-    item_indent = None
-    open_list_key = None
-    for line in lines:
-        cleaned = _strip_yaml_comment(line)
-        stripped = cleaned.strip()
-        if stripped == "{}:".format(key):
-            capturing = True
-            key_indent = len(cleaned) - len(cleaned.lstrip())
-            continue
-        if capturing:
-            indent = len(cleaned) - len(cleaned.lstrip())
-            if stripped and indent <= key_indent:
-                break
-            if not stripped:
-                continue
-            if stripped.startswith("- ") and item_indent is not None and indent > item_indent:
-                # Block list nested under a mapping key, e.g. "produces:" followed by "- a".
-                if current is not None and open_list_key:
-                    if not isinstance(current.get(open_list_key), list):
-                        current[open_list_key] = []
-                    current[open_list_key].append(_parse_yaml_value(stripped[2:]))
-                continue
-            if stripped.startswith("- "):
-                if current:
-                    values.append(current)
-                current = {}
-                item_indent = indent
-                open_list_key = None
-                item = stripped[2:].strip()
-                if ":" in item:
-                    item_key, item_value = item.split(":", 1)
-                    current[item_key.strip()] = _parse_yaml_value(item_value)
-                    open_list_key = item_key.strip() if not item_value.strip() else None
-            elif current is not None and ":" in stripped:
-                item_key, item_value = stripped.split(":", 1)
-                current[item_key.strip()] = _parse_yaml_value(item_value)
-                open_list_key = item_key.strip() if not item_value.strip() else None
-    if current:
-        values.append(current)
-    return values
-
-
-def load_study_config():
-    """Load study_config.yaml and return the subset used by this generator."""
-    if not os.path.exists(STUDY_CONFIG_FILE):
-        print("  No study_config.yaml found (using inferred task depth)")
-        return {}
-    with open(STUDY_CONFIG_FILE, "r", encoding="utf-8") as config_file:
-        text = config_file.read()
-    config = {}
-    for section in ["study", "inputs", "analysis", "notebooks", "report",
-                    "quality_gates"]:
-        lines = _section_lines(text, section)
-        config[section] = _parse_section_scalars(lines)
-    config["report"]["formats"] = _parse_scalar_list(
-        _section_lines(text, "report"), "formats")
-    config["report"]["required_sections"] = _parse_scalar_list(
-        _section_lines(text, "report"), "required_sections")
-    config["notebooks"]["plan"] = _parse_notebook_plan(
-        _section_lines(text, "notebooks"))
-    config["inputs"]["documents"] = _parse_mapping_list(
-        _section_lines(text, "inputs"), "documents")
-    config["inputs"]["data_sources"] = _parse_mapping_list(
-        _section_lines(text, "inputs"), "data_sources")
-    config["analysis"]["scripts"] = _parse_mapping_list(
-        _section_lines(text, "analysis"), "scripts")
-    print("  Loaded study_config.yaml")
-    return config
-
-
-# Norwegian task_spec.md files are common, and heading matching used to be
-# English-only, so a fully written Norwegian scope section was reported as
-# "lacks source data". Each canonical heading therefore carries its aliases.
-SPEC_HEADING_ALIASES = {
-    "applicable standards": ("gjeldende standarder", "standarder", "regelverk",
-                             "scope and standards", "omfang og standarder"),
-    "calculation methods": ("beregningsmetoder", "metode", "metoder",
-                            "framgangsmate", "fremgangsmate"),
-    "acceptance criteria": ("akseptkriterier", "akseptansekriterier"),
-    "operating envelope": ("driftsomrade", "driftsvindu", "operasjonsvindu"),
-    "objective": ("formal", "mal", "hensikt", "oppgave"),
-    "scope": ("omfang", "avgrensning", "bakgrunn og avgrensning"),
-    "data sources": ("datakilder", "kilder"),
-    "deliverables": ("leveranser", "leveranse"),
-}
-
-
-def _heading_variants(heading):
-    """Return the heading plus any language aliases registered for it."""
-    key = str(heading or "").strip().lower()
-    return (key,) + SPEC_HEADING_ALIASES.get(key, ())
-
-
-def extract_spec_section(spec_text, heading):
-    """Extract a section from task_spec.md by heading.
-
-    Matching is case-insensitive and alias-aware, so a Norwegian heading such as
-    "Akseptkriterier" satisfies a request for "Acceptance Criteria".
-    """
-    if not spec_text:
-        return ""
-    variants = _heading_variants(heading)
-    lines = spec_text.split("\n")
-    capturing = False
-    result = []
-    for line in lines:
-        if line.startswith("## ") and any(v in line.lower() for v in variants):
-            capturing = True
-            continue
-        elif line.startswith("## ") and capturing:
-            break
-        elif capturing:
-            result.append(line)
-    text = "\n".join(result).strip()
-    # Skip if still placeholder
-    if text and "| | | |" not in text and "[e.g.," not in text:
-        return text
-    return ""
-
-
-# â”€â”€ Report identity (title, author, task statement) â”€â”€â”€â”€â”€â”€
-
-def _is_placeholder_value(value):
-    """Return true for empty or bracketed scaffold values such as "[Title]"."""
-    text = str(value or "").strip()
-    if not text:
-        return True
-    return text.startswith("[") and text.endswith("]")
-
-
-def _prettify_slug(folder_name):
-    """Turn a task folder name into a readable title."""
-    name = folder_name
-    if len(name) >= 11 and name[4] == "-" and name[7] == "-":
-        name = name[11:]
-    name = name.replace("_", " ").replace("-", " ").strip()
-    if not name:
-        return ""
-    return name[0].upper() + name[1:]
-
-
-def _local_report_constant(name):
-    """Read a constant from report_sections.json or a legacy vendored copy."""
-    override = REPORT_SECTIONS.get(name.lower())
-    if isinstance(override, str) and override.strip():
-        return override.strip()
-    local_copy = os.path.join(TASK_REPORT_DIR, "generate_report.py")
-    if os.path.abspath(local_copy) == os.path.abspath(__file__):
-        return ""
-    if not os.path.isfile(local_copy):
-        return ""
-    pattern = re.compile(r'^{}\s*=\s*"([^"]*)"'.format(name), re.MULTILINE)
-    with open(local_copy, "r", encoding="utf-8") as source:
-        match = pattern.search(source.read())
-    return match.group(1).strip() if match else ""
-
-
-def _task_spec_title(task_spec):
-    """Return the title from the first heading of task_spec.md."""
-    if not task_spec:
-        return ""
-    for line in task_spec.split("\n"):
-        if line.startswith("# "):
-            title = line[2:].strip()
-            for prefix in ("Task Specification:", "Task Spec:", "Task:"):
-                if title.lower().startswith(prefix.lower()):
-                    title = title[len(prefix):].strip()
-            if not _is_placeholder_value(title):
-                return title
-            return ""
-    return ""
-
-
-def _cli_option(flag):
-    """Return the value that follows a command-line flag, or an empty string."""
-    if flag not in sys.argv:
-        return ""
-    index = sys.argv.index(flag) + 1
-    if index >= len(sys.argv):
-        print("ERROR: {} requires a value".format(flag))
-        sys.exit(2)
-    return sys.argv[index].strip()
-
-
-def _first_paragraph(text, max_chars=700):
-    """Return the first prose paragraph of a block, trimmed for a summary box."""
-    for block in str(text or "").split("\n\n"):
-        cleaned = " ".join(
-            line.strip() for line in block.split("\n")
-            if line.strip() and not line.strip().startswith(("|", "#", "-", "*"))
-        ).strip()
-        if cleaned:
-            if len(cleaned) > max_chars:
-                cleaned = cleaned[:max_chars].rsplit(" ", 1)[0] + " ..."
-            return cleaned
-    return ""
-
-
-def resolve_task_statement(results, task_spec, study_config):
-    """Return a one-paragraph statement of what the task asked for."""
-    if results:
-        for key in ("task_statement", "task", "objective", "problem_statement"):
-            text = results.get(key)
-            if text and isinstance(text, str) and not _is_placeholder_text(text):
-                return _first_paragraph(text)
-    for heading in ("Objective", "Task Description", "Problem Statement",
-                    "Description", "Background"):
-        text = extract_spec_section(task_spec, heading)
-        if text and not _is_placeholder_text(text):
-            statement = _first_paragraph(text)
-            if statement:
-                return statement
-    title = (study_config or {}).get("study", {}).get("title", "")
-    if not _is_placeholder_value(title):
-        return "Study scope: {}.".format(str(title).rstrip("."))
-    return ""
-
-
-def _study_badges(study_config):
-    """Return [(label, value)] describing study depth, shown under the title."""
-    study = (study_config or {}).get("study", {})
-    labels = (
-        ("task_type", "Task type"),
-        ("scale", "Scale"),
-        ("mode", "Mode"),
-        ("aace_class", "AACE class"),
-        ("fel_stage", "FEL stage"),
-    )
-    badges = []
-    for key, label in labels:
-        value = str(study.get(key, "")).strip()
-        if not value or value.lower() in ("auto", "none", "[title]"):
-            continue
-        badges.append((_t(label), value))
-    return badges
-
-
-def resolve_report_identity(study_config, task_spec, results):
-    """Set TITLE, AUTHOR, CLASSIFICATION, TASK_STATEMENT and STUDY_BADGES.
-
-    The report title is the study title, so a report generated from the
-    canonical script against any task folder is never left named "Task Report".
-    """
-    global TITLE, AUTHOR, CLASSIFICATION, TASK_STATEMENT, STUDY_BADGES
-
-    study = (study_config or {}).get("study", {})
-    report_cfg = (study_config or {}).get("report", {})
-
-    title_candidates = [
-        _cli_option("--title"),
-        os.environ.get("NEQSIM_REPORT_TITLE", "").strip(),
-        study.get("title", ""),
-        _task_spec_title(task_spec),
-        _local_report_constant("TITLE"),
-        _prettify_slug(os.path.basename(TASK_DIR)),
-    ]
-    for candidate in title_candidates:
-        if candidate and not _is_placeholder_value(candidate) \
-                and candidate != "Task Report":
-            TITLE = str(candidate).strip()
-            break
-
-    author_candidates = [
-        _cli_option("--author"),
-        os.environ.get("NEQSIM_REPORT_AUTHOR", "").strip(),
-        study.get("author", ""),
-        report_cfg.get("author", ""),
-        _local_report_constant("AUTHOR"),
-    ]
-    for candidate in author_candidates:
-        if candidate and not _is_placeholder_value(candidate):
-            AUTHOR = str(candidate).strip()
-            break
-
-    for candidate in (study.get("classification", ""),
-                      report_cfg.get("classification", ""),
-                      _local_report_constant("CLASSIFICATION")):
-        if candidate and not _is_placeholder_value(candidate):
-            CLASSIFICATION = str(candidate).strip()
-            break
-
-    TASK_STATEMENT = resolve_task_statement(results, task_spec, study_config)
-    STUDY_BADGES = _study_badges(study_config)
-    return TITLE
-
-
-def _as_bool(value):
-    """Interpret YAML-like values as booleans."""
-    if isinstance(value, bool):
-        return value
-    return str(value).strip().lower() in ("true", "yes", "required")
-
-
-def _as_int(value, default=0):
-    """Interpret YAML-like values as integers."""
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return default
-
-
-def _is_required(value):
-    """Return true when a config value means required."""
-    return str(value).strip().lower() == "required" or value is True
-
-
-def _is_placeholder_text(text):
-    """Return true when text still contains report-template placeholder content."""
-    if not text:
-        return True
-    stripped = str(text).strip()
-    if stripped.startswith("[") and stripped.endswith("]"):
-        return True
-    placeholder_markers = (
-        "[replace with",
-        "[describe ",
-        "[summarize ",
-        "[list references",
-        "[auto-populated",
-    )
-    return any(stripped.lower().startswith(marker) for marker in placeholder_markers)
-
-
-def _manual_section_filled(name):
-    """Return true when a manual section has been filled in."""
-    content = MANUAL_SECTIONS.get(name, "")
-    return not _is_placeholder_text(content)
-
-
-def _has_safety_context(results):
-    """Return true when results look like a safety or governed evidence study."""
-    if not results:
-        return False
-    safety_keys = (
-        "safety_readiness",
-        "readiness",
-        "evidence_gaps",
-        "assumptions_gaps",
-        "standards_findings",
-        "source_term_handoff",
-        "source_basis_summary",
-    )
-    if any(results.get(key) for key in safety_keys):
-        return True
-    text = " ".join([
-        str(results.get("task_type", "")),
-        str(results.get("objective", "")),
-        str(results.get("approach", "")),
-        str(results.get("conclusions", "")),
-    ]).lower()
-    return any(token in text for token in ("safety", "rupture", "fire", "blowdown"))
-
-
-# Validation keys whose NAME asserts something bad. For these, False is the
-# desired outcome, so it must not be reported as a failed check. The enterprise
-# skills require agents to emit `credentials_disclosed: false`, which otherwise
-# reads as a blocker and flips safety readiness to DESIGN-GRADE BLOCKED.
-_NEGATIVE_VALIDATION_MARKERS = (
-    "disclosed", "exceeded", "violated", "breached", "failed", "failure",
-    "error", "errors", "blocked", "blocker", "blockers", "leaked", "exposed",
-    "inferred", "fabricated", "constructed", "overrun", "overdue",
-)
-
-# A key that already negates itself ("no_data_fabricated") is positive again.
-_VALIDATION_NEGATION_PREFIXES = ("no", "not", "never", "without", "zero", "nil")
-
-
-def _validation_outcome_is_failure(check, outcome):
-    """True when a validation entry should be reported as a failed check.
-
-    A key phrased as an assertion of something undesirable is inverted: for
-    ``credentials_disclosed`` the passing value is False, not True. A key that
-    carries its own negation prefix flips back, so
-    ``no_document_number_inferred`` passes on True.
-    """
-    if isinstance(outcome, str):
-        return outcome.strip().upper() in _FAIL_STATUSES
-    if outcome not in (True, False):
-        return False
-    tokens = check.lower().split("_")
-    negative = any(marker in tokens for marker in _NEGATIVE_VALIDATION_MARKERS)
-    if negative and tokens and tokens[0] in _VALIDATION_NEGATION_PREFIXES:
-        negative = False
-    return outcome is True if negative else outcome is False
-
-
-def _validation_value(outcome):
-    """Return the scalar of a validation entry; entries may be {value, unit, label} dicts."""
-    if isinstance(outcome, dict) and "value" in outcome:
-        return outcome["value"]
-    return outcome
-
-
-def _validation_failures(results):
-    """Return validation checks that are false and block design-grade use."""
-    failures = []
-    validation = results.get("validation", {}) if results else {}
-    for check, outcome in validation.items():
-        if _validation_outcome_is_failure(check, _validation_value(outcome)):
-            failures.append(_label_from_key(check))
-    return failures
-
-
-def infer_safety_readiness(results):
-    """Infer a report-facing safety readiness label from results.json."""
-    if not _has_safety_context(results):
-        return None
-    explicit = results.get("safety_readiness") or results.get("readiness")
-    findings = []
-    if isinstance(explicit, dict):
-        verdict = str(explicit.get("verdict") or explicit.get("label") or "").strip()
-        raw_findings = explicit.get("findings") or explicit.get("blockers") or []
-        if isinstance(raw_findings, list):
-            findings.extend([str(item) for item in raw_findings])
-        elif raw_findings:
-            findings.append(str(raw_findings))
-    elif explicit:
-        verdict = str(explicit).strip()
-    else:
-        verdict = ""
-
-    evidence_gaps = results.get("evidence_gaps") or results.get("assumptions_gaps") or []
-    validation_failures = _validation_failures(results)
-    if evidence_gaps and isinstance(evidence_gaps, list):
-        findings.extend([_format_list_item_text(item) for item in evidence_gaps[:5]])
-    findings.extend(validation_failures)
-
-    if not verdict:
-        if evidence_gaps or validation_failures:
-            verdict = "SCREENING - DESIGN-GRADE BLOCKED"
-        else:
-            verdict = "SCREENING / READY FOR HUMAN REVIEW"
-    elif verdict.upper() == "SCREENING" and (evidence_gaps or validation_failures):
-        verdict = "SCREENING - DESIGN-GRADE BLOCKED"
-
-    return {
-        "verdict": verdict,
-        "findings": findings,
-    }
-
-
-def _format_list_item_text(item):
-    """Format a result-list item as readable report text."""
-    if isinstance(item, dict):
-        preferred = []
-        for key in ("gap", "description", "finding", "item", "action", "recommendation"):
-            if item.get(key):
-                preferred.append(str(item.get(key)))
-        if preferred:
-            return " - ".join(preferred)
-        parts = []
-        for key in sorted(item.keys()):
-            parts.append("{}: {}".format(key.replace("_", " "), item[key]))
-        return "; ".join(parts)
-    return str(item)
-
-
-def load_collection_manifest():
-    """Return the references collection manifest, or {} when absent.
-
-    Written by devtools/generate_sources_md.py; it is the machine-readable
-    record of every document the task collected and which system it came from.
-    """
-    path = os.path.join(TASK_DIR, "step1_scope_and_research", "references",
-                        "collection_manifest.json")
-    if not os.path.exists(path):
-        return {}
-    try:
-        with open(path, "r", encoding="utf-8-sig") as manifest_file:
-            data = json.load(manifest_file)
-    except (OSError, ValueError):
-        return {}
-    return data if isinstance(data, dict) else {}
-
-
-def _document_source_counts(manifest):
-    """Return [(source name, document count, description)] from the manifest."""
-    rows = []
-    for group in manifest.get("sources", []) or []:
-        if not isinstance(group, dict):
-            continue
-        documents = group.get("documents") or group.get("files") or []
-        if not documents:
-            continue
-        name = (group.get("system_name") or group.get("source")
-                or group.get("name") or "other")
-        rows.append((str(name), len(documents), str(group.get("description", "") or "")))
-    rows.sort(key=lambda row: (-row[1], row[0].lower()))
-    return rows
-
-
-def _count_reference_files():
-    """Count collected files directly, for tasks with no manifest."""
-    references = os.path.join(TASK_DIR, "step1_scope_and_research", "references")
-    if not os.path.isdir(references):
-        return []
-    counts = {}
-    for root, dirs, files in os.walk(references):
-        dirs[:] = [name for name in dirs if not name.startswith(".")]
-        for name in files:
-            if name in ("SOURCES.md", "collection_manifest.json"):
-                continue
-            folder = os.path.basename(root)
-            label = "unfiled" if os.path.abspath(root) == os.path.abspath(references) \
-                else folder
-            counts[label] = counts.get(label, 0) + 1
-    rows = [(name, count, "") for name, count in counts.items()]
-    rows.sort(key=lambda row: (-row[1], row[0].lower()))
-    return rows
-
-
-def format_information_sources_text(config, results):
-    """Format the evidence basis: how many documents came from which system.
-
-    A reader's first question about a data-driven study is what it was built on.
-    This answers it from the collected files themselves, so the count cannot be
-    overstated in prose.
-    """
-    manifest = load_collection_manifest()
-    rows = _document_source_counts(manifest) or _count_reference_files()
-    inputs = (config or {}).get("inputs", {})
-    data_sources = inputs.get("data_sources", []) or []
-    parts = []
-
-    if rows:
-        total = sum(row[1] for row in rows)
-        parts.append(
-            _t("{} document(s) were collected from {} source system(s) and are stored "
-               "with this task in step1_scope_and_research/references/.").format(
-                total, len(rows)))
-        parts.append("")
-        table = ["| {} | {} | {} |".format(_t("Source system"), _t("Documents"), _t("Content")),
-                 "|---|---|---|"]
-        for name, count, description in rows:
-            table.append("| {} | {} | {} |".format(name, count, description or "-"))
-        parts.append("\n".join(table))
-
-    if data_sources:
-        parts.append("")
-        parts.append(_t("Source systems read") + ":")
-        table = ["| {} | {} | {} | {} |".format(
-                     _t("System"), _t("Scope read"), _t("Access"), _t("Captured evidence")),
-                 "|---|---|---|---|"]
-        for entry in data_sources:
-            if not isinstance(entry, dict):
-                continue
-            evidence = str(entry.get("evidence", "") or "")
-            if not evidence:
-                state = _t("not recorded")
-            elif os.path.exists(_resolve_task_path(evidence)):
-                state = evidence
-            else:
-                state = "{} ({})".format(evidence, _t("missing"))
-            table.append("| {} | {} | {} | {} |".format(
-                entry.get("system", "-"), entry.get("scope", "-"),
-                entry.get("access", "read-only"), state))
-        if len(table) > 2:
-            parts.append("\n".join(table))
-
-    gaps = manifest.get("data_gaps", []) or []
-    if gaps:
-        parts.append("")
-        parts.append(_t("Documents sought but not obtained:"))
-        for gap in gaps:
-            if isinstance(gap, dict):
-                text = (gap.get("description") or gap.get("gap")
-                        or "; ".join("{}: {}".format(key, value)
-                                     for key, value in sorted(gap.items())))
-            else:
-                text = str(gap)
-            parts.append("- {}".format(text))
-
-    if results and results.get("references"):
-        parts.append("")
-        parts.append(_t("Standards and literature cited are listed in the References "
-                        "section; the per-file origin, retrieval date, and relevance of "
-                        "every collected document are in "
-                        "step1_scope_and_research/references/SOURCES.md."))
-    elif rows:
-        parts.append("")
-        parts.append("Per-file origin, retrieval date, and relevance: "
-                     "step1_scope_and_research/references/SOURCES.md.")
-
-    return "\n".join(parts).strip()
-
-
-def format_improvements_text(results):
-    """Format the tooling improvements this task delivered to NeqSim/agents/skills.
-
-    A task is also a test of the tooling; this section makes the resulting fixes
-    part of the deliverable instead of leaving them in a side file.
-    """
-    if not results:
-        return ""
-    items = results.get("improvements")
-    if isinstance(items, str):
-        return items.strip()
-    if not isinstance(items, list) or not items:
-        return ""
-
-    rows = []
-    for item in items:
-        if not isinstance(item, dict):
-            rows.append("- {}".format(item))
-            continue
-        target = (item.get("target") or item.get("component") or item.get("file")
-                  or item.get("repo") or "tooling")
-        if item.get("repo") and item.get("file") and not item.get("target"):
-            target = "{}: {}".format(item["repo"], item["file"])
-        gap = item.get("gap") or item.get("problem") or ""
-        change = item.get("change") or item.get("improvement") or ""
-        evidence = item.get("evidence") or item.get("test") or ""
-        line = "- **{}** â€” {}".format(target, change or gap)
-        if gap and change:
-            line += " (gap: {})".format(gap)
-        if evidence:
-            line += " [{}]".format(evidence)
-        rows.append(line)
-    return "\n".join(rows)
-
-
-def _assumption_rows(results):
-    """Return (assumption rows, data-gap rows) from any results.json spelling."""
-    assumptions = []
-    gaps = []
-    combined = results.get("assumptions_and_gaps") or results.get("assumptions_gaps")
-    if isinstance(combined, dict):
-        assumptions.extend(combined.get("assumptions", []) or [])
-        gaps.extend(combined.get("data_gaps", []) or combined.get("gaps", []) or [])
-        if not any(k in combined for k in ("assumptions", "data_gaps", "gaps")):
-            # Free-form {topic: text} register, the shape most task folders write.
-            assumptions.extend({"assumption": "{}: {}".format(k.replace("_", " "), v)}
-                               for k, v in combined.items() if v)
-    elif isinstance(combined, list):
-        gaps.extend(combined)
-    for key in ("assumptions", "assumption_register"):
-        value = results.get(key)
-        if isinstance(value, list):
-            assumptions.extend(value)
-    for key in ("data_gaps", "evidence_gaps", "gaps"):
-        value = results.get(key)
-        if isinstance(value, list):
-            gaps.extend(value)
-    return assumptions, gaps
-
-
-def _assumption_text(item, keys):
-    """Pull the first present key from a dict item, else render the whole item."""
-    if not isinstance(item, dict):
-        return str(item)
-    for key in keys:
-        if item.get(key):
-            return str(item[key])
-    return ""
-
-
-def format_assumptions_text(results):
-    """Format the assumption and data-gap register.
-
-    Every assumption a reader must accept, and every piece of information that
-    could not be found, with what was assumed in its place.
-    """
-    if not results:
-        return ""
-    assumptions, gaps = _assumption_rows(results)
-    if not assumptions and not gaps:
-        return ""
-
-    parts = []
-    if assumptions:
-        rows = []
-        for item in assumptions:
-            if isinstance(item, dict):
-                text = _assumption_text(item, ("assumption", "description", "text", "item"))
-                basis = _assumption_text(item, ("basis", "source", "rationale", "why"))
-                effect = _assumption_text(
-                    item, ("effect", "impact", "conservatism", "direction", "consequence"))
-            else:
-                text, basis, effect = str(item), "", ""
-            rows.append((text, basis, effect))
-        parts.append(_t("Assumptions the results depend on") + ":")
-        parts.append("")
-        # A table with two empty columns reads worse than a list; only tabulate
-        # when the basis or effect was actually recorded.
-        if any(basis or effect for _text, basis, effect in rows):
-            table = ["| # | {} | {} | {} |".format(
-                         _t("Assumption"), _t("Basis"), _t("Effect on the result")),
-                     "|---|---|---|---|"]
-            for index, (text, basis, effect) in enumerate(rows, 1):
-                table.append("| A{} | {} | {} | {} |".format(
-                    index, text.replace("|", "/"), basis.replace("|", "/") or "-",
-                    effect.replace("|", "/") or "-"))
-            parts.append("\n".join(table))
-        else:
-            for index, (text, _basis, _effect) in enumerate(rows, 1):
-                parts.append("- A{}: {}".format(index, text))
-
-    if gaps:
-        if parts:
-            parts.append("")
-        parts.append(_t("Information sought but not available, and what was assumed "
-                        "in its place") + ":")
-        parts.append("")
-        table = [
-            "| # | {} | {} | {} | {} | {} |".format(
-                _t("Information sought"), _t("Source"), _t("Status"),
-                _t("Assumed instead"), _t("Effect if wrong")),
-            "|---|---|---|---|---|---|",
-        ]
-        for index, item in enumerate(gaps, 1):
-            if isinstance(item, dict):
-                sought = _assumption_text(
-                    item, ("gap", "description", "information", "sought", "what",
-                           "needed", "missing", "item", "text"))
-                source = _assumption_text(item, ("source", "system", "document"))
-                status = _assumption_text(item, ("status", "state", "reason"))
-                blocker = _assumption_text(item, ("blocker", "why", "detail"))
-                if not sought:
-                    sought, blocker = blocker, ""
-                if blocker and status:
-                    status = "{} â€” {}".format(status, blocker)
-                elif blocker:
-                    status = blocker
-                assumed = _assumption_text(
-                    item, ("assumed", "assumption", "fallback", "substitute",
-                           "workaround", "mitigation"))
-                effect = _assumption_text(
-                    item, ("effect", "impact", "consequence", "risk"))
-            else:
-                sought, source, status, assumed, effect = str(item), "", "", "", ""
-            table.append("| G{} | {} | {} | {} | {} | {} |".format(
-                index, sought.replace("|", "/") or "-", source.replace("|", "/") or "-",
-                status.replace("|", "/") or "-", assumed.replace("|", "/") or "-",
-                effect.replace("|", "/") or "-"))
-        parts.append("\n".join(table))
-        parts.append("")
-        parts.append(_t("Each gap above is an open item: the conclusion holds only while "
-                        "the stated substitute assumption holds."))
-
-    return "\n".join(parts).strip()
-
-
-def format_list_items_text(items):
-    """Format strings or dictionaries from results.json as bullet text."""
-    if not items:
-        return ""
-    if isinstance(items, dict):
-        iterable = [items]
-    elif isinstance(items, list):
-        iterable = items
-    else:
-        iterable = [items]
-    return "\n".join(["- {}".format(_format_list_item_text(item)) for item in iterable])
-
-
-def _build_fingerprint():
-    """Short hashes of results.json and of the generator, to tie a report to its inputs."""
-    def digest(paths):
-        sha = hashlib.sha256()
-        found = False
-        for path in paths:
-            try:
-                with open(path, "rb") as handle:
-                    sha.update(handle.read())
-                found = True
-            except OSError:
-                pass
-        return sha.hexdigest()[:12] if found else ""
-    return {"results": digest([RESULTS_FILE]),
-            "generator": digest([os.path.abspath(__file__), KIT.__file__])}
-
-
-def format_reproducibility_text(results):
-    """Format results.json ``reproducibility`` as markdown for the appendix.
-
-    Accepts a string, a list of steps, or a dict with ``environment``,
-    ``steps``, ``checks`` and ``what_if`` (each a string or list). A build
-    line ties the report to the exact results.json and generator it came from.
-    """
-    text = _reproducibility_body(results)
-    stamp = _build_fingerprint()
-    if text and stamp["results"]:
-        text += "\n\n**{}**\n- results.json SHA-256 {}\u2026; report generator {}\u2026".format(
-            _t("Report build"), stamp["results"], stamp["generator"])
-    return text
-
-
-_LIFECYCLE_IDENTITY_FIELDS = (
-    "classification", "source", "qualified_constraint_name", "applicable_limit",
-    "physical_unit", "applicable_limit_role", "applicable_limit_provenance",
-)
-
-
-def _report_number(value):
-    """Return true only for finite report-facing numbers (booleans are not numbers)."""
-    if not isinstance(value, (int, float)) or isinstance(value, bool):
-        return False
-    try:
-        return math.isfinite(float(value))
-    except OverflowError:
-        return False
-
-
-def _report_text(value):
-    """Return true only for non-empty report-facing text."""
-    return isinstance(value, str) and bool(value.strip())
-
-
-def _md_cell(value):
-    """Escape one value for a compact Markdown table cell."""
-    return str(value if value is not None else "-").replace("|", "/").replace("\n", " ")
-
-
-def _constraint_identity(row):
-    """Return the exact schema-v8 identity subset from one ranked summary row."""
-    return {field: row.get(field) for field in _LIFECYCLE_IDENTITY_FIELDS}
-
-
-def _exact_report_difference(first, second):
-    """Return exact ordered rows in first but not second, retaining multiplicity."""
-    remaining = list(second)
-    difference = []
-    for row in first:
-        if row in remaining:
-            remaining.remove(row)
-        else:
-            difference.append(row)
-    return difference
-
-
-def _validate_representative_constraint(entry, representative, feasible):
-    """Validate one exact representative row against its ranked identity and class."""
-    if not isinstance(representative, dict):
-        return False
-    if representative.get("feasible") is not feasible:
-        return False
-    if any(representative.get(field) != entry.get(field) for field in (
-            "source", "qualified_constraint_name", "applicable_limit", "physical_unit",
-            "applicable_limit_role", "applicable_limit_provenance")):
-        return False
-    return all(_report_number(representative.get(field)) for field in (
-        "current_value", "physical_margin", "normalized_margin"))
-
-
-def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
-    """Validate the report-facing schema-v8 subset and independently replay identity deltas."""
-    reasons = []
-    if not isinstance(evidence, dict):
-        return ["evidence is not an object"]
-    if evidence.get("schema_version") != 8:
-        reasons.append("schema_version must be 8")
-    if evidence.get("advisory") is not True:
-        reasons.append("advisory flag is missing")
-    if not _report_text(evidence.get("cycle_id")):
-        reasons.append("cycle_id is missing")
-    elif expected_cycle_id and evidence.get("cycle_id") != expected_cycle_id:
-        reasons.append("cycle_id does not match the promoted current-best cycle")
-    if not all(_report_text(evidence.get(field)) for field in (
-            "lifecycle_study_id", "lifecycle_study_name", "lifecycle_study_provenance", "time_unit")):
-        reasons.append("lifecycle identity, provenance, or time unit is incomplete")
-    requested = evidence.get("requested_point_count")
-    completed = evidence.get("completed_point_count")
-    if (not _report_number(requested) or not _report_number(completed)
-            or int(requested) != requested or int(completed) != completed
-            or requested < 1 or requested != completed):
-        reasons.append("sampled lifecycle points are incomplete")
-    if (not _report_number(evidence.get("total_evaluation_count"))
-            or evidence.get("total_evaluation_count") < 1
-            or not _report_number(evidence.get("envelope_runtime_seconds"))
-            or evidence.get("envelope_runtime_seconds") < 0):
-        reasons.append("evaluation count or runtime is invalid")
-
-    periods = evidence.get("periods")
-    if (not isinstance(periods, list) or not periods
-            or evidence.get("period_count") != len(periods)):
-        reasons.append("period_count does not match the period evidence")
-        return reasons
-    period_identities = []
-    previous_elapsed = None
-    seen_period_ids = set()
-    for index, period in enumerate(periods):
-        prefix = "period {}".format(index + 1)
-        if not isinstance(period, dict):
-            reasons.append(prefix + " is not an object")
-            period_identities.append([])
-            continue
-        period_id = period.get("period_id")
-        elapsed = period.get("elapsed_time")
-        if not _report_text(period_id) or period_id in seen_period_ids:
-            reasons.append(prefix + " has a missing or duplicate period_id")
-        else:
-            seen_period_ids.add(period_id)
-        if (not _report_text(period.get("period_name"))
-                or not _report_text(period.get("configuration_provenance"))):
-            reasons.append(prefix + " has incomplete report metadata")
-        if (not _report_number(elapsed) or elapsed < 0
-                or (previous_elapsed is not None and elapsed <= previous_elapsed)):
-            reasons.append(prefix + " elapsed_time is not strictly increasing")
-        else:
-            previous_elapsed = elapsed
-        if period.get("time_unit") != evidence.get("time_unit"):
-            reasons.append(prefix + " time unit does not match the lifecycle")
-        envelope = period.get("envelope_evidence")
-        if not isinstance(envelope, dict) or envelope.get("schema_version") != 2:
-            reasons.append(prefix + " is missing schema-v2 envelope evidence")
-            period_identities.append([])
-            continue
-        slices = envelope.get("slices")
-        if (not isinstance(slices, list) or not slices
-                or any(not isinstance(row, dict) or row.get("complete") is not True
-                       or row.get("outcome") != "COMPLETE" for row in slices)):
-            reasons.append(prefix + " contains incomplete operating-envelope slices")
-        summary = envelope.get("cross_slice_constraint_summary")
-        ranked = summary.get("ranked_constraints") if isinstance(summary, dict) else None
-        if (not isinstance(summary, dict) or summary.get("summary_version") != 1
-                or summary.get("advisory") is not True or not isinstance(ranked, list)
-                or summary.get("ranked_constraint_count") != len(ranked)):
-            reasons.append(prefix + " has an invalid cross-slice constraint summary")
-            period_identities.append([])
-            continue
-        identities = []
-        for row_index, row in enumerate(ranked):
-            row_prefix = "{} ranked constraint {}".format(prefix, row_index + 1)
-            if (not isinstance(row, dict)
-                    or row.get("rank") != row_index + 1
-                    or row.get("classification") not in ("REJECTING", "NEAR_ACTIVE")
-                    or not all(_report_text(row.get(field)) for field in (
-                        "source", "qualified_constraint_name", "physical_unit",
-                        "applicable_limit_role", "applicable_limit_provenance"))
-                    or (row.get("applicable_limit") is not None
-                        and not _report_number(row.get("applicable_limit")))):
-                reasons.append(row_prefix + " has an incomplete identity")
-                continue
-            representative_key = ("representative_rejecting_constraint"
-                                  if row["classification"] == "REJECTING"
-                                  else "representative_feasible_constraint")
-            representative = row.get(representative_key)
-            if not _validate_representative_constraint(
-                    row, representative, row["classification"] == "NEAR_ACTIVE"):
-                reasons.append(row_prefix + " has incomplete or mismatched representative evidence")
-            identity = _constraint_identity(row)
-            if identity in identities:
-                reasons.append(row_prefix + " duplicates an exact identity")
-            identities.append(identity)
-        period_identities.append(identities)
-
-    if expected_cycle_id and expected_cycle_id not in seen_period_ids:
-        reasons.append("promoted current-best cycle is missing from lifecycle periods")
-
-    changes = evidence.get("period_change_diagnostics")
-    if not isinstance(changes, list) or len(changes) != max(0, len(periods) - 1):
-        reasons.append("period_change_diagnostics does not match adjacent periods")
-        return reasons
-    for index, change in enumerate(changes):
-        prefix = "period change {}".format(index + 1)
-        if not isinstance(change, dict):
-            reasons.append(prefix + " is not an object")
-            continue
-        removed = _exact_report_difference(period_identities[index], period_identities[index + 1])
-        added = _exact_report_difference(period_identities[index + 1], period_identities[index])
-        retained = len(period_identities[index]) - len(removed)
-        if (change.get("from_period_id") != periods[index].get("period_id")
-                or change.get("to_period_id") != periods[index + 1].get("period_id")
-                or change.get("from_ranked_constraint_identity_count") != len(period_identities[index])
-                or change.get("to_ranked_constraint_identity_count") != len(period_identities[index + 1])
-                or change.get("retained_ranked_constraint_identity_count") != retained
-                or change.get("removed_ranked_constraint_identities") != removed
-                or change.get("added_ranked_constraint_identities") != added):
-            reasons.append(prefix + " identity migration does not reconstruct from period summaries")
-    return reasons
-
-
-def _promoted_cycle_id():
-    """Return the reviewed current-best source cycle when this is a living task."""
-    path = os.path.join(TASK_DIR, "continuous", "baseline", "baseline.json")
-    try:
-        with open(path, "r", encoding="utf-8-sig") as handle:
-            baseline = json.load(handle)
-    except (OSError, ValueError):
-        return None
-    return baseline.get("source_cycle") if isinstance(baseline, dict) else None
-
-
-def _identity_text(identity):
-    """Render one exact identity without comparing physical margins across units."""
-    limit = identity.get("applicable_limit")
-    limit_text = _fmt_number(limit) if _report_number(limit) else "not applicable"
-    return "{} `{}` â€” {} {}, role {}, source {}; basis: {}".format(
-        identity.get("classification"), identity.get("qualified_constraint_name"),
-        limit_text, identity.get("physical_unit") or "", identity.get("applicable_limit_role"),
-        identity.get("source"), identity.get("applicable_limit_provenance"))
-
-
-def format_lifecycle_envelope_text(results, expected_cycle_id=None):
-    """Render guarded schema-v8 lifecycle evidence for current-best and final reports."""
-    evidence = (results or {}).get("lifecycle_envelope_evidence")
-    if evidence is None:
-        return ""
-    reasons = _validate_lifecycle_report_evidence(evidence, expected_cycle_id)
-    if reasons:
-        return ("**Lifecycle evidence withheld.** The report did not accept this evidence because: {}. "
-                "No bottleneck, headroom, or identity-migration claim is rendered."
-                .format("; ".join(reasons)))
-
-    lines = [
-        "**Evidence basis.** {} (`{}`), cycle `{}`; {} complete sampled point(s), {} model evaluation(s), "
-        "runtime {} s. {}".format(
-            evidence["lifecycle_study_name"], evidence["lifecycle_study_id"], evidence["cycle_id"],
-            evidence["completed_point_count"], evidence["total_evaluation_count"],
-            _fmt_number(evidence["envelope_runtime_seconds"]), evidence["lifecycle_study_provenance"]),
-        "",
-        "Rows below retain exact per-period engineering units and representative physical headroom. "
-        "Rank applies only inside one period; margins are never ranked or compared across unlike units.",
-        "",
-        "| Period | Time | Class | Exact constraint | Representative value | Physical headroom | Limit basis |",
-        "|---|---|---|---|---|---|---|",
-    ]
-    for period in evidence["periods"]:
-        summary = period["envelope_evidence"]["cross_slice_constraint_summary"]
-        ranked = summary["ranked_constraints"]
-        if not ranked:
-            lines.append("| {} | {} {} | - | No rejecting or near-active identity | - | - | {} |".format(
-                _md_cell(period["period_name"]), _fmt_number(period["elapsed_time"]),
-                _md_cell(period["time_unit"]), _md_cell(period["configuration_provenance"])))
-            continue
-        for row in ranked:
-            representative = row[("representative_rejecting_constraint"
-                                  if row["classification"] == "REJECTING"
-                                  else "representative_feasible_constraint")]
-            lines.append("| {} | {} {} | {} | `{}` | {} {} | {} {} | {}: {} {}; {} |".format(
-                _md_cell(period["period_name"]), _fmt_number(period["elapsed_time"]),
-                _md_cell(period["time_unit"]), row["classification"],
-                _md_cell(row["qualified_constraint_name"]),
-                _fmt_number(representative["current_value"]), _md_cell(row["physical_unit"]),
-                _fmt_number(representative["physical_margin"]), _md_cell(row["physical_unit"]),
-                _md_cell(row["applicable_limit_role"]),
-                _fmt_number(row["applicable_limit"]) if row["applicable_limit"] is not None else "n/a",
-                _md_cell(row["physical_unit"]), _md_cell(row["applicable_limit_provenance"])))
-
-    lines += ["", "**Exact adjacent-period identity migration.** Classification or limit-basis changes "
-              "appear as one removed and one added identity; this is descriptive evidence, not causal attribution."]
-    for change in evidence["period_change_diagnostics"]:
-        lines += ["", "- **{} â†’ {}:** {} retained, {} removed, {} added.".format(
-            _md_cell(change["from_period_id"]), _md_cell(change["to_period_id"]),
-            change["retained_ranked_constraint_identity_count"],
-            len(change["removed_ranked_constraint_identities"]),
-            len(change["added_ranked_constraint_identities"]))]
-        lines += ["  - Removed: {}".format(_identity_text(identity))
-                  for identity in change["removed_ranked_constraint_identities"]]
-        lines += ["  - Added: {}".format(_identity_text(identity))
-                  for identity in change["added_ranked_constraint_identities"]]
-    lines += ["", "**Qualification boundary.** This is exact sampled/refined advisory evidence. It is not a "
-              "continuous forecast, shadow price, causal diagnosis, equipment qualification, operating approval, "
-              "or permission to relax a physical constraint."]
-    return "\n".join(lines)
-
-
-def _load_final_report_metadata():
-    """Load the continuous-task finalization record supplied by its orchestrator."""
-    path = _cli_option("--final-metadata")
-    if not path:
-        return {}
-    try:
-        with open(path, "r", encoding="utf-8-sig") as handle:
-            data = json.load(handle)
-    except (OSError, ValueError) as error:
-        print("ERROR: could not read final-report metadata {}: {}".format(path, error))
-        sys.exit(2)
-    if not isinstance(data, dict) or not data.get("revision"):
-        print("ERROR: final-report metadata must contain a revision")
-        sys.exit(2)
-    return data
-
-
-def get_live_figures():
-    """Figures a living task's final report adds (kept outside the task's own figures/ folder)."""
-    metadata = _load_final_report_metadata()
-    folder = os.path.join(TASK_DIR, str(metadata.get("figures_dir") or ""))
-    if not metadata.get("figures_dir"):
-        return []
-    return [os.path.join(folder, name) for name in metadata.get("figures") or []
-            if os.path.isfile(os.path.join(folder, name))]
-
-
-def format_live_summary(metadata):
-    """The plain-language live-task summary written by the continuous-task orchestrator."""
-    return str((metadata or {}).get("summary_markdown") or "")
-
-
-def format_final_report_record(metadata):
-    """Render the immutable final-delivery identity and audit references as Markdown."""
-    if not metadata:
-        return ""
-    source = metadata.get("source") or {}
-    audit = metadata.get("audit_trail") or {}
-    lines = [
-        "This standalone deliverable is final-report revision **{}**, generated from "
-        "the latest reviewed Task Solver baseline. Transient cycle history is deliberately "
-        "not reproduced here; the task-folder records below remain the authoritative audit trail. "
-        "The task's original report in step3_report/ is not changed by this revision; this is a separate "
-        "document that contains the same engineering content plus the live-study summary and figures."
-        .format(metadata.get("revision")),
-        "",
-        "- Finalized: {}".format(metadata.get("finalized_at") or "-"),
-        "- Reviewed by: {}".format(metadata.get("reviewer") or "-"),
-        "- Promoted baseline: {}".format(source.get("baseline_id") or "-"),
-        "- Source cycle: {}".format(source.get("source_cycle") or "-"),
-    ]
-    if metadata.get("note"):
-        lines.append("- Finalization note: {}".format(metadata.get("note")))
-    lines.extend(["", "**Audit trail and reproducibility companions**"])
-    for label, key in (("Work record", "work_record"),
-                       ("Living Report", "living_report"),
-                       ("Decision ledger", "ledger"),
-                       ("Promoted cycle manifest", "cycle")):
-        if audit.get(key):
-            lines.append("- {}: `{}`".format(label, audit[key]))
-    return "\n".join(lines)
-
-
-def _reproducibility_body(results):
-    """The author-written reproducibility content as markdown, or an empty string."""
-    repro = (results or {}).get("reproducibility")
-    if not repro:
-        return ""
-    if isinstance(repro, str):
-        return repro
-    if isinstance(repro, list):
-        return "\n".join("{}. {}".format(i, s) for i, s in enumerate(repro, 1))
-    lines = []
-    if repro.get("summary"):
-        lines.extend([repro["summary"], ""])
-    for key, title, numbered in (("environment", "Software and environment", False),
-                                 ("steps", "Steps", True),
-                                 ("checks", "Checks after a rerun", False),
-                                 ("what_if", "Changing a case", False)):
-        items = repro.get(key)
-        if not items:
-            continue
-        lines.append("**{}**".format(_t(title)))
-        if isinstance(items, str):
-            lines.append(items)
-        else:
-            lines.extend("{} {}".format("{}.".format(i) if numbered else "-",
-                                        _format_list_item_text(item))
-                         for i, item in enumerate(items, 1))
-        lines.append("")
-    return "\n".join(lines).strip()
-
-
-def format_safety_readiness_text(results):
-    """Format the inferred safety readiness as report text."""
-    readiness = infer_safety_readiness(results)
-    if not readiness:
-        return ""
-    lines = ["Readiness label: {}".format(readiness["verdict"])]
-    findings = [item for item in readiness.get("findings", []) if item]
-    if findings:
-        lines.append("")
-        lines.append("Design-grade blockers / review findings:")
-        lines.extend(["- {}".format(item) for item in findings])
-    lines.append("")
-    lines.append(
-        "Safety-study outputs remain screening/preparation until the listed blockers are closed "
-        "and a qualified engineer reviews the controlled evidence basis."
-    )
-    return "\n".join(lines)
-
-
-_SENTENCE_ABBREVIATIONS = (
-    "e.g.", "i.e.", "cf.", "vs.", "etc.", "approx.", "ca.", "no.", "nos.",
-    "fig.", "figs.", "eq.", "eqs.", "ref.", "refs.", "tab.", "sec.", "ch.",
-    "dvs.", "jf.", "bl.a.", "pkt.", "ca.", "inkl.", "ekskl.",
-)
-
-# Longer than this in one unbroken run and a Word/PDF paragraph reads as a wall.
-BODY_PARAGRAPH_MAX_CHARS = 650
-
-
-# A trailing run of 1-4 "Capital-letter + period" groups (e.g. "J.M.", "R.")
-# is almost always initials in a person's name, not a sentence boundary.
-_INITIALS_RE = re.compile(r'(?:^|\s)(?:[A-Z]\.){1,4}$')
-
-
-def _split_sentences(text):
-    """Split prose into sentences, keeping abbreviations and initials intact.
-
-    Without the initials check, "benchmarked against the J.M. Campbell
-    correlation" splits into two paragraphs at "J.M.", stranding "Campbell
-    correlation." as an orphan one-line paragraph.
-    """
-    pieces = re.split(r'(?<=[.!?])\s+(?=[A-Z0-9\u00c6\u00d8\u00c5"\'(\[])', text)
-    merged = []
-    for piece in pieces:
-        if merged and (merged[-1].lower().endswith(_SENTENCE_ABBREVIATIONS)
-                       or _INITIALS_RE.search(merged[-1])):
-            merged[-1] = merged[-1] + " " + piece
-        else:
-            merged.append(piece)
-    return merged
-
-
-def _reflow_paragraph(text, max_chars=BODY_PARAGRAPH_MAX_CHARS):
-    """Break an over-long single paragraph at sentence boundaries."""
-    if len(text) <= max_chars:
-        return [text]
-    chunks = []
-    buffer = ""
-    for sentence in _split_sentences(text):
-        if buffer and len(buffer) + 1 + len(sentence) > max_chars:
-            chunks.append(buffer)
-            buffer = sentence
-        else:
-            buffer = sentence if not buffer else buffer + " " + sentence
-    if buffer:
-        chunks.append(buffer)
-    return chunks
-
-
-def _body_paragraphs(text):
-    """Return renderable paragraphs for a plain-prose section.
-
-    A results.json field written as one long string (approach, conclusions,
-    executive_summary) otherwise renders as a single unbroken block. Blocks the
-    author already broke with their own newlines are left untouched.
-    """
-    paragraphs = []
-    for block in str(text or "").split("\n\n"):
-        block = block.strip()
-        if not block:
-            continue
-        if "\n" in block:
-            paragraphs.append(block)
-            continue
-        paragraphs.extend(_reflow_paragraph(block))
-    return paragraphs
-
-
-def _word_paragraphs(text):
-    """Paragraphs for Word: wrapped prose rejoined, each list item or table row on its own.
-
-    Word keeps a literal newline as a line break, so hard-wrapped markdown would
-    otherwise print with ragged breaks mid-sentence.
-    """
-    paragraphs = []
-    for para in _body_paragraphs(text):
-        lines = [line.strip() for line in para.split("\n") if line.strip()]
-        if len(lines) > 1 and _is_line_structured(para):
-            items = []
-            for line in lines:
-                starts_item = _LIST_LINE_RE.match(line) or line.startswith("|")
-                if items and not starts_item:
-                    items[-1] += " " + line  # wrapped continuation of a list item
-                else:
-                    items.append(line)
-            paragraphs.extend(items)
-        else:
-            paragraphs.append(" ".join(lines))
-    return paragraphs
-
-
-_LIST_LINE_RE = re.compile(r"^\s*(?:[-*+\u2022]\s|\d+[.)]\s)")
-_INLINE_CODE_RE = re.compile(r"`([^`\n]+)`")
-
-
-def _is_line_structured(block):
-    """True when a block's own line breaks carry meaning (list or table)."""
-    lines = [line for line in block.split("\n") if line.strip()]
-    if len(lines) < 2:
-        return False
-    structured = sum(1 for line in lines
-                     if _LIST_LINE_RE.match(line) or line.strip().startswith("|"))
-    return structured >= len(lines) / 2.0
-
-
-def _prose_to_html(text):
-    """Render plain prose as HTML paragraphs using the same splitting rules.
-
-    Source markdown is hard-wrapped, and markdown treats a single newline as a
-    space. Only a list or table block keeps its line breaks; wrapped prose is
-    rejoined so sentences are not split mid-clause. Inline `code` spans become
-    <code>, which is how tag and document numbers are written in a task spec.
-    """
-    out = []
-    for para in _body_paragraphs(text):
-        if _is_line_structured(para):
-            body = "<br>".join(line.strip() for line in para.split("\n")
-                               if line.strip())
-        else:
-            body = " ".join(line.strip() for line in para.split("\n")
-                            if line.strip())
-        out.append("<p>{}</p>".format(
-            _html_xrefs(_INLINE_CODE_RE.sub(r"<code>\1</code>", body))))
-    return "".join(out)
-
-
-def _benchmark_tests(results):
-    """Normalize legacy ``tests`` lists and named benchmark mappings for all outputs."""
-    benchmark = (results or {}).get("benchmark_validation") or {}
-    if isinstance(benchmark, list):
-        benchmark = {"tests": benchmark}
-    if not isinstance(benchmark, dict):
-        return []
-    listed = next((benchmark[key] for key in ("tests", "points")
-                   if isinstance(benchmark.get(key), list)), None)
-    if listed is not None:
-        entries = ((value.get("test") or value.get("name") or "Test {}".format(index)
-                    if isinstance(value, dict) else "Test {}".format(index), value)
-                   for index, value in enumerate(listed, 1))
-    else:
-        entries = benchmark.items()
-    tests = []
-    for name, value in entries:
-        if not isinstance(value, dict):
-            continue
-        test = dict(value)
-        test.setdefault("parameter", name if listed is not None else name.replace("_", " ").title())
-        if "pass" not in test:
-            status = str(test.get("status", "")).upper()
-            if status in ("PASS", "FAIL"):
-                test["pass"] = status == "PASS"
-        tests.append(test)
-    return tests
-
-
-def auto_executive_summary(results, task_spec):
-    """Generate an executive summary that leads with findings, not provenance.
-
-    With written conclusions the summary is the conclusions plus only items that
-    need attention. The approach, evidence counts, data-gap counts and passed
-    checks belong to their own sections and are used only as a fallback.
-    """
-    parts = []
-    conclusions = str((results or {}).get("conclusions") or "").strip()
-    has_conclusions = bool(conclusions) and not _is_placeholder_text(conclusions)
-    if has_conclusions:
-        parts.append(conclusions)
-    approach = ""
-    if results and results.get("approach"):
-        approach = results["approach"]
-    if not has_conclusions and approach and not _is_placeholder_text(approach):
-        # Skip run-in headings such as "Data." that open a paragraph.
-        sentences = [s.strip().rstrip(".") for s in approach.split(". ") if s.strip()]
-        first_sentence = next((s for s in sentences if len(s.split()) >= 4),
-                              sentences[0] if sentences else "")
-        parts.append(first_sentence + ".")
-    if not has_conclusions and results and results.get("key_results"):
-        findings = []
-        for label, value, unit, _note in _flatten_key_results(results["key_results"])[:5]:
-            value_text = _fmt_cell(value)
-            findings.append("{} = {}{}".format(
-                label, value_text, " " + unit if unit else ""))
-        if findings:
-            parts.append("Key findings: {}.".format(", ".join(findings)))
-    readiness = infer_safety_readiness(results) if results else None
-    if readiness:
-        parts.append("Safety study readiness: {}.".format(readiness["verdict"]))
-    evidence_rows = [] if has_conclusions else (
-        _document_source_counts(load_collection_manifest()) or _count_reference_files())
-    if evidence_rows:
-        parts.append("Evidence basis: {} document(s) from {}.".format(
-            sum(row[1] for row in evidence_rows),
-            ", ".join("{} ({})".format(name, count)
-                      for name, count, _desc in evidence_rows[:6])))
-    if results and not has_conclusions:
-        _assumptions, _gaps = _assumption_rows(results)
-        if _gaps:
-            parts.append("{} item(s) of information could not be obtained; the "
-                         "substitute assumptions are listed in Assumptions and "
-                         "Data Gaps.".format(len(_gaps)))
-    if results and results.get("uncertainty"):
-        uncertainty = results["uncertainty"]
-        p50 = uncertainty.get("p50")
-        output = uncertainty.get("output_parameter", "output")
-        if p50 is not None:
-            parts.append("Uncertainty analysis gives P50 {} = {:.4g}.".format(output, p50))
-    if results and results.get("validation"):
-        failures = _validation_failures(results)
-        failures.extend("benchmark: {}".format(test["parameter"])
-                        for test in _benchmark_tests(results) if test.get("pass") is False)
-        if failures:
-            parts.append("Validation checks requiring attention: {}.".format(
-                ", ".join(failures)))
-        elif not has_conclusions:
-            parts.append("Validation checks did not flag design blockers.")
-    benchmarks = _benchmark_tests(results)
-    if benchmarks and not has_conclusions:
-        passed = sum(test.get("pass") is True for test in benchmarks)
-        parts.append("{} of {} benchmark comparisons passed.".format(passed, len(benchmarks)))
-    if results and results.get("risk_evaluation", {}).get("overall_risk_level"):
-        parts.append("Overall project risk: {}.".format(
-            results["risk_evaluation"]["overall_risk_level"]))
-    return "\n\n".join(parts)
-
-
-def check_report_consistency(results):
-    """Check results.json for internal contradictions and inconsistencies.
-
-    Returns a list of dicts with keys: severity, message, fix_type.
-    severity: 'ERROR', 'WARNING', or 'INFO'.
-    fix_type: 'text' (auto-fixable in report), 'calculation' (needs
-    agent to re-run notebook), or 'none' (informational).
-    """
-    if not results:
-        return [{"severity": "INFO", "message": "No results.json loaded; all sections use placeholders.", "fix_type": "none"}]
-
-    issues = []
-
-    # --- 1. Benchmark failures vs optimistic conclusions ---
-    bmk_tests = _benchmark_tests(results)
-    n_fail = sum(1 for t in bmk_tests if t.get("pass") is False)
-    n_total = len(bmk_tests)
-    conclusions = results.get("conclusions", "")
-
-    if n_fail > 0:
-        # Check if any failure has large deviation (>20%) => calculation fix
-        large_devs = []
-        documented = []
-        for t in bmk_tests:
-            if t.get("pass") is False:
-                dev_pct = t.get("deviation_pct")
-                if dev_pct is not None and abs(dev_pct) > 20:
-                    # A written disposition (e.g. two input sources disagree) is a finding, not a misfit.
-                    (documented if str(t.get("disposition", "")).strip() else large_devs).append(t)
-        if documented:
-            issues.append({
-                "severity": "WARNING",
-                "message": "Benchmark deviation >20% kept with a written disposition: {}.".format(
-                    ", ".join(t.get("parameter", "?") for t in documented)),
-                "fix_type": "none",
-            })
-
-        failure_words = ["fail", "exceed", "deviation", "caution", "attention",
-                         "issue", "concern", "discrepanc", "not met"]
-        conc_lower = conclusions.lower()
-        acknowledges = any(w in conc_lower for w in failure_words)
-
-        if large_devs:
-            params = [t.get("parameter", "?") for t in large_devs]
-            issues.append({
-                "severity": "ERROR",
-                "message": "Benchmark deviation >20% for: {}. Model may need "
-                           "retuning or different EOS/parameters.".format(
-                               ", ".join(params)),
-                "fix_type": "calculation",
-                "action": "Re-run benchmark notebook with revised model "
-                          "parameters (check EOS, BIPs, component characterization).",
-                "parameters": params,
-            })
-
-        if not acknowledges:
-            safe_words = ["safe", "confirm", "acceptable", "satisfactor",
-                          "within limits", "meets"]
-            if any(w in conc_lower for w in safe_words):
-                issues.append({
-                    "severity": "ERROR",
-                    "message": "Conclusions say \'{}\' but {}/{} benchmark tests FAILED. "
-                               "Conclusions must acknowledge benchmark failures or explain "
-                               "why they are acceptable.".format(
-                                   conclusions[:80], n_fail, n_total),
-                    "fix_type": "text",
-                })
-            else:
-                issues.append({
-                    "severity": "WARNING",
-                    "message": "{}/{} benchmark tests failed. Consider addressing this "
-                               "in the conclusions.".format(n_fail, n_total),
-                    "fix_type": "text",
-                })
-
-    # --- 2. Validation failures vs optimistic conclusions ---
-    validation = results.get("validation", {})
-    val_failures = []
-    for check, outcome in validation.items():
-        outcome = _validation_value(outcome)
-        if outcome is False or (isinstance(outcome, str)
-                                and outcome.strip().upper() in _FAIL_STATUSES):
-            val_failures.append(check)
-        elif (check.endswith(("_pct", "_percent"))
-              and isinstance(outcome, (int, float)) and outcome >= 5.0):
-            val_failures.append("{} ({})".format(check, outcome))
-    if val_failures:
-        conc_lower = conclusions.lower()
-        safe_words = ["safe", "confirm", "acceptable", "satisfactor",
-                      "all.*pass", "within limits"]
-        if any(w in conc_lower for w in safe_words):
-            issues.append({
-                "severity": "ERROR",
-                "message": "Conclusions claim safety/acceptability but validation checks "
-                           "show issues: {}. Revise conclusions or explain why failures "
-                           "are acceptable.".format(", ".join(val_failures)),
-                "fix_type": "text",
-            })
-        # Check if validation error is large enough to need recalculation
-        large_val = [value for key, value in validation.items()
-                     if key.endswith(("_pct", "_percent"))
-                     and isinstance(value, (int, float)) and value >= 10.0]
-        if large_val:
-            issues.append({
-                "severity": "ERROR",
-                "message": "Validation error >=10% detected ({}). Model accuracy "
-                           "may be insufficient â€” consider retuning.".format(
-                               ", ".join(val_failures)),
-                "fix_type": "calculation",
-                "action": "Re-run main analysis notebook with tighter convergence "
-                          "tolerances or revised model setup.",
-            })
-
-    # --- 3. High risk level vs unconditionally positive conclusions ---
-    risk_eval = results.get("risk_evaluation", {})
-    overall_risk = risk_eval.get("overall_risk_level", "").lower()
-    risks = risk_eval.get("risks", [])
-    high_risks = [r for r in risks if "high" in r.get("risk_level", "").lower()
-                  or "very high" in r.get("risk_level", "").lower()]
-    if high_risks:
-        conc_lower = conclusions.lower()
-        caution_words = ["risk", "mitigat", "caution", "monitor", "contingenc",
-                         "condition", "subject to", "provided that"]
-        has_caution = any(w in conc_lower for w in caution_words)
-        if not has_caution and any(
-            w in conc_lower for w in ["safe", "confirm", "recommend proceed",
-                                      "no concern"]
-        ):
-            issues.append({
-                "severity": "WARNING",
-                "message": "{} high-risk items identified ({}), but conclusions don\'t "
-                           "mention risk mitigation. Consider adding caveats.".format(
-                               len(high_risks),
-                               ", ".join(r.get("description", "") for r in high_risks[:3])),
-                "fix_type": "text",
-            })
-
-    # --- 4. High probability of negative outcome vs positive conclusions ---
-    uncertainty = results.get("uncertainty", {})
-    prob_neg = uncertainty.get("prob_negative_pct")
-    if prob_neg is not None and prob_neg > 25:
-        conc_lower = conclusions.lower()
-        if any(w in conc_lower for w in ["safe", "confirm", "favourable",
-                                          "recommend proceed"]):
-            issues.append({
-                "severity": "WARNING",
-                "message": "Probability of unfavourable outcome is {:.1f}% (>25%). "
-                           "Conclusions should acknowledge the significant downside "
-                           "risk.".format(prob_neg),
-                "fix_type": "text",
-            })
-
-    # --- 5. Discussion recommendations contradict conclusions ---
-    discussions = results.get("figure_discussion", [])
-    recs = [d.get("recommendation", "") for d in discussions
-            if d.get("recommendation")]
-    for rec in recs:
-        rec_lower = rec.lower()
-        conc_lower = conclusions.lower()
-        # Check for direct contradictions
-        if "do not proceed" in rec_lower and "proceed" in conc_lower:
-            issues.append({
-                "severity": "ERROR",
-                "message": "Discussion recommends \'do not proceed\' but conclusions "
-                           "say \'proceed\'. Resolve the contradiction.",
-                "fix_type": "text",
-            })
-        if "further study" in rec_lower or "sensitivity" in rec_lower:
-            if "no further" in conc_lower:
-                issues.append({
-                    "severity": "WARNING",
-                    "message": "Discussion recommends further study/sensitivity analysis "
-                               "but conclusions dismiss it. Ensure consistency.",
-                    "fix_type": "text",
-                })
-
-    # --- 6. Missing critical sections ---
-    if not results.get("key_results"):
-        issues.append({
-            "severity": "WARNING",
-            "message": "No key_results in results.json. The Results section will be empty.",
-            "fix_type": "calculation",
-            "action": "Run the main analysis notebook and populate key_results in results.json.",
-        })
-    if not results.get("conclusions") or results["conclusions"].startswith("["):
-        issues.append({
-            "severity": "WARNING",
-            "message": "Conclusions are still a placeholder. Fill in conclusions "
-                       "before finalising the report.",
-            "fix_type": "text",
-        })
-    if not results.get("approach") or results["approach"].startswith("["):
-        issues.append({
-            "severity": "WARNING",
-            "message": "Approach section is still a placeholder.",
-            "fix_type": "text",
-        })
-
-    # --- 7. Numerical consistency: key_results referenced in discussions ---
-    key_results = results.get("key_results", {})
-    for disc in discussions:
-        obs = disc.get("observation", "")
-        linked = disc.get("linked_results", [])
-        for link_key in linked:
-            if link_key in key_results:
-                expected_val = key_results[link_key]
-                if isinstance(expected_val, dict):
-                    expected_val = expected_val.get("value")
-                if isinstance(expected_val, float):
-                    # Check if the observation mentions a consistent number.
-                    # Small magnitudes are usually written in scientific notation in
-                    # prose, so accept those renderings too; and do not accept the
-                    # degenerate "0.0" that %.1f produces for them, which would match
-                    # almost any text.
-                    val_strs = [
-                        "{:.4g}".format(expected_val),
-                        "{:.3g}".format(expected_val),
-                        "{:.2g}".format(expected_val),
-                        str(int(expected_val)) if expected_val == int(expected_val) else "",
-                    ]
-                    if abs(expected_val) >= 0.1:
-                        val_strs.append("{:.1f}".format(expected_val))
-                    for prec in (1, 2, 3):
-                        sci = "{:.{p}e}".format(expected_val, p=prec)
-                        mant, _, exp = sci.partition("e")
-                        exp_i = int(exp)
-                        val_strs.extend([
-                            sci,
-                            "{}e{:+03d}".format(mant, exp_i),
-                            "{}e{}".format(mant, exp_i),
-                            "{}E{:+03d}".format(mant, exp_i),
-                        ])
-                    val_strs = [v for v in val_strs if v]
-                    # Norwegian and other decimal-comma prose write 169,9 and 49 229.
-                    localized = [v.replace(".", ",") for v in val_strs if "." in v and "e" not in v.lower()]
-                    if abs(expected_val) >= 1000:
-                        grouped = "{:,.0f}".format(expected_val)
-                        localized.extend([grouped, grouped.replace(",", " "), grouped.replace(",", "\u00a0")])
-                    val_strs.extend(localized)
-                    if obs and not any(v in obs for v in val_strs):
-                        issues.append({
-                            "severity": "WARNING",
-                            "message": "Discussion links to \'{}\' (value={}) but "
-                                       "observation text doesn\'t mention this value. "
-                                       "Verify numerical consistency.".format(
-                                           link_key, expected_val),
-                            "fix_type": "calculation",
-                            "action": "Verify the value of \'{}\' in the notebook output "
-                                      "and update either key_results or the discussion "
-                                      "observation text.".format(link_key),
-                        })
-
-    # --- 8. Risk level vs uncertainty probability alignment ---
-    if prob_neg is not None and overall_risk:
-        if prob_neg > 40 and overall_risk in ("low",):
-            issues.append({
-                "severity": "WARNING",
-                "message": "Probability of negative outcome is {:.0f}% but overall risk "
-                           "is \'Low\'. These seem inconsistent.".format(prob_neg),
-                "fix_type": "text",
-            })
-        if prob_neg < 5 and overall_risk in ("high", "very high"):
-            issues.append({
-                "severity": "INFO",
-                "message": "Probability of negative outcome is only {:.0f}% but overall "
-                           "risk is \'{}\'. Consider whether the risk rating is driven "
-                           "by non-economic factors.".format(prob_neg, overall_risk.title()),
-                "fix_type": "none",
-            })
-
-    # --- 9. Numbers quoted in the findings that results.json cannot account for ---
-    quoted, unmatched = KIT.untraced_numbers(results)
-    if len(unmatched) >= 3 and len(unmatched) > len(quoted) / 2.0:
-        listed = ", ".join(_fmt_number(v) for v in unmatched[:10])
-        issues.append({
-            "severity": "WARNING",
-            "message": "{} of {} numbers quoted in the findings are not in results.json "
-                       "({}). Add them to key_results, or state in the text how they were "
-                       "derived, so every figure in the findings can be traced.".format(
-                           len(unmatched), len(quoted), listed),
-            "fix_type": "text",
-        })
-    elif unmatched:
-        issues.append({
-            "severity": "INFO",
-            "message": "Numbers quoted in the findings but not found in results.json: {}. "
-                       "Confirm they are derived values or add them to key_results.".format(
-                           ", ".join(_fmt_number(v) for v in unmatched[:10])),
-            "fix_type": "none",
-        })
-
-    # --- 10. A long key_results list with nothing marked as the headline ---
-    n_rows = len(_flatten_key_results(key_results)) if key_results else 0
-    if n_rows > 15 and not _headline_rows(results):
-        issues.append({
-            "severity": "WARNING",
-            "message": "key_results has {} rows and none is marked \"headline\": true, so the "
-                       "Results table prints all of them with labels derived from key names. "
-                       "Mark the 5-10 decisive values (with label, unit, decimals) and the "
-                       "full list moves to an appendix.".format(n_rows),
-            "fix_type": "text",
-        })
-
-    if not issues:
-        issues.append({"severity": "INFO", "message": "No consistency issues found.", "fix_type": "none"})
-
-    return issues
-
-
-def print_consistency_report(issues):
-    """Print the consistency check results with visual formatting."""
-    errors = [i for i in issues if i["severity"] == "ERROR"]
-    warnings = [i for i in issues if i["severity"] == "WARNING"]
-    infos = [i for i in issues if i["severity"] == "INFO"]
-
-    text_fixes = [i for i in issues if i.get("fix_type") == "text"]
-    calc_fixes = [i for i in issues if i.get("fix_type") == "calculation"]
-
-    print("  ===== Report Consistency Check =====")
-    if errors:
-        for i in errors:
-            tag = " [CALC-FIX]" if i.get("fix_type") == "calculation" else " [TEXT-FIX]" if i.get("fix_type") == "text" else ""
-            print("  [ERROR{}] {}".format(tag, i["message"]))
-    if warnings:
-        for i in warnings:
-            tag = " [CALC-FIX]" if i.get("fix_type") == "calculation" else " [TEXT-FIX]" if i.get("fix_type") == "text" else ""
-            print("  [WARNING{}] {}".format(tag, i["message"]))
-    if infos and not errors and not warnings:
-        for i in infos:
-            print("  [OK] {}".format(i["message"]))
-
-    if errors:
-        print("")
-        print("  {} ERROR(s) found. Fix these before distributing the report.".format(
-            len(errors)))
-        print("  Errors indicate contradictions that undermine report credibility.")
-    elif warnings:
-        print("")
-        print("  {} WARNING(s) found. Review before finalising.".format(
-            len(warnings)))
-    else:
-        print("  Report is internally consistent.")
-
-    if text_fixes:
-        print("  {} text fix(es) require review before distribution.".format(len(text_fixes)))
-    if calc_fixes:
-        print("  {} calculation fix(es) need agent re-run (see fixes_needed.json).".format(
-            len(calc_fixes)))
-
-    print("  ====================================")
-    return len(errors)
-
-
-
-def auto_problem_description(results, task_spec):
-    """Generate a problem description from task_spec.md sections."""
-    parts = []
-    for heading in ["Objective", "Description", "Problem Statement", "Task Description", "Background"]:
-        text = extract_spec_section(task_spec, heading)
-        if text:
-            parts.append(text)
-            break
-    envelope = extract_spec_section(task_spec, "Operating Envelope")
-    # A markdown table cannot be flattened into prose without becoming a line of
-    # pipes; Scope and Standards already renders the same section as a table.
-    if envelope and "|" not in envelope:
-        items = [re.sub(r"^\s*[-*]\s+", "", line).strip().rstrip(".")
-                 for line in envelope.splitlines() if line.strip()]
-        parts.append(_t("Operating envelope") + ": " + "; ".join(items) + ".")
-    if results and results.get("objective") and not parts:
-        parts.append(str(results["objective"]))
-    return "\n\n".join(parts)
-
-
-def _required_section_available(section, results, task_spec):
-    """Check whether a configured report section has enough input data."""
-    normalized = str(section).strip().lower().replace("-", "_").replace(" ", "_")
-    if normalized == "executive_summary":
-        return bool((results and (results.get("executive_summary")
-                                  or results.get("key_results")
-                                  or results.get("approach")
-                                  or results.get("conclusions")))
-                    or _manual_section_filled("executive_summary"))
-    if normalized in ("problem_description", "problem_statement"):
-        return bool(auto_problem_description(results, task_spec)
-                    or _manual_section_filled("problem_description"))
-    if normalized in ("scope", "scope_and_standards"):
-        if not task_spec:
-            return False
-        return bool(extract_spec_section(task_spec, "Applicable Standards")
-                    or extract_spec_section(task_spec, "Calculation Methods")
-                    or extract_spec_section(task_spec, "Acceptance Criteria")
-                    or extract_spec_section(task_spec, "Operating Envelope"))
-    if normalized in ("methodology", "approach"):
-        return bool((results and results.get("approach"))
-                    or _manual_section_filled("approach"))
-    if normalized in ("information_sources", "evidence_basis", "sources"):
-        return bool(format_information_sources_text({}, results))
-    if normalized in ("assumptions", "assumptions_and_gaps", "data_gaps"):
-        return bool(format_assumptions_text(results))
-    if normalized == "results":
-        return bool(results and results.get("key_results"))
-    if normalized == "discussion":
-        return bool(results and results.get("figure_discussion"))
-    if normalized == "validation":
-        return bool(results and results.get("validation"))
-    if normalized == "benchmark_validation":
-        return bool(results and results.get("benchmark_validation"))
-    if normalized in ("uncertainty", "uncertainty_analysis"):
-        return bool(results and results.get("uncertainty"))
-    if normalized in ("solution_workflow", "workflow", "agent_workflow"):
-        return bool(results and results.get("agent_workflow_plan"))
-    if normalized in ("risk", "risk_assessment", "risk_evaluation"):
-        return bool(results and (results.get("risk_evaluation") or results.get("risks")))
-    if normalized in ("conclusion", "conclusions", "conclusions_and_recommendations"):
-        return bool((results and results.get("conclusions"))
-                    or _manual_section_filled("conclusions"))
-    if normalized == "references":
-        return bool((results and results.get("references"))
-                    or _manual_section_filled("references"))
-    return True
-
-
-def _load_runner_jobs(runner_db_path):
-    """Return runner job rows from runner.db or an error message."""
-    try:
-        connection = sqlite3.connect(runner_db_path, timeout=5.0)
-        connection.row_factory = sqlite3.Row
-        try:
-            rows = connection.execute(
-                "SELECT job_id, script, job_type, status, error_message "
-                "FROM jobs ORDER BY created_at"
-            ).fetchall()
-        finally:
-            connection.close()
-    except sqlite3.Error as error:
-        return [], str(error)
-    return [dict(row) for row in rows], None
-
-
-def _runner_script_name(job_row):
-    """Return the basename of a runner job script path."""
-    return os.path.basename(str(job_row.get("script") or ""))
-
-
-def _runner_status_summary(job_rows):
-    """Return a compact status summary for report warnings."""
-    counts = {}
-    for job_row in job_rows:
-        status = str(job_row.get("status") or "unknown")
-        counts[status] = counts.get(status, 0) + 1
-    return ", ".join(["{}={}".format(status, counts[status])
-                      for status in sorted(counts)])
-
-
-def _validate_runner_execution(notebooks, planned_notebooks, existing_notebooks):
-    """Return warnings for incomplete NeqSim Runner notebook execution."""
-    warnings = []
-    execution_engine = str(notebooks.get("execution_engine", "")).strip().lower()
-    notebook_execution_required = _as_bool(notebooks.get("execution_required", False))
-    require_successful_jobs = _as_bool(notebooks.get("require_successful_jobs", True))
-    if not (notebook_execution_required and execution_engine == "neqsim_runner"):
-        return warnings
-    if not existing_notebooks:
-        return warnings
-
-    runner_output_path = os.path.join(TASK_DIR, "runner_output")
-    runner_db_path = os.path.join(TASK_DIR, "runner.db")
-    if not os.path.exists(runner_output_path):
-        warnings.append("Notebook execution engine is neqsim_runner, but runner_output/ is missing.")
-    if not os.path.exists(runner_db_path):
-        warnings.append("Notebook execution engine is neqsim_runner, but runner.db is missing.")
-        return warnings
-
-    job_rows, load_error = _load_runner_jobs(runner_db_path)
-    if load_error:
-        warnings.append("Could not inspect runner.db for notebook status: {}".format(
-            load_error))
-        return warnings
-    if not job_rows:
-        warnings.append("runner.db exists, but it contains no recorded runner jobs.")
-        return warnings
-
-    expected_notebooks = planned_notebooks or [os.path.basename(path)
-                                               for path in existing_notebooks]
-    expected_script_names = set()
-    for notebook_file in expected_notebooks:
-        notebook_name = os.path.basename(str(notebook_file))
-        expected_script_names.add(notebook_name)
-        expected_script_names.add(os.path.splitext(notebook_name)[0] + ".py")
-
-    notebook_rows = []
-    for row in job_rows:
-        job_type = str(row.get("job_type") or "script")
-        script_name = _runner_script_name(row)
-        if job_type == "notebook" or script_name in expected_script_names:
-            notebook_rows.append(row)
-    if not notebook_rows:
-        warnings.append(
-            "runner.db contains jobs ({}), but none match the planned notebooks.".format(
-                _runner_status_summary(job_rows)))
-        return warnings
-
-    if require_successful_jobs:
-        unsuccessful = [row for row in notebook_rows
-                        if str(row.get("status") or "") != "success"]
-        if unsuccessful:
-            details = []
-            for row in unsuccessful[:5]:
-                details.append("{}={} ({})".format(
-                    row.get("job_id"), row.get("status"), _runner_script_name(row)))
-            if len(unsuccessful) > 5:
-                details.append("... {} more".format(len(unsuccessful) - 5))
-            warnings.append("NeqSim Runner notebook jobs are not all successful: {}.".format(
-                "; ".join(details)))
-
-        successful_notebooks = set([_runner_script_name(row) for row in notebook_rows
-                                    if str(row.get("status") or "") == "success"])
-        for notebook_file in expected_notebooks:
-            notebook_name = os.path.basename(str(notebook_file))
-            script_name = os.path.splitext(notebook_name)[0] + ".py"
-            notebook_path = os.path.join(TASK_DIR, "step2_analysis", str(notebook_file))
-            if (os.path.exists(notebook_path)
-                    and notebook_name not in successful_notebooks
-                    and script_name not in successful_notebooks):
-                warnings.append(
-                    "Planned notebook has no successful runner job: step2_analysis/{}".format(
-                        notebook_file))
-    return warnings
-
-
-def _resolve_task_path(path):
-    """Resolve a study_config path relative to the task folder."""
-    if os.path.isabs(str(path)):
-        return str(path)
-    return os.path.join(TASK_DIR, str(path))
-
-
-def _split_produces(produces):
-    """Return declared outputs as a list; accepts a YAML list or a comma-separated string."""
-    if not produces:
-        return []
-    items = produces if isinstance(produces, (list, tuple)) else str(produces).split(",")
-    return [str(item).strip() for item in items if str(item).strip()]
-
-
-def _validate_analysis_scripts(analysis):
-    """Return warnings for declared analysis scripts and their artifacts."""
-    warnings = []
-    engine = str(analysis.get("engine", "auto")).strip().lower()
-    scripts = analysis.get("scripts", [])
-    if engine in ("script", "hybrid") and not scripts:
-        warnings.append(
-            "analysis.engine is '{}', but analysis.scripts lists no scripts.".format(engine))
-    for entry in scripts:
-        script_file = entry.get("file")
-        if not script_file:
-            continue
-        # Data-retrieval scripts live in step1; the work record resolves bare names in both folders.
-        candidates = [os.path.join(TASK_DIR, folder, str(script_file))
-                      for folder in ("step2_analysis", "step1_scope_and_research")]
-        candidates.append(_resolve_task_path(script_file))
-        if not any(os.path.exists(path) for path in candidates):
-            warnings.append("Planned analysis script is missing: step2_analysis/{}".format(
-                script_file))
-            continue
-        for produced in _split_produces(entry.get("produces")):
-            if not glob.glob(_resolve_task_path(produced)):
-                warnings.append("Analysis script {} declares an output that is missing: {}".format(
-                    script_file, produced))
-    return warnings
-
-
-def _validate_data_sources(inputs, quality_gates, results):
-    """Return warnings for declared source systems and provenance closure."""
-    warnings = []
-    data_sources = inputs.get("data_sources", [])
-    required = _as_bool(inputs.get("data_sources_required", False))
-    if required and not data_sources:
-        warnings.append(
-            "inputs.data_sources_required is true, but no source systems are listed.")
-
-    for entry in data_sources:
-        system = entry.get("system", "<unnamed>")
-        evidence = entry.get("evidence")
-        if not evidence:
-            if required or _is_required(quality_gates.get("provenance_closure")):
-                warnings.append(
-                    "Data source '{}' has no evidence path â€” captured records cannot "
-                    "be traced.".format(system))
-            continue
-        if not os.path.exists(_resolve_task_path(evidence)):
-            warnings.append("Captured evidence is missing for data source '{}': {}".format(
-                system, evidence))
-
-    if _is_required(quality_gates.get("provenance_closure")) and data_sources:
-        cited = results.get("data_sources") or results.get("sources") if results else None
-        if not cited:
-            warnings.append(
-                "Provenance closure is required, but results.json has no data_sources "
-                "or sources section naming the systems the numbers came from.")
-    return warnings
-
-
-def _validate_work_record(report, quality_gates):
-    """Return warnings when the method-and-data record is required but unusable."""
-    setting = str(report.get("work_record", "auto")).strip().lower()
-    gate = str(quality_gates.get("work_record", "auto")).strip().lower()
-    if "skip" in (setting, gate):
-        return []
-    if not (_is_required(setting) or _is_required(gate)):
-        return []
-
-    record_path = os.path.join(TASK_DIR, "step3_report", "WORK_RECORD.md")
-    if not os.path.exists(record_path):
-        return ["Work record is required, but step3_report/WORK_RECORD.md is missing "
-                "(build it with: neqsim work-record .)."]
-    try:
-        with open(record_path, "r", encoding="utf-8") as record_file:
-            text = record_file.read()
-    except OSError as error:
-        return ["Work record could not be read: {}".format(error)]
-
-    warnings = []
-    blocks = re.findall(
-        r"<!--\s*WORK_RECORD:NARRATIVE id=([A-Za-z0-9_\-]+)\s*-->\n?(.*?)\n?"
-        r"<!--\s*/WORK_RECORD:NARRATIVE\s*-->", text, re.DOTALL)
-    unfilled = [block_id for block_id, body in blocks
-                if re.fullmatch(r"\[[^\]]*\]", (body or "").strip() or "[]")]
-    if unfilled:
-        warnings.append(
-            "Work record narrative is still template text: {}.".format(
-                ", ".join(unfilled)))
-    if not blocks:
-        warnings.append(
-            "Work record has no narrative blocks â€” regenerate it with "
-            "neqsim work-record so the method section is present.")
-    return warnings
-
-
-def _find_work_record_generator():
-    """Locate devtools/generate_work_record.py from the environment or the tree.
-
-    A task folder vendors its own copy of this report generator, so the search
-    also walks up from the task itself â€” that is what lets an old task pick up
-    the current work-record generator.
-    """
-    return _find_devtool("generate_work_record.py")
-
-
-def _find_devtool(filename):
-    """Locate a devtools script from NEQSIM_PROJECT_ROOT or the folder tree."""
-    candidates = []
-    project_root = os.environ.get("NEQSIM_PROJECT_ROOT")
-    if project_root:
-        candidates.append(os.path.join(project_root, "devtools", filename))
-    for start in (os.path.dirname(os.path.abspath(__file__)), TASK_DIR):
-        current = start
-        for _ in range(6):
-            candidates.append(os.path.join(current, "devtools", filename))
-            candidates.append(os.path.join(current, filename))
-            parent = os.path.dirname(current)
-            if parent == current:
-                break
-            current = parent
-    for candidate in candidates:
-        if os.path.isfile(candidate):
-            return candidate
-    return None
-
-
-def record_environment(results):
-    """Record the software that produced this report into results.json.
-
-    Stamped here rather than backfilled later: only the run that renders the
-    deliverable can honestly claim which NeqSim produced its numbers.
-    """
-    if not isinstance(results, dict):
-        return None
-    tool = _find_devtool("task_corpus.py")
-    if not tool:
-        return None
-    try:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("neqsim_task_corpus", tool)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        environment = module.capture_environment()
-    except Exception as error:  # a provenance stamp must never break a report
-        print("NOTE: environment not recorded ({}).".format(error))
-        return None
-    results["environment"] = environment
-    try:
-        with open(RESULTS_FILE, "r", encoding="utf-8-sig") as handle:
-            stored = json.load(handle)
-        if isinstance(stored, dict):
-            stored["environment"] = environment
-            with open(RESULTS_FILE, "w", encoding="utf-8") as handle:
-                json.dump(stored, handle, indent=2, ensure_ascii=False)
-                handle.write("\n")
-    except (OSError, ValueError) as error:
-        print("NOTE: could not persist the report environment in results.json "
-              "({}).".format(error), file=sys.stderr)
-    return environment
-
-
-def generate_work_record(config):
-    """Build step3_report/WORK_RECORD.md unless the task opts out.
-
-    The report carries the conclusion; the work record carries the method, the
-    data, and the file map. It is regenerated with every report so the two
-    deliverables cannot drift apart.
-    """
-    setting = str((config.get("report") or {}).get("work_record", "auto")).strip().lower()
-    if setting == "skip":
-        return
-    generator = _find_work_record_generator()
-    if not generator:
-        print("")
-        print("NOTE: work record not generated (devtools/generate_work_record.py "
-              "not found). Run: neqsim work-record \"{}\"".format(TASK_DIR))
-        return
-    try:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("neqsim_work_record", generator)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        print("")
-        module.main([TASK_DIR])
-    except Exception as error:  # never block the report on the companion file
-        print("")
-        print("NOTE: work record could not be generated: {}".format(error))
-
-
-def _validate_assumption_register(inputs, results):
-    """Warn when information was not obtained but nothing was assumed in writing.
-
-    A study that could not get a document still reached an answer somehow. If no
-    assumption is registered, that substitution is invisible to the reader.
-    """
-    unobtained = []
-    for entry in inputs.get("data_sources", []) or []:
-        if not isinstance(entry, dict):
-            continue
-        evidence = str(entry.get("evidence", "") or "")
-        if not evidence or not os.path.exists(_resolve_task_path(evidence)):
-            unobtained.append(str(entry.get("system", "<unnamed>")))
-    manifest_gaps = load_collection_manifest().get("data_gaps", []) or []
-    if not unobtained and not manifest_gaps:
-        return []
-    if format_assumptions_text(results):
-        return []
-    detail = ", ".join(unobtained) if unobtained else "{} document gap(s)".format(
-        len(manifest_gaps))
-    return ["Information was not obtained ({}), but results.json registers no "
-            "assumptions or data_gaps \u2014 state what was assumed in its place.".format(
-                detail)]
-
-
-def validate_study_config(config, results, task_spec):
-    """Return warnings for missing deliverables required by study_config.yaml."""
-    if not config:
-        return []
-
-    warnings = []
-    inputs = config.get("inputs", {})
-    analysis = config.get("analysis", {})
-    notebooks = config.get("notebooks", {})
-    report = config.get("report", {})
-    quality_gates = config.get("quality_gates", {})
-
-    documents = inputs.get("documents", [])
-    documents_required = _as_bool(inputs.get("documents_required", False))
-    if documents_required and not documents:
-        warnings.append("inputs.documents_required is true, but no input documents are listed.")
-    for document in documents:
-        document_path = document.get("path")
-        document_required = documents_required or _as_bool(document.get("required", False))
-        if not document_path or not document_required:
-            continue
-        if os.path.isabs(str(document_path)):
-            resolved_path = str(document_path)
-        else:
-            resolved_path = os.path.join(TASK_DIR, str(document_path))
-        if not os.path.exists(resolved_path):
-            warnings.append("Required input document path is missing: {}".format(document_path))
-        elif os.path.isdir(resolved_path):
-            files = [name for name in os.listdir(resolved_path)
-                     if os.path.isfile(os.path.join(resolved_path, name))]
-            if not files:
-                warnings.append("Required input document directory is empty: {}".format(
-                    document_path))
-
-    planned_notebooks = [entry.get("file") for entry in notebooks.get("plan", [])
-                         if entry.get("file")]
-    existing_notebooks = glob.glob(os.path.join(TASK_DIR, "step2_analysis", "*.ipynb"))
-    minimum_count = _as_int(notebooks.get("minimum_count"), 0)
-    notebooks_required = _as_bool(notebooks.get("required", True))
-    notebook_execution_required = _as_bool(notebooks.get("execution_required", False))
-    execution_engine = str(notebooks.get("execution_engine", "")).strip().lower()
-    analysis_engine = str(analysis.get("engine", "auto")).strip().lower()
-    script_backed = (not notebooks_required
-                     and (execution_engine == "script" or analysis_engine == "script"))
-    if notebooks_required or notebook_execution_required or minimum_count:
-        if minimum_count and len(existing_notebooks) < minimum_count and not script_backed:
-            warnings.append(
-                "Configured notebook minimum is {}, but {} notebook(s) exist.".format(
-                    minimum_count, len(existing_notebooks)))
-        if notebooks_required and not script_backed:
-            for notebook_file in planned_notebooks:
-                notebook_path = os.path.join(TASK_DIR, "step2_analysis", notebook_file)
-                if not os.path.exists(notebook_path):
-                    warnings.append("Planned notebook is missing: step2_analysis/{}".format(
-                        notebook_file))
-
-        warnings.extend(_validate_runner_execution(notebooks, planned_notebooks,
-                                                   existing_notebooks))
-
-    warnings.extend(_validate_analysis_scripts(analysis))
-    warnings.extend(_validate_data_sources(inputs, quality_gates, results or {}))
-    warnings.extend(_validate_work_record(report, quality_gates))
-    warnings.extend(_validate_assumption_register(inputs, results or {}))
-
-    if _as_bool(quality_gates.get("require_results_json", False)) and not results:
-        warnings.append("quality_gates.require_results_json is true, but results.json is missing.")
-    if _is_required(quality_gates.get("benchmark_validation")) and not (
-            results and results.get("benchmark_validation")):
-        benchmark_kind = str(quality_gates.get("benchmark_kind", "auto")).strip().lower()
-        if benchmark_kind in ("", "auto", "none"):
-            benchmark_kind = "independent reference"
-        warnings.append(
-            "Benchmark validation ({}) is required, but results.json has no "
-            "benchmark_validation section.".format(benchmark_kind.replace("_", " ")))
-    if _is_required(quality_gates.get("human_review")) and not (
-            results and (results.get("human_review") or results.get("review"))):
-        warnings.append(
-            "Human review is required, but results.json has no human_review section "
-            "recording the reviewer and sign-off status.")
-    if _is_required(quality_gates.get("uncertainty_analysis")) and not (
-            results and results.get("uncertainty")):
-        warnings.append("Uncertainty analysis is required, but results.json has no uncertainty section.")
-    if _is_required(quality_gates.get("risk_register")) and not (
-            results and (results.get("risk_evaluation") or results.get("risks"))):
-        warnings.append("Risk register is required, but results.json has no risk_evaluation or risks section.")
-    if _is_required(quality_gates.get("figure_discussion")) and not (
-            results and results.get("figure_discussion")):
-        warnings.append("Figure discussion is required, but results.json has no figure_discussion section.")
-    if _is_required(quality_gates.get("consistency_checker")):
-        consistency_path = os.path.join(TASK_DIR, "consistency_report.json")
-        if not os.path.exists(consistency_path):
-            warnings.append("Consistency checker is required, but consistency_report.json is missing.")
-
-    minimum_figures = _as_int(quality_gates.get("minimum_figures"), 0)
-    figure_count = len(glob.glob(os.path.join(FIG_DIR, "*.png")))
-    if minimum_figures and figure_count < minimum_figures:
-        warnings.append("Configured figure minimum is {}, but {} PNG figure(s) exist.".format(
-            minimum_figures, figure_count))
-
-    for section in report.get("required_sections", []):
-        if not _required_section_available(section, results, task_spec):
-            warnings.append("Required report section lacks source data: {}".format(section))
-
-    return warnings
-
-
-def _md_table_to_html(lines):
-    """Convert markdown table lines to an HTML table string."""
-    if len(lines) < 2:
-        return ""
-    # Parse header
-    header_cells = [c.strip() for c in lines[0].strip().strip("|").split("|")]
-    # Skip separator line (line 1)
-    html = '<table class="scope-table"><thead><tr>'
-    for cell in header_cells:
-        html += "<th>{}</th>".format(_md_inline(cell))
-    html += "</tr></thead><tbody>\n"
-    for row_line in lines[2:]:
-        cells = [c.strip() for c in row_line.strip().strip("|").split("|")]
-        html += "<tr>"
-        for cell in cells:
-            html += "<td>{}</td>".format(_md_inline(cell))
-        html += "</tr>\n"
-    html += "</tbody></table>"
-    return html
-
-
-def _md_inline(text):
-    """Convert inline markdown (bold, `code`) to HTML."""
-    text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
-    return _INLINE_CODE_RE.sub(r"<code>\1</code>", text)
-
-
-def _md_list_to_html(lines):
-    """Convert markdown bullet list lines to an HTML list."""
-    html = "<ul>\n"
-    for line in lines:
-        item = line.lstrip("- ").strip()
-        html += "  <li>{}</li>\n".format(_md_inline(item))
-    html += "</ul>"
-    return html
-
-
-def scope_content_to_html(content):
-    """Convert scope section content (from task_spec.md) to styled HTML.
-
-    Handles markdown tables, bold text, bullet lists, and sub-headings.
-    """
-    lines = content.split("\n")
-    html_parts = []
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-
-        # Blank line
-        if not line.strip():
-            i += 1
-            continue
-
-        # Sub-heading (e.g., "Applicable Standards:")
-        if (line.strip().endswith(":") and not line.strip().startswith("-")
-                and not line.strip().startswith("|") and not line.strip().startswith("*")):
-            html_parts.append("<h3>{}</h3>".format(
-                _md_inline(line.strip().rstrip(":").strip())))
-            i += 1
-            continue
-
-        # Markdown table (starts with |)
-        if line.strip().startswith("|"):
-            table_lines = []
-            while i < len(lines) and lines[i].strip().startswith("|"):
-                table_lines.append(lines[i])
-                i += 1
-            # Check if second line is separator (|---|)
-            if len(table_lines) >= 2 and set(table_lines[1].replace("|", "").replace("-", "").replace(":", "").strip()) <= set(""):
-                html_parts.append(_md_table_to_html(table_lines))
-            else:
-                # Not a real table, just text with pipes
-                for tl in table_lines:
-                    html_parts.append("<p>{}</p>".format(_md_inline(tl.strip())))
-            continue
-
-        # Bullet list (starts with -)
-        if line.strip().startswith("- "):
-            list_lines = []
-            while i < len(lines) and lines[i].strip().startswith("- "):
-                list_lines.append(lines[i])
-                i += 1
-            html_parts.append(_md_list_to_html(list_lines))
-            continue
-
-        # Regular paragraph
-        html_parts.append("<p>{}</p>".format(_md_inline(line.strip())))
-        i += 1
-
-    return "\n".join(html_parts)
-
-
-def render_scope_to_word(doc, content):
-    """Render scope section content (from task_spec.md) into a Word document.
-
-    Parses markdown tables into Word tables, bold text into runs, and
-    bullet lists into formatted paragraphs.
-    """
-    lines = content.split("\n")
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-
-        # Blank line
-        if not line.strip():
-            i += 1
-            continue
-
-        # Sub-heading (e.g., "Applicable Standards:")
-        if (line.strip().endswith(":") and not line.strip().startswith("-")
-                and not line.strip().startswith("|") and not line.strip().startswith("*")):
-            # "Applicable Standards:" is a label in the spec, not heading text.
-            _add_heading(doc, line.strip().rstrip(":").strip(), level=2)
-            i += 1
-            continue
-
-        # Markdown table
-        if line.strip().startswith("|"):
-            table_lines = []
-            while i < len(lines) and lines[i].strip().startswith("|"):
-                table_lines.append(lines[i])
-                i += 1
-            if len(table_lines) >= 2:
-                _md_table_to_word(doc, table_lines)
-            else:
-                for tl in table_lines:
-                    doc.add_paragraph(tl.strip())
-            continue
-
-        # Bullet list
-        if line.strip().startswith("- "):
-            while i < len(lines) and lines[i].strip().startswith("- "):
-                item_text = lines[i].strip()[2:]  # Remove "- "
-                p = doc.add_paragraph(style="List Bullet")
-                _add_bold_runs(p, item_text)
-                i += 1
-            continue
-
-        # Regular paragraph
-        p = doc.add_paragraph()
-        _add_bold_runs(p, line.strip())
-        i += 1
-
-
-def _md_table_to_word(doc, table_lines):
-    """Convert markdown table lines to a styled Word table."""
-    header_cells = [c.strip() for c in table_lines[0].strip().strip("|").split("|")]
-    data_rows = []
-    for row_line in table_lines[2:]:  # skip header and separator
-        cells = [c.strip() for c in row_line.strip().strip("|").split("|")]
-        data_rows.append(cells)
-    add_word_table(doc, header_cells, data_rows)
-
-
-# Matches **bold** spans and $...$ inline maths (but not $$...$$ display
-# maths, which is a separate results.json-driven code path) in one pass, so
-# the two kinds of markup can be interleaved in a single sentence.
-_INLINE_TOKEN_RE = re.compile(
-    r"(\*\*.+?\*\*|`[^`\n]+`|\{fig:[^}\s]+\}|\$(?!\$)[^$\n]+?\$(?!\$))")
-_INLINE_MATH_CACHE = {}
-
-_FIGURE_PLAN_CACHE = {}
-
-
-def get_figure_plan(results):
-    """Where each figure is shown and its number; shared by Word and HTML.
-
-    A figure with a Discussion entry is shown next to that discussion, the rest
-    stay in Results. Cached per results object so both renderers agree.
-    """
-    key = id(results)
-    if key not in _FIGURE_PLAN_CACHE:
-        discussion = (results or {}).get("figure_discussion") or []
-        _FIGURE_PLAN_CACHE.clear()
-        _FIGURE_PLAN_CACHE[key] = KIT.FigurePlan(get_figures(), discussion)
-    return _FIGURE_PLAN_CACHE[key]
-
-
-def _active_figure_plan():
-    """The plan of the report being built, or an empty plan."""
-    for plan in _FIGURE_PLAN_CACHE.values():
-        return plan
-    return KIT.FigurePlan([], None)
-
-
-def _figure_bookmark(path):
-    """Word bookmark that wraps a figure's "Figure N" caption label."""
-    return "_RefFig_" + KIT.figure_slug(path)
-
-
-_BOOKMARK_IDS = {"next": 100}
-
-
-def _add_ref_field(paragraph, bookmark, text):
-    """Insert a { REF bookmark \\h } cross-reference that Word keeps current."""
-    begin = paragraph.add_run()
-    begin._r.append(parse_xml('<w:fldChar {} w:fldCharType="begin"/>'.format(nsdecls("w"))))
-    code = paragraph.add_run()
-    code._r.append(parse_xml(
-        '<w:instrText {} xml:space="preserve"> REF {} \\h </w:instrText>'.format(
-            nsdecls("w"), bookmark)))
-    sep = paragraph.add_run()
-    sep._r.append(parse_xml('<w:fldChar {} w:fldCharType="separate"/>'.format(nsdecls("w"))))
-    shown = paragraph.add_run(text)
-    end = paragraph.add_run()
-    end._r.append(parse_xml('<w:fldChar {} w:fldCharType="end"/>'.format(nsdecls("w"))))
-    return shown
-
-
-def _add_figure_reference(paragraph, token):
-    """Render a {fig:name} marker as a live cross-reference, or plain text."""
-    plan = _active_figure_plan()
-    path = plan.resolve(token)
-    number = plan.number_of(path) if path else None
-    if number is None:
-        paragraph.add_run("{} ?".format(_t("Figure")))
-        return
-    _add_ref_field(paragraph, _figure_bookmark(path),
-                   "{} {}".format(_t("Figure"), number))
-
-
-def _html_xrefs(text):
-    """Replace {fig:name} markers with links to the figure anchors."""
-    plan = _active_figure_plan()
-
-    def link(match):
-        path = plan.resolve(match.group(1))
-        number = plan.number_of(path) if path else None
-        if number is None:
-            return "{} ?".format(_t("Figure"))
-        return '<a class="xref" href="#fig-{}">{} {}</a>'.format(
-            number, _t("Figure"), number)
-
-    return KIT.FIG_REF_RE.sub(link, str(text))
-
-
-def _append_omml(paragraph, latex_str):
-    """Append an editable Word equation; False when it needs the image fallback."""
-    if not EQUATIONS_AS_OMML:
-        return False
-    xml = KIT.latex_to_omml(_sanitize_equation_latex(latex_str))
-    if not xml:
-        return False
-    try:
-        paragraph._p.append(parse_xml(xml))
-    except Exception:
-        return False
-    return True
-
-
-def _inline_math_image_path(latex_str, font_pt):
-    """Render (and cache) a small inline-maths PNG; returns the path or None."""
-    key = (latex_str, font_pt)
-    if key in _INLINE_MATH_CACHE:
-        return _INLINE_MATH_CACHE[key]
-    eq_img_dir = os.path.join(REPORT_DIR, "_eq_images")
-    if not os.path.exists(eq_img_dir):
-        os.makedirs(eq_img_dir)
-    digest = hashlib.md5(latex_str.encode("utf-8")).hexdigest()[:12]
-    path = os.path.join(eq_img_dir, "inline_{}.png".format(digest))
-    ok = render_equation_to_image(latex_str, path, font_pt=font_pt, inline=True)
-    _INLINE_MATH_CACHE[key] = path if ok else None
-    return _INLINE_MATH_CACHE[key]
-
-
-def _add_inline_math_run(paragraph, latex_str, font_pt=None):
-    """Insert inline maths: an editable equation, else a small image on the line."""
-    if _append_omml(paragraph, latex_str):
-        return
-    font_pt = font_pt or INLINE_EQ_FONT_PT
-    image_path = _inline_math_image_path(_sanitize_equation_latex(latex_str), font_pt)
-    if not image_path:
-        run = paragraph.add_run(_latex_fallback_text(latex_str))
-        run.italic = True
-        return
-    run = paragraph.add_run()
-    # Natural size at EQ_RENDER_DPI reproduces exactly the fixed ascent/descent
-    # window the image was cropped to, so consecutive inline equations share
-    # one baseline instead of each floating at their own ink-tight height.
-    size = _png_pixel_size(image_path)
-    if size and size[1] > 0:
-        run.add_picture(image_path, height=Inches(size[1] / float(EQ_RENDER_DPI)))
-    else:
-        run.add_picture(image_path, height=Pt(font_pt))
-    _set_last_picture_alt(paragraph, _latex_fallback_text(latex_str))
-
-
-def _set_last_picture_alt(paragraph, text):
-    """Give the paragraph's last inline picture alt text (screen readers, PDF tags)."""
-    try:
-        docpr = paragraph._p.xpath(".//wp:docPr")[-1]
-        docpr.set("descr", KIT.plain_alt_text(text))
-    except (IndexError, AttributeError, KeyError):
-        pass
-
-
-def _add_bold_runs(paragraph, text):
-    """Add text with **bold** spans, $...$ inline maths and {fig:name} cross-references."""
-    for part in _INLINE_TOKEN_RE.split(text):
-        if not part:
-            continue
-        if part.startswith("**") and part.endswith("**"):
-            run = paragraph.add_run(part[2:-2])
-            run.bold = True
-        elif part.startswith("{fig:") and part.endswith("}"):
-            _add_figure_reference(paragraph, part[5:-1])
-        elif part.startswith("`") and part.endswith("`") and len(part) > 2:
-            run = paragraph.add_run(part[1:-1])
-            run.font.name = "Consolas"
-        elif part.startswith("$") and part.endswith("$") and len(part) > 2:
-            _add_inline_math_run(paragraph, part[1:-1])
-        else:
-            paragraph.add_run(part)
-
-
-def get_figures():
-    """The task's figures followed by the live-task figures of a final report, if any."""
-    return _task_figures() + get_live_figures()
-
-
-def _task_figures():
-    """Collect all PNG/SVG figures from the figures/ directory.
-
-    Files named without an ordering prefix (``fig01_``, ``01_``) follow the order of
-    ``figure_captions`` in results.json, so the narrative order is the author's, not
-    the alphabet's; figures without a caption follow alphabetically.
-    """
-    pngs = sorted(glob.glob(os.path.join(FIG_DIR, "*.png")))
-    svgs = sorted(glob.glob(os.path.join(FIG_DIR, "*.svg")))
-    figures = pngs + svgs
-    prefixed = re.compile(r"^(fig(ure)?[\s_-]*)?\d", re.IGNORECASE)
-    if any(prefixed.match(os.path.basename(path)) for path in figures):
-        return figures
-    try:
-        with open(RESULTS_FILE, "r", encoding="utf-8") as source:
-            captions = list((json.load(source).get("figure_captions") or {}).keys())
-    except (OSError, ValueError, AttributeError):
-        return figures
-    rank = {name: index for index, name in enumerate(captions)}
-    return sorted(figures, key=lambda path: (rank.get(os.path.basename(path), len(rank)),
-                                             os.path.basename(path)))
-
-
-def get_figure_caption(fig_path, results, fig_index):
-    """Get a caption for a figure: custom from results.json or auto-generated."""
-    fig_name = os.path.basename(fig_path)
-    captions = {}
-    if results:
-        captions = results.get("figure_captions", {})
-    if fig_name in captions:
-        return "{} {}: {}".format(_t("Figure"), fig_index, captions[fig_name])
-    live_captions = _load_final_report_metadata().get("figure_captions") or {}
-    if fig_name in live_captions:
-        return "{} {}: {}".format(_t("Figure"), fig_index, live_captions[fig_name])
-    for entry in (results or {}).get("figure_discussion", []) or []:
-        if isinstance(entry, dict) and os.path.basename(
-                str(entry.get("figure", ""))) == fig_name:
-            title = str(entry.get("caption") or entry.get("title") or "").strip()
-            if title:
-                return "{} {}: {}".format(_t("Figure"), fig_index, title)
-    # Auto-generate from filename; drop an ordering prefix such as "fig03_".
-    stem = re.sub(r"^fig(ure)?[\s_-]*\d+[\s_-]*", "",
-                  fig_name.rsplit(".", 1)[0], flags=re.IGNORECASE)
-    stem = stem or fig_name.rsplit(".", 1)[0]
-    auto = stem.replace("_", " ").replace("-", " ").strip()
-    auto = auto[:1].upper() + auto[1:]
-    return "{} {}: {}".format(_t("Figure"), fig_index, auto)
-
-
-# A degree sign written through a codepage-437 console round-trips as the
-# U+2591 light-shade block ("Â°C" becomes "â–‘C"); nothing in engineering
-# notation legitimately uses that glyph, so repairing it is always safe.
-_MOJIBAKE_DEGREE = "\u2591"
-# matplotlib's mathtext only knows the long form of these comparison
-# operators, not the common LaTeX aliases authors actually type.
-_MATHTEXT_ALIASES = [
-    (re.compile(r"\\le\b"), r"\\leq"),
-    (re.compile(r"\\ge\b"), r"\\geq"),
-    (re.compile(r"\\ne\b"), r"\\neq"),
-]
-
-
-def _sanitize_equation_latex(latex_str):
-    """Repair known encoding corruption and LaTeX/mathtext symbol mismatches."""
-    text = str(latex_str or "").replace(_MOJIBAKE_DEGREE, "\u00b0")
-    for pattern, replacement in _MATHTEXT_ALIASES:
-        text = pattern.sub(replacement, text)
-    return text
-
-
-# Best-effort LaTeX-to-plain-text approximation for the rare equation mathtext
-# cannot parse at all (e.g. a \begin{cases} piecewise definition -- mathtext
-# has no support for LaTeX environments). Order matters: fractions and text
-# runs are unwrapped before the catch-all \command stripper at the end.
-_LATEX_FALLBACK_SUBS = [
-    (re.compile(r"\\begin\{[a-zA-Z*]+\}"), ""),
-    (re.compile(r"\\end\{[a-zA-Z*]+\}"), ""),
-    (re.compile(r"\\\\"), "; "),
-    (re.compile(r"\\d?frac\{([^{}]*)\}\{([^{}]*)\}"), r"(\1)/(\2)"),
-    (re.compile(r"\\text\{([^{}]*)\}"), r"\1"),
-    (re.compile(r"\\mathrm\{([^{}]*)\}"), r"\1"),
-    (re.compile(r"\\left|\\right"), ""),
-    (re.compile(r"\\quad|\\qquad|\\,|\\;|\\!"), " "),
-    (re.compile(r"\\cdot"), "\u00b7"), (re.compile(r"\\times"), "\u00d7"),
-    (re.compile(r"\\leq"), "\u2264"), (re.compile(r"\\geq"), "\u2265"),
-    (re.compile(r"\\neq"), "\u2260"),
-    (re.compile(r"\\rightarrow|\\to"), "\u2192"),
-    (re.compile(r"\\pi"), "\u03c0"), (re.compile(r"\\Delta"), "\u0394"),
-    (re.compile(r"\\alpha"), "\u03b1"), (re.compile(r"\\beta"), "\u03b2"),
-    (re.compile(r"\\gamma"), "\u03b3"), (re.compile(r"\\eta"), "\u03b7"),
-    (re.compile(r"\\rho"), "\u03c1"), (re.compile(r"\\mu"), "\u03bc"),
-    (re.compile(r"\\theta"), "\u03b8"), (re.compile(r"\\omega"), "\u03c9"),
-    (re.compile(r"\\phi"), "\u03c6"),
-    (re.compile(r"&"), " \u2192 "),
-    (re.compile(r"\\[a-zA-Z]+"), ""),
-    (re.compile(r"[{}]"), ""),
-    (re.compile(r"\s+"), " "),
-]
-
-
-def _latex_fallback_text(latex_str):
-    """Readable approximation for an equation matplotlib cannot render.
-
-    Used only when rendering fails; a stripped-down plain-text approximation
-    reads as an engineer's shorthand, whereas the raw backslash-and-brace
-    LaTeX source reads as a bug in a formal report.
-    """
-    text = _sanitize_equation_latex(latex_str)
-    for pattern, replacement in _LATEX_FALLBACK_SUBS:
-        text = pattern.sub(replacement, text)
-    return text.strip()
-
-
-def get_equations(results):
-    """Get equations from results.json. Returns list of {label, latex}."""
-    if not results:
-        return []
-    cleaned = []
-    for eq in results.get("equations", []):
-        if isinstance(eq, dict) and eq.get("latex"):
-            eq = dict(eq, latex=_sanitize_equation_latex(eq["latex"]))
-        cleaned.append(eq)
-    return cleaned
-
-
-# An inline equation's own ink extent varies with how many sub/superscripts
-# or fractions it carries, so a per-equation tight vertical crop would leave
-# every inline expression sitting at a different height on the line (Word
-# aligns an inline picture's BOTTOM edge with the text baseline). Cropping to
-# a fixed ascent/descent window instead -- in font-size units, generous enough
-# for a simple fraction or subscript -- keeps that bottom edge, and so the
-# apparent baseline, the same distance from every equation's own baseline.
-INLINE_EQ_ASCENT_EM = 1.30
-INLINE_EQ_DESCENT_EM = 0.50
-
-
-def render_equation_to_image(latex_str, output_path, font_pt=None, inline=False):
-    """Render a LaTeX equation to a PNG sized for font_pt in the document.
-
-    Rendered at font_pt (default EQ_FONT_PT) and EQ_RENDER_DPI so that placing
-    the image at its natural size (pixels / EQ_RENDER_DPI inches) reproduces
-    exactly that point size. A display equation (inline=False) is cropped
-    tight to its own ink on every side, which is correct for a free-standing,
-    centered equation. ``inline=True`` instead crops to a fixed ascent/descent
-    window so consecutive inline equations line up on the same baseline; see
-    INLINE_EQ_ASCENT_EM/INLINE_EQ_DESCENT_EM. Returns True if the image was
-    created, False otherwise.
-    """
-    if not HAS_MATPLOTLIB:
-        return False
-    size_pt = font_pt or EQ_FONT_PT
-    text = "${}$".format(_sanitize_equation_latex(latex_str))
-    try:
-        if inline:
-            ascent_in = INLINE_EQ_ASCENT_EM * size_pt / 72.0
-            descent_in = INLINE_EQ_DESCENT_EM * size_pt / 72.0
-            fig = plt.figure(figsize=(10.0, ascent_in + descent_in))
-            fig.text(0.5, descent_in / (ascent_in + descent_in), text,
-                      fontsize=size_pt, ha="center", va="baseline",
-                      math_fontfamily="cm")
-            renderer = fig.canvas.get_renderer()
-            tight = fig.get_tightbbox(renderer)
-            fixed = Bbox.from_extents(tight.x0, 0.0, tight.x1,
-                                       ascent_in + descent_in)
-            fig.savefig(output_path, dpi=EQ_RENDER_DPI, bbox_inches=fixed,
-                        pad_inches=0.02, facecolor="white", edgecolor="none")
-        else:
-            fig = plt.figure(figsize=(8, 1.2))
-            fig.text(0.5, 0.5, text, fontsize=size_pt, ha="center", va="center",
-                      math_fontfamily="cm")
-            fig.savefig(output_path, dpi=EQ_RENDER_DPI, bbox_inches="tight",
-                        pad_inches=0.04, facecolor="white", edgecolor="none")
-        plt.close(fig)
-        return True
-    except Exception as e:
-        print("  Warning: could not render equation: {}".format(e))
-        return False
-
-
-def _png_pixel_size(path):
-    """Return (width, height) in pixels from the PNG IHDR chunk, else None."""
-    try:
-        with open(path, "rb") as handle:
-            header = handle.read(24)
-        if len(header) < 24 or header[:8] != b"\x89PNG\r\n\x1a\n":
-            return None
-        return (int.from_bytes(header[16:20], "big"),
-                int.from_bytes(header[20:24], "big"))
-    except Exception:
-        return None
-
-
-def _add_equation_picture(doc, image_path, max_width_in):
-    """Insert an equation image at its natural size, capped to the text width."""
-    size = _png_pixel_size(image_path)
-    if size and size[0] > 0:
-        width_in = min(size[0] / float(EQ_RENDER_DPI), max_width_in)
-    else:
-        width_in = min(3.0, max_width_in)
-    doc.add_picture(image_path, width=Inches(width_in))
-
-
-def _raise_run(run, half_points):
-    """Raise a run above the baseline by the given number of half-points."""
-    if half_points > 0:
-        run._r.get_or_add_rPr().append(parse_xml(
-            '<w:position {} w:val="{}"/>'.format(nsdecls("w"), int(half_points))))
-
-
-def _add_display_equation(doc, image_path, label, max_width_in):
-    """Set a display equation centred, with its number right-aligned: (n).
-
-    The label goes on a short lead-in line above; the number is a Word SEQ
-    field raised to the equation's vertical centre, as in a typeset paper.
-    """
-    measure = _text_width_in(doc)
-    if label:
-        lead = doc.add_paragraph()
-        run = lead.add_run(_strip_caption_prefix(label))
-        run.italic = True
-        run.font.size = Pt(CAPTION_PT)
-        run.font.color.rgb = RGBColor(90, 90, 90)
-        lead.paragraph_format.space_before = Pt(6)
-        lead.paragraph_format.space_after = Pt(0)
-        lead.paragraph_format.keep_with_next = True
-    size = _png_pixel_size(image_path)
-    natural_in = size[0] / float(EQ_RENDER_DPI) if size and size[0] else 3.0
-    # Leave room either side so the number never collides with the maths.
-    width_in = min(natural_in, max_width_in, measure - 1.4)
-    height_pt = (width_in * size[1] / float(size[0]) * 72.0
-                 if size and size[0] else EQ_FONT_PT * 1.5)
-    paragraph = doc.add_paragraph()
-    fmt = paragraph.paragraph_format
-    fmt.space_before = Pt(2)
-    fmt.space_after = Pt(8)
-    fmt.keep_together = True
-    fmt.tab_stops.add_tab_stop(Inches(measure / 2.0), WD_TAB_ALIGNMENT.CENTER)
-    fmt.tab_stops.add_tab_stop(Inches(measure), WD_TAB_ALIGNMENT.RIGHT)
-    paragraph.add_run("\t")
-    paragraph.add_run().add_picture(image_path, width=Inches(width_in))
-    first_number_run = len(paragraph.runs)
-    paragraph.add_run("\t(")
-    _add_seq_field(paragraph, _t("Equation"))
-    paragraph.add_run(")")
-    # Word re-formats an updated field result from its field-code run, so every
-    # run of the number (codes included) must carry the raise, not just the text.
-    for run in paragraph.runs[first_number_run:]:
-        _raise_run(run, height_pt - 0.7 * BODY_PT)
-    return paragraph
-
-
-def _add_equation_fallback_paragraph(doc, label, latex):
-    """Show an unrenderable display equation as marked, readable text.
-
-    Presenting it as ordinary body prose would read as a typo; the italic,
-    muted styling and the trailing note make clear it is a known gap rather
-    than broken output.
-    """
-    paragraph = doc.add_paragraph()
-    prefix = "{}: ".format(label) if label else ""
-    run = paragraph.add_run(prefix + _latex_fallback_text(latex))
-    run.italic = True
-    run.font.color.rgb = RGBColor(90, 90, 90)
-    note = paragraph.add_run("  ({})".format(
-        _t("automatic equation typesetting unavailable")))
-    note.italic = True
-    note.font.size = Pt(CAPTION_PT)
-    note.font.color.rgb = RGBColor(140, 140, 140)
-    return paragraph
-
-
-def _add_figure_picture(doc, image_path, alt=None):
-    """Place a figure across the measure, shrunk if it would not fit the page.
-
-    A fixed picture width makes a tall figure overflow the printable height,
-    which Word resolves by pushing it onto its own page and clipping what is
-    left. Scaling on the native aspect ratio keeps every figure on one page.
-    """
-    max_width = _text_width_in(doc)
-    max_height = max(2.0, _text_height_in(doc) - FIGURE_CAPTION_ALLOWANCE_IN)
-    width_in = max_width
-    size = _png_pixel_size(image_path)
-    if size and size[0] > 0 and size[1] > 0:
-        height_in = max_width * size[1] / float(size[0])
-        if height_in > max_height:
-            width_in = max_width * max_height / height_in
-    doc.add_picture(image_path, width=Inches(width_in))
-    picture_para = doc.paragraphs[-1]
-    if alt:
-        _set_last_picture_alt(picture_para, alt)
-    picture_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    # The caption follows the picture, so the picture must not end a page.
-    picture_para.paragraph_format.keep_with_next = True
-    return picture_para
-
-
-_CAPTION_PREFIX = re.compile(r"^\s*(Figure|Table|Equation)\s+\d+\s*[:.\u2013-]\s*",
-                             re.IGNORECASE)
-
-
-def _strip_caption_prefix(text):
-    """Drop a leading "Figure 3:" so the Word SEQ field owns the numbering.
-
-    Also strips the translated labels, otherwise a report in another language
-    keeps the prefix and Word adds a second one.
-    """
-    cleaned = _CAPTION_PREFIX.sub("", str(text or "")).strip()
-    labels = [_t(label) for label in ("Figure", "Table", "Equation")]
-    labels = [label for label in labels if label]
-    if labels:
-        translated = re.compile(
-            r"^\s*({})\s+\d+\s*[:.\u2013-]\s*".format("|".join(
-                re.escape(label) for label in labels)), re.IGNORECASE)
-        cleaned = translated.sub("", cleaned).strip()
-    return cleaned
-
-
-def _add_seq_field(paragraph, label):
-    """Append a { SEQ <label> } field so Word owns the caption numbering."""
-    run = paragraph.add_run()
-    run._r.append(parse_xml(
-        '<w:fldChar {} w:fldCharType="begin"/>'.format(nsdecls("w"))))
-    run._r.append(parse_xml(
-        '<w:instrText {} xml:space="preserve"> SEQ {} \\* ARABIC </w:instrText>'
-        .format(nsdecls("w"), label)))
-    run._r.append(parse_xml(
-        '<w:fldChar {} w:fldCharType="separate"/>'.format(nsdecls("w"))))
-    placeholder = paragraph.add_run(str(_SEQ_COUNTERS.setdefault(label, 0) + 1))
-    _SEQ_COUNTERS[label] += 1
-    run_end = paragraph.add_run()
-    run_end._r.append(parse_xml(
-        '<w:fldChar {} w:fldCharType="end"/>'.format(nsdecls("w"))))
-    return placeholder
-
-
-_SEQ_COUNTERS = {}
-
-
-def _add_caption(doc, label, text, keep_with_next=False, bookmark=None):
-    """Add a numbered, styled caption that a list of figures/tables can collect.
-
-    The number comes from a Word SEQ field, so inserting a figure renumbers the
-    rest of the report instead of leaving the captions to drift out of step.
-    A ``bookmark`` wraps "Figure N" so REF fields can cross-reference it.
-    """
-    text = _strip_caption_prefix(text)
-    try:
-        paragraph = doc.add_paragraph(style="Caption")
-    except KeyError:
-        paragraph = doc.add_paragraph()
-    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    paragraph.paragraph_format.keep_with_next = keep_with_next
-    if bookmark:
-        bookmark_id = _BOOKMARK_IDS["next"]
-        _BOOKMARK_IDS["next"] += 1
-        paragraph._p.append(parse_xml(
-            '<w:bookmarkStart {} w:id="{}" w:name="{}"/>'.format(
-                nsdecls("w"), bookmark_id, bookmark)))
-    paragraph.add_run("{} ".format(label))
-    _add_seq_field(paragraph, label)
-    if bookmark:
-        paragraph._p.append(parse_xml(
-            '<w:bookmarkEnd {} w:id="{}"/>'.format(nsdecls("w"), bookmark_id)))
-    if text:
-        paragraph.add_run(": {}".format(text))
-    for run in paragraph.runs:
-        run.font.size = Pt(CAPTION_PT)
-        run.font.italic = True
-    return paragraph
-
-
-def _fmt_number(value, sig=4):
-    """Format a number the way an engineering report prints one.
-
-    "{:.4g}" turns 370523 into "3.705e+05", which reads as a slip rather than a
-    result. Digits are grouped with a non-breaking space per ISO 80000-1 and an
-    exponent is kept only where it is genuinely the clearer form.
-    """
-    try:
-        number = float(value)
-    except (TypeError, ValueError):
-        return str(value)
-    if number != number or number in (float("inf"), float("-inf")):
-        return str(value)
-    if number == 0:
-        return "0"
-    magnitude = abs(number)
-    # An exact count is not a measurement: rounding 370523 records to 370 500
-    # reads as a sloppy figure rather than a rounded one.
-    if float(number).is_integer() and magnitude < 1e12:
-        return "{:,.0f}".format(number).replace(",", THOUSANDS_SEP)
-    if magnitude >= 1e7 or magnitude < 1e-4:
-        return _localize_decimal("{:.{}e}".format(number, max(1, sig - 1)))
-    rounded = float("{:.{}g}".format(number, sig))
-    if abs(rounded) >= 1000:
-        return "{:,.0f}".format(rounded).replace(",", THOUSANDS_SEP)
-    return _localize_decimal("{:.{}g}".format(rounded, sig))
-
-
-# Report languages whose prose and tables use a decimal comma (ISO 80000-1 allows both).
-DECIMAL_COMMA_LANGUAGES = {"nb"}
-
-
-def _localize_decimal(text):
-    """Swap the decimal point for a comma when the report language writes 0,5."""
-    return text.replace(".", ",") if REPORT_LANGUAGE in DECIMAL_COMMA_LANGUAGES else text
-
-
-def _fmt_cell(value, sig=4):
-    """Format one table cell, leaving non-numeric values untouched."""
-    if isinstance(value, bool):
-        return str(value)
-    if isinstance(value, (int, float)):
-        return _fmt_number(value, sig)
-    return str(value)
-
-
-def _label_from_key(name_part):
-    """Title-case a snake_case key without destroying acronyms.
-
-    ``.title()`` turns GFC into Gfc and LL into Ll, which reads badly in the
-    headline results table. A token that is already all-uppercase is kept.
-    """
-    words = []
-    for word in name_part.split("_"):
-        if not word:
-            continue
-        # "0p91" is how a decimal survives a snake_case key.
-        decimal = re.match(r"^(\d+)p(\d+)$", word)
-        if decimal:
-            words.append("{}.{}".format(*decimal.groups()))
-        elif word.isupper() and len(word) > 1:
-            words.append(word)
-        elif any(ch.isupper() for ch in word[1:]):
-            words.append(word)
-        else:
-            words.append(word.capitalize())
-    return " ".join(words)
-
-
-def _parse_key_name(key):
-    """Parse a key_results key into (label, unit). Splits on last known unit suffix."""
-    unit_suffixes = [
-        ("_pct", "%"), ("_percent", "%"),
-        ("_ppm", "ppm"), ("_ppmv", "ppmv"), ("_ppb", "ppb"),
-        ("_l_per_h", "l/h"), ("_l_per_min", "l/min"), ("_l_per_s", "l/s"),
-        ("_degC", "\u00b0C"), ("_degc", "\u00b0C"),
-        ("_MNOK", "MNOK"), ("_MUSD", "MUSD"), ("_NOK", "NOK"), ("_USD", "USD"),
-        ("_days", "days"), ("_years", "years"),
-        ("_bar", "bar"), ("_bara", "bara"), ("_barg", "barg"),
-        ("_psi", "psi"), ("_psia", "psia"),
-        ("_C", "Â°C"), ("_K", "K"), ("_F", "Â°F"),
-        ("_kg", "kg"), ("_g", "g"), ("_lb", "lb"),
-        ("_m3", "mÂ³"), ("_m2", "mÂ²"), ("_m", "m"),
-        ("_mm", "mm"), ("_cm", "cm"), ("_km", "km"),
-        ("_ft", "ft"), ("_in", "in"),
-        ("_kW", "kW"), ("_MW", "MW"), ("_W", "W"),
-        ("_kJ", "kJ"), ("_MJ", "MJ"), ("_J", "J"),
-        ("_kg_hr", "kg/hr"), ("_kg_s", "kg/s"),
-        ("_m3_hr", "mÂ³/hr"), ("_m3_s", "mÂ³/s"),
-        ("_Sm3_day", "SmÂ³/day"), ("_Sm3_hr", "SmÂ³/hr"),
-        ("_Sm3d", "SmÂ³/d"), ("_Sm3", "SmÂ³"), ("_kSm3", "kSmÂ³"), ("_MSm3", "MSmÂ³"),
-        ("_GSm3", "GSmÂ³"), ("_rm3_Sm3", "rmÂ³/SmÂ³"),
-        ("_kg_m3", "kg/mÂ³"), ("_kg_Sm3", "kg/SmÂ³"), ("_g_cm3", "g/cmÂ³"),
-        ("_hours", "hours"), ("_hr", "hr"), ("_min", "min"), ("_s", "s"),
-        ("_rpm", "rpm"), ("_Hz", "Hz"),
-    ]
-    # Checked before the suffix table below: single-letter suffixes such as
-    # "_s"/"_m"/"_kg" would otherwise swallow the denominator of a
-    # "..._num_per_den" key (e.g. "velocity_m_per_s" ending in "_s").
-    per_match = re.match(r"^(.*)_([A-Za-z0-9]+)_per_([A-Za-z0-9]+)$", key)
-    if per_match:
-        name_part, num_token, den_token = per_match.groups()
-        unit = "{}/{}".format(_prettify_unit_token(num_token), _prettify_unit_token(den_token))
-        return _label_from_key(name_part), unit
-    # Sorted longest-suffix-first so a compound suffix (e.g. "_kg_m3") always
-    # wins over a shorter suffix it contains (e.g. "_m3"), regardless of the
-    # order the table above lists them in. Without this a density key like
-    # "..._kg_m3" resolves to unit "mÂ³" with a stray "Kg" left in the label.
-    for suffix, unit in sorted(unit_suffixes, key=lambda pair: -len(pair[0])):
-        if key.endswith(suffix):
-            name_part = key[:len(key) - len(suffix)]
-            return _label_from_key(name_part), unit
-    return _label_from_key(key), ""
-
-
-_UNIT_TOKEN_MAP = {
-    "kg": "kg", "g": "g", "lb": "lb",
-    "m3": "m\u00b3", "m2": "m\u00b2", "m": "m", "mm": "mm", "cm": "cm", "km": "km",
-    "sm3": "Sm\u00b3", "ksm3": "kSm\u00b3", "msm3": "MSm\u00b3", "nm3": "Nm\u00b3",
-    "s": "s", "sec": "s", "min": "min", "h": "h", "hr": "h", "d": "d", "day": "day",
-    "bar": "bar", "bara": "bara", "barg": "barg", "psi": "psi", "psia": "psia",
-    "kw": "kW", "mw": "MW", "w": "W", "kj": "kJ", "mj": "MJ", "j": "J",
-    "kmol": "kmol", "mol": "mol", "rpm": "rpm", "hz": "Hz",
-    "degc": "\u00b0C", "degf": "\u00b0F", "c": "\u00b0C",
-}
-
-
-
-def _prettify_unit_token(token):
-    """Normalize a single unit token parsed out of a ``..._per_...`` key suffix."""
-    lookup = _UNIT_TOKEN_MAP.get(token.lower())
-    if lookup:
-        return lookup
-    numeric = re.match(r"^(\d+)([A-Za-z]+)$", token)
-    if numeric:
-        number, unit = numeric.groups()
-        return "{} {}".format(number, _UNIT_TOKEN_MAP.get(unit.lower(), unit))
-    return token
-
-
-def _prettify_declared_unit(unit_str):
-    """Superscript/normalize an explicitly declared unit string (e.g. "kSm3/h")."""
-    if not unit_str:
-        return unit_str
-    parts = str(unit_str).split("/")
-    pretty = [_prettify_unit_token(part) if re.match(r"^[A-Za-z0-9]+$", part) else part
-              for part in parts]
-    return "/".join(pretty)
-
-
-def _leaf_label_and_unit(key_for_leaf, declared_unit=None):
-    """Resolve the display label/unit for one leaf, preferring a declared unit."""
-    if key_for_leaf is None:
-        return "Value", _prettify_declared_unit(declared_unit) or ""
-    parsed_label, parsed_unit = _parse_key_name(key_for_leaf)
-    unit = _prettify_declared_unit(declared_unit) if declared_unit else parsed_unit
-    return parsed_label, unit
-
-
-_LIST_SUMMARY_THRESHOLD = 8
-
-
-def _summarize_dict_list(items):
-    """Summarize a long list of similarly-shaped dicts (e.g. a transient time
-    history) as one compact line instead of exploding every sample into its
-    own row.
-    """
-    keys = []
-    for item in items:
-        if isinstance(item, dict):
-            for sub_key in item:
-                if sub_key not in keys:
-                    keys.append(sub_key)
-    parts = ["{} samples".format(len(items))]
-    for sub_key in keys:
-        values = [item[sub_key] for item in items
-                  if isinstance(item, dict) and isinstance(item.get(sub_key), (int, float))
-                  and not isinstance(item.get(sub_key), bool)]
-        if values:
-            parts.append("{}: {} \u2192 {}".format(
-                _label_from_key(sub_key), _fmt_number(min(values)), _fmt_number(max(values))))
-    return "; ".join(parts)
-
-
-def _flatten_key_results(key_results):
-    """Flatten a (possibly nested) key_results dict into printable leaf rows.
-
-    Task notebooks sometimes group parameters into nested dicts, e.g.
-    ``{"operating_point": {"pressure_barg": {"value": 29.1, "unit": "barg",
-    "description": "..."}}}`` instead of the flat ``key -> scalar`` schema.
-    Printing ``str(value)`` on those dicts puts raw Python repr straight into
-    the report. This walks the structure and yields one ``(label, value,
-    unit, note)`` row per leaf, honoring an explicit ``value``/``unit`` pair
-    and prefixing nested leaves with their parent group name(s).
-    """
-    rows = []
-
-    def walk(value, key_for_leaf, path_labels, depth):
-        if isinstance(value, dict):
-            if "value" in value and not isinstance(value["value"], (dict, list)):
-                label_part, unit = _leaf_label_and_unit(key_for_leaf, value.get("unit"))
-                label_part = value.get("label") or label_part
-                label = " \u2013 ".join(path_labels + [label_part]) if path_labels else label_part
-                note = value.get("description") or value.get("source") or value.get("basis")
-                rows.append((label, _apply_decimals(value["value"], value.get("decimals")),
-                             unit, note))
-                return
-            if depth >= 5:
-                label = " \u2013 ".join(path_labels) or "Value"
-                rows.append((label, str(value), "", None))
-                return
-            group_labels = path_labels + [_label_from_key(key_for_leaf)] if key_for_leaf else path_labels
-            for sub_key, sub_val in value.items():
-                walk(sub_val, sub_key, group_labels, depth + 1)
-            return
-        if isinstance(value, (list, tuple)):
-            if all(not isinstance(item, (dict, list, tuple)) for item in value):
-                label_part, unit = _leaf_label_and_unit(key_for_leaf)
-                label = " \u2013 ".join(path_labels + [label_part]) if path_labels else label_part
-                if len(value) > _LIST_SUMMARY_THRESHOLD:
-                    shown = ", ".join(_fmt_cell(item) for item in value[:3])
-                    text = "{}, \u2026 ({} values total)".format(shown, len(value))
-                else:
-                    text = ", ".join(_fmt_cell(item) for item in value)
-                rows.append((label, text, unit, None))
-            elif len(value) > _LIST_SUMMARY_THRESHOLD and all(
-                    isinstance(item, dict) for item in value):
-                # A long list of same-shaped dicts is a time series/sweep, not a
-                # set of distinct results; one summary row beats one row per sample.
-                label_part = _label_from_key(key_for_leaf) if key_for_leaf else "Value"
-                label = " \u2013 ".join(path_labels + [label_part]) if path_labels else label_part
-                rows.append((label, _summarize_dict_list(value), "",
-                             "Full series retained in results.json"))
-            else:
-                group_labels = path_labels + [_label_from_key(key_for_leaf)] if key_for_leaf else path_labels
-                for index, item in enumerate(value, 1):
-                    walk(item, str(index), group_labels, depth + 1)
-            return
-        label_part, unit = _leaf_label_and_unit(key_for_leaf)
-        if isinstance(value, str):
-            # A guessed unit suffix (e.g. "..._pct") does not apply once the
-            # value is free text that may already state its own units.
-            unit = ""
-        label = " \u2013 ".join(path_labels + [label_part]) if path_labels else label_part
-        rows.append((label, value, unit, None))
-
-    for top_key, top_val in (key_results or {}).items():
-        walk(top_val, top_key, [], 1)
-    return rows
-
-
-def _apply_decimals(value, decimals):
-    """Fixed decimals for a numeric result when the author asked for them."""
-    if (isinstance(decimals, int) and not isinstance(decimals, bool) and decimals >= 0
-            and isinstance(value, (int, float)) and not isinstance(value, bool)):
-        return _localize_decimal("{:.{}f}".format(value, decimals))
-    return value
-
-
-def _headline_rows(results):
-    """The decisive results as (group, label, value, unit, note) rows.
-
-    Authors mark them with ``"headline": true`` (plus optional ``label``,
-    ``unit``, ``group``, ``decimals``) inside key_results, or list them in a
-    top-level ``headline_results`` array. Empty when nothing is marked, in
-    which case the Results table keeps printing every key_results row.
-    """
-    rows = []
-    declared = (results or {}).get("headline_results")
-    for item in declared if isinstance(declared, list) else []:
-        if not isinstance(item, dict) or "value" not in item:
-            continue
-        label = item.get("label") or _label_from_key(str(item.get("key", "Value")))
-        rows.append((item.get("group") or "", label,
-                     _apply_decimals(item["value"], item.get("decimals")),
-                     _prettify_declared_unit(item.get("unit")) or "",
-                     item.get("note") or item.get("source") or item.get("description")))
-
-    def walk(key, value):
-        if not isinstance(value, dict):
-            return
-        if "value" in value and not isinstance(value["value"], (dict, list)):
-            if value.get("headline"):
-                label, unit = _leaf_label_and_unit(key, value.get("unit"))
-                rows.append((value.get("group") or "", value.get("label") or label,
-                             _apply_decimals(value["value"], value.get("decimals")), unit,
-                             value.get("description") or value.get("source")
-                             or value.get("basis")))
-            return
-        for sub_key, sub_value in value.items():
-            walk(sub_key, sub_value)
-
-    for top_key, top_value in ((results or {}).get("key_results") or {}).items():
-        walk(top_key, top_value)
-    return rows
-
-
-def _grouped(rows):
-    """Split headline rows into [(group, [(label, value, unit, note)])] in first-seen order."""
-    order, groups = [], {}
-    for group, label, value, unit, note in rows:
-        if group not in groups:
-            groups[group] = []
-            order.append(group)
-        groups[group].append((label, value, unit, note))
-    return [(group, groups[group]) for group in order]
-
-
-def format_results_table(results):
-    """Format key_results dict as a text table."""
-    key_results = results.get("key_results", {})
-    if not key_results:
-        return "[No key_results in results.json]"
-    lines = []
-    for label, value, unit, note in _flatten_key_results(key_results):
-        val_str = _fmt_cell(value)
-        line = "{}: {} {}".format(label, val_str, unit) if unit else "{}: {}".format(label, val_str)
-        if note:
-            line += " ({})".format(note)
-        lines.append(line)
-    return "\n".join(lines)
-
-
-def format_validation_table(results):
-    """Format validation checks as a text table."""
-    validation = results.get("validation", {})
-    if not validation:
-        return "[No validation data in results.json]"
-    lines = ["Validation Summary:", ""]
-    for check, outcome in validation.items():
-        label = _label_from_key(check)
-        if isinstance(outcome, dict) and "value" in outcome:
-            label = outcome.get("label") or label
-            outcome = outcome["value"]
-        if isinstance(outcome, bool):
-            status = "FAIL" if _validation_outcome_is_failure(check, outcome) else "PASS"
-        elif isinstance(outcome, (int, float)):
-            status = "{:.4g}".format(outcome)
-        else:
-            status = str(outcome)
-        lines.append("  {}: {}".format(label, status))
-    return "\n".join(lines)
-
-
-def format_validation_html(results):
-    """Format validation checks as an HTML table."""
-    validation = results.get("validation", {})
-    if not validation:
-        return "<p><em>No validation data in results.json</em></p>"
-    rows = ""
-    for check, outcome in validation.items():
-        label = _label_from_key(check)
-        unit = ""
-        if isinstance(outcome, dict) and "value" in outcome:
-            label = outcome.get("label") or label
-            unit = outcome.get("unit") or ""
-            outcome = outcome["value"]
-        if isinstance(outcome, bool):
-            failed = _validation_outcome_is_failure(check, outcome)
-            status = "FAIL" if failed else "PASS"
-            css_class = ' class="fail"' if failed else ' class="pass"'
-        elif isinstance(outcome, (int, float)):
-            status = (_fmt_number(outcome) + " " + unit).strip()
-            css_class = ' class="num"'
-        else:
-            status = str(outcome)
-            css_class = {"PASS": ' class="pass"', "FAIL": ' class="fail"'}.get(
-                status.strip().upper(), "")
-        rows += '<tr><td>{}</td><td{}>{}</td></tr>\n'.format(
-            label, css_class, status)
-    return (_html_table_caption(_t("Validation checks"))
-            + '<table class="validation-table"><thead><tr><th>{}</th>'
-            '<th>{}</th></tr></thead><tbody>\n{}</tbody></table>'.format(
-                _t("Check"), _t("Result"), rows))
-
-
-def _results_table_html(rows, caption):
-    """One styled results table from (label, value, unit, note) rows."""
-    has_notes = any(note for _label, _value, _unit, note in rows)
-    body = ""
-    for label, value, unit, note in rows:
-        body += '<tr><td>{}</td><td class="num">{}</td><td>{}</td>'.format(
-            _html_escape(label), _fmt_cell(value), _html_escape(unit))
-        if has_notes:
-            body += '<td>{}</td>'.format(_html_escape(note) if note else "")
-        body += '</tr>\n'
-    extra_header = '<th>{}</th>'.format(_t("Source")) if has_notes else ""
-    return (
-        _html_table_caption(caption)
-        + '<table class="results-table"><thead>'
-        '<tr><th>{}</th><th>{}</th><th>{}</th>{}</tr>'
-        '</thead><tbody>\n{}</tbody></table>'.format(
-            _t("Parameter"), _t("Value"), _t("Unit"), extra_header, body)
-    )
-
-
-def format_results_html(results, full=False):
-    """Format key_results as styled HTML tables (headline view, or all rows when full)."""
-    key_results = results.get("key_results", {})
-    headline = [] if full else _headline_rows(results)
-    if headline:
-        return "".join(_results_table_html(rows, _group_caption(group))
-                       for group, rows in _grouped(headline))
-    if not key_results:
-        return ""
-    return _results_table_html(
-        _flatten_key_results(key_results),
-        _t("Complete numerical results") if full else _t("Key results"))
-
-
-_HTML_TABLE_COUNTER = {"n": 0}
-
-
-def _html_table_caption(title):
-    """Return a numbered table caption so HTML and Word agree on the numbering."""
-    _HTML_TABLE_COUNTER["n"] += 1
-    text = _strip_caption_prefix(title)
-    label = "{} {}".format(_t("Table"), _HTML_TABLE_COUNTER["n"])
-    if text:
-        label = "{}: {}".format(label, text)
-    return '<p class="table-caption">{}</p>\n'.format(_html_escape(label))
-
-
-def format_custom_tables_html(results):
-    """Format custom tables from results.json 'tables' key as HTML."""
-    tables = results.get("tables", [])
-    if not tables:
-        return ""
-    html_parts = []
-    for tbl in tables:
-        title = tbl.get("title", "")
-        headers = tbl.get("headers", [])
-        data_rows = tbl.get("rows", [])
-        if not headers or not data_rows:
-            continue
-        h = _html_table_caption(title)
-        h += '<table class="custom-table"><thead><tr>'
-        for col in headers:
-            h += '<th>{}</th>'.format(col)
-        h += '</tr></thead><tbody>\n'
-        for row in data_rows:
-            h += "<tr>"
-            for i, cell in enumerate(row):
-                css = ' class="num"' if i > 0 and isinstance(cell, (int, float)) else ""
-                h += '<td{}>{}</td>'.format(css, _fmt_cell(cell))
-            h += "</tr>\n"
-        h += "</tbody></table>"
-        html_parts.append(h)
-    return "\n".join(html_parts)
-
-
-def _reference_text(ref):
-    """Citation text of a reference entry; results.json files use text, citation or title."""
-    if not isinstance(ref, dict):
-        return str(ref)
-    return str(ref.get("text") or ref.get("citation") or ref.get("title") or "")
-
-
-def format_references_html(results):
-    """Format the references list from results.json as a styled HTML ordered list."""
-    refs = results.get("references", [])
-    if not refs:
-        return ""
-    h = '<ol class="reference-list">\n'
-    for ref in refs:
-        ref_id = ref.get("id", "") if isinstance(ref, dict) else ""
-        ref_text = _reference_text(ref)
-        if ref_id:
-            h += '  <li id="ref-{}"><strong>[{}]</strong> {}</li>\n'.format(
-                ref_id, ref_id, ref_text)
-        else:
-            h += '  <li>{}</li>\n'.format(ref_text)
-    h += '</ol>'
-    return h
-
-
-def format_risk_html(results):
-    """Format risk_evaluation from results.json as a styled HTML risk table.
-
-    Renders a summary card with overall risk level, then a professional
-    table with color-coded risk levels and mitigation measures.
-    """
-    re_data = results.get("risk_evaluation", {})
-    if not re_data:
-        return ""
-    risks = re_data.get("risks", [])
-    matrix = re_data.get("risk_matrix_used", "5x5 (ISO 31000)")
-    overall = re_data.get("overall_risk_level", "N/A")
-    high_count = re_data.get("high_risk_count",
-                             sum(1 for r in risks if r.get("risk_level") == "High"))
-    medium_count = re_data.get("medium_risk_count",
-                               sum(1 for r in risks if r.get("risk_level") == "Medium"))
-    low_count = sum(1 for r in risks if r.get("risk_level") == "Low")
-
-    h = '<div class="risk-summary-card">\n'
-    h += '<p>Risk assessment performed using <strong>{}</strong> framework.</p>\n'.format(
-        matrix)
-    h += '<p>Overall risk level: <span class="risk-badge risk-{}">{}</span>'.format(
-        overall.lower(), overall)
-    h += '&nbsp;&mdash;&nbsp;'
-    parts = []
-    if high_count:
-        parts.append('<span class="risk-badge risk-high">{} High</span>'.format(high_count))
-    if medium_count:
-        parts.append('<span class="risk-badge risk-medium">{} Medium</span>'.format(medium_count))
-    if low_count:
-        parts.append('<span class="risk-badge risk-low">{} Low</span>'.format(low_count))
-    h += ", ".join(parts) if parts else ""
-    h += '</p>\n</div>\n'
-
-    if risks:
-        h += '<table class="risk-table"><thead><tr>'
-        h += '<th>ID</th><th>Category</th><th>Risk Description</th>'
-        h += '<th>Likelihood</th><th>Consequence</th><th>Risk Level</th>'
-        h += '<th>Mitigation</th>'
-        h += '</tr></thead><tbody>\n'
-        for risk in risks:
-            level = risk.get("risk_level", "").lower()
-            h += '<tr>'
-            h += '<td><strong>{}</strong></td>'.format(risk.get("id", ""))
-            h += '<td>{}</td>'.format(risk.get("category", ""))
-            h += '<td>{}</td>'.format(risk.get("description", ""))
-            h += '<td>{}</td>'.format(risk.get("likelihood", ""))
-            h += '<td>{}</td>'.format(risk.get("consequence", ""))
-            h += '<td class="risk-level risk-{}">{}</td>'.format(level, risk.get("risk_level", ""))
-            h += '<td class="mitigation-cell">{}</td>'.format(risk.get("mitigation", ""))
-            h += '</tr>\n'
-        h += '</tbody></table>\n'
-    return h
-
-
-def format_workflow_html(results):
-    """Format agent_workflow_plan from results.json as a Solution Workflow block.
-
-    Documents *how* the task was solved: the discovered/used specialist agents,
-    the workflow composition, and the rationale. Reuses the existing risk-card
-    and risk-table CSS classes so no stylesheet changes are needed.
-    """
-    plan = results.get("agent_workflow_plan", {})
-    if not plan:
-        return ""
-    h = '<div class="risk-summary-card">\n'
-    wtype = plan.get("workflow_type", "")
-    workflow = plan.get("workflow", "")
-    if wtype:
-        h += '<p>Workflow type: <strong>{}</strong></p>\n'.format(wtype)
-    if workflow:
-        h += '<p>Composition: <code>{}</code></p>\n'.format(workflow)
-    disc = plan.get("discovery", {})
-    if isinstance(disc, dict) and (disc.get("skill_search") or disc.get("agent_search")):
-        bits = []
-        if disc.get("skill_search"):
-            bits.append("skill_search")
-        if disc.get("agent_search"):
-            bits.append("agent_search &rarr; {}".format(disc.get("agent_search")))
-        h += '<p>Discovery: {}</p>\n'.format(", ".join(bits))
-    h += '</div>\n'
-
-    agents = plan.get("agents_used", [])
-    if agents:
-        h += '<table class="risk-table"><thead><tr>'
-        h += '<th>Agent</th><th>Repo</th><th>Role</th><th>Loads skills</th>'
-        h += '</tr></thead><tbody>\n'
-        for a in agents:
-            handle = a.get("handle") or a.get("name", "")
-            skills = a.get("loads_skills", [])
-            skills_txt = ", ".join(skills) if isinstance(skills, list) else str(skills)
-            h += '<tr>'
-            h += '<td><strong>{}</strong></td>'.format(handle)
-            h += '<td>{}</td>'.format(a.get("repo", ""))
-            h += '<td>{}</td>'.format(a.get("role", ""))
-            h += '<td>{}</td>'.format(skills_txt)
-            h += '</tr>\n'
-        h += '</tbody></table>\n'
-
-    rationale = plan.get("rationale", "")
-    if rationale:
-        h += '<p><em>{}</em></p>\n'.format(rationale)
-    return h
-
-
-def add_workflow_word_section(doc, results):
-    """Add the Solution Workflow (agent_workflow_plan) as text plus a Word table."""
-    plan = results.get("agent_workflow_plan", {})
-    if not plan:
-        return
-    wtype = plan.get("workflow_type", "")
-    workflow = plan.get("workflow", "")
-    if wtype:
-        p = doc.add_paragraph()
-        p.add_run("Workflow type: ").font.size = Pt(BODY_PT)
-        run = p.add_run(str(wtype))
-        run.bold = True
-        run.font.size = Pt(BODY_PT)
-    if workflow:
-        p = doc.add_paragraph()
-        p.add_run("Composition: ").font.size = Pt(BODY_PT)
-        p.add_run(str(workflow)).font.size = Pt(BODY_PT)
-    disc = plan.get("discovery", {})
-    if isinstance(disc, dict) and (disc.get("skill_search") or disc.get("agent_search")):
-        bits = []
-        if disc.get("skill_search"):
-            bits.append("skill_search")
-        if disc.get("agent_search"):
-            bits.append("agent_search: {}".format(disc.get("agent_search")))
-        p = doc.add_paragraph()
-        p.add_run("Discovery: {}".format(", ".join(bits))).font.size = Pt(BODY_PT)
-
-    agents = plan.get("agents_used", [])
-    if agents:
-        headers = ["Agent", "Repo", "Role", "Loads skills"]
-        data_rows = []
-        for a in agents:
-            handle = a.get("handle") or a.get("name", "")
-            skills = a.get("loads_skills", [])
-            skills_txt = ", ".join(skills) if isinstance(skills, list) else str(skills)
-            data_rows.append([
-                str(handle), str(a.get("repo", "")), str(a.get("role", "")), skills_txt
-            ])
-        add_word_table(doc, headers, data_rows)
-
-    rationale = plan.get("rationale", "")
-    if rationale:
-        p = doc.add_paragraph()
-        run = p.add_run(str(rationale))
-        run.italic = True
-        run.font.size = Pt(BODY_PT)
-
-
-def format_uncertainty_html(results):
-    """Format uncertainty analysis from results.json as styled HTML tables.
-
-    Renders: input parameters table, P10/P50/P90 output table, tornado table.
-    """
-    unc = results.get("uncertainty", {})
-    if not unc:
-        return ""
-    h = ""
-
-    # Summary paragraph
-    h += '<div class="uncertainty-summary">\n'
-    h += '<p><strong>{}</strong> with <strong>{}</strong> simulations'.format(
-        unc.get("method", "Monte Carlo analysis"),
-        unc.get("n_simulations", "N/A"))
-    engine = unc.get("simulation_engine", "")
-    if engine:
-        h += ' using {}'.format(engine)
-    h += '.</p>\n</div>\n'
-
-    # Input parameters table
-    params = unc.get("input_parameters", [])
-    if params:
-        h += '<h3>' + _t('Input Parameter Ranges') + '</h3>\n'
-        h += '<table class="uncertainty-table"><thead><tr>'
-        h += '<th>Parameter</th><th>Unit</th><th>Low</th><th>Base</th>'
-        h += '<th>High</th><th>Distribution</th>'
-        h += '</tr></thead><tbody>\n'
-        for p in params:
-            h += '<tr>'
-            h += '<td>{}</td>'.format(p.get("name", ""))
-            h += '<td>{}</td>'.format(p.get("unit", ""))
-            h += '<td class="num">{}</td>'.format(_fmt_num(p.get("low", "")))
-            h += '<td class="num">{}</td>'.format(_fmt_num(p.get("base", "")))
-            h += '<td class="num">{}</td>'.format(_fmt_num(p.get("high", "")))
-            h += '<td>{}</td>'.format(p.get("distribution", ""))
-            h += '</tr>\n'
-        h += '</tbody></table>\n'
-
-    # Output P10/P50/P90 table â€” handle both single-output and multi-output formats
-    out_param = unc.get("output_parameter", "")
-    out_params = unc.get("output_parameters", {})
-    if out_param or out_params:
-        h += '<h3>' + _t('Output Distribution (P10 / P50 / P90)') + '</h3>\n'
-        h += '<table class="uncertainty-table"><thead><tr>'
-        h += '<th>Output Parameter</th><th>P10</th><th>P50</th><th>P90</th>'
-        h += '</tr></thead><tbody>\n'
-        if out_param:
-            h += '<tr><td>{}</td>'.format(out_param)
-            h += '<td class="num">{}</td>'.format(_fmt_num(unc.get("p10", "")))
-            h += '<td class="num"><strong>{}</strong></td>'.format(_fmt_num(unc.get("p50", "")))
-            h += '<td class="num">{}</td></tr>\n'.format(_fmt_num(unc.get("p90", "")))
-        for key, val in out_params.items():
-            label = key.replace("_", " ").title()
-            h += '<tr><td>{}</td>'.format(label)
-            h += '<td class="num">{}</td>'.format(_fmt_num(val.get("p10", "")))
-            h += '<td class="num"><strong>{}</strong></td>'.format(_fmt_num(val.get("p50", "")))
-            h += '<td class="num">{}</td></tr>\n'.format(_fmt_num(val.get("p90", "")))
-        h += '</tbody></table>\n'
-
-    # Tornado sensitivity table
-    tornado = unc.get("tornado", [])
-    if tornado:
-        h += '<h3>' + _t('Sensitivity Ranking (Tornado)') + '</h3>\n'
-        h += '<table class="tornado-table"><thead><tr>'
-        # Detect column names from first tornado entry
-        first = tornado[0]
-        cols = [k for k in first.keys() if k != "parameter"]
-        h += '<th>Parameter</th>'
-        for col in cols:
-            h += '<th>{}</th>'.format(col.replace("_", " ").title())
-        h += '</tr></thead><tbody>\n'
-        for item in tornado:
-            h += '<tr><td>{}</td>'.format(item.get("parameter", ""))
-            for col in cols:
-                h += '<td class="num">{}</td>'.format(_fmt_num(item.get(col, "")))
-            h += '</tr>\n'
-        h += '</tbody></table>\n'
-
-    return h
-
-
-def format_benchmark_html(results):
-    """Format benchmark_validation from results.json as a styled HTML table."""
-    bv = results.get("benchmark_validation", {})
-    if not bv:
-        return ""
-    source = bv.get("source", "") if isinstance(bv, dict) else ""
-    h = '<p>{}: {}</p>\n'.format(_t("Reference source"), _html_escape(str(source))) if source else ""
-    headers, rows, status_idx = _benchmark_table(results)
-    h += '<table class="benchmark-table"><thead><tr>'
-    h += "".join("<th>{}</th>".format(_html_escape(str(x))) for x in headers)
-    h += '</tr></thead><tbody>\n'
-    for row in rows:
-        h += '<tr>'
-        for index, cell in enumerate(row):
-            text = _html_escape(str(cell))
-            if index == status_idx:
-                css = (' class="pass"' if cell == "PASS"
-                       else (' class="fail"' if cell == "FAIL" else ""))
-                h += '<td{}><strong>{}</strong></td>'.format(css, text)
-            elif index == 0:
-                h += '<td><strong>{}</strong></td>'.format(text)
-            else:
-                h += '<td>{}</td>'.format(text)
-        h += '</tr>\n'
-    h += '</tbody></table>\n'
-    return h
-
-
-def _fmt_num(value):
-    """Format a numeric value for display in tables."""
-    # Same formatter as every other table, so 162000.0 reads "162 000", not "1.62e+05".
-    if isinstance(value, (int, float)) and not isinstance(value, bool):
-        return _fmt_cell(value)
-    return str(value)
-
-
-def add_risk_word_table(doc, results):
-    """Add risk evaluation as a styled Word table with color-coded risk levels."""
-    re_data = results.get("risk_evaluation", {})
-    if not re_data:
-        return
-    risks = re_data.get("risks", [])
-    matrix = re_data.get("risk_matrix_used", "5x5 (ISO 31000)")
-    overall = re_data.get("overall_risk_level", "N/A")
-    high_count = re_data.get("high_risk_count",
-                             sum(1 for r in risks if r.get("risk_level") == "High"))
-    medium_count = re_data.get("medium_risk_count",
-                               sum(1 for r in risks if r.get("risk_level") == "Medium"))
-
-    # Summary paragraph
-    p = doc.add_paragraph()
-    p.add_run("Risk assessment using ").font.size = Pt(BODY_PT)
-    r = p.add_run("{} framework".format(matrix))
-    r.bold = True
-    r.font.size = Pt(BODY_PT)
-    p.add_run(". Overall risk level: ").font.size = Pt(BODY_PT)
-    r2 = p.add_run(overall)
-    r2.bold = True
-    r2.font.size = Pt(BODY_PT)
-    if overall == "High":
-        r2.font.color.rgb = RGBColor(0xDC, 0x35, 0x45)
-    elif overall == "Medium":
-        r2.font.color.rgb = RGBColor(0xE6, 0x7E, 0x22)
-    elif overall == "Low":
-        r2.font.color.rgb = RGBColor(0x28, 0xA7, 0x45)
-    p.add_run(". ({} High, {} Medium)".format(high_count, medium_count)).font.size = Pt(BODY_PT)
-
-    if not risks:
-        return
-    headers = ["ID", "Category", "Description", "Likelihood", "Consequence",
-               "Risk Level", "Mitigation"]
-    data_rows = []
-    for risk in risks:
-        data_rows.append([
-            risk.get("id", ""),
-            risk.get("category", ""),
-            risk.get("description", ""),
-            risk.get("likelihood", ""),
-            risk.get("consequence", ""),
-            risk.get("risk_level", ""),
-            risk.get("mitigation", ""),
-        ])
-    table = add_word_table(doc, headers, data_rows)
-    # Color-code risk level column (column 5, 0-indexed)
-    for row in table.rows[1:]:
-        cell = row.cells[5]
-        text = cell.text.strip()
-        for paragraph in cell.paragraphs:
-            for run in paragraph.runs:
-                run.font.bold = True
-                if text == "High":
-                    run.font.color.rgb = RGBColor(0xDC, 0x35, 0x45)
-                elif text == "Medium":
-                    run.font.color.rgb = RGBColor(0xE6, 0x7E, 0x22)
-                elif text == "Low":
-                    run.font.color.rgb = RGBColor(0x28, 0xA7, 0x45)
-
-
-def add_uncertainty_word_tables(doc, results):
-    """Add uncertainty analysis as styled Word tables."""
-    unc = results.get("uncertainty", {})
-    if not unc:
-        return
-
-    # Summary paragraph
-    p = doc.add_paragraph()
-    p.add_run("{} with {} simulations".format(
-        unc.get("method", "Monte Carlo analysis"),
-        unc.get("n_simulations", "N/A"))).font.size = Pt(BODY_PT)
-    engine = unc.get("simulation_engine", "")
-    if engine:
-        p.add_run(" using {}.".format(engine)).font.size = Pt(BODY_PT)
-
-    # Input parameters table
-    params = unc.get("input_parameters", [])
-    if params:
-        _add_heading(doc, _t("Input Parameter Ranges"), level=2)
-        headers = ["Parameter", "Unit", "Low", "Base", "High", "Distribution"]
-        data_rows = []
-        for param in params:
-            data_rows.append([
-                param.get("name", ""),
-                param.get("unit", ""),
-                _fmt_num(param.get("low", "")),
-                _fmt_num(param.get("base", "")),
-                _fmt_num(param.get("high", "")),
-                param.get("distribution", ""),
-            ])
-        add_word_table(doc, headers, data_rows)
-
-    # Output P10/P50/P90 table
-    out_param = unc.get("output_parameter", "")
-    out_params = unc.get("output_parameters", {})
-    if out_param or out_params:
-        _add_heading(doc, _t("Output Distribution (P10 / P50 / P90)"), level=2)
-        headers = ["Output Parameter", "P10", "P50", "P90"]
-        data_rows = []
-        if out_param:
-            data_rows.append([
-                out_param,
-                _fmt_num(unc.get("p10", "")),
-                _fmt_num(unc.get("p50", "")),
-                _fmt_num(unc.get("p90", "")),
-            ])
-        for key, val in out_params.items():
-            label = key.replace("_", " ").title()
-            data_rows.append([
-                label,
-                _fmt_num(val.get("p10", "")),
-                _fmt_num(val.get("p50", "")),
-                _fmt_num(val.get("p90", "")),
-            ])
-        add_word_table(doc, headers, data_rows,
-                       col_widths=[Inches(2.5), Inches(1.0), Inches(1.0), Inches(1.0)])
-
-    # Tornado sensitivity table
-    tornado = unc.get("tornado", [])
-    if tornado:
-        _add_heading(doc, _t("Sensitivity Ranking (Tornado)"), level=2)
-        first = tornado[0]
-        cols = [k for k in first.keys() if k != "parameter"]
-        headers = ["Parameter"] + [c.replace("_", " ").title() for c in cols]
-        data_rows = []
-        for item in tornado:
-            row = [item.get("parameter", "")]
-            for col in cols:
-                row.append(_fmt_num(item.get(col, "")))
-            data_rows.append(row)
-        add_word_table(doc, headers, data_rows)
-
-
-# (label, accepted keys): results.json files in use write either
-# reference_value/neqsim_value or the shorter numeric reference/neqsim.
-_BENCHMARK_VALUE_COLUMNS = (
-    ("Reference value", ("reference_value", "expected", "reference")),
-    ("NeqSim value", ("neqsim_value", "neqsim", "calculated")),
-    ("Unit", ("unit",)),
-    ("Deviation [%]", ("deviation_pct", "deviation_percent")),
-    ("Tolerance [%]", ("tolerance_pct", "tolerance_percent")),
-)
-_BENCHMARK_TEXT_KEYS = {"parameter", "name", "test", "description", "source",
-                        "status", "pass", "points"}
-
-
-def _benchmark_value_key(test, keys, label):
-    """First key of ``keys`` present in the test; a text "reference" is a citation."""
-    for key in keys:
-        if key not in test:
-            continue
-        if key == "reference" and isinstance(test[key], str):
-            continue
-        return key
-    return None
-
-
-def _benchmark_reference_text(test):
-    """The citation for a test, when one is given as text."""
-    reference = test.get("reference")
-    if isinstance(reference, str) and reference.strip():
-        return reference
-    if test.get("name") and test.get("description"):
-        return test["description"]
-    return test.get("source") or ""
-
-
-def _benchmark_table(results):
-    """Return (headers, rows, status column index) for the benchmark table.
-
-    Each numeric field gets its own column; flattening them into one
-    "Name: ...; Reference Value: ..." string made the table unreadable.
-    """
-    tests = _benchmark_tests(results)
-    value_cols = [(label, keys) for label, keys in _BENCHMARK_VALUE_COLUMNS
-                  if any(_benchmark_value_key(t, keys, label) for t in tests)]
-    # A value from another simulator (OPM, OLGA) is not a "NeqSim value"; say what it is.
-    bv = (results or {}).get("benchmark_validation") or {}
-    value_label = bv.get("value_label") if isinstance(bv, dict) else None
-    if not value_label and not any(k in t for t in tests for k in ("neqsim_value", "neqsim")):
-        value_label = "Calculated value"
-    if value_label:
-        value_cols = [(value_label if label == "NeqSim value" else label, keys)
-                      for label, keys in value_cols]
-    has_reference = any(_benchmark_reference_text(t) for t in tests)
-    used_by_test = []
-    for test in tests:
-        used = set(_BENCHMARK_TEXT_KEYS)
-        for label, keys in value_cols:
-            key = _benchmark_value_key(test, keys, label)
-            if key:
-                used.add(key)
-        if isinstance(test.get("reference"), str):
-            used.add("reference")
-        used_by_test.append(used)
-    has_notes = any(key not in used for test, used in zip(tests, used_by_test)
-                    for key in test)
-    headers = ([_t("Test")] + ([_t("Reference")] if has_reference else [])
-               + [_t(label) for label, _ in value_cols]
-               + [_t("Status")] + ([_t("Notes")] if has_notes else []))
-    rows = []
-    for test, used in zip(tests, used_by_test):
-        status = test.get("status")
-        if status is None:
-            passed = test.get("pass")
-            status = "PASS" if passed is True else ("FAIL" if passed is False else "N/A")
-        row = [test.get("name") or test.get("description") or test["parameter"]]
-        if has_reference:
-            row.append(_benchmark_reference_text(test))
-        for label, keys in value_cols:
-            key = _benchmark_value_key(test, keys, label)
-            row.append(_fmt_cell(test[key]) if key else "")
-        row.append(str(status).upper())
-        if has_notes:
-            row.append("; ".join(_fmt_cell(value) if key in ("notes", "note", "comment")
-                                  else "{}: {}".format(_label_from_key(key), _fmt_cell(value))
-                                  for key, value in test.items() if key not in used))
-        rows.append(row)
-    return headers, rows, 1 + int(has_reference) + len(value_cols)
-
-
-def add_benchmark_word_table(doc, results):
-    """Add benchmark validation as a styled Word table."""
-    bv = results.get("benchmark_validation", {})
-    if not bv:
-        return
-    if isinstance(bv, dict) and bv.get("source"):
-        doc.add_paragraph("{}: {}".format(_t("Reference source"), bv["source"]))
-    headers, data_rows, status_idx = _benchmark_table(results)
-    if not data_rows:
-        return
-    table = add_word_table(doc, headers, data_rows)
-    for row in table.rows[1:]:
-        cell = row.cells[status_idx]
-        text = cell.text.strip()
-        for paragraph in cell.paragraphs:
-            for run in paragraph.runs:
-                run.font.bold = True
-                if text == "PASS":
-                    run.font.color.rgb = RGBColor(0x28, 0xA7, 0x45)
-                elif text == "FAIL":
-                    run.font.color.rgb = RGBColor(0xDC, 0x35, 0x45)
-
-
-def add_word_table(doc, headers, data_rows, col_widths=None, caption=None):
-    """Add a professionally styled table to a Word document.
-
-    Args:
-        doc: Document object.
-        headers: list of column header strings.
-        data_rows: list of lists (each inner list = one row of cell values).
-        col_widths: optional list of Inches widths per column, rescaled to the
-            measure so a template's page size cannot leave the table narrow.
-        caption: optional caption text, numbered and placed above the table.
-    """
-    ncols = len(headers)
-    texts = [[str(text) for text in headers]]
-    texts += [[_fmt_cell(val) for val in row_data[:ncols]]
-              + [""] * max(0, ncols - len(row_data)) for row_data in data_rows]
-    margin_in = _TABLE_WIDE_MARGIN_IN if ncols >= 7 else _TABLE_MARGIN_IN
-    body_pt, landscape = _plan_table_layout(doc, texts, margin_in, col_widths)
-    if landscape:
-        _set_body_orientation(doc, landscape=True)
-    if caption:
-        _add_caption(doc, _t("Table"), caption, keep_with_next=True)
-    table = doc.add_table(rows=1, cols=ncols)
-    table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    _set_table_style(table)
-    _set_cell_margins(table, margin_in)
-
-    hdr = table.rows[0]
-    for i, text in enumerate(texts[0]):
-        cell = hdr.cells[i]
-        cell.text = text
-        _style_cell_text(cell, body_pt, bold=True, color=RGBColor(0xFF, 0xFF, 0xFF))
-        cell._tc.get_or_add_tcPr().append(parse_xml(
-            '<w:shd {} w:val="clear" w:color="auto" w:fill="2F5496"/>'.format(
-                nsdecls('w'))))
-        cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.BOTTOM
-
-    for row_texts in texts[1:]:
-        row = table.add_row()
-        for i, text in enumerate(row_texts):
-            cell = row.cells[i]
-            cell.text = text
-            _style_cell_text(cell, body_pt)
-
-    _scale_table_to_measure(doc, table, col_widths, body_pt, margin_in)
-    _repeat_header_row(table)
-    _keep_rows_intact(table)
-    _align_numeric_cells(table)
-
-    if landscape:
-        _set_body_orientation(doc, landscape=False)
-    else:
-        spacer = doc.add_paragraph("")
-        spacer.paragraph_format.space_after = Pt(4)
-    return table
-
-
-# Word's default cell margin is 0.075 in each side; wide tables get less so the
-# digits, not the padding, claim the width.
-_TABLE_MARGIN_IN = 0.075
-_TABLE_WIDE_MARGIN_IN = 0.045
-# Smallest type a portrait table may shrink to before it is set landscape.
-_TABLE_PORTRAIT_MIN_PT = 8.0
-_TABLE_MIN_PT = 7.0
-# Body cells narrower than this are kept on one line ("Test 1", "open (NIP-01)").
-_TABLE_NOWRAP_IN = 0.85
-
-
-def _style_cell_text(cell, font_pt, bold=False, color=None):
-    """Set type size and compact spacing; Normal's 6 pt space-after doubles row height."""
-    for paragraph in cell.paragraphs:
-        fmt = paragraph.paragraph_format
-        fmt.space_before = Pt(1.5)
-        fmt.space_after = Pt(1.5)
-        fmt.line_spacing = 1.0
-        fmt.keep_with_next = False
-        for run in paragraph.runs:
-            run.font.size = Pt(font_pt)
-            if bold:
-                run.font.bold = True
-            if color is not None:
-                run.font.color.rgb = color
-
-
-def _set_cell_margins(table, margin_in):
-    """Set the table's default left/right cell margins."""
-    tbl_pr = table._tbl.tblPr
-    for existing in tbl_pr.findall(qn("w:tblCellMar")):
-        tbl_pr.remove(existing)
-    twips = int(round(margin_in * 1440))
-    tbl_pr.append(parse_xml(
-        '<w:tblCellMar {0}><w:top w:w="0" w:type="dxa"/>'
-        '<w:left w:w="{1}" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/>'
-        '<w:right w:w="{1}" w:type="dxa"/></w:tblCellMar>'.format(nsdecls("w"), twips)))
-
-
-def _landscape_measure_in(doc):
-    """Printable width of the current section if it were turned landscape."""
-    section = doc.sections[-1]
-    long_side = max(section.page_width, section.page_height)
-    return max(2.0, (long_side - section.left_margin - section.right_margin) / 914400.0)
-
-
-def _plan_table_layout(doc, texts, margin_in, col_widths=None):
-    """Pick the largest type size at which no word or number has to break.
-
-    Returns (font_pt, landscape). A table that does not fit the portrait measure
-    even at _TABLE_PORTRAIT_MIN_PT is set on its own landscape page instead of
-    splitting "9.961" over three lines.
-    """
-    ncols = len(texts[0]) if texts else 0
-    start_pt = TABLE_PT
-    if ncols >= 9:
-        start_pt = TABLE_PT - 1.5
-    elif ncols >= 7:
-        start_pt = TABLE_PT - 1.0
-    if col_widths or ncols <= 1:
-        return start_pt, False
-    pad = 2.0 * margin_in + 0.02
-    portrait = _text_width_in(doc)
-    section = doc.sections[-1]
-    already_landscape = section.page_width > section.page_height
-
-    def fits(font_pt, measure):
-        minimums, _natural = _column_extents(texts, font_pt, pad)
-        return sum(minimums) <= measure
-
-    font_pt = start_pt
-    while font_pt >= _TABLE_PORTRAIT_MIN_PT - 1e-9:
-        if fits(font_pt, portrait):
-            return font_pt, False
-        font_pt -= 0.5
-    if already_landscape or REPORT_ORIENTATION == "template":
-        font_pt = _TABLE_PORTRAIT_MIN_PT - 0.5
-        while font_pt > _TABLE_MIN_PT and not fits(font_pt, portrait):
-            font_pt -= 0.5
-        return max(font_pt, _TABLE_MIN_PT), False
-    landscape = _landscape_measure_in(doc)
-    font_pt = start_pt
-    while font_pt > _TABLE_MIN_PT and not fits(font_pt, landscape):
-        font_pt -= 0.5
-    return max(font_pt, _TABLE_MIN_PT), True
-
-
-def _set_body_orientation(doc, landscape):
-    """Start a new section on a fresh page in the requested orientation.
-
-    Headers and footers stay linked to the previous section, so page numbering
-    and branding continue unchanged.
-    """
-    section = doc.add_section(WD_SECTION.NEW_PAGE)
-    is_landscape = section.page_width > section.page_height
-    if is_landscape != landscape:
-        section.page_width, section.page_height = section.page_height, section.page_width
-    section.orientation = WD_ORIENT.LANDSCAPE if landscape else WD_ORIENT.PORTRAIT
-    section.different_first_page_header_footer = False
-    return section
-
-
-# Approximate advance widths in em for a sans corporate face (Arial/Calibri
-# class). A flat average under-sizes "Medium" (two wide m's) and over-sizes
-# "Consequence", so column minimums were wrong in both directions.
-_GLYPH_EM_WIDE = set("MWmw@%")
-_GLYPH_EM_NARROW = set("iljtfrI.,:;'!|()[]-/ ")
-_TABLE_BOLD_FACTOR = 1.07
-_TABLE_CELL_PAD_IN = 0.17
-# A single token longer than this (a URL, a long formula) may break; letting
-# it claim its full width would starve every other column.
-_TABLE_MAX_TOKEN_IN = 1.6
-
-
-def _text_width_estimate_in(text, font_pt):
-    """Estimated printed width of text in inches at font_pt (bold)."""
-    em = 0.0
-    for char in text:
-        if char in _GLYPH_EM_WIDE:
-            em += 0.86
-        elif char in _GLYPH_EM_NARROW:
-            em += 0.30
-        elif char.isupper():
-            em += 0.68
-        else:
-            em += 0.56
-    return em * font_pt * _TABLE_BOLD_FACTOR / 72.0
-# Only real spaces are break points; "180 000" uses a no-break separator.
-_TABLE_BREAK_RE = re.compile(r"[ \t\n]+")
-
-
-def _column_extents(texts, font_pt, pad_in=_TABLE_CELL_PAD_IN):
-    """Return (minimum, natural) widths per column for a text matrix.
-
-    Row 0 is the header, which may wrap between words; a short body cell is
-    kept on one line because "Test / 1" reads as two entries.
-    """
-    ncols = max(len(row) for row in texts) if texts else 0
-    minimums, natural = [], []
-    for index in range(ncols):
-        min_in, natural_in = 0.0, 0.0
-        for row_index, row in enumerate(texts):
-            if index >= len(row):
-                continue
-            text = row[index].strip()
-            words = [w for w in _TABLE_BREAK_RE.split(text) if w]
-            if not words:
-                continue
-            longest = max(_text_width_estimate_in(w, font_pt) for w in words)
-            whole = _text_width_estimate_in(text[:70], font_pt)
-            if row_index > 0 and whole <= _TABLE_NOWRAP_IN:
-                longest = whole
-            min_in = max(min_in, min(longest, _TABLE_MAX_TOKEN_IN))
-            natural_in = max(natural_in, whole)
-        minimums.append(min_in + pad_in)
-        natural.append(max(min_in, natural_in) + pad_in)
-    return minimums, natural
-
-
-def _content_column_widths(table, measure, font_pt=TABLE_PT, pad_in=_TABLE_CELL_PAD_IN):
-    """Column widths from content, so no column has to break a word.
-
-    Equal-width columns split "Consequence" into "Consequenc/e" while a
-    two-character ID column sits half empty. Every column first gets room for
-    its longest word; the rest of the measure goes to the columns whose text
-    would otherwise wrap the most.
-    """
-    texts = [[cell.text for cell in row.cells] for row in table.rows]
-    minimums, natural = _column_extents(texts, font_pt, pad_in)
-    if sum(natural) <= measure:
-        return natural
-    spare = measure - sum(minimums)
-    if spare <= 0:
-        return minimums
-    stretch = [want - low for want, low in zip(natural, minimums)]
-    total_stretch = sum(stretch) or 1.0
-    return [low + spare * extra / total_stretch
-            for low, extra in zip(minimums, stretch)]
-
-
-def _scale_table_to_measure(doc, table, col_widths=None, font_pt=TABLE_PT,
-                            margin_in=_TABLE_MARGIN_IN):
-    """Lay the table out across the full measure, keeping column proportions.
-
-    Column widths written in absolute inches were sized for a portrait page; on
-    any other page they leave the table floating in white space or push it into
-    the margin.
-    """
-    measure = _text_width_in(doc)
-    count = len(table.columns)
-    if not count:
-        return
-    if col_widths:
-        shares = [float(width.inches) if hasattr(width, "inches") else float(width)
-                  for width in col_widths[:count]]
-        shares += [sum(shares) / len(shares)] * (count - len(shares))
-    else:
-        shares = _content_column_widths(table, measure, font_pt, 2.0 * margin_in + 0.02)
-    total = sum(shares) or float(count)
-    table.autofit = False
-    twips_total = 0
-    for index, share in enumerate(shares):
-        width = Inches(measure * share / total)
-        twips_total += int(width.twips)
-        table.columns[index].width = width
-        for row in table.rows:
-            if index < len(row.cells):
-                row.cells[index].width = width
-    # An "auto" table width lets Word and LibreOffice re-flow a fixed layout.
-    tbl_pr = table._tbl.tblPr
-    for existing in tbl_pr.findall(qn("w:tblW")):
-        tbl_pr.remove(existing)
-    tbl_pr.append(parse_xml('<w:tblW {} w:w="{}" w:type="dxa"/>'.format(
-        nsdecls("w"), twips_total)))
-
-
-def _group_caption(group):
-    """Caption for one headline table: "Key results" or "Key results - <group>"."""
-    return "{} \u2013 {}".format(_t("Key results"), group) if group else _t("Key results")
-
-
-def add_results_word_table(doc, results, full=False):
-    """Add key_results as a styled Word table with units column.
-
-    With headline results marked, the Results section shows only those (one
-    table per group); ``full=True`` prints every row for the appendix.
-    """
-    key_results = results.get("key_results", {})
-    headline = [] if full else _headline_rows(results)
-    if headline:
-        for group, rows in _grouped(headline):
-            has_notes = any(note for _l, _v, _u, note in rows)
-            headers = [_t("Parameter"), _t("Value"), _t("Unit")] + (
-                [_t("Source")] if has_notes else [])
-            data_rows = [[label, _fmt_cell(value), unit] + ([note or ""] if has_notes else [])
-                         for label, value, unit, note in rows]
-            add_word_table(doc, headers, data_rows, caption=_group_caption(group))
-        return
-    if not key_results:
-        return
-    flat_rows = _flatten_key_results(key_results)
-    has_notes = any(note for _label, _value, _unit, note in flat_rows)
-    if has_notes:
-        headers = [_t("Parameter"), _t("Value"), _t("Unit"), _t("Source")]
-        data_rows = [[label, _fmt_cell(value), unit, note or ""]
-                     for label, value, unit, note in flat_rows]
-        col_widths = [Inches(2.3), Inches(1.3), Inches(1.1), Inches(2.3)]
-    else:
-        headers = [_t("Parameter"), _t("Value"), _t("Unit")]
-        data_rows = [[label, _fmt_cell(value), unit] for label, value, unit, _note in flat_rows]
-        col_widths = [Inches(3.0), Inches(1.5), Inches(1.5)]
-    add_word_table(doc, headers, data_rows,
-                   col_widths=col_widths,
-                   caption=_t("Complete numerical results") if full else _t("Key results"))
-
-
-def add_validation_word_table(doc, results):
-    """Add validation checks as a styled Word table."""
-    validation = results.get("validation", {})
-    if not validation:
-        return
-    headers = [_t("Check"), _t("Result")]
-    data_rows = []
-    for check, outcome in validation.items():
-        label = _label_from_key(check)
-        if isinstance(outcome, dict) and "value" in outcome:
-            label = outcome.get("label") or label
-            unit = outcome.get("unit") or ""
-            outcome = outcome["value"]
-            if isinstance(outcome, (int, float)) and not isinstance(outcome, bool) and unit:
-                data_rows.append([label, "{} {}".format(_fmt_number(outcome), unit)])
-                continue
-        if isinstance(outcome, bool):
-            status = "FAIL" if _validation_outcome_is_failure(check, outcome) else "PASS"
-        elif isinstance(outcome, (int, float)):
-            status = _fmt_number(outcome)
-        else:
-            status = str(outcome)
-        data_rows.append([label, status])
-    table = add_word_table(doc, headers, data_rows,
-                           col_widths=[Inches(4.0), Inches(2.0)],
-                           caption=_t("Validation checks"))
-    # Color-code PASS/FAIL cells
-    for row in table.rows[1:]:
-        cell = row.cells[1]
-        text = cell.text.strip()
-        for paragraph in cell.paragraphs:
-            for run in paragraph.runs:
-                run.font.bold = True
-                if text == "PASS":
-                    run.font.color.rgb = RGBColor(0x28, 0xA7, 0x45)
-                elif text == "FAIL":
-                    run.font.color.rgb = RGBColor(0xDC, 0x35, 0x45)
-
-
-def add_custom_word_tables(doc, results):
-    """Add custom tables from results.json 'tables' key."""
-    tables = results.get("tables", [])
-    if not tables:
-        return
-    for tbl in tables:
-        title = tbl.get("title", "")
-        headers = tbl.get("headers", [])
-        data_rows = tbl.get("rows", [])
-        if not headers or not data_rows:
-            continue
-        # A data table titled with Heading 2 lands in the table of contents as
-        # if it were a chapter; a numbered caption is what it actually is.
-        add_word_table(doc, headers, data_rows, caption=title or None)
-
-
-# â”€â”€ Analytical depth (the nine depth moves) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-# A report can pass every hygiene gate and still only restate its source
-# document. These keys carry the analysis that separates an engineering answer
-# from a summary; see the neqsim-professional-reporting skill, Principle 0.
-DEPTH_MOVES = (
-    ("contributor_ranking",
-     "Contributors ranked on a common basis",
-     "Which effects actually carry the result, largest first."),
-    ("source_recommendation_assessment",
-     "Verdict on each source recommendation",
-     "Supported, supported with correction, or challenged \u2014 with the basis."),
-    ("ruled_out",
-     "Hypotheses ruled out quantitatively",
-     "What was excluded, by which test, and with how much margin."),
-    ("robustness",
-     "Robustness and crossover",
-     "How far an input can move before the conclusion flips."),
-    ("conservatism",
-     "Direction of each conservatism",
-     "Whether each assumption bounds the answer from above or below."),
-    ("discriminating_test",
-     "Cheapest discriminating test",
-     "The one measurement that would separate the surviving explanations."),
-    ("evidence_against",
-     "Evidence that does not fit",
-     "Observations the accepted explanation does not account for."),
-)
-
-
-def _depth_entries(results):
-    """Return the depth moves that the study actually produced."""
-    if not results:
-        return []
-    return [(key, _t(title), _t(hint)) for key, title, hint in DEPTH_MOVES
-            if results.get(key)]
-
-
-def _depth_rows(payload):
-    """Normalise a depth payload into (headers, rows) for a table, or None."""
-    if isinstance(payload, dict):
-        payload = [payload]
-    if not isinstance(payload, list) or not payload:
-        return None
-    dict_items = [item for item in payload if isinstance(item, dict)]
-    if len(dict_items) != len(payload):
-        return None
-    headers = []
-    for item in dict_items:
-        for key in item:
-            if key not in headers:
-                headers.append(key)
-    rows = [[_fmt_cell(item.get(key, "")) for key in headers]
-            for item in dict_items]
-    return [key.replace("_", " ").title() for key in headers], rows
-
-
-def _depth_bullets(payload):
-    """Render a non-tabular depth payload as bullet lines."""
-    if isinstance(payload, dict):
-        return ["{}: {}".format(key.replace("_", " ").title(), _fmt_cell(value))
-                for key, value in payload.items()]
-    if isinstance(payload, list):
-        return [_format_list_item_text(item) for item in payload]
-    return [str(payload)]
-
-
-def _depth_score_text(results):
-    """Return the declared depth score, or one derived from what is present."""
-    declared = results.get("depth_score") if results else None
-    if declared:
-        return str(declared)
-    return "{}/{} depth moves reported".format(
-        len(_depth_entries(results)), len(DEPTH_MOVES))
-
-
-def format_depth_html(results):
-    """Render the analytical-depth moves as HTML."""
-    entries = _depth_entries(results)
-    if not entries:
-        return ""
-    html = ('<p class="depth-score">Analytical depth: <strong>{}</strong></p>\n'
-            .format(_html_escape(_depth_score_text(results))))
-    for key, title, hint in entries:
-        payload = results.get(key)
-        html += '<h3>{}</h3>\n<p class="depth-hint">{}</p>\n'.format(
-            _html_escape(title), _html_escape(hint))
-        table = _depth_rows(payload)
-        if table:
-            headers, rows = table
-            html += _html_table_caption(title)
-            html += '<table class="custom-table"><thead><tr>'
-            html += "".join('<th>{}</th>'.format(_html_escape(col))
-                            for col in headers)
-            html += '</tr></thead><tbody>\n'
-            for row in rows:
-                html += "<tr>" + "".join(
-                    '<td>{}</td>'.format(_html_escape(cell)) for cell in row
-                ) + "</tr>\n"
-            html += "</tbody></table>\n"
-        else:
-            html += "<ul>\n" + "".join(
-                "  <li>{}</li>\n".format(_html_escape(line))
-                for line in _depth_bullets(payload)) + "</ul>\n"
-    return html
-
-
-def add_references_word(doc, results):
-    """Numbered reference list, one paragraph per entry with a hanging indent."""
-    for index, ref in enumerate(results.get("references") or [], 1):
-        text = _reference_text(ref)
-        para = doc.add_paragraph()
-        fmt = para.paragraph_format
-        fmt.left_indent = Inches(0.4)
-        fmt.first_line_indent = Inches(-0.4)
-        fmt.space_after = Pt(3)
-        para.add_run("[{}]\t".format(index))
-        _add_bold_runs(para, text)
-
-
-def add_depth_word_section(doc, results):
-    """Render the analytical-depth moves into the Word report."""
-    entries = _depth_entries(results)
-    if not entries:
-        return
-    paragraph = doc.add_paragraph()
-    paragraph.add_run("Analytical depth: ").bold = True
-    paragraph.add_run(_depth_score_text(results))
-    for key, title, hint in entries:
-        _add_heading(doc, title, level=2)
-        hint_para = doc.add_paragraph(hint)
-        for run in hint_para.runs:
-            run.font.size = Pt(CAPTION_PT)
-            run.font.italic = True
-            run.font.color.rgb = RGBColor(110, 110, 110)
-        table = _depth_rows(results.get(key))
-        if table:
-            headers, rows = table
-            add_word_table(doc, headers, rows, caption=title)
-        else:
-            for line in _depth_bullets(results.get(key)):
-                doc.add_paragraph(line, style="List Bullet")
-
-
-def _key_result_index(results):
-    """Map each key_results key (nested keys too) to its (label, value, unit, note) row."""
-    index = {}
-
-    def visit(mapping):
-        for key, value in (mapping or {}).items():
-            rows = _flatten_key_results({key: value})
-            if len(rows) == 1:
-                index[key] = rows[0]
-            if isinstance(value, dict) and not (
-                    "value" in value and not isinstance(value["value"], (dict, list))):
-                visit(value)
-
-    visit((results or {}).get("key_results"))
-    return index
-
-
-def _linked_result_text(name, index):
-    """Readable form of a linked result: "Label = value unit", never a raw key."""
-    name = str(name)
-    if name in index:
-        label, value, unit, _note = index[name]
-        return "{} = {}{}".format(label, _fmt_cell(value), " " + unit if unit else "")
-    return _label_from_key(name) if re.fullmatch(r"[A-Za-z0-9_]+", name) else name
-
-
-def _discussion_trace(disc, index):
-    """Traceability footer for one discussion entry (links and the question answered)."""
-    parts = []
-    linked = disc.get("linked_results", [])
-    if linked:
-        parts.append("{}: {}".format(
-            _t("Linked results"), "; ".join(_linked_result_text(k, index) for k in linked)))
-    if disc.get("insight_question_ref"):
-        parts.append("Answers: {}".format(disc["insight_question_ref"]))
-    return " | ".join(parts)
-
-
-def format_discussion_html(results):
-    """Format figure_discussion from results.json as styled HTML discussion blocks.
-
-    Each discussion entry links a figure to its observation, physical mechanism,
-    engineering implication, and recommendation â€” creating traceability from
-    calculation to conclusion. The figure itself is shown inside its block.
-    """
-    discussions = results.get("figure_discussion", [])
-    if not discussions:
-        return ""
-    plan = get_figure_plan(results)
-    index = _key_result_index(results)
-    h = ""
-    for i, disc in enumerate(discussions, 1):
-        fig_file = disc.get("figure", "")
-        title = disc.get("title", fig_file.replace("_", " ").replace(".png", "").title())
-        observation = disc.get("observation", "")
-        mechanism = disc.get("mechanism", "")
-        implication = disc.get("implication", "")
-        recommendation = disc.get("recommendation", "")
-
-        h += '<div class="discussion-block">\n'
-        h += '<h3>{} {}: {}</h3>\n'.format(_t("Discussion"), i, title)
-        if (i - 1) in plan.discussion_figure:
-            h += _figure_html(plan.discussion_figure[i - 1], results, plan,
-                              alt_extra=observation)
-        elif (i - 1) in plan.discussion_ref:
-            number = plan.number_of(plan.discussion_ref[i - 1])
-            h += '<p>{} <a class="xref" href="#fig-{}">{} {}</a>.</p>\n'.format(
-                _t("See"), number, _t("Figure"), number)
-        if observation:
-            h += '<p><strong>{}:</strong> {}</p>\n'.format(
-                _t("Observation"), _html_xrefs(observation))
-        if mechanism:
-            h += '<p><strong>{}:</strong> {}</p>\n'.format(
-                _t("Physical Mechanism"), _html_xrefs(mechanism))
-        if implication:
-            h += '<p><strong>{}:</strong> {}</p>\n'.format(
-                _t("Engineering Implication"), _html_xrefs(implication))
-        if recommendation:
-            h += '<p class="recommendation"><strong>{}:</strong> {}</p>\n'.format(
-                _t("Recommendation"), _html_xrefs(recommendation))
-        trace = _discussion_trace(disc, index)
-        if trace:
-            h += '<p class="traceability"><em>{}</em></p>\n'.format(_html_escape(trace))
-        h += '</div>\n'
-    return h
-
-
-def add_discussion_word(doc, results):
-    """Add figure discussion entries as styled Word content.
-
-    Each discussion block has: its figure, observation, physical mechanism,
-    engineering implication, and recommendation with traceability references.
-    """
-    discussions = results.get("figure_discussion", [])
-    if not discussions:
-        return
-    plan = get_figure_plan(results)
-    index = _key_result_index(results)
-    for i, disc in enumerate(discussions, 1):
-        fig_file = disc.get("figure", "")
-        title = disc.get("title", fig_file.replace("_", " ").replace(".png", "").title())
-        observation = disc.get("observation", "")
-        mechanism = disc.get("mechanism", "")
-        implication = disc.get("implication", "")
-        recommendation = disc.get("recommendation", "")
-
-        _add_heading(doc, "{} {}: {}".format(_t("Discussion"), i, title), level=2)
-
-        if (i - 1) in plan.discussion_figure:
-            _add_figure_block(doc, plan.discussion_figure[i - 1], results, plan,
-                              alt_extra=observation)
-        elif (i - 1) in plan.discussion_ref:
-            para = doc.add_paragraph()
-            para.add_run(_t("See") + " ")
-            ref_path = plan.discussion_ref[i - 1]
-            _add_ref_field(para, _figure_bookmark(ref_path),
-                           "{} {}".format(_t("Figure"), plan.number_of(ref_path)))
-            para.add_run(".")
-
-        for label, text in ((_t("Observation"), observation),
-                            (_t("Physical Mechanism"), mechanism),
-                            (_t("Engineering Implication"), implication),
-                            (_t("Recommendation"), recommendation)):
-            if not text:
-                continue
-            p = doc.add_paragraph()
-            r = p.add_run(label + ": ")
-            r.bold = True
-            r.font.size = Pt(BODY_PT)
-            first = len(p.runs)
-            _add_bold_runs(p, text)
-            for run in p.runs[first:]:
-                run.font.size = Pt(BODY_PT)
-                if label == _t("Recommendation"):
-                    run.font.color.rgb = RGBColor(0x1A, 0x53, 0x7A)
-
-        trace = _discussion_trace(disc, index)
-        if trace:
-            p = doc.add_paragraph()
-            r = p.add_run(trace)
-            r.font.size = Pt(CAPTION_PT)
-            r.font.italic = True
-            r.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
-
-        doc.add_paragraph("")  # spacing
-
-
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-# Build sections (auto-populated where possible)
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-
-def _renumber_sections(sections):
-    """Renumber section headings 1..N so conditional sections cannot leave gaps.
-
-    Sections are appended conditionally, so any counter bug shows up in the
-    issued report as a skipped or repeated chapter number.
-    """
-    index = 0
-    for section in sections:
-        if section.get("appendix"):
-            continue
-        index += 1
-        heading = str(section.get("heading", "")).strip()
-        section["heading"] = "{}. {}".format(
-            index, _MANUAL_HEADING_NUMBER.sub("", heading).strip())
-    return sections
-
-
-def build_sections(results, task_spec, study_config_warnings=None, study_config=None,
-                   consistency_issues=None):
-    """Build report sections, auto-populating from results.json and task_spec.md."""
-    sections = []
-    if study_config_warnings is None:
-        study_config_warnings = []
-
-    # 1. Executive Summary
-    exec_summary = ""
-    if "executive_summary" in AUTHORED_SECTIONS:
-        exec_summary = MANUAL_SECTIONS["executive_summary"]
-    if _is_placeholder_text(exec_summary) and results \
-            and results.get("executive_summary"):
-        exec_summary = str(results["executive_summary"])
-    if _is_placeholder_text(exec_summary):
-        exec_summary = auto_executive_summary(results, task_spec)
-    if _is_placeholder_text(exec_summary):
-        exec_summary = MANUAL_SECTIONS["executive_summary"]
-    sections.append({
-        "heading": "1. {}".format(_t("Executive Summary")),
-        "content": exec_summary,
-    })
-
-    # 2. Problem Description
-    problem_description = MANUAL_SECTIONS["problem_description"] \
-        if "problem_description" in AUTHORED_SECTIONS else ""
-    if _is_placeholder_text(problem_description):
-        problem_description = auto_problem_description(results, task_spec)
-    if _is_placeholder_text(problem_description):
-        problem_description = MANUAL_SECTIONS["problem_description"]
-    sections.append({
-        "heading": "2. {}".format(_t("Problem Description")),
-        "content": problem_description,
-    })
-
-    next_section_num = 3
-
-    live_summary = format_live_summary(_load_final_report_metadata())
-    if live_summary:
-        sections.append({
-            "heading": "{}. {}".format(next_section_num, "How the Live Study Developed"),
-            "content": live_summary,
-            "has_markdown": True,
-        })
-        next_section_num += 1
-
-    safety_readiness = format_safety_readiness_text(results) if results else ""
-    if safety_readiness:
-        sections.append({
-            "heading": "{}. {}".format(next_section_num,
-                                       _t("Safety Study Readiness")),
-            "content": safety_readiness,
-            "has_markdown": True,
-        })
-        next_section_num += 1
-
-    # Scope and Standards (auto-populated from task_spec.md)
-    scope_parts = []
-    standards = extract_spec_section(task_spec, "Applicable Standards")
-    if standards:
-        scope_parts.append(_t("Applicable Standards") + ":\n" + standards)
-    methods = extract_spec_section(task_spec, "Calculation Methods")
-    if methods:
-        scope_parts.append(_t("Calculation Methods") + ":\n" + methods)
-    criteria = extract_spec_section(task_spec, "Acceptance Criteria")
-    if criteria:
-        scope_parts.append(_t("Acceptance Criteria") + ":\n" + criteria)
-    envelope = extract_spec_section(task_spec, "Operating Envelope")
-    if envelope:
-        scope_parts.append(_t("Operating Envelope") + ":\n" + envelope)
-
-    scope_content = "\n\n".join(scope_parts) if scope_parts else (
-        "[Auto-populated from task_spec.md when filled in. "
-        "Edit step1_scope_and_research/task_spec.md and re-run.]"
-    )
-    sections.append({
-        "heading": "{}. {}".format(next_section_num, _t("Scope and Standards")),
-        "content": scope_content,
-        "has_scope": True,
-    })
-    next_section_num += 1
-
-    # Information Sources (auto-built from the collected documents themselves)
-    information_sources = format_information_sources_text(study_config, results)
-    if information_sources:
-        sections.append({
-            "heading": "{}. {}".format(
-                next_section_num, _t("Information Sources and Evidence Basis")),
-            "content": information_sources,
-            "has_markdown": True,
-        })
-        next_section_num += 1
-
-    # Approach
-    approach = MANUAL_SECTIONS["approach"]
-    if results and results.get("approach") and "approach" not in AUTHORED_SECTIONS:
-        approach = results["approach"]
-    sections.append({
-        "heading": "{}. {}".format(next_section_num, _t("Approach")),
-        "content": approach,
-        "has_equations": True,
-    })
-    next_section_num += 1
-
-    # Solution Workflow (how the task was solved â€” discovered agents + workflow)
-    if results and results.get("agent_workflow_plan"):
-        sections.append({
-            "heading": "{}. {}".format(next_section_num, _t("Solution Workflow")),
-            "content": "",
-            "has_workflow": True,
-        })
-        next_section_num += 1
-
-    # Results (auto-populated from results.json)
-    if results and results.get("key_results"):
-        results_text = format_results_table(results)
-    else:
-        results_text = (
-            "[Auto-populated from results.json when created by notebook. "
-            "Save results with the pattern shown in the task README.]"
-        )
-    sections.append({
-        "heading": "{}. {}".format(next_section_num, _t("Results")),
-        "content": results_text,
-        "has_figures": True,
-    })
-    next_section_num += 1
-
-    lifecycle_text = format_lifecycle_envelope_text(results, _promoted_cycle_id())
-    if lifecycle_text:
-        sections.append({
-            "heading": "{}. Lifecycle Operating Envelope".format(next_section_num),
-            "content": lifecycle_text,
-            "has_markdown": True,
-        })
-        next_section_num += 1
-
-    # Discussion (auto-populated from results.json figure_discussion)
-    if results and results.get("figure_discussion"):
-        sections.append({
-            "heading": "{}. {}".format(next_section_num, _t("Discussion")),
-            "content": "",
-            "has_discussion": True,
-        })
-        next_section_num += 1
-
-    # Analytical Depth: the moves that turn a summary into an engineering answer
-    if _depth_entries(results):
-        sections.append({
-            "heading": "{}. {}".format(next_section_num, _t("Analytical Depth")),
-            "content": "",
-            "has_depth": True,
-        })
-        next_section_num += 1
-
-    # Validation Summary (auto-populated from results.json)
-    if results and results.get("validation"):
-        validation_text = format_validation_table(results)
-    else:
-        validation_text = (
-            "[Auto-populated from results.json validation section. "
-            "Add validation checks to your notebook results output.]"
-        )
-    sections.append({
-        "heading": "{}. {}".format(next_section_num, _t("Validation Summary")),
-        "content": validation_text,
-        "has_validation": True,
-    })
-    next_section_num += 1
-
-    # Generator self-checks belong to the reviewer, not the engineering
-    # argument: they go to an appendix instead of interrupting the chapters.
-    quality_lines = []
-    review_items = ["- {}: {}".format(issue["severity"], issue["message"])
-                    for issue in (consistency_issues or [])
-                    if issue["severity"] != "INFO"]
-    if review_items:
-        quality_lines.append("**{}**".format(_t("Consistency review")))
-        quality_lines.extend(review_items)
-    if study_config_warnings:
-        quality_lines.append("**{}**".format(_t("Study configuration")))
-        quality_lines.extend("- {}".format(w) for w in study_config_warnings)
-
-    if results and results.get("benchmark_validation"):
-        sections.append({
-            "heading": "{}. {}".format(next_section_num, _t("Benchmark Validation")),
-            "content": "",
-            "has_benchmark": True,
-        })
-        next_section_num += 1
-
-    # N. Uncertainty Analysis (if data available)
-    if results and results.get("uncertainty"):
-        sections.append({
-            "heading": "{}. {}".format(next_section_num, _t("Uncertainty Analysis")),
-            "content": "",
-            "has_uncertainty": True,
-        })
-        next_section_num += 1
-
-    # N. Risk Assessment (if data available)
-    if results and results.get("risk_evaluation"):
-        sections.append({
-            "heading": "{}. {}".format(next_section_num, _t("Risk Assessment")),
-            "content": "",
-            "has_risk": True,
-        })
-        next_section_num += 1
-
-    assumptions_text = format_assumptions_text(results)
-    if assumptions_text:
-        sections.append({
-            "heading": "{}. {}".format(next_section_num,
-                                       _t("Assumptions and Data Gaps")),
-            "content": assumptions_text,
-            "has_markdown": True,
-        })
-        next_section_num += 1
-    elif results and (results.get("evidence_gaps") or results.get("assumptions_gaps")):
-        sections.append({
-            "heading": "{}. {}".format(
-                next_section_num, _t("Evidence Gaps and Design-Grade Blockers")),
-            "content": format_list_items_text(
-                results.get("evidence_gaps") or results.get("assumptions_gaps")),
-            "has_markdown": True,
-        })
-        next_section_num += 1
-
-    if results and results.get("recommendations"):
-        sections.append({
-            "heading": "{}. {}".format(next_section_num, _t("Recommendations")),
-            "content": format_list_items_text(results.get("recommendations")),
-            "has_markdown": True,
-        })
-        next_section_num += 1
-
-    improvements_text = format_improvements_text(results)
-    if improvements_text:
-        sections.append({
-            "heading": "{}. {}".format(next_section_num,
-                                       _t("Tooling Improvements Delivered")),
-            "content": improvements_text,
-            "has_markdown": True,
-        })
-        next_section_num += 1
-
-    # N. Conclusions and Recommendations
-    conclusions = MANUAL_SECTIONS["conclusions"]
-    if results and results.get("conclusions"):
-        conclusions = results["conclusions"]
-    sections.append({
-        "heading": "{}. {}".format(next_section_num,
-                                   _t("Conclusions and Recommendations")),
-        "content": conclusions,
-    })
-    next_section_num += 1
-
-    # N. References (auto-populated from results.json if available)
-    refs_content = MANUAL_SECTIONS["references"]
-    if results and results.get("references"):
-        ref_lines = []
-        for i, ref in enumerate(results["references"], 1):
-            ref_id = ref.get("id", "") if isinstance(ref, dict) else ""
-            ref_text = _reference_text(ref)
-            if ref_id:
-                ref_lines.append("[{}] {}".format(i, ref_text))
-            else:
-                ref_lines.append("[{}] {}".format(i, ref_text))
-        refs_content = "\n".join(ref_lines)
-    sections.append({
-        "heading": "{}. {}".format(next_section_num, _t("References")),
-        "content": refs_content,
-        "has_references": True,
-    })
-
-    reproducibility_text = format_reproducibility_text(results)
-    final_report_record = format_final_report_record(_load_final_report_metadata())
-    appendices = []
-    for _authored in (REPORT_SECTIONS.get("appendix_sections") or []):
-        if isinstance(_authored, dict) and str(_authored.get("title", "")).strip() and str(_authored.get("content", "")).strip():
-            appendices.append((str(_authored["title"]).strip(), {"content": str(_authored["content"]), "has_markdown": True}))
-    if final_report_record:
-        appendices.append(("Final Report Record", {
-            "content": final_report_record, "has_markdown": True}))
-    if results and _headline_rows(results) and results.get("key_results"):
-        appendices.append(("Complete Numerical Results", {
-            "content": "", "has_all_results": True}))
-    if reproducibility_text:
-        appendices.append(("Reproducing the Results", {
-            "content": reproducibility_text, "has_markdown": True}))
-    if quality_lines:
-        appendices.append(("Report Quality Checks", {
-            "content": "\n".join(quality_lines), "has_markdown": True}))
-    for position, (title, extra) in enumerate(appendices):
-        section = {"heading": "{} {}. {}".format(
-            _t("Appendix"), chr(ord("A") + position), _t(title)), "appendix": True}
-        section.update(extra)
-        sections.append(section)
-
-    return _renumber_sections(sections)
-
-
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-# Word report
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-
-def _auto_doc_number():
-    """Generate a document number from the task folder name if DOC_NUMBER is blank."""
-    if DOC_NUMBER:
-        return DOC_NUMBER
-    folder_name = os.path.basename(TASK_DIR)
-    # Extract date prefix (YYYY-MM-DD) if present
-    if len(folder_name) >= 10 and folder_name[4] == "-" and folder_name[7] == "-":
-        date_part = folder_name[:10].replace("-", "")
-        return "REP-{}".format(date_part)
-    return "REP-DRAFT"
-
-
-def _add_cover_page(doc):
-    """Add a professional cover page with title, metadata, and revision history."""
-    doc_num = _auto_doc_number()
-
-    # Spacer
-    for _ in range(4):
-        doc.add_paragraph("")
-
-    # Title
-    title_para = doc.add_paragraph()
-    title_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = title_para.add_run(TITLE)
-    run.font.size = Pt(28)
-    run.font.color.rgb = RGBColor(47, 84, 150)
-    run.bold = True
-
-    doc.add_paragraph("")
-
-    # Subtitle line
-    subtitle = doc.add_paragraph()
-    subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = subtitle.add_run(_t("NeqSim Engineering Report"))
-    run.font.size = Pt(14)
-    run.font.color.rgb = RGBColor(100, 100, 100)
-
-    if STUDY_BADGES:
-        badges = doc.add_paragraph()
-        badges.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        run = badges.add_run(
-            "  |  ".join("{}: {}".format(label, value)
-                         for label, value in STUDY_BADGES))
-        run.font.size = Pt(9)
-        run.font.color.rgb = RGBColor(130, 130, 130)
-
-    if TASK_STATEMENT:
-        doc.add_paragraph("")
-        statement = doc.add_paragraph()
-        statement.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        statement.paragraph_format.left_indent = Inches(0.8)
-        statement.paragraph_format.right_indent = Inches(0.8)
-        run = statement.add_run(TASK_STATEMENT)
-        run.font.size = Pt(11)
-        run.font.italic = True
-        run.font.color.rgb = RGBColor(70, 70, 70)
-
-    for _ in range(3):
-        doc.add_paragraph("")
-
-    # Metadata table
-    meta_table = doc.add_table(rows=5, cols=2)
-    _set_table_style(meta_table)
-    meta_table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    meta_data = [
-        (_t("Document Number"), doc_num),
-        (_t("Revision"), REVISION),
-        (_t("Date"), TASK_DATE),
-        (_t("Author"), AUTHOR or _t("(not specified)")),
-        (_t("Classification"), CLASSIFICATION),
-    ]
-    for i, (label, value) in enumerate(meta_data):
-        meta_table.rows[i].cells[0].text = label
-        meta_table.rows[i].cells[1].text = value
-        for cell in meta_table.rows[i].cells:
-            for paragraph in cell.paragraphs:
-                paragraph.paragraph_format.space_after = Pt(2)
-                paragraph.paragraph_format.space_before = Pt(2)
-        # Bold the label column
-        for run in meta_table.rows[i].cells[0].paragraphs[0].runs:
-            run.bold = True
-
-    doc.add_paragraph("")
-
-    # Revision history table (if entries exist)
-    rev_entries = REVISION_HISTORY or [
-        {"rev": REVISION, "date": TASK_DATE,
-         "description": _t("Initial issue"), "author": AUTHOR or ""}
-    ]
-    rev_heading = doc.add_paragraph()
-    rev_heading.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    run = rev_heading.add_run(_t("Revision History"))
-    run.font.size = Pt(12)
-    run.bold = True
-    run.font.color.rgb = RGBColor(47, 84, 150)
-
-    rev_table = doc.add_table(rows=1 + len(rev_entries), cols=4)
-    _set_table_style(rev_table)
-    rev_table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    headers = [_t("Rev"), _t("Date"), _t("Description"), _t("Author")]
-    for j, h in enumerate(headers):
-        cell = rev_table.rows[0].cells[j]
-        cell.text = h
-        shading = parse_xml(
-            '<w:shd {} w:fill="2F5496"/>'.format(nsdecls("w"))
-        )
-        cell.paragraphs[0].runs[0].font.color.rgb = RGBColor(255, 255, 255)
-        cell.paragraphs[0].runs[0].bold = True
-        cell._tc.get_or_add_tcPr().append(shading)
-    for i, entry in enumerate(rev_entries, 1):
-        rev_table.rows[i].cells[0].text = str(entry.get("rev", ""))
-        rev_table.rows[i].cells[1].text = str(entry.get("date", ""))
-        rev_table.rows[i].cells[2].text = str(entry.get("description", ""))
-        rev_table.rows[i].cells[3].text = str(entry.get("author", ""))
-    # The contents heading carries page-break-before; a break paragraph after
-    # this table would be an extra empty line that can spill a blank page.
-
-
-def _suppress_paragraph_numbering(paragraph):
-    """Keep a heading out of the template's automatic heading numbering."""
-    p_pr = paragraph._p.get_or_add_pPr()
-    for existing in p_pr.findall(qn("w:numPr")):
-        p_pr.remove(existing)
-    p_pr.append(parse_xml(
-        '<w:numPr {}><w:ilvl w:val="0"/><w:numId w:val="0"/></w:numPr>'.format(nsdecls("w"))
-    ))
-
-
-FRONT_MATTER_STYLE = "NeqSim Front Matter Heading"
-
-
-def _front_matter_heading(doc, text):
-    """A heading that looks like Heading 1 but stays out of the TOC.
-
-    As a real Heading 1 the contents page listed itself ("Table of Contents
-    ... 2") and the lists of figures and tables. Outline level 9 is body text,
-    so neither the \\o nor the \\u TOC switch collects it, and numId 0 keeps a
-    template's heading numbering off it.
-    """
-    try:
-        style = doc.styles[FRONT_MATTER_STYLE]
-    except KeyError:
-        style = doc.styles.add_style(FRONT_MATTER_STYLE, WD_STYLE_TYPE.PARAGRAPH)
-        try:
-            style.base_style = doc.styles["Heading 1"]
-        except KeyError:
-            style.font.size = Pt(HEADING1_PT)
-            style.font.bold = True
-        p_pr = style.element.get_or_add_pPr()
-        for tag in ("w:numPr", "w:outlineLvl"):
-            for existing in p_pr.findall(qn(tag)):
-                p_pr.remove(existing)
-        p_pr.append(parse_xml(
-            '<w:numPr {}><w:ilvl w:val="0"/><w:numId w:val="0"/></w:numPr>'.format(
-                nsdecls("w"))))
-        p_pr.append(parse_xml('<w:outlineLvl {} w:val="9"/>'.format(nsdecls("w"))))
-        style.paragraph_format.keep_with_next = True
-        style.paragraph_format.page_break_before = False
-    return doc.add_paragraph(text, style=style)
-
-
-def _end_page(doc):
-    """Start the next content on a new page without leaving a blank page.
-
-    doc.add_page_break() puts the break in a paragraph of its own; when the
-    page is already full that paragraph spills onto the next page and breaks
-    again. Appending the break to the last paragraph cannot spill.
-    """
-    body = [child for child in doc.element.body if child.tag != qn("w:sectPr")]
-    if body and body[-1].tag == qn("w:p"):
-        Paragraph(body[-1], doc._body).add_run().add_break(WD_BREAK.PAGE)
-    else:
-        doc.add_page_break()
-
-
-def _add_word_toc(doc):
-    """Add a Table of Contents field to the Word document."""
-    heading = _front_matter_heading(doc, _t("Table of Contents"))
-    heading.paragraph_format.page_break_before = True
-    _add_toc_field(doc, 'TOC \\o "1-2" \\h \\z \\u')
-    # Tell Word to update all fields (incl. this TOC) when the document is opened
-    _set_update_fields_on_open(doc)
-    _end_page(doc)
-
-
-def _add_figure_and_table_lists(doc, results):
-    """Add a list of figures and a list of tables, when there is anything to list.
-
-    Word builds these from the SEQ fields in the captions, so a reader can find
-    a named figure without scrolling the whole report. Short reports skip them
-    (``report.front_matter_lists``) so the reader reaches the summary at once.
-    """
-    n_items = len(get_figures() or []) + len((results or {}).get("tables") or [])
-    if REPORT_FRONT_LISTS == "never" or (REPORT_FRONT_LISTS == "auto" and n_items < FRONT_LISTS_MIN_ITEMS):
-        return
-    added = False
-    if get_figures():
-        _front_matter_heading(doc, _t("List of Figures"))
-        _add_toc_field(doc, 'TOC \\h \\z \\c "{}"'.format(_t("Figure")))
-        added = True
-    if results and (results.get("tables") or results.get("key_results")):
-        heading = _front_matter_heading(doc, _t("List of Tables"))
-        if added:
-            heading.paragraph_format.space_before = Pt(18)
-        _add_toc_field(doc, 'TOC \\h \\z \\c "{}"'.format(_t("Table")))
-        added = True
-    if added:
-        _end_page(doc)
-
-
-def _add_toc_field(doc, instruction):
-    """Insert a Word TOC-family field that populates on open or F9."""
-    paragraph = doc.add_paragraph()
-    run = paragraph.add_run()
-    fldChar1 = parse_xml(
-        '<w:fldChar {} w:fldCharType="begin"/>'.format(nsdecls("w"))
-    )
-    run._r.append(fldChar1)
-    run2 = paragraph.add_run()
-    instrText = parse_xml(
-        '<w:instrText {} xml:space="preserve"> {} </w:instrText>'.format(
-            nsdecls("w"), instruction
-        )
-    )
-    run2._r.append(instrText)
-    run3 = paragraph.add_run()
-    fldChar2 = parse_xml(
-        '<w:fldChar {} w:fldCharType="separate"/>'.format(nsdecls("w"))
-    )
-    run3._r.append(fldChar2)
-    run4 = paragraph.add_run(_t("(Right-click and select 'Update Field' to populate)"))
-    run4.font.color.rgb = RGBColor(128, 128, 128)
-    run4.font.italic = True
-    run5 = paragraph.add_run()
-    fldChar3 = parse_xml(
-        '<w:fldChar {} w:fldCharType="end"/>'.format(nsdecls("w"))
-    )
-    run5._r.append(fldChar3)
-    return paragraph
-
-
-def _set_update_fields_on_open(doc):
-    """Flag the document so Word refreshes all fields (TOC, page numbers) on open."""
-    settings = doc.settings.element
-    update = settings.find(qn("w:updateFields"))
-    if update is None:
-        update = parse_xml(
-            '<w:updateFields {} w:val="true"/>'.format(nsdecls("w"))
-        )
-        settings.append(update)
-    else:
-        update.set(qn("w:val"), "true")
-
-
-def _heading_levels_by_style(doc):
-    """Map paragraph style id -> heading level for 'Heading 1..9' styles."""
-    levels = {}
-    for style in doc.styles:
-        match = re.match(r"^heading\s+(\d)$", (style.name or "").strip(), re.IGNORECASE)
-        if match and style.style_id:
-            levels[style.style_id] = int(match.group(1))
-    return levels
-
-
-def _collect_toc_entries(doc):
-    """Return (headings [(level, text)], captions {seq label: [text]}) in document order."""
-    levels = _heading_levels_by_style(doc)
-    headings, captions = [], {}
-    for p in doc.element.body.iter(qn("w:p")):
-        instr = "".join(t.text or "" for t in p.iter(qn("w:instrText")))
-        if instr.strip().startswith("TOC"):
-            continue
-        text = "".join(t.text or "" for t in p.iter(qn("w:t"))).strip()
-        if not text:
-            continue
-        seq = re.search(r"\bSEQ\s+\"?([^\s\"\\]+)", instr)
-        if seq:
-            captions.setdefault(seq.group(1), []).append(text)
-            continue
-        style = p.find(qn("w:pPr") + "/" + qn("w:pStyle"))
-        level = levels.get(style.get(qn("w:val"))) if style is not None else None
-        if level:
-            headings.append((level, text))
-    return headings, captions
-
-
-def _write_field_result(doc, field_p, entries, style_for_level):
-    """Replace a TOC field's placeholder result with one paragraph per entry.
-
-    The field keeps its begin/instr/separate runs in the first paragraph and its
-    end run moves to the last one, so Word still sees one field and F9 or the
-    automatic update replaces the whole result (adding page numbers).
-    """
-    runs = list(field_p.iter(qn("w:r")))
-    kinds = [(r, r.find(qn("w:fldChar"))) for r in runs]
-    sep = next(r for r, f in kinds if f is not None and f.get(qn("w:fldCharType")) == "separate")
-    end = next(r for r, f in kinds if f is not None and f.get(qn("w:fldCharType")) == "end")
-    for r in runs[runs.index(sep) + 1:runs.index(end) + 1]:
-        field_p.remove(r)
-    previous = field_p
-    for index, (level, text) in enumerate(entries):
-        if index == 0:
-            p_el = field_p
-        else:
-            p_el = OxmlElement("w:p")
-            previous.addnext(p_el)
-        paragraph = Paragraph(p_el, doc._body)
-        style_name = style_for_level(level)
-        try:
-            paragraph.style = doc.styles[style_name]
-        except KeyError:
-            paragraph.paragraph_format.left_indent = Inches(0.25 * (level - 1))
-        paragraph.paragraph_format.space_after = Pt(2)
-        paragraph.add_run(text)
-        previous = p_el
-    previous.append(end)
-
-
-def _prefill_toc_fields(doc):
-    """Write the current headings and captions into every TOC-family field result.
-
-    Without this the contents, list of figures and list of tables show only a
-    placeholder until someone updates fields in Word; viewers that never update
-    fields (Word Online, Teams/SharePoint preview, LibreOffice) show nothing.
-    Page numbers are added when Word updates the fields.
-    """
-    headings, captions = _collect_toc_entries(doc)
-    for p in list(doc.element.body.iter(qn("w:p"))):
-        instr = "".join(t.text or "" for t in p.iter(qn("w:instrText"))).strip()
-        if not instr.startswith("TOC"):
-            continue
-        caption = re.search(r'\\c\s+"([^"]+)"', instr)
-        if caption:
-            entries = [(1, text) for text in captions.get(caption.group(1), [])]
-            style_for_level = lambda level: "Table of Figures"  # noqa: E731
-        else:
-            outline = re.search(r'\\o\s+"(\d)-(\d)"', instr)
-            deepest = int(outline.group(2)) if outline else 3
-            entries = [(level, text) for level, text in headings if level <= deepest]
-            style_for_level = lambda level: "TOC {}".format(level)  # noqa: E731
-        if entries:
-            _write_field_result(doc, p, entries, style_for_level)
-
-
-_WORD_FIELD_UPDATE_SCRIPT = r'''
-import sys
-import pythoncom
-import win32com.client
-pythoncom.CoInitialize()
-word = win32com.client.DispatchEx("Word.Application")
-word.Visible = False
-word.DisplayAlerts = 0
-doc = word.Documents.Open(sys.argv[1], ConfirmConversions=False, ReadOnly=False,
-                          AddToRecentFiles=False, Visible=False)
-try:
-    doc.Fields.Update()
-    for i in range(1, doc.TablesOfContents.Count + 1):
-        doc.TablesOfContents(i).Update()
-    for i in range(1, doc.TablesOfFigures.Count + 1):
-        doc.TablesOfFigures(i).Update()
-    doc.Repaginate()
-    # Filling the lists moves the body, so refresh page numbers once more.
-    for i in range(1, doc.TablesOfContents.Count + 1):
-        doc.TablesOfContents(i).UpdatePageNumbers()
-    for i in range(1, doc.TablesOfFigures.Count + 1):
-        doc.TablesOfFigures(i).UpdatePageNumbers()
-    doc.Fields.Update()
-    doc.Save()
-finally:
-    doc.Close(0)
-    word.Quit()
-    pythoncom.CoUninitialize()
-'''
-
-
-def _clear_update_fields_flag(docx_path):
-    """Remove w:updateFields so Word does not ask to update an already-updated document."""
-    import zipfile
-    tmp_path = docx_path + ".tmp"
-    with zipfile.ZipFile(docx_path) as src, zipfile.ZipFile(tmp_path, "w", zipfile.ZIP_DEFLATED) as dst:
-        for item in src.infolist():
-            data = src.read(item.filename)
-            if item.filename == "word/settings.xml":
-                data = re.sub(rb"<w:updateFields\b[^>]*/>", b"", data)
-            dst.writestr(item, data)
-    os.replace(tmp_path, docx_path)
-
-
-def update_word_fields(docx_path, timeout=240):
-    """Let Microsoft Word fill the TOC, lists of figures/tables and page numbers.
-
-    Runs by default on Windows when Word and pywin32 are available; disable with
-    ``--no-field-update`` or ``NEQSIM_REPORT_FIELD_UPDATE=0``. Word runs in a
-    child process on a %TEMP% copy (Word automation can hang on OneDrive paths),
-    and any failure leaves the pre-filled document, which still carries the
-    update-on-open flag.
-
-    Returns
-    -------
-    str or None
-        ``None`` when Word updated the document, otherwise why it did not.
-    """
-    if "--no-field-update" in sys.argv or os.environ.get("NEQSIM_REPORT_FIELD_UPDATE", "1") == "0":
-        return "disabled"
-    if os.name != "nt":
-        return "Microsoft Word automation is only available on Windows"
-    try:
-        import win32com.client  # noqa: F401
-    except ImportError:
-        return "pywin32 is not installed"
-    import tempfile
-    workdir = tempfile.mkdtemp(prefix="neqsim_fields_")
-    work = os.path.join(workdir, "report.docx")
-    try:
-        shutil.copy2(docx_path, work)
-        _clear_update_fields_flag(work)
-        try:
-            completed = subprocess.run([sys.executable, "-c", _WORD_FIELD_UPDATE_SCRIPT, work],
-                                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                       timeout=timeout)
-        except subprocess.TimeoutExpired:
-            return "Word did not finish within {} s".format(timeout)
-        if completed.returncode != 0:
-            tail = completed.stdout.decode("utf-8", "replace").strip().splitlines()[-1:]
-            return "Word automation failed ({})".format(tail[0] if tail else completed.returncode)
-        try:
-            shutil.copy2(work, docx_path)
-        except PermissionError:
-            return "{} is open in Word or locked by OneDrive".format(os.path.basename(docx_path))
-        return None
-    finally:
-        shutil.rmtree(workdir, ignore_errors=True)
-
-
-def finalize_word_fields(docx_path, label="Report"):
-    """Update fields through Word and report the outcome in one line."""
-    reason = update_word_fields(docx_path)
-    if reason is None:
-        print("{}: table of contents, lists of figures/tables and page numbers filled by Word.".format(label))
-    elif reason != "disabled":
-        print("{}: contents and lists pre-filled without page numbers ({}); "
-              "Word adds page numbers when the file is opened.".format(label, reason))
-    return reason is None
-
-
-def _add_page_number_footer(doc):
-    """Add "<title> | <doc no> | Page X of Y" to the footer of every section.
-
-    Skipped when a corporate template is used, because the template owns its
-    own headers and footers.
-    """
-    if REPORT_TEMPLATE:
-        return
-    label = "{} | {} Rev {} | Page ".format(TITLE, _auto_doc_number(), REVISION)
-    for section in doc.sections:
-        footer = section.footer
-        paragraph = footer.paragraphs[0] if footer.paragraphs \
-            else footer.add_paragraph()
-        paragraph.text = ""
-        paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        run = paragraph.add_run(label)
-        run.font.size = Pt(8)
-        run.font.color.rgb = RGBColor(120, 120, 120)
-        _add_field(paragraph, "PAGE")
-        run = paragraph.add_run(" of ")
-        run.font.size = Pt(8)
-        run.font.color.rgb = RGBColor(120, 120, 120)
-        _add_field(paragraph, "NUMPAGES")
-
-
-def _add_field(paragraph, instruction):
-    """Append a Word field (e.g. PAGE, NUMPAGES) to a paragraph."""
-    run = paragraph.add_run()
-    run.font.size = Pt(8)
-    run.font.color.rgb = RGBColor(120, 120, 120)
-    run._r.append(parse_xml(
-        '<w:fldChar {} w:fldCharType="begin"/>'.format(nsdecls("w"))))
-    run._r.append(parse_xml(
-        '<w:instrText {} xml:space="preserve"> {} </w:instrText>'.format(
-            nsdecls("w"), instruction)))
-    run._r.append(parse_xml(
-        '<w:fldChar {} w:fldCharType="end"/>'.format(nsdecls("w"))))
-
-
-def _add_task_statement_block(doc):
-    """State the task at the very start of the report body."""
-    if not TASK_STATEMENT:
-        return
-    heading = doc.add_paragraph()
-    run = heading.add_run(_t("Task"))
-    run.bold = True
-    run.font.size = Pt(12)
-    run.font.color.rgb = RGBColor(47, 84, 150)
-
-    box = doc.add_table(rows=1, cols=1)
-    box.alignment = WD_TABLE_ALIGNMENT.CENTER
-    cell = box.rows[0].cells[0]
-    cell._tc.get_or_add_tcPr().append(
-        parse_xml('<w:shd {} w:fill="F3F6FB"/>'.format(nsdecls("w"))))
-    cell.text = ""
-    paragraph = cell.paragraphs[0]
-    run = paragraph.add_run(TASK_STATEMENT)
-    run.font.size = Pt(BODY_PT)
-    if STUDY_BADGES:
-        meta = cell.add_paragraph()
-        run = meta.add_run("  |  ".join(
-            "{}: {}".format(label, value) for label, value in STUDY_BADGES))
-        run.font.size = Pt(CAPTION_PT)
-        run.font.italic = True
-        run.font.color.rgb = RGBColor(110, 110, 110)
-    doc.add_paragraph("")
-
-
-def _set_document_properties(doc, results):
-    """Fill the document properties that PDF viewers and search indexes read."""
-    props = doc.core_properties
-    # python-docx rejects any property longer than 255 characters.
-    props.title = str(TITLE)[:250]
-    props.subject = "{} {}".format(_t("NeqSim Engineering Report"), _auto_doc_number()).strip()[:250]
-    if AUTHOR:
-        props.author = str(AUTHOR)[:250]
-        props.last_modified_by = str(AUTHOR)[:250]
-    props.keywords = KIT.report_keywords(
-        ["NeqSim"], (value for _label, value in (STUDY_BADGES or [])),
-        (results or {}).get("standards_applied") if isinstance(
-            (results or {}).get("standards_applied"), list) else [])[:250]
-    props.comments = KIT.plain_alt_text(TASK_STATEMENT, 250)
-    props.category = str(CLASSIFICATION)[:250]
-    props.identifier = str(_auto_doc_number())[:250]
-    stamp = _build_fingerprint()
-    if stamp["results"]:
-        props.version = "results.json sha256:{}".format(stamp["results"])
-
-
-def _add_figure_block(doc, fig_path, results, plan, alt_extra=""):
-    """Picture, alt text and numbered caption (with a bookmark for cross-references)."""
-    number = plan.number_of(fig_path)
-    caption_text = get_figure_caption(fig_path, results, number)
-    alt = KIT.plain_alt_text("{} {}".format(_strip_caption_prefix(caption_text), alt_extra))
-    _add_figure_picture(doc, fig_path, alt=alt)
-    _add_caption(doc, _t("Figure"), caption_text, bookmark=_figure_bookmark(fig_path))
-
-
-def _add_display_omml(doc, label, latex):
-    """Numbered display equation as an editable Word equation; False when unsupported."""
-    if not EQUATIONS_AS_OMML:
-        return False
-    xml = KIT.latex_to_omml(_sanitize_equation_latex(latex))
-    if not xml:
-        return False
-    measure = _text_width_in(doc)
-    if label:
-        lead = doc.add_paragraph()
-        run = lead.add_run(_strip_caption_prefix(label))
-        run.italic = True
-        run.font.size = Pt(CAPTION_PT)
-        run.font.color.rgb = RGBColor(90, 90, 90)
-        lead.paragraph_format.space_before = Pt(6)
-        lead.paragraph_format.space_after = Pt(0)
-        lead.paragraph_format.keep_with_next = True
-    paragraph = doc.add_paragraph()
-    fmt = paragraph.paragraph_format
-    fmt.space_before = Pt(2)
-    fmt.space_after = Pt(8)
-    fmt.keep_together = True
-    fmt.tab_stops.add_tab_stop(Inches(measure / 2.0), WD_TAB_ALIGNMENT.CENTER)
-    fmt.tab_stops.add_tab_stop(Inches(measure), WD_TAB_ALIGNMENT.RIGHT)
-    paragraph.add_run("\t")
-    try:
-        paragraph._p.append(parse_xml(xml))
-    except Exception:
-        doc.element.body.remove(paragraph._p)
-        return False
-    paragraph.add_run("\t(")
-    _add_seq_field(paragraph, _t("Equation"))
-    paragraph.add_run(")")
-    return True
-
-
-def build_word_report(sections, results=None):
-    """Build the Word document with cover page, TOC, numbered figures, and equations."""
-    doc = _new_document()
-    plan = get_figure_plan(results)
-    _set_document_properties(doc, results)
-
-    # Cover page with metadata and revision history
-    _add_cover_page(doc)
-
-    # Table of Contents
-    _add_word_toc(doc)
-    _add_figure_and_table_lists(doc, results)
-
-    # The task this report answers, stated before any analysis
-    _add_task_statement_block(doc)
-
-    # Add all sections
-    for section in sections:
-        heading = _add_heading(doc, section["heading"], level=1,
-                               numbered=not section.get("appendix"))
-        if section.get("appendix"):
-            heading.paragraph_format.page_break_before = True
-
-        # Results section: use Word table instead of plain text
-        if section.get("has_all_results") and results:
-            add_results_word_table(doc, results, full=True)
-        elif section.get("has_figures") and results and results.get("key_results"):
-            add_results_word_table(doc, results)
-            # Custom tables
-            if results.get("tables"):
-                add_custom_word_tables(doc, results)
-        elif section.get("has_figures"):
-            # No results data â€” show placeholder text
-            for para_text in _body_paragraphs(section["content"]):
-                doc.add_paragraph(para_text)
-        elif section.get("has_scope") or section.get("has_markdown"):
-            # Scope section: parse markdown tables, bold, and lists
-            render_scope_to_word(doc, section["content"])
-        elif (section.get("has_validation") and not section.get("has_benchmark")
-              and results and results.get("validation")):
-            # Validation section: use Word table
-            add_validation_word_table(doc, results)
-        elif section.get("has_benchmark") and results:
-            # Benchmark Validation section: styled table
-            add_benchmark_word_table(doc, results)
-        elif section.get("has_uncertainty") and results:
-            # Uncertainty Analysis section: styled tables
-            add_uncertainty_word_tables(doc, results)
-        elif section.get("has_risk") and results:
-            # Risk Assessment section: styled table with color-coded levels
-            add_risk_word_table(doc, results)
-        elif section.get("has_workflow") and results:
-            # Solution Workflow section: agents + workflow composition
-            add_workflow_word_section(doc, results)
-        elif section.get("has_discussion") and results:
-            # Discussion section: figure-by-figure interpretation
-            add_discussion_word(doc, results)
-        elif section.get("has_depth") and results:
-            # Analytical Depth: ranking, rule-outs, robustness, crossover
-            add_depth_word_section(doc, results)
-        elif section.get("has_references") and results and results.get("references"):
-            add_references_word(doc, results)
-        else:
-            # Regular text content (bold spans and $...$ inline maths render)
-            for para_text in _word_paragraphs(section["content"]):
-                _add_bold_runs(doc.add_paragraph(), para_text)
-
-        # Embed figures after Results section (the discussed ones sit in Discussion)
-        if section.get("has_figures"):
-            if plan.results_figures:
-                for fig_path in plan.results_figures:
-                    _add_figure_block(doc, fig_path, results, plan)
-            elif not plan.order:
-                doc.add_paragraph(
-                    "[No figures found in figures/ directory. "
-                    "Save plots as PNG files there and re-run this script.]"
-                )
-
-        # Embed equations after Approach section
-        if section.get("has_equations"):
-            equations = get_equations(results)
-            if equations:
-                _add_heading(doc, _t("Key Equations"), level=2)
-                eq_img_dir = os.path.join(REPORT_DIR, "_eq_images")
-                if not os.path.exists(eq_img_dir):
-                    os.makedirs(eq_img_dir)
-                for eq_idx, eq in enumerate(equations, 1):
-                    label = eq.get("label", "")
-                    latex = eq.get("latex", "")
-                    if not latex:
-                        continue
-                    if _add_display_omml(doc, label, latex):
-                        continue
-                    eq_img_path = os.path.join(eq_img_dir, "eq_{}.png".format(eq_idx))
-                    if render_equation_to_image(latex, eq_img_path):
-                        _add_display_equation(doc, eq_img_path, label,
-                                              _text_width_in(doc))
-                        _set_last_picture_alt(doc.paragraphs[-1], _latex_fallback_text(latex))
-                    else:
-                        _add_equation_fallback_paragraph(doc, label, latex)
-
-    # Save
-    _prefill_toc_fields(doc)
-    _add_page_number_footer(doc)
-    _save_docx(doc, DOCX_FILE)
-    print("Word report saved: {}".format(DOCX_FILE))
-
-
-def _save_docx(doc, path):
-    """Save a Word document, exiting with a clear message when it is open in Word."""
-    try:
-        doc.save(path)
-    except PermissionError:
-        print("ERROR: cannot write {} - it is open in Word or locked by "
-              "OneDrive. Close it and run the report again.".format(path))
-        sys.exit(3)
-
-
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-# HTML report
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-
-def _build_rev_rows_html():
-    """Build HTML table rows for revision history in the HTML report."""
-    rev_entries = REVISION_HISTORY or [
-        {"rev": REVISION, "date": TASK_DATE,
-         "description": _t("Initial issue"), "author": AUTHOR or ""}
-    ]
-    rows = ""
-    for entry in rev_entries:
-        rows += "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n".format(
-            entry.get("rev", ""), entry.get("date", ""),
-            entry.get("description", ""), entry.get("author", ""))
-    return rows
-
-
-def _html_escape(text):
-    """Escape the characters that would break generated HTML."""
-    return (str(text).replace("&", "&amp;").replace("<", "&lt;")
-            .replace(">", "&gt;"))
-
-
-def _build_badges_html():
-    """Build the study-depth badge row shown under the report title."""
-    if not STUDY_BADGES:
-        return ""
-    spans = "".join(
-        "<span>{}: {}</span>".format(_html_escape(label), _html_escape(value))
-        for label, value in STUDY_BADGES)
-    return '<p class="study-badges">{}</p>'.format(spans)
-
-
-def _build_task_block_html():
-    """Build the task statement shown at the very start of the report body."""
-    if not TASK_STATEMENT:
-        return ""
-    return (
-        '<div class="task-statement">\n'
-        '    <h2>{}</h2>\n'
-        '    <p>{}</p>\n'
-        '</div>'.format(_html_escape(_t("Task")),
-                        _html_escape(TASK_STATEMENT))
-    )
-
-
-def _figure_html(fig_path, results, plan, alt_extra=""):
-    """One numbered figure with an anchor, embedded image, alt text and caption."""
-    number = plan.number_of(fig_path)
-    caption_text = get_figure_caption(fig_path, results, number)
-    mime = "image/svg+xml" if fig_path.endswith(".svg") else "image/png"
-    with open(fig_path, "rb") as handle:
-        img_data = base64.b64encode(handle.read()).decode("utf-8")
-    alt = _html_escape(KIT.plain_alt_text(
-        "{} {}".format(_strip_caption_prefix(caption_text), alt_extra)))
-    return (
-        '<figure class="figure" id="fig-{}">\n'
-        '    <img src="data:{};base64,{}" alt="{}">\n'
-        '    <figcaption class="caption">{}</figcaption>\n'
-        '</figure>\n'.format(number, mime, img_data, alt, _html_escape(caption_text)))
-
-
-def build_html_report(sections, results=None):
-    """Build an HTML report with embedded figures, KaTeX equations, and navigation."""
-    plan = get_figure_plan(results)
-
-    # Figures without a discussion stay in Results; discussed ones sit in Discussion
-    figure_html = ""
-    if plan.results_figures:
-        figure_html = "".join(_figure_html(path, results, plan)
-                              for path in plan.results_figures)
-    elif not plan.order:
-        figure_html = "<p><em>No figures found in figures/ directory.</em></p>"
-
-    # Build equation HTML (KaTeX rendering with embedded image fallbacks)
-    equation_html = ""
-    equations = get_equations(results)
-    if equations:
-        equation_html += '<h3>{}</h3>\n'.format(_t("Key Equations"))
-        # Pre-render equation images for offline fallback
-        eq_img_dir = os.path.join(REPORT_DIR, "_eq_images")
-        if not os.path.exists(eq_img_dir):
-            os.makedirs(eq_img_dir)
-        for eq_idx, eq in enumerate(equations, 1):
-            label = eq.get("label", "Equation {}".format(eq_idx))
-            latex = eq.get("latex", "")
-            if not latex:
-                continue
-            # Render fallback image
-            fallback_img = ""
-            eq_img_path = os.path.join(eq_img_dir, "eq_{}.png".format(eq_idx))
-            if render_equation_to_image(latex, eq_img_path):
-                with open(eq_img_path, "rb") as imgf:
-                    img_b64 = base64.b64encode(imgf.read()).decode("utf-8")
-                fallback_img = (
-                    '<img class="eq-fallback" '
-                    'src="data:image/png;base64,{}" '
-                    'alt="{}" style="display:none; max-width:90%;">'.format(
-                        img_b64, label)
-                )
-            equation_html += """
-            <div class="equation-block">
-                <div class="equation katex-eq">$${}$$</div>
-                {}
-                <p class="equation-label">Equation {}: {}</p>
-            </div>
-            """.format(latex, fallback_img, eq_idx, label)
-
-    # Build validation HTML
-    validation_html = ""
-    if results and results.get("validation"):
-        validation_html = format_validation_html(results)
-
-    # Build key results HTML table
-    results_table_html = ""
-    if results and results.get("key_results"):
-        results_table_html = format_results_html(results)
-
-    # Build custom tables HTML
-    custom_tables_html = ""
-    if results and results.get("tables"):
-        custom_tables_html = format_custom_tables_html(results)
-
-    # Build section HTML and navigation
-    nav_items = ""
-    section_html = ""
-    for section in sections:
-        section_id = section["heading"].lower().replace(" ", "-").replace(".", "")
-        nav_items += '    <li><a href="#{}">{}</a></li>\n'.format(
-            section_id, section["heading"]
-        )
-        # Convert scope section markdown to HTML
-        if section.get("has_scope") or section.get("has_markdown"):
-            content = scope_content_to_html(section["content"])
-        else:
-            content = _prose_to_html(section["content"])
-
-        # Insert auto-generated HTML for special sections
-        if section.get("has_figures"):
-            if results_table_html:
-                content = results_table_html + custom_tables_html + figure_html
-            else:
-                content += figure_html
-
-        if section.get("has_equations") and equation_html:
-            content += equation_html
-
-        if section.get("has_all_results") and results:
-            content = format_results_html(results, full=True)
-
-        if section.get("has_validation") and validation_html:
-            content = validation_html
-
-        if section.get("has_benchmark") and results:
-            content = format_benchmark_html(results)
-
-        if section.get("has_uncertainty") and results:
-            content = format_uncertainty_html(results)
-
-        if section.get("has_risk") and results:
-            content = format_risk_html(results)
-
-        if section.get("has_workflow") and results:
-            content = format_workflow_html(results)
-
-        if section.get("has_discussion") and results:
-            content = format_discussion_html(results)
-
-        if section.get("has_depth") and results:
-            content = format_depth_html(results)
-
-        if section.get("has_references") and results and results.get("references"):
-            content = format_references_html(results)
-
-        section_html += """
-        <section id="{}">
-            <h2>{}</h2>
-            <div>{}</div>
-        </section>
-        """.format(section_id, section["heading"], content)
-
-    # KaTeX for equations and inline maths: bundled so the report also reads offline
-    katex_head = ""
-    katex_body_script = ""
-    needs_math = bool(equations) or any(
-        re.search(r"\$[^$\n]+\$", str(section.get("content", ""))) for section in sections)
-    if needs_math:
-        assets = KIT.katex_assets()
-        if assets:
-            css, katex_js, auto_js = assets
-            katex_head = ("\n    <style>{}</style>\n    <script>{}</script>\n    <script>{}</script>"
-                          .format(css, katex_js.replace("</script", "<\\/script"),
-                                  auto_js.replace("</script", "<\\/script")))
-        else:
-            katex_head = """
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>"""
-    if needs_math:
-        katex_body_script = """
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            if (typeof renderMathInElement === "function") {
-                renderMathInElement(document.body, {
-                    delimiters: [
-                        {left: "$$", right: "$$", display: true},
-                        {left: "$", right: "$", display: false}
-                    ],
-                    throwOnError: false
-                });
-            } else {
-                // KaTeX not available (offline) â€” show fallback images
-                var eqs = document.querySelectorAll(".katex-eq");
-                for (var i = 0; i < eqs.length; i++) {
-                    eqs[i].style.display = "none";
-                }
-                var imgs = document.querySelectorAll(".eq-fallback");
-                for (var j = 0; j < imgs.length; j++) {
-                    imgs[j].style.display = "inline";
-                }
-            }
-        });
-    </script>"""
-
-    html = """<!DOCTYPE html>
-<html lang="{lang}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title}</title>
-    <meta name="author" content="{meta_author}">
-    <meta name="description" content="{meta_description}">
-    <meta name="neqsim-results-sha256" content="{meta_fingerprint}">{katex_head}
-    <style>
-        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-               display: flex; line-height: 1.6; color: #333; }}
-        nav {{ width: 260px; min-height: 100vh; background: #f5f5f5; padding: 1.5rem;
-              position: fixed; overflow-y: auto; border-right: 1px solid #ddd; }}
-        nav h3 {{ margin-bottom: 1rem; color: #555; font-size: 0.9rem;
-                  text-transform: uppercase; letter-spacing: 0.05em; }}
-        nav ul {{ list-style: none; }}
-        nav li {{ margin-bottom: 0.5rem; }}
-        nav a {{ color: #0366d6; text-decoration: none; font-size: 0.9rem; }}
-        nav a:hover {{ text-decoration: underline; }}
-        main {{ margin-left: 260px; max-width: 900px; padding: 2rem 3rem; }}
-        h1 {{ margin-bottom: 0.5rem; color: #1a1a1a; }}
-        h2 {{ margin-top: 2rem; margin-bottom: 1rem; color: #1a1a1a;
-             border-bottom: 1px solid #eee; padding-bottom: 0.3rem; }}
-        h3 {{ margin-top: 1.5rem; margin-bottom: 0.5rem; color: #333; }}
-        .meta {{ color: #666; margin-bottom: 2rem; }}
-        .cover-page {{ text-align: center; padding: 3rem 0; margin-bottom: 2rem;
-                       border-bottom: 3px solid #2F5496; }}
-        .cover-page h1 {{ font-size: 2.2rem; color: #2F5496; margin-bottom: 0.5rem;
-                          line-height: 1.25; }}
-        .cover-page .subtitle {{ font-size: 1.1rem; color: #888; margin-bottom: 0.8rem; }}
-        .study-badges {{ margin-bottom: 1.5rem; }}
-        .study-badges span {{ display: inline-block; margin: 0 0.25rem 0.35rem 0;
-                       padding: 0.15rem 0.6rem; font-size: 0.78rem; color: #2F5496;
-                       background: #eef2fa; border: 1px solid #d4ddef;
-                       border-radius: 999px; }}
-        .task-statement {{ border-left: 4px solid #2F5496; background: #f3f6fb;
-                       padding: 1rem 1.2rem; margin: 0 0 2rem 0;
-                       border-radius: 0 4px 4px 0; }}
-        .task-statement h2 {{ margin: 0 0 0.4rem 0; border: none; padding: 0;
-                       font-size: 1.05rem; color: #2F5496;
-                       text-transform: uppercase; letter-spacing: 0.06em; }}
-        .task-statement p {{ margin: 0; }}
-        .cover-meta {{ display: inline-block; text-align: left; margin: 1rem auto;
-                       background: #f8f9fa; padding: 1rem 2rem; border-radius: 6px;
-                       border: 1px solid #e0e0e0; }}
-        .cover-meta td {{ padding: 0.2rem 0.8rem; }}
-        .cover-meta td:first-child {{ font-weight: bold; color: #555; }}
-        .rev-table {{ margin: 1rem auto; font-size: 0.9rem; max-width: 700px; }}
-        .rev-table th {{ background: #2F5496; color: #fff; padding: 0.4rem 0.8rem; }}
-        .rev-table td {{ padding: 0.3rem 0.8rem; border: 1px solid #e0e0e0; }}
-        section {{ margin-bottom: 2rem; }}
-        .figure {{ text-align: center; margin: 1.5rem 0; }}
-        .figure img {{ max-width: 100%; border: 1px solid #ddd; border-radius: 4px; }}
-        .caption {{ font-size: 0.85rem; color: #666; font-style: italic;
-                    margin-top: 0.3rem; }}
-        a.xref {{ color: #2F5496; text-decoration: none; border-bottom: 1px dotted #2F5496; }}
-        .table-caption {{ font-size: 0.85rem; color: #555; font-style: italic;
-                    margin: 1.4rem 0 0.2rem 0; }}
-        .table-caption + table {{ margin-top: 0; }}
-        .depth-score {{ background: #f3f6fb; border-left: 4px solid #2F5496;
-                    padding: 0.5rem 0.9rem; margin-bottom: 1rem;
-                    border-radius: 0 4px 4px 0; }}
-        .depth-hint {{ font-size: 0.85rem; color: #777; font-style: italic;
-                    margin-bottom: 0.4rem; }}
-        .equation-block {{ margin: 1.5rem 0; text-align: center; }}
-        .equation {{ font-size: 1.2rem; padding: 0.5rem 0; }}
-        .equation-label {{ font-size: 0.85rem; color: #666; font-style: italic;
-                           margin-top: 0.2rem; }}
-        table {{ border-collapse: collapse; width: 100%; margin: 1.5rem 0;
-                font-size: 0.92rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }}
-        thead th {{ background: #2F5496; color: #fff; font-weight: 600;
-                    padding: 0.6rem 0.75rem; text-align: left;
-                    border: 1px solid #2a4a85; }}
-        tbody td {{ border: 1px solid #e0e0e0; padding: 0.5rem 0.75rem;
-                    text-align: left; }}
-        tbody tr:nth-child(even) {{ background: #f8f9fa; }}
-        tbody tr:hover {{ background: #e9ecef; }}
-        td.num {{ text-align: right; font-variant-numeric: tabular-nums; }}
-        .pass {{ color: #28a745; font-weight: bold; }}
-        .fail {{ color: #dc3545; font-weight: bold; }}
-        .results-table {{ max-width: 600px; }}
-        .validation-table {{ max-width: 500px; }}
-        .custom-table {{ margin-top: 0.5rem; }}
-        .scope-table {{ margin: 0.5rem 0 1rem 0; }}
-        section h3 {{ color: #2F5496; margin-top: 1.2rem; margin-bottom: 0.4rem;
-            font-size: 1.1rem; border-bottom: 1px solid #ddd; padding-bottom: 0.2rem; }}
-        section ul {{ margin: 0.3rem 0 0.8rem 1.5rem; }}
-        section ul li {{ margin-bottom: 0.3rem; }}
-        .reference-list {{ list-style: none; padding-left: 0; }}
-        .reference-list li {{ margin-bottom: 0.6rem; padding: 0.4rem 0.6rem;
-            border-left: 3px solid #2F5496; background: #f8f9fa; }}
-        .reference-list li strong {{ color: #2F5496; }}
-        /* Risk assessment styles */
-        .risk-summary-card {{ background: #f8f9fa; border-left: 4px solid #2F5496;
-            padding: 0.8rem 1.2rem; margin-bottom: 1.2rem; border-radius: 0 4px 4px 0; }}
-        .risk-badge {{ display: inline-block; padding: 0.15rem 0.6rem; border-radius: 3px;
-            font-weight: 600; font-size: 0.85rem; color: #fff; }}
-        .risk-badge.risk-high {{ background: #dc3545; }}
-        .risk-badge.risk-medium {{ background: #e67e22; }}
-        .risk-badge.risk-low {{ background: #28a745; }}
-        .risk-table {{ font-size: 0.88rem; }}
-        .risk-table .mitigation-cell {{ font-size: 0.85rem; color: #555; }}
-        .risk-level {{ font-weight: bold; text-align: center; }}
-        .risk-level.risk-high {{ color: #dc3545; }}
-        .risk-level.risk-medium {{ color: #e67e22; }}
-        .risk-level.risk-low {{ color: #28a745; }}
-        /* Uncertainty analysis styles */
-        .uncertainty-summary {{ background: #e8f4fd; border-left: 4px solid #0366d6;
-            padding: 0.8rem 1.2rem; margin-bottom: 1.2rem; border-radius: 0 4px 4px 0; }}
-        .uncertainty-table {{ font-size: 0.88rem; }}
-        .tornado-table {{ font-size: 0.88rem; }}
-        /* Benchmark validation styles */
-        .benchmark-table {{ font-size: 0.88rem; }}
-        /* Discussion section styles */
-        .discussion-block {{ background: #f9fafb; border-left: 4px solid #2d6a4f;
-            padding: 1rem 1.2rem; margin-bottom: 1.5rem; border-radius: 0 4px 4px 0; }}
-        .discussion-block h3 {{ color: #2d6a4f; margin-top: 0; }}
-        .discussion-block .recommendation {{ background: #e8f5e9; padding: 0.5rem 0.8rem;
-            border-radius: 3px; border-left: 3px solid #28a745; }}
-        .discussion-block .traceability {{ font-size: 0.8rem; color: #888;
-            border-top: 1px dashed #ccc; padding-top: 0.4rem; margin-top: 0.6rem; }}
-        @media (max-width: 768px) {{
-            nav {{ position: static; width: 100%; min-height: auto; }}
-            main {{ margin-left: 0; padding: 1rem; }}
-        }}
-        @media print {{
-            @page {{ size: A4 portrait; margin: 20mm 18mm 18mm 20mm; }}
-            nav {{ display: none; }}
-            main {{ margin-left: 0; max-width: 100%; padding: 0; }}
-            body {{ display: block; font-size: 10.5pt; color: #000; }}
-            .cover-page {{ page-break-after: always; }}
-            section {{ page-break-inside: auto; }}
-            .figure, table, .discussion-block {{ page-break-inside: avoid; }}
-            thead {{ display: table-header-group; }}
-            tr {{ page-break-inside: avoid; }}
-            h2, h3 {{ page-break-after: avoid; break-after: avoid; }}
-            .table-caption {{ page-break-after: avoid; }}
-            p {{ orphans: 3; widows: 3; }}
-            a {{ color: #000; text-decoration: none; }}
-        }}
-    </style>
-</head>
-<body>
-    <nav>
-        <h3>{contents_label}</h3>
-        <ul>
-{nav}
-        </ul>
-        <hr style="margin: 1rem 0;">
-        <p style="font-size: 0.8rem; color: #999;">{doc_num}</p>
-        <p style="font-size: 0.8rem; color: #999;">{rev_label} {rev} | {date}</p>
-    </nav>
-    <main>
-        <div class="cover-page">
-            <h1>{title}</h1>
-            <p class="subtitle">{subtitle}</p>
-            {badges}
-            <table class="cover-meta">
-                <tr><td>{doc_num_label}</td><td>{doc_num}</td></tr>
-                <tr><td>{revision_label}</td><td>{rev}</td></tr>
-                <tr><td>{date_label}</td><td>{date}</td></tr>
-                <tr><td>{author_label}</td><td>{author}</td></tr>
-                <tr><td>{classification_label}</td><td>{classification}</td></tr>
-            </table>
-            <h3 style="margin-top: 2rem; color: #2F5496;">{rev_history_label}</h3>
-            <table class="rev-table">
-                <thead><tr><th>{rev_label}</th><th>{date_label}</th><th>{description_label}</th><th>{author_label}</th></tr></thead>
-                <tbody>{rev_rows}</tbody>
-            </table>
-        </div>
-{task_block}
-{sections}
-    </main>{katex_body_script}
-</body>
-</html>""".format(
-        title=TITLE,
-        meta_author=_html_escape(AUTHOR or "").replace('"', "&quot;"),
-        meta_fingerprint=_build_fingerprint()["results"],
-        meta_description=_html_escape(KIT.plain_alt_text(TASK_STATEMENT, 300)).replace('"', "&quot;"),
-        lang=_report_locale(),
-        subtitle=_t("NeqSim Engineering Report"),
-        contents_label=_t("Contents"),
-        doc_num_label=_t("Document No."),
-        revision_label=_t("Revision"),
-        date_label=_t("Date"),
-        author_label=_t("Author"),
-        classification_label=_t("Classification"),
-        description_label=_t("Description"),
-        rev_history_label=_t("Revision History"),
-        rev_label=_t("Rev"),
-        badges=_build_badges_html(),
-        task_block=_build_task_block_html(),
-        author=AUTHOR or _t("(not specified)"),
-        date=TASK_DATE,
-        doc_num=_auto_doc_number(),
-        rev=REVISION,
-        classification=CLASSIFICATION,
-        rev_rows=_build_rev_rows_html(),
-        nav=nav_items,
-        sections=section_html,
-        katex_head=katex_head,
-        katex_body_script=katex_body_script,
-    )
-
-    with open(HTML_FILE, "w", encoding="utf-8") as f:
-        f.write(html)
-    print("HTML report saved: {}".format(HTML_FILE))
-
-
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-# Scientific Paper Generation
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-
-def build_paper_sections(results, task_spec):
-    """Build scientific paper sections from results.json and task_spec.md.
-
-    Maps task data to a standard engineering paper structure:
-    Abstract, Introduction, Methodology, Results & Discussion,
-    Uncertainty Analysis, Conclusions, Acknowledgments, References.
-    """
-    sections = []
-    paper_title = PAPER_TITLE or TITLE
-
-    # Abstract
-    abstract = PAPER_SECTIONS["abstract"]
-    if results and results.get("approach") and results.get("conclusions"):
-        # Auto-generate abstract from approach + key results + conclusions
-        parts = []
-        parts.append(results["approach"])
-        kr = results.get("key_results", {})
-        if kr:
-            highlights = []
-            for key, value in list(kr.items())[:5]:
-                label, unit = _parse_key_name(key)
-                if isinstance(value, float):
-                    highlights.append("{}: {:.4g} {}".format(label, value, unit).strip())
-                else:
-                    highlights.append("{}: {} {}".format(label, value, unit).strip())
-            parts.append("Key results: " + "; ".join(highlights) + ".")
-        parts.append(results["conclusions"])
-        abstract = " ".join(parts)
-    sections.append({
-        "type": "abstract",
-        "heading": "Abstract",
-        "content": abstract,
-    })
-
-    # 1. Introduction
-    intro = PAPER_SECTIONS["introduction"]
-    # Try to auto-populate from problem_description + task_spec background
-    if MANUAL_SECTIONS.get("problem_description") and not MANUAL_SECTIONS[
-            "problem_description"].startswith("["):
-        intro = MANUAL_SECTIONS["problem_description"]
-        background = extract_spec_section(task_spec, "Background")
-        if background:
-            intro = background + "\n\n" + intro
-    sections.append({
-        "type": "numbered",
-        "number": 1,
-        "heading": "Introduction",
-        "content": intro,
-    })
-
-    # 2. Methodology
-    methodology = PAPER_SECTIONS["methodology"]
-    if results and results.get("approach"):
-        methodology = results["approach"]
-    # Append standards info from task_spec
-    standards = extract_spec_section(task_spec, "Applicable Standards")
-    methods = extract_spec_section(task_spec, "Calculation Methods")
-    if standards:
-        methodology += "\n\nApplicable Standards:\n" + standards
-    if methods:
-        methodology += "\n\nCalculation Methods:\n" + methods
-    sections.append({
-        "type": "numbered",
-        "number": 2,
-        "heading": "Methodology",
-        "content": methodology,
-        "has_equations": True,
-    })
-
-    # 3. Results and Discussion
-    results_text = PAPER_SECTIONS["results_discussion"]
-    if results and results.get("key_results"):
-        results_text = format_results_table(results)
-    sections.append({
-        "type": "numbered",
-        "number": 3,
-        "heading": "Results and Discussion",
-        "content": results_text,
-        "has_figures": True,
-        "has_discussion": bool(results and results.get("figure_discussion")),
-    })
-
-    # 3.1 Validation (sub-section if data available)
-    if results and results.get("validation"):
-        sections.append({
-            "type": "numbered",
-            "number": 3.1,
-            "heading": "Validation",
-            "content": format_validation_table(results),
-            "is_subsection": True,
-        })
-
-    # 3.2 Benchmark comparison (sub-section if data available)
-    if results and results.get("benchmark_validation"):
-        bv = results["benchmark_validation"]
-        bv_lines = []
-        for key, val in bv.items():
-            if not isinstance(val, dict):
-                continue
-            desc = val.get("description") or val.get("reference") or key
-            status = val.get("status")
-            if status is None:
-                p = val.get("pass")
-                status = "PASS" if p is True else ("FAIL" if p is False else "N/A")
-            bv_lines.append("- {}: {}".format(desc, status))
-            if "max_deviation_pct" in val:
-                bv_lines.append("  Max deviation: {:.4f}%".format(
-                    val["max_deviation_pct"]))
-            if "deviation_pct" in val:
-                bv_lines.append("  Deviation: {:.2f}%".format(
-                    val["deviation_pct"]))
-        sections.append({
-            "type": "numbered",
-            "number": 3.2,
-            "heading": "Benchmark Comparison",
-            "content": "\n".join(bv_lines),
-            "is_subsection": True,
-        })
-
-    # 4. Uncertainty Analysis (if data available)
-    if results and results.get("uncertainty"):
-        unc = results["uncertainty"]
-        unc_lines = []
-        unc_lines.append("A {} was performed with {} simulations using {}.".format(
-            unc.get("method", "Monte Carlo analysis"),
-            unc.get("n_simulations", "N/A"),
-            unc.get("simulation_engine", "NeqSim")))
-        unc_lines.append("")
-        unc_lines.append("Input parameters and ranges:")
-        for param in unc.get("input_parameters", []):
-            unc_lines.append("  - {} [{}]: {}-{} ({}, base={})".format(
-                param["name"], param.get("unit", ""),
-                param["low"], param["high"],
-                param.get("distribution", "uniform"), param["base"]))
-        unc_lines.append("")
-        # Output P10/P50/P90
-        out_param = unc.get("output_parameter", "")
-        if out_param:
-            unc_lines.append("Results for {}:".format(out_param))
-            unc_lines.append("  P10: {}, P50: {}, P90: {}".format(
-                unc.get("p10", "N/A"), unc.get("p50", "N/A"),
-                unc.get("p90", "N/A")))
-        # Also handle output_parameters dict (mercury-style)
-        for out_key, out_val in unc.get("output_parameters", {}).items():
-            unc_lines.append("Results for {}:".format(out_key))
-            unc_lines.append("  P10: {}, P50: {}, P90: {}".format(
-                out_val.get("p10", "N/A"), out_val.get("p50", "N/A"),
-                out_val.get("p90", "N/A")))
-        sections.append({
-            "type": "numbered",
-            "number": 4,
-            "heading": "Uncertainty Analysis",
-            "content": "\n".join(unc_lines),
-            "has_uncertainty": True,
-        })
-
-    # 5. Risk Assessment (if data available)
-    if results and results.get("risk_evaluation"):
-        re_data = results["risk_evaluation"]
-        re_lines = []
-        re_lines.append("Risk assessment using {} framework.".format(
-            re_data.get("risk_matrix_used", "5x5 (ISO 31000)")))
-        re_lines.append("Overall risk level: {}.".format(
-            re_data.get("overall_risk_level", "N/A")))
-        re_lines.append("")
-        for risk in re_data.get("risks", []):
-            re_lines.append("- {} ({}): {} [{}]".format(
-                risk["id"], risk["category"], risk["description"],
-                risk["risk_level"]))
-            re_lines.append("  Mitigation: {}".format(risk["mitigation"]))
-        next_num = 5
-        sections.append({
-            "type": "numbered",
-            "number": next_num,
-            "heading": "Risk Assessment",
-            "content": "\n".join(re_lines),
-            "has_risk": True,
-        })
-
-    # N. Conclusions
-    conclusions = PAPER_SECTIONS["conclusions"]
-    if results and results.get("conclusions"):
-        conclusions = results["conclusions"]
-    elif not MANUAL_SECTIONS["conclusions"].startswith("["):
-        conclusions = MANUAL_SECTIONS["conclusions"]
-    # Determine next section number
-    last_num = max((s.get("number", 0) for s in sections
-                    if isinstance(s.get("number"), int)), default=3)
-    sections.append({
-        "type": "numbered",
-        "number": last_num + 1,
-        "heading": "Conclusions",
-        "content": conclusions,
-    })
-
-    # Acknowledgments (unnumbered)
-    ack = PAPER_SECTIONS["acknowledgments"] or PAPER_ACKNOWLEDGMENTS
-    if ack:
-        sections.append({
-            "type": "unnumbered",
-            "heading": "Acknowledgments",
-            "content": ack,
-        })
-
-    # References (unnumbered)
-    refs_content = ""
-    if results and results.get("references"):
-        ref_lines = []
-        for i, ref in enumerate(results["references"], 1):
-            ref_text = _reference_text(ref)
-            ref_lines.append("[{}] {}".format(i, ref_text))
-        refs_content = "\n".join(ref_lines)
-    elif not MANUAL_SECTIONS["references"].startswith("["):
-        refs_content = MANUAL_SECTIONS["references"]
-    if refs_content:
-        sections.append({
-            "type": "references",
-            "heading": "References",
-            "content": refs_content,
-            "has_references": True,
-        })
-
-    return sections
-
-
-def _paper_section_heading(section):
-    """Format a section heading with number for the paper."""
-    stype = section.get("type", "numbered")
-    if stype == "abstract":
-        return "Abstract"
-    elif stype in ("unnumbered", "references"):
-        return section["heading"]
-    elif section.get("is_subsection"):
-        return "{} {}".format(section["number"], section["heading"])
-    else:
-        return "{}. {}".format(section["number"], section["heading"])
-
-
-def build_paper_docx(sections, results=None):
-    """Build a scientific paper in Word format.
-
-    Uses standard academic formatting: Times New Roman, single-column,
-    numbered sections, centered title/author block, italic abstract,
-    numbered figures and equations.
-
-    The corporate report template is deliberately not applied here: a journal
-    manuscript follows the journal's format, not company branding.
-    """
-    doc = Document()
-
-    # â”€â”€ Page setup â”€â”€
-    for doc_section in doc.sections:
-        doc_section.top_margin = Inches(1.0)
-        doc_section.bottom_margin = Inches(1.0)
-        doc_section.left_margin = Inches(1.0)
-        doc_section.right_margin = Inches(1.0)
-
-    paper_title = PAPER_TITLE or TITLE
-
-    # â”€â”€ Title (centered, bold, 16pt) â”€â”€
-    title_para = doc.add_paragraph()
-    title_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    title_run = title_para.add_run(paper_title)
-    title_run.bold = True
-    title_run.font.size = Pt(16)
-    title_run.font.name = "Times New Roman"
-    doc.add_paragraph("")
-
-    # â”€â”€ Authors and affiliations (centered) â”€â”€
-    authors = PAPER_AUTHORS
-    if authors:
-        author_para = doc.add_paragraph()
-        author_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        names = []
-        affiliations = []
-        seen_aff = {}
-        for i, a in enumerate(authors):
-            name = a.get("name", "")
-            aff = a.get("affiliation", "")
-            if aff and aff not in seen_aff:
-                seen_aff[aff] = len(seen_aff) + 1
-                affiliations.append(aff)
-            sup = str(seen_aff.get(aff, "")) if aff else ""
-            names.append(name + ("" if not sup else sup))
-        author_run = author_para.add_run(", ".join(names))
-        author_run.font.size = Pt(12)
-        author_run.font.name = "Times New Roman"
-        if affiliations:
-            aff_para = doc.add_paragraph()
-            aff_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            for idx, aff in enumerate(affiliations, 1):
-                aff_run = aff_para.add_run("{}{}".format(idx, aff))
-                aff_run.font.size = Pt(10)
-                aff_run.font.name = "Times New Roman"
-                aff_run.font.italic = True
-                if idx < len(affiliations):
-                    aff_para.add_run("; ")
-    elif AUTHOR:
-        author_para = doc.add_paragraph()
-        author_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        author_run = author_para.add_run(AUTHOR)
-        author_run.font.size = Pt(12)
-        author_run.font.name = "Times New Roman"
-
-    # â”€â”€ Date (centered) â”€â”€
-    date_para = doc.add_paragraph()
-    date_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    date_run = date_para.add_run(TASK_DATE)
-    date_run.font.size = Pt(10)
-    date_run.font.name = "Times New Roman"
-    date_run.font.italic = True
-
-    doc.add_paragraph("")  # spacing
-
-    # â”€â”€ Keywords (if provided) â”€â”€
-    if PAPER_KEYWORDS:
-        kw_para = doc.add_paragraph()
-        kw_bold = kw_para.add_run("Keywords: ")
-        kw_bold.bold = True
-        kw_bold.font.size = Pt(10)
-        kw_bold.font.name = "Times New Roman"
-        kw_text = kw_para.add_run(", ".join(PAPER_KEYWORDS))
-        kw_text.font.size = Pt(10)
-        kw_text.font.name = "Times New Roman"
-        kw_text.font.italic = True
-        doc.add_paragraph("")
-
-    # Track figure and equation counters for the whole paper
-    fig_counter = [0]
-    eq_counter = [0]
-
-    # â”€â”€ Sections â”€â”€
-    for section in sections:
-        heading_text = _paper_section_heading(section)
-        is_sub = section.get("is_subsection", False)
-        stype = section.get("type", "numbered")
-
-        # Heading level
-        if stype == "abstract":
-            h = _add_heading(doc, heading_text, level=1, numbered=False)
-        elif is_sub:
-            h = _add_heading(doc, heading_text, level=2)
-        else:
-            h = _add_heading(doc, heading_text, level=1)
-
-        # Style heading runs as Times New Roman
-        for run in h.runs:
-            run.font.name = "Times New Roman"
-
-        # Abstract is italic
-        if stype == "abstract":
-            for para_text in _body_paragraphs(section["content"]):
-                p = doc.add_paragraph()
-                r = p.add_run(para_text)
-                r.font.italic = True
-                r.font.size = Pt(10)
-                r.font.name = "Times New Roman"
-        elif stype == "references" and results and results.get("references"):
-            # Numbered reference list
-            for i, ref in enumerate(results["references"], 1):
-                ref_text = _reference_text(ref)
-                p = doc.add_paragraph()
-                p.paragraph_format.left_indent = Inches(0.3)
-                p.paragraph_format.first_line_indent = Inches(-0.3)
-                bracket_run = p.add_run("[{}] ".format(i))
-                bracket_run.bold = True
-                bracket_run.font.size = Pt(10)
-                bracket_run.font.name = "Times New Roman"
-                text_run = p.add_run(ref_text)
-                text_run.font.size = Pt(10)
-                text_run.font.name = "Times New Roman"
-        elif section.get("has_figures") and results and results.get("key_results"):
-            # Results section: add results table
-            add_results_word_table(doc, results)
-            if results.get("tables"):
-                add_custom_word_tables(doc, results)
-            # Discussion text
-            disc = section["content"]
-            if disc and not disc.startswith("["):
-                for para_text in _body_paragraphs(disc):
-                    doc.add_paragraph(para_text)
-        elif ("Validation" in section["heading"] and not section.get("has_benchmark")
-              and results and results.get("validation")):
-            add_validation_word_table(doc, results)
-        elif section.get("has_benchmark") and results:
-            add_benchmark_word_table(doc, results)
-        elif section.get("has_uncertainty") and results:
-            add_uncertainty_word_tables(doc, results)
-        elif section.get("has_risk") and results:
-            add_risk_word_table(doc, results)
-        elif section.get("has_scope", False) or section.get("has_markdown", False):
-            render_scope_to_word(doc, section["content"])
-        else:
-            # Regular text content
-            for para_text in _body_paragraphs(section["content"]):
-                p = doc.add_paragraph()
-                _add_bold_runs(p, para_text)
-                for run in p.runs:
-                    run.font.name = "Times New Roman"
-                    if not run.font.size:
-                        run.font.size = Pt(11)
-
-        # Embed equations after Methodology section
-        if section.get("has_equations"):
-            equations = get_equations(results)
-            if equations:
-                eq_img_dir = os.path.join(REPORT_DIR, "_eq_images")
-                if not os.path.exists(eq_img_dir):
-                    os.makedirs(eq_img_dir)
-                for eq in equations:
-                    eq_counter[0] += 1
-                    label = eq.get("label", "")
-                    latex = eq.get("latex", "")
-                    if not latex:
-                        continue
-                    eq_img_path = os.path.join(
-                        eq_img_dir, "eq_{}.png".format(eq_counter[0]))
-                    if render_equation_to_image(latex, eq_img_path):
-                        _add_display_equation(doc, eq_img_path, label, 5.0)
-                    else:
-                        _add_equation_fallback_paragraph(doc, label, latex)
-
-        # Embed figures after Results section
-        if section.get("has_figures"):
-            figures = get_figures()
-            if figures:
-                for fig_path in figures:
-                    fig_counter[0] += 1
-                    caption_text = get_figure_caption(
-                        fig_path, results, fig_counter[0])
-                    doc.add_paragraph("")
-                    _add_figure_picture(doc, fig_path)
-                    cap = doc.add_paragraph(caption_text)
-                    cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    for run in cap.runs:
-                        run.font.size = Pt(CAPTION_PT)
-                        run.font.name = "Times New Roman"
-                        run.font.italic = True
-                    doc.add_paragraph("")
-
-        # Embed figure discussion after figures in Results & Discussion section
-        if section.get("has_discussion") and results:
-            add_discussion_word(doc, results)
-
-    _save_docx(doc, PAPER_DOCX_FILE)
-    print("Scientific paper (Word) saved: {}".format(PAPER_DOCX_FILE))
-
-
-def build_paper_html(sections, results=None):
-    """Build a scientific paper in HTML format with academic styling.
-
-    Single-column layout, no sidebar, centered title/author block,
-    properly numbered sections, KaTeX equations, and embedded figures.
-    """
-    paper_title = PAPER_TITLE or TITLE
-    figures = get_figures()
-
-    # Build author block
-    author_html = ""
-    authors = PAPER_AUTHORS
-    if authors:
-        names = []
-        affiliations = []
-        seen_aff = {}
-        for a in authors:
-            name = a.get("name", "")
-            aff = a.get("affiliation", "")
-            if aff and aff not in seen_aff:
-                seen_aff[aff] = len(seen_aff) + 1
-                affiliations.append(aff)
-            sup = str(seen_aff.get(aff, "")) if aff else ""
-            names.append("{}<sup>{}</sup>".format(name, sup) if sup else name)
-        author_html = '<p class="authors">{}</p>\n'.format(", ".join(names))
-        if affiliations:
-            aff_items = []
-            for idx, aff in enumerate(affiliations, 1):
-                aff_items.append("<sup>{}</sup>{}".format(idx, aff))
-            author_html += '<p class="affiliations">{}</p>\n'.format(
-                "; ".join(aff_items))
-    elif AUTHOR:
-        author_html = '<p class="authors">{}</p>\n'.format(AUTHOR)
-
-    # Keywords
-    keywords_html = ""
-    if PAPER_KEYWORDS:
-        keywords_html = (
-            '<p class="keywords"><strong>Keywords:</strong> '
-            '<em>{}</em></p>\n'.format(", ".join(PAPER_KEYWORDS)))
-
-    # Build figure HTML (reuse base64 embedding)
-    fig_counter = [0]
-
-    def _embed_figure(fig_path):
-        fig_counter[0] += 1
-        fig_name = os.path.basename(fig_path)
-        caption = get_figure_caption(fig_path, results, fig_counter[0])
-        mime = "image/svg+xml" if fig_path.endswith(".svg") else "image/png"
-        with open(fig_path, "rb") as f:
-            img_data = base64.b64encode(f.read()).decode("utf-8")
-        return """
-        <div class="paper-figure">
-            <img src="data:{};base64,{}" alt="{}">
-            <p class="fig-caption">{}</p>
-        </div>""".format(mime, img_data, caption, caption)
-
-    # Build equation HTML
-    eq_counter = [0]
-
-    def _embed_equation(eq):
-        eq_counter[0] += 1
-        label = eq.get("label", "")
-        latex = eq.get("latex", "")
-        if not latex:
-            return ""
-        fallback_img = ""
-        eq_img_dir = os.path.join(REPORT_DIR, "_eq_images")
-        if not os.path.exists(eq_img_dir):
-            os.makedirs(eq_img_dir)
-        eq_img_path = os.path.join(eq_img_dir, "eq_{}.png".format(eq_counter[0]))
-        if render_equation_to_image(latex, eq_img_path):
-            with open(eq_img_path, "rb") as imgf:
-                img_b64 = base64.b64encode(imgf.read()).decode("utf-8")
-            fallback_img = (
-                '<img class="eq-fallback" src="data:image/png;base64,{}" '
-                'alt="{}" style="display:none; max-width:90%;">'.format(
-                    img_b64, label))
-        return """
-        <div class="paper-equation">
-            <div class="eq-content katex-eq">$${}$$</div>
-            {}
-            <span class="eq-number">({}){}</span>
-        </div>""".format(latex, fallback_img, eq_counter[0],
-                         "  " + label if label else "")
-
-    # Build sections HTML
-    section_html = ""
-    for section in sections:
-        heading_text = _paper_section_heading(section)
-        stype = section.get("type", "numbered")
-        is_sub = section.get("is_subsection", False)
-        section_id = heading_text.lower().replace(" ", "-").replace(".", "")
-
-        # Heading tag
-        if stype == "abstract":
-            tag = "h2"
-        elif is_sub:
-            tag = "h3"
-        else:
-            tag = "h2"
-
-        # Content formatting
-        if stype == "abstract":
-            content = '<div class="abstract-text">{}</div>'.format(
-                _prose_to_html(section["content"]))
-        elif stype == "references" and results and results.get("references"):
-            content = format_references_html(results)
-        elif section.get("has_figures") and results and results.get("key_results"):
-            content = format_results_html(results)
-            if results.get("tables"):
-                content += format_custom_tables_html(results)
-            # Add discussion text
-            disc = section["content"]
-            if disc and not disc.startswith("["):
-                content += _prose_to_html(disc)
-            # Add figures
-            if figures:
-                for fig_path in figures:
-                    content += _embed_figure(fig_path)
-        elif "Validation" in section["heading"] and results and results.get("validation"):
-            content = format_validation_html(results)
-        elif section.get("has_benchmark") and results:
-            content = format_benchmark_html(results)
-        elif section.get("has_uncertainty") and results:
-            content = format_uncertainty_html(results)
-        elif section.get("has_risk") and results:
-            content = format_risk_html(results)
-        elif section.get("has_scope", False) or section.get("has_markdown", False):
-            content = scope_content_to_html(section["content"])
-        else:
-            content = _prose_to_html(section["content"])
-
-        # Add figure discussion after figures in Results & Discussion
-        if section.get("has_discussion") and results:
-            content += format_discussion_html(results)
-
-        # Add equations after methodology
-        if section.get("has_equations"):
-            equations = get_equations(results)
-            if equations:
-                for eq in equations:
-                    content += _embed_equation(eq)
-
-        section_html += """
-        <section id="{}">
-            <{} class="section-heading">{}</{}>
-            <div class="section-content">{}</div>
-        </section>""".format(section_id, tag, heading_text, tag, content)
-
-    # KaTeX CDN
-    equations = get_equations(results)
-    katex_head = ""
-    katex_body_script = ""
-    if equations:
-        katex_head = """
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>"""
-        katex_body_script = """
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {{
-            if (typeof renderMathInElement === "function") {{
-                renderMathInElement(document.body, {{
-                    delimiters: [
-                        {{left: "$$", right: "$$", display: true}},
-                        {{left: "$", right: "$", display: false}}
-                    ],
-                    throwOnError: false
-                }});
-            }} else {{
-                var eqs = document.querySelectorAll(".katex-eq");
-                for (var i = 0; i < eqs.length; i++) {{ eqs[i].style.display = "none"; }}
-                var imgs = document.querySelectorAll(".eq-fallback");
-                for (var j = 0; j < imgs.length; j++) {{ imgs[j].style.display = "inline"; }}
-            }}
-        }});
-    </script>"""
-
-    html = """<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title}</title>{katex_head}
-    <style>
-        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{
-            font-family: 'Times New Roman', Times, 'DejaVu Serif', Georgia, serif;
-            line-height: 1.6; color: #1a1a1a;
-            max-width: 800px; margin: 0 auto; padding: 2rem 2.5rem;
-            background: #fff;
-        }}
-        /* â”€â”€ Title block â”€â”€ */
-        .paper-header {{ text-align: center; margin-bottom: 2rem;
-            border-bottom: 2px solid #333; padding-bottom: 1.5rem; }}
-        .paper-header h1 {{ font-size: 1.6rem; font-weight: bold;
-            margin-bottom: 0.8rem; line-height: 1.3; }}
-        .authors {{ font-size: 1.05rem; margin-bottom: 0.3rem; }}
-        .affiliations {{ font-size: 0.9rem; font-style: italic;
-            color: #555; margin-bottom: 0.3rem; }}
-        .paper-date {{ font-size: 0.9rem; color: #666;
-            font-style: italic; margin-top: 0.5rem; }}
-        .keywords {{ font-size: 0.9rem; margin-top: 0.8rem;
-            text-align: left; padding: 0.5rem 1rem;
-            background: #f9f9f9; border-left: 3px solid #333; }}
-        /* â”€â”€ Abstract â”€â”€ */
-        .abstract-text {{ font-style: italic; padding: 0.5rem 1.5rem;
-            border-left: 3px solid #666; margin: 0.5rem 0 1.5rem 0;
-            color: #333; font-size: 0.95rem; }}
-        .abstract-text p {{ margin-bottom: 0.5rem; }}
-        /* â”€â”€ Section headings â”€â”€ */
-        h2.section-heading {{ font-size: 1.2rem; font-weight: bold;
-            margin-top: 1.8rem; margin-bottom: 0.6rem; color: #1a1a1a;
-            border-bottom: 1px solid #ccc; padding-bottom: 0.2rem; }}
-        h3.section-heading {{ font-size: 1.05rem; font-weight: bold;
-            margin-top: 1.2rem; margin-bottom: 0.4rem; color: #333; }}
-        .section-content {{ margin-bottom: 1rem; }}
-        .section-content p {{ margin-bottom: 0.6rem; text-align: justify; }}
-        /* â”€â”€ Figures â”€â”€ */
-        .paper-figure {{ text-align: center; margin: 1.5rem 0;
-            page-break-inside: avoid; }}
-        .paper-figure img {{ max-width: 100%; border: 1px solid #ddd; }}
-        .fig-caption {{ font-size: 0.85rem; color: #333;
-            margin-top: 0.4rem; font-style: italic; }}
-        /* â”€â”€ Equations â”€â”€ */
-        .paper-equation {{ display: flex; align-items: center;
-            justify-content: center; margin: 1rem 0;
-            position: relative; }}
-        .eq-content {{ flex: 1; text-align: center; font-size: 1.1rem; }}
-        .eq-number {{ position: absolute; right: 0; font-size: 0.95rem;
-            color: #333; }}
-        /* â”€â”€ Tables â”€â”€ */
-        table {{ border-collapse: collapse; width: 100%; margin: 1rem 0;
-            font-size: 0.9rem; }}
-        thead th {{ background: #2F5496; color: #fff; font-weight: 600;
-            padding: 0.5rem; text-align: left; border: 1px solid #2a4a85; }}
-        tbody td {{ border: 1px solid #ddd; padding: 0.4rem 0.5rem; }}
-        tbody tr:nth-child(even) {{ background: #f8f9fa; }}
-        td.num {{ text-align: right; font-variant-numeric: tabular-nums; }}
-        .pass {{ color: #28a745; font-weight: bold; }}
-        .fail {{ color: #dc3545; font-weight: bold; }}
-        .results-table {{ max-width: 600px; margin: 1rem auto; }}
-        .validation-table {{ max-width: 500px; margin: 1rem auto; }}
-        .custom-table {{ margin: 0.5rem auto; }}
-        /* â”€â”€ References â”€â”€ */
-        .reference-list {{ list-style: none; padding-left: 0; }}
-        .reference-list li {{ margin-bottom: 0.5rem; padding-left: 2rem;
-            text-indent: -2rem; font-size: 0.9rem; }}
-        .reference-list li strong {{ color: #333; }}
-        /* â”€â”€ Risk assessment styles â”€â”€ */
-        .risk-summary-card {{ background: #f8f9fa; border-left: 4px solid #333;
-            padding: 0.8rem 1.2rem; margin-bottom: 1.2rem; }}
-        .risk-badge {{ display: inline-block; padding: 0.15rem 0.6rem; border-radius: 3px;
-            font-weight: 600; font-size: 0.85rem; color: #fff; }}
-        .risk-badge.risk-high {{ background: #dc3545; }}
-        .risk-badge.risk-medium {{ background: #e67e22; }}
-        .risk-badge.risk-low {{ background: #28a745; }}
-        .risk-table {{ font-size: 0.88rem; }}
-        .risk-table .mitigation-cell {{ font-size: 0.85rem; color: #555; }}
-        .risk-level {{ font-weight: bold; text-align: center; }}
-        .risk-level.risk-high {{ color: #dc3545; }}
-        .risk-level.risk-medium {{ color: #e67e22; }}
-        .risk-level.risk-low {{ color: #28a745; }}
-        /* â”€â”€ Uncertainty analysis styles â”€â”€ */
-        .uncertainty-summary {{ background: #f5f5f5; border-left: 4px solid #333;
-            padding: 0.8rem 1.2rem; margin-bottom: 1.2rem; }}
-        .uncertainty-table {{ font-size: 0.88rem; }}
-        .tornado-table {{ font-size: 0.88rem; }}
-        /* â”€â”€ Benchmark validation styles â”€â”€ */
-        .benchmark-table {{ font-size: 0.88rem; }}
-        /* â”€â”€ Discussion section styles â”€â”€ */
-        .discussion-block {{ background: #f9fafb; border-left: 4px solid #2d6a4f;
-            padding: 1rem 1.2rem; margin-bottom: 1.5rem; border-radius: 0 4px 4px 0; }}
-        .discussion-block h3 {{ color: #2d6a4f; margin-top: 0; }}
-        .discussion-block .recommendation {{ background: #e8f5e9; padding: 0.5rem 0.8rem;
-            border-radius: 3px; border-left: 3px solid #28a745; }}
-        .discussion-block .traceability {{ font-size: 0.8rem; color: #888;
-            border-top: 1px dashed #ccc; padding-top: 0.4rem; margin-top: 0.6rem; }}
-        /* â”€â”€ Footer â”€â”€ */
-        .paper-footer {{ margin-top: 3rem; padding-top: 1rem;
-            border-top: 1px solid #ccc; font-size: 0.8rem;
-            color: #999; text-align: center; }}
-        /* â”€â”€ Print styles â”€â”€ */
-        @media print {{
-            body {{ padding: 0; max-width: none; }}
-            .paper-figure {{ page-break-inside: avoid; }}
-            table {{ page-break-inside: avoid; }}
-        }}
-    </style>
-</head>
-<body>
-    <div class="paper-header">
-        <h1>{title}</h1>
-        {author_block}
-        <p class="paper-date">{date}</p>
-        {keywords}
-    </div>
-{sections}
-    <div class="paper-footer">
-        <p>Generated {date} using NeqSim task-solving workflow</p>
-    </div>{katex_body_script}
-</body>
-</html>""".format(
-        title=paper_title,
-        author_block=author_html,
-        date=TASK_DATE,
-        keywords=keywords_html,
-        sections=section_html,
-        katex_head=katex_head,
-        katex_body_script=katex_body_script,
-    )
-
-    with open(PAPER_HTML_FILE, "w", encoding="utf-8") as f:
-        f.write(html)
-    print("Scientific paper (HTML) saved: {}".format(PAPER_HTML_FILE))
-
-
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-# Main
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-
-if __name__ == "__main__":
-    generate_paper = "--paper" in sys.argv or "--paper-only" in sys.argv
-    paper_only = "--paper-only" in sys.argv
-
-    # Word template selection: --template PATH | --no-template | saved setting
-    explicit_template = None
-    if "--template" in sys.argv:
-        template_index = sys.argv.index("--template") + 1
-        if template_index >= len(sys.argv):
-            print("ERROR: --template requires a path to a .docx or .dotx file")
-            sys.exit(2)
-        explicit_template = sys.argv[template_index]
-    KEEP_TEMPLATE_CONTENT = "--keep-template-content" in sys.argv
-    study_config = load_study_config()
-    try:
-        REPORT_TEMPLATE = resolve_report_template(
-            explicit_template, allow_saved="--no-template" not in sys.argv,
-            configured=study_config.get("report", {}).get("template"))
-    except (OSError, ValueError) as error:
-        print("ERROR: {}".format(error))
-        print("Fix the path, set report.template in study_config.yaml, pass --template PATH, or run:")
-        print("  neqsim --set-report-template \"PATH\"   (or --reset-report-template)")
-        sys.exit(2)
-
-    # Auto-read task data
-    results = load_results()
-    task_spec = load_task_spec()
-    record_environment(results)
-    REPORT_LANGUAGE = resolve_report_language(study_config)  # before identity: badges are translated
-    resolve_report_identity(study_config, task_spec, results)
-    apply_report_output_names(TITLE)
-
-    print("")
-    print("Generating outputs for: {}".format(TITLE))
-    REPORT_ORIENTATION = resolve_report_orientation(study_config)
-    REPORT_FRONT_LISTS = resolve_front_matter_lists(study_config)
-    if REPORT_LANGUAGE != DEFAULT_REPORT_LANGUAGE:
-        print("Report language: {} ({})".format(REPORT_LANGUAGE, _report_locale()))
-    pdf_requested = want_pdf_output(study_config)
-    print("Report files: {}.docx / {}.html{}".format(
-        REPORT_BASENAME, REPORT_BASENAME,
-        " / {}.pdf".format(REPORT_BASENAME) if pdf_requested else ""))
-    if REPORT_TEMPLATE:
-        print("Word template: {}".format(REPORT_TEMPLATE))
-    if not TASK_STATEMENT:
-        print("NOTE: no task statement found. Add study.title to study_config.yaml,")
-        print("      an '## Objective' section to task_spec.md, or 'objective' to")
-        print("      results.json so the report states the task up front.")
-
-    study_config_warnings = validate_study_config(study_config, results, task_spec)
-    consistency_issues = check_report_consistency(results)
-    print_consistency_report(consistency_issues)
-    calculation_issues = [issue for issue in consistency_issues
-                          if issue.get("fix_type") == "calculation"]
-    fixes_path = os.path.join(TASK_DIR, "fixes_needed.json")
-    if calculation_issues or os.path.exists(fixes_path):
-        with open(fixes_path, "w", encoding="utf-8") as handle:
-            json.dump(calculation_issues, handle, indent=2, ensure_ascii=False)
-            handle.write("\n")
-    if study_config_warnings:
-        print("")
-        print("Study configuration warnings:")
-        for warning in study_config_warnings:
-            print("  - {}".format(warning))
-
-    if not paper_only:
-        # Build report sections and generate technical report
-        sections = build_sections(results, task_spec, study_config_warnings,
-                                  study_config, consistency_issues)
-        print("")
-        build_word_report(sections, results)
-        finalize_word_fields(DOCX_FILE, "Report")
-        build_html_report(sections, results)
-        report_pdf_written = False
-        if pdf_requested:
-            report_pdf_written = convert_docx_to_pdf(DOCX_FILE, PDF_FILE, "Report")
-        print("")
-        print("Technical reports generated.")
-        print("  Open {} in a browser for navigable view.".format(
-            os.path.basename(HTML_FILE)))
-        print("  Open {} for formal distribution.".format(
-            os.path.basename(DOCX_FILE)))
-        if report_pdf_written:
-            print("  Open {} for read-only distribution.".format(
-                os.path.basename(PDF_FILE)))
-
-    if generate_paper:
-        # Build paper sections and generate scientific paper
-        paper_sections = build_paper_sections(results, task_spec)
-        print("")
-        build_paper_docx(paper_sections, results)
-        build_paper_html(paper_sections, results)
-        paper_pdf_written = False
-        if pdf_requested:
-            paper_pdf_written = convert_docx_to_pdf(
-                PAPER_DOCX_FILE, PAPER_PDF_FILE, "Paper")
-        print("")
-        print("Scientific papers generated.")
-        print("  Open {} for reading.".format(os.path.basename(PAPER_HTML_FILE)))
-        print("  Open {} for journal submission / distribution.".format(
-            os.path.basename(PAPER_DOCX_FILE)))
-        if paper_pdf_written:
-            print("  Open {} for read-only distribution.".format(
-                os.path.basename(PAPER_PDF_FILE)))
-
-    written = []
-    if not paper_only:
-        written.extend([DOCX_FILE, HTML_FILE])
-        if pdf_requested:
-            written.append(PDF_FILE)
-    if generate_paper:
-        written.extend([PAPER_DOCX_FILE, PAPER_HTML_FILE])
-        if pdf_requested:
-            written.append(PAPER_PDF_FILE)
-    if written:
-        prune_superseded_outputs(written)
-
-    if not generate_paper and not paper_only:
-        print("")
-        print("TIP: Add --paper flag to also generate a scientific paper.")
-        print("     python step3_report/generate_report.py --paper")
-
-    if not paper_only:
-        generate_work_record(study_config)
-
-    if not results:
-        print("")
-        print("TIP: Create results.json in the task root to auto-populate")
-        print("     the Results and Validation sections. See the task README")
-        print("     for the results.json pattern.")
+YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éí×mõïÄèµ©hºÚn¶X§zÍHˆˆ‚™Ù[™\˜]WÜ™\ÜœHHÙ[™\˜]HÛÜ™ÒS™\ÜÈ[™ØÚY[YšXÈ\\œÈ›Üˆ\È\ÚË‚‚•\ØYÙN‚ˆ\[œÝ[]Û‹YØÞX]ÝXˆ
+Û™K][YHÙ]\
+Bˆ]ÛˆÝ\×Ü™\ÜÙÙ[™\˜]WÜ™\ÜœHÈXÚšXØ[™\ÜÛ›Bˆ]ÛˆÝ\×Ü™\ÜÙÙ[™\˜]WÜ™\ÜœHK\\\ˆÈ[ÛÈÙ[™\˜]HØÚY[YšXÈ\\‚ˆ]ÛˆÝ\×Ü™\ÜÙÙ[™\˜]WÜ™\ÜœHK\\\‹[Û›HÈØÚY[YšXÈ\\ˆÛ›Bˆ]ÛˆÝ\×Ü™\ÜÙÙ[™\˜]WÜ™\ÜœHK][\]HÎ‹ø )‹ØÛÛ\[žH[\]K™ØÞ‚ˆ]ÛˆÝ\×Ü™\ÜÙÙ[™\˜]WÜ™\ÜœHK[›Ë][\]HÈYÛ›Ü™HHØ]™Y[\]Bˆ]ÛˆÝ\×Ü™\ÜÙÙ[™\˜]WÜ™\ÜœHKZÙY\][\]KXÛÛ[ˆ]ÛˆÝ\×Ü™\ÜÙÙ[™\˜]WÜ™\ÜœHK]]H‹‹‹ˆˆKX]]Üˆ‹‹‹ˆ‚ˆ]ÛˆÝ\×Ü™\ÜÙÙ[™\˜]WÜ™\ÜœHK[[™ÝXYÙH˜‚ˆ]Ûˆ]ÛÛËÝ\Ú×Ý[\]KÜÝ\×Ü™\ÜÙÙ[™\˜]WÜ™\ÜœHK]\ÚËY\ˆU‚•HØ[›ÛšXØ[ÛÜHÙˆ\ÈØÜš\]™\È[ˆ]ÛÛËÝ\Ú×Ý[\]KËˆ[ˆ]˜YØZ[œÝ[žH\ÚÈ›Û\ˆÚ]™\\Ú[H™\Ü\ÚÈ›Û\˜
+ÜˆK]\ÚËY\ˆÂ“‘TTÒSWÕTÒ×ÑTŠHÛÈHš^\™H\Y\ÈÈ\ÚÈ›Û\œÈÜ™X]YX\›Y\‹‚‚•H™\Ü[™ÝXYÙH\È[™Û\Ú[›\ÜÈ[›Ý\ˆ\ÈÛÛ™šYÝ\™Yˆ™\ÛÛ][ÛˆÜ™\Ž‚‹K[[™ÝXYÙHÓÑK‘TTÒSWÔ‘TÔ•ÓS‘ÕPQÑK[ˆ™\Ü›[™ÝXYÙX[‚œÝYWØÛÛ™šYËžX[[ˆ]Ù]ÈHÙXÝ[ÛˆXY[™ÜËÛÝ™\ˆX™[Ë[™Ø\[Û‚œ™Yš^\ÈHÙ[™\˜]ÜˆÝÛœË[™HØÝ[Y[[™ÝXYÙHÙˆH™ØÞ[™š[œÛÈÛÜ™Ü[XÚXÚÜÈ[ˆ][™ÝXYÙNÈ]]Ü™YÛÛ[\ÈÜš][ˆ[ˆ]›[™ÝXYÙHžHHÝYH]]Ü‹ˆHØÚY[YšXÈ\\ˆ
+K\\\ŠHÝ^\È[™Û\Ú‚‚•H™\Ü]H\ÈHÕQH]K[™H\ÚÈ\ÈÝ]Y]HÜÙˆBœ™\Üˆ]KØ]]Üˆ™\ÛÛ][ÛˆÜ™\Ž‚ˆK]]HÈKX]]Üˆˆ‘TTÒSWÔ‘TÔ•ÕUHÈ‘TTÒSWÔ‘TÔ•ÐUUÔˆ‚ˆÝYWØÛÛ™šYËžX[[
+ÝYK]KÝYK˜]]ÜŠHˆHš\œÝXY[™ÈÙ‚ˆ\Ú×ÜÜXË›YˆH\ÚË[ØØ[Ù[™\˜]WÜ™\ÜœHÛÜHˆH›Û\ˆ˜[YK‚•H\ÚÈÝ][Y[ÛÛY\Èœ›ÛH™\Ý[ËšœÛÛˆ
+\Ú×ÜÝ][Y[ˆÈ›Øš™XÝ]™HŠK™[ÙHHØš™XÝ]™KÕ\ÚÈ\ØÜš\[ÛˆÙXÝ[ÛˆÙˆ\Ú×ÜÜXË›Y[ÙHÝYK]K‚‚”™\Ü™ØÞ\ÈZ[œ›ÛHHÛÜ™[\]HÚ[ˆÛ™H\ÈÛÛ™šYÝ\™YÛÈÛÛ\[žB™›ÛËÛÛÝ\œËÝ[\ËXY\œË[™›ÛÝ\œÈ\Kˆ™\ÛÛ][ÛˆÜ™\Ž‚‹K][\]HU‘TTÒSWÔ‘TÔ•ÕSTUK[ˆHØ]™Y™\ÜÝ[\]X[‚Ÿ‹Ë›™\\Ú[KÝ\Ú×ÙY˜][ËšœÛÛˆ
+Ù]Û˜ÙHÚ]™\\Ú[HK\Ù]\™\Ü][\]HU
+K‚•H[\]IÜÈÝÛˆ›ÙH^\È›ÜY[›\ÜÈKZÙY\][\]KXÛÛ[\ÈÚ]™[ŽÂœYÙHÙ]\XY\œË›ÛÝ\œË[™Ý[\È\™H[Ø^\È[š\š]Yˆ\\‹™ØÞÙY\Âš›Ý\›˜[›Ü›X][™È[™YÛ›Ü™\ÈH[\]K‚‚•\ÈØÜš\UUËT‘PQÈ]Hœ›ÛHH\ÚÈ›Û\Ž‚ˆHÝYWØÛÛ™šYËžX[[OˆYš[™\È\›ÝX›ÛÚÈ[‹]X[]HØ]\ÂˆHÝ\WÜØÛÜWØ[™Ü™\ÙX\˜ÚÝ\Ú×ÜÜXË›YOˆÜ[]\ÈØÛÜH	ˆÝ[™\™ÂˆH™\Ý[ËšœÛÛˆ
+\ÚÈ›ÛÝ
+HOˆÜ[]\È™\Ý[È
+È˜[Y][Û‚ˆH™\Ý[ËšœÛÛˆ›Y™XÞXÛWÙ[™[ÜWÙ]šY[˜ÙHˆOˆÝX\™Y\‹\\š[Ù[™[ÜH]šY[˜ÙBˆHšYÝ\™\ËÊ‹œ™ÈOˆ[X™YÈ[ÝÂˆH™\Ý[ËšœÛÛˆ™\]X][ÛœÈˆOˆ™[™\œÈ\]X][ÛœÈ
+ØUVÚ[XYÙ\ÊBˆH™\Ý[ËšœÛÛˆ™šYÝ\™WØØ\[ÛœÈˆOˆÝ\ÝÛHØ\[ÛœÈ›ÜˆšYÝ\™\Â‚’]›ÙXÙ\È
+š[H˜[Y\È\™HH™\Ü]KÛÈH[]™\˜X›H\ÈY[YšXX›B›Ý]ÚYH]È\ÚÈ›Û\ˆ8 %K™Ëˆ’Y˜]HX\™Ú[ˆ›ÜˆH^Ü[™Hˆ™XÛÛY\Â’Y˜]WÛX\™Ú[—Ù›Ü—ÝWÙ^ÜÛ[™K™ØÞ
+N‚ˆHÝ\×Ü™\ÜÏ]O‹™ØÞ
+ÛÜ™ØÝ[Y[›Üˆ›Ü›X[\ÝšX][ÛŠBˆHÝ\×Ü™\ÜÏ]O‹š[
+˜]šYØX›HSÚ]ÚYX˜\‹ØUV\]X][ÛœÊBˆHÝ\×Ü™\ÜÏ]O—Ô\\‹™ØÞ
+ØÚY[YšXÈ\\ˆ[ˆÛÜ™›Ü›X]Ú]K\\\ŠBˆHÝ\×Ü™\ÜÏ]O—Ô\\‹š[
+ØÚY[YšXÈ\\ˆ[ˆS›Ü›X]Ú]K\\\ŠB”™\Üš[\ÈÜš][ˆ[™\ˆ[ˆX\›Y\ˆ]H\™H™[[Ý™YÛÈH™[˜[YYÝYHÙ\Â››ÝX]™HHÝ\\œÙYY[]™\˜X›H™\ÚYHHÝ\œ™[Û™K‚‚’Yˆ™\Ý[ËšœÛÛˆÜˆ\Ú×ÜÜXË›Y\™HZ\ÜÚ[™ËH™\Ü\Ù\ÈXÙZÛ\ˆ^‚’[™]Üš][ˆÛÛ[ÛÙ\È[ˆÝ\×Ü™\ÜÜ™\ÜÜÙXÝ[ÛœËšœÛÛˆ
+ÙYB—ÛØYÜ™\ÜÜÙXÝ[ÛœÊNÈÈ›Ý›ÜšÈÜˆY]\ÈØÜš\\ˆ\ÚË‚ˆˆˆ‚š[\ÜÜÂš[\Ü™Bš[\ÜÞ\Âš[\ÜÛØ‚š[\ÜœÛÛ‚š[\Ü˜\ÙMš[\Ü\ÚX‚š[\Ü[Âš[\ÜX]š[\ÜÚ][š[\ÜÜ[]LÂš[\ÜÝXœ›ØÙ\ÜÂ™œ›ÛH]][YH[\Ü]B‚žN‚ˆœ›ÛHØÞ[\ÜØÝ[Y[ˆœ›ÛHØÞœÚ\™Y[\Ü[˜Ú\Ë‘ÐÛÛÜ‚ˆœ›ÛHØÞ™[[K^[\ÜÑÐSQÓ—ÔTQÔTÑÐ”‘PRËÑÕP—ÐSQÓ“QS•ˆœ›ÛHØÞ™[[KX›H[\ÜÑÕP“WÐSQÓ“QS•ÑÐÑSÕ‘T•PÐSÐSQÓ“QS•ˆœ›ÛHØÞ™[[KœÙXÝ[Ûˆ[\ÜÑÓÔ’QS•ÑÔÑPÕSÓ‚ˆœ›ÛHØÞ™[[KœÝ[H[\ÜÑÔÕSWÕTBˆœ›ÛHØÞ^œ\˜YÜ˜\[\Ü\˜YÜ˜\ˆœ›ÛHØÞ›Þ[›œÈ[\ÜœÙXÛË[‚ˆœ›ÛHØÞ›Þ[[\ÜÞ[[[Y[\œÙWÞ[™^Ù\[\Ü\œ›ÜŽ‚ˆš[
+‘T”“ÔŽˆ]Û‹YØÞ›Ý[œÝ[Yˆ[Žˆ\[œÝ[]Û‹YØÞŠBˆÞ\Ë™^]
+JB‚ˆÈÜ[Û˜[ˆX]ÝXˆ›Üˆ™[™\š[™È\]X][ÛœÈÈ[XYÙ\È
+ÛÜ™™\Ü
+BžN‚ˆ[\ÜX]ÝX‚ˆX]ÝX‹\ÙJYÙÈŠBˆ[\ÜX]ÝX‹œ\Ý\Èˆœ›ÛHX]ÝX‹˜[œÙ›Ü›\È[\Ü˜›ÞˆT×ÓPUÕPˆHYB™^Ù\[\Ü\œ›ÜŽ‚ˆT×ÓPUÕPˆH˜[ÙB‚‚™YˆÛØYÜ™\ÜÚÚ]
+
+N‚ˆˆˆ’[\Ü™\ÜÚÚ]œHœ›ÛH™\ÚYH\ÈØÜš\[ÙHœ›ÛHH™\TÚ[HÛÛÚ]‚‚ˆH\ÚÈ›Û\ˆX^HÛHÛ™HÛÜHÙˆ\ÈØÜš\ÛÈH[\ˆ[Ù[H\Âˆ[ÛÈÛÚÙY\›ÝYÚ‘TTÒSWÔ“Ò‘PÕÔ“ÓÕHØ]™Y›Ú™XÝ›ÛÝBˆ\Z[œÝ[YÛÛÚ][™HØ[È\ÈH™\TÚ[HÚXÚÛÝ]‚ˆˆˆ‚ˆ[\Ü[\ÜX‹][ˆ\™HHÜËœ]™\›˜[YJÜËœ]˜XœÜ]
+×Ùš[W×ÊJBˆ™[]]™HHÜËœ]š›Ú[Š™]ÛÛÈ‹\Ú×Ý[\]H‹œÝ\×Ü™\ÜŠBˆØ[™Y]\ÈHÚ\™WBˆØ]™YHˆ‚ˆžN‚ˆÚ]Ü[ŠÜËœ]š›Ú[ŠÜËœ]™^[™\Ù\ŠŸˆŠK‹›™\\Ú[H‹\Ú×ÙY˜][ËšœÛÛˆŠKˆœˆ‹[˜ÛÙ[™ÏH]‹N\ÚYÈŠH\È[™N‚ˆØ]™YHœÛÛ‹›ØY
+[™JK™Ù]
+œ›Ú™XÝÜ›ÛÝŠHÜˆˆ‚ˆ^Ù\
+ÔÑ\œ›Ü‹˜[YQ\œ›Ü‹]šX]Q\œ›ÜŠN‚ˆ\ÜÂˆ›Üˆ›ÛÝ[ˆ
+ÜË™[š\›Û‹™Ù]
+“‘TTÒSWÔ“Ò‘PÕÔ“ÓÕŠKØ]™Y
+N‚ˆYˆ›ÛÝ‚ˆØ[™Y]\Ë˜\[™
+ÜËœ]š›Ú[Š›ÛÝ™[]]™JJBˆžN‚ˆÜXÈH[\ÜX‹][™š[™ÜÜXÊ\Ú×Ý[\]HŠBˆ›ÜˆØØ][Ûˆ[ˆ
+ÜXËœÝX›[Ù[WÜÙX\˜ÚÛØØ][ÛœÈÜˆ×JHYˆÜXÈ[ÙH×N‚ˆØ[™Y]\Ë˜\[™
+ÜËœ]š›Ú[ŠØØ][Û‹œÝ\×Ü™\ÜŠJBˆ^Ù\
+[\Ü\œ›Ü‹˜[YQ\œ›ÜŠN‚ˆ\ÜÂˆ\™[H\™Bˆ›ÜˆÈ[ˆ˜[™ÙJ
+N‚ˆ\™[HÜËœ]™\›˜[YJ\™[
+BˆYˆÜËœ]š\Ùš[JÜËœ]š›Ú[Š\™[œÛKž[ŠJN‚ˆØ[™Y]\Ë˜\[™
+ÜËœ]š›Ú[Š\™[™[]]™JJBˆ›Üˆ›Û\ˆ[ˆØ[™Y]\Î‚ˆ]HÜËœ]š›Ú[Š›Û\‹œ™\ÜÚÚ]œHŠBˆYˆÜËœ]š\Ùš[J]
+N‚ˆÜXÈH[\ÜX‹][œÜX×Ùœ›ÛWÙš[WÛØØ][ÛŠ›™\\Ú[WÜ™\ÜÚÚ]‹]
+Bˆ[Ù[HH[\ÜX‹][›[Ù[WÙœ›ÛWÜÜXÊÜXÊBˆÜXË›ØY\‹™^X×Û[Ù[J[Ù[JBˆ™]\›ˆ[Ù[Bˆš[
+‘T”“ÔŽˆ™\ÜÚÚ]œH›Ý›Ý[™™\ÚYHÙ[™\˜]WÜ™\ÜœHÜˆ[ˆH™\TÚ[H‚ˆÛÛÚ]ˆÛÜH]œ›ÛH]ÛÛËÝ\Ú×Ý[\]KÜÝ\×Ü™\ÜÈÜˆÙ]‚ˆ“‘TTÒSWÔ“Ò‘PÕÔ“ÓÕˆŠBˆÞ\Ë™^]
+JB‚‚’ÒUHÛØYÜ™\ÜÚÚ]
+
+BˆÈÛÜ™\]X][ÛœÈ\ÈY]X›HÓSSÈÙ]˜[ÙHÈÙY\™[™\™Y[XYÙ\ÈÛ›K‚‘TUPUSÓ”×ÐT×ÓÓSSHYB‚ˆÈ8¥ 8¥ ÛÜ™\ÙÜ˜\H8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ ˆÈ›ÛÜœÈ\YYÈH[\]IÜÈÝÛˆÝ[\È
+ÙYHØ\WÜ™XYX›WÝ\ÙÜ˜\JK‚“ÑWÔHLKŒ’PQS‘ÌWÔHM‹Œ’PQS‘Ì—ÔHLËŒ’PQS‘Ì×ÔHLKB•P“WÔHLŒÐTSÓ—ÔHKB“ÑWÔÔPÑWÐQ•T—ÔH‹Œ‚ˆÈ\]X][Ûˆ[XYÙ\È\™H™[™\™Y]TWÑ“Ó•Ô[™[ˆXÙY]Z\ˆUTSˆÈÚ^™KÛÈHX]ÈÛÛY\ÈÝ]]TWÑ“Ó•Ô[ˆHØÝ[Y[ˆ›Ü˜Ú[™ÈHš^YˆÈXÝ\™HÚY[œÝXYXYÛšYšY\ÈHÚÜ\]X][ÛˆÈHÚYÙˆHYÙK‚‘TWÑ“Ó•ÔHLËŒ‘TWÔ‘S‘T—ÑHHÌˆÈ[›[™HX]È
+	‹‹‰[œÚYHHÙ[[˜ÙJH\È™[™\™Y]›ÙHÚ^™HÛÈ]Ú]ÂˆÈÛˆH[™HZÙHH›Ü›X[ÛÜ™[œÝXYÙˆÝÙ\š[™ÈÝ™\ˆHÝ\œ›Ý[™[™È^‚’S“S‘WÑTWÑ“Ó•ÔH“ÑWÔ‚ˆÈ8¥ 8¥ YÙHYX\Ý\™H8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ ˆÈHÛÜœÜ˜]H™Ý\Èœ™\]Y[HS‘ÐÐTH™XØ]\ÙH]\ÈZ[›Üˆ›Ü›\È[™ˆÈ™\Ù[][ÛœËˆ[ˆ[™Ú[™Y\š[™È™\ÜÙ]Ûˆ]KH[ˆYX\Ý\™H[œÈÈŒMˆÈÚ\˜XÝ\œÈ\ˆ[™K›ÝYÚHÚXÙHH™XYX›HÜ[][K[™]™\žHšYÝ\™H[™ˆÈX›HÚ^™Y›ÜˆHÜ˜Z]YÙHX]™\ÈH\™ÙˆHÚY[\K‚ˆÈ[\]HˆÙY\ÈÚ]]™\ˆH[\]HXÛ\™\Ë‚”‘TÔ•ÓÔ’QS•USÓˆHœÜ˜Z]ˆÈÜ˜Z][™ØØ\H[\]B”‘TÔ•Ñ”“Ó•ÓTÕÈH˜]]ÈˆÈ]]È[Ø^\È™]™\ˆ
+\ÝÈÙˆšYÝ\™\È[™X›\ÊB‘”“Ó•ÓTÕ×ÓRS—ÒUSTÈHŒÈ]]ÎˆÛ›H\ÝÚ[ˆšYÝ\™\È
+ÈX›\È™XXÚ\Â“PVÓQPTÕT‘WÒSˆH‹ÈÈÚY\ÝÛÛ[[ˆÙHÙ]ÛÛ[[Ý\È›ÜÙHÛ‚“RS—ÔÒQWÓPT‘ÒS—ÒSˆHÎHÈŒ[H8 %™]™\ˆ˜\œ›ÝÙ\ˆÚ[ˆÚY[š[™ÈX\™Ú[œÂˆÈ›ÛÛHY[™\ˆH[]ÚYšYÝ\™H›Üˆ]ÈØ\[Ûˆ[™H›ÛÝÚ[™ÈØ\‚‘’QÕT‘WÐÐTSÓ—ÐSÕÐSÑWÒSˆHŽBˆÈTÓÈLHYÚ]Ü›Ý\[™ÎˆH›Û‹Xœ™XZÚ[™ÈÜXÙK›ÝHÛÛ[XK‚•ÕTÐS‘×ÔÑTH—LL‚‚ˆÈ8¥ 8¥ ™\Ü[™ÝXYÙH8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ ˆÈ™\ÛÛ™Yœ›ÛHK[[™ÝXYÙK‘TTÒSWÔ‘TÔ•ÓS‘ÕPQÑKÜˆÝYWØÛÛ™šYËžX[[ˆÈ
+™\Ü›[™ÝXYÙJKˆ[™Û\Ú\ÈHY˜][ˆ\ÈÙ]ÈH™\Ü\›š]\™HBˆÈÙ[™\˜]ÜˆÝÛœÈ8 %ÙXÝ[ÛˆXY[™ÜËÛÝ™\ˆX™[ËØ\[Ûˆ™Yš^\Ë˜]šYØ][Û‚ˆÈ8 %[™HØÝ[Y[[™ÝXYÙHÙˆH™ØÞ[™š[ÛÈÛÜ™Ü[XÚXÚÜÈ[‚ˆÈHšYÚ[™ÝXYÙKˆ]]Ü™YÛÛ[
+™\Ý[ËšœÛÛ‹\Ú×ÜÜXË›YHX[X[ˆÈÙXÝ[ÛœÊH\ÈÜš][ˆ[ˆ][™ÝXYÙHžHHÝYH]]Ü‹‚‘QUSÔ‘TÔ•ÓS‘ÕPQÑHH™[ˆ‚”‘TÔ•ÓS‘ÕPQÑHHQUSÔ‘TÔ•ÓS‘ÕPQÑB‚ˆÈÜ[[™ÜÈH\Ù\ˆX^H™X\ÛÛ˜X›HÜš]H[ˆÝYWØÛÛ™šYËžX[[‚“S‘ÕPQÑWÐSPTÑTÈHÂˆ™[ˆŽˆ™[ˆ‹™[™ÈŽˆ™[ˆ‹™[™Û\ÚŽˆ™[ˆ‹™[‹YØˆŽˆ™[ˆ‹™[‹]\ÈŽˆ™[ˆ‹ˆ››ÈŽˆ›˜ˆ‹›˜ˆŽˆ›˜ˆ‹›˜‹[›ÈŽˆ›˜ˆ‹››ˆŽˆ›˜ˆ‹››ÜœÚÈŽˆ›˜ˆ‹ˆ››ÜÙYÚX[ˆŽˆ›˜ˆ‹˜›ÚÛX[Žˆ›˜ˆ‹˜›ÚÛpé[Žˆ›˜ˆ‹ŸB‚ˆÈÜš][ˆ[ÈH™ØÞ
+Î›[™ÊH[™HS[™È]šX]K‚“S‘ÕPQÑWÓÐÐSTÈHÂˆ™[ˆŽˆ™[‹QÐˆ‹ˆ›˜ˆŽˆ›˜‹S“È‹ˆ™HŽˆ™KQÈ‹ˆœÝˆŽˆœÝ‹TÑH‹ˆ™HŽˆ™KQH‹ˆ™œˆŽˆ™œ‹Q”ˆ‹ˆ››Žˆ››S“‹ˆ™\ÈŽˆ™\ËQTÈ‹ˆœŽˆœT‹ˆš]Žˆš]RU‹ŸB‚ˆÈš^Y™\ÜÛÜ™[™ËÙ^YYžHH[™Û\Ú˜\ÙH\ÙY[ˆHÛÙKˆH[™ÝXYÙBˆÈÚ]Ý]HX›H\™HÝ[Ù]È]ÈØÝ[Y[[™ÝXYÙHÙ]ÈÛ›HH\›š]\™BˆÈÝ^\È[™Û\Ú[™HÙ[™\˜]ÜˆØ^\ÈÛË‚”‘TÔ•ÔÕ’S‘ÔÈHÂˆ›˜ˆŽˆÂˆÈÙXÝ[ÛˆXY[™ÜÂˆ‘^XÝ]]™HÝ[[X\žHŽˆ”Ø[[Y[™˜YÈ‹ˆ”›Ø›[H\ØÜš\[ÛˆŽˆ”›Ø›[X™\ÚÜš]™[ÙH‹ˆ”ØY™]HÝYH™XY[™\ÜÈŽˆ‘Ü[››YÈ›ÜˆÚZÚÙ\š]ÜÝYYH‹ˆ”ØÛÜH[™Ý[™\™ÈŽˆ“ÛY˜[™ÈÙÈÝ[™\™\ˆ‹ˆ’[™›Ü›X][ÛˆÛÝ\˜Ù\È[™]šY[˜ÙH˜\Ú\ÈŽ‚ˆ’[™›Ü›X\Ú›ÛœÚÚ[\ˆÙÈÚÝ[Y[\Ú›ÛœÙÜ[››YÈ‹ˆ\›ØXÚŽˆ‘œ™[YØ[™ÜÛpé]H‹ˆ”ÛÛ][ÛˆÛÜšÙ›ÝÈŽˆ\˜™ZYÙ›]›Üˆ0îÛš[™Ù[ˆ‹ˆ”™\Ý[ÈŽˆ”™\Ý[]\ˆ‹ˆ‘\ØÝ\ÜÚ[ÛˆŽˆ‘\ÚÝ\Ú›Ûˆ‹ˆ[˜[]XØ[\Žˆ[˜[]\ÚÈX™H‹ˆ•˜[Y][ÛˆÝ[[X\žHŽˆ•˜[Y\š[™ÜÜØ[[Y[™˜YÈ‹ˆ”™\ÜÛÛœÚ\Ý[˜ÞH™]šY]ÈŽˆ’ÛÛœÚ\Ý[œÚÛÛ›Û]ˆ˜\Ü[ˆ‹ˆ”ÝYHÛÛ™šYÝ\˜][ÛˆØ\›š[™ÜÈŽˆY˜\œÛ\ˆœ˜HÝYYZÛÛ™šYÝ\˜\Ú›Û™[ˆ‹ˆ™[˜ÚX\šÈ˜[Y][ÛˆŽˆ”™Y™\˜[œÙ]˜[Y\š[™È‹ˆ•[˜Ù\Z[H[˜[\Ú\ÈŽˆ•\ÚZÚÙ\š]Ø[˜[\ÙH‹ˆ”š\ÚÈ\ÜÙ\ÜÛY[Žˆ”š\ÚZÛÝ\™\š[™È‹ˆ\ÜÝ[\[ÛœÈ[™]HØ\ÈŽˆ‘›Ü]Ù]š[™Ù\ˆÙÈ][X[™Û\ˆ‹ˆ‘]šY[˜ÙHØ\È[™\ÚYÛ‹QÜ˜YH›ØÚÙ\œÈŽ‚ˆ‘ÚÝ[Y[\Ú›ÛœÛX[™Û\ˆÙÈ[™š[™Ù\ˆ›Üˆ\ÚYÛ™Ü[››YÈ‹ˆ”™XÛÛ[Y[™][ÛœÈŽˆ[˜™Y˜[[™Ù\ˆ‹ˆ•ÛÛ[™È[\›Ý™[Y[È[]™\™YŽˆ“]™\H™\šÝ0îY›Ü˜™Yš[™Ù\ˆ‹ˆÛÛ˜Û\Ú[ÛœÈ[™™XÛÛ[Y[™][ÛœÈŽˆ’ÛÛšÛ\Ú›Û™\ˆÙÈ[˜™Y˜[[™Ù\ˆ‹ˆ”™Y™\™[˜Ù\ÈŽˆ”™Y™\˜[œÙ\ˆ‹ˆÈœ›ÛX]\ˆ[™\›š]\™Bˆ“™\TÚ[H[™Ú[™Y\š[™È™\ÜŽˆ“™\TÚ[H[™Ù[špîœ˜\Ü‹ˆ•X›HÙˆÛÛ[ÈŽˆ’[›šÛÙ›ÜYÛ™[ÙH‹ˆ“\ÝÙˆšYÝ\™\ÈŽˆ‘šYÝ\›\ÝH‹ˆ“\ÝÙˆX›\ÈŽˆ•X™[\ÝH‹ˆ’Ù^H\]X][ÛœÈŽˆ”Ù[˜[HYÛš[™Ù\ˆ‹ˆ\[™^Žˆ•™YYÙÈ‹ˆ”™\Ü]X[]HÚXÚÜÈŽˆ’Ý˜[]]ÚÛÛ›Û]ˆ˜\Ü[ˆ‹ˆ”™\›ÙXÚ[™ÈH™\Ý[ÈŽˆ”™\›Ù\Ù\™H™\Ý[][™H‹ˆÛÛ\]H[Y\šXØ[™\Ý[ÈŽˆ[H[Y\š\ÚÙH™\Ý[]\ˆ‹ˆ”™\ÜZ[Žˆ”˜\ÜžYÙÈ‹ˆÛÛ\]H[Y\šXØ[™\Ý[ÈŽˆ[H[Y\š\ÚÙH™\Ý[]\ˆ‹ˆ”ÙYHŽˆ”ÙH‹ˆ\[™^Kˆ™\Ü]X[]HÚXÚÜÈŽˆ•™YYÙÈKˆÝ˜[]]ÚÛÛ›Û]ˆ˜\Ü[ˆ‹ˆ\[™^‹ˆ™\Ü]X[]HÚXÚÜÈŽˆ•™YYÙÈ‹ˆÝ˜[]]ÚÛÛ›Û]ˆ˜\Ü[ˆ‹ˆ\[™^Kˆ™\›ÙXÚ[™ÈH™\Ý[ÈŽˆ•™YYÙÈKˆ™\›Ù\Ù\™H™\Ý[][™H‹ˆ”ÛÙØ\™H[™[š\›Û›Y[Žˆ”›ÙÜ˜[]˜\™HÙÈZ[°î‹ˆ”Ý\ÈŽˆ•š[›ˆ‹ˆÚXÚÜÈY\ˆH™\[ˆŽˆ’ÛÛ›Û\ˆ]\ˆžHÚ°îš[™È‹ˆÚ[™Ú[™ÈHØ\ÙHŽˆ‘[™™H][™[H‹ˆÛÛœÚ\Ý[˜ÞH™]šY]ÈŽˆ’ÛÛœÚ\Ý[œÚÛÛ›Û‹ˆ”ÝYHÛÛ™šYÝ\˜][ÛˆŽˆ”ÝYYZÛÛ™šYÝ\˜\Ú›Ûˆ‹ˆ˜]]ÛX]XÈ\]X][Ûˆ\\Ù][™È[˜]˜Z[X›HŽ‚ˆ˜]]ÛX]\ÚÈYÛš[™ÜÜÙ][™ÈZÚÙH[Ú™[™Ù[YÈ‹ˆ•\ÝŽˆ•\Ý‹ˆ”™Y™\™[˜ÙHŽˆ”™Y™\˜[œÙH‹ˆ”™Y™\™[˜ÙH˜[YHŽˆ”™Y™\˜[œÙ]™\™H‹ˆ“™\TÚ[H˜[YHŽˆ“™\TÚ[K]™\™H‹ˆ•[š]Žˆ‘[š]‹ˆ‘]šX][ÛˆÉWHŽˆ]šZÈÉWH‹ˆ•Û\˜[˜ÙHÉWHŽˆ•Û\˜[œÙHÉWH‹ˆ”Ý]\ÈŽˆ”Ý]\È‹ˆ“›Ý\ÈŽˆ“Y\šÛ˜Y\ˆ‹ˆÛÛ[ÈŽˆ’[›šÛ‹ˆ”™]š\Ú[Ûˆ\ÝÜžHŽˆ”™]š\Ú›ÛœÚ\ÝÜšZÚÈ‹ˆ‘ØÝ[Y[[X™\ˆŽˆ‘ÚÝ[Y[[[Y\ˆ‹ˆ‘ØÝ[Y[›ËˆŽˆ‘ÚÝ[Y[œ‹ˆ‹ˆ”™]š\Ú[ÛˆŽˆ”™]š\Ú›Ûˆ‹ˆ”™]ˆŽˆ”™]ˆ‹ˆ‘]HŽˆ‘]È‹ˆ‘\ØÜš\[ÛˆŽˆ™\ÚÜš]™[ÙH‹ˆ]]ÜˆŽˆ‘›Ü™˜]\ˆ‹ˆÛ\ÜÚYšXØ][ÛˆŽˆ’Û\ÜÚYš\Ù\š[™È‹ˆ’[š]X[\ÜÝYHŽˆ‘°îœÝH]Ú]™[ÙH‹ˆŠ›ÝÜXÚYšYY
+HŽˆŠZÚÙH[™Ú]
+H‹ˆ•\ÚÈŽˆ“ÜØ]™H‹ˆ‘šYÝ\™HŽˆ‘šYÝ\ˆ‹ˆ•X›HŽˆ•X™[‹ˆ‘\]X][ÛˆŽˆ“YÛš[™È‹ˆÈÝX‹ZXY[™ÜÂˆ’Ù^H™\Ý[ÈŽˆ’Ý™Y™\Ý[]\ˆ‹ˆ•˜[Y][ÛˆÚXÚÜÈŽˆ•˜[Y\š[™ÜÚÛÛ›Û\ˆ‹ˆ\XØX›HÝ[™\™ÈŽˆ‘Ú™[[™HÝ[™\™\ˆ‹ˆØ[Ý[][ÛˆY]ÙÈŽˆ™\™YÛš[™ÜÛY]Ù\ˆ‹ˆXØÙ\[˜ÙHÜš]\šXHŽˆZÜÙ\Üš]\šY\ˆ‹ˆ”ÛÝ\˜ÙHÞ\Ý[\È™XYŽˆ’Ú[\Þ\Ý[Y\ˆÛÛH\ˆ\Ý‹ˆ\ÜÝ[\[ÛœÈH™\Ý[È\[™ÛˆŽˆ‘›Ü]Ù]š[™Ù\ˆ™\Ý[][™Hš[\ˆ0éH‹ˆ’[™›Ü›X][ÛˆÛÝYÚ]›Ý]˜Z[X›K[™Ú]Ø\È\ÜÝ[YY[ˆ]ÈXÙHŽ‚ˆ’[™›Ü›X\Ú›ÛˆÛÛH›HðîÝY[ˆZÚÙH[›™]ÙÈ˜HÛÛH›H[]HÝY]‹ˆ’[œ]\˜[Y]\ˆ˜[™Ù\ÈŽˆ”Ü[›ˆH[›™Ø[™ÜÜ\˜[Y]\™H‹ˆ“Ý]]\ÝšX][Ûˆ
+LÈLÈL
+HŽˆ”™\Ý[]›Ü™[[™È
+LÈLÈL
+H‹ˆ”Ù[œÚ]]š]H˜[šÚ[™È
+Ü›˜YÊHŽˆ”Ù[œÚ]]š]]Ü˜[™Ù\š[™È
+Ü›˜YÊH‹ˆÛÛšX]ÜœÈ˜[šÙYÛˆHÛÛ[[Ûˆ˜\Ú\ÈŽˆšY˜YÜÞ]\™H˜[™Ù\0éH™[\ÈÜ[››YÈ‹ˆ•ÚXÚY™™XÝÈXÝX[HØ\œžHH™\Ý[\™Ù\Ýš\œÝˆŽ‚ˆ’š[ÙHY™™ZÝ\ˆÛÛH˜ZÝ\ÚÈ°éœ™\ˆ™\Ý[]]Ý0îœÝ°îœÝˆ‹ˆ•™\™XÝÛˆXXÚÛÝ\˜ÙH™XÛÛ[Y[™][ÛˆŽˆ•\™\š[™È]ˆ™\ˆÚ[X[˜™Y˜[[™È‹ˆ”Ý\ÜYÝ\ÜYÚ]ÛÜœ™XÝ[Û‹ÜˆÚ[[™ÙYLŒMÚ]H˜\Ú\ËˆŽ‚ˆ”Ý0î]Ý0î]YYÛÜœ™ZÜÚ›Ûˆ[\ˆ]›Ü™™]LŒMYY™YÜ[›™[ÙKˆ‹ˆ’\Ý\Ù\È[YÝ]]X[]]]™[HŽˆ’\Ý\Ù\ˆ][ZÚÙ]Ý˜[]]]‹ˆ•Ú]Ø\È^ÛYYžHÚXÚ\Ý[™Ú]ÝÈ]XÚX\™Ú[‹ˆŽ‚ˆ’˜HÛÛH›H][ZÚÙ]YYš[Ù[ˆ\ÝÙÈYY›ÜˆÝÜˆX\™Ú[‹ˆ‹ˆ”›Ø\Ý™\ÜÈ[™Ü›ÜÜÛÝ™\ˆŽˆ”›Ø\Ý]ÙÈš\\[šÝ‹ˆ’ÝÈ˜\ˆ[ˆ[œ]Ø[ˆ[Ý™H™Y›Ü™HHÛÛ˜Û\Ú[Ûˆ›\ËˆŽ‚ˆ’›Üˆ[™Ý[ˆ[›™Ø[™ÜÝ™\™HØ[ˆ›]HÙYÈ°îˆÛÛšÛ\Ú›Û™[ˆÛ\‹ˆ‹ˆ‘\™XÝ[ÛˆÙˆXXÚÛÛœÙ\˜]\ÛHŽˆ”™]š[™È0éH™\ˆÛÛœÙ\˜]\ÛYH‹ˆ•Ú]\ˆXXÚ\ÜÝ[\[Ûˆ›Ý[™ÈH[œÝÙ\ˆœ›ÛHX›Ý™HÜˆ™[ÝËˆŽ‚ˆ“ÛH™\ˆ[ZÙ[ÙH]™Ü™[œÙ\ˆÝ˜\™]Ý™[™œ˜H[\ˆ™Y[™œ˜Kˆ‹ˆÚX\\Ý\ØÜš[Z[˜][™È\ÝŽˆš[YÜÝH]™Ú°î™[™H\Ý‹ˆ•HÛ™HYX\Ý\™[Y[]ÛÝ[Ù\\˜]HHÝ\š]š[™È^[˜][ÛœËˆŽ‚ˆ‘[ˆ[™Hpé[[™Ù[ˆÛÛHÚÚ[\ˆ›ÜšÛ\š[™Ù[™HÛÛHÚ™[œÝ0é\‹ˆ‹ˆ‘]šY[˜ÙH]Ù\È›Ýš]Žˆ‘]šY[œÈÛÛHZÚÙH\ÜÙ\ˆ‹ˆ“ØœÙ\˜][ÛœÈHXØÙ\Y^[˜][ÛˆÙ\È›ÝXØÛÝ[›Ü‹ˆŽ‚ˆ“ØœÙ\˜\Ú›Û™\ˆÛÛH[ˆZÜÙ\\H›ÜšÛ\š[™Ù[ˆZÚÙHZÚÙ\‹ˆ‹ˆÈX›H\›š]\™H[œÚYHÙ[™\˜]YÙXÝ[ÛœÂˆ“Ü\˜][™È[™[ÜHŽˆ‘šYÛÛ\°éYH‹ˆ“Ü\˜][™È[™[ÜHŽˆ‘šYÛÛ\°éYH‹ˆ”Þ\Ý[HŽˆ”Þ\Ý[H‹ˆ”ØÛÜH™XYŽˆ“ÛY˜[™È\Ý‹ˆXØÙ\ÜÈŽˆ•[Ø[™È‹ˆØ\\™Y]šY[˜ÙHŽˆ“YÜ™]ÚÝ[Y[\Ú›Ûˆ‹ˆ››Ý™XÛÜ™YŽˆšZÚÙH™YÚ\Ý™\‹ˆ›Z\ÜÚ[™ÈŽˆ›X[™Û\ˆ‹ˆ”ÛÝ\˜ÙHÞ\Ý[HŽˆ’Ú[\Þ\Ý[H‹ˆ‘ØÝ[Y[ÈŽˆ‘ÚÝ[Y[\ˆ‹ˆÛÛ[Žˆ’[›šÛ‹ˆ‘ØÝ[Y[ÈÛÝYÚ]›ÝØZ[™YˆŽˆ‘ÚÝ[Y[\ˆÛÛH›HðîÝ]\‹Y[ˆZÚÙH[›™]ˆ‹ˆ\ÜÝ[\[ÛˆŽˆ‘›Ü]Ù]š[™È‹ˆ˜\Ú\ÈŽˆ‘Ü[››YÈ‹ˆ‘Y™™XÝÛˆH™\Ý[Žˆ‘Y™™ZÝ0éH™\Ý[]]‹ˆ’[™›Ü›X][ÛˆÛÝYÚŽˆ’[™›Ü›X\Ú›ÛˆðîÝ‹ˆ”ÛÝ\˜ÙHŽˆ’Ú[H‹ˆ\ÜÝ[YY[œÝXYŽˆ[]HÝY]‹ˆ‘Y™™XÝYˆÜ›Û™ÈŽˆ‘Y™™ZÝš\È™Z[‹ˆ‘XXÚØ\X›Ý™H\È[ˆÜ[ˆ][NˆHÛÛ˜Û\Ú[ÛˆÛÈÛ›HÚ[HHÝ]YÝXœÝ]]H\ÜÝ[\[ÛˆÛËˆŽ‚ˆ’™\ˆX[™Ù[Ý™\ˆ\ˆ]0é\[[šÝˆÛÛšÛ\Ú›Û™[ˆÚ™[\ˆ˜\™HðéH[™ÙH[ˆ[™Ú]H\œÝ]š[™ÜÙ›Ü]Ù]š[™Ù[ˆÛ\‹ˆ‹ˆ“ØœÙ\˜][ÛˆŽˆ“ØœÙ\˜\Ú›Ûˆ‹ˆ”\ÚXØ[YXÚ[š\ÛHŽˆ‘ž\Ú\ÚÈYZØ[š\ÛYH‹ˆ‘[™Ú[™Y\š[™È[\XØ][ÛˆŽˆ’[™Ù[špî›Y\ÜÚYÈ™]Yš[™È‹ˆ”™XÛÛ[Y[™][ÛˆŽˆ[˜™Y˜[[™È‹ˆ“[šÙY™\Ý[ÈŽˆ’ÛØ›YH™\Ý[]\ˆ‹ˆ”\˜[Y]\ˆŽˆ”\˜[Y]\ˆ‹ˆ•˜[YHŽˆ•™\™H‹ˆÚXÚÈŽˆ’ÛÛ›Û‹ˆ”™\Ý[Žˆ”™\Ý[]‹ˆžßHØÝ[Y[
+ÊHÙ\™HÛÛXÝYœ›ÛHßHÛÝ\˜ÙHÞ\Ý[JÊH[™\™HÝÜ™YÚ]\È\ÚÈ[ˆÝ\WÜØÛÜWØ[™Ü™\ÙX\˜ÚÜ™Y™\™[˜Ù\ËËˆŽ‚ˆžßHÚÝ[Y[
+\ŠH›H[]œ˜HßHÚ[\Þ\Ý[J\ŠHÙÈ\ˆYÜ™]YYÜØ]™[ˆHÝ\WÜØÛÜWØ[™Ü™\ÙX\˜ÚÜ™Y™\™[˜Ù\ËËˆ‹ˆ”Ý[™\™È[™]\˜]\™HÚ]Y\™H\ÝY[ˆH™Y™\™[˜Ù\ÈÙXÝ[ÛŽÈH\‹Yš[HÜšYÚ[‹™]šY]˜[]K[™™[]˜[˜ÙHÙˆ]™\žHÛÛXÝYØÝ[Y[\™H[ˆÝ\WÜØÛÜWØ[™Ü™\ÙX\˜ÚÜ™Y™\™[˜Ù\ËÔÓÕTÑTË›YˆŽ‚ˆ”Ý[™\™\ˆÙÈ]\˜]\ˆ\ˆ\Ý][™\ˆ™Y™\˜[œÙ\ŽÈÜš[›™[ÙK[Y]ÈÙÈ™[]˜[œÈ›Üˆ™\ÚÝ[Y[Ý0é\ˆHÝ\WÜØÛÜWØ[™Ü™\ÙX\˜ÚÜ™Y™\™[˜Ù\ËÔÓÕTÑTË›Yˆ‹ˆŠšYÚXÛXÚÈ[™Ù[XÝ	Õ\]HšY[	ÈÈÜ[]JHŽ‚ˆŠ0î\™ZÛZÚÈÙÈ™[È0ªÓÜ]\ˆ™[0®È›Üˆ0éHž[H]
+H‹ˆ”™Y™\™[˜ÙHÛÝ\˜ÙHŽˆ”™Y™\˜[œÙZÚ[H‹ˆ•\ÚÈ\HŽˆ“ÜØ]™]\H‹ˆ”ØØ[HŽˆ“ÛY˜[™È‹ˆ“[ÙHŽˆ“[Ù\È‹ˆPPÑHÛ\ÜÈŽˆPPÑKZÛ\ÜÙH‹ˆ‘‘SÝYÙHŽˆ‘‘SY˜\ÙH‹ˆKŸB‚‚™YˆÝ
+^
+N‚ˆˆˆ•˜[œÛ]Hš^Y™\ÜÛÜ™[™È[È‘TÔ•ÓS‘ÕPQÑK‚‚ˆ™]\›œÈH[™Û\Ú˜\ÙH[˜Ú[™ÙYÚ[ˆH[™ÝXYÙH\È›ÈX›HÜˆ›Âˆ[žH›Üˆ]ÛÈY[™ÈHXY[™È™]™\ˆœ™XZÜÈH˜[œÛ]Y™\Ü‚ˆˆˆ‚ˆ™]\›ˆ‘TÔ•ÔÕ’S‘ÔË™Ù]
+‘TÔ•ÓS‘ÕPQÑKßJK™Ù]
+^^
+B‚‚™YˆÜ™\ÜÛØØ[J
+N‚ˆˆˆ”™]\›ˆHØÝ[Y[ØØ[H
+˜‹S“Ø
+H›ÜˆH™\Ü[™ÝXYÙKˆˆˆ‚ˆ™]\›ˆS‘ÕPQÑWÓÐÐSTË™Ù]
+‘TÔ•ÓS‘ÕPQÑK‘TÔ•ÓS‘ÕPQÑHÜˆ™[ˆŠB‚ˆÈ8¥ 8¥ ]È8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ ™YˆÜ™\ÛÛ™WÝ\Ú×Ù\Š
+HOˆÝŽ‚ˆˆˆ”™]\›ˆH\ÚÈ›Û\ŽˆK]\ÚËY\‹‘TTÒSWÕTÒ×ÑT‹[ÙH\Èš[IÜÈ\™[‚‚ˆ[ÝÚ[™È[ˆ^\›˜[\ÚÈ›Û\ˆ]ÈHØ[›ÛšXØ[]ÛÛÈÛÜHÙˆ\ÂˆØÜš\Ù\™H[žH\ÚËÛÈHš^\™H™XXÚ\È\ÚÈ›Û\œÈ]Ù\™HÜ™X]YˆÚ][ˆÛ\ˆ™[™Ü™YÛÜH
+™\\Ú[H™\Ü\ÚÈ›Û\˜
+K‚ˆˆˆ‚ˆYˆ‹K]\ÚËY\ˆˆ[ˆÞ\Ë˜\™ÝŽ‚ˆ[™^HÞ\Ë˜\™Ý‹š[™^
+‹K]\ÚËY\ˆŠH
+ÈBˆYˆ[™^H[ŠÞ\Ë˜\™ÝŠN‚ˆš[
+‘T”“ÔŽˆK]\ÚËY\ˆ™\]Z\™\ÈH]ŠBˆÞ\Ë™^]
+ŠBˆ™]\›ˆÜËœ]˜XœÜ]
+Þ\Ë˜\™Ý–Ú[™^JBˆ[—Ù\ˆHÜË™[š\›Û‹™Ù]
+“‘TTÒSWÕTÒ×ÑTˆŠBˆYˆ[—Ù\Ž‚ˆ™]\›ˆÜËœ]˜XœÜ]
+ÜËœ]™^[™˜\œÊÜËœ]™^[™\Ù\Š[—Ù\ŠJJBˆ™]\›ˆÜËœ]™\›˜[YJÜËœ]™\›˜[YJÜËœ]˜XœÜ]
+×Ùš[W×ÊJJB‚‚™YˆÜ™\ÛÛ™WÛÝ]]Ù\Š\Ú×Ü™\ÜÙ\ŠN‚ˆˆˆ”™]\›ˆK[Ý]]Y\˜ÜˆH\ÚÉÜÈÜ™[˜\žH™\Ü\™XÝÜžK‚‚ˆÛÛ[[Ý\Ë]\ÚÈš[˜[^˜][Ûˆ\Ù\È\ÈÜ[ÛˆÈ[ˆH^XÝØ[›ÛšXØ[ˆ™[™\™\ˆ[È[ˆ[[]]X›H™]š\Ú[Ûˆ›Û\ˆÚ]Ý]™\XÚ[™ÈHÜ™[˜\žBˆÝ\œ™[X™\Ý\ÚÈÛÛ™\ˆ™\Ü‚ˆˆˆ‚ˆYˆ‹K[Ý]]Y\ˆˆ›Ý[ˆÞ\Ë˜\™ÝŽ‚ˆ™]\›ˆ\Ú×Ü™\ÜÙ\‚ˆ[™^HÞ\Ë˜\™Ý‹š[™^
+‹K[Ý]]Y\ˆŠH
+ÈBˆYˆ[™^H[ŠÞ\Ë˜\™ÝŠN‚ˆš[
+‘T”“ÔŽˆK[Ý]]Y\ˆ™\]Z\™\ÈH]ŠBˆÞ\Ë™^]
+ŠBˆ™]\›ˆÜËœ]˜XœÜ]
+Þ\Ë˜\™Ý–Ú[™^JB‚‚•TÒ×ÑTˆHÜ™\ÛÛ™WÝ\Ú×Ù\Š
+B‘’Q×ÑTˆHÜËœ]š›Ú[ŠTÒ×ÑT‹™šYÝ\™\ÈŠB•TÒ×Ô‘TÔ•ÑTˆHÜËœ]š›Ú[ŠTÒ×ÑT‹œÝ\×Ü™\ÜŠB”‘TÔ•ÑTˆHÜ™\ÛÛ™WÛÝ]]Ù\ŠTÒ×Ô‘TÔ•ÑTŠB”‘TÔ•ÐTÑSSQHH”™\ÜˆÈ™\XÙYžHH™\Ü]H[ˆ×ÛXZ[—×Â‘ÐÖÑ’SHHÜËœ]š›Ú[Š‘TÔ•ÑT‹”™\Ü™ØÞŠB’SÑ’SHHÜËœ]š›Ú[Š‘TÔ•ÑT‹”™\Üš[ŠB”—Ñ’SHHÜËœ]š›Ú[Š‘TÔ•ÑT‹”™\ÜœˆŠB”TT—ÑÐÖÑ’SHHÜËœ]š›Ú[Š‘TÔ•ÑT‹”\\‹™ØÞŠB”TT—ÒSÑ’SHHÜËœ]š›Ú[Š‘TÔ•ÑT‹”\\‹š[ŠB”TT—Ô—Ñ’SHHÜËœ]š›Ú[Š‘TÔ•ÑT‹”\\‹œˆŠB”‘TÕS×Ñ’SHHÜËœ]š›Ú[ŠTÒ×ÑT‹œ™\Ý[ËšœÛÛˆŠB•TÒ×ÔÔP×Ñ’SHHÜËœ]š›Ú[ŠTÒ×ÑT‹œÝ\WÜØÛÜWØ[™Ü™\ÙX\˜Ú‹\Ú×ÜÜXË›YŠB”ÕQWÐÓÓ‘’Q×Ñ’SHHÜËœ]š›Ú[ŠTÒ×ÑT‹œÝYWØÛÛ™šYËžX[[ŠB“ÕUUÓPS’Q‘TÕÑ’SHHÜËœ]š›Ú[Š‘TÔ•ÑT‹‹œ™\ÜÛÝ]]ËšœÛÛˆŠB“QÐPÖWÓÕUUÓSQTÈH
+”™\Ü™ØÞ‹”™\Üš[‹”™\Üœˆ‹ˆ”\\‹™ØÞ‹”\\‹š[‹”\\‹œˆŠB”‘TÔ•ÓSQWÓPVÐÒT”ÈHLŒ‚šYˆ›ÝÜËœ]š\Ù\Š‘TÔ•ÑTŠN‚ˆÜË›XZÙY\œÊ‘TÔ•ÑTŠB‚‚™YˆÛYÚYžWÜ™\ÜÛ˜[YJ]K˜[˜XÚÏH”™\ÜŠN‚ˆˆˆ”™]\›ˆHš[\Þ\Ý[K\ØY™Hš[H˜\ÙH˜[YH\š]™Yœ›ÛHH™\Ü]K‚‚ˆ\˜[Y]\œÂˆKKKKKKKKKBˆ]HˆÝ‚ˆH™\Ü
+ÝYJH]K‚ˆ˜[˜XÚÈˆÝ‚ˆ˜[YH\ÙYÚ[ˆH]HZY[È›Ý[™È\ØX›K‚‚ˆ™]\›œÂˆKKKKKKBˆÝ‚ˆ]HÚ]]ZÜÝ[HÚ\˜XÝ\œÈ™[[Ý™Y[™ÜXÙ\È\È[™\œØÛÜ™\Ë‚ˆˆˆ‚ˆ^HÝŠ]HÜˆˆŠBˆ^H™KœÝXŠˆ–×ÎŠ×Ÿ——JÈ‹ˆ‹^
+Bˆ^H™KœÝXŠˆ–×ŒNPKV˜K^—LÌWLˆ	Š
+JË—ËWJÈ‹ˆ‹^
+Bˆ^H™KœÝXŠˆ—ÊÈ‹ˆ‹^
+KœÝš\
+ˆ‹WÈŠBˆYˆ›Ý^‚ˆ™]\›ˆ˜[˜XÚÂˆ˜[YHH™KœÝXŠˆ—ÊÈ‹—È‹^œ™\XÙJˆ‹—ÈŠJKœÝš\
+—ÈŠBˆYˆ[Š˜[YJHˆ‘TÔ•ÓSQWÓPVÐÒT”Î‚ˆ˜[YHH˜[YVÎ”‘TÔ•ÓSQWÓPVÐÒT”×KœœÝš\
+—ËHŠBˆ™]\›ˆ˜[YHÜˆ˜[˜XÚÂ‚‚™Yˆ\WÜ™\ÜÛÝ]]Û˜[Y\Ê]JN‚ˆˆˆ“˜[YHHÙ[™\˜]Y™\Üš[\ÈY\ˆH™\Ü]K‚‚ˆ]™\žH\ÚÈÚ\È[]™\˜X›\ÈÚÜÙHš[H˜[YH\ÈHÝYH]KÛÈBˆ™\Ü\ÈY[YšXX›HÝ]ÚYH]È\ÚÈ›Û\‹‚‚ˆ\˜[Y]\œÂˆKKKKKKKKKBˆ]HˆÝ‚ˆ™\ÛÛ™Y™\Ü]K‚‚ˆ™]\›œÂˆKKKKKKBˆÝ‚ˆH˜\ÙH˜[YH\ÙY›ÜˆHÙ[™\˜]Yš[\Ë‚ˆˆˆ‚ˆÛØ˜[‘TÔ•ÐTÑSSQKÐÖÑ’SKSÑ’SK—Ñ’SBˆÛØ˜[TT—ÑÐÖÑ’SKTT—ÒSÑ’SKTT—Ô—Ñ’SBˆ‘TÔ•ÐTÑSSQHHÛYÚYžWÜ™\ÜÛ˜[YJ]JBˆÐÖÑ’SHHÜËœ]š›Ú[Š‘TÔ•ÑT‹‘TÔ•ÐTÑSSQH
+È‹™ØÞŠBˆSÑ’SHHÜËœ]š›Ú[Š‘TÔ•ÑT‹‘TÔ•ÐTÑSSQH
+È‹š[ŠBˆ—Ñ’SHHÜËœ]š›Ú[Š‘TÔ•ÑT‹‘TÔ•ÐTÑSSQH
+È‹œˆŠBˆTT—ÑÐÖÑ’SHHÜËœ]š›Ú[Š‘TÔ•ÑT‹‘TÔ•ÐTÑSSQH
+È—Ô\\‹™ØÞŠBˆTT—ÒSÑ’SHHÜËœ]š›Ú[Š‘TÔ•ÑT‹‘TÔ•ÐTÑSSQH
+È—Ô\\‹š[ŠBˆTT—Ô—Ñ’SHHÜËœ]š›Ú[Š‘TÔ•ÑT‹‘TÔ•ÐTÑSSQH
+È—Ô\\‹œˆŠBˆ™]\›ˆ‘TÔ•ÐTÑSSQB‚‚™YˆÙØÞÝ×Ü—ÝÛÜ™
+ØÞÜ]—Ü]
+N‚ˆˆˆÛÛ™\›ÝYÚZXÜ›ÜÛÙÛÜ™ÓÓH]]ÛX][Ûˆ
+Ú[™ÝÜÈÛ›JK‚‚ˆ™Y™\œ™Y˜XÚÙ[™ˆÛÜ™™[™\œÈ]ÈÝÛˆ›Ü›X]ÛÈHÛÜœÜ˜]H[\]IÜÂˆ›ÛËXY\œË›ÛÝ\œÈ[™[X™\š[™ÈÝ\š]™HHÛÛ™\œÚ[Ûˆ[XÝ‚‚ˆ\˜[Y]\œÂˆKKKKKKKKKBˆØÞÜ]ˆÝ‚ˆXœÛÛ]H]ÙˆHÛÝ\˜ÙHÛÜ™ØÝ[Y[‚ˆ—Ü]ˆÝ‚ˆXœÛÛ]H]ÙˆHˆÈÜš]K‚‚ˆ™]\›œÂˆKKKKKKBˆÝˆÜˆ›Û™Bˆ›Û™XÛˆÝXØÙ\ÜËÝ\Ú\ÙHH™X\ÛÛˆH˜XÚÙ[™Ø\È[\ØX›K‚ˆˆˆ‚ˆžN‚ˆ[\Ü]Û˜ÛÛBˆ[\ÜÚ[ŒÌ˜ÛÛK˜ÛY[ˆ^Ù\[\Ü\œ›ÜŽ‚ˆ™]\›ˆœ]Ú[ŒÌˆ\È›Ý[œÝ[Y‚ˆÙÙ^ÜÙ›Ü›X]ÜˆHMÂˆ]Û˜ÛÛKÛÒ[š]X[^™J
+BˆÛÜ™H›Û™BˆØÝ[Y[H›Û™BˆžN‚ˆÛÜ™HÚ[ŒÌ˜ÛÛK˜ÛY[‘\Ü]Ú^
+•ÛÜ™\XØ][ÛˆŠBˆÛÜ™•š\ÚX›HH˜[ÙBˆÛÜ™‘\Ü^P[\ÈHˆØÝ[Y[HÛÜ™‘ØÝ[Y[Ë“Ü[ŠØÞÜ]™XYÛ›OUYKš\ÚX›OQ˜[ÙJBˆØÝ[Y[‘^Ü\Ñš^Y›Ü›X]
+—Ü]ÙÙ^ÜÙ›Ü›X]Ü‹ˆÜ™X]P›ÛÚÛX\šÜÏLK[˜ÛYQØÔ›ÜÏUYKˆØÔÝXÝ\™UYÜÏUYJBˆ^Ù\^Ù\[Ûˆ\È\œ›ÜŽˆÈ˜YÛXNˆ›ÈÛÝ™\ˆHÓÓHÝ\™˜XÙ\ÈX[žH\\Âˆ™]\›ˆ•ÛÜ™]]ÛX][Ûˆ˜Z[Y
+ßJH‹™›Ü›X]
+\œ›ÜŠBˆš[˜[N‚ˆYˆØÝ[Y[\È›Ý›Û™N‚ˆžN‚ˆØÝ[Y[ÛÜÙJ
+Bˆ^Ù\^Ù\[ÛŽ‚ˆ\ÜÂˆYˆÛÜ™\È›Ý›Û™N‚ˆžN‚ˆÛÜ™”]Z]
+
+Bˆ^Ù\^Ù\[ÛŽ‚ˆ\ÜÂˆ]Û˜ÛÛKÛÕ[š[š]X[^™J
+Bˆ™]\›ˆ›Û™B‚‚™YˆÙØÞÝ×Ü—ÛXœ™[Ù™šXÙJØÞÜ]—Ü]
+N‚ˆˆˆÛÛ™\›ÝYÚHXY\ÜÈXœ™SÙ™šXÙH[œÝ[][Û‹‚‚ˆÜ›ÜÜË\]›Ü›H˜[˜XÚËˆšY[]HÈHÛÜ™[\]H\ÈÛÛÙ]›Ý^XÝˆÛÈ\È\ÈÛ›H\ÙYÚ[ˆÛÜ™]]ÛX][Ûˆ\È[˜]˜Z[X›K‚‚ˆ\˜[Y]\œÂˆKKKKKKKKKBˆØÞÜ]ˆÝ‚ˆXœÛÛ]H]ÙˆHÛÝ\˜ÙHÛÜ™ØÝ[Y[‚ˆ—Ü]ˆÝ‚ˆXœÛÛ]H]ÙˆHˆÈÜš]K‚‚ˆ™]\›œÂˆKKKKKKBˆÝˆÜˆ›Û™Bˆ›Û™XÛˆÝXØÙ\ÜËÝ\Ú\ÙHH™X\ÛÛˆH˜XÚÙ[™Ø\È[\ØX›K‚ˆˆˆ‚ˆ^XÝ]X›HHÚ][ÚXÚ
+œÛÙ™šXÙHŠHÜˆÚ][ÚXÚ
+›Xœ™[Ù™šXÙHŠBˆYˆ›Ý^XÝ]X›N‚ˆ™]\›ˆ“Xœ™SÙ™šXÙH
+ÛÙ™šXÙJH\È›ÝÛˆU‚ˆÝ]\ˆHÜËœ]™\›˜[YJ—Ü]
+BˆžN‚ˆÛÛ\]YHÝXœ›ØÙ\ÜËœ[ŠˆÙ^XÝ]X›K‹KZXY\ÜÈ‹‹KXÛÛ™\]È‹ˆ	ÜŽÜš]\—Ü—Ñ^ÜžÈ•\ÙUYÙÙYˆŽžÈ\HŽˆ˜›ÛÛX[ˆ‹˜[YHŽˆYHŸ_IËˆ‹K[Ý]\ˆ‹Ý]\‹ØÞÜ]KˆÝÝ]\ÝXœ›ØÙ\ÜË”TKÝ\œ\ÝXœ›ØÙ\ÜË”ÕÕU[Y[Ý]LÌ
+Bˆ^Ù\
+ÔÑ\œ›Ü‹ÝXœ›ØÙ\ÜË”ÝXœ›ØÙ\ÜÑ\œ›ÜŠH\È\œ›ÜŽ‚ˆ™]\›ˆ“Xœ™SÙ™šXÙHØ[˜Z[Y
+ßJH‹™›Ü›X]
+\œ›ÜŠBˆYˆÛÛ\]Yœ™]\›˜ÛÙHOH‚ˆ™]\›ˆ“Xœ™SÙ™šXÙH^]YßH‹™›Ü›X]
+ÛÛ\]Yœ™]\›˜ÛÙJBˆ›ÙXÙYHÜËœ]š›Ú[ŠˆÝ]\‹ÜËœ]œÜ]^
+ÜËœ]˜˜\Ù[˜[YJØÞÜ]
+JVÌH
+È‹œˆŠBˆYˆ›ÙXÙYOH—Ü][™ÜËœ]š\Ùš[J›ÙXÙY
+N‚ˆÚ][›[Ý™J›ÙXÙY—Ü]
+Bˆ™]\›ˆ›Û™B‚‚™YˆÛÛ™\ÙØÞÝ×ÜŠØÞÜ]—Ü]X™[H”™\ÜŠN‚ˆˆˆ”™[™\ˆHÙ[™\˜]YÛÜ™™\ÜÈˆ›Üˆ\ÝšX][Û‹‚‚ˆHˆ\È›ÙXÙYœ›ÛHHÐÖ˜]\ˆ[ˆœ›ÛHHSÛÈ]]ˆ[š\š]ÈHÛÛ™šYÝ\™YÛÜœÜ˜]HÛÜ™[\]Kˆ˜XÚÙ[™È\™HšYY[‚ˆ\ØÙ[™[™ÈÜ™\ˆÙˆšY[]K[™H˜Z[\™H\È™\ÜY˜]\ˆ[ˆ˜Z\ÙY‚ˆHZ\ÜÚ[™Èˆ]\Ý›Ý\ØØ\™[ˆÝ\Ú\ÙHÛÛ\]H™\Ü[‹‚‚ˆ\˜[Y]\œÂˆKKKKKKKKKBˆØÞÜ]ˆÝ‚ˆ]ÙˆHÛÜ™™\Ü›ÙXÙYžH\È[‹‚ˆ—Ü]ˆÝ‚ˆ]ÙˆHˆÈÜš]K‚ˆX™[ˆÝ‹Ü[Û˜[ˆ[X[‹\™XYX›H˜[YH\ÙY[ˆÛÛœÛÛHY\ÜØYÙ\Ë‚‚ˆ™]\›œÂˆKKKKKKBˆ›ÛÛˆYHÚ[ˆHˆØ\ÈÜš][‹‚ˆˆˆ‚ˆØÞÜ]HÜËœ]˜XœÜ]
+ØÞÜ]
+Bˆ—Ü]HÜËœ]˜XœÜ]
+—Ü]
+BˆYˆ›ÝÜËœ]š\Ùš[JØÞÜ]
+N‚ˆš[
+““ÕNˆßHˆÚÚ\YÛÝ\˜ÙHØÝ[Y[\ÈZ\ÜÚ[™ÎˆßH‹™›Ü›X]
+ˆX™[ØÞÜ]
+JBˆ™]\›ˆ˜[ÙBˆ™X\ÛÛœÈH×Bˆ›Üˆ˜XÚÙ[™[ˆ
+ÙØÞÝ×Ü—ÝÛÜ™ÙØÞÝ×Ü—ÛXœ™[Ù™šXÙJN‚ˆ™X\ÛÛˆH˜XÚÙ[™
+ØÞÜ]—Ü]
+BˆYˆ™X\ÛÛˆ\È›Û™H[™ÜËœ]š\Ùš[J—Ü]
+N‚ˆš[
+žßHˆØ]™YˆßH‹™›Ü›X]
+X™[—Ü]
+JBˆ™]\›ˆYBˆ™X\ÛÛœË˜\[™
+™X\ÛÛˆÜˆ˜˜XÚÙ[™™\ÜYÝXØÙ\ÜÈ]Ü›ÝH›Èš[HŠBˆš[
+““ÕNˆßHˆÛÝ[›Ý™HÙ[™\˜]YˆšYYˆßKˆ‹™›Ü›X]
+ˆX™[ŽÈ‹š›Ú[Š™X\ÛÛœÊJJBˆš[
+ˆ[œÝ[ZXÜ›ÜÛÙÛÜ™Ú]]Ú[ŒÌ‹ÜˆXœ™SÙ™šXÙK‚ˆ›Üˆ^ÜH™ØÞX[X[KˆŠBˆ™]\›ˆ˜[ÙB‚‚™YˆØ[Ü—ÛÝ]]
+ÝYWØÛÛ™šYÊN‚ˆˆˆ‘XÚYHÚ]\ˆ\È[ˆÚÝ[[ÛÈ[Z]‹‚‚ˆ\˜[Y]\œÂˆKKKKKKKKKBˆÝYWØÛÛ™šYÈˆXÝˆ\œÙYÝYWØÛÛ™šYËžX[[‚‚ˆ™]\›œÂˆKKKKKKBˆ›ÛÛˆYHÚ[ˆK\˜Ø\È\ÜÙYÜˆ™\Ü™›Ü›X]Ø\ÝÈ˜‚ˆˆˆ‚ˆYˆ‹K\ˆˆ[ˆÞ\Ë˜\™ÝŽ‚ˆ™]\›ˆYBˆYˆ‹K[›Ë\ˆˆ[ˆÞ\Ë˜\™ÝŽ‚ˆ™]\›ˆ˜[ÙBˆ›Ü›X]ÈH
+ÝYWØÛÛ™šYÈÜˆßJK™Ù]
+œ™\Ü‹ßJK™Ù]
+™›Ü›X]ÈŠHÜˆ×Bˆ™]\›ˆ[žJÝŠ›]
+KœÝš\
+
+K›ÝÙ\Š
+HOHœˆˆ›Üˆ›][ˆ›Ü›X]ÊB‚‚™Yˆ™\ÛÛ™WÜ™\ÜÛÜšY[][ÛŠÝYWØÛÛ™šYÊN‚ˆˆˆ”™\ÛÛ™HHYÙHÜšY[][Ûˆ›ÜˆH™\Ü›ÙK‚‚ˆÜ™\ŽˆK[ÜšY[][ÛˆSQXˆ™\Ü›ÜšY[][Û˜[‚ˆÝYWØÛÛ™šYËžX[[ˆÜ˜Z]ˆ[\]XÙY\ÈÚ]]™\ˆHÛÜœÜ˜]Bˆ[\]HXÛ\™\ËÚXÚ\È\ÝX[H[™ØØ\K‚ˆˆˆ‚ˆ[ÝÙYH
+œÜ˜Z]‹›[™ØØ\H‹[\]HŠBˆ˜[YHHØÛWÛÜ[ÛŠ‹K[ÜšY[][ÛˆŠBˆYˆ›Ý˜[YN‚ˆ˜[YHH
+ÝYWØÛÛ™šYÈÜˆßJK™Ù]
+œ™\Ü‹ßJK™Ù]
+›ÜšY[][ÛˆŠBˆ˜[YHHÝŠ˜[YHÜˆœÜ˜Z]ŠKœÝš\
+
+K›ÝÙ\Š
+BˆYˆ˜[YH›Ý[ˆ[ÝÙY‚ˆš[
+““ÕNˆ[šÛ›ÝÛˆ™\Ü›ÜšY[][Ûˆ	ÞßIÎÈ\Ú[™ÈÜ˜Z]ˆ‹™›Ü›X]
+˜[YJJBˆ™]\›ˆœÜ˜Z]‚ˆ™]\›ˆ˜[YB‚‚™Yˆ™\ÛÛ™WÙœ›ÛÛX]\—Û\ÝÊÝYWØÛÛ™šYÊN‚ˆˆˆ˜™\Ü™œ›ÛÛX]\—Û\ÝØˆ]]È
+Û™È™\ÜÈÛ›JH[Ø^\È™]™\‹ˆˆˆ‚ˆ˜[YHHÝŠ
+ÝYWØÛÛ™šYÈÜˆßJK™Ù]
+œ™\Ü‹ßJK™Ù]
+™œ›ÛÛX]\—Û\ÝÈŠHÜˆ˜]]ÈŠKœÝš\
+
+K›ÝÙ\Š
+Bˆ™]\›ˆ˜[YHYˆ˜[YH[ˆ
+˜]]È‹˜[Ø^\È‹›™]™\ˆŠH[ÙH˜]]È‚‚‚™Yˆ™\ÛÛ™WÜ™\ÜÛ[™ÝXYÙJÝYWØÛÛ™šYÊN‚ˆˆˆ”™\ÛÛ™HH[™ÝXYÙHH™\Ü\ÈÜš][ˆ[‹‚‚ˆÜ™\ŽˆK[[™ÝXYÙHÓÑXˆ‘TTÒSWÔ‘TÔ•ÓS‘ÕPQÑX‚ˆ™\Ü›[™ÝXYÙX
+[ˆÝYK›[™ÝXYÙX
+H[ˆÝYWØÛÛ™šYËžX[[‚ˆ[™Û\Ú‚‚ˆ\˜[Y]\œÂˆKKKKKKKKKBˆÝYWØÛÛ™šYÈˆXÝˆ\œÙYÝYWØÛÛ™šYËžX[[‚‚ˆ™]\›œÂˆKKKKKKBˆÝ‚ˆ›Ü›X[^™Y[™ÝXYÙHÛÙKK™Ëˆ[˜Üˆ˜˜‚ˆˆˆ‚ˆ˜[YHHØÛWÛÜ[ÛŠ‹K[[™ÝXYÙHŠHÜˆÜË™[š\›Û‹™Ù]
+“‘TTÒSWÔ‘TÔ•ÓS‘ÕPQÑH‹ˆŠBˆYˆ›Ý˜[YN‚ˆÛÛ™šYÈHÝYWØÛÛ™šYÈÜˆßBˆ˜[YHH
+ÛÛ™šYË™Ù]
+œ™\Ü‹ßJK™Ù]
+›[™ÝXYÙHŠBˆÜˆÛÛ™šYË™Ù]
+œÝYH‹ßJK™Ù]
+›[™ÝXYÙHŠHÜˆˆŠBˆ˜[YHHÝŠ˜[YHÜˆˆŠKœÝš\
+
+K›ÝÙ\Š
+BˆYˆ˜[YH[ˆ
+ˆ‹˜]]È‹™Y˜][ŠN‚ˆ™]\›ˆQUSÔ‘TÔ•ÓS‘ÕPQÑBˆÛÙHHS‘ÕPQÑWÐSPTÑTË™Ù]
+˜[YK˜[YJBˆYˆÛÙHOHQUSÔ‘TÔ•ÓS‘ÕPQÑH[™ÛÙH›Ý[ˆ‘TÔ•ÔÕ’S‘ÔÎ‚ˆš[
+““ÕNˆ›È˜[œÛ][ÛˆX›H›Üˆ™\Ü[™ÝXYÙH	ÞßIËˆÙXÝ[Ûˆ‚ˆšXY[™ÜÈ[™ÛÝ™\ˆX™[ÈÝ^H[™Û\ÚÈHØÝ[Y[[™ÝXYÙH‚ˆš\ÈÙ]ÈßKˆ‹™›Ü›X]
+˜[YKS‘ÕPQÑWÓÐÐSTË™Ù]
+ÛÙKÛÙJJJBˆ™]\›ˆÛÙB‚‚™Yˆ[™WÜÝ\\œÙYYÛÝ]]ÊÝ\œ™[Ùš[\ÊN‚ˆˆˆ‘[]H™\Üš[\È\ÈÙ[™\˜]ÜˆÜ›ÝH[™\ˆ[ˆX\›Y\ˆ]K‚‚ˆÚ]Ý]\Ë™[˜[Z[™ÈHÝYHX]™\ÈHÝ\\œÙYY[]™\˜X›H™\ÚYHBˆÝ\œ™[Û™H[™H™XY\ˆØ[››Ý[ÚXÚ\È]™K‚‚ˆ\˜[Y]\œÂˆKKKKKKKKKBˆÝ\œ™[Ùš[\Èˆ\ÝÙˆÝ‚ˆ]ÈÜš][ˆžH\È[‹‚ˆˆˆ‚ˆÝ\œ™[HÙ]
+ÜËœ]˜XœÜ]
+]
+H›Üˆ][ˆÝ\œ™[Ùš[\ÂˆYˆ][™ÜËœ]™^\ÝÊ]
+JBˆ™]š[Ý\ÈH\Ý
+QÐPÖWÓÕUUÓSQTÊBˆYˆÜËœ]™^\ÝÊÕUUÓPS’Q‘TÕÑ’SJN‚ˆžN‚ˆÚ]Ü[ŠÕUUÓPS’Q‘TÕÑ’SK[˜ÛÙ[™ÏH]‹N\ÚYÈŠH\ÈX[šY™\Ý‚ˆ™]š[Ý\Ë™^[™
+œÛÛ‹›ØY
+X[šY™\Ý
+K™Ù]
+™š[\È‹×JJBˆ^Ù\
+ÔÑ\œ›Ü‹˜[YQ\œ›ÜŠH\È\œ›ÜŽ‚ˆš[
+““ÕNˆÛÝ[›Ý™XY™\ÜÝ]]X[šY™\ÝÈ‚ˆ˜ÚXÚÚ[™ÈYØXÞHÝ]]˜[Y\ÈÛ›H
+ßJKˆ‹™›Ü›X]
+\œ›ÜŠKš[O\Þ\ËœÝ\œŠBˆ›Üˆ˜[YH[ˆ™]š[Ý\Î‚ˆÝ[HHÜËœ]˜XœÜ]
+ÜËœ]š›Ú[Š‘TÔ•ÑT‹ÜËœ]˜˜\Ù[˜[YJ˜[YJJJBˆYˆÝ[H[ˆÝ\œ™[Üˆ›ÝÜËœ]š\Ùš[JÝ[JN‚ˆÛÛ[YBˆžN‚ˆÜËœ™[[Ý™JÝ[JBˆš[
+”™[[Ý™YÝ\\œÙYY™\Üš[NˆßH‹™›Ü›X]
+ÜËœ]˜˜\Ù[˜[YJÝ[JJJBˆ^Ù\ÔÑ\œ›Üˆ\È\œ›ÜŽ‚ˆš[
+““ÕNˆÛÝ[›Ý™[[Ý™HßNˆßH‹™›Ü›X]
+Ý[K\œ›ÜŠJBˆžN‚ˆÚ]Ü[ŠÕUUÓPS’Q‘TÕÑ’SKÈ‹[˜ÛÙ[™ÏH]‹NŠH\ÈX[šY™\Ý‚ˆœÛÛ‹™[\
+È™š[\ÈŽˆÛÜY
+ÜËœ]˜˜\Ù[˜[YJ
+H›Üˆ[ˆÝ\œ™[
+_KˆX[šY™\Ý[™[LŠBˆ^Ù\ÔÑ\œ›Üˆ\È\œ›ÜŽ‚ˆš[
+““ÕNˆÛÝ[›ÝØ]™H™\ÜÝ]]X[šY™\ÝÈÛX[\˜XÚÚ[™È‚ˆ›X^H™H[˜ÛÛ\]H™^[ˆ
+ßJKˆ‹™›Ü›X]
+\œ›ÜŠKš[O\Þ\ËœÝ\œŠB‚ˆÈ8¥ 8¥ ÛÜ™[\]H
+ÛÜœÜ˜]Hœ˜[™[™ÊH8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ ˆÈ™\ÛÛ][ÛˆÜ™\ŽˆK][\]HU‘TTÒSWÔ‘TÔ•ÕSTUKHØ]™YˆÈ™\ÜÝ[\]X[ˆ‹Ë›™\\Ú[KÝ\Ú×ÙY˜][ËšœÛÛˆ
+™\\Ú[HK\Ù]\™\Ü][\]JKˆÈ[ˆZ[Z[ˆÝ[[™ËˆÛÜ™ØÝ[Y[È\™H[ˆZ[ÛˆH[\]HÛÈBˆÈÛÛ\[žH›ÛËÛÛÝ\œËÝ[\ËXY\œË[™›ÛÝ\œÈ\K‚•TÒ×ÑQUS×Ñ’SHHÜËœ]™^[™\Ù\ŠŸ‹Ë›™\\Ú[KÝ\Ú×ÙY˜][ËšœÛÛˆŠB”‘TÔ•ÕSTUWÑVS”ÒSÓ”ÈH
+‹™ØÞ‹‹™ÝŠB”‘TÔ•ÕSTUHH›Û™HÈÙ][ˆ×ÛXZ[—×Èœ›ÛHÓKÙ[‹ÜÙ][™ÜÂ’ÑQTÕSTUWÐÓÓ•S•H˜[ÙHÈKZÙY\][\]KXÛÛ[ÙY\ÈH[\]H›ÙB•STUWÓ•SP‘T”×ÒPQS‘ÔÈH˜[ÙHÈ[\]HXY[™ÈÝ[\ÈØ\œžHZ\ˆÝÛˆ[X™\š[™Â‚‚™Yˆ™\ÛÛ™WÜ™\ÜÝ[\]J^XÚ]S›Û™K[Ý×ÜØ]™YUYKÛÛ™šYÝ\™YS›Û™JN‚ˆˆˆ”™\ÛÛ™HHÛÜ™[\]H™\ÜÈ\™HZ[œ›ÛKÜˆ›Û™HYˆ[œÙ]‚‚ˆ\˜[Y]\œÂˆKKKKKKKKKBˆ^XÚ]ˆÝˆÜˆ›Û™Bˆ[\]H]œ›ÛHK][\]NÈÝ™\œšY\È]™\ž][™È[ÙK‚ˆ[Ý×ÜØ]™Yˆ›ÛÛˆÚ[ˆ˜[ÙH
+K[›Ë][\]JKÝYWØÛÛ™šYË[š\›Û›Y[[™HØ]™Yˆ\Ù\ˆÙ][™È\™H[YÛ›Ü™Y‚ˆÛÛ™šYÝ\™YˆÝˆÜˆ›Û™Bˆ™\Ü[\]Xœ›ÛHÝYWØÛÛ™šYËžX[[È™[]]™H]È™\ÛÛ™Hœ›ÛBˆH\ÚÈ›Û\ˆ[™›Û™XÙ[XÝÈHZ[Z[ˆÝ[[™ËˆÝ™\œšY\ÂˆH[š\›Û›Y[[™HØ]™Y\Ù\ˆÙ][™Ë‚‚ˆ™]\›œÂˆKKKKKKBˆÝˆÜˆ›Û™BˆXœÛÛ]H]È[ˆ^\Ý[™È™ØÞË™Ýš[KÜˆ›Û™K‚‚ˆ˜Z\Ù\ÂˆKKKKKBˆ˜[YQ\œ›Ü‚ˆYˆH[\]H\ÈÛÛ™šYÝ\™Y]\È›ÝH™XYX›HÛÜ™š[K‚ˆˆˆ‚ˆÛÛ™šYÝ\™YH
+ÛÛ™šYÝ\™YÜˆˆŠKœÝš\
+
+BˆYˆ›Ý^XÚ][™[Ý×ÜØ]™Y[™ÛÛ™šYÝ\™Y‚ˆYˆÛÛ™šYÝ\™Y›ÝÙ\Š
+H[ˆ
+››Û™H‹›Ù™ˆ‹˜Z[[ˆ‹˜Z[Z[ˆŠN‚ˆ™]\›ˆ›Û™Bˆ^XÚ]H
+ÛÛ™šYÝ\™YYˆÜËœ]š\ØXœÊÜËœ]™^[™\Ù\ŠÛÛ™šYÝ\™Y
+JBˆ[ÙHÜËœ]š›Ú[ŠTÒ×ÑT‹ÛÛ™šYÝ\™Y
+JBˆÙ[XÝYH^XÚ]ÜˆÜË™[š\›Û‹™Ù]
+“‘TTÒSWÔ‘TÔ•ÕSTUHŠBˆYˆ›ÝÙ[XÝY[™[Ý×ÜØ]™Y[™ÜËœ]™^\ÝÊTÒ×ÑQUS×Ñ’SJN‚ˆÚ]Ü[ŠTÒ×ÑQUS×Ñ’SK[˜ÛÙ[™ÏH]‹N\ÚYÈŠH\ÈÛÝ\˜ÙN‚ˆÙ[XÝYHœÛÛ‹›ØY
+ÛÝ\˜ÙJK™Ù]
+œ™\ÜÝ[\]HŠBˆYˆ›ÝÙ[XÝY‚ˆ™]\›ˆ›Û™BˆYˆ›Ý\Ú[œÝ[˜ÙJÙ[XÝYÝŠHÜˆ›ÝÙ[XÝYœÝš\
+
+N‚ˆ˜Z\ÙH˜[YQ\œ›ÜŠ”™\Ü[\]H]\Ý™HH]ÈH™ØÞÜˆ™Ýš[HŠBˆ]HÜËœ]˜XœÜ]
+ÜËœ]™^[™˜\œÊÜËœ]™^[™\Ù\ŠÙ[XÝY
+JJBˆYˆÜËœ]œÜ]^
+]
+VÌWK›ÝÙ\Š
+H›Ý[ˆ‘TÔ•ÕSTUWÑVS”ÒSÓ”Î‚ˆ˜Z\ÙH˜[YQ\œ›ÜŠ”™\Ü[\]H]\Ý™HH™ØÞÜˆ™Ýš[NˆßH‹™›Ü›X]
+]
+JBˆYˆ›ÝÜËœ]š\Ùš[J]
+N‚ˆ˜Z\ÙH˜[YQ\œ›ÜŠ”™\Ü[\]H›Ý›Ý[™ˆßH‹™›Ü›X]
+]
+JBˆ™]\›ˆ]‚‚™YˆØÛX\—ÙØÝ[Y[Ø›ÙJØÊN‚ˆˆˆ‘›ÜH[\]IÜÈÝÛˆ›ÙHÛÛ[ÙY\[™ÈYÙHÙ]\[™XY\œËˆˆˆ‚ˆ›ÙHHØË™[[Y[˜›ÙBˆ›ÜˆÚ[[ˆ\Ý
+›ÙJN‚ˆYˆÚ[YÈOH[ŠÎœÙXÝˆŠN‚ˆÛÛ[YBˆ›ÙKœ™[[Ý™JÚ[
+B‚‚™YˆÙ[œÝ\™WÜ\˜YÜ˜\ÜÝ[JØË˜[YKÚ^™WÜS›Û™K›ÛQ˜[ÙJN‚ˆˆˆÜ™X]HHZ[š[X[Ý[™Z[ˆÚ[ˆH[\]HXÚÜÈHÝ[HÙHÜš]HËˆˆˆ‚ˆžN‚ˆØËœÝ[\ÖÛ˜[YWBˆ™]\›‚ˆ^Ù\Ù^Q\œ›ÜŽ‚ˆ\ÜÂˆÝ[HHØËœÝ[\Ë˜YÜÝ[J˜[YKÑÔÕSWÕTK”TQÔT
+BˆžN‚ˆÝ[K˜˜\ÙWÜÝ[HHØËœÝ[\ÖÈ“›Ü›X[—Bˆ^Ù\Ù^Q\œ›ÜŽ‚ˆ\ÜÂˆYˆÚ^™WÜ‚ˆÝ[K™›ÛœÚ^™HH
+Ú^™WÜ
+BˆÝ[K™›Û˜›ÛH›Û‚‚™YˆØ\WÜ™XYX›WÝ\ÙÜ˜\JØÊN‚ˆˆˆ”˜Z\ÙHÝ[HÚ^™\È]˜[™[ÝÈH™XYX›H›ÛÜ‹‚‚ˆÛ›H]™\ˆ[˜Ü™X\Ù\ÈHÚ^™KÛÈH[\]HÚÜÙH›ÙH^[™XY[™ÜÈ\™Bˆ[™XYH™X\ÛÛ˜X›HÙY\È]ÈÝÛˆ\ÚYÛ‹ˆÛÜœÜ˜]H[\]\ÈZ[›Ü‚ˆ[œÙH›Ü›\ÈÙ[ˆÚ\›Ü›X[]KNKHÚ][XY[™È]™[È]BˆØ[YHÚ^™KÚXÚX]™\ÈH™\Ü›ÙHÛX[[™HÙXÝ[ÛˆY\˜\˜ÚBˆ[š\ÚX›HÛ˜ÙHH[\]H›ÙH\ÈÛX\™Y‚ˆˆˆ‚ˆ›ÛÜœÈH
+ˆ
+“›Ü›X[‹“ÑWÔ
+Kˆ
+’XY[™ÈH‹PQS‘ÌWÔ
+Kˆ
+’XY[™Èˆ‹PQS‘Ì—Ô
+Kˆ
+’XY[™ÈÈ‹PQS‘Ì×Ô
+Kˆ
+Bˆ›Üˆ˜[YK›ÛÜ—Ü[ˆ›ÛÜœÎ‚ˆžN‚ˆÝ[HHØËœÝ[\ÖÛ˜[YWBˆ^Ù\Ù^Q\œ›ÜŽ‚ˆÛÛ[YBˆÝ\œ™[HÝ[K™›ÛœÚ^™KœYˆÝ[K™›ÛœÚ^™H[ÙH›Û™BˆYˆÝ\œ™[\È›Û™HÜˆÝ\œ™[›ÛÜ—Ü‚ˆÝ[K™›ÛœÚ^™HH
+›ÛÜ—Ü
+BˆYˆ˜[YKœÝ\ÝÚ]
+’XY[™ÈŠN‚ˆÝ[K™›Û˜›ÛHYBˆÈH›Ü›H[\]HÙ[ˆÙ]ÈÜXÙWØY\ˆHÚXÚÛY\ÈÛÛœÙXÝ]]™BˆÈ\˜YÜ˜\ÈÙÙ]\ˆ[™Y\ÈH\˜YÜ˜\ÝXÝ\™H[\™[K‚ˆžN‚ˆ›ÙHHØËœÝ[\ÖÈ“›Ü›X[—Kœ\˜YÜ˜\Ù›Ü›X]ˆYˆ›ÙKœÜXÙWØY\ˆ\È›Û™HÜˆ›ÙKœÜXÙWØY\ˆ
+“ÑWÔÔPÑWÐQ•T—Ô
+N‚ˆ›ÙKœÜXÙWØY\ˆH
+“ÑWÔÔPÑWÐQ•T—Ô
+Bˆ›ÙKÚYÝ×ØÛÛ›ÛHYBˆ^Ù\Ù^Q\œ›ÜŽ‚ˆ\ÜÂˆÙ[œÝ\™WØØ\[Û—ÜÝ[JØÊB‚‚™YˆÙ[œÝ\™WØØ\[Û—ÜÝ[JØÊN‚ˆˆˆ‘Ú]™HšYÝ\™H[™X›HØ\[ÛœÈH™X[Ø\[ÛˆÝ[K‚‚ˆØ\[ÛœÈÜš][ˆ\ÈYZØÈ][XÈ[œÈØ[››Ý™HÛÛXÝY[ÈH\ÝÙ‚ˆšYÝ\™\Ë[™ÛÜ™\Èœ™YHÈœ™XZÈHYÙH™]ÙY[ˆHšYÝ\™H[™]ÂˆØ\[Û‹ˆHÝ[YØ\[Ûˆš^\È›Ý‚ˆˆˆ‚ˆÙ[œÝ\™WÜ\˜YÜ˜\ÜÝ[JØËØ\[Ûˆ‹ÐTSÓ—Ô
+BˆžN‚ˆÝ[HHØËœÝ[\ÖÈØ\[Ûˆ—Bˆ^Ù\Ù^Q\œ›ÜŽ‚ˆ™]\›‚ˆÝ[K™›ÛœÚ^™HH
+ÐTSÓ—Ô
+BˆÝ[K™›Ûš][XÈHYBˆÝ[K™›Û˜›ÛH˜[ÙBˆÝ[K™›Û˜ÛÛÜ‹œ™ØˆH‘ÐÛÛÜŠLLL
+BˆÝ[Kœ\˜YÜ˜\Ù›Ü›X]œÜXÙWØY\ˆH
+“ÑWÔÔPÑWÐQ•T—Ô
+BˆÝ[Kœ\˜YÜ˜\Ù›Ü›X]šÙY\ÝÚ]Û™^H˜[ÙB‚‚™YˆÜÙ]Ü[—Û[™ÝXYÙJ—Ü‹ØØ[JN‚ˆˆˆ”Ù]Î›[™ØÛˆH[‹\›Ü\Y\È[[Y[™\XÚ[™È[žH^\Ý[™ÈÛ™Kˆˆˆ‚ˆ›Üˆ^\Ý[™È[ˆ—Ü‹™š[™[
+[ŠÎ›[™ÈŠJN‚ˆ—Ü‹œ™[[Ý™J^\Ý[™ÊBˆ—Ü‹˜\[™
+\œÙWÞ[
+ˆ	ÏÎ›[™ÈßHÎ˜[HžßHˆÎ™X\Ý\ÚXOHžßH‹Ï‰Ë™›Ü›X]
+ˆœÙXÛÊÈŠKØØ[KØØ[JJJB‚‚™YˆØ\WÙØÝ[Y[Û[™ÝXYÙJØÊN‚ˆˆˆ”Ù]HØÝ[Y[[™ÝXYÙHÛÈÛÜ™Ü[XÚXÚÜÈ[ˆH™\Ü[™ÝXYÙK‚‚ˆH[\]HZ[[ˆÛ™H[™ÝXYÙHÝ\Ú\ÙHX\šÜÈ]™\žHÛÜ™ÙˆH™\ÜˆÜš][ˆ[ˆ[›Ý\ˆ\ÈHÜ[[™È\œ›Ü‹‚ˆˆˆ‚ˆØØ[HHÜ™\ÜÛØØ[J
+BˆÝ[\ÈHØËœÝ[\Ë™[[Y[ˆY˜][ÈHÝ[\Ë™š[™
+[ŠÎ™ØÑY˜][ÈŠJBˆYˆY˜][È\È›Ý›Û™N‚ˆ—Ü—ÙY˜][HY˜][Ë™š[™
+[ŠÎœ”‘Y˜][ŠJBˆYˆ—Ü—ÙY˜][\È›Û™N‚ˆ—Ü—ÙY˜][H\œÙWÞ[
+ˆ	ÏÎœ”‘Y˜][ßKÏ‰Ë™›Ü›X]
+œÙXÛÊÈŠJJBˆY˜][Ëš[œÙ\
+—Ü—ÙY˜][
+Bˆ—ÜˆH—Ü—ÙY˜][™š[™
+[ŠÎœ”ˆŠJBˆYˆ—Üˆ\È›Û™N‚ˆ—ÜˆH\œÙWÞ[
+	ÏÎœ”ˆßKÏ‰Ë™›Ü›X]
+œÙXÛÊÈŠJJBˆ—Ü—ÙY˜][˜\[™
+—ÜŠBˆÜÙ]Ü[—Û[™ÝXYÙJ—Ü‹ØØ[JBˆžN‚ˆ›Ü›X[HØËœÝ[\ÖÈ“›Ü›X[—K™[[Y[ˆ^Ù\Ù^Q\œ›ÜŽ‚ˆ™]\›‚ˆ—ÜˆH›Ü›X[™š[™
+[ŠÎœ”ˆŠJBˆYˆ—Üˆ\È›Û™N‚ˆ—ÜˆH\œÙWÞ[
+	ÏÎœ”ˆßKÏ‰Ë™›Ü›X]
+œÙXÛÊÈŠJJBˆ›Ü›X[˜\[™
+—ÜŠBˆÜÙ]Ü[—Û[™ÝXYÙJ—Ü‹ØØ[JB‚‚™YˆØ[˜ÚÜ—ÚXY\—Ù˜]Ú[™Ü×Ý×ÜšYÚÛX\™Ú[ŠØÊN‚ˆˆˆ’ÙY\šYÚZ[™XY\‹Ù›ÛÝ\ˆ˜]Ú[™ÜÈ
+ÙÛÊHÛˆHYÙHY\ˆH›\‚‚ˆÛÜœÜ˜]H[\]\ÈXÙHHÙÛÈÚ]Hš^YÙ™œÙ]œ›ÛHHYˆÛÛ[[‹ˆ›Ý][™ÈH[™ØØ\H[\]HÈÜ˜Z]X]™\È]Ù™œÙ]ˆ™^[Û™HYÙHYÙKÛÈHÙÛÈ˜[š\Ú\Ëˆ™KY^™\ÜÚ[™ÈHÙ™œÙ]ˆ™[]]™HÈHšYÚX\™Ú[ˆÙY\ÈHØ[YHØ\[ˆZ]\ˆÜšY[][Û‹‚ˆˆˆ‚ˆÙY[ˆHÙ]
+
+Bˆ›ÜˆÙXÝ[Ûˆ[ˆØËœÙXÝ[ÛœÎ‚ˆYHÙXÝ[Û‹›YÛX\™Ú[ˆÜˆˆšYÚHÙXÝ[Û‹œšYÚÛX\™Ú[ˆÜˆˆYÙWÝÈHÙXÝ[Û‹œYÙWÝÚYˆ\ÈH
+ÙXÝ[Û‹šXY\‹ÙXÝ[Û‹™š\œÝÜYÙWÚXY\‹ˆÙXÝ[Û‹™]™[—ÜYÙWÚXY\‹ÙXÝ[Û‹™›ÛÝ\‹ˆÙXÝ[Û‹™š\œÝÜYÙWÙ›ÛÝ\‹ÙXÝ[Û‹™]™[—ÜYÙWÙ›ÛÝ\ŠBˆ›Üˆ\[ˆ\Î‚ˆYˆ\š\×Û[šÙYÝ×Ü™]š[Ý\Î‚ˆÛÛ[YBˆ›ÛÝH\—Ù[[Y[ˆYˆY
+›ÛÝ
+H[ˆÙY[Ž‚ˆÛÛ[YBˆÙY[‹˜Y
+Y
+›ÛÝ
+JBˆ›Üˆ[˜ÚÜˆ[ˆ›ÛÝš]\Š[ŠÜ˜[˜ÚÜˆŠJN‚ˆÜ×ÚH[˜ÚÜ‹™š[™
+[ŠÜœÜÚ][Û’ŠJBˆ^[H[˜ÚÜ‹™š[™
+[ŠÜ™^[ŠJBˆYˆÜ×Ú\È›Û™HÜˆ^[\È›Û™N‚ˆÛÛ[YBˆÙ™œÙ]HÜ×Ú™š[™
+[ŠÜœÜÓÙ™œÙ]ŠJBˆYˆÙ™œÙ]\È›Û™N‚ˆÛÛ[YBˆ˜\ÙHHÈ˜ÛÛ[[ˆŽˆY›X\™Ú[ˆŽˆY›YX\™Ú[ˆŽˆYˆœYÙHŽˆK™Ù]
+Ü×Ú™Ù]
+œ™[]]™Qœ›ÛHŠJBˆYˆ˜\ÙH\È›Û™N‚ˆÛÛ[YBˆÛYH˜\ÙH
+È[
+Ù™œÙ]^
+BˆYˆÛY
+È[
+^[™Ù]
+˜ÞŠJHÈ‹ŒYÙWÝÈÈ‹Œ‚ˆÛÛ[YBˆÜ×ÚœÙ]
+œ™[]]™Qœ›ÛH‹œšYÚX\™Ú[ˆŠBˆÙ™œÙ]^HÝŠ[
+ÛYH
+YÙWÝÈHšYÚ
+JJB‚‚™YˆÛ›Ü›X[^™WÜYÙWÜÙ]\
+ØÊN‚ˆˆˆ”Ù]H›ÙHÛˆH™XYX›HYX\Ý\™KÚ]]™\ˆH[\]HXÛ\™\Ëˆˆˆ‚ˆYˆ‘TÔ•ÓÔ’QS•USÓˆOH[\]HŽ‚ˆ™]\›‚ˆØ[Û[™ØØ\HH‘TÔ•ÓÔ’QS•USÓˆOH›[™ØØ\H‚ˆØ[˜ÚÜ—ÚXY\—Ù˜]Ú[™Ü×Ý×ÜšYÚÛX\™Ú[ŠØÊBˆ›ÜˆÙXÝ[Ûˆ[ˆØËœÙXÝ[ÛœÎ‚ˆYˆ
+ÙXÝ[Û‹œYÙWÝÚYˆÙXÝ[Û‹œYÙWÚZYÚ
+HOHØ[Û[™ØØ\N‚ˆÙXÝ[Û‹œYÙWÝÚYÙXÝ[Û‹œYÙWÚZYÚH
+ˆÙXÝ[Û‹œYÙWÚZYÚÙXÝ[Û‹œYÙWÝÚY
+BˆÙXÝ[Û‹›ÜšY[][ÛˆH
+ÑÓÔ’QS•“S‘ÐÐTHYˆØ[Û[™ØØ\Bˆ[ÙHÑÓÔ’QS•”Ô•RU
+BˆYX\Ý\™HH
+ÙXÝ[Û‹œYÙWÝÚYHÙXÝ[Û‹›YÛX\™Ú[‚ˆHÙXÝ[Û‹œšYÚÛX\™Ú[ŠHÈLMŒˆYˆYX\Ý\™HHPVÓQPTÕT‘WÒSŽ‚ˆÛÛ[YBˆ^˜HH[˜Ú\Ê
+YX\Ý\™HHPVÓQPTÕT‘WÒSŠHÈ‹Œ
+Bˆ›ÛÜˆH[˜Ú\ÊRS—ÔÒQWÓPT‘ÒS—ÒSŠBˆÙXÝ[Û‹›YÛX\™Ú[ˆHX^
+ÙXÝ[Û‹›YÛX\™Ú[ˆ
+È^˜K›ÛÜŠBˆÙXÝ[Û‹œšYÚÛX\™Ú[ˆHX^
+ÙXÝ[Û‹œšYÚÛX\™Ú[ˆ
+È^˜K›ÛÜŠB‚‚™YˆÝ^ÝÚYÚ[ŠØÊN‚ˆˆˆ”š[X›HÚYÙˆHÝ\œ™[ÙXÝ[Û‹[ˆ[˜Ú\Ëˆˆˆ‚ˆÙXÝ[ÛˆHØËœÙXÝ[ÛœÖËLWBˆ™]\›ˆX^
+‹Œ
+ÙXÝ[Û‹œYÙWÝÚYHÙXÝ[Û‹›YÛX\™Ú[‚ˆHÙXÝ[Û‹œšYÚÛX\™Ú[ŠHÈLMŒ
+B‚‚™YˆÝ^ÚZYÚÚ[ŠØÊN‚ˆˆˆ”š[X›HZYÚÙˆHÝ\œ™[ÙXÝ[Û‹[ˆ[˜Ú\Ëˆˆˆ‚ˆÙXÝ[ÛˆHØËœÙXÝ[ÛœÖËLWBˆ™]\›ˆX^
+‹Œ
+ÙXÝ[Û‹œYÙWÚZYÚHÙXÝ[Û‹ÜÛX\™Ú[‚ˆHÙXÝ[Û‹˜›ÝÛWÛX\™Ú[ŠHÈLMŒ
+B‚‚™YˆÛ™]×ÙØÝ[Y[
+
+N‚ˆˆˆ”™]\›ˆHÛÜ™ØÝ[Y[˜\ÙYÛˆHÛÛ™šYÝ\™Y[\]KYˆ[žKˆˆˆ‚ˆÛØ˜[STUWÓ•SP‘T”×ÒPQS‘ÔÂˆYˆ›Ý‘TÔ•ÕSTUN‚ˆØÈHØÝ[Y[
+
+BˆØ\WÜ™XYX›WÝ\ÙÜ˜\JØÊBˆØ\WÙØÝ[Y[Û[™ÝXYÙJØÊBˆÛ›Ü›X[^™WÜYÙWÜÙ]\
+ØÊBˆ™]\›ˆØÂˆØÈHØÝ[Y[
+‘TÔ•ÕSTUJBˆYˆ›ÝÑQTÕSTUWÐÓÓ•S•‚ˆØÛX\—ÙØÝ[Y[Ø›ÙJØÊBˆ›Üˆ˜[YKÚ^™WÜ[ˆ
+
+•]H‹Ž
+K
+’XY[™ÈH‹PQS‘ÌWÔ
+Kˆ
+’XY[™Èˆ‹PQS‘Ì—Ô
+Kˆ
+’XY[™ÈÈ‹PQS‘Ì×Ô
+K
+“\Ý[]‹›Û™JJN‚ˆÙ[œÝ\™WÜ\˜YÜ˜\ÜÝ[JØË˜[YKÚ^™WÜ›Û\Ú^™WÜ\È›Ý›Û™JBˆØ\WÜ™XYX›WÝ\ÙÜ˜\JØÊBˆØ\WÙØÝ[Y[Û[™ÝXYÙJØÊBˆÛ›Ü›X[^™WÜYÙWÜÙ]\
+ØÊBˆ™]\›ˆØÂ‚‚™YˆÜÝ[WÛ[X™\š[™×ØXÝ]™JØËÝ[WÛ˜[YKÜÙY[S›Û™JN‚ˆˆˆ”™]\›ˆYHÚ[ˆHXY[™ÈÝ[HØ\œšY\È]]ÛX]XÈÛÜ™[X™\š[™Ë‚‚ˆHÛÜœÜ˜]H[\]H\ÝX[H[X™\œÈ]ÈXY[™ÈÝ[\È]Ù[‹ˆÜš][™ÈÝ\‚ˆÝÛˆËˆˆ™Yš^[ÈÝXÚHXY[™È›ÙXÙ\ÈŽËˆÛÛ][ÛˆÛÜšÙ›ÝÈˆ8 %ˆÛÈ[X™\š[™ÈØÚ[Y\È][ÛÈ\ØYÜ™YK™XØ]\ÙHÛÜ™ÛÝ[ÈHÛÝ™\ˆ[™ˆÛÛ[ÈXY[™ÜÈÛË‚ˆˆˆ‚ˆYˆÜÙY[ˆ\È›Û™N‚ˆÜÙY[ˆHÙ]
+
+BˆYˆÝ[WÛ˜[YH[ˆÜÙY[Ž‚ˆ™]\›ˆ˜[ÙBˆÜÙY[‹˜Y
+Ý[WÛ˜[YJBˆžN‚ˆÝ[HHØËœÝ[\ÖÜÝ[WÛ˜[YWBˆ^Ù\Ù^Q\œ›ÜŽ‚ˆ™]\›ˆ˜[ÙBˆ[[Y[HÝ[K™[[Y[ˆYˆ[[Y[™š[™
+[ŠÎœˆŠJH\È›Ý›Û™N‚ˆYˆ[[Y[™š[™
+[ŠÎœˆŠJK™š[™
+[ŠÎ›[TˆŠJH\È›Ý›Û™N‚ˆ™]\›ˆYBˆ˜\ÙYÛÛˆH[[Y[™š[™
+[ŠÎ˜˜\ÙYÛˆŠJBˆYˆ˜\ÙYÛÛˆ\È›Ý›Û™N‚ˆ\™[H˜\ÙYÛÛ‹™Ù]
+[ŠÎ˜[ŠJBˆYˆ\™[‚ˆ™]\›ˆÜÝ[WÛ[X™\š[™×ØXÝ]™JØË\™[ÜÙY[ŠBˆ™]\›ˆ˜[ÙB‚‚—ÒPQS‘×Ó•SP‘T’S‘×ÐÐPÒHHßB—ÓPS•PSÒPQS‘×Ó•SP‘TˆH™K˜ÛÛ\[Jˆ——Ê—
+ÊÎ——
+ÊJ–ËŠWO×ÊÈŠB‚‚™YˆÚXY[™×Û[X™\š[™×ØXÝ]™JØË]™[
+N‚ˆˆˆØXÚHH[X™\š[™ÈÚXÚÈ\ˆØÝ[Y[[™XY[™È]™[ˆˆˆ‚ˆÙ^HH
+Y
+ØÊK]™[
+BˆYˆÙ^H›Ý[ˆÒPQS‘×Ó•SP‘T’S‘×ÐÐPÒN‚ˆÒPQS‘×Ó•SP‘T’S‘×ÐÐPÒVÚÙ^WHHÜÝ[WÛ[X™\š[™×ØXÝ]™JˆØË’XY[™ÈßH‹™›Ü›X]
+]™[
+JBˆ™]\›ˆÒPQS‘×Ó•SP‘T’S‘×ÐÐPÒVÚÙ^WB‚‚™YˆÜÝ\™\Ü×Ü\˜YÜ˜\Û[X™\š[™Ê\˜YÜ˜\
+N‚ˆˆˆ”™[[Ý™H\Ý[X™\š[™Èœ›ÛHHÚ[™ÛH\˜YÜ˜\
+[RY
+Kˆˆˆ‚ˆÜˆH\˜YÜ˜\—Ü™Ù]ÛÜ—ØYÜŠ
+Bˆ›Üˆ^\Ý[™È[ˆÜ‹™š[™[
+[ŠÎ›[TˆŠJN‚ˆÜ‹œ™[[Ý™J^\Ý[™ÊBˆÜ‹˜\[™
+\œÙWÞ[
+ˆ	ÏÎ›[TˆßOÎš[›Î˜[HŒ‹ÏÎ›[RYÎ˜[HŒ‹ÏÝÎ›[T‰Ë™›Ü›X]
+ˆœÙXÛÊÈŠJJJB‚‚—ÓPS•PSÔÕP”ÑPÕSÓ—ÔÕUHHßB—ÓPQS‘×ÐÒTT—Ó•SP‘TˆH™K˜ÛÛ\[Jˆ——ÊŠ
+ÊVËŠWO×ÊÈŠB‚‚™YˆØYÚXY[™ÊØË^]™[LK[X™\™YUYJN‚ˆˆˆYHXY[™È]Ù\È›ÝšYÚH[\]IÜÈÝÛˆ[X™\š[™Ë‚‚ˆÚ[ˆH[\]H[X™\œÈXY[™ÜËÝ\ˆX[X[“‹ˆˆ™Yš^\È›ÜYÛÂˆÛÜ™Ý\Y\ÈHÚ[™ÛH]]Üš]]]™H[X™\ŽÈXY[™ÜÈ]]\ÝÝ^Bˆ[›[X™\™Y
+ÛÛ[Ëœ›ÛX]\ŠH]™H[X™\š[™ÈÝ\™\ÜÙY[œÝXY‚ˆÚ]Ý][\]H[X™\š[™Ë]™[LˆXY[™ÜÈÙ]HX[X[“‹šÈˆÛÈBˆZ[Z[ˆ^[Ý]X]Ú\ÈH[X™\™YÛÜœÜ˜]H[\]K‚ˆˆˆ‚ˆ^HÝŠ^
+BˆYˆÚXY[™×Û[X™\š[™×ØXÝ]™JØË]™[
+N‚ˆYˆ[X™\™Y‚ˆ^HÓPS•PSÒPQS‘×Ó•SP‘T‹œÝXŠˆ‹^
+BˆXY[™ÈHØË˜YÚXY[™Ê^]™[[]™[
+BˆYˆ›Ý[X™\™Y‚ˆÜÝ\™\Ü×Ü\˜YÜ˜\Û[X™\š[™ÊXY[™ÊBˆ[ÙN‚ˆÝ]HHÓPS•PSÔÕP”ÑPÕSÓ—ÔÕUKœÙ]Y˜][
+Y
+ØÊKÈ˜Ú\\ˆŽˆ›Û™KœÝXˆŽˆJBˆYˆ]™[OHN‚ˆX]ÚHÓPQS‘×ÐÒTT—Ó•SP‘T‹›X]Ú
+^
+HYˆ[X™\™Y[ÙH›Û™BˆÝ]VÈ˜Ú\\ˆ—KÝ]VÈœÝXˆ—HH
+X]Ú™Ü›Ý\
+JHYˆX]Ú[ÙH›Û™JKˆ[Yˆ]™[OHˆ[™[X™\™Y[™Ý]VÈ˜Ú\\ˆ—Hˆ[™›ÝÓPS•PSÒPQS‘×Ó•SP‘T‹›X]Ú
+^
+N‚ˆÝ]VÈœÝXˆ—H
+ÏHBˆ^HžßKžßHßH‹™›Ü›X]
+Ý]VÈ˜Ú\\ˆ—KÝ]VÈœÝXˆ—K^
+BˆXY[™ÈHØË˜YÚXY[™Ê^]™[[]™[
+BˆÈHXY[™ÈÝ˜[™Y]H›ÛÝÙˆHYÙH\ÈH[ÜÝš\ÚX›H^[Ý]˜][ˆÈ[ˆ[ˆÝ\Ú\ÙHÛX[ˆ™\Ü‚ˆXY[™Ëœ\˜YÜ˜\Ù›Ü›X]šÙY\ÝÚ]Û™^HYBˆXY[™Ëœ\˜YÜ˜\Ù›Ü›X]œYÙWØœ™XZ×Ø™Y›Ü™HH˜[ÙBˆ™]\›ˆXY[™Â‚‚™YˆÜ™\X]ÚXY\—Ü›ÝÊX›JN‚ˆˆˆ“X\šÈ›ÝÈH\ÈHXY\ˆÛÈ]™\X]ÈÚ[ˆHX›Hœ™XZÜÈXÜ›ÜÜÈYÙ\Ëˆˆˆ‚ˆ—ÜˆHX›Kœ›ÝÜÖÌK—Ý‹™Ù]ÛÜ—ØYÝ”Š
+BˆYˆ—Ü‹™š[™
+[ŠÎ›XY\ˆŠJH\È›Û™N‚ˆ—Ü‹˜\[™
+\œÙWÞ[
+	ÏÎ›XY\ˆßKÏ‰Ë™›Ü›X]
+œÙXÛÊÈŠJJJB‚‚™YˆÚÙY\Ü›ÝÜ×Ú[XÝ
+X›JN‚ˆˆˆ”ÝÜÛÜ™Ü][™ÈHÚ[™ÛHX›H›ÝÈXÜ›ÜÜÈHYÙHœ™XZËˆˆˆ‚ˆ›Üˆ›ÝÈ[ˆX›Kœ›ÝÜÎ‚ˆ—ÜˆH›ÝË—Ý‹™Ù]ÛÜ—ØYÝ”Š
+BˆYˆ—Ü‹™š[™
+[ŠÎ˜Ø[Ü]ŠJH\È›Û™N‚ˆ—Ü‹˜\[™
+\œÙWÞ[
+	ÏÎ˜Ø[Ü]ßKÏ‰Ë™›Ü›X]
+œÙXÛÊÈŠJJJB‚‚—Ó•SQT’P×ÐÑSH™K˜ÛÛ\[Jˆˆ—–××LLJ–Ï—LŒLŒWLŒ_—OÖ××LLJ–ËJ×OÖ×LLˆJ—‚ˆˆŠÎ–ÙQWVËJ×O×
+ÊOÖ××LLJ‰OÖ××LLJ‰ŠB‚‚™YˆØ[YÛ—Û[Y\šX×ØÙ[ÊX›JN‚ˆˆˆ”šYÚX[YÛˆHÙ[È]Û[X™\œÈÛÈYÚ]È[™H\žHXÙH˜[YKˆˆˆ‚ˆ›Üˆ›ÝÈ[ˆX›Kœ›ÝÜÖÌN—N‚ˆ›ÜˆÙ[[ˆ›ÝË˜Ù[Î‚ˆ^HÙ[^œÝš\
+
+BˆYˆ›Ý^Üˆ›ÝÓ•SQT’P×ÐÑS›X]Ú
+^
+N‚ˆÛÛ[YBˆ›Üˆ\˜YÜ˜\[ˆÙ[œ\˜YÜ˜\Î‚ˆ\˜YÜ˜\˜[YÛ›Y[HÑÐSQÓ—ÔTQÔT”’QÒ‚‚™YˆÜÙ]ÝX›WÜÝ[JX›K˜[YOH•X›HÜšYŠN‚ˆˆˆ\HHX›HÝ[K˜[[™È˜XÚÈÈ^XÚ]›Ü™\œÈYˆ]\ÈZ\ÜÚ[™Ëˆˆˆ‚ˆžN‚ˆX›KœÝ[HH˜[YBˆ™]\›‚ˆ^Ù\Ù^Q\œ›ÜŽ‚ˆ\ÜÂˆ›Ü™\œÈHˆ‹š›Ú[Šˆ	ÏÎžßHÎ˜[HœÚ[™ÛHˆÎœÞHˆÎ˜ÛÛÜHŽNNNNNH‹Ï‰Ë™›Ü›X]
+YÙJBˆ›ÜˆYÙH[ˆ
+Ü‹›Y‹˜›ÝÛH‹œšYÚ‹š[œÚYR‹š[œÚYUˆŠBˆ
+BˆX›K—Ý››‹˜\[™
+ˆ\œÙWÞ[
+	ÏÎ››Ü™\œÈßOžßOÝÎ››Ü™\œÏ‰Ë™›Ü›X]
+œÙXÛÊÈŠK›Ü™\œÊJBˆ
+B‚ˆÈ8¥ 8¥ ÛÛ™šYÝ\˜][Ûˆ8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ ˆÈUH[™UUÔˆ\™H™\ÛÛ™Y][ˆ[YHžH™\ÛÛ™WÜ™\ÜÚY[]J
+N‚ˆÈK]]HÈKX]]ÜˆˆÝYWØÛÛ™šYËžX[[
+ÝYK]KÝYK˜]]ÜŠH‚ˆÈ\Ú×ÜÜXË›YXY[™ÈˆH\ÚË[ØØ[Ù[™\˜]WÜ™\ÜœHÛÜHˆ›Û\ˆ˜[YK‚ˆÈH˜[Y\È™[ÝÈ\™HÛ›HH\Ý\™\ÛÜ˜[˜XÚÜË‚•UHH•\ÚÈ™\Ü‚UUÔˆHˆ‚•TÒ×ÑUHH]KÙ^J
+Kš\ÛÙ›Ü›X]
+
+B•TÒ×ÔÕUSQS•HˆˆÈ™\ÛÛ™Yœ›ÛHÝYWØÛÛ™šYËÝ\Ú×ÜÜXËÜ™\Ý[Â”ÕQWÐQÑTÈH×HÈÊX™[˜[YJWHÚÝÛˆ[™\ˆH]B‚ˆÈ8¥ 8¥ \\‹\ÜXÚYšXÈÛÛ™šYÝ\˜][Ûˆ
+Y]›ÜˆØÚY[YšXÈ\\ˆÝ]]
+H8¥ 8¥ ”TT—ÕUHHˆˆÈKHX]™H[\HÈ\ÙHUB”TT—ÐUUÔ”ÈH×HÈKHK™ËˆÞÈ›˜[YHŽˆ’‹ˆÙH‹˜Y™š[X][ÛˆŽˆ“••HŸWB”TT—ÒÑVUÓÔ‘ÈH×HÈKHK™ËˆÈ\›[Ù[˜[ZXÜÈ‹œ›ØÙ\ÜÈÚ[][][Ûˆ—B”TT—Ò“ÕT“SHˆˆÈKHK™Ëˆ’›Ý\›˜[Ùˆ˜]\˜[Ø\ÈØÚY[˜ÙH[™[™Ú[™Y\š[™È‚”TT—ÐPÒÓ“ÕÓQÓQS•ÈHˆˆÈKHK™Ëˆ‘[™YžH™\ÙX\˜ÚÛÝ[˜Ú[Ùˆ›ÜØ^H‚‚ˆÈ8¥ 8¥ ™\ÜY]Y]H
+ÛÝ™\ˆYÙH[™™]š\Ú[Ûˆ\ÝÜžJH8¥ 8¥ 8¥ 8¥ ‘Ð×Ó•SP‘TˆHˆˆÈKHK™Ëˆ”‘TLŒ‹LHˆ
+]]ËYÙ[™\˜]Yœ›ÛH\ÚÈ›Û\ˆYˆ›[šÊB”‘U’TÒSÓˆHŒˆÈKHÝ\œ™[™]š\Ú[Ûˆ[X™\‚”‘U’TÒSÓ—ÒTÕÔ–HHÂˆÈÈœ™]ˆŽˆŒ‹™]HŽˆŒŒ‹LËL‹™\ØÜš\[ÛˆŽˆ’[š]X[\ÜÝYH‹˜]]ÜˆŽˆˆŸK—BÓTÔÒQ’PÐUSÓˆH“Ü[ˆˆÈKH“Ü[ˆ‹’[\›˜[‹ÛÛ™šY[X[‚‚ˆÈ8¥ 8¥ X[X[ÙXÝ[ÛœÈ
+Y]ÛÛ[›Üˆ[Ý\ˆÜXÚYšXÈ\ÚÊH8¥ ˆÈ\ÙH\™H\ÙYÚ[ˆ]]Ë\™XY]H\È›Ý]˜Z[X›K‚ˆÈYˆ™\Ý[ËšœÛÛˆ^\ÝËÙXÝ[ÛœÈKMˆ\™H]]Ë\Ü[]Y‚“PS•PSÔÑPÕSÓ”ÈHÂˆ™^XÝ]]™WÜÝ[[X\žHŽˆ
+ˆ–Ô™\XÙHÚ]HËMHÙ[[˜ÙHÝ[[X\žHÙˆH\ÚË\›ØXÚ‚ˆ˜[™Ù^Hš[™[™ÜË—H‚ˆ
+Kˆœ›Ø›[WÙ\ØÜš\[ÛˆŽˆ
+ˆ–Ñ\ØÜšX™HH[™Ú[™Y\š[™È]Y\Ý[ÛˆÜˆ\ÚÈ]Ø\ÈÛÛ™Y—H‚ˆ
+Kˆ˜\›ØXÚŽˆ
+ˆ–Ñ\ØÜšX™HHY]ÙÛÙÞNˆSÔÈ\ÙY›ØÙ\ÜÈÛÛ™šYÝ\˜][Û‹‚ˆœÚ[][][ÛˆÙ]\Ù^H\ÜÝ[\[ÛœË—H‚ˆ
+Kˆ˜ÛÛ˜Û\Ú[ÛœÈŽˆ
+ˆ–ÔÝ[[X\š^™HÙ^Hš[™[™ÜÈ[™›ÝšYH™XÛÛ[Y[™][ÛœË—H‚ˆ
+Kˆœ™Y™\™[˜Ù\ÈŽˆ
+ˆ–Ó\Ý™Y™\™[˜Ù\Èœ›ÛHÝ\WÜØÛÜWØ[™Ü™\ÙX\˜ÚÛ›Ý\Ë›Y—H‚ˆ
+KŸB‚ˆÈ8¥ 8¥ ØÚY[YšXÈ\\ˆÙXÝ[ÛœÈ
+Y]›Üˆ\\ˆÝ]]
+H8¥ 8¥ 8¥ 8¥ ˆÈ\ÙHX\ÈÝ[™\™[™Ú[™Y\š[™È\\ˆÙXÝ[ÛœË‚ˆÈ]]Ë\Ü[]YšY[Èœ›ÛH™\Ý[ËšœÛÛˆÝ™\œšYHXÙZÛ\œË‚”TT—ÔÑPÕSÓ”ÈHÂˆ˜XœÝ˜XÝŽˆ
+ˆ–Ô™\XÙHÚ]HMLLÌÛÜ™XœÝ˜XÝÝ[[X\š^š[™ÈH›Ø›[K‚ˆ›Y]ÙÛÙÞKÙ^H™\Ý[Ë[™ÛÛ˜Û\Ú[ÛœË—H‚ˆ
+Kˆš[›ÙXÝ[ÛˆŽˆ
+ˆ–Ô™\XÙHÚ]‹M\˜YÜ˜\ÈÛÝ™\š[™Î—ˆ‚ˆ‹H˜XÚÙÜ›Ý[™[™[Ý]˜][Û—ˆ‚ˆ‹HœšYYˆ]\˜]\™H™]šY]×ˆ‚ˆ‹H›Ø›[HÝ][Y[[™Øš™XÝ]™\×ˆ‚ˆ‹H\\ˆÜ™Ø[š^˜][Ûˆ
+Ü[Û˜[
+WH‚ˆ
+Kˆ›Y]ÙÛÙÞHŽˆ
+ˆ–Ô™\XÙHÚ]H\ØÜš\[ÛˆÙˆHY]ÙÛÙÞN—ˆ‚ˆ‹H\›[Ù[˜[ZXÈ[Ù[[™\]X][ÛˆÙˆÝ]Wˆ‚ˆ‹H›ØÙ\ÜÈÚ[][][ÛˆÙ]\[™\ÜÝ[\[Ûœ×ˆ‚ˆ‹H[Y\šXØ[Y]ÙÈ[™ÛÛ™\™Ù[˜ÙHÜš]\šXWˆ‚ˆ‹HÙ^H\]X][ÛœÈ[™ÛÜœ™[][ÛœÈ\ÙYH‚ˆ
+Kˆœ™\Ý[×Ù\ØÝ\ÜÚ[ÛˆŽˆ
+ˆ–Ô™\XÙHÚ]™\Ý[È\ØÝ\ÜÚ[ÛˆYˆ]]Ë\Ü[]Y‚ˆ™]Hœ›ÛH™\Ý[ËšœÛÛˆ\È[œÝY™šXÚY[—H‚ˆ
+Kˆ˜ÛÛ˜Û\Ú[ÛœÈŽˆ
+ˆ–Ô™\XÙHÚ]ÛÛ˜Ú\ÙK[X™\™YÛÛ˜Û\Ú[ÛœÈ[™‚ˆœ™XÛÛ[Y[™][ÛœÈ›Üˆ]\™HÛÜšË—H‚ˆ
+Kˆ˜XÚÛ›ÝÛYÛY[ÈŽˆ
+ˆˆ‚ˆ
+KŸB‚‚ˆÈ8¥ 8¥ \ÚË[ØØ[Ý™\œšY\È8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ ˆÈ[™]Üš][ˆ™\ÜÛÛ[]™\È[ˆÝ\×Ü™\ÜÜ™\ÜÜÙXÝ[ÛœËšœÛÛ‹›ÝˆÈ[ˆH›ÜšÙYÛÜHÙˆ\ÈØÜš\ˆÙ^\Îˆ]K]]Ü‹Û\ÜÚYšXØ][Û‹ˆÈØ×Û[X™\‹™]š\Ú[Û‹X[X[ÜÙXÝ[ÛœË\[™^ÜÙXÝ[ÛœË\\—ÜÙXÝ[ÛœË\\—ÊˆY]Y]K‚”‘TÔ•ÔÑPÕSÓ”×Ñ’SHHÜËœ]š›Ú[ŠTÒ×Ô‘TÔ•ÑT‹œ™\ÜÜÙXÝ[ÛœËšœÛÛˆŠB‚‚™YˆÛØYÜ™\ÜÜÙXÝ[ÛœÊ
+N‚ˆˆˆ”™]\›ˆH\ÚÉÜÈ[™]Üš][ˆ™\ÜÝ™\œšY\ËÜˆ[ˆ[\HXÝˆˆˆ‚ˆYˆ›ÝÜËœ]š\Ùš[J‘TÔ•ÔÑPÕSÓ”×Ñ’SJN‚ˆ™]\›ˆßBˆžN‚ˆÚ]Ü[Š‘TÔ•ÔÑPÕSÓ”×Ñ’SKœˆ‹[˜ÛÙ[™ÏH]‹N\ÚYÈŠH\ÈÛÝ\˜ÙN‚ˆ]HHœÛÛ‹›ØY
+ÛÝ\˜ÙJBˆ^Ù\
+ÔÑ\œ›Ü‹˜[YQ\œ›ÜŠH\È\œ›ÜŽ‚ˆš[
+•ÐT“’S‘ÎˆÛÝ[›Ý™XYßNˆßH‹™›Ü›X]
+‘TÔ•ÔÑPÕSÓ”×Ñ’SK\œ›ÜŠJBˆ™]\›ˆßBˆ™]\›ˆ]HYˆ\Ú[œÝ[˜ÙJ]KXÝ
+H[ÙHßB‚‚”‘TÔ•ÔÑPÕSÓ”ÈHÛØYÜ™\ÜÜÙXÝ[ÛœÊ
+BˆÈÙXÝ[ÛœÈH[X[ˆÜ›ÝHžH[™È\ÙHÝ]˜[šÈ]]ËYÙ[™\˜]Y›ÜÙK‚UUÔ‘QÔÑPÕSÓ”ÈHÙ]
+
+B‚™›ÜˆÚÙ^KÝ˜[YH[ˆ
+‘TÔ•ÔÑPÕSÓ”Ë™Ù]
+›X[X[ÜÙXÝ[ÛœÈŠHÜˆßJKš][\Ê
+N‚ˆYˆ\Ú[œÝ[˜ÙJÝ˜[YKÝŠH[™Ý˜[YKœÝš\
+
+N‚ˆPS•PSÔÑPÕSÓ”Ö×ÚÙ^WHHÝ˜[YBˆUUÔ‘QÔÑPÕSÓ”Ë˜Y
+ÚÙ^JB™›ÜˆÚÙ^KÝ˜[YH[ˆ
+‘TÔ•ÔÑPÕSÓ”Ë™Ù]
+œ\\—ÜÙXÝ[ÛœÈŠHÜˆßJKš][\Ê
+N‚ˆYˆ\Ú[œÝ[˜ÙJÝ˜[YKÝŠH[™Ý˜[YKœÝš\
+
+N‚ˆTT—ÔÑPÕSÓ”Ö×ÚÙ^WHHÝ˜[YB™›ÜˆÚÙ^KÙÛØ˜[[ˆ
+
+™Ø×Û[X™\ˆ‹‘Ð×Ó•SP‘TˆŠK
+œ™]š\Ú[Ûˆ‹”‘U’TÒSÓˆŠKˆ
+œ\\—Ý]H‹”TT—ÕUHŠKˆ
+œ\\—Ú›Ý\›˜[‹”TT—Ò“ÕT“SŠKˆ
+œ\\—ØXÚÛ›ÝÛYÛY[È‹”TT—ÐPÒÓ“ÕÓQÓQS•ÈŠJN‚ˆYˆ\Ú[œÝ[˜ÙJ‘TÔ•ÔÑPÕSÓ”Ë™Ù]
+ÚÙ^JKÝŠH[™‘TÔ•ÔÑPÕSÓ”Ö×ÚÙ^WKœÝš\
+
+N‚ˆÛØ˜[Ê
+V×ÙÛØ˜[HH‘TÔ•ÔÑPÕSÓ”Ö×ÚÙ^WB™›ÜˆÚÙ^KÙÛØ˜[[ˆ
+
+œ™]š\Ú[Û—Ú\ÝÜžH‹”‘U’TÒSÓ—ÒTÕÔ–HŠKˆ
+œ\\—Ø]]ÜœÈ‹”TT—ÐUUÔ”ÈŠKˆ
+œ\\—ÚÙ^]ÛÜ™È‹”TT—ÒÑVUÓÔ‘ÈŠJN‚ˆYˆ\Ú[œÝ[˜ÙJ‘TÔ•ÔÑPÕSÓ”Ë™Ù]
+ÚÙ^JK\Ý
+H[™‘TÔ•ÔÑPÕSÓ”Ö×ÚÙ^WN‚ˆÛØ˜[Ê
+V×ÙÛØ˜[HH‘TÔ•ÔÑPÕSÓ”Ö×ÚÙ^WB‚‚ˆÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥dˆÈ]]Ë\™XY[˜Ý[ÛœÂˆÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d‚—ÔTÔ×ÔÕUTÑTÈHÈ”TÔÈ‹”TÔÑQ‹“ÒÈ‹“QUŸB—ÑRSÔÕUTÑTÈHÈ‘RS‹‘RSQ‹““ÕQU‹““ÕÓQUŸB‚‚™YˆÜÝ]\×ÝÛÜ™
+Ý]\ÊN‚ˆˆˆ“X\H˜[Y][Û‹\›ÝÈÝ]\ÈÈTÔËRSÜˆ]ÈÝÛˆ\\‹XØ\ÙY^ˆˆˆ‚ˆYˆ\Ú[œÝ[˜ÙJÝ]\Ë›ÛÛ
+N‚ˆ™]\›ˆ”TÔÈˆYˆÝ]\È[ÙH‘RS‚ˆÛÜ™HÝŠÝ]\ÈYˆÝ]\È\È›Ý›Û™H[ÙHˆŠKœÝš\
+
+K\\Š
+BˆYˆÛÜ™[ˆÔTÔ×ÔÕUTÑTÎ‚ˆ™]\›ˆ”TÔÈ‚ˆYˆÛÜ™[ˆÑRSÔÕUTÑTÎ‚ˆ™]\›ˆ‘RS‚ˆ™]\›ˆÛÜ™Üˆ“‹ÐH‚‚‚™YˆÛ›Ü›X[^™WÝ˜[Y][ÛŠ]JN‚ˆˆˆXØÙ\H\ÝÙˆÚXÚÈ›ÝÜÈ\È˜[Y][Û˜žH›Û[™È][ÈHXÝÚ\H\ÙY\™Kˆˆˆ‚ˆ˜[Y][ÛˆH]K™Ù]
+˜[Y][ÛˆŠBˆYˆ\Ú[œÝ[˜ÙJ˜[Y][Û‹\Ý
+N‚ˆ]VÈ˜[Y][Û—Ü›ÝÜÈ—HH˜[Y][Û‚ˆ›ÛYHßBˆ›Üˆ[™^›ÝÈ[ˆ[[Y\˜]J˜[Y][ÛŠN‚ˆYˆ›Ý\Ú[œÝ[˜ÙJ›ÝËXÝ
+N‚ˆÛÛ[YBˆ˜[YHHÝŠ›ÝË™Ù]
+˜ÚXÚÈ‹[™^
+JBˆYˆ˜[YH[ˆ›ÛY‚ˆ˜[YHHžßH
+ßJH‹™›Ü›X]
+˜[YK[™^
+ÈJBˆÈÝ]\ÈÛÜ™Ë›Ý›ÛÛX[œÎˆH›ÛÛX[ˆÛÝ[™H[™\Y›Üˆ˜[Y\ÈÝXÚ\È™\œ›Üˆ‹‚ˆ›ÛYÛ˜[YWHHÜÝ]\×ÝÛÜ™
+›ÝË™Ù]
+œÝ]\È‹›ÝË™Ù]
+œ\ÜÙY‹›ÝË™Ù]
+œ\ÜÈŠJJJBˆ]VÈ˜[Y][Ûˆ—HH›ÛYˆ[Yˆ˜[Y][Ûˆ\È›Ý›Û™H[™›Ý\Ú[œÝ[˜ÙJ˜[Y][Û‹XÝ
+N‚ˆ]VÈ˜[Y][Ûˆ—HHßBˆ™]\›ˆ]B‚‚™YˆÙ^[™ÜÝ[š[™×ÝX›\Ê]JN‚ˆˆˆ•\›ˆ™\Ý[ÖÉÜÝ[š[™×Ü]X[]I×H[È™\ÜX›\È
+™Y›Ü™KØY\‹[™Y\˜[Y]\œË^Û\Ú[ÛœÊK‚‚ˆHX›\È\™H\[™YÈ]VÉÝX›\É×XÛÈ]HS[™ÛÜ™™[™\™\œÈÚÝÈH›ZY][š[™Âˆ]X[]HÚ]Ý]›ØÚË\ÜXÚYšXÈÛÙKˆ^\Ý[™ÈX›\ÈÚ]HØ[YH]H\™HÙ\\È^H\™K‚ˆˆˆ‚ˆ›ØÚÈH]K™Ù]
+œÝ[š[™×Ü]X[]HŠHYˆ\Ú[œÝ[˜ÙJ]KXÝ
+H[ÙH›Û™BˆYˆ›Ý\Ú[œÝ[˜ÙJ›ØÚËXÝ
+N‚ˆ™]\›ˆ]BˆX›\ÈH]KœÙ]Y˜][
+X›\È‹×JBˆYˆ›Ý\Ú[œÝ[˜ÙJX›\Ë\Ý
+N‚ˆ™]\›ˆ]Bˆ]™HHÝ™Ù]
+]HŠH›Üˆ[ˆX›\ÈYˆ\Ú[œÝ[˜ÙJXÝ
+_B‚ˆYˆ›]
+˜[YJN‚ˆYˆ˜[YH\È›Û™HÜˆ˜[YHOHˆŽ‚ˆ™]\›ˆ›‹ØH‚ˆYˆ\Ú[œÝ[˜ÙJ˜[YK›ÛÛ
+N‚ˆ™]\›ˆžY\ÈˆYˆ˜[YH[ÙH››È‚ˆYˆ\Ú[œÝ[˜ÙJ˜[YK›Ø]
+N‚ˆ™]\›ˆžÎ‹ßH‹™›Ü›X]
+˜[YJBˆ™]\›ˆÝŠ˜[YJB‚ˆ^ÈHÙH›ÜˆH[ˆ›ØÚË™Ù]
+™^\š[Y[È‹×JHYˆ\Ú[œÝ[˜ÙJKXÝ
+WBˆ]HH”•[š[™È]X[]Nˆ\œ›Üˆ™Y›Ü™H[™Y\ˆ[š[™È‚ˆYˆ^È[™]H›Ý[ˆ]™N‚ˆX›\Ë˜\[™
+È]HŽˆ]KˆšXY\œÈŽˆÈ”Ø[\H‹‘^\š[Y[‹“Y]šXÈ‹™Y›Ü™H‹Y\ˆ‹•[š]—Kˆœ›ÝÜÈŽˆÖÙ›]
+K™Ù]
+œØ[\HŠJK›]
+K™Ù]
+\HŠJK›]
+K™Ù]
+›Y]šXÈŠJK›]
+K™Ù]
+˜™Y›Ü™HŠJKˆ›]
+K™Ù]
+˜Y\ˆŠJK›]
+K™Ù]
+[š]ŠJWH›ÜˆH[ˆ^×_JBˆ\˜[\ÈHÜ›Üˆ[ˆ›ØÚË™Ù]
+œ\˜[Y]\œÈ‹×JHYˆ\Ú[œÝ[˜ÙJXÝ
+WBˆ]HH”•[š[™È]X[]Nˆ[™Y\˜[Y]\œÈ[™›Ý[™È‚ˆYˆ\˜[\È[™]H›Ý[ˆ]™N‚ˆX›\Ë˜\[™
+È]HŽˆ]KˆšXY\œÈŽˆÈ”\˜[Y]\ˆ‹’[š]X[‹•[™Y‹“ÝÙ\ˆ‹•\\ˆ‹]›Ý[™—Kˆœ›ÝÜÈŽˆÖÙ›]
+™Ù]
+›˜[YHŠJK›]
+™Ù]
+š[š]X[ŠJK›]
+™Ù]
+[™YŠJK›]
+™Ù]
+›ÝÙ\ˆŠJKˆ›]
+™Ù]
+\\ˆŠJK›]
+™Ù]
+˜]Ø›Ý[™ŠJWH›Üˆ[ˆ\˜[\×_JBˆ^ÛHÞ›Üˆ[ˆ›ØÚË™Ù]
+™^Û\Ú[ÛœÈ‹×JHYˆ\Ú[œÝ[˜ÙJXÝ
+WBˆ]HH”•[š[™È]X[]Nˆ]H^ÛYYœ›ÛHH[š[™È‚ˆYˆ^Û[™]H›Ý[ˆ]™N‚ˆX›\Ë˜\[™
+È]HŽˆ]KšXY\œÈŽˆÈ”Ø[\HÜˆ]H‹”™X\ÛÛˆ—Kˆœ›ÝÜÈŽˆÖÙ›]
+™Ù]
+œØ[\HŠJK›]
+™Ù]
+œ™X\ÛÛˆŠJWH›Üˆ[ˆ^Û_JBˆ™]\›ˆ]B‚‚™YˆØYÜ™\Ý[Ê
+N‚ˆˆˆ“ØY™\Ý[ËšœÛÛˆYˆ]^\ÝËˆ™]\›œÈXÝÜˆ›Û™Kˆˆˆ‚ˆYˆÜËœ]™^\ÝÊ‘TÕS×Ñ’SJN‚ˆÚ]Ü[Š‘TÕS×Ñ’SKœˆ‹[˜ÛÙ[™ÏH]‹NŠH\ÈŽ‚ˆ]HHÙ^[™ÜÝ[š[™×ÝX›\ÊÛ›Ü›X[^™WÝ˜[Y][ÛŠœÛÛ‹›ØY
+ŠJJBˆš[
+ˆØYY™\Ý[ËšœÛÛˆ
+ßHÙ^\ÊH‹™›Ü›X]
+[Š]JJJBˆ™]\›ˆ]Bˆš[
+ˆ›È™\Ý[ËšœÛÛˆ›Ý[™
+\Ú[™ÈX[X[ÙXÝ[ÛœÊHŠBˆ™]\›ˆ›Û™B‚‚™YˆØYÝ\Ú×ÜÜXÊ
+N‚ˆˆˆ“ØY\Ú×ÜÜXË›Y[™^˜XÝÝ[™\™ËÛY]ÙËØÜš]\šXHÙXÝ[ÛœËˆˆˆ‚ˆYˆ›ÝÜËœ]™^\ÝÊTÒ×ÔÔP×Ñ’SJN‚ˆš[
+ˆ›È\Ú×ÜÜXË›Y›Ý[™
+\Ú[™ÈXÙZÛ\ˆ›ÜˆØÛÜJHŠBˆ™]\›ˆ›Û™BˆÚ]Ü[ŠTÒ×ÔÔP×Ñ’SKœˆ‹[˜ÛÙ[™ÏH]‹NŠH\ÈŽ‚ˆÛÛ[H‹œ™XY
+
+Bˆš[
+ˆØYY\Ú×ÜÜXË›Y
+ßHÚ\œÊH‹™›Ü›X]
+[ŠÛÛ[
+JJBˆ™]\›ˆÛÛ[‚‚™YˆÜÝš\ÞX[[ØÛÛ[Y[
+[™JN‚ˆˆˆ”Ýš\PSSÛÛ[Y[ÈÚ[H™\Ù\š[™È\Ú\È[œÚYH][ÝYÝš[™ÜËˆˆˆ‚ˆ™\Ý[H×Bˆ][ÝHH›Û™Bˆ›ÜˆÚ\˜XÝ\ˆ[ˆ[™N‚ˆYˆÚ\˜XÝ\ˆ[ˆ
+	È‰Ë‰ÈŠN‚ˆYˆ][ÝHOHÚ\˜XÝ\Ž‚ˆ][ÝHH›Û™Bˆ[Yˆ][ÝH\È›Û™N‚ˆ][ÝHHÚ\˜XÝ\‚ˆYˆÚ\˜XÝ\ˆOHˆÈˆ[™][ÝH\È›Û™N‚ˆœ™XZÂˆ™\Ý[˜\[™
+Ú\˜XÝ\ŠBˆ™]\›ˆˆ‹š›Ú[Š™\Ý[
+KœœÝš\
+
+B‚‚™YˆÜ\œÙWÞX[[Ý˜[YJ˜[YJN‚ˆˆˆ”\œÙHHÚ[\HØØ[\ˆ˜[Y\È\ÙYžHÝYWØÛÛ™šYËžX[[ˆˆˆ‚ˆÛX[™YHÜÝš\ÞX[[ØÛÛ[Y[
+˜[YJKœÝš\
+
+BˆYˆ›ÝÛX[™Y‚ˆ™]\›ˆˆ‚ˆYˆ
+
+ÛX[™YœÝ\ÝÚ]
+	È‰ÊH[™ÛX[™Y™[™ÝÚ]
+	È‰ÊJBˆÜˆ
+ÛX[™YœÝ\ÝÚ]
+‰ÈŠH[™ÛX[™Y™[™ÝÚ]
+‰ÈŠJJN‚ˆ™]\›ˆÛX[™YÌN‹LWBˆÝÙ\™YHÛX[™Y›ÝÙ\Š
+BˆYˆÝÙ\™YOHYHŽ‚ˆ™]\›ˆYBˆYˆÝÙ\™YOH™˜[ÙHŽ‚ˆ™]\›ˆ˜[ÙBˆžN‚ˆ™]\›ˆ[
+ÛX[™Y
+Bˆ^Ù\˜[YQ\œ›ÜŽ‚ˆ™]\›ˆÛX[™Y‚‚™YˆÜÙXÝ[Û—Û[™\ÊÛÛ™šY×Ý^ÙXÝ[ÛŠN‚ˆˆˆ”™]\›ˆ[™\È™[Û™Ú[™ÈÈHÜ[]™[PSSÙXÝ[Û‹ˆˆˆ‚ˆ[™\ÈHÛÛ™šY×Ý^œÜ][™\Ê
+BˆÙXÝ[Û—ÛX\šÙ\ˆHžßNˆ‹™›Ü›X]
+ÙXÝ[ÛŠBˆØ\\š[™ÈH˜[ÙBˆ™\Ý[H×Bˆ›Üˆ[™H[ˆ[™\Î‚ˆÝš\YH[™KœÝš\
+
+BˆYˆÝš\YOHÙXÝ[Û—ÛX\šÙ\ˆ[™›Ý[™KœÝ\ÝÚ]
+ˆŠN‚ˆØ\\š[™ÈHYBˆÛÛ[YBˆYˆØ\\š[™È[™Ýš\Y[™›Ý[™KœÝ\ÝÚ]
+ˆŠN‚ˆœ™XZÂˆYˆØ\\š[™Î‚ˆ™\Ý[˜\[™
+[™JBˆ™]\›ˆ™\Ý[‚‚™YˆÜ\œÙWÜÙXÝ[Û—ÜØØ[\œÊ[™\ÊN‚ˆˆˆ”\œÙHØØ[\ˆÙ^\È\™XÝH[™\ˆHPSSÙXÝ[Û‹ˆˆˆ‚ˆ\œÙYHßBˆÚ[Ú[™[ÈHÛ[Š[™JHH[Š[™K›Ýš\
+
+JH›Üˆ[™H[ˆ[™\ÂˆYˆ[™KœÝš\
+
+H[™[™KœÝ\ÝÚ]
+ˆŠWBˆYˆ›ÝÚ[Ú[™[Î‚ˆ™]\›ˆ\œÙYˆÚ[Ú[™[HZ[ŠÚ[Ú[™[ÊBˆ›Üˆ[™H[ˆ[™\Î‚ˆÛX[™YHÜÝš\ÞX[[ØÛÛ[Y[
+[™JBˆYˆ›ÝÛX[™YœÝš\
+
+HÜˆ›ÝÛX[™YœÝ\ÝÚ]
+ˆŠN‚ˆÛÛ[YBˆ[™[H[ŠÛX[™Y
+HH[ŠÛX[™Y›Ýš\
+
+JBˆYˆ[™[OHÚ[Ú[™[‚ˆÛÛ[YBˆYˆŽˆˆ›Ý[ˆÛX[™Y‚ˆÛÛ[YBˆÙ^K˜[YHHÛX[™YœÝš\
+
+KœÜ]
+Žˆ‹JBˆ˜[YHH˜[YKœÝš\
+
+BˆYˆ˜[YN‚ˆ\œÙYÚÙ^WHHÜ\œÙWÞX[[Ý˜[YJ˜[YJBˆ™]\›ˆ\œÙY‚‚™YˆÜ\œÙWÜØØ[\—Û\Ý
+[™\ËÙ^JN‚ˆˆˆ”\œÙHHØØ[\ˆ\Ý[™\ˆ[ˆ[™[YPSSÙ^Kˆˆˆ‚ˆ˜[Y\ÈH×BˆØ\\š[™ÈH˜[ÙBˆÙ^WÚ[™[Hˆ›Üˆ[™H[ˆ[™\Î‚ˆÛX[™YHÜÝš\ÞX[[ØÛÛ[Y[
+[™JBˆÝš\YHÛX[™YœÝš\
+
+BˆYˆÝš\YOHžßNˆ‹™›Ü›X]
+Ù^JN‚ˆØ\\š[™ÈHYBˆÙ^WÚ[™[H[ŠÛX[™Y
+HH[ŠÛX[™Y›Ýš\
+
+JBˆÛÛ[YBˆYˆØ\\š[™Î‚ˆ[™[H[ŠÛX[™Y
+HH[ŠÛX[™Y›Ýš\
+
+JBˆYˆÝš\Y[™[™[HÙ^WÚ[™[‚ˆœ™XZÂˆYˆÝš\YœÝ\ÝÚ]
+‹HŠN‚ˆ˜[Y\Ë˜\[™
+Ü\œÙWÞX[[Ý˜[YJÝš\YÌŽ—JJBˆ™]\›ˆ˜[Y\Â‚‚™YˆÜ\œÙWÛ›ÝX›ÛÚ×Ü[Š[™\ÊN‚ˆˆˆ”\œÙH›ÝX›ÛÚÜËœ[ˆ[šY\Èœ›ÛHÝYWØÛÛ™šYËžX[[ˆˆˆ‚ˆ[ˆH×BˆÝ\œ™[H›Û™BˆØ\\š[™ÈH˜[ÙBˆ[—Ú[™[Hˆ›Üˆ[™H[ˆ[™\Î‚ˆÛX[™YHÜÝš\ÞX[[ØÛÛ[Y[
+[™JBˆÝš\YHÛX[™YœÝš\
+
+BˆYˆÝš\YOHœ[ŽˆŽ‚ˆØ\\š[™ÈHYBˆ[—Ú[™[H[ŠÛX[™Y
+HH[ŠÛX[™Y›Ýš\
+
+JBˆÛÛ[YBˆYˆØ\\š[™Î‚ˆ[™[H[ŠÛX[™Y
+HH[ŠÛX[™Y›Ýš\
+
+JBˆYˆÝš\Y[™[™[H[—Ú[™[‚ˆœ™XZÂˆYˆÝš\YœÝ\ÝÚ]
+‹Hš[NˆŠN‚ˆYˆÝ\œ™[‚ˆ[‹˜\[™
+Ý\œ™[
+BˆÝ\œ™[HÈ™š[HŽˆÜ\œÙWÞX[[Ý˜[YJÝš\YœÜ]
+Žˆ‹JVÌWJ_Bˆ[YˆÝ\œ™[[™Ýš\YœÝ\ÝÚ]
+œ\œÜÙNˆŠN‚ˆÝ\œ™[Èœ\œÜÙH—HHÜ\œÙWÞX[[Ý˜[YJÝš\YœÜ]
+Žˆ‹JVÌWJBˆYˆÝ\œ™[‚ˆ[‹˜\[™
+Ý\œ™[
+Bˆ™]\›ˆ[‚‚‚™YˆÜ\œÙWÛX\[™×Û\Ý
+[™\ËÙ^JN‚ˆˆˆ”\œÙHH\ÝÙˆÚ[\HX\[™ÜÈ[™\ˆ[ˆ[™[YPSSÙ^Kˆˆˆ‚ˆ˜[Y\ÈH×BˆÝ\œ™[H›Û™BˆØ\\š[™ÈH˜[ÙBˆÙ^WÚ[™[Hˆ][WÚ[™[H›Û™BˆÜ[—Û\ÝÚÙ^HH›Û™Bˆ›Üˆ[™H[ˆ[™\Î‚ˆÛX[™YHÜÝš\ÞX[[ØÛÛ[Y[
+[™JBˆÝš\YHÛX[™YœÝš\
+
+BˆYˆÝš\YOHžßNˆ‹™›Ü›X]
+Ù^JN‚ˆØ\\š[™ÈHYBˆÙ^WÚ[™[H[ŠÛX[™Y
+HH[ŠÛX[™Y›Ýš\
+
+JBˆÛÛ[YBˆYˆØ\\š[™Î‚ˆ[™[H[ŠÛX[™Y
+HH[ŠÛX[™Y›Ýš\
+
+JBˆYˆÝš\Y[™[™[HÙ^WÚ[™[‚ˆœ™XZÂˆYˆ›ÝÝš\Y‚ˆÛÛ[YBˆYˆÝš\YœÝ\ÝÚ]
+‹HŠH[™][WÚ[™[\È›Ý›Û™H[™[™[ˆ][WÚ[™[‚ˆÈ›ØÚÈ\Ý™\ÝY[™\ˆHX\[™ÈÙ^KK™Ëˆœ›ÙXÙ\Îˆˆ›ÛÝÙYžH‹HH‹‚ˆYˆÝ\œ™[\È›Ý›Û™H[™Ü[—Û\ÝÚÙ^N‚ˆYˆ›Ý\Ú[œÝ[˜ÙJÝ\œ™[™Ù]
+Ü[—Û\ÝÚÙ^JK\Ý
+N‚ˆÝ\œ™[ÛÜ[—Û\ÝÚÙ^WHH×BˆÝ\œ™[ÛÜ[—Û\ÝÚÙ^WK˜\[™
+Ü\œÙWÞX[[Ý˜[YJÝš\YÌŽ—JJBˆÛÛ[YBˆYˆÝš\YœÝ\ÝÚ]
+‹HŠN‚ˆYˆÝ\œ™[‚ˆ˜[Y\Ë˜\[™
+Ý\œ™[
+BˆÝ\œ™[HßBˆ][WÚ[™[H[™[ˆÜ[—Û\ÝÚÙ^HH›Û™Bˆ][HHÝš\YÌŽ—KœÝš\
+
+BˆYˆŽˆˆ[ˆ][N‚ˆ][WÚÙ^K][WÝ˜[YHH][KœÜ]
+Žˆ‹JBˆÝ\œ™[Ú][WÚÙ^KœÝš\
+
+WHHÜ\œÙWÞX[[Ý˜[YJ][WÝ˜[YJBˆÜ[—Û\ÝÚÙ^HH][WÚÙ^KœÝš\
+
+HYˆ›Ý][WÝ˜[YKœÝš\
+
+H[ÙH›Û™Bˆ[YˆÝ\œ™[\È›Ý›Û™H[™Žˆˆ[ˆÝš\Y‚ˆ][WÚÙ^K][WÝ˜[YHHÝš\YœÜ]
+Žˆ‹JBˆÝ\œ™[Ú][WÚÙ^KœÝš\
+
+WHHÜ\œÙWÞX[[Ý˜[YJ][WÝ˜[YJBˆÜ[—Û\ÝÚÙ^HH][WÚÙ^KœÝš\
+
+HYˆ›Ý][WÝ˜[YKœÝš\
+
+H[ÙH›Û™BˆYˆÝ\œ™[‚ˆ˜[Y\Ë˜\[™
+Ý\œ™[
+Bˆ™]\›ˆ˜[Y\Â‚‚™YˆØYÜÝYWØÛÛ™šYÊ
+N‚ˆˆˆ“ØYÝYWØÛÛ™šYËžX[[[™™]\›ˆHÝXœÙ]\ÙYžH\ÈÙ[™\˜]Ü‹ˆˆˆ‚ˆYˆ›ÝÜËœ]™^\ÝÊÕQWÐÓÓ‘’Q×Ñ’SJN‚ˆš[
+ˆ›ÈÝYWØÛÛ™šYËžX[[›Ý[™
+\Ú[™È[™™\œ™Y\ÚÈ\
+HŠBˆ™]\›ˆßBˆÚ]Ü[ŠÕQWÐÓÓ‘’Q×Ñ’SKœˆ‹[˜ÛÙ[™ÏH]‹NŠH\ÈÛÛ™šY×Ùš[N‚ˆ^HÛÛ™šY×Ùš[Kœ™XY
+
+BˆÛÛ™šYÈHßBˆ›ÜˆÙXÝ[Ûˆ[ˆÈœÝYH‹š[œ]È‹˜[˜[\Ú\È‹››ÝX›ÛÚÜÈ‹œ™\Ü‹ˆœ]X[]WÙØ]\È—N‚ˆ[™\ÈHÜÙXÝ[Û—Û[™\Ê^ÙXÝ[ÛŠBˆÛÛ™šYÖÜÙXÝ[Û—HHÜ\œÙWÜÙXÝ[Û—ÜØØ[\œÊ[™\ÊBˆÛÛ™šYÖÈœ™\Ü—VÈ™›Ü›X]È—HHÜ\œÙWÜØØ[\—Û\Ý
+ˆÜÙXÝ[Û—Û[™\Ê^œ™\ÜŠK™›Ü›X]ÈŠBˆÛÛ™šYÖÈœ™\Ü—VÈœ™\]Z\™YÜÙXÝ[ÛœÈ—HHÜ\œÙWÜØØ[\—Û\Ý
+ˆÜÙXÝ[Û—Û[™\Ê^œ™\ÜŠKœ™\]Z\™YÜÙXÝ[ÛœÈŠBˆÛÛ™šYÖÈ››ÝX›ÛÚÜÈ—VÈœ[ˆ—HHÜ\œÙWÛ›ÝX›ÛÚ×Ü[ŠˆÜÙXÝ[Û—Û[™\Ê^››ÝX›ÛÚÜÈŠJBˆÛÛ™šYÖÈš[œ]È—VÈ™ØÝ[Y[È—HHÜ\œÙWÛX\[™×Û\Ý
+ˆÜÙXÝ[Û—Û[™\Ê^š[œ]ÈŠK™ØÝ[Y[ÈŠBˆÛÛ™šYÖÈš[œ]È—VÈ™]WÜÛÝ\˜Ù\È—HHÜ\œÙWÛX\[™×Û\Ý
+ˆÜÙXÝ[Û—Û[™\Ê^š[œ]ÈŠK™]WÜÛÝ\˜Ù\ÈŠBˆÛÛ™šYÖÈ˜[˜[\Ú\È—VÈœØÜš\È—HHÜ\œÙWÛX\[™×Û\Ý
+ˆÜÙXÝ[Û—Û[™\Ê^˜[˜[\Ú\ÈŠKœØÜš\ÈŠBˆš[
+ˆØYYÝYWØÛÛ™šYËžX[[ŠBˆ™]\›ˆÛÛ™šYÂ‚‚ˆÈ›ÜÙYÚX[ˆ\Ú×ÜÜXË›Yš[\È\™HÛÛ[[Û‹[™XY[™ÈX]Ú[™È\ÙYÈ™BˆÈ[™Û\Ú[Û›KÛÈH[HÜš][ˆ›ÜÙYÚX[ˆØÛÜHÙXÝ[ÛˆØ\È™\ÜY\ÂˆÈ›XÚÜÈÛÝ\˜ÙH]H‹ˆXXÚØ[›ÛšXØ[XY[™È\™Y›Ü™HØ\œšY\È]È[X\Ù\Ë‚”ÔP×ÒPQS‘×ÐSPTÑTÈHÂˆ˜\XØX›HÝ[™\™ÈŽˆ
+™Ú™[[™HÝ[™\™\ˆ‹œÝ[™\™\ˆ‹œ™YÙ[™\šÈ‹ˆœØÛÜH[™Ý[™\™È‹›ÛY˜[™ÈÙÈÝ[™\™\ˆŠKˆ˜Ø[Ý[][ÛˆY]ÙÈŽˆ
+˜™\™YÛš[™ÜÛY]Ù\ˆ‹›Y]ÙH‹›Y]Ù\ˆ‹ˆ™œ˜[YØ[™ÜÛX]H‹™œ™[YØ[™ÜÛX]HŠKˆ˜XØÙ\[˜ÙHÜš]\šXHŽˆ
+˜ZÜÙ\Üš]\šY\ˆ‹˜ZÜÙ\[œÙZÜš]\šY\ˆŠKˆ›Ü\˜][™È[™[ÜHŽˆ
+™šYÛÛ\˜YH‹™šYÝš[™H‹›Ü\˜\Ú›ÛœÝš[™HŠKˆ›Øš™XÝ]™HŽˆ
+™›Ü›X[‹›X[‹š[œÚZÝ‹›ÜØ]™HŠKˆœØÛÜHŽˆ
+›ÛY˜[™È‹˜]™Ü™[œÛš[™È‹˜˜ZÙÜ[›ˆÙÈ]™Ü™[œÛš[™ÈŠKˆ™]HÛÝ\˜Ù\ÈŽˆ
+™]ZÚ[\ˆ‹šÚ[\ˆŠKˆ™[]™\˜X›\ÈŽˆ
+›]™\˜[œÙ\ˆ‹›]™\˜[œÙHŠKŸB‚‚™YˆÚXY[™×Ý˜\šX[ÊXY[™ÊN‚ˆˆˆ”™]\›ˆHXY[™È\È[žH[™ÝXYÙH[X\Ù\È™YÚ\Ý\™Y›Üˆ]ˆˆˆ‚ˆÙ^HHÝŠXY[™ÈÜˆˆŠKœÝš\
+
+K›ÝÙ\Š
+Bˆ™]\›ˆ
+Ù^K
+H
+ÈÔP×ÒPQS‘×ÐSPTÑTË™Ù]
+Ù^K
+
+JB‚‚™Yˆ^˜XÝÜÜX×ÜÙXÝ[ÛŠÜX×Ý^XY[™ÊN‚ˆˆˆ‘^˜XÝHÙXÝ[Ûˆœ›ÛH\Ú×ÜÜXË›YžHXY[™Ë‚‚ˆX]Ú[™È\ÈØ\ÙKZ[œÙ[œÚ]]™H[™[X\ËX]Ø\™KÛÈH›ÜÙYÚX[ˆXY[™ÈÝXÚ\ÂˆZÜÙ\Üš]\šY\ˆˆØ]\ÙšY\ÈH™\]Y\Ý›ÜˆXØÙ\[˜ÙHÜš]\šXH‹‚ˆˆˆ‚ˆYˆ›ÝÜX×Ý^‚ˆ™]\›ˆˆ‚ˆ˜\šX[ÈHÚXY[™×Ý˜\šX[ÊXY[™ÊBˆ[™\ÈHÜX×Ý^œÜ]
+—ˆŠBˆØ\\š[™ÈH˜[ÙBˆ™\Ý[H×Bˆ›Üˆ[™H[ˆ[™\Î‚ˆYˆ[™KœÝ\ÝÚ]
+ˆÈÈŠH[™[žJˆ[ˆ[™K›ÝÙ\Š
+H›Üˆˆ[ˆ˜\šX[ÊN‚ˆØ\\š[™ÈHYBˆÛÛ[YBˆ[Yˆ[™KœÝ\ÝÚ]
+ˆÈÈŠH[™Ø\\š[™Î‚ˆœ™XZÂˆ[YˆØ\\š[™Î‚ˆ™\Ý[˜\[™
+[™JBˆ^H—ˆ‹š›Ú[Š™\Ý[
+KœÝš\
+
+BˆÈÚÚ\YˆÝ[XÙZÛ\‚ˆYˆ^[™Ÿˆ›Ý[ˆ^[™–ÙK™Ë‹ˆ›Ý[ˆ^‚ˆ™]\›ˆ^ˆ™]\›ˆˆ‚‚‚ˆÈ8¥ 8¥ ™\ÜY[]H
+]K]]Ü‹\ÚÈÝ][Y[
+H8¥ 8¥ 8¥ 8¥ 8¥ 8¥ ‚™YˆÚ\×ÜXÙZÛ\—Ý˜[YJ˜[YJN‚ˆˆˆ”™]\›ˆYH›Üˆ[\HÜˆœ˜XÚÙ]YØØY™›Û˜[Y\ÈÝXÚ\È–Õ]WH‹ˆˆˆ‚ˆ^HÝŠ˜[YHÜˆˆŠKœÝš\
+
+BˆYˆ›Ý^‚ˆ™]\›ˆYBˆ™]\›ˆ^œÝ\ÝÚ]
+–ÈŠH[™^™[™ÝÚ]
+—HŠB‚‚™YˆÜ™]YžWÜÛYÊ›Û\—Û˜[YJN‚ˆˆˆ•\›ˆH\ÚÈ›Û\ˆ˜[YH[ÈH™XYX›H]Kˆˆˆ‚ˆ˜[YHH›Û\—Û˜[YBˆYˆ[Š˜[YJHHLH[™˜[YVÍHOH‹Hˆ[™˜[YVÍ×HOH‹HŽ‚ˆ˜[YHH˜[YVÌLN—Bˆ˜[YHH˜[YKœ™\XÙJ—È‹ˆŠKœ™\XÙJ‹H‹ˆŠKœÝš\
+
+BˆYˆ›Ý˜[YN‚ˆ™]\›ˆˆ‚ˆ™]\›ˆ˜[YVÌK\\Š
+H
+È˜[YVÌN—B‚‚™YˆÛØØ[Ü™\ÜØÛÛœÝ[
+˜[YJN‚ˆˆˆ”™XYHÛÛœÝ[œ›ÛH™\ÜÜÙXÝ[ÛœËšœÛÛˆÜˆHYØXÞH™[™Ü™YÛÜKˆˆˆ‚ˆÝ™\œšYHH‘TÔ•ÔÑPÕSÓ”Ë™Ù]
+˜[YK›ÝÙ\Š
+JBˆYˆ\Ú[œÝ[˜ÙJÝ™\œšYKÝŠH[™Ý™\œšYKœÝš\
+
+N‚ˆ™]\›ˆÝ™\œšYKœÝš\
+
+BˆØØ[ØÛÜHHÜËœ]š›Ú[ŠTÒ×Ô‘TÔ•ÑT‹™Ù[™\˜]WÜ™\ÜœHŠBˆYˆÜËœ]˜XœÜ]
+ØØ[ØÛÜJHOHÜËœ]˜XœÜ]
+×Ùš[W×ÊN‚ˆ™]\›ˆˆ‚ˆYˆ›ÝÜËœ]š\Ùš[JØØ[ØÛÜJN‚ˆ™]\›ˆˆ‚ˆ]\›ˆH™K˜ÛÛ\[J‰×žßWÊWÊˆŠ×ˆ—JŠH‰Ë™›Ü›X]
+˜[YJK™K“USSS‘JBˆÚ]Ü[ŠØØ[ØÛÜKœˆ‹[˜ÛÙ[™ÏH]‹NŠH\ÈÛÝ\˜ÙN‚ˆX]ÚH]\›‹œÙX\˜Ú
+ÛÝ\˜ÙKœ™XY
+
+JBˆ™]\›ˆX]Ú™Ü›Ý\
+JKœÝš\
+
+HYˆX]Ú[ÙHˆ‚‚‚™YˆÝ\Ú×ÜÜX×Ý]J\Ú×ÜÜXÊN‚ˆˆˆ”™]\›ˆH]Hœ›ÛHHš\œÝXY[™ÈÙˆ\Ú×ÜÜXË›Yˆˆˆ‚ˆYˆ›Ý\Ú×ÜÜXÎ‚ˆ™]\›ˆˆ‚ˆ›Üˆ[™H[ˆ\Ú×ÜÜXËœÜ]
+—ˆŠN‚ˆYˆ[™KœÝ\ÝÚ]
+ˆÈŠN‚ˆ]HH[™VÌŽ—KœÝš\
+
+Bˆ›Üˆ™Yš^[ˆ
+•\ÚÈÜXÚYšXØ][ÛŽˆ‹•\ÚÈÜXÎˆ‹•\ÚÎˆŠN‚ˆYˆ]K›ÝÙ\Š
+KœÝ\ÝÚ]
+™Yš^›ÝÙ\Š
+JN‚ˆ]HH]VÛ[Š™Yš^
+N—KœÝš\
+
+BˆYˆ›ÝÚ\×ÜXÙZÛ\—Ý˜[YJ]JN‚ˆ™]\›ˆ]Bˆ™]\›ˆˆ‚ˆ™]\›ˆˆ‚‚‚™YˆØÛWÛÜ[ÛŠ›YÊN‚ˆˆˆ”™]\›ˆH˜[YH]›ÛÝÜÈHÛÛ[X[™[[™H›YËÜˆ[ˆ[\HÝš[™Ëˆˆˆ‚ˆYˆ›YÈ›Ý[ˆÞ\Ë˜\™ÝŽ‚ˆ™]\›ˆˆ‚ˆ[™^HÞ\Ë˜\™Ý‹š[™^
+›YÊH
+ÈBˆYˆ[™^H[ŠÞ\Ë˜\™ÝŠN‚ˆš[
+‘T”“ÔŽˆßH™\]Z\™\ÈH˜[YH‹™›Ü›X]
+›YÊJBˆÞ\Ë™^]
+ŠBˆ™]\›ˆÞ\Ë˜\™Ý–Ú[™^KœÝš\
+
+B‚‚™YˆÙš\œÝÜ\˜YÜ˜\
+^X^ØÚ\œÏMÌ
+N‚ˆˆˆ”™]\›ˆHš\œÝ›ÜÙH\˜YÜ˜\ÙˆH›ØÚËš[[YY›ÜˆHÝ[[X\žH›Þˆˆˆ‚ˆ›Üˆ›ØÚÈ[ˆÝŠ^ÜˆˆŠKœÜ]
+——ˆŠN‚ˆÛX[™YHˆ‹š›Ú[Šˆ[™KœÝš\
+
+H›Üˆ[™H[ˆ›ØÚËœÜ]
+—ˆŠBˆYˆ[™KœÝš\
+
+H[™›Ý[™KœÝš\
+
+KœÝ\ÝÚ]
+
+Ÿ‹ˆÈ‹‹H‹ŠˆŠJBˆ
+KœÝš\
+
+BˆYˆÛX[™Y‚ˆYˆ[ŠÛX[™Y
+HˆX^ØÚ\œÎ‚ˆÛX[™YHÛX[™YÎ›X^ØÚ\œ×KœœÜ]
+ˆ‹JVÌH
+Èˆ‹‹ˆ‚ˆ™]\›ˆÛX[™Yˆ™]\›ˆˆ‚‚‚™Yˆ™\ÛÛ™WÝ\Ú×ÜÝ][Y[
+™\Ý[Ë\Ú×ÜÜXËÝYWØÛÛ™šYÊN‚ˆˆˆ”™]\›ˆHÛ™K\\˜YÜ˜\Ý][Y[ÙˆÚ]H\ÚÈ\ÚÙY›Ü‹ˆˆˆ‚ˆYˆ™\Ý[Î‚ˆ›ÜˆÙ^H[ˆ
+\Ú×ÜÝ][Y[‹\ÚÈ‹›Øš™XÝ]™H‹œ›Ø›[WÜÝ][Y[ŠN‚ˆ^H™\Ý[Ë™Ù]
+Ù^JBˆYˆ^[™\Ú[œÝ[˜ÙJ^ÝŠH[™›ÝÚ\×ÜXÙZÛ\—Ý^
+^
+N‚ˆ™]\›ˆÙš\œÝÜ\˜YÜ˜\
+^
+Bˆ›ÜˆXY[™È[ˆ
+“Øš™XÝ]™H‹•\ÚÈ\ØÜš\[Ûˆ‹”›Ø›[HÝ][Y[‹ˆ‘\ØÜš\[Ûˆ‹˜XÚÙÜ›Ý[™ŠN‚ˆ^H^˜XÝÜÜX×ÜÙXÝ[ÛŠ\Ú×ÜÜXËXY[™ÊBˆYˆ^[™›ÝÚ\×ÜXÙZÛ\—Ý^
+^
+N‚ˆÝ][Y[HÙš\œÝÜ\˜YÜ˜\
+^
+BˆYˆÝ][Y[‚ˆ™]\›ˆÝ][Y[ˆ]HH
+ÝYWØÛÛ™šYÈÜˆßJK™Ù]
+œÝYH‹ßJK™Ù]
+]H‹ˆŠBˆYˆ›ÝÚ\×ÜXÙZÛ\—Ý˜[YJ]JN‚ˆ™]\›ˆ”ÝYHØÛÜNˆßKˆ‹™›Ü›X]
+ÝŠ]JKœœÝš\
+‹ˆŠJBˆ™]\›ˆˆ‚‚‚™YˆÜÝYWØ˜YÙ\ÊÝYWØÛÛ™šYÊN‚ˆˆˆ”™]\›ˆÊX™[˜[YJWH\ØÜšXš[™ÈÝYH\ÚÝÛˆ[™\ˆH]Kˆˆˆ‚ˆÝYHH
+ÝYWØÛÛ™šYÈÜˆßJK™Ù]
+œÝYH‹ßJBˆX™[ÈH
+ˆ
+\Ú×Ý\H‹•\ÚÈ\HŠKˆ
+œØØ[H‹”ØØ[HŠKˆ
+›[ÙH‹“[ÙHŠKˆ
+˜XXÙWØÛ\ÜÈ‹PPÑHÛ\ÜÈŠKˆ
+™™[ÜÝYÙH‹‘‘SÝYÙHŠKˆ
+Bˆ˜YÙ\ÈH×Bˆ›ÜˆÙ^KX™[[ˆX™[Î‚ˆ˜[YHHÝŠÝYK™Ù]
+Ù^KˆŠJKœÝš\
+
+BˆYˆ›Ý˜[YHÜˆ˜[YK›ÝÙ\Š
+H[ˆ
+˜]]È‹››Û™H‹–Ý]WHŠN‚ˆÛÛ[YBˆ˜YÙ\Ë˜\[™
+
+Ý
+X™[
+K˜[YJJBˆ™]\›ˆ˜YÙ\Â‚‚™Yˆ™\ÛÛ™WÜ™\ÜÚY[]JÝYWØÛÛ™šYË\Ú×ÜÜXË™\Ý[ÊN‚ˆˆˆ”Ù]UKUUÔ‹ÓTÔÒQ’PÐUSÓ‹TÒ×ÔÕUSQS•[™ÕQWÐQÑTË‚‚ˆH™\Ü]H\ÈHÝYH]KÛÈH™\ÜÙ[™\˜]Yœ›ÛHBˆØ[›ÛšXØ[ØÜš\YØZ[œÝ[žH\ÚÈ›Û\ˆ\È™]™\ˆY˜[YY•\ÚÈ™\Ü‹‚ˆˆˆ‚ˆÛØ˜[UKUUÔ‹ÓTÔÒQ’PÐUSÓ‹TÒ×ÔÕUSQS•ÕQWÐQÑTÂ‚ˆÝYHH
+ÝYWØÛÛ™šYÈÜˆßJK™Ù]
+œÝYH‹ßJBˆ™\ÜØÙ™ÈH
+ÝYWØÛÛ™šYÈÜˆßJK™Ù]
+œ™\Ü‹ßJB‚ˆ]WØØ[™Y]\ÈHÂˆØÛWÛÜ[ÛŠ‹K]]HŠKˆÜË™[š\›Û‹™Ù]
+“‘TTÒSWÔ‘TÔ•ÕUH‹ˆŠKœÝš\
+
+KˆÝYK™Ù]
+]H‹ˆŠKˆÝ\Ú×ÜÜX×Ý]J\Ú×ÜÜXÊKˆÛØØ[Ü™\ÜØÛÛœÝ[
+•UHŠKˆÜ™]YžWÜÛYÊÜËœ]˜˜\Ù[˜[YJTÒ×ÑTŠJKˆBˆ›ÜˆØ[™Y]H[ˆ]WØØ[™Y]\Î‚ˆYˆØ[™Y]H[™›ÝÚ\×ÜXÙZÛ\—Ý˜[YJØ[™Y]JHˆ[™Ø[™Y]HOH•\ÚÈ™\ÜŽ‚ˆUHHÝŠØ[™Y]JKœÝš\
+
+Bˆœ™XZÂ‚ˆ]]Ü—ØØ[™Y]\ÈHÂˆØÛWÛÜ[ÛŠ‹KX]]ÜˆŠKˆÜË™[š\›Û‹™Ù]
+“‘TTÒSWÔ‘TÔ•ÐUUÔˆ‹ˆŠKœÝš\
+
+KˆÝYK™Ù]
+˜]]Üˆ‹ˆŠKˆ™\ÜØÙ™Ë™Ù]
+˜]]Üˆ‹ˆŠKˆÛØØ[Ü™\ÜØÛÛœÝ[
+UUÔˆŠKˆBˆ›ÜˆØ[™Y]H[ˆ]]Ü—ØØ[™Y]\Î‚ˆYˆØ[™Y]H[™›ÝÚ\×ÜXÙZÛ\—Ý˜[YJØ[™Y]JN‚ˆUUÔˆHÝŠØ[™Y]JKœÝš\
+
+Bˆœ™XZÂ‚ˆ›ÜˆØ[™Y]H[ˆ
+ÝYK™Ù]
+˜Û\ÜÚYšXØ][Ûˆ‹ˆŠKˆ™\ÜØÙ™Ë™Ù]
+˜Û\ÜÚYšXØ][Ûˆ‹ˆŠKˆÛØØ[Ü™\ÜØÛÛœÝ[
+ÓTÔÒQ’PÐUSÓˆŠJN‚ˆYˆØ[™Y]H[™›ÝÚ\×ÜXÙZÛ\—Ý˜[YJØ[™Y]JN‚ˆÓTÔÒQ’PÐUSÓˆHÝŠØ[™Y]JKœÝš\
+
+Bˆœ™XZÂ‚ˆTÒ×ÔÕUSQS•H™\ÛÛ™WÝ\Ú×ÜÝ][Y[
+™\Ý[Ë\Ú×ÜÜXËÝYWØÛÛ™šYÊBˆÕQWÐQÑTÈHÜÝYWØ˜YÙ\ÊÝYWØÛÛ™šYÊBˆ™]\›ˆUB‚‚™YˆØ\×Ø›ÛÛ
+˜[YJN‚ˆˆˆ’[\œ™]PSS[ZÙH˜[Y\È\È›ÛÛX[œËˆˆˆ‚ˆYˆ\Ú[œÝ[˜ÙJ˜[YK›ÛÛ
+N‚ˆ™]\›ˆ˜[YBˆ™]\›ˆÝŠ˜[YJKœÝš\
+
+K›ÝÙ\Š
+H[ˆ
+YH‹žY\È‹œ™\]Z\™YŠB‚‚™YˆØ\×Ú[
+˜[YKY˜][L
+N‚ˆˆˆ’[\œ™]PSS[ZÙH˜[Y\È\È[YÙ\œËˆˆˆ‚ˆžN‚ˆ™]\›ˆ[
+˜[YJBˆ^Ù\
+\Q\œ›Ü‹˜[YQ\œ›ÜŠN‚ˆ™]\›ˆY˜][‚‚™YˆÚ\×Ü™\]Z\™Y
+˜[YJN‚ˆˆˆ”™]\›ˆYHÚ[ˆHÛÛ™šYÈ˜[YHYX[œÈ™\]Z\™Yˆˆˆ‚ˆ™]\›ˆÝŠ˜[YJKœÝš\
+
+K›ÝÙ\Š
+HOHœ™\]Z\™YˆÜˆ˜[YH\ÈYB‚‚™YˆÚ\×ÜXÙZÛ\—Ý^
+^
+N‚ˆˆˆ”™]\›ˆYHÚ[ˆ^Ý[ÛÛZ[œÈ™\Ü][\]HXÙZÛ\ˆÛÛ[ˆˆˆ‚ˆYˆ›Ý^‚ˆ™]\›ˆYBˆÝš\YHÝŠ^
+KœÝš\
+
+BˆYˆÝš\YœÝ\ÝÚ]
+–ÈŠH[™Ýš\Y™[™ÝÚ]
+—HŠN‚ˆ™]\›ˆYBˆXÙZÛ\—ÛX\šÙ\œÈH
+ˆ–Ü™\XÙHÚ]‹ˆ–Ù\ØÜšX™H‹ˆ–ÜÝ[[X\š^™H‹ˆ–Û\Ý™Y™\™[˜Ù\È‹ˆ–Ø]]Ë\Ü[]Y‹ˆ
+Bˆ™]\›ˆ[žJÝš\Y›ÝÙ\Š
+KœÝ\ÝÚ]
+X\šÙ\ŠH›ÜˆX\šÙ\ˆ[ˆXÙZÛ\—ÛX\šÙ\œÊB‚‚™YˆÛX[X[ÜÙXÝ[Û—Ùš[Y
+˜[YJN‚ˆˆˆ”™]\›ˆYHÚ[ˆHX[X[ÙXÝ[Ûˆ\È™Y[ˆš[Y[‹ˆˆˆ‚ˆÛÛ[HPS•PSÔÑPÕSÓ”Ë™Ù]
+˜[YKˆŠBˆ™]\›ˆ›ÝÚ\×ÜXÙZÛ\—Ý^
+ÛÛ[
+B‚‚™YˆÚ\×ÜØY™]WØÛÛ^
+™\Ý[ÊN‚ˆˆˆ”™]\›ˆYHÚ[ˆ™\Ý[ÈÛÚÈZÙHHØY™]HÜˆÛÝ™\›™Y]šY[˜ÙHÝYKˆˆˆ‚ˆYˆ›Ý™\Ý[Î‚ˆ™]\›ˆ˜[ÙBˆØY™]WÚÙ^\ÈH
+ˆœØY™]WÜ™XY[™\ÜÈ‹ˆœ™XY[™\ÜÈ‹ˆ™]šY[˜ÙWÙØ\È‹ˆ˜\ÜÝ[\[Ûœ×ÙØ\È‹ˆœÝ[™\™×Ùš[™[™ÜÈ‹ˆœÛÝ\˜ÙWÝ\›WÚ[™Ù™ˆ‹ˆœÛÝ\˜ÙWØ˜\Ú\×ÜÝ[[X\žH‹ˆ
+BˆYˆ[žJ™\Ý[Ë™Ù]
+Ù^JH›ÜˆÙ^H[ˆØY™]WÚÙ^\ÊN‚ˆ™]\›ˆYBˆ^Hˆ‹š›Ú[ŠÂˆÝŠ™\Ý[Ë™Ù]
+\Ú×Ý\H‹ˆŠJKˆÝŠ™\Ý[Ë™Ù]
+›Øš™XÝ]™H‹ˆŠJKˆÝŠ™\Ý[Ë™Ù]
+˜\›ØXÚ‹ˆŠJKˆÝŠ™\Ý[Ë™Ù]
+˜ÛÛ˜Û\Ú[ÛœÈ‹ˆŠJKˆJK›ÝÙ\Š
+Bˆ™]\›ˆ[žJÚÙ[ˆ[ˆ^›ÜˆÚÙ[ˆ[ˆ
+œØY™]H‹œ\\™H‹™š\™H‹˜›ÝÙÝÛˆŠJB‚‚ˆÈ˜[Y][ÛˆÙ^\ÈÚÜÙHSQH\ÜÙ\ÈÛÛY][™È˜Yˆ›Üˆ\ÙK˜[ÙH\ÈBˆÈ\Ú\™YÝ]ÛÛYKÛÈ]]\Ý›Ý™H™\ÜY\ÈH˜Z[YÚXÚËˆH[\œš\ÙBˆÈÚÚ[È™\]Z\™HYÙ[ÈÈ[Z]Ü™Y[X[×Ù\ØÛÜÙYˆ˜[ÙXÚXÚÝ\Ú\ÙBˆÈ™XYÈ\ÈH›ØÚÙ\ˆ[™›\ÈØY™]H™XY[™\ÜÈÈTÒQÓ‹QÔQH“ÐÒÑQ‚—Ó‘QÐUU‘WÕSQUSÓ—ÓPT’ÑT”ÈH
+ˆ™\ØÛÜÙY‹™^ÙYYY‹š[Û]Y‹˜œ™XXÚY‹™˜Z[Y‹™˜Z[\™H‹ˆ™\œ›Üˆ‹™\œ›ÜœÈ‹˜›ØÚÙY‹˜›ØÚÙ\ˆ‹˜›ØÚÙ\œÈ‹›XZÙY‹™^ÜÙY‹ˆš[™™\œ™Y‹™˜XœšXØ]Y‹˜ÛÛœÝXÝY‹›Ý™\œ[ˆ‹›Ý™\™YH‹ŠB‚ˆÈHÙ^H][™XYH™YØ]\È]Ù[ˆ
+››×Ù]WÙ˜XœšXØ]YŠH\ÈÜÚ]]™HYØZ[‹‚—ÕSQUSÓ—Ó‘QÐUSÓ—Ô‘Q’VTÈH
+››È‹››Ý‹›™]™\ˆ‹Ú]Ý]‹ž™\›È‹›š[ŠB‚‚™YˆÝ˜[Y][Û—ÛÝ]ÛÛYWÚ\×Ù˜Z[\™JÚXÚËÝ]ÛÛYJN‚ˆˆˆ•YHÚ[ˆH˜[Y][Ûˆ[žHÚÝ[™H™\ÜY\ÈH˜Z[YÚXÚË‚‚ˆHÙ^H˜\ÙY\È[ˆ\ÜÙ\[ÛˆÙˆÛÛY][™È[™\Ú\˜X›H\È[™\Yˆ›Ü‚ˆÜ™Y[X[×Ù\ØÛÜÙYH\ÜÚ[™È˜[YH\È˜[ÙK›ÝYKˆHÙ^H]ˆØ\œšY\È]ÈÝÛˆ™YØ][Ûˆ™Yš^›\È˜XÚËÛÂˆ›×ÙØÝ[Y[Û[X™\—Ú[™™\œ™Y\ÜÙ\ÈÛˆYK‚ˆˆˆ‚ˆYˆ\Ú[œÝ[˜ÙJÝ]ÛÛYKÝŠN‚ˆ™]\›ˆÝ]ÛÛYKœÝš\
+
+K\\Š
+H[ˆÑRSÔÕUTÑTÂˆYˆÝ]ÛÛYH›Ý[ˆ
+YK˜[ÙJN‚ˆ™]\›ˆ˜[ÙBˆÚÙ[œÈHÚXÚË›ÝÙ\Š
+KœÜ]
+—ÈŠBˆ™YØ]]™HH[žJX\šÙ\ˆ[ˆÚÙ[œÈ›ÜˆX\šÙ\ˆ[ˆÓ‘QÐUU‘WÕSQUSÓ—ÓPT’ÑT”ÊBˆYˆ™YØ]]™H[™ÚÙ[œÈ[™ÚÙ[œÖÌH[ˆÕSQUSÓ—Ó‘QÐUSÓ—Ô‘Q’VTÎ‚ˆ™YØ]]™HH˜[ÙBˆ™]\›ˆÝ]ÛÛYH\ÈYHYˆ™YØ]]™H[ÙHÝ]ÛÛYH\È˜[ÙB‚‚™YˆÝ˜[Y][Û—Ý˜[YJÝ]ÛÛYJN‚ˆˆˆ”™]\›ˆHØØ[\ˆÙˆH˜[Y][Ûˆ[žNÈ[šY\ÈX^H™HÝ˜[YK[š]X™[HXÝËˆˆˆ‚ˆYˆ\Ú[œÝ[˜ÙJÝ]ÛÛYKXÝ
+H[™˜[YHˆ[ˆÝ]ÛÛYN‚ˆ™]\›ˆÝ]ÛÛYVÈ˜[YH—Bˆ™]\›ˆÝ]ÛÛYB‚‚™YˆÝ˜[Y][Û—Ù˜Z[\™\Ê™\Ý[ÊN‚ˆˆˆ”™]\›ˆ˜[Y][ÛˆÚXÚÜÈ]\™H˜[ÙH[™›ØÚÈ\ÚYÛ‹YÜ˜YH\ÙKˆˆˆ‚ˆ˜Z[\™\ÈH×Bˆ˜[Y][ÛˆH™\Ý[Ë™Ù]
+˜[Y][Ûˆ‹ßJHYˆ™\Ý[È[ÙHßBˆ›ÜˆÚXÚËÝ]ÛÛYH[ˆ˜[Y][Û‹š][\Ê
+N‚ˆYˆÝ˜[Y][Û—ÛÝ]ÛÛYWÚ\×Ù˜Z[\™JÚXÚËÝ˜[Y][Û—Ý˜[YJÝ]ÛÛYJJN‚ˆ˜Z[\™\Ë˜\[™
+ÛX™[Ùœ›ÛWÚÙ^JÚXÚÊJBˆ™]\›ˆ˜Z[\™\Â‚‚™Yˆ[™™\—ÜØY™]WÜ™XY[™\ÜÊ™\Ý[ÊN‚ˆˆˆ’[™™\ˆH™\ÜY˜XÚ[™ÈØY™]H™XY[™\ÜÈX™[œ›ÛH™\Ý[ËšœÛÛ‹ˆˆˆ‚ˆYˆ›ÝÚ\×ÜØY™]WØÛÛ^
+™\Ý[ÊN‚ˆ™]\›ˆ›Û™Bˆ^XÚ]H™\Ý[Ë™Ù]
+œØY™]WÜ™XY[™\ÜÈŠHÜˆ™\Ý[Ë™Ù]
+œ™XY[™\ÜÈŠBˆš[™[™ÜÈH×BˆYˆ\Ú[œÝ[˜ÙJ^XÚ]XÝ
+N‚ˆ™\™XÝHÝŠ^XÚ]™Ù]
+™\™XÝŠHÜˆ^XÚ]™Ù]
+›X™[ŠHÜˆˆŠKœÝš\
+
+Bˆ˜]×Ùš[™[™ÜÈH^XÚ]™Ù]
+™š[™[™ÜÈŠHÜˆ^XÚ]™Ù]
+˜›ØÚÙ\œÈŠHÜˆ×BˆYˆ\Ú[œÝ[˜ÙJ˜]×Ùš[™[™ÜË\Ý
+N‚ˆš[™[™ÜË™^[™
+ÜÝŠ][JH›Üˆ][H[ˆ˜]×Ùš[™[™Ü×JBˆ[Yˆ˜]×Ùš[™[™ÜÎ‚ˆš[™[™ÜË˜\[™
+ÝŠ˜]×Ùš[™[™ÜÊJBˆ[Yˆ^XÚ]‚ˆ™\™XÝHÝŠ^XÚ]
+KœÝš\
+
+Bˆ[ÙN‚ˆ™\™XÝHˆ‚‚ˆ]šY[˜ÙWÙØ\ÈH™\Ý[Ë™Ù]
+™]šY[˜ÙWÙØ\ÈŠHÜˆ™\Ý[Ë™Ù]
+˜\ÜÝ[\[Ûœ×ÙØ\ÈŠHÜˆ×Bˆ˜[Y][Û—Ù˜Z[\™\ÈHÝ˜[Y][Û—Ù˜Z[\™\Ê™\Ý[ÊBˆYˆ]šY[˜ÙWÙØ\È[™\Ú[œÝ[˜ÙJ]šY[˜ÙWÙØ\Ë\Ý
+N‚ˆš[™[™ÜË™^[™
+×Ù›Ü›X]Û\ÝÚ][WÝ^
+][JH›Üˆ][H[ˆ]šY[˜ÙWÙØ\ÖÎWWJBˆš[™[™ÜË™^[™
+˜[Y][Û—Ù˜Z[\™\ÊB‚ˆYˆ›Ý™\™XÝ‚ˆYˆ]šY[˜ÙWÙØ\ÈÜˆ˜[Y][Û—Ù˜Z[\™\Î‚ˆ™\™XÝH”ÐÔ‘QS’S‘ÈHTÒQÓ‹QÔQH“ÐÒÑQ‚ˆ[ÙN‚ˆ™\™XÝH”ÐÔ‘QS’S‘ÈÈ‘PQH“ÔˆSPSˆ‘U’QUÈ‚ˆ[Yˆ™\™XÝ\\Š
+HOH”ÐÔ‘QS’S‘Èˆ[™
+]šY[˜ÙWÙØ\ÈÜˆ˜[Y][Û—Ù˜Z[\™\ÊN‚ˆ™\™XÝH”ÐÔ‘QS’S‘ÈHTÒQÓ‹QÔQH“ÐÒÑQ‚‚ˆ™]\›ˆÂˆ™\™XÝŽˆ™\™XÝˆ™š[™[™ÜÈŽˆš[™[™ÜËˆB‚‚™YˆÙ›Ü›X]Û\ÝÚ][WÝ^
+][JN‚ˆˆˆ‘›Ü›X]H™\Ý[[\Ý][H\È™XYX›H™\Ü^ˆˆˆ‚ˆYˆ\Ú[œÝ[˜ÙJ][KXÝ
+N‚ˆ™Y™\œ™YH×Bˆ›ÜˆÙ^H[ˆ
+™Ø\‹™\ØÜš\[Ûˆ‹™š[™[™È‹š][H‹˜XÝ[Ûˆ‹œ™XÛÛ[Y[™][ÛˆŠN‚ˆYˆ][K™Ù]
+Ù^JN‚ˆ™Y™\œ™Y˜\[™
+ÝŠ][K™Ù]
+Ù^JJJBˆYˆ™Y™\œ™Y‚ˆ™]\›ˆˆH‹š›Ú[Š™Y™\œ™Y
+Bˆ\ÈH×Bˆ›ÜˆÙ^H[ˆÛÜY
+][KšÙ^\Ê
+JN‚ˆ\Ë˜\[™
+žßNˆßH‹™›Ü›X]
+Ù^Kœ™\XÙJ—È‹ˆŠK][VÚÙ^WJJBˆ™]\›ˆŽÈ‹š›Ú[Š\ÊBˆ™]\›ˆÝŠ][JB‚‚™YˆØYØÛÛXÝ[Û—ÛX[šY™\Ý
+
+N‚ˆˆˆ”™]\›ˆH™Y™\™[˜Ù\ÈÛÛXÝ[ÛˆX[šY™\ÝÜˆßHÚ[ˆXœÙ[‚‚ˆÜš][ˆžH]ÛÛËÙÙ[™\˜]WÜÛÝ\˜Ù\×ÛYœNÈ]\ÈHXXÚ[™K\™XYX›Bˆ™XÛÜ™Ùˆ]™\žHØÝ[Y[H\ÚÈÛÛXÝY[™ÚXÚÞ\Ý[H]Ø[YHœ›ÛK‚ˆˆˆ‚ˆ]HÜËœ]š›Ú[ŠTÒ×ÑT‹œÝ\WÜØÛÜWØ[™Ü™\ÙX\˜Ú‹œ™Y™\™[˜Ù\È‹ˆ˜ÛÛXÝ[Û—ÛX[šY™\ÝšœÛÛˆŠBˆYˆ›ÝÜËœ]™^\ÝÊ]
+N‚ˆ™]\›ˆßBˆžN‚ˆÚ]Ü[Š]œˆ‹[˜ÛÙ[™ÏH]‹N\ÚYÈŠH\ÈX[šY™\ÝÙš[N‚ˆ]HHœÛÛ‹›ØY
+X[šY™\ÝÙš[JBˆ^Ù\
+ÔÑ\œ›Ü‹˜[YQ\œ›ÜŠN‚ˆ™]\›ˆßBˆ™]\›ˆ]HYˆ\Ú[œÝ[˜ÙJ]KXÝ
+H[ÙHßB‚‚™YˆÙØÝ[Y[ÜÛÝ\˜ÙWØÛÝ[ÊX[šY™\Ý
+N‚ˆˆˆ”™]\›ˆÊÛÝ\˜ÙH˜[YKØÝ[Y[ÛÝ[\ØÜš\[ÛŠWHœ›ÛHHX[šY™\Ýˆˆˆ‚ˆ›ÝÜÈH×Bˆ›ÜˆÜ›Ý\[ˆX[šY™\Ý™Ù]
+œÛÝ\˜Ù\È‹×JHÜˆ×N‚ˆYˆ›Ý\Ú[œÝ[˜ÙJÜ›Ý\XÝ
+N‚ˆÛÛ[YBˆØÝ[Y[ÈHÜ›Ý\™Ù]
+™ØÝ[Y[ÈŠHÜˆÜ›Ý\™Ù]
+™š[\ÈŠHÜˆ×BˆYˆ›ÝØÝ[Y[Î‚ˆÛÛ[YBˆ˜[YHH
+Ü›Ý\™Ù]
+œÞ\Ý[WÛ˜[YHŠHÜˆÜ›Ý\™Ù]
+œÛÝ\˜ÙHŠBˆÜˆÜ›Ý\™Ù]
+›˜[YHŠHÜˆ›Ý\ˆŠBˆ›ÝÜË˜\[™
+
+ÝŠ˜[YJK[ŠØÝ[Y[ÊKÝŠÜ›Ý\™Ù]
+™\ØÜš\[Ûˆ‹ˆŠHÜˆˆŠJJBˆ›ÝÜËœÛÜ
+Ù^O[[X™H›ÝÎˆ
+\›ÝÖÌWK›ÝÖÌK›ÝÙ\Š
+JJBˆ™]\›ˆ›ÝÜÂ‚‚™YˆØÛÝ[Ü™Y™\™[˜ÙWÙš[\Ê
+N‚ˆˆˆÛÝ[ÛÛXÝYš[\È\™XÝK›Üˆ\ÚÜÈÚ]›ÈX[šY™\Ýˆˆˆ‚ˆ™Y™\™[˜Ù\ÈHÜËœ]š›Ú[ŠTÒ×ÑT‹œÝ\WÜØÛÜWØ[™Ü™\ÙX\˜Ú‹œ™Y™\™[˜Ù\ÈŠBˆYˆ›ÝÜËœ]š\Ù\Š™Y™\™[˜Ù\ÊN‚ˆ™]\›ˆ×BˆÛÝ[ÈHßBˆ›Üˆ›ÛÝ\œËš[\È[ˆÜËØ[Ê™Y™\™[˜Ù\ÊN‚ˆ\œÖÎ—HHÛ˜[YH›Üˆ˜[YH[ˆ\œÈYˆ›Ý˜[YKœÝ\ÝÚ]
+‹ˆŠWBˆ›Üˆ˜[YH[ˆš[\Î‚ˆYˆ˜[YH[ˆ
+”ÓÕTÑTË›Y‹˜ÛÛXÝ[Û—ÛX[šY™\ÝšœÛÛˆŠN‚ˆÛÛ[YBˆ›Û\ˆHÜËœ]˜˜\Ù[˜[YJ›ÛÝ
+BˆX™[H[™š[YˆYˆÜËœ]˜XœÜ]
+›ÛÝ
+HOHÜËœ]˜XœÜ]
+™Y™\™[˜Ù\ÊHˆ[ÙH›Û\‚ˆÛÝ[ÖÛX™[HHÛÝ[Ë™Ù]
+X™[
+H
+ÈBˆ›ÝÜÈHÊ˜[YKÛÝ[ˆŠH›Üˆ˜[YKÛÝ[[ˆÛÝ[Ëš][\Ê
+WBˆ›ÝÜËœÛÜ
+Ù^O[[X™H›ÝÎˆ
+\›ÝÖÌWK›ÝÖÌK›ÝÙ\Š
+JJBˆ™]\›ˆ›ÝÜÂ‚‚™Yˆ›Ü›X]Ú[™›Ü›X][Û—ÜÛÝ\˜Ù\×Ý^
+ÛÛ™šYË™\Ý[ÊN‚ˆˆˆ‘›Ü›X]H]šY[˜ÙH˜\Ú\ÎˆÝÈX[žHØÝ[Y[ÈØ[YHœ›ÛHÚXÚÞ\Ý[K‚‚ˆH™XY\‰ÜÈš\œÝ]Y\Ý[ÛˆX›Ý]H]KYš]™[ˆÝYH\ÈÚ]]Ø\ÈZ[Û‹‚ˆ\È[œÝÙ\œÈ]œ›ÛHHÛÛXÝYš[\È[\Ù[™\ËÛÈHÛÝ[Ø[››Ý™BˆÝ™\œÝ]Y[ˆ›ÜÙK‚ˆˆˆ‚ˆX[šY™\ÝHØYØÛÛXÝ[Û—ÛX[šY™\Ý
+
+Bˆ›ÝÜÈHÙØÝ[Y[ÜÛÝ\˜ÙWØÛÝ[ÊX[šY™\Ý
+HÜˆØÛÝ[Ü™Y™\™[˜ÙWÙš[\Ê
+Bˆ[œ]ÈH
+ÛÛ™šYÈÜˆßJK™Ù]
+š[œ]È‹ßJBˆ]WÜÛÝ\˜Ù\ÈH[œ]Ë™Ù]
+™]WÜÛÝ\˜Ù\È‹×JHÜˆ×Bˆ\ÈH×B‚ˆYˆ›ÝÜÎ‚ˆÝ[HÝ[J›ÝÖÌWH›Üˆ›ÝÈ[ˆ›ÝÜÊBˆ\Ë˜\[™
+ˆÝ
+žßHØÝ[Y[
+ÊHÙ\™HÛÛXÝYœ›ÛHßHÛÝ\˜ÙHÞ\Ý[JÊH[™\™HÝÜ™Y‚ˆÚ]\È\ÚÈ[ˆÝ\WÜØÛÜWØ[™Ü™\ÙX\˜ÚÜ™Y™\™[˜Ù\ËËˆŠK™›Ü›X]
+ˆÝ[[Š›ÝÜÊJJBˆ\Ë˜\[™
+ˆŠBˆX›HHÈŸßHßHßH‹™›Ü›X]
+Ý
+”ÛÝ\˜ÙHÞ\Ý[HŠKÝ
+‘ØÝ[Y[ÈŠKÝ
+ÛÛ[ŠJKˆŸKK_KK_KK_—Bˆ›Üˆ˜[YKÛÝ[\ØÜš\[Ûˆ[ˆ›ÝÜÎ‚ˆX›K˜\[™
+ŸßHßHßH‹™›Ü›X]
+˜[YKÛÝ[\ØÜš\[ÛˆÜˆ‹HŠJBˆ\Ë˜\[™
+—ˆ‹š›Ú[ŠX›JJB‚ˆYˆ]WÜÛÝ\˜Ù\Î‚ˆ\Ë˜\[™
+ˆŠBˆ\Ë˜\[™
+Ý
+”ÛÝ\˜ÙHÞ\Ý[\È™XYŠH
+ÈŽˆŠBˆX›HHÈŸßHßHßHßH‹™›Ü›X]
+ˆÝ
+”Þ\Ý[HŠKÝ
+”ØÛÜH™XYŠKÝ
+XØÙ\ÜÈŠKÝ
+Ø\\™Y]šY[˜ÙHŠJKˆŸKK_KK_KK_KK_—Bˆ›Üˆ[žH[ˆ]WÜÛÝ\˜Ù\Î‚ˆYˆ›Ý\Ú[œÝ[˜ÙJ[žKXÝ
+N‚ˆÛÛ[YBˆ]šY[˜ÙHHÝŠ[žK™Ù]
+™]šY[˜ÙH‹ˆŠHÜˆˆŠBˆYˆ›Ý]šY[˜ÙN‚ˆÝ]HHÝ
+››Ý™XÛÜ™YŠBˆ[YˆÜËœ]™^\ÝÊÜ™\ÛÛ™WÝ\Ú×Ü]
+]šY[˜ÙJJN‚ˆÝ]HH]šY[˜ÙBˆ[ÙN‚ˆÝ]HHžßH
+ßJH‹™›Ü›X]
+]šY[˜ÙKÝ
+›Z\ÜÚ[™ÈŠJBˆX›K˜\[™
+ŸßHßHßHßH‹™›Ü›X]
+ˆ[žK™Ù]
+œÞ\Ý[H‹‹HŠK[žK™Ù]
+œØÛÜH‹‹HŠKˆ[žK™Ù]
+˜XØÙ\ÜÈ‹œ™XY[Û›HŠKÝ]JJBˆYˆ[ŠX›JHˆŽ‚ˆ\Ë˜\[™
+—ˆ‹š›Ú[ŠX›JJB‚ˆØ\ÈHX[šY™\Ý™Ù]
+™]WÙØ\È‹×JHÜˆ×BˆYˆØ\Î‚ˆ\Ë˜\[™
+ˆŠBˆ\Ë˜\[™
+Ý
+‘ØÝ[Y[ÈÛÝYÚ]›ÝØZ[™YˆŠJBˆ›ÜˆØ\[ˆØ\Î‚ˆYˆ\Ú[œÝ[˜ÙJØ\XÝ
+N‚ˆ^H
+Ø\™Ù]
+™\ØÜš\[ÛˆŠHÜˆØ\™Ù]
+™Ø\ŠBˆÜˆŽÈ‹š›Ú[ŠžßNˆßH‹™›Ü›X]
+Ù^K˜[YJBˆ›ÜˆÙ^K˜[YH[ˆÛÜY
+Ø\š][\Ê
+JJJBˆ[ÙN‚ˆ^HÝŠØ\
+Bˆ\Ë˜\[™
+‹HßH‹™›Ü›X]
+^
+JB‚ˆYˆ™\Ý[È[™™\Ý[Ë™Ù]
+œ™Y™\™[˜Ù\ÈŠN‚ˆ\Ë˜\[™
+ˆŠBˆ\Ë˜\[™
+Ý
+”Ý[™\™È[™]\˜]\™HÚ]Y\™H\ÝY[ˆH™Y™\™[˜Ù\È‚ˆœÙXÝ[ÛŽÈH\‹Yš[HÜšYÚ[‹™]šY]˜[]K[™™[]˜[˜ÙHÙˆ‚ˆ™]™\žHÛÛXÝYØÝ[Y[\™H[ˆ‚ˆœÝ\WÜØÛÜWØ[™Ü™\ÙX\˜ÚÜ™Y™\™[˜Ù\ËÔÓÕTÑTË›YˆŠJBˆ[Yˆ›ÝÜÎ‚ˆ\Ë˜\[™
+ˆŠBˆ\Ë˜\[™
+”\‹Yš[HÜšYÚ[‹™]šY]˜[]K[™™[]˜[˜ÙNˆ‚ˆœÝ\WÜØÛÜWØ[™Ü™\ÙX\˜ÚÜ™Y™\™[˜Ù\ËÔÓÕTÑTË›YˆŠB‚ˆ™]\›ˆ—ˆ‹š›Ú[Š\ÊKœÝš\
+
+B‚‚™Yˆ›Ü›X]Ú[\›Ý™[Y[×Ý^
+™\Ý[ÊN‚ˆˆˆ‘›Ü›X]HÛÛ[™È[\›Ý™[Y[È\È\ÚÈ[]™\™YÈ™\TÚ[KØYÙ[ËÜÚÚ[Ë‚‚ˆH\ÚÈ\È[ÛÈH\ÝÙˆHÛÛ[™ÎÈ\ÈÙXÝ[ÛˆXZÙ\ÈH™\Ý[[™Èš^\Âˆ\ÙˆH[]™\˜X›H[œÝXYÙˆX]š[™È[H[ˆHÚYHš[K‚ˆˆˆ‚ˆYˆ›Ý™\Ý[Î‚ˆ™]\›ˆˆ‚ˆ][\ÈH™\Ý[Ë™Ù]
+š[\›Ý™[Y[ÈŠBˆYˆ\Ú[œÝ[˜ÙJ][\ËÝŠN‚ˆ™]\›ˆ][\ËœÝš\
+
+BˆYˆ›Ý\Ú[œÝ[˜ÙJ][\Ë\Ý
+HÜˆ›Ý][\Î‚ˆ™]\›ˆˆ‚‚ˆ›ÝÜÈH×Bˆ›Üˆ][H[ˆ][\Î‚ˆYˆ›Ý\Ú[œÝ[˜ÙJ][KXÝ
+N‚ˆ›ÝÜË˜\[™
+‹HßH‹™›Ü›X]
+][JJBˆÛÛ[YBˆ\™Ù]H
+][K™Ù]
+\™Ù]ŠHÜˆ][K™Ù]
+˜ÛÛ\Û™[ŠHÜˆ][K™Ù]
+™š[HŠBˆÜˆ][K™Ù]
+œ™\ÈŠHÜˆÛÛ[™ÈŠBˆYˆ][K™Ù]
+œ™\ÈŠH[™][K™Ù]
+™š[HŠH[™›Ý][K™Ù]
+\™Ù]ŠN‚ˆ\™Ù]HžßNˆßH‹™›Ü›X]
+][VÈœ™\È—K][VÈ™š[H—JBˆØ\H][K™Ù]
+™Ø\ŠHÜˆ][K™Ù]
+œ›Ø›[HŠHÜˆˆ‚ˆÚ[™ÙHH][K™Ù]
+˜Ú[™ÙHŠHÜˆ][K™Ù]
+š[\›Ý™[Y[ŠHÜˆˆ‚ˆ]šY[˜ÙHH][K™Ù]
+™]šY[˜ÙHŠHÜˆ][K™Ù]
+\ÝŠHÜˆˆ‚ˆ[™HH‹H
+ŠžßJŠˆ8 %ßH‹™›Ü›X]
+\™Ù]Ú[™ÙHÜˆØ\
+BˆYˆØ\[™Ú[™ÙN‚ˆ[™H
+ÏHˆ
+Ø\ˆßJH‹™›Ü›X]
+Ø\
+BˆYˆ]šY[˜ÙN‚ˆ[™H
+ÏHˆÞßWH‹™›Ü›X]
+]šY[˜ÙJBˆ›ÝÜË˜\[™
+[™JBˆ™]\›ˆ—ˆ‹š›Ú[Š›ÝÜÊB‚‚™YˆØ\ÜÝ[\[Û—Ü›ÝÜÊ™\Ý[ÊN‚ˆˆˆ”™]\›ˆ
+\ÜÝ[\[Ûˆ›ÝÜË]KYØ\›ÝÜÊHœ›ÛH[žH™\Ý[ËšœÛÛˆÜ[[™Ëˆˆˆ‚ˆ\ÜÝ[\[ÛœÈH×BˆØ\ÈH×BˆÛÛXš[™YH™\Ý[Ë™Ù]
+˜\ÜÝ[\[Ûœ×Ø[™ÙØ\ÈŠHÜˆ™\Ý[Ë™Ù]
+˜\ÜÝ[\[Ûœ×ÙØ\ÈŠBˆYˆ\Ú[œÝ[˜ÙJÛÛXš[™YXÝ
+N‚ˆ\ÜÝ[\[ÛœË™^[™
+ÛÛXš[™Y™Ù]
+˜\ÜÝ[\[ÛœÈ‹×JHÜˆ×JBˆØ\Ë™^[™
+ÛÛXš[™Y™Ù]
+™]WÙØ\È‹×JHÜˆÛÛXš[™Y™Ù]
+™Ø\È‹×JHÜˆ×JBˆYˆ›Ý[žJÈ[ˆÛÛXš[™Y›ÜˆÈ[ˆ
+˜\ÜÝ[\[ÛœÈ‹™]WÙØ\È‹™Ø\ÈŠJN‚ˆÈœ™YKY›Ü›HÝÜXÎˆ^H™YÚ\Ý\‹HÚ\H[ÜÝ\ÚÈ›Û\œÈÜš]K‚ˆ\ÜÝ[\[ÛœË™^[™
+È˜\ÜÝ[\[ÛˆŽˆžßNˆßH‹™›Ü›X]
+Ëœ™\XÙJ—È‹ˆŠKŠ_Bˆ›ÜˆËˆ[ˆÛÛXš[™Yš][\Ê
+HYˆŠBˆ[Yˆ\Ú[œÝ[˜ÙJÛÛXš[™Y\Ý
+N‚ˆØ\Ë™^[™
+ÛÛXš[™Y
+Bˆ›ÜˆÙ^H[ˆ
+˜\ÜÝ[\[ÛœÈ‹˜\ÜÝ[\[Û—Ü™YÚ\Ý\ˆŠN‚ˆ˜[YHH™\Ý[Ë™Ù]
+Ù^JBˆYˆ\Ú[œÝ[˜ÙJ˜[YK\Ý
+N‚ˆ\ÜÝ[\[ÛœË™^[™
+˜[YJBˆ›ÜˆÙ^H[ˆ
+™]WÙØ\È‹™]šY[˜ÙWÙØ\È‹™Ø\ÈŠN‚ˆ˜[YHH™\Ý[Ë™Ù]
+Ù^JBˆYˆ\Ú[œÝ[˜ÙJ˜[YK\Ý
+N‚ˆØ\Ë™^[™
+˜[YJBˆ™]\›ˆ\ÜÝ[\[ÛœËØ\Â‚‚™YˆØ\ÜÝ[\[Û—Ý^
+][KÙ^\ÊN‚ˆˆˆ”[Hš\œÝ™\Ù[Ù^Hœ›ÛHHXÝ][K[ÙH™[™\ˆHÚÛH][Kˆˆˆ‚ˆYˆ›Ý\Ú[œÝ[˜ÙJ][KXÝ
+N‚ˆ™]\›ˆÝŠ][JBˆ›ÜˆÙ^H[ˆÙ^\Î‚ˆYˆ][K™Ù]
+Ù^JN‚ˆ™]\›ˆÝŠ][VÚÙ^WJBˆ™]\›ˆˆ‚‚‚™Yˆ›Ü›X]Ø\ÜÝ[\[Ûœ×Ý^
+™\Ý[ÊN‚ˆˆˆ‘›Ü›X]H\ÜÝ[\[Ûˆ[™]KYØ\™YÚ\Ý\‹‚‚ˆ]™\žH\ÜÝ[\[ÛˆH™XY\ˆ]\ÝXØÙ\[™]™\žHYXÙHÙˆ[™›Ü›X][Ûˆ]ˆÛÝ[›Ý™H›Ý[™Ú]Ú]Ø\È\ÜÝ[YY[ˆ]ÈXÙK‚ˆˆˆ‚ˆYˆ›Ý™\Ý[Î‚ˆ™]\›ˆˆ‚ˆ\ÜÝ[\[ÛœËØ\ÈHØ\ÜÝ[\[Û—Ü›ÝÜÊ™\Ý[ÊBˆYˆ›Ý\ÜÝ[\[ÛœÈ[™›ÝØ\Î‚ˆ™]\›ˆˆ‚‚ˆ\ÈH×BˆYˆ\ÜÝ[\[ÛœÎ‚ˆ›ÝÜÈH×Bˆ›Üˆ][H[ˆ\ÜÝ[\[ÛœÎ‚ˆYˆ\Ú[œÝ[˜ÙJ][KXÝ
+N‚ˆ^HØ\ÜÝ[\[Û—Ý^
+][K
+˜\ÜÝ[\[Ûˆ‹™\ØÜš\[Ûˆ‹^‹š][HŠJBˆ˜\Ú\ÈHØ\ÜÝ[\[Û—Ý^
+][K
+˜˜\Ú\È‹œÛÝ\˜ÙH‹œ˜][Û˜[H‹ÚHŠJBˆY™™XÝHØ\ÜÝ[\[Û—Ý^
+ˆ][K
+™Y™™XÝ‹š[\XÝ‹˜ÛÛœÙ\˜]\ÛH‹™\™XÝ[Ûˆ‹˜ÛÛœÙ\]Y[˜ÙHŠJBˆ[ÙN‚ˆ^˜\Ú\ËY™™XÝHÝŠ][JKˆ‹ˆ‚ˆ›ÝÜË˜\[™
+
+^˜\Ú\ËY™™XÝ
+JBˆ\Ë˜\[™
+Ý
+\ÜÝ[\[ÛœÈH™\Ý[È\[™ÛˆŠH
+ÈŽˆŠBˆ\Ë˜\[™
+ˆŠBˆÈHX›HÚ]ÛÈ[\HÛÛ[[œÈ™XYÈÛÜœÙH[ˆH\ÝÈÛ›HX[]BˆÈÚ[ˆH˜\Ú\ÈÜˆY™™XÝØ\ÈXÝX[H™XÛÜ™Y‚ˆYˆ[žJ˜\Ú\ÈÜˆY™™XÝ›ÜˆÝ^˜\Ú\ËY™™XÝ[ˆ›ÝÜÊN‚ˆX›HHÈŸÈßHßHßH‹™›Ü›X]
+ˆÝ
+\ÜÝ[\[ÛˆŠKÝ
+˜\Ú\ÈŠKÝ
+‘Y™™XÝÛˆH™\Ý[ŠJKˆŸKK_KK_KK_KK_—Bˆ›Üˆ[™^
+^˜\Ú\ËY™™XÝ
+H[ˆ[[Y\˜]J›ÝÜËJN‚ˆX›K˜\[™
+Ÿ^ßHßHßHßH‹™›Ü›X]
+ˆ[™^^œ™\XÙJŸ‹‹ÈŠK˜\Ú\Ëœ™\XÙJŸ‹‹ÈŠHÜˆ‹H‹ˆY™™XÝœ™\XÙJŸ‹‹ÈŠHÜˆ‹HŠJBˆ\Ë˜\[™
+—ˆ‹š›Ú[ŠX›JJBˆ[ÙN‚ˆ›Üˆ[™^
+^Ø˜\Ú\ËÙY™™XÝ
+H[ˆ[[Y\˜]J›ÝÜËJN‚ˆ\Ë˜\[™
+‹H^ßNˆßH‹™›Ü›X]
+[™^^
+JB‚ˆYˆØ\Î‚ˆYˆ\Î‚ˆ\Ë˜\[™
+ˆŠBˆ\Ë˜\[™
+Ý
+’[™›Ü›X][ÛˆÛÝYÚ]›Ý]˜Z[X›K[™Ú]Ø\È\ÜÝ[YY‚ˆš[ˆ]ÈXÙHŠH
+ÈŽˆŠBˆ\Ë˜\[™
+ˆŠBˆX›HHÂˆŸÈßHßHßHßHßH‹™›Ü›X]
+ˆÝ
+’[™›Ü›X][ÛˆÛÝYÚŠKÝ
+”ÛÝ\˜ÙHŠKÝ
+”Ý]\ÈŠKˆÝ
+\ÜÝ[YY[œÝXYŠKÝ
+‘Y™™XÝYˆÜ›Û™ÈŠJKˆŸKK_KK_KK_KK_KK_KK_‹ˆBˆ›Üˆ[™^][H[ˆ[[Y\˜]JØ\ËJN‚ˆYˆ\Ú[œÝ[˜ÙJ][KXÝ
+N‚ˆÛÝYÚHØ\ÜÝ[\[Û—Ý^
+ˆ][K
+™Ø\‹™\ØÜš\[Ûˆ‹š[™›Ü›X][Ûˆ‹œÛÝYÚ‹Ú]‹ˆ›™YYY‹›Z\ÜÚ[™È‹š][H‹^ŠJBˆÛÝ\˜ÙHHØ\ÜÝ[\[Û—Ý^
+][K
+œÛÝ\˜ÙH‹œÞ\Ý[H‹™ØÝ[Y[ŠJBˆÝ]\ÈHØ\ÜÝ[\[Û—Ý^
+][K
+œÝ]\È‹œÝ]H‹œ™X\ÛÛˆŠJBˆ›ØÚÙ\ˆHØ\ÜÝ[\[Û—Ý^
+][K
+˜›ØÚÙ\ˆ‹ÚH‹™]Z[ŠJBˆYˆ›ÝÛÝYÚ‚ˆÛÝYÚ›ØÚÙ\ˆH›ØÚÙ\‹ˆ‚ˆYˆ›ØÚÙ\ˆ[™Ý]\Î‚ˆÝ]\ÈHžßH8 %ßH‹™›Ü›X]
+Ý]\Ë›ØÚÙ\ŠBˆ[Yˆ›ØÚÙ\Ž‚ˆÝ]\ÈH›ØÚÙ\‚ˆ\ÜÝ[YYHØ\ÜÝ[\[Û—Ý^
+ˆ][K
+˜\ÜÝ[YY‹˜\ÜÝ[\[Ûˆ‹™˜[˜XÚÈ‹œÝXœÝ]]H‹ˆÛÜšØ\›Ý[™‹›Z]YØ][ÛˆŠJBˆY™™XÝHØ\ÜÝ[\[Û—Ý^
+ˆ][K
+™Y™™XÝ‹š[\XÝ‹˜ÛÛœÙ\]Y[˜ÙH‹œš\ÚÈŠJBˆ[ÙN‚ˆÛÝYÚÛÝ\˜ÙKÝ]\Ë\ÜÝ[YYY™™XÝHÝŠ][JKˆ‹ˆ‹ˆ‹ˆ‚ˆX›K˜\[™
+ŸÞßHßHßHßHßHßH‹™›Ü›X]
+ˆ[™^ÛÝYÚœ™\XÙJŸ‹‹ÈŠHÜˆ‹H‹ÛÝ\˜ÙKœ™\XÙJŸ‹‹ÈŠHÜˆ‹H‹ˆÝ]\Ëœ™\XÙJŸ‹‹ÈŠHÜˆ‹H‹\ÜÝ[YYœ™\XÙJŸ‹‹ÈŠHÜˆ‹H‹ˆY™™XÝœ™\XÙJŸ‹‹ÈŠHÜˆ‹HŠJBˆ\Ë˜\[™
+—ˆ‹š›Ú[ŠX›JJBˆ\Ë˜\[™
+ˆŠBˆ\Ë˜\[™
+Ý
+‘XXÚØ\X›Ý™H\È[ˆÜ[ˆ][NˆHÛÛ˜Û\Ú[ÛˆÛÈÛ›HÚ[H‚ˆHÝ]YÝXœÝ]]H\ÜÝ[\[ÛˆÛËˆŠJB‚ˆ™]\›ˆ—ˆ‹š›Ú[Š\ÊKœÝš\
+
+B‚‚™Yˆ›Ü›X]Û\ÝÚ][\×Ý^
+][\ÊN‚ˆˆˆ‘›Ü›X]Ýš[™ÜÈÜˆXÝ[Û˜\šY\Èœ›ÛH™\Ý[ËšœÛÛˆ\È[]^ˆˆˆ‚ˆYˆ›Ý][\Î‚ˆ™]\›ˆˆ‚ˆYˆ\Ú[œÝ[˜ÙJ][\ËXÝ
+N‚ˆ]\˜X›HHÚ][\×Bˆ[Yˆ\Ú[œÝ[˜ÙJ][\Ë\Ý
+N‚ˆ]\˜X›HH][\Âˆ[ÙN‚ˆ]\˜X›HHÚ][\×Bˆ™]\›ˆ—ˆ‹š›Ú[ŠÈ‹HßH‹™›Ü›X]
+Ù›Ü›X]Û\ÝÚ][WÝ^
+][JJH›Üˆ][H[ˆ]\˜X›WJB‚‚™YˆØZ[Ùš[™Ù\œš[
+
+N‚ˆˆˆ”ÚÜ\Ú\ÈÙˆ™\Ý[ËšœÛÛˆ[™ÙˆHÙ[™\˜]Ü‹ÈYHH™\ÜÈ]È[œ]Ëˆˆˆ‚ˆYˆYÙ\Ý
+]ÊN‚ˆÚHH\ÚX‹œÚLMŠ
+Bˆ›Ý[™H˜[ÙBˆ›Üˆ][ˆ]Î‚ˆžN‚ˆÚ]Ü[Š]œ˜ˆŠH\È[™N‚ˆÚK\]J[™Kœ™XY
+
+JBˆ›Ý[™HYBˆ^Ù\ÔÑ\œ›ÜŽ‚ˆ\ÜÂˆ™]\›ˆÚKš^YÙ\Ý
+
+VÎŒL—HYˆ›Ý[™[ÙHˆ‚ˆ™]\›ˆÈœ™\Ý[ÈŽˆYÙ\Ý
+Ô‘TÕS×Ñ’SWJKˆ™Ù[™\˜]ÜˆŽˆYÙ\Ý
+ÛÜËœ]˜XœÜ]
+×Ùš[W×ÊKÒU—×Ùš[W××J_B‚‚™Yˆ›Ü›X]Ü™\›ÙXÚXš[]WÝ^
+™\Ý[ÊN‚ˆˆˆ‘›Ü›X]™\Ý[ËšœÛÛˆ™\›ÙXÚXš[]X\ÈX\šÙÝÛˆ›ÜˆH\[™^‚‚ˆXØÙ\ÈHÝš[™ËH\ÝÙˆÝ\ËÜˆHXÝÚ][š\›Û›Y[ˆÝ\ØÚXÚÜØ[™Ú]ÚY˜
+XXÚHÝš[™ÈÜˆ\Ý
+KˆHZ[ˆ[™HY\ÈH™\ÜÈH^XÝ™\Ý[ËšœÛÛˆ[™Ù[™\˜]Üˆ]Ø[YHœ›ÛK‚ˆˆˆ‚ˆ^HÜ™\›ÙXÚXš[]WØ›ÙJ™\Ý[ÊBˆÝ[\HØZ[Ùš[™Ù\œš[
+
+BˆYˆ^[™Ý[\Èœ™\Ý[È—N‚ˆ^
+ÏH——ŠŠžßJŠ—‹H™\Ý[ËšœÛÛˆÒKLMˆßWLŒŽÈ™\ÜÙ[™\˜]ÜˆßWLŒˆ‹™›Ü›X]
+ˆÝ
+”™\ÜZ[ŠKÝ[\Èœ™\Ý[È—KÝ[\È™Ù[™\˜]Üˆ—JBˆ™]\›ˆ^‚‚—ÓQ‘PÖPÓWÒQS•UWÑ’QSÈH
+ˆ˜Û\ÜÚYšXØ][Ûˆ‹œÛÝ\˜ÙH‹œ]X[YšYYØÛÛœÝ˜Z[Û˜[YH‹˜\XØX›WÛ[Z]‹ˆœ\ÚXØ[Ý[š]‹˜\XØX›WÛ[Z]Ü›ÛH‹˜\XØX›WÛ[Z]Ü›Ý™[˜[˜ÙH‹ŠB‚‚™YˆÜ™\ÜÛ[X™\Š˜[YJN‚ˆˆˆ”™]\›ˆYHÛ›H›Üˆš[š]H™\ÜY˜XÚ[™È[X™\œÈ
+›ÛÛX[œÈ\™H›Ý[X™\œÊKˆˆˆ‚ˆYˆ›Ý\Ú[œÝ[˜ÙJ˜[YK
+[›Ø]
+JHÜˆ\Ú[œÝ[˜ÙJ˜[YK›ÛÛ
+N‚ˆ™]\›ˆ˜[ÙBˆžN‚ˆ™]\›ˆX]š\Ùš[š]J›Ø]
+˜[YJJBˆ^Ù\Ý™\™›ÝÑ\œ›ÜŽ‚ˆ™]\›ˆ˜[ÙB‚‚™YˆÜ™\ÜÝ^
+˜[YJN‚ˆˆˆ”™]\›ˆYHÛ›H›Üˆ›Û‹Y[\H™\ÜY˜XÚ[™È^ˆˆˆ‚ˆ™]\›ˆ\Ú[œÝ[˜ÙJ˜[YKÝŠH[™›ÛÛ
+˜[YKœÝš\
+
+JB‚‚™YˆÛYØÙ[
+˜[YJN‚ˆˆˆ‘\ØØ\HÛ™H˜[YH›ÜˆHÛÛ\XÝX\šÙÝÛˆX›HÙ[ˆˆˆ‚ˆ™]\›ˆÝŠ˜[YHYˆ˜[YH\È›Ý›Û™H[ÙH‹HŠKœ™\XÙJŸ‹‹ÈŠKœ™\XÙJ—ˆ‹ˆŠB‚‚™YˆØÛÛœÝ˜Z[ÚY[]J›ÝÊN‚ˆˆˆ”™]\›ˆH^XÝØÚ[XK]ŽY[]HÝXœÙ]œ›ÛHÛ™H˜[šÙYÝ[[X\žH›ÝËˆˆˆ‚ˆ™]\›ˆÙšY[ˆ›ÝË™Ù]
+šY[
+H›ÜˆšY[[ˆÓQ‘PÖPÓWÒQS•UWÑ’QSßB‚‚™YˆÙ^XÝÜ™\ÜÙY™™\™[˜ÙJš\œÝÙXÛÛ™
+N‚ˆˆˆ”™]\›ˆ^XÝÜ™\™Y›ÝÜÈ[ˆš\œÝ]›ÝÙXÛÛ™™]Z[š[™È][\XÚ]Kˆˆˆ‚ˆ™[XZ[š[™ÈH\Ý
+ÙXÛÛ™
+BˆY™™\™[˜ÙHH×Bˆ›Üˆ›ÝÈ[ˆš\œÝ‚ˆYˆ›ÝÈ[ˆ™[XZ[š[™Î‚ˆ™[XZ[š[™Ëœ™[[Ý™J›ÝÊBˆ[ÙN‚ˆY™™\™[˜ÙK˜\[™
+›ÝÊBˆ™]\›ˆY™™\™[˜ÙB‚‚™YˆÝ˜[Y]WÜ™\™\Ù[]]™WØÛÛœÝ˜Z[
+[žK™\™\Ù[]]™K™X\ÚX›JN‚ˆˆˆ•˜[Y]HÛ™H^XÝ™\™\Ù[]]™H›ÝÈYØZ[œÝ]È˜[šÙYY[]H[™Û\ÜËˆˆˆ‚ˆYˆ›Ý\Ú[œÝ[˜ÙJ™\™\Ù[]]™KXÝ
+N‚ˆ™]\›ˆ˜[ÙBˆYˆ™\™\Ù[]]™K™Ù]
+™™X\ÚX›HŠH\È›Ý™X\ÚX›N‚ˆ™]\›ˆ˜[ÙBˆYˆ[žJ™\™\Ù[]]™K™Ù]
+šY[
+HOH[žK™Ù]
+šY[
+H›ÜˆšY[[ˆ
+ˆœÛÝ\˜ÙH‹œ]X[YšYYØÛÛœÝ˜Z[Û˜[YH‹˜\XØX›WÛ[Z]‹œ\ÚXØ[Ý[š]‹ˆ˜\XØX›WÛ[Z]Ü›ÛH‹˜\XØX›WÛ[Z]Ü›Ý™[˜[˜ÙHŠJN‚ˆ™]\›ˆ˜[ÙBˆ™]\›ˆ[
+Ü™\ÜÛ[X™\Š™\™\Ù[]]™K™Ù]
+šY[
+JH›ÜˆšY[[ˆ
+ˆ˜Ý\œ™[Ý˜[YH‹œ\ÚXØ[ÛX\™Ú[ˆ‹››Ü›X[^™YÛX\™Ú[ˆŠJB‚‚™YˆÝ˜[Y]WÛY™XÞXÛWÜ™\ÜÙ]šY[˜ÙJ]šY[˜ÙK^XÝYØÞXÛWÚYS›Û™JN‚ˆˆˆ•˜[Y]HH™\ÜY˜XÚ[™ÈY™XÞXÛHÝXœÙ][™[™\[™[H™\^HY[]H[\Ëˆˆˆ‚ˆ™X\ÛÛœÈH×BˆYˆ›Ý\Ú[œÝ[˜ÙJ]šY[˜ÙKXÝ
+N‚ˆ™]\›ˆÈ™]šY[˜ÙH\È›Ý[ˆØš™XÝ—BˆYˆ]šY[˜ÙK™Ù]
+œØÚ[XWÝ™\œÚ[ÛˆŠH›Ý[ˆ
+JN‚ˆ™X\ÛÛœË˜\[™
+œØÚ[XWÝ™\œÚ[Ûˆ]\Ý™HÜˆHŠBˆYˆ]šY[˜ÙK™Ù]
+˜Yš\ÛÜžHŠH\È›ÝYN‚ˆ™X\ÛÛœË˜\[™
+˜Yš\ÛÜžH›YÈ\ÈZ\ÜÚ[™ÈŠBˆYˆ›ÝÜ™\ÜÝ^
+]šY[˜ÙK™Ù]
+˜ÞXÛWÚYŠJN‚ˆ™X\ÛÛœË˜\[™
+˜ÞXÛWÚY\ÈZ\ÜÚ[™ÈŠBˆ[Yˆ^XÝYØÞXÛWÚY[™]šY[˜ÙK™Ù]
+˜ÞXÛWÚYŠHOH^XÝYØÞXÛWÚY‚ˆ™X\ÛÛœË˜\[™
+˜ÞXÛWÚYÙ\È›ÝX]ÚH›Û[ÝYÝ\œ™[X™\ÝÞXÛHŠBˆYˆ›Ý[
+Ü™\ÜÝ^
+]šY[˜ÙK™Ù]
+šY[
+JH›ÜˆšY[[ˆ
+ˆ›Y™XÞXÛWÜÝYWÚY‹›Y™XÞXÛWÜÝYWÛ˜[YH‹›Y™XÞXÛWÜÝYWÜ›Ý™[˜[˜ÙH‹[YWÝ[š]ŠJN‚ˆ™X\ÛÛœË˜\[™
+›Y™XÞXÛHY[]K›Ý™[˜[˜ÙKÜˆ[YH[š]\È[˜ÛÛ\]HŠBˆ™\]Y\ÝYH]šY[˜ÙK™Ù]
+œ™\]Y\ÝYÜÚ[ØÛÝ[ŠBˆÛÛ\]YH]šY[˜ÙK™Ù]
+˜ÛÛ\]YÜÚ[ØÛÝ[ŠBˆYˆ
+›ÝÜ™\ÜÛ[X™\Š™\]Y\ÝY
+HÜˆ›ÝÜ™\ÜÛ[X™\ŠÛÛ\]Y
+BˆÜˆ[
+™\]Y\ÝY
+HOH™\]Y\ÝYÜˆ[
+ÛÛ\]Y
+HOHÛÛ\]YˆÜˆ™\]Y\ÝYHÜˆ™\]Y\ÝYOHÛÛ\]Y
+N‚ˆ™X\ÛÛœË˜\[™
+œØ[\YY™XÞXÛHÚ[È\™H[˜ÛÛ\]HŠBˆYˆ
+›ÝÜ™\ÜÛ[X™\Š]šY[˜ÙK™Ù]
+Ý[Ù]˜[X][Û—ØÛÝ[ŠJBˆÜˆ]šY[˜ÙK™Ù]
+Ý[Ù]˜[X][Û—ØÛÝ[ŠHBˆÜˆ›ÝÜ™\ÜÛ[X™\Š]šY[˜ÙK™Ù]
+™[™[ÜWÜ[[YWÜÙXÛÛ™ÈŠJBˆÜˆ]šY[˜ÙK™Ù]
+™[™[ÜWÜ[[YWÜÙXÛÛ™ÈŠH
+N‚ˆ™X\ÛÛœË˜\[™
+™]˜[X][ÛˆÛÝ[Üˆ[[YH\È[˜[YŠB‚ˆ\š[ÙÈH]šY[˜ÙK™Ù]
+œ\š[ÙÈŠBˆYˆ
+›Ý\Ú[œÝ[˜ÙJ\š[ÙË\Ý
+HÜˆ›Ý\š[ÙÂˆÜˆ]šY[˜ÙK™Ù]
+œ\š[ÙØÛÝ[ŠHOH[Š\š[ÙÊJN‚ˆ™X\ÛÛœË˜\[™
+œ\š[ÙØÛÝ[Ù\È›ÝX]ÚH\š[Ù]šY[˜ÙHŠBˆ™]\›ˆ™X\ÛÛœÂˆ\š[ÙÚY[]Y\ÈH×Bˆ™]š[Ý\×Ù[\ÙYH›Û™BˆÙY[—Ü\š[ÙÚYÈHÙ]
+
+Bˆ›Üˆ[™^\š[Ù[ˆ[[Y\˜]J\š[ÙÊN‚ˆ™Yš^Hœ\š[ÙßH‹™›Ü›X]
+[™^
+ÈJBˆYˆ›Ý\Ú[œÝ[˜ÙJ\š[ÙXÝ
+N‚ˆ™X\ÛÛœË˜\[™
+™Yš^
+Èˆ\È›Ý[ˆØš™XÝŠBˆ\š[ÙÚY[]Y\Ë˜\[™
+×JBˆÛÛ[YBˆ\š[ÙÚYH\š[Ù™Ù]
+œ\š[ÙÚYŠBˆ[\ÙYH\š[Ù™Ù]
+™[\ÙYÝ[YHŠBˆYˆ›ÝÜ™\ÜÝ^
+\š[ÙÚY
+HÜˆ\š[ÙÚY[ˆÙY[—Ü\š[ÙÚYÎ‚ˆ™X\ÛÛœË˜\[™
+™Yš^
+Èˆ\ÈHZ\ÜÚ[™ÈÜˆ\XØ]H\š[ÙÚYŠBˆ[ÙN‚ˆÙY[—Ü\š[ÙÚYË˜Y
+\š[ÙÚY
+BˆYˆ
+›ÝÜ™\ÜÝ^
+\š[Ù™Ù]
+œ\š[ÙÛ˜[YHŠJBˆÜˆ›ÝÜ™\ÜÝ^
+\š[Ù™Ù]
+˜ÛÛ™šYÝ\˜][Û—Ü›Ý™[˜[˜ÙHŠJJN‚ˆ™X\ÛÛœË˜\[™
+™Yš^
+Èˆ\È[˜ÛÛ\]H™\ÜY]Y]HŠBˆYˆ
+›ÝÜ™\ÜÛ[X™\Š[\ÙY
+HÜˆ[\ÙYˆÜˆ
+™]š[Ý\×Ù[\ÙY\È›Ý›Û™H[™[\ÙYH™]š[Ý\×Ù[\ÙY
+JN‚ˆ™X\ÛÛœË˜\[™
+™Yš^
+Èˆ[\ÙYÝ[YH\È›ÝÝšXÝH[˜Ü™X\Ú[™ÈŠBˆ[ÙN‚ˆ™]š[Ý\×Ù[\ÙYH[\ÙYˆYˆ\š[Ù™Ù]
+[YWÝ[š]ŠHOH]šY[˜ÙK™Ù]
+[YWÝ[š]ŠN‚ˆ™X\ÛÛœË˜\[™
+™Yš^
+Èˆ[YH[š]Ù\È›ÝX]ÚHY™XÞXÛHŠBˆYˆ]šY[˜ÙK™Ù]
+œØÚ[XWÝ™\œÚ[ÛˆŠHOHN‚ˆÛÝ™\˜YÙHH\š[Ù™Ù]
+][^˜][Û—ØÛÝ™\˜YÙHŠBˆYˆ
+›Ý\Ú[œÝ[˜ÙJÛÝ™\˜YÙKXÝ
+HÜˆÛÝ™\˜YÙK™Ù]
+œØÚ[XWÝ™\œÚ[ÛˆŠHOHŒKŒ‚ˆÜˆÛÝ™\˜YÙK™Ù]
+˜ÛÝ™\˜YÙWÜØÛÜHŠHOH‘PÓT‘QÑTURTQS•ÐS‘ÐÓÓ”ÕRS•È‚ˆÜˆÛÝ™\˜YÙK™Ù]
+˜ÛÛ\]HŠH\È›ÝYHÜˆÛÝ™\˜YÙK™Ù]
+™XYÛ›ÜÝXÜÈŠHOH×BˆÜˆ›Ý\Ú[œÝ[˜ÙJÛÝ™\˜YÙK™Ù]
+œ›ÝÜÈŠK\Ý
+HÜˆ›ÝÛÝ™\˜YÙK™Ù]
+œ›ÝÜÈŠJN‚ˆ™X\ÛÛœË˜\[™
+™Yš^
+Èˆ\È[˜[Y][^˜][ÛˆÛÝ™\˜YÙHŠBˆ[ÙN‚ˆÛÝ™\˜YÙWÚYÈH×Bˆ›ÜˆÛÝ™\˜YÙWÜ›ÝÈ[ˆÛÝ™\˜YÙVÈœ›ÝÜÈ—N‚ˆÝ]\Ù\ÈHÛÝ™\˜YÙWÜ›ÝË™Ù]
+œÝ]\Ù\ÈŠHYˆ\Ú[œÝ[˜ÙJÛÝ™\˜YÙWÜ›ÝËXÝ
+H[ÙH›Û™BˆYˆ
+›Ý\Ú[œÝ[˜ÙJÛÝ™\˜YÙWÜ›ÝËXÝ
+BˆÜˆÝ]\Ù\È›Ý[ˆ
+ÈURSP“H—KÈ‘TÐP“Q—JBˆÜˆ›ÝÜ™\ÜÝ^
+ÛÝ™\˜YÙWÜ›ÝË™Ù]
+œ]X[YšYYØÛÛœÝ˜Z[ÚYŠJBˆÜˆ
+Ý]\Ù\ÈOHÈURSP“H—Bˆ[™
+›ÝÜ™\ÜÝ^
+ÛÝ™\˜YÙWÜ›ÝË™Ù]
+[š]ŠJBˆÜˆ›ÝÜ™\ÜÝ^
+ÛÝ™\˜YÙWÜ›ÝË™Ù]
+˜˜\Ú\ÈŠJBˆÜˆ›ÝÜ™\ÜÝ^
+ÛÝ™\˜YÙWÜ›ÝË™Ù]
+œ›Ý™[˜[˜ÙHŠJBˆÜˆ›ÝÜ™\ÜÛ[X™\ŠÛÝ™\˜YÙWÜ›ÝË™Ù]
+˜Ý\œ™[Ý˜[YHŠJBˆÜˆ›ÝÜ™\ÜÛ[X™\ŠÛÝ™\˜YÙWÜ›ÝË™Ù]
+˜\XØX›WÛ[Z]ŠJBˆÜˆ›ÝÜ™\ÜÛ[X™\ŠˆÛÝ™\˜YÙWÜ›ÝË™Ù]
+››Ü›X[^™YÝ][^˜][ÛˆŠJJJJN‚ˆ™X\ÛÛœË˜\[™
+™Yš^
+Èˆ\È[˜ÛÛ\]H][^˜][ÛˆÛÝ™\˜YÙH›ÝÜÈŠBˆœ™XZÂˆÛÝ™\˜YÙWÚYË˜\[™
+ÛÝ™\˜YÙWÜ›ÝÖÈœ]X[YšYYØÛÛœÝ˜Z[ÚY—JBˆ^XÝYÚYÈHÛÝ™\˜YÙK™Ù]
+™^XÝYØÛÛœÝ˜Z[ÚYÈŠBˆ™\]Z\™YÚYÈHÛÝ™\˜YÙK™Ù]
+œ™\]Z\™YØÛÛœÝ˜Z[ÚYÈŠBˆYˆ
+›Ý\Ú[œÝ[˜ÙJ^XÝYÚYË\Ý
+HÜˆ›Ý^XÝYÚYÂˆÜˆ›Ý\Ú[œÝ[˜ÙJ™\]Z\™YÚYË\Ý
+BˆÜˆ[ŠÛÝ™\˜YÙWÚYÊHOH[ŠÙ]
+ÛÝ™\˜YÙWÚYÊJBˆÜˆÙ]
+^XÝYÚYÊHHÙ]
+ÛÝ™\˜YÙWÚYÊBˆÜˆÙ]
+™\]Z\™YÚYÊHOHÙ]
+ÛÝ™\˜YÙWÚYÊJN‚ˆ™X\ÛÛœË˜\[™
+™Yš^
+Èˆ\ÈZ\ÛX]ÚY][^˜][ÛˆÛÝ™\˜YÙHØÛÜHŠBˆ[™[ÜHH\š[Ù™Ù]
+™[™[ÜWÙ]šY[˜ÙHŠBˆYˆ›Ý\Ú[œÝ[˜ÙJ[™[ÜKXÝ
+HÜˆ[™[ÜK™Ù]
+œØÚ[XWÝ™\œÚ[ÛˆŠHOHŽ‚ˆ™X\ÛÛœË˜\[™
+™Yš^
+Èˆ\ÈZ\ÜÚ[™ÈØÚ[XK]Œˆ[™[ÜH]šY[˜ÙHŠBˆ\š[ÙÚY[]Y\Ë˜\[™
+×JBˆÛÛ[YBˆÛXÙ\ÈH[™[ÜK™Ù]
+œÛXÙ\ÈŠBˆYˆ
+›Ý\Ú[œÝ[˜ÙJÛXÙ\Ë\Ý
+HÜˆ›ÝÛXÙ\ÂˆÜˆ[žJ›Ý\Ú[œÝ[˜ÙJ›ÝËXÝ
+HÜˆ›ÝË™Ù]
+˜ÛÛ\]HŠH\È›ÝYBˆÜˆ›ÝË™Ù]
+›Ý]ÛÛYHŠHOHÓÓTUHˆ›Üˆ›ÝÈ[ˆÛXÙ\ÊJN‚ˆ™X\ÛÛœË˜\[™
+™Yš^
+ÈˆÛÛZ[œÈ[˜ÛÛ\]HÜ\˜][™ËY[™[ÜHÛXÙ\ÈŠBˆÝ[[X\žHH[™[ÜK™Ù]
+˜Ü›ÜÜ×ÜÛXÙWØÛÛœÝ˜Z[ÜÝ[[X\žHŠBˆ˜[šÙYHÝ[[X\žK™Ù]
+œ˜[šÙYØÛÛœÝ˜Z[ÈŠHYˆ\Ú[œÝ[˜ÙJÝ[[X\žKXÝ
+H[ÙH›Û™BˆYˆ
+›Ý\Ú[œÝ[˜ÙJÝ[[X\žKXÝ
+HÜˆÝ[[X\žK™Ù]
+œÝ[[X\žWÝ™\œÚ[ÛˆŠHOHBˆÜˆÝ[[X\žK™Ù]
+˜Yš\ÛÜžHŠH\È›ÝYHÜˆ›Ý\Ú[œÝ[˜ÙJ˜[šÙY\Ý
+BˆÜˆÝ[[X\žK™Ù]
+œ˜[šÙYØÛÛœÝ˜Z[ØÛÝ[ŠHOH[Š˜[šÙY
+JN‚ˆ™X\ÛÛœË˜\[™
+™Yš^
+Èˆ\È[ˆ[˜[YÜ›ÜÜË\ÛXÙHÛÛœÝ˜Z[Ý[[X\žHŠBˆ\š[ÙÚY[]Y\Ë˜\[™
+×JBˆÛÛ[YBˆY[]Y\ÈH×Bˆ›Üˆ›Ý×Ú[™^›ÝÈ[ˆ[[Y\˜]J˜[šÙY
+N‚ˆ›Ý×Ü™Yš^HžßH˜[šÙYÛÛœÝ˜Z[ßH‹™›Ü›X]
+™Yš^›Ý×Ú[™^
+ÈJBˆYˆ
+›Ý\Ú[œÝ[˜ÙJ›ÝËXÝ
+BˆÜˆ›ÝË™Ù]
+œ˜[šÈŠHOH›Ý×Ú[™^
+ÈBˆÜˆ›ÝË™Ù]
+˜Û\ÜÚYšXØ][ÛˆŠH›Ý[ˆ
+”‘R‘PÕS‘È‹“‘PT—ÐPÕU‘HŠBˆÜˆ›Ý[
+Ü™\ÜÝ^
+›ÝË™Ù]
+šY[
+JH›ÜˆšY[[ˆ
+ˆœÛÝ\˜ÙH‹œ]X[YšYYØÛÛœÝ˜Z[Û˜[YH‹œ\ÚXØ[Ý[š]‹ˆ˜\XØX›WÛ[Z]Ü›ÛH‹˜\XØX›WÛ[Z]Ü›Ý™[˜[˜ÙHŠJBˆÜˆ
+›ÝË™Ù]
+˜\XØX›WÛ[Z]ŠH\È›Ý›Û™Bˆ[™›ÝÜ™\ÜÛ[X™\Š›ÝË™Ù]
+˜\XØX›WÛ[Z]ŠJJJN‚ˆ™X\ÛÛœË˜\[™
+›Ý×Ü™Yš^
+Èˆ\È[ˆ[˜ÛÛ\]HY[]HŠBˆÛÛ[YBˆ™\™\Ù[]]™WÚÙ^HH
+œ™\™\Ù[]]™WÜ™Z™XÝ[™×ØÛÛœÝ˜Z[‚ˆYˆ›ÝÖÈ˜Û\ÜÚYšXØ][Ûˆ—HOH”‘R‘PÕS‘È‚ˆ[ÙHœ™\™\Ù[]]™WÙ™X\ÚX›WØÛÛœÝ˜Z[ŠBˆ™\™\Ù[]]™HH›ÝË™Ù]
+™\™\Ù[]]™WÚÙ^JBˆYˆ›ÝÝ˜[Y]WÜ™\™\Ù[]]™WØÛÛœÝ˜Z[
+ˆ›ÝË™\™\Ù[]]™K›ÝÖÈ˜Û\ÜÚYšXØ][Ûˆ—HOH“‘PT—ÐPÕU‘HŠN‚ˆ™X\ÛÛœË˜\[™
+›Ý×Ü™Yš^
+Èˆ\È[˜ÛÛ\]HÜˆZ\ÛX]ÚY™\™\Ù[]]™H]šY[˜ÙHŠBˆY[]HHØÛÛœÝ˜Z[ÚY[]J›ÝÊBˆYˆY[]H[ˆY[]Y\Î‚ˆ™X\ÛÛœË˜\[™
+›Ý×Ü™Yš^
+Èˆ\XØ]\È[ˆ^XÝY[]HŠBˆY[]Y\Ë˜\[™
+Y[]JBˆ\š[ÙÚY[]Y\Ë˜\[™
+Y[]Y\ÊB‚ˆYˆ^XÝYØÞXÛWÚY[™^XÝYØÞXÛWÚY›Ý[ˆÙY[—Ü\š[ÙÚYÎ‚ˆ™X\ÛÛœË˜\[™
+œ›Û[ÝYÝ\œ™[X™\ÝÞXÛH\ÈZ\ÜÚ[™Èœ›ÛHY™XÞXÛH\š[ÙÈŠB‚ˆÚ[™Ù\ÈH]šY[˜ÙK™Ù]
+œ\š[ÙØÚ[™ÙWÙXYÛ›ÜÝXÜÈŠBˆYˆ›Ý\Ú[œÝ[˜ÙJÚ[™Ù\Ë\Ý
+HÜˆ[ŠÚ[™Ù\ÊHOHX^
+[Š\š[ÙÊHHJN‚ˆ™X\ÛÛœË˜\[™
+œ\š[ÙØÚ[™ÙWÙXYÛ›ÜÝXÜÈÙ\È›ÝX]ÚY˜XÙ[\š[ÙÈŠBˆ™]\›ˆ™X\ÛÛœÂˆ›Üˆ[™^Ú[™ÙH[ˆ[[Y\˜]JÚ[™Ù\ÊN‚ˆ™Yš^Hœ\š[ÙÚ[™ÙHßH‹™›Ü›X]
+[™^
+ÈJBˆYˆ›Ý\Ú[œÝ[˜ÙJÚ[™ÙKXÝ
+N‚ˆ™X\ÛÛœË˜\[™
+™Yš^
+Èˆ\È›Ý[ˆØš™XÝŠBˆÛÛ[YBˆ™[[Ý™YHÙ^XÝÜ™\ÜÙY™™\™[˜ÙJ\š[ÙÚY[]Y\ÖÚ[™^K\š[ÙÚY[]Y\ÖÚ[™^
+ÈWJBˆYYHÙ^XÝÜ™\ÜÙY™™\™[˜ÙJ\š[ÙÚY[]Y\ÖÚ[™^
+ÈWK\š[ÙÚY[]Y\ÖÚ[™^JBˆ™]Z[™YH[Š\š[ÙÚY[]Y\ÖÚ[™^JHH[Š™[[Ý™Y
+BˆYˆ
+Ú[™ÙK™Ù]
+™œ›ÛWÜ\š[ÙÚYŠHOH\š[ÙÖÚ[™^K™Ù]
+œ\š[ÙÚYŠBˆÜˆÚ[™ÙK™Ù]
+×Ü\š[ÙÚYŠHOH\š[ÙÖÚ[™^
+ÈWK™Ù]
+œ\š[ÙÚYŠBˆÜˆÚ[™ÙK™Ù]
+™œ›ÛWÜ˜[šÙYØÛÛœÝ˜Z[ÚY[]WØÛÝ[ŠHOH[Š\š[ÙÚY[]Y\ÖÚ[™^JBˆÜˆÚ[™ÙK™Ù]
+×Ü˜[šÙYØÛÛœÝ˜Z[ÚY[]WØÛÝ[ŠHOH[Š\š[ÙÚY[]Y\ÖÚ[™^
+ÈWJBˆÜˆÚ[™ÙK™Ù]
+œ™]Z[™YÜ˜[šÙYØÛÛœÝ˜Z[ÚY[]WØÛÝ[ŠHOH™]Z[™YˆÜˆÚ[™ÙK™Ù]
+œ™[[Ý™YÜ˜[šÙYØÛÛœÝ˜Z[ÚY[]Y\ÈŠHOH™[[Ý™YˆÜˆÚ[™ÙK™Ù]
+˜YYÜ˜[šÙYØÛÛœÝ˜Z[ÚY[]Y\ÈŠHOHYY
+N‚ˆ™X\ÛÛœË˜\[™
+™Yš^
+ÈˆY[]HZYÜ˜][ÛˆÙ\È›Ý™XÛÛœÝXÝœ›ÛH\š[ÙÝ[[X\šY\ÈŠBˆ™]\›ˆ™X\ÛÛœÂ‚‚™YˆÜ›Û[ÝYØÞXÛWÚY
+
+N‚ˆˆˆ”™]\›ˆH™]šY]ÙYÝ\œ™[X™\ÝÛÝ\˜ÙHÞXÛHÚ[ˆ\È\ÈH]š[™È\ÚËˆˆˆ‚ˆ]HÜËœ]š›Ú[ŠTÒ×ÑT‹˜ÛÛ[[Ý\È‹˜˜\Ù[[™H‹˜˜\Ù[[™KšœÛÛˆŠBˆžN‚ˆÚ]Ü[Š]œˆ‹[˜ÛÙ[™ÏH]‹N\ÚYÈŠH\È[™N‚ˆ˜\Ù[[™HHœÛÛ‹›ØY
+[™JBˆ^Ù\
+ÔÑ\œ›Ü‹˜[YQ\œ›ÜŠN‚ˆ™]\›ˆ›Û™Bˆ™]\›ˆ˜\Ù[[™K™Ù]
+œÛÝ\˜ÙWØÞXÛHŠHYˆ\Ú[œÝ[˜ÙJ˜\Ù[[™KXÝ
+H[ÙH›Û™B‚‚™YˆÚY[]WÝ^
+Y[]JN‚ˆˆˆ”™[™\ˆÛ™H^XÝY[]HÚ]Ý]ÛÛ\\š[™È\ÚXØ[X\™Ú[œÈXÜ›ÜÜÈ[š]Ëˆˆˆ‚ˆ[Z]HY[]K™Ù]
+˜\XØX›WÛ[Z]ŠBˆ[Z]Ý^HÙ›]Û[X™\Š[Z]
+HYˆÜ™\ÜÛ[X™\Š[Z]
+H[ÙH››Ý\XØX›H‚ˆ™]\›ˆžßHßX8 %ßHßK›ÛHßKÛÝ\˜ÙHßNÈ˜\Ú\ÎˆßH‹™›Ü›X]
+ˆY[]K™Ù]
+˜Û\ÜÚYšXØ][ÛˆŠKY[]K™Ù]
+œ]X[YšYYØÛÛœÝ˜Z[Û˜[YHŠKˆ[Z]Ý^Y[]K™Ù]
+œ\ÚXØ[Ý[š]ŠHÜˆˆ‹Y[]K™Ù]
+˜\XØX›WÛ[Z]Ü›ÛHŠKˆY[]K™Ù]
+œÛÝ\˜ÙHŠKY[]K™Ù]
+˜\XØX›WÛ[Z]Ü›Ý™[˜[˜ÙHŠJB‚‚™Yˆ›Ü›X]ÛY™XÞXÛWÙ[™[ÜWÝ^
+™\Ý[Ë^XÝYØÞXÛWÚYS›Û™JN‚ˆˆˆ”™[™\ˆÝX\™YY™XÞXÛH]šY[˜ÙH›ÜˆÝ\œ™[X™\Ý[™š[˜[™\ÜËˆˆˆ‚ˆ]šY[˜ÙHH
+™\Ý[ÈÜˆßJK™Ù]
+›Y™XÞXÛWÙ[™[ÜWÙ]šY[˜ÙHŠBˆYˆ]šY[˜ÙH\È›Û™N‚ˆ™]\›ˆˆ‚ˆ™X\ÛÛœÈHÝ˜[Y]WÛY™XÞXÛWÜ™\ÜÙ]šY[˜ÙJ]šY[˜ÙK^XÝYØÞXÛWÚY
+BˆYˆ™X\ÛÛœÎ‚ˆ™]\›ˆ
+ŠŠ“Y™XÞXÛH]šY[˜ÙHÚ][ŠŠˆH™\ÜY›ÝXØÙ\\È]šY[˜ÙH™XØ]\ÙNˆßKˆ‚ˆ“›È›Ý[™XÚËXY›ÛÛKÜˆY[]K[ZYÜ˜][ÛˆÛZ[H\È™[™\™Yˆ‚ˆ™›Ü›X]
+ŽÈ‹š›Ú[Š™X\ÛÛœÊJJB‚ˆ[™\ÈHÂˆŠŠ‘]šY[˜ÙH˜\Ú\ËŠŠˆßH
+ßX
+KÞXÛHßXÈßHÛÛ\]HØ[\YÚ[
+ÊKßH[Ù[]˜[X][ÛŠÊK‚ˆœ[[YHßHËˆßH‹™›Ü›X]
+ˆ]šY[˜ÙVÈ›Y™XÞXÛWÜÝYWÛ˜[YH—K]šY[˜ÙVÈ›Y™XÞXÛWÜÝYWÚY—K]šY[˜ÙVÈ˜ÞXÛWÚY—Kˆ]šY[˜ÙVÈ˜ÛÛ\]YÜÚ[ØÛÝ[—K]šY[˜ÙVÈÝ[Ù]˜[X][Û—ØÛÝ[—KˆÙ›]Û[X™\Š]šY[˜ÙVÈ™[™[ÜWÜ[[YWÜÙXÛÛ™È—JK]šY[˜ÙVÈ›Y™XÞXÛWÜÝYWÜ›Ý™[˜[˜ÙH—JKˆˆ‹ˆ”›ÝÜÈ™[ÝÈ™]Z[ˆ^XÝ\‹\\š[Ù[™Ú[™Y\š[™È[š]È[™™\™\Ù[]]™H\ÚXØ[XY›ÛÛKˆ‚ˆ”˜[šÈ\Y\ÈÛ›H[œÚYHÛ™H\š[ÙÈX\™Ú[œÈ\™H™]™\ˆ˜[šÙYÜˆÛÛ\\™YXÜ›ÜÜÈ[›ZÙH[š]Ëˆ‹ˆˆ‹ˆŸ\š[Ù[YHÛ\ÜÈ^XÝÛÛœÝ˜Z[™\™\Ù[]]™H˜[YH\ÚXØ[XY›ÛÛH[Z]˜\Ú\È‹ˆŸKK_KK_KK_KK_KK_KK_KK_‹ˆBˆ›Üˆ\š[Ù[ˆ]šY[˜ÙVÈœ\š[ÙÈ—N‚ˆÝ[[X\žHH\š[ÙÈ™[™[ÜWÙ]šY[˜ÙH—VÈ˜Ü›ÜÜ×ÜÛXÙWØÛÛœÝ˜Z[ÜÝ[[X\žH—Bˆ˜[šÙYHÝ[[X\žVÈœ˜[šÙYØÛÛœÝ˜Z[È—BˆYˆ›Ý˜[šÙY‚ˆ[™\Ë˜\[™
+ŸßHßHßHH›È™Z™XÝ[™ÈÜˆ™X\‹XXÝ]™HY[]HHHßH‹™›Ü›X]
+ˆÛYØÙ[
+\š[ÙÈœ\š[ÙÛ˜[YH—JKÙ›]Û[X™\Š\š[ÙÈ™[\ÙYÝ[YH—JKˆÛYØÙ[
+\š[ÙÈ[YWÝ[š]—JKÛYØÙ[
+\š[ÙÈ˜ÛÛ™šYÝ\˜][Û—Ü›Ý™[˜[˜ÙH—JJJBˆÛÛ[YBˆ›Üˆ›ÝÈ[ˆ˜[šÙY‚ˆ™\™\Ù[]]™HH›ÝÖÊœ™\™\Ù[]]™WÜ™Z™XÝ[™×ØÛÛœÝ˜Z[‚ˆYˆ›ÝÖÈ˜Û\ÜÚYšXØ][Ûˆ—HOH”‘R‘PÕS‘È‚ˆ[ÙHœ™\™\Ù[]]™WÙ™X\ÚX›WØÛÛœÝ˜Z[ŠWBˆ[™\Ë˜\[™
+ŸßHßHßHßHßXßHßHßHßHßNˆßHßNÈßH‹™›Ü›X]
+ˆÛYØÙ[
+\š[ÙÈœ\š[ÙÛ˜[YH—JKÙ›]Û[X™\Š\š[ÙÈ™[\ÙYÝ[YH—JKˆÛYØÙ[
+\š[ÙÈ[YWÝ[š]—JK›ÝÖÈ˜Û\ÜÚYšXØ][Ûˆ—KˆÛYØÙ[
+›ÝÖÈœ]X[YšYYØÛÛœÝ˜Z[Û˜[YH—JKˆÙ›]Û[X™\Š™\™\Ù[]]™VÈ˜Ý\œ™[Ý˜[YH—JKÛYØÙ[
+›ÝÖÈœ\ÚXØ[Ý[š]—JKˆÙ›]Û[X™\Š™\™\Ù[]]™VÈœ\ÚXØ[ÛX\™Ú[ˆ—JKÛYØÙ[
+›ÝÖÈœ\ÚXØ[Ý[š]—JKˆÛYØÙ[
+›ÝÖÈ˜\XØX›WÛ[Z]Ü›ÛH—JKˆÙ›]Û[X™\Š›ÝÖÈ˜\XØX›WÛ[Z]—JHYˆ›ÝÖÈ˜\XØX›WÛ[Z]—H\È›Ý›Û™H[ÙH›‹ØH‹ˆÛYØÙ[
+›ÝÖÈœ\ÚXØ[Ý[š]—JKÛYØÙ[
+›ÝÖÈ˜\XØX›WÛ[Z]Ü›Ý™[˜[˜ÙH—JJJB‚ˆYˆ]šY[˜ÙVÈœØÚ[XWÝ™\œÚ[Ûˆ—HOHN‚ˆ[™\È
+ÏHÈˆ‹ŠŠ‘XÛ\™Y[œÝ[YXØ\XÚ]HÛÝ™\˜YÙKŠŠˆ]™\žH›ÝÈ\Èœ›Þ™[ˆ]HXØÙ\Y™\^NÈ‚ˆ›Z\ÜÚ[™ËØÜ™Y[š[™Ë[Û›K›Û‹Yš[š]KÜˆ[œ]X[YšYY[Z]È\™HÚ][\Ý™X[Kˆ‹ˆ‹ˆŸ\š[Ù^XÝÛÛœÝ˜Z[Ý\œ™[È[Z]][^˜][Ûˆ[Z]˜\Ú\È›Ý™[˜[˜ÙH‹ˆŸKK_KK_KK_KK_KK_KK_—Bˆ›Üˆ\š[Ù[ˆ]šY[˜ÙVÈœ\š[ÙÈ—N‚ˆ›Üˆ›ÝÈ[ˆ\š[ÙÈ][^˜][Û—ØÛÝ™\˜YÙH—VÈœ›ÝÜÈ—N‚ˆYˆ›ÝÖÈœÝ]\Ù\È—HOHÈ‘TÐP“Q—N‚ˆ[™\Ë˜\[™
+ŸßHßX\ØX›YHßHßH‹™›Ü›X]
+ˆÛYØÙ[
+\š[ÙÈœ\š[ÙÛ˜[YH—JKÛYØÙ[
+›ÝÖÈœ]X[YšYYØÛÛœÝ˜Z[ÚY—JKˆÛYØÙ[
+›ÝÖÈ˜˜\Ú\È—JKÛYØÙ[
+›ÝÖÈœ›Ý™[˜[˜ÙH—JJJBˆ[ÙN‚ˆ[™\Ë˜\[™
+ŸßHßXßHÈßHßHßHßHßH‹™›Ü›X]
+ˆÛYØÙ[
+\š[ÙÈœ\š[ÙÛ˜[YH—JKÛYØÙ[
+›ÝÖÈœ]X[YšYYØÛÛœÝ˜Z[ÚY—JKˆÙ›]Û[X™\Š›ÝÖÈ˜Ý\œ™[Ý˜[YH—JKÙ›]Û[X™\Š›ÝÖÈ˜\XØX›WÛ[Z]—JKˆÛYØÙ[
+›ÝÖÈ[š]—JKÙ›]Û[X™\Š›ÝÖÈ››Ü›X[^™YÝ][^˜][Ûˆ—JKˆÛYØÙ[
+›ÝÖÈ˜˜\Ú\È—JKÛYØÙ[
+›ÝÖÈœ›Ý™[˜[˜ÙH—JJJB‚ˆ[™\È
+ÏHÈˆ‹ŠŠ‘^XÝY˜XÙ[\\š[ÙY[]HZYÜ˜][Û‹ŠŠˆÛ\ÜÚYšXØ][ÛˆÜˆ[Z]X˜\Ú\ÈÚ[™Ù\È‚ˆ˜\X\ˆ\ÈÛ™H™[[Ý™Y[™Û™HYYY[]NÈ\È\È\ØÜš\]™H]šY[˜ÙK›ÝØ]\Ø[]šX][Û‹ˆ—Bˆ›ÜˆÚ[™ÙH[ˆ]šY[˜ÙVÈœ\š[ÙØÚ[™ÙWÙXYÛ›ÜÝXÜÈ—N‚ˆ[™\È
+ÏHÈˆ‹‹H
+ŠžßH8¡¤ˆßNŠŠˆßH™]Z[™YßH™[[Ý™YßHYYˆ‹™›Ü›X]
+ˆÛYØÙ[
+Ú[™ÙVÈ™œ›ÛWÜ\š[ÙÚY—JKÛYØÙ[
+Ú[™ÙVÈ×Ü\š[ÙÚY—JKˆÚ[™ÙVÈœ™]Z[™YÜ˜[šÙYØÛÛœÝ˜Z[ÚY[]WØÛÝ[—Kˆ[ŠÚ[™ÙVÈœ™[[Ý™YÜ˜[šÙYØÛÛœÝ˜Z[ÚY[]Y\È—JKˆ[ŠÚ[™ÙVÈ˜YYÜ˜[šÙYØÛÛœÝ˜Z[ÚY[]Y\È—JJWBˆ[™\È
+ÏHÈˆH™[[Ý™YˆßH‹™›Ü›X]
+ÚY[]WÝ^
+Y[]JJBˆ›ÜˆY[]H[ˆÚ[™ÙVÈœ™[[Ý™YÜ˜[šÙYØÛÛœÝ˜Z[ÚY[]Y\È—WBˆ[™\È
+ÏHÈˆHYYˆßH‹™›Ü›X]
+ÚY[]WÝ^
+Y[]JJBˆ›ÜˆY[]H[ˆÚ[™ÙVÈ˜YYÜ˜[šÙYØÛÛœÝ˜Z[ÚY[]Y\È—WBˆ[™\È
+ÏHÈˆ‹ŠŠ”]X[YšXØ][Ûˆ›Ý[™\žKŠŠˆ\È\È^XÝØ[\YÜ™Yš[™YYš\ÛÜžH]šY[˜ÙKˆ]\È›ÝH‚ˆ˜ÛÛ[[Ý\È›Ü™XØ\ÝÚYÝÈšXÙKØ]\Ø[XYÛ›ÜÚ\Ë\]Z\Y[]X[YšXØ][Û‹Ü\˜][™È\›Ý˜[‚ˆ›Üˆ\›Z\ÜÚ[ÛˆÈ™[^H\ÚXØ[ÛÛœÝ˜Z[ˆ—Bˆ™]\›ˆ—ˆ‹š›Ú[Š[™\ÊB‚‚™YˆÛØYÙš[˜[Ü™\ÜÛY]Y]J
+N‚ˆˆˆ“ØYHÛÛ[[Ý\Ë]\ÚÈš[˜[^˜][Ûˆ™XÛÜ™Ý\YYžH]ÈÜ˜Ú\Ý˜]Ü‹ˆˆˆ‚ˆ]HØÛWÛÜ[ÛŠ‹KYš[˜[[Y]Y]HŠBˆYˆ›Ý]‚ˆ™]\›ˆßBˆžN‚ˆÚ]Ü[Š]œˆ‹[˜ÛÙ[™ÏH]‹N\ÚYÈŠH\È[™N‚ˆ]HHœÛÛ‹›ØY
+[™JBˆ^Ù\
+ÔÑ\œ›Ü‹˜[YQ\œ›ÜŠH\È\œ›ÜŽ‚ˆš[
+‘T”“ÔŽˆÛÝ[›Ý™XYš[˜[\™\ÜY]Y]HßNˆßH‹™›Ü›X]
+]\œ›ÜŠJBˆÞ\Ë™^]
+ŠBˆYˆ›Ý\Ú[œÝ[˜ÙJ]KXÝ
+HÜˆ›Ý]K™Ù]
+œ™]š\Ú[ÛˆŠN‚ˆš[
+‘T”“ÔŽˆš[˜[\™\ÜY]Y]H]\ÝÛÛZ[ˆH™]š\Ú[ÛˆŠBˆÞ\Ë™^]
+ŠBˆ™]\›ˆ]B‚‚™YˆÙ]Û]™WÙšYÝ\™\Ê
+N‚ˆˆˆ‘šYÝ\™\ÈH]š[™È\ÚÉÜÈš[˜[™\ÜYÈ
+Ù\Ý]ÚYHH\ÚÉÜÈÝÛˆšYÝ\™\ËÈ›Û\ŠKˆˆˆ‚ˆY]Y]HHÛØYÙš[˜[Ü™\ÜÛY]Y]J
+Bˆ›Û\ˆHÜËœ]š›Ú[ŠTÒ×ÑT‹ÝŠY]Y]K™Ù]
+™šYÝ\™\×Ù\ˆŠHÜˆˆŠJBˆYˆ›ÝY]Y]K™Ù]
+™šYÝ\™\×Ù\ˆŠN‚ˆ™]\›ˆ×Bˆ™]\›ˆÛÜËœ]š›Ú[Š›Û\‹˜[YJH›Üˆ˜[YH[ˆY]Y]K™Ù]
+™šYÝ\™\ÈŠHÜˆ×BˆYˆÜËœ]š\Ùš[JÜËœ]š›Ú[Š›Û\‹˜[YJJWB‚‚™Yˆ›Ü›X]Û]™WÜÝ[[X\žJY]Y]JN‚ˆˆˆ•HZ[‹[[™ÝXYÙH]™K]\ÚÈÝ[[X\žHÜš][ˆžHHÛÛ[[Ý\Ë]\ÚÈÜ˜Ú\Ý˜]Ü‹ˆˆˆ‚ˆ™]\›ˆÝŠ
+Y]Y]HÜˆßJK™Ù]
+œÝ[[X\žWÛX\šÙÝÛˆŠHÜˆˆŠB‚‚™Yˆ›Ü›X]Ùš[˜[Ü™\ÜÜ™XÛÜ™
+Y]Y]JN‚ˆˆˆ”™[™\ˆH[[]]X›Hš[˜[Y[]™\žHY[]H[™]Y]™Y™\™[˜Ù\È\ÈX\šÙÝÛ‹ˆˆˆ‚ˆYˆ›ÝY]Y]N‚ˆ™]\›ˆˆ‚ˆÛÝ\˜ÙHHY]Y]K™Ù]
+œÛÝ\˜ÙHŠHÜˆßBˆ]Y]HY]Y]K™Ù]
+˜]Y]Ý˜Z[ŠHÜˆßBˆ[™\ÈHÂˆ•\ÈÝ[™[Û™H[]™\˜X›H\Èš[˜[\™\Ü™]š\Ú[Ûˆ
+ŠžßJŠ‹Ù[™\˜]Yœ›ÛH‚ˆH]\Ý™]šY]ÙY\ÚÈÛÛ™\ˆ˜\Ù[[™Kˆ˜[œÚY[ÞXÛH\ÝÜžH\È[X™\˜][H‚ˆ››Ý™\›ÙXÙY\™NÈH\ÚËY›Û\ˆ™XÛÜ™È™[ÝÈ™[XZ[ˆH]]Üš]]]™H]Y]˜Z[ˆ‚ˆ•H\ÚÉÜÈÜšYÚ[˜[™\Ü[ˆÝ\×Ü™\ÜÈ\È›ÝÚ[™ÙYžH\È™]š\Ú[ÛŽÈ\È\ÈHÙ\\˜]H‚ˆ™ØÝ[Y[]ÛÛZ[œÈHØ[YH[™Ú[™Y\š[™ÈÛÛ[\ÈH]™K\ÝYHÝ[[X\žH[™šYÝ\™\Ëˆ‚ˆ™›Ü›X]
+Y]Y]K™Ù]
+œ™]š\Ú[ÛˆŠJKˆˆ‹ˆ‹Hš[˜[^™YˆßH‹™›Ü›X]
+Y]Y]K™Ù]
+™š[˜[^™YØ]ŠHÜˆ‹HŠKˆ‹H™]šY]ÙYžNˆßH‹™›Ü›X]
+Y]Y]K™Ù]
+œ™]šY]Ù\ˆŠHÜˆ‹HŠKˆ‹H›Û[ÝY˜\Ù[[™NˆßH‹™›Ü›X]
+ÛÝ\˜ÙK™Ù]
+˜˜\Ù[[™WÚYŠHÜˆ‹HŠKˆ‹HÛÝ\˜ÙHÞXÛNˆßH‹™›Ü›X]
+ÛÝ\˜ÙK™Ù]
+œÛÝ\˜ÙWØÞXÛHŠHÜˆ‹HŠKˆBˆYˆY]Y]K™Ù]
+››ÝHŠN‚ˆ[™\Ë˜\[™
+‹Hš[˜[^˜][Ûˆ›ÝNˆßH‹™›Ü›X]
+Y]Y]K™Ù]
+››ÝHŠJJBˆ[™\Ë™^[™
+Èˆ‹ŠŠ]Y]˜Z[[™™\›ÙXÚXš[]HÛÛ\[š[ÛœÊŠˆ—JBˆ›ÜˆX™[Ù^H[ˆ
+
+•ÛÜšÈ™XÛÜ™‹ÛÜš×Ü™XÛÜ™ŠKˆ
+“]š[™È™\Ü‹›]š[™×Ü™\ÜŠKˆ
+‘XÚ\Ú[ÛˆYÙ\ˆ‹›YÙ\ˆŠKˆ
+”›Û[ÝYÞXÛHX[šY™\Ý‹˜ÞXÛHŠJN‚ˆYˆ]Y]™Ù]
+Ù^JN‚ˆ[™\Ë˜\[™
+‹HßNˆßX‹™›Ü›X]
+X™[]Y]ÚÙ^WJJBˆ™]\›ˆ—ˆ‹š›Ú[Š[™\ÊB‚‚™YˆÜ™\›ÙXÚXš[]WØ›ÙJ™\Ý[ÊN‚ˆˆˆ•H]]Ü‹]Üš][ˆ™\›ÙXÚXš[]HÛÛ[\ÈX\šÙÝÛ‹Üˆ[ˆ[\HÝš[™Ëˆˆˆ‚ˆ™\›ÈH
+™\Ý[ÈÜˆßJK™Ù]
+œ™\›ÙXÚXš[]HŠBˆYˆ›Ý™\›Î‚ˆ™]\›ˆˆ‚ˆYˆ\Ú[œÝ[˜ÙJ™\›ËÝŠN‚ˆ™]\›ˆ™\›ÂˆYˆ\Ú[œÝ[˜ÙJ™\›Ë\Ý
+N‚ˆ™]\›ˆ—ˆ‹š›Ú[ŠžßKˆßH‹™›Ü›X]
+KÊH›ÜˆKÈ[ˆ[[Y\˜]J™\›ËJJBˆ[™\ÈH×BˆYˆ™\›Ë™Ù]
+œÝ[[X\žHŠN‚ˆ[™\Ë™^[™
+Ü™\›ÖÈœÝ[[X\žH—Kˆ—JBˆ›ÜˆÙ^K]K[X™\™Y[ˆ
+
+™[š\›Û›Y[‹”ÛÙØ\™H[™[š\›Û›Y[‹˜[ÙJKˆ
+œÝ\È‹”Ý\È‹YJKˆ
+˜ÚXÚÜÈ‹ÚXÚÜÈY\ˆH™\[ˆ‹˜[ÙJKˆ
+Ú]ÚYˆ‹Ú[™Ú[™ÈHØ\ÙH‹˜[ÙJJN‚ˆ][\ÈH™\›Ë™Ù]
+Ù^JBˆYˆ›Ý][\Î‚ˆÛÛ[YBˆ[™\Ë˜\[™
+ŠŠžßJŠˆ‹™›Ü›X]
+Ý
+]JJJBˆYˆ\Ú[œÝ[˜ÙJ][\ËÝŠN‚ˆ[™\Ë˜\[™
+][\ÊBˆ[ÙN‚ˆ[™\Ë™^[™
+žßHßH‹™›Ü›X]
+žßKˆ‹™›Ü›X]
+JHYˆ[X™\™Y[ÙH‹H‹ˆÙ›Ü›X]Û\ÝÚ][WÝ^
+][JJBˆ›ÜˆK][H[ˆ[[Y\˜]J][\ËJJBˆ[™\Ë˜\[™
+ˆŠBˆ™]\›ˆ—ˆ‹š›Ú[Š[™\ÊKœÝš\
+
+B‚‚™Yˆ›Ü›X]ÜØY™]WÜ™XY[™\Ü×Ý^
+™\Ý[ÊN‚ˆˆˆ‘›Ü›X]H[™™\œ™YØY™]H™XY[™\ÜÈ\È™\Ü^ˆˆˆ‚ˆ™XY[™\ÜÈH[™™\—ÜØY™]WÜ™XY[™\ÜÊ™\Ý[ÊBˆYˆ›Ý™XY[™\ÜÎ‚ˆ™]\›ˆˆ‚ˆ[™\ÈHÈ”™XY[™\ÜÈX™[ˆßH‹™›Ü›X]
+™XY[™\ÜÖÈ™\™XÝ—JWBˆš[™[™ÜÈHÚ][H›Üˆ][H[ˆ™XY[™\ÜË™Ù]
+™š[™[™ÜÈ‹×JHYˆ][WBˆYˆš[™[™ÜÎ‚ˆ[™\Ë˜\[™
+ˆŠBˆ[™\Ë˜\[™
+‘\ÚYÛ‹YÜ˜YH›ØÚÙ\œÈÈ™]šY]Èš[™[™ÜÎˆŠBˆ[™\Ë™^[™
+È‹HßH‹™›Ü›X]
+][JH›Üˆ][H[ˆš[™[™Ü×JBˆ[™\Ë˜\[™
+ˆŠBˆ[™\Ë˜\[™
+ˆ”ØY™]K\ÝYHÝ]]È™[XZ[ˆØÜ™Y[š[™ËÜ™\\˜][Ûˆ[[H\ÝY›ØÚÙ\œÈ\™HÛÜÙY‚ˆ˜[™H]X[YšYY[™Ú[™Y\ˆ™]šY]ÜÈHÛÛ›ÛY]šY[˜ÙH˜\Ú\Ëˆ‚ˆ
+Bˆ™]\›ˆ—ˆ‹š›Ú[Š[™\ÊB‚‚—ÔÑS•SÑWÐP”‘U’PUSÓ”ÈH
+ˆ™K™Ëˆ‹šK™Kˆ‹˜Ù‹ˆ‹œËˆ‹™]Ëˆ‹˜\›Þˆ‹˜ØKˆ‹››Ëˆ‹››ÜËˆ‹ˆ™šYËˆ‹™šYÜËˆ‹™\Kˆ‹™\\Ëˆ‹œ™Y‹ˆ‹œ™YœËˆ‹X‹ˆ‹œÙXËˆ‹˜Úˆ‹ˆ™œËˆ‹š™‹ˆ‹˜›˜Kˆ‹œÝˆ‹˜ØKˆ‹š[šÛˆ‹™ZÜÚÛˆ‹ŠB‚ˆÈÛ™Ù\ˆ[ˆ\È[ˆÛ™H[˜œ›ÚÙ[ˆ[ˆ[™HÛÜ™Ôˆ\˜YÜ˜\™XYÈ\ÈHØ[‚“ÑWÔTQÔTÓPVÐÒT”ÈHL‚‚ˆÈH˜Z[[™È[ˆÙˆKMØ\][[]\ˆ
+È\š[ÙˆÜ›Ý\È
+K™Ëˆ’‹“Kˆ‹”‹ˆŠBˆÈ\È[[ÜÝ[Ø^\È[š]X[È[ˆH\œÛÛ‰ÜÈ˜[YK›ÝHÙ[[˜ÙH›Ý[™\žK‚—ÒS’UPS×Ô‘HH™K˜ÛÛ\[J‰ÊÎ—ŸÊJÎ–ÐKV—WŠ^ÌKI	ÊB‚‚™YˆÜÜ]ÜÙ[[˜Ù\Ê^
+N‚ˆˆˆ”Ü]›ÜÙH[ÈÙ[[˜Ù\ËÙY\[™ÈX˜œ™]šX][ÛœÈ[™[š]X[È[XÝ‚‚ˆÚ]Ý]H[š]X[ÈÚXÚË˜™[˜ÚX\šÙYYØZ[œÝH‹“KˆØ[\™[ˆÛÜœ™[][ÛˆˆÜ]È[ÈÛÈ\˜YÜ˜\È]’‹“Kˆ‹Ý˜[™[™ÈØ[\™[ˆÛÜœ™[][Û‹ˆˆ\È[ˆÜœ[ˆÛ™K[[™H\˜YÜ˜\‚ˆˆˆ‚ˆYXÙ\ÈH™KœÜ]
+‰ÊÏVËˆO×JWÊÊÏVÐKVŒNWLÍ—LLÍH—	Ê×JIË^
+BˆY\™ÙYH×Bˆ›ÜˆYXÙH[ˆYXÙ\Î‚ˆYˆY\™ÙY[™
+Y\™ÙYËLWK›ÝÙ\Š
+K™[™ÝÚ]
+ÔÑS•SÑWÐP”‘U’PUSÓ”ÊBˆÜˆÒS’UPS×Ô‘KœÙX\˜Ú
+Y\™ÙYËLWJJN‚ˆY\™ÙYËLWHHY\™ÙYËLWH
+Èˆˆ
+ÈYXÙBˆ[ÙN‚ˆY\™ÙY˜\[™
+YXÙJBˆ™]\›ˆY\™ÙY‚‚™YˆÜ™Y›Ý×Ü\˜YÜ˜\
+^X^ØÚ\œÏP“ÑWÔTQÔTÓPVÐÒT”ÊN‚ˆˆˆœ™XZÈ[ˆÝ™\‹[Û™ÈÚ[™ÛH\˜YÜ˜\]Ù[[˜ÙH›Ý[™\šY\Ëˆˆˆ‚ˆYˆ[Š^
+HHX^ØÚ\œÎ‚ˆ™]\›ˆÝ^BˆÚ[šÜÈH×BˆY™™\ˆHˆ‚ˆ›ÜˆÙ[[˜ÙH[ˆÜÜ]ÜÙ[[˜Ù\Ê^
+N‚ˆYˆY™™\ˆ[™[ŠY™™\ŠH
+ÈH
+È[ŠÙ[[˜ÙJHˆX^ØÚ\œÎ‚ˆÚ[šÜË˜\[™
+Y™™\ŠBˆY™™\ˆHÙ[[˜ÙBˆ[ÙN‚ˆY™™\ˆHÙ[[˜ÙHYˆ›ÝY™™\ˆ[ÙHY™™\ˆ
+Èˆˆ
+ÈÙ[[˜ÙBˆYˆY™™\Ž‚ˆÚ[šÜË˜\[™
+Y™™\ŠBˆ™]\›ˆÚ[šÜÂ‚‚™YˆØ›ÙWÜ\˜YÜ˜\Ê^
+N‚ˆˆˆ”™]\›ˆ™[™\˜X›H\˜YÜ˜\È›ÜˆHZ[‹\›ÜÙHÙXÝ[Û‹‚‚ˆH™\Ý[ËšœÛÛˆšY[Üš][ˆ\ÈÛ™HÛ™ÈÝš[™È
+\›ØXÚÛÛ˜Û\Ú[ÛœËˆ^XÝ]]™WÜÝ[[X\žJHÝ\Ú\ÙH™[™\œÈ\ÈHÚ[™ÛH[˜œ›ÚÙ[ˆ›ØÚËˆ›ØÚÜÈBˆ]]Üˆ[™XYHœ›ÚÙHÚ]Z\ˆÝÛˆ™]Û[™\È\™HY[ÝXÚY‚ˆˆˆ‚ˆ\˜YÜ˜\ÈH×Bˆ›Üˆ›ØÚÈ[ˆÝŠ^ÜˆˆŠKœÜ]
+——ˆŠN‚ˆ›ØÚÈH›ØÚËœÝš\
+
+BˆYˆ›Ý›ØÚÎ‚ˆÛÛ[YBˆYˆ—ˆˆ[ˆ›ØÚÎ‚ˆ\˜YÜ˜\Ë˜\[™
+›ØÚÊBˆÛÛ[YBˆ\˜YÜ˜\Ë™^[™
+Ü™Y›Ý×Ü\˜YÜ˜\
+›ØÚÊJBˆ™]\›ˆ\˜YÜ˜\Â‚‚™YˆÝÛÜ™Ü\˜YÜ˜\Ê^
+N‚ˆˆˆ”\˜YÜ˜\È›ÜˆÛÜ™ˆÜ˜\Y›ÜÙH™Z›Ú[™YXXÚ\Ý][HÜˆX›H›ÝÈÛˆ]ÈÝÛ‹‚‚ˆÛÜ™ÙY\ÈH]\˜[™]Û[™H\ÈH[™Hœ™XZËÛÈ\™]Ü˜\YX\šÙÝÛˆÛÝ[ˆÝ\Ú\ÙHš[Ú]˜YÙÙYœ™XZÜÈZY\Ù[[˜ÙK‚ˆˆˆ‚ˆ\˜YÜ˜\ÈH×Bˆ›Üˆ\˜H[ˆØ›ÙWÜ\˜YÜ˜\Ê^
+N‚ˆ[™\ÈHÛ[™KœÝš\
+
+H›Üˆ[™H[ˆ\˜KœÜ]
+—ˆŠHYˆ[™KœÝš\
+
+WBˆYˆ[Š[™\ÊHˆH[™Ú\×Û[™WÜÝXÝ\™Y
+\˜JN‚ˆ][\ÈH×Bˆ›Üˆ[™H[ˆ[™\Î‚ˆÝ\×Ú][HHÓTÕÓS‘WÔ‘K›X]Ú
+[™JHÜˆ[™KœÝ\ÝÚ]
+ŸŠBˆYˆ][\È[™›ÝÝ\×Ú][N‚ˆ][\ÖËLWH
+ÏHˆˆ
+È[™HÈÜ˜\YÛÛ[X][ÛˆÙˆH\Ý][Bˆ[ÙN‚ˆ][\Ë˜\[™
+[™JBˆ\˜YÜ˜\Ë™^[™
+][\ÊBˆ[ÙN‚ˆ\˜YÜ˜\Ë˜\[™
+ˆ‹š›Ú[Š[™\ÊJBˆ™]\›ˆ\˜YÜ˜\Â‚‚—ÓTÕÓS‘WÔ‘HH™K˜ÛÛ\[Jˆ——ÊŠÎ–ËJŠ×LŒŒ—Wß
+ÖËŠWWÊHŠB—ÒS“S‘WÐÓÑWÔ‘HH™K˜ÛÛ\[Jˆ˜
+×˜—JÊXŠB‚‚™YˆÚ\×Û[™WÜÝXÝ\™Y
+›ØÚÊN‚ˆˆˆ•YHÚ[ˆH›ØÚÉÜÈÝÛˆ[™Hœ™XZÜÈØ\œžHYX[š[™È
+\ÝÜˆX›JKˆˆˆ‚ˆ[™\ÈHÛ[™H›Üˆ[™H[ˆ›ØÚËœÜ]
+—ˆŠHYˆ[™KœÝš\
+
+WBˆYˆ[Š[™\ÊHŽ‚ˆ™]\›ˆ˜[ÙBˆÝXÝ\™YHÝ[JH›Üˆ[™H[ˆ[™\ÂˆYˆÓTÕÓS‘WÔ‘K›X]Ú
+[™JHÜˆ[™KœÝš\
+
+KœÝ\ÝÚ]
+ŸŠJBˆ™]\›ˆÝXÝ\™YH[Š[™\ÊHÈ‹Œ‚‚™YˆÜ›ÜÙWÝ×Ú[
+^
+N‚ˆˆˆ”™[™\ˆZ[ˆ›ÜÙH\ÈS\˜YÜ˜\È\Ú[™ÈHØ[YHÜ][™È[\Ë‚‚ˆÛÝ\˜ÙHX\šÙÝÛˆ\È\™]Ü˜\Y[™X\šÙÝÛˆ™X]ÈHÚ[™ÛH™]Û[™H\ÈBˆÜXÙKˆÛ›HH\ÝÜˆX›H›ØÚÈÙY\È]È[™Hœ™XZÜÎÈÜ˜\Y›ÜÙH\Âˆ™Z›Ú[™YÛÈÙ[[˜Ù\È\™H›ÝÜ]ZYXÛ]\ÙKˆ[›[™HÛÙXÜ[œÈ™XÛÛYBˆÛÙO‹ÚXÚ\ÈÝÈYÈ[™ØÝ[Y[[X™\œÈ\™HÜš][ˆ[ˆH\ÚÈÜXË‚ˆˆˆ‚ˆÝ]H×Bˆ›Üˆ\˜H[ˆØ›ÙWÜ\˜YÜ˜\Ê^
+N‚ˆYˆÚ\×Û[™WÜÝXÝ\™Y
+\˜JN‚ˆ›ÙHHœˆ‹š›Ú[Š[™KœÝš\
+
+H›Üˆ[™H[ˆ\˜KœÜ]
+—ˆŠBˆYˆ[™KœÝš\
+
+JBˆ[ÙN‚ˆ›ÙHHˆ‹š›Ú[Š[™KœÝš\
+
+H›Üˆ[™H[ˆ\˜KœÜ]
+—ˆŠBˆYˆ[™KœÝš\
+
+JBˆÝ]˜\[™
+žßOÜˆ‹™›Ü›X]
+ˆÚ[Þ™YœÊÒS“S‘WÐÓÑWÔ‘KœÝXŠˆÛÙO—OØÛÙOˆ‹›ÙJJJJBˆ™]\›ˆˆ‹š›Ú[ŠÝ]
+B‚‚™YˆØ™[˜ÚX\š×Ý\ÝÊ™\Ý[ÊN‚ˆˆˆ“›Ü›X[^™HYØXÞH\ÝØ\ÝÈ[™˜[YY™[˜ÚX\šÈX\[™ÜÈ›Üˆ[Ý]]Ëˆˆˆ‚ˆ™[˜ÚX\šÈH
+™\Ý[ÈÜˆßJK™Ù]
+˜™[˜ÚX\š×Ý˜[Y][ÛˆŠHÜˆßBˆYˆ\Ú[œÝ[˜ÙJ™[˜ÚX\šË\Ý
+N‚ˆ™[˜ÚX\šÈHÈ\ÝÈŽˆ™[˜ÚX\šßBˆYˆ›Ý\Ú[œÝ[˜ÙJ™[˜ÚX\šËXÝ
+N‚ˆ™]\›ˆ×Bˆ\ÝYH™^
+
+™[˜ÚX\šÖÚÙ^WH›ÜˆÙ^H[ˆ
+\ÝÈ‹œÚ[ÈŠBˆYˆ\Ú[œÝ[˜ÙJ™[˜ÚX\šË™Ù]
+Ù^JK\Ý
+JK›Û™JBˆYˆ\ÝY\È›Ý›Û™N‚ˆ[šY\ÈH
+
+˜[YK™Ù]
+\ÝŠHÜˆ˜[YK™Ù]
+›˜[YHŠHÜˆ•\ÝßH‹™›Ü›X]
+[™^
+BˆYˆ\Ú[œÝ[˜ÙJ˜[YKXÝ
+H[ÙH•\ÝßH‹™›Ü›X]
+[™^
+K˜[YJBˆ›Üˆ[™^˜[YH[ˆ[[Y\˜]J\ÝYJJBˆ[ÙN‚ˆ[šY\ÈH™[˜ÚX\šËš][\Ê
+Bˆ\ÝÈH×Bˆ›Üˆ˜[YK˜[YH[ˆ[šY\Î‚ˆYˆ›Ý\Ú[œÝ[˜ÙJ˜[YKXÝ
+N‚ˆÛÛ[YBˆ\ÝHXÝ
+˜[YJBˆ\ÝœÙ]Y˜][
+œ\˜[Y]\ˆ‹˜[YHYˆ\ÝY\È›Ý›Û™H[ÙH˜[YKœ™\XÙJ—È‹ˆŠK]J
+JBˆYˆœ\ÜÈˆ›Ý[ˆ\Ý‚ˆÝ]\ÈHÝŠ\Ý™Ù]
+œÝ]\È‹ˆŠJK\\Š
+BˆYˆÝ]\È[ˆ
+”TÔÈ‹‘RSŠN‚ˆ\ÝÈœ\ÜÈ—HHÝ]\ÈOH”TÔÈ‚ˆ\ÝË˜\[™
+\Ý
+Bˆ™]\›ˆ\ÝÂ‚‚™Yˆ]]×Ù^XÝ]]™WÜÝ[[X\žJ™\Ý[Ë\Ú×ÜÜXÊN‚ˆˆˆ‘Ù[™\˜]H[ˆ^XÝ]]™HÝ[[X\žH]XYÈÚ]š[™[™ÜË›Ý›Ý™[˜[˜ÙK‚‚ˆÚ]Üš][ˆÛÛ˜Û\Ú[ÛœÈHÝ[[X\žH\ÈHÛÛ˜Û\Ú[ÛœÈ\ÈÛ›H][\È]ˆ™YY][[Û‹ˆH\›ØXÚ]šY[˜ÙHÛÝ[Ë]KYØ\ÛÝ[È[™\ÜÙYˆÚXÚÜÈ™[Û™ÈÈZ\ˆÝÛˆÙXÝ[ÛœÈ[™\™H\ÙYÛ›H\ÈH˜[˜XÚË‚ˆˆˆ‚ˆ\ÈH×BˆÛÛ˜Û\Ú[ÛœÈHÝŠ
+™\Ý[ÈÜˆßJK™Ù]
+˜ÛÛ˜Û\Ú[ÛœÈŠHÜˆˆŠKœÝš\
+
+Bˆ\×ØÛÛ˜Û\Ú[ÛœÈH›ÛÛ
+ÛÛ˜Û\Ú[ÛœÊH[™›ÝÚ\×ÜXÙZÛ\—Ý^
+ÛÛ˜Û\Ú[ÛœÊBˆYˆ\×ØÛÛ˜Û\Ú[ÛœÎ‚ˆ\Ë˜\[™
+ÛÛ˜Û\Ú[ÛœÊBˆ\›ØXÚHˆ‚ˆYˆ™\Ý[È[™™\Ý[Ë™Ù]
+˜\›ØXÚŠN‚ˆ\›ØXÚH™\Ý[ÖÈ˜\›ØXÚ—BˆYˆ›Ý\×ØÛÛ˜Û\Ú[ÛœÈ[™\›ØXÚ[™›ÝÚ\×ÜXÙZÛ\—Ý^
+\›ØXÚ
+N‚ˆÈÚÚ\[‹Z[ˆXY[™ÜÈÝXÚ\È‘]Kˆˆ]Ü[ˆH\˜YÜ˜\‚ˆÙ[[˜Ù\ÈHÜËœÝš\
+
+KœœÝš\
+‹ˆŠH›ÜˆÈ[ˆ\›ØXÚœÜ]
+‹ˆŠHYˆËœÝš\
+
+WBˆš\œÝÜÙ[[˜ÙHH™^
+
+È›ÜˆÈ[ˆÙ[[˜Ù\ÈYˆ[ŠËœÜ]
+
+JHH
+KˆÙ[[˜Ù\ÖÌHYˆÙ[[˜Ù\È[ÙHˆŠBˆ\Ë˜\[™
+š\œÝÜÙ[[˜ÙH
+È‹ˆŠBˆYˆ›Ý\×ØÛÛ˜Û\Ú[ÛœÈ[™™\Ý[È[™™\Ý[Ë™Ù]
+šÙ^WÜ™\Ý[ÈŠN‚ˆš[™[™ÜÈH×Bˆ›ÜˆX™[˜[YK[š]Û›ÝH[ˆÙ›][—ÚÙ^WÜ™\Ý[Ê™\Ý[ÖÈšÙ^WÜ™\Ý[È—JVÎWN‚ˆ˜[YWÝ^HÙ›]ØÙ[
+˜[YJBˆš[™[™ÜË˜\[™
+žßHHß^ßH‹™›Ü›X]
+ˆX™[˜[YWÝ^ˆˆ
+È[š]Yˆ[š][ÙHˆŠJBˆYˆš[™[™ÜÎ‚ˆ\Ë˜\[™
+’Ù^Hš[™[™ÜÎˆßKˆ‹™›Ü›X]
+‹‹š›Ú[Šš[™[™ÜÊJJBˆ™XY[™\ÜÈH[™™\—ÜØY™]WÜ™XY[™\ÜÊ™\Ý[ÊHYˆ™\Ý[È[ÙH›Û™BˆYˆ™XY[™\ÜÎ‚ˆ\Ë˜\[™
+”ØY™]HÝYH™XY[™\ÜÎˆßKˆ‹™›Ü›X]
+™XY[™\ÜÖÈ™\™XÝ—JJBˆ]šY[˜ÙWÜ›ÝÜÈH×HYˆ\×ØÛÛ˜Û\Ú[ÛœÈ[ÙH
+ˆÙØÝ[Y[ÜÛÝ\˜ÙWØÛÝ[ÊØYØÛÛXÝ[Û—ÛX[šY™\Ý
+
+JHÜˆØÛÝ[Ü™Y™\™[˜ÙWÙš[\Ê
+JBˆYˆ]šY[˜ÙWÜ›ÝÜÎ‚ˆ\Ë˜\[™
+‘]šY[˜ÙH˜\Ú\ÎˆßHØÝ[Y[
+ÊHœ›ÛHßKˆ‹™›Ü›X]
+ˆÝ[J›ÝÖÌWH›Üˆ›ÝÈ[ˆ]šY[˜ÙWÜ›ÝÜÊKˆ‹‹š›Ú[ŠžßH
+ßJH‹™›Ü›X]
+˜[YKÛÝ[
+Bˆ›Üˆ˜[YKÛÝ[Ù\ØÈ[ˆ]šY[˜ÙWÜ›ÝÜÖÎ—JJJBˆYˆ™\Ý[È[™›Ý\×ØÛÛ˜Û\Ú[ÛœÎ‚ˆØ\ÜÝ[\[ÛœËÙØ\ÈHØ\ÜÝ[\[Û—Ü›ÝÜÊ™\Ý[ÊBˆYˆÙØ\Î‚ˆ\Ë˜\[™
+žßH][JÊHÙˆ[™›Ü›X][ÛˆÛÝ[›Ý™HØZ[™YÈH‚ˆœÝXœÝ]]H\ÜÝ[\[ÛœÈ\™H\ÝY[ˆ\ÜÝ[\[ÛœÈ[™‚ˆ‘]HØ\Ëˆ‹™›Ü›X]
+[ŠÙØ\ÊJJBˆYˆ™\Ý[È[™™\Ý[Ë™Ù]
+[˜Ù\Z[HŠN‚ˆ[˜Ù\Z[HH™\Ý[ÖÈ[˜Ù\Z[H—BˆLH[˜Ù\Z[K™Ù]
+œLŠBˆÝ]]H[˜Ù\Z[K™Ù]
+›Ý]]Ü\˜[Y]\ˆ‹›Ý]]ŠBˆYˆL\È›Ý›Û™N‚ˆ\Ë˜\[™
+•[˜Ù\Z[H[˜[\Ú\ÈÚ]™\ÈLßHHÎ‹ßKˆ‹™›Ü›X]
+Ý]]L
+JBˆYˆ™\Ý[È[™™\Ý[Ë™Ù]
+˜[Y][ÛˆŠN‚ˆ˜Z[\™\ÈHÝ˜[Y][Û—Ù˜Z[\™\Ê™\Ý[ÊBˆ˜Z[\™\Ë™^[™
+˜™[˜ÚX\šÎˆßH‹™›Ü›X]
+\ÝÈœ\˜[Y]\ˆ—JBˆ›Üˆ\Ý[ˆØ™[˜ÚX\š×Ý\ÝÊ™\Ý[ÊHYˆ\Ý™Ù]
+œ\ÜÈŠH\È˜[ÙJBˆYˆ˜Z[\™\Î‚ˆ\Ë˜\[™
+•˜[Y][ÛˆÚXÚÜÈ™\]Z\š[™È][[ÛŽˆßKˆ‹™›Ü›X]
+ˆ‹‹š›Ú[Š˜Z[\™\ÊJJBˆ[Yˆ›Ý\×ØÛÛ˜Û\Ú[ÛœÎ‚ˆ\Ë˜\[™
+•˜[Y][ÛˆÚXÚÜÈY›Ý›YÈ\ÚYÛˆ›ØÚÙ\œËˆŠBˆ™[˜ÚX\šÜÈHØ™[˜ÚX\š×Ý\ÝÊ™\Ý[ÊBˆYˆ™[˜ÚX\šÜÈ[™›Ý\×ØÛÛ˜Û\Ú[ÛœÎ‚ˆ\ÜÙYHÝ[J\Ý™Ù]
+œ\ÜÈŠH\ÈYH›Üˆ\Ý[ˆ™[˜ÚX\šÜÊBˆ\Ë˜\[™
+žßHÙˆßH™[˜ÚX\šÈÛÛ\\š\ÛÛœÈ\ÜÙYˆ‹™›Ü›X]
+\ÜÙY[Š™[˜ÚX\šÜÊJJBˆYˆ™\Ý[È[™™\Ý[Ë™Ù]
+œš\Ú×Ù]˜[X][Ûˆ‹ßJK™Ù]
+›Ý™\˜[Üš\Ú×Û]™[ŠN‚ˆ\Ë˜\[™
+“Ý™\˜[›Ú™XÝš\ÚÎˆßKˆ‹™›Ü›X]
+ˆ™\Ý[ÖÈœš\Ú×Ù]˜[X][Ûˆ—VÈ›Ý™\˜[Üš\Ú×Û]™[—JJBˆ™]\›ˆ——ˆ‹š›Ú[Š\ÊB‚‚™YˆÚXÚ×Ü™\ÜØÛÛœÚ\Ý[˜ÞJ™\Ý[ÊN‚ˆˆˆÚXÚÈ™\Ý[ËšœÛÛˆ›Üˆ[\›˜[ÛÛ˜YXÝ[ÛœÈ[™[˜ÛÛœÚ\Ý[˜ÚY\Ë‚‚ˆ™]\›œÈH\ÝÙˆXÝÈÚ]Ù^\ÎˆÙ]™\š]KY\ÜØYÙKš^Ý\K‚ˆÙ]™\š]Nˆ	ÑT”“Ô‰Ë	ÕÐT“’S‘ÉËÜˆ	ÒS‘“ÉË‚ˆš^Ý\Nˆ	Ý^	È
+]]ËYš^X›H[ˆ™\Ü
+K	ØØ[Ý[][Û‰È
+™YYÂˆYÙ[È™K\[ˆ›ÝX›ÛÚÊKÜˆ	Û›Û™IÈ
+[™›Ü›X][Û˜[
+K‚ˆˆˆ‚ˆYˆ›Ý™\Ý[Î‚ˆ™]\›ˆÞÈœÙ]™\š]HŽˆ’S‘“È‹›Y\ÜØYÙHŽˆ“›È™\Ý[ËšœÛÛˆØYYÈ[ÙXÝ[ÛœÈ\ÙHXÙZÛ\œËˆ‹™š^Ý\HŽˆ››Û™HŸWB‚ˆ\ÜÝY\ÈH×B‚ˆÈKKHKˆ™[˜ÚX\šÈ˜Z[\™\ÈœÈÜ[Z\ÝXÈÛÛ˜Û\Ú[ÛœÈKKBˆ›Z×Ý\ÝÈHØ™[˜ÚX\š×Ý\ÝÊ™\Ý[ÊBˆ—Ù˜Z[HÝ[JH›Üˆ[ˆ›Z×Ý\ÝÈYˆ™Ù]
+œ\ÜÈŠH\È˜[ÙJBˆ—ÝÝ[H[Š›Z×Ý\ÝÊBˆÛÛ˜Û\Ú[ÛœÈH™\Ý[Ë™Ù]
+˜ÛÛ˜Û\Ú[ÛœÈ‹ˆŠB‚ˆYˆ—Ù˜Z[ˆ‚ˆÈÚXÚÈYˆ[žH˜Z[\™H\È\™ÙH]šX][Ûˆ
+ŒŒ	JHOˆØ[Ý[][Ûˆš^ˆ\™ÙWÙ]œÈH×BˆØÝ[Y[YH×Bˆ›Üˆ[ˆ›Z×Ý\ÝÎ‚ˆYˆ™Ù]
+œ\ÜÈŠH\È˜[ÙN‚ˆ]—ÜÝH™Ù]
+™]šX][Û—ÜÝŠBˆYˆ]—ÜÝ\È›Ý›Û™H[™XœÊ]—ÜÝ
+HˆŒ‚ˆÈHÜš][ˆ\ÜÜÚ][Ûˆ
+K™ËˆÛÈ[œ]ÛÝ\˜Ù\È\ØYÜ™YJH\ÈHš[™[™Ë›ÝHZ\Ùš]‚ˆ
+ØÝ[Y[YYˆÝŠ™Ù]
+™\ÜÜÚ][Ûˆ‹ˆŠJKœÝš\
+
+H[ÙH\™ÙWÙ]œÊK˜\[™
+
+BˆYˆØÝ[Y[Y‚ˆ\ÜÝY\Ë˜\[™
+ÂˆœÙ]™\š]HŽˆ•ÐT“’S‘È‹ˆ›Y\ÜØYÙHŽˆ™[˜ÚX\šÈ]šX][ÛˆŒŒ	HÙ\Ú]HÜš][ˆ\ÜÜÚ][ÛŽˆßKˆ‹™›Ü›X]
+ˆ‹‹š›Ú[Š™Ù]
+œ\˜[Y]\ˆ‹ÈŠH›Üˆ[ˆØÝ[Y[Y
+JKˆ™š^Ý\HŽˆ››Û™H‹ˆJB‚ˆ˜Z[\™WÝÛÜ™ÈHÈ™˜Z[‹™^ÙYY‹™]šX][Ûˆ‹˜Ø]][Ûˆ‹˜][[Ûˆ‹ˆš\ÜÝYH‹˜ÛÛ˜Ù\›ˆ‹™\ØÜ™\[˜È‹››ÝY]—BˆÛÛ˜×ÛÝÙ\ˆHÛÛ˜Û\Ú[ÛœË›ÝÙ\Š
+BˆXÚÛ›ÝÛYÙ\ÈH[žJÈ[ˆÛÛ˜×ÛÝÙ\ˆ›ÜˆÈ[ˆ˜Z[\™WÝÛÜ™ÊB‚ˆYˆ\™ÙWÙ]œÎ‚ˆ\˜[\ÈHÝ™Ù]
+œ\˜[Y]\ˆ‹ÈŠH›Üˆ[ˆ\™ÙWÙ]œ×Bˆ\ÜÝY\Ë˜\[™
+ÂˆœÙ]™\š]HŽˆ‘T”“Ôˆ‹ˆ›Y\ÜØYÙHŽˆ™[˜ÚX\šÈ]šX][ÛˆŒŒ	H›ÜŽˆßKˆ[Ù[X^H™YY‚ˆœ™][š[™ÈÜˆY™™\™[SÔËÜ\˜[Y]\œËˆ‹™›Ü›X]
+ˆ‹‹š›Ú[Š\˜[\ÊJKˆ™š^Ý\HŽˆ˜Ø[Ý[][Ûˆ‹ˆ˜XÝ[ÛˆŽˆ”™K\[ˆ™[˜ÚX\šÈ›ÝX›ÛÚÈÚ]™]š\ÙY[Ù[‚ˆœ\˜[Y]\œÈ
+ÚXÚÈSÔË’TËÛÛ\Û™[Ú\˜XÝ\š^˜][ÛŠKˆ‹ˆœ\˜[Y]\œÈŽˆ\˜[\ËˆJB‚ˆYˆ›ÝXÚÛ›ÝÛYÙ\Î‚ˆØY™WÝÛÜ™ÈHÈœØY™H‹˜ÛÛ™š\›H‹˜XØÙ\X›H‹œØ]\Ù˜XÝÜˆ‹ˆÚ][ˆ[Z]È‹›YY]È—BˆYˆ[žJÈ[ˆÛÛ˜×ÛÝÙ\ˆ›ÜˆÈ[ˆØY™WÝÛÜ™ÊN‚ˆ\ÜÝY\Ë˜\[™
+ÂˆœÙ]™\š]HŽˆ‘T”“Ôˆ‹ˆ›Y\ÜØYÙHŽˆÛÛ˜Û\Ú[ÛœÈØ^H	ÞßW	È]ßKÞßH™[˜ÚX\šÈ\ÝÈRSQˆ‚ˆÛÛ˜Û\Ú[ÛœÈ]\ÝXÚÛ›ÝÛYÙH™[˜ÚX\šÈ˜Z[\™\ÈÜˆ^Z[ˆ‚ˆÚH^H\™HXØÙ\X›Kˆ‹™›Ü›X]
+ˆÛÛ˜Û\Ú[ÛœÖÎŽK—Ù˜Z[—ÝÝ[
+Kˆ™š^Ý\HŽˆ^‹ˆJBˆ[ÙN‚ˆ\ÜÝY\Ë˜\[™
+ÂˆœÙ]™\š]HŽˆ•ÐT“’S‘È‹ˆ›Y\ÜØYÙHŽˆžßKÞßH™[˜ÚX\šÈ\ÝÈ˜Z[YˆÛÛœÚY\ˆY™\ÜÚ[™È\È‚ˆš[ˆHÛÛ˜Û\Ú[ÛœËˆ‹™›Ü›X]
+—Ù˜Z[—ÝÝ[
+Kˆ™š^Ý\HŽˆ^‹ˆJB‚ˆÈKKH‹ˆ˜[Y][Ûˆ˜Z[\™\ÈœÈÜ[Z\ÝXÈÛÛ˜Û\Ú[ÛœÈKKBˆ˜[Y][ÛˆH™\Ý[Ë™Ù]
+˜[Y][Ûˆ‹ßJBˆ˜[Ù˜Z[\™\ÈH×Bˆ›ÜˆÚXÚËÝ]ÛÛYH[ˆ˜[Y][Û‹š][\Ê
+N‚ˆÝ]ÛÛYHHÝ˜[Y][Û—Ý˜[YJÝ]ÛÛYJBˆYˆÝ]ÛÛYH\È˜[ÙHÜˆ
+\Ú[œÝ[˜ÙJÝ]ÛÛYKÝŠBˆ[™Ý]ÛÛYKœÝš\
+
+K\\Š
+H[ˆÑRSÔÕUTÑTÊN‚ˆ˜[Ù˜Z[\™\Ë˜\[™
+ÚXÚÊBˆ[Yˆ
+ÚXÚË™[™ÝÚ]
+
+—ÜÝ‹—Ü\˜Ù[ŠJBˆ[™\Ú[œÝ[˜ÙJÝ]ÛÛYK
+[›Ø]
+JH[™Ý]ÛÛYHHKŒ
+N‚ˆ˜[Ù˜Z[\™\Ë˜\[™
+žßH
+ßJH‹™›Ü›X]
+ÚXÚËÝ]ÛÛYJJBˆYˆ˜[Ù˜Z[\™\Î‚ˆÛÛ˜×ÛÝÙ\ˆHÛÛ˜Û\Ú[ÛœË›ÝÙ\Š
+BˆØY™WÝÛÜ™ÈHÈœØY™H‹˜ÛÛ™š\›H‹˜XØÙ\X›H‹œØ]\Ù˜XÝÜˆ‹ˆ˜[Šœ\ÜÈ‹Ú][ˆ[Z]È—BˆYˆ[žJÈ[ˆÛÛ˜×ÛÝÙ\ˆ›ÜˆÈ[ˆØY™WÝÛÜ™ÊN‚ˆ\ÜÝY\Ë˜\[™
+ÂˆœÙ]™\š]HŽˆ‘T”“Ôˆ‹ˆ›Y\ÜØYÙHŽˆÛÛ˜Û\Ú[ÛœÈÛZ[HØY™]KØXØÙ\Xš[]H]˜[Y][ÛˆÚXÚÜÈ‚ˆœÚÝÈ\ÜÝY\ÎˆßKˆ™]š\ÙHÛÛ˜Û\Ú[ÛœÈÜˆ^Z[ˆÚH˜Z[\™\È‚ˆ˜\™HXØÙ\X›Kˆ‹™›Ü›X]
+‹‹š›Ú[Š˜[Ù˜Z[\™\ÊJKˆ™š^Ý\HŽˆ^‹ˆJBˆÈÚXÚÈYˆ˜[Y][Ûˆ\œ›Üˆ\È\™ÙH[›ÝYÚÈ™YY™XØ[Ý[][Û‚ˆ\™ÙWÝ˜[HÝ˜[YH›ÜˆÙ^K˜[YH[ˆ˜[Y][Û‹š][\Ê
+BˆYˆÙ^K™[™ÝÚ]
+
+—ÜÝ‹—Ü\˜Ù[ŠJBˆ[™\Ú[œÝ[˜ÙJ˜[YK
+[›Ø]
+JH[™˜[YHHLŒBˆYˆ\™ÙWÝ˜[‚ˆ\ÜÝY\Ë˜\[™
+ÂˆœÙ]™\š]HŽˆ‘T”“Ôˆ‹ˆ›Y\ÜØYÙHŽˆ•˜[Y][Ûˆ\œ›ÜˆLL	H]XÝY
+ßJKˆ[Ù[XØÝ\˜XÞH‚ˆ›X^H™H[œÝY™šXÚY[8 %ÛÛœÚY\ˆ™][š[™Ëˆ‹™›Ü›X]
+ˆ‹‹š›Ú[Š˜[Ù˜Z[\™\ÊJKˆ™š^Ý\HŽˆ˜Ø[Ý[][Ûˆ‹ˆ˜XÝ[ÛˆŽˆ”™K\[ˆXZ[ˆ[˜[\Ú\È›ÝX›ÛÚÈÚ]YÚ\ˆÛÛ™\™Ù[˜ÙH‚ˆÛ\˜[˜Ù\ÈÜˆ™]š\ÙY[Ù[Ù]\ˆ‹ˆJB‚ˆÈKKHËˆYÚš\ÚÈ]™[œÈ[˜ÛÛ™][Û˜[HÜÚ]]™HÛÛ˜Û\Ú[ÛœÈKKBˆš\Ú×Ù]˜[H™\Ý[Ë™Ù]
+œš\Ú×Ù]˜[X][Ûˆ‹ßJBˆÝ™\˜[Üš\ÚÈHš\Ú×Ù]˜[™Ù]
+›Ý™\˜[Üš\Ú×Û]™[‹ˆŠK›ÝÙ\Š
+Bˆš\ÚÜÈHš\Ú×Ù]˜[™Ù]
+œš\ÚÜÈ‹×JBˆYÚÜš\ÚÜÈHÜˆ›Üˆˆ[ˆš\ÚÜÈYˆšYÚˆ[ˆ‹™Ù]
+œš\Ú×Û]™[‹ˆŠK›ÝÙ\Š
+BˆÜˆ™\žHYÚˆ[ˆ‹™Ù]
+œš\Ú×Û]™[‹ˆŠK›ÝÙ\Š
+WBˆYˆYÚÜš\ÚÜÎ‚ˆÛÛ˜×ÛÝÙ\ˆHÛÛ˜Û\Ú[ÛœË›ÝÙ\Š
+BˆØ]][Û—ÝÛÜ™ÈHÈœš\ÚÈ‹›Z]YØ]‹˜Ø]][Ûˆ‹›[Ûš]Üˆ‹˜ÛÛ[™Ù[˜È‹ˆ˜ÛÛ™][Ûˆ‹œÝXš™XÝÈ‹œ›ÝšYY]—Bˆ\×ØØ]][ÛˆH[žJÈ[ˆÛÛ˜×ÛÝÙ\ˆ›ÜˆÈ[ˆØ]][Û—ÝÛÜ™ÊBˆYˆ›Ý\×ØØ]][Ûˆ[™[žJˆÈ[ˆÛÛ˜×ÛÝÙ\ˆ›ÜˆÈ[ˆÈœØY™H‹˜ÛÛ™š\›H‹œ™XÛÛ[Y[™›ØÙYY‹ˆ››ÈÛÛ˜Ù\›ˆ—Bˆ
+N‚ˆ\ÜÝY\Ë˜\[™
+ÂˆœÙ]™\š]HŽˆ•ÐT“’S‘È‹ˆ›Y\ÜØYÙHŽˆžßHYÚ\š\ÚÈ][\ÈY[YšYY
+ßJK]ÛÛ˜Û\Ú[ÛœÈÛ—	Ý‚ˆ›Y[[Ûˆš\ÚÈZ]YØ][Û‹ˆÛÛœÚY\ˆY[™ÈØ]™X]Ëˆ‹™›Ü›X]
+ˆ[ŠYÚÜš\ÚÜÊKˆ‹‹š›Ú[Š‹™Ù]
+™\ØÜš\[Ûˆ‹ˆŠH›Üˆˆ[ˆYÚÜš\ÚÜÖÎŒ×JJKˆ™š^Ý\HŽˆ^‹ˆJB‚ˆÈKKHˆYÚ›Ø˜Xš[]HÙˆ™YØ]]™HÝ]ÛÛYHœÈÜÚ]]™HÛÛ˜Û\Ú[ÛœÈKKBˆ[˜Ù\Z[HH™\Ý[Ë™Ù]
+[˜Ù\Z[H‹ßJBˆ›Ø—Û™YÈH[˜Ù\Z[K™Ù]
+œ›Ø—Û™YØ]]™WÜÝŠBˆYˆ›Ø—Û™YÈ\È›Ý›Û™H[™›Ø—Û™YÈˆN‚ˆÛÛ˜×ÛÝÙ\ˆHÛÛ˜Û\Ú[ÛœË›ÝÙ\Š
+BˆYˆ[žJÈ[ˆÛÛ˜×ÛÝÙ\ˆ›ÜˆÈ[ˆÈœØY™H‹˜ÛÛ™š\›H‹™˜]›Ý\˜X›H‹ˆœ™XÛÛ[Y[™›ØÙYY—JN‚ˆ\ÜÝY\Ë˜\[™
+ÂˆœÙ]™\š]HŽˆ•ÐT“’S‘È‹ˆ›Y\ÜØYÙHŽˆ”›Ø˜Xš[]HÙˆ[™˜]›Ý\˜X›HÝ]ÛÛYH\ÈÎ‹ŒYŸIH
+ŒIJKˆ‚ˆÛÛ˜Û\Ú[ÛœÈÚÝ[XÚÛ›ÝÛYÙHHÚYÛšYšXØ[ÝÛœÚYH‚ˆœš\ÚËˆ‹™›Ü›X]
+›Ø—Û™YÊKˆ™š^Ý\HŽˆ^‹ˆJB‚ˆÈKKHKˆ\ØÝ\ÜÚ[Ûˆ™XÛÛ[Y[™][ÛœÈÛÛ˜YXÝÛÛ˜Û\Ú[ÛœÈKKBˆ\ØÝ\ÜÚ[ÛœÈH™\Ý[Ë™Ù]
+™šYÝ\™WÙ\ØÝ\ÜÚ[Ûˆ‹×JBˆ™XÜÈHÙ™Ù]
+œ™XÛÛ[Y[™][Ûˆ‹ˆŠH›Üˆ[ˆ\ØÝ\ÜÚ[ÛœÂˆYˆ™Ù]
+œ™XÛÛ[Y[™][ÛˆŠWBˆ›Üˆ™XÈ[ˆ™XÜÎ‚ˆ™X×ÛÝÙ\ˆH™XË›ÝÙ\Š
+BˆÛÛ˜×ÛÝÙ\ˆHÛÛ˜Û\Ú[ÛœË›ÝÙ\Š
+BˆÈÚXÚÈ›Üˆ\™XÝÛÛ˜YXÝ[ÛœÂˆYˆ™È›Ý›ØÙYYˆ[ˆ™X×ÛÝÙ\ˆ[™œ›ØÙYYˆ[ˆÛÛ˜×ÛÝÙ\Ž‚ˆ\ÜÝY\Ë˜\[™
+ÂˆœÙ]™\š]HŽˆ‘T”“Ôˆ‹ˆ›Y\ÜØYÙHŽˆ‘\ØÝ\ÜÚ[Ûˆ™XÛÛ[Y[™È	ÙÈ›Ý›ØÙYY	È]ÛÛ˜Û\Ú[ÛœÈ‚ˆœØ^H	Ü›ØÙYY	Ëˆ™\ÛÛ™HHÛÛ˜YXÝ[Û‹ˆ‹ˆ™š^Ý\HŽˆ^‹ˆJBˆYˆ™\\ˆÝYHˆ[ˆ™X×ÛÝÙ\ˆÜˆœÙ[œÚ]]š]Hˆ[ˆ™X×ÛÝÙ\Ž‚ˆYˆ››È\\ˆˆ[ˆÛÛ˜×ÛÝÙ\Ž‚ˆ\ÜÝY\Ë˜\[™
+ÂˆœÙ]™\š]HŽˆ•ÐT“’S‘È‹ˆ›Y\ÜØYÙHŽˆ‘\ØÝ\ÜÚ[Ûˆ™XÛÛ[Y[™È\\ˆÝYKÜÙ[œÚ]]š]H[˜[\Ú\È‚ˆ˜]ÛÛ˜Û\Ú[ÛœÈ\ÛZ\ÜÈ]ˆ[œÝ\™HÛÛœÚ\Ý[˜ÞKˆ‹ˆ™š^Ý\HŽˆ^‹ˆJB‚ˆÈKKH‹ˆZ\ÜÚ[™ÈÜš]XØ[ÙXÝ[ÛœÈKKBˆYˆ›Ý™\Ý[Ë™Ù]
+šÙ^WÜ™\Ý[ÈŠN‚ˆ\ÜÝY\Ë˜\[™
+ÂˆœÙ]™\š]HŽˆ•ÐT“’S‘È‹ˆ›Y\ÜØYÙHŽˆ“›ÈÙ^WÜ™\Ý[È[ˆ™\Ý[ËšœÛÛ‹ˆH™\Ý[ÈÙXÝ[ÛˆÚ[™H[\Kˆ‹ˆ™š^Ý\HŽˆ˜Ø[Ý[][Ûˆ‹ˆ˜XÝ[ÛˆŽˆ”[ˆHXZ[ˆ[˜[\Ú\È›ÝX›ÛÚÈ[™Ü[]HÙ^WÜ™\Ý[È[ˆ™\Ý[ËšœÛÛ‹ˆ‹ˆJBˆYˆ›Ý™\Ý[Ë™Ù]
+˜ÛÛ˜Û\Ú[ÛœÈŠHÜˆ™\Ý[ÖÈ˜ÛÛ˜Û\Ú[ÛœÈ—KœÝ\ÝÚ]
+–ÈŠN‚ˆ\ÜÝY\Ë˜\[™
+ÂˆœÙ]™\š]HŽˆ•ÐT“’S‘È‹ˆ›Y\ÜØYÙHŽˆÛÛ˜Û\Ú[ÛœÈ\™HÝ[HXÙZÛ\‹ˆš[[ˆÛÛ˜Û\Ú[ÛœÈ‚ˆ˜™Y›Ü™Hš[˜[\Ú[™ÈH™\Üˆ‹ˆ™š^Ý\HŽˆ^‹ˆJBˆYˆ›Ý™\Ý[Ë™Ù]
+˜\›ØXÚŠHÜˆ™\Ý[ÖÈ˜\›ØXÚ—KœÝ\ÝÚ]
+–ÈŠN‚ˆ\ÜÝY\Ë˜\[™
+ÂˆœÙ]™\š]HŽˆ•ÐT“’S‘È‹ˆ›Y\ÜØYÙHŽˆ\›ØXÚÙXÝ[Ûˆ\ÈÝ[HXÙZÛ\‹ˆ‹ˆ™š^Ý\HŽˆ^‹ˆJB‚ˆÈKKHËˆ[Y\šXØ[ÛÛœÚ\Ý[˜ÞNˆÙ^WÜ™\Ý[È™Y™\™[˜ÙY[ˆ\ØÝ\ÜÚ[ÛœÈKKBˆÙ^WÜ™\Ý[ÈH™\Ý[Ë™Ù]
+šÙ^WÜ™\Ý[È‹ßJBˆ›Üˆ\ØÈ[ˆ\ØÝ\ÜÚ[ÛœÎ‚ˆØœÈH\ØË™Ù]
+›ØœÙ\˜][Ûˆ‹ˆŠBˆ[šÙYH\ØË™Ù]
+›[šÙYÜ™\Ý[È‹×JBˆ›Üˆ[š×ÚÙ^H[ˆ[šÙY‚ˆYˆ[š×ÚÙ^H[ˆÙ^WÜ™\Ý[Î‚ˆ^XÝYÝ˜[HÙ^WÜ™\Ý[ÖÛ[š×ÚÙ^WBˆYˆ\Ú[œÝ[˜ÙJ^XÝYÝ˜[XÝ
+N‚ˆ^XÝYÝ˜[H^XÝYÝ˜[™Ù]
+˜[YHŠBˆYˆ\Ú[œÝ[˜ÙJ^XÝYÝ˜[›Ø]
+N‚ˆÈÚXÚÈYˆHØœÙ\˜][ÛˆY[[ÛœÈHÛÛœÚ\Ý[[X™\‹‚ˆÈÛX[XYÛš]Y\È\™H\ÝX[HÜš][ˆ[ˆØÚY[YšXÈ›Ý][Ûˆ[‚ˆÈ›ÜÙKÛÈXØÙ\ÜÙH™[™\š[™ÜÈÛÎÈ[™È›ÝXØÙ\BˆÈYÙ[™\˜]HŒŒˆ]	KŒYˆ›ÙXÙ\È›Üˆ[KÚXÚÛÝ[X]ÚˆÈ[[ÜÝ[žH^‚ˆ˜[ÜÝœÈHÂˆžÎ‹ßH‹™›Ü›X]
+^XÝYÝ˜[
+KˆžÎ‹ŒÙßH‹™›Ü›X]
+^XÝYÝ˜[
+KˆžÎ‹Œ™ßH‹™›Ü›X]
+^XÝYÝ˜[
+KˆÝŠ[
+^XÝYÝ˜[
+JHYˆ^XÝYÝ˜[OH[
+^XÝYÝ˜[
+H[ÙHˆ‹ˆBˆYˆXœÊ^XÝYÝ˜[
+HHŒN‚ˆ˜[ÜÝœË˜\[™
+žÎ‹ŒYŸH‹™›Ü›X]
+^XÝYÝ˜[
+JBˆ›Üˆ™XÈ[ˆ
+K‹ÊN‚ˆØÚHHžÎ‹žÜY_H‹™›Ü›X]
+^XÝYÝ˜[\™XÊBˆX[Ë^HØÚKœ\][ÛŠ™HŠBˆ^ÚHH[
+^
+Bˆ˜[ÜÝœË™^[™
+ÂˆØÚKˆžßY^ÎŠÌÙH‹™›Ü›X]
+X[^ÚJKˆžßY^ßH‹™›Ü›X]
+X[^ÚJKˆžßQ^ÎŠÌÙH‹™›Ü›X]
+X[^ÚJKˆJBˆ˜[ÜÝœÈHÝˆ›Üˆˆ[ˆ˜[ÜÝœÈYˆ—BˆÈ›ÜÙYÚX[ˆ[™Ý\ˆXÚ[X[XÛÛ[XH›ÜÙHÜš]HMŽKH[™HŒŽK‚ˆØØ[^™YHÝ‹œ™\XÙJ‹ˆ‹‹ŠH›Üˆˆ[ˆ˜[ÜÝœÈYˆ‹ˆˆ[ˆˆ[™™Hˆ›Ý[ˆ‹›ÝÙ\Š
+WBˆYˆXœÊ^XÝYÝ˜[
+HHL‚ˆÜ›Ý\YHžÎ‹ŒŸH‹™›Ü›X]
+^XÝYÝ˜[
+BˆØØ[^™Y™^[™
+ÙÜ›Ý\YÜ›Ý\Yœ™\XÙJ‹‹ˆŠKÜ›Ý\Yœ™\XÙJ‹‹—LLŠWJBˆ˜[ÜÝœË™^[™
+ØØ[^™Y
+BˆYˆØœÈ[™›Ý[žJˆ[ˆØœÈ›Üˆˆ[ˆ˜[ÜÝœÊN‚ˆ\ÜÝY\Ë˜\[™
+ÂˆœÙ]™\š]HŽˆ•ÐT“’S‘È‹ˆ›Y\ÜØYÙHŽˆ‘\ØÝ\ÜÚ[Ûˆ[šÜÈÈ	ÞßW	È
+˜[YO^ßJH]‚ˆ›ØœÙ\˜][Ûˆ^Ù\Û—	ÝY[[Ûˆ\È˜[YKˆ‚ˆ•™\šYžH[Y\šXØ[ÛÛœÚ\Ý[˜ÞKˆ‹™›Ü›X]
+ˆ[š×ÚÙ^K^XÝYÝ˜[
+Kˆ™š^Ý\HŽˆ˜Ø[Ý[][Ûˆ‹ˆ˜XÝ[ÛˆŽˆ•™\šYžHH˜[YHÙˆ	ÞßW	È[ˆH›ÝX›ÛÚÈÝ]]‚ˆ˜[™\]HZ]\ˆÙ^WÜ™\Ý[ÈÜˆH\ØÝ\ÜÚ[Ûˆ‚ˆ›ØœÙ\˜][Ûˆ^ˆ‹™›Ü›X]
+[š×ÚÙ^JKˆJB‚ˆÈKKHˆš\ÚÈ]™[œÈ[˜Ù\Z[H›Ø˜Xš[]H[YÛ›Y[KKBˆYˆ›Ø—Û™YÈ\È›Ý›Û™H[™Ý™\˜[Üš\ÚÎ‚ˆYˆ›Ø—Û™YÈˆ[™Ý™\˜[Üš\ÚÈ[ˆ
+›ÝÈ‹
+N‚ˆ\ÜÝY\Ë˜\[™
+ÂˆœÙ]™\š]HŽˆ•ÐT“’S‘È‹ˆ›Y\ÜØYÙHŽˆ”›Ø˜Xš[]HÙˆ™YØ]]™HÝ]ÛÛYH\ÈÎ‹ŒŸIH]Ý™\˜[š\ÚÈ‚ˆš\È	ÓÝ×	Ëˆ\ÙHÙY[H[˜ÛÛœÚ\Ý[ˆ‹™›Ü›X]
+›Ø—Û™YÊKˆ™š^Ý\HŽˆ^‹ˆJBˆYˆ›Ø—Û™YÈH[™Ý™\˜[Üš\ÚÈ[ˆ
+šYÚ‹™\žHYÚŠN‚ˆ\ÜÝY\Ë˜\[™
+ÂˆœÙ]™\š]HŽˆ’S‘“È‹ˆ›Y\ÜØYÙHŽˆ”›Ø˜Xš[]HÙˆ™YØ]]™HÝ]ÛÛYH\ÈÛ›HÎ‹ŒŸIH]Ý™\˜[‚ˆœš\ÚÈ\È	ÞßW	ËˆÛÛœÚY\ˆÚ]\ˆHš\ÚÈ˜][™È\Èš]™[ˆ‚ˆ˜žH›Û‹YXÛÛ›ÛZXÈ˜XÝÜœËˆ‹™›Ü›X]
+›Ø—Û™YËÝ™\˜[Üš\ÚË]J
+JKˆ™š^Ý\HŽˆ››Û™H‹ˆJB‚ˆÈKKHKˆ[X™\œÈ][ÝY[ˆHš[™[™ÜÈ]™\Ý[ËšœÛÛˆØ[››ÝXØÛÝ[›ÜˆKKBˆ][ÝY[›X]ÚYHÒU[˜XÙYÛ[X™\œÊ™\Ý[ÊBˆYˆ[Š[›X]ÚY
+HHÈ[™[Š[›X]ÚY
+Hˆ[Š][ÝY
+HÈ‹Œ‚ˆ\ÝYH‹‹š›Ú[ŠÙ›]Û[X™\ŠŠH›Üˆˆ[ˆ[›X]ÚYÎŒLJBˆ\ÜÝY\Ë˜\[™
+ÂˆœÙ]™\š]HŽˆ•ÐT“’S‘È‹ˆ›Y\ÜØYÙHŽˆžßHÙˆßH[X™\œÈ][ÝY[ˆHš[™[™ÜÈ\™H›Ý[ˆ™\Ý[ËšœÛÛˆ‚ˆŠßJKˆY[HÈÙ^WÜ™\Ý[ËÜˆÝ]H[ˆH^ÝÈ^HÙ\™H‚ˆ™\š]™YÛÈ]™\žHšYÝ\™H[ˆHš[™[™ÜÈØ[ˆ™H˜XÙYˆ‹™›Ü›X]
+ˆ[Š[›X]ÚY
+K[Š][ÝY
+K\ÝY
+Kˆ™š^Ý\HŽˆ^‹ˆJBˆ[Yˆ[›X]ÚY‚ˆ\ÜÝY\Ë˜\[™
+ÂˆœÙ]™\š]HŽˆ’S‘“È‹ˆ›Y\ÜØYÙHŽˆ“[X™\œÈ][ÝY[ˆHš[™[™ÜÈ]›Ý›Ý[™[ˆ™\Ý[ËšœÛÛŽˆßKˆ‚ˆÛÛ™š\›H^H\™H\š]™Y˜[Y\ÈÜˆY[HÈÙ^WÜ™\Ý[Ëˆ‹™›Ü›X]
+ˆ‹‹š›Ú[ŠÙ›]Û[X™\ŠŠH›Üˆˆ[ˆ[›X]ÚYÎŒLJJKˆ™š^Ý\HŽˆ››Û™H‹ˆJB‚ˆÈKKHLˆHÛ™ÈÙ^WÜ™\Ý[È\ÝÚ]›Ý[™ÈX\šÙY\ÈHXY[™HKKBˆ—Ü›ÝÜÈH[ŠÙ›][—ÚÙ^WÜ™\Ý[ÊÙ^WÜ™\Ý[ÊJHYˆÙ^WÜ™\Ý[È[ÙHˆYˆ—Ü›ÝÜÈˆMH[™›ÝÚXY[™WÜ›ÝÜÊ™\Ý[ÊN‚ˆ\ÜÝY\Ë˜\[™
+ÂˆœÙ]™\š]HŽˆ•ÐT“’S‘È‹ˆ›Y\ÜØYÙHŽˆšÙ^WÜ™\Ý[È\ÈßH›ÝÜÈ[™›Û™H\ÈX\šÙYšXY[™WŽˆYKÛÈH‚ˆ”™\Ý[ÈX›Hš[È[Ùˆ[HÚ]X™[È\š]™Yœ›ÛHÙ^H˜[Y\Ëˆ‚ˆ“X\šÈHKLLXÚ\Ú]™H˜[Y\È
+Ú]X™[[š]XÚ[X[ÊH[™H‚ˆ™[\Ý[Ý™\ÈÈ[ˆ\[™^ˆ‹™›Ü›X]
+—Ü›ÝÜÊKˆ™š^Ý\HŽˆ^‹ˆJB‚ˆYˆ›Ý\ÜÝY\Î‚ˆ\ÜÝY\Ë˜\[™
+ÈœÙ]™\š]HŽˆ’S‘“È‹›Y\ÜØYÙHŽˆ“›ÈÛÛœÚ\Ý[˜ÞH\ÜÝY\È›Ý[™ˆ‹™š^Ý\HŽˆ››Û™HŸJB‚ˆ™]\›ˆ\ÜÝY\Â‚‚™Yˆš[ØÛÛœÚ\Ý[˜ÞWÜ™\Ü
+\ÜÝY\ÊN‚ˆˆˆ”š[HÛÛœÚ\Ý[˜ÞHÚXÚÈ™\Ý[ÈÚ]š\ÝX[›Ü›X][™Ëˆˆˆ‚ˆ\œ›ÜœÈHÚH›ÜˆH[ˆ\ÜÝY\ÈYˆVÈœÙ]™\š]H—HOH‘T”“Ôˆ—BˆØ\›š[™ÜÈHÚH›ÜˆH[ˆ\ÜÝY\ÈYˆVÈœÙ]™\š]H—HOH•ÐT“’S‘È—Bˆ[™›ÜÈHÚH›ÜˆH[ˆ\ÜÝY\ÈYˆVÈœÙ]™\š]H—HOH’S‘“È—B‚ˆ^Ùš^\ÈHÚH›ÜˆH[ˆ\ÜÝY\ÈYˆK™Ù]
+™š^Ý\HŠHOH^—BˆØ[×Ùš^\ÈHÚH›ÜˆH[ˆ\ÜÝY\ÈYˆK™Ù]
+™š^Ý\HŠHOH˜Ø[Ý[][Ûˆ—B‚ˆš[
+ˆOOOOH™\ÜÛÛœÚ\Ý[˜ÞHÚXÚÈOOOOHŠBˆYˆ\œ›ÜœÎ‚ˆ›ÜˆH[ˆ\œ›ÜœÎ‚ˆYÈHˆÐÐSËQ’VHˆYˆK™Ù]
+™š^Ý\HŠHOH˜Ø[Ý[][Ûˆˆ[ÙHˆÕVQ’VHˆYˆK™Ù]
+™š^Ý\HŠHOH^ˆ[ÙHˆ‚ˆš[
+ˆÑT”“ÔžßWHßH‹™›Ü›X]
+YËVÈ›Y\ÜØYÙH—JJBˆYˆØ\›š[™ÜÎ‚ˆ›ÜˆH[ˆØ\›š[™ÜÎ‚ˆYÈHˆÐÐSËQ’VHˆYˆK™Ù]
+™š^Ý\HŠHOH˜Ø[Ý[][Ûˆˆ[ÙHˆÕVQ’VHˆYˆK™Ù]
+™š^Ý\HŠHOH^ˆ[ÙHˆ‚ˆš[
+ˆÕÐT“’S‘ÞßWHßH‹™›Ü›X]
+YËVÈ›Y\ÜØYÙH—JJBˆYˆ[™›ÜÈ[™›Ý\œ›ÜœÈ[™›ÝØ\›š[™ÜÎ‚ˆ›ÜˆH[ˆ[™›ÜÎ‚ˆš[
+ˆÓÒ×HßH‹™›Ü›X]
+VÈ›Y\ÜØYÙH—JJB‚ˆYˆ\œ›ÜœÎ‚ˆš[
+ˆŠBˆš[
+ˆßHT”“ÔŠÊH›Ý[™ˆš^\ÙH™Y›Ü™H\ÝšX][™ÈH™\Üˆ‹™›Ü›X]
+ˆ[Š\œ›ÜœÊJJBˆš[
+ˆ\œ›ÜœÈ[™XØ]HÛÛ˜YXÝ[ÛœÈ][™\›Z[™H™\ÜÜ™YXš[]KˆŠBˆ[YˆØ\›š[™ÜÎ‚ˆš[
+ˆŠBˆš[
+ˆßHÐT“’S‘ÊÊH›Ý[™ˆ™]šY]È™Y›Ü™Hš[˜[\Ú[™Ëˆ‹™›Ü›X]
+ˆ[ŠØ\›š[™ÜÊJJBˆ[ÙN‚ˆš[
+ˆ™\Ü\È[\›˜[HÛÛœÚ\Ý[ˆŠB‚ˆYˆ^Ùš^\Î‚ˆš[
+ˆßH^š^
+\ÊH™\]Z\™H™]šY]È™Y›Ü™H\ÝšX][Û‹ˆ‹™›Ü›X]
+[Š^Ùš^\ÊJJBˆYˆØ[×Ùš^\Î‚ˆš[
+ˆßHØ[Ý[][Ûˆš^
+\ÊH™YYYÙ[™K\[ˆ
+ÙYHš^\×Û™YYYšœÛÛŠKˆ‹™›Ü›X]
+ˆ[ŠØ[×Ùš^\ÊJJB‚ˆš[
+ˆOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOHŠBˆ™]\›ˆ[Š\œ›ÜœÊB‚‚‚™Yˆ]]×Ü›Ø›[WÙ\ØÜš\[ÛŠ™\Ý[Ë\Ú×ÜÜXÊN‚ˆˆˆ‘Ù[™\˜]HH›Ø›[H\ØÜš\[Ûˆœ›ÛH\Ú×ÜÜXË›YÙXÝ[ÛœËˆˆˆ‚ˆ\ÈH×Bˆ›ÜˆXY[™È[ˆÈ“Øš™XÝ]™H‹‘\ØÜš\[Ûˆ‹”›Ø›[HÝ][Y[‹•\ÚÈ\ØÜš\[Ûˆ‹˜XÚÙÜ›Ý[™—N‚ˆ^H^˜XÝÜÜX×ÜÙXÝ[ÛŠ\Ú×ÜÜXËXY[™ÊBˆYˆ^‚ˆ\Ë˜\[™
+^
+Bˆœ™XZÂˆ[™[ÜHH^˜XÝÜÜX×ÜÙXÝ[ÛŠ\Ú×ÜÜXË“Ü\˜][™È[™[ÜHŠBˆÈHX\šÙÝÛˆX›HØ[››Ý™H›][™Y[È›ÜÙHÚ]Ý]™XÛÛZ[™ÈH[™HÙ‚ˆÈ\\ÎÈØÛÜH[™Ý[™\™È[™XYH™[™\œÈHØ[YHÙXÝ[Ûˆ\ÈHX›K‚ˆYˆ[™[ÜH[™Ÿˆ›Ý[ˆ[™[ÜN‚ˆ][\ÈHÜ™KœÝXŠˆ——Ê–ËJ—WÊÈ‹ˆ‹[™JKœÝš\
+
+KœœÝš\
+‹ˆŠBˆ›Üˆ[™H[ˆ[™[ÜKœÜ][™\Ê
+HYˆ[™KœÝš\
+
+WBˆ\Ë˜\[™
+Ý
+“Ü\˜][™È[™[ÜHŠH
+ÈŽˆˆ
+ÈŽÈ‹š›Ú[Š][\ÊH
+È‹ˆŠBˆYˆ™\Ý[È[™™\Ý[Ë™Ù]
+›Øš™XÝ]™HŠH[™›Ý\Î‚ˆ\Ë˜\[™
+ÝŠ™\Ý[ÖÈ›Øš™XÝ]™H—JJBˆ™]\›ˆ——ˆ‹š›Ú[Š\ÊB‚‚™YˆÜ™\]Z\™YÜÙXÝ[Û—Ø]˜Z[X›JÙXÝ[Û‹™\Ý[Ë\Ú×ÜÜXÊN‚ˆˆˆÚXÚÈÚ]\ˆHÛÛ™šYÝ\™Y™\ÜÙXÝ[Ûˆ\È[›ÝYÚ[œ]]Kˆˆˆ‚ˆ›Ü›X[^™YHÝŠÙXÝ[ÛŠKœÝš\
+
+K›ÝÙ\Š
+Kœ™\XÙJ‹H‹—ÈŠKœ™\XÙJˆ‹—ÈŠBˆYˆ›Ü›X[^™YOH™^XÝ]]™WÜÝ[[X\žHŽ‚ˆ™]\›ˆ›ÛÛ
+
+™\Ý[È[™
+™\Ý[Ë™Ù]
+™^XÝ]]™WÜÝ[[X\žHŠBˆÜˆ™\Ý[Ë™Ù]
+šÙ^WÜ™\Ý[ÈŠBˆÜˆ™\Ý[Ë™Ù]
+˜\›ØXÚŠBˆÜˆ™\Ý[Ë™Ù]
+˜ÛÛ˜Û\Ú[ÛœÈŠJJBˆÜˆÛX[X[ÜÙXÝ[Û—Ùš[Y
+™^XÝ]]™WÜÝ[[X\žHŠJBˆYˆ›Ü›X[^™Y[ˆ
+œ›Ø›[WÙ\ØÜš\[Ûˆ‹œ›Ø›[WÜÝ][Y[ŠN‚ˆ™]\›ˆ›ÛÛ
+]]×Ü›Ø›[WÙ\ØÜš\[ÛŠ™\Ý[Ë\Ú×ÜÜXÊBˆÜˆÛX[X[ÜÙXÝ[Û—Ùš[Y
+œ›Ø›[WÙ\ØÜš\[ÛˆŠJBˆYˆ›Ü›X[^™Y[ˆ
+œØÛÜH‹œØÛÜWØ[™ÜÝ[™\™ÈŠN‚ˆYˆ›Ý\Ú×ÜÜXÎ‚ˆ™]\›ˆ˜[ÙBˆ™]\›ˆ›ÛÛ
+^˜XÝÜÜX×ÜÙXÝ[ÛŠ\Ú×ÜÜXË\XØX›HÝ[™\™ÈŠBˆÜˆ^˜XÝÜÜX×ÜÙXÝ[ÛŠ\Ú×ÜÜXËØ[Ý[][ÛˆY]ÙÈŠBˆÜˆ^˜XÝÜÜX×ÜÙXÝ[ÛŠ\Ú×ÜÜXËXØÙ\[˜ÙHÜš]\šXHŠBˆÜˆ^˜XÝÜÜX×ÜÙXÝ[ÛŠ\Ú×ÜÜXË“Ü\˜][™È[™[ÜHŠJBˆYˆ›Ü›X[^™Y[ˆ
+›Y]ÙÛÙÞH‹˜\›ØXÚŠN‚ˆ™]\›ˆ›ÛÛ
+
+™\Ý[È[™™\Ý[Ë™Ù]
+˜\›ØXÚŠJBˆÜˆÛX[X[ÜÙXÝ[Û—Ùš[Y
+˜\›ØXÚŠJBˆYˆ›Ü›X[^™Y[ˆ
+š[™›Ü›X][Û—ÜÛÝ\˜Ù\È‹™]šY[˜ÙWØ˜\Ú\È‹œÛÝ\˜Ù\ÈŠN‚ˆ™]\›ˆ›ÛÛ
+›Ü›X]Ú[™›Ü›X][Û—ÜÛÝ\˜Ù\×Ý^
+ßK™\Ý[ÊJBˆYˆ›Ü›X[^™Y[ˆ
+˜\ÜÝ[\[ÛœÈ‹˜\ÜÝ[\[Ûœ×Ø[™ÙØ\È‹™]WÙØ\ÈŠN‚ˆ™]\›ˆ›ÛÛ
+›Ü›X]Ø\ÜÝ[\[Ûœ×Ý^
+™\Ý[ÊJBˆYˆ›Ü›X[^™YOHœ™\Ý[ÈŽ‚ˆ™]\›ˆ›ÛÛ
+™\Ý[È[™™\Ý[Ë™Ù]
+šÙ^WÜ™\Ý[ÈŠJBˆYˆ›Ü›X[^™YOH™\ØÝ\ÜÚ[ÛˆŽ‚ˆ™]\›ˆ›ÛÛ
+™\Ý[È[™™\Ý[Ë™Ù]
+™šYÝ\™WÙ\ØÝ\ÜÚ[ÛˆŠJBˆYˆ›Ü›X[^™YOH˜[Y][ÛˆŽ‚ˆ™]\›ˆ›ÛÛ
+™\Ý[È[™™\Ý[Ë™Ù]
+˜[Y][ÛˆŠJBˆYˆ›Ü›X[^™YOH˜™[˜ÚX\š×Ý˜[Y][ÛˆŽ‚ˆ™]\›ˆ›ÛÛ
+™\Ý[È[™™\Ý[Ë™Ù]
+˜™[˜ÚX\š×Ý˜[Y][ÛˆŠJBˆYˆ›Ü›X[^™Y[ˆ
+[˜Ù\Z[H‹[˜Ù\Z[WØ[˜[\Ú\ÈŠN‚ˆ™]\›ˆ›ÛÛ
+™\Ý[È[™™\Ý[Ë™Ù]
+[˜Ù\Z[HŠJBˆYˆ›Ü›X[^™Y[ˆ
+œÛÛ][Û—ÝÛÜšÙ›ÝÈ‹ÛÜšÙ›ÝÈ‹˜YÙ[ÝÛÜšÙ›ÝÈŠN‚ˆ™]\›ˆ›ÛÛ
+™\Ý[È[™™\Ý[Ë™Ù]
+˜YÙ[ÝÛÜšÙ›Ý×Ü[ˆŠJBˆYˆ›Ü›X[^™Y[ˆ
+œš\ÚÈ‹œš\Ú×Ø\ÜÙ\ÜÛY[‹œš\Ú×Ù]˜[X][ÛˆŠN‚ˆ™]\›ˆ›ÛÛ
+™\Ý[È[™
+™\Ý[Ë™Ù]
+œš\Ú×Ù]˜[X][ÛˆŠHÜˆ™\Ý[Ë™Ù]
+œš\ÚÜÈŠJJBˆYˆ›Ü›X[^™Y[ˆ
+˜ÛÛ˜Û\Ú[Ûˆ‹˜ÛÛ˜Û\Ú[ÛœÈ‹˜ÛÛ˜Û\Ú[Ûœ×Ø[™Ü™XÛÛ[Y[™][ÛœÈŠN‚ˆ™]\›ˆ›ÛÛ
+
+™\Ý[È[™™\Ý[Ë™Ù]
+˜ÛÛ˜Û\Ú[ÛœÈŠJBˆÜˆÛX[X[ÜÙXÝ[Û—Ùš[Y
+˜ÛÛ˜Û\Ú[ÛœÈŠJBˆYˆ›Ü›X[^™YOHœ™Y™\™[˜Ù\ÈŽ‚ˆ™]\›ˆ›ÛÛ
+
+™\Ý[È[™™\Ý[Ë™Ù]
+œ™Y™\™[˜Ù\ÈŠJBˆÜˆÛX[X[ÜÙXÝ[Û—Ùš[Y
+œ™Y™\™[˜Ù\ÈŠJBˆ™]\›ˆYB‚‚™YˆÛØYÜ[›™\—Ú›ØœÊ[›™\—Ù—Ü]
+N‚ˆˆˆ”™]\›ˆ[›™\ˆ›Øˆ›ÝÜÈœ›ÛH[›™\‹™ˆÜˆ[ˆ\œ›ÜˆY\ÜØYÙKˆˆˆ‚ˆžN‚ˆÛÛ›™XÝ[ÛˆHÜ[]LË˜ÛÛ›™XÝ
+[›™\—Ù—Ü][Y[Ý]MKŒ
+BˆÛÛ›™XÝ[Û‹œ›Ý×Ù˜XÝÜžHHÜ[]LË”›ÝÂˆžN‚ˆ›ÝÜÈHÛÛ›™XÝ[Û‹™^XÝ]Jˆ”ÑSPÕ›Ø—ÚYØÜš\›Ø—Ý\KÝ]\Ë\œ›Ü—ÛY\ÜØYÙH‚ˆ‘”“ÓH›ØœÈÔ‘Tˆ–HÜ™X]YØ]‚ˆ
+K™™]Ú[
+
+Bˆš[˜[N‚ˆÛÛ›™XÝ[Û‹˜ÛÜÙJ
+Bˆ^Ù\Ü[]LË‘\œ›Üˆ\È\œ›ÜŽ‚ˆ™]\›ˆ×KÝŠ\œ›ÜŠBˆ™]\›ˆÙXÝ
+›ÝÊH›Üˆ›ÝÈ[ˆ›ÝÜ×K›Û™B‚‚™YˆÜ[›™\—ÜØÜš\Û˜[YJ›Ø—Ü›ÝÊN‚ˆˆˆ”™]\›ˆH˜\Ù[˜[YHÙˆH[›™\ˆ›ØˆØÜš\]ˆˆˆ‚ˆ™]\›ˆÜËœ]˜˜\Ù[˜[YJÝŠ›Ø—Ü›ÝË™Ù]
+œØÜš\ŠHÜˆˆŠJB‚‚™YˆÜ[›™\—ÜÝ]\×ÜÝ[[X\žJ›Ø—Ü›ÝÜÊN‚ˆˆˆ”™]\›ˆHÛÛ\XÝÝ]\ÈÝ[[X\žH›Üˆ™\ÜØ\›š[™ÜËˆˆˆ‚ˆÛÝ[ÈHßBˆ›Üˆ›Ø—Ü›ÝÈ[ˆ›Ø—Ü›ÝÜÎ‚ˆÝ]\ÈHÝŠ›Ø—Ü›ÝË™Ù]
+œÝ]\ÈŠHÜˆ[šÛ›ÝÛˆŠBˆÛÝ[ÖÜÝ]\×HHÛÝ[Ë™Ù]
+Ý]\Ë
+H
+ÈBˆ™]\›ˆ‹‹š›Ú[ŠÈžßO^ßH‹™›Ü›X]
+Ý]\ËÛÝ[ÖÜÝ]\×JBˆ›ÜˆÝ]\È[ˆÛÜY
+ÛÝ[ÊWJB‚‚™YˆÝ˜[Y]WÜ[›™\—Ù^XÝ][ÛŠ›ÝX›ÛÚÜË[›™YÛ›ÝX›ÛÚÜË^\Ý[™×Û›ÝX›ÛÚÜÊN‚ˆˆˆ”™]\›ˆØ\›š[™ÜÈ›Üˆ[˜ÛÛ\]H™\TÚ[H[›™\ˆ›ÝX›ÛÚÈ^XÝ][Û‹ˆˆˆ‚ˆØ\›š[™ÜÈH×Bˆ^XÝ][Û—Ù[™Ú[™HHÝŠ›ÝX›ÛÚÜË™Ù]
+™^XÝ][Û—Ù[™Ú[™H‹ˆŠJKœÝš\
+
+K›ÝÙ\Š
+Bˆ›ÝX›ÛÚ×Ù^XÝ][Û—Ü™\]Z\™YHØ\×Ø›ÛÛ
+›ÝX›ÛÚÜË™Ù]
+™^XÝ][Û—Ü™\]Z\™Y‹˜[ÙJJBˆ™\]Z\™WÜÝXØÙ\ÜÙ[Ú›ØœÈHØ\×Ø›ÛÛ
+›ÝX›ÛÚÜË™Ù]
+œ™\]Z\™WÜÝXØÙ\ÜÙ[Ú›ØœÈ‹YJJBˆYˆ›Ý
+›ÝX›ÛÚ×Ù^XÝ][Û—Ü™\]Z\™Y[™^XÝ][Û—Ù[™Ú[™HOH›™\\Ú[WÜ[›™\ˆŠN‚ˆ™]\›ˆØ\›š[™ÜÂˆYˆ›Ý^\Ý[™×Û›ÝX›ÛÚÜÎ‚ˆ™]\›ˆØ\›š[™ÜÂ‚ˆ[›™\—ÛÝ]]Ü]HÜËœ]š›Ú[ŠTÒ×ÑT‹œ[›™\—ÛÝ]]ŠBˆ[›™\—Ù—Ü]HÜËœ]š›Ú[ŠTÒ×ÑT‹œ[›™\‹™ˆŠBˆYˆ›ÝÜËœ]™^\ÝÊ[›™\—ÛÝ]]Ü]
+N‚ˆØ\›š[™ÜË˜\[™
+“›ÝX›ÛÚÈ^XÝ][Ûˆ[™Ú[™H\È™\\Ú[WÜ[›™\‹][›™\—ÛÝ]]È\ÈZ\ÜÚ[™ËˆŠBˆYˆ›ÝÜËœ]™^\ÝÊ[›™\—Ù—Ü]
+N‚ˆØ\›š[™ÜË˜\[™
+“›ÝX›ÛÚÈ^XÝ][Ûˆ[™Ú[™H\È™\\Ú[WÜ[›™\‹][›™\‹™ˆ\ÈZ\ÜÚ[™ËˆŠBˆ™]\›ˆØ\›š[™ÜÂ‚ˆ›Ø—Ü›ÝÜËØYÙ\œ›ÜˆHÛØYÜ[›™\—Ú›ØœÊ[›™\—Ù—Ü]
+BˆYˆØYÙ\œ›ÜŽ‚ˆØ\›š[™ÜË˜\[™
+ÛÝ[›Ý[œÜXÝ[›™\‹™ˆ›Üˆ›ÝX›ÛÚÈÝ]\ÎˆßH‹™›Ü›X]
+ˆØYÙ\œ›ÜŠJBˆ™]\›ˆØ\›š[™ÜÂˆYˆ›Ý›Ø—Ü›ÝÜÎ‚ˆØ\›š[™ÜË˜\[™
+œ[›™\‹™ˆ^\ÝË]]ÛÛZ[œÈ›È™XÛÜ™Y[›™\ˆ›ØœËˆŠBˆ™]\›ˆØ\›š[™ÜÂ‚ˆ^XÝYÛ›ÝX›ÛÚÜÈH[›™YÛ›ÝX›ÛÚÜÈÜˆÛÜËœ]˜˜\Ù[˜[YJ]
+Bˆ›Üˆ][ˆ^\Ý[™×Û›ÝX›ÛÚÜ×Bˆ^XÝYÜØÜš\Û˜[Y\ÈHÙ]
+
+Bˆ›Üˆ›ÝX›ÛÚ×Ùš[H[ˆ^XÝYÛ›ÝX›ÛÚÜÎ‚ˆ›ÝX›ÛÚ×Û˜[YHHÜËœ]˜˜\Ù[˜[YJÝŠ›ÝX›ÛÚ×Ùš[JJBˆ^XÝYÜØÜš\Û˜[Y\Ë˜Y
+›ÝX›ÛÚ×Û˜[YJBˆ^XÝYÜØÜš\Û˜[Y\Ë˜Y
+ÜËœ]œÜ]^
+›ÝX›ÛÚ×Û˜[YJVÌH
+È‹œHŠB‚ˆ›ÝX›ÛÚ×Ü›ÝÜÈH×Bˆ›Üˆ›ÝÈ[ˆ›Ø—Ü›ÝÜÎ‚ˆ›Ø—Ý\HHÝŠ›ÝË™Ù]
+š›Ø—Ý\HŠHÜˆœØÜš\ŠBˆØÜš\Û˜[YHHÜ[›™\—ÜØÜš\Û˜[YJ›ÝÊBˆYˆ›Ø—Ý\HOH››ÝX›ÛÚÈˆÜˆØÜš\Û˜[YH[ˆ^XÝYÜØÜš\Û˜[Y\Î‚ˆ›ÝX›ÛÚ×Ü›ÝÜË˜\[™
+›ÝÊBˆYˆ›Ý›ÝX›ÛÚ×Ü›ÝÜÎ‚ˆØ\›š[™ÜË˜\[™
+ˆœ[›™\‹™ˆÛÛZ[œÈ›ØœÈ
+ßJK]›Û™HX]ÚH[›™Y›ÝX›ÛÚÜËˆ‹™›Ü›X]
+ˆÜ[›™\—ÜÝ]\×ÜÝ[[X\žJ›Ø—Ü›ÝÜÊJJBˆ™]\›ˆØ\›š[™ÜÂ‚ˆYˆ™\]Z\™WÜÝXØÙ\ÜÙ[Ú›ØœÎ‚ˆ[œÝXØÙ\ÜÙ[HÜ›ÝÈ›Üˆ›ÝÈ[ˆ›ÝX›ÛÚ×Ü›ÝÜÂˆYˆÝŠ›ÝË™Ù]
+œÝ]\ÈŠHÜˆˆŠHOHœÝXØÙ\ÜÈ—BˆYˆ[œÝXØÙ\ÜÙ[‚ˆ]Z[ÈH×Bˆ›Üˆ›ÝÈ[ˆ[œÝXØÙ\ÜÙ[ÎWN‚ˆ]Z[Ë˜\[™
+žßO^ßH
+ßJH‹™›Ü›X]
+ˆ›ÝË™Ù]
+š›Ø—ÚYŠK›ÝË™Ù]
+œÝ]\ÈŠKÜ[›™\—ÜØÜš\Û˜[YJ›ÝÊJJBˆYˆ[Š[œÝXØÙ\ÜÙ[
+HˆN‚ˆ]Z[Ë˜\[™
+‹‹‹ˆßH[Ü™H‹™›Ü›X]
+[Š[œÝXØÙ\ÜÙ[
+HHJJBˆØ\›š[™ÜË˜\[™
+“™\TÚ[H[›™\ˆ›ÝX›ÛÚÈ›ØœÈ\™H›Ý[ÝXØÙ\ÜÙ[ˆßKˆ‹™›Ü›X]
+ˆŽÈ‹š›Ú[Š]Z[ÊJJB‚ˆÝXØÙ\ÜÙ[Û›ÝX›ÛÚÜÈHÙ]
+×Ü[›™\—ÜØÜš\Û˜[YJ›ÝÊH›Üˆ›ÝÈ[ˆ›ÝX›ÛÚ×Ü›ÝÜÂˆYˆÝŠ›ÝË™Ù]
+œÝ]\ÈŠHÜˆˆŠHOHœÝXØÙ\ÜÈ—JBˆ›Üˆ›ÝX›ÛÚ×Ùš[H[ˆ^XÝYÛ›ÝX›ÛÚÜÎ‚ˆ›ÝX›ÛÚ×Û˜[YHHÜËœ]˜˜\Ù[˜[YJÝŠ›ÝX›ÛÚ×Ùš[JJBˆØÜš\Û˜[YHHÜËœ]œÜ]^
+›ÝX›ÛÚ×Û˜[YJVÌH
+È‹œH‚ˆ›ÝX›ÛÚ×Ü]HÜËœ]š›Ú[ŠTÒ×ÑT‹œÝ\—Ø[˜[\Ú\È‹ÝŠ›ÝX›ÛÚ×Ùš[JJBˆYˆ
+ÜËœ]™^\ÝÊ›ÝX›ÛÚ×Ü]
+Bˆ[™›ÝX›ÛÚ×Û˜[YH›Ý[ˆÝXØÙ\ÜÙ[Û›ÝX›ÛÚÜÂˆ[™ØÜš\Û˜[YH›Ý[ˆÝXØÙ\ÜÙ[Û›ÝX›ÛÚÜÊN‚ˆØ\›š[™ÜË˜\[™
+ˆ”[›™Y›ÝX›ÛÚÈ\È›ÈÝXØÙ\ÜÙ[[›™\ˆ›ØŽˆÝ\—Ø[˜[\Ú\ËÞßH‹™›Ü›X]
+ˆ›ÝX›ÛÚ×Ùš[JJBˆ™]\›ˆØ\›š[™ÜÂ‚‚™YˆÜ™\ÛÛ™WÝ\Ú×Ü]
+]
+N‚ˆˆˆ”™\ÛÛ™HHÝYWØÛÛ™šYÈ]™[]]™HÈH\ÚÈ›Û\‹ˆˆˆ‚ˆYˆÜËœ]š\ØXœÊÝŠ]
+JN‚ˆ™]\›ˆÝŠ]
+Bˆ™]\›ˆÜËœ]š›Ú[ŠTÒ×ÑT‹ÝŠ]
+JB‚‚™YˆÜÜ]Ü›ÙXÙ\Ê›ÙXÙ\ÊN‚ˆˆˆ”™]\›ˆXÛ\™YÝ]]È\ÈH\ÝÈXØÙ\ÈHPSS\ÝÜˆHÛÛ[XK\Ù\\˜]YÝš[™Ëˆˆˆ‚ˆYˆ›Ý›ÙXÙ\Î‚ˆ™]\›ˆ×Bˆ][\ÈH›ÙXÙ\ÈYˆ\Ú[œÝ[˜ÙJ›ÙXÙ\Ë
+\Ý\JJH[ÙHÝŠ›ÙXÙ\ÊKœÜ]
+‹ŠBˆ™]\›ˆÜÝŠ][JKœÝš\
+
+H›Üˆ][H[ˆ][\ÈYˆÝŠ][JKœÝš\
+
+WB‚‚™YˆÝ˜[Y]WØ[˜[\Ú\×ÜØÜš\Ê[˜[\Ú\ÊN‚ˆˆˆ”™]\›ˆØ\›š[™ÜÈ›ÜˆXÛ\™Y[˜[\Ú\ÈØÜš\È[™Z\ˆ\Y˜XÝËˆˆˆ‚ˆØ\›š[™ÜÈH×Bˆ[™Ú[™HHÝŠ[˜[\Ú\Ë™Ù]
+™[™Ú[™H‹˜]]ÈŠJKœÝš\
+
+K›ÝÙ\Š
+BˆØÜš\ÈH[˜[\Ú\Ë™Ù]
+œØÜš\È‹×JBˆYˆ[™Ú[™H[ˆ
+œØÜš\‹šXœšYŠH[™›ÝØÜš\Î‚ˆØ\›š[™ÜË˜\[™
+ˆ˜[˜[\Ú\Ë™[™Ú[™H\È	ÞßIË][˜[\Ú\ËœØÜš\È\ÝÈ›ÈØÜš\Ëˆ‹™›Ü›X]
+[™Ú[™JJBˆ›Üˆ[žH[ˆØÜš\Î‚ˆØÜš\Ùš[HH[žK™Ù]
+™š[HŠBˆYˆ›ÝØÜš\Ùš[N‚ˆÛÛ[YBˆÈ]K\™]šY]˜[ØÜš\È]™H[ˆÝ\NÈHÛÜšÈ™XÛÜ™™\ÛÛ™\È˜\™H˜[Y\È[ˆ›Ý›Û\œË‚ˆØ[™Y]\ÈHÛÜËœ]š›Ú[ŠTÒ×ÑT‹›Û\‹ÝŠØÜš\Ùš[JJBˆ›Üˆ›Û\ˆ[ˆ
+œÝ\—Ø[˜[\Ú\È‹œÝ\WÜØÛÜWØ[™Ü™\ÙX\˜ÚŠWBˆØ[™Y]\Ë˜\[™
+Ü™\ÛÛ™WÝ\Ú×Ü]
+ØÜš\Ùš[JJBˆYˆ›Ý[žJÜËœ]™^\ÝÊ]
+H›Üˆ][ˆØ[™Y]\ÊN‚ˆØ\›š[™ÜË˜\[™
+”[›™Y[˜[\Ú\ÈØÜš\\ÈZ\ÜÚ[™ÎˆÝ\—Ø[˜[\Ú\ËÞßH‹™›Ü›X]
+ˆØÜš\Ùš[JJBˆÛÛ[YBˆ›Üˆ›ÙXÙY[ˆÜÜ]Ü›ÙXÙ\Ê[žK™Ù]
+œ›ÙXÙ\ÈŠJN‚ˆYˆ›ÝÛØ‹™ÛØŠÜ™\ÛÛ™WÝ\Ú×Ü]
+›ÙXÙY
+JN‚ˆØ\›š[™ÜË˜\[™
+[˜[\Ú\ÈØÜš\ßHXÛ\™\È[ˆÝ]]]\ÈZ\ÜÚ[™ÎˆßH‹™›Ü›X]
+ˆØÜš\Ùš[K›ÙXÙY
+JBˆ™]\›ˆØ\›š[™ÜÂ‚‚™YˆÝ˜[Y]WÙ]WÜÛÝ\˜Ù\Ê[œ]Ë]X[]WÙØ]\Ë™\Ý[ÊN‚ˆˆˆ”™]\›ˆØ\›š[™ÜÈ›ÜˆXÛ\™YÛÝ\˜ÙHÞ\Ý[\È[™›Ý™[˜[˜ÙHÛÜÝ\™Kˆˆˆ‚ˆØ\›š[™ÜÈH×Bˆ]WÜÛÝ\˜Ù\ÈH[œ]Ë™Ù]
+™]WÜÛÝ\˜Ù\È‹×JBˆ™\]Z\™YHØ\×Ø›ÛÛ
+[œ]Ë™Ù]
+™]WÜÛÝ\˜Ù\×Ü™\]Z\™Y‹˜[ÙJJBˆYˆ™\]Z\™Y[™›Ý]WÜÛÝ\˜Ù\Î‚ˆØ\›š[™ÜË˜\[™
+ˆš[œ]Ë™]WÜÛÝ\˜Ù\×Ü™\]Z\™Y\ÈYK]›ÈÛÝ\˜ÙHÞ\Ý[\È\™H\ÝYˆŠB‚ˆ›Üˆ[žH[ˆ]WÜÛÝ\˜Ù\Î‚ˆÞ\Ý[HH[žK™Ù]
+œÞ\Ý[H‹[›˜[YYˆŠBˆ]šY[˜ÙHH[žK™Ù]
+™]šY[˜ÙHŠBˆYˆ›Ý]šY[˜ÙN‚ˆYˆ™\]Z\™YÜˆÚ\×Ü™\]Z\™Y
+]X[]WÙØ]\Ë™Ù]
+œ›Ý™[˜[˜ÙWØÛÜÝ\™HŠJN‚ˆØ\›š[™ÜË˜\[™
+ˆ‘]HÛÝ\˜ÙH	ÞßIÈ\È›È]šY[˜ÙH]8 %Ø\\™Y™XÛÜ™ÈØ[››Ý‚ˆ˜™H˜XÙYˆ‹™›Ü›X]
+Þ\Ý[JJBˆÛÛ[YBˆYˆ›ÝÜËœ]™^\ÝÊÜ™\ÛÛ™WÝ\Ú×Ü]
+]šY[˜ÙJJN‚ˆØ\›š[™ÜË˜\[™
+Ø\\™Y]šY[˜ÙH\ÈZ\ÜÚ[™È›Üˆ]HÛÝ\˜ÙH	ÞßIÎˆßH‹™›Ü›X]
+ˆÞ\Ý[K]šY[˜ÙJJB‚ˆYˆÚ\×Ü™\]Z\™Y
+]X[]WÙØ]\Ë™Ù]
+œ›Ý™[˜[˜ÙWØÛÜÝ\™HŠJH[™]WÜÛÝ\˜Ù\Î‚ˆÚ]YH™\Ý[Ë™Ù]
+™]WÜÛÝ\˜Ù\ÈŠHÜˆ™\Ý[Ë™Ù]
+œÛÝ\˜Ù\ÈŠHYˆ™\Ý[È[ÙH›Û™BˆYˆ›ÝÚ]Y‚ˆØ\›š[™ÜË˜\[™
+ˆ”›Ý™[˜[˜ÙHÛÜÝ\™H\È™\]Z\™Y]™\Ý[ËšœÛÛˆ\È›È]WÜÛÝ\˜Ù\È‚ˆ›ÜˆÛÝ\˜Ù\ÈÙXÝ[Ûˆ˜[Z[™ÈHÞ\Ý[\ÈH[X™\œÈØ[YHœ›ÛKˆŠBˆ™]\›ˆØ\›š[™ÜÂ‚‚™YˆÝ˜[Y]WÝÛÜš×Ü™XÛÜ™
+™\Ü]X[]WÙØ]\ÊN‚ˆˆˆ”™]\›ˆØ\›š[™ÜÈÚ[ˆHY]ÙX[™Y]H™XÛÜ™\È™\]Z\™Y][\ØX›Kˆˆˆ‚ˆÙ][™ÈHÝŠ™\Ü™Ù]
+ÛÜš×Ü™XÛÜ™‹˜]]ÈŠJKœÝš\
+
+K›ÝÙ\Š
+BˆØ]HHÝŠ]X[]WÙØ]\Ë™Ù]
+ÛÜš×Ü™XÛÜ™‹˜]]ÈŠJKœÝš\
+
+K›ÝÙ\Š
+BˆYˆœÚÚ\ˆ[ˆ
+Ù][™ËØ]JN‚ˆ™]\›ˆ×BˆYˆ›Ý
+Ú\×Ü™\]Z\™Y
+Ù][™ÊHÜˆÚ\×Ü™\]Z\™Y
+Ø]JJN‚ˆ™]\›ˆ×B‚ˆ™XÛÜ™Ü]HÜËœ]š›Ú[ŠTÒ×ÑT‹œÝ\×Ü™\Ü‹•ÓÔ’×Ô‘PÓÔ‘›YŠBˆYˆ›ÝÜËœ]™^\ÝÊ™XÛÜ™Ü]
+N‚ˆ™]\›ˆÈ•ÛÜšÈ™XÛÜ™\È™\]Z\™Y]Ý\×Ü™\ÜÕÓÔ’×Ô‘PÓÔ‘›Y\ÈZ\ÜÚ[™È‚ˆŠZ[]Ú]ˆ™\\Ú[HÛÜšË\™XÛÜ™ŠKˆ—BˆžN‚ˆÚ]Ü[Š™XÛÜ™Ü]œˆ‹[˜ÛÙ[™ÏH]‹NŠH\È™XÛÜ™Ùš[N‚ˆ^H™XÛÜ™Ùš[Kœ™XY
+
+Bˆ^Ù\ÔÑ\œ›Üˆ\È\œ›ÜŽ‚ˆ™]\›ˆÈ•ÛÜšÈ™XÛÜ™ÛÝ[›Ý™H™XYˆßH‹™›Ü›X]
+\œ›ÜŠWB‚ˆØ\›š[™ÜÈH×Bˆ›ØÚÜÈH™K™š[™[
+ˆˆKKWÊ•ÓÔ’×Ô‘PÓÔ‘“T”UU‘HYJÐKV˜K^ŒNW×WJÊWÊ‹KO—ÊŠÊWÈ‚ˆˆKKWÊ‹ÕÓÔ’×Ô‘PÓÔ‘“T”UU‘WÊ‹KOˆ‹^™K‘ÕS
+Bˆ[™š[YHØ›ØÚ×ÚY›Üˆ›ØÚ×ÚY›ÙH[ˆ›ØÚÜÂˆYˆ™K™[X]Ú
+ˆ—Ö×—WJ—H‹
+›ÙHÜˆˆŠKœÝš\
+
+HÜˆ–×HŠWBˆYˆ[™š[Y‚ˆØ\›š[™ÜË˜\[™
+ˆ•ÛÜšÈ™XÛÜ™˜\œ˜]]™H\ÈÝ[[\]H^ˆßKˆ‹™›Ü›X]
+ˆ‹‹š›Ú[Š[™š[Y
+JJBˆYˆ›Ý›ØÚÜÎ‚ˆØ\›š[™ÜË˜\[™
+ˆ•ÛÜšÈ™XÛÜ™\È›È˜\œ˜]]™H›ØÚÜÈ8 %™YÙ[™\˜]H]Ú]‚ˆ›™\\Ú[HÛÜšË\™XÛÜ™ÛÈHY]ÙÙXÝ[Ûˆ\È™\Ù[ˆŠBˆ™]\›ˆØ\›š[™ÜÂ‚‚™YˆÙš[™ÝÛÜš×Ü™XÛÜ™ÙÙ[™\˜]ÜŠ
+N‚ˆˆˆ“ØØ]H]ÛÛËÙÙ[™\˜]WÝÛÜš×Ü™XÛÜ™œHœ›ÛHH[š\›Û›Y[ÜˆH™YK‚‚ˆH\ÚÈ›Û\ˆ™[™ÜœÈ]ÈÝÛˆÛÜHÙˆ\È™\ÜÙ[™\˜]Ü‹ÛÈHÙX\˜Úˆ[ÛÈØ[ÜÈ\œ›ÛHH\ÚÈ]Ù[ˆ8 %]\ÈÚ]]È[ˆÛ\ÚÈXÚÈ\ˆHÝ\œ™[ÛÜšË\™XÛÜ™Ù[™\˜]Ü‹‚ˆˆˆ‚ˆ™]\›ˆÙš[™Ù]ÛÛ
+™Ù[™\˜]WÝÛÜš×Ü™XÛÜ™œHŠB‚‚™YˆÙš[™Ù]ÛÛ
+š[[˜[YJN‚ˆˆˆ“ØØ]HH]ÛÛÈØÜš\œ›ÛH‘TTÒSWÔ“Ò‘PÕÔ“ÓÕÜˆH›Û\ˆ™YKˆˆˆ‚ˆØ[™Y]\ÈH×Bˆ›Ú™XÝÜ›ÛÝHÜË™[š\›Û‹™Ù]
+“‘TTÒSWÔ“Ò‘PÕÔ“ÓÕŠBˆYˆ›Ú™XÝÜ›ÛÝ‚ˆØ[™Y]\Ë˜\[™
+ÜËœ]š›Ú[Š›Ú™XÝÜ›ÛÝ™]ÛÛÈ‹š[[˜[YJJBˆ›ÜˆÝ\[ˆ
+ÜËœ]™\›˜[YJÜËœ]˜XœÜ]
+×Ùš[W×ÊJKTÒ×ÑTŠN‚ˆÝ\œ™[HÝ\ˆ›ÜˆÈ[ˆ˜[™ÙJŠN‚ˆØ[™Y]\Ë˜\[™
+ÜËœ]š›Ú[ŠÝ\œ™[™]ÛÛÈ‹š[[˜[YJJBˆØ[™Y]\Ë˜\[™
+ÜËœ]š›Ú[ŠÝ\œ™[š[[˜[YJJBˆ\™[HÜËœ]™\›˜[YJÝ\œ™[
+BˆYˆ\™[OHÝ\œ™[‚ˆœ™XZÂˆÝ\œ™[H\™[ˆ›ÜˆØ[™Y]H[ˆØ[™Y]\Î‚ˆYˆÜËœ]š\Ùš[JØ[™Y]JN‚ˆ™]\›ˆØ[™Y]Bˆ™]\›ˆ›Û™B‚‚™Yˆ™XÛÜ™Ù[š\›Û›Y[
+™\Ý[ÊN‚ˆˆˆ”™XÛÜ™HÛÙØ\™H]›ÙXÙY\È™\Ü[È™\Ý[ËšœÛÛ‹‚‚ˆÝ[\Y\™H˜]\ˆ[ˆ˜XÚÙš[Y]\ŽˆÛ›HH[ˆ]™[™\œÈBˆ[]™\˜X›HØ[ˆÛ™\ÝHÛZ[HÚXÚ™\TÚ[H›ÙXÙY]È[X™\œË‚ˆˆˆ‚ˆYˆ›Ý\Ú[œÝ[˜ÙJ™\Ý[ËXÝ
+N‚ˆ™]\›ˆ›Û™BˆÛÛHÙš[™Ù]ÛÛ
+\Ú×ØÛÜœ\ËœHŠBˆYˆ›ÝÛÛ‚ˆ™]\›ˆ›Û™BˆžN‚ˆ[\Ü[\ÜX‹][ˆÜXÈH[\ÜX‹][œÜX×Ùœ›ÛWÙš[WÛØØ][ÛŠ›™\\Ú[WÝ\Ú×ØÛÜœ\È‹ÛÛ
+Bˆ[Ù[HH[\ÜX‹][›[Ù[WÙœ›ÛWÜÜXÊÜXÊBˆÜXË›ØY\‹™^X×Û[Ù[J[Ù[JBˆ[š\›Û›Y[H[Ù[K˜Ø\\™WÙ[š\›Û›Y[
+
+Bˆ^Ù\^Ù\[Ûˆ\È\œ›ÜŽˆÈH›Ý™[˜[˜ÙHÝ[\]\Ý™]™\ˆœ™XZÈH™\Üˆš[
+““ÕNˆ[š\›Û›Y[›Ý™XÛÜ™Y
+ßJKˆ‹™›Ü›X]
+\œ›ÜŠJBˆ™]\›ˆ›Û™Bˆ™\Ý[ÖÈ™[š\›Û›Y[—HH[š\›Û›Y[ˆžN‚ˆÚ]Ü[Š‘TÕS×Ñ’SKœˆ‹[˜ÛÙ[™ÏH]‹N\ÚYÈŠH\È[™N‚ˆÝÜ™YHœÛÛ‹›ØY
+[™JBˆYˆ\Ú[œÝ[˜ÙJÝÜ™YXÝ
+N‚ˆÝÜ™YÈ™[š\›Û›Y[—HH[š\›Û›Y[ˆÚ]Ü[Š‘TÕS×Ñ’SKÈ‹[˜ÛÙ[™ÏH]‹NŠH\È[™N‚ˆœÛÛ‹™[\
+ÝÜ™Y[™K[™[L‹[œÝ\™WØ\ØÚZOQ˜[ÙJBˆ[™KÜš]J—ˆŠBˆ^Ù\
+ÔÑ\œ›Ü‹˜[YQ\œ›ÜŠH\È\œ›ÜŽ‚ˆš[
+““ÕNˆÛÝ[›Ý\œÚ\ÝH™\Ü[š\›Û›Y[[ˆ™\Ý[ËšœÛÛˆ‚ˆŠßJKˆ‹™›Ü›X]
+\œ›ÜŠKš[O\Þ\ËœÝ\œŠBˆ™]\›ˆ[š\›Û›Y[‚‚™YˆÙ[™\˜]WÝÛÜš×Ü™XÛÜ™
+ÛÛ™šYÊN‚ˆˆˆZ[Ý\×Ü™\ÜÕÓÔ’×Ô‘PÓÔ‘›Y[›\ÜÈH\ÚÈÜÈÝ]‚‚ˆH™\ÜØ\œšY\ÈHÛÛ˜Û\Ú[ÛŽÈHÛÜšÈ™XÛÜ™Ø\œšY\ÈHY]ÙBˆ]K[™Hš[HX\ˆ]\È™YÙ[™\˜]YÚ]]™\žH™\ÜÛÈHÛÂˆ[]™\˜X›\ÈØ[››ÝšY\\‚ˆˆˆ‚ˆÙ][™ÈHÝŠ
+ÛÛ™šYË™Ù]
+œ™\ÜŠHÜˆßJK™Ù]
+ÛÜš×Ü™XÛÜ™‹˜]]ÈŠJKœÝš\
+
+K›ÝÙ\Š
+BˆYˆÙ][™ÈOHœÚÚ\Ž‚ˆ™]\›‚ˆÙ[™\˜]ÜˆHÙš[™ÝÛÜš×Ü™XÛÜ™ÙÙ[™\˜]ÜŠ
+BˆYˆ›ÝÙ[™\˜]ÜŽ‚ˆš[
+ˆŠBˆš[
+““ÕNˆÛÜšÈ™XÛÜ™›ÝÙ[™\˜]Y
+]ÛÛËÙÙ[™\˜]WÝÛÜš×Ü™XÛÜ™œH‚ˆ››Ý›Ý[™
+Kˆ[Žˆ™\\Ú[HÛÜšË\™XÛÜ™žßWˆ‹™›Ü›X]
+TÒ×ÑTŠJBˆ™]\›‚ˆžN‚ˆ[\Ü[\ÜX‹][ˆÜXÈH[\ÜX‹][œÜX×Ùœ›ÛWÙš[WÛØØ][ÛŠ›™\\Ú[WÝÛÜš×Ü™XÛÜ™‹Ù[™\˜]ÜŠBˆ[Ù[HH[\ÜX‹][›[Ù[WÙœ›ÛWÜÜXÊÜXÊBˆÜXË›ØY\‹™^X×Û[Ù[J[Ù[JBˆš[
+ˆŠBˆ[Ù[K›XZ[ŠÕTÒ×ÑT—JBˆ^Ù\^Ù\[Ûˆ\È\œ›ÜŽˆÈ™]™\ˆ›ØÚÈH™\ÜÛˆHÛÛ\[š[Ûˆš[Bˆš[
+ˆŠBˆš[
+““ÕNˆÛÜšÈ™XÛÜ™ÛÝ[›Ý™HÙ[™\˜]YˆßH‹™›Ü›X]
+\œ›ÜŠJB‚‚™YˆÝ˜[Y]WØ\ÜÝ[\[Û—Ü™YÚ\Ý\Š[œ]Ë™\Ý[ÊN‚ˆˆˆ•Ø\›ˆÚ[ˆ[™›Ü›X][ÛˆØ\È›ÝØZ[™Y]›Ý[™ÈØ\È\ÜÝ[YY[ˆÜš][™Ë‚‚ˆHÝYH]ÛÝ[›ÝÙ]HØÝ[Y[Ý[™XXÚY[ˆ[œÝÙ\ˆÛÛYZÝËˆYˆ›Âˆ\ÜÝ[\[Ûˆ\È™YÚ\Ý\™Y]ÝXœÝ]][Ûˆ\È[š\ÚX›HÈH™XY\‹‚ˆˆˆ‚ˆ[›ØZ[™YH×Bˆ›Üˆ[žH[ˆ[œ]Ë™Ù]
+™]WÜÛÝ\˜Ù\È‹×JHÜˆ×N‚ˆYˆ›Ý\Ú[œÝ[˜ÙJ[žKXÝ
+N‚ˆÛÛ[YBˆ]šY[˜ÙHHÝŠ[žK™Ù]
+™]šY[˜ÙH‹ˆŠHÜˆˆŠBˆYˆ›Ý]šY[˜ÙHÜˆ›ÝÜËœ]™^\ÝÊÜ™\ÛÛ™WÝ\Ú×Ü]
+]šY[˜ÙJJN‚ˆ[›ØZ[™Y˜\[™
+ÝŠ[žK™Ù]
+œÞ\Ý[H‹[›˜[YYˆŠJJBˆX[šY™\ÝÙØ\ÈHØYØÛÛXÝ[Û—ÛX[šY™\Ý
+
+K™Ù]
+™]WÙØ\È‹×JHÜˆ×BˆYˆ›Ý[›ØZ[™Y[™›ÝX[šY™\ÝÙØ\Î‚ˆ™]\›ˆ×BˆYˆ›Ü›X]Ø\ÜÝ[\[Ûœ×Ý^
+™\Ý[ÊN‚ˆ™]\›ˆ×Bˆ]Z[H‹‹š›Ú[Š[›ØZ[™Y
+HYˆ[›ØZ[™Y[ÙHžßHØÝ[Y[Ø\
+ÊH‹™›Ü›X]
+ˆ[ŠX[šY™\ÝÙØ\ÊJBˆ™]\›ˆÈ’[™›Ü›X][ÛˆØ\È›ÝØZ[™Y
+ßJK]™\Ý[ËšœÛÛˆ™YÚ\Ý\œÈ›È‚ˆ˜\ÜÝ[\[ÛœÈÜˆ]WÙØ\ÈLŒMÝ]HÚ]Ø\È\ÜÝ[YY[ˆ]ÈXÙKˆ‹™›Ü›X]
+ˆ]Z[
+WB‚‚™Yˆ˜[Y]WÜÝYWØÛÛ™šYÊÛÛ™šYË™\Ý[Ë\Ú×ÜÜXÊN‚ˆˆˆ”™]\›ˆØ\›š[™ÜÈ›ÜˆZ\ÜÚ[™È[]™\˜X›\È™\]Z\™YžHÝYWØÛÛ™šYËžX[[ˆˆˆ‚ˆYˆ›ÝÛÛ™šYÎ‚ˆ™]\›ˆ×B‚ˆØ\›š[™ÜÈH×Bˆ[œ]ÈHÛÛ™šYË™Ù]
+š[œ]È‹ßJBˆ[˜[\Ú\ÈHÛÛ™šYË™Ù]
+˜[˜[\Ú\È‹ßJBˆ›ÝX›ÛÚÜÈHÛÛ™šYË™Ù]
+››ÝX›ÛÚÜÈ‹ßJBˆ™\ÜHÛÛ™šYË™Ù]
+œ™\Ü‹ßJBˆ]X[]WÙØ]\ÈHÛÛ™šYË™Ù]
+œ]X[]WÙØ]\È‹ßJB‚ˆØÝ[Y[ÈH[œ]Ë™Ù]
+™ØÝ[Y[È‹×JBˆØÝ[Y[×Ü™\]Z\™YHØ\×Ø›ÛÛ
+[œ]Ë™Ù]
+™ØÝ[Y[×Ü™\]Z\™Y‹˜[ÙJJBˆYˆØÝ[Y[×Ü™\]Z\™Y[™›ÝØÝ[Y[Î‚ˆØ\›š[™ÜË˜\[™
+š[œ]Ë™ØÝ[Y[×Ü™\]Z\™Y\ÈYK]›È[œ]ØÝ[Y[È\™H\ÝYˆŠBˆ›ÜˆØÝ[Y[[ˆØÝ[Y[Î‚ˆØÝ[Y[Ü]HØÝ[Y[™Ù]
+œ]ŠBˆØÝ[Y[Ü™\]Z\™YHØÝ[Y[×Ü™\]Z\™YÜˆØ\×Ø›ÛÛ
+ØÝ[Y[™Ù]
+œ™\]Z\™Y‹˜[ÙJJBˆYˆ›ÝØÝ[Y[Ü]Üˆ›ÝØÝ[Y[Ü™\]Z\™Y‚ˆÛÛ[YBˆYˆÜËœ]š\ØXœÊÝŠØÝ[Y[Ü]
+JN‚ˆ™\ÛÛ™YÜ]HÝŠØÝ[Y[Ü]
+Bˆ[ÙN‚ˆ™\ÛÛ™YÜ]HÜËœ]š›Ú[ŠTÒ×ÑT‹ÝŠØÝ[Y[Ü]
+JBˆYˆ›ÝÜËœ]™^\ÝÊ™\ÛÛ™YÜ]
+N‚ˆØ\›š[™ÜË˜\[™
+”™\]Z\™Y[œ]ØÝ[Y[]\ÈZ\ÜÚ[™ÎˆßH‹™›Ü›X]
+ØÝ[Y[Ü]
+JBˆ[YˆÜËœ]š\Ù\Š™\ÛÛ™YÜ]
+N‚ˆš[\ÈHÛ˜[YH›Üˆ˜[YH[ˆÜË›\Ý\Š™\ÛÛ™YÜ]
+BˆYˆÜËœ]š\Ùš[JÜËœ]š›Ú[Š™\ÛÛ™YÜ]˜[YJJWBˆYˆ›Ýš[\Î‚ˆØ\›š[™ÜË˜\[™
+”™\]Z\™Y[œ]ØÝ[Y[\™XÝÜžH\È[\NˆßH‹™›Ü›X]
+ˆØÝ[Y[Ü]
+JB‚ˆ[›™YÛ›ÝX›ÛÚÜÈHÙ[žK™Ù]
+™š[HŠH›Üˆ[žH[ˆ›ÝX›ÛÚÜË™Ù]
+œ[ˆ‹×JBˆYˆ[žK™Ù]
+™š[HŠWBˆ^\Ý[™×Û›ÝX›ÛÚÜÈHÛØ‹™ÛØŠÜËœ]š›Ú[ŠTÒ×ÑT‹œÝ\—Ø[˜[\Ú\È‹Š‹š\[˜ˆŠJBˆZ[š[][WØÛÝ[HØ\×Ú[
+›ÝX›ÛÚÜË™Ù]
+›Z[š[][WØÛÝ[ŠK
+Bˆ›ÝX›ÛÚÜ×Ü™\]Z\™YHØ\×Ø›ÛÛ
+›ÝX›ÛÚÜË™Ù]
+œ™\]Z\™Y‹YJJBˆ›ÝX›ÛÚ×Ù^XÝ][Û—Ü™\]Z\™YHØ\×Ø›ÛÛ
+›ÝX›ÛÚÜË™Ù]
+™^XÝ][Û—Ü™\]Z\™Y‹˜[ÙJJBˆ^XÝ][Û—Ù[™Ú[™HHÝŠ›ÝX›ÛÚÜË™Ù]
+™^XÝ][Û—Ù[™Ú[™H‹ˆŠJKœÝš\
+
+K›ÝÙ\Š
+Bˆ[˜[\Ú\×Ù[™Ú[™HHÝŠ[˜[\Ú\Ë™Ù]
+™[™Ú[™H‹˜]]ÈŠJKœÝš\
+
+K›ÝÙ\Š
+BˆØÜš\Ø˜XÚÙYH
+›Ý›ÝX›ÛÚÜ×Ü™\]Z\™Yˆ[™
+^XÝ][Û—Ù[™Ú[™HOHœØÜš\ˆÜˆ[˜[\Ú\×Ù[™Ú[™HOHœØÜš\ŠJBˆYˆ›ÝX›ÛÚÜ×Ü™\]Z\™YÜˆ›ÝX›ÛÚ×Ù^XÝ][Û—Ü™\]Z\™YÜˆZ[š[][WØÛÝ[‚ˆYˆZ[š[][WØÛÝ[[™[Š^\Ý[™×Û›ÝX›ÛÚÜÊHZ[š[][WØÛÝ[[™›ÝØÜš\Ø˜XÚÙY‚ˆØ\›š[™ÜË˜\[™
+ˆÛÛ™šYÝ\™Y›ÝX›ÛÚÈZ[š[][H\ÈßK]ßH›ÝX›ÛÚÊÊH^\Ýˆ‹™›Ü›X]
+ˆZ[š[][WØÛÝ[[Š^\Ý[™×Û›ÝX›ÛÚÜÊJJBˆYˆ›ÝX›ÛÚÜ×Ü™\]Z\™Y[™›ÝØÜš\Ø˜XÚÙY‚ˆ›Üˆ›ÝX›ÛÚ×Ùš[H[ˆ[›™YÛ›ÝX›ÛÚÜÎ‚ˆ›ÝX›ÛÚ×Ü]HÜËœ]š›Ú[ŠTÒ×ÑT‹œÝ\—Ø[˜[\Ú\È‹›ÝX›ÛÚ×Ùš[JBˆYˆ›ÝÜËœ]™^\ÝÊ›ÝX›ÛÚ×Ü]
+N‚ˆØ\›š[™ÜË˜\[™
+”[›™Y›ÝX›ÛÚÈ\ÈZ\ÜÚ[™ÎˆÝ\—Ø[˜[\Ú\ËÞßH‹™›Ü›X]
+ˆ›ÝX›ÛÚ×Ùš[JJB‚ˆØ\›š[™ÜË™^[™
+Ý˜[Y]WÜ[›™\—Ù^XÝ][ÛŠ›ÝX›ÛÚÜË[›™YÛ›ÝX›ÛÚÜËˆ^\Ý[™×Û›ÝX›ÛÚÜÊJB‚ˆØ\›š[™ÜË™^[™
+Ý˜[Y]WØ[˜[\Ú\×ÜØÜš\Ê[˜[\Ú\ÊJBˆØ\›š[™ÜË™^[™
+Ý˜[Y]WÙ]WÜÛÝ\˜Ù\Ê[œ]Ë]X[]WÙØ]\Ë™\Ý[ÈÜˆßJJBˆØ\›š[™ÜË™^[™
+Ý˜[Y]WÝÛÜš×Ü™XÛÜ™
+™\Ü]X[]WÙØ]\ÊJBˆØ\›š[™ÜË™^[™
+Ý˜[Y]WØ\ÜÝ[\[Û—Ü™YÚ\Ý\Š[œ]Ë™\Ý[ÈÜˆßJJB‚ˆYˆØ\×Ø›ÛÛ
+]X[]WÙØ]\Ë™Ù]
+œ™\]Z\™WÜ™\Ý[×ÚœÛÛˆ‹˜[ÙJJH[™›Ý™\Ý[Î‚ˆØ\›š[™ÜË˜\[™
+œ]X[]WÙØ]\Ëœ™\]Z\™WÜ™\Ý[×ÚœÛÛˆ\ÈYK]™\Ý[ËšœÛÛˆ\ÈZ\ÜÚ[™ËˆŠBˆYˆÚ\×Ü™\]Z\™Y
+]X[]WÙØ]\Ë™Ù]
+˜™[˜ÚX\š×Ý˜[Y][ÛˆŠJH[™›Ý
+ˆ™\Ý[È[™™\Ý[Ë™Ù]
+˜™[˜ÚX\š×Ý˜[Y][ÛˆŠJN‚ˆ™[˜ÚX\š×ÚÚ[™HÝŠ]X[]WÙØ]\Ë™Ù]
+˜™[˜ÚX\š×ÚÚ[™‹˜]]ÈŠJKœÝš\
+
+K›ÝÙ\Š
+BˆYˆ™[˜ÚX\š×ÚÚ[™[ˆ
+ˆ‹˜]]È‹››Û™HŠN‚ˆ™[˜ÚX\š×ÚÚ[™Hš[™\[™[™Y™\™[˜ÙH‚ˆØ\›š[™ÜË˜\[™
+ˆ™[˜ÚX\šÈ˜[Y][Ûˆ
+ßJH\È™\]Z\™Y]™\Ý[ËšœÛÛˆ\È›È‚ˆ˜™[˜ÚX\š×Ý˜[Y][ÛˆÙXÝ[Û‹ˆ‹™›Ü›X]
+™[˜ÚX\š×ÚÚ[™œ™\XÙJ—È‹ˆŠJJBˆYˆÚ\×Ü™\]Z\™Y
+]X[]WÙØ]\Ë™Ù]
+š[X[—Ü™]šY]ÈŠJH[™›Ý
+ˆ™\Ý[È[™
+™\Ý[Ë™Ù]
+š[X[—Ü™]šY]ÈŠHÜˆ™\Ý[Ë™Ù]
+œ™]šY]ÈŠJJN‚ˆØ\›š[™ÜË˜\[™
+ˆ’[X[ˆ™]šY]È\È™\]Z\™Y]™\Ý[ËšœÛÛˆ\È›È[X[—Ü™]šY]ÈÙXÝ[Ûˆ‚ˆœ™XÛÜ™[™ÈH™]šY]Ù\ˆ[™ÚYÛ‹[Ù™ˆÝ]\ËˆŠBˆYˆÚ\×Ü™\]Z\™Y
+]X[]WÙØ]\Ë™Ù]
+[˜Ù\Z[WØ[˜[\Ú\ÈŠJH[™›Ý
+ˆ™\Ý[È[™™\Ý[Ë™Ù]
+[˜Ù\Z[HŠJN‚ˆØ\›š[™ÜË˜\[™
+•[˜Ù\Z[H[˜[\Ú\È\È™\]Z\™Y]™\Ý[ËšœÛÛˆ\È›È[˜Ù\Z[HÙXÝ[Û‹ˆŠBˆYˆÚ\×Ü™\]Z\™Y
+]X[]WÙØ]\Ë™Ù]
+œš\Ú×Ü™YÚ\Ý\ˆŠJH[™›Ý
+ˆ™\Ý[È[™
+™\Ý[Ë™Ù]
+œš\Ú×Ù]˜[X][ÛˆŠHÜˆ™\Ý[Ë™Ù]
+œš\ÚÜÈŠJJN‚ˆØ\›š[™ÜË˜\[™
+”š\ÚÈ™YÚ\Ý\ˆ\È™\]Z\™Y]™\Ý[ËšœÛÛˆ\È›Èš\Ú×Ù]˜[X][ÛˆÜˆš\ÚÜÈÙXÝ[Û‹ˆŠBˆYˆÚ\×Ü™\]Z\™Y
+]X[]WÙØ]\Ë™Ù]
+™šYÝ\™WÙ\ØÝ\ÜÚ[ÛˆŠJH[™›Ý
+ˆ™\Ý[È[™™\Ý[Ë™Ù]
+™šYÝ\™WÙ\ØÝ\ÜÚ[ÛˆŠJN‚ˆØ\›š[™ÜË˜\[™
+‘šYÝ\™H\ØÝ\ÜÚ[Ûˆ\È™\]Z\™Y]™\Ý[ËšœÛÛˆ\È›ÈšYÝ\™WÙ\ØÝ\ÜÚ[ÛˆÙXÝ[Û‹ˆŠBˆYˆÚ\×Ü™\]Z\™Y
+]X[]WÙØ]\Ë™Ù]
+˜ÛÛœÚ\Ý[˜ÞWØÚXÚÙ\ˆŠJN‚ˆÛÛœÚ\Ý[˜ÞWÜ]HÜËœ]š›Ú[ŠTÒ×ÑT‹˜ÛÛœÚ\Ý[˜ÞWÜ™\ÜšœÛÛˆŠBˆYˆ›ÝÜËœ]™^\ÝÊÛÛœÚ\Ý[˜ÞWÜ]
+N‚ˆØ\›š[™ÜË˜\[™
+ÛÛœÚ\Ý[˜ÞHÚXÚÙ\ˆ\È™\]Z\™Y]ÛÛœÚ\Ý[˜ÞWÜ™\ÜšœÛÛˆ\ÈZ\ÜÚ[™ËˆŠB‚ˆZ[š[][WÙšYÝ\™\ÈHØ\×Ú[
+]X[]WÙØ]\Ë™Ù]
+›Z[š[][WÙšYÝ\™\ÈŠK
+BˆšYÝ\™WØÛÝ[H[ŠÛØ‹™ÛØŠÜËœ]š›Ú[Š’Q×ÑT‹Š‹œ™ÈŠJJBˆYˆZ[š[][WÙšYÝ\™\È[™šYÝ\™WØÛÝ[Z[š[][WÙšYÝ\™\Î‚ˆØ\›š[™ÜË˜\[™
+ÛÛ™šYÝ\™YšYÝ\™HZ[š[][H\ÈßK]ßH‘ÈšYÝ\™JÊH^\Ýˆ‹™›Ü›X]
+ˆZ[š[][WÙšYÝ\™\ËšYÝ\™WØÛÝ[
+JB‚ˆ›ÜˆÙXÝ[Ûˆ[ˆ™\Ü™Ù]
+œ™\]Z\™YÜÙXÝ[ÛœÈ‹×JN‚ˆYˆ›ÝÜ™\]Z\™YÜÙXÝ[Û—Ø]˜Z[X›JÙXÝ[Û‹™\Ý[Ë\Ú×ÜÜXÊN‚ˆØ\›š[™ÜË˜\[™
+”™\]Z\™Y™\ÜÙXÝ[ÛˆXÚÜÈÛÝ\˜ÙH]NˆßH‹™›Ü›X]
+ÙXÝ[ÛŠJB‚ˆ™]\›ˆØ\›š[™ÜÂ‚‚™YˆÛYÝX›WÝ×Ú[
+[™\ÊN‚ˆˆˆÛÛ™\X\šÙÝÛˆX›H[™\ÈÈ[ˆSX›HÝš[™Ëˆˆˆ‚ˆYˆ[Š[™\ÊHŽ‚ˆ™]\›ˆˆ‚ˆÈ\œÙHXY\‚ˆXY\—ØÙ[ÈHØËœÝš\
+
+H›ÜˆÈ[ˆ[™\ÖÌKœÝš\
+
+KœÝš\
+ŸŠKœÜ]
+ŸŠWBˆÈÚÚ\Ù\\˜]Üˆ[™H
+[™HJBˆ[H	ÏX›HÛ\ÜÏHœØÛÜK]X›HXY‰Âˆ›ÜˆÙ[[ˆXY\—ØÙ[Î‚ˆ[
+ÏHžßOÝˆ‹™›Ü›X]
+ÛYÚ[›[™JÙ[
+JBˆ[
+ÏHÝÝXY›ÙO—ˆ‚ˆ›Üˆ›Ý×Û[™H[ˆ[™\ÖÌŽ—N‚ˆÙ[ÈHØËœÝš\
+
+H›ÜˆÈ[ˆ›Ý×Û[™KœÝš\
+
+KœÝš\
+ŸŠKœÜ]
+ŸŠWBˆ[
+ÏHˆ‚ˆ›ÜˆÙ[[ˆÙ[Î‚ˆ[
+ÏHžßOÝˆ‹™›Ü›X]
+ÛYÚ[›[™JÙ[
+JBˆ[
+ÏHÝ—ˆ‚ˆ[
+ÏHÝ›ÙOÝX›Oˆ‚ˆ™]\›ˆ[‚‚™YˆÛYÚ[›[™J^
+N‚ˆˆˆÛÛ™\[›[™HX\šÙÝÛˆ
+›ÛÛÙX
+HÈSˆˆˆ‚ˆ^H™KœÝXŠˆ—
+—
+ŠŠÏÊW
+—
+ˆ‹ˆÝ›Û™Ï—OÜÝ›Û™Ïˆ‹^
+Bˆ™]\›ˆÒS“S‘WÐÓÑWÔ‘KœÝXŠˆÛÙO—OØÛÙOˆ‹^
+B‚‚™YˆÛYÛ\ÝÝ×Ú[
+[™\ÊN‚ˆˆˆÛÛ™\X\šÙÝÛˆ[]\Ý[™\ÈÈ[ˆS\Ýˆˆˆ‚ˆ[H[—ˆ‚ˆ›Üˆ[™H[ˆ[™\Î‚ˆ][HH[™K›Ýš\
+‹HŠKœÝš\
+
+Bˆ[
+ÏHˆOžßOÛO—ˆ‹™›Ü›X]
+ÛYÚ[›[™J][JJBˆ[
+ÏHÝ[ˆ‚ˆ™]\›ˆ[‚‚™YˆØÛÜWØÛÛ[Ý×Ú[
+ÛÛ[
+N‚ˆˆˆÛÛ™\ØÛÜHÙXÝ[ÛˆÛÛ[
+œ›ÛH\Ú×ÜÜXË›Y
+HÈÝ[YS‚‚ˆ[™\ÈX\šÙÝÛˆX›\Ë›Û^[]\ÝË[™ÝX‹ZXY[™ÜË‚ˆˆˆ‚ˆ[™\ÈHÛÛ[œÜ]
+—ˆŠBˆ[Ü\ÈH×BˆHHˆÚ[HH[Š[™\ÊN‚ˆ[™HH[™\ÖÚWB‚ˆÈ›[šÈ[™BˆYˆ›Ý[™KœÝš\
+
+N‚ˆH
+ÏHBˆÛÛ[YB‚ˆÈÝX‹ZXY[™È
+K™Ë‹\XØX›HÝ[™\™ÎˆŠBˆYˆ
+[™KœÝš\
+
+K™[™ÝÚ]
+ŽˆŠH[™›Ý[™KœÝš\
+
+KœÝ\ÝÚ]
+‹HŠBˆ[™›Ý[™KœÝš\
+
+KœÝ\ÝÚ]
+ŸŠH[™›Ý[™KœÝš\
+
+KœÝ\ÝÚ]
+ŠˆŠJN‚ˆ[Ü\Ë˜\[™
+ÏžßOÚÏˆ‹™›Ü›X]
+ˆÛYÚ[›[™J[™KœÝš\
+
+KœœÝš\
+ŽˆŠKœÝš\
+
+JJJBˆH
+ÏHBˆÛÛ[YB‚ˆÈX\šÙÝÛˆX›H
+Ý\ÈÚ]
+BˆYˆ[™KœÝš\
+
+KœÝ\ÝÚ]
+ŸŠN‚ˆX›WÛ[™\ÈH×BˆÚ[HH[Š[™\ÊH[™[™\ÖÚWKœÝš\
+
+KœÝ\ÝÚ]
+ŸŠN‚ˆX›WÛ[™\Ë˜\[™
+[™\ÖÚWJBˆH
+ÏHBˆÈÚXÚÈYˆÙXÛÛ™[™H\ÈÙ\\˜]Üˆ
+KK_
+BˆYˆ[ŠX›WÛ[™\ÊHHˆ[™Ù]
+X›WÛ[™\ÖÌWKœ™\XÙJŸ‹ˆŠKœ™\XÙJ‹H‹ˆŠKœ™\XÙJŽˆ‹ˆŠKœÝš\
+
+JHHÙ]
+ˆŠN‚ˆ[Ü\Ë˜\[™
+ÛYÝX›WÝ×Ú[
+X›WÛ[™\ÊJBˆ[ÙN‚ˆÈ›ÝH™X[X›K\Ý^Ú]\\Âˆ›Üˆ[ˆX›WÛ[™\Î‚ˆ[Ü\Ë˜\[™
+žßOÜˆ‹™›Ü›X]
+ÛYÚ[›[™JœÝš\
+
+JJJBˆÛÛ[YB‚ˆÈ[]\Ý
+Ý\ÈÚ]JBˆYˆ[™KœÝš\
+
+KœÝ\ÝÚ]
+‹HŠN‚ˆ\ÝÛ[™\ÈH×BˆÚ[HH[Š[™\ÊH[™[™\ÖÚWKœÝš\
+
+KœÝ\ÝÚ]
+‹HŠN‚ˆ\ÝÛ[™\Ë˜\[™
+[™\ÖÚWJBˆH
+ÏHBˆ[Ü\Ë˜\[™
+ÛYÛ\ÝÝ×Ú[
+\ÝÛ[™\ÊJBˆÛÛ[YB‚ˆÈ™YÝ[\ˆ\˜YÜ˜\ˆ[Ü\Ë˜\[™
+žßOÜˆ‹™›Ü›X]
+ÛYÚ[›[™J[™KœÝš\
+
+JJJBˆH
+ÏHB‚ˆ™]\›ˆ—ˆ‹š›Ú[Š[Ü\ÊB‚‚™Yˆ™[™\—ÜØÛÜWÝ×ÝÛÜ™
+ØËÛÛ[
+N‚ˆˆˆ”™[™\ˆØÛÜHÙXÝ[ÛˆÛÛ[
+œ›ÛH\Ú×ÜÜXË›Y
+H[ÈHÛÜ™ØÝ[Y[‚‚ˆ\œÙ\ÈX\šÙÝÛˆX›\È[ÈÛÜ™X›\Ë›Û^[È[œË[™ˆ[]\ÝÈ[È›Ü›X]Y\˜YÜ˜\Ë‚ˆˆˆ‚ˆ[™\ÈHÛÛ[œÜ]
+—ˆŠBˆHHˆÚ[HH[Š[™\ÊN‚ˆ[™HH[™\ÖÚWB‚ˆÈ›[šÈ[™BˆYˆ›Ý[™KœÝš\
+
+N‚ˆH
+ÏHBˆÛÛ[YB‚ˆÈÝX‹ZXY[™È
+K™Ë‹\XØX›HÝ[™\™ÎˆŠBˆYˆ
+[™KœÝš\
+
+K™[™ÝÚ]
+ŽˆŠH[™›Ý[™KœÝš\
+
+KœÝ\ÝÚ]
+‹HŠBˆ[™›Ý[™KœÝš\
+
+KœÝ\ÝÚ]
+ŸŠH[™›Ý[™KœÝš\
+
+KœÝ\ÝÚ]
+ŠˆŠJN‚ˆÈ\XØX›HÝ[™\™Îˆˆ\ÈHX™[[ˆHÜXË›ÝXY[™È^‚ˆØYÚXY[™ÊØË[™KœÝš\
+
+KœœÝš\
+ŽˆŠKœÝš\
+
+K]™[LŠBˆH
+ÏHBˆÛÛ[YB‚ˆÈX\šÙÝÛˆX›BˆYˆ[™KœÝš\
+
+KœÝ\ÝÚ]
+ŸŠN‚ˆX›WÛ[™\ÈH×BˆÚ[HH[Š[™\ÊH[™[™\ÖÚWKœÝš\
+
+KœÝ\ÝÚ]
+ŸŠN‚ˆX›WÛ[™\Ë˜\[™
+[™\ÖÚWJBˆH
+ÏHBˆYˆ[ŠX›WÛ[™\ÊHHŽ‚ˆÛYÝX›WÝ×ÝÛÜ™
+ØËX›WÛ[™\ÊBˆ[ÙN‚ˆ›Üˆ[ˆX›WÛ[™\Î‚ˆØË˜YÜ\˜YÜ˜\
+œÝš\
+
+JBˆÛÛ[YB‚ˆÈ[]\ÝˆYˆ[™KœÝš\
+
+KœÝ\ÝÚ]
+‹HŠN‚ˆÚ[HH[Š[™\ÊH[™[™\ÖÚWKœÝš\
+
+KœÝ\ÝÚ]
+‹HŠN‚ˆ][WÝ^H[™\ÖÚWKœÝš\
+
+VÌŽ—HÈ™[[Ý™H‹H‚ˆHØË˜YÜ\˜YÜ˜\
+Ý[OH“\Ý[]ŠBˆØYØ›ÛÜ[œÊ][WÝ^
+BˆH
+ÏHBˆÛÛ[YB‚ˆÈ™YÝ[\ˆ\˜YÜ˜\ˆHØË˜YÜ\˜YÜ˜\
+
+BˆØYØ›ÛÜ[œÊ[™KœÝš\
+
+JBˆH
+ÏHB‚‚™YˆÛYÝX›WÝ×ÝÛÜ™
+ØËX›WÛ[™\ÊN‚ˆˆˆÛÛ™\X\šÙÝÛˆX›H[™\ÈÈHÝ[YÛÜ™X›Kˆˆˆ‚ˆXY\—ØÙ[ÈHØËœÝš\
+
+H›ÜˆÈ[ˆX›WÛ[™\ÖÌKœÝš\
+
+KœÝš\
+ŸŠKœÜ]
+ŸŠWBˆ]WÜ›ÝÜÈH×Bˆ›Üˆ›Ý×Û[™H[ˆX›WÛ[™\ÖÌŽ—NˆÈÚÚ\XY\ˆ[™Ù\\˜]Ü‚ˆÙ[ÈHØËœÝš\
+
+H›ÜˆÈ[ˆ›Ý×Û[™KœÝš\
+
+KœÝš\
+ŸŠKœÜ]
+ŸŠWBˆ]WÜ›ÝÜË˜\[™
+Ù[ÊBˆYÝÛÜ™ÝX›JØËXY\—ØÙ[Ë]WÜ›ÝÜÊB‚‚ˆÈX]Ú\È
+Š˜›Û
+ŠˆÜ[œÈ[™	‹‹‰[›[™HX]È
+]›Ý		‹‹‰	\Ü^BˆÈX]ËÚXÚ\ÈHÙ\\˜]H™\Ý[ËšœÛÛ‹Yš]™[ˆÛÙH]
+H[ˆÛ™H\ÜËÛÂˆÈHÛÈÚ[™ÈÙˆX\šÝ\Ø[ˆ™H[\›X]™Y[ˆHÚ[™ÛHÙ[[˜ÙK‚—ÒS“S‘WÕÒÑS—Ô‘HH™K˜ÛÛ\[JˆˆŠ
+—
+‹ŠÏ×
+—
+Ÿ×˜—JØÙšYÎ–×ŸW×J×_	
+ÈW	
+V×‰—JÏ×	
+ÈW	
+JHŠB—ÒS“S‘WÓPUÐÐPÒHHßB‚—Ñ’QÕT‘WÔS—ÐÐPÒHHßB‚‚™YˆÙ]ÙšYÝ\™WÜ[Š™\Ý[ÊN‚ˆˆˆ•Ú\™HXXÚšYÝ\™H\ÈÚÝÛˆ[™]È[X™\ŽÈÚ\™YžHÛÜ™[™S‚‚ˆHšYÝ\™HÚ]H\ØÝ\ÜÚ[Ûˆ[žH\ÈÚÝÛˆ™^È]\ØÝ\ÜÚ[Û‹H™\ÝˆÝ^H[ˆ™\Ý[ËˆØXÚY\ˆ™\Ý[ÈØš™XÝÛÈ›Ý™[™\™\œÈYÜ™YK‚ˆˆˆ‚ˆÙ^HHY
+™\Ý[ÊBˆYˆÙ^H›Ý[ˆÑ’QÕT‘WÔS—ÐÐPÒN‚ˆ\ØÝ\ÜÚ[ÛˆH
+™\Ý[ÈÜˆßJK™Ù]
+™šYÝ\™WÙ\ØÝ\ÜÚ[ÛˆŠHÜˆ×BˆÑ’QÕT‘WÔS—ÐÐPÒK˜ÛX\Š
+BˆÑ’QÕT‘WÔS—ÐÐPÒVÚÙ^WHHÒU‘šYÝ\™T[ŠÙ]ÙšYÝ\™\Ê
+K\ØÝ\ÜÚ[ÛŠBˆ™]\›ˆÑ’QÕT‘WÔS—ÐÐPÒVÚÙ^WB‚‚™YˆØXÝ]™WÙšYÝ\™WÜ[Š
+N‚ˆˆˆ•H[ˆÙˆH™\Ü™Z[™ÈZ[Üˆ[ˆ[\H[‹ˆˆˆ‚ˆ›Üˆ[ˆ[ˆÑ’QÕT‘WÔS—ÐÐPÒK˜[Y\Ê
+N‚ˆ™]\›ˆ[‚ˆ™]\›ˆÒU‘šYÝ\™T[Š×K›Û™JB‚‚™YˆÙšYÝ\™WØ›ÛÚÛX\šÊ]
+N‚ˆˆˆ•ÛÜ™›ÛÚÛX\šÈ]Ü˜\ÈHšYÝ\™IÜÈ‘šYÝ\™HˆˆØ\[ÛˆX™[ˆˆˆ‚ˆ™]\›ˆ—Ô™Y‘šY×Èˆ
+ÈÒU™šYÝ\™WÜÛYÊ]
+B‚‚—Ð“ÓÒÓPT’×ÒQÈHÈ›™^ŽˆLB‚‚™YˆØYÜ™Y—ÙšY[
+\˜YÜ˜\›ÛÚÛX\šË^
+N‚ˆˆˆ’[œÙ\HÈ‘Qˆ›ÛÚÛX\šÈHÜ›ÜÜË\™Y™\™[˜ÙH]ÛÜ™ÙY\ÈÝ\œ™[ˆˆˆ‚ˆ™YÚ[ˆH\˜YÜ˜\˜YÜ[Š
+Bˆ™YÚ[‹—Ü‹˜\[™
+\œÙWÞ[
+	ÏÎ™›Ú\ˆßHÎ™›Ú\•\OH˜™YÚ[ˆ‹Ï‰Ë™›Ü›X]
+œÙXÛÊÈŠJJJBˆÛÙHH\˜YÜ˜\˜YÜ[Š
+BˆÛÙK—Ü‹˜\[™
+\œÙWÞ[
+ˆ	ÏÎš[œÝ•^ßH[œÜXÙOHœ™\Ù\™Hˆ‘QˆßHÝÎš[œÝ•^‰Ë™›Ü›X]
+ˆœÙXÛÊÈŠK›ÛÚÛX\šÊJJBˆÙ\H\˜YÜ˜\˜YÜ[Š
+BˆÙ\—Ü‹˜\[™
+\œÙWÞ[
+	ÏÎ™›Ú\ˆßHÎ™›Ú\•\OHœÙ\\˜]H‹Ï‰Ë™›Ü›X]
+œÙXÛÊÈŠJJJBˆÚÝÛˆH\˜YÜ˜\˜YÜ[Š^
+Bˆ[™H\˜YÜ˜\˜YÜ[Š
+Bˆ[™—Ü‹˜\[™
+\œÙWÞ[
+	ÏÎ™›Ú\ˆßHÎ™›Ú\•\OH™[™‹Ï‰Ë™›Ü›X]
+œÙXÛÊÈŠJJJBˆ™]\›ˆÚÝÛ‚‚‚™YˆØYÙšYÝ\™WÜ™Y™\™[˜ÙJ\˜YÜ˜\ÚÙ[ŠN‚ˆˆˆ”™[™\ˆHÙšYÎ›˜[Y_HX\šÙ\ˆ\ÈH]™HÜ›ÜÜË\™Y™\™[˜ÙKÜˆZ[ˆ^ˆˆˆ‚ˆ[ˆHØXÝ]™WÙšYÝ\™WÜ[Š
+Bˆ]H[‹œ™\ÛÛ™JÚÙ[ŠBˆ[X™\ˆH[‹›[X™\—ÛÙŠ]
+HYˆ][ÙH›Û™BˆYˆ[X™\ˆ\È›Û™N‚ˆ\˜YÜ˜\˜YÜ[ŠžßHÈ‹™›Ü›X]
+Ý
+‘šYÝ\™HŠJJBˆ™]\›‚ˆØYÜ™Y—ÙšY[
+\˜YÜ˜\ÙšYÝ\™WØ›ÛÚÛX\šÊ]
+KˆžßHßH‹™›Ü›X]
+Ý
+‘šYÝ\™HŠK[X™\ŠJB‚‚™YˆÚ[Þ™YœÊ^
+N‚ˆˆˆ”™\XÙHÙšYÎ›˜[Y_HX\šÙ\œÈÚ][šÜÈÈHšYÝ\™H[˜ÚÜœËˆˆˆ‚ˆ[ˆHØXÝ]™WÙšYÝ\™WÜ[Š
+B‚ˆYˆ[šÊX]Ú
+N‚ˆ]H[‹œ™\ÛÛ™JX]Ú™Ü›Ý\
+JJBˆ[X™\ˆH[‹›[X™\—ÛÙŠ]
+HYˆ][ÙH›Û™BˆYˆ[X™\ˆ\È›Û™N‚ˆ™]\›ˆžßHÈ‹™›Ü›X]
+Ý
+‘šYÝ\™HŠJBˆ™]\›ˆ	ÏHÛ\ÜÏHž™Yˆˆ™YHˆÙšYË^ßHžßHßOØO‰Ë™›Ü›X]
+ˆ[X™\‹Ý
+‘šYÝ\™HŠK[X™\ŠB‚ˆ™]\›ˆÒU‘’Q×Ô‘Q—Ô‘KœÝXŠ[šËÝŠ^
+JB‚‚™YˆØ\[™ÛÛ[[
+\˜YÜ˜\]^ÜÝŠN‚ˆˆˆ\[™[ˆY]X›HÛÜ™\]X][ÛŽÈ˜[ÙHÚ[ˆ]™YYÈH[XYÙH˜[˜XÚËˆˆˆ‚ˆYˆ›ÝTUPUSÓ”×ÐT×ÓÓSS‚ˆ™]\›ˆ˜[ÙBˆ[HÒU›]^Ý×ÛÛ[[
+ÜØ[š]^™WÙ\]X][Û—Û]^
+]^ÜÝŠJBˆYˆ›Ý[‚ˆ™]\›ˆ˜[ÙBˆžN‚ˆ\˜YÜ˜\—Ü˜\[™
+\œÙWÞ[
+[
+JBˆ^Ù\^Ù\[ÛŽ‚ˆ™]\›ˆ˜[ÙBˆ™]\›ˆYB‚‚™YˆÚ[›[™WÛX]Ú[XYÙWÜ]
+]^ÜÝ‹›ÛÜ
+N‚ˆˆˆ”™[™\ˆ
+[™ØXÚJHHÛX[[›[™K[X]È‘ÎÈ™]\›œÈH]Üˆ›Û™Kˆˆˆ‚ˆÙ^HH
+]^ÜÝ‹›ÛÜ
+BˆYˆÙ^H[ˆÒS“S‘WÓPUÐÐPÒN‚ˆ™]\›ˆÒS“S‘WÓPUÐÐPÒVÚÙ^WBˆ\WÚ[Y×Ù\ˆHÜËœ]š›Ú[Š‘TÔ•ÑT‹—Ù\WÚ[XYÙ\ÈŠBˆYˆ›ÝÜËœ]™^\ÝÊ\WÚ[Y×Ù\ŠN‚ˆÜË›XZÙY\œÊ\WÚ[Y×Ù\ŠBˆYÙ\ÝH7×¿-¢G§²ÚîÆ­yÖVFVBÂfÇ6R÷F†W'v—6Rà¢"" ¢–bæ÷B„5ôÔEÄõDÄ”# ¢&WGW&âfÇ6P¢6—¦U÷BÒföçE÷B÷"UôdôåEõ@¢FW‡BÒ"G·ÒB"æf÷&ÖB…÷6æ—F—¦UöWVF–öåöÆFW‚†ÆFW…÷7G"’¢G'“ ¢–b–æÆ–æS ¢66VçEö–âÒ”äÄ”äUôUô44TåEôTÒ¢6—¦U÷Bòs"ã ¢FW66VçEö–âÒ”äÄ”äUôUôDU44TåEôTÒ¢6—¦U÷Bòs"ã ¢f–rÒÇBæf–wW&R†f–w6—¦SÒƒãÂ66VçEö–â²FW66VçEö–â’¢f–rçFW‡BƒãRÂFW66VçEö–âò†66VçEö–â²FW66VçEö–â’ÂFW‡BÀ¢föçG6—¦S×6—¦U÷BÂ†Ò&6VçFW""ÂfÒ&&6VÆ–æR"À¢ÖF…öföçFfÖ–Ç“Ò&6Ò"¢&VæFW&W"Òf–ræ6çf2ævWE÷&VæFW&W"‚¢F–v‡BÒf–rævWE÷F–v‡F&&÷‚‡&VæFW&W"¢f—†VBÒ&&÷‚æg&öÕöW‡FVçG2‡F–v‡BçƒÂãÂF–v‡BçƒÀ¢66VçEö–â²FW66VçEö–â¢f–rç6fVf–r†÷WGWE÷F‚ÂG“ÔUõ$TäDU%ôE’Â&&÷…ö–æ6†W3Öf—†VBÀ¢Eö–æ6†W3Óã"Âf6V6öÆ÷#Ò'v†—FR"ÂVFvV6öÆ÷#Ò&æöæR"¢VÇ6S ¢f–rÒÇBæf–wW&R†f–w6—¦SÒƒ‚Âã"’¢f–rçFW‡BƒãRÂãRÂFW‡BÂföçG6—¦S×6—¦U÷BÂ†Ò&6VçFW""ÂfÒ&6VçFW""À¢ÖF…öföçFfÖ–Ç“Ò&6Ò"¢f–rç6fVf–r†÷WGWE÷F‚ÂG“ÔUõ$TäDU%ôE’Â&&÷…ö–æ6†W3Ò'F–v‡B"À¢Eö–æ6†W3ÓãBÂf6V6öÆ÷#Ò'v†—FR"ÂVFvV6öÆ÷#Ò&æöæR"¢ÇBæ6Æ÷6R†f–r¢&WGW&âG'VP¢W†6WBW†6WF–öâ2S ¢&–çB‚"v&æ–æs¢6÷VÆBæ÷B&VæFW"WVF–öã¢·Ò"æf÷&ÖB†R’¢&WGW&âfÇ6P  ¦FVb÷æu÷—†VÅ÷6—¦R‡F‚“ ¢""%&WGW&â‡v–GF‚Â†V–v‡B’–â—†VÇ2g&öÒF†Rär”„E"6‡Væ²ÂVÇ6RæöæRâ"" ¢G'“ ¢v—F‚÷Vâ‡F‚Â'&""’2†æFÆS ¢†VFW"Ò†æFÆRç&VBƒ#B¢–bÆVâ††VFW"’Â#B÷"†VFW%³£…ÒÒ"%Çƒƒ•äuÇ%ÆåÇƒÆâ# ¢&WGW&âæöæP¢&WGW&â†–çBæg&öÕö'—FW2††VFW%³c£#ÒÂ&&–r"’À¢–çBæg&öÕö'—FW2††VFW%³#£#EÒÂ&&–r"’¢W†6WBW†6WF–öã ¢&WGW&âæöæP  ¦FVböFEöWVF–öå÷–7GW&R†Fö2Â–ÖvU÷F‚ÂÖ…÷v–GF…ö–â“ ¢""$–ç6W'BâWVF–öâ–ÖvRB—G2æGW&Â6—¦RÂ6VBFòF†RFW‡Bv–GF‚â"" ¢6—¦RÒ÷æu÷—†VÅ÷6—¦R†–ÖvU÷F‚¢–b6—¦RæB6—¦U³Òâ ¢v–GF…ö–âÒÖ–â‡6—¦U³ÒòfÆöB„Uõ$TäDU%ôE’’ÂÖ…÷v–GF…ö–â¢VÇ6S ¢v–GF…ö–âÒÖ–âƒ2ãÂÖ…÷v–GF…ö–â¢Fö2æFE÷–7GW&R†–ÖvU÷F‚Âv–GFƒÔ–æ6†W2‡v–GF…ö–â’  ¦FVb÷&—6U÷'Vâ‡'VâÂ†Æe÷ö–çG2“ ¢""%&—6R'Vâ&÷fRF†R&6VÆ–æR'’F†Rv—fVâçVÖ&W"öb†Æb×ö–çG2â"" ¢–b†Æe÷ö–çG2â ¢'Vâå÷"ævWEö÷%öFE÷%"‚’æVæB‡'6U÷†ÖÂ€¢sÇs§÷6—F–öâ·Òs§fÃÒ'·Ò"óâræf÷&ÖB†ç6FV6Ç2‚'r"’Â–çB††Æe÷ö–çG2’’’  ¦FVböFEöF—7Æ•öWVF–öâ†Fö2Â–ÖvU÷F‚ÂÆ&VÂÂÖ…÷v–GF…ö–â“ ¢""%6WBF—7Æ’WVF–öâ6VçG&VBÂv—F‚—G2çVÖ&W"&–v‡BÖÆ–væVC¢†â’à ¢F†RÆ&VÂvöW2öâ6†÷'BÆVBÖ–âÆ–æR&÷fS²F†RçVÖ&W"—2v÷&B4U¢f–VÆB&—6VBFòF†RWVF–öâw2fW'F–6Â6VçG&RÂ2–âG—W6WBW"à¢"" ¢ÖV7W&RÒ÷FW‡E÷v–GF…ö–â†Fö2¢–bÆ&VÃ ¢ÆVBÒFö2æFE÷&w&‚‚¢'VâÒÆVBæFE÷'Vâ…÷7G&—ö6F–öå÷&Vf—‚†Æ&VÂ’¢'Vâæ—FÆ–2ÒG'VP¢'VâæföçBç6—¦RÒB„4D”ôåõB¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒ“Â“Â“¢ÆVBç&w&…öf÷&ÖBç76Uö&Vf÷&RÒBƒb¢ÆVBç&w&…öf÷&ÖBç76UögFW"ÒBƒ¢ÆVBç&w&…öf÷&ÖBæ¶VW÷v—F…öæW‡BÒG'VP¢6—¦RÒ÷æu÷—†VÅ÷6—¦R†–ÖvU÷F‚¢æGW&Åö–âÒ6—¦U³ÒòfÆöB„Uõ$TäDU%ôE’’–b6—¦RæB6—¦U³ÒVÇ6R2ã ¢2ÆVfR&ööÒV—F†W"6–FR6òF†RçVÖ&W"æWfW"6öÆÆ–FW2v—F‚F†RÖF‡2à¢v–GF…ö–âÒÖ–â†æGW&Åö–âÂÖ…÷v–GF…ö–âÂÖV7W&RÒãB¢†V–v‡E÷BÒ‡v–GF…ö–â¢6—¦U³ÒòfÆöB‡6—¦U³Ò’¢s"ã ¢–b6—¦RæB6—¦U³ÒVÇ6RUôdôåEõB¢ãR¢&w&‚ÒFö2æFE÷&w&‚‚¢f×BÒ&w&‚ç&w&…öf÷&Ö@¢f×Bç76Uö&Vf÷&RÒBƒ"¢f×Bç76UögFW"ÒBƒ‚¢f×Bæ¶VW÷FövWF†W"ÒG'VP¢f×BçF%÷7F÷2æFE÷F%÷7F÷„–æ6†W2†ÖV7W&Rò"ã’ÂtEõD%ôÄ”täÔTåBä4TåDU"¢f×BçF%÷7F÷2æFE÷F%÷7F÷„–æ6†W2†ÖV7W&R’ÂtEõD%ôÄ”täÔTåBå$”t…B¢&w&‚æFE÷'Vâ‚%ÇB"¢&w&‚æFE÷'Vâ‚’æFE÷–7GW&R†–ÖvU÷F‚Âv–GFƒÔ–æ6†W2‡v–GF…ö–â’¢f—'7EöçVÖ&W%÷'VâÒÆVâ‡&w&‚ç'Vç2¢&w&‚æFE÷'Vâ‚%ÇB‚"¢öFE÷6Wöf–VÆB‡&w&‚Â÷B‚$WVF–öâ"’¢&w&‚æFE÷'Vâ‚"’"¢2v÷&B&RÖf÷&ÖG2âWFFVBf–VÆB&W7VÇBg&öÒ—G2f–VÆBÖ6öFR'VâÂ6òWfW'¢2'VâöbF†RçVÖ&W"†6öFW2–æ6ÇVFVB’×W7B6''’F†R&—6RÂæ÷B§W7BF†RFW‡Bà¢f÷"'Vâ–â&w&‚ç'Vç5¶f—'7EöçVÖ&W%÷'Vã¥Ó ¢÷&—6U÷'Vâ‡'VâÂ†V–v‡E÷BÒãr¢$ôE•õB¢&WGW&â&w&€  ¦FVböFEöWVF–öåöfÆÆ&6µ÷&w&‚†Fö2ÂÆ&VÂÂÆFW‚“ ¢""%6†÷râVç&VæFW&&ÆRF—7Æ’WVF–öâ2Ö&¶VBÂ&VF&ÆRFW‡Bà ¢&W6VçF–ær—B2÷&F–æ'’&öG’&÷6Rv÷VÆB&VB2G—ó²F†R—FÆ–2À¢×WFVB7G–Æ–æræBF†RG&–Æ–æræ÷FRÖ¶R6ÆV"—B—2¶æ÷vâv&F†W ¢F†â'&ö¶Vâ÷WGWBà¢"" ¢&w&‚ÒFö2æFE÷&w&‚‚¢&Vf—‚Ò'·Ó¢"æf÷&ÖB†Æ&VÂ’–bÆ&VÂVÇ6R" ¢'VâÒ&w&‚æFE÷'Vâ‡&Vf—‚²öÆFW…öfÆÆ&6µ÷FW‡B†ÆFW‚’¢'Vâæ—FÆ–2ÒG'VP¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒ“Â“Â“¢æ÷FRÒ&w&‚æFE÷'Vâ‚"‡·Ò’"æf÷&ÖB€¢÷B‚&WFöÖF–2WVF–öâG—W6WGF–ærVæf–Æ&ÆR"’’¢æ÷FRæ—FÆ–2ÒG'VP¢æ÷FRæföçBç6—¦RÒB„4D”ôåõB¢æ÷FRæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒCÂCÂC¢&WGW&â&w&€  ¦FVböFEöf–wW&U÷–7GW&R†Fö2Â–ÖvU÷F‚ÂÇCÔæöæR“ ¢""%Æ6Rf–wW&R7&÷72F†RÖV7W&RÂ6‡'Væ²–b—Bv÷VÆBæ÷Bf—BF†RvRà ¢f—†VB–7GW&Rv–GF‚Ö¶W2FÆÂf–wW&R÷fW&fÆ÷rF†R&–çF&ÆR†V–v‡BÀ¢v†–6‚v÷&B&W6öÇfW2'’W6†–ær—BöçFò—G2÷vâvRæB6Æ—–ærv†B—0¢ÆVgBâ66Æ–æröâF†RæF—fR7V7B&F–ò¶VW2WfW'’f–wW&RöâöæRvRà¢"" ¢Ö…÷v–GF‚Ò÷FW‡E÷v–GF…ö–â†Fö2¢Ö…ö†V–v‡BÒÖ‚ƒ"ãÂ÷FW‡Eö†V–v‡Eö–â†Fö2’Òd”uU$Uô4D”ôåôÄÄõtä4Uô”â¢v–GF…ö–âÒÖ…÷v–GF€¢6—¦RÒ÷æu÷—†VÅ÷6—¦R†–ÖvU÷F‚¢–b6—¦RæB6—¦U³ÒâæB6—¦U³Òâ ¢†V–v‡Eö–âÒÖ…÷v–GF‚¢6—¦U³ÒòfÆöB‡6—¦U³Ò¢–b†V–v‡Eö–ââÖ…ö†V–v‡C ¢v–GF…ö–âÒÖ…÷v–GF‚¢Ö…ö†V–v‡Bò†V–v‡Eö–à¢Fö2æFE÷–7GW&R†–ÖvU÷F‚Âv–GFƒÔ–æ6†W2‡v–GF…ö–â’¢–7GW&U÷&ÒFö2ç&w&‡5²ÓÐ¢–bÇC ¢÷6WEöÆ7E÷–7GW&UöÇB‡–7GW&U÷&ÂÇB¢–7GW&U÷&æÆ–væÖVçBÒtEôÄ”tåõ$u$‚ä4TåDU ¢2F†R6F–öâföÆÆ÷w2F†R–7GW&RÂ6òF†R–7GW&R×W7Bæ÷BVæBvRà¢–7GW&U÷&ç&w&…öf÷&ÖBæ¶VW÷v—F…öæW‡BÒG'VP¢&WGW&â–7GW&U÷&  ¥ô4D”ôåõ$Td•‚Ò&Ræ6ö×–ÆR‡"%åÇ2¢„f–wW&WÅF&ÆWÄWVF–öâ•Ç2µÆBµÇ2¥³¢åÇS#2ÕÕÇ2¢"À¢&Rä”täõ$T44R  ¦FVb÷7G&—ö6F–öå÷&Vf—‚‡FW‡B“ ¢""$G&÷ÆVF–ær$f–wW&R3¢"6òF†Rv÷&B4Uf–VÆB÷vç2F†RçVÖ&W&–ærà ¢Ç6ò7G&—2F†RG&ç6ÆFVBÆ&VÇ2Â÷F†W'v—6R&W÷'B–âæ÷F†W"ÆæwVvP¢¶VW2F†R&Vf—‚æBv÷&BFG26V6öæBöæRà¢"" ¢6ÆVæVBÒô4D”ôåõ$Td•‚ç7V"‚""Â7G"‡FW‡B÷"""’’ç7G&—‚¢Æ&VÇ2Òµ÷B†Æ&VÂ’f÷"Æ&VÂ–â‚$f–wW&R"Â%F&ÆR"Â$WVF–öâ"•Ð¢Æ&VÇ2Ò¶Æ&VÂf÷"Æ&VÂ–âÆ&VÇ2–bÆ&VÅÐ¢–bÆ&VÇ3 ¢G&ç6ÆFVBÒ&Ræ6ö×–ÆR€¢"%åÇ2¢‡·Ò•Ç2µÆBµÇ2¥³¢åÇS#2ÕÕÇ2¢"æf÷&ÖB‚'Â"æ¦ö–â€¢&RæW66R†Æ&VÂ’f÷"Æ&VÂ–âÆ&VÇ2’’Â&Rä”täõ$T44R¢6ÆVæVBÒG&ç6ÆFVBç7V"‚""Â6ÆVæVB’ç7G&—‚¢&WGW&â6ÆVæV@  ¦FVböFE÷6Wöf–VÆB‡&w&‚ÂÆ&VÂ“ ¢""$VæB²4UÆÆ&VÃâÒf–VÆB6òv÷&B÷vç2F†R6F–öâçVÖ&W&–ærâ"" ¢'VâÒ&w&‚æFE÷'Vâ‚¢'Vâå÷"æVæB‡'6U÷†ÖÂ€¢sÇs¦fÆD6†"·Òs¦fÆD6†%G—SÒ&&Vv–â"óâræf÷&ÖB†ç6FV6Ç2‚'r"’’’¢'Vâå÷"æVæB‡'6U÷†ÖÂ€¢sÇs¦–ç7G%FW‡B·Ò†ÖÃ§76SÒ'&W6W'fR#â4U·ÒÅÂ¢$$”2Â÷s¦–ç7G%FW‡Câp¢æf÷&ÖB†ç6FV6Ç2‚'r"’ÂÆ&VÂ’’¢'Vâå÷"æVæB‡'6U÷†ÖÂ€¢sÇs¦fÆD6†"·Òs¦fÆD6†%G—SÒ'6W&FR"óâræf÷&ÖB†ç6FV6Ç2‚'r"’’’¢Æ6V†öÆFW"Ò&w&‚æFE÷'Vâ‡7G"…õ4Uô4õTåDU%2ç6WFFVfVÇB†Æ&VÂÂ’²’¢õ4Uô4õTåDU%5¶Æ&VÅÒ³Ò¢'VåöVæBÒ&w&‚æFE÷'Vâ‚¢'VåöVæBå÷"æVæB‡'6U÷†ÖÂ€¢sÇs¦fÆD6†"·Òs¦fÆD6†%G—SÒ&VæB"óâræf÷&ÖB†ç6FV6Ç2‚'r"’’’¢&WGW&âÆ6V†öÆFW   ¥õ4Uô4õTåDU%2Ò·Ð  ¦FVböFEö6F–öâ†Fö2ÂÆ&VÂÂFW‡BÂ¶VW÷v—F…öæW‡CÔfÇ6RÂ&öö¶Ö&³ÔæöæR“ ¢""$FBçVÖ&W&VBÂ7G–ÆVB6F–öâF†BÆ—7Böbf–wW&W2÷F&ÆW26â6öÆÆV7Bà ¢F†RçVÖ&W"6öÖW2g&öÒv÷&B4Uf–VÆBÂ6ò–ç6W'F–ærf–wW&R&VçVÖ&W'2F†P¢&W7BöbF†R&W÷'B–ç7FVBöbÆVf–ærF†R6F–öç2FòG&–gB÷WBöb7FWà¢&öö¶Ö&¶w&2$f–wW&Râ"6ò$Tbf–VÆG26â7&÷72×&VfW&Væ6R—Bà¢"" ¢FW‡BÒ÷7G&—ö6F–öå÷&Vf—‚‡FW‡B¢G'“ ¢&w&‚ÒFö2æFE÷&w&‚‡7G–ÆSÒ$6F–öâ"¢W†6WB¶W”W'&÷# ¢&w&‚ÒFö2æFE÷&w&‚‚¢&w&‚æÆ–væÖVçBÒtEôÄ”tåõ$u$‚ä4TåDU ¢&w&‚ç&w&…öf÷&ÖBæ¶VW÷v—F…öæW‡BÒ¶VW÷v—F…öæW‡@¢–b&öö¶Ö&³ ¢&öö¶Ö&µö–BÒô$ôô´Ô$µô”E5²&æW‡B%Ð¢ô$ôô´Ô$µô”E5²&æW‡B%Ò³Ò¢&w&‚å÷æVæB‡'6U÷†ÖÂ€¢sÇs¦&öö¶Ö&µ7F'B·Òs¦–CÒ'·Ò"s¦æÖSÒ'·Ò"óâræf÷&ÖB€¢ç6FV6Ç2‚'r"’Â&öö¶Ö&µö–BÂ&öö¶Ö&²’’¢&w&‚æFE÷'Vâ‚'·Ò"æf÷&ÖB†Æ&VÂ’¢öFE÷6Wöf–VÆB‡&w&‚ÂÆ&VÂ¢–b&öö¶Ö&³ ¢&w&‚å÷æVæB‡'6U÷†ÖÂ€¢sÇs¦&öö¶Ö&´VæB·Òs¦–CÒ'·Ò"óâræf÷&ÖB†ç6FV6Ç2‚'r"’Â&öö¶Ö&µö–B’’¢–bFW‡C ¢&w&‚æFE÷'Vâ‚#¢·Ò"æf÷&ÖB‡FW‡B’¢f÷"'Vâ–â&w&‚ç'Vç3 ¢'VâæföçBç6—¦RÒB„4D”ôåõB¢'VâæföçBæ—FÆ–2ÒG'VP¢&WGW&â&w&€  ¦FVböf×EöçVÖ&W"‡fÇVRÂ6–sÓB“ ¢""$f÷&ÖBçVÖ&W"F†Rv’âVæv–æVW&–ær&W÷'B&–çG2öæRà ¢'³¢ãFwÒ"GW&ç23sS#2–çFò#2ãsVR³R"Âv†–6‚&VG226Æ—&F†W"F†â¢&W7VÇBâF–v—G2&Rw&÷WVBv—F‚æöâÖ'&V¶–ær76RW"•4òƒÓæBà¢W‡öæVçB—2¶WBöæÇ’v†W&R—B—2vVçV–æVÇ’F†R6ÆV&W"f÷&Òà¢"" ¢G'“ ¢çVÖ&W"ÒfÆöB‡fÇVR¢W†6WB…G—TW'&÷"ÂfÇVTW'&÷"“ ¢&WGW&â7G"‡fÇVR¢–bçVÖ&W"ÒçVÖ&W"÷"çVÖ&W"–â†fÆöB‚&–æb"’ÂfÆöB‚"Ö–æb"’“ ¢&WGW&â7G"‡fÇVR¢–bçVÖ&W"ÓÒ ¢&WGW&â# ¢Övæ—GVFRÒ'2†çVÖ&W"¢2âW†7B6÷VçB—2æ÷BÖV7W&VÖVçC¢&÷VæF–ær3sS#2&V6÷&G2Fò3sS ¢2&VG226Æ÷’f–wW&R&F†W"F†â&÷VæFVBöæRà¢–bfÆöB†çVÖ&W"’æ—5ö–çFVvW"‚’æBÖvæ—GVFRÂS# ¢&WGW&â'³¢ÂãgÒ"æf÷&ÖB†çVÖ&W"’ç&WÆ6R‚"Â"ÂD„õU4äE5õ4U¢–bÖvæ—GVFRãÒSr÷"Övæ—GVFRÂRÓC ¢&WGW&âöÆö6Æ—¦UöFV6–ÖÂ‚'³¢ç·ÖWÒ"æf÷&ÖB†çVÖ&W"ÂÖ‚ƒÂ6–rÒ’’¢&÷VæFVBÒfÆöB‚'³¢ç·ÖwÒ"æf÷&ÖB†çVÖ&W"Â6–r’¢–b'2‡&÷VæFVB’ãÒ ¢&WGW&â'³¢ÂãgÒ"æf÷&ÖB‡&÷VæFVB’ç&WÆ6R‚"Â"ÂD„õU4äE5õ4U¢&WGW&âöÆö6Æ—¦UöFV6–ÖÂ‚'³¢ç·ÖwÒ"æf÷&ÖB‡&÷VæFVBÂ6–r’  ¢2&W÷'BÆæwVvW2v†÷6R&÷6RæBF&ÆW2W6RFV6–ÖÂ6öÖÖ„•4òƒÓÆÆ÷w2&÷F‚’à¤DT4”ÔÅô4ôÔÔôÄäuTtU2Ò²&æ"'Ð  ¦FVböÆö6Æ—¦UöFV6–ÖÂ‡FW‡B“ ¢""%7vF†RFV6–ÖÂö–çBf÷"6öÖÖv†VâF†R&W÷'BÆæwVvRw&—FW2ÃRâ"" ¢&WGW&âFW‡Bç&WÆ6R‚"â"Â"Â"’–b$Uõ%EôÄäuTtR–âDT4”ÔÅô4ôÔÔôÄäuTtU2VÇ6RFW‡@  ¦FVböf×Eö6VÆÂ‡fÇVRÂ6–sÓB“ ¢""$f÷&ÖBöæRF&ÆR6VÆÂÂÆVf–æræöâÖçVÖW&–2fÇVW2VçF÷V6†VBâ"" ¢–b—6–ç7Fæ6R‡fÇVRÂ&ööÂ“ ¢&WGW&â7G"‡fÇVR¢–b—6–ç7Fæ6R‡fÇVRÂ†–çBÂfÆöB’“ ¢&WGW&âöf×EöçVÖ&W"‡fÇVRÂ6–r¢&WGW&â7G"‡fÇVR  ¦FVböÆ&VÅög&öÕö¶W’†æÖU÷'B“ ¢""%F—FÆRÖ66R6æ¶Uö66R¶W’v—F†÷WBFW7G&÷––ær7&öç–×2à ¢çF—FÆR‚–GW&ç2td2–çFòvf2æBÄÂ–çFòÆÂÂv†–6‚&VG2&FÇ’–âF†P¢†VFÆ–æR&W7VÇG2F&ÆRâFö¶VâF†B—2Ç&VG’ÆÂ×WW&66R—2¶WBà¢"" ¢v÷&G2ÒµÐ¢f÷"v÷&B–âæÖU÷'Bç7Æ—B‚%ò"“ ¢–bæ÷Bv÷&C ¢6öçF–çVP¢2#“"—2†÷rFV6–ÖÂ7W'f—fW26æ¶Uö66R¶W’à¢FV6–ÖÂÒ&RæÖF6‚‡"%â…ÆB²—…ÆB²’B"Âv÷&B¢–bFV6–ÖÃ ¢v÷&G2æVæB‚'·Òç·Ò"æf÷&ÖB‚¦FV6–ÖÂæw&÷W2‚’’¢VÆ–bv÷&Bæ—7WW"‚’æBÆVâ‡v÷&B’â ¢v÷&G2æVæB‡v÷&B¢VÆ–bç’†6‚æ—7WW"‚’f÷"6‚–âv÷&E³¥Ò“ ¢v÷&G2æVæB‡v÷&B¢VÇ6S ¢v÷&G2æVæB‡v÷&Bæ6—FÆ—¦R‚’¢&WGW&â""æ¦ö–â‡v÷&G2  ¦FVb÷'6Uö¶W•öæÖR†¶W’“ ¢""%'6R¶W•÷&W7VÇG2¶W’–çFò†Æ&VÂÂVæ—B’â7Æ—G2öâÆ7B¶æ÷vâVæ—B7Vff—‚â"" ¢Væ—E÷7Vff—†W2Ò°¢‚%÷7B"Â"R"’Â‚%÷W&6VçB"Â"R"’À¢‚%÷Ò"Â'Ò"’Â‚%÷×b"Â'×b"’Â‚%÷""Â'""’À¢‚%öÅ÷W%ö‚"Â&Âö‚"’Â‚%öÅ÷W%öÖ–â"Â&ÂöÖ–â"’Â‚%öÅ÷W%÷2"Â&Â÷2"’À¢‚%öFVt2"Â%ÇS#2"’Â‚%öFVv2"Â%ÇS#2"’À¢‚%ôÔäô²"Â$Ôäô²"’Â‚%ôÕU4B"Â$ÕU4B"’Â‚%ôäô²"Â$äô²"’Â‚%õU4B"Â%U4B"’À¢‚%öF—2"Â&F—2"’Â‚%÷–V'2"Â'–V'2"’À¢‚%ö&""Â&&""’Â‚%ö&&"Â&&&"’Â‚%ö&&r"Â&&&r"’À¢‚%÷6’"Â'6’"’Â‚%÷6–"Â'6–"’À¢‚%ô2"Â,+2"’Â‚%ô²"Â$²"’Â‚%ôb"Â,+b"’À¢‚%ö¶r"Â&¶r"’Â‚%ör"Â&r"’Â‚%öÆ""Â&Æ""’À¢‚%öÓ2"Â&Ü+2"’Â‚%öÓ""Â&Ü+""’Â‚%öÒ"Â&Ò"’À¢‚%öÖÒ"Â&ÖÒ"’Â‚%ö6Ò"Â&6Ò"’Â‚%ö¶Ò"Â&¶Ò"’À¢‚%ögB"Â&gB"’Â‚%ö–â"Â&–â"’À¢‚%öµr"Â&µr"’Â‚%ôÕr"Â$Õr"’Â‚%õr"Â%r"’À¢‚%ö´¢"Â&´¢"’Â‚%ôÔ¢"Â$Ô¢"’Â‚%ô¢"Â$¢"’À¢‚%ö¶uö‡""Â&¶rö‡""’Â‚%ö¶u÷2"Â&¶r÷2"’À¢‚%öÓ5ö‡""Â&Ü+2ö‡""’Â‚%öÓ5÷2"Â&Ü+2÷2"’À¢‚%õ6Ó5öF’"Â%6Ü+2öF’"’Â‚%õ6Ó5ö‡""Â%6Ü+2ö‡""’À¢‚%õ6Ó6B"Â%6Ü+2öB"’Â‚%õ6Ó2"Â%6Ü+2"’Â‚%öµ6Ó2"Â&µ6Ü+2"’Â‚%ôÕ6Ó2"Â$Õ6Ü+2"’À¢‚%ôu6Ó2"Â$u6Ü+2"’Â‚%÷&Ó5õ6Ó2"Â'&Ü+2õ6Ü+2"’À¢‚%ö¶uöÓ2"Â&¶röÜ+2"’Â‚%ö¶uõ6Ó2"Â&¶rõ6Ü+2"’Â‚%öuö6Ó2"Â&rö6Ü+2"’À¢‚%ö†÷W'2"Â&†÷W'2"’Â‚%ö‡""Â&‡""’Â‚%öÖ–â"Â&Ö–â"’Â‚%÷2"Â'2"’À¢‚%÷'Ò"Â''Ò"’Â‚%ô‡¢"Â$‡¢"’À¢Ð¢26†V6¶VB&Vf÷&RF†R7Vff—‚F&ÆR&VÆ÷s¢6–ævÆRÖÆWGFW"7Vff—†W27V6‚0¢2%÷2"ò%öÒ"ò%ö¶r"v÷VÆB÷F†W'v—6R7vÆÆ÷rF†RFVæöÖ–æF÷"öb¢2"ââåöçVÕ÷W%öFVâ"¶W’†Rærâ'fVÆö6—G•öÕ÷W%÷2"VæF–ær–â%÷2"’à¢W%öÖF6‚Ò&RæÖF6‚‡"%â‚â¢•ò…´Õ¦×£Ó•Ò²•÷W%ò…´Õ¦×£Ó•Ò²’B"Â¶W’¢–bW%öÖF6ƒ ¢æÖU÷'BÂçVÕ÷Fö¶VâÂFVå÷Fö¶VâÒW%öÖF6‚æw&÷W2‚¢Væ—BÒ'·Ò÷·Ò"æf÷&ÖB…÷&WGF–g•÷Væ—E÷Fö¶Vâ†çVÕ÷Fö¶Vâ’Â÷&WGF–g•÷Væ—E÷Fö¶Vâ†FVå÷Fö¶Vâ’¢&WGW&âöÆ&VÅög&öÕö¶W’†æÖU÷'B’ÂVæ—@¢26÷'FVBÆöævW7B×7Vff—‚Öf—'7B6ò6ö×÷VæB7Vff—‚†Rærâ%ö¶uöÓ2"’Çv—0¢2v–ç2÷fW"6†÷'FW"7Vff—‚—B6öçF–ç2†Rærâ%öÓ2"’Â&Vv&FÆW72öbF†P¢2÷&FW"F†RF&ÆR&÷fRÆ—7G2F†VÒ–ââv—F†÷WBF†—2FVç6—G’¶W’Æ–¶P¢2"ââåö¶uöÓ2"&W6öÇfW2FòVæ—B&Ü+2"v—F‚7G&’$¶r"ÆVgB–âF†RÆ&VÂà¢f÷"7Vff—‚ÂVæ—B–â6÷'FVB‡Væ—E÷7Vff—†W2Â¶W“ÖÆÖ&F—#¢ÖÆVâ‡—%³Ò’“ ¢–b¶W’æVæG7v—F‚‡7Vff—‚“ ¢æÖU÷'BÒ¶W•³¦ÆVâ†¶W’’ÒÆVâ‡7Vff—‚•Ð¢&WGW&âöÆ&VÅög&öÕö¶W’†æÖU÷'B’ÂVæ—@¢&WGW&âöÆ&VÅög&öÕö¶W’†¶W’’Â"   ¥õTä•EõDô´TåôÔÒ°¢&¶r#¢&¶r"Â&r#¢&r"Â&Æ"#¢&Æ""À¢&Ó2#¢&ÕÇS#2"Â&Ó"#¢&ÕÇS#""Â&Ò#¢&Ò"Â&ÖÒ#¢&ÖÒ"Â&6Ò#¢&6Ò"Â&¶Ò#¢&¶Ò"À¢'6Ó2#¢%6ÕÇS#2"Â&·6Ó2#¢&µ6ÕÇS#2"Â&×6Ó2#¢$Õ6ÕÇS#2"Â&æÓ2#¢$æÕÇS#2"À¢'2#¢'2"Â'6V2#¢'2"Â&Ö–â#¢&Ö–â"Â&‚#¢&‚"Â&‡"#¢&‚"Â&B#¢&B"Â&F’#¢&F’"À¢&&"#¢&&""Â&&&#¢&&&"Â&&&r#¢&&&r"Â'6’#¢'6’"Â'6–#¢'6–"À¢&·r#¢&µr"Â&×r#¢$Õr"Â'r#¢%r"Â&¶¢#¢&´¢"Â&Ö¢#¢$Ô¢"Â&¢#¢$¢"À¢&¶ÖöÂ#¢&¶ÖöÂ"Â&ÖöÂ#¢&ÖöÂ"Â''Ò#¢''Ò"Â&‡¢#¢$‡¢"À¢&FVv2#¢%ÇS#2"Â&FVvb#¢%ÇS#b"Â&2#¢%ÇS#2"À§Ð   ¦FVb÷&WGF–g•÷Væ—E÷Fö¶Vâ‡Fö¶Vâ“ ¢""$æ÷&ÖÆ—¦R6–ævÆRVæ—BFö¶Vâ'6VB÷WBöbââå÷W%òââæ¶W’7Vff—‚â"" ¢Æöö·WÒõTä•EõDô´TåôÔævWB‡Fö¶VâæÆ÷vW"‚’¢–bÆöö·W ¢&WGW&âÆöö·W ¢çVÖW&–2Ò&RæÖF6‚‡"%â…ÆB²’…´Õ¦×¥Ò²’B"ÂFö¶Vâ¢–bçVÖW&–3 ¢çVÖ&W"ÂVæ—BÒçVÖW&–2æw&÷W2‚¢&WGW&â'·Ò·Ò"æf÷&ÖB†çVÖ&W"ÂõTä•EõDô´TåôÔævWB‡Væ—BæÆ÷vW"‚’ÂVæ—B’¢&WGW&âFö¶Và  ¦FVb÷&WGF–g•öFV6Æ&VE÷Væ—B‡Væ—E÷7G"“ ¢""%7WW'67&—Böæ÷&ÖÆ—¦RâW‡Æ–6—FÇ’FV6Æ&VBVæ—B7G&–ær†Rærâ&µ6Ó2ö‚"’â"" ¢–bæ÷BVæ—E÷7G# ¢&WGW&âVæ—E÷7G ¢'G2Ò7G"‡Væ—E÷7G"’ç7Æ—B‚"ò"¢&WGG’Òµ÷&WGF–g•÷Væ—E÷Fö¶Vâ‡'B’–b&RæÖF6‚‡"%å´Õ¦×£Ó•Ò²B"Â'B’VÇ6R'@¢f÷"'B–â'G5Ð¢&WGW&â"ò"æ¦ö–â‡&WGG’  ¦FVböÆVeöÆ&VÅöæE÷Væ—B†¶W•öf÷%öÆVbÂFV6Æ&VE÷Væ—CÔæöæR“ ¢""%&W6öÇfRF†RF—7Æ’Æ&VÂ÷Væ—Bf÷"öæRÆVbÂ&VfW'&–ærFV6Æ&VBVæ—Bâ"" ¢–b¶W•öf÷%öÆVb—2æöæS ¢&WGW&â%fÇVR"Â÷&WGF–g•öFV6Æ&VE÷Væ—B†FV6Æ&VE÷Væ—B’÷"" ¢'6VEöÆ&VÂÂ'6VE÷Væ—BÒ÷'6Uö¶W•öæÖR†¶W•öf÷%öÆVb¢Væ—BÒ÷&WGF–g•öFV6Æ&VE÷Væ—B†FV6Æ&VE÷Væ—B’–bFV6Æ&VE÷Væ—BVÇ6R'6VE÷Væ—@¢&WGW&â'6VEöÆ&VÂÂVæ—@  ¥ôÄ•5Eõ5TÔÔ%•õD…$U4„ôÄBÒ€  ¦FVb÷7VÖÖ&—¦UöF–7EöÆ—7B†—FV×2“ ¢""%7VÖÖ&—¦RÆöærÆ—7Böb6–Ö–Æ&Ç’×6†VBF–7G2†RærâG&ç6–VçBF–ÖP¢†—7F÷'’’2öæR6ö×7BÆ–æR–ç7FVBöbW‡ÆöF–ærWfW'’6×ÆR–çFò—G0¢÷vâ&÷rà¢"" ¢¶W—2ÒµÐ¢f÷"—FVÒ–â—FV×3 ¢–b—6–ç7Fæ6R†—FVÒÂF–7B“ ¢f÷"7V%ö¶W’–â—FVÓ ¢–b7V%ö¶W’æ÷B–â¶W—3 ¢¶W—2æVæB‡7V%ö¶W’¢'G2Ò²'·Ò6×ÆW2"æf÷&ÖB†ÆVâ†—FV×2’•Ð¢f÷"7V%ö¶W’–â¶W—3 ¢fÇVW2Ò¶—FVÕ·7V%ö¶W•Òf÷"—FVÒ–â—FV×0¢–b—6–ç7Fæ6R†—FVÒÂF–7B’æB—6–ç7Fæ6R†—FVÒævWB‡7V%ö¶W’’Â†–çBÂfÆöB’¢æBæ÷B—6–ç7Fæ6R†—FVÒævWB‡7V%ö¶W’’Â&ööÂ•Ð¢–bfÇVW3 ¢'G2æVæB‚'·Ó¢·ÒÇS#“"·Ò"æf÷&ÖB€¢öÆ&VÅög&öÕö¶W’‡7V%ö¶W’’Âöf×EöçVÖ&W"†Ö–â‡fÇVW2’’Âöf×EöçVÖ&W"†Ö‚‡fÇVW2’’’¢&WGW&â#²"æ¦ö–â‡'G2  ¦FVböfÆGFVåö¶W•÷&W7VÇG2†¶W•÷&W7VÇG2“ ¢""$fÆGFVâ‡÷76–&Ç’æW7FVB’¶W•÷&W7VÇG2F–7B–çFò&–çF&ÆRÆVb&÷w2à ¢F6²æ÷FV&öö·26öÖWF–ÖW2w&÷W&ÖWFW'2–çFòæW7FVBF–7G2ÂRærà¢²&÷W&F–æu÷ö–çB#¢²'&W77W&Uö&&r#¢²'fÇVR#¢#’ãÂ'Væ—B#¢&&&r"À¢&FW67&—F–öâ#¢"âââ'××Ö–ç7FVBöbF†RfÆB¶W’Óâ66Æ&66†VÖà¢&–çF–ær7G"‡fÇVR–öâF†÷6RF–7G2WG2&r—F†öâ&W"7G&–v‡B–çFð¢F†R&W÷'BâF†—2vÆ·2F†R7G'V7GW&RæB––VÆG2öæR†Æ&VÂÂfÇVRÀ¢Væ—BÂæ÷FR–&÷rW"ÆVbÂ†öæ÷&–ærâW‡Æ–6—BfÇVVöVæ—F— ¢æB&Vf—†–æræW7FVBÆVfW2v—F‚F†V—"&VçBw&÷WæÖR‡2’à¢"" ¢&÷w2ÒµÐ ¢FVbvÆ²‡fÇVRÂ¶W•öf÷%öÆVbÂF…öÆ&VÇ2ÂFWF‚“ ¢–b—6–ç7Fæ6R‡fÇVRÂF–7B“ ¢–b'fÇVR"–âfÇVRæBæ÷B—6–ç7Fæ6R‡fÇVU²'fÇVR%ÒÂ†F–7BÂÆ—7B’“ ¢Æ&VÅ÷'BÂVæ—BÒöÆVeöÆ&VÅöæE÷Væ—B†¶W•öf÷%öÆVbÂfÇVRævWB‚'Væ—B"’¢Æ&VÅ÷'BÒfÇVRævWB‚&Æ&VÂ"’÷"Æ&VÅ÷'@¢Æ&VÂÒ"ÇS#2"æ¦ö–â‡F…öÆ&VÇ2²¶Æ&VÅ÷'EÒ’–bF…öÆ&VÇ2VÇ6RÆ&VÅ÷'@¢æ÷FRÒfÇVRævWB‚&FW67&—F–öâ"’÷"fÇVRævWB‚'6÷W&6R"’÷"fÇVRævWB‚&&6—2"¢&÷w2æVæB‚†Æ&VÂÂöÇ•öFV6–ÖÇ2‡fÇVU²'fÇVR%ÒÂfÇVRævWB‚&FV6–ÖÇ2"’’À¢Væ—BÂæ÷FR’¢&WGW&à¢–bFWF‚ãÒS ¢Æ&VÂÒ"ÇS#2"æ¦ö–â‡F…öÆ&VÇ2’÷"%fÇVR ¢&÷w2æVæB‚†Æ&VÂÂ7G"‡fÇVR’Â""ÂæöæR’¢&WGW&à¢w&÷WöÆ&VÇ2ÒF…öÆ&VÇ2²µöÆ&VÅög&öÕö¶W’†¶W•öf÷%öÆVb•Ò–b¶W•öf÷%öÆVbVÇ6RF…öÆ&VÇ0¢f÷"7V%ö¶W’Â7V%÷fÂ–âfÇVRæ—FV×2‚“ ¢vÆ²‡7V%÷fÂÂ7V%ö¶W’Âw&÷WöÆ&VÇ2ÂFWF‚²¢&WGW&à¢–b—6–ç7Fæ6R‡fÇVRÂ†Æ—7BÂGWÆR’“ ¢–bÆÂ†æ÷B—6–ç7Fæ6R†—FVÒÂ†F–7BÂÆ—7BÂGWÆR’’f÷"—FVÒ–âfÇVR“ ¢Æ&VÅ÷'BÂVæ—BÒöÆVeöÆ&VÅöæE÷Væ—B†¶W•öf÷%öÆVb¢Æ&VÂÒ"ÇS#2"æ¦ö–â‡F…öÆ&VÇ2²¶Æ&VÅ÷'EÒ’–bF…öÆ&VÇ2VÇ6RÆ&VÅ÷'@¢–bÆVâ‡fÇVR’âôÄ•5Eõ5TÔÔ%•õD…$U4„ôÄC ¢6†÷vâÒ"Â"æ¦ö–â…öf×Eö6VÆÂ†—FVÒ’f÷"—FVÒ–âfÇVU³£5Ò¢FW‡BÒ'·ÒÂÇS##b‡·ÒfÇVW2F÷FÂ’"æf÷&ÖB‡6†÷vâÂÆVâ‡fÇVR’¢VÇ6S ¢FW‡BÒ"Â"æ¦ö–â…öf×Eö6VÆÂ†—FVÒ’f÷"—FVÒ–âfÇVR¢&÷w2æVæB‚†Æ&VÂÂFW‡BÂVæ—BÂæöæR’¢VÆ–bÆVâ‡fÇVR’âôÄ•5Eõ5TÔÔ%•õD…$U4„ôÄBæBÆÂ€¢—6–ç7Fæ6R†—FVÒÂF–7B’f÷"—FVÒ–âfÇVR“ ¢2ÆöærÆ—7Böb6ÖR×6†VBF–7G2—2F–ÖR6W&–W2÷7vVWÂæ÷B¢26WBöbF—7F–æ7B&W7VÇG3²öæR7VÖÖ'’&÷r&VG2öæR&÷rW"6×ÆRà¢Æ&VÅ÷'BÒöÆ&VÅög&öÕö¶W’†¶W•öf÷%öÆVb’–b¶W•öf÷%öÆVbVÇ6R%fÇVR ¢Æ&VÂÒ"ÇS#2"æ¦ö–â‡F…öÆ&VÇ2²¶Æ&VÅ÷'EÒ’–bF…öÆ&VÇ2VÇ6RÆ&VÅ÷'@¢&÷w2æVæB‚†Æ&VÂÂ÷7VÖÖ&—¦UöF–7EöÆ—7B‡fÇVR’Â""À¢$gVÆÂ6W&–W2&WF–æVB–â&W7VÇG2æ§6öâ"’¢VÇ6S ¢w&÷WöÆ&VÇ2ÒF…öÆ&VÇ2²µöÆ&VÅög&öÕö¶W’†¶W•öf÷%öÆVb•Ò–b¶W•öf÷%öÆVbVÇ6RF…öÆ&VÇ0¢f÷"–æFW‚Â—FVÒ–âVçVÖW&FR‡fÇVRÂ“ ¢vÆ²†—FVÒÂ7G"†–æFW‚’Âw&÷WöÆ&VÇ2ÂFWF‚²¢&WGW&à¢Æ&VÅ÷'BÂVæ—BÒöÆVeöÆ&VÅöæE÷Væ—B†¶W•öf÷%öÆVb¢–b—6–ç7Fæ6R‡fÇVRÂ7G"“ ¢2wVW76VBVæ—B7Vff—‚†Rærâ"ââå÷7B"’FöW2æ÷BÇ’öæ6RF†P¢2fÇVR—2g&VRFW‡BF†BÖ’Ç&VG’7FFR—G2÷vâVæ—G2à¢Væ—BÒ" ¢Æ&VÂÒ"ÇS#2"æ¦ö–â‡F…öÆ&VÇ2²¶Æ&VÅ÷'EÒ’–bF…öÆ&VÇ2VÇ6RÆ&VÅ÷'@¢&÷w2æVæB‚†Æ&VÂÂfÇVRÂVæ—BÂæöæR’ ¢f÷"F÷ö¶W’ÂF÷÷fÂ–â†¶W•÷&W7VÇG2÷"·Ò’æ—FV×2‚“ ¢vÆ²‡F÷÷fÂÂF÷ö¶W’ÂµÒÂ¢&WGW&â&÷w0  ¦FVböÇ•öFV6–ÖÇ2‡fÇVRÂFV6–ÖÇ2“ ¢""$f—†VBFV6–ÖÇ2f÷"çVÖW&–2&W7VÇBv†VâF†RWF†÷"6¶VBf÷"F†VÒâ"" ¢–b†—6–ç7Fæ6R†FV6–ÖÇ2Â–çB’æBæ÷B—6–ç7Fæ6R†FV6–ÖÇ2Â&ööÂ’æBFV6–ÖÇ2ãÒ ¢æB—6–ç7Fæ6R‡fÇVRÂ†–çBÂfÆöB’’æBæ÷B—6–ç7Fæ6R‡fÇVRÂ&ööÂ’“ ¢&WGW&âöÆö6Æ—¦UöFV6–ÖÂ‚'³¢ç·ÖgÒ"æf÷&ÖB‡fÇVRÂFV6–ÖÇ2’¢&WGW&âfÇVP  ¦FVbö†VFÆ–æU÷&÷w2‡&W7VÇG2“ ¢""%F†RFV6—6—fR&W7VÇG22†w&÷WÂÆ&VÂÂfÇVRÂVæ—BÂæ÷FR’&÷w2à ¢WF†÷'2Ö&²F†VÒv—F‚&†VFÆ–æR#¢G'VV‡ÇW2÷F–öæÂÆ&VÆÀ¢Væ—FÂw&÷WÂFV6–ÖÇ6’–ç6–FR¶W•÷&W7VÇG2Â÷"Æ—7BF†VÒ–â¢F÷ÖÆWfVÂ†VFÆ–æU÷&W7VÇG6'&’âV×G’v†Vâæ÷F†–ær—2Ö&¶VBÂ–à¢v†–6‚66RF†R&W7VÇG2F&ÆR¶VW2&–çF–ærWfW'’¶W•÷&W7VÇG2&÷rà¢"" ¢&÷w2ÒµÐ¢FV6Æ&VBÒ‡&W7VÇG2÷"·Ò’ævWB‚&†VFÆ–æU÷&W7VÇG2"¢f÷"—FVÒ–âFV6Æ&VB–b—6–ç7Fæ6R†FV6Æ&VBÂÆ—7B’VÇ6RµÓ ¢–bæ÷B—6–ç7Fæ6R†—FVÒÂF–7B’÷"'fÇVR"æ÷B–â—FVÓ ¢6öçF–çVP¢Æ&VÂÒ—FVÒævWB‚&Æ&VÂ"’÷"öÆ&VÅög&öÕö¶W’‡7G"†—FVÒævWB‚&¶W’"Â%fÇVR"’’¢&÷w2æVæB‚†—FVÒævWB‚&w&÷W"’÷"""ÂÆ&VÂÀ¢öÇ•öFV6–ÖÇ2†—FVÕ²'fÇVR%ÒÂ—FVÒævWB‚&FV6–ÖÇ2"’’À¢÷&WGF–g•öFV6Æ&VE÷Væ—B†—FVÒævWB‚'Væ—B"’’÷"""À¢—FVÒævWB‚&æ÷FR"’÷"—FVÒævWB‚'6÷W&6R"’÷"—FVÒævWB‚&FW67&—F–öâ"’’ ¢FVbvÆ²†¶W’ÂfÇVR“ ¢–bæ÷B—6–ç7Fæ6R‡fÇVRÂF–7B“ ¢&WGW&à¢–b'fÇVR"–âfÇVRæBæ÷B—6–ç7Fæ6R‡fÇVU²'fÇVR%ÒÂ†F–7BÂÆ—7B’“ ¢–bfÇVRævWB‚&†VFÆ–æR"“ ¢Æ&VÂÂVæ—BÒöÆVeöÆ&VÅöæE÷Væ—B†¶W’ÂfÇVRævWB‚'Væ—B"’¢&÷w2æVæB‚‡fÇVRævWB‚&w&÷W"’÷"""ÂfÇVRævWB‚&Æ&VÂ"’÷"Æ&VÂÀ¢öÇ•öFV6–ÖÇ2‡fÇVU²'fÇVR%ÒÂfÇVRævWB‚&FV6–ÖÇ2"’’ÂVæ—BÀ¢fÇVRævWB‚&FW67&—F–öâ"’÷"fÇVRævWB‚'6÷W&6R"¢÷"fÇVRævWB‚&&6—2"’’¢&WGW&à¢f÷"7V%ö¶W’Â7V%÷fÇVR–âfÇVRæ—FV×2‚“ ¢vÆ²‡7V%ö¶W’Â7V%÷fÇVR ¢f÷"F÷ö¶W’ÂF÷÷fÇVR–â‚‡&W7VÇG2÷"·Ò’ævWB‚&¶W•÷&W7VÇG2"’÷"·Ò’æ—FV×2‚“ ¢vÆ²‡F÷ö¶W’ÂF÷÷fÇVR¢&WGW&â&÷w0  ¦FVböw&÷WVB‡&÷w2“ ¢""%7Æ—B†VFÆ–æR&÷w2–çFò²†w&÷WÂ²†Æ&VÂÂfÇVRÂVæ—BÂæ÷FR•Ò•Ò–âf—'7B×6VVâ÷&FW"â"" ¢÷&FW"Âw&÷W2ÒµÒÂ·Ð¢f÷"w&÷WÂÆ&VÂÂfÇVRÂVæ—BÂæ÷FR–â&÷w3 ¢–bw&÷Wæ÷B–âw&÷W3 ¢w&÷W5¶w&÷WÒÒµÐ¢÷&FW"æVæB†w&÷W¢w&÷W5¶w&÷WÒæVæB‚†Æ&VÂÂfÇVRÂVæ—BÂæ÷FR’¢&WGW&â²†w&÷WÂw&÷W5¶w&÷WÒ’f÷"w&÷W–â÷&FW%Ð  ¦FVbf÷&ÖE÷&W7VÇG5÷F&ÆR‡&W7VÇG2“ ¢""$f÷&ÖB¶W•÷&W7VÇG2F–7B2FW‡BF&ÆRâ"" ¢¶W•÷&W7VÇG2Ò&W7VÇG2ævWB‚&¶W•÷&W7VÇG2"Â·Ò¢–bæ÷B¶W•÷&W7VÇG3 ¢&WGW&â%´æò¶W•÷&W7VÇG2–â&W7VÇG2æ§6öåÒ ¢Æ–æW2ÒµÐ¢f÷"Æ&VÂÂfÇVRÂVæ—BÂæ÷FR–âöfÆGFVåö¶W•÷&W7VÇG2†¶W•÷&W7VÇG2“ ¢fÅ÷7G"Òöf×Eö6VÆÂ‡fÇVR¢Æ–æRÒ'·Ó¢·Ò·Ò"æf÷&ÖB†Æ&VÂÂfÅ÷7G"ÂVæ—B’–bVæ—BVÇ6R'·Ó¢·Ò"æf÷&ÖB†Æ&VÂÂfÅ÷7G"¢–bæ÷FS ¢Æ–æR³Ò"‡·Ò’"æf÷&ÖB†æ÷FR¢Æ–æW2æVæB†Æ–æR¢&WGW&â%Æâ"æ¦ö–â†Æ–æW2  ¦FVbf÷&ÖE÷fÆ–FF–öå÷F&ÆR‡&W7VÇG2“ ¢""$f÷&ÖBfÆ–FF–öâ6†V6·22FW‡BF&ÆRâ"" ¢fÆ–FF–öâÒ&W7VÇG2ævWB‚'fÆ–FF–öâ"Â·Ò¢–bæ÷BfÆ–FF–öã ¢&WGW&â%´æòfÆ–FF–öâFF–â&W7VÇG2æ§6öåÒ ¢Æ–æW2Ò²%fÆ–FF–öâ7VÖÖ'“¢"Â"%Ð¢f÷"6†V6²Â÷WF6öÖR–âfÆ–FF–öâæ—FV×2‚“ ¢Æ&VÂÒöÆ&VÅög&öÕö¶W’†6†V6²¢–b—6–ç7Fæ6R†÷WF6öÖRÂF–7B’æB'fÇVR"–â÷WF6öÖS ¢Æ&VÂÒ÷WF6öÖRævWB‚&Æ&VÂ"’÷"Æ&VÀ¢÷WF6öÖRÒ÷WF6öÖU²'fÇVR%Ð¢–b—6–ç7Fæ6R†÷WF6öÖRÂ&ööÂ“ ¢7FGW2Ò$d”Â"–b÷fÆ–FF–öåö÷WF6öÖUö—5öf–ÇW&R†6†V6²Â÷WF6öÖR’VÇ6R%52 ¢VÆ–b—6–ç7Fæ6R†÷WF6öÖRÂ†–çBÂfÆöB’“ ¢7FGW2Ò'³¢ãFwÒ"æf÷&ÖB†÷WF6öÖR¢VÇ6S ¢7FGW2Ò7G"†÷WF6öÖR¢Æ–æW2æVæB‚"·Ó¢·Ò"æf÷&ÖB†Æ&VÂÂ7FGW2’¢&WGW&â%Æâ"æ¦ö–â†Æ–æW2  ¦FVbf÷&ÖE÷fÆ–FF–öåö‡FÖÂ‡&W7VÇG2“ ¢""$f÷&ÖBfÆ–FF–öâ6†V6·22â…DÔÂF&ÆRâ"" ¢fÆ–FF–öâÒ&W7VÇG2ævWB‚'fÆ–FF–öâ"Â·Ò¢–bæ÷BfÆ–FF–öã ¢&WGW&â#ÇãÆVÓäæòfÆ–FF–öâFF–â&W7VÇG2æ§6öãÂöVÓãÂ÷â ¢&÷w2Ò" ¢f÷"6†V6²Â÷WF6öÖR–âfÆ–FF–öâæ—FV×2‚“ ¢Æ&VÂÒöÆ&VÅög&öÕö¶W’†6†V6²¢Væ—BÒ" ¢–b—6–ç7Fæ6R†÷WF6öÖRÂF–7B’æB'fÇVR"–â÷WF6öÖS ¢Æ&VÂÒ÷WF6öÖRævWB‚&Æ&VÂ"’÷"Æ&VÀ¢Væ—BÒ÷WF6öÖRævWB‚'Væ—B"’÷"" ¢÷WF6öÖRÒ÷WF6öÖU²'fÇVR%Ð¢–b—6–ç7Fæ6R†÷WF6öÖRÂ&ööÂ“ ¢f–ÆVBÒ÷fÆ–FF–öåö÷WF6öÖUö—5öf–ÇW&R†6†V6²Â÷WF6öÖR¢7FGW2Ò$d”Â"–bf–ÆVBVÇ6R%52 ¢775ö6Æ72Òr6Æ73Ò&f–Â"r–bf–ÆVBVÇ6Rr6Æ73Ò'72"p¢VÆ–b—6–ç7Fæ6R†÷WF6öÖRÂ†–çBÂfÆöB’“ ¢7FGW2Ò…öf×EöçVÖ&W"†÷WF6öÖR’²""²Væ—B’ç7G&—‚¢775ö6Æ72Òr6Æ73Ò&çVÒ"p¢VÇ6S ¢7FGW2Ò7G"†÷WF6öÖR¢775ö6Æ72Ò²%52#¢r6Æ73Ò'72"rÂ$d”Â#¢r6Æ73Ò&f–Â"wÒævWB€¢7FGW2ç7G&—‚’çWW"‚’Â""¢&÷w2³ÒsÇG#ãÇFCç·ÓÂ÷FCãÇFG·Óç·ÓÂ÷FCãÂ÷G#åÆâræf÷&ÖB€¢Æ&VÂÂ775ö6Æ72Â7FGW2¢&WGW&â…ö‡FÖÅ÷F&ÆUö6F–öâ…÷B‚%fÆ–FF–öâ6†V6·2"’¢²sÇF&ÆR6Æ73Ò'fÆ–FF–öâ×F&ÆR#ãÇF†VCãÇG#ãÇFƒç·ÓÂ÷Fƒâp¢sÇFƒç·ÓÂ÷FƒãÂ÷G#ãÂ÷F†VCãÇF&öG“åÆç·ÓÂ÷F&öG“ãÂ÷F&ÆSâræf÷&ÖB€¢÷B‚$6†V6²"’Â÷B‚%&W7VÇB"’Â&÷w2’  ¦FVb÷&W7VÇG5÷F&ÆUö‡FÖÂ‡&÷w2Â6F–öâ“ ¢""$öæR7G–ÆVB&W7VÇG2F&ÆRg&öÒ†Æ&VÂÂfÇVRÂVæ—BÂæ÷FR’&÷w2â"" ¢†5öæ÷FW2Òç’†æ÷FRf÷"öÆ&VÂÂ÷fÇVRÂ÷Væ—BÂæ÷FR–â&÷w2¢&öG’Ò" ¢f÷"Æ&VÂÂfÇVRÂVæ—BÂæ÷FR–â&÷w3 ¢&öG’³ÒsÇG#ãÇFCç·ÓÂ÷FCãÇFB6Æ73Ò&çVÒ#ç·ÓÂ÷FCãÇFCç·ÓÂ÷FCâræf÷&ÖB€¢ö‡FÖÅöW66R†Æ&VÂ’Âöf×Eö6VÆÂ‡fÇVR’Âö‡FÖÅöW66R‡Væ—B’¢–b†5öæ÷FW3 ¢&öG’³ÒsÇFCç·ÓÂ÷FCâræf÷&ÖB…ö‡FÖÅöW66R†æ÷FR’–bæ÷FRVÇ6R""¢&öG’³ÒsÂ÷G#åÆâp¢W‡G&ö†VFW"ÒsÇFƒç·ÓÂ÷Fƒâræf÷&ÖB…÷B‚%6÷W&6R"’’–b†5öæ÷FW2VÇ6R" ¢&WGW&â€¢ö‡FÖÅ÷F&ÆUö6F–öâ†6F–öâ¢²sÇF&ÆR6Æ73Ò'&W7VÇG2×F&ÆR#ãÇF†VCâp¢sÇG#ãÇFƒç·ÓÂ÷FƒãÇFƒç·ÓÂ÷FƒãÇFƒç·ÓÂ÷Fƒç·ÓÂ÷G#âp¢sÂ÷F†VCãÇF&öG“åÆç·ÓÂ÷F&öG“ãÂ÷F&ÆSâræf÷&ÖB€¢÷B‚%&ÖWFW""’Â÷B‚%fÇVR"’Â÷B‚%Væ—B"’ÂW‡G&ö†VFW"Â&öG’¢  ¦FVbf÷&ÖE÷&W7VÇG5ö‡FÖÂ‡&W7VÇG2ÂgVÆÃÔfÇ6R“ ¢""$f÷&ÖB¶W•÷&W7VÇG227G–ÆVB…DÔÂF&ÆW2††VFÆ–æRf–WrÂ÷"ÆÂ&÷w2v†VâgVÆÂ’â"" ¢¶W•÷&W7VÇG2Ò&W7VÇG2ævWB‚&¶W•÷&W7VÇG2"Â·Ò¢†VFÆ–æRÒµÒ–bgVÆÂVÇ6Rö†VFÆ–æU÷&÷w2‡&W7VÇG2¢–b†VFÆ–æS ¢&WGW&â""æ¦ö–â…÷&W7VÇG5÷F&ÆUö‡FÖÂ‡&÷w2Âöw&÷Wö6F–öâ†w&÷W’¢f÷"w&÷WÂ&÷w2–âöw&÷WVB††VFÆ–æR’¢–bæ÷B¶W•÷&W7VÇG3 ¢&WGW&â" ¢&WGW&â÷&W7VÇG5÷F&ÆUö‡FÖÂ€¢öfÆGFVåö¶W•÷&W7VÇG2†¶W•÷&W7VÇG2’À¢÷B‚$6ö×ÆWFRçVÖW&–6Â&W7VÇG2"’–bgVÆÂVÇ6R÷B‚$¶W’&W7VÇG2"’  ¥ô…DÔÅõD$ÄUô4õTåDU"Ò²&â#¢Ð  ¦FVbö‡FÖÅ÷F&ÆUö6F–öâ‡F—FÆR“ ¢""%&WGW&âçVÖ&W&VBF&ÆR6F–öâ6ò…DÔÂæBv÷&Bw&VRöâF†RçVÖ&W&–ærâ"" ¢ô…DÔÅõD$ÄUô4õTåDU%²&â%Ò³Ò¢FW‡BÒ÷7G&—ö6F–öå÷&Vf—‚‡F—FÆR¢Æ&VÂÒ'·Ò·Ò"æf÷&ÖB…÷B‚%F&ÆR"’Âô…DÔÅõD$ÄUô4õTåDU%²&â%Ò¢–bFW‡C ¢Æ&VÂÒ'·Ó¢·Ò"æf÷&ÖB†Æ&VÂÂFW‡B¢&WGW&âsÇ6Æ73Ò'F&ÆRÖ6F–öâ#ç·ÓÂ÷åÆâræf÷&ÖB…ö‡FÖÅöW66R†Æ&VÂ’  ¦FVbf÷&ÖEö7W7FöÕ÷F&ÆW5ö‡FÖÂ‡&W7VÇG2“ ¢""$f÷&ÖB7W7FöÒF&ÆW2g&öÒ&W7VÇG2æ§6öâwF&ÆW2r¶W’2…DÔÂâ"" ¢F&ÆW2Ò&W7VÇG2ævWB‚'F&ÆW2"ÂµÒ¢–bæ÷BF&ÆW3 ¢&WGW&â" ¢‡FÖÅ÷'G2ÒµÐ¢f÷"F&Â–âF&ÆW3 ¢F—FÆRÒF&ÂævWB‚'F—FÆR"Â""¢†VFW'2ÒF&ÂævWB‚&†VFW'2"ÂµÒ¢FF÷&÷w2ÒF&ÂævWB‚'&÷w2"ÂµÒ¢–bæ÷B†VFW'2÷"æ÷BFF÷&÷w3 ¢6öçF–çVP¢‚Òö‡FÖÅ÷F&ÆUö6F–öâ‡F—FÆR¢‚³ÒsÇF&ÆR6Æ73Ò&7W7FöÒ×F&ÆR#ãÇF†VCãÇG#âp¢f÷"6öÂ–â†VFW'3 ¢‚³ÒsÇFƒç·ÓÂ÷Fƒâræf÷&ÖB†6öÂ¢‚³ÒsÂ÷G#ãÂ÷F†VCãÇF&öG“åÆâp¢f÷"&÷r–âFF÷&÷w3 ¢‚³Ò#ÇG#â ¢f÷"’Â6VÆÂ–âVçVÖW&FR‡&÷r“ ¢772Òr6Æ73Ò&çVÒ"r–b’âæB—6–ç7Fæ6R†6VÆÂÂ†–çBÂfÆöB’’VÇ6R" ¢‚³ÒsÇFG·Óç·ÓÂ÷FCâræf÷&ÖB†772Âöf×Eö6VÆÂ†6VÆÂ’¢‚³Ò#Â÷G#åÆâ ¢‚³Ò#Â÷F&öG“ãÂ÷F&ÆSâ ¢‡FÖÅ÷'G2æVæB†‚¢&WGW&â%Æâ"æ¦ö–â†‡FÖÅ÷'G2  ¦FVb÷&VfW&Væ6U÷FW‡B‡&Vb“ ¢""$6—FF–öâFW‡Böb&VfW&Væ6RVçG'“²&W7VÇG2æ§6öâf–ÆW2W6RFW‡BÂ6—FF–öâ÷"F—FÆRâ"" ¢–bæ÷B—6–ç7Fæ6R‡&VbÂF–7B“ ¢&WGW&â7G"‡&Vb¢&WGW&â7G"‡&VbævWB‚'FW‡B"’÷"&VbævWB‚&6—FF–öâ"’÷"&VbævWB‚'F—FÆR"’÷"""  ¦FVbf÷&ÖE÷&VfW&Væ6W5ö‡FÖÂ‡&W7VÇG2“ ¢""$f÷&ÖBF†R&VfW&Væ6W2Æ—7Bg&öÒ&W7VÇG2æ§6öâ27G–ÆVB…DÔÂ÷&FW&VBÆ—7Bâ"" ¢&Vg2Ò&W7VÇG2ævWB‚'&VfW&Væ6W2"ÂµÒ¢–bæ÷B&Vg3 ¢&WGW&â" ¢‚ÒsÆöÂ6Æ73Ò'&VfW&Væ6RÖÆ—7B#åÆâp¢f÷"&Vb–â&Vg3 ¢&Veö–BÒ&VbævWB‚&–B"Â""’–b—6–ç7Fæ6R‡&VbÂF–7B’VÇ6R" ¢&Ve÷FW‡BÒ÷&VfW&Væ6U÷FW‡B‡&Vb¢–b&Veö–C ¢‚³ÒrÆÆ’–CÒ'&Vb×·Ò#ãÇ7G&öæså··ÕÓÂ÷7G&öæsâ·ÓÂöÆ“åÆâræf÷&ÖB€¢&Veö–BÂ&Veö–BÂ&Ve÷FW‡B¢VÇ6S ¢‚³ÒrÆÆ“ç·ÓÂöÆ“åÆâræf÷&ÖB‡&Ve÷FW‡B¢‚³ÒsÂööÃâp¢&WGW&â€  ¦FVbf÷&ÖE÷&—6µö‡FÖÂ‡&W7VÇG2“ ¢""$f÷&ÖB&—6µöWfÇVF–öâg&öÒ&W7VÇG2æ§6öâ27G–ÆVB…DÔÂ&—6²F&ÆRà ¢&VæFW'27VÖÖ'’6&Bv—F‚÷fW&ÆÂ&—6²ÆWfVÂÂF†Vâ&öfW76–öæÀ¢F&ÆRv—F‚6öÆ÷"Ö6öFVB&—6²ÆWfVÇ2æBÖ—F–vF–öâÖV7W&W2à¢"" ¢&UöFFÒ&W7VÇG2ævWB‚'&—6µöWfÇVF–öâ"Â·Ò¢–bæ÷B&UöFF ¢&WGW&â" ¢&—6·2Ò&UöFFævWB‚'&—6·2"ÂµÒ¢ÖG&—‚Ò&UöFFævWB‚'&—6µöÖG&—…÷W6VB"Â#WƒR„•4ò3’"¢÷fW&ÆÂÒ&UöFFævWB‚&÷fW&ÆÅ÷&—6µöÆWfVÂ"Â$âô"¢†–v…ö6÷VçBÒ&UöFFævWB‚&†–v…÷&—6µö6÷VçB"À¢7VÒƒf÷""–â&—6·2–b"ævWB‚'&—6µöÆWfVÂ"’ÓÒ$†–v‚"’¢ÖVF—VÕö6÷VçBÒ&UöFFævWB‚&ÖVF—VÕ÷&—6µö6÷VçB"À¢7VÒƒf÷""–â&—6·2–b"ævWB‚'&—6µöÆWfVÂ"’ÓÒ$ÖVF—VÒ"’¢Æ÷uö6÷VçBÒ7VÒƒf÷""–â&—6·2–b"ævWB‚'&—6µöÆWfVÂ"’ÓÒ$Æ÷r" ¢‚ÒsÆF—b6Æ73Ò'&—6²×7VÖÖ'’Ö6&B#åÆâp¢‚³ÒsÇå&—6²76W76ÖVçBW&f÷&ÖVBW6–ærÇ7G&öæsç·ÓÂ÷7G&öæsâg&ÖWv÷&²ãÂ÷åÆâræf÷&ÖB€¢ÖG&—‚¢‚³ÒsÇä÷fW&ÆÂ&—6²ÆWfVÃ¢Ç7â6Æ73Ò'&—6²Ö&FvR&—6²×·Ò#ç·ÓÂ÷7ãâræf÷&ÖB€¢÷fW&ÆÂæÆ÷vW"‚’Â÷fW&ÆÂ¢‚³Òrfæ'7²fÖF6ƒ²fæ'7²p¢'G2ÒµÐ¢–b†–v…ö6÷VçC ¢'G2æVæB‚sÇ7â6Æ73Ò'&—6²Ö&FvR&—6²Ö†–v‚#ç·Ò†–vƒÂ÷7ãâræf÷&ÖB††–v…ö6÷VçB’¢–bÖVF—VÕö6÷VçC ¢'G2æVæB‚sÇ7â6Æ73Ò'&—6²Ö&FvR&—6²ÖÖVF—VÒ#ç·ÒÖVF—VÓÂ÷7ãâræf÷&ÖB†ÖVF—VÕö6÷VçB’¢–bÆ÷uö6÷VçC ¢'G2æVæB‚sÇ7â6Æ73Ò'&—6²Ö&FvR&—6²ÖÆ÷r#ç·ÒÆ÷sÂ÷7ãâræf÷&ÖB†Æ÷uö6÷VçB’¢‚³Ò"Â"æ¦ö–â‡'G2’–b'G2VÇ6R" ¢‚³ÒsÂ÷åÆãÂöF—cåÆâp ¢–b&—6·3 ¢‚³ÒsÇF&ÆR6Æ73Ò'&—6²×F&ÆR#ãÇF†VCãÇG#âp¢‚³ÒsÇFƒä”CÂ÷FƒãÇFƒä6FVv÷'“Â÷FƒãÇFƒå&—6²FW67&—F–öãÂ÷Fƒâp¢‚³ÒsÇFƒäÆ–¶VÆ–†ööCÂ÷FƒãÇFƒä6öç6WVVæ6SÂ÷FƒãÇFƒå&—6²ÆWfVÃÂ÷Fƒâp¢‚³ÒsÇFƒäÖ—F–vF–öãÂ÷Fƒâp¢‚³ÒsÂ÷G#ãÂ÷F†VCãÇF&öG“åÆâp¢f÷"&—6²–â&—6·3 ¢ÆWfVÂÒ&—6²ævWB‚'&—6µöÆWfVÂ"Â""’æÆ÷vW"‚¢‚³ÒsÇG#âp¢‚³ÒsÇFCãÇ7G&öæsç·ÓÂ÷7G&öæsãÂ÷FCâræf÷&ÖB‡&—6²ævWB‚&–B"Â""’¢‚³ÒsÇFCç·ÓÂ÷FCâræf÷&ÖB‡&—6²ævWB‚&6FVv÷'’"Â""’¢‚³ÒsÇFCç·ÓÂ÷FCâræf÷&ÖB‡&—6²ævWB‚&FW67&—F–öâ"Â""’¢‚³ÒsÇFCç·ÓÂ÷FCâræf÷&ÖB‡&—6²ævWB‚&Æ–¶VÆ–†ööB"Â""’¢‚³ÒsÇFCç·ÓÂ÷FCâræf÷&ÖB‡&—6²ævWB‚&6öç6WVVæ6R"Â""’¢‚³ÒsÇFB6Æ73Ò'&—6²ÖÆWfVÂ&—6²×·Ò#ç·ÓÂ÷FCâræf÷&ÖB†ÆWfVÂÂ&—6²ævWB‚'&—6µöÆWfVÂ"Â""’¢‚³ÒsÇFB6Æ73Ò&Ö—F–vF–öâÖ6VÆÂ#ç·ÓÂ÷FCâræf÷&ÖB‡&—6²ævWB‚&Ö—F–vF–öâ"Â""’¢‚³ÒsÂ÷G#åÆâp¢‚³ÒsÂ÷F&öG“ãÂ÷F&ÆSåÆâp¢&WGW&â€  ¦FVbf÷&ÖE÷v÷&¶fÆ÷uö‡FÖÂ‡&W7VÇG2“ ¢""$f÷&ÖBvVçE÷v÷&¶fÆ÷u÷Æâg&öÒ&W7VÇG2æ§6öâ26öÇWF–öâv÷&¶fÆ÷r&Æö6²à ¢Fö7VÖVçG2¦†÷r¢F†RF6²v26öÇfVC¢F†RF—66÷fW&VB÷W6VB7V6–Æ—7BvVçG2À¢F†Rv÷&¶fÆ÷r6ö×÷6—F–öâÂæBF†R&F–öæÆRâ&WW6W2F†RW†—7F–ær&—6²Ö6&@¢æB&—6²×F&ÆR5526Æ76W26òæò7G–ÆW6†VWB6†ævW2&RæVVFVBà¢"" ¢ÆâÒ&W7VÇG2ævWB‚&vVçE÷v÷&¶fÆ÷u÷Æâ"Â·Ò¢–bæ÷BÆã ¢&WGW&â" ¢‚ÒsÆF—b6Æ73Ò'&—6²×7VÖÖ'’Ö6&B#åÆâp¢wG—RÒÆâævWB‚'v÷&¶fÆ÷u÷G—R"Â""¢v÷&¶fÆ÷rÒÆâævWB‚'v÷&¶fÆ÷r"Â""¢–bwG—S ¢‚³ÒsÇåv÷&¶fÆ÷rG—S¢Ç7G&öæsç·ÓÂ÷7G&öæsãÂ÷åÆâræf÷&ÖB‡wG—R¢–bv÷&¶fÆ÷s ¢‚³ÒsÇä6ö×÷6—F–öã¢Æ6öFSç·ÓÂö6öFSãÂ÷åÆâræf÷&ÖB‡v÷&¶fÆ÷r¢F—62ÒÆâævWB‚&F—66÷fW'’"Â·Ò¢–b—6–ç7Fæ6R†F—62ÂF–7B’æB†F—62ævWB‚'6¶–ÆÅ÷6V&6‚"’÷"F—62ævWB‚&vVçE÷6V&6‚"’“ ¢&—G2ÒµÐ¢–bF—62ævWB‚'6¶–ÆÅ÷6V&6‚"“ ¢&—G2æVæB‚'6¶–ÆÅ÷6V&6‚"¢–bF—62ævWB‚&vVçE÷6V&6‚"“ ¢&—G2æVæB‚&vVçE÷6V&6‚g&'#²·Ò"æf÷&ÖB†F—62ævWB‚&vVçE÷6V&6‚"’’¢‚³ÒsÇäF—66÷fW'“¢·ÓÂ÷åÆâræf÷&ÖB‚"Â"æ¦ö–â†&—G2’¢‚³ÒsÂöF—cåÆâp ¢vVçG2ÒÆâævWB‚&vVçG5÷W6VB"ÂµÒ¢–bvVçG3 ¢‚³ÒsÇF&ÆR6Æ73Ò'&—6²×F&ÆR#ãÇF†VCãÇG#âp¢‚³ÒsÇFƒävVçCÂ÷FƒãÇFƒå&WóÂ÷FƒãÇFƒå&öÆSÂ÷FƒãÇFƒäÆöG26¶–ÆÇ3Â÷Fƒâp¢‚³ÒsÂ÷G#ãÂ÷F†VCãÇF&öG“åÆâp¢f÷"–âvVçG3 ¢†æFÆRÒævWB‚&†æFÆR"’÷"ævWB‚&æÖR"Â""¢6¶–ÆÇ2ÒævWB‚&ÆöG5÷6¶–ÆÇ2"ÂµÒ¢6¶–ÆÇ5÷G‡BÒ"Â"æ¦ö–â‡6¶–ÆÇ2’–b—6–ç7Fæ6R‡6¶–ÆÇ2ÂÆ—7B’VÇ6R7G"‡6¶–ÆÇ2¢‚³ÒsÇG#âp¢‚³ÒsÇFCãÇ7G&öæsç·ÓÂ÷7G&öæsãÂ÷FCâræf÷&ÖB††æFÆR¢‚³ÒsÇFCç·ÓÂ÷FCâræf÷&ÖB†ævWB‚'&Wò"Â""’¢‚³ÒsÇFCç·ÓÂ÷FCâræf÷&ÖB†ævWB‚'&öÆR"Â""’¢‚³ÒsÇFCç·ÓÂ÷FCâræf÷&ÖB‡6¶–ÆÇ5÷G‡B¢‚³ÒsÂ÷G#åÆâp¢‚³ÒsÂ÷F&öG“ãÂ÷F&ÆSåÆâp ¢&F–öæÆRÒÆâævWB‚'&F–öæÆR"Â""¢–b&F–öæÆS ¢‚³ÒsÇãÆVÓç·ÓÂöVÓãÂ÷åÆâræf÷&ÖB‡&F–öæÆR¢&WGW&â€  ¦FVbFE÷v÷&¶fÆ÷u÷v÷&E÷6V7F–öâ†Fö2Â&W7VÇG2“ ¢""$FBF†R6öÇWF–öâv÷&¶fÆ÷r†vVçE÷v÷&¶fÆ÷u÷Æâ’2FW‡BÇW2v÷&BF&ÆRâ"" ¢ÆâÒ&W7VÇG2ævWB‚&vVçE÷v÷&¶fÆ÷u÷Æâ"Â·Ò¢–bæ÷BÆã ¢&WGW&à¢wG—RÒÆâævWB‚'v÷&¶fÆ÷u÷G—R"Â""¢v÷&¶fÆ÷rÒÆâævWB‚'v÷&¶fÆ÷r"Â""¢–bwG—S ¢ÒFö2æFE÷&w&‚‚¢æFE÷'Vâ‚%v÷&¶fÆ÷rG—S¢"’æföçBç6—¦RÒB„$ôE•õB¢'VâÒæFE÷'Vâ‡7G"‡wG—R’¢'Vâæ&öÆBÒG'VP¢'VâæföçBç6—¦RÒB„$ôE•õB¢–bv÷&¶fÆ÷s ¢ÒFö2æFE÷&w&‚‚¢æFE÷'Vâ‚$6ö×÷6—F–öã¢"’æföçBç6—¦RÒB„$ôE•õB¢æFE÷'Vâ‡7G"‡v÷&¶fÆ÷r’’æföçBç6—¦RÒB„$ôE•õB¢F—62ÒÆâævWB‚&F—66÷fW'’"Â·Ò¢–b—6–ç7Fæ6R†F—62ÂF–7B’æB†F—62ævWB‚'6¶–ÆÅ÷6V&6‚"’÷"F—62ævWB‚&vVçE÷6V&6‚"’“ ¢&—G2ÒµÐ¢–bF—62ævWB‚'6¶–ÆÅ÷6V&6‚"“ ¢&—G2æVæB‚'6¶–ÆÅ÷6V&6‚"¢–bF—62ævWB‚&vVçE÷6V&6‚"“ ¢&—G2æVæB‚&vVçE÷6V&6ƒ¢·Ò"æf÷&ÖB†F—62ævWB‚&vVçE÷6V&6‚"’’¢ÒFö2æFE÷&w&‚‚¢æFE÷'Vâ‚$F—66÷fW'“¢·Ò"æf÷&ÖB‚"Â"æ¦ö–â†&—G2’’’æföçBç6—¦RÒB„$ôE•õB ¢vVçG2ÒÆâævWB‚&vVçG5÷W6VB"ÂµÒ¢–bvVçG3 ¢†VFW'2Ò²$vVçB"Â%&Wò"Â%&öÆR"Â$ÆöG26¶–ÆÇ2%Ð¢FF÷&÷w2ÒµÐ¢f÷"–âvVçG3 ¢†æFÆRÒævWB‚&†æFÆR"’÷"ævWB‚&æÖR"Â""¢6¶–ÆÇ2ÒævWB‚&ÆöG5÷6¶–ÆÇ2"ÂµÒ¢6¶–ÆÇ5÷G‡BÒ"Â"æ¦ö–â‡6¶–ÆÇ2’–b—6–ç7Fæ6R‡6¶–ÆÇ2ÂÆ—7B’VÇ6R7G"‡6¶–ÆÇ2¢FF÷&÷w2æVæB…°¢7G"††æFÆR’Â7G"†ævWB‚'&Wò"Â""’’Â7G"†ævWB‚'&öÆR"Â""’’Â6¶–ÆÇ5÷G‡@¢Ò¢FE÷v÷&E÷F&ÆR†Fö2Â†VFW'2ÂFF÷&÷w2 ¢&F–öæÆRÒÆâævWB‚'&F–öæÆR"Â""¢–b&F–öæÆS ¢ÒFö2æFE÷&w&‚‚¢'VâÒæFE÷'Vâ‡7G"‡&F–öæÆR’¢'Vâæ—FÆ–2ÒG'VP¢'VâæföçBç6—¦RÒB„$ôE•õB  ¦FVbf÷&ÖE÷Væ6W'F–çG•ö‡FÖÂ‡&W7VÇG2“ ¢""$f÷&ÖBVæ6W'F–çG’æÇ—6—2g&öÒ&W7VÇG2æ§6öâ27G–ÆVB…DÔÂF&ÆW2à ¢&VæFW'3¢–çWB&ÖWFW'2F&ÆRÂõSõ“÷WGWBF&ÆRÂF÷&æFòF&ÆRà¢"" ¢Væ2Ò&W7VÇG2ævWB‚'Væ6W'F–çG’"Â·Ò¢–bæ÷BVæ3 ¢&WGW&â" ¢‚Ò"  ¢27VÖÖ'’&w&€¢‚³ÒsÆF—b6Æ73Ò'Væ6W'F–çG’×7VÖÖ'’#åÆâp¢‚³ÒsÇãÇ7G&öæsç·ÓÂ÷7G&öæsâv—F‚Ç7G&öæsç·ÓÂ÷7G&öæsâ6–×VÆF–öç2ræf÷&ÖB€¢Væ2ævWB‚&ÖWF†öB"Â$ÖöçFR6&ÆòæÇ—6—2"’À¢Væ2ævWB‚&å÷6–×VÆF–öç2"Â$âô"’¢Væv–æRÒVæ2ævWB‚'6–×VÆF–öåöVæv–æR"Â""¢–bVæv–æS ¢‚³ÒrW6–ær·Òræf÷&ÖB†Væv–æR¢‚³ÒrãÂ÷åÆãÂöF—cåÆâp ¢2–çWB&ÖWFW'2F&ÆP¢&×2ÒVæ2ævWB‚&–çWE÷&ÖWFW'2"ÂµÒ¢–b&×3 ¢‚³ÒsÆƒ3âr²÷B‚t–çWB&ÖWFW"&ævW2r’²sÂöƒ3åÆâp¢‚³ÒsÇF&ÆR6Æ73Ò'Væ6W'F–çG’×F&ÆR#ãÇF†VCãÇG#âp¢‚³ÒsÇFƒå&ÖWFW#Â÷FƒãÇFƒåVæ—CÂ÷FƒãÇFƒäÆ÷sÂ÷FƒãÇFƒä&6SÂ÷Fƒâp¢‚³ÒsÇFƒä†–vƒÂ÷FƒãÇFƒäF—7G&–'WF–öãÂ÷Fƒâp¢‚³ÒsÂ÷G#ãÂ÷F†VCãÇF&öG“åÆâp¢f÷"–â&×3 ¢‚³ÒsÇG#âp¢‚³ÒsÇFCç·ÓÂ÷FCâræf÷&ÖB‡ævWB‚&æÖR"Â""’¢‚³ÒsÇFCç·ÓÂ÷FCâræf÷&ÖB‡ævWB‚'Væ—B"Â""’¢‚³ÒsÇFB6Æ73Ò&çVÒ#ç·ÓÂ÷FCâræf÷&ÖB…öf×EöçVÒ‡ævWB‚&Æ÷r"Â""’’¢‚³ÒsÇFB6Æ73Ò&çVÒ#ç·ÓÂ÷FCâræf÷&ÖB…öf×EöçVÒ‡ævWB‚&&6R"Â""’’¢‚³ÒsÇFB6Æ73Ò&çVÒ#ç·ÓÂ÷FCâræf÷&ÖB…öf×EöçVÒ‡ævWB‚&†–v‚"Â""’’¢‚³ÒsÇFCç·ÓÂ÷FCâræf÷&ÖB‡ævWB‚&F—7G&–'WF–öâ"Â""’¢‚³ÒsÂ÷G#åÆâp¢‚³ÒsÂ÷F&öG“ãÂ÷F&ÆSåÆâp ¢2÷WGWBõSõ“F&ÆR(	B†æFÆR&÷F‚6–ævÆRÖ÷WGWBæB×VÇF’Ö÷WGWBf÷&ÖG0¢÷WE÷&ÒÒVæ2ævWB‚&÷WGWE÷&ÖWFW""Â""¢÷WE÷&×2ÒVæ2ævWB‚&÷WGWE÷&ÖWFW'2"Â·Ò¢–b÷WE÷&Ò÷"÷WE÷&×3 ¢‚³ÒsÆƒ3âr²÷B‚t÷WGWBF—7G&–'WF–öâ…òSò“’r’²sÂöƒ3åÆâp¢‚³ÒsÇF&ÆR6Æ73Ò'Væ6W'F–çG’×F&ÆR#ãÇF†VCãÇG#âp¢‚³ÒsÇFƒä÷WGWB&ÖWFW#Â÷FƒãÇFƒåÂ÷FƒãÇFƒåSÂ÷FƒãÇFƒå“Â÷Fƒâp¢‚³ÒsÂ÷G#ãÂ÷F†VCãÇF&öG“åÆâp¢–b÷WE÷&Ó ¢‚³ÒsÇG#ãÇFCç·ÓÂ÷FCâræf÷&ÖB†÷WE÷&Ò¢‚³ÒsÇFB6Æ73Ò&çVÒ#ç·ÓÂ÷FCâræf÷&ÖB…öf×EöçVÒ‡Væ2ævWB‚'"Â""’’¢‚³ÒsÇFB6Æ73Ò&çVÒ#ãÇ7G&öæsç·ÓÂ÷7G&öæsãÂ÷FCâræf÷&ÖB…öf×EöçVÒ‡Væ2ævWB‚'S"Â""’’¢‚³ÒsÇFB6Æ73Ò&çVÒ#ç·ÓÂ÷FCãÂ÷G#åÆâræf÷&ÖB…öf×EöçVÒ‡Væ2ævWB‚'“"Â""’’¢f÷"¶W’ÂfÂ–â÷WE÷&×2æ—FV×2‚“ ¢Æ&VÂÒ¶W’ç&WÆ6R‚%ò"Â""’çF—FÆR‚¢‚³ÒsÇG#ãÇFCç·ÓÂ÷FCâræf÷&ÖB†Æ&VÂ¢‚³ÒsÇFB6Æ73Ò&çVÒ#ç·ÓÂ÷FCâræf÷&ÖB…öf×EöçVÒ‡fÂævWB‚'"Â""’’¢‚³ÒsÇFB6Æ73Ò&çVÒ#ãÇ7G&öæsç·ÓÂ÷7G&öæsãÂ÷FCâræf÷&ÖB…öf×EöçVÒ‡fÂævWB‚'S"Â""’’¢‚³ÒsÇFB6Æ73Ò&çVÒ#ç·ÓÂ÷FCãÂ÷G#åÆâræf÷&ÖB…öf×EöçVÒ‡fÂævWB‚'“"Â""’’¢‚³ÒsÂ÷F&öG“ãÂ÷F&ÆSåÆâp ¢2F÷&æFò6Vç6—F—f—G’F&ÆP¢F÷&æFòÒVæ2ævWB‚'F÷&æFò"ÂµÒ¢–bF÷&æFó ¢‚³ÒsÆƒ3âr²÷B‚u6Vç6—F—f—G’&æ¶–ær…F÷&æFò’r’²sÂöƒ3åÆâp¢‚³ÒsÇF&ÆR6Æ73Ò'F÷&æFò×F&ÆR#ãÇF†VCãÇG#âp¢2FWFV7B6öÇVÖâæÖW2g&öÒf—'7BF÷&æFòVçG'¢f—'7BÒF÷&æFõ³Ð¢6öÇ2Ò¶²f÷"²–âf—'7Bæ¶W—2‚’–b²Ò'&ÖWFW"%Ð¢‚³ÒsÇFƒå&ÖWFW#Â÷Fƒâp¢f÷"6öÂ–â6öÇ3 ¢‚³ÒsÇFƒç·ÓÂ÷Fƒâræf÷&ÖB†6öÂç&WÆ6R‚%ò"Â""’çF—FÆR‚’¢‚³ÒsÂ÷G#ãÂ÷F†VCãÇF&öG“åÆâp¢f÷"—FVÒ–âF÷&æFó ¢‚³ÒsÇG#ãÇFCç·ÓÂ÷FCâræf÷&ÖB†—FVÒævWB‚'&ÖWFW""Â""’¢f÷"6öÂ–â6öÇ3 ¢‚³ÒsÇFB6Æ73Ò&çVÒ#ç·ÓÂ÷FCâræf÷&ÖB…öf×EöçVÒ†—FVÒævWB†6öÂÂ""’’¢‚³ÒsÂ÷G#åÆâp¢‚³ÒsÂ÷F&öG“ãÂ÷F&ÆSåÆâp ¢&WGW&â€  ¦FVbf÷&ÖEö&Væ6†Ö&µö‡FÖÂ‡&W7VÇG2“ ¢""$f÷&ÖB&Væ6†Ö&µ÷fÆ–FF–öâg&öÒ&W7VÇG2æ§6öâ27G–ÆVB…DÔÂF&ÆRâ"" ¢'bÒ&W7VÇG2ævWB‚&&Væ6†Ö&µ÷fÆ–FF–öâ"Â·Ò¢–bæ÷B'c ¢&WGW&â" ¢6÷W&6RÒ'bævWB‚'6÷W&6R"Â""’–b—6–ç7Fæ6R†'bÂF–7B’VÇ6R" ¢‚ÒsÇç·Ó¢·ÓÂ÷åÆâræf÷&ÖB…÷B‚%&VfW&Væ6R6÷W&6R"’Âö‡FÖÅöW66R‡7G"‡6÷W&6R’’’–b6÷W&6RVÇ6R" ¢†VFW'2Â&÷w2Â7FGW5ö–G‚Òö&Væ6†Ö&µ÷F&ÆR‡&W7VÇG2¢‚³ÒsÇF&ÆR6Æ73Ò&&Væ6†Ö&²×F&ÆR#ãÇF†VCãÇG#âp¢‚³Ò""æ¦ö–â‚#ÇFƒç·ÓÂ÷Fƒâ"æf÷&ÖB…ö‡FÖÅöW66R‡7G"‡‚’’’f÷"‚–â†VFW'2¢‚³ÒsÂ÷G#ãÂ÷F†VCãÇF&öG“åÆâp¢f÷"&÷r–â&÷w3 ¢‚³ÒsÇG#âp¢f÷"–æFW‚Â6VÆÂ–âVçVÖW&FR‡&÷r“ ¢FW‡BÒö‡FÖÅöW66R‡7G"†6VÆÂ’¢–b–æFW‚ÓÒ7FGW5ö–Gƒ ¢772Ò‚r6Æ73Ò'72"r–b6VÆÂÓÒ%52 ¢VÇ6R‚r6Æ73Ò&f–Â"r–b6VÆÂÓÒ$d”Â"VÇ6R""’¢‚³ÒsÇFG·ÓãÇ7G&öæsç·ÓÂ÷7G&öæsãÂ÷FCâræf÷&ÖB†772ÂFW‡B¢VÆ–b–æFW‚ÓÒ ¢‚³ÒsÇFCãÇ7G&öæsç·ÓÂ÷7G&öæsãÂ÷FCâræf÷&ÖB‡FW‡B¢VÇ6S ¢‚³ÒsÇFCç·ÓÂ÷FCâræf÷&ÖB‡FW‡B¢‚³ÒsÂ÷G#åÆâp¢‚³ÒsÂ÷F&öG“ãÂ÷F&ÆSåÆâp¢&WGW&â€  ¦FVböf×EöçVÒ‡fÇVR“ ¢""$f÷&ÖBçVÖW&–2fÇVRf÷"F—7Æ’–âF&ÆW2â"" ¢26ÖRf÷&ÖGFW"2WfW'’÷F†W"F&ÆRÂ6òc#ã&VG2#c""Âæ÷B#ãc&R³R"à¢–b—6–ç7Fæ6R‡fÇVRÂ†–çBÂfÆöB’’æBæ÷B—6–ç7Fæ6R‡fÇVRÂ&ööÂ“ ¢&WGW&âöf×Eö6VÆÂ‡fÇVR¢&WGW&â7G"‡fÇVR  ¦FVbFE÷&—6µ÷v÷&E÷F&ÆR†Fö2Â&W7VÇG2“ ¢""$FB&—6²WfÇVF–öâ27G–ÆVBv÷&BF&ÆRv—F‚6öÆ÷"Ö6öFVB&—6²ÆWfVÇ2â"" ¢&UöFFÒ&W7VÇG2ævWB‚'&—6µöWfÇVF–öâ"Â·Ò¢–bæ÷B&UöFF ¢&WGW&à¢&—6·2Ò&UöFFævWB‚'&—6·2"ÂµÒ¢ÖG&—‚Ò&UöFFævWB‚'&—6µöÖG&—…÷W6VB"Â#WƒR„•4ò3’"¢÷fW&ÆÂÒ&UöFFævWB‚&÷fW&ÆÅ÷&—6µöÆWfVÂ"Â$âô"¢†–v…ö6÷VçBÒ&UöFFævWB‚&†–v…÷&—6µö6÷VçB"À¢7VÒƒf÷""–â&—6·2–b"ævWB‚'&—6µöÆWfVÂ"’ÓÒ$†–v‚"’¢ÖVF—VÕö6÷VçBÒ&UöFFævWB‚&ÖVF—VÕ÷&—6µö6÷VçB"À¢7VÒƒf÷""–â&—6·2–b"ævWB‚'&—6µöÆWfVÂ"’ÓÒ$ÖVF—VÒ"’ ¢27VÖÖ'’&w&€¢ÒFö2æFE÷&w&‚‚¢æFE÷'Vâ‚%&—6²76W76ÖVçBW6–ær"’æföçBç6—¦RÒB„$ôE•õB¢"ÒæFE÷'Vâ‚'·Òg&ÖWv÷&²"æf÷&ÖB†ÖG&—‚’¢"æ&öÆBÒG'VP¢"æföçBç6—¦RÒB„$ôE•õB¢æFE÷'Vâ‚"â÷fW&ÆÂ&—6²ÆWfVÃ¢"’æföçBç6—¦RÒB„$ôE•õB¢#"ÒæFE÷'Vâ†÷fW&ÆÂ¢#"æ&öÆBÒG'VP¢#"æföçBç6—¦RÒB„$ôE•õB¢–b÷fW&ÆÂÓÒ$†–v‚# ¢#"æföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒ„D2Âƒ3RÂƒCR¢VÆ–b÷fW&ÆÂÓÒ$ÖVF—VÒ# ¢#"æföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒ„SbÂƒtRÂƒ#"¢VÆ–b÷fW&ÆÂÓÒ$Æ÷r# ¢#"æföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒƒ#‚Â„rÂƒCR¢æFE÷'Vâ‚"â‡·Ò†–v‚Â·ÒÖVF—VÒ’"æf÷&ÖB††–v…ö6÷VçBÂÖVF—VÕö6÷VçB’’æföçBç6—¦RÒB„$ôE•õB ¢–bæ÷B&—6·3 ¢&WGW&à¢†VFW'2Ò²$”B"Â$6FVv÷'’"Â$FW67&—F–öâ"Â$Æ–¶VÆ–†ööB"Â$6öç6WVVæ6R"À¢%&—6²ÆWfVÂ"Â$Ö—F–vF–öâ%Ð¢FF÷&÷w2ÒµÐ¢f÷"&—6²–â&—6·3 ¢FF÷&÷w2æVæB…°¢&—6²ævWB‚&–B"Â""’À¢&—6²ævWB‚&6FVv÷'’"Â""’À¢&—6²ævWB‚&FW67&—F–öâ"Â""’À¢&—6²ævWB‚&Æ–¶VÆ–†ööB"Â""’À¢&—6²ævWB‚&6öç6WVVæ6R"Â""’À¢&—6²ævWB‚'&—6µöÆWfVÂ"Â""’À¢&—6²ævWB‚&Ö—F–vF–öâ"Â""’À¢Ò¢F&ÆRÒFE÷v÷&E÷F&ÆR†Fö2Â†VFW'2ÂFF÷&÷w2¢26öÆ÷"Ö6öFR&—6²ÆWfVÂ6öÇVÖâ†6öÇVÖâRÂÖ–æFW†VB¢f÷"&÷r–âF&ÆRç&÷w5³¥Ó ¢6VÆÂÒ&÷ræ6VÆÇ5³UÐ¢FW‡BÒ6VÆÂçFW‡Bç7G&—‚¢f÷"&w&‚–â6VÆÂç&w&‡3 ¢f÷"'Vâ–â&w&‚ç'Vç3 ¢'VâæföçBæ&öÆBÒG'VP¢–bFW‡BÓÒ$†–v‚# ¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒ„D2Âƒ3RÂƒCR¢VÆ–bFW‡BÓÒ$ÖVF—VÒ# ¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒ„SbÂƒtRÂƒ#"¢VÆ–bFW‡BÓÒ$Æ÷r# ¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒƒ#‚Â„rÂƒCR  ¦FVbFE÷Væ6W'F–çG•÷v÷&E÷F&ÆW2†Fö2Â&W7VÇG2“ ¢""$FBVæ6W'F–çG’æÇ—6—227G–ÆVBv÷&BF&ÆW2â"" ¢Væ2Ò&W7VÇG2ævWB‚'Væ6W'F–çG’"Â·Ò¢–bæ÷BVæ3 ¢&WGW&à ¢27VÖÖ'’&w&€¢ÒFö2æFE÷&w&‚‚¢æFE÷'Vâ‚'·Òv—F‚·Ò6–×VÆF–öç2"æf÷&ÖB€¢Væ2ævWB‚&ÖWF†öB"Â$ÖöçFR6&ÆòæÇ—6—2"’À¢Væ2ævWB‚&å÷6–×VÆF–öç2"Â$âô"’’’æföçBç6—¦RÒB„$ôE•õB¢Væv–æRÒVæ2ævWB‚'6–×VÆF–öåöVæv–æR"Â""¢–bVæv–æS ¢æFE÷'Vâ‚"W6–ær·Òâ"æf÷&ÖB†Væv–æR’’æföçBç6—¦RÒB„$ôE•õB ¢2–çWB&ÖWFW'2F&ÆP¢&×2ÒVæ2ævWB‚&–çWE÷&ÖWFW'2"ÂµÒ¢–b&×3 ¢öFEö†VF–ær†Fö2Â÷B‚$–çWB&ÖWFW"&ævW2"’ÂÆWfVÃÓ"¢†VFW'2Ò²%&ÖWFW""Â%Væ—B"Â$Æ÷r"Â$&6R"Â$†–v‚"Â$F—7G&–'WF–öâ%Ð¢FF÷&÷w2ÒµÐ¢f÷"&Ò–â&×3 ¢FF÷&÷w2æVæB…°¢&ÒævWB‚&æÖR"Â""’À¢&ÒævWB‚'Væ—B"Â""’À¢öf×EöçVÒ‡&ÒævWB‚&Æ÷r"Â""’’À¢öf×EöçVÒ‡&ÒævWB‚&&6R"Â""’’À¢öf×EöçVÒ‡&ÒævWB‚&†–v‚"Â""’’À¢&ÒævWB‚&F—7G&–'WF–öâ"Â""’À¢Ò¢FE÷v÷&E÷F&ÆR†Fö2Â†VFW'2ÂFF÷&÷w2 ¢2÷WGWBõSõ“F&ÆP¢÷WE÷&ÒÒVæ2ævWB‚&÷WGWE÷&ÖWFW""Â""¢÷WE÷&×2ÒVæ2ævWB‚&÷WGWE÷&ÖWFW'2"Â·Ò¢–b÷WE÷&Ò÷"÷WE÷&×3 ¢öFEö†VF–ær†Fö2Â÷B‚$÷WGWBF—7G&–'WF–öâ…òSò“’"’ÂÆWfVÃÓ"¢†VFW'2Ò²$÷WGWB&ÖWFW""Â%"Â%S"Â%“%Ð¢FF÷&÷w2ÒµÐ¢–b÷WE÷&Ó ¢FF÷&÷w2æVæB…°¢÷WE÷&ÒÀ¢öf×EöçVÒ‡Væ2ævWB‚'"Â""’’À¢öf×EöçVÒ‡Væ2ævWB‚'S"Â""’’À¢öf×EöçVÒ‡Væ2ævWB‚'“"Â""’’À¢Ò¢f÷"¶W’ÂfÂ–â÷WE÷&×2æ—FV×2‚“ ¢Æ&VÂÒ¶W’ç&WÆ6R‚%ò"Â""’çF—FÆR‚¢FF÷&÷w2æVæB…°¢Æ&VÂÀ¢öf×EöçVÒ‡fÂævWB‚'"Â""’’À¢öf×EöçVÒ‡fÂævWB‚'S"Â""’’À¢öf×EöçVÒ‡fÂævWB‚'“"Â""’’À¢Ò¢FE÷v÷&E÷F&ÆR†Fö2Â†VFW'2ÂFF÷&÷w2À¢6öÅ÷v–GF‡3Õ´–æ6†W2ƒ"ãR’Â–æ6†W2ƒã’Â–æ6†W2ƒã’Â–æ6†W2ƒã•Ò ¢2F÷&æFò6Vç6—F—f—G’F&ÆP¢F÷&æFòÒVæ2ævWB‚'F÷&æFò"ÂµÒ¢–bF÷&æFó ¢öFEö†VF–ær†Fö2Â÷B‚%6Vç6—F—f—G’&æ¶–ær…F÷&æFò’"’ÂÆWfVÃÓ"¢f—'7BÒF÷&æFõ³Ð¢6öÇ2Ò¶²f÷"²–âf—'7Bæ¶W—2‚’–b²Ò'&ÖWFW"%Ð¢†VFW'2Ò²%&ÖWFW"%Ò²¶2ç&WÆ6R‚%ò"Â""’çF—FÆR‚’f÷"2–â6öÇ5Ð¢FF÷&÷w2ÒµÐ¢f÷"—FVÒ–âF÷&æFó ¢&÷rÒ¶—FVÒævWB‚'&ÖWFW""Â""•Ð¢f÷"6öÂ–â6öÇ3 ¢&÷ræVæB…öf×EöçVÒ†—FVÒævWB†6öÂÂ""’’¢FF÷&÷w2æVæB‡&÷r¢FE÷v÷&E÷F&ÆR†Fö2Â†VFW'2ÂFF÷&÷w2  ¢2†Æ&VÂÂ66WFVB¶W—2“¢&W7VÇG2æ§6öâf–ÆW2–âW6Rw&—FRV—F†W ¢2&VfW&Væ6U÷fÇVRöæW6–Õ÷fÇVR÷"F†R6†÷'FW"çVÖW&–2&VfW&Væ6RöæW6–Òà¥ô$Tä4„Ô$µõdÅTUô4ôÅTÔå2Ò€¢‚%&VfW&Væ6RfÇVR"Â‚'&VfW&Væ6U÷fÇVR"Â&W‡V7FVB"Â'&VfW&Væ6R"’’À¢‚$æW6–ÒfÇVR"Â‚&æW6–Õ÷fÇVR"Â&æW6–Ò"Â&6Æ7VÆFVB"’’À¢‚%Væ—B"Â‚'Væ—B"Â’’À¢‚$FWf–F–öâ²UÒ"Â‚&FWf–F–öå÷7B"Â&FWf–F–öå÷W&6VçB"’’À¢‚%FöÆW&æ6R²UÒ"Â‚'FöÆW&æ6U÷7B"Â'FöÆW&æ6U÷W&6VçB"’’À¢¥ô$Tä4„Ô$µõDU…Eô´U•2Ò²'&ÖWFW""Â&æÖR"Â'FW7B"Â&FW67&—F–öâ"Â'6÷W&6R"À¢'7FGW2"Â'72"Â'ö–çG2'Ð  ¦FVbö&Væ6†Ö&µ÷fÇVUö¶W’‡FW7BÂ¶W—2ÂÆ&VÂ“ ¢""$f—'7B¶W’öb¶W—6&W6VçB–âF†RFW7C²FW‡B'&VfW&Væ6R"—26—FF–öââ"" ¢f÷"¶W’–â¶W—3 ¢–b¶W’æ÷B–âFW7C ¢6öçF–çVP¢–b¶W’ÓÒ'&VfW&Væ6R"æB—6–ç7Fæ6R‡FW7E¶¶W•ÒÂ7G"“ ¢6öçF–çVP¢&WGW&â¶W¢&WGW&âæöæP  ¦FVbö&Væ6†Ö&µ÷&VfW&Væ6U÷FW‡B‡FW7B“ ¢""%F†R6—FF–öâf÷"FW7BÂv†VâöæR—2v—fVâ2FW‡Bâ"" ¢&VfW&Væ6RÒFW7BævWB‚'&VfW&Væ6R"¢–b—6–ç7Fæ6R‡&VfW&Væ6RÂ7G"’æB&VfW&Væ6Rç7G&—‚“ ¢&WGW&â&VfW&Væ6P¢–bFW7BævWB‚&æÖR"’æBFW7BævWB‚&FW67&—F–öâ"“ ¢&WGW&âFW7E²&FW67&—F–öâ%Ð¢&WGW&âFW7BævWB‚'6÷W&6R"’÷""   ¦FVbö&Væ6†Ö&µ÷F&ÆR‡&W7VÇG2“ ¢""%&WGW&â††VFW'2Â&÷w2Â7FGW26öÇVÖâ–æFW‚’f÷"F†R&Væ6†Ö&²F&ÆRà ¢V6‚çVÖW&–2f–VÆBvWG2—G2÷vâ6öÇVÖã²fÆGFVæ–ærF†VÒ–çFòöæP¢$æÖS¢ââã²&VfW&Væ6RfÇVS¢âââ"7G&–ærÖFRF†RF&ÆRVç&VF&ÆRà¢"" ¢FW7G2Òö&Væ6†Ö&µ÷FW7G2‡&W7VÇG2¢fÇVUö6öÇ2Ò²†Æ&VÂÂ¶W—2’f÷"Æ&VÂÂ¶W—2–âô$Tä4„Ô$µõdÅTUô4ôÅTÔå0¢–bç’…ö&Væ6†Ö&µ÷fÇVUö¶W’‡BÂ¶W—2ÂÆ&VÂ’f÷"B–âFW7G2•Ð¢2fÇVRg&öÒæ÷F†W"6–×VÆF÷"„õÒÂôÄt’—2æ÷B$æW6–ÒfÇVR#²6’v†B—B—2à¢'bÒ‡&W7VÇG2÷"·Ò’ævWB‚&&Væ6†Ö&µ÷fÆ–FF–öâ"’÷"·Ð¢fÇVUöÆ&VÂÒ'bævWB‚'fÇVUöÆ&VÂ"’–b—6–ç7Fæ6R†'bÂF–7B’VÇ6RæöæP¢–bæ÷BfÇVUöÆ&VÂæBæ÷Bç’†²–âBf÷"B–âFW7G2f÷"²–â‚&æW6–Õ÷fÇVR"Â&æW6–Ò"’“ ¢fÇVUöÆ&VÂÒ$6Æ7VÆFVBfÇVR ¢–bfÇVUöÆ&VÃ ¢fÇVUö6öÇ2Ò²‡fÇVUöÆ&VÂ–bÆ&VÂÓÒ$æW6–ÒfÇVR"VÇ6RÆ&VÂÂ¶W—2¢f÷"Æ&VÂÂ¶W—2–âfÇVUö6öÇ5Ð¢†5÷&VfW&Væ6RÒç’…ö&Væ6†Ö&µ÷&VfW&Væ6U÷FW‡B‡B’f÷"B–âFW7G2¢W6VEö'•÷FW7BÒµÐ¢f÷"FW7B–âFW7G3 ¢W6VBÒ6WB…ô$Tä4„Ô$µõDU…Eô´U•2¢f÷"Æ&VÂÂ¶W—2–âfÇVUö6öÇ3 ¢¶W’Òö&Væ6†Ö&µ÷fÇVUö¶W’‡FW7BÂ¶W—2ÂÆ&VÂ¢–b¶W“ ¢W6VBæFB†¶W’¢–b—6–ç7Fæ6R‡FW7BævWB‚'&VfW&Væ6R"’Â7G"“ ¢W6VBæFB‚'&VfW&Væ6R"¢W6VEö'•÷FW7BæVæB‡W6VB¢†5öæ÷FW2Òç’†¶W’æ÷B–âW6VBf÷"FW7BÂW6VB–â¦—‡FW7G2ÂW6VEö'•÷FW7B¢f÷"¶W’–âFW7B¢†VFW'2Ò…µ÷B‚%FW7B"•Ò²…µ÷B‚%&VfW&Væ6R"•Ò–b†5÷&VfW&Væ6RVÇ6RµÒ¢²µ÷B†Æ&VÂ’f÷"Æ&VÂÂò–âfÇVUö6öÇ5Ð¢²µ÷B‚%7FGW2"•Ò²…µ÷B‚$æ÷FW2"•Ò–b†5öæ÷FW2VÇ6RµÒ’¢&÷w2ÒµÐ¢f÷"FW7BÂW6VB–â¦—‡FW7G2ÂW6VEö'•÷FW7B“ ¢7FGW2ÒFW7BævWB‚'7FGW2"¢–b7FGW2—2æöæS ¢76VBÒFW7BævWB‚'72"¢7FGW2Ò%52"–b76VB—2G'VRVÇ6R‚$d”Â"–b76VB—2fÇ6RVÇ6R$âô"¢&÷rÒ·FW7BævWB‚&æÖR"’÷"FW7BævWB‚&FW67&—F–öâ"’÷"FW7E²'&ÖWFW"%ÕÐ¢–b†5÷&VfW&Væ6S ¢&÷ræVæB…ö&Væ6†Ö&µ÷&VfW&Væ6U÷FW‡B‡FW7B’¢f÷"Æ&VÂÂ¶W—2–âfÇVUö6öÇ3 ¢¶W’Òö&Væ6†Ö&µ÷fÇVUö¶W’‡FW7BÂ¶W—2ÂÆ&VÂ¢&÷ræVæB…öf×Eö6VÆÂ‡FW7E¶¶W•Ò’–b¶W’VÇ6R""¢&÷ræVæB‡7G"‡7FGW2’çWW"‚’¢–b†5öæ÷FW3 ¢&÷ræVæB‚#²"æ¦ö–â…öf×Eö6VÆÂ‡fÇVR’–b¶W’–â‚&æ÷FW2"Â&æ÷FR"Â&6öÖÖVçB"¢VÇ6R'·Ó¢·Ò"æf÷&ÖB…öÆ&VÅög&öÕö¶W’†¶W’’Âöf×Eö6VÆÂ‡fÇVR’¢f÷"¶W’ÂfÇVR–âFW7Bæ—FV×2‚’–b¶W’æ÷B–âW6VB’¢&÷w2æVæB‡&÷r¢&WGW&â†VFW'2Â&÷w2Â²–çB††5÷&VfW&Væ6R’²ÆVâ‡fÇVUö6öÇ2  ¦FVbFEö&Væ6†Ö&µ÷v÷&E÷F&ÆR†Fö2Â&W7VÇG2“ ¢""$FB&Væ6†Ö&²fÆ–FF–öâ27G–ÆVBv÷&BF&ÆRâ"" ¢'bÒ&W7VÇG2ævWB‚&&Væ6†Ö&µ÷fÆ–FF–öâ"Â·Ò¢–bæ÷B'c ¢&WGW&à¢–b—6–ç7Fæ6R†'bÂF–7B’æB'bævWB‚'6÷W&6R"“ ¢Fö2æFE÷&w&‚‚'·Ó¢·Ò"æf÷&ÖB…÷B‚%&VfW&Væ6R6÷W&6R"’Â'e²'6÷W&6R%Ò’¢†VFW'2ÂFF÷&÷w2Â7FGW5ö–G‚Òö&Væ6†Ö&µ÷F&ÆR‡&W7VÇG2¢–bæ÷BFF÷&÷w3 ¢&WGW&à¢F&ÆRÒFE÷v÷&E÷F&ÆR†Fö2Â†VFW'2ÂFF÷&÷w2¢f÷"&÷r–âF&ÆRç&÷w5³¥Ó ¢6VÆÂÒ&÷ræ6VÆÇ5·7FGW5ö–G…Ð¢FW‡BÒ6VÆÂçFW‡Bç7G&—‚¢f÷"&w&‚–â6VÆÂç&w&‡3 ¢f÷"'Vâ–â&w&‚ç'Vç3 ¢'VâæföçBæ&öÆBÒG'VP¢–bFW‡BÓÒ%52# ¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒƒ#‚Â„rÂƒCR¢VÆ–bFW‡BÓÒ$d”Â# ¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒ„D2Âƒ3RÂƒCR  ¦FVbFE÷v÷&E÷F&ÆR†Fö2Â†VFW'2ÂFF÷&÷w2Â6öÅ÷v–GF‡3ÔæöæRÂ6F–öãÔæöæR“ ¢""$FB&öfW76–öæÆÇ’7G–ÆVBF&ÆRFòv÷&BFö7VÖVçBà ¢&w3 ¢Fö3¢Fö7VÖVçBö&¦V7Bà¢†VFW'3¢Æ—7Böb6öÇVÖâ†VFW"7G&–æw2à¢FF÷&÷w3¢Æ—7BöbÆ—7G2†V6‚–ææW"Æ—7BÒöæR&÷röb6VÆÂfÇVW2’à¢6öÅ÷v–GF‡3¢÷F–öæÂÆ—7Böb–æ6†W2v–GF‡2W"6öÇVÖâÂ&W66ÆVBFòF†P¢ÖV7W&R6òFV×ÆFRw2vR6—¦R6ææ÷BÆVfRF†RF&ÆRæ'&÷rà¢6F–öã¢÷F–öæÂ6F–öâFW‡BÂçVÖ&W&VBæBÆ6VB&÷fRF†RF&ÆRà¢"" ¢æ6öÇ2ÒÆVâ††VFW'2¢FW‡G2Òµ·7G"‡FW‡B’f÷"FW‡B–â†VFW'5ÕÐ¢FW‡G2³Òµµöf×Eö6VÆÂ‡fÂ’f÷"fÂ–â&÷uöFF³¦æ6öÇ5ÕÐ¢²²"%Ò¢Ö‚ƒÂæ6öÇ2ÒÆVâ‡&÷uöFF’’f÷"&÷uöFF–âFF÷&÷w5Ð¢Ö&v–åö–âÒõD$ÄUõt”DUôÔ$t”åô”â–bæ6öÇ2ãÒrVÇ6RõD$ÄUôÔ$t”åô”à¢&öG•÷BÂÆæG66RÒ÷Æå÷F&ÆUöÆ–÷WB†Fö2ÂFW‡G2ÂÖ&v–åö–âÂ6öÅ÷v–GF‡2¢–bÆæG66S ¢÷6WEö&öG•ö÷&–VçFF–öâ†Fö2ÂÆæG66SÕG'VR¢–b6F–öã ¢öFEö6F–öâ†Fö2Â÷B‚%F&ÆR"’Â6F–öâÂ¶VW÷v—F…öæW‡CÕG'VR¢F&ÆRÒFö2æFE÷F&ÆR‡&÷w3ÓÂ6öÇ3Öæ6öÇ2¢F&ÆRæÆ–væÖVçBÒtEõD$ÄUôÄ”täÔTåBä4TåDU ¢÷6WE÷F&ÆU÷7G–ÆR‡F&ÆR¢÷6WEö6VÆÅöÖ&v–ç2‡F&ÆRÂÖ&v–åö–â ¢†G"ÒF&ÆRç&÷w5³Ð¢f÷"’ÂFW‡B–âVçVÖW&FR‡FW‡G5³Ò“ ¢6VÆÂÒ†G"æ6VÆÇ5¶•Ð¢6VÆÂçFW‡BÒFW‡@¢÷7G–ÆUö6VÆÅ÷FW‡B†6VÆÂÂ&öG•÷BÂ&öÆCÕG'VRÂ6öÆ÷#Õ$t$6öÆ÷"ƒ„dbÂ„dbÂ„db’¢6VÆÂå÷F2ævWEö÷%öFE÷F5"‚’æVæB‡'6U÷†ÖÂ€¢sÇs§6†B·Òs§fÃÒ&6ÆV""s¦6öÆ÷#Ò&WFò"s¦f–ÆÃÒ#$cSC“b"óâræf÷&ÖB€¢ç6FV6Ç2‚wrr’’’¢6VÆÂçfW'F–6ÅöÆ–væÖVçBÒtEô4TÄÅõdU%D”4ÅôÄ”täÔTåBä$õEDôÐ ¢f÷"&÷u÷FW‡G2–âFW‡G5³¥Ó ¢&÷rÒF&ÆRæFE÷&÷r‚¢f÷"’ÂFW‡B–âVçVÖW&FR‡&÷u÷FW‡G2“ ¢6VÆÂÒ&÷ræ6VÆÇ5¶•Ð¢6VÆÂçFW‡BÒFW‡@¢÷7G–ÆUö6VÆÅ÷FW‡B†6VÆÂÂ&öG•÷B ¢÷66ÆU÷F&ÆU÷FõöÖV7W&R†Fö2ÂF&ÆRÂ6öÅ÷v–GF‡2Â&öG•÷BÂÖ&v–åö–â¢÷&WVEö†VFW%÷&÷r‡F&ÆR¢ö¶VW÷&÷w5ö–çF7B‡F&ÆR¢öÆ–våöçVÖW&–5ö6VÆÇ2‡F&ÆR ¢–bÆæG66S ¢÷6WEö&öG•ö÷&–VçFF–öâ†Fö2ÂÆæG66SÔfÇ6R¢VÇ6S ¢76W"ÒFö2æFE÷&w&‚‚""¢76W"ç&w&…öf÷&ÖBç76UögFW"ÒBƒB¢&WGW&âF&ÆP  ¢2v÷&Bw2FVfVÇB6VÆÂÖ&v–â—2ãsR–âV6‚6–FS²v–FRF&ÆW2vWBÆW726òF†P¢2F–v—G2Âæ÷BF†RFF–ærÂ6Æ–ÒF†Rv–GF‚à¥õD$ÄUôÔ$t”åô”âÒãsP¥õD$ÄUõt”DUôÔ$t”åô”âÒãCP¢26ÖÆÆW7BG—R÷'G&—BF&ÆRÖ’6‡&–æ²Fò&Vf÷&R—B—26WBÆæG66Rà¥õD$ÄUõõ%E$•EôÔ”åõBÒ‚ã ¥õD$ÄUôÔ”åõBÒrã ¢2&öG’6VÆÇ2æ'&÷vW"F†âF†—2&R¶WBöâöæRÆ–æR‚%FW7B"Â&÷Vâ„ä•Ó’"’à¥õD$ÄUôäõu$ô”âÒãƒP  ¦FVb÷7G–ÆUö6VÆÅ÷FW‡B†6VÆÂÂföçE÷BÂ&öÆCÔfÇ6RÂ6öÆ÷#ÔæöæR“ ¢""%6WBG—R6—¦RæB6ö×7B76–æs²æ÷&ÖÂw2bB76RÖgFW"F÷V&ÆW2&÷r†V–v‡Bâ"" ¢f÷"&w&‚–â6VÆÂç&w&‡3 ¢f×BÒ&w&‚ç&w&…öf÷&Ö@¢f×Bç76Uö&Vf÷&RÒBƒãR¢f×Bç76UögFW"ÒBƒãR¢f×BæÆ–æU÷76–ærÒã ¢f×Bæ¶VW÷v—F…öæW‡BÒfÇ6P¢f÷"'Vâ–â&w&‚ç'Vç3 ¢'VâæföçBç6—¦RÒB†föçE÷B¢–b&öÆC ¢'VâæföçBæ&öÆBÒG'VP¢–b6öÆ÷"—2æ÷BæöæS ¢'VâæföçBæ6öÆ÷"ç&v"Ò6öÆ÷   ¦FVb÷6WEö6VÆÅöÖ&v–ç2‡F&ÆRÂÖ&v–åö–â“ ¢""%6WBF†RF&ÆRw2FVfVÇBÆVgB÷&–v‡B6VÆÂÖ&v–ç2â"" ¢F&Å÷"ÒF&ÆRå÷F&ÂçF&Å ¢f÷"W†—7F–ær–âF&Å÷"æf–æFÆÂ‡â‚'s§F&Ä6VÆÄÖ""’“ ¢F&Å÷"ç&VÖ÷fR†W†—7F–ær¢Gv—2Ò–çB‡&÷VæB†Ö&v–åö–â¢CC’¢F&Å÷"æVæB‡'6U÷†ÖÂ€¢sÇs§F&Ä6VÆÄÖ"³ÓãÇs§F÷s§sÒ#"s§G—SÒ&G†"óâp¢sÇs¦ÆVgBs§sÒ'³Ò"s§G—SÒ&G†"óãÇs¦&÷GFöÒs§sÒ#"s§G—SÒ&G†"óâp¢sÇs§&–v‡Bs§sÒ'³Ò"s§G—SÒ&G†"óãÂ÷s§F&Ä6VÆÄÖ#âræf÷&ÖB†ç6FV6Ç2‚'r"’ÂGv—2’’  ¦FVböÆæG66UöÖV7W&Uö–â†Fö2“ ¢""%&–çF&ÆRv–GF‚öbF†R7W'&VçB6V7F–öâ–b—BvW&RGW&æVBÆæG66Râ"" ¢6V7F–öâÒFö2ç6V7F–öç5²ÓÐ¢Æöæu÷6–FRÒÖ‚‡6V7F–öâçvU÷v–GF‚Â6V7F–öâçvUö†V–v‡B¢&WGW&âÖ‚ƒ"ãÂ†Æöæu÷6–FRÒ6V7F–öâæÆVgEöÖ&v–âÒ6V7F–öâç&–v‡EöÖ&v–â’ò“CCã  ¦FVb÷Æå÷F&ÆUöÆ–÷WB†Fö2ÂFW‡G2ÂÖ&v–åö–âÂ6öÅ÷v–GF‡3ÔæöæR“ ¢""%–6²F†RÆ&vW7BG—R6—¦RBv†–6‚æòv÷&B÷"çVÖ&W"†2Fò'&V²à ¢&WGW&ç2†föçE÷BÂÆæG66R’âF&ÆRF†BFöW2æ÷Bf—BF†R÷'G&—BÖV7W&P¢WfVâBõD$ÄUõõ%E$•EôÔ”åõB—26WBöâ—G2÷vâÆæG66RvR–ç7FVBö`¢7Æ—GF–ær#’ã“c"÷fW"F‡&VRÆ–æW2à¢"" ¢æ6öÇ2ÒÆVâ‡FW‡G5³Ò’–bFW‡G2VÇ6R ¢7F'E÷BÒD$ÄUõ@¢–bæ6öÇ2ãÒ“ ¢7F'E÷BÒD$ÄUõBÒãP¢VÆ–bæ6öÇ2ãÒs ¢7F'E÷BÒD$ÄUõBÒã ¢–b6öÅ÷v–GF‡2÷"æ6öÇ2ÃÒ ¢&WGW&â7F'E÷BÂfÇ6P¢BÒ"ã¢Ö&v–åö–â²ã ¢÷'G&—BÒ÷FW‡E÷v–GF…ö–â†Fö2¢6V7F–öâÒFö2ç6V7F–öç5²ÓÐ¢Ç&VG•öÆæG66RÒ6V7F–öâçvU÷v–GF‚â6V7F–öâçvUö†V–v‡@ ¢FVbf—G2†föçE÷BÂÖV7W&R“ ¢Ö–æ–×V×2ÂöæGW&ÂÒö6öÇVÖåöW‡FVçG2‡FW‡G2ÂföçE÷BÂB¢&WGW&â7VÒ†Ö–æ–×V×2’ÃÒÖV7W&P ¢föçE÷BÒ7F'E÷@¢v†–ÆRföçE÷BãÒõD$ÄUõõ%E$•EôÔ”åõBÒRÓ“ ¢–bf—G2†föçE÷BÂ÷'G&—B“ ¢&WGW&âföçE÷BÂfÇ6P¢föçE÷BÓÒãP¢–bÇ&VG•öÆæG66R÷"$Uõ%Eôõ$”TåDD”ôâÓÒ'FV×ÆFR# ¢föçE÷BÒõD$ÄUõõ%E$•EôÔ”åõBÒãP¢v†–ÆRföçE÷BâõD$ÄUôÔ”åõBæBæ÷Bf—G2†föçE÷BÂ÷'G&—B“ ¢föçE÷BÓÒãP¢&WGW&âÖ‚†föçE÷BÂõD$ÄUôÔ”åõB’ÂfÇ6P¢ÆæG66RÒöÆæG66UöÖV7W&Uö–â†Fö2¢föçE÷BÒ7F'E÷@¢v†–ÆRföçE÷BâõD$ÄUôÔ”åõBæBæ÷Bf—G2†föçE÷BÂÆæG66R“ ¢föçE÷BÓÒãP¢&WGW&âÖ‚†föçE÷BÂõD$ÄUôÔ”åõB’ÂG'VP  ¦FVb÷6WEö&öG•ö÷&–VçFF–öâ†Fö2ÂÆæG66R“ ¢""%7F'BæWr6V7F–öâöâg&W6‚vR–âF†R&WVW7FVB÷&–VçFF–öâà ¢†VFW'2æBfö÷FW'27F’Æ–æ¶VBFòF†R&Wf–÷W26V7F–öâÂ6òvRçVÖ&W&–æp¢æB'&æF–ær6öçF–çVRVæ6†ævVBà¢"" ¢6V7F–öâÒFö2æFE÷6V7F–öâ…tEõ4T5D”ôâääUuõtR¢—5öÆæG66RÒ6V7F–öâçvU÷v–GF‚â6V7F–öâçvUö†V–v‡@¢–b—5öÆæG66RÒÆæG66S ¢6V7F–öâçvU÷v–GF‚Â6V7F–öâçvUö†V–v‡BÒ6V7F–öâçvUö†V–v‡BÂ6V7F–öâçvU÷v–GF€¢6V7F–öâæ÷&–VçFF–öâÒtEôõ$”TåBäÄäE44R–bÆæG66RVÇ6RtEôõ$”TåBåõ%E$•@¢6V7F–öâæF–ffW&VçEöf—'7E÷vUö†VFW%öfö÷FW"ÒfÇ6P¢&WGW&â6V7F–öà  ¢2&÷†–ÖFRGfæ6Rv–GF‡2–âVÒf÷"6ç26÷'÷&FRf6R„&–Âô6Æ–'&¢26Æ72’âfÆBfW&vRVæFW"×6—¦W2$ÖVF—VÒ"‡Gvòv–FRÒw2’æB÷fW"×6—¦W0¢2$6öç6WVVæ6R"Â6ò6öÇVÖâÖ–æ–×V×2vW&Rw&öær–â&÷F‚F—&V7F–öç2à¥ôtÅ•…ôTÕõt”DRÒ6WB‚$Õv×tR"¥ôtÅ•…ôTÕôä%$õrÒ6WB‚&–Æ§Fg$’âÃ£²rÂ‚•µÒÒò"¥õD$ÄUô$ôÄEôd5Dõ"Òãp¥õD$ÄUô4TÄÅõEô”âÒãp¢26–ævÆRFö¶VâÆöævW"F†âF†—2†U$ÂÂÆöærf÷&×VÆ’Ö’'&V³²ÆWGF–æp¢2—B6Æ–Ò—G2gVÆÂv–GF‚v÷VÆB7F'fRWfW'’÷F†W"6öÇVÖâà¥õD$ÄUôÔ…õDô´Tåô”âÒã`  ¦FVb÷FW‡E÷v–GF…öW7F–ÖFUö–â‡FW‡BÂföçE÷B“ ¢""$W7F–ÖFVB&–çFVBv–GF‚öbFW‡B–â–æ6†W2BföçE÷B†&öÆB’â"" ¢VÒÒã ¢f÷"6†"–âFW‡C ¢–b6†"–âôtÅ•…ôTÕõt”DS ¢VÒ³Òãƒ`¢VÆ–b6†"–âôtÅ•…ôTÕôä%$õs ¢VÒ³Òã3 ¢VÆ–b6†"æ—7WW"‚“ ¢VÒ³Òãc€¢VÇ6S ¢VÒ³ÒãS`¢&WGW&âVÒ¢föçE÷B¢õD$ÄUô$ôÄEôd5Dõ"òs"ã ¢2öæÇ’&VÂ76W2&R'&V²ö–çG3²#ƒ"W6W2æòÖ'&V²6W&F÷"à¥õD$ÄUô%$Tµõ$RÒ&Ræ6ö×–ÆR‡"%²ÇEÆåÒ²"  ¦FVbö6öÇVÖåöW‡FVçG2‡FW‡G2ÂföçE÷BÂEö–ãÕõD$ÄUô4TÄÅõEô”â“ ¢""%&WGW&â†Ö–æ–×VÒÂæGW&Â’v–GF‡2W"6öÇVÖâf÷"FW‡BÖG&—‚à ¢&÷r—2F†R†VFW"Âv†–6‚Ö’w&&WGvVVâv÷&G3²6†÷'B&öG’6VÆÂ—0¢¶WBöâöæRÆ–æR&V6W6R%FW7Bò"&VG22GvòVçG&–W2à¢"" ¢æ6öÇ2ÒÖ‚†ÆVâ‡&÷r’f÷"&÷r–âFW‡G2’–bFW‡G2VÇ6R ¢Ö–æ–×V×2ÂæGW&ÂÒµÒÂµÐ¢f÷"–æFW‚–â&ævR†æ6öÇ2“ ¢Ö–åö–âÂæGW&Åö–âÒãÂã ¢f÷"&÷uö–æFW‚Â&÷r–âVçVÖW&FR‡FW‡G2“ ¢–b–æFW‚ãÒÆVâ‡&÷r“ ¢6öçF–çVP¢FW‡BÒ&÷u¶–æFW…Òç7G&—‚¢v÷&G2Ò·rf÷"r–âõD$ÄUô%$Tµõ$Rç7Æ—B‡FW‡B’–buÐ¢–bæ÷Bv÷&G3 ¢6öçF–çVP¢ÆöævW7BÒÖ‚…÷FW‡E÷v–GF…öW7F–ÖFUö–â‡rÂföçE÷B’f÷"r–âv÷&G2¢v†öÆRÒ÷FW‡E÷v–GF…öW7F–ÖFUö–â‡FW‡E³£sÒÂföçE÷B¢–b&÷uö–æFW‚âæBv†öÆRÃÒõD$ÄUôäõu$ô”ã ¢ÆöævW7BÒv†öÆP¢Ö–åö–âÒÖ‚†Ö–åö–âÂÖ–â†ÆöævW7BÂõD$ÄUôÔ…õDô´Tåô”â’¢æGW&Åö–âÒÖ‚†æGW&Åö–âÂv†öÆR¢Ö–æ–×V×2æVæB†Ö–åö–â²Eö–â¢æGW&ÂæVæB†Ö‚†Ö–åö–âÂæGW&Åö–â’²Eö–â¢&WGW&âÖ–æ–×V×2ÂæGW&À  ¦FVbö6öçFVçEö6öÇVÖå÷v–GF‡2‡F&ÆRÂÖV7W&RÂföçE÷CÕD$ÄUõBÂEö–ãÕõD$ÄUô4TÄÅõEô”â“ ¢""$6öÇVÖâv–GF‡2g&öÒ6öçFVçBÂ6òæò6öÇVÖâ†2Fò'&V²v÷&Bà ¢WVÂ×v–GF‚6öÇVÖç27Æ—B$6öç6WVVæ6R"–çFò$6öç6WVVæ2öR"v†–ÆR¢GvòÖ6†&7FW"”B6öÇVÖâ6—G2†ÆbV×G’âWfW'’6öÇVÖâf—'7BvWG2&ööÒf÷ ¢—G2ÆöævW7Bv÷&C²F†R&W7BöbF†RÖV7W&RvöW2FòF†R6öÇVÖç2v†÷6RFW‡@¢v÷VÆB÷F†W'v—6Rw&F†RÖ÷7Bà¢"" ¢FW‡G2Òµ¶6VÆÂçFW‡Bf÷"6VÆÂ–â&÷ræ6VÆÇ5Òf÷"&÷r–âF&ÆRç&÷w5Ð¢Ö–æ–×V×2ÂæGW&ÂÒö6öÇVÖåöW‡FVçG2‡FW‡G2ÂföçE÷BÂEö–â¢–b7VÒ†æGW&Â’ÃÒÖV7W&S ¢&WGW&âæGW&À¢7&RÒÖV7W&RÒ7VÒ†Ö–æ–×V×2¢–b7&RÃÒ ¢&WGW&âÖ–æ–×V×0¢7G&WF6‚Ò·vçBÒÆ÷rf÷"vçBÂÆ÷r–â¦—†æGW&ÂÂÖ–æ–×V×2•Ð¢F÷FÅ÷7G&WF6‚Ò7VÒ‡7G&WF6‚’÷"ã ¢&WGW&â¶Æ÷r²7&R¢W‡G&òF÷FÅ÷7G&WF6€¢f÷"Æ÷rÂW‡G&–â¦—†Ö–æ–×V×2Â7G&WF6‚•Ð  ¦FVb÷66ÆU÷F&ÆU÷FõöÖV7W&R†Fö2ÂF&ÆRÂ6öÅ÷v–GF‡3ÔæöæRÂföçE÷CÕD$ÄUõBÀ¢Ö&v–åö–ãÕõD$ÄUôÔ$t”åô”â“ ¢""$Æ’F†RF&ÆR÷WB7&÷72F†RgVÆÂÖV7W&RÂ¶VW–ær6öÇVÖâ&÷÷'F–öç2à ¢6öÇVÖâv–GF‡2w&—GFVâ–â'6öÇWFR–æ6†W2vW&R6—¦VBf÷"÷'G&—BvS²öà¢ç’÷F†W"vRF†W’ÆVfRF†RF&ÆRfÆöF–ær–âv†—FR76R÷"W6‚—B–çFð¢F†RÖ&v–âà¢"" ¢ÖV7W&RÒ÷FW‡E÷v–GF…ö–â†Fö2¢6÷VçBÒÆVâ‡F&ÆRæ6öÇVÖç2¢–bæ÷B6÷VçC ¢&WGW&à¢–b6öÅ÷v–GF‡3 ¢6†&W2Ò¶fÆöB‡v–GF‚æ–æ6†W2’–b†6GG"‡v–GF‚Â&–æ6†W2"’VÇ6RfÆöB‡v–GF‚¢f÷"v–GF‚–â6öÅ÷v–GF‡5³¦6÷VçEÕÐ¢6†&W2³Ò·7VÒ‡6†&W2’òÆVâ‡6†&W2•Ò¢†6÷VçBÒÆVâ‡6†&W2’¢VÇ6S ¢6†&W2Òö6öçFVçEö6öÇVÖå÷v–GF‡2‡F&ÆRÂÖV7W&RÂföçE÷BÂ"ã¢Ö&v–åö–â²ã"¢F÷FÂÒ7VÒ‡6†&W2’÷"fÆöB†6÷VçB¢F&ÆRæWFöf—BÒfÇ6P¢Gv—5÷F÷FÂÒ ¢f÷"–æFW‚Â6†&R–âVçVÖW&FR‡6†&W2“ ¢v–GF‚Ò–æ6†W2†ÖV7W&R¢6†&RòF÷FÂ¢Gv—5÷F÷FÂ³Ò–çB‡v–GF‚çGv—2¢F&ÆRæ6öÇVÖç5¶–æFW…Òçv–GF‚Òv–GF€¢f÷"&÷r–âF&ÆRç&÷w3 ¢–b–æFW‚ÂÆVâ‡&÷ræ6VÆÇ2“ ¢&÷ræ6VÆÇ5¶–æFW…Òçv–GF‚Òv–GF€¢2â&WFò"F&ÆRv–GF‚ÆWG2v÷&BæBÆ–'&Töff–6R&RÖfÆ÷rf—†VBÆ–÷WBà¢F&Å÷"ÒF&ÆRå÷F&ÂçF&Å ¢f÷"W†—7F–ær–âF&Å÷"æf–æFÆÂ‡â‚'s§F&År"’“ ¢F&Å÷"ç&VÖ÷fR†W†—7F–ær¢F&Å÷"æVæB‡'6U÷†ÖÂ‚sÇs§F&År·Òs§sÒ'·Ò"s§G—SÒ&G†"óâræf÷&ÖB€¢ç6FV6Ç2‚'r"’ÂGv—5÷F÷FÂ’’  ¦FVböw&÷Wö6F–öâ†w&÷W“ ¢""$6F–öâf÷"öæR†VFÆ–æRF&ÆS¢$¶W’&W7VÇG2"÷"$¶W’&W7VÇG2ÒÆw&÷Wâ"â"" ¢&WGW&â'·ÒÇS#2·Ò"æf÷&ÖB…÷B‚$¶W’&W7VÇG2"’Âw&÷W’–bw&÷WVÇ6R÷B‚$¶W’&W7VÇG2"  ¦FVbFE÷&W7VÇG5÷v÷&E÷F&ÆR†Fö2Â&W7VÇG2ÂgVÆÃÔfÇ6R“ ¢""$FB¶W•÷&W7VÇG227G–ÆVBv÷&BF&ÆRv—F‚Væ—G26öÇVÖâà ¢v—F‚†VFÆ–æR&W7VÇG2Ö&¶VBÂF†R&W7VÇG26V7F–öâ6†÷w2öæÇ’F†÷6R†öæP¢F&ÆRW"w&÷W“²gVÆÃÕG'VV&–çG2WfW'’&÷rf÷"F†RVæF—‚à¢"" ¢¶W•÷&W7VÇG2Ò&W7VÇG2ævWB‚&¶W•÷&W7VÇG2"Â·Ò¢†VFÆ–æRÒµÒ–bgVÆÂVÇ6Rö†VFÆ–æU÷&÷w2‡&W7VÇG2¢–b†VFÆ–æS ¢f÷"w&÷WÂ&÷w2–âöw&÷WVB††VFÆ–æR“ ¢†5öæ÷FW2Òç’†æ÷FRf÷"öÂÂ÷bÂ÷RÂæ÷FR–â&÷w2¢†VFW'2Òµ÷B‚%&ÖWFW""’Â÷B‚%fÇVR"’Â÷B‚%Væ—B"•Ò²€¢µ÷B‚%6÷W&6R"•Ò–b†5öæ÷FW2VÇ6RµÒ¢FF÷&÷w2Òµ¶Æ&VÂÂöf×Eö6VÆÂ‡fÇVR’ÂVæ—EÒ²…¶æ÷FR÷""%Ò–b†5öæ÷FW2VÇ6RµÒ¢f÷"Æ&VÂÂfÇVRÂVæ—BÂæ÷FR–â&÷w5Ð¢FE÷v÷&E÷F&ÆR†Fö2Â†VFW'2ÂFF÷&÷w2Â6F–öãÕöw&÷Wö6F–öâ†w&÷W’¢&WGW&à¢–bæ÷B¶W•÷&W7VÇG3 ¢&WGW&à¢fÆE÷&÷w2ÒöfÆGFVåö¶W•÷&W7VÇG2†¶W•÷&W7VÇG2¢†5öæ÷FW2Òç’†æ÷FRf÷"öÆ&VÂÂ÷fÇVRÂ÷Væ—BÂæ÷FR–âfÆE÷&÷w2¢–b†5öæ÷FW3 ¢†VFW'2Òµ÷B‚%&ÖWFW""’Â÷B‚%fÇVR"’Â÷B‚%Væ—B"’Â÷B‚%6÷W&6R"•Ð¢FF÷&÷w2Òµ¶Æ&VÂÂöf×Eö6VÆÂ‡fÇVR’ÂVæ—BÂæ÷FR÷""%Ð¢f÷"Æ&VÂÂfÇVRÂVæ—BÂæ÷FR–âfÆE÷&÷w5Ð¢6öÅ÷v–GF‡2Ò´–æ6†W2ƒ"ã2’Â–æ6†W2ƒã2’Â–æ6†W2ƒã’Â–æ6†W2ƒ"ã2•Ð¢VÇ6S ¢†VFW'2Òµ÷B‚%&ÖWFW""’Â÷B‚%fÇVR"’Â÷B‚%Væ—B"•Ð¢FF÷&÷w2Òµ¶Æ&VÂÂöf×Eö6VÆÂ‡fÇVR’ÂVæ—EÒf÷"Æ&VÂÂfÇVRÂVæ—BÂöæ÷FR–âfÆE÷&÷w5Ð¢6öÅ÷v–GF‡2Ò´–æ6†W2ƒ2ã’Â–æ6†W2ƒãR’Â–æ6†W2ƒãR•Ð¢FE÷v÷&E÷F&ÆR†Fö2Â†VFW'2ÂFF÷&÷w2À¢6öÅ÷v–GF‡3Ö6öÅ÷v–GF‡2À¢6F–öãÕ÷B‚$6ö×ÆWFRçVÖW&–6Â&W7VÇG2"’–bgVÆÂVÇ6R÷B‚$¶W’&W7VÇG2"’  ¦FVbFE÷fÆ–FF–öå÷v÷&E÷F&ÆR†Fö2Â&W7VÇG2“ ¢""$FBfÆ–FF–öâ6†V6·227G–ÆVBv÷&BF&ÆRâ"" ¢fÆ–FF–öâÒ&W7VÇG2ævWB‚'fÆ–FF–öâ"Â·Ò¢–bæ÷BfÆ–FF–öã ¢&WGW&à¢†VFW'2Òµ÷B‚$6†V6²"’Â÷B‚%&W7VÇB"•Ð¢FF÷&÷w2ÒµÐ¢f÷"6†V6²Â÷WF6öÖR–âfÆ–FF–öâæ—FV×2‚“ ¢Æ&VÂÒöÆ&VÅög&öÕö¶W’†6†V6²¢–b—6–ç7Fæ6R†÷WF6öÖRÂF–7B’æB'fÇVR"–â÷WF6öÖS ¢Æ&VÂÒ÷WF6öÖRævWB‚&Æ&VÂ"’÷"Æ&VÀ¢Væ—BÒ÷WF6öÖRævWB‚'Væ—B"’÷"" ¢÷WF6öÖRÒ÷WF6öÖU²'fÇVR%Ð¢–b—6–ç7Fæ6R†÷WF6öÖRÂ†–çBÂfÆöB’’æBæ÷B—6–ç7Fæ6R†÷WF6öÖRÂ&ööÂ’æBVæ—C ¢FF÷&÷w2æVæB…¶Æ&VÂÂ'·Ò·Ò"æf÷&ÖB…öf×EöçVÖ&W"†÷WF6öÖR’ÂVæ—B•Ò¢6öçF–çVP¢–b—6–ç7Fæ6R†÷WF6öÖRÂ&ööÂ“ ¢7FGW2Ò$d”Â"–b÷fÆ–FF–öåö÷WF6öÖUö—5öf–ÇW&R†6†V6²Â÷WF6öÖR’VÇ6R%52 ¢VÆ–b—6–ç7Fæ6R†÷WF6öÖRÂ†–çBÂfÆöB’“ ¢7FGW2Òöf×EöçVÖ&W"†÷WF6öÖR¢VÇ6S ¢7FGW2Ò7G"†÷WF6öÖR¢FF÷&÷w2æVæB…¶Æ&VÂÂ7FGW5Ò¢F&ÆRÒFE÷v÷&E÷F&ÆR†Fö2Â†VFW'2ÂFF÷&÷w2À¢6öÅ÷v–GF‡3Õ´–æ6†W2ƒBã’Â–æ6†W2ƒ"ã•ÒÀ¢6F–öãÕ÷B‚%fÆ–FF–öâ6†V6·2"’¢26öÆ÷"Ö6öFR52ôd”Â6VÆÇ0¢f÷"&÷r–âF&ÆRç&÷w5³¥Ó ¢6VÆÂÒ&÷ræ6VÆÇ5³Ð¢FW‡BÒ6VÆÂçFW‡Bç7G&—‚¢f÷"&w&‚–â6VÆÂç&w&‡3 ¢f÷"'Vâ–â&w&‚ç'Vç3 ¢'VâæföçBæ&öÆBÒG'VP¢–bFW‡BÓÒ%52# ¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒƒ#‚Â„rÂƒCR¢VÆ–bFW‡BÓÒ$d”Â# ¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒ„D2Âƒ3RÂƒCR  ¦FVbFEö7W7FöÕ÷v÷&E÷F&ÆW2†Fö2Â&W7VÇG2“ ¢""$FB7W7FöÒF&ÆW2g&öÒ&W7VÇG2æ§6öâwF&ÆW2r¶W’â"" ¢F&ÆW2Ò&W7VÇG2ævWB‚'F&ÆW2"ÂµÒ¢–bæ÷BF&ÆW3 ¢&WGW&à¢f÷"F&Â–âF&ÆW3 ¢F—FÆRÒF&ÂævWB‚'F—FÆR"Â""¢†VFW'2ÒF&ÂævWB‚&†VFW'2"ÂµÒ¢FF÷&÷w2ÒF&ÂævWB‚'&÷w2"ÂµÒ¢–bæ÷B†VFW'2÷"æ÷BFF÷&÷w3 ¢6öçF–çVP¢2FFF&ÆRF—FÆVBv—F‚†VF–ær"ÆæG2–âF†RF&ÆRöb6öçFVçG20¢2–b—BvW&R6†FW#²çVÖ&W&VB6F–öâ—2v†B—B7GVÆÇ’—2à¢FE÷v÷&E÷F&ÆR†Fö2Â†VFW'2ÂFF÷&÷w2Â6F–öã×F—FÆR÷"æöæR  ¢2)H)HæÇ—F–6ÂFWF‚‡F†Ræ–æRFWF‚Ö÷fW2’)H)H)H)H)H)H)H)H)H)H)H)H)H)H ¢2&W÷'B6â72WfW'’‡–v–VæRvFRæB7F–ÆÂöæÇ’&W7FFR—G26÷W&6P¢2Fö7VÖVçBâF†W6R¶W—26''’F†RæÇ—6—2F†B6W&FW2âVæv–æVW&–ærç7vW ¢2g&öÒ7VÖÖ'“²6VRF†RæW6–Ò×&öfW76–öæÂ×&W÷'F–ær6¶–ÆÂÂ&–æ6—ÆRà¤DUD…ôÔõdU2Ò€¢‚&6öçG&–'WF÷%÷&æ¶–ær"À¢$6öçG&–'WF÷'2&æ¶VBöâ6öÖÖöâ&6—2"À¢%v†–6‚VffV7G27GVÆÇ’6''’F†R&W7VÇBÂÆ&vW7Bf—'7Bâ"’À¢‚'6÷W&6U÷&V6öÖÖVæFF–öåö76W76ÖVçB"À¢%fW&F–7BöâV6‚6÷W&6R&V6öÖÖVæFF–öâ"À¢%7W÷'FVBÂ7W÷'FVBv—F‚6÷'&V7F–öâÂ÷"6†ÆÆVævVBÇS#Bv—F‚F†R&6—2â"’À¢‚''VÆVEö÷WB"À¢$‡—÷F†W6W2'VÆVB÷WBVçF—FF—fVÇ’"À¢%v†Bv2W†6ÇVFVBÂ'’v†–6‚FW7BÂæBv—F‚†÷r×V6‚Ö&v–ââ"’À¢‚'&ö'W7FæW72"À¢%&ö'W7FæW72æB7&÷76÷fW""À¢$†÷rf"â–çWB6âÖ÷fR&Vf÷&RF†R6öæ6ÇW6–öâfÆ—2â"’À¢‚&6öç6W'fF—6Ò"À¢$F—&V7F–öâöbV6‚6öç6W'fF—6Ò"À¢%v†WF†W"V6‚77V×F–öâ&÷VæG2F†Rç7vW"g&öÒ&÷fR÷"&VÆ÷râ"’À¢‚&F—67&–Ö–æF–æu÷FW7B"À¢$6†VW7BF—67&–Ö–æF–ærFW7B"À¢%F†RöæRÖV7W&VÖVçBF†Bv÷VÆB6W&FRF†R7W'f—f–ærW‡ÆæF–öç2â"’À¢‚&Wf–FVæ6Uöv–ç7B"À¢$Wf–FVæ6RF†BFöW2æ÷Bf—B"À¢$ö'6W'fF–öç2F†R66WFVBW‡ÆæF–öâFöW2æ÷B66÷VçBf÷"â"’À¢  ¦FVböFWF…öVçG&–W2‡&W7VÇG2“ ¢""%&WGW&âF†RFWF‚Ö÷fW2F†BF†R7GVG’7GVÆÇ’&öGV6VBâ"" ¢–bæ÷B&W7VÇG3 ¢&WGW&âµÐ¢&WGW&â²†¶W’Â÷B‡F—FÆR’Â÷B††–çB’’f÷"¶W’ÂF—FÆRÂ†–çB–âDUD…ôÔõdU0¢–b&W7VÇG2ævWB†¶W’•Ð  ¦FVböFWF…÷&÷w2‡–ÆöB“ ¢""$æ÷&ÖÆ—6RFWF‚–ÆöB–çFò††VFW'2Â&÷w2’f÷"F&ÆRÂ÷"æöæRâ"" ¢–b—6–ç7Fæ6R‡–ÆöBÂF–7B“ ¢–ÆöBÒ·–ÆöEÐ¢–bæ÷B—6–ç7Fæ6R‡–ÆöBÂÆ—7B’÷"æ÷B–ÆöC ¢&WGW&âæöæP¢F–7Eö—FV×2Ò¶—FVÒf÷"—FVÒ–â–ÆöB–b—6–ç7Fæ6R†—FVÒÂF–7B•Ð¢–bÆVâ†F–7Eö—FV×2’ÒÆVâ‡–ÆöB“ ¢&WGW&âæöæP¢†VFW'2ÒµÐ¢f÷"—FVÒ–âF–7Eö—FV×3 ¢f÷"¶W’–â—FVÓ ¢–b¶W’æ÷B–â†VFW'3 ¢†VFW'2æVæB†¶W’¢&÷w2Òµµöf×Eö6VÆÂ†—FVÒævWB†¶W’Â""’’f÷"¶W’–â†VFW'5Ð¢f÷"—FVÒ–âF–7Eö—FV×5Ð¢&WGW&â¶¶W’ç&WÆ6R‚%ò"Â""’çF—FÆR‚’f÷"¶W’–â†VFW'5ÒÂ&÷w0  ¦FVböFWF…ö'VÆÆWG2‡–ÆöB“ ¢""%&VæFW"æöâ×F'VÆ"FWF‚–ÆöB2'VÆÆWBÆ–æW2â"" ¢–b—6–ç7Fæ6R‡–ÆöBÂF–7B“ ¢&WGW&â²'·Ó¢·Ò"æf÷&ÖB†¶W’ç&WÆ6R‚%ò"Â""’çF—FÆR‚’Âöf×Eö6VÆÂ‡fÇVR’¢f÷"¶W’ÂfÇVR–â–ÆöBæ—FV×2‚•Ð¢–b—6–ç7Fæ6R‡–ÆöBÂÆ—7B“ ¢&WGW&âµöf÷&ÖEöÆ—7Eö—FVÕ÷FW‡B†—FVÒ’f÷"—FVÒ–â–ÆöEÐ¢&WGW&â·7G"‡–ÆöB•Ð  ¦FVböFWF…÷66÷&U÷FW‡B‡&W7VÇG2“ ¢""%&WGW&âF†RFV6Æ&VBFWF‚66÷&RÂ÷"öæRFW&—fVBg&öÒv†B—2&W6VçBâ"" ¢FV6Æ&VBÒ&W7VÇG2ævWB‚&FWF…÷66÷&R"’–b&W7VÇG2VÇ6RæöæP¢–bFV6Æ&VC ¢&WGW&â7G"†FV6Æ&VB¢&WGW&â'·Ò÷·ÒFWF‚Ö÷fW2&W÷'FVB"æf÷&ÖB€¢ÆVâ…öFWF…öVçG&–W2‡&W7VÇG2’’ÂÆVâ„DUD…ôÔõdU2’  ¦FVbf÷&ÖEöFWF…ö‡FÖÂ‡&W7VÇG2“ ¢""%&VæFW"F†RæÇ—F–6ÂÖFWF‚Ö÷fW22…DÔÂâ"" ¢VçG&–W2ÒöFWF…öVçG&–W2‡&W7VÇG2¢–bæ÷BVçG&–W3 ¢&WGW&â" ¢‡FÖÂÒ‚sÇ6Æ73Ò&FWF‚×66÷&R#äæÇ—F–6ÂFWFƒ¢Ç7G&öæsç·ÓÂ÷7G&öæsãÂ÷åÆâp¢æf÷&ÖB…ö‡FÖÅöW66R…öFWF…÷66÷&U÷FW‡B‡&W7VÇG2’’’¢f÷"¶W’ÂF—FÆRÂ†–çB–âVçG&–W3 ¢–ÆöBÒ&W7VÇG2ævWB†¶W’¢‡FÖÂ³ÒsÆƒ3ç·ÓÂöƒ3åÆãÇ6Æ73Ò&FWF‚Ö†–çB#ç·ÓÂ÷åÆâræf÷&ÖB€¢ö‡FÖÅöW66R‡F—FÆR’Âö‡FÖÅöW66R††–çB’¢F&ÆRÒöFWF…÷&÷w2‡–ÆöB¢–bF&ÆS ¢†VFW'2Â&÷w2ÒF&ÆP¢‡FÖÂ³Òö‡FÖÅ÷F&ÆUö6F–öâ‡F—FÆR¢‡FÖÂ³ÒsÇF&ÆR6Æ73Ò&7W7FöÒ×F&ÆR#ãÇF†VCãÇG#âp¢‡FÖÂ³Ò""æ¦ö–â‚sÇFƒç·ÓÂ÷Fƒâræf÷&ÖB…ö‡FÖÅöW66R†6öÂ’¢f÷"6öÂ–â†VFW'2¢‡FÖÂ³ÒsÂ÷G#ãÂ÷F†VCãÇF&öG“åÆâp¢f÷"&÷r–â&÷w3 ¢‡FÖÂ³Ò#ÇG#â"²""æ¦ö–â€¢sÇFCç·ÓÂ÷FCâræf÷&ÖB…ö‡FÖÅöW66R†6VÆÂ’’f÷"6VÆÂ–â&÷p¢’²#Â÷G#åÆâ ¢‡FÖÂ³Ò#Â÷F&öG“ãÂ÷F&ÆSåÆâ ¢VÇ6S ¢‡FÖÂ³Ò#ÇVÃåÆâ"²""æ¦ö–â€¢"ÆÆ“ç·ÓÂöÆ“åÆâ"æf÷&ÖB…ö‡FÖÅöW66R†Æ–æR’¢f÷"Æ–æR–âöFWF…ö'VÆÆWG2‡–ÆöB’’²#Â÷VÃåÆâ ¢&WGW&â‡FÖÀ  ¦FVbFE÷&VfW&Væ6W5÷v÷&B†Fö2Â&W7VÇG2“ ¢""$çVÖ&W&VB&VfW&Væ6RÆ—7BÂöæR&w&‚W"VçG'’v—F‚†æv–ær–æFVçBâ"" ¢f÷"–æFW‚Â&Vb–âVçVÖW&FR‡&W7VÇG2ævWB‚'&VfW&Væ6W2"’÷"µÒÂ“ ¢FW‡BÒ÷&VfW&Væ6U÷FW‡B‡&Vb¢&ÒFö2æFE÷&w&‚‚¢f×BÒ&ç&w&…öf÷&Ö@¢f×BæÆVgEö–æFVçBÒ–æ6†W2ƒãB¢f×Bæf—'7EöÆ–æUö–æFVçBÒ–æ6†W2‚ÓãB¢f×Bç76UögFW"ÒBƒ2¢&æFE÷'Vâ‚%··ÕÕÇB"æf÷&ÖB†–æFW‚’¢öFEö&öÆE÷'Vç2‡&ÂFW‡B  ¦FVbFEöFWF…÷v÷&E÷6V7F–öâ†Fö2Â&W7VÇG2“ ¢""%&VæFW"F†RæÇ—F–6ÂÖFWF‚Ö÷fW2–çFòF†Rv÷&B&W÷'Bâ"" ¢VçG&–W2ÒöFWF…öVçG&–W2‡&W7VÇG2¢–bæ÷BVçG&–W3 ¢&WGW&à¢&w&‚ÒFö2æFE÷&w&‚‚¢&w&‚æFE÷'Vâ‚$æÇ—F–6ÂFWFƒ¢"’æ&öÆBÒG'VP¢&w&‚æFE÷'Vâ…öFWF…÷66÷&U÷FW‡B‡&W7VÇG2’¢f÷"¶W’ÂF—FÆRÂ†–çB–âVçG&–W3 ¢öFEö†VF–ær†Fö2ÂF—FÆRÂÆWfVÃÓ"¢†–çE÷&ÒFö2æFE÷&w&‚††–çB¢f÷"'Vâ–â†–çE÷&ç'Vç3 ¢'VâæföçBç6—¦RÒB„4D”ôåõB¢'VâæföçBæ—FÆ–2ÒG'VP¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒÂÂ¢F&ÆRÒöFWF…÷&÷w2‡&W7VÇG2ævWB†¶W’’¢–bF&ÆS ¢†VFW'2Â&÷w2ÒF&ÆP¢FE÷v÷&E÷F&ÆR†Fö2Â†VFW'2Â&÷w2Â6F–öã×F—FÆR¢VÇ6S ¢f÷"Æ–æR–âöFWF…ö'VÆÆWG2‡&W7VÇG2ævWB†¶W’’“ ¢Fö2æFE÷&w&‚†Æ–æRÂ7G–ÆSÒ$Æ—7B'VÆÆWB"  ¦FVbö¶W•÷&W7VÇEö–æFW‚‡&W7VÇG2“ ¢""$ÖV6‚¶W•÷&W7VÇG2¶W’†æW7FVB¶W—2Föò’Fò—G2†Æ&VÂÂfÇVRÂVæ—BÂæ÷FR’&÷râ"" ¢–æFW‚Ò·Ð ¢FVbf—6—B†Ö–ær“ ¢f÷"¶W’ÂfÇVR–â†Ö–ær÷"·Ò’æ—FV×2‚“ ¢&÷w2ÒöfÆGFVåö¶W•÷&W7VÇG2‡¶¶W“¢fÇVWÒ¢–bÆVâ‡&÷w2’ÓÒ ¢–æFW…¶¶W•ÒÒ&÷w5³Ð¢–b—6–ç7Fæ6R‡fÇVRÂF–7B’æBæ÷B€¢'fÇVR"–âfÇVRæBæ÷B—6–ç7Fæ6R‡fÇVU²'fÇVR%ÒÂ†F–7BÂÆ—7B’’“ ¢f—6—B‡fÇVR ¢f—6—B‚‡&W7VÇG2÷"·Ò’ævWB‚&¶W•÷&W7VÇG2"’¢&WGW&â–æFW€  ¦FVböÆ–æ¶VE÷&W7VÇE÷FW‡B†æÖRÂ–æFW‚“ ¢""%&VF&ÆRf÷&ÒöbÆ–æ¶VB&W7VÇC¢$Æ&VÂÒfÇVRVæ—B"ÂæWfW"&r¶W’â"" ¢æÖRÒ7G"†æÖR¢–bæÖR–â–æFWƒ ¢Æ&VÂÂfÇVRÂVæ—BÂöæ÷FRÒ–æFW…¶æÖUÐ¢&WGW&â'·ÒÒ·×·Ò"æf÷&ÖB†Æ&VÂÂöf×Eö6VÆÂ‡fÇVR’Â""²Væ—B–bVæ—BVÇ6R""¢&WGW&âöÆ&VÅög&öÕö¶W’†æÖR’–b&RægVÆÆÖF6‚‡"%´Õ¦×£Ó•õÒ²"ÂæÖR’VÇ6RæÖP  ¦FVböF—67W76–öå÷G&6R†F—62Â–æFW‚“ ¢""%G&6V&–Æ—G’fö÷FW"f÷"öæRF—67W76–öâVçG'’†Æ–æ·2æBF†RVW7F–öâç7vW&VB’â"" ¢'G2ÒµÐ¢Æ–æ¶VBÒF—62ævWB‚&Æ–æ¶VE÷&W7VÇG2"ÂµÒ¢–bÆ–æ¶VC ¢'G2æVæB‚'·Ó¢·Ò"æf÷&ÖB€¢÷B‚$Æ–æ¶VB&W7VÇG2"’Â#²"æ¦ö–â…öÆ–æ¶VE÷&W7VÇE÷FW‡B†²Â–æFW‚’f÷"²–âÆ–æ¶VB’’¢–bF—62ævWB‚&–ç6–v‡E÷VW7F–öå÷&Vb"“ ¢'G2æVæB‚$ç7vW'3¢·Ò"æf÷&ÖB†F—65²&–ç6–v‡E÷VW7F–öå÷&Vb%Ò’¢&WGW&â"Â"æ¦ö–â‡'G2  ¦FVbf÷&ÖEöF—67W76–öåö‡FÖÂ‡&W7VÇG2“ ¢""$f÷&ÖBf–wW&UöF—67W76–öâg&öÒ&W7VÇG2æ§6öâ27G–ÆVB…DÔÂF—67W76–öâ&Æö6·2à ¢V6‚F—67W76–öâVçG'’Æ–æ·2f–wW&RFò—G2ö'6W'fF–öâÂ‡—6–6ÂÖV6†æ—6ÒÀ¢Væv–æVW&–ær–×Æ–6F–öâÂæB&V6öÖÖVæFF–öâ(	B7&VF–ærG&6V&–Æ—G’g&öÐ¢6Æ7VÆF–öâFò6öæ6ÇW6–öââF†Rf–wW&R—G6VÆb—26†÷vâ–ç6–FR—G2&Æö6²à¢"" ¢F—67W76–öç2Ò&W7VÇG2ævWB‚&f–wW&UöF—67W76–öâ"ÂµÒ¢–bæ÷BF—67W76–öç3 ¢&WGW&â" ¢ÆâÒvWEöf–wW&U÷Æâ‡&W7VÇG2¢–æFW‚Òö¶W•÷&W7VÇEö–æFW‚‡&W7VÇG2¢‚Ò" ¢f÷"’ÂF—62–âVçVÖW&FR†F—67W76–öç2Â“ ¢f–uöf–ÆRÒF—62ævWB‚&f–wW&R"Â""¢F—FÆRÒF—62ævWB‚'F—FÆR"Âf–uöf–ÆRç&WÆ6R‚%ò"Â""’ç&WÆ6R‚"çær"Â""’çF—FÆR‚’¢ö'6W'fF–öâÒF—62ævWB‚&ö'6W'fF–öâ"Â""¢ÖV6†æ—6ÒÒF—62ævWB‚&ÖV6†æ—6Ò"Â""¢–×Æ–6F–öâÒF—62ævWB‚&–×Æ–6F–öâ"Â""¢&V6öÖÖVæFF–öâÒF—62ævWB‚'&V6öÖÖVæFF–öâ"Â"" ¢‚³ÒsÆF—b6Æ73Ò&F—67W76–öâÖ&Æö6²#åÆâp¢‚³ÒsÆƒ3ç·Ò·Ó¢·ÓÂöƒ3åÆâræf÷&ÖB…÷B‚$F—67W76–öâ"’Â’ÂF—FÆR¢–b†’Ò’–âÆâæF—67W76–öåöf–wW&S ¢‚³Òöf–wW&Uö‡FÖÂ‡ÆâæF—67W76–öåöf–wW&U¶’ÒÒÂ&W7VÇG2ÂÆâÀ¢ÇEöW‡G&Öö'6W'fF–öâ¢VÆ–b†’Ò’–âÆâæF—67W76–öå÷&Vc ¢çVÖ&W"ÒÆâæçVÖ&W%ööb‡ÆâæF—67W76–öå÷&Ve¶’ÒÒ¢‚³ÒsÇç·ÒÆ6Æ73Ò'‡&Vb"‡&VcÒ"6f–r×·Ò#ç·Ò·ÓÂöâãÂ÷åÆâræf÷&ÖB€¢÷B‚%6VR"’ÂçVÖ&W"Â÷B‚$f–wW&R"’ÂçVÖ&W"¢–bö'6W'fF–öã ¢‚³ÒsÇãÇ7G&öæsç·Ó£Â÷7G&öæsâ·ÓÂ÷åÆâræf÷&ÖB€¢÷B‚$ö'6W'fF–öâ"’Âö‡FÖÅ÷‡&Vg2†ö'6W'fF–öâ’¢–bÖV6†æ—6Ó ¢‚³ÒsÇãÇ7G&öæsç·Ó£Â÷7G&öæsâ·ÓÂ÷åÆâræf÷&ÖB€¢÷B‚%‡—6–6ÂÖV6†æ—6Ò"’Âö‡FÖÅ÷‡&Vg2†ÖV6†æ—6Ò’¢–b–×Æ–6F–öã ¢‚³ÒsÇãÇ7G&öæsç·Ó£Â÷7G&öæsâ·ÓÂ÷åÆâræf÷&ÖB€¢÷B‚$Væv–æVW&–ær–×Æ–6F–öâ"’Âö‡FÖÅ÷‡&Vg2†–×Æ–6F–öâ’¢–b&V6öÖÖVæFF–öã ¢‚³ÒsÇ6Æ73Ò'&V6öÖÖVæFF–öâ#ãÇ7G&öæsç·Ó£Â÷7G&öæsâ·ÓÂ÷åÆâræf÷&ÖB€¢÷B‚%&V6öÖÖVæFF–öâ"’Âö‡FÖÅ÷‡&Vg2‡&V6öÖÖVæFF–öâ’¢G&6RÒöF—67W76–öå÷G&6R†F—62Â–æFW‚¢–bG&6S ¢‚³ÒsÇ6Æ73Ò'G&6V&–Æ—G’#ãÆVÓç·ÓÂöVÓãÂ÷åÆâræf÷&ÖB…ö‡FÖÅöW66R‡G&6R’¢‚³ÒsÂöF—cåÆâp¢&WGW&â€  ¦FVbFEöF—67W76–öå÷v÷&B†Fö2Â&W7VÇG2“ ¢""$FBf–wW&RF—67W76–öâVçG&–W227G–ÆVBv÷&B6öçFVçBà ¢V6‚F—67W76–öâ&Æö6²†3¢—G2f–wW&RÂö'6W'fF–öâÂ‡—6–6ÂÖV6†æ—6ÒÀ¢Væv–æVW&–ær–×Æ–6F–öâÂæB&V6öÖÖVæFF–öâv—F‚G&6V&–Æ—G’&VfW&Væ6W2à¢"" ¢F—67W76–öç2Ò&W7VÇG2ævWB‚&f–wW&UöF—67W76–öâ"ÂµÒ¢–bæ÷BF—67W76–öç3 ¢&WGW&à¢ÆâÒvWEöf–wW&U÷Æâ‡&W7VÇG2¢–æFW‚Òö¶W•÷&W7VÇEö–æFW‚‡&W7VÇG2¢f÷"’ÂF—62–âVçVÖW&FR†F—67W76–öç2Â“ ¢f–uöf–ÆRÒF—62ævWB‚&f–wW&R"Â""¢F—FÆRÒF—62ævWB‚'F—FÆR"Âf–uöf–ÆRç&WÆ6R‚%ò"Â""’ç&WÆ6R‚"çær"Â""’çF—FÆR‚’¢ö'6W'fF–öâÒF—62ævWB‚&ö'6W'fF–öâ"Â""¢ÖV6†æ—6ÒÒF—62ævWB‚&ÖV6†æ—6Ò"Â""¢–×Æ–6F–öâÒF—62ævWB‚&–×Æ–6F–öâ"Â""¢&V6öÖÖVæFF–öâÒF—62ævWB‚'&V6öÖÖVæFF–öâ"Â"" ¢öFEö†VF–ær†Fö2Â'·Ò·Ó¢·Ò"æf÷&ÖB…÷B‚$F—67W76–öâ"’Â’ÂF—FÆR’ÂÆWfVÃÓ" ¢–b†’Ò’–âÆâæF—67W76–öåöf–wW&S ¢öFEöf–wW&Uö&Æö6²†Fö2ÂÆâæF—67W76–öåöf–wW&U¶’ÒÒÂ&W7VÇG2ÂÆâÀ¢ÇEöW‡G&Öö'6W'fF–öâ¢VÆ–b†’Ò’–âÆâæF—67W76–öå÷&Vc ¢&ÒFö2æFE÷&w&‚‚¢&æFE÷'Vâ…÷B‚%6VR"’²""¢&Ve÷F‚ÒÆâæF—67W76–öå÷&Ve¶’ÒÐ¢öFE÷&Veöf–VÆB‡&Âöf–wW&Uö&öö¶Ö&²‡&Ve÷F‚’À¢'·Ò·Ò"æf÷&ÖB…÷B‚$f–wW&R"’ÂÆâæçVÖ&W%ööb‡&Ve÷F‚’’¢&æFE÷'Vâ‚"â" ¢f÷"Æ&VÂÂFW‡B–â‚…÷B‚$ö'6W'fF–öâ"’Âö'6W'fF–öâ’À¢…÷B‚%‡—6–6ÂÖV6†æ—6Ò"’ÂÖV6†æ—6Ò’À¢…÷B‚$Væv–æVW&–ær–×Æ–6F–öâ"’Â–×Æ–6F–öâ’À¢…÷B‚%&V6öÖÖVæFF–öâ"’Â&V6öÖÖVæFF–öâ’“ ¢–bæ÷BFW‡C ¢6öçF–çVP¢ÒFö2æFE÷&w&‚‚¢"ÒæFE÷'Vâ†Æ&VÂ²#¢"¢"æ&öÆBÒG'VP¢"æföçBç6—¦RÒB„$ôE•õB¢f—'7BÒÆVâ‡ç'Vç2¢öFEö&öÆE÷'Vç2‡ÂFW‡B¢f÷"'Vâ–âç'Vç5¶f—'7C¥Ó ¢'VâæföçBç6—¦RÒB„$ôE•õB¢–bÆ&VÂÓÒ÷B‚%&V6öÖÖVæFF–öâ"“ ¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒƒÂƒS2Âƒt ¢G&6RÒöF—67W76–öå÷G&6R†F—62Â–æFW‚¢–bG&6S ¢ÒFö2æFE÷&w&‚‚¢"ÒæFE÷'Vâ‡G&6R¢"æföçBç6—¦RÒB„4D”ôåõB¢"æföçBæ—FÆ–2ÒG'VP¢"æföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒƒcbÂƒcbÂƒcb ¢Fö2æFE÷&w&‚‚""’276–æp  ¢2)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y ¢2'V–ÆB6V7F–öç2†WFò×÷VÆFVBv†W&R÷76–&ÆR¢2)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y  ¦FVb÷&VçVÖ&W%÷6V7F–öç2‡6V7F–öç2“ ¢""%&VçVÖ&W"6V7F–öâ†VF–æw2âäâ6ò6öæF—F–öæÂ6V7F–öç26ææ÷BÆVfRv2à ¢6V7F–öç2&RVæFVB6öæF—F–öæÆÇ’Â6òç’6÷VçFW"'Vr6†÷w2W–âF†P¢—77VVB&W÷'B26¶—VB÷"&WVFVB6†FW"çVÖ&W"à¢"" ¢–æFW‚Ò ¢f÷"6V7F–öâ–â6V7F–öç3 ¢–b6V7F–öâævWB‚&VæF—‚"“ ¢6öçF–çVP¢–æFW‚³Ò¢†VF–ærÒ7G"‡6V7F–öâævWB‚&†VF–ær"Â""’’ç7G&—‚¢6V7F–öå²&†VF–ær%ÒÒ'·Òâ·Ò"æf÷&ÖB€¢–æFW‚ÂôÔåTÅô„TD”äuôåTÔ$U"ç7V"‚""Â†VF–ær’ç7G&—‚’¢&WGW&â6V7F–öç0  ¦FVb'V–ÆE÷6V7F–öç2‡&W7VÇG2ÂF6µ÷7V2Â7GVG•ö6öæf–u÷v&æ–æw3ÔæöæRÂ7GVG•ö6öæf–sÔæöæRÀ¢6öç6—7FVæ7•ö—77VW3ÔæöæR“ ¢""$'V–ÆB&W÷'B6V7F–öç2ÂWFò×÷VÆF–ærg&öÒ&W7VÇG2æ§6öâæBF6µ÷7V2æÖBâ"" ¢6V7F–öç2ÒµÐ¢–b7GVG•ö6öæf–u÷v&æ–æw2—2æöæS ¢7GVG•ö6öæf–u÷v&æ–æw2ÒµÐ ¢2âW†V7WF—fR7VÖÖ'¢W†V5÷7VÖÖ'’Ò" ¢–b&W†V7WF—fU÷7VÖÖ'’"–âUD„õ$TEõ4T5D”ôå3 ¢W†V5÷7VÖÖ'’ÒÔåTÅõ4T5D”ôå5²&W†V7WF—fU÷7VÖÖ'’%Ð¢–bö—5÷Æ6V†öÆFW%÷FW‡B†W†V5÷7VÖÖ'’’æB&W7VÇG2À¢æB&W7VÇG2ævWB‚&W†V7WF—fU÷7VÖÖ'’"“ ¢W†V5÷7VÖÖ'’Ò7G"‡&W7VÇG5²&W†V7WF—fU÷7VÖÖ'’%Ò¢–bö—5÷Æ6V†öÆFW%÷FW‡B†W†V5÷7VÖÖ'’“ ¢W†V5÷7VÖÖ'’ÒWFõöW†V7WF—fU÷7VÖÖ'’‡&W7VÇG2ÂF6µ÷7V2¢–bö—5÷Æ6V†öÆFW%÷FW‡B†W†V5÷7VÖÖ'’“ ¢W†V5÷7VÖÖ'’ÒÔåTÅõ4T5D”ôå5²&W†V7WF—fU÷7VÖÖ'’%Ð¢6V7F–öç2æVæB‡°¢&†VF–ær#¢#â·Ò"æf÷&ÖB…÷B‚$W†V7WF—fR7VÖÖ'’"’’À¢&6öçFVçB#¢W†V5÷7VÖÖ'’À¢Ò ¢2"â&ö&ÆVÒFW67&—F–öà¢&ö&ÆVÕöFW67&—F–öâÒÔåTÅõ4T5D”ôå5²'&ö&ÆVÕöFW67&—F–öâ%ÒÀ¢–b'&ö&ÆVÕöFW67&—F–öâ"–âUD„õ$TEõ4T5D”ôå2VÇ6R" ¢–bö—5÷Æ6V†öÆFW%÷FW‡B‡&ö&ÆVÕöFW67&—F–öâ“ ¢&ö&ÆVÕöFW67&—F–öâÒWFõ÷&ö&ÆVÕöFW67&—F–öâ‡&W7VÇG2ÂF6µ÷7V2¢–bö—5÷Æ6V†öÆFW%÷FW‡B‡&ö&ÆVÕöFW67&—F–öâ“ ¢&ö&ÆVÕöFW67&—F–öâÒÔåTÅõ4T5D”ôå5²'&ö&ÆVÕöFW67&—F–öâ%Ð¢6V7F–öç2æVæB‡°¢&†VF–ær#¢#"â·Ò"æf÷&ÖB…÷B‚%&ö&ÆVÒFW67&—F–öâ"’’À¢&6öçFVçB#¢&ö&ÆVÕöFW67&—F–öâÀ¢Ò ¢æW‡E÷6V7F–öåöçVÒÒ0 ¢Æ—fU÷7VÖÖ'’Òf÷&ÖEöÆ—fU÷7VÖÖ'’…öÆöEöf–æÅ÷&W÷'EöÖWFFF‚’¢–bÆ—fU÷7VÖÖ'“ ¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·Òâ·Ò"æf÷&ÖB†æW‡E÷6V7F–öåöçVÒÂ$†÷rF†RÆ—fR7GVG’FWfVÆ÷VB"’À¢&6öçFVçB#¢Æ—fU÷7VÖÖ'’À¢&†5öÖ&¶F÷vâ#¢G'VRÀ¢Ò¢æW‡E÷6V7F–öåöçVÒ³Ò ¢6fWG•÷&VF–æW72Òf÷&ÖE÷6fWG•÷&VF–æW75÷FW‡B‡&W7VÇG2’–b&W7VÇG2VÇ6R" ¢–b6fWG•÷&VF–æW73 ¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·Òâ·Ò"æf÷&ÖB†æW‡E÷6V7F–öåöçVÒÀ¢÷B‚%6fWG’7GVG’&VF–æW72"’’À¢&6öçFVçB#¢6fWG•÷&VF–æW72À¢&†5öÖ&¶F÷vâ#¢G'VRÀ¢Ò¢æW‡E÷6V7F–öåöçVÒ³Ò ¢266÷RæB7FæF&G2†WFò×÷VÆFVBg&öÒF6µ÷7V2æÖB¢66÷U÷'G2ÒµÐ¢7FæF&G2ÒW‡G&7E÷7V5÷6V7F–öâ‡F6µ÷7V2Â$Æ–6&ÆR7FæF&G2"¢–b7FæF&G3 ¢66÷U÷'G2æVæB…÷B‚$Æ–6&ÆR7FæF&G2"’²#¥Æâ"²7FæF&G2¢ÖWF†öG2ÒW‡G&7E÷7V5÷6V7F–öâ‡F6µ÷7V2Â$6Æ7VÆF–öâÖWF†öG2"¢–bÖWF†öG3 ¢66÷U÷'G2æVæB…÷B‚$6Æ7VÆF–öâÖWF†öG2"’²#¥Æâ"²ÖWF†öG2¢7&—FW&–ÒW‡G&7E÷7V5÷6V7F–öâ‡F6µ÷7V2Â$66WFæ6R7&—FW&–"¢–b7&—FW&– ¢66÷U÷'G2æVæB…÷B‚$66WFæ6R7&—FW&–"’²#¥Æâ"²7&—FW&–¢VçfVÆ÷RÒW‡G&7E÷7V5÷6V7F–öâ‡F6µ÷7V2Â$÷W&F–ærVçfVÆ÷R"¢–bVçfVÆ÷S ¢66÷U÷'G2æVæB…÷B‚$÷W&F–ærVçfVÆ÷R"’²#¥Æâ"²VçfVÆ÷R ¢66÷Uö6öçFVçBÒ%ÆåÆâ"æ¦ö–â‡66÷U÷'G2’–b66÷U÷'G2VÇ6R€¢%´WFò×÷VÆFVBg&öÒF6µ÷7V2æÖBv†Vâf–ÆÆVB–ââ ¢$VF—B7FW÷66÷UöæE÷&W6V&6‚÷F6µ÷7V2æÖBæB&R×'VâåÒ ¢¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·Òâ·Ò"æf÷&ÖB†æW‡E÷6V7F–öåöçVÒÂ÷B‚%66÷RæB7FæF&G2"’’À¢&6öçFVçB#¢66÷Uö6öçFVçBÀ¢&†5÷66÷R#¢G'VRÀ¢Ò¢æW‡E÷6V7F–öåöçVÒ³Ò ¢2–æf÷&ÖF–öâ6÷W&6W2†WFòÖ'V–ÇBg&öÒF†R6öÆÆV7FVBFö7VÖVçG2F†V×6VÇfW2¢–æf÷&ÖF–öå÷6÷W&6W2Òf÷&ÖEö–æf÷&ÖF–öå÷6÷W&6W5÷FW‡B‡7GVG•ö6öæf–rÂ&W7VÇG2¢–b–æf÷&ÖF–öå÷6÷W&6W3 ¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·Òâ·Ò"æf÷&ÖB€¢æW‡E÷6V7F–öåöçVÒÂ÷B‚$–æf÷&ÖF–öâ6÷W&6W2æBWf–FVæ6R&6—2"’’À¢&6öçFVçB#¢–æf÷&ÖF–öå÷6÷W&6W2À¢&†5öÖ&¶F÷vâ#¢G'VRÀ¢Ò¢æW‡E÷6V7F–öåöçVÒ³Ò ¢2&ö6€¢&ö6‚ÒÔåTÅõ4T5D”ôå5²&&ö6‚%Ð¢–b&W7VÇG2æB&W7VÇG2ævWB‚&&ö6‚"’æB&&ö6‚"æ÷B–âUD„õ$TEõ4T5D”ôå3 ¢&ö6‚Ò&W7VÇG5²&&ö6‚%Ð¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·Òâ·Ò"æf÷&ÖB†æW‡E÷6V7F–öåöçVÒÂ÷B‚$&ö6‚"’’À¢&6öçFVçB#¢&ö6‚À¢&†5öWVF–öç2#¢G'VRÀ¢Ò¢æW‡E÷6V7F–öåöçVÒ³Ò ¢26öÇWF–öâv÷&¶fÆ÷r††÷rF†RF6²v26öÇfVB(	BF—66÷fW&VBvVçG2²v÷&¶fÆ÷r¢–b&W7VÇG2æB&W7VÇG2ævWB‚&vVçE÷v÷&¶fÆ÷u÷Æâ"“ ¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·Òâ·Ò"æf÷&ÖB†æW‡E÷6V7F–öåöçVÒÂ÷B‚%6öÇWF–öâv÷&¶fÆ÷r"’’À¢&6öçFVçB#¢""À¢&†5÷v÷&¶fÆ÷r#¢G'VRÀ¢Ò¢æW‡E÷6V7F–öåöçVÒ³Ò ¢2&W7VÇG2†WFò×÷VÆFVBg&öÒ&W7VÇG2æ§6öâ¢–b&W7VÇG2æB&W7VÇG2ævWB‚&¶W•÷&W7VÇG2"“ ¢&W7VÇG5÷FW‡BÒf÷&ÖE÷&W7VÇG5÷F&ÆR‡&W7VÇG2¢VÇ6S ¢&W7VÇG5÷FW‡BÒ€¢%´WFò×÷VÆFVBg&öÒ&W7VÇG2æ§6öâv†Vâ7&VFVB'’æ÷FV&öö²â ¢%6fR&W7VÇG2v—F‚F†RGFW&â6†÷vâ–âF†RF6²$TDÔRåÒ ¢¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·Òâ·Ò"æf÷&ÖB†æW‡E÷6V7F–öåöçVÒÂ÷B‚%&W7VÇG2"’’À¢&6öçFVçB#¢&W7VÇG5÷FW‡BÀ¢&†5öf–wW&W2#¢G'VRÀ¢Ò¢æW‡E÷6V7F–öåöçVÒ³Ò ¢Æ–fV7–6ÆU÷FW‡BÒf÷&ÖEöÆ–fV7–6ÆUöVçfVÆ÷U÷FW‡B‡&W7VÇG2Â÷&öÖ÷FVEö7–6ÆUö–B‚’¢–bÆ–fV7–6ÆU÷FW‡C ¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·ÒâÆ–fV7–6ÆR÷W&F–ærVçfVÆ÷R"æf÷&ÖB†æW‡E÷6V7F–öåöçVÒ’À¢&6öçFVçB#¢Æ–fV7–6ÆU÷FW‡BÀ¢&†5öÖ&¶F÷vâ#¢G'VRÀ¢Ò¢æW‡E÷6V7F–öåöçVÒ³Ò ¢2F—67W76–öâ†WFò×÷VÆFVBg&öÒ&W7VÇG2æ§6öâf–wW&UöF—67W76–öâ¢–b&W7VÇG2æB&W7VÇG2ævWB‚&f–wW&UöF—67W76–öâ"“ ¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·Òâ·Ò"æf÷&ÖB†æW‡E÷6V7F–öåöçVÒÂ÷B‚$F—67W76–öâ"’’À¢&6öçFVçB#¢""À¢&†5öF—67W76–öâ#¢G'VRÀ¢Ò¢æW‡E÷6V7F–öåöçVÒ³Ò ¢2æÇ—F–6ÂFWFƒ¢F†RÖ÷fW2F†BGW&â7VÖÖ'’–çFòâVæv–æVW&–ærç7vW ¢–böFWF…öVçG&–W2‡&W7VÇG2“ ¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·Òâ·Ò"æf÷&ÖB†æW‡E÷6V7F–öåöçVÒÂ÷B‚$æÇ—F–6ÂFWF‚"’’À¢&6öçFVçB#¢""À¢&†5öFWF‚#¢G'VRÀ¢Ò¢æW‡E÷6V7F–öåöçVÒ³Ò ¢2fÆ–FF–öâ7VÖÖ'’†WFò×÷VÆFVBg&öÒ&W7VÇG2æ§6öâ¢–b&W7VÇG2æB&W7VÇG2ævWB‚'fÆ–FF–öâ"“ ¢fÆ–FF–öå÷FW‡BÒf÷&ÖE÷fÆ–FF–öå÷F&ÆR‡&W7VÇG2¢VÇ6S ¢fÆ–FF–öå÷FW‡BÒ€¢%´WFò×÷VÆFVBg&öÒ&W7VÇG2æ§6öâfÆ–FF–öâ6V7F–öââ ¢$FBfÆ–FF–öâ6†V6·2Fò–÷W"æ÷FV&öö²&W7VÇG2÷WGWBåÒ ¢¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·Òâ·Ò"æf÷&ÖB†æW‡E÷6V7F–öåöçVÒÂ÷B‚%fÆ–FF–öâ7VÖÖ'’"’’À¢&6öçFVçB#¢fÆ–FF–öå÷FW‡BÀ¢&†5÷fÆ–FF–öâ#¢G'VRÀ¢Ò¢æW‡E÷6V7F–öåöçVÒ³Ò ¢2vVæW&F÷"6VÆbÖ6†V6·2&VÆöærFòF†R&Wf–WvW"Âæ÷BF†RVæv–æVW&–æp¢2&wVÖVçC¢F†W’vòFòâVæF—‚–ç7FVBöb–çFW''WF–ærF†R6†FW'2à¢VÆ—G•öÆ–æW2ÒµÐ¢&Wf–Wuö—FV×2Ò²"Ò·Ó¢·Ò"æf÷&ÖB†—77VU²'6WfW&—G’%ÒÂ—77VU²&ÖW76vR%Ò¢f÷"—77VR–â†6öç6—7FVæ7•ö—77VW2÷"µÒ¢–b—77VU²'6WfW&—G’%ÒÒ$”ädò%Ð¢–b&Wf–Wuö—FV×3 ¢VÆ—G•öÆ–æW2æVæB‚"¢§·Ò¢¢"æf÷&ÖB…÷B‚$6öç6—7FVæ7’&Wf–Wr"’’¢VÆ—G•öÆ–æW2æW‡FVæB‡&Wf–Wuö—FV×2¢–b7GVG•ö6öæf–u÷v&æ–æw3 ¢VÆ—G•öÆ–æW2æVæB‚"¢§·Ò¢¢"æf÷&ÖB…÷B‚%7GVG’6öæf–wW&F–öâ"’’¢VÆ—G•öÆ–æW2æW‡FVæB‚"Ò·Ò"æf÷&ÖB‡r’f÷"r–â7GVG•ö6öæf–u÷v&æ–æw2 ¢–b&W7VÇG2æB&W7VÇG2ævWB‚&&Væ6†Ö&µ÷fÆ–FF–öâ"“ ¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·Òâ·Ò"æf÷&ÖB†æW‡E÷6V7F–öåöçVÒÂ÷B‚$&Væ6†Ö&²fÆ–FF–öâ"’’À¢&6öçFVçB#¢""À¢&†5ö&Væ6†Ö&²#¢G'VRÀ¢Ò¢æW‡E÷6V7F–öåöçVÒ³Ò ¢2ââVæ6W'F–çG’æÇ—6—2†–bFFf–Æ&ÆR¢–b&W7VÇG2æB&W7VÇG2ævWB‚'Væ6W'F–çG’"“ ¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·Òâ·Ò"æf÷&ÖB†æW‡E÷6V7F–öåöçVÒÂ÷B‚%Væ6W'F–çG’æÇ—6—2"’’À¢&6öçFVçB#¢""À¢&†5÷Væ6W'F–çG’#¢G'VRÀ¢Ò¢æW‡E÷6V7F–öåöçVÒ³Ò ¢2ââ&—6²76W76ÖVçB†–bFFf–Æ&ÆR¢–b&W7VÇG2æB&W7VÇG2ævWB‚'&—6µöWfÇVF–öâ"“ ¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·Òâ·Ò"æf÷&ÖB†æW‡E÷6V7F–öåöçVÒÂ÷B‚%&—6²76W76ÖVçB"’’À¢&6öçFVçB#¢""À¢&†5÷&—6²#¢G'VRÀ¢Ò¢æW‡E÷6V7F–öåöçVÒ³Ò ¢77V×F–öç5÷FW‡BÒf÷&ÖEö77V×F–öç5÷FW‡B‡&W7VÇG2¢–b77V×F–öç5÷FW‡C ¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·Òâ·Ò"æf÷&ÖB†æW‡E÷6V7F–öåöçVÒÀ¢÷B‚$77V×F–öç2æBFFv2"’’À¢&6öçFVçB#¢77V×F–öç5÷FW‡BÀ¢&†5öÖ&¶F÷vâ#¢G'VRÀ¢Ò¢æW‡E÷6V7F–öåöçVÒ³Ò¢VÆ–b&W7VÇG2æB‡&W7VÇG2ævWB‚&Wf–FVæ6Uöv2"’÷"&W7VÇG2ævWB‚&77V×F–öç5öv2"’“ ¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·Òâ·Ò"æf÷&ÖB€¢æW‡E÷6V7F–öåöçVÒÂ÷B‚$Wf–FVæ6Rv2æBFW6–vâÔw&FR&Æö6¶W'2"’’À¢&6öçFVçB#¢f÷&ÖEöÆ—7Eö—FV×5÷FW‡B€¢&W7VÇG2ævWB‚&Wf–FVæ6Uöv2"’÷"&W7VÇG2ævWB‚&77V×F–öç5öv2"’’À¢&†5öÖ&¶F÷vâ#¢G'VRÀ¢Ò¢æW‡E÷6V7F–öåöçVÒ³Ò ¢–b&W7VÇG2æB&W7VÇG2ævWB‚'&V6öÖÖVæFF–öç2"“ ¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·Òâ·Ò"æf÷&ÖB†æW‡E÷6V7F–öåöçVÒÂ÷B‚%&V6öÖÖVæFF–öç2"’’À¢&6öçFVçB#¢f÷&ÖEöÆ—7Eö—FV×5÷FW‡B‡&W7VÇG2ævWB‚'&V6öÖÖVæFF–öç2"’’À¢&†5öÖ&¶F÷vâ#¢G'VRÀ¢Ò¢æW‡E÷6V7F–öåöçVÒ³Ò ¢–×&÷fVÖVçG5÷FW‡BÒf÷&ÖEö–×&÷fVÖVçG5÷FW‡B‡&W7VÇG2¢–b–×&÷fVÖVçG5÷FW‡C ¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·Òâ·Ò"æf÷&ÖB†æW‡E÷6V7F–öåöçVÒÀ¢÷B‚%FööÆ–ær–×&÷fVÖVçG2FVÆ—fW&VB"’’À¢&6öçFVçB#¢–×&÷fVÖVçG5÷FW‡BÀ¢&†5öÖ&¶F÷vâ#¢G'VRÀ¢Ò¢æW‡E÷6V7F–öåöçVÒ³Ò ¢2ââ6öæ6ÇW6–öç2æB&V6öÖÖVæFF–öç0¢6öæ6ÇW6–öç2ÒÔåTÅõ4T5D”ôå5²&6öæ6ÇW6–öç2%Ð¢–b&W7VÇG2æB&W7VÇG2ævWB‚&6öæ6ÇW6–öç2"“ ¢6öæ6ÇW6–öç2Ò&W7VÇG5²&6öæ6ÇW6–öç2%Ð¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·Òâ·Ò"æf÷&ÖB†æW‡E÷6V7F–öåöçVÒÀ¢÷B‚$6öæ6ÇW6–öç2æB&V6öÖÖVæFF–öç2"’’À¢&6öçFVçB#¢6öæ6ÇW6–öç2À¢Ò¢æW‡E÷6V7F–öåöçVÒ³Ò ¢2ââ&VfW&Væ6W2†WFò×÷VÆFVBg&öÒ&W7VÇG2æ§6öâ–bf–Æ&ÆR¢&Vg5ö6öçFVçBÒÔåTÅõ4T5D”ôå5²'&VfW&Væ6W2%Ð¢–b&W7VÇG2æB&W7VÇG2ævWB‚'&VfW&Væ6W2"“ ¢&VeöÆ–æW2ÒµÐ¢f÷"’Â&Vb–âVçVÖW&FR‡&W7VÇG5²'&VfW&Væ6W2%ÒÂ“ ¢&Veö–BÒ&VbævWB‚&–B"Â""’–b—6–ç7Fæ6R‡&VbÂF–7B’VÇ6R" ¢&Ve÷FW‡BÒ÷&VfW&Væ6U÷FW‡B‡&Vb¢–b&Veö–C ¢&VeöÆ–æW2æVæB‚%··ÕÒ·Ò"æf÷&ÖB†’Â&Ve÷FW‡B’¢VÇ6S ¢&VeöÆ–æW2æVæB‚%··ÕÒ·Ò"æf÷&ÖB†’Â&Ve÷FW‡B’¢&Vg5ö6öçFVçBÒ%Æâ"æ¦ö–â‡&VeöÆ–æW2¢6V7F–öç2æVæB‡°¢&†VF–ær#¢'·Òâ·Ò"æf÷&ÖB†æW‡E÷6V7F–öåöçVÒÂ÷B‚%&VfW&Væ6W2"’’À¢&6öçFVçB#¢&Vg5ö6öçFVçBÀ¢&†5÷&VfW&Væ6W2#¢G'VRÀ¢Ò ¢&W&öGV6–&–Æ—G•÷FW‡BÒf÷&ÖE÷&W&öGV6–&–Æ—G•÷FW‡B‡&W7VÇG2¢f–æÅ÷&W÷'E÷&V6÷&BÒf÷&ÖEöf–æÅ÷&W÷'E÷&V6÷&B…öÆöEöf–æÅ÷&W÷'EöÖWFFF‚’¢VæF–6W2ÒµÐ¢f÷"öWF†÷&VB–â…$Uõ%Eõ4T5D”ôå2ævWB‚&VæF—…÷6V7F–öç2"’÷"µÒ“ ¢–b—6–ç7Fæ6R…öWF†÷&VBÂF–7B’æB7G"…öWF†÷&VBævWB‚'F—FÆR"Â""’’ç7G&—‚’æB7G"…öWF†÷&VBævWB‚&6öçFVçB"Â""’’ç7G&—‚“ ¢VæF–6W2æVæB‚‡7G"…öWF†÷&VE²'F—FÆR%Ò’ç7G&—‚’Â²&6öçFVçB#¢7G"…öWF†÷&VE²&6öçFVçB%Ò’Â&†5öÖ&¶F÷vâ#¢G'VWÒ’¢–bf–æÅ÷&W÷'E÷&V6÷&C ¢VæF–6W2æVæB‚‚$f–æÂ&W÷'B&V6÷&B"Â°¢&6öçFVçB#¢f–æÅ÷&W÷'E÷&V6÷&BÂ&†5öÖ&¶F÷vâ#¢G'VWÒ’¢–b&W7VÇG2æBö†VFÆ–æU÷&÷w2‡&W7VÇG2’æB&W7VÇG2ævWB‚&¶W•÷&W7VÇG2"“ ¢VæF–6W2æVæB‚‚$6ö×ÆWFRçVÖW&–6Â&W7VÇG2"Â°¢&6öçFVçB#¢""Â&†5öÆÅ÷&W7VÇG2#¢G'VWÒ’¢–b&W&öGV6–&–Æ—G•÷FW‡C ¢VæF–6W2æVæB‚‚%&W&öGV6–ærF†R&W7VÇG2"Â°¢&6öçFVçB#¢&W&öGV6–&–Æ—G•÷FW‡BÂ&†5öÖ&¶F÷vâ#¢G'VWÒ’¢–bVÆ—G•öÆ–æW3 ¢VæF–6W2æVæB‚‚%&W÷'BVÆ—G’6†V6·2"Â°¢&6öçFVçB#¢%Æâ"æ¦ö–â‡VÆ—G•öÆ–æW2’Â&†5öÖ&¶F÷vâ#¢G'VWÒ’¢f÷"÷6—F–öâÂ‡F—FÆRÂW‡G&’–âVçVÖW&FR†VæF–6W2“ ¢6V7F–öâÒ²&†VF–ær#¢'·Ò·Òâ·Ò"æf÷&ÖB€¢÷B‚$VæF—‚"’Â6‡"†÷&B‚$"’²÷6—F–öâ’Â÷B‡F—FÆR’’Â&VæF—‚#¢G'VWÐ¢6V7F–öâçWFFR†W‡G&¢6V7F–öç2æVæB‡6V7F–öâ ¢&WGW&â÷&VçVÖ&W%÷6V7F–öç2‡6V7F–öç2  ¢2)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y ¢2v÷&B&W÷'@¢2)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y  ¦FVböWFõöFö5öçVÖ&W"‚“ ¢""$vVæW&FRFö7VÖVçBçVÖ&W"g&öÒF†RF6²föÆFW"æÖR–bDô5ôåTÔ$U"—2&Ææ²â"" ¢–bDô5ôåTÔ$U# ¢&WGW&âDô5ôåTÔ$U ¢föÆFW%öæÖRÒ÷2çF‚æ&6VæÖR…D4µôD•"¢2W‡G&7BFFR&Vf—‚…•••’ÔÔÒÔDB’–b&W6Vç@¢–bÆVâ†föÆFW%öæÖR’ãÒæBföÆFW%öæÖU³EÒÓÒ"Ò"æBföÆFW%öæÖU³uÒÓÒ"Ò# ¢FFU÷'BÒföÆFW%öæÖU³£Òç&WÆ6R‚"Ò"Â""¢&WGW&â%$U×·Ò"æf÷&ÖB†FFU÷'B¢&WGW&â%$UÔE$eB   ¦FVböFEö6÷fW%÷vR†Fö2“ ¢""$FB&öfW76–öæÂ6÷fW"vRv—F‚F—FÆRÂÖWFFFÂæB&Wf—6–öâ†—7F÷'’â"" ¢Fö5öçVÒÒöWFõöFö5öçVÖ&W"‚ ¢276W ¢f÷"ò–â&ævRƒB“ ¢Fö2æFE÷&w&‚‚"" ¢2F—FÆP¢F—FÆU÷&ÒFö2æFE÷&w&‚‚¢F—FÆU÷&æÆ–væÖVçBÒtEôÄ”tåõ$u$‚ä4TåDU ¢'VâÒF—FÆU÷&æFE÷'Vâ…D•DÄR¢'VâæföçBç6—¦RÒBƒ#‚¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒCrÂƒBÂS¢'Vâæ&öÆBÒG'VP ¢Fö2æFE÷&w&‚‚"" ¢27V'F—FÆRÆ–æP¢7V'F—FÆRÒFö2æFE÷&w&‚‚¢7V'F—FÆRæÆ–væÖVçBÒtEôÄ”tåõ$u$‚ä4TåDU ¢'VâÒ7V'F—FÆRæFE÷'Vâ…÷B‚$æW6–ÒVæv–æVW&–ær&W÷'B"’¢'VâæföçBç6—¦RÒBƒB¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒÂÂ ¢–b5ETE•ô$DtU3 ¢&FvW2ÒFö2æFE÷&w&‚‚¢&FvW2æÆ–væÖVçBÒtEôÄ”tåõ$u$‚ä4TåDU ¢'VâÒ&FvW2æFE÷'Vâ€¢"Â"æ¦ö–â‚'·Ó¢·Ò"æf÷&ÖB†Æ&VÂÂfÇVR¢f÷"Æ&VÂÂfÇVR–â5ETE•ô$DtU2’¢'VâæföçBç6—¦RÒBƒ’¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒ3Â3Â3 ¢–bD4µõ5DDTÔTåC ¢Fö2æFE÷&w&‚‚""¢7FFVÖVçBÒFö2æFE÷&w&‚‚¢7FFVÖVçBæÆ–væÖVçBÒtEôÄ”tåõ$u$‚ä4TåDU ¢7FFVÖVçBç&w&…öf÷&ÖBæÆVgEö–æFVçBÒ–æ6†W2ƒã‚¢7FFVÖVçBç&w&…öf÷&ÖBç&–v‡Eö–æFVçBÒ–æ6†W2ƒã‚¢'VâÒ7FFVÖVçBæFE÷'Vâ…D4µõ5DDTÔTåB¢'VâæföçBç6—¦RÒBƒ¢'VâæföçBæ—FÆ–2ÒG'VP¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒsÂsÂs ¢f÷"ò–â&ævRƒ2“ ¢Fö2æFE÷&w&‚‚"" ¢2ÖWFFFF&ÆP¢ÖWF÷F&ÆRÒFö2æFE÷F&ÆR‡&÷w3ÓRÂ6öÇ3Ó"¢÷6WE÷F&ÆU÷7G–ÆR†ÖWF÷F&ÆR¢ÖWF÷F&ÆRæÆ–væÖVçBÒtEõD$ÄUôÄ”täÔTåBä4TåDU ¢ÖWFöFFÒ°¢…÷B‚$Fö7VÖVçBçVÖ&W""’ÂFö5öçVÒ’À¢…÷B‚%&Wf—6–öâ"’Â$Ud•4”ôâ’À¢…÷B‚$FFR"’ÂD4µôDDR’À¢…÷B‚$WF†÷""’ÂUD„õ"÷"÷B‚"†æ÷B7V6–f–VB’"’’À¢…÷B‚$6Æ76–f–6F–öâ"’Â4Ä54”d”4D”ôâ’À¢Ð¢f÷"’Â†Æ&VÂÂfÇVR’–âVçVÖW&FR†ÖWFöFF“ ¢ÖWF÷F&ÆRç&÷w5¶•Òæ6VÆÇ5³ÒçFW‡BÒÆ&VÀ¢ÖWF÷F&ÆRç&÷w5¶•Òæ6VÆÇ5³ÒçFW‡BÒfÇVP¢f÷"6VÆÂ–âÖWF÷F&ÆRç&÷w5¶•Òæ6VÆÇ3 ¢f÷"&w&‚–â6VÆÂç&w&‡3 ¢&w&‚ç&w&…öf÷&ÖBç76UögFW"ÒBƒ"¢&w&‚ç&w&…öf÷&ÖBç76Uö&Vf÷&RÒBƒ"¢2&öÆBF†RÆ&VÂ6öÇVÖà¢f÷"'Vâ–âÖWF÷F&ÆRç&÷w5¶•Òæ6VÆÇ5³Òç&w&‡5³Òç'Vç3 ¢'Vâæ&öÆBÒG'VP ¢Fö2æFE÷&w&‚‚"" ¢2&Wf—6–öâ†—7F÷'’F&ÆR†–bVçG&–W2W†—7B¢&WeöVçG&–W2Ò$Ud•4”ôåô„•5Dõ%’÷"°¢²'&Wb#¢$Ud•4”ôâÂ&FFR#¢D4µôDDRÀ¢&FW67&—F–öâ#¢÷B‚$–æ—F–Â—77VR"’Â&WF†÷"#¢UD„õ"÷""'Ð¢Ð¢&Weö†VF–ærÒFö2æFE÷&w&‚‚¢&Weö†VF–æræÆ–væÖVçBÒtEôÄ”tåõ$u$‚äÄTe@¢'VâÒ&Weö†VF–æræFE÷'Vâ…÷B‚%&Wf—6–öâ†—7F÷'’"’¢'VâæföçBç6—¦RÒBƒ"¢'Vâæ&öÆBÒG'VP¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒCrÂƒBÂS ¢&We÷F&ÆRÒFö2æFE÷F&ÆR‡&÷w3Ó²ÆVâ‡&WeöVçG&–W2’Â6öÇ3ÓB¢÷6WE÷F&ÆU÷7G–ÆR‡&We÷F&ÆR¢&We÷F&ÆRæÆ–væÖVçBÒtEõD$ÄUôÄ”täÔTåBä4TåDU ¢†VFW'2Òµ÷B‚%&Wb"’Â÷B‚$FFR"’Â÷B‚$FW67&—F–öâ"’Â÷B‚$WF†÷""•Ð¢f÷"¢Â‚–âVçVÖW&FR††VFW'2“ ¢6VÆÂÒ&We÷F&ÆRç&÷w5³Òæ6VÆÇ5¶¥Ð¢6VÆÂçFW‡BÒ€¢6†F–ærÒ'6U÷†ÖÂ€¢sÇs§6†B·Òs¦f–ÆÃÒ#$cSC“b"óâræf÷&ÖB†ç6FV6Ç2‚'r"’¢¢6VÆÂç&w&‡5³Òç'Vç5³ÒæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒ#SRÂ#SRÂ#SR¢6VÆÂç&w&‡5³Òç'Vç5³Òæ&öÆBÒG'VP¢6VÆÂå÷F2ævWEö÷%öFE÷F5"‚’æVæB‡6†F–ær¢f÷"’ÂVçG'’–âVçVÖW&FR‡&WeöVçG&–W2Â“ ¢&We÷F&ÆRç&÷w5¶•Òæ6VÆÇ5³ÒçFW‡BÒ7G"†VçG'’ævWB‚'&Wb"Â""’¢&We÷F&ÆRç&÷w5¶•Òæ6VÆÇ5³ÒçFW‡BÒ7G"†VçG'’ævWB‚&FFR"Â""’¢&We÷F&ÆRç&÷w5¶•Òæ6VÆÇ5³%ÒçFW‡BÒ7G"†VçG'’ævWB‚&FW67&—F–öâ"Â""’¢&We÷F&ÆRç&÷w5¶•Òæ6VÆÇ5³5ÒçFW‡BÒ7G"†VçG'’ævWB‚&WF†÷""Â""’¢2F†R6öçFVçG2†VF–ær6'&–W2vRÖ'&V²Ö&Vf÷&S²'&V²&w&‚gFW ¢2F†—2F&ÆRv÷VÆB&RâW‡G&V×G’Æ–æRF†B6â7–ÆÂ&Ææ²vRà  ¦FVb÷7W&W75÷&w&…öçVÖ&W&–ær‡&w&‚“ ¢""$¶VW†VF–ær÷WBöbF†RFV×ÆFRw2WFöÖF–2†VF–ærçVÖ&W&–ærâ"" ¢÷"Ò&w&‚å÷ævWEö÷%öFE÷"‚¢f÷"W†—7F–ær–â÷"æf–æFÆÂ‡â‚'s¦çVÕ""’“ ¢÷"ç&VÖ÷fR†W†—7F–ær¢÷"æVæB‡'6U÷†ÖÂ€¢sÇs¦çVÕ"·ÓãÇs¦–ÇfÂs§fÃÒ#"óãÇs¦çVÔ–Bs§fÃÒ#"óãÂ÷s¦çVÕ#âræf÷&ÖB†ç6FV6Ç2‚'r"’¢’  ¤e$ôåEôÔEDU%õ5E”ÄRÒ$æW6–Òg&öçBÖGFW"†VF–ær   ¦FVbög&öçEöÖGFW%ö†VF–ær†Fö2ÂFW‡B“ ¢""$†VF–ærF†BÆöö·2Æ–¶R†VF–ær'WB7F—2÷WBöbF†RDô2à ¢2&VÂ†VF–ærF†R6öçFVçG2vRÆ—7FVB—G6VÆb‚%F&ÆRöb6öçFVçG0¢âââ""’æBF†RÆ—7G2öbf–wW&W2æBF&ÆW2â÷WFÆ–æRÆWfVÂ’—2&öG’FW‡BÀ¢6òæV—F†W"F†RÅÆòæ÷"F†RÅÇRDô27v—F6‚6öÆÆV7G2—BÂæBçVÔ–B¶VW2¢FV×ÆFRw2†VF–ærçVÖ&W&–æröfb—Bà¢"" ¢G'“ ¢7G–ÆRÒFö2ç7G–ÆW5´e$ôåEôÔEDU%õ5E”ÄUÐ¢W†6WB¶W”W'&÷# ¢7G–ÆRÒFö2ç7G–ÆW2æFE÷7G–ÆR„e$ôåEôÔEDU%õ5E”ÄRÂtEõ5E”ÄUõE•Rå$u$‚¢G'“ ¢7G–ÆRæ&6U÷7G–ÆRÒFö2ç7G–ÆW5²$†VF–ær%Ð¢W†6WB¶W”W'&÷# ¢7G–ÆRæföçBç6—¦RÒB„„TD”äsõB¢7G–ÆRæföçBæ&öÆBÒG'VP¢÷"Ò7G–ÆRæVÆVÖVçBævWEö÷%öFE÷"‚¢f÷"Fr–â‚'s¦çVÕ""Â's¦÷WFÆ–æTÇfÂ"“ ¢f÷"W†—7F–ær–â÷"æf–æFÆÂ‡â‡Fr’“ ¢÷"ç&VÖ÷fR†W†—7F–ær¢÷"æVæB‡'6U÷†ÖÂ€¢sÇs¦çVÕ"·ÓãÇs¦–ÇfÂs§fÃÒ#"óãÇs¦çVÔ–Bs§fÃÒ#"óãÂ÷s¦çVÕ#âræf÷&ÖB€¢ç6FV6Ç2‚'r"’’’¢÷"æVæB‡'6U÷†ÖÂ‚sÇs¦÷WFÆ–æTÇfÂ·Òs§fÃÒ#’"óâræf÷&ÖB†ç6FV6Ç2‚'r"’’’¢7G–ÆRç&w&…öf÷&ÖBæ¶VW÷v—F…öæW‡BÒG'VP¢7G–ÆRç&w&…öf÷&ÖBçvUö'&Vµö&Vf÷&RÒfÇ6P¢&WGW&âFö2æFE÷&w&‚‡FW‡BÂ7G–ÆS×7G–ÆR  ¦FVböVæE÷vR†Fö2“ ¢""%7F'BF†RæW‡B6öçFVçBöâæWrvRv—F†÷WBÆVf–ær&Ææ²vRà ¢Fö2æFE÷vUö'&V²‚’WG2F†R'&V²–â&w&‚öb—G2÷vã²v†VâF†P¢vR—2Ç&VG’gVÆÂF†B&w&‚7–ÆÇ2öçFòF†RæW‡BvRæB'&V·0¢v–ââVæF–ærF†R'&V²FòF†RÆ7B&w&‚6ææ÷B7–ÆÂà¢"" ¢&öG’Ò¶6†–ÆBf÷"6†–ÆB–âFö2æVÆVÖVçBæ&öG’–b6†–ÆBçFrÒâ‚'s§6V7E""•Ð¢–b&öG’æB&öG•²ÓÒçFrÓÒâ‚'s§"“ ¢&w&‚†&öG•²ÓÒÂFö2åö&öG’’æFE÷'Vâ‚’æFEö'&V²…tEô%$T²åtR¢VÇ6S ¢Fö2æFE÷vUö'&V²‚  ¦FVböFE÷v÷&E÷Fö2†Fö2“ ¢""$FBF&ÆRöb6öçFVçG2f–VÆBFòF†Rv÷&BFö7VÖVçBâ"" ¢†VF–ærÒög&öçEöÖGFW%ö†VF–ær†Fö2Â÷B‚%F&ÆRöb6öçFVçG2"’¢†VF–ærç&w&…öf÷&ÖBçvUö'&Vµö&Vf÷&RÒG'VP¢öFE÷Fö5öf–VÆB†Fö2ÂuDô2ÅÆò#Ó""ÅÆ‚ÅÇ¢ÅÇRr¢2FVÆÂv÷&BFòWFFRÆÂf–VÆG2†–æ6ÂâF†—2Dô2’v†VâF†RFö7VÖVçB—2÷VæV@¢÷6WE÷WFFUöf–VÆG5ööåö÷Vâ†Fö2¢öVæE÷vR†Fö2  ¦FVböFEöf–wW&UöæE÷F&ÆUöÆ—7G2†Fö2Â&W7VÇG2“ ¢""$FBÆ—7Böbf–wW&W2æBÆ—7BöbF&ÆW2Âv†VâF†W&R—2ç—F†–ærFòÆ—7Bà ¢v÷&B'V–ÆG2F†W6Rg&öÒF†R4Uf–VÆG2–âF†R6F–öç2Â6ò&VFW"6âf–æ@¢æÖVBf–wW&Rv—F†÷WB67&öÆÆ–ærF†Rv†öÆR&W÷'Bâ6†÷'B&W÷'G26¶—F†VÐ¢†&W÷'Bæg&öçEöÖGFW%öÆ—7G6’6òF†R&VFW"&V6†W2F†R7VÖÖ'’Böæ6Rà¢"" ¢åö—FV×2ÒÆVâ†vWEöf–wW&W2‚’÷"µÒ’²ÆVâ‚‡&W7VÇG2÷"·Ò’ævWB‚'F&ÆW2"’÷"µÒ¢–b$Uõ%Eôe$ôåEôÄ•5E2ÓÒ&æWfW""÷"…$Uõ%Eôe$ôåEôÄ•5E2ÓÒ&WFò"æBåö—FV×2Âe$ôåEôÄ•5E5ôÔ”åô•DTÕ2“ ¢&WGW&à¢FFVBÒfÇ6P¢–bvWEöf–wW&W2‚“ ¢ög&öçEöÖGFW%ö†VF–ær†Fö2Â÷B‚$Æ—7Böbf–wW&W2"’¢öFE÷Fö5öf–VÆB†Fö2ÂuDô2ÅÆ‚ÅÇ¢ÅÆ2'·Ò"ræf÷&ÖB…÷B‚$f–wW&R"’’¢FFVBÒG'VP¢–b&W7VÇG2æB‡&W7VÇG2ævWB‚'F&ÆW2"’÷"&W7VÇG2ævWB‚&¶W•÷&W7VÇG2"’“ ¢†VF–ærÒög&öçEöÖGFW%ö†VF–ær†Fö2Â÷B‚$Æ—7BöbF&ÆW2"’¢–bFFVC ¢†VF–ærç&w&…öf÷&ÖBç76Uö&Vf÷&RÒBƒ‚¢öFE÷Fö5öf–VÆB†Fö2ÂuDô2ÅÆ‚ÅÇ¢ÅÆ2'·Ò"ræf÷&ÖB…÷B‚%F&ÆR"’’¢FFVBÒG'VP¢–bFFVC ¢öVæE÷vR†Fö2  ¦FVböFE÷Fö5öf–VÆB†Fö2Â–ç7G'V7F–öâ“ ¢""$–ç6W'Bv÷&BDô2ÖfÖ–Ç’f–VÆBF†B÷VÆFW2öâ÷Vâ÷"c’â"" ¢&w&‚ÒFö2æFE÷&w&‚‚¢'VâÒ&w&‚æFE÷'Vâ‚¢fÆD6†#Ò'6U÷†ÖÂ€¢sÇs¦fÆD6†"·Òs¦fÆD6†%G—SÒ&&Vv–â"óâræf÷&ÖB†ç6FV6Ç2‚'r"’¢¢'Vâå÷"æVæB†fÆD6†#¢'Vã"Ò&w&‚æFE÷'Vâ‚¢–ç7G%FW‡BÒ'6U÷†ÖÂ€¢sÇs¦–ç7G%FW‡B·Ò†ÖÃ§76SÒ'&W6W'fR#â·ÒÂ÷s¦–ç7G%FW‡Câræf÷&ÖB€¢ç6FV6Ç2‚'r"’Â–ç7G'V7F–öà¢¢¢'Vã"å÷"æVæB†–ç7G%FW‡B¢'Vã2Ò&w&‚æFE÷'Vâ‚¢fÆD6†#"Ò'6U÷†ÖÂ€¢sÇs¦fÆD6†"·Òs¦fÆD6†%G—SÒ'6W&FR"óâræf÷&ÖB†ç6FV6Ç2‚'r"’¢¢'Vã2å÷"æVæB†fÆD6†#"¢'VãBÒ&w&‚æFE÷'Vâ…÷B‚"…&–v‡BÖ6Æ–6²æB6VÆV7BuWFFRf–VÆBrFò÷VÆFR’"’¢'VãBæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒ#‚Â#‚Â#‚¢'VãBæföçBæ—FÆ–2ÒG'VP¢'VãRÒ&w&‚æFE÷'Vâ‚¢fÆD6†#2Ò'6U÷†ÖÂ€¢sÇs¦fÆD6†"·Òs¦fÆD6†%G—SÒ&VæB"óâræf÷&ÖB†ç6FV6Ç2‚'r"’¢¢'VãRå÷"æVæB†fÆD6†#2¢&WGW&â&w&€  ¦FVb÷6WE÷WFFUöf–VÆG5ööåö÷Vâ†Fö2“ ¢""$fÆrF†RFö7VÖVçB6òv÷&B&Vg&W6†W2ÆÂf–VÆG2…Dô2ÂvRçVÖ&W'2’öâ÷Vââ"" ¢6WGF–æw2ÒFö2ç6WGF–æw2æVÆVÖVç@¢WFFRÒ6WGF–æw2æf–æB‡â‚'s§WFFTf–VÆG2"’¢–bWFFR—2æöæS ¢WFFRÒ'6U÷†ÖÂ€¢sÇs§WFFTf–VÆG2·Òs§fÃÒ'G'VR"óâræf÷&ÖB†ç6FV6Ç2‚'r"’¢¢6WGF–æw2æVæB‡WFFR¢VÇ6S ¢WFFRç6WB‡â‚'s§fÂ"’Â'G'VR"  ¦FVbö†VF–æuöÆWfVÇ5ö'•÷7G–ÆR†Fö2“ ¢""$Ö&w&‚7G–ÆR–BÓâ†VF–ærÆWfVÂf÷"t†VF–ærâã’r7G–ÆW2â"" ¢ÆWfVÇ2Ò·Ð¢f÷"7G–ÆR–âFö2ç7G–ÆW3 ¢ÖF6‚Ò&RæÖF6‚‡"%æ†VF–æuÇ2²…ÆB’B"Â‡7G–ÆRææÖR÷"""’ç7G&—‚’Â&Rä”täõ$T44R¢–bÖF6‚æB7G–ÆRç7G–ÆUö–C ¢ÆWfVÇ5·7G–ÆRç7G–ÆUö–EÒÒ–çB†ÖF6‚æw&÷Wƒ’¢&WGW&âÆWfVÇ0  ¦FVbö6öÆÆV7E÷Fö5öVçG&–W2†Fö2“ ¢""%&WGW&â††VF–æw2²†ÆWfVÂÂFW‡B•ÒÂ6F–öç2·6WÆ&VÃ¢·FW‡E×Ò’–âFö7VÖVçB÷&FW"â"" ¢ÆWfVÇ2Òö†VF–æuöÆWfVÇ5ö'•÷7G–ÆR†Fö2¢†VF–æw2Â6F–öç2ÒµÒÂ·Ð¢f÷"–âFö2æVÆVÖVçBæ&öG’æ—FW"‡â‚'s§"’“ ¢–ç7G"Ò""æ¦ö–â‡BçFW‡B÷"""f÷"B–âæ—FW"‡â‚'s¦–ç7G%FW‡B"’’¢–b–ç7G"ç7G&—‚’ç7F'G7v—F‚‚%Dô2"“ ¢6öçF–çVP¢FW‡BÒ""æ¦ö–â‡BçFW‡B÷"""f÷"B–âæ—FW"‡â‚'s§B"’’’ç7G&—‚¢–bæ÷BFW‡C ¢6öçF–çVP¢6WÒ&Rç6V&6‚‡"%Æ%4UÇ2µÂ#ò…µåÇ5Â%ÅÅÒ²’"Â–ç7G"¢–b6W ¢6F–öç2ç6WFFVfVÇB‡6Wæw&÷Wƒ’ÂµÒ’æVæB‡FW‡B¢6öçF–çVP¢7G–ÆRÒæf–æB‡â‚'s§""’²"ò"²â‚'s§7G–ÆR"’¢ÆWfVÂÒÆWfVÇ2ævWB‡7G–ÆRævWB‡â‚'s§fÂ"’’’–b7G–ÆR—2æ÷BæöæRVÇ6RæöæP¢–bÆWfVÃ ¢†VF–æw2æVæB‚†ÆWfVÂÂFW‡B’¢&WGW&â†VF–æw2Â6F–öç0  ¦FVb÷w&—FUöf–VÆE÷&W7VÇB†Fö2Âf–VÆE÷ÂVçG&–W2Â7G–ÆUöf÷%öÆWfVÂ“ ¢""%&WÆ6RDô2f–VÆBw2Æ6V†öÆFW"&W7VÇBv—F‚öæR&w&‚W"VçG'’à ¢F†Rf–VÆB¶VW2—G2&Vv–âö–ç7G"÷6W&FR'Vç2–âF†Rf—'7B&w&‚æB—G0¢VæB'VâÖ÷fW2FòF†RÆ7BöæRÂ6òv÷&B7F–ÆÂ6VW2öæRf–VÆBæBc’÷"F†P¢WFöÖF–2WFFR&WÆ6W2F†Rv†öÆR&W7VÇB†FF–ærvRçVÖ&W'2’à¢"" ¢'Vç2ÒÆ—7B†f–VÆE÷æ—FW"‡â‚'s§""’’¢¶–æG2Ò²‡"Â"æf–æB‡â‚'s¦fÆD6†""’’’f÷""–â'Vç5Ð¢6WÒæW‡B‡"f÷""Âb–â¶–æG2–bb—2æ÷BæöæRæBbævWB‡â‚'s¦fÆD6†%G—R"’’ÓÒ'6W&FR"¢VæBÒæW‡B‡"f÷""Âb–â¶–æG2–bb—2æ÷BæöæRæBbævWB‡â‚'s¦fÆD6†%G—R"’’ÓÒ&VæB"¢f÷""–â'Vç5·'Vç2æ–æFW‚‡6W’²§'Vç2æ–æFW‚†VæB’²Ó ¢f–VÆE÷ç&VÖ÷fR‡"¢&Wf–÷W2Òf–VÆE÷ ¢f÷"–æFW‚Â†ÆWfVÂÂFW‡B’–âVçVÖW&FR†VçG&–W2“ ¢–b–æFW‚ÓÒ ¢öVÂÒf–VÆE÷ ¢VÇ6S ¢öVÂÒ÷†ÖÄVÆVÖVçB‚'s§"¢&Wf–÷W2æFFæW‡B‡öVÂ¢&w&‚Ò&w&‚‡öVÂÂFö2åö&öG’¢7G–ÆUöæÖRÒ7G–ÆUöf÷%öÆWfVÂ†ÆWfVÂ¢G'“ ¢&w&‚ç7G–ÆRÒFö2ç7G–ÆW5·7G–ÆUöæÖUÐ¢W†6WB¶W”W'&÷# ¢&w&‚ç&w&…öf÷&ÖBæÆVgEö–æFVçBÒ–æ6†W2ƒã#R¢†ÆWfVÂÒ’¢&w&‚ç&w&…öf÷&ÖBç76UögFW"ÒBƒ"¢&w&‚æFE÷'Vâ‡FW‡B¢&Wf–÷W2ÒöVÀ¢&Wf–÷W2æVæB†VæB  ¦FVb÷&Vf–ÆÅ÷Fö5öf–VÆG2†Fö2“ ¢""%w&—FRF†R7W'&VçB†VF–æw2æB6F–öç2–çFòWfW'’Dô2ÖfÖ–Ç’f–VÆB&W7VÇBà ¢v—F†÷WBF†—2F†R6öçFVçG2ÂÆ—7Böbf–wW&W2æBÆ—7BöbF&ÆW26†÷röæÇ’¢Æ6V†öÆFW"VçF–Â6öÖVöæRWFFW2f–VÆG2–âv÷&C²f–WvW'2F†BæWfW"WFFP¢f–VÆG2…v÷&BöæÆ–æRÂFV×2õ6†&Uö–çB&Wf–WrÂÆ–'&Töff–6R’6†÷ræ÷F†–ærà¢vRçVÖ&W'2&RFFVBv†Vâv÷&BWFFW2F†Rf–VÆG2à¢"" ¢†VF–æw2Â6F–öç2Òö6öÆÆV7E÷Fö5öVçG&–W2†Fö2¢f÷"–âÆ—7B†Fö2æVÆVÖVçBæ&öG’æ—FW"‡â‚'s§"’’“ ¢–ç7G"Ò""æ¦ö–â‡BçFW‡B÷"""f÷"B–âæ—FW"‡â‚'s¦–ç7G%FW‡B"’’’ç7G&—‚¢–bæ÷B–ç7G"ç7F'G7v—F‚‚%Dô2"“ ¢6öçF–çVP¢6F–öâÒ&Rç6V&6‚‡"uÅÆ5Ç2²"…µâ%Ò²’"rÂ–ç7G"¢–b6F–öã ¢VçG&–W2Ò²ƒÂFW‡B’f÷"FW‡B–â6F–öç2ævWB†6F–öâæw&÷Wƒ’ÂµÒ•Ð¢7G–ÆUöf÷%öÆWfVÂÒÆÖ&FÆWfVÃ¢%F&ÆRöbf–wW&W2"2æ÷¢Ss3¢VÇ6S ¢÷WFÆ–æRÒ&Rç6V&6‚‡"uÅÆõÇ2²"…ÆB’Ò…ÆB’"rÂ–ç7G"¢FVWW7BÒ–çB†÷WFÆ–æRæw&÷Wƒ"’’–b÷WFÆ–æRVÇ6R0¢VçG&–W2Ò²†ÆWfVÂÂFW‡B’f÷"ÆWfVÂÂFW‡B–â†VF–æw2–bÆWfVÂÃÒFVWW7EÐ¢7G–ÆUöf÷%öÆWfVÂÒÆÖ&FÆWfVÃ¢%Dô2·Ò"æf÷&ÖB†ÆWfVÂ’2æ÷¢Ss3¢–bVçG&–W3 ¢÷w&—FUöf–VÆE÷&W7VÇB†Fö2ÂÂVçG&–W2Â7G–ÆUöf÷%öÆWfVÂ  ¥õtõ$Eôd”TÄEõUDDUõ45$•BÒ"rrp¦–×÷'B7—0¦–×÷'B—F†öæ6öÐ¦–×÷'Bv–ã3&6öÒæ6Æ–Vç@§—F†öæ6öÒä6ô–æ—F–Æ—¦R‚§v÷&BÒv–ã3&6öÒæ6Æ–VçBäF—7F6„W‚‚%v÷&BäÆ–6F–öâ"§v÷&Båf—6–&ÆRÒfÇ6P§v÷&BäF—7Æ”ÆW'G2Ò ¦Fö2Òv÷&BäFö7VÖVçG2ä÷Vâ‡7—2æ&we³ÒÂ6öæf—&Ô6öçfW'6–öç3ÔfÇ6RÂ&VDöæÇ“ÔfÇ6RÀ¢FEFõ&V6VçDf–ÆW3ÔfÇ6RÂf—6–&ÆSÔfÇ6R§G'“ ¢Fö2äf–VÆG2åWFFR‚¢f÷"’–â&ævRƒÂFö2åF&ÆW4öd6öçFVçG2ä6÷VçB²“ ¢Fö2åF&ÆW4öd6öçFVçG2†’’åWFFR‚¢f÷"’–â&ævRƒÂFö2åF&ÆW4ödf–wW&W2ä6÷VçB²“ ¢Fö2åF&ÆW4ödf–wW&W2†’’åWFFR‚¢Fö2å&Wv–æFR‚¢2f–ÆÆ–ærF†RÆ—7G2Ö÷fW2F†R&öG’Â6ò&Vg&W6‚vRçVÖ&W'2öæ6RÖ÷&Rà¢f÷"’–â&ævRƒÂFö2åF&ÆW4öd6öçFVçG2ä6÷VçB²“ ¢Fö2åF&ÆW4öd6öçFVçG2†’’åWFFUvTçVÖ&W'2‚¢f÷"’–â&ævRƒÂFö2åF&ÆW4ödf–wW&W2ä6÷VçB²“ ¢Fö2åF&ÆW4ödf–wW&W2†’’åWFFUvTçVÖ&W'2‚¢Fö2äf–VÆG2åWFFR‚¢Fö2å6fR‚¦f–æÆÇ“ ¢Fö2ä6Æ÷6Rƒ¢v÷&BåV—B‚¢—F†öæ6öÒä6õVæ–æ—F–Æ—¦R‚¢rrp  ¦FVbö6ÆV%÷WFFUöf–VÆG5öfÆr†Fö7…÷F‚“ ¢""%&VÖ÷fRs§WFFTf–VÆG26òv÷&BFöW2æ÷B6²FòWFFRâÇ&VG’×WFFVBFö7VÖVçBâ"" ¢–×÷'B¦—f–ÆP¢F×÷F‚ÒFö7…÷F‚²"çF× ¢v—F‚¦—f–ÆRå¦—f–ÆR†Fö7…÷F‚’27&2Â¦—f–ÆRå¦—f–ÆR‡F×÷F‚Â'r"Â¦—f–ÆRå¤•ôDTdÄDTB’2G7C ¢f÷"—FVÒ–â7&2æ–æföÆ—7B‚“ ¢FFÒ7&2ç&VB†—FVÒæf–ÆVæÖR¢–b—FVÒæf–ÆVæÖRÓÒ'v÷&B÷6WGF–æw2ç†ÖÂ# ¢FFÒ&Rç7V"‡&"#Çs§WFFTf–VÆG5Æ%µãåÒ¢óâ"Â"""ÂFF¢G7Bçw&—FW7G"†—FVÒÂFF¢÷2ç&WÆ6R‡F×÷F‚ÂFö7…÷F‚  ¦FVbWFFU÷v÷&Eöf–VÆG2†Fö7…÷F‚ÂF–ÖV÷WCÓ#C“ ¢""$ÆWBÖ–7&÷6ögBv÷&Bf–ÆÂF†RDô2ÂÆ—7G2öbf–wW&W2÷F&ÆW2æBvRçVÖ&W'2à ¢'Vç2'’FVfVÇBöâv–æF÷w2v†Vâv÷&BæB—v–ã3"&Rf–Æ&ÆS²F—6&ÆRv—F€¢ÒÖæòÖf–VÆB×WFFV÷"äU4”Õõ$Uõ%Eôd”TÄEõUDDSÓâv÷&B'Vç2–â¢6†–ÆB&ö6W72öâUDTÕR6÷’…v÷&BWFöÖF–öâ6â†æröâöæTG&—fRF‡2’À¢æBç’f–ÇW&RÆVfW2F†R&RÖf–ÆÆVBFö7VÖVçBÂv†–6‚7F–ÆÂ6'&–W2F†P¢WFFRÖöâÖ÷VâfÆrà ¢&WGW&ç0¢ÒÒÒÒÒÒÐ¢7G"÷"æöæP¢æöæVv†Vâv÷&BWFFVBF†RFö7VÖVçBÂ÷F†W'v—6Rv‡’—BF–Bæ÷Bà¢"" ¢–b"ÒÖæòÖf–VÆB×WFFR"–â7—2æ&wb÷"÷2æVçf—&öâævWB‚$äU4”Õõ$Uõ%Eôd”TÄEõUDDR"Â#"’ÓÒ## ¢&WGW&â&F—6&ÆVB ¢–b÷2ææÖRÒ&çB# ¢&WGW&â$Ö–7&÷6ögBv÷&BWFöÖF–öâ—2öæÇ’f–Æ&ÆRöâv–æF÷w2 ¢G'“ ¢–×÷'Bv–ã3&6öÒæ6Æ–VçB2æ÷¢cC¢W†6WB–×÷'DW'&÷# ¢&WGW&â'—v–ã3"—2æ÷B–ç7FÆÆVB ¢–×÷'BFV×f–ÆP¢v÷&¶F—"ÒFV×f–ÆRæÖ¶GFV×‡&Vf—ƒÒ&æW6–Õöf–VÆG5ò"¢v÷&²Ò÷2çF‚æ¦ö–â‡v÷&¶F—"Â'&W÷'BæFö7‚"¢G'“ ¢6‡WF–Âæ6÷“"†Fö7…÷F‚Âv÷&²¢ö6ÆV%÷WFFUöf–VÆG5öfÆr‡v÷&²¢G'“ ¢6ö×ÆWFVBÒ7V'&ö6W72ç'Vâ…·7—2æW†V7WF&ÆRÂ"Ö2"Âõtõ$Eôd”TÄEõUDDUõ45$•BÂv÷&µÒÀ¢7FF÷WC×7V'&ö6W72å•RÂ7FFW'#×7V'&ö6W72å5DDõUBÀ¢F–ÖV÷WC×F–ÖV÷WB¢W†6WB7V'&ö6W72åF–ÖV÷WDW‡—&VC ¢&WGW&â%v÷&BF–Bæ÷Bf–æ—6‚v—F†–â·Ò2"æf÷&ÖB‡F–ÖV÷WB¢–b6ö×ÆWFVBç&WGW&æ6öFRÒ ¢F–ÂÒ6ö×ÆWFVBç7FF÷WBæFV6öFR‚'WFbÓ‚"Â'&WÆ6R"’ç7G&—‚’ç7Æ—FÆ–æW2‚•²Ó¥Ð¢&WGW&â%v÷&BWFöÖF–öâf–ÆVB‡·Ò’"æf÷&ÖB‡F–Å³Ò–bF–ÂVÇ6R6ö×ÆWFVBç&WGW&æ6öFR¢G'“ ¢6‡WF–Âæ6÷“"‡v÷&²ÂFö7…÷F‚¢W†6WBW&Ö—76–öäW'&÷# ¢&WGW&â'·Ò—2÷Vâ–âv÷&B÷"Æö6¶VB'’öæTG&—fR"æf÷&ÖB†÷2çF‚æ&6VæÖR†Fö7…÷F‚’¢&WGW&âæöæP¢f–æÆÇ“ ¢6‡WF–Âç&×G&VR‡v÷&¶F—"Â–væ÷&UöW'&÷'3ÕG'VR  ¦FVbf–æÆ—¦U÷v÷&Eöf–VÆG2†Fö7…÷F‚ÂÆ&VÃÒ%&W÷'B"“ ¢""%WFFRf–VÆG2F‡&÷Vv‚v÷&BæB&W÷'BF†R÷WF6öÖR–âöæRÆ–æRâ"" ¢&V6öâÒWFFU÷v÷&Eöf–VÆG2†Fö7…÷F‚¢–b&V6öâ—2æöæS ¢&–çB‚'·Ó¢F&ÆRöb6öçFVçG2ÂÆ—7G2öbf–wW&W2÷F&ÆW2æBvRçVÖ&W'2f–ÆÆVB'’v÷&Bâ"æf÷&ÖB†Æ&VÂ’¢VÆ–b&V6öâÒ&F—6&ÆVB# ¢&–çB‚'·Ó¢6öçFVçG2æBÆ—7G2&RÖf–ÆÆVBv—F†÷WBvRçVÖ&W'2‡·Ò“² ¢%v÷&BFG2vRçVÖ&W'2v†VâF†Rf–ÆR—2÷VæVBâ"æf÷&ÖB†Æ&VÂÂ&V6öâ’¢&WGW&â&V6öâ—2æöæP  ¦FVböFE÷vUöçVÖ&W%öfö÷FW"†Fö2“ ¢""$FB#ÇF—FÆSâÂÆFö2æóâÂvR‚öb’"FòF†Rfö÷FW"öbWfW'’6V7F–öâà ¢6¶—VBv†Vâ6÷'÷&FRFV×ÆFR—2W6VBÂ&V6W6RF†RFV×ÆFR÷vç2—G0¢÷vâ†VFW'2æBfö÷FW'2à¢"" ¢–b$Uõ%EõDTÕÄDS ¢&WGW&à¢Æ&VÂÒ'·ÒÂ·Ò&Wb·ÒÂvR"æf÷&ÖB…D•DÄRÂöWFõöFö5öçVÖ&W"‚’Â$Ud•4”ôâ¢f÷"6V7F–öâ–âFö2ç6V7F–öç3 ¢fö÷FW"Ò6V7F–öâæfö÷FW ¢&w&‚Òfö÷FW"ç&w&‡5³Ò–bfö÷FW"ç&w&‡2À¢VÇ6Rfö÷FW"æFE÷&w&‚‚¢&w&‚çFW‡BÒ" ¢&w&‚æÆ–væÖVçBÒtEôÄ”tåõ$u$‚ä4TåDU ¢'VâÒ&w&‚æFE÷'Vâ†Æ&VÂ¢'VâæföçBç6—¦RÒBƒ‚¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒ#Â#Â#¢öFEöf–VÆB‡&w&‚Â%tR"¢'VâÒ&w&‚æFE÷'Vâ‚"öb"¢'VâæföçBç6—¦RÒBƒ‚¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒ#Â#Â#¢öFEöf–VÆB‡&w&‚Â$åTÕtU2"  ¦FVböFEöf–VÆB‡&w&‚Â–ç7G'V7F–öâ“ ¢""$VæBv÷&Bf–VÆB†RærâtRÂåTÕtU2’Fò&w&‚â"" ¢'VâÒ&w&‚æFE÷'Vâ‚¢'VâæföçBç6—¦RÒBƒ‚¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒ#Â#Â#¢'Vâå÷"æVæB‡'6U÷†ÖÂ€¢sÇs¦fÆD6†"·Òs¦fÆD6†%G—SÒ&&Vv–â"óâræf÷&ÖB†ç6FV6Ç2‚'r"’’’¢'Vâå÷"æVæB‡'6U÷†ÖÂ€¢sÇs¦–ç7G%FW‡B·Ò†ÖÃ§76SÒ'&W6W'fR#â·ÒÂ÷s¦–ç7G%FW‡Câræf÷&ÖB€¢ç6FV6Ç2‚'r"’Â–ç7G'V7F–öâ’’¢'Vâå÷"æVæB‡'6U÷†ÖÂ€¢sÇs¦fÆD6†"·Òs¦fÆD6†%G—SÒ&VæB"óâræf÷&ÖB†ç6FV6Ç2‚'r"’’’  ¦FVböFE÷F6µ÷7FFVÖVçEö&Æö6²†Fö2“ ¢""%7FFRF†RF6²BF†RfW'’7F'BöbF†R&W÷'B&öG’â"" ¢–bæ÷BD4µõ5DDTÔTåC ¢&WGW&à¢†VF–ærÒFö2æFE÷&w&‚‚¢'VâÒ†VF–æræFE÷'Vâ…÷B‚%F6²"’¢'Vâæ&öÆBÒG'VP¢'VâæföçBç6—¦RÒBƒ"¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒCrÂƒBÂS ¢&÷‚ÒFö2æFE÷F&ÆR‡&÷w3ÓÂ6öÇ3Ó¢&÷‚æÆ–væÖVçBÒtEõD$ÄUôÄ”täÔTåBä4TåDU ¢6VÆÂÒ&÷‚ç&÷w5³Òæ6VÆÇ5³Ð¢6VÆÂå÷F2ævWEö÷%öFE÷F5"‚’æVæB€¢'6U÷†ÖÂ‚sÇs§6†B·Òs¦f–ÆÃÒ$c4cdd""óâræf÷&ÖB†ç6FV6Ç2‚'r"’’’¢6VÆÂçFW‡BÒ" ¢&w&‚Ò6VÆÂç&w&‡5³Ð¢'VâÒ&w&‚æFE÷'Vâ…D4µõ5DDTÔTåB¢'VâæföçBç6—¦RÒB„$ôE•õB¢–b5ETE•ô$DtU3 ¢ÖWFÒ6VÆÂæFE÷&w&‚‚¢'VâÒÖWFæFE÷'Vâ‚"Â"æ¦ö–â€¢'·Ó¢·Ò"æf÷&ÖB†Æ&VÂÂfÇVR’f÷"Æ&VÂÂfÇVR–â5ETE•ô$DtU2’¢'VâæföçBç6—¦RÒB„4D”ôåõB¢'VâæföçBæ—FÆ–2ÒG'VP¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒÂÂ¢Fö2æFE÷&w&‚‚""  ¦FVb÷6WEöFö7VÖVçE÷&÷W'F–W2†Fö2Â&W7VÇG2“ ¢""$f–ÆÂF†RFö7VÖVçB&÷W'F–W2F†BDbf–WvW'2æB6V&6‚–æFW†W2&VBâ"" ¢&÷2ÒFö2æ6÷&U÷&÷W'F–W0¢2—F†öâÖFö7‚&V¦V7G2ç’&÷W'G’ÆöævW"F†â#SR6†&7FW'2à¢&÷2çF—FÆRÒ7G"…D•DÄR•³£#SÐ¢&÷2ç7V&¦V7BÒ'·Ò·Ò"æf÷&ÖB…÷B‚$æW6–ÒVæv–æVW&–ær&W÷'B"’ÂöWFõöFö5öçVÖ&W"‚’’ç7G&—‚•³£#SÐ¢–bUD„õ# ¢&÷2æWF†÷"Ò7G"„UD„õ"•³£#SÐ¢&÷2æÆ7EöÖöF–f–VEö'’Ò7G"„UD„õ"•³£#SÐ¢&÷2æ¶W—v÷&G2Ò´•Bç&W÷'Eö¶W—v÷&G2€¢²$æW6–Ò%ÒÂ‡fÇVRf÷"öÆ&VÂÂfÇVR–â…5ETE•ô$DtU2÷"µÒ’’À¢‡&W7VÇG2÷"·Ò’ævWB‚'7FæF&G5öÆ–VB"’–b—6–ç7Fæ6R€¢‡&W7VÇG2÷"·Ò’ævWB‚'7FæF&G5öÆ–VB"’ÂÆ—7B’VÇ6RµÒ•³£#SÐ¢&÷2æ6öÖÖVçG2Ò´•BçÆ–åöÇE÷FW‡B…D4µõ5DDTÔTåBÂ#S¢&÷2æ6FVv÷'’Ò7G"„4Ä54”d”4D”ôâ•³£#SÐ¢&÷2æ–FVçF–f–W"Ò7G"…öWFõöFö5öçVÖ&W"‚’•³£#SÐ¢7F×Òö'V–ÆEöf–ævW'&–çB‚¢–b7F×²'&W7VÇG2%Ó ¢&÷2çfW'6–öâÒ'&W7VÇG2æ§6öâ6†#Sc§·Ò"æf÷&ÖB‡7F×²'&W7VÇG2%Ò  ¦FVböFEöf–wW&Uö&Æö6²†Fö2Âf–u÷F‚Â&W7VÇG2ÂÆâÂÇEöW‡G&Ò""“ ¢""%–7GW&RÂÇBFW‡BæBçVÖ&W&VB6F–öâ‡v—F‚&öö¶Ö&²f÷"7&÷72×&VfW&Væ6W2’â"" ¢çVÖ&W"ÒÆâæçVÖ&W%ööb†f–u÷F‚¢6F–öå÷FW‡BÒvWEöf–wW&Uö6F–öâ†f–u÷F‚Â&W7VÇG2ÂçVÖ&W"¢ÇBÒ´•BçÆ–åöÇE÷FW‡B‚'·Ò·Ò"æf÷&ÖB…÷7G&—ö6F–öå÷&Vf—‚†6F–öå÷FW‡B’ÂÇEöW‡G&’¢öFEöf–wW&U÷–7GW&R†Fö2Âf–u÷F‚ÂÇCÖÇB¢öFEö6F–öâ†Fö2Â÷B‚$f–wW&R"’Â6F–öå÷FW‡BÂ&öö¶Ö&³Õöf–wW&Uö&öö¶Ö&²†f–u÷F‚’  ¦FVböFEöF—7Æ•ööÖÖÂ†Fö2ÂÆ&VÂÂÆFW‚“ ¢""$çVÖ&W&VBF—7Æ’WVF–öâ2âVF—F&ÆRv÷&BWVF–öã²fÇ6Rv†VâVç7W÷'FVBâ"" ¢–bæ÷BUTD”ôå5ô5ôôÔÔÃ ¢&WGW&âfÇ6P¢†ÖÂÒ´•BæÆFW…÷FõööÖÖÂ…÷6æ—F—¦UöWVF–öåöÆFW‚†ÆFW‚’¢–bæ÷B†ÖÃ ¢&WGW&âfÇ6P¢ÖV7W&RÒ÷FW‡E÷v–GF…ö–â†Fö2¢–bÆ&VÃ ¢ÆVBÒFö2æFE÷&w&‚‚¢'VâÒÆVBæFE÷'Vâ…÷7G&—ö6F–öå÷&Vf—‚†Æ&VÂ’¢'Vâæ—FÆ–2ÒG'VP¢'VâæföçBç6—¦RÒB„4D”ôåõB¢'VâæföçBæ6öÆ÷"ç&v"Ò$t$6öÆ÷"ƒ“Â“Â“¢ÆVBç&w&…öf÷&ÖBç76Uö&Vf÷&RÒBƒb¢ÆVBç&w&…öf÷&ÖBç76UögFW"ÒBƒ¢ÆVBç&w&…öf÷&ÖBæ¶VW÷v—F…öæW‡BÒG'VP¢&w&‚ÒFö2æFE÷&w&‚‚¢f×BÒ&w&‚ç&w&…öf÷&Ö@¢f×Bç76Uö&Vf÷&RÒBƒ"¢f×Bç76UögFW"ÒBƒ‚¢f×Bæ¶VW÷FövWF†W"ÒG'VP¢f×BçF%÷7F÷2æFE÷F%÷7F÷„–æ6†W2†ÖV7W&Rò"ã’ÂtEõD%ôÄ”täÔTåBä4TåDU"¢f×BçF%÷7F÷2æFE÷F%÷7F÷„–æ6†W2†ÖV7W&R’ÂtEõD%ôÄ”täÔTåBå$”t…B¢&w&‚æFE÷'Vâ‚%ÇB"¢G'“ ¢&w&‚å÷æVæB‡'6U÷†ÖÂ‡†ÖÂ’¢W†6WBW†6WF–öã ¢Fö2æVÆVÖVçBæ&öG’ç&VÖ÷fR‡&w&‚å÷¢&WGW&âfÇ6P¢&w&‚æFE÷'Vâ‚%ÇB‚"¢öFE÷6Wöf–VÆB‡&w&‚Â÷B‚$WVF–öâ"’¢&w&‚æFE÷'Vâ‚"’"¢&WGW&âG'VP  ¦FVb'V–ÆE÷v÷&E÷&W÷'B‡6V7F–öç2Â&W7VÇG3ÔæöæR“ ¢""$'V–ÆBF†Rv÷&BFö7VÖVçBv—F‚6÷fW"vRÂDô2ÂçVÖ&W&VBf–wW&W2ÂæBWVF–öç2â"" ¢Fö2ÒöæWuöFö7VÖVçB‚¢ÆâÒvWEöf–wW&U÷Æâ‡&W7VÇG2¢÷6WEöFö7VÖVçE÷&÷W'F–W2†Fö2Â&W7VÇG2 ¢26÷fW"vRv—F‚ÖWFFFæB&Wf—6–öâ†—7F÷'¢öFEö6÷fW%÷vR†Fö2 ¢2F&ÆRöb6öçFVçG0¢öFE÷v÷&E÷Fö2†Fö2¢öFEöf–wW&UöæE÷F&ÆUöÆ—7G2†Fö2Â&W7VÇG2 ¢2F†RF6²F†—2&W÷'Bç7vW'2Â7FFVB&Vf÷&Rç’æÇ—6—0¢öFE÷F6µ÷7FFVÖVçEö&Æö6²†Fö2 ¢2FBÆÂ6V7F–öç0¢f÷"6V7F–öâ–â6V7F–öç3 ¢†VF–ærÒöFEö†VF–ær†Fö2Â6V7F–öå²&†VF–ær%ÒÂÆWfVÃÓÀ¢çVÖ&W&VCÖæ÷B6V7F–öâævWB‚&VæF—‚"’¢–b6V7F–öâævWB‚&VæF—‚"“ ¢†VF–ærç&w&…öf÷&ÖBçvUö'&Vµö&Vf÷&RÒG'VP ¢2&W7VÇG26V7F–öã¢W6Rv÷&BF&ÆR–ç7FVBöbÆ–âFW‡@¢–b6V7F–öâævWB‚&†5öÆÅ÷&W7VÇG2"’æB&W7VÇG3 ¢FE÷&W7VÇG5÷v÷&E÷F&ÆR†Fö2Â&W7VÇG2ÂgVÆÃÕG'VR¢VÆ–b6V7F–öâævWB‚&†5öf–wW&W2"’æB&W7VÇG2æB&W7VÇG2ævWB‚&¶W•÷&W7VÇG2"“ ¢FE÷&W7VÇG5÷v÷&E÷F&ÆR†Fö2Â&W7VÇG2¢27W7FöÒF&ÆW0¢–b&W7VÇG2ævWB‚'F&ÆW2"“ ¢FEö7W7FöÕ÷v÷&E÷F&ÆW2†Fö2Â&W7VÇG2¢VÆ–b6V7F–öâævWB‚&†5öf–wW&W2"“ ¢2æò&W7VÇG2FF(	B6†÷rÆ6V†öÆFW"FW‡@¢f÷"&÷FW‡B–âö&öG•÷&w&‡2‡6V7F–öå²&6öçFVçB%Ò“ ¢Fö2æFE÷&w&‚‡&÷FW‡B¢VÆ–b6V7F–öâævWB‚&†5÷66÷R"’÷"6V7F–öâævWB‚&†5öÖ&¶F÷vâ"“ ¢266÷R6V7F–öã¢'6RÖ&¶F÷vâF&ÆW2Â&öÆBÂæBÆ—7G0¢&VæFW%÷66÷U÷Fõ÷v÷&B†Fö2Â6V7F–öå²&6öçFVçB%Ò¢VÆ–b‡6V7F–öâævWB‚&†5÷fÆ–FF–öâ"’æBæ÷B6V7F–öâævWB‚&†5ö&Væ6†Ö&²"¢æB&W7VÇG2æB&W7VÇG2ævWB‚'fÆ–FF–öâ"’“ ¢2fÆ–FF–öâ6V7F–öã¢W6Rv÷&BF&ÆP¢FE÷fÆ–FF–öå÷v÷&E÷F&ÆR†Fö2Â&W7VÇG2¢VÆ–b6V7F–öâævWB‚&†5ö&Væ6†Ö&²"’æB&W7VÇG3 ¢2&Væ6†Ö&²fÆ–FF–öâ6V7F–öã¢7G–ÆVBF&ÆP¢FEö&Væ6†Ö&µ÷v÷&E÷F&ÆR†Fö2Â&W7VÇG2¢VÆ–b6V7F–öâævWB‚&†5÷Væ6W'F–çG’"’æB&W7VÇG3 ¢2Væ6W'F–çG’æÇ—6—26V7F–öã¢7G–ÆVBF&ÆW0¢FE÷Væ6W'F–çG•÷v÷&E÷F&ÆW2†Fö2Â&W7VÇG2¢VÆ–b6V7F–öâævWB‚&†5÷&—6²"’æB&W7VÇG3 ¢2&—6²76W76ÖVçB6V7F–öã¢7G–ÆVBF&ÆRv—F‚6öÆ÷"Ö6öFVBÆWfVÇ0¢FE÷&—6µ÷v÷&E÷F&ÆR†Fö2Â&W7VÇG2¢VÆ–b6V7F–öâævWB‚&†5÷v÷&¶fÆ÷r"’æB&W7VÇG3 ¢26öÇWF–öâv÷&¶fÆ÷r6V7F–öã¢vVçG2²v÷&¶fÆ÷r6ö×÷6—F–öà¢FE÷v÷&¶fÆ÷u÷v÷&E÷6V7F–öâ†Fö2Â&W7VÇG2¢VÆ–b6V7F–öâævWB‚&†5öF—67W76–öâ"’æB&W7VÇG3 ¢2F—67W76–öâ6V7F–öã¢f–wW&RÖ'’Öf–wW&R–çFW'&WFF–öà¢FEöF—67W76–öå÷v÷&B†Fö2Â&W7VÇG2¢VÆ–b6V7F–öâævWB‚&†5öFWF‚"’æB&W7VÇG3 ¢2æÇ—F–6ÂFWFƒ¢&æ¶–ærÂ'VÆRÖ÷WG2Â&ö'W7FæW72Â7&÷76÷fW ¢FEöFWF…÷v÷&E÷6V7F–öâ†Fö2Â&W7VÇG2¢VÆ–b6V7F–öâævWB‚&†5÷&VfW&Væ6W2"’æB&W7VÇG2æB&W7VÇG2ævWB‚'&VfW&Væ6W2"“ ¢FE÷&VfW&Væ6W5÷v÷&B†Fö2Â&W7VÇG2¢VÇ6S ¢2&VwVÆ"FW‡B6öçFVçB†&öÆB7ç2æBBâââB–æÆ–æRÖF‡2&VæFW"¢f÷"&÷FW‡B–â÷v÷&E÷&w&‡2‡6V7F–öå²&6öçFVçB%Ò“ ¢öFEö&öÆE÷'Vç2†Fö2æFE÷&w&‚‚’Â&÷FW‡B ¢2VÖ&VBf–wW&W2gFW"&W7VÇG26V7F–öâ‡F†RF—67W76VBöæW26—B–âF—67W76–öâ¢–b6V7F–öâævWB‚&†5öf–wW&W2"“ ¢–bÆâç&W7VÇG5öf–wW&W3 ¢f÷"f–u÷F‚–âÆâç&W7VÇG5öf–wW&W3 ¢öFEöf–wW&Uö&Æö6²†Fö2Âf–u÷F‚Â&W7VÇG2ÂÆâ¢VÆ–bæ÷BÆâæ÷&FW# ¢Fö2æFE÷&w&‚€¢%´æòf–wW&W2f÷VæB–âf–wW&W2òF—&V7F÷'’â ¢%6fRÆ÷G22ärf–ÆW2F†W&RæB&R×'VâF†—267&—BåÒ ¢ ¢2VÖ&VBWVF–öç2gFW"&ö6‚6V7F–öà¢–b6V7F–öâævWB‚&†5öWVF–öç2"“ ¢WVF–öç2ÒvWEöWVF–öç2‡&W7VÇG2¢–bWVF–öç3 ¢öFEö†VF–ær†Fö2Â÷B‚$¶W’WVF–öç2"’ÂÆWfVÃÓ"¢Wö–ÖuöF—"Ò÷2çF‚æ¦ö–â…$Uõ%EôD•"Â%öWö–ÖvW2"¢–bæ÷B÷2çF‚æW†—7G2†Wö–ÖuöF—"“ ¢÷2æÖ¶VF—'2†Wö–ÖuöF—"¢f÷"Wö–G‚ÂW–âVçVÖW&FR†WVF–öç2Â“ ¢Æ&VÂÒWævWB‚&Æ&VÂ"Â""¢ÆFW‚ÒWævWB‚&ÆFW‚"Â""¢–bæ÷BÆFWƒ ¢6öçF–çVP¢–böFEöF—7Æ•ööÖÖÂ†Fö2ÂÆ&VÂÂÆFW‚“ ¢6öçF–çVP¢Wö–Öu÷F‚Ò÷2çF‚æ¦ö–â†Wö–ÖuöF—"Â&W÷·Òçær"æf÷&ÖB†Wö–G‚’¢–b&VæFW%öWVF–öå÷Fõö–ÖvR†ÆFW‚ÂWö–Öu÷F‚“ ¢öFEöF—7Æ•öWVF–öâ†Fö2ÂWö–Öu÷F‚ÂÆ&VÂÀ¢÷FW‡E÷v–GF…ö–â†Fö2’¢÷6WEöÆ7E÷–7GW&UöÇB†Fö2ç&w&‡5²ÓÒÂöÆFW…öfÆÆ&6µ÷FW‡B†ÆFW‚’¢VÇ6S ¢öFEöWVF–öåöfÆÆ&6µ÷&w&‚†Fö2ÂÆ&VÂÂÆFW‚ ¢26fP¢÷&Vf–ÆÅ÷Fö5öf–VÆG2†Fö2¢öFE÷vUöçVÖ&W%öfö÷FW"†Fö2¢÷6fUöFö7‚†Fö2ÂDô5…ôd”ÄR¢&–çB‚%v÷&B&W÷'B6fVC¢·Ò"æf÷&ÖB„Dô5…ôd”ÄR’  ¦FVb÷6fUöFö7‚†Fö2ÂF‚“ ¢""%6fRv÷&BFö7VÖVçBÂW†—F–ærv—F‚6ÆV"ÖW76vRv†Vâ—B—2÷Vâ–âv÷&Bâ"" ¢G'“ ¢Fö2ç6fR‡F‚¢W†6WBW&Ö—76–öäW'&÷# ¢&–çB‚$U%$õ#¢6ææ÷Bw&—FR·ÒÒ—B—2÷Vâ–âv÷&B÷"Æö6¶VB'’ ¢$öæTG&—fRâ6Æ÷6R—BæB'VâF†R&W÷'Bv–ââ"æf÷&ÖB‡F‚’¢7—2æW†—Bƒ2  ¢2)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y ¢2)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y ¢2…DÔÂ&W÷'@¢2)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y  ¦FVbö'V–ÆE÷&We÷&÷w5ö‡FÖÂ‚“ ¢""$'V–ÆB…DÔÂF&ÆR&÷w2f÷"&Wf—6–öâ†—7F÷'’–âF†R…DÔÂ&W÷'Bâ"" ¢&WeöVçG&–W2Ò$Ud•4”ôåô„•5Dõ%’÷"°¢²'&Wb#¢$Ud•4”ôâÂ&FFR#¢D4µôDDRÀ¢&FW67&—F–öâ#¢÷B‚$–æ—F–Â—77VR"’Â&WF†÷"#¢UD„õ"÷""'Ð¢Ð¢&÷w2Ò" ¢f÷"VçG'’–â&WeöVçG&–W3 ¢&÷w2³Ò#ÇG#ãÇFCç·ÓÂ÷FCãÇFCç·ÓÂ÷FCãÇFCç·ÓÂ÷FCãÇFCç·ÓÂ÷FCãÂ÷G#åÆâ"æf÷&ÖB€¢VçG'’ævWB‚'&Wb"Â""’ÂVçG'’ævWB‚&FFR"Â""’À¢VçG'’ævWB‚&FW67&—F–öâ"Â""’ÂVçG'’ævWB‚&WF†÷""Â""’¢&WGW&â&÷w0  ¦FVbö‡FÖÅöW66R‡FW‡B“ ¢""$W66RF†R6†&7FW'2F†Bv÷VÆB'&V²vVæW&FVB…DÔÂâ"" ¢&WGW&â‡7G"‡FW‡B’ç&WÆ6R‚"b"Â"f×²"’ç&WÆ6R‚#Â"Â"fÇC²"¢ç&WÆ6R‚#â"Â"fwC²"’  ¦FVbö'V–ÆEö&FvW5ö‡FÖÂ‚“ ¢""$'V–ÆBF†R7GVG’ÖFWF‚&FvR&÷r6†÷vâVæFW"F†R&W÷'BF—FÆRâ"" ¢–bæ÷B5ETE•ô$DtU3 ¢&WGW&â" ¢7ç2Ò""æ¦ö–â€¢#Ç7ãç·Ó¢·ÓÂ÷7ãâ"æf÷&ÖB…ö‡FÖÅöW66R†Æ&VÂ’Âö‡FÖÅöW66R‡fÇVR’¢f÷"Æ&VÂÂfÇVR–â5ETE•ô$DtU2¢&WGW&âsÇ6Æ73Ò'7GVG’Ö&FvW2#ç·ÓÂ÷âræf÷&ÖB‡7ç2  ¦FVbö'V–ÆE÷F6µö&Æö6µö‡FÖÂ‚“ ¢""$'V–ÆBF†RF6²7FFVÖVçB6†÷vâBF†RfW'’7F'BöbF†R&W÷'B&öG’â"" ¢–bæ÷BD4µõ5DDTÔTåC ¢&WGW&â" ¢&WGW&â€¢sÆF—b6Æ73Ò'F6²×7FFVÖVçB#åÆâp¢rÆƒ#ç·ÓÂöƒ#åÆâp¢rÇç·ÓÂ÷åÆâp¢sÂöF—câræf÷&ÖB…ö‡FÖÅöW66R…÷B‚%F6²"’’À¢ö‡FÖÅöW66R…D4µõ5DDTÔTåB’¢  ¦FVböf–wW&Uö‡FÖÂ†f–u÷F‚Â&W7VÇG2ÂÆâÂÇEöW‡G&Ò""“ ¢""$öæRçVÖ&W&VBf–wW&Rv—F‚âæ6†÷"ÂVÖ&VFFVB–ÖvRÂÇBFW‡BæB6F–öââ"" ¢çVÖ&W"ÒÆâæçVÖ&W%ööb†f–u÷F‚¢6F–öå÷FW‡BÒvWEöf–wW&Uö6F–öâ†f–u÷F‚Â&W7VÇG2ÂçVÖ&W"¢Ö–ÖRÒ&–ÖvR÷7fr·†ÖÂ"–bf–u÷F‚æVæG7v—F‚‚"ç7fr"’VÇ6R&–ÖvR÷ær ¢v—F‚÷Vâ†f–u÷F‚Â'&""’2†æFÆS ¢–ÖuöFFÒ&6ScBæ#cFVæ6öFR††æFÆRç&VB‚’’æFV6öFR‚'WFbÓ‚"¢ÇBÒö‡FÖÅöW66R„´•BçÆ–åöÇE÷FW‡B€¢'·Ò·Ò"æf÷&ÖB…÷7G&—ö6F–öå÷&Vf—‚†6F–öå÷FW‡B’ÂÇEöW‡G&’’¢&WGW&â€¢sÆf–wW&R6Æ73Ò&f–wW&R"–CÒ&f–r×·Ò#åÆâp¢rÆ–Ör7&3Ò&FF§·Ó¶&6ScBÇ·Ò"ÇCÒ'·Ò#åÆâp¢rÆf–v6F–öâ6Æ73Ò&6F–öâ#ç·ÓÂöf–v6F–öãåÆâp¢sÂöf–wW&SåÆâræf÷&ÖB†çVÖ&W"ÂÖ–ÖRÂ–ÖuöFFÂÇBÂö‡FÖÅöW66R†6F–öå÷FW‡B’’  ¦FVb'V–ÆEö‡FÖÅ÷&W÷'B‡6V7F–öç2Â&W7VÇG3ÔæöæR“ ¢""$'V–ÆBâ…DÔÂ&W÷'Bv—F‚VÖ&VFFVBf–wW&W2Â¶FU‚WVF–öç2ÂæBæf–vF–öââ"" ¢ÆâÒvWEöf–wW&U÷Æâ‡&W7VÇG2 ¢2f–wW&W2v—F†÷WBF—67W76–öâ7F’–â&W7VÇG3²F—67W76VBöæW26—B–âF—67W76–öà¢f–wW&Uö‡FÖÂÒ" ¢–bÆâç&W7VÇG5öf–wW&W3 ¢f–wW&Uö‡FÖÂÒ""æ¦ö–â…öf–wW&Uö‡FÖÂ‡F‚Â&W7VÇG2ÂÆâ¢f÷"F‚–âÆâç&W7VÇG5öf–wW&W2¢VÆ–bæ÷BÆâæ÷&FW# ¢f–wW&Uö‡FÖÂÒ#ÇãÆVÓäæòf–wW&W2f÷VæB–âf–wW&W2òF—&V7F÷'’ãÂöVÓãÂ÷â  ¢2'V–ÆBWVF–öâ…DÔÂ„¶FU‚&VæFW&–ærv—F‚VÖ&VFFVB–ÖvRfÆÆ&6·2¢WVF–öåö‡FÖÂÒ" ¢WVF–öç2ÒvWEöWVF–öç2‡&W7VÇG2¢–bWVF–öç3 ¢WVF–öåö‡FÖÂ³ÒsÆƒ3ç·ÓÂöƒ3åÆâræf÷&ÖB…÷B‚$¶W’WVF–öç2"’¢2&R×&VæFW"WVF–öâ–ÖvW2f÷"öffÆ–æRfÆÆ&6°¢Wö–ÖuöF—"Ò÷2çF‚æ¦ö–â…$Uõ%EôD•"Â%öWö–ÖvW2"¢–bæ÷B÷2çF‚æW†—7G2†Wö–ÖuöF—"“ ¢÷2æÖ¶VF—'2†Wö–ÖuöF—"¢f÷"Wö–G‚ÂW–âVçVÖW&FR†WVF–öç2Â“ ¢Æ&VÂÒWævWB‚&Æ&VÂ"Â$WVF–öâ·Ò"æf÷&ÖB†Wö–G‚’¢ÆFW‚ÒWævWB‚&ÆFW‚"Â""¢–bæ÷BÆFWƒ ¢6öçF–çVP¢2&VæFW"fÆÆ&6²–ÖvP¢fÆÆ&6µö–ÖrÒ" ¢Wö–Öu÷F‚Ò÷2çF‚æ¦ö–â†Wö–ÖuöF—"Â&W÷·Òçær"æf÷&ÖB†Wö–G‚’¢–b&VæFW%öWVF–öå÷Fõö–ÖvR†ÆFW‚ÂWö–Öu÷F‚“ ¢v—F‚÷Vâ†Wö–Öu÷F‚Â'&""’2–Övc ¢–Öuö#cBÒ&6ScBæ#cFVæ6öFR†–Övbç&VB‚’’æFV6öFR‚'WFbÓ‚"¢fÆÆ&6µö–ÖrÒ€¢sÆ–Ör6Æ73Ò&WÖfÆÆ&6²"p¢w7&3Ò&FF¦–ÖvR÷æs¶&6ScBÇ·Ò"p¢vÇCÒ'·Ò"7G–ÆSÒ&F—7Æ“¦æöæS²Ö‚×v–GFƒ£“S²#âræf÷&ÖB€¢–Öuö#cBÂÆ&VÂ¢¢WVF–öåö‡FÖÂ³Ò"" ¢ÆF—b6Æ73Ò&WVF–öâÖ&Æö6²#à¢ÆF—b6Æ73Ò&WVF–öâ¶FW‚ÖW#âBG·ÒBCÂöF—cà¢·Ð¢Ç6Æ73Ò&WVF–öâÖÆ&VÂ#äWVF–öâ·Ó¢·ÓÂ÷à¢ÂöF—cà¢"""æf÷&ÖB†ÆFW‚ÂfÆÆ&6µö–ÖrÂWö–G‚ÂÆ&VÂ ¢2'V–ÆBfÆ–FF–öâ…DÔÀ¢fÆ–FF–öåö‡FÖÂÒ" ¢–b&W7VÇG2æB&W7VÇG2ævWB‚'fÆ–FF–öâ"“ ¢fÆ–FF–öåö‡FÖÂÒf÷&ÖE÷fÆ–FF–öåö‡FÖÂ‡&W7VÇG2 ¢2'V–ÆB¶W’&W7VÇG2…DÔÂF&ÆP¢&W7VÇG5÷F&ÆUö‡FÖÂÒ" ¢–b&W7VÇG2æB&W7VÇG2ævWB‚&¶W•÷&W7VÇG2"“ ¢&W7VÇG5÷F&ÆUö‡FÖÂÒf÷&ÖE÷&W7VÇG5ö‡FÖÂ‡&W7VÇG2 ¢2'V–ÆB7W7FöÒF&ÆW2…DÔÀ¢7W7FöÕ÷F&ÆW5ö‡FÖÂÒ" ¢–b&W7VÇG2æB&W7VÇG2ævWB‚'F&ÆW2"“ ¢7W7FöÕ÷F&ÆW5ö‡FÖÂÒf÷&ÖEö7W7FöÕ÷F&ÆW5ö‡FÖÂ‡&W7VÇG2 ¢2'V–ÆB6V7F–öâ…DÔÂæBæf–vF–öà¢æeö—FV×2Ò" ¢6V7F–öåö‡FÖÂÒ" ¢f÷"6V7F–öâ–â6V7F–öç3 ¢6V7F–öåö–BÒ6V7F–öå²&†VF–ær%ÒæÆ÷vW"‚’ç&WÆ6R‚""Â"Ò"’ç&WÆ6R‚"â"Â""¢æeö—FV×2³ÒrÆÆ“ãÆ‡&VcÒ"7·Ò#ç·ÓÂöãÂöÆ“åÆâræf÷&ÖB€¢6V7F–öåö–BÂ6V7F–öå²&†VF–ær%Ð¢¢26öçfW'B66÷R6V7F–öâÖ&¶F÷vâFò…DÔÀ¢–b6V7F–öâævWB‚&†5÷66÷R"’÷"6V7F–öâævWB‚&†5öÖ&¶F÷vâ"“ ¢6öçFVçBÒ66÷Uö6öçFVçE÷Fõö‡FÖÂ‡6V7F–öå²&6öçFVçB%Ò¢VÇ6S ¢6öçFVçBÒ÷&÷6U÷Fõö‡FÖÂ‡6V7F–öå²&6öçFVçB%Ò ¢2–ç6W'BWFòÖvVæW&FVB…DÔÂf÷"7V6–Â6V7F–öç0¢–b6V7F–öâævWB‚&†5öf–wW&W2"“ ¢–b&W7VÇG5÷F&ÆUö‡FÖÃ ¢6öçFVçBÒ&W7VÇG5÷F&ÆUö‡FÖÂ²7W7FöÕ÷F&ÆW5ö‡FÖÂ²f–wW&Uö‡FÖÀ¢VÇ6S ¢6öçFVçB³Òf–wW&Uö‡FÖÀ ¢–b6V7F–öâævWB‚&†5öWVF–öç2"’æBWVF–öåö‡FÖÃ ¢6öçFVçB³ÒWVF–öåö‡FÖÀ ¢–b6V7F–öâævWB‚&†5öÆÅ÷&W7VÇG2"’æB&W7VÇG3 ¢6öçFVçBÒf÷&ÖE÷&W7VÇG5ö‡FÖÂ‡&W7VÇG2ÂgVÆÃÕG'VR ¢–b6V7F–öâævWB‚&†5÷fÆ–FF–öâ"’æBfÆ–FF–öåö‡FÖÃ ¢6öçFVçBÒfÆ–FF–öåö‡FÖÀ ¢–b6V7F–öâævWB‚&†5ö&Væ6†Ö&²"’æB&W7VÇG3 ¢6öçFVçBÒf÷&ÖEö&Væ6†Ö&µö‡FÖÂ‡&W7VÇG2 ¢–b6V7F–öâævWB‚&†5÷Væ6W'F–çG’"’æB&W7VÇG3 ¢6öçFVçBÒf÷&ÖE÷Væ6W'F–çG•ö‡FÖÂ‡&W7VÇG2 ¢–b6V7F–öâævWB‚&†5÷&—6²"’æB&W7VÇG3 ¢6öçFVçBÒf÷&ÖE÷&—6µö‡FÖÂ‡&W7VÇG2 ¢–b6V7F–öâævWB‚&†5÷v÷&¶fÆ÷r"’æB&W7VÇG3 ¢6öçFVçBÒf÷&ÖE÷v÷&¶fÆ÷uö‡FÖÂ‡&W7VÇG2 ¢–b6V7F–öâævWB‚&†5öF—67W76–öâ"’æB&W7VÇG3 ¢6öçFVçBÒf÷&ÖEöF—67W76–öåö‡FÖÂ‡&W7VÇG2 ¢–b6V7F–öâævWB‚&†5öFWF‚"’æB&W7VÇG3 ¢6öçFVçBÒf÷&ÖEöFWF…ö‡FÖÂ‡&W7VÇG2 ¢–b6V7F–öâævWB‚&†5÷&VfW&Væ6W2"’æB&W7VÇG2æB&W7VÇG2ævWB‚'&VfW&Væ6W2"“ ¢6öçFVçBÒf÷&ÖE÷&VfW&Væ6W5ö‡FÖÂ‡&W7VÇG2 ¢6V7F–öåö‡FÖÂ³Ò"" ¢Ç6V7F–öâ–CÒ'·Ò#à¢Æƒ#ç·ÓÂöƒ#à¢ÆF—cç·ÓÂöF—cà¢Â÷6V7F–öãà¢"""æf÷&ÖB‡6V7F–öåö–BÂ6V7F–öå²&†VF–ær%ÒÂ6öçFVçB ¢2¶FU‚f÷"WVF–öç2æB–æÆ–æRÖF‡3¢'VæFÆVB6òF†R&W÷'BÇ6ò&VG2öffÆ–æP¢¶FW…ö†VBÒ" ¢¶FW…ö&öG•÷67&—BÒ" ¢æVVG5öÖF‚Ò&ööÂ†WVF–öç2’÷"ç’€¢&Rç6V&6‚‡"%ÂEµâEÆåÒµÂB"Â7G"‡6V7F–öâævWB‚&6öçFVçB"Â""’’’f÷"6V7F–öâ–â6V7F–öç2¢–bæVVG5öÖFƒ ¢76WG2Ò´•Bæ¶FW…ö76WG2‚¢–b76WG3 ¢772Â¶FW…ö§2ÂWFõö§2Ò76WG0¢¶FW…ö†VBÒ‚%ÆâÇ7G–ÆSç·ÓÂ÷7G–ÆSåÆâÇ67&—Cç·ÓÂ÷67&—CåÆâÇ67&—Cç·ÓÂ÷67&—Câ ¢æf÷&ÖB†772Â¶FW…ö§2ç&WÆ6R‚#Â÷67&—B"Â#ÅÅÂ÷67&—B"’À¢WFõö§2ç&WÆ6R‚#Â÷67&—B"Â#ÅÅÂ÷67&—B"’’¢VÇ6S ¢¶FW…ö†VBÒ"" ¢ÆÆ–æ²&VÃÒ'7G–ÆW6†VWB"‡&VcÒ&‡GG3¢òö6Fâæ§6FVÆ—g"ææWBöçÒö¶FW„ãbãöF—7Bö¶FW‚æÖ–âæ772#à¢Ç67&—BFVfW"7&3Ò&‡GG3¢òö6Fâæ§6FVÆ—g"ææWBöçÒö¶FW„ãbãöF—7Bö¶FW‚æÖ–âæ§2#ãÂ÷67&—Cà¢Ç67&—BFVfW"7&3Ò&‡GG3¢òö6Fâæ§6FVÆ—g"ææWBöçÒö¶FW„ãbãöF—7Bö6öçG&–"öWFò×&VæFW"æÖ–âæ§2#ãÂ÷67&—Câ"" ¢–bæVVG5öÖFƒ ¢¶FW…ö&öG•÷67&—BÒ"" ¢Ç67&—Cà¢Fö7VÖVçBæFDWfVçDÆ—7FVæW"‚$DôÔ6öçFVçDÆöFVB"ÂgVæ7F–öâ‚’°¢–b‡G—Vöb&VæFW$ÖF„–äVÆVÖVçBÓÓÒ&gVæ7F–öâ"’°¢&VæFW$ÖF„–äVÆVÖVçB†Fö7VÖVçBæ&öG’Â°¢FVÆ–Ö—FW'3¢°¢¶ÆVgC¢"BB"Â&–v‡C¢"BB"ÂF—7Æ“¢G'VWÒÀ¢¶ÆVgC¢"B"Â&–v‡C¢"B"ÂF—7Æ“¢fÇ6WÐ¢ÒÀ¢F‡&÷töäW'&÷#¢fÇ6P¢Ò“°¢ÒVÇ6R°¢òò¶FU‚æ÷Bf–Æ&ÆR†öffÆ–æR’(	B6†÷rfÆÆ&6²–ÖvW0¢f"W2ÒFö7VÖVçBçVW'•6VÆV7F÷$ÆÂ‚"æ¶FW‚ÖW"“°¢f÷"‡f"’Ò²’ÂW2æÆVæwFƒ²’²²’°¢W5¶•Òç7G–ÆRæF—7Æ’Ò&æöæR#°¢Ð¢f"–Öw2ÒFö7VÖVçBçVW'•6VÆV7F÷$ÆÂ‚"æWÖfÆÆ&6²"“°¢f÷"‡f"¢Ò²¢Â–Öw2æÆVæwFƒ²¢²²’°¢–Öw5¶¥Òç7G–ÆRæF—7Æ’Ò&–æÆ–æR#°¢Ð¢Ð¢Ò“°¢Â÷67&—Câ""  ¢‡FÖÂÒ""#ÂDô5E•R‡FÖÃà£Æ‡FÖÂÆæsÒ'¶ÆæwÒ#à£Æ†VCà¢ÆÖWF6†'6WCÒ%UDbÓ‚#à¢ÆÖWFæÖSÒ'f–Ww÷'B"6öçFVçCÒ'v–GFƒÖFWf–6R×v–GF‚Â–æ—F–Â×66ÆSÓã#à¢ÇF—FÆSç·F—FÆWÓÂ÷F—FÆSà¢ÆÖWFæÖSÒ&WF†÷""6öçFVçCÒ'¶ÖWFöWF†÷'Ò#à¢ÆÖWFæÖSÒ&FW67&—F–öâ"6öçFVçCÒ'¶ÖWFöFW67&—F–öçÒ#à¢ÆÖWFæÖSÒ&æW6–Ò×&W7VÇG2×6†#Sb"6öçFVçCÒ'¶ÖWFöf–ævW'&–çGÒ#ç¶¶FW…ö†VGÐ¢Ç7G–ÆSà¢¢·²Ö&v–ã¢²FF–æs¢²&÷‚×6—¦–æs¢&÷&FW"Ö&÷ƒ²×Ð¢&öG’·²föçBÖfÖ–Ç“¢ÖÆR×7—7FVÒÂ&Æ–æ´Ö57—7FVÔföçBÂu6VvöRT’rÂ6ç2×6W&–c°¢F—7Æ“¢fÆWƒ²Æ–æRÖ†V–v‡C¢ãc²6öÆ÷#¢3333²×Ð¢æb·²v–GFƒ¢#cƒ²Ö–âÖ†V–v‡C¢fƒ²&6¶w&÷VæC¢6cVcVcS²FF–æs¢ãW&VÓ°¢÷6—F–öã¢f—†VC²÷fW&fÆ÷r×“¢WFó²&÷&FW"×&–v‡C¢‚6öÆ–B6FFC²×Ð¢æbƒ2·²Ö&v–âÖ&÷GFöÓ¢&VÓ²6öÆ÷#¢3SSS²föçB×6—¦S¢ã—&VÓ°¢FW‡B×G&ç6f÷&Ó¢WW&66S²ÆWGFW"×76–æs¢ãVVÓ²×Ð¢æbVÂ·²Æ—7B×7G–ÆS¢æöæS²×Ð¢æbÆ’·²Ö&v–âÖ&÷GFöÓ¢ãW&VÓ²×Ð¢æb·²6öÆ÷#¢33cfCc²FW‡BÖFV6÷&F–öã¢æöæS²föçB×6—¦S¢ã—&VÓ²×Ð¢æb¦†÷fW"·²FW‡BÖFV6÷&F–öã¢VæFW&Æ–æS²×Ð¢Ö–â·²Ö&v–âÖÆVgC¢#cƒ²Ö‚×v–GFƒ¢“ƒ²FF–æs¢'&VÒ7&VÓ²×Ð¢ƒ·²Ö&v–âÖ&÷GFöÓ¢ãW&VÓ²6öÆ÷#¢3²×Ð¢ƒ"·²Ö&v–â×F÷¢'&VÓ²Ö&v–âÖ&÷GFöÓ¢&VÓ²6öÆ÷#¢3°¢&÷&FW"Ö&÷GFöÓ¢‚6öÆ–B6VVS²FF–ærÖ&÷GFöÓ¢ã7&VÓ²×Ð¢ƒ2·²Ö&v–â×F÷¢ãW&VÓ²Ö&v–âÖ&÷GFöÓ¢ãW&VÓ²6öÆ÷#¢3333²×Ð¢æÖWF·²6öÆ÷#¢3ccc²Ö&v–âÖ&÷GFöÓ¢'&VÓ²×Ð¢æ6÷fW"×vR·²FW‡BÖÆ–vã¢6VçFW#²FF–æs¢7&VÒ²Ö&v–âÖ&÷GFöÓ¢'&VÓ°¢&÷&FW"Ö&÷GFöÓ¢7‚6öÆ–B3$cSC“c²×Ð¢æ6÷fW"×vRƒ·²föçB×6—¦S¢"ã'&VÓ²6öÆ÷#¢3$cSC“c²Ö&v–âÖ&÷GFöÓ¢ãW&VÓ°¢Æ–æRÖ†V–v‡C¢ã#S²×Ð¢æ6÷fW"×vRç7V'F—FÆR·²föçB×6—¦S¢ã&VÓ²6öÆ÷#¢3ƒƒƒ²Ö&v–âÖ&÷GFöÓ¢ã‡&VÓ²×Ð¢ç7GVG’Ö&FvW2·²Ö&v–âÖ&÷GFöÓ¢ãW&VÓ²×Ð¢ç7GVG’Ö&FvW27â·²F—7Æ“¢–æÆ–æRÖ&Æö6³²Ö&v–ã¢ã#W&VÒã3W&VÒ°¢FF–æs¢ãW&VÒãg&VÓ²föçB×6—¦S¢ãs‡&VÓ²6öÆ÷#¢3$cSC“c°¢&6¶w&÷VæC¢6VVc&f²&÷&FW#¢‚6öÆ–B6CFFFVc°¢&÷&FW"×&F—W3¢““—ƒ²×Ð¢çF6²×7FFVÖVçB·²&÷&FW"ÖÆVgC¢G‚6öÆ–B3$cSC“c²&6¶w&÷VæC¢6c6cff#°¢FF–æs¢&VÒã'&VÓ²Ö&v–ã¢'&VÒ°¢&÷&FW"×&F—W3¢G‚G‚²×Ð¢çF6²×7FFVÖVçBƒ"·²Ö&v–ã¢ãG&VÒ²&÷&FW#¢æöæS²FF–æs¢°¢föçB×6—¦S¢ãW&VÓ²6öÆ÷#¢3$cSC“c°¢FW‡B×G&ç6f÷&Ó¢WW&66S²ÆWGFW"×76–æs¢ãfVÓ²×Ð¢çF6²×7FFVÖVçB·²Ö&v–ã¢²×Ð¢æ6÷fW"ÖÖWF·²F—7Æ“¢–æÆ–æRÖ&Æö6³²FW‡BÖÆ–vã¢ÆVgC²Ö&v–ã¢&VÒWFó°¢&6¶w&÷VæC¢6c†c–f²FF–æs¢&VÒ'&VÓ²&÷&FW"×&F—W3¢gƒ°¢&÷&FW#¢‚6öÆ–B6SSS²×Ð¢æ6÷fW"ÖÖWFFB·²FF–æs¢ã'&VÒã‡&VÓ²×Ð¢æ6÷fW"ÖÖWFFC¦f—'7BÖ6†–ÆB·²föçB×vV–v‡C¢&öÆC²6öÆ÷#¢3SSS²×Ð¢ç&Wb×F&ÆR·²Ö&v–ã¢&VÒWFó²föçB×6—¦S¢ã—&VÓ²Ö‚×v–GFƒ¢sƒ²×Ð¢ç&Wb×F&ÆRF‚·²&6¶w&÷VæC¢3$cSC“c²6öÆ÷#¢6ffc²FF–æs¢ãG&VÒã‡&VÓ²×Ð¢ç&Wb×F&ÆRFB·²FF–æs¢ã7&VÒã‡&VÓ²&÷&FW#¢‚6öÆ–B6SSS²×Ð¢6V7F–öâ·²Ö&v–âÖ&÷GFöÓ¢'&VÓ²×Ð¢æf–wW&R·²FW‡BÖÆ–vã¢6VçFW#²Ö&v–ã¢ãW&VÒ²×Ð¢æf–wW&R–Ör·²Ö‚×v–GFƒ¢S²&÷&FW#¢‚6öÆ–B6FFC²&÷&FW"×&F—W3¢Gƒ²×Ð¢æ6F–öâ·²föçB×6—¦S¢ãƒW&VÓ²6öÆ÷#¢3ccc²föçB×7G–ÆS¢—FÆ–3°¢Ö&v–â×F÷¢ã7&VÓ²×Ð¢ç‡&Vb·²6öÆ÷#¢3$cSC“c²FW‡BÖFV6÷&F–öã¢æöæS²&÷&FW"Ö&÷GFöÓ¢‚F÷GFVB3$cSC“c²×Ð¢çF&ÆRÖ6F–öâ·²föçB×6—¦S¢ãƒW&VÓ²6öÆ÷#¢3SSS²föçB×7G–ÆS¢—FÆ–3°¢Ö&v–ã¢ãG&VÒã'&VÒ²×Ð¢çF&ÆRÖ6F–öâ²F&ÆR·²Ö&v–â×F÷¢²×Ð¢æFWF‚×66÷&R·²&6¶w&÷VæC¢6c6cff#²&÷&FW"ÖÆVgC¢G‚6öÆ–B3$cSC“c°¢FF–æs¢ãW&VÒã—&VÓ²Ö&v–âÖ&÷GFöÓ¢&VÓ°¢&÷&FW"×&F—W3¢G‚G‚²×Ð¢æFWF‚Ö†–çB·²föçB×6—¦S¢ãƒW&VÓ²6öÆ÷#¢3sss²föçB×7G–ÆS¢—FÆ–3°¢Ö&v–âÖ&÷GFöÓ¢ãG&VÓ²×Ð¢æWVF–öâÖ&Æö6²·²Ö&v–ã¢ãW&VÒ²FW‡BÖÆ–vã¢6VçFW#²×Ð¢æWVF–öâ·²föçB×6—¦S¢ã'&VÓ²FF–æs¢ãW&VÒ²×Ð¢æWVF–öâÖÆ&VÂ·²föçB×6—¦S¢ãƒW&VÓ²6öÆ÷#¢3ccc²föçB×7G–ÆS¢—FÆ–3°¢Ö&v–â×F÷¢ã'&VÓ²×Ð¢F&ÆR·²&÷&FW"Ö6öÆÆ6S¢6öÆÆ6S²v–GFƒ¢S²Ö&v–ã¢ãW&VÒ°¢föçB×6—¦S¢ã“'&VÓ²&÷‚×6†F÷s¢‚7‚&v&ƒÃÃÃã‚“²×Ð¢F†VBF‚·²&6¶w&÷VæC¢3$cSC“c²6öÆ÷#¢6ffc²föçB×vV–v‡C¢c°¢FF–æs¢ãg&VÒãsW&VÓ²FW‡BÖÆ–vã¢ÆVgC°¢&÷&FW#¢‚6öÆ–B3&FƒS²×Ð¢F&öG’FB·²&÷&FW#¢‚6öÆ–B6SSS²FF–æs¢ãW&VÒãsW&VÓ°¢FW‡BÖÆ–vã¢ÆVgC²×Ð¢F&öG’G#¦çF‚Ö6†–ÆB†WfVâ’·²&6¶w&÷VæC¢6c†c–f²×Ð¢F&öG’G#¦†÷fW"·²&6¶w&÷VæC¢6S–V6Vc²×Ð¢FBæçVÒ·²FW‡BÖÆ–vã¢&–v‡C²föçB×f&–çBÖçVÖW&–3¢F'VÆ"ÖçV×3²×Ð¢ç72·²6öÆ÷#¢3#†sCS²föçB×vV–v‡C¢&öÆC²×Ð¢æf–Â·²6öÆ÷#¢6F33SCS²föçB×vV–v‡C¢&öÆC²×Ð¢ç&W7VÇG2×F&ÆR·²Ö‚×v–GFƒ¢cƒ²×Ð¢çfÆ–FF–öâ×F&ÆR·²Ö‚×v–GFƒ¢Sƒ²×Ð¢æ7W7FöÒ×F&ÆR·²Ö&v–â×F÷¢ãW&VÓ²×Ð¢ç66÷R×F&ÆR·²Ö&v–ã¢ãW&VÒ&VÒ²×Ð¢6V7F–öâƒ2·²6öÆ÷#¢3$cSC“c²Ö&v–â×F÷¢ã'&VÓ²Ö&v–âÖ&÷GFöÓ¢ãG&VÓ°¢föçB×6—¦S¢ã&VÓ²&÷&FW"Ö&÷GFöÓ¢‚6öÆ–B6FFC²FF–ærÖ&÷GFöÓ¢ã'&VÓ²×Ð¢6V7F–öâVÂ·²Ö&v–ã¢ã7&VÒã‡&VÒãW&VÓ²×Ð¢6V7F–öâVÂÆ’·²Ö&v–âÖ&÷GFöÓ¢ã7&VÓ²×Ð¢ç&VfW&Væ6RÖÆ—7B·²Æ—7B×7G–ÆS¢æöæS²FF–ærÖÆVgC¢²×Ð¢ç&VfW&Væ6RÖÆ—7BÆ’·²Ö&v–âÖ&÷GFöÓ¢ãg&VÓ²FF–æs¢ãG&VÒãg&VÓ°¢&÷&FW"ÖÆVgC¢7‚6öÆ–B3$cSC“c²&6¶w&÷VæC¢6c†c–f²×Ð¢ç&VfW&Væ6RÖÆ—7BÆ’7G&öær·²6öÆ÷#¢3$cSC“c²×Ð¢ò¢&—6²76W76ÖVçB7G–ÆW2¢ð¢ç&—6²×7VÖÖ'’Ö6&B·²&6¶w&÷VæC¢6c†c–f²&÷&FW"ÖÆVgC¢G‚6öÆ–B3$cSC“c°¢FF–æs¢ã‡&VÒã'&VÓ²Ö&v–âÖ&÷GFöÓ¢ã'&VÓ²&÷&FW"×&F—W3¢G‚G‚²×Ð¢ç&—6²Ö&FvR·²F—7Æ“¢–æÆ–æRÖ&Æö6³²FF–æs¢ãW&VÒãg&VÓ²&÷&FW"×&F—W3¢7ƒ°¢föçB×vV–v‡C¢c²föçB×6—¦S¢ãƒW&VÓ²6öÆ÷#¢6ffc²×Ð¢ç&—6²Ö&FvRç&—6²Ö†–v‚·²&6¶w&÷VæC¢6F33SCS²×Ð¢ç&—6²Ö&FvRç&—6²ÖÖVF—VÒ·²&6¶w&÷VæC¢6ScvS##²×Ð¢ç&—6²Ö&FvRç&—6²ÖÆ÷r·²&6¶w&÷VæC¢3#†sCS²×Ð¢ç&—6²×F&ÆR·²föçB×6—¦S¢ãƒ‡&VÓ²×Ð¢ç&—6²×F&ÆRæÖ—F–vF–öâÖ6VÆÂ·²föçB×6—¦S¢ãƒW&VÓ²6öÆ÷#¢3SSS²×Ð¢ç&—6²ÖÆWfVÂ·²föçB×vV–v‡C¢&öÆC²FW‡BÖÆ–vã¢6VçFW#²×Ð¢ç&—6²ÖÆWfVÂç&—6²Ö†–v‚·²6öÆ÷#¢6F33SCS²×Ð¢ç&—6²ÖÆWfVÂç&—6²ÖÖVF—VÒ·²6öÆ÷#¢6ScvS##²×Ð¢ç&—6²ÖÆWfVÂç&—6²ÖÆ÷r·²6öÆ÷#¢3#†sCS²×Ð¢ò¢Væ6W'F–çG’æÇ—6—27G–ÆW2¢ð¢çVæ6W'F–çG’×7VÖÖ'’·²&6¶w&÷VæC¢6S†cFfC²&÷&FW"ÖÆVgC¢G‚6öÆ–B33cfCc°¢FF–æs¢ã‡&VÒã'&VÓ²Ö&v–âÖ&÷GFöÓ¢ã'&VÓ²&÷&FW"×&F—W3¢G‚G‚²×Ð¢çVæ6W'F–çG’×F&ÆR·²föçB×6—¦S¢ãƒ‡&VÓ²×Ð¢çF÷&æFò×F&ÆR·²föçB×6—¦S¢ãƒ‡&VÓ²×Ð¢ò¢&Væ6†Ö&²fÆ–FF–öâ7G–ÆW2¢ð¢æ&Væ6†Ö&²×F&ÆR·²föçB×6—¦S¢ãƒ‡&VÓ²×Ð¢ò¢F—67W76–öâ6V7F–öâ7G–ÆW2¢ð¢æF—67W76–öâÖ&Æö6²·²&6¶w&÷VæC¢6c–ff#²&÷&FW"ÖÆVgC¢G‚6öÆ–B3&CfFc°¢FF–æs¢&VÒã'&VÓ²Ö&v–âÖ&÷GFöÓ¢ãW&VÓ²&÷&FW"×&F—W3¢G‚G‚²×Ð¢æF—67W76–öâÖ&Æö6²ƒ2·²6öÆ÷#¢3&CfFc²Ö&v–â×F÷¢²×Ð¢æF—67W76–öâÖ&Æö6²ç&V6öÖÖVæFF–öâ·²&6¶w&÷VæC¢6S†cVS“²FF–æs¢ãW&VÒã‡&VÓ°¢&÷&FW"×&F—W3¢7ƒ²&÷&FW"ÖÆVgC¢7‚6öÆ–B3#†sCS²×Ð¢æF—67W76–öâÖ&Æö6²çG&6V&–Æ—G’·²föçB×6—¦S¢ã‡&VÓ²6öÆ÷#¢3ƒƒƒ°¢&÷&FW"×F÷¢‚F6†VB6663²FF–ær×F÷¢ãG&VÓ²Ö&v–â×F÷¢ãg&VÓ²×Ð¢ÖVF–†Ö‚×v–GFƒ¢sc‡‚’·°¢æb·²÷6—F–öã¢7FF–3²v–GFƒ¢S²Ö–âÖ†V–v‡C¢WFó²×Ð¢Ö–â·²Ö&v–âÖÆVgC¢²FF–æs¢&VÓ²×Ð¢×Ð¢ÖVF–&–çB·°¢vR·²6—¦S¢B÷'G&—C²Ö&v–ã¢#ÖÒ†ÖÒ†ÖÒ#ÖÓ²×Ð¢æb·²F—7Æ“¢æöæS²×Ð¢Ö–â·²Ö&v–âÖÆVgC¢²Ö‚×v–GFƒ¢S²FF–æs¢²×Ð¢&öG’·²F—7Æ“¢&Æö6³²föçB×6—¦S¢ãWC²6öÆ÷#¢3²×Ð¢æ6÷fW"×vR·²vRÖ'&V²ÖgFW#¢Çv—3²×Ð¢6V7F–öâ·²vRÖ'&V²Ö–ç6–FS¢WFó²×Ð¢æf–wW&RÂF&ÆRÂæF—67W76–öâÖ&Æö6²·²vRÖ'&V²Ö–ç6–FS¢fö–C²×Ð¢F†VB·²F—7Æ“¢F&ÆRÖ†VFW"Öw&÷W²×Ð¢G"·²vRÖ'&V²Ö–ç6–FS¢fö–C²×Ð¢ƒ"Âƒ2·²vRÖ'&V²ÖgFW#¢fö–C²'&V²ÖgFW#¢fö–C²×Ð¢çF&ÆRÖ6F–öâ·²vRÖ'&V²ÖgFW#¢fö–C²×Ð¢·²÷'†ç3¢3²v–F÷w3¢3²×Ð¢·²6öÆ÷#¢3²FW‡BÖFV6÷&F–öã¢æöæS²×Ð¢×Ð¢Â÷7G–ÆSà£Âö†VCà£Æ&öG“à¢Ææcà¢Æƒ3ç¶6öçFVçG5öÆ&VÇÓÂöƒ3à¢ÇVÃà§¶ægÐ¢Â÷VÃà¢Æ‡"7G–ÆSÒ&Ö&v–ã¢&VÒ²#à¢Ç7G–ÆSÒ&föçB×6—¦S¢ã‡&VÓ²6öÆ÷#¢3“““²#ç¶Fö5öçV×ÓÂ÷à¢Ç7G–ÆSÒ&föçB×6—¦S¢ã‡&VÓ²6öÆ÷#¢3“““²#ç·&WeöÆ&VÇÒ·&WgÒÂ¶FFWÓÂ÷à¢Âöæcà¢ÆÖ–ãà¢ÆF—b6Æ73Ò&6÷fW"×vR#à¢Æƒç·F—FÆWÓÂöƒà¢Ç6Æ73Ò'7V'F—FÆR#ç·7V'F—FÆWÓÂ÷à¢¶&FvW7Ð¢ÇF&ÆR6Æ73Ò&6÷fW"ÖÖWF#à¢ÇG#ãÇFCç¶Fö5öçVÕöÆ&VÇÓÂ÷FCãÇFCç¶Fö5öçV×ÓÂ÷FCãÂ÷G#à¢ÇG#ãÇFCç·&Wf—6–öåöÆ&VÇÓÂ÷FCãÇFCç·&WgÓÂ÷FCãÂ÷G#à¢ÇG#ãÇFCç¶FFUöÆ&VÇÓÂ÷FCãÇFCç¶FFWÓÂ÷FCãÂ÷G#à¢ÇG#ãÇFCç¶WF†÷%öÆ&VÇÓÂ÷FCãÇFCç¶WF†÷'ÓÂ÷FCãÂ÷G#à¢ÇG#ãÇFCç¶6Æ76–f–6F–öåöÆ&VÇÓÂ÷FCãÇFCç¶6Æ76–f–6F–öçÓÂ÷FCãÂ÷G#à¢Â÷F&ÆSà¢Æƒ27G–ÆSÒ&Ö&v–â×F÷¢'&VÓ²6öÆ÷#¢3$cSC“c²#ç·&Weö†—7F÷'•öÆ&VÇÓÂöƒ3à¢ÇF&ÆR6Æ73Ò'&Wb×F&ÆR#à¢ÇF†VCãÇG#ãÇFƒç·&WeöÆ&VÇÓÂ÷FƒãÇFƒç¶FFUöÆ&VÇÓÂ÷FƒãÇFƒç¶FW67&—F–öåöÆ&VÇÓÂ÷FƒãÇFƒç¶WF†÷%öÆ&VÇÓÂ÷FƒãÂ÷G#ãÂ÷F†VCà¢ÇF&öG“ç·&We÷&÷w7ÓÂ÷F&öG“à¢Â÷F&ÆSà¢ÂöF—cà§·F6µö&Æö6·Ð§·6V7F–öç7Ð¢ÂöÖ–ãç¶¶FW…ö&öG•÷67&—GÐ£Âö&öG“à£Âö‡FÖÃâ"""æf÷&ÖB€¢F—FÆSÕD•DÄRÀ¢ÖWFöWF†÷#Õö‡FÖÅöW66R„UD„õ"÷"""’ç&WÆ6R‚r"rÂ"gV÷C²"’À¢ÖWFöf–ævW'&–çCÕö'V–ÆEöf–ævW'&–çB‚•²'&W7VÇG2%ÒÀ¢ÖWFöFW67&—F–öãÕö‡FÖÅöW66R„´•BçÆ–åöÇE÷FW‡B…D4µõ5DDTÔTåBÂ3’’ç&WÆ6R‚r"rÂ"gV÷C²"’À¢ÆæsÕ÷&W÷'EöÆö6ÆR‚’À¢7V'F—FÆSÕ÷B‚$æW6–ÒVæv–æVW&–ær&W÷'B"’À¢6öçFVçG5öÆ&VÃÕ÷B‚$6öçFVçG2"’À¢Fö5öçVÕöÆ&VÃÕ÷B‚$Fö7VÖVçBæòâ"’À¢&Wf—6–öåöÆ&VÃÕ÷B‚%&Wf—6–öâ"’À¢FFUöÆ&VÃÕ÷B‚$FFR"’À¢WF†÷%öÆ&VÃÕ÷B‚$WF†÷""’À¢6Æ76–f–6F–öåöÆ&VÃÕ÷B‚$6Æ76–f–6F–öâ"’À¢FW67&—F–öåöÆ&VÃÕ÷B‚$FW67&—F–öâ"’À¢&Weö†—7F÷'•öÆ&VÃÕ÷B‚%&Wf—6–öâ†—7F÷'’"’À¢&WeöÆ&VÃÕ÷B‚%&Wb"’À¢&FvW3Õö'V–ÆEö&FvW5ö‡FÖÂ‚’À¢F6µö&Æö6³Õö'V–ÆE÷F6µö&Æö6µö‡FÖÂ‚’À¢WF†÷#ÔUD„õ"÷"÷B‚"†æ÷B7V6–f–VB’"’À¢FFSÕD4µôDDRÀ¢Fö5öçVÓÕöWFõöFö5öçVÖ&W"‚’À¢&WcÕ$Ud•4”ôâÀ¢6Æ76–f–6F–öãÔ4Ä54”d”4D”ôâÀ¢&We÷&÷w3Õö'V–ÆE÷&We÷&÷w5ö‡FÖÂ‚’À¢æcÖæeö—FV×2À¢6V7F–öç3×6V7F–öåö‡FÖÂÀ¢¶FW…ö†VCÖ¶FW…ö†VBÀ¢¶FW…ö&öG•÷67&—CÖ¶FW…ö&öG•÷67&—BÀ¢ ¢v—F‚÷Vâ„…DÔÅôd”ÄRÂ'r"ÂVæ6öF–æsÒ'WFbÓ‚"’2c ¢bçw&—FR†‡FÖÂ¢&–çB‚$…DÔÂ&W÷'B6fVC¢·Ò"æf÷&ÖB„…DÔÅôd”ÄR’  ¢2)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y ¢266–VçF–f–2W"vVæW&F–öà¢2)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y  ¦FVb'V–ÆE÷W%÷6V7F–öç2‡&W7VÇG2ÂF6µ÷7V2“ ¢""$'V–ÆB66–VçF–f–2W"6V7F–öç2g&öÒ&W7VÇG2æ§6öâæBF6µ÷7V2æÖBà ¢Ö2F6²FFFò7FæF&BVæv–æVW&–ærW"7G'V7GW&S ¢'7G&7BÂ–çG&öGV7F–öâÂÖWF†öFöÆöw’Â&W7VÇG2bF—67W76–öâÀ¢Væ6W'F–çG’æÇ—6—2Â6öæ6ÇW6–öç2Â6¶æ÷vÆVFvÖVçG2Â&VfW&Væ6W2à¢"" ¢6V7F–öç2ÒµÐ¢W%÷F—FÆRÒU%õD•DÄR÷"D•DÄP ¢2'7G&7@¢'7G&7BÒU%õ4T5D”ôå5²&'7G&7B%Ð¢–b&W7VÇG2æB&W7VÇG2ævWB‚&&ö6‚"’æB&W7VÇG2ævWB‚&6öæ6ÇW6–öç2"“ ¢2WFòÖvVæW&FR'7G&7Bg&öÒ&ö6‚²¶W’&W7VÇG2²6öæ6ÇW6–öç0¢'G2ÒµÐ¢'G2æVæB‡&W7VÇG5²&&ö6‚%Ò¢·"Ò&W7VÇG2ævWB‚&¶W•÷&W7VÇG2"Â·Ò¢–b·# ¢†–v†Æ–v‡G2ÒµÐ¢f÷"¶W’ÂfÇVR–âÆ—7B†·"æ—FV×2‚’•³£UÓ ¢Æ&VÂÂVæ—BÒ÷'6Uö¶W•öæÖR†¶W’¢–b—6–ç7Fæ6R‡fÇVRÂfÆöB“ ¢†–v†Æ–v‡G2æVæB‚'·Ó¢³¢ãFwÒ·Ò"æf÷&ÖB†Æ&VÂÂfÇVRÂVæ—B’ç7G&—‚’¢VÇ6S ¢†–v†Æ–v‡G2æVæB‚'·Ó¢·Ò·Ò"æf÷&ÖB†Æ&VÂÂfÇVRÂVæ—B’ç7G&—‚’¢'G2æVæB‚$¶W’&W7VÇG3¢"²#²"æ¦ö–â††–v†Æ–v‡G2’²"â"¢'G2æVæB‡&W7VÇG5²&6öæ6ÇW6–öç2%Ò¢'7G&7BÒ""æ¦ö–â‡'G2¢6V7F–öç2æVæB‡°¢'G—R#¢&'7G&7B"À¢&†VF–ær#¢$'7G&7B"À¢&6öçFVçB#¢'7G&7BÀ¢Ò ¢2â–çG&öGV7F–öà¢–çG&òÒU%õ4T5D”ôå5²&–çG&öGV7F–öâ%Ð¢2G'’FòWFò×÷VÆFRg&öÒ&ö&ÆVÕöFW67&—F–öâ²F6µ÷7V2&6¶w&÷Væ@¢–bÔåTÅõ4T5D”ôå2ævWB‚'&ö&ÆVÕöFW67&—F–öâ"’æBæ÷BÔåTÅõ4T5D”ôå5°¢'&ö&ÆVÕöFW67&—F–öâ%Òç7F'G7v—F‚‚%²"“ ¢–çG&òÒÔåTÅõ4T5D”ôå5²'&ö&ÆVÕöFW67&—F–öâ%Ð¢&6¶w&÷VæBÒW‡G&7E÷7V5÷6V7F–öâ‡F6µ÷7V2Â$&6¶w&÷VæB"¢–b&6¶w&÷VæC ¢–çG&òÒ&6¶w&÷VæB²%ÆåÆâ"²–çG&ð¢6V7F–öç2æVæB‡°¢'G—R#¢&çVÖ&W&VB"À¢&çVÖ&W"#¢À¢&†VF–ær#¢$–çG&öGV7F–öâ"À¢&6öçFVçB#¢–çG&òÀ¢Ò ¢2"âÖWF†öFöÆöw¢ÖWF†öFöÆöw’ÒU%õ4T5D”ôå5²&ÖWF†öFöÆöw’%Ð¢–b&W7VÇG2æB&W7VÇG2ævWB‚&&ö6‚"“ ¢ÖWF†öFöÆöw’Ò&W7VÇG5²&&ö6‚%Ð¢2VæB7FæF&G2–æfòg&öÒF6µ÷7V0¢7FæF&G2ÒW‡G&7E÷7V5÷6V7F–öâ‡F6µ÷7V2Â$Æ–6&ÆR7FæF&G2"¢ÖWF†öG2ÒW‡G&7E÷7V5÷6V7F–öâ‡F6µ÷7V2Â$6Æ7VÆF–öâÖWF†öG2"¢–b7FæF&G3 ¢ÖWF†öFöÆöw’³Ò%ÆåÆäÆ–6&ÆR7FæF&G3¥Æâ"²7FæF&G0¢–bÖWF†öG3 ¢ÖWF†öFöÆöw’³Ò%ÆåÆä6Æ7VÆF–öâÖWF†öG3¥Æâ"²ÖWF†öG0¢6V7F–öç2æVæB‡°¢'G—R#¢&çVÖ&W&VB"À¢&çVÖ&W"#¢"À¢&†VF–ær#¢$ÖWF†öFöÆöw’"À¢&6öçFVçB#¢ÖWF†öFöÆöw’À¢&†5öWVF–öç2#¢G'VRÀ¢Ò ¢22â&W7VÇG2æBF—67W76–öà¢&W7VÇG5÷FW‡BÒU%õ4T5D”ôå5²'&W7VÇG5öF—67W76–öâ%Ð¢–b&W7VÇG2æB&W7VÇG2ævWB‚&¶W•÷&W7VÇG2"“ ¢&W7VÇG5÷FW‡BÒf÷&ÖE÷&W7VÇG5÷F&ÆR‡&W7VÇG2¢6V7F–öç2æVæB‡°¢'G—R#¢&çVÖ&W&VB"À¢&çVÖ&W"#¢2À¢&†VF–ær#¢%&W7VÇG2æBF—67W76–öâ"À¢&6öçFVçB#¢&W7VÇG5÷FW‡BÀ¢&†5öf–wW&W2#¢G'VRÀ¢&†5öF—67W76–öâ#¢&ööÂ‡&W7VÇG2æB&W7VÇG2ævWB‚&f–wW&UöF—67W76–öâ"’’À¢Ò ¢22ãfÆ–FF–öâ‡7V"×6V7F–öâ–bFFf–Æ&ÆR¢–b&W7VÇG2æB&W7VÇG2ævWB‚'fÆ–FF–öâ"“ ¢6V7F–öç2æVæB‡°¢'G—R#¢&çVÖ&W&VB"À¢&çVÖ&W"#¢2ãÀ¢&†VF–ær#¢%fÆ–FF–öâ"À¢&6öçFVçB#¢f÷&ÖE÷fÆ–FF–öå÷F&ÆR‡&W7VÇG2’À¢&—5÷7V'6V7F–öâ#¢G'VRÀ¢Ò ¢22ã"&Væ6†Ö&²6ö×&—6öâ‡7V"×6V7F–öâ–bFFf–Æ&ÆR¢–b&W7VÇG2æB&W7VÇG2ævWB‚&&Væ6†Ö&µ÷fÆ–FF–öâ"“ ¢'bÒ&W7VÇG5²&&Væ6†Ö&µ÷fÆ–FF–öâ%Ð¢'eöÆ–æW2ÒµÐ¢f÷"¶W’ÂfÂ–â'bæ—FV×2‚“ ¢–bæ÷B—6–ç7Fæ6R‡fÂÂF–7B“ ¢6öçF–çVP¢FW62ÒfÂævWB‚&FW67&—F–öâ"’÷"fÂævWB‚'&VfW&Væ6R"’÷"¶W¢7FGW2ÒfÂævWB‚'7FGW2"¢–b7FGW2—2æöæS ¢ÒfÂævWB‚'72"¢7FGW2Ò%52"–b—2G'VRVÇ6R‚$d”Â"–b—2fÇ6RVÇ6R$âô"¢'eöÆ–æW2æVæB‚"Ò·Ó¢·Ò"æf÷&ÖB†FW62Â7FGW2’¢–b&Ö…öFWf–F–öå÷7B"–âfÃ ¢'eöÆ–æW2æVæB‚"Ö‚FWf–F–öã¢³¢ãFgÒR"æf÷&ÖB€¢fÅ²&Ö…öFWf–F–öå÷7B%Ò’¢–b&FWf–F–öå÷7B"–âfÃ ¢'eöÆ–æW2æVæB‚"FWf–F–öã¢³¢ã&gÒR"æf÷&ÖB€¢fÅ²&FWf–F–öå÷7B%Ò’¢6V7F–öç2æVæB‡°¢'G—R#¢&çVÖ&W&VB"À¢&çVÖ&W"#¢2ã"À¢&†VF–ær#¢$&Væ6†Ö&²6ö×&—6öâ"À¢&6öçFVçB#¢%Æâ"æ¦ö–â†'eöÆ–æW2’À¢&—5÷7V'6V7F–öâ#¢G'VRÀ¢Ò ¢2BâVæ6W'F–çG’æÇ—6—2†–bFFf–Æ&ÆR¢–b&W7VÇG2æB&W7VÇG2ævWB‚'Væ6W'F–çG’"“ ¢Væ2Ò&W7VÇG5²'Væ6W'F–çG’%Ð¢Væ5öÆ–æW2ÒµÐ¢Væ5öÆ–æW2æVæB‚$·Òv2W&f÷&ÖVBv—F‚·Ò6–×VÆF–öç2W6–ær·Òâ"æf÷&ÖB€¢Væ2ævWB‚&ÖWF†öB"Â$ÖöçFR6&ÆòæÇ—6—2"’À¢Væ2ævWB‚&å÷6–×VÆF–öç2"Â$âô"’À¢Væ2ævWB‚'6–×VÆF–öåöVæv–æR"Â$æW6–Ò"’’¢Væ5öÆ–æW2æVæB‚""¢Væ5öÆ–æW2æVæB‚$–çWB&ÖWFW'2æB&ævW3¢"¢f÷"&Ò–âVæ2ævWB‚&–çWE÷&ÖWFW'2"ÂµÒ“ ¢Væ5öÆ–æW2æVæB‚"Ò·Ò··ÕÓ¢·Ò×·Ò‡·ÒÂ&6S×·Ò’"æf÷&ÖB€¢&Õ²&æÖR%ÒÂ&ÒævWB‚'Væ—B"Â""’À¢&Õ²&Æ÷r%ÒÂ&Õ²&†–v‚%ÒÀ¢&ÒævWB‚&F—7G&–'WF–öâ"Â'Væ–f÷&Ò"’Â&Õ²&&6R%Ò’¢Væ5öÆ–æW2æVæB‚""¢2÷WGWBõSõ“ ¢÷WE÷&ÒÒVæ2ævWB‚&÷WGWE÷&ÖWFW""Â""¢–b÷WE÷&Ó ¢Væ5öÆ–æW2æVæB‚%&W7VÇG2f÷"·Ó¢"æf÷&ÖB†÷WE÷&Ò’¢Væ5öÆ–æW2æVæB‚"¢·ÒÂS¢·ÒÂ“¢·Ò"æf÷&ÖB€¢Væ2ævWB‚'"Â$âô"’ÂVæ2ævWB‚'S"Â$âô"’À¢Væ2ævWB‚'“"Â$âô"’’¢2Ç6ò†æFÆR÷WGWE÷&ÖWFW'2F–7B†ÖW&7W'’×7G–ÆR¢f÷"÷WEö¶W’Â÷WE÷fÂ–âVæ2ævWB‚&÷WGWE÷&ÖWFW'2"Â·Ò’æ—FV×2‚“ ¢Væ5öÆ–æW2æVæB‚%&W7VÇG2f÷"·Ó¢"æf÷&ÖB†÷WEö¶W’’¢Væ5öÆ–æW2æVæB‚"¢·ÒÂS¢·ÒÂ“¢·Ò"æf÷&ÖB€¢÷WE÷fÂævWB‚'"Â$âô"’Â÷WE÷fÂævWB‚'S"Â$âô"’À¢÷WE÷fÂævWB‚'“"Â$âô"’’¢6V7F–öç2æVæB‡°¢'G—R#¢&çVÖ&W&VB"À¢&çVÖ&W"#¢BÀ¢&†VF–ær#¢%Væ6W'F–çG’æÇ—6—2"À¢&6öçFVçB#¢%Æâ"æ¦ö–â‡Væ5öÆ–æW2’À¢&†5÷Væ6W'F–çG’#¢G'VRÀ¢Ò ¢2Râ&—6²76W76ÖVçB†–bFFf–Æ&ÆR¢–b&W7VÇG2æB&W7VÇG2ævWB‚'&—6µöWfÇVF–öâ"“ ¢&UöFFÒ&W7VÇG5²'&—6µöWfÇVF–öâ%Ð¢&UöÆ–æW2ÒµÐ¢&UöÆ–æW2æVæB‚%&—6²76W76ÖVçBW6–ær·Òg&ÖWv÷&²â"æf÷&ÖB€¢&UöFFævWB‚'&—6µöÖG&—…÷W6VB"Â#WƒR„•4ò3’"’’¢&UöÆ–æW2æVæB‚$÷fW&ÆÂ&—6²ÆWfVÃ¢·Òâ"æf÷&ÖB€¢&UöFFævWB‚&÷fW&ÆÅ÷&—6µöÆWfVÂ"Â$âô"’’¢&UöÆ–æW2æVæB‚""¢f÷"&—6²–â&UöFFævWB‚'&—6·2"ÂµÒ“ ¢&UöÆ–æW2æVæB‚"Ò·Ò‡·Ò“¢·Ò··ÕÒ"æf÷&ÖB€¢&—6µ²&–B%ÒÂ&—6µ²&6FVv÷'’%ÒÂ&—6µ²&FW67&—F–öâ%ÒÀ¢&—6µ²'&—6µöÆWfVÂ%Ò’¢&UöÆ–æW2æVæB‚"Ö—F–vF–öã¢·Ò"æf÷&ÖB‡&—6µ²&Ö—F–vF–öâ%Ò’¢æW‡EöçVÒÒP¢6V7F–öç2æVæB‡°¢'G—R#¢&çVÖ&W&VB"À¢&çVÖ&W"#¢æW‡EöçVÒÀ¢&†VF–ær#¢%&—6²76W76ÖVçB"À¢&6öçFVçB#¢%Æâ"æ¦ö–â‡&UöÆ–æW2’À¢&†5÷&—6²#¢G'VRÀ¢Ò ¢2ââ6öæ6ÇW6–öç0¢6öæ6ÇW6–öç2ÒU%õ4T5D”ôå5²&6öæ6ÇW6–öç2%Ð¢–b&W7VÇG2æB&W7VÇG2ævWB‚&6öæ6ÇW6–öç2"“ ¢6öæ6ÇW6–öç2Ò&W7VÇG5²&6öæ6ÇW6–öç2%Ð¢VÆ–bæ÷BÔåTÅõ4T5D”ôå5²&6öæ6ÇW6–öç2%Òç7F'G7v—F‚‚%²"“ ¢6öæ6ÇW6–öç2ÒÔåTÅõ4T5D”ôå5²&6öæ6ÇW6–öç2%Ð¢2FWFW&Ö–æRæW‡B6V7F–öâçVÖ&W ¢Æ7EöçVÒÒÖ‚‚‡2ævWB‚&çVÖ&W""Â’f÷"2–â6V7F–öç0¢–b—6–ç7Fæ6R‡2ævWB‚&çVÖ&W""’Â–çB’’ÂFVfVÇCÓ2¢6V7F–öç2æVæB‡°¢'G—R#¢&çVÖ&W&VB"À¢&çVÖ&W"#¢Æ7EöçVÒ²À¢&†VF–ær#¢$6öæ6ÇW6–öç2"À¢&6öçFVçB#¢6öæ6ÇW6–öç2À¢Ò ¢26¶æ÷vÆVFvÖVçG2‡VæçVÖ&W&VB¢6²ÒU%õ4T5D”ôå5²&6¶æ÷vÆVFvÖVçG2%Ò÷"U%ô4´äõtÄTDtÔTåE0¢–b6³ ¢6V7F–öç2æVæB‡°¢'G—R#¢'VæçVÖ&W&VB"À¢&†VF–ær#¢$6¶æ÷vÆVFvÖVçG2"À¢&6öçFVçB#¢6²À¢Ò ¢2&VfW&Væ6W2‡VæçVÖ&W&VB¢&Vg5ö6öçFVçBÒ" ¢–b&W7VÇG2æB&W7VÇG2ævWB‚'&VfW&Væ6W2"“ ¢&VeöÆ–æW2ÒµÐ¢f÷"’Â&Vb–âVçVÖW&FR‡&W7VÇG5²'&VfW&Væ6W2%ÒÂ“ ¢&Ve÷FW‡BÒ÷&VfW&Væ6U÷FW‡B‡&Vb¢&VeöÆ–æW2æVæB‚%··ÕÒ·Ò"æf÷&ÖB†’Â&Ve÷FW‡B’¢&Vg5ö6öçFVçBÒ%Æâ"æ¦ö–â‡&VeöÆ–æW2¢VÆ–bæ÷BÔåTÅõ4T5D”ôå5²'&VfW&Væ6W2%Òç7F'G7v—F‚‚%²"“ ¢&Vg5ö6öçFVçBÒÔåTÅõ4T5D”ôå5²'&VfW&Væ6W2%Ð¢–b&Vg5ö6öçFVçC ¢6V7F–öç2æVæB‡°¢'G—R#¢'&VfW&Væ6W2"À¢&†VF–ær#¢%&VfW&Væ6W2"À¢&6öçFVçB#¢&Vg5ö6öçFVçBÀ¢&†5÷&VfW&Væ6W2#¢G'VRÀ¢Ò ¢&WGW&â6V7F–öç0  ¦FVb÷W%÷6V7F–öåö†VF–ær‡6V7F–öâ“ ¢""$f÷&ÖB6V7F–öâ†VF–ærv—F‚çVÖ&W"f÷"F†RW"â"" ¢7G—RÒ6V7F–öâævWB‚'G—R"Â&çVÖ&W&VB"¢–b7G—RÓÒ&'7G&7B# ¢&WGW&â$'7G&7B ¢VÆ–b7G—R–â‚'VæçVÖ&W&VB"Â'&VfW&Væ6W2"“ ¢&WGW&â6V7F–öå²&†VF–ær%Ð¢VÆ–b6V7F–öâævWB‚&—5÷7V'6V7F–öâ"“ ¢&WGW&â'·Ò·Ò"æf÷&ÖB‡6V7F–öå²&çVÖ&W"%ÒÂ6V7F–öå²&†VF–ær%Ò¢VÇ6S ¢&WGW&â'·Òâ·Ò"æf÷&ÖB‡6V7F–öå²&çVÖ&W"%ÒÂ6V7F–öå²&†VF–ær%Ò  ¦FVb'V–ÆE÷W%öFö7‚‡6V7F–öç2Â&W7VÇG3ÔæöæR“ ¢""$'V–ÆB66–VçF–f–2W"–âv÷&Bf÷&ÖBà ¢W6W27FæF&B6FVÖ–2f÷&ÖGF–æs¢F–ÖW2æWr&öÖâÂ6–ævÆRÖ6öÇVÖâÀ¢çVÖ&W&VB6V7F–öç2Â6VçFW&VBF—FÆRöWF†÷"&Æö6²Â—FÆ–2'7G&7BÀ¢çVÖ&W&VBf–wW&W2æBWVF–öç2à ¢F†R6÷'÷&FR&W÷'BFV×ÆFR—2FVÆ–&W&FVÇ’æ÷BÆ–VB†W&S¢¦÷W&æÀ¢ÖçW67&—BföÆÆ÷w2F†R¦÷W&æÂw2f÷&ÖBÂæ÷B6ö×ç’'&æF–ærà¢"" ¢Fö2ÒFö7VÖVçB‚ ¢2)H)HvR6WGW)H)H ¢f÷"Fö5÷6V7F–öâ–âFö2ç6V7F–öç3 ¢Fö5÷6V7F–öâçF÷öÖ&v–âÒ–æ6†W2ƒã¢Fö5÷6V7F–öâæ&÷GFöÕöÖ&v–âÒ–æ6†W2ƒã¢Fö5÷6V7F–öâæÆVgEöÖ&v–âÒ–æ6†W2ƒã¢Fö5÷6V7F–öâç&–v‡EöÖ&v–âÒ–æ6†W2ƒã ¢W%÷F—FÆRÒU%õD•DÄR÷"D•DÄP ¢2)H)HF—FÆR†6VçFW&VBÂ&öÆBÂgB’)H)H ¢F—FÆU÷&ÒFö2æFE÷&w&‚‚¢F—FÆU÷&æÆ–væÖVçBÒtEôÄ”tåõ$u$‚ä4TåDU ¢F—FÆU÷'VâÒF—FÆU÷&æFE÷'Vâ‡W%÷F—FÆR¢F—FÆU÷'Vâæ&öÆBÒG'VP¢F—FÆU÷'VâæföçBç6—¦RÒBƒb¢F—FÆU÷'VâæföçBææÖRÒ%F–ÖW2æWr&öÖâ ¢Fö2æFE÷&w&‚‚"" ¢2)H)HWF†÷'2æBff–Æ–F–öç2†6VçFW&VB’)H)H ¢WF†÷'2ÒU%ôUD„õ%0¢–bWF†÷'3 ¢WF†÷%÷&ÒFö2æFE÷&w&‚‚¢WF†÷%÷&æÆ–væÖVçBÒtEôÄ”tåõ$u$‚ä4TåDU ¢æÖW2ÒµÐ¢ff–Æ–F–öç2ÒµÐ¢6VVåöfbÒ·Ð¢f÷"’Â–âVçVÖW&FR†WF†÷'2“ ¢æÖRÒævWB‚&æÖR"Â""¢fbÒævWB‚&ff–Æ–F–öâ"Â""¢–bfbæBfbæ÷B–â6VVåöfc ¢6VVåöfe¶feÒÒÆVâ‡6VVåöfb’²¢ff–Æ–F–öç2æVæB†fb¢7WÒ7G"‡6VVåöfbævWB†fbÂ""’’–bfbVÇ6R" ¢æÖW2æVæB†æÖR²‚""–bæ÷B7WVÇ6R7W’¢WF†÷%÷'VâÒWF†÷%÷&æFE÷'Vâ‚"Â"æ¦ö–â†æÖW2’¢WF†÷%÷'VâæföçBç6—¦RÒBƒ"¢WF†÷%÷'VâæföçBææÖRÒ%F–ÖW2æWr&öÖâ ¢–bff–Æ–F–öç3 ¢fe÷&ÒFö2æFE÷&w&‚‚¢fe÷&æÆ–væÖVçBÒtEôÄ”tåõ$u$‚ä4TåDU ¢f÷"–G‚Âfb–âVçVÖW&FR†ff–Æ–F–öç2Â“ ¢fe÷'VâÒfe÷&æFE÷'Vâ‚'·×·Ò"æf÷&ÖB†–G‚Âfb’¢fe÷'VâæföçBç6—¦RÒBƒ¢fe÷'VâæföçBææÖRÒ%F–ÖW2æWr&öÖâ ¢fe÷'VâæföçBæ—FÆ–2ÒG'VP¢–b–G‚ÂÆVâ†ff–Æ–F–öç2“ ¢fe÷&æFE÷'Vâ‚#²"¢VÆ–bUD„õ# ¢WF†÷%÷&ÒFö2æFE÷&w&‚‚¢WF†÷%÷&æÆ–væÖVçBÒtEôÄ”tåõ$u$‚ä4TåDU ¢WF†÷%÷'VâÒWF†÷%÷&æFE÷'Vâ„UD„õ"¢WF†÷%÷'VâæföçBç6—¦RÒBƒ"¢WF†÷%÷'VâæföçBææÖRÒ%F–ÖW2æWr&öÖâ  ¢2)H)HFFR†6VçFW&VB’)H)H ¢FFU÷&ÒFö2æFE÷&w&‚‚¢FFU÷&æÆ–væÖVçBÒtEôÄ”tåõ$u$‚ä4TåDU ¢FFU÷'VâÒFFU÷&æFE÷'Vâ…D4µôDDR¢FFU÷'VâæföçBç6—¦RÒBƒ¢FFU÷'VâæföçBææÖRÒ%F–ÖW2æWr&öÖâ ¢FFU÷'VâæföçBæ—FÆ–2ÒG'VP ¢Fö2æFE÷&w&‚‚""’276–æp ¢2)H)H¶W—v÷&G2†–b&÷f–FVB’)H)H ¢–bU%ô´U•tõ$E3 ¢·u÷&ÒFö2æFE÷&w&‚‚¢·uö&öÆBÒ·u÷&æFE÷'Vâ‚$¶W—v÷&G3¢"¢·uö&öÆBæ&öÆBÒG'VP¢·uö&öÆBæföçBç6—¦RÒBƒ¢·uö&öÆBæföçBææÖRÒ%F–ÖW2æWr&öÖâ ¢·u÷FW‡BÒ·u÷&æFE÷'Vâ‚"Â"æ¦ö–â…U%ô´U•tõ$E2’¢·u÷FW‡BæföçBç6—¦RÒBƒ¢·u÷FW‡BæföçBææÖRÒ%F–ÖW2æWr&öÖâ ¢·u÷FW‡BæföçBæ—FÆ–2ÒG'VP¢Fö2æFE÷&w&‚‚"" ¢2G&6²f–wW&RæBWVF–öâ6÷VçFW'2f÷"F†Rv†öÆRW ¢f–uö6÷VçFW"Ò³Ð¢Wö6÷VçFW"Ò³Ð ¢2)H)H6V7F–öç2)H)H ¢f÷"6V7F–öâ–â6V7F–öç3 ¢†VF–æu÷FW‡BÒ÷W%÷6V7F–öåö†VF–ær‡6V7F–öâ¢—5÷7V"Ò6V7F–öâævWB‚&—5÷7V'6V7F–öâ"ÂfÇ6R¢7G—RÒ6V7F–öâævWB‚'G—R"Â&çVÖ&W&VB" ¢2†VF–ærÆWfVÀ¢–b7G—RÓÒ&'7G&7B# ¢‚ÒöFEö†VF–ær†Fö2Â†VF–æu÷FW‡BÂÆWfVÃÓÂçVÖ&W&VCÔfÇ6R¢VÆ–b—5÷7V# ¢‚ÒöFEö†VF–ær†Fö2Â†VF–æu÷FW‡BÂÆWfVÃÓ"¢VÇ6S ¢‚ÒöFEö†VF–ær†Fö2Â†VF–æu÷FW‡BÂÆWfVÃÓ ¢27G–ÆR†VF–ær'Vç22F–ÖW2æWr&öÖà¢f÷"'Vâ–â‚ç'Vç3 ¢'VâæföçBææÖRÒ%F–ÖW2æWr&öÖâ  ¢2'7G&7B—2—FÆ–0¢–b7G—RÓÒ&'7G&7B# ¢f÷"&÷FW‡B–âö&öG•÷&w&‡2‡6V7F–öå²&6öçFVçB%Ò“ ¢ÒFö2æFE÷&w&‚‚¢"ÒæFE÷'Vâ‡&÷FW‡B¢"æföçBæ—FÆ–2ÒG'VP¢"æföçBç6—¦RÒBƒ¢"æföçBææÖRÒ%F–ÖW2æWr&öÖâ ¢VÆ–b7G—RÓÒ'&VfW&Væ6W2"æB&W7VÇG2æB&W7VÇG2ævWB‚'&VfW&Væ6W2"“ ¢2çVÖ&W&VB&VfW&Væ6RÆ—7@¢f÷"’Â&Vb–âVçVÖW&FR‡&W7VÇG5²'&VfW&Væ6W2%ÒÂ“ ¢&Ve÷FW‡BÒ÷&VfW&Væ6U÷FW‡B‡&Vb¢ÒFö2æFE÷&w&‚‚¢ç&w&…öf÷&ÖBæÆVgEö–æFVçBÒ–æ6†W2ƒã2¢ç&w&…öf÷&ÖBæf—'7EöÆ–æUö–æFVçBÒ–æ6†W2‚Óã2¢'&6¶WE÷'VâÒæFE÷'Vâ‚%··ÕÒ"æf÷&ÖB†’’¢'&6¶WE÷'Vâæ&öÆBÒG'VP¢'&6¶WE÷'VâæföçBç6—¦RÒBƒ¢'&6¶WE÷'VâæföçBææÖRÒ%F–ÖW2æWr&öÖâ ¢FW‡E÷'VâÒæFE÷'Vâ‡&Ve÷FW‡B¢FW‡E÷'VâæföçBç6—¦RÒBƒ¢FW‡E÷'VâæföçBææÖRÒ%F–ÖW2æWr&öÖâ ¢VÆ–b6V7F–öâævWB‚&†5öf–wW&W2"’æB&W7VÇG2æB&W7VÇG2ævWB‚&¶W•÷&W7VÇG2"“ ¢2&W7VÇG26V7F–öã¢FB&W7VÇG2F&ÆP¢FE÷&W7VÇG5÷v÷&E÷F&ÆR†Fö2Â&W7VÇG2¢–b&W7VÇG2ævWB‚'F&ÆW2"“ ¢FEö7W7FöÕ÷v÷&E÷F&ÆW2†Fö2Â&W7VÇG2¢2F—67W76–öâFW‡@¢F—62Ò6V7F–öå²&6öçFVçB%Ð¢–bF—62æBæ÷BF—62ç7F'G7v—F‚‚%²"“ ¢f÷"&÷FW‡B–âö&öG•÷&w&‡2†F—62“ ¢Fö2æFE÷&w&‚‡&÷FW‡B¢VÆ–b‚%fÆ–FF–öâ"–â6V7F–öå²&†VF–ær%ÒæBæ÷B6V7F–öâævWB‚&†5ö&Væ6†Ö&²"¢æB&W7VÇG2æB&W7VÇG2ævWB‚'fÆ–FF–öâ"’“ ¢FE÷fÆ–FF–öå÷v÷&E÷F&ÆR†Fö2Â&W7VÇG2¢VÆ–b6V7F–öâævWB‚&†5ö&Væ6†Ö&²"’æB&W7VÇG3 ¢FEö&Væ6†Ö&µ÷v÷&E÷F&ÆR†Fö2Â&W7VÇG2¢VÆ–b6V7F–öâævWB‚&†5÷Væ6W'F–çG’"’æB&W7VÇG3 ¢FE÷Væ6W'F–çG•÷v÷&E÷F&ÆW2†Fö2Â&W7VÇG2¢VÆ–b6V7F–öâævWB‚&†5÷&—6²"’æB&W7VÇG3 ¢FE÷&—6µ÷v÷&E÷F&ÆR†Fö2Â&W7VÇG2¢VÆ–b6V7F–öâævWB‚&†5÷66÷R"ÂfÇ6R’÷"6V7F–öâævWB‚&†5öÖ&¶F÷vâ"ÂfÇ6R“ ¢&VæFW%÷66÷U÷Fõ÷v÷&B†Fö2Â6V7F–öå²&6öçFVçB%Ò¢VÇ6S ¢2&VwVÆ"FW‡B6öçFVç@¢f÷"&÷FW‡B–âö&öG•÷&w&‡2‡6V7F–öå²&6öçFVçB%Ò“ ¢ÒFö2æFE÷&w&‚‚¢öFEö&öÆE÷'Vç2‡Â&÷FW‡B¢f÷"'Vâ–âç'Vç3 ¢'VâæföçBææÖRÒ%F–ÖW2æWr&öÖâ ¢–bæ÷B'VâæföçBç6—¦S ¢'VâæföçBç6—¦RÒBƒ ¢2VÖ&VBWVF–öç2gFW"ÖWF†öFöÆöw’6V7F–öà¢–b6V7F–öâævWB‚&†5öWVF–öç2"“ ¢WVF–öç2ÒvWEöWVF–öç2‡&W7VÇG2¢–bWVF–öç3 ¢Wö–ÖuöF—"Ò÷2çF‚æ¦ö–â…$Uõ%EôD•"Â%öWö–ÖvW2"¢–bæ÷B÷2çF‚æW†—7G2†Wö–ÖuöF—"“ ¢÷2æÖ¶VF—'2†Wö–ÖuöF—"¢f÷"W–âWVF–öç3 ¢Wö6÷VçFW%³Ò³Ò¢Æ&VÂÒWævWB‚&Æ&VÂ"Â""¢ÆFW‚ÒWævWB‚&ÆFW‚"Â""¢–bæ÷BÆFWƒ ¢6öçF–çVP¢Wö–Öu÷F‚Ò÷2çF‚æ¦ö–â€¢Wö–ÖuöF—"Â&W÷·Òçær"æf÷&ÖB†Wö6÷VçFW%³Ò’¢–b&VæFW%öWVF–öå÷Fõö–ÖvR†ÆFW‚ÂWö–Öu÷F‚“ ¢öFEöF—7Æ•öWVF–öâ†Fö2ÂWö–Öu÷F‚ÂÆ&VÂÂRã¢VÇ6S ¢öFEöWVF–öåöfÆÆ&6µ÷&w&‚†Fö2ÂÆ&VÂÂÆFW‚ ¢2VÖ&VBf–wW&W2gFW"&W7VÇG26V7F–öà¢–b6V7F–öâævWB‚&†5öf–wW&W2"“ ¢f–wW&W2ÒvWEöf–wW&W2‚¢–bf–wW&W3 ¢f÷"f–u÷F‚–âf–wW&W3 ¢f–uö6÷VçFW%³Ò³Ò¢6F–öå÷FW‡BÒvWEöf–wW&Uö6F–öâ€¢f–u÷F‚Â&W7VÇG2Âf–uö6÷VçFW%³Ò¢Fö2æFE÷&w&‚‚""¢öFEöf–wW&U÷–7GW&R†Fö2Âf–u÷F‚¢6ÒFö2æFE÷&w&‚†6F–öå÷FW‡B¢6æÆ–væÖVçBÒtEôÄ”tåõ$u$‚ä4TåDU ¢f÷"'Vâ–â6ç'Vç3 ¢'VâæföçBç6—¦RÒB„4D”ôåõB¢'VâæföçBææÖRÒ%F–ÖW2æWr&öÖâ ¢'VâæföçBæ—FÆ–2ÒG'VP¢Fö2æFE÷&w&‚‚"" ¢2VÖ&VBf–wW&RF—67W76–öâgFW"f–wW&W2–â&W7VÇG2bF—67W76–öâ6V7F–öà¢–b6V7F–öâævWB‚&†5öF—67W76–öâ"’æB&W7VÇG3 ¢FEöF—67W76–öå÷v÷&B†Fö2Â&W7VÇG2 ¢÷6fUöFö7‚†Fö2ÂU%ôDô5…ôd”ÄR¢&–çB‚%66–VçF–f–2W"…v÷&B’6fVC¢·Ò"æf÷&ÖB…U%ôDô5…ôd”ÄR’  ¦FVb'V–ÆE÷W%ö‡FÖÂ‡6V7F–öç2Â&W7VÇG3ÔæöæR“ ¢""$'V–ÆB66–VçF–f–2W"–â…DÔÂf÷&ÖBv—F‚6FVÖ–27G–Æ–ærà ¢6–ævÆRÖ6öÇVÖâÆ–÷WBÂæò6–FV&"Â6VçFW&VBF—FÆRöWF†÷"&Æö6²À¢&÷W&Ç’çVÖ&W&VB6V7F–öç2Â¶FU‚WVF–öç2ÂæBVÖ&VFFVBf–wW&W2à¢"" ¢W%÷F—FÆRÒU%õD•DÄR÷"D•DÄP¢f–wW&W2ÒvWEöf–wW&W2‚ ¢2'V–ÆBWF†÷"&Æö6°¢WF†÷%ö‡FÖÂÒ" ¢WF†÷'2ÒU%ôUD„õ%0¢–bWF†÷'3 ¢æÖW2ÒµÐ¢ff–Æ–F–öç2ÒµÐ¢6VVåöfbÒ·Ð¢f÷"–âWF†÷'3 ¢æÖRÒævWB‚&æÖR"Â""¢fbÒævWB‚&ff–Æ–F–öâ"Â""¢–bfbæBfbæ÷B–â6VVåöfc ¢6VVåöfe¶feÒÒÆVâ‡6VVåöfb’²¢ff–Æ–F–öç2æVæB†fb¢7WÒ7G"‡6VVåöfbævWB†fbÂ""’’–bfbVÇ6R" ¢æÖW2æVæB‚'·ÓÇ7Wç·ÓÂ÷7Wâ"æf÷&ÖB†æÖRÂ7W’–b7WVÇ6RæÖR¢WF†÷%ö‡FÖÂÒsÇ6Æ73Ò&WF†÷'2#ç·ÓÂ÷åÆâræf÷&ÖB‚"Â"æ¦ö–â†æÖW2’¢–bff–Æ–F–öç3 ¢feö—FV×2ÒµÐ¢f÷"–G‚Âfb–âVçVÖW&FR†ff–Æ–F–öç2Â“ ¢feö—FV×2æVæB‚#Ç7Wç·ÓÂ÷7Wç·Ò"æf÷&ÖB†–G‚Âfb’¢WF†÷%ö‡FÖÂ³ÒsÇ6Æ73Ò&ff–Æ–F–öç2#ç·ÓÂ÷åÆâræf÷&ÖB€¢#²"æ¦ö–â†feö—FV×2’¢VÆ–bUD„õ# ¢WF†÷%ö‡FÖÂÒsÇ6Æ73Ò&WF†÷'2#ç·ÓÂ÷åÆâræf÷&ÖB„UD„õ" ¢2¶W—v÷&G0¢¶W—v÷&G5ö‡FÖÂÒ" ¢–bU%ô´U•tõ$E3 ¢¶W—v÷&G5ö‡FÖÂÒ€¢sÇ6Æ73Ò&¶W—v÷&G2#ãÇ7G&öæsä¶W—v÷&G3£Â÷7G&öæsâp¢sÆVÓç·ÓÂöVÓãÂ÷åÆâræf÷&ÖB‚"Â"æ¦ö–â…U%ô´U•tõ$E2’’ ¢2'V–ÆBf–wW&R…DÔÂ‡&WW6R&6ScBVÖ&VFF–ær¢f–uö6÷VçFW"Ò³Ð ¢FVböVÖ&VEöf–wW&R†f–u÷F‚“ ¢f–uö6÷VçFW%³Ò³Ò¢f–uöæÖRÒ÷2çF‚æ&6VæÖR†f–u÷F‚¢6F–öâÒvWEöf–wW&Uö6F–öâ†f–u÷F‚Â&W7VÇG2Âf–uö6÷VçFW%³Ò¢Ö–ÖRÒ&–ÖvR÷7fr·†ÖÂ"–bf–u÷F‚æVæG7v—F‚‚"ç7fr"’VÇ6R&–ÖvR÷ær ¢v—F‚÷Vâ†f–u÷F‚Â'&""’2c ¢–ÖuöFFÒ&6ScBæ#cFVæ6öFR†bç&VB‚’’æFV6öFR‚'WFbÓ‚"¢&WGW&â"" ¢ÆF—b6Æ73Ò'W"Öf–wW&R#à¢Æ–Ör7&3Ò&FF§·Ó¶&6ScBÇ·Ò"ÇCÒ'·Ò#à¢Ç6Æ73Ò&f–rÖ6F–öâ#ç·ÓÂ÷à¢ÂöF—câ"""æf÷&ÖB†Ö–ÖRÂ–ÖuöFFÂ6F–öâÂ6F–öâ ¢2'V–ÆBWVF–öâ…DÔÀ¢Wö6÷VçFW"Ò³Ð ¢FVböVÖ&VEöWVF–öâ†W“ ¢Wö6÷VçFW%³Ò³Ò¢Æ&VÂÒWævWB‚&Æ&VÂ"Â""¢ÆFW‚ÒWævWB‚&ÆFW‚"Â""¢–bæ÷BÆFWƒ ¢&WGW&â" ¢fÆÆ&6µö–ÖrÒ" ¢Wö–ÖuöF—"Ò÷2çF‚æ¦ö–â…$Uõ%EôD•"Â%öWö–ÖvW2"¢–bæ÷B÷2çF‚æW†—7G2†Wö–ÖuöF—"“ ¢÷2æÖ¶VF—'2†Wö–ÖuöF—"¢Wö–Öu÷F‚Ò÷2çF‚æ¦ö–â†Wö–ÖuöF—"Â&W÷·Òçær"æf÷&ÖB†Wö6÷VçFW%³Ò’¢–b&VæFW%öWVF–öå÷Fõö–ÖvR†ÆFW‚ÂWö–Öu÷F‚“ ¢v—F‚÷Vâ†Wö–Öu÷F‚Â'&""’2–Övc ¢–Öuö#cBÒ&6ScBæ#cFVæ6öFR†–Övbç&VB‚’’æFV6öFR‚'WFbÓ‚"¢fÆÆ&6µö–ÖrÒ€¢sÆ–Ör6Æ73Ò&WÖfÆÆ&6²"7&3Ò&FF¦–ÖvR÷æs¶&6ScBÇ·Ò"p¢vÇCÒ'·Ò"7G–ÆSÒ&F—7Æ“¦æöæS²Ö‚×v–GFƒ£“S²#âræf÷&ÖB€¢–Öuö#cBÂÆ&VÂ’¢&WGW&â"" ¢ÆF—b6Æ73Ò'W"ÖWVF–öâ#à¢ÆF—b6Æ73Ò&WÖ6öçFVçB¶FW‚ÖW#âBG·ÒBCÂöF—cà¢·Ð¢Ç7â6Æ73Ò&WÖçVÖ&W"#â‡·Ò—·ÓÂ÷7ãà¢ÂöF—câ"""æf÷&ÖB†ÆFW‚ÂfÆÆ&6µö–ÖrÂWö6÷VçFW%³ÒÀ¢""²Æ&VÂ–bÆ&VÂVÇ6R"" ¢2'V–ÆB6V7F–öç2…DÔÀ¢6V7F–öåö‡FÖÂÒ" ¢f÷"6V7F–öâ–â6V7F–öç3 ¢†VF–æu÷FW‡BÒ÷W%÷6V7F–öåö†VF–ær‡6V7F–öâ¢7G—RÒ6V7F–öâævWB‚'G—R"Â&çVÖ&W&VB"¢—5÷7V"Ò6V7F–öâævWB‚&—5÷7V'6V7F–öâ"ÂfÇ6R¢6V7F–öåö–BÒ†VF–æu÷FW‡BæÆ÷vW"‚’ç&WÆ6R‚""Â"Ò"’ç&WÆ6R‚"â"Â"" ¢2†VF–ærFp¢–b7G—RÓÒ&'7G&7B# ¢FrÒ&ƒ" ¢VÆ–b—5÷7V# ¢FrÒ&ƒ2 ¢VÇ6S ¢FrÒ&ƒ"  ¢26öçFVçBf÷&ÖGF–æp¢–b7G—RÓÒ&'7G&7B# ¢6öçFVçBÒsÆF—b6Æ73Ò&'7G&7B×FW‡B#ç·ÓÂöF—câræf÷&ÖB€¢÷&÷6U÷Fõö‡FÖÂ‡6V7F–öå²&6öçFVçB%Ò’¢VÆ–b7G—RÓÒ'&VfW&Væ6W2"æB&W7VÇG2æB&W7VÇG2ævWB‚'&VfW&Væ6W2"“ ¢6öçFVçBÒf÷&ÖE÷&VfW&Væ6W5ö‡FÖÂ‡&W7VÇG2¢VÆ–b6V7F–öâævWB‚&†5öf–wW&W2"’æB&W7VÇG2æB&W7VÇG2ævWB‚&¶W•÷&W7VÇG2"“ ¢6öçFVçBÒf÷&ÖE÷&W7VÇG5ö‡FÖÂ‡&W7VÇG2¢–b&W7VÇG2ævWB‚'F&ÆW2"“ ¢6öçFVçB³Òf÷&ÖEö7W7FöÕ÷F&ÆW5ö‡FÖÂ‡&W7VÇG2¢2FBF—67W76–öâFW‡@¢F—62Ò6V7F–öå²&6öçFVçB%Ð¢–bF—62æBæ÷BF—62ç7F'G7v—F‚‚%²"“ ¢6öçFVçB³Ò÷&÷6U÷Fõö‡FÖÂ†F—62¢2FBf–wW&W0¢–bf–wW&W3 ¢f÷"f–u÷F‚–âf–wW&W3 ¢6öçFVçB³ÒöVÖ&VEöf–wW&R†f–u÷F‚¢VÆ–b%fÆ–FF–öâ"–â6V7F–öå²&†VF–ær%ÒæB&W7VÇG2æB&W7VÇG2ævWB‚'fÆ–FF–öâ"“ ¢6öçFVçBÒf÷&ÖE÷fÆ–FF–öåö‡FÖÂ‡&W7VÇG2¢VÆ–b6V7F–öâævWB‚&†5ö&Væ6†Ö&²"’æB&W7VÇG3 ¢6öçFVçBÒf÷&ÖEö&Væ6†Ö&µö‡FÖÂ‡&W7VÇG2¢VÆ–b6V7F–öâævWB‚&†5÷Væ6W'F–çG’"’æB&W7VÇG3 ¢6öçFVçBÒf÷&ÖE÷Væ6W'F–çG•ö‡FÖÂ‡&W7VÇG2¢VÆ–b6V7F–öâævWB‚&†5÷&—6²"’æB&W7VÇG3 ¢6öçFVçBÒf÷&ÖE÷&—6µö‡FÖÂ‡&W7VÇG2¢VÆ–b6V7F–öâævWB‚&†5÷66÷R"ÂfÇ6R’÷"6V7F–öâævWB‚&†5öÖ&¶F÷vâ"ÂfÇ6R“ ¢6öçFVçBÒ66÷Uö6öçFVçE÷Fõö‡FÖÂ‡6V7F–öå²&6öçFVçB%Ò¢VÇ6S ¢6öçFVçBÒ÷&÷6U÷Fõö‡FÖÂ‡6V7F–öå²&6öçFVçB%Ò ¢2FBf–wW&RF—67W76–öâgFW"f–wW&W2–â&W7VÇG2bF—67W76–öà¢–b6V7F–öâævWB‚&†5öF—67W76–öâ"’æB&W7VÇG3 ¢6öçFVçB³Òf÷&ÖEöF—67W76–öåö‡FÖÂ‡&W7VÇG2 ¢2FBWVF–öç2gFW"ÖWF†öFöÆöw¢–b6V7F–öâævWB‚&†5öWVF–öç2"“ ¢WVF–öç2ÒvWEöWVF–öç2‡&W7VÇG2¢–bWVF–öç3 ¢f÷"W–âWVF–öç3 ¢6öçFVçB³ÒöVÖ&VEöWVF–öâ†W ¢6V7F–öåö‡FÖÂ³Ò"" ¢Ç6V7F–öâ–CÒ'·Ò#à¢Ç·Ò6Æ73Ò'6V7F–öâÖ†VF–ær#ç·ÓÂ÷·Óà¢ÆF—b6Æ73Ò'6V7F–öâÖ6öçFVçB#ç·ÓÂöF—cà¢Â÷6V7F–öãâ"""æf÷&ÖB‡6V7F–öåö–BÂFrÂ†VF–æu÷FW‡BÂFrÂ6öçFVçB ¢2¶FU‚4Dà¢WVF–öç2ÒvWEöWVF–öç2‡&W7VÇG2¢¶FW…ö†VBÒ" ¢¶FW…ö&öG•÷67&—BÒ" ¢–bWVF–öç3 ¢¶FW…ö†VBÒ"" ¢ÆÆ–æ²&VÃÒ'7G–ÆW6†VWB"‡&VcÒ&‡GG3¢òö6Fâæ§6FVÆ—g"ææWBöçÒö¶FW„ãbãöF—7Bö¶FW‚æÖ–âæ772#à¢Ç67&—BFVfW"7&3Ò&‡GG3¢òö6Fâæ§6FVÆ—g"ææWBöçÒö¶FW„ãbãöF—7Bö¶FW‚æÖ–âæ§2#ãÂ÷67&—Cà¢Ç67&—BFVfW"7&3Ò&‡GG3¢òö6Fâæ§6FVÆ—g"ææWBöçÒö¶FW„ãbãöF—7Bö6öçG&–"öWFò×&VæFW"æÖ–âæ§2#ãÂ÷67&—Câ"" ¢¶FW…ö&öG•÷67&—BÒ"" ¢Ç67&—Cà¢Fö7VÖVçBæFDWfVçDÆ—7FVæW"‚$DôÔ6öçFVçDÆöFVB"ÂgVæ7F–öâ‚’·°¢–b‡G—Vöb&VæFW$ÖF„–äVÆVÖVçBÓÓÒ&gVæ7F–öâ"’·°¢&VæFW$ÖF„–äVÆVÖVçB†Fö7VÖVçBæ&öG’Â·°¢FVÆ–Ö—FW'3¢°¢·¶ÆVgC¢"BB"Â&–v‡C¢"BB"ÂF—7Æ“¢G'VW×ÒÀ¢·¶ÆVgC¢"B"Â&–v‡C¢"B"ÂF—7Æ“¢fÇ6W×Ð¢ÒÀ¢F‡&÷töäW'&÷#¢fÇ6P¢×Ò“°¢×ÒVÇ6R·°¢f"W2ÒFö7VÖVçBçVW'•6VÆV7F÷$ÆÂ‚"æ¶FW‚ÖW"“°¢f÷"‡f"’Ò²’ÂW2æÆVæwFƒ²’²²’·²W5¶•Òç7G–ÆRæF—7Æ’Ò&æöæR#²×Ð¢f"–Öw2ÒFö7VÖVçBçVW'•6VÆV7F÷$ÆÂ‚"æWÖfÆÆ&6²"“°¢f÷"‡f"¢Ò²¢Â–Öw2æÆVæwFƒ²¢²²’·²–Öw5¶¥Òç7G–ÆRæF—7Æ’Ò&–æÆ–æR#²×Ð¢×Ð¢×Ò“°¢Â÷67&—Câ""  ¢‡FÖÂÒ""#ÂDô5E•R‡FÖÃà£Æ‡FÖÂÆæsÒ&Vâ#à£Æ†VCà¢ÆÖWF6†'6WCÒ%UDbÓ‚#à¢ÆÖWFæÖSÒ'f–Ww÷'B"6öçFVçCÒ'v–GFƒÖFWf–6R×v–GF‚Â–æ—F–Â×66ÆSÓã#à¢ÇF—FÆSç·F—FÆWÓÂ÷F—FÆSç¶¶FW…ö†VGÐ¢Ç7G–ÆSà¢¢·²Ö&v–ã¢²FF–æs¢²&÷‚×6—¦–æs¢&÷&FW"Ö&÷ƒ²×Ð¢&öG’·°¢föçBÖfÖ–Ç“¢uF–ÖW2æWr&öÖârÂF–ÖW2ÂtFV¦gR6W&–brÂvV÷&v–Â6W&–c°¢Æ–æRÖ†V–v‡C¢ãc²6öÆ÷#¢3°¢Ö‚×v–GFƒ¢ƒƒ²Ö&v–ã¢WFó²FF–æs¢'&VÒ"ãW&VÓ°¢&6¶w&÷VæC¢6ffc°¢×Ð¢ò¢)H)HF—FÆR&Æö6²)H)H¢ð¢çW"Ö†VFW"·²FW‡BÖÆ–vã¢6VçFW#²Ö&v–âÖ&÷GFöÓ¢'&VÓ°¢&÷&FW"Ö&÷GFöÓ¢'‚6öÆ–B3333²FF–ærÖ&÷GFöÓ¢ãW&VÓ²×Ð¢çW"Ö†VFW"ƒ·²föçB×6—¦S¢ãg&VÓ²föçB×vV–v‡C¢&öÆC°¢Ö&v–âÖ&÷GFöÓ¢ã‡&VÓ²Æ–æRÖ†V–v‡C¢ã3²×Ð¢æWF†÷'2·²föçB×6—¦S¢ãW&VÓ²Ö&v–âÖ&÷GFöÓ¢ã7&VÓ²×Ð¢æff–Æ–F–öç2·²föçB×6—¦S¢ã—&VÓ²föçB×7G–ÆS¢—FÆ–3°¢6öÆ÷#¢3SSS²Ö&v–âÖ&÷GFöÓ¢ã7&VÓ²×Ð¢çW"ÖFFR·²föçB×6—¦S¢ã—&VÓ²6öÆ÷#¢3ccc°¢föçB×7G–ÆS¢—FÆ–3²Ö&v–â×F÷¢ãW&VÓ²×Ð¢æ¶W—v÷&G2·²föçB×6—¦S¢ã—&VÓ²Ö&v–â×F÷¢ã‡&VÓ°¢FW‡BÖÆ–vã¢ÆVgC²FF–æs¢ãW&VÒ&VÓ°¢&6¶w&÷VæC¢6c–c–c“²&÷&FW"ÖÆVgC¢7‚6öÆ–B3333²×Ð¢ò¢)H)H'7G&7B)H)H¢ð¢æ'7G&7B×FW‡B·²föçB×7G–ÆS¢—FÆ–3²FF–æs¢ãW&VÒãW&VÓ°¢&÷&FW"ÖÆVgC¢7‚6öÆ–B3ccc²Ö&v–ã¢ãW&VÒãW&VÒ°¢6öÆ÷#¢3333²föçB×6—¦S¢ã“W&VÓ²×Ð¢æ'7G&7B×FW‡B·²Ö&v–âÖ&÷GFöÓ¢ãW&VÓ²×Ð¢ò¢)H)H6V7F–öâ†VF–æw2)H)H¢ð¢ƒ"ç6V7F–öâÖ†VF–ær·²föçB×6—¦S¢ã'&VÓ²föçB×vV–v‡C¢&öÆC°¢Ö&v–â×F÷¢ã‡&VÓ²Ö&v–âÖ&÷GFöÓ¢ãg&VÓ²6öÆ÷#¢3°¢&÷&FW"Ö&÷GFöÓ¢‚6öÆ–B6663²FF–ærÖ&÷GFöÓ¢ã'&VÓ²×Ð¢ƒ2ç6V7F–öâÖ†VF–ær·²föçB×6—¦S¢ãW&VÓ²föçB×vV–v‡C¢&öÆC°¢Ö&v–â×F÷¢ã'&VÓ²Ö&v–âÖ&÷GFöÓ¢ãG&VÓ²6öÆ÷#¢3333²×Ð¢ç6V7F–öâÖ6öçFVçB·²Ö&v–âÖ&÷GFöÓ¢&VÓ²×Ð¢ç6V7F–öâÖ6öçFVçB·²Ö&v–âÖ&÷GFöÓ¢ãg&VÓ²FW‡BÖÆ–vã¢§W7F–g“²×Ð¢ò¢)H)Hf–wW&W2)H)H¢ð¢çW"Öf–wW&R·²FW‡BÖÆ–vã¢6VçFW#²Ö&v–ã¢ãW&VÒ°¢vRÖ'&V²Ö–ç6–FS¢fö–C²×Ð¢çW"Öf–wW&R–Ör·²Ö‚×v–GFƒ¢S²&÷&FW#¢‚6öÆ–B6FFC²×Ð¢æf–rÖ6F–öâ·²föçB×6—¦S¢ãƒW&VÓ²6öÆ÷#¢3333°¢Ö&v–â×F÷¢ãG&VÓ²föçB×7G–ÆS¢—FÆ–3²×Ð¢ò¢)H)HWVF–öç2)H)H¢ð¢çW"ÖWVF–öâ·²F—7Æ“¢fÆWƒ²Æ–vâÖ—FV×3¢6VçFW#°¢§W7F–g’Ö6öçFVçC¢6VçFW#²Ö&v–ã¢&VÒ°¢÷6—F–öã¢&VÆF—fS²×Ð¢æWÖ6öçFVçB·²fÆWƒ¢²FW‡BÖÆ–vã¢6VçFW#²föçB×6—¦S¢ã&VÓ²×Ð¢æWÖçVÖ&W"·²÷6—F–öã¢'6öÇWFS²&–v‡C¢²föçB×6—¦S¢ã“W&VÓ°¢6öÆ÷#¢3333²×Ð¢ò¢)H)HF&ÆW2)H)H¢ð¢F&ÆR·²&÷&FW"Ö6öÆÆ6S¢6öÆÆ6S²v–GFƒ¢S²Ö&v–ã¢&VÒ°¢föçB×6—¦S¢ã—&VÓ²×Ð¢F†VBF‚·²&6¶w&÷VæC¢3$cSC“c²6öÆ÷#¢6ffc²föçB×vV–v‡C¢c°¢FF–æs¢ãW&VÓ²FW‡BÖÆ–vã¢ÆVgC²&÷&FW#¢‚6öÆ–B3&FƒS²×Ð¢F&öG’FB·²&÷&FW#¢‚6öÆ–B6FFC²FF–æs¢ãG&VÒãW&VÓ²×Ð¢F&öG’G#¦çF‚Ö6†–ÆB†WfVâ’·²&6¶w&÷VæC¢6c†c–f²×Ð¢FBæçVÒ·²FW‡BÖÆ–vã¢&–v‡C²föçB×f&–çBÖçVÖW&–3¢F'VÆ"ÖçV×3²×Ð¢ç72·²6öÆ÷#¢3#†sCS²föçB×vV–v‡C¢&öÆC²×Ð¢æf–Â·²6öÆ÷#¢6F33SCS²föçB×vV–v‡C¢&öÆC²×Ð¢ç&W7VÇG2×F&ÆR·²Ö‚×v–GFƒ¢cƒ²Ö&v–ã¢&VÒWFó²×Ð¢çfÆ–FF–öâ×F&ÆR·²Ö‚×v–GFƒ¢Sƒ²Ö&v–ã¢&VÒWFó²×Ð¢æ7W7FöÒ×F&ÆR·²Ö&v–ã¢ãW&VÒWFó²×Ð¢ò¢)H)H&VfW&Væ6W2)H)H¢ð¢ç&VfW&Væ6RÖÆ—7B·²Æ—7B×7G–ÆS¢æöæS²FF–ærÖÆVgC¢²×Ð¢ç&VfW&Væ6RÖÆ—7BÆ’·²Ö&v–âÖ&÷GFöÓ¢ãW&VÓ²FF–ærÖÆVgC¢'&VÓ°¢FW‡BÖ–æFVçC¢Ó'&VÓ²föçB×6—¦S¢ã—&VÓ²×Ð¢ç&VfW&Væ6RÖÆ—7BÆ’7G&öær·²6öÆ÷#¢3333²×Ð¢ò¢)H)H&—6²76W76ÖVçB7G–ÆW2)H)H¢ð¢ç&—6²×7VÖÖ'’Ö6&B·²&6¶w&÷VæC¢6c†c–f²&÷&FW"ÖÆVgC¢G‚6öÆ–B3333°¢FF–æs¢ã‡&VÒã'&VÓ²Ö&v–âÖ&÷GFöÓ¢ã'&VÓ²×Ð¢ç&—6²Ö&FvR·²F—7Æ“¢–æÆ–æRÖ&Æö6³²FF–æs¢ãW&VÒãg&VÓ²&÷&FW"×&F—W3¢7ƒ°¢föçB×vV–v‡C¢c²föçB×6—¦S¢ãƒW&VÓ²6öÆ÷#¢6ffc²×Ð¢ç&—6²Ö&FvRç&—6²Ö†–v‚·²&6¶w&÷VæC¢6F33SCS²×Ð¢ç&—6²Ö&FvRç&—6²ÖÖVF—VÒ·²&6¶w&÷VæC¢6ScvS##²×Ð¢ç&—6²Ö&FvRç&—6²ÖÆ÷r·²&6¶w&÷VæC¢3#†sCS²×Ð¢ç&—6²×F&ÆR·²föçB×6—¦S¢ãƒ‡&VÓ²×Ð¢ç&—6²×F&ÆRæÖ—F–vF–öâÖ6VÆÂ·²föçB×6—¦S¢ãƒW&VÓ²6öÆ÷#¢3SSS²×Ð¢ç&—6²ÖÆWfVÂ·²föçB×vV–v‡C¢&öÆC²FW‡BÖÆ–vã¢6VçFW#²×Ð¢ç&—6²ÖÆWfVÂç&—6²Ö†–v‚·²6öÆ÷#¢6F33SCS²×Ð¢ç&—6²ÖÆWfVÂç&—6²ÖÖVF—VÒ·²6öÆ÷#¢6ScvS##²×Ð¢ç&—6²ÖÆWfVÂç&—6²ÖÆ÷r·²6öÆ÷#¢3#†sCS²×Ð¢ò¢)H)HVæ6W'F–çG’æÇ—6—27G–ÆW2)H)H¢ð¢çVæ6W'F–çG’×7VÖÖ'’·²&6¶w&÷VæC¢6cVcVcS²&÷&FW"ÖÆVgC¢G‚6öÆ–B3333°¢FF–æs¢ã‡&VÒã'&VÓ²Ö&v–âÖ&÷GFöÓ¢ã'&VÓ²×Ð¢çVæ6W'F–çG’×F&ÆR·²föçB×6—¦S¢ãƒ‡&VÓ²×Ð¢çF÷&æFò×F&ÆR·²föçB×6—¦S¢ãƒ‡&VÓ²×Ð¢ò¢)H)H&Væ6†Ö&²fÆ–FF–öâ7G–ÆW2)H)H¢ð¢æ&Væ6†Ö&²×F&ÆR·²föçB×6—¦S¢ãƒ‡&VÓ²×Ð¢ò¢)H)HF—67W76–öâ6V7F–öâ7G–ÆW2)H)H¢ð¢æF—67W76–öâÖ&Æö6²·²&6¶w&÷VæC¢6c–ff#²&÷&FW"ÖÆVgC¢G‚6öÆ–B3&CfFc°¢FF–æs¢&VÒã'&VÓ²Ö&v–âÖ&÷GFöÓ¢ãW&VÓ²&÷&FW"×&F—W3¢G‚G‚²×Ð¢æF—67W76–öâÖ&Æö6²ƒ2·²6öÆ÷#¢3&CfFc²Ö&v–â×F÷¢²×Ð¢æF—67W76–öâÖ&Æö6²ç&V6öÖÖVæFF–öâ·²&6¶w&÷VæC¢6S†cVS“²FF–æs¢ãW&VÒã‡&VÓ°¢&÷&FW"×&F—W3¢7ƒ²&÷&FW"ÖÆVgC¢7‚6öÆ–B3#†sCS²×Ð¢æF—67W76–öâÖ&Æö6²çG&6V&–Æ—G’·²föçB×6—¦S¢ã‡&VÓ²6öÆ÷#¢3ƒƒƒ°¢&÷&FW"×F÷¢‚F6†VB6663²FF–ær×F÷¢ãG&VÓ²Ö&v–â×F÷¢ãg&VÓ²×Ð¢ò¢)H)Hfö÷FW")H)H¢ð¢çW"Öfö÷FW"·²Ö&v–â×F÷¢7&VÓ²FF–ær×F÷¢&VÓ°¢&÷&FW"×F÷¢‚6öÆ–B6663²föçB×6—¦S¢ã‡&VÓ°¢6öÆ÷#¢3“““²FW‡BÖÆ–vã¢6VçFW#²×Ð¢ò¢)H)H&–çB7G–ÆW2)H)H¢ð¢ÖVF–&–çB·°¢&öG’·²FF–æs¢²Ö‚×v–GFƒ¢æöæS²×Ð¢çW"Öf–wW&R·²vRÖ'&V²Ö–ç6–FS¢fö–C²×Ð¢F&ÆR·²vRÖ'&V²Ö–ç6–FS¢fö–C²×Ð¢×Ð¢Â÷7G–ÆSà£Âö†VCà£Æ&öG“à¢ÆF—b6Æ73Ò'W"Ö†VFW"#à¢Æƒç·F—FÆWÓÂöƒà¢¶WF†÷%ö&Æö6·Ð¢Ç6Æ73Ò'W"ÖFFR#ç¶FFWÓÂ÷à¢¶¶W—v÷&G7Ð¢ÂöF—cà§·6V7F–öç7Ð¢ÆF—b6Æ73Ò'W"Öfö÷FW"#à¢ÇävVæW&FVB¶FFWÒW6–æræW6–ÒF6²×6öÇf–ærv÷&¶fÆ÷sÂ÷à¢ÂöF—cç¶¶FW…ö&öG•÷67&—GÐ£Âö&öG“à£Âö‡FÖÃâ"""æf÷&ÖB€¢F—FÆS×W%÷F—FÆRÀ¢WF†÷%ö&Æö6³ÖWF†÷%ö‡FÖÂÀ¢FFSÕD4µôDDRÀ¢¶W—v÷&G3Ö¶W—v÷&G5ö‡FÖÂÀ¢6V7F–öç3×6V7F–öåö‡FÖÂÀ¢¶FW…ö†VCÖ¶FW…ö†VBÀ¢¶FW…ö&öG•÷67&—CÖ¶FW…ö&öG•÷67&—BÀ¢ ¢v—F‚÷Vâ…U%ô…DÔÅôd”ÄRÂ'r"ÂVæ6öF–æsÒ'WFbÓ‚"’2c ¢bçw&—FR†‡FÖÂ¢&–çB‚%66–VçF–f–2W"„…DÔÂ’6fVC¢·Ò"æf÷&ÖB…U%ô…DÔÅôd”ÄR’  ¢2)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y ¢2Ö–à¢2)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y)Y  ¦–bõöæÖUõòÓÒ%õöÖ–åõò# ¢vVæW&FU÷W"Ò"Ò×W""–â7—2æ&wb÷""Ò×W"ÖöæÇ’"–â7—2æ&w`¢W%ööæÇ’Ò"Ò×W"ÖöæÇ’"–â7—2æ&w` ¢2v÷&BFV×ÆFR6VÆV7F–öã¢Ò×FV×ÆFRD‚ÂÒÖæò×FV×ÆFRÂ6fVB6WGF–æp¢W‡Æ–6—E÷FV×ÆFRÒæöæP¢–b"Ò×FV×ÆFR"–â7—2æ&wc ¢FV×ÆFUö–æFW‚Ò7—2æ&wbæ–æFW‚‚"Ò×FV×ÆFR"’²¢–bFV×ÆFUö–æFW‚ãÒÆVâ‡7—2æ&wb“ ¢&–çB‚$U%$õ#¢Ò×FV×ÆFR&WV—&W2F‚FòæFö7‚÷"æF÷G‚f–ÆR"¢7—2æW†—Bƒ"¢W‡Æ–6—E÷FV×ÆFRÒ7—2æ&we·FV×ÆFUö–æFW…Ð¢´TUõDTÕÄDUô4ôåDTåBÒ"ÒÖ¶VW×FV×ÆFRÖ6öçFVçB"–â7—2æ&w`¢7GVG•ö6öæf–rÒÆöE÷7GVG•ö6öæf–r‚¢G'“ ¢$Uõ%EõDTÕÄDRÒ&W6öÇfU÷&W÷'E÷FV×ÆFR€¢W‡Æ–6—E÷FV×ÆFRÂÆÆ÷u÷6fVCÒ"ÒÖæò×FV×ÆFR"æ÷B–â7—2æ&wbÀ¢6öæf–wW&VC×7GVG•ö6öæf–rævWB‚'&W÷'B"Â·Ò’ævWB‚'FV×ÆFR"’¢W†6WB„õ4W'&÷"ÂfÇVTW'&÷"’2W'&÷# ¢&–çB‚$U%$õ#¢·Ò"æf÷&ÖB†W'&÷"’¢&–çB‚$f—‚F†RF‚Â6WB&W÷'BçFV×ÆFR–â7GVG•ö6öæf–rç–ÖÂÂ72Ò×FV×ÆFRD‚Â÷"'Vã¢"¢&–çB‚"æW6–ÒÒ×6WB×&W÷'B×FV×ÆFRÂ%D…Â"†÷"Ò×&W6WB×&W÷'B×FV×ÆFR’"¢7—2æW†—Bƒ" ¢2WFò×&VBF6²FF¢&W7VÇG2ÒÆöE÷&W7VÇG2‚¢F6µ÷7V2ÒÆöE÷F6µ÷7V2‚¢&V6÷&EöVçf—&öæÖVçB‡&W7VÇG2¢$Uõ%EôÄäuTtRÒ&W6öÇfU÷&W÷'EöÆæwVvR‡7GVG•ö6öæf–r’2&Vf÷&R–FVçF—G“¢&FvW2&RG&ç6ÆFV@¢&W6öÇfU÷&W÷'Eö–FVçF—G’‡7GVG•ö6öæf–rÂF6µ÷7V2Â&W7VÇG2¢Ç•÷&W÷'Eö÷WGWEöæÖW2…D•DÄR ¢&–çB‚""¢&–çB‚$vVæW&F–ær÷WGWG2f÷#¢·Ò"æf÷&ÖB…D•DÄR’¢$Uõ%Eôõ$”TåDD”ôâÒ&W6öÇfU÷&W÷'Eö÷&–VçFF–öâ‡7GVG•ö6öæf–r¢$Uõ%Eôe$ôåEôÄ•5E2Ò&W6öÇfUög&öçEöÖGFW%öÆ—7G2‡7GVG•ö6öæf–r¢–b$Uõ%EôÄäuTtRÒDTdTÅEõ$Uõ%EôÄäuTtS ¢&–çB‚%&W÷'BÆæwVvS¢·Ò‡·Ò’"æf÷&ÖB…$Uõ%EôÄäuTtRÂ÷&W÷'EöÆö6ÆR‚’’¢Fe÷&WVW7FVBÒvçE÷Feö÷WGWB‡7GVG•ö6öæf–r¢&–çB‚%&W÷'Bf–ÆW3¢·ÒæFö7‚ò·Òæ‡FÖÇ·Ò"æf÷&ÖB€¢$Uõ%Eô$4TäÔRÂ$Uõ%Eô$4TäÔRÀ¢"ò·ÒçFb"æf÷&ÖB…$Uõ%Eô$4TäÔR’–bFe÷&WVW7FVBVÇ6R""’¢–b$Uõ%EõDTÕÄDS ¢&–çB‚%v÷&BFV×ÆFS¢·Ò"æf÷&ÖB…$Uõ%EõDTÕÄDR’¢–bæ÷BD4µõ5DDTÔTåC ¢&–çB‚$äõDS¢æòF6²7FFVÖVçBf÷VæBâFB7GVG’çF—FÆRFò7GVG•ö6öæf–rç–ÖÂÂ"¢&–çB‚"âr22ö&¦V7F—fRr6V7F–öâFòF6µ÷7V2æÖBÂ÷"vö&¦V7F—fRrFò"¢&–çB‚"&W7VÇG2æ§6öâ6òF†R&W÷'B7FFW2F†RF6²Wg&öçBâ" ¢7GVG•ö6öæf–u÷v&æ–æw2ÒfÆ–FFU÷7GVG•ö6öæf–r‡7GVG•ö6öæf–rÂ&W7VÇG2ÂF6µ÷7V2¢6öç6—7FVæ7•ö—77VW2Ò6†V6µ÷&W÷'Eö6öç6—7FVæ7’‡&W7VÇG2¢&–çEö6öç6—7FVæ7•÷&W÷'B†6öç6—7FVæ7•ö—77VW2¢6Æ7VÆF–öåö—77VW2Ò¶—77VRf÷"—77VR–â6öç6—7FVæ7•ö—77VW0¢–b—77VRævWB‚&f—…÷G—R"’ÓÒ&6Æ7VÆF–öâ%Ð¢f—†W5÷F‚Ò÷2çF‚æ¦ö–â…D4µôD•"Â&f—†W5öæVVFVBæ§6öâ"¢–b6Æ7VÆF–öåö—77VW2÷"÷2çF‚æW†—7G2†f—†W5÷F‚“ ¢v—F‚÷Vâ†f—†W5÷F‚Â'r"ÂVæ6öF–æsÒ'WFbÓ‚"’2†æFÆS ¢§6öâæGV×†6Æ7VÆF–öåö—77VW2Â†æFÆRÂ–æFVçCÓ"ÂVç7W&Uö66–“ÔfÇ6R¢†æFÆRçw&—FR‚%Æâ"¢–b7GVG•ö6öæf–u÷v&æ–æw3 ¢&–çB‚""¢&–çB‚%7GVG’6öæf–wW&F–öâv&æ–æw3¢"¢f÷"v&æ–ær–â7GVG•ö6öæf–u÷v&æ–æw3 ¢&–çB‚"Ò·Ò"æf÷&ÖB‡v&æ–ær’ ¢–bæ÷BW%ööæÇ“ ¢2'V–ÆB&W÷'B6V7F–öç2æBvVæW&FRFV6†æ–6Â&W÷'@¢6V7F–öç2Ò'V–ÆE÷6V7F–öç2‡&W7VÇG2ÂF6µ÷7V2Â7GVG•ö6öæf–u÷v&æ–æw2À¢7GVG•ö6öæf–rÂ6öç6—7FVæ7•ö—77VW2¢&–çB‚""¢'V–ÆE÷v÷&E÷&W÷'B‡6V7F–öç2Â&W7VÇG2¢f–æÆ—¦U÷v÷&Eöf–VÆG2„Dô5…ôd”ÄRÂ%&W÷'B"¢'V–ÆEö‡FÖÅ÷&W÷'B‡6V7F–öç2Â&W7VÇG2¢&W÷'E÷Fe÷w&—GFVâÒfÇ6P¢–bFe÷&WVW7FVC ¢&W÷'E÷Fe÷w&—GFVâÒ6öçfW'EöFö7…÷Fõ÷Fb„Dô5…ôd”ÄRÂDeôd”ÄRÂ%&W÷'B"¢&–çB‚""¢&–çB‚%FV6†æ–6Â&W÷'G2vVæW&FVBâ"¢&–çB‚"÷Vâ·Ò–â'&÷w6W"f÷"æf–v&ÆRf–Wrâ"æf÷&ÖB€¢÷2çF‚æ&6VæÖR„…DÔÅôd”ÄR’’¢&–çB‚"÷Vâ·Òf÷"f÷&ÖÂF—7G&–'WF–öââ"æf÷&ÖB€¢÷2çF‚æ&6VæÖR„Dô5…ôd”ÄR’’¢–b&W÷'E÷Fe÷w&—GFVã ¢&–çB‚"÷Vâ·Òf÷"&VBÖöæÇ’F—7G&–'WF–öââ"æf÷&ÖB€¢÷2çF‚æ&6VæÖR…Deôd”ÄR’’ ¢–bvVæW&FU÷W# ¢2'V–ÆBW"6V7F–öç2æBvVæW&FR66–VçF–f–2W ¢W%÷6V7F–öç2Ò'V–ÆE÷W%÷6V7F–öç2‡&W7VÇG2ÂF6µ÷7V2¢&–çB‚""¢'V–ÆE÷W%öFö7‚‡W%÷6V7F–öç2Â&W7VÇG2¢'V–ÆE÷W%ö‡FÖÂ‡W%÷6V7F–öç2Â&W7VÇG2¢W%÷Fe÷w&—GFVâÒfÇ6P¢–bFe÷&WVW7FVC ¢W%÷Fe÷w&—GFVâÒ6öçfW'EöFö7…÷Fõ÷Fb€¢U%ôDô5…ôd”ÄRÂU%õDeôd”ÄRÂ%W""¢&–çB‚""¢&–çB‚%66–VçF–f–2W'2vVæW&FVBâ"¢&–çB‚"÷Vâ·Òf÷"&VF–ærâ"æf÷&ÖB†÷2çF‚æ&6VæÖR…U%ô…DÔÅôd”ÄR’’¢&–çB‚"÷Vâ·Òf÷"¦÷W&æÂ7V&Ö—76–öâòF—7G&–'WF–öââ"æf÷&ÖB€¢÷2çF‚æ&6VæÖR…U%ôDô5…ôd”ÄR’’¢–bW%÷Fe÷w&—GFVã ¢&–çB‚"÷Vâ·Òf÷"&VBÖöæÇ’F—7G&–'WF–öââ"æf÷&ÖB€¢÷2çF‚æ&6VæÖR…U%õDeôd”ÄR’’ ¢w&—GFVâÒµÐ¢–bæ÷BW%ööæÇ“ ¢w&—GFVâæW‡FVæB…´Dô5…ôd”ÄRÂ…DÔÅôd”ÄUÒ¢–bFe÷&WVW7FVC ¢w&—GFVâæVæB…Deôd”ÄR¢–bvVæW&FU÷W# ¢w&—GFVâæW‡FVæB…µU%ôDô5…ôd”ÄRÂU%ô…DÔÅôd”ÄUÒ¢–bFe÷&WVW7FVC ¢w&—GFVâæVæB…U%õDeôd”ÄR¢–bw&—GFVã ¢'VæU÷7WW'6VFVEö÷WGWG2‡w&—GFVâ ¢–bæ÷BvVæW&FU÷W"æBæ÷BW%ööæÇ“ ¢&–çB‚""¢&–çB‚%D•¢FBÒ×W"fÆrFòÇ6òvVæW&FR66–VçF–f–2W"â"¢&–çB‚"—F†öâ7FW5÷&W÷'BövVæW&FU÷&W÷'Bç’Ò×W"" ¢–bæ÷BW%ööæÇ“ ¢vVæW&FU÷v÷&µ÷&V6÷&B‡7GVG•ö6öæf–r ¢–bæ÷B&W7VÇG3 ¢&–çB‚""¢&–çB‚%D•¢7&VFR&W7VÇG2æ§6öâ–âF†RF6²&ö÷BFòWFò×÷VÆFR"¢&–çB‚"F†R&W7VÇG2æBfÆ–FF–öâ6V7F–öç2â6VRF†RF6²$TDÔR"¢&–çB‚"f÷"F†R&W7VÇG2æ§6öâGFW&ââ"

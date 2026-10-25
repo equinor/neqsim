@@ -539,6 +539,41 @@ def _valid_constraint_summary_migration_lifecycle_evidence(current_envelope):
     return evidence
 
 
+def _valid_coverage_lifecycle_evidence(current_envelope):
+    """Extend schema-v8 evidence with complete declared accepted-replay capacity coverage."""
+    evidence = _valid_constraint_summary_migration_lifecycle_evidence(current_envelope)
+    evidence["schema_version"] = 9
+    coverage = {
+        "schema_version": "1.0",
+        "coverage_scope": "DECLARED_EQUIPMENT_AND_CONSTRAINTS",
+        "model_name": "synthetic-field",
+        "registry_identity_digest": "",
+        "expected_equipment_ids": ["equipment:synthetic-field/Host/V-1"],
+        "expected_constraint_ids": ["equipment:synthetic-field/Host/V-1#gas%20handling"],
+        "required_constraint_ids": ["equipment:synthetic-field/Host/V-1#gas%20handling"],
+        "rows": [{
+            "equipment_id": "equipment:synthetic-field/Host/V-1",
+            "constraint_name": "gas handling",
+            "qualified_constraint_id": "equipment:synthetic-field/Host/V-1#gas%20handling",
+            "origin": "DIRECT",
+            "enabled": True,
+            "unit": "kg/hr",
+            "basis": "datasheet",
+            "provenance": "synthetic separator operating procedure",
+            "minimum_constraint": False,
+            "current_value": 900.0,
+            "applicable_limit": 1000.0,
+            "normalized_utilization": 0.9,
+            "statuses": ["AVAILABLE"],
+        }],
+        "diagnostics": [],
+        "complete": True,
+    }
+    for period in evidence["periods"]:
+        period["utilization_coverage"] = copy.deepcopy(coverage)
+    return evidence
+
+
 def _valid_state_lifecycle_evidence(current_envelope):
     """Extend valid schema-v4 evidence with exact accepted physical-state metrics."""
     evidence = _valid_region_lifecycle_evidence(current_envelope)
@@ -1337,6 +1372,52 @@ def test_guard_persists_schema8_constraint_identity_migration(tmp_path):
     assert tampered_ctx.proposals == []
     reasons = json.loads((tmp_path / "guard.json").read_text())["withheld"][0]["reasons"]
     assert "lifecycle_period_change_diagnostics_mismatch" in reasons
+
+
+def test_guard_requires_complete_schema9_utilization_coverage(tmp_path):
+    proposal = _valid_proposal()
+    envelope = proposal["accepted_point_envelope_evidence"]
+    _add_empty_operating_region_evidence(envelope)
+    _add_empty_boundary_refinement_evidence(envelope)
+    _add_empty_constraint_summary_evidence(envelope)
+    proposal["lifecycle_envelope_evidence"] = _valid_coverage_lifecycle_evidence(envelope)
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+
+    production.guard(ctx, {})
+
+    assert [row["title"] for row in ctx.proposals] == ["candidate"]
+    assert ctx.proposals[0]["lifecycle_envelope_evidence"]["schema_version"] == 9
+
+
+@pytest.mark.parametrize("mutation, expected_reason", [
+    (lambda coverage: coverage.update(complete=False),
+     "lifecycle_period_0_incomplete_utilization_coverage"),
+    (lambda coverage: coverage["rows"][0].update(provenance=""),
+     "lifecycle_period_0_invalid_available_utilization_coverage_row"),
+    (lambda coverage: coverage["rows"][0].update(statuses=["SCREENING_ONLY"]),
+     "lifecycle_period_0_invalid_utilization_coverage_row"),
+    (lambda coverage: coverage.update(expected_constraint_ids=["missing"]),
+     "lifecycle_period_0_utilization_coverage_scope_mismatch"),
+])
+def test_guard_rejects_tampered_schema9_utilization_coverage(
+        tmp_path, mutation, expected_reason):
+    proposal = _valid_proposal()
+    envelope = proposal["accepted_point_envelope_evidence"]
+    _add_empty_operating_region_evidence(envelope)
+    _add_empty_boundary_refinement_evidence(envelope)
+    _add_empty_constraint_summary_evidence(envelope)
+    lifecycle = _valid_coverage_lifecycle_evidence(envelope)
+    mutation(lifecycle["periods"][0]["utilization_coverage"])
+    proposal["lifecycle_envelope_evidence"] = lifecycle
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+
+    production.guard(ctx, {})
+
+    assert ctx.proposals == []
+    reasons = json.loads((tmp_path / "guard.json").read_text())["withheld"][0]["reasons"]
+    assert expected_reason in reasons
 
 
 def _promotable_schema8_task(tmp_path):
