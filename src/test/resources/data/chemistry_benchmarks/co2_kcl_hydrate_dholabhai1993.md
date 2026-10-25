@@ -85,26 +85,39 @@ KCl, the evaluated table reports 0.0572 mol CO2/kg water, not 0.0575. The
 IUPAC-NIST PDF table also resolves the compact HTML rendering of the 348.15 K,
 1.0 molal solvent density as 1.0179 g/cm3.
 
-The no-fit `SystemElectrolyteCPAstatoil` calculation iterates total pressure so
-that gas-phase `y_CO2 * P` matches the reported partial pressure, then compares
-aqueous CO2 molality on the same kilogram-water basis. A safeguarded bracketed
-secant driver retains the 1e-10 bar stopping criterion and permits up to 80
-iterations. Each pressure trial starts from an independent fluid state so root
-iteration cannot alter the salt inventory. The earlier 20-iteration fixed-point
-cap stopped the 348.15 K low-pressure state at a 4.69e-5 bar residual; simply
-extending that mutable-state loop to 80 iterations reached the pressure target
-but reduced the 0.1 mol K+ inventory to 6.57e-49 mol. No numerical or
-experimental tolerance is relaxed. The water-basis
-calculation explicitly divides aqueous CO2 moles by aqueous water moles times
-the water molar mass; it does not use the generic component `getMolality`
-method, whose denominator is total phase mass. Source salting-out order is
-checked independently within each temperature block. The calculated change and
-its `salting_out`, `salting_in` or `flat` classification are retained per row
-instead of treating model agreement with the experimental direction as a
-numerical pass condition. The generated
-`target/kcl-co2-solubility-he-morse1993-assessment.csv` retains all source
-values, uncertainties, aqueous water mass, calculated value, residual and phase
-diagnostic.
+The no-fit `SystemElectrolyteCPAstatoil` calculation matches both the reported
+CO2 partial pressure (`y_CO2 * P`) and final aqueous KCl molality. Each trial
+starts from a fresh system with a 1 mol CO2 reservoir, the source salt inventory
+and enough feed water to leave 1 kg **in the aqueous phase** after evaporation.
+A nested water-inventory iteration checks that final mass at 1e-10 kg; the
+calculated KCl molality must match the source within 1e-9 mol/kg water. A separate
+363.15 K, 3 molal regression halves the gas reservoir and requires unchanged
+solubility and pressure. This is a boundary-condition correction, not parameter
+fitting. A fixed 1 kg feed with 10 mol CO2 can lose substantial water to the gas,
+so its final liquid no longer represents the specified source molality.
+
+The safeguarded bracketed secant pressure driver retains its 1e-10 bar stopping
+criterion and permits up to 80 iterations. It brackets downward from a validated
+liquid-bearing state, rather than starting with total pressure equal to CO2
+partial pressure. At high temperature, that earlier lower trial can evaporate
+the liquid and erase its salt inventory. Every accepted trial now requires
+GAS+AQUEOUS topology, component-inventory residual below 1e-10 mol, 1e-12 mol
+individual aqueous-ion closure, ion exclusion from gas, and molecular log
+fugacity-ratio residual below 1e-7. A pressure root that exhausts its iterations
+fails explicitly. Only fixed-T/P fugacities are consumed, so `init(1)` suffices;
+no transport or derivative initialization is required.
+
+The water-basis calculation explicitly divides aqueous CO2 moles by aqueous
+water moles times water molar mass; it does not use generic `getMolality`, whose
+denominator is total phase mass. Source salting-out order is checked separately
+within each temperature block. The calculated change and its `salting_out`,
+`salting_in` or `flat` classification remain evidence rather than an
+experimental-accuracy pass condition. The generated
+`target/kcl-co2-solubility-he-morse1993-assessment.csv` additionally retains actual
+KCl molality, CO2 feed inventory, component balance and molecular fugacity
+residuals. Rows are saved as they pass, so a later numerical failure preserves
+earlier evidence while the collector still marks an incomplete producer as
+failed. Experimental uncertainties and numerical tolerances are not relaxed.
 
 The earlier six-point 273.15 K execution predates merged #4367 and therefore
 cannot establish the current parameter's concentration or temperature

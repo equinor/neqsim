@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
@@ -17,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -37,6 +39,8 @@ class KClCO2SolubilityReferenceAssessmentTest {
   private static final double TEMPERATURE_UNCERTAINTY_K = 0.1;
   private static final double PARTIAL_PRESSURE_CONVERGENCE_TOLERANCE_BAR = 1.0e-10;
   private static final int MAX_PARTIAL_PRESSURE_ITERATIONS = 80;
+  private static final double CO2_FEED_MOLES = 1.0;
+  private static final double AQUEOUS_WATER_MASS_TOLERANCE_KG = 1.0e-10;
 
   /**
    * Executes the complete five-temperature NIST series at reported CO2 partial pressure without fitting.
@@ -54,7 +58,10 @@ class KClCO2SolubilityReferenceAssessmentTest {
         + "model_delta_from_previous_molality,model_trend_from_previous,aqueous_water_mass_kg,"
         + "model_minus_experiment,relative_residual,experimental_relative_uncertainty,"
         + "source_activity_coefficient_relative_uncertainty,temperature_uncertainty_K,total_pressure_bara,"
-        + "aqueous_x_co2,fluid_phases");
+        + "aqueous_x_co2,fluid_phases,actual_kcl_molality_mol_per_kg_water,"
+        + "co2_feed_moles,component_balance_residual_mol,molecular_log_fugacity_residual");
+    Files.createDirectories(Paths.get("target"));
+    Files.write(Paths.get("target/kcl-co2-solubility-he-morse1993-assessment.csv"), report, StandardCharsets.UTF_8);
 
     double previousTemperature = Double.NaN;
     double previousExperimentalMolality = Double.POSITIVE_INFINITY;
@@ -74,15 +81,16 @@ class KClCO2SolubilityReferenceAssessmentTest {
           reference.pointId + " CO2 partial-pressure iteration did not converge");
       assertTrue(Double.isFinite(result.modelCo2Molality) && result.modelCo2Molality > 0.0,
           reference.pointId + " model CO2 molality must be finite and positive");
-      report.add(result.toCsv(reference, previousModelMolality));
+      String row = result.toCsv(reference, previousModelMolality);
+      report.add(row);
+      Files.write(Paths.get("target/kcl-co2-solubility-he-morse1993-assessment.csv"),
+          java.util.Collections.singletonList(row), StandardCharsets.UTF_8, StandardOpenOption.APPEND);
       previousExperimentalMolality = reference.experimentalCo2Molality;
       previousModelMolality = result.modelCo2Molality;
     }
 
     assertEquals(5, temperatureBlocks);
     assertEquals(27, report.size());
-    Files.createDirectories(Paths.get("target"));
-    Files.write(Paths.get("target/kcl-co2-solubility-he-morse1993-assessment.csv"), report, StandardCharsets.UTF_8);
     for (String row : report) {
       logger.info("KCL_CO2_SOLUBILITY_DIAGNOSTIC,{}", row);
     }
@@ -95,31 +103,64 @@ class KClCO2SolubilityReferenceAssessmentTest {
    * @return calculated diagnostics
    */
   private static Result calculate(Reference reference) {
-    PressureTrial lower = flashAtTotalPressure(reference, reference.targetCo2PartialPressureBara);
-    PressureTrial upper = flashAtTotalPressure(reference, reference.targetCo2PartialPressureBara + 1.0);
+    return calculate(reference, CO2_FEED_MOLES);
+  }
+
+  /**
+   * Verifies the source state is independent of the finite gas-reservoir size.
+   */
+  @Tag("slow")
+  @Test
+  void hotConcentratedStateKeepsSourceMolalityWithEitherGasInventory() {
+    Reference reference = new Reference("HM363-KCL3000", 363.15, 0.301, 1.0841, 0.0031, 3.0, 1.12);
+    Result ordinary = calculate(reference, CO2_FEED_MOLES);
+    Result smallerReservoir = calculate(reference, 0.5 * CO2_FEED_MOLES);
+    assertEquals(ordinary.modelCo2Molality, smallerReservoir.modelCo2Molality, 1.0e-10);
+    assertEquals(ordinary.totalPressureBara, smallerReservoir.totalPressureBara, 1.0e-9);
+  }
+
+  /**
+   * Matches gas partial pressure and final aqueous salt molality, including evaporated feed water.
+   *
+   * @param reference experimental state
+   * @param co2FeedMoles finite CO2 reservoir in mol, exceeding the dissolved inventory
+   * @return calculated diagnostics
+   */
+  private static Result calculate(Reference reference, double co2FeedMoles) {
+    PressureTrial upper = flashAtTotalPressure(reference, reference.targetCo2PartialPressureBara + 1.0, co2FeedMoles);
     for (int expansion = 0; expansion < 10
         && upper.actualCo2PartialPressureBara < reference.targetCo2PartialPressureBara; expansion++) {
-      upper = flashAtTotalPressure(reference, 2.0 * upper.totalPressureBara);
+      upper = flashAtTotalPressure(reference, 2.0 * upper.totalPressureBara, co2FeedMoles);
     }
-
-    assertTrue(lower.actualCo2PartialPressureBara <= reference.targetCo2PartialPressureBara,
-        reference.pointId + " lower pressure trial must not exceed the target CO2 partial pressure");
     assertTrue(upper.actualCo2PartialPressureBara >= reference.targetCo2PartialPressureBara,
         reference.pointId + " could not bracket the target CO2 partial pressure");
 
+    // Descend from a valid liquid-bearing state. Starting at pCO2 alone can boil away the
+    // aqueous phase; a salt-depleted single gas phase is not a valid root-function evaluation.
+    PressureTrial lower = upper;
+    for (int contraction = 0; contraction < 80
+        && lower.actualCo2PartialPressureBara > reference.targetCo2PartialPressureBara; contraction++) {
+      double lowerPressure = Math.max(reference.targetCo2PartialPressureBara, 0.9 * lower.totalPressureBara);
+      lower = flashAtTotalPressure(reference, lowerPressure, co2FeedMoles);
+    }
+    assertTrue(lower.actualCo2PartialPressureBara <= reference.targetCo2PartialPressureBara,
+        reference.pointId + " could not find a conserved lower pressure trial");
+
     PressureTrial selected = lower;
-    for (int iteration = 0; iteration < MAX_PARTIAL_PRESSURE_ITERATIONS; iteration++) {
+    for (int iteration = 0; iteration < MAX_PARTIAL_PRESSURE_ITERATIONS
+        && Math.abs(selected.actualCo2PartialPressureBara
+            - reference.targetCo2PartialPressureBara) >= PARTIAL_PRESSURE_CONVERGENCE_TOLERANCE_BAR; iteration++) {
       double lowerResidual = lower.actualCo2PartialPressureBara - reference.targetCo2PartialPressureBara;
       double upperResidual = upper.actualCo2PartialPressureBara - reference.targetCo2PartialPressureBara;
       double bracketWidth = upper.totalPressureBara - lower.totalPressureBara;
       double candidatePressure = lower.totalPressureBara
           - lowerResidual * bracketWidth / (upperResidual - lowerResidual);
-      if (!Double.isFinite(candidatePressure) || candidatePressure <= lower.totalPressureBara + 0.05 * bracketWidth
-          || candidatePressure >= upper.totalPressureBara - 0.05 * bracketWidth) {
+      if (!Double.isFinite(candidatePressure) || candidatePressure <= lower.totalPressureBara
+          || candidatePressure >= upper.totalPressureBara || iteration % 4 == 3) {
         candidatePressure = 0.5 * (lower.totalPressureBara + upper.totalPressureBara);
       }
 
-      selected = flashAtTotalPressure(reference, candidatePressure);
+      selected = flashAtTotalPressure(reference, candidatePressure, co2FeedMoles);
       double selectedResidual = selected.actualCo2PartialPressureBara - reference.targetCo2PartialPressureBara;
       if (Math.abs(selectedResidual) < PARTIAL_PRESSURE_CONVERGENCE_TOLERANCE_BAR) {
         break;
@@ -131,10 +172,15 @@ class KClCO2SolubilityReferenceAssessmentTest {
       }
     }
 
+    assertEquals(reference.targetCo2PartialPressureBara, selected.actualCo2PartialPressureBara,
+        PARTIAL_PRESSURE_CONVERGENCE_TOLERANCE_BAR, reference.pointId + " pressure root exhausted its iteration limit");
     SystemInterface fluid = selected.fluid;
     PhaseInterface aqueous = findIonRichPhase(fluid);
     double aqueousWaterMassKg = aqueous.getComponent("water").getNumberOfMolesInPhase() * WATER_MOLAR_MASS_KG_PER_MOL;
-    assertTrue(aqueousWaterMassKg > 0.0, "aqueous phase must retain a positive water mass");
+    assertEquals(1.0, aqueousWaterMassKg, AQUEOUS_WATER_MASS_TOLERANCE_KG,
+        reference.pointId + " must use the source kilogram-water basis");
+    double actualKclMolality = aqueous.getComponent("K+").getNumberOfMolesInPhase() / aqueousWaterMassKg;
+    assertEquals(reference.kclMolality, actualKclMolality, 1.0e-9, reference.pointId + " aqueous KCl molality");
     double modelCo2Molality = aqueous.getComponent("CO2").getNumberOfMolesInPhase() / aqueousWaterMassKg;
     double aqueousCo2MoleFraction = aqueous.getComponent("CO2").getx();
     assertEquals(reference.kclMolality, aqueous.getComponent("K+").getNumberOfMolesInPhase(), 1.0e-12);
@@ -145,31 +191,64 @@ class KClCO2SolubilityReferenceAssessmentTest {
       phaseTypes.add(fluid.getPhase(phaseIndex).getType().toString());
     }
     return new Result(selected.actualCo2PartialPressureBara, selected.totalPressureBara, modelCo2Molality,
-        aqueousWaterMassKg, aqueousCo2MoleFraction, String.join("+", phaseTypes));
+        aqueousWaterMassKg, aqueousCo2MoleFraction, String.join("+", phaseTypes), actualKclMolality, co2FeedMoles,
+        selected.componentBalanceResidualMol, selected.molecularLogFugacityResidual);
   }
 
   /**
-   * Flashes an independent state at one trial pressure.
+   * Flashes independent states while compensating evaporated water to retain one aqueous kilogram.
    *
    * @param reference experimental state
    * @param totalPressureBara trial total pressure in bara
-   * @return independent pressure trial
+   * @param co2FeedMoles finite CO2 reservoir in mol
+   * @return independently validated pressure trial
    */
-  private static PressureTrial flashAtTotalPressure(Reference reference, double totalPressureBara) {
-    SystemInterface fluid = new SystemElectrolyteCPAstatoil(reference.temperatureK, totalPressureBara);
-    fluid.addComponent("CO2", 10.0);
-    fluid.addComponent("water", 1.0 / WATER_MOLAR_MASS_KG_PER_MOL);
-    fluid.addComponent("K+", reference.kclMolality);
-    fluid.addComponent("Cl-", reference.kclMolality);
-    fluid.setMixingRule(10);
-    fluid.setMultiPhaseCheck(true);
-    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
-    operations.TPflash();
-    fluid.init(3);
+  private static PressureTrial flashAtTotalPressure(Reference reference, double totalPressureBara,
+      double co2FeedMoles) {
+    double waterFeedMoles = 1.0 / WATER_MOLAR_MASS_KG_PER_MOL;
+    for (int iteration = 0; iteration < 20; iteration++) {
+      SystemInterface fluid = new SystemElectrolyteCPAstatoil(reference.temperatureK, totalPressureBara);
+      fluid.addComponent("CO2", co2FeedMoles);
+      fluid.addComponent("water", waterFeedMoles);
+      fluid.addComponent("K+", reference.kclMolality);
+      fluid.addComponent("Cl-", reference.kclMolality);
+      fluid.setMixingRule(10);
+      fluid.setMultiPhaseCheck(true);
+      new ThermodynamicOperations(fluid).TPflash();
+      fluid.init(1);
 
-    PhaseInterface gas = fluid.getPhase("gas");
-    double actualCo2PartialPressureBara = gas.getComponent("CO2").getx() * fluid.getPressure();
-    return new PressureTrial(fluid, fluid.getPressure(), actualCo2PartialPressureBara);
+      assertEquals(2, fluid.getNumberOfPhases(), reference.pointId + " requires gas and aqueous phases");
+      assertTrue(fluid.hasPhaseType(PhaseType.GAS) && fluid.hasPhaseType(PhaseType.AQUEOUS), reference.pointId);
+      PhaseInterface gas = fluid.getPhase("gas");
+      PhaseInterface aqueous = fluid.getPhase("aqueous");
+      double componentBalanceResidualMol = 0.0;
+      double molecularLogFugacityResidual = 0.0;
+      double[] feedMoles = {co2FeedMoles, waterFeedMoles, reference.kclMolality, reference.kclMolality};
+      for (int component = 0; component < feedMoles.length; component++) {
+        double gasMoles = gas.getComponent(component).getNumberOfMolesInPhase();
+        double aqueousMoles = aqueous.getComponent(component).getNumberOfMolesInPhase();
+        componentBalanceResidualMol = Math.max(componentBalanceResidualMol,
+            Math.abs(gasMoles + aqueousMoles - feedMoles[component]));
+        if (gas.getComponent(component).getIonicCharge() == 0) {
+          double fugacityRatio = gas.getFugacity(component) / aqueous.getFugacity(component);
+          molecularLogFugacityResidual = Math.max(molecularLogFugacityResidual, Math.abs(Math.log(fugacityRatio)));
+        } else {
+          assertEquals(0.0, gasMoles, 1.0e-40, reference.pointId + " ions must remain aqueous");
+          assertEquals(reference.kclMolality, aqueousMoles, 1.0e-12, reference.pointId + " ion inventory");
+        }
+      }
+      assertTrue(componentBalanceResidualMol < 1.0e-10, reference.pointId + " component inventory");
+      assertTrue(molecularLogFugacityResidual < 1.0e-7, reference.pointId + " molecular fugacity equilibrium");
+      double aqueousWaterMoles = aqueous.getComponent("water").getNumberOfMolesInPhase();
+      double waterCorrectionMoles = 1.0 / WATER_MOLAR_MASS_KG_PER_MOL - aqueousWaterMoles;
+      if (Math.abs(waterCorrectionMoles) * WATER_MOLAR_MASS_KG_PER_MOL < AQUEOUS_WATER_MASS_TOLERANCE_KG) {
+        double actualCo2PartialPressureBara = gas.getComponent("CO2").getx() * fluid.getPressure();
+        return new PressureTrial(fluid, fluid.getPressure(), actualCo2PartialPressureBara, componentBalanceResidualMol,
+            molecularLogFugacityResidual);
+      }
+      waterFeedMoles += waterCorrectionMoles;
+    }
+    throw new AssertionError(reference.pointId + " aqueous-water inventory iteration did not converge");
   }
 
   /**
@@ -228,6 +307,8 @@ class KClCO2SolubilityReferenceAssessmentTest {
     private final SystemInterface fluid;
     private final double totalPressureBara;
     private final double actualCo2PartialPressureBara;
+    private final double componentBalanceResidualMol;
+    private final double molecularLogFugacityResidual;
 
     /**
      * Creates a pressure trial.
@@ -235,11 +316,16 @@ class KClCO2SolubilityReferenceAssessmentTest {
      * @param fluid independently flashed system
      * @param totalPressureBara total pressure in bara
      * @param actualCo2PartialPressureBara calculated CO2 partial pressure in bara
+     * @param componentBalanceResidualMol maximum component balance residual in mol
+     * @param molecularLogFugacityResidual maximum molecular log fugacity ratio
      */
-    private PressureTrial(SystemInterface fluid, double totalPressureBara, double actualCo2PartialPressureBara) {
+    private PressureTrial(SystemInterface fluid, double totalPressureBara, double actualCo2PartialPressureBara,
+        double componentBalanceResidualMol, double molecularLogFugacityResidual) {
       this.fluid = fluid;
       this.totalPressureBara = totalPressureBara;
       this.actualCo2PartialPressureBara = actualCo2PartialPressureBara;
+      this.componentBalanceResidualMol = componentBalanceResidualMol;
+      this.molecularLogFugacityResidual = molecularLogFugacityResidual;
     }
   }
 
@@ -294,6 +380,10 @@ class KClCO2SolubilityReferenceAssessmentTest {
     private final double aqueousWaterMassKg;
     private final double aqueousCo2MoleFraction;
     private final String phaseTypes;
+    private final double actualKclMolality;
+    private final double co2FeedMoles;
+    private final double componentBalanceResidualMol;
+    private final double molecularLogFugacityResidual;
 
     /**
      * Creates calculated diagnostics.
@@ -304,15 +394,24 @@ class KClCO2SolubilityReferenceAssessmentTest {
      * @param aqueousWaterMassKg water mass in the selected aqueous phase in kilograms
      * @param aqueousCo2MoleFraction calculated aqueous CO2 mole fraction
      * @param phaseTypes phase topology
+     * @param actualKclMolality final aqueous KCl molality in mol/kg water
+     * @param co2FeedMoles finite CO2 feed inventory in mol
+     * @param componentBalanceResidualMol maximum component balance residual in mol
+     * @param molecularLogFugacityResidual maximum molecular log fugacity ratio
      */
     private Result(double actualCo2PartialPressureBara, double totalPressureBara, double modelCo2Molality,
-        double aqueousWaterMassKg, double aqueousCo2MoleFraction, String phaseTypes) {
+        double aqueousWaterMassKg, double aqueousCo2MoleFraction, String phaseTypes, double actualKclMolality,
+        double co2FeedMoles, double componentBalanceResidualMol, double molecularLogFugacityResidual) {
       this.actualCo2PartialPressureBara = actualCo2PartialPressureBara;
       this.totalPressureBara = totalPressureBara;
       this.modelCo2Molality = modelCo2Molality;
       this.aqueousWaterMassKg = aqueousWaterMassKg;
       this.aqueousCo2MoleFraction = aqueousCo2MoleFraction;
       this.phaseTypes = phaseTypes;
+      this.actualKclMolality = actualKclMolality;
+      this.co2FeedMoles = co2FeedMoles;
+      this.componentBalanceResidualMol = componentBalanceResidualMol;
+      this.molecularLogFugacityResidual = molecularLogFugacityResidual;
     }
 
     /**
@@ -342,7 +441,8 @@ class KClCO2SolubilityReferenceAssessmentTest {
           + "," + modelDelta + "," + modelTrend + "," + aqueousWaterMassKg + "," + residual + ","
           + residual / reference.experimentalCo2Molality + "," + RELATIVE_SOLUBILITY_UNCERTAINTY + ","
           + CO2_ACTIVITY_COEFFICIENT_UNCERTAINTY + "," + TEMPERATURE_UNCERTAINTY_K + "," + totalPressureBara + ","
-          + aqueousCo2MoleFraction + "," + phaseTypes;
+          + aqueousCo2MoleFraction + "," + phaseTypes + "," + actualKclMolality + "," + co2FeedMoles + ","
+          + componentBalanceResidualMol + "," + molecularLogFugacityResidual;
     }
   }
 }

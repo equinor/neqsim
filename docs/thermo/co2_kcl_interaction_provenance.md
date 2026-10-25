@@ -370,6 +370,44 @@ approval, before merge. Its strong Dholabhai KCl holdout is useful evidence but
 does not close the independent provenance gate, especially with the retained
 He–Morse/Yasunishi deviations and mixed-brine family/recipe biases.
 
+### He-Morse pressure-driver and solvent-basis repair
+
+Run [40168078608](https://github.com/equinor/neqsim/actions/runs/40168078608)
+failed at `HM363-KCL3000`: the old pressure driver returned 0.342881516 bara
+against a 0.304988250 bara CO2 target. Independent trials showed that its low
+pressure bracket included salt-depleted gas-only states and some intermediate
+two-phase states failed molecular fugacity equality. The 10 mol CO2 / 1 kg
+feed-water construction also changed aqueous salt molality through evaporation.
+
+The revised diagnostic brackets from conserved GAS+AQUEOUS trials and matches
+both gas partial pressure and final aqueous solvent mass. It uses a 1 mol CO2
+reservoir and compensates feed water to retain 1 kg aqueous water. An independent
+half-reservoir regression at the failing hot concentrated source point checks
+that this choice does not control the resulting solubility or pressure. Every
+trial verifies component inventory, aqueous-ion closure and molecular fugacity
+equality. The CSV records actual KCl molality and numerical residuals, preserving
+completed rows if a later case fails. See the
+[benchmark notes](../../src/test/resources/data/chemistry_benchmarks/co2_kcl_hydrate_dholabhai1993.md)
+for the exact numerical gates. Historical runs using fixed feed water are not
+like-for-like evaluations of the final aqueous source molality.
+
+Local validation on NeqSim 3.26.0 with OpenJDK 17 executed all 26 source rows
+and the independent reservoir regression (2 tests, no failures/errors/skips).
+The maximum partial-pressure error was 9.91e-11 bar, the maximum aqueous KCl
+molality error 4.70e-10 mol/kg water, component-inventory residual 7.11e-15 mol,
+and molecular log fugacity-ratio residual 3.51e-12. The formerly failing
+`HM363-KCL3000` state converged at total pressure 0.935796555 bara and CO2
+partial pressure 0.304988250 bara.
+
+These numerical checks do not establish experimental accuracy: calculated CO2
+solubility remains 11.4-31.5% below the source values, and the 4.998/5.000 molal
+endpoints at 323.15, 348.15 and 363.15 K still show local salting-in. Those model
+deviations remain explicit evidence for the independent scientific review.
+
+This corrects the assessment boundary conditions and failure reporting. It does
+not change production flash equations, interaction parameters, source values or
+experimental-accuracy criteria, and it does not establish model qualification.
+
 ## Retained numerical evidence
 
 The Core Build, Test, and Javadoc workflow retains an
