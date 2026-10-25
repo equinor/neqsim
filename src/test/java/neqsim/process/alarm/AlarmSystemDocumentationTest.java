@@ -27,12 +27,12 @@ import neqsim.NeqSimTest;
  * Verifies the executable alarm lifecycle example and the documented safeguarding boundaries.
  */
 public class AlarmSystemDocumentationTest extends NeqSimTest {
-  private static final Pattern EXACT_EXAMPLE = Pattern.compile(
-      "(?s)<!-- alarm-lifecycle-example:start -->\\s*```java\\r?\\n(.*?)\\r?\\n```\\s*"
+  private static final Pattern EXACT_EXAMPLE = Pattern
+      .compile("(?s)<!-- alarm-lifecycle-example:start -->\\s*```java\\r?\\n(.*?)\\r?\\n```\\s*"
           + "<!-- alarm-lifecycle-example:end -->");
   private static final Pattern JAVA_FENCE = Pattern.compile("(?m)^```java[ \\t]*$");
-  private static final Pattern PUBLIC_CLASS =
-      Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+  private static final Pattern PUBLIC_CLASS = Pattern
+      .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
   private static final Pattern DUPLICATE_H1 = Pattern.compile("(?m)^#\\s+");
 
   @TempDir
@@ -72,8 +72,7 @@ public class AlarmSystemDocumentationTest extends NeqSimTest {
   void alarmPagesRespectSafetyBoundary() throws Exception {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
     String guide = read(repositoryRoot.resolve("docs/safety/alarm_system_guide.md"));
-    String integration =
-        read(repositoryRoot.resolve("docs/safety/alarm_triggered_logic_example.md"));
+    String integration = read(repositoryRoot.resolve("docs/safety/alarm_triggered_logic_example.md"));
     String lowerIntegration = integration.toLowerCase(Locale.ROOT);
 
     assertTrue(guide.startsWith("---\ntitle:"));
@@ -85,10 +84,10 @@ public class AlarmSystemDocumentationTest extends NeqSimTest {
     assertFalse(integration.contains("ISA-18.2 Aligned"));
     assertFalse(integration.contains("SIL-1"));
     assertFalse(integration.contains("SIL-2"));
-    assertTrue(integration.contains(
-        "src/test/java/neqsim/process/util/example/ProcessLogicAlarmIntegratedExample.java"));
-    assertTrue(integration.contains(
-        "does **not** implement or prove two-out-of-three voting at the alarm-manager layer"));
+    assertTrue(
+        integration.contains("src/test/java/neqsim/process/util/example/ProcessLogicAlarmIntegratedExample.java"));
+    assertTrue(
+        integration.contains("does **not** implement or prove two-out-of-three voting at the alarm-manager layer"));
     assertTrue(integration.contains("must not be counted as independent or credited safeguards"));
   }
 
@@ -122,18 +121,13 @@ public class AlarmSystemDocumentationTest extends NeqSimTest {
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
-    DiagnosticCollector<JavaFileObject> diagnostics =
-        new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath",
-        classPath, "-d", outputDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        outputDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
       Boolean successful = compiler
-          .getTask(null, manager, diagnostics, options, null,
-              manager.getJavaFileObjects(javaSource.toFile()))
-          .call();
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(javaSource.toFile())).call();
       assertTrue(Boolean.TRUE.equals(successful), diagnostics.getDiagnostics().toString());
     }
 
