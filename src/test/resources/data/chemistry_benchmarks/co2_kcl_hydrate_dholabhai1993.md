@@ -87,7 +87,11 @@ IUPAC-NIST PDF table also resolves the compact HTML rendering of the 348.15 K,
 
 The no-fit `SystemElectrolyteCPAstatoil` calculation iterates total pressure so
 that gas-phase `y_CO2 * P` matches the reported partial pressure, then compares
-aqueous CO2 molality on the same kilogram-water basis. The water-basis
+aqueous CO2 molality on the same kilogram-water basis. The fixed-point driver
+retains its 1e-10 bar stopping criterion and permits up to 80 iterations. This
+replaces the earlier 20-iteration cap, which stopped the 348.15 K low-pressure
+state at a 4.69e-5 bar residual; no numerical or experimental tolerance is
+relaxed. The water-basis
 calculation explicitly divides aqueous CO2 moles by aqueous water moles times
 the water molar mass; it does not use the generic component `getMolality`
 method, whose denominator is total phase mass. Source salting-out order is

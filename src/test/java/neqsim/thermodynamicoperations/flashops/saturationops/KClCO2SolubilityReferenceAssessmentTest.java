@@ -35,6 +35,8 @@ class KClCO2SolubilityReferenceAssessmentTest {
   private static final double RELATIVE_SOLUBILITY_UNCERTAINTY = 0.012;
   private static final double CO2_ACTIVITY_COEFFICIENT_UNCERTAINTY = 0.04;
   private static final double TEMPERATURE_UNCERTAINTY_K = 0.1;
+  private static final double PARTIAL_PRESSURE_CONVERGENCE_TOLERANCE_BAR = 1.0e-10;
+  private static final int MAX_PARTIAL_PRESSURE_ITERATIONS = 80;
 
   /**
    * Executes the complete five-temperature NIST series at reported CO2 partial pressure without fitting.
@@ -104,12 +106,13 @@ class KClCO2SolubilityReferenceAssessmentTest {
     ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
 
     double actualPartialPressureBara = Double.NaN;
-    for (int iteration = 0; iteration < 20; iteration++) {
+    for (int iteration = 0; iteration < MAX_PARTIAL_PRESSURE_ITERATIONS; iteration++) {
       operations.TPflash();
       fluid.init(3);
       PhaseInterface gas = fluid.getPhase("gas");
       actualPartialPressureBara = gas.getComponent("CO2").getx() * fluid.getPressure();
-      if (Math.abs(actualPartialPressureBara - reference.targetCo2PartialPressureBara) < 1.0e-10) {
+      if (Math.abs(actualPartialPressureBara - reference.targetCo2PartialPressureBara)
+          < PARTIAL_PRESSURE_CONVERGENCE_TOLERANCE_BAR) {
         break;
       }
       fluid.setPressure(fluid.getPressure() * reference.targetCo2PartialPressureBara / actualPartialPressureBara);
