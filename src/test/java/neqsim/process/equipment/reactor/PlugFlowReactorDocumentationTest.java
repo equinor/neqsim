@@ -31,8 +31,8 @@ import org.junit.jupiter.api.io.TempDir;
  * @version 1.0
  */
 class PlugFlowReactorDocumentationTest extends NeqSimTest {
-  private static final Pattern WORKED_EXAMPLE = Pattern.compile(
-      "(?s)<!-- pfr-worked-example-(\\d):start -->\\s*```java\\r?\\n(.*?)"
+  private static final Pattern WORKED_EXAMPLE = Pattern
+      .compile("(?s)<!-- pfr-worked-example-(\\d):start -->\\s*```java\\r?\\n(.*?)"
           + "```\\s*<!-- pfr-worked-example-\\1:end -->");
 
   @TempDir
@@ -58,8 +58,7 @@ class PlugFlowReactorDocumentationTest extends NeqSimTest {
       exampleCount++;
       String exampleNumber = examples.group(1);
       String exampleBody = examples.group(2);
-      assertEquals(Integer.toString(exampleCount), exampleNumber,
-          "Worked examples must remain ordered and contiguous");
+      assertEquals(Integer.toString(exampleCount), exampleNumber, "Worked examples must remain ordered and contiguous");
       assertFalse(Pattern.compile("System\\.(?:out|err)").matcher(exampleBody).find(),
           "Published examples must use Log4j2 rather than console output");
       assertTrue(exampleBody.contains("Logger logger = LogManager.getLogger("));
@@ -81,42 +80,28 @@ class PlugFlowReactorDocumentationTest extends NeqSimTest {
         + "import neqsim.process.equipment.reactor.KineticReaction;\n"
         + "import neqsim.process.equipment.reactor.PlugFlowReactor;\n"
         + "import neqsim.process.equipment.reactor.ReactorAxialProfile;\n"
-        + "import neqsim.process.equipment.stream.Stream;\n"
-        + "import neqsim.thermo.system.SystemInterface;\n"
-        + "import neqsim.thermo.system.SystemSrkEos;\n"
-        + "import org.apache.logging.log4j.LogManager;\n"
-        + "import org.apache.logging.log4j.Logger;\n\n"
-        + "public final class " + className + " {\n"
-        + "  private " + className + "() {}\n\n"
-        + "  public static void main(String[] args) {\n"
-        + exampleBody
-        + "  }\n"
-        + "}\n";
+        + "import neqsim.process.equipment.stream.Stream;\n" + "import neqsim.thermo.system.SystemInterface;\n"
+        + "import neqsim.thermo.system.SystemSrkEos;\n" + "import org.apache.logging.log4j.LogManager;\n"
+        + "import org.apache.logging.log4j.Logger;\n\n" + "public final class " + className + " {\n" + "  private "
+        + className + "() {}\n\n" + "  public static void main(String[] args) {\n" + exampleBody + "  }\n" + "}\n";
   }
 
   private void compile(JavaCompiler compiler, Path source) throws Exception {
-    DiagnosticCollector<JavaFileObject> diagnostics =
-        new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath",
-        classPath, "-d", temporaryDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
-      Boolean successful =
-          compiler
-              .getTask(null, manager, diagnostics, options, null,
-                  manager.getJavaFileObjects(source.toFile()))
-              .call();
+    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        temporaryDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(source.toFile())).call();
       assertTrue(Boolean.TRUE.equals(successful),
           "docs/process/equipment/plug_flow_reactor.md: " + diagnostics.getDiagnostics());
     }
   }
 
   private void execute(String className) throws Exception {
-    try (URLClassLoader loader =
-        new URLClassLoader(new URL[] {temporaryDirectory.toUri().toURL()},
-            getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {temporaryDirectory.toUri().toURL()},
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> exampleClass = Class.forName(className, true, loader);
       assertTrue(exampleClass.desiredAssertionStatus());
