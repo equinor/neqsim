@@ -1,3 +1,8 @@
+---
+title: "Sample validation report of the synthetic flow-assurance demonstration"
+description: "Validation report written by neqsim flow-assurance-report --demo (synthetic data, readiness SCREENING)."
+---
+
 # Flow-assurance study validation
 
 Overall: **WARN** - readiness **SCREENING**: synthetic inputs; not for design or construction
