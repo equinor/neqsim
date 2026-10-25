@@ -1,0 +1,73 @@
+# SYNTHETIC workflow-test cases for the single-flowline tie-back. Rates are MASS rates; source pressure is CALCULATED.
+schema: flow_assurance_cases.v1
+topology_variants:
+  - {id: DEFAULT, description: "Template S produces to the host through the flowline and riser"}
+cases:
+  - id: BASE
+    label: "Base - plateau"
+    role: design
+    stage: plateau
+    topology_variant: DEFAULT
+    fluid: WET-GAS-1
+    description: "Plateau rate, low water production, MEG injected at the template"
+    sources:
+      TMPL-S: {hc_rate: {value: 12.0, unit: kg/s, basis: mass}, water_rate: {value: 800.0, unit: kg/h, basis: mass}, t_c: 70.0,
+               inhibitor_rate: {value: 400.0, unit: kg/h, basis: mass}}
+    inhibitor: {name: MEG, purity_wt: 0.90, basis: "lean MEG stream, mass fraction MEG; no losses to gas or condensate"}
+    boundary: {outlet: {node: HOST-IN, type: pressure, value: {value: 60.0, unit: bara}, reference: "host inlet, riser top battery limit"},
+               inlet: {type: rate_specified, note: "source pressure is solved"}}
+    shut_in: {settle_out_pressure_bara: 110.0, ambient_note: "seabed ambient per route; inhibitor retained in place", duration_h: 48.0}
+  - id: LOW
+    label: "Low rate - minimum stable rate"
+    role: scenario
+    stage: turndown
+    topology_variant: DEFAULT
+    fluid: WET-GAS-1
+    description: "35 % of plateau hydrocarbon rate; MEG scaled with water"
+    sources:
+      TMPL-S: {hc_rate: {value: 4.2, unit: kg/s, basis: mass}, water_rate: {value: 280.0, unit: kg/h, basis: mass}, t_c: 70.0,
+               inhibitor_rate: {value: 140.0, unit: kg/h, basis: mass}}
+    inhibitor: {name: MEG, purity_wt: 0.90, basis: "lean MEG stream, mass fraction MEG; no losses to gas or condensate"}
+    boundary: {outlet: {node: HOST-IN, type: pressure, value: {value: 60.0, unit: bara}, reference: "host inlet, riser top battery limit"},
+               inlet: {type: rate_specified, note: "source pressure is solved"}}
+    shut_in: {settle_out_pressure_bara: 110.0, ambient_note: "seabed ambient per route; inhibitor retained in place", duration_h: 48.0}
+  - id: LATE
+    label: "Late life - high water"
+    role: scenario
+    stage: late_life
+    topology_variant: DEFAULT
+    fluid: WET-GAS-1
+    description: "Declining gas rate, ten times the plateau water rate, lower wellhead temperature and host pressure; MEG dose NOT increased"
+    sources:
+      TMPL-S: {hc_rate: {value: 7.0, unit: kg/s, basis: mass}, water_rate: {value: 8000.0, unit: kg/h, basis: mass}, t_c: 62.0,
+               inhibitor_rate: {value: 400.0, unit: kg/h, basis: mass}}
+    inhibitor: {name: MEG, purity_wt: 0.90, basis: "lean MEG stream, mass fraction MEG; no losses to gas or condensate"}
+    boundary: {outlet: {node: HOST-IN, type: pressure, value: {value: 55.0, unit: bara}, reference: "host inlet, riser top battery limit"},
+               inlet: {type: rate_specified, note: "source pressure is solved"}}
+    shut_in: {settle_out_pressure_bara: 95.0, ambient_note: "seabed ambient per route; inhibitor retained in place", duration_h: 48.0}
+  - id: LATE-M1
+    label: "Late life - MEG dose raised to 30 wt % aqueous"
+    role: mitigation
+    stage: late_life
+    topology_variant: DEFAULT
+    baseline_case: LATE
+    fluid: WET-GAS-1
+    description: "As LATE with the lean MEG rate computed for a 30 wt % MEG mass fraction in the aqueous phase"
+    sources:
+      TMPL-S: {hc_rate: {value: 7.0, unit: kg/s, basis: mass}, water_rate: {value: 8000.0, unit: kg/h, basis: mass}, t_c: 62.0, inhibitor_target_wt: 0.30}
+    inhibitor: {name: MEG, purity_wt: 0.90, basis: "lean MEG stream, mass fraction MEG; no losses to gas or condensate"}
+    boundary: {outlet: {node: HOST-IN, type: pressure, value: {value: 55.0, unit: bara}, reference: "host inlet, riser top battery limit"},
+               inlet: {type: rate_specified, note: "source pressure is solved"}}
+    shut_in: {settle_out_pressure_bara: 95.0, ambient_note: "seabed ambient per route; inhibitor retained in place", duration_h: 48.0}
+events:
+  - {id: EVT-SHUTIN-01, case: BASE, type: shut_in, analysis: lumped_cooldown, time_origin: "t = 0 at simultaneous closure of the tree valve and the host inlet valve",
+     description: "Unplanned shut-in from base operation; time to reach the hydrate equilibrium temperature at the settle-out pressure"}
+  - {id: EVT-SHUTIN-02, case: LATE, type: shut_in, analysis: lumped_cooldown, time_origin: "t = 0 at simultaneous closure of the tree valve and the host inlet valve",
+     description: "Shut-in from late-life operation at the baseline MEG dose"}
+  - id: EVT-RESTART-01
+    case: LATE
+    type: restart
+    analysis: external
+    description: "Restart after 24 h shut-in with warm-up and liquid sweep-out through the riser"
+    required_outputs: ["riser-top liquid rate versus time", "host inlet pressure versus time", "peak liquid slug volume at the host inlet", "minimum temperature margin to hydrate during warm-up"]
+    comparison_criteria: "peak slug volume within the host slug-catcher allowance (not supplied in this test)"

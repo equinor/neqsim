@@ -269,7 +269,7 @@ def hydrate_sheet(sh, ds, rs, ctx):
                   ("marker", "circle", False, "Minimum margin, criterion FAIL (hollow)")]
     sh.notes = ["Margin = fluid temperature minus the CPA hydrate equilibrium temperature at the local pressure and the aqueous inhibitor mass fraction of the local stream (equilibrium, not plugging time).",
                 "The inhibitor mass fraction follows the injection rate balance; losses to gas and condensate are not modelled (upper bound on the concentration).",
-                "The 3 K margin is a synthetic project criterion, not a code value. The hatched band is the region below the criterion.",
+                "The %g K margin is a project criterion (source: %s), not a code value. The hatched band is the region below the criterion." % (lim, crit.get("source", "see basis")),
                 "Bottom panel: governing case %s; line styles are labelled on the panel and do not follow the case colours of the legend; the uninhibited curve is a reference, not an operating mode." % gcase,
                 "Hydrate temperatures are interpolated in ln(p) on a pressure grid; the interpolation check is reported in the validation appendix."]
     sh.scale_text = "NOT TO SCALE"

@@ -40,7 +40,8 @@ Exit codes: 0 ok, 1 strict validation failure, 2 input or usage error (nothing i
 | `standards_register.yaml` | standard, status, assessment status | public metadata only; text not read means not assessed |
 
 An unfilled template (`unavailable - TO BE CONFIRMED` where a number is required) is rejected with
-exit 2. Templates: `devtools/fa_templates/`; synthetic example: `devtools/fa_examples/offshore_tieback/`.
+exit 2. Templates: `devtools/fa_templates/`; synthetic examples: `devtools/fa_examples/offshore_tieback/` (two sources, junction, PLEM)
+and `devtools/fa_examples/single_flowline/` (one source, one path).
 
 ## What is calculated and what is not
 
@@ -63,7 +64,7 @@ the result back through `--external-results`.
 
 ```
 report/   FA-...docx, .pdf (Word or LibreOffice; WARN FA-DOC-PDF when neither exists), validation_report.json/.md, report_facts.json
-drawings/ svg/ (10 A3 sheets), png/, <doc>_drawings.pdf, layout_spec.json
+drawings/ svg/ (10 A3 sheets; 9 for a single-path route), png/, <doc>_drawings.pdf, layout_spec.json
 dataset/  flow_assurance_study.json (schema flow_assurance_study.v1, hash in every title block)
 handoff/  external-event JSON per open transient event
 figures/  report figures      cache/  per-case solver cache (keyed on inputs and NeqSim version)
@@ -114,6 +115,8 @@ Readiness is `NOT_READY` / `SCREENING` / `REVIEWED`. `REVIEWED` needs a human re
 - **Topology variants** support `isolate_sources` and `isolate_segments` only; bypass, reroute or added
   segments raise an error (extension point: `fa_geometry.apply_variant`).
 - **Branching**: one junction (common trunk) per study; nested junctions are rejected.
+- **Narrative is data-driven**: report and drawing text must come from the dataset (case roles, criteria, extrema, mitigations),
+  never from case IDs, option names or limits of the demo. A second geometry (`single_flowline`) is the regression test for this.
 - Tokens need a format slot: `[[crit:C-HYD-01:BASE:value|.1f]]`, `[[seg:FL-A-01:length_m|.0f|unit=km]]`.
 
 ## References

@@ -72,6 +72,7 @@ packages = [
     "fa_templates",
     "fa_examples",
     "fa_examples.offshore_tieback",
+    "fa_examples.single_flowline",
 ]
 
 [tool.setuptools.package-data]
@@ -79,6 +80,7 @@ task_template = ["*", "*/*", "*/*/*", "*/*/*/*"]
 psr_templates = ["*.yaml"]
 fa_templates = ["*.yaml", "*.md"]
 "fa_examples.offshore_tieback" = ["*.yaml"]
+"fa_examples.single_flowline" = ["*.yaml"]
 
 [tool.setuptools.exclude-package-data]
 "*" = ["__pycache__/*", "*.pyc"]

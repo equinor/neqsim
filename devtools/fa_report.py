@@ -51,12 +51,13 @@ def make_figures(ds, fig_dir):
     plt.close(fig)
     out["profiles"] = (p, "Pressure and temperature along path %s for the design and scenario cases" % pid,
                        "Pressure and temperature along path %s (design and scenario cases)" % pid)
+    first = next((c["id"] for c in ds["cases"] if c["role"] == "design"), ds["cases"][0]["id"])
     crit = next(c for c in ds["criteria"] if c["quantity"] == "hydrate_margin_min")
     fig, ax = plt.subplots(figsize=(7.2, 3.8))
     for c in ds["cases"]:
         r = ds["results"][c["id"]]
         for q, pth in enumerate(r["profiles"]):
-            if q > 0 and c["id"] != "BASE":
+            if q > 0 and c["id"] != first:
                 continue
             pr, der = r["profiles"][pth], r["profiles_derived"][pth]
             ys = [None if v is None else v for v in der["margin_k"]]
@@ -144,6 +145,29 @@ class FaReportBuilder(psr_report.ReportBuilder):
 
     def tok(self, ref, fmt=None, unit=None):
         return "[[%s|%s%s]]" % (ref, fmt or "", "|unit=" + unit if unit else "")
+
+    def design_case(self):
+        """Id of the design case (first case when none has the design role)."""
+        return next((c["id"] for c in self.ds["cases"] if c["role"] == "design"), self.ds["cases"][0]["id"])
+
+    def sheet_no(self, dwg):
+        """Ordinal sheet number of drawing ``DWG-NN`` in this package (drawing numbers stay stable when a sheet is not produced)."""
+        for i, s in enumerate(self.manifest["sheets"]):
+            if str(s["drawing_number"]).endswith("DWG-%02d" % dwg):
+                return i + 1
+        return None
+
+    def synthetic(self):
+        """True when any input is synthetic or the route is only schematic."""
+        return self.ds["route"]["status"] in ("synthetic", "schematic") or any(s.get("input_class") == "synthetic" for s in self.ds["sources"])
+
+    def seg_kind(self, sid):
+        return next((s["kind"] for s in self.ds["route"]["segments"] if s["id"] == sid), "segment")
+
+    def lowest_case(self, ext_id):
+        """Case id with the smallest value of a derived extremum (None when no case has a value)."""
+        items = [(self.ds["results"][c]["extrema"][ext_id]["value"], c) for c in self.cases if self.ds["results"][c]["extrema"][ext_id]["value"] is not None]
+        return min(items)[1] if items else None
 
     def landscape(self):
         self.section(landscape=True)
@@ -296,7 +320,7 @@ class FaReportBuilder(psr_report.ReportBuilder):
         self.table(["Segment", "Line tag", "From > to", "Length (m)", "Horizontal (m)", "dz (m)", "ID (mm)", "Insulation", "Burial", "U inner (W/m2K)"], rows,
                    caption="Line list: measured length, horizontal length, elevation change, inside diameter, insulation, burial and U-value (inner-area basis)", font=7,
                    widths=[22, 40, 44, 20, 22, 16, 18, 36, 24, 24], align=["left"] * 3 + ["right"] * 4 + ["left"] * 2 + ["right"])
-        self.P("Non-modelled jumpers carry no hydraulic or thermal values (n/a). The U-value is referenced to the inner pipe surface because the hydraulic solver uses pi x ID x L; the layered build-up is on drawing sheet 6.")
+        self.P("Non-modelled jumpers carry no hydraulic or thermal values (n/a). The U-value is referenced to the inner pipe surface because the hydraulic solver uses pi x ID x L; the layered build-up is on drawing sheet %s." % self.sheet_no(6))
         self.H("4.1 Drawing register", 2)
         rows = [(s["drawing_number"], s["title"], "%d of %d" % (s["number"], len(self.manifest["sheets"])), s["qa"], os.path.basename(s["svg"])) for s in self.manifest["sheets"]]
         self.table(["Drawing number", "Title", "Sheet", "Layout QA", "Editable source"], rows, caption="Drawing register (A3 landscape SVG sources; vector PDF and PNG previews delivered)", font=8,
@@ -377,15 +401,20 @@ class FaReportBuilder(psr_report.ReportBuilder):
                    caption="Steady results by case (source pressures are calculated; host pressure is specified)", font=7, widths=[22, 50, 16, 16, 24, 18, 18], align=["left"] * 2 + ["right"] * 5)
         if "profiles" in self.figs:
             self.picture(*self._fig("profiles", 160))
-        base = self.cases[0]
+        base = self.design_case()
         r = ds["results"][base]
         rs_id = next((s["id"] for s in ds["route"]["segments"] if s["kind"] == "riser" and s.get("hydraulic", True)), None)
-        self.P("Reading the figure: in case %s the pressure falls from [[res:%s:streams.%s.p_bara|.1f]] to [[res:%s:streams.%s.p_bara|.1f]] bara along the %s km route; the riser alone accounts for "
-               "[[segres:%s:%s:dp_bar|.1f]] bar because the liquid holdup in the riser rises to [[segres:%s:%s:holdup_max|.2f]] and the hydrostatic head of the liquid dominates. "
-               "The temperature falls towards the ambient value in the insulated lines and by a further step in the riser, where gas expansion and lifting cool the fluid; the lowest arrival temperature occurs in the "
-               "turndown case ([[res:TURNDOWN:streams.%s.t_c|.1f]] degC) because the low flow loses most heat per unit mass (Section 10)." % (
-                   base, base, list(r["sources"])[0], base, r["sink"], "%.1f" % ds["facts"]["route_length_km"], base, rs_id, base, rs_id, r["sink"]) if rs_id and "TURNDOWN" in ds["results"] else
-               "Pressure and temperature profiles are shown in the figure above.")
+        first_src = list(r["sources"])[0]
+        text = ("Reading the figure: in case %s the pressure falls from [[res:%s:streams.%s.p_bara|.1f]] to [[res:%s:streams.%s.p_bara|.1f]] bara along the %.1f km route"
+                % (base, base, first_src, base, r["sink"], ds["facts"]["route_length_km"]))
+        if rs_id and rs_id in r["segments"]:
+            text += "; the riser accounts for [[segres:%s:%s:dp_bar|.1f]] bar of this and its maximum steady liquid holdup is [[segres:%s:%s:holdup_max|.2f]]" % (base, rs_id, base, rs_id)
+        text += ". "
+        arrivals = [(ds["results"][c]["streams"][r["sink"]]["t_c"], c) for c in self.cases if r["sink"] in ds["results"][c]["streams"]]
+        if arrivals:
+            cold = min(arrivals)[1]
+            text += "The lowest host arrival temperature of all cases is [[res:%s:streams.%s.t_c|.1f]] degC in case %s (Section 10)." % (cold, r["sink"], cold)
+        self.P(text)
         self.P("Thermal basis: layered U-values are referenced to the inner area; the internal film is neglected, which makes the arrival temperatures conservative (low). Insulation and burial transitions along the path: " +
                ("; ".join("%s > %s at %s" % (t["from_segment"], t["to_segment"], t["node"]) for t in ds["route"]["transitions"]) or "none") + ".")
         self.landscape()
@@ -418,10 +447,17 @@ class FaReportBuilder(psr_report.ReportBuilder):
                    widths=[34, 26, 34, 50, 22], align=["left", "right", "right", "left", "left"])
         if "cooldown" in self.figs:
             self.picture(*self._fig("cooldown", 150))
+        gov_by_seg = {}
+        for cid in self.cases:
+            cd = ds["results"][cid].get("cooldown")
+            if cd and cd.get("governing"):
+                gov_by_seg.setdefault(cd["governing"]["segment_id"], []).append(cid)
+        gov_txt = "; ".join("%s (%s) in %s" % (sid, self.seg_kind(sid), ", ".join(cs)) for sid, cs in gov_by_seg.items())
         self.P("Reading the figure: the curves start at the steady operating temperature of the governing location of each case and decay exponentially towards the ambient temperature with the time constant of the "
                "local build-up; the circle marks the time at which the hydrate equilibrium temperature at the settle-out pressure is reached. A governing time of 0 h means the steady operating temperature is already at or below "
-               "that temperature at the location (the hydrate criterion is already violated in operation). The governing location is most often the end of a thinly insulated branch or the riser top - not the trunk - "
-               "so trunk insulation changes alone do not move it (Section 13).")
+               "that temperature at the location (the hydrate criterion is already violated in operation). " +
+               (("Governing locations (segment, kind, cases): %s. " % gov_txt) if gov_txt else "") +
+               "Whether a change of insulation on another segment moves the governing time depends on where the governing location is; the mitigation comparison in Section 13 shows the calculated effect of each declared option.")
         self.H("9.1 External events (not simulated)", 2)
         rows = [(e["id"], e["case"], e["type"], {"calculated": "calculated (lumped cooldown)", "external_open": "EXTERNAL - NOT SIMULATED - OPEN", "external_supplied": "external result supplied, not verified here", "open": "OPEN"}[e["status"]],
                  e["description"], e.get("handoff", "-")) for e in ds["events"]]
@@ -444,17 +480,31 @@ class FaReportBuilder(psr_report.ReportBuilder):
             for n, s in r["sources"].items():
                 if n in r["streams"]:
                     rows.append(self.row([cid, n, "%.0f" % (3600.0 * s["water_kg_s"]), "%.0f" % (3600.0 * s["lean_inhibitor_kg_s"]), "%.1f" % (100.0 * s["aqueous_inhibitor_wt"])]))
-        self.table(["Case", "Source", "Water (kg/h)", "Lean MEG (kg/h, 90 wt%)", "Aqueous MEG (wt%)"], rows, caption="Inhibitor injection-rate balance (mass basis)", font=8, widths=[34, 24, 24, 38, 30], align=["left", "left"] + ["right"] * 3)
+        self.table(["Case", "Source", "Water (kg/h)", "Lean inhibitor (kg/h, purity per case)", "Aqueous MEG (wt%)"], rows, caption="Inhibitor injection-rate balance (mass basis)", font=8, widths=[34, 24, 24, 38, 30], align=["left", "left"] + ["right"] * 3)
         rows = [self.row([cid, "[[ext:%s:hyd_margin_min:value|.1f]]" % cid, "KP [[ext:%s:hyd_margin_min:chainage_m|.1f|unit=km]] km, %s" % (cid, ds["results"][cid]["extrema"]["hyd_margin_min"]["segment_id"]),
                           "[[ext:%s:hyd_margin_unin_min:value|.1f]]" % cid, "[[crit:%s:%s:status]]" % (crit["id"], cid)]) for cid in self.cases]
         self.table(["Case", "Min margin, inhibited (K)", "Location", "Min margin if uninhibited (K)", "%s (>= %g K)" % (crit["id"], crit["value"])], rows,
                    caption="Hydrate margin: governing values and criterion status", font=8, widths=[34, 34, 44, 40, 28], align=["left", "right", "left", "right", "left"])
         if "margin" in self.figs:
             self.picture(*self._fig("margin", 150))
-        self.P("Reading the figure: the margin is largest at the template outlets and falls along the route as the stream cools; the smallest margin is at the riser top because the stream cools by expansion and lifting there. "
-               "In the turndown case the inhibited margin is [[ext:TURNDOWN:hyd_margin_min:value|.1f]] K at KP [[ext:TURNDOWN:hyd_margin_min:chainage_m|.1f|unit=km]] km, below the %g K criterion, while the uninhibited reference is "
-               "[[ext:TURNDOWN:hyd_margin_unin_min:value|.1f]] K: inhibition is required and, at 30 wt%% aqueous MEG, still insufficient in turndown." % crit["value"]
-               if "TURNDOWN" in ds["results"] else "The margin profile is shown in the figure above.")
+        low = self.lowest_case("hyd_margin_min")
+        if low:
+            ex_low = ds["results"][low]["extrema"]
+            r_low = ds["results"][low]
+            inh = ", ".join("%.0f wt%% at %s" % (100.0 * s["aqueous_inhibitor_wt"], n) for n, s in r_low["sources"].items() if n in r_low["streams"])
+            m_in, m_un = ex_low["hyd_margin_min"]["value"], ex_low["hyd_margin_unin_min"]["value"]
+            text = ("Reading the figure: the smallest inhibited margin of all cases is [[ext:%s:hyd_margin_min:value|.1f]] K in case %s at KP [[ext:%s:hyd_margin_min:chainage_m|.1f|unit=km]] km (segment %s, %s); "
+                    "in that case the aqueous MEG mass fraction is %s and the uninhibited reference margin is [[ext:%s:hyd_margin_unin_min:value|.1f]] K. "
+                    % (low, low, low, ex_low["hyd_margin_min"]["segment_id"], self.seg_kind(ex_low["hyd_margin_min"]["segment_id"]), inh or "not applicable", low))
+            if m_in is not None and m_in < crit["value"]:
+                text += "The inhibited margin is below the %g K criterion in this case: the stated inhibitor dose does not satisfy the criterion there." % crit["value"]
+            elif m_un is not None and m_un < crit["value"]:
+                text += "The uninhibited margin is below the %g K criterion while the inhibited margin meets it: inhibition is required in this case." % crit["value"]
+            else:
+                text += "The %g K criterion is met even without inhibitor in this case." % crit["value"]
+            self.P(text)
+        else:
+            self.P("The margin profile is shown in the figure above.")
         hc = next((b for b in ds["benchmarks"] if b["id"] == "XCHECK-HAMMERSCHMIDT"), None)
         if hc and hc["value"] is not None:
             self.P("Cross-check: the CPA hydrate depression for 20 wt%% MEG at 100 bara is %.1f K against %.1f K from the empirical Hammerschmidt rule. The rule is a screening estimate and is not a validation; the difference is reported "
@@ -469,9 +519,19 @@ class FaReportBuilder(psr_report.ReportBuilder):
         rows = [(t["id"], t["threat"], t["status"].upper().replace("_", " "), t["reason"], ", ".join(t["methods"]) or "-") for t in ds["threats"]]
         self.table(["Id", "Threat", "Status", "Reason / evidence basis", "Methods"], rows, caption="Threat applicability matrix", font=7, widths=[26, 60, 28, 120, 30], align=["left"] * 5)
         self.portrait()
-        self.P("Erosional velocity: the maximum ratio of mixture velocity to the project erosional velocity is [[ext:BASE:erosional_ratio_max:value|.2f]] in the base case (limit [[crit:C-EROS-01:value|.1f]]); "
-               "the maximum mixture velocity is [[ext:BASE:v_mix_max:value|.1f]] m/s (limit [[crit:C-VEL-01:value|.0f]] m/s). These are project criteria for clean service and not a DNV-RP-O501 assessment. "
-               "Wax, scale and CO2 corrosion could not be assessed because the required inputs were not supplied (data gap G-02)." if "BASE" in ds["results"] else "See the threat matrix.")
+        base = self.design_case()
+        crit_q = {c["quantity"]: c for c in ds["criteria"]}
+        open_t = [t["id"] for t in ds["threats"] if t["status"] in ("open", "unsupported")]
+        text = "Erosional velocity: "
+        if "erosional_ratio_max" in crit_q and "mixture_velocity_max" in crit_q:
+            text += ("the maximum ratio of mixture velocity to the project erosional velocity is [[ext:%s:erosional_ratio_max:value|.2f]] in case %s (limit [[crit:%s:value|.1f]]); "
+                     "the maximum mixture velocity is [[ext:%s:v_mix_max:value|.1f]] m/s (limit [[crit:%s:value|.0f]] m/s). These are project criteria for clean service and not a DNV-RP-O501 assessment. "
+                     % (base, base, crit_q["erosional_ratio_max"]["id"], base, crit_q["mixture_velocity_max"]["id"]))
+        else:
+            text += "no erosional-velocity or velocity criterion is declared in the basis; the maximum mixture velocity of case %s is [[ext:%s:v_mix_max:value|.1f]] m/s (not a DNV-RP-O501 assessment). " % (base, base)
+        if open_t:
+            text += "Threats without a result (open or unsupported): %s; see the threat matrix and the data gaps for the missing inputs." % ", ".join(open_t)
+        self.P(text)
 
     # --- 12 envelope ---
     def envelope(self):
@@ -480,8 +540,19 @@ class FaReportBuilder(psr_report.ReportBuilder):
         ok = [c["id"] for c in ds["cases"] if all(cr["by_case"].get(c["id"], {"status": "NOT APPLICABLE"})["status"] in ("PASS", "NOT APPLICABLE") for cr in ds["criteria"])]
         bad = [c["id"] for c in ds["cases"] if c["id"] not in ok]
         self.P("Cases that meet every applicable criterion: %s. Cases with at least one criterion not met: %s." % (", ".join(ok) or "none", ", ".join(bad) or "none"))
-        self.P("Operating limits supported by the calculations (screening, within the stated basis): required source pressure up to [[ext:BASE:source_pressure_max:value|.0f]] bara in the base case against the available 180 bara; "
-               "the hydrate margin criterion constrains the lowest stable rate: turndown at the baseline MEG dose does not satisfy it (Section 10)." if "BASE" in ds["results"] else "No operating limits can be stated.")
+        base = self.design_case()
+        src = next((c for c in ds["criteria"] if c["quantity"] == "source_pressure_max"), None)
+        hyd = next((c for c in ds["criteria"] if c["quantity"] == "hydrate_margin_min"), None)
+        text = "Operating limits supported by the calculations (screening, within the stated basis): "
+        if src:
+            text += "required source pressure up to [[ext:%s:source_pressure_max:value|.0f]] bara in case %s against the available [[crit:%s:value|.0f]] bara; " % (base, base, src["id"])
+        if hyd:
+            hyd_bad = [k for k, v in hyd["by_case"].items() if v["status"] == "FAIL"]
+            text += ("the hydrate margin criterion %s is not met in %s at the stated inhibitor doses, which limits the operating envelope there (Section 10)." % (hyd["id"], ", ".join(hyd_bad))
+                     if hyd_bad else "the hydrate margin criterion %s is met in all applicable cases (Section 10)." % hyd["id"])
+        elif not src:
+            text += "none can be stated because no limiting criterion is declared in the basis."
+        self.P(text)
         self.P("Startup, restart and shutdown recommendations: OPEN. A restart procedure depends on liquid sweep-out, depressurisation and warm-up transients that were not simulated (Section 9). No procedure is recommended by this report; "
                "the shut-in cooldown time to the hydrate temperature (Section 9) gives the time available before hydrate-forming conditions are reached and the criterion status shows where that allowance is not met.")
 
@@ -504,9 +575,23 @@ class FaReportBuilder(psr_report.ReportBuilder):
             if m["status"] != "calculated":
                 continue
             self.P("%s - %s. Remaining uncertainty: %s." % (m["id"], m["title"], m["remaining_uncertainty"]), bold=False)
-        self.P("Discriminating observation: the governing cooldown location is at the end of the branch or the riser top, not in the trunk; therefore thicker trunk insulation (M2) improves the cooldown time only where the trunk governs, "
-               "while a higher MEG rate (M1) lowers the criterion temperature everywhere. The combined option M3 addresses both the criterion temperature and the branch heat loss; see the criterion status of each option case in Section 1. "
-               "Heating, rate or pressure changes and pigging or operating procedures were not quantified and remain open alternatives.")
+        calc = [m for m in ds["mitigations"] if m["status"] == "calculated"]
+        if calc:
+            def dl(m, metric):
+                return next((d for d in m["deltas"] if d["metric"] == metric), None)
+
+            parts = []
+            for m in calc:
+                bits = []
+                for metric, name in (("hyd_margin_min", "minimum hydrate margin"), ("cooldown_time_min", "minimum cooldown time")):
+                    d = dl(m, metric)
+                    if d and d["delta"] is not None:
+                        bits.append("%s %+.1f %s (%s to %s)" % (name, d["delta"], d["unit"], "n/a" if d["baseline"] is None else "%.1f" % d["baseline"], "n/a" if d["option"] is None else "%.1f" % d["option"]))
+                parts.append("%s (%s vs %s): %s" % (m["id"], m["case"], m["baseline"], "; ".join(bits) or "no comparable values"))
+            self.P("Calculated effect of each declared option: " + " | ".join(parts) + ". The criterion status of each option case is in Section 1 and on the operating-limit drawing; an option that improves "
+                   "one metric can leave another criterion unmet. Heating, rate or pressure changes and pigging or operating procedures were not quantified and remain open alternatives.")
+        else:
+            self.P("No mitigation option is declared in the basis, so no alternatives are compared. Inhibitor dose, insulation, heating, rate or pressure changes and operating procedures remain open alternatives.")
 
     # --- 14 sensitivity ---
     def sensitivity(self):
@@ -521,10 +606,14 @@ class FaReportBuilder(psr_report.ReportBuilder):
                        caption="Spatial sensitivity of case %s (study mesh: %d increments per segment; reference: finest mesh)" % (ms["case"], ds["solver"]["increments"]), font=7, widths=[20, 28, 26, 26, 26, 26, 28],
                        align=["left"] + ["right"] * 6)
             coarse = ms["rows"][0]
+            tol = ms["tolerance"]
+            exceeds = any(v is not None and abs(v) > tol.get(k, float("inf")) for v, k in ((coarse["d_arrival_t_k"], "t_k"), (coarse["d_margin_k"], "margin_k")))
             self.P("Spatial gate: status %s with tolerances %s (declared before the comparison); the gate compares the study mesh with the finest mesh for the case with the smallest hydrate margin. "
-                   "The coarsest mesh (%d increments) differs from the finest by %s K in arrival temperature and %s K in the minimum margin, so a coarse mesh is not acceptable for this geometry and the study mesh must be confirmed "
-                   "against a finer one for every new geometry." % (ms["status"], json.dumps(ms["tolerance"]), coarse["increments"], "%+.2f" % coarse["d_arrival_t_k"] if coarse["d_arrival_t_k"] is not None else "n/a",
-                                                                       "%+.2f" % coarse["d_margin_k"] if coarse["d_margin_k"] is not None else "n/a"))
+                   "The coarsest mesh (%d increments) differs from the finest by %s K in arrival temperature and %s K in the minimum margin%s" % (
+                       ms["status"], json.dumps(tol), coarse["increments"], "%+.2f" % coarse["d_arrival_t_k"] if coarse["d_arrival_t_k"] is not None else "n/a",
+                       "%+.2f" % coarse["d_margin_k"] if coarse["d_margin_k"] is not None else "n/a",
+                       ", beyond the declared tolerance: a coarse mesh is not acceptable for this geometry and the study mesh must be confirmed against a finer one for every new geometry." if exceeds
+                       else ", within the declared tolerance."))
         by_kind = {}
         for b in ds["benchmarks"]:
             by_kind.setdefault(b["kind"], []).append(b)
@@ -536,19 +625,22 @@ class FaReportBuilder(psr_report.ReportBuilder):
                 self.table(["Id", "Check", "Status", "Value", "Reference", "Deviation", "Tolerance", "Provenance"], rows, caption=label, font=6, widths=[24, 50, 12, 14, 14, 14, 20, 40], align=["left"] * 3 + ["right"] * 3 + ["left"] * 2)
         self.P("Calibration versus validation: no calibration data and no independent measured field or laboratory data exist for this study. The only independent comparison is the secondary-source methane hydrate check; "
                "the hydraulic model is verified against analytic limits only. Experimental or field validation of the hydraulic and hydrate results is OPEN.")
-        self.P("Uncertainty and robustness: no Monte Carlo propagation is performed in this synthetic demonstration; the sensitivity cases (turndown, late life, line-up variant and mitigation options) bound the main drivers. "
-               "Ambient temperature, external film coefficient, inhibitor losses and the hydrate-model error are not propagated and are listed as assumptions.")
+        scen = [c["id"] for c in ds["cases"] if c["role"] == "scenario"]
+        mit = [c["id"] for c in ds["cases"] if c["role"] == "mitigation"]
+        self.P("Uncertainty and robustness: no Monte Carlo propagation is performed in this study; the declared scenario cases (%s) and mitigation cases (%s) bound the main drivers that were defined. "
+               "Ambient temperature, external film coefficient, inhibitor losses and the hydrate-model error are not propagated and are listed as assumptions." % (", ".join(scen) or "none", ", ".join(mit) or "none"))
         self.P("Route and input integrity: %s" % ("; ".join("%s: %s" % (f["code"], f["message"]) for f in ds["route"]["findings"] if f["level"] != "info") or "no route integrity errors or warnings; information items are listed in the dataset") + ".")
 
     # --- 15 conclusions & actions ---
     def conclusions(self):
         ds = self.ds
         self.H("15 Conclusions and action register", 1)
-        self.P("Conclusions (screening, synthetic data):", bold=True)
+        self.P("Conclusions (screening%s):" % (", synthetic data" if self.synthetic() else "; see the readiness label and the open items"), bold=True)
         for c in ds["criteria"]:
             bad = [k for k, v in c["by_case"].items() if v["status"] == "FAIL"]
             self.P("%s: %s." % (c["id"], ("not met in " + ", ".join(bad)) if bad else "met in all applicable cases"), style="List Bullet")
-        self.P("The package demonstrates the workflow; no conclusion applies to a real system.", italic=True)
+        self.P("The package demonstrates the workflow; no conclusion applies to a real system." if self.synthetic() else
+               "These are screening results within the stated basis; open threats, unsupported analyses and data gaps remain open until closed by the actions below.", italic=True)
         n = 0
         rows = []
 
@@ -559,7 +651,8 @@ class FaReportBuilder(psr_report.ReportBuilder):
         for c in ds["criteria"]:
             bad = [k for k, v in c["by_case"].items() if v["status"] == "FAIL"]
             if bad:
-                add("criterion not met", "%s not met in %s: mitigate, change the operating envelope or record an approved deviation" % (c["id"], ", ".join(bad)), "Section 10, 13; sheets 8-9")
+                add("criterion not met", "%s not met in %s: mitigate, change the operating envelope or record an approved deviation" % (c["id"], ", ".join(bad)),
+                    "Section 10, 13; sheets %s-%s" % (self.sheet_no(8), self.sheet_no(9)))
         for t in ds["threats"]:
             if t["status"] in ("open", "unsupported"):
                 add("open threat" if t["status"] == "open" else "unsupported", "%s: %s" % (t["id"], t["reason"]), "threat matrix")
@@ -579,8 +672,12 @@ class FaReportBuilder(psr_report.ReportBuilder):
         ds = self.ds
         self.H("16 Appendices", 1)
         self.H("Appendix A - Drawing package", 2)
+        notes = []
+        if not ds["route"].get("georeferenced"):
+            notes.append("sheet %s is labelled as %s and not georeferenced" % (self.sheet_no(2), "a synthetic local grid" if ds["route"]["status"] == "synthetic" else "a schematic plan"))
+        notes.append("sheets %s and %s are schematic and not to scale" % (self.sheet_no(5), self.sheet_no(6)))
         self.P("The A3 drawings follow, reduced to page width. The SVG sources are editable; the layout specification (layout_spec.json) lists every annotation with its data reference. "
-               "Sheet 2 is labelled as a synthetic local grid and not georeferenced; sheets 5 and 6 are schematic and not to scale.")
+               + "; ".join(notes).capitalize() + ". Drawing numbers stay stable; the sheet number counts the sheets actually produced.")
         for s in self.manifest["sheets"]:
             self.A3()
             self.picture(s["png"], 396, "Drawing %s: %s" % (s["drawing_number"], s["title"]), "%s - %s (A3 landscape, reduced)" % (s["drawing_number"], s["title"]))
