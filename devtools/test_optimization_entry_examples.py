@@ -27,7 +27,7 @@ class OptimizationEntryExamplesTest(unittest.TestCase):
         document = Path(__file__).resolve().parents[1] / "docs/process/optimization/OPTIMIZATION_OVERVIEW.md"
         blocks = re.findall(r"```python\n(.*?)```", document.read_text(encoding="utf-8"), re.S)
         self.assertEqual(3, len(blocks), "Execute every published Python block")
-        lifecycle_block = next(block for block in blocks if "proposal_from_lifecycle_json" in block)
+        lifecycle_block = next(block for block in blocks if "proposal_from_lifecycle_context" in block)
         engine_block = next(block for block in blocks if "findMaximumThroughput" in block)
         optimizer_block = next(block for block in blocks if "ThroughputObjective" in block)
         state = {"__name__": "__main__"}

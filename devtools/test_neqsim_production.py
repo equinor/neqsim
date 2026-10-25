@@ -1456,6 +1456,86 @@ def test_lifecycle_json_proposal_adapter_fails_closed(tmp_path, failure):
             predicted={"rvp_bara": 0.63})
 
 
+def _objective_bound_lifecycle(evidence):
+    """Add exact current-source objective metadata to one valid lifecycle fixture."""
+    candidate = copy.deepcopy(evidence)
+    current = next(period for period in candidate["periods"] if period["period_id"] == "C-1")
+    current["envelope_evidence"]["optimizer_evidence"].update({
+        "objective_name": "validated gas export",
+        "objective_direction": "MAXIMIZE",
+        "objective_unit": "kg/hr",
+        "initial_objective_value": 12700.0,
+        "accepted_objective_value": 13000.0,
+    })
+    return candidate
+
+
+def _objective_context(tmp_path):
+    """Return the task-local goal and reviewed baseline for objective binding tests."""
+    return SimpleNamespace(
+        cycle_id="C-1",
+        goal={"objective": {
+            "metric": "export_kg_hr",
+            "source_name": "validated gas export",
+            "direction": "maximize",
+            "unit": "kg/hr",
+        }},
+        baseline={"kpis": {"export_kg_hr": 12700.0}},
+        cycle_dir=str(tmp_path),
+    )
+
+
+def test_lifecycle_context_binds_source_objective_to_reviewed_baseline(tmp_path):
+    _, evidence, _ = _promotable_schema8_task(tmp_path)
+
+    proposal = production.proposal_from_lifecycle_context(
+        json.dumps(_objective_bound_lifecycle(evidence)),
+        _objective_context(tmp_path),
+        "Increase validated field export",
+        predicted={"rvp_bara": 0.63},
+    )
+
+    assert proposal["objective_kpi"] == "export_kg_hr"
+    assert proposal["baseline_value"] == 12700.0
+    assert proposal["expected_gain"] == {"value": 300.0, "kpi": "export_kg_hr"}
+    assert proposal["predicted"] == {"rvp_bara": 0.63, "export_kg_hr": 13000.0}
+
+    guard_dir = tmp_path / "guard"
+    guard_dir.mkdir()
+    ctx = _guard_context(guard_dir, proposal)
+    ctx.goal = _objective_context(tmp_path).goal
+    ctx.baseline = _objective_context(tmp_path).baseline
+    ctx.plan["production"]["require_objective_evidence"] = True
+    production.guard(ctx, {})
+    assert [row["title"] for row in ctx.proposals] == ["Increase validated field export"]
+
+
+@pytest.mark.parametrize("failure", ["name", "direction", "unit", "baseline", "accepted", "prediction"])
+def test_lifecycle_context_rejects_mismatched_objective_metadata(tmp_path, failure):
+    _, evidence, _ = _promotable_schema8_task(tmp_path)
+    candidate = _objective_bound_lifecycle(evidence)
+    ctx = _objective_context(tmp_path)
+    predicted = {}
+    optimizer = next(period for period in candidate["periods"]
+                     if period["period_id"] == "C-1")["envelope_evidence"]["optimizer_evidence"]
+    if failure == "name":
+        ctx.goal["objective"]["source_name"] = "different objective"
+    elif failure == "direction":
+        ctx.goal["objective"]["direction"] = "minimize"
+    elif failure == "unit":
+        ctx.goal["objective"]["unit"] = "Sm3/day"
+    elif failure == "baseline":
+        ctx.baseline["kpis"]["export_kg_hr"] = 12699.0
+    elif failure == "accepted":
+        optimizer["accepted_objective_value"] = float("nan")
+    else:
+        predicted["export_kg_hr"] = 12999.0
+
+    with pytest.raises(ValueError, match="objective|Objective|baseline|finite"):
+        production.proposal_from_lifecycle_context(
+            json.dumps(candidate), ctx, "unsafe objective binding", predicted=predicted)
+
+
 def test_promote_copies_only_guarded_schema8_lifecycle_evidence(tmp_path):
     task, evidence, _ = _promotable_schema8_task(tmp_path)
 
