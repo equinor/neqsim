@@ -85,7 +85,7 @@ acceptance_criteria:
     operator: ">="
     value: 3.0
     unit: K
-    applies_to: [BASE, TURNDOWN, LATE, LATE-M1, LATE-M2, ALT-B-ISOLATED]
+    applies_to: [BASE, TURNDOWN, LATE, LATE-M1, LATE-M2, LATE-M3, TURN-M4, ALT-B-ISOLATED]
     source: "DEMO-DB-001 (synthetic project criterion; not a code requirement)"
     requirement_class: mandatory
     applicability: "operating cases with inhibitor injection; the margin is a project temperature allowance, not a standard value"
@@ -95,7 +95,7 @@ acceptance_criteria:
     operator: "<="
     value: 180.0
     unit: bara
-    applies_to: [BASE, TURNDOWN, LATE, LATE-M1, LATE-M2, ALT-B-ISOLATED]
+    applies_to: [BASE, TURNDOWN, LATE, LATE-M1, LATE-M2, LATE-M3, TURN-M4, ALT-B-ISOLATED]
     source: "DEMO-DB-001 (synthetic available source pressure)"
     requirement_class: mandatory
     applicability: "all operating cases"
@@ -105,7 +105,7 @@ acceptance_criteria:
     operator: "<="
     value: 15.0
     unit: m/s
-    applies_to: [BASE, TURNDOWN, LATE, LATE-M1, LATE-M2, ALT-B-ISOLATED]
+    applies_to: [BASE, TURNDOWN, LATE, LATE-M1, LATE-M2, LATE-M3, TURN-M4, ALT-B-ISOLATED]
     source: "DEMO-DB-001 (synthetic project velocity limit)"
     requirement_class: recommended
     applicability: "all operating cases"
@@ -115,7 +115,7 @@ acceptance_criteria:
     operator: "<="
     value: 1.0
     unit: "-"
-    applies_to: [BASE, TURNDOWN, LATE, LATE-M1, LATE-M2, ALT-B-ISOLATED]
+    applies_to: [BASE, TURNDOWN, LATE, LATE-M1, LATE-M2, LATE-M3, TURN-M4, ALT-B-ISOLATED]
     source: "DEMO-DB-001 (synthetic project choice of the C-factor; not a design-code verification)"
     requirement_class: recommended
     applicability: "clean, sand-free service"
@@ -125,7 +125,7 @@ acceptance_criteria:
     operator: ">="
     value: 8.0
     unit: h
-    applies_to: [BASE, TURNDOWN, LATE, LATE-M1, LATE-M2]
+    applies_to: [BASE, TURNDOWN, LATE, LATE-M1, LATE-M2, LATE-M3, TURN-M4]
     source: "DEMO-DB-001 (synthetic cooldown allowance)"
     requirement_class: mandatory
     applicability: "shut-in events; time to the equilibrium temperature, not time to plug"
@@ -138,6 +138,10 @@ mitigation_options:
      uncertainty: "inhibitor losses to gas and condensate are not modelled; the CPA hydrate depression at 30 wt % MEG has no measured confirmation here"}
   - {id: M2, title: "Increase the trunk PP insulation from 60 mm to 90 mm", case: LATE-M2, baseline: LATE,
      uncertainty: "wet-insulation degradation, field-joint heat loss and the external film coefficient are not modelled; effect on cooldown uses the lumped model"}
+  - {id: M3, title: "Raise the MEG rate to 30 wt % and increase the branch PP insulation from 40 mm to 80 mm", case: LATE-M3, baseline: LATE,
+     uncertainty: "combined option; inhibitor losses, wet-insulation degradation and installation feasibility of the thicker branch insulation are not assessed"}
+  - {id: M4, title: "Turndown: raise the MEG rate to a 40 wt % aqueous mass fraction", case: TURN-M4, baseline: TURNDOWN,
+     uncertainty: "the CPA hydrate depression at 40 wt % MEG has no measured confirmation here; MEG losses and the regeneration capacity for the higher rate are not assessed"}
 assumptions:
   - {id: A-01, text: "All input values are synthetic and plausible; none is a measurement or a design value.", effect: "Results demonstrate the workflow and must not be used for any real decision."}
   - {id: A-02, text: "Template outlet streams are aggregated: individual wells and jumpers are not modelled hydraulically.", effect: "Well-to-well interaction and jumper pressure drop are excluded."}

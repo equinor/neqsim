@@ -93,6 +93,42 @@ cases:
     boundary: {outlet: {node: HOST-IN, type: pressure, value: {value: 65.0, unit: bara}, reference: "host inlet, riser top battery limit"},
                inlet: {type: rate_specified, note: "source pressures are solved"}}
     shut_in: {settle_out_pressure_bara: 115.0, ambient_note: "seabed ambient per route; inhibitor retained in place", duration_h: 72.0}
+  - id: LATE-M3
+    label: "Late life - MEG 30 wt % and branch insulation 80 mm"
+    role: mitigation
+    stage: late_life
+    topology_variant: DEFAULT
+    baseline_case: LATE
+    fluid: WELLSTREAM-1
+    description: "Combination: lean MEG rate for a 30 wt % aqueous mass fraction and the PP insulation of the five branch flowline segments increased from 40 mm to 80 mm"
+    layer_overrides:
+      FL-A-01: {"PP insulation": 0.080}
+      FL-A-02: {"PP insulation": 0.080}
+      FL-A-03: {"PP insulation": 0.080}
+      FL-B-01: {"PP insulation": 0.080}
+      FL-B-02: {"PP insulation": 0.080}
+    sources:
+      TMPL-A: {hc_rate: {value: 12.0, unit: kg/s, basis: mass}, water_rate: {value: 18000.0, unit: kg/h, basis: mass}, t_c: 75.0, inhibitor_target_wt: 0.30}
+      TMPL-B: {hc_rate: {value: 8.2, unit: kg/s, basis: mass}, water_rate: {value: 12000.0, unit: kg/h, basis: mass}, t_c: 74.0, inhibitor_target_wt: 0.30}
+    inhibitor: {name: MEG, purity_wt: 0.90, basis: "lean MEG stream, mass fraction MEG; no losses to gas or condensate"}
+    boundary: {outlet: {node: HOST-IN, type: pressure, value: {value: 65.0, unit: bara}, reference: "host inlet, riser top battery limit"},
+               inlet: {type: rate_specified, note: "source pressures are solved"}}
+    shut_in: {settle_out_pressure_bara: 115.0, ambient_note: "seabed ambient per route; inhibitor retained in place", duration_h: 72.0}
+  - id: TURN-M4
+    label: "Turndown - MEG dose raised to 40 wt % aqueous"
+    role: mitigation
+    stage: turndown
+    topology_variant: DEFAULT
+    baseline_case: TURNDOWN
+    fluid: WELLSTREAM-1
+    description: "As TURNDOWN with the lean MEG rate per template computed for a 40 wt % MEG mass fraction in the aqueous phase"
+    sources:
+      TMPL-A: {hc_rate: {value: 8.0, unit: kg/s, basis: mass}, water_rate: {value: 1200.0, unit: kg/h, basis: mass}, t_c: 85.0, inhibitor_target_wt: 0.40}
+      TMPL-B: {hc_rate: {value: 5.5, unit: kg/s, basis: mass}, water_rate: {value: 800.0, unit: kg/h, basis: mass}, t_c: 83.0, inhibitor_target_wt: 0.40}
+    inhibitor: {name: MEG, purity_wt: 0.90, basis: "lean MEG stream, mass fraction MEG; no losses to gas or condensate"}
+    boundary: {outlet: {node: HOST-IN, type: pressure, value: {value: 70.0, unit: bara}, reference: "host inlet, riser top battery limit"},
+               inlet: {type: rate_specified, note: "source pressures are solved"}}
+    shut_in: {settle_out_pressure_bara: 125.0, ambient_note: "seabed ambient per route; inhibitor retained in place", duration_h: 72.0}
   - id: ALT-B-ISOLATED
     label: "Alternate line-up - template B isolated"
     role: scenario

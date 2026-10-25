@@ -557,7 +557,7 @@ def run_case(ns, route_model, variant, fluid_def, case, solver, hydrate_cache=No
         wts["mixed:%s" % junction] = inh_mass / (inh_mass + wat)
     all_p = [p for prof in profiles.values() for p in prof["p_bara"]]
     so = (case.get("shut_in") or {}).get("settle_out_pressure_bara")
-    p_lo, p_hi = min(all_p), max(all_p + ([float(so)] if so else []))
+    p_lo, p_hi = min(all_p + ([float(so)] if so else [])), max(all_p + ([float(so)] if so else []))
     curves = {}
     grid = solver.get("hydrate_grid_bara") or [40, 55, 70, 90, 110, 140, 180, 230]
     for key, wt in wts.items():
