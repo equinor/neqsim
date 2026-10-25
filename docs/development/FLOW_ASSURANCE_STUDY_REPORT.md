@@ -46,7 +46,8 @@ neqsim flow-assurance-report --init study_inputs
 ```
 
 After filling `route.yaml`, `basis.yaml` and `cases.yaml` (the synthetic example in
-`devtools/fa_examples/offshore_tieback/` shows every field), run the study. `--strict` returns exit code 1 when a
+`devtools/fa_examples/offshore_tieback/` shows every field; `devtools/fa_examples/single_flowline/` is a second synthetic
+example with one source, no junction or PLEM and a route along one axis), run the study. `--strict` returns exit code 1 when a
 validation check fails.
 
 <!-- parse -->
@@ -94,7 +95,7 @@ assert abs(fa_units.aqueous_wt_fraction(water, meg) - 0.534) < 0.005
 | Folder | Content |
 |--------|---------|
 | `report/` | Word report, PDF, `validation_report.json` and `.md`, `report_facts.json` |
-| `drawings/` | `svg/` (ten A3 sheets), `png/`, drawing PDF, `layout_spec.json` |
+| `drawings/` | `svg/` (ten A3 sheets; nine for a single-path route, which has no second-path profile, DWG-04), `png/`, drawing PDF, `layout_spec.json` |
 | `dataset/` | `flow_assurance_study.json` (schema `flow_assurance_study.v1`) |
 | `handoff/` | external-simulator event packages |
 | `figures/`, `cache/` | report figures; per-case solver cache keyed on the inputs and the NeqSim version |

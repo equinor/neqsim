@@ -5,7 +5,7 @@ description: "Validation report written by neqsim flow-assurance-report --demo (
 
 # Flow-assurance study validation
 
-Overall: **WARN** - readiness **SCREENING**: synthetic demonstration; not for design or construction
+Overall: **WARN** - readiness **SCREENING**: synthetic inputs; not for design or construction
 
 | Check | Result | Detail |
 |---|---|---|
@@ -27,13 +27,13 @@ Overall: **WARN** - readiness **SCREENING**: synthetic demonstration; not for de
 | FA-THREATS | PASS | 16 threats; 4 open, 3 unsupported are never reported as safe |
 | FA-EVENTS | PASS | 5 events |
 | FA-STD-VERIFY | WARN | ISO 10628-2: UNVERIFIED; ASME B31.4 / ASME B31.8: not checked (not checked) |
-| FA-DRAW-QA | PASS | 10 sheets, 564 annotations checked |
+| FA-DRAW-QA | PASS | 10 sheets, 568 annotations checked |
 | FA-DRAW-DATA | PASS | all bound numbers and series equal the dataset |
 | FA-DRAW-ALIGN | PASS | aligned |
 | FA-DRAW-FILES | PASS | 10 SVG, 1 PDF, 10 PNG |
 | FA-DRAW-FRONT | PASS | banners and title blocks consistent |
-| FA-DOC-REFS | PASS | 536 tokens resolved |
-| FA-DOC-FACTS | PASS | dataset hash and 536 resolved values match |
+| FA-DOC-REFS | PASS | 537 tokens resolved |
+| FA-DOC-FACTS | PASS | dataset hash and 537 resolved values match |
 | FA-DOC-SECTIONS | PASS | 36 headings |
 | FA-DOC-OPEN | PASS | all open items listed |
 | FA-DOC-CLEAN | PASS | clean |
