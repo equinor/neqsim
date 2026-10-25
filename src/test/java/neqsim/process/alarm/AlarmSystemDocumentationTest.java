@@ -73,7 +73,9 @@ public class AlarmSystemDocumentationTest extends NeqSimTest {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
     String guide = read(repositoryRoot.resolve("docs/safety/alarm_system_guide.md"));
     String integration = read(repositoryRoot.resolve("docs/safety/alarm_triggered_logic_example.md"));
-    String lowerIntegration = integration.toLowerCase(Locale.ROOT);
+    // Markdown soft line breaks must not change the required safety statements.
+    String integrationProse = integration.replaceAll("\\s+", " ");
+    String lowerIntegration = integrationProse.toLowerCase(Locale.ROOT);
 
     assertTrue(guide.startsWith("---\ntitle:"));
     assertTrue(integration.startsWith("---\ntitle:"));
@@ -81,14 +83,14 @@ public class AlarmSystemDocumentationTest extends NeqSimTest {
     assertFalse(DUPLICATE_H1.matcher(integration).find());
     assertFalse(JAVA_FENCE.matcher(integration).find());
     assertFalse(lowerIntegration.contains("production-ready"));
-    assertFalse(integration.contains("ISA-18.2 Aligned"));
-    assertFalse(integration.contains("SIL-1"));
-    assertFalse(integration.contains("SIL-2"));
+    assertFalse(integrationProse.contains("ISA-18.2 Aligned"));
+    assertFalse(integrationProse.contains("SIL-1"));
+    assertFalse(integrationProse.contains("SIL-2"));
     assertTrue(
         integration.contains("src/test/java/neqsim/process/util/example/ProcessLogicAlarmIntegratedExample.java"));
-    assertTrue(
-        integration.contains("does **not** implement or prove two-out-of-three voting at the alarm-manager layer"));
-    assertTrue(integration.contains("must not be counted as independent or credited safeguards"));
+    assertTrue(integrationProse
+        .contains("does **not** implement or prove two-out-of-three voting at the alarm-manager layer"));
+    assertTrue(integrationProse.contains("must not be counted as independent or credited safeguards"));
   }
 
   /**
