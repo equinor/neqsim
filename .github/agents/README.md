@@ -44,6 +44,8 @@ In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 | **process-study-report** | `@process-study-report <model and purpose>` | **Process-study report for any model** → basis, all-stream tables per case, balances, BFD/PFD sheets, standards register and validation via `neqsim process-report` ([how-to](../../docs/development/PROCESS_STUDY_REPORT.md)) |
 | **flow-assurance-study-report** | `@flow-assurance-study-report <route and purpose>` | **Flow-assurance study report + pipeline drawings** → threat matrix, hydrate/cooldown/hydraulics per case, mitigation comparison, 10 A3 sheets, fail-closed validation via `neqsim flow-assurance-report` ([how-to](../../docs/development/FLOW_ASSURANCE_STUDY_REPORT.md)) |
 | **surf-design-study** | `@surf-design-study <field and decision>` | **SURF design study** → generated and solved NeqSim field network (live wells, flowlines, risers, umbilical), concept comparison with feasibility before cost, 15 A3 sheets, MTO/cost, 20-chapter report, fail-closed validation via `neqsim surf-study` ([how-to](../../docs/development/SURF_DESIGN_STUDY.md)) |
+| **plant-layout-study** | `@plant-layout-study <facility and task>` | **Physical plant-layout screening** → onshore plots/offshore decks, explicit equipment/envelopes, checked alternatives, drawings, optional CAD and source-traceable report via `neqsim layout-study` ([how-to](../../docs/development/PLANT_LAYOUT_STUDY.md)) |
+| **plant-layout-review** | `@plant-layout-review <specification and output>` | **Independent layout review** → source evidence, coordinates, geometric checks, drawings and CAD exchange limitations; no design approval |
 
 **Examples:**
 ```

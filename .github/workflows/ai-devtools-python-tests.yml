@@ -61,5 +61,8 @@ jobs:
       - name: Run mechanical design mesh contract tests
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_mechanical_design_json_to_mesh.py -v
 
+      - name: Run plant layout geometry and delivery contract tests
+        run: uv run --project devtools --locked --group test python devtools/test_layout_study.py -v
+
       - name: Run report generator integration test (script)
         run: uv run --project devtools --locked --group test devtools/test_report_gen.py

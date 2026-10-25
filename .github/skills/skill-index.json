@@ -2471,11 +2471,63 @@
  "flowline report": [
   "neqsim-flow-assurance-study-report"
  ],
- "surf design study": ["neqsim-surf-design-study", "neqsim-surf-model-generation", "neqsim-surf-report-drawings"],
- "surf design report": ["neqsim-surf-design-study", "neqsim-surf-report-drawings"],
- "neqsim surf-study": ["neqsim-surf-design-study"],
- "subsea tieback design report": ["neqsim-surf-design-study", "neqsim-surf-report-drawings"],
- "subsea field layout generate network": ["neqsim-surf-model-generation", "neqsim-surf-design-study"],
- "surf drawings": ["neqsim-surf-report-drawings", "neqsim-surf-design-study"],
- "reservoir to products full chain Python Java SURF utilities downstream": ["neqsim-production-system-modeling", "neqsim-integrated-production-and-lifecycle", "neqsim-process-modeling"]
+ "surf design study": [
+  "neqsim-surf-design-study",
+  "neqsim-surf-model-generation",
+  "neqsim-surf-report-drawings"
+ ],
+ "surf design report": [
+  "neqsim-surf-design-study",
+  "neqsim-surf-report-drawings"
+ ],
+ "neqsim surf-study": [
+  "neqsim-surf-design-study"
+ ],
+ "subsea tieback design report": [
+  "neqsim-surf-design-study",
+  "neqsim-surf-report-drawings"
+ ],
+ "subsea field layout generate network": [
+  "neqsim-surf-model-generation",
+  "neqsim-surf-design-study"
+ ],
+ "surf drawings": [
+  "neqsim-surf-report-drawings",
+  "neqsim-surf-design-study"
+ ],
+ "reservoir to products full chain Python Java SURF utilities downstream": [
+  "neqsim-production-system-modeling",
+  "neqsim-integrated-production-and-lifecycle",
+  "neqsim-process-modeling"
+ ],
+ "plant layout": [
+  "neqsim-plant-layout-study",
+  "neqsim-plant-layout-geometry",
+  "neqsim-plant-layout-delivery"
+ ],
+ "onshore plot plan": [
+  "neqsim-plant-layout-study",
+  "neqsim-plant-layout-geometry"
+ ],
+ "offshore deck arrangement": [
+  "neqsim-plant-layout-study",
+  "neqsim-plant-layout-geometry"
+ ],
+ "equipment maintenance envelopes": [
+  "neqsim-plant-layout-geometry"
+ ],
+ "plant layout CAD exports": [
+  "neqsim-plant-layout-delivery"
+ ],
+ "physical equipment clash": [
+  "neqsim-plant-layout-geometry"
+ ],
+ "layout study report": [
+  "neqsim-plant-layout-study",
+  "neqsim-plant-layout-delivery"
+ ],
+ "layout independent review": [
+  "neqsim-plant-layout-geometry",
+  "neqsim-plant-layout-delivery"
+ ]
 }
