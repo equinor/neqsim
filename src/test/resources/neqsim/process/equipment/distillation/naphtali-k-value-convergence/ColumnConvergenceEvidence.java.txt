@@ -1,0 +1,53 @@
+import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Locale;
+import neqsim.process.equipment.distillation.DistillationColumn;
+
+/**
+ * Reuses the public-behavior regression fixture without changing its assertions.
+ *
+ * @author Even Solbraa
+ * @version 1.0
+ */
+public final class ColumnConvergenceEvidence {
+  /**
+   * Runs the unchanged cold-column fixture and records acceptance and solver work.
+   *
+   * @param args output CSV path and implementation label
+   * @throws Exception if fixture construction or evidence output fails
+   */
+  public static void main(String[] args) throws Exception {
+    Class<?> fixture = Class.forName(
+        "neqsim.process.equipment.distillation.NaphtaliSandholmPublishedStateTest");
+    Method create = fixture.getDeclaredMethod("createColumn", DistillationColumn.SolverType.class);
+    create.setAccessible(true);
+    Method qualify = fixture.getDeclaredMethod("assertPublishedBalances", DistillationColumn.class);
+    qualify.setAccessible(true);
+    DistillationColumn column = (DistillationColumn) create.invoke(null,
+        DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+    long start = System.nanoTime();
+    column.run();
+    double elapsed = (System.nanoTime() - start) / 1.0e9;
+    boolean accepted = true;
+    String failure = "";
+    try {
+      qualify.invoke(null, column);
+    } catch (InvocationTargetException ex) {
+      accepted = false;
+      failure = ex.getCause().getMessage().replace(',', ';').replace('\n', ' ');
+    }
+    try (PrintWriter output = new PrintWriter(args[0], "UTF-8")) {
+      output.println("implementation,accepted,solved,solver,iterations,thermo_evaluations,"
+          + "k_sweeps,capped_k_evaluations,max_log_k_update,energy_residual,"
+          + "mesh_energy_residual,seconds,failure");
+      output.printf(Locale.ROOT, "%s,%s,%s,%s,%d,%d,%d,%d,%.17g,%.17g,%.17g,%.9f,%s%n",
+          args[1], accepted, column.solved(), column.getLastSolverTypeUsed(),
+          column.getLastIterationCount(), column.getLastNaphtaliThermoEvaluationCount(),
+          column.getLastNaphtaliThermoKValueIterationCount(),
+          column.getLastNaphtaliThermoKValueNonConvergedCount(),
+          column.getLastNaphtaliThermoMaxLogKValueUpdate(), column.getEnergyBalanceError(),
+          column.getLastMeshEnergyResidualNorm(), elapsed, failure);
+    }
+  }
+}

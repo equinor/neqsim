@@ -11,6 +11,10 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.thermo.phase.PhaseEos;
+import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 
 /** Regression for issue #3698: the accepted column must publish one material and energy state. */
@@ -179,6 +183,43 @@ class NaphtaliSandholmPublishedStateTest extends neqsim.NeqSimTest {
     assertTrue(column.getLastEnergyResidual() < 1.0e-7, column.getConvergenceDiagnostics());
     assertEquals(column.getEnergyBalanceError(), column.getLastEnergyResidual(), 1.0e-12);
     assertTrue(column.getLastMeshEnergyResidualNorm() < 1.0e-7, column.getConvergenceDiagnostics());
+  }
+
+  /**
+   * The fixed-root K-value calculation needs level 1; caloric initialization must preserve its fugacities.
+   */
+  @Test
+  void forcedRootFugacityDoesNotRequireCaloricDerivatives() {
+    for (boolean pengRobinson : new boolean[] {false, true}) {
+      for (int mixingRule : new int[] {2, 4}) {
+        for (PhaseType phaseType : new PhaseType[] {PhaseType.GAS, PhaseType.LIQUID}) {
+          SystemInterface fluid = pengRobinson ? new SystemPrEos(283.15, 25.0) : new SystemSrkEos(283.15, 25.0);
+          fluid.addComponent("methane", 0.22);
+          fluid.addComponent("ethane", 0.34);
+          fluid.addComponent("propane", 0.20);
+          fluid.addComponent("n-butane", 0.24);
+          fluid.setMixingRule(mixingRule);
+          fluid.init(0);
+          fluid.setNumberOfPhases(1);
+          fluid.setPhaseType(0, phaseType);
+          fluid.setForcePhaseTypes(true);
+          fluid.init(1);
+          double volume = fluid.getPhase(0).getMolarVolume();
+          double[] fugacities = new double[4];
+          for (int i = 0; i < fugacities.length; i++) {
+            fugacities[i] = fluid.getPhase(0).getComponent(i).getFugacityCoefficient();
+          }
+          fluid.init(2);
+          assertEquals(volume, fluid.getPhase(0).getMolarVolume(), Math.abs(volume) * 1.0e-12);
+          assertEquals(fluid.getPressure(), ((PhaseEos) fluid.getPhase(0)).calcPressure(), 1.0e-8);
+          for (int i = 0; i < fugacities.length; i++) {
+            assertTrue(Double.isFinite(fugacities[i]) && fugacities[i] > 0.0);
+            assertEquals(fugacities[i], fluid.getPhase(0).getComponent(i).getFugacityCoefficient(),
+                Math.abs(fugacities[i]) * 1.0e-12);
+          }
+        }
+      }
+    }
   }
 
   @Test

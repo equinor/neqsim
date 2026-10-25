@@ -52,7 +52,8 @@ class TPflashIncipientPhaseStabilityTest {
     assertEquals(2, ordinary.getNumberOfPhases());
     assertTrue(ordinary.hasPhaseType(PhaseType.GAS));
     assertTrue(ordinary.hasPhaseType(PhaseType.OIL));
-    assertEquals(3.50882832337307e-5, ordinary.getBeta(findPhase(ordinary, PhaseType.GAS)), 1.0e-10);
+    // Independent 60/80-digit SRK equation solution; see incipient-srk-reference/reproduce.py.
+    assertEquals(3.508682096277057e-5, ordinary.getBeta(findPhase(ordinary, PhaseType.GAS)), 1.0e-10);
     assertClosedState(ordinary, "ordinary incipient vapour");
     assertClosedState(multiphase, "multiphase incipient vapour");
     assertEquivalentState(ordinary, multiphase, 1.0e-10, "incipient-vapour algorithm agreement");

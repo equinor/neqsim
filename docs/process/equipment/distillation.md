@@ -257,6 +257,16 @@ to the fluid and negative for heat removed. Flowing products receive caloric ini
 before the balance is evaluated; zero-flow phase templates contribute zero energy. This avoids
 using stale residual enthalpy from the internal mixed fluid when a ratio reaches zero.
 
+Naphtali-Sandholm evaluates each tray's forced-root fugacity fixed point for up to 30
+sweeps, stopping at the existing maximum log-K update tolerance of $10^{-8}$. Cold,
+retained and terminal-recovery evaluations use the same bound. Two or three truncated
+sweeps can leave the MESH residual dependent on the preceding K estimate, making its
+finite-difference Jacobian inconsistent. The convergence repair retains all published
+material, energy and equilibrium acceptance gates. Fugacity-only sweeps use `init(1)`;
+separate enthalpy evaluations retain `init(2)`. The iteration bound does not guarantee
+convergence of every column, and exhausted inner iterations remain visible in the
+existing K-value telemetry.
+
 Explicit standalone Naphtali-Sandholm retains its established initialization sequence. The isolated
 sequential ratio correction preserves the current tray state instead of replacing it with a
 bubble-point seed. Both paths retain the terminal specifications and physical acceptance gates.

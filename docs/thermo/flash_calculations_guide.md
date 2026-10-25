@@ -264,6 +264,16 @@ phase-constrained, aqueous, reactive, ionic, solid, wax and specialized-model
 calculations retain their existing paths. These numerical checks do not establish
 experimental accuracy or prove global stability against every possible phase set.
 
+The synthetic incipient-vapor regression at 253.46685189059752 K and
+77.53775411226596 bara uses an independent high-precision SRK equation reference,
+$\beta_v = 3.508682096277057 \times 10^{-5}$. The stored scalar inputs and a
+standard-library Decimal reproduction are in
+`src/test/resources/neqsim/thermodynamicoperations/flashops/incipient-srk-reference/`.
+Six solutions at 60/80 digits and perturbed initial estimates agree. This replaces
+a legacy iterative reference while retaining the absolute $10^{-10}$ vapor-fraction
+tolerance and the material, fugacity, repeatability and algorithm-agreement checks.
+It qualifies the equations for this synthetic fixture, rather than measured accuracy.
+
 The recovery check is gated by actual removal of a negligible phase during that
 flash. Results without final phase removal skip all recovery component scans,
 cloning and extra EOS initialization; the added normal-path work is a reset and

@@ -61,14 +61,8 @@ public class NaphtaliSandholmSolver {
   /** Maximum number of non-descent line-search steps allowed before restoring the best state. */
   private static final int MAX_NON_DESCENT_LINE_SEARCH_STEPS = 3;
 
-  /** Maximum forced-root fugacity fixed-point sweeps for one tray evaluation. */
-  private static final int THERMO_K_VALUE_ITERATIONS = 2;
-
-  /** Maximum forced-root fugacity sweeps when refining a retained column state. */
-  private static final int THERMO_WARM_START_K_VALUE_ITERATIONS = 3;
-
-  /** Maximum fugacity sweeps for ratio-constrained recovery requiring a consistent Newton residual. */
-  private static final int THERMO_TERMINAL_RECOVERY_K_VALUE_ITERATIONS = 20;
+  /** Maximum forced-root fugacity fixed-point sweeps for a cold, retained or recovery tray evaluation. */
+  private static final int THERMO_K_VALUE_ITERATIONS = 30;
 
   /** Convergence tolerance for the largest absolute logarithmic K-value update. */
   private static final double THERMO_K_VALUE_TOLERANCE = 1.0e-8;
@@ -3668,19 +3662,15 @@ public class NaphtaliSandholmSolver {
     }
 
     // Self-consistency loop: K = phi_L(x) / phi_V(y), then y = K x / sum(K x).
-    // Perform at most two sweeps for a cold state and one additional sweep when
-    // refining a retained state. Stop once the existing convergence criterion is
-    // met so already-converged compositions do not pay for a redundant EOS call.
+    // A truncated inner iteration makes the MESH residual depend on the previous K
+    // estimate, and can give a finite-difference Jacobian an inconsistent base. Allow
+    // bounded convergence for cold and retained states, stopping at the existing
+    // tolerance so converged compositions avoid redundant EOS work.
     boolean kOk = phiOk;
     boolean kConverged = false;
     double finalMaxLogKUpdate = Double.POSITIVE_INFINITY;
     if (kOk) {
-      int maximumKValueIterations = warmStartFromColumn ? THERMO_WARM_START_K_VALUE_ITERATIONS
-          : THERMO_K_VALUE_ITERATIONS;
-      if (terminalRatioNewtonSeed) {
-        maximumKValueIterations = THERMO_TERMINAL_RECOVERY_K_VALUE_ITERATIONS;
-      }
-      for (int sweep = 0; sweep < maximumKValueIterations; sweep++) {
+      for (int sweep = 0; sweep < THERMO_K_VALUE_ITERATIONS; sweep++) {
         if (!computeSinglePhaseFugacityCoefficients(y, T[j], Pbar, true, phiV)) {
           kOk = false;
           break;
@@ -4409,7 +4399,8 @@ public class NaphtaliSandholmSolver {
       sys.setNumberOfPhases(1);
       sys.setPhaseType(0, isVapor ? PhaseType.GAS : PhaseType.LIQUID);
       sys.setForcePhaseTypes(true);
-      sys.init(2);
+      // Fixed-T/P fugacity does not consume caloric temperature derivatives.
+      sys.init(1);
       for (int i = 0; i < C; i++) {
         double phi = sys.getPhase(0).getComponent(i).getFugacityCoefficient();
         if (!(phi > 0.0) || Double.isNaN(phi) || Double.isInfinite(phi)) {
