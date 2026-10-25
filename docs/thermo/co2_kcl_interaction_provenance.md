@@ -211,12 +211,39 @@ when a later trial raises an exception; an incomplete assessment remains failed.
 test supplies **no physical-accuracy pass band**; signed relative reference
 residuals are retained even when numerical gates pass.
 
-The previously retained 273.15–298.15 K exact-master subset has a -27.30% to
--19.25% salt-free solubility residual. The extended 303.15–363.15 K rows retain
-signed residuals as diagnostic evidence; exact-head hosted results must be
-inspected before drawing a temperature-dependent conclusion. Runtime diagnostics identify rule `ClassicSRKT2`, CO2
-2A/two sites and water 4C/four sites, cross beta 0.075 and cross energy
-8327.5 J/mol. Stored zero cross energy selects the combining rule; it does not
+Hosted [run 40226079125](https://github.com/equinor/neqsim/actions/runs/40226079125)
+retains all 57 rows in `electrolyte-assessment-evidence-1`. Its manifest records
+PR head `57ccb4131352cd32b3fd4f44620bfdcdf46d663a`, merge checkout
+`be6c8130e01ec69a3252e7d97d67db61c35d45a5`, one executed producer test,
+no failure/error/skip, complete selected evidence, and `qualification:
+not_assessed`. All rows are GAS+AQUEOUS and pass the frozen numerical gates.
+Maximum partial-pressure mismatch is 6.26e-11 bara; molecular log-fugacity
+residual 1.85e-9; component-balance residual 3.56e-16; repeat mole-fraction
+difference 1.90e-19; and construction spread in calculated CO2 mole fraction
+4.23e-18.
+
+The calculated salt-free CO2 mole fraction is below the evaluated reference at
+all nineteen temperatures. Signed residuals range from -27.30% at 273.15 K to
+-14.59% at 343.15 K; MAPE and signed mean magnitude are 17.99%. The residual
+improves through the mid-temperature region, then reaches -16.15% at 363.15 K.
+At the matched 323.15, 348.15 and 363.15 K He-Morse temperatures, salt-free
+residuals are -15.13%, -15.01% and -16.15%; the corresponding mean residuals
+across each KCl block are -16.51%, -16.39% and -18.07%. Thus the dominant
+absolute deficit is already present in the salt-free CO2/water baseline. KCl
+still controls the separately retained salting slope and high-molality
+curvature, including local salting-in; hydrate compensation remains an
+application-level possibility.
+
+This comparison is diagnostic rather than a direct residual subtraction:
+Carroll reports liquid mole fraction at 1.01325 bara CO2 partial pressure,
+whereas He-Morse reports molality at its source partial pressure. It therefore
+does not uniquely identify a neutral binary or association parameter. The
+salt-free guest fugacity is 1.00985, 1.01353 and 1.01787 bara at the three hot
+matched temperatures, respectively; its modest variation does not by itself
+separate gas-fugacity from aqueous-model contributions.
+
+Runtime diagnostics identify rule `ClassicSRKT2`, CO2 2A/two sites and water
+4C/four sites, cross beta 0.075 and cross energy 8327.5 J/mol. Stored zero cross energy selects the combining rule; it does not
 disable association. The default binary coefficients give
 `k(T) = -0.27686 + 0.001121 * T[K]`. These are observed legacy values, not a
 source-authenticated recommendation. Complete joint parameter provenance and
