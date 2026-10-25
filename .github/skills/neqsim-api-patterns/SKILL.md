@@ -253,6 +253,22 @@ ops.calcPTphaseEnvelope();              // Phase envelope
 > if not (10.0 < p_dew < 3.0 * p_reservoir):
 >     p_dew = float("nan")     # reject, do not propagate
 > ```
+>
+> **A plausible value can still be a false root — the start pressure matters.**
+> For a CO2-rich volatile oil (GOR 383 Sm3/Sm3, 43 % CO2 in gas, 80 C) the same
+> fluid gave Psat = 474 bara when the flash started at 300 or 450 bara, but
+> 584 bara when it started at the 641 bara reservoir pressure — and a TP flash
+> at 480-640 bara is single-phase. Start below the expected saturation pressure
+> and confirm the root with a stability check either side:
+> ```python
+> b = fluid.clone(); b.setPressure(0.5 * p_reservoir)
+> ThermodynamicOperations(b).bubblePointPressureFlash(False); psat = b.getPressure()
+> phases = []
+> for dp in (-5.0, 5.0):
+>     c = fluid.clone(); c.setPressure(psat + dp)
+>     ThermodynamicOperations(c).TPflash(); phases.append(c.getNumberOfPhases())
+> assert phases == [2, 1], "bubble point not bracketed by a phase change"
+> ```
 
 ### Re-flashing a characterised fluid many times (CRITICAL for loops)
 

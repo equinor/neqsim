@@ -37,7 +37,8 @@ import com.google.gson.JsonParser;
  * <li><b>US-GOM</b> - United States (Gulf of Mexico)</li>
  * <li><b>BR</b> - Brazil (Concession regime)</li>
  * <li><b>BR-PSA</b> - Brazil (Pre-Salt Production Sharing Agreement)</li>
- * <li><b>BR-DW</b> - Brazil (Deep Water with Special Participation)</li>
+ * <li><b>BR-DW</b> - Brazil (Deep Water with Special Participation approximated by a flat 25 % resource tax; use
+ * {@link BrazilSpecialParticipation} for the statutory volume-banded Decreto 2.705/1998 charge)</li>
  * <li><b>AO</b> - Angola</li>
  * <li><b>NG</b> - Nigeria</li>
  * <li><b>AU</b> - Australia</li>
