@@ -145,7 +145,7 @@ public class RateBasedPackedColumnTest {
   }
 
   /**
-   * Reproduce the simultaneous-segment fixed-point exhaustion reported in issue 4111.
+   * Reject a simultaneous-segment profile that exhausts iterations or encounters an invalid thermodynamic state.
    */
   @Test
   public void testSimultaneousFixedPointRejectsUnconvergedProfile() {
@@ -153,9 +153,39 @@ public class RateBasedPackedColumnTest {
         6.0);
     column.setSegmentSolver(RateBasedPackedColumn.SegmentSolver.SIMULTANEOUS_RESIDUAL);
     Assertions.assertThrows(IllegalStateException.class, column::run);
-    Assertions.assertEquals(column.getMaxIterations(), column.getLastIterationCount());
+    Assertions.assertTrue(column.getLastIterationCount() > 0);
+    Assertions.assertTrue(column.getLastIterationCount() <= column.getMaxIterations());
     Assertions.assertTrue(column.getLastConvergenceResidual() > column.getConvergenceTolerance());
     Assertions.assertFalse(column.solved());
+  }
+
+  /**
+   * A failed thermodynamic trial must preserve accepted outlets and report the actual failed iteration.
+   */
+  @Test
+  public void testInvalidThermodynamicRerunPreservesAcceptedProfile() {
+    RateBasedPackedColumn column = configuredColumn(createGasStream("gas", 0.10), createLiquidStream("liquid", 0.0),
+        6.0);
+    column.run();
+    Assertions.assertTrue(column.solved());
+    SystemInterface previousGas = column.getGasOutStream().getThermoSystem();
+    SystemInterface previousLiquid = column.getLiquidOutStream().getThermoSystem();
+    double previousTransfer = column.getTotalAbsoluteMolarTransfer();
+    int previousSegments = column.getSegmentResults().size();
+    column.setSegmentSolver(RateBasedPackedColumn.SegmentSolver.SIMULTANEOUS_RESIDUAL);
+
+    IllegalStateException failure = Assertions.assertThrows(IllegalStateException.class, column::run);
+
+    Assertions.assertNotNull(failure.getCause(), "retain the thermodynamic failure for diagnosis");
+    Assertions.assertTrue(failure.getMessage().contains("valid thermodynamic profile"));
+    Assertions.assertTrue(column.getLastIterationCount() > 0);
+    Assertions.assertTrue(column.getLastIterationCount() < column.getMaxIterations());
+    Assertions.assertEquals(Double.POSITIVE_INFINITY, column.getLastConvergenceResidual());
+    Assertions.assertFalse(column.solved());
+    Assertions.assertSame(previousGas, column.getGasOutStream().getThermoSystem());
+    Assertions.assertSame(previousLiquid, column.getLiquidOutStream().getThermoSystem());
+    Assertions.assertEquals(previousTransfer, column.getTotalAbsoluteMolarTransfer(), 0.0);
+    Assertions.assertEquals(previousSegments, column.getSegmentResults().size());
   }
 
   /**

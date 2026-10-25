@@ -443,6 +443,13 @@ Given pressure and total enthalpy, find temperature and phase split. Essential f
 - Heat exchanger design
 - Process streams after heating/cooling
 
+An empty stream with zero total enthalpy has no caloric temperature constraint.
+The standard PH flash preserves its temperature, pressure and zero inventory,
+so a zero-flow column connection retains a usable temperature template when
+flow resumes. Nonzero total enthalpy on an empty stream is rejected. A flowing
+stream can have a zero enthalpy target; its residual uses a finite normalization.
+Small nonzero inventories continue through the caloric solve.
+
 **Method signatures:**
 ```java
 void PHflash(double Hspec)                    // H in J

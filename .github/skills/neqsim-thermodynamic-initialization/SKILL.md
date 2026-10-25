@@ -27,6 +27,15 @@ When a caller consumes temperature derivatives after `TPflash`, initialize them 
 the resulting phase state with `init(2)`. Initializing before the flash is insufficient
 when it replaces phases; the legacy cricondenbar iteration is a regression example.
 
+An empty stream has no caloric temperature constraint: PH with zero total enthalpy
+must retain its temperature template, while nonzero extensive enthalpy is invalid.
+Do not run inverse-temperature Newton iterations on zero inventory or normalize a
+flowing zero-enthalpy target by zero. `PHFlashZeroInventoryTest` covers preserved
+templates, resumed-flow closure, pure-component dispatch and small nonzero flows.
+When a column trial fails its EOS evaluation, retain the cause and report an
+unconverged profile at the actual iteration; do not publish the invalid trial or
+report iteration-cap exhaustion that did not occur.
+
 For strict release-inventory VU accounting, repeated general VU calls can stagnate on
 single-phase dense liquids even when caloric caches are current. Keep the strict balance
 gates. A fixed-composition coupled V/U Jacobian needs the volume/energy cross derivatives

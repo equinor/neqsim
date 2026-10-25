@@ -455,11 +455,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    *
    * <p>
    * Uses a specialized single-component PH flash if the system contains only one component and the specified enthalpy
-   * is within the valid range.
+   * is within the valid range. An empty system with zero specified enthalpy retains its temperature and pressure;
+   * without material, enthalpy cannot determine a temperature.
    * </p>
    *
    * @param Hspec a double
    * @param type flash type (0 = standard) or (1 = direct PH flash if not pure component)
+   * @throws IllegalArgumentException if a nonzero enthalpy is specified for an empty system
    */
   public void PHflash(double Hspec, int type) {
     if (isPureComponentWithinEnthalpyRange(Hspec)) {
@@ -478,7 +480,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @return true if the system is a pure component and the enthalpy is within the valid range, false otherwise
    */
   private boolean isPureComponentWithinEnthalpyRange(double Hspec) {
-    if (system.getPhase(0).getNumberOfComponents() != 1) {
+    if (system.getTotalNumberOfMoles() == 0.0 || system.getPhase(0).getNumberOfComponents() != 1) {
       return false;
     }
     double pc = system.getPhase(0).getComponent(0).getPC();

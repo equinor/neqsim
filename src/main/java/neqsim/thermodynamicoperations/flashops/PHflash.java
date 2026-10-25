@@ -48,7 +48,8 @@ public class PHflash extends Flash {
    */
   public double calcdQdTT() {
     double dQdTT = -system.getTemperature() * system.getTemperature() * system.getCp();
-    return dQdTT / Math.abs(Hspec);
+    double enthalpyScale = Hspec == 0.0 ? 1.0 : Math.abs(Hspec);
+    return dQdTT / enthalpyScale;
   }
 
   /**
@@ -57,7 +58,8 @@ public class PHflash extends Flash {
    * @return a double
    */
   public double calcdQdT() {
-    double dQ = (system.getEnthalpy() - Hspec) / Math.abs(Hspec);
+    double enthalpyScale = Hspec == 0.0 ? 1.0 : Math.abs(Hspec);
+    double dQ = (system.getEnthalpy() - Hspec) / enthalpyScale;
     return dQ;
   }
 
@@ -214,6 +216,14 @@ public class PHflash extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
+    // No caloric temperature constraint exists without material. Keep the stream's
+    // temperature template instead of dividing zero enthalpy and heat capacity.
+    if (system.getTotalNumberOfMoles() == 0.0) {
+      if (Hspec != 0.0) {
+        throw new IllegalArgumentException("An empty system cannot carry nonzero enthalpy");
+      }
+      return;
+    }
     // First TPflash runs COLD (Wilson initial K) so that stale K from a
     // previous unrelated flash (at different P/T) does not bias the solution.
     // Then enable K-value warm-start for subsequent TPflash iterations only when
