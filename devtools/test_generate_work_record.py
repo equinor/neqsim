@@ -142,6 +142,24 @@ def test_narrative_is_preserved_across_regeneration(task):
     assert regenerated.count("WORK_RECORD:NARRATIVE id=method") == 1
 
 
+def test_long_narrative_with_template_marker_is_preserved(task):
+    gwr.main([str(task)])
+    path = task / "step3_report" / "WORK_RECORD.md"
+    text = path.read_text(encoding="utf-8")
+    prose = ("The coupled forecast runs the monthly loop with the export-manifold "
+             "pressure required for each arrival-pressure trajectory, interpolates "
+             "between capacity envelopes and clamps to the tabulated range. Custom "
+             "trajectories use the syntax T:YYYY-MM-DD=p for optimisation runs.")
+    text = text.replace(
+        "[The method in prose: the approach chosen, why it was chosen over the "
+        "alternatives, what each step established, and the decisions taken along "
+        "the way.]", prose)
+    path.write_text(text, encoding="utf-8")
+
+    gwr.main([str(task)])
+    assert prose in path.read_text(encoding="utf-8")
+
+
 def test_missing_work_record_is_reported(task):
     problems = gwr.check_work_record(task)
     assert problems and "missing" in problems[0].lower()
