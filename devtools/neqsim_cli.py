@@ -12,6 +12,7 @@ Usage:
     neqsim tasks CMD         Across solved tasks: index/search/relink/env/duplicates
     neqsim report [DIR]      Generate the report (files named after its title)
     neqsim process-report SRC  Process-study report (stream tables, BFD/PFD, balances, validation)
+    neqsim flow-assurance-report DIR  Flow-assurance report + pipeline drawings
                             from a Python model, JSON definition, .neqsim file or process_data.json
     neqsim work-record [DIR] Generate WORK_RECORD.md (method, data, file map)
     neqsim file-issue [DIR]  Offer to file a NeqSim gap as a GitHub issue (and PR)
@@ -126,6 +127,8 @@ def _print_usage():
                                 "Generate the report (files named after its title)"))
     print("  {:<18s} {}".format("process-report SRC",
                                 "Process-study report from a model file (Python/JSON/.neqsim/data)"))
+    print("  {:<18s} {}".format("flow-assurance-report DIR",
+                                "Flow-assurance study report + pipeline drawings (--init, --demo)"))
     print("  {:<18s} {}".format("work-record [DIR]",
                                 "Generate WORK_RECORD.md (method, data, file map)"))
     print("  {:<18s} {}".format("file-issue [DIR]",
@@ -575,6 +578,9 @@ def main():
     if cmd == "report":
         sys.exit(_handle_report(sys.argv[2:]))
 
+    if cmd in ("flow-assurance-report", "flow_assurance_report"):
+        import flow_assurance_report
+        sys.exit(flow_assurance_report.main(sys.argv[2:]))
     if cmd in ("process-report", "process_report"):
         import process_report
         sys.exit(process_report.main(sys.argv[2:]))

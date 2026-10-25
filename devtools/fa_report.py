@@ -200,7 +200,7 @@ class FaReportBuilder(psr_report.ReportBuilder):
                 cells.append("%s %s" % (self.tok("crit:%s:%s:value" % (c["id"], cid), ".1f"), by["status"]) if by["status"] in ("PASS", "FAIL") else "n/a")
             rows.append(self.row(cells))
         self.table(header, rows, caption="Criteria status by case (governing value over the whole route and PASS/FAIL against the project criterion; n/a = not applicable)", font=6.5,
-                   widths=[34] + [15] * len(self.cases), align=["left"] + ["center"] * len(self.cases))
+                   widths=[30] + [16] * len(self.cases), align=["left"] + ["center"] * len(self.cases))
         trk.append(" ".join(" ".join(r) for r in rows))
         fails = [c for c in ds["criteria"] if c["overall"] == "FAIL"]
         if fails:
