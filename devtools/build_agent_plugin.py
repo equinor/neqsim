@@ -145,7 +145,7 @@ def default_specs() -> List[PluginSpec]:
             # to be pip-installed - and import-checked below - even if that dependency
             # is ever dropped from devtools/pyproject.toml.
             pip_targets=[VENDORED_TOOLKIT_REQUIREMENT, "neqsim"],
-            verify_imports=["neqsim"],
+            verify_imports=["neqsim", "neqsim_cli", "neqsim_runner"],
         ),
         PluginSpec(
             "neqsim-community",
@@ -258,6 +258,7 @@ mcp.json whenever that entry would otherwise run an unusable ``java``.
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 import time
@@ -675,8 +676,34 @@ def targets():
         yield req.replace("${{PLUGIN_ROOT}}", str(root))
 
 def stamp_text(python):
-    """Version + interpreter, so a changed NEQSIM_PYTHON triggers a fresh install."""
-    return version + "\\n" + str(Path(python).resolve())
+    """Reinstall after a version, interpreter or editable package location change."""
+    return version + "\\n" + str(Path(python).resolve()) + "\\n" + str(root.resolve())
+
+
+def runtime_context(python, ready):
+    """Give plugin-only sessions usable commands without assuming a source checkout."""
+    if not python:
+        return ("NeqSim plugin-only runtime: Python is unavailable; do not run toolkit "
+                "commands until setup succeeds. Use available MCP tools for calculations.")
+    quoted = ("& '" + python.replace("'", "''") + "'" if os.name == "nt"
+              else shlex.quote(python))
+    command = quoted + " -m neqsim_cli"
+    status = ("NeqSim plugin-only runtime ({{}}): plugin root={{}}; Python={{}}; "
+              "Python package setup={{}}; install log={{}}. "
+              "If setup is pending or failed, inspect the log and run /neqsim-setup; "
+              "do not claim the toolkit is ready. Enterprise access still requires the "
+              "user's own permissions; never treat installed packages as access grants."
+              .format(plugin_name, root, python, "verified" if ready else "pending or failed", log))
+    if plugin_name != "neqsim":
+        return status
+    return (status + " Use available NeqSim MCP tools first for one-off calculations. "
+            "For task folders, runner and reports use `{{}} <arguments>`; do not assume "
+            "the neqsim executable is on PATH. In agent/skill recipes, replace "
+            "`devtools/NAME.py` with the installed module using this interpreter "
+            "(`-m NAME`); load skills by name instead of reading .github/skills paths. "
+            "No source checkout, Maven, uv or git clone is required for normal use. "
+            "Do not run checkout-only build/CI scripts or try to edit installed plugin files."
+            .format(command))
 
 def pip_install(python, req, out):
     """pip install one requirement, preferring a bundled ${{PLUGIN_ROOT}}/wheels folder.
@@ -781,22 +808,26 @@ def import_check(python, out):
     """
     pkgs = sorted(set(skill_packages()) | set(VERIFY_IMPORTS))
     if not pkgs:
-        return
+        return True
     code = ("import importlib, sys\\n"
             "bad = []\\n"
             "for name in sys.argv[1:]:\\n"
             "    try:\\n"
+            "        if name == 'neqsim':\\n"
+            "            from java_locator import ensure_java_home\\n"
+            "            ensure_java_home()\\n"
             "        importlib.import_module(name)\\n"
             "    except Exception as exc:\\n"
             "        bad.append('%s (%s: %s)' % (name, type(exc).__name__, exc))\\n"
             "print('IMPORT_OK=%d IMPORT_FAILED=%d' % (len(sys.argv) - 1 - len(bad), len(bad)))\\n"
             "for line in bad:\\n"
-            "    print('  FAILED ' + line)\\n")
+            "    print('  FAILED ' + line)\\n"
+            "sys.exit(1 if bad else 0)\\n")
     out.write("== {{}} import check of {{}} skill packages\\n".format(
         time.strftime("%Y-%m-%d %H:%M:%S"), len(pkgs)))
     out.flush()
-    subprocess.run([python, "-c", code] + pkgs, stdout=out, stderr=out, check=False,
-                   creationflags=NO_WINDOW)
+    return subprocess.run([python, "-c", code] + pkgs, stdout=out, stderr=out, check=False,
+                          creationflags=NO_WINDOW).returncode == 0
 
 
 def run_install(python):
@@ -814,7 +845,7 @@ def run_install(python):
             ok &= pip_install(python, req, out)
         failed_live = install_live_requirements(python, out) if ok else []
         if ok:
-            import_check(python, out)
+            ok = import_check(python, out)
         status = "OK" if ok else "FAILED"
         if ok and failed_live:
             status = "OK (skill packages installed; {{}} live dependencies missing, see above)".format(
@@ -822,6 +853,8 @@ def run_install(python):
         out.write("== {{}} {{}}\\n".format(time.strftime("%Y-%m-%d %H:%M:%S"), status))
     if ok:
         stamp.write_text(stamp_text(python), encoding="utf-8")
+    elif stamp.exists():
+        stamp.unlink()
     try:
         lock.unlink()
     except OSError:
@@ -888,8 +921,11 @@ def main():
         messages.append("NeqSim plugin '{{}}' v{{}}: installing its Python packages into {{}} in the "
                         "background (first session only, a few minutes). Log: {{}}. Run /neqsim-setup "
                         "afterwards to verify.{{}}".format(plugin_name, version, python, log, mcp_note))
-    if messages:
-        print(json.dumps({{"systemMessage": " ".join(messages)}}))
+    ready = bool(python and stamp.exists()
+                 and stamp.read_text(encoding="utf-8") == stamp_text(python))
+    print(json.dumps({{"systemMessage": " ".join(messages),
+                      "hookSpecificOutput": {{"hookEventName": "SessionStart",
+                                             "additionalContext": runtime_context(python, ready)}}}}))
     return 0
 
 

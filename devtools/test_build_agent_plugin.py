@@ -5,6 +5,7 @@ Uses a synthetic mini-repo so the tests do not depend on sibling checkouts.
 from __future__ import annotations
 
 import base64
+import io
 import json
 import os
 import re
@@ -231,7 +232,7 @@ class BuildPluginTest(unittest.TestCase):
         spec = bap.PluginSpec("core", "Core", self.spec.skills_roots, self.spec.agents_roots, [],
                               False, [],
                               pip_targets=[bap.VENDORED_TOOLKIT_REQUIREMENT, "neqsim"],
-                              verify_imports=["neqsim"])
+                              verify_imports=["neqsim", "neqsim_cli", "neqsim_runner"])
         known = {n for n, _ in bap.iter_skills(spec.skills_roots)}
         result = bap.build_plugin(spec, self.out, known, _args())
         self.assertEqual(result["errors"], [])
@@ -239,13 +240,13 @@ class BuildPluginTest(unittest.TestCase):
             encoding="utf-8")
         self.assertIn("'${PLUGIN_ROOT}/toolkit'", hook_py)
         self.assertIn("'neqsim'", hook_py)
-        self.assertIn("VERIFY_IMPORTS = ['neqsim']", hook_py)
+        self.assertIn("VERIFY_IMPORTS = ['neqsim', 'neqsim_cli', 'neqsim_runner']", hook_py)
         compile(hook_py, "install_skill_packages.py", "exec")
 
     def test_default_specs_core_plugin_verifies_neqsim(self):
         core = next(s for s in bap.default_specs() if s.name == "neqsim")
         self.assertIn("neqsim", core.pip_targets)
-        self.assertEqual(core.verify_imports, ["neqsim"])
+        self.assertEqual(core.verify_imports, ["neqsim", "neqsim_cli", "neqsim_runner"])
 
     def test_unresolved_required_skill_is_a_warning(self):
         result = self._build()
@@ -549,6 +550,119 @@ class HookJavaResolutionTest(unittest.TestCase):
         self.assertTrue(self.ns["java_note_is_new"]("B"))
         self.assertFalse(self.ns["java_note_is_new"](None))
         self.assertTrue(self.ns["java_note_is_new"]("B"))  # relapse after a healthy session
+
+
+class HookPluginOnlyTest(unittest.TestCase):
+    """Exercise the generated hook without a checkout, pip installs or network access."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name) / "plugin with spaces"
+        self.root.mkdir()
+        _write(self.root / "plugin.json", '{"name":"neqsim","version":"1.0.0"}')
+        self.env = mock.patch.dict(os.environ, {"PLUGIN_ROOT": str(self.root)})
+        self.env.start()
+        src = bap.HOOK_PY.format(pinned="", editable_self=False, requirements=[],
+                                 prefetch_mcp=False, live_requirements="", verify_imports=["json"])
+        self.ns = {"__file__": str(self.root / "scripts" / "install_skill_packages.py")}
+        exec(src.replace("sys.exit(main())", ""), self.ns)
+        state = self.root / "state"
+        state.mkdir()
+        for name, filename in (("state", ""), ("stamp", "installed_version"),
+                               ("lock", "install.lock"), ("log", "install.log")):
+            self.ns[name] = state / filename
+        self.ns["pick_python"] = lambda: sys.executable
+        self.ns["spawn_worker"] = mock.Mock()
+        self.ns["java_note_is_new"] = lambda note: False
+
+    def tearDown(self):
+        self.env.stop()
+        self.tmp.cleanup()
+
+    def _main_output(self):
+        with mock.patch.object(sys, "argv", ["install_skill_packages.py"]), \
+                mock.patch("sys.stdout", new_callable=io.StringIO) as output:
+            self.assertEqual(self.ns["main"](), 0)
+        return json.loads(output.getvalue())
+
+    def test_import_check_executes_and_reports_failure(self):
+        self.ns["VERIFY_IMPORTS"] = ["json", "_neqsim_test_nonexistent_package_"]
+        with self.ns["log"].open("w", encoding="utf-8") as out:
+            self.assertFalse(self.ns["import_check"](sys.executable, out))
+        text = self.ns["log"].read_text(encoding="utf-8")
+        self.assertIn("IMPORT_OK=1 IMPORT_FAILED=1", text)
+        self.assertIn("FAILED _neqsim_test_nonexistent_package_", text)
+
+    def test_worker_stamps_only_verified_install(self):
+        self.assertEqual(self.ns["run_install"](sys.executable), 0)
+        self.assertEqual(self.ns["stamp"].read_text(encoding="utf-8"),
+                         self.ns["stamp_text"](sys.executable))
+        self.assertIn("IMPORT_OK=1 IMPORT_FAILED=0",
+                      self.ns["log"].read_text(encoding="utf-8"))
+
+    def test_failed_import_removes_success_stamp_and_retries_next_session(self):
+        self.ns["stamp"].write_text("old success", encoding="utf-8")
+        self.ns["lock"].write_text("123", encoding="utf-8")
+        self.ns["VERIFY_IMPORTS"] = ["_neqsim_test_nonexistent_package_"]
+        self.assertEqual(self.ns["run_install"](sys.executable), 1)
+        self.assertFalse(self.ns["stamp"].exists())
+        self.assertFalse(self.ns["lock"].exists())
+        self.assertIn("FAILED", self.ns["log"].read_text(encoding="utf-8"))
+        self._main_output()
+        self.ns["spawn_worker"].assert_called_once_with(sys.executable)
+
+    def test_stamp_tracks_editable_plugin_location(self):
+        before = self.ns["stamp_text"](sys.executable)
+        self.ns["root"] = self.root.parent / "moved plugin"
+        self.assertNotEqual(before, self.ns["stamp_text"](sys.executable))
+
+    def test_ready_session_always_supplies_plugin_only_context(self):
+        self.ns["stamp"].write_text(self.ns["stamp_text"](sys.executable), encoding="utf-8")
+        result = self._main_output()
+        hook = result["hookSpecificOutput"]
+        self.assertEqual(hook["hookEventName"], "SessionStart")
+        context = hook["additionalContext"]
+        for expected in (str(self.root), sys.executable, "setup=verified", "-m neqsim_cli",
+                         "-m NAME", "load skills by name", "No source checkout"):
+            self.assertIn(expected, context)
+        self.ns["spawn_worker"].assert_not_called()
+
+    def test_pending_session_does_not_claim_toolkit_ready(self):
+        self.ns["lock"].write_text("123", encoding="utf-8")
+        result = self._main_output()
+        self.assertIn("setup=pending or failed",
+                      result["hookSpecificOutput"]["additionalContext"])
+        self.ns["spawn_worker"].assert_not_called()
+
+    def test_missing_python_context_limits_work_to_mcp(self):
+        self.ns["pick_python"] = lambda: None
+        result = self._main_output()
+        self.assertIn("Python is unavailable",
+                      result["hookSpecificOutput"]["additionalContext"])
+        self.ns["spawn_worker"].assert_not_called()
+
+    def test_skills_plugins_do_not_duplicate_core_workflow_context(self):
+        self.ns["plugin_name"] = "neqsim-enterprise"
+        context = self.ns["runtime_context"](sys.executable, True)
+        self.assertIn("neqsim-enterprise", context)
+        self.assertIn("setup=verified", context)
+        self.assertNotIn("-m neqsim_cli", context)
+
+    def test_runtime_commands_quote_interpreter_paths(self):
+        self.ns["os"] = SimpleNamespace(name="nt")
+        windows = self.ns["runtime_context"](r"C:\O'Brien\Python Tools\python.exe", True)
+        self.assertIn(r"& 'C:\O''Brien\Python Tools\python.exe' -m neqsim_cli", windows)
+        self.ns["os"] = SimpleNamespace(name="posix")
+        posix = self.ns["runtime_context"]("/opt/Python Tools/python", True)
+        self.assertIn("'/opt/Python Tools/python' -m neqsim_cli", posix)
+
+    def test_core_import_check_resolves_hidden_java(self):
+        self.ns["VERIFY_IMPORTS"] = ["neqsim"]
+        with mock.patch.object(self.ns["subprocess"], "run",
+                               return_value=SimpleNamespace(returncode=0)) as run:
+            self.assertTrue(self.ns["import_check"](sys.executable, io.StringIO()))
+        code = run.call_args.args[0][2]
+        self.assertLess(code.index("ensure_java_home()"), code.index("importlib.import_module"))
 
 
 class BumpTest(unittest.TestCase):
