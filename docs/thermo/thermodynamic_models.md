@@ -173,8 +173,27 @@ Where $\Delta^{A_i B_j}$ is the association strength between site A on molecule 
 | `SystemSrkCPAstatoil` | **Recommended** Equinor SRK-CPA implementation | 10 |
 | `SystemSrkCPA` | Standard SRK-CPA | 7 |
 | `SystemSrkCPAs` | Alternative SRK-CPA | 7 |
-| `SystemPrCPA` | Peng-Robinson with CPA | 7 |
+| `SystemPrCPA` | Peng-Robinson with generic PR-CPA parameters | 7, 9, 10 |
 | `SystemUMRCPAEoS` | UMR-CPA with UNIFAC | - |
+
+`SystemPrCPA` shares the PR-based CPA mass-action solver and analytic association
+derivatives with `SystemUMRCPAEoS`. Its components use the generic `aCPA_PR`,
+`bCPA_PR`, `mCPA_PR` and `associationboundingvolume_PR` database columns, the
+ordinary PR alpha with the fitted CPA coefficient when available, and
+`cpakij_PR` interactions. It does not use the dedicated UMR-CPA parameter or
+Mathias-Copeman families. Non-associating components without fitted CPA physical
+parameters retain their ordinary PR behavior. No new parameter regression is
+implied by the implementation repair.
+
+The repaired implementation replaces the legacy incomplete association path,
+which used SRK component objects inside a PR phase and could not initialize the
+water/TEG caloric reproducer. Its Java class names, constructors and PR phase
+inheritance are retained; `ComponentPrCPA` is now a concrete implementation.
+Old Java-serialized `PhasePrCPA` states are deliberately incompatible and must
+be recreated with `SystemPrCPA`; the phase serialization UID has changed.
+New-format serialization and cloned states are covered by regression tests.
+See [CPA caloric consistency](mixing_rules_guide.md#65-caloric-consistency) for
+the numerical checks and their limits.
 
 **Liquid-water heat capacity:** the default `SystemSrkCPAstatoil` can be 8–17% low
 at 5–60 °C. An opt-in, caloric-data-fitted water alpha is available through

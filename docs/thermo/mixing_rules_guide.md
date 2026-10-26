@@ -601,18 +601,23 @@ the attraction or association-strength expressions used for phase equilibrium.
 [#4634](https://github.com/equinor/neqsim/issues/4634), nearby compositions and
 temperatures, pure-component controls and alternative mixing rules.
 
-The same checks cover SRK-CPA, simplified SRK-CPA, electrolyte-CPA (a neutral
+The same checks cover PR-CPA, SRK-CPA, simplified SRK-CPA, electrolyte-CPA (a neutral
 water/TEG control), UMR-CPA and the implicit/reduced/Anderson/Broyden SRK-CPA
 solvers. Volume-translated UMR-CPA also differentiates its implemented,
 temperature-independent Peneloux translation as a constant. A stored database
 temperature coefficient does not enter that translation expression and must not
 be substituted for its derivative.
 
-Legacy `SystemPrCPA` is excluded from the passing caloric qualification: the
-water/TEG reproducer fails during association initialization. Its initialization,
-mass-action solve and caloric qualification are tracked separately in
-[#4636](https://github.com/equinor/neqsim/issues/4636). This consistency coverage
-does not establish experimental mixture accuracy or qualify ionic mixtures.
+`SystemPrCPA` uses the existing PR-based CPA mass-action solver and analytical
+site responses, with its own generic PR-CPA component parameters and PR alpha.
+It does not select the dedicated UMR-CPA parameter or alpha family merely
+because it shares that solver. `PrCpaImplementationTest` additionally checks
+mass-action residuals, the non-associating PR limit, site sensitivities, phase
+equilibrium, repeated initialization, cloning and serialization for the repair
+of [#4636](https://github.com/equinor/neqsim/issues/4636).
+See the [PR-CPA model and compatibility notes](thermodynamic_models.md#42-available-cpa-models).
+This consistency coverage does not establish experimental mixture accuracy or
+qualify ionic mixtures.
 
 ---
 

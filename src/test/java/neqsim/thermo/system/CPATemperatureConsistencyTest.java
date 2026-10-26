@@ -3,7 +3,6 @@ package neqsim.thermo.system;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -67,11 +66,23 @@ class CPATemperatureConsistencyTest {
     assertCaloricConsistency(model, 430, 0.25, 10);
   }
 
-  /** Keeps the independent legacy PR-CPA initialization failure reproducible. */
+  /** Verifies the PR-CPA reproducer after repairing association initialization and derivatives. */
   @Test
-  @Disabled("Legacy PR-CPA initialization and association solve require repair: issue #4636")
   void legacyPrCpaCaloricConsistency() {
     assertCaloricConsistency("SystemPrCPA", 430, 0.25, 10);
+  }
+
+  /**
+   * Checks PR-CPA compositions, temperatures and mixing-rule controls after the issue 4636 repair.
+   *
+   * @param temperature temperature in K
+   * @param water water mole fraction
+   * @param rule mixing-rule selector
+   */
+  @ParameterizedTest
+  @CsvSource({"350,0.1,10", "390,0.5,10", "430,0.9,10", "430,1,10", "430,0,10", "430,0.25,7", "430,0.25,9"})
+  void prCpaCaloricStateGrid(double temperature, double water, int rule) {
+    assertCaloricConsistency("SystemPrCPA", temperature, water, rule);
   }
 
   /**

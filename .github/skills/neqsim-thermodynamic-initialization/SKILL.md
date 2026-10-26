@@ -38,8 +38,13 @@ Delta/g) isolates the latter. A stored database temperature coefficient is not
 automatically the derivative of the implemented property expression. See
 `CPATemperatureConsistencyTest`, `ClassicTxTemperatureDerivativeTest` and
 [CPA caloric consistency](../../../docs/thermo/mixing_rules_guide.md#65-caloric-consistency).
-Legacy `SystemPrCPA` cannot currently initialize the water/TEG caloric reproducer;
-issue #4636 tracks its independent association-initialization/solver repair.
+`SystemPrCPA` shares the PR-based CPA association solver with UMR-CPA, while
+retaining generic PR-CPA database parameters and PR alpha. Verify the ordinary
+PR limit for non-associating components and avoid activating UMR parameter
+families through implementation reuse. `PrCpaImplementationTest` covers the
+issue #4636 repair, site responses, flash closure and independent cloned state.
+Recreate old Java-serialized PR-CPA states after the phase serialization UID
+change; the old incomplete association state is not migrated implicitly.
 
 When a caller consumes temperature derivatives after `TPflash`, initialize them on
 the resulting phase state with `init(2)`. Initializing before the flash is insufficient

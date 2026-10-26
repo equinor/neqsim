@@ -93,24 +93,136 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   /** {@inheritDoc} */
   @Override
   public PhaseUMRCPA clone() {
-    PhaseUMRCPA clonedPhase = null;
-    try {
-      clonedPhase = (PhaseUMRCPA) super.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+    PhaseUMRCPA clonedPhase = (PhaseUMRCPA) super.clone();
+    if (clonedPhase == null) {
+      throw new IllegalStateException("Cannot clone CPA phase: base phase clone failed");
     }
-    if (activeAccosComp != null) {
-      clonedPhase.activeAccosComp = activeAccosComp.clone();
-      System.arraycopy(this.activeAccosComp, 0, clonedPhase.activeAccosComp, 0, activeAccosComp.length);
-    }
+    clonedPhase.dFdNtemp = dFdNtemp == null ? null : dFdNtemp.clone();
+    clonedPhase.activeAccosComp = activeAccosComp == null ? null : activeAccosComp.clone();
+    clonedPhase.lngi = lngi == null ? null : lngi.clone();
+    clonedPhase.moleculeNumber = moleculeNumber == null ? null : moleculeNumber.clone();
+    clonedPhase.assSiteNumber = assSiteNumber == null ? null : assSiteNumber.clone();
+    clonedPhase.selfAccociationScheme = copyArray(selfAccociationScheme);
+    clonedPhase.crossAccociationScheme = copyArray(crossAccociationScheme);
+    clonedPhase.gvector = copyArray(gvector);
+    clonedPhase.delta = copyArray(delta);
+    clonedPhase.deltaNog = copyArray(deltaNog);
+    clonedPhase.deltadT = copyArray(deltadT);
+    clonedPhase.deltadTdT = copyArray(deltadTdT);
+    clonedPhase.Klkni = copyArray(Klkni);
+    clonedPhase.KlkTVMatrix = KlkTVMatrix == null ? null : KlkTVMatrix.copy();
+    clonedPhase.KlkTTMatrix = KlkTTMatrix == null ? null : KlkTTMatrix.copy();
+    clonedPhase.KlkTMatrix = KlkTMatrix == null ? null : KlkTMatrix.copy();
+    clonedPhase.udotTimesmMatrix = udotTimesmMatrix == null ? null : udotTimesmMatrix.copy();
+    clonedPhase.mVector = mVector == null ? null : mVector.copy();
+    clonedPhase.udotMatrix = udotMatrix == null ? null : udotMatrix.copy();
+    clonedPhase.uMatrix = uMatrix == null ? null : uMatrix.copy();
+    clonedPhase.QMatksiksiksi = QMatksiksiksi == null ? null : QMatksiksiksi.copy();
+    clonedPhase.KlkVVVMatrix = KlkVVVMatrix == null ? null : KlkVVVMatrix.copy();
+    clonedPhase.KlkVVMatrix = KlkVVMatrix == null ? null : KlkVVMatrix.copy();
+    clonedPhase.udotTimesmiMatrix = udotTimesmiMatrix == null ? null : udotTimesmiMatrix.copy();
+    clonedPhase.ksiMatrix = ksiMatrix == null ? null : ksiMatrix.copy();
+    clonedPhase.KlkMatrix = KlkMatrix == null ? null : KlkMatrix.copy();
+    clonedPhase.hessianMatrix = hessianMatrix == null ? null : hessianMatrix.copy();
+    clonedPhase.hessianInvers = hessianInvers == null ? null : hessianInvers.copy();
+    clonedPhase.KlkVMatrix = KlkVMatrix == null ? null : KlkVMatrix.copy();
+    clonedPhase.corr2Matrix = corr2Matrix == null ? null : corr2Matrix.copy();
+    clonedPhase.corr3Matrix = corr3Matrix == null ? null : corr3Matrix.copy();
+    clonedPhase.corr4Matrix = corr4Matrix == null ? null : corr4Matrix.copy();
+    // Factorizations own mutable scratch and cannot be shared. Rebuild lazily from the copied
+    // Hessian if a derivative is requested before the clone next solves its association sites.
     clonedPhase.hessianLU = null;
     clonedPhase.hessianLUinput = null;
     clonedPhase.hessianLUSize = -1;
-    // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
-    // clonedPhase.cpamix = (CPAMixingInterface) cpamix.clone();
-    // clonedPhase.cpamix = cpaSelect.getMixingRule(1, this);
+    // Keep the configured CPA mixing-rule parameters shared, as in the EOS clone contract.
+    // Concurrent mixing-rule reconfiguration is not supported.
 
     return clonedPhase;
+  }
+
+  /**
+   * Copies an owned association matrix without sharing rows.
+   *
+   * @param source source matrix, possibly null
+   * @return independent matrix with the same values and shape, or null
+   */
+  private static double[][] copyArray(double[][] source) {
+    if (source == null) {
+      return null;
+    }
+    double[][] result = source.clone();
+    for (int i = 0; i < source.length; i++) {
+      result[i] = source[i] == null ? null : source[i].clone();
+    }
+    return result;
+  }
+
+  /**
+   * Copies an owned association tensor without sharing nested rows.
+   *
+   * @param source source tensor, possibly null
+   * @return independent tensor with the same values and shape, or null
+   */
+  private static double[][][] copyArray(double[][][] source) {
+    if (source == null) {
+      return null;
+    }
+    double[][][] result = source.clone();
+    for (int i = 0; i < source.length; i++) {
+      result[i] = copyArray(source[i]);
+    }
+    return result;
+  }
+
+  /**
+   * Copies an owned association matrix without sharing rows.
+   *
+   * @param source source matrix, possibly null
+   * @return independent matrix with the same values and shape, or null
+   */
+  private static int[][] copyArray(int[][] source) {
+    if (source == null) {
+      return null;
+    }
+    int[][] result = source.clone();
+    for (int i = 0; i < source.length; i++) {
+      result[i] = source[i] == null ? null : source[i].clone();
+    }
+    return result;
+  }
+
+  /**
+   * Copies an owned association tensor without sharing nested rows.
+   *
+   * @param source source tensor, possibly null
+   * @return independent tensor with the same values and shape, or null
+   */
+  private static int[][][] copyArray(int[][][] source) {
+    if (source == null) {
+      return null;
+    }
+    int[][][] result = source.clone();
+    for (int i = 0; i < source.length; i++) {
+      result[i] = copyArray(source[i]);
+    }
+    return result;
+  }
+
+  /**
+   * Copies an owned association tensor without sharing nested rows.
+   *
+   * @param source source tensor, possibly null
+   * @return independent tensor with the same values and shape, or null
+   */
+  private static int[][][][] copyArray(int[][][][] source) {
+    if (source == null) {
+      return null;
+    }
+    int[][][][] result = source.clone();
+    for (int i = 0; i < source.length; i++) {
+      result[i] = copyArray(source[i]);
+    }
+    return result;
   }
 
   /** {@inheritDoc} */
@@ -155,10 +267,15 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       }
 
       for (int i = 0; i < numberOfComponents; i++) {
+        ((ComponentUMRCPA) componentArray[i]).resizeXsitedni(numberOfComponents);
         for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
           ((ComponentUMRCPA) componentArray[i]).setXsite(j, 1.0);
           ((ComponentUMRCPA) componentArray[i]).setXsitedV(j, 0.0);
           ((ComponentUMRCPA) componentArray[i]).setXsitedT(j, 0.0);
+          ((ComponentUMRCPA) componentArray[i]).setXsitedVdV(j, 0.0);
+          ((ComponentUMRCPA) componentArray[i]).setXsitedVdVdV(j, 0.0);
+          ((ComponentUMRCPA) componentArray[i]).setXsitedTdV(j, 0.0);
+          ((ComponentUMRCPA) componentArray[i]).setXsitedTdT(j, 0.0);
         }
       }
 
@@ -385,10 +502,22 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       return;
     }
 
+    // Differentiate the stationary association equations twice and three times
+    // with respect to native EOS volume. Each derivative is another right-hand
+    // side for the already-factorized association Hessian.
+    SimpleMatrix XVV = applyHessianInv(
+        KlkVVMatrixTImesKsi.plus(KlkVMatrix.mult(XV).scale(2.0)).minus(QMatksiksiksi.elementMult(XV.elementMult(XV))));
+    SimpleMatrix QMatksiksiksiksi = QMatksiksiksi.elementDiv(ksiMatrix).scale(-3.0);
+    SimpleMatrix XVVV = applyHessianInv(KlkVVVMatrix.mult(ksiMatrix).plus(KlkVVMatrix.mult(XV).scale(3.0))
+        .plus(KlkVMatrix.mult(XVV).scale(3.0)).minus(QMatksiksiksi.elementMult(XV.elementMult(XVV)).scale(3.0))
+        .minus(QMatksiksiksiksi.elementMult(XV.elementMult(XV).elementMult(XV))));
+
     temp = 0;
     for (int p = 0; p < numberOfComponents; p++) {
       for (int kk = 0; kk < getComponent(p).getNumberOfAssociationSites(); kk++) {
         ((ComponentCPAInterface) getComponent(p)).setXsitedV(kk, XV.get(temp + kk, 0));
+        ((ComponentUMRCPA) getComponent(p)).setXsitedVdV(kk, XVV.get(temp + kk, 0));
+        ((ComponentUMRCPA) getComponent(p)).setXsitedVdVdV(kk, XVVV.get(temp + kk, 0));
       }
       temp += getComponent(p).getNumberOfAssociationSites();
     }
@@ -405,6 +534,13 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     // dFCPAdTdV = tempMatrixTV.get(0, 0);
     // dXdT
     SimpleMatrix XT = applyHessianInv(KlkTMatrixTImesKsi);
+    // Differentiate the stationary association equations once more. The same
+    // Hessian applies; only the right-hand side changes. QMatksiksiksi stores
+    // the diagonal third derivative 2*m/X^3 of the association Helmholtz term.
+    SimpleMatrix XTT = applyHessianInv(KlkTTMatrix.mult(ksiMatrix).plus(KlkTMatrix.mult(XT).scale(2.0))
+        .minus(QMatksiksiksi.elementMult(XT.elementMult(XT))));
+    SimpleMatrix XTV = applyHessianInv(KlkTVMatrix.mult(ksiMatrix).plus(KlkTMatrix.mult(XV)).plus(KlkVMatrix.mult(XT))
+        .minus(QMatksiksiksi.elementMult(XT.elementMult(XV))));
     // dQdTdT
     SimpleMatrix tempMatrixTT = ksiMatrixTranspose.mult(KlkTTMatrix.mult(ksiMatrix)).scale(-0.5)
         .minus(KlkTMatrixTImesKsi.transpose().mult(XT));
@@ -418,6 +554,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     for (int p = 0; p < numberOfComponents; p++) {
       for (int kk = 0; kk < getComponent(p).getNumberOfAssociationSites(); kk++) {
         ((ComponentCPAInterface) getComponent(p)).setXsitedT(kk, XT.get(temp + kk, 0));
+        ((ComponentUMRCPA) getComponent(p)).setXsitedTdV(kk, XTV.get(temp + kk, 0));
+        ((ComponentCPAInterface) getComponent(p)).setXsitedTdT(kk, XTT.get(temp + kk, 0));
       }
       temp += getComponent(p).getNumberOfAssociationSites();
     }
@@ -501,6 +639,9 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, moles, molesInPhase, compNumber);
     componentArray[compNumber] = new ComponentUMRCPA(name, moles, molesInPhase, compNumber);
+    for (int i = 0; i < numberOfComponents; i++) {
+      ((ComponentUMRCPA) componentArray[i]).resizeXsitedni(numberOfComponents);
+    }
   }
 
   /** {@inheritDoc} */
@@ -821,8 +962,16 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
    * @return solution of {@code hessianMatrix * x = rhs}
    */
   private SimpleMatrix applyHessianInv(SimpleMatrix rhs) {
-    if (hessianInvers != null) {
-      return hessianInvers.mult(rhs);
+    if ((hessianLU == null || hessianLUSize != totalNumberOfAccociationSites) && hessianInvers == null) {
+      int n = totalNumberOfAccociationSites;
+      LinearSolverDense<DMatrixRMaj> solver = LinearSolverFactory_DDRM.lu(n);
+      DMatrixRMaj input = hessianMatrix.getDDRM().copy();
+      if (!solver.setA(input)) {
+        throw new IllegalStateException("Unable to factor copied CPA association Hessian");
+      }
+      hessianLU = solver;
+      hessianLUinput = input;
+      hessianLUSize = n;
     }
     if (hessianLU != null && hessianLUSize == totalNumberOfAccociationSites) {
       DMatrixRMaj rhsMat = rhs.getDDRM();
@@ -830,7 +979,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       hessianLU.solve(rhsMat, out);
       return SimpleMatrix.wrap(out);
     }
-    throw new IllegalStateException("Hessian factorization has not been initialized");
+    return hessianInvers.mult(rhs);
   }
 
   /**
