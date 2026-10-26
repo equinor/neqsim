@@ -239,6 +239,11 @@ XStream creates objects without running constructors, so a field added after the
 would otherwise keep its JVM default (`null`, `0` or `false`) instead of its declared initial value.
 In legacy mode each such field is restored from a freshly constructed instance of the same class,
 energy ports are re-registered, and private `readObject` hooks run so their post-load repairs apply.
+These repairs cover both plain field XML and the `serialization="custom"` layout used by classes
+with serialization hooks. Removed fields and fields that are now transient are ignored in either
+layout. If a hook rejects invalid model data, loading fails with the original cause instead of
+returning an incomplete model. For example, a layered well without persisted zone definitions
+must be rebuilt from its original inputs.
 Without this, an archive from NeqSim 3.9 or earlier could load and run with an EOS attraction
 parameter of zero (in one lean natural gas case the dew point came out 9.7 C low and no condensate
 was predicted) or fail with a `NullPointerException` in `getEnergyPorts()`.

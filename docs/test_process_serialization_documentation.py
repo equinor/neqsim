@@ -33,7 +33,7 @@ def read(path: Path) -> str:
 def test_java_quick_start_checks_archive_failures() -> None:
     """The primary recipe must compile conceptually and check both documented failure signals."""
 
-    guide = read(GUIDE)
+    guide = " ".join(read(GUIDE).split()).replace("`", "")
 
     assert "import neqsim.thermo.system.SystemInterface;" in guide
     assert 'if (!process.saveToNeqsim("my_process.neqsim"))' in guide
@@ -90,6 +90,8 @@ def test_cross_version_loading_is_documented_and_source_anchored() -> None:
     assert 'public static final String META_ENTRY = "neqsim-meta.properties";' in source
     assert 'renamed.put("tagName", "tagNumber");' in source
     assert "restoreMissingFields" in source
+    assert 'serialization="custom"' in guide
+    assert "loading fails with the original cause" in guide
 
 
 def test_embedded_host_portability_guidance_is_source_anchored() -> None:
@@ -109,7 +111,7 @@ def test_embedded_host_portability_guidance_is_source_anchored() -> None:
 def test_format_boundaries_and_process_entry_point_remain_discoverable() -> None:
     """Keep full-object archives distinct from selective lifecycle state at both entry points."""
 
-    guide = read(GUIDE)
+    guide = " ".join(read(GUIDE).split())
     process_guide = read(PROCESS_GUIDE)
 
     assert "selective state model rather than a" in guide

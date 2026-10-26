@@ -40,14 +40,17 @@ import java.util.zip.ZipOutputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.converters.ConversionException;
 import com.thoughtworks.xstream.converters.MarshallingContext;
 import com.thoughtworks.xstream.converters.UnmarshallingContext;
 import com.thoughtworks.xstream.converters.reflection.ReflectionConverter;
 import com.thoughtworks.xstream.converters.reflection.ReflectionProvider;
 import com.thoughtworks.xstream.converters.reflection.ReflectionProviderWrapper;
 import com.thoughtworks.xstream.converters.reflection.SerializableConverter;
+import com.thoughtworks.xstream.core.util.HierarchicalStreams;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
+import com.thoughtworks.xstream.io.ReaderWrapper;
 import com.thoughtworks.xstream.mapper.CannotResolveClassException;
 import com.thoughtworks.xstream.mapper.Mapper;
 import com.thoughtworks.xstream.mapper.MapperWrapper;
@@ -313,8 +316,8 @@ public class NeqSimXtream {
     xstream.allowTypesByWildcard(new String[] {"neqsim.**"});
 
     FieldWriteRecorder recorder = new FieldWriteRecorder(xstream.getReflectionProvider());
-    SerializableConverter serializableConverter = new SerializableConverter(xstream.getMapper(),
-        xstream.getReflectionProvider(), xstream.getClassLoaderReference());
+    SerializableConverter serializableConverter = new SerializableConverter(xstream.getMapper(), recorder,
+        xstream.getClassLoaderReference());
     xstream.registerConverter(new NeqSimObjectConverter(xstream.getMapper(), recorder, serializableConverter, report),
         XStream.PRIORITY_NORMAL);
     return xstream;
@@ -412,21 +415,23 @@ public class NeqSimXtream {
     }
 
     /**
-     * Decides whether a member is serialized. XStream asks this for every class up to {@code Object} when it meets an
-     * element with no matching field; answering false for {@code Object} (which has no fields) skips such elements
-     * instead of failing the whole load.
+     * Skips removed and transient fields while reading either XML layout. The custom SerializableConverter asks
+     * directly about the declaring class rather than walking the hierarchy to {@code Object}.
      *
      * @param definedIn the class declaring the member
      * @param fieldName the member name
-     * @return false for null or {@code Object}, otherwise the wrapped mapper's answer
+     * @return false for absent or transient NeqSim fields, otherwise the wrapped mapper's answer
      */
     @Override
     public boolean shouldSerializeMember(Class definedIn, String fieldName) {
       if (definedIn == null) {
         return false;
       }
-      if (definedIn == Object.class) {
-        logger.debug("Ignoring unknown field during deserialization: {}", fieldName);
+      Field field = report != null && definedIn.getName().startsWith("neqsim.") ? findField(definedIn, fieldName)
+          : null;
+      if (definedIn == Object.class || (report != null && definedIn.getName().startsWith("neqsim.")
+          && (field == null || Modifier.isTransient(field.getModifiers())))) {
+        logger.debug("Ignoring absent or transient field during deserialization: {}", fieldName);
         if (report != null) {
           report.count(report.ignoredElements, fieldName);
         }
@@ -467,14 +472,24 @@ public class NeqSimXtream {
         return;
       }
       if (recording) {
-        Set<String> fields = written.get(object);
-        if (fields == null) {
-          fields = new HashSet<String>();
-          written.put(object, fields);
-        }
-        fields.add(key);
+        fieldsFor(object).add(key);
       }
       super.writeField(object, fieldName, value, definedIn);
+    }
+
+    /**
+     * Returns the field keys already populated or restored for an object.
+     *
+     * @param object the object being read
+     * @return its mutable field-key set
+     */
+    Set<String> fieldsFor(Object object) {
+      Set<String> fields = written.get(object);
+      if (fields == null) {
+        fields = new HashSet<String>();
+        written.put(object, fields);
+      }
+      return fields;
     }
 
     /**
@@ -528,6 +543,9 @@ public class NeqSimXtream {
     /** Cache of instance fields per class. */
     private final Map<Class<?>, List<Field>> fieldCache = new HashMap<Class<?>, List<Field>>();
 
+    /** At most one constructor template per object while its class hierarchy is being read. */
+    private final Map<Object, Object> templates = new IdentityHashMap<Object, Object>();
+
     /**
      * Creates a NeqSimObjectConverter.
      *
@@ -570,20 +588,71 @@ public class NeqSimXtream {
     public Object unmarshal(HierarchicalStreamReader reader, UnmarshallingContext context) {
       Class<?> type = context.getRequiredType();
       String layout = reader.getAttribute(mapper.aliasForSystemAttribute("serialization"));
-      if ("custom".equals(layout) && serializableConverter.canConvert(type)) {
-        return serializableConverter.unmarshal(reader, context);
-      }
+      boolean custom = "custom".equals(layout) && serializableConverter.canConvert(type);
       boolean legacy = report != null && report.isLegacyFormat();
-      Object result = instantiateNewInstance(reader, context);
+      Object instance = instantiateNewInstance(reader, context);
       recorder.recording = legacy;
-      result = doUnmarshal(result, reader, context);
-      if (legacy) {
-        restoreMissingFields(result, recorder.take(result));
-        if (serializableConverter.canConvert(result.getClass())) {
-          runReadObjectHooks(result);
+      try {
+        Object result = custom
+            ? serializableConverter.doUnmarshal(instance, legacy ? restoringReader(reader, instance) : reader, context)
+            : doUnmarshal(instance, reader, context);
+        if (legacy) {
+          Object template = restoreMissingFields(result, recorder.fieldsFor(result), null);
+          if (template != null && result instanceof LegacyLoadRepairable) {
+            try {
+              ((LegacyLoadRepairable) result).repairAfterLegacyLoad(template);
+            } catch (RuntimeException e) {
+              report.count(report.readObjectHookFailures, result.getClass().getName() + ".repairAfterLegacyLoad");
+              throw new ConversionException("Legacy repair failed for " + result.getClass().getName(), e);
+            }
+          }
+          if (!custom && serializableConverter.canConvert(result.getClass())) {
+            runReadObjectHooks(result);
+          }
         }
+        return serializationMembers.callReadResolve(result);
+      } finally {
+        recorder.take(instance);
+        templates.remove(instance);
       }
-      return serializationMembers.callReadResolve(result);
+    }
+
+    /**
+     * Restores each custom default block before defaultReadObject returns to the class's hook. This preserves any
+     * dependent values calculated by that hook and avoids invoking a custom readObject twice.
+     *
+     * @param reader the original reader, positioned at the custom object
+     * @param result the object being populated
+     * @return a reader that observes only this object's class and default-block boundaries
+     */
+    private HierarchicalStreamReader restoringReader(HierarchicalStreamReader reader, final Object result) {
+      return new ReaderWrapper(reader) {
+        /** Depth within this object's custom layout; nested objects use their own converters. */
+        private int depth;
+
+        /** Class whose default fields are currently being read. */
+        private Class<?> declaringClass;
+
+        /** {@inheritDoc} */
+        @Override
+        public void moveDown() {
+          super.moveDown();
+          depth++;
+          if (depth == 1 && !"unserializable-parents".equals(getNodeName())) {
+            declaringClass = HierarchicalStreams.readClassType(this, mapper);
+          }
+        }
+
+        /** {@inheritDoc} */
+        @Override
+        public void moveUp() {
+          if (depth == 2 && "default".equals(getNodeName()) && declaringClass != null) {
+            restoreMissingFields(result, recorder.fieldsFor(result), declaringClass);
+          }
+          super.moveUp();
+          depth--;
+        }
+      };
     }
 
     /**
@@ -606,32 +675,43 @@ public class NeqSimXtream {
      * constructed template instance of the same class.
      *
      * @param result the unmarshalled object
-     * @param written field keys present in the XML
+     * @param written field keys already populated or restored; newly considered fields are added to avoid overwriting
+     * hook repairs during the final pass
+     * @param declaringClass the class whose default block just ended, or null for the final pass
+     * @return the constructor template, or null if none was needed or could be constructed
      */
-    private void restoreMissingFields(Object result, Set<String> written) {
+    private Object restoreMissingFields(Object result, Set<String> written, Class<?> declaringClass) {
       List<Field> missing = new ArrayList<Field>();
       for (Field field : cachedFields(result.getClass())) {
-        if (written.contains(fieldKey(field.getDeclaringClass(), field.getName()))
+        if ((declaringClass != null && field.getDeclaringClass() != declaringClass)
+            || written.contains(fieldKey(field.getDeclaringClass(), field.getName()))
             || !mapper.shouldSerializeMember(field.getDeclaringClass(), field.getName())) {
           continue;
         }
         try {
           if (field.getType().isPrimitive() || field.get(result) == null) {
             missing.add(field);
+            written.add(fieldKey(field.getDeclaringClass(), field.getName()));
           }
         } catch (IllegalAccessException e) {
           logger.debug("Cannot read field {}: {}", field, e.getMessage());
         }
       }
       if (missing.isEmpty()) {
-        return;
+        return templates.get(result);
       }
-      Object template = createTemplate(result);
+      Object template = templates.get(result);
+      if (template == null) {
+        template = createTemplate(result);
+        if (template != null) {
+          templates.put(result, template);
+        }
+      }
       if (template == null) {
         for (Field field : missing) {
           report.count(report.fieldsWithoutTemplate, describe(field));
         }
-        return;
+        return null;
       }
       for (Field field : missing) {
         try {
@@ -661,14 +741,7 @@ public class NeqSimXtream {
           report.count(report.fieldsWithoutTemplate, describe(field));
         }
       }
-      if (result instanceof LegacyLoadRepairable) {
-        try {
-          ((LegacyLoadRepairable) result).repairAfterLegacyLoad(template);
-        } catch (RuntimeException e) {
-          logger.debug("Legacy repair of {} failed: {}", result.getClass().getName(), e.toString());
-          report.count(report.readObjectHookFailures, result.getClass().getName() + ".repairAfterLegacyLoad");
-        }
-      }
+      return template;
     }
 
     /**
@@ -711,6 +784,7 @@ public class NeqSimXtream {
      * that post-deserialization repairs apply to objects read from the legacy plain layout.
      *
      * @param result the unmarshalled object
+     * @throws ConversionException if a hook rejects the loaded state or cannot complete
      */
     private void runReadObjectHooks(Object result) {
       List<Class<?>> hierarchy = new ArrayList<Class<?>>();
@@ -735,6 +809,7 @@ public class NeqSimXtream {
           Throwable cause = e instanceof InvocationTargetException ? e.getCause() : e;
           logger.debug("readObject hook of {} failed on legacy object: {}", type.getName(), String.valueOf(cause));
           report.count(report.readObjectHookFailures, type.getName());
+          throw new ConversionException("Legacy readObject hook failed for " + type.getName(), cause);
         }
       }
     }
