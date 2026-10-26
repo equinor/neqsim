@@ -1,7 +1,7 @@
 ---
 name: neqsim-utilities-specification
 version: "1.1.0"
-description: "Select and document process utility levels and quality requirements: steam, cooling/heating media, instrument air, fuel gas, nitrogen, water and refrigeration. Use for utility design bases, consumer-to-header allocation and project specification reviews. Use neqsim-utility-design for screening calculations and neqsim-utilities-design-report for the complete report workflow."
+description: "USE WHEN: selecting and documenting process utility levels and quality requirements: steam, cooling/heating media, instrument air, fuel gas, nitrogen, water and refrigeration. Covers utility design bases, consumer-to-header allocation and project specification reviews. Use neqsim-utility-design for screening calculations and neqsim-utilities-design-report for the complete report workflow."
 last_verified: "2026-10-25"
 ---
 

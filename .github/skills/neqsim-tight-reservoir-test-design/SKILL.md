@@ -1,6 +1,7 @@
 ---
 name: neqsim-tight-reservoir-test-design
 description: "Screening workflow for opening a tight (chalk, tight carbonate or sandstone) reservoir through an existing host: stimulated-horizontal-well rate and EUR with NeqSim PVT, Arps extrapolation bias, production-test duration and sampling, flowback chemistry and compatibility, value of information of the test and stage-gate criteria. USE WHEN: designing a production test, drainage strategy or stage-gate pipeline for a tight reservoir tied to an existing facility (chalk analogues)."
+last_verified: "2026-10-26"
 ---
 
 # Tight-reservoir test design and stage-gate screening

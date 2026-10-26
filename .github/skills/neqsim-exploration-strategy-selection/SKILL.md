@@ -1,6 +1,7 @@
 ---
 name: neqsim-exploration-strategy-selection
 description: "Exploration strategy screening for a near-field target next to a producing host: dedicated exploration well versus a PLX sidetrack, pilot or lateral from a planned producer. Monte Carlo of discovery, volume, fluid, value, timing and cost with exploration cost paid in every outcome; EMV, value of information, break-even chance of success, crossovers and an APbo data checklist. USE WHEN: choosing how to explore a satellite or cellar target, or preparing an exploration APbo."
+last_verified: "2026-10-26"
 ---
 
 # Exploration strategy selection (dedicated well vs PLX)
