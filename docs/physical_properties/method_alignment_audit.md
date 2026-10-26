@@ -27,7 +27,7 @@ to `src/main/java/neqsim/`. The nearest guides document existing choices and con
 | Property family | Existing architecture and examples | Evidence and remaining work |
 |---|---|---|
 | Pure constants and characterization | `thermo/component/Component`, `thermo/characterization/TBPfractionModel` and component databases | Present. Establish per-parameter provenance and validity; generic molecular group-contribution estimation is not established by this inventory. |
-| Ideal-gas Cp, Cv, H, S and formation data | `Component.getCp0/getCv0/getHID/getIdEntropy`, `SystemIdealGas` | Present. Polynomial paths need independent coefficient and integral matrices. Existing PR #4568 handles the CpD accessor separately. |
+| Ideal-gas Cp, Cv, H, S and formation data | `Component.getCp0/getCv0/getHID/getIdEntropy`, `SystemIdealGas` | Cp0/Cv0 and H/S differences now have an independent NIST Shomate matrix for methane, CO2 and nitrogen at 320/400/500/800 K from a 300 K baseline, plus differential/quadrature checks. The 2% comparison gate is limited to these states; other fluids/ranges and parameter provenance remain open. Reuses #4568 CpD coverage. |
 | Vapor pressure, saturation and phase-change enthalpy | `Component.getAntoineVaporPressure` and its derivative/inverse, `ThermodynamicOperations` saturation operations, `SystemInterface.getHeatOfVaporization`, `Component.calculateWatsonHeatOfVaporization` | Present through correlations and EOS operations. The low-level coefficient getters now share the five-coefficient DIPPR 106 form and explicit missing-data contract; per-fluid parameter qualification remains separate from EOS phase enthalpy differences. Opt-in Watson reference scaling is checked against six benzene calorimetry points at 307-353 K only. |
 | Pure-fluid PVT and caloric properties | SRK/PR, CPA, PC-SAFT, Span-Wagner, water and hydrogen reference utilities | Present. Selecting a modern EOS does not establish modern transport-model completeness. See [thermodynamics](../thermo/). |
 | Mixture PVT and equilibrium | `SystemGERG2008Eos`, `SystemEOSCGEos`, cubic/CPA/PC-SAFT mixtures, TP/PH/PS and saturation flashes | Present. Reuse [#2937](https://github.com/equinor/neqsim/issues/2937) for numerical flash and stability qualification. Standalone general Tsonopoulos virial prediction was not found; embedded virial terms do exist in AGA8/GERG-related code. |
@@ -38,6 +38,50 @@ to `src/main/java/neqsim/`. The nearest guides document existing choices and con
 | Gas and liquid diffusivity | Chapman-Enskog, Wilke-Lee, Fuller, Wilke-Chang, Siddiqi-Lucas, Tyn-Calus, Hayduk-Minhas and specialized aqueous methods | Present; see [diffusivity models](diffusivity_models). Extend independent value/range checks per method; do not infer dense-fluid validity from dilute-gas accuracy. |
 | Surface tension | Parachor, gradient theory, linear gradient theory, density-functional and empirical interfaces | Present; see [interfacial properties](interfacial_properties). Qualify by phase pair, critical approach and parameter source. |
 | Uncertainty | Existing numerical and study-specific uncertainty utilities | General property-model validity/uncertainty contracts are incomplete. Avoid reporting a universal percentage uncertainty for a correlation or a handbook. |
+
+## Ideal-gas caloric qualification matrix
+
+`IdealGasCaloricReferenceTest` checks the existing `Component.getCp0/getCv0/getHID/getIdEntropy`
+methods without changing production Java or database coefficients. Frozen independent values are in
+`src/test/resources/neqsim/thermo/component/ideal_gas_caloric_nist.csv`.
+
+The primary references are the NIST WebBook Shomate records for
+[methane](https://webbook.nist.gov/cgi/cbook.cgi?ID=C74828&Type=JANAFG),
+[CO2](https://webbook.nist.gov/cgi/cbook.cgi?ID=C124389&Units=SI&Mask=1), and
+[nitrogen](https://webbook.nist.gov/cgi/cbook.cgi?ID=C7727379&Type=JANAFG),
+credited to Chase (1998). Nitrogen's current record also identifies a January 2009 parameter fit.
+Reference calculations use the published equations and coefficients, not NeqSim's polynomial.
+The Shomate reduced temperature is T/1000, Cp is J/(mol K), H is kJ/mol and S is J/(mol K).
+Convert reference H to J/mol before comparison. Methane uses the 298-1300 K fit, CO2 the
+298-1200 K fit, and nitrogen the 100-500 K and 500-2000 K fits. At 500 K the lower nitrogen
+fit is used; above it the upper fit and its own F/G integration constants are used.
+
+NeqSim's default sensible H and temperature-only ideal entropy use a 273.15 K zero;
+Shomate has different integration/reference constants. Compare H(T)-H(300 K) and
+S(T)-S(300 K), never their unlike absolute zeros. A separate check confirms that enabling
+formation enthalpy changes the H offset without changing these differences. This does not
+requalify formation data, standard absolute entropy or real-fluid residual terms.
+
+| Fluid | Target temperatures (K) | Maximum Cp error (%) | Maximum delta-H error (%) | Maximum delta-S error (%) |
+| --- | --- | ---: | ---: | ---: |
+| Methane | 320, 400, 500, 800 | 1.30 | 0.65 | 0.59 |
+| CO2 | 320, 400, 500, 800 | 0.08 | 0.09 | 0.09 |
+| Nitrogen | 320, 400, 500, 800 | 0.21 | 0.11 | 0.11 |
+
+The declared engineering comparison gate is 2% for each of the 36 reference comparisons.
+These are comparisons against an evaluated reference correlation, not new experimental
+measurements, universal uncertainty bands or full-range database qualification.
+Twelve-point differential checks verify Cp-Cv=R, dH/dT=Cp and dS/dT=Cp/T. Independent
+composite-Simpson integration of the public Cp getter over 300-800 K checks the analytic
+H/S integrals. Reference zeros, formation offsets, amount invariance and clone-state
+independence are tested. Existing `ComponentCpDRoundTripTest`, `FormationEnthalpyReferenceTest`,
+`SystemFormationEnthalpyTest` and `SystemIdealGasTest` provide adjacent coverage; these
+checks complement the broader worked-example effort in #3792.
+
+No new property API, runtime route, method selection, cache, guard or calculation work is
+introduced. Production methods remain unchanged because this scoped audit establishes no
+defect requiring a fix. Other fluids, untested temperatures (including near-zero/invalid
+inputs), coefficient provenance and sixth-edition equation/errata conformance remain open.
 
 ## Verified transport changes
 
