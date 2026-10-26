@@ -22,10 +22,16 @@ import org.junit.jupiter.api.io.TempDir;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.process.equipment.compressor.AntiSurge;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.compressor.CompressorDriver;
+import neqsim.process.equipment.compressor.CompressorState;
+import neqsim.process.equipment.compressor.DriverType;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mpc.ProcessLinkedMPC;
+import neqsim.thermo.system.SystemSrkEos;
 
 /** Compiles and executes the actual Java blocks published in the MPC and compressor guides. */
 class MpcAndCompressorGuideDocumentationTest {
@@ -145,6 +151,64 @@ class MpcAndCompressorGuideDocumentationTest {
       assertEquals(compressor.getInletStream().getFlowRate("kg/hr"), compressor.getOutletStream().getFlowRate("kg/hr"),
           1.0e-5);
     }
+  }
+
+  @Test
+  void compressorDynamicPythonExampleUsesCurrentGatewayAndApis() throws Exception {
+    String python = codeAfter(COMPRESSOR_GUIDE, "### Python Example - Dynamic Simulation", "python");
+    assertTrue(python.contains("from neqsim import jneqsim"));
+    assertFalse(python.contains("jNeqSim"));
+    assertFalse(python.contains("JClass"));
+    assertTrue(python.indexOf("fluid = SystemSrkEos(") < python.indexOf("inlet_stream = Stream("));
+    assertTrue(python.indexOf("inlet_stream = Stream(") < python.indexOf("comp = Compressor("));
+    assertTrue(python.contains("for step in range(number_of_steps):"));
+    assertTrue(python.contains("comp.updateDynamicState(dt)"));
+    assertTrue(python.contains("history.getPointCount() > 0"));
+
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.85);
+    fluid.addComponent("ethane", 0.10);
+    fluid.addComponent("propane", 0.05);
+    fluid.setMixingRule("classic");
+
+    Stream inletStream = new Stream("dynamic inlet", fluid);
+    inletStream.setFlowRate(5000.0, "kg/hr");
+    inletStream.setTemperature(25.0, "C");
+    inletStream.setPressure(40.0, "bara");
+    inletStream.run();
+
+    Compressor compressor = new Compressor("K-100 dynamic", inletStream);
+    compressor.setOutletPressure(100.0, "bara");
+    compressor.setUsePolytropicCalc(true);
+    compressor.setPolytropicEfficiency(0.78);
+    compressor.setSpeed(10000.0);
+    compressor.run();
+
+    compressor.enableOperatingHistory();
+    compressor.setRotationalInertia(15.0);
+    CompressorDriver driver = new CompressorDriver(DriverType.GAS_TURBINE, 5000.0);
+    driver.setAmbientTemperature(308.15);
+    compressor.setDriver(driver);
+
+    AntiSurge antiSurge = compressor.getAntiSurge();
+    antiSurge.setControlStrategy(AntiSurge.ControlStrategy.PID);
+    antiSurge.setPIDParameters(2.0, 0.5, 0.1);
+    compressor.startCompressor(10000.0);
+
+    double valvePosition = 0.0;
+    for (int step = 0; step < 20; step++) {
+      compressor.updateDynamicState(0.1);
+      valvePosition = antiSurge.updateController(0.05, 0.1);
+      assertTrue(Double.isFinite(valvePosition));
+      assertTrue(valvePosition >= 0.0 && valvePosition <= 1.0);
+    }
+
+    assertTrue(compressor.getOperatingState() == CompressorState.STARTING
+        || compressor.getOperatingState() == CompressorState.RUNNING);
+    assertTrue(Double.isFinite(compressor.getSpeed()));
+    assertTrue(Double.isFinite(compressor.getPower("kW")));
+    assertNotNull(compressor.getOperatingHistory());
+    assertTrue(compressor.getOperatingHistory().getPointCount() > 0);
   }
 
   @Test
