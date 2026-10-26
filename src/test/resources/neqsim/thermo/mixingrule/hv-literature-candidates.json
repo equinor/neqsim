@@ -361,5 +361,61 @@
     "TEG/benzene",
     "TEG/toluene"
   ],
-  "activation_caution": "Dormant existing MEG/heptane alpha.39867 and largeD/DT resemble ordinaryNRTLTable3.6 of Derawi2002, not Folas's refitted volumeweightedHVTable6.2. Do not activate dormant data without checking model convention."
+  "activation_caution": "Dormant existing MEG/heptane alpha.39867 and largeD/DT resemble ordinaryNRTLTable3.6 of Derawi2002, not Folas's refitted volumeweightedHVTable6.2. Do not activate dormant data without checking model convention.",
+  "experimental_assessment_sources": [
+    {
+      "doi": "10.1016/j.fluid.2006.11.001",
+      "kind": "ternary VLE endpoint-derived feed assessment, z=0.5x+0.5y",
+      "resource": "hv-meg-qualification/folas-2007-ternary.csv",
+      "states": 6,
+      "temperature_range_K": [
+        278.15,
+        298.15
+      ],
+      "pressure_range_bara": [
+        50,
+        200
+      ],
+      "source_dataset": 3,
+      "uncertainty": "NIST compiler expanded 95% for liquid MEG and vapor MEG only; liquid methane and vapor water not supplied",
+      "qualification": "Default accuracy unqualified; no measured overall feed; ambiguous binary dataset 2 excluded",
+      "test": "HuronVidalMegExperimentalAssessmentTest"
+    },
+    {
+      "doi": "10.1021/acs.jced.8b00115",
+      "kind": "measured overall-feed ternary VLE",
+      "resource": "hv-meg-qualification/kruger-2018.csv",
+      "states": 16,
+      "vapor_meg_observations": 10,
+      "components": [
+        "MEG",
+        "water",
+        "methane"
+      ],
+      "temperature_range_K": [
+        288.16,
+        323.19
+      ],
+      "pressure_range_MPa": [
+        5.93,
+        12.53
+      ],
+      "uncertainty": "Point composition expanded 3 sigma; literal source scales retained",
+      "qualification": "Default SRK/PR-HV accuracy unqualified; no published CPA coefficients transferred",
+      "test": "HuronVidalMegExperimentalAssessmentTest"
+    },
+    {
+      "doi": "10.1021/je9004905",
+      "kind": "measured pure MEG vapor pressure",
+      "resource": "hv-meg-qualification/pure-meg-2009.csv",
+      "states": 15,
+      "temperature_range_K": [
+        307.7,
+        384.5
+      ],
+      "uncertainty": "NIST compiler point expanded 95% pressure uncertainty in kPa",
+      "qualification": "Ordinary native cubic parity demonstrated; physical pressure errors retained; no alpha retuning",
+      "test": "HuronVidalMegExperimentalAssessmentTest"
+    }
+  ]
 }
