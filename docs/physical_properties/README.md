@@ -82,6 +82,11 @@ physical-property model.
 | `CO2WATER` | CO₂-water systems |
 | `BASIC` | Minimal property calculations |
 
+The aqueous phases of `GLYCOL`, `AMINE` and `CO2WATER` use Filippov conductivity with
+the enabled pressure option. Its [documented pressure factor](thermal_conductivity_models#filippov-liquid-mixing-and-pressure-factor)
+is the CHEMPAK Missenard-derived expression; mixture/parameter accuracy remains unqualified.
+The general `DEFAULT`/PFCT paths are unaffected by that correction.
+
 Select the model set before initializing the properties. For example, call
 `fluid.setPhysicalPropertyModel(PhysicalPropertyModel.GLYCOL)` and then
 `fluid.initPhysicalProperties()`.

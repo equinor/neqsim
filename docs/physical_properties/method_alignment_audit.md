@@ -34,7 +34,7 @@ to `src/main/java/neqsim/`. The nearest guides document existing choices and con
 | Activity coefficients, infinite dilution and specialized phase behavior | Wilson, NRTL, UNIQUAC, UNIFAC/PSRK/UMR, solid-liquid operations, Henry-law APIs | Present. Benchmark each model/parameter set and infinite-dilution limit. A supplied class does not establish a suitable parameter set for an arbitrary pair. |
 | Density | COSTALD, Rackett, Peneloux and EOS density | Present; see [density models](density_models). Existing correction/mixture methods should be qualified, rather than duplicated as detached utility code. |
 | Viscosity | PFCT, LBC, Chung gas, friction theory, pure-fluid reference choices | Present; see [viscosity models](viscosity_models). **Added:** bounded pure-liquid Letsou-Stiel estimation. **Repaired:** CO2 background viscosity now includes the missing initial-density term and passes published Table 6/8 checks. Critical enhancement remains unimplemented. |
-| Thermal conductivity | PFCT, dilute/dense Chung, polynomial, Filippov and reference choices | **Repaired:** dense Chung equation, units, original coefficients and conformal mixing. Filippov's simplified pressure factor still needs comparison with the actual Missenard correlation. See [conductivity models](thermal_conductivity_models). |
+| Thermal conductivity | PFCT, dilute/dense Chung, polynomial, Filippov and reference choices | **Repaired:** dense Chung equation, units, original coefficients and conformal mixing. Filippov's pressure factor now implements the complete CHEMPAK Missenard-derived expression with independent equation/lifecycle checks. The original tabulated-Q variant, mixture accuracy and sixth-edition conformance remain unqualified. See [conductivity models](thermal_conductivity_models). |
 | Gas and liquid diffusivity | Chapman-Enskog, Wilke-Lee, Fuller, Wilke-Chang, Siddiqi-Lucas, Tyn-Calus, Hayduk-Minhas and specialized aqueous methods | Present; see [diffusivity models](diffusivity_models). Extend independent value/range checks per method; do not infer dense-fluid validity from dilute-gas accuracy. |
 | Surface tension | Parachor, gradient theory, linear gradient theory, density-functional and empirical interfaces | Present; see [interfacial properties](interfacial_properties). Qualify by phase pair, critical approach and parameter source. |
 | Uncertainty | Existing numerical and study-specific uncertainty utilities | General property-model validity/uncertainty contracts are incomplete. Avoid reporting a universal percentage uncertainty for a correlation or a handbook. |
@@ -168,6 +168,49 @@ near-critical viscosity must account for the missing enhancement separately.
 still identifies Laesecke–Muzny (2017) as the reference viscosity formulation and retains
 its parameters when evaluating the new alternative CO₂ EOS. That EOS is separate from
 this viscosity repair; it has not been implemented or qualified by this audit.
+
+## Filippov pressure-factor qualification
+
+The Filippov liquid model (also built into the GLYCOL/AMINE/CO2WATER aqueous property sets) now uses the complete analytic expression documented in
+[AFT's permission-based reproduction of CHEMPAK version 4 (1998), section 8.6.5](https://docs.aft.com/fathom/ChempakTechnicalInformationDetailedDiscussion.html),
+attributed there to Danner and Daubert's Missenard-derived procedure. The old code used
+`0.98+0.0079*Pr*sqrt(Tr)`, omitted the rational term and documented yet another equation.
+The [conductivity guide](thermal_conductivity_models#filippov-liquid-mixing-and-pressure-factor)
+now gives the implemented equation, units, mixture pseudo-critical approximation, unity
+floor, legacy cutoffs, missing-critical-data behavior and executed Java example.
+
+`FilippovConductivityMethodTest` freezes ten independent Python evaluations of the published
+analytic expression (with the retained unity floor), over Tr=0.5-0.9 and Pr=1-200:
+
+| Tr | Pr | Factor | Previous factor |
+| ---: | ---: | ---: | ---: |
+| 0.5 | 50 | 1.301066653092 | 1.259307178569 |
+| 0.7 | 10 | 1.130606599229 | 1.046096142096 |
+| 0.8 | 50 | 1.570267830252 | 1.333298740445 |
+
+These are equation checks, not experimental observations or an uncertainty envelope.
+Tests additionally cover the disable switch, state/pressure-unit changes, amount and
+insertion order, composition changes, physical phase/facade and specialized-set wiring,
+repeated evaluation and clone independence.
+The pure-component work array is copied on clone and resized when the model is rebound to
+a phase with a different component count. No cross-state cache is introduced.
+
+The original Missenard paper and its tabulated-Q implementation are not verified by this
+increment. No original-paper, table-cell or sixth-edition equivalence is asserted. Mixture
+pseudo-critical mixing, base-conductivity coefficients, actual saturation/solid boundaries,
+critical behavior and physical accuracy (including at the integration-test states) remain
+unqualified. The 0.95 reduced-temperature cutoff is a retained discontinuity, not a physical
+validity bound. Nonfinite critical data produces NaN; critical data below 1e-10 retains
+the legacy bypass of the pressure multiplier. Neither establishes
+that the base polynomial is appropriate. Existing DEFAULT/PFCT paths remain unchanged;
+selected GLYCOL/AMINE/CO2WATER aqueous paths receive the corrected calculation.
+A mathematically bounded unity-floor shortcut avoids fractional powers for positive
+Tr below 0.95 and Pr at most 0.5; the full expression is then below 0.994.
+
+For edition verification, the precise outstanding source is the sixth edition's liquid
+thermal-conductivity pressure-correction equations, associated coefficient tables, stated
+applicability and any errata. A licensed extract of that section is sufficient for the
+next comparison; publisher scope metadata does not supply it.
 
 ## Coefficient-based saturation latent heat
 

@@ -14,6 +14,7 @@ This guide documents the thermal conductivity calculation methods available in N
   - [Chung Dense Method](#chung-dense-method)
   - [Polynomial Correlation](#polynomial-correlation)
   - [CO₂ Reference](#co2-reference)
+  - [Filippov Liquid Mixing and Pressure Factor](#filippov-liquid-mixing-and-pressure-factor)
 - [Model Selection Guide](#model-selection-guide)
 - [Usage Examples](#usage-examples)
 
@@ -223,6 +224,66 @@ fluid.getPhase("gas").initPhysicalProperties();
 
 ---
 
+## Filippov Liquid Mixing and Pressure Factor
+
+The `Filippov` key combines database liquid polynomials using mass fractions. It is also
+the built-in aqueous conductivity model in the explicitly selected `GLYCOL`, `AMINE` and
+`CO2WATER` model sets:
+
+$$k_0=\sum_i w_i k_i-0.72\sum_{i<j}w_iw_j|k_i-k_j|$$
+
+Its enabled-by-default pressure option now evaluates the complete Missenard-derived
+Danner/Daubert expression published in the
+[AFT CHEMPAK manual, section 8.6.5](https://docs.aft.com/fathom/ChempakTechnicalInformationDetailedDiscussion.html):
+
+$$F=0.98+0.0079P_rT_r^{1.4}+0.63T_r^{1.2}\frac{P_r}{30+P_r}$$
+
+Here $T_r=T/\sum_i x_iT_{c,i}$ and $P_r=P/\sum_i x_iP_{c,i}$; T is K,
+and P and Pc use the same pressure unit (internally bara). The output is $k=k_0\max(1,F)$
+in W/(m K). The previously implemented square-root factor omitted the rational term.
+
+The unity floor and bypass at $T_r\geq0.95$ or $P_r<0.01$ are retained implementation
+choices, not accuracy bounds supplied by CHEMPAK. Pseudo-critical data below 1e-10
+(K or bara) bypasses the correction; this does not qualify the uncorrected polynomials.
+Nonfinite pseudo-critical data returns NaN; nonfinite state values can also yield NaN.
+The cutoff at 0.95 is discontinuous.
+No saturation pressure is calculated or subtracted.
+
+This qualifies implementation of that analytic derived expression, not the original
+Missenard tabulated-Q variant or sixth-edition conformance. The mixture pseudo-critical
+extension and database polynomial fits need independent physical validation. Do not infer
+an uncertainty or a design validity envelope from the numerical tests. Default PFCT
+selection is unchanged. The specialized sets above receive this correction automatically
+for their aqueous phases; their physical accuracy is not established by the route tests.
+For positive Tr below 0.95 and Pr at most 0.5, the full factor is below 0.994, so the unity
+floor can return one without evaluating a fractional power. Higher-pressure calculations
+use one fifth root to supply both temperature powers.
+
+The following example, including the disable switch, executes in
+`FilippovConductivityMethodTest.guideExampleAndPressureUnits`:
+
+```java
+SystemInterface fluid = new SystemSrkEos(350, 100);
+fluid.addComponent("n-hexane", 1);
+fluid.setMixingRule("classic");
+new ThermodynamicOperations(fluid).TPflash();
+fluid.initProperties();
+fluid.getPhase(0).getPhysicalProperties().setConductivityModel("Filippov");
+fluid.getPhase(0).initPhysicalProperties();
+double corrected = fluid.getPhase(0).getThermalConductivity("W/mK");
+FilippovConductivityMethod model = (FilippovConductivityMethod)
+    fluid.getPhase(0).getPhysicalProperties().getConductivityModel();
+model.setUsePressureCorrection(false);
+fluid.getPhase(0).initPhysicalProperties();
+double uncorrected = fluid.getPhase(0).getThermalConductivity("W/mK");
+```
+
+Use the existing Java phase/property interfaces (or the same objects through the Python
+bridge). No detached conductivity implementation or new invocation protocol is introduced.
+See the [method audit](method_alignment_audit) for frozen equation values and exclusions.
+
+---
+
 ## Model Selection Guide
 
 | Application | Recommended Model | Notes |
@@ -235,7 +296,7 @@ fluid.getPhase("gas").initPhysicalProperties();
 | Wide P-T range | PFCT | Robust extrapolation |
 | Polar systems | Chung | Includes polar corrections |
 
-Additional implemented keys are `friction theory`, `Filippov`, `WaterModel`, and `H2Model`.
+Additional implemented keys are `friction theory`, `WaterModel`, and `H2Model`.
 They are specialized models and should be selected only with a composition and phase appropriate
 to the underlying correlation.
 
