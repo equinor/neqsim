@@ -23,6 +23,19 @@ public class PHflash extends Flash {
   int type = 0;
 
   /**
+   * Relative enthalpy residual below which a stalled Newton iteration is accepted as converged.
+   */
+  static final double STALL_RELATIVE_ENTHALPY_TOLERANCE = 1.0e-6;
+
+  /**
+   * Number of consecutive iterations without improvement of the best residual that defines a stall.
+   */
+  static final int STALL_ITERATIONS_WITHOUT_IMPROVEMENT = 15;
+
+  /** Number of Newton iterations used by the latest {@link #solveQ()} call. */
+  private int lastIterationCount = 0;
+
+  /**
    * Constructor for PHflash operation.
    *
    * <p>
@@ -66,6 +79,16 @@ public class PHflash extends Flash {
   /**
    * solveQ.
    *
+   * <p>
+   * Newton iteration on 1/T for the specified enthalpy. The nominal stop criterion limits the sum of magnitudes of two
+   * consecutive relative enthalpy residuals to 1e-8. For association models (CPA) with glycol/water/aromatic mixtures
+   * the enthalpy returned by the inner TP flash carries numerical noise above that level, so the iteration would
+   * otherwise run to the iteration cap with the temperature frozen. A stall detector therefore accepts the solution
+   * only when the current residual is finite and its magnitude is below {@link #STALL_RELATIVE_ENTHALPY_TOLERANCE}, and
+   * the best residual has not improved for {@link #STALL_ITERATIONS_WITHOUT_IMPROVEMENT} consecutive iterations. The
+   * relaxed tolerance is checked against the returned state; improving iterations retain the nominal stop criterion.
+   * </p>
+   *
    * @return a double
    */
   public double solveQ() {
@@ -82,6 +105,9 @@ public class PHflash extends Flash {
     double minTemperature = 0.0;
     double previousInverseTemperature = Double.NaN;
     double previousResidual = Double.NaN;
+    double bestError = Double.MAX_VALUE;
+    int iterationsWithoutImprovement = 0;
+    boolean stalled = false;
 
     do {
       if (Math.abs(error) > Math.abs(errorOld) && factor > 0.1 && correctFactor) {
@@ -160,8 +186,26 @@ public class PHflash extends Flash {
       } else if (error < 0 && system.getTemperature() < minTemperature) {
         minTemperature = system.getTemperature();
       }
-    } while (((Math.abs(error) + Math.abs(errorOld)) > 1e-8 || iterations < 3) && iterations < 200);
+      if (Math.abs(error) < bestError) {
+        bestError = Math.abs(error);
+        iterationsWithoutImprovement = 0;
+      } else {
+        iterationsWithoutImprovement++;
+      }
+      stalled = iterationsWithoutImprovement >= STALL_ITERATIONS_WITHOUT_IMPROVEMENT && Double.isFinite(error)
+          && Math.abs(error) < STALL_RELATIVE_ENTHALPY_TOLERANCE;
+    } while (((Math.abs(error) + Math.abs(errorOld)) > 1e-8 || iterations < 3) && iterations < 200 && !stalled);
+    lastIterationCount = iterations;
     return 1.0 / nyTemp;
+  }
+
+  /**
+   * Number of Newton iterations used by the latest {@link #solveQ()} call.
+   *
+   * @return iteration count, 0 if {@link #solveQ()} has not been run
+   */
+  public int getLastIterationCount() {
+    return lastIterationCount;
   }
 
   /**
