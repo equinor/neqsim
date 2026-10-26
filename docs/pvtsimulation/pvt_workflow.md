@@ -14,6 +14,12 @@ For a runnable starting point, use the Java 8/Log4j2
 The enabled [PVT regression tests](../../src/test/java/neqsim/pvtsimulation/regression/PVTRegressionTest.java)
 exercise the current regression surface. This page intentionally contains no second code example.
 
+For executable sample/analysis QC, characterization, supported bounded CCE
+calibration, final parameter capture, fresh-process E300 replay and professional
+reporting, see the [PVT fluid-study report workflow](pvt_fluid_study_report.md).
+Its narrower calibrated/exportable contract is explicit; simulation support does
+not imply that every fitting protocol is qualified.
+
 ## Evidence boundary
 
 The workflow is bounded by current repository sources:

@@ -347,6 +347,26 @@ fluid.getPhase("gas").initPhysicalProperties();
 
 ## Tuning Parameters
 
+### LBC viscosity-only critical volumes
+
+`LBCViscosityMethod.getCriticalVolumes()` returns the effective per-component
+volumes used by the correlation, in **cm³/mol** and phase component order.
+`setCriticalVolumes(double[])` accepts a positive finite value for every
+component. It configures the viscosity correlation independently of each
+component's thermodynamic critical volume. Passing null clears the override and
+restores the legacy estimation route, including the existing Whitson-based TBP
+estimate. The input and output arrays are defensive copies, and overrides remain
+independent after model cloning or compatible-version native serialization.
+Changing the component slate requires a new array; stale counts fail explicitly.
+
+This optional contract supports [`VCRITVIS` E300 delivery](../pvtsimulation/eclipse_e300_fluid_import.md#viscosity-only-critical-volumes-vcritvis)
+and JSON `viscosityModel.criticalVolumesCm3PerMol` reload without silently
+re-estimating the transport parameter. Configure the same effective volumes and
+LBC coefficients on every phase that may become active. The guarded PVT delivery
+rejects phase-specific settings that one E300 component block cannot represent.
+The enabled [LbcFluidRoundTripTest](../../src/test/java/neqsim/thermo/util/readwrite/LbcFluidRoundTripTest.java)
+checks these APIs and actual petroleum-oil viscosity over pressure states.
+
 ### LBC Parameter Tuning
 
 The LBC method is commonly tuned to match laboratory viscosity data:

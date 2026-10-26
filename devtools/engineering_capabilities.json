@@ -42,6 +42,26 @@
       "limitations": "Experimental input and fluid characterization must be supplied; test presence is not a fluid-specific calibration."
     },
     {
+      "id": "pvt-fluid-study-report",
+      "title": "Traceable PVT characterization study and E300 handover",
+      "domain": "pvt",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.util.PVTFluidStudy"
+      ],
+      "skills": [
+        "neqsim-pvt-fluid-study-report"
+      ],
+      "agents": [
+        "pvt-fluid-study-report"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/pvtsimulation/util/PVTFluidStudyTest.java",
+        "src/test/java/neqsim/thermo/util/readwrite/LbcFluidRoundTripTest.java"
+      ],
+      "limitations": "Discovery and inspectApi route only; execute the complete study through neqsim pvt-study or the documented Python/Java adapter. Bounded plain cubic hydrocarbon models, classic mixing and CCE relative-volume BIP fitting only. Synthetic examples establish numerical workflow/replay, not independent experimental accuracy or target-simulator compatibility."
+    },
+    {
       "id": "process-separation",
       "title": "Build and solve a separation train",
       "domain": "process",
