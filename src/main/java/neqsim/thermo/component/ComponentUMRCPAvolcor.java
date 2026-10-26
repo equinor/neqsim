@@ -82,12 +82,13 @@ public class ComponentUMRCPAvolcor extends ComponentUMRCPA {
   }
 
   /**
-   * Calculate the temperature derivative of the volume translation parameter.
+   * Returns the derivative of the temperature-independent Peneloux translation used by {@link #calcc()}.
    *
-   * @return dc/dT
+   * @return zero because the implemented translation has no explicit temperature dependence
    */
   public double calccT() {
-    return super.getVolumeCorrectionT();
+    // The database temperature coefficient is not used by calcc(); it is not its derivative.
+    return 0.0;
   }
 
   /** {@inheritDoc} */

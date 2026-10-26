@@ -30,6 +30,17 @@ later caloric initialization cannot silently choose another root.
 
 For fixed-T/P cubic-root selection and fugacity/Gibbs equilibrium checks, prefer `init(1)`. Temperature derivative caches such as `loc_AT` and `loc_ATT` support caloric properties; they are not by themselves evidence that a fixed-T/P flash-Gibbs comparison requires `init(2)`.
 
+For CPA caloric changes, compare residual enthalpy with the fixed-P/composition
+temperature derivative of the weighted log fugacity coefficients, and compare Cp
+with dH/dT at more than one step. Check A_T/A_TT and explicit association
+derivatives separately; holding the radial distribution fixed (or differentiating
+Delta/g) isolates the latter. A stored database temperature coefficient is not
+automatically the derivative of the implemented property expression. See
+`CPATemperatureConsistencyTest`, `ClassicTxTemperatureDerivativeTest` and
+[CPA caloric consistency](../../../docs/thermo/mixing_rules_guide.md#65-caloric-consistency).
+Legacy `SystemPrCPA` cannot currently initialize the water/TEG caloric reproducer;
+issue #4636 tracks its independent association-initialization/solver repair.
+
 When a caller consumes temperature derivatives after `TPflash`, initialize them on
 the resulting phase state with `init(2)`. Initializing before the flash is insufficient
 when it replaces phases; the legacy cricondenbar iteration is a regression example.

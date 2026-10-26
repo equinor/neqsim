@@ -414,10 +414,11 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
       }
       double derivative = -getCrossAssociationEnergy(compnumb1, compnumb2, phase, temperature, pressure, numbcomp)
           / (R * phase.getTemperature() * phase.getTemperature());
+      // d(exp(epsilon/RT) - 1)/dT contains exp(epsilon/RT), not exp(epsilon/RT) - 1.
       return ((PhaseCPAInterface) phase).getCrossAssosiationScheme(compnumb1, compnumb2, siteNumber1, siteNumber2)
           * derivative
           * (Math.exp(getCrossAssociationEnergy(compnumb1, compnumb2, phase, temperature, pressure, numbcomp)
-              / (R * phase.getTemperature())) - 1.0)
+              / (R * phase.getTemperature())))
           * (((ComponentEosInterface) phase.getComponent(compnumb1)).getb()
               + ((ComponentEosInterface) phase.getComponent(compnumb2)).getb())
           / 2.0 * getCrossAssociationVolume(compnumb1, compnumb2, phase, temperature, pressure, numbcomp)
