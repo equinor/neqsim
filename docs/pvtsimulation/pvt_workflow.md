@@ -90,6 +90,34 @@ The current `PVTRegression` methods accept the following quantities:
 | `addViscosityData` | pressure in bara, dynamic viscosity in Pa s, temperature in K, and phase name `gas`, `oil`, `liquid`, `aqueous`, or `water` |
 
 These five data-ingestion methods define the current regression target surface.
+
+Each `addCVDData` or `addDLEData` call registers one complete **isothermal depletion
+experiment**, with its original nonincreasing pressure schedule in bara. Do not
+split one laboratory experiment into singleton registrations: gas removal changes
+the remaining fluid, and DLE uses the final residual stock-tank oil as the common
+reference at 288.15 K and 1.01325 bara. Separate registrations retain separate
+histories, temperatures and reference volumes, including in the final objective
+summary. Observation arrays must match the schedule length.
+
+The regression runs the full protocol on a fresh model clone for each distinct
+parameter vector. Frozen serialized model graphs keep interaction parameters
+independent of the source fluid and other experiments; ordinary fluid clones
+alone share some mixing-rule state. Observation functions share successful full-protocol results
+within that experiment; the cache holds at most eight trial vectors and never
+shares results across independently registered model/protocol identities. This
+preserves CVD liquid-dropout percentage points and the DLE Rs/Bo reference basis
+while avoiding a new depletion simulation for each property at each pressure.
+
+For direct `PVTRegressionFunction` callers, register the protocol with
+`registerDepletionExperiment(type, pressures, temperature)`. A six-entry
+observation contains pressure, temperature, experiment-type ordinal, property
+index, returned experiment index, and original protocol row index. Indexes must
+be integers and the row's pressure, temperature and type must match registration.
+Legacy four-entry CVD/DLE observations retain **independent singleton** semantics;
+five-entry depletion observations are rejected. The existing experiment solvers
+and their physical qualification limits remain applicable; matching the direct
+full protocol establishes numerical identity, not agreement with measured PVT data.
+
 `ExperimentType.SATURATION_PRESSURE` and `ExperimentType.SWELLING` are reserved
 identifiers; `PVTRegression` has no ingestion method or complete experimental
 protocol for either. Calling `PVTRegressionFunction.calcValue(...)` with those
@@ -104,10 +132,11 @@ or a zero residual against a zero-valued observation. Starting another solve
 clears the optimizer's prior convergence result and statistics; an evaluation
 exception leaves it unsolved with no final chi-square result.
 
-The array-taking methods iterate from the pressure-array length and do not perform a visible
-equal-length, non-empty, finite-value, or ordering check before indexing the companion arrays.
-Validate those properties before calling the API. Also retain the original observation order or an
-explicit sort record; do not infer a depletion path from an unordered table.
+CVD/DLE registration validates its pressure schedule, temperature and observation-array lengths.
+The CCE and viscosity array-taking methods still require callers to validate equal-length,
+non-empty, finite input arrays before indexing. Validate observation values for every experiment,
+and retain original depletion order or an explicit sort record; do not infer a depletion path
+from an unordered table.
 
 Pressure conventions differ across the surface: most regression experiment Javadocs say bar,
 viscosity uses bara, and report metadata uses bara. Treat the laboratory pressure basis as an input

@@ -332,7 +332,7 @@ def _calibrate(ns, adapter, fluid, data):
     for observation in observations:
         experiment = experiments[observation["experiment_id"]]
         if experiment["kind"] != "CCE" or observation["property"] != "relative_volume":
-            raise PVTStudyError("qualified fitting currently supports CCE relative_volume only; CVD/DLE pointwise regression does not preserve the depletion protocol")
+            raise PVTStudyError("qualified fitting currently supports CCE relative_volume only; this study workflow has not enabled or qualified CVD/DLE calibration")
     regression_cls = ns.JClass("neqsim.pvtsimulation.regression.PVTRegression")
     parameter_cls = ns.JClass("neqsim.pvtsimulation.regression.RegressionParameter")
     regression = regression_cls(fluid.clone())
@@ -537,7 +537,7 @@ def run_pipeline(study, out_dir, strict=False, resume=False, stop_after="report"
     data["raw_data"] = {"path": str(raw_path), "sha256": hashlib.sha256(raw_path.read_bytes()).hexdigest(),
                          "input_identity": input_id}
     data["findings"].append({"code": "DEPLETION-CALIBRATION-LIMIT", "status": "WARN",
-                             "message": "CVD/DLE simulation preserves the full protocol; pointwise calibration is blocked pending history-aware objectives",
+                             "message": "CVD/DLE simulation preserves the full protocol; this study workflow supports CCE calibration only",
                              "issue": "https://github.com/equinor/neqsim/issues/4596"})
     if mode == "simulation_only":
         data["findings"].append({"code": "SIMULATION-ONLY-INCOMPLETE", "status": "FAIL",

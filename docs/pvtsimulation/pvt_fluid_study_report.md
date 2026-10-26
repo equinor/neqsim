@@ -135,11 +135,12 @@ retain their legacy zero-for-absence convention for existing callers; its
 phase-availability getters and the study adapter provide the separate presence
 information.
 
-CVD/DLE simulation support is separate from calibration support. The existing
-one-pressure fitting objective resets the fluid at each point; it cannot stand
-in for a full depletion protocol with material removal. This workflow therefore
-rejects those calibration targets until a protocol-faithful objective is added
-and qualified. Advanced transport, association/activity models, broad
+CVD/DLE simulation support is separate from this study workflow's calibration
+support. `PVTRegression` preserves complete registered depletion protocols; the
+study CLI currently registers only CCE `relative_volume` calibration targets.
+CVD/DLE calibration remains rejected here until the study integration and its
+acceptance checks are implemented and qualified. Advanced transport,
+association/activity models, broad
 uncertainty propagation and independently qualified field-fluid examples remain
 separate work; the first workflow does not claim the whole original research
 program is accepted.

@@ -85,9 +85,9 @@ existing numerical and physical acceptance gates remain mandatory.
 The initial calibrated route uses `PVTRegression` for CCE `relative_volume`
 with bounded constant symmetric BIP parameters only. CVD/DLE/separator/viscosity
 simulation support does not imply that this study workflow supports fitting
-those protocols. Unsupported fitting targets are rejected. In particular, a
-one-pressure objective that resets depletion cannot match the full laboratory
-material-removal sequence. Extend and qualify that objective before enabling it.
+those protocols. Unsupported fitting targets are rejected. For CVD/DLE,
+`PVTRegression` requires a complete registered depletion protocol; integrate and
+qualify that route in this study workflow before enabling it.
 
 Other `PVTRegression` routes retain their own source/API contracts. `SATURATION_PRESSURE` and
 `SWELLING` are reserved unsupported fitting targets even when their simulations
