@@ -20,6 +20,18 @@
       "expect_skills_top5": ["process-study-report"]
     },
     {
+      "id": "pvt-fluid-study-report-e300",
+      "prompt": "Create a professional PVT and fluid characterization study report from sample laboratory analyses and QC through the frozen final model, all effective parameters and BIP matrix, with verified E300 export and fresh process replay.",
+      "expect_agent_top3": ["pvt-fluid-study-report"],
+      "expect_skills_top5": ["neqsim-pvt-fluid-study-report"]
+    },
+    {
+      "id": "pvt-characterization-report-samples",
+      "prompt": "Document PVT sample lineage, laboratory QC, recombination and heavy end characterization, compare untuned and calibrated EOS experiments, hold out measurements and hand over complete model parameters with E300 and a professional report.",
+      "expect_agent_top3": ["pvt-fluid-study-report"],
+      "expect_skills_top5": ["neqsim-pvt-fluid-study-report"]
+    },
+    {
       "id": "cme-pvt",
       "prompt": "constant mass expansion CME test at 100 C and saturation pressure for a reservoir fluid with C7+ characterization",
       "expect_agent_top3": ["pvt-simulation"],
@@ -414,6 +426,26 @@
       ],
       "expect_skills_top5": [
         "neqsim-eos-regression"
+      ]
+    },
+    {
+      "id": "process-utilities-design-report",
+      "prompt": "Develop a process utilities design report for an offshore plant from its process report: utility consumer register, simultaneous operating cases, generation distribution capacity, utility flow diagrams and standards evidence",
+      "expect_agent_top3": [
+        "utilities-design-report"
+      ],
+      "expect_skills_top5": [
+        "neqsim-utilities-design-report"
+      ]
+    },
+    {
+      "id": "onshore-utility-loss-report",
+      "prompt": "Prepare an onshore process utilities design report with instrument air nitrogen steam cooling water consumer loads, standby storage autonomy and utility loss scenarios",
+      "expect_agent_top3": [
+        "utilities-design-report"
+      ],
+      "expect_skills_top5": [
+        "neqsim-utilities-design-report"
       ]
     }
   ],

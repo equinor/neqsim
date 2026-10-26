@@ -23,6 +23,8 @@ public class LBCViscosityMethod extends Viscosity {
       0.0093324};
 
   double[] denseContributionParameters = DEFAULT_DENSE_CONTRIBUTION_PARAMETERS.clone();
+  /** Optional viscosity-only critical volumes, in cm3/mol and component order. */
+  private double[] criticalVolumeOverrides;
 
   /**
    * Constructor for LBCViscosityMethod.
@@ -43,7 +45,7 @@ public class LBCViscosityMethod extends Viscosity {
 
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
       ComponentInterface component = phase.getPhase().getComponent(i);
-      double criticalVolume = getOrEstimateCriticalVolume(component);
+      double criticalVolume = getCriticalVolume(i);
       volumeMixSum += component.getx() * criticalVolume;
 
       double molarMass = component.getMolarMass() * 1000.0; // g/mol
@@ -166,6 +168,63 @@ public class LBCViscosityMethod extends Viscosity {
   }
 
   /**
+   * Set viscosity-only critical volumes without changing thermodynamic component properties.
+   *
+   * <p>
+   * The E300 VCRITVIS keyword supplies these values independently of VCRIT. Without an override, the existing
+   * pure-component or TBP estimation route is retained. Adding or removing components after setting an override
+   * requires a new array in the updated component order.
+   *
+   * @param volumes positive finite critical volumes in cm3/mol, one per component; null clears overrides
+   * @throws IllegalArgumentException if the count or a volume is invalid
+   */
+  public void setCriticalVolumes(double[] volumes) {
+    if (volumes == null) {
+      criticalVolumeOverrides = null;
+      return;
+    }
+    if (volumes.length != phase.getPhase().getNumberOfComponents()) {
+      throw new IllegalArgumentException("LBC critical volumes require one value per component");
+    }
+    for (double volume : volumes) {
+      if (!Double.isFinite(volume) || volume <= 0.0) {
+        throw new IllegalArgumentException("LBC critical volumes must be finite and positive");
+      }
+    }
+    criticalVolumeOverrides = volumes.clone();
+  }
+
+  /**
+   * Return the actual critical volume used by the LBC mixture calculation for a component.
+   *
+   * @param componentIndex component index in the phase
+   * @return effective viscosity-only critical volume in cm3/mol
+   * @throws IllegalStateException if the component slate changed after an override was configured
+   */
+  public double getCriticalVolume(int componentIndex) {
+    if (criticalVolumeOverrides != null) {
+      if (criticalVolumeOverrides.length != phase.getPhase().getNumberOfComponents()) {
+        throw new IllegalStateException("Component slate changed after LBC critical volumes were configured");
+      }
+      return criticalVolumeOverrides[componentIndex];
+    }
+    return getOrEstimateCriticalVolume(phase.getPhase().getComponent(componentIndex));
+  }
+
+  /**
+   * Get a defensive array of all effective viscosity-only critical volumes in component order.
+   *
+   * @return actual LBC critical volumes in cm3/mol, including estimates when overrides are absent
+   */
+  public double[] getCriticalVolumes() {
+    double[] volumes = new double[phase.getPhase().getNumberOfComponents()];
+    for (int i = 0; i < volumes.length; i++) {
+      volumes[i] = getCriticalVolume(i);
+    }
+    return volumes;
+  }
+
+  /**
    * Estimate the critical volume when it is missing from component data.
    *
    * <p>
@@ -262,6 +321,7 @@ public class LBCViscosityMethod extends Viscosity {
   public LBCViscosityMethod clone() {
     LBCViscosityMethod method = (LBCViscosityMethod) super.clone();
     method.denseContributionParameters = denseContributionParameters.clone();
+    method.criticalVolumeOverrides = criticalVolumeOverrides == null ? null : criticalVolumeOverrides.clone();
     return method;
   }
 }

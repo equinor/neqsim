@@ -40,6 +40,10 @@ jobs:
             devtools/test_skill_search.py \
             devtools/test_discovery_registry.py \
             devtools/test_verify_agent_skill_refs.py \
+            devtools/test_fa_solver_runtime.py \
+            devtools/test_pvt_study.py \
+            devtools/test_pvt_report.py \
+            docs/test_pvt_fluid_study_report_documentation.py \
             devtools/test_report_workflow.py \
             devtools/test_report_template.py \
             devtools/test_report_heading_numbering.py \
@@ -60,6 +64,9 @@ jobs:
 
       - name: Run mechanical design mesh contract tests
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_mechanical_design_json_to_mesh.py -v
+
+      - name: Run plant layout geometry and delivery contract tests
+        run: uv run --project devtools --locked --group test python devtools/test_layout_study.py -v
 
       - name: Run report generator integration test (script)
         run: uv run --project devtools --locked --group test devtools/test_report_gen.py

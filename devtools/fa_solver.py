@@ -28,12 +28,17 @@ EROSIONAL_C_DEFAULT = None  # never defaulted: the erosional C-factor is a sourc
 
 
 def neqsim_handle():
-    """Return the ``jneqsim.neqsim`` package (starts the JVM) or raise :class:`FlowAssuranceError` when it is not installed."""
+    """Return the Java ``neqsim`` package, using the shared source/installed-runtime bootstrap."""
     try:
-        from jneqsim import neqsim
-    except ImportError as exc:  # pragma: no cover - environment dependent
-        raise FlowAssuranceError("jneqsim is not installed; the NeqSim model runner needs it (%s)" % exc)
-    return neqsim
+        import jpype
+
+        if not jpype.isJVMStarted():
+            import neqsim_dev_setup
+
+            neqsim_dev_setup.neqsim_init(verbose=False)
+        return jpype.JPackage("neqsim")
+    except (ImportError, RuntimeError, OSError) as exc:
+        raise FlowAssuranceError("NeqSim runtime is unavailable; check Java and the NeqSim classpath (%s)" % exc) from exc
 
 
 def neqsim_version():

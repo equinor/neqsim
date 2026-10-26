@@ -569,6 +569,10 @@ Given temperature and total volume, find pressure and phase split. Used for:
 - Fixed-volume vessel calculations
 - Constant volume processes
 
+Pressure trials retain the supplied component inventories when a negligible phase disappears.
+Removing a trial phase changes the active phase set without discarding matter from the closed
+vessel. Repeated TV flashes therefore do not accumulate trace-phase inventory losses.
+
 **Method signatures:**
 ```java
 void TVflash(double Vspec)                    // V in cm³
@@ -603,6 +607,10 @@ ideal heat-capacity data do not alter the EOS reference. Pressure closure in eve
 phase, component conservation, equal fugacity and nearby-temperature caloric differences
 are qualified in `CubicTvHelmholtzQualificationTest`. This is an equation-based check
 of this fixture, not experimental validation or a global stability proof.
+The addition history checks the actual initial inventory plus every supplied feed against
+the overall component amounts after each addition and the final phase amounts, retaining
+the original $10^{-10}$ mol absolute conservation gate. Pressure and residual-energy
+references and their acceptance tolerances are unchanged.
 
 ---
 

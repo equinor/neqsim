@@ -266,6 +266,12 @@ those derivative states together with its residual base, so perturbed columns ca
 one another's K-value estimate. Every prediction still receives a new EOS evaluation and the
 same convergence check. Cold, retained and terminal-recovery evaluations use the same bound.
 
+Sum-Rates checkpoints retain the K-values, phase flows, enthalpies and evaluated vapor-derivative
+states with their temperatures and component inventories. Rejecting an initialization trial or
+returning to the best Sum-Rates state restores that complete seed before recalculating its
+thermodynamic properties. This prevents a rejected trial from changing the thermodynamic branch
+used by the subsequent Newton solve, including on Java 8. Existing convergence gates remain active.
+
 Liquid fugacity-only evaluations use `init(1)`. Vapor evaluations that supply composition and
 temperature derivatives use `init(3)`, and separate enthalpy evaluations retain `init(2)`.
 Exhausted inner iterations remain visible in the existing K-value telemetry. Published phase

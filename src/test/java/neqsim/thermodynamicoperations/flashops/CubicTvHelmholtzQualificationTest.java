@@ -83,9 +83,19 @@ class CubicTvHelmholtzQualificationTest {
   void addedFluidHistoryRetainsQualifiedResidualEnergy() {
     SystemInterface fluid = additionFeed(new double[] {0.0, 0.0, 0.9, 0.1}, 1.0);
     SystemInterface gas = additionFeed(new double[] {0.85, 0.15, 0.0, 0.0}, 0.3);
+    double[] initialInventory = new double[FEED.length];
+    double[] additionInventory = new double[FEED.length];
+    for (int component = 0; component < initialInventory.length; component++) {
+      initialInventory[component] = fluid.getComponent(component).getNumberOfmoles();
+      additionInventory[component] = gas.getComponent(component).getNumberOfmoles();
+    }
     for (int i = 0; i < 50; i++) {
       fluid.addFluid(gas);
       new ThermodynamicOperations(fluid).TVflash(0.998, "m3");
+      for (int component = 0; component < initialInventory.length; component++) {
+        double supplied = initialInventory[component] + (i + 1.0) * additionInventory[component];
+        assertEquals(supplied, fluid.getComponent(component).getNumberOfmoles(), 1.0e-10);
+      }
     }
     fluid.init(3);
     assertEquals(2, fluid.getNumberOfPhases());
@@ -93,7 +103,13 @@ class CubicTvHelmholtzQualificationTest {
     assertEquals(19.138156156431233, fluid.getPressure(), 1.0e-8);
     double ideal = 0.0;
     for (int i = 0; i < FEED.length; i++) {
-      assertEquals(FEED[i], fluid.getComponent(i).getNumberOfmoles(), 1.0e-10);
+      double supplied = initialInventory[i] + 50.0 * additionInventory[i];
+      assertEquals(supplied, fluid.getComponent(i).getNumberOfmoles(), 1.0e-10);
+      double recovered = 0.0;
+      for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+        recovered += fluid.getPhase(phase).getComponent(i).getNumberOfMolesInPhase();
+      }
+      assertEquals(supplied, recovered, 1.0e-10);
       ideal += fluid.getComponent(i).getNumberOfmoles() * fluid.getComponent(i).getHID(fluid.getTemperature());
     }
     assertEquals(-534369.1023002401, fluid.getEnthalpy() - ideal, 1.0);

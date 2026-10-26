@@ -113,6 +113,11 @@ class NaphtaliSandholmPublishedStateTest extends neqsim.NeqSimTest {
 
   private static void assertPublishedBalances(DistillationColumn column, int feedTray,
       DistillationColumn.SolverType expectedSolver) {
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertEquals(expectedSolver, column.getLastSolverTypeUsed());
+    if (expectedSolver == DistillationColumn.SolverType.NAPHTALI_SANDHOLM) {
+      assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, column.getLastSolveStatus());
+    }
     StreamInterface feed = column.getFeedStreams(feedTray).get(0);
     int count = column.getNumberOfTrays();
     StreamInterface[] gas = new StreamInterface[count];
@@ -174,11 +179,6 @@ class NaphtaliSandholmPublishedStateTest extends neqsim.NeqSimTest {
       assertEquals(componentFlow(feed, c),
           componentFlow(column.getGasOutStream(), c) + componentFlow(column.getLiquidOutStream(), c),
           Math.max(1.0e-5, componentFlow(feed, c) * 1.0e-7));
-    }
-    assertTrue(column.solved(), column.getConvergenceDiagnostics());
-    assertEquals(expectedSolver, column.getLastSolverTypeUsed());
-    if (expectedSolver == DistillationColumn.SolverType.NAPHTALI_SANDHOLM) {
-      assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, column.getLastSolveStatus());
     }
     assertTrue(column.getLastEnergyResidual() < 1.0e-7, column.getConvergenceDiagnostics());
     assertEquals(column.getEnergyBalanceError(), column.getLastEnergyResidual(), 1.0e-12);

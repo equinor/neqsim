@@ -46,11 +46,9 @@ def check_data(ds):
     out.append(_check("V-FALLBACK", "No retained hydraulic fallback or failed-edge status in the reference/selected concept", "FAIL" if any(b[0] in relevant for b in bad_status) else ("WARN" if bad_status else "PASS"),
                       "; ".join(b[1] for b in bad_status[:3])))
     relevant = {ds["reference_concept"], ds["selected_concept"]}
-    hand_bad = [("%s %s" % (cid, h["id"])) for cid, hs in ds["hand_checks"].items() if cid in relevant for h in hs if h["status"] not in ("PASS", "EXPLAINED")]
-    hand_expl = [("%s %s" % (cid, h["id"])) for cid, hs in ds["hand_checks"].items() if cid in relevant for h in hs if h["status"] == "EXPLAINED"]
-    out.append(_check("V-HAND", "Hydrostatic, friction, thermal and mass-closure hand checks agree with the solved values", "FAIL" if hand_bad else ("WARN" if hand_expl else "PASS"),
-                      "%d checks; failed: %s; explained solver limitation (elevation work absent in the generic Darcy edge energy balance): %s" % (
-                          sum(len(v) for v in ds["hand_checks"].values()), ", ".join(hand_bad) or "none", ", ".join(hand_expl) or "none")))
+    hand_bad = [("%s %s" % (cid, h["id"])) for cid, hs in ds["hand_checks"].items() if cid in relevant for h in hs if h["status"] != "PASS"]
+    out.append(_check("V-HAND", "Hydrostatic, friction, thermal and mass-closure hand checks agree with the solved values", "FAIL" if hand_bad else "PASS",
+                      "%d checks; failed: %s" % (sum(len(v) for v in ds["hand_checks"].values()), ", ".join(hand_bad) or "none")))
     ms = ds.get("mesh_sensitivity")
     out.append(_check("V-MESH", "Spatial-sensitivity gate (study mesh against a finer mesh)", "WARN" if ms is None else ("PASS" if ms["status"] == "PASS" else "FAIL"),
                       "not run" if ms is None else "max dp %.3f bar, max dT %.2f K (tolerances %s)" % (ms["max_dp_bar"], ms["max_dt_k"], ms["tolerances"])))

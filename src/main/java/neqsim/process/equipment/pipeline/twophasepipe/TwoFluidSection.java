@@ -104,6 +104,37 @@ public class TwoFluidSection extends PipeSection {
   /** Mixture energy per unit length: (α_g*ρ_g*E_g + α_L*ρ_L*E_L) * A (J/m). */
   private double energyPerLength;
 
+  /** Whether separate transported liquid phase caloric properties are available. */
+  private boolean phaseResolvedEnthalpies;
+
+  /** Specific enthalpy of transported oil, J/kg. */
+  private double oilEnthalpy;
+
+  /** Specific enthalpy of transported aqueous phase, J/kg. */
+  private double waterEnthalpy;
+
+  /**
+   * Install independently evaluated liquid phase enthalpies.
+   *
+   * @param oil oil specific enthalpy in J/kg
+   * @param water aqueous specific enthalpy in J/kg
+   */
+  public void setPhaseEnthalpies(double oil, double water) {
+    oilEnthalpy = oil;
+    waterEnthalpy = water;
+    phaseResolvedEnthalpies = true;
+  }
+
+  /** @return oil specific enthalpy in J/kg, or the legacy bulk liquid value */
+  public double getOilEnthalpy() {
+    return phaseResolvedEnthalpies ? oilEnthalpy : getLiquidEnthalpy();
+  }
+
+  /** @return aqueous specific enthalpy in J/kg, or the legacy bulk liquid value */
+  public double getWaterEnthalpy() {
+    return phaseResolvedEnthalpies ? waterEnthalpy : getLiquidEnthalpy();
+  }
+
   // ============ Three-phase support ============
 
   /** Oil holdup within liquid phase (oil/(oil+water)). */
@@ -311,7 +342,10 @@ public class TwoFluidSection extends PipeSection {
 
     // Total internal plus kinetic energy, using the independently moving liquid phases.
     // Subtract pressure times occupied area directly to avoid 0/0 for an absent phase.
-    energyPerLength = gasMassPerLength * (getGasEnthalpy() + 0.5 * vG * vG) + liquidMassPerLength * getLiquidEnthalpy()
+    double liquidEnthalpyPerLength = phaseResolvedEnthalpies
+        ? oilMassPerLength * getOilEnthalpy() + waterMassPerLength * getWaterEnthalpy()
+        : liquidMassPerLength * getLiquidEnthalpy();
+    energyPerLength = gasMassPerLength * (getGasEnthalpy() + 0.5 * vG * vG) + liquidEnthalpyPerLength
         + 0.5 * oilMassPerLength * oilVelocity * oilVelocity + 0.5 * waterMassPerLength * waterVelocity * waterVelocity
         - getPressure() * A * (alphaG + alphaL);
   }

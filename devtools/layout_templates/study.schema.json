@@ -1,0 +1,524 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neqsim.org/schemas/plant_layout_study.v1.json",
+  "title": "NeqSim concept plant layout study",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "project",
+    "coordinate_system",
+    "decks",
+    "equipment"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "plant_layout_study.v1"
+    },
+    "project": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "facility_type"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "string"
+        },
+        "maturity": {
+          "enum": [
+            "SCREENING"
+          ]
+        },
+        "facility_type": {
+          "enum": [
+            "onshore",
+            "offshore_fixed",
+            "offshore_floating"
+          ]
+        },
+        "jurisdiction": {
+          "type": "string"
+        }
+      }
+    },
+    "coordinate_system": {
+      "type": "object",
+      "required": [
+        "length_unit",
+        "mass_unit"
+      ],
+      "properties": {
+        "length_unit": {
+          "const": "m"
+        },
+        "mass_unit": {
+          "const": "kg"
+        },
+        "origin": {
+          "$ref": "#/$defs/point3"
+        },
+        "north_deg": {
+          "type": "number"
+        },
+        "elevation_datum": {
+          "type": "string"
+        }
+      }
+    },
+    "decks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "width_m",
+          "depth_m",
+          "elevation_m"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "width_m": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "depth_m": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "elevation_m": {
+            "type": "number"
+          },
+          "height_limit_m": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "mass_limit_kg": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        }
+      }
+    },
+    "equipment": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "tag",
+          "size_m",
+          "dimension_source",
+          "allowed_decks"
+        ],
+        "properties": {
+          "tag": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string"
+          },
+          "size_m": {
+            "$ref": "#/$defs/size3"
+          },
+          "mass_kg": {
+            "type": "number",
+            "minimum": 0
+          },
+          "allowed_decks": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string"
+            }
+          },
+          "rotations_deg": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                0,
+                90,
+                180,
+                270
+              ]
+            }
+          },
+          "dimension_source": {
+            "type": "object",
+            "required": [
+              "kind",
+              "reference"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "synthetic_assumption",
+                  "vendor",
+                "calculated",
+                "measured",
+                "project_assumption"
+                ]
+              },
+              "reference": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "envelopes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "kind",
+                "bounds_m"
+              ],
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "maintenance",
+                    "operation",
+                    "lifting"
+                  ]
+                },
+                "bounds_m": {
+                  "$ref": "#/$defs/box3"
+                }
+              }
+            }
+          },
+          "fixed": {
+            "$ref": "#/$defs/placement"
+          }
+        }
+      }
+    },
+    "connections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "from_tag",
+          "to_tag"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "from_tag": {
+            "type": "string"
+          },
+          "to_tag": {
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "corridors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "deck",
+          "bounds_m",
+          "kind"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "deck": {
+            "type": "string"
+          },
+          "bounds_m": {
+            "$ref": "#/$defs/box2"
+          },
+          "kind": {
+            "enum": [
+              "escape",
+              "pipe_rack",
+              "road"
+            ]
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "exits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "deck",
+          "x_m",
+          "y_m"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "deck": {
+            "type": "string"
+          },
+          "x_m": {
+            "type": "number"
+          },
+          "y_m": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "obstacles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "deck",
+          "bounds_m"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "deck": {
+            "type": "string"
+          },
+          "bounds_m": {
+            "$ref": "#/$defs/box3"
+          }
+        }
+      }
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "source"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "minimum_separation",
+              "required_evidence"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "minimum_m": {
+            "type": "number",
+            "minimum": 0
+          },
+          "from_tag": {
+            "type": "string"
+          },
+          "to_tag": {
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/$defs/source"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "evidence_status": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "standards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "document",
+          "edition",
+          "access_status",
+          "reference"
+        ]
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "data_gaps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "options": {
+      "type": "object",
+      "properties": {
+        "alternatives": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "grid_m": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "max_candidates": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "backend": {
+          "enum": [
+            "deterministic",
+            "auto",
+            "ortools"
+          ]
+        }
+      }
+    }
+  },
+  "$defs": {
+    "point3": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "number"
+        }
+      ],
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "size3": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "box2": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "box3": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 6,
+      "maxItems": 6
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "kind",
+        "reference",
+        "access_status"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "project_requirement",
+            "standard",
+            "software_model"
+          ]
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 1
+        },
+        "access_status": {
+          "enum": [
+            "verified_full_text",
+            "metadata_only",
+            "unavailable"
+          ]
+        },
+        "document": {
+          "type": "string"
+        },
+        "edition": {
+          "type": "string"
+        },
+        "clause": {
+          "type": "string"
+        }
+      }
+    },
+    "placement": {
+      "type": "object",
+      "required": [
+        "deck",
+        "x_m",
+        "y_m",
+        "rotation_deg"
+      ],
+      "properties": {
+        "deck": {
+          "type": "string"
+        },
+        "x_m": {
+          "type": "number"
+        },
+        "y_m": {
+          "type": "number"
+        },
+        "rotation_deg": {
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ]
+        }
+      }
+    }
+  },
+  "$comment": "Runtime normalization also rejects nonfinite values, duplicate identities, inverted boxes, unresolved tag/deck references and unsupported geometry. Schema metadata is not proof of standard compliance."
+}

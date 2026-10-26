@@ -2764,11 +2764,19 @@ public class NaphtaliSandholmSolver {
     logger.info("SR: starting Sum-Rates energy correction. T[0]={} T[N-1]={}", String.format("%.1f", T[0] - 273.15),
         String.format("%.1f", T[N - 1] - 273.15));
 
-    // Save BP solution as fallback
+    // Keep the K-value basin and its evaluated vapor derivatives with every primary checkpoint.
+    // Rejected SR trials must not seed the restored BP or best state with another thermodynamic branch.
     double[][] bpLiq = new double[N][C];
     double[] bpT = new double[N];
     double[] bpV = new double[N];
     saveTrayState(bpLiq, bpT, bpV);
+    double[][] bpK = new double[N][C];
+    double[][] bpVap = new double[N][C];
+    double[] bpL = new double[N];
+    double[] bpHL = new double[N];
+    double[] bpHV = new double[N];
+    saveDerivedThermodynamicState(bpK, bpVap, bpL, bpHL, bpHV);
+    SystemInterface[] bpVaporSystems = lastVaporSystems.clone();
     double bpMbErr = computeMassBalanceError();
     double bpEnergyErr = computeMaxRelativeEnergyError();
 
@@ -2777,6 +2785,13 @@ public class NaphtaliSandholmSolver {
     double[] bestT = new double[N];
     double[] bestV = new double[N];
     saveTrayState(bestLiq, bestT, bestV);
+    double[][] bestK = new double[N][C];
+    double[][] bestVap = new double[N][C];
+    double[] bestL = new double[N];
+    double[] bestHL = new double[N];
+    double[] bestHV = new double[N];
+    saveDerivedThermodynamicState(bestK, bestVap, bestL, bestHL, bestHV);
+    SystemInterface[] bestVaporSystems = lastVaporSystems.clone();
     double bestMbErr = bpMbErr;
     double bestEnergyErr = bpEnergyErr;
 
@@ -2966,6 +2981,8 @@ public class NaphtaliSandholmSolver {
         bestEnergyErr = eErr;
         bestMbErr = mbErr;
         saveTrayState(bestLiq, bestT, bestV);
+        saveDerivedThermodynamicState(bestK, bestVap, bestL, bestHL, bestHV);
+        System.arraycopy(lastVaporSystems, 0, bestVaporSystems, 0, N);
       }
 
       // Convergence: T stable and mass balance acceptable
@@ -2980,6 +2997,8 @@ public class NaphtaliSandholmSolver {
         logger.debug("SR: mass balance degraded to {}%; reducing damping", mbErr * 100);
         logger.warn("SR: mass balance degraded to {}%, reducing damping", String.format("%.1f", mbErr * 100));
         restoreTrayState(bestLiq, bestT, bestV);
+        restoreDerivedThermodynamicState(bestK, bestVap, bestL, bestHL, bestHV);
+        System.arraycopy(bestVaporSystems, 0, lastVaporSystems, 0, N);
         evaluateThermo();
         dampT *= 0.5;
         maxClampT = Math.max(maxClampT * 0.5, 1.0);
@@ -2990,8 +3009,10 @@ public class NaphtaliSandholmSolver {
       }
     }
 
-    // Restore best solution found
+    // Re-evaluate the saved seed because SR checkpoints may follow an unevaluated temperature update.
     restoreTrayState(bestLiq, bestT, bestV);
+    restoreDerivedThermodynamicState(bestK, bestVap, bestL, bestHL, bestHV);
+    System.arraycopy(bestVaporSystems, 0, lastVaporSystems, 0, N);
     evaluateThermo();
 
     double finalMb = computeMassBalanceError();
@@ -3007,6 +3028,8 @@ public class NaphtaliSandholmSolver {
       logger.debug("SR solution is worse than Bubble-Point solution; reverting");
       logger.info("SR: solution worse than BP, reverting");
       restoreTrayState(bpLiq, bpT, bpV);
+      restoreDerivedThermodynamicState(bpK, bpVap, bpL, bpHL, bpHV);
+      System.arraycopy(bpVaporSystems, 0, lastVaporSystems, 0, N);
       evaluateThermo();
     }
   }

@@ -1240,11 +1240,12 @@ public class TwoFluidConservationEquations implements Serializable {
     // Energy flux
     if (includeEnergyEquation) {
       double HG = sec.getGasEnthalpy();
-      double HL = sec.getLiquidEnthalpy();
+      double HO = sec.getOilEnthalpy();
+      double HW = sec.getWaterEnthalpy();
       // Exactly absent phases have no enthalpy flux even when their unused properties are non-finite.
       flux[IDX_ENERGY] = ((alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * (HG + 0.5 * vG * vG))
-          + (alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * (HL + 0.5 * vO * vO))
-          + (alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * (HL + 0.5 * vW * vW))) * A;
+          + (alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * (HO + 0.5 * vO * vO))
+          + (alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * (HW + 0.5 * vW * vW))) * A;
     }
 
     return flux;
@@ -1316,11 +1317,12 @@ public class TwoFluidConservationEquations implements Serializable {
     // Energy flux
     if (includeEnergyEquation) {
       double HG = sec.getGasEnthalpy();
-      double HL = sec.getLiquidEnthalpy();
+      double HO = sec.getOilEnthalpy();
+      double HW = sec.getWaterEnthalpy();
       // Exactly absent phases have no enthalpy flux even when their unused properties are non-finite.
       flux[IDX_ENERGY] = ((alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * (HG + 0.5 * vG * vG))
-          + (alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * (HL + 0.5 * vO * vO))
-          + (alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * (HL + 0.5 * vW * vW))) * A;
+          + (alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * (HO + 0.5 * vO * vO))
+          + (alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * (HW + 0.5 * vW * vW))) * A;
     }
 
     return flux;
@@ -2505,7 +2507,7 @@ public class TwoFluidConservationEquations implements Serializable {
     double mass = water ? sec.getWaterMassPerLength() : sec.getOilMassPerLength();
     double holdup = density > 0.0 && sec.getArea() > 0.0 ? mass / (density * sec.getArea()) : 0.0;
     return new PhaseState(density, velocity, sec.getPressure(), sec.getLiquidSoundSpeed(),
-        sec.getLiquidEnthalpy() + 0.5 * velocity * velocity, holdup);
+        (water ? sec.getWaterEnthalpy() : sec.getOilEnthalpy()) + 0.5 * velocity * velocity, holdup);
   }
 
   /**

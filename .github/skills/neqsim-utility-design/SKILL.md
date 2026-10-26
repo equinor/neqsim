@@ -181,3 +181,5 @@ wiring any utility flowsheet into a closed optimization loop.
 - [`neqsim-utilities-specification`](../neqsim-utilities-specification/SKILL.md) — choosing utility levels
 - [`neqsim-heat-integration`](../neqsim-heat-integration/SKILL.md) — deriving duties from composite curves
 - [`neqsim-power-generation`](../neqsim-power-generation/SKILL.md) — HRSG / steam-turbine network
+
+- [Utilities design report](../neqsim-utilities-design-report/SKILL.md) — reconcile consumers, simultaneous case loads, supply/distribution, utility-loss scenarios and report acceptance using the main process-report workflow.

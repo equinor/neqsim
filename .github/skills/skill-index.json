@@ -563,7 +563,7 @@
  "identifying facility bottlenecks": [
   "neqsim-production-optimization"
  ],
- "images — equipment data sheets": [
+ "images \u2014 equipment data sheets": [
   "neqsim-technical-document-reading"
  ],
  "impurity effects on phase behavior": [
@@ -976,7 +976,7 @@
  "pfr)": [
   "neqsim-reaction-engineering"
  ],
- "phase envelopes —": [
+ "phase envelopes \u2014": [
   "neqsim-technical-document-reading"
  ],
  "pipeline hydraulics": [
@@ -2471,11 +2471,115 @@
  "flowline report": [
   "neqsim-flow-assurance-study-report"
  ],
- "surf design study": ["neqsim-surf-design-study", "neqsim-surf-model-generation", "neqsim-surf-report-drawings"],
- "surf design report": ["neqsim-surf-design-study", "neqsim-surf-report-drawings"],
- "neqsim surf-study": ["neqsim-surf-design-study"],
- "subsea tieback design report": ["neqsim-surf-design-study", "neqsim-surf-report-drawings"],
- "subsea field layout generate network": ["neqsim-surf-model-generation", "neqsim-surf-design-study"],
- "surf drawings": ["neqsim-surf-report-drawings", "neqsim-surf-design-study"],
- "reservoir to products full chain Python Java SURF utilities downstream": ["neqsim-production-system-modeling", "neqsim-integrated-production-and-lifecycle", "neqsim-process-modeling"]
+ "surf design study": [
+  "neqsim-surf-design-study",
+  "neqsim-surf-model-generation",
+  "neqsim-surf-report-drawings"
+ ],
+ "surf design report": [
+  "neqsim-surf-design-study",
+  "neqsim-surf-report-drawings"
+ ],
+ "neqsim surf-study": [
+  "neqsim-surf-design-study"
+ ],
+ "subsea tieback design report": [
+  "neqsim-surf-design-study",
+  "neqsim-surf-report-drawings"
+ ],
+ "subsea field layout generate network": [
+  "neqsim-surf-model-generation",
+  "neqsim-surf-design-study"
+ ],
+ "surf drawings": [
+  "neqsim-surf-report-drawings",
+  "neqsim-surf-design-study"
+ ],
+ "reservoir to products full chain Python Java SURF utilities downstream": [
+  "neqsim-production-system-modeling",
+  "neqsim-integrated-production-and-lifecycle",
+  "neqsim-process-modeling"
+ ],
+ "plant layout": [
+  "neqsim-plant-layout-study",
+  "neqsim-plant-layout-geometry",
+  "neqsim-plant-layout-delivery"
+ ],
+ "onshore plot plan": [
+  "neqsim-plant-layout-study",
+  "neqsim-plant-layout-geometry"
+ ],
+ "offshore deck arrangement": [
+  "neqsim-plant-layout-study",
+  "neqsim-plant-layout-geometry"
+ ],
+ "equipment maintenance envelopes": [
+  "neqsim-plant-layout-geometry"
+ ],
+ "plant layout CAD exports": [
+  "neqsim-plant-layout-delivery"
+ ],
+ "physical equipment clash": [
+  "neqsim-plant-layout-geometry"
+ ],
+ "layout study report": [
+  "neqsim-plant-layout-study",
+  "neqsim-plant-layout-delivery"
+ ],
+ "layout independent review": [
+  "neqsim-plant-layout-geometry",
+  "neqsim-plant-layout-delivery"
+ ],
+ "a complete pvt report": [
+  "neqsim-pvt-fluid-study-report"
+ ],
+ "calibration/hold-out validation": [
+  "neqsim-pvt-fluid-study-report"
+ ],
+ "e300 handover": [
+  "neqsim-pvt-fluid-study-report"
+ ],
+ "full parameter/bip documentation": [
+  "neqsim-pvt-fluid-study-report"
+ ],
+ "heavy-end characterization": [
+  "neqsim-pvt-fluid-study-report"
+ ],
+ "neqsim pvt-study workflow is requested": [
+  "neqsim-pvt-fluid-study-report"
+ ],
+ "recombination": [
+  "neqsim-pvt-fluid-study-report"
+ ],
+ "sample qc": [
+  "neqsim-pvt-fluid-study-report"
+ ],
+ "neqsim-pvt-fluid-study-report": [
+  "neqsim-pvt-fluid-study-report"
+ ],
+ "process utilities design report": [
+  "neqsim-utilities-design-report",
+  "neqsim-utility-design",
+  "process-study-report"
+ ],
+ "utility flow diagrams": [
+  "neqsim-utilities-design-report",
+  "neqsim-utility-design",
+  "process-study-report"
+ ],
+ "utility consumer register": [
+  "neqsim-utilities-design-report",
+  "neqsim-utility-design",
+  "process-study-report"
+ ],
+ "simultaneous utility demand": [
+  "neqsim-utilities-design-report",
+  "neqsim-utility-design",
+  "process-study-report"
+ ],
+ "utility loss design report": [
+  "neqsim-utilities-design-report",
+  "neqsim-utility-design",
+  "process-study-report"
+ ]
 }

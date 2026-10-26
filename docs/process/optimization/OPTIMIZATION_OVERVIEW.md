@@ -831,7 +831,7 @@ ordered field periods. Build each period from its own converged model/evaluator 
 accepted-point slices, then add it with a non-negative strictly increasing elapsed time and explicit
 configuration provenance. The lifecycle study invokes the same exact-runtime envelope export gate before
 accepting a period, requires identical ordered action identifiers across periods, aggregates evaluation/runtime
-provenance, and reports changes in the accepted leading constraint between adjacent periods. Current schema version 8
+provenance, and reports changes in the accepted leading constraint between adjacent periods. Schema version 8
 also exports `period_change_diagnostics`: accepted-action deltas, comparable/added/removed slice axes, exact
 sampled-point overlap, feasible-point changes, and leading-constraint changes for every adjacent period pair. For
 matching axes it compares the complete sampled `operating_region_transitions` rows and reports exact retained,
@@ -850,7 +850,7 @@ source provenance. Metric IDs, order, and units must remain identical across per
 exact accepted state under each period when supplied and adds exact `accepted_state_changes` to the adjacent
 period diagnostics. This is the handoff for accepted reservoir pressure, production/injection rates, cumulative
 throughput, common-shaft power, or other already-qualified state; it does not make an independently calculated or
-forecast value accepted. State metrics remain optional in schema v8 and remain readable in schemas v4 through v7. It does not copy
+forecast value accepted. State metrics remain optional in schema v8/v9 and remain readable in schemas v4 through v7. It does not copy
 reservoir, separator, compressor-map, shaft, driver, or power-limit physics; those remain in each period's
 canonical model and constraint evidence.
 
@@ -888,15 +888,20 @@ or action-incompatible period is rejected instead of producing a partial lifecyc
 are sampled identities, not a continuous forecast, causal attribution, shadow price, equipment qualification, or
 operating approval.
 
-Lifecycle schema versions 1 through 7 remain readable by the persistent production guard for stored historical
-evidence. Current exports use schema version 8 with optional accepted-state metrics and require schema-v2
+Lifecycle schema versions 1 through 8 remain readable by the persistent production guard for stored historical
+evidence. A lifecycle that supplies `UtilizationCoverageReport` for every period exports schema version 9; otherwise
+it remains schema version 8 for compatibility. Schema v9 requires non-empty declared equipment/constraint scope,
+complete finite rated evidence, explicit unit/basis/provenance, and exact binding to the accepted-point replay. Build
+the report from `search.getAcceptedPointReplay().getEvaluation().getInstalledEquipmentCapacityEvidence()` using the
+frozen-evidence builder path; this never resamples the mutable process after baseline restoration. Current schema-v9
+exports retain optional accepted-state metrics and require schema-v2
 cross-slice summaries in every period. The guard reconstructs each summary from persisted sampled and refined
 endpoint rows before trusting it, then recomputes every
 period-change diagnostic from the persisted periods before accepting it, including exact operating-region event
 migration, refined-boundary endpoint constraints and physical margins, exact ranked constraint-identity migration,
 and, when present, state-metric identity,
 units, finite values, and exact deltas. A missing or modified
-count, event, delta, axis set, feasibility change, state metric, or ranked identity therefore fails closed
+count, event, delta, axis set, feasibility change, state metric, coverage row, or ranked identity therefore fails closed
 instead of becoming a trusted advisory result.
 
 Long-lived Task Solver studies can persist this map as `lifecycle_envelope_evidence` beside the current
@@ -907,7 +912,7 @@ periods and aggregate/transition closure from persisted JSON, then invalidates a
 when mapped reservoir state, availability, routing, operating limits, or other evidence changes. This reuses the
 existing #4187 ledger and revalidation path rather than introducing another lifecycle state store.
 
-Promotion automatically copies one exact schema-v8 block from the reviewed cycle's current guard-approved ledger
+Promotion automatically copies one exact schema-v8/v9 block from the reviewed cycle's current guard-approved ledger
 proposal into both the current-best `results.json` and its immutable baseline snapshot. It independently replays the
 production validation and refuses stale, superseded, rejected, modified, unguarded, or ambiguous evidence before
 changing the baseline. When lifecycle evidence is required, a cycle without that receipt cannot be promoted.
@@ -942,8 +947,9 @@ NEQSIM_TEST_CLASSPATH="target/classes:target/test-classes:$(cat target/optimizat
 ```
 
 The workflow asserts finite evaluation counts and runtime, full convergence/feasibility/restoration receipts, exact
-selected-objective identity and reviewed-baseline binding, schema-v8 persistence, the
-separator/scrubber-to-shared-power bottleneck migration, and report rendering. It is a
+selected-objective identity and reviewed-baseline binding, schema-v9 persistence, complete declared constraint
+coverage with operating-limit provenance, the separator/scrubber-to-shared-power bottleneck migration, and report
+rendering. It is a
 synthetic software acceptance test, not a reservoir forecast, equipment qualification, operating approval, or an
 instruction to relax any physical constraint.
 
@@ -956,10 +962,11 @@ evidence, and a `revalidation_of` ledger link to the invalidated proposal. Unmap
 a full cycle. Selective execution is therefore an execution/provenance claim only: it does not reuse an accepted
 candidate, constraint snapshot, or partially restored model state.
 
-The canonical task report consumes accepted top-level schema-v8 `lifecycle_envelope_evidence` in both ordinary
+The canonical task report consumes accepted top-level schema-v8/v9 `lifecycle_envelope_evidence` in both ordinary
 current-best and immutable final-report generation. It renders the exact per-period `REJECTING` and `NEAR_ACTIVE`
 rows, representative values, signed physical headroom with engineering units, and adjacent-period identity
-migration. Before rendering, it requires complete ordered period evidence, finite counts/runtime, complete slices,
+migration. Schema v9 additionally renders every declared installed-capacity row with current value, applicable limit,
+utilization, unit, basis, and provenance. Before rendering, it requires complete ordered period evidence, finite counts/runtime, complete slices,
 matching representative identities, exact reconstructed identity deltas, and—when a promoted living-task baseline
 exists—the matching source cycle. A mismatch produces an explicit evidence-withheld section rather than a partial
 bottleneck claim. This report view is downstream of, and does not replace, the production guard. Rankings remain

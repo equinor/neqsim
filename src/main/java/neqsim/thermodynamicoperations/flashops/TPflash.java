@@ -198,6 +198,8 @@ public class TPflash extends Flash {
   private boolean phaseRemovedDuringFlash = false;
   /** Allows an iterative outer flash to retain a qualified conserved homogeneous trial state. */
   private boolean conservativeHomogeneousRecoveryAllowed = false;
+  /** Retains overall component inventories during trace-phase cleanup in a closed-volume outer flash. */
+  private boolean preserveFeedInventoryOnPhaseRemoval = false;
   /** Cold initial state retained only for a screened asymmetric endpoint retry. */
   private transient SystemInterface multiphaseEndpointRescueSeed;
   /** Prevents a bounded water-rich cross-algorithm fallback from recursively starting another fallback. */
@@ -310,6 +312,21 @@ public class TPflash extends Flash {
    */
   void setConservativeHomogeneousRecoveryAllowed(boolean allowed) {
     conservativeHomogeneousRecoveryAllowed = allowed;
+  }
+
+  /**
+   * Keeps overall component inventories unchanged when final cleanup removes a negligible phase.
+   *
+   * <p>
+   * A closed-volume outer flash can repeat phase cleanup hundreds of times while varying pressure. Discarding the trace
+   * phase's component amounts on every trial would change the conserved inventory. Ordinary TP flashes retain their
+   * existing cleanup behavior unless their outer operation explicitly enables this option.
+   * </p>
+   *
+   * @param preserve whether phase removal must retain the overall component inventories
+   */
+  void setPreserveFeedInventoryOnPhaseRemoval(boolean preserve) {
+    preserveFeedInventoryOnPhaseRemoval = preserve;
   }
 
   /**
@@ -1476,10 +1493,10 @@ public class TPflash extends Flash {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getBeta(i) < phaseFractionMinimumLimit * 1.01) {
         phaseRemovedDuringFlash = true;
-        if (system.getNumberOfPhases() == 2 && isOrdinaryDryHydrocarbonRecoveryAllowed()
-            && maximumComponentMaterialBalanceResidual(system) > COLLAPSED_HYDROCARBON_MATERIAL_BALANCE_TOLERANCE) {
-          // Preserve the conserved feed for an invalid endpoint that needs recovery.
-          // Balanced endpoints retain the established trace-phase cleanup path.
+        if (preserveFeedInventoryOnPhaseRemoval || (system.getNumberOfPhases() == 2
+            && isOrdinaryDryHydrocarbonRecoveryAllowed()
+            && maximumComponentMaterialBalanceResidual(system) > COLLAPSED_HYDROCARBON_MATERIAL_BALANCE_TOLERANCE)) {
+          // Closed-volume trials retain their inventory; invalid ordinary endpoints retain it for recovery.
           system.removePhaseKeepTotalComposition(i);
         } else {
           system.removePhase(i);
