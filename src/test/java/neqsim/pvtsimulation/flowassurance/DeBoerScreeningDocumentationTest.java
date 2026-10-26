@@ -44,8 +44,7 @@ public class DeBoerScreeningDocumentationTest extends NeqSimTest {
   @Test
   void publishedDeBoerProgramCompilesAndRunsWithAssertions() throws Exception {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
-    String guide = read(repositoryRoot
-        .resolve("docs/pvtsimulation/flowassurance/asphaltene_deboer_screening.md"));
+    String guide = read(repositoryRoot.resolve("docs/pvtsimulation/flowassurance/asphaltene_deboer_screening.md"));
     Matcher exactExample = EXACT_EXAMPLE.matcher(guide);
 
     assertTrue(exactExample.find(), "Guide must contain the marked exact Java program");
@@ -71,8 +70,7 @@ public class DeBoerScreeningDocumentationTest extends NeqSimTest {
   @Test
   void guideRetainsInputAndEngineeringBoundaries() throws Exception {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
-    String guide = read(repositoryRoot
-        .resolve("docs/pvtsimulation/flowassurance/asphaltene_deboer_screening.md"));
+    String guide = read(repositoryRoot.resolve("docs/pvtsimulation/flowassurance/asphaltene_deboer_screening.md"));
     String normalized = guide.replaceAll("\\s+", " ");
     String lowerGuide = normalized.toLowerCase(Locale.ROOT);
 
@@ -82,10 +80,8 @@ public class DeBoerScreeningDocumentationTest extends NeqSimTest {
     assertTrue(guide.contains("| Saturation pressure | bara |"));
     assertTrue(guide.contains("| In-situ oil density | kg/m³ |"));
     assertTrue(normalized.contains("It is not an asphaltene-onset pressure"));
-    assertTrue(normalized.contains(
-        "It does not predict deposition rate, plugging, or inhibitor dose."));
-    assertTrue(normalized.contains(
-        "validate against measured SARA data and onset/deposition observations"));
+    assertTrue(normalized.contains("It does not predict deposition rate, plugging, or inhibitor dose."));
+    assertTrue(normalized.contains("validate against measured SARA data and onset/deposition observations"));
     assertFalse(lowerGuide.contains("production-ready"));
   }
 
@@ -119,23 +115,18 @@ public class DeBoerScreeningDocumentationTest extends NeqSimTest {
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
-    DiagnosticCollector<JavaFileObject> diagnostics =
-        new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath",
-        classPath, "-d", outputDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        outputDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
       Boolean successful = compiler
-          .getTask(null, manager, diagnostics, options, null,
-              manager.getJavaFileObjects(javaSource.toFile()))
-          .call();
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(javaSource.toFile())).call();
       assertTrue(Boolean.TRUE.equals(successful), diagnostics.getDiagnostics().toString());
     }
 
-    try (URLClassLoader loader = new URLClassLoader(
-        new URL[] {outputDirectory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {outputDirectory.toUri().toURL()},
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName(name, true, loader);
       assertTrue(example.desiredAssertionStatus());
