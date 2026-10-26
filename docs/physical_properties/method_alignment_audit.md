@@ -28,7 +28,7 @@ to `src/main/java/neqsim/`. The nearest guides document existing choices and con
 |---|---|---|
 | Pure constants and characterization | `thermo/component/Component`, `thermo/characterization/TBPfractionModel` and component databases | Present. Establish per-parameter provenance and validity; generic molecular group-contribution estimation is not established by this inventory. |
 | Ideal-gas Cp, Cv, H, S and formation data | `Component.getCp0/getCv0/getHID/getIdEntropy`, `SystemIdealGas` | Present. Polynomial paths need independent coefficient and integral matrices. Existing PR #4568 handles the CpD accessor separately. |
-| Vapor pressure, saturation and phase-change enthalpy | `Component.getAntoineVaporPressure` and its derivative/inverse, `ThermodynamicOperations` saturation operations, `SystemInterface.getHeatOfVaporization` | Present through correlations and EOS operations. The low-level coefficient getters now share the five-coefficient DIPPR 106 form and explicit missing-data contract; per-fluid parameter qualification remains separate from EOS phase enthalpy differences. |
+| Vapor pressure, saturation and phase-change enthalpy | `Component.getAntoineVaporPressure` and its derivative/inverse, `ThermodynamicOperations` saturation operations, `SystemInterface.getHeatOfVaporization`, `Component.calculateWatsonHeatOfVaporization` | Present through correlations and EOS operations. The low-level coefficient getters now share the five-coefficient DIPPR 106 form and explicit missing-data contract; per-fluid parameter qualification remains separate from EOS phase enthalpy differences. Opt-in Watson reference scaling is checked against six benzene calorimetry points at 307-353 K only. |
 | Pure-fluid PVT and caloric properties | SRK/PR, CPA, PC-SAFT, Span-Wagner, water and hydrogen reference utilities | Present. Selecting a modern EOS does not establish modern transport-model completeness. See [thermodynamics](../thermo/). |
 | Mixture PVT and equilibrium | `SystemGERG2008Eos`, `SystemEOSCGEos`, cubic/CPA/PC-SAFT mixtures, TP/PH/PS and saturation flashes | Present. Reuse [#2937](https://github.com/equinor/neqsim/issues/2937) for numerical flash and stability qualification. Standalone general Tsonopoulos virial prediction was not found; embedded virial terms do exist in AGA8/GERG-related code. |
 | Activity coefficients, infinite dilution and specialized phase behavior | Wilson, NRTL, UNIQUAC, UNIFAC/PSRK/UMR, solid-liquid operations, Henry-law APIs | Present. Benchmark each model/parameter set and infinite-dilution limit. A supplied class does not establish a suitable parameter set for an arbitrary pair. |
@@ -164,6 +164,63 @@ The fallback still omits unavailable component correlations; that existing appro
 is not a qualified substitute for coupled interphase enthalpy transport. This repair does
 not certify evaporation distance or two-phase thermal closure against experiments.
 
+### Watson reference-state scaling (opt-in)
+
+A caller with trustworthy pure-fluid saturation reference data can now use
+`Component.calculateWatsonHeatOfVaporization(T, Tref, Href, Tc)` or
+`component.getHeatOfVaporizationWatson(T, Tref, Href)` through the existing component
+interface (also available through the Python Java bridge). The instance adapter uses
+that component's Tc. The static operation is registered through `runCapability`.
+It does not use or replace the database latent-heat coefficients.
+
+$$H(T)=H_{ref}\left(\frac{T_c-T}{T_c-T_{ref}}\right)^{0.38}$$
+
+All temperatures are in K and both enthalpies are in J/mol. The equation and fixed
+exponent are from Watson (1943), equation 13, printed page 402
+([original paper](https://personal.ems.psu.edu/~radovic/Watson_IEC_1943.pdf),
+[DOI](https://doi.org/10.1021/ie50400a004)); the scanned equation was inspected.
+This reference scaling differs from NIST TDE's fitted multi-term HVP expansion.
+
+Require finite positive Href, 0 < Tref < Tc, and 0 < T <= Tc. The reference value is
+returned exactly at T=Tref and the mathematical limit is zero at T=Tc. A supercritical
+target, invalid reference or unrepresentable positive subcritical result throws
+`IllegalArgumentException`. Temperature differences avoid separately subtracting
+reduced temperatures from one near Tc. No cross-state cache is used.
+
+The documented adapter example is executed in `watsonComponentAdapterAndClone`:
+
+```java
+SystemSrkEos fluid = new SystemSrkEos(332, 1);
+fluid.addComponent("benzene", 1);
+ComponentInterface component = fluid.getPhase(0).getComponent(0);
+double estimate = component.getHeatOfVaporizationWatson(332, 353.3, 30720);
+```
+
+The standalone static route with Tc=562.1 K gives 31875.128087 J/mol at 332 K.
+The adapter uses the shipped component Tc and therefore need not give identical digits.
+An independent NIST benzene comparison uses the Majer/Svoboda (1985) anchor
+30720 J/mol at 353.3 K and Tc=562.1 K; none of the following Dong et al. (1988)
+calorimetry points were used to fit the fixed 0.38 exponent:
+
+| Temperature (K) | NIST calorimetry (J/mol) | Watson estimate (J/mol) | Relative error (%) |
+| ---: | ---: | ---: | ---: |
+| 307 | 33400 | 33149.24 | -0.75 |
+| 314 | 33100 | 32800.60 | -0.90 |
+| 324 | 32400 | 32291.80 | -0.33 |
+| 332 | 31900 | 31875.13 | -0.08 |
+| 344 | 31400 | 31232.93 | -0.53 |
+| 353 | 30600 | 30736.76 | +0.45 |
+
+All six points pass a declared 1% comparison gate. This is a limited benzene check,
+not a universal uncertainty statement or validation outside 307-353 K. Use reference
+data near the target temperature. The original paper identifies water below its normal
+boiling point as an exception. Pure-fluid phase stability/melting limits, mixtures,
+compressed-liquid pressure corrections and near-critical accuracy/derivatives remain
+outside this estimator's qualification. The zero endpoint is a model limit, not proof
+of critical-region accuracy. Default EOS latent heat, all property selections and
+normal process evaluation costs are unchanged; work is performed only on explicit calls.
+The earlier database parameter discrepancy and sixth-edition evidence gap remain open.
+
 ## Execution routes and computational cost
 
 The stateless transport correlation APIs are registered in `devtools/engineering_capabilities.json`
@@ -220,8 +277,8 @@ not measure an entire flash/process calculation or establish a stable speedup gu
 3. Qualify latent-heat parameter provenance/fit ranges and liquid pressure corrections with
    published examples before changing defaults. Distinguish an unsupported alternative
    correlation from a calculation type already supported by EOS enthalpy differences.
-4. Assess standalone Tsonopoulos, Watson reference-state latent-heat scaling and molecular
-   group-contribution APIs. Require a genuine use case, verified parameters, finite/invalid
+4. Assess standalone Tsonopoulos and molecular
+   group-contribution APIs; Watson reference-state scaling is now exposed with the limited qualification above. Require a genuine use case, verified parameters, finite/invalid
    input behavior, dimensional tests and independent values before implementation.
 5. Extend [#3792](https://github.com/equinor/neqsim/issues/3792)'s worked-example harness across
    the matrix. Keep [#469](https://github.com/equinor/neqsim/issues/469)'s SUPERTRAPP work separate.

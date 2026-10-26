@@ -1164,6 +1164,45 @@ public abstract class Component implements ComponentInterface {
     // Math.pow(1.0 - temperature / liquidDensityCoefs[2], liquidDensityCoefs[3]));
   }
 
+  /**
+   * Estimates pure-fluid saturation latent heat from a reference measurement using Watson (1943), equation 13.
+   *
+   * <p>
+   * Uses H(T)=Href*((Tc-T)/(Tc-Tref))^0.38. This is an opt-in estimate, not a mixture rule, pressure correction,
+   * database parameter fit or critical-region accuracy guarantee.
+   * </p>
+   *
+   * @param temperature target absolute temperature in K, 0 &lt; T &lt;= Tc
+   * @param referenceTemperature reference saturation temperature in K, 0 &lt; Tref &lt; Tc
+   * @param referenceEnthalpy positive measured reference saturation latent heat in J/mol
+   * @param criticalTemperature pure-fluid critical temperature in K
+   * @return estimated latent heat in J/mol, including zero at the model's critical limit
+   * @throws IllegalArgumentException if an input is nonfinite/outside the domain or a positive subcritical result
+   * cannot be represented
+   */
+  public static double calculateWatsonHeatOfVaporization(double temperature, double referenceTemperature,
+      double referenceEnthalpy, double criticalTemperature) {
+    if (!Double.isFinite(temperature) || !Double.isFinite(referenceTemperature) || !Double.isFinite(referenceEnthalpy)
+        || !Double.isFinite(criticalTemperature) || temperature <= 0.0 || referenceTemperature <= 0.0
+        || referenceEnthalpy <= 0.0 || criticalTemperature <= referenceTemperature
+        || temperature > criticalTemperature) {
+      throw new IllegalArgumentException("Watson requires finite 0<T<=Tc, 0<Tref<Tc and Href>0 in K and J/mol");
+    }
+    if (temperature == criticalTemperature) {
+      return 0.0;
+    }
+    if (temperature == referenceTemperature) {
+      return referenceEnthalpy;
+    }
+    // Differences avoid cancellation from separately forming 1-T/Tc close to the critical temperature.
+    double ratio = (criticalTemperature - temperature) / (criticalTemperature - referenceTemperature);
+    double value = referenceEnthalpy * Math.pow(ratio, 0.38);
+    if (!Double.isFinite(value) || value <= 0.0) {
+      throw new IllegalArgumentException("Watson subcritical latent heat is outside the representable positive range");
+    }
+    return value;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double getPureComponentHeatOfVaporization(double temperature) {

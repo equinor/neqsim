@@ -1516,6 +1516,27 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getPureComponentHeatOfVaporization(double temperature);
 
   /**
+   * Estimates pure-component saturation latent heat from a supplied reference using Watson scaling.
+   *
+   * <p>
+   * Uses this component's critical temperature and a fixed exponent of 0.38. Does not use or change database
+   * latent-heat coefficients or EOS phase enthalpies. The caller supplies a trustworthy pure-fluid saturation
+   * reference; no phase or mixture validity is inferred from a component's presence in a fluid.
+   * </p>
+   *
+   * @param temperature target absolute temperature in K, 0 &lt; T &lt;= Tc
+   * @param referenceTemperature reference saturation temperature in K, 0 &lt; Tref &lt; Tc
+   * @param referenceEnthalpy positive reference latent heat in J/mol
+   * @return estimated latent heat in J/mol; zero at the model's critical limit
+   * @throws IllegalArgumentException if the scalar domain or representable-result contract is violated
+   * @see Component#calculateWatsonHeatOfVaporization(double, double, double, double)
+   */
+  public default double getHeatOfVaporizationWatson(double temperature, double referenceTemperature,
+      double referenceEnthalpy) {
+    return Component.calculateWatsonHeatOfVaporization(temperature, referenceTemperature, referenceEnthalpy, getTC());
+  }
+
+  /**
    * getPaulingAnionicDiameter.
    *
    * @return a double
