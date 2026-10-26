@@ -14,6 +14,11 @@ report. The toolkit reuses `FieldNetworkTopology` over `LoopedPipeNetwork`, `Fie
 
 The result is a **screening-level** deliverable. The software never assigns the REVIEWED label and never approves a design.
 
+For generic single-phase Darcy edges, the canonical network uses the steady passive-edge balance
+$h_{out} + g z_{out} = h_{in} + g z_{in}$ before applying the configured lumped heat transfer. This keeps elevation work
+direction-aware for risers and descending injection lines. The workflow checks the resulting arrival temperature
+against an independent plug-flow calculation; Beggs-Brill and two-fluid edges retain their dedicated energy models.
+
 ## Commands
 
 <!-- parse -->
