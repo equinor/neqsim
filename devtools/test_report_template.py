@@ -190,6 +190,28 @@ def test_lifecycle_envelope_is_rendered_with_unit_safe_headroom(tmp_path):
     assert "40 kg/hr" in final_html and "-20 kW" in final_html
 
 
+def test_lifecycle_report_accepts_unnormalized_rejecting_evidence(tmp_path):
+    task = _make_task(tmp_path)
+    results_path = task / "results.json"
+    results = json.loads(results_path.read_text(encoding="utf-8"))
+    evidence = _lifecycle_report_evidence()
+    late_summary = evidence["periods"][1]["envelope_evidence"][
+        "cross_slice_constraint_summary"]
+    late_summary["summary_version"] = 2
+    late_summary["ranked_constraints"][0][
+        "representative_rejecting_constraint"]["normalized_margin"] = None
+    results["lifecycle_envelope_evidence"] = evidence
+    results_path.write_text(json.dumps(results), encoding="utf-8")
+
+    _run(task, "--no-template", "--title", "Unnormalized rejection")
+
+    html = (task / "step3_report" / "Unnormalized_rejection.html").read_text(
+        encoding="utf-8")
+    assert "Lifecycle evidence withheld" not in html
+    assert "plant:shared-power" in html
+    assert "-20 kW" in html
+
+
 def test_lifecycle_envelope_withholds_tampered_identity_migration(tmp_path):
     task = _make_task(tmp_path)
     results_path = task / "results.json"

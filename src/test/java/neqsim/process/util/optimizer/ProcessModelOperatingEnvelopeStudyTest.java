@@ -209,7 +209,8 @@ class ProcessModelOperatingEnvelopeStudyTest {
   void oneDimensionalSliceTracksBottleneckMigrationAndRestoresBaseline() throws Exception {
     Fixture fixture = createFixture();
     ProcessModelOperatingEnvelopeStudy study = new ProcessModelOperatingEnvelopeStudy("well-a-slice",
-        "Well A operating envelope", "synthetic field-to-facility acceptance", createEvaluator(fixture));
+        "Well A operating envelope", "synthetic field-to-facility acceptance", createEvaluator(fixture))
+        .setNearActiveConstraintNormalizedMargin(0.20, "synthetic secondary-bottleneck screen");
 
     SliceResult result = study.evaluateOneDimensional("producer-a-rate", new double[] {300.0, 500.0, 700.0, 900.0},
         new double[] {600.0, 300.0});
@@ -228,7 +229,18 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals("CONFIGURED_OPERATING", result.getPoints().get(2).getLeadingConstraint().getApplicableLimitRole());
     assertEquals("synthetic facility choke rule",
         result.getPoints().get(2).getLeadingConstraint().getApplicableLimitProvenance());
+    assertTrue(result.getPoints().get(2).getConstraintEvidence().size() >= 2);
+    assertTrue(result.getPoints().get(2).getConstraintEvidence().stream()
+        .anyMatch(row -> "gathering::gathering sink/shared gathering rate".equals(row.getQualifiedConstraintName())));
     assertEquals(1, result.getBottleneckTransitions().size());
+
+    CrossSliceConstraintSummary summary = study.summarizeConstraints(result);
+    ConstraintSummaryEntry secondary = summary.getRankedConstraints().stream()
+        .filter(row -> "gathering::gathering sink/shared gathering rate".equals(row.getQualifiedConstraintName()))
+        .findFirst().orElseThrow(() -> new AssertionError("secondary near-active constraint missing"));
+    assertEquals(ConstraintSummaryEntry.Classification.NEAR_ACTIVE, secondary.getClassification());
+    assertEquals(3, secondary.getSampledPointCount());
+    assertEquals(1.0 - 1000.0 / 1200.0, secondary.getMinimumNormalizedMargin(), 1.0e-12);
 
     Transition transition = result.getBottleneckTransitions().get(0);
     assertEquals("producer-a-rate", transition.getAxisActionId());
@@ -312,7 +324,13 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertTrue(Double.isFinite(refinement.getFeasibleBoundaryConstraint().getPhysicalMargin()));
     assertTrue(refinement.getInfeasibleBoundaryConstraint() != null);
     assertFalse(refinement.getInfeasibleBoundaryConstraint().isFeasible());
+    assertEquals(LeadingConstraintEvidence.Source.REQUIRED_HYDRAULIC,
+        refinement.getInfeasibleBoundaryConstraint().getSource());
     assertTrue(Double.isFinite(refinement.getInfeasibleBoundaryConstraint().getPhysicalMargin()));
+    assertFalse(refinement.getFeasibleBoundaryConstraintEvidence().isEmpty());
+    assertFalse(refinement.getInfeasibleBoundaryConstraintEvidence().isEmpty());
+    assertTrue(refinement.getInfeasibleBoundaryConstraintEvidence().stream()
+        .noneMatch(row -> row.getSource() == LeadingConstraintEvidence.Source.REGISTERED_MODEL_CONSTRAINT));
     assertTrue(refinement.getSteps().size() > 0);
     assertEquals(2 + refinement.getSteps().size(), result.getEvaluationCount());
     for (OperatingRegionBoundaryRefinement.Step step : refinement.getSteps()) {
@@ -331,6 +349,10 @@ class ProcessModelOperatingEnvelopeStudyTest {
         evidence.get("feasible_boundary_constraint"));
     assertEquals(refinement.getInfeasibleBoundaryConstraint().toEvidenceMap(),
         evidence.get("infeasible_boundary_constraint"));
+    assertEquals(refinement.getFeasibleBoundaryConstraintEvidence().size(),
+        ((List<?>) evidence.get("feasible_boundary_constraint_evidence")).size());
+    assertEquals(refinement.getInfeasibleBoundaryConstraintEvidence().size(),
+        ((List<?>) evidence.get("infeasible_boundary_constraint_evidence")).size());
     CrossSliceConstraintSummary summary = study.summarizeConstraints(result);
     assertEquals(0.10, summary.getMaximumNormalizedMargin(), 0.0);
     assertTrue(summary.getObservedConstraintCount() >= 1);
@@ -476,7 +498,7 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals(bottleneck.getQualifiedConstraintName(),
         ((Map<?, ?>) envelopeEvidence.get("accepted_point_bottleneck")).get("qualified_constraint_name"));
     Map<?, ?> summary = (Map<?, ?>) envelopeEvidence.get("cross_slice_constraint_summary");
-    assertEquals(Integer.valueOf(1), summary.get("summary_version"));
+    assertEquals(Integer.valueOf(2), summary.get("summary_version"));
     assertEquals(Double.valueOf(0.10), summary.get("maximum_normalized_margin"));
     assertEquals(Boolean.TRUE, summary.get("advisory"));
     assertThrows(UnsupportedOperationException.class, () -> envelopeEvidence.put("study_id", "changed"));

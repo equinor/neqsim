@@ -462,9 +462,15 @@ public class FieldToFacilityOptimizationAcceptanceTest {
         ((Map<?, ?>) envelopeEvidence.get("accepted_point_bottleneck")).get("qualified_constraint_name"));
     assertEquals(Integer.valueOf(2), envelopeEvidence.get("schema_version"));
     Map<?, ?> constraintSummary = (Map<?, ?>) envelopeEvidence.get("cross_slice_constraint_summary");
-    assertEquals(Integer.valueOf(1), constraintSummary.get("summary_version"));
-    assertTrue(((Integer) constraintSummary.get("observed_constraint_count")).intValue() > 0);
-    assertTrue(((Integer) constraintSummary.get("ranked_constraint_count")).intValue() > 0);
+    assertEquals(Integer.valueOf(2), constraintSummary.get("summary_version"));
+    int observedConstraintCount = ((Integer) constraintSummary.get("observed_constraint_count")).intValue();
+    int rankedConstraintCount = ((Integer) constraintSummary.get("ranked_constraint_count")).intValue();
+    assertTrue(observedConstraintCount > rankedConstraintCount);
+    assertTrue(rankedConstraintCount > 0);
+    List<?> acceptedSlicePoints = (List<?>) ((Map<?, ?>) ((List<?>) envelopeEvidence.get("slices")).get(0))
+        .get("points");
+    assertTrue(acceptedSlicePoints.stream().map(Map.class::cast)
+        .allMatch(point -> !((List<?>) point.get("constraint_evidence")).isEmpty()));
 
     assertEquals(100.0, fixture.exportValve.getOutletStream().getPressure("bara"), 1.0e-6);
     assertBaselineRestored(fixture);
@@ -531,10 +537,17 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     JsonObject rejectingSummary = jsonPeriods.get(0).getAsJsonObject().getAsJsonObject("envelope_evidence")
         .getAsJsonObject("cross_slice_constraint_summary").getAsJsonArray("ranked_constraints").get(0)
         .getAsJsonObject();
+    assertTrue(jsonPeriods.asList().stream().map(JsonElement::getAsJsonObject)
+        .flatMap(period -> period.getAsJsonObject("envelope_evidence").getAsJsonObject("cross_slice_constraint_summary")
+            .getAsJsonArray("ranked_constraints").asList().stream())
+        .map(JsonElement::getAsJsonObject)
+        .noneMatch(row -> "REGISTERED_MODEL_CONSTRAINT".equals(row.get("source").getAsString())));
+    assertEquals("REJECTING", rejectingSummary.get("classification").getAsString());
+    assertTrue(rejectingSummary.get("rejecting_evidence_count").getAsInt() > 0);
     assertTrue(rejectingSummary.has("minimum_normalized_margin"));
-    assertTrue(rejectingSummary.get("minimum_normalized_margin").isJsonNull());
+    assertTrue(Double.isFinite(rejectingSummary.get("minimum_normalized_margin").getAsDouble()));
     assertTrue(rejectingSummary.has("representative_feasible_constraint"));
-    assertTrue(rejectingSummary.get("representative_feasible_constraint").isJsonNull());
+    assertTrue(rejectingSummary.get("representative_feasible_constraint").isJsonObject());
     assertThrows(IllegalStateException.class, () -> lifecycle.toEvidenceJson("missing-cycle"));
     assertEquals(Integer.valueOf(2), lifecycleEvidence.get("period_count"));
     assertEquals(Integer.valueOf(12), lifecycleEvidence.get("requested_point_count"));

@@ -1832,6 +1832,65 @@ def test_guard_reconstructs_schema2_constraint_summary_fail_closed(tmp_path):
     assert "envelope_constraint_summary_mismatch" in reasons
 
 
+def test_guard_reconstructs_schema2_full_constraint_ladder_fail_closed(tmp_path):
+    proposal = _valid_proposal()
+    envelope = proposal["accepted_point_envelope_evidence"]
+    leading = {
+        "source": "PLANT_CONSTRAINT",
+        "qualified_constraint_name": "host::shared power",
+        "normalized_utilization": 0.98,
+        "normalized_margin": 0.02,
+        "current_value": 980.0,
+        "applicable_limit": 1000.0,
+        "physical_margin": 20.0,
+        "physical_unit": "kW",
+        "feasible": True,
+        "diagnostic": "AVAILABLE",
+        "applicable_limit_role": "SHARED_RESOURCE",
+        "applicable_limit_provenance": "approved host power budget",
+    }
+    secondary = {
+        "source": "PLANT_CONSTRAINT",
+        "qualified_constraint_name": "host::separator gas capacity",
+        "normalized_utilization": 0.92,
+        "normalized_margin": 0.08,
+        "current_value": 920.0,
+        "applicable_limit": 1000.0,
+        "physical_margin": 80.0,
+        "physical_unit": "kg/hr",
+        "feasible": True,
+        "diagnostic": "AVAILABLE",
+        "applicable_limit_role": "OPERATING_LIMIT",
+        "applicable_limit_provenance": "approved separator operating limit",
+    }
+    point = envelope["slices"][0]["points"][0]
+    point["leading_constraint"] = leading
+    point["constraint_evidence"] = [leading, secondary]
+    _add_empty_constraint_summary_evidence(envelope)
+    envelope["cross_slice_constraint_summary"]["summary_version"] = 2
+    envelope["cross_slice_constraint_summary"] = production._cross_slice_constraint_summary(
+        envelope["slices"], envelope["cross_slice_constraint_summary"])
+
+    ctx = _guard_context(tmp_path, proposal)
+    production.guard(ctx, {})
+    assert [row["title"] for row in ctx.proposals] == ["candidate"]
+    entries = ctx.proposals[0]["accepted_point_envelope_evidence"][
+        "cross_slice_constraint_summary"]["ranked_constraints"]
+    assert [entry["qualified_constraint_name"] for entry in entries] == [
+        "host::shared power", "host::separator gas capacity"]
+    assert entries[1]["classification"] == "NEAR_ACTIVE"
+
+    tampered = copy.deepcopy(proposal)
+    tampered["title"] = "missing secondary evidence"
+    tampered["accepted_point_envelope_evidence"]["slices"][0]["points"][0][
+        "constraint_evidence"] = [leading]
+    tampered_ctx = _guard_context(tmp_path, tampered)
+    production.guard(tampered_ctx, {})
+    assert tampered_ctx.proposals == []
+    reasons = json.loads((tmp_path / "guard.json").read_text())["withheld"][0]["reasons"]
+    assert "envelope_constraint_summary_mismatch" in reasons
+
+
 def test_boundary_refinement_receipt_recomputes_midpoints_fail_closed():
     sampled_feasible_constraint = {
         "qualified_constraint_name": "separator-capacity",

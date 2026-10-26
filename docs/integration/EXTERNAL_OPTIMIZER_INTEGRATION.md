@@ -1091,11 +1091,15 @@ multi-slice block. It includes the optimizer guard evidence, accepted-point bott
 sampled points, exact rejection identities, bottleneck transitions, sampled operating-region
 transitions, diagnostics, and measured
 search/envelope evaluation counts and runtimes. Schema v2 adds a deterministic
-`cross_slice_constraint_summary`: rejecting evidence precedes feasible near-active evidence, and the
-latter uses only a configured finite normalized-margin threshold with explicit provenance. Exact
+`cross_slice_constraint_summary`. Summary version 2 ranks the complete exact constraint
+ladder retained at every sampled point and final refined endpoint, rather than only the leading row;
+this preserves secondary near-active plant constraints without another model evaluation. Rejecting
+evidence precedes feasible near-active evidence, and the latter uses only a configured finite
+normalized-margin threshold with explicit provenance. Exact
 source/name/applicable-limit/unit/role/provenance identity prevents rows with incompatible engineering
 bases from collapsing. Raw physical margins remain in representative rows and are not compared across
-units. The call is read-only and requires the exact runtime
+units. Persisted summary version 1 remains valid for historical leading-only envelopes. The call is
+read-only and requires the exact runtime
 study plus complete, uniquely addressed slices anchored at the accepted candidate. It rejects
 foreign, deserialized, duplicate-axis, incomplete-recovery, stale, or definition-drifted evidence
 rather than combining it into a current cycle.

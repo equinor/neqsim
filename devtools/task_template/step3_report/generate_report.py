@@ -2378,8 +2378,12 @@ def _validate_representative_constraint(entry, representative, feasible):
             "source", "qualified_constraint_name", "applicable_limit", "physical_unit",
             "applicable_limit_role", "applicable_limit_provenance")):
         return False
-    return all(_report_number(representative.get(field)) for field in (
-        "current_value", "physical_margin", "normalized_margin"))
+    if not all(_report_number(representative.get(field)) for field in (
+            "current_value", "physical_margin")):
+        return False
+    normalized_margin = representative.get("normalized_margin")
+    return (_report_number(normalized_margin) if feasible
+            else normalized_margin is None or _report_number(normalized_margin))
 
 
 def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
@@ -2491,7 +2495,7 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
             reasons.append(prefix + " contains incomplete operating-envelope slices")
         summary = envelope.get("cross_slice_constraint_summary")
         ranked = summary.get("ranked_constraints") if isinstance(summary, dict) else None
-        if (not isinstance(summary, dict) or summary.get("summary_version") != 1
+        if (not isinstance(summary, dict) or summary.get("summary_version") not in (1, 2)
                 or summary.get("advisory") is not True or not isinstance(ranked, list)
                 or summary.get("ranked_constraint_count") != len(ranked)):
             reasons.append(prefix + " has an invalid cross-slice constraint summary")
