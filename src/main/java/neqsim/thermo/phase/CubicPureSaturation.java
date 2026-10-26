@@ -102,6 +102,10 @@ public final class CubicPureSaturation {
     double initial = requiredAttraction(low, e, f) - strength;
     for (int i = 0; i < 100; i++) {
       double mid = (low + high) / 2.0;
+      // Adjacent representable endpoints cannot shrink further; the remaining sweeps are identical.
+      if (mid == low || mid == high) {
+        return mid;
+      }
       if ((requiredAttraction(mid, e, f) - strength) * initial > 0.0) {
         low = mid;
       } else {
@@ -138,6 +142,10 @@ public final class CubicPureSaturation {
   private static double density(double low, double high, double target, double strength, double e, double f) {
     for (int i = 0; i < 100; i++) {
       double mid = (low + high) / 2.0;
+      // Adjacent representable endpoints cannot shrink further; the remaining sweeps are identical.
+      if (mid == low || mid == high) {
+        return mid;
+      }
       if (pressureAt(mid, strength, e, f) < target) {
         low = mid;
       } else {

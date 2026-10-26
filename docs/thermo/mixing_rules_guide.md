@@ -831,7 +831,13 @@ mechanical spinodals and brackets equal liquid/vapor fugacity strictly between
 them. The bubble-pressure calculation uses that pressure to initialize distinct
 physical roots. It does not accept identical roots merely because their fugacity
 coefficients agree. The helper does not mutate its supplied phase, introduce
-fitted parameters, or run on mixture TP-flash paths.
+fitted parameters, or run on mixture TP-flash paths. The inner density and spinodal
+bisections stop when rounding makes the midpoint equal an endpoint: further
+steps cannot change the returned value. The existing 100-step cap and outer
+pressure tolerance are unchanged. Matched baseline/candidate measurements and
+bitwise pressure comparisons are retained in
+`src/test/resources/neqsim/thermo/phase/cubic-saturation-performance/`.
+
 
 `CubicPureSaturationTest` checks hydrogen at 20.369 K, CO2 at 302 K, methane at
 150 K and water at 373.15 K for both EOS, with three starting pressures each.
