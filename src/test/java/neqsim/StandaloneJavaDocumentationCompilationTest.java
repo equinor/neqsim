@@ -61,6 +61,19 @@ public class StandaloneJavaDocumentationCompilationTest {
     }
   }
 
+  /** Verifies that the well-to-stabilization example uses current temperature and pressure-difference APIs. */
+  @Test
+  void testWellToOilStabilizationExampleUsesCurrentApis() throws IOException {
+    Path examplesDirectory = Paths.get(System.getProperty("user.dir"), "docs", "examples").toAbsolutePath();
+    Path sourceFile = examplesDirectory.resolve("WellToOilStabilizationExample.java");
+    String source = new String(Files.readAllBytes(sourceFile), StandardCharsets.UTF_8);
+
+    assertFalse(source.contains("setOutTemperature("), "The example must not advertise the deprecated heater alias");
+    assertTrue(source.contains("setOutletTemperature("), "The example must use the maintained heater API");
+    assertTrue(source.contains("getDrawdown(\"bar\")"), "Drawdown must use a pressure-difference unit");
+    assertFalse(source.contains("getDrawdown(\"bara\")"), "Drawdown must not be labelled as absolute pressure");
+  }
+
   /** Verifies that the chemical-reactions package guide uses the maintained public workflow. */
   @Test
   void testChemicalReactionGuideUsesCurrentExecutableContract() throws IOException {
