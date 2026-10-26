@@ -583,7 +583,7 @@ A `Compressor` can hold several performance maps at once via a
 `CompressorChartLibrary` and switch the active chart by name — the professional
 way to keep vendor-expected, as-tested and field-fitted curves for the same
 machine side by side (revamp studies, digital twins, design-vs-tested checks).
-See the [Compressor Chart Library](../../docs/process/equipment/compressor_curves.md#compressor-chart-library-multiple-named-charts) doc.
+See the [Compressor Chart Library](../../../docs/process/equipment/compressor_curves.md#compressor-chart-library-multiple-named-charts) doc.
 
 ```java
 comp.addChart("BCL405B-design", expectedChart);
@@ -606,7 +606,7 @@ comp.setChartLibrary(CompressorChartLibrary.loadFromFile("BCL405B_charts.json"))
 Model deposit (fouling) mass from process thermodynamics, its effect on
 performance, where it lands per impeller, the degraded chart after N hours, and
 online washing. Package `neqsim.process.equipment.compressor`. See the
-[Compressor Deposit and Performance Degradation](../../docs/process/compressor_deposit_degradation.md)
+[Compressor Deposit and Performance Degradation](../../../docs/process/compressor_deposit_degradation.md)
 doc.
 
 ```java
