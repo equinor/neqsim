@@ -1,6 +1,6 @@
 ---
 name: network-energy-systems
-description: "Builds Python/Java NeqSim models from natural language: reservoir, production/injection wells, SURF templates/manifolds/PLEMs, multiphase flowlines/risers, facilities, utilities and downstream processing. Couples deliverability/backpressure and capacities. Handles host tie-in capacity, well-test matching, gas-lift allocation, looped networks, crude oil terminal tank inventory and cargo scheduling, energy buses and electrification. Uses core/community specialists and enterprise overlays."
+description: "Builds Python/Java NeqSim models from natural language: reservoir, wells, SURF templates/manifolds/PLEMs, multiphase flowlines/risers, facilities, utilities and downstream processing. Couples deliverability/backpressure and capacities. Handles looped gas/oil gathering networks with choke and well-setpoint optimisation and CO2/quality limits at the delivery point, linepack, host tie-in capacity, well-test matching, gas-lift allocation, crude terminal tanks and cargo scheduling, energy buses and electrification."
 required_skills:
 - neqsim-production-system-modeling
 - neqsim-pipeline-and-terminal-networks
