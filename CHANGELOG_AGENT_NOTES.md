@@ -9,6 +9,35 @@
 
 ---
 
+## 2026-10-26 — Cross-version `.neqsim` loading: legacy mode, load report, atomic save, OmegaA guard
+
+- **Problem found:** a `.neqsim` file written by NeqSim before 3.10 could not be opened (renamed `tagName`, removed
+  separator geometry fields, classes that gained a private `readObject` such as `SystemThermo`, `Separator` and
+  `EnergyStream`). Forcing it open revealed two silent faults: XStream skips constructors, so new fields kept JVM
+  defaults. `ComponentEos.omegaAOverride` (initializer `NaN`) became 0.0, `calca()` returned 0 and every EOS attraction
+  term vanished after `init(0)` (lean gas dew point 25.1 C instead of 34.8 C, no condensate). `energyPorts` was null
+  (NPE in `run()`), and separator run caches deserialized from the file made the first `run()` return stored outlets.
+- **`NeqSimXtream`:** writes a `neqsim-meta.properties` entry (format, NeqSim and Java versions) before `process.xml`
+  and saves through a temporary file plus atomic move (a failed save returns false, keeps the previous file and leaves no
+  partial file). Reading skips unknown fields and classes, maps renamed fields (`tagName` to `tagNumber`) and reads the
+  plain field layout of classes that now have `readObject`. Files without the metadata entry load in **legacy mode**:
+  every field absent from the XML is restored from a freshly constructed template of the same class (reusable values
+  only; owner-bound collections become empty), `LegacyLoadRepairable.repairAfterLegacyLoad` rebuilds owner-bound state
+  (`ProcessEquipmentBaseClass` re-registers energy ports), and private `readObject` hooks run with a no-op stream.
+  `NeqSimXtream.getLastLoadReport()` lists what was skipped, mapped and restored, and a warning is logged when anything
+  was.
+- **`ComponentEos`:** only a finite positive OmegaA is an override. `setOmegaA` ignores zero, negative and infinite
+  values with a warning, and `getOmegaAOverride()` returns `NaN` when no override is active.
+- **`Separator` / `ThreePhaseSeparator`:** `lastEnthalpy`, `lastFlowRate`, `lastPressure` and `lastPressureDrop` are
+  transient, so loaded or cloned separators always recalculate on the first run.
+- **Agents:** to run an old `.neqsim` file, call `NeqSimXtream.openNeqsim`/`ProcessSystem.loadFromNeqsim` and check
+  `getLastLoadReport()`; removed fields (for example separator geometry, now in `SeparatorMechanicalDesign`) must be
+  re-entered. For UMR-PRU fluids use `setMixingRule("HV", "UNIFAC_UMRPRU")`: the enum-only `setMixingRule(HV)` selects
+  NRTL-modified HV.
+- **Tests:** `NeqSimXtreamLegacyCompatibilityTest` (fixture written by NeqSim 3.2.1).
+
+---
+
 ## 2026-10-24 — Stratified wave roughness: depth-squared form replaces the capped Andritsos-Hanratty enhancement
 
 - **`InterfacialFriction.stratifiedWaveEnhancement`** (new; used by the `TwoFluidPipe` steady stratified holdup root):

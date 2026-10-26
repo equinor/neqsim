@@ -50,7 +50,12 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
   public double b = 1;
 
-  /** Per-component OmegaA override. NaN means use the EOS default. */
+  /**
+   * Per-component OmegaA override. NaN means use the EOS default. Only a finite, positive value is treated as an
+   * override: an instance created without running its constructor (for example by XStream when loading a
+   * {@code .neqsim} file written before this field existed) holds 0.0 here, and a zero OmegaA would silently remove the
+   * EOS attraction term.
+   */
   protected double omegaAOverride = Double.NaN;
 
   public double m = 0;
@@ -617,11 +622,18 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   /**
    * Override the OmegaA parameter used in {@link #calca()}. Once set, every call to {@code calca()} (including those
    * triggered by {@code init()}) will use this value instead of the EOS class default. Use {@code Double.NaN} to revert
-   * to the EOS default.
+   * to the EOS default. Values that are not finite and positive are ignored with a warning, because OmegaA must be
+   * positive for a physical attraction term.
    *
    * @param omegaA the OmegaA value, e.g. 0.45724 for PR or 0.42748 for SRK.
    */
   public void setOmegaA(double omegaA) {
+    if (!Double.isNaN(omegaA) && !isValidOmegaA(omegaA)) {
+      logger.warn("Ignoring OmegaA override {} for component {}: OmegaA must be finite and positive", omegaA,
+          getComponentName());
+      this.omegaAOverride = Double.NaN;
+      return;
+    }
     this.omegaAOverride = omegaA;
   }
 
@@ -631,7 +643,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * @return true if an OmegaA override is active
    */
   public boolean hasOmegaAOverride() {
-    return !Double.isNaN(omegaAOverride);
+    return isValidOmegaA(omegaAOverride);
   }
 
   /**
@@ -640,7 +652,17 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * @return active OmegaA override, or NaN
    */
   public double getOmegaAOverride() {
-    return omegaAOverride;
+    return hasOmegaAOverride() ? omegaAOverride : Double.NaN;
+  }
+
+  /**
+   * Checks whether a value can be used as an OmegaA override.
+   *
+   * @param omegaA candidate OmegaA value
+   * @return true if the value is finite and positive
+   */
+  private static boolean isValidOmegaA(double omegaA) {
+    return omegaA > 0.0 && !Double.isInfinite(omegaA);
   }
 
   /** {@inheritDoc} */

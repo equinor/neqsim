@@ -58,7 +58,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author ESOL
  * @version $Id: $Id
  */
-public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass implements ProcessEquipmentInterface {
+public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
+    implements ProcessEquipmentInterface, neqsim.util.serialization.LegacyLoadRepairable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -353,6 +354,25 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   @Override
   public Map<String, EnergyPort> getEnergyPorts() {
     return Collections.unmodifiableMap(energyPorts);
+  }
+
+  /**
+   * Re-registers the energy ports that the constructor of this class creates, after a legacy .neqsim load left this
+   * equipment without them. Ports are registered on this equipment, so the first one is connected to its own energy
+   * stream exactly as the constructor would have done.
+   *
+   * @param template a freshly constructed instance of the same class
+   */
+  @Override
+  public void repairAfterLegacyLoad(Object template) {
+    if (!(template instanceof ProcessEquipmentBaseClass) || energyPorts == null) {
+      return;
+    }
+    for (EnergyPort port : ((ProcessEquipmentBaseClass) template).energyPorts.values()) {
+      if (!energyPorts.containsKey(port.getName())) {
+        registerEnergyPort(port.getName(), port.getEnergyType(), port.getDirection(), port.getMode());
+      }
+    }
   }
 
   /**

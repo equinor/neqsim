@@ -70,10 +70,26 @@ def test_failed_save_and_trust_boundaries_are_explicit() -> None:
     source = read(XSTREAM_SOURCE)
 
     assert "partial or truncated destination can remain" in guide
+    assert "leaves no partial file" in guide
     assert "Load `.neqsim` and XML files only from trusted sources" in guide
     assert "AnyTypePermission.ANY" not in guide
-    assert "new FileOutputStream(filename)" in source
+    assert "new FileOutputStream(tempFile)" in source
+    assert "moveIntoPlace(tempFile, file);" in source
     assert "return false;" in source
+
+
+def test_cross_version_loading_is_documented_and_source_anchored() -> None:
+    """Legacy archives must load with restored field defaults and an inspectable load report."""
+
+    guide = read(GUIDE)
+    source = read(XSTREAM_SOURCE)
+
+    assert "neqsim-meta.properties" in guide
+    assert "NeqSimXtream.getLastLoadReport()" in guide
+    assert "tagName` to `tagNumber`" in guide
+    assert 'public static final String META_ENTRY = "neqsim-meta.properties";' in source
+    assert 'renamed.put("tagName", "tagNumber");' in source
+    assert "restoreMissingFields" in source
 
 
 def test_embedded_host_portability_guidance_is_source_anchored() -> None:
