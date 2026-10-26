@@ -30,6 +30,10 @@ Without the `neqsim` command: `<python> -m neqsim_cli flow-assurance-report ...`
 `--external-results DIR` (attach results from an external simulator), `--standards FILE`.
 Exit codes: 0 ok, 1 strict validation failure, 2 input or usage error (nothing is written).
 
+The shared `fa_solver.neqsim_handle()` adapter uses `neqsim_dev_setup` for source-checkout or installed-JAR
+execution and reuses an active JVM. Do not import a top-level `jneqsim` Python module; the adapter returns
+the Java `neqsim` package on the selected classpath, including when called from a SURF study.
+
 ## Inputs
 
 | File | Holds | Rules |

@@ -60,6 +60,12 @@ The existing global composition/thermal coupling must be enabled when different
 well fluids or thermally coupled junction states are important. No additional
 mixing algorithm is introduced by hydraulic model selection.
 
+Passive generic edges use an explicit specific-enthalpy flash and conserve
+$h + gz$ between their physical inlet and outlet before the existing lumped
+heat-transfer step. Reverse flow reverses both the route traversal and the
+elevation-work sign. The lumped model does not include kinetic-energy change;
+Beggs-Brill and two-fluid edges continue to own their dedicated energy equations.
+
 `getEffectiveHydraulicModelType(...)` and `getHydraulicModelStatus()` expose the
 selection and evaluation evidence. A failed, unconverged, pressure-floor-limited
 or wall-clock-limited two-fluid calculation throws and cannot silently substitute

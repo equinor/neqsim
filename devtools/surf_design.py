@@ -288,19 +288,10 @@ def hand_checks(spec, model, concept_id, case_id, prod, inj, umb):
         amb = e["thermal"]["ambient_c"]
         ua = r["u_value_w_m2k"] * math.pi * e["id_m"] * e["installed_length_m"]
         t_hand = amb + (t_in - amb) * math.exp(-ua / (q * cp))
-        # The generic Darcy edge flashes isenthalpically to the downstream pressure and carries no gravity work, so a dense liquid
-        # on a sloping line shifts by g*dz/cp. A deviation that equals this known term is reported as EXPLAINED, never as PASS.
-        t_artefact = t_hand + G * dz / cp
-        if abs(t_out - t_hand) <= 0.5:
-            t_status, t_note = "PASS", ""
-        elif abs(dz) > 1.0 and abs(t_out - t_artefact) <= 0.25:
-            t_status = "EXPLAINED"
-            t_note = "; deviation %.2f K equals the elevation work g*dz/cp = %.2f K omitted by the generic Darcy edge energy balance (isenthalpic flash)" % (t_out - t_hand, G * dz / cp)
-        else:
-            t_status, t_note = "FAIL", ""
+        t_status = "PASS" if abs(t_out - t_hand) <= 0.5 else "FAIL"
         checks.append({"id": "HC-THERMAL-%s" % eid, "description": "Plug-flow arrival temperature on %s with the stated U-value (cp %.0f J/kgK from the solved fluid)" % (eid, cp),
                        "model": t_out, "hand": t_hand, "unit": "degC", "tolerance": 0.5, "status": t_status,
-                       "independence": "analytical energy balance; checks the thermal-hydraulic solution, not the SRK heat capacity" + t_note})
+                       "independence": "analytical energy balance; checks the thermal-hydraulic solution, not the SRK heat capacity"})
     wells = sum(w["applied_rate_kg_s"] for w in prod["wells"])
     host = prod["host"]["mass_rate_kg_s"]
     checks.append({"id": "HC-MASS-PROD", "description": "Total well rate equals host inlet rate (production)", "model": host, "hand": wells, "unit": "kg/s",

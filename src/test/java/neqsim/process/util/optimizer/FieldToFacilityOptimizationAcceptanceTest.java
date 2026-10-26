@@ -167,19 +167,21 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     private final Fixture fixture;
     private final ProcessModelOperatingEnvelopeStudy study;
     private final OperatingPointSearchResult search;
+    private final UtilizationCoverageReport coverage;
     private final SliceResult[] slices;
 
     private LifecyclePeriod(Fixture fixture, ProcessModelOperatingEnvelopeStudy study,
-        OperatingPointSearchResult search, SliceResult[] slices) {
+        OperatingPointSearchResult search, UtilizationCoverageReport coverage, SliceResult[] slices) {
       this.fixture = fixture;
       this.study = study;
       this.search = search;
+      this.coverage = coverage;
       this.slices = Arrays.copyOf(slices, slices.length);
     }
   }
 
   /**
-   * Execute the source-backed ten-well lifecycle acceptance case and serialize its exact schema-v8 evidence.
+   * Execute the source-backed ten-well lifecycle acceptance case and serialize its exact schema-v9 evidence.
    *
    * <p>
    * This test-scope entry point lets the Python living-task acceptance workflow call the same Java fixture and physical
@@ -244,11 +246,11 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     return new ProcessModelOperatingEnvelopeLifecycleStudy("ten-well-lifecycle", "Ten-well field lifecycle envelope",
         "synthetic independent reservoir/facility operating definitions", "year")
         .addPeriod("early-life", "Early life", 0.0,
-            "tight separator and scrubber operating limits; qualified compressor maps retained", early.study,
-            early.search, early.slices)
+            "tight separator and scrubber operating limits; qualified compressor maps retained", early.coverage,
+            early.study, early.search, early.slices)
         .addPeriod(currentCycleId, "Current life", 5.0,
-            "expanded separation capacity and tighter shared plant power budget", current.study, current.search,
-            current.slices)
+            "expanded separation capacity and tighter shared plant power budget", current.coverage, current.study,
+            current.search, current.slices)
         .toEvidenceJson(currentCycleId);
   }
 
@@ -497,19 +499,24 @@ public class FieldToFacilityOptimizationAcceptanceTest {
         "ten-well-lifecycle", "Ten-well field lifecycle envelope",
         "synthetic independent reservoir/facility operating definitions", "year")
         .addPeriod("early-life", "Early life", 0.0,
-            "tight separator and scrubber operating limits; qualified compressor maps retained", early.study,
-            early.search, early.slices)
+            "tight separator and scrubber operating limits; qualified compressor maps retained", early.coverage,
+            early.study, early.search, early.slices)
         .addPeriod("late-life", "Late life", 5.0, "expanded separation capacity and tighter shared plant power budget",
-            late.study, late.search, late.slices);
+            late.coverage, late.study, late.search, late.slices);
     Map<String, Object> lifecycleEvidence = lifecycle.toEvidenceMap("synthetic-lifecycle-cycle");
     JsonObject lifecycleJson = JsonParser.parseString(lifecycle.toEvidenceJson("late-life")).getAsJsonObject();
 
-    assertEquals(Integer.valueOf(8), lifecycleEvidence.get("schema_version"));
-    assertEquals(8, lifecycleJson.get("schema_version").getAsInt());
+    assertEquals(Integer.valueOf(9), lifecycleEvidence.get("schema_version"));
+    assertEquals(9, lifecycleJson.get("schema_version").getAsInt());
     assertEquals("late-life", lifecycleJson.get("cycle_id").getAsString());
     JsonArray jsonPeriods = lifecycleJson.getAsJsonArray("periods");
     assertEquals(2, jsonPeriods.size());
     assertEquals("late-life", jsonPeriods.get(1).getAsJsonObject().get("period_id").getAsString());
+    JsonObject coverage = jsonPeriods.get(1).getAsJsonObject().getAsJsonObject("utilization_coverage");
+    assertTrue(coverage.get("complete").getAsBoolean());
+    assertEquals(34, coverage.getAsJsonArray("expected_constraint_ids").size());
+    assertEquals(34, coverage.getAsJsonArray("rows").size());
+    assertTrue(coverage.getAsJsonArray("diagnostics").isEmpty());
     assertEquals("late-life", jsonPeriods.get(1).getAsJsonObject().getAsJsonObject("envelope_evidence")
         .getAsJsonObject("optimizer_evidence").get("cycle_id").getAsString());
     JsonObject rejectingSummary = jsonPeriods.get(0).getAsJsonObject().getAsJsonObject("envelope_evidence")
@@ -757,7 +764,25 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     assertTrue(choke.isComplete(), choke.getDiagnostics().toString());
     assertTrue(route.isComplete(), route.getDiagnostics().toString());
     assertTrue(hostPower.isComplete(), hostPower.getDiagnostics().toString());
-    return new LifecyclePeriod(fixture, study, search, new SliceResult[] {choke, route, hostPower});
+    UtilizationCoverageReport coverage = acceptedCoverage(fixture, search);
+    assertTrue(coverage.isComplete(), coverage.getDiagnostics().toString());
+    return new LifecyclePeriod(fixture, study, search, coverage, new SliceResult[] {choke, route, hostPower});
+  }
+
+  /** Build declared capacity coverage from the accepted replay without resampling the restored fixture. */
+  private UtilizationCoverageReport acceptedCoverage(Fixture fixture, OperatingPointSearchResult search) {
+    UtilizationCoverageReport.Builder coverage = UtilizationCoverageReport.builder("ten-well-field");
+    for (String suffix : fixture.wellSuffixes) {
+      coverage.expectConstraint("Field", "field network", "producer " + suffix + " deliverability")
+          .expectConstraint("Field", "field network", suffix + " HP route capacity")
+          .expectConstraint("Field", "field network", suffix + " LP route capacity");
+    }
+    for (String equipmentName : Arrays.asList("HP separator", "LP separator", "HP suction scrubber",
+        "LP suction scrubber")) {
+      coverage.expectConstraint("Field", equipmentName, "gas handling");
+    }
+    return coverage.evidence(search.getAcceptedPointReplay().getEvaluation().getInstalledEquipmentCapacityEvidence())
+        .build();
   }
 
   /**

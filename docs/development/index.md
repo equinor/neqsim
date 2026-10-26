@@ -7,6 +7,7 @@ description: "Guides for contributing to and extending NeqSim, including adding 
 
 - [Agent and MCP engineering capability coverage](ENGINEERING_CAPABILITY_COVERAGE.md)
 - [Discover functionality for agentic work](AGENT_CAPABILITY_DISCOVERY.md)
+- [Physical plant layout studies and CAD delivery](PLANT_LAYOUT_STUDY.md)
 - [JAMA to EJML migration and dependency retirement](jama-ejml-migration.md)
 - [NeqSim 3.26.0 release and migration notes](release-notes-3.26.0.md)
 

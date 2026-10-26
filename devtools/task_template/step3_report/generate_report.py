@@ -2383,12 +2383,12 @@ def _validate_representative_constraint(entry, representative, feasible):
 
 
 def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
-    """Validate the report-facing schema-v8 subset and independently replay identity deltas."""
+    """Validate the report-facing lifecycle subset and independently replay identity deltas."""
     reasons = []
     if not isinstance(evidence, dict):
         return ["evidence is not an object"]
-    if evidence.get("schema_version") != 8:
-        reasons.append("schema_version must be 8")
+    if evidence.get("schema_version") not in (8, 9):
+        reasons.append("schema_version must be 8 or 9")
     if evidence.get("advisory") is not True:
         reasons.append("advisory flag is missing")
     if not _report_text(evidence.get("cycle_id")):
@@ -2440,6 +2440,39 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
             previous_elapsed = elapsed
         if period.get("time_unit") != evidence.get("time_unit"):
             reasons.append(prefix + " time unit does not match the lifecycle")
+        if evidence.get("schema_version") == 9:
+            coverage = period.get("utilization_coverage")
+            if (not isinstance(coverage, dict) or coverage.get("schema_version") != "1.0"
+                    or coverage.get("coverage_scope") != "DECLARED_EQUIPMENT_AND_CONSTRAINTS"
+                    or coverage.get("complete") is not True or coverage.get("diagnostics") != []
+                    or not isinstance(coverage.get("rows"), list) or not coverage.get("rows")):
+                reasons.append(prefix + " has invalid utilization coverage")
+            else:
+                coverage_ids = []
+                for coverage_row in coverage["rows"]:
+                    statuses = coverage_row.get("statuses") if isinstance(coverage_row, dict) else None
+                    if (not isinstance(coverage_row, dict)
+                            or statuses not in (["AVAILABLE"], ["DISABLED"])
+                            or not _report_text(coverage_row.get("qualified_constraint_id"))
+                            or (statuses == ["AVAILABLE"]
+                                and (not _report_text(coverage_row.get("unit"))
+                                     or not _report_text(coverage_row.get("basis"))
+                                     or not _report_text(coverage_row.get("provenance"))
+                                     or not _report_number(coverage_row.get("current_value"))
+                                     or not _report_number(coverage_row.get("applicable_limit"))
+                                     or not _report_number(
+                                         coverage_row.get("normalized_utilization"))))):
+                        reasons.append(prefix + " has incomplete utilization coverage rows")
+                        break
+                    coverage_ids.append(coverage_row["qualified_constraint_id"])
+                expected_ids = coverage.get("expected_constraint_ids")
+                required_ids = coverage.get("required_constraint_ids")
+                if (not isinstance(expected_ids, list) or not expected_ids
+                        or not isinstance(required_ids, list)
+                        or len(coverage_ids) != len(set(coverage_ids))
+                        or set(expected_ids) - set(coverage_ids)
+                        or set(required_ids) != set(coverage_ids)):
+                    reasons.append(prefix + " has mismatched utilization coverage scope")
         envelope = period.get("envelope_evidence")
         if not isinstance(envelope, dict) or envelope.get("schema_version") != 2:
             reasons.append(prefix + " is missing schema-v2 envelope evidence")
@@ -2532,7 +2565,7 @@ def _identity_text(identity):
 
 
 def format_lifecycle_envelope_text(results, expected_cycle_id=None):
-    """Render guarded schema-v8 lifecycle evidence for current-best and final reports."""
+    """Render guarded lifecycle evidence for current-best and final reports."""
     evidence = (results or {}).get("lifecycle_envelope_evidence")
     if evidence is None:
         return ""
@@ -2576,6 +2609,24 @@ def format_lifecycle_envelope_text(results, expected_cycle_id=None):
                 _md_cell(row["applicable_limit_role"]),
                 _fmt_number(row["applicable_limit"]) if row["applicable_limit"] is not None else "n/a",
                 _md_cell(row["physical_unit"]), _md_cell(row["applicable_limit_provenance"])))
+
+    if evidence["schema_version"] == 9:
+        lines += ["", "**Declared installed-capacity coverage.** Every row is frozen at the accepted replay; "
+                  "missing, screening-only, non-finite, or unqualified limits are withheld upstream.", "",
+                  "| Period | Exact constraint | Current / limit | Utilization | Limit basis | Provenance |",
+                  "|---|---|---|---|---|---|"]
+        for period in evidence["periods"]:
+            for row in period["utilization_coverage"]["rows"]:
+                if row["statuses"] == ["DISABLED"]:
+                    lines.append("| {} | `{}` | disabled | - | {} | {} |".format(
+                        _md_cell(period["period_name"]), _md_cell(row["qualified_constraint_id"]),
+                        _md_cell(row["basis"]), _md_cell(row["provenance"])))
+                else:
+                    lines.append("| {} | `{}` | {} / {} {} | {} | {} | {} |".format(
+                        _md_cell(period["period_name"]), _md_cell(row["qualified_constraint_id"]),
+                        _fmt_number(row["current_value"]), _fmt_number(row["applicable_limit"]),
+                        _md_cell(row["unit"]), _fmt_number(row["normalized_utilization"]),
+                        _md_cell(row["basis"]), _md_cell(row["provenance"])))
 
     lines += ["", "**Exact adjacent-period identity migration.** Classification or limit-basis changes "
               "appear as one removed and one added identity; this is descriptive evidence, not causal attribution."]

@@ -1,0 +1,368 @@
+schema: pvt_study.v1
+study:
+  id: PVT-SYNTHETIC-OIL-001
+  title: Synthetic oil PVT fluid study
+  intended_use: Demonstrate reproducible characterization, real laboratory protocols
+    and E300 handover
+  synthetic: true
+  document_number: PVT-SYNTHETIC-OIL-001
+  revision: '0'
+  issue_status: SOFTWARE DEMONSTRATION - NOT FOR DESIGN
+samples:
+- id: OIL-001
+  type: synthetic reservoir-fluid definition
+  source: Synthetic software fixture; no field sample or laboratory certificate exists
+  synthetic: true
+  accepted: true
+  representativeness: This numerical composition only; no reservoir-wide claim
+  chain_of_custody: Not applicable to synthetic fixture
+analyses:
+- id: COMPOSITION-OIL-001
+  sample_id: OIL-001
+  basis: mole_fraction
+  source: Synthetic mixture specified in this version-controlled YAML, not a measured
+    analysis
+  closure_tolerance: 1.0e-06
+  components:
+  - name: methane
+    value: 0.5
+  - name: ethane
+    value: 0.08
+  - name: propane
+    value: 0.06
+  - name: n-butane
+    value: 0.04
+  - name: n-pentane
+    value: 0.03
+  - name: n-hexane
+    value: 0.02
+  - name: C7
+    kind: tbp
+    value: 0.05
+    molar_mass_kg_mol: 0.092
+    density_g_cm3: 0.727
+  - name: C8
+    kind: tbp
+    value: 0.04
+    molar_mass_kg_mol: 0.104
+    density_g_cm3: 0.749
+  - name: C9
+    kind: tbp
+    value: 0.03
+    molar_mass_kg_mol: 0.119
+    density_g_cm3: 0.768
+  - name: C10
+    kind: plus
+    value: 0.15
+    molar_mass_kg_mol: 0.2
+    density_g_cm3: 0.83
+fluid:
+  sample_id: OIL-001
+  analysis_id: COMPOSITION-OIL-001
+  eos: PR
+  mixing_rule: 2
+  viscosity_model: LBC
+  temperature:
+    value: 100.0
+    unit: C
+  pressure:
+    value: 300.0
+    unit: bara
+  characterization:
+    plus_fraction_model: Pedersen
+    lumps: 3
+    mass_relative_tolerance: 1.0e-06
+experiments:
+- id: OIL-CCE
+  sample_id: OIL-001
+  kind: CCE
+  role: calibration
+  temperature:
+    value: 100.0
+    unit: C
+  pressures:
+    values:
+    - 400.0
+    - 300.0
+    - 200.0
+    - 100.0
+    - 50.0
+    unit: bara
+  source_kind: synthetic_reference
+  reference_basis: Closed cell, fixed total composition, relative volume referenced
+    to saturation volume
+- id: OIL-DLE
+  sample_id: OIL-001
+  kind: DLE
+  role: validation
+  temperature:
+    value: 100.0
+    unit: C
+  pressures:
+    values:
+    - 300.0
+    - 200.0
+    - 100.0
+    - 50.0
+    - 10.0
+    unit: bara
+  source_kind: synthetic_reference
+  reference_basis: Sequential equilibrium gas removal with remaining oil carried to
+    the next stage
+- id: OIL-SEPARATOR
+  sample_id: OIL-001
+  kind: SEPARATOR
+  role: simulation
+  temperature:
+    value: 100.0
+    unit: C
+  pressures:
+    values:
+    - 300.0
+    unit: bara
+  stages:
+  - pressure:
+      value: 40.0
+      unit: bara
+    temperature:
+      value: 50.0
+      unit: C
+  - pressure:
+      value: 5.0
+      unit: bara
+    temperature:
+      value: 35.0
+      unit: C
+  - pressure:
+      value: 1.01325
+      unit: bara
+    temperature:
+      value: 15.0
+      unit: C
+  source_kind: synthetic_prediction
+  reference_basis: Three-stage separator train ending at explicitly stated stock-tank
+    conditions
+- id: OIL-CCE-HOLDOUT
+  sample_id: OIL-001
+  kind: CCE
+  role: validation
+  temperature:
+    value: 90.0
+    unit: C
+  pressures:
+    values:
+    - 400.0
+    - 300.0
+    - 200.0
+    - 100.0
+    - 50.0
+    unit: bara
+  source_kind: synthetic_reference
+  reference_basis: Closed cell, fixed total composition, relative volume referenced
+    to saturation volume
+- id: OIL-VISCOSITY
+  sample_id: OIL-001
+  kind: VISCOSITY
+  role: validation
+  temperature:
+    value: 100.0
+    unit: C
+  pressures:
+    values:
+    - 100.0
+    - 50.0
+    - 10.0
+    unit: bara
+  reference_basis: Oil-phase dynamic viscosity at stated absolute conditions
+  source_kind: synthetic_reference
+observations:
+- id: OIL-CCE-relative_volume
+  experiment_id: OIL-CCE
+  property: relative_volume
+  unit: '1'
+  values:
+  - 0.9282912109797654
+  - 0.962079556029221
+  - 1.0529405209614346
+  - 1.753777011415927
+  - 3.4404083638543987
+  uncertainty:
+  - 0.001
+  - 0.001
+  - 0.001
+  - 0.001
+  - 0.001
+  uncertainty_basis: Assumed synthetic standard uncertainty for a software fixture;
+    not an instrument measurement
+  source_kind: synthetic_reference
+  source:
+    fixture: oil_reference.json
+    table: OIL-CCE/relative_volume
+    reference_parameter_identity: 1897b54f1b9e5b7868c215476af1aa21e1f7500e4e1503375e4796c7396acab7
+  acceptance_max_absolute_error: 0.0005
+- id: OIL-DLE-rs_sm3_sm3
+  experiment_id: OIL-DLE
+  property: rs_sm3_sm3
+  unit: Sm3/Sm3
+  values:
+  - 281.11536855208686
+  - 235.3679930136075
+  - 96.99813472573118
+  - 49.393905544650785
+  - 6.459207527265729
+  uncertainty:
+  - 0.5
+  - 0.5
+  - 0.5
+  - 0.5
+  - 0.5
+  uncertainty_basis: Assumed synthetic standard uncertainty for a software fixture;
+    not an instrument measurement
+  source_kind: synthetic_reference
+  source:
+    fixture: oil_reference.json
+    table: OIL-DLE/rs_sm3_sm3
+    reference_parameter_identity: 1897b54f1b9e5b7868c215476af1aa21e1f7500e4e1503375e4796c7396acab7
+  acceptance_max_absolute_error: 0.05
+- id: OIL-DLE-bo_m3_sm3
+  experiment_id: OIL-DLE
+  property: bo_m3_sm3
+  unit: m3/Sm3
+  values:
+  - 1.8967035195995945
+  - 1.829347753078255
+  - 1.4053827538270651
+  - 1.2566838136969272
+  - 1.1013226579503568
+  uncertainty:
+  - 0.005
+  - 0.005
+  - 0.005
+  - 0.005
+  - 0.005
+  uncertainty_basis: Assumed synthetic standard uncertainty for a software fixture;
+    not an instrument measurement
+  source_kind: synthetic_reference
+  source:
+    fixture: oil_reference.json
+    table: OIL-DLE/bo_m3_sm3
+    reference_parameter_identity: 1897b54f1b9e5b7868c215476af1aa21e1f7500e4e1503375e4796c7396acab7
+  acceptance_max_absolute_error: 0.001
+- id: OIL-DLE-oil_density_kg_m3
+  experiment_id: OIL-DLE
+  property: oil_density_kg_m3
+  unit: kg/m3
+  values:
+  - 561.8540719809606
+  - 558.629442924166
+  - 637.9018655207932
+  - 676.7231165796353
+  - 717.8461487947106
+  uncertainty:
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  - 1.0
+  uncertainty_basis: Assumed synthetic standard uncertainty for a software fixture;
+    not an instrument measurement
+  source_kind: synthetic_reference
+  source:
+    fixture: oil_reference.json
+    table: OIL-DLE/oil_density_kg_m3
+    reference_parameter_identity: 1897b54f1b9e5b7868c215476af1aa21e1f7500e4e1503375e4796c7396acab7
+  acceptance_max_absolute_error: 0.1
+- id: OIL-CCE-HOLDOUT-relative_volume
+  experiment_id: OIL-CCE-HOLDOUT
+  property: relative_volume
+  unit: '1'
+  values:
+  - 0.9325208708654128
+  - 0.9636262343895289
+  - 1.0413869860710052
+  - 1.714134000544475
+  - 3.3525912013082477
+  uncertainty:
+  - 0.001
+  - 0.001
+  - 0.001
+  - 0.001
+  - 0.001
+  uncertainty_basis: Assumed synthetic standard uncertainty for a software fixture;
+    not an instrument measurement
+  source_kind: synthetic_reference
+  source:
+    fixture: oil_reference.json
+    table: OIL-CCE-HOLDOUT/relative_volume
+    reference_parameter_identity: 1897b54f1b9e5b7868c215476af1aa21e1f7500e4e1503375e4796c7396acab7
+  acceptance_max_absolute_error: 0.0005
+- id: OIL-VISCOSITY-viscosity_pa_s
+  experiment_id: OIL-VISCOSITY
+  property: viscosity_pa_s
+  unit: Pa s
+  values:
+  - 0.00027095053480159293
+  - 0.0004659756480393515
+  - 0.0010065347116680699
+  uncertainty:
+  - 1.0e-05
+  - 1.0e-05
+  - 1.0e-05
+  uncertainty_basis: Assumed synthetic standard uncertainty for a software fixture;
+    not an instrument measurement
+  source_kind: synthetic_reference
+  source:
+    fixture: oil_reference.json
+    table: OIL-VISCOSITY/viscosity_pa_s
+    reference_parameter_identity: 1897b54f1b9e5b7868c215476af1aa21e1f7500e4e1503375e4796c7396acab7
+  acceptance_max_absolute_error: 1.0e-05
+  phase: oil
+calibration:
+  parameters:
+  - name: BIP_METHANE_C7PLUS
+    lower: 0.0
+    upper: 0.1
+    initial: 0.03
+    source: Predeclared software-fixture bounds for numerical recovery
+  max_iterations: 15
+validation:
+  states:
+  - temperature:
+      value: 100.0
+      unit: C
+    pressure:
+      value: 300.0
+      unit: bara
+  - temperature:
+      value: 80.0
+      unit: C
+    pressure:
+      value: 100.0
+      unit: bara
+  export_pressures_bara:
+  - 300.0
+  - 100.0
+  - 50.0
+standards: []
+data_gaps:
+- No physical sample, laboratory measurement or target simulator ingestion is supplied
+- Synthetic data demonstrate recovery and replay only; no experimental-accuracy claim
+- Supplied synthetic uncertainties are reported in metrics; current CCE fitting engine
+  uses its fixed residual scale
+- No standards conformity or statistical parameter-confidence interval is claimed
+synthetic_reference:
+  kind: synthetic_reference
+  reference_generator: pvt_examples/generate_reference.py
+  engine_source_revision: 9f1c667aeed816a3fa0ce78f5981fcbfc3eb4e3e
+  engine_and_workflow_identity: 4c7fcf0ec4659cb0b9275825de28d696c03145421e6776a13bed91a12884a7de
+  reference_eos: PR, classic mixing rule 2, declared LBC transport
+  reference_grouped_methane_heavy_bip: 0.04
+  initial_candidate: Same composition and characterization, original database BIPs
+    before fitting
+  reference_parameter_identity: 1897b54f1b9e5b7868c215476af1aa21e1f7500e4e1503375e4796c7396acab7
+  added_noise: none
+  noise_seed: null
+  independence: Temperature and experiment hold-outs test numerical recovery; all
+    share the same synthetic EOS and do not establish independent physical accuracy
+  uncertainty: Explicit arbitrary synthetic standard uncertainties; no confidence
+    interval or laboratory accreditation claim

@@ -1,0 +1,4083 @@
+{
+  "schema": "synthetic_pvt_reference.v1",
+  "provenance": {
+    "kind": "synthetic_reference",
+    "reference_generator": "pvt_examples/generate_reference.py",
+    "engine_source_revision": "9f1c667aeed816a3fa0ce78f5981fcbfc3eb4e3e",
+    "engine_and_workflow_identity": "4c7fcf0ec4659cb0b9275825de28d696c03145421e6776a13bed91a12884a7de",
+    "reference_eos": "PR, classic mixing rule 2, declared LBC transport",
+    "reference_grouped_methane_heavy_bip": 0.04,
+    "initial_candidate": "Same composition and characterization, original database BIPs before fitting",
+    "reference_parameter_identity": "1897b54f1b9e5b7868c215476af1aa21e1f7500e4e1503375e4796c7396acab7",
+    "added_noise": "none",
+    "noise_seed": null,
+    "independence": "Temperature and experiment hold-outs test numerical recovery; all share the same synthetic EOS and do not establish independent physical accuracy",
+    "uncertainty": "Explicit arbitrary synthetic standard uncertainties; no confidence interval or laboratory accreditation claim"
+  },
+  "reference_parameter_inventory": {
+    "schema": "neqsim-pvt-fluid-study/1",
+    "systemClass": "neqsim.thermo.system.SystemPrEos",
+    "model": "PR-EOS",
+    "mixingRule": "CLASSIC",
+    "temperatureK": 373.15,
+    "pressureBara": 300.0,
+    "totalMoles": 1.0000000000000655,
+    "exactRestoreFormat": "NeqSim native Java serialization; same software version required",
+    "inventoryScope": "Active cubic EOS, composition, volume translation, BIPs and viscosity settings",
+    "hydrateCheck": false,
+    "solidPhaseCheck": false,
+    "chemicalSystem": false,
+    "components": [
+      {
+        "index": 0,
+        "name": "methane",
+        "moleFraction": 0.49999999999996725,
+        "molarMassKgPerMol": 0.016042999999999998,
+        "criticalTemperatureK": 190.55999999999997,
+        "criticalPressureBara": 45.99,
+        "criticalVolumeCm3PerMol": 99.0,
+        "acentricFactor": 0.0115,
+        "normalBoilingPointK": 111.59999999999997,
+        "normalLiquidDensityGPerCm3": 0.422182073,
+        "isTBPFraction": false,
+        "isPlusFraction": false,
+        "rackettZ": 0.289550875,
+        "volumeCorrectionConst": 0.0,
+        "appliedVolumeCorrection": -0.5147087677131006,
+        "volumeCorrectionT": 0.0,
+        "parachor": 77.3,
+        "attractiveTermNumber": 1,
+        "attractiveTermClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+        "attractiveM": 0.39234029307999996,
+        "attractiveParameters": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "a": 24958.344605491657,
+        "b": 2.6804066985249855,
+        "deltaEosParameters": [
+          2.414213562373095,
+          -0.41421356237309515
+        ],
+        "hasOmegaAOverride": false,
+        "omegaB": 0.077803333,
+        "hasOmegaBOverride": false
+      },
+      {
+        "index": 1,
+        "name": "ethane",
+        "moleFraction": 0.07999999999999476,
+        "molarMassKgPerMol": 0.03007,
+        "criticalTemperatureK": 305.32,
+        "criticalPressureBara": 48.72,
+        "criticalVolumeCm3PerMol": 148.0,
+        "acentricFactor": 0.0995,
+        "normalBoilingPointK": 184.59999999999997,
+        "normalLiquidDensityGPerCm3": 0.544459352,
+        "isTBPFraction": false,
+        "isPlusFraction": false,
+        "rackettZ": 0.281828875,
+        "volumeCorrectionConst": 0.0,
+        "appliedVolumeCorrection": -0.5771573416362681,
+        "volumeCorrectionT": 0.0,
+        "parachor": 108.9,
+        "attractiveTermNumber": 1,
+        "attractiveTermClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+        "attractiveM": 0.52542259452,
+        "attractiveParameters": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "a": 60480.99480329711,
+        "b": 4.053968166633394,
+        "deltaEosParameters": [
+          2.414213562373095,
+          -0.41421356237309515
+        ],
+        "hasOmegaAOverride": false,
+        "omegaB": 0.077803333,
+        "hasOmegaBOverride": false
+      },
+      {
+        "index": 2,
+        "name": "propane",
+        "moleFraction": 0.05999999999999607,
+        "molarMassKgPerMol": 0.044097000000000004,
+        "criticalTemperatureK": 369.83,
+        "criticalPressureBara": 42.48,
+        "criticalVolumeCm3PerMol": 203.0,
+        "acentricFactor": 0.1523,
+        "normalBoilingPointK": 231.09999999999997,
+        "normalLiquidDensityGPerCm3": 0.5906202551384941,
+        "isTBPFraction": false,
+        "isPlusFraction": false,
+        "rackettZ": 0.277195675,
+        "volumeCorrectionConst": 0.0,
+        "appliedVolumeCorrection": -0.6339969855071347,
+        "volumeCorrectionT": 0.0,
+        "parachor": 151.9,
+        "attractiveTermNumber": 1,
+        "attractiveTermClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+        "attractiveM": 0.6032653253232,
+        "attractiveParameters": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "a": 101773.67689406448,
+        "b": 5.631835868682071,
+        "deltaEosParameters": [
+          2.414213562373095,
+          -0.41421356237309515
+        ],
+        "hasOmegaAOverride": false,
+        "omegaB": 0.077803333,
+        "hasOmegaBOverride": false
+      },
+      {
+        "index": 3,
+        "name": "n-butane",
+        "moleFraction": 0.03999999999999738,
+        "molarMassKgPerMol": 0.058122999999999994,
+        "criticalTemperatureK": 425.12,
+        "criticalPressureBara": 37.96,
+        "criticalVolumeCm3PerMol": 255.0,
+        "acentricFactor": 0.2002,
+        "normalBoilingPointK": 272.7,
+        "normalLiquidDensityGPerCm3": 0.6129838790149476,
+        "isTBPFraction": false,
+        "isPlusFraction": false,
+        "rackettZ": 0.27299245,
+        "volumeCorrectionConst": 0.0,
+        "appliedVolumeCorrection": -0.6197373498623535,
+        "volumeCorrectionT": 0.0,
+        "parachor": 191.7,
+        "attractiveTermNumber": 1,
+        "attractiveTermClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+        "attractiveM": 0.6725820476031998,
+        "attractiveParameters": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "a": 150491.7070519087,
+        "b": 7.244654745088096,
+        "deltaEosParameters": [
+          2.414213562373095,
+          -0.41421356237309515
+        ],
+        "hasOmegaAOverride": false,
+        "omegaB": 0.077803333,
+        "hasOmegaBOverride": false
+      },
+      {
+        "index": 4,
+        "name": "n-pentane",
+        "moleFraction": 0.029999999999998035,
+        "molarMassKgPerMol": 0.07215,
+        "criticalTemperatureK": 469.7,
+        "criticalPressureBara": 33.7,
+        "criticalVolumeCm3PerMol": 304.0,
+        "acentricFactor": 0.2515,
+        "normalBoilingPointK": 309.2,
+        "normalLiquidDensityGPerCm3": 0.6262,
+        "isTBPFraction": false,
+        "isPlusFraction": false,
+        "rackettZ": 0.26849087499999996,
+        "volumeCorrectionConst": 0.0,
+        "appliedVolumeCorrection": -0.5102784341232046,
+        "volumeCorrectionT": 0.0,
+        "parachor": 233.9,
+        "attractiveTermNumber": 1,
+        "attractiveTermClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+        "attractiveM": 0.74544534268,
+        "attractiveParameters": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "a": 206931.64854093277,
+        "b": 9.016189257494943,
+        "deltaEosParameters": [
+          2.414213562373095,
+          -0.41421356237309515
+        ],
+        "hasOmegaAOverride": false,
+        "omegaB": 0.077803333,
+        "hasOmegaBOverride": false
+      },
+      {
+        "index": 5,
+        "name": "n-hexane",
+        "moleFraction": 0.01999999999999869,
+        "molarMassKgPerMol": 0.086177,
+        "criticalTemperatureK": 507.59999999999997,
+        "criticalPressureBara": 30.25,
+        "criticalVolumeCm3PerMol": 370.0,
+        "acentricFactor": 0.3013,
+        "normalBoilingPointK": 341.9,
+        "normalLiquidDensityGPerCm3": 0.664,
+        "isTBPFraction": false,
+        "isPlusFraction": false,
+        "rackettZ": 0.264120925,
+        "volumeCorrectionConst": 0.0,
+        "appliedVolumeCorrection": -0.3093010081693937,
+        "volumeCorrectionT": 0.0,
+        "parachor": 271.0,
+        "attractiveTermNumber": 1,
+        "attractiveTermClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+        "attractiveM": 0.8148191442352,
+        "attractiveParameters": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "a": 269236.2580760948,
+        "b": 10.854969173671213,
+        "deltaEosParameters": [
+          2.414213562373095,
+          -0.41421356237309515
+        ],
+        "hasOmegaAOverride": false,
+        "omegaB": 0.077803333,
+        "hasOmegaBOverride": false
+      },
+      {
+        "index": 6,
+        "name": "C7_PC",
+        "moleFraction": 0.04999999999999673,
+        "molarMassKgPerMol": 0.092,
+        "criticalTemperatureK": 528.1296141214235,
+        "criticalPressureBara": 30.280409249798545,
+        "criticalVolumeCm3PerMol": 368.1677604718274,
+        "acentricFactor": 0.3239542889590128,
+        "normalBoilingPointK": 364.50097600000004,
+        "normalLiquidDensityGPerCm3": 0.727,
+        "isTBPFraction": true,
+        "isPlusFraction": false,
+        "rackettZ": 0.2524780003548076,
+        "volumeCorrectionConst": 0.0,
+        "appliedVolumeCorrection": 0.5232692076386691,
+        "volumeCorrectionT": 0.0,
+        "parachor": 274.58,
+        "attractiveTermNumber": 1,
+        "attractiveTermClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+        "attractiveM": 0.8459346144400001,
+        "attractiveParameters": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "a": 291162.20445165306,
+        "b": 11.282650625701798,
+        "deltaEosParameters": [
+          2.414213562373095,
+          -0.41421356237309515
+        ],
+        "hasOmegaAOverride": false,
+        "omegaB": 0.077803333,
+        "hasOmegaBOverride": false
+      },
+      {
+        "index": 7,
+        "name": "C8_PC",
+        "moleFraction": 0.03999999999999738,
+        "molarMassKgPerMol": 0.104,
+        "criticalTemperatureK": 551.6882921088335,
+        "criticalPressureBara": 27.76902675117312,
+        "criticalVolumeCm3PerMol": 415.67988411315173,
+        "acentricFactor": 0.3641861600596492,
+        "normalBoilingPointK": 385.764928,
+        "normalLiquidDensityGPerCm3": 0.749,
+        "isTBPFraction": true,
+        "isPlusFraction": false,
+        "rackettZ": 0.2490493873628046,
+        "volumeCorrectionConst": 0.0,
+        "appliedVolumeCorrection": 0.8794080648392311,
+        "volumeCorrectionT": 0.0,
+        "parachor": 302.65999999999997,
+        "attractiveTermNumber": 1,
+        "attractiveTermClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+        "attractiveM": 0.9005098367600008,
+        "attractiveParameters": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "a": 346451.60229382856,
+        "b": 12.851844691200766,
+        "deltaEosParameters": [
+          2.414213562373095,
+          -0.41421356237309515
+        ],
+        "hasOmegaAOverride": false,
+        "omegaB": 0.077803333,
+        "hasOmegaBOverride": false
+      },
+      {
+        "index": 8,
+        "name": "C9_PC",
+        "moleFraction": 0.029999999999998035,
+        "molarMassKgPerMol": 0.119,
+        "criticalTemperatureK": 577.977130936031,
+        "criticalPressureBara": 25.187489657218013,
+        "criticalVolumeCm3PerMol": 472.7476541569328,
+        "acentricFactor": 0.4138175185453612,
+        "normalBoilingPointK": 411.18251799999996,
+        "normalLiquidDensityGPerCm3": 0.768,
+        "isTBPFraction": true,
+        "isPlusFraction": false,
+        "rackettZ": 0.2462084179417184,
+        "volumeCorrectionConst": 0.0,
+        "appliedVolumeCorrection": 1.2869371306908337,
+        "volumeCorrectionT": 0.0,
+        "parachor": 337.76,
+        "attractiveTermNumber": 1,
+        "attractiveTermClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+        "attractiveM": 0.9666317723100002,
+        "attractiveParameters": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "a": 419229.77755971585,
+        "b": 14.844245549944182,
+        "deltaEosParameters": [
+          2.414213562373095,
+          -0.41421356237309515
+        ],
+        "hasOmegaAOverride": false,
+        "omegaB": 0.077803333,
+        "hasOmegaBOverride": false
+      },
+      {
+        "index": 9,
+        "name": "C10-12_PC",
+        "moleFraction": 0.06628831408037693,
+        "molarMassKgPerMol": 0.14559657998200273,
+        "criticalTemperatureK": 619.9902642631482,
+        "criticalPressureBara": 22.067779715840533,
+        "criticalVolumeCm3PerMol": 560.646840185316,
+        "acentricFactor": 0.5001366503365099,
+        "normalBoilingPointK": 453.1940152012678,
+        "normalLiquidDensityGPerCm3": 0.8055610740773689,
+        "isTBPFraction": true,
+        "isPlusFraction": false,
+        "rackettZ": 0.24222336435084005,
+        "volumeCorrectionConst": 0.0,
+        "appliedVolumeCorrection": 2.0413909865504953,
+        "volumeCorrectionT": 0.0,
+        "parachor": 399.9959971578864,
+        "attractiveTermNumber": 1,
+        "attractiveTermClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+        "attractiveM": 1.078463860648854,
+        "attractiveParameters": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "a": 550588.0708115074,
+        "b": 18.1743375430003,
+        "deltaEosParameters": [
+          2.414213562373095,
+          -0.41421356237309515
+        ],
+        "hasOmegaAOverride": false,
+        "omegaB": 0.077803333,
+        "hasOmegaBOverride": false
+      },
+      {
+        "index": 10,
+        "name": "C13-15_PC",
+        "moleFraction": 0.03699407952591993,
+        "molarMassKgPerMol": 0.18833897500383262,
+        "criticalTemperatureK": 675.9732300481334,
+        "criticalPressureBara": 18.660146651900302,
+        "criticalVolumeCm3PerMol": 681.2503987703248,
+        "acentricFactor": 0.6332728801385836,
+        "normalBoilingPointK": 513.0209065173535,
+        "normalLiquidDensityGPerCm3": 0.8228164065492695,
+        "isTBPFraction": true,
+        "isPlusFraction": false,
+        "rackettZ": 0.24322060985202676,
+        "volumeCorrectionConst": 0.0,
+        "appliedVolumeCorrection": 2.481890774169434,
+        "volumeCorrectionT": 0.0,
+        "parachor": 500.01320150896834,
+        "attractiveTermNumber": 1,
+        "attractiveTermClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+        "attractiveM": 1.243064188891655,
+        "attractiveParameters": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "a": 774033.2912951852,
+        "b": 23.434020459780427,
+        "deltaEosParameters": [
+          2.414213562373095,
+          -0.41421356237309515
+        ],
+        "hasOmegaAOverride": false,
+        "omegaB": 0.077803333,
+        "hasOmegaBOverride": false
+      },
+      {
+        "index": 11,
+        "name": "C16-20_PC",
+        "moleFraction": 0.029044894926842646,
+        "molarMassKgPerMol": 0.24451976005196988,
+        "criticalTemperatureK": 739.909134156126,
+        "criticalPressureBara": 16.17501744170931,
+        "criticalVolumeCm3PerMol": 809.8033299148489,
+        "acentricFactor": 0.7966234415455493,
+        "normalBoilingPointK": 578.6357147450885,
+        "normalLiquidDensityGPerCm3": 0.8398053314802245,
+        "isTBPFraction": true,
+        "isPlusFraction": false,
+        "rackettZ": 0.24737475945277831,
+        "volumeCorrectionConst": 0.0,
+        "appliedVolumeCorrection": 2.343512273249197,
+        "volumeCorrectionT": 0.0,
+        "parachor": 631.4762385216094,
+        "attractiveTermNumber": 1,
+        "attractiveTermClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+        "attractiveM": 1.4319468326132818,
+        "attractiveParameters": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "a": 1069861.8906868477,
+        "b": 29.591432604989844,
+        "deltaEosParameters": [
+          2.414213562373095,
+          -0.41421356237309515
+        ],
+        "hasOmegaAOverride": false,
+        "omegaB": 0.077803333,
+        "hasOmegaBOverride": false
+      },
+      {
+        "index": 12,
+        "name": "C21-79_PC",
+        "moleFraction": 0.017672711466916034,
+        "molarMassKgPerMol": 0.35530317073992723,
+        "criticalTemperatureK": 849.4862339737618,
+        "criticalPressureBara": 13.832870349489546,
+        "criticalVolumeCm3PerMol": 1088.1924766734294,
+        "acentricFactor": 1.0672147135545595,
+        "normalBoilingPointK": 672.440188128933,
+        "normalLiquidDensityGPerCm3": 0.8673919606802186,
+        "isTBPFraction": true,
+        "isPlusFraction": false,
+        "rackettZ": 0.25790787129428716,
+        "volumeCorrectionConst": 0.0,
+        "appliedVolumeCorrection": 0.45527500395304743,
+        "volumeCorrectionT": 0.0,
+        "parachor": 890.7094195314296,
+        "attractiveTermNumber": 1,
+        "attractiveTermClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+        "attractiveM": 1.7131379238028592,
+        "attractiveParameters": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "a": 1648982.636343588,
+        "b": 39.72614276719927,
+        "deltaEosParameters": [
+          2.414213562373095,
+          -0.41421356237309515
+        ],
+        "hasOmegaAOverride": false,
+        "omegaB": 0.077803333,
+        "hasOmegaBOverride": false
+      }
+    ],
+    "phases": [
+      {
+        "index": 0,
+        "active": true,
+        "type": "GAS",
+        "volumeCorrectionEnabled": true,
+        "viscosityModel": "neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.LBCViscosityMethod",
+        "cspViscosityCorrectionFactors": [],
+        "lbcParameters": [
+          0.1023,
+          0.023364,
+          0.058533,
+          -0.040758,
+          0.0093324
+        ],
+        "lbcCriticalVolumesCm3PerMol": [
+          99.0,
+          148.0,
+          203.0,
+          255.0,
+          304.0,
+          370.0,
+          473.28669504945367,
+          495.1767083783184,
+          536.0286939079966,
+          610.4412876823386,
+          787.1132516729785,
+          1032.9137401667704,
+          1543.2151465748154
+        ],
+        "eosComponentParameters": [
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 190.55999999999997,
+            "PcBara": 45.99,
+            "acentricFactor": 0.0115,
+            "molarMassKgPerMol": 0.016042999999999998,
+            "criticalVolumeCm3PerMol": 99.0,
+            "normalBoilingPointK": 111.59999999999997,
+            "rackettZ": 0.289550875,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": -0.5147087677131006,
+            "parachor": 77.3,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 0.39234029307999996,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 24958.344605491657,
+            "b": 2.6804066985249855,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 305.32,
+            "PcBara": 48.72,
+            "acentricFactor": 0.0995,
+            "molarMassKgPerMol": 0.03007,
+            "criticalVolumeCm3PerMol": 148.0,
+            "normalBoilingPointK": 184.59999999999997,
+            "rackettZ": 0.281828875,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": -0.5771573416362681,
+            "parachor": 108.9,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 0.52542259452,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 60480.99480329711,
+            "b": 4.053968166633394,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 369.83,
+            "PcBara": 42.48,
+            "acentricFactor": 0.1523,
+            "molarMassKgPerMol": 0.044097000000000004,
+            "criticalVolumeCm3PerMol": 203.0,
+            "normalBoilingPointK": 231.09999999999997,
+            "rackettZ": 0.277195675,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": -0.6339969855071347,
+            "parachor": 151.9,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 0.6032653253232,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 101773.67689406448,
+            "b": 5.631835868682071,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 425.12,
+            "PcBara": 37.96,
+            "acentricFactor": 0.2002,
+            "molarMassKgPerMol": 0.058122999999999994,
+            "criticalVolumeCm3PerMol": 255.0,
+            "normalBoilingPointK": 272.7,
+            "rackettZ": 0.27299245,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": -0.6197373498623535,
+            "parachor": 191.7,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 0.6725820476031998,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 150491.7070519087,
+            "b": 7.244654745088096,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 469.7,
+            "PcBara": 33.7,
+            "acentricFactor": 0.2515,
+            "molarMassKgPerMol": 0.07215,
+            "criticalVolumeCm3PerMol": 304.0,
+            "normalBoilingPointK": 309.2,
+            "rackettZ": 0.26849087499999996,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": -0.5102784341232046,
+            "parachor": 233.9,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 0.74544534268,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 206931.64854093277,
+            "b": 9.016189257494943,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 507.59999999999997,
+            "PcBara": 30.25,
+            "acentricFactor": 0.3013,
+            "molarMassKgPerMol": 0.086177,
+            "criticalVolumeCm3PerMol": 370.0,
+            "normalBoilingPointK": 341.9,
+            "rackettZ": 0.264120925,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": -0.3093010081693937,
+            "parachor": 271.0,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 0.8148191442352,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 269236.2580760948,
+            "b": 10.854969173671213,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 528.1296141214235,
+            "PcBara": 30.280409249798545,
+            "acentricFactor": 0.3239542889590128,
+            "molarMassKgPerMol": 0.092,
+            "criticalVolumeCm3PerMol": 368.1677604718274,
+            "normalBoilingPointK": 364.50097600000004,
+            "rackettZ": 0.2524780003548076,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": 0.5232692076386691,
+            "parachor": 274.58,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 0.8459346144400001,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 291162.20445165306,
+            "b": 11.282650625701798,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 551.6882921088335,
+            "PcBara": 27.76902675117312,
+            "acentricFactor": 0.3641861600596492,
+            "molarMassKgPerMol": 0.104,
+            "criticalVolumeCm3PerMol": 415.67988411315173,
+            "normalBoilingPointK": 385.764928,
+            "rackettZ": 0.2490493873628046,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": 0.8794080648392311,
+            "parachor": 302.65999999999997,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 0.9005098367600008,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 346451.60229382856,
+            "b": 12.851844691200766,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 577.977130936031,
+            "PcBara": 25.187489657218013,
+            "acentricFactor": 0.4138175185453612,
+            "molarMassKgPerMol": 0.119,
+            "criticalVolumeCm3PerMol": 472.7476541569328,
+            "normalBoilingPointK": 411.18251799999996,
+            "rackettZ": 0.2462084179417184,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": 1.2869371306908337,
+            "parachor": 337.76,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 0.9666317723100002,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 419229.77755971585,
+            "b": 14.844245549944182,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 619.9902642631482,
+            "PcBara": 22.067779715840533,
+            "acentricFactor": 0.5001366503365099,
+            "molarMassKgPerMol": 0.14559657998200273,
+            "criticalVolumeCm3PerMol": 560.646840185316,
+            "normalBoilingPointK": 453.1940152012678,
+            "rackettZ": 0.24222336435084005,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": 2.0413909865504953,
+            "parachor": 399.9959971578864,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 1.078463860648854,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 550588.0708115074,
+            "b": 18.1743375430003,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 675.9732300481334,
+            "PcBara": 18.660146651900302,
+            "acentricFactor": 0.6332728801385836,
+            "molarMassKgPerMol": 0.18833897500383262,
+            "criticalVolumeCm3PerMol": 681.2503987703248,
+            "normalBoilingPointK": 513.0209065173535,
+            "rackettZ": 0.24322060985202676,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": 2.481890774169434,
+            "parachor": 500.01320150896834,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 1.243064188891655,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 774033.2912951852,
+            "b": 23.434020459780427,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 739.909134156126,
+            "PcBara": 16.17501744170931,
+            "acentricFactor": 0.7966234415455493,
+            "molarMassKgPerMol": 0.24451976005196988,
+            "criticalVolumeCm3PerMol": 809.8033299148489,
+            "normalBoilingPointK": 578.6357147450885,
+            "rackettZ": 0.24737475945277831,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": 2.343512273249197,
+            "parachor": 631.4762385216094,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 1.4319468326132818,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 1069861.8906868477,
+            "b": 29.591432604989844,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 849.4862339737618,
+            "PcBara": 13.832870349489546,
+            "acentricFactor": 1.0672147135545595,
+            "molarMassKgPerMol": 0.35530317073992723,
+            "criticalVolumeCm3PerMol": 1088.1924766734294,
+            "normalBoilingPointK": 672.440188128933,
+            "rackettZ": 0.25790787129428716,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": 0.45527500395304743,
+            "parachor": 890.7094195314296,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 1.7131379238028592,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 1648982.636343588,
+            "b": 39.72614276719927,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          }
+        ],
+        "bMixType": 0,
+        "binaryInteractionParameters": [
+          {
+            "i": 0,
+            "j": 0,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 1,
+            "kij": 0.00295295,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 2,
+            "kij": 0.00747722,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 3,
+            "kij": 0.01289789,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 4,
+            "kij": 0.01847102,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 5,
+            "kij": 0.023474067,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 6,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 7,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 8,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 9,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 10,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 11,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 12,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 0,
+            "kij": 0.00295295,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 1,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 2,
+            "kij": 0.00185286,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 3,
+            "kij": 0.00464288,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 4,
+            "kij": 0.00811359,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 0,
+            "kij": 0.00747722,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 1,
+            "kij": 0.00185286,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 2,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 3,
+            "kij": 0.00132268,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 4,
+            "kij": 0.00316586,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 0,
+            "kij": 0.01289789,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 1,
+            "kij": 0.00464288,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 2,
+            "kij": 0.00132268,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 3,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 4,
+            "kij": 0.00097665,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 0,
+            "kij": 0.01847102,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 1,
+            "kij": 0.00811359,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 2,
+            "kij": 0.00316586,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 3,
+            "kij": 0.00097665,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 4,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 0,
+            "kij": 0.023474067,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 1,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 2,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 3,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 4,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 0,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 1,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 2,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 3,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 4,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 0,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 1,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 2,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 3,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 4,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 0,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 1,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 2,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 3,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 4,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 0,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 1,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 2,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 3,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 4,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 0,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 1,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 2,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 3,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 4,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 0,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 1,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 2,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 3,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 4,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 0,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 1,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 2,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 3,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 4,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "active": true,
+        "type": "LIQUID",
+        "volumeCorrectionEnabled": true,
+        "viscosityModel": "neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.LBCViscosityMethod",
+        "cspViscosityCorrectionFactors": [],
+        "lbcParameters": [
+          0.1023,
+          0.023364,
+          0.058533,
+          -0.040758,
+          0.0093324
+        ],
+        "lbcCriticalVolumesCm3PerMol": [
+          99.0,
+          148.0,
+          203.0,
+          255.0,
+          304.0,
+          370.0,
+          473.28669504945367,
+          495.1767083783184,
+          536.0286939079966,
+          610.4412876823386,
+          787.1132516729785,
+          1032.9137401667704,
+          1543.2151465748154
+        ],
+        "eosComponentParameters": [
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 190.55999999999997,
+            "PcBara": 45.99,
+            "acentricFactor": 0.0115,
+            "molarMassKgPerMol": 0.016042999999999998,
+            "criticalVolumeCm3PerMol": 99.0,
+            "normalBoilingPointK": 111.59999999999997,
+            "rackettZ": 0.289550875,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": -0.5147087677131006,
+            "parachor": 77.3,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 0.39234029307999996,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 24958.344605491657,
+            "b": 2.6804066985249855,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 305.32,
+            "PcBara": 48.72,
+            "acentricFactor": 0.0995,
+            "molarMassKgPerMol": 0.03007,
+            "criticalVolumeCm3PerMol": 148.0,
+            "normalBoilingPointK": 184.59999999999997,
+            "rackettZ": 0.281828875,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": -0.5771573416362681,
+            "parachor": 108.9,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 0.52542259452,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 60480.99480329711,
+            "b": 4.053968166633394,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 369.83,
+            "PcBara": 42.48,
+            "acentricFactor": 0.1523,
+            "molarMassKgPerMol": 0.044097000000000004,
+            "criticalVolumeCm3PerMol": 203.0,
+            "normalBoilingPointK": 231.09999999999997,
+            "rackettZ": 0.277195675,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": -0.6339969855071347,
+            "parachor": 151.9,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 0.6032653253232,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 101773.67689406448,
+            "b": 5.631835868682071,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 425.12,
+            "PcBara": 37.96,
+            "acentricFactor": 0.2002,
+            "molarMassKgPerMol": 0.058122999999999994,
+            "criticalVolumeCm3PerMol": 255.0,
+            "normalBoilingPointK": 272.7,
+            "rackettZ": 0.27299245,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": -0.6197373498623535,
+            "parachor": 191.7,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 0.6725820476031998,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 150491.7070519087,
+            "b": 7.244654745088096,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 469.7,
+            "PcBara": 33.7,
+            "acentricFactor": 0.2515,
+            "molarMassKgPerMol": 0.07215,
+            "criticalVolumeCm3PerMol": 304.0,
+            "normalBoilingPointK": 309.2,
+            "rackettZ": 0.26849087499999996,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": -0.5102784341232046,
+            "parachor": 233.9,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 0.74544534268,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 206931.64854093277,
+            "b": 9.016189257494943,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 507.59999999999997,
+            "PcBara": 30.25,
+            "acentricFactor": 0.3013,
+            "molarMassKgPerMol": 0.086177,
+            "criticalVolumeCm3PerMol": 370.0,
+            "normalBoilingPointK": 341.9,
+            "rackettZ": 0.264120925,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": -0.3093010081693937,
+            "parachor": 271.0,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 0.8148191442352,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 269236.2580760948,
+            "b": 10.854969173671213,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 528.1296141214235,
+            "PcBara": 30.280409249798545,
+            "acentricFactor": 0.3239542889590128,
+            "molarMassKgPerMol": 0.092,
+            "criticalVolumeCm3PerMol": 368.1677604718274,
+            "normalBoilingPointK": 364.50097600000004,
+            "rackettZ": 0.2524780003548076,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": 0.5232692076386691,
+            "parachor": 274.58,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 0.8459346144400001,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 291162.20445165306,
+            "b": 11.282650625701798,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 551.6882921088335,
+            "PcBara": 27.76902675117312,
+            "acentricFactor": 0.3641861600596492,
+            "molarMassKgPerMol": 0.104,
+            "criticalVolumeCm3PerMol": 415.67988411315173,
+            "normalBoilingPointK": 385.764928,
+            "rackettZ": 0.2490493873628046,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": 0.8794080648392311,
+            "parachor": 302.65999999999997,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 0.9005098367600008,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 346451.60229382856,
+            "b": 12.851844691200766,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 577.977130936031,
+            "PcBara": 25.187489657218013,
+            "acentricFactor": 0.4138175185453612,
+            "molarMassKgPerMol": 0.119,
+            "criticalVolumeCm3PerMol": 472.7476541569328,
+            "normalBoilingPointK": 411.18251799999996,
+            "rackettZ": 0.2462084179417184,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": 1.2869371306908337,
+            "parachor": 337.76,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 0.9666317723100002,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 419229.77755971585,
+            "b": 14.844245549944182,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 619.9902642631482,
+            "PcBara": 22.067779715840533,
+            "acentricFactor": 0.5001366503365099,
+            "molarMassKgPerMol": 0.14559657998200273,
+            "criticalVolumeCm3PerMol": 560.646840185316,
+            "normalBoilingPointK": 453.1940152012678,
+            "rackettZ": 0.24222336435084005,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": 2.0413909865504953,
+            "parachor": 399.9959971578864,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 1.078463860648854,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 550588.0708115074,
+            "b": 18.1743375430003,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 675.9732300481334,
+            "PcBara": 18.660146651900302,
+            "acentricFactor": 0.6332728801385836,
+            "molarMassKgPerMol": 0.18833897500383262,
+            "criticalVolumeCm3PerMol": 681.2503987703248,
+            "normalBoilingPointK": 513.0209065173535,
+            "rackettZ": 0.24322060985202676,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": 2.481890774169434,
+            "parachor": 500.01320150896834,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 1.243064188891655,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 774033.2912951852,
+            "b": 23.434020459780427,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 739.909134156126,
+            "PcBara": 16.17501744170931,
+            "acentricFactor": 0.7966234415455493,
+            "molarMassKgPerMol": 0.24451976005196988,
+            "criticalVolumeCm3PerMol": 809.8033299148489,
+            "normalBoilingPointK": 578.6357147450885,
+            "rackettZ": 0.24737475945277831,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": 2.343512273249197,
+            "parachor": 631.4762385216094,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 1.4319468326132818,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 1069861.8906868477,
+            "b": 29.591432604989844,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          },
+          {
+            "componentClass": "neqsim.thermo.component.ComponentPR",
+            "TcK": 849.4862339737618,
+            "PcBara": 13.832870349489546,
+            "acentricFactor": 1.0672147135545595,
+            "molarMassKgPerMol": 0.35530317073992723,
+            "criticalVolumeCm3PerMol": 1088.1924766734294,
+            "normalBoilingPointK": 672.440188128933,
+            "rackettZ": 0.25790787129428716,
+            "volumeCorrectionConst": 0.0,
+            "volumeCorrectionT": 0.0,
+            "appliedVolumeCorrection": 0.45527500395304743,
+            "parachor": 890.7094195314296,
+            "attractiveTermNumber": 1,
+            "attractiveClass": "neqsim.thermo.component.attractiveeosterm.AttractiveTermPr",
+            "m": 1.7131379238028592,
+            "alphaCoefficients": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "a": 1648982.636343588,
+            "b": 39.72614276719927,
+            "deltaEosParameters": [
+              2.414213562373095,
+              -0.41421356237309515
+            ],
+            "omegaB": 0.077803333
+          }
+        ],
+        "bMixType": 0,
+        "binaryInteractionParameters": [
+          {
+            "i": 0,
+            "j": 0,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 1,
+            "kij": 0.00295295,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 2,
+            "kij": 0.00747722,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 3,
+            "kij": 0.01289789,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 4,
+            "kij": 0.01847102,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 5,
+            "kij": 0.023474067,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 6,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 7,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 8,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 9,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 10,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 11,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 0,
+            "j": 12,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 0,
+            "kij": 0.00295295,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 1,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 2,
+            "kij": 0.00185286,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 3,
+            "kij": 0.00464288,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 4,
+            "kij": 0.00811359,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 1,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 0,
+            "kij": 0.00747722,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 1,
+            "kij": 0.00185286,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 2,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 3,
+            "kij": 0.00132268,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 4,
+            "kij": 0.00316586,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 2,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 0,
+            "kij": 0.01289789,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 1,
+            "kij": 0.00464288,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 2,
+            "kij": 0.00132268,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 3,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 4,
+            "kij": 0.00097665,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 3,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 0,
+            "kij": 0.01847102,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 1,
+            "kij": 0.00811359,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 2,
+            "kij": 0.00316586,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 3,
+            "kij": 0.00097665,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 4,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 4,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 0,
+            "kij": 0.023474067,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 1,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 2,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 3,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 4,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 5,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 0,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 1,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 2,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 3,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 4,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 6,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 0,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 1,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 2,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 3,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 4,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 7,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 0,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 1,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 2,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 3,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 4,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 8,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 0,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 1,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 2,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 3,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 4,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 9,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 0,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 1,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 2,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 3,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 4,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 10,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 0,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 1,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 2,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 3,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 4,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 11,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 0,
+            "kij": 0.04,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 1,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 2,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 3,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 4,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 5,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 6,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 7,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 8,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 9,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 10,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 11,
+            "kij": 0.0,
+            "kijT1": 0.0
+          },
+          {
+            "i": 12,
+            "j": 12,
+            "kij": 0.0,
+            "kijT1": 0.0
+          }
+        ]
+      }
+    ],
+    "portableFluidJson": {
+      "format": "neqsim-fluid",
+      "version": "1.0",
+      "generatedBy": "NeqSim",
+      "generatedAt": "2026-10-25 20:17:56",
+      "eos": "PR",
+      "prcorr": false,
+      "reservoirTemperature": {
+        "value": 100.0,
+        "unit": "C"
+      },
+      "standardConditions": {
+        "temperature": 15.0,
+        "pressure": 1.01325
+      },
+      "components": [
+        {
+          "name": "methane",
+          "moleFraction": 0.49999999999996725,
+          "criticalTemperature": 190.55999999999997,
+          "criticalPressure": 45.99,
+          "acentricFactor": 0.0115,
+          "molarMass": 16.043,
+          "normalBoilingPoint": 111.59999999999997,
+          "criticalVolume": 99.0,
+          "volumeShift": 0.0,
+          "rackettZ": 0.289550875,
+          "parachor": 77.3,
+          "isPseudo": false
+        },
+        {
+          "name": "ethane",
+          "moleFraction": 0.07999999999999476,
+          "criticalTemperature": 305.32,
+          "criticalPressure": 48.72,
+          "acentricFactor": 0.0995,
+          "molarMass": 30.07,
+          "normalBoilingPoint": 184.59999999999997,
+          "criticalVolume": 148.0,
+          "volumeShift": 0.0,
+          "rackettZ": 0.281828875,
+          "parachor": 108.9,
+          "isPseudo": false
+        },
+        {
+          "name": "propane",
+          "moleFraction": 0.05999999999999607,
+          "criticalTemperature": 369.83,
+          "criticalPressure": 42.48,
+          "acentricFactor": 0.1523,
+          "molarMass": 44.097,
+          "normalBoilingPoint": 231.09999999999997,
+          "criticalVolume": 203.0,
+          "volumeShift": 0.0,
+          "rackettZ": 0.277195675,
+          "parachor": 151.9,
+          "isPseudo": false
+        },
+        {
+          "name": "n-butane",
+          "moleFraction": 0.03999999999999738,
+          "criticalTemperature": 425.12,
+          "criticalPressure": 37.96,
+          "acentricFactor": 0.2002,
+          "molarMass": 58.123,
+          "normalBoilingPoint": 272.7,
+          "criticalVolume": 255.0,
+          "volumeShift": 0.0,
+          "rackettZ": 0.27299245,
+          "parachor": 191.7,
+          "isPseudo": false
+        },
+        {
+          "name": "n-pentane",
+          "moleFraction": 0.029999999999998035,
+          "criticalTemperature": 469.7,
+          "criticalPressure": 33.7,
+          "acentricFactor": 0.2515,
+          "molarMass": 72.15,
+          "normalBoilingPoint": 309.2,
+          "criticalVolume": 304.0,
+          "volumeShift": 0.0,
+          "rackettZ": 0.26849087499999996,
+          "parachor": 233.9,
+          "isPseudo": false
+        },
+        {
+          "name": "n-hexane",
+          "moleFraction": 0.01999999999999869,
+          "criticalTemperature": 507.59999999999997,
+          "criticalPressure": 30.25,
+          "acentricFactor": 0.3013,
+          "molarMass": 86.177,
+          "normalBoilingPoint": 341.9,
+          "criticalVolume": 370.0,
+          "volumeShift": 0.0,
+          "rackettZ": 0.264120925,
+          "parachor": 271.0,
+          "isPseudo": false
+        },
+        {
+          "name": "C7_PC",
+          "moleFraction": 0.04999999999999673,
+          "criticalTemperature": 528.1296141214235,
+          "criticalPressure": 30.280409249798545,
+          "acentricFactor": 0.3239542889590128,
+          "molarMass": 92.0,
+          "normalBoilingPoint": 364.50097600000004,
+          "criticalVolume": 368.1677604718274,
+          "volumeShift": 0.0,
+          "rackettZ": 0.2524780003548076,
+          "parachor": 274.58,
+          "isPseudo": true,
+          "density": 0.727
+        },
+        {
+          "name": "C8_PC",
+          "moleFraction": 0.03999999999999738,
+          "criticalTemperature": 551.6882921088335,
+          "criticalPressure": 27.76902675117312,
+          "acentricFactor": 0.3641861600596492,
+          "molarMass": 104.0,
+          "normalBoilingPoint": 385.764928,
+          "criticalVolume": 415.67988411315173,
+          "volumeShift": 0.0,
+          "rackettZ": 0.2490493873628046,
+          "parachor": 302.65999999999997,
+          "isPseudo": true,
+          "density": 0.749
+        },
+        {
+          "name": "C9_PC",
+          "moleFraction": 0.029999999999998035,
+          "criticalTemperature": 577.977130936031,
+          "criticalPressure": 25.187489657218013,
+          "acentricFactor": 0.4138175185453612,
+          "molarMass": 119.0,
+          "normalBoilingPoint": 411.18251799999996,
+          "criticalVolume": 472.7476541569328,
+          "volumeShift": 0.0,
+          "rackettZ": 0.2462084179417184,
+          "parachor": 337.76,
+          "isPseudo": true,
+          "density": 0.768
+        },
+        {
+          "name": "C10-12_PC",
+          "moleFraction": 0.06628831408037693,
+          "criticalTemperature": 619.9902642631482,
+          "criticalPressure": 22.067779715840533,
+          "acentricFactor": 0.5001366503365099,
+          "molarMass": 145.59657998200274,
+          "normalBoilingPoint": 453.1940152012678,
+          "criticalVolume": 560.646840185316,
+          "volumeShift": 0.0,
+          "rackettZ": 0.24222336435084005,
+          "parachor": 399.9959971578864,
+          "isPseudo": true,
+          "density": 0.8055610740773689
+        },
+        {
+          "name": "C13-15_PC",
+          "moleFraction": 0.03699407952591993,
+          "criticalTemperature": 675.9732300481334,
+          "criticalPressure": 18.660146651900302,
+          "acentricFactor": 0.6332728801385836,
+          "molarMass": 188.33897500383262,
+          "normalBoilingPoint": 513.0209065173535,
+          "criticalVolume": 681.2503987703248,
+          "volumeShift": 0.0,
+          "rackettZ": 0.24322060985202676,
+          "parachor": 500.01320150896834,
+          "isPseudo": true,
+          "density": 0.8228164065492695
+        },
+        {
+          "name": "C16-20_PC",
+          "moleFraction": 0.029044894926842646,
+          "criticalTemperature": 739.909134156126,
+          "criticalPressure": 16.17501744170931,
+          "acentricFactor": 0.7966234415455493,
+          "molarMass": 244.51976005196988,
+          "normalBoilingPoint": 578.6357147450885,
+          "criticalVolume": 809.8033299148489,
+          "volumeShift": 0.0,
+          "rackettZ": 0.24737475945277831,
+          "parachor": 631.4762385216094,
+          "isPseudo": true,
+          "density": 0.8398053314802245
+        },
+        {
+          "name": "C21-79_PC",
+          "moleFraction": 0.017672711466916034,
+          "criticalTemperature": 849.4862339737618,
+          "criticalPressure": 13.832870349489546,
+          "acentricFactor": 1.0672147135545595,
+          "molarMass": 355.3031707399272,
+          "normalBoilingPoint": 672.440188128933,
+          "criticalVolume": 1088.1924766734294,
+          "volumeShift": 0.0,
+          "rackettZ": 0.25790787129428716,
+          "parachor": 890.7094195314296,
+          "isPseudo": true,
+          "density": 0.8673919606802186
+        }
+      ],
+      "binaryInteractionCoefficients": [
+        {
+          "i": "methane",
+          "j": "ethane",
+          "kij": 0.00295295
+        },
+        {
+          "i": "methane",
+          "j": "propane",
+          "kij": 0.00747722
+        },
+        {
+          "i": "methane",
+          "j": "n-butane",
+          "kij": 0.01289789
+        },
+        {
+          "i": "methane",
+          "j": "n-pentane",
+          "kij": 0.01847102
+        },
+        {
+          "i": "methane",
+          "j": "n-hexane",
+          "kij": 0.023474067
+        },
+        {
+          "i": "methane",
+          "j": "C7_PC",
+          "kij": 0.04
+        },
+        {
+          "i": "methane",
+          "j": "C8_PC",
+          "kij": 0.04
+        },
+        {
+          "i": "methane",
+          "j": "C9_PC",
+          "kij": 0.04
+        },
+        {
+          "i": "methane",
+          "j": "C10-12_PC",
+          "kij": 0.04
+        },
+        {
+          "i": "methane",
+          "j": "C13-15_PC",
+          "kij": 0.04
+        },
+        {
+          "i": "methane",
+          "j": "C16-20_PC",
+          "kij": 0.04
+        },
+        {
+          "i": "methane",
+          "j": "C21-79_PC",
+          "kij": 0.04
+        },
+        {
+          "i": "ethane",
+          "j": "propane",
+          "kij": 0.00185286
+        },
+        {
+          "i": "ethane",
+          "j": "n-butane",
+          "kij": 0.00464288
+        },
+        {
+          "i": "ethane",
+          "j": "n-pentane",
+          "kij": 0.00811359
+        },
+        {
+          "i": "propane",
+          "j": "n-butane",
+          "kij": 0.00132268
+        },
+        {
+          "i": "propane",
+          "j": "n-pentane",
+          "kij": 0.00316586
+        },
+        {
+          "i": "n-butane",
+          "j": "n-pentane",
+          "kij": 0.00097665
+        }
+      ],
+      "viscosityModel": {
+        "type": "LBC",
+        "coefficients": [
+          0.1023,
+          0.023364,
+          0.058533,
+          -0.040758,
+          0.0093324
+        ],
+        "criticalVolumesCm3PerMol": [
+          99.0,
+          148.0,
+          203.0,
+          255.0,
+          304.0,
+          370.0,
+          473.28669504945367,
+          495.1767083783184,
+          536.0286939079966,
+          610.4412876823386,
+          787.1132516729785,
+          1032.9137401667704,
+          1543.2151465748154
+        ]
+      }
+    },
+    "portableFluidJsonLimitations": "Convenience export: not an exact checkpoint; mixing-rule, alpha, OmegaA and transport extensions may be omitted"
+  },
+  "experiments": [
+    {
+      "experiment_id": "OIL-CCE",
+      "kind": "CCE",
+      "temperature_k": 373.15,
+      "pressures_bara": [
+        400.0,
+        300.0,
+        200.0,
+        100.0,
+        50.0
+      ],
+      "reference_predictions": {
+        "kind": "CCE",
+        "temperatureK": 373.15,
+        "pressuresBara": [
+          400.0,
+          300.0,
+          200.0,
+          100.0,
+          50.0
+        ],
+        "saturationPressureBara": 221.13239860534668,
+        "values": {
+          "relativeVolume": [
+            0.9282912109797654,
+            0.962079556029221,
+            1.0529405209614346,
+            1.753777011415927,
+            3.4404083638543987
+          ],
+          "liquidRelativeVolume": [
+            null,
+            null,
+            93.24431785285705,
+            73.57628550261678,
+            65.53485428145545
+          ],
+          "phaseZeroDensityKgPerM3": [
+            582.3343399912129,
+            561.8540719809606,
+            177.28741531370392,
+            80.56230628903646,
+            39.67212817480705
+          ],
+          "oilDensityKgPerM3": [
+            582.3343399912129,
+            561.8540719809606,
+            558.629442924166,
+            637.9950426558755,
+            681.1342946527749
+          ],
+          "gasZ": [
+            1.366130107820125,
+            1.0618913268250152,
+            0.822079509727325,
+            0.8562547328835254,
+            0.9064158346975575
+          ],
+          "yFactor": [
+            null,
+            null,
+            1.995862358508046,
+            1.6070057426904858,
+            1.4024898548950957
+          ]
+        }
+      }
+    },
+    {
+      "experiment_id": "OIL-DLE",
+      "kind": "DLE",
+      "temperature_k": 373.15,
+      "pressures_bara": [
+        300.0,
+        200.0,
+        100.0,
+        50.0,
+        10.0
+      ],
+      "reference_predictions": {
+        "kind": "DLE",
+        "temperatureK": 373.15,
+        "pressuresBara": [
+          300.0,
+          200.0,
+          100.0,
+          50.0,
+          10.0
+        ],
+        "saturationPressureBara": 221.13239860534668,
+        "values": {
+          "boM3PerSm3": [
+            1.8967035195995945,
+            1.829347753078255,
+            1.4053827538270651,
+            1.2566838136969272,
+            1.1013226579503568
+          ],
+          "rsSm3PerSm3": [
+            281.11536855208686,
+            235.3679930136075,
+            96.99813472573118,
+            49.393905544650785,
+            6.459207527265729
+          ],
+          "bgM3PerSm3": [
+            0.0,
+            0.005393432680803867,
+            0.011227344955990088,
+            0.023625474442197515,
+            0.12504502679951443
+          ],
+          "oilDensityKgPerM3": [
+            561.8540719809606,
+            558.629442924166,
+            637.9018655207932,
+            676.7231165796353,
+            717.8461487947106
+          ],
+          "gasZ": [
+            0.0,
+            0.822079509727325,
+            0.8556489700715273,
+            0.9002623929859833,
+            0.9529826402678271
+          ]
+        }
+      }
+    },
+    {
+      "experiment_id": "OIL-CCE-HOLDOUT",
+      "kind": "CCE",
+      "temperature_k": 363.15,
+      "pressures_bara": [
+        400.0,
+        300.0,
+        200.0,
+        100.0,
+        50.0
+      ],
+      "reference_predictions": {
+        "kind": "CCE",
+        "temperatureK": 363.15,
+        "pressuresBara": [
+          400.0,
+          300.0,
+          200.0,
+          100.0,
+          50.0
+        ],
+        "saturationPressureBara": 217.1352825164795,
+        "values": {
+          "relativeVolume": [
+            0.9325208708654128,
+            0.9636262343895289,
+            1.0413869860710052,
+            1.714134000544475,
+            3.3525912013082477
+          ],
+          "liquidRelativeVolume": [
+            null,
+            null,
+            94.74604436597426,
+            75.15004367827002,
+            67.18060908476272
+          ],
+          "phaseZeroDensityKgPerM3": [
+            590.3007122015246,
+            571.2189979153516,
+            179.0869288191115,
+            81.1192319801515,
+            39.66619099442521
+          ],
+          "oilDensityKgPerM3": [
+            590.3007122015246,
+            571.2189979153516,
+            564.7002002462724,
+            642.9518822007138,
+            685.5562298435618
+          ],
+          "gasZ": [
+            1.3848322161344557,
+            1.0732687294627445,
+            0.8121896482791588,
+            0.8491822280411436,
+            0.9029625860252649
+          ],
+          "yFactor": [
+            null,
+            null,
+            2.0701293018874987,
+            1.6402423414537386,
+            1.4208612395008324
+          ]
+        }
+      }
+    },
+    {
+      "experiment_id": "OIL-VISCOSITY",
+      "kind": "VISCOSITY",
+      "temperature_k": 373.15,
+      "pressures_bara": [
+        100.0,
+        50.0,
+        10.0
+      ],
+      "reference_predictions": {
+        "kind": "VISCOSITY",
+        "temperatureK": 373.15,
+        "pressuresBara": [
+          100.0,
+          50.0,
+          10.0
+        ],
+        "absentPhaseConvention": "Existing ViscositySim returns zero when a phase is absent",
+        "values": {
+          "gasViscosityPaS": [
+            1.478865502787547e-05,
+            1.3153979920067252e-05,
+            1.1933799839763858e-05
+          ],
+          "oilViscosityPaS": [
+            0.00027095053480159293,
+            0.0004659756480393515,
+            0.0010065347116680699
+          ],
+          "aqueousViscosityPaS": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    }
+  ],
+  "observations": [
+    {
+      "id": "OIL-CCE-relative_volume",
+      "experiment_id": "OIL-CCE",
+      "property": "relative_volume",
+      "unit": "1",
+      "values": [
+        0.9282912109797654,
+        0.962079556029221,
+        1.0529405209614346,
+        1.753777011415927,
+        3.4404083638543987
+      ],
+      "uncertainty": [
+        0.001,
+        0.001,
+        0.001,
+        0.001,
+        0.001
+      ],
+      "uncertainty_basis": "Assumed synthetic standard uncertainty for a software fixture; not an instrument measurement",
+      "source_kind": "synthetic_reference",
+      "source": {
+        "fixture": "oil_reference.json",
+        "table": "OIL-CCE/relative_volume",
+        "reference_parameter_identity": "1897b54f1b9e5b7868c215476af1aa21e1f7500e4e1503375e4796c7396acab7"
+      },
+      "acceptance_max_absolute_error": 0.0005
+    },
+    {
+      "id": "OIL-DLE-rs_sm3_sm3",
+      "experiment_id": "OIL-DLE",
+      "property": "rs_sm3_sm3",
+      "unit": "Sm3/Sm3",
+      "values": [
+        281.11536855208686,
+        235.3679930136075,
+        96.99813472573118,
+        49.393905544650785,
+        6.459207527265729
+      ],
+      "uncertainty": [
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        0.5
+      ],
+      "uncertainty_basis": "Assumed synthetic standard uncertainty for a software fixture; not an instrument measurement",
+      "source_kind": "synthetic_reference",
+      "source": {
+        "fixture": "oil_reference.json",
+        "table": "OIL-DLE/rs_sm3_sm3",
+        "reference_parameter_identity": "1897b54f1b9e5b7868c215476af1aa21e1f7500e4e1503375e4796c7396acab7"
+      },
+      "acceptance_max_absolute_error": 0.05
+    },
+    {
+      "id": "OIL-DLE-bo_m3_sm3",
+      "experiment_id": "OIL-DLE",
+      "property": "bo_m3_sm3",
+      "unit": "m3/Sm3",
+      "values": [
+        1.8967035195995945,
+        1.829347753078255,
+        1.4053827538270651,
+        1.2566838136969272,
+        1.1013226579503568
+      ],
+      "uncertainty": [
+        0.005,
+        0.005,
+        0.005,
+        0.005,
+        0.005
+      ],
+      "uncertainty_basis": "Assumed synthetic standard uncertainty for a software fixture; not an instrument measurement",
+      "source_kind": "synthetic_reference",
+      "source": {
+        "fixture": "oil_reference.json",
+        "table": "OIL-DLE/bo_m3_sm3",
+        "reference_parameter_identity": "1897b54f1b9e5b7868c215476af1aa21e1f7500e4e1503375e4796c7396acab7"
+      },
+      "acceptance_max_absolute_error": 0.001
+    },
+    {
+      "id": "OIL-DLE-oil_density_kg_m3",
+      "experiment_id": "OIL-DLE",
+      "property": "oil_density_kg_m3",
+      "unit": "kg/m3",
+      "values": [
+        561.8540719809606,
+        558.629442924166,
+        637.9018655207932,
+        676.7231165796353,
+        717.8461487947106
+      ],
+      "uncertainty": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "uncertainty_basis": "Assumed synthetic standard uncertainty for a software fixture; not an instrument measurement",
+      "source_kind": "synthetic_reference",
+      "source": {
+        "fixture": "oil_reference.json",
+        "table": "OIL-DLE/oil_density_kg_m3",
+        "reference_parameter_identity": "1897b54f1b9e5b7868c215476af1aa21e1f7500e4e1503375e4796c7396acab7"
+      },
+      "acceptance_max_absolute_error": 0.1
+    },
+    {
+      "id": "OIL-CCE-HOLDOUT-relative_volume",
+      "experiment_id": "OIL-CCE-HOLDOUT",
+      "property": "relative_volume",
+      "unit": "1",
+      "values": [
+        0.9325208708654128,
+        0.9636262343895289,
+        1.0413869860710052,
+        1.714134000544475,
+        3.3525912013082477
+      ],
+      "uncertainty": [
+        0.001,
+        0.001,
+        0.001,
+        0.001,
+        0.001
+      ],
+      "uncertainty_basis": "Assumed synthetic standard uncertainty for a software fixture; not an instrument measurement",
+      "source_kind": "synthetic_reference",
+      "source": {
+        "fixture": "oil_reference.json",
+        "table": "OIL-CCE-HOLDOUT/relative_volume",
+        "reference_parameter_identity": "1897b54f1b9e5b7868c215476af1aa21e1f7500e4e1503375e4796c7396acab7"
+      },
+      "acceptance_max_absolute_error": 0.0005
+    },
+    {
+      "id": "OIL-VISCOSITY-viscosity_pa_s",
+      "experiment_id": "OIL-VISCOSITY",
+      "property": "viscosity_pa_s",
+      "unit": "Pa s",
+      "values": [
+        0.00027095053480159293,
+        0.0004659756480393515,
+        0.0010065347116680699
+      ],
+      "uncertainty": [
+        1e-05,
+        1e-05,
+        1e-05
+      ],
+      "uncertainty_basis": "Assumed synthetic standard uncertainty for a software fixture; not an instrument measurement",
+      "source_kind": "synthetic_reference",
+      "source": {
+        "fixture": "oil_reference.json",
+        "table": "OIL-VISCOSITY/viscosity_pa_s",
+        "reference_parameter_identity": "1897b54f1b9e5b7868c215476af1aa21e1f7500e4e1503375e4796c7396acab7"
+      },
+      "acceptance_max_absolute_error": 1e-05,
+      "phase": "oil"
+    }
+  ]
+}
