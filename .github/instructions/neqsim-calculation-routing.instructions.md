@@ -1,4 +1,5 @@
 ---
+description: "Use when running NeqSim calculations or resolving plugin-only Python, Java and toolkit setup."
 applyTo: "**"
 ---
 
@@ -8,8 +9,9 @@ applyTo: "**"
 
 A single property, flash, phase-envelope, sizing, PVT, or standards lookup is
 served by a curated `mcp_neqsim_*` tool when the NeqSim MCP server is available.
-Use it first: it needs no local Python, no terminal, and no Java, and it returns
-a schema-checked result with provenance. Write Python or Java only when the task
+Use it first: it needs no Python or terminal commands from the agent and returns
+a schema-checked result with provenance. The MCP server itself needs Java.
+Write Python or Java only when the task
 needs loops, plotting, a notebook, a report, or state inspected between steps.
 
 ```text
@@ -36,11 +38,14 @@ uv run --project devtools --locked devtools/java_locator.py        # source chec
 neqsim doctor                          # pip install of the CLI: names the found Java
 ```
 
-If `neqsim` is not on PATH, run `python -m neqsim_cli doctor` with the same
-arguments. With only the agent plugin installed (no checkout, no CLI) neither
-command exists — but the plugin's session hook resolves a JDK 21+ for the MCP
-server on its own, so the `mcp_neqsim_*` tools still work and remain the route
-to prefer.
+The core plugin installs the CLI and task toolkit on first session, without a
+checkout. Use the resolved Python interpreter and setup status supplied by the
+session hook. If `neqsim` is not on PATH, invoke `-m neqsim_cli doctor` with that
+interpreter (PowerShell requires `&` before a quoted executable path). Do not run
+the `uv` checkout command unless `devtools` actually exists. If package setup is
+pending or failed, inspect the reported install log and run `/neqsim-setup`
+instead of assuming the CLI is installed. The session hook separately resolves
+a JDK 21+ for the MCP server; prefer its available calculation tools.
 
 In Python, make a hidden JVM usable for the current process before touching
 JPype or NeqSim:
