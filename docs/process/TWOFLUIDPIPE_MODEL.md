@@ -134,7 +134,21 @@ source without component transport still uses the reference-fluid no-slip volume
 an approximation and is unsuitable for preserving equilibrium in a slipping mixture.
 
 Flash-driven phase transfer is mapped by component name. Evaporation withdraws the donor oil or
-water composition. Condensation uses the receiving equilibrium phase composition. In every cell,
+water composition. Condensation uses the receiving equilibrium phase composition.
+
+An initially empty phase may advect within the substep that creates it when stage-frozen
+component sources provide its composition. All outgoing faces together must fit within that
+cell's old plus same-stage-created phase mass; incoming face mass cannot fund another departure
+in the same step. Existing phases retain their old upwind composition. No phase inventory is
+seeded, and the source is counted exactly once. Missing, nonfinite, inconsistent, or insufficient
+sources reject the complete component candidate without changing its inventory or ledgers.
+Frozen component sources must reproduce each hydrodynamic phase source and sum to zero across
+phases for every named component in each cell. Equal total phase transfers alone cannot authorize
+conversion of one chemical component into another. Source-funded outlet transfers enter the same
+component boundary ledger as existing-phase transport.
+This transport contract does not qualify full blowdown thermal recovery or outlet backflow.
+
+The interphase source balance is
 
 $$
 \sum_{k\in\{G,O,W\}} \Delta M_{i,k,c}^{transfer}=0

@@ -5,7 +5,7 @@ description: "Validation report written by neqsim surf-study --demo (synthetic d
 
 # SURF study validation report
 
-Overall: **PASS** (31 checks, 19 pass, 0 fail, 12 warn). Readiness: **SCREENING** - screening grade: synthetic inputs, 8 open specialist hand-off(s), 5 data gap(s)
+Overall: **PASS** (31 checks, 20 pass, 0 fail, 11 warn). Readiness: **SCREENING** - screening grade: synthetic inputs, 8 open specialist hand-off(s), 5 data gap(s)
 
 | Check | Result | Description | Detail |
 |---|---|---|---|
@@ -13,7 +13,7 @@ Overall: **PASS** (31 checks, 19 pass, 0 fail, 12 warn). Readiness: **SCREENING*
 | V-CONCEPTS | PASS | At least two meaningful concepts are compared | A, B, C |
 | V-CONVERGE | WARN | Every case of the reference/selected concept solved: coupling converged, process model converged, no retained hydraulic fallback | C/BASE: hydraulic fallback or failure on FL-TRUNK (BEGGS_BRILL_FALLBACK_DARCY); no distributed pro (concepts that are not reference or selected are reported infeasible and excluded from ranking) |
 | V-FALLBACK | WARN | No retained hydraulic fallback or failed-edge status in the reference/selected concept | C/BASE/FL-TRUNK: BEGGS_BRILL_FALLBACK_DARCY |
-| V-HAND | WARN | Hydrostatic, friction, thermal and mass-closure hand checks agree with the solved values | 27 checks; failed: none; explained solver limitation (elevation work absent in the generic Darcy edge energy balance): A HC-THERMAL-RI-INJ |
+| V-HAND | PASS | Hydrostatic, friction, thermal and mass-closure hand checks agree with the solved values | 27 checks; failed: none |
 | V-MESH | PASS | Spatial-sensitivity gate (study mesh against a finer mesh) | max dp 0.279 bar, max dT 2.16 K (tolerances {'p_bar': 1.0, 't_k': 3.0}) |
 | V-COOLDOWN | PASS | Lumped cooldown time agrees with the independent RK4 integration |  |
 | V-FLUID | WARN | SRK pure-water properties against tabulated water | SRK pure-water heat capacity deviates 14.0% |

@@ -33,7 +33,7 @@ optimization-notebooks = [
 
 [project.optional-dependencies]
 combustion = ["cantera==3.2.0"]
-pdf = ["pymupdf>=1.22.0"]
+pdf = ["pymupdf>=1.22.0", "reportlab>=4.0"]
 ocr = [
     "pymupdf>=1.22.0",
     "ocrmypdf>=15.0.0",
@@ -60,6 +60,7 @@ py-modules = [
     "process_report", "psr_draft",
     "fa_units", "fa_geometry", "fa_thermal", "fa_methods", "fa_solver", "fa_benchmarks", "fa_study", "fa_draw",
     "fa_sheets_net", "fa_sheets_results", "fa_diagrams", "fa_handoff", "fa_report", "fa_validate", "flow_assurance_report",
+    "pvt_data", "pvt_study", "pvt_report",
     "surf_spec", "surf_model", "surf_run", "surf_design", "surf_quantities", "surf_dataset", "surf_draw", "surf_sheets_a", "surf_sheets_b", "surf_diagrams",
     "surf_report", "surf_validate", "surf_study",
 ]
@@ -75,6 +76,7 @@ packages = [
     "fa_examples",
     "fa_examples.offshore_tieback",
     "fa_examples.single_flowline",
+    "pvt_examples",
     "surf_templates",
     "surf_examples",
     "surf_examples.four_well_tieback",
@@ -88,6 +90,7 @@ surf_templates = ["*.yaml", "*.md"]
 "surf_examples.four_well_tieback" = ["*.yaml"]
 "fa_examples.offshore_tieback" = ["*.yaml"]
 "fa_examples.single_flowline" = ["*.yaml"]
+pvt_examples = ["*.yaml", "*.json"]
 
 [tool.setuptools.exclude-package-data]
 "*" = ["__pycache__/*", "*.pyc"]

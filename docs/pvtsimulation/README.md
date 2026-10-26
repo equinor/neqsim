@@ -12,6 +12,10 @@ See the [Pedersen-method qualification matrix](pedersen_method_qualification)
 for the distinction between implemented APIs, numerical verification and measured
 accuracy, including current gas-injection limitations.
 
+For a complete sample-to-model study with professional reporting, full parameter
+capture and fresh-process E300 replay, use the
+[PVT and fluid-characterization study workflow](pvt_fluid_study_report).
+
 ## Choose a simulation
 
 | Engineering task | Main class | Typical results |

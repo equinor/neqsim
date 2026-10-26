@@ -16,12 +16,15 @@ import java.util.Arrays;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.LBCViscosityMethod;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.component.ComponentPR;
 import neqsim.thermo.phase.PhaseEosInterface;
+import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -514,6 +517,7 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> SSHIFTS = new ArrayList<Double>();
       ArrayList<Double> TBOIL = new ArrayList<Double>();
       ArrayList<Double> VCRIT = new ArrayList<Double>();
+      ArrayList<Double> VCRITVIS = new ArrayList<Double>();
       ArrayList<Double> PARACHOR = new ArrayList<Double>();
       ArrayList<Double> ZI = new ArrayList<Double>();
       ArrayList<Double> BIC = new ArrayList<Double>();
@@ -522,9 +526,13 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> OMEGAA_list = new ArrayList<Double>();
       ArrayList<Double> OMEGAB_list = new ArrayList<Double>();
       boolean usePedersen = false;
+      String unitSystem = "METRIC";
       String EOS;
       while ((st = br.readLine()) != null) {
         st = st.trim();
+        if ("METRIC".equals(st) || "FIELD".equals(st) || "LAB".equals(st) || "PVT-M".equals(st)) {
+          unitSystem = st;
+        }
 
         // System.out.println("EOS " +EOS );
         if (st.trim().equals("EOS")) {
@@ -640,6 +648,9 @@ public class EclipseFluidReadWrite {
           if (st == null) {
             break;
           }
+        }
+        if (st.equals("VCRITVIS")) {
+          VCRITVIS.addAll(readViscosityCriticalVolumes(br));
         }
         if (st.equals("SSHIFT")) {
           while ((st = readLineClean(br)) != null) {
@@ -905,6 +916,12 @@ public class EclipseFluidReadWrite {
         // Apply Pedersen (PFCT) viscosity model if PEDERSEN keyword was found
         applyPFCTViscosityModel(fluid);
       }
+      if (!VCRITVIS.isEmpty() && (LBCCOEF.size() >= 5 || !usePedersen)) {
+        if (!"METRIC".equals(unitSystem)) {
+          throw new IllegalArgumentException("VCRITVIS currently requires METRIC input units");
+        }
+        applyLbcCriticalVolumes(fluid, VCRITVIS, names.size());
+      }
 
       // Enable the multi-phase (VLLE) flash when the fluid contains water. A
       // water + hydrocarbon system is liquid-liquid immiscible, and the default
@@ -1150,6 +1167,7 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> SSHIFTS = new ArrayList<Double>();
       ArrayList<Double> TBOIL = new ArrayList<Double>();
       ArrayList<Double> VCRIT = new ArrayList<Double>();
+      ArrayList<Double> VCRITVIS = new ArrayList<Double>();
       ArrayList<Double> PARACHOR = new ArrayList<Double>();
       ArrayList<Double> ZI = new ArrayList<Double>();
       ArrayList<Double> BIC = new ArrayList<Double>();
@@ -1158,9 +1176,13 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> OMEGAA_list = new ArrayList<Double>();
       ArrayList<Double> OMEGAB_list = new ArrayList<Double>();
       boolean usePedersen = false;
+      String unitSystem = "METRIC";
       String EOS;
       while ((st = br.readLine()) != null) {
         st = st.trim();
+        if ("METRIC".equals(st) || "FIELD".equals(st) || "LAB".equals(st) || "PVT-M".equals(st)) {
+          unitSystem = st;
+        }
         // System.out.println("EOS " +EOS );
         if (st.equals("EOS")) {
           st = st.trim();
@@ -1237,6 +1259,9 @@ public class EclipseFluidReadWrite {
             }
             VCRIT.add(Double.parseDouble(st));
           }
+        }
+        if (st.equals("VCRITVIS")) {
+          VCRITVIS.addAll(readViscosityCriticalVolumes(br));
         }
         if (st.trim().equals("SSHIFT")) {
           while ((st = br.readLine().trim().replace("/", "")) != null) {
@@ -1499,6 +1524,12 @@ public class EclipseFluidReadWrite {
       } else if (usePedersen) {
         // Apply Pedersen (PFCT) viscosity model if PEDERSEN keyword was found
         applyPFCTViscosityModel(fluid);
+      }
+      if (!VCRITVIS.isEmpty() && (LBCCOEF.size() >= 5 || !usePedersen)) {
+        if (!"METRIC".equals(unitSystem)) {
+          throw new IllegalArgumentException("VCRITVIS currently requires METRIC input units");
+        }
+        applyLbcCriticalVolumes(fluid, VCRITVIS, names.size());
       }
     } catch (IOException ex) {
       throw new IllegalArgumentException("Failed to read Eclipse fluid file: " + inputFile + ". " + ex.getMessage(),
@@ -1854,6 +1885,16 @@ public class EclipseFluidReadWrite {
     }
     writer.write("/\n");
 
+    if (fluid.getPhase(0).getPhysicalProperties().isLBCViscosityModel()) {
+      writer.write("-- Critical volumes for viscosity only (m3/kmol)\n");
+      writer.write("VCRITVIS\n");
+      LBCViscosityMethod lbc = (LBCViscosityMethod) fluid.getPhase(0).getPhysicalProperties().getViscosityModel();
+      for (double volume : lbc.getCriticalVolumes()) {
+        writer.write("   " + Double.toString(volume / CM3_PER_MOL_PER_M3_PER_KMOL) + "\n");
+      }
+      writer.write("/\n");
+    }
+
     // Critical Z-factors
     writer.write("-- Critical Z-factors\n");
     writer.write("ZCRIT\n");
@@ -2094,18 +2135,95 @@ public class EclipseFluidReadWrite {
   }
 
   /**
+   * Read a slash-terminated VCRITVIS array, retaining component order and accepting inline comments.
+   *
+   * @param reader reader positioned immediately after the VCRITVIS keyword
+   * @return positive finite values in the source METRIC m3/kmol units
+   * @throws IOException if the input cannot be read
+   * @throws IllegalArgumentException if values are invalid or the block has no terminator
+   */
+  private static List<Double> readViscosityCriticalVolumes(BufferedReader reader) throws IOException {
+    List<Double> volumes = new ArrayList<Double>();
+    String line;
+    while ((line = reader.readLine()) != null) {
+      int comment = line.indexOf("--");
+      String numeric = comment >= 0 ? line.substring(0, comment) : line;
+      int terminator = numeric.indexOf('/');
+      String values = (terminator >= 0 ? numeric.substring(0, terminator) : numeric).trim();
+      if (!values.isEmpty()) {
+        for (String token : values.split("\\s+")) {
+          double value = Double.parseDouble(token);
+          if (!Double.isFinite(value) || value <= 0.0) {
+            throw new IllegalArgumentException("VCRITVIS values must be finite and positive");
+          }
+          volumes.add(value);
+        }
+      }
+      if (terminator >= 0) {
+        if (volumes.isEmpty()) {
+          throw new IllegalArgumentException("VCRITVIS requires one value per source component");
+        }
+        return volumes;
+      }
+    }
+    throw new IllegalArgumentException("VCRITVIS must be terminated by a slash");
+  }
+
+  /**
+   * Apply METRIC viscosity-only volumes while preserving the separate thermodynamic VCRIT values.
+   *
+   * @param fluid model containing one or more replicated component blocks
+   * @param metricVolumes one positive finite m3/kmol value per source component
+   * @param blockSize number of source components before optional replication
+   * @throws IllegalArgumentException if component counts or volume values are invalid
+   */
+  private static void applyLbcCriticalVolumes(SystemInterface fluid, List<Double> metricVolumes, int blockSize) {
+    if (blockSize < 1 || metricVolumes.size() != blockSize || fluid.getNumberOfComponents() % blockSize != 0) {
+      throw new IllegalArgumentException("VCRITVIS requires one value per source component");
+    }
+    double[] volumes = new double[fluid.getNumberOfComponents()];
+    for (int i = 0; i < volumes.length; i++) {
+      double value = metricVolumes.get(i % blockSize);
+      if (!Double.isFinite(value) || value <= 0.0) {
+        throw new IllegalArgumentException("VCRITVIS values must be finite and positive");
+      }
+      volumes[i] = value * CM3_PER_MOL_PER_M3_PER_KMOL;
+    }
+    for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
+      PhaseInterface phase = fluid.getPhase(p);
+      PhaseType originalType = phase.getType();
+      try {
+        for (PhaseType type : new PhaseType[] {originalType, PhaseType.GAS, PhaseType.OIL}) {
+          phase.setType(type);
+          if (!phase.getPhysicalProperties().isLBCViscosityModel()) {
+            phase.getPhysicalProperties().setViscosityModel("LBC");
+          }
+          ((LBCViscosityMethod) phase.getPhysicalProperties().getViscosityModel()).setCriticalVolumes(volumes);
+        }
+      } finally {
+        phase.setType(originalType);
+      }
+    }
+  }
+
+  /**
    * Apply LBC viscosity model with custom parameters to fluid.
    *
    * @param fluid the fluid to configure
    * @param lbcParams array of 5 LBC dense contribution parameters
    */
   private static void applyLBCViscosityModel(SystemInterface fluid, double[] lbcParams) {
-    for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+    for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
+      PhaseInterface phase = fluid.getPhase(p);
+      PhaseType originalType = phase.getType();
       try {
-        fluid.getPhase(phase).getPhysicalProperties().setViscosityModel("LBC");
-        fluid.getPhase(phase).getPhysicalProperties().setLbcParameters(lbcParams);
-      } catch (Exception e) {
-        logger.debug("Could not set LBC model for phase " + phase + ": " + e.getMessage());
+        for (PhaseType type : new PhaseType[] {originalType, PhaseType.GAS, PhaseType.OIL}) {
+          phase.setType(type);
+          phase.getPhysicalProperties().setViscosityModel("LBC");
+          phase.getPhysicalProperties().setLbcParameters(lbcParams);
+        }
+      } finally {
+        phase.setType(originalType);
       }
     }
   }
@@ -2116,11 +2234,16 @@ public class EclipseFluidReadWrite {
    * @param fluid the fluid to configure
    */
   private static void applyPFCTViscosityModel(SystemInterface fluid) {
-    for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+    for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
+      PhaseInterface phase = fluid.getPhase(p);
+      PhaseType originalType = phase.getType();
       try {
-        fluid.getPhase(phase).getPhysicalProperties().setViscosityModel("PFCT");
-      } catch (Exception e) {
-        logger.debug("Could not set PFCT model for phase " + phase + ": " + e.getMessage());
+        for (PhaseType type : new PhaseType[] {originalType, PhaseType.GAS, PhaseType.OIL}) {
+          phase.setType(type);
+          phase.getPhysicalProperties().setViscosityModel("PFCT");
+        }
+      } finally {
+        phase.setType(originalType);
       }
     }
   }

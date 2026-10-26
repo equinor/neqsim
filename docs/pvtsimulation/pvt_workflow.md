@@ -14,6 +14,12 @@ For a runnable starting point, use the Java 8/Log4j2
 The enabled [PVT regression tests](../../src/test/java/neqsim/pvtsimulation/regression/PVTRegressionTest.java)
 exercise the current regression surface. This page intentionally contains no second code example.
 
+For executable sample/analysis QC, characterization, supported bounded CCE
+calibration, final parameter capture, fresh-process E300 replay and professional
+reporting, see the [PVT fluid-study report workflow](pvt_fluid_study_report.md).
+Its narrower calibrated/exportable contract is explicit; simulation support does
+not imply that every fitting protocol is qualified.
+
 ## Evidence boundary
 
 The workflow is bounded by current repository sources:
@@ -126,10 +132,11 @@ or a zero residual against a zero-valued observation. Starting another solve
 clears the optimizer's prior convergence result and statistics; an evaluation
 exception leaves it unsolved with no final chi-square result.
 
-The array-taking methods iterate from the pressure-array length and do not perform a visible
-equal-length, non-empty, finite-value, or ordering check before indexing the companion arrays.
-Validate those properties before calling the API. Also retain the original observation order or an
-explicit sort record; do not infer a depletion path from an unordered table.
+CVD/DLE registration validates its pressure schedule, temperature and observation-array lengths.
+The CCE and viscosity array-taking methods still require callers to validate equal-length,
+non-empty, finite input arrays before indexing. Validate observation values for every experiment,
+and retain original depletion order or an explicit sort record; do not infer a depletion path
+from an unordered table.
 
 Pressure conventions differ across the surface: most regression experiment Javadocs say bar,
 viscosity uses bara, and report metadata uses bara. Treat the laboratory pressure basis as an input

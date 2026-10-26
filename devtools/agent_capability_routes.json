@@ -105,11 +105,12 @@
     {
       "package": "neqsim.pvtsimulation",
       "title": "PVT laboratory simulations and regression",
-      "keywords": "PVT CME CCE CVD depletion differential liberation swelling saturation fluid laboratory",
+      "keywords": "PVT CME CCE CVD depletion differential liberation swelling saturation fluid laboratory sample analysis QC recombination characterization final parameter E300 report study",
       "agent": "pvt-simulation",
       "skill": "neqsim-eos-regression",
       "docs": [
-        "docs/pvtsimulation/README.md"
+        "docs/pvtsimulation/README.md",
+        "docs/pvtsimulation/pvt_fluid_study_report.md"
       ]
     },
     {

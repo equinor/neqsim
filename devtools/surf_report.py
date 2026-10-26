@@ -373,13 +373,8 @@ class SurfReportBuilder(psr_report.ReportBuilder):
                    widths=[22, 38, 28, 40, 40], align=["left"] + ["right"] * 4)
         rows = [(h["id"], h["description"][:96], "%.3f" % h["model"], "%.3f" % h["hand"], h["unit"], h["status"]) for h in ds["hand_checks"][self.ref] if not h["id"].startswith("HC-NODE")]
         self.table(["Check", "Description", "Model", "Hand", "Unit", "Result"], rows, caption="Independent hand checks (reference concept, design case)", font=6.5, widths=[28, 80, 16, 16, 12, 14], align=["left"] * 6)
-        expl = [h for h in ds["hand_checks"][self.ref] if h["status"] == "EXPLAINED"]
-        self.P("Mass closes below the stated tolerance at every network node and between wells and host. The single-phase hydrostatic, friction and thermal hand checks agree with the solved values"
-               + (" except for %d explained deviation(s)" % len(expl) if expl else "") + "; they check the "
+        self.P("Mass closes below the stated tolerance at every network node and between wells and host. The single-phase hydrostatic, friction and thermal hand checks agree with the solved values; they check the "
                "implementation of the hydraulics and the thermal solution, not the multiphase correlation, which carries no general experimental qualification.")
-        if expl:
-            self.P("Finding: " + "; ".join("%s: %s" % (h["id"], h["independence"].split("; ", 1)[-1]) for h in expl) + ". The deviation is a solver limitation, not a design margin; "
-                   "it is carried as an open item for the NeqSim network energy balance and does not change a criterion verdict.")
         fc = ds.get("fluid_checks", [])
         if fc:
             self.P("Finding: %s" % "; ".join("%s deviates %.1f %% from tabulated water" % (c["description"].split(" against")[0], 100 * c["deviation"]) for c in fc if c["status"] != "PASS") +

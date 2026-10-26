@@ -27,6 +27,9 @@ public class ViscositySim extends BasePVTsimulation {
   private double[] gasViscosity;
   private double[] oilViscosity;
   private double[] aqueousViscosity;
+  private boolean[] gasPhaseAvailable;
+  private boolean[] oilPhaseAvailable;
+  private boolean[] aqueousPhaseAvailable;
   ViscosityFunction function;
 
   /**
@@ -104,6 +107,9 @@ public class ViscositySim extends BasePVTsimulation {
     gasViscosity = new double[pressure.length];
     oilViscosity = new double[pressure.length];
     aqueousViscosity = new double[pressure.length];
+    gasPhaseAvailable = new boolean[pressure.length];
+    oilPhaseAvailable = new boolean[pressure.length];
+    aqueousPhaseAvailable = new boolean[pressure.length];
 
     for (int i = 0; i < pressure.length; i++) {
       // thermoOps.setSystem(getThermoSystem());
@@ -112,13 +118,16 @@ public class ViscositySim extends BasePVTsimulation {
       thermoOps.TPflash();
       getThermoSystem().initPhysicalProperties();
 
-      if (getThermoSystem().hasPhaseType("gas")) {
+      gasPhaseAvailable[i] = getThermoSystem().hasPhaseType("gas");
+      oilPhaseAvailable[i] = getThermoSystem().hasPhaseType("oil");
+      aqueousPhaseAvailable[i] = getThermoSystem().hasPhaseType("aqueous");
+      if (gasPhaseAvailable[i]) {
         gasViscosity[i] = getThermoSystem().getPhase("gas").getPhysicalProperties().getViscosity();
       }
-      if (getThermoSystem().hasPhaseType("oil")) {
+      if (oilPhaseAvailable[i]) {
         oilViscosity[i] = getThermoSystem().getPhase("oil").getPhysicalProperties().getViscosity();
       }
-      if (getThermoSystem().hasPhaseType("aqueous")) {
+      if (aqueousPhaseAvailable[i]) {
         aqueousViscosity[i] = getThermoSystem().getPhase("aqueous").getPhysicalProperties().getViscosity();
       }
     }
@@ -191,5 +200,32 @@ public class ViscositySim extends BasePVTsimulation {
    */
   public double[] getAqueousViscosity() {
     return aqueousViscosity;
+  }
+
+  /**
+   * Get gas-phase presence from each flashed state in the last calculation.
+   *
+   * @return presence flags aligned with the viscosity arrays, or null before calculation
+   */
+  public boolean[] getGasPhaseAvailable() {
+    return gasPhaseAvailable;
+  }
+
+  /**
+   * Get oil-phase presence from each flashed state in the last calculation.
+   *
+   * @return presence flags aligned with the viscosity arrays, or null before calculation
+   */
+  public boolean[] getOilPhaseAvailable() {
+    return oilPhaseAvailable;
+  }
+
+  /**
+   * Get aqueous-phase presence from each flashed state in the last calculation.
+   *
+   * @return presence flags aligned with the viscosity arrays, or null before calculation
+   */
+  public boolean[] getAqueousPhaseAvailable() {
+    return aqueousPhaseAvailable;
   }
 }

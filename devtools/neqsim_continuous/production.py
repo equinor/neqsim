@@ -1336,7 +1336,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
 
     reasons = []
     schema_version = evidence.get("schema_version")
-    if schema_version not in (1, 2, 3, 4, 5, 6, 7, 8):
+    if schema_version not in (1, 2, 3, 4, 5, 6, 7, 8, 9):
         reasons.append("unsupported_lifecycle_envelope_schema")
     if evidence.get("cycle_id") != ctx.cycle_id:
         reasons.append("stale_lifecycle_envelope_evidence")
@@ -1351,7 +1351,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
         action_ids = []
     state_metric_ids = None
     if (schema_version == 3
-            or (schema_version in (4, 5, 6, 7, 8) and "accepted_state_metric_ids" in evidence)):
+            or (schema_version in (4, 5, 6, 7, 8, 9) and "accepted_state_metric_ids" in evidence)):
         state_metric_ids = _action_ids(evidence.get("accepted_state_metric_ids"))
         if state_metric_ids is None:
             reasons.append("invalid_lifecycle_state_metric_ids")
@@ -1425,7 +1425,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             reasons.append(prefix + "_identity_mismatch")
         if envelope.get("accepted_action_ids") != action_ids:
             reasons.append(prefix + "_action_ids_mismatch")
-        if schema_version in (4, 5, 6, 7, 8):
+        if schema_version in (4, 5, 6, 7, 8, 9):
             slices = envelope.get("slices")
             if (not isinstance(slices, list)
                     or any(not isinstance(envelope_slice, dict)
@@ -1433,19 +1433,23 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
                            or "operating_region_transitions" not in envelope_slice
                            for envelope_slice in slices)):
                 reasons.append(prefix + "_missing_operating_region_transition_evidence")
-            if (schema_version in (5, 6, 7, 8)
+            if (schema_version in (5, 6, 7, 8, 9)
                     and (not isinstance(slices, list)
                          or any(not isinstance(envelope_slice, dict)
                                 or "operating_region_boundary_refinements" not in envelope_slice
                                 or "maximum_boundary_refinement_evaluations" not in envelope_slice
                                 for envelope_slice in slices))):
                 reasons.append(prefix + "_missing_operating_region_boundary_refinement_evidence")
-            if schema_version in (6, 7, 8) and not _has_boundary_constraint_headroom(slices):
+            if schema_version in (6, 7, 8, 9) and not _has_boundary_constraint_headroom(slices):
                 reasons.append(prefix + "_missing_boundary_constraint_headroom_evidence")
-            if (schema_version in (7, 8)
+            if (schema_version in (7, 8, 9)
                     and (envelope.get("schema_version") != 2
                          or "cross_slice_constraint_summary" not in envelope)):
                 reasons.append(prefix + "_missing_cross_slice_constraint_summary")
+        if schema_version == 9:
+            reasons.extend(prefix + "_" + reason
+                           for reason in _utilization_coverage_reasons(
+                               row.get("utilization_coverage")))
 
         accepted = envelope.get("accepted_candidate_values")
         optimizer = envelope.get("optimizer_evidence")
@@ -1508,18 +1512,95 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             })
     if evidence.get("bottleneck_transitions") != expected_transitions:
         reasons.append("lifecycle_bottleneck_transitions_mismatch")
-    if schema_version in (2, 3, 4, 5, 6, 7, 8):
+    if schema_version in (2, 3, 4, 5, 6, 7, 8, 9):
         expected_period_changes = _period_change_diagnostics(
             periods, action_ids, evidence.get("time_unit"), state_metric_ids,
-            require_operating_transitions=schema_version in (4, 5, 6, 7, 8),
-            require_boundary_refinements=schema_version in (5, 6, 7, 8),
-            require_constraint_summary_identities=schema_version == 8)
+            require_operating_transitions=schema_version in (4, 5, 6, 7, 8, 9),
+            require_boundary_refinements=schema_version in (5, 6, 7, 8, 9),
+            require_constraint_summary_identities=schema_version in (8, 9))
         if (expected_period_changes is None
                 or evidence.get("period_change_diagnostics") != expected_period_changes):
             reasons.append("lifecycle_period_change_diagnostics_mismatch")
     if evidence.get("advisory") is not True:
         reasons.append("lifecycle_envelope_not_advisory")
     return reasons
+
+
+def _utilization_coverage_reasons(coverage):
+    """Validate one complete declared-scope coverage block without trusting its summary flag."""
+    if not isinstance(coverage, dict):
+        return ["missing_utilization_coverage"]
+    reasons = []
+    if (coverage.get("schema_version") != "1.0"
+            or coverage.get("coverage_scope") != "DECLARED_EQUIPMENT_AND_CONSTRAINTS"
+            or not _text(coverage.get("model_name"))
+            or not isinstance(coverage.get("registry_identity_digest"), str)):
+        reasons.append("invalid_utilization_coverage_identity")
+    expected_equipment = coverage.get("expected_equipment_ids")
+    expected_constraints = coverage.get("expected_constraint_ids")
+    required_constraints = coverage.get("required_constraint_ids")
+    if (not isinstance(expected_equipment, list) or not expected_equipment
+            or any(not _text(value) for value in expected_equipment)
+            or len(set(expected_equipment)) != len(expected_equipment)):
+        reasons.append("invalid_utilization_coverage_equipment_scope")
+        expected_equipment = []
+    if (not isinstance(expected_constraints, list) or not expected_constraints
+            or any(not _text(value) for value in expected_constraints)
+            or len(set(expected_constraints)) != len(expected_constraints)):
+        reasons.append("invalid_utilization_coverage_constraint_scope")
+        expected_constraints = []
+    if (not isinstance(required_constraints, list)
+            or any(not _text(value) for value in required_constraints)
+            or len(set(required_constraints)) != len(required_constraints)):
+        reasons.append("invalid_utilization_coverage_required_scope")
+        required_constraints = []
+    rows = coverage.get("rows")
+    seen = set()
+    seen_equipment = set()
+    if not isinstance(rows, list) or not rows:
+        reasons.append("invalid_utilization_coverage_rows")
+        rows = []
+    for row in rows:
+        if not isinstance(row, dict):
+            reasons.append("invalid_utilization_coverage_row")
+            continue
+        identity = row.get("qualified_constraint_id")
+        statuses = row.get("statuses")
+        available = statuses == ["AVAILABLE"]
+        disabled = statuses == ["DISABLED"]
+        if (not _text(identity) or identity in seen
+                or not _text(row.get("equipment_id"))
+                or not _text(row.get("constraint_name"))
+                or not isinstance(row.get("enabled"), bool)
+                or row.get("origin") not in ("DIRECT", "STRATEGY", "UNKNOWN")
+                or not isinstance(row.get("minimum_constraint"), bool)
+                or not identity.startswith(row.get("equipment_id", "") + "#")
+                or not isinstance(statuses, list)
+                or not (available or disabled)):
+            reasons.append("invalid_utilization_coverage_row")
+            continue
+        seen.add(identity)
+        seen_equipment.add(row["equipment_id"])
+        if available and (row.get("enabled") is not True
+                          or not _text(row.get("unit"))
+                          or not _text(row.get("basis"))
+                          or not _text(row.get("provenance"))
+                          or not _number(row.get("current_value"))
+                          or not _number(row.get("applicable_limit"))
+                          or row.get("applicable_limit") <= 0
+                          or not _number(row.get("normalized_utilization"))):
+            reasons.append("invalid_available_utilization_coverage_row")
+        if disabled and (row.get("enabled") is not False
+                         or row.get("current_value") is not None
+                         or row.get("normalized_utilization") is not None):
+            reasons.append("invalid_disabled_utilization_coverage_row")
+    if (set(expected_constraints) - seen
+            or set(required_constraints) != seen
+            or set(expected_equipment) != seen_equipment):
+        reasons.append("utilization_coverage_scope_mismatch")
+    if coverage.get("complete") is not True or coverage.get("diagnostics") != []:
+        reasons.append("incomplete_utilization_coverage")
+    return sorted(set(reasons))
 
 
 def _non_finite_fields(values):
