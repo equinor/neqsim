@@ -107,6 +107,12 @@ constraints, and distinguishes a real observed zero from an absent value. Missin
 basis or provenance and screening-only defaults prevent complete rated coverage. Unavailable
 numbers are `NaN` in Java and `null` in `toJson()`; they are never a false zero-percent utilization.
 
+Accepted replays can extend the same report with plant-wide constraints rather than a parallel coverage model. Declare
+each registry-qualified ID with `expectPlantConstraint(...)`, then supply immutable
+`PlantConstraintEvidence` using `plantEvidence(...)`. Schema 1.1 rows identify their evidence kind, subject scope,
+limit direction, category, and calculation ID. Missing, screening-only, stale, unconverged, non-finite, or
+metadata-mismatched plant evidence prevents completion just as it does for installed equipment.
+
 For a registry-bound report, supply its immutable preflight to the snapshot:
 
 ```java

@@ -574,6 +574,46 @@ def _valid_coverage_lifecycle_evidence(current_envelope):
     return evidence
 
 
+def _valid_plant_coverage_lifecycle_evidence(current_envelope):
+    """Extend schema-v9 coverage with exact accepted-replay plant constraint evidence."""
+    evidence = _valid_coverage_lifecycle_evidence(current_envelope)
+    evidence["schema_version"] = 10
+    plant_id = "shared_resource:synthetic-field/shared%20power#total-shaft-power"
+    for period in evidence["periods"]:
+        coverage = period["utilization_coverage"]
+        coverage["schema_version"] = "1.1"
+        coverage["expected_plant_constraint_ids"] = [plant_id]
+        coverage["required_constraint_ids"].append(plant_id)
+        coverage["rows"][0].update({
+            "evidence_kind": "INSTALLED_EQUIPMENT",
+            "scope_id": coverage["rows"][0]["equipment_id"],
+            "limit_direction": "MAXIMUM",
+            "category": "DESIGN",
+            "calculation_id": "",
+        })
+        coverage["rows"].append({
+            "evidence_kind": "PLANT_CONSTRAINT",
+            "scope_id": "shared_resource:synthetic-field/shared%20power",
+            "equipment_id": "shared_resource:synthetic-field/shared%20power",
+            "constraint_name": "total-shaft-power",
+            "qualified_constraint_id": plant_id,
+            "origin": "UNKNOWN",
+            "enabled": True,
+            "unit": "kW",
+            "basis": "compressor and pump shaft power",
+            "provenance": "approved host power budget",
+            "minimum_constraint": False,
+            "limit_direction": "MAXIMUM",
+            "category": "OPERATING",
+            "calculation_id": period["period_id"] + "-accepted-replay",
+            "current_value": 750.0,
+            "applicable_limit": 1000.0,
+            "normalized_utilization": 0.75,
+            "statuses": ["AVAILABLE"],
+        })
+    return evidence
+
+
 def _valid_state_lifecycle_evidence(current_envelope):
     """Extend valid schema-v4 evidence with exact accepted physical-state metrics."""
     evidence = _valid_region_lifecycle_evidence(current_envelope)
@@ -1408,6 +1448,79 @@ def test_guard_rejects_tampered_schema9_utilization_coverage(
     _add_empty_boundary_refinement_evidence(envelope)
     _add_empty_constraint_summary_evidence(envelope)
     lifecycle = _valid_coverage_lifecycle_evidence(envelope)
+    mutation(lifecycle["periods"][0]["utilization_coverage"])
+    proposal["lifecycle_envelope_evidence"] = lifecycle
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+
+    production.guard(ctx, {})
+
+    assert ctx.proposals == []
+    reasons = json.loads((tmp_path / "guard.json").read_text())["withheld"][0]["reasons"]
+    assert expected_reason in reasons
+
+
+def test_guard_accepts_schema10_plant_constraint_coverage(tmp_path):
+    proposal = _valid_proposal()
+    envelope = proposal["accepted_point_envelope_evidence"]
+    _add_empty_operating_region_evidence(envelope)
+    _add_empty_boundary_refinement_evidence(envelope)
+    _add_empty_constraint_summary_evidence(envelope)
+    proposal["lifecycle_envelope_evidence"] = _valid_plant_coverage_lifecycle_evidence(envelope)
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+
+    production.guard(ctx, {})
+
+    assert [row["title"] for row in ctx.proposals] == ["candidate"]
+    assert ctx.proposals[0]["lifecycle_envelope_evidence"]["schema_version"] == 10
+
+
+def test_guard_accepts_explicitly_disabled_schema10_plant_constraint(tmp_path):
+    proposal = _valid_proposal()
+    envelope = proposal["accepted_point_envelope_evidence"]
+    _add_empty_operating_region_evidence(envelope)
+    _add_empty_boundary_refinement_evidence(envelope)
+    _add_empty_constraint_summary_evidence(envelope)
+    lifecycle = _valid_plant_coverage_lifecycle_evidence(envelope)
+    for period in lifecycle["periods"]:
+        period["utilization_coverage"]["rows"][1].update({
+            "enabled": False,
+            "calculation_id": "",
+            "current_value": None,
+            "applicable_limit": None,
+            "normalized_utilization": None,
+            "statuses": ["DISABLED"],
+        })
+    proposal["lifecycle_envelope_evidence"] = lifecycle
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+
+    production.guard(ctx, {})
+
+    assert [row["title"] for row in ctx.proposals] == ["candidate"]
+
+
+@pytest.mark.parametrize("mutation, expected_reason", [
+    (lambda coverage: coverage.update(expected_plant_constraint_ids=[]),
+     "lifecycle_period_0_invalid_utilization_coverage_plant_scope"),
+    (lambda coverage: coverage["rows"][1].update(calculation_id=""),
+     "lifecycle_period_0_invalid_utilization_coverage_row"),
+    (lambda coverage: coverage["rows"][1].update(category="SCREENING"),
+     "lifecycle_period_0_invalid_utilization_coverage_row"),
+    (lambda coverage: coverage["rows"][1].update(current_value=float("nan")),
+     "lifecycle_period_0_invalid_available_utilization_coverage_row"),
+    (lambda coverage: coverage["rows"][1].update(provenance=""),
+     "lifecycle_period_0_invalid_available_utilization_coverage_row"),
+])
+def test_guard_rejects_tampered_schema10_plant_constraint_coverage(
+        tmp_path, mutation, expected_reason):
+    proposal = _valid_proposal()
+    envelope = proposal["accepted_point_envelope_evidence"]
+    _add_empty_operating_region_evidence(envelope)
+    _add_empty_boundary_refinement_evidence(envelope)
+    _add_empty_constraint_summary_evidence(envelope)
+    lifecycle = _valid_plant_coverage_lifecycle_evidence(envelope)
     mutation(lifecycle["periods"][0]["utilization_coverage"])
     proposal["lifecycle_envelope_evidence"] = lifecycle
     ctx = _guard_context(tmp_path, proposal)

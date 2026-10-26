@@ -1,6 +1,7 @@
 package neqsim.process.util.optimizer;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -181,7 +182,7 @@ public class FieldToFacilityOptimizationAcceptanceTest {
   }
 
   /**
-   * Execute the source-backed ten-well lifecycle acceptance case and serialize its exact schema-v9 evidence.
+   * Execute the source-backed ten-well lifecycle acceptance case and serialize its exact schema-v10 evidence.
    *
    * <p>
    * This test-scope entry point lets the Python living-task acceptance workflow call the same Java fixture and physical
@@ -506,16 +507,24 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     Map<String, Object> lifecycleEvidence = lifecycle.toEvidenceMap("synthetic-lifecycle-cycle");
     JsonObject lifecycleJson = JsonParser.parseString(lifecycle.toEvidenceJson("late-life")).getAsJsonObject();
 
-    assertEquals(Integer.valueOf(9), lifecycleEvidence.get("schema_version"));
-    assertEquals(9, lifecycleJson.get("schema_version").getAsInt());
+    assertEquals(Integer.valueOf(10), lifecycleEvidence.get("schema_version"));
+    assertEquals(10, lifecycleJson.get("schema_version").getAsInt());
     assertEquals("late-life", lifecycleJson.get("cycle_id").getAsString());
     JsonArray jsonPeriods = lifecycleJson.getAsJsonArray("periods");
     assertEquals(2, jsonPeriods.size());
     assertEquals("late-life", jsonPeriods.get(1).getAsJsonObject().get("period_id").getAsString());
     JsonObject coverage = jsonPeriods.get(1).getAsJsonObject().getAsJsonObject("utilization_coverage");
     assertTrue(coverage.get("complete").getAsBoolean());
+    assertEquals("1.1", coverage.get("schema_version").getAsString());
     assertEquals(34, coverage.getAsJsonArray("expected_constraint_ids").size());
-    assertEquals(34, coverage.getAsJsonArray("rows").size());
+    assertEquals(10, coverage.getAsJsonArray("expected_plant_constraint_ids").size());
+    assertEquals(44, coverage.getAsJsonArray("rows").size());
+    assertTrue(coverage.getAsJsonArray("rows").asList().stream().map(JsonElement::getAsJsonObject)
+        .anyMatch(row -> "PLANT_CONSTRAINT".equals(row.get("evidence_kind").getAsString())
+            && row.get("qualified_constraint_id").getAsString().endsWith("#driver-maximum-power")));
+    assertTrue(coverage.getAsJsonArray("rows").asList().stream().map(JsonElement::getAsJsonObject)
+        .anyMatch(row -> "PLANT_CONSTRAINT".equals(row.get("evidence_kind").getAsString())
+            && row.get("qualified_constraint_id").getAsString().endsWith("#total-shaft-power")));
     assertTrue(coverage.getAsJsonArray("diagnostics").isEmpty());
     assertEquals("late-life", jsonPeriods.get(1).getAsJsonObject().getAsJsonObject("envelope_evidence")
         .getAsJsonObject("optimizer_evidence").get("cycle_id").getAsString());
@@ -781,8 +790,20 @@ public class FieldToFacilityOptimizationAcceptanceTest {
         "LP suction scrubber")) {
       coverage.expectConstraint("Field", equipmentName, "gas handling");
     }
+    PlantConstraintScope shaftGroup = PlantConstraintScope.coupledGroup("synthetic field", "Host",
+        "export common shaft");
+    for (String constraintName : Arrays.asList("common-speed-deviation", "shaft-maximum-speed", "shaft-power-balance",
+        "driver-speed-envelope", "driver-maximum-power", "gearbox-maximum-input-power", "shaft-maximum-torque")) {
+      coverage.expectPlantConstraint(shaftGroup.getStableId() + "#" + PlantConstraintScope.escape(constraintName));
+    }
+    for (String equipmentName : Arrays.asList("HP compressor", "LP compressor")) {
+      PlantConstraintScope compressor = PlantConstraintScope.equipment("synthetic field", "Host", equipmentName);
+      coverage
+          .expectPlantConstraint(compressor.getStableId() + "#" + PlantConstraintScope.escape("compressor-map-margin"));
+    }
+    coverage.expectPlantConstraint(sharedPowerDefinition().getQualifiedId());
     return coverage.evidence(search.getAcceptedPointReplay().getEvaluation().getInstalledEquipmentCapacityEvidence())
-        .build();
+        .plantEvidence(search.getAcceptedPointReplay().getEvaluation().getPlantConstraintEvidence()).build();
   }
 
   /**

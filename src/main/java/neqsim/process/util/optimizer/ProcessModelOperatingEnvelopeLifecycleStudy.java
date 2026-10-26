@@ -240,6 +240,9 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       replay.put(id, item);
     }
     for (UtilizationCoverageReport.Row row : coverage.getRows()) {
+      if (row.getEvidenceKind() == UtilizationCoverageReport.EvidenceKind.PLANT_CONSTRAINT) {
+        continue;
+      }
       InstalledEquipmentCapacityEvidence item = replay.get(row.getQualifiedConstraintId());
       String replayProvenance = item == null ? "" : item.getApplicableLimitSourceReference();
       if (item != null && isMissingSource(replayProvenance)) {
@@ -254,6 +257,32 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
           || !sameNumber(row.getNormalizedUtilization(), item.getNormalizedUtilization())) {
         throw new IllegalStateException(
             "Accepted capacity coverage is not bound to replay evidence " + row.getQualifiedConstraintId());
+      }
+    }
+    Map<String, PlantConstraintEvidence> plantReplay = new LinkedHashMap<String, PlantConstraintEvidence>();
+    for (PlantConstraintEvidence item : search.getAcceptedPointReplay().getEvaluation().getPlantConstraintEvidence()) {
+      plantReplay.put(item.getQualifiedConstraintId(), item);
+    }
+    for (UtilizationCoverageReport.Row row : coverage.getRows()) {
+      if (row.getEvidenceKind() != UtilizationCoverageReport.EvidenceKind.PLANT_CONSTRAINT) {
+        continue;
+      }
+      PlantConstraintEvidence item = plantReplay.get(row.getQualifiedConstraintId());
+      PlantConstraintDefinition definition = item == null ? null : item.getDefinition();
+      PlantConstraintSample sample = item == null ? null : item.getSample();
+      boolean disabled = item != null && item.getCoverageStatus() == PlantConstraintEvidence.CoverageStatus.DISABLED;
+      if (item == null || definition == null || (!disabled && (sample == null || !item.hasAvailableEvidence()))
+          || !row.getScopeId().equals(definition.getScope().getStableId())
+          || !row.getConstraintName().equals(definition.getId()) || row.isEnabled() != definition.isEnabled()
+          || !row.getUnit().equals(definition.getUnit()) || !row.getBasis().equals(definition.getBasis())
+          || !row.getProvenance().equals(definition.getProvenance())
+          || row.getLimitDirection() != definition.getLimitDirection() || row.getCategory() != definition.getCategory()
+          || (!disabled && (!row.getCalculationId().equals(sample.getCalculationId())
+              || !sameNumber(row.getCurrentValue(), sample.getSampledValue())
+              || !sameNumber(row.getApplicableLimit(), sample.getApplicableLimit())
+              || !sameNumber(row.getNormalizedUtilization(), sample.getNormalizedUtilization())))) {
+        throw new IllegalStateException(
+            "Accepted plant constraint coverage is not bound to replay evidence " + row.getQualifiedConstraintId());
       }
     }
   }
@@ -351,7 +380,8 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     }
     Map<String, Object> evidence = new LinkedHashMap<String, Object>();
     boolean hasStateMetrics = acceptedStateMetricIds != null && !acceptedStateMetricIds.isEmpty();
-    evidence.put("schema_version", Integer.valueOf(periods.get(0).getAcceptedCoverage() == null ? 8 : 9));
+    evidence.put("schema_version", Integer.valueOf(periods.get(0).getAcceptedCoverage() == null ? 8
+        : periods.get(0).getAcceptedCoverage().getExpectedPlantConstraintIds().isEmpty() ? 9 : 10));
     evidence.put("cycle_id", currentCycleId);
     evidence.put("lifecycle_study_id", id);
     evidence.put("lifecycle_study_name", name);
@@ -387,7 +417,8 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
    * </p>
    *
    * @param cycleId current living-task cycle identifier and lifecycle period identifier
-   * @return compact JSON containing exact schema-v8 or replay-coverage schema-v9 evidence
+   * @return compact JSON containing exact schema-v8, installed-coverage schema-v9, or plant-coverage schema-v10
+   * evidence
    * @throws IllegalStateException if the current cycle is not an accepted lifecycle period
    */
   public String toEvidenceJson(String cycleId) {

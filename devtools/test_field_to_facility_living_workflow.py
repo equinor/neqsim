@@ -1,7 +1,7 @@
 """Execute the Java ten-well lifecycle through the persistent production workflow.
 
 This is the source acceptance path for issue #4188. It deliberately calls the test-scope
-Java fixture, consumes only its exact schema-v9 JSON, and exercises the existing #4187
+Java fixture, consumes only its exact schema-v10 JSON, and exercises the existing #4187
 adapter, guard, ledger, promotion, living report, and canonical report implementation.
 """
 
@@ -239,7 +239,7 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             first_item = items[0]
             first_item_id = first_item["id"]
             evidence = items[0]["lifecycle_envelope_evidence"]
-            self.assertEqual(9, evidence["schema_version"])
+            self.assertEqual(10, evidence["schema_version"])
             self.assertEqual(cycle_id, evidence["cycle_id"])
             self.assertEqual(2, evidence["period_count"])
             self.assertEqual(12, evidence["requested_point_count"])
@@ -253,7 +253,17 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertIs(True, coverage["complete"])
             self.assertEqual([], coverage["diagnostics"])
             self.assertEqual(34, len(coverage["expected_constraint_ids"]))
+            self.assertEqual(10, len(coverage["expected_plant_constraint_ids"]))
+            self.assertEqual(44, len(coverage["rows"]))
             self.assertTrue(all(row["statuses"] == ["AVAILABLE"]
+                                for row in coverage["rows"]))
+            self.assertTrue(any(row["evidence_kind"] == "PLANT_CONSTRAINT"
+                                and row["qualified_constraint_id"].endswith(
+                                    "#driver-maximum-power")
+                                for row in coverage["rows"]))
+            self.assertTrue(any(row["evidence_kind"] == "PLANT_CONSTRAINT"
+                                and row["qualified_constraint_id"].endswith(
+                                    "#total-shaft-power")
                                 for row in coverage["rows"]))
             self.assertTrue(any(row["provenance"] ==
                                 "synthetic lifecycle separation limit"
@@ -304,7 +314,8 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertIn("Early life", report)
             self.assertIn("Current life", report)
             self.assertIn("shared plant power", report.lower())
-            self.assertIn("Declared installed-capacity coverage", report)
+            self.assertIn("Declared accepted-replay constraint coverage", report)
+            self.assertIn("PLANT_CONSTRAINT", report)
             self.assertIn("synthetic lifecycle separation limit", report)
 
             input_path = task / "continuous" / "user_input.yaml"

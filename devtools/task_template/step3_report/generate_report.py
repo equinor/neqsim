@@ -2387,8 +2387,8 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
     reasons = []
     if not isinstance(evidence, dict):
         return ["evidence is not an object"]
-    if evidence.get("schema_version") not in (8, 9):
-        reasons.append("schema_version must be 8 or 9")
+    if evidence.get("schema_version") not in (8, 9, 10):
+        reasons.append("schema_version must be 8, 9, or 10")
     if evidence.get("advisory") is not True:
         reasons.append("advisory flag is missing")
     if not _report_text(evidence.get("cycle_id")):
@@ -2440,9 +2440,11 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
             previous_elapsed = elapsed
         if period.get("time_unit") != evidence.get("time_unit"):
             reasons.append(prefix + " time unit does not match the lifecycle")
-        if evidence.get("schema_version") == 9:
+        if evidence.get("schema_version") in (9, 10):
             coverage = period.get("utilization_coverage")
-            if (not isinstance(coverage, dict) or coverage.get("schema_version") != "1.0"
+            expected_coverage_schema = "1.1" if evidence.get("schema_version") == 10 else "1.0"
+            if (not isinstance(coverage, dict)
+                    or coverage.get("schema_version") != expected_coverage_schema
                     or coverage.get("coverage_scope") != "DECLARED_EQUIPMENT_AND_CONSTRAINTS"
                     or coverage.get("complete") is not True or coverage.get("diagnostics") != []
                     or not isinstance(coverage.get("rows"), list) or not coverage.get("rows")):
@@ -2466,11 +2468,15 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
                         break
                     coverage_ids.append(coverage_row["qualified_constraint_id"])
                 expected_ids = coverage.get("expected_constraint_ids")
+                expected_plant_ids = coverage.get("expected_plant_constraint_ids", [])
                 required_ids = coverage.get("required_constraint_ids")
                 if (not isinstance(expected_ids, list) or not expected_ids
+                        or not isinstance(expected_plant_ids, list)
+                        or (evidence.get("schema_version") == 10 and not expected_plant_ids)
                         or not isinstance(required_ids, list)
                         or len(coverage_ids) != len(set(coverage_ids))
                         or set(expected_ids) - set(coverage_ids)
+                        or set(expected_plant_ids) - set(coverage_ids)
                         or set(required_ids) != set(coverage_ids)):
                     reasons.append(prefix + " has mismatched utilization coverage scope")
         envelope = period.get("envelope_evidence")
@@ -2610,20 +2616,22 @@ def format_lifecycle_envelope_text(results, expected_cycle_id=None):
                 _fmt_number(row["applicable_limit"]) if row["applicable_limit"] is not None else "n/a",
                 _md_cell(row["physical_unit"]), _md_cell(row["applicable_limit_provenance"])))
 
-    if evidence["schema_version"] == 9:
-        lines += ["", "**Declared installed-capacity coverage.** Every row is frozen at the accepted replay; "
+    if evidence["schema_version"] in (9, 10):
+        lines += ["", "**Declared accepted-replay constraint coverage.** Every row is frozen at the accepted replay; "
                   "missing, screening-only, non-finite, or unqualified limits are withheld upstream.", "",
-                  "| Period | Exact constraint | Current / limit | Utilization | Limit basis | Provenance |",
-                  "|---|---|---|---|---|---|"]
+                  "| Period | Evidence | Exact constraint | Current / limit | Utilization | Limit basis | Provenance |",
+                  "|---|---|---|---|---|---|---|"]
         for period in evidence["periods"]:
             for row in period["utilization_coverage"]["rows"]:
                 if row["statuses"] == ["DISABLED"]:
-                    lines.append("| {} | `{}` | disabled | - | {} | {} |".format(
-                        _md_cell(period["period_name"]), _md_cell(row["qualified_constraint_id"]),
+                    lines.append("| {} | {} | `{}` | disabled | - | {} | {} |".format(
+                        _md_cell(period["period_name"]), _md_cell(row.get("evidence_kind", "INSTALLED_EQUIPMENT")),
+                        _md_cell(row["qualified_constraint_id"]),
                         _md_cell(row["basis"]), _md_cell(row["provenance"])))
                 else:
-                    lines.append("| {} | `{}` | {} / {} {} | {} | {} | {} |".format(
-                        _md_cell(period["period_name"]), _md_cell(row["qualified_constraint_id"]),
+                    lines.append("| {} | {} | `{}` | {} / {} {} | {} | {} | {} |".format(
+                        _md_cell(period["period_name"]), _md_cell(row.get("evidence_kind", "INSTALLED_EQUIPMENT")),
+                        _md_cell(row["qualified_constraint_id"]),
                         _fmt_number(row["current_value"]), _fmt_number(row["applicable_limit"]),
                         _md_cell(row["unit"]), _fmt_number(row["normalized_utilization"]),
                         _md_cell(row["basis"]), _md_cell(row["provenance"])))
