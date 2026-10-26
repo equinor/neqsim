@@ -2863,63 +2863,76 @@ comp.run();  // Speed automatically adjusted based on chart
 
 ### Python Example - Dynamic Simulation
 
+This standalone example uses the supported `jneqsim` gateway and a short deterministic step
+loop. It demonstrates the rotor-state and operating-history APIs; it is not a vendor transient
+performance model.
+
 ```python
-from neqsim import jNeqSim
-from jpype import JClass
+from neqsim import jneqsim
 
-# Import classes
-Compressor = jNeqSim.process.equipment.compressor.Compressor
-CompressorState = JClass('neqsim.process.equipment.compressor.CompressorState')
-CompressorDriver = JClass('neqsim.process.equipment.compressor.CompressorDriver')
-DriverType = JClass('neqsim.process.equipment.compressor.DriverType')
-AntiSurge = jNeqSim.process.equipment.compressor.AntiSurge
-StartupProfile = JClass('neqsim.process.equipment.compressor.StartupProfile')
-ShutdownProfile = JClass('neqsim.process.equipment.compressor.ShutdownProfile')
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+Stream = jneqsim.process.equipment.stream.Stream
+Compressor = jneqsim.process.equipment.compressor.Compressor
+CompressorDriver = jneqsim.process.equipment.compressor.CompressorDriver
+DriverType = jneqsim.process.equipment.compressor.DriverType
+AntiSurge = jneqsim.process.equipment.compressor.AntiSurge
 
-# Create compressor (assuming inlet stream exists)
-comp = Compressor("K-100", inlet_stream)
+# Build and initialize the inlet stream.
+fluid = SystemSrkEos(298.15, 50.0)
+fluid.addComponent("methane", 0.85)
+fluid.addComponent("ethane", 0.10)
+fluid.addComponent("propane", 0.05)
+fluid.setMixingRule("classic")
+
+inlet_stream = Stream("dynamic inlet", fluid)
+inlet_stream.setFlowRate(5000.0, "kg/hr")
+inlet_stream.setTemperature(25.0, "C")
+inlet_stream.setPressure(40.0, "bara")
+inlet_stream.run()
+
+# Initialize a steady operating point before starting the dynamic state model.
+comp = Compressor("K-100 dynamic", inlet_stream)
 comp.setOutletPressure(100.0, "bara")
-comp.setSpeed(10000)
+comp.setUsePolytropicCalc(True)
+comp.setPolytropicEfficiency(0.78)
+comp.setSpeed(10000.0)
 comp.run()
 
-# Configure dynamic features
 comp.enableOperatingHistory()
 comp.setRotationalInertia(15.0)
 comp.setSurgeWarningThreshold(0.15)
 comp.setSurgeCriticalThreshold(0.05)
 
-# Set up gas turbine driver
-driver = CompressorDriver(DriverType.GAS_TURBINE, 5000)
-driver.setAmbientTemperature(308.15)  # 35°C
+driver = CompressorDriver(DriverType.GAS_TURBINE, 5000.0)
+driver.setAmbientTemperature(308.15)  # 35 degrees C
 comp.setDriver(driver)
 
-# Configure anti-surge
 anti_surge = comp.getAntiSurge()
 anti_surge.setControlStrategy(AntiSurge.ControlStrategy.PID)
 anti_surge.setPIDParameters(2.0, 0.5, 0.1)
 
-# Run dynamic simulation
-dt = 0.1  # 100 ms
-sim_time = 0.0
+dt = 0.1
+number_of_steps = 100
+comp.startCompressor(10000.0)
 
-comp.startCompressor(10000)
-
-while sim_time < 300.0:
-    inlet_stream.run()
-    comp.run()
+for step in range(number_of_steps):
+    sim_time = step * dt
     comp.updateDynamicState(dt)
+    surge_margin = comp.getDistanceToSurge()
+    valve_position = anti_surge.updateController(surge_margin, dt)
 
-    # Print state periodically
-    if int(sim_time) % 10 == 0 and sim_time == int(sim_time):
-        print(f"t={sim_time:.0f}s: State={comp.getOperatingState()}, "
-              f"Speed={comp.getSpeed():.0f} RPM, "
-              f"Surge margin={comp.getDistanceToSurge()*100:.1f}%")
+    if step % 10 == 0:
+        print(
+            f"t={sim_time:.1f}s: State={comp.getOperatingState()}, "
+            f"Speed={comp.getSpeed():.0f} RPM, "
+            f"Surge margin={surge_margin * 100:.1f}%, "
+            f"Recycle valve={valve_position * 100:.1f}%"
+        )
 
-    sim_time += dt
-
-# Export results
-comp.getOperatingHistory().exportToCSV("compressor_dynamic.csv")
-print(str(comp.getOperatingHistory().generateSummary()))
+history = comp.getOperatingHistory()
+assert history is not None
+assert history.getPointCount() > 0
+print(str(history.generateSummary()))
 ```
 
 ---
