@@ -1,6 +1,7 @@
 ---
 name: neqsim-production-system-modeling
 description: "Build NeqSim models from natural language in Python or Java: reservoir, production/injection wells, SURF templates/manifolds/PLEMs, multiphase flowlines and risers, facilities, utilities and downstream processing. USE WHEN: building reservoir-to-products models, coupled deliverability/capacity and equivalent language implementations. Compose core/community specialists and optional enterprise overlays."
+last_verified: "2026-10-26"
 ---
 
 # Natural-language production-system modeling
