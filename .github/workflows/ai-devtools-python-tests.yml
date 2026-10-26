@@ -40,6 +40,10 @@ jobs:
             devtools/test_skill_search.py \
             devtools/test_discovery_registry.py \
             devtools/test_verify_agent_skill_refs.py \
+            devtools/test_fa_solver_runtime.py \
+            devtools/test_pvt_study.py \
+            devtools/test_pvt_report.py \
+            docs/test_pvt_fluid_study_report_documentation.py \
             devtools/test_report_workflow.py \
             devtools/test_report_template.py \
             devtools/test_report_heading_numbering.py \

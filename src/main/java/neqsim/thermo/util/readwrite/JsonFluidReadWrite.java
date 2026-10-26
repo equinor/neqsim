@@ -16,19 +16,22 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.LBCViscosityMethod;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentPR;
 import neqsim.thermo.phase.PhaseEosInterface;
+import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Read and write NeqSim fluids in a JSON format that provides full EOS-level fidelity equivalent to Eclipse E300 fluid
- * files.
+ * Read and write the supported compositional fluid fields in a portable JSON format.
  *
  * <p>
- * The JSON format supports all parameters needed to exactly reproduce a PVT-tuned fluid: component critical properties,
- * acentric factors, molecular weights, volume shifts, parachors, binary interaction coefficients, viscosity model
- * coefficients (LBC/Pedersen), and pseudo-component (TBP fraction) definitions.
+ * Supported fields include component critical properties, acentric factors, molecular weights, volume shifts, Rackett
+ * compressibility, parachors, binary interaction coefficients, LBC coefficients and viscosity-only critical volumes,
+ * and pseudo-component (TBP fraction) definitions. This schema is not an arbitrary native-system snapshot; callers must
+ * qualify the active model settings and resulting predictions required by their delivery.
  * </p>
  *
  * <p>
@@ -199,7 +202,10 @@ public class JsonFluidReadWrite {
           density = 0.5046 * data.molarMass / 1000.0 + 0.668468;
         }
         fluid.addTBPfraction(data.name, data.moleFraction, data.molarMass / 1000.0, density);
-        neqsimName = data.name + "_PC";
+        // addTBPfraction normalizes an existing _PC suffix; a writer-produced name
+        // must not be looked up as C20_PC_PC when the allocated component is C20_PC.
+        int suffix = data.name.indexOf("_PC");
+        neqsimName = (suffix < 0 ? data.name : data.name.substring(0, suffix)) + "_PC";
       } else {
         fluid.addComponent(neqsimName, data.moleFraction);
       }
@@ -217,7 +223,8 @@ public class JsonFluidReadWrite {
         fluid.getPhase(phase).getComponent(neqsimName).setParachorParameter(data.parachor);
         double volShift = data.volumeShiftSurface != 0.0 ? data.volumeShiftSurface : data.volumeShift;
         fluid.getPhase(phase).getComponent(neqsimName).setVolumeCorrectionConst(volShift);
-        fluid.getPhase(phase).getComponent(neqsimName).setRacketZ(0.29056 - 0.08775 * data.acentricFactor);
+        fluid.getPhase(phase).getComponent(neqsimName)
+            .setRacketZ(data.rackettZ == null ? 0.29056 - 0.08775 * data.acentricFactor : data.rackettZ.doubleValue());
         if (data.omegaB != null) {
           if (!(fluid.getPhase(phase).getComponent(neqsimName) instanceof ComponentPR)) {
             throw new IllegalArgumentException("omegaB is supported only for PR components");
@@ -389,6 +396,7 @@ public class JsonFluidReadWrite {
       compObj.addProperty("normalBoilingPoint", fluid.getComponent(i).getNormalBoilingPoint());
       compObj.addProperty("criticalVolume", fluid.getComponent(i).getCriticalVolume());
       compObj.addProperty("volumeShift", fluid.getComponent(i).getVolumeCorrectionConst());
+      compObj.addProperty("rackettZ", fluid.getComponent(i).getRacketZ());
       compObj.addProperty("parachor", fluid.getComponent(i).getParachorParameter());
       compObj.addProperty("isPseudo", fluid.getComponent(i).isIsTBPfraction());
       if (fluid.getComponent(i) instanceof ComponentPR) {
@@ -547,6 +555,12 @@ public class JsonFluidReadWrite {
     data.criticalVolume = getDoubleOrDefault(comp, "criticalVolume", 0.0);
     data.volumeShift = getDoubleOrDefault(comp, "volumeShift", 0.0);
     data.volumeShiftSurface = getDoubleOrDefault(comp, "volumeShiftSurface", 0.0);
+    if (comp.has("rackettZ")) {
+      data.rackettZ = comp.get("rackettZ").getAsDouble();
+      if (!Double.isFinite(data.rackettZ.doubleValue())) {
+        throw new IllegalArgumentException("Rackett Z must be finite");
+      }
+    }
     data.parachor = getDoubleOrDefault(comp, "parachor", 0.0);
     data.isPseudo = comp.has("isPseudo") && comp.get("isPseudo").getAsBoolean();
     data.density = getDoubleOrDefault(comp, "density", 0.0);
@@ -687,28 +701,58 @@ public class JsonFluidReadWrite {
     }
     String type = viscObj.get("type").getAsString().toUpperCase();
 
-    if ("LBC".equals(type) && viscObj.has("coefficients")) {
-      JsonArray coeffs = viscObj.getAsJsonArray("coefficients");
-      if (coeffs.size() >= 5) {
-        double[] lbcParams = new double[5];
-        for (int i = 0; i < 5; i++) {
-          lbcParams[i] = coeffs.get(i).getAsDouble();
+    if ("LBC".equals(type)) {
+      double[] lbcParams = null;
+      if (viscObj.has("coefficients")) {
+        JsonArray coeffs = viscObj.getAsJsonArray("coefficients");
+        if (coeffs.size() != 5) {
+          throw new IllegalArgumentException("LBC viscosity requires exactly five coefficients");
         }
-        for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
-          try {
-            fluid.getPhase(phase).getPhysicalProperties().setViscosityModel("LBC");
-            fluid.getPhase(phase).getPhysicalProperties().setLbcParameters(lbcParams);
-          } catch (Exception e) {
-            logger.debug("Could not set LBC model for phase {}: {}", phase, e.getMessage());
+        lbcParams = new double[5];
+        for (int i = 0; i < lbcParams.length; i++) {
+          lbcParams[i] = coeffs.get(i).getAsDouble();
+          if (!Double.isFinite(lbcParams[i])) {
+            throw new IllegalArgumentException("LBC viscosity coefficients must be finite");
           }
         }
       }
-    } else if ("PEDERSEN".equals(type) || "PFCT".equals(type)) {
-      for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+      double[] volumes = null;
+      if (viscObj.has("criticalVolumesCm3PerMol")) {
+        JsonArray values = viscObj.getAsJsonArray("criticalVolumesCm3PerMol");
+        volumes = new double[values.size()];
+        for (int i = 0; i < volumes.length; i++) {
+          volumes[i] = values.get(i).getAsDouble();
+        }
+      }
+      for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
+        PhaseInterface phase = fluid.getPhase(p);
+        PhaseType originalType = phase.getType();
         try {
-          fluid.getPhase(phase).getPhysicalProperties().setViscosityModel("PFCT");
-        } catch (Exception e) {
-          logger.debug("Could not set PFCT model for phase {}: {}", phase, e.getMessage());
+          for (PhaseType phaseType : new PhaseType[] {originalType, PhaseType.GAS, PhaseType.OIL}) {
+            phase.setType(phaseType);
+            phase.getPhysicalProperties().setViscosityModel("LBC");
+            if (lbcParams != null) {
+              phase.getPhysicalProperties().setLbcParameters(lbcParams);
+            }
+            if (volumes != null) {
+              ((LBCViscosityMethod) phase.getPhysicalProperties().getViscosityModel()).setCriticalVolumes(volumes);
+            }
+          }
+        } finally {
+          phase.setType(originalType);
+        }
+      }
+    } else if ("PEDERSEN".equals(type) || "PFCT".equals(type)) {
+      for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
+        PhaseInterface phase = fluid.getPhase(p);
+        PhaseType originalType = phase.getType();
+        try {
+          for (PhaseType phaseType : new PhaseType[] {originalType, PhaseType.GAS, PhaseType.OIL}) {
+            phase.setType(phaseType);
+            phase.getPhysicalProperties().setViscosityModel("PFCT");
+          }
+        } finally {
+          phase.setType(originalType);
         }
       }
     }
@@ -749,6 +793,13 @@ public class JsonFluidReadWrite {
               coeffArr.add(params[i]);
             }
             obj.add("coefficients", coeffArr);
+            JsonArray volumes = new JsonArray();
+            LBCViscosityMethod lbc = (LBCViscosityMethod) fluid.getPhase(phase).getPhysicalProperties()
+                .getViscosityModel();
+            for (double volume : lbc.getCriticalVolumes()) {
+              volumes.add(volume);
+            }
+            obj.add("criticalVolumesCm3PerMol", volumes);
             return obj;
           }
         }
@@ -819,6 +870,8 @@ public class JsonFluidReadWrite {
     double volumeShift;
     /** Volume shift at surface conditions. */
     double volumeShiftSurface;
+    /** Optional Rackett compressibility preserving derived volume translation. */
+    Double rackettZ;
     /** Parachor for IFT calculation. */
     double parachor;
     /** Whether this is a pseudo-component (TBP fraction). */

@@ -68,6 +68,7 @@ Analyze the request and match it to one or more agents:
 | Quick process sim, working notebook fast | `@solve-process` | — |
 | Process study report, design basis, heat and material balance, stream tables, PFD/BFD drawings of a NeqSim model, `neqsim process-report` | `@process-study-report` | `@solve-process` / `@process-model` / `@extract-process` when the model does not exist yet; `@standards-review` for a requirement set; loads `process-study-report` |
 | Flow-assurance study report, pipeline or tie-back drawings, hydrate/cooldown/MEG screening documentation, turndown and late-life case comparison, `neqsim flow-assurance-report` | `@flow-assurance-study-report` | `@flow-assurance` for calculation detail; `@thermo-fluid` for the fluid; `@standards-review` for a requirement set; loads `neqsim-flow-assurance-study-report` |
+| Professional PVT or fluid-characterization study report, sample/laboratory QC through final model, all parameters/BIP matrix, verified E300 handover, `neqsim pvt-study` | `@pvt-fluid-study-report` | `@thermo-fluid` for fluid setup; `@pvt-simulation` for experiment physics and supported fitting; `@standards-review` for requirements; loads `neqsim-pvt-fluid-study-report` |
 | SURF design study or report, subsea tieback with templates/manifolds, daisy chain vs direct gathering, production and injection flowlines, risers, umbilical, SURF drawings and MTO/cost, `neqsim surf-study` | `@surf-design-study` | `@flow-assurance` for threats; `@mechanical-design` for structural inputs; `@field-development` for host and economics; loads `neqsim-surf-design-study` |
 | Physical plant layout, onshore plot plan, offshore topsides/deck/module arrangement, maintenance/lifting envelopes, layout alternatives and CAD, `neqsim layout-study` | `@plant-layout-study` | `@plant-layout-review` for independent geometry/deliverable checks; process, mechanical, standards and consequence specialists provide their evidence; loads `neqsim-plant-layout-study` |
 | "Can NeqSim do X?", capability check, gap analysis, implementation plan | `@capability-scout` | — |
@@ -169,6 +170,10 @@ Some requests need multiple agents in sequence. Detect these patterns:
 ### Pattern 5b: PVT + EOS Regression
 **Trigger:** "tune", "fit", "match experimental", "kij", "regression"
 **Pipeline:** `@pvt-simulation` (run PVT experiments) with `neqsim-eos-regression` skill loaded
+
+### Pattern 5c: Complete PVT Study and Fluid Handover
+**Trigger:** "PVT report", "fluid characterization report", "sample to final model", "all parameters", or "verified E300"
+**Pipeline:** `@pvt-fluid-study-report` owns the evidence chain and executes `neqsim pvt-study`; delegate fluid setup to `@thermo-fluid`, experiment/regression detail to `@pvt-simulation`, and requirements assessment to `@standards-review`
 
 ### Pattern 6: Capability Assessment + Implementation
 **Trigger:** Complex task spanning 3+ disciplines, "can NeqSim do", "what capabilities", "plan implementation"

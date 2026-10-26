@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests the existing bounded static-JSON route for the new transport correlation APIs.
+ * Tests the existing bounded static-JSON route for the bounded property correlation APIs.
  *
  * @author Even Solbraa
  * @version 1.0
@@ -82,4 +82,19 @@ public class TransportPropertyCapabilityTest {
     JsonObject finiteDensityExtrapolation = invoke(className, "calculateViscosity", "[10000,0]");
     assertEquals("error", finiteDensityExtrapolation.get("status").getAsString());
   }
+
+  /** Verifies Watson latent-heat invocation, SI result, critical limit and invalid-reference refusal. */
+  @Test
+  void watsonReferenceLatentHeatRoute() {
+    String className = "neqsim.thermo.component.Component";
+    JsonObject value = invoke(className, "calculateWatsonHeatOfVaporization", "[332,353.3,30720,562.1]");
+    assertEquals("success", value.get("status").getAsString(), value.toString());
+    assertEquals(31875.128086545672, value.get("result").getAsDouble(), 1e-9);
+    JsonObject critical = invoke(className, "calculateWatsonHeatOfVaporization", "[562.1,353.3,30720,562.1]");
+    assertEquals("success", critical.get("status").getAsString(), critical.toString());
+    assertEquals(0, critical.get("result").getAsDouble(), 0);
+    JsonObject invalid = invoke(className, "calculateWatsonHeatOfVaporization", "[332,562.1,30720,562.1]");
+    assertEquals("error", invalid.get("status").getAsString());
+  }
+
 }

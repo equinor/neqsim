@@ -3,6 +3,7 @@ package neqsim.process.util.optimizer;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -92,10 +93,26 @@ public final class UtilizationCoverageReport implements Serializable {
     for (Map.Entry<String, PlantConstraintScope> expected : builder.expectedEquipment.entrySet()) {
       PlantConstraintScope scope = expected.getValue();
       ProcessEquipmentInterface equipment = builder.equipment.get(expected.getKey());
+      Map<String, InstalledEquipmentCapacityEvidence> frozen = builder.frozenEvidence.get(expected.getKey());
       Set<String> names = builder.expectedNames(scope);
-      if (equipment == null) {
+      if (equipment == null && frozen == null) {
         assessed.add(Row.unavailable(scope, "", Status.MISSING_EQUIPMENT));
         addMissingRows(assessed, scope, names, Status.MISSING_CONSTRAINT);
+        continue;
+      }
+      if (frozen != null) {
+        names.addAll(frozen.keySet());
+        if (names.isEmpty()) {
+          assessed.add(Row.unavailable(scope, "", Status.NO_CONSTRAINTS));
+        }
+        for (String name : names) {
+          String id = constraintId(scope, name);
+          required.add(id);
+          InstalledEquipmentCapacityEvidence selected = frozen.get(name);
+          assessed.add(selected == null ? Row.unavailable(scope, name, Status.MISSING_CONSTRAINT)
+              : new Row(scope, name, selected, builder.bases.get(id), builder.registry != null,
+                  builder.registry == null ? null : builder.registry.get(id)));
+        }
         continue;
       }
       Map<String, ResolvedConstraint> resolved;
@@ -231,6 +248,52 @@ public final class UtilizationCoverageReport implements Serializable {
     return new GsonBuilder().serializeNulls().create().toJson(this);
   }
 
+  /**
+   * Returns a deeply immutable JSON-friendly coverage block.
+   *
+   * @return exact declared scope, frozen rows and diagnostics
+   */
+  public Map<String, Object> toEvidenceMap() {
+    List<Map<String, Object>> rowEvidence = new ArrayList<Map<String, Object>>();
+    for (Row row : rows) {
+      Map<String, Object> item = new LinkedHashMap<String, Object>();
+      item.put("equipment_id", row.getEquipmentId());
+      item.put("constraint_name", row.getConstraintName());
+      item.put("qualified_constraint_id", row.getQualifiedConstraintId());
+      item.put("origin", row.getOrigin().name());
+      item.put("enabled", Boolean.valueOf(row.isEnabled()));
+      item.put("unit", row.getUnit());
+      item.put("basis", row.getBasis());
+      item.put("provenance", row.getProvenance());
+      item.put("minimum_constraint", Boolean.valueOf(row.isMinimumConstraint()));
+      item.put("current_value", finiteOrNull(row.getCurrentValue()));
+      item.put("applicable_limit", finiteOrNull(row.getApplicableLimit()));
+      item.put("normalized_utilization", finiteOrNull(row.getNormalizedUtilization()));
+      List<String> statusNames = new ArrayList<String>();
+      for (Status status : row.getStatuses()) {
+        statusNames.add(status.name());
+      }
+      item.put("statuses", Collections.unmodifiableList(statusNames));
+      rowEvidence.add(Collections.unmodifiableMap(item));
+    }
+    Map<String, Object> evidence = new LinkedHashMap<String, Object>();
+    evidence.put("schema_version", schemaVersion);
+    evidence.put("coverage_scope", coverageScope);
+    evidence.put("model_name", modelName);
+    evidence.put("registry_identity_digest", registryIdentityDigest);
+    evidence.put("expected_equipment_ids", expectedEquipmentIds);
+    evidence.put("expected_constraint_ids", expectedConstraintIds);
+    evidence.put("required_constraint_ids", requiredConstraintIds);
+    evidence.put("rows", Collections.unmodifiableList(rowEvidence));
+    evidence.put("diagnostics", diagnostics);
+    evidence.put("complete", Boolean.valueOf(complete));
+    return Collections.unmodifiableMap(evidence);
+  }
+
+  private static Double finiteOrNull(double value) {
+    return Double.isFinite(value) ? Double.valueOf(value) : null;
+  }
+
   /** Immutable evidence row with no mutable constraint or equipment reference. */
   public static final class Row implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -359,6 +422,85 @@ public final class UtilizationCoverageReport implements Serializable {
       statuses = Collections.unmodifiableList(gaps);
     }
 
+    /** Creates one row from evidence already frozen at an accepted operating point. */
+    private Row(PlantConstraintScope scope, String name, InstalledEquipmentCapacityEvidence evidence,
+        String declaredBasis, boolean registrySupplied, PlantConstraintDefinition definition) {
+      equipmentId = scope.getStableId();
+      constraintName = name;
+      qualifiedConstraintId = constraintId(scope, name);
+      origin = evidence.getConstraintOrigin();
+      enabled = evidence.isEnabled();
+      unit = PlantConstraintScope.safeText(evidence.getPhysicalUnit());
+      String evidenceBasis = PlantConstraintScope.safeText(evidence.getDesignBasis());
+      basis = definition == null ? (PlantConstraintScope.safeText(declaredBasis).isEmpty() ? evidenceBasis
+          : PlantConstraintScope.safeText(declaredBasis)) : definition.getBasis();
+      String sourceReference = PlantConstraintScope.safeText(evidence.getApplicableLimitSourceReference());
+      String dataSource = PlantConstraintScope.safeText(evidence.getDataSource());
+      String liveProvenance = isMissingSource(sourceReference) ? dataSource : sourceReference;
+      provenance = definition == null ? liveProvenance : definition.getProvenance();
+      minimumConstraint = evidence.isMinimumConstraint();
+      List<Status> gaps = new ArrayList<Status>();
+      if (registrySupplied && definition == null) {
+        gaps.add(Status.MISSING_REGISTRATION);
+      }
+      if (definition != null && (!unit.equals(definition.getUnit()) || enabled != definition.isEnabled()
+          || evidence.getSeverity() != definition.getSeverity()
+          || (!isMissingSource(liveProvenance) && !liveProvenance.equals(definition.getProvenance()))
+          || definition.getLimitDirection() != (minimumConstraint ? PlantConstraintDefinition.LimitDirection.MINIMUM
+              : PlantConstraintDefinition.LimitDirection.MAXIMUM)
+          || (!PlantConstraintScope.safeText(declaredBasis).isEmpty() && !basis.equals(declaredBasis)))) {
+        gaps.add(Status.METADATA_MISMATCH);
+      }
+      Double sampled = enabled ? finite(evidence.getCurrentValue()) : null;
+      Double limit = finite(evidence.getApplicableLimit());
+      Double utilization = enabled ? finite(evidence.getNormalizedUtilization()) : null;
+      if (limit != null && limit.doubleValue() == Double.MAX_VALUE) {
+        limit = null;
+      }
+      if (enabled) {
+        if (sampled == null) {
+          gaps.add(Status.NON_FINITE_CURRENT_VALUE);
+        }
+        if (limit == null) {
+          gaps.add(Status.MISSING_LIMIT);
+        } else if (limit.doubleValue() <= 0.0) {
+          gaps.add(Status.INVALID_LIMIT);
+        }
+        if (unit.isEmpty()) {
+          gaps.add(Status.MISSING_UNIT);
+        }
+        if (basis.isEmpty()) {
+          gaps.add(Status.MISSING_BASIS);
+        }
+        if (isMissingSource(provenance)) {
+          gaps.add(Status.MISSING_PROVENANCE);
+        }
+        if (evidence.getSeverity() == CapacityConstraint.ConstraintSeverity.ADVISORY
+            || evidence.getConstraintType() == CapacityConstraint.ConstraintType.DESIGN
+            || (definition != null && definition.getCategory() == PlantConstraintDefinition.Category.SCREENING)
+            || (evidence.getDesignSource() == CapacityConstraint.ConstraintSource.DEFAULT
+                && isMissingSource(dataSource))) {
+          gaps.add(Status.SCREENING_ONLY);
+        }
+        if (evidence
+            .getEvidenceApplicability() == InstalledEquipmentCapacityEvidence.EvidenceApplicability.OUTSIDE_VALIDITY_RANGE) {
+          gaps.add(Status.OUTSIDE_VALIDITY_RANGE);
+        }
+        if (sampled != null && limit != null && limit.doubleValue() > 0.0 && utilization == null) {
+          gaps.add(Status.NON_FINITE_UTILIZATION);
+        }
+      } else {
+        gaps.add(Status.DISABLED);
+      }
+      currentValue = sampled;
+      applicableLimit = limit;
+      normalizedUtilization = utilization;
+      if (gaps.isEmpty()) {
+        gaps.add(Status.AVAILABLE);
+      }
+      statuses = Collections.unmodifiableList(gaps);
+    }
+
     private static boolean isMissingSource(String source) {
       return source.isEmpty() || "not_set".equalsIgnoreCase(source) || "default".equalsIgnoreCase(source);
     }
@@ -449,6 +591,7 @@ public final class UtilizationCoverageReport implements Serializable {
     private final Set<String> expectedConstraints = new TreeSet<String>();
     private final Map<String, Set<String>> namesByEquipment = new TreeMap<String, Set<String>>();
     private final Map<String, ProcessEquipmentInterface> equipment = new TreeMap<String, ProcessEquipmentInterface>();
+    private final Map<String, Map<String, InstalledEquipmentCapacityEvidence>> frozenEvidence = new TreeMap<String, Map<String, InstalledEquipmentCapacityEvidence>>();
     private final Map<String, String> bases = new TreeMap<String, String>();
     private PlantConstraintRegistry registry;
 
@@ -503,10 +646,62 @@ public final class UtilizationCoverageReport implements Serializable {
       }
       expectEquipment(areaName, value.getName());
       String id = PlantConstraintScope.equipment(modelName, areaName, value.getName()).getStableId();
+      if (frozenEvidence.containsKey(id)) {
+        throw new IllegalArgumentException("Equipment identity already has frozen evidence " + id);
+      }
       if (equipment.containsKey(id) && equipment.get(id) != value) {
         throw new IllegalArgumentException("Duplicate equipment identity " + id);
       }
       equipment.put(id, value);
+      return this;
+    }
+
+    /**
+     * Supplies one immutable constraint snapshot already sampled at an accepted operating point.
+     *
+     * <p>
+     * This path never resamples live equipment and is intended for optimizer, envelope and lifecycle handoffs after the
+     * mutable process model has been restored to its baseline.
+     * </p>
+     *
+     * @param value frozen installed-capacity evidence
+     * @return this builder
+     */
+    public Builder evidence(InstalledEquipmentCapacityEvidence value) {
+      if (value == null) {
+        throw new IllegalArgumentException("Installed-capacity evidence is required");
+      }
+      PlantConstraintScope scope = PlantConstraintScope.equipment(modelName, value.getAreaName(),
+          value.getEquipmentName());
+      String id = scope.getStableId();
+      if (equipment.containsKey(id)) {
+        throw new IllegalArgumentException("Equipment identity already has a live instance " + id);
+      }
+      Map<String, InstalledEquipmentCapacityEvidence> constraints = frozenEvidence.get(id);
+      if (constraints == null) {
+        constraints = new TreeMap<String, InstalledEquipmentCapacityEvidence>();
+        frozenEvidence.put(id, constraints);
+      }
+      if (constraints.put(value.getConstraintName(), value) != null) {
+        throw new IllegalArgumentException(
+            "Duplicate frozen constraint identity " + constraintId(scope, value.getConstraintName()));
+      }
+      return this;
+    }
+
+    /**
+     * Supplies immutable constraint snapshots already sampled at one accepted operating point.
+     *
+     * @param values frozen installed-capacity evidence
+     * @return this builder
+     */
+    public Builder evidence(Iterable<InstalledEquipmentCapacityEvidence> values) {
+      if (values == null) {
+        throw new IllegalArgumentException("Installed-capacity evidence is required");
+      }
+      for (InstalledEquipmentCapacityEvidence value : values) {
+        evidence(value);
+      }
       return this;
     }
 

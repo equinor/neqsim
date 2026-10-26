@@ -13,6 +13,7 @@ Usage:
     neqsim report [DIR]      Generate the report (files named after its title)
     neqsim process-report SRC  Process-study report (stream tables, BFD/PFD, balances, validation)
     neqsim flow-assurance-report DIR  Flow-assurance report + pipeline drawings
+    neqsim pvt-study YAML     PVT samples, characterization, experiments, E300 and controlled report
                             from a Python model, JSON definition, .neqsim file or process_data.json
     neqsim surf-study SPEC   SURF design study: generated NeqSim model, cases, drawings and report
     neqsim layout-study SPEC Physical plant layout: checked alternatives, CAD and study report
@@ -51,6 +52,10 @@ CONTINUOUS_COMMANDS = ("living", "cycle", "solve", "resume", "update", "backtest
                        "ledger", "status", "report", "reference-case", "note")
 
 COMMANDS = {
+    "pvt-study": {
+        "module": "pvt_study",
+        "desc": "Traceable PVT fluid study, characterization, verified E300 export and report",
+    },
     "try": {
         "module": "neqsim_try",
         "desc": "Interactive playground — explore NeqSim in 30 seconds",

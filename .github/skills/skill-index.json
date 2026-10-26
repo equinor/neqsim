@@ -563,7 +563,7 @@
  "identifying facility bottlenecks": [
   "neqsim-production-optimization"
  ],
- "images — equipment data sheets": [
+ "images \u2014 equipment data sheets": [
   "neqsim-technical-document-reading"
  ],
  "impurity effects on phase behavior": [
@@ -976,7 +976,7 @@
  "pfr)": [
   "neqsim-reaction-engineering"
  ],
- "phase envelopes —": [
+ "phase envelopes \u2014": [
   "neqsim-technical-document-reading"
  ],
  "pipeline hydraulics": [
@@ -2529,5 +2529,32 @@
  "layout independent review": [
   "neqsim-plant-layout-geometry",
   "neqsim-plant-layout-delivery"
+ ],
+ "a complete pvt report": [
+  "neqsim-pvt-fluid-study-report"
+ ],
+ "calibration/hold-out validation": [
+  "neqsim-pvt-fluid-study-report"
+ ],
+ "e300 handover": [
+  "neqsim-pvt-fluid-study-report"
+ ],
+ "full parameter/bip documentation": [
+  "neqsim-pvt-fluid-study-report"
+ ],
+ "heavy-end characterization": [
+  "neqsim-pvt-fluid-study-report"
+ ],
+ "neqsim pvt-study workflow is requested": [
+  "neqsim-pvt-fluid-study-report"
+ ],
+ "recombination": [
+  "neqsim-pvt-fluid-study-report"
+ ],
+ "sample qc": [
+  "neqsim-pvt-fluid-study-report"
+ ],
+ "neqsim-pvt-fluid-study-report": [
+  "neqsim-pvt-fluid-study-report"
  ]
 }
