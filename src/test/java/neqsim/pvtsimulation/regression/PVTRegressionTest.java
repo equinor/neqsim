@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.pvtsimulation.simulation.DifferentialLiberation;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -197,6 +198,31 @@ public class PVTRegressionTest {
     assertThrows(IllegalStateException.class, () -> {
       regression.runRegression();
     });
+  }
+
+  @Test
+  public void testDleSampleIsEvaluatedOnFullDepletionPath() {
+    double[] path = {250.0, 200.0, 150.0, 100.0, 1.01325};
+    SystemInterface fluid = new SystemSrkEos(373.15, 300.0);
+    fluid.addComponent("methane", 0.50);
+    fluid.addComponent("propane", 0.10);
+    fluid.addComponent("n-decane", 0.40);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    DifferentialLiberation dle = new DifferentialLiberation(fluid.clone());
+    dle.setPressures(path);
+    dle.setTemperature(373.15, "K");
+    dle.runCalc();
+    double rsOnPath = dle.getRs()[2];
+
+    PVTRegressionFunction function = new PVTRegressionFunction(fluid,
+        java.util.Collections.<RegressionParameterConfig>emptyList(),
+        new java.util.EnumMap<ExperimentType, Double>(ExperimentType.class));
+    function.setDlePressures(path);
+    double[] dependentValues = {150.0, 373.15, ExperimentType.DLE.ordinal(), 0};
+
+    assertEquals(rsOnPath, function.calcValue(dependentValues), 1e-9);
   }
 
   @Test

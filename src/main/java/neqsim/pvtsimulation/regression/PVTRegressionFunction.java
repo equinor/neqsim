@@ -23,6 +23,17 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
   private SystemInterface baseFluid;
   private List<RegressionParameterConfig> parameterConfigs;
   private EnumMap<ExperimentType, Double> experimentWeights;
+  private double[] dlePressures;
+
+  /**
+   * Set the full differential-liberation pressure path. Rs, Bo and oil density at a pressure depend on all earlier
+   * depletion steps, so each DLE sample is evaluated on the complete path and read at its own pressure.
+   *
+   * @param pressures DLE pressures in bara, in depletion order
+   */
+  public void setDlePressures(double[] pressures) {
+    this.dlePressures = pressures == null ? null : pressures.clone();
+  }
 
   /**
    * Create a PVT regression function.
@@ -54,6 +65,7 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
   public PVTRegressionFunction clone() {
     PVTRegressionFunction cloned = new PVTRegressionFunction(baseFluid.clone(), parameterConfigs,
         new EnumMap<>(experimentWeights));
+    cloned.dlePressures = this.dlePressures;
     if (this.params != null) {
       cloned.params = new double[this.params.length];
       System.arraycopy(this.params, 0, cloned.params, 0, this.params.length);
@@ -207,20 +219,31 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
    */
   private double calculateDLEValue(SystemInterface fluid, double pressure, double temperature, int propertyIndex) {
     DifferentialLiberation dle = new DifferentialLiberation(fluid);
-    dle.setPressures(new double[] {pressure});
+    double[] path = new double[] {pressure};
+    int index = 0;
+    if (dlePressures != null) {
+      for (int i = 0; i < dlePressures.length; i++) {
+        if (Math.abs(dlePressures[i] - pressure) < 1.0e-9) {
+          path = dlePressures.clone();
+          index = i;
+          break;
+        }
+      }
+    }
+    dle.setPressures(path);
     dle.setTemperature(temperature, "K");
     dle.runCalc();
 
     switch (propertyIndex) {
     case 0: // Rs
       double[] rs = dle.getRs();
-      return rs != null && rs.length > 0 ? rs[0] : 0.0;
+      return rs != null && rs.length > index ? rs[index] : 0.0;
     case 1: // Bo
       double[] bo = dle.getBo();
-      return bo != null && bo.length > 0 ? bo[0] : 1.0;
+      return bo != null && bo.length > index ? bo[index] : 1.0;
     case 2: // Oil density
       double[] density = dle.getOilDensity();
-      return density != null && density.length > 0 ? density[0] : 800.0;
+      return density != null && density.length > index ? density[index] : 800.0;
     default:
       return 0.0;
     }

@@ -95,6 +95,29 @@ public class ConstantVolumeDepletionTest {
   }
 
   @Test
+  void testSetTemperaturesAndPressuresDefinesDepletionPath() {
+    SystemInterface gasCondensate = new SystemSrkEos(353.15, 200.0);
+    gasCondensate.addComponent("methane", 0.80);
+    gasCondensate.addComponent("ethane", 0.08);
+    gasCondensate.addComponent("propane", 0.05);
+    gasCondensate.addComponent("n-butane", 0.03);
+    gasCondensate.addComponent("n-hexane", 0.02);
+    gasCondensate.addComponent("n-octane", 0.02);
+    gasCondensate.setMixingRule("classic");
+    gasCondensate.init(0);
+    gasCondensate.init(1);
+
+    double[] path = {300.0, 250.0, 200.0, 150.0, 100.0};
+    ConstantVolumeDepletion cvd = new ConstantVolumeDepletion(gasCondensate);
+    cvd.setTemperaturesAndPressures(new double[] {353.15, 353.15, 353.15, 353.15, 353.15}, path);
+    cvd.runCalc();
+
+    assertEquals(path.length, cvd.getPressures().length);
+    assertEquals(path.length, cvd.getLiquidRelativeVolume().length);
+    assertEquals(100.0, cvd.getPressures()[path.length - 1], 1.0e-12);
+  }
+
+  @Test
   void testRunEclipseInput() {
     File file = new File("src/test/java/neqsim/pvtsimulation/simulation");
     String fileFluid1 = file.getAbsolutePath() + "/EclipseModel.e300";

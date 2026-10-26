@@ -59,6 +59,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
    */
   public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
     this.pressure = pressure;
+    this.pressures = pressure;
     this.temperatures = temperature;
     experimentalData = new double[temperature.length][1];
   }
