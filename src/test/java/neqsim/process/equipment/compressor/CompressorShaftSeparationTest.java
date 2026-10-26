@@ -116,7 +116,9 @@ public class CompressorShaftSeparationTest {
     CompressorShaft shaft = new CompressorShaft("recompression shaft (single GT)");
     shaft.addCompressor(rc1);
     shaft.addCompressor(rc2);
-    shaft.setSpeedBounds(commonSpeed * 0.6, commonSpeed * 1.6);
+    // The old 0.6-speed bound extrapolated rc2 to negative head and efficiency.
+    // Bracket the design target with physical map operating points for both bodies.
+    shaft.setSpeedBounds(commonSpeed * 0.9, commonSpeed * 1.2);
     shaft.setPressureTolerance(0.5);
     shaft.setMaxIterations(30);
     shaft.solveSpeed(rc2, P1, "bara", new Runnable() {

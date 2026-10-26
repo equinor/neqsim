@@ -80,6 +80,25 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
+   * Signals an invalid fixed-speed chart evaluation that an optimizer may reject as infeasible.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  public static class ChartOperatingPointException extends IllegalArgumentException {
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * Creates a diagnostic retaining the rejected map coordinates and physical bounds.
+     *
+     * @param diagnostic invalid operating-point description
+     */
+    public ChartOperatingPointException(String diagnostic) {
+      super(diagnostic);
+    }
+  }
+
+  /**
    * Calculation strategy used when the compressor participates in a dynamic process.
    */
   public enum TransientCalculationMode {
@@ -1699,8 +1718,20 @@ public class Compressor extends TwoPortEquipment
 
           double polytropEff = getCompressorChart().getPolytropicEfficiency(actualFlowRate, getSpeed());
           polytropEff = applyInletGuideVaneEfficiency(polytropEff);
+          double chartHead = applyInletGuideVaneHead(
+              getCompressorChart().getPolytropicHead(actualFlowRate, getSpeed()));
+          // Apply the same physical bounds used by the speed solver before the efficiency
+          // setter can clamp an invalid map result or a caloric flash consumes its head.
+          if (!Double.isFinite(chartHead) || chartHead < 0.0 || !Double.isFinite(polytropEff) || polytropEff <= 0.0
+              || polytropEff > 100.0) {
+            getThermoSystem().setMultiPhaseCheck(originalMultiPhaseCheck);
+            throw new ChartOperatingPointException("Invalid compressor chart operating point for " + getName()
+                + ": flow=" + actualFlowRate + " m3/hr, speed=" + getSpeed() + " rpm, head=" + chartHead + " "
+                + getCompressorChart().getHeadUnit() + ", efficiency=" + polytropEff
+                + " percent; require finite nonnegative head and efficiency in (0, 100]. Check the map flow/speed range.");
+          }
           setPolytropicEfficiency(polytropEff / 100.0);
-          polytropicHead = applyInletGuideVaneHead(getCompressorChart().getPolytropicHead(actualFlowRate, getSpeed()));
+          polytropicHead = chartHead;
           double temperature_inlet = thermoSystem.getTemperature();
           double n = 1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEff / 100.0));
           polytropicExponent = n;

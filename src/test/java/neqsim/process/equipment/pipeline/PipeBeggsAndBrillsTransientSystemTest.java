@@ -98,6 +98,43 @@ public class PipeBeggsAndBrillsTransientSystemTest {
         Arrays.asList(gasFlowProbe(), liquidFlowProbe()));
   }
 
+  /** Checks that updating the transient outlet composition preserves a normalized equilibrium phase split. */
+  @Test
+  public void transientOutletRetainsThreePhaseEquilibrium() {
+    ProcessComponents components = buildProcess(createThreePhaseGasOilWaterFluid(), INITIAL_VALVE_OPENING);
+    components.process.run();
+    components.valve.setCalculateSteadyState(false);
+    components.process.setTimeStep(TIME_STEP_SECONDS);
+    for (int step = 0; step < 3; step++) {
+      components.process.runTransient();
+      SystemInterface outlet = components.pipeline.getOutletStream().getFluid();
+      Assertions.assertEquals(3, outlet.getNumberOfPhases());
+      Assertions.assertTrue(outlet.hasPhaseType("gas"));
+      Assertions.assertTrue(outlet.hasPhaseType("oil"));
+      Assertions.assertTrue(outlet.hasPhaseType("aqueous"));
+      double phaseFractionSum = 0.0;
+      for (int phase = 0; phase < outlet.getNumberOfPhases(); phase++) {
+        phaseFractionSum += outlet.getBeta(phase);
+      }
+      Assertions.assertEquals(1.0, phaseFractionSum, 1.0e-12);
+      for (int component = 0; component < outlet.getNumberOfComponents(); component++) {
+        double recovered = 0.0;
+        for (int phase = 0; phase < outlet.getNumberOfPhases(); phase++) {
+          recovered += outlet.getBeta(phase) * outlet.getPhase(phase).getComponent(component).getx();
+        }
+        Assertions.assertEquals(outlet.getComponent(component).getz(), recovered, 1.0e-10);
+      }
+      SystemInterface reference = components.valve.getOutletStream().getFluid().clone();
+      reference.setTemperature(outlet.getTemperature());
+      reference.setPressure(outlet.getPressure());
+      reference.setTotalFlowRate(outlet.getFlowRate("kg/sec"), "kg/sec");
+      new ThermodynamicOperations(reference).TPflash();
+      reference.initProperties();
+      Assertions.assertEquals(reference.getDensity("kg/m3"), outlet.getDensity("kg/m3"), 1.0e-6);
+      Assertions.assertEquals(reference.getEnthalpy(), outlet.getEnthalpy(), 1.0e-4);
+    }
+  }
+
   private void assertDelayedSeparatorResponse(String scenarioDescription, Supplier<SystemInterface> fluidSupplier,
       List<FlowProbe> probes) {
     ProcessComponents dynamic = buildProcess(fluidSupplier.get(), INITIAL_VALVE_OPENING);

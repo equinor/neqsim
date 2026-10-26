@@ -1307,13 +1307,11 @@ public class DistillationSolverBenchmarkTest {
    * Assert accelerated full-tray sweep telemetry follows the single-clone transfer contract.
    *
    * @param column accelerated column result
-   * @param firstFeedTrayNumber lowest feed tray index used by the full sweep
    * @param message assertion message prefix
    */
-  private void assertSingleCloneAcceleratedSweepWork(DistillationColumn column, int firstFeedTrayNumber,
-      String message) {
+  private void assertSingleCloneAcceleratedSweepWork(DistillationColumn column, String message) {
     int sweepCount = column.getLastAcceleratedFullTraySweepCount();
-    int transfersPerSweep = firstFeedTrayNumber + column.getNumberOfTrays() - 1;
+    int transfersPerSweep = 2 * (column.getNumberOfTrays() - 1);
     assertTrue(sweepCount > 0, message + " should report at least one full-tray sweep");
     assertEquals(sweepCount * transfersPerSweep, column.getLastAcceleratedInternalStreamTransferCount(),
         message + " should retain one owned stream clone for every internal transfer");
@@ -1380,12 +1378,12 @@ public class DistillationSolverBenchmarkTest {
       assertTrue(Double.isNaN(column.getLastNewtonLineSearchResidual()),
           "a solve that converges before line search should not report an unevaluated residual");
     }
-    assertSingleCloneAcceleratedSweepWork(column, 5, "Newton solve");
+    assertSingleCloneAcceleratedSweepWork(column, "Newton solve");
 
     column.run();
 
     assertTrue(column.solved(), "Repeated unchanged NEWTON solve should converge");
-    assertSingleCloneAcceleratedSweepWork(column, 5, "Repeated unchanged Newton solve");
+    assertSingleCloneAcceleratedSweepWork(column, "Repeated unchanged Newton solve");
     double productRepeatabilityTolerance = 1.5e-2;
     assertEquals(gasFlow, column.getGasOutStream().getFlowRate("kg/hr"),
         Math.max(0.01, gasFlow * productRepeatabilityTolerance),

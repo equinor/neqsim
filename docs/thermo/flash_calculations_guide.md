@@ -104,6 +104,14 @@ System.out.println("Pressure: " + fluid.getPressure("bara") + " bara");
 
 The most common flash type. Given temperature and pressure, find phase split and compositions. NeqSim implements the classical Michelsen flash algorithm with stability analysis.
 
+For an already-equilibrated neutral two-phase endpoint containing at least 1 mol% water,
+TP flash can remove roundoff in the phase amounts by recovering the unique lever-rule
+fractions from the converged compositions and original feed. The correction is limited
+to $10^{-10}$ in either phase fraction, retains the phase set and compositions, and must
+improve component closure to $10^{-13}$ while preserving fugacity equality. This avoids
+amplifying small amount differences into discrepancies in extensive caloric properties.
+It adds no equilibrium iterations and does not change dry-fluid or trace-water flash paths.
+
 **Method signatures:**
 ```java
 void TPflash()
@@ -263,6 +271,16 @@ as a stability repair. The user's multiphase setting is preserved. Balanced,
 phase-constrained, aqueous, reactive, ionic, solid, wax and specialized-model
 calculations retain their existing paths. These numerical checks do not establish
 experimental accuracy or prove global stability against every possible phase set.
+
+The synthetic incipient-vapor regression at 253.46685189059752 K and
+77.53775411226596 bara uses an independent high-precision SRK equation reference,
+$\beta_v = 3.508682096277057 \times 10^{-5}$. The stored scalar inputs and a
+standard-library Decimal reproduction are in
+`src/test/resources/neqsim/thermodynamicoperations/flashops/incipient-srk-reference/`.
+Six solutions at 60/80 digits and perturbed initial estimates agree. This replaces
+a legacy iterative reference while retaining the absolute $10^{-10}$ vapor-fraction
+tolerance and the material, fugacity, repeatability and algorithm-agreement checks.
+It qualifies the equations for this synthetic fixture, rather than measured accuracy.
 
 The recovery check is gated by actual removal of a negligible phase during that
 flash. Results without final phase removal skip all recovery component scans,
@@ -433,6 +451,21 @@ Given pressure and total enthalpy, find temperature and phase split. Essential f
 - Heat exchanger design
 - Process streams after heating/cooling
 
+An empty stream with zero total enthalpy has no caloric temperature constraint.
+The standard PH flash preserves its temperature, pressure and zero inventory,
+so a zero-flow column connection retains a usable temperature template when
+flow resumes. Nonzero total enthalpy on an empty stream is rejected. A flowing
+stream can have a zero enthalpy target; its residual uses a finite normalization.
+Small nonzero inventories continue through the caloric solve.
+
+The standard caloric solve reuses the enthalpy residuals from two completed
+TP flashes to estimate the equilibrium caloric slope. When the residual is
+improving and that slope has a finite, physical sign and a bounded magnitude,
+a secant temperature correction avoids unnecessary full equilibrium evaluations.
+Other states retain the damped heat-capacity Newton correction. Both paths keep
+the existing 10 K trial-step bound, TP-failure backoff, iteration limit and
+enthalpy residual tolerance; the acceleration adds no trial TP flash.
+
 **Method signatures:**
 ```java
 void PHflash(double Hspec)                    // H in J
@@ -536,6 +569,10 @@ Given temperature and total volume, find pressure and phase split. Used for:
 - Fixed-volume vessel calculations
 - Constant volume processes
 
+Pressure trials retain the supplied component inventories when a negligible phase disappears.
+Removing a trial phase changes the active phase set without discarding matter from the closed
+vessel. Repeated TV flashes therefore do not accumulate trace-phase inventory losses.
+
 **Method signatures:**
 ```java
 void TVflash(double Vspec)                    // V in cm³
@@ -560,6 +597,20 @@ ops.TVflash(vesselVolume, "m3");
 
 System.out.println("New pressure: " + fluid.getPressure("bara") + " bara");
 ```
+
+A volume residual alone does not qualify the phase split. The quadratic-covolume UMR-PRU
+50-addition regression at 293.15 K and 0.998 m³ now selects gas plus oil. Independent
+fixed-$T,V,n$ Helmholtz evaluation lowers energy by 25.868 kJ relative to the former
+single-gas state and gives residual enthalpy $H^{res}=-534369.1023$ J. The regression
+checks that reference after subtracting the current ideal-gas enthalpy, so changes in
+ideal heat-capacity data do not alter the EOS reference. Pressure closure in every
+phase, component conservation, equal fugacity and nearby-temperature caloric differences
+are qualified in `CubicTvHelmholtzQualificationTest`. This is an equation-based check
+of this fixture, not experimental validation or a global stability proof.
+The addition history checks the actual initial inventory plus every supplied feed against
+the overall component amounts after each addition and the final phase amounts, retaining
+the original $10^{-10}$ mol absolute conservation gate. Pressure and residual-energy
+references and their acceptance tolerances are unchanged.
 
 ---
 
@@ -742,6 +793,7 @@ ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.TPflash();
 
 // Initial state
+fluid.init(2);  // Initialize caloric derivatives before reading internal energy
 double V0 = fluid.getVolume("m3");
 double U0 = fluid.getInternalEnergy("J");
 
@@ -749,9 +801,29 @@ double U0 = fluid.getInternalEnergy("J");
 double V_new = V0 * 2.0;  // Volume doubles
 ops.VUflash(V_new, U0, "m3", "J");
 
-System.out.println("New T: " + fluid.getTemperature("C") + " °C");
-System.out.println("New P: " + fluid.getPressure("bara") + " bara");
+org.apache.logging.log4j.LogManager.getLogger("VU example").info("New T: {} C, new P: {} bara",
+    fluid.getTemperature("C"), fluid.getPressure("bara"));
 ```
+
+This example is executed by
+`VUCaloricStateQualificationTest.documentedExpansionUsesInitializedInternalEnergy`.
+
+`OptimizedVUflash` initializes caloric properties at level two after each TP
+flash and reuses that state in the next iteration. Volume, Cp and temperature/pressure
+derivatives require level two; the VU update does not consume composition-derivative
+matrices. Returned enthalpy and internal energy therefore refer to the final
+TP state, rather than caloric caches retained from a preceding iterate.
+
+The existing update equations, damping, bounds and stopping criteria are retained.
+Applications requiring stricter volume/energy closure must check both residuals
+and refine explicitly, as in the [coupled release inventory](../process/safety/coupled-release-inventory).
+`VUCaloricStateQualificationTest` checks independently configured SRK/PR,
+classical/HV gas, hydrocarbon-liquid and methanol/water cases, two finite-difference
+steps, inventory scaling and fresh/repeated/changed/returned targets. Its extensive
+native identities use the default $10^{-10}$ bound per mole, explicitly scaled
+with inventory; independent volume/energy derivative differences use a declared
+$10^{-5}$ mixed scale. These are numerical model checks, not experimental parameter
+qualification or a guarantee of strict VU convergence.
 
 ---
 
@@ -790,7 +862,7 @@ The Q-function flashes use analytical thermodynamic derivatives computed via `in
 | TUflash | T, U | P | $\left(\frac{\partial U}{\partial P}\right)_T = -T\left(\frac{\partial V}{\partial T}\right)_P - P\left(\frac{\partial V}{\partial P}\right)_T$ |
 | TVflash | T, V | P | $\left(\frac{\partial V}{\partial P}\right)_T$ |
 | PVflash | P, V | T | $\left(\frac{\partial V}{\partial T}\right)_P$ |
-| VUflash | V, U | T, P | 2D Newton with $\frac{\partial U}{\partial T}$, $\frac{\partial U}{\partial P}$, $\frac{\partial V}{\partial T}$, $\frac{\partial V}{\partial P}$ |
+| VUflash | V, U | T, P | Damped T/P updates using a diagonal approximation; coupled-step and phase-transition qualification is tracked in [#4579](https://github.com/equinor/neqsim/issues/4579) and [#4583](https://github.com/equinor/neqsim/issues/4583) |
 | VHflash | V, H | T, P | 2D Newton with $\frac{\partial H}{\partial T}$, $\frac{\partial H}{\partial P}$, $\frac{\partial V}{\partial T}$, $\frac{\partial V}{\partial P}$ |
 | VSflash | V, S | T, P | 2D Newton with $\frac{\partial S}{\partial T}$, $\frac{\partial S}{\partial P}$, $\frac{\partial V}{\partial T}$, $\frac{\partial V}{\partial P}$ |
 
@@ -1097,6 +1169,21 @@ SystemInterface TPgradientFlash(double height, double temperature)
 **Parameters:**
 - `height`: Depth in meters
 - `temperature`: Temperature at depth in Kelvin
+
+The solver advances through 20 finite height/temperature increments. Each increment
+matches component log fugacities with the gravitational chemical-potential change
+and enforces composition normalization. Its Jacobian uses derivatives of **log**
+fugacity coefficients directly; the derivatives must not be divided by the
+fugacity coefficient again. Newton steps preserve positive compositions and
+pressure, with a 50-iteration cap and explicit rejection of an unconverged or
+nonfinite result. Returned properties correspond to the final accepted state.
+
+The SRK and PR five-component reference in
+`TPgradientFlashTest.reservoirGasGradientMatchesIndependentReference` is reproduced
+independently with standard-library Python Decimal arithmetic at 60 and 80 digits
+in `src/test/resources/neqsim/thermodynamicoperations/flashops/gradient-cubic-reference/`.
+It qualifies the implemented 20-step discretization; it is not a continuous-depth
+integration or a thermal-diffusion (Soret) model.
 
 ---
 

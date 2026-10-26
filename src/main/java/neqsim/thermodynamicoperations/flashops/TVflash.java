@@ -15,7 +15,8 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <p>
  * Given temperature T and volume V, solves for pressure P using Newton iteration. The calculation iteratively adjusts
- * pressure until the system volume matches the specified volume.
+ * pressure until the system volume matches the specified volume. Overall component inventories are retained when
+ * negligible phases disappear during these pressure trials.
  * </p>
  *
  * @author even solbraa
@@ -44,7 +45,9 @@ public class TVflash extends Flash {
    */
   public TVflash(SystemInterface system, double Vspec) {
     this.system = system;
-    this.tpFlash = new TPflash(system);
+    TPflash volumeConstrainedFlash = new TPflash(system);
+    volumeConstrainedFlash.setPreserveFeedInventoryOnPhaseRemoval(true);
+    this.tpFlash = volumeConstrainedFlash;
     this.Vspec = Vspec;
   }
 

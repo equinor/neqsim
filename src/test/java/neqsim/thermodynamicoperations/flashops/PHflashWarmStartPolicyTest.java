@@ -16,6 +16,7 @@ public class PHflashWarmStartPolicyTest {
   @Test
   public void cpaDisablesInnerWarmStart() {
     SystemInterface system = new SystemSrkCPAstatoil(373.15, 1.2);
+    system.addComponent("methane", 1.0);
     RecordingPHflash flash = new RecordingPHflash(system);
     RecordingTPflash innerFlash = new RecordingTPflash(system);
     flash.setInnerFlash(innerFlash);
@@ -40,6 +41,7 @@ public class PHflashWarmStartPolicyTest {
   @Test
   public void cubicEosRetainsInnerWarmStart() {
     SystemInterface system = new SystemSrkEos(300.15, 20.0);
+    system.addComponent("methane", 1.0);
     RecordingPHflash flash = new RecordingPHflash(system);
     RecordingTPflash innerFlash = new RecordingTPflash(system);
     flash.setInnerFlash(innerFlash);

@@ -123,6 +123,10 @@ success unconditionally. Its finite differences use detached system snapshots
 to test the API's unconstrained partial derivatives. Separate electrolyte
 regressions use charge-compatible composition directions. Checking a model
 must preserve the caller's state and must not change the caller's tolerance.
+Near dilute component amounts, the checker allows up to four additional step halvings to
+resolve finite-difference truncation error. Both consecutive estimates must
+agree with the analytic derivative at the requested tolerance; an unresolved
+or non-finite derivative still fails.
 Analytical identities, finite differences and experimental validation answer
 different questions; none replaces the other two.
 

@@ -1073,10 +1073,16 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     SystemInterface previousLiquidOutlet = null;
     CounterCurrentSolution solution = null;
     for (int iteration = 1; iteration <= maxIterations; iteration++) {
-      solution = runOneProfileIteration(gasIn, liquidIn, liquidEntering);
+      lastIterationCount = iteration;
+      try {
+        solution = runOneProfileIteration(gasIn, liquidIn, liquidEntering);
+      } catch (RuntimeException ex) {
+        lastConvergenceResidual = Double.POSITIVE_INFINITY;
+        throw new IllegalStateException("Fixed-point packed column failed at iteration " + iteration
+            + " before a valid thermodynamic profile was obtained. Outlet streams have not been updated.", ex);
+      }
       double residual = calculateOutletResidual(previousGasOutlet, solution.gasOutlet, previousLiquidOutlet,
           solution.liquidOutlet);
-      lastIterationCount = iteration;
       lastConvergenceResidual = residual;
       if (residual <= convergenceTolerance || packedHeight == 0.0) {
         return solution;

@@ -3,6 +3,7 @@ package neqsim.thermodynamicoperations.flashops;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
@@ -181,12 +182,15 @@ class TPflashCubicRootSelectionTest {
     assertEquals(expected.getEnthalpy(), actual.getEnthalpy(), 1.0e-6);
     for (int phaseIndex = 0; phaseIndex < expected.getNumberOfPhases(); phaseIndex++) {
       assertEquals(expected.getPhase(phaseIndex).getType(), actual.getPhase(phaseIndex).getType());
-      assertEquals(expected.getBeta(phaseIndex), actual.getBeta(phaseIndex), 1.0e-10);
-      assertEquals(expected.getPhase(phaseIndex).getDensity(), actual.getPhase(phaseIndex).getDensity(), 1.0e-7);
-      assertEquals(expected.getPhase(phaseIndex).getZ(), actual.getPhase(phaseIndex).getZ(), 1.0e-10);
+      // Different valid root-search paths terminate at the flash's 1e-8 equilibrium tolerance.
+      assertEquals(expected.getBeta(phaseIndex), actual.getBeta(phaseIndex), CROSS_ALGORITHM_STATE_TOLERANCE);
+      assertEquals(expected.getPhase(phaseIndex).getDensity(), actual.getPhase(phaseIndex).getDensity(),
+          CROSS_ALGORITHM_STATE_TOLERANCE * Math.max(1.0, Math.abs(expected.getPhase(phaseIndex).getDensity())));
+      assertEquals(expected.getPhase(phaseIndex).getZ(), actual.getPhase(phaseIndex).getZ(),
+          CROSS_ALGORITHM_STATE_TOLERANCE);
       for (int componentIndex = 0; componentIndex < feed.length; componentIndex++) {
         assertEquals(expected.getPhase(phaseIndex).getComponent(componentIndex).getx(),
-            actual.getPhase(phaseIndex).getComponent(componentIndex).getx(), 1.0e-10);
+            actual.getPhase(phaseIndex).getComponent(componentIndex).getx(), CROSS_ALGORITHM_STATE_TOLERANCE);
         assertEquals(expected.getPhase(phaseIndex).getComponent(componentIndex).getFugacityCoefficient(),
             actual.getPhase(phaseIndex).getComponent(componentIndex).getFugacityCoefficient(), 1.0e-8);
       }
@@ -198,6 +202,8 @@ class TPflashCubicRootSelectionTest {
   private void assertMaterialBalanceAndEquilibrium(SystemInterface system, double[] feed) {
     double betaTotal = 0.0;
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      assertEquals(system.getPressure(), ((PhaseEos) system.getPhase(phaseIndex)).calcPressure(), 1.0e-8,
+          "every accepted volume must satisfy the EOS pressure equation");
       betaTotal += system.getBeta(phaseIndex);
       double compositionTotal = 0.0;
       for (int componentIndex = 0; componentIndex < feed.length; componentIndex++) {

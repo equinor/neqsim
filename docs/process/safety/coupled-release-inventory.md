@@ -60,11 +60,23 @@ it changes only which explicitly named equilibrium phase supplies subsequent out
 and enthalpy. Threshold sensitivity therefore belongs in each study's validation matrix.
 
 The general VU flash's stopping tolerance is looser than the cumulative accounting target.
-Each substep therefore permits up to 32 repeated solves of the same VU equations until
+Each substep therefore permits up to 32 solves/refinements of the same VU equations until
 volume and energy residuals are at most $10^{-11}$ relative to their respective scales.
-This is explicit residual refinement with unchanged physics, not a replacement flash or
-property fallback. Failure to meet it produces `INVENTORY_VU_REFINEMENT_FAILED`. The total
-number of VU solves is available through `getLastVolumeEnergySolves()` and frame provenance.
+After the first general VU solve, a nearby single-phase state can use a coupled Newton
+correction including both volume/energy cross derivatives. A bounded line search reflashes
+each trial with the configured EOS and mixing rule; it accepts only an unchanged phase
+and a smaller scaled residual. Multiphase states, invalid Jacobians and rejected trials
+retain the general VU refinement path. This prevents dense-liquid stagnation caused by
+repeated diagonal updates without changing the inventory closure target or general VU solver.
+Failure to meet the target produces `INVENTORY_VU_REFINEMENT_FAILED`. The total number of
+VU solves/refinements is available through `getLastVolumeEnergySolves()` and frame provenance;
+it does not count the TP trials internal to each refinement.
+
+The general VU solver refreshes caloric derivatives on its final TP state before
+returning, so inventory checks use current enthalpy and internal energy. Its update
+equations and stopping policy remain unchanged. Caloric-state consistency alone
+does not establish the stricter inventory closure; the same $10^{-11}$ gates and
+32-solve bound remain mandatory.
 
 The release model is explicitly selected. Its upstream pressure, temperature and enthalpy
 must match the selected phase and its upstream/exit composition must match that phase's withdrawal.

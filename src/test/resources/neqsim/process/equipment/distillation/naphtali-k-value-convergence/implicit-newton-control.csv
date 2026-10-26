@@ -1,0 +1,2 @@
+implementation,accepted,solved,solver,iterations,thermo_evaluations,k_sweeps,capped_k_evaluations,max_log_k_update,energy_residual,mesh_energy_residual,seconds,failure
+pr-02917efb-control,true,true,NAPHTALI_SANDHOLM,32,22450,102200,9,1.6373032110730740e-05,5.6079557263872100e-10,2.8039778624073756e-10,7.702954088,

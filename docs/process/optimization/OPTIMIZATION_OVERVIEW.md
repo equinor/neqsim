@@ -250,6 +250,13 @@ logger.info("Optimal rate: {} kg/hr", result.getOptimalRate());
 
 ## Full ProcessModel Optimization
 
+For single-process searches, `ProductionOptimizer` rejects failed compressor-speed
+solves and invalid fixed-speed chart points as hard infeasible trials. These appear
+as `compressorSpeedSolve` and `compressorChartOperatingPoint` constraints. Failed
+trials do not evaluate objectives or user constraints against stale downstream
+results, including when optional simulation validation is disabled. Other calculation
+exceptions propagate so configuration and programming errors remain visible.
+
 Use `ProcessModelThroughputOptimizer` for large fixed-equipment studies such as increasing one or more producer feed rates until a separator, compressor, valve, heat exchanger, or export train reaches its installed capacity. It is the ergonomic layer for the common full-facility throughput-to-bottleneck task.
 
 Use `ProcessModelSimulationEvaluator` directly when you need a lower-level black-box bridge to SciPy, NLopt, SQP, Pyomo, or another external optimizer.

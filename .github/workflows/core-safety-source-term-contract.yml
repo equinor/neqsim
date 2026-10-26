@@ -44,7 +44,7 @@ jobs:
       - name: Check formatting and process/source regressions
         run: |
           ./mvnw -B -ntp spotless:check
-          ./mvnw -B -ntp -Dtest=DynamicCapabilityBuiltInInventoryTest,ReleaseFlowModelTest,ReleaseFlowFlashingTest,ReleaseFlowAdapterTest,IdealGasFannoPipeReleaseModelTest,DriftFluxHomogeneousEquilibriumReleaseModelTest,FiniteRateDriftFluxReleaseModelTest,ComponentSelectiveFiniteRateReleaseModelTest,RanzMarshallFiniteRateReleaseModelTest,PredictiveBubbleTransferZoneReleaseModelTest,ReleaseInventoryTest,ReleaseInventoryCpaIsolationTest,LeakModelTest,SourceTermFrameTest,SourceTermSessionTest,ReleaseFlowEnsembleTest,ReleaseFlowBenchmarkTest test
+          ./mvnw -B -ntp -Dtest=DynamicCapabilityBuiltInInventoryTest,ReleaseFlowModelTest,ReleaseFlowFlashingTest,ReleaseFlowAdapterTest,IdealGasFannoPipeReleaseModelTest,DriftFluxHomogeneousEquilibriumReleaseModelTest,FiniteRateDriftFluxReleaseModelTest,ComponentSelectiveFiniteRateReleaseModelTest,RanzMarshallFiniteRateReleaseModelTest,PredictiveBubbleTransferZoneReleaseModelTest,ReleaseInventoryTest,ReleaseInventoryVuRefinementTest,ReleaseInventoryCpaIsolationTest,LeakModelTest,SourceTermFrameTest,SourceTermSessionTest,ReleaseFlowEnsembleTest,ReleaseFlowBenchmarkTest test
       - name: Validate emitted frames and schema rejection cases
         run: |
           uv run --project devtools --locked --group test devtools/validate_source_term_contract.py

@@ -257,6 +257,34 @@ to the fluid and negative for heat removed. Flowing products receive caloric ini
 before the balance is evaluated; zero-flow phase templates contribute zero energy. This avoids
 using stale residual enthalpy from the internal mixed fluid when a ratio reaches zero.
 
+Naphtali-Sandholm solves each tray's implicit vapor-composition K-value equation for up to
+30 forced-root fugacity sweeps, retaining the maximum log-K residual tolerance of $10^{-8}$.
+The update uses vapor fugacity composition derivatives and a bounded Newton correction;
+singular, nonfinite or oversized corrections retain the fixed-point direction. Nearby states
+reuse the prior local derivatives as a predictor. The outer finite-difference Jacobian freezes
+those derivative states together with its residual base, so perturbed columns cannot advance
+one another's K-value estimate. Every prediction still receives a new EOS evaluation and the
+same convergence check. Cold, retained and terminal-recovery evaluations use the same bound.
+
+Sum-Rates checkpoints retain the K-values, phase flows, enthalpies and evaluated vapor-derivative
+states with their temperatures and component inventories. Rejecting an initialization trial or
+returning to the best Sum-Rates state restores that complete seed before recalculating its
+thermodynamic properties. This prevents a rejected trial from changing the thermodynamic branch
+used by the subsequent Newton solve, including on Java 8. Existing convergence gates remain active.
+
+Liquid fugacity-only evaluations use `init(1)`. Vapor evaluations that supply composition and
+temperature derivatives use `init(3)`, and separate enthalpy evaluations retain `init(2)`.
+Exhausted inner iterations remain visible in the existing K-value telemetry. Published phase
+outlets retain the solver's forced EOS root across later caloric initialization. Columns without
+side draws retain the independent total vapor flow and its normalized composition, matching the
+vapor enthalpy basis; side-draw inventories retain the solver's component-flow arrays. The convergence repair retains all material, energy and equilibrium acceptance
+gates; it does not guarantee convergence of every column.
+
+Accelerated
+full-tray sweeps transfer liquid across every interface from condenser to reboiler,
+including the rectifying section above a middle feed, and vapor across every interface
+from reboiler to condenser.
+
 Explicit standalone Naphtali-Sandholm retains its established initialization sequence. The isolated
 sequential ratio correction preserves the current tray state instead of replacing it with a
 bubble-point seed. Both paths retain the terminal specifications and physical acceptance gates.
@@ -361,6 +389,13 @@ concrete solver that completed the run. Inspect `getLastAutoSolverSummary()` or
 `getConvergenceDiagnostics()` to see the feasibility pre-screen, candidate list, residuals,
 iteration counts, solve times, and fallback notes. For product-specification cases, also inspect
 `getLastSpecificationHomotopyStepCount()` to confirm whether staged continuation was used.
+
+When the relaxed base already satisfies every active convergence gate, `AUTO`
+accepts that qualified result for any column size and specification context.
+The trace explicitly identifies subsequent candidate probes as skipped. An
+unqualified or fallback-only base retains the full candidate ladder. Product
+specification homotopy still completes its configured stages and checks the
+final target; this work reduction changes no physical acceptance tolerance.
 
 Exact unchanged-input reuse is conditional on both an identical problem fingerprint and the same
 active convergence-gate configuration that was recorded after the accepted public solve. Changing
@@ -633,6 +668,12 @@ The rate-based model exposes segment profiles, component-transfer totals, pressu
 fraction diagnostics, film/heat-transfer model choices, and equation-oriented residual diagnostics.
 
 The fixed-point solver rejects a positive-height profile with `IllegalStateException` when the iteration limit is reached without a finite outlet component-flow residual at or below `getConvergenceTolerance()`. Inspect `getLastConvergenceResidual()` (mol/s) and `getLastIterationCount()` after failure. `solved()` is false; previously accepted outlets and segment results are retained but are stale. A zero-height no-transfer column remains a supported bypass. An intermediate fixed-point profile may still seed the equation-oriented solver without being published; its final result must pass the separate column residual tolerance.
+
+An invalid thermodynamic trial also aborts with `IllegalStateException`, retaining
+the original cause, the actual failed iteration, and an infinite convergence
+residual. It does not publish trial outlets or replace the last accepted segment
+profile. Early thermodynamic failure is distinct from reaching the iteration cap;
+neither result establishes a converged simultaneous segment model.
 
 `ColumnSolver.EQUATION_ORIENTED` throws `IllegalStateException` when the final full-transfer
 residual is non-finite or exceeds `getColumnResidualTolerance()`. The failed run clears the solved

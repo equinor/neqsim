@@ -58,6 +58,12 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
         double frac = (system.getTemperature() - tTrip) / (tCrit - tTrip);
         pGuess = pTrip + frac * (pCrit - pTrip);
       }
+      if (system.getPhase(0).getClass() == neqsim.thermo.phase.PhaseSrkEos.class
+          || system.getPhase(0).getClass() == neqsim.thermo.phase.PhasePrEos.class) {
+        system.init(0);
+        system.init(1);
+        pGuess = neqsim.thermo.phase.CubicPureSaturation.pressure((neqsim.thermo.phase.PhaseEos) system.getPhase(0));
+      }
       system.setPressure(pGuess);
     }
 

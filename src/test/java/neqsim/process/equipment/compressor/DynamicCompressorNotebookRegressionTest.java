@@ -225,7 +225,13 @@ class DynamicCompressorNotebookRegressionTest {
     process.add(dischargeValve);
     process.run();
 
-    compressor.generateCompressorCurves();
+    if (dynamicValvePressureCalculation) {
+      compressor.generateCompressorCurves();
+    } else {
+      // The fixed-pressure variant has a different inlet flow from the dynamic-Cv
+      // example. Anchor its map at its own physical flow and pressure rise.
+      compressor.generateCompressorChart("normal curves", 5);
+    }
     compressor.getCompressorChart().setUseCompressorChart(true);
     process.run();
 

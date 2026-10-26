@@ -275,6 +275,7 @@ For transient gas, follow `TransientGasNetworkTest`: define nodes and pipe cells
 
 ## Gotchas
 
+- `PipeBeggsAndBrills` transient outlets require a TP flash after composition assignment and before `initProperties()`. Property initialization alone does not restore equilibrium phase fractions after `setMolarComposition(...)` resets phase information. `PipeBeggsAndBrillsTransientSystemTest` checks repeated gas/oil/water outlet updates against a separately flashed inlet template.
 - `LoopedPipeNetwork.run()` needs at least one edge and a fluid template; with no pipes it returns without solving. It throws if the template is missing.
 - The node helpers take bara, while `NetworkNode.setPressure` is an internal SI-Pa value. Pipe dimensions are m; network pipe rates are internally kg/s. Do not mix helper and internal-node units.
 - A fixed-pressure sink asks the solver to find deliverable flow. A rate sink has a prescribed demand. Do not specify both interpretations for one delivery point.

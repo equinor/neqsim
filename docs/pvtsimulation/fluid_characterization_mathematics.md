@@ -718,7 +718,7 @@ $$F_{\mu} = \sum_{i} \left(\frac{\mu_i^{calc} - \mu_i^{exp}}{\mu_i^{exp}}\right)
 
 Viscosity data are added with `PVTRegression.addViscosityData(...)`. The framework flashes the fluid at each pressure and temperature, initializes physical properties, and compares the selected phase viscosity in Pa s. Supported phase names are `gas`, `vapor`, `oil`, `liquid`, `aqueous`, and `water`.
 
-When the regression parameters include `VISCOSITY_CSP_1` through `VISCOSITY_CSP_4`, NeqSim activates the PFCT/CSP viscosity model on each phase and fits the four CSP viscosity correction factors. The helper `addCspViscosityRegressionParameters()` registers all four factors with their default bounds.
+When the regression parameters include `VISCOSITY_CSP_1` through `VISCOSITY_CSP_4`, NeqSim activates the PFCT/CSP viscosity model on each phase and fits the four CSP viscosity correction factors. The helper `addCspViscosityRegressionParameters()` registers all four factors with their default bounds. Factors are installed on the gas, oil and aqueous property families of each stored fluid-phase slot, including inactive slots, so phase reindexing or a change of phase type during later flashes preserves the fitted configuration.
 
 ---
 

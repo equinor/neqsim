@@ -63,6 +63,12 @@ public class TPflash extends Flash {
   private static final double METASTABLE_GAS_VOLUME_OVER_B_LIMIT = 4.0;
   /** Maximum beta for replacing an invalid incipient sour-gas phase with a balanced endpoint. */
   private static final double INVALID_INCIPIENT_PHASE_FRACTION_LIMIT = 0.01;
+  /** Largest beta correction eligible for roundoff-only aqueous amount synchronization. */
+  private static final double AQUEOUS_AMOUNT_ROUNDOFF_CORRECTION_LIMIT = 1.0e-10;
+  /** Smallest material residual that justifies aqueous amount synchronization. */
+  private static final double AQUEOUS_AMOUNT_ROUNDOFF_REPAIR_THRESHOLD = 1.0e-14;
+  /** Material closure required after roundoff-only aqueous amount synchronization. */
+  private static final double AQUEOUS_AMOUNT_ROUNDOFF_MATERIAL_TOLERANCE = 1.0e-13;
   /** Minimum water feed fraction for ordinary water-rich endpoint refinement. */
   private static final double WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT = 0.01;
   /** Material-balance target for an already-present trace-water aqueous split undergoing repair. */
@@ -192,6 +198,8 @@ public class TPflash extends Flash {
   private boolean phaseRemovedDuringFlash = false;
   /** Allows an iterative outer flash to retain a qualified conserved homogeneous trial state. */
   private boolean conservativeHomogeneousRecoveryAllowed = false;
+  /** Retains overall component inventories during trace-phase cleanup in a closed-volume outer flash. */
+  private boolean preserveFeedInventoryOnPhaseRemoval = false;
   /** Cold initial state retained only for a screened asymmetric endpoint retry. */
   private transient SystemInterface multiphaseEndpointRescueSeed;
   /** Prevents a bounded water-rich cross-algorithm fallback from recursively starting another fallback. */
@@ -304,6 +312,21 @@ public class TPflash extends Flash {
    */
   void setConservativeHomogeneousRecoveryAllowed(boolean allowed) {
     conservativeHomogeneousRecoveryAllowed = allowed;
+  }
+
+  /**
+   * Keeps overall component inventories unchanged when final cleanup removes a negligible phase.
+   *
+   * <p>
+   * A closed-volume outer flash can repeat phase cleanup hundreds of times while varying pressure. Discarding the trace
+   * phase's component amounts on every trial would change the conserved inventory. Ordinary TP flashes retain their
+   * existing cleanup behavior unless their outer operation explicitly enables this option.
+   * </p>
+   *
+   * @param preserve whether phase removal must retain the overall component inventories
+   */
+  void setPreserveFeedInventoryOnPhaseRemoval(boolean preserve) {
+    preserveFeedInventoryOnPhaseRemoval = preserve;
   }
 
   /**
@@ -689,6 +712,7 @@ public class TPflash extends Flash {
         }
       }
       repairInvalidMultiphaseHydrocarbonEndpoint();
+      synchronizeEquilibratedAqueousPhaseAmounts();
       validateTraceWaterAqueousRepair();
       validateCharacterizedFluidPhaseInventories();
     } finally {
@@ -1469,10 +1493,10 @@ public class TPflash extends Flash {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getBeta(i) < phaseFractionMinimumLimit * 1.01) {
         phaseRemovedDuringFlash = true;
-        if (system.getNumberOfPhases() == 2 && isOrdinaryDryHydrocarbonRecoveryAllowed()
-            && maximumComponentMaterialBalanceResidual(system) > COLLAPSED_HYDROCARBON_MATERIAL_BALANCE_TOLERANCE) {
-          // Preserve the conserved feed for an invalid endpoint that needs recovery.
-          // Balanced endpoints retain the established trace-phase cleanup path.
+        if (preserveFeedInventoryOnPhaseRemoval || (system.getNumberOfPhases() == 2
+            && isOrdinaryDryHydrocarbonRecoveryAllowed()
+            && maximumComponentMaterialBalanceResidual(system) > COLLAPSED_HYDROCARBON_MATERIAL_BALANCE_TOLERANCE)) {
+          // Closed-volume trials retain their inventory; invalid ordinary endpoints retain it for recovery.
           system.removePhaseKeepTotalComposition(i);
         } else {
           system.removePhase(i);
@@ -4185,6 +4209,65 @@ public class TPflash extends Flash {
       }
       logger.debug("Neutral two-phase amount synchronization failed: {}", ex.getMessage());
     }
+  }
+
+  /**
+   * Removes roundoff in the phase amounts of an already-equilibrated water-rich split.
+   *
+   * <p>
+   * Ordinary and multiphase beta iterations can retain differences near machine precision even when their compositions
+   * agree. Those differences multiply liquid caloric properties and can leave avoidable extensive-property
+   * discrepancies. Recover the unique lever-rule fractions without another equilibrium solve, changing neither phase
+   * composition nor the active set. Only neutral, substantial-water endpoints with roundoff-sized corrections qualify;
+   * dry and trace-water endpoints retain their existing paths.
+   * </p>
+   */
+  private void synchronizeEquilibratedAqueousPhaseAmounts() {
+    if (system.getNumberOfPhases() != 2 || !system.hasPhaseType(PhaseType.AQUEOUS) || system.isChemicalSystem()
+        || system.hasIons() || solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck()) {
+      return;
+    }
+    double waterFeedFraction = 0.0;
+    for (int componentIndex = 0; componentIndex < system.getNumberOfComponents(); componentIndex++) {
+      if ("water".equalsIgnoreCase(system.getComponent(componentIndex).getComponentName())) {
+        waterFeedFraction = system.getComponent(componentIndex).getz();
+        break;
+      }
+    }
+    if (waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT) {
+      return;
+    }
+    double originalResidual = maximumComponentMaterialBalanceResidual(system);
+    if (originalResidual <= AQUEOUS_AMOUNT_ROUNDOFF_REPAIR_THRESHOLD
+        || originalResidual > AQUEOUS_AMOUNT_ROUNDOFF_CORRECTION_LIMIT || !isBalancedEquilibriumCandidate(system)) {
+      return;
+    }
+    double[] correctedBetas = fixedCompositionTwoPhaseFractions(system);
+    double originalFirstBeta = system.getBeta(0);
+    double originalSecondBeta = system.getBeta(1);
+    if (correctedBetas == null
+        || Math.abs(correctedBetas[0] - originalFirstBeta) > AQUEOUS_AMOUNT_ROUNDOFF_CORRECTION_LIMIT
+        || Math.abs(correctedBetas[1] - originalSecondBeta) > AQUEOUS_AMOUNT_ROUNDOFF_CORRECTION_LIMIT) {
+      return;
+    }
+    PhaseType firstType = system.getPhase(0).getType();
+    PhaseType secondType = system.getPhase(1).getType();
+    try {
+      system.setBeta(0, correctedBetas[0]);
+      system.setBeta(1, correctedBetas[1]);
+      system.init(1);
+      double correctedResidual = maximumComponentMaterialBalanceResidual(system);
+      if (isBalancedEquilibriumCandidate(system) && Double.isFinite(system.getGibbsEnergy())
+          && correctedResidual <= Math.min(originalResidual, AQUEOUS_AMOUNT_ROUNDOFF_MATERIAL_TOLERANCE)
+          && system.getPhase(0).getType() == firstType && system.getPhase(1).getType() == secondType) {
+        return;
+      }
+    } catch (Exception ex) {
+      logger.debug("Aqueous roundoff amount synchronization failed: {}", ex.getMessage());
+    }
+    system.setBeta(0, originalFirstBeta);
+    system.setBeta(1, originalSecondBeta);
+    system.init(1);
   }
 
   /**

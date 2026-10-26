@@ -2328,42 +2328,46 @@ public class GibbsReactor extends TwoPortEquipment {
     try {
       // SystemInterface system = getInletStream().getThermoSystem();
 
-      // Update component moles in the system
-      for (int i = 0; i < processedComponents.size(); i++) {
-        String compName = processedComponents.get(i);
-        // Only update if component is in the Gibbs database
-        if (componentMap.get(compName.toLowerCase()) == null) {
-          // Not in database, skip update to keep moles unchanged
-          continue;
-        }
-        double newMoles = outlet_mole.get(i);
-
-        // Find component index in system
-        int compIndex = -1;
-        for (int j = 0; j < system.getNumberOfComponents(); j++) {
-          if (compName.equals(system.getComponent(j).getComponentName())) {
-            compIndex = j;
-            break;
-          }
-        }
-
-        if (compIndex >= 0) {
-          // Set new moles
-          double currentMoles = system.getComponent(compIndex).getNumberOfMolesInPhase();
-          double molesToAdd = newMoles - currentMoles;
-          if ((molesToAdd < 0.0) && (Math.abs(Math.abs(molesToAdd) - currentMoles)) < 1e-6) {
-            // Prevent removing more moles than present
-            molesToAdd = -currentMoles + 1e-6; // leave a tiny amount to avoid zero
-          }
-          if (Math.abs(molesToAdd) > 1e-15) {
-            system.addComponent(compIndex, molesToAdd, 0);
-          }
-        }
+      if (reconcileCompositionBeforeFugacity) {
+        synchronizeWorkingComposition();
         getOutletStream().setThermoSystem(system);
+      } else {
+        // Update component moles in the system
+        for (int i = 0; i < processedComponents.size(); i++) {
+          String compName = processedComponents.get(i);
+          // Only update if component is in the Gibbs database
+          if (componentMap.get(compName.toLowerCase()) == null) {
+            // Not in database, skip update to keep moles unchanged
+            continue;
+          }
+          double newMoles = outlet_mole.get(i);
+
+          // Find component index in system
+          int compIndex = -1;
+          for (int j = 0; j < system.getNumberOfComponents(); j++) {
+            if (compName.equals(system.getComponent(j).getComponentName())) {
+              compIndex = j;
+              break;
+            }
+          }
+
+          if (compIndex >= 0) {
+            // Set new moles
+            double currentMoles = system.getComponent(compIndex).getNumberOfMolesInPhase();
+            double molesToAdd = newMoles - currentMoles;
+            if ((molesToAdd < 0.0) && (Math.abs(Math.abs(molesToAdd) - currentMoles)) < 1e-6) {
+              // Prevent removing more moles than present
+              molesToAdd = -currentMoles + 1e-6; // leave a tiny amount to avoid zero
+            }
+            if (Math.abs(molesToAdd) > 1e-15) {
+              system.addComponent(compIndex, molesToAdd, 0);
+            }
+          }
+          getOutletStream().setThermoSystem(system);
+        }
       }
 
       if (reconcileCompositionBeforeFugacity) {
-        // addComponent updates inventories but not the stored bulk/phase fractions.
         system.init_x_y();
         system.init(1);
       }
@@ -2391,6 +2395,50 @@ public class GibbsReactor extends TwoPortEquipment {
     } catch (Exception e) {
       logger.error("Error updating system with new compositions: " + e.getMessage());
       return false;
+    }
+  }
+
+  /**
+   * Synchronizes the homogeneous working inventory before evaluating fugacities.
+   *
+   * <p>
+   * The Newton vector contains absolute component amounts. Repeated difference updates against phase amounts can
+   * accumulate rounding error next to a large inert inventory. Inactive phase slots must carry the same overall amounts
+   * and fractions because the final outlet flash can reactivate any of them.
+   * </p>
+   *
+   * @throws IllegalStateException if a component amount is invalid or the total is not finite and positive
+   */
+  private void synchronizeWorkingComposition() {
+    double[] componentMoles = new double[system.getNumberOfComponents()];
+    double totalInventory = 0.0;
+    for (int componentIndex = 0; componentIndex < componentMoles.length; componentIndex++) {
+      String componentName = system.getComponent(componentIndex).getComponentName();
+      Integer processedIndex = processedComponentIndexMap.get(componentName);
+      componentMoles[componentIndex] = componentMap.containsKey(componentName.toLowerCase()) && processedIndex != null
+          ? outlet_mole.get(processedIndex)
+          : system.getComponent(componentIndex).getNumberOfmoles();
+      if (!Double.isFinite(componentMoles[componentIndex]) || componentMoles[componentIndex] < 0.0) {
+        throw new IllegalStateException(
+            "Reaction component inventory must be finite and non-negative: " + componentName);
+      }
+      totalInventory += componentMoles[componentIndex];
+    }
+    if (!Double.isFinite(totalInventory) || totalInventory <= 0.0) {
+      throw new IllegalStateException("Reaction total inventory must be finite and positive");
+    }
+    system.setTotalNumberOfMolesRaw(totalInventory);
+    for (neqsim.thermo.phase.PhaseInterface phase : system.getPhases()) {
+      if (phase == null) {
+        continue;
+      }
+      for (int componentIndex = 0; componentIndex < componentMoles.length; componentIndex++) {
+        phase.getComponent(componentIndex).setNumberOfmoles(componentMoles[componentIndex]);
+        phase.getComponent(componentIndex).setz(componentMoles[componentIndex] / totalInventory);
+      }
+    }
+    for (int componentIndex = 0; componentIndex < componentMoles.length; componentIndex++) {
+      system.getPhase(0).getComponent(componentIndex).setNumberOfMolesInPhase(componentMoles[componentIndex]);
     }
   }
 

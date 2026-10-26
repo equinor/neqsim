@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -111,6 +113,10 @@ public class PVTRegressionTest {
   @Test
   public void testCspViscosityRegressionParametersApplyToFluid() {
     SystemInterface viscosityFluid = createViscosityFluid();
+    PhaseType[] originalTypes = new PhaseType[viscosityFluid.getMaxNumberOfPhases()];
+    for (int phaseIndex = 0; phaseIndex < originalTypes.length; phaseIndex++) {
+      originalTypes[phaseIndex] = viscosityFluid.getPhases()[phaseIndex].getType();
+    }
 
     RegressionParameter.VISCOSITY_CSP_1.applyToFluid(viscosityFluid, 0.6232);
     RegressionParameter.VISCOSITY_CSP_2.applyToFluid(viscosityFluid, 1.1507);
@@ -122,6 +128,30 @@ public class PVTRegressionTest {
     assertEquals(1.1507, correctionFactors[1], 1e-6);
     assertEquals(1.1, correctionFactors[2], 1e-6);
     assertEquals(0.9, correctionFactors[3], 1e-6);
+
+    for (int phaseIndex = 0; phaseIndex < originalTypes.length; phaseIndex++) {
+      assertEquals(originalTypes[phaseIndex], viscosityFluid.getPhases()[phaseIndex].getType(),
+          "parameter configuration must preserve each thermodynamic phase type");
+    }
+
+    // A liquid-only flash maps phase zero to the liquid slot. init(0) restores the raw slots.
+    viscosityFluid.init(0);
+    for (int phaseIndex = 0; phaseIndex < viscosityFluid.getMaxNumberOfPhases(); phaseIndex++) {
+      PhaseInterface phase = viscosityFluid.getPhases()[phaseIndex];
+      PhaseType originalType = phase.getType();
+      try {
+        for (PhaseType type : new PhaseType[] {PhaseType.GAS, PhaseType.OIL, PhaseType.AQUEOUS}) {
+          phase.setType(type);
+          double[] storedFactors = phase.getPhysicalProperties().getCspViscosityCorrectionFactors();
+          assertEquals(0.6232, storedFactors[0], 1e-6);
+          assertEquals(1.1507, storedFactors[1], 1e-6);
+          assertEquals(1.1, storedFactors[2], 1e-6);
+          assertEquals(0.9, storedFactors[3], 1e-6);
+        }
+      } finally {
+        phase.setType(originalType);
+      }
+    }
   }
 
   @Test

@@ -1,0 +1,129 @@
+{
+  "T": 293.15,
+  "V_internal": 99800.00000002717,
+  "n": [
+    702.5935344274613,
+    123.98709431063615,
+    10.27690550561485,
+    1.1418783893713018
+  ],
+  "phase_checks": [
+    {
+      "independent_F_RT": -5280.508475968696,
+      "independent_Hres_J": -401867.91297669057,
+      "reported_Hres_J": -401867.91297669103,
+      "P_bar": 19.138156156431236,
+      "A": 18472525737.046425,
+      "reported_A": 18472525737.04642,
+      "AT": -33345581.1774574,
+      "reported_AT": -33345581.1774574,
+      "B": 2451.1592548425256,
+      "reported_B": 2451.159254842526
+    },
+    {
+      "independent_F_RT": -42.88045312254809,
+      "independent_Hres_J": -132501.1893235495,
+      "reported_Hres_J": -132501.18932354962,
+      "P_bar": 19.138156156434206,
+      "A": 6338996.83148437,
+      "reported_A": 6338996.83148437,
+      "AT": -12274.89057075576,
+      "reported_AT": -12274.89057075576,
+      "B": 44.343602682665086,
+      "reported_B": 44.343602682665086
+    }
+  ],
+  "one_phase_F_RT": -5312.775721162784,
+  "candidate_F_RT": -5323.388929088415,
+  "candidate_minus_one_phase_A_J": -25868.46917898328,
+  "one_phase_Hres_J": -417416.39101149124,
+  "candidate_Hres_J": -534369.1023002401,
+  "candidate_total_H_J": 118357.65566585524,
+  "trials": [
+    {
+      "success": true,
+      "message": "Optimization terminated successfully",
+      "F_RT": -5323.388929088412,
+      "q": [
+        0.0009821082243300656,
+        0.0006435110369816266,
+        0.0009999929221120752,
+        0.0013625776586555166,
+        0.0005093127155385998
+      ],
+      "nit": 24
+    },
+    {
+      "success": true,
+      "message": "Optimization terminated successfully",
+      "F_RT": -5323.3889290884135,
+      "q": [
+        0.0009821084996909056,
+        0.0006435100851886946,
+        0.0009999922279363548,
+        0.0013625776646475568,
+        0.0005093127195262145
+      ],
+      "nit": 21
+    },
+    {
+      "success": true,
+      "message": "Optimization terminated successfully",
+      "F_RT": -5323.388929088414,
+      "q": [
+        0.0009821088088623183,
+        0.0006435100760226251,
+        0.0009999932501143242,
+        0.0013625776615893382,
+        0.0005093128304272996
+      ],
+      "nit": 18
+    },
+    {
+      "success": true,
+      "message": "Optimization terminated successfully",
+      "F_RT": -5323.388929088413,
+      "q": [
+        0.0009821080474399157,
+        0.0006435104583236041,
+        0.000999994096572647,
+        0.0013625776482373638,
+        0.000509312884554024
+      ],
+      "nit": 26
+    },
+    {
+      "success": true,
+      "message": "Optimization terminated successfully",
+      "F_RT": -5323.3889290884135,
+      "q": [
+        0.000982108928952008,
+        0.0006435105793435003,
+        0.000999992622669166,
+        0.0013625776435845936,
+        0.0005093128127967132
+      ],
+      "nit": 27
+    }
+  ],
+  "provenance": {
+    "source_head": "f1f71e9b902e018153b64f98c4fba253cf44bd7b",
+    "model": "SystemUMRPRUMCEos; Mathias-Copeman alpha13; rule2; quadratic covolume type1",
+    "units": "n mol; T K; P bara; H/A J; volume internal 1e5*m3",
+    "protocol": "Existing TVFlashTest public fixture, 1kg/s liquid +50 additions of .3kg/s gas,293.15K,.998m3; no parameter fit",
+    "interpretation": "Five perturbed starting points return the same two-phase local minimum; its Helmholtz energy is lower than the former homogeneous endpoint. Not a universal global phase-stability or experimental accuracy proof.",
+    "ideal_heat_capacity": "Total enthalpy includes separately maintained ideal Cp data; residual reference is the physically discriminating invariant.",
+    "component_order": [
+      "methane",
+      "ethane",
+      "n-pentane",
+      "nC16"
+    ],
+    "java_temperature_checks_K": [
+      293.05,
+      293.15,
+      293.25
+    ],
+    "amount_basis": "One-second-equivalent inlet charges reproduce the existing flow-configured addFluid TV fixture; scalar n values are treated as molar inventories for fixed-T,V,n minimization."
+  }
+}

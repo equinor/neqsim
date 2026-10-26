@@ -1,0 +1,13 @@
+false,2,gas,org.opentest4j.AssertionFailedError: VU must return caloric properties initialized on its final TP state ==> expected: <2457.61077786631> but was: <2457.610715153899>
+false,2,oil,org.opentest4j.AssertionFailedError: VU must return caloric properties initialized on its final TP state ==> expected: <-15272.203356428397> but was: <-15272.203394152419>
+false,2,aqueous,org.opentest4j.AssertionFailedError: VU must return caloric properties initialized on its final TP state ==> expected: <-40884.406826325954> but was: <-40884.406790361565>
+false,4,gas,org.opentest4j.AssertionFailedError: VU must return caloric properties initialized on its final TP state ==> expected: <2457.6107778663104> but was: <2457.6107151538995>
+false,4,oil,org.opentest4j.AssertionFailedError: VU must return caloric properties initialized on its final TP state ==> expected: <-15272.203356463306> but was: <-15272.203394191874>
+false,4,aqueous,org.opentest4j.AssertionFailedError: VU must return caloric properties initialized on its final TP state ==> expected: <-41466.57385733672> but was: <-41466.573820347825>
+true,2,gas,org.opentest4j.AssertionFailedError: VU must return caloric properties initialized on its final TP state ==> expected: <2389.925597306058> but was: <2389.925545541543>
+true,2,oil,org.opentest4j.AssertionFailedError: VU must return caloric properties initialized on its final TP state ==> expected: <-15138.3886257158> but was: <-15138.3886553852>
+true,2,aqueous,org.opentest4j.AssertionFailedError: VU must return caloric properties initialized on its final TP state ==> expected: <-39843.68163766432> but was: <-39843.681617832415>
+true,4,gas,org.opentest4j.AssertionFailedError: VU must return caloric properties initialized on its final TP state ==> expected: <2389.9255973060576> but was: <2389.925545541543>
+true,4,oil,org.opentest4j.AssertionFailedError: VU must return caloric properties initialized on its final TP state ==> expected: <-15138.3886257149> but was: <-15138.38865538431>
+true,4,aqueous,org.opentest4j.AssertionFailedError: VU must return caloric properties initialized on its final TP state ==> expected: <-40411.44417473142> but was: <-40411.44415425594>
+Failed=12/12

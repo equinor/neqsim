@@ -639,12 +639,19 @@ class CompressorTest extends neqsim.NeqSimTest {
 
     boolean sawExtrapolated = false;
     boolean sawInRange = false;
-    double[] speedFractions = {1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2};
+    double[] speedFractions = {1.2, 1.1, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2};
     for (double speedFraction : speedFractions) {
       comp.setSpeed(10000.0 * speedFraction);
       inletStream.setFlowRate(80000.0, "kg/hr");
       inletStream.run();
-      comp.run();
+      try {
+        comp.run();
+      } catch (IllegalArgumentException invalidPoint) {
+        // No accepted state exists at this point. Qualify extrapolation flags at
+        // the physical points above the design speed instead.
+        Assertions.assertTrue(invalidPoint.getMessage().contains("Invalid compressor chart operating point"));
+        continue;
+      }
 
       boolean extrapolated = comp.isChartExtrapolated();
       double validated = comp.getValidatedDistanceToSurge();

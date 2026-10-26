@@ -52,17 +52,12 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       logger.error("Cloning failed.", ex);
     }
 
-    // Thread-safety contract: mixSelect and mixRule are shared (shallow) with the
-    // parent. This is safe for concurrent flashing on parent and clone because the
-    // interaction-parameter matrices (intparam, intparamT, HVDij, NRTLDij,
-    // WSintparam,
-    // NRTLalpha, ...) are written exclusively by setMixingRule() during fluid setup
-    // and are treated as read-only during flash calculations. Callers MUST NOT
-    // invoke setMixingRule() on a fluid (or any of its clones) while another thread
-    // is performing a flash on a sibling clone. EosMixingRuleHandler.clone() is
-    // available for callers that need fully-independent matrix copies (e.g., when
-    // tuning kij in parallel); it is intentionally not invoked here to keep clone()
-    // cheap on the hot path.
+    // mixSelect and mixRule remain shared to keep this hot-path clone inexpensive.
+    // Parameter mutation affects siblings. Stateful rules, including Huron-Vidal,
+    // also share mutable calculation caches, so read-only parameter access alone
+    // does not make concurrent sibling flashes safe. Use independently configured
+    // systems per worker or serialize complete operations on cloned siblings.
+    // Copying only the handler's parameter matrices does not isolate rule work state.
     return clonedPhase;
   }
 
@@ -337,7 +332,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     double[] roots = solveCubic(c2, c1, c0);
     double z = Double.NaN;
     for (double r : roots) {
-      if (!Double.isNaN(r) && r > 0) {
+      if (Double.isFinite(r) && r > Math.max(0.0, B)) {
         if (Double.isNaN(z)) {
           z = r;
         } else if (pt == PhaseType.GAS && r > z) {
@@ -358,7 +353,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * Solve cubic equation z^3 + c2*z^2 + c1*z + c0 = 0 using Cardano's method.
+   * Solve z^3 + c2*z^2 + c1*z + c0 = 0 using Cardano's largest root and stable quadratic deflation.
    *
    * @param c2 coefficient for z^2
    * @param c1 coefficient for z
@@ -392,10 +387,29 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       double phi = Math.acos(acosArg);
       double m = 2.0 * Math.cbrt(r);
       roots[0] = m * Math.cos(phi / 3.0) - b / (3.0 * a);
-      roots[1] = m * Math.cos((phi + 2.0 * Math.PI) / 3.0) - b / (3.0 * a);
-      roots[2] = m * Math.cos((phi + 4.0 * Math.PI) / 3.0) - b / (3.0 * a);
+      // For phi in [0, pi], cos(phi/3) gives the largest root; recover the other two by deflation below.
+      roots[1] = Double.NaN;
+      roots[2] = Double.NaN;
     }
 
+    // At low pressure, subtracting b/(3a) from the trigonometric roots loses the small liquid roots.
+    // Deflate by the well-scaled largest root, deriving the quadratic coefficient from c1 rather than c2+z.
+    double largest = roots[0];
+    if (Double.isFinite(largest) && largest != 0.0) {
+      double product = -c0 / largest;
+      double linear = (product - c1) / largest;
+      double quadraticDiscriminant = linear * linear - 4.0 * product;
+      roots[0] = largest;
+      roots[1] = Double.NaN;
+      roots[2] = Double.NaN;
+      if (quadraticDiscriminant >= 0.0) {
+        double quadraticRoot = -0.5 * (linear + Math.copySign(Math.sqrt(quadraticDiscriminant), linear));
+        if (quadraticRoot != 0.0) {
+          roots[1] = quadraticRoot;
+          roots[2] = product / quadraticRoot;
+        }
+      }
+    }
     return roots;
   }
 
@@ -476,7 +490,11 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       Z = pressure * getMolarVolume() / (R * temperature);
       // logger.info("Math.abs((BonV - BonVold)) " + Math.abs((BonV - BonVold)));
     } while (error > 1.0e-10 && iterations < maxIterations);
-    if (iterations >= maxIterations) {
+    // A tiny update can also indicate a stalled spinodal iteration. Inspect the final pressure only when the
+    // previous residual is suspect, avoiding another evaluation on the ordinary converged path. A large previous
+    // residual alone is not a failure if the last update solved the equation.
+    if (iterations >= maxIterations || !Double.isFinite(h) || (Math.abs(h) > 1.0e-10
+        && Math.abs(calcPressure() - pressure) > 1.0e-8 * Math.max(1.0, Math.abs(pressure)))) {
       return molarVolumeAnalytical(pressure, temperature, pt);
     }
     if (Double.isNaN(getMolarVolume())) {

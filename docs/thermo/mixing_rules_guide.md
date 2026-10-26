@@ -224,17 +224,25 @@ at initialization levels 1, 2 and 3.
 
 ### 4.1 Mathematical framework
 
-The excess Gibbs energy from the selected activity-coefficient model is incorporated
-into the EoS:
+The infinite-pressure excess Gibbs energy is incorporated into the EoS:
 
-$$a_{mix} = b_{mix} \left( \sum_i x_i \frac{a_i}{b_i} - \frac{G^E}{\Lambda} \right)$$
+$$a_{mix} = b_{mix} \left( \sum_i x_i \frac{a_i}{b_i} - \frac{g_\infty^E}{\Lambda} \right)$$
 
-Here, $G^E$ is the excess Gibbs energy and $\Lambda$ is the EoS-specific
-constant (approximately 0.693 for SRK).
+Here $g_\infty^E$ is **molar** excess Gibbs energy, in the same energy-per-mole
+units as $a_i/b_i$. The positive EoS constant is $\Lambda=\ln 2$ for SRK and
+$\Lambda=\ln[(2+\sqrt{2})/(2-\sqrt{2})]/(2\sqrt{2})\approx0.62322524$ for PR.
+The implementation obtains this constant from the EoS delta parameters, including
+when generating classical-pair interactions.
 
-`CLASSIC_HV` (type 3) constructs the modified NRTL rule with the database
-`HVDij` matrix only. `HV` (type 4) also supplies `HVDijT`, so its
-dimensionless directional NRTL parameter is evaluated in source as
+The modified NRTL expression uses covolume-weighted local compositions:
+$G_{ji}=b_j\exp(-\alpha_{ji}\tau_{ji})$. It is not the ordinary mole-weighted
+NRTL model, nor Michelsen's zero-pressure MHV1/MHV2 mixing rules. See
+[Huron and Vidal (1979)](https://doi.org/10.1016/0378-3812(79)80001-1).
+
+Both `CLASSIC_HV` (type 3) and `HV` (type 4) receive the database temperature
+offsets during initialization. Type 3 therefore does not disable nonzero
+`HVDijT` coefficients; use explicitly zero offsets for that comparison. The
+dimensionless directional NRTL parameter is evaluated as
 
 $$\tau_{ij}(T) = \frac{D_{ij}}{T} + D_{ij,T}.$$
 
@@ -243,6 +251,10 @@ $D_{ij}^{\mathrm{eff}}(T)=D_{ij}+D_{ij,T}T$ and divide it by $T$.
 Consequently, `Dij` has units of kelvin and `DijT` is dimensionless; it is
 not a second kelvin-valued slope. `HVMixingRulesInterface` exposes both
 directional matrices and the dimensionless nonrandomness parameter `alpha`.
+The two directed coefficients need not be equal. The temperature derivatives
+are $\partial\tau_{ij}/\partial T=-D_{ij}/T^2$ and
+$\partial^2\tau_{ij}/\partial T^2=2D_{ij}/T^3$; a nonzero offset still
+affects the local-composition weights and their derivatives.
 
 ### 4.2 Complete HV/NRTL example
 
@@ -332,6 +344,123 @@ excess-Gibbs-energy implementation. The type-4 handler currently accepts:
 strings as source-level contracts: configure the final component list first,
 then create the database and select the rule before changing or reading custom
 interaction parameters.
+
+### 4.4 Parameter selection and qualification
+
+`HVTYPE` selects fitted modified-NRTL interactions for an individual pair.
+Pairs marked `Classic`, including missing database pairs, use zero
+nonrandomness and interaction energies derived from the cubic EoS and its
+classical binary coefficient. This recovers the classical mixing rule when all
+pairs are classical. It does **not** generate fitted polar parameters or provide
+an independently validated water/inhibitor correlation for an unknown oil or
+pseudocomponent pair. Stored HV coefficients on a pair marked `Classic` do not
+activate an HV fit.
+
+The database supports separate complete `_SRK` and `_PR` HV coefficient
+families, as described in the [interaction-table guide](inter_table_guide.md#huron-vidal-parameters).
+The optional bundled families are initially empty, so existing fluids retain
+their shared legacy coefficients. A malformed selected family raises an error
+instead of changing to classical mixing. The correct EoS constant alone does
+not establish that shared fitted coefficients are accurate for both EoS.
+Parameter provenance, pure-component alpha/properties, fit ranges and EoS
+transferability must be checked against independent measurements for the
+intended mixture.
+Do not infer accuracy from convergence, finite properties, or phase count.
+
+`HuronVidalLiteratureReproductionTest` preserves an explicit source-compatible
+SRK-HV MEG/n-heptane configuration and seven measured states at 1 bara. It
+reproduces the published mean absolute relative errors of 6.7% for heptane in MEG
+and 21.2% for MEG in heptane. That fit requires the published MEG critical pressure
+of 82 bara and Mathias-Copeman alpha coefficients; it does not replace the library
+defaults. The source inventory is in
+`src/test/resources/neqsim/thermo/mixingrule/hv-literature-candidates.json`.
+Reproducing a published correlation does not establish agreement within the
+measurement uncertainties or justify transferring its parameters to another EOS.
+
+Numerical qualification covers analytical temperature and composition
+derivatives, Gibbs-Duhem and Hessian symmetry, classical-rule recovery for both
+EoS, directed-parameter ordering, and gas-oil-water material balance and fugacity
+equilibrium with methanol and MEG. These checks establish implementation
+consistency for the tested states; they are separate from experimental accuracy.
+Hydrate-temperature depression is a trend check on the coupled hydrate model,
+not a validation of dissociation temperatures for every inhibitor concentration.
+
+`HuronVidalThermodynamicModelConsistencyTest` also uses the existing
+`ThermodynamicModelTest` fugacity/Gibbs, composition, pressure and temperature
+identity checks at their default absolute tolerance of $10^{-10}$ for its
+specified feeds. The independent numerical derivative check uses the established
+mixed absolute/relative tolerance of $10^{-6}$ and requires agreement between two
+step sizes. Bounded step refinement resolves trace-component one-sided stencil
+truncation without relaxing that tolerance; an unresolved check still fails.
+
+`HuronVidalModelConsistencyTest` and `HuronVidalMultiphaseQualificationTest` also
+assert all five `ThermodynamicModelTest` identities and independently compare
+every component's $\partial\ln\phi_i/\partial T$, $\partial\ln\phi_i/\partial P$
+and $\partial\ln\phi_i/\partial n_j$ against refined finite differences. Coverage
+includes both rules 3/4, prescribed asymmetric interactions and nonzero offsets,
+non-unit mole amounts, temperature changes and return, and equilibrated gas,
+oil and aqueous phases with and without methanol or MEG. Derivative trials retain
+each phase root, pressure and component amounts without reflashing. Additional
+checks compare attraction temperature/mixed derivatives and residual heat
+capacity with independent differences. The numerical checker may halve its step
+up to four additional times near dilute amounts; it still rejects unresolved derivatives
+at the requested tolerance and preserves the supplied fluid state.
+
+A stalled cubic-volume iteration must not be accepted solely because its update
+is small. The volume solver checks its EOS-equation residual before accepting
+that convergence, using the existing analytical cubic fallback if needed. The
+fixed-root qualification explicitly checks the returned volume against the
+pressure equation, including the SRK-HV spinodal regression at 280 K and 20 bara.
+This also removes a spurious third phase in a classical SRK CO2/methane/ethane/
+water regression at 255 K and 90 bara: its former vapor volume satisfied only
+54.73 bara. The corrected two-phase result satisfies the EOS equation and has
+lower Gibbs energy. Three-phase topology protection uses the same feed at
+255 K and 60 bara, where all three volumes satisfy the pressure equation.
+
+Public experimental data for a separate physical assessment are available for
+[MEG-water-methane from Folas et al. (2007)](https://trc.nist.gov/ThermoML/10.1016/j.fluid.2006.11.001.html).
+This study compares SRK-HV and CPA. Agreement reported for a published parameter
+set must not be attributed automatically to the current database or to PR-HV.
+An assessment of the six ternary states at 278.15/298.15 K and 50/100/200 bara
+using the database at `8f471dd7b28d0f151d203d6f880a8cb95cc7753a` gave the
+following mean absolute relative deviations in phase mole fractions:
+
+| Observable | SRK-HV | PR-HV |
+|---|---:|---:|
+| Liquid methane | 28.09% | 36.29% |
+| Vapor MEG | 97.76% | 188.60% |
+| Vapor water | 29.27% | 19.96% |
+
+The feed was constructed as $z=(x_{measured}+y_{measured})/2$ and flashed at
+the measured temperature and pressure without fitting. This is a measured-feed
+assessment, not a calculation imposing the measured liquid composition.
+The predicted liquid MEG concentration differed from the measurement by at most
+0.50% relative. Maximum material-balance and log-fugacity residuals were
+$6.28\times10^{-12}$ and $2.53\times10^{-11}$, respectively. These residuals
+demonstrate numerical equilibrium, while the phase-composition deviations expose
+a physical qualification gap. Experimental uncertainty and the published
+parameter set still need to be reconciled; these deviations are not acceptance
+tolerances. The reproducible example and follow-up are tracked in
+[#4573](https://github.com/equinor/neqsim/issues/4573).
+
+Salt-containing inhibitor solutions require a separately qualified electrolyte
+model; the neutral HV checks here do not cover brines.
+
+**Concurrent calculations:** `PhaseEos.clone()` shares the mixing-rule object.
+For HV this includes mutable GE and attraction-derivative work state, in addition
+to the configured parameters. Concurrent flashes on cloned siblings are not
+qualified: an interleaved calculation on a sibling can overwrite this work state.
+Use independently constructed and configured systems per concurrent worker,
+or serialize complete operations on cloned siblings. The reproducer and required
+state-isolation work are tracked in
+[#4575](https://github.com/equinor/neqsim/issues/4575).
+
+The implementation and literature-qualification plan is tracked in
+[#4576](https://github.com/equinor/neqsim/issues/4576). Performance qualification
+includes classical-rule SRK/PR baselines at matched composition, temperature,
+pressure and initialization order, plus complete flashes with reported phase
+topology. Changing the equilibrium model can change solver work and results;
+timing alone does not measure equivalent physical accuracy.
 
 ---
 
@@ -693,3 +822,86 @@ ops.TPflash();
 - [Mathematical Models](mathematical_models.md) - EoS equations and derivations
 - [Thermodynamic Workflows](thermodynamic_workflows.md) - Flash calculations and operations
 - [PVT and Fluid Characterization](pvt_fluid_characterization.md) - Heavy fraction handling
+
+
+### Pure cubic saturation root qualification
+
+For an ordinary pure SRK or PR phase, `CubicPureSaturation` locates the two
+mechanical spinodals and brackets equal liquid/vapor fugacity strictly between
+them. The bubble-pressure calculation uses that pressure to initialize distinct
+physical roots. It does not accept identical roots merely because their fugacity
+coefficients agree. The helper does not mutate its supplied phase, introduce
+fitted parameters, or run on mixture TP-flash paths. The inner density and spinodal
+bisections stop when rounding makes the midpoint equal an endpoint: further
+steps cannot change the returned value. The existing 100-step cap and outer
+pressure tolerance are unchanged. Matched baseline/candidate measurements and
+bitwise pressure comparisons are retained in
+`src/test/resources/neqsim/thermo/phase/cubic-saturation-performance/`.
+
+
+`CubicPureSaturationTest` checks hydrogen at 20.369 K, CO2 at 302 K, methane at
+150 K and water at 373.15 K for both EOS, with three starting pressures each.
+Reference pressures come from independently solving the spinodal quartic and
+cubic pressure polynomial with NumPy, then bisecting the log-fugacity difference.
+The complete scalar inputs and results are retained in
+`src/test/resources/neqsim/thermo/mixingrule/hv-pure-cubic-saturation-reference.json`,
+with its standalone reproduction script. These are equation-implementation
+checks, not measured vapor-pressure accuracy or a new parameter fit.
+
+This qualification excludes CPA, electrolytes, translated-volume phases, SAFT,
+mixture saturation and critical/dew continuation. Broader TV, stability and
+caloric compatibility of the stalled-volume correction remains tracked in
+[issue #4579](https://github.com/equinor/neqsim/issues/4579).
+
+
+### TV endpoint and caloric qualification
+
+Rejecting stalled cubic volumes changes the UMR-PRU/Mathias-Copeman, rule-2,
+quadratic-covolume 50-addition TV fixture from a homogeneous gas to gas plus oil.
+Independent evaluation at the same temperature, volume and component inventories
+lowers Helmholtz energy by 25.868 kJ. Five perturbed-start SciPy minimizations
+recover the same two-phase local minimum. This rejects the former homogeneous
+energy reference; it does not prove global stability for arbitrary mixtures.
+
+The independent residual enthalpy is -534369.102300 J. The new independent addition-history regression retains the
+original 1 J absolute energy tolerance and compares total enthalpy after subtracting
+the component ideal-gas contributions, so independent ideal heat-capacity
+maintenance does not alter the residual reference. Its TV calculation exceptions
+fail the test directly. The legacy total-enthalpy golden check remains unchanged
+and is still tracked as compatibility debt in issue #4579. The corresponding `CubicTvHelmholtzQualificationTest` checks three
+nearby temperatures, material/volume/pressure/fugacity closure, lower Helmholtz
+energy and residual enthalpy from refined fixed-volume temperature differences.
+Complete molar inventories, pure/cross coefficients, units, protocol and the
+NumPy/SciPy reproduction are under
+`src/test/resources/neqsim/thermodynamicoperations/flashops/tv-helmholtz/`.
+These are independent equation-implementation checks, not empirical calibration.
+Remaining stability, process and strict-gradient compatibility is tracked in
+[issue #4579](https://github.com/equinor/neqsim/issues/4579).
+
+
+### Cubic fallback precision and cost
+
+The cubic fallback obtains the largest root with Cardano's formula and recovers
+the other roots by stable quadratic deflation. For largest root $r$, the remaining
+quadratic has constant coefficient $v=-c_0/r$ and linear coefficient
+$u=(v-c_1)/r$. Computing $u$ this way avoids subtracting two numbers near unity
+at dilute pressures. A stable quadratic formula then retains the small liquid
+roots. Roots inside the excluded volume are rejected. The trigonometric branch
+needs only the largest root, saving two redundant cosine evaluations.
+
+`CubicAnalyticalRootPressureTest` checks SRK/PR water, CO2, methane and hexadecane
+from $10^{-10}$ to 200 bara at three molar inventory scales. It checks pressure,
+excluded volume, mechanical stability and root order through both direct fallback
+and public forced-root initialization. Low-pressure liquid branches may be
+metastable; this is EOS root qualification, not saturation or measurement accuracy.
+The previous fallback failed pressure closure in 25 of 128 direct checks; the
+repaired roots agree with independent 80-digit Decimal calculations to about
+$3.5\times10^{-15}$ relative volume error for the saved scalar inputs. Full
+baseline/input/reference data and the standalone reproduction script are under
+`src/test/resources/neqsim/thermo/phase/cubic-root-deflation/`.
+
+The change uses local primitive arithmetic and the existing three-root array;
+it adds no shared cache or per-call allocation. Complete-flash cost must still
+be distinguished from isolated root evaluation and from changed phase equilibria.
+Matched classical-rule/HV timing evidence and remaining compatibility failures
+are tracked in [issue #4579](https://github.com/equinor/neqsim/issues/4579).

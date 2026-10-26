@@ -37,8 +37,33 @@ class TPflashAqueousEndpointTest {
     assertFlashClosure(multiphase);
   }
 
+  /** Verifies the roundoff repair also preserves caloric agreement at nearby operating points. */
+  @Test
+  void nearbyWaterRichEndpointsRetainCaloricAndInventoryAgreement() {
+    for (double temperature : new double[] {272.15, 274.15}) {
+      SystemInterface ordinary = createAndFlash(false, temperature, 290.0);
+      SystemInterface multiphase = createAndFlash(true, temperature, 290.0);
+      assertEquals(multiphase.getEnthalpy(), ordinary.getEnthalpy(), 1.0e-8);
+      assertEquals(multiphase.getGibbsEnergy(), ordinary.getGibbsEnergy(), 1.0e-8);
+      assertFlashClosure(ordinary);
+      assertFlashClosure(multiphase);
+    }
+  }
+
   private SystemInterface createAndFlash(boolean multiphaseCheck) {
-    SystemInterface system = new SystemSrkEos(273.15, 300.0);
+    return createAndFlash(multiphaseCheck, 273.15, 300.0);
+  }
+
+  /**
+   * Constructs and flashes the common feed at one operating point.
+   *
+   * @param multiphaseCheck whether to enable multiphase stability checking
+   * @param temperature temperature in K
+   * @param pressure absolute pressure in bara
+   * @return equilibrated, property-initialized feed
+   */
+  private SystemInterface createAndFlash(boolean multiphaseCheck, double temperature, double pressure) {
+    SystemInterface system = new SystemSrkEos(temperature, pressure);
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
       system.addComponent(COMPONENTS[componentIndex], FEED[componentIndex]);
     }

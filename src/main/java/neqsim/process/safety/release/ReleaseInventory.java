@@ -524,8 +524,10 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
     // The general VU solver has looser stopping criteria than cumulative release accounting.
     // Refine the SAME equations and property model, never accept a substitute flash/property path.
     for (int solve = 1; solve <= 32; solve++) {
-      new ThermodynamicOperations(fluid).VUflash(volumeM3, targetEnergy, "m3", "J");
-      fluid.init(3);
+      if (solve == 1 || !refineSinglePhaseVolumeEnergy(fluid, targetEnergy, energyScale)) {
+        new ThermodynamicOperations(fluid).VUflash(volumeM3, targetEnergy, "m3", "J");
+      }
+      fluid.init(2);
       requireInventory(fluid, true);
       double volumeError = Math.abs(fluid.getVolume("m3") - volumeM3) / volumeM3;
       double energyError = Math.abs(fluid.getInternalEnergy("J") - targetEnergy) / Math.max(1e-10, energyScale);
@@ -534,6 +536,69 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
       }
     }
     throw new IllegalStateException("INVENTORY_VU_REFINEMENT_FAILED: strict volume/energy residuals not reached");
+  }
+
+  /**
+   * Refines a nearby single-phase VU state with its coupled volume/internal-energy Jacobian.
+   *
+   * <p>
+   * Fixed-composition derivatives are valid only while the equilibrated phase is unchanged. Each bounded trial is
+   * reflashed and must reduce the scaled residual; phase changes and non-improving trials return to general VU. Volumes
+   * and derivatives use NeqSim's native volume unit (1e-5 m3), pressure is bara and energy is J.
+   * </p>
+   *
+   * @param fluid candidate inventory, already initialized at level two
+   * @param targetEnergy required internal energy in J
+   * @param energyScale energy scale for the strict closure check in J
+   * @return whether a coupled correction was accepted
+   */
+  private boolean refineSinglePhaseVolumeEnergy(SystemInterface fluid, double targetEnergy, double energyScale) {
+    if (fluid.getNumberOfPhases() != 1) {
+      return false;
+    }
+    double volumeTarget = volumeM3 * 1e5;
+    double volumeResidual = fluid.getVolume() - volumeTarget;
+    double energyResidual = fluid.getInternalEnergy() - targetEnergy;
+    double scale = Math.max(1e-10, energyScale);
+    double residual = Math.max(Math.abs(volumeResidual) / volumeTarget, Math.abs(energyResidual) / scale);
+    if (!Double.isFinite(residual) || residual > 1e-3) {
+      return false;
+    }
+    double temperature = fluid.getTemperature();
+    double pressure = fluid.getPressure();
+    PhaseType phaseType = fluid.getPhase(0).getType();
+    double vt = fluid.getdVdTpn();
+    double vp = fluid.getdVdPtn();
+    double ut = fluid.getCp() - pressure * vt;
+    double up = -temperature * vt - pressure * vp;
+    double determinant = vt * up - vp * ut;
+    if (!(vp < 0.0) || !Double.isFinite(determinant) || determinant == 0.0) {
+      return false;
+    }
+    double deltaT = (-volumeResidual * up + vp * energyResidual) / determinant;
+    double deltaP = (ut * volumeResidual - vt * energyResidual) / determinant;
+    if (!Double.isFinite(deltaT) || !Double.isFinite(deltaP)) {
+      return false;
+    }
+    double damping = Math.min(1.0, Math.min(10.0 / Math.max(10.0, Math.abs(deltaT)),
+        0.25 * pressure / Math.max(0.25 * pressure, Math.abs(deltaP))));
+    for (int trial = 0; trial < 8; trial++, damping *= 0.5) {
+      fluid.setTemperature(temperature + damping * deltaT);
+      fluid.setPressure(pressure + damping * deltaP);
+      new ThermodynamicOperations(fluid).TPflash();
+      fluid.init(2);
+      double nextResidual = Math.max(Math.abs(fluid.getVolume() - volumeTarget) / volumeTarget,
+          Math.abs(fluid.getInternalEnergy() - targetEnergy) / scale);
+      if (fluid.getNumberOfPhases() == 1 && fluid.getPhase(0).getType() == phaseType && Double.isFinite(nextResidual)
+          && nextResidual < residual) {
+        return true;
+      }
+    }
+    fluid.setTemperature(temperature);
+    fluid.setPressure(pressure);
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.init(2);
+    return false;
   }
 
   private static PhaseType requireWithdrawalPhase(PhaseType type) {

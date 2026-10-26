@@ -71,6 +71,12 @@ setters when a project-approved pipe is absent from the table.
 
 ### PipeBeggsAndBrills
 
+The transient transport path flashes the published outlet at its transported
+pressure, temperature, and inlet composition before initializing properties.
+This preserves equilibrium phase fractions and phase flows after composition
+assignment resets phase information, including gas/oil/water outlets. It does not
+add independent phase-slip or composition-advection equations to that path.
+
 `PipeBeggsAndBrills` uses the Beggs-Brill gas/liquid pressure-drop and holdup
 correlation, with segmented equilibrium flashes and selectable thermal modes.
 Use `getFlowRegime()` or `getFlowRegimeEnum()`, and use the segment holdup and

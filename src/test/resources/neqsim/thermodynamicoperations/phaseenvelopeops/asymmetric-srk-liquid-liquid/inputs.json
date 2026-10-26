@@ -1,0 +1,16 @@
+{
+  "model": "SRK, classic symmetric quadratic attraction and linear covolume",
+  "purpose": "Numerical qualification of liquid-liquid onset; no physical parameter fit or experimental validation",
+  "temperature_K": "162.03989088929555",
+  "R": "8.3144621",
+  "components": ["methane", "n-hexane", "nC10"],
+  "feed_mole_fractions": ["0.8", "0.1", "0.1"],
+  "aT": ["25178.707165589407", "499110.6143695149", "1353279.6348826545"],
+  "b": ["2.984851232640916", "12.087892533674642", "21.088685099850753"],
+  "kij": [["0", "0.023474067", "0.041099999"], ["0.023474067", "0", "0"], ["0.041099999", "0", "0"]],
+  "parameter_provenance": "Pure-component a(T), b, R and classic INTER coefficients exported at PR 4577 head 02917efba52dc87e412dcdbad8d222c6db5fc8d1; pressure units bara and NeqSim internal cubic volume units",
+  "pressure_guess_bara": "153",
+  "incipient_composition_guess": ["0.947", "0.036", "0.017"],
+  "feed_Z_guess": "0.76",
+  "incipient_Z_guess": "0.55"
+}

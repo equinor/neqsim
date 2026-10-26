@@ -17,7 +17,8 @@ import neqsim.thermo.system.SystemInterface;
  * <li>Smart initial guessing using previous state</li>
  * <li>Reduced thermodynamic property evaluations</li>
  * <li>Early termination for well-behaved cases</li>
- * <li>Optimized Newton-Raphson solver with line search</li>
+ * <li>Damped Newton updates with bounded steps</li>
+ * <li>Caloric initialization on the returned TP state, reused by the next iteration</li>
  * </ul>
  *
  * @author GitHub Copilot
@@ -202,13 +203,14 @@ public class OptimizedVUflash extends Flash {
     int stagnationCount = 0;
 
     try {
+      // Volume, Cp and temperature/pressure derivatives require level two, not composition derivatives.
+      system.init(2);
       do {
         iterations++;
         oldPres = nyPres;
         oldTemp = nyTemp;
 
-        // Batch initialization to reduce overhead
-        system.init(3);
+        // The caloric state is current from initialization or the preceding TP flash.
 
         // Calculate all derivatives at once
         double dQdP = calcdQdP();
@@ -239,6 +241,9 @@ public class OptimizedVUflash extends Flash {
 
         // Single TP flash per iteration
         tpFlash.run();
+        // A TP flash refreshes fixed-T/P equilibrium; initialize caloric derivatives on its resulting state.
+        // Reuse this level-two state in the next iteration rather than adding a second initialization there.
+        system.init(2);
 
         // Calculate convergence metrics - check BOTH iteration variable changes AND
         // specification

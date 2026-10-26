@@ -1,5 +1,6 @@
 package neqsim.process.equipment.distillation;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
@@ -13,6 +14,42 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for {@link RateBasedPackedColumn}.
  */
 public class RateBasedPackedColumnTest {
+
+  /**
+   * Gas fixture that fails a selected cloned profile trial after accepting its inlet initialization.
+   *
+   * @author NeqSim
+   * @version 1.0
+   */
+  private static final class FailingProfileFluid extends SystemSrkEos {
+    private static final long serialVersionUID = 1000L;
+
+    /** Shared by the inlet and its trial clones so the failure occurs at a reproducible boundary. */
+    private final AtomicInteger remainingInitializations = new AtomicInteger(-1);
+
+    /** Original thermodynamic failure retained by the column diagnostic. */
+    private final IllegalStateException trialFailure = new IllegalStateException("Injected profile property failure");
+
+    /** Create the physical gas fixture with fault injection disabled. */
+    private FailingProfileFluid() {
+      super(313.15, 50.0);
+    }
+
+    /** Enable a failure after the single inlet property initialization. */
+    private void failOnProfileTrial() {
+      remainingInitializations.set(1);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void initProperties() {
+      if (remainingInitializations != null && remainingInitializations.get() >= 0
+          && remainingInitializations.getAndDecrement() == 0) {
+        throw trialFailure;
+      }
+      super.initProperties();
+    }
+  }
 
   @Test
   public void testAbsorbsCarbonDioxideFromGas() {
@@ -145,7 +182,7 @@ public class RateBasedPackedColumnTest {
   }
 
   /**
-   * Reproduce the simultaneous-segment fixed-point exhaustion reported in issue 4111.
+   * Reject a simultaneous-segment profile that exhausts iterations or encounters an invalid thermodynamic state.
    */
   @Test
   public void testSimultaneousFixedPointRejectsUnconvergedProfile() {
@@ -153,9 +190,43 @@ public class RateBasedPackedColumnTest {
         6.0);
     column.setSegmentSolver(RateBasedPackedColumn.SegmentSolver.SIMULTANEOUS_RESIDUAL);
     Assertions.assertThrows(IllegalStateException.class, column::run);
-    Assertions.assertEquals(column.getMaxIterations(), column.getLastIterationCount());
+    Assertions.assertTrue(column.getLastIterationCount() > 0);
+    Assertions.assertTrue(column.getLastIterationCount() <= column.getMaxIterations());
     Assertions.assertTrue(column.getLastConvergenceResidual() > column.getConvergenceTolerance());
     Assertions.assertFalse(column.solved());
+  }
+
+  /**
+   * A failed thermodynamic trial must preserve accepted outlets and report the actual failed iteration.
+   */
+  @Test
+  public void testInvalidThermodynamicRerunPreservesAcceptedProfile() {
+    FailingProfileFluid gasFluid = new FailingProfileFluid();
+    Stream gas = createGasStream("gas", 0.10, gasFluid);
+    RateBasedPackedColumn column = configuredColumn(gas, createLiquidStream("liquid", 0.0), 6.0);
+    column.run();
+    Assertions.assertTrue(column.solved());
+    SystemInterface previousGas = column.getGasOutStream().getThermoSystem();
+    SystemInterface previousLiquid = column.getLiquidOutStream().getThermoSystem();
+    double previousTransfer = column.getTotalAbsoluteMolarTransfer();
+    int previousSegments = column.getSegmentResults().size();
+    column.setSegmentSolver(RateBasedPackedColumn.SegmentSolver.SIMULTANEOUS_RESIDUAL);
+
+    gasFluid.failOnProfileTrial();
+
+    IllegalStateException failure = Assertions.assertThrows(IllegalStateException.class, column::run);
+
+    Assertions.assertNotNull(failure.getCause(), "retain the thermodynamic failure for diagnosis");
+    Assertions.assertSame(gasFluid.trialFailure, failure.getCause(), "retain the original injected failure");
+    Assertions.assertTrue(failure.getMessage().contains("valid thermodynamic profile"));
+    Assertions.assertTrue(column.getLastIterationCount() > 0);
+    Assertions.assertTrue(column.getLastIterationCount() < column.getMaxIterations());
+    Assertions.assertEquals(Double.POSITIVE_INFINITY, column.getLastConvergenceResidual());
+    Assertions.assertFalse(column.solved());
+    Assertions.assertSame(previousGas, column.getGasOutStream().getThermoSystem());
+    Assertions.assertSame(previousLiquid, column.getLiquidOutStream().getThermoSystem());
+    Assertions.assertEquals(previousTransfer, column.getTotalAbsoluteMolarTransfer(), 0.0);
+    Assertions.assertEquals(previousSegments, column.getSegmentResults().size());
   }
 
   /**
@@ -380,7 +451,18 @@ public class RateBasedPackedColumnTest {
    * @return gas stream
    */
   private Stream createGasStream(String name, double co2Fraction) {
-    SystemInterface gas = new SystemSrkEos(313.15, 50.0);
+    return createGasStream(name, co2Fraction, new SystemSrkEos(313.15, 50.0));
+  }
+
+  /**
+   * Initialize a supplied gas model with the common absorption-test composition and flow.
+   *
+   * @param name stream name
+   * @param co2Fraction carbon dioxide mole fraction from zero to one
+   * @param gas supplied thermodynamic model
+   * @return initialized gas stream
+   */
+  private Stream createGasStream(String name, double co2Fraction, SystemInterface gas) {
     gas.addComponent("methane", 1.0 - co2Fraction);
     gas.addComponent("CO2", co2Fraction);
     gas.setMixingRule("classic");
