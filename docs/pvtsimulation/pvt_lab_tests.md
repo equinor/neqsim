@@ -181,6 +181,12 @@ Read `getSaturationPressure`, `getRelativeVolume`, `getLiquidRelativeVolume`,
 `getCummulativeMolePercDepleted` is the current compatibility API.
 `getLiquidRelativeVolume` returns percent of saturation volume, not a unitless fraction.
 
+The legacy `setTemperaturesAndPressures(temperaturesK, pressuresBara)` also sets the
+pressure schedule used by `runCalc`, replacing any earlier schedule. `runCalc` remains
+isothermal: use `setTemperature` for its common temperature; the temperature array
+is used by `runTuning`. Regression evidence:
+[`ConstantVolumeDepletionTest`](../../src/test/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletionTest.java).
+
 ### Differential liberation
 
 Configure `DifferentialLiberation` with `setTemperature`, `setPressures`, and `runCalc`.

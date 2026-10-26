@@ -52,13 +52,15 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * setTemperaturesAndPressures.
+   * Set paired tuning temperatures and the depletion pressure schedule used by runCalc and runTuning. runCalc uses the
+   * common temperature configured with setTemperature, or the fluid's temperature if unset.
    *
-   * @param temperature an array of type double
-   * @param pressure an array of type double
+   * @param temperature tuning temperatures in K
+   * @param pressure depletion pressures in bara
    */
   public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
     this.pressure = pressure;
+    this.pressures = pressure;
     this.temperatures = temperature;
     experimentalData = new double[temperature.length][1];
   }

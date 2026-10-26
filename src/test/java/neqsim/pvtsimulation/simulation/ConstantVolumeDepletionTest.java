@@ -1,5 +1,6 @@
 package neqsim.pvtsimulation.simulation;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
@@ -92,6 +93,39 @@ public class ConstantVolumeDepletionTest {
     }
     assertTrue(cvd.validateMaterialBalance(0.02));
     assertTrue(maximumLiquidDropout > 0.5);
+  }
+
+  /** Paired-state configuration replaces an earlier path and reproduces the isothermal depletion results. */
+  @Test
+  void testSetTemperaturesAndPressuresDefinesDepletionPath() {
+    SystemInterface gasCondensate = new SystemSrkEos(353.15, 200.0);
+    gasCondensate.addComponent("methane", 0.80);
+    gasCondensate.addComponent("ethane", 0.08);
+    gasCondensate.addComponent("propane", 0.05);
+    gasCondensate.addComponent("n-butane", 0.03);
+    gasCondensate.addComponent("n-hexane", 0.02);
+    gasCondensate.addComponent("n-octane", 0.02);
+    gasCondensate.setMixingRule("classic");
+    gasCondensate.init(0);
+    gasCondensate.init(1);
+
+    double[] path = {300.0, 250.0, 200.0, 150.0, 100.0};
+    ConstantVolumeDepletion reference = new ConstantVolumeDepletion(gasCondensate.clone());
+    reference.setTemperature(353.15, "K");
+    reference.setPressures(path.clone());
+    reference.runCalc();
+
+    ConstantVolumeDepletion cvd = new ConstantVolumeDepletion(gasCondensate);
+    cvd.setTemperature(353.15, "K");
+    cvd.setPressures(new double[] {400.0, 200.0});
+    cvd.setTemperaturesAndPressures(new double[] {353.15, 353.15, 353.15, 353.15, 353.15}, path);
+    cvd.runCalc();
+
+    assertArrayEquals(path, cvd.getPressures(), 0.0);
+    assertArrayEquals(reference.getLiquidRelativeVolume(), cvd.getLiquidRelativeVolume(), 1e-10);
+    assertArrayEquals(reference.getZgas(), cvd.getZgas(), 1e-10);
+    assertArrayEquals(reference.getCummulativeMolePercDepleted(), cvd.getCummulativeMolePercDepleted(), 1e-10);
+    assertTrue(cvd.validateMaterialBalance(0.02));
   }
 
   @Test

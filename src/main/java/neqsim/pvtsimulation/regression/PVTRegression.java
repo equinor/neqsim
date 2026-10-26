@@ -411,6 +411,17 @@ public class PVTRegression {
   }
 
   /**
+   * Scale DLE and separator residuals by one percent of the observation, with an absolute floor near zero.
+   *
+   * @param value observed value in the property's input units
+   * @param weight experiment weight dividing the standard deviation
+   * @return sample standard deviation
+   */
+  private static double relativeStandardDeviation(double value, double weight) {
+    return Math.max(Math.abs(value) * 0.01, 1.0e-3) / weight;
+  }
+
+  /**
    * Add DLE samples to the sample list.
    *
    * @param sampleList the list to add DLE samples to
@@ -426,21 +437,24 @@ public class PVTRegression {
         // Rs
         double[] dependentValues = {point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 0,
             identity, row};
-        SampleValue sample = new SampleValue(point.getRs(), 0.01 / weight, dependentValues);
+        SampleValue sample = new SampleValue(point.getRs(), relativeStandardDeviation(point.getRs(), weight),
+            dependentValues);
         sample.setFunction(function.clone());
         sampleList.add(sample);
 
         // Bo
         double[] dependentValues2 = {point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 1,
             identity, row};
-        SampleValue sample2 = new SampleValue(point.getBo(), 0.01 / weight, dependentValues2);
+        SampleValue sample2 = new SampleValue(point.getBo(), relativeStandardDeviation(point.getBo(), weight),
+            dependentValues2);
         sample2.setFunction(function.clone());
         sampleList.add(sample2);
 
         // Oil density
         double[] dependentValues3 = {point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 2,
             identity, row};
-        SampleValue sample3 = new SampleValue(point.getOilDensity(), 0.01 / weight, dependentValues3);
+        SampleValue sample3 = new SampleValue(point.getOilDensity(),
+            relativeStandardDeviation(point.getOilDensity(), weight), dependentValues3);
         sample3.setFunction(function.clone());
         sampleList.add(sample3);
       }
@@ -459,14 +473,16 @@ public class PVTRegression {
       // GOR
       double[] dependentValues = {point.getSeparatorPressure(), point.getSeparatorTemperature(),
           ExperimentType.SEPARATOR.ordinal(), 0, point.getReservoirTemperature()};
-      SampleValue sample = new SampleValue(point.getGor(), 0.01 / weight, dependentValues);
+      SampleValue sample = new SampleValue(point.getGor(), relativeStandardDeviation(point.getGor(), weight),
+          dependentValues);
       sample.setFunction(function.clone());
       sampleList.add(sample);
 
       // Bo
       double[] dependentValues2 = {point.getSeparatorPressure(), point.getSeparatorTemperature(),
           ExperimentType.SEPARATOR.ordinal(), 1, point.getReservoirTemperature()};
-      SampleValue sample2 = new SampleValue(point.getBo(), 0.01 / weight, dependentValues2);
+      SampleValue sample2 = new SampleValue(point.getBo(), relativeStandardDeviation(point.getBo(), weight),
+          dependentValues2);
       sample2.setFunction(function.clone());
       sampleList.add(sample2);
     }

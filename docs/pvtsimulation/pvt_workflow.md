@@ -165,6 +165,22 @@ importance of each data type. `setExperimentWeight`, `setMaxIterations`, `setTol
 `setVerbose` configure the current framework. `runRegression()` rejects an empty parameter set
 and a run with no experimental data.
 
+DLE Rs, Bo and oil density, and separator GOR and Bo, use the sample standard deviation
+$\sigma = \max(0.01|y|, 0.001)/w$, where $y$ is the observed value in the documented
+input units and $w$ is the experiment weight. The absolute floor keeps zero and near-zero
+observations finite. Above that floor, equal relative errors contribute equally across
+these properties. Previously, all five observables used the same absolute standard
+deviation, so large numerical values such as density dominated Bo. CCE, CVD and viscosity
+sample scaling is unchanged. This one-percent scale is a default fitting convention,
+not a statement of laboratory uncertainty.
+
+Weights divide the standard deviation, so doubling a positive experiment weight
+quadruples its contribution to the least-squares sum. This preserves the existing
+weight convention. The per-experiment objective summaries remain separate diagnostics;
+they are not the weighted chi-square reported by the optimizer. The enabled
+[`PVTRegressionWeightingTest`](../../src/test/java/neqsim/pvtsimulation/regression/PVTRegressionWeightingTest.java)
+checks the registered sample scales, near-zero floor and weight convention.
+
 Keep the base-fluid revision, data-preparation revision, parameter configuration, optimizer
 settings, software revision, and execution log together. Logging in maintained Java examples must
 remain Java 8 compatible and use Log4j2; console printing is not an accepted publication pattern.
