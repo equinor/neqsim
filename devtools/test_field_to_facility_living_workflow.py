@@ -1,7 +1,7 @@
 """Execute the Java ten-well lifecycle through the persistent production workflow.
 
 This is the source acceptance path for issue #4188. It deliberately calls the test-scope
-Java fixture, consumes only its exact schema-v8 JSON, and exercises the existing #4187
+Java fixture, consumes only its exact schema-v9 JSON, and exercises the existing #4187
 adapter, guard, ledger, promotion, living report, and canonical report implementation.
 """
 
@@ -239,7 +239,7 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             first_item = items[0]
             first_item_id = first_item["id"]
             evidence = items[0]["lifecycle_envelope_evidence"]
-            self.assertEqual(8, evidence["schema_version"])
+            self.assertEqual(9, evidence["schema_version"])
             self.assertEqual(cycle_id, evidence["cycle_id"])
             self.assertEqual(2, evidence["period_count"])
             self.assertEqual(12, evidence["requested_point_count"])
@@ -249,6 +249,15 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertEqual(1, len(evidence["bottleneck_transitions"]))
             current = next(period for period in evidence["periods"]
                            if period["period_id"] == cycle_id)
+            coverage = current["utilization_coverage"]
+            self.assertIs(True, coverage["complete"])
+            self.assertEqual([], coverage["diagnostics"])
+            self.assertEqual(34, len(coverage["expected_constraint_ids"]))
+            self.assertTrue(all(row["statuses"] == ["AVAILABLE"]
+                                for row in coverage["rows"]))
+            self.assertTrue(any(row["provenance"] ==
+                                "synthetic lifecycle separation limit"
+                                for row in coverage["rows"]))
             optimizer = current["envelope_evidence"]["optimizer_evidence"]
             self.assertEqual("validated gas export", optimizer["objective_name"])
             self.assertEqual("MAXIMIZE", optimizer["objective_direction"])
@@ -295,6 +304,8 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertIn("Early life", report)
             self.assertIn("Current life", report)
             self.assertIn("shared plant power", report.lower())
+            self.assertIn("Declared installed-capacity coverage", report)
+            self.assertIn("synthetic lifecycle separation limit", report)
 
             input_path = task / "continuous" / "user_input.yaml"
             input_path.write_text(

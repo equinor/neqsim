@@ -134,7 +134,21 @@ source without component transport still uses the reference-fluid no-slip volume
 an approximation and is unsuitable for preserving equilibrium in a slipping mixture.
 
 Flash-driven phase transfer is mapped by component name. Evaporation withdraws the donor oil or
-water composition. Condensation uses the receiving equilibrium phase composition. In every cell,
+water composition. Condensation uses the receiving equilibrium phase composition.
+
+An initially empty phase may advect within the substep that creates it when stage-frozen
+component sources provide its composition. All outgoing faces together must fit within that
+cell's old plus same-stage-created phase mass; incoming face mass cannot fund another departure
+in the same step. Existing phases retain their old upwind composition. No phase inventory is
+seeded, and the source is counted exactly once. Missing, nonfinite, inconsistent, or insufficient
+sources reject the complete component candidate without changing its inventory or ledgers.
+Frozen component sources must reproduce each hydrodynamic phase source and sum to zero across
+phases for every named component in each cell. Equal total phase transfers alone cannot authorize
+conversion of one chemical component into another. Source-funded outlet transfers enter the same
+component boundary ledger as existing-phase transport.
+This transport contract does not qualify full blowdown thermal recovery or outlet backflow.
+
+The interphase source balance is
 
 $$
 \sum_{k\in\{G,O,W\}} \Delta M_{i,k,c}^{transfer}=0
@@ -366,8 +380,8 @@ project data before engineering use.
 
 | Feature | Description |
 |---------|-------------|
-| Mixture energy equation | Full energy balance including kinetic and potential terms |
-| Joule-Thomson effect | Enabled by default for accurate temperature prediction |
+| Mixture stored energy | Phase internal plus kinetic energy; gravity is a work source |
+| Joule-Thomson effect | Legacy thermal correction; conservative recovery uses the EOS response |
 | Multi-layer heat transfer | RadialThermalLayer and MultilayerThermalCalculator classes |
 
 The steady temperature solve estimates equilibrium heat capacity and Joule-Thomson
@@ -385,6 +399,81 @@ or `setSurfaceTemperatureProfile(profile, "K")`. The single-argument setter and
 profile getter use absolute Kelvin. A 5–8 °C seawater boundary is 278.15–281.15 K;
 passing 5–8 to the legacy setter represents a cryogenic boundary and warns below
 100 K. See [profile units and the wet-gas riser regression](../wiki/two_fluid_model.md#surface-temperature-profile-units).
+
+#### Opt-in conservative transient thermodynamic recovery
+
+Issue [#4595](https://github.com/equinor/neqsim/issues/4595) identifies a gap in the legacy
+post-step sensible-temperature route: a uniform-temperature adiabatic blowdown can transport
+enthalpy out while leaving published temperature unchanged. A clean mass ledger or the legacy
+thermal report does not detect the resulting disagreement between stored total energy and the
+published pressure, temperature and phase inventories.
+
+Select `setUseConservativeEnergyRecovery(true)` before `run()` to use the experimental
+conservative route. This option initializes named-component inventories, including a
+single-component fluid, and stages each requested transient interval on a private pipe copy.
+Recovery failure or an incomplete interval rejects the entire interval without publishing its
+cells, inventories, clocks or reports. Changing the energy owner after initialization is
+rejected. The default remains the legacy route.
+
+For each accepted cell, common pressure $p$ and temperature $T$ are recovered from fixed cell
+volume $V$ and total energy $E$, retaining each gas, oil and aqueous component inventory and
+phase momentum:
+
+$$\sum_k\frac{m_k}{\rho_k(p,T,Y_k)}=V$$
+
+$$\sum_k m_k e_k(p,T,Y_k)=E-\sum_k\frac{q_k^2}{2m_k}$$
+
+Here $m_k$ is phase mass in kg, $Y_k$ its transported component mass fractions, $\rho_k$ phase
+density in kg/m³, $e_k$ phase specific internal energy in J/kg, and $q_k$ phase momentum in
+kg·m/s. Exactly absent phases contribute zero and cannot carry momentum. Phase properties use
+the supported forced-phase EOS at that phase's own composition. A bulk equilibrium VU flash
+must not restore hidden phases or redistribute finite-rate phase inventories.
+
+The energy equation owns total-enthalpy and phase kinetic-energy face transport, including the
+accepted pressure-correction mass transfers, and gravitational work. Heat exchanged with the
+wall or deposited electrically is added once to that conservative energy. The recovered state
+does not receive another sensible-advection, Joule–Thomson, latent-heat or gravity temperature
+correction. Mass transfer remains the existing empirical closure; conservative recovery does
+not make its relaxation time a measured evaporation rate. Simple-wall exchange uses the
+existing backward-Euler two-node model with a local phase-mass-weighted $C_v$ capacity;
+the heat increment enters total energy before a fresh nonlinear EOS recovery. This is a
+linearized thermal coupling requiring time-step refinement for strongly varying properties.
+The prescribed outlet pressure acts at the external momentum face; it does not project
+the last physical cell onto a reservoir pressure or remove mass without its enthalpy.
+
+`getLastConservativeEnergyReport()` exposes the fluid first-law ledger and separate maximum
+relative occupied-volume and published-state energy residuals. Its signed residual is final
+minus initial fluid internal-plus-kinetic energy, minus net advected energy, gravitational work
+and heat added to the fluid. Heat includes direct electrical heating; wall storage and ambient
+exchange are outside this fluid control volume. Check all three residuals. The legacy
+`getLastThermalEnergyBalanceReport()` is `null` for this route because it describes a different
+post-step sensible-temperature model.
+
+The initial supported configuration requires Euler integration, coupled pressure/momentum and
+the energy equation, with slug tracking, the multilayer wall model, the finite-rate film route,
+the experimental unsplit solver and upstream compressible storage disabled. Unsupported
+combinations fail before advancing time. Complete-interval copying and iterative EOS recovery
+add work; this opt-in path has no blanket process-simulation speedup claim.
+
+`TwoFluidPipeConservativeEnergyTest` checks the issue's ideal-nitrogen blowdown,
+rigid-vessel filling, closed invariance/heating, nearby conditions and serialization.
+`TwoFluidPipeConservativeQualificationTest` checks the integrated filling limit on
+2/4/8 cells with refined time steps, exact electrical heat input and a synthetic
+six-component gas/oil/water composition front with independently rebuilt phase EOS states.
+`TwoFluidPipeConservativeTransitionTest` checks closed methane/n-butane cooling and
+reheating on 2/4 cells with refined time steps. Oil appears under cooling and evaporates
+under reheating; all inventories and energy remain conserved, including positive trace
+relaxation tails. The adiabatic control stays gas-only. These aggressive numerical heat
+transfer/heating values shorten the test and are not equipment design values.
+
+Qualification must distinguish conservative numerical closure from physical accuracy. The
+well-mixed calorically perfect limits are $T/T_0=(m/m_0)^{\gamma-1}$ for adiabatic blowdown and
+$T=(m_0 T_0+\gamma T_{in}(m-m_0))/m$ for adiabatic filling. They are uniform control-volume
+limits, not pointwise targets for an arbitrary short, spatially nonuniform pipe transient.
+Flowing rich-hydrocarbon phase appearance/disappearance, additional mesh/time and thermal-path
+qualification, and public benchmark gates remain necessary before using this route for
+asset-specific evaporation-time or restart design predictions. The Åsgard example remains
+unqualified for evaporation-time prediction without those gates and verified asset inputs.
 
 ## Flow Regime Detection
 
@@ -972,7 +1061,7 @@ System.out.println(pipe.getThermalSummary());
   The local conservative phase inventory supplies fluid thermal inertia, so a disconnected inlet stream's stored
   nominal rate cannot change a closed-domain temperature history. Each cell also owns an independent radial-layer
   temperature history, preventing repeated advancement or cross-cell mixing of stateful multilayer wall calculations.
-- **Energy ownership**: The post-step fluid/wall temperature model owns ambient heat exchange. The duplicate wall source
+- **Legacy energy ownership**: The post-step fluid/wall temperature model owns ambient heat exchange. The duplicate wall source
   in `TwoFluidConservationEquations` is disabled when this model is configured, avoiding two applications of the same
   heat loss.
 - **Multilayer flux consistency**: The fluid and first radial layer use the same instantaneous pre-update
@@ -984,8 +1073,9 @@ System.out.println(pipe.getThermalSummary());
   composition-dependent interphase latent heat, ambient loss, and a signed residual in joules. With component transport
   enabled, the thermal step also runs for an adiabatic pipe so conservative sensible advection and latent effects remain
   coupled even when the external heat-transfer coefficient is zero. The report is `null` only when neither external
-  heat transfer nor component transport is active. Pressure work and kinetic-energy storage are outside this post-step
-  thermal diagnostic.
+  heat transfer nor component transport is active, or when conservative thermodynamic recovery is selected. Pressure
+  work and kinetic-energy storage are outside this legacy post-step thermal diagnostic; use the separate conservative
+  report for the opt-in recovery route.
 
 For validation, start from `run()`, close both boundaries, disable Joule–Thomson effects for an adiabatic invariant, and
 check that a uniform state remains uniform. For cooldown, report absolute pressure, composition and mixing rule,

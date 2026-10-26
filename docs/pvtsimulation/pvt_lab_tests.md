@@ -181,6 +181,12 @@ Read `getSaturationPressure`, `getRelativeVolume`, `getLiquidRelativeVolume`,
 `getCummulativeMolePercDepleted` is the current compatibility API.
 `getLiquidRelativeVolume` returns percent of saturation volume, not a unitless fraction.
 
+The legacy `setTemperaturesAndPressures(temperaturesK, pressuresBara)` also sets the
+pressure schedule used by `runCalc`, replacing any earlier schedule. `runCalc` remains
+isothermal: use `setTemperature` for its common temperature; the temperature array
+is used by `runTuning`. Regression evidence:
+[`ConstantVolumeDepletionTest`](../../src/test/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletionTest.java).
+
 ### Differential liberation
 
 Configure `DifferentialLiberation` with `setTemperature`, `setPressures`, and `runCalc`.
@@ -244,6 +250,14 @@ by `devtools/generate_srk_swelling_reference.py`; it is not experimental oil dat
 `ViscositySim.setTemperaturesAndPressures(temperaturesK, pressuresBara)` defines paired
 states. After `runCalc`, use `getGasViscosity`, `getOilViscosity`, and
 `getAqueousViscosity`. These arrays are in Pa·s.
+
+For compatibility, these numerical arrays contain zero where the corresponding
+phase is absent. Use `getGasPhaseAvailable`, `getOilPhaseAvailable` and
+`getAqueousPhaseAvailable` to distinguish absence from a computed value at each
+paired state. The Boolean arrays are captured from the actual flash within
+`runCalc`; a viscosity value alone does not establish phase presence. The
+[PVT study adapter and report](pvt_fluid_study_report.md) retain these masks in
+the canonical dataset and encode absent-phase viscosities as JSON `null`.
 
 ## Calibration workflow
 

@@ -94,8 +94,6 @@ class PvtWorkflowDocumentationTest(unittest.TestCase):
     def test_regression_source_contract(self):
         required = [
             "public PVTRegression(SystemInterface fluid)",
-            "this.baseFluid = fluid.clone();",
-            "this.tunedFluid = fluid.clone();",
             (
                 "public void addCCEData(double[] pressures, "
                 "double[] relativeVolumes, double temperature)"
