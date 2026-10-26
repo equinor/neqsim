@@ -305,6 +305,12 @@
       "expect_skills_top5": ["enterprise-host-ullage-allocation", "enterprise-area-development-workflow"]
     },
     {
+      "id": "welldb-discovery-well-evidence",
+      "prompt": "what did the discovery well find: fluid type, contacts, MDT sampling and tests from the final well report and discovery evaluation in welldb for Nøkken, and which reports exist for the wellbore",
+      "expect_agent_top3": ["enterprise-welldb-agent", "enterprise-prospect-evidence-agent", "enterprise-geox-agent"],
+      "expect_skills_top5": ["enterprise-welldb-search-api"]
+    },
+    {
       "id": "pepr-action-bottleneck",
       "prompt": "PEPR action 80302027 bottleneck study for gas treatment, read the action and attachments, historian data and maintenance notifications, produce a work report",
       "expect_agent_top3": ["enterprise-pepr-solve-task-agent", "enterprise-pepr-agent"],
