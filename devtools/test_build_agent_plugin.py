@@ -252,6 +252,17 @@ class BuildPluginTest(unittest.TestCase):
         result = self._build()
         self.assertTrue(any("neqsim-missing" in w for w in result["warnings"]))
 
+    def test_only_keeps_skills_of_other_plugins_known(self):
+        other_skills = self.root / "other" / "skills"
+        _write(other_skills / "neqsim-missing" / "SKILL.md",
+               "---\nname: neqsim-missing\ndescription: M. USE WHEN: z\n---\nbody\n")
+        other = bap.PluginSpec("other", "Other", [other_skills], [], [], False, [])
+        specs, known = bap.select_specs([self.spec, other], ["demo"])
+        self.assertEqual([s.name for s in specs], ["demo"])
+        self.assertIn("neqsim-missing", known)
+        result = bap.build_plugin(self.spec, self.out, known, _args())
+        self.assertFalse(any("neqsim-missing" in w for w in result["warnings"]))
+
     def test_version_gate(self):
         self.assertEqual(self._build()["errors"], [])
         # unchanged -> no bump needed
