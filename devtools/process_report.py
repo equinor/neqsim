@@ -274,7 +274,10 @@ def _python_build(module, case, path):
 
 
 def _build_json(text, path):
-    from jneqsim import neqsim
+    try:
+        from jneqsim import neqsim
+    except ImportError:  # pip install of neqsim: the same classes as neqsim.jneqsim
+        from neqsim import jneqsim as neqsim
 
     root = json.loads(text)
     if "areas" in root:
@@ -295,7 +298,10 @@ def _build_json(text, path):
 
 
 def _open_neqsim(path):
-    from jneqsim import neqsim
+    try:
+        from jneqsim import neqsim
+    except ImportError:  # pip install of neqsim: the same classes as neqsim.jneqsim
+        from neqsim import jneqsim as neqsim
 
     try:
         obj = neqsim.util.serialization.NeqSimXtream.openNeqsim(path)

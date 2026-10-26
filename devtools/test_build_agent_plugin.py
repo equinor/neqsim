@@ -211,7 +211,8 @@ class BuildPluginTest(unittest.TestCase):
         self.assertTrue((toolkit / "neqsim_runner" / "__init__.py").exists())
         self.assertTrue((toolkit / "task_template" / "step3_report" / "generate_report.py").exists())
         self.assertFalse((toolkit / "test_new_task.py").exists())
-        self.assertFalse((toolkit / "unisim_reader.py").exists())
+        self.assertFalse((toolkit / "build_agent_plugin.py").exists())
+        self.assertTrue((toolkit / "unisim_reader.py").exists())
         rule = self.out / "core" / "com.github.copilot" / "rules" / "neqsim-calculation-routing.instructions.md"
         self.assertIn("neqsim docker ensure --linux", rule.read_text(encoding="utf-8"))
         hook_py = (self.out / "core" / "scripts" / "install_skill_packages.py").read_text(
@@ -728,6 +729,42 @@ class HookPluginOnlyTest(unittest.TestCase):
         self.assertLess(code.index("ensure_java_home()"), code.index("importlib.import_module"))
 
 
+class LocalizeCommandsTest(unittest.TestCase):
+    modules = {"skill_search", "generate_sources_md", "pdf_ocr"}
+
+    def test_uv_and_python_commands_become_module_calls(self):
+        text = ("uv run --project devtools --locked devtools/generate_sources_md.py <task> --organize\n"
+                "uv run --project devtools devtools/skill_search.py \"x\"\n"
+                "python devtools/pdf_ocr.py a.pdf --pid\n"
+                "python3 devtools/skill_search.py y\n")
+        out = bap.localize_commands(text, self.modules)
+        self.assertIn("<python> -m generate_sources_md <task> --organize", out)
+        self.assertIn("<python> -m skill_search \"x\"", out)
+        self.assertIn("<python> -m pdf_ocr a.pdf --pid", out)
+        self.assertIn("<python> -m skill_search y", out)
+        self.assertNotIn("uv run", out)
+
+    def test_scripts_outside_the_toolkit_are_left_alone(self):
+        text = "uv run --project devtools --locked devtools/build_agent_plugin.py --check\n"
+        self.assertEqual(bap.localize_commands(text, self.modules), text)
+
+    def test_every_rewritten_module_is_installed_and_runnable(self):
+        modules = bap.toolkit_modules()
+        for name in ("unisim_reader", "pdf_ocr", "skill_search", "generate_sources_md"):
+            self.assertIn(name, modules)
+            source = (Path(bap.DEVTOOLS) / (name + ".py")).read_text(encoding="utf-8")
+            self.assertIn("__main__", source, name + " must run as python -m " + name)
+
+    def test_markdown_tree_only_changes_markdown(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _write(root / "a.md", "uv run --project devtools devtools/skill_search.py q\n")
+            _write(root / "a.py", "uv run --project devtools devtools/skill_search.py q\n")
+            self.assertEqual(bap.localize_markdown_tree(root, self.modules), 1)
+            self.assertIn("<python> -m skill_search q", (root / "a.md").read_text(encoding="utf-8"))
+            self.assertIn("uv run", (root / "a.py").read_text(encoding="utf-8"))
+
+
 class RewriteRepoLinksTest(unittest.TestCase):
     def test_repo_links_become_github_urls_and_local_links_stay(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -766,6 +803,36 @@ class RewriteRepoLinksTest(unittest.TestCase):
 
 
 class ToolkitPackagingTest(unittest.TestCase):
+    def test_shipped_modules_only_import_shipped_local_modules(self):
+        import ast
+        devtools = Path(bap.DEVTOOLS)
+        text = (devtools / "pyproject.toml").read_text(encoding="utf-8")
+        modules = set(bap._toml_string_list(text, "py-modules"))
+        packages = set(bap._toml_string_list(text, "packages"))
+        local_modules = {p.stem for p in devtools.glob("*.py")}
+        local_packages = {p.name for p in devtools.iterdir()
+                          if p.is_dir() and (p / "__init__.py").exists()}
+        files = [devtools / (m + ".py") for m in modules]
+        for package in packages:
+            files += devtools.joinpath(*package.split(".")).rglob("*.py")
+        missing = {}
+        for path in files:
+            if "tests" in path.parts or path.name.startswith("test_"):
+                continue
+            for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+                if isinstance(node, ast.Import):
+                    names = [a.name.split(".")[0] for a in node.names]
+                elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                    names = [node.module.split(".")[0]]
+                else:
+                    continue
+                for name in names:
+                    if (name in local_modules and name not in modules) or (
+                            name in local_packages
+                            and not any(p == name or p.startswith(name + ".") for p in packages)):
+                        missing.setdefault(name, set()).add(path.name)
+        self.assertEqual(missing, {}, "modules imported by the toolkit but not packaged")
+
     def test_every_subpackage_of_a_declared_package_is_declared(self):
         devtools = Path(bap.DEVTOOLS)
         text = (devtools / "pyproject.toml").read_text(encoding="utf-8")

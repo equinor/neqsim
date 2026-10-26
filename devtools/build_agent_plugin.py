@@ -263,6 +263,52 @@ def rewrite_repo_links(source: Path, dest: Path, repo_root: Path = REPO_ROOT) ->
     return rewritten
 
 
+_UV_CMD_RE = re.compile(
+    r"uv run --project devtools(?: --locked)?\s+devtools[/\\]([A-Za-z0-9_]+)\.py")
+_PY_CMD_RE = re.compile(r"(?<![\w-])(?:python3?|py)\s+devtools[/\\]([A-Za-z0-9_]+)\.py")
+
+
+def toolkit_modules(devtools: Path = DEVTOOLS) -> set:
+    """Names of the flat modules the vendored toolkit installs (``py-modules``)."""
+    text = (devtools / "pyproject.toml").read_text(encoding="utf-8")
+    return set(_toml_string_list(text, "py-modules"))
+
+
+def localize_commands(text: str, modules: Optional[set] = None) -> str:
+    """Turn checkout-only script commands into ones a plugin-only user can run.
+
+    ``uv run --project devtools --locked devtools/NAME.py ARGS`` and
+    ``python devtools/NAME.py ARGS`` need a source checkout (and uv). When ``NAME``
+    is a toolkit module the plugin installs, the command becomes ``<python> -m NAME ARGS``,
+    run with the interpreter the session hook reports. Commands for scripts the toolkit
+    does not ship (build and CI tooling) are left unchanged.
+    """
+    known = toolkit_modules() if modules is None else modules
+
+    def replace(match: "re.Match[str]") -> str:
+        return "<python> -m " + match.group(1) if match.group(1) in known else match.group(0)
+
+    return _PY_CMD_RE.sub(replace, _UV_CMD_RE.sub(replace, text))
+
+
+def localize_markdown_tree(root: Path, modules: Optional[set] = None) -> int:
+    """Apply ``localize_commands`` to every markdown file under ``root``.
+
+    Returns the number of files changed.
+    """
+    known = toolkit_modules() if modules is None else modules
+    changed = 0
+    for md in root.rglob("*.md"):
+        if any(part in SKIP_DIRS for part in md.relative_to(root).parts):
+            continue
+        text = md.read_bytes().decode("utf-8")
+        updated = localize_commands(text, known)
+        if updated != text:
+            md.write_bytes(updated.encode("utf-8"))
+            changed += 1
+    return changed
+
+
 def copy_skill(name: str, source: Path, dest_root: Path, errors: List[str]) -> None:
     if source.name != name:
         errors.append("skill dir '{}' != name '{}' ({})".format(source.name, name, source))
@@ -272,6 +318,7 @@ def copy_skill(name: str, source: Path, dest_root: Path, errors: List[str]) -> N
         return
     shutil.copytree(str(source), str(dest), ignore=_ignore)
     rewrite_repo_links(source, dest)
+    localize_markdown_tree(dest)
 
 
 def write_agent(agent_id: str, source: Path, dest_root: Path, known_skills: set,
@@ -283,6 +330,7 @@ def write_agent(agent_id: str, source: Path, dest_root: Path, known_skills: set,
         errors.append("duplicate agent id '{}' from {}".format(agent_id, source))
         return
     content = install_agent.render_vscode_agent(agent_id, source)
+    content = localize_commands(content)
     for skill in af.extract_required_skills(content):
         if skill not in known_skills:
             warnings.append("{}: required skill '{}' not in any bundled plugin".format(
@@ -1484,6 +1532,7 @@ def write_toolkit(dest_root: Path, devtools: Path = DEVTOOLS) -> int:
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(str(src), str(dest))
         count += 1
+    localize_markdown_tree(out, toolkit_modules(devtools))
     return count
 
 

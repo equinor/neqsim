@@ -155,3 +155,6 @@ benchmark_results.txt
 
 # Database backup copies are retained in Git history, not as runtime resources.
 /src/main/resources/**/*.bak
+
+# Local pip HTTP cache (may hold authenticated download responses)
+/pip/

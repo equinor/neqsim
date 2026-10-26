@@ -103,4 +103,22 @@ only) map them instead of failing on a missing file:
 - `.github/skills/NAME/SKILL.md` is the skill `NAME`: load it by name from
   the plugin, do not read that path.
 - A task folder is created with `neqsim new-task`; its templates are packaged,
-  so never copy from a `task_solve/` or `tasks/` path that is not there.
+  so never copy from a `task_solve/` or `tasks/` path that is not there. Without a
+  checkout, tasks default to `~/neqsim_tasks`; `neqsim --show-task-root` prints the
+  folder in use.
+- In shipped skills and agents, commands written for a checkout were already turned into
+  `<python> -m NAME ...` where the toolkit has that module (use the session's Python
+  interpreter for `<python>`). A command that still says `uv run --project devtools`
+  or `devtools/NAME.py` is build or CI tooling: skip it.
+- `AGENTS.md`, `CONTEXT.md` and `docs/...` are not installed. Read them at
+  `https://github.com/equinor/neqsim/blob/master/<path>` only when the answer needs
+  them; the skill text normally carries what you need.
+- Discovery without a checkout: use the MCP tool `runCapability` (`search`, `inspectApi`,
+  `coverage`), `-m skill_search` and `-m agent_search`. `capability_search` needs the
+  source tree and is not installed.
+- Maven, Spotless, JUnit, Checkstyle and Java 8 source rules apply only when editing the
+  NeqSim Java source in a checkout (agents such as `neqsim-test`, `dynamic-equipment` and
+  `documentation`). Do not run `mvnw` or look for `pom.xml` without a checkout. If a
+  needed capability is missing, say so, give a Python or MCP workaround where one exists,
+  and offer `neqsim file-issue <task>` (or a pre-filled
+  `https://github.com/equinor/neqsim/issues/new` link) instead of editing Java.

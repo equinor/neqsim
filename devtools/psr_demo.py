@@ -17,7 +17,10 @@ def build_demo_model(feed_kg_h=20000.0, compressor_outlet_bara=90.0):
         A solved ``neqsim.process.processmodel.ProcessModel`` with the areas
         ``separation`` and ``compression``.
     """
-    from jneqsim import neqsim
+    try:
+        from jneqsim import neqsim
+    except ImportError:  # pip install of neqsim: the same classes as neqsim.jneqsim
+        from neqsim import jneqsim as neqsim
 
     fluid = neqsim.thermo.system.SystemSrkEos(273.15 + 45.0, 40.0)
     for name, amount in (("nitrogen", 0.005), ("CO2", 0.02), ("methane", 0.72), ("ethane", 0.08),
@@ -86,7 +89,10 @@ def build_large_model(n_trains=18, areas=3):
     Returns:
         A solved multi-area ``ProcessModel``.
     """
-    from jneqsim import neqsim
+    try:
+        from jneqsim import neqsim
+    except ImportError:  # pip install of neqsim: the same classes as neqsim.jneqsim
+        from neqsim import jneqsim as neqsim
 
     fluid = neqsim.thermo.system.SystemSrkEos(273.15 + 40.0, 30.0)
     for name, amount in (("methane", 0.80), ("ethane", 0.08), ("propane", 0.05), ("n-butane", 0.03), ("n-hexane", 0.02),

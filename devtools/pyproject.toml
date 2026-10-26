@@ -15,6 +15,11 @@ dependencies = [
     "neqsim>=3.18",
     "python-docx>=1.1",
     "matplotlib>=3.7",
+    # Report generators (process, flow assurance, SURF, PVT, layout) render drawings to
+    # PDF/PNG and fail closed without them, so they are not optional.
+    "pymupdf>=1.22.0",
+    "reportlab>=4.0",
+    "openpyxl>=3.1",
     # Enforce the security floor for pip installs as well as the uv lockfile.
     "pillow>=13.0.0",
 ]
@@ -57,7 +62,9 @@ py-modules = [
     "ensure_on_path", "paperlab_install", "new_skill", "neqsim_doctor", "onboard",
     "neqsim_try", "neqsim_contribute", "java_locator", "doc_retriever", "stid_download",
     "process_study_report", "psr_extract", "psr_balances", "psr_basis", "psr_diagrams", "psr_report", "psr_validate", "psr_demo",
-    "process_report", "psr_draft",
+    "process_report", "psr_draft", "psr_connectivity", "psr_wiring", "file_neqsim_issue",
+    "unisim_reader", "unisim_writer", "unisim_neqsim_bridge", "unisim_batch_check",
+    "unisim_run_generated", "unisim_probe_ops", "unisim_probe_column", "pdf_ocr",
     "fa_units", "fa_geometry", "fa_thermal", "fa_methods", "fa_solver", "fa_benchmarks", "fa_study", "fa_draw",
     "fa_sheets_net", "fa_sheets_results", "fa_diagrams", "fa_handoff", "fa_report", "fa_validate", "flow_assurance_report",
     "pvt_data", "pvt_study", "pvt_report",

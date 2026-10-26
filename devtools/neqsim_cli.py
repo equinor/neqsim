@@ -552,6 +552,55 @@ def _handle_task_root(argv):
         print(new_task.resolve_task_root())
 
 
+def _is_checkout():
+    """True in a NeqSim source checkout, where the engine is the freshly built source."""
+    return os.path.isfile(os.path.join(PROJECT_ROOT, "pom.xml"))
+
+
+def _packaged_jar_has(entry):
+    """True when the pip-installed NeqSim jar contains ``entry`` (a ``.class`` path).
+
+    Looks at the jar without starting the JVM. Unknown layouts count as present, so a
+    problem finding the jar never blocks a command.
+    """
+    import glob
+    import importlib.util
+    import zipfile
+    try:
+        spec = importlib.util.find_spec("neqsim")
+        paths = list(spec.submodule_search_locations or []) if spec else []
+        jars = [j for p in paths for j in glob.glob(os.path.join(p, "lib", "neqsim-*.jar"))]
+        if not jars:
+            return True
+        return any(entry in zipfile.ZipFile(j).namelist() for j in jars)
+    except (OSError, ValueError, zipfile.BadZipFile):
+        return True
+
+
+def _print_engine_too_old(what):
+    """Explain that the installed NeqSim engine predates a command's requirements."""
+    try:
+        from importlib.metadata import version
+        installed = version("neqsim")
+    except Exception:  # noqa: BLE001
+        installed = "unknown"
+    print("This command needs {} from a newer NeqSim engine than the installed {}.".format(
+        what, installed))
+    print("Run `python -m pip install -U neqsim`. If that is already the newest release, the "
+          "feature is on the NeqSim master branch but not released yet.")
+
+
+def _run_needing_newer_engine(func, argv):
+    """Run a report command; turn a missing-engine-API crash into a clear message."""
+    try:
+        return func(argv)
+    except AttributeError as error:
+        if _is_checkout() or "neqsim." not in str(error):
+            raise
+        _print_engine_too_old("a method ({})".format(str(error).split(" object")[0]))
+        return 3
+
+
 def main():
     # Ensure devtools/ is importable
     if DEVTOOLS_DIR not in sys.path:
@@ -594,13 +643,18 @@ def main():
         sys.exit(flow_assurance_report.main(sys.argv[2:]))
     if cmd in ("surf-study", "surf_study"):
         import surf_study
-        sys.exit(surf_study.main(sys.argv[2:]))
+        sys.exit(_run_needing_newer_engine(surf_study.main, sys.argv[2:]))
     if cmd in ("layout-study", "layout_study"):
         import layout_study
         sys.exit(layout_study.main(sys.argv[2:]))
     if cmd in ("process-report", "process_report"):
         import process_report
         sys.exit(process_report.main(sys.argv[2:]))
+
+    if cmd == "pvt-study" and not _is_checkout() \
+            and not _packaged_jar_has("neqsim/pvtsimulation/util/PVTFluidStudy.class"):
+        _print_engine_too_old("the PVT fluid study class (PVTFluidStudy)")
+        sys.exit(3)
 
     if cmd in ("work-record", "workrecord"):
         sys.exit(_handle_work_record(sys.argv[2:]))

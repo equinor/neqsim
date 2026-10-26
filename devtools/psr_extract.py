@@ -347,7 +347,10 @@ def _phase_name(phase):
 def _std_flash(fluid, std_t_c, std_p_bara):
     """Flash a clone at standard conditions; return gas/oil/aqueous volumes (m3/h)."""
     import jpype  # noqa: F401  (JVM must be running)
-    from jneqsim import neqsim
+    try:
+        from jneqsim import neqsim
+    except ImportError:  # pip install of neqsim: the same classes as neqsim.jneqsim
+        from neqsim import jneqsim as neqsim
 
     clone = fluid.clone()
     clone.setTemperature(std_t_c + 273.15)
