@@ -23,6 +23,23 @@ Only measurement facts are transcribed. Manuscripts and images are not redistrib
 The uncertainty and comparison protocols are also recorded in
 [issue #4573](https://github.com/equinor/neqsim/issues/4573#issuecomment-6417703485).
 
+The separate `folas-2007-ternary.csv` preserves the original six-state assessment
+from issue #4573: DOI https://doi.org/10.1016/j.fluid.2006.11.001,
+[NIST ThermoML dataset 3](https://trc.nist.gov/ThermoML/10.1016/j.fluid.2006.11.001.html).
+The JSON SHA256 is `3080ddc2eda31b58283ff12de65bb0ce0da3f1a442c5f7b9a70452d945d1df92`.
+Variables 1/2/3 are T in K, pressure in kPa and liquid methane mole fraction;
+properties 1/2/3 are liquid MEG, vapor MEG and vapor water mole fractions.
+Only liquid-MEG and vapor-MEG point uncertainties are supplied (NIST compiler,
+expanded 95%). No uncertainty is invented for liquid methane or vapor water.
+The ambiguous binary-gas component label in dataset 2 is excluded; neither binary
+dataset is joined to this ternary fixture.
+
+This is an **endpoint-derived feed** assessment: complete each measured endpoint
+by mole-fraction closure, then define z = 0.5 x + 0.5 y and perform a TP flash.
+It does not impose measured liquid composition or claim a measured overall feed.
+The resulting liquid-MEG deviation is reported to expose the protocol's small
+composition shift. Pressures convert from kPa to bara by division by 100.
+
 ## Units, missing values and feed basis
 
 Component order in the source is MEG (1), water (2), methane (3).
@@ -52,8 +69,10 @@ not a confidence region or a proven global bound.
 
 ## Executable assessment and acceptance boundary
 
-Run `HuronVidalMegExperimentalAssessmentTest` through Maven. It writes four CSVs
-under `target/hv-meg-assessment/`: SRK/PR mixture and pure assessments.
+Run `HuronVidalMegExperimentalAssessmentTest` through Maven. It writes six CSVs
+under `target/hv-meg-assessment/`: SRK/PR measured-feed mixture, endpoint-derived
+`folas-2007`, and pure assessments. The Folas reports retain their feed protocol,
+constructed feed, liquid-MEG shift and only the supplied uncertainty fields.
 Each report contains calculated and measured values, source uncertainty, signed
 relative error and numerical qualification. Reports deliberately do not label
 experimental accuracy as passed. Missing MEG observations remain NaN.
@@ -65,6 +84,9 @@ They cover fresh, repeated, nearby changed, returned and reversed-component-orde
 states using independently configured fluids. Pure saturation additionally requires
 distinct mechanically stable roots and the EOS pressure equation for both phases.
 The native checks are asserted; logging-only runTest() is not used.
+Repeated/restored/reordered observable comparisons use the larger of 1e-13
+absolute and 1e-8 relative tolerance, allowing a small absolute floor for trace
+vapor amounts. These tolerances do not score agreement with measurements.
 
 AARD is 100 times mean(abs(prediction/measurement - 1)), separately for each
 observable and EOS. Count only ten published vapor-MEG observations; water-in-gas

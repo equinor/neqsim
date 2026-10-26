@@ -915,6 +915,10 @@ are exercised by HuronVidalMegExperimentalAssessmentTest. It asserts native
 fugacity identities and numerical derivatives, balances, distinct pure roots and
 state-history/component-order invariance. The generated CSVs under
 target/hv-meg-assessment keep experimental errors and point uncertainties visible.
+The separate six-state Folas 2007 report preserves the original endpoint-derived
+feed protocol, z = 0.5 x + 0.5 y. It reports the resulting liquid-MEG shift and is
+distinct from the measured overall feeds of Kruger 2018. Missing uncertainty is
+not replaced with a nominal percentage; the ambiguous binary-gas dataset is excluded.
 
 Passing these numerical tests does not establish measured accuracy: the recorded
 default SRK/PR-HV vapor-MEG errors are substantial. No empirical accuracy tolerance,

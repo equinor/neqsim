@@ -100,6 +100,73 @@ class HuronVidalMegExperimentalAssessmentTest extends neqsim.NeqSimTest {
   }
 
   /**
+   * Preserves the original six-state endpoint-derived feed assessment separately from measured feeds.
+   *
+   * @param pr whether to use Peng-Robinson instead of SRK
+   * @throws Exception if input, equilibrium, diagnostics or report output fails
+   */
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void endpointDerivedFeedsPreserveOriginalFolasAssessment(boolean pr) throws Exception {
+    List<String[]> rows = read("folas-2007-ternary.csv");
+    assertEquals(6, rows.size());
+    try (PrintWriter out = report(pr, "folas-2007")) {
+      out.println("T_K,P_bara,zMEG,zWater,zMethane,yMEG,yWater,xMethane,xMEG,"
+          + "measured_yMEG,measured_yWater,measured_xMethane,measured_xMEG,compiler_U95_yMEG,"
+          + "compiler_U95_xMEG,relative_yMEG,relative_yWater,relative_xMethane,relative_xMEG,"
+          + "feed_protocol,numerically_qualified");
+      for (String[] row : rows) {
+        double[] liquid = {number(row[2]), 1 - number(row[2]) - number(row[3]), number(row[3])};
+        double[] vapor = {number(row[4]), number(row[5]), 1 - number(row[4]) - number(row[5])};
+        String[] names = {"MEG", "water", "methane"};
+        double[] feed = new double[3];
+        for (int i = 0; i < feed.length; i++) {
+          feed[i] = 0.5 * liquid[i] + 0.5 * vapor[i];
+          assertTrue(feed[i] > 0 && feed[i] < 1);
+        }
+        double[] fresh = null;
+        for (boolean reverse : new boolean[] {false, true}) {
+          SystemInterface fluid = system(pr, number(row[0]), number(row[1]) / 100);
+          for (int position = 0; position < names.length; position++) {
+            int i = reverse ? 2 - position : position;
+            fluid.addComponent(names[i], feed[i]);
+          }
+          fluid.setMixingRule(4);
+          fluid.setMultiPhaseCheck(true);
+          ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+          operations.TPflash();
+          double[] actual = checkMixture(fluid);
+          if (reverse) {
+            assertSameObservables(fresh, actual);
+            continue;
+          }
+          fresh = actual;
+          PhaseInterface aqueous = fluid.getPhase(0).getType() == PhaseType.GAS ? fluid.getPhase(1) : fluid.getPhase(0);
+          double calculatedLiquidMeg = aqueous.getComponent("MEG").getx();
+          out.printf(Locale.ROOT,
+              "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,"
+                  + "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g,half_liquid_plus_half_vapor,true%n",
+              number(row[0]), number(row[1]) / 100, feed[0], feed[1], feed[2], fresh[0], fresh[1], fresh[2],
+              calculatedLiquidMeg, vapor[0], vapor[1], liquid[2], liquid[0], number(row[7]), number(row[6]),
+              fresh[0] / vapor[0] - 1, fresh[1] / vapor[1] - 1, fresh[2] / liquid[2] - 1,
+              calculatedLiquidMeg / liquid[0] - 1);
+          operations.TPflash();
+          assertSameObservables(fresh, checkMixture(fluid));
+          fluid.setTemperature(number(row[0]) + 0.2);
+          fluid.setPressure(number(row[1]) / 100 * 1.01);
+          operations.TPflash();
+          checkMixture(fluid);
+          fluid.setTemperature(number(row[0]));
+          fluid.setPressure(number(row[1]) / 100);
+          operations.TPflash();
+          assertSameObservables(fresh, checkMixture(fluid));
+        }
+      }
+      assertTrue(!out.checkError(), "The assessment report must be written successfully");
+    }
+  }
+
+  /**
    * Reports pure-MEG pressure errors while requiring distinct stable roots and equation closure.
    *
    * @param pr whether to use Peng-Robinson instead of SRK
