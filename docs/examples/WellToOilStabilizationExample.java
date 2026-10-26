@@ -175,7 +175,7 @@ public class WellToOilStabilizationExample {
 
     // --- First Stage: HP Separator ---
     Heater preHeater1 = new Heater("Pre-Heater HP", inletChoke.getOutletStream());
-    preHeater1.setOutTemperature(70.0, "C");
+    preHeater1.setOutletTemperature(70.0, "C");
 
     Separator hpSeparator = new Separator("HP Separator");
     hpSeparator.setInletStream(preHeater1.getOutletStream());
@@ -188,7 +188,7 @@ public class WellToOilStabilizationExample {
     mpValve.setOutletPressure(10.0, "bara");
 
     Heater preHeater2 = new Heater("Pre-Heater MP", mpValve.getOutletStream());
-    preHeater2.setOutTemperature(65.0, "C");
+    preHeater2.setOutletTemperature(65.0, "C");
 
     Separator mpSeparator = new Separator("MP Separator");
     mpSeparator.setInletStream(preHeater2.getOutletStream());
@@ -201,7 +201,7 @@ public class WellToOilStabilizationExample {
     lpValve.setOutletPressure(2.0, "bara");
 
     Heater stabilizer = new Heater("Stabilizer Heater", lpValve.getOutletStream());
-    stabilizer.setOutTemperature(80.0, "C");
+    stabilizer.setOutletTemperature(80.0, "C");
 
     Separator lpSeparator = new Separator("LP Separator (Stabilizer)");
     lpSeparator.setInletStream(stabilizer.getOutletStream());
@@ -219,7 +219,7 @@ public class WellToOilStabilizationExample {
     lpCompressor.setPolytropicEfficiency(0.75);
 
     Cooler lpCooler = new Cooler("LP Compressor Aftercooler", lpCompressor.getOutletStream());
-    lpCooler.setOutTemperature(40.0, "C");
+    lpCooler.setOutletTemperature(40.0, "C");
 
     // Mix LP compressed gas with MP gas
     Mixer mpMixer = new Mixer("MP Gas Mixer");
@@ -232,7 +232,7 @@ public class WellToOilStabilizationExample {
     mpCompressor.setPolytropicEfficiency(0.75);
 
     Cooler mpCooler = new Cooler("MP Compressor Aftercooler", mpCompressor.getOutletStream());
-    mpCooler.setOutTemperature(40.0, "C");
+    mpCooler.setOutletTemperature(40.0, "C");
 
     // Mix with HP gas for export
     Mixer hpMixer = new Mixer("HP Gas Mixer");
@@ -245,7 +245,7 @@ public class WellToOilStabilizationExample {
     exportCompressor.setPolytropicEfficiency(0.78);
 
     Cooler exportCooler = new Cooler("Export Cooler", exportCompressor.getOutletStream());
-    exportCooler.setOutTemperature(30.0, "C");
+    exportCooler.setOutletTemperature(30.0, "C");
 
     logger.info("   - 3-stage compression: LP→MP→HP→Export");
     logger.info("   - Export pressure: 120 bara");
@@ -301,7 +301,7 @@ public class WellToOilStabilizationExample {
         well.getBottomHolePressure("bara")));
     logger.info("{}", String.format("   Wellhead Pressure:     %.1f bara",
         well.getWellheadPressure("bara")));
-    logger.info("{}", String.format("   Drawdown:              %.1f bar", well.getDrawdown("bara")));
+    logger.info("{}", String.format("   Drawdown:              %.1f bar", well.getDrawdown("bar")));
     logger.info("{}", String.format("   Operating Flow Rate:   %.1f Sm³/day",
         well.getOperatingFlowRate("Sm3/day")));
 
