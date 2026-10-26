@@ -234,6 +234,64 @@ class TwoFluidPipeConservativeEnergyTest {
     assertArrayEquals(pressure, fixture.pipe.getPressureProfile(), 0.0);
   }
 
+  /** A converged legacy steady state can transfer energy ownership once without changing accepted fields. */
+  @Test
+  void convergedSteadyStateCanHandOffToConservativeTransientOwnership() {
+    Fixture fixture = createPipe("steady-handoff", false, 300.0, 2.0, 2);
+    double[] pressure = fixture.pipe.getPressureProfile();
+    double[] temperature = fixture.pipe.getTemperatureProfile();
+    double[] holdup = fixture.pipe.getLiquidHoldupProfile();
+    double[] gasVelocity = fixture.pipe.getGasVelocityProfile();
+    double[] liquidVelocity = fixture.pipe.getLiquidVelocityProfile();
+    double energy = storedEnergy(fixture.pipe);
+
+    fixture.pipe.prepareConservativeEnergyTransientFromSteadyState();
+
+    assertTrue(fixture.pipe.isUseConservativeEnergyRecovery());
+    assertTrue(fixture.pipe.isComponentTransportEnabled());
+    assertTrue(fixture.pipe.isCoupledPressureMomentumEnabled());
+    assertEquals(TimeIntegrator.Method.EULER, fixture.pipe.getTimeIntegrationMethod());
+    assertArrayEquals(pressure, fixture.pipe.getPressureProfile(), 0.0);
+    assertArrayEquals(temperature, fixture.pipe.getTemperatureProfile(), 0.0);
+    assertArrayEquals(holdup, fixture.pipe.getLiquidHoldupProfile(), 0.0);
+    assertArrayEquals(gasVelocity, fixture.pipe.getGasVelocityProfile(), 0.0);
+    assertArrayEquals(liquidVelocity, fixture.pipe.getLiquidVelocityProfile(), 0.0);
+    assertEquals(energy, storedEnergy(fixture.pipe), 0.0);
+
+    fixture.pipe.prepareConservativeEnergyTransientFromSteadyState();
+    fixture.pipe.closeInlet();
+    fixture.pipe.openOutlet(1.9, "bara");
+    fixture.pipe.runTransient(1.0e-4, CALCULATION_ID);
+    assertNotNull(fixture.pipe.getLastConservativeEnergyReport());
+    assertNotNull(fixture.pipe.getLastComponentConservationReport());
+    assertThrows(IllegalStateException.class, fixture.pipe::prepareConservativeEnergyTransientFromSteadyState);
+  }
+
+  /** Reject post-steady ownership transfer before a converged steady state exists. */
+  @Test
+  void conservativeHandoffRejectsUninitializedPipe() {
+    SystemIdealGas fluid = nitrogen(300.0, 2.0);
+    Stream inlet = new Stream("uninitialized-handoff-inlet", fluid);
+    TwoFluidPipe pipe = new TwoFluidPipe("uninitialized-handoff", inlet);
+    assertThrows(IllegalStateException.class, pipe::prepareConservativeEnergyTransientFromSteadyState);
+  }
+
+  /** An unsupported post-steady model fails before installing component or energy ownership. */
+  @Test
+  void conservativeHandoffRejectsUnsupportedModelWithoutPartialPreparation() {
+    Fixture fixture = createPipe("unsupported-handoff", false, 300.0, 2.0, 2);
+    double[] pressure = fixture.pipe.getPressureProfile();
+    double energy = storedEnergy(fixture.pipe);
+    fixture.pipe.setUseMultilayerThermalModel(true);
+
+    assertThrows(IllegalStateException.class, fixture.pipe::prepareConservativeEnergyTransientFromSteadyState);
+
+    assertFalse(fixture.pipe.isUseConservativeEnergyRecovery());
+    assertFalse(fixture.pipe.isComponentTransportEnabled());
+    assertArrayEquals(pressure, fixture.pipe.getPressureProfile(), 0.0);
+    assertEquals(energy, storedEnergy(fixture.pipe), 0.0);
+  }
+
   /**
    * Create the short ideal-nitrogen diagnostic from issue 4595.
    *

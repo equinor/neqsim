@@ -949,6 +949,25 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     }
 
     /**
+     * Create an independent conservative-energy transient pipe from the last accepted network solve.
+     *
+     * <p>
+     * The converged steady fields are retained without another hydraulic solve. Named-component inventories are
+     * initialized from the accepted phase inventories and the copy is placed in the supported coupled-Euler transient
+     * configuration. The network edge and its hydraulic evidence remain unchanged.
+     * </p>
+     *
+     * @return independent conservative-energy pipe initialized from the converged steady state
+     * @throws IllegalStateException if the edge has no accepted two-fluid steady state or uses an unsupported transient
+     * configuration
+     */
+    public TwoFluidPipe createConservativeEnergyInitializedTwoFluidPipe() {
+      TwoFluidPipe initialized = createInitializedTwoFluidPipe();
+      initialized.prepareConservativeEnergyTransientFromSteadyState();
+      return initialized;
+    }
+
+    /**
      * Return the last evaluation status, including any correlation fallback.
      *
      * @return hydraulic evaluation status

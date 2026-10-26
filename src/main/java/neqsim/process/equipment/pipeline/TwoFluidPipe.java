@@ -5535,13 +5535,66 @@ public class TwoFluidPipe extends Pipeline {
    */
   public synchronized void setUseConservativeEnergyRecovery(boolean enabled) {
     if (sections != null && enabled != useConservativeEnergyRecovery) {
-      throw new IllegalStateException("Select the energy recovery owner before run()");
+      throw new IllegalStateException("Select the energy recovery owner before run(), or use "
+          + "prepareConservativeEnergyTransientFromSteadyState() on a converged, unadvanced steady state");
     }
     if (enabled) {
       setComponentTransportEnabled(true);
     }
     useConservativeEnergyRecovery = enabled;
     lastConservativeEnergyReport = null;
+  }
+
+  /**
+   * Prepare an accepted steady state for conservative-energy transient simulation without rerunning the steady solve.
+   *
+   * <p>
+   * This controlled handoff retains the converged pressure, temperature, holdup, phase velocity and conservative
+   * section fields. It initializes named-component inventories directly from those accepted phase inventories and
+   * selects the supported coupled-Euler transient configuration. The operation is allowed only before any transient
+   * time has advanced. Unsupported optional models and boundary combinations fail before the pipe state is changed.
+   * </p>
+   *
+   * <p>
+   * Calling this method on an already prepared pipe is idempotent as long as its supported configuration has not been
+   * changed. This is the post-steady counterpart to selecting {@link #setUseConservativeEnergyRecovery(boolean)} before
+   * {@link #run(UUID)}.
+   * </p>
+   *
+   * @throws IllegalStateException if no converged steady state exists, transient time has advanced, or the initialized
+   * pipe uses an unsupported conservative-energy configuration
+   */
+  public synchronized void prepareConservativeEnergyTransientFromSteadyState() {
+    if (sections == null || referenceFluid == null) {
+      throw new IllegalStateException("Conservative-energy handoff requires an initialized steady state");
+    }
+    if (!isSteadyStateConverged()) {
+      throw new IllegalStateException("Conservative-energy handoff requires a converged steady state");
+    }
+    if (simulationTime != 0.0 || time != 0.0 || timeIntegrator.getCurrentTime() != 0.0) {
+      throw new IllegalStateException("Conservative-energy handoff is only available before transient time advances");
+    }
+    if (useConservativeEnergyRecovery) {
+      validateConservativeEnergyConfiguration();
+      return;
+    }
+    validateConservativeEnergyCompatibility();
+
+    TwoFluidComponentTransport initializedTransport = componentTransport;
+    if (initializedTransport == null) {
+      initializedTransport = new TwoFluidComponentTransport(referenceFluid, sections, initialAqueousFluid);
+    }
+
+    setIncludeEnergyEquation(true);
+    setComponentTransportEnabled(true);
+    componentTransport = initializedTransport;
+    setTimeIntegrationMethod(TimeIntegrator.Method.EULER);
+    setEnableSlugTracking(false);
+    setEnableCoupledPressureMomentum(true);
+    useConservativeEnergyRecovery = true;
+    lastConservativeEnergyReport = null;
+    lastThermalEnergyBalanceReport = null;
+    validateConservativeEnergyConfiguration();
   }
 
   /** @return whether conservative thermodynamic recovery owns transient temperature */
@@ -5557,12 +5610,24 @@ public class TwoFluidPipe extends Pipeline {
   /** Reject unsupported combinations before evaluating a conservative interval. */
   private void validateConservativeEnergyConfiguration() {
     if (!includeEnergyEquation || !componentTransportEnabled || !coupledPressureMomentumEnabled
-        || timeIntegrator.getMethod() != TimeIntegrator.Method.EULER || enableSlugTracking
-        || nonEquilibriumFilmTransfer != null || useMultilayerThermalModel || upstreamCompressibleVolume != null
+        || timeIntegrator.getMethod() != TimeIntegrator.Method.EULER || enableSlugTracking) {
+      throw new IllegalStateException(
+          "Conservative energy recovery requires coupled Euler, energy and component transport with slug tracking "
+              + "disabled");
+    }
+    validateConservativeEnergyCompatibility();
+  }
+
+  /** Reject optional-model and boundary combinations unsupported by conservative thermodynamic recovery. */
+  private void validateConservativeEnergyCompatibility() {
+    if (nonEquilibriumFilmTransfer != null || useMultilayerThermalModel || upstreamCompressibleVolume != null
         || unsplitTransientSolver != null || equations.isConservativeSlugForceIntegrationEnabled()
         || equations.isStiffBubbleDragEnabled()) {
-      throw new IllegalStateException("Conservative energy recovery requires coupled Euler, energy and component "
-          + "transport, disabled slug tracking, and no multilayer, film, upstream-volume or split-force model");
+      throw new IllegalStateException("Conservative energy recovery does not support a multilayer, film, "
+          + "upstream-volume, unsplit or split-force model");
+    }
+    if (equations.isOutletPhaseBackflowAllowed()) {
+      throw new IllegalStateException(componentOutletBackflowUnsupportedMessage());
     }
     if (!(inletBCType == BoundaryCondition.CLOSED || inletBCType == BoundaryCondition.STREAM_CONNECTED
         || inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet)

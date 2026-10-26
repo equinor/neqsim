@@ -20,8 +20,11 @@ import neqsim.process.equipment.network.NetworkHydraulicModelComparison.EdgeComp
 import neqsim.process.equipment.network.NetworkHydraulicModelComparison.MeshSensitivityResult;
 import neqsim.process.equipment.network.NetworkHydraulicModelComparison.ModelProfiles;
 import neqsim.process.equipment.network.NetworkHydraulicModelComparison.Result;
+import neqsim.process.equipment.pipeline.TwoFluidConservativeEnergyReport;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport;
+import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -138,6 +141,28 @@ class NetworkHydraulicModelComparisonTest {
     assertNotNull(independent.getLastMassBalanceReport());
     assertTrue(Double
         .isFinite(independent.getLastMassBalanceReport().getRelativeResidual(TwoFluidMassBalanceReport.Phase.TOTAL)));
+
+    TwoFluidPipe conservative = result.createConservativeEnergyInitializedTwoFluidPipe("flowline");
+    assertTrue(conservative.isUseConservativeEnergyRecovery());
+    assertTrue(conservative.isComponentTransportEnabled());
+    assertTrue(conservative.isCoupledPressureMomentumEnabled());
+    assertEquals(TimeIntegrator.Method.EULER, conservative.getTimeIntegrationMethod());
+    assertArrayEquals(flowline.getTwoFluidProfiles().getPressurePa(), conservative.getPressureProfile(), 0.0);
+    assertArrayEquals(flowline.getTwoFluidProfiles().getTemperatureK(), conservative.getTemperatureProfile(), 0.0);
+    assertArrayEquals(initialized.getLiquidHoldupProfile(), conservative.getLiquidHoldupProfile(), 0.0);
+    assertArrayEquals(initialized.getGasVelocityProfile(), conservative.getGasVelocityProfile(), 0.0);
+    assertArrayEquals(initialized.getLiquidVelocityProfile(), conservative.getLiquidVelocityProfile(), 0.0);
+    assertArrayEquals(sectionEnergy(initialized), sectionEnergy(conservative), 0.0);
+    conservative.prepareConservativeEnergyTransientFromSteadyState();
+    conservative.runTransient(1.0e-6, UUID.randomUUID());
+    TwoFluidConservativeEnergyReport energy = conservative.getLastConservativeEnergyReport();
+    assertNotNull(energy);
+    assertTrue(energy.isWithinTolerance(1.0e-4, 1.0e-7));
+    assertTrue(energy.getMaxRelativeVolumeResidual() < 1.0e-7);
+    assertTrue(energy.getMaxRelativeThermodynamicEnergyResidual() < 1.0e-7);
+    assertNotNull(conservative.getLastComponentConservationReport());
+    assertTrue(conservative.getLastComponentConservationReport().isConverged());
+    assertThrows(IllegalStateException.class, conservative::prepareConservativeEnergyTransientFromSteadyState);
   }
 
   /** Verify conservation and comparison evidence at a nearby field rate. */
@@ -284,5 +309,20 @@ class NetworkHydraulicModelComparisonTest {
       total += value;
     }
     return total;
+  }
+
+  /**
+   * Read the accepted conservative section-energy field.
+   *
+   * @param pipe initialized two-fluid pipe
+   * @return energy per unit length for each cell in J/m
+   */
+  private double[] sectionEnergy(TwoFluidPipe pipe) {
+    TwoFluidSection[] sections = pipe.getSectionSnapshots();
+    double[] energy = new double[sections.length];
+    for (int i = 0; i < sections.length; i++) {
+      energy[i] = sections[i].getEnergyPerLength();
+    }
+    return energy;
   }
 }
