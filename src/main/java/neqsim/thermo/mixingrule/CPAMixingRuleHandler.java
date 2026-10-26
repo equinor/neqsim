@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
+import neqsim.thermo.component.ComponentUMRCPA;
 import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.util.database.NeqSimDataBase;
@@ -367,9 +368,11 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
     @Override
     public double calcDeltadN(int derivativeComp, int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
         PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+      double logarithmicDerivative = phase.getComponent(derivativeComp) instanceof ComponentUMRCPA
+          ? ((ComponentUMRCPA) phase.getComponent(derivativeComp)).calc_lngi(phase)
+          : ((ComponentSrkCPA) phase.getComponent(derivativeComp)).calc_lngi(phase);
       return ((PhaseCPAInterface) phase).getCrossAssosiationScheme(compnumb1, compnumb2, siteNumber1, siteNumber2)
-          * calcDelta(compnumb1, compnumb2, phase, temperature, pressure, numbcomp)
-          * ((ComponentSrkCPA) phase.getComponent(derivativeComp)).calc_lngi(phase);
+          * calcDelta(compnumb1, compnumb2, phase, temperature, pressure, numbcomp) * logarithmicDerivative;
     }
 
     /** {@inheritDoc} */
@@ -414,10 +417,11 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
       }
       double derivative = -getCrossAssociationEnergy(compnumb1, compnumb2, phase, temperature, pressure, numbcomp)
           / (R * phase.getTemperature() * phase.getTemperature());
+      // d(exp(epsilon/RT) - 1)/dT contains exp(epsilon/RT), not exp(epsilon/RT) - 1.
       return ((PhaseCPAInterface) phase).getCrossAssosiationScheme(compnumb1, compnumb2, siteNumber1, siteNumber2)
           * derivative
           * (Math.exp(getCrossAssociationEnergy(compnumb1, compnumb2, phase, temperature, pressure, numbcomp)
-              / (R * phase.getTemperature())) - 1.0)
+              / (R * phase.getTemperature())))
           * (((ComponentEosInterface) phase.getComponent(compnumb1)).getb()
               + ((ComponentEosInterface) phase.getComponent(compnumb2)).getb())
           / 2.0 * getCrossAssociationVolume(compnumb1, compnumb2, phase, temperature, pressure, numbcomp)

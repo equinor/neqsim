@@ -5,7 +5,14 @@ import neqsim.thermo.phase.PhasePrCPA;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
- * This class defines a thermodynamic system using the PR-CPA equation of state.
+ * Thermodynamic system using the PR-CPA equation of state with generic PR-CPA database parameters.
+ *
+ * <p>
+ * Uses the PR-based CPA mass-action and analytical site-derivative implementation with the ordinary PR alpha and fitted
+ * CPA coefficient when available. Sharing the association solver with UMR-CPA does not select its dedicated parameter
+ * or alpha families. Use CPA mixing rules 7, 9 or 10. Legacy Java-serialized PR-CPA phases must be recreated after the
+ * association implementation repair; see {@link PhasePrCPA}.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id

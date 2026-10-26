@@ -566,10 +566,58 @@ CPA mixing rules also handle association site interactions between different mol
 
 | Association Scheme | Description | Examples |
 |-------------------|-------------|----------|
-| CR-1 | Cross-association with single site | Water-MEG |
+| CR-1 | Cross energy and volume parameters, with arithmetic/geometric combining defaults | Water-TEG |
 | ER | Elliott combining rule | General polar systems |
 | 4C | Four-site model | Water, glycols |
 | 2B | Two-site model | Alcohols |
+
+### 6.5 Caloric consistency
+
+At fixed pressure and component amounts, a single phase must satisfy
+
+$$h^{\mathrm{res}}=-RT^2\left(\frac{\partial\sum_i x_i\ln\phi_i}{\partial T}\right)_{P,n},\qquad C_p=\left(\frac{\partial H}{\partial T}\right)_{P,n}.$$
+
+Here $h^{\mathrm{res}}$ is residual molar enthalpy in J/mol, $R$ is in J/(mol K),
+$T$ is in K, $x_i$ is mole fraction, $\phi_i$ is fugacity coefficient, and $H$
+and $C_p$ are extensive enthalpy and heat capacity. These checks apply to an
+explicit single-phase root; an equilibrium multiphase temperature perturbation
+also changes the phase split.
+
+For temperature-independent association parameters and fixed volume, the CR-1
+strength has the form $\Delta=g b\beta[\exp(\epsilon/(RT))-1]$. Its explicit
+temperature derivative contains $\exp(\epsilon/(RT))$, with no subtraction of
+one. The radial distribution $g$ is constant in this partial derivative;
+finite differences of $\Delta/g$ isolate the same explicit dependence.
+The ER rule instead combines the pure-component strengths geometrically.
+Here $g$ and $\beta$ are dimensionless, $b$ is the cross co-volume in m³/mol,
+and $\epsilon$ is association energy in J/mol, so $\Delta$ is in m³/mol.
+
+For rule 10, both the first and second temperature derivatives of the cubic
+attraction must use the same composition-dependent $k_{ij}$ as the attraction
+itself. These analytical derivatives feed enthalpy, entropy and heat capacity.
+Correcting them changes caloric results for affected mixtures without changing
+the attraction or association-strength expressions used for phase equilibrium.
+`CPATemperatureConsistencyTest` covers the water/TEG case reported in
+[#4634](https://github.com/equinor/neqsim/issues/4634), nearby compositions and
+temperatures, pure-component controls and alternative mixing rules.
+
+The same checks cover PR-CPA, SRK-CPA, simplified SRK-CPA, electrolyte-CPA (a neutral
+water/TEG control), UMR-CPA and the implicit/reduced/Anderson/Broyden SRK-CPA
+solvers. Volume-translated UMR-CPA also differentiates its implemented,
+temperature-independent Peneloux translation as a constant. A stored database
+temperature coefficient does not enter that translation expression and must not
+be substituted for its derivative.
+
+`SystemPrCPA` uses the existing PR-based CPA mass-action solver and analytical
+site responses, with its own generic PR-CPA component parameters and PR alpha.
+It does not select the dedicated UMR-CPA parameter or alpha family merely
+because it shares that solver. `PrCpaImplementationTest` additionally checks
+mass-action residuals, the non-associating PR limit, site sensitivities, phase
+equilibrium, repeated initialization, cloning and serialization for the repair
+of [#4636](https://github.com/equinor/neqsim/issues/4636).
+See the [PR-CPA model and compatibility notes](thermodynamic_models.md#42-available-cpa-models).
+This consistency coverage does not establish experimental mixture accuracy or
+qualify ionic mixtures.
 
 ---
 

@@ -1567,6 +1567,19 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
+    /**
+     * Returns the interaction parameter at the composition used by temperature derivatives.
+     *
+     * @param phase phase providing the component amounts
+     * @param temperature temperature in K
+     * @param i first component index
+     * @param j second component index
+     * @return binary interaction parameter
+     */
+    protected double getkij(PhaseInterface phase, double temperature, int i, int j) {
+      return getkij(temperature, i, j);
+    }
+
     /** {@inheritDoc} */
     @Override
     public double getkij(double temperature, int i, int j) {
@@ -1686,7 +1699,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
           final double s2 = 0.5
               * ((2.0 * a1[i] * a1[j] + a[i] * a2[j] + a[j] * a2[i]) * invS - 0.5 * invS * (N * N) / (a[i] * a[j]));
 
-          final double kij = getkij(temperature, i, j);
+          final double kij = getkij(phase, temperature, i, j);
           final double dk = getkijdT(temperature, i, j);
           final double d2k = getkijdTdT(temperature, i, j);
 
@@ -1716,6 +1729,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
+    /** {@inheritDoc} */
+    @Override
     public double getkij(PhaseInterface phase, double temperature, int i, int j) {
       if (i == j) {
         return 0.0;
@@ -1938,9 +1953,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         }
         for (int j = 0; j < numbcomp; j++) {
           if (compArray[j].getNumberOfMolesInPhase() > 1e-100 && (compNumb == j || compNumb == i) && i != j) {
-            aij3 = -0.5 / asqrt[compNumb] / asqrt[j]
-                * (compArray[compNumb].getaT() * compArray[j].getaDiffT()
-                    + compArray[j].getaT() * compArray[compNumb].getaDiffT())
+            aij3 = -0.5 / asqrt[i] / asqrt[j]
+                * (compArray[i].getaT() * compArray[j].getaDiffT() + compArray[j].getaT() * compArray[i].getaDiffT())
                 * getkijdn(compNumb, phase, temperature, i, j);
             A2 += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase() * aij3;
           }
