@@ -80,13 +80,13 @@ public class PHflash extends Flash {
    * solveQ.
    *
    * <p>
-   * Newton iteration on 1/T for the specified enthalpy. The nominal stop criterion requires two consecutive relative
-   * enthalpy residuals below 1e-8. For association models (CPA) with glycol/water/aromatic mixtures the enthalpy
-   * returned by the inner TP flash carries numerical noise above that level, so the iteration would otherwise run to
-   * the iteration cap with the temperature frozen. A stall detector therefore accepts the solution when the best
-   * residual is below {@link #STALL_RELATIVE_ENTHALPY_TOLERANCE} and has not improved for
-   * {@link #STALL_ITERATIONS_WITHOUT_IMPROVEMENT} consecutive iterations. A converging iteration improves its residual
-   * every step, so the detector does not change well-behaved flashes.
+   * Newton iteration on 1/T for the specified enthalpy. The nominal stop criterion limits the sum of magnitudes of two
+   * consecutive relative enthalpy residuals to 1e-8. For association models (CPA) with glycol/water/aromatic mixtures
+   * the enthalpy returned by the inner TP flash carries numerical noise above that level, so the iteration would
+   * otherwise run to the iteration cap with the temperature frozen. A stall detector therefore accepts the solution
+   * only when the current residual is finite and its magnitude is below {@link #STALL_RELATIVE_ENTHALPY_TOLERANCE}, and
+   * the best residual has not improved for {@link #STALL_ITERATIONS_WITHOUT_IMPROVEMENT} consecutive iterations. The
+   * relaxed tolerance is checked against the returned state; improving iterations retain the nominal stop criterion.
    * </p>
    *
    * @return a double
@@ -192,8 +192,8 @@ public class PHflash extends Flash {
       } else {
         iterationsWithoutImprovement++;
       }
-      stalled = bestError < STALL_RELATIVE_ENTHALPY_TOLERANCE
-          && iterationsWithoutImprovement >= STALL_ITERATIONS_WITHOUT_IMPROVEMENT;
+      stalled = iterationsWithoutImprovement >= STALL_ITERATIONS_WITHOUT_IMPROVEMENT && Double.isFinite(error)
+          && Math.abs(error) < STALL_RELATIVE_ENTHALPY_TOLERANCE;
     } while (((Math.abs(error) + Math.abs(errorOld)) > 1e-8 || iterations < 3) && iterations < 200 && !stalled);
     lastIterationCount = iterations;
     return 1.0 / nyTemp;

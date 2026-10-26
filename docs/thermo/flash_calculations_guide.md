@@ -464,7 +464,13 @@ improving and that slope has a finite, physical sign and a bounded magnitude,
 a secant temperature correction avoids unnecessary full equilibrium evaluations.
 Other states retain the damped heat-capacity Newton correction. Both paths keep
 the existing 10 K trial-step bound, TP-failure backoff, iteration limit and
-enthalpy residual tolerance; the acceleration adds no trial TP flash.
+nominal enthalpy residual tolerance; the acceleration adds no trial TP flash.
+
+The nominal stop criterion limits the combined magnitude of two consecutive
+relative enthalpy residuals to $10^{-8}$. To avoid repeated TP flashes on a
+numerical-noise plateau, the solver may stop after 15 iterations without improving
+the best residual, provided the **current** relative residual is finite and its
+magnitude is below $10^{-6}$. This relaxed check applies to the returned state.
 
 **Method signatures:**
 ```java

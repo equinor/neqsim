@@ -2,9 +2,11 @@ package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * PH flash stall handling for CPA glycol / water / aromatic mixtures.
@@ -20,6 +22,93 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  * @version 1.0
  */
 class PHFlashStallTest {
+  /**
+   * Controlled residuals isolate the outer solver's stop condition from TP-flash numerical noise.
+   *
+   * @author NeqSim
+   * @version 1.0
+   */
+  private static final class ScriptedResidualPHflash extends PHflash {
+    private static final long serialVersionUID = 1000L;
+    private final double[] relativeResiduals;
+    private int completedTpFlashes;
+
+    /**
+     * Create a solver with one prescribed residual per completed inner flash.
+     *
+     * @param relativeResiduals initial residual followed by residuals after successive inner flashes
+     */
+    private ScriptedResidualPHflash(double[] relativeResiduals) {
+      super(residualTestSystem(), 1.0, 0);
+      this.relativeResiduals = relativeResiduals.clone();
+      tpFlash = new TPflash(system) {
+        private static final long serialVersionUID = 1000L;
+
+        /** {@inheritDoc} */
+        @Override
+        public void run() {
+          completedTpFlashes++;
+        }
+      };
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public double calcdQdT() {
+      return relativeResiduals[Math.min(completedTpFlashes, relativeResiduals.length - 1)];
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public double calcdQdTT() {
+      return -1.0e6;
+    }
+  }
+
+  /**
+   * Create a material system for controlled outer-solver tests.
+   *
+   * @return two-component cubic-EOS system
+   */
+  private static SystemInterface residualTestSystem() {
+    SystemInterface system = new SystemSrkEos(300.0, 1.0);
+    system.addComponent("methane", 0.8);
+    system.addComponent("ethane", 0.2);
+    system.setMixingRule(2);
+    return system;
+  }
+
+  /** An acceptable residual plateau must activate the relaxed stop for either residual sign. */
+  @Test
+  void acceptableResidualPlateauStopsWithoutReachingIterationCap() {
+    for (double residual : new double[] {5.0e-7, -5.0e-7}) {
+      ScriptedResidualPHflash flash = new ScriptedResidualPHflash(new double[] {residual});
+
+      flash.solveQ();
+
+      assertEquals(residual, flash.calcdQdT(), 0.0);
+      assertEquals(PHflash.STALL_ITERATIONS_WITHOUT_IMPROVEMENT + 1, flash.completedTpFlashes);
+      assertTrue(flash.getLastIterationCount() < 200);
+    }
+  }
+
+  /** A historical good residual must not accept a current residual outside the stall tolerance. */
+  @Test
+  void historicalGoodResidualDoesNotAcceptDeterioratedIterate() {
+    double[] residuals = new double[22];
+    Arrays.fill(residuals, 0.1);
+    residuals[1] = 5.0e-7;
+    residuals[20] = 0.0;
+    residuals[21] = 0.0;
+    ScriptedResidualPHflash flash = new ScriptedResidualPHflash(residuals);
+
+    flash.solveQ();
+
+    assertEquals(0.0, flash.calcdQdT(), 0.0, "The returned iterate must satisfy the enthalpy target");
+    assertEquals(21, flash.completedTpFlashes, "The solver must continue until the sequence converges");
+    assertTrue(flash.getLastIterationCount() < 200);
+  }
+
   /**
    * Build the DRIZO still feed stage mixture.
    *
@@ -55,7 +144,7 @@ class PHFlashStallTest {
     phFlash.run();
 
     assertEquals(temperature, system.getTemperature(), 1.0e-2);
-    assertEquals(enthalpy, system.getEnthalpy(), Math.abs(enthalpy) * 1.0e-5);
+    assertEquals(enthalpy, system.getEnthalpy(), Math.abs(enthalpy) * PHflash.STALL_RELATIVE_ENTHALPY_TOLERANCE);
     assertTrue(phFlash.getLastIterationCount() < 60,
         "PH flash stalled: " + phFlash.getLastIterationCount() + " iterations");
   }
@@ -74,6 +163,7 @@ class PHFlashStallTest {
     phFlash.run();
 
     assertEquals(temperature, system.getTemperature(), 5.0e-2);
+    assertEquals(enthalpy, system.getEnthalpy(), Math.abs(enthalpy) * PHflash.STALL_RELATIVE_ENTHALPY_TOLERANCE);
     assertTrue(phFlash.getLastIterationCount() < 100,
         "PH flash stalled: " + phFlash.getLastIterationCount() + " iterations");
   }
