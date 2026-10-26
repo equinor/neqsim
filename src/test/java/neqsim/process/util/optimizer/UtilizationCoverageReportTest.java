@@ -125,6 +125,38 @@ class UtilizationCoverageReportTest {
   }
 
   @Test
+  void acceptedPointEvidenceBuildsCoverageWithoutResamplingLiveSupplier() {
+    AtomicInteger calls = new AtomicInteger();
+    CapacityConstraint power = rated("power").setValueSupplier(() -> 50.0 + calls.incrementAndGet());
+    InstalledEquipmentCapacityEvidence accepted = new InstalledEquipmentCapacityEvidence("Compression", "K-1",
+        Stream.class.getName(), "", "power", ConstraintOrigin.DIRECT, power, power.getCurrentValue());
+
+    UtilizationCoverageReport report = UtilizationCoverageReport.builder("Plant")
+        .expectConstraint("Compression", "K-1", "power").evidence(accepted).build();
+
+    assertTrue(report.isComplete(), report.getDiagnostics().toString());
+    assertEquals(1, calls.get());
+    assertEquals(51.0, report.getRows().get(0).getCurrentValue());
+    assertEquals("vendor datasheet revision 3", report.getRows().get(0).getProvenance());
+    assertEquals(Boolean.TRUE, report.toEvidenceMap().get("complete"));
+    assertThrows(UnsupportedOperationException.class, () -> report.toEvidenceMap().put("complete", Boolean.FALSE));
+  }
+
+  @Test
+  void frozenEvidenceCannotHideAnExpectedConstraint() {
+    CapacityConstraint power = rated("power").setCurrentValue(50.0);
+    InstalledEquipmentCapacityEvidence accepted = new InstalledEquipmentCapacityEvidence("Compression", "K-1",
+        Stream.class.getName(), "", "power", ConstraintOrigin.DIRECT, power, power.getCurrentValue());
+
+    UtilizationCoverageReport report = UtilizationCoverageReport.builder("Plant")
+        .expectConstraint("Compression", "K-1", "power").expectConstraint("Compression", "K-1", "speed")
+        .evidence(accepted).build();
+
+    assertFalse(report.isComplete());
+    assertTrue(report.getDiagnostics().contains("equipment:Plant/Compression/K-1#speed=MISSING_CONSTRAINT"));
+  }
+
+  @Test
   void exceptionsAndNonFiniteSamplesRemainExplicit() {
     Stream equipment = new Stream("K-1");
     equipment.addCapacityConstraint(rated("throwing").setValueSupplier(() -> {

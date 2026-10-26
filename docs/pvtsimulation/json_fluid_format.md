@@ -5,9 +5,9 @@ description: "Guide to the NeqSim JSON fluid format (.json), supported fields, a
 
 ## Overview
 
-NeqSim provides a **JSON-based fluid format** (`neqsim-fluid`) that offers full EOS-level fidelity equivalent to the [Eclipse E300 format](eclipse_e300_fluid_import.md), but in a structured, human-readable, and machine-friendly format.
+NeqSim provides a **JSON-based fluid format** (`neqsim-fluid`) for the explicitly supported EOS-level fields, in a structured, human-readable, machine-friendly form. Its portable schema has a different contract from an exact native thermodynamic-system snapshot; it does not serialize every possible active model setting.
 
-The JSON format supports all parameters needed to exactly reproduce a PVT-tuned fluid:
+The JSON format records the following supported fields:
 
 - Equation of state selection (SRK, PR, PR1978)
 - Component critical properties ($T_c$, $P_c$, $\omega$, $MW$, $T_{bp}$, $V_c$)
@@ -19,6 +19,13 @@ The JSON format supports all parameters needed to exactly reproduce a PVT-tuned 
 - Water handling with configurable $k_{ij}$
 
 The Java class that handles JSON fluids is `neqsim.thermo.util.readwrite.JsonFluidReadWrite`.
+
+For a frozen final-model handover, use the guarded
+[PVT fluid-study report workflow](pvt_fluid_study_report.md). It captures effective
+parameters and a compatible-version native snapshot, rejects unsupported active
+export features, and checks E300 replay in a fresh process. Do not infer arbitrary
+model fidelity from a JSON write/read success or from `fluid.toJson()` diagnostic
+output; compare the settings required by the actual model.
 
 ### JSON vs E300 Format Comparison
 
@@ -82,13 +89,22 @@ Each entry in the `components` array is an object with these fields:
 | `acentricFactor`      | number  | No       | —       | Acentric factor ($\omega$)                                   |
 | `molarMass`           | number  | No       | g/mol   | Molecular weight ($MW$)                                      |
 | `normalBoilingPoint`  | number  | No       | K       | Normal boiling point ($T_{bp}$)                              |
-| `criticalVolume`      | number  | No       | m³/kmol | Critical volume ($V_c$)                                      |
+| `criticalVolume`      | number  | No       | cm³/mol | NeqSim stored critical volume ($V_c$); E300 uses m³/kmol |
 | `volumeShift`         | number  | No       | —       | Volume translation parameter (SSHIFT)                        |
 | `volumeShiftSurface`  | number  | No       | —       | Volume shift at surface conditions (SSHIFTS, takes priority) |
+| `rackettZ` | number | No | — | Finite Rackett compressibility preserving characterization-derived volume translation |
 | `parachor`            | number  | No       | dyn/cm  | Parachor for IFT calculation                                 |
 | `isPseudo`            | boolean | No       | —       | If true, added as TBP pseudo-fraction                        |
-| `density`             | number  | No       | kg/m³   | Standard liquid density (for pseudo-components)              |
+| `density`             | number  | No       | g/cm³   | Standard liquid density written for pseudo-components |
 | `omegaB`              | number  | No       | —       | Positive finite persistent PR covolume coefficient override |
+
+The writer preserves `rackettZ` explicitly. Replacing a characterized fraction's
+Rackett value with an acentric-factor estimate can change its translated density
+and therefore LBC viscosity even when the EOS phase split agrees. When this field
+is absent, the existing acentric-factor fallback remains active. Writer-produced
+pseudo-component names already ending in `_PC` are normalized once during
+allocation and retain their original name on reload. These behaviors are covered
+by [LbcFluidRoundTripTest](../../src/test/java/neqsim/thermo/util/readwrite/LbcFluidRoundTripTest.java).
 
 The optional `omegaB` value uses the
 [PR covolume tuning contract](../thermo/characterization/README#persistent-pr-covolume-tuning).
@@ -165,6 +181,23 @@ The `viscosityModel` object specifies the viscosity correlation:
 | -------------- | ------ | -------------------------------------------------------- |
 | `type`         | string | `"LBC"` or `"PEDERSEN"` (also accepts `"PFCT"`)          |
 | `coefficients` | array  | 5 LBC dense-fluid contribution parameters (only for LBC) |
+| `criticalVolumesCm3PerMol` | array | Optional effective LBC critical volume for every component, in cm³/mol and `components` array order |
+
+The LBC writer also records `criticalVolumesCm3PerMol`, containing the actual
+viscosity-only volume used for every component. This preserves TBP LBC behavior
+when a fraction's density or classification is reconstructed on reload. These
+values are independent of the thermodynamic `components[].criticalVolume`.
+Import requires exactly one positive finite volume per component and configures
+every allocated phase. The five optional LBC coefficients must be finite; missing
+coefficients retain the LBC defaults. Files without explicit viscosity volumes
+retain the existing component/TBP estimation route.
+
+The corresponding E300 field is [`VCRITVIS`](eclipse_e300_fluid_import.md#viscosity-only-critical-volumes-vcritvis),
+whose METRIC m³/kmol values differ from this JSON cm³/mol array by a factor of
+1000. [LbcFluidRoundTripTest](../../src/test/java/neqsim/thermo/util/readwrite/LbcFluidRoundTripTest.java)
+checks effective volumes, oil-viscosity replay, invalid inputs, component order,
+replication and defensive native/clone ownership. These supported transport
+fields do not expand the JSON schema into an arbitrary native-model snapshot.
 
 ### Pseudo-Component Density
 
