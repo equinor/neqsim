@@ -1343,6 +1343,17 @@ def previous_state(plugin_dir: Path) -> Tuple[Optional[str], Optional[str]]:
 # build
 # ----------------------------------------------------------------------------
 
+def select_specs(all_specs: List[PluginSpec], only: Optional[List[str]]):
+    """Pick the plugins to build and the skills every available plugin bundles.
+
+    Required-skill checks use all available plugins, so ``--only`` does not report a
+    skill as missing when another plugin ships it.
+    """
+    available = [s for s in all_specs if any(r.is_dir() for r in s.skills_roots + s.agents_roots)]
+    known_skills = {name for s in available for name, _ in iter_skills(s.skills_roots)}
+    return [s for s in available if not only or s.name in only], known_skills
+
+
 def build_plugin(spec: PluginSpec, out_root: Path, known_skills: set, args) -> Dict[str, object]:
     plugin_dir = out_root / spec.name
     old_version, old_digest = previous_state(plugin_dir)
@@ -1498,9 +1509,7 @@ def main(argv=None) -> int:
     if args.mcp_version == "pom":
         args.mcp_version = neqsim_release_version()
 
-    specs = [s for s in default_specs() if not args.only or s.name in args.only]
-    specs = [s for s in specs if any(r.is_dir() for r in s.skills_roots + s.agents_roots)]
-    known_skills = {name for s in specs for name, _ in iter_skills(s.skills_roots)}
+    specs, known_skills = select_specs(default_specs(), args.only)
 
     out_root = args.out.resolve()
     out_root.mkdir(parents=True, exist_ok=True)
