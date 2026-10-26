@@ -193,6 +193,7 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
+| **utilities-design-report** | `@utilities-design-report <model or task folder>` | Process utilities design report based on the process report: consumers, simultaneous loads, supply/distribution, drawings, standards and utility acceptance ([how-to](../../docs/development/UTILITIES_DESIGN_REPORT.md)) |
 | **utility-design** | `@utility-design <description>` | Screening-level utility sizing (boiler, deaerator, refrigeration, nitrogen, steam network) + agentic compression optimization |
 
 **Examples:**
@@ -461,7 +462,7 @@ They contain verified patterns, rules, and domain knowledge.
 | `neqsim-platform-modeling` | Topside platform process modeling | Multi-stage separation, recompression, anti-surge, scrubber recycles |
 | `neqsim-process-safety` | HAZOP, LOPA, SIL, bow-tie, risk matrix | IEC 61508/61511, NORSOK Z-013, quantitative risk evaluation |
 | `neqsim-relief-flare-network` | PSV sizing, flare loads, radiation | API 520/521/537, fire case, header back-pressure & Mach |
-| `neqsim-utilities-specification` | Steam, cooling water, instrument air, fuel gas | NORSOK U-001, ISA-7.0.01, utility duty consolidation |
+| `neqsim-utilities-specification` | Steam, cooling water, instrument air, fuel gas | Project-adopted requirements, ISA-7.0.01 / ISO 8573-1 as applicable, utility level selection |
 
 ### API Changelog
 

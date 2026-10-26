@@ -1,0 +1,96 @@
+# Synthetic AUTHORING example, not a process-report or utility-design CLI input schema.
+# No physics or report engine has run these illustrative demands or ratings.
+study:
+  id: synthetic_closed_cooling_example
+  title: Synthetic process utilities design report
+  maturity: SCREENING
+  readiness_note: Illustrative inputs only; not for design or construction
+  process_model_revision: unavailable
+  plant_type: onshore
+  jurisdiction: unavailable
+  battery_limits: Two synthetic coolers and their closed cooling loop
+  pressure_basis: absolute
+  demand_basis: positive utility demand
+  standard_volume: {temperature_c: 15.0, pressure_bara: 1.01325}
+sources:
+  - id: SYN1
+    title: Synthetic teaching inputs
+    revision: "1"
+    locator: This file
+    classification: synthetic
+    inspected: true
+cases:
+  - id: A
+    process_case_id: A
+    description: Both coolers operating simultaneously
+    active_consumers: [CC1, CC2]
+    unavailable_supply_units: []
+    source_id: SYN1
+  - id: B
+    process_case_id: B
+    description: Peak demand with one supply unit unavailable
+    active_consumers: [CC1, CC2]
+    unavailable_supply_units: [CW-PACKAGE-2]
+    source_id: SYN1
+  - id: C
+    process_case_id: C
+    description: Second cooler isolated; first cooler demand unknown
+    active_consumers: [CC1]
+    unavailable_supply_units: []
+    source_id: SYN1
+systems:
+  - id: CW
+    scope_status: included
+    medium: closed cooling water
+    header_id: CW-SUPPLY
+    supply_temperature_c: 25.0
+    maximum_return_temperature_c: 35.0
+    source_id: SYN1
+    supply_units:
+      - {id: CW-PACKAGE-1, rated_capacity_kw: 900.0, derating_factor: 1.0, source_id: SYN1}
+      - {id: CW-PACKAGE-2, rated_capacity_kw: 900.0, derating_factor: 1.0, source_id: SYN1}
+    case_terms:
+      A: {network_heat_load_kw: 0.0, design_allowance_kw: 0.0, source_id: SYN1}
+      B: {network_heat_load_kw: 0.0, design_allowance_kw: 0.0, source_id: SYN1}
+      C: {network_heat_load_kw: 0.0, design_allowance_kw: 0.0, source_id: SYN1}
+    omitted_checks: [hydraulics, pump_curves, exchanger_approach, water_quality, utility_loss_transient]
+consumers:
+  - id: CC1
+    system_id: CW
+    header_id: CW-SUPPLY
+    process_tag: E-101
+    area: process
+    demand_unit: kW
+    input_class: synthetic
+    source_id: SYN1
+    demand_by_case: {A: 500.0, B: 700.0, C: null}
+    availability_by_case: {A: specified, B: specified, C: unavailable}
+    minimum_pressure_bara: null
+    quality_requirement: unavailable
+    gap_ids: [G1, G2]
+  - id: CC2
+    system_id: CW
+    header_id: CW-SUPPLY
+    process_tag: E-102
+    area: process
+    demand_unit: kW
+    input_class: synthetic
+    source_id: SYN1
+    demand_by_case: {A: 300.0, B: 400.0, C: 0.0}
+    availability_by_case: {A: specified, B: specified, C: isolated}
+    minimum_pressure_bara: null
+    quality_requirement: unavailable
+    gap_ids: [G2]
+qualification:
+  calculation_status: not_run
+  intended_use: Demonstrate provenance, simultaneous cases, supply outage and unknown versus zero
+  limits: No hydraulic, temperature-grade, vendor or utility design qualification
+assumptions:
+  - id: AS1
+    statement: Network heat load and design allowance deliberately zero in this arithmetic example
+    source_id: SYN1
+    effect: Replace with sourced project terms before design use
+data_gaps:
+  - {id: G1, item: CC1 demand in case C, effect: Case C demand and capacity unassessed, owner: not_assigned}
+  - {id: G2, item: Consumer pressure/quality and hydraulics, effect: Delivery adequacy unassessed, owner: not_assigned}
+  - {id: G3, item: Main model and jurisdiction, effect: Scope and standards unconfirmed, owner: not_assigned}

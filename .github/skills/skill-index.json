@@ -2556,5 +2556,30 @@
  ],
  "neqsim-pvt-fluid-study-report": [
   "neqsim-pvt-fluid-study-report"
+ ],
+ "process utilities design report": [
+  "neqsim-utilities-design-report",
+  "neqsim-utility-design",
+  "process-study-report"
+ ],
+ "utility flow diagrams": [
+  "neqsim-utilities-design-report",
+  "neqsim-utility-design",
+  "process-study-report"
+ ],
+ "utility consumer register": [
+  "neqsim-utilities-design-report",
+  "neqsim-utility-design",
+  "process-study-report"
+ ],
+ "simultaneous utility demand": [
+  "neqsim-utilities-design-report",
+  "neqsim-utility-design",
+  "process-study-report"
+ ],
+ "utility loss design report": [
+  "neqsim-utilities-design-report",
+  "neqsim-utility-design",
+  "process-study-report"
  ]
 }

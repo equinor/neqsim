@@ -81,3 +81,12 @@ When the task is exposed through the MCP server, call the `designUtilities` tool
 - Refrigeration COP is a Carnot fraction, not a cycle simulation.
 - Nitrogen specific energy is a method-based estimate; override it when a vendor figure exists.
 - Do NOT claim TEMA/ASME mechanical sizing here — escalate to `@mechanical-design`.
+
+## Complete utility design report
+
+For a controlled report based on the main process report, delegate to
+`@utilities-design-report` and load
+[neqsim-utilities-design-report](../skills/neqsim-utilities-design-report/SKILL.md).
+Pass the raw sizing results, model/version, case IDs and screening limitations;
+consumer simultaneity, delivery conditions and utility availability need separate
+checks beyond the aggregate duty.
