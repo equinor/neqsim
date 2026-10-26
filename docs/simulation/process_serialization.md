@@ -188,8 +188,11 @@ input boundary as `.neqsim` archives and are not a safe interchange parser for a
 
 ## Publish files transactionally
 
-`saveToNeqsim()` and `save_neqsim()` open the destination before serializing. If serialization
-fails, they report failure but a partial or truncated destination can remain. Do not treat file
+`saveToNeqsim()` and `NeqSimXtream.saveNeqsim()` write to a temporary file in the destination
+directory and move it over the destination only after serialization succeeded. A failed Java save
+returns `false`, keeps any previous file unchanged and leaves no partial file. Writers that open the
+destination directly, such as the `save_neqsim()` wrapper in older neqsim-python releases, can
+still report failure while a partial or truncated destination can remain. Do not treat file
 existence as proof of success.
 
 For durable checkpoints:
@@ -223,10 +226,49 @@ non-portable stored field and behave differently between Maven tests and embedde
 
 ### Version compatibility
 
-Full-object archives contain Java class and field names. Test a representative archive before a
-NeqSim upgrade, keep the creating NeqSim version with the artifact, and retain a previous verified
-checkpoint. Unknown fields may be ignored by the configured reader, but renamed or removed classes,
-changed equipment graphs, and changed solver behavior can still prevent loading or change results.
+Full-object archives contain Java class and field names. Archives written by current NeqSim also
+contain a `neqsim-meta.properties` entry with the writing NeqSim and Java versions. The reader
+tolerates differences between versions:
+
+- unknown classes and unknown field elements are skipped;
+- renamed fields are mapped to their current names (for example `tagName` to `tagNumber`); and
+- classes that gained a private `readObject` hook still read the plain field layout of older files.
+
+Archives without the metadata entry were written by an older NeqSim and are loaded in legacy mode.
+XStream creates objects without running constructors, so a field added after the file was written
+would otherwise keep its JVM default (`null`, `0` or `false`) instead of its declared initial value.
+In legacy mode each such field is restored from a freshly constructed instance of the same class,
+energy ports are re-registered, and private `readObject` hooks run so their post-load repairs apply.
+These repairs cover both plain field XML and the `serialization="custom"` layout used by classes
+with serialization hooks. Removed fields and fields that are now transient are ignored in either
+layout. If a hook rejects invalid model data, loading fails with the original cause instead of
+returning an incomplete model. For example, a layered well without persisted zone definitions
+must be rebuilt from its original inputs.
+Without this, an archive from NeqSim 3.9 or earlier could load and run with an EOS attraction
+parameter of zero (in one lean natural gas case the dew point came out 9.7 C low and no condensate
+was predicted) or fail with a `NullPointerException` in `getEnergyPorts()`.
+
+Inspect what was skipped, mapped and restored after a load:
+
+```java
+Object restored = NeqSimXtream.openNeqsim("old_model.neqsim");
+NeqSimXtream.LoadReport report = NeqSimXtream.getLastLoadReport();
+if (!report.isClean()) {
+    // NeqSimXtream has already logged the report as a warning
+    Map<String, Integer> skipped = report.getIgnoredElements();   // e.g. removed separator geometry
+    Map<String, Integer> restoredFields = report.getRestoredFields();
+    logger.info("Skipped {}, restored {}", skipped.keySet(), restoredFields.keySet());
+}
+```
+
+Separators recalculate their outlets on the first run after a load: their run-skip cache is
+transient, so stored outlet states (which may have been changed after the last run, for example by a
+dew-point flash on an outlet fluid) are not returned as results.
+
+Fields that were removed (such as the separator geometry that moved to `SeparatorMechanicalDesign`)
+are dropped and must be re-entered if needed. Changed equipment graphs and changed solver behavior can
+still change results, so test a representative archive before a NeqSim upgrade, keep the creating
+NeqSim version with the artifact, and retain a previous verified checkpoint.
 
 Lifecycle JSON is easier to inspect and migrate, but it is a selective state model rather than a
 lossless copy of every Java object. Record schema version, model version, provenance, units, and the
@@ -237,7 +279,7 @@ base model definition used for `applyTo()`.
 ### Save returned `false`
 
 - Read the logged root exception; do not continue with the destination file.
-- Remove the partial temporary file.
+- The Java writers leave no partial file; remove partial files left by other writers.
 - For `No converter available` or module-access errors, reduce the model to the equipment that
   introduces the stored collection and report it as a portability defect.
 - Confirm the parent directory is writable and has enough free space.
@@ -245,13 +287,14 @@ base model definition used for `applyTo()`.
 ### Load returned `null` or `None`
 
 - Confirm the file is a ZIP archive with a `process.xml` entry.
-- Confirm it was created with a compatible NeqSim version.
+- Read the logged load report and exception; check `NeqSimXtream.getLastLoadReport()`.
 - Confirm the expected root type (`ProcessSystem` versus `ProcessModel`).
 - Do not retry an untrusted or visibly truncated file with broader XStream permissions.
 
 ### Loaded values differ
 
 - Remember that the Java convenience loaders run the model after deserialization.
+- Check the load report: removed fields are dropped and restored fields take current defaults.
 - Compare inputs, solver settings, NeqSim version, and convergence diagnostics, not only stored
   outlet values.
 - For lifecycle JSON, verify that `validate()` succeeds and that `applyTo()` targets the same

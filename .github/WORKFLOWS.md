@@ -22,6 +22,12 @@ that a workflow invokes an LLM.
 | [core-safety-source-term-contract.yml](workflows/core-safety-source-term-contract.yml) | [Core] Safety Source-Term Contract | PR, manual | Java and Python release-source-term contract validation. |
 | [core-engineering-diagram-performance.yml](workflows/core-engineering-diagram-performance.yml) | [Core] Engineering Diagram Performance | PR, manual | Java diagram benchmark and Python performance-budget validation. |
 
+The model-specification and slow-test steps retry Maven once after 10 seconds only
+when it reports a plugin or dependency resolution failure, such as a Maven Central
+HTTP 429 response. Both attempts use `-U` to recheck failed downloads. Compilation
+errors and test failures fail immediately; the retry preserves the selected tests
+and the final Maven exit status.
+
 ### Windows JVM crash workaround
 
 The Windows fast-test step sets `JAVA_TOOL_OPTIONS` to exclude two methods from

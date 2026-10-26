@@ -106,6 +106,11 @@ requires `water` in the composition; an unavailable hydrate temperature is retur
 | Custody transfer, fiscal metering | `SystemGERG2008Eos` | (none needed) |
 | Electrolyte systems, **hydrate with salt brine** | `SystemElectrolyteCPAstatoil` | `10` |
 | Volume-corrected SRK | `SystemSrkEosvolcor` | `"classic"` |
+| Predictive group contribution (UMR-PRU) | `SystemUMRPRUMCEos` | `setMixingRule("HV", "UNIFAC_UMRPRU")` |
+
+**UMR-PRU mixing rule:** the two-argument form is required. `setMixingRule(EosMixingRuleType.HV)` (or copying
+`otherFluid.getMixingRule()`) selects NRTL-modified Huron-Vidal, not the UMR-PRU UNIFAC model, and silently changes
+dew points (about 2 C in a lean-gas check).
 
 **PR-LK vs PR78**: `SystemPrLeeKeslerEos` uses PR76 alpha for ALL ω:
 `m = 0.37464 + 1.54226ω − 0.26992ω²`. Standard `SystemPrEos1978` uses a modified
@@ -1070,6 +1075,23 @@ List<String> areas = plantAuto.getAreaList();
 // Area-qualified: "Area::Unit.property"
 double t = plantAuto.getVariableValue("Separation::HP Sep.gasOutStream.temperature", "C");
 ```
+
+## Full-Object Archives (`.neqsim`) Across NeqSim Versions
+
+`ProcessSystem.loadFromNeqsim(path)` / `NeqSimXtream.openNeqsim(path)` read files from older NeqSim versions:
+unknown fields and classes are skipped, `tagName` maps to `tagNumber`, and files without a `neqsim-meta.properties`
+entry load in legacy mode with new fields restored to their declared defaults. Always inspect the report:
+
+```java
+Object loaded = NeqSimXtream.openNeqsim("old_model.neqsim");
+NeqSimXtream.LoadReport report = NeqSimXtream.getLastLoadReport();
+// report.isLegacyFormat(), getIgnoredElements() (dropped fields, e.g. separator geometry),
+// getRestoredFields(), getFieldsWithoutTemplate()
+```
+
+Re-enter removed data (separator geometry now lives in `SeparatorMechanicalDesign`) and re-save with the current
+version so the file carries a version stamp. Check one known result (a dew point or a separator liquid rate) against
+a model rebuilt from the same specification before trusting a legacy archive.
 
 ## Lifecycle State (Save / Restore / Compare)
 

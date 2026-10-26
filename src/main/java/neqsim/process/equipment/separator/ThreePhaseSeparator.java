@@ -55,10 +55,14 @@ public class ThreePhaseSeparator extends Separator {
 
   boolean useTempMultiPhaseCheck = false;
 
-  private double lastEnthalpy;
-  private double lastFlowRate;
-  private double lastPressure;
-  private double lastPressureDrop;
+  /*
+   * Run-skip cache. Transient so a deserialized or cloned separator always recalculates its outlets on the first run
+   * instead of returning the stored (possibly modified) outlet states.
+   */
+  private transient double lastEnthalpy;
+  private transient double lastFlowRate;
+  private transient double lastPressure;
+  private transient double lastPressureDrop;
 
   /**
    * Water level height in meters (bottom of separator to water-oil interface).

@@ -304,8 +304,25 @@ jobs:
           printf '  %s\n' "${selected[@]}"
           printf '%s\n' "${selected[@]}" > "$RUNNER_TEMP/slow-selected-tests.txt"
           test_pattern=$(IFS=,; echo "${selected[*]}")
-          mvn -B test -ntp -Dtest="$test_pattern" -Dgroups=slow \
-            "-DexcludedTestGroups=" "-Djacoco.skip=true"
+          set -o pipefail
+          for attempt in 1 2; do
+            # -U also rechecks missing releases cached by a failed download.
+            if mvn -B -U test -ntp -Dtest="$test_pattern" -Dgroups=slow \
+              "-DexcludedTestGroups=" "-Djacoco.skip=true" \
+              2>&1 | tee "$RUNNER_TEMP/slow-test-maven-$SHARD_INDEX-$attempt.log"; then
+              exit 0
+            else
+              status=$?
+            fi
+            # Retry only Maven resolution failures, never compilation or test failures.
+            if [ "$attempt" -eq 2 ] || ! grep -Eq \
+              '^\[ERROR\] \[Help [0-9]+\] https?://[^ ]+/(PluginResolutionException|DependencyResolutionException)$' \
+              "$RUNNER_TEMP/slow-test-maven-$SHARD_INDEX-$attempt.log"; then
+              exit "$status"
+            fi
+            echo "Maven dependency resolution failed; retrying once in 10 seconds."
+            sleep 10
+          done
       - name: Retain slow-test reports
         if: always()
         uses: actions/upload-artifact@v7
