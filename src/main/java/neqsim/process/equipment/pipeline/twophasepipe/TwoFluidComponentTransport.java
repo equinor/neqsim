@@ -58,8 +58,8 @@ public final class TwoFluidComponentTransport implements Serializable {
     }
     SystemInterface prepared = prepareFluid(fluidTemplate, "initial component transport state");
     componentNames = sortedComponentNames(prepared);
-    if (componentNames.length < 2) {
-      throw new IllegalArgumentException("Component-resolved transport requires at least two components");
+    if (componentNames.length < 1) {
+      throw new IllegalArgumentException("Component-resolved transport requires at least one component");
     }
     componentMolarMassKgMol = componentMolarMasses(prepared, componentNames);
     cellCount = sections.length;

@@ -113,6 +113,23 @@ process.add(liqValve);
 process.run();
 ```
 
+## TwoFluidPipe conservative thermal recovery
+
+For blowdown or repressurization, the legacy post-step temperature update does not
+recover temperature from transported total energy. The experimental
+`setUseConservativeEnergyRecovery(true)` option must be selected before `run()`;
+it initializes named-component inventories automatically, including pure fluids.
+Select coupled pressure-momentum, Euler, energy enabled and slug tracking disabled.
+Read [the two-fluid model guide](../../../docs/process/TWOFLUIDPIPE_MODEL.md#opt-in-conservative-transient-thermodynamic-recovery)
+for unsupported combinations and qualification limits. Inspect
+`getLastConservativeEnergyReport()` together with mass and component reports;
+the legacy sensible thermal report is null in this mode. A successful interval
+recovers common P/T from occupied volume and internal energy at each transported
+phase composition. It does not qualify rich-fluid evaporation rates or asset
+blowdown times. Regressions: `TwoFluidPipeConservativeEnergyTest` and
+`ConservativeThermodynamicRecoveryTest`. Keep issue #4595 open until the complete
+rich-phase-transition and refinement acceptance is demonstrated.
+
 ## Adding Measurement Devices
 
 ```java
