@@ -47,7 +47,7 @@ def _mini_repo(root: Path) -> bap.PluginSpec:
            "[project]\nname = 'alpha'\nversion = '0'\ndependencies = [\"stidapi\", \"requests>=2.28\"]\n"
            "[project.optional-dependencies]\ndev = [\"pytest>=8.0\"]\n")
     _write(skills / "cat" / "neqsim-beta" / "pyproject.toml",
-           "[project]\nname = 'beta'\nversion = '0'\ndependencies = [\"alpha\", \"msal\"]\n"
+           "[project]\nname = 'beta'\nversion = '0'\ndependencies = [\"alpha\", \"msal\", \"neqsim-skill-gamma\"]\n"
            "[project.optional-dependencies]\ndev = [\"pytest>=8.0\"]\n"
            "live = [\n  \"requests>=2.28\",\n  \"msal>=1.24\",\n"
            "  \"pypdm @ git+https://github.com/equinor/PyPDM.git\",\n]\n"
@@ -153,20 +153,22 @@ class BuildPluginTest(unittest.TestCase):
         self.assertTrue(req_file.exists())
         lines = [l for l in req_file.read_text(encoding="utf-8").splitlines()
                  if l and not l.startswith("#")]
-        # dependencies + live + network, dev excluded, direct URL -> name, the sibling
-        # skill 'alpha' dropped (the editable root install provides it), bare 'msal'
-        # superseded by its specified form
-        self.assertEqual(lines, ["msal>=1.24", "pepr-client>=1.0.2", "pypdm", "requests>=2.28",
-                                 "stidapi"])
+        # dependencies + live + network, dev excluded, the direct URL moved to the internal file,
+        # the sibling skill 'alpha' dropped (the editable root install provides it), bare
+        # 'msal' superseded by its specified form
+        self.assertEqual(lines, ["msal>=1.24", "pepr-client>=1.0.2", "requests>=2.28", "stidapi"])
         self.assertNotIn("pytest", req_file.read_text(encoding="utf-8"))
-        self.assertIn("git+https://github.com/equinor/PyPDM.git", req_file.read_text(encoding="utf-8"))
-        self.assertEqual(result["live_requirements"], 5)
+        internal = [l for l in (plugin / bap.INTERNAL_REQUIREMENTS_FILE).read_text(
+            encoding="utf-8").splitlines() if l and not l.startswith("#")]
+        self.assertEqual(internal, ["pypdm @ git+https://github.com/equinor/PyPDM.git"])
+        self.assertEqual(result["live_requirements"], 4)
         hook_py = (plugin / "scripts" / "install_skill_packages.py").read_text(encoding="utf-8")
         self.assertIn("LIVE_REQUIREMENTS = 'requirements-live.txt'", hook_py)
+        self.assertIn("install_internal_requirements(python, out)", hook_py)
         self.assertIn("IMPORT_OK=", hook_py)
         compile(hook_py, "install_skill_packages.py", "exec")
         manifest = json.loads((plugin / "BUILD_MANIFEST.json").read_text(encoding="utf-8"))
-        self.assertEqual(manifest["live_requirements"], 5)
+        self.assertEqual(manifest["live_requirements"], 4)
 
     def test_core_plugin_has_no_live_requirements(self):
         spec = bap.PluginSpec("core", "Core", self.spec.skills_roots, self.spec.agents_roots, [],
@@ -596,6 +598,56 @@ class HookPluginOnlyTest(unittest.TestCase):
             self.assertEqual(self.ns["main"](), 0)
         return json.loads(output.getvalue())
 
+    def test_pip_lock_serializes_and_reclaims_stale(self):
+        shared = self.ns["state"].parent / "pip.lock"
+        shared.write_text("1", encoding="utf-8")
+        self.assertIsNone(self.ns["acquire_pip_lock"](timeout_s=0.1))
+        self.assertTrue(shared.exists())
+        old = shared.stat().st_mtime - self.ns["LOCK_MAX_AGE_S"] - 60
+        os.utime(str(shared), (old, old))
+        self.assertEqual(self.ns["acquire_pip_lock"](timeout_s=1), shared)
+        shared.unlink()
+
+    def test_import_check_waits_for_sibling_pip_stage_but_not_import_check(self):
+        sibling = self.ns["state"].parent / "sibling"
+        sibling.mkdir()
+        (sibling / "install.lock").write_text("1234", encoding="utf-8")
+        slept = []
+
+        def fake_sleep(seconds):
+            slept.append(seconds)
+            (sibling / "install.lock").write_text("check", encoding="utf-8")
+
+        with mock.patch.object(self.ns["time"], "sleep", side_effect=fake_sleep):
+            self.ns["wait_for_other_installs"](timeout_s=30)
+        self.assertEqual(len(slept), 1)
+        with mock.patch.object(self.ns["time"], "sleep") as sleep:
+            self.ns["wait_for_other_installs"](timeout_s=30)
+        sleep.assert_not_called()
+
+    def test_run_install_releases_shared_lock(self):
+        self.assertEqual(self.ns["run_install"](sys.executable), 0)
+        self.assertFalse((self.ns["state"].parent / "pip.lock").exists())
+
+    def test_internal_requirements_never_prompt_and_never_fail_install(self):
+        (self.root / "requirements-internal.txt").write_text(
+            "# private\nprivpkg @ git+https://github.com/example/private.git\n", encoding="utf-8")
+        with mock.patch.object(self.ns["subprocess"], "run",
+                               return_value=SimpleNamespace(returncode=1)) as run, \
+                self.ns["log"].open("w", encoding="utf-8") as out:
+            skipped = self.ns["install_internal_requirements"](sys.executable, out)
+        self.assertEqual(skipped, ["privpkg"])
+        command = run.call_args.args[0]
+        self.assertEqual(command[-1], "privpkg @ git+https://github.com/example/private.git")
+        env = run.call_args.kwargs["env"]
+        self.assertEqual(env["GIT_TERMINAL_PROMPT"], "0")
+        self.assertEqual(env["GCM_INTERACTIVE"], "never")
+        self.assertIn("1 skipped (privpkg", self.ns["log"].read_text(encoding="utf-8"))
+
+    def test_internal_requirements_absent_is_noop(self):
+        with self.ns["log"].open("w", encoding="utf-8") as out:
+            self.assertEqual(self.ns["install_internal_requirements"](sys.executable, out), [])
+
     def test_import_check_executes_and_reports_failure(self):
         self.ns["VERIFY_IMPORTS"] = ["json", "_neqsim_test_nonexistent_package_"]
         with self.ns["log"].open("w", encoding="utf-8") as out:
@@ -674,6 +726,59 @@ class HookPluginOnlyTest(unittest.TestCase):
             self.assertTrue(self.ns["import_check"](sys.executable, io.StringIO()))
         code = run.call_args.args[0][2]
         self.assertLess(code.index("ensure_java_home()"), code.index("importlib.import_module"))
+
+
+class RewriteRepoLinksTest(unittest.TestCase):
+    def test_repo_links_become_github_urls_and_local_links_stay(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            skill = repo / ".github" / "skills" / "demo"
+            _write(repo / "docs" / "guide.md", "guide")
+            _write(repo / "src" / "Thing.java", "class Thing {}")
+            _write(skill / "reference.md", "ref")
+            _write(skill / "SKILL.md",
+                   "[a](../../../docs/guide.md#sec) [b](../../../src/Thing.java) "
+                   "[c](docs/guide.md) [d](reference.md) [e](figures/x.png) "
+                   "[f](https://example.com/x.md) [g](../../../docs/missing.md)\n")
+            dest = Path(tmp) / "out" / "demo"
+            import shutil
+            shutil.copytree(str(skill), str(dest))
+            count = bap.rewrite_repo_links(skill, dest, repo_root=repo)
+            text = (dest / "SKILL.md").read_text(encoding="utf-8")
+            self.assertEqual(count, 3)
+            self.assertIn("(" + bap.REPO_BLOB_URL + "docs/guide.md#sec)", text)
+            self.assertIn("(" + bap.REPO_BLOB_URL + "src/Thing.java)", text)
+            self.assertIn("(" + bap.REPO_BLOB_URL + "docs/guide.md)", text)
+            self.assertIn("(reference.md)", text)
+            self.assertIn("(figures/x.png)", text)
+            self.assertIn("(../../../docs/missing.md)", text)
+
+    def test_skill_outside_repo_is_not_rewritten(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            _write(repo / "docs" / "guide.md", "guide")
+            other = Path(tmp) / "community" / "skills" / "demo"
+            _write(other / "SKILL.md", "[c](docs/guide.md)\n")
+            dest = Path(tmp) / "out" / "demo"
+            import shutil
+            shutil.copytree(str(other), str(dest))
+            self.assertEqual(bap.rewrite_repo_links(other, dest, repo_root=repo), 0)
+
+
+class ToolkitPackagingTest(unittest.TestCase):
+    def test_every_subpackage_of_a_declared_package_is_declared(self):
+        devtools = Path(bap.DEVTOOLS)
+        text = (devtools / "pyproject.toml").read_text(encoding="utf-8")
+        declared = set(bap._toml_string_list(text, "packages"))
+        missing = []
+        for package in sorted(declared):
+            base = devtools / package.replace(".", os.sep)
+            for init in base.rglob("__init__.py"):
+                name = ".".join(init.parent.relative_to(devtools).parts)
+                if name not in declared and not name.endswith(".tests") \
+                        and "__pycache__" not in name:
+                    missing.append(name)
+        self.assertEqual(missing, [], "subpackages missing from [tool.setuptools] packages")
 
 
 class BumpTest(unittest.TestCase):

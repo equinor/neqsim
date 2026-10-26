@@ -32,6 +32,34 @@ def check_path_lengths(root: Path, problems: list) -> None:
                 len(rel), MAX_RELATIVE_PATH, rel))
 
 
+def check_strict_yaml(path: Path, label: str, problems: list) -> None:
+    """Fail when the frontmatter is not valid YAML (VS Code parses it strictly).
+
+    The flat parser in agent_frontmatter accepts an unquoted ``description: a: b``
+    that a real YAML parser rejects, which silently drops the skill or agent.
+    Skipped when PyYAML is not installed.
+    """
+    try:
+        import yaml
+    except ImportError:
+        return
+    text = path.read_text(encoding="utf-8")
+    if not text.startswith("---"):
+        return
+    end = text.find("\n---", 3)
+    if end < 0:
+        return
+    try:
+        data = yaml.safe_load(text[3:end])
+    except yaml.YAMLError as error:
+        problems.append("{}: {} frontmatter is not valid YAML ({})".format(
+            label, path.parent.name if path.name == "SKILL.md" else path.name,
+            str(error).splitlines()[0]))
+        return
+    if not isinstance(data, dict):
+        problems.append("{}: {} frontmatter is not a YAML mapping".format(label, path.name))
+
+
 def main(root: Path) -> int:
     problems = []
     marketplace = json.loads((root / "marketplace.json").read_text(encoding="utf-8"))
@@ -51,6 +79,7 @@ def main(root: Path) -> int:
                 entry["name"], entry.get("version"), manifest.get("version")))
         for skill_dir in sorted((plugin_dir / "skills").iterdir()):
             fm = af.parse_frontmatter((skill_dir / "SKILL.md").read_text(encoding="utf-8"))
+            check_strict_yaml(skill_dir / "SKILL.md", entry["name"], problems)
             if fm.get("name") != skill_dir.name:
                 problems.append("{}: skill dir '{}' != name '{}'".format(
                     entry["name"], skill_dir.name, fm.get("name")))
@@ -58,6 +87,7 @@ def main(root: Path) -> int:
                 problems.append("{}: skill '{}' is not kebab-case".format(entry["name"], skill_dir.name))
         for agent in sorted((plugin_dir / "com.github.copilot" / "agents").glob("*.agent.md")):
             fm = af.parse_frontmatter(agent.read_text(encoding="utf-8"))
+            check_strict_yaml(agent, entry["name"], problems)
             if not fm.get("name") or not fm.get("description"):
                 problems.append("{}: agent {} lacks name/description".format(entry["name"], agent.name))
         mcp_path = plugin_dir / "mcp.json"

@@ -1,6 +1,6 @@
 ---
 name: pvt-simulation
-description: Creates and runs NeqSim PVT laboratory simulations: constant mass expansion (CME/CCE), CVD, differential liberation, separator and swelling tests, saturation pressure/temperature, GOR and viscosity. Handles black-oil PVT tables (Rs, Rv, Bo, Bg), compositional conversion, Eclipse/CMG export and reservoir handoff. Assesses slim-tube/MMP limitations and verifies supported regression targets before fitting experimental data.
+description: "Creates and runs NeqSim PVT laboratory simulations: constant mass expansion (CME/CCE), CVD, differential liberation, separator and swelling tests, saturation pressure/temperature, GOR and viscosity. Handles black-oil PVT tables (Rs, Rv, Bo, Bg), compositional conversion, Eclipse/CMG export and reservoir handoff. Assesses slim-tube/MMP limitations and verifies supported regression targets before fitting experimental data."
 required_skills:
 - neqsim-phase-envelope
 - neqsim-api-patterns

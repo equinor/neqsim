@@ -93,6 +93,10 @@ MCP_LATEST = "latest"
 # the builder aggregates those extras into one requirements file that the SessionStart
 # hook installs (best effort, wheelhouse first). ``dependencies`` is always included.
 LIVE_REQUIREMENTS_FILE = "requirements-live.txt"
+INTERNAL_REQUIREMENTS_FILE = "requirements-internal.txt"
+# Community skills publish as ``neqsim-skill-*`` distributions that are never on an index;
+# an enterprise skill that depends on one gets it from the neqsim-community plugin.
+SKILL_DIST_PREFIX = "neqsim-skill-"
 LIVE_EXTRAS = ("live", "network")
 # ``build`` / ``dist`` are setuptools output left behind by ``pip install <skill>``;
 # they duplicate the package under build/lib and must never ship in the plugin.
@@ -200,6 +204,65 @@ def _ignore(_dir: str, names: List[str]) -> List[str]:
             or Path(n).suffix in SKIP_SUFFIXES]
 
 
+REPO_BLOB_URL = "https://github.com/equinor/neqsim/blob/master/"
+REPO_TREE_URL = "https://github.com/equinor/neqsim/tree/master/"
+_MD_LINK_RE = re.compile(r"\]\(([^)\s#]+)(#[^)\s]*)?\)")
+_URL_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
+
+
+def rewrite_repo_links(source: Path, dest: Path, repo_root: Path = REPO_ROOT) -> int:
+    """Point relative links that leave the skill folder at the public GitHub repo.
+
+    A skill links to ``docs/``, ``src/`` or ``.github/`` of the NeqSim repository with
+    ``../../../docs/x.md``. Those files do not travel with the plugin, so the link would
+    be dead for a plugin-only user. A relative link is rewritten only when it does not
+    resolve inside the skill folder but does resolve to a file or folder of ``repo_root``
+    (also tried relative to the repository root, for ``docs/...`` style links); anything
+    else, such as example image names inside code samples, is left alone.
+    Returns the number of links rewritten.
+    """
+    source = source.resolve()
+    repo_root = repo_root.resolve()
+    bases_extra = [repo_root] if repo_root in source.parents else []
+    rewritten = 0
+    for md in source.rglob("*.md"):
+        if any(part in SKIP_DIRS for part in md.relative_to(source).parts):
+            continue
+        text = md.read_bytes().decode("utf-8")
+
+        def replace(match: "re.Match[str]") -> str:
+            nonlocal rewritten
+            link = match.group(1)
+            if _URL_SCHEME_RE.match(link) or link.startswith(("/", "#")):
+                return match.group(0)
+            for base in [md.parent] + bases_extra:
+                try:
+                    target = (base / link).resolve()
+                    inside_skill = target.relative_to(source)
+                except ValueError:
+                    inside_skill = None
+                except OSError:
+                    continue
+                if inside_skill is not None:
+                    if target.exists():
+                        return match.group(0)
+                    continue
+                try:
+                    rel = target.relative_to(repo_root).as_posix()
+                except ValueError:
+                    continue
+                if target.is_file() or target.is_dir():
+                    rewritten += 1
+                    url = (REPO_TREE_URL if target.is_dir() else REPO_BLOB_URL) + rel
+                    return "](" + url + (match.group(2) or "") + ")"
+            return match.group(0)
+
+        updated = _MD_LINK_RE.sub(replace, text)
+        if updated != text:
+            (dest / md.relative_to(source)).write_bytes(updated.encode("utf-8"))
+    return rewritten
+
+
 def copy_skill(name: str, source: Path, dest_root: Path, errors: List[str]) -> None:
     if source.name != name:
         errors.append("skill dir '{}' != name '{}' ({})".format(source.name, name, source))
@@ -208,6 +271,7 @@ def copy_skill(name: str, source: Path, dest_root: Path, errors: List[str]) -> N
         errors.append("duplicate skill name '{}' from {}".format(name, source))
         return
     shutil.copytree(str(source), str(dest), ignore=_ignore)
+    rewrite_repo_links(source, dest)
 
 
 def write_agent(agent_id: str, source: Path, dest_root: Path, known_skills: set,
@@ -268,6 +332,7 @@ PINNED_PYTHON = {pinned!r}
 EDITABLE_SELF = {editable_self!r}
 REQUIREMENTS = {requirements!r}
 LIVE_REQUIREMENTS = {live_requirements!r}
+INTERNAL_REQUIREMENTS = "requirements-internal.txt"
 VERIFY_IMPORTS = {verify_imports!r}
 PREFETCH_MCP = {prefetch_mcp!r}
 LOCK_MAX_AGE_S = 45 * 60
@@ -785,6 +850,42 @@ def install_live_requirements(python, out):
     return failed
 
 
+def install_internal_requirements(python, out):
+    """Install packages that live in private repositories (``name @ <git url>``).
+
+    They are not on the public index: a bare name there is an unrelated, or hostile,
+    package. Each one is installed from its own URL and git is never allowed to prompt,
+    so missing git, missing cached credentials or no repository access just skips it
+    (logged). Never affects the install status. Returns the names that were skipped.
+    """
+    req_file = root / INTERNAL_REQUIREMENTS
+    if not req_file.is_file():
+        return []
+    reqs = [l.strip() for l in req_file.read_text(encoding="utf-8").splitlines()]
+    reqs = [l for l in reqs if l and not l.startswith("#")]
+    if not reqs:
+        return []
+    out.write("== {{}} internal dependencies ({{}} from private repositories)\\n".format(
+        time.strftime("%Y-%m-%d %H:%M:%S"), len(reqs)))
+    out.flush()
+    env = dict(os.environ, GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="never")
+    skipped = []
+    for req in reqs:
+        try:
+            rc = subprocess.run([python, "-m", "pip", "install", "--disable-pip-version-check", req],
+                                stdout=out, stderr=out, check=False, env=env, timeout=300,
+                                creationflags=NO_WINDOW).returncode
+        except (OSError, subprocess.SubprocessError):
+            rc = 1
+        if rc != 0:
+            skipped.append(req.split("@")[0].strip())
+    out.write("== internal dependencies: {{}} installed, {{}} skipped{{}}\\n".format(
+        len(reqs) - len(skipped), len(skipped),
+        " ({{}}; needs git and access to the private repository)".format(", ".join(skipped))
+        if skipped else ""))
+    return skipped
+
+
 def skill_packages():
     """Top-level import names of the bundled skills (``skills/**/src/<pkg>/__init__.py``)."""
     names = set()
@@ -830,8 +931,85 @@ def import_check(python, out):
                           creationflags=NO_WINDOW).returncode == 0
 
 
+def acquire_pip_lock(timeout_s=1800):
+    """Wait for the other plugins' installers, then claim the shared pip lock.
+
+    All three plugin hooks start together and install into the same interpreter;
+    concurrent pip runs collide on files (WinError 32) and flip shared packages
+    between versions. Returns the lock path, or None when it could not be claimed
+    (the install then proceeds unserialised). A lock older than LOCK_MAX_AGE_S is
+    stale, left by a killed worker.
+    """
+    shared = state.parent / "pip.lock"
+    deadline = time.time() + timeout_s
+    state.parent.mkdir(parents=True, exist_ok=True)
+    while True:
+        try:
+            fd = os.open(str(shared), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.write(fd, str(os.getpid()).encode("ascii"))
+            os.close(fd)
+            return shared
+        except FileExistsError:
+            try:
+                if time.time() - shared.stat().st_mtime > LOCK_MAX_AGE_S:
+                    shared.unlink()
+                    continue
+            except OSError:
+                continue
+            if time.time() > deadline:
+                return None
+            time.sleep(2)
+        except OSError:
+            return None
+
+
+def wait_for_other_installs(timeout_s=900):
+    """Wait until the other plugins' workers have finished their pip stage.
+
+    A skill may import a package that ships in a sibling plugin (an enterprise skill
+    uses a community one), so the import check is only meaningful once every plugin
+    that is installing has put its packages in place. A worker whose lock reads
+    ``check`` is past its pip stage and is not waited for, so two workers can never
+    wait on each other. Gives up after ``timeout_s``.
+    """
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        busy = False
+        for other in state.parent.glob("*/install.lock"):
+            if other.parent == state:
+                continue
+            try:
+                fresh = time.time() - other.stat().st_mtime < LOCK_MAX_AGE_S
+                busy = busy or (fresh and other.read_text(encoding="utf-8").strip() != "check")
+            except OSError:
+                continue
+        if not busy:
+            return
+        time.sleep(2)
+
+
 def run_install(python):
     """Foreground worker (called with --run in the detached process)."""
+    state.mkdir(parents=True, exist_ok=True)
+    shared = acquire_pip_lock()
+    released = []
+
+    def release():
+        if shared is not None and not released:
+            released.append(True)
+            try:
+                shared.unlink()
+            except OSError:
+                pass
+
+    try:
+        return install_packages(python, release)
+    finally:
+        release()
+
+
+def install_packages(python, release=lambda: None):
+    """Install, then import-check; ``release`` frees the shared pip lock after the pip stage."""
     state.mkdir(parents=True, exist_ok=True)
     with open(str(log), "a", encoding="utf-8") as out:
         out.write("== {{}} {{}} -> {{}}\\n".format(time.strftime("%Y-%m-%d %H:%M:%S"), plugin_name, python))
@@ -845,6 +1023,14 @@ def run_install(python):
             ok &= pip_install(python, req, out)
         failed_live = install_live_requirements(python, out) if ok else []
         if ok:
+            install_internal_requirements(python, out)
+        release()
+        if ok:
+            try:
+                lock.write_text("check", encoding="utf-8")
+            except OSError:
+                pass
+            wait_for_other_installs()
             ok = import_check(python, out)
         status = "OK" if ok else "FAILED"
         if ok and failed_live:
@@ -1162,9 +1348,11 @@ def _project_name(pyproject: Path) -> str:
 def collect_live_requirements(skill_dirs: Iterable[Path]) -> Tuple[List[str], List[str]]:
     """Aggregate the skills' live-path requirement specs into one deduplicated list.
 
-    Direct-URL specs (``name @ git+https://...``) are reduced to the bare project
-    name so the file installs without git and can be mirrored into a wheelhouse
-    with ``pip download``; the original spec is kept as a comment. Requirements
+    Direct-URL specs (``name @ git+https://...``) are NOT reduced to a bare name: the
+    public index may hold an unrelated package of that name (``pypdm``) or none at all
+    (``ioc-hierarchy``), and installing it would be wrong or unsafe. They are left out
+    here and written by ``collect_internal_requirements`` with their original URL;
+    a comment records where each came from. Requirements
     on sibling skills (``enterprise-stid-evidence`` ...) are dropped - the editable
     install of the plugin root already provides them and the index does not. When
     a package appears both bare and with a version specifier, only the specified
@@ -1186,14 +1374,15 @@ def collect_live_requirements(skill_dirs: Iterable[Path]) -> Tuple[List[str], Li
                 continue
             direct = _DIRECT_URL_RE.match(spec)
             if direct:
-                notes.append("# {}: declared as '{}' - installed by name from the index"
-                             .format(skill_dir.name, spec))
-                spec = direct.group(1)
+                if _norm_name(direct.group(1)) not in bundled:
+                    notes.append("# {}: declared as '{}' - see {}"
+                                 .format(skill_dir.name, spec, INTERNAL_REQUIREMENTS_FILE))
+                continue
             name_match = _REQ_NAME_RE.match(spec)
             if not name_match:
                 continue
             name = _norm_name(name_match.group(1))
-            if name in bundled:
+            if name in bundled or name.startswith(SKILL_DIST_PREFIX):
                 continue
             by_name.setdefault(name, {})[spec.replace(" ", "").lower()] = spec
     lines: List[str] = []
@@ -1201,6 +1390,27 @@ def collect_live_requirements(skill_dirs: Iterable[Path]) -> Tuple[List[str], Li
         specified = {k: v for k, v in variants.items() if not re.fullmatch(r"[a-z0-9._-]+", k)}
         lines.extend((specified or variants).values())
     return sorted(lines, key=str.lower), sorted(set(notes))
+
+
+def collect_internal_requirements(skill_dirs: Iterable[Path]) -> List[str]:
+    """Direct-URL requirement specs (``name @ git+https://...``) of the skills, deduplicated.
+
+    Specs for projects bundled in the same plugin are skipped, like in
+    ``collect_live_requirements``.
+    """
+    skill_dirs = list(skill_dirs)
+    bundled = {_norm_name(_project_name(d / "pyproject.toml"))
+               for d in skill_dirs if (d / "pyproject.toml").is_file()}
+    specs: Dict[str, str] = {}
+    for skill_dir in skill_dirs:
+        pyproject = skill_dir / "pyproject.toml"
+        if not pyproject.is_file():
+            continue
+        for spec in skill_live_requirements(pyproject):
+            direct = _DIRECT_URL_RE.match(spec.strip())
+            if direct and _norm_name(direct.group(1)) not in bundled:
+                specs.setdefault(_norm_name(direct.group(1)), spec.strip())
+    return sorted(specs.values(), key=str.lower)
 
 
 def write_live_requirements(dest_root: Path, skill_dirs: Iterable[Path]) -> int:
@@ -1222,6 +1432,18 @@ def write_live_requirements(dest_root: Path, skill_dirs: Iterable[Path]) -> int:
     ]
     body = header + notes + [""] + lines + [""]
     (dest_root / LIVE_REQUIREMENTS_FILE).write_text("\n".join(body), encoding="utf-8")
+    internal = collect_internal_requirements(skill_dirs)
+    if internal:
+        internal_header = [
+            "# Skill dependencies that live in private repositories, aggregated by build_agent_plugin.py.",
+            "# Kept apart from requirements-live.txt and installed from their own URL, never by bare",
+            "# name: the public index has no such package, or an unrelated one of the same name.",
+            "# The SessionStart hook tries each without any prompt; no git or no repository access",
+            "# skips it and only that skill's live path is unavailable.",
+            "# Install by hand: <python> -m pip install -r requirements-internal.txt",
+        ]
+        (dest_root / INTERNAL_REQUIREMENTS_FILE).write_text(
+            "\n".join(internal_header + [""] + internal + [""]), encoding="utf-8")
     return len(lines)
 
 

@@ -68,6 +68,7 @@ py-modules = [
 ]
 packages = [
     "neqsim_runner",
+    "neqsim_runner.bootstrap",
     "neqsim_continuous",
     "task_template",
     "task_template.step1_scope_and_research",

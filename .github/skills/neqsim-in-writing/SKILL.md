@@ -172,7 +172,7 @@ checks that:
 
 When introducing a new symbol, add it to `nomenclature.yaml` BEFORE writing
 the prose. NeqSim default units are documented in
-[`docs/development/CODE_PATTERNS.md`](../../docs/development/CODE_PATTERNS.md).
+[`docs/development/CODE_PATTERNS.md`](../../../docs/development/CODE_PATTERNS.md).
 
 Common defaults:
 
