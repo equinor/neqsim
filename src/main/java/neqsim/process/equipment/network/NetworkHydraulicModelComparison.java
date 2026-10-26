@@ -428,6 +428,26 @@ public final class NetworkHydraulicModelComparison {
       }
       return SerializationUtils.clone(pipe);
     }
+
+    /**
+     * Create a conservative-energy transient pipe from an accepted two-fluid edge state.
+     *
+     * <p>
+     * The returned copy retains the comparison's converged steady fields without rerunning hydraulics. Its distributed
+     * named-component inventory is initialized from the accepted phase state and its transient controls are set to the
+     * supported coupled-Euler configuration.
+     * </p>
+     *
+     * @param edgeId compared edge identifier
+     * @return independent conservative-energy pipe initialized from the accepted steady state
+     * @throws IllegalArgumentException when the edge was not compared
+     * @throws IllegalStateException when the accepted pipe cannot enter the supported conservative transient mode
+     */
+    public TwoFluidPipe createConservativeEnergyInitializedTwoFluidPipe(String edgeId) {
+      TwoFluidPipe pipe = createInitializedTwoFluidPipe(edgeId);
+      pipe.prepareConservativeEnergyTransientFromSteadyState();
+      return pipe;
+    }
   }
 
   private final FieldNetworkTopology topology;

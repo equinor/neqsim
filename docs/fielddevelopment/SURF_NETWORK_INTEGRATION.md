@@ -72,7 +72,9 @@ or wall-clock-limited two-fluid calculation throws and cannot silently substitut
 Darcy-Weisbach. `getTwoFluidModel()` provides the last steady pipe and convergence/
 holdup/phase-velocity profiles. `createInitializedTwoFluidPipe()` only succeeds for
 `TWO_FLUID_CONVERGED` evidence and returns an independent deep copy retaining the
-accepted steady fields. Zero-flow evaluation uses the existing static
+accepted steady fields. `createConservativeEnergyInitializedTwoFluidPipe()` additionally
+initializes component inventories from that accepted state and selects the supported
+conservative-energy transient configuration without another steady solve. Zero-flow evaluation uses the existing static
 Darcy/hydrostatic screening calculation and reports `ZERO_FLOW_STATIC`.
 Legacy Beggs-Brill fallback remains available and reports `BEGGS_BRILL_FALLBACK_DARCY`.
 Inspect this status before accepting an engineering result.
@@ -158,6 +160,10 @@ TwoFluidPipe initialized = result.createInitializedTwoFluidPipe("flowline");
 initialized.setTransactionalTransientEnabled(true);
 initialized.runTransient(0.001, UUID.randomUUID());
 
+TwoFluidPipe conservative =
+    result.createConservativeEnergyInitializedTwoFluidPipe("flowline");
+conservative.runTransient(0.000001, UUID.randomUUID());
+
 NetworkHydraulicModelComparison.MeshSensitivityResult mesh =
     comparison.compareMeshSensitivity(
         Arrays.asList("flowline"), Arrays.asList(4, 8, 10), UUID.randomUUID());
@@ -172,6 +178,9 @@ distance-aligned profile bounds, cross-model engineering bounds for all five qua
 4/8/10-segment sensitivity, preservation of the original topology/model selection,
 clone independence and one accepted transactional transient step. This is evidence-ladder
 level 3/4 (conservation and engineering bounds), not an independent correlation benchmark.
+The test also checks that the conservative-energy handoff preserves every accepted steady
+pressure, temperature, holdup, phase-velocity and section-energy value exactly, then exercises
+the component and total-energy ledgers for one accepted transient interval.
 Transient multi-edge junction conservation, energy/component closure, representative
 large-field runtime and independent field data remain open qualification work.
 

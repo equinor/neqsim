@@ -412,8 +412,17 @@ Select `setUseConservativeEnergyRecovery(true)` before `run()` to use the experi
 conservative route. This option initializes named-component inventories, including a
 single-component fluid, and stages each requested transient interval on a private pipe copy.
 Recovery failure or an incomplete interval rejects the entire interval without publishing its
-cells, inventories, clocks or reports. Changing the energy owner after initialization is
-rejected. The default remains the legacy route.
+cells, inventories, clocks or reports. The default remains the legacy route.
+
+An accepted, converged steady state that has not advanced transient time can instead call
+`prepareConservativeEnergyTransientFromSteadyState()`. This controlled handoff does not rerun
+the steady solve or alter its pressure, temperature, holdup, phase-velocity or conservative
+section-energy fields. It initializes named-component inventories from the accepted phase
+inventories, selects coupled Euler with the energy equation, and disables the default transient
+slug tracker. Film transfer, multilayer heat transfer, upstream compressible storage, the
+experimental unsplit solver, split slug force and stiff bubble-drag modes remain incompatible
+and fail before the handoff changes state. Directly changing the energy owner with
+`setUseConservativeEnergyRecovery(...)` after initialization remains rejected.
 
 For each accepted cell, common pressure $p$ and temperature $T$ are recovered from fixed cell
 volume $V$ and total energy $E$, retaining each gas, oil and aqueous component inventory and
@@ -456,7 +465,8 @@ combinations fail before advancing time. Complete-interval copying and iterative
 add work; this opt-in path has no blanket process-simulation speedup claim.
 
 `TwoFluidPipeConservativeEnergyTest` checks the issue's ideal-nitrogen blowdown,
-rigid-vessel filling, closed invariance/heating, nearby conditions and serialization.
+rigid-vessel filling, closed invariance/heating, nearby conditions, serialization and an exact
+field-preserving handoff from a converged steady state.
 `TwoFluidPipeConservativeQualificationTest` checks the integrated filling limit on
 2/4/8 cells with refined time steps, exact electrical heat input and a synthetic
 six-component gas/oil/water composition front with independently rebuilt phase EOS states.
