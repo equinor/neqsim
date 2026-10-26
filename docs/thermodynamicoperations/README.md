@@ -126,10 +126,21 @@ The same facade provides the following public operations:
 | Dew pressure at current temperature | `dewPointPressureFlash()` |
 | Dew temperature at current pressure | `dewPointTemperatureFlash()` |
 | Water dew temperature | `waterDewPointTemperatureFlash()` |
+| Water-rich liquid dew temperature including dissolved gas | `waterDewPointTemperatureFlash(true)` |
 | Hydrate formation temperature | `hydrateFormationTemperature()` |
 | Hydrate formation pressure | `hydrateFormationPressure()` |
 | Multiliquid equilibrium | Enable `setMultiPhaseCheck(true)`, then call `TPflash()` |
 | Wax or other configured solid | Call `setSolidPhaseCheck(name)`, then `TPflash()` |
+
+The mixed-liquid water-dew-point operation holds the feed gas composition fixed
+and solves fugacity equilibrium for all components in an incipient water-rich
+liquid. It requires more than 50 mol% water in that liquid and excludes
+reactions, other liquids, solids and hydrates. Its subzero reference is
+metastable liquid water. The `CPA` water-dew-point analyser uses this operation;
+failed measurements return `NaN`. Use the full multiphase operation for
+hydrocarbon liquids or glycol-rich condensates. See the
+[dew-point guide](../standards/dew_point_standards#trace-water-process-analyser)
+for the distinction from GERG-water's ISO ice reference and validity range.
 
 Solid selection preserves the fluid multiphase-check setting. Request additional
 liquid phases explicitly with `setMultiPhaseCheck(true)`. The empirical solid model

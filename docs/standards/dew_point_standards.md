@@ -113,6 +113,33 @@ measurements are discussed by
 [Rajzinger (2012)](https://doi.org/10.26552/com.C.2012.4A.29-35), Table 2;
 matching that model is distinct from matching experimental data.
 
+### Trace-water process analyser
+
+`WaterDewPointAnalyser`'s `CPA` method solves fixed-feed-gas equilibrium against
+a water-rich liquid, including dissolved gas, using Statoil SRK-CPA. It uses
+metastable liquid water below freezing and excludes solid and hydrate searches.
+Unlike the former phase-appearance search, its stopping criterion is water
+fugacity equilibrium; the amount of an incipient phase does not set the answer.
+Failed measurements return `NaN`, and the process stream remains unchanged.
+
+The direct API is `waterDewPointTemperatureFlash(true)`. It requires a
+non-reacting gas and a liquid with more than 50 mol% water. Dissolved components
+satisfy their gas/liquid fugacity equations while water closes the liquid
+composition. This keeps the solve on the aqueous branch rather than accepting
+the trivial gas-composition root. It does not check global stability against
+other liquid phases. Select the analyser's `multiphase` method on a CPA stream
+when hydrocarbon liquids or glycol-rich liquids must be included. The existing
+no-argument direct operation retains its pure-condensate reference.
+
+For a synthetic gas containing 95% methane before moisture substitution,
+3% ethane, 1% nitrogen and 1% CO2, 5 ppmv water at 43 bara gives approximately
+−43.90 °C with the mixed-liquid CPA method. GERG-water gives approximately
+−34.50 °C. These numerical fixtures use different condensed-phase models;
+agreement within 3 °C is not a valid universal acceptance criterion. Tests
+cover 1–100 ppmv at 43 and 70 bara and independently reinitialize both EOS
+phases to check every component's fugacity equality. This establishes numerical
+equilibrium, not experimental accuracy of either low-temperature model.
+
 Before the convergence correction, the fixed temperature step scaled with
 absolute water mole fraction and could stop at 10,000 iterations far from
 equilibrium, especially in dry gas. Earlier stored dew-point values from this
