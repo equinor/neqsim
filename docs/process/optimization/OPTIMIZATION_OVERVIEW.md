@@ -798,14 +798,19 @@ The compact immutable map combines the existing optimizer guard block, the accep
 bottleneck, every sampled point, bottleneck transition, explicit operating-region transition,
 optional fail-closed continuous-boundary receipt, and per-slice plus aggregate evaluation counts
 and wall-clock runtimes. Accepted-envelope schema v2 also includes
-`cross_slice_constraint_summary`. It groups exact sampled and final refined-endpoint rows only when
-source, qualified constraint name, applicable limit, unit, limit role, and limit provenance all
-match. Rows with any rejection rank first by occurrence; otherwise feasible rows enter only when
-their finite dimensionless normalized margin is at or below the configured threshold (default
-0.10), whose provenance is exported. Physical margins remain visible evidence but are never ranked
-across unlike units. `summarizeConstraints(...)` exposes the same immutable read-only result without
-rerunning the model. This is a deterministic screening report, not an optimizer active set, shadow
-price, causal attribution, or approval. Every slice must come from the exact runtime study, share the
+`cross_slice_constraint_summary`. Summary version 2 traverses every exact required-hydraulic,
+installed-equipment, and typed plant constraint already recorded at sampled points and final refined
+endpoints, so a secondary line, separator, compressor-map, common-shaft, or shared-power limit can
+remain visible even when it is not the single leading bottleneck. It groups rows only when source,
+qualified constraint name, applicable limit, unit, limit role, and limit provenance all match. Rows
+with any rejection rank first by occurrence; otherwise feasible rows enter only when their finite
+dimensionless normalized margin is at or below the configured threshold (default 0.10), whose
+provenance is exported. Physical margins remain visible evidence but are never ranked across unlike
+units. The summary reuses evaluator evidence and performs no additional process simulations;
+`summarizeConstraints(...)` exposes the same immutable read-only result. Summary version 1 remains a
+supported persisted-input contract for leading-only historical evidence. This is a deterministic
+screening report, not an optimizer active set, shadow price, causal attribution, or approval. Every
+slice must come from the exact runtime study, share the
 accepted candidate anchor, and have complete restoration/reconvergence. A foreign, deserialized,
 duplicate-axis, partial-recovery, or stale slice is rejected before export. Non-finite optional
 numerical fields are emitted as JSON `null`; they are never promoted to accepted evidence. Runtime

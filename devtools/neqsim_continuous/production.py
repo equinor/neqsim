@@ -435,12 +435,13 @@ def _bottleneck_name(value):
 def _cross_slice_constraint_summary(slices, persisted):
     """Rebuild the exact schema-v2 constraint summary from sampled and endpoint rows."""
     if (not isinstance(slices, list) or not isinstance(persisted, dict)
-            or persisted.get("summary_version") != 1
+            or persisted.get("summary_version") not in (1, 2)
             or not _number(persisted.get("maximum_normalized_margin"))
             or persisted["maximum_normalized_margin"] < 0
             or not _text(persisted.get("threshold_provenance"))):
         return None
     maximum_margin = float(persisted["maximum_normalized_margin"])
+    summary_version = persisted["summary_version"]
     accumulators = []
 
     def observe(evidence, role, axes):
@@ -518,15 +519,27 @@ def _cross_slice_constraint_summary(slices, persisted):
                 or not isinstance(refinements, list)):
             return None
         for point in points:
-            if (not isinstance(point, dict)
-                    or not observe(point.get("leading_constraint"), "sampled_point", axes)):
+            if not isinstance(point, dict):
+                return None
+            point_rows = (point.get("constraint_evidence") if summary_version == 2
+                          else [point.get("leading_constraint")])
+            if (not isinstance(point_rows, list)
+                    or any(not observe(row, "sampled_point", axes) for row in point_rows)):
                 return None
         for refinement in refinements:
-            if (not isinstance(refinement, dict)
-                    or not observe(refinement.get("feasible_boundary_constraint"),
-                                   "feasible_boundary", axes)
-                    or not observe(refinement.get("infeasible_boundary_constraint"),
-                                   "infeasible_boundary", axes)):
+            if not isinstance(refinement, dict):
+                return None
+            feasible_rows = (refinement.get("feasible_boundary_constraint_evidence")
+                             if summary_version == 2
+                             else [refinement.get("feasible_boundary_constraint")])
+            infeasible_rows = (refinement.get("infeasible_boundary_constraint_evidence")
+                               if summary_version == 2
+                               else [refinement.get("infeasible_boundary_constraint")])
+            if (not isinstance(feasible_rows, list) or not isinstance(infeasible_rows, list)
+                    or any(not observe(row, "feasible_boundary", axes)
+                           for row in feasible_rows)
+                    or any(not observe(row, "infeasible_boundary", axes)
+                           for row in infeasible_rows)):
                 return None
 
     ranked = [item for item in accumulators
@@ -577,7 +590,7 @@ def _cross_slice_constraint_summary(slices, persisted):
             "representative_rejecting_constraint": item["representative_rejecting_constraint"],
         })
     return {
-        "summary_version": 1,
+        "summary_version": summary_version,
         "maximum_normalized_margin": persisted["maximum_normalized_margin"],
         "threshold_provenance": persisted["threshold_provenance"],
         "observed_constraint_count": len(accumulators),
@@ -586,6 +599,9 @@ def _cross_slice_constraint_summary(slices, persisted):
         "ranked_constraints": entries,
         "advisory": True,
         "interpretation": (
+            "Complete sampled/refined constraint ladder; not a shadow price, "
+            "causal attribution, global active set, or approval"
+            if summary_version == 2 else
             "Exact sampled/refined evidence; not a shadow price, causal attribution, "
             "global active set, or approval"),
     }

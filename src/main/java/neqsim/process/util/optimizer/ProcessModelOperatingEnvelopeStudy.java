@@ -392,12 +392,12 @@ public final class ProcessModelOperatingEnvelopeStudy {
     for (SliceResult slice : slices) {
       String[] axes = slice.getAxisActionIds();
       for (Point point : slice.getPoints()) {
-        observeConstraint(accumulators, point.getLeadingConstraint(), ConstraintEvidenceRole.SAMPLED_POINT, axes);
+        observeConstraints(accumulators, point.getConstraintEvidence(), ConstraintEvidenceRole.SAMPLED_POINT, axes);
       }
       for (OperatingRegionBoundaryRefinement refinement : slice.getBoundaryRefinements()) {
-        observeConstraint(accumulators, refinement.getFeasibleBoundaryConstraint(),
+        observeConstraints(accumulators, refinement.getFeasibleBoundaryConstraintEvidence(),
             ConstraintEvidenceRole.FEASIBLE_BOUNDARY, axes);
-        observeConstraint(accumulators, refinement.getInfeasibleBoundaryConstraint(),
+        observeConstraints(accumulators, refinement.getInfeasibleBoundaryConstraintEvidence(),
             ConstraintEvidenceRole.INFEASIBLE_BOUNDARY, axes);
       }
     }
@@ -439,6 +439,14 @@ public final class ProcessModelOperatingEnvelopeStudy {
     ConstraintSummaryAccumulator accumulator = new ConstraintSummaryAccumulator(evidence);
     accumulator.observe(evidence, role, axes);
     accumulators.add(accumulator);
+  }
+
+  /** Adds every exact constraint row from one sampled or refined endpoint. */
+  private static void observeConstraints(List<ConstraintSummaryAccumulator> accumulators,
+      List<LeadingConstraintEvidence> evidenceRows, ConstraintEvidenceRole role, String[] axes) {
+    for (LeadingConstraintEvidence evidence : evidenceRows) {
+      observeConstraint(accumulators, evidence, role, axes);
+    }
   }
 
   /** Returns true when the ordered axis identifier vector already exists. */
@@ -847,7 +855,7 @@ public final class ProcessModelOperatingEnvelopeStudy {
       CandidateSetEvaluationResult evaluation = evaluator.evaluate(candidate);
       InstalledEquipmentCapacityEvidence installed = leadingInstalled(evaluation);
       Point evaluated = new Point(iteration, new int[0], new double[] {midpoint}, candidate, evaluation,
-          leading(evaluation, installed), installed);
+          leading(evaluation, installed), installed, constraintEvidence(evaluation));
       steps.add(OperatingRegionBoundaryRefinement.Step.fromPoint(iteration, evaluated));
       if (!safeRecovery(evaluated)) {
         status = OperatingRegionBoundaryRefinement.Status.MODEL_RECOVERY_FAILED;
@@ -872,7 +880,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
         boundaryRefinementRelativeTolerance, absoluteTolerance, boundaryRefinementToleranceProvenance,
         maximumBoundaryRefinementEvaluations, feasible.getCandidateValues()[actionIndex],
         infeasible.getCandidateValues()[actionIndex], feasible.getLeadingConstraint(),
-        infeasible.getLeadingConstraint(), status, steps);
+        infeasible.getLeadingConstraint(), feasible.getConstraintEvidence(), infeasible.getConstraintEvidence(), status,
+        steps);
   }
 
   /** Returns true only for a finite, converged, feasible midpoint with complete recovery. */
@@ -927,7 +936,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
     }
     CandidateSetEvaluationResult result = evaluator.evaluate(candidate);
     InstalledEquipmentCapacityEvidence installed = leadingInstalled(result);
-    return new Point(sequence, gridIndexes, coordinates, candidate, result, leading(result, installed), installed);
+    return new Point(sequence, gridIndexes, coordinates, candidate, result, leading(result, installed), installed,
+        constraintEvidence(result));
   }
 
   /**
@@ -970,6 +980,73 @@ public final class ProcessModelOperatingEnvelopeStudy {
     return leading;
   }
 
+  /**
+   * Freezes the complete normalized constraint ladder needed for near-active and rejecting summaries.
+   *
+   * <p>
+   * Feasible points retain every finite required-hydraulic, installed-equipment, and typed plant constraint. Rejected
+   * points retain every exact fail-closed source that matches the evaluator outcome. This is a read-only traversal of
+   * evidence already produced by the evaluator; it does not rerun the process model or relax any acceptance rule.
+   * </p>
+   */
+  private static List<LeadingConstraintEvidence> constraintEvidence(CandidateSetEvaluationResult result) {
+    List<LeadingConstraintEvidence> evidenceRows = new ArrayList<LeadingConstraintEvidence>();
+    if (result.isFeasible()) {
+      for (HydraulicConstraintSnapshot snapshot : result.getHydraulicConstraints()) {
+        if (snapshot.isPresent() && snapshot.hasFiniteValue() && snapshot.isFeasible() && snapshot
+            .getEvidenceApplicability() != ProcessModelSimulationEvaluator.BottleneckStatus.EvidenceApplicability.OUTSIDE_VALIDITY_RANGE) {
+          evidenceRows.add(LeadingConstraintEvidence.fromHydraulic(snapshot));
+        }
+      }
+      for (InstalledEquipmentCapacityEvidence evidence : result.getInstalledEquipmentCapacityEvidence()) {
+        if (evidence.isEnabled() && evidence.hasFiniteEvidence()) {
+          evidenceRows.add(LeadingConstraintEvidence.fromInstalled(evidence));
+        }
+      }
+      for (PlantConstraintEvidence evidence : result.getPlantConstraintEvidence()) {
+        if (evidence.getDefinition().isEnabled() && evidence.hasAvailableEvidence()
+            && Double.isFinite(evidence.getNormalizedUtilization())) {
+          evidenceRows.add(LeadingConstraintEvidence.fromPlant(evidence));
+        }
+      }
+      return Collections.unmodifiableList(evidenceRows);
+    }
+
+    switch (result.getOutcome()) {
+    case REQUIRED_CONSTRAINT_MISSING:
+    case CONSTRAINT_VALUE_UNAVAILABLE:
+    case HYDRAULIC_CONSTRAINT_VIOLATED:
+    case EVIDENCE_OUTSIDE_VALIDITY_RANGE:
+      for (HydraulicConstraintSnapshot snapshot : result.getHydraulicConstraints()) {
+        if (matchesHydraulicOutcome(result.getOutcome(), snapshot)) {
+          evidenceRows.add(LeadingConstraintEvidence.fromHydraulic(snapshot));
+        }
+      }
+      break;
+    case OTHER_MODEL_CONSTRAINT_VIOLATED:
+      for (InstalledEquipmentCapacityEvidence evidence : result.getInstalledEquipmentCapacityEvidence()) {
+        if (evidence.isEnabled() && (!evidence.hasFiniteEvidence() || !evidence.isFeasible())) {
+          evidenceRows.add(LeadingConstraintEvidence.fromInstalled(evidence));
+        }
+      }
+      for (PlantConstraintEvidence evidence : result.getPlantConstraintEvidence()) {
+        if (evidence.getDefinition().isEnabled() && (!evidence.hasAvailableEvidence() || !evidence.isFeasible())) {
+          evidenceRows.add(LeadingConstraintEvidence.fromPlant(evidence));
+        }
+      }
+      for (CandidateConstraintEvidence evidence : result.getConstraintEvidence()) {
+        if (evidence.isHard() && !evidence.isSatisfied() && evidence.getPhysicalUnit() == null) {
+          evidenceRows.add(LeadingConstraintEvidence.fromRegisteredConstraint(evidence));
+        }
+      }
+      break;
+    case FEASIBLE:
+    default:
+      break;
+    }
+    return Collections.unmodifiableList(evidenceRows);
+  }
+
   /** Selects the unit-safe leading constraint or exact fail-closed rejection source. */
   private static LeadingConstraintEvidence leading(CandidateSetEvaluationResult result,
       InstalledEquipmentCapacityEvidence installed) {
@@ -985,13 +1062,18 @@ public final class ProcessModelOperatingEnvelopeStudy {
       }
       break;
     case OTHER_MODEL_CONSTRAINT_VIOLATED:
+      for (InstalledEquipmentCapacityEvidence evidence : result.getInstalledEquipmentCapacityEvidence()) {
+        if (evidence.isEnabled() && (!evidence.hasFiniteEvidence() || !evidence.isFeasible())) {
+          return LeadingConstraintEvidence.fromInstalled(evidence);
+        }
+      }
       for (PlantConstraintEvidence evidence : result.getPlantConstraintEvidence()) {
         if (evidence.getDefinition().isEnabled() && (!evidence.hasAvailableEvidence() || !evidence.isFeasible())) {
           return LeadingConstraintEvidence.fromPlant(evidence);
         }
       }
       for (CandidateConstraintEvidence evidence : result.getConstraintEvidence()) {
-        if (evidence.isHard() && !evidence.isSatisfied()) {
+        if (evidence.isHard() && !evidence.isSatisfied() && evidence.getPhysicalUnit() == null) {
           return LeadingConstraintEvidence.fromRegisteredConstraint(evidence);
         }
       }
@@ -1211,6 +1293,15 @@ public final class ProcessModelOperatingEnvelopeStudy {
     List<String> result = new ArrayList<String>();
     for (ProcessModelOperatingAction.ValueSemantics value : values) {
       result.add(value.name());
+    }
+    return Collections.unmodifiableList(result);
+  }
+
+  /** Converts exact constraint rows to a deeply immutable JSON-friendly list. */
+  private static List<Map<String, Object>> constraintEvidenceMaps(List<LeadingConstraintEvidence> rows) {
+    List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+    for (LeadingConstraintEvidence row : rows) {
+      result.add(row.toEvidenceMap());
     }
     return Collections.unmodifiableList(result);
   }
@@ -1488,7 +1579,7 @@ public final class ProcessModelOperatingEnvelopeStudy {
         entries.add(entry.toEvidenceMap());
       }
       Map<String, Object> evidence = new LinkedHashMap<String, Object>();
-      evidence.put("summary_version", Integer.valueOf(1));
+      evidence.put("summary_version", Integer.valueOf(2));
       evidence.put("maximum_normalized_margin", Double.valueOf(maximumNormalizedMargin));
       evidence.put("threshold_provenance", thresholdProvenance);
       evidence.put("observed_constraint_count", Integer.valueOf(observedConstraintCount));
@@ -1497,7 +1588,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
       evidence.put("ranked_constraints", Collections.unmodifiableList(entries));
       evidence.put("advisory", Boolean.TRUE);
       evidence.put("interpretation",
-          "Exact sampled/refined evidence; not a shadow price, causal attribution, global active set, or approval");
+          "Complete sampled/refined constraint ladder; not a shadow price, causal attribution, "
+              + "global active set, or approval");
       return Collections.unmodifiableMap(evidence);
     }
   }
@@ -1774,11 +1866,15 @@ public final class ProcessModelOperatingEnvelopeStudy {
 
     /** Creates evidence from one installed equipment constraint. */
     private static LeadingConstraintEvidence fromInstalled(InstalledEquipmentCapacityEvidence evidence) {
+      String sourceReference = evidence.getApplicableLimitSourceReference();
+      if (sourceReference == null || sourceReference.trim().isEmpty()) {
+        sourceReference = evidence.getApplicableLimitSource().name() + " constraint source (no reference declared)";
+      }
       return new LeadingConstraintEvidence(Source.INSTALLED_EQUIPMENT, evidence.getQualifiedConstraintName(),
           evidence.getNormalizedUtilization(), evidence.getNormalizedMargin(), evidence.getCurrentValue(),
           evidence.getApplicableLimit(), evidence.getPhysicalMargin(), evidence.getPhysicalUnit(),
           evidence.isFeasible(), evidence.getEvidenceStatus().name(), evidence.getApplicableLimitRole().name(),
-          evidence.getApplicableLimitSourceReference());
+          sourceReference);
     }
 
     /** Creates evidence from one required hydraulic snapshot. */
@@ -1824,7 +1920,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
       String physicalUnit = evidence.getPhysicalUnit() == null ? evidence.getUnit() : evidence.getPhysicalUnit();
       return new LeadingConstraintEvidence(Source.REGISTERED_MODEL_CONSTRAINT, evidence.getName(), Double.NaN,
           Double.NaN, evidence.getValue(), limit, evidence.getMargin(), physicalUnit, evidence.isSatisfied(),
-          "DECLARATION_ORDER_HARD_CONSTRAINT", "REGISTERED_MODEL_CONSTRAINT", "");
+          "DECLARATION_ORDER_HARD_CONSTRAINT", "REGISTERED_MODEL_CONSTRAINT",
+          "registered evaluator constraint definition");
     }
 
     /** @return evidence layer that supplied the selected constraint */
@@ -1925,6 +2022,7 @@ public final class ProcessModelOperatingEnvelopeStudy {
     private final CandidateSetEvaluationResult evaluation;
     private final LeadingConstraintEvidence leadingConstraint;
     private final InstalledEquipmentCapacityEvidence leadingInstalledConstraint;
+    private final List<LeadingConstraintEvidence> constraintEvidence;
 
     /**
      * Creates one immutable point.
@@ -1936,10 +2034,12 @@ public final class ProcessModelOperatingEnvelopeStudy {
      * @param evaluation complete evaluator evidence
      * @param leadingConstraint unit-safe leading or rejecting constraint
      * @param leadingInstalledConstraint leading installed evidence or null
+     * @param constraintEvidence complete normalized feasible or exact rejecting constraint ladder
      */
     private Point(int sequenceIndex, int[] gridIndexes, double[] axisValues, double[] candidateValues,
         CandidateSetEvaluationResult evaluation, LeadingConstraintEvidence leadingConstraint,
-        InstalledEquipmentCapacityEvidence leadingInstalledConstraint) {
+        InstalledEquipmentCapacityEvidence leadingInstalledConstraint,
+        List<LeadingConstraintEvidence> constraintEvidence) {
       this.sequenceIndex = sequenceIndex;
       this.gridIndexes = Arrays.copyOf(gridIndexes, gridIndexes.length);
       this.axisValues = Arrays.copyOf(axisValues, axisValues.length);
@@ -1947,6 +2047,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
       this.evaluation = evaluation;
       this.leadingConstraint = leadingConstraint;
       this.leadingInstalledConstraint = leadingInstalledConstraint;
+      this.constraintEvidence = Collections
+          .unmodifiableList(new ArrayList<LeadingConstraintEvidence>(constraintEvidence));
     }
 
     /** @return deterministic sequence index */
@@ -1984,6 +2086,11 @@ public final class ProcessModelOperatingEnvelopeStudy {
       return leadingInstalledConstraint;
     }
 
+    /** @return complete immutable normalized feasible or exact rejecting constraint ladder */
+    public List<LeadingConstraintEvidence> getConstraintEvidence() {
+      return Collections.unmodifiableList(new ArrayList<LeadingConstraintEvidence>(constraintEvidence));
+    }
+
     /** @return true only for a fully feasible evaluator result */
     public boolean isFeasible() {
       return evaluation.isFeasible();
@@ -2008,6 +2115,11 @@ public final class ProcessModelOperatingEnvelopeStudy {
       evidence.put("baseline_simulation_converged", Boolean.valueOf(evaluation.isBaselineSimulationConverged()));
       evidence.put("raw_objectives", toFiniteDoubleList(evaluation.getRawObjectives()));
       evidence.put("leading_constraint", leadingConstraint == null ? null : leadingConstraint.toEvidenceMap());
+      List<Map<String, Object>> constraintRows = new ArrayList<Map<String, Object>>();
+      for (LeadingConstraintEvidence constraint : constraintEvidence) {
+        constraintRows.add(constraint.toEvidenceMap());
+      }
+      evidence.put("constraint_evidence", Collections.unmodifiableList(constraintRows));
       evidence.put("diagnostics", Collections.unmodifiableList(new ArrayList<String>(evaluation.getDiagnostics())));
       return Collections.unmodifiableMap(evidence);
     }
@@ -2325,6 +2437,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
     private final double infeasibleAxisValue;
     private final LeadingConstraintEvidence feasibleBoundaryConstraint;
     private final LeadingConstraintEvidence infeasibleBoundaryConstraint;
+    private final List<LeadingConstraintEvidence> feasibleBoundaryConstraintEvidence;
+    private final List<LeadingConstraintEvidence> infeasibleBoundaryConstraintEvidence;
     private final Status status;
     private final List<Step> steps;
 
@@ -2342,6 +2456,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
      * @param infeasibleAxisValue final independently evaluated infeasible value
      * @param feasibleBoundaryConstraint leading constraint at the final feasible endpoint
      * @param infeasibleBoundaryConstraint rejecting constraint at the final infeasible endpoint
+     * @param feasibleBoundaryConstraintEvidence complete normalized evidence at the final feasible endpoint
+     * @param infeasibleBoundaryConstraintEvidence complete exact rejecting evidence at the final infeasible endpoint
      * @param status terminal refinement status
      * @param steps complete midpoint evidence
      */
@@ -2349,7 +2465,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
         double actionUpperBound, double relativeTolerance, double absoluteTolerance, String toleranceProvenance,
         int maximumEvaluations, double feasibleAxisValue, double infeasibleAxisValue,
         LeadingConstraintEvidence feasibleBoundaryConstraint, LeadingConstraintEvidence infeasibleBoundaryConstraint,
-        Status status, List<Step> steps) {
+        List<LeadingConstraintEvidence> feasibleBoundaryConstraintEvidence,
+        List<LeadingConstraintEvidence> infeasibleBoundaryConstraintEvidence, Status status, List<Step> steps) {
       this.axisActionId = transition.getAxisActionId();
       this.fromSequenceIndex = transition.getFromSequenceIndex();
       this.toSequenceIndex = transition.getToSequenceIndex();
@@ -2365,6 +2482,10 @@ public final class ProcessModelOperatingEnvelopeStudy {
       this.infeasibleAxisValue = infeasibleAxisValue;
       this.feasibleBoundaryConstraint = feasibleBoundaryConstraint;
       this.infeasibleBoundaryConstraint = infeasibleBoundaryConstraint;
+      this.feasibleBoundaryConstraintEvidence = Collections
+          .unmodifiableList(new ArrayList<LeadingConstraintEvidence>(feasibleBoundaryConstraintEvidence));
+      this.infeasibleBoundaryConstraintEvidence = Collections
+          .unmodifiableList(new ArrayList<LeadingConstraintEvidence>(infeasibleBoundaryConstraintEvidence));
       this.status = status;
       this.steps = Collections.unmodifiableList(new ArrayList<Step>(steps));
     }
@@ -2444,6 +2565,17 @@ public final class ProcessModelOperatingEnvelopeStudy {
       return infeasibleBoundaryConstraint;
     }
 
+    /** @return complete immutable normalized evidence at the final feasible endpoint */
+    public List<LeadingConstraintEvidence> getFeasibleBoundaryConstraintEvidence() {
+      return Collections.unmodifiableList(new ArrayList<LeadingConstraintEvidence>(feasibleBoundaryConstraintEvidence));
+    }
+
+    /** @return complete immutable exact rejecting evidence at the final infeasible endpoint */
+    public List<LeadingConstraintEvidence> getInfeasibleBoundaryConstraintEvidence() {
+      return Collections
+          .unmodifiableList(new ArrayList<LeadingConstraintEvidence>(infeasibleBoundaryConstraintEvidence));
+    }
+
     /** @return final bracket width in the action unit */
     public double getBracketWidth() {
       return Math.abs(infeasibleAxisValue - feasibleAxisValue);
@@ -2491,6 +2623,9 @@ public final class ProcessModelOperatingEnvelopeStudy {
           feasibleBoundaryConstraint == null ? null : feasibleBoundaryConstraint.toEvidenceMap());
       evidence.put("infeasible_boundary_constraint",
           infeasibleBoundaryConstraint == null ? null : infeasibleBoundaryConstraint.toEvidenceMap());
+      evidence.put("feasible_boundary_constraint_evidence", constraintEvidenceMaps(feasibleBoundaryConstraintEvidence));
+      evidence.put("infeasible_boundary_constraint_evidence",
+          constraintEvidenceMaps(infeasibleBoundaryConstraintEvidence));
       evidence.put("status", status.name());
       evidence.put("converged", Boolean.valueOf(isConverged()));
       evidence.put("steps", Collections.unmodifiableList(stepEvidence));
@@ -2517,12 +2652,14 @@ public final class ProcessModelOperatingEnvelopeStudy {
       private final boolean baselineRestored;
       private final boolean baselineSimulationConverged;
       private final LeadingConstraintEvidence leadingConstraint;
+      private final List<LeadingConstraintEvidence> constraintEvidence;
 
       /** Creates one immutable midpoint evaluation from a complete evaluated point. */
       private Step(int sequenceIndex, double axisValue, double[] candidateValues,
           ProcessModelOperatingActionSetEvaluator.Outcome outcome, boolean feasible,
           boolean candidateSimulationConverged, boolean candidateEvaluatorFeasible, boolean baselineRestored,
-          boolean baselineSimulationConverged, LeadingConstraintEvidence leadingConstraint) {
+          boolean baselineSimulationConverged, LeadingConstraintEvidence leadingConstraint,
+          List<LeadingConstraintEvidence> constraintEvidence) {
         this.sequenceIndex = sequenceIndex;
         this.axisValue = axisValue;
         this.candidateValues = Arrays.copyOf(candidateValues, candidateValues.length);
@@ -2533,6 +2670,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
         this.baselineRestored = baselineRestored;
         this.baselineSimulationConverged = baselineSimulationConverged;
         this.leadingConstraint = leadingConstraint;
+        this.constraintEvidence = Collections
+            .unmodifiableList(new ArrayList<LeadingConstraintEvidence>(constraintEvidence));
       }
 
       /** Creates one step from a complete runtime point. */
@@ -2541,7 +2680,7 @@ public final class ProcessModelOperatingEnvelopeStudy {
         return new Step(sequenceIndex, point.getAxisValues()[0], point.getCandidateValues(), evaluation.getOutcome(),
             evaluation.isFeasible(), evaluation.isCandidateSimulationConverged(),
             evaluation.isCandidateEvaluatorFeasible(), evaluation.isBaselineRestored(),
-            evaluation.isBaselineSimulationConverged(), point.getLeadingConstraint());
+            evaluation.isBaselineSimulationConverged(), point.getLeadingConstraint(), point.getConstraintEvidence());
       }
 
       /** @return zero-based midpoint sequence */
@@ -2594,6 +2733,11 @@ public final class ProcessModelOperatingEnvelopeStudy {
         return leadingConstraint;
       }
 
+      /** @return complete immutable normalized feasible or exact rejecting constraint ladder */
+      public List<LeadingConstraintEvidence> getConstraintEvidence() {
+        return Collections.unmodifiableList(new ArrayList<LeadingConstraintEvidence>(constraintEvidence));
+      }
+
       /** Converts this midpoint evaluation to a compact JSON-friendly map. */
       public Map<String, Object> toEvidenceMap() {
         Map<String, Object> evidence = new LinkedHashMap<String, Object>();
@@ -2607,6 +2751,7 @@ public final class ProcessModelOperatingEnvelopeStudy {
         evidence.put("baseline_restored", Boolean.valueOf(baselineRestored));
         evidence.put("baseline_simulation_converged", Boolean.valueOf(baselineSimulationConverged));
         evidence.put("leading_constraint", leadingConstraint == null ? null : leadingConstraint.toEvidenceMap());
+        evidence.put("constraint_evidence", constraintEvidenceMaps(constraintEvidence));
         return Collections.unmodifiableMap(evidence);
       }
     }
