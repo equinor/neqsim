@@ -62,7 +62,10 @@ when the equilibrium state changes.
 
 `fluid.setPhysicalPropertyModel(PhysicalPropertyModel.DEFAULT)` selects a coordinated model set.
 Other supported sets include `WATER`, `SALT_WATER`, `GLYCOL`, `AMINE`, `CO2WATER`, and
-`BASIC`. Select the set before calling `initPhysicalProperties()`.
+`BASIC`. Select the set before calling `initPhysicalProperties()`. The aqueous phases
+of `GLYCOL`, `AMINE` and `CO2WATER` use Filippov conductivity, including its enabled
+CHEMPAK Missenard-derived pressure factor. See its
+[units, cutoffs and qualification limits](../physical_properties/thermal_conductivity_models#filippov-liquid-mixing-and-pressure-factor).
 
 An EOS mixing rule, such as `fluid.setMixingRule("classic")`, configures thermodynamic mixture
 behavior. It is not a viscosity or conductivity model selector. For a specialized transport
