@@ -30,12 +30,13 @@ import neqsim.process.util.optimizer.InstalledEquipmentCapacityEvidence.Constrai
  */
 public final class UtilizationCoverageReport implements Serializable {
   private static final long serialVersionUID = 1L;
-  private final String schemaVersion = "1.0";
+  private final String schemaVersion;
   private final String coverageScope = "DECLARED_EQUIPMENT_AND_CONSTRAINTS";
   private final String modelName;
   private final String registryIdentityDigest;
   private final List<String> expectedEquipmentIds;
   private final List<String> expectedConstraintIds;
+  private final List<String> expectedPlantConstraintIds;
   private final List<String> requiredConstraintIds;
   private final List<Row> rows;
   private final List<String> diagnostics;
@@ -80,15 +81,30 @@ public final class UtilizationCoverageReport implements Serializable {
     /** Default or advisory evidence does not establish rated installed capacity. */
     SCREENING_ONLY,
     /** Current evidence lies outside the declared scalar validity range. */
-    OUTSIDE_VALIDITY_RANGE
+    OUTSIDE_VALIDITY_RANGE,
+    /** Declared plant-wide evidence was not supplied. */
+    MISSING_PLANT_EVIDENCE,
+    /** Plant-wide evidence is present but not available for the accepted calculation. */
+    INVALID_PLANT_EVIDENCE
+  }
+
+  /** Source contract represented by one coverage row. */
+  public enum EvidenceKind {
+    /** Equipment-local installed-capacity evidence. */
+    INSTALLED_EQUIPMENT,
+    /** Registry-defined plant-wide constraint evidence. */
+    PLANT_CONSTRAINT
   }
 
   private UtilizationCoverageReport(Builder builder) {
+    schemaVersion = builder.expectedPlantConstraints.isEmpty() ? "1.0" : "1.1";
     modelName = builder.modelName;
     registryIdentityDigest = builder.registry == null ? "" : builder.registry.getIdentityDigest();
     expectedEquipmentIds = immutableList(builder.expectedEquipment.keySet());
     expectedConstraintIds = immutableList(builder.expectedConstraints);
+    expectedPlantConstraintIds = immutableList(builder.expectedPlantConstraints);
     Set<String> required = new TreeSet<String>(builder.expectedConstraints);
+    required.addAll(builder.expectedPlantConstraints);
     List<Row> assessed = new ArrayList<Row>();
     for (Map.Entry<String, PlantConstraintScope> expected : builder.expectedEquipment.entrySet()) {
       PlantConstraintScope scope = expected.getValue();
@@ -140,10 +156,14 @@ public final class UtilizationCoverageReport implements Serializable {
         }
       }
     }
+    for (String id : builder.expectedPlantConstraints) {
+      PlantConstraintEvidence evidence = builder.plantEvidence.get(id);
+      assessed.add(evidence == null ? Row.unavailablePlant(id, Status.MISSING_PLANT_EVIDENCE) : new Row(evidence));
+    }
     requiredConstraintIds = immutableList(required);
     rows = Collections.unmodifiableList(assessed);
     List<String> gaps = new ArrayList<String>();
-    if (expectedEquipmentIds.isEmpty()) {
+    if (expectedEquipmentIds.isEmpty() && expectedPlantConstraintIds.isEmpty()) {
       gaps.add("EXPECTATIONS_NOT_DECLARED");
     }
     for (Row row : rows) {
@@ -223,6 +243,11 @@ public final class UtilizationCoverageReport implements Serializable {
     return expectedConstraintIds;
   }
 
+  /** @return immutable sorted explicitly expected plant-wide constraint identities */
+  public List<String> getExpectedPlantConstraintIds() {
+    return expectedPlantConstraintIds;
+  }
+
   /** @return immutable union of explicitly expected and discovered canonical constraint identities */
   public List<String> getRequiredConstraintIds() {
     return requiredConstraintIds;
@@ -257,6 +282,8 @@ public final class UtilizationCoverageReport implements Serializable {
     List<Map<String, Object>> rowEvidence = new ArrayList<Map<String, Object>>();
     for (Row row : rows) {
       Map<String, Object> item = new LinkedHashMap<String, Object>();
+      item.put("evidence_kind", row.getEvidenceKind().name());
+      item.put("scope_id", row.getScopeId());
       item.put("equipment_id", row.getEquipmentId());
       item.put("constraint_name", row.getConstraintName());
       item.put("qualified_constraint_id", row.getQualifiedConstraintId());
@@ -266,6 +293,9 @@ public final class UtilizationCoverageReport implements Serializable {
       item.put("basis", row.getBasis());
       item.put("provenance", row.getProvenance());
       item.put("minimum_constraint", Boolean.valueOf(row.isMinimumConstraint()));
+      item.put("limit_direction", row.getLimitDirection().name());
+      item.put("category", row.getCategory().name());
+      item.put("calculation_id", row.getCalculationId());
       item.put("current_value", finiteOrNull(row.getCurrentValue()));
       item.put("applicable_limit", finiteOrNull(row.getApplicableLimit()));
       item.put("normalized_utilization", finiteOrNull(row.getNormalizedUtilization()));
@@ -283,6 +313,7 @@ public final class UtilizationCoverageReport implements Serializable {
     evidence.put("registry_identity_digest", registryIdentityDigest);
     evidence.put("expected_equipment_ids", expectedEquipmentIds);
     evidence.put("expected_constraint_ids", expectedConstraintIds);
+    evidence.put("expected_plant_constraint_ids", expectedPlantConstraintIds);
     evidence.put("required_constraint_ids", requiredConstraintIds);
     evidence.put("rows", Collections.unmodifiableList(rowEvidence));
     evidence.put("diagnostics", diagnostics);
@@ -298,6 +329,7 @@ public final class UtilizationCoverageReport implements Serializable {
   public static final class Row implements Serializable {
     private static final long serialVersionUID = 1L;
     private final String equipmentId;
+    private final EvidenceKind evidenceKind;
     private final String constraintName;
     private final String qualifiedConstraintId;
     private final ConstraintOrigin origin;
@@ -306,6 +338,9 @@ public final class UtilizationCoverageReport implements Serializable {
     private final String basis;
     private final String provenance;
     private final boolean minimumConstraint;
+    private final PlantConstraintDefinition.LimitDirection limitDirection;
+    private final PlantConstraintDefinition.Category category;
+    private final String calculationId;
     private final Double currentValue;
     private final Double applicableLimit;
     private final Double normalizedUtilization;
@@ -313,6 +348,7 @@ public final class UtilizationCoverageReport implements Serializable {
 
     private Row(PlantConstraintScope scope, String name, Status status) {
       equipmentId = scope.getStableId();
+      evidenceKind = EvidenceKind.INSTALLED_EQUIPMENT;
       constraintName = name;
       qualifiedConstraintId = name.isEmpty() ? "" : constraintId(scope, name);
       origin = ConstraintOrigin.UNKNOWN;
@@ -321,6 +357,9 @@ public final class UtilizationCoverageReport implements Serializable {
       basis = "";
       provenance = "";
       minimumConstraint = false;
+      limitDirection = PlantConstraintDefinition.LimitDirection.MAXIMUM;
+      category = PlantConstraintDefinition.Category.DESIGN;
+      calculationId = "";
       currentValue = null;
       applicableLimit = null;
       normalizedUtilization = null;
@@ -331,10 +370,38 @@ public final class UtilizationCoverageReport implements Serializable {
       return new Row(scope, name, status);
     }
 
+    private static Row unavailablePlant(String id, Status status) {
+      int separator = id.lastIndexOf('#');
+      String scopeId = separator < 0 ? id : id.substring(0, separator);
+      String name = separator < 0 ? "" : id.substring(separator + 1);
+      return new Row(scopeId, name, id, status);
+    }
+
+    private Row(String scopeId, String name, String id, Status status) {
+      equipmentId = scopeId;
+      evidenceKind = EvidenceKind.PLANT_CONSTRAINT;
+      constraintName = name;
+      qualifiedConstraintId = id;
+      origin = ConstraintOrigin.UNKNOWN;
+      enabled = true;
+      unit = "";
+      basis = "";
+      provenance = "";
+      minimumConstraint = false;
+      limitDirection = PlantConstraintDefinition.LimitDirection.MAXIMUM;
+      category = PlantConstraintDefinition.Category.PHYSICAL;
+      calculationId = "";
+      currentValue = null;
+      applicableLimit = null;
+      normalizedUtilization = null;
+      statuses = Collections.singletonList(status);
+    }
+
     private Row(PlantConstraintScope scope, String name, ResolvedConstraint resolved, boolean equipmentEnabled,
         String declaredBasis, boolean registrySupplied, PlantConstraintDefinition definition) {
       CapacityConstraint constraint = resolved.getConstraint();
       equipmentId = scope.getStableId();
+      evidenceKind = EvidenceKind.INSTALLED_EQUIPMENT;
       constraintName = name;
       qualifiedConstraintId = constraintId(scope, name);
       origin = resolved.getOrigin();
@@ -347,6 +414,10 @@ public final class UtilizationCoverageReport implements Serializable {
           : isMissingSource(dataSource) ? sourceReference : dataSource;
       provenance = definition != null ? definition.getProvenance() : liveProvenance;
       minimumConstraint = constraint.isMinimumConstraint();
+      limitDirection = minimumConstraint ? PlantConstraintDefinition.LimitDirection.MINIMUM
+          : PlantConstraintDefinition.LimitDirection.MAXIMUM;
+      category = definition == null ? PlantConstraintDefinition.Category.DESIGN : definition.getCategory();
+      calculationId = "";
       List<Status> gaps = new ArrayList<Status>();
       if (registrySupplied && definition == null) {
         gaps.add(Status.MISSING_REGISTRATION);
@@ -426,6 +497,7 @@ public final class UtilizationCoverageReport implements Serializable {
     private Row(PlantConstraintScope scope, String name, InstalledEquipmentCapacityEvidence evidence,
         String declaredBasis, boolean registrySupplied, PlantConstraintDefinition definition) {
       equipmentId = scope.getStableId();
+      evidenceKind = EvidenceKind.INSTALLED_EQUIPMENT;
       constraintName = name;
       qualifiedConstraintId = constraintId(scope, name);
       origin = evidence.getConstraintOrigin();
@@ -439,6 +511,10 @@ public final class UtilizationCoverageReport implements Serializable {
       String liveProvenance = isMissingSource(sourceReference) ? dataSource : sourceReference;
       provenance = definition == null ? liveProvenance : definition.getProvenance();
       minimumConstraint = evidence.isMinimumConstraint();
+      limitDirection = minimumConstraint ? PlantConstraintDefinition.LimitDirection.MINIMUM
+          : PlantConstraintDefinition.LimitDirection.MAXIMUM;
+      category = definition == null ? PlantConstraintDefinition.Category.DESIGN : definition.getCategory();
+      calculationId = "";
       List<Status> gaps = new ArrayList<Status>();
       if (registrySupplied && definition == null) {
         gaps.add(Status.MISSING_REGISTRATION);
@@ -501,6 +577,48 @@ public final class UtilizationCoverageReport implements Serializable {
       statuses = Collections.unmodifiableList(gaps);
     }
 
+    /** Creates one row from immutable plant-wide evidence at an accepted operating point. */
+    private Row(PlantConstraintEvidence evidence) {
+      PlantConstraintDefinition definition = evidence.getDefinition();
+      PlantConstraintSample sample = evidence.getSample();
+      boolean disabled = evidence.getCoverageStatus() == PlantConstraintEvidence.CoverageStatus.DISABLED;
+      equipmentId = definition.getScope().getStableId();
+      evidenceKind = EvidenceKind.PLANT_CONSTRAINT;
+      constraintName = definition.getId();
+      qualifiedConstraintId = definition.getQualifiedId();
+      origin = ConstraintOrigin.UNKNOWN;
+      enabled = definition.isEnabled();
+      unit = definition.getUnit();
+      basis = definition.getBasis();
+      provenance = definition.getProvenance();
+      limitDirection = definition.getLimitDirection();
+      category = definition.getCategory();
+      minimumConstraint = limitDirection == PlantConstraintDefinition.LimitDirection.MINIMUM;
+      calculationId = sample == null || disabled ? "" : sample.getCalculationId();
+      currentValue = sample == null || disabled ? null : finite(sample.getSampledValue());
+      applicableLimit = sample == null || disabled ? null : finite(sample.getApplicableLimit());
+      normalizedUtilization = sample == null || disabled ? null : finite(sample.getNormalizedUtilization());
+      List<Status> gaps = new ArrayList<Status>();
+      if (disabled) {
+        gaps.add(Status.DISABLED);
+      } else if (!evidence.hasAvailableEvidence()) {
+        gaps.add(Status.INVALID_PLANT_EVIDENCE);
+      } else if (category == PlantConstraintDefinition.Category.SCREENING) {
+        gaps.add(Status.SCREENING_ONLY);
+      } else if (unit.isEmpty()) {
+        gaps.add(Status.MISSING_UNIT);
+      } else if (basis.isEmpty()) {
+        gaps.add(Status.MISSING_BASIS);
+      } else if (isMissingSource(provenance)) {
+        gaps.add(Status.MISSING_PROVENANCE);
+      } else if (currentValue == null || applicableLimit == null || normalizedUtilization == null) {
+        gaps.add(Status.INVALID_PLANT_EVIDENCE);
+      } else {
+        gaps.add(Status.AVAILABLE);
+      }
+      statuses = Collections.unmodifiableList(gaps);
+    }
+
     private static boolean isMissingSource(String source) {
       return source.isEmpty() || "not_set".equalsIgnoreCase(source) || "default".equalsIgnoreCase(source);
     }
@@ -516,6 +634,16 @@ public final class UtilizationCoverageReport implements Serializable {
     /** @return canonical equipment scope identity */
     public String getEquipmentId() {
       return equipmentId;
+    }
+
+    /** @return stable subject scope identity for equipment or plant-wide evidence */
+    public String getScopeId() {
+      return equipmentId;
+    }
+
+    /** @return evidence contract represented by this row */
+    public EvidenceKind getEvidenceKind() {
+      return evidenceKind;
     }
 
     /** @return equipment-local constraint name, or empty for an equipment-level gap */
@@ -563,6 +691,21 @@ public final class UtilizationCoverageReport implements Serializable {
       return minimumConstraint;
     }
 
+    /** @return registered direction of increasing violation */
+    public PlantConstraintDefinition.LimitDirection getLimitDirection() {
+      return limitDirection;
+    }
+
+    /** @return registered engineering category */
+    public PlantConstraintDefinition.Category getCategory() {
+      return category;
+    }
+
+    /** @return accepted calculation identity for plant-wide evidence, or empty */
+    public String getCalculationId() {
+      return calculationId;
+    }
+
     /** @return sampled current value, or NaN when unavailable */
     public double getCurrentValue() {
       return valueOrNaN(currentValue);
@@ -589,9 +732,11 @@ public final class UtilizationCoverageReport implements Serializable {
     private final String modelName;
     private final Map<String, PlantConstraintScope> expectedEquipment = new TreeMap<String, PlantConstraintScope>();
     private final Set<String> expectedConstraints = new TreeSet<String>();
+    private final Set<String> expectedPlantConstraints = new TreeSet<String>();
     private final Map<String, Set<String>> namesByEquipment = new TreeMap<String, Set<String>>();
     private final Map<String, ProcessEquipmentInterface> equipment = new TreeMap<String, ProcessEquipmentInterface>();
     private final Map<String, Map<String, InstalledEquipmentCapacityEvidence>> frozenEvidence = new TreeMap<String, Map<String, InstalledEquipmentCapacityEvidence>>();
+    private final Map<String, PlantConstraintEvidence> plantEvidence = new TreeMap<String, PlantConstraintEvidence>();
     private final Map<String, String> bases = new TreeMap<String, String>();
     private PlantConstraintRegistry registry;
 
@@ -701,6 +846,41 @@ public final class UtilizationCoverageReport implements Serializable {
       }
       for (InstalledEquipmentCapacityEvidence value : values) {
         evidence(value);
+      }
+      return this;
+    }
+
+    /**
+     * Declares one required registry-qualified plant-wide constraint independently of supplied evidence.
+     *
+     * @param qualifiedConstraintId exact registry-qualified identity
+     * @return this builder
+     */
+    public Builder expectPlantConstraint(String qualifiedConstraintId) {
+      expectedPlantConstraints
+          .add(PlantConstraintScope.requireText(qualifiedConstraintId, "Plant constraint identity"));
+      return this;
+    }
+
+    /** Supplies one immutable plant-wide evidence row sampled at the accepted operating point. */
+    public Builder plantEvidence(PlantConstraintEvidence value) {
+      if (value == null) {
+        throw new IllegalArgumentException("Plant constraint evidence is required");
+      }
+      String id = value.getQualifiedConstraintId();
+      if (plantEvidence.put(id, value) != null) {
+        throw new IllegalArgumentException("Duplicate plant constraint evidence " + id);
+      }
+      return this;
+    }
+
+    /** Supplies immutable plant-wide evidence rows sampled at one accepted operating point. */
+    public Builder plantEvidence(Iterable<PlantConstraintEvidence> values) {
+      if (values == null) {
+        throw new IllegalArgumentException("Plant constraint evidence is required");
+      }
+      for (PlantConstraintEvidence value : values) {
+        plantEvidence(value);
       }
       return this;
     }

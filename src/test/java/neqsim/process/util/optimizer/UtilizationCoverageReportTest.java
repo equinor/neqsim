@@ -157,6 +157,58 @@ class UtilizationCoverageReportTest {
   }
 
   @Test
+  void declaredPlantConstraintEvidenceIsIndependentAndFailClosed() {
+    PlantConstraintDefinition definition = PlantConstraintDefinition
+        .builder("total-power", PlantConstraintScope.sharedResource("Plant", "shared power"))
+        .aggregationPolicy(PlantConstraintDefinition.AggregationPolicy.SHARED_BUDGET)
+        .limitDirection(PlantConstraintDefinition.LimitDirection.MAXIMUM)
+        .category(PlantConstraintDefinition.Category.OPERATING).severity(ConstraintSeverity.HARD).unit("kW")
+        .basis("total shaft power").provenance("approved host power budget")
+        .participant(PlantConstraintParticipant.direct("Compression", "kW", "total shaft power")).build();
+    PlantConstraintSample sample = PlantConstraintSample.builder(definition.getQualifiedId(), "accepted-17")
+        .values(50.0, 100.0).normalized(0.5, -0.5).physical(50.0, 0.0).unit("kW").basis("total shaft power")
+        .provenance("accepted replay").build();
+    PlantConstraintEvidence evidence = new PlantConstraintEvidence(definition, sample, "accepted-17", 0.9, true);
+
+    UtilizationCoverageReport missing = UtilizationCoverageReport.builder("Plant")
+        .expectPlantConstraint(definition.getQualifiedId()).build();
+    assertFalse(missing.isComplete());
+    assertEquals(Arrays.asList(Status.MISSING_PLANT_EVIDENCE), missing.getRows().get(0).getStatuses());
+
+    UtilizationCoverageReport report = UtilizationCoverageReport.builder("Plant")
+        .expectPlantConstraint(definition.getQualifiedId()).plantEvidence(evidence).build();
+    Row row = report.getRows().get(0);
+    assertTrue(report.isComplete(), report.getDiagnostics().toString());
+    assertEquals("1.1", report.getSchemaVersion());
+    assertEquals(UtilizationCoverageReport.EvidenceKind.PLANT_CONSTRAINT, row.getEvidenceKind());
+    assertEquals(definition.getScope().getStableId(), row.getScopeId());
+    assertEquals("accepted-17", row.getCalculationId());
+    assertEquals(PlantConstraintDefinition.LimitDirection.MAXIMUM, row.getLimitDirection());
+    assertEquals(PlantConstraintDefinition.Category.OPERATING, row.getCategory());
+    assertEquals(0.5, row.getNormalizedUtilization());
+    assertEquals(Arrays.asList(definition.getQualifiedId()), report.getExpectedPlantConstraintIds());
+  }
+
+  @Test
+  void disabledPlantConstraintNeedsNoRuntimeSample() {
+    PlantConstraintDefinition definition = PlantConstraintDefinition
+        .builder("maintenance-cap", PlantConstraintScope.sharedResource("Plant", "temporary restriction"))
+        .category(PlantConstraintDefinition.Category.OPERATING).severity(ConstraintSeverity.HARD).unit("kW")
+        .basis("temporary shaft-power cap").provenance("approved maintenance plan").enabled(false).build();
+    PlantConstraintEvidence evidence = new PlantConstraintEvidence(definition, null, "accepted-18", 0.9, true);
+
+    UtilizationCoverageReport report = UtilizationCoverageReport.builder("Plant")
+        .expectPlantConstraint(definition.getQualifiedId()).plantEvidence(evidence).build();
+    Row row = report.getRows().get(0);
+
+    assertTrue(report.isComplete());
+    assertEquals(Arrays.asList(Status.DISABLED), row.getStatuses());
+    assertFalse(row.isEnabled());
+    assertTrue(Double.isNaN(row.getCurrentValue()));
+    assertEquals("", row.getCalculationId());
+  }
+
+  @Test
   void exceptionsAndNonFiniteSamplesRemainExplicit() {
     Stream equipment = new Stream("K-1");
     equipment.addCapacityConstraint(rated("throwing").setValueSupplier(() -> {

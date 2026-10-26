@@ -888,13 +888,15 @@ or action-incompatible period is rejected instead of producing a partial lifecyc
 are sampled identities, not a continuous forecast, causal attribution, shadow price, equipment qualification, or
 operating approval.
 
-Lifecycle schema versions 1 through 8 remain readable by the persistent production guard for stored historical
-evidence. A lifecycle that supplies `UtilizationCoverageReport` for every period exports schema version 9; otherwise
-it remains schema version 8 for compatibility. Schema v9 requires non-empty declared equipment/constraint scope,
-complete finite rated evidence, explicit unit/basis/provenance, and exact binding to the accepted-point replay. Build
-the report from `search.getAcceptedPointReplay().getEvaluation().getInstalledEquipmentCapacityEvidence()` using the
-frozen-evidence builder path; this never resamples the mutable process after baseline restoration. Current schema-v9
-exports retain optional accepted-state metrics and require schema-v2
+Lifecycle schema versions 1 through 9 remain readable by the persistent production guard for stored historical
+evidence. A lifecycle with installed-equipment coverage exports schema version 9. When the declared coverage also
+includes registry-qualified plant constraints it exports schema version 10; without coverage it remains schema version
+8 for compatibility. Schema v10 requires non-empty, independently declared plant-constraint IDs in addition to the
+schema-v9 equipment scope, complete finite rated evidence, explicit unit/basis/provenance/direction/category, and exact
+calculation binding to the accepted-point replay. Supply both
+`getInstalledEquipmentCapacityEvidence()` and `getPlantConstraintEvidence()` through the frozen-evidence builder path;
+this never resamples the mutable process after baseline restoration. Current schema-v10 exports retain optional
+accepted-state metrics and require schema-v2
 cross-slice summaries in every period. The guard reconstructs each summary from persisted sampled and refined
 endpoint rows before trusting it, then recomputes every
 period-change diagnostic from the persisted periods before accepting it, including exact operating-region event
@@ -947,8 +949,9 @@ NEQSIM_TEST_CLASSPATH="target/classes:target/test-classes:$(cat target/optimizat
 ```
 
 The workflow asserts finite evaluation counts and runtime, full convergence/feasibility/restoration receipts, exact
-selected-objective identity and reviewed-baseline binding, schema-v9 persistence, complete declared constraint
-coverage with operating-limit provenance, the separator/scrubber-to-shared-power bottleneck migration, and report
+selected-objective identity and reviewed-baseline binding, schema-v10 persistence, complete declared installed and
+plant-wide constraint coverage with operating-limit provenance, common-shaft/compressor-map/driver/shared-power
+evidence, the separator/scrubber-to-shared-power bottleneck migration, and report
 rendering. It is a
 synthetic software acceptance test, not a reservoir forecast, equipment qualification, operating approval, or an
 instruction to relax any physical constraint.
