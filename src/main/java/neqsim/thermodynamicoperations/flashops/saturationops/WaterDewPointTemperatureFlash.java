@@ -1,5 +1,9 @@
 package neqsim.thermodynamicoperations.flashops.saturationops;
 
+import neqsim.thermo.phase.PhaseCPAInterface;
+import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -8,7 +12,9 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * Gas composition is held at the feed composition. For GERG-water, the condensed-phase fugacity uses the ISO 18453 ice
  * correlation below the triple point. Dissolved gas, hydrates and mixed aqueous phases are not included; use the
- * multiphase operation when an aqueous mixture is required. The legacy pure-MEG calculation is retained.
+ * multiphase operation when an aqueous mixture is required. The legacy pure-MEG calculation is retained. CPA uses a
+ * separate pure reference phase so that absent dissolved species cannot make the condensed-phase association
+ * calculation singular. Below freezing this is a metastable liquid-water dew point.
  * </p>
  *
  * @author asmund
@@ -19,6 +25,8 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
   private static final long serialVersionUID = 1000;
   /** Relative fugacity equilibrium tolerance, expressed as a logarithmic residual. */
   private static final double FUGACITY_TOLERANCE = 1.0e-9;
+  /** Independent pure CPA reference phases, rebuilt for each run. */
+  private transient PhaseInterface[] pureCondensedPhases;
 
   /**
    * Creates a water dew point calculation.
@@ -43,6 +51,30 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
     system.init(0);
     system.setNumberOfPhases(2);
     system.setBeta(1, 1.0e-15);
+    pureCondensedPhases = null;
+    if (system.getPhase(1) instanceof PhaseCPAInterface) {
+      // Build private references rather than retaining association sites for feed components whose
+      // incipient liquid mole fractions are zero. Their near-zero site populations can make the
+      // mixed-phase CPA solve singular even though the pure water reference is well defined.
+      PhaseInterface referenceSource = system.getPhase(1).clone();
+      referenceSource.setRefPhase((PhaseInterface[]) null);
+      referenceSource.initRefPhases(true);
+      pureCondensedPhases = referenceSource.getRefPhase();
+      for (int component = 0; component < system.getPhase(1).getNumberOfComponents(); component++) {
+        String name = system.getPhase(1).getComponent(component).getComponentName();
+        if ("water".equals(name) || "MEG".equals(name)) {
+          // Retain caller-owned component tuning rather than replacing it with database defaults.
+          PhaseInterface condensed = pureCondensedPhases[component];
+          ComponentInterface pureComponent = system.getPhase(1).getComponent(component).clone();
+          pureComponent.setComponentNumber(0);
+          pureComponent.setNumberOfmoles(1.0);
+          pureComponent.setx(1.0);
+          pureComponent.setz(1.0);
+          condensed.getcomponentArray()[0] = pureComponent;
+          condensed.init(1.0, 1, 0, PhaseType.LIQUID, 1.0);
+        }
+      }
+    }
     double maximumTemperature = Double.NEGATIVE_INFINITY;
     int controllingComponent = -1;
     for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
@@ -127,7 +159,16 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
    */
   private double residual(double temperature, int component) {
     system.setTemperature(temperature);
-    system.init(1);
+    if (pureCondensedPhases == null) {
+      system.init(1);
+    } else {
+      system.init(1, 0);
+      PhaseInterface condensed = pureCondensedPhases[component];
+      condensed.setTemperature(temperature);
+      condensed.setPressure(system.getPressure());
+      condensed.init(condensed.getNumberOfMolesInPhase(), 1, 1, PhaseType.LIQUID, 1.0);
+      system.getPhase(1).getComponent(component).setFugacityCoefficient(condensed.getComponent(0).fugcoef(condensed));
+    }
     double value = Math.log(system.getPhase(0).getComponent(component).getz())
         + system.getPhase(0).getComponent(component).getLogFugacityCoefficient()
         - system.getPhase(1).getComponent(component).getLogFugacityCoefficient();

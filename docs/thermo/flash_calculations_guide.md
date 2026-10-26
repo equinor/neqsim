@@ -1034,6 +1034,15 @@ boundaries. See the [dew-point standards guide](../standards/dew_point_standards
 for validated and extended ranges, failure handling, and the trace-water
 convergence correction.
 
+For CPA, the direct pure-condensate operation evaluates a separate pure liquid
+reference phase, avoiding association equations for absent dissolved species.
+`WaterDewPointAnalyser` selects this operation for its `CPA` method, including a
+metastable liquid-water reference below freezing, and returns `NaN` on failure.
+This is a pure-water approximation, not a mixed-liquid or hydrate boundary.
+Select the analyser's `multiphase` method on a CPA stream when mixed aqueous
+phases or hydrocarbon liquids must be included; the full multiphase operation
+retains its existing behavior.
+
 
 **Methods:**
 ```java

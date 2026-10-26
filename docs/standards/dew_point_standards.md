@@ -113,6 +113,38 @@ measurements are discussed by
 [Rajzinger (2012)](https://doi.org/10.26552/com.C.2012.4A.29-35), Table 2;
 matching that model is distinct from matching experimental data.
 
+### Trace-water process analyser
+
+`WaterDewPointAnalyser` distinguishes the following boundaries:
+
+| Method | Condensed reference and use |
+| --- | --- |
+| `CPA` | Fixed feed gas against pure liquid water using the Statoil SRK-CPA model; metastable liquid below freezing |
+| `multiphase` | Mixed aqueous-phase onset using the stream's model and full multiphase flashes; use when dissolved gas, glycol or hydrocarbon liquids must be included |
+| `CPA hydrate` | Hydrate equilibrium, separate from either water dew point |
+| GERG-water | ISO 18453 correlation, including its ice reference below 273.16 K |
+
+The `CPA` analyser now uses direct fugacity equilibrium instead of detecting an
+aqueous phase by repeatedly flashing progressively colder mixtures. Its pure
+liquid reference is initialized separately, avoiding ill-conditioned association
+equations for species with vanishing mole fractions in the trial condensate.
+Failed CPA calculations return `NaN` rather than a trial temperature. The inlet
+stream remains unchanged.
+
+This is a **pure-water approximation**: dissolved gas and mixed aqueous liquids
+are excluded. It replaces the analyser's previous mixed-liquid search; callers
+requiring that search should select `multiphase` on a CPA stream. This change
+does not alter `waterDewPointTemperatureMultiphaseFlash()` or hydrate operations.
+
+For a synthetic gas with 95% methane before moisture substitution, 3% ethane,
+1% nitrogen and 1% CO2, the CPA liquid-water dew point at 5 ppmv and 43 bara is
+approximately −43.97 °C. GERG-water gives approximately −34.50 °C for that gas.
+These values solve different condensed-reference models; forcing agreement
+within 3 °C would not validate either model. A liquid-water ideal-gas bound must
+not be applied indiscriminately to the ISO ice correlation. Numerical tests
+cover 1–100 ppmv at 43 and 70 bara and check CPA gas/pure-liquid fugacity equality;
+they do not qualify extrapolated model accuracy against field measurements.
+
 Before the convergence correction, the fixed temperature step scaled with
 absolute water mole fraction and could stop at 10,000 iterations far from
 equilibrium, especially in dry gas. Earlier stored dew-point values from this

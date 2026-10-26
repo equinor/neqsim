@@ -90,14 +90,14 @@ public class WaterDewPointAnalyser extends StreamMeasurementDeviceBaseClass
     } else if (method.equals("CPA")) {
       SystemInterface tempFluid = stream.getThermoSystem().clone();
       SystemInterface tempFluid2 = tempFluid.setModel("CPAs-SRK-EOS-statoil");
-      tempFluid2.setMultiPhaseCheck(true);
       tempFluid2.setPressure(referencePressure);
       tempFluid2.setTemperature(0.1, "C");
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid2);
       try {
-        thermoOps.waterDewPointTemperatureMultiphaseFlash();
+        thermoOps.waterDewPointTemperatureFlash();
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
+        return Double.NaN;
       }
       return tempFluid2.getTemperature(unit);
     } else if (method.equals("CPA hydrate")) {
@@ -160,7 +160,10 @@ public class WaterDewPointAnalyser extends StreamMeasurementDeviceBaseClass
   /**
    * Setter for the field <code>method</code>.
    *
-   * @param method a {@link java.lang.String} object
+   * @param method {@code Bukacek} for the empirical correlation, {@code CPA} for fixed-feed-gas equilibrium with pure
+   * liquid water (metastable below freezing), {@code multiphase} for mixed aqueous-phase onset using the stream's
+   * model, or {@code CPA hydrate} for hydrate equilibrium. Other values select GERG-water/ISO 18453, whose subzero
+   * reference is ice. These boundaries need not agree at low moisture content.
    */
   public void setMethod(String method) {
     this.method = method;
