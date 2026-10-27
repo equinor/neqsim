@@ -1548,6 +1548,14 @@ The complete workflow in `TPmultiflash.run()` is:
 
 Beyond stability analysis, NeqSim uses heuristic phase seeding and guarded restarts to improve convergence:
 
+An aqueous trial added after the multiphase beta loop must pass through the existing
+bounded rerun before phase cleanup and return. Setting the flags for another solve
+does not execute it: otherwise the initial aqueous fraction of approximately
+$10^{-5}$ can escape as an unsolved phase, even for separator gas at its dew point.
+`PipeBeggsAndBrillsDewPointTest` checks repeated flashes, component balances and
+phase fugacity equality for this case, alongside the pressure-continuity checks
+described in the [pipeline guide](../process/PipeBeggsAndBrills.md#friction-pressure-drop).
+
 #### 3.5.1 Water-rich Hydrocarbon Vapour Appearance
 
 A neutral OIL+AQUEOUS endpoint can still be unstable to a hydrocarbon vapour phase when water dominates the overall

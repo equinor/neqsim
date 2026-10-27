@@ -53,6 +53,8 @@ public class TPmultiflash extends TPflash {
   /** True when the beta loop exited above its own tolerance, i.e. the three-phase solve really stalled. */
   private boolean betaSolveStalled = false;
   private int rerunDepth = 0;
+  /** Maximum recursive multiphase solves, including post-solve aqueous trials. */
+  private static final int MAX_RERUN_DEPTH = 4;
   /** Exact reaction-adjusted overall species inventory during coupled phase/chemical equilibrium. */
   private transient double[] reactiveOverallMoles;
   /** Normalized reaction-adjusted species fractions used by the multiphase beta equations. */
@@ -466,7 +468,7 @@ public class TPmultiflash extends TPflash {
    * Execute a bounded recursive rerun request to avoid unbounded recursion in difficult cases.
    */
   private void requestBoundedRerun() {
-    if (rerunDepth >= 4) {
+    if (rerunDepth >= MAX_RERUN_DEPTH) {
       logger.warn("TPmultiflash rerun depth limit reached, skipping additional rerun");
       return;
     }
@@ -3382,7 +3384,7 @@ public class TPmultiflash extends TPflash {
         // indexing beyond what downstream algorithms expect. Do not create a new aqueous
         // phase if one already exists.
         if (waterZ > 1.0e-6 && waterComponentIndex >= 0 && system.getNumberOfPhases() < 3
-            && !system.hasPhaseType(PhaseType.AQUEOUS)) {
+            && rerunDepth < MAX_RERUN_DEPTH && !system.hasPhaseType(PhaseType.AQUEOUS)) {
           system.addPhase();
           int aquPhaseIndex = system.getNumberOfPhases() - 1;
           system.setPhaseType(aquPhaseIndex, PhaseType.AQUEOUS);
@@ -3413,6 +3415,9 @@ public class TPmultiflash extends TPflash {
           }
           multiPhaseTest = true;
           doStabilityAnalysis = false;
+          // The beta loop above ran before this aqueous seed existed. Solve the new
+          // active set before returning it to callers; the seed is not an equilibrium.
+          requestBoundedRerun();
         }
       }
 

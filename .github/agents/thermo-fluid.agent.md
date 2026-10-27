@@ -64,6 +64,14 @@ fluid.getCharacterization().characterisePlusFraction();
 
 ## Flash Calculations
 
+For pressure jumps near a gas dew point, inspect both flash phase fractions and
+the hydraulic friction closure. An aqueous trial appended after a beta solve
+must be solved before returning; a trial seed is not an equilibrium phase.
+Use `PipeBeggsAndBrillsDewPointTest` for repeated-flash conservation and fugacity
+checks and for the numerical dry-gas friction extension below one ppm liquid by
+flowing volume. See the [pipeline guide](../../docs/process/PipeBeggsAndBrills.md#friction-pressure-drop)
+for its qualification limits.
+
 For parallel standard modified-NRTL SRK/PR-HV calculations, finish configuring and
 cloning each worker fluid before launching its own operations object. The HV clone
 path detaches parameters, GE and derivative work state, including runtime-tuned
