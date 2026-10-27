@@ -446,14 +446,29 @@ tolerances. The reproducible example and follow-up are tracked in
 Salt-containing inhibitor solutions require a separately qualified electrolyte
 model; the neutral HV checks here do not cover brines.
 
-**Concurrent calculations:** `PhaseEos.clone()` shares the mixing-rule object.
-For HV this includes mutable GE and attraction-derivative work state, in addition
-to the configured parameters. Concurrent flashes on cloned siblings are not
-qualified: an interleaved calculation on a sibling can overwrite this work state.
-Use independently constructed and configured systems per concurrent worker,
-or serialize complete operations on cloned siblings. The reproducer and required
-state-isolation work are tracked in
+**Concurrent calculations:** for the standard modified-NRTL HV implementation,
+`PhaseEos.clone()` copies the parameter handler, HV rule, GE phase/components and
+retained attraction/derivative work arrays. Runtime-tuned directed coefficients,
+nonrandomness, pair activation and pure-alpha coefficients survive copying;
+changing them on a clone does not retune its source. Copying performs no database
+reload or activity-coefficient reevaluation. Serialization retains the detached
+ownership graph.
+
+The regression matrix covers SRK/PR, rules 3/4, initialization levels 1/3,
+deterministic temperature/composition interleaving, tuned methanol/water and
+parallel sibling flashes of neutral methane/decane/water with MEG or methanol. Each worker owns its
+fluid and operations object. Configure and finish cloning before launching workers;
+concurrent mutation or cloning of the same live fluid is outside this contract.
+Other mixing rules, HV with other GE implementations, reactive fluids, hydrate/solid
+coupling and whole-process concurrency retain their separate ownership requirements.
+Independently constructed and configured worker fluids remain a safe alternative.
+The reproducer, scope and measured copy-cost follow-up are tracked in
 [#4575](https://github.com/equinor/neqsim/issues/4575).
+
+See the [clone qualification and raw cost matrix](../../src/test/resources/neqsim/thermo/mixingrule/hv-clone-performance/README.md)
+for the executed ownership contract and timing limitations. The
+[thermo-fluid agent](../../.github/agents/thermo-fluid.agent.md) carries the same
+worker-setup restrictions.
 
 The implementation and literature-qualification plan is tracked in
 [#4576](https://github.com/equinor/neqsim/issues/4576). Performance qualification

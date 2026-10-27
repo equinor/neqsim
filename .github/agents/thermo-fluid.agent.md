@@ -63,6 +63,15 @@ fluid.getCharacterization().characterisePlusFraction();
 ```
 
 ## Flash Calculations
+
+For parallel standard modified-NRTL SRK/PR-HV calculations, finish configuring and
+cloning each worker fluid before launching its own operations object. The HV clone
+path detaches parameters, GE and derivative work state, including runtime-tuned
+pure-alpha coefficient arrays. Do not generalize this bounded contract to other GE
+models, mixing-rule families, hydrate/reactive systems or concurrent mutation of
+one live fluid. Use `HuronVidalCloneIsolationTest` and the concurrency/cost discussion
+in [the mixing-rule guide](../../docs/thermo/mixing_rules_guide.md) when extending
+this path; copying only the handler or rebuilding from the database is insufficient.
 ```java
 ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.TPflash();           // Temperature-Pressure flash

@@ -797,6 +797,64 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     return maximumAbsoluteValue;
   }
 
+  /**
+   * Identifies the modified-NRTL HV rule whose calculation state can be copied independently.
+   *
+   * @param source configured rule
+   * @return true for the standard HV implementation and its modified-NRTL GE phase
+   */
+  public boolean canCopyHuronVidalRule(EosMixingRulesInterface source) {
+    return source != null && source.getClass() == SRKHuronVidal2.class
+        && ((SRKHuronVidal2) source).gePhase.getClass() == PhaseGENRTLmodifiedHV.class;
+  }
+
+  /**
+   * Copies retained HV work state into this already detached parameter handler.
+   *
+   * <p>
+   * The caller must first clone the parameter handler. No database setup, flash or thermodynamic reevaluation is
+   * performed. Other GE implementations require their own ownership contract and are rejected.
+   * </p>
+   *
+   * @param source standard modified-NRTL HV rule to copy
+   * @param phase copied EOS phase that will own the rule
+   * @return rule owned by this handler and bound to the copied phase
+   * @throws IllegalArgumentException if the rule does not have the supported ownership contract
+   */
+  public EosMixingRulesInterface copyHuronVidalRule(EosMixingRulesInterface source, PhaseInterface phase) {
+    if (!canCopyHuronVidalRule(source)) {
+      throw new IllegalArgumentException("Only standard modified-NRTL HV state can be copied");
+    }
+    return new SRKHuronVidal2((SRKHuronVidal2) source, phase);
+  }
+
+  /**
+   * Copies a nullable calculation vector.
+   *
+   * @param values retained vector, or null before initialization
+   * @return detached vector, or null
+   */
+  private static double[] copyHvVector(double[] values) {
+    return values == null ? null : values.clone();
+  }
+
+  /**
+   * Copies every row of a nullable calculation matrix.
+   *
+   * @param values retained matrix, or null before initialization
+   * @return detached matrix, or null
+   */
+  private static double[][] copyHvMatrix(double[][] values) {
+    if (values == null) {
+      return null;
+    }
+    double[][] copy = new double[values.length][];
+    for (int row = 0; row < values.length; row++) {
+      copy[row] = copyHvVector(values[row]);
+    }
+    return copy;
+  }
+
   /** {@inheritDoc} */
   @Override
   public EosMixingRuleHandler clone() {
@@ -2636,6 +2694,49 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
   }
 
   public class SRKHuronVidal2 extends ClassicSRK implements HVMixingRulesInterface {
+    /**
+     * Copies an HV evaluation without recomputing it or retaining the original owner.
+     *
+     * @param source retained work state
+     * @param phase copied EOS phase
+     */
+    private SRKHuronVidal2(SRKHuronVidal2 source, PhaseInterface phase) {
+      orgPhase = phase;
+      gePhase = ((PhaseGENRTLmodifiedHV) source.gePhase).copyForHuronVidal(phase, HValpha, HVDij, HVDijT, classicOrHV,
+          intparam);
+      Q = source.Q;
+      QT = source.QT;
+      DDE2 = source.DDE2;
+      alpha_mix = source.alpha_mix;
+      dadt = source.dadt;
+      b_mix = source.b_mix;
+      dbdt = source.dbdt;
+      bdert = source.bdert;
+      d2adt2 = source.d2adt2;
+      d2bdt2 = source.d2bdt2;
+      hwfc = source.hwfc;
+      gex = source.gex;
+      ader = copyHvVector(source.ader);
+      adert = copyHvVector(source.adert);
+      qf1 = copyHvVector(source.qf1);
+      d2qp = copyHvVector(source.d2qp);
+      qPure = copyHvVector(source.qPure);
+      qPuredT = copyHvVector(source.qPuredT);
+      qPuredTdT = copyHvVector(source.qPuredTdT);
+      oneSubAlf = copyHvVector(source.oneSubAlf);
+      abf = copyHvVector(source.abf);
+      bc = copyHvVector(source.bc);
+      abft2 = copyHvVector(source.abft2);
+      abft = copyHvVector(source.abft);
+      QFTD = copyHvVector(source.QFTD);
+      BDER = copyHvVector(source.BDER);
+      BDERT = copyHvVector(source.BDERT);
+      ad2 = copyHvMatrix(source.ad2);
+      qf2 = copyHvMatrix(source.qf2);
+      qft = copyHvMatrix(source.qft);
+      bd2 = copyHvMatrix(source.bd2);
+    }
+
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
