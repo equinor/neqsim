@@ -456,12 +456,12 @@ Rejected full-step/two-half-step trials restore the actuator and safety state be
 
 For `FIRST_ORDER_LAG`, the implemented step is the exact constant-command response
 
-\[
+$$
 x_{n+1}=x_n+\left(1-e^{-\Delta t/\tau}\right)(u-x_n).
-\]
+$$
 
-The regression benchmark uses \(x_0=20\%\), \(u=80\%\), and \(\tau=4\ \mathrm{s}\);
-one-second and 0.125-second steps give the same eight-second endpoint to \(10^{-10}\) percentage
+The regression benchmark uses $x_0=20\%$, $u=80\%$, and $\tau=4\ \mathrm{s}$;
+one-second and 0.125-second steps give the same eight-second endpoint to $10^{-10}$ percentage
 points. Separate tests qualify asymmetric rate limits, deadband, breakaway stiction, reversal
 hysteresis, fail-close ESD travel, commanded blowdown opening, rollback/replay, and controller-chain
 coverage.
