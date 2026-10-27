@@ -2592,5 +2592,29 @@
   "neqsim-utilities-design-report",
   "neqsim-utility-design",
   "process-study-report"
+ ],
+ "dry gas seal": [
+  "neqsim-rotating-equipment-design"
+ ],
+ "seal gas conditioning": [
+  "neqsim-rotating-equipment-design"
+ ],
+ "primary vent leakage": [
+  "neqsim-rotating-equipment-design"
+ ],
+ "buffer separation gas": [
+  "neqsim-rotating-equipment-design"
+ ],
+ "api 692": [
+  "neqsim-rotating-equipment-design"
+ ],
+ "seal gas regulator": [
+  "neqsim-rotating-equipment-design"
+ ],
+ "tetningsgass": [
+  "neqsim-rotating-equipment-design"
+ ],
+ "t\u00f8rre gasstetninger": [
+  "neqsim-rotating-equipment-design"
  ]
 }

@@ -336,6 +336,7 @@ See the [property method alignment audit](physical_properties/method_alignment_a
 | ----------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------- |
 | Compressors       | [docs/process/equipment/compressors.md](process/equipment/compressors.md)                         | Compressor models, drivers, speed-dependent power |
 | Seal Support-System Monitoring | [docs/process/equipment/dry_gas_seal_monitoring.md](process/equipment/dry_gas_seal_monitoring.md) | Timed advisory supply/vent/buffer/separation monitoring |
+| Dry Gas Seal Engineering Review | [docs/process/equipment/dry_gas_seal_engineering_review.md](process/equipment/dry_gas_seal_engineering_review.md) | Literature, standards scope, current-model audit, troubleshooting and validation roadmap |
 | Compression Train Assessment | [docs/process/equipment/compression_train_assessment.md](process/equipment/compression_train_assessment.md) | Off-design acoustic coordinates, map queries and constrained net-export energy comparison |
 | Seal Condensation and Conditioning | [docs/process/equipment/dry_gas_seal_conditioning.md](process/equipment/dry_gas_seal_conditioning.md) | Sampled liquid-risk evidence, flow bases and separated-gas thermal duties |
 | Labyrinth Seal Leakage | [docs/process/equipment/labyrinth_seal_leakage.md](process/equipment/labyrinth_seal_leakage.md) | Stodola, Egli, Vermes, Kearton and tooth-by-tooth Neumann leakage through straight-through labyrinths, any NeqSim fluid |

@@ -14,6 +14,26 @@
       "expect_skills_top5": ["neqsim-emulsion-separation"]
     },
     {
+      "id": "dry-gas-seal-conditioning",
+      "prompt": "Troubleshoot dry gas seal supply conditioning with regulator JT condensation, water and hydrocarbon dewpoint margin, API 692 and ISO 6368, startup and standby booster pressure",
+      "expect_agent_top3": [
+        "rotating-equipment"
+      ],
+      "expect_skills_top5": [
+        "neqsim-rotating-equipment-design"
+      ]
+    },
+    {
+      "id": "dry-gas-seal-vent-diagnosis",
+      "prompt": "Dry gas seal high primary vent leakage, buffer nitrogen flow and bearing separation gas differential pressure during compressor trip coastdown: distinguish vent restriction, process ingress and seal face damage",
+      "expect_agent_top3": [
+        "rotating-equipment"
+      ],
+      "expect_skills_top5": [
+        "neqsim-rotating-equipment-design"
+      ]
+    },
+    {
       "id": "hydrate-export-line",
       "prompt": "hydrate formation temperature for a wet gas export pipeline at 100 bara, MEG injection needed?",
       "expect_agent_top3": ["flow-assurance", "hydrate-screening-agent", "flow-assurance-engineer-agent", "production-chemistry"],

@@ -265,6 +265,11 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(3, testSystem.getNumberOfPhases());
   }
 
+  /**
+   * Rejects an unsolved aqueous seed in undersaturated gas and retains real water condensation on cooling.
+   *
+   * @throws IOException if the E300 fluid cannot be read
+   */
   @Test
   void testFluidWater222() throws IOException {
     testSystem = EclipseFluidReadWrite.read(fluid_water);
@@ -281,11 +286,72 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testSystem.setPressure(2.099970727022911, "bara");
-    testSystem.setTemperature(30.0, "C");
-    testOps.TPflash();
+    for (double temperature : new double[] {30.0, 25.0, 20.0, 10.0, 30.0}) {
+      testSystem.setTemperature(temperature, "C");
+      // At 30 C water fugacity is below the pure-liquid-water trial fugacity.
+      // A third phase here was the old unsolved 1e-5 seed, not condensed water.
+      for (int repeat = 0; repeat < 2; repeat++) {
+        testOps.TPflash();
+        Assertions.assertEquals(temperature == 30.0 ? 2 : 3, testSystem.getNumberOfPhases());
+        Assertions.assertTrue(testSystem.hasPhaseType("gas"));
+        Assertions.assertTrue(testSystem.hasPhaseType("oil"));
+        Assertions.assertEquals(temperature < 30.0, testSystem.hasPhaseType("aqueous"));
+        assertEquilibriumPhaseBalances(testSystem);
+      }
 
-    // testSystem.prettyPrint();
-    Assertions.assertEquals(3, testSystem.getNumberOfPhases());
+      // Keep the imported water EOS parameters in an independent liquid-root trial.
+      SystemInterface water = testSystem.phaseToSystem(0);
+      double[] pureWater = new double[testSystem.getNumberOfComponents()];
+      pureWater[testSystem.getComponent("water").getComponentNumber()] = 1.0;
+      water.setMolarComposition(pureWater);
+      water.setPhaseType(0, neqsim.thermo.phase.PhaseType.AQUEOUS);
+      water.init(1);
+      double liquidWaterFugacity = water.getPhase(0).getComponent("water").getFugacityCoefficient()
+          * water.getPressure();
+      double gasWaterFugacity = testSystem.getPhase(0).getComponent("water").getx()
+          * testSystem.getPhase(0).getComponent("water").getFugacityCoefficient() * testSystem.getPressure();
+      if (temperature == 30.0) {
+        Assertions.assertTrue(gasWaterFugacity < liquidWaterFugacity, "Water remains undersaturated at 30 C");
+      } else {
+        Assertions.assertEquals(liquidWaterFugacity, gasWaterFugacity, 1e-7 * liquidWaterFugacity,
+            "Condensed water reaches equilibrium with gas");
+      }
+    }
+  }
+
+  /**
+   * Checks phase normalization, component conservation and equality of component fugacities.
+   *
+   * @param fluid flashed fluid to check
+   */
+  private void assertEquilibriumPhaseBalances(SystemInterface fluid) {
+    fluid.init(1);
+    double betaSum = 0.0;
+    for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+      double beta = fluid.getBeta(phase);
+      Assertions.assertTrue(Double.isFinite(beta) && beta > 0.0 && beta <= 1.0);
+      betaSum += beta;
+      double compositionSum = 0.0;
+      for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
+        double fraction = fluid.getPhase(phase).getComponent(component).getx();
+        Assertions.assertTrue(Double.isFinite(fraction) && fraction >= 0.0 && fraction <= 1.0);
+        compositionSum += fraction;
+      }
+      Assertions.assertEquals(1.0, compositionSum, 1e-10, "Phase composition normalization");
+    }
+    Assertions.assertEquals(1.0, betaSum, 1e-12, "Phase fraction normalization");
+    for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
+      double recoveredFeed = 0.0;
+      double referenceLogFugacity = Math.log(fluid.getPhase(0).getComponent(component).getx())
+          + fluid.getPhase(0).getComponent(component).getLogFugacityCoefficient();
+      for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+        recoveredFeed += fluid.getBeta(phase) * fluid.getPhase(phase).getComponent(component).getx();
+        double logFugacity = Math.log(fluid.getPhase(phase).getComponent(component).getx())
+            + fluid.getPhase(phase).getComponent(component).getLogFugacityCoefficient();
+        Assertions.assertEquals(referenceLogFugacity, logFugacity, 1e-8, "Component fugacity equality");
+      }
+      Assertions.assertEquals(fluid.getComponent(component).getz(), recoveredFeed, 1e-10, "Component mole balance");
+    }
   }
 
   @Test

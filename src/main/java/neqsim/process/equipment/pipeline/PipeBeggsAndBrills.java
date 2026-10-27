@@ -653,6 +653,9 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   private static final double MIN_TRANSIT_VELOCITY = 1.0e-3;
   private static final double MIN_DENSITY = 1.0e-6;
 
+  /** Upper no-slip liquid volume fraction for the smooth dry-gas friction extension. */
+  private static final double TRACE_LIQUID_VOLUME_FRACTION = 1.0e-6;
+
   /** Flag indicating if pipeline has been auto-sized. */
   private boolean autoSized = false;
 
@@ -1589,13 +1592,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     double muNoSlip = 0;
 
     if (regime != FlowRegime.SINGLE_PHASE) {
-      double y = inputVolumeFractionLiquid / (Math.pow(El, 2));
-      if (1 < y && y < 1.2) {
-        S = Math.log(2.2 * y - 1.2);
-      } else {
-        S = Math.log(y) / (-0.0523 + 3.182 * Math.log(y) - 0.8725 * Math.pow(Math.log(y), 2.0)
-            + 0.01853 * Math.pow(Math.log(y), 4));
-      }
+      S = frictionSlipExponent(inputVolumeFractionLiquid, El);
       if (system.getNumberOfPhases() == 3) {
         rhoNoSlip = mixtureLiquidDensity * inputVolumeFractionLiquid
             + (system.getPhase(0).getDensity("lb/ft3")) * (1 - inputVolumeFractionLiquid);
@@ -1653,6 +1650,40 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
     frictionPressureLoss = frictionTwoPhase * Math.pow(supMixVel, 2) * rhoNoSlip * (length) / (2 * insideDiameter);
     return frictionPressureLoss;
+  }
+
+  /**
+   * Evaluates the Beggs-Brill friction exponent with a continuous dry-gas limit.
+   *
+   * <p>
+   * The empirical exponent can remain of order one for liquid volume fractions near the flash phase-removal limit.
+   * Switching directly to zero when that phase disappears produces a finite pressure jump. Below one part per million
+   * liquid by flowing volume, a cubic smoothstep joins the exponent to zero with zero slope at both ends. At and above
+   * that fraction the original correlation is unchanged. This is a numerical extension at phase appearance, not an
+   * independently validated trace-liquid friction correlation; liquid holdup is unchanged.
+   * </p>
+   *
+   * @param liquidFraction no-slip liquid volume fraction
+   * @param liquidHoldup in-situ liquid volume fraction
+   * @return exponent of the two-phase friction multiplier
+   */
+  static double frictionSlipExponent(double liquidFraction, double liquidHoldup) {
+    if (liquidFraction <= 0.0 || liquidHoldup <= 0.0) {
+      return 0.0;
+    }
+    double y = liquidFraction / (liquidHoldup * liquidHoldup);
+    double exponent;
+    if (1 < y && y < 1.2) {
+      exponent = Math.log(2.2 * y - 1.2);
+    } else {
+      double logY = Math.log(y);
+      exponent = logY / (-0.0523 + 3.182 * logY - 0.8725 * logY * logY + 0.01853 * Math.pow(logY, 4));
+    }
+    if (liquidFraction < TRACE_LIQUID_VOLUME_FRACTION) {
+      double fraction = liquidFraction / TRACE_LIQUID_VOLUME_FRACTION;
+      exponent *= fraction * fraction * (3.0 - 2.0 * fraction);
+    }
+    return exponent;
   }
 
   /**

@@ -739,3 +739,17 @@ Base class for stream-based measurement devices.
 - [Safety Systems](../safety/)
 - [Pipeline Simulation](../../fluidmechanics/)
 - [Capacity Constraints](../CAPACITY_CONSTRAINT_FRAMEWORK) - FIV/AIV limits
+
+
+## Physical-step sample and hold
+
+`PressureTransmitter` supports an additive physical-step sampling mode that is disabled by default. When explicitly
+enabled and registered with a `ProcessSystem`, it advances its fault, noise, first-order filter and discrete-delay state
+once per physical-step UUID using the actual timestep. Controllers, history and alarm evaluation reuse the same held
+sample. This removes read-count dependence from qualified transient studies while preserving legacy direct-read
+behaviour for existing models and all unaudited instrument families.
+
+The scan occurs after scheduled events and INPUT field values and before equipment/controller execution. Linear-drift
+parameters are engineering units per second in this mode; delay remains an integer number of scans. Use declared
+vendor/project response and fault data where available. The numerical model is study evidence, not instrument
+certification, alarm rationalization, SIL selection or detector-coverage approval.
