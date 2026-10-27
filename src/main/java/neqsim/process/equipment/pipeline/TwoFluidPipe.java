@@ -5630,10 +5630,11 @@ public class TwoFluidPipe extends Pipeline {
       throw new IllegalStateException(componentOutletBackflowUnsupportedMessage());
     }
     if (!(inletBCType == BoundaryCondition.CLOSED || inletBCType == BoundaryCondition.STREAM_CONNECTED
-        || inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet)
+        || inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet
+        || inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet)
         || !(outletBCType == BoundaryCondition.CLOSED || outletBCType == BoundaryCondition.CONSTANT_PRESSURE)) {
-      throw new IllegalStateException("Conservative energy recovery supports a phase-flow or closed inlet "
-          + "and a pressure-face or closed outlet");
+      throw new IllegalStateException("Conservative energy recovery supports a phase-flow, pressure-face or closed "
+          + "inlet and a pressure-face or closed outlet");
     }
   }
 
@@ -7594,8 +7595,17 @@ public class TwoFluidPipe extends Pipeline {
       inlet.setGasMomentumPerLength(inlet.getGasMassPerLength() * vG);
       inlet.setLiquidMomentumPerLength(inlet.getLiquidMassPerLength() * vL);
     } else if (inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet) {
-      // Fix inlet pressure (transient: flow rate computed from momentum balance)
-      inlet.setPressure(inletPressure);
+      // Conservative thermodynamic transport requires a distinct external donor state.
+      // Its zero prescribed velocity does not impose flow: AUSM and the pressure correction
+      // calculate the signed pressure-driven face flux from this reservoir state and the cell.
+      if (isTransientMode && useConservativeEnergyRecovery) {
+        TwoFluidSection pressureFace = createPrescribedInletFace(inlet, 0.0);
+        pressureFace.setPressure(inletPressure);
+        equations.setInletBoundaryState(pressureFace);
+      } else {
+        // Legacy route fixes the inlet cell pressure directly.
+        inlet.setPressure(inletPressure);
+      }
       if (!preserveTransientCellTemperature()) {
         inlet.setTemperature(getInletStream().getFluid().getTemperature("K"));
       }

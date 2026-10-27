@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.UUID;
+import org.apache.commons.lang3.SerializationUtils;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport;
@@ -54,12 +55,77 @@ class TwoFluidPipeNetworkTest {
     assertTrue(network.getLastBalanceReport().getRelativeResidual(Phase.TOTAL) < 1.0e-8);
   }
 
+  @Test
+  void conservativeMergeClosesComponentsAndEnergyIndependentOfBranchOrder() {
+    TwoFluidPipeNetwork first = createConservativeMerge(false);
+    TwoFluidPipeNetwork reversed = createConservativeMerge(true);
+    double initialMethaneFraction = first.getNodeComponentMassKg("manifold", "methane")
+        / (first.getNodeComponentMassKg("manifold", "methane") + first.getNodeComponentMassKg("manifold", "n-heptane"));
+
+    first.runTransient(0.005, UUID.randomUUID());
+    reversed.runTransient(0.005, UUID.randomUUID());
+
+    TwoFluidPipeNetwork.ThermodynamicBalanceReport report = first.getLastThermodynamicBalanceReport();
+    for (String componentName : report.getComponentNames()) {
+      assertTrue(report.getRelativeComponentResidual(componentName) < 1.0e-8,
+          componentName + " residual=" + report.getRelativeComponentResidual(componentName));
+      assertEquals(first.getNodeComponentMassKg("manifold", componentName),
+          reversed.getNodeComponentMassKg("manifold", componentName), 1.0e-9);
+    }
+    assertTrue(report.getRelativeEnergyResidual() < 1.0e-7, "energy residual=" + report.getRelativeEnergyResidual());
+    assertEquals(first.getNodeTemperatureK("manifold"), reversed.getNodeTemperatureK("manifold"), 1.0e-8);
+    double finalMethaneFraction = first.getNodeComponentMassKg("manifold", "methane")
+        / (first.getNodeComponentMassKg("manifold", "methane") + first.getNodeComponentMassKg("manifold", "n-heptane"));
+    assertTrue(Math.abs(finalMethaneFraction - initialMethaneFraction) > 1.0e-10);
+  }
+
+  @Test
+  void conservativeNetworkSurvivesSerialization() {
+    TwoFluidPipeNetwork original = createConservativeMerge(false);
+    original.runTransient(0.005, UUID.randomUUID());
+
+    TwoFluidPipeNetwork restored = SerializationUtils.clone(original);
+    double frozenTemperature = restored.getNodeTemperatureK("manifold");
+    double frozenMethaneFraction = restored.getNodeComponentMassKg("manifold", "methane")
+        / (restored.getNodeComponentMassKg("manifold", "methane")
+            + restored.getNodeComponentMassKg("manifold", "n-heptane"));
+    restored.runTransient(0.005, UUID.randomUUID());
+
+    assertTrue(restored.getLastThermodynamicBalanceReport().getRelativeEnergyResidual() < 1.0e-7);
+    assertEquals(frozenTemperature, restored.getPipe("outlet").getInletStream().getTemperature("K"), 1.0e-8);
+    assertEquals(frozenMethaneFraction,
+        overallComponentMassFraction(restored.getPipe("outlet").getInletStream().getFluid(), "methane"), 1.0e-10);
+    for (String componentName : restored.getLastThermodynamicBalanceReport().getComponentNames()) {
+      assertTrue(restored.getLastThermodynamicBalanceReport().getRelativeComponentResidual(componentName) < 1.0e-8);
+    }
+  }
+
+  private static TwoFluidPipeNetwork createConservativeMerge(boolean reverseBranchOrder) {
+    TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("conservative merge");
+    network.addFixedPressureNode("gas source", 61.0e5);
+    network.addFixedPressureNode("liquid source", 60.0e5);
+    network.addConservativeCompressibleNode("manifold", createVolume(55.0e5, 1000.0), createFluid(0.80, 0.20));
+    network.addFixedPressureNode("sink", 50.0e5);
+    if (reverseBranchOrder) {
+      network.addPipe("outlet", "manifold", "sink", createPipe("outlet", 0.80, 0.20));
+      network.addPipe("liquid inlet", "liquid source", "manifold", createPipe("liquid inlet", 0.30, 0.70));
+      network.addPipe("gas inlet", "gas source", "manifold", createPipe("gas inlet", 0.98, 0.02));
+    } else {
+      network.addPipe("gas inlet", "gas source", "manifold", createPipe("gas inlet", 0.98, 0.02));
+      network.addPipe("liquid inlet", "liquid source", "manifold", createPipe("liquid inlet", 0.30, 0.70));
+      network.addPipe("outlet", "manifold", "sink", createPipe("outlet", 0.80, 0.20));
+    }
+    return network;
+  }
+
   private static TwoFluidPipe createPipe(String name) {
-    SystemInterface fluid = new SystemSrkEos(300.0, 60.0);
-    fluid.addComponent("methane", 0.95);
-    fluid.addComponent("n-heptane", 0.05);
+    return createPipe(name, 0.95, 0.05);
+  }
+
+  private static TwoFluidPipe createPipe(String name, double methane, double heptane) {
+    SystemInterface fluid = createFluid(methane, heptane);
+    fluid.setPressure(60.0, "bara");
     fluid.setMixingRule("classic");
-    fluid.setMultiPhaseCheck(true);
     Stream feed = new Stream(name + " feed", fluid);
     feed.setFlowRate(2.0, "kg/sec");
     feed.run();
@@ -70,6 +136,28 @@ class TwoFluidPipeNetworkTest {
     pipe.setNumberOfSections(4);
     pipe.setElevationProfile(new double[4]);
     return pipe;
+  }
+
+  private static SystemInterface createFluid(double methane, double heptane) {
+    SystemInterface fluid = new SystemSrkEos(300.0, 60.0);
+    fluid.addComponent("methane", methane);
+    fluid.addComponent("n-heptane", heptane);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+    return fluid;
+  }
+
+  private static double overallComponentMassFraction(SystemInterface fluid, String componentName) {
+    double totalMass = 0.0;
+    double componentMass = 0.0;
+    for (int index = 0; index < fluid.getNumberOfComponents(); index++) {
+      double mass = fluid.getComponent(index).getNumberOfmoles() * fluid.getComponent(index).getMolarMass();
+      totalMass += mass;
+      if (fluid.getComponent(index).getComponentName().equals(componentName)) {
+        componentMass = mass;
+      }
+    }
+    return componentMass / totalMass;
   }
 
   private static UpstreamCompressibleVolume createVolume(double pressurePa, double volumeM3) {
