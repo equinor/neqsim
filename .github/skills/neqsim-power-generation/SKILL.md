@@ -333,6 +333,27 @@ double load     = gt.getLoadFraction();
 double co2_tph  = gt.getCO2EmissionKgPerS() * 3.6;
 ```
 
+### Site rating, exhaust limit and waste heat (ambient-dependent driver)
+
+```java
+GasTurbinePerformanceMap map = GasTurbinePerformanceMap.fromSpec(spec);
+map.setSiteRatingFromPowerPoints(new double[] {5, 16}, new double[] {41.4e6, 39.3e6}, spec.getRatedPowerW()); // vendor points
+map.setExhaustTemperatureRisePerKelvin(0.5);        // or setSiteExhaustTemperatureTable(...)
+gt.setPerformanceMap(map);
+gt.setMaxExhaustTemperatureK(820.0);                  // power cut 1 %/K of full-load exhaust-T excess
+double pAt30C = gt.getAvailablePowerAtAmbientC(30.0); // no run needed; W
+double[] curve = gt.getSiteRatingCurveW(new double[] {-5, 5, 15, 25});
+gt.setAmbientTemperatureC(30.0); gt.setDemandedPower(15.0e6); gt.run();
+double fuelKgHr = gt.getFuelMassFlowKgPerHr();
+double whruW = gt.getWasteHeatRecoveryDutyW(150.0 + 273.15, 0.85);  // exhaust heat above stack
+```
+
+`PlatformPowerSystem` dispatches GT generators + power from shore (+ optional steam bottoming yield, e.g. 0.25
+MWe/MW) at an ambient temperature: `evaluate(T_K, electricDemandW, heatDemandW)` and `evaluateAcrossAmbient(...)`
+give capacity, deficit, N-1 margin, WHRU heat to the process, fuel and CO2 (`toJson()`). A mechanical-drive GT on a
+compressor shaft is modelled with `CompressorShaft.setGasTurbineUnitDriver` (see `neqsim-rotating-equipment-design`).
+The vendor table overrides the linear lapse; keep the catalog only for slopes when vendor data exist.
+
 ### Linking turbine shaft to compressor demand
 
 Each `GasTurbineUnit` aggregates the live shaft demand from any number of
@@ -596,3 +617,6 @@ Related: [`neqsim-heat-integration`](../neqsim-heat-integration/SKILL.md) for ut
 | Missing air stream for gas turbine | GT requires both fuel and combustion air |
 | Steam below saturation in turbine outlet | Check for wet steam — may need superheat or extraction |
 | Pinch analysis with wrong units | HeatStream uses °C for temperature, kW for duty |
+| Ambient derate "does nothing" for a capped turbine | `min(site rating, operating cap)`: a fixed cap (e.g. a 27.5 MW user/mechanical cap, an island-balance rating) hides the lapse until the site rating falls below it (Oseberg: never at 0-20 °C ambient). Ask whether the cap is an ISO rating (derate it with `site factor`) or a hard limit, and report both |
+| Efficiency "improves" on a hot day at fixed MW | The part-load polynomial uses load = P / *available* power; at the same MW a hot-day turbine is at higher load fraction, so its heat rate can drop. Compare at a fixed load fraction (`0.8 * getAvailablePowerAtAmbient(T)`) when judging ambient effects |
+| Exhaust/WHRU duty independent of load and ambient | WHRU = m·cp·(T_exh − T_stack)·eff with m ∝ (0.5 + 0.5 load) and T_exh = full-load(T) + part-load shape; a generator in hot standby at 30 % load gives a small fraction of the nameplate WHRU duty, so "kept as backup" HKs give no heat unless run (power-from-shore plants) |

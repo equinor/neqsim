@@ -47,6 +47,22 @@ public class GasTurbinePerformanceMap implements Serializable {
   // Minimum acceptable load before flame-out / unstable combustion
   private double minLoadFraction = 0.30;
 
+  /** Full-load exhaust temperature rise per kelvin of ambient temperature above ISO [K/K]. */
+  private double exhaustTempRisePerKelvin = 0.5;
+
+  /** Optional vendor site-rating table: ambient temperatures [K], ascending. */
+  private double[] siteAmbientK = null;
+  /** Optional vendor site-rating table: available power as a fraction of ISO rated power. */
+  private double[] sitePowerFactor = null;
+  /** Optional vendor heat-rate table: ambient temperatures [K], ascending. */
+  private double[] siteHeatRateAmbientK = null;
+  /** Optional vendor heat-rate table: heat-rate multiplier relative to ISO. */
+  private double[] siteHeatRateFactor = null;
+  /** Optional vendor exhaust-temperature table: ambient temperatures [K], ascending. */
+  private double[] siteExhaustAmbientK = null;
+  /** Optional vendor exhaust-temperature table: full-load exhaust temperature [K]. */
+  private double[] siteExhaustTemperatureK = null;
+
   /**
    * Create a default map suitable for a low-emission aeroderivative turbine.
    */
@@ -99,10 +115,7 @@ public class GasTurbinePerformanceMap implements Serializable {
    * @return site-corrected available power [W]
    */
   public double getAvailablePower(double ratedPowerW, double ambientTemperatureK, double ambientPressureBara) {
-    double tFactor = 1.0 - powerLossPerKelvin * (ambientTemperatureK - T_ISO_K);
-    if (tFactor < 0.5) {
-      tFactor = 0.5;
-    }
+    double tFactor = getSitePowerFactor(ambientTemperatureK);
     double pFactor = ambientPressureBara / P_ISO_BARA;
     if (pFactor < 0.5) {
       pFactor = 0.5;
@@ -132,11 +145,191 @@ public class GasTurbinePerformanceMap implements Serializable {
         partLoadMultiplier = 0.98;
       }
     }
-    double tCorr = 1.0 + heatRateRisePerKelvin * (ambientTemperatureK - T_ISO_K);
+    double tCorr;
+    if (siteHeatRateFactor != null) {
+      tCorr = interpolate(siteHeatRateAmbientK, siteHeatRateFactor, ambientTemperatureK, true);
+    } else {
+      tCorr = 1.0 + heatRateRisePerKelvin * (ambientTemperatureK - T_ISO_K);
+    }
     if (tCorr < 0.95) {
       tCorr = 0.95;
     }
     return isoHeatRateKJPerKWh * partLoadMultiplier * tCorr;
+  }
+
+  /**
+   * Temperature-only site-rating factor: available power at the ambient temperature divided by the ISO rated power (no
+   * site pressure correction). Uses the vendor table from {@link #setSiteRatingTable(double[], double[])} when set
+   * (linear interpolation, end-slope extrapolation), else the linear {@code 1 - powerLossPerKelvin (T - 15 C)} lapse.
+   * The factor is floored at 0.5 for the linear lapse and at 0.05 for a vendor table.
+   *
+   * @param ambientTemperatureK ambient temperature [K]
+   * @return available power fraction of the ISO rating (1.0 at 15 C)
+   */
+  public double getSitePowerFactor(double ambientTemperatureK) {
+    if (sitePowerFactor != null) {
+      return Math.max(0.05, interpolate(siteAmbientK, sitePowerFactor, ambientTemperatureK, true));
+    }
+    double tFactor = 1.0 - powerLossPerKelvin * (ambientTemperatureK - T_ISO_K);
+    if (tFactor < 0.5) {
+      tFactor = 0.5;
+    }
+    return tFactor;
+  }
+
+  /**
+   * Install a vendor site-rating table (available power versus ambient temperature). Replaces the linear lapse of
+   * {@link #setAmbientCorrection(double, double)} for power.
+   *
+   * @param ambientK ambient temperatures [K], strictly ascending, at least two points
+   * @param powerFactor available power as a fraction of the ISO rated power at each ambient temperature
+   * @throws IllegalArgumentException if the arrays are null, differ in length, have fewer than two points or the
+   * ambient temperatures are not strictly ascending
+   */
+  public void setSiteRatingTable(double[] ambientK, double[] powerFactor) {
+    validateTable(ambientK, powerFactor);
+    this.siteAmbientK = ambientK.clone();
+    this.sitePowerFactor = powerFactor.clone();
+  }
+
+  /**
+   * Install a vendor site-rating table from absolute power points, e.g. "41.4 MW at 5 C and 39.3 MW at 16 C".
+   *
+   * @param ambientC ambient temperatures [deg C], strictly ascending, at least two points
+   * @param powerW available shaft power at each ambient temperature [W]
+   * @param isoRatedPowerW ISO rated power of the turbine used to normalise the table [W]
+   * @throws IllegalArgumentException if the table is invalid or {@code isoRatedPowerW} is not positive
+   */
+  public void setSiteRatingFromPowerPoints(double[] ambientC, double[] powerW, double isoRatedPowerW) {
+    if (isoRatedPowerW <= 0.0 || ambientC == null || powerW == null) {
+      throw new IllegalArgumentException("isoRatedPowerW must be positive and the tables must not be null");
+    }
+    double[] k = new double[ambientC.length];
+    double[] f = new double[powerW.length];
+    for (int i = 0; i < ambientC.length; i++) {
+      k[i] = ambientC[i] + 273.15;
+    }
+    for (int i = 0; i < powerW.length; i++) {
+      f[i] = powerW[i] / isoRatedPowerW;
+    }
+    setSiteRatingTable(k, f);
+  }
+
+  /**
+   * Install a vendor heat-rate-versus-ambient table (multiplier of the ISO heat rate at full load).
+   *
+   * @param ambientK ambient temperatures [K], strictly ascending, at least two points
+   * @param heatRateFactor heat-rate multiplier relative to ISO at each ambient temperature
+   * @throws IllegalArgumentException if the table is invalid
+   */
+  public void setSiteHeatRateTable(double[] ambientK, double[] heatRateFactor) {
+    validateTable(ambientK, heatRateFactor);
+    this.siteHeatRateAmbientK = ambientK.clone();
+    this.siteHeatRateFactor = heatRateFactor.clone();
+  }
+
+  /**
+   * Install a vendor full-load exhaust-temperature-versus-ambient table.
+   *
+   * @param ambientK ambient temperatures [K], strictly ascending, at least two points
+   * @param exhaustTemperatureK full-load exhaust temperature [K] at each ambient temperature
+   * @throws IllegalArgumentException if the table is invalid
+   */
+  public void setSiteExhaustTemperatureTable(double[] ambientK, double[] exhaustTemperatureK) {
+    validateTable(ambientK, exhaustTemperatureK);
+    this.siteExhaustAmbientK = ambientK.clone();
+    this.siteExhaustTemperatureK = exhaustTemperatureK.clone();
+  }
+
+  /**
+   * Set the full-load exhaust temperature sensitivity to ambient temperature (used when no vendor exhaust table is
+   * set). A gas turbine at constant firing temperature has lower air mass flow on a hot day, so the exhaust gets
+   * hotter.
+   *
+   * @param risePerKelvin exhaust temperature rise per kelvin of ambient temperature [K/K], typically 0.3 to 0.8
+   */
+  public void setExhaustTemperatureRisePerKelvin(double risePerKelvin) {
+    this.exhaustTempRisePerKelvin = risePerKelvin;
+  }
+
+  /**
+   * Get the ambient power lapse of the linear model.
+   *
+   * @return fractional power loss per kelvin above ISO
+   */
+  public double getPowerLossPerKelvin() {
+    return powerLossPerKelvin;
+  }
+
+  /**
+   * Full-load exhaust temperature at the ambient temperature (vendor table, else ISO value plus a linear ambient
+   * sensitivity).
+   *
+   * @param isoExhaustTemperatureK ISO full-load exhaust temperature [K]
+   * @param ambientTemperatureK ambient temperature [K]
+   * @return full-load exhaust temperature [K]
+   */
+  public double getFullLoadExhaustTemperature(double isoExhaustTemperatureK, double ambientTemperatureK) {
+    if (siteExhaustTemperatureK != null) {
+      return interpolate(siteExhaustAmbientK, siteExhaustTemperatureK, ambientTemperatureK, true);
+    }
+    return isoExhaustTemperatureK + exhaustTempRisePerKelvin * (ambientTemperatureK - T_ISO_K);
+  }
+
+  /**
+   * Exhaust temperature at a load fraction and ambient temperature: the part-load shape of
+   * {@link #getExhaustTemperature(double, double)} applied on top of the ambient-corrected full-load temperature.
+   *
+   * @param isoExhaustTemperatureK ISO full-load exhaust temperature [K]
+   * @param loadFraction load fraction of the site-rated power
+   * @param ambientTemperatureK ambient temperature [K]
+   * @return exhaust temperature [K]
+   */
+  public double getExhaustTemperature(double isoExhaustTemperatureK, double loadFraction, double ambientTemperatureK) {
+    return getExhaustTemperature(getFullLoadExhaustTemperature(isoExhaustTemperatureK, ambientTemperatureK),
+        loadFraction);
+  }
+
+  /**
+   * Check a site-rating style table.
+   *
+   * @param x abscissa values, strictly ascending
+   * @param y ordinate values
+   * @throws IllegalArgumentException if the table is not valid
+   */
+  private static void validateTable(double[] x, double[] y) {
+    if (x == null || y == null || x.length != y.length || x.length < 2) {
+      throw new IllegalArgumentException("table needs two arrays of equal length with at least two points");
+    }
+    for (int i = 1; i < x.length; i++) {
+      if (!(x[i] > x[i - 1])) {
+        throw new IllegalArgumentException("table abscissa must be strictly ascending");
+      }
+    }
+  }
+
+  /**
+   * Piecewise-linear interpolation with end-slope extrapolation.
+   *
+   * @param x ascending abscissa
+   * @param y ordinate
+   * @param xq query point
+   * @param extrapolate true for linear extrapolation beyond the ends, false to clamp
+   * @return interpolated value
+   */
+  private static double interpolate(double[] x, double[] y, double xq, boolean extrapolate) {
+    int n = x.length;
+    if (xq <= x[0]) {
+      return extrapolate ? y[0] + (y[1] - y[0]) / (x[1] - x[0]) * (xq - x[0]) : y[0];
+    }
+    if (xq >= x[n - 1]) {
+      return extrapolate ? y[n - 1] + (y[n - 1] - y[n - 2]) / (x[n - 1] - x[n - 2]) * (xq - x[n - 1]) : y[n - 1];
+    }
+    int i = 1;
+    while (xq > x[i]) {
+      i++;
+    }
+    return y[i - 1] + (y[i] - y[i - 1]) * (xq - x[i - 1]) / (x[i] - x[i - 1]);
   }
 
   /**
