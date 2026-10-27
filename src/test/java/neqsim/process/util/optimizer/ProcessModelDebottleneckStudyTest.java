@@ -12,6 +12,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.DoubleSupplier;
 import java.util.function.ToDoubleFunction;
@@ -31,6 +32,7 @@ import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.MetricKind;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.MetricSampler;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.StudyOutcome;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.StudyResult;
+import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.OperatingActionCandidateListSearch;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -176,6 +178,54 @@ class ProcessModelDebottleneckStudyTest {
     assertFalse(result.getMetricComparisons().get(4).isCalculable());
     assertTrue(result.isCapacityRestored());
     assertTrue(result.isProcessStateRestored());
+    assertOriginalStateRestored(fixture);
+  }
+
+  /** Transactional operating actions must use the same paired search and restore every candidate exactly. */
+  @Test
+  void pairedOperatingActionAlternativeIsQualifiedAndReversible() {
+    Fixture fixture = createFixture();
+    ProcessModelSimulationEvaluator simulation = new ProcessModelSimulationEvaluator(fixture.model);
+    simulation.setIncludeStrategyCapacityConstraints(false);
+    simulation.addObjective("feed production", model -> model.getVariableValue("wells::feed.flowRate", "kg/hr"),
+        ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+    simulation.getObjectives().get(0).setUnit("kg/hr");
+    ProcessModelOperatingAction action = ProcessModelOperatingAction.continuous("feed-rate", "Feed rate",
+        "wells::feed.flowRate", 800.0, 1400.0, "kg/hr", "synthetic throughput action");
+    ProcessModelOperatingActionSetEvaluator actions = new ProcessModelOperatingActionSetEvaluator("paired-feed-actions",
+        "Paired feed actions", "synthetic transactional regression", simulation, Arrays.asList(action));
+    actions.requireHydraulicConstraint(ProcessModelOperatingActionEvaluator.HydraulicLimitRole.GATHERING_HYDRAULICS,
+        "separation", "separator", "installed gas rate", "synthetic installed capacity requirement");
+    ProcessModelOperatingActionSetEvaluator.CandidateSetEvaluationResult probe = actions.evaluate(new double[] {800.0});
+    assertTrue(probe.isFeasible(), probe.getOutcome() + ": " + probe.getDiagnostics());
+    List<double[]> candidates = new ArrayList<double[]>();
+    candidates.add(new double[] {800.0});
+    candidates.add(new double[] {999.0});
+    candidates.add(new double[] {1199.0});
+    candidates.add(new double[] {1400.0});
+    OperatingActionCandidateListSearch search = new OperatingActionCandidateListSearch("ordered-action-grid",
+        "Ordered action grid", "synthetic common paired candidates", candidates, 0, 0.0);
+    CapacityAlternative alternative = new CapacityAlternative("separator-gas-1200",
+        "Raise separator installed gas capacity", "synthetic brownfield screening case", "separation", "separator",
+        "installed gas rate", 1200.0, "kg/hr", LimitDirection.MAXIMUM, "synthetic replacement equipment basis", 0.90,
+        900.0, 1300.0);
+    ProcessModelDebottleneckStudy study = new ProcessModelDebottleneckStudy("paired-action-study",
+        "Paired action capacity study", "synthetic transactional paired regression", actions, alternative, search, 0);
+
+    StudyResult result = study.evaluate();
+
+    assertEquals(StudyOutcome.COMPLETED, result.getOutcome(), result.getDiagnostics().toString() + " baseline="
+        + (result.getBaseline() == null ? "null" : result.getBaseline().getDiagnostics().toString()));
+    assertArrayEquals(new double[] {999.0}, result.getBaseline().getSelectedParameters(), 0.0);
+    assertArrayEquals(new double[] {1199.0}, result.getAlternative().getSelectedParameters(), 0.0);
+    assertEquals(200.0, result.getObjectiveDelta(), 1.0e-8);
+    assertTrue(result.getBaseline().isProcessStateRestored());
+    assertTrue(result.getAlternative().isProcessStateRestored());
+    assertTrue(result.isCapacityRestored());
+    assertTrue(result.isProcessStateRestored());
+    assertTrue(result.isRecoverySimulationConverged());
+    assertThrows(IllegalStateException.class, () -> study.addMetric(new MetricDefinition("unsupported", "Unsupported",
+        MetricKind.OTHER, "-", "none", "none", "none", 1.0, false, model -> 0.0)));
     assertOriginalStateRestored(fixture);
   }
 

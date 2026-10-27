@@ -1536,6 +1536,107 @@ def test_guard_rejects_tampered_schema11_constraint_opportunity_screen(tmp_path)
     assert "lifecycle_period_0_constraint_opportunity_summary_mismatch" in reasons
 
 
+def _qualified_relief_summary_fixture():
+    """Return one exact installed opportunity plus a qualified paired-relief receipt."""
+    row = {
+        "rank": 1,
+        "classification": "NEAR_ACTIVE",
+        "source": "INSTALLED_EQUIPMENT",
+        "qualified_constraint_name": "Field::HP separator/gas handling",
+        "applicable_limit": 1000.0,
+        "physical_unit": "kg/hr",
+        "applicable_limit_role": "CONFIGURED_OPERATING",
+        "applicable_limit_provenance": "approved operating limit",
+        "slice_axes": [["choke-a"]],
+        "feasible_evidence_count": 1,
+        "rejecting_evidence_count": 0,
+        "representative_feasible_constraint": {
+            "current_value": 950.0,
+            "applicable_limit": 1000.0,
+            "physical_margin": 50.0,
+        },
+    }
+    envelope = {
+        "candidate_evaluator_id": "field-actions",
+        "accepted_action_ids": ["choke-a"],
+        "accepted_candidate_values": [70.0],
+        "optimizer_evidence": {
+            "objective_name": "validated gas export",
+            "objective_direction": "MAXIMIZE",
+            "objective_unit": "kg/hr",
+            "accepted_objective_value": 900.0,
+        },
+        "cross_slice_constraint_summary": {
+            "summary_version": 2,
+            "ranked_constraints": [row],
+        },
+    }
+    summary = production._constraint_opportunity_summary(envelope)
+    summary["summary_version"] = 2
+    candidate = summary["candidates"][0]
+    candidate["paired_relief_study_status"] = "QUALIFIED"
+    candidate["paired_relief_study_required"] = False
+    candidate["paired_relief_study_receipt"] = {
+        "receipt_version": 1,
+        "study_id": "hp-separator-paired",
+        "study_name": "HP separator paired study",
+        "study_provenance": "synthetic test",
+        "alternative_id": "hp-separator-relief",
+        "alternative_name": "HP separator relief",
+        "alternative_provenance": "synthetic alternative",
+        "action_set_id": "field-actions",
+        "accepted_action_ids": ["choke-a"],
+        "baseline_action_values": [70.0],
+        "alternative_action_values": [70.0],
+        "qualified_constraint_name": "Field::HP separator/gas handling",
+        "original_applicable_limit": 1000.0,
+        "proposed_applicable_limit": 1100.0,
+        "physical_unit": "kg/hr",
+        "limit_direction": "MAXIMUM",
+        "proposal_source": "replacement internals basis",
+        "objective": {
+            "index": 0,
+            "name": "validated gas export",
+            "direction": "MAXIMIZE",
+            "unit": "kg/hr",
+            "baseline_value": 900.0,
+            "paired_baseline_value": 900.0,
+            "baseline_binding_residual": 0.0,
+            "baseline_binding_tolerance": 1.0e-6,
+            "baseline_binding_tolerance_provenance": "accepted replay tolerance",
+            "alternative_value": 900.0,
+            "delta": 0.0,
+        },
+        "study_outcome": "COMPLETED",
+        "capacity_restored": True,
+        "process_state_restored": True,
+        "recovery_simulation_converged": True,
+        "qualification_state": "QUALIFIED_PAIRED_SAMPLED_RELIEF",
+        "advisory": True,
+        "interpretation": "Paired sampled evidence only",
+    }
+    return envelope, summary
+
+
+def test_schema12_qualified_relief_receipt_binds_exact_accepted_baseline():
+    envelope, summary = _qualified_relief_summary_fixture()
+
+    assert production._qualified_constraint_opportunity_reasons(summary, envelope) == []
+
+
+@pytest.mark.parametrize("field,value", [
+    ("process_state_restored", False),
+    ("recovery_simulation_converged", False),
+])
+def test_schema12_qualified_relief_receipt_rejects_incomplete_restoration(field, value):
+    envelope, summary = _qualified_relief_summary_fixture()
+    summary["candidates"][0]["paired_relief_study_receipt"][field] = value
+
+    assert production._qualified_constraint_opportunity_reasons(summary, envelope) == [
+        "invalid_qualified_relief_receipt"
+    ]
+
+
 def test_guard_accepts_explicitly_disabled_schema10_plant_constraint(tmp_path):
     proposal = _valid_proposal()
     envelope = proposal["accepted_point_envelope_evidence"]

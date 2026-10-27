@@ -900,16 +900,26 @@ includes registry-qualified plant constraints it exports schema version 11; with
 opportunity screen. The screen classifies exact current rejecting constraints and next-bottleneck candidates from the
 complete sampled/refined constraint ladder, preserving physical headroom, applicable limit, unit, role, provenance,
 axes, and evidence counts. It is not a causal attribution, shadow price, predicted benefit, equipment qualification,
-permission, or approval; a paired relief study is required before making a debottleneck-benefit claim.
+permission, or approval; a paired relief study is required before making a debottleneck-benefit claim. Schema v12 is
+emitted only when at least one installed-equipment screen row carries a qualified
+`ProcessModelDebottleneckStudy` receipt. Transactional studies use
+`OperatingActionCandidateListSearch` with the exact envelope action evaluator. The receipt binds the paired baseline
+action vector and selected-objective identity to the accepted replay, reruns the same ordered search under the proposed
+direct capacity limit, and is withheld unless both scenarios are converged, feasible and finite and both the action
+state and complete installed-limit state are restored. The objective binding retains the accepted replay value, paired
+sample, residual, allowed replay/search tolerance and tolerance provenance; it never hides numerical repeatability
+within a declared tolerance.
 
 Schema v11 retains the schema-v10 requirement for non-empty, independently declared plant-constraint IDs in addition to the
 schema-v9 equipment scope, complete finite rated evidence, explicit unit/basis/provenance/direction/category, and exact
 calculation binding to the accepted-point replay. Supply both
 `getInstalledEquipmentCapacityEvidence()` and `getPlantConstraintEvidence()` through the frozen-evidence builder path;
-this never resamples the mutable process after baseline restoration. Current schema-v11 exports retain optional
+this never resamples the mutable process after baseline restoration. Current schema-v11/v12 exports retain optional
 accepted-state metrics and require schema-v2
 cross-slice summaries in every period. The guard reconstructs each summary from persisted sampled and refined
-endpoint rows before trusting it, independently reconstructs the constraint opportunity screen, then recomputes every
+endpoint rows before trusting it, independently reconstructs the constraint opportunity screen, validates any v12
+receipt against the exact installed identity, limit, unit, action set, accepted action vector, objective identity,
+accepted value, paired residual/tolerance, finite delta and restoration flags, then recomputes every
 period-change diagnostic from the persisted periods before accepting it, including exact operating-region event
 migration, refined-boundary endpoint constraints and physical margins, exact ranked constraint-identity migration,
 and, when present, state-metric identity,
