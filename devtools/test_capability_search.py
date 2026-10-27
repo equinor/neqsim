@@ -170,3 +170,19 @@ def test_all_current_public_types_have_valid_workflow_entry_points():
     assert result["emptyRoutes"] == []
     assert result["routedTypes"] == result["publicTypes"]
     assert result["engineeringQualification"] == "not_assessed"
+
+
+@pytest.mark.parametrize("api", [
+    "neqsim.process.equipment.separator.emulsion.DenseEmulsionLayerModel",
+    "neqsim.process.equipment.separator.emulsion.EmulsionSeparationStudy",
+])
+def test_emulsion_study_has_specific_navigation_without_inventing_mcp_execution(api):
+    result = discovery.search(api, discovery.ROOT, top=1)
+    first = result["apis"][0]
+    assert first["id"] == api
+    assert first["route"]["agent"] == "emulsion-separation"
+    assert first["route"]["skill"] == "neqsim-emulsion-separation"
+    assert first["route"]["docs"] == ["docs/process/equipment/emulsion-separation-study.md"]
+    assert first["declaredRegistrations"] == []
+    assert first["execution"] == "not_recorded"
+    assert first["engineeringQualification"] == "not_assessed"
