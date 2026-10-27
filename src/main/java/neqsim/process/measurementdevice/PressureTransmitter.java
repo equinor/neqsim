@@ -13,8 +13,8 @@ import neqsim.util.unit.PressureUnit;
  * @author ESOL
  * @version $Id: $Id
  */
-public class PressureTransmitter extends StreamMeasurementDeviceBaseClass implements TransientMeasurementDevice,
-    TransientStateParticipant<PressureTransmitter.PressureTransmitterState> {
+public class PressureTransmitter extends StreamMeasurementDeviceBaseClass
+    implements TransientMeasurementDevice, TransientStateParticipant<PressureTransmitter.PressureTransmitterState> {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Persistent identity used only for transient transaction provenance. */

@@ -5031,8 +5031,7 @@ public class ProcessSystem extends SimulationBaseClass {
     for (int i = 0; i < measurementDevices.size(); i++) {
       MeasurementDeviceInterface device = measurementDevices.get(i);
       if (device instanceof neqsim.process.measurementdevice.TransientMeasurementDevice) {
-        neqsim.process.measurementdevice.TransientMeasurementDevice sampled =
-            (neqsim.process.measurementdevice.TransientMeasurementDevice) device;
+        neqsim.process.measurementdevice.TransientMeasurementDevice sampled = (neqsim.process.measurementdevice.TransientMeasurementDevice) device;
         if (sampled.isTransientSamplingEnabled()) {
           sampled.sampleTransient(dt, id);
         }
@@ -5113,8 +5112,7 @@ public class ProcessSystem extends SimulationBaseClass {
       double measuredValue;
       if (device instanceof neqsim.process.measurementdevice.TransientMeasurementDevice
           && ((neqsim.process.measurementdevice.TransientMeasurementDevice) device).hasTransientSample(id)) {
-        measuredValue =
-            ((neqsim.process.measurementdevice.TransientMeasurementDevice) device).getTransientSample();
+        measuredValue = ((neqsim.process.measurementdevice.TransientMeasurementDevice) device).getTransientSample();
       } else {
         measuredValue = device.getMeasuredValue();
       }

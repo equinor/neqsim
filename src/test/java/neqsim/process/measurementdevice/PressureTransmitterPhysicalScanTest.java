@@ -192,8 +192,7 @@ class PressureTransmitterPhysicalScanTest extends neqsim.NeqSimTest {
     transmitter.setTransientSamplingEnabled(true);
 
     assertThrows(IllegalArgumentException.class, () -> transmitter.sampleTransient(1.0, null));
-    assertThrows(IllegalArgumentException.class,
-        () -> transmitter.sampleTransient(Double.NaN, step("invalid", 0)));
+    assertThrows(IllegalArgumentException.class, () -> transmitter.sampleTransient(Double.NaN, step("invalid", 0)));
     assertThrows(IllegalStateException.class, () -> transmitter.getTransientSample("bara"));
   }
 
