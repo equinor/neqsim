@@ -893,17 +893,23 @@ or action-incompatible period is rejected instead of producing a partial lifecyc
 are sampled identities, not a continuous forecast, causal attribution, shadow price, equipment qualification, or
 operating approval.
 
-Lifecycle schema versions 1 through 9 remain readable by the persistent production guard for stored historical
+Lifecycle schema versions 1 through 10 remain readable by the persistent production guard for stored historical
 evidence. A lifecycle with installed-equipment coverage exports schema version 9. When the declared coverage also
-includes registry-qualified plant constraints it exports schema version 10; without coverage it remains schema version
-8 for compatibility. Schema v10 requires non-empty, independently declared plant-constraint IDs in addition to the
+includes registry-qualified plant constraints it exports schema version 11; without coverage it remains schema version
+8 for compatibility. Schema v10 remains readable, while schema v11 adds a deterministic constraint follow-up
+opportunity screen. The screen classifies exact current rejecting constraints and next-bottleneck candidates from the
+complete sampled/refined constraint ladder, preserving physical headroom, applicable limit, unit, role, provenance,
+axes, and evidence counts. It is not a causal attribution, shadow price, predicted benefit, equipment qualification,
+permission, or approval; a paired relief study is required before making a debottleneck-benefit claim.
+
+Schema v11 retains the schema-v10 requirement for non-empty, independently declared plant-constraint IDs in addition to the
 schema-v9 equipment scope, complete finite rated evidence, explicit unit/basis/provenance/direction/category, and exact
 calculation binding to the accepted-point replay. Supply both
 `getInstalledEquipmentCapacityEvidence()` and `getPlantConstraintEvidence()` through the frozen-evidence builder path;
-this never resamples the mutable process after baseline restoration. Current schema-v10 exports retain optional
+this never resamples the mutable process after baseline restoration. Current schema-v11 exports retain optional
 accepted-state metrics and require schema-v2
 cross-slice summaries in every period. The guard reconstructs each summary from persisted sampled and refined
-endpoint rows before trusting it, then recomputes every
+endpoint rows before trusting it, independently reconstructs the constraint opportunity screen, then recomputes every
 period-change diagnostic from the persisted periods before accepting it, including exact operating-region event
 migration, refined-boundary endpoint constraints and physical margins, exact ranked constraint-identity migration,
 and, when present, state-metric identity,
@@ -954,7 +960,8 @@ NEQSIM_TEST_CLASSPATH="target/classes:target/test-classes:$(cat target/optimizat
 ```
 
 The workflow asserts finite evaluation counts and runtime, full convergence/feasibility/restoration receipts, exact
-selected-objective identity and reviewed-baseline binding, schema-v10 persistence, complete declared installed and
+selected-objective identity and reviewed-baseline binding, schema-v11 persistence and constraint-opportunity
+reconstruction, complete declared installed and
 plant-wide constraint coverage with operating-limit provenance, common-shaft/compressor-map/driver/shared-power
 evidence, the separator/scrubber-to-shared-power bottleneck migration, and report
 rendering. It is a

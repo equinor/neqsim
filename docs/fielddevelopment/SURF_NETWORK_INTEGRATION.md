@@ -25,7 +25,7 @@ none of this completes field, vendor, independent-verification or AFC qualificat
 | `NetworkNewtonSolver`, `WellBranch`, `FlowlineBranch`, `IntegratedProductionModel` | Separate fast lifecycle/optimization graph in surface volumetric units; reduced deliverability curves and fitted quadratic flowline resistance. | Preserve the fast reduced-order workflow. Supply validated surrogates from detailed results later; do not confuse Sm3/day with the detailed graph's kg/s or treat one-point fits as full hydraulics. |
 | `SubseaProductionSystem`, `TiebackRouteNetwork` | Direct/cluster/daisy-chain/template builders and cost/geometry metadata; forward equipment execution with configured rates/choke pressures. Route network is explicitly screening metadata. | Reuse architecture/design equipment and route provenance. Add a mapping to detailed network identities rather than assuming architecture labels already provide coupled pressure/flow solution. |
 | `SubseaTree`, `SubseaManifold`, `SubseaJumper`, `PLET`, `PLEM`, risers, mechanical-design classes and SURF cost estimators | Existing process/design objects and design/cost screening workflows. | Keep real equipment as owners of geometry, mechanical design and cost. Template/manifold/PLEM labels alone add no junction physics; junction conservation belongs to the network. |
-| `TwoFluidPipe`, `TwoFluidPipeNetwork` | Mechanistic pipe steady/transient states; a storage-node transient network with phase mass-balance tests. The latter explicitly excludes algebraic zero-volume junctions, component/enthalpy mixing, reverse boundary composition and branch subcycling. | Use `TwoFluidPipe` for steady resistance evaluation here. Reuse the existing transient network in #2911; do not build a second transient engine or claim general mixed-fidelity dynamics. |
+| `TwoFluidPipe`, `TwoFluidPipeNetwork` | Mechanistic pipe steady/transient states; a storage-node transient network with phase mass-balance tests. Accepted conservative-energy reports expose signed inlet and outlet transfers for subsequent junction routing. The network still explicitly excludes algebraic zero-volume junctions, component/enthalpy mixing, reverse boundary composition and branch subcycling. | Use `TwoFluidPipe` for steady resistance evaluation here. Reuse the existing transient network in #2911; do not build a second transient engine or claim general mixed-fidelity dynamics. |
 | `TransientGasNetwork`, `TransientCompositionalPipeNetwork` | Dedicated gas linepack and bounded prescribed-flow species transport. | Retain their documented applicability. Neither qualifies general oil/gas/water dynamic SURF networks. |
 | `FieldLifecycleModel`, `FieldLifecycleSimulator` | Existing SURF + facility `ProcessSystem`/`ProcessModel` composition, reservoir and injection streams, lifecycle economics and constraints. | Connect solved network outlets to these existing streams and areas. Preserve existing detailed user-built equipment instead of regenerating it. |
 | Agent/MCP inventory | Pipe tools, API discovery and capability evidence distinguish source presence from executable operations. | Register discovery and regression evidence without claiming the instance-based network builder is already an MCP invocation contract; coordinate exposure with #3153. |
@@ -181,6 +181,14 @@ level 3/4 (conservation and engineering bounds), not an independent correlation 
 The test also checks that the conservative-energy handoff preserves every accepted steady
 pressure, temperature, holdup, phase-velocity and section-energy value exactly, then exercises
 the component and total-energy ledgers for one accepted transient interval.
+
+For multi-edge continuation, `TwoFluidConservativeEnergyReport` retains the integration-weighted
+accepted inlet and outlet total-energy transfers separately, including pressure-correction mass
+transport, while preserving the existing net-advection and first-law residual API. These signed
+boundary terms are the exact routing contract required by the existing `TwoFluidPipeNetwork` for
+future storage-node component/enthalpy inventory and mixing. They do not yet implement that node
+state, reverse-flow boundary thermodynamics or a conservative multi-edge junction solve.
+
 Transient multi-edge junction conservation, energy/component closure, representative
 large-field runtime and independent field data remain open qualification work.
 

@@ -15,11 +15,14 @@ class TwoFluidThermalFaceFluxTest {
 
     equations.calcRHS(sections, 10.0);
     double[][] faceFluxes = equations.getLastPhaseMassFaceFluxes();
+    double[] energyFluxes = equations.getLastEnergyFaceFluxes();
 
     for (int phase = 0; phase < 3; phase++) {
       assertEquals(0.0, faceFluxes[0][phase], 0.0);
       assertEquals(0.0, faceFluxes[faceFluxes.length - 1][phase], 0.0);
     }
+    assertEquals(0.0, energyFluxes[0], 0.0);
+    assertEquals(0.0, energyFluxes[energyFluxes.length - 1], 0.0);
     double internalThroughput = 0.0;
     for (int face = 1; face < faceFluxes.length - 1; face++) {
       for (int phase = 0; phase < 3; phase++) {
@@ -27,20 +30,29 @@ class TwoFluidThermalFaceFluxTest {
       }
     }
     assertTrue(internalThroughput > 0.0, "Closing the external faces must not disable internal convection");
+    assertTrue(Math.abs(energyFluxes[1]) > 0.0, "Internal convection must retain its total-energy flux");
 
     double retainedInternalGasFlow = faceFluxes[1][0];
     double[][] weightedFluxes = new double[faceFluxes.length][3];
+    double[] weightedEnergyFluxes = new double[energyFluxes.length];
     equations.accumulateLastPhaseMassFaceFluxes(weightedFluxes, 0.25);
     equations.accumulateLastPhaseMassFaceFluxes(weightedFluxes, 0.75);
+    equations.accumulateLastEnergyFaceFluxes(weightedEnergyFluxes, 0.25);
+    equations.accumulateLastEnergyFaceFluxes(weightedEnergyFluxes, 0.75);
     for (int face = 0; face < faceFluxes.length; face++) {
+      assertEquals(energyFluxes[face], weightedEnergyFluxes[face], 1.0e-12,
+          "Stage accumulation must preserve the weighted conservative energy flow");
       for (int phase = 0; phase < 3; phase++) {
         assertEquals(faceFluxes[face][phase], weightedFluxes[face][phase], 1.0e-12,
             "Stage accumulation must preserve the weighted conservative face flow");
       }
     }
     faceFluxes[0][0] = 1.0;
+    energyFluxes[0] = 1.0;
     assertEquals(0.0, equations.getLastPhaseMassFaceFluxes()[0][0], 0.0,
         "Callers must not be able to mutate the retained integration-stage fluxes");
+    assertEquals(0.0, equations.getLastEnergyFaceFluxes()[0], 0.0,
+        "Callers must not be able to mutate the retained energy fluxes");
 
     sections[1].setGasVelocity(4.0);
     sections[1].updateConservativeVariables();

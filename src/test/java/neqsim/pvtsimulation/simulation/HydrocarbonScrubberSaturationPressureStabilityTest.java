@@ -15,9 +15,37 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Regression coverage for the hydrocarbon-scrubber export-gas saturation boundary.
+ *
+ * @author Even Solbraa
+ * @version 1.0
  */
 @Tag("slow")
 class HydrocarbonScrubberSaturationPressureStabilityTest extends neqsim.NeqSimTest {
+  /** Verifies repeated phase appearance and disappearance with both Wilson stability paths. */
+  @Test
+  void pressureSweepRetainsPhysicalEquilibriumWithReusedPhaseSlots() {
+    SystemInterface exportGas = runScrubberProcess().getGasOutStream().getFluid();
+    double[] pressures = {151.0, 106.0, 105.0, 101.0, 81.0, 61.0, 41.0, 31.0, 41.0, 61.0, 81.0, 101.0, 105.0, 106.0,
+        151.0};
+    for (boolean enhanced : new boolean[] {false, true}) {
+      SystemInterface fluid = exportGas.clone();
+      fluid.setTemperature(0.0, "C");
+      fluid.setMultiPhaseCheck(true);
+      fluid.setEnhancedMultiPhaseCheck(enhanced);
+      ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+      for (double pressure : pressures) {
+        fluid.setPressure(pressure, "bara");
+        operations.TPflash();
+        fluid.init(1);
+        if (pressure >= 106.0) {
+          assertEquals(1, fluid.getNumberOfPhases());
+        } else {
+          assertPhysicalEquilibrium(fluid);
+        }
+      }
+    }
+  }
+
   @Test
   void ordinaryAndEnhancedChecksRetainPhysicalSaturationBoundary() {
     ThreePhaseSeparator scrubber = runScrubberProcess();

@@ -346,6 +346,8 @@ For robust three-phase detection in complex systems (sour gas, CO₂-rich stream
 - **Pure-component stability trials** — catch LLE instability at temperatures well below the lightest component's critical temperature, where Wilson K-values are ineffective
 - **Cosine-similarity trivial-solution filtering** — rejects spurious two-phase results where both phases have nearly identical composition
 
+Wilson stability trials reject failed EOS initializations and nonfinite log-fugacity coefficients instead of interpreting skipped updates as convergence. Rejected trials leave the current phase set intact so the remaining stability trials can still test phase appearance.
+
 ```java
 // Sour gas system with potential three-phase split
 SystemInterface fluid = new SystemPrEos(210.0, 55.0);  // -63°C, 55 bara

@@ -1140,6 +1140,14 @@ classification/basis change without comparing physical margins across units. The
 schemas v1-v7 for historical evidence, while v8 additionally reconstructs every identity delta from each period's
 schema-v2 summary after validating its grouping, counts, ordering, threshold, and representative rows.
 
+Plant-covered lifecycle schema v11 also freezes a `constraint_opportunity_summary` beside every period envelope.
+The production guard and canonical report independently reconstruct this screen from the exact complete constraint
+ladder. Rejecting rows are current constraint investigations; feasible near-active rows are next-bottleneck
+candidates. Each row preserves the sampled or refined physical headroom, applicable limit, unit, role, provenance,
+axes, and evidence counts. This is screening evidence only—not causality, a shadow price, predicted relief, permission
+to alter a limit, or operating approval. Run a separately qualified paired relief study before reporting a
+debottleneck benefit. Schemas v8-v10 remain readable for historical lifecycle evidence.
+
 The block also carries ordered `accepted_action_ids` beside `accepted_candidate_values`. Attach it to
 the proposal as `accepted_point_envelope_evidence` and set
 `production.require_envelope_evidence: true` in a continuous field-study plan. The existing living-task guard
