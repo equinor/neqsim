@@ -121,6 +121,7 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 
 ## ⚡ Quick Start Example
 
+<!-- landing-page-example: java-quick-start -->
 ```java
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
