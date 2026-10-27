@@ -87,12 +87,10 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     assertTrue(firstSpecies.isConverged(), firstSpecies.getMessage());
     assertTrue(firstSpecies.getMaximumRelativeInventoryResidual() < 1.0e-8, firstSpecies.getMessage());
     assertTrue(firstSpecies.getMaximumThermodynamicMassFractionError() <= 1.0e-10, firstSpecies.getMessage());
-    // Java 8 interpreted and compiled floating-point paths can differ by a few ULPs.
-    // Keep repeatability substantially tighter than the conservation and convergence gates.
-    assertRoundoffEquals(firstSpecies.getFinalInventoryKg(),
-        repeated.getSpeciesConservationReport().getFinalInventoryKg());
-    assertRoundoffEquals(firstSpecies.getMassFractionProfile()[1],
-        repeated.getSpeciesConservationReport().getMassFractionProfile()[1]);
+    assertArrayEquals(firstSpecies.getFinalInventoryKg(), repeated.getSpeciesConservationReport().getFinalInventoryKg(),
+        0.0);
+    assertArrayEquals(firstSpecies.getMassFractionProfile()[1],
+        repeated.getSpeciesConservationReport().getMassFractionProfile()[1], 0.0);
 
     OnePhaseFlowConvergenceReport nearbyFlow = nearby.getConvergenceReport();
     assertTrue(nearbyFlow.isConverged(), nearbyFlow.getMessage());
@@ -592,22 +590,6 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
   private static void assertRelativeEquals(double expected, double actual, String message) {
     double scale = Math.max(Math.max(Math.abs(expected), Math.abs(actual)), 1.0e-30);
     assertEquals(expected, actual, 1.0e-12 * scale, message);
-  }
-
-  /**
-   * Compares repeated calculations within eight floating-point units in the last place.
-   *
-   * @param expected first calculation values
-   * @param actual repeated calculation values
-   */
-  private static void assertRoundoffEquals(double[] expected, double[] actual) {
-    assertEquals(expected.length, actual.length);
-    for (int index = 0; index < expected.length; index++) {
-      assertTrue(Double.isFinite(expected[index]) && Double.isFinite(actual[index]),
-          "Repeated calculation must remain finite at index " + index);
-      double tolerance = 8.0 * Math.max(Math.ulp(expected[index]), Math.ulp(actual[index]));
-      assertEquals(expected[index], actual[index], tolerance, "Repeated calculation at index " + index);
-    }
   }
 
   private static void assertRawBitsEqual(double expected, double actual, String message) {
