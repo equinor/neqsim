@@ -2,6 +2,8 @@ package neqsim.process.fielddevelopment.reservoir;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Reads a single VFPPROD or VFPINJ keyword back into numbers, in deck units and deck index order.
@@ -103,26 +105,37 @@ public final class VfpDeckReader {
       clean.append(c >= 0 ? line.substring(0, c) : line).append('\n');
     }
     String body = clean.toString();
-    int pi = body.indexOf("VFPPROD");
-    int ii = body.indexOf("VFPINJ");
-    boolean inj = pi < 0 || (ii >= 0 && ii < pi);
-    int start = inj ? ii : pi;
-    if (start < 0) {
+    Matcher keyword = Pattern.compile("(?im)^\\s*(VFPPROD|VFPINJ)\\b").matcher(body);
+    if (!keyword.find()) {
       throw new IllegalArgumentException("No VFPPROD or VFPINJ keyword found");
     }
-    String[] records = body.substring(start + (inj ? 6 : 7)).split("/");
+    boolean inj = "VFPINJ".equalsIgnoreCase(keyword.group(1));
+    String[] records = body.substring(keyword.end()).split("/", -1);
     ParsedTable table = new ParsedTable();
     table.injection = inj;
-    String[] header = records[0].trim().split("\\s+");
-    table.tableNumber = Integer.parseInt(header[0]);
-    table.datumDepth = Double.parseDouble(header[1]);
-    for (int i = 2; i < header.length; i++) {
-      table.definitions.add(header[i].replace("'", "").toUpperCase(java.util.Locale.ROOT));
+    Matcher header = Pattern.compile("'([^']*)'|([^\\s]+)").matcher(records[0].trim());
+    List<String> fields = new ArrayList<String>();
+    while (header.find()) {
+      fields.add(header.group(1) == null ? header.group(2) : header.group(1));
+    }
+    if (fields.size() != (inj ? 6 : 9)) {
+      throw new IllegalArgumentException("Invalid VFP header: expected " + (inj ? 6 : 9) + " fields");
+    }
+    table.tableNumber = Integer.parseInt(fields.get(0));
+    table.datumDepth = Double.parseDouble(fields.get(1));
+    for (int i = 2; i < fields.size(); i++) {
+      table.definitions.add(fields.get(i).toUpperCase(java.util.Locale.ROOT));
     }
     int nAxes = inj ? 2 : 5;
     double[][] axes = new double[5][];
+    if (records.length <= nAxes + 1) {
+      throw new IllegalArgumentException("Missing VFP axis records");
+    }
     for (int i = 0; i < nAxes; i++) {
       axes[i] = numbers(records[1 + i]);
+      if (axes[i].length == 0) {
+        throw new IllegalArgumentException("Empty VFP axis " + i);
+      }
     }
     for (int i = nAxes; i < 5; i++) {
       axes[i] = new double[] {0.0};
@@ -133,11 +146,22 @@ public final class VfpDeckReader {
     int nw = axes[2].length;
     int ng = axes[3].length;
     int na = axes[4].length;
-    double[][][][][] bhp = new double[nf][nt][nw][ng][na];
-    int expected = nt * nw * ng * na;
+    long recordCount = 1;
+    for (int d = 1; d < 5; d++) {
+      recordCount *= axes[d].length;
+      if (recordCount > Integer.MAX_VALUE) {
+        throw new IllegalArgumentException("Too many VFP pressure records");
+      }
+    }
+    int expected = (int) recordCount;
     int first = 1 + nAxes;
+    if (records.length - first - 1 < expected) {
+      throw new IllegalArgumentException("Missing pressure records: expected " + expected);
+    }
+    double[][][][][] bhp = new double[nf][nt][nw][ng][na];
+    boolean[][][][] seen = new boolean[nt][nw][ng][na];
     for (int r = 0; r < expected; r++) {
-      if (first + r >= records.length) {
+      if (first + r >= records.length - 1 || records[first + r].trim().isEmpty()) {
         throw new IllegalArgumentException("Missing pressure records: expected " + expected);
       }
       double[] v = numbers(records[first + r]);
@@ -146,13 +170,21 @@ public final class VfpDeckReader {
         throw new IllegalArgumentException(
             "Record " + (r + 1) + " has " + v.length + " numbers, expected " + (skip + nf));
       }
-      int t = (int) v[0] - 1;
-      int w = inj ? 0 : (int) v[1] - 1;
-      int g = inj ? 0 : (int) v[2] - 1;
-      int a = inj ? 0 : (int) v[3] - 1;
+      int t = index(v[0], nt, "THP");
+      int w = inj ? 0 : index(v[1], nw, "WFR");
+      int g = inj ? 0 : index(v[2], ng, "GFR");
+      int a = inj ? 0 : index(v[3], na, "ALQ");
+      if (seen[t][w][g][a]) {
+        throw new IllegalArgumentException("Duplicate VFP pressure record: THP/WFR/GFR/ALQ indices");
+      }
+      seen[t][w][g][a] = true;
       for (int f = 0; f < nf; f++) {
         bhp[f][t][w][g][a] = v[skip + f];
       }
+    }
+    String trailing = records[first + expected].trim();
+    if (!trailing.isEmpty() && !Character.isLetter(trailing.charAt(0))) {
+      throw new IllegalArgumentException("Extra pressure records: expected " + expected);
     }
     table.bhp = bhp;
     return table;
@@ -169,11 +201,41 @@ public final class VfpDeckReader {
     if (trimmed.isEmpty()) {
       return new double[0];
     }
-    String[] parts = trimmed.split("\\s+");
-    double[] values = new double[parts.length];
-    for (int i = 0; i < parts.length; i++) {
-      values[i] = Double.parseDouble(parts[i]);
+    List<Double> expanded = new ArrayList<Double>();
+    for (String token : trimmed.split("\\s+")) {
+      String[] repetition = token.split("\\*", -1);
+      int count = repetition.length == 2 ? Integer.parseInt(repetition[0]) : 1;
+      String value = repetition.length == 2 ? repetition[1] : token;
+      if (repetition.length > 2 || value.isEmpty() || count <= 0 || count > 1000000) {
+        throw new IllegalArgumentException("Unsupported VFP numeric/default token: " + token);
+      }
+      double number = Double.parseDouble(value.replace('D', 'E').replace('d', 'e'));
+      if (!Double.isFinite(number)) {
+        throw new IllegalArgumentException("Non-finite VFP number: " + token);
+      }
+      for (int i = 0; i < count; i++) {
+        expanded.add(number);
+      }
+    }
+    double[] values = new double[expanded.size()];
+    for (int i = 0; i < values.length; i++) {
+      values[i] = expanded.get(i);
     }
     return values;
+  }
+
+  /**
+   * Validates a one-based deck index before converting to a Java index.
+   *
+   * @param value deck index, dimensionless
+   * @param length axis length
+   * @param axis axis name for diagnostics
+   * @return zero-based index
+   */
+  private static int index(double value, int length, String axis) {
+    if (value != Math.rint(value) || value < 1 || value > length) {
+      throw new IllegalArgumentException("Invalid " + axis + " record index " + value + "; expected 1.." + length);
+    }
+    return (int) value - 1;
   }
 }

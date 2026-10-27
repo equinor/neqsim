@@ -35,6 +35,7 @@ Documentation for pipeline equipment in NeqSim.
 **Classes:**
 | Class                | Description                                                      | FIV | AutoSize |
 | -------------------- | ---------------------------------------------------------------- | --- | -------- |
+| `VfpPipeline` | Approved VFPPROD table hydraulics ([guide](vfp_pipeline)) | - | - |
 | `PipeBeggsAndBrills` | Beggs-Brill correlation                                          | ✅   | ✅        |
 | `AdiabaticPipe`      | Adiabatic pipe segment                                           | ✅   | ✅        |
 | `OnePhasePipe`       | Single-phase pipe                                                | -   | -        |
