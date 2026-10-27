@@ -24,6 +24,7 @@ class PhaseSrkCPASiteDerivativeTest {
     fluid.setMixingRule(10);
     assertTemperatureDerivatives(fluid, "water", 0, 0.01);
     assertVolumeDerivatives(fluid, "water", 0);
+    assertCompositionDerivatives(fluid, "water", "water", "water", 0);
   }
 
   /** Compares K15 electrolyte-CPA water-site sensitivities with fixed-volume differences. */
@@ -38,6 +39,65 @@ class PhaseSrkCPASiteDerivativeTest {
     fluid.setMixingRule(10);
     assertTemperatureDerivatives(fluid, "water", 0, 0.01);
     assertVolumeDerivatives(fluid, "water", 0);
+    assertCompositionDerivatives(fluid, "water", "CO2", "water", 0);
+  }
+
+  /**
+   * Checks opt-in mixed association-site composition derivatives at fixed native EOS volume.
+   *
+   * @param fluid configured CPA system
+   * @param siteComponentName component owning the inspected association site
+   * @param firstAmountName first amount-coordinate component
+   * @param secondAmountName second amount-coordinate component
+   * @param phaseIndex phase containing the association sites
+   */
+  private void assertCompositionDerivatives(SystemInterface fluid, String siteComponentName, String firstAmountName,
+      String secondAmountName, int phaseIndex) {
+    fluid.init(0);
+    fluid.init(3);
+    fluid.setUseTVasIndependentVariables(true);
+    fluid.init(3);
+
+    PhaseSrkCPA phase = (PhaseSrkCPA) fluid.getPhase(phaseIndex);
+    phase.calcAssociationSiteCompositionDerivatives();
+    ComponentSrkCPA siteComponent = component(fluid, siteComponentName, phaseIndex);
+    int first = phase.getComponent(firstAmountName).getComponentNumber();
+    int second = phase.getComponent(secondAmountName).getComponentNumber();
+    double firstStep = amountStep(phase, first);
+    double secondStep = amountStep(phase, second);
+
+    double[] plusFirst = siteSensitivitiesAtAmount(fluid, siteComponentName, phaseIndex, first, firstStep);
+    double[] minusFirst = siteSensitivitiesAtAmount(fluid, siteComponentName, phaseIndex, first, -firstStep);
+    double numericalAmountTemperature = (plusFirst[0] - minusFirst[0]) / (2.0 * firstStep);
+    double numericalAmountVolume = (plusFirst[1] - minusFirst[1]) / (2.0 * firstStep);
+    double numericalFirstAmount = (plusFirst[2 + phase.getNumberOfComponents()]
+        - minusFirst[2 + phase.getNumberOfComponents()]) / (2.0 * firstStep);
+    double numericalLngAmount = (plusFirst[3 + phase.getNumberOfComponents()]
+        - minusFirst[3 + phase.getNumberOfComponents()]) / (2.0 * firstStep);
+    double numericalBAmount = (plusFirst[4 + phase.getNumberOfComponents()]
+        - minusFirst[4 + phase.getNumberOfComponents()]) / (2.0 * firstStep);
+    double numericalMoleAmount = (plusFirst[5 + phase.getNumberOfComponents()]
+        - minusFirst[5 + phase.getNumberOfComponents()]) / (2.0 * firstStep);
+
+    double[] plusSecond = siteSensitivitiesAtAmount(fluid, siteComponentName, phaseIndex, second, secondStep);
+    double[] minusSecond = siteSensitivitiesAtAmount(fluid, siteComponentName, phaseIndex, second, -secondStep);
+    double numericalAmountAmount = (plusSecond[2 + first] - minusSecond[2 + first]) / (2.0 * secondStep);
+
+    assertEquals(1.0, numericalMoleAmount, 1.0e-9);
+    assertEquals(numericalBAmount,
+        phase.calcBi(first, phase, phase.getTemperature(), phase.getPressure(), phase.getNumberOfComponents()),
+        tolerance(numericalBAmount, 2.0e-4, 1.0e-12));
+    assertEquals(numericalLngAmount, ((ComponentSrkCPA) phase.getComponent(first)).calc_lngi(phase),
+        tolerance(numericalLngAmount, 2.0e-4, 1.0e-9));
+    assertEquals(numericalFirstAmount, siteComponent.getXsitedni(0, first),
+        tolerance(numericalFirstAmount, 2.0e-4, 1.0e-9));
+    assertEquals(numericalAmountTemperature, siteComponent.getXsitednidT(0, first),
+        tolerance(numericalAmountTemperature, 2.0e-4, 1.0e-10));
+    assertEquals(numericalAmountVolume, siteComponent.getXsitednidV(0, first),
+        tolerance(numericalAmountVolume, 2.0e-4, 1.0e-8));
+    assertEquals(numericalAmountAmount, siteComponent.getXsitednidnj(0, first, second),
+        tolerance(numericalAmountAmount, 3.0e-4, 1.0e-9));
+    assertEquals(siteComponent.getXsitednidnj(0, first, second), siteComponent.getXsitednidnj(0, second, first), 0.0);
   }
 
   /**
@@ -172,6 +232,55 @@ class PhaseSrkCPASiteDerivativeTest {
     perturbed.setTemperature(temperature);
     perturbed.init(3);
     return component(perturbed, componentName, phaseIndex).getXsitedV()[0];
+  }
+
+  /**
+   * Evaluates first site sensitivities after an amount perturbation at fixed native EOS volume.
+   *
+   * @param base initialized fixed-volume system
+   * @param componentName component owning the inspected association site
+   * @param phaseIndex phase index
+   * @param amountComponent perturbed component index
+   * @param amountIncrement signed amount perturbation in mol
+   * @return temperature, volume, and each amount sensitivity of the first site
+   */
+  private double[] siteSensitivitiesAtAmount(SystemInterface base, String componentName, int phaseIndex,
+      int amountComponent, double amountIncrement) {
+    PhaseSrkCPA perturbed = ((PhaseSrkCPA) base.getPhase(phaseIndex)).clone();
+    double volume = perturbed.getTotalVolume();
+    perturbed.addMoles(amountComponent, amountIncrement);
+    for (int componentIndex = 0; componentIndex < perturbed.getNumberOfComponents(); componentIndex++) {
+      double moleFraction = perturbed.getComponent(componentIndex).getNumberOfMolesInPhase()
+          / perturbed.getNumberOfMolesInPhase();
+      perturbed.getComponent(componentIndex).setx(moleFraction);
+      perturbed.getComponent(componentIndex).setz(moleFraction);
+    }
+    perturbed.setTotalVolume(volume);
+    perturbed.init(perturbed.getNumberOfMolesInPhase() / perturbed.getBeta(), perturbed.getNumberOfComponents(), 3,
+        perturbed.getBeta());
+    ComponentSrkCPA component = (ComponentSrkCPA) perturbed.getComponent(componentName);
+    double[] result = new double[6 + perturbed.getNumberOfComponents()];
+    result[0] = component.getXsitedT()[0];
+    result[1] = component.getXsitedV()[0];
+    for (int amount = 0; amount < perturbed.getNumberOfComponents(); amount++) {
+      result[2 + amount] = component.getXsitedni(0, amount);
+    }
+    result[2 + perturbed.getNumberOfComponents()] = component.getXsite()[0];
+    result[3 + perturbed.getNumberOfComponents()] = Math.log(perturbed.getGcpa());
+    result[4 + perturbed.getNumberOfComponents()] = perturbed.getB();
+    result[5 + perturbed.getNumberOfComponents()] = perturbed.getComponent(amountComponent).getNumberOfMolesInPhase();
+    return result;
+  }
+
+  /**
+   * Selects a scale-aware central-difference amount step.
+   *
+   * @param phase phase containing the perturbed component
+   * @param component component index
+   * @return amount step in mol
+   */
+  private double amountStep(PhaseSrkCPA phase, int component) {
+    return Math.max(1.0, phase.getComponent(component).getNumberOfMolesInPhase()) * 1.0e-6;
   }
 
   /**
