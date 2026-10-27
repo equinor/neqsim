@@ -709,7 +709,11 @@ public class TwoFluidConservationEquations implements Serializable {
     conservativeFrictionEnabled = enabled;
   }
 
-  /** @return whether conservative frozen-resistance friction owns the source */
+  /**
+   * Report whether the frozen-resistance source owns wall and interfacial friction.
+   *
+   * @return true when conservative friction is enabled
+   */
   public boolean isConservativeFrictionEnabled() {
     return conservativeFrictionEnabled;
   }
