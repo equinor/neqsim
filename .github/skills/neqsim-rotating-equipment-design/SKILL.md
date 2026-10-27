@@ -112,6 +112,27 @@ power_kw = train.getPower("kW")
 | Expander/compressor power | `getPowerExpander("kW")`, `getPowerCompressor("kW")`; coupled machine residual from `getPowerBalanceResidual()` |
 | Mechanical screens | Check units on each result class; examples include casing thickness mm/pressure MPa, thrust N, and unbalance g·mm |
 
+## Compressor trains on a common shaft (power-limited driver)
+
+Use `CompressorShaft` (not one `Compressor` with `setSolveSpeed(true)` per body) whenever stages share a driver, also
+when the stages sit in different platform models. Full code pattern: `neqsim-compressor-antisurge-recycle`, section
+"Common-Shaft Trains Across Platforms, Power-Limited Drivers and Ambient Derating". Quick map from the Python
+`ShaftGroup` idiom (Oseberg `eot_ofc_common.shaft`) to Java:
+
+| Need | Java |
+|---|---|
+| members with gear ratio | `addCompressor(c, ratio)`, `setGearRatio`, `getMemberSpeed` |
+| controlling member sets speed | `solveSpeedToTarget(member, DISCHARGE_PRESSURE / SUCTION_PRESSURE / INLET_FLOW, value, unit, run)` |
+| per-member margins, recycle demand, flags | `getOperatingReport()` (`toJson()`), `setMemberRequiredDischargePressure` |
+| train off / decoupled stage | `setMemberActive(c, false)`, `removeCompressor(c)`, status `SHAFT_IDLE` |
+| shared driver power with ambient | `setGasTurbineUnitDriver(unit)` + `setAmbientTemperature(T, "C")`, `setMaxShaftPower`, `setElectricSupplyLimit` |
+| max speed / max throughput at the driver limit | `findMaxSpeedWithinPowerLimit(run)`, `DriverLimitedThroughputSolver` |
+| fuel, exhaust, waste heat | `updateDriverOperatingPoint()` then the `GasTurbineUnit` getters |
+
+Not in Java: the Python snapshot evaluation without re-running the flowsheet (Java always re-runs through the
+callback), and automatic application of the recycle demand to the anti-surge valves (read `requiredRecycleFraction`
+and set the recycle yourself, or let the process anti-surge controller do it).
+
 ## Gotchas
 
 - `AxialThrustScreening` rejects non-finite inputs/results and requires a positive fitted zero-crossing for a relative margin. An invalid case is not a safe margin or `NULL` thrust. Report the data range, extrapolation and OEM thrust sign convention.

@@ -68,6 +68,16 @@ public class GasTurbineUnit extends TwoPortEquipment {
   private boolean explicitDemandSet = false;
   private double explicitDemandW = 0.0;
 
+  /** Exhaust (power-turbine inlet or stack) temperature limit [K]; 0 = no limit. */
+  private double maxExhaustTemperatureK = 0.0;
+  /** Fraction of site power lost per kelvin that the full-load exhaust temperature exceeds the limit. */
+  private double exhaustLimitPowerLossPerKelvin = 0.01;
+  /** Mean exhaust gas specific heat used for waste-heat duty [kJ/kg/K]. */
+  private double exhaustCpKJPerKgK = 1.10;
+  private boolean exhaustTemperatureLimited = false;
+  private double fuelEnergyRateW = 0.0;
+  private double shaftPowerW = 0.0;
+
   // computed each run
   private double availablePowerW = 0.0;
   private double demandedPowerW = 0.0;
@@ -252,10 +262,9 @@ public class GasTurbineUnit extends TwoPortEquipment {
       degradation = new GasTurbineDegradation();
     }
 
-    // 1) Available power at site conditions, with degradation derate
-    double sitePower = performanceMap.getAvailablePower(spec.getRatedPowerW(), ambientTemperatureK,
-        ambientPressureBara);
-    this.availablePowerW = sitePower * degradation.getPowerDerateFactor();
+    // 1) Available power at site conditions, with degradation derate and exhaust-temperature limit
+    this.availablePowerW = getAvailablePowerAtAmbient(ambientTemperatureK);
+    this.exhaustTemperatureLimited = isExhaustLimitActive(ambientTemperatureK);
 
     // 2) Demanded power
     if (explicitDemandSet) {
@@ -295,6 +304,8 @@ public class GasTurbineUnit extends TwoPortEquipment {
       this.fuelMolarFlowMolPerS = 0.0;
       this.exhaustMassFlowKgPerS = 0.0;
       this.exhaustTemperatureK = ambientTemperatureK;
+      this.fuelEnergyRateW = 0.0;
+      this.shaftPowerW = 0.0;
       this.co2KgPerS = 0.0;
       this.noxKgPerS = 0.0;
       this.methaneSlipKgPerS = 0.0;
@@ -313,6 +324,8 @@ public class GasTurbineUnit extends TwoPortEquipment {
     // fuel energy rate [kW] = heatRate * shaftPower [kW] / 3600
     double shaftPowerKW = Math.min(this.demandedPowerW, this.availablePowerW) / 1.0e3;
     double fuelEnergyKW = this.effectiveHeatRateKJPerKWh * shaftPowerKW / 3600.0;
+    this.fuelEnergyRateW = fuelEnergyKW * 1.0e3;
+    this.shaftPowerW = shaftPowerKW * 1.0e3;
     // fuel mass flow = fuelEnergyKW * 1000 [W] / LHV [J/kg]
     double lhvJPerKg = getFuelLHVJPerKg();
     if (lhvJPerKg <= 0.0) {
@@ -329,7 +342,8 @@ public class GasTurbineUnit extends TwoPortEquipment {
     // 6) Exhaust at part-load
     double exhaustScale = performanceMap.getAvailablePower(1.0, ambientTemperatureK, ambientPressureBara);
     this.exhaustMassFlowKgPerS = performanceMap.getExhaustFlow(spec.getExhaustFlowKgPerS() * exhaustScale, loadForMap);
-    this.exhaustTemperatureK = performanceMap.getExhaustTemperature(spec.getExhaustTemperatureK(), loadForMap);
+    this.exhaustTemperatureK = performanceMap.getExhaustTemperature(spec.getExhaustTemperatureK(), loadForMap,
+        ambientTemperatureK);
 
     // 7) Emissions
     this.co2KgPerS = emissions.computeCO2KgPerS(fuel, this.fuelMolarFlowMolPerS);
@@ -382,6 +396,180 @@ public class GasTurbineUnit extends TwoPortEquipment {
       logger.warn("Could not compute fuel LCV for {}: {}", getName(), ex.getMessage());
       return 0.0;
     }
+  }
+
+  // ── Site rating, exhaust limit and waste-heat recovery ───────────────
+
+  /**
+   * Maximum continuous shaft power available at a given ambient temperature (site rating): the performance-map power at
+   * the unit's ambient pressure, times the degradation derate, reduced when a full-load exhaust-temperature limit is
+   * exceeded. Does not run the unit and does not change the stored ambient temperature.
+   *
+   * @param ambientTemperatureK ambient air temperature [K]
+   * @return available shaft power [W], 0 when no spec is set
+   */
+  public double getAvailablePowerAtAmbient(double ambientTemperatureK) {
+    if (spec == null) {
+      return 0.0;
+    }
+    GasTurbinePerformanceMap map = performanceMap != null ? performanceMap : GasTurbinePerformanceMap.fromSpec(spec);
+    double derate = degradation != null ? degradation.getPowerDerateFactor() : 1.0;
+    double power = map.getAvailablePower(spec.getRatedPowerW(), ambientTemperatureK, ambientPressureBara) * derate;
+    if (maxExhaustTemperatureK > 0.0) {
+      double excess = map.getFullLoadExhaustTemperature(spec.getExhaustTemperatureK(), ambientTemperatureK)
+          - maxExhaustTemperatureK;
+      if (excess > 0.0) {
+        power *= Math.max(0.3, 1.0 - exhaustLimitPowerLossPerKelvin * excess);
+      }
+    }
+    return power;
+  }
+
+  /**
+   * Site rating at an ambient temperature in degrees Celsius.
+   *
+   * @param ambientTemperatureC ambient air temperature [deg C]
+   * @return available shaft power [W]
+   */
+  public double getAvailablePowerAtAmbientC(double ambientTemperatureC) {
+    return getAvailablePowerAtAmbient(ambientTemperatureC + 273.15);
+  }
+
+  /**
+   * Site-rating curve: available shaft power for each of the ambient temperatures.
+   *
+   * @param ambientTemperaturesC ambient temperatures [deg C]
+   * @return available shaft power [W] per ambient temperature
+   */
+  public double[] getSiteRatingCurveW(double[] ambientTemperaturesC) {
+    double[] out = new double[ambientTemperaturesC.length];
+    for (int i = 0; i < out.length; i++) {
+      out[i] = getAvailablePowerAtAmbientC(ambientTemperaturesC[i]);
+    }
+    return out;
+  }
+
+  /**
+   * Whether the full-load exhaust temperature at the ambient temperature exceeds the configured limit (so the power
+   * rating is exhaust-temperature limited rather than only ambient derated).
+   *
+   * @param ambientTemperatureK ambient air temperature [K]
+   * @return true when a limit is set and exceeded at full load
+   */
+  private boolean isExhaustLimitActive(double ambientTemperatureK) {
+    return maxExhaustTemperatureK > 0.0 && performanceMap != null && spec != null && performanceMap
+        .getFullLoadExhaustTemperature(spec.getExhaustTemperatureK(), ambientTemperatureK) > maxExhaustTemperatureK;
+  }
+
+  /**
+   * Set an exhaust-temperature limit for the power rating. When the full-load exhaust temperature at the ambient
+   * temperature is above the limit the available power is cut by {@code exhaustLimitPowerLossPerKelvin} (default 1 %
+   * per kelvin) per kelvin of excess, floored at 30 % of the site power.
+   *
+   * @param limitK exhaust temperature limit [K]; 0 or negative removes the limit
+   */
+  public void setMaxExhaustTemperatureK(double limitK) {
+    this.maxExhaustTemperatureK = Math.max(0.0, limitK);
+  }
+
+  /**
+   * Get the exhaust temperature limit.
+   *
+   * @return limit [K], 0 when none
+   */
+  public double getMaxExhaustTemperatureK() {
+    return maxExhaustTemperatureK;
+  }
+
+  /**
+   * Set the power sensitivity used when the exhaust-temperature limit is exceeded.
+   *
+   * @param fractionPerKelvin fraction of site power lost per kelvin of excess full-load exhaust temperature
+   */
+  public void setExhaustLimitPowerLossPerKelvin(double fractionPerKelvin) {
+    this.exhaustLimitPowerLossPerKelvin = Math.max(0.0, fractionPerKelvin);
+  }
+
+  /**
+   * Whether the last run was exhaust-temperature limited.
+   *
+   * @return true if the exhaust-temperature limit reduced the available power
+   */
+  public boolean isExhaustTemperatureLimited() {
+    return exhaustTemperatureLimited;
+  }
+
+  /**
+   * Get the stored ambient air temperature.
+   *
+   * @return ambient temperature [K]
+   */
+  public double getAmbientTemperatureK() {
+    return ambientTemperatureK;
+  }
+
+  /**
+   * Set the ambient air temperature in degrees Celsius.
+   *
+   * @param temperatureC ambient temperature [deg C]
+   */
+  public void setAmbientTemperatureC(double temperatureC) {
+    this.ambientTemperatureK = temperatureC + 273.15;
+  }
+
+  /**
+   * Set the mean exhaust-gas specific heat used for waste-heat duties.
+   *
+   * @param cpKJPerKgK specific heat [kJ/kg/K], typically 1.05 to 1.15 for GT exhaust
+   */
+  public void setExhaustSpecificHeatKJPerKgK(double cpKJPerKgK) {
+    if (cpKJPerKgK > 0.0) {
+      this.exhaustCpKJPerKgK = cpKJPerKgK;
+    }
+  }
+
+  /**
+   * Heat in the exhaust gas above a stack (gas outlet) temperature at the last run condition.
+   *
+   * @param stackTemperatureK minimum gas outlet temperature [K], e.g. heating-medium return plus pinch
+   * @return exhaust heat above the stack temperature [W]; 0 when the unit is off or the exhaust is colder
+   */
+  public double getExhaustHeatAboveW(double stackTemperatureK) {
+    double dT = exhaustTemperatureK - stackTemperatureK;
+    if (dT <= 0.0 || exhaustMassFlowKgPerS <= 0.0) {
+      return 0.0;
+    }
+    return exhaustMassFlowKgPerS * exhaustCpKJPerKgK * 1.0e3 * dT;
+  }
+
+  /**
+   * Waste-heat recovery unit (WHRU) duty from the exhaust of the last run: the exhaust heat above the stack temperature
+   * times a recovery effectiveness.
+   *
+   * @param stackTemperatureK minimum gas outlet temperature [K]
+   * @param effectiveness fraction of the available exhaust heat transferred (0 to 1)
+   * @return recovered heat duty [W]
+   */
+  public double getWasteHeatRecoveryDutyW(double stackTemperatureK, double effectiveness) {
+    return getExhaustHeatAboveW(stackTemperatureK) * Math.max(0.0, Math.min(1.0, effectiveness));
+  }
+
+  /**
+   * Fuel energy input rate (LHV basis) of the last run.
+   *
+   * @return fuel energy rate [W]
+   */
+  public double getFuelEnergyRateW() {
+    return fuelEnergyRateW;
+  }
+
+  /**
+   * Shaft power actually delivered in the last run, limited by the available power.
+   *
+   * @return delivered shaft power [W]
+   */
+  public double getShaftPowerW() {
+    return shaftPowerW;
   }
 
   // ── Getters ───────────────────────────────────────────────────────────

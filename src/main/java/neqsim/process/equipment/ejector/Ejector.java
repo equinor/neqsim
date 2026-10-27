@@ -284,7 +284,11 @@ public class Ejector extends ProcessEquipmentBaseClass
   public void run(UUID id) {
     motiveStream.run();
     suctionStream.run();
-    mixedStream = motiveStream.clone();
+    // Keep the same outlet stream object across runs so downstream equipment that was connected to
+    // getOutStream()/getMixedStream() before the first run keeps receiving the updated results.
+    if (mixedStream == null) {
+      mixedStream = motiveStream.clone();
+    }
 
     double suctionPressure = suctionStream.getPressure("bara");
     double mDotMotive = motiveStream.getFlowRate("kg/sec");
