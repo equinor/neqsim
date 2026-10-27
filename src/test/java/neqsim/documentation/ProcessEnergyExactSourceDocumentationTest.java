@@ -116,4 +116,3 @@ class ProcessEnergyExactSourceDocumentationTest {
     return new URLClassLoader(new URL[] {classes.toUri().toURL()}, getClass().getClassLoader());
   }
 }
-
