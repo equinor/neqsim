@@ -154,6 +154,14 @@ family by family with inventory, controller, conservation, timestep, and replay 
 becomes available for those flowsheets. An open transaction is an in-memory trial and is deliberately not serialized as
 a restart checkpoint.
 
+Concrete `Separator` and `ThreePhaseSeparator` instances are covered participants. Before a dynamic inventory update,
+they checkpoint the vessel inventory, phase and level state, outlet streams, and their owned inlet mixer without
+replacing any process-graph object. A returned VU state is accepted only when pressure, temperature, volume, and energy
+are finite, both relative volume and internal-energy residuals are at most $10^{-3}$, and the multicomponent optimized
+VU operation reports convergence. Rejection restores separator-owned state before propagating a deterministic failure;
+the enclosing process or model transaction then restores the clock and other participants. Separator subclasses remain
+blocked until they extend the snapshot for every subclass-owned mutable field.
+
 Scheduler rollback restores pending/fired membership, not arbitrary external side effects from event or alarm callbacks.
 Actions used inside a rejectable trial must mutate covered participants or defer external effects until commit. Passing
 transaction coverage proves rollback mechanics only; it does not establish physical validation, numerical convergence,

@@ -2,12 +2,14 @@ package neqsim.process.equipment.mixer;
 
 import java.awt.Container;
 import java.awt.FlowLayout;
+import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -18,6 +20,7 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.mixer.MixerMechanicalDesign;
@@ -97,6 +100,9 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   private boolean lastDoMultiPhaseCheck = true;
   private double lastOutTemperature = Double.NaN;
   private double lastSpecifiedOutletPressure = Double.NaN;
+
+  /** Stable identity used to reject a checkpoint captured from another mixer. */
+  private String transientStateIdentity = UUID.randomUUID().toString();
 
   /**
    * Setter for the field <code>doMultiPhaseCheck</code>.
@@ -562,6 +568,155 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
       return Collections.singletonList(mixedStream);
     }
     return Collections.emptyList();
+  }
+
+  /**
+   * Captures the mutable state changed by {@link #run(UUID)} for an owning equipment transaction.
+   *
+   * <p>
+   * A separator owns an internal mixer that is not registered independently in the process system. The separator uses
+   * this checkpoint to restore the mixer in place if its subsequent vessel flash is rejected.
+   * </p>
+   *
+   * @return immutable mixer checkpoint
+   */
+  public TransientState captureTransientState() {
+    String coverageIssue = getTransientStateCoverageIssue();
+    if (coverageIssue != null) {
+      throw new IllegalStateException("Cannot capture mixer '" + getName() + "': " + coverageIssue);
+    }
+    return new TransientState(this);
+  }
+
+  /**
+   * Reports whether this mixer's mutable run state can be restored in place.
+   *
+   * @return null when coverage is complete, otherwise a deterministic blocker
+   */
+  public String getTransientStateCoverageIssue() {
+    if (!(mixedStream instanceof Stream) || mixedStream.getClass() != Stream.class) {
+      return "mixer outlet must be a concrete local Stream";
+    }
+    return ((Stream) mixedStream).getTransientStateCoverageIssue();
+  }
+
+  /**
+   * Restores mutable run state without replacing the mixer or its outlet stream object.
+   *
+   * @param snapshot checkpoint returned by {@link #captureTransientState()}
+   */
+  public void restoreTransientState(TransientState snapshot) {
+    Objects.requireNonNull(snapshot, "mixer transient snapshot cannot be null");
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException("Transient snapshot belongs to another mixer");
+    }
+    if (!(mixedStream instanceof Stream) || mixedStream.getClass() != Stream.class) {
+      throw new IllegalStateException("Mixer outlet topology changed during a rejected transient step");
+    }
+
+    restoreBaseTransientState(snapshot.baseState);
+    ((Stream) mixedStream).restoreTransientState(snapshot.mixedStreamState);
+    templateStreamIndex = snapshot.templateStreamIndex;
+    lowestPressure = snapshot.lowestPressure;
+    highestInletPressure = snapshot.highestInletPressure;
+    pressureMismatch = snapshot.pressureMismatch;
+    lastInletTemperatures = cloneArray(snapshot.lastInletTemperatures);
+    lastInletPressures = cloneArray(snapshot.lastInletPressures);
+    lastInletFlowRates = cloneArray(snapshot.lastInletFlowRates);
+    lastInletCompositions = cloneArray(snapshot.lastInletCompositions);
+    lastInletSpecifications = snapshot.lastInletSpecifications == null ? null
+        : snapshot.lastInletSpecifications.clone();
+    lastNumberOfInputStreams = snapshot.lastNumberOfInputStreams;
+    lastIsSetOutTemperature = snapshot.lastIsSetOutTemperature;
+    lastDoMultiPhaseCheck = snapshot.lastDoMultiPhaseCheck;
+    lastOutTemperature = snapshot.lastOutTemperature;
+    lastSpecifiedOutletPressure = snapshot.lastSpecifiedOutletPressure;
+  }
+
+  /**
+   * Returns the stable identity for this mixer checkpoint owner.
+   *
+   * @return mixer checkpoint identity
+   */
+  private String getTransientStateIdentity() {
+    if (transientStateIdentity == null || transientStateIdentity.trim().isEmpty()) {
+      transientStateIdentity = UUID.randomUUID().toString();
+    }
+    return "equipment:mixer:" + transientStateIdentity;
+  }
+
+  /**
+   * Clones a nullable primitive array.
+   *
+   * @param values values to clone
+   * @return independent clone, or null
+   */
+  private static double[] cloneArray(double[] values) {
+    return values == null ? null : values.clone();
+  }
+
+  /**
+   * Deep-clones a nullable matrix.
+   *
+   * @param values values to clone
+   * @return independent clone, or null
+   */
+  private static double[][] cloneArray(double[][] values) {
+    if (values == null) {
+      return null;
+    }
+    double[][] result = new double[values.length][];
+    for (int row = 0; row < values.length; row++) {
+      result[row] = cloneArray(values[row]);
+    }
+    return result;
+  }
+
+  /** Serializable checkpoint for state mutated by one mixer run. */
+  public static final class TransientState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String stateIdentity;
+    private final ProcessEquipmentTransientState baseState;
+    private final Stream.TransientState mixedStreamState;
+    private final int templateStreamIndex;
+    private final double lowestPressure;
+    private final double highestInletPressure;
+    private final boolean pressureMismatch;
+    private final double[] lastInletTemperatures;
+    private final double[] lastInletPressures;
+    private final double[] lastInletFlowRates;
+    private final double[][] lastInletCompositions;
+    private final String[] lastInletSpecifications;
+    private final int lastNumberOfInputStreams;
+    private final boolean lastIsSetOutTemperature;
+    private final boolean lastDoMultiPhaseCheck;
+    private final double lastOutTemperature;
+    private final double lastSpecifiedOutletPressure;
+
+    /**
+     * Creates a mixer checkpoint.
+     *
+     * @param source mixer to capture
+     */
+    private TransientState(Mixer source) {
+      stateIdentity = source.getTransientStateIdentity();
+      baseState = source.captureBaseTransientState();
+      mixedStreamState = ((Stream) source.mixedStream).captureTransientState();
+      templateStreamIndex = source.templateStreamIndex;
+      lowestPressure = source.lowestPressure;
+      highestInletPressure = source.highestInletPressure;
+      pressureMismatch = source.pressureMismatch;
+      lastInletTemperatures = cloneArray(source.lastInletTemperatures);
+      lastInletPressures = cloneArray(source.lastInletPressures);
+      lastInletFlowRates = cloneArray(source.lastInletFlowRates);
+      lastInletCompositions = cloneArray(source.lastInletCompositions);
+      lastInletSpecifications = source.lastInletSpecifications == null ? null : source.lastInletSpecifications.clone();
+      lastNumberOfInputStreams = source.lastNumberOfInputStreams;
+      lastIsSetOutTemperature = source.lastIsSetOutTemperature;
+      lastDoMultiPhaseCheck = source.lastDoMultiPhaseCheck;
+      lastOutTemperature = source.lastOutTemperature;
+      lastSpecifiedOutletPressure = source.lastSpecifiedOutletPressure;
+    }
   }
 
   /** {@inheritDoc} */
