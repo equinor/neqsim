@@ -920,8 +920,9 @@ class ThreePhaseSeparatorTest {
     // Switch to transient mode
     separator.setCalculateSteadyState(false);
 
-    double timeStep = 10.0; // 10 seconds per step
-    int numSteps = 120; // 1200 seconds total
+    // A one-second controller interval remains inside the validated transient V/U closure range.
+    double timeStep = 1.0;
+    int numSteps = 120; // 120 seconds total
     double currentTime = 0.0;
 
     // Data collection
@@ -939,16 +940,16 @@ class ThreePhaseSeparatorTest {
     for (int i = 0; i < numSteps; i++) {
       currentTime = i * timeStep;
 
-      // Simulate disturbance at t=400s: increase inlet flow rate
+      // Simulate disturbance at t=40s: increase inlet flow rate
       if (i == 40) {
-        logger.info("\n*** Disturbance at t=400s: Inlet flow increased to 6000 kg/hr ***");
+        logger.info("\n*** Disturbance at t=40s: Inlet flow increased to 6000 kg/hr ***");
         inletStream.setFlowRate(6000.0, "kg/hr");
         inletStream.run();
       }
 
-      // Simulate disturbance at t=800s: decrease inlet flow rate
+      // Simulate disturbance at t=80s: decrease inlet flow rate
       if (i == 80) {
-        logger.info("\n*** Disturbance at t=800s: Inlet flow decreased to 4000 kg/hr ***");
+        logger.info("\n*** Disturbance at t=80s: Inlet flow decreased to 4000 kg/hr ***");
         inletStream.setFlowRate(4000.0, "kg/hr");
         inletStream.run();
       }
