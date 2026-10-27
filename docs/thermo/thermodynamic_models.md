@@ -316,6 +316,17 @@ to molecular type:
   columns in `COMP.csv`); those without a regressed value keep zero translation
   because their fitted CPA co-volume $b$ already reproduces the liquid density.
 
+`SystemUMRCPAvolcor` is the separate EOS-level translation variant. It includes
+the translation in the Helmholtz energy and fugacity derivatives, and disables
+the additional density-only correction. Its mixture translation and derivative
+caches must reflect the current component amounts before solving the volume or
+evaluating fugacity. Repeated initialization is not a substitute for that ordering.
+`PhaseUMRCPAvolcorStateLifecycleTest` checks first-initialization EOS pressure,
+partial molar volumes and fugacity derivatives after changes in phase amount and
+composition, plus conserved methane/water gas/aqueous equilibria on fresh,
+reused and cloned fluids over 280–320 K and 10–80 bara. These are numerical
+consistency regressions, not an experimental-accuracy qualification.
+
 **Typical applications**
 
 - Natural-gas dehydration with TEG (water dew-point, glycol losses).

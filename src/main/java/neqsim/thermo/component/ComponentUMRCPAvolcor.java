@@ -121,7 +121,6 @@ public class ComponentUMRCPAvolcor extends ComponentUMRCPA {
   @Override
   public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
       int numberOfComponents, int initType) {
-    super.Finit(phase, temp, pres, totMoles, beta, numberOfComponents, initType);
     Ci = ((PhaseUMRCPAvolcor) phase).calcCi(componentNumber, phase, temp, pres, numberOfComponents);
     if (initType >= 2) {
       CiT = ((PhaseUMRCPAvolcor) phase).calcCiT(componentNumber, phase, temp, pres, numberOfComponents);
@@ -131,6 +130,8 @@ public class ComponentUMRCPAvolcor extends ComponentUMRCPA {
         Cij[j] = ((PhaseUMRCPAvolcor) phase).calcCij(componentNumber, j, phase, temp, pres, numberOfComponents);
       }
     }
+    // The inherited partial molar volume evaluates dFdNdV, which consumes the current Ci.
+    super.Finit(phase, temp, pres, totMoles, beta, numberOfComponents, initType);
   }
 
   /**
