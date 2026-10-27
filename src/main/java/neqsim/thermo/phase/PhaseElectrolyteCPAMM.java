@@ -138,6 +138,8 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   protected double srWT = 0.0;
   /** Second temperature derivative of W [m³·mol/K²]. */
   protected double srWTT = 0.0;
+  /** Exact derivative state for the extended Debye-Huckel scalar. */
+  private transient DebyeHuckelDerivativeState debyeHuckelDerivativeState;
 
   /**
    * Constructor for PhaseElectrolyteCPAMM.
@@ -162,6 +164,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     PhaseElectrolyteCPAMM clonedPhase = null;
     try {
       clonedPhase = (PhaseElectrolyteCPAMM) super.clone();
+      clonedPhase.debyeHuckelDerivativeState = null;
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
@@ -207,6 +210,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
       tauDH = 1.0;
       tauDHprime = 0.0;
     }
+    debyeHuckelDerivativeState = new DebyeHuckelDerivativeState(this);
 
     // Compute W/WT/WTT from the Furst electrolyte mixing rule (wij from Stokes diameter)
     if (shortRangeOn && electrolyteMixingRule != null) {
@@ -257,7 +261,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     if (u < 1e-8) {
       return u * u * u / 3.0;
     }
-    return Math.log(1.0 + u) - u + 0.5 * u * u;
+    return Math.log1p(u) - u + 0.5 * u * u;
   }
 
   /**
@@ -281,8 +285,10 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * @return τ [-]
    */
   static double calcTauDH(double chi) {
-    if (chi < 1e-6) {
-      return 1.0;
+    if (chi < 0.05) {
+      return 1.0 - 0.75 * chi + 0.6 * chi * chi - 0.5 * chi * chi * chi + 3.0 / 7.0 * Math.pow(chi, 4.0)
+          - 0.375 * Math.pow(chi, 5.0) + Math.pow(chi, 6.0) / 3.0 - 0.3 * Math.pow(chi, 7.0)
+          + 3.0 / 11.0 * Math.pow(chi, 8.0) - 0.25 * Math.pow(chi, 9.0) + 3.0 / 13.0 * Math.pow(chi, 10.0);
     }
     return 3.0 * psiDH(chi) / (chi * chi * chi);
   }
@@ -295,14 +301,54 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * @return dτ/dχ [-]
    */
   static double calcTauDHprime(double chi) {
-    if (chi < 1e-6) {
-      return 0.0;
+    if (chi < 0.05) {
+      return -0.75 + 1.2 * chi - 1.5 * chi * chi + 12.0 / 7.0 * chi * chi * chi - 15.0 / 8.0 * Math.pow(chi, 4.0)
+          + 2.0 * Math.pow(chi, 5.0) - 2.1 * Math.pow(chi, 6.0) + 24.0 / 11.0 * Math.pow(chi, 7.0)
+          - 2.25 * Math.pow(chi, 8.0) + 30.0 / 13.0 * Math.pow(chi, 9.0);
     }
     // τ(χ) = 3ψ(χ)/χ³
     // τ'(χ) = 3[ψ'(χ)χ³ - 3χ²ψ(χ)] / χ⁶ = 3[ψ'χ - 3ψ] / χ⁴
     double psi = psiDH(chi);
     double psip = psiDHprime(chi);
     return 3.0 * (psip * chi - 3.0 * psi) / (chi * chi * chi * chi);
+  }
+
+  /**
+   * Second derivative of the DH screening factor.
+   *
+   * @param chi dimensionless screening parameter κd
+   * @return d²τ/dχ² [-]
+   */
+  static double calcTauDHsecond(double chi) {
+    if (chi < 0.05) {
+      return 1.2 - 3.0 * chi + 36.0 / 7.0 * chi * chi - 7.5 * chi * chi * chi + 10.0 * Math.pow(chi, 4.0)
+          - 63.0 / 5.0 * Math.pow(chi, 5.0) + 168.0 / 11.0 * Math.pow(chi, 6.0) - 18.0 * Math.pow(chi, 7.0)
+          + 270.0 / 13.0 * Math.pow(chi, 8.0);
+    }
+    double psi = psiDH(chi);
+    double psiFirst = psiDHprime(chi);
+    double psiSecond = 1.0 - 1.0 / ((1.0 + chi) * (1.0 + chi));
+    return 3.0 * psiSecond / Math.pow(chi, 3.0) - 18.0 * psiFirst / Math.pow(chi, 4.0)
+        + 36.0 * psi / Math.pow(chi, 5.0);
+  }
+
+  /**
+   * Third derivative of the DH screening factor.
+   *
+   * @param chi dimensionless screening parameter κd
+   * @return d³τ/dχ³ [-]
+   */
+  static double calcTauDHthird(double chi) {
+    if (chi < 0.05) {
+      return -3.0 + 72.0 / 7.0 * chi - 22.5 * chi * chi + 40.0 * chi * chi * chi - 63.0 * Math.pow(chi, 4.0)
+          + 1008.0 / 11.0 * Math.pow(chi, 5.0) - 126.0 * Math.pow(chi, 6.0) + 2160.0 / 13.0 * Math.pow(chi, 7.0);
+    }
+    double psi = psiDH(chi);
+    double psiFirst = psiDHprime(chi);
+    double psiSecond = 1.0 - 1.0 / ((1.0 + chi) * (1.0 + chi));
+    double psiThird = 2.0 / Math.pow(1.0 + chi, 3.0);
+    return 3.0 * psiThird / Math.pow(chi, 3.0) - 27.0 * psiSecond / Math.pow(chi, 4.0)
+        + 108.0 * psiFirst / Math.pow(chi, 5.0) - 180.0 * psi / Math.pow(chi, 6.0);
   }
 
   /**
@@ -330,6 +376,59 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    */
   public double getMeanIonDiameter() {
     return meanIonDiameter;
+  }
+
+  /**
+   * Gets the exact fixed-volume Debye-Huckel component derivative.
+   *
+   * @param component component index
+   * @return dF/dn for the extended Debye-Huckel scalar
+   */
+  public double getDebyeHuckelDerivativeN(int component) {
+    return getDebyeHuckelDerivativeState().getDN(component);
+  }
+
+  /**
+   * Gets the exact component-temperature Debye-Huckel derivative.
+   *
+   * @param component component index
+   * @return d²F/(dn dT)
+   */
+  public double getDebyeHuckelDerivativeNT(int component) {
+    return getDebyeHuckelDerivativeState().getDNT(component);
+  }
+
+  /**
+   * Gets the exact component-volume Debye-Huckel derivative in NeqSim's native volume coordinate.
+   *
+   * @param component component index
+   * @return d²F/(dn dV)
+   */
+  public double getDebyeHuckelDerivativeNV(int component) {
+    return getDebyeHuckelDerivativeState().getDNV(component) * 1e-5;
+  }
+
+  /**
+   * Gets an exact component Hessian entry for the extended Debye-Huckel scalar.
+   *
+   * @param first first component index
+   * @param second second component index
+   * @return d²F/(dn_first dn_second)
+   */
+  public double getDebyeHuckelDerivativeNN(int first, int second) {
+    return getDebyeHuckelDerivativeState().getDNN(first, second);
+  }
+
+  /**
+   * Gets or rebuilds the derivative state after deserialization.
+   *
+   * @return current immutable derivative state
+   */
+  private DebyeHuckelDerivativeState getDebyeHuckelDerivativeState() {
+    if (debyeHuckelDerivativeState == null) {
+      debyeHuckelDerivativeState = new DebyeHuckelDerivativeState(this);
+    }
+    return debyeHuckelDerivativeState;
   }
 
   /**
@@ -1498,12 +1597,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * @return F^DH contribution to Helmholtz energy [-]
    */
   public double FDebyeHuckel() {
-    if (kappa < 1e-30) {
-      return 0.0;
-    }
-    double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // Total volume in m³
-    double kappa3 = kappa * kappa * kappa;
-    return -kappa3 * V / (12.0 * Math.PI * AVOGADRO) * tauDH;
+    return getDebyeHuckelDerivativeState().getValue();
   }
 
   /**
@@ -1517,13 +1611,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * @return dF^DH/dT [-/K]
    */
   public double dFDebyeHuckeldT() {
-    if (kappa < 1e-30) {
-      return 0.0;
-    }
-    double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // Total volume in m³
-    double dKappa3dT = 3.0 * kappa * kappa * kappadT;
-
-    return -V / (12.0 * Math.PI * AVOGADRO) * dKappa3dT * tauDH;
+    return getDebyeHuckelDerivativeState().getDT();
   }
 
   /**
@@ -1534,14 +1622,10 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * this is exact.
    * </p>
    *
-   * @return dF^DH/dV [1/m³]
+   * @return dF^DH/dV in NeqSim's {@code 1e-5 m3} volume coordinate
    */
   public double dFDebyeHuckeldV() {
-    if (kappa < 1e-30) {
-      return 0.0;
-    }
-    double kappa3 = kappa * kappa * kappa;
-    return -kappa3 * 1e-5 / (12.0 * Math.PI * AVOGADRO) * tauDH;
+    return getDebyeHuckelDerivativeState().getDV() * 1e-5;
   }
 
   /**
@@ -2108,22 +2192,19 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   /**
    * Second volume derivative of Debye-Hückel term. d²F^DH/dV²
    *
-   * @return d²F^DH/dV² [1/m⁶]
+   * @return d²F^DH/dV² in NeqSim's {@code 1e-5 m3} volume coordinate
    */
   public double dFDebyeHuckeldVdV() {
-    // F^DH = -κ³Vm/(12πRT)
-    // dF/dV = -κ³/(12πRT * n) * 1e-5
-    // d²F/dV² = 0 (linear in V at constant κ)
-    return 0.0;
+    return getDebyeHuckelDerivativeState().getDVV() * 1e-10;
   }
 
   /**
    * Third volume derivative of Debye-Hückel term. d³F^DH/dV³
    *
-   * @return d³F^DH/dV³ [1/m⁹]
+   * @return d³F^DH/dV³ in NeqSim's {@code 1e-5 m3} volume coordinate
    */
   public double dFDebyeHuckeldVdVdV() {
-    return 0.0;
+    return getDebyeHuckelDerivativeState().getDVVV() * 1e-15;
   }
 
   /**
@@ -2136,14 +2217,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * @return d²F^DH/dT² [-/K²]
    */
   public double dFDebyeHuckeldTdT() {
-    if (kappa < 1e-30) {
-      return 0.0;
-    }
-    double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // Total volume in m³
-    double kappa3 = kappa * kappa * kappa;
-
-    // Simplified: main contribution from 1/T² dependence
-    return -2.0 * V / (12.0 * Math.PI * R * AVOGADRO) * kappa3 / (temperature * temperature * temperature) * tauDH;
+    return getDebyeHuckelDerivativeState().getDTT();
   }
 
   /**
@@ -2153,14 +2227,10 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * Uses extended DH screening factor τ.
    * </p>
    *
-   * @return d²F^DH/dTdV [1/(m³·K)]
+   * @return d²F^DH/dTdV in NeqSim's {@code 1e-5 m3} volume coordinate
    */
   public double dFDebyeHuckeldTdV() {
-    if (kappa < 1e-30) {
-      return 0.0;
-    }
-    double kappa3 = kappa * kappa * kappa;
-    return kappa3 * 1e-5 / (12.0 * Math.PI * R * AVOGADRO * temperature * temperature) * tauDH;
+    return getDebyeHuckelDerivativeState().getDTV() * 1e-5;
   }
 
   /**
