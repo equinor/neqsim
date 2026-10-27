@@ -72,6 +72,12 @@ checks and for the numerical dry-gas friction extension below one ppm liquid by
 flowing volume. See the [pipeline guide](../../docs/process/PipeBeggsAndBrills.md#friction-pressure-drop)
 for its qualification limits.
 
+For volume-translated UMR-CPA, refresh translation inputs and invalidate derivative
+caches before the inherited volume and fugacity calculations, as in translated PR.
+Check component balance and fugacity equality after warm composition or temperature
+changes with `PhaseUMRCPAvolcorTest`; a plausible phase count alone misses stale
+translation data. See the [CPA mixing-rule guidance](../../docs/thermo/mixing_rules_guide.md#6-cpa-mixing-rules).
+
 For parallel standard modified-NRTL SRK/PR-HV calculations, finish configuring and
 cloning each worker fluid before launching its own operations object. The HV clone
 path detaches parameters, GE and derivative work state, including runtime-tuned

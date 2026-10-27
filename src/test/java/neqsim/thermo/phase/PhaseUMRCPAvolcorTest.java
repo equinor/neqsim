@@ -2,6 +2,9 @@ package neqsim.thermo.phase;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import neqsim.thermo.ThermodynamicModelTest;
 import neqsim.thermo.component.ComponentUMRCPAvolcor;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemUMRCPAEoS;
@@ -121,23 +124,118 @@ public class PhaseUMRCPAvolcorTest {
     Assertions.assertTrue(Double.isFinite(jt), "Joule-Thomson coefficient must be finite");
   }
 
-  @Test
-  void waterMethaneMixtureFlashesAndDensitiesArePositive() {
+  /**
+   * Checks phase equilibrium and component conservation through warm temperature changes.
+   *
+   * @param multiphase whether to run explicit multiphase stability checks
+   */
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void waterMethaneMixtureFlashesAndDensitiesArePositive(boolean multiphase) {
     SystemInterface system = new SystemUMRCPAvolcor(298.15, 50.0);
     system.addComponent("methane", 0.9);
     system.addComponent("water", 0.1);
     system.setMixingRule("HV", "UNIFAC_UMRPRU");
-    system.setMultiPhaseCheck(true);
+    system.setMultiPhaseCheck(multiphase);
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
-    ops.TPflash();
-    system.initProperties();
-
-    Assertions.assertTrue(system.getNumberOfPhases() >= 2,
-        "methane/water at 298 K, 50 bara should split into at least two phases");
-    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      double rho = system.getPhase(i).getDensity("kg/m3");
-      Assertions.assertTrue(rho > 0.0 && Double.isFinite(rho), "all phase densities must be positive and finite");
+    for (double temperature : new double[] {298.15, 318.15, 278.15, 298.15}) {
+      system.setTemperature(temperature);
+      double previousGasBeta = Double.NaN;
+      for (int repeat = 0; repeat < 2; repeat++) {
+        ops.TPflash();
+        system.initProperties();
+        Assertions.assertEquals(2, system.getNumberOfPhases(), "methane/water must retain gas and aqueous phases");
+        Assertions.assertTrue(system.hasPhaseType("gas"));
+        Assertions.assertTrue(system.hasPhaseType("aqueous"));
+        double betaSum = 0.0;
+        for (int i = 0; i < system.getNumberOfPhases(); i++) {
+          double rho = system.getPhase(i).getDensity("kg/m3");
+          Assertions.assertTrue(rho > 0.0 && Double.isFinite(rho), "all phase densities must be positive and finite");
+          Assertions.assertTrue(system.getBeta(i) > 0.0 && system.getBeta(i) < 1.0);
+          betaSum += system.getBeta(i);
+          double xSum = 0.0;
+          for (int component = 0; component < system.getNumberOfComponents(); component++) {
+            xSum += system.getPhase(i).getComponent(component).getx();
+          }
+          Assertions.assertEquals(1.0, xSum, 1.0e-10, "phase compositions must be normalized");
+        }
+        Assertions.assertEquals(1.0, betaSum, 1.0e-10, "phase fractions must be normalized");
+        for (int component = 0; component < system.getNumberOfComponents(); component++) {
+          double overall = 0.0;
+          for (int i = 0; i < system.getNumberOfPhases(); i++) {
+            overall += system.getBeta(i) * system.getPhase(i).getComponent(component).getx();
+          }
+          Assertions.assertEquals(system.getPhase(0).getComponent(component).getz(), overall, 1.0e-8,
+              "each feed component must be conserved");
+          double logFugacity0 = Math.log(system.getPhase(0).getComponent(component).getx())
+              + system.getPhase(0).getComponent(component).getLogFugacityCoefficient();
+          double logFugacity1 = Math.log(system.getPhase(1).getComponent(component).getx())
+              + system.getPhase(1).getComponent(component).getLogFugacityCoefficient();
+          Assertions.assertEquals(logFugacity0, logFugacity1, 1.0e-8, "phase fugacities must agree");
+        }
+        double gasBeta = system.getPhase("gas").getBeta();
+        if (repeat > 0) {
+          Assertions.assertEquals(previousGasBeta, gasBeta, 1.0e-8, "repeated flashes must preserve the phase split");
+        }
+        previousGasBeta = gasBeta;
+      }
     }
+  }
+
+  /** Checks translation derivatives after composition, mole scale and initialization-level changes. */
+  @Test
+  void translationDerivativesFollowCurrentInventory() {
+    SystemInterface system = new SystemUMRCPAvolcor(350.0, 30.0);
+    system.addComponent("methane", 0.7);
+    system.addComponent("ethane", 0.3);
+    system.setMixingRule("HV", "UNIFAC_UMRPRU");
+    system.init(0);
+    system.setNumberOfPhases(1);
+    for (double methaneFraction : new double[] {0.7, 0.2, 0.9, 0.7}) {
+      system.setMolarComposition(new double[] {methaneFraction, 1.0 - methaneFraction});
+      system.setTotalNumberOfMoles(10.0 * methaneFraction);
+      for (int level : new int[] {1, 3, 1}) {
+        system.init(level);
+        PhaseUMRCPAvolcor phase = (PhaseUMRCPAvolcor) system.getPhase(0);
+        for (int component = 0; component < system.getNumberOfComponents(); component++) {
+          ComponentUMRCPAvolcor translated = (ComponentUMRCPAvolcor) phase.getComponent(component);
+          Assertions.assertEquals(translated.getc(), translated.getCi(), 1.0e-12,
+              "linear translation derivative must use the current component inventory");
+        }
+        Assertions.assertEquals(system.getPressure(), phase.calcPressure(), 1.0e-7,
+            "the translated volume must satisfy the current EOS pressure equation");
+      }
+    }
+  }
+
+  /**
+   * Checks translated fugacity identities and numerical derivatives in well-conditioned gas states.
+   *
+   * @param associating whether to include undersaturated water instead of ethane
+   */
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void translatedGasFugacityDerivativesAreConsistent(boolean associating) {
+    SystemInterface system = new SystemUMRCPAvolcor(350.0, 30.0);
+    system.addComponent("methane", associating ? 0.999 : 0.7);
+    system.addComponent(associating ? "water" : "ethane", associating ? 0.001 : 0.3);
+    system.setMixingRule("HV", "UNIFAC_UMRPRU");
+    system.setMultiPhaseCheck(true);
+    new ThermodynamicOperations(system).TPflash();
+    system.init(3);
+    Assertions.assertEquals(1, system.getNumberOfPhases());
+    ThermodynamicModelTest modelTest = new ThermodynamicModelTest(system);
+    Assertions.assertTrue(modelTest.checkFugacityCoefficients());
+    Assertions.assertTrue(modelTest.checkFugacityCoefficientsDP());
+    Assertions.assertTrue(modelTest.checkFugacityCoefficientsDT());
+    Assertions.assertTrue(modelTest.checkFugacityCoefficientsDn2());
+    if (!associating) {
+      // The stricter CPA composition identity has the existing limitation documented in
+      // SystemUMRCPAEoSPaperValidationTest, independent of the volume translation.
+      Assertions.assertTrue(modelTest.checkFugacityCoefficientsDn());
+    }
+    modelTest.setMaxError(1.0e-5);
+    Assertions.assertTrue(modelTest.checkNumerically());
   }
 
   /**

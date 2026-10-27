@@ -633,6 +633,15 @@ temperature-independent Peneloux translation as a constant. A stored database
 temperature coefficient does not enter that translation expression and must not
 be substituted for its derivative.
 
+`SystemUMRCPAvolcor` refreshes the extensive translation and its derivative caches
+after component initialization and before solving the volume or evaluating
+fugacities. This ordering also applies after composition or phase-inventory changes;
+using the preceding inventory's translation can corrupt the aqueous phase split.
+`PhaseUMRCPAvolcorTest` checks the translation derivatives and EOS pressure equation,
+plus repeated methane/water flashes with component conservation and phase-fugacity
+equality. These are numerical consistency checks, not experimental qualification
+of the UMR-CPA parameter set.
+
 `SystemPrCPA` uses the existing PR-based CPA mass-action solver and analytical
 site responses, with its own generic PR-CPA component parameters and PR alpha.
 It does not select the dedicated UMR-CPA parameter or alpha family merely

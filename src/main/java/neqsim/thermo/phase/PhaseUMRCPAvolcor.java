@@ -69,21 +69,32 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   /** {@inheritDoc} */
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     cachedCi = null;
     cachedCiT = null;
     cachedCij = null;
+    super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+    if (initType == 0) {
+      // PhaseEos skips calcB at level zero, after initializing the component translations.
+      loc_C = calcC(this, temperature, pressure, numberOfComponents);
+      CT = calcCT(this, temperature, pressure, numberOfComponents);
+    }
+  }
+
+  /**
+   * Refresh translation inputs after component initialization and before the inherited volume and fugacity calculations
+   * use them.
+   *
+   * @param phase phase whose co-volume is calculated
+   * @param temperature temperature in K
+   * @param pressure pressure in bara
+   * @param numberOfComponents number of components
+   * @return extensive mixture co-volume
+   */
+  @Override
+  public double calcB(PhaseInterface phase, double temperature, double pressure, int numberOfComponents) {
     loc_C = calcC(this, temperature, pressure, numberOfComponents);
     CT = calcCT(this, temperature, pressure, numberOfComponents);
-    if (initType >= 1) {
-      ensureCiCache(numberOfComponents);
-    }
-    if (initType >= 2) {
-      ensureCiTCache(numberOfComponents);
-    }
-    if (initType >= 3) {
-      ensureCijCache(numberOfComponents);
-    }
+    return super.calcB(phase, temperature, pressure, numberOfComponents);
   }
 
   /** {@inheritDoc} */
