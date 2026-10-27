@@ -17,6 +17,7 @@ Calculation mode controls process-graph ordering. An equipment port in `CALCULAT
 
 A connected shaft-work stream makes `Pump` calculate its outlet pressure from available shaft power, inlet volumetric flow, and efficiency:
 
+<!-- energy-streams-example: pump -->
 ```java
 SystemInterface water = new SystemSrkEos(298.15, 2.0);
 water.addComponent("water", 1.0);
@@ -44,6 +45,7 @@ Without an externally connected energy stream, `Pump` keeps its existing pressur
 
 Use `EnergyBus` when several producers or consumers share a heat or electrical network. Named contributions are signed: positive values inject power and negative values withdraw power.
 
+<!-- energy-streams-example: bus -->
 ```java
 EnergyBus grid = new EnergyBus("main electrical bus", EnergyType.ELECTRICAL);
 grid.setContribution("solar", 2.0, "MW");
@@ -53,6 +55,7 @@ double reserve = grid.getNetPower("kW");
 
 `MechanicalShaft` is a shaft-work bus with convenience methods for generation and loads:
 
+<!-- energy-streams-example: shaft -->
 ```java
 MechanicalShaft shaftTrain = new MechanicalShaft("expander-compressor shaft");
 shaftTrain.setMechanicalEfficiency(0.98);
@@ -87,6 +90,7 @@ These connections remain stable when the flowsheet is executed repeatedly, and J
 
 For a state-of-the-art multi-party network, ports publish offers or requests and the bus solves one deterministic allocation. Lower priority numbers are served first; equal-priority participants share available power proportionally.
 
+<!-- energy-streams-example: allocation -->
 ```java
 EnergyBus allocatedGrid = new EnergyBus("allocated grid", EnergyType.ELECTRICAL);
 
@@ -179,6 +183,7 @@ The `neqsim.process.equipment.energy` package provides process units with explic
 
 Configure explicit supply and return states when the utility network must report physical circulation rather than only thermal power. Specific enthalpy is supplied in J/kg, allowing the values to come from NeqSim, vendor data, or another qualified property package.
 
+<!-- energy-streams-example: thermal-utility -->
 ```java
 ThermalUtilityState steamSupply =
     new ThermalUtilityState(425.0, 4.0e5, 2.8e6);
