@@ -42,8 +42,7 @@ class SystemThermoPhaseSlotLifecycleTest {
           assertEquals(originalTotal, fluid.getTotalNumberOfMoles(), TOLERANCE);
           assertComponentInventory(fluid, originalInventory);
         } else {
-          assertEquals(Math.max(0.0, originalTotal - removedTotal),
-              fluid.getTotalNumberOfMoles(), TOLERANCE);
+          assertEquals(Math.max(0.0, originalTotal - removedTotal), fluid.getTotalNumberOfMoles(), TOLERANCE);
           for (int component = 0; component < originalInventory.length; component++) {
             assertEquals(originalInventory[component] - removedInventory[component],
                 fluid.getPhase(0).getComponent(component).getNumberOfmoles(), TOLERANCE);
@@ -61,8 +60,7 @@ class SystemThermoPhaseSlotLifecycleTest {
         if (keepTotalComposition) {
           fluid.init(0);
           for (int phase = 0; phase < 3; phase++) {
-            int originalPosition = phase == 2 ? removedPosition
-                : survivorOriginalPosition(phase, removedPosition);
+            int originalPosition = phase == 2 ? removedPosition : survivorOriginalPosition(phase, removedPosition);
             assertEquals(originalTypes[originalPosition], fluid.getPhase(phase).getPhaseTypeName());
           }
         }
@@ -125,8 +123,8 @@ class SystemThermoPhaseSlotLifecycleTest {
   }
 
   private static String[] activePhaseTypes(SystemInterface fluid) {
-    return new String[] {fluid.getPhase(0).getPhaseTypeName(),
-        fluid.getPhase(1).getPhaseTypeName(), fluid.getPhase(2).getPhaseTypeName()};
+    return new String[] {fluid.getPhase(0).getPhaseTypeName(), fluid.getPhase(1).getPhaseTypeName(),
+        fluid.getPhase(2).getPhaseTypeName()};
   }
 
   private static double[] activeBetas(SystemInterface fluid) {
@@ -144,24 +142,20 @@ class SystemThermoPhaseSlotLifecycleTest {
   private static double[] phaseComponentMoles(SystemInterface fluid, int phase) {
     double[] inventory = new double[fluid.getNumberOfComponents()];
     for (int component = 0; component < inventory.length; component++) {
-      inventory[component] =
-          fluid.getPhase(phase).getComponent(component).getNumberOfMolesInPhase();
+      inventory[component] = fluid.getPhase(phase).getComponent(component).getNumberOfMolesInPhase();
     }
     return inventory;
   }
 
   private static void assertComponentInventory(SystemInterface fluid, double[] expected) {
     for (int component = 0; component < expected.length; component++) {
-      assertEquals(expected[component],
-          fluid.getPhase(0).getComponent(component).getNumberOfmoles(), TOLERANCE);
+      assertEquals(expected[component], fluid.getPhase(0).getComponent(component).getNumberOfmoles(), TOLERANCE);
     }
   }
 
-  private static void assertSurvivingOrder(SystemInterface fluid, Object[] originalPhases,
-      int removedPosition) {
+  private static void assertSurvivingOrder(SystemInterface fluid, Object[] originalPhases, int removedPosition) {
     for (int phase = 0; phase < 2; phase++) {
-      assertSame(originalPhases[survivorOriginalPosition(phase, removedPosition)],
-          fluid.getPhase(phase));
+      assertSame(originalPhases[survivorOriginalPosition(phase, removedPosition)], fluid.getPhase(phase));
     }
   }
 
