@@ -157,8 +157,10 @@ Parameters for Antoine-type vapor pressure correlations.
 For `pow10KPa`, $dP_{sat}/dT = P_{sat}\ln(10)B/(T+C)^2$; explicit base-ten
 labels keep precedence even when `ANTOINEE` is nonzero. The pressure and
 derivative therefore use the same correlation and scale during inverse-temperature
-recovery. The legacy Wagner fallback still returns zero for the derivative;
-correlation availability alone does not establish derivative support for that path.
+recovery. The Wagner fallback now also evaluates its analytical derivative. The existing
+Wagner regression checks pressure at Tc; it does not independently qualify that
+derivative or the full Wagner fit range. Correlation availability alone does not
+establish physical accuracy or a fitted temperature range.
 
 **Missing data and applicability:** `none` with zero `ANTOINEA`–`ANTOINEE`
 means no liquid-vapor correlation is available; it does not mean zero vapor
