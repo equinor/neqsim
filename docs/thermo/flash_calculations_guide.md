@@ -480,27 +480,81 @@ void PHflash(double Hspec, int type)          // type 0 = standard
 ```
 
 **Example - Joule-Thomson expansion:**
+
+<!-- flash-guide-example: ph-joule-thomson -->
 ```java
-SystemInterface fluid = new SystemSrkEos(350.0, 100.0);
-fluid.addComponent("methane", 1.0);
-fluid.setMixingRule("classic");
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-fluid.initPhysicalProperties();
+/**
+ * Runs an isenthalpic methane expansion with the public PH-flash API.
+ *
+ * @author NeqSim Development Team
+ * @version 1.0
+ */
+public final class FlashCalculationsGuidePHExample {
+  private static final Logger logger =
+      LogManager.getLogger(FlashCalculationsGuidePHExample.class);
 
-// Store inlet enthalpy
-double inletH = fluid.getEnthalpy("J");
+  /** Prevent utility-class construction. */
+  private FlashCalculationsGuidePHExample() {}
 
-// Reduce pressure (isenthalpic process)
-fluid.setPressure(10.0, "bara");
+  /**
+   * Calculates the inlet and outlet state.
+   *
+   * @return inlet temperature, outlet temperature, inlet enthalpy, outlet enthalpy,
+   *     and outlet pressure
+   */
+  public static double[] run() {
+    SystemInterface fluid = new SystemSrkEos(350.0, 100.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
 
-// Find new temperature at same enthalpy
-ops.PHflash(inletH);
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
+    fluid.init(3);
 
-System.out.println("Outlet temperature: " + fluid.getTemperature("C") + " °C");
-// Demonstrates Joule-Thomson cooling
+    double inletTemperature = fluid.getTemperature("K");
+    double inletEnthalpy = fluid.getEnthalpy("J");
+
+    fluid.setPressure(10.0, "bara");
+    operations.PHflash(inletEnthalpy);
+    fluid.init(3);
+
+    double outletTemperature = fluid.getTemperature("K");
+    double outletEnthalpy = fluid.getEnthalpy("J");
+    logger.info(
+        "Isenthalpic expansion: {} K at 100 bara to {} K at {} bara",
+        inletTemperature,
+        outletTemperature,
+        fluid.getPressure("bara"));
+
+    return new double[] {
+      inletTemperature,
+      outletTemperature,
+      inletEnthalpy,
+      outletEnthalpy,
+      fluid.getPressure("bara")
+    };
+  }
+
+  /**
+   * Runs the example.
+   *
+   * @param args command-line arguments; not used
+   */
+  public static void main(String[] args) {
+    run();
+  }
+}
 ```
+
+The exact published class is compiled and executed by the documentation contract. It verifies
+finite positive temperatures, a 10 bara outlet, isenthalpic closure, and cooling for this stated
+methane case. The result is an equation-of-state example, not experimental validation.
 
 **With unit specification:**
 ```java
