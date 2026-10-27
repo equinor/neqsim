@@ -3401,7 +3401,7 @@ public class TPmultiflash extends TPflash {
             system.getPhase(aquPhaseIndex).getComponent(comp).setx(x);
           }
 
-          system.getPhases()[aquPhaseIndex].normalize();
+          system.getPhase(aquPhaseIndex).normalize();
           double initialBeta = Math.max(1.0e-5, 10.0 * phaseFractionMinimumLimit);
           system.setBeta(aquPhaseIndex, initialBeta);
           system.normalizeBeta();
@@ -3413,6 +3413,8 @@ public class TPmultiflash extends TPflash {
           }
           multiPhaseTest = true;
           doStabilityAnalysis = false;
+          // This seed is added after the beta loop: solve its phase amounts and compositions before cleanup.
+          requestBoundedRerun();
         }
       }
 

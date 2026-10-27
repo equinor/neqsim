@@ -1603,6 +1603,21 @@ if (oilAndAqueousWithoutGas && neutral && wilsonSubmixtureBracketsTwoPhases) {
 
 When water is present but no aqueous phase exists:
 
+The fallback aqueous seed is introduced after the main phase-fraction iteration.
+Its initial beta of `1e-5` is a numerical guess, not an equilibrium phase amount.
+Normalize the seed through its logical phase index and run the existing bounded
+multiphase solve before phase cleanup. The per-operation seed guard prevents
+repeated insertion if the aqueous phase is unstable and disappears during that
+solve. Returning the unsolved seed can produce a finite entropy jump near water
+dropout and make a correctly strict PS flash fail.
+
+`TPflashIssue4659WetRichGasTest` covers the public PR78/classic wet-rich-gas
+example in issue #4659: a continuous entropy scan at 8 bara, component balances
+and fugacity equality, heating/cooling with reused and cloned states through
+phase disappearance, thermodynamic derivative checks, direct PS entropy
+closure, and the 40-step polytropic compressor. PS entropy acceptance tolerances
+are unchanged.
+
 ```java
 if (waterZ > 1.0e-6 && !system.hasPhaseType(PhaseType.AQUEOUS)) {
     system.addPhase();

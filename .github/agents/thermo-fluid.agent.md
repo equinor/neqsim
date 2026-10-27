@@ -160,6 +160,10 @@ physical dew side from the cricondentherm as described in `neqsim-phase-envelope
 ## Multi-Phase Flash Guidance
 - **Two-phase (gas + liquid):** Default behavior — use `TPflash()`
 - **Three-phase (gas + oil + aqueous):** Set `fluid.setMultiPhaseCheck(true)` before flash
+- **Aqueous seeds:** A phase label or seed beta does not establish equilibrium. For discontinuous
+  entropy near water dropout, check component balances and fugacity equality after phase seeding;
+  retain strict PS entropy closure. See `docs/thermodynamicoperations/TPflash_algorithm.md`
+  section 3.5.2 and `TPflashIssue4659WetRichGasTest`.
 - **Hydrate check:** Set `fluid.setHydrateCheck(true)` for hydrate stability
 - **Solid phase (wax, ice):** Set appropriate solid-phase models
 
