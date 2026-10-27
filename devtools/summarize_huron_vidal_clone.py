@@ -27,6 +27,7 @@ def summarize(directory, expected_cells=64, expected_rounds=8):
                          + " cells with four JVMs and " + str(expected_rounds) + " rounds each")
     summaries = []
     expected_samples = {}
+    expected_phases = {}
     for cell, rows in sorted(cells.items()):
         samples = defaultdict(list)
         for row in rows:
@@ -36,6 +37,10 @@ def summarize(directory, expected_cells=64, expected_rounds=8):
         if len({(row["sample"], row["round"]) for row in rows}) != 4 * expected_rounds:
             raise ValueError("Duplicate cell/JVM/round identity")
         expected_samples[cell] = set(samples)
+        phase_counts = {int(row["phases"]) for row in rows}
+        if len(phase_counts) != 1 or min(phase_counts) < 1:
+            raise ValueError("Final phase count must be positive and unchanged across measured rounds/JVMs")
+        expected_phases[cell] = phase_counts.pop()
         medians = {label: median(values) for label, values in samples.items()}
         result = dict(zip(keys, cell))
         for label in ("baseline", "candidate"):
@@ -50,17 +55,35 @@ def summarize(directory, expected_cells=64, expected_rounds=8):
             ])
         result["candidate_over_baseline"] = result["candidate_ns_per_op"] / result["baseline_ns_per_op"]
         summaries.append(result)
-    with (directory / "summary.csv").open("w", newline="") as output:
-        writer = csv.DictWriter(output, fieldnames=list(summaries[0]), lineterminator="\n")
-        writer.writeheader()
-        writer.writerows(summaries)
     states_path = directory / "rounds.csv.states.csv"
     source = states_path.open() if states_path.exists() else gzip.open(directory / "states.csv.gz", "rt")
     with source:
         states = list(csv.DictReader(source))
+    state_cells = defaultdict(list)
     values = defaultdict(list)
     for row in states:
+        state_cells[tuple(row[key] for key in keys)].append(row)
         values[tuple(row[key] for key in keys + ["phase", "component"])].append(row)
+    if set(state_cells) != set(expected_samples):
+        raise ValueError("Incomplete final-state cell roster")
+    for cell, rows in state_cells.items():
+        sample_rows = defaultdict(list)
+        for row in rows:
+            sample_rows[row["sample"]].append(row)
+        if set(sample_rows) != expected_samples[cell]:
+            raise ValueError("Final phase/component topology differs: incomplete JVM roster")
+        for sample in sample_rows.values():
+            phases = defaultdict(list)
+            for row in sample:
+                phases[row["phase"]].append(row["component"])
+            if len(phases) != expected_phases[cell]:
+                raise ValueError("Incomplete final-state phase roster")
+            component_rosters = [set(names) for names in phases.values()]
+            if any(len(names) != int(cell[1]) or len(set(names)) != int(cell[1])
+                   for names in phases.values()) or any(
+                       names != component_rosters[0] for names in component_rosters[1:]
+                   ):
+                raise ValueError("Incomplete or duplicate final-state component roster")
     maximum = {key: 0.0 for key in ["beta", "x", "logphi"]}
     for rows in values.values():
         cell = tuple(rows[0][key] for key in keys)
@@ -84,6 +107,10 @@ def summarize(directory, expected_cells=64, expected_rounds=8):
         "interpretation": "Median of two independent per-JVM medians; min/max retain between-JVM variation. "
         "No statistical speedup, absolute optimality or experimental-accuracy assertion.",
     }
+    with (directory / "summary.csv").open("w", newline="") as output:
+        writer = csv.DictWriter(output, fieldnames=list(summaries[0]), lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(summaries)
     (directory / "numerical-summary.json").write_text(json.dumps(evidence, indent=2) + "\n")
     print(json.dumps(evidence, indent=2))
 

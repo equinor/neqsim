@@ -25,14 +25,16 @@ class HuronVidalSummaryTest(unittest.TestCase):
             cell = dict(eos="SRK", components="1", operation="phase", init="3", rule="4", sample=sample)
             for round_id in range(3):
                 self.rounds.append(dict(cell, round=round_id, ns_per_op=100,
-                                        allocated_bytes_per_op=32, max_balance=0, max_logfugacity=0))
+                                        allocated_bytes_per_op=32, phases=1, max_balance=0, max_logfugacity=0))
             self.states.append(dict(cell, phase="gas", component="methane", beta=1, x=1, logphi=0))
+        self.state_fields = list(self.states[0])
 
     def write(self):
         """Write fresh raw evidence after each controlled corruption."""
         for name, rows in (("rounds.csv", self.rounds), ("rounds.csv.states.csv", self.states)):
             with (self.directory / name).open("w", newline="") as output:
-                writer = csv.DictWriter(output, fieldnames=list(rows[0]))
+                fields = list(rows[0]) if rows else self.state_fields
+                writer = csv.DictWriter(output, fieldnames=fields)
                 writer.writeheader()
                 writer.writerows(rows)
 
@@ -74,6 +76,79 @@ class HuronVidalSummaryTest(unittest.TestCase):
         self.write()
         with self.assertRaisesRegex(ValueError, "Non-finite"):
             summarize(self.directory, 1, 3)
+
+    def test_empty_final_states_are_rejected(self):
+        self.states.clear()
+        self.write()
+        with self.assertRaisesRegex(ValueError, "Incomplete final-state"):
+            summarize(self.directory, 1, 3)
+
+    def test_rejected_states_do_not_publish_partial_summary(self):
+        self.states[-1]["logphi"] = 1e-5
+        self.write()
+        with self.assertRaisesRegex(ValueError, "thermodynamic result changed"):
+            summarize(self.directory, 1, 3)
+        self.assertFalse((self.directory / "summary.csv").exists())
+        self.assertFalse((self.directory / "numerical-summary.json").exists())
+
+    def test_missing_entire_cell_is_rejected(self):
+        self.rounds += [dict(row, eos="PR") for row in self.rounds]
+        self.write()
+        with self.assertRaisesRegex(ValueError, "Incomplete final-state"):
+            summarize(self.directory, 2, 3)
+
+    def test_missing_entire_component_is_rejected(self):
+        for row in self.rounds + self.states:
+            row["components"] = "2"
+        self.write()
+        with self.assertRaisesRegex(ValueError, "component roster"):
+            summarize(self.directory, 1, 3)
+
+    def test_missing_entire_phase_is_rejected(self):
+        for row in self.rounds:
+            row["phases"] = 2
+        self.write()
+        with self.assertRaisesRegex(ValueError, "phase roster"):
+            summarize(self.directory, 1, 3)
+
+    def test_changed_phase_count_between_rounds_is_rejected(self):
+        self.rounds[-1]["phases"] = 2
+        self.write()
+        with self.assertRaisesRegex(ValueError, "phase count"):
+            summarize(self.directory, 1, 3)
+
+    def test_valid_multiphase_multicomponent_roster_is_supported(self):
+        for row in self.rounds + self.states:
+            row["components"] = "2"
+        for row in self.rounds:
+            row["phases"] = 2
+        self.states += [dict(row, component="water") for row in self.states]
+        self.states += [dict(row, phase="aqueous") for row in self.states]
+        for row in self.states:
+            row["beta"] = 0.5
+            row["x"] = 0.5
+        self.write()
+        with contextlib.redirect_stdout(io.StringIO()):
+            summarize(self.directory, 1, 3)
+        result = json.loads((self.directory / "numerical-summary.json").read_text())
+        self.assertEqual(result["state_rows"], 16)
+
+    def test_all_published_allocation_matrices_remain_supported(self):
+        root = Path(__file__).resolve().parents[1]
+        fixture = root / "src/test/resources/neqsim/thermo/mixingrule/hv-allocation-performance"
+        configurations = [("", 64, 8), ("phase-quiet", 16, 16),
+                          ("clone-flash-quiet", 4, 16), ("clone-flash-pinned", 4, 16),
+                          ("identity-pinned", 1, 16)]
+        for name, cells, rounds in configurations:
+            with self.subTest(matrix=name or "full"):
+                for filename in ("rounds.csv.gz", "states.csv.gz"):
+                    shutil.copyfile(fixture / name / filename, self.directory / filename)
+                with contextlib.redirect_stdout(io.StringIO()):
+                    summarize(self.directory, cells, rounds)
+                result = json.loads((self.directory / "numerical-summary.json").read_text())
+                self.assertEqual(result["jvms"], 4 * cells)
+                self.assertEqual(result["max_baseline_candidate_state_difference"],
+                                 dict(beta=0.0, x=0.0, logphi=0.0))
 
     def test_original_published_default_matrix_remains_supported(self):
         root = Path(__file__).resolve().parents[1]

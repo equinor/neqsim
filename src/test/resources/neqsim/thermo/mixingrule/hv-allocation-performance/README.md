@@ -111,8 +111,14 @@ point on CPU0, using512 warmups/16 rounds/eight operations. Their timings are ex
 
 The summarizer defaults still require all 64 cells/four JVMs/eight rounds. Explicit `--cells` and
 `--rounds` select a different frozen matrix, keeping strict round/sample uniqueness and final-state
-sample identity. Seven Python tests include the original published default fixture and rejected
-missing/duplicate/non-finite/changed evidence. CSV gzip uses deterministic mtime 0; raw logs are
+sample identity. It also requires every measured cell/JVM, the positive phase count reported
+consistently in every round, and every component exactly once in every final phase. It rejects
+empty tables and whole missing cells, phases or components before writing either summary.
+Fifteen Python tests cover these rejection cases, a valid multicomponent/multiphase roster,
+all five allocation matrices and the original published default fixture. Previously the group-wise
+comparison could silently accept deletion of an entire matching group; the original published
+raw data pass the complete-roster checks unchanged. The numerical gates and timing interpretation
+are unchanged. CSV gzip uses deterministic mtime 0; raw logs are
 scratch diagnostics, with successful process exits recorded in each manifest.
 
 `HuronVidalWorkspaceLifecycleTest` asserts fresh-versus-retained values across count changes,
