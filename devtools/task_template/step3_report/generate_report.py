@@ -2346,6 +2346,11 @@ def _report_text(value):
     return isinstance(value, str) and bool(value.strip())
 
 
+def _report_non_negative_integer(value):
+    """Return true only for non-negative finite report-facing integers."""
+    return _report_number(value) and value >= 0 and float(value) == int(value)
+
+
 def _md_cell(value):
     """Escape one value for a compact Markdown table cell."""
     return str(value if value is not None else "-").replace("|", "/").replace("\n", " ")
@@ -2386,13 +2391,71 @@ def _validate_representative_constraint(entry, representative, feasible):
             else normalized_margin is None or _report_number(normalized_margin))
 
 
+def _constraint_opportunity_summary(ranked):
+    """Rebuild the report-facing physical-headroom opportunity screen."""
+    if not isinstance(ranked, list):
+        return None
+    candidates = []
+    for expected_rank, row in enumerate(ranked, 1):
+        if not isinstance(row, dict) or row.get("rank") != expected_rank:
+            return None
+        classification = row.get("classification")
+        representative_key = ("representative_rejecting_constraint"
+                              if classification == "REJECTING"
+                              else "representative_feasible_constraint")
+        representative = row.get(representative_key)
+        if (classification not in ("REJECTING", "NEAR_ACTIVE")
+                or not isinstance(representative, dict)
+                or not all(_report_number(representative.get(field)) for field in (
+                    "current_value", "applicable_limit", "physical_margin"))
+                or not _report_text(row.get("source"))
+                or not _report_text(row.get("qualified_constraint_name"))
+                or not _report_text(row.get("physical_unit"))
+                or not _report_text(row.get("applicable_limit_role"))
+                or not _report_text(row.get("applicable_limit_provenance"))
+                or not isinstance(row.get("slice_axes"), list)
+                or not _report_non_negative_integer(row.get("feasible_evidence_count"))
+                or not _report_non_negative_integer(row.get("rejecting_evidence_count"))):
+            return None
+        candidates.append({
+            "rank": expected_rank,
+            "screening_classification": (
+                "CURRENT_REJECTING_CONSTRAINT" if classification == "REJECTING"
+                else "NEXT_BOTTLENECK_CANDIDATE"),
+            "source": row.get("source"),
+            "qualified_constraint_name": row.get("qualified_constraint_name"),
+            "current_value": representative.get("current_value"),
+            "applicable_limit": row.get("applicable_limit"),
+            "physical_headroom": representative.get("physical_margin"),
+            "physical_unit": row.get("physical_unit"),
+            "applicable_limit_role": row.get("applicable_limit_role"),
+            "applicable_limit_provenance": row.get("applicable_limit_provenance"),
+            "slice_axes": row.get("slice_axes"),
+            "feasible_evidence_count": row.get("feasible_evidence_count"),
+            "rejecting_evidence_count": row.get("rejecting_evidence_count"),
+            "qualification_state": "EXACT_SAMPLED_OR_REFINED_EVIDENCE",
+            "paired_relief_study_status": "NOT_PROVIDED",
+            "paired_relief_study_required": True,
+        })
+    return {
+        "summary_version": 1,
+        "source_constraint_summary_version": 2,
+        "candidate_count": len(candidates),
+        "candidates": candidates,
+        "advisory": True,
+        "interpretation": (
+            "Exact constraint follow-up screen; not causal attribution, a shadow price, "
+            "predicted relief benefit, permission to change a limit, or operating approval"),
+    }
+
+
 def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
     """Validate the report-facing lifecycle subset and independently replay identity deltas."""
     reasons = []
     if not isinstance(evidence, dict):
         return ["evidence is not an object"]
-    if evidence.get("schema_version") not in (8, 9, 10):
-        reasons.append("schema_version must be 8, 9, or 10")
+    if evidence.get("schema_version") not in (8, 9, 10, 11):
+        reasons.append("schema_version must be 8, 9, 10, or 11")
     if evidence.get("advisory") is not True:
         reasons.append("advisory flag is missing")
     if not _report_text(evidence.get("cycle_id")):
@@ -2444,9 +2507,9 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
             previous_elapsed = elapsed
         if period.get("time_unit") != evidence.get("time_unit"):
             reasons.append(prefix + " time unit does not match the lifecycle")
-        if evidence.get("schema_version") in (9, 10):
+        if evidence.get("schema_version") in (9, 10, 11):
             coverage = period.get("utilization_coverage")
-            expected_coverage_schema = "1.1" if evidence.get("schema_version") == 10 else "1.0"
+            expected_coverage_schema = "1.1" if evidence.get("schema_version") in (10, 11) else "1.0"
             if (not isinstance(coverage, dict)
                     or coverage.get("schema_version") != expected_coverage_schema
                     or coverage.get("coverage_scope") != "DECLARED_EQUIPMENT_AND_CONSTRAINTS"
@@ -2476,7 +2539,7 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
                 required_ids = coverage.get("required_constraint_ids")
                 if (not isinstance(expected_ids, list) or not expected_ids
                         or not isinstance(expected_plant_ids, list)
-                        or (evidence.get("schema_version") == 10 and not expected_plant_ids)
+                        or (evidence.get("schema_version") in (10, 11) and not expected_plant_ids)
                         or not isinstance(required_ids, list)
                         or len(coverage_ids) != len(set(coverage_ids))
                         or set(expected_ids) - set(coverage_ids)
@@ -2525,6 +2588,11 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
             if identity in identities:
                 reasons.append(row_prefix + " duplicates an exact identity")
             identities.append(identity)
+        if evidence.get("schema_version") == 11:
+            expected_opportunities = _constraint_opportunity_summary(ranked)
+            if (expected_opportunities is None
+                    or period.get("constraint_opportunity_summary") != expected_opportunities):
+                reasons.append(prefix + " has an invalid constraint opportunity summary")
         period_identities.append(identities)
 
     if expected_cycle_id and expected_cycle_id not in seen_period_ids:
@@ -2620,7 +2688,7 @@ def format_lifecycle_envelope_text(results, expected_cycle_id=None):
                 _fmt_number(row["applicable_limit"]) if row["applicable_limit"] is not None else "n/a",
                 _md_cell(row["physical_unit"]), _md_cell(row["applicable_limit_provenance"])))
 
-    if evidence["schema_version"] in (9, 10):
+    if evidence["schema_version"] in (9, 10, 11):
         lines += ["", "**Declared accepted-replay constraint coverage.** Every row is frozen at the accepted replay; "
                   "missing, screening-only, non-finite, or unqualified limits are withheld upstream.", "",
                   "| Period | Evidence | Exact constraint | Current / limit | Utilization | Limit basis | Provenance |",
@@ -2639,6 +2707,21 @@ def format_lifecycle_envelope_text(results, expected_cycle_id=None):
                         _fmt_number(row["current_value"]), _fmt_number(row["applicable_limit"]),
                         _md_cell(row["unit"]), _fmt_number(row["normalized_utilization"]),
                         _md_cell(row["basis"]), _md_cell(row["provenance"])))
+
+    if evidence["schema_version"] == 11:
+        lines += ["", "**Constraint follow-up opportunity screen.** Rows are qualified only as exact sampled or "
+                  "refined constraint evidence. A separate paired relief study is required before reporting "
+                  "debottleneck benefit.", "",
+                  "| Period | Screen | Exact constraint | Current / limit | Physical headroom | Follow-up |",
+                  "|---|---|---|---|---|---|"]
+        for period in evidence["periods"]:
+            for candidate in period["constraint_opportunity_summary"]["candidates"]:
+                lines.append("| {} | {} | `{}` | {} / {} {} | {} {} | Paired relief study required |".format(
+                    _md_cell(period["period_name"]), _md_cell(candidate["screening_classification"]),
+                    _md_cell(candidate["qualified_constraint_name"]),
+                    _fmt_number(candidate["current_value"]), _fmt_number(candidate["applicable_limit"]),
+                    _md_cell(candidate["physical_unit"]), _fmt_number(candidate["physical_headroom"]),
+                    _md_cell(candidate["physical_unit"])))
 
     lines += ["", "**Exact adjacent-period identity migration.** Classification or limit-basis changes "
               "appear as one removed and one added identity; this is descriptive evidence, not causal attribution."]

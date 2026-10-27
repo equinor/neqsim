@@ -1572,6 +1572,69 @@ public final class ProcessModelOperatingEnvelopeStudy {
       return observedConstraintCount - rankedConstraints.size();
     }
 
+    /**
+     * Builds a deterministic physical-headroom screen for follow-up constraint studies.
+     *
+     * <p>
+     * Rejecting rows are labelled as current constraint investigations and feasible rows as next-bottleneck candidates.
+     * Every row retains one exact sampled or refined representative, the applicable limit and its provenance. The
+     * screen does not estimate production gain or authorize a limit change; a separately qualified paired relief study
+     * remains required before reporting debottleneck benefit.
+     * </p>
+     *
+     * @return deeply immutable JSON-friendly opportunity screen
+     * @throws IllegalStateException if a ranked row lacks finite physical representative evidence
+     */
+    public Map<String, Object> toConstraintOpportunityEvidenceMap() {
+      List<Map<String, Object>> candidates = new ArrayList<Map<String, Object>>();
+      for (ConstraintSummaryEntry entry : rankedConstraints) {
+        LeadingConstraintEvidence representative = entry
+            .getClassification() == ConstraintSummaryEntry.Classification.REJECTING
+                ? entry.getRepresentativeRejectingConstraint()
+                : entry.getRepresentativeFeasibleConstraint();
+        if (representative == null || !Double.isFinite(representative.getCurrentValue())
+            || !Double.isFinite(representative.getApplicableLimit())
+            || !Double.isFinite(representative.getPhysicalMargin()) || representative.getPhysicalUnit().trim().isEmpty()
+            || representative.getApplicableLimitRole().trim().isEmpty()
+            || representative.getApplicableLimitProvenance().trim().isEmpty()) {
+          throw new IllegalStateException(
+              "Constraint opportunity evidence requires finite physical headroom and qualified limit provenance: "
+                  + entry.getQualifiedConstraintName());
+        }
+        Map<String, Object> candidate = new LinkedHashMap<String, Object>();
+        candidate.put("rank", Integer.valueOf(entry.getRank()));
+        candidate.put("screening_classification",
+            entry.getClassification() == ConstraintSummaryEntry.Classification.REJECTING
+                ? "CURRENT_REJECTING_CONSTRAINT"
+                : "NEXT_BOTTLENECK_CANDIDATE");
+        candidate.put("source", entry.getSource().name());
+        candidate.put("qualified_constraint_name", entry.getQualifiedConstraintName());
+        candidate.put("current_value", Double.valueOf(representative.getCurrentValue()));
+        candidate.put("applicable_limit", Double.valueOf(entry.getApplicableLimit()));
+        candidate.put("physical_headroom", Double.valueOf(representative.getPhysicalMargin()));
+        candidate.put("physical_unit", entry.getPhysicalUnit());
+        candidate.put("applicable_limit_role", entry.getApplicableLimitRole());
+        candidate.put("applicable_limit_provenance", entry.getApplicableLimitProvenance());
+        candidate.put("slice_axes", entry.getSliceAxes());
+        candidate.put("feasible_evidence_count", Integer.valueOf(entry.getFeasibleEvidenceCount()));
+        candidate.put("rejecting_evidence_count", Integer.valueOf(entry.getRejectingEvidenceCount()));
+        candidate.put("qualification_state", "EXACT_SAMPLED_OR_REFINED_EVIDENCE");
+        candidate.put("paired_relief_study_status", "NOT_PROVIDED");
+        candidate.put("paired_relief_study_required", Boolean.TRUE);
+        candidates.add(Collections.unmodifiableMap(candidate));
+      }
+      Map<String, Object> evidence = new LinkedHashMap<String, Object>();
+      evidence.put("summary_version", Integer.valueOf(1));
+      evidence.put("source_constraint_summary_version", Integer.valueOf(2));
+      evidence.put("candidate_count", Integer.valueOf(candidates.size()));
+      evidence.put("candidates", Collections.unmodifiableList(candidates));
+      evidence.put("advisory", Boolean.TRUE);
+      evidence.put("interpretation",
+          "Exact constraint follow-up screen; not causal attribution, a shadow price, predicted relief benefit, "
+              + "permission to change a limit, or operating approval");
+      return Collections.unmodifiableMap(evidence);
+    }
+
     /** Converts this summary to a deeply immutable JSON-friendly map. */
     public Map<String, Object> toEvidenceMap() {
       List<Map<String, Object>> entries = new ArrayList<Map<String, Object>>();

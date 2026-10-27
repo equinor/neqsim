@@ -366,7 +366,18 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals(refinement.getInfeasibleBoundaryConstraint().getQualifiedConstraintName(),
         rejecting.getRepresentativeRejectingConstraint().getQualifiedConstraintName());
     assertFalse(rejecting.getRepresentativeRejectingConstraint().isFeasible());
+    Map<String, Object> opportunities = summary.toConstraintOpportunityEvidenceMap();
+    assertEquals(Integer.valueOf(1), opportunities.get("summary_version"));
+    assertEquals(Integer.valueOf(summary.getRankedConstraints().size()), opportunities.get("candidate_count"));
+    Map<?, ?> firstOpportunity = (Map<?, ?>) ((List<?>) opportunities.get("candidates")).get(0);
+    assertEquals("CURRENT_REJECTING_CONSTRAINT", firstOpportunity.get("screening_classification"));
+    assertEquals(rejecting.getQualifiedConstraintName(), firstOpportunity.get("qualified_constraint_name"));
+    assertEquals(rejecting.getRepresentativeRejectingConstraint().getPhysicalMargin(),
+        firstOpportunity.get("physical_headroom"));
+    assertEquals(Boolean.TRUE, firstOpportunity.get("paired_relief_study_required"));
+    assertEquals("NOT_PROVIDED", firstOpportunity.get("paired_relief_study_status"));
     assertThrows(UnsupportedOperationException.class, () -> summary.getRankedConstraints().clear());
+    assertThrows(UnsupportedOperationException.class, () -> ((List<?>) opportunities.get("candidates")).clear());
     assertThrows(IllegalArgumentException.class, () -> study.summarizeConstraints(result, result));
     assertEquals(600.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
     assertEquals(400.0, fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);

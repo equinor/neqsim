@@ -239,7 +239,7 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             first_item = items[0]
             first_item_id = first_item["id"]
             evidence = items[0]["lifecycle_envelope_evidence"]
-            self.assertEqual(10, evidence["schema_version"])
+            self.assertEqual(11, evidence["schema_version"])
             self.assertEqual(cycle_id, evidence["cycle_id"])
             self.assertEqual(2, evidence["period_count"])
             self.assertEqual(12, evidence["requested_point_count"])
@@ -247,6 +247,8 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertGreater(evidence["total_evaluation_count"], 12)
             self.assertGreaterEqual(evidence["envelope_runtime_seconds"], 0.0)
             self.assertEqual(1, len(evidence["bottleneck_transitions"]))
+            self.assertTrue(all(
+                "constraint_opportunity_summary" in period for period in evidence["periods"]))
             current = next(period for period in evidence["periods"]
                            if period["period_id"] == cycle_id)
             coverage = current["utilization_coverage"]

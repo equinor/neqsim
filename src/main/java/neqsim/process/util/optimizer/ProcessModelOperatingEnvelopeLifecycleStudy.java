@@ -198,6 +198,8 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       throw new IllegalArgumentException("Lifecycle period study must not be null");
     }
     Map<String, Object> envelopeEvidence = study.getAcceptedPointEnvelopeEvidence(validatedId, search, slices);
+    Map<String, Object> constraintOpportunityEvidence = freezeMap(
+        study.summarizeConstraints(slices).toConstraintOpportunityEvidenceMap());
     LeadingConstraintEvidence bottleneck = study.getAcceptedPointBottleneck(search);
     validateAcceptedCoverage(acceptedCoverage, search);
     if (!periods.isEmpty() && (periods.get(0).getAcceptedCoverage() == null) != (acceptedCoverage == null)) {
@@ -215,7 +217,8 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
 
     PeriodEvidence period = new PeriodEvidence(validatedId, validatedName, elapsedTime, timeUnit,
         validatedConfiguration, study.getId(), study.getCandidateEvaluator().getId(), bottleneck,
-        frozenEnvelopeEvidence, search.getAcceptedCandidateValues(), stateMetrics, acceptedCoverage, slices);
+        frozenEnvelopeEvidence, constraintOpportunityEvidence, search.getAcceptedCandidateValues(), stateMetrics,
+        acceptedCoverage, slices);
     periods.add(period);
     return this;
   }
@@ -381,7 +384,7 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     Map<String, Object> evidence = new LinkedHashMap<String, Object>();
     boolean hasStateMetrics = acceptedStateMetricIds != null && !acceptedStateMetricIds.isEmpty();
     evidence.put("schema_version", Integer.valueOf(periods.get(0).getAcceptedCoverage() == null ? 8
-        : periods.get(0).getAcceptedCoverage().getExpectedPlantConstraintIds().isEmpty() ? 9 : 10));
+        : periods.get(0).getAcceptedCoverage().getExpectedPlantConstraintIds().isEmpty() ? 9 : 11));
     evidence.put("cycle_id", currentCycleId);
     evidence.put("lifecycle_study_id", id);
     evidence.put("lifecycle_study_name", name);
@@ -417,7 +420,7 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
    * </p>
    *
    * @param cycleId current living-task cycle identifier and lifecycle period identifier
-   * @return compact JSON containing exact schema-v8, installed-coverage schema-v9, or plant-coverage schema-v10
+   * @return compact JSON containing exact schema-v8, installed-coverage schema-v9, or plant-coverage schema-v11
    * evidence
    * @throws IllegalStateException if the current cycle is not an accepted lifecycle period
    */
@@ -515,6 +518,7 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     private final String candidateEvaluatorId;
     private final LeadingConstraintEvidence acceptedBottleneck;
     private final Map<String, Object> envelopeEvidence;
+    private final Map<String, Object> constraintOpportunityEvidence;
     private final double[] acceptedCandidateValues;
     private final List<AcceptedStateMetric> acceptedStateMetrics;
     private final UtilizationCoverageReport acceptedCoverage;
@@ -523,8 +527,9 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     private PeriodEvidence(String periodId, String periodName, double elapsedTime, String timeUnit,
         String configurationProvenance, String envelopeStudyId, String candidateEvaluatorId,
         LeadingConstraintEvidence acceptedBottleneck, Map<String, Object> envelopeEvidence,
-        double[] acceptedCandidateValues, List<AcceptedStateMetric> acceptedStateMetrics,
-        UtilizationCoverageReport acceptedCoverage, SliceResult[] slices) {
+        Map<String, Object> constraintOpportunityEvidence, double[] acceptedCandidateValues,
+        List<AcceptedStateMetric> acceptedStateMetrics, UtilizationCoverageReport acceptedCoverage,
+        SliceResult[] slices) {
       this.periodId = periodId;
       this.periodName = periodName;
       this.elapsedTime = elapsedTime;
@@ -534,6 +539,7 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       this.candidateEvaluatorId = candidateEvaluatorId;
       this.acceptedBottleneck = acceptedBottleneck;
       this.envelopeEvidence = envelopeEvidence;
+      this.constraintOpportunityEvidence = constraintOpportunityEvidence;
       this.acceptedCandidateValues = Arrays.copyOf(acceptedCandidateValues, acceptedCandidateValues.length);
       this.acceptedStateMetrics = Collections
           .unmodifiableList(new ArrayList<AcceptedStateMetric>(acceptedStateMetrics));
@@ -591,6 +597,11 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       return envelopeEvidence;
     }
 
+    /** @return exact physical-headroom follow-up screen derived from the complete envelope ladder */
+    public Map<String, Object> getConstraintOpportunityEvidence() {
+      return constraintOpportunityEvidence;
+    }
+
     /** @return immutable accepted physical-state metrics */
     public List<AcceptedStateMetric> getAcceptedStateMetrics() {
       return acceptedStateMetrics;
@@ -634,6 +645,7 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
         evidence.put("utilization_coverage", freezeMap(acceptedCoverage.toEvidenceMap()));
       }
       evidence.put("envelope_evidence", envelopeEvidence);
+      evidence.put("constraint_opportunity_summary", constraintOpportunityEvidence);
       return Collections.unmodifiableMap(evidence);
     }
   }
