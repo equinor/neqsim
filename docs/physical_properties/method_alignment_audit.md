@@ -28,7 +28,7 @@ to `src/main/java/neqsim/`. The nearest guides document existing choices and con
 |---|---|---|
 | Pure constants and characterization | `thermo/component/Component`, `thermo/characterization/TBPfractionModel` and component databases | Present. Establish per-parameter provenance and validity; generic molecular group-contribution estimation is not established by this inventory. |
 | Ideal-gas Cp, Cv, H, S and formation data | `Component.getCp0/getCv0/getHID/getIdEntropy`, `SystemIdealGas` | Cp0/Cv0 and H/S differences now have an independent NIST Shomate matrix for methane, CO2 and nitrogen at 320/400/500/800 K from a 300 K baseline, plus differential/quadrature checks. The 2% comparison gate is limited to these states; other fluids/ranges and parameter provenance remain open. Reuses #4568 CpD coverage. |
-| Vapor pressure, saturation and phase-change enthalpy | `Component.getAntoineVaporPressure` and its derivative/inverse, `ThermodynamicOperations` saturation operations, `SystemInterface.getHeatOfVaporization`, `Component.calculateWatsonHeatOfVaporization` | Present through correlations and EOS operations. The low-level coefficient getters now share the five-coefficient DIPPR 106 form and explicit missing-data contract; per-fluid parameter qualification remains separate from EOS phase enthalpy differences. Opt-in Watson reference scaling is checked against six benzene calorimetry points at 307-353 K only. |
+| Vapor pressure, saturation and phase-change enthalpy | `Component.getAntoineVaporPressure` and its derivative/inverse, `ThermodynamicOperations` saturation operations, `SystemInterface.getHeatOfVaporization`, `Component.calculateWatsonHeatOfVaporization` | Pressure/derivative/inverse behavior is covered by the existing component tests summarized below; an independent NIST isopentane pressure comparison is limited to 290/298.15/301 K. Other fit ranges and parameters remain unqualified. The low-level coefficient getters now share the five-coefficient DIPPR 106 form and explicit missing-data contract; per-fluid parameter qualification remains separate from EOS phase enthalpy differences. Opt-in Watson reference scaling is checked against six benzene calorimetry points at 307-353 K only. |
 | Pure-fluid PVT and caloric properties | SRK/PR, CPA, PC-SAFT, Span-Wagner, water and hydrogen reference utilities | Present. Selecting a modern EOS does not establish modern transport-model completeness. See [thermodynamics](../thermo/). |
 | Mixture PVT and equilibrium | `SystemGERG2008Eos`, `SystemEOSCGEos`, cubic/CPA/PC-SAFT mixtures, TP/PH/PS and saturation flashes | Present. Reuse [#2937](https://github.com/equinor/neqsim/issues/2937) for numerical flash and stability qualification. Standalone general Tsonopoulos virial prediction was not found; embedded virial terms do exist in AGA8/GERG-related code. |
 | Activity coefficients, infinite dilution and specialized phase behavior | Wilson, NRTL, UNIQUAC, UNIFAC/PSRK/UMR, solid-liquid operations, Henry-law APIs | Present. Benchmark each model/parameter set and infinite-dilution limit. A supplied class does not establish a suitable parameter set for an arbitrary pair. |
@@ -211,6 +211,45 @@ For edition verification, the precise outstanding source is the sixth edition's 
 thermal-conductivity pressure-correction equations, associated coefficient tables, stated
 applicability and any errata. A licensed extract of that section is sufficient for the
 next comparison; publisher scope metadata does not supply it.
+
+## Existing vapor-pressure qualification evidence
+
+Current-master inspection on 27 October 2026 used baseline
+`e2cb5f792f2a3480fab451bb9a161e586b0e3fda`. Reuse the existing
+`ComponentAntoineVaporPressureTest` and `ComponentPow10KPaVaporPressureTest`;
+the following evidence does not require another correlation implementation.
+Public routes are `getAntoineVaporPressure(T)`, `getAntoineVaporPressuredT(T)`
+and `getAntoineVaporTemperature(P)`, with K, bar absolute, bar/K and K respectively.
+The [component database guide](../thermo/component_database_guide#vapor-pressure-parameters)
+documents dispatch and the retained legacy pressure scales.
+
+| Correlation/path | Existing executable evidence | Qualification boundary |
+| --- | --- | --- |
+| DIPPR-101 selected by nonzero E, including legacy log/exp labels | Four shipped-row pressure values; ten finite-difference derivative states; nine inverse round trips; explicit label-precedence cases | Numerical equation/dispatch checks do not certify each coefficient set or fitted range. |
+| Isopentane shipped DIPPR fit | Independent NIST Antoine comparison at 290, 298.15 and 301 K, using the existing 1% comparison gate | Pressure agreement at these three points only; no universal uncertainty or derivative-accuracy claim. |
+| Explicit pow10/pow10KPa labels | Synthetic pressure and analytical-derivative values; pow10KPa finite differences and inverse checks at 260/300/350 K | These prescribed coefficients test scale and dispatch, not a physical substance. The pow10KPa label retains division by 100000, not a kPa-to-bar conversion. |
+| Zero-exponent log/exp | Synthetic 2-bar pressure and 1/15 bar/K derivative at 300 K | Numerical implementation check only. |
+| Wagner fallback | Pressure equals Pc at Tc; source inspection confirms the analytical derivative is implemented | Existing tests do not independently qualify the Wagner derivative, inverse or full fit range. |
+| Domain/inverse behavior | CO2 pole-extrapolation refusal; consistent pressure/derivative/inverse states at 230/250/280 K; synthetic inverse bracketing through raw values above Pc; selected missing/invalid/ionic cases | These cases are not an exhaustive domain, solver-convergence or database audit. |
+
+The primary independent isopentane source is the
+[NIST WebBook, CAS 78-78-4](https://webbook.nist.gov/cgi/cbook.cgi?ID=C78784&Mask=4),
+Willingham et al. (1945), Antoine parameters A=3.91457, B=1020.012 and C=-40.053,
+with pressure in bar and temperature in K. Its stated interval is 289.44-301.74 K;
+all three comparison temperatures lie inside it. The record was refreshed for this audit.
+Agreement with that evaluated correlation is distinct from new experimental validation.
+
+On this baseline, the two existing vapor-pressure classes pass 50 cases. The combined
+run with `ComponentHeatOfVaporizationTest` and `FilippovConductivityMethodTest` passes
+84 cases with zero failures/errors/skips. Production equations, coefficients and APIs
+are unchanged by this documentation reconciliation, so it introduces no calculation cost.
+The inherited tests retain their tolerances; no discrepancy is fitted away.
+
+Fit-temperature provenance, independently verified derivatives and inverses for every
+correlation family, systematic boundaries/lifecycle behavior, and sixth-edition
+conformance remain open. EOS saturation/phase enthalpy differences and the low-level
+latent-heat parameter discrepancy are separate contracts. This evidence complements
+#3792's broader worked-example harness and does not supersede #2937's flash campaign.
 
 ## Coefficient-based saturation latent heat
 
