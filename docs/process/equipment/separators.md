@@ -135,6 +135,8 @@ StreamInterface condensate = scrubber.getLiquidOutStream();
 
 The `ThreePhaseSeparator` extends `Separator` and separates a multiphase feed into three outlet streams: gas, oil, and water (aqueous). During `run()`, it temporarily enables the thermodynamic multiphase check for its internal flash and restores the cloned fluid setting afterward. Calling `setMultiPhaseCheck(true)` on the feed is therefore not a separator prerequisite; use it when the upstream feed itself must be initialized or inspected as multiphase. Distinct oil and aqueous phases still depend on the selected thermodynamic model, composition, temperature, and pressure.
 
+With entrainment, an outlet's name identifies its destination rather than a guaranteed single thermodynamic phase. For example, water entrained into the oil outlet can form a separate aqueous phase when that outlet is flashed. Retaining this split conserves the entrained component inventory and determines the outlet enthalpy used by downstream valves and other equipment.
+
 Absent product phases use a negligible-inventory fluid template. Its component
 amounts are scaled from the conserved feed inventory, including inactive physical
 phase slots; reinitialization must never restore the original feed into an absent

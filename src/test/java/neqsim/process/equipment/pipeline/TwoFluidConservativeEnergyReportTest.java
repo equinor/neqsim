@@ -26,6 +26,17 @@ class TwoFluidConservativeEnergyReportTest {
     assertEquals(2.0e-11, report.getMaxRelativeThermodynamicEnergyResidual(), 0.0);
   }
 
+  /** Boundary-resolved transfers must preserve their signs and reproduce the legacy net ledger. */
+  @Test
+  void boundaryResolvedAdvectionProvidesExactNetworkRoutingTerms() {
+    TwoFluidConservativeEnergyReport report = new TwoFluidConservativeEnergyReport(0.2, 100.0, 107.0, 25.0, 18.0, 0.0,
+        0.0, 0.0, 0.0);
+    assertEquals(25.0, report.getInletAdvectedEnergyJ(), 0.0);
+    assertEquals(18.0, report.getOutletAdvectedEnergyJ(), 0.0);
+    assertEquals(7.0, report.getNetAdvectedEnergyJ(), 0.0);
+    assertEquals(0.0, report.getResidualJ(), 0.0);
+  }
+
   /** A large arbitrary caloric energy reference must not hide an incorrect heat input. */
   @Test
   void closedCellResidualDoesNotUseAbsoluteStoredEnergyAsItsScale() {
@@ -56,6 +67,8 @@ class TwoFluidConservativeEnergyReportTest {
     TwoFluidConservativeEnergyReport restored = SerializationUtils.clone(original);
     assertEquals(original.getInitialEnergyJ(), restored.getInitialEnergyJ(), 0.0);
     assertEquals(original.getFinalEnergyJ(), restored.getFinalEnergyJ(), 0.0);
+    assertEquals(original.getInletAdvectedEnergyJ(), restored.getInletAdvectedEnergyJ(), 0.0);
+    assertEquals(original.getOutletAdvectedEnergyJ(), restored.getOutletAdvectedEnergyJ(), 0.0);
     assertEquals(original.getNetAdvectedEnergyJ(), restored.getNetAdvectedEnergyJ(), 0.0);
     assertEquals(original.getGravitationalWorkJ(), restored.getGravitationalWorkJ(), 0.0);
     assertEquals(original.getWallHeatToFluidJ(), restored.getWallHeatToFluidJ(), 0.0);

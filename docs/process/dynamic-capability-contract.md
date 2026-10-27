@@ -108,9 +108,11 @@ findings, `UNCLASSIFIED_DYNAMIC` review items, and known process-level execution
 not yet safe for strict professional qualification. `getExecutionIssues()` exposes those process-level findings
 separately so they are not confused with equipment state ownership or activation.
 
-Adaptive transient execution remains explicitly blocked by the current Phase-0 contract:
-`runTransientAdaptive(...)` mutates one full timestep and derives a following timestep recommendation without a
-full-step/two-half-step error estimate, rejected-step restore, retry, and one accepted-step commit boundary.
+The legacy two-argument `ProcessSystem.runTransientAdaptive(dt, id)` remains explicitly blocked by the
+Phase-0 strict execution contract: it mutates one full timestep and derives a following timestep recommendation without
+full-step/two-half-step error estimation, rejected-step restore or retry. The separate three-argument overload described
+below supplies an opt-in numerical acceptance path. Its presence does not change the legacy method or automatically
+qualify a process model.
 
 ## Identity-preserving transient step transactions
 
@@ -148,8 +150,8 @@ membership. Both blocks reject duplicate advancement for the same non-null physi
 continuation after rollback or Java serialization. Subclasses fail closed until they extend the snapshot for any
 additional mutable state.
 
-This is an additive compatibility boundary. Legacy `runTransient(...)`, `reset()`, and
-`runTransientAdaptive(...)` retain their current behavior. Built-in equipment must adopt the participant contract
+This is an additive compatibility boundary. Legacy `runTransient(...)`, `reset()`, and the two-argument
+`runTransientAdaptive(dt, id)` retain their current behavior. Built-in equipment must adopt the participant contract
 family by family with inventory, controller, conservation, timestep, and replay evidence before transactional execution
 becomes available for those flowsheets. An open transaction is an in-memory trial and is deliberately not serialized as
 a restart checkpoint.
@@ -190,6 +192,89 @@ Passing strict preflight only means that the capability audit found no currently
 configuration, unqualified process execution mode, or unaudited custom transient method. It does not establish
 conservation accuracy, timestep independence, pressure-flow correctness, control/safety fidelity, OTS real-time
 performance, or engineering approval.
+
+## Opt-in numerical adaptive acceptance
+
+Both `ProcessSystem` and `ProcessModel` provide the overload
+`runTransientAdaptive(double requestedDt, UUID parentId, AdaptiveTransientOptions options)`. It returns an
+`AdaptiveTransientResult` after accepting one bounded interval, which may be shorter than `requestedDt`. This first
+profile accepts concrete `ProcessSystem` and `ProcessModel` instances only: a subclass may override transient
+execution with state or effects outside the audited trial path. Model areas must have exactly aligned finite clocks,
+and a mutable participant shared by different areas is rejected rather than advanced twice. The caller
+must use `getAcceptedStepSeconds()` when advancing its own scenario bookkeeping and must supply a new parent ID for
+the next accepted interval. `getSuggestedNextStepSeconds()` is a recommendation for a subsequent call, not additional
+elapsed time.
+
+`AdaptiveTransientOptions` explicitly declares minimum/maximum timesteps in seconds, a maximum attempt count, the
+underlying integration order and a list of `TransientErrorStateBinding` objects. Each binding associates the actual
+`TransientStateParticipant` instance with a serializable, read-only `TransientErrorStateProvider`. Every unique
+participant, including equipment-attached controllers, requires a binding. Complete rollback coverage and complete
+numerical provider coverage are separate requirements. A provider must report every numerical state relevant to its
+participant's error assessment; binding an object does not audit the physical completeness of that declaration.
+
+Each provider returns a nonempty list of immutable `TransientErrorStateVariable` values. Every variable declares a
+stable owner identity, stable variable identity, explicit unit, finite value, strictly positive absolute tolerance and
+nonnegative relative tolerance. The local owner identity must match its bound participant's state identity. The engine
+qualifies identities by process area. It rejects missing/duplicate participant bindings, duplicate scalar identities,
+empty vectors and changes in identity, unit or tolerance policy between the initial, full-step and half-step states.
+Units are compared as labels; the integrator performs no implicit unit conversion. Providers must not mutate the model
+or produce external effects.
+
+For a full-step state $x_f$ and the state $x_h$ after two half steps, acceptance uses the deterministic maximum
+normalized difference
+
+$$e=\max_i\frac{|x_{h,i}-x_{f,i}|}{a_i+r_i\max(|x_{h,i}|,|x_{f,i}|)}$$
+
+where $a_i$ has the declared state unit and $r_i$ is dimensionless. The interval is acceptable when $e\leq 1$.
+The engine accepts the actual two-half-step state; it does not reconstruct opaque snapshots or apply Richardson
+extrapolation. The full-step trial is rolled back before the half-step trial. Excess error causes complete rollback
+and a smaller retry within the configured bounds. Nonfinite state, changed coverage/schema, event failure and other
+execution failures restore the original model and propagate an error rather than being reported as accepted progress.
+Minimum-step or attempt exhaustion also leaves the requested step uncommitted.
+
+`AdaptiveTransientException` distinguishes `MINIMUM_STEP`, `ATTEMPT_LIMIT` and `UNREPRESENTABLE_INTERVAL` termination.
+Its getters expose the reason, number of attempted trials, attempted interval in seconds, last normalized error and
+limiting-variable evidence when available. A `NaN` error means that no valid comparison was available; positive
+infinity records an overflowing or unbounded normalized difference. These are failure diagnostics, never accepted
+numerical results. Invalid configuration or schema and ordinary equipment/event failures retain their own exception
+contracts after rollback.
+
+Full, first-half and second-half evaluations use distinct deterministic **physical child identifiers**. These are
+separate from `deterministicEvaluation(...)` diagnostic IDs. The second half uses the remaining representable duration
+to the full-step endpoint, keeping the accepted area clocks at the same endpoint as the full trial. Accepted
+participants retain their actual child-step provenance; the result retains the caller's parent ID and the two accepted half-step IDs. The result also records
+accepted and suggested timesteps, normalized error, limiting variable, attempt count and rejected-attempt count.
+
+### Events, replay and cost
+
+The new overload uses start-of-substep event semantics. Due scoped events execute before the interval is integrated;
+the interval is shortened to the earliest future event across all process-area schedulers. A shared scheduler is
+handled once before areas advance. An event at an accepted endpoint remains pending and takes effect at the start of
+the following call. This prevents a shutdown or setpoint change at the endpoint from changing the preceding physical
+interval. A newly inserted future event inside a proposed interval causes rollback and a bounded localization retry.
+Legacy transient entry points retain their existing event timing.
+
+Callbacks must terminate and must avoid chains that insert new due-now events into a scheduler that has already been
+processed in the current substep. A leftover event before the trial endpoint fails the interval. The existing
+`EventScheduler` has no callback-execution budget, so unbounded self-scheduling callbacks are outside this contract;
+the adaptive attempt limit cannot interrupt a callback that never returns.
+
+Rejected full/half trials restore participant state, clocks, controller state, histories and scheduler bookkeeping
+through the existing transaction boundary. Use exclusive ownership of the process and its areas during adaptive
+execution. Transaction-scoped callbacks must mutate only their declared, covered in-memory participants; the engine
+cannot compensate for external I/O or undeclared changes. Serialize only committed models. Providers/configuration
+must be preserved or explicitly rebuilt against the restored participant instances when continuing a checkpoint.
+
+A completed numerical attempt normally requires three physical evaluations: one full step and two half steps, plus
+state capture/comparison and any rejected attempts. No speedup is implied. No numerical-provider evaluation or
+adaptive trial is added to the default steady-state or legacy transient paths.
+
+`AdaptiveTransientStepTest` provides quantitative synthetic inventory-transfer/decay, refinement, conservation,
+rejection/rollback, event-boundary, multi-area and restart/replay evidence. These checks qualify the stated integration
+contract for those fixtures. Real separator, compressor, instrument, valve, control and safeguarding studies still
+require audited provider coverage, physical conservation/refinement benchmarks, valid vendor/site parameters and
+explicit operating/design limits. This API alone does not qualify stiff integration, whole-plant pressure-flow
+coupling, P&ID design, SIL, or safety-study approval.
 
 ## Physical-step versus refinement identity
 

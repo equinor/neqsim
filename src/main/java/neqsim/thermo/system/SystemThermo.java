@@ -2223,10 +2223,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void deleteFluidPhase(int phaseNum) {
-    for (int i = phaseNum; i < numberOfPhases; i++) {
-      phaseIndex[i] = phaseIndex[i + 1];
-    }
-    numberOfPhases--;
+    recycleRemovedPhaseSlot(phaseNum);
   }
 
   /** {@inheritDoc} */
@@ -4931,21 +4928,31 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
 
-    for (int i = specPhase; i < numberOfPhases - 1; i++) {
-      phaseIndex[i] = phaseIndex[i + 1];
-      phaseType[i] = phaseType[i + 1];
-    }
-    numberOfPhases--;
+    recycleRemovedPhaseSlot(specPhase);
   }
 
   /** {@inheritDoc} */
   @Override
   public void removePhaseKeepTotalComposition(int specPhase) {
-    for (int i = specPhase; i < numberOfPhases - 1; i++) {
+    recycleRemovedPhaseSlot(specPhase);
+  }
+
+  /**
+   * Removes a logical phase and returns its physical storage slot to the inactive tail.
+   *
+   * <p>
+   * Phase type and beta are owned by the physical slot, so only the logical-to-physical mapping is permuted.
+   * </p>
+   *
+   * @param phaseNumber logical phase position to remove
+   */
+  private void recycleRemovedPhaseSlot(int phaseNumber) {
+    int removedPhaseIndex = phaseIndex[phaseNumber];
+    for (int i = phaseNumber; i < numberOfPhases - 1; i++) {
       phaseIndex[i] = phaseIndex[i + 1];
-      phaseType[i] = phaseType[i + 1];
     }
     numberOfPhases--;
+    phaseIndex[numberOfPhases] = removedPhaseIndex;
   }
 
   /** {@inheritDoc} */

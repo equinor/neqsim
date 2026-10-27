@@ -507,6 +507,9 @@ public class TwoFluidConservationEquations implements Serializable {
   /** Phase-resolved face mass flows from the most recent {@link #calcRHS} evaluation. */
   private double[][] lastPhaseMassFaceFluxes = new double[0][3];
 
+  /** Total-energy flow at each face from the most recent {@link #calcRHS} evaluation. */
+  private double[] lastEnergyFaceFluxes = new double[0];
+
   /** Transactional directional mass/momentum decomposition at internal faces. */
   private DirectionalPhaseFaceFlux[][] lastDirectionalPhaseFaceFluxes = new DirectionalPhaseFaceFlux[0][3];
 
@@ -836,6 +839,7 @@ public class TwoFluidConservationEquations implements Serializable {
     double[] outletFlux = calcOutletFlux(outletBoundary, outletFacePressure(sections, outletBoundary));
     lastPhaseMassFaceFluxes = populatePhaseMassFaceFluxes(lastPhaseMassFaceFluxes, nCells, fluxes, inletFlux,
         outletFlux);
+    lastEnergyFaceFluxes = populateEnergyFaceFluxes(lastEnergyFaceFluxes, nCells, fluxes, inletFlux, outletFlux);
 
     // Assemble RHS: dU/dt = -1/dx_i * (F_{i+1/2} - F_{i-1/2}) + S_i
     //
@@ -935,7 +939,7 @@ public class TwoFluidConservationEquations implements Serializable {
     try {
       outletBackflowClamped = false;
       double[][] rates = calcRHS(sections, dx);
-      return new TransactionalEvaluation(rates, lastMassBalanceRate, lastPhaseMassFaceFluxes,
+      return new TransactionalEvaluation(rates, lastMassBalanceRate, lastPhaseMassFaceFluxes, lastEnergyFaceFluxes,
           lastDirectionalPhaseFaceFluxes, lastPhaseMassSourcesPerLength, lastMomentumSourceForcesPerLength,
           outletBackflowClamped);
     } finally {
@@ -949,17 +953,19 @@ public class TwoFluidConservationEquations implements Serializable {
     private final double[][] rates;
     private final MassBalanceRate massBalanceRate;
     private final double[][] phaseMassFaceFluxes;
+    private final double[] energyFaceFluxes;
     private final DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes;
     private final double[][] phaseMassSourcesPerLength;
     private final double[][] momentumSourceForcesPerLength;
     private final boolean outletBackflowClamped;
 
     private TransactionalEvaluation(double[][] rates, MassBalanceRate massBalanceRate, double[][] phaseMassFaceFluxes,
-        DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes, double[][] phaseMassSourcesPerLength,
-        double[][] momentumSourceForcesPerLength, boolean outletBackflowClamped) {
+        double[] energyFaceFluxes, DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes,
+        double[][] phaseMassSourcesPerLength, double[][] momentumSourceForcesPerLength, boolean outletBackflowClamped) {
       this.rates = copyMatrixArray(rates);
       this.massBalanceRate = massBalanceRate;
       this.phaseMassFaceFluxes = copyMatrixArray(phaseMassFaceFluxes);
+      this.energyFaceFluxes = energyFaceFluxes.clone();
       this.directionalPhaseFaceFluxes = copyMatrixArray(directionalPhaseFaceFluxes);
       this.phaseMassSourcesPerLength = copyMatrixArray(phaseMassSourcesPerLength);
       this.momentumSourceForcesPerLength = copyMatrixArray(momentumSourceForcesPerLength);
@@ -979,6 +985,11 @@ public class TwoFluidConservationEquations implements Serializable {
     /** @return defensive face mass fluxes in kg/s, shape [cellCount + 1][3] */
     public double[][] getPhaseMassFaceFluxes() {
       return copyMatrixArray(phaseMassFaceFluxes);
+    }
+
+    /** @return defensive face total-energy fluxes in W, shape [cellCount + 1] */
+    public double[] getEnergyFaceFluxes() {
+      return energyFaceFluxes.clone();
     }
 
     /**
@@ -1025,6 +1036,7 @@ public class TwoFluidConservationEquations implements Serializable {
     private final boolean savedBackflow = outletBackflowClamped;
     private final MassBalanceRate savedBalance = lastMassBalanceRate;
     private final double[][] savedFaces = copyMatrixArray(lastPhaseMassFaceFluxes);
+    private final double[] savedEnergyFaces = lastEnergyFaceFluxes.clone();
     private final DirectionalPhaseFaceFlux[][] savedDirectionalFaces = copyMatrixArray(lastDirectionalPhaseFaceFluxes);
     private final double[][] savedSources = copyMatrixArray(lastPhaseMassSourcesPerLength);
     private final double[][] savedForces = copyMatrixArray(lastMomentumSourceForcesPerLength);
@@ -1039,6 +1051,7 @@ public class TwoFluidConservationEquations implements Serializable {
       outletBackflowClamped = savedBackflow;
       lastMassBalanceRate = savedBalance;
       lastPhaseMassFaceFluxes = savedFaces;
+      lastEnergyFaceFluxes = savedEnergyFaces;
       lastDirectionalPhaseFaceFluxes = savedDirectionalFaces;
       lastPhaseMassSourcesPerLength = savedSources;
       lastMomentumSourceForcesPerLength = savedForces;
@@ -1095,6 +1108,39 @@ public class TwoFluidConservationEquations implements Serializable {
       for (int phase = 0; phase < 3; phase++) {
         accumulator[face][phase] += weight * lastPhaseMassFaceFluxes[face][phase];
       }
+    }
+  }
+
+  /**
+   * Get a defensive copy of the total-energy flow at every finite-volume face.
+   *
+   * <p>
+   * Positive values point from inlet to outlet. The first and last entries are therefore the signed inlet and outlet
+   * boundary transfers needed to route accepted energy conservatively between network branches.
+   * </p>
+   *
+   * @return face total-energy flows in W, or an empty array before the first evaluation
+   */
+  public double[] getLastEnergyFaceFluxes() {
+    return lastEnergyFaceFluxes.clone();
+  }
+
+  /**
+   * Add the most recently evaluated total-energy face flows to a caller-owned accumulator.
+   *
+   * @param accumulator destination receiving {@code weight * energyFlow}
+   * @param weight integration-stage weight
+   * @throws IllegalArgumentException if the accumulator shape is incompatible or the weight is not finite
+   */
+  public void accumulateLastEnergyFaceFluxes(double[] accumulator, double weight) {
+    if (accumulator == null || accumulator.length != lastEnergyFaceFluxes.length) {
+      throw new IllegalArgumentException("Accumulator must match the most recent energy-flux shape");
+    }
+    if (!Double.isFinite(weight)) {
+      throw new IllegalArgumentException("Integration-stage weight must be finite");
+    }
+    for (int face = 0; face < lastEnergyFaceFluxes.length; face++) {
+      accumulator[face] += weight * lastEnergyFaceFluxes[face];
     }
   }
 
@@ -1184,6 +1230,29 @@ public class TwoFluidConservationEquations implements Serializable {
     phaseMassFaceFluxes[sectionCount][1] = outletFlux[IDX_OIL_MASS];
     phaseMassFaceFluxes[sectionCount][2] = outletFlux[IDX_WATER_MASS];
     return phaseMassFaceFluxes;
+  }
+
+  /**
+   * Populate a caller-provided total-energy face-flux buffer.
+   *
+   * @param energyFaceFluxes reusable destination, or {@code null}
+   * @param sectionCount number of finite-volume sections
+   * @param interfaceFluxes conservative fluxes at internal faces
+   * @param inletFlux conservative inlet-face flux
+   * @param outletFlux conservative outlet-face flux
+   * @return populated total-energy face flows in W
+   */
+  private double[] populateEnergyFaceFluxes(double[] energyFaceFluxes, int sectionCount, double[][] interfaceFluxes,
+      double[] inletFlux, double[] outletFlux) {
+    if (energyFaceFluxes == null || energyFaceFluxes.length != sectionCount + 1) {
+      energyFaceFluxes = new double[sectionCount + 1];
+    }
+    energyFaceFluxes[0] = inletFlux[IDX_ENERGY];
+    for (int face = 1; face < sectionCount; face++) {
+      energyFaceFluxes[face] = interfaceFluxes[face - 1][IDX_ENERGY];
+    }
+    energyFaceFluxes[sectionCount] = outletFlux[IDX_ENERGY];
+    return energyFaceFluxes;
   }
 
   /**

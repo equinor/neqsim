@@ -6,6 +6,7 @@
 
 package neqsim.thermo.component;
 
+import java.util.Arrays;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
@@ -103,9 +104,15 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
     double dG2dt = 0;
     double dGdtdt = 0;
     double dG2dtdt = 0.0;
-    double[][] Gmatrix = type == 3 ? new double[numberOfComponents][numberOfComponents] : null;
-    double[][] tauMatrix = type == 3 ? new double[numberOfComponents][numberOfComponents] : null;
-    dlngammadn = new double[numberOfComponents];
+    // Call-local flat workspaces avoid row-array allocation without retaining a cubic-size cache.
+    double[] Gmatrix = type == 3 ? new double[numberOfComponents * numberOfComponents] : null;
+    double[] tauMatrix = type == 3 ? new double[numberOfComponents * numberOfComponents] : null;
+    // Each component owns this vector, including after cloning. Lower init levels must clear it too.
+    if (dlngammadn == null || dlngammadn.length != numberOfComponents) {
+      dlngammadn = new double[numberOfComponents];
+    } else {
+      Arrays.fill(dlngammadn, 0.0);
+    }
     ComponentEosInterface[] comp_Array = (ComponentEosInterface[]) phase.getcomponentArray();
     double dA2dTetter = 0;
     double dA2dTdTetter = 0;
@@ -311,8 +318,8 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
         G = comp_Array[l].getb() * Math.exp(-alpha * tau);
         dGdt = dtaudt * -alpha * G;
         if (type == 3) {
-          Gmatrix[l][j] = G;
-          tauMatrix[l][j] = tau;
+          Gmatrix[l * numberOfComponents + j] = G;
+          tauMatrix[l * numberOfComponents + j] = tau;
         }
 
         C += G * comp_Array[l].getx();
@@ -385,15 +392,16 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
       for (int f = 0; f < numberOfComponents; f++) {
         nt += comp_Array[f].getNumberOfMolesInPhase();
         for (int g = 0; g < numberOfComponents; g++) {
-          columnSum[f] += comp_Array[g].getx() * Gmatrix[g][f];
-          columnEnergySum[f] += comp_Array[g].getx() * Gmatrix[g][f] * tauMatrix[g][f];
+          columnSum[f] += comp_Array[g].getx() * Gmatrix[g * numberOfComponents + f];
+          columnEnergySum[f] += comp_Array[g].getx() * Gmatrix[g * numberOfComponents + f]
+              * tauMatrix[g * numberOfComponents + f];
         }
       }
 
       for (int p = 0; p < numberOfComponents; p++) {
-        dAdn = tauMatrix[p][componentNumber] * Gmatrix[p][componentNumber];
-        dBdn = Gmatrix[p][componentNumber];
-        dEdn = Gmatrix[componentNumber][p] * tauMatrix[componentNumber][p];
+        dAdn = tauMatrix[p * numberOfComponents + componentNumber] * Gmatrix[p * numberOfComponents + componentNumber];
+        dBdn = Gmatrix[p * numberOfComponents + componentNumber];
+        dEdn = Gmatrix[componentNumber * numberOfComponents + p] * tauMatrix[componentNumber * numberOfComponents + p];
         // dFdn = Gmatrix[componentNumber][p];
         Dtemp = 0;
         Ctemp = columnSum[p];
@@ -403,13 +411,15 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
         for (int f = 0; f < numberOfComponents; f++) {
           double sum = columnSum[f];
           double sum2 = columnEnergySum[f];
-          Dtemp += Gmatrix[p][f] * Gmatrix[componentNumber][f] * tauMatrix[componentNumber][f] * comp_Array[f].getx()
-              / (sum * sum);
-          Ftemp += comp_Array[f].getx() * Gmatrix[p][f] * sum2 * Gmatrix[componentNumber][f] / (sum * sum * sum);
-          Gtemp += comp_Array[f].getx() * Gmatrix[p][f] * tauMatrix[p][f] * Gmatrix[componentNumber][f] / (sum * sum);
+          Dtemp += Gmatrix[p * numberOfComponents + f] * Gmatrix[componentNumber * numberOfComponents + f]
+              * tauMatrix[componentNumber * numberOfComponents + f] * comp_Array[f].getx() / (sum * sum);
+          Ftemp += comp_Array[f].getx() * Gmatrix[p * numberOfComponents + f] * sum2
+              * Gmatrix[componentNumber * numberOfComponents + f] / (sum * sum * sum);
+          Gtemp += comp_Array[f].getx() * Gmatrix[p * numberOfComponents + f] * tauMatrix[p * numberOfComponents + f]
+              * Gmatrix[componentNumber * numberOfComponents + f] / (sum * sum);
         }
         dlngammadn[p] = (dAdn / B - A / (B * B) * dBdn) + dEdn / Ctemp - Dtemp
-            - Etemp * Gmatrix[componentNumber][p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp;
+            - Etemp * Gmatrix[componentNumber * numberOfComponents + p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp;
         // E/(C*C)*dCdn[p]*(tau2-D/C) + E/C*(-dDdn[p]/C + D/(C*C)*dCdn[p]);
         dlngammadn[p] /= (nt);
       }
