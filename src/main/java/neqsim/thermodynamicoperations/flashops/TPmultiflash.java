@@ -664,13 +664,22 @@ public class TPmultiflash extends TPflash {
         PhaseInterface trialPhase = trialSystem.getPhase(1);
         for (int i = 0; i < numComp; i++) {
           ComponentInterface trialComponent = trialPhase.getComponent(i);
-          if (validComp[i] && !Double.isInfinite(trialComponent.getLogFugacityCoefficient())) {
-            logWi[i] = d[i] - trialComponent.getLogFugacityCoefficient();
+          if (validComp[i]) {
+            double logFugacityCoefficient = trialComponent.getLogFugacityCoefficient();
+            if (!Double.isFinite(logFugacityCoefficient)) {
+              // Skipping this update would leave a stale weight and can falsely report zero error.
+              trialInitFailed = true;
+              break;
+            }
+            logWi[i] = d[i] - logFugacityCoefficient;
           }
           deltalogWi[i] = logWi[i] - oldlogw[i];
           err += Math.abs(deltalogWi[i]);
         }
 
+        if (trialInitFailed) {
+          break;
+        }
         // Wegstein acceleration every 7th iteration
         if (iter % 7 == 0 && iter > 7 && useAccel && err < errOld) {
           double prod1 = 0.0;
@@ -703,7 +712,7 @@ public class TPmultiflash extends TPflash {
         }
       } while (!trialInitFailed && (Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
 
-      if (trialInitFailed) {
+      if (trialInitFailed || !Double.isFinite(err)) {
         continue;
       }
 
@@ -730,7 +739,7 @@ public class TPmultiflash extends TPflash {
         for (int i = 0; i < numComp; i++) {
           system.getPhase(newPhaseIdx).getComponent(i).setx(xTrial[i]);
         }
-        system.getPhases()[newPhaseIdx].normalize();
+        system.getPhase(newPhaseIdx).normalize();
         multiPhaseTest = true;
         int dominantComp = 0;
         double maxX = 0;
@@ -1055,7 +1064,7 @@ public class TPmultiflash extends TPflash {
         for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
           system.getPhase(system.getNumberOfPhases() - 1).getComponent(i).setx(x[k][i]);
         }
-        system.getPhases()[system.getNumberOfPhases() - 1].normalize();
+        system.getPhase(system.getNumberOfPhases() - 1).normalize();
         multiPhaseTest = true;
         system.setBeta(system.getNumberOfPhases() - 1, system.getPhase(0).getComponent(unstabcomp).getz());
         try {
@@ -1228,6 +1237,7 @@ public class TPmultiflash extends TPflash {
         double errOld = 1.0e100;
         int maxiter = 150; // Reduced from 200 - Wilson init converges faster
         boolean useAcceleration = true;
+        boolean trialInitFailed = false;
 
         do {
           errOld = err;
@@ -1247,6 +1257,7 @@ public class TPmultiflash extends TPflash {
             // Molar volume calculation failed for this trial phase composition
             // Skip this trial - it's not a physically meaningful phase
             logger.debug("Enhanced stability trial init failed: " + ex.getMessage());
+            trialInitFailed = true;
             break;
           }
 
@@ -1254,15 +1265,20 @@ public class TPmultiflash extends TPflash {
           for (int i = 0; i < numComponents; i++) {
             if (validComponent[i]) {
               double logFugCoeff = clonedSystem.getPhase(1).getComponent(i).getLogFugacityCoefficient();
-              if (!Double.isInfinite(logFugCoeff)) {
-                logWi[i] = d[i] - logFugCoeff;
+              if (!Double.isFinite(logFugCoeff)) {
+                trialInitFailed = true;
+                break;
               }
+              logWi[i] = d[i] - logFugCoeff;
             }
             deltalogWi[i] = logWi[i] - oldlogw[i];
             err += Math.abs(deltalogWi[i]);
             Wi[i] = safeExp(logWi[i]);
           }
 
+          if (trialInitFailed) {
+            break;
+          }
           // Wegstein/GDEM acceleration every 7th iteration
           if (iter % 7 == 0 && iter > 7 && useAcceleration && err < errOld) {
             double prod1 = 0.0;
@@ -1300,6 +1316,9 @@ public class TPmultiflash extends TPflash {
           }
         } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
 
+        if (trialInitFailed || !Double.isFinite(err)) {
+          continue;
+        }
         // Calculate tangent plane distance
         double tmVal = 1.0;
         for (int i = 0; i < numComponents; i++) {
@@ -1329,7 +1348,7 @@ public class TPmultiflash extends TPflash {
           for (int i = 0; i < numComponents; i++) {
             system.getPhase(newPhaseIdx).getComponent(i).setx(x[i]);
           }
-          system.getPhases()[newPhaseIdx].normalize();
+          system.getPhase(newPhaseIdx).normalize();
           multiPhaseTest = true;
 
           // Set initial beta based on dominant component
@@ -1729,7 +1748,7 @@ public class TPmultiflash extends TPflash {
         for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
           system.getPhase(system.getNumberOfPhases() - 1).getComponent(i).setx(x[k][i]);
         }
-        system.getPhases()[system.getNumberOfPhases() - 1].normalize();
+        system.getPhase(system.getNumberOfPhases() - 1).normalize();
         multiPhaseTest = true;
         system.setBeta(system.getNumberOfPhases() - 1, system.getPhase(0).getComponent(unstabcomp).getz());
         try {
@@ -2082,7 +2101,7 @@ public class TPmultiflash extends TPflash {
         for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
           system.getPhase(system.getNumberOfPhases() - 1).getComponent(i).setx(x[k][i]);
         }
-        system.getPhases()[system.getNumberOfPhases() - 1].normalize();
+        system.getPhase(system.getNumberOfPhases() - 1).normalize();
         multiPhaseTest = true;
         system.setBeta(system.getNumberOfPhases() - 1, system.getPhase(0).getComponent(unstabcomp).getz());
         try {
@@ -2188,7 +2207,7 @@ public class TPmultiflash extends TPflash {
       double x = Math.exp(logTrialComposition[comp] - maximumLogTrialComposition);
       system.getPhase(phaseIndex).getComponent(comp).setx(Math.max(x, 1.0e-16));
     }
-    system.getPhases()[phaseIndex].normalize();
+    system.getPhase(phaseIndex).normalize();
     double initialBeta = Math.max(1.0e-3, 1000.0 * phaseFractionMinimumLimit);
     system.setBeta(phaseIndex, initialBeta);
     system.normalizeBeta();
@@ -2368,7 +2387,7 @@ public class TPmultiflash extends TPflash {
       system.getPhase(phaseIndex).getComponent(comp).setx(x);
     }
 
-    system.getPhases()[phaseIndex].normalize();
+    system.getPhase(phaseIndex).normalize();
     double initialBeta = Math.max(1.0e-5, 10.0 * phaseFractionMinimumLimit);
     system.setBeta(phaseIndex, initialBeta);
     system.normalizeBeta();
@@ -3401,7 +3420,7 @@ public class TPmultiflash extends TPflash {
             system.getPhase(aquPhaseIndex).getComponent(comp).setx(x);
           }
 
-          system.getPhases()[aquPhaseIndex].normalize();
+          system.getPhase(aquPhaseIndex).normalize();
           double initialBeta = Math.max(1.0e-5, 10.0 * phaseFractionMinimumLimit);
           system.setBeta(aquPhaseIndex, initialBeta);
           system.normalizeBeta();

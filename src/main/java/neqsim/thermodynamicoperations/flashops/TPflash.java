@@ -118,6 +118,8 @@ public class TPflash extends Flash {
   private static final double NEUTRAL_TWO_PHASE_AMOUNT_SEPARATION_TOLERANCE = 1.0e-8;
   /** Maximum accepted phase-composition normalization residual for an aqueous trial seed. */
   private static final double AQUEOUS_SEED_COMPOSITION_NORMALIZATION_TOLERANCE = 1.0e-8;
+  /** Component closure required before retaining a tiny aqueous seed over a stable homogeneous state. */
+  private static final double AQUEOUS_SEED_MATERIAL_BALANCE_TOLERANCE = 1.0e-10;
   /** Maximum accepted log-fugacity residual when selecting an alternate cubic root. */
   private static final double PHASE_ROOT_EQUILIBRIUM_TOLERANCE = 1.0e-8;
   /** Target log-fugacity residual for polishing a qualified neutral two-phase endpoint. */
@@ -1264,7 +1266,7 @@ public class TPflash extends Flash {
         rescueSinglePhaseWaterBearingEndpoint();
         rescueSinglePhaseMultiphaseEndpointLegacy();
         rescueSinglePhaseMultiphaseEndpoint();
-        rejectUnnormalizedAqueousEndpointAfterStableSinglePhase();
+        rejectInvalidAqueousSeedAfterStableSinglePhase();
 
         // TPmultiflash owns the coupled phase/reaction solve for multiphase chemical systems.
         // Solve chemistry here only when no multiphase calculation was requested.
@@ -5045,21 +5047,22 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Rejects an unnormalized aqueous trial phase created while checking an already stable single-phase state.
+   * Rejects an unnormalized or nonconservative aqueous seed over an already stable single-phase state.
    *
    * <p>
    * The multiphase stability path can seed an aqueous trial phase at a small positive phase fraction. If the beta
    * solver does not move that seed, its composition can remain unnormalized and survive the generic minimum-beta
-   * cleanup. Such a structurally invalid trial must not replace the accepted homogeneous state.
+   * cleanup. A normalized seed can likewise remain at its initial tiny fraction without satisfying component balance.
+   * Such an unequilibrated trial must not replace the accepted homogeneous state.
    * </p>
    *
    * <p>
-   * This guard deliberately does not impose a universal material-balance or fugacity-residual threshold. Some
-   * specialized fluid and solid-phase models use model-specific convergence and refinement paths, so normalized
-   * endpoints remain available to those paths. Chemical, ionic, solid, wax, and non-aqueous endpoints are excluded.
+   * The material-balance check is limited to aqueous fractions no larger than the initial seed in {@link TPmultiflash}.
+   * Larger normalized endpoints remain available to model-specific refinement paths. Chemical, ionic, solid, wax, and
+   * non-aqueous endpoints are excluded.
    * </p>
    */
-  private void rejectUnnormalizedAqueousEndpointAfterStableSinglePhase() {
+  private void rejectInvalidAqueousSeedAfterStableSinglePhase() {
     if (system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons() || solidCheck
         || system.isMultiphaseWaxCheck() || referenceSinglePhaseType == null
         || !system.hasPhaseType(PhaseType.AQUEOUS)) {
@@ -5089,6 +5092,12 @@ public class TPflash extends Flash {
         collapseToReferenceSinglePhase();
         return;
       }
+    }
+    double initialSeedFraction = Math.max(1.0e-5, 10.0 * phaseFractionMinimumLimit);
+    double aqueousFraction = system.getBeta(system.getPhaseNumberOfPhase("aqueous"));
+    if (aqueousFraction <= initialSeedFraction
+        && maximumComponentMaterialBalanceResidual(system) > AQUEOUS_SEED_MATERIAL_BALANCE_TOLERANCE) {
+      collapseToReferenceSinglePhase();
     }
   }
 

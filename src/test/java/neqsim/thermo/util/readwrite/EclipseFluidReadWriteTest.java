@@ -374,14 +374,33 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     double ent = separator.getOilOutStream().getFluid().getEnthalpy();
     separator.getOilOutStream().run();
     // separator.getOilOutStream().getFluid().prettyPrint();
-    // Updated expected value: OMEGAA from file (0.45724) now applied instead of
-    // default
-    // (0.45724333333)
-    // IC4/IC5 now map to the database components (database ideal-gas Cp), which shifts the enthalpy
-    Assertions.assertEquals(-4636.697178152326, ent, 1e-3);
-
-    // Oil outlet stream is single-phase oil after separation
-    Assertions.assertEquals(1, separator.getOilOutStream().getFluid().getNumberOfPhases());
+    // Entrained water exceeds its oil solubility. Distinct phase slots retain the lower-Gibbs
+    // oil/aqueous equilibrium instead of collapsing it through aliased storage.
+    Assertions.assertEquals(-4678.030028524407, ent, 1e-3);
+    SystemInterface oilProduct = separator.getOilOutStream().getFluid();
+    Assertions.assertEquals(2, oilProduct.getNumberOfPhases());
+    Assertions.assertTrue(oilProduct.hasPhaseType("oil"));
+    Assertions.assertTrue(oilProduct.hasPhaseType("aqueous"));
+    Assertions.assertEquals(1.0, oilProduct.getBeta(0) + oilProduct.getBeta(1), 1e-12);
+    for (int component = 0; component < oilProduct.getNumberOfComponents(); component++) {
+      double recoveredMoles = 0.0;
+      for (int phase = 0; phase < oilProduct.getNumberOfPhases(); phase++) {
+        recoveredMoles += oilProduct.getPhase(phase).getComponent(component).getNumberOfMolesInPhase();
+      }
+      double entrainedMoles = separator.getThermoSystem().getPhase("oil").getComponent(component)
+          .getNumberOfMolesInPhase();
+      Assertions.assertEquals(entrainedMoles, recoveredMoles, 1e-10);
+      double logFugacityRatio = Math
+          .log(oilProduct.getPhase(0).getFugacity(component) / oilProduct.getPhase(1).getFugacity(component));
+      Assertions.assertEquals(0.0, logFugacityRatio, 1e-8);
+    }
+    SystemInterface homogeneousOil = oilProduct.clone();
+    homogeneousOil.init(0);
+    homogeneousOil.setNumberOfPhases(1);
+    homogeneousOil.setPhaseType(0, neqsim.thermo.phase.PhaseType.OIL);
+    homogeneousOil.setBeta(0, 1.0);
+    homogeneousOil.init(1);
+    Assertions.assertTrue(oilProduct.getGibbsEnergy() < homogeneousOil.getGibbsEnergy() - 1e-6);
 
     ThrottlingValve throttlingValve = new ThrottlingValve("throttlingValve", separator.getOilOutStream());
     throttlingValve.setOutletPressure(3.0, "bara");
@@ -390,8 +409,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // throttlingValve.getOutletStream().getFluid().prettyPrint();
     // After throttling, may flash to 2 or 3 phases depending on conditions
     Assertions.assertTrue(throttlingValve.getOutletStream().getFluid().getNumberOfPhases() >= 2);
-    // Updated expected temperature due to thermodynamic model changes
-    Assertions.assertEquals(55.35277831578685, throttlingValve.getOutletStream().getFluid().getTemperature("C"), 1e-3);
+    // Isenthalpic throttling starts from the qualified oil/aqueous product above.
+    Assertions.assertEquals(54.53885745110426, throttlingValve.getOutletStream().getFluid().getTemperature("C"), 1e-3);
   }
 
   @Test

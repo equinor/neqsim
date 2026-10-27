@@ -284,9 +284,11 @@ public class SolidFlash extends TPflash {
    */
   public void calcSolidBeta() {
     double tempVar = system.getPhase(0).getComponents()[solidComponent].getz();
+    double solidFugacityCoefficient = system.getPhase(PhaseType.SOLID).getComponent(solidComponent)
+        .getFugacityCoefficient();
     // double beta = 1.0;
     for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
-      tempVar -= system.getBeta(i) * system.getPhase(3).getComponent(solidComponent).getFugacityCoefficient()
+      tempVar -= system.getBeta(i) * solidFugacityCoefficient
           / system.getPhase(i).getComponent(solidComponent).getFugacityCoefficient();
       // beta -= system.getBeta(i);
     }
