@@ -1,0 +1,19 @@
+{
+  "cells": 4,
+  "jvms": 16,
+  "raw_rounds": 256,
+  "state_rows": 192,
+  "max_balance": 2.5868196473766147e-14,
+  "max_logfugacity": 6.394884621840902e-13,
+  "max_baseline_candidate_state_difference": {
+    "beta": 0.0,
+    "x": 0.0,
+    "logphi": 0.0
+  },
+  "phase_types": [
+    "AQUEOUS",
+    "GAS",
+    "OIL"
+  ],
+  "interpretation": "Median of two independent per-JVM medians; min/max retain between-JVM variation. No statistical speedup, absolute optimality or experimental-accuracy assertion."
+}
