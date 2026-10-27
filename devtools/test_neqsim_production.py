@@ -614,6 +614,27 @@ def _valid_plant_coverage_lifecycle_evidence(current_envelope):
     return evidence
 
 
+def _valid_constraint_opportunity_lifecycle_evidence(current_envelope):
+    """Extend schema-v10 evidence with a fail-closed physical-headroom opportunity screen."""
+    summary = current_envelope["cross_slice_constraint_summary"]
+    summary["summary_version"] = 2
+    for envelope_slice in current_envelope["slices"]:
+        for point in envelope_slice["points"]:
+            point["constraint_evidence"] = []
+        for refinement in envelope_slice["operating_region_boundary_refinements"]:
+            refinement["feasible_boundary_constraint_evidence"] = []
+            refinement["infeasible_boundary_constraint_evidence"] = []
+    current_envelope["cross_slice_constraint_summary"] = (
+        production._cross_slice_constraint_summary(current_envelope["slices"], summary))
+    evidence = _valid_plant_coverage_lifecycle_evidence(current_envelope)
+    evidence["schema_version"] = 11
+    for period in evidence["periods"]:
+        summary = period["envelope_evidence"]["cross_slice_constraint_summary"]
+        period["constraint_opportunity_summary"] = production._constraint_opportunity_summary(
+            period["envelope_evidence"])
+    return evidence
+
+
 def _valid_state_lifecycle_evidence(current_envelope):
     """Extend valid schema-v4 evidence with exact accepted physical-state metrics."""
     evidence = _valid_region_lifecycle_evidence(current_envelope)
@@ -1474,6 +1495,45 @@ def test_guard_accepts_schema10_plant_constraint_coverage(tmp_path):
 
     assert [row["title"] for row in ctx.proposals] == ["candidate"]
     assert ctx.proposals[0]["lifecycle_envelope_evidence"]["schema_version"] == 10
+
+
+def test_guard_accepts_schema11_constraint_opportunity_screen(tmp_path):
+    proposal = _valid_proposal()
+    envelope = proposal["accepted_point_envelope_evidence"]
+    _add_empty_operating_region_evidence(envelope)
+    _add_empty_boundary_refinement_evidence(envelope)
+    _add_empty_constraint_summary_evidence(envelope)
+    proposal["lifecycle_envelope_evidence"] = (
+        _valid_constraint_opportunity_lifecycle_evidence(envelope))
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+
+    production.guard(ctx, {})
+
+    assert [row["title"] for row in ctx.proposals] == ["candidate"]
+    lifecycle = ctx.proposals[0]["lifecycle_envelope_evidence"]
+    assert lifecycle["schema_version"] == 11
+    assert all(period["constraint_opportunity_summary"]["candidates"] == []
+               for period in lifecycle["periods"])
+
+
+def test_guard_rejects_tampered_schema11_constraint_opportunity_screen(tmp_path):
+    proposal = _valid_proposal()
+    envelope = proposal["accepted_point_envelope_evidence"]
+    _add_empty_operating_region_evidence(envelope)
+    _add_empty_boundary_refinement_evidence(envelope)
+    _add_empty_constraint_summary_evidence(envelope)
+    lifecycle = _valid_constraint_opportunity_lifecycle_evidence(envelope)
+    lifecycle["periods"][0]["constraint_opportunity_summary"]["candidate_count"] = 1
+    proposal["lifecycle_envelope_evidence"] = lifecycle
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+
+    production.guard(ctx, {})
+
+    assert ctx.proposals == []
+    reasons = json.loads((tmp_path / "guard.json").read_text())["withheld"][0]["reasons"]
+    assert "lifecycle_period_0_constraint_opportunity_summary_mismatch" in reasons
 
 
 def test_guard_accepts_explicitly_disabled_schema10_plant_constraint(tmp_path):

@@ -513,8 +513,8 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     Map<String, Object> lifecycleEvidence = lifecycle.toEvidenceMap("synthetic-lifecycle-cycle");
     JsonObject lifecycleJson = JsonParser.parseString(lifecycle.toEvidenceJson("late-life")).getAsJsonObject();
 
-    assertEquals(Integer.valueOf(10), lifecycleEvidence.get("schema_version"));
-    assertEquals(10, lifecycleJson.get("schema_version").getAsInt());
+    assertEquals(Integer.valueOf(11), lifecycleEvidence.get("schema_version"));
+    assertEquals(11, lifecycleJson.get("schema_version").getAsInt());
     assertEquals("late-life", lifecycleJson.get("cycle_id").getAsString());
     JsonArray jsonPeriods = lifecycleJson.getAsJsonArray("periods");
     assertEquals(2, jsonPeriods.size());
@@ -548,6 +548,17 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     assertTrue(Double.isFinite(rejectingSummary.get("minimum_normalized_margin").getAsDouble()));
     assertTrue(rejectingSummary.has("representative_feasible_constraint"));
     assertTrue(rejectingSummary.get("representative_feasible_constraint").isJsonObject());
+    JsonObject opportunitySummary = jsonPeriods.get(0).getAsJsonObject()
+        .getAsJsonObject("constraint_opportunity_summary");
+    assertEquals(1, opportunitySummary.get("summary_version").getAsInt());
+    assertEquals(rejectingSummary.get("rank").getAsInt(),
+        opportunitySummary.getAsJsonArray("candidates").get(0).getAsJsonObject().get("rank").getAsInt());
+    assertEquals("CURRENT_REJECTING_CONSTRAINT", opportunitySummary.getAsJsonArray("candidates").get(0)
+        .getAsJsonObject().get("screening_classification").getAsString());
+    assertTrue(opportunitySummary.getAsJsonArray("candidates").asList().stream().map(JsonElement::getAsJsonObject)
+        .allMatch(candidate -> candidate.get("paired_relief_study_required").getAsBoolean()
+            && "NOT_PROVIDED".equals(candidate.get("paired_relief_study_status").getAsString())
+            && Double.isFinite(candidate.get("physical_headroom").getAsDouble())));
     assertThrows(IllegalStateException.class, () -> lifecycle.toEvidenceJson("missing-cycle"));
     assertEquals(Integer.valueOf(2), lifecycleEvidence.get("period_count"));
     assertEquals(Integer.valueOf(12), lifecycleEvidence.get("requested_point_count"));

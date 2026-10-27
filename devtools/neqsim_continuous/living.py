@@ -364,8 +364,8 @@ def _guarded_lifecycle_evidence(task_dir, cycle_id, manifest):
                 or item.get("status") in ("rejected", "superseded")):
             reasons.append("ledger lifecycle evidence is not current and guard-approved")
         if (not isinstance(evidence, dict)
-                or evidence.get("schema_version") not in (8, 9, 10)):
-            reasons.append("promoted lifecycle evidence must use schema version 8, 9, or 10")
+                or evidence.get("schema_version") not in (8, 9, 10, 11)):
+            reasons.append("promoted lifecycle evidence must use schema version 8, 9, 10, or 11")
         else:
             reasons.extend(_lifecycle_evidence_reasons(
                 SimpleNamespace(cycle_id=cycle_id), item, required=True))

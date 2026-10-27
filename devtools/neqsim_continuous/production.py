@@ -979,6 +979,68 @@ def _constraint_summary_identities(envelope):
     return identities
 
 
+def _constraint_opportunity_summary(envelope):
+    """Project exact ranked rows into a fail-closed physical-headroom follow-up screen."""
+    if not isinstance(envelope, dict):
+        return None
+    summary = envelope.get("cross_slice_constraint_summary")
+    ranked = summary.get("ranked_constraints") if isinstance(summary, dict) else None
+    if (not isinstance(summary, dict) or summary.get("summary_version") != 2
+            or not isinstance(ranked, list)):
+        return None
+    candidates = []
+    for expected_rank, row in enumerate(ranked, 1):
+        if not isinstance(row, dict) or row.get("rank") != expected_rank:
+            return None
+        classification = row.get("classification")
+        representative_key = ("representative_rejecting_constraint"
+                              if classification == "REJECTING"
+                              else "representative_feasible_constraint")
+        representative = row.get(representative_key)
+        if (classification not in ("REJECTING", "NEAR_ACTIVE")
+                or not isinstance(representative, dict)
+                or not all(_number(representative.get(field)) for field in (
+                    "current_value", "applicable_limit", "physical_margin"))
+                or not _text(row.get("qualified_constraint_name"))
+                or not _text(row.get("physical_unit"))
+                or not _text(row.get("applicable_limit_role"))
+                or not _text(row.get("applicable_limit_provenance"))
+                or not isinstance(row.get("slice_axes"), list)
+                or not _non_negative_integer(row.get("feasible_evidence_count"))
+                or not _non_negative_integer(row.get("rejecting_evidence_count"))):
+            return None
+        candidates.append({
+            "rank": expected_rank,
+            "screening_classification": (
+                "CURRENT_REJECTING_CONSTRAINT" if classification == "REJECTING"
+                else "NEXT_BOTTLENECK_CANDIDATE"),
+            "source": row.get("source"),
+            "qualified_constraint_name": row.get("qualified_constraint_name"),
+            "current_value": representative.get("current_value"),
+            "applicable_limit": row.get("applicable_limit"),
+            "physical_headroom": representative.get("physical_margin"),
+            "physical_unit": row.get("physical_unit"),
+            "applicable_limit_role": row.get("applicable_limit_role"),
+            "applicable_limit_provenance": row.get("applicable_limit_provenance"),
+            "slice_axes": row.get("slice_axes"),
+            "feasible_evidence_count": row.get("feasible_evidence_count"),
+            "rejecting_evidence_count": row.get("rejecting_evidence_count"),
+            "qualification_state": "EXACT_SAMPLED_OR_REFINED_EVIDENCE",
+            "paired_relief_study_status": "NOT_PROVIDED",
+            "paired_relief_study_required": True,
+        })
+    return {
+        "summary_version": 1,
+        "source_constraint_summary_version": 2,
+        "candidate_count": len(candidates),
+        "candidates": candidates,
+        "advisory": True,
+        "interpretation": (
+            "Exact constraint follow-up screen; not causal attribution, a shadow price, "
+            "predicted relief benefit, permission to change a limit, or operating approval"),
+    }
+
+
 def _period_change_diagnostics(periods, action_ids, time_unit, state_metric_ids=None,
                                require_operating_transitions=False,
                                require_boundary_refinements=False,
@@ -1352,7 +1414,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
 
     reasons = []
     schema_version = evidence.get("schema_version")
-    if schema_version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10):
+    if schema_version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11):
         reasons.append("unsupported_lifecycle_envelope_schema")
     if evidence.get("cycle_id") != ctx.cycle_id:
         reasons.append("stale_lifecycle_envelope_evidence")
@@ -1367,7 +1429,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
         action_ids = []
     state_metric_ids = None
     if (schema_version == 3
-            or (schema_version in (4, 5, 6, 7, 8, 9, 10) and "accepted_state_metric_ids" in evidence)):
+            or (schema_version in (4, 5, 6, 7, 8, 9, 10, 11) and "accepted_state_metric_ids" in evidence)):
         state_metric_ids = _action_ids(evidence.get("accepted_state_metric_ids"))
         if state_metric_ids is None:
             reasons.append("invalid_lifecycle_state_metric_ids")
@@ -1441,7 +1503,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             reasons.append(prefix + "_identity_mismatch")
         if envelope.get("accepted_action_ids") != action_ids:
             reasons.append(prefix + "_action_ids_mismatch")
-        if schema_version in (4, 5, 6, 7, 8, 9, 10):
+        if schema_version in (4, 5, 6, 7, 8, 9, 10, 11):
             slices = envelope.get("slices")
             if (not isinstance(slices, list)
                     or any(not isinstance(envelope_slice, dict)
@@ -1449,24 +1511,29 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
                            or "operating_region_transitions" not in envelope_slice
                            for envelope_slice in slices)):
                 reasons.append(prefix + "_missing_operating_region_transition_evidence")
-            if (schema_version in (5, 6, 7, 8, 9, 10)
+            if (schema_version in (5, 6, 7, 8, 9, 10, 11)
                     and (not isinstance(slices, list)
                          or any(not isinstance(envelope_slice, dict)
                                 or "operating_region_boundary_refinements" not in envelope_slice
                                 or "maximum_boundary_refinement_evaluations" not in envelope_slice
                                 for envelope_slice in slices))):
                 reasons.append(prefix + "_missing_operating_region_boundary_refinement_evidence")
-            if schema_version in (6, 7, 8, 9, 10) and not _has_boundary_constraint_headroom(slices):
+            if schema_version in (6, 7, 8, 9, 10, 11) and not _has_boundary_constraint_headroom(slices):
                 reasons.append(prefix + "_missing_boundary_constraint_headroom_evidence")
-            if (schema_version in (7, 8, 9, 10)
+            if (schema_version in (7, 8, 9, 10, 11)
                     and (envelope.get("schema_version") != 2
                          or "cross_slice_constraint_summary" not in envelope)):
                 reasons.append(prefix + "_missing_cross_slice_constraint_summary")
-        if schema_version in (9, 10):
+        if schema_version in (9, 10, 11):
             reasons.extend(prefix + "_" + reason
                            for reason in _utilization_coverage_reasons(
                                row.get("utilization_coverage"),
-                               require_plant=schema_version == 10))
+                               require_plant=schema_version in (10, 11)))
+        if schema_version == 11:
+            expected_opportunities = _constraint_opportunity_summary(envelope)
+            if (expected_opportunities is None
+                    or row.get("constraint_opportunity_summary") != expected_opportunities):
+                reasons.append(prefix + "_constraint_opportunity_summary_mismatch")
 
         accepted = envelope.get("accepted_candidate_values")
         optimizer = envelope.get("optimizer_evidence")
@@ -1529,12 +1596,12 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             })
     if evidence.get("bottleneck_transitions") != expected_transitions:
         reasons.append("lifecycle_bottleneck_transitions_mismatch")
-    if schema_version in (2, 3, 4, 5, 6, 7, 8, 9, 10):
+    if schema_version in (2, 3, 4, 5, 6, 7, 8, 9, 10, 11):
         expected_period_changes = _period_change_diagnostics(
             periods, action_ids, evidence.get("time_unit"), state_metric_ids,
-            require_operating_transitions=schema_version in (4, 5, 6, 7, 8, 9, 10),
-            require_boundary_refinements=schema_version in (5, 6, 7, 8, 9, 10),
-            require_constraint_summary_identities=schema_version in (8, 9, 10))
+            require_operating_transitions=schema_version in (4, 5, 6, 7, 8, 9, 10, 11),
+            require_boundary_refinements=schema_version in (5, 6, 7, 8, 9, 10, 11),
+            require_constraint_summary_identities=schema_version in (8, 9, 10, 11))
         if (expected_period_changes is None
                 or evidence.get("period_change_diagnostics") != expected_period_changes):
             reasons.append("lifecycle_period_change_diagnostics_mismatch")

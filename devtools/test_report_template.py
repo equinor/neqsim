@@ -125,6 +125,92 @@ def _lifecycle_report_evidence(cycle_id="C-1"):
     }
 
 
+def _schema11_lifecycle_report_evidence(cycle_id="C-1"):
+    """Return plant-covered lifecycle evidence with a reconstructed opportunity screen."""
+    evidence = _lifecycle_report_evidence(cycle_id)
+    evidence["schema_version"] = 11
+    constraint_id = "equipment:synthetic-field/Host/V-1#gas%20handling"
+    plant_id = "shared_resource:synthetic-field/shared%20power#total-shaft-power"
+    for period in evidence["periods"]:
+        ranked = period["envelope_evidence"]["cross_slice_constraint_summary"][
+            "ranked_constraints"]
+        period["envelope_evidence"]["cross_slice_constraint_summary"][
+            "summary_version"] = 2
+        candidates = []
+        for row in ranked:
+            row.update({
+                "slice_axes": [["well-choke"]],
+                "feasible_evidence_count": 1,
+                "rejecting_evidence_count": (
+                    1 if row["classification"] == "REJECTING" else 0),
+            })
+            representative = row[("representative_rejecting_constraint"
+                                  if row["classification"] == "REJECTING"
+                                  else "representative_feasible_constraint")]
+            candidates.append({
+                "rank": row["rank"],
+                "screening_classification": (
+                    "CURRENT_REJECTING_CONSTRAINT"
+                    if row["classification"] == "REJECTING"
+                    else "NEXT_BOTTLENECK_CANDIDATE"),
+                "source": row["source"],
+                "qualified_constraint_name": row["qualified_constraint_name"],
+                "current_value": representative["current_value"],
+                "applicable_limit": row["applicable_limit"],
+                "physical_headroom": representative["physical_margin"],
+                "physical_unit": row["physical_unit"],
+                "applicable_limit_role": row["applicable_limit_role"],
+                "applicable_limit_provenance": row["applicable_limit_provenance"],
+                "slice_axes": row["slice_axes"],
+                "feasible_evidence_count": row["feasible_evidence_count"],
+                "rejecting_evidence_count": row["rejecting_evidence_count"],
+                "qualification_state": "EXACT_SAMPLED_OR_REFINED_EVIDENCE",
+                "paired_relief_study_status": "NOT_PROVIDED",
+                "paired_relief_study_required": True,
+            })
+        period["constraint_opportunity_summary"] = {
+            "summary_version": 1,
+            "source_constraint_summary_version": 2,
+            "candidate_count": len(candidates),
+            "candidates": candidates,
+            "advisory": True,
+            "interpretation": (
+                "Exact constraint follow-up screen; not causal attribution, a shadow price, "
+                "predicted relief benefit, permission to change a limit, or operating approval"),
+        }
+        period["utilization_coverage"] = {
+            "schema_version": "1.1",
+            "coverage_scope": "DECLARED_EQUIPMENT_AND_CONSTRAINTS",
+            "expected_constraint_ids": [constraint_id],
+            "expected_plant_constraint_ids": [plant_id],
+            "required_constraint_ids": [constraint_id, plant_id],
+            "rows": [{
+                "qualified_constraint_id": constraint_id,
+                "evidence_kind": "INSTALLED_EQUIPMENT",
+                "current_value": 900.0,
+                "applicable_limit": 1000.0,
+                "normalized_utilization": 0.9,
+                "unit": "kg/hr",
+                "basis": "synthetic separator rating",
+                "provenance": "approved synthetic operating limit",
+                "statuses": ["AVAILABLE"],
+            }, {
+                "qualified_constraint_id": plant_id,
+                "evidence_kind": "PLANT_CONSTRAINT",
+                "current_value": 750.0,
+                "applicable_limit": 1000.0,
+                "normalized_utilization": 0.75,
+                "unit": "kW",
+                "basis": "shared power budget",
+                "provenance": "approved synthetic host limit",
+                "statuses": ["AVAILABLE"],
+            }],
+            "diagnostics": [],
+            "complete": True,
+        }
+    return evidence
+
+
 def _run(task, *args):
     script = task / "step3_report" / "generate_report.py"
     result = subprocess.run([sys.executable, str(script)] + list(args),
@@ -210,6 +296,25 @@ def test_lifecycle_report_accepts_unnormalized_rejecting_evidence(tmp_path):
     assert "Lifecycle evidence withheld" not in html
     assert "plant:shared-power" in html
     assert "-20 kW" in html
+
+
+def test_lifecycle_report_renders_schema11_constraint_opportunity_screen(tmp_path):
+    task = _make_task(tmp_path)
+    results_path = task / "results.json"
+    results = json.loads(results_path.read_text(encoding="utf-8"))
+    results["lifecycle_envelope_evidence"] = _schema11_lifecycle_report_evidence()
+    results_path.write_text(json.dumps(results), encoding="utf-8")
+
+    _run(task, "--no-template", "--title", "Opportunity screen")
+
+    html = (task / "step3_report" / "Opportunity_screen.html").read_text(
+        encoding="utf-8")
+    assert "Lifecycle evidence withheld" not in html
+    assert "Constraint follow-up opportunity screen" in html
+    assert "NEXT_BOTTLENECK_CANDIDATE" in html
+    assert "CURRENT_REJECTING_CONSTRAINT" in html
+    assert "Paired relief study required" in html
+    assert "before reporting debottleneck benefit" in html
 
 
 def test_lifecycle_envelope_withholds_tampered_identity_migration(tmp_path):
