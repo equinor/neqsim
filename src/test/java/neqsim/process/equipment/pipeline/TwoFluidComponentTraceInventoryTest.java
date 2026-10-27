@@ -11,13 +11,20 @@ import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.process.equipment.pipeline.TwoFluidComponentConservationReport.Phase;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidComponentTransport;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /** Conservation of positive phase inventories around the absolute synchronization tolerance. */
 class TwoFluidComponentTraceInventoryTest {
+  /**
+   * Retain every component in a closed positive trace phase across repeated substeps.
+   *
+   * @param gasMassKg initial gas mass in kg
+   */
   @ParameterizedTest
-  @ValueSource(doubles = {1.0e-11, 5.0e-11, 1.0e-10, 2.0e-10})
+  @ValueSource(doubles = {1.0e-15, 1.0e-13, 1.0e-12, 1.0e-11, 5.0e-11, 1.0e-10, 2.0e-10})
   void closedTracePhaseRetainsEveryComponentAcrossRepeatedSubsteps(double gasMassKg) {
     SystemInterface fluid = wetGas();
     TwoFluidSection[] cells = {cell(gasMassKg)};
@@ -60,24 +67,52 @@ class TwoFluidComponentTraceInventoryTest {
     }
   }
 
-  @Test
-  void hydrodynamicRoundoffDoesNotCreateComponentsAndLargerMismatchRejects() {
+  /**
+   * Reject positive water mass without species even when it lies below the audit tolerance.
+   *
+   * @param waterMassKg unsupported hydrodynamic water mass in kg
+   */
+  /**
+   * Carry the actual equilibrium oil composition for every nonzero condensation source.
+   *
+   * @param oilSourceKgPerMetreSecond oil source rate in kg/(m s)
+   */
+  @ParameterizedTest
+  @ValueSource(doubles = {1.0e-15, 5.0e-11, 1.0e-10})
+  void everyPositiveHydrodynamicPhaseRequiresNamedComponents(double waterMassKg) {
     SystemInterface fluid = wetGas();
     TwoFluidSection[] cells = {cell(1.0)};
     TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, cells);
-    cells[0].setWaterMassPerLength(5.0e-11);
-    transport.advance(1.0, new double[2][3], new double[1][3], cells, fluid, fluid, 1.0e-8);
-    TwoFluidComponentConservationReport report = transport.createReport(1.0, 1, 1.0e-8);
-    assertEquals(0.0, report.getFinalPhaseInventoryKg(Phase.WATER, "water"), 0.0);
-    assertEquals(5.0e-11, report.getMaximumPhaseMassSynchronizationErrorKg(), 0.0);
-    assertTrue(report.isConverged(), report.getMessage());
     String before = transport.createReport(0.0, 0, 1.0e-8).toJson();
-    cells[0].setWaterMassPerLength(2.0e-10);
+    cells[0].setWaterMassPerLength(waterMassKg);
 
     IllegalStateException exception = assertThrows(IllegalStateException.class,
         () -> transport.advance(1.0, new double[2][3], new double[1][3], cells, fluid, fluid, 1.0e-8));
-    assertTrue(exception.getMessage().contains("mass differ"));
+    assertTrue(exception.getMessage().contains("Positive hydrodynamic water mass has no component inventory"));
     assertEquals(before, transport.createReport(0.0, 0, 1.0e-8).toJson());
+  }
+
+  @ParameterizedTest
+  @ValueSource(doubles = {1.0e-15, 1.0e-13, 1.0e-12})
+  void everyNonzeroCondensationSourceCarriesNamedComponents(double oilSourceKgPerMetreSecond) {
+    SystemInterface fluid = richGas(150.0);
+    TwoFluidSection[] cells = {cell(1.0)};
+    TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, cells);
+    SystemInterface localEquilibrium = richGas(80.0);
+    double[][] phaseSources = {{-oilSourceKgPerMetreSecond, oilSourceKgPerMetreSecond, 0.0}};
+    double[][][] componentSources = transport.createComponentSourceRates(phaseSources,
+        new SystemInterface[] {localEquilibrium}, 1.0e-8);
+
+    assertEquals(oilSourceKgPerMetreSecond, sum(componentSources[0][1]), oilSourceKgPerMetreSecond * 1.0e-12);
+    cells[0].setGasMassPerLength(1.0 - oilSourceKgPerMetreSecond);
+    cells[0].setOilMassPerLength(oilSourceKgPerMetreSecond);
+    transport.advance(1.0, new double[2][3], phaseSources, componentSources, new double[1], cells, fluid, fluid,
+        1.0e-8);
+
+    assertEquals(oilSourceKgPerMetreSecond, sum(transport.getInventoryKg()[0][1]), oilSourceKgPerMetreSecond * 1.0e-12);
+    assertEquals(PhaseType.OIL, transport
+        .createPhaseState(0, 1, fluid, cells[0].getPressure(), cells[0].getTemperature()).getPhase(0).getType());
+    assertTrue(transport.createReport(1.0, 1, 1.0e-8).isConverged());
   }
 
   private static SystemInterface wetGas() {
@@ -86,6 +121,39 @@ class TwoFluidComponentTraceInventoryTest {
     fluid.addComponent("water", 1.0e-6);
     fluid.setMixingRule("classic");
     return fluid;
+  }
+
+  /**
+   * Build and flash the public synthetic rich gas.
+   *
+   * @param pressureBara absolute pressure in bara
+   * @return initialized equilibrium fluid
+   */
+  private static SystemInterface richGas(double pressureBara) {
+    SystemInterface fluid = new SystemSrkEos(277.15, pressureBara);
+    String[] names = {"methane", "ethane", "propane", "n-butane", "n-pentane", "n-heptane"};
+    double[] fractions = {0.916, 0.050, 0.020, 0.007, 0.003, 0.004};
+    for (int component = 0; component < names.length; component++) {
+      fluid.addComponent(names[component], fractions[component]);
+    }
+    fluid.setMixingRule("classic");
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.initProperties();
+    return fluid;
+  }
+
+  /**
+   * Sum values without applying a numerical presence floor.
+   *
+   * @param values values to sum
+   * @return arithmetic sum
+   */
+  private static double sum(double[] values) {
+    double result = 0.0;
+    for (double value : values) {
+      result += value;
+    }
+    return result;
   }
 
   private static TwoFluidSection cell(double gasMassKg) {
