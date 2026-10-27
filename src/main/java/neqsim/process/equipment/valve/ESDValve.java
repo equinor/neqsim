@@ -73,6 +73,8 @@ import neqsim.process.equipment.stream.StreamInterface;
 public class ESDValve extends ThrottlingValve {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Last physical-step identity that advanced the ESD actuator state machine. */
+  private UUID lastSafetyStepId = null;
 
   /** Energization state of the valve solenoid/actuator. */
   private boolean isEnergized = true; // Normally energized (open)
@@ -315,7 +317,8 @@ public class ESDValve extends ThrottlingValve {
    */
   @Override
   public void runTransient(double dt, UUID id) {
-    if (!isEnergized && isClosing) {
+    boolean advanceSafetyState = id == null || !id.equals(lastSafetyStepId);
+    if (advanceSafetyState && !isEnergized && isClosing) {
       // Valve is de-energized and closing
       timeElapsedSinceTrip += dt;
 
@@ -333,7 +336,7 @@ public class ESDValve extends ThrottlingValve {
         hasTripCompleted = true;
         setPercentValveOpening(failSafePosition);
       }
-    } else if (partialStrokeTestActive) {
+    } else if (advanceSafetyState && partialStrokeTestActive) {
       // Partial stroke test - close to test position then return
       double currentOpening = getPercentValveOpening();
       if (currentOpening > partialStrokeTestPosition) {
@@ -344,9 +347,82 @@ public class ESDValve extends ThrottlingValve {
       }
       // Note: Test completion must be triggered externally via completePartialStrokeTest()
     }
+    if (advanceSafetyState) {
+      lastSafetyStepId = id;
+    }
 
     // Call parent runTransient to perform valve flow calculations
     super.runTransient(dt, id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    return getValveTransientStateCoverageIssue();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public TransientState captureTransientState() {
+    String coverageIssue = getTransientStateCoverageIssue();
+    if (coverageIssue != null) {
+      throw new IllegalStateException("Cannot capture ESD valve '" + getName() + "': " + coverageIssue);
+    }
+    return new EsdTransientState(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected void restoreTransientStepState(TransientState snapshot) {
+    if (!(snapshot instanceof EsdTransientState)) {
+      throw new IllegalArgumentException("ESD valve requires an ESD valve transient snapshot");
+    }
+    super.restoreTransientStepState(snapshot);
+    EsdTransientState esdState = (EsdTransientState) snapshot;
+    lastSafetyStepId = esdState.lastSafetyStepId;
+    isEnergized = esdState.energized;
+    strokeTime = esdState.strokeTime;
+    timeElapsedSinceTrip = esdState.timeElapsedSinceTrip;
+    openingAtTripStart = esdState.openingAtTripStart;
+    isClosing = esdState.closing;
+    failSafePosition = esdState.failSafePosition;
+    partialStrokeTestActive = esdState.partialStrokeTestActive;
+    partialStrokeTestPosition = esdState.partialStrokeTestPosition;
+    hasTripCompleted = esdState.tripCompleted;
+  }
+
+  /** Serializable checkpoint for ESD actuator and trip state. */
+  public static final class EsdTransientState extends TransientState {
+    private static final long serialVersionUID = 1000L;
+    private final UUID lastSafetyStepId;
+    private final boolean energized;
+    private final double strokeTime;
+    private final double timeElapsedSinceTrip;
+    private final double openingAtTripStart;
+    private final boolean closing;
+    private final double failSafePosition;
+    private final boolean partialStrokeTestActive;
+    private final double partialStrokeTestPosition;
+    private final boolean tripCompleted;
+
+    /**
+     * Creates an ESD valve checkpoint.
+     *
+     * @param source ESD valve to capture
+     */
+    private EsdTransientState(ESDValve source) {
+      super(source);
+      lastSafetyStepId = source.lastSafetyStepId;
+      energized = source.isEnergized;
+      strokeTime = source.strokeTime;
+      timeElapsedSinceTrip = source.timeElapsedSinceTrip;
+      openingAtTripStart = source.openingAtTripStart;
+      closing = source.isClosing;
+      failSafePosition = source.failSafePosition;
+      partialStrokeTestActive = source.partialStrokeTestActive;
+      partialStrokeTestPosition = source.partialStrokeTestPosition;
+      tripCompleted = source.hasTripCompleted;
+    }
   }
 
   /**

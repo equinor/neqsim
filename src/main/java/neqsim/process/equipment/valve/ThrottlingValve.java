@@ -1,14 +1,18 @@
 package neqsim.process.equipment.valve;
 
+import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.physicalproperties.PhysicalPropertyType;
+import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
 import neqsim.process.mechanicaldesign.valve.ValveTrimSizingResult;
@@ -27,10 +31,15 @@ import neqsim.util.unit.PressureUnit;
  * @author esol
  * @version $Id: $Id
  */
-public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
-    neqsim.process.equipment.capacity.CapacityConstrainedEquipment, neqsim.process.design.AutoSizeable {
+public class ThrottlingValve extends TwoPortEquipment
+    implements ValveInterface, neqsim.process.equipment.capacity.CapacityConstrainedEquipment,
+    neqsim.process.design.AutoSizeable, TransientStateParticipant<ThrottlingValve.TransientState> {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Persistent identity used by transient rollback and event provenance. */
+  private String transientStateIdentity = UUID.randomUUID().toString();
+  /** Last physical-step identity that advanced actuator dynamics. */
+  private UUID lastActuatorStepId = null;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ThrottlingValve.class);
   SystemInterface thermoSystem;
@@ -701,6 +710,10 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
    * @param id Calculation identifier
    */
   public void runController(double dt, UUID id) {
+    if (id != null && id.equals(lastActuatorStepId)) {
+      setCalculationIdentifier(id);
+      return;
+    }
     double controllerRequest = requestedValveOpening;
     if (hasController && getController().isActive()) {
       getController().runTransient(this.percentValveOpening, dt, id);
@@ -709,7 +722,277 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     controllerRequest = clampValveOpening(controllerRequest);
     setTargetPercentValveOpening(controllerRequest);
     percentValveOpening = clampValveOpening(applyTravelDynamics(percentValveOpening, requestedValveOpening, dt));
+    lastActuatorStepId = id;
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Audits valve-owned state without rejecting controllers that the process transaction captures independently.
+   *
+   * @return {@code null} when this valve can be captured, otherwise a deterministic blocker
+   */
+  protected final String getValveTransientStateCoverageIssue() {
+    String baseIssue = getBaseTransientStateCoverageIssue(true);
+    if (baseIssue != null) {
+      return baseIssue;
+    }
+    if (inStream == null || outStream == null || thermoSystem == null) {
+      return "valve inlet, outlet, and thermodynamic state must be initialized";
+    }
+    if (outStream.getClass() != Stream.class) {
+      return "valve outlet must be a concrete local Stream instance";
+    }
+    String outletIssue = ((Stream) outStream).getTransientStateCoverageIssue();
+    if (outletIssue != null) {
+      return "valve outlet: " + outletIssue;
+    }
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateIdentity == null || transientStateIdentity.trim().isEmpty()) {
+      transientStateIdentity = UUID.randomUUID().toString();
+    }
+    return "equipment:valve:" + transientStateIdentity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != ThrottlingValve.class && getClass() != ControlValve.class) {
+      return "valve subclass " + getClass().getName() + " must extend the snapshot for subclass-owned mutable state";
+    }
+    return getValveTransientStateCoverageIssue();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public TransientState captureTransientState() {
+    String coverageIssue = getTransientStateCoverageIssue();
+    if (coverageIssue != null) {
+      throw new IllegalStateException("Cannot capture valve '" + getName() + "': " + coverageIssue);
+    }
+    return new TransientState(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(TransientState snapshot) {
+    restoreTransientStepState(snapshot);
+  }
+
+  /**
+   * Restores valve-owned state without replacing the valve or either connected stream.
+   *
+   * @param snapshot checkpoint captured from this valve
+   */
+  protected void restoreTransientStepState(TransientState snapshot) {
+    Objects.requireNonNull(snapshot, "valve transient snapshot cannot be null");
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException("Transient snapshot belongs to another valve");
+    }
+    restoreBaseTransientState(snapshot.baseState);
+    ((Stream) outStream).restoreTransientState(snapshot.outletState);
+    thermoSystem = snapshot.thermoSystemIsOutletSystem ? outStream.getThermoSystem()
+        : cloneSystem(snapshot.thermoSystem);
+    valveKvSet = snapshot.valveKvSet;
+    isoThermal = snapshot.isoThermal;
+    pressure = snapshot.pressure;
+    Kv = snapshot.kv;
+    maxMolarFlow = snapshot.maxMolarFlow;
+    minMolarFlow = snapshot.minMolarFlow;
+    maxValveOpening = snapshot.maxValveOpening;
+    minValveOpening = snapshot.minValveOpening;
+    percentValveOpening = snapshot.percentValveOpening;
+    requestedValveOpening = snapshot.requestedValveOpening;
+    valveTravelTimeSec = snapshot.valveTravelTimeSec;
+    valveOpeningTravelTimeSec = snapshot.valveOpeningTravelTimeSec;
+    valveClosingTravelTimeSec = snapshot.valveClosingTravelTimeSec;
+    valveTimeConstantSec = snapshot.valveTimeConstantSec;
+    travelModel = snapshot.travelModel;
+    valveDeadband = snapshot.valveDeadband;
+    valveStiction = snapshot.valveStiction;
+    valveHysteresis = snapshot.valveHysteresis;
+    lastMoveDirection = snapshot.lastMoveDirection;
+    isStuck = snapshot.stuck;
+    stuckPosition = snapshot.stuckPosition;
+    molarFlow = snapshot.molarFlow;
+    pressureUnit = snapshot.pressureUnit;
+    acceptNegativeDP = snapshot.acceptNegativeDp;
+    isCalcPressure = snapshot.calcPressure;
+    gasValve = snapshot.gasValve;
+    Fp = snapshot.fp;
+    foulingFraction = snapshot.foulingFraction;
+    deltaPressure = snapshot.deltaPressure;
+    allowChoked = snapshot.allowChoked;
+    allowLaminar = snapshot.allowLaminar;
+    lastInletTemperature = snapshot.lastInletTemperature;
+    lastInletPressure = snapshot.lastInletPressure;
+    lastInletFlowRate = snapshot.lastInletFlowRate;
+    lastInletComposition = snapshot.lastInletComposition == null ? null : snapshot.lastInletComposition.clone();
+    lastOutletPressure = snapshot.lastOutletPressure;
+    lastKv = snapshot.lastKv;
+    lastPercentValveOpening = snapshot.lastPercentValveOpening;
+    lastRequestedValveOpening = snapshot.lastRequestedValveOpening;
+    lastDeltaPressure = snapshot.lastDeltaPressure;
+    lastFp = snapshot.lastFp;
+    lastFoulingFraction = snapshot.lastFoulingFraction;
+    lastXt = snapshot.lastXt;
+    lastPressureUnit = snapshot.lastPressureUnit;
+    lastSpecification = snapshot.lastSpecification;
+    lastValveKvSet = snapshot.lastValveKvSet;
+    lastIsoThermal = snapshot.lastIsoThermal;
+    lastAcceptNegativeDP = snapshot.lastAcceptNegativeDp;
+    lastIsCalcPressure = snapshot.lastIsCalcPressure;
+    lastAllowChoked = snapshot.lastAllowChoked;
+    lastAllowLaminar = snapshot.lastAllowLaminar;
+    autoSized = snapshot.autoSized;
+    maxDesignAIV = snapshot.maxDesignAiv;
+    lastActuatorStepId = snapshot.lastActuatorStepId;
+  }
+
+  /**
+   * Clones a thermodynamic system for an identity-preserving valve checkpoint.
+   *
+   * @param source system to copy
+   * @return independent copy, or {@code null}
+   */
+  private static SystemInterface cloneSystem(SystemInterface source) {
+    return source == null ? null : source.clone();
+  }
+
+  /** Serializable checkpoint for valve actuator, flow, cache, and outlet state. */
+  public static class TransientState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String stateIdentity;
+    private final ProcessEquipmentTransientState baseState;
+    private final SystemInterface thermoSystem;
+    private final boolean thermoSystemIsOutletSystem;
+    private final Stream.TransientState outletState;
+    private final boolean valveKvSet;
+    private final boolean isoThermal;
+    private final double pressure;
+    private final double kv;
+    private final double maxMolarFlow;
+    private final double minMolarFlow;
+    private final double maxValveOpening;
+    private final double minValveOpening;
+    private final double percentValveOpening;
+    private final double requestedValveOpening;
+    private final double valveTravelTimeSec;
+    private final double valveOpeningTravelTimeSec;
+    private final double valveClosingTravelTimeSec;
+    private final double valveTimeConstantSec;
+    private final ValveTravelModel travelModel;
+    private final double valveDeadband;
+    private final double valveStiction;
+    private final double valveHysteresis;
+    private final int lastMoveDirection;
+    private final boolean stuck;
+    private final double stuckPosition;
+    private final double molarFlow;
+    private final String pressureUnit;
+    private final boolean acceptNegativeDp;
+    private final boolean calcPressure;
+    private final boolean gasValve;
+    private final double fp;
+    private final double foulingFraction;
+    private final double deltaPressure;
+    private final boolean allowChoked;
+    private final boolean allowLaminar;
+    private final double lastInletTemperature;
+    private final double lastInletPressure;
+    private final double lastInletFlowRate;
+    private final double[] lastInletComposition;
+    private final double lastOutletPressure;
+    private final double lastKv;
+    private final double lastPercentValveOpening;
+    private final double lastRequestedValveOpening;
+    private final double lastDeltaPressure;
+    private final double lastFp;
+    private final double lastFoulingFraction;
+    private final double lastXt;
+    private final String lastPressureUnit;
+    private final String lastSpecification;
+    private final boolean lastValveKvSet;
+    private final boolean lastIsoThermal;
+    private final boolean lastAcceptNegativeDp;
+    private final boolean lastIsCalcPressure;
+    private final boolean lastAllowChoked;
+    private final boolean lastAllowLaminar;
+    private final boolean autoSized;
+    private final double maxDesignAiv;
+    private final UUID lastActuatorStepId;
+
+    /**
+     * Creates a complete checkpoint of mutable state owned by a throttling valve.
+     *
+     * @param source valve to capture
+     */
+    protected TransientState(ThrottlingValve source) {
+      stateIdentity = source.getTransientStateIdentity();
+      baseState = source.captureBaseTransientState();
+      thermoSystem = cloneSystem(source.thermoSystem);
+      thermoSystemIsOutletSystem = source.outStream != null
+          && source.thermoSystem == source.outStream.getThermoSystem();
+      outletState = ((Stream) source.outStream).captureTransientState();
+      valveKvSet = source.valveKvSet;
+      isoThermal = source.isoThermal;
+      pressure = source.pressure;
+      kv = source.Kv;
+      maxMolarFlow = source.maxMolarFlow;
+      minMolarFlow = source.minMolarFlow;
+      maxValveOpening = source.maxValveOpening;
+      minValveOpening = source.minValveOpening;
+      percentValveOpening = source.percentValveOpening;
+      requestedValveOpening = source.requestedValveOpening;
+      valveTravelTimeSec = source.valveTravelTimeSec;
+      valveOpeningTravelTimeSec = source.valveOpeningTravelTimeSec;
+      valveClosingTravelTimeSec = source.valveClosingTravelTimeSec;
+      valveTimeConstantSec = source.valveTimeConstantSec;
+      travelModel = source.travelModel;
+      valveDeadband = source.valveDeadband;
+      valveStiction = source.valveStiction;
+      valveHysteresis = source.valveHysteresis;
+      lastMoveDirection = source.lastMoveDirection;
+      stuck = source.isStuck;
+      stuckPosition = source.stuckPosition;
+      molarFlow = source.molarFlow;
+      pressureUnit = source.pressureUnit;
+      acceptNegativeDp = source.acceptNegativeDP;
+      calcPressure = source.isCalcPressure;
+      gasValve = source.gasValve;
+      fp = source.Fp;
+      foulingFraction = source.foulingFraction;
+      deltaPressure = source.deltaPressure;
+      allowChoked = source.allowChoked;
+      allowLaminar = source.allowLaminar;
+      lastInletTemperature = source.lastInletTemperature;
+      lastInletPressure = source.lastInletPressure;
+      lastInletFlowRate = source.lastInletFlowRate;
+      lastInletComposition = source.lastInletComposition == null ? null : source.lastInletComposition.clone();
+      lastOutletPressure = source.lastOutletPressure;
+      lastKv = source.lastKv;
+      lastPercentValveOpening = source.lastPercentValveOpening;
+      lastRequestedValveOpening = source.lastRequestedValveOpening;
+      lastDeltaPressure = source.lastDeltaPressure;
+      lastFp = source.lastFp;
+      lastFoulingFraction = source.lastFoulingFraction;
+      lastXt = source.lastXt;
+      lastPressureUnit = source.lastPressureUnit;
+      lastSpecification = source.lastSpecification;
+      lastValveKvSet = source.lastValveKvSet;
+      lastIsoThermal = source.lastIsoThermal;
+      lastAcceptNegativeDp = source.lastAcceptNegativeDP;
+      lastIsCalcPressure = source.lastIsCalcPressure;
+      lastAllowChoked = source.lastAllowChoked;
+      lastAllowLaminar = source.lastAllowLaminar;
+      autoSized = source.autoSized;
+      maxDesignAiv = source.maxDesignAIV;
+      lastActuatorStepId = source.lastActuatorStepId;
+    }
   }
 
   private double clampValveOpening(double value) {

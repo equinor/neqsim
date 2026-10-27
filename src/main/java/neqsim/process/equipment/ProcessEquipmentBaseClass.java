@@ -1338,7 +1338,25 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * @return {@code null} when the reusable base snapshot is complete, otherwise a deterministic blocking diagnostic
    */
   protected final String getBaseTransientStateCoverageIssue() {
-    if (controller != null || flowValveController != null || hasController || !controllerMap.isEmpty()) {
+    return getBaseTransientStateCoverageIssue(false);
+  }
+
+  /**
+   * Audits reusable base-equipment state while optionally allowing attached controllers to be captured as independent
+   * process elements.
+   *
+   * <p>
+   * A concrete participant may opt in only when its owning process transaction enumerates attached controllers
+   * independently, as {@code ProcessSystem} does. The equipment snapshot never captures or replaces controller objects.
+   * </p>
+   *
+   * @param attachedControllersCoveredSeparately true when the owning transaction independently requires complete
+   * controller participants
+   * @return {@code null} when the reusable base snapshot is complete, otherwise a deterministic blocking diagnostic
+   */
+  protected final String getBaseTransientStateCoverageIssue(boolean attachedControllersCoveredSeparately) {
+    if (!attachedControllersCoveredSeparately
+        && (controller != null || flowValveController != null || hasController || !controllerMap.isEmpty())) {
       return "attached controller state must participate independently";
     }
     if (isSetEnergyStream || !energyPorts.isEmpty() || !externallyConnectedEnergyPorts.isEmpty()) {
