@@ -6,17 +6,20 @@
 
 package neqsim.process.equipment.separator;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.process.design.AutoSizeable;
+import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.electricaldesign.separator.SeparatorElectricalDesign;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -47,7 +50,9 @@ import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSoreideWhitson;
+import neqsim.thermodynamicoperations.OperationInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.flashops.OptimizedVUflash;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
@@ -99,8 +104,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Separator extends ProcessEquipmentBaseClass
-    implements SeparatorInterface, StateVectorProvider, CapacityConstrainedEquipment, AutoSizeable {
+public class Separator extends ProcessEquipmentBaseClass implements SeparatorInterface, StateVectorProvider,
+    CapacityConstrainedEquipment, AutoSizeable, TransientStateParticipant<Separator.TransientState> {
   /**
    * Lazily initializes {@link #gasOutStream} and {@link #liquidOutStream} from the inlet stream mixer if they have not
    * yet been created.
@@ -256,6 +261,14 @@ public class Separator extends ProcessEquipmentBaseClass
   private transient double lastFlowRate;
   private transient double lastPressure;
   private transient double lastPressureDrop;
+
+  /** Stable identity for transient transaction diagnostics. */
+  private String transientStateIdentity = UUID.randomUUID().toString();
+
+  /** Relative volume residual accepted for a transient VU state. */
+  protected static final double TRANSIENT_VU_VOLUME_TOLERANCE = 1.0e-3;
+  /** Relative internal-energy residual accepted for a transient VU state. */
+  protected static final double TRANSIENT_VU_ENERGY_TOLERANCE = 1.0e-3;
 
   // Heat input capabilities
   private boolean setHeatInput = false;
@@ -687,6 +700,260 @@ public class Separator extends ProcessEquipmentBaseClass
     }
   }
 
+  /**
+   * Runs a transient VU flash and rejects any returned iterate that does not satisfy the caller-owned vessel contract.
+   *
+   * <p>
+   * Pure-component VU implementations do not expose a convergence flag, so every operation is checked independently
+   * against the specified volume and internal energy. The optimized multicomponent operation must additionally report
+   * convergence. This prevents its documented last rejected iterate from becoming published separator state.
+   * </p>
+   *
+   * @param specifiedVolumeM3 vessel volume in m3
+   * @param specifiedEnergyJ target internal energy in J
+   * @param warmStartInitialization whether the initialization TP flash may reuse current K-values
+   */
+  protected final void runAcceptedTransientVUFlash(double specifiedVolumeM3, double specifiedEnergyJ,
+      boolean warmStartInitialization) {
+    ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+    thermoOps.VUflash(specifiedVolumeM3, specifiedEnergyJ, "m3", "J", warmStartInitialization);
+    thermoSystem.init(2);
+
+    double actualVolumeM3 = thermoSystem.getVolume("m3");
+    double actualEnergyJ = thermoSystem.getInternalEnergy();
+    double volumeResidual = relativeResidual(actualVolumeM3, specifiedVolumeM3);
+    double energyResidual = relativeResidual(actualEnergyJ, specifiedEnergyJ);
+    OperationInterface operation = thermoOps.getOperation();
+    boolean operationConverged = !(operation instanceof OptimizedVUflash)
+        || ((OptimizedVUflash) operation).isLastRunConverged();
+    boolean finiteState = Double.isFinite(thermoSystem.getPressure()) && thermoSystem.getPressure() > 0.0
+        && Double.isFinite(thermoSystem.getTemperature()) && thermoSystem.getTemperature() > 0.0
+        && Double.isFinite(actualVolumeM3) && Double.isFinite(actualEnergyJ);
+
+    if (!finiteState || !operationConverged || volumeResidual > TRANSIENT_VU_VOLUME_TOLERANCE
+        || energyResidual > TRANSIENT_VU_ENERGY_TOLERANCE) {
+      throw new IllegalStateException(String.format(java.util.Locale.ROOT,
+          "Separator '%s' rejected transient VU state: operation=%s, converged=%s, volumeResidual=%.12g,"
+              + " energyResidual=%.12g, volumeTolerance=%.12g, energyTolerance=%.12g",
+          getName(), operation == null ? "unknown" : operation.getClass().getSimpleName(), operationConverged,
+          volumeResidual, energyResidual, TRANSIENT_VU_VOLUME_TOLERANCE, TRANSIENT_VU_ENERGY_TOLERANCE));
+    }
+  }
+
+  /**
+   * Calculates a scale-safe relative residual.
+   *
+   * @param actual returned value
+   * @param specified specified value
+   * @return absolute residual divided by the larger of the specified magnitude and one
+   */
+  private static double relativeResidual(double actual, double specified) {
+    if (!Double.isFinite(actual) || !Double.isFinite(specified)) {
+      return Double.POSITIVE_INFINITY;
+    }
+    return Math.abs(actual - specified) / Math.max(Math.abs(specified), 1.0);
+  }
+
+  /** Captures separator-owned state before one transient step. */
+  protected TransientState captureTransientStepState() {
+    return new TransientState(this);
+  }
+
+  /**
+   * Restores separator-owned state after a rejected transient step.
+   *
+   * @param snapshot state captured before the step
+   */
+  protected void restoreTransientStepState(TransientState snapshot) {
+    Objects.requireNonNull(snapshot, "separator transient snapshot cannot be null");
+    if (!getTransientStateIdentity().equals(snapshot.stateIdentity)) {
+      throw new IllegalArgumentException("Transient snapshot belongs to another separator");
+    }
+    restoreBaseTransientState(snapshot.baseState);
+    thermoSystem = cloneSystem(snapshot.thermoSystem);
+    gasSystem = cloneSystem(snapshot.gasSystem);
+    waterSystem = cloneSystem(snapshot.waterSystem);
+    liquidSystem = cloneSystem(snapshot.liquidSystem);
+    thermoSystemCloned = cloneSystem(snapshot.thermoSystemCloned);
+    thermoSystem2 = cloneSystem(snapshot.thermoSystem2);
+    restoreStreamState(gasOutStream, snapshot.gasOutState);
+    restoreStreamState(liquidOutStream, snapshot.liquidOutState);
+    inletStreamMixer.restoreTransientState(snapshot.mixerState);
+    isInitTransient = snapshot.initTransient;
+    liquidLevel = snapshot.liquidLevel;
+    liquidVolume = snapshot.liquidVolume;
+    gasVolume = snapshot.gasVolume;
+    lastEnthalpy = snapshot.lastEnthalpy;
+    lastFlowRate = snapshot.lastFlowRate;
+    lastPressure = snapshot.lastPressure;
+    lastPressureDrop = snapshot.lastPressureDrop;
+    oilInGas = snapshot.oilInGas;
+    oilInGasSpec = snapshot.oilInGasSpec;
+    waterInGas = snapshot.waterInGas;
+    waterInGasSpec = snapshot.waterInGasSpec;
+    gasInLiquid = snapshot.gasInLiquid;
+    gasInLiquidSpec = snapshot.gasInLiquidSpec;
+  }
+
+  /**
+   * Clones a nullable thermodynamic system.
+   *
+   * @param system system to clone
+   * @return independent clone, or null
+   */
+  private static SystemInterface cloneSystem(SystemInterface system) {
+    return system == null ? null : system.clone();
+  }
+
+  /**
+   * Captures a concrete separator-owned stream.
+   *
+   * @param stream stream to capture
+   * @return immutable stream checkpoint
+   */
+  protected static Stream.TransientState captureStreamState(StreamInterface stream) {
+    if (!(stream instanceof Stream) || stream.getClass() != Stream.class) {
+      throw new IllegalStateException("Separator outlet must be a concrete local Stream");
+    }
+    return ((Stream) stream).captureTransientState();
+  }
+
+  /**
+   * Restores a separator-owned stream without replacing the stream object.
+   *
+   * @param stream stream to restore
+   * @param snapshot captured stream state
+   */
+  protected static void restoreStreamState(StreamInterface stream, Stream.TransientState snapshot) {
+    if (!(stream instanceof Stream) || stream.getClass() != Stream.class) {
+      throw new IllegalStateException("Separator outlet topology changed during a rejected transient step");
+    }
+    ((Stream) stream).restoreTransientState(snapshot);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateIdentity == null || transientStateIdentity.trim().isEmpty()) {
+      transientStateIdentity = UUID.randomUUID().toString();
+    }
+    return "equipment:separator:" + transientStateIdentity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != Separator.class && getClass() != ThreePhaseSeparator.class) {
+      return "separator subclass " + getClass().getName()
+          + " must extend the snapshot for subclass-owned mutable state";
+    }
+    String baseIssue = getBaseTransientStateCoverageIssue();
+    if (baseIssue != null) {
+      return baseIssue;
+    }
+    if (thermoSystem == null) {
+      return "separator has no vessel thermodynamic system to capture";
+    }
+    if (gasOutStream == null || liquidOutStream == null || inletStreamMixer.getOutletStream() == null) {
+      return "separator outlet or inlet-mixer stream topology is incomplete";
+    }
+    if (gasOutStream.getClass() != Stream.class || liquidOutStream.getClass() != Stream.class) {
+      return "separator outlets must be concrete local Stream instances";
+    }
+    String gasIssue = ((Stream) gasOutStream).getTransientStateCoverageIssue();
+    if (gasIssue != null) {
+      return "gas outlet: " + gasIssue;
+    }
+    String liquidIssue = ((Stream) liquidOutStream).getTransientStateCoverageIssue();
+    if (liquidIssue != null) {
+      return "liquid outlet: " + liquidIssue;
+    }
+    String mixerIssue = inletStreamMixer.getTransientStateCoverageIssue();
+    if (mixerIssue != null) {
+      return "inlet mixer: " + mixerIssue;
+    }
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public TransientState captureTransientState() {
+    String coverageIssue = getTransientStateCoverageIssue();
+    if (coverageIssue != null) {
+      throw new IllegalStateException("Cannot capture separator '" + getName() + "': " + coverageIssue);
+    }
+    return captureTransientStepState();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(TransientState snapshot) {
+    restoreTransientStepState(snapshot);
+  }
+
+  /** Serializable separator-owned checkpoint for one transient step. */
+  public static class TransientState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String stateIdentity;
+    private final ProcessEquipmentTransientState baseState;
+    private final SystemInterface thermoSystem;
+    private final SystemInterface gasSystem;
+    private final SystemInterface waterSystem;
+    private final SystemInterface liquidSystem;
+    private final SystemInterface thermoSystemCloned;
+    private final SystemInterface thermoSystem2;
+    private final Stream.TransientState gasOutState;
+    private final Stream.TransientState liquidOutState;
+    private final Mixer.TransientState mixerState;
+    private final boolean initTransient;
+    private final double liquidLevel;
+    private final double liquidVolume;
+    private final double gasVolume;
+    private final double lastEnthalpy;
+    private final double lastFlowRate;
+    private final double lastPressure;
+    private final double lastPressureDrop;
+    private final double oilInGas;
+    private final String oilInGasSpec;
+    private final double waterInGas;
+    private final String waterInGasSpec;
+    private final double gasInLiquid;
+    private final String gasInLiquidSpec;
+
+    /**
+     * Creates a checkpoint.
+     *
+     * @param source separator to capture
+     */
+    protected TransientState(Separator source) {
+      stateIdentity = source.getTransientStateIdentity();
+      baseState = source.captureBaseTransientState();
+      thermoSystem = cloneSystem(source.thermoSystem);
+      gasSystem = cloneSystem(source.gasSystem);
+      waterSystem = cloneSystem(source.waterSystem);
+      liquidSystem = cloneSystem(source.liquidSystem);
+      thermoSystemCloned = cloneSystem(source.thermoSystemCloned);
+      thermoSystem2 = cloneSystem(source.thermoSystem2);
+      gasOutState = captureStreamState(source.gasOutStream);
+      liquidOutState = captureStreamState(source.liquidOutStream);
+      mixerState = source.inletStreamMixer.captureTransientState();
+      initTransient = source.isInitTransient;
+      liquidLevel = source.liquidLevel;
+      liquidVolume = source.liquidVolume;
+      gasVolume = source.gasVolume;
+      lastEnthalpy = source.lastEnthalpy;
+      lastFlowRate = source.lastFlowRate;
+      lastPressure = source.lastPressure;
+      lastPressureDrop = source.lastPressureDrop;
+      oilInGas = source.oilInGas;
+      oilInGasSpec = source.oilInGasSpec;
+      waterInGas = source.waterInGas;
+      waterInGasSpec = source.waterInGasSpec;
+      gasInLiquid = source.gasInLiquid;
+      gasInLiquidSpec = source.gasInLiquidSpec;
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
@@ -934,188 +1201,199 @@ public class Separator extends ProcessEquipmentBaseClass
       // created by setInletStream(); ensureOutputStreamsInitialized() handles construction paths
       // (e.g. JSON/MCP runDynamic) that may have skipped that wiring.
       ensureOutputStreamsInitialized();
-      if (!isInitTransient) {
-        initializeTransientCalculation();
-      }
-      inletStreamMixer.run(id);
-
-      // Check if separator has enough moles for calculation
-      if (thermoSystem.getTotalNumberOfMoles() < 1e-10) {
-        // Separator is essentially empty - just update time and return
-        increaseTime(dt);
-        setCalculationIdentifier(id);
-        return;
-      }
-
+      TransientState checkpoint = captureTransientStepState();
       try {
-        thermoSystem.init(2);
-      } catch (Exception e) {
-        // If init fails due to low moles, skip this step
-        logger.debug("Separator init(2) failed, likely due to low moles: " + e.getMessage());
-        increaseTime(dt);
-        setCalculationIdentifier(id);
-        return;
-      }
-      thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-      try {
-        gasOutStream.getThermoSystem().init(2);
-        if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-          liquidOutStream.getThermoSystem().init(2);
+        if (!isInitTransient) {
+          initializeTransientCalculation();
         }
-      } catch (Exception e) {
-        logger.error(e.getMessage());
-      }
-      boolean hasliq = false;
-      double deliq = 0.0;
-      if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-        hasliq = true;
-        deliq = -liquidOutStream.getThermoSystem().getEnthalpy();
-      }
-      double deltaEnergy = inletStreamMixer.getOutletStream().getThermoSystem().getEnthalpy()
-          - gasOutStream.getThermoSystem().getEnthalpy() + deliq;
+        inletStreamMixer.run(id);
 
-      // Add external heat input (e.g., from flare radiation)
-      if (setHeatInput && heatInput != 0.0) {
-        deltaEnergy += heatInput; // Heat input in watts (J/s)
-      }
-
-      double newEnergy = thermoSystem.getInternalEnergy() + dt * deltaEnergy;
-      thermoSystem.init(0);
-      for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
-        double dncomp = 0.0;
-        dncomp += inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
-        double dniliq = 0.0;
-        if (hasliq) {
-          dniliq = -liquidOutStream.getThermoSystem().getComponent(i).getNumberOfmoles();
+        // Check if separator has enough moles for calculation
+        if (thermoSystem.getTotalNumberOfMoles() < 1e-10) {
+          // Separator is essentially empty - just update time and return
+          increaseTime(dt);
+          setCalculationIdentifier(id);
+          return;
         }
-        dncomp += -gasOutStream.getThermoSystem().getComponent(i).getNumberOfmoles() + dniliq;
 
-        double molesChange = dncomp * dt;
-        double currentMoles = thermoSystem.getComponent(i).getNumberOfmoles();
-        // Prevent negative moles - limit removal to what's available
-        if (currentMoles + molesChange < 1e-20) {
-          molesChange = -currentMoles + 1e-20;
+        try {
+          thermoSystem.init(2);
+        } catch (Exception e) {
+          // If init fails due to low moles, skip this step
+          logger.debug("Separator init(2) failed, likely due to low moles: " + e.getMessage());
+          increaseTime(dt);
+          setCalculationIdentifier(id);
+          return;
         }
-        thermoSystem.addComponent(i, molesChange);
-      }
-
-      // Skip VU flash if system has too few moles (essentially empty separator)
-      if (thermoSystem.getTotalNumberOfMoles() < 1e-10) {
-        setCalculationIdentifier(id);
-        return;
-      }
-
-      ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-      // Preserve the nearby equilibrium seed only for associating fluids. Cubic EOS dynamics
-      // retain the legacy cold initialization and its established trajectory.
-      boolean warmStartInitialization = !neqsim.thermo.ThermodynamicModelSettings
-          .isInnerFlashWarmStartSafe(thermoSystem);
-      thermoOps.VUflash(gasVolume + liquidVolume, newEnergy, "m3", "J", warmStartInitialization);
-      thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-
-      // Update entrainment fractions from performance calculator during transient
-      if (useDetailedEntrainmentCalculation && performanceCalculator != null && thermoSystem.getNumberOfPhases() >= 2) {
-        updateEntrainmentForTransient();
-      }
-
-      // Determine whether entrainment corrections apply to outlet compositions
-      boolean applyEntrainment = (oilInGas > 1e-10 || waterInGas > 1e-10 || gasInLiquid > 1e-10)
-          && thermoSystem.getNumberOfPhases() >= 2;
-
-      if (thermoSystem.getNumberOfComponents() > 1) {
-        if (applyEntrainment) {
-          // Clone the vessel state and redistribute moles to model imperfect separation.
-          // The original thermoSystem (vessel inventory) remains unmodified.
-          SystemInterface entrainedSystem = thermoSystem.clone();
-          entrainedSystem.addPhaseFractionToPhase(oilInGas, oilInGasSpec, specifiedStream, "oil", "gas");
-          entrainedSystem.addPhaseFractionToPhase(waterInGas, waterInGasSpec, specifiedStream, "aqueous", "gas");
-          if (entrainedSystem.hasPhaseType("liquid")) {
-            entrainedSystem.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas", "liquid");
-          } else if (entrainedSystem.hasPhaseType("oil") && entrainedSystem.hasPhaseType("aqueous")) {
-            double oilMoles = entrainedSystem.getPhase("oil").getNumberOfMolesInPhase();
-            double waterMoles = entrainedSystem.getPhase("aqueous").getNumberOfMolesInPhase();
-            double totalMoles = oilMoles + waterMoles;
-            if (totalMoles > 0.0) {
-              double oilShare = oilMoles / totalMoles;
-              double waterShare = waterMoles / totalMoles;
-              entrainedSystem.addPhaseFractionToPhase(gasInLiquid * oilShare, gasInLiquidSpec, specifiedStream, "gas",
-                  "oil");
-              entrainedSystem.addPhaseFractionToPhase(gasInLiquid * waterShare, gasInLiquidSpec, specifiedStream, "gas",
-                  "aqueous");
-            }
-          } else if (entrainedSystem.hasPhaseType("oil")) {
-            entrainedSystem.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas", "oil");
-          } else if (entrainedSystem.hasPhaseType("aqueous")) {
-            entrainedSystem.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas", "aqueous");
-          }
-          if (entrainedSystem.hasPhaseType("gas")) {
-            gasOutStream.getFluid().setMolarComposition(entrainedSystem.getPhase("gas").getMolarComposition());
-          }
-          if (entrainedSystem.hasPhaseType("oil") || entrainedSystem.hasPhaseType("aqueous")) {
-            if (entrainedSystem.getNumberOfPhases() > 1) {
-              liquidOutStream.getFluid().setMolarComposition(entrainedSystem.getPhase(1).getMolarComposition());
-            }
-          }
-        } else {
-          if (thermoSystem.hasPhaseType("gas")) {
-            gasOutStream.getFluid().setMolarComposition(thermoSystem.getPhase("gas").getMolarComposition());
-          }
+        thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+        try {
+          gasOutStream.getThermoSystem().init(2);
           if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-            if (thermoSystem.getNumberOfPhases() > 1) {
-              liquidOutStream.getFluid().setMolarComposition(thermoSystem.getPhase(1).getMolarComposition());
+            liquidOutStream.getThermoSystem().init(2);
+          }
+        } catch (Exception e) {
+          logger.error(e.getMessage());
+        }
+        boolean hasliq = false;
+        double deliq = 0.0;
+        if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+          hasliq = true;
+          deliq = -liquidOutStream.getThermoSystem().getEnthalpy();
+        }
+        double deltaEnergy = inletStreamMixer.getOutletStream().getThermoSystem().getEnthalpy()
+            - gasOutStream.getThermoSystem().getEnthalpy() + deliq;
+
+        // Add external heat input (e.g., from flare radiation)
+        if (setHeatInput && heatInput != 0.0) {
+          deltaEnergy += heatInput; // Heat input in watts (J/s)
+        }
+
+        double newEnergy = thermoSystem.getInternalEnergy() + dt * deltaEnergy;
+        thermoSystem.init(0);
+        for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
+          double dncomp = 0.0;
+          dncomp += inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
+          double dniliq = 0.0;
+          if (hasliq) {
+            dniliq = -liquidOutStream.getThermoSystem().getComponent(i).getNumberOfmoles();
+          }
+          dncomp += -gasOutStream.getThermoSystem().getComponent(i).getNumberOfmoles() + dniliq;
+
+          double molesChange = dncomp * dt;
+          double currentMoles = thermoSystem.getComponent(i).getNumberOfmoles();
+          // Prevent negative moles - limit removal to what's available
+          if (currentMoles + molesChange < 1e-20) {
+            molesChange = -currentMoles + 1e-20;
+          }
+          thermoSystem.addComponent(i, molesChange);
+        }
+
+        // Skip VU flash if system has too few moles (essentially empty separator)
+        if (thermoSystem.getTotalNumberOfMoles() < 1e-10) {
+          setCalculationIdentifier(id);
+          return;
+        }
+
+        // Preserve the nearby equilibrium seed only for associating fluids. Cubic EOS dynamics
+        // retain the legacy cold initialization and its established trajectory.
+        boolean warmStartInitialization = !neqsim.thermo.ThermodynamicModelSettings
+            .isInnerFlashWarmStartSafe(thermoSystem);
+        runAcceptedTransientVUFlash(gasVolume + liquidVolume, newEnergy, warmStartInitialization);
+        thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+
+        // Update entrainment fractions from performance calculator during transient
+        if (useDetailedEntrainmentCalculation && performanceCalculator != null
+            && thermoSystem.getNumberOfPhases() >= 2) {
+          updateEntrainmentForTransient();
+        }
+
+        // Determine whether entrainment corrections apply to outlet compositions
+        boolean applyEntrainment = (oilInGas > 1e-10 || waterInGas > 1e-10 || gasInLiquid > 1e-10)
+            && thermoSystem.getNumberOfPhases() >= 2;
+
+        if (thermoSystem.getNumberOfComponents() > 1) {
+          if (applyEntrainment) {
+            // Clone the vessel state and redistribute moles to model imperfect separation.
+            // The original thermoSystem (vessel inventory) remains unmodified.
+            SystemInterface entrainedSystem = thermoSystem.clone();
+            entrainedSystem.addPhaseFractionToPhase(oilInGas, oilInGasSpec, specifiedStream, "oil", "gas");
+            entrainedSystem.addPhaseFractionToPhase(waterInGas, waterInGasSpec, specifiedStream, "aqueous", "gas");
+            if (entrainedSystem.hasPhaseType("liquid")) {
+              entrainedSystem.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas", "liquid");
+            } else if (entrainedSystem.hasPhaseType("oil") && entrainedSystem.hasPhaseType("aqueous")) {
+              double oilMoles = entrainedSystem.getPhase("oil").getNumberOfMolesInPhase();
+              double waterMoles = entrainedSystem.getPhase("aqueous").getNumberOfMolesInPhase();
+              double totalMoles = oilMoles + waterMoles;
+              if (totalMoles > 0.0) {
+                double oilShare = oilMoles / totalMoles;
+                double waterShare = waterMoles / totalMoles;
+                entrainedSystem.addPhaseFractionToPhase(gasInLiquid * oilShare, gasInLiquidSpec, specifiedStream, "gas",
+                    "oil");
+                entrainedSystem.addPhaseFractionToPhase(gasInLiquid * waterShare, gasInLiquidSpec, specifiedStream,
+                    "gas", "aqueous");
+              }
+            } else if (entrainedSystem.hasPhaseType("oil")) {
+              entrainedSystem.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas", "oil");
+            } else if (entrainedSystem.hasPhaseType("aqueous")) {
+              entrainedSystem.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas", "aqueous");
+            }
+            if (entrainedSystem.hasPhaseType("gas")) {
+              gasOutStream.getFluid().setMolarComposition(entrainedSystem.getPhase("gas").getMolarComposition());
+            }
+            if (entrainedSystem.hasPhaseType("oil") || entrainedSystem.hasPhaseType("aqueous")) {
+              if (entrainedSystem.getNumberOfPhases() > 1) {
+                liquidOutStream.getFluid().setMolarComposition(entrainedSystem.getPhase(1).getMolarComposition());
+              }
+            }
+          } else {
+            if (thermoSystem.hasPhaseType("gas")) {
+              gasOutStream.getFluid().setMolarComposition(thermoSystem.getPhase("gas").getMolarComposition());
+            }
+            if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+              if (thermoSystem.getNumberOfPhases() > 1) {
+                liquidOutStream.getFluid().setMolarComposition(thermoSystem.getPhase(1).getMolarComposition());
+              }
             }
           }
         }
-      }
-      setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
+        setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
 
-      // --- Separator internals: weir-controlled liquid outflow ---
-      // When weir geometry is configured, limit the liquid outlet flow rate to the
-      // Francis weir overflow rate. This models the physical constraint of liquid
-      // flowing over the weir to the outlet nozzle.
-      if (weirHeight > 0.0 && weirLength > 0.0
-          && (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous"))) {
-        double weirFlowRate = getWeirOverflowRate(); // m3/s
-        if (weirFlowRate > 0.0) {
-          double currentLiqOutRate = liquidOutStream.getThermoSystem().getFlowRate("m3/sec");
-          if (currentLiqOutRate > weirFlowRate) {
-            double scaleFactor = weirFlowRate / currentLiqOutRate;
-            liquidOutStream.setFlowRate(liquidOutStream.getThermoSystem().getFlowRate("kg/hr") * scaleFactor, "kg/hr");
+        // --- Separator internals: weir-controlled liquid outflow ---
+        // When weir geometry is configured, limit the liquid outlet flow rate to the
+        // Francis weir overflow rate. This models the physical constraint of liquid
+        // flowing over the weir to the outlet nozzle.
+        if (weirHeight > 0.0 && weirLength > 0.0
+            && (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous"))) {
+          double weirFlowRate = getWeirOverflowRate(); // m3/s
+          if (weirFlowRate > 0.0) {
+            double currentLiqOutRate = liquidOutStream.getThermoSystem().getFlowRate("m3/sec");
+            if (currentLiqOutRate > weirFlowRate) {
+              double scaleFactor = weirFlowRate / currentLiqOutRate;
+              liquidOutStream.setFlowRate(liquidOutStream.getThermoSystem().getFlowRate("kg/hr") * scaleFactor,
+                  "kg/hr");
+            }
+          } else {
+            // Liquid below weir — no outflow
+            liquidOutStream.setFlowRate(0.0, "kg/hr");
           }
-        } else {
-          // Liquid below weir — no outflow
-          liquidOutStream.setFlowRate(0.0, "kg/hr");
         }
-      }
 
-      // --- Separator internals: mist eliminator pressure drop ---
-      // When a mist eliminator is configured, apply a pressure drop to the gas outlet
-      // stream. This gives the controller a realistic pressure signal.
-      if (mistEliminatorDpCoeff > 0.0 && thermoSystem.hasPhaseType("gas")) {
-        double meDp = getMistEliminatorPressureDrop(); // Pa
-        double meDpBar = meDp / 1.0e5;
-        double gasPres = gasOutStream.getPressure();
-        if (meDpBar > 0.0 && meDpBar < gasPres * 0.5) {
-          gasOutStream.setPressure(gasPres - meDpBar, "bara");
+        // --- Separator internals: mist eliminator pressure drop ---
+        // When a mist eliminator is configured, apply a pressure drop to the gas outlet
+        // stream. This gives the controller a realistic pressure signal.
+        if (mistEliminatorDpCoeff > 0.0 && thermoSystem.hasPhaseType("gas")) {
+          double meDp = getMistEliminatorPressureDrop(); // Pa
+          double meDpBar = meDp / 1.0e5;
+          double gasPres = gasOutStream.getPressure();
+          if (meDpBar > 0.0 && meDpBar < gasPres * 0.5) {
+            gasOutStream.setPressure(gasPres - meDpBar, "bara");
+          }
         }
-      }
 
-      liquidLevel = 0.0;
-      if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-        double volumeLoc = 0.0;
-        if (thermoSystem.hasPhaseType("oil")) {
-          volumeLoc += thermoSystem.getPhase("oil").getVolume("m3");
+        liquidLevel = 0.0;
+        if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+          double volumeLoc = 0.0;
+          if (thermoSystem.hasPhaseType("oil")) {
+            volumeLoc += thermoSystem.getPhase("oil").getVolume("m3");
+          }
+          if (thermoSystem.hasPhaseType("aqueous")) {
+            volumeLoc += thermoSystem.getPhase("aqueous").getVolume("m3");
+          }
+          liquidLevel = levelFromVolume(volumeLoc);
         }
-        if (thermoSystem.hasPhaseType("aqueous")) {
-          volumeLoc += thermoSystem.getPhase("aqueous").getVolume("m3");
-        }
-        liquidLevel = levelFromVolume(volumeLoc);
-      }
-      liquidVolume = calcLiquidVolume();
-      enforceHeadspace();
+        liquidVolume = calcLiquidVolume();
+        enforceHeadspace();
 
-      // System.out.printf("vol original: %.2f mine %f \n", liquidVolume, liqVol);
-      setCalculationIdentifier(id);
+        // System.out.printf("vol original: %.2f mine %f \n", liquidVolume, liqVol);
+        setCalculationIdentifier(id);
+      } catch (RuntimeException ex) {
+        try {
+          restoreTransientStepState(checkpoint);
+        } catch (RuntimeException rollbackFailure) {
+          ex.addSuppressed(rollbackFailure);
+        }
+        throw ex;
+      }
     }
   }
 

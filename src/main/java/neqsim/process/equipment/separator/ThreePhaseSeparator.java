@@ -814,145 +814,282 @@ public class ThreePhaseSeparator extends Separator {
 
   /** {@inheritDoc} */
   @Override
+  public String getTransientStateCoverageIssue() {
+    String issue = super.getTransientStateCoverageIssue();
+    if (issue != null) {
+      return issue;
+    }
+    if (waterOutStream == null || waterOutStream.getThermoSystem() == null) {
+      return "three-phase separator water outlet topology is incomplete";
+    }
+    if (waterOutStream.getClass() != Stream.class) {
+      return "three-phase separator water outlet must be a concrete local Stream";
+    }
+    String waterIssue = ((Stream) waterOutStream).getTransientStateCoverageIssue();
+    if (waterIssue != null) {
+      return "water outlet: " + waterIssue;
+    }
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected TransientState captureTransientStepState() {
+    return new ThreePhaseTransientStepState(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected void restoreTransientStepState(TransientState snapshot) {
+    if (!(snapshot instanceof ThreePhaseTransientStepState)) {
+      throw new IllegalArgumentException("Three-phase separator requires a three-phase transient snapshot");
+    }
+    super.restoreTransientStepState(snapshot);
+    ThreePhaseTransientStepState threePhaseSnapshot = (ThreePhaseTransientStepState) snapshot;
+    restoreStreamState(waterOutStream, threePhaseSnapshot.waterOutState);
+    gasInAqueous = threePhaseSnapshot.gasInAqueous;
+    gasInAqueousSpec = threePhaseSnapshot.gasInAqueousSpec;
+    gasInOil = threePhaseSnapshot.gasInOil;
+    gasInOilSpec = threePhaseSnapshot.gasInOilSpec;
+    oilInGas = threePhaseSnapshot.oilInGas;
+    oilInGasSpec = threePhaseSnapshot.oilInGasSpec;
+    oilInAqueous = threePhaseSnapshot.oilInAqueous;
+    oilInAqueousSpec = threePhaseSnapshot.oilInAqueousSpec;
+    aqueousInGas = threePhaseSnapshot.aqueousInGas;
+    aqueousInGasSpec = threePhaseSnapshot.aqueousInGasSpec;
+    aqueousInOil = threePhaseSnapshot.aqueousInOil;
+    aqueousInOilSpec = threePhaseSnapshot.aqueousInOilSpec;
+    useTempMultiPhaseCheck = threePhaseSnapshot.useTempMultiPhaseCheck;
+    lastEnthalpy = threePhaseSnapshot.lastEnthalpy;
+    lastFlowRate = threePhaseSnapshot.lastFlowRate;
+    lastPressure = threePhaseSnapshot.lastPressure;
+    lastPressureDrop = threePhaseSnapshot.lastPressureDrop;
+    waterLevel = threePhaseSnapshot.waterLevel;
+    oilLevel = threePhaseSnapshot.oilLevel;
+    gasOutletFlowFraction = threePhaseSnapshot.gasOutletFlowFraction;
+    oilOutletFlowFraction = threePhaseSnapshot.oilOutletFlowFraction;
+    waterOutletFlowFraction = threePhaseSnapshot.waterOutletFlowFraction;
+    gasOutletCapacity = threePhaseSnapshot.gasOutletCapacity;
+    oilOutletCapacity = threePhaseSnapshot.oilOutletCapacity;
+    waterOutletCapacity = threePhaseSnapshot.waterOutletCapacity;
+  }
+
+  /** Complete three-phase separator checkpoint for one transient step. */
+  private static final class ThreePhaseTransientStepState extends TransientState {
+    private static final long serialVersionUID = 1000L;
+    private final Stream.TransientState waterOutState;
+    private final double gasInAqueous;
+    private final String gasInAqueousSpec;
+    private final double gasInOil;
+    private final String gasInOilSpec;
+    private final double oilInGas;
+    private final String oilInGasSpec;
+    private final double oilInAqueous;
+    private final String oilInAqueousSpec;
+    private final double aqueousInGas;
+    private final String aqueousInGasSpec;
+    private final double aqueousInOil;
+    private final String aqueousInOilSpec;
+    private final boolean useTempMultiPhaseCheck;
+    private final double lastEnthalpy;
+    private final double lastFlowRate;
+    private final double lastPressure;
+    private final double lastPressureDrop;
+    private final double waterLevel;
+    private final double oilLevel;
+    private final double gasOutletFlowFraction;
+    private final double oilOutletFlowFraction;
+    private final double waterOutletFlowFraction;
+    private final double gasOutletCapacity;
+    private final double oilOutletCapacity;
+    private final double waterOutletCapacity;
+
+    /**
+     * Creates a three-phase checkpoint.
+     *
+     * @param source separator to capture
+     */
+    private ThreePhaseTransientStepState(ThreePhaseSeparator source) {
+      super(source);
+      waterOutState = captureStreamState(source.waterOutStream);
+      gasInAqueous = source.gasInAqueous;
+      gasInAqueousSpec = source.gasInAqueousSpec;
+      gasInOil = source.gasInOil;
+      gasInOilSpec = source.gasInOilSpec;
+      oilInGas = source.oilInGas;
+      oilInGasSpec = source.oilInGasSpec;
+      oilInAqueous = source.oilInAqueous;
+      oilInAqueousSpec = source.oilInAqueousSpec;
+      aqueousInGas = source.aqueousInGas;
+      aqueousInGasSpec = source.aqueousInGasSpec;
+      aqueousInOil = source.aqueousInOil;
+      aqueousInOilSpec = source.aqueousInOilSpec;
+      useTempMultiPhaseCheck = source.useTempMultiPhaseCheck;
+      lastEnthalpy = source.lastEnthalpy;
+      lastFlowRate = source.lastFlowRate;
+      lastPressure = source.lastPressure;
+      lastPressureDrop = source.lastPressureDrop;
+      waterLevel = source.waterLevel;
+      oilLevel = source.oilLevel;
+      gasOutletFlowFraction = source.gasOutletFlowFraction;
+      oilOutletFlowFraction = source.oilOutletFlowFraction;
+      waterOutletFlowFraction = source.waterOutletFlowFraction;
+      gasOutletCapacity = source.gasOutletCapacity;
+      oilOutletCapacity = source.oilOutletCapacity;
+      waterOutletCapacity = source.waterOutletCapacity;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void runTransient(double dt, UUID id) {
     if (getCalculateSteadyState()) {
       run(id);
       increaseTime(dt);
       setCalculationIdentifier(id);
     } else {
-      if (!isInitTransient) {
-        initializeTransientCalculation();
-      }
-      inletStreamMixer.run(id);
-
-      if (thermoSystem.getTotalNumberOfMoles() < 1e-10) {
-        increaseTime(dt);
-        setCalculationIdentifier(id);
-        return;
-      }
-      thermoSystem.init(2);
-      thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+      TransientState checkpoint = captureTransientStepState();
       try {
-        gasOutStream.getThermoSystem().init(2);
+        if (!isInitTransient) {
+          initializeTransientCalculation();
+        }
+        inletStreamMixer.run(id);
+
+        if (thermoSystem.getTotalNumberOfMoles() < 1e-10) {
+          increaseTime(dt);
+          setCalculationIdentifier(id);
+          return;
+        }
+        thermoSystem.init(2);
+        thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+        try {
+          gasOutStream.getThermoSystem().init(2);
+          if (thermoSystem.hasPhaseType("oil")) {
+            liquidOutStream.getThermoSystem().init(2);
+          }
+          if (thermoSystem.hasPhaseType("aqueous")) {
+            waterOutStream.getThermoSystem().init(2);
+          }
+        } catch (Exception e) {
+          logger.error(e.getMessage());
+        }
+
+        boolean hasOil = false;
+        boolean hasAqueous = false;
+        double deOil = 0.0;
+        double deAqueous = 0.0;
+
         if (thermoSystem.hasPhaseType("oil")) {
-          liquidOutStream.getThermoSystem().init(2);
+          hasOil = true;
+          deOil = -liquidOutStream.getThermoSystem().getEnthalpy() * oilOutletFlowFraction;
         }
         if (thermoSystem.hasPhaseType("aqueous")) {
-          waterOutStream.getThermoSystem().init(2);
+          hasAqueous = true;
+          deAqueous = -waterOutStream.getThermoSystem().getEnthalpy() * waterOutletFlowFraction;
         }
-      } catch (Exception e) {
-        logger.error(e.getMessage());
-      }
 
-      boolean hasOil = false;
-      boolean hasAqueous = false;
-      double deOil = 0.0;
-      double deAqueous = 0.0;
+        double deltaEnergy = inletStreamMixer.getOutletStream().getThermoSystem().getEnthalpy()
+            - gasOutStream.getThermoSystem().getEnthalpy() * gasOutletFlowFraction + deOil + deAqueous;
 
-      if (thermoSystem.hasPhaseType("oil")) {
-        hasOil = true;
-        deOil = -liquidOutStream.getThermoSystem().getEnthalpy() * oilOutletFlowFraction;
-      }
-      if (thermoSystem.hasPhaseType("aqueous")) {
-        hasAqueous = true;
-        deAqueous = -waterOutStream.getThermoSystem().getEnthalpy() * waterOutletFlowFraction;
-      }
-
-      double deltaEnergy = inletStreamMixer.getOutletStream().getThermoSystem().getEnthalpy()
-          - gasOutStream.getThermoSystem().getEnthalpy() * gasOutletFlowFraction + deOil + deAqueous;
-
-      // Add external heat input (e.g., from flare radiation)
-      if (isSetHeatInput() && getHeatInput() != 0.0) {
-        deltaEnergy += getHeatInput(); // Heat input in watts (J/s)
-      }
-
-      double newEnergy = thermoSystem.getInternalEnergy() + dt * deltaEnergy;
-      thermoSystem.init(0);
-
-      for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
-        double dncomp = 0.0;
-        dncomp += inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
-        double dniOil = 0.0;
-        double dniAqueous = 0.0;
-        if (hasOil) {
-          dniOil = -liquidOutStream.getThermoSystem().getComponent(i).getNumberOfmoles() * oilOutletFlowFraction;
+        // Add external heat input (e.g., from flare radiation)
+        if (isSetHeatInput() && getHeatInput() != 0.0) {
+          deltaEnergy += getHeatInput(); // Heat input in watts (J/s)
         }
-        if (hasAqueous) {
-          dniAqueous = -waterOutStream.getThermoSystem().getComponent(i).getNumberOfmoles() * waterOutletFlowFraction;
-        }
-        dncomp += -gasOutStream.getThermoSystem().getComponent(i).getNumberOfmoles() * gasOutletFlowFraction + dniOil
-            + dniAqueous;
 
-        double molesChange = dncomp * dt;
-        double currentMoles = thermoSystem.getComponent(i).getNumberOfmoles();
-        if (currentMoles + molesChange < 1e-20) {
-          molesChange = -currentMoles + 1e-20;
-        }
-        thermoSystem.addComponent(i, molesChange);
-      }
+        double newEnergy = thermoSystem.getInternalEnergy() + dt * deltaEnergy;
+        thermoSystem.init(0);
 
-      if (thermoSystem.getTotalNumberOfMoles() < 1e-10) {
+        for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
+          double dncomp = 0.0;
+          dncomp += inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
+          double dniOil = 0.0;
+          double dniAqueous = 0.0;
+          if (hasOil) {
+            dniOil = -liquidOutStream.getThermoSystem().getComponent(i).getNumberOfmoles() * oilOutletFlowFraction;
+          }
+          if (hasAqueous) {
+            dniAqueous = -waterOutStream.getThermoSystem().getComponent(i).getNumberOfmoles() * waterOutletFlowFraction;
+          }
+          dncomp += -gasOutStream.getThermoSystem().getComponent(i).getNumberOfmoles() * gasOutletFlowFraction + dniOil
+              + dniAqueous;
+
+          double molesChange = dncomp * dt;
+          double currentMoles = thermoSystem.getComponent(i).getNumberOfmoles();
+          if (currentMoles + molesChange < 1e-20) {
+            molesChange = -currentMoles + 1e-20;
+          }
+          thermoSystem.addComponent(i, molesChange);
+        }
+
+        if (thermoSystem.getTotalNumberOfMoles() < 1e-10) {
+          increaseTime(dt);
+          setCalculationIdentifier(id);
+          return;
+        }
+
+        // Preserve the nearby equilibrium seed only for associating fluids. Cubic EOS dynamics
+        // retain the legacy cold initialization and its established trajectory.
+        boolean warmStartInitialization = !neqsim.thermo.ThermodynamicModelSettings
+            .isInnerFlashWarmStartSafe(thermoSystem);
+        runAcceptedTransientVUFlash(gasVolume + liquidVolume, newEnergy, warmStartInitialization);
+        thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+
+        // Update entrainment fractions from performance calculator during transient
+        if (isDetailedEntrainmentCalculation() && getPerformanceCalculator() != null
+            && thermoSystem.getNumberOfPhases() >= 2) {
+          updateThreePhaseEntrainmentForTransient();
+        }
+
+        // Determine whether any entrainment correction is non-negligible
+        boolean applyEntrainment = (oilInGas > 1e-10 || aqueousInGas > 1e-10 || gasInOil > 1e-10 || gasInAqueous > 1e-10
+            || oilInAqueous > 1e-10 || aqueousInOil > 1e-10) && thermoSystem.getNumberOfPhases() >= 2;
+
+        SystemInterface outletSystem = thermoSystem;
+        if (thermoSystem.getNumberOfComponents() > 1 && applyEntrainment) {
+          // Clone the vessel state and redistribute moles to model imperfect separation.
+          // The original thermoSystem (vessel inventory) remains unmodified.
+          outletSystem = thermoSystem.clone();
+          outletSystem.addPhaseFractionToPhase(gasInAqueous, gasInAqueousSpec, specifiedStream, "gas", "aqueous");
+          outletSystem.addPhaseFractionToPhase(gasInOil, gasInOilSpec, specifiedStream, "gas", "oil");
+          outletSystem.addPhaseFractionToPhase(oilInAqueous, oilInAqueousSpec, specifiedStream, "oil", "aqueous");
+          outletSystem.addPhaseFractionToPhase(oilInGas, oilInGasSpec, specifiedStream, "oil", "gas");
+          outletSystem.addPhaseFractionToPhase(aqueousInGas, aqueousInGasSpec, specifiedStream, "aqueous", "gas");
+          outletSystem.addPhaseFractionToPhase(aqueousInOil, aqueousInOilSpec, specifiedStream, "aqueous", "oil");
+        }
+
+        gasOutletCapacity = refreshTransientOutlet(gasOutStream, outletSystem, "gas", id, gasOutletCapacity);
+        oilOutletCapacity = refreshTransientOutlet(liquidOutStream, outletSystem, "oil", id, oilOutletCapacity);
+        waterOutletCapacity = refreshTransientOutlet(waterOutStream, outletSystem, "aqueous", id, waterOutletCapacity);
+        inletStreamMixer.setPressure(thermoSystem.getPressure());
+
+        liquidLevel = 0.0;
+        if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+          double volumeLoc = 0.0;
+          if (thermoSystem.hasPhaseType("oil")) {
+            volumeLoc += thermoSystem.getPhase("oil").getVolume("m3");
+          }
+          if (thermoSystem.hasPhaseType("aqueous")) {
+            volumeLoc += thermoSystem.getPhase("aqueous").getVolume("m3");
+          }
+          liquidLevel = levelFromVolume(volumeLoc);
+          updateWaterAndOilLevelsFromPhases();
+        } else {
+          waterLevel = 0.0;
+          oilLevel = 0.0;
+        }
+        liquidVolume = calcLiquidVolume();
+        enforceHeadspace();
+
         increaseTime(dt);
         setCalculationIdentifier(id);
-        return;
-      }
-
-      ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-      // Preserve the nearby equilibrium seed only for associating fluids. Cubic EOS dynamics
-      // retain the legacy cold initialization and its established trajectory.
-      boolean warmStartInitialization = !neqsim.thermo.ThermodynamicModelSettings
-          .isInnerFlashWarmStartSafe(thermoSystem);
-      thermoOps.VUflash(gasVolume + liquidVolume, newEnergy, "m3", "J", warmStartInitialization);
-      thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-
-      // Update entrainment fractions from performance calculator during transient
-      if (isDetailedEntrainmentCalculation() && getPerformanceCalculator() != null
-          && thermoSystem.getNumberOfPhases() >= 2) {
-        updateThreePhaseEntrainmentForTransient();
-      }
-
-      // Determine whether any entrainment correction is non-negligible
-      boolean applyEntrainment = (oilInGas > 1e-10 || aqueousInGas > 1e-10 || gasInOil > 1e-10 || gasInAqueous > 1e-10
-          || oilInAqueous > 1e-10 || aqueousInOil > 1e-10) && thermoSystem.getNumberOfPhases() >= 2;
-
-      SystemInterface outletSystem = thermoSystem;
-      if (thermoSystem.getNumberOfComponents() > 1 && applyEntrainment) {
-        // Clone the vessel state and redistribute moles to model imperfect separation.
-        // The original thermoSystem (vessel inventory) remains unmodified.
-        outletSystem = thermoSystem.clone();
-        outletSystem.addPhaseFractionToPhase(gasInAqueous, gasInAqueousSpec, specifiedStream, "gas", "aqueous");
-        outletSystem.addPhaseFractionToPhase(gasInOil, gasInOilSpec, specifiedStream, "gas", "oil");
-        outletSystem.addPhaseFractionToPhase(oilInAqueous, oilInAqueousSpec, specifiedStream, "oil", "aqueous");
-        outletSystem.addPhaseFractionToPhase(oilInGas, oilInGasSpec, specifiedStream, "oil", "gas");
-        outletSystem.addPhaseFractionToPhase(aqueousInGas, aqueousInGasSpec, specifiedStream, "aqueous", "gas");
-        outletSystem.addPhaseFractionToPhase(aqueousInOil, aqueousInOilSpec, specifiedStream, "aqueous", "oil");
-      }
-
-      gasOutletCapacity = refreshTransientOutlet(gasOutStream, outletSystem, "gas", id, gasOutletCapacity);
-      oilOutletCapacity = refreshTransientOutlet(liquidOutStream, outletSystem, "oil", id, oilOutletCapacity);
-      waterOutletCapacity = refreshTransientOutlet(waterOutStream, outletSystem, "aqueous", id, waterOutletCapacity);
-      inletStreamMixer.setPressure(thermoSystem.getPressure());
-
-      liquidLevel = 0.0;
-      if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-        double volumeLoc = 0.0;
-        if (thermoSystem.hasPhaseType("oil")) {
-          volumeLoc += thermoSystem.getPhase("oil").getVolume("m3");
+      } catch (RuntimeException ex) {
+        try {
+          restoreTransientStepState(checkpoint);
+        } catch (RuntimeException rollbackFailure) {
+          ex.addSuppressed(rollbackFailure);
         }
-        if (thermoSystem.hasPhaseType("aqueous")) {
-          volumeLoc += thermoSystem.getPhase("aqueous").getVolume("m3");
-        }
-        liquidLevel = levelFromVolume(volumeLoc);
-        updateWaterAndOilLevelsFromPhases();
-      } else {
-        waterLevel = 0.0;
-        oilLevel = 0.0;
+        throw ex;
       }
-      liquidVolume = calcLiquidVolume();
-      enforceHeadspace();
-
-      increaseTime(dt);
-      setCalculationIdentifier(id);
     }
   }
 

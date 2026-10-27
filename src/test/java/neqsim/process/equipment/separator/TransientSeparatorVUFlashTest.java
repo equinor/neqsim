@@ -1,9 +1,17 @@
 package neqsim.process.equipment.separator;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +19,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.LevelTransmitter;
 import neqsim.process.measurementdevice.PressureTransmitter;
@@ -18,6 +27,7 @@ import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
 
 /**
  * Test class for transient separator simulation using improved VU flash calculations. This test replicates a complex
@@ -198,81 +208,254 @@ public class TransientSeparatorVUFlashTest {
     oilProcess.setTimeStep(TIME_STEP);
     oilProcess.runTransient();
 
-    // Run transient simulation
+    // Run until the historically accepted rejected VU iterate is reached.
     int steps = (int) (TOTAL_TIME / TIME_STEP);
     for (int i = 0; i < steps; i++) {
+      double currentTime = oilProcess.getTime();
+      double currentLevel = v001.getLiquidLevel();
+      double currentPressure = v001.getThermoSystem().getPressure();
+      double liquidVolume = v001.calcLiquidVolume();
+      double valveOpening = lcv00.getPercentValveOpening();
+
+      timeData.add(currentTime);
+      levelData.add(currentLevel);
+      pressureData.add(currentPressure);
+      liquidVolumeData.add(liquidVolume);
+      valveOpeningData.add(valveOpening);
+
+      assertTrue(currentLevel >= 0.0 && currentLevel <= 1.0, "Liquid level must be between 0 and 1");
+      assertTrue(currentPressure > 0.0, "Pressure must be positive");
+      assertTrue(liquidVolume >= 0.0, "Liquid volume must be non-negative");
+      assertTrue(valveOpening >= 0.0 && valveOpening <= 100.0, "Valve opening must be between 0 and 100%");
+
+      double separatorTimeBeforeStep = v001.getTime();
+      java.util.UUID separatorIdBeforeStep = v001.getCalculationIdentifier();
+      double levelBeforeStep = v001.getLiquidLevel();
+      double pressureBeforeStep = v001.getThermoSystem().getPressure();
+      double temperatureBeforeStep = v001.getThermoSystem().getTemperature();
+      double energyBeforeStep = v001.getThermoSystem().getInternalEnergy();
+      double[] componentMolesBeforeStep = componentMoles(v001.getThermoSystem());
+      Stream gasOutletIdentity = (Stream) v001.getGasOutStream();
+      Stream liquidOutletIdentity = (Stream) v001.getLiquidOutStream();
+      UUID gasOutletIdBeforeStep = gasOutletIdentity.getCalculationIdentifier();
+      UUID liquidOutletIdBeforeStep = liquidOutletIdentity.getCalculationIdentifier();
+      double gasOutletTimeBeforeStep = gasOutletIdentity.getTime();
+      double liquidOutletTimeBeforeStep = liquidOutletIdentity.getTime();
+      StreamInterface mixerOutletIdentity = v001.inletStreamMixer.getOutletStream();
+      UUID mixerIdBeforeStep = v001.inletStreamMixer.getCalculationIdentifier();
+      UUID mixerOutletIdBeforeStep = mixerOutletIdentity.getCalculationIdentifier();
+      double mixerTimeBeforeStep = v001.inletStreamMixer.getTime();
+      double mixerOutletTimeBeforeStep = mixerOutletIdentity.getTime();
+      boolean mixerRecalculationBeforeStep = v001.inletStreamMixer.needRecalculation();
+      double[] mixerInventoryBeforeStep = componentMoles(mixerOutletIdentity.getThermoSystem());
+      SystemInterface gasOutletBeforeStep = gasOutletIdentity.getThermoSystem().clone();
+      SystemInterface liquidOutletBeforeStep = liquidOutletIdentity.getThermoSystem().clone();
+
       try {
-        double currentTime = oilProcess.getTime();
-        double currentLevel = v001.getLiquidLevel();
-        double currentPressure = v001.getThermoSystem().getPressure();
-        double liquidVolume = v001.calcLiquidVolume();
-        double valveOpening = lcv00.getPercentValveOpening();
-
-        // Store data
-        timeData.add(currentTime);
-        levelData.add(currentLevel);
-        pressureData.add(currentPressure);
-        liquidVolumeData.add(liquidVolume);
-        valveOpeningData.add(valveOpening);
-
-        // Print progress every 5 steps
-        if (i % 5 == 0) {
-          logger.printf(org.apache.logging.log4j.Level.INFO,
-              "Step %d: Time=%.1f s, Level=%.3f, Pressure=%.3f bar, " + "LiqVol=%.3f m³, ValveOpening=%.1f%%%n", i,
-              currentTime, currentLevel, currentPressure, liquidVolume, valveOpening);
-        }
-
-        // Assertions to verify physical consistency
-        assertTrue(currentLevel >= 0.0 && currentLevel <= 1.0, "Liquid level must be between 0 and 1");
-        assertTrue(currentPressure > 0.0, "Pressure must be positive");
-        assertTrue(liquidVolume >= 0.0, "Liquid volume must be non-negative");
-        assertTrue(valveOpening >= 0.0 && valveOpening <= 100.0, "Valve opening must be between 0 and 100%");
-
-        // Run next time step
         oilProcess.runTransient(TIME_STEP);
-      } catch (Exception e) {
-        System.err.printf("Error at step %d: %s%n", i, e.getMessage());
-        throw new RuntimeException("Simulation failed at step " + i, e);
+      } catch (IllegalStateException expected) {
+        assertTrue(expected.getMessage().contains("rejected transient VU state"));
+        assertTrue(expected.getMessage().contains("volumeResidual="));
+        assertEquals(separatorTimeBeforeStep, v001.getTime(), 0.0, "Rejected step must not advance separator time");
+        assertEquals(separatorIdBeforeStep, v001.getCalculationIdentifier(),
+            "Rejected step must restore the separator calculation identifier");
+        assertEquals(levelBeforeStep, v001.getLiquidLevel(), 0.0, "Rejected step must restore the liquid level");
+        assertEquals(pressureBeforeStep, v001.getThermoSystem().getPressure(), 0.0,
+            "Rejected step must restore vessel pressure");
+        assertEquals(temperatureBeforeStep, v001.getThermoSystem().getTemperature(), 0.0,
+            "Rejected step must restore vessel temperature");
+        assertEquals(energyBeforeStep, v001.getThermoSystem().getInternalEnergy(),
+            Math.max(Math.abs(energyBeforeStep), 1.0) * 1e-12, "Rejected step must restore vessel energy");
+        assertArrayEquals(componentMolesBeforeStep, componentMoles(v001.getThermoSystem()), 1e-12,
+            "Rejected step must restore every component inventory");
+        assertSame(gasOutletIdentity, v001.getGasOutStream(), "Gas outlet object identity must be stable");
+        assertSame(liquidOutletIdentity, v001.getLiquidOutStream(), "Liquid outlet object identity must be stable");
+        assertEquals(gasOutletIdBeforeStep, gasOutletIdentity.getCalculationIdentifier(),
+            "Rejected step must restore the gas outlet calculation identifier");
+        assertEquals(liquidOutletIdBeforeStep, liquidOutletIdentity.getCalculationIdentifier(),
+            "Rejected step must restore the liquid outlet calculation identifier");
+        assertEquals(gasOutletTimeBeforeStep, gasOutletIdentity.getTime(), 0.0,
+            "Rejected step must restore gas outlet time");
+        assertEquals(liquidOutletTimeBeforeStep, liquidOutletIdentity.getTime(), 0.0,
+            "Rejected step must restore liquid outlet time");
+        assertSame(mixerOutletIdentity, v001.inletStreamMixer.getOutletStream(),
+            "Mixer outlet object identity must be stable");
+        assertEquals(mixerIdBeforeStep, v001.inletStreamMixer.getCalculationIdentifier(),
+            "Rejected step must restore the mixer calculation identifier");
+        assertEquals(mixerOutletIdBeforeStep, mixerOutletIdentity.getCalculationIdentifier(),
+            "Rejected step must restore the mixer outlet calculation identifier");
+        assertEquals(mixerTimeBeforeStep, v001.inletStreamMixer.getTime(), 0.0,
+            "Rejected step must restore mixer time");
+        assertEquals(mixerOutletTimeBeforeStep, mixerOutletIdentity.getTime(), 0.0,
+            "Rejected step must restore mixer outlet time");
+        assertEquals(mixerRecalculationBeforeStep, v001.inletStreamMixer.needRecalculation(),
+            "Rejected step must restore mixer recalculation caches");
+        assertArrayEquals(mixerInventoryBeforeStep, componentMoles(mixerOutletIdentity.getThermoSystem()), 1e-12,
+            "Rejected step must restore mixer outlet state");
+        assertArrayEquals(componentMoles(gasOutletBeforeStep), componentMoles(v001.getGasOutStream().getThermoSystem()),
+            1e-12, "Rejected step must restore the gas outlet state");
+        assertArrayEquals(componentMoles(liquidOutletBeforeStep),
+            componentMoles(v001.getLiquidOutStream().getThermoSystem()), 1e-12,
+            "Rejected step must restore the liquid outlet state");
+        return;
       }
     }
+    fail("The historical rejected VU iterate was not reached");
+  }
 
-    // Final verification
-    assertTrue(timeData.size() == steps, "Correct number of time steps recorded");
-    assertTrue(levelData.size() == steps, "Level data recorded for all steps");
-    assertTrue(pressureData.size() == steps, "Pressure data recorded for all steps");
+  @Test
+  @DisplayName("Transactional process restores clock and separator state after rejected VU flash")
+  void transactionalProcessRestoresRejectedSeparatorStep() {
+    Stream feed = new Stream("transaction feed", wellfluid.clone());
+    feed.setFlowRate(FLOW_RATE, "kg/hr");
+    Separator separator = new Separator("transaction separator", feed);
+    separator.setOrientation(SEP_ORIENTATION);
+    separator.setSeparatorLength(SEP_LENGTH);
+    separator.setInternalDiameter(SEP_DIAMETER);
+    separator.setLiquidLevel(SEP_LIQUID_LEVEL);
 
-    // Check for numerical stability - values should be finite and within reasonable bounds
-    for (int i = 0; i < levelData.size(); i++) {
-      assertTrue(Double.isFinite(levelData.get(i)), "Level at step " + i + " should be finite");
-      assertTrue(Double.isFinite(pressureData.get(i)), "Pressure at step " + i + " should be finite");
-      assertTrue(Double.isFinite(liquidVolumeData.get(i)), "Liquid volume at step " + i + " should be finite");
+    ProcessSystem process = new ProcessSystem("transaction process");
+    process.add(feed);
+    process.add(separator);
+    process.run();
+    separator.setCalculateSteadyState(false);
+    separator.initializeTransientCalculation();
+
+    // Force a numerically impossible vessel target without changing the solver tolerances.
+    separator.gasVolume = 1.0e-12;
+    separator.liquidVolume = 0.0;
+
+    double processTime = process.getTime();
+    double separatorTime = separator.getTime();
+    UUID separatorId = separator.getCalculationIdentifier();
+    double[] inventory = componentMoles(separator.getThermoSystem());
+    double pressure = separator.getThermoSystem().getPressure();
+    Stream gasOutlet = (Stream) separator.getGasOutStream();
+    Stream liquidOutlet = (Stream) separator.getLiquidOutStream();
+
+    IllegalStateException failure = assertThrows(IllegalStateException.class,
+        () -> process.runTransientTransactional(5.0, UUID.randomUUID()));
+    assertTrue(failure.getMessage().contains("rejected transient VU state"));
+    assertEquals(processTime, process.getTime(), 0.0);
+    assertEquals(separatorTime, separator.getTime(), 0.0);
+    assertEquals(separatorId, separator.getCalculationIdentifier());
+    assertEquals(pressure, separator.getThermoSystem().getPressure(), 0.0);
+    assertArrayEquals(inventory, componentMoles(separator.getThermoSystem()), 1e-12);
+    assertSame(gasOutlet, separator.getGasOutStream());
+    assertSame(liquidOutlet, separator.getLiquidOutStream());
+  }
+
+  @Test
+  @DisplayName("Three-phase separator restores water, oil and gas state after rejected VU flash")
+  void threePhaseSeparatorRestoresRejectedStep() {
+    SystemInterface fluid = new SystemSrkCPAstatoil(315.15, 10.0);
+    fluid.addComponent("methane", 72.0);
+    fluid.addComponent("n-heptane", 14.0);
+    fluid.addComponent("water", 40.0);
+    fluid.setMixingRule(10);
+    fluid.setMultiPhaseCheck(true);
+
+    Stream feed = new Stream("three-phase feed", fluid);
+    feed.setFlowRate(721.0, "kg/hr");
+    feed.run();
+    ThreePhaseSeparator separator = new ThreePhaseSeparator("three-phase transaction separator", feed);
+    separator.setInternalDiameter(1.0);
+    separator.setSeparatorLength(3.0);
+    separator.setLiquidLevel(0.5);
+    separator.run();
+    separator.setCalculateSteadyState(false);
+    separator.initializeTransientCalculation();
+
+    separator.gasVolume = 1.0e-12;
+    separator.liquidVolume = 0.0;
+    double waterLevel = separator.getWaterLevel();
+    double oilLevel = separator.getOilLevel();
+    double[] inventory = componentMoles(separator.getThermoSystem());
+    Stream gasOutlet = (Stream) separator.getGasOutStream();
+    Stream oilOutlet = (Stream) separator.getOilOutStream();
+    Stream waterOutlet = (Stream) separator.getWaterOutStream();
+    UUID gasOutletId = gasOutlet.getCalculationIdentifier();
+    UUID oilOutletId = oilOutlet.getCalculationIdentifier();
+    UUID waterOutletId = waterOutlet.getCalculationIdentifier();
+    double[] gasInventory = componentMoles(gasOutlet.getThermoSystem());
+    double[] oilInventory = componentMoles(oilOutlet.getThermoSystem());
+    double[] waterInventory = componentMoles(waterOutlet.getThermoSystem());
+
+    IllegalStateException failure = assertThrows(IllegalStateException.class,
+        () -> separator.runTransient(5.0, UUID.randomUUID()));
+    assertTrue(failure.getMessage().contains("rejected transient VU state"));
+    assertEquals(waterLevel, separator.getWaterLevel(), 0.0);
+    assertEquals(oilLevel, separator.getOilLevel(), 0.0);
+    assertArrayEquals(inventory, componentMoles(separator.getThermoSystem()), 1e-12);
+    assertSame(gasOutlet, separator.getGasOutStream());
+    assertSame(oilOutlet, separator.getOilOutStream());
+    assertSame(waterOutlet, separator.getWaterOutStream());
+    assertEquals(gasOutletId, gasOutlet.getCalculationIdentifier());
+    assertEquals(oilOutletId, oilOutlet.getCalculationIdentifier());
+    assertEquals(waterOutletId, waterOutlet.getCalculationIdentifier());
+    assertArrayEquals(gasInventory, componentMoles(gasOutlet.getThermoSystem()), 1e-12);
+    assertArrayEquals(oilInventory, componentMoles(oilOutlet.getThermoSystem()), 1e-12);
+    assertArrayEquals(waterInventory, componentMoles(waterOutlet.getThermoSystem()), 1e-12);
+  }
+
+  @Test
+  @DisplayName("Unqualified separator subclasses fail transient transaction coverage")
+  void separatorSubclassFailsClosed() {
+    Stream feed = new Stream("subclass feed", wellfluid.clone());
+    feed.setFlowRate(FLOW_RATE, "kg/hr");
+    UnsupportedSeparator separator = new UnsupportedSeparator("unsupported separator", feed);
+    separator.run();
+
+    assertTrue(separator.getTransientStateCoverageIssue().contains("must extend the snapshot"));
+    ProcessSystem process = new ProcessSystem("unsupported transaction process");
+    process.add(feed);
+    process.add(separator);
+    IllegalStateException failure = assertThrows(IllegalStateException.class, process::beginTransientStepTransaction);
+    assertTrue(failure.getMessage().contains("incomplete transient state coverage"));
+  }
+
+  @Test
+  @DisplayName("Accepted separator steps close component, energy and volume balances under refinement")
+  void acceptedStepsCloseBalancesAndRefine() {
+    Separator balanceSeparator = createRefinementSeparator("balance separator");
+    balanceSeparator.inletStreamMixer.run(UUID.randomUUID());
+    double dt = 1.0;
+    SystemInterface vesselBefore = balanceSeparator.getThermoSystem().clone();
+    SystemInterface inlet = balanceSeparator.inletStreamMixer.getOutletStream().getThermoSystem();
+    SystemInterface gasOutlet = balanceSeparator.getGasOutStream().getThermoSystem();
+    SystemInterface liquidOutlet = balanceSeparator.getLiquidOutStream().getThermoSystem();
+    boolean hasLiquid = vesselBefore.hasPhaseType("oil") || vesselBefore.hasPhaseType("aqueous");
+    double expectedEnergy = vesselBefore.getInternalEnergy()
+        + dt * (inlet.getEnthalpy() - gasOutlet.getEnthalpy() - (hasLiquid ? liquidOutlet.getEnthalpy() : 0.0));
+    double[] expectedInventory = componentMoles(vesselBefore);
+    for (int componentIndex = 0; componentIndex < expectedInventory.length; componentIndex++) {
+      expectedInventory[componentIndex] += dt * (inlet.getComponent(componentIndex).getNumberOfmoles()
+          - gasOutlet.getComponent(componentIndex).getNumberOfmoles()
+          - (hasLiquid ? liquidOutlet.getComponent(componentIndex).getNumberOfmoles() : 0.0));
     }
+    double specifiedVolume = balanceSeparator.gasVolume + balanceSeparator.liquidVolume;
 
-    // Verify the simulation ran for the expected duration
-    double finalTime = timeData.get(timeData.size() - 1);
-    assertTrue(Math.abs(finalTime - TOTAL_TIME) < TIME_STEP, "Simulation should run for approximately the total time");
+    balanceSeparator.runTransient(dt, UUID.randomUUID());
 
-    // Print summary
-    double finalLevel = levelData.get(levelData.size() - 1);
-    double finalPressure = pressureData.get(pressureData.size() - 1);
-    double finalVolume = liquidVolumeData.get(liquidVolumeData.size() - 1);
+    assertRelativeClosure(balanceSeparator.getThermoSystem().getVolume("m3"), specifiedVolume, 1.0e-3,
+        "accepted volume");
+    assertRelativeClosure(balanceSeparator.getThermoSystem().getInternalEnergy(), expectedEnergy, 1.0e-3,
+        "accepted energy");
+    assertArrayEquals(expectedInventory, componentMoles(balanceSeparator.getThermoSystem()), 1.0e-9,
+        "accepted VU flash must conserve every updated component inventory");
 
-    logger.printf(org.apache.logging.log4j.Level.INFO, "%nSimulation completed successfully:%n");
-    logger.printf(org.apache.logging.log4j.Level.INFO,
-        "Final conditions: Level=%.3f, Pressure=%.3f bar, LiqVol=%.3f m³%n", finalLevel, finalPressure, finalVolume);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Total simulation time: %.1f seconds (%d steps)%n", finalTime,
-        steps);
-
-    // Test that the enhanced VU flash provided stable results
-    double levelVariance = calculateVariance(levelData);
-    double pressureVariance = calculateVariance(pressureData);
-
-    logger.printf(org.apache.logging.log4j.Level.INFO, "Level variance: %.6f, Pressure variance: %.6f%n", levelVariance,
-        pressureVariance);
-
-    // The enhanced VU flash should provide stable results with reasonable variance
-    assertTrue(levelVariance < 1.0, "Level variance should be reasonable");
-    assertTrue(pressureVariance < 100.0, "Pressure variance should be reasonable");
+    double[][] refinedStates = assertTimeout(Duration.ofSeconds(20),
+        () -> new double[][] {runRefinedTrajectory(4.0), runRefinedTrajectory(2.0), runRefinedTrajectory(1.0)},
+        "accepted separator refinement must retain bounded runtime");
+    double[] coarse = refinedStates[0];
+    double[] medium = refinedStates[1];
+    double[] fine = refinedStates[2];
+    double coarseToMedium = normalizedDistance(coarse, medium);
+    double mediumToFine = normalizedDistance(medium, fine);
+    assertTrue(coarseToMedium > 1.0e-10, "the disturbed trajectory must exercise timestep sensitivity");
+    assertTrue(mediumToFine < coarseToMedium,
+        "pressure, temperature and level must converge under timestep refinement: coarse-medium=" + coarseToMedium
+            + ", medium-fine=" + mediumToFine);
   }
 
   @Test
@@ -336,5 +519,111 @@ public class TransientSeparatorVUFlashTest {
     double mean = values.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
     double variance = values.stream().mapToDouble(val -> Math.pow(val - mean, 2)).average().orElse(0.0);
     return variance;
+  }
+
+  /**
+   * Returns total component inventories in system component order.
+   *
+   * @param system thermodynamic system
+   * @return component mole inventory
+   */
+  private static double[] componentMoles(SystemInterface system) {
+    int componentCount = system.getPhase(0).getNumberOfComponents();
+    double[] result = new double[componentCount];
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      result[componentIndex] = system.getComponent(componentIndex).getNumberOfmoles();
+    }
+    return result;
+  }
+
+  /**
+   * Creates an initialized separator with a repeatable inlet-rate disturbance.
+   *
+   * @param name separator name
+   * @return initialized dynamic separator
+   */
+  private static Separator createRefinementSeparator(String name) {
+    SystemInterface fluid = new SystemPrEos(303.15, 12.0);
+    fluid.addComponent("methane", 80.0);
+    fluid.addComponent("n-heptane", 20.0);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+    Stream feed = new Stream(name + " feed", fluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.run();
+    Separator separator = new Separator(name, feed);
+    separator.setInternalDiameter(1.0);
+    separator.setSeparatorLength(3.0);
+    separator.setLiquidLevel(0.5);
+    separator.run();
+    separator.setCalculateSteadyState(false);
+    separator.initializeTransientCalculation();
+    feed.setFlowRate(140.0, "kg/hr");
+    feed.run();
+    return separator;
+  }
+
+  /**
+   * Runs the disturbed separator to a common endpoint.
+   *
+   * @param dt timestep in seconds
+   * @return pressure, temperature and liquid level at eight seconds
+   */
+  private static double[] runRefinedTrajectory(double dt) {
+    Separator separator = createRefinementSeparator("refinement " + dt);
+    int steps = (int) Math.round(8.0 / dt);
+    for (int step = 0; step < steps; step++) {
+      separator.runTransient(dt, UUID.randomUUID());
+      assertRelativeClosure(separator.getThermoSystem().getVolume("m3"), separator.gasVolume + separator.liquidVolume,
+          1.0e-3, "refined accepted volume");
+    }
+    return new double[] {separator.getThermoSystem().getPressure(), separator.getThermoSystem().getTemperature(),
+        separator.getLiquidLevel()};
+  }
+
+  /**
+   * Computes a scale-normalized Euclidean state distance.
+   *
+   * @param left first state
+   * @param right second state
+   * @return normalized distance
+   */
+  private static double normalizedDistance(double[] left, double[] right) {
+    double squared = 0.0;
+    for (int index = 0; index < left.length; index++) {
+      double scale = Math.max(Math.max(Math.abs(left[index]), Math.abs(right[index])), 1.0);
+      double difference = (left[index] - right[index]) / scale;
+      squared += difference * difference;
+    }
+    return Math.sqrt(squared);
+  }
+
+  /**
+   * Asserts the caller-owned extensive-property acceptance gate.
+   *
+   * @param actual returned value
+   * @param specified requested value
+   * @param tolerance relative tolerance
+   * @param label assertion label
+   */
+  private static void assertRelativeClosure(double actual, double specified, double tolerance, String label) {
+    double residual = Math.abs(actual - specified) / Math.max(Math.abs(specified), 1.0);
+    assertTrue(Double.isFinite(residual) && residual <= tolerance,
+        label + " residual " + residual + " exceeds " + tolerance);
+  }
+
+  /** Deliberately unqualified subclass used to verify fail-closed snapshot coverage. */
+  private static final class UnsupportedSeparator extends Separator {
+    private static final long serialVersionUID = 1000L;
+
+    /**
+     * Creates the test separator.
+     *
+     * @param name separator name
+     * @param inlet inlet stream
+     */
+    private UnsupportedSeparator(String name, Stream inlet) {
+      super(name, inlet);
+    }
   }
 }
