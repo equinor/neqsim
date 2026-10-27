@@ -1556,6 +1556,15 @@ $10^{-5}$ can escape as an unsolved phase, even for separator gas at its dew poi
 phase fugacity equality for this case, alongside the pressure-continuity checks
 described in the [pipeline guide](../process/PipeBeggsAndBrills.md#friction-pressure-drop).
 
+Solving the trial may remove it when the water remains undersaturated; the
+presence of water in the feed does not require an aqueous product phase.
+`EclipseFluidReadWriteTest.testFluidWater222` checks the imported PR-1978 fluid
+at 2.09997 bara through 30, 20, 10 and 30 °C, with repeated flashes at each
+temperature. At 30 °C it has gas and trace oil, with gas water fugacity below
+the pure-liquid-water trial fugacity. Cooling to 20 and 10 °C produces a
+genuine third aqueous phase; reheating removes it. All states must retain
+normalized phases, component balances and equal component fugacities.
+
 #### 3.5.1 Water-rich Hydrocarbon Vapour Appearance
 
 A neutral OIL+AQUEOUS endpoint can still be unstable to a hydrocarbon vapour phase when water dominates the overall
