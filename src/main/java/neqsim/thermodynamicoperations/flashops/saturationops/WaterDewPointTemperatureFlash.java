@@ -1,14 +1,21 @@
 package neqsim.thermodynamicoperations.flashops.saturationops;
 
+import neqsim.thermo.phase.PhaseEosInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Calculates the water dew point against a pure condensed phase at fixed pressure.
+ * Calculates the water dew point against a pure condensed phase or a water-rich liquid at fixed pressure.
  *
  * <p>
- * Gas composition is held at the feed composition. For GERG-water, the condensed-phase fugacity uses the ISO 18453 ice
- * correlation below the triple point. Dissolved gas, hydrates and mixed aqueous phases are not included; use the
- * multiphase operation when an aqueous mixture is required. The legacy pure-MEG calculation is retained.
+ * Gas composition is held at the feed composition. By default, the condensed phase is pure water or pure MEG. For
+ * GERG-water, its fugacity uses the ISO 18453 ice correlation below the triple point. Hydrates are not included.
+ * </p>
+ *
+ * <p>
+ * The optional dissolved-component mode equilibrates every feed species in an incipient liquid with more than 50 mol%
+ * water. It uses liquid water, including metastable liquid below freezing. It does not perform phase-stability searches
+ * for other liquids; use the full multiphase operation when a hydrocarbon liquid or glycol-rich liquid is present.
  * </p>
  *
  * @author asmund
@@ -19,6 +26,8 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
   private static final long serialVersionUID = 1000;
   /** Relative fugacity equilibrium tolerance, expressed as a logarithmic residual. */
   private static final double FUGACITY_TOLERANCE = 1.0e-9;
+  /** Whether the incipient water-rich liquid includes dissolved feed components. */
+  private final boolean allowDissolvedComponents;
 
   /**
    * Creates a water dew point calculation.
@@ -26,7 +35,19 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
    * @param system the fluid to calculate at its current absolute pressure
    */
   public WaterDewPointTemperatureFlash(SystemInterface system) {
+    this(system, false);
+  }
+
+  /**
+   * Creates a fixed-feed-gas water dew point calculation.
+   *
+   * @param system fluid at the required absolute pressure
+   * @param allowDissolvedComponents true to equilibrate dissolved components in a water-rich liquid; false for the
+   * legacy pure condensed reference
+   */
+  public WaterDewPointTemperatureFlash(SystemInterface system, boolean allowDissolvedComponents) {
     super(system);
+    this.allowDissolvedComponents = allowDissolvedComponents;
   }
 
   /**
@@ -43,6 +64,36 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
     system.init(0);
     system.setNumberOfPhases(2);
     system.setBeta(1, 1.0e-15);
+    if (allowDissolvedComponents) {
+      if (system.isChemicalSystem() || !system.getPhase(0).hasComponent("water")
+          || !(system.getPhase(0).getComponent("water").getz() > 0.0)) {
+        throw new IllegalArgumentException("Mixed-liquid water dew point requires water in a non-reacting gas");
+      }
+      int water = system.getPhase(0).getComponent("water").getComponentNumber();
+      system.setBeta(0, 1.0 - 1.0e-10);
+      system.setBeta(1, 1.0e-10);
+      system.setPhaseType(0, PhaseType.GAS);
+      system.setPhaseType(1, PhaseType.LIQUID);
+      double dryFraction = 1.0 - system.getPhase(0).getComponent(water).getz();
+      for (int component = 0; component < system.getNumberOfComponents(); component++) {
+        double feed = system.getPhase(0).getComponent(component).getz();
+        system.getPhase(0).getComponent(component).setx(feed);
+        system.getPhase(1).getComponent(component).setx(component == water ? (dryFraction > 0.0 ? 0.9999 : 1.0)
+            : (dryFraction > 0.0 ? 1.0e-4 * feed / dryFraction : 0.0));
+      }
+      double temperature = solveTemperature(water);
+      residual(temperature, water);
+      for (int phase = 0; phase < 2; phase++) {
+        if (system.getPhase(phase) instanceof PhaseEosInterface) {
+          double calculatedPressure = ((PhaseEosInterface) system.getPhase(phase)).calcPressure();
+          if (!Double.isFinite(calculatedPressure)
+              || Math.abs(calculatedPressure - system.getPressure()) > 1.0e-7 * Math.max(1.0, system.getPressure())) {
+            throw new IllegalStateException("Mixed-liquid dew point did not converge to an EOS volume root");
+          }
+        }
+      }
+      return;
+    }
     double maximumTemperature = Double.NEGATIVE_INFINITY;
     int controllingComponent = -1;
     for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
@@ -127,6 +178,9 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
    */
   private double residual(double temperature, int component) {
     system.setTemperature(temperature);
+    if (allowDissolvedComponents) {
+      return mixedLiquidResidual(component);
+    }
     system.init(1);
     double value = Math.log(system.getPhase(0).getComponent(component).getz())
         + system.getPhase(0).getComponent(component).getLogFugacityCoefficient()
@@ -135,6 +189,59 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
       throw new IllegalStateException("Non-finite fugacity in water/MEG dew point calculation");
     }
     return value;
+  }
+
+  /**
+   * Equilibrates dissolved species and evaluates the remaining water fugacity residual.
+   *
+   * <p>
+   * Water closes the liquid composition while each dissolved component satisfies its gas/liquid fugacity equation.
+   * Normalizing all trial fugacities instead would admit the trivial gas-composition root in very dry gas. The
+   * water-rich branch is required explicitly. Only fugacity initialization is needed; no TP flashes or solid/hydrate
+   * searches are performed.
+   * </p>
+   *
+   * @param water water component index
+   * @return logarithmic water fugacity residual
+   * @throws IllegalStateException if the water-rich branch or finite equilibrium cannot be found
+   */
+  private double mixedLiquidResidual(int water) {
+    system.init(1, 0);
+    double[] dissolved = new double[system.getNumberOfComponents()];
+    for (int iteration = 0; iteration < 100; iteration++) {
+      system.init(1, 1);
+      double totalDissolved = 0.0;
+      for (int component = 0; component < dissolved.length; component++) {
+        if (component != water) {
+          double feed = system.getPhase(0).getComponent(component).getz();
+          dissolved[component] = feed == 0.0 ? 0.0
+              : Math.exp(Math.log(feed) + system.getPhase(0).getComponent(component).getLogFugacityCoefficient()
+                  - system.getPhase(1).getComponent(component).getLogFugacityCoefficient());
+          totalDissolved += dissolved[component];
+        }
+      }
+      if (!Double.isFinite(totalDissolved) || totalDissolved >= 0.5) {
+        throw new IllegalStateException("No water-rich incipient liquid; use the full multiphase operation");
+      }
+      dissolved[water] = 1.0 - totalDissolved;
+      double difference = 0.0;
+      for (int component = 0; component < dissolved.length; component++) {
+        double previous = system.getPhase(1).getComponent(component).getx();
+        difference = Math.max(difference, Math.abs(dissolved[component] - previous) / (1.0e-12 + dissolved[component]));
+        system.getPhase(1).getComponent(component).setx(dissolved[component]);
+      }
+      if (difference <= 1.0e-9) {
+        system.init(1, 1);
+        double value = Math.log(system.getPhase(0).getComponent(water).getz())
+            + system.getPhase(0).getComponent(water).getLogFugacityCoefficient() - Math.log(dissolved[water])
+            - system.getPhase(1).getComponent(water).getLogFugacityCoefficient();
+        if (!Double.isFinite(value)) {
+          throw new IllegalStateException("Non-finite water fugacity in mixed-liquid dew point");
+        }
+        return value;
+      }
+    }
+    throw new IllegalStateException("Dissolved components did not converge in water-rich liquid");
   }
 
   /** {@inheritDoc} */

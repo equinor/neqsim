@@ -1316,6 +1316,26 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
+   * Calculates the water dew point of a fixed feed gas against a liquid reference.
+   *
+   * @param allowDissolvedComponents true for a water-rich liquid including dissolved gas components; false for the
+   * legacy pure condensed reference. The mixed-liquid mode excludes other liquid phases, reactions, solids and
+   * hydrates, and uses metastable liquid water below freezing. Use the full multiphase operation when another liquid is
+   * present.
+   * @throws IsNaNException if the legacy pure-reference operation returns an invalid temperature
+   * @throws IllegalArgumentException if required water content or pressure is invalid
+   * @throws IllegalStateException if equilibrium cannot be bracketed or converged
+   */
+  public void waterDewPointTemperatureFlash(boolean allowDissolvedComponents) throws IsNaNException {
+    if (!allowDissolvedComponents) {
+      waterDewPointTemperatureFlash();
+      return;
+    }
+    operation = new WaterDewPointTemperatureFlash(system, true);
+    getOperation().run();
+  }
+
+  /**
    * waterDewPointTemperatureMultiphaseFlash.
    *
    * @throws neqsim.util.exception.IsNaNException if any.
