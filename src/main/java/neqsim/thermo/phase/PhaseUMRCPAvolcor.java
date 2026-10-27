@@ -69,21 +69,31 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   /** {@inheritDoc} */
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     cachedCi = null;
     cachedCiT = null;
     cachedCij = null;
+    super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+    if (initType == 0) {
+      // Level zero initializes component amounts but does not call calcB.
+      loc_C = calcC(this, temperature, pressure, numberOfComponents);
+      CT = calcCT(this, temperature, pressure, numberOfComponents);
+    }
+  }
+
+  /**
+   * Refresh translation after component initialization, before the inherited volume and fugacity calculations.
+   *
+   * @param phase phase whose co-volume is calculated
+   * @param temperature temperature in K
+   * @param pressure pressure in bara
+   * @param numberOfComponents number of components
+   * @return extensive mixture co-volume
+   */
+  @Override
+  public double calcB(PhaseInterface phase, double temperature, double pressure, int numberOfComponents) {
     loc_C = calcC(this, temperature, pressure, numberOfComponents);
     CT = calcCT(this, temperature, pressure, numberOfComponents);
-    if (initType >= 1) {
-      ensureCiCache(numberOfComponents);
-    }
-    if (initType >= 2) {
-      ensureCiTCache(numberOfComponents);
-    }
-    if (initType >= 3) {
-      ensureCijCache(numberOfComponents);
-    }
+    return super.calcB(phase, temperature, pressure, numberOfComponents);
   }
 
   /** {@inheritDoc} */
@@ -263,13 +273,14 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
       return;
     }
     cachedCij = new double[numbcomp][numbcomp];
+    ensureCiCache(numbcomp);
     ComponentEosInterface[] compArray = (ComponentEosInterface[]) this.getcomponentArray();
     double totalMolesInPhase = getNumberOfMolesInPhase();
     for (int i = 0; i < numbcomp; i++) {
       for (int j = 0; j < numbcomp; j++) {
         double cij = getcij(compArray[i], compArray[j]);
-        cachedCij[i][j] = (2.0 * cij - ((ComponentUMRCPAvolcor) compArray[i]).getCi()
-            - ((ComponentUMRCPAvolcor) compArray[j]).getCi()) / totalMolesInPhase;
+        // A later component may not have reached Finit yet; use the current phase derivative cache.
+        cachedCij[i][j] = (2.0 * cij - cachedCi[i] - cachedCi[j]) / totalMolesInPhase;
       }
     }
   }
