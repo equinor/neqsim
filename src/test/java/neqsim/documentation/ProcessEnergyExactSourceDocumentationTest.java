@@ -66,7 +66,7 @@ class ProcessEnergyExactSourceDocumentationTest {
           "import neqsim.thermo.system.SystemInterface;",
           "import neqsim.thermo.system.SystemSrkEos;");
 
-  @TempDir Path temporaryDirectory;
+  @TempDir\n  Path temporaryDirectory;
 
   /** Verifies that every marked complete process-energy example is exact executable source. */
   @Test
