@@ -23,6 +23,8 @@ import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.phase.PhaseEos;
+import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -265,12 +267,15 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(3, testSystem.getNumberOfPhases());
   }
 
+  /**
+   * Checks aqueous phase disappearance and recovery instead of retaining an unequilibrated water seed.
+   *
+   * @throws IOException if the E300 fixture cannot be read
+   */
   @Test
   void testFluidWater222() throws IOException {
     testSystem = EclipseFluidReadWrite.read(fluid_water);
     testSystem.setMultiPhaseCheck(true);
-
-    // testSystem.init(0);
 
     double molcomp[] = new double[] {0.00010073836721612647, 0.008498223381288974, 0.4966714442086843,
         0.17280427751505803, 0.1606550990492106, 0.08304099784638264, 0.031567842584520195, 0.007037046430749713,
@@ -281,11 +286,70 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testSystem.setPressure(2.099970727022911, "bara");
-    testSystem.setTemperature(30.0, "C");
-    testOps.TPflash();
+    double[] temperatures = {30.0, 25.0, 30.0};
+    int[] expectedPhases = {2, 3, 2};
+    for (int step = 0; step < temperatures.length; step++) {
+      testSystem.setTemperature(temperatures[step], "C");
+      testOps.TPflash();
+      testSystem.init(1);
+      assertEquals(expectedPhases[step], testSystem.getNumberOfPhases(), "T=" + temperatures[step]);
+      Assertions.assertTrue(testSystem.hasPhaseType(PhaseType.GAS));
+      Assertions.assertTrue(testSystem.hasPhaseType(PhaseType.OIL));
+      assertEquals(expectedPhases[step] == 3, testSystem.hasPhaseType(PhaseType.AQUEOUS));
+      assertFluidPhaseEquilibrium(testSystem);
 
-    // testSystem.prettyPrint();
-    Assertions.assertEquals(3, testSystem.getNumberOfPhases());
+      if (expectedPhases[step] == 2) {
+        // At 30 C the gas is undersaturated: a numerical aqueous seed must disappear.
+        int water = testSystem.getComponent("water").getComponentNumber();
+        PhaseInterface liquidWater = testSystem.getPhase("gas").clone();
+        for (int component = 0; component < testSystem.getNumberOfComponents(); component++) {
+          liquidWater.getComponent(component).setx(component == water ? 1.0 : 0.0);
+        }
+        liquidWater.init(testSystem.getTotalNumberOfMoles(), testSystem.getNumberOfComponents(), 1, PhaseType.AQUEOUS,
+            1.0);
+        double liquidWaterFugacityCoefficient = liquidWater.getComponent(water).fugcoef(liquidWater);
+        double gasWaterFugacity = testSystem.getPhase("gas").getComponent(water).getx()
+            * testSystem.getPhase("gas").getComponent(water).getFugacityCoefficient();
+        Assertions.assertTrue(
+            Double.isFinite(liquidWaterFugacityCoefficient) && liquidWaterFugacityCoefficient > 0.0
+                && gasWaterFugacity < liquidWaterFugacityCoefficient,
+            "Water must remain below liquid-water saturation at 30 C");
+      }
+    }
+  }
+
+  /**
+   * Checks phase normalization, component conservation and equal component fugacities.
+   *
+   * @param fluid the flashed fluid with initialized fugacity coefficients
+   */
+  private void assertFluidPhaseEquilibrium(SystemInterface fluid) {
+    double betaSum = 0.0;
+    for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+      double beta = fluid.getBeta(phase);
+      Assertions.assertTrue(Double.isFinite(beta) && beta > 0.0 && beta <= 1.0);
+      betaSum += beta;
+      double compositionSum = 0.0;
+      for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
+        double x = fluid.getPhase(phase).getComponent(component).getx();
+        Assertions.assertTrue(Double.isFinite(x) && x >= 0.0 && x <= 1.0);
+        compositionSum += x;
+      }
+      assertEquals(1.0, compositionSum, 1.0e-10);
+    }
+    assertEquals(1.0, betaSum, 1.0e-10);
+    for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
+      double recombined = 0.0;
+      double referenceLogFugacity = Math.log(fluid.getPhase(0).getComponent(component).getx())
+          + fluid.getPhase(0).getComponent(component).getLogFugacityCoefficient();
+      for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+        double x = fluid.getPhase(phase).getComponent(component).getx();
+        recombined += fluid.getBeta(phase) * x;
+        double logFugacity = Math.log(x) + fluid.getPhase(phase).getComponent(component).getLogFugacityCoefficient();
+        assertEquals(referenceLogFugacity, logFugacity, 1.0e-7, "phase/component=" + phase + "/" + component);
+      }
+      assertEquals(fluid.getComponent(component).getz(), recombined, 1.0e-10);
+    }
   }
 
   @Test

@@ -1618,6 +1618,14 @@ phase disappearance, thermodynamic derivative checks, direct PS entropy
 closure, and the 40-step polytropic compressor. PS entropy acceptance tolerances
 are unchanged.
 
+The E300 regression `EclipseFluidReadWriteTest.testFluidWater222` also checks
+removal of an unstable aqueous seed. At 2.09997 bara and 30 °C this fixture's
+gas-water fugacity is about 0.774 of the EOS liquid-water fugacity, so its
+equilibrium has gas and oil only. Cooling to 25 °C produces a stable aqueous
+phase; heating back to 30 °C removes it. Each state must conserve components and
+satisfy fugacity equality, rather than retaining a third phase solely because
+water is present.
+
 ```java
 if (waterZ > 1.0e-6 && !system.hasPhaseType(PhaseType.AQUEOUS)) {
     system.addPhase();
