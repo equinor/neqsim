@@ -730,7 +730,7 @@ public class TPmultiflash extends TPflash {
         for (int i = 0; i < numComp; i++) {
           system.getPhase(newPhaseIdx).getComponent(i).setx(xTrial[i]);
         }
-        system.getPhases()[newPhaseIdx].normalize();
+        system.getPhase(newPhaseIdx).normalize();
         multiPhaseTest = true;
         int dominantComp = 0;
         double maxX = 0;
@@ -1055,7 +1055,7 @@ public class TPmultiflash extends TPflash {
         for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
           system.getPhase(system.getNumberOfPhases() - 1).getComponent(i).setx(x[k][i]);
         }
-        system.getPhases()[system.getNumberOfPhases() - 1].normalize();
+        system.getPhase(system.getNumberOfPhases() - 1).normalize();
         multiPhaseTest = true;
         system.setBeta(system.getNumberOfPhases() - 1, system.getPhase(0).getComponent(unstabcomp).getz());
         try {
@@ -1329,7 +1329,7 @@ public class TPmultiflash extends TPflash {
           for (int i = 0; i < numComponents; i++) {
             system.getPhase(newPhaseIdx).getComponent(i).setx(x[i]);
           }
-          system.getPhases()[newPhaseIdx].normalize();
+          system.getPhase(newPhaseIdx).normalize();
           multiPhaseTest = true;
 
           // Set initial beta based on dominant component
@@ -1729,7 +1729,7 @@ public class TPmultiflash extends TPflash {
         for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
           system.getPhase(system.getNumberOfPhases() - 1).getComponent(i).setx(x[k][i]);
         }
-        system.getPhases()[system.getNumberOfPhases() - 1].normalize();
+        system.getPhase(system.getNumberOfPhases() - 1).normalize();
         multiPhaseTest = true;
         system.setBeta(system.getNumberOfPhases() - 1, system.getPhase(0).getComponent(unstabcomp).getz());
         try {
@@ -2082,7 +2082,7 @@ public class TPmultiflash extends TPflash {
         for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
           system.getPhase(system.getNumberOfPhases() - 1).getComponent(i).setx(x[k][i]);
         }
-        system.getPhases()[system.getNumberOfPhases() - 1].normalize();
+        system.getPhase(system.getNumberOfPhases() - 1).normalize();
         multiPhaseTest = true;
         system.setBeta(system.getNumberOfPhases() - 1, system.getPhase(0).getComponent(unstabcomp).getz());
         try {
@@ -2188,7 +2188,7 @@ public class TPmultiflash extends TPflash {
       double x = Math.exp(logTrialComposition[comp] - maximumLogTrialComposition);
       system.getPhase(phaseIndex).getComponent(comp).setx(Math.max(x, 1.0e-16));
     }
-    system.getPhases()[phaseIndex].normalize();
+    system.getPhase(phaseIndex).normalize();
     double initialBeta = Math.max(1.0e-3, 1000.0 * phaseFractionMinimumLimit);
     system.setBeta(phaseIndex, initialBeta);
     system.normalizeBeta();
@@ -2368,7 +2368,7 @@ public class TPmultiflash extends TPflash {
       system.getPhase(phaseIndex).getComponent(comp).setx(x);
     }
 
-    system.getPhases()[phaseIndex].normalize();
+    system.getPhase(phaseIndex).normalize();
     double initialBeta = Math.max(1.0e-5, 10.0 * phaseFractionMinimumLimit);
     system.setBeta(phaseIndex, initialBeta);
     system.normalizeBeta();
@@ -3401,7 +3401,7 @@ public class TPmultiflash extends TPflash {
             system.getPhase(aquPhaseIndex).getComponent(comp).setx(x);
           }
 
-          system.getPhases()[aquPhaseIndex].normalize();
+          system.getPhase(aquPhaseIndex).normalize();
           double initialBeta = Math.max(1.0e-5, 10.0 * phaseFractionMinimumLimit);
           system.setBeta(aquPhaseIndex, initialBeta);
           system.normalizeBeta();
