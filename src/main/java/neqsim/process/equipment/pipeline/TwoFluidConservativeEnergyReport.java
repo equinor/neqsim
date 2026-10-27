@@ -28,7 +28,8 @@ public final class TwoFluidConservativeEnergyReport implements Serializable {
   private final double elapsedTimeSeconds;
   private final double initialEnergyJ;
   private final double finalEnergyJ;
-  private final double netAdvectedEnergyJ;
+  private final double inletAdvectedEnergyJ;
+  private final double outletAdvectedEnergyJ;
   private final double gravitationalWorkJ;
   private final double wallHeatToFluidJ;
   private final double maxRelativeVolumeResidual;
@@ -51,10 +52,40 @@ public final class TwoFluidConservativeEnergyReport implements Serializable {
   public TwoFluidConservativeEnergyReport(double elapsedTimeSeconds, double initialEnergyJ, double finalEnergyJ,
       double netAdvectedEnergyJ, double gravitationalWorkJ, double wallHeatToFluidJ, double maxRelativeVolumeResidual,
       double maxRelativeThermodynamicEnergyResidual) {
+    this(elapsedTimeSeconds, initialEnergyJ, finalEnergyJ, netAdvectedEnergyJ, 0.0, gravitationalWorkJ,
+        wallHeatToFluidJ, maxRelativeVolumeResidual, maxRelativeThermodynamicEnergyResidual);
+  }
+
+  /**
+   * Construct an accepted-interval fluid energy ledger with boundary-resolved advection.
+   *
+   * <p>
+   * Boundary transfers retain their finite-volume sign convention: positive inlet energy enters from the upstream
+   * boundary and positive outlet energy leaves through the downstream boundary. Their difference is the net advected
+   * energy added to the pipe. Keeping the two transfers separate allows a network junction to route the exact accepted
+   * branch energy without reconstructing it from an end state.
+   * </p>
+   *
+   * @param elapsedTimeSeconds accepted elapsed time in seconds
+   * @param initialEnergyJ initial integrated internal plus kinetic energy in joules
+   * @param finalEnergyJ final integrated internal plus kinetic energy in joules
+   * @param inletAdvectedEnergyJ signed accepted energy through the inlet face in joules
+   * @param outletAdvectedEnergyJ signed accepted energy through the outlet face in joules
+   * @param gravitationalWorkJ integrated gravitational work on the fluid in joules
+   * @param wallHeatToFluidJ integrated heat added to the fluid, including electrical heating, in joules
+   * @param maxRelativeVolumeResidual maximum absolute occupied-volume residual relative to cell volume
+   * @param maxRelativeThermodynamicEnergyResidual maximum absolute discrepancy between conservative and reconstructed
+   * thermodynamic total energy, relative to the recovery solver's energy scale
+   * @throws IllegalArgumentException if a quantity is nonfinite or a time/residual is negative
+   */
+  public TwoFluidConservativeEnergyReport(double elapsedTimeSeconds, double initialEnergyJ, double finalEnergyJ,
+      double inletAdvectedEnergyJ, double outletAdvectedEnergyJ, double gravitationalWorkJ, double wallHeatToFluidJ,
+      double maxRelativeVolumeResidual, double maxRelativeThermodynamicEnergyResidual) {
     requireNonnegativeFinite(elapsedTimeSeconds, "elapsedTimeSeconds");
     requireFinite(initialEnergyJ, "initialEnergyJ");
     requireFinite(finalEnergyJ, "finalEnergyJ");
-    requireFinite(netAdvectedEnergyJ, "netAdvectedEnergyJ");
+    requireFinite(inletAdvectedEnergyJ, "inletAdvectedEnergyJ");
+    requireFinite(outletAdvectedEnergyJ, "outletAdvectedEnergyJ");
     requireFinite(gravitationalWorkJ, "gravitationalWorkJ");
     requireFinite(wallHeatToFluidJ, "wallHeatToFluidJ");
     requireNonnegativeFinite(maxRelativeVolumeResidual, "maxRelativeVolumeResidual");
@@ -62,7 +93,8 @@ public final class TwoFluidConservativeEnergyReport implements Serializable {
     this.elapsedTimeSeconds = elapsedTimeSeconds;
     this.initialEnergyJ = initialEnergyJ;
     this.finalEnergyJ = finalEnergyJ;
-    this.netAdvectedEnergyJ = netAdvectedEnergyJ;
+    this.inletAdvectedEnergyJ = inletAdvectedEnergyJ;
+    this.outletAdvectedEnergyJ = outletAdvectedEnergyJ;
     this.gravitationalWorkJ = gravitationalWorkJ;
     this.wallHeatToFluidJ = wallHeatToFluidJ;
     this.maxRelativeVolumeResidual = maxRelativeVolumeResidual;
@@ -116,9 +148,19 @@ public final class TwoFluidConservativeEnergyReport implements Serializable {
     return finalEnergyJ - initialEnergyJ;
   }
 
+  /** @return signed total-enthalpy and kinetic energy entering through the inlet face, in joules */
+  public double getInletAdvectedEnergyJ() {
+    return inletAdvectedEnergyJ;
+  }
+
+  /** @return signed total-enthalpy and kinetic energy leaving through the outlet face, in joules */
+  public double getOutletAdvectedEnergyJ() {
+    return outletAdvectedEnergyJ;
+  }
+
   /** @return net external-face total-enthalpy and kinetic energy entering the fluid, in joules */
   public double getNetAdvectedEnergyJ() {
-    return netAdvectedEnergyJ;
+    return inletAdvectedEnergyJ - outletAdvectedEnergyJ;
   }
 
   /** @return gravitational work added to the fluid in joules */
@@ -143,7 +185,7 @@ public final class TwoFluidConservativeEnergyReport implements Serializable {
 
   /** @return signed fluid first-law residual in joules */
   public double getResidualJ() {
-    return getStoredEnergyChangeJ() - netAdvectedEnergyJ - gravitationalWorkJ - wallHeatToFluidJ;
+    return getStoredEnergyChangeJ() - getNetAdvectedEnergyJ() - gravitationalWorkJ - wallHeatToFluidJ;
   }
 
   /**
@@ -153,7 +195,7 @@ public final class TwoFluidConservativeEnergyReport implements Serializable {
    * @return nonnegative relative first-law residual
    */
   public double getRelativeResidual() {
-    double scale = Math.max(Math.abs(getStoredEnergyChangeJ()), Math.abs(netAdvectedEnergyJ));
+    double scale = Math.max(Math.abs(getStoredEnergyChangeJ()), Math.abs(getNetAdvectedEnergyJ()));
     scale = Math.max(scale, Math.abs(gravitationalWorkJ));
     scale = Math.max(scale, Math.abs(wallHeatToFluidJ));
     return Math.abs(getResidualJ()) / Math.max(scale, RELATIVE_SCALE_FLOOR_J);
