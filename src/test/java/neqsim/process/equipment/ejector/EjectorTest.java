@@ -412,4 +412,37 @@ class EjectorTest {
         "Diffuser area must use density at the flashed discharge state");
   }
 
+  @Test
+  void outletStreamObjectIsStableAcrossRuns() {
+    SystemInterface motiveFluid = new SystemSrkEos(273.15 + 20.0, 10.0);
+    motiveFluid.addComponent("methane", 1.0);
+    motiveFluid.createDatabase(true);
+    motiveFluid.setMixingRule(2);
+    Stream motiveStream = new Stream("motive", motiveFluid);
+    motiveStream.setPressure(10.0, "bara");
+    motiveStream.setTemperature(20.0, "C");
+    motiveStream.setFlowRate(0.5, "kg/sec");
+
+    SystemInterface suctionFluid = new SystemSrkEos(273.15 + 20.0, 1.0);
+    suctionFluid.addComponent("methane", 1.0);
+    suctionFluid.createDatabase(true);
+    suctionFluid.setMixingRule(2);
+    Stream suctionStream = new Stream("suction", suctionFluid);
+    suctionStream.setPressure(1.0, "bara");
+    suctionStream.setTemperature(20.0, "C");
+    suctionStream.setFlowRate(0.15, "kg/sec");
+
+    Ejector ejector = new Ejector("gas booster", motiveStream, suctionStream);
+    ejector.setDischargePressure(3.0);
+    StreamInterface outBefore = ejector.getOutStream();
+    ejector.run();
+    assertTrue(outBefore == ejector.getOutStream(), "outlet stream object must survive the first run");
+    assertEquals(0.65, outBefore.getFlowRate("kg/sec"), 1.0e-6);
+
+    suctionStream.setFlowRate(0.25, "kg/sec");
+    ejector.run();
+    assertTrue(outBefore == ejector.getOutStream(), "outlet stream object must survive repeated runs");
+    assertEquals(0.75, outBefore.getFlowRate("kg/sec"), 1.0e-6);
+  }
+
 }

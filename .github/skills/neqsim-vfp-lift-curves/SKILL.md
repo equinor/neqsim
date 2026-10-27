@@ -173,6 +173,11 @@ exporter uses a placeholder correlation and logs a warning. The JSON face is `ne
   provider return NaN. Fix the diameter or trim the rate axis; do not accept a repaired table silently.
 - Gas-lift or rate-cap tables are only as good as the group limits in the deck.
 - Beggs-Brill in `PipeBeggsAndBrills` for steep lean-gas risers: check against Gray or measured data (warning logged).
+- **Python `RecombinationFluidFactory`**: call `init(0)` on the template and on every surface gas, oil and water source system before building the factory. Without it the
+  molar compositions read as zero and every point returns NaN (`PhasePrEos` compressibility NaN).
+- **Oil wells with a CO2-rich fluid near the bubble point**: `HASAN_KABIR` returned NaN for flowing pressures near Pb (single-phase liquid side) while `BEGGS_BRILL` solved
+  everywhere and `GRAY` was inconsistent at low THP; compare the correlations at 3-4 points before building (spread of 30-50 bar seen) and check the first rate point of every
+  THP/ratio corner, because `FailurePolicy.EXTRAPOLATE_RATE` needs two valid points per rate curve. A thin wrapper that retries a NaN point with a +/-0.5 bar shift is acceptable if counted and reported.
 
 ## Related
 

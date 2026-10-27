@@ -343,5 +343,22 @@ Never accept repeated mass-balance values as a convergence criterion while loops
 remain open. Separator constraints expose `getRawValue()`, `getDesignLimit()`,
 `getUnit()` and `getBasis()`; built-in limits are defaults and explicit setters
 are custom unless actual datasheet provenance is declared.
+
+## Ejector (gas-jet compressor) pitfalls
+
+`neqsim.process.equipment.ejector.Ejector` (motive + suction streams, discharge pressure, four efficiencies) is a design-point model: both flows are inputs, `setThroatArea`
+is a no-op, `generatePerformanceCurve` returns a constant entrainment ratio and there is no fixed-geometry (off-design) solution - an installed ejector at a new year / motive
+pressure / gas MW cannot be checked with it. Practical rules learned on the Oseberg OSA ejector study:
+
+- **Outlet stream:** `run()` used to replace `mixedStream` (jneqsim 3.18: every run); wire downstream equipment to a `Mixer` outlet (adiabatic energy balance = the
+  ejector outlet state, kinetic terms cancel) or re-fetch `getMixedStream()` after each run.
+- **Suction must be vapour:** a two-phase suction gas (4th stage gas + cold flare gas) makes any 1-D isentropic nozzle model return nonsense (entrainment 8x too high); knock the
+  liquid out first and use the gas phase (`fluid.phaseToSystem("gas")`).
+- **Capacity vs motive pressure:** a constant-pressure-mixing model gives a HIGHER capacity at lower motive pressure (primary jet area shrinks); never throttle the motive
+  pressure to turn down - model turndown as recycle at full motive pressure (motive flow is fixed by throat area x choked flux).
+- **Critical back pressure margin** (`P_cb / P_d - 1`) is the robust off-design indicator; a lighter suction gas or a falling motive pressure moves it to breakdown long before
+  the entrainment ratio looks wrong. Size with ~10 % margin and re-check every year / case with the FIXED geometry.
+- Compressors downstream see the motive gas as extra flow and a much lower MW (25-30 vs 44-46 g/mol design): check head / speed / surge / stonewall on the vendor charts with the actual MW.
+
 For a fixed minimum-flow compressor return at suction state, see
 `neqsim-compressor-antisurge-recycle` and `MinimumFlowSpill` in the compressor guide.
