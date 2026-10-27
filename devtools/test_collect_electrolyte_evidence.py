@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -296,7 +297,9 @@ class EvidenceWorkflowContractTest(unittest.TestCase):
         steps = self.workflow["jobs"]["test_java_slow"]["steps"]
         by_name = {step.get("name"): step for step in steps}
         run = by_name["Run slow-test shard without JaCoCo"]["run"]
-        self.assertLess(run.index("slow-selected-tests.txt"), run.index("mvn -B test"))
+        maven_test = re.search(r"\bmvn(?:\s+-\S+)*\s+test\b", run)
+        self.assertIsNotNone(maven_test, "The slow shard must execute Maven tests")
+        self.assertLess(run.index("slow-selected-tests.txt"), maven_test.start())
         collector = by_name["Collect electrolyte assessment evidence"]
         self.assertEqual(collector["if"], "always()")
         self.assertIn('--selected-tests "$RUNNER_TEMP/slow-selected-tests.txt"', collector["run"])
