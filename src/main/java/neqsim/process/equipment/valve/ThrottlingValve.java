@@ -40,6 +40,8 @@ public class ThrottlingValve extends TwoPortEquipment
   private String transientStateIdentity = UUID.randomUUID().toString();
   /** Last physical-step identity that advanced actuator dynamics. */
   private UUID lastActuatorStepId = null;
+  /** Whether repeated calls with one physical-step identity advance actuator state only once. */
+  private boolean physicalStepIdempotencyEnabled = false;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ThrottlingValve.class);
   SystemInterface thermoSystem;
@@ -710,7 +712,7 @@ public class ThrottlingValve extends TwoPortEquipment
    * @param id Calculation identifier
    */
   public void runController(double dt, UUID id) {
-    if (id != null && id.equals(lastActuatorStepId)) {
+    if (physicalStepIdempotencyEnabled && id != null && id.equals(lastActuatorStepId)) {
       setCalculationIdentifier(id);
       return;
     }
@@ -722,8 +724,37 @@ public class ThrottlingValve extends TwoPortEquipment
     controllerRequest = clampValveOpening(controllerRequest);
     setTargetPercentValveOpening(controllerRequest);
     percentValveOpening = clampValveOpening(applyTravelDynamics(percentValveOpening, requestedValveOpening, dt));
-    lastActuatorStepId = id;
+    if (physicalStepIdempotencyEnabled) {
+      lastActuatorStepId = id;
+    }
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Enables one actuator advance per non-null physical-step UUID.
+   *
+   * <p>
+   * The policy is disabled by default so legacy loops that reuse one calculation identifier across multiple physical
+   * timesteps retain their historical behavior. Transactional adaptive studies should enable it and supply a distinct
+   * UUID for every physical interval.
+   * </p>
+   *
+   * @param enabled true to make actuator advancement idempotent for one physical-step UUID
+   */
+  public void setPhysicalStepIdempotencyEnabled(boolean enabled) {
+    physicalStepIdempotencyEnabled = enabled;
+    if (!enabled) {
+      lastActuatorStepId = null;
+    }
+  }
+
+  /**
+   * Reports whether physical-step UUID idempotency is enabled.
+   *
+   * @return true when one UUID can advance actuator state only once
+   */
+  public boolean isPhysicalStepIdempotencyEnabled() {
+    return physicalStepIdempotencyEnabled;
   }
 
   /**
@@ -827,6 +858,8 @@ public class ThrottlingValve extends TwoPortEquipment
     foulingFraction = snapshot.foulingFraction;
     deltaPressure = snapshot.deltaPressure;
     allowChoked = snapshot.allowChoked;
+    getMechanicalDesign().getValveSizingMethod().setAllowChoked(snapshot.sizingAllowChoked);
+    getMechanicalDesign().getValveSizingMethod().setxT(snapshot.sizingXt);
     allowLaminar = snapshot.allowLaminar;
     lastInletTemperature = snapshot.lastInletTemperature;
     lastInletPressure = snapshot.lastInletPressure;
@@ -851,6 +884,7 @@ public class ThrottlingValve extends TwoPortEquipment
     autoSized = snapshot.autoSized;
     maxDesignAIV = snapshot.maxDesignAiv;
     lastActuatorStepId = snapshot.lastActuatorStepId;
+    physicalStepIdempotencyEnabled = snapshot.physicalStepIdempotencyEnabled;
   }
 
   /**
@@ -901,6 +935,8 @@ public class ThrottlingValve extends TwoPortEquipment
     private final double foulingFraction;
     private final double deltaPressure;
     private final boolean allowChoked;
+    private final boolean sizingAllowChoked;
+    private final double sizingXt;
     private final boolean allowLaminar;
     private final double lastInletTemperature;
     private final double lastInletPressure;
@@ -925,6 +961,7 @@ public class ThrottlingValve extends TwoPortEquipment
     private final boolean autoSized;
     private final double maxDesignAiv;
     private final UUID lastActuatorStepId;
+    private final boolean physicalStepIdempotencyEnabled;
 
     /**
      * Creates a complete checkpoint of mutable state owned by a throttling valve.
@@ -968,6 +1005,8 @@ public class ThrottlingValve extends TwoPortEquipment
       foulingFraction = source.foulingFraction;
       deltaPressure = source.deltaPressure;
       allowChoked = source.allowChoked;
+      sizingAllowChoked = source.getMechanicalDesign().getValveSizingMethod().isAllowChoked();
+      sizingXt = source.getMechanicalDesign().getValveSizingMethod().getxT();
       allowLaminar = source.allowLaminar;
       lastInletTemperature = source.lastInletTemperature;
       lastInletPressure = source.lastInletPressure;
@@ -992,6 +1031,7 @@ public class ThrottlingValve extends TwoPortEquipment
       autoSized = source.autoSized;
       maxDesignAiv = source.maxDesignAIV;
       lastActuatorStepId = source.lastActuatorStepId;
+      physicalStepIdempotencyEnabled = source.physicalStepIdempotencyEnabled;
     }
   }
 

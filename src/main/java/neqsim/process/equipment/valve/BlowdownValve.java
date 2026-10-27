@@ -191,7 +191,7 @@ public class BlowdownValve extends ThrottlingValve {
    */
   @Override
   public void runTransient(double dt, UUID id) {
-    boolean advanceSafetyState = id == null || !id.equals(lastSafetyStepId);
+    boolean advanceSafetyState = !isPhysicalStepIdempotencyEnabled() || id == null || !id.equals(lastSafetyStepId);
     if (advanceSafetyState && isActivated && isOpening) {
       // Increment time elapsed
       timeElapsed += dt;
@@ -208,7 +208,7 @@ public class BlowdownValve extends ThrottlingValve {
         isOpening = false;
       }
     }
-    if (advanceSafetyState) {
+    if (advanceSafetyState && isPhysicalStepIdempotencyEnabled()) {
       lastSafetyStepId = id;
     }
 
@@ -219,6 +219,9 @@ public class BlowdownValve extends ThrottlingValve {
   /** {@inheritDoc} */
   @Override
   public String getTransientStateCoverageIssue() {
+    if (getClass() != BlowdownValve.class) {
+      return "valve subclass " + getClass().getName() + " must extend the snapshot for subclass-owned mutable state";
+    }
     return getValveTransientStateCoverageIssue();
   }
 

@@ -317,7 +317,7 @@ public class ESDValve extends ThrottlingValve {
    */
   @Override
   public void runTransient(double dt, UUID id) {
-    boolean advanceSafetyState = id == null || !id.equals(lastSafetyStepId);
+    boolean advanceSafetyState = !isPhysicalStepIdempotencyEnabled() || id == null || !id.equals(lastSafetyStepId);
     if (advanceSafetyState && !isEnergized && isClosing) {
       // Valve is de-energized and closing
       timeElapsedSinceTrip += dt;
@@ -347,7 +347,7 @@ public class ESDValve extends ThrottlingValve {
       }
       // Note: Test completion must be triggered externally via completePartialStrokeTest()
     }
-    if (advanceSafetyState) {
+    if (advanceSafetyState && isPhysicalStepIdempotencyEnabled()) {
       lastSafetyStepId = id;
     }
 
@@ -358,6 +358,9 @@ public class ESDValve extends ThrottlingValve {
   /** {@inheritDoc} */
   @Override
   public String getTransientStateCoverageIssue() {
+    if (getClass() != ESDValve.class) {
+      return "valve subclass " + getClass().getName() + " must extend the snapshot for subclass-owned mutable state";
+    }
     return getValveTransientStateCoverageIssue();
   }
 

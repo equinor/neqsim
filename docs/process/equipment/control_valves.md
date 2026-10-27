@@ -450,9 +450,23 @@ thermodynamic cache, outlet-stream state, physical-step identifier, and the ESD/
 machine. Attached base PID controllers remain separate transaction participants; the process
 transaction validates and restores both objects without replacing either one.
 
-One physical-step UUID advances actuator state at most once. Repeating a hydraulic calculation with
-the same UUID can update flow state but cannot apply travel, trip time, or blowdown time twice.
-Rejected full-step/two-half-step trials restore the actuator and safety state before retry.
+Rollback also restores the active sizing method's choked-flow switch and $x_T$ factor in place.
+Keep the mechanical design, sizing method, and other sizing configuration fixed during a trial.
+Every attached controller must be independently enumerated; a duplicate controller tag that hides
+an attached controller blocks transaction coverage. Subclasses of `ESDValve` and `BlowdownValve`
+must extend the snapshot and explicitly qualify their own state before participating.
+
+Physical-step idempotency is explicit and default-off for legacy compatibility:
+
+```java
+valve.setPhysicalStepIdempotencyEnabled(true);
+```
+
+When enabled, one non-null physical-step UUID advances actuator state at most once. Repeating a
+hydraulic calculation with the same UUID can update flow state but cannot apply travel, trip time,
+or blowdown time twice. Rejected full-step/two-half-step trials restore the actuator and safety
+state before retry. When disabled, legacy loops that reuse one UUID across multiple physical
+timesteps continue to advance on every call.
 
 For `FIRST_ORDER_LAG`, the implemented step is the exact constant-command response
 

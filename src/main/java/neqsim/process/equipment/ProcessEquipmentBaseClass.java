@@ -1359,6 +1359,10 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
         && (controller != null || flowValveController != null || hasController || !controllerMap.isEmpty())) {
       return "attached controller state must participate independently";
     }
+    if (attachedControllersCoveredSeparately
+        && (!isTransientControllerEnumerated(controller) || !isTransientControllerEnumerated(flowValveController))) {
+      return "attached controller is missing from independent process enumeration";
+    }
     if (isSetEnergyStream || !energyPorts.isEmpty() || !externallyConnectedEnergyPorts.isEmpty()) {
       return "connected energy-stream and energy-port state is not covered by the equipment snapshot";
     }
@@ -1372,6 +1376,24 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
       return "runtime capacity-constraint state is not covered by the reusable base snapshot";
     }
     return null;
+  }
+
+  /**
+   * Checks whether an attached controller is included by identity in the owning process enumeration.
+   *
+   * @param attachedController controller to check, or {@code null} when absent
+   * @return true when absent or independently enumerated
+   */
+  private boolean isTransientControllerEnumerated(ControllerDeviceInterface attachedController) {
+    if (attachedController == null) {
+      return true;
+    }
+    for (ControllerDeviceInterface enumeratedController : getControllers()) {
+      if (enumeratedController == attachedController) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

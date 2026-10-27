@@ -2,6 +2,7 @@ package neqsim.process.equipment.valve;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -47,6 +48,32 @@ class ValveTransientStateTransactionTest {
 
     assertEquals(once, study.valve.getPercentValveOpening(), TOLERANCE);
     assertEquals(80.0 + (20.0 - 80.0) * Math.exp(-1.0 / 4.0), once, TOLERANCE);
+  }
+
+  /** Default-off UUID idempotency preserves legacy loops that reuse one identifier across steps. */
+  @Test
+  void legacyRepeatedUuidStillAdvancesWhenPolicyIsDisabled() {
+    ValveStudy valveStudy = createStudy(new ThrottlingValve("FV-legacy", createFeed("legacy feed")));
+    valveStudy.valve.setTravelModel(ValveTravelModel.FIRST_ORDER_LAG);
+    valveStudy.valve.setTravelTimeConstant(4.0);
+    valveStudy.valve.setPercentValveOpening(20.0);
+    valveStudy.valve.setTargetPercentValveOpening(80.0);
+    UUID repeatedId = UUID.randomUUID();
+
+    valveStudy.valve.runTransient(1.0, repeatedId);
+    valveStudy.valve.runTransient(1.0, repeatedId);
+
+    assertFalse(valveStudy.valve.isPhysicalStepIdempotencyEnabled());
+    assertEquals(80.0 + (20.0 - 80.0) * Math.exp(-2.0 / 4.0), valveStudy.valve.getPercentValveOpening(), TOLERANCE);
+
+    ESDValve esdValve = new ESDValve("ESDV-legacy", createFeed("legacy ESD feed"));
+    createStudy(esdValve);
+    esdValve.setStrokeTime(4.0);
+    esdValve.deEnergize();
+    esdValve.runTransient(1.0, repeatedId);
+    esdValve.runTransient(1.0, repeatedId);
+    assertEquals(50.0, esdValve.getPercentValveOpening(), TOLERANCE);
+    assertEquals(2.0, esdValve.getTimeElapsedSinceTrip(), TOLERANCE);
   }
 
   /** Rate limits, deadband, stiction, and reversal hysteresis retain their declared units. */
@@ -205,6 +232,7 @@ class ValveTransientStateTransactionTest {
   void esdFailCloseStateRollsBackAndReplaysDeterministically() {
     ESDValve valve = new ESDValve("ESDV-101", createFeed("feed"));
     ValveStudy study = createStudy(valve);
+    valve.setPhysicalStepIdempotencyEnabled(true);
     valve.setStrokeTime(4.0);
     valve.deEnergize();
     UUID stepId = UUID.randomUUID();
@@ -233,6 +261,7 @@ class ValveTransientStateTransactionTest {
   void blowdownFailOpenStateRollsBackAndReplaysDeterministically() {
     BlowdownValve valve = new BlowdownValve("BDV-101", createFeed("feed"));
     ValveStudy study = createStudy(valve);
+    valve.setPhysicalStepIdempotencyEnabled(true);
     valve.setOpeningTime(4.0);
     valve.activate();
     UUID stepId = UUID.randomUUID();
@@ -268,6 +297,50 @@ class ValveTransientStateTransactionTest {
     assertTrue(coverage.getBlockingIssues().stream().anyMatch(issue -> issue.contains("must extend the snapshot")));
   }
 
+  /** Safety valve extensions must qualify their own state before inheriting transaction coverage. */
+  @Test
+  void unsupportedSafetyValveSubclassesReportCoverageBlockers() {
+    ThrottlingValve[] valves = {new ESDValve("custom ESD", createFeed("ESD feed")) {
+      private static final long serialVersionUID = 1L;
+    }, new BlowdownValve("custom BDV", createFeed("BDV feed")) {
+      private static final long serialVersionUID = 1L;
+    }};
+    for (ThrottlingValve valve : valves) {
+      ValveStudy study = createStudy(valve);
+      TransientTransactionCoverage coverage = study.process.getTransientTransactionCoverage();
+      assertFalse(coverage.isComplete(), valve.getClass().getName());
+      assertTrue(coverage.getBlockingIssues().stream().anyMatch(issue -> issue.contains("must extend the snapshot")));
+      assertThrows(IllegalStateException.class, valve::captureTransientState);
+    }
+  }
+
+  /** A rejected trial restores the live sizing parameters without replacing the sizing method. */
+  @Test
+  void rejectedStepRestoresActiveHydraulicSizingConfiguration() {
+    ValveStudy study = createStudy(new ThrottlingValve("FV-sizing", createFeed("feed")));
+    Object sizingIdentity = study.valve.getMechanicalDesign().getValveSizingMethod();
+    boolean initialChoking = study.valve.isAllowChoked();
+    double initialXt = study.valve.getMechanicalDesign().getValveSizingMethod().getxT();
+    try (TransientStepTransaction transaction = study.process.beginTransientStepTransaction()) {
+      study.valve.setAllowChoked(!initialChoking);
+      study.valve.getMechanicalDesign().getValveSizingMethod().setxT(initialXt + 0.1);
+      transaction.rollback();
+    }
+    assertEquals(initialChoking, study.valve.isAllowChoked());
+    assertEquals(initialXt, study.valve.getMechanicalDesign().getValveSizingMethod().getxT(), 0.0);
+    assertTrue(sizingIdentity == study.valve.getMechanicalDesign().getValveSizingMethod());
+  }
+
+  /** A controller hidden by a duplicate tag must block incomplete rollback coverage. */
+  @Test
+  void controllerTagCollisionCannotHideActiveControllerFromCoverage() {
+    ValveStudy study = createStudy(new ThrottlingValve("FV-controller", createFeed("feed")));
+    study.valve.setController(new ControllerDeviceBaseClass("same tag"));
+    study.valve.setFlowValveController(new ControllerDeviceBaseClass("same tag"));
+    assertFalse(study.process.getTransientTransactionCoverage().isComplete());
+    assertThrows(IllegalStateException.class, study.valve::captureTransientState);
+  }
+
   /**
    * Integrates an exact first-order actuator for a fixed eight-second interval.
    *
@@ -290,6 +363,7 @@ class ValveTransientStateTransactionTest {
    * @param valve valve to configure
    */
   private static void configureFirstOrderTravel(ThrottlingValve valve) {
+    valve.setPhysicalStepIdempotencyEnabled(true);
     valve.setTravelModel(ValveTravelModel.FIRST_ORDER_LAG);
     valve.setTravelTimeConstant(4.0);
     valve.setPercentValveOpening(20.0);
