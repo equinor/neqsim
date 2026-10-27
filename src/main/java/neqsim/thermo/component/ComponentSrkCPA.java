@@ -17,9 +17,9 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   int cpaon = 1;
   double[] xsite = new double[0];
   private double[][] xsitedni = new double[0][0];
-  private double[][] xsitednidT = new double[0][0];
-  private double[][] xsitednidV = new double[0][0];
-  private double[][][] xsitednidnj = new double[0][0][0];
+  private double[][] xsitednidT;
+  private double[][] xsitednidV;
+  private double[][][] xsitednidnj;
   double[] xsiteOld = new double[0];
   double[] xsitedV = new double[0];
   double[] xsitedVdV = new double[0];
@@ -139,20 +139,26 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
     for (int site = 0; site < xsitedni.length; site++) {
       clonedComponent.xsitedni[site] = xsitedni[site] == null ? null : xsitedni[site].clone();
     }
-    clonedComponent.xsitednidT = xsitednidT.clone();
-    for (int site = 0; site < xsitednidT.length; site++) {
-      clonedComponent.xsitednidT[site] = xsitednidT[site] == null ? null : xsitednidT[site].clone();
+    if (xsitednidT != null) {
+      clonedComponent.xsitednidT = xsitednidT.clone();
+      for (int site = 0; site < xsitednidT.length; site++) {
+        clonedComponent.xsitednidT[site] = xsitednidT[site] == null ? null : xsitednidT[site].clone();
+      }
     }
-    clonedComponent.xsitednidV = xsitednidV.clone();
-    for (int site = 0; site < xsitednidV.length; site++) {
-      clonedComponent.xsitednidV[site] = xsitednidV[site] == null ? null : xsitednidV[site].clone();
+    if (xsitednidV != null) {
+      clonedComponent.xsitednidV = xsitednidV.clone();
+      for (int site = 0; site < xsitednidV.length; site++) {
+        clonedComponent.xsitednidV[site] = xsitednidV[site] == null ? null : xsitednidV[site].clone();
+      }
     }
-    clonedComponent.xsitednidnj = xsitednidnj.clone();
-    for (int site = 0; site < xsitednidnj.length; site++) {
-      clonedComponent.xsitednidnj[site] = xsitednidnj[site].clone();
-      for (int component = 0; component < xsitednidnj[site].length; component++) {
-        clonedComponent.xsitednidnj[site][component] = xsitednidnj[site][component] == null ? null
-            : xsitednidnj[site][component].clone();
+    if (xsitednidnj != null) {
+      clonedComponent.xsitednidnj = xsitednidnj.clone();
+      for (int site = 0; site < xsitednidnj.length; site++) {
+        clonedComponent.xsitednidnj[site] = xsitednidnj[site].clone();
+        for (int component = 0; component < xsitednidnj[site].length; component++) {
+          clonedComponent.xsitednidnj[site][component] = xsitednidnj[site][component] == null ? null
+              : xsitednidnj[site][component].clone();
+        }
       }
     }
     return clonedComponent;

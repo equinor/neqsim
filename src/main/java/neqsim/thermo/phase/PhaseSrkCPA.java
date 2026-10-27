@@ -621,24 +621,29 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * <p>
    * This operation is intentionally explicit because the complete amount Hessian requires
    * {@code O(numberOfComponents^2)} association-Hessian solves and storage. Callers must first initialize this phase
-   * with derivative level three. Ordinary CPA initialization does not allocate or calculate these tensors.
+   * with derivative level one or higher. This operation refreshes the phase at level three before using its first
+   * derivatives. Ordinary CPA initialization does not allocate or calculate these tensors.
    *
    * <p>
    * The derivatives use native EOS volume as the independent volume coordinate, consistently with
    * {@link ComponentSrkCPA#getXsitedV()} and the other CPA site derivatives.
    *
-   * @throws IllegalStateException if level-three association matrices are unavailable
+   * @throws IllegalStateException if the phase has not been initialized at derivative level one or higher
    */
   public void calcAssociationSiteCompositionDerivatives() {
     int siteCount = getTotalNumberOfAccociationSites();
     if (siteCount == 0) {
       return;
     }
-    if (Klkni == null || KlkTMatrix == null || KlkVMatrix == null || ksiMatrix == null || QMatksiksiksi == null
-        || hessianMatrix == null) {
+    if (getInitType() < 1 || Klkni == null || KlkTMatrix == null || KlkVMatrix == null || ksiMatrix == null
+        || QMatksiksiksi == null || hessianMatrix == null) {
       throw new IllegalStateException(
-          "Initialize the CPA phase with derivative level three before calculating mixed site derivatives");
+          "Initialize the CPA phase with derivative level one or higher before calculating mixed site derivatives");
     }
+
+    // Matrix allocation at level zero does not establish derivative availability. Refresh only on this explicit
+    // path, including component covolume derivatives, so ordinary flashes need no additional state tracking.
+    init(numberOfMolesInPhase / beta, numberOfComponents, 3, getType(), beta);
 
     for (int component = 0; component < numberOfComponents; component++) {
       ((ComponentSrkCPA) getComponent(component)).allocateAssociationSiteCompositionDerivatives(numberOfComponents);
