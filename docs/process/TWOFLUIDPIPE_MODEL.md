@@ -464,6 +464,24 @@ the experimental unsplit solver and upstream compressible storage disabled. Unsu
 combinations fail before advancing time. Complete-interval copying and iterative EOS recovery
 add work; this opt-in path has no blanket process-simulation speedup claim.
 
+The conservative-energy Euler route integrates stiff wall and interfacial friction through
+one local, first-order source step after the transport/pressure predictor. The configured
+native wall and interface laws supply frozen resistance coefficients; no new empirical
+correlation or required user switch is introduced. Gas and bulk-liquid momentum are solved
+together. Gas-liquid forcing gives oil and water the same acceleration, while the existing
+oil-water law separately relaxes their relative motion. Regime-blended wall matrices retain
+each closure's driving velocity rather than replacing mixture friction with independent
+phase wall laws.
+
+Phase inventories and conservative total energy remain unchanged during this source step.
+Interfacial exchange conserves total momentum; wall resistance transfers momentum to the
+stationary pipe. Dissipated kinetic energy is recovered as internal energy by the subsequent
+EOS solve, without adding a second frictional heat source. Exactly absent phases cannot carry
+material momentum; only floating-point roundoff is redistributed to present inertia while
+preserving total momentum. Nonfinite, nonpassive or inconsistent source states fail the whole
+transaction. This first-order frozen-resistance treatment requires time-step refinement and
+does not qualify hydrocarbon transfer rates, low-point pooling or a complete restart.
+
 `TwoFluidPipeConservativeEnergyTest` checks the issue's ideal-nitrogen blowdown,
 rigid-vessel filling, closed invariance/heating, nearby conditions, serialization and an exact
 field-preserving handoff from a converged steady state.

@@ -518,6 +518,9 @@ public class TwoFluidConservationEquations implements Serializable {
   private boolean momentumForceDiagnosticsEnabled;
   private boolean conservativeSlugForceIntegrationEnabled;
 
+  /** Frozen-resistance conservative wall, gas/liquid and oil/water source integration. */
+  private boolean conservativeFrictionEnabled;
+
   private double[][] lastMomentumSourceForcesPerLength = new double[0][6];
 
   /**
@@ -685,6 +688,339 @@ public class TwoFluidConservationEquations implements Serializable {
     state.setGasMomentumPerLength(gasMass * gasVelocity);
     state.setOilMomentumPerLength(state.getOilMomentumPerLength() + state.getOilMassPerLength() * liquidChange);
     state.setWaterMomentumPerLength(state.getWaterMomentumPerLength() + state.getWaterMassPerLength() * liquidChange);
+  }
+
+  /**
+   * Select conservative, linearly implicit friction outside the explicit right-hand side.
+   *
+   * <p>
+   * The source step freezes the configured nonnegative resistance at the predictor velocity and solves its backward
+   * Euler relaxation analytically. It is first-order consistent with the same instantaneous closure, including regime
+   * blending. It preserves phase masses and total energy, with external wall impulse in total momentum. Gas-liquid drag
+   * gives both liquids the same acceleration; their independent slip is relaxed only by the configured oil-water law.
+   * Native wall driving velocities are retained. The caller must apply {@link #applyConservativeFriction} exactly once
+   * for each explicit source interval and recover thermodynamics from the unchanged total energy afterwards. This
+   * option does not select a different friction correlation or qualify a physical evaporation time.
+   * </p>
+   *
+   * @param enabled true to remove friction from the explicit source and use the conservative source step
+   */
+  public void setConservativeFrictionEnabled(boolean enabled) {
+    conservativeFrictionEnabled = enabled;
+  }
+
+  /** @return whether conservative frozen-resistance friction owns the source */
+  public boolean isConservativeFrictionEnabled() {
+    return conservativeFrictionEnabled;
+  }
+
+  /**
+   * Advance coupled wall and gas/bulk-liquid friction, then oil-water slip, at frozen native resistance.
+   *
+   * <p>
+   * Without wall resistance, phase-pair reduced mass {@code mr}, slip {@code w}, and native force {@code F=K*w} give
+   * the new slip {@code w*mr/(mr+dt*K)}. Thus the slip contracts without overshoot for arbitrary positive inertia; no
+   * liquid seed, momentum cap or phase-mass threshold is needed. Lost kinetic energy remains in the unchanged total
+   * energy and is recovered as internal energy by the caller. A coupled two-velocity solve retains mixture-driven wall
+   * closures, and rejects native wall states that add mechanical energy. Only roundoff-scale momentum in an exactly
+   * absent phase is transferred to the largest present inertia; a material absent-phase momentum is rejected. A
+   * zero-duration call performs only that conservative consistency check.
+   * </p>
+   *
+   * @param state conservative predictor, never modified
+   * @param sections frozen geometry, thermophysical properties and regime weights, never modified
+   * @param dt source interval in seconds
+   * @return independent conservative state when enabled, otherwise the input reference
+   * @throws IllegalArgumentException for inconsistent dimensions, a negative interval or an inadmissible phase state
+   * @throws IllegalStateException for competing source owners or a nonpassive/nonfinite configured drag force
+   */
+  public double[][] applyConservativeFriction(double[][] state, TwoFluidSection[] sections, double dt) {
+    if (!conservativeFrictionEnabled) {
+      return state;
+    }
+    if (sections == null || state == null || sections.length != state.length || !Double.isFinite(dt) || dt < 0.0) {
+      throw new IllegalArgumentException("Conservative drag requires matching cells and a finite nonnegative interval");
+    }
+    if (enableStiffBubbleDrag || conservativeSlugForceIntegrationEnabled) {
+      throw new IllegalStateException("Conservative interfacial drag cannot share another implicit friction owner");
+    }
+    double[][] result = new double[state.length][];
+    for (int cell = 0; cell < state.length; cell++) {
+      if (state[cell] == null || state[cell].length != NUM_EQUATIONS || sections[cell] == null) {
+        throw new IllegalArgumentException("Conservative drag requires seven finite variables per cell");
+      }
+      double[] updated = state[cell].clone();
+      result[cell] = updated;
+      normalizeAbsentPhaseMomenta(updated);
+      if (dt == 0.0) {
+        continue;
+      }
+      double initialKinetic = conservativeKineticEnergy(updated);
+      TwoFluidSection probe = sections[cell].clone();
+      probe.setStateVector(updated);
+      probe.extractPrimitiveVariables();
+      setConservativeDragVelocities(probe, updated);
+      double gasMass = updated[IDX_GAS_MASS];
+      double liquidMass = updated[IDX_OIL_MASS] + updated[IDX_WATER_MASS];
+      double liquidMomentum = updated[IDX_OIL_MOMENTUM] + updated[IDX_WATER_MOMENTUM];
+      double oldLiquidSlip = probe.getOilVelocity() - probe.getWaterVelocity();
+      WallFriction.WallFrictionResult wall = calculateWallFriction(probe, probe.getRegimeWeights());
+      double resistance = 0.0;
+      if (gasMass > 0.0 && liquidMass > 0.0) {
+        double oldSlip = probe.getGasVelocity() - probe.getLiquidVelocity();
+        InterfacialFriction.InterfacialFrictionResult friction = calculateInterfacialFriction(probe,
+            probe.getRegimeWeights());
+        resistance = passiveResistance(oldSlip, interfacialForcePerLength(probe, friction));
+      }
+      double[] bulk = solveConservativeBulkFriction(new double[] {gasMass, liquidMass},
+          new double[] {updated[IDX_GAS_MOMENTUM], liquidMomentum}, wall, probe.getLiquidHoldup(), resistance, dt);
+      updated[IDX_GAS_MOMENTUM] = bulk[0];
+      if (liquidMass > 0.0) {
+        preserveLiquidSlipAtMomentum(updated, bulk[1], oldLiquidSlip);
+      }
+      setConservativeDragVelocities(probe, updated);
+      double oilMass = updated[IDX_OIL_MASS];
+      double waterMass = updated[IDX_WATER_MASS];
+      if (enableWaterOilSlip && oilMass > 0.0 && waterMass > 0.0) {
+        double oldSlip = updated[IDX_OIL_MOMENTUM] / oilMass - updated[IDX_WATER_MOMENTUM] / waterMass;
+        double force = probe.calcOilWaterInterfacialShear() * probe.getDiameter() * 0.5 * probe.getLiquidHoldup();
+        double slip = relaxedSlip(oilMass, waterMass, oldSlip, force, dt);
+        preserveLiquidSlipAtMomentum(updated, updated[IDX_OIL_MOMENTUM] + updated[IDX_WATER_MOMENTUM], slip);
+      }
+      double finalKinetic = conservativeKineticEnergy(updated);
+      double roundoff = 64.0 * Math.ulp(Math.max(initialKinetic, finalKinetic));
+      if (finalKinetic > initialKinetic + roundoff) {
+        throw new IllegalStateException("Conservative interfacial drag increased phase kinetic energy");
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Check conservative inputs and transfer only an exactly absent phase's roundoff momentum to present inertia.
+   *
+   * @param state seven conservative variables, modified only for roundoff momentum redistribution
+   * @throws IllegalArgumentException for negative/nonfinite mass or material momentum in an absent phase
+   */
+  private static void normalizeAbsentPhaseMomenta(double[] state) {
+    int recipient = 0;
+    double momentumScale = 0.0;
+    for (int variable = 0; variable < NUM_EQUATIONS; variable++) {
+      if (!Double.isFinite(state[variable])) {
+        throw new IllegalArgumentException("Conservative drag requires finite state variables");
+      }
+    }
+    for (int phase = 0; phase < 3; phase++) {
+      if (state[phase] < 0.0) {
+        throw new IllegalArgumentException("Conservative drag requires nonnegative phase mass");
+      }
+      if (state[phase] > state[recipient]) {
+        recipient = phase;
+      }
+      if (state[phase] > 0.0) {
+        momentumScale += Math.abs(state[phase + 3]);
+      }
+    }
+    double tolerance = 64.0 * Math.ulp(momentumScale);
+    for (int phase = 0; phase < 3; phase++) {
+      if (state[phase] == 0.0 && state[phase + 3] != 0.0) {
+        if (state[recipient] == 0.0 || Math.abs(state[phase + 3]) > tolerance) {
+          throw new IllegalArgumentException("An absent phase cannot carry material momentum");
+        }
+        state[recipient + 3] += state[phase + 3];
+        state[phase + 3] = 0.0;
+      }
+    }
+  }
+
+  /**
+   * Publish uncapped conservative phase velocities to a private closure probe.
+   *
+   * @param probe private closure state
+   * @param state conservative masses and momenta
+   */
+  private static void setConservativeDragVelocities(TwoFluidSection probe, double[] state) {
+    probe.setGasVelocity(state[0] > 0.0 ? state[3] / state[0] : 0.0);
+    double liquidMass = state[1] + state[2];
+    probe.setLiquidVelocity(liquidMass > 0.0 ? (state[4] + state[5]) / liquidMass : 0.0);
+    probe.setOilVelocity(state[1] > 0.0 ? state[4] / state[1] : 0.0);
+    probe.setWaterVelocity(state[2] > 0.0 ? state[5] / state[2] : 0.0);
+  }
+
+  /**
+   * Contract one pair's slip using its nonnegative frozen native force coefficient.
+   *
+   * @param firstMass first positive phase mass per length
+   * @param secondMass second positive phase mass per length
+   * @param oldSlip conservative relative velocity in m/s
+   * @param force native signed drag force per length in N/m
+   * @param dt source interval in seconds
+   * @return relaxed relative velocity in m/s
+   * @throws IllegalStateException if the configured force is nonfinite or does not oppose slip
+   */
+  private static double relaxedSlip(double firstMass, double secondMass, double oldSlip, double force, double dt) {
+    double resistance = passiveResistance(oldSlip, force);
+    if (oldSlip == 0.0 || resistance == 0.0) {
+      return oldSlip;
+    }
+    double smallerMass = Math.min(firstMass, secondMass);
+    double largerMass = Math.max(firstMass, secondMass);
+    double reducedMass = smallerMass / (1.0 + smallerMass / largerMass);
+    return oldSlip * (reducedMass / (reducedMass + dt * resistance));
+  }
+
+  /**
+   * Evaluate a finite nonnegative frozen coefficient from a native passive force.
+   *
+   * @param slip relative velocity in m/s
+   * @param force signed resistance force per length
+   * @return nonnegative force divided by slip, zero at the force-free endpoint
+   * @throws IllegalStateException for a nonfinite or active force
+   */
+  private static double passiveResistance(double slip, double force) {
+    if (!Double.isFinite(slip) || !Double.isFinite(force) || slip == 0.0 && force != 0.0 || slip * force < 0.0) {
+      throw new IllegalStateException("Conservative friction requires a finite passive force");
+    }
+    double resistance = slip != 0.0 ? force / slip : 0.0;
+    if (!Double.isFinite(resistance) || resistance < 0.0) {
+      throw new IllegalStateException("Frozen friction resistance must be finite and nonnegative");
+    }
+    return resistance;
+  }
+
+  /**
+   * Solve the two-velocity frozen wall/interface backward-Euler system without subtracting squared stiff drag.
+   *
+   * <p>
+   * Wall forces have the native form {@code (dG*uG+pG*uMix, dL*uL+pL*uMix)} with nonnegative coefficients and
+   * {@code uMix=(1-alphaL)*uG+alphaL*uL}. Regime blending sums those four coefficients. The wall determinant is
+   * {@code dG*dL+dG*pL*alphaL+dL*pG*(1-alphaL)}, avoiding cancellation of a mixture-law rank-one product. Adding
+   * symmetric gas-liquid resistance {@code ki} contributes {@code ki*(dG+dL+pG+pL)} to the determinant, not subtracting
+   * two terms of order {@code ki*ki}. Native bubble-wall laws may be active in counterflow; endpoint wall work is
+   * tested independently of interfacial dissipation so that a falling total kinetic energy cannot hide them.
+   * </p>
+   *
+   * @param masses gas and combined-liquid masses per length
+   * @param momenta gas and combined-liquid momenta per length
+   * @param wall native frozen wall resistance coefficients
+   * @param alphaL local liquid volume fraction
+   * @param interfaceResistance symmetric gas-liquid resistance
+   * @param dt positive source interval in seconds
+   * @return new gas and combined-liquid momentum per length
+   * @throws IllegalStateException for nonfinite coefficients, singular algebra or active stationary wall work
+   */
+  static double[] solveConservativeBulkFriction(double[] masses, double[] momenta, WallFriction.WallFrictionResult wall,
+      double alphaL, double interfaceResistance, double dt) {
+    double gasMass = masses[0];
+    double liquidMass = masses[1];
+    double[] coefficients = {wall.gasWallResistance, wall.liquidWallResistance, wall.gasMixtureResistance,
+        wall.liquidMixtureResistance, interfaceResistance};
+    double maximumResistance = 0.0;
+    for (double coefficient : coefficients) {
+      if (!Double.isFinite(coefficient) || coefficient < 0.0) {
+        throw new IllegalStateException("Native frozen friction coefficients must be finite and nonnegative");
+      }
+      maximumResistance = Math.max(maximumResistance, coefficient);
+    }
+    if (maximumResistance == 0.0 || gasMass + liquidMass == 0.0) {
+      return momenta.clone();
+    }
+    double scale = Math.max(Math.max(gasMass, liquidMass), dt * maximumResistance);
+    if (!Double.isFinite(scale) || scale <= 0.0 || !Double.isFinite(alphaL) || alphaL < 0.0 || alphaL > 1.0) {
+      throw new IllegalStateException("Frozen friction system requires finite inertia and valid holdup");
+    }
+    double gas = gasMass / scale;
+    double liquid = liquidMass / scale;
+    double gasMomentum = momenta[0] / scale;
+    double liquidMomentum = momenta[1] / scale;
+    double dG = dt * wall.gasWallResistance / scale;
+    double dL = dt * wall.liquidWallResistance / scale;
+    double pG = dt * wall.gasMixtureResistance / scale;
+    double pL = dt * wall.liquidMixtureResistance / scale;
+    double ki = dt * interfaceResistance / scale;
+    double alphaG = 1.0 - alphaL;
+    double wGG = dG + pG * alphaG;
+    double wLL = dL + pL * alphaL;
+    double wGL = pG * alphaL;
+    double wLG = pL * alphaG;
+    double gasVelocity;
+    double liquidVelocity;
+    if (gasMass == 0.0) {
+      gasVelocity = 0.0;
+      liquidVelocity = liquidMomentum / (liquid + wLL);
+    } else if (liquidMass == 0.0) {
+      gasVelocity = gasMomentum / (gas + wGG);
+      liquidVelocity = 0.0;
+    } else {
+      double wallDeterminant = dG * dL + dG * pL * alphaL + dL * pG * alphaG;
+      double determinant = gas * liquid + gas * (wLL + ki) + liquid * (wGG + ki) + wallDeterminant
+          + ki * (dG + dL + pG + pL);
+      if (!Double.isFinite(determinant) || determinant <= 0.0) {
+        throw new IllegalStateException("Frozen friction system is singular");
+      }
+      double interfaceTerm = ki * (gasMomentum + liquidMomentum);
+      gasVelocity = (gasMomentum * liquid + gasMomentum * wLL - liquidMomentum * wGL + interfaceTerm) / determinant;
+      liquidVelocity = (liquidMomentum * gas + liquidMomentum * wGG - gasMomentum * wLG + interfaceTerm) / determinant;
+    }
+    double ownWallPower = dG * gasVelocity * gasVelocity + dL * liquidVelocity * liquidVelocity;
+    double mixtureWallPower = (pG * gasVelocity + pL * liquidVelocity)
+        * (alphaG * gasVelocity + alphaL * liquidVelocity);
+    double powerTolerance = 64.0 * Math.ulp(Math.abs(ownWallPower) + Math.abs(mixtureWallPower));
+    if (!Double.isFinite(gasVelocity) || !Double.isFinite(liquidVelocity)
+        || !Double.isFinite(ownWallPower + mixtureWallPower) || ownWallPower + mixtureWallPower < -powerTolerance) {
+      throw new IllegalStateException("Native stationary wall closure adds mechanical energy in this state");
+    }
+    double[] result = {gasMass * gasVelocity, liquidMass * liquidVelocity};
+    if (dG + dL + pG + pL == 0.0) {
+      double totalMomentum = momenta[0] + momenta[1];
+      if (gasMass <= liquidMass) {
+        result[1] = totalMomentum - result[0];
+      } else {
+        result[0] = totalMomentum - result[1];
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Recover independent liquid momenta at specified bulk momentum and unchanged or relaxed oil-water slip.
+   *
+   * @param state conservative state updated in place
+   * @param liquidMomentum desired combined liquid momentum per length
+   * @param slip oil minus water velocity in m/s
+   */
+  private static void preserveLiquidSlipAtMomentum(double[] state, double liquidMomentum, double slip) {
+    double oilMass = state[IDX_OIL_MASS];
+    double waterMass = state[IDX_WATER_MASS];
+    double liquidMass = oilMass + waterMass;
+    double meanVelocity = liquidMomentum / liquidMass;
+    if (oilMass <= waterMass) {
+      state[IDX_OIL_MOMENTUM] = oilMass * (meanVelocity + waterMass / liquidMass * slip);
+      state[IDX_WATER_MOMENTUM] = liquidMomentum - state[IDX_OIL_MOMENTUM];
+    } else {
+      state[IDX_WATER_MOMENTUM] = waterMass * (meanVelocity - oilMass / liquidMass * slip);
+      state[IDX_OIL_MOMENTUM] = liquidMomentum - state[IDX_WATER_MOMENTUM];
+    }
+  }
+
+  /**
+   * Evaluate kinetic energy directly from positive conservative phase inertias.
+   *
+   * @param state conservative state
+   * @return kinetic energy per length in J/m
+   * @throws IllegalStateException if conservative phase speeds or kinetic energy are nonfinite
+   */
+  private static double conservativeKineticEnergy(double[] state) {
+    double energy = 0.0;
+    for (int phase = 0; phase < 3; phase++) {
+      if (state[phase] > 0.0) {
+        energy += 0.5 * state[phase + 3] * (state[phase + 3] / state[phase]);
+      }
+    }
+    if (!Double.isFinite(energy)) {
+      throw new IllegalStateException("Conservative drag requires finite phase kinetic energy");
+    }
+    return energy;
   }
 
   /** @param enabled true to retain mechanical force diagnostics from the latest RHS evaluation */
@@ -1472,6 +1808,10 @@ public class TwoFluidConservationEquations implements Serializable {
       WallFriction.WallFrictionResult result = new WallFriction.WallFrictionResult();
       result.gasWallForcePerLength = force.gasWall;
       result.liquidWallForcePerLength = force.liquidWall;
+      result.gasWallResistance = force.gasWallResistance;
+      result.liquidWallResistance = force.liquidWallResistance;
+      result.gasMixtureResistance = force.gasMixtureResistance;
+      result.liquidMixtureResistance = force.liquidMixtureResistance;
       result.gasWallShear = force.gasWall / (Math.PI * sec.getDiameter());
       result.liquidWallShear = force.liquidWall / (Math.PI * sec.getDiameter());
       return result;
@@ -1491,6 +1831,10 @@ public class TwoFluidConservationEquations implements Serializable {
       blended.liquidWallShear += entry.getValue() * component.liquidWallShear;
       blended.gasWallForcePerLength += entry.getValue() * component.gasWallForcePerLength;
       blended.liquidWallForcePerLength += entry.getValue() * component.liquidWallForcePerLength;
+      blended.gasWallResistance += entry.getValue() * component.gasWallResistance;
+      blended.liquidWallResistance += entry.getValue() * component.liquidWallResistance;
+      blended.gasMixtureResistance += entry.getValue() * component.gasMixtureResistance;
+      blended.liquidMixtureResistance += entry.getValue() * component.liquidMixtureResistance;
     }
     return blended;
   }
@@ -1879,7 +2223,7 @@ public class TwoFluidConservationEquations implements Serializable {
       double rate = 0.0;
       // Use the same activation predicate as calcSourceTerms: these wall and gas-liquid forces are already
       // advanced by applyConservativeSlugFriction, not the explicit RHS. Oil-water shear remains explicit below.
-      if (conservativeSlugForces(section) == null) {
+      if (conservativeSlugForces(section) == null && !conservativeFrictionEnabled) {
         // Unresolved wall and gas-liquid drag use the mass-weighted bulk liquid velocity.
         // Both give present liquid phases a common acceleration, also when oil-water slip is enabled.
         double liquidWallInverseMass = liquidMass > 0.0 ? 1.0 / liquidMass : 0.0;
@@ -1918,7 +2262,7 @@ public class TwoFluidConservationEquations implements Serializable {
         rate = Math.max(gasWallRate, liquidWallRate);
 
         boolean implicitBubbleDrag = enableStiffBubbleDrag && isDispersedBubbleRegime(section.getFlowRegime());
-        if (gasMass > 0.0 && liquidMass > 0.0 && !implicitBubbleDrag) {
+        if (gasMass > 0.0 && liquidMass > 0.0 && !implicitBubbleDrag && !conservativeFrictionEnabled) {
           probe.setGasVelocity(gasVelocity + gasPerturbation);
           InterfacialFriction.InterfacialFrictionResult plus = calculateInterfacialFriction(probe, weights);
           probe.setGasVelocity(gasVelocity - gasPerturbation);
@@ -1940,7 +2284,7 @@ public class TwoFluidConservationEquations implements Serializable {
           rate += gasDragDerivative / gasMass + liquidDragDerivative * liquidInterfaceInverseMass;
         }
       }
-      if (enableWaterOilSlip && oilMass > 0.0 && waterMass > 0.0) {
+      if (enableWaterOilSlip && oilMass > 0.0 && waterMass > 0.0 && !conservativeFrictionEnabled) {
         double oilVelocity = section.getOilVelocity();
         double perturbation = momentumSourceVelocityPerturbation(oilVelocity);
         probe.setOilVelocity(oilVelocity + perturbation);
@@ -2106,6 +2450,14 @@ public class TwoFluidConservationEquations implements Serializable {
         forces[5] = F_gL;
       }
 
+      if (conservativeFrictionEnabled) {
+        // The frozen-resistance source step owns wall resistance and internal exchange, exactly once.
+        F_wG = 0.0;
+        F_wL = 0.0;
+        F_iG = 0.0;
+        F_iL = 0.0;
+      }
+
       if (subcellForces != null) {
         // These forces are advanced by the local implicit source split, exactly once.
         F_wG = 0.0;
@@ -2182,7 +2534,7 @@ public class TwoFluidConservationEquations implements Serializable {
         double F_iW = liquidInterfaceForces[1];
 
         // Oil-water interfacial shear (from TwoFluidSection calculation)
-        double tau_ow = sec.calcOilWaterInterfacialShear();
+        double tau_ow = conservativeFrictionEnabled ? 0.0 : sec.calcOilWaterInterfacialShear();
 
         // Estimate oil-water interface length (simplified as fraction of diameter)
         double S_ow = sec.getDiameter() * 0.5 * alphaL;
