@@ -25,6 +25,7 @@ class TwoFluidTransactionalEvaluationTest {
     equations.calcRHS(cloneSections(accepted), 7.0);
     MassBalanceRate savedBalance = equations.getLastMassBalanceRate();
     double[][] savedFaces = equations.getLastPhaseMassFaceFluxes();
+    double[] savedEnergyFaces = equations.getLastEnergyFaceFluxes();
     double[][] savedForces = equations.getLastMomentumSourceForcesPerLength();
     TwoFluidSection[] trial = cloneSections(accepted);
     trial[2].setGasVelocity(4.0);
@@ -37,9 +38,11 @@ class TwoFluidTransactionalEvaluationTest {
 
     assertSame(savedBalance, equations.getLastMassBalanceRate());
     assertMatrixEquals(savedFaces, equations.getLastPhaseMassFaceFluxes());
+    assertArrayEquals(savedEnergyFaces, equations.getLastEnergyFaceFluxes(), 0.0);
     assertMatrixEquals(savedForces, equations.getLastMomentumSourceForcesPerLength());
     assertMatrixEquals(evaluation.getRates(), repeated.getRates());
     assertMatrixEquals(evaluation.getPhaseMassFaceFluxes(), repeated.getPhaseMassFaceFluxes());
+    assertArrayEquals(evaluation.getEnergyFaceFluxes(), repeated.getEnergyFaceFluxes(), 0.0);
     assertNotEquals(savedFaces[3][1], evaluation.getPhaseMassFaceFluxes()[3][1]);
     assertTrue(evaluation.getPhaseMassFaceFluxes()[3][1] < 0.0);
     assertFalse(evaluation.isOutletBackflowClamped());
@@ -48,14 +51,17 @@ class TwoFluidTransactionalEvaluationTest {
 
     double rate = evaluation.getRates()[0][0];
     double flux = evaluation.getPhaseMassFaceFluxes()[0][0];
+    double energyFlux = evaluation.getEnergyFaceFluxes()[0];
     double force = evaluation.getMomentumSourceForcesPerLength()[0][0];
     evaluation.getRates()[0][0] = Double.NaN;
     evaluation.getPhaseMassFaceFluxes()[0][0] = Double.NaN;
+    evaluation.getEnergyFaceFluxes()[0] = Double.NaN;
     evaluation.getPhaseMassSourcesPerLength()[0][0] = Double.NaN;
     evaluation.getMomentumSourceForcesPerLength()[0][0] = Double.NaN;
     evaluation.getMassBalanceRate().getInletMassFlowKgPerSecond()[0] = Double.NaN;
     assertEquals(rate, evaluation.getRates()[0][0], 0.0);
     assertEquals(flux, evaluation.getPhaseMassFaceFluxes()[0][0], 0.0);
+    assertEquals(energyFlux, evaluation.getEnergyFaceFluxes()[0], 0.0);
     assertEquals(force, evaluation.getMomentumSourceForcesPerLength()[0][0], 0.0);
     assertDomainBalance(trial, evaluation);
   }
@@ -113,6 +119,7 @@ class TwoFluidTransactionalEvaluationTest {
     equations.calcRHS(new TwoFluidSection[] {section(0.0, 3.0)}, 3.0);
     MassBalanceRate savedBalance = equations.getLastMassBalanceRate();
     double[][] savedFaces = equations.getLastPhaseMassFaceFluxes();
+    double[] savedEnergyFaces = equations.getLastEnergyFaceFluxes();
     double[][] savedForces = equations.getLastMomentumSourceForcesPerLength();
     equations.fail = true;
 
@@ -121,6 +128,7 @@ class TwoFluidTransactionalEvaluationTest {
 
     assertSame(savedBalance, equations.getLastMassBalanceRate());
     assertMatrixEquals(savedFaces, equations.getLastPhaseMassFaceFluxes());
+    assertArrayEquals(savedEnergyFaces, equations.getLastEnergyFaceFluxes(), 0.0);
     assertMatrixEquals(savedForces, equations.getLastMomentumSourceForcesPerLength());
     assertFalse(equations.isOutletBackflowClamped());
     equations.fail = false;
@@ -144,6 +152,7 @@ class TwoFluidTransactionalEvaluationTest {
     equations.calcRHS(new TwoFluidSection[] {section(0.0, 1.0), section(1.0, 2.0)}, 1.5);
     assertMatrixEquals(original.getRates(), restored.getRates());
     assertMatrixEquals(original.getPhaseMassFaceFluxes(), restored.getPhaseMassFaceFluxes());
+    assertArrayEquals(original.getEnergyFaceFluxes(), restored.getEnergyFaceFluxes(), 0.0);
     assertArrayEquals(original.getMassBalanceRate().getOutletMassFlowKgPerSecond(),
         restored.getMassBalanceRate().getOutletMassFlowKgPerSecond(), 0.0);
     assertEquals(0, restored.getMomentumSourceForcesPerLength().length);

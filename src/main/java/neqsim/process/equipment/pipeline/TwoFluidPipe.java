@@ -6159,7 +6159,8 @@ public class TwoFluidPipe extends Pipeline {
     double[] integratedOutletMassKg = new double[3];
     double[] integratedSourceMassKg = new double[3];
     double initialConservativeEnergyJ = useConservativeEnergyRecovery ? integratedConservativeEnergy() : 0.0;
-    double conservativeAdvectionJ = 0.0;
+    double conservativeInletEnergyJ = 0.0;
+    double conservativeOutletEnergyJ = 0.0;
     double conservativeGravityJ = 0.0;
     double conservativeWallHeatJ = 0.0;
     double maximumRecoveryVolumeResidual = 0.0;
@@ -6298,6 +6299,8 @@ public class TwoFluidPipe extends Pipeline {
       final double[] phaseStageWeights = capturePhaseStageTerms ? getTimeIntegrationStageWeights() : new double[0];
       final double[][] weightedPhaseMassFaceFluxes = capturePhaseStageTerms ? new double[numberOfSections + 1][3]
           : new double[0][0];
+      final double[] weightedEnergyFaceFluxes = useConservativeEnergyRecovery ? new double[numberOfSections + 1]
+          : new double[0];
       final double[][] weightedPhaseMassSources = captureComponentStageFluxes ? new double[numberOfSections][3]
           : new double[0][0];
       final double[][][] weightedComponentSources = captureComponentStageFluxes && includeMassTransfer
@@ -6307,7 +6310,8 @@ public class TwoFluidPipe extends Pipeline {
           ? new double[numberOfSections]
           : null;
       final int[] phaseStageIndex = {0};
-      final double[] conservativeRates = new double[2];
+      final double[] conservativeGravityRateW = new double[1];
+      final double[] correctionBoundaryEnergyJ = new double[2];
 
       TimeIntegrator.RHSFunction rhs = (state, t) -> {
         equations.applyState(sections, state);
@@ -6346,9 +6350,9 @@ public class TwoFluidPipe extends Pipeline {
           double weight = phaseStageWeights[phaseStageIndex[0]];
           for (int cell = 0; cell < numberOfSections; cell++) {
             double source = sections[cell].getEnergySource() * sections[cell].getLength();
-            conservativeRates[0] += weight * (derivative[cell][6] * sections[cell].getLength() - source);
-            conservativeRates[1] += weight * source;
+            conservativeGravityRateW[0] += weight * source;
           }
+          equations.accumulateLastEnergyFaceFluxes(weightedEnergyFaceFluxes, weight);
         }
         stageMassBalanceRates.add(equations.getLastMassBalanceRate());
         if (capturePhaseStageTerms) {
@@ -6545,7 +6549,8 @@ public class TwoFluidPipe extends Pipeline {
         double[] correctionEnergyJ = ConservativeEnergyTransport.applyFaceTransfers(U_new,
             timeIntegrator.getCoupledPressureMomentumPhaseMassCorrectionsKg(), phaseTotalEnthalpies(energyDonors),
             new double[3], sectionLengthsForEnergy());
-        conservativeRates[0] += (correctionEnergyJ[0] - correctionEnergyJ[1]) / dtActual;
+        correctionBoundaryEnergyJ[0] = correctionEnergyJ[0];
+        correctionBoundaryEnergyJ[1] = correctionEnergyJ[1];
       }
       validateAndCorrectState(U_new, U_prev);
 
@@ -6639,8 +6644,10 @@ public class TwoFluidPipe extends Pipeline {
         double[] residuals = conservativeRecoveryResiduals();
         maximumRecoveryVolumeResidual = Math.max(maximumRecoveryVolumeResidual, residuals[0]);
         maximumRecoveryEnergyResidual = Math.max(maximumRecoveryEnergyResidual, residuals[1]);
-        conservativeAdvectionJ += dtActual * conservativeRates[0];
-        conservativeGravityJ += dtActual * conservativeRates[1];
+        conservativeInletEnergyJ += dtActual * weightedEnergyFaceFluxes[0] + correctionBoundaryEnergyJ[0];
+        conservativeOutletEnergyJ += dtActual * weightedEnergyFaceFluxes[numberOfSections]
+            + correctionBoundaryEnergyJ[1];
+        conservativeGravityJ += dtActual * conservativeGravityRateW[0];
       }
       // Compensated accepted-time summation prevents repeated subtraction from leaving
       // a spurious, unrepresentable tail after hundreds of CFL-limited steps.
@@ -6725,8 +6732,9 @@ public class TwoFluidPipe extends Pipeline {
         getPhaseMassInventoriesKg(), integratedInletMassKg, integratedOutletMassKg, integratedSourceMassKg);
     if (useConservativeEnergyRecovery) {
       lastConservativeEnergyReport = new TwoFluidConservativeEnergyReport(acceptedElapsedTime,
-          initialConservativeEnergyJ, integratedConservativeEnergy(), conservativeAdvectionJ, conservativeGravityJ,
-          conservativeWallHeatJ, maximumRecoveryVolumeResidual, maximumRecoveryEnergyResidual);
+          initialConservativeEnergyJ, integratedConservativeEnergy(), conservativeInletEnergyJ,
+          conservativeOutletEnergyJ, conservativeGravityJ, conservativeWallHeatJ, maximumRecoveryVolumeResidual,
+          maximumRecoveryEnergyResidual);
     }
     if (thermalEnergyTracked) {
       lastThermalEnergyBalanceReport = new TwoFluidThermalEnergyBalanceReport(acceptedElapsedTime, acceptedSubsteps,
