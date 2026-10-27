@@ -74,15 +74,14 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
     cachedCij = null;
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     if (initType == 0) {
-      // PhaseEos skips calcB at level zero, after initializing the component translations.
+      // Level zero initializes component amounts but does not call calcB.
       loc_C = calcC(this, temperature, pressure, numberOfComponents);
       CT = calcCT(this, temperature, pressure, numberOfComponents);
     }
   }
 
   /**
-   * Refresh translation inputs after component initialization and before the inherited volume and fugacity calculations
-   * use them.
+   * Refresh translation after component initialization, before the inherited volume and fugacity calculations.
    *
    * @param phase phase whose co-volume is calculated
    * @param temperature temperature in K
@@ -228,6 +227,16 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   public double calcCT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
     double locCT = 0.0;
     ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
+    if (getClass() == PhaseUMRCPAvolcor.class) {
+      // Factor the built-in arithmetic mixing rule; subclasses retain their pair hooks below.
+      double componentMoles = 0.0;
+      for (int i = 0; i < numbcomp; i++) {
+        double moles = compArray[i].getNumberOfMolesInPhase();
+        componentMoles += moles;
+        locCT += moles * ((ComponentUMRCPAvolcor) compArray[i]).getcT();
+      }
+      return componentMoles * locCT / phase.getNumberOfMolesInPhase();
+    }
     for (int i = 0; i < numbcomp; i++) {
       for (int j = 0; j < numbcomp; j++) {
         locCT += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
@@ -244,6 +253,20 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
     cachedCi = new double[numbcomp];
     ComponentEosInterface[] compArray = (ComponentEosInterface[]) this.getcomponentArray();
     double totalMolesInPhase = getNumberOfMolesInPhase();
+    if (getClass() == PhaseUMRCPAvolcor.class) {
+      double componentMoles = 0.0;
+      double weightedTranslation = 0.0;
+      for (int i = 0; i < numbcomp; i++) {
+        double moles = compArray[i].getNumberOfMolesInPhase();
+        componentMoles += moles;
+        weightedTranslation += moles * ((ComponentUMRCPAvolcor) compArray[i]).getc();
+      }
+      for (int i = 0; i < numbcomp; i++) {
+        cachedCi[i] = (componentMoles * ((ComponentUMRCPAvolcor) compArray[i]).getc() + weightedTranslation - getC())
+            / totalMolesInPhase;
+      }
+      return;
+    }
     for (int i = 0; i < numbcomp; i++) {
       double CiVal = 0.0;
       for (int j = 0; j < numbcomp; j++) {
@@ -260,6 +283,20 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
     cachedCiT = new double[numbcomp];
     ComponentEosInterface[] compArray = (ComponentEosInterface[]) this.getcomponentArray();
     double totalMolesInPhase = getNumberOfMolesInPhase();
+    if (getClass() == PhaseUMRCPAvolcor.class) {
+      double componentMoles = 0.0;
+      double weightedTranslationT = 0.0;
+      for (int i = 0; i < numbcomp; i++) {
+        double moles = compArray[i].getNumberOfMolesInPhase();
+        componentMoles += moles;
+        weightedTranslationT += moles * ((ComponentUMRCPAvolcor) compArray[i]).getcT();
+      }
+      for (int i = 0; i < numbcomp; i++) {
+        cachedCiT[i] = (componentMoles * ((ComponentUMRCPAvolcor) compArray[i]).getcT() + weightedTranslationT
+            - getCT()) / totalMolesInPhase;
+      }
+      return;
+    }
     for (int i = 0; i < numbcomp; i++) {
       double CiTVal = 0.0;
       for (int j = 0; j < numbcomp; j++) {
@@ -274,13 +311,14 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
       return;
     }
     cachedCij = new double[numbcomp][numbcomp];
+    ensureCiCache(numbcomp);
     ComponentEosInterface[] compArray = (ComponentEosInterface[]) this.getcomponentArray();
     double totalMolesInPhase = getNumberOfMolesInPhase();
     for (int i = 0; i < numbcomp; i++) {
       for (int j = 0; j < numbcomp; j++) {
         double cij = getcij(compArray[i], compArray[j]);
-        cachedCij[i][j] = (2.0 * cij - ((ComponentUMRCPAvolcor) compArray[i]).getCi()
-            - ((ComponentUMRCPAvolcor) compArray[j]).getCi()) / totalMolesInPhase;
+        // A later component may not have reached Finit yet; use the current phase derivative cache.
+        cachedCij[i][j] = (2.0 * cij - cachedCi[i] - cachedCi[j]) / totalMolesInPhase;
       }
     }
   }
@@ -297,10 +335,20 @@ public class PhaseUMRCPAvolcor extends PhaseUMRCPA {
   public double calcC(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
     C = 0.0;
     ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
-    for (int i = 0; i < numbcomp; i++) {
-      for (int j = 0; j < numbcomp; j++) {
-        C += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
-            * getcij(compArray[i], compArray[j]);
+    if (getClass() == PhaseUMRCPAvolcor.class) {
+      double componentMoles = 0.0;
+      for (int i = 0; i < numbcomp; i++) {
+        double moles = compArray[i].getNumberOfMolesInPhase();
+        componentMoles += moles;
+        C += moles * ((ComponentUMRCPAvolcor) compArray[i]).getc();
+      }
+      C *= componentMoles;
+    } else {
+      for (int i = 0; i < numbcomp; i++) {
+        for (int j = 0; j < numbcomp; j++) {
+          C += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
+              * getcij(compArray[i], compArray[j]);
+        }
       }
     }
     C /= phase.getNumberOfMolesInPhase();

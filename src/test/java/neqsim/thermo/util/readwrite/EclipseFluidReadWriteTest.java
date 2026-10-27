@@ -286,7 +286,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testSystem.setPressure(2.099970727022911, "bara");
-    for (double temperature : new double[] {30.0, 20.0, 10.0, 30.0}) {
+    for (double temperature : new double[] {30.0, 25.0, 20.0, 10.0, 30.0}) {
       testSystem.setTemperature(temperature, "C");
       // At 30 C water fugacity is below the pure-liquid-water trial fugacity.
       // A third phase here was the old unsolved 1e-5 seed, not condensed water.

@@ -642,6 +642,14 @@ plus repeated methane/water flashes with component conservation and phase-fugaci
 equality. These are numerical consistency checks, not experimental qualification
 of the UMR-CPA parameter set.
 
+For the built-in arithmetic volume-translation rule, the mixture translation and
+its first-derivative caches use factored sums with linear component-count cost.
+Subclasses retain the general pair-rule calculation and virtual mixing hooks;
+second-derivative storage remains quadratic. `PhaseUMRCPAvolcorMixingRuleTest`
+compares the factored expressions with independent pair sums across component
+inventories and mole scales, including custom pair rules and nonzero temperature
+responses. The equilibrium solver and its acceptance tolerances are unchanged.
+
 `SystemPrCPA` uses the existing PR-based CPA mass-action solver and analytical
 site responses, with its own generic PR-CPA component parameters and PR alpha.
 It does not select the dedicated UMR-CPA parameter or alpha family merely
