@@ -377,6 +377,19 @@ defaults. The source inventory is in
 Reproducing a published correlation does not establish agreement within the
 measurement uncertainties or justify transferring its parameters to another EOS.
 
+The same explicit source-paired MEG alpha is also checked against 15 existing
+NIST pure-MEG vapor pressures at 307.7–384.5 K. Its pressure AARD is 5.86%, with
+15 predictions inside the supplied compiler-expanded 95% point-pressure
+uncertainties. This comparison does not propagate input or fitted-parameter
+uncertainty and does not qualify inhibitor partition in mixtures. The native
+identity and refined numerical checks are asserted for the source-compatible
+liquids, changed/repeated/reversed-order states and pure coexistence. Pure
+coexistence uses equal phase amounts at the unchanged bubble pressure to avoid
+roundoff in mole differences on the solver's infinitesimal incipient phase;
+mixture phase fractions are retained. The
+[source-compatible assessment protocol and raw results](../../src/test/resources/neqsim/thermo/mixingrule/hv-source-compatible/README.md)
+record this numerical conditioning limitation and the separate physical errors.
+
 Numerical qualification covers analytical temperature and composition
 derivatives, Gibbs-Duhem and Hessian symmetry, classical-rule recovery for both
 EoS, directed-parameter ordering, and gas-oil-water material balance and fugacity

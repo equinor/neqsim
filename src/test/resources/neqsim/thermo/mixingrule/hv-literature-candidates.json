@@ -347,7 +347,14 @@
     },
     "published_comparison_reference": "FolasTable6.6 PDFp158,printedp139",
     "interpretation": "Reproduces the published model correlation; not measurement-uncertainty accuracy. Current globalMEGPC90bar is incompatible with this fitted dataset; no global default changed.",
-    "reproduction_test": "neqsim.thermo.mixingrule.HuronVidalLiteratureReproductionTest"
+    "reproduction_test": "neqsim.thermo.mixingrule.HuronVidalLiteratureReproductionTest",
+    "numerical_qualification": {
+      "test": "HuronVidalLiteratureReproductionTest",
+      "checks": "All five native ThermodynamicModelTest identities at 1e-8; checkNumerically at 1e-6 with byte-identical source serialization; independent fixed-composition liquid T differences at h=0.001/0.0005 K",
+      "history": "Both component orders; 315.95,315.95,329.75,351.85,315.95 K against fresh controls",
+      "raw_report": "hv-source-compatible/MEG-heptane.csv",
+      "scope": "Numerical consistency of the explicit source-paired SRK configuration; physical errors remain above reported measurement uncertainties"
+    }
   },
   "missing_active_HV_pairs_in_current_INTER": [
     "water/n-octane",
@@ -417,5 +424,20 @@
       "qualification": "Ordinary native cubic parity demonstrated; physical pressure errors retained; no alpha retuning",
       "test": "HuronVidalMegExperimentalAssessmentTest"
     }
-  ]
+  ],
+  "source_paired_pure_MEG_assessment": {
+    "parameter_source": "Already catalogued Derawi2002 Tables4.1/5.5; same MEG pure configuration as MEG_heptane_physical_reproduction; no refit",
+    "measurement_doi": "10.1021/je9004905",
+    "measurement_resource": "hv-meg-qualification/pure-meg-2009.csv",
+    "report": "hv-source-compatible/pure-MEG.csv",
+    "states": 15,
+    "temperature_range_K": [
+      307.7,
+      384.5
+    ],
+    "AARD_percent": 5.861635531497968,
+    "points_inside_compiler_expanded_95_pressure_uncertainty": 15,
+    "numerical_basis": "Pure coexistence only: original bubble beta0=1e-10; use equal 0.5/0.5 phase amounts at unchanged saturation pressure to resolve native mole differences. No mixed-phase fraction is adjusted.",
+    "qualification": "All native identities and numerical checks asserted. Point pressure comparisons do not propagate input or fitted-parameter uncertainty and do not qualify mixture partition, PR transfer, hydrates or library defaults."
+  }
 }
