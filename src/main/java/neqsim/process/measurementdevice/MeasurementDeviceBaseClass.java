@@ -269,7 +269,27 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
    * @return value after noise, fault injection and delay are applied
    */
   protected double applySignalModifiers(double rawValue) {
-    double faultedValue = applyFault(rawValue);
+    return applySignalModifiers(rawValue, 1.0);
+  }
+
+  /**
+   * Applies configured noise, delay, filtering and sensor fault for one declared physical sample.
+   *
+   * <p>
+   * The filter uses the exact sample interval. A linear-drift parameter is interpreted as engineering units per second
+   * on this path. The legacy one-argument method retains its historical one-second-per-read convention.
+   * </p>
+   *
+   * @param rawValue unmodified measurement value
+   * @param dt finite positive physical sample interval in seconds
+   * @return value after fault, noise, filter and sample-delay processing
+   * @throws IllegalArgumentException if {@code dt} is not finite and positive
+   */
+  protected double applySignalModifiers(double rawValue, double dt) {
+    if (!Double.isFinite(dt) || dt <= 0.0) {
+      throw new IllegalArgumentException("Measurement sample interval must be finite and positive: " + dt);
+    }
+    double faultedValue = applyFault(rawValue, dt);
     Random r = random;
     if (r == null) {
       r = new Random();
@@ -277,13 +297,12 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
     }
     double noisyValue = faultedValue + r.nextGaussian() * noiseStdDev;
 
-    // First-order exponential filter: y(k) = alpha * x(k) + (1-alpha) * y(k-1)
+    // Exact zero-order-hold discretization of a first-order measurement lag.
     if (firstOrderTimeConstant > 0.0) {
       if (Double.isNaN(filteredPreviousValue)) {
         filteredPreviousValue = noisyValue;
       }
-      // Use a default dt of 1.0 second for per-sample filtering
-      double alpha = 1.0 - Math.exp(-1.0 / firstOrderTimeConstant);
+      double alpha = 1.0 - Math.exp(-dt / firstOrderTimeConstant);
       noisyValue = alpha * noisyValue + (1.0 - alpha) * filteredPreviousValue;
       filteredPreviousValue = noisyValue;
     }
@@ -447,14 +466,15 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
    * {@link SensorFaultType}.
    *
    * @param rawValue true process measurement before fault injection
+   * @param dt finite positive physical sample interval in seconds
    * @return measurement value after fault transformation
    */
-  private double applyFault(double rawValue) {
+  private double applyFault(double rawValue, double dt) {
     switch (faultType) {
     case STUCK_AT_VALUE:
       return faultParameter;
     case LINEAR_DRIFT:
-      faultAccumulator += faultParameter;
+      faultAccumulator += faultParameter * dt;
       return rawValue + faultAccumulator;
     case BIAS:
       return rawValue + faultParameter;
@@ -482,7 +502,8 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
    * according to the specified fault type and parameter.
    *
    * @param type the type of sensor fault to inject
-   * @param parameter fault-specific parameter (e.g. stuck value, drift rate, bias)
+   * @param parameter fault-specific parameter; linear drift is engineering units per second for physical-step sampling
+   * and retains the legacy per-read increment for direct reads
    */
   public void setFault(SensorFaultType type, double parameter) {
     this.faultType = type != null ? type : SensorFaultType.NONE;
