@@ -80,6 +80,36 @@ class ValveTransientStateTransactionTest {
     assertEquals(42.0, valve.getPercentValveOpening(), TOLERANCE);
   }
 
+  /** Rejected trials restore hidden stiction and hysteresis memory before replay. */
+  @Test
+  void rejectedTrialRestoresNonlinearActuatorMemory() {
+    ValveStudy stictionStudy = createStudy(new ThrottlingValve("FV-stiction", createFeed("stiction feed")));
+    stictionStudy.valve.setPercentValveOpening(50.0);
+    stictionStudy.valve.setValveStiction(5.0);
+    try (TransientStepTransaction transaction = stictionStudy.process.beginTransientStepTransaction()) {
+      stictionStudy.valve.setTargetPercentValveOpening(56.0);
+      stictionStudy.process.runTransient(1.0, UUID.randomUUID());
+      assertEquals(56.0, stictionStudy.valve.getPercentValveOpening(), TOLERANCE);
+      transaction.rollback();
+    }
+    stictionStudy.valve.setTargetPercentValveOpening(53.0);
+    stictionStudy.process.runTransientTransactional(1.0, UUID.randomUUID());
+    assertEquals(50.0, stictionStudy.valve.getPercentValveOpening(), TOLERANCE);
+
+    ValveStudy hysteresisStudy = createStudy(new ThrottlingValve("FV-hysteresis", createFeed("hysteresis feed")));
+    hysteresisStudy.valve.setPercentValveOpening(50.0);
+    hysteresisStudy.valve.setValveHysteresis(4.0);
+    try (TransientStepTransaction transaction = hysteresisStudy.process.beginTransientStepTransaction()) {
+      hysteresisStudy.valve.setTargetPercentValveOpening(60.0);
+      hysteresisStudy.process.runTransient(1.0, UUID.randomUUID());
+      assertEquals(60.0, hysteresisStudy.valve.getPercentValveOpening(), TOLERANCE);
+      transaction.rollback();
+    }
+    hysteresisStudy.valve.setTargetPercentValveOpening(40.0);
+    hysteresisStudy.process.runTransientTransactional(1.0, UUID.randomUUID());
+    assertEquals(40.0, hysteresisStudy.valve.getPercentValveOpening(), TOLERANCE);
+  }
+
   /** Asymmetric full-stroke times bound opening and closing travel independently. */
   @Test
   void asymmetricLinearTravelIsRateBounded() {
