@@ -4971,6 +4971,27 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   @Override
   public synchronized void runTransient(double dt, UUID id) {
+    runTransientInternal(dt, id, true);
+  }
+
+  /**
+   * Advances an adaptive trial after its coordinator has fired start-of-interval events.
+   *
+   * @param dt trial timestep in seconds
+   * @param id physical child identifier
+   */
+  synchronized void runTransientAdaptiveTrial(double dt, UUID id) {
+    runTransientInternal(dt, id, false);
+  }
+
+  /**
+   * Executes the common transient path with explicit scheduler ownership.
+   *
+   * @param dt timestep in seconds
+   * @param id physical-step identity
+   * @param fireEndEvents whether to preserve the legacy end-time scheduler semantics
+   */
+  private void runTransientInternal(double dt, UUID id, boolean fireEndEvents) {
     validateTransientTimestep(dt);
     ensureInitialStateSnapshot();
     applyFlowsheetWideSettings();
@@ -4998,7 +5019,7 @@ public class ProcessSystem extends SimulationBaseClass {
     // equipment so an ESD/IOA action (e.g. valve close, setpoint change) takes effect on
     // the current timestep. Exceptions inside an event payload are surfaced to stderr by
     // the scheduler and do not abort the transient loop.
-    if (eventScheduler != null) {
+    if (fireEndEvents && eventScheduler != null) {
       eventScheduler.fireDueEvents(time);
     }
 
@@ -5206,16 +5227,16 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Runs a single transient step with adaptive timestep control. This method compares a full-step result with two
-   * half-step results to estimate the local truncation error and adjusts dt accordingly.
+   * Runs the legacy temperature-change timestep heuristic. It advances one full step and recommends the following
+   * timestep; it does not estimate truncation error, reject, restore or retry a step.
    *
    * <p>
-   * Usage: call this instead of runTransient(dt, id) when adaptive control is desired.
+   * Use the explicit-options overload for transactional full-step/two-half-step error control.
    * </p>
    *
    * @param dt the requested timestep in seconds
    * @param id calculation identifier
-   * @return the actual timestep used (may differ from dt)
+   * @return suggested following timestep, or dt when the legacy heuristic is disabled
    * @throws IllegalArgumentException if {@code dt} is non-finite or not greater than zero
    */
   public double runTransientAdaptive(double dt, UUID id) {
@@ -5269,6 +5290,27 @@ public class ProcessSystem extends SimulationBaseClass {
 
     setTimeStep(currentDt);
     return currentDt;
+  }
+
+  /**
+   * Accepts one bounded interval using explicit numerical state and transactional step doubling.
+   *
+   * <p>
+   * The accepted state is two consecutive half steps. Scheduled events execute at interval starts; an event at the
+   * accepted endpoint remains pending until the next call. Caller-supplied providers must describe all relevant
+   * numerical state of every transaction participant.
+   * </p>
+   *
+   * @param dt requested upper bound on accepted physical time in seconds
+   * @param id non-null, new parent physical-interval identity
+   * @param options explicit timestep, retry, method-order and numerical-state policy
+   * @return accepted interval, error, retry and child-identity evidence
+   * @throws IllegalArgumentException if the request or numerical policy is invalid
+   * @throws IllegalStateException if coverage, trial execution or bounded acceptance fails
+   */
+  public synchronized neqsim.process.dynamics.AdaptiveTransientResult runTransientAdaptive(double dt, UUID id,
+      neqsim.process.dynamics.AdaptiveTransientOptions options) {
+    return AdaptiveTransientStepper.advance(this, dt, id, options);
   }
 
   /**
@@ -5730,7 +5772,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @return identity-de-duplicated process elements
    */
-  private List<ProcessElementInterface> getUniqueTransientElements() {
+  List<ProcessElementInterface> getUniqueTransientElements() {
     List<ProcessElementInterface> unique = new ArrayList<ProcessElementInterface>();
     java.util.Set<ProcessElementInterface> seen = Collections
         .newSetFromMap(new IdentityHashMap<ProcessElementInterface, Boolean>());
@@ -6095,8 +6137,8 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Enables or disables adaptive timestep control. When enabled, the timestep is adjusted based on local error
-   * estimates by comparing a full step with two half-steps.
+   * Enables or disables the legacy two-argument adaptive method's temperature-change heuristic. The explicit-options
+   * overload controls its own step-doubling policy independently of this flag.
    *
    * @param enabled true to enable adaptive timestep
    */
@@ -6105,7 +6147,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Returns whether adaptive timestep control is enabled.
+   * Returns whether the legacy temperature-change timestep heuristic is enabled.
    *
    * @return true if adaptive timestep is enabled
    */
@@ -6114,7 +6156,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Sets the minimum timestep for adaptive control.
+   * Sets the minimum timestep for the legacy temperature-change heuristic.
    *
    * @param minDt minimum timestep in seconds
    */
@@ -6123,7 +6165,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Gets the minimum timestep for adaptive control.
+   * Gets the minimum timestep for the legacy temperature-change heuristic.
    *
    * @return minimum timestep in seconds
    */
@@ -6132,7 +6174,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Sets the maximum timestep for adaptive control.
+   * Sets the maximum timestep for the legacy temperature-change heuristic.
    *
    * @param maxDt maximum timestep in seconds
    */
@@ -6141,7 +6183,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Gets the maximum timestep for adaptive control.
+   * Gets the maximum timestep for the legacy temperature-change heuristic.
    *
    * @return maximum timestep in seconds
    */
@@ -6150,7 +6192,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Sets the relative tolerance for adaptive timestep error control.
+   * Sets the relative temperature-change threshold for the legacy timestep heuristic.
    *
    * @param tol relative tolerance (e.g. 0.01 for 1%)
    */
@@ -6159,7 +6201,7 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Gets the relative tolerance for adaptive timestep error control.
+   * Gets the relative temperature-change threshold for the legacy timestep heuristic.
    *
    * @return relative tolerance
    */
