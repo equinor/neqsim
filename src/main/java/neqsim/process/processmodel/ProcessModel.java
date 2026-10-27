@@ -1881,6 +1881,26 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Accepts one coordinated multi-area interval using transactional numerical step doubling.
+   *
+   * <p>
+   * All areas use the same accepted interval and physical child identities. A failed or rejected trial restores every
+   * area. Shared start-of-interval events execute before any area integrates.
+   * </p>
+   *
+   * @param dt requested upper bound on accepted physical time in seconds
+   * @param id non-null, new parent physical-interval identity
+   * @param options explicit timestep, retry, method-order and numerical-state policy
+   * @return accepted interval, numerical error, retry and physical-child evidence
+   * @throws IllegalArgumentException if the request or numerical policy is invalid
+   * @throws IllegalStateException if coverage, clock alignment or bounded acceptance fails
+   */
+  public synchronized neqsim.process.dynamics.AdaptiveTransientResult runTransientAdaptive(double dt, UUID id,
+      neqsim.process.dynamics.AdaptiveTransientOptions options) {
+    return AdaptiveTransientStepper.advance(this, dt, id, options);
+  }
+
+  /**
    * Rolls back open child transactions in reverse area order.
    *
    * @param areaCheckpoints child transactions captured so far

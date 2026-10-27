@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-09-07"
+last_verified: "2026-10-27"
 ---
 
 # Dynamic Simulation Guidance
@@ -62,13 +62,53 @@ UUID. For ordinary loops `runTransient()` is safe because it creates a fresh
 UUID each call. Deterministic safety/OTS workflows can use
 `TransientStepIdentifier.deterministicPhysicalStep(scope, stepIndex)`.
 
-`ProcessSystem.runTransientAdaptive(...)` is **not yet a transactional adaptive
-integrator**. The current implementation validates the request, advances trial
-state directly, estimates a temperature-change heuristic, and chooses a
-subsequent timestep. It does not yet provide rejected-step process/event/control
-rollback or a full-step versus two-half-step error estimate. Do not use it as
-evidence of qualified stiff/adaptive professional dynamics until the #2911
-transactional-step work is complete.
+The legacy two-argument `ProcessSystem.runTransientAdaptive(dt, id)` advances one
+full step and recommends a following timestep using a temperature-change heuristic.
+It does not reject/retry on a full-step versus two-half-step estimate. Its strict
+qualification blocker remains; do not infer a different contract from its name.
+
+For opt-in numerical acceptance, both `ProcessSystem` and `ProcessModel` provide
+`runTransientAdaptive(requestedDt, parentId, AdaptiveTransientOptions)`. This first
+profile requires concrete process/model owners, exactly aligned finite area clocks
+and no shared mutable participant across different areas. Use explicit
+minimum/maximum timestep, bounded attempts, integration order and a
+`TransientErrorStateBinding` for every unique rollback participant, including
+attached controllers. Each read-only serializable provider returns a nonempty
+vector with stable owner/variable IDs, explicit units, finite values, positive
+absolute tolerances and nonnegative relative tolerances. Numerical coverage must
+be complete and the schema/tolerances must remain fixed across all trial states.
+The caller remains responsible for auditing that the declared variables cover
+the relevant physical and control state.
+
+The overload compares one full step with two half steps using maximum normalized
+error, restores rejected trials in place, and commits the actual two-half-step
+state. Distinct deterministic physical child UUIDs prevent idempotent controllers
+from skipping the second half. Use a new parent UUID on the next call; preserve
+result `getAcceptedStepSeconds()` versus `getSuggestedNextStepSeconds()` semantics.
+Execution/provider/schema failures propagate after rollback; they are not accepted
+as numerical progress. Exhausted bounds/attempts leave the step uncommitted.
+Use `AdaptiveTransientException` reason (`MINIMUM_STEP`, `ATTEMPT_LIMIT`, or
+`UNREPRESENTABLE_INTERVAL`), attempted-trial count, attempted step, normalized error
+and limiting-variable evidence for numerical failure reports. A `NaN` error marks
+an unavailable comparison; infinity marks an unbounded/overflowing error.
+
+Only this new overload uses start-of-substep event timing and caps the interval at
+the earliest future event across all area schedulers. Shared due events execute
+before any area advances. Endpoint events remain pending until the following call,
+so they cannot alter the interval that precedes their trigger time. Event actions
+must have declared complete in-memory mutation scope; external effects are outside
+the rollback contract. Callbacks must terminate and avoid due-now cross-scheduler
+chains; the underlying scheduler has no callback budget. Newly inserted future
+events trigger bounded rollback/localization, while a leftover past event fails
+the interval. Keep exclusive ownership during adaptive execution.
+
+Expect three physical evaluations per complete attempt plus snapshot/comparison and
+rejected-trial cost. Default/legacy paths gain no adaptive work. The synthetic
+quantitative tests establish the numerical acceptance/replay contract, while real
+process-control and safety studies still need method/parameter qualification,
+conservation/refinement evidence and explicit limits. Read the
+[dynamic capability contract](../../../docs/process/dynamic-capability-contract.md#opt-in-numerical-adaptive-acceptance)
+for the norm, provider contract, provenance, event and qualification boundaries.
 
 ## Basic Dynamic Setup
 
