@@ -477,6 +477,16 @@ pressure and initialization order, plus complete flashes with reported phase
 topology. Changing the equilibrium model can change solver work and results;
 timing alone does not measure equivalent physical accuracy.
 
+The modified-NRTL evaluator reduces temporary allocation by reusing each
+component's independently owned composition-derivative vector and clearing it
+at every initialization level. Its derivative matrices remain local to each
+call; flattening their storage avoids separate row objects without retaining
+larger caches on cloned fluids. The equations and arithmetic order are unchanged.
+The [allocation qualification matrix](../../src/test/resources/neqsim/thermo/mixingrule/hv-allocation-performance/README.md)
+records fresh-master comparisons, exact activity/derivative fingerprints,
+classical controls and timing limitations. Lower allocation alone does not
+establish a universal flash speedup or resolve the physical-accuracy gaps above.
+
 ---
 
 ## 5. Wong-Sandler Mixing Rule
