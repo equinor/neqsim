@@ -50,9 +50,14 @@ class ProcessEnergyExactSourceDocumentationTest {
       "import neqsim.process.equipment.stream.Stream;", "import neqsim.process.equipment.stream.UtilityLevel;",
       "import neqsim.thermo.system.SystemInterface;", "import neqsim.thermo.system.SystemSrkEos;");
 
-  @TempDir\n  Path temporaryDirectory;
+  @TempDir
+  Path temporaryDirectory;
 
-  /** Verifies that every marked complete process-energy example is exact executable source. */
+  /**
+   * Verifies that every marked complete process-energy example is exact executable source.
+   *
+   * @throws Exception if an example cannot be extracted, compiled, or executed
+   */
   @Test
   void processEnergyExamplesCompileAndRun() throws Exception {
     assertEquals(MARKERS.size(), CLASS_NAMES.size());
