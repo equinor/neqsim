@@ -59,10 +59,10 @@ public abstract class AttractiveTermBaseClass implements AttractiveTermInterface
       logger.error("Cloning failed.", ex);
     }
 
-    // atSystem.out.println("m " + m);ractiveTerm.parameters = (double[])
-    // parameters.clone();
-    // System.arraycopy(parameters,0, attractiveTerm.parameters, 0,
-    // parameters.length);
+    if (attractiveTerm != null) {
+      attractiveTerm.parameters = parameters == null ? null : parameters.clone();
+      attractiveTerm.parametersSolid = parametersSolid == null ? null : parametersSolid.clone();
+    }
     return attractiveTerm;
   }
 

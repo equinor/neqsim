@@ -33,6 +33,14 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
 
   /** {@inheritDoc} */
   @Override
+  public ComponentGENRTLmodifiedHV clone() {
+    ComponentGENRTLmodifiedHV copy = (ComponentGENRTLmodifiedHV) super.clone();
+    copy.dlngammadn = dlngammadn == null ? null : dlngammadn.clone();
+    return copy;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
       PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
     double[][] HVgijT = new double[numberOfComponents][numberOfComponents];

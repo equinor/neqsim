@@ -52,12 +52,12 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       logger.error("Cloning failed.", ex);
     }
 
-    // mixSelect and mixRule remain shared to keep this hot-path clone inexpensive.
-    // Parameter mutation affects siblings. Stateful rules, including Huron-Vidal,
-    // also share mutable calculation caches, so read-only parameter access alone
-    // does not make concurrent sibling flashes safe. Use independently configured
-    // systems per worker or serialize complete operations on cloned siblings.
-    // Copying only the handler's parameter matrices does not isolate rule work state.
+    // Detach standard HV parameters and retained calculation state together. Other
+    // rules retain their existing sharing contract; no general concurrency promise is made.
+    if (clonedPhase != null && mixSelect.canCopyHuronVidalRule(mixRule)) {
+      clonedPhase.mixSelect = mixSelect.clone();
+      clonedPhase.mixRule = clonedPhase.mixSelect.copyHuronVidalRule(mixRule, clonedPhase);
+    }
     return clonedPhase;
   }
 

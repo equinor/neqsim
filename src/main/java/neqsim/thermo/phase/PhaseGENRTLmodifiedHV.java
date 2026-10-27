@@ -74,6 +74,33 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
     }
   }
 
+  /**
+   * Copies retained GE work state and binds the supplied detached HV parameters.
+   *
+   * <p>
+   * The matrices belong to the copied HV handler. This method does not reload a database or evaluate activity
+   * coefficients.
+   * </p>
+   *
+   * @param owner copied EOS phase
+   * @param alpha detached nonrandomness matrix
+   * @param dij detached directed temperature coefficients in kelvin
+   * @param dijT detached dimensionless temperature offsets
+   * @param rules detached pair activation choices
+   * @param kij detached classical binary interactions
+   * @return independent GE state bound to the copied parameter handler
+   */
+  public PhaseGENRTLmodifiedHV copyForHuronVidal(PhaseInterface owner, double[][] alpha, double[][] dij,
+      double[][] dijT, String[][] rules, double[][] kij) {
+    PhaseGENRTLmodifiedHV copy = (PhaseGENRTLmodifiedHV) super.clone();
+    copy.mixSelect = mixSelect.clone();
+    copy.mixRule = copy.mixSelect.getMixingRule(mixingRuleType.getValue());
+    copy.setParams(owner, alpha, dij, dijT, rules, kij);
+    copy.type = type;
+    copy.setProperties(owner);
+    return copy;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
