@@ -1,7 +1,7 @@
 ---
 name: neqsim-rotating-equipment-design
-description: "This skill guides agents through NeqSim compressor, expander and pump performance modeling and mechanical screening. USE WHEN: loading or calibrating vendor maps, checking chart extrapolation, modeling a compressor train or turboexpander, checking pump NPSH/API 610 inputs, or screening rotating-equipment mechanics. Anchors: CompressorChart, CompressorChartCalibrator, CompressorTrain, TurboExpanderMapIngestion, PumpChart, PumpApi610DesignCalculator."
-last_verified: "2026-10-03"
+description: "NeqSim rotating-equipment studies. USE WHEN: dry gas seal or seal gas conditioning troubleshooting, regulator JT condensation, primary vent leakage, buffer/separation gas, API 692/ISO 6368 scope, startup and standby margins, compressor vendor maps/trains, turboexpanders, pump NPSH/API 610 or mechanical screening. APIs: DryGasSealAnalyzer, SealGasSupplyConditioning, DryGasSealMonitor, LabyrinthSealFlowCalculator, CompressorThermalModel."
+last_verified: "2026-10-27"
 ---
 
 # Rotating Equipment Design
@@ -39,14 +39,53 @@ Use this skill when an agent needs to create, correct, apply or interpret compre
 
 Turboexpander map work is separate: create `TurboExpanderMapIngestion`, add vendor/test anchor points with velocity ratio, IGV opening and measured efficiency, configure the reference fluid and impeller diameters, then validate against the expander/compressor operating envelope. Geometry-derived maps and `ExpanderChartKhader` are correlations/models, not converted vendor data.
 
-## Seal gas supply and contamination (added after the Grane PEPR 80302027 study)
+## Dry gas seal systems, conditioning and troubleshooting
 
-Dry gas seals fail from liquid in the supply as often as from the machine. Two classes in `neqsim.process.equipment.compressor` split the problem:
+Read [the engineering review](../../../docs/process/equipment/dry_gas_seal_engineering_review.md)
+for the primary literature, source audit, standards boundaries, failure hypotheses
+and validation priorities. Use public/synthetic data unless private inputs are supplied
+and authorized. Retain OEM limits and parameter provenance rather than transferring
+another machine's rules of thumb.
 
-- `DryGasSealAnalyzer`: leakage side, JT condensation in the primary vent and standpipes.
-- `SealGasSupplyConditioning`: supply side. `setSource(P, "barg", T, "C")`, `setSupplyPressure(P, "barg")`, optional `setHeaterOutletTemperature`, then `getSupplyTemperatureC()`, `getWaterDewPointC()`, `getHydrocarbonDewPointC()`, `getMinimumMarginK()`, `isMarginMet()` (API 692 practice 20 K) and `calculateRequiredInletTemperatureC(maxC)`. Static helpers `impliedLiquidLoadKgPerMSm3(...)` and `sumpFillTimeDays(...)` turn a filter sump filling rate into kg of liquid per MSm3 to compare with the filter datasheet contaminant basis (Grane CA-23-0026: 10-20 kg/MSm3).
+Use these existing APIs after inspecting current constructors/methods:
 
-Rules of thumb checked on Grane: JT cooling over the supply valve of a dense lean gas is 15-20 K, so a seal gas taken at 45 C and 92 barg has about 0 K margin at 49 barg without a heater; a take-off at an impeller exit has 7-36 K depending on the head already produced; a take-off at the stage discharge has more than 40 K. Fuel gas used as seal gas (2nd/3rd stage on Grane) is cooled to about 20 C, where the model gives 370 kg/MSm3 of equilibrium condensate and none at 28 C, so check the fuel gas temperature before blaming the filters. Natural experiments (import gas as fuel, set-point steps) discriminate better than regressions on daily data.
+- `DryGasSealAnalyzer`: configure an owned gas clone with `setSealGas`, cavity/vent
+  pressures, temperature, leakage and independent GCU supply throughput. Run
+  `runFullAnalysis` and inspect complete/error evidence in `getResults`.
+  `isSafeToOperate` is a legacy sampled-condensation screen, not an operating permissive.
+- `SealGasSupplyConditioning`: `setSource`, `setSupplyPressure`, optional
+  `setHeaterOutletTemperature`, then supply temperature, dewpoints, margin and heater
+  search. The audit identifies single-liquid, failed/missing dewpoint, unit and caller
+  ownership concerns. Validate evidence independently; do not equate a passing
+  `isMarginMet` Boolean with demonstrated complete-path dryness. Use
+  `impliedLiquidLoadKgPerMSm3` and `sumpFillTimeDays` only with explicit input bases.
+- `DryGasSealMonitor`: caller-defined `Limits`, quality-aware `Sample`,
+  `evaluate` and explicit simulator `reset`. Supply-process DP, primary vent,
+  intermediate buffer and bearing-side separation signals are distinct.
+- `LabyrinthSealFlowCalculator`: process-side straight-through labyrinth demand,
+  choking and validity checks. This is not grooved dry-seal face leakage.
+- `CompressorThermalModel`: calibrated lumped seal/shaft/metal temperatures;
+  this does not resolve local seal-film thermohydrodynamics.
+
+Freeze source/cavity/process/vent pressures, seal arrangement, startup/running/trip/
+standstill mode, composition including water/heavy ends, gas/metal/ambient temperatures,
+normal-flow conditions, timestamp/quality and OEM limits. Evaluate regulator JT
+cooling, wet supply, heater/booster capacity, filters/coalescers, sump/drains, vent
+backpressure and buffer/separation loss. Primary vent flow may include nitrogen;
+reconcile branch balances and flowmeter gas basis before diagnosing face damage.
+
+Use API 692 and ISO 6368:2021 for dry-seal-system scope. API 614 sixth edition
+excludes dry gas seal systems. The existing 17 K/20 K defaults are screening inputs,
+not universal API 692 requirements. Full licensed clauses, project edition and OEM
+instructions are needed for a conformity assessment.
+
+Keep failed/missing thermodynamics unresolved. Compare competing hypotheses and
+changes after interventions; a high vent signal alone does not uniquely identify
+seal failure. Hand historian data to `@plant-data`, fault hypotheses to `@root-cause`,
+fluid validity to `@thermo-fluid`, and regulator/controller dynamics to `@control-system`.
+Reuse #4144/#4145 and roadmap #4149; do not claim that source discovery adds a curated
+MCP operation. Keep expensive diagnostics optional so ordinary compressor runs do
+not gain extra flashes.
 
 ## Build pattern
 

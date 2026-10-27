@@ -10,6 +10,13 @@ condensation grid, dead-leg cooling and condensate accumulation. It also estimat
 conditioning thermal duties. It does not establish a complete compressor/seal operating
 permissive, filter cleanliness, hydrate-free operation or protection-system adequacy.
 
+For the source audit, standards boundaries, primary literature, troubleshooting
+workflow and dependency-ordered improvements, read the
+[dry gas seal systems engineering review](dry_gas_seal_engineering_review).
+It also documents the separate `SealGasSupplyConditioning` class's remaining
+evidence and ownership concerns; analyzer hardening does not imply that every
+seal-gas helper has equivalent evidence handling.
+
 ## Inputs and physical basis
 
 Supply the composition and mixing rule through `setSealGas`. The analyzer keeps an owned
