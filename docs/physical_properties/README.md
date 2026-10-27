@@ -30,6 +30,8 @@ Use the physical-property API in this order:
 The following complete example calculates gas density, dynamic viscosity, kinematic viscosity,
 and thermal conductivity. Temperature is in kelvin and pressure is absolute in bara.
 
+<!-- physical-properties-example: overview -->
+
 ```java
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.system.SystemInterface;
@@ -101,6 +103,8 @@ map to `MASS_DENSITY`, `DYNAMIC_VISCOSITY`, and `THERMAL_CONDUCTIVITY`, respecti
 
 Individual models are selected on a phase's `PhysicalProperties` object. Model keys are
 case-sensitive. Reinitialize each changed phase after selecting a model.
+
+<!-- physical-properties-example: phase-specific -->
 
 ```java
 import neqsim.thermo.system.SystemInterface;
@@ -184,6 +188,8 @@ range, and reinitialize the affected phase after changing them.
 
 Create a `ThermodynamicOperations` instance for the fluid that is actually being flashed. This is
 especially important when cloning a base fluid:
+
+<!-- physical-properties-example: temperature-sweep -->
 
 ```java
 import neqsim.thermo.system.SystemInterface;
