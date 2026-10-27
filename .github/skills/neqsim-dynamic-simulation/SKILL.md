@@ -875,3 +875,12 @@ CompositionAnalyzer ax = new CompositionAnalyzer("AX-1", sweetGas, "methane",
 FlowRatioMeter rxn = new FlowRatioMeter("FR-1", recycleStream, feedStream,
     FlowRatioMeter.FlowBasis.MASS);
 ```
+
+
+### Use one physical pressure-transmitter sample per control scan
+
+For qualified controller or alarm studies, explicitly enable the concrete `PressureTransmitter` physical-step sampling
+mode and register the transmitter in the `ProcessSystem`. The process then samples once after events and field inputs
+and before equipment/controllers; controller, history and alarm consumers share that held value. Declare the physical
+scan interval, filter time constant, integer sample delay, noise basis and any sensor-fault rate. Direct reads and other
+instrument families retain legacy read-driven behavior until they receive separate qualification.

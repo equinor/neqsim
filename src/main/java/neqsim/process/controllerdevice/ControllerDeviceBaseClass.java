@@ -17,6 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
+import neqsim.process.measurementdevice.TransientMeasurementDevice;
 import neqsim.util.NamedBaseClass;
 
 /**
@@ -133,6 +134,26 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   }
 
   /**
+   * Reads a physical-step sample when the transmitter has one, otherwise retaining legacy direct-read behaviour.
+   *
+   * @param requestedUnit controller engineering unit
+   * @param physicalStepIdentifier current physical-step identifier
+   * @return measurement for this controller execution
+   */
+  private double getTransientMeasuredValue(String requestedUnit, UUID physicalStepIdentifier) {
+    if (transmitter instanceof TransientMeasurementDevice) {
+      TransientMeasurementDevice sampled = (TransientMeasurementDevice) transmitter;
+      if (sampled.hasTransientSample(physicalStepIdentifier)) {
+        if (requestedUnit == null || requestedUnit.isEmpty() || requestedUnit.equals("[?]")) {
+          return sampled.getTransientSample();
+        }
+        return sampled.getTransientSample(requestedUnit);
+      }
+    }
+    return getMeasuredValue(requestedUnit);
+  }
+
+  /**
    * {@inheritDoc}
    *
    * <p>
@@ -156,7 +177,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     if (mode == ControllerMode.MANUAL) {
       totalTime += dt;
       response = manualOutput;
-      double measurement = getMeasuredValue(unit);
+      double measurement = getTransientMeasuredValue(unit, id);
       oldoldError = oldError;
       oldError = error;
       error = measurement - controllerSetPoint;
@@ -170,7 +191,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
 
     totalTime += dt;
     propConstant = isReverseActing() ? -1 : 1;
-    double measurement = getMeasuredValue(unit);
+    double measurement = getTransientMeasuredValue(unit, id);
     applyGainSchedule(measurement);
     oldoldError = oldError;
     oldError = error;

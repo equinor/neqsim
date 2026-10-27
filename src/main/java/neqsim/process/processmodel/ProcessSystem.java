@@ -5026,6 +5026,18 @@ public class ProcessSystem extends SimulationBaseClass {
     // Apply field data from INPUT instruments before running the model
     applyFieldInputs();
 
+    // One opt-in physical instrument scan occurs after events and field inputs but before equipment/controllers.
+    // Duplicate registration remains safe because sampled devices are idempotent for one physical-step identifier.
+    for (int i = 0; i < measurementDevices.size(); i++) {
+      MeasurementDeviceInterface device = measurementDevices.get(i);
+      if (device instanceof neqsim.process.measurementdevice.TransientMeasurementDevice) {
+        neqsim.process.measurementdevice.TransientMeasurementDevice sampled = (neqsim.process.measurementdevice.TransientMeasurementDevice) device;
+        if (sampled.isTransientSamplingEnabled()) {
+          sampled.sampleTransient(dt, id);
+        }
+      }
+    }
+
     // Track mass before transient step
     if (enableMassBalanceTracking) {
       double currentMass = calculateTotalSystemMass();
@@ -5097,7 +5109,13 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     for (int i = 0; i < measurementDevices.size(); i++) {
       MeasurementDeviceInterface device = measurementDevices.get(i);
-      double measuredValue = device.getMeasuredValue();
+      double measuredValue;
+      if (device instanceof neqsim.process.measurementdevice.TransientMeasurementDevice
+          && ((neqsim.process.measurementdevice.TransientMeasurementDevice) device).hasTransientSample(id)) {
+        measuredValue = ((neqsim.process.measurementdevice.TransientMeasurementDevice) device).getTransientSample();
+      } else {
+        measuredValue = device.getMeasuredValue();
+      }
       if (row != null) {
         row[3 * i + 1] = device.getName();
         row[3 * i + 2] = Double.toString(measuredValue);
