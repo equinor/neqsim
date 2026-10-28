@@ -105,6 +105,28 @@ class HuronVidalWorkspaceLifecycleTest extends neqsim.NeqSimTest {
   }
 
   /**
+   * Changes pure alpha inputs at fixed temperature without retaining a previous evaluation's terms.
+   *
+   * @param pr whether to use PR
+   */
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void pureAlphaChangesAtFixedTemperatureMatchFreshEvaluations(boolean pr) {
+    ComponentGENRTLmodifiedHV retained = component();
+    double[] initial = evaluate(retained, pr, 4, 3, 0, 0.0);
+    for (double adjustment : new double[] {0.03, -0.01, 0.0}) {
+      double[] expected = evaluate(component(), pr, 4, 3, 0, adjustment);
+      double[] actual = evaluate(retained, pr, 4, 3, 0, adjustment);
+      assertArrayEquals(expected, actual, 0.0, "Pure terms belong to this call's configured components");
+      if (adjustment != 0.0) {
+        assertTrue(Math.abs(initial[0] - actual[0]) > 1e-10, "The alpha perturbation must change the fixture");
+      } else {
+        assertArrayEquals(initial, actual, 0.0, "Returning the inputs must recover every exposed derivative");
+      }
+    }
+  }
+
+  /**
    * Constructs an evaluator without previously allocated derivative storage.
    *
    * @return the first component of a prescribed mixture
@@ -124,6 +146,22 @@ class HuronVidalWorkspaceLifecycleTest extends neqsim.NeqSimTest {
    * @return gamma and every exposed derivative
    */
   private static double[] evaluate(ComponentGENRTLmodifiedHV evaluator, boolean pr, int size, int level, int state) {
+    return evaluate(evaluator, pr, size, level, state, 0.0);
+  }
+
+  /**
+   * Evaluates prescribed interactions with an optional synthetic pure-alpha perturbation.
+   *
+   * @param evaluator retained or fresh modified-NRTL component
+   * @param pr whether to use PR
+   * @param size component count
+   * @param level requested initialization level
+   * @param state deterministic temperature/composition variant
+   * @param pureAdjustment additive alpha m perturbation scaled by component index, not a calibrated fit
+   * @return gamma and every exposed derivative
+   */
+  private static double[] evaluate(ComponentGENRTLmodifiedHV evaluator, boolean pr, int size, int level, int state,
+      double pureAdjustment) {
     double temperature = 290.0 + 11.0 * state;
     SystemInterface fluid = pr ? new SystemPrEos(temperature, 20.0) : new SystemSrkEos(temperature, 20.0);
     String[] names = {"methanol", "water", "methane", "ethane"};
@@ -134,6 +172,12 @@ class HuronVidalWorkspaceLifecycleTest extends neqsim.NeqSimTest {
     fluid.setForceSinglePhase(PhaseType.LIQUID);
     fluid.init(3);
     PhaseInterface phase = fluid.getPhase(0);
+    if (pureAdjustment != 0.0) {
+      for (int i = 0; i < size; i++) {
+        ComponentEosInterface pure = (ComponentEosInterface) phase.getComponent(i);
+        pure.getAttractiveTerm().setm(pure.getAttractiveTerm().getm() + pureAdjustment * (i + 1));
+      }
+    }
     phase.setInitType(level);
     double[][] alpha = new double[size][size];
     double[][] energy = new double[size][size];

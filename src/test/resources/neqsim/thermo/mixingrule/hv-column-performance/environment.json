@@ -1,0 +1,38 @@
+{
+  "base_sha": "a160d27fb5db6ecb8f5035e39597aa4c9ea4c339",
+  "utc_started": "2026-10-28T19:41:56Z",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+  "cpu_affinity": 6,
+  "affinity_is_exclusive": false,
+  "java": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment (build 17.0.20+8-1-24.04-Ubuntu)\nOpenJDK 64-Bit Server VM (build 17.0.20+8-1-24.04-Ubuntu, mixed mode, sharing)\n",
+  "jvm_options": [
+    "-Xms512m",
+    "-Xmx512m",
+    "-Xbatch"
+  ],
+  "component_class_sha256": {
+    "baseline": "450e3ffeae23f721b849a6e2aeba66fbd6c60f6ce2e7b9668154dc964c51b412",
+    "candidate": "26a24cc43c849c3405f4443c8531a39e4aaa7828598d5a13fe6859621e9fa604"
+  },
+  "component_class_versions": {
+    "baseline": 52,
+    "candidate": 52
+  },
+  "harness_class_sha256": "e40fc246d9a3ebd9efb0aabcb580fc1a30974a1a3681ffc519f46cfa0ccc5d5d",
+  "forks": 3,
+  "warmup_batches": 30,
+  "measurement_batches": 10,
+  "phase_iterations": {
+    "4": 2000,
+    "20": 200
+  },
+  "flash_iterations": {
+    "4": 20,
+    "20": 4
+  },
+  "notes": "Same harness and remaining classes; control uses the exact baseline component binary. One EOS/scenario per JVM. Host isolation is not asserted. Different mixing rules can do different solver work.",
+  "utc_finished": "2026-10-28T20:16:14Z",
+  "jvms": 192,
+  "state_groups": 32,
+  "state_equality": "Exact CSV equality for all baseline/candidate/control forks within each EOS/size/scenario/init/rule"
+}
