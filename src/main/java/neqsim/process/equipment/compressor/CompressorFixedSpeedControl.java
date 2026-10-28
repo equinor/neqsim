@@ -66,7 +66,7 @@ public final class CompressorFixedSpeedControl {
     if (member == null) {
       throw new IllegalArgumentException("compressor member must not be null");
     }
-    if (!(requiredDischargeBara > 0.0)) {
+    if (!Double.isFinite(requiredDischargeBara) || requiredDischargeBara <= 0.0) {
       throw new IllegalArgumentException("required discharge pressure must be positive");
     }
     String name = member.getName();
@@ -76,26 +76,30 @@ public final class CompressorFixedSpeedControl {
       return FixedSpeedControlResult.notEvaluated(name, speed, requiredDischargeBara,
           "no compressor chart in use: the fixed-speed operating point needs a chart");
     }
-    if (!(speed > 0.0)) {
+    if (!Double.isFinite(speed) || speed <= 0.0) {
       return FixedSpeedControlResult.notEvaluated(name, speed, requiredDischargeBara, "member speed not set");
     }
     StreamInterface inlet = member.getInletStream();
     double q0 = inlet.getFlowRate("m3/hr");
     double m0 = inlet.getFlowRate("kg/hr");
-    if (!(q0 > 0.0) || !(m0 > 0.0)) {
+    if (!Double.isFinite(q0) || !Double.isFinite(m0) || q0 <= 0.0 || m0 <= 0.0) {
       return FixedSpeedControlResult.notEvaluated(name, speed, requiredDischargeBara, "no inlet flow");
     }
 
     double surgeFlow = chart.getSurgeFlowAtSpeed(speed);
-    double controlFlow = surgeFlow > 0.0 && !Double.isInfinite(surgeFlow)
+    double controlFlow = Double.isFinite(surgeFlow) && surgeFlow > 0.0
         ? surgeFlow * (1.0 + member.getSurgeControlMargin())
         : 0.0;
     double stoneWall = chart.getStonewallFlowAtSpeed(speed);
     if (!(stoneWall > 0.0)) {
       stoneWall = chart.getStoneWallFlowAtSpeed(speed);
     }
-    boolean hasStoneWall = stoneWall > 0.0 && !Double.isInfinite(stoneWall);
+    boolean hasStoneWall = Double.isFinite(stoneWall) && stoneWall > 0.0;
     double qMin = Math.max(q0, controlFlow);
+    if (!Double.isFinite(qMin) || (hasStoneWall && qMin > stoneWall)) {
+      return FixedSpeedControlResult.notEvaluated(name, speed, requiredDischargeBara,
+          "process or anti-surge control flow is outside the valid compressor chart range");
+    }
 
     Compressor probe;
     try {
@@ -109,7 +113,7 @@ public final class CompressorFixedSpeedControl {
 
     try {
       double pHigh = deliverable(probe, m0 * qMin / q0);
-      if (Double.isNaN(pHigh)) {
+      if (!Double.isFinite(pHigh) || pHigh <= 0.0) {
         return FixedSpeedControlResult.notEvaluated(name, speed, requiredDischargeBara,
             "chart run failed at the lowest flow");
       }
@@ -136,9 +140,13 @@ public final class CompressorFixedSpeedControl {
             stoneWall, m0);
       }
       double pUpper = deliverable(probe, m0 * qUpper / q0);
-      if (Double.isNaN(pUpper)) {
+      if (!Double.isFinite(pUpper) || pUpper <= 0.0) {
         return FixedSpeedControlResult.notEvaluated(name, speed, requiredDischargeBara,
             "chart run failed at the highest flow");
+      }
+      if (!hasStoneWall && pUpper >= requiredDischargeBara * (1.0 - PRESSURE_TOLERANCE)) {
+        return FixedSpeedControlResult.notEvaluated(name, speed, requiredDischargeBara,
+            "no stonewall limit: trial flow cap cannot establish that throttling is required");
       }
       if (pUpper >= requiredDischargeBara * (1.0 - PRESSURE_TOLERANCE)) {
         return throttled(probe, name, speed, requiredDischargeBara, pHigh, q0, qMin, controlFlow, hasStoneWall,
@@ -152,7 +160,7 @@ public final class CompressorFixedSpeedControl {
       for (int i = 0; i < MAX_ITERATIONS; i++) {
         mid = 0.5 * (lo + hi);
         pMid = deliverable(probe, m0 * mid / q0);
-        if (Double.isNaN(pMid)) {
+        if (!Double.isFinite(pMid) || pMid <= 0.0) {
           return FixedSpeedControlResult.notEvaluated(name, speed, requiredDischargeBara,
               "chart run failed during the flow search");
         }
@@ -242,7 +250,8 @@ public final class CompressorFixedSpeedControl {
       probe.getInletStream().setFlowRate(massFlowKgPerHr, "kg/hr");
       probe.getInletStream().run();
       probe.run();
-      return probe.getOutletStream().getPressure("bara");
+      double pressure = probe.getOutletStream().getPressure("bara");
+      return Double.isFinite(pressure) && pressure > 0.0 ? pressure : Double.NaN;
     } catch (RuntimeException ex) {
       logger.debug("chart run failed at {} kg/hr", massFlowKgPerHr, ex);
       return Double.NaN;
