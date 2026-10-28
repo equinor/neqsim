@@ -28,6 +28,7 @@ public final class TwoFluidComponentTransport implements Serializable {
   private double[] intervalInitialInventoryKg;
   private double[] intervalInletMassKg;
   private double[] intervalOutletMassKg;
+  private double[] intervalOutboundMassKg;
   private double[][] intervalInterphaseTransferKg;
   private double[][][] intervalCellInterphaseTransferKg;
   private double intervalLatentHeatEnergyJ;
@@ -100,6 +101,7 @@ public final class TwoFluidComponentTransport implements Serializable {
     intervalInitialInventoryKg = accepted.intervalInitialInventoryKg;
     intervalInletMassKg = accepted.intervalInletMassKg.clone();
     intervalOutletMassKg = accepted.intervalOutletMassKg.clone();
+    intervalOutboundMassKg = accepted.intervalOutboundMassKg.clone();
     intervalInterphaseTransferKg = new double[PHASE_COUNT][];
     for (int phase = 0; phase < PHASE_COUNT; phase++) {
       intervalInterphaseTransferKg[phase] = accepted.intervalInterphaseTransferKg[phase].clone();
@@ -165,6 +167,7 @@ public final class TwoFluidComponentTransport implements Serializable {
     intervalInitialInventoryKg = totalComponentInventory();
     intervalInletMassKg = new double[componentNames.length];
     intervalOutletMassKg = new double[componentNames.length];
+    intervalOutboundMassKg = new double[componentNames.length];
     intervalInterphaseTransferKg = new double[PHASE_COUNT][componentNames.length];
     intervalCellInterphaseTransferKg = new double[cellCount][PHASE_COUNT][componentNames.length];
     intervalLatentHeatEnergyJ = 0.0;
@@ -187,7 +190,27 @@ public final class TwoFluidComponentTransport implements Serializable {
       double[][] phaseMassSourceKgPerMetreSecond, TwoFluidSection[] sections, SystemInterface inletFluid,
       SystemInterface fluidTemplate, double tolerance) {
     return advance(timeStepSeconds, phaseMassFaceFluxKgS, phaseMassSourceKgPerMetreSecond, null, null, sections,
-        inletFluid, fluidTemplate, tolerance);
+        inletFluid, null, fluidTemplate, tolerance);
+  }
+
+  /**
+   * Advance components with independently specified inlet and reversed-outlet donor states.
+   *
+   * @param timeStepSeconds accepted substep duration
+   * @param phaseMassFaceFluxKgS stage-weighted gas/oil/water face mass flows
+   * @param phaseMassSourceKgPerMetreSecond stage-weighted cell phase sources
+   * @param sections accepted hydrodynamic cell states
+   * @param inletFluid current inlet boundary fluid
+   * @param outletFluid external outlet donor for reversed flow, or {@code null}
+   * @param fluidTemplate thermodynamic template used for cell flashes
+   * @param tolerance relative conservation/synchronization tolerance
+   * @return composition-dependent latent heat added in each cell over the accepted step, in joules
+   */
+  public double[] advance(double timeStepSeconds, double[][] phaseMassFaceFluxKgS,
+      double[][] phaseMassSourceKgPerMetreSecond, TwoFluidSection[] sections, SystemInterface inletFluid,
+      SystemInterface outletFluid, SystemInterface fluidTemplate, double tolerance) {
+    return advance(timeStepSeconds, phaseMassFaceFluxKgS, phaseMassSourceKgPerMetreSecond, null, null, sections,
+        inletFluid, outletFluid, fluidTemplate, tolerance);
   }
 
   /**
@@ -216,16 +239,41 @@ public final class TwoFluidComponentTransport implements Serializable {
       double[][] phaseMassSourceKgPerMetreSecond, double[][][] componentSourceKgPerMetreSecond,
       double[] latentHeatSourceWPerMetre, TwoFluidSection[] sections, SystemInterface inletFluid,
       SystemInterface fluidTemplate, double tolerance) {
+    return advance(timeStepSeconds, phaseMassFaceFluxKgS, phaseMassSourceKgPerMetreSecond,
+        componentSourceKgPerMetreSecond, latentHeatSourceWPerMetre, sections, inletFluid, null, fluidTemplate,
+        tolerance);
+  }
+
+  /**
+   * Advance stage-frozen component sources with explicit thermodynamic donors at both external faces.
+   *
+   * @param timeStepSeconds accepted substep duration
+   * @param phaseMassFaceFluxKgS stage-weighted gas/oil/water face mass flows
+   * @param phaseMassSourceKgPerMetreSecond stage-weighted cell phase sources
+   * @param componentSourceKgPerMetreSecond stage-weighted cell/phase/component sources, or {@code null}
+   * @param latentHeatSourceWPerMetre stage-weighted cell latent-heat sources, or {@code null}
+   * @param sections accepted hydrodynamic cell states
+   * @param inletFluid current inlet boundary fluid
+   * @param outletFluid external outlet donor for reversed flow, or {@code null}
+   * @param fluidTemplate thermodynamic template used for cell flashes
+   * @param tolerance relative conservation/synchronization tolerance
+   * @return composition-dependent latent heat added in each cell over the accepted step, in joules
+   */
+  public double[] advance(double timeStepSeconds, double[][] phaseMassFaceFluxKgS,
+      double[][] phaseMassSourceKgPerMetreSecond, double[][][] componentSourceKgPerMetreSecond,
+      double[] latentHeatSourceWPerMetre, TwoFluidSection[] sections, SystemInterface inletFluid,
+      SystemInterface outletFluid, SystemInterface fluidTemplate, double tolerance) {
     validateAdvanceArguments(timeStepSeconds, phaseMassFaceFluxKgS, phaseMassSourceKgPerMetreSecond, sections,
         tolerance);
     TwoFluidComponentTransport candidate = new TwoFluidComponentTransport(this);
     double[] latentHeat = candidate.advanceCandidate(timeStepSeconds, phaseMassFaceFluxKgS,
         phaseMassSourceKgPerMetreSecond, componentSourceKgPerMetreSecond, latentHeatSourceWPerMetre, sections,
-        inletFluid, fluidTemplate, tolerance);
+        inletFluid, outletFluid, fluidTemplate, tolerance);
     candidate.validateFiniteState();
     componentInventoryKg = candidate.componentInventoryKg;
     intervalInletMassKg = candidate.intervalInletMassKg;
     intervalOutletMassKg = candidate.intervalOutletMassKg;
+    intervalOutboundMassKg = candidate.intervalOutboundMassKg;
     intervalInterphaseTransferKg = candidate.intervalInterphaseTransferKg;
     intervalCellInterphaseTransferKg = candidate.intervalCellInterphaseTransferKg;
     intervalLatentHeatEnergyJ = candidate.intervalLatentHeatEnergyJ;
@@ -236,6 +284,7 @@ public final class TwoFluidComponentTransport implements Serializable {
   private void validateFiniteState() {
     requireFiniteValues(intervalInletMassKg);
     requireFiniteValues(intervalOutletMassKg);
+    requireFiniteValues(intervalOutboundMassKg);
     for (double[] transfer : intervalInterphaseTransferKg) {
       requireFiniteValues(transfer);
     }
@@ -259,13 +308,19 @@ public final class TwoFluidComponentTransport implements Serializable {
   private double[] advanceCandidate(double timeStepSeconds, double[][] phaseMassFaceFluxKgS,
       double[][] phaseMassSourceKgPerMetreSecond, double[][][] componentSourceKgPerMetreSecond,
       double[] latentHeatSourceWPerMetre, TwoFluidSection[] sections, SystemInterface inletFluid,
-      SystemInterface fluidTemplate, double tolerance) {
+      SystemInterface outletFluid, SystemInterface fluidTemplate, double tolerance) {
     if (fluidTemplate == null) {
       throw new IllegalArgumentException("Fluid template cannot be null for component transport");
     }
     SystemInterface preparedInlet = prepareFluid(inletFluid, "component inlet boundary");
     validateComponentSlate(preparedInlet);
     double[][] inletPhaseFractions = phaseMassFractions(preparedInlet);
+    double[][] outletPhaseFractions = null;
+    if (outletFluid != null) {
+      SystemInterface preparedOutlet = prepareFluid(outletFluid, "component outlet boundary");
+      validateComponentSlate(preparedOutlet);
+      outletPhaseFractions = phaseMassFractions(preparedOutlet);
+    }
     double[][][] oldFractions = currentMassFractions();
     double[][][] updated = copy(componentInventoryKg);
     double[] latentHeatEnergyByCellJ = new double[cellCount];
@@ -282,7 +337,7 @@ public final class TwoFluidComponentTransport implements Serializable {
             sections[cell].getLength(), phaseTransferKg, componentSourceKgPerMetreSecond, tolerance);
       }
       prepareAppearingPhaseDonors(timeStepSeconds, phaseMassFaceFluxKgS, frozenComponentTransferKg, inletPhaseFractions,
-          oldFractions, tolerance);
+          outletPhaseFractions, oldFractions, tolerance);
     }
 
     for (int face = 0; face <= cellCount; face++) {
@@ -291,7 +346,7 @@ public final class TwoFluidComponentTransport implements Serializable {
         if (phaseFlowKgS >= 0.0) {
           advectPositiveFace(timeStepSeconds, face, phase, phaseFlowKgS, inletPhaseFractions, oldFractions, updated);
         } else {
-          advectNegativeFace(timeStepSeconds, face, phase, -phaseFlowKgS, oldFractions, updated);
+          advectNegativeFace(timeStepSeconds, face, phase, -phaseFlowKgS, outletPhaseFractions, oldFractions, updated);
         }
       }
     }
@@ -352,12 +407,14 @@ public final class TwoFluidComponentTransport implements Serializable {
    * @param faceFlowsKgS accepted gas/oil/water face mass flows
    * @param componentTransferKg validated cell/phase/component source transfers
    * @param inletFractions specified inlet phase/component mass fractions
+   * @param outletFractions specified reversed-outlet phase/component mass fractions, or {@code null}
    * @param donorFractions old upwind fractions, updated only for empty appearing phases
    * @param tolerance relative mass-budget tolerance
    * @throws IllegalStateException if an empty donor cannot fund its outgoing transfers
    */
   private void prepareAppearingPhaseDonors(double timeStepSeconds, double[][] faceFlowsKgS,
-      double[][][] componentTransferKg, double[][] inletFractions, double[][][] donorFractions, double tolerance) {
+      double[][][] componentTransferKg, double[][] inletFractions, double[][] outletFractions,
+      double[][][] donorFractions, double tolerance) {
     for (int pass = 0; pass < cellCount; pass++) {
       boolean changed = false;
       for (int cell = 0; cell < cellCount; cell++) {
@@ -387,7 +444,8 @@ public final class TwoFluidComponentTransport implements Serializable {
           }
           double rightIncomingKg = timeStepSeconds * Math.max(0.0, -faceFlowsKgS[cell + 1][phase]);
           if (rightIncomingKg > 0.0) {
-            double[] rightFractions = cell + 1 < cellCount ? donorFractions[cell + 1][phase] : null;
+            double[] rightFractions = cell + 1 < cellCount ? donorFractions[cell + 1][phase]
+                : outletFractions == null ? null : outletFractions[phase];
             if (rightFractions == null || sum(rightFractions) <= 0.0) {
               unresolvedIncoming = true;
             } else {
@@ -688,19 +746,30 @@ public final class TwoFluidComponentTransport implements Serializable {
         updated[face][phase][component] += transportedMassKg;
       } else {
         intervalOutletMassKg[component] += transportedMassKg;
+        intervalOutboundMassKg[component] += transportedMassKg;
       }
     }
   }
 
   private void advectNegativeFace(double timeStepSeconds, int face, int phase, double phaseFlowKgS,
-      double[][][] oldFractions, double[][][] updated) {
+      double[][] outletPhaseFractions, double[][][] oldFractions, double[][][] updated) {
     if (face == 0) {
       throw new IllegalStateException("Unsupported component outflow through the inlet boundary in " + phaseName(phase)
           + ": positive inlet flow is required when component transport is enabled");
     }
     if (face == cellCount) {
-      throw new IllegalStateException("Unsupported component inflow through the outlet boundary in " + phaseName(phase)
-          + ": provide a validated outlet composition before enabling reverse boundary flow");
+      if (outletPhaseFractions == null) {
+        throw new IllegalStateException("Unsupported component inflow through the outlet boundary in "
+            + phaseName(phase) + ": provide a validated outlet composition before enabling reverse boundary flow");
+      }
+      double[] donorFractions = outletPhaseFractions[phase];
+      validateDonorComposition(donorFractions, timeStepSeconds * phaseFlowKgS, face, phase);
+      for (int component = 0; component < componentNames.length; component++) {
+        double transportedMassKg = timeStepSeconds * phaseFlowKgS * donorFractions[component];
+        updated[cellCount - 1][phase][component] += transportedMassKg;
+        intervalOutletMassKg[component] -= transportedMassKg;
+      }
+      return;
     }
     double[] donorFractions = oldFractions[face][phase];
     validateDonorComposition(donorFractions, timeStepSeconds * phaseFlowKgS, face, phase);
@@ -755,11 +824,13 @@ public final class TwoFluidComponentTransport implements Serializable {
    * Construct the interval-average outlet fluid from the accepted component boundary transfers.
    *
    * <p>
-   * Each component flow equals its integrated outlet mass divided by the accepted interval duration. Composition is
-   * mapped by component name, independent of template order. A TP flash at the requested outlet state preserves total
-   * component flows; its equilibrium phase split need not equal the transported hydrodynamic phase split. With zero
-   * outlet transfer the result has zero flow and the template composition is retained only as a thermodynamic carrier.
-   * Call this after a converged component report. The transport state and input template are not modified.
+   * Each component flow equals its positive outbound transfer divided by the accepted interval duration. Reversed
+   * phases remain signed in the conservation report but are external donor material, not downstream product.
+   * Composition is mapped by component name, independent of template order. A TP flash at the requested outlet state
+   * preserves total outbound component flows; its equilibrium phase split need not equal the transported hydrodynamic
+   * phase split. With zero outbound transfer the result has zero flow and the template composition is retained only as
+   * a thermodynamic carrier. Call this after a converged component report. The transport state and input template are
+   * not modified.
    * </p>
    *
    * @param fluidTemplate thermodynamic template with the tracked component slate
@@ -788,9 +859,9 @@ public final class TwoFluidComponentTransport implements Serializable {
       }
     }
     double totalMass = 0.0;
-    for (double mass : intervalOutletMassKg) {
+    for (double mass : intervalOutboundMassKg) {
       if (!Double.isFinite(mass) || mass < 0.0) {
-        throw new IllegalStateException("Component outlet transfer must be finite and nonnegative");
+        throw new IllegalStateException("Outbound component transfer must be finite and nonnegative");
       }
       totalMass += mass;
     }
@@ -809,7 +880,7 @@ public final class TwoFluidComponentTransport implements Serializable {
     }
     SystemInterface outlet;
     if (totalMass > 0.0) {
-      outlet = flashWithComponentMasses(outletTemplate, intervalOutletMassKg, pressurePa, temperatureK,
+      outlet = flashWithComponentMasses(outletTemplate, intervalOutboundMassKg, pressurePa, temperatureK,
           "accepted component outlet");
     } else {
       SystemInterface carrier = outletTemplate.clone();

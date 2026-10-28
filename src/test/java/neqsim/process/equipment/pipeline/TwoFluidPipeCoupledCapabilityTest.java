@@ -33,12 +33,12 @@ class TwoFluidPipeCoupledCapabilityTest {
   private static final double INITIAL_SLUG_FRONT_METRES = 12.0;
 
   @Test
-  void componentTransportAndSignedOutletBackflowFailBeforeMutationInEitherSetterOrder() {
+  void componentTransportAndSignedOutletBackflowWithoutDonorFailBeforeMutationInEitherSetterOrder() {
     TwoFluidPipe componentsFirst = uninitializedPipe("components-first");
     componentsFirst.setComponentTransportEnabled(true);
     IllegalStateException backflowException = assertThrows(IllegalStateException.class,
         () -> componentsFirst.setAllowOutletPhaseBackflow(true));
-    assertTrue(backflowException.getMessage().contains("external outlet composition"));
+    assertTrue(backflowException.getMessage().contains("setOutletBoundaryFluid"));
     assertFalse(componentsFirst.isOutletPhaseBackflowAllowed());
     assertTrue(componentsFirst.isComponentTransportEnabled());
     assertEquals(0.0, componentsFirst.getSimulationTime(), 0.0);
@@ -47,10 +47,33 @@ class TwoFluidPipeCoupledCapabilityTest {
     backflowFirst.setAllowOutletPhaseBackflow(true);
     IllegalStateException componentException = assertThrows(IllegalStateException.class,
         () -> backflowFirst.setComponentTransportEnabled(true));
-    assertTrue(componentException.getMessage().contains("external outlet composition"));
+    assertTrue(componentException.getMessage().contains("setOutletBoundaryFluid"));
     assertTrue(backflowFirst.isOutletPhaseBackflowAllowed());
     assertFalse(backflowFirst.isComponentTransportEnabled());
     assertEquals(0.0, backflowFirst.getSimulationTime(), 0.0);
+  }
+
+  /** An explicit external thermodynamic donor permits either configuration order and remains defensive. */
+  @Test
+  void explicitOutletDonorPermitsComponentTransportAndSignedBackflowInEitherOrder() {
+    TwoFluidPipe componentsFirst = uninitializedPipe("components-first-donor");
+    componentsFirst.setComponentTransportEnabled(true);
+    componentsFirst.setOutletBoundaryFluid(componentsFirst.getInletStream().getFluid());
+    componentsFirst.setAllowOutletPhaseBackflow(true);
+    assertTrue(componentsFirst.isComponentTransportEnabled());
+    assertTrue(componentsFirst.isOutletPhaseBackflowAllowed());
+
+    TwoFluidPipe backflowFirst = uninitializedPipe("backflow-first-donor");
+    backflowFirst.setOutletBoundaryFluid(backflowFirst.getInletStream().getFluid());
+    backflowFirst.setAllowOutletPhaseBackflow(true);
+    backflowFirst.setComponentTransportEnabled(true);
+    assertTrue(backflowFirst.isComponentTransportEnabled());
+    assertTrue(backflowFirst.isOutletPhaseBackflowAllowed());
+
+    double acceptedPressure = backflowFirst.getOutletBoundaryFluid().getPressure("Pa");
+    SystemInterface copy = backflowFirst.getOutletBoundaryFluid();
+    copy.setPressure(1.0, "bara");
+    assertEquals(acceptedPressure, backflowFirst.getOutletBoundaryFluid().getPressure("Pa"), 0.0);
   }
 
   @Test

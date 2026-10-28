@@ -123,8 +123,12 @@ $$
 
 where $\dot m_{f,k}$ is the integration-weighted phase mass flux already used by the phase
 continuity equation. The upwind state follows the sign of the internal face flux. The inlet stream
-supplies positive-flow inlet composition. Integrated boundary component masses use the same Euler,
-Runge-Kutta, or IMEX stage weights as the accepted phase update.
+supplies positive-flow inlet composition. For a pressure outlet that physically permits fallback,
+`setOutletBoundaryFluid(fluid)` supplies an independent flashed external donor and
+`setAllowOutletPhaseBackflow(true)` enables signed phase transport. Reversed phases use that donor's
+phase composition, density, and enthalpy while retaining the signed face speed and independent outlet
+pressure traction. Integrated boundary component masses use the same Euler, Runge-Kutta, or IMEX
+stage weights as the accepted phase update.
 
 With component transport and mass transfer enabled, each RHS evaluation flashes the conserved
 local component composition. Its equilibrium gas **mass fraction** sets the transfer target,
@@ -146,7 +150,11 @@ Frozen component sources must reproduce each hydrodynamic phase source and sum t
 phases for every named component in each cell. Equal total phase transfers alone cannot authorize
 conversion of one chemical component into another. Source-funded outlet transfers enter the same
 component boundary ledger as existing-phase transport.
-This transport contract does not qualify full blowdown thermal recovery or outlet backflow.
+The conservation report records signed net outlet component transfer. Downstream stream publication
+contains only positive outbound component transfer; external donor material entering the pipe is not
+published as negative product flow. Missing donor composition, a changed component slate, or an
+unsupported donor phase rejects the complete component candidate. This transport contract does not
+qualify a full blowdown, terrain pooling, restart, or predictive hydrocarbon transfer rate.
 
 The interphase source balance is
 
@@ -289,10 +297,13 @@ before state mutation because a phase that appears within an intermediate stage 
 stage-local component inventory. Other named-component advection cases retain their documented
 Euler, Runge-Kutta, and IMEX stage-weighted paths.
 
-Signed outlet backflow and named-component transport are mutually rejected during configuration,
-in either setter order, before steady or transient state can change. Reverse outlet inflow requires
-an independently supplied external composition; no such boundary API exists, so the implementation
-does not infer composition from the last interior cell.
+Signed outlet backflow with named-component transport requires an independently supplied external
+state through `setOutletBoundaryFluid(...)`, configured before signed flow is enabled. The outlet must
+be a pressure boundary. The implementation never infers external composition or enthalpy from the
+last interior cell. Without the donor, either setter order fails before steady or transient state can
+change. The synthetic rich-gas qualification depressurizes for 40 s and then ramps the external
+pressure to exercise actual same-gas fallback while mass, named-component, and full-energy ledgers
+close. It is boundary-contract evidence, not complete blowdown/refill or evaporation-rate validation.
 
 ### Momentum Conservation
 Separate momentum equations for each phase:

@@ -103,6 +103,47 @@ class TwoFluidComponentOutletTest {
     }
   }
 
+  /** Reversed outlet transport must use the explicit donor composition and a signed external ledger. */
+  @Test
+  void reversedOutletUsesExplicitDonorCompositionAndConservesEveryComponent() {
+    SystemInterface fluid = fluid(false);
+    SystemInterface donor = donorFluid();
+    TwoFluidSection[] cells = cells();
+    TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, cells);
+    double initialGasMass = phaseInventory(transport, 0);
+    double[][] faces = {{0.0, 0.0, 0.0}, {-0.2, 0.0, 0.0}};
+    cells[0].setGasMassPerLength(cells[0].getGasMassPerLength() + 0.02);
+    transport.advance(0.1, faces, new double[1][3], cells, fluid, donor, fluid, 1.0e-8);
+
+    TwoFluidComponentConservationReport report = transport.createReport(0.1, 1, 1.0e-8);
+    assertTrue(report.isConverged(), report.getMessage());
+    assertEquals(-0.02, sum(report.getOutletBoundaryMassKg()), 1.0e-12);
+    assertEquals(initialGasMass + 0.02, phaseInventory(transport, 0), 1.0e-12);
+    SystemInterface publishedOutlet = transport.createOutletFluid(fluid, 65.0e5, 290.15, 0.1);
+    assertEquals(0.0, publishedOutlet.getFlowRate("kg/sec"), 1.0e-12);
+
+    String[] names = report.getComponentNames();
+    double[] signedOutlet = report.getOutletBoundaryMassKg();
+    for (int component = 0; component < names.length; component++) {
+      double expectedFraction = donor.getPhase("gas").getComponent(names[component]).getx()
+          * donor.getPhase("gas").getComponent(names[component]).getMolarMass() / donor.getPhase("gas").getMolarMass();
+      assertEquals(-0.02 * expectedFraction, signedOutlet[component], 1.0e-12, names[component]);
+    }
+  }
+
+  /** A missing reversed-outlet donor must reject without changing accepted component state. */
+  @Test
+  void reversedOutletWithoutDonorRollsBackComponentCandidate() {
+    SystemInterface fluid = fluid(false);
+    TwoFluidSection[] cells = cells();
+    TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, cells);
+    String before = transport.createReport(0.0, 0, 1.0e-8).toJson();
+    double[][] faces = {{0.0, 0.0, 0.0}, {-0.2, 0.0, 0.0}};
+    assertThrows(IllegalStateException.class,
+        () -> transport.advance(0.1, faces, new double[1][3], cells, fluid, null, fluid, 1.0e-8));
+    assertEquals(before, transport.createReport(0.0, 0, 1.0e-8).toJson());
+  }
+
   private static void assertComponentFlows(TwoFluidComponentConservationReport report, SystemInterface outlet) {
     String[] names = report.getComponentNames();
     double[] masses = report.getOutletBoundaryMassKg();
@@ -111,6 +152,20 @@ class TwoFluidComponentOutletTest {
           * outlet.getPhase(0).getComponent(names[component]).getMolarMass();
       assertEquals(masses[component] / report.getElapsedTimeSeconds(), flow, 1.0e-11, names[component]);
     }
+  }
+
+  /** Return total component inventory in one transported phase. */
+  private static double phaseInventory(TwoFluidComponentTransport transport, int phase) {
+    return sum(transport.getInventoryKg()[0][phase]);
+  }
+
+  /** Sum a vector without changing it. */
+  private static double sum(double[] values) {
+    double total = 0.0;
+    for (double value : values) {
+      total += value;
+    }
+    return total;
   }
 
   private static TwoFluidSection[] cells() {
@@ -140,5 +195,18 @@ class TwoFluidComponentOutletTest {
     new ThermodynamicOperations(fluid).TPflash();
     fluid.initProperties();
     return fluid;
+  }
+
+  /** Create a static external donor with the same component slate and a distinct gas composition. */
+  private static SystemInterface donorFluid() {
+    SystemInterface donor = new SystemSrkEos(285.15, 50.0);
+    donor.addComponent("methane", 0.25);
+    donor.addComponent("n-heptane", 0.01);
+    donor.addComponent("water", 0.001);
+    donor.setMixingRule("classic");
+    donor.setMultiPhaseCheck(true);
+    new ThermodynamicOperations(donor).TPflash();
+    donor.initProperties();
+    return donor;
   }
 }

@@ -515,10 +515,13 @@ phase, total, named-component, interphase, bounded-fraction, and latent-inclusiv
 
 The conservative Lagrangian slug/film + named-component + phase-transfer + thermal combination is
 currently verified only with single-stage Euler. Reject a multi-stage selection before mutation
-until intermediate phase appearance owns stage-local component inventories. Also reject signed
-outlet backflow with named-component transport unless a physical external outlet composition is
-configured; the last interior composition is not a valid inflow boundary. None of these numerical
-contracts establishes equivalence with a commercial transient multiphase simulator.
+until intermediate phase appearance owns stage-local component inventories. Signed outlet backflow
+with named-component transport requires `setOutletBoundaryFluid(externalFluid)` before
+`setAllowOutletPhaseBackflow(true)`; this explicitly owns reversed phase composition, density, and
+enthalpy. The last interior composition is not a valid inflow boundary. Treat the synthetic
+same-gas pressure-ramp regression as boundary-contract evidence only, not complete restart or
+evaporation-rate qualification. None of these numerical contracts establishes equivalence with a
+commercial transient multiphase simulator.
 
 ## TwoFluidPipe Regime-Transition Continuation
 

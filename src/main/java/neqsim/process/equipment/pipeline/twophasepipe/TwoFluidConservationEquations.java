@@ -145,6 +145,7 @@ public class TwoFluidConservationEquations implements Serializable {
   private double[][] interfacePhasePressure = new double[0][3];
   private TwoFluidSection reconstructedOutlet;
   private TwoFluidSection inletBoundaryState;
+  private TwoFluidSection outletBoundaryState;
   /** Prescribed phase advection with pressure extrapolated from the current inlet cell. */
   private boolean inletPhaseFlowPrescribed;
   private boolean inletClosed;
@@ -223,6 +224,22 @@ public class TwoFluidConservationEquations implements Serializable {
   public void setInletPhaseFlowBoundaryState(TwoFluidSection state) {
     inletBoundaryState = state == null ? null : state.clone();
     inletPhaseFlowPrescribed = state != null;
+  }
+
+  /**
+   * Supply an explicit external thermodynamic donor for reversed outlet flow.
+   *
+   * <p>
+   * The supplied phase holdups, densities and enthalpies are used only when the corresponding outlet-cell phase
+   * velocity points into the pipe. The interior velocity determines the signed face speed, while
+   * {@link #setOutletBoundaryPressure(double)} remains the independent pressure-traction owner. Forward outflow keeps
+   * the interior donor. Pass {@code null} to restore the legacy zero-gradient donor.
+   * </p>
+   *
+   * @param state external donor state, or {@code null}
+   */
+  public void setOutletBoundaryState(TwoFluidSection state) {
+    outletBoundaryState = state == null ? null : state.clone();
   }
 
   /** Obtain consistent inlet traction and source metadata without mutating the prescribed state. */
@@ -1665,9 +1682,10 @@ public class TwoFluidConservationEquations implements Serializable {
    *
    * <p>
    * By default, each reversed phase velocity is clamped at zero because a one-way transmissive boundary has no upstream
-   * state to advect in. When signed outlet flow is explicitly enabled, the zero-gradient interior phase state supplies
-   * that boundary state and a reversed phase carries signed mass and energy back into the domain. Use signed flow only
-   * with a well-posed pressure-momentum model and a boundary whose physical interpretation permits fallback.
+   * state to advect in. When signed outlet flow is explicitly enabled, an explicit outlet donor supplied through
+   * {@link #setOutletBoundaryState(TwoFluidSection)} provides phase density, holdup and enthalpy for reversed flow. The
+   * legacy zero-gradient interior donor remains available when no external state is supplied. Use signed flow only with
+   * a well-posed pressure-momentum model and a boundary whose physical interpretation permits fallback.
    * </p>
    *
    * <p>
@@ -1696,38 +1714,41 @@ public class TwoFluidConservationEquations implements Serializable {
     }
 
     // Gas flux (positive velocity means outflow) - use default density if not set
-    double rhoG = sec.getGasDensity();
+    double vG = allowOutletPhaseBackflow ? sec.getGasVelocity() : Math.max(0.0, sec.getGasVelocity());
+    TwoFluidSection gasDonor = outletDonor(sec, vG);
+    double rhoG = gasDonor.getGasDensity();
     if (!Double.isFinite(rhoG) || rhoG <= 0.0)
       rhoG = 1.0; // Default gas density
-    double vG = allowOutletPhaseBackflow ? sec.getGasVelocity() : Math.max(0.0, sec.getGasVelocity());
-    double alphaG = sec.getGasHoldup();
+    double alphaG = gasDonor.getGasHoldup();
     flux[IDX_GAS_MASS] = alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * A;
     flux[IDX_GAS_MOMENTUM] = alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * vG * A + alphaG * facePressure * A;
 
     // Oil flux - use default density if not set
-    double rhoO = sec.getOilDensity();
+    double vO = allowOutletPhaseBackflow ? sec.getOilVelocity() : Math.max(0.0, sec.getOilVelocity());
+    TwoFluidSection oilDonor = outletDonor(sec, vO);
+    double rhoO = oilDonor.getOilDensity();
     if (!Double.isFinite(rhoO) || rhoO <= 0.0)
       rhoO = 700.0; // Default oil density
-    double vO = allowOutletPhaseBackflow ? sec.getOilVelocity() : Math.max(0.0, sec.getOilVelocity());
     // Recover oil and water independently; subtracting gas holdup would erase positive trace liquid.
-    double alphaO = sec.getOilHoldup();
+    double alphaO = oilDonor.getOilHoldup();
     flux[IDX_OIL_MASS] = alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * A;
     flux[IDX_OIL_MOMENTUM] = alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * vO * A + alphaO * facePressure * A;
 
     // Water flux - use default density if not set
-    double rhoW = sec.getWaterDensity();
+    double vW = allowOutletPhaseBackflow ? sec.getWaterVelocity() : Math.max(0.0, sec.getWaterVelocity());
+    TwoFluidSection waterDonor = outletDonor(sec, vW);
+    double rhoW = waterDonor.getWaterDensity();
     if (!Double.isFinite(rhoW) || rhoW <= 0.0)
       rhoW = 1000.0; // Default water density
-    double vW = allowOutletPhaseBackflow ? sec.getWaterVelocity() : Math.max(0.0, sec.getWaterVelocity());
-    double alphaW = sec.getWaterHoldup();
+    double alphaW = waterDonor.getWaterHoldup();
     flux[IDX_WATER_MASS] = alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * A;
     flux[IDX_WATER_MOMENTUM] = alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * vW * A + alphaW * facePressure * A;
 
     // Energy flux
     if (includeEnergyEquation) {
-      double HG = sec.getGasEnthalpy();
-      double HO = sec.getOilEnthalpy();
-      double HW = sec.getWaterEnthalpy();
+      double HG = gasDonor.getGasEnthalpy();
+      double HO = oilDonor.getOilEnthalpy();
+      double HW = waterDonor.getWaterEnthalpy();
       // Exactly absent phases have no enthalpy flux even when their unused properties are non-finite.
       flux[IDX_ENERGY] = ((alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * (HG + 0.5 * vG * vG))
           + (alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * (HO + 0.5 * vO * vO))
@@ -1735,6 +1756,17 @@ public class TwoFluidConservationEquations implements Serializable {
     }
 
     return flux;
+  }
+
+  /**
+   * Select the external thermodynamic donor only for explicitly enabled reversed outlet flow.
+   *
+   * @param interior interior or reconstructed outlet state
+   * @param velocity signed phase velocity in m/s
+   * @return external donor for reverse flow, otherwise the interior state
+   */
+  private TwoFluidSection outletDonor(TwoFluidSection interior, double velocity) {
+    return allowOutletPhaseBackflow && velocity < 0.0 && outletBoundaryState != null ? outletBoundaryState : interior;
   }
 
   /** A closed face carries pressure traction but no advected mass or energy. */

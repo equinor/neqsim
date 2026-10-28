@@ -91,6 +91,41 @@ class TwoFluidAbsentPhaseOutletReviewTest {
   }
 
   /**
+   * A reversed phase must use external density and enthalpy while retaining the signed interior face speed.
+   *
+   * @throws Exception if the private boundary evaluator cannot be invoked
+   */
+  @Test
+  void reversedOutletUsesExternalThermodynamicDonorForMassMomentumAndEnergy() throws Exception {
+    TwoFluidSection interior = liquidSection();
+    interior.setGasHoldup(1.0);
+    interior.setLiquidHoldup(0.0);
+    interior.setGasDensity(2.0);
+    interior.setGasVelocity(-3.0);
+    interior.setGasEnthalpy(1.0e5);
+    interior.updateConservativeVariables();
+
+    TwoFluidSection donor = interior.clone();
+    donor.setGasDensity(5.0);
+    donor.setGasEnthalpy(3.0e5);
+    donor.setGasVelocity(0.0);
+    donor.updateConservativeVariables();
+
+    TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+    equations.setIncludeEnergyEquation(true);
+    equations.setAllowOutletPhaseBackflow(true);
+    equations.setOutletBoundaryState(donor);
+    Method method = TwoFluidConservationEquations.class.getDeclaredMethod("calcOutletFlux", TwoFluidSection.class,
+        double.class);
+    method.setAccessible(true);
+    double[] flux = (double[]) method.invoke(equations, interior, interior.getPressure());
+    double area = interior.getArea();
+    assertEquals(-5.0 * 3.0 * area, flux[0], 1.0e-12);
+    assertEquals(5.0 * 9.0 * area + interior.getPressure() * area, flux[3], 1.0e-8);
+    assertEquals(-5.0 * 3.0 * (3.0e5 + 4.5) * area, flux[6], 1.0e-8);
+  }
+
+  /**
    * Check both boundary implementations and both outlet backflow policies.
    *
    * @param section boundary state with independently known total-energy flux

@@ -388,6 +388,9 @@ public class TwoFluidPipe extends Pipeline {
   /** Outlet pressure (Pa). */
   private double outletPressure;
 
+  /** Independently specified thermodynamic donor for reversed outlet flow. */
+  private SystemInterface outletBoundaryFluid;
+
   /** Flag indicating if outlet pressure was explicitly set. */
   private boolean outletPressureSet = false;
 
@@ -5626,8 +5629,11 @@ public class TwoFluidPipe extends Pipeline {
       throw new IllegalStateException("Conservative energy recovery does not support a multilayer, film, "
           + "upstream-volume, unsplit or split-force model");
     }
-    if (equations.isOutletPhaseBackflowAllowed()) {
+    if (equations.isOutletPhaseBackflowAllowed() && outletBoundaryFluid == null) {
       throw new IllegalStateException(componentOutletBackflowUnsupportedMessage());
+    }
+    if (outletBoundaryFluid != null && outletBCType != BoundaryCondition.CONSTANT_PRESSURE) {
+      throw new IllegalStateException("An outlet boundary fluid requires a constant-pressure outlet");
     }
     if (!(inletBCType == BoundaryCondition.CLOSED || inletBCType == BoundaryCondition.STREAM_CONNECTED
         || inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet
@@ -6002,6 +6008,7 @@ public class TwoFluidPipe extends Pipeline {
     inletBCType = candidate.inletBCType;
     outletBCType = candidate.outletBCType;
     outletPressure = candidate.outletPressure;
+    outletBoundaryFluid = candidate.outletBoundaryFluid;
     outletPressureSet = candidate.outletPressureSet;
     inletPressure = candidate.inletPressure;
     inletPressureSet = candidate.inletPressureSet;
@@ -6645,7 +6652,7 @@ public class TwoFluidPipe extends Pipeline {
       if (captureComponentStageFluxes) {
         latentHeatEnergyByCellJ = componentTransport.advance(dtActual, weightedPhaseMassFaceFluxes,
             weightedPhaseMassSources, weightedComponentSources, weightedLatentHeatSources, sections,
-            getInletStream().getFluid(), referenceFluid, componentConservationTolerance);
+            getInletStream().getFluid(), outletBoundaryFluid, referenceFluid, componentConservationTolerance);
       }
       if (useConservativeEnergyRecovery) {
         recoverConservativeThermodynamics();
@@ -7468,6 +7475,7 @@ public class TwoFluidPipe extends Pipeline {
           outletBCType == BoundaryCondition.CLOSED);
     }
     equations.setInletBoundaryState(null);
+    equations.setOutletBoundaryState(null);
     if (isTransientMode && coupledPressureMomentumEnabled && (inletBCType == BoundaryCondition.STREAM_CONNECTED
         || inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet)) {
       // A prescribed feed belongs on an external face. Replacing the evolving cell's
@@ -7664,6 +7672,11 @@ public class TwoFluidPipe extends Pipeline {
     // Outlet boundary
     TwoFluidSection outlet = sections[numberOfSections - 1];
     if (outletBCType == BoundaryCondition.CONSTANT_PRESSURE) {
+      if (outletBoundaryFluid != null) {
+        TwoFluidSection outletFace = createPrescribedInletFace(outlet, 0.0, outletBoundaryFluid);
+        outletFace.setPressure(outletPressureSet ? outletPressure : outletBoundaryFluid.getPressure("Pa"));
+        equations.setOutletBoundaryState(outletFace);
+      }
       if (!(isTransientMode && useConservativeEnergyRecovery)) {
         outlet.setPressure(transientOutletCellPressure());
       }
@@ -7816,6 +7829,12 @@ public class TwoFluidPipe extends Pipeline {
     return fluid.getPhase(phaseName).getFlowRate("kg/sec") / density;
   }
 
+  /**
+   * Calculate flashed phase mass fractions from flow rates or, for a static reservoir, phase inventories.
+   *
+   * @param inFluid flashed boundary fluid
+   * @return gas, oil and aqueous mass fractions
+   */
   private double[] calculateInletPhaseMassFractions(SystemInterface inFluid) {
     double[] fractions = new double[3];
     double massTotal = inFluid.getFlowRate("kg/sec");
@@ -7833,6 +7852,18 @@ public class TwoFluidPipe extends Pipeline {
     }
 
     double sum = fractions[0] + fractions[1] + fractions[2];
+    if (sum <= 0.0) {
+      if (inFluid.hasPhaseType("gas")) {
+        fractions[0] = inFluid.getPhase("gas").getMass();
+      }
+      if (inFluid.hasPhaseType("oil")) {
+        fractions[1] = inFluid.getPhase("oil").getMass();
+      }
+      if (inFluid.hasPhaseType("aqueous")) {
+        fractions[2] = inFluid.getPhase("aqueous").getMass();
+      }
+      sum = fractions[0] + fractions[1] + fractions[2];
+    }
     if (sum <= 0.0) {
       boolean hasGas = inFluid.hasPhaseType("gas");
       boolean hasOil = inFluid.hasPhaseType("oil");
@@ -8401,14 +8432,15 @@ public class TwoFluidPipe extends Pipeline {
    * This opt-in path uses the accepted hydrodynamic phase face fluxes and interphase source terms. Enable it before
    * {@link #run(UUID)} so the distributed component state can be initialized from the steady phase inventories. With
    * mass transfer enabled, phase mass targets come from a flash of the conserved local component composition, so
-   * hydraulic slip alone does not create evaporation. Positive-flow boundaries and an unchanged named component slate
-   * are currently required.
+   * hydraulic slip alone does not create evaporation. Signed outlet inflow additionally requires an explicit
+   * thermodynamic donor configured with {@link #setOutletBoundaryFluid(SystemInterface)}. The named component slate
+   * must remain unchanged.
    * </p>
    *
    * @param enabled true to track named components conservatively
    */
   public void setComponentTransportEnabled(boolean enabled) {
-    if (enabled && equations.isOutletPhaseBackflowAllowed()) {
+    if (enabled && equations.isOutletPhaseBackflowAllowed() && outletBoundaryFluid == null) {
       throw new IllegalStateException(componentOutletBackflowUnsupportedMessage());
     }
     componentTransportEnabled = enabled;
@@ -9671,6 +9703,34 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Specify the external thermodynamic donor used only for reversed phase flow at a pressure outlet.
+   *
+   * <p>
+   * The fluid is defensively copied. Its flashed phase composition, density and enthalpy supply material entering from
+   * the outlet; the configured outlet pressure remains the mechanical traction. Forward outflow continues to use the
+   * final pipe cell. Call {@link #setAllowOutletPhaseBackflow(boolean)} separately to enable signed flow. Pass
+   * {@code null} to clear the external donor.
+   * </p>
+   *
+   * @param fluid external donor fluid, or {@code null}
+   */
+  public void setOutletBoundaryFluid(SystemInterface fluid) {
+    if (fluid == null && componentTransportEnabled && equations.isOutletPhaseBackflowAllowed()) {
+      throw new IllegalStateException(componentOutletBackflowUnsupportedMessage());
+    }
+    outletBoundaryFluid = fluid == null ? null : fluid.clone();
+  }
+
+  /**
+   * Get a defensive copy of the reversed-outlet thermodynamic donor.
+   *
+   * @return configured donor, or {@code null}
+   */
+  public SystemInterface getOutletBoundaryFluid() {
+    return outletBoundaryFluid == null ? null : outletBoundaryFluid.clone();
+  }
+
+  /**
    * Set inlet boundary condition type.
    *
    * <p>
@@ -10447,15 +10507,15 @@ public class TwoFluidPipe extends Pipeline {
    * @param allow true to carry signed phase mass and energy through the outlet
    */
   public void setAllowOutletPhaseBackflow(boolean allow) {
-    if (allow && componentTransportEnabled) {
+    if (allow && componentTransportEnabled && outletBoundaryFluid == null) {
       throw new IllegalStateException(componentOutletBackflowUnsupportedMessage());
     }
     equations.setAllowOutletPhaseBackflow(allow);
   }
 
   private static String componentOutletBackflowUnsupportedMessage() {
-    return "Named-component transport cannot be combined with signed outlet backflow: "
-        + "reverse outlet inflow requires an external outlet composition, which is not configured";
+    return "Named-component transport requires setOutletBoundaryFluid(...) before signed outlet backflow: "
+        + "reverse outlet inflow must have an external composition and enthalpy owner";
   }
 
   /** @return true when signed outlet phase flow is enabled */
