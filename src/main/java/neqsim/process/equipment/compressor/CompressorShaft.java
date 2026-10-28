@@ -1663,6 +1663,59 @@ public class CompressorShaft implements Serializable {
   }
 
   /**
+   * Evaluate how every active member meets its required discharge pressure at the present, fixed shaft speed, using the
+   * member's chart: head deficit, recycle (through-flow, recycle fraction), throttling needed, and the shaft power and
+   * discharge temperature at the controlled operating point. This is the operating model of a constant-speed shaft,
+   * where the speed cannot be solved and the pressure set points are held by recycle or throttling.
+   *
+   * <p>
+   * Set the pressure each stage must deliver with {@link #setMemberRequiredDischargePressure}, run the shaft at its
+   * fixed speed ({@link #runAtFixedSpeed}), then call this method. Idle members and members without a required pressure
+   * or a chart are returned as {@link FixedSpeedControlResult.Status#NOT_EVALUATED}. The flowsheet and the members are
+   * not changed. See {@link CompressorFixedSpeedControl} for the method and its assumptions.
+   * </p>
+   *
+   * @return one result per member, in the order the members were added
+   */
+  public List<FixedSpeedControlResult> evaluateFixedSpeedControl() {
+    List<FixedSpeedControlResult> results = new ArrayList<FixedSpeedControlResult>();
+    for (Compressor c : compressors) {
+      Double need = requiredDischargeBara.get(c);
+      if (!isMemberActive(c)) {
+        results.add(FixedSpeedControlResult.notEvaluated(c.getName(), 0.0,
+            need == null ? Double.NaN : need.doubleValue(), "member idle"));
+      } else if (need == null) {
+        results.add(FixedSpeedControlResult.notEvaluated(c.getName(), c.getSpeed(), Double.NaN,
+            "no required discharge pressure set"));
+      } else {
+        results.add(CompressorFixedSpeedControl.evaluate(c, need.doubleValue()));
+      }
+    }
+    return results;
+  }
+
+  /**
+   * Total shaft power at the controlled operating points of {@link #evaluateFixedSpeedControl()}: the evaluated members
+   * contribute the power at their controlled point (including recycle), the others their present power.
+   *
+   * @param unit power unit: "W", "kW" or "MW"
+   * @return the controlled shaft power in the requested unit
+   */
+  public double getFixedSpeedControlledPower(String unit) {
+    double sumW = 0.0;
+    List<FixedSpeedControlResult> results = evaluateFixedSpeedControl();
+    for (int i = 0; i < compressors.size(); i++) {
+      Compressor c = compressors.get(i);
+      if (!isMemberActive(c)) {
+        continue;
+      }
+      double kw = results.get(i).getShaftPowerKW();
+      sumW += Double.isNaN(kw) ? c.getPower() : kw * 1000.0;
+    }
+    return sumW / powerFactor(unit);
+  }
+
+  /**
    * Build the operating-point report at the present state of the flowsheet: member speeds, powers, surge and stonewall
    * margins, discharge-pressure margins against the process need and the anti-surge recycle fraction each member needs.
    *

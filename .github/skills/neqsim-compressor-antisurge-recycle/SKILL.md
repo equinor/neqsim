@@ -227,6 +227,23 @@ calc.setRecycleCoolerTemperature(35.0, "C");
 AntiSurgeRecycleCalculator.Result result = calc.solve();
 ```
 
+## Constant-Speed Compressors: Fixed-Speed Operating Point
+
+A motor-driven machine on a fixed gear (no VFD) cannot move speed, so the speed solvers of `CompressorShaft` do not
+apply. Use `CompressorShaft.evaluateFixedSpeedControl()` (or `CompressorFixedSpeedControl.evaluate(compressor,
+requiredBara)` for one stage). Per stage it reports, on the real chart at the fixed speed:
+
+| Status | Meaning |
+|---|---|
+| `ON_CURVE` | chart delivers the required pressure at the process flow |
+| `RECYCLE_CONTROLLED` | surplus head; recycle raises the through-flow until chart head = requirement; power, recycle fraction and discharge temperature are those of that point |
+| `THROTTLE_REQUIRED` | surplus head even at stonewall; recycle cannot remove it |
+| `HEAD_DEFICIT` | chart cannot reach the pressure (for example a lighter gas at the same flow); `deliverableDischargeBara` gives what it can |
+
+Set the stage pressures with `setMemberRequiredDischargePressure`, call `runAtFixedSpeed(rpm, null)`, then evaluate.
+Idle members (1oo2 trains) are `NOT_EVALUATED`. The evaluation runs a deep copy of each member, so MW correction, IGV and
+the efficiency model are those of the flowsheet. Tests: `CompressorFixedSpeedControlTest`.
+
 ## Dynamic Anti-Surge Control (AntiSurgeController)
 
 The `Calculator`-driven loop above is a **steady-state** recycle solver. For a
