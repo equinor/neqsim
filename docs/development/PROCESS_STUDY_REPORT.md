@@ -496,6 +496,9 @@ remain `FAIL`.
 | Mixed EOS or component warning | Areas use different equation-of-state classes or define a pseudo-component differently; state it in the basis |
 | No PDF | PDF export and field update need Microsoft Word; without it the contents carry a static list |
 | Nearly empty sheets | Long linear chains are wide and short; raise or lower `--max-units-per-sheet`, or group areas with `pfd_sheets` |
+| The same material appears twice (a wrapper stream beside the unit outlet, double counting in area balances) | The model names outlets with `Stream(name, other_stream)`. A NeqSim build whose `Stream.getInletStreams()` reports the wrapped stream (workspace build) merges the wrapper; the pip package 3.18.0 does not. Start the JVM with `neqsim_dev_setup.neqsim_init(...)` and then call `process_report.main(argv)` from a small launcher script, or build the model with the unit outlets themselves |
+| Contactor/absorber drawn as unconnected unit | `SimpleAbsorber`-family feeds are added with `addGasInStream/addSolventInStream`; the extractor reads them through the absorber getters (fixed 2026-10-28) |
+| `BAL-OVERALL` FAIL that is understood | Document it with `known_balance_exceptions: [{id: overall, explanation: ...}]` (turns the check into WARN); unit and area ids work as before |
 
 **What the standards register claims.** It lists the standards used for the conventions (ISO 10628-1/-2, ISO 14617,
 NORSOK P-002, DEXPI, IEC 62424) with edition, status, source and date checked. Symbols and conventions follow the

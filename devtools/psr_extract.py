@@ -38,6 +38,7 @@ _CATEGORY_KEYWORDS = [
     ("Ejector", "ejector"),
     ("DistillationColumn", "column"),
     ("Column", "column"),
+    ("Absorber", "column"),  # SimpleAbsorber extends Separator: without this the contactor would be drawn as a vessel
     ("Compressor", "compressor"),
     ("Expander", "expander"),
     ("Pump", "pump"),
@@ -568,6 +569,19 @@ def unit_results(unit_rec, stream_res):
     outs = [r for r in outs if r and r.get("available")]
     if category in ("heater", "cooler", "exchanger"):
         res["duty_kw"] = _watts_to_kw(_try(obj, ["getDuty"]))
+    if category == "column":
+        # DistillationColumn: external heat is the reboiler plus the condenser duty (absorber-type columns have none)
+        duties = []
+        for part in ("getReboiler", "getCondenser"):
+            sub = _try(obj, [part])
+            if sub is not None:
+                value = _watts_to_kw(_try(sub, ["getDuty"]))
+                if value is not None:
+                    duties.append((part[3:].lower(), value))
+        if duties:
+            res["duty_kw"] = sum(v for _, v in duties)
+            for label, value in duties:
+                res["extras"]["%s_duty_kw" % label] = value
     if category in ("compressor", "pump", "expander"):
         res["power_kw"] = _watts_to_kw(_try(obj, ["getPower"]))
     if ins and outs and category in ("valve", "heater", "cooler", "exchanger", "pipe", "compressor",

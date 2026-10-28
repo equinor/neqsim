@@ -152,7 +152,37 @@ def unit_balance(unit, streams, case, comps, tol):
             else rec["energy_rel"] <= tol["energy_rel_bookkeeping"]
         if not ok and note and within:
             rec["energy_status"], rec["energy_note"] = "NOTE", note
+    if "StreamSaturator" in str(unit.get("java_class") or ""):
+        _saturator_note(rec, unit, streams, case, comps)
     return rec
+
+
+SATURATOR_NOTE = ("stream saturator: the unit adds the saturating component (water) to the stream, so the residual is the "
+                  "boundary supply of that component (a feed generator), not a closure error")
+
+
+def _saturator_note(rec, unit, streams, case, comps):
+    """Relabel the mass/component/energy residual of a stream saturator as NOTE when it is the added component.
+
+    The unit's mass residual must equal the sum of the component increments (everything added is a modelled component)
+    and the enthalpy increment is reported as the implied energy of the added material.
+    """
+    in_ids, out_ids = unit["inlet_streams"], unit["outlet_streams"]
+    added = 0.0
+    for name in comps:
+        a = sum(((streams[s]["results"][case].get("flow_kg_h") or {}).get(name) or 0.0) for s in in_ids
+                if streams[s]["results"].get(case, {}).get("available"))
+        b = sum(((streams[s]["results"][case].get("flow_kg_h") or {}).get(name) or 0.0) for s in out_ids
+                if streams[s]["results"].get(case, {}).get("available"))
+        if b - a > 0:
+            added += b - a
+    if added <= 0 or abs(rec["mass_res_kg_h"] - added) > max(1e-3, 1e-4 * added):
+        return
+    rec["mass_status"], rec["mass_note"] = "NOTE", SATURATOR_NOTE
+    rec["component_status"], rec["component_note"] = "NOTE", SATURATOR_NOTE
+    if rec.get("energy_status") == "N/A" and rec.get("implied_energy_kw") is not None:
+        rec["energy_res_kw"] = rec["implied_energy_kw"]
+        rec["energy_status"], rec["energy_note"] = "NOTE", SATURATOR_NOTE + " (energy residual = enthalpy increment of the added material)"
 
 
 def _explained(residual, attributed, scale, rel_tol, abs_tol):
@@ -169,11 +199,27 @@ def _note_status(status, residual, units, key_status, key_res, scale, rel_tol, a
     if not noted:
         return status, ""
     attributed = sum(u[key_res] for u in noted)
-    if tol_limit is not None and scale > 0 and abs(residual) / scale > tol_limit:
+    key_note = key_status.replace("_status", "_note")
+    sat = sum(u[key_res] for u in noted if str(u.get(key_note) or "").startswith("stream saturator"))
+    # the size limit guards recycle/re-flash bookkeeping; a stream saturator's boundary supply is explained in full
+    if tol_limit is not None and scale > 0 and abs(residual - sat) / scale > tol_limit:
         return status, ""
     if _explained(residual, attributed, scale, rel_tol, abs_tol):
         return "NOTE", "explained by the bookkeeping residual of: %s" % ", ".join(u["tag"] for u in noted[:6])
     return status, ""
+
+
+def _ext_duty(unit, case):
+    """External heat duty of a unit for the area and overall energy balances.
+
+    A two-stream heat exchanger (two inlets and two outlets in the model) moves heat from one modelled stream to the
+    other: its ``getDuty()`` is an internal transfer, not an external duty, so it is excluded. Columns report the sum
+    of reboiler and condenser duty (extracted by ``psr_extract.unit_results``).
+    """
+    if unit.get("category") == "exchanger" and len(unit.get("inlet_streams") or []) >= 2 \
+            and len(unit.get("outlet_streams") or []) >= 2:
+        return 0.0
+    return _num(unit["results"].get(case, {}).get("duty_kw"))
 
 
 def area_balances(data, case, tol, unit_recs=None):
@@ -206,7 +252,7 @@ def area_balances(data, case, tol, unit_recs=None):
         m_out, _ = _sum_streams(outflow, streams, case, "mass_kg_h")
         h_in, _ = _sum_streams(inflow, streams, case, "H_kw")
         h_out, _ = _sum_streams(outflow, streams, case, "H_kw")
-        q = sum(_num(u["results"].get(case, {}).get("duty_kw")) for u in data["equipment"] if u["area"] == name)
+        q = sum(_ext_duty(u, case) for u in data["equipment"] if u["area"] == name)
         w = sum(_num(u["results"].get(case, {}).get("power_kw")) for u in data["equipment"] if u["area"] == name)
         throughput = max(m_in, m_out)
         mass_res = m_out - m_in
@@ -242,7 +288,7 @@ def overall_balance(data, case, tol, unit_recs=None):
     m_out, miss_p = _sum_streams(products, streams, case, "mass_kg_h")
     h_in, _ = _sum_streams(feeds, streams, case, "H_kw")
     h_out, _ = _sum_streams(products, streams, case, "H_kw")
-    q_total = sum(_num(u["results"].get(case, {}).get("duty_kw")) for u in data["equipment"])
+    q_total = sum(_ext_duty(u, case) for u in data["equipment"])
     w_total = sum(_num(u["results"].get(case, {}).get("power_kw")) for u in data["equipment"])
     comp_rows = []
     for name in comps:

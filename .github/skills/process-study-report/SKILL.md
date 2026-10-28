@@ -157,6 +157,16 @@ Outputs: `OUT/data/` (`process_data.json`, `.xlsx`, `stream_properties.csv`, `st
   `BAL-NOTES` (WARN). On a 146-stream plant model 18 FAIL became 13 NOTE and 5 genuine FAIL.
 - `known_balance_exceptions` in the basis documents unit/area balance failures that are understood
   (e.g. stale recycle state): they turn FAIL into WARN only when an explanation exists; undocumented failures stay FAIL.
+  An `id: overall` entry documents a failing overall balance (WARN); the other ids are unit tags and area names.
+- Balance bookkeeping added on the OSD TEG model (2026-10-28): a `StreamSaturatorUtil` that adds the saturation water is a
+  NOTE (boundary supply, its enthalpy increment is the implied energy), a two-stream heat exchanger is an internal heat
+  transfer (its `getDuty()` is not an external duty in area/overall energy balances) and a `DistillationColumn` reports
+  reboiler plus condenser duty. Absorber-family units (`SimpleAbsorber`, `SimpleTEGAbsorber`, `WaterStripperColumn`) take their
+  ports from `getGasInStream/getInStream`, `getSolventInStream`, `getGasOutStream`, `getLiquidOutStream` and are drawn as columns.
+- A `Stream` built from another stream (`Stream(name, other)`) is a naming wrapper: with a NeqSim build whose `Stream.getInletStreams()`
+  reports the wrapped stream (workspace build, newer than 3.18) the wrapper is merged into the wrapped stream, so material is
+  not drawn or balanced twice. To use that build from the CLI, start the JVM with `neqsim_dev_setup.neqsim_init` first and then call
+  `process_report.main(...)` (see the task launcher pattern in `docs/development/PROCESS_STUDY_REPORT.md`).
 - Multi-area models: components are the union over all stream fluids (a component missing in a stream is an exact 0);
   a pseudo-component defined differently in two areas is kept apart as `name [variant 2]`; several EOS classes or such
   conflicts raise `MODEL-EOS-COMPONENTS`.
