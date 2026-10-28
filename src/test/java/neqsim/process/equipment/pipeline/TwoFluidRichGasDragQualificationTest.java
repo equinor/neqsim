@@ -23,6 +23,29 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 @Tag("slow")
 class TwoFluidRichGasDragQualificationTest {
+  /**
+   * Conserved component targets must complete the entire requested pressure ramp on both historical meshes.
+   */
+  @Test
+  void originalTerrainCompletesPressureRampWithConservedComponentTargets() {
+    for (int cells : new int[] {12, 24}) {
+      double dt = cells == 12 ? 0.25 : 0.125;
+      TwoFluidPipe pipe = createRichGasPipe(cells, false);
+      for (int step = 1; step <= (int) Math.round(120.0 / dt); step++) {
+        double elapsed = step * dt;
+        pipe.setOutletPressure(150.0 - 140.0 * elapsed / 120.0, "bara");
+        pipe.runTransient(dt, null);
+        assertEquals(elapsed, pipe.getSimulationTime(), 1e-9);
+        assertFalse(pipe.isTransientOutletBackflowClamped());
+        assertTrue(pipe.getLastComponentConservationReport().isConverged());
+        assertTrue(pipe.getLastConservativeEnergyReport().isWithinTolerance(1e-3, 1e-7));
+        for (Phase phase : Phase.values()) {
+          assertTrue(pipe.getLastMassBalanceReport().isWithinTolerance(phase, 1e-6, 1e-8));
+        }
+      }
+    }
+  }
+
   /** Cross the former trace-drag rejection on the original terrain. */
   @Test
   void originalTerrainCrossesConservativeFirstOilAppearance() {

@@ -574,6 +574,74 @@ public final class TwoFluidComponentTransport implements Serializable {
   }
 
   /**
+   * Relax dry hydrocarbon component inventories toward their local equilibrium phase inventories.
+   *
+   * <p>
+   * Each oil source is its equilibrium component inventory minus its conserved inventory, divided by cell length and
+   * the existing relaxation time. Gas receives the exact opposite source. Components may counter-transfer even when net
+   * phase mass transfer vanishes. This is an approximate relaxation law, not a predictive interfacial rate. A
+   * source-only Euler step no longer than the relaxation time is a convex inventory update.
+   * </p>
+   *
+   * @param equilibriumStates source-stage flashes of the conserved local composition
+   * @param sections physical cells supplying lengths
+   * @param relaxationTimeSeconds positive finite relaxation time in seconds
+   * @return cell/phase/component rates in kg/(m s), or null when aqueous inventory or equilibrium is present
+   */
+  public double[][][] createHydrocarbonRelaxationSourceRates(SystemInterface[] equilibriumStates,
+      TwoFluidSection[] sections, double relaxationTimeSeconds) {
+    if (equilibriumStates == null || equilibriumStates.length != cellCount || sections == null
+        || sections.length != cellCount || !(relaxationTimeSeconds > 0.0) || !Double.isFinite(relaxationTimeSeconds)) {
+      throw new IllegalArgumentException("Hydrocarbon relaxation requires matching cells, flashes and positive time");
+    }
+    double[][][] result = new double[cellCount][PHASE_COUNT][componentNames.length];
+    for (int cell = 0; cell < cellCount; cell++) {
+      SystemInterface equilibrium = equilibriumStates[cell];
+      if (equilibrium == null || sections[cell] == null || !(sections[cell].getLength() > 0.0)
+          || !Double.isFinite(sections[cell].getLength())) {
+        throw new IllegalArgumentException("Hydrocarbon relaxation requires flashed states and finite cell lengths");
+      }
+      validateComponentSlate(equilibrium);
+      if (phaseInventory(componentInventoryKg[cell][WATER]) > 0.0) {
+        return null;
+      }
+      double equilibriumMass = 0.0;
+      double equilibriumOilMass = 0.0;
+      for (int phase = 0; phase < equilibrium.getNumberOfPhases(); phase++) {
+        PhaseInterface phaseState = equilibrium.getPhase(phase);
+        double mass = phaseState.getMass();
+        if (!Double.isFinite(mass) || mass < 0.0) {
+          throw new IllegalArgumentException("Equilibrium phase masses must be finite and nonnegative");
+        }
+        int identity = phaseIndex(phaseState.getType());
+        if (identity == WATER && mass > 0.0) {
+          return null;
+        }
+        if (identity < 0 && mass > 0.0) {
+          throw new IllegalArgumentException("Unsupported hydrocarbon relaxation phase " + phaseState.getType());
+        }
+        equilibriumMass += mass;
+        if (identity == OIL) {
+          equilibriumOilMass += mass;
+        }
+      }
+      if (!(equilibriumMass > 0.0)) {
+        throw new IllegalArgumentException("Equilibrium state must contain positive mass");
+      }
+      double mass = phaseInventory(componentInventoryKg[cell][GAS]) + phaseInventory(componentInventoryKg[cell][OIL]);
+      double targetOilMass = mass * equilibriumOilMass / equilibriumMass;
+      double[][] fractions = phaseMassFractions(equilibrium);
+      for (int component = 0; component < componentNames.length; component++) {
+        double oilRate = (targetOilMass * fractions[OIL][component] - componentInventoryKg[cell][OIL][component])
+            / sections[cell].getLength() / relaxationTimeSeconds;
+        result[cell][OIL][component] = oilRate;
+        result[cell][GAS][component] = -oilRate;
+      }
+    }
+    return result;
+  }
+
+  /**
    * Calculate composition-resolved latent-heat source rates at the same local equilibrium states as the component
    * source allocation.
    *

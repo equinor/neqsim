@@ -487,7 +487,12 @@ distinction between implemented, numerically verified, experimentally qualified,
 failed, and unsupported behavior.
 
 When `TwoFluidPipe.setIncludeMassTransfer(true)` is enabled, flash-driven transfer is phase
-resolved. Condensation must use equilibrium hydrocarbon-liquid and aqueous-liquid **mass**
+resolved. In conservative-energy Euler mode on a dry gas/oil grid, use conserved component
+inventory differences from the local flashed targets, rather than assigning all new oil its final
+equilibrium composition. Carry opposing species transfers with their actual donor momentum and
+keep one total-energy owner. This remains an approximate relaxation, not predictive evaporation.
+Positive aqueous inventory/equilibrium retains the preceding source contract below.
+Condensation must use equilibrium hydrocarbon-liquid and aqueous-liquid **mass**
 contributions; never use the current cell water cut to identify a phase that is not yet present.
 For evaporation, withdraw from the actual oil and water conservative inventories and bound each
 withdrawal by `phase mass / relaxation time`. An absent phase must have exactly zero evaporation
