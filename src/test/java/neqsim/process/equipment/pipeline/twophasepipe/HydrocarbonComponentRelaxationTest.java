@@ -107,6 +107,63 @@ class HydrocarbonComponentRelaxationTest {
         assertEquals(0.0, rate, 1e-12);
   }
 
+  /** Complete evaporation has a conservative, passive source-only endpoint without liquid residue. */
+  @Test
+  void singleGasTargetEvaporatesEveryOilComponentWithItsDonorMomentum() {
+    for (double temperature : new double[] {480.0, 500.0, 520.0}) {
+      SystemInterface fluid = fluid();
+      TwoFluidSection[] cells = cells();
+      cells[0].setGasVelocity(8.0);
+      cells[0].setOilVelocity(-2.0);
+      TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, cells);
+      SystemInterface equilibrium = transport.createThermodynamicState(0, fluid, 50e5, temperature);
+      assertTrue(equilibrium.hasPhaseType("gas"));
+      assertFalse(equilibrium.hasPhaseType("oil"));
+      double[][][] before = transport.getInventoryKg();
+      double tau = 2.0;
+      double[][][] rates = transport.createHydrocarbonRelaxationSourceRates(new SystemInterface[] {equilibrium}, cells,
+          tau);
+      double[][] phaseRates = new double[1][3];
+      for (int component = 0; component < 2; component++) {
+        assertEquals(-before[0][1][component] / tau, rates[0][1][component], 0.0);
+        assertEquals(-rates[0][1][component], rates[0][0][component], 0.0);
+        for (int phase = 0; phase < 3; phase++) {
+          phaseRates[0][phase] += rates[0][phase][component];
+        }
+      }
+      double[] momentum = TwoFluidConservationEquations.componentTransferMomentumSources(cells[0], rates[0]);
+      assertEquals(0.0, momentum[0] + momentum[1] + momentum[2], 0.0);
+      assertEquals(0.0, -2.0 + tau * momentum[1], 1e-14);
+      assertEquals(6.0, 8.0 + tau * momentum[0], 1e-14);
+      double initialKinetic = 0.5 * (8.0 * 8.0 + 2.0 * 2.0);
+      double finalKinetic = 0.5 * Math.pow(8.0 + tau * momentum[0], 2) / 2.0;
+      assertTrue(finalKinetic < initialKinetic);
+      TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+      equations.setComponentMassTransferSources(rates);
+      equations.setIncludeMassTransfer(true);
+      equations.setIncludeEnergyEquation(true);
+      assertEquals(0.0, equations.calcSourceTerms(cells)[0][6], 0.0);
+      double[] latentHeat = transport.createLatentHeatSourceRates(rates, new SystemInterface[] {equilibrium});
+      assertTrue(Double.isFinite(latentHeat[0]), "Absent equilibrium oil must retain finite donor diagnostics");
+      cells[0].setGasMassPerLength(2.0);
+      cells[0].setOilMassPerLength(0.0);
+      transport.advance(tau, new double[2][3], phaseRates, rates, latentHeat, cells, fluid, fluid, 1e-8);
+      double[][][] after = transport.getInventoryKg();
+      for (int component = 0; component < 2; component++) {
+        assertEquals(0.0, after[0][1][component], 0.0);
+        assertEquals(before[0][0][component] + before[0][1][component], after[0][0][component], 1e-14);
+      }
+      assertTrue(transport.createReport(tau, 1, 1e-8).isConverged());
+      double[][][] settled = transport.createHydrocarbonRelaxationSourceRates(new SystemInterface[] {equilibrium},
+          cells, tau);
+      for (double[] phase : settled[0]) {
+        for (double rate : phase) {
+          assertEquals(0.0, rate, 0.0);
+        }
+      }
+    }
+  }
+
   /**
    * Frozen-target Euler refinement must approach the independently known exponential.
    *

@@ -153,6 +153,15 @@ composition: an already heavy-enriched liquid may need very little additional he
 even while considerable light material condenses. The new component targets are still an
 approximate relaxation closure, not a predictive hydrocarbon evaporation rate.
 
+The source-only disappearance control in `HydrocarbonComponentRelaxationTest` uses a
+50 bara gas target at 480, 500 and 520 K. Starting from retained oil, one Euler step
+of exactly the prescribed relaxation time transfers every oil component to gas with
+no liquid residue, preserves named-component totals and total momentum, and dissipates
+kinetic energy through donor mixing without adding internal transfer energy. These
+hot, frozen-target controls qualify the algebraic endpoint, not seabed heat supply or
+an elapsed physical evaporation time. A 330 K trial remained two-phase under the EOS
+and is not a liquid-free target.
+
 Other routes retain their mapped flash-driven phase transfer: evaporation withdraws the donor
 oil or water composition and condensation uses the receiving equilibrium phase composition.
 The dry component-target path declines the whole grid when either conserved aqueous inventory
