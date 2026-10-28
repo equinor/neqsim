@@ -400,6 +400,31 @@ and [Compressor Performance Curves](compressor_curves.md).
 <tr><td><code>process.add(shaftCalc)</code></td><td>Register so it steps the speed on every <code>run()</code> pass (add after the bodies/anti-surge).</td></tr>
 </table>
 
+## Required recycle, VFD speed band, automation addresses and platform power
+
+- `shaft.setAntiSurgeValve(member, valve)` / `setAntiSurgeController(member, controller)` register a member's recycle
+  valve; `applyRequiredRecycle()` positions each valve at the member's required recycle fraction
+  (`requiredRecycleFraction`), is idempotent and releases the valves again when the demand is zero. Controllers the user
+  activated stay untouched.
+- With `setMotorDriverUnit(ElectricMotor)` or `setDriverCurve(curve)` the shaft speed band follows the driver
+  (a VFD gives the converter speed range, a fixed-speed motor a narrow band around synchronous speed);
+  `CompressorShaftCalculator` picks it up unless `setSpeedBounds` was called.
+- `CompressorShaftCalculator` and `PlatformPowerSystemUnit` implement `AutomationAddressable`, so
+  `ProcessAutomation` exposes them. Shaft: `<calc>.speed`, `targetPressure`, `ambientTemperature`, `maxShaftPower`,
+  `applyRecycle` (writable), `power`, `availablePower`, `powerUtilization`, `overPower`, `feasible`, `minSpeed`,
+  `maxSpeed`, `recycleFractionMax`, and per member `<calc>.member.<tag>.speed|power|surgeMargin|stonewallMargin|
+  recycleFraction|recyclePower|dischargeMargin` plus the writable `member.<tag>.active` and `gearRatio`.
+  Platform: `<unit>.ambientTemperature|electricDemand|heatDemand` (writable) and `availablePower`, `demand`,
+  `deficit`, `n1Margin`, `shorePower`, `gasTurbinePower`, `whruDuty`, `fuel`, `co2`, `utilisation`,
+  `capacityLimited`, `generator.<name>.availablePower`. Out-of-range writes are rejected by
+  `setVariableValueSafe` with a diagnostic result.
+- `PlatformPowerSystemUnit.connectToBus(EnergyBus)` lets `CoupledProcessEnergySolver` dispatch the platform power
+  system against the process electrical demand (see `PlatformPowerSystemUnitTest`).
+- Equipment limits from data books: `EquipmentLimitRegister` (JSON load/save, tag/quantity/year lookup, merge,
+  `applyTo(process, year)` into the capacity constraints and utilisation snapshot; entries carry source, VERIFIED or
+  ASSUMPTION status and confidence). See `EquipmentLimitRegisterTest` and the sample
+  `compressor_limits_sample.json`.
+
 ## Related Documentation
 
 - [Compressors](compressors.md)

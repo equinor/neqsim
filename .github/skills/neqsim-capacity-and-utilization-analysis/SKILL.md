@@ -184,6 +184,19 @@ Use when the question is "what is +x MSm3/d of handling capacity worth, and wher
 
 Traps seen: a TP/third-party owner reusing another owner's blown-up intensity; division of served gas by an intensity that is zero after the economic limit (guard with a floor); capacity labelled "after lever" while demand counts lift gas before the lever (add the lever credit explicitly and keep one convention); Centuries oil can be 14 % below allocated PDM rates and its RC1 tail 50 % above Sodir remaining reserves, so tie profiles to one stated source.
 
+## Equipment limit register (data-book limits per machine)
+
+`neqsim.process.equipment.capacity.EquipmentLimitRegister` holds verified/assumed limits as entries
+`{equipmentTag, quantity, value, unit, validFromYear/validToYear, source, status VERIFIED|ASSUMPTION, confidence}`.
+`load(path)` / `fromJson` / `save` / `toJson`, `lookup(tag, quantity, year)`, `merge(other, overwrite)`,
+`fromCompressorLimitsDatabase(json)` (nested `machines`/`facts` layout), and `applyTo(process, year)` which writes the
+values into the matching `CapacityConstraint`s (map quantity names with `mapQuantityToConstraint`) so they show up in
+the utilisation snapshot; the `ApplyReport` lists applied, unmatched and assumption-based limits. Keep ASSUMPTION
+entries visible in reports.
+
+Shaft and platform-power variables are also addressable via `ProcessAutomation` (`AutomationAddressable`); see
+`neqsim-rotating-equipment-design`.
+
 ## Related skills
 
 - `neqsim-capacity-increase-screening` — turns the constraint map into ranked lever ideas (wells, subsea, topside), an idea register and a maturation pipeline.

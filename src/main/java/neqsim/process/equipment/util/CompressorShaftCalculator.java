@@ -3,10 +3,14 @@ package neqsim.process.equipment.util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import neqsim.process.automation.AutomationAddressable;
+import neqsim.process.automation.SimulationVariable;
+import neqsim.process.automation.SimulationVariable.VariableType;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorShaft;
+import neqsim.process.equipment.compressor.CompressorShaftReport;
 import neqsim.process.equipment.powergeneration.GasTurbine;
 
 /**
@@ -42,10 +46,49 @@ import neqsim.process.equipment.powergeneration.GasTurbine;
  * up as an ordinary unit in {@code getUtilizationSnapshotJson()} and can bind as the plant bottleneck.
  * </p>
  *
+ * <h2>Automation addresses</h2>
+ *
+ * <p>
+ * The calculator publishes the shaft to {@link neqsim.process.automation.ProcessAutomation} (see
+ * {@link AutomationAddressable}); with the calculator named {@code HT shaft} the addresses are
+ * </p>
+ *
+ * <table>
+ * <caption>Shaft automation addresses</caption>
+ * <tr>
+ * <th>Address (after the unit name)</th>
+ * <th>Type</th>
+ * <th>Meaning</th>
+ * </tr>
+ * <tr>
+ * <td>speed, targetPressure, ambientTemperature, maxShaftPower</td>
+ * <td>input</td>
+ * <td>common speed [rpm] (inside the speed band), controlled discharge pressure, ambient [C], explicit driver limit
+ * [kW]</td>
+ * </tr>
+ * <tr>
+ * <td>power, requiredDriverPower, availablePower, powerUtilization, overPower, feasible, minSpeed, maxSpeed</td>
+ * <td>output</td>
+ * <td>shaft power balance [kW], utilization [fraction], flags (1 or 0), speed band [rpm]</td>
+ * </tr>
+ * <tr>
+ * <td>member.NAME.speed, power, surgeMargin, stonewallMargin, recycleFraction, recyclePower, dischargeMargin</td>
+ * <td>output</td>
+ * <td>per member report values</td>
+ * </tr>
+ * <tr>
+ * <td>member.NAME.active, member.NAME.gearRatio, applyRecycle</td>
+ * <td>input</td>
+ * <td>active flag (0 or 1), gear ratio, and a trigger (write 1) that runs
+ * {@link CompressorShaft#applyRequiredRecycle()}</td>
+ * </tr>
+ * </table>
+ *
  * @author NeqSim Development Team
- * @version 1.0
+ * @version 1.1
  */
-public class CompressorShaftCalculator extends Calculator implements CapacityConstrainedEquipment {
+public class CompressorShaftCalculator extends Calculator
+    implements CapacityConstrainedEquipment, AutomationAddressable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1L;
 
@@ -72,6 +115,9 @@ public class CompressorShaftCalculator extends Calculator implements CapacityCon
 
   /** Maximum fractional speed change per iteration (damping for stability). */
   private double maxStepFraction = 0.10;
+
+  /** True while the speed band follows the driver band of the shaft (no explicit {@link #setSpeedBounds}). */
+  private boolean speedBandFromShaft = true;
 
   /** Current common shaft speed in rpm. */
   private double speed = 10000.0;
@@ -221,6 +267,7 @@ public class CompressorShaftCalculator extends Calculator implements CapacityCon
   public void setSpeedBounds(double min, double max) {
     this.minSpeed = min;
     this.maxSpeed = max;
+    this.speedBandFromShaft = false;
   }
 
   /**
@@ -230,6 +277,24 @@ public class CompressorShaftCalculator extends Calculator implements CapacityCon
    */
   public void setMaxStepFraction(double fraction) {
     this.maxStepFraction = fraction;
+  }
+
+  /**
+   * Get the lower speed bound in force (explicit, or taken from the driver of the shaft).
+   *
+   * @return the lower bound in rpm
+   */
+  public double getMinSpeed() {
+    return minSpeed;
+  }
+
+  /**
+   * Get the upper speed bound in force (explicit, or taken from the driver of the shaft).
+   *
+   * @return the upper bound in rpm
+   */
+  public double getMaxSpeed() {
+    return maxSpeed;
   }
 
   /**
@@ -292,9 +357,14 @@ public class CompressorShaftCalculator extends Calculator implements CapacityCon
   }
 
   /**
-   * Put every body into fixed-speed, chart-forward mode at the current common speed.
+   * Put every body into fixed-speed, chart-forward mode at the current common speed (gear ratios and idle members of
+   * the {@link CompressorShaft} are respected).
    */
   private void applySpeed() {
+    if (shaft != null) {
+      shaft.setSpeed(speed);
+      return;
+    }
     for (Compressor compressor : bodies) {
       compressor.setSolveSpeed(false);
       compressor.setSpeed(speed);
@@ -312,6 +382,11 @@ public class CompressorShaftCalculator extends Calculator implements CapacityCon
       return;
     }
     ensureShaftPowerConstraint();
+    if (shaft != null && speedBandFromShaft && shaft.isSpeedBandFromDriver()) {
+      shaft.refreshSpeedBandFromDriver();
+      minSpeed = shaft.getMinSpeed();
+      maxSpeed = shaft.getMaxSpeed();
+    }
     double pout = reference.getOutletStream().getPressure(pressureUnit);
     double error = pout - targetPressure; // drive to zero
     double newSpeed;
@@ -386,6 +461,245 @@ public class CompressorShaftCalculator extends Calculator implements CapacityCon
       lastResult = new CompressorShaft.SolveResult(false, CompressorShaft.SolveStatus.OVER_POWER, targetPressure, pout,
           Double.NaN, Double.NaN, speed, pressureUnit, String.format("shaft draws %.0f kW of %.0f kW installed",
               shaft.getRequiredDriverPower("kW"), shaft.getAvailableShaftPower("kW")));
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<SimulationVariable> getAutomationVariables(String unitAddress) {
+    List<SimulationVariable> vars = new ArrayList<SimulationVariable>();
+    String p = unitAddress + ".";
+    vars.add(new SimulationVariable(p + "speed", "speed", VariableType.INPUT, "rpm", "Common shaft speed")
+        .withBounds(Double.valueOf(0.0), null));
+    vars.add(new SimulationVariable(p + "targetPressure", "targetPressure", VariableType.INPUT, pressureUnit,
+        "Controlled discharge pressure of the reference body").withBounds(Double.valueOf(0.0), null));
+    vars.add(new SimulationVariable(p + "ambientTemperature", "ambientTemperature", VariableType.INPUT, "C",
+        "Ambient air temperature seen by the driver").withBounds(Double.valueOf(-80.0), Double.valueOf(80.0))
+        .withUnitFamily("temperature"));
+    vars.add(new SimulationVariable(p + "maxShaftPower", "maxShaftPower", VariableType.INPUT, "kW",
+        "Explicit installed driver power limit (0 clears it)").withBounds(Double.valueOf(0.0), null));
+    vars.add(new SimulationVariable(p + "applyRecycle", "applyRecycle", VariableType.INPUT, "-",
+        "Write 1 to feed the required recycle fraction into the member anti-surge")
+        .withBounds(Double.valueOf(0.0), Double.valueOf(1.0)));
+    String[] outputs = {"power", "requiredDriverPower", "availablePower"};
+    for (String o : outputs) {
+      vars.add(new SimulationVariable(p + o, o, VariableType.OUTPUT, "kW", "Shaft " + o).withUnitFamily("power"));
+    }
+    String[] flags = {"powerUtilization", "overPower", "feasible", "turning", "recycleFractionMax"};
+    for (String o : flags) {
+      vars.add(new SimulationVariable(p + o, o, VariableType.OUTPUT, "-", "Shaft " + o));
+    }
+    vars.add(new SimulationVariable(p + "minSpeed", "minSpeed", VariableType.OUTPUT, "rpm", "Lower speed bound"));
+    vars.add(new SimulationVariable(p + "maxSpeed", "maxSpeed", VariableType.OUTPUT, "rpm", "Upper speed bound"));
+    if (shaft != null) {
+      for (Compressor c : shaft.getCompressors()) {
+        String m = p + "member." + c.getName() + ".";
+        String[][] memberOutputs = {{"speed", "rpm"}, {"power", "kW"}, {"surgeMargin", "-"}, {"stonewallMargin", "-"},
+            {"recycleFraction", "-"}, {"recyclePower", "kW"}, {"dischargeMargin", "bar"}};
+        for (String[] mo : memberOutputs) {
+          vars.add(new SimulationVariable(m + mo[0], "member." + c.getName() + "." + mo[0], VariableType.OUTPUT, mo[1],
+              "Member " + mo[0]));
+        }
+        vars.add(new SimulationVariable(m + "active", "member." + c.getName() + ".active", VariableType.INPUT, "-",
+            "Member in service (1) or idle (0)").withBounds(Double.valueOf(0.0), Double.valueOf(1.0)));
+        vars.add(new SimulationVariable(m + "gearRatio", "member." + c.getName() + ".gearRatio", VariableType.INPUT,
+            "-", "Member rpm per shaft rpm").withBounds(Double.valueOf(0.0), null));
+      }
+    }
+    return vars;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getAutomationValue(String property, String unitOfMeasure) {
+    if (shaft == null) {
+      throw new IllegalArgumentException("shaft calculator '" + getName() + "' has no shaft");
+    }
+    if (property.startsWith("member.")) {
+      return getMemberValue(property, unitOfMeasure);
+    }
+    switch (property) {
+    case "speed":
+      return shaft.getSpeed();
+    case "targetPressure":
+      return targetPressure;
+    case "ambientTemperature":
+      return AutomationAddressable.temperatureFromKelvin(shaft.getAmbientTemperature("K"), unitOfMeasure);
+    case "maxShaftPower":
+      return AutomationAddressable.powerFromWatts(shaft.getMaxShaftPower("W"), unitOfMeasure);
+    case "applyRecycle":
+      return 0.0;
+    case "power":
+      return AutomationAddressable.powerFromWatts(shaft.getTotalPower(), unitOfMeasure);
+    case "requiredDriverPower":
+      return AutomationAddressable.powerFromWatts(shaft.getRequiredDriverPower("W"), unitOfMeasure);
+    case "availablePower":
+      return AutomationAddressable.powerFromWatts(shaft.getAvailableShaftPower("W"), unitOfMeasure);
+    case "powerUtilization":
+      return shaft.getPowerUtilization();
+    case "overPower":
+      return shaft.isOverPower() ? 1.0 : 0.0;
+    case "feasible":
+      return isFeasible() ? 1.0 : 0.0;
+    case "turning":
+      return shaft.isTurning() ? 1.0 : 0.0;
+    case "minSpeed":
+      return minSpeed;
+    case "maxSpeed":
+      return maxSpeed;
+    case "recycleFractionMax":
+      double max = 0.0;
+      for (CompressorShaftReport.MemberReport mr : shaft.getOperatingReport().getMembers()) {
+        max = Math.max(max, mr.getRequiredRecycleFraction());
+      }
+      return max;
+    default:
+      throw new IllegalArgumentException("Unknown property '" + property + "' for shaft calculator " + getName());
+    }
+  }
+
+  /**
+   * Read a per-member value.
+   *
+   * @param property property of the form {@code member.NAME.quantity}
+   * @param unitOfMeasure requested unit for power quantities
+   * @return the value
+   * @throws IllegalArgumentException if the member or quantity is unknown
+   */
+  private double getMemberValue(String property, String unitOfMeasure) {
+    int last = property.lastIndexOf('.');
+    String memberName = property.substring("member.".length(), last);
+    String quantity = property.substring(last + 1);
+    Compressor c = findMember(memberName);
+    if ("active".equals(quantity)) {
+      return shaft.isMemberActive(c) ? 1.0 : 0.0;
+    }
+    if ("gearRatio".equals(quantity)) {
+      return shaft.getGearRatio(c);
+    }
+    CompressorShaftReport.MemberReport mr = shaft.getOperatingReport().getMember(memberName);
+    switch (quantity) {
+    case "speed":
+      return mr.getSpeedRpm();
+    case "power":
+      return AutomationAddressable.powerFromWatts(mr.getPowerW(), unitOfMeasure);
+    case "surgeMargin":
+      return mr.getDistanceToSurge();
+    case "stonewallMargin":
+      return mr.getDistanceToStoneWall();
+    case "recycleFraction":
+      return mr.getRequiredRecycleFraction();
+    case "recyclePower":
+      return AutomationAddressable.powerFromWatts(mr.getRecyclePowerW(), unitOfMeasure);
+    case "dischargeMargin":
+      return mr.getDischargeMarginBar();
+    default:
+      throw new IllegalArgumentException(
+          "Unknown member quantity '" + quantity + "' for shaft calculator " + getName());
+    }
+  }
+
+  /**
+   * Find a member of the shaft by compressor name.
+   *
+   * @param memberName the compressor name
+   * @return the compressor
+   * @throws IllegalArgumentException if no member has the name
+   */
+  private Compressor findMember(String memberName) {
+    for (Compressor c : shaft.getCompressors()) {
+      if (c.getName().equals(memberName)) {
+        return c;
+      }
+    }
+    throw new IllegalArgumentException("'" + memberName + "' is not a member of shaft " + getName());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setAutomationValue(String property, double value, String unitOfMeasure) {
+    if (shaft == null) {
+      throw new IllegalArgumentException("shaft calculator '" + getName() + "' has no shaft");
+    }
+    if (!Double.isFinite(value)) {
+      throw new IllegalArgumentException("value must be finite");
+    }
+    if (property.startsWith("member.")) {
+      setMemberValue(property, value);
+      return;
+    }
+    switch (property) {
+    case "speed":
+      if (value < minSpeed || value > maxSpeed) {
+        throw new IllegalArgumentException(
+            "speed " + value + " rpm is outside the speed band " + minSpeed + " to " + maxSpeed + " rpm");
+      }
+      speed = value;
+      prevSpeed = Double.NaN;
+      prevError = Double.NaN;
+      applySpeed();
+      break;
+    case "targetPressure":
+      if (!(value > 0.0)) {
+        throw new IllegalArgumentException("target pressure must be positive");
+      }
+      if (unitOfMeasure != null && !unitOfMeasure.trim().isEmpty()
+          && !unitOfMeasure.trim().equalsIgnoreCase(pressureUnit)
+          && !(unitOfMeasure.trim().toLowerCase().startsWith("bar") && pressureUnit.toLowerCase().startsWith("bar"))) {
+        throw new IllegalArgumentException(
+            "unsupported pressure unit '" + unitOfMeasure + "' (use " + pressureUnit + ")");
+      }
+      targetPressure = value;
+      prevError = Double.NaN;
+      break;
+    case "ambientTemperature":
+      double kelvin = AutomationAddressable.temperatureToKelvin(value, unitOfMeasure);
+      if (kelvin < 193.15 || kelvin > 353.15) {
+        throw new IllegalArgumentException("ambient temperature must be between -80 and 80 C");
+      }
+      shaft.setAmbientTemperature(kelvin, "K");
+      break;
+    case "maxShaftPower":
+      if (value < 0.0) {
+        throw new IllegalArgumentException("power limit must not be negative (0 clears the limit)");
+      }
+      setMaxShaftPower(value, unitOfMeasure == null || unitOfMeasure.trim().isEmpty() ? "kW" : unitOfMeasure);
+      break;
+    case "applyRecycle":
+      if (Math.abs(value - 1.0) > 1.0e-9) {
+        throw new IllegalArgumentException("write 1 to apply the required recycle");
+      }
+      shaft.applyRequiredRecycle();
+      break;
+    default:
+      throw new IllegalArgumentException(
+          "Property '" + property + "' of shaft calculator " + getName() + " is unknown or read-only");
+    }
+  }
+
+  /**
+   * Write a per-member input.
+   *
+   * @param property property of the form {@code member.NAME.quantity}
+   * @param value the value
+   * @throws IllegalArgumentException if the member, quantity or value is invalid
+   */
+  private void setMemberValue(String property, double value) {
+    int last = property.lastIndexOf('.');
+    String memberName = property.substring("member.".length(), last);
+    String quantity = property.substring(last + 1);
+    Compressor c = findMember(memberName);
+    if ("active".equals(quantity)) {
+      if (Math.abs(value) > 1.0e-9 && Math.abs(value - 1.0) > 1.0e-9) {
+        throw new IllegalArgumentException("active flag must be 0 or 1");
+      }
+      shaft.setMemberActive(c, value > 0.5);
+    } else if ("gearRatio".equals(quantity)) {
+      shaft.setGearRatio(c, value);
+      applySpeed();
+    } else {
+      throw new IllegalArgumentException(
+          "Member quantity '" + quantity + "' of " + getName() + " is unknown or read-only");
     }
   }
 }

@@ -120,6 +120,15 @@ public class PlatformPowerSystem implements Serializable {
   }
 
   /**
+   * Get the power-from-shore (or other import) limit.
+   *
+   * @return the import limit [W], 0 when there is none
+   */
+  public double getPowerFromShoreLimitW() {
+    return shoreLimitW;
+  }
+
+  /**
    * Get the generator sets.
    *
    * @return unmodifiable list of gas turbine units

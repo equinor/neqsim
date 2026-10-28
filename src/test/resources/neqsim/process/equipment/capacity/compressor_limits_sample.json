@@ -1,0 +1,355 @@
+{
+ "meta": {
+  "title": "Illustrative sample of a compressor limits database (3 machines)",
+  "status_legend": {
+   "verified": "read from a named source/measurement",
+   "assumption": "engineering default or derived rule (see note)"
+  }
+ },
+ "machines": {
+  "K-101": {
+   "key": "K-101",
+   "tag": "K-101",
+   "platform": "PLAT-A",
+   "service": "low-pressure recompression",
+   "confidence": "low",
+   "era_from": null,
+   "era_to": null,
+   "driver_type": "electric motor, variable speed",
+   "facts": {
+    "design_gas_MW": {
+     "value": 44.84,
+     "unit": "g/mol",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "design_Ps": {
+     "value": 1.37,
+     "unit": "bara",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "design_Ts": {
+     "value": 58.9,
+     "unit": "degC",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "design_Pd": {
+     "value": 5,
+     "unit": "bara",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "design_Td": {
+     "value": 116.5,
+     "unit": "degC",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "design_kappa": {
+     "value": 1.15,
+     "unit": "-",
+     "source": "illustrative engineering default",
+     "status": "assumption",
+     "note": ""
+    },
+    "rated_shaft_power": {
+     "value": 695,
+     "unit": "kW",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "rated_speed_100pct": {
+     "value": 11333,
+     "unit": "rpm",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "design_eta_poly": {
+     "value": 0.784,
+     "unit": "-",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "power_limit": {
+     "value": 765,
+     "unit": "kW",
+     "source": "illustrative engineering default",
+     "status": "assumption",
+     "note": ""
+    },
+    "n_max": {
+     "value": 10250.0,
+     "unit": "rpm",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "n_trip": {
+     "value": 11275,
+     "unit": "rpm",
+     "source": "illustrative engineering default",
+     "status": "assumption",
+     "note": ""
+    },
+    "T_out_max": {
+     "value": 150.0,
+     "unit": "degC",
+     "source": "illustrative engineering default",
+     "status": "assumption",
+     "note": ""
+    },
+    "p_out_max": {
+     "value": 5.5,
+     "unit": "bara",
+     "source": "illustrative engineering default",
+     "status": "assumption",
+     "note": ""
+    }
+   }
+  },
+  "K-201": {
+   "key": "K-201",
+   "tag": "K-201",
+   "platform": "PLAT-A",
+   "service": "high-pressure stage (gas turbine drive)",
+   "confidence": "medium",
+   "era_from": null,
+   "era_to": 2028,
+   "driver_type": "gas turbine, shared shaft",
+   "facts": {
+    "design_gas_MW": {
+     "value": 23.57,
+     "unit": "g/mol",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "design_Ps": {
+     "value": 18.1,
+     "unit": "bara",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "design_Ts": {
+     "value": 30,
+     "unit": "degC",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "design_Pd": {
+     "value": 64.7,
+     "unit": "bara",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "design_Td": {
+     "value": 135.3,
+     "unit": "degC",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "design_kappa": {
+     "value": 1.208,
+     "unit": "-",
+     "source": "illustrative engineering default",
+     "status": "assumption",
+     "note": ""
+    },
+    "rated_shaft_power": {
+     "value": 5730,
+     "unit": "kW",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "rated_speed_100pct": {
+     "value": 10037,
+     "unit": "rpm",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "design_eta_poly": {
+     "value": 0.737,
+     "unit": "-",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "n_max": {
+     "value": 10278,
+     "unit": "rpm",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "gear_ratio": {
+     "value": 2.1752,
+     "unit": "-",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "group_power_limit": {
+     "value": 29000.0,
+     "unit": "kW",
+     "source": "illustrative engineering default",
+     "status": "assumption",
+     "note": ""
+    },
+    "power_limit": {
+     "value": 6303,
+     "unit": "kW",
+     "source": "illustrative engineering default",
+     "status": "assumption",
+     "note": ""
+    },
+    "T_out_max": {
+     "value": 150.0,
+     "unit": "degC",
+     "source": "illustrative engineering default",
+     "status": "assumption",
+     "note": ""
+    },
+    "p_out_max": {
+     "value": 71.2,
+     "unit": "bara",
+     "source": "illustrative engineering default",
+     "status": "assumption",
+     "note": ""
+    }
+   }
+  },
+  "K-201_N": {
+   "key": "K-201_N",
+   "tag": "K-201",
+   "platform": "PLAT-A",
+   "service": "high-pressure stage (replacement electric drive)",
+   "confidence": "medium",
+   "era_from": 2028,
+   "era_to": null,
+   "driver_type": "electric motor, fixed speed",
+   "facts": {
+    "design_gas_MW": {
+     "value": 23.57,
+     "unit": "g/mol",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "design_Ps": {
+     "value": 18.1,
+     "unit": "bara",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "design_Ts": {
+     "value": 30,
+     "unit": "degC",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "design_Pd": {
+     "value": 64.7,
+     "unit": "bara",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "design_Td": {
+     "value": 135.3,
+     "unit": "degC",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "design_kappa": {
+     "value": 1.208,
+     "unit": "-",
+     "source": "illustrative engineering default",
+     "status": "assumption",
+     "note": ""
+    },
+    "rated_shaft_power": {
+     "value": 5730,
+     "unit": "kW",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "rated_speed_100pct": {
+     "value": 10037,
+     "unit": "rpm",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "design_eta_poly": {
+     "value": 0.737,
+     "unit": "-",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "n_max": {
+     "value": 11571.0,
+     "unit": "rpm",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "gear_ratio": {
+     "value": 2.1752,
+     "unit": "-",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "group_power_limit": {
+     "value": 29000.0,
+     "unit": "kW",
+     "source": "illustrative engineering default",
+     "status": "assumption",
+     "note": ""
+    },
+    "power_limit": {
+     "value": 5700.0,
+     "unit": "kW",
+     "source": "illustrative design point",
+     "status": "verified",
+     "note": ""
+    },
+    "T_out_max": {
+     "value": 150.0,
+     "unit": "degC",
+     "source": "illustrative engineering default",
+     "status": "assumption",
+     "note": ""
+    },
+    "p_out_max": {
+     "value": 71.2,
+     "unit": "bara",
+     "source": "illustrative engineering default",
+     "status": "assumption",
+     "note": ""
+    }
+   }
+  }
+ }
+}
