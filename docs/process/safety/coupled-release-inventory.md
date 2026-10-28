@@ -17,6 +17,13 @@ equilibrium phase supplies the upstream state and withdrawn composition; the ent
 inventory is then reflashed. This is a boundary condition, not a level/geometry model: no
 entrainment, slip, interfacial transfer rate or automatic fallback phase is inferred.
 
+An additional opt-in `ReleaseInventoryPhaseGeometry` overload adds a cylindrical-vessel
+geometry gate to the explicit phase selection. It calculates the live liquid level and
+gas/liquid interface area from phase volumes, verifies that the selected phase occupies the
+declared opening elevation, and rejects an opening inside a caller-declared interface exclusion
+band. The band makes unresolved waves and entrainment machine-readable and fail-closed; it is not
+a carry-over correlation.
+
 An overload accepting `List<PhaseType>` and `phaseExhaustionMassFraction` adds a caller-declared
 ordered transition plan. The first phase must initially be present above the threshold. A transient
 step advances only to the next named phase when the active phase inventory mass fraction reaches
@@ -135,6 +142,34 @@ ReleaseInventory staged = new ReleaseInventory("staged", flashedFluid,
 
 This does not model a vessel level, interface geometry, entrainment or interfacial transfer rate.
 Use a threshold justified for the modeled inventory and verify sensitivity around it.
+
+### Geometry-gated phase withdrawal
+
+For a vertical or horizontal cylindrical vessel, supply internal diameter, cylinder length,
+opening-centre elevation from the vessel bottom, and an assessed interface exclusion half-band.
+The cylinder capacity must match `volumeM3`:
+
+```java
+ReleaseInventoryPhaseGeometry geometry = new ReleaseInventoryPhaseGeometry(
+    ReleaseInventoryPhaseGeometry.Orientation.VERTICAL,
+    0.50, 2.0, 1.70, 0.05); // m, m, m, m
+ReleaseInventory geometryGated = new ReleaseInventory("geometry-gated", flashedFluid,
+    Math.PI * 0.50 * 0.50 / 4.0 * 2.0,
+    0.01, 0.62, 101325.0, new HomogeneousEquilibriumReleaseModel(), 0.02,
+    PhaseType.GAS, geometry);
+```
+
+Vertical level is liquid volume divided by cylinder cross-sectional area. Horizontal level is
+the bounded inverse of the circular-segment area, and interface area is chord length times vessel
+length. The implementation supports one gas phase above at most one oil, generic-liquid or
+aqueous phase. Multiple material liquid phases, an opening in the exclusion band, a mismatch
+between opening phase and selected phase, or loss of phase-volume closure fail the complete
+inventory call without committing state.
+
+Frames retain `inventoryLiquidLevelM`, `inventoryInterfacialAreaM2`, opening and cylinder geometry,
+and `inventoryGeometryStatus=OPENING_PHASE_CONFIRMED_ENTRAINMENT_BAND_CLEAR`. This status means
+only that the opening is outside the declared unresolved band. It does not qualify an entrainment
+rate, interface wave model, droplet population, slip, or finite-rate heat/mass transfer.
 
 For an area-based model, add `process` under `"gas-area"`, construct the session from that
 `ProcessModel`, and use `session.addInventorySource("opening", "gas-area", "inventory")`.
@@ -306,10 +341,12 @@ All nine cases conserve 0.0003 kg release, commit exactly one transition and ret
 energy and volume closure. The finest nearby-threshold pressure spread is below 0.032%; successive
 step refinement is non-increasing within the asserted numerical tolerance.
 
-This increment covers equilibrium, phase-selected withdrawal and explicit ordered phase-exhaustion
-transitions in a well-mixed rigid inventory. Phase level/geometry, entrainment and slip, finite-rate interfacial transfer, wall/fire heat transfer,
-real-gas transient decompression, non-equilibrium transfer, solid-bearing flow physics and experimental qualification
-remain separate work in [#3860](https://github.com/equinor/neqsim/issues/3860).
+This increment covers equilibrium, phase-selected withdrawal, explicit ordered phase-exhaustion
+transitions, and opt-in live cylindrical phase geometry with a fail-closed entrainment/interface
+band. Predictive entrainment and slip, finite-rate interfacial heat/latent/component transfer,
+wall/fire heat transfer, real-gas transient decompression, non-equilibrium transfer, solid-bearing
+flow physics and experimental qualification remain separate work in
+[#3860](https://github.com/equinor/neqsim/issues/3860).
 The numerical limit of the selected release model still applies. No facility qualification
 or independent safety/domain review is implied.
 \n### Receiving-pressure event provenance\n\n`inventoryPressureEquilibrationEvent` records whether the last successful transient call landed on the no-flow boundary. `inventoryReleaseDurationS` is the physical discharge duration within that caller timestep. Event trials use the same EOS, component removal and enthalpy balance as ordinary substeps; failed event location commits no state.\n
