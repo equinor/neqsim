@@ -16,9 +16,27 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-/** Quantitative scan-order, hydraulic-response, and rollback tests for embedded LCV/PCV control. */
+/**
+ * Quantitative scan-order, hydraulic-response, and rollback tests for embedded LCV/PCV control.
+ *
+ * @author ESOL
+ * @version 1.0
+ */
 class SpecializedControlValveTransientTest {
   private static final double TOLERANCE = 1.0e-10;
+
+  /** Both studies start from the pressure-driven transient flow at the unchanged manual opening. */
+  @Test
+  void studyBaselinesMatchPressureDrivenValveFlow() {
+    ControlValve[] valves = {createLevelStudy("level baseline").valve, createPressureStudy("pressure baseline").valve};
+    for (ControlValve valve : valves) {
+      assertEquals(50.0, valve.getPercentValveOpening(), TOLERANCE);
+      assertEquals(50.0, valve.getTargetPercentValveOpening(), TOLERANCE);
+      assertEquals(valve.calculateMolarFlow(), valve.getOutletStream().getFlowRate("mole/sec"), TOLERANCE,
+          valve.getName());
+      assertEquals(0.0, valve.getMassBalance("kg/hr"), 1.0e-6);
+    }
+  }
 
   /** Direct level action opens a discharge valve on high level and increases physical flow. */
   @Test
@@ -153,6 +171,12 @@ class SpecializedControlValveTransientTest {
         0.0);
   }
 
+  /**
+   * Creates a level-control study with an initialized transient hydraulic baseline.
+   *
+   * @param name study name
+   * @return initialized level-control study
+   */
   private static LevelStudy createLevelStudy(String name) {
     Stream feed = createFeed(name + " feed");
     LevelControlValve valve = new LevelControlValve(name + " LCV", feed);
@@ -164,8 +188,7 @@ class SpecializedControlValveTransientTest {
     process.add(feed);
     process.add(valve);
     process.run();
-    valve.setCalculateSteadyState(false);
-    valve.setPhysicalStepIdempotencyEnabled(true);
+    initializeTransientHydraulics(valve);
     valve.setLevelSetpoint(50.0);
     valve.setControllerGain(1.0);
     valve.setAutoMode(true);
@@ -173,6 +196,12 @@ class SpecializedControlValveTransientTest {
     return new LevelStudy(process, valve);
   }
 
+  /**
+   * Creates a pressure-control study with an initialized transient hydraulic baseline.
+   *
+   * @param name study name
+   * @return initialized pressure-control study
+   */
   private static PressureStudy createPressureStudy(String name) {
     Stream feed = createFeed(name + " feed");
     PressureControlValve valve = new PressureControlValve(name + " PCV", feed);
@@ -184,11 +213,22 @@ class SpecializedControlValveTransientTest {
     process.add(feed);
     process.add(valve);
     process.run();
-    valve.setCalculateSteadyState(false);
-    valve.setPhysicalStepIdempotencyEnabled(true);
+    initializeTransientHydraulics(valve);
     valve.setAutoMode(true);
     process.setTime(0.0);
     return new PressureStudy(process, valve);
+  }
+
+  /**
+   * Initializes pressure-driven flow while automatic control is disabled and without advancing time.
+   *
+   * @param valve manually positioned valve after its steady initialization
+   */
+  private static void initializeTransientHydraulics(ControlValve valve) {
+    valve.setCalculateSteadyState(false);
+    valve.setPhysicalStepIdempotencyEnabled(true);
+    // Steady execution retains the imposed feed flow; compare control responses with transient flow.
+    valve.runTransient(0.0, UUID.randomUUID());
   }
 
   private static Stream createFeed(String name) {
