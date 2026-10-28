@@ -119,6 +119,19 @@ spell-checks in that language. Write the study content (`results.json`,
 gets its document language set, the headings stay English, and the generator says
 so. The scientific paper stays English for journal submission.
 
+For a formatting-only pilot, use
+`neqsim report-design "SOURCE.docx" --output "formatting_pilot\PILOT.docx" --render`.
+This opt-in finishing pass preserves the source, template fonts, branding and
+technical wording. It improves table readability, adds missing numbered table
+captions and page numbering, and writes a PDF, all-page PNG previews and a QA
+JSON next to the derivative. The command refuses source overwrites and requires
+`--overwrite` to replace an existing derivative. Use `--table-label Tabell` for
+new Norwegian captions. Rendering needs Microsoft Word with pywin32 on Windows
+or an installed LibreOffice; it never uses an online converter. The QA record
+stays `PENDING` until someone actually inspects the page images. See the
+[report-design and visual-QA skill](../.github/skills/neqsim-report-design-and-visual-qa/SKILL.md).
+Normal report generation and scientific-paper styles are unchanged.
+
 The canonical generator accepts both `benchmark_validation.tests` lists and
 named benchmark mappings. Word and HTML outputs retain the source, numerical
 comparisons, and PASS/FAIL status. Before rendering, the generator checks for

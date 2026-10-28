@@ -143,6 +143,31 @@ def stream_number(index, width):
     return "S%0*d" % (width, index)
 
 
+def _absorber_ports(unit):
+    """Gas/solvent inlets and gas/liquid outlets of absorber-family units.
+
+    ``SimpleAbsorber``, ``SimpleTEGAbsorber`` and ``WaterStripperColumn`` return empty lists from
+    ``getInletStreams``/``getOutletStreams`` because their feeds are added with ``addGasInStream`` and
+    ``addSolventInStream``; without this fallback they are drawn and audited as unconnected.
+    """
+    import jpype
+
+    ident = jpype.JClass("java.lang.System").identityHashCode
+    ins, outs = [], []
+    seen = set()
+    for names, target in ((["getGasInStream", "getInStream"], ins), (["getSolventInStream"], ins),
+                          (["getGasOutStream"], outs), (["getLiquidOutStream", "getSolventOutStream"], outs)):
+        obj = _try(unit, names)
+        if obj is None:
+            continue
+        key = int(ident(obj))
+        if key in seen:
+            continue
+        seen.add(key)
+        target.append(obj)
+    return ins, outs
+
+
 def discover_topology(process):
     """Discover units and streams of a model. Returns (units, streams, areas).
 
@@ -166,28 +191,53 @@ def discover_topology(process):
             tags_seen[tag] = True
             ins = list(_try(unit, ["getInletStreams"]) or [])
             outs = list(_try(unit, ["getOutletStreams"]) or [])
+            if not ins and not outs and "SimpleAbsorber" in chain:
+                ins, outs = _absorber_ports(unit)
             raw_units.append({"tag": tag, "name": name, "area": area_name, "java_class": chain[0],
                               "category": category, "_obj": unit, "_ins": ins, "_outs": outs})
             area_units.append(tag)
         areas.append({"name": area_name, "units": area_units})
 
     # First pass: stream-type units register themselves, then inlets/outlets of the rest.
+    # A Stream built from another stream (``Stream(name, other)``) is a naming wrapper: it is merged into the
+    # wrapped stream (workspace NeqSim reports the wrapped stream as ``getInletStreams()`` of the wrapper), so the
+    # drawings, stream tables and balances do not see the same material twice. Older NeqSim builds report no
+    # wrapped stream and keep the wrapper as a stream of its own.
     streams = []
     order = []
     stream_unit_area = {}
+    alias = {}
+    alias_names = {}
+    stream_unit_keys = set()
+    for unit in raw_units:
+        if unit["category"] == "stream":
+            stream_unit_keys.add(reg.key(unit["_obj"]))
+            if len(unit["_ins"]) == 1 and reg.key(unit["_ins"][0]) != reg.key(unit["_obj"]):
+                alias[reg.key(unit["_obj"])] = unit["_ins"][0]
+
+    def resolve(obj):
+        hops = 0
+        while reg.key(obj) in alias and hops < 20:
+            obj = alias[reg.key(obj)]
+            hops += 1
+        return obj
 
     def register(obj):
-        if reg.get(obj) is not None:
-            return reg.get(obj)
+        root = resolve(obj)
+        if root is not obj and reg.key(root) != reg.key(obj):
+            alias_names.setdefault(reg.key(root), []).append(str(obj.getName()))
+        if reg.get(root) is not None:
+            return reg.get(root)
         sid = len(streams) + 1
-        reg.add(obj, sid)
-        streams.append({"_obj": obj, "name": str(obj.getName()), "index": sid})
+        reg.add(root, sid)
+        streams.append({"_obj": root, "name": str(root.getName()), "index": sid})
         order.append(sid)
         return sid
 
     for unit in raw_units:
         if unit["category"] == "stream":
-            stream_unit_area[register(unit["_obj"])] = unit["area"]
+            sid_u = register(unit["_obj"])
+            stream_unit_area.setdefault(sid_u, unit["area"])
             continue
         for obj in unit["_ins"]:
             register(obj)
@@ -196,14 +246,17 @@ def discover_topology(process):
     width = max(3, len(str(len(streams))))
     for rec in streams:
         rec["id"] = stream_number(rec["index"], width)
+        names = alias_names.get(reg.key(rec["_obj"]))
+        if names and reg.key(rec["_obj"]) not in stream_unit_keys:
+            rec["name"] = names[0]
 
     units = []
     for unit in raw_units:
         if unit["category"] == "stream":
             continue
         rec = {k: v for k, v in unit.items() if not k.startswith("_")}
-        rec["inlet_streams"] = [stream_number(reg.get(o), width) for o in unit["_ins"]]
-        rec["outlet_streams"] = [stream_number(reg.get(o), width) for o in unit["_outs"]]
+        rec["inlet_streams"] = [stream_number(reg.get(resolve(o)), width) for o in unit["_ins"]]
+        rec["outlet_streams"] = [stream_number(reg.get(resolve(o)), width) for o in unit["_outs"]]
         rec["_obj"] = unit["_obj"]
         units.append(rec)
 
