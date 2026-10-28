@@ -203,9 +203,14 @@ This is implementation and synthetic conservation evidence, not independent qual
 
 The route fails before accepting an interval when a compressible node lacks thermodynamic
 inventory, component slates differ, branch reports are missing/unconverged, a component boundary
-transfer reverses, or a node source term lacks an explicit source fluid and enthalpy. It does not
-yet implement reverse-flow boundary thermodynamics, algebraic zero-volume junctions, branch
-subcycling or a general conservative multi-edge Newton junction solve.
+transfer reverses, or a node source term lacks an explicit source fluid and enthalpy. A conservative
+node source now binds the existing phase-resolved `UpstreamCompressibleVolume` source rates to one
+defensively copied composition and explicit specific enthalpy. The same accepted mass is added to
+the hydraulic, named-component and open-system energy ledgers, and the whole-network report exposes
+source component masses and source enthalpy separately. Missing provenance, mismatched component
+slates and non-finite enthalpy fail before time advances. It does not yet implement reverse-flow
+boundary thermodynamics, algebraic zero-volume junctions, branch subcycling or a general
+conservative multi-edge Newton junction solve.
 
 Transient multi-edge junction conservation, energy/component closure, representative
 large-field runtime and independent field data remain open qualification work.
@@ -959,8 +964,10 @@ second transition detector or interpret a heuristic `OPTIMAL` status as operatin
    Then couple qualified alternatives to multi-period lifecycle economics and reduced-order
    surrogates.
 3. Coordinate the storage-node conservative transient route with #2911 and independently
-   qualify it. Next add explicit source-fluid/enthalpy terms where needed, then address reverse-flow
-   boundary thermodynamics, algebraic zero-volume junctions and branch subcycling in that order.
+   qualify it. Explicit source-fluid/enthalpy terms now close the conservative storage-node source
+   ledger. Next address reverse-flow boundary thermodynamics, algebraic zero-volume junctions and
+   branch subcycling in that order. Consume the explicit reversed outlet-boundary donor owned by
+   #4687/#3298 after that contract is merged and qualified; do not duplicate it in the network.
    Enable dynamics only within the quantitatively tested scope.
 4. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export
    (#2899/#1332). Use synthetic/public acceptance cases and retain reproducible results.

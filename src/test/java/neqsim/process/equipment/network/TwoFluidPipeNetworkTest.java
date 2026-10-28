@@ -1,6 +1,7 @@
 package neqsim.process.equipment.network;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.UUID;
@@ -98,6 +99,56 @@ class TwoFluidPipeNetworkTest {
     for (String componentName : restored.getLastThermodynamicBalanceReport().getComponentNames()) {
       assertTrue(restored.getLastThermodynamicBalanceReport().getRelativeComponentResidual(componentName) < 1.0e-8);
     }
+  }
+
+  @Test
+  void conservativeNodeSourceClosesComponentsAndEnergy() {
+    UpstreamCompressibleVolume manifold = createVolume(55.0e5, 1000.0);
+    manifold.setSourceMassFlowRates(0.05, 0.0, 0.0);
+    SystemInterface sourceFluid = createFluid(0.55, 0.45);
+    double sourceSpecificEnthalpyJPerKg = 2.5e5;
+
+    TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("conservative node source");
+    network.addConservativeCompressibleNode("manifold", manifold, createFluid(0.80, 0.20));
+    network.setConservativeNodeSourceThermodynamics("manifold", sourceFluid, sourceSpecificEnthalpyJPerKg);
+    network.addFixedPressureNode("sink", 50.0e5);
+    network.addPipe("outlet", "manifold", "sink", createPipe("outlet", 0.80, 0.20));
+
+    network.runTransient(0.005, UUID.randomUUID());
+
+    TwoFluidPipeNetwork.ThermodynamicBalanceReport report = network.getLastThermodynamicBalanceReport();
+    double expectedSourceMassKg = 0.05 * 0.005;
+    assertEquals(expectedSourceMassKg * overallComponentMassFraction(sourceFluid, "methane"),
+        report.getSourceComponentMassKg("methane"), 1.0e-12);
+    assertEquals(expectedSourceMassKg * overallComponentMassFraction(sourceFluid, "n-heptane"),
+        report.getSourceComponentMassKg("n-heptane"), 1.0e-12);
+    double reportedSourceMassKg = 0.0;
+    for (String componentName : report.getComponentNames()) {
+      reportedSourceMassKg += report.getSourceComponentMassKg(componentName);
+      assertTrue(report.getRelativeComponentResidual(componentName) < 1.0e-8,
+          componentName + " source residual=" + report.getRelativeComponentResidual(componentName));
+    }
+    assertEquals(expectedSourceMassKg, reportedSourceMassKg, 1.0e-12);
+    assertEquals(expectedSourceMassKg * sourceSpecificEnthalpyJPerKg, report.getSourceEnergyJ(), 1.0e-12);
+    assertTrue(report.getRelativeEnergyResidual() < 1.0e-7,
+        "source energy residual=" + report.getRelativeEnergyResidual());
+    assertTrue(network.getLastBalanceReport().getRelativeResidual(Phase.TOTAL) < 1.0e-8);
+  }
+
+  @Test
+  void conservativeHydraulicSourceRequiresThermodynamicContract() {
+    UpstreamCompressibleVolume manifold = createVolume(55.0e5, 1000.0);
+    manifold.setSourceMassFlowRates(0.05, 0.0, 0.0);
+    TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("missing source thermodynamics");
+    network.addConservativeCompressibleNode("manifold", manifold, createFluid(0.80, 0.20));
+    network.addFixedPressureNode("sink", 50.0e5);
+    network.addPipe("outlet", "manifold", "sink", createPipe("outlet", 0.80, 0.20));
+
+    IllegalStateException error = assertThrows(IllegalStateException.class,
+        () -> network.runTransient(0.005, UUID.randomUUID()));
+
+    assertTrue(error.getMessage().contains("explicit source fluid and enthalpy"));
+    assertEquals(0.0, network.getSimulationTimeSeconds(), 0.0);
   }
 
   private static TwoFluidPipeNetwork createConservativeMerge(boolean reverseBranchOrder) {
