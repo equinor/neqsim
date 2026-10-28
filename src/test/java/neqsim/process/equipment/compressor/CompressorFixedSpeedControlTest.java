@@ -179,6 +179,10 @@ public class CompressorFixedSpeedControlTest {
         CompressorFixedSpeedControl.evaluate(plain, 20.0).getStatus());
     assertThrows(IllegalArgumentException.class, () -> CompressorFixedSpeedControl.evaluate(null, 20.0));
     assertThrows(IllegalArgumentException.class, () -> CompressorFixedSpeedControl.evaluate(member, 0.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> CompressorFixedSpeedControl.evaluate(member, Double.POSITIVE_INFINITY));
+    assertThrows(IllegalArgumentException.class,
+        () -> CompressorFixedSpeedControl.evaluate(member, Double.NaN));
   }
 
   /**
