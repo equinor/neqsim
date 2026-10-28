@@ -77,6 +77,10 @@ class MathAndExpanderDocumentationTest {
         "assertTrue(Double.isFinite(extraCoolingK) && extraCoolingK > 0.0);"
             + "assertEquals(-expander.getPower(\"kW\") - compressor.getPower(\"kW\"), shaftSurplusKW, 1e-9);"
             + "assertEquals(10000.0, expander.getOutletStream().getFlowRate(\"kg/hr\"), 1e-6);");
+    checks.put("expander-nozzle-capacity",
+        "assertEquals(150.0 / 1.2, capacityKgPerS, 1e-6);" + "assertEquals(150.0 - 150.0 / 1.2, bypassKgPerS, 1e-6);"
+            + "assertEquals(1.0 - 1.0 / 1.2, bypassFraction, 1e-9);" + "assertEquals(150.0, outletKgPerS, 1e-4);"
+            + "assertTrue(mixedOutletC > wheelOutletC);" + "assertTrue(Math.abs(shaftResidualW) < 1.0e-3 * 1.0e6);");
     checks.put("thermo-electrolyte",
         "assertTrue(Double.isFinite(aqueousDensity));"
             + "assertTrue(aqueousDensity > 900.0 && aqueousDensity < 1200.0);"
