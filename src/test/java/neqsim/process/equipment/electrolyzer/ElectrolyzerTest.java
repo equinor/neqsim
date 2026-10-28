@@ -38,13 +38,14 @@ class ElectrolyzerTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  void testFaradaicEfficiencyReducesH2() {
+  void testFaradaicEfficiencyIncreasesWaterFeedPower() {
     Stream inlet = waterFeed();
     Electrolyzer el = new Electrolyzer("el", inlet);
     el.setFaradaicEfficiency(0.5);
     el.run();
-    // Half the current actually splits water.
-    assertEquals(1.0, el.getHydrogenOutStream().getFlowRate("mole/sec"), 1e-6);
+    // All supplied water is consumed; half-current efficiency doubles electrical demand.
+    assertEquals(2.0, el.getHydrogenOutStream().getFlowRate("mole/sec"), 1e-6);
+    assertEquals(2.0 * 2.0 * 96485.3329 * 1.23 / 0.5, el.getStackPower(), 1e-6);
   }
 
   @Test

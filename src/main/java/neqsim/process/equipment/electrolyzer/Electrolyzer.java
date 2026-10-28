@@ -16,7 +16,14 @@ import neqsim.thermo.system.SystemInterface;
 /**
  * Electrolyzer unit converting water to hydrogen and oxygen using electrical energy.
  *
+ * <p>
+ * The inlet represents pure water consumed stoichiometrically, with no excess-water outlet. Water-feed mode consumes
+ * the supplied flow; power mode updates the connected inlet to the actual water demand. Faradaic efficiency affects
+ * charge demand, not water conversion.
+ * </p>
+ *
  * @author esol
+ * @version 1.0
  */
 public class Electrolyzer extends ProcessEquipmentBaseClass {
   /** Serialization version UID. */
@@ -53,7 +60,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
    * Operating mode of the electrolyzer.
    */
   public enum OperationMode {
-    /** Water-feed driven: the inlet water rate sets production; power is an output. */
+    /** Water-feed driven: all supplied pure water is consumed; power is an output. */
     WATER_FEED,
     /** Power driven: available electrical power sets production; water demand is an output. */
     POWER
@@ -174,7 +181,7 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   /**
    * Setter for the field <code>inletStream</code>.
    *
-   * @param inletStream water inlet stream, must not be null
+   * @param inletStream pure-water demand stream; power mode updates its flow during run
    * @throws IllegalArgumentException if {@code inletStream} is null
    */
   public void setInletStream(StreamInterface inletStream) {
@@ -243,6 +250,11 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (waterInlet.getThermoSystem().getNumberOfComponents() != 1
+        || !"water".equals(waterInlet.getThermoSystem().getComponent(0).getComponentName())) {
+      throw new IllegalArgumentException("Electrolyzer requires a pure-water inlet; "
+          + "mixed feeds need a separate electrolyte or residual-water model");
+    }
     if (getEnergyPort("electricalPower").getMode() == EnergyPortMode.SPECIFICATION) {
       setAvailablePower(getEnergyPort("electricalPower").getPowerMagnitude());
     }
@@ -293,19 +305,20 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
       currentDensity = j;
       cellVoltage = cellVoltageAt(j, tempK);
       stackCurrent = j * area;
-      double h2FromCurrent = stackCurrent / (2.0 * FARADAY_CONSTANT); // mol/sec
-      hydrogenFlow = h2FromCurrent * faradaicEfficiency;
-      // Water demand follows the splitting current (NIP-6 stoichiometric basis).
-      waterInlet.setFlowRate(h2FromCurrent, "mole/sec");
+      hydrogenFlow = hydrogenFromCurrent(stackCurrent);
+      // One mole of consumed water yields one mole of exported hydrogen.
+      waterInlet.setFlowRate(hydrogenFlow, "mole/sec");
       waterInlet.run(id);
       stackPower = stackCurrent * cellVoltage;
     } else {
       double waterFlow = waterInlet.getFlowRate("mole/sec");
-      hydrogenFlow = waterFlow * faradaicEfficiency;
-      if (ivCharacteristic != null) {
-        cellVoltage = ivCharacteristic.getCellVoltage(currentDensity, tempK);
+      hydrogenFlow = waterFlow;
+      stackCurrent = currentFromHydrogen(hydrogenFlow);
+      double area = getStackActiveArea();
+      if (area > 0.0) {
+        currentDensity = stackCurrent / area;
       }
-      stackCurrent = hydrogenFlow * 2.0 * FARADAY_CONSTANT;
+      cellVoltage = cellVoltageAt(currentDensity, tempK);
       stackPower = stackCurrent * cellVoltage;
     }
 
@@ -316,6 +329,26 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
     getEnergyPort("electricalPower").setDuty(stackPower);
     setEnergyStream(true);
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Computes actual hydrogen production from the sum of cell currents.
+   *
+   * @param current equivalent summed cell current in A
+   * @return hydrogen rate in mol/s
+   */
+  private double hydrogenFromCurrent(double current) {
+    return faradaicEfficiency * current / (2.0 * FARADAY_CONSTANT);
+  }
+
+  /**
+   * Computes the sum of cell currents needed for actual hydrogen production.
+   *
+   * @param hydrogenFlow hydrogen rate in mol/s
+   * @return equivalent summed cell current in A
+   */
+  private double currentFromHydrogen(double hydrogenFlow) {
+    return hydrogenFlow * 2.0 * FARADAY_CONSTANT / faradaicEfficiency;
   }
 
   /**
@@ -554,9 +587,10 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Get the total stack current from the most recent run.
+   * Get the sum of cell currents from the most recent run. For series cells this is terminal current multiplied by the
+   * number of cells, paired with cell voltage to calculate total stack power.
    *
-   * @return stack current (A)
+   * @return equivalent summed cell current (A)
    */
   public double getStackCurrent() {
     return stackCurrent;
@@ -987,13 +1021,17 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   // ==========================================================================
 
   /**
-   * Get the stack waste heat from the most recent run, computed from the overpotential above the thermoneutral voltage:
-   * {@code Q = max(0, V_cell - V_tn) * I_stack}.
+   * Get nonnegative stack heat output on a fixed 25 C HHV screening basis: {@code Q = max(0, P_DC - 2 F V_tn n_H2)},
+   * with {@code V_tn = 1.481 V}. Unproductive current is assumed to dissipate its input within the stack, without
+   * side-product chemical-energy export. Sensible heat, temperature-dependent reaction enthalpy and external heat
+   * integration are excluded. A negative signed balance represents external heat demand, while this getter returns
+   * zero. This is not a complete high-temperature SOEC heat balance.
    *
    * @return waste heat (W)
    */
   public double getWasteHeat() {
-    return Math.max(0.0, cellVoltage - V_THERMONEUTRAL) * stackCurrent;
+    double hydrogenFlow = hydrogenOutStream == null ? 0.0 : hydrogenOutStream.getFlowRate("mole/sec");
+    return Math.max(0.0, stackPower - 2.0 * FARADAY_CONSTANT * V_THERMONEUTRAL * hydrogenFlow);
   }
 
   /**
