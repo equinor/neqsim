@@ -53,8 +53,22 @@ public class EjectorGuideDocumentationTest extends NeqSimTest {
     assertFalse(guide.contains("System.out"));
 
     Matcher fences = ALL_JAVA.matcher(guide);
-    assertTrue(fences.find(), "Guide must publish one Java program");
+    assertTrue(fences.find(), "Guide must publish its Java programs");
+    assertTrue(fences.find(), "Guide must publish the fixed-geometry Java program");
     assertFalse(fences.find(), "Guide must not contain unverified Java fragments");
+  }
+
+  @Test
+  void fixedGeometryProgramCompilesAndRunsWithAssertions() throws Exception {
+    Matcher fences = ALL_JAVA.matcher(readGuide());
+    assertTrue(fences.find());
+    assertTrue(fences.find(), "Fixed-geometry example is missing");
+    String source = fences.group(1);
+    assertTrue(source.contains("class FixedGeometryEjectorExample"));
+    assertTrue(source.contains("setFixedGeometryAreaRatio"));
+    assertTrue(source.contains("isInBreakdown()"));
+    assertFalse(source.contains("System.out"));
+    compileAndRun(source);
   }
 
   @Test

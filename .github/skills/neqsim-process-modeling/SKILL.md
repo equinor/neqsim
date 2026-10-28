@@ -346,9 +346,12 @@ are custom unless actual datasheet provenance is declared.
 
 ## Ejector (gas-jet compressor) pitfalls
 
-`neqsim.process.equipment.ejector.Ejector` (motive + suction streams, discharge pressure, four efficiencies) is a design-point model: both flows are inputs, `setThroatArea`
-is a no-op, `generatePerformanceCurve` returns a constant entrainment ratio and there is no fixed-geometry (off-design) solution - an installed ejector at a new year / motive
-pressure / gas MW cannot be checked with it. Practical rules learned on the Oseberg OSA ejector study:
+`neqsim.process.equipment.ejector.Ejector` (motive + suction streams, discharge pressure, four efficiencies) is a design-point model by default (both flows are inputs, `setThroatArea` is a no-op, `generatePerformanceCurve` has a constant entrainment ratio). For an
+installed ejector at a new year / motive pressure / gas MW use the **fixed-geometry mode**: `setFixedGeometry(throatM2, mixingM2)` (or `setFixedGeometryAreaRatio`),
+`autoSizeFixedGeometry(designSuctionFlow, 0.10)` to size it once, then `run()`; flows are results (`getOperatingPoint()`, `getOperatingWindowReport()`, `isInBreakdown()`,
+`getBreakdownMargin()`, `generateFixedGeometryCurve`). Pitfalls: stream flow rates are ignored in this mode (use `setLimitEntrainmentToSuctionSupply(true)` to cap by supply),
+only the vapour phase is used, the regimes are CRITICAL / SUBCRITICAL (entrainment falling) / BREAKDOWN (ER = 0), and a subcritical result is not a capacity guarantee.
+See `docs/process/equipment/ejectors.md`. Practical rules learned on the Oseberg OSA ejector study:
 
 - **Outlet stream:** `run()` used to replace `mixedStream` (jneqsim 3.18: every run); wire downstream equipment to a `Mixer` outlet (adiabatic energy balance = the
   ejector outlet state, kinetic terms cancel) or re-fetch `getMixedStream()` after each run.
