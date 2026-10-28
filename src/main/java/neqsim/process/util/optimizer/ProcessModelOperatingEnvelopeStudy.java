@@ -1518,6 +1518,164 @@ public final class ProcessModelOperatingEnvelopeStudy {
     }
   }
 
+  /** Immutable qualified paired-relief receipt bound to one accepted operating point. */
+  public static final class QualifiedReliefStudyEvidence implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final String qualifiedConstraintName;
+    private final Map<String, Object> evidence;
+
+    /** Creates one deeply immutable receipt after complete validation. */
+    private QualifiedReliefStudyEvidence(String qualifiedConstraintName, Map<String, Object> evidence) {
+      this.qualifiedConstraintName = qualifiedConstraintName;
+      this.evidence = Collections.unmodifiableMap(new LinkedHashMap<String, Object>(evidence));
+    }
+
+    /** @return exact installed constraint identity */
+    public String getQualifiedConstraintName() {
+      return qualifiedConstraintName;
+    }
+
+    /** @return deeply immutable JSON-friendly receipt */
+    public Map<String, Object> toEvidenceMap() {
+      return evidence;
+    }
+  }
+
+  /**
+   * Qualifies one existing paired debottleneck result against this study's accepted operating point.
+   *
+   * <p>
+   * The paired study must use the exact transactional evaluator that produced the operating envelope. Its baseline
+   * action vector and objective evidence must bitwise match the independently replayed accepted point. Both paired
+   * scenarios must be converged, feasible, finite and completely restored, and the installed capacity state must be
+   * exactly recovered before a receipt is returned.
+   * </p>
+   *
+   * @param search independently replayed accepted operating point
+   * @param pairedStudy existing paired installed-capacity study
+   * @param result immutable result returned by {@code pairedStudy.evaluate()}
+   * @return qualified receipt suitable for attachment to the exact opportunity-screen row
+   * @throws IllegalArgumentException if the study or result belongs to another evaluator or definition
+   * @throws IllegalStateException if any convergence, finiteness, binding, feasibility, or restoration gate fails
+   */
+  public QualifiedReliefStudyEvidence qualifyReliefStudy(OperatingPointSearchResult search,
+      ProcessModelDebottleneckStudy pairedStudy, ProcessModelDebottleneckStudy.StudyResult result) {
+    double[] acceptedValues = validateAcceptedSearch(search);
+    if (pairedStudy == null || result == null) {
+      throw new IllegalArgumentException("Paired relief study and result must not be null");
+    }
+    if (pairedStudy.getOperatingActionEvaluator() != evaluator) {
+      throw new IllegalArgumentException("Paired relief study must use the exact operating-envelope evaluator");
+    }
+    if (!sameText(result.getId(), pairedStudy.getId()) || !sameText(result.getName(), pairedStudy.getName())
+        || !sameText(result.getProvenance(), pairedStudy.getProvenance())
+        || result.getAlternativeDefinition() != pairedStudy.getAlternative()) {
+      throw new IllegalArgumentException("Paired relief result does not belong to the supplied study definition");
+    }
+    if (result.getOutcome() != ProcessModelDebottleneckStudy.StudyOutcome.COMPLETED || !result.isCapacityRestored()
+        || !result.isProcessStateRestored() || !result.isRecoverySimulationConverged() || result.getBaseline() == null
+        || result.getAlternative() == null || !result.getBaseline().isQualified()
+        || !result.getAlternative().isQualified() || !result.isObjectiveDeltaCalculable()
+        || !Double.isFinite(result.getObjectiveDelta())) {
+      throw new IllegalStateException("Paired relief result is not completely qualified and restored");
+    }
+    if (!sameVector(acceptedValues, result.getBaseline().getSelectedParameters())) {
+      throw new IllegalStateException("Paired relief baseline does not match the accepted operating point exactly");
+    }
+    int objectiveIndex = pairedStudy.getObjectiveIndex();
+    List<ProcessModelDebottleneckStudy.ObjectiveEvidence> baselineObjectives = result.getBaseline().getObjectives();
+    List<ProcessModelDebottleneckStudy.ObjectiveEvidence> alternativeObjectives = result.getAlternative()
+        .getObjectives();
+    List<CandidateObjectiveEvidence> acceptedObjectives = search.getAcceptedPointReplay().getEvaluation()
+        .getObjectiveEvidence();
+    if (objectiveIndex >= baselineObjectives.size() || objectiveIndex >= alternativeObjectives.size()
+        || objectiveIndex >= acceptedObjectives.size()) {
+      throw new IllegalStateException("Paired relief result lacks complete objective evidence");
+    }
+    ProcessModelDebottleneckStudy.ObjectiveEvidence baseline = baselineObjectives.get(objectiveIndex);
+    ProcessModelDebottleneckStudy.ObjectiveEvidence alternative = alternativeObjectives.get(objectiveIndex);
+    CandidateObjectiveEvidence accepted = acceptedObjectives.get(objectiveIndex);
+    double objectiveBindingTolerance = Math.max(search.getObjectiveImprovementTolerance(),
+        Math.abs(accepted.getRawValue()) * search.getReplayRelativeTolerance());
+    double objectiveBindingResidual = Math.abs(baseline.getRawValue() - accepted.getRawValue());
+    if (baseline.getIndex() != accepted.getIndex() || !sameText(baseline.getName(), accepted.getName())
+        || baseline.getDirection() != accepted.getDirection() || !sameText(baseline.getUnit(), accepted.getUnit())
+        || !sameDouble(baseline.getWeight(), accepted.getWeight()) || !Double.isFinite(objectiveBindingResidual)
+        || objectiveBindingResidual > objectiveBindingTolerance || !Double.isFinite(alternative.getRawValue())
+        || !sameDouble(result.getObjectiveDelta(), alternative.getRawValue() - baseline.getRawValue())) {
+      throw new IllegalStateException("Paired relief objective evidence is stale, non-finite, or incompatible: "
+          + "baseline=" + baseline.getRawValue() + ", accepted=" + accepted.getRawValue() + ", alternative="
+          + alternative.getRawValue() + ", delta=" + result.getObjectiveDelta() + ", baselineName=" + baseline.getName()
+          + ", acceptedName=" + accepted.getName());
+    }
+    ProcessModelDebottleneckStudy.CapacityAlternative capacity = result.getAlternativeDefinition();
+    ProcessModelDebottleneckStudy.CapacityState original = result.getOriginalCapacityState();
+    ProcessModelDebottleneckStudy.CapacityState applied = result.getAppliedCapacityState();
+    if (original == null || applied == null || !sameText(original.getUnit(), capacity.getUnit())
+        || !sameText(applied.getUnit(), capacity.getUnit())
+        || !sameDouble(applied.getApplicableLimit(), capacity.getProposedLimit())) {
+      throw new IllegalStateException("Paired relief capacity-state evidence is incomplete or incompatible");
+    }
+
+    List<String> actionIds = new ArrayList<String>();
+    for (ProcessModelOperatingAction action : evaluator.getActions()) {
+      actionIds.add(action.getId());
+    }
+    Map<String, Object> objective = new LinkedHashMap<String, Object>();
+    objective.put("index", Integer.valueOf(objectiveIndex));
+    objective.put("name", baseline.getName());
+    objective.put("direction", baseline.getDirection().name());
+    objective.put("unit", baseline.getUnit());
+    objective.put("baseline_value", Double.valueOf(accepted.getRawValue()));
+    objective.put("paired_baseline_value", Double.valueOf(baseline.getRawValue()));
+    objective.put("baseline_binding_residual", Double.valueOf(objectiveBindingResidual));
+    objective.put("baseline_binding_tolerance", Double.valueOf(objectiveBindingTolerance));
+    objective.put("baseline_binding_tolerance_provenance",
+        search.getObjectiveToleranceProvenance() + "; " + search.getReplayToleranceProvenance());
+    objective.put("alternative_value", Double.valueOf(alternative.getRawValue()));
+    objective.put("delta", Double.valueOf(result.getObjectiveDelta()));
+    Map<String, Object> receipt = new LinkedHashMap<String, Object>();
+    receipt.put("receipt_version", Integer.valueOf(1));
+    receipt.put("study_id", result.getId());
+    receipt.put("study_name", result.getName());
+    receipt.put("study_provenance", result.getProvenance());
+    receipt.put("alternative_id", capacity.getId());
+    receipt.put("alternative_name", capacity.getName());
+    receipt.put("alternative_provenance", capacity.getProvenance());
+    receipt.put("action_set_id", evaluator.getId());
+    receipt.put("accepted_action_ids", Collections.unmodifiableList(actionIds));
+    receipt.put("baseline_action_values", doubleList(acceptedValues));
+    receipt.put("alternative_action_values", doubleList(result.getAlternative().getSelectedParameters()));
+    receipt.put("qualified_constraint_name", capacity.getQualifiedConstraintName());
+    receipt.put("original_applicable_limit", Double.valueOf(original.getApplicableLimit()));
+    receipt.put("proposed_applicable_limit", Double.valueOf(capacity.getProposedLimit()));
+    receipt.put("physical_unit", capacity.getUnit());
+    receipt.put("limit_direction", capacity.getLimitDirection().name());
+    receipt.put("proposal_source", capacity.getProposalSource());
+    receipt.put("objective", Collections.unmodifiableMap(objective));
+    receipt.put("study_outcome", result.getOutcome().name());
+    receipt.put("capacity_restored", Boolean.TRUE);
+    receipt.put("process_state_restored", Boolean.TRUE);
+    receipt.put("recovery_simulation_converged", Boolean.TRUE);
+    receipt.put("qualification_state", "QUALIFIED_PAIRED_SAMPLED_RELIEF");
+    receipt.put("advisory", Boolean.TRUE);
+    receipt.put("interpretation",
+        "Paired converged sampled evidence for the declared capacity alternative; not causal attribution, a shadow price, design approval, investment approval, permission to change a limit, or operating approval");
+    return new QualifiedReliefStudyEvidence(capacity.getQualifiedConstraintName(), receipt);
+  }
+
+  /** Converts a primitive vector to an immutable JSON-friendly number list. */
+  private static List<Double> doubleList(double[] values) {
+    List<Double> result = new ArrayList<Double>();
+    for (double value : values) {
+      if (!Double.isFinite(value)) {
+        throw new IllegalStateException("Qualified relief evidence contains a non-finite action value");
+      }
+      result.add(Double.valueOf(value));
+    }
+    return Collections.unmodifiableList(result);
+  }
+
   /**
    * Immutable ranked cross-slice near-active and rejecting constraint summary.
    *
@@ -1586,6 +1744,32 @@ public final class ProcessModelOperatingEnvelopeStudy {
      * @throws IllegalStateException if a ranked row lacks finite physical representative evidence
      */
     public Map<String, Object> toConstraintOpportunityEvidenceMap() {
+      return toConstraintOpportunityEvidenceMap(Collections.<QualifiedReliefStudyEvidence>emptyList());
+    }
+
+    /**
+     * Builds the opportunity screen and attaches only exact qualified paired-relief receipts.
+     *
+     * @param qualifiedReliefStudies receipts produced by {@link ProcessModelOperatingEnvelopeStudy#qualifyReliefStudy}
+     * @return deeply immutable JSON-friendly opportunity screen
+     * @throws IllegalArgumentException if receipts are duplicated or do not match an installed opportunity row
+     * @throws IllegalStateException if a ranked row lacks finite physical representative evidence
+     */
+    public Map<String, Object> toConstraintOpportunityEvidenceMap(
+        List<QualifiedReliefStudyEvidence> qualifiedReliefStudies) {
+      List<QualifiedReliefStudyEvidence> receipts = qualifiedReliefStudies == null
+          ? Collections.<QualifiedReliefStudyEvidence>emptyList()
+          : qualifiedReliefStudies;
+      Map<String, QualifiedReliefStudyEvidence> receiptsByConstraint = new LinkedHashMap<String, QualifiedReliefStudyEvidence>();
+      for (QualifiedReliefStudyEvidence receipt : receipts) {
+        if (receipt == null) {
+          throw new IllegalArgumentException("Qualified relief receipts must not contain null entries");
+        }
+        if (receiptsByConstraint.put(receipt.getQualifiedConstraintName(), receipt) != null) {
+          throw new IllegalArgumentException(
+              "Duplicate qualified relief receipt for " + receipt.getQualifiedConstraintName());
+        }
+      }
       List<Map<String, Object>> candidates = new ArrayList<Map<String, Object>>();
       for (ConstraintSummaryEntry entry : rankedConstraints) {
         LeadingConstraintEvidence representative = entry
@@ -1619,12 +1803,37 @@ public final class ProcessModelOperatingEnvelopeStudy {
         candidate.put("feasible_evidence_count", Integer.valueOf(entry.getFeasibleEvidenceCount()));
         candidate.put("rejecting_evidence_count", Integer.valueOf(entry.getRejectingEvidenceCount()));
         candidate.put("qualification_state", "EXACT_SAMPLED_OR_REFINED_EVIDENCE");
-        candidate.put("paired_relief_study_status", "NOT_PROVIDED");
-        candidate.put("paired_relief_study_required", Boolean.TRUE);
+        QualifiedReliefStudyEvidence receipt = receiptsByConstraint.remove(entry.getQualifiedConstraintName());
+        if (receipt != null) {
+          if (entry.getSource() != LeadingConstraintEvidence.Source.INSTALLED_EQUIPMENT) {
+            throw new IllegalArgumentException(
+                "Paired installed-capacity relief receipt cannot qualify a non-installed opportunity row: "
+                    + entry.getQualifiedConstraintName());
+          }
+          Map<String, Object> receiptMap = receipt.toEvidenceMap();
+          if (!(receiptMap.get("original_applicable_limit") instanceof Number)
+              || !sameDouble(entry.getApplicableLimit(),
+                  ((Number) receiptMap.get("original_applicable_limit")).doubleValue())
+              || !sameText(entry.getPhysicalUnit(), String.valueOf(receiptMap.get("physical_unit")))) {
+            throw new IllegalArgumentException(
+                "Paired relief receipt does not match the screened installed limit and unit: "
+                    + entry.getQualifiedConstraintName());
+          }
+          candidate.put("paired_relief_study_status", "QUALIFIED");
+          candidate.put("paired_relief_study_required", Boolean.FALSE);
+          candidate.put("paired_relief_study_receipt", receiptMap);
+        } else {
+          candidate.put("paired_relief_study_status", "NOT_PROVIDED");
+          candidate.put("paired_relief_study_required", Boolean.TRUE);
+        }
         candidates.add(Collections.unmodifiableMap(candidate));
       }
+      if (!receiptsByConstraint.isEmpty()) {
+        throw new IllegalArgumentException("Qualified relief receipt does not match an exact screened opportunity row: "
+            + receiptsByConstraint.keySet().iterator().next());
+      }
       Map<String, Object> evidence = new LinkedHashMap<String, Object>();
-      evidence.put("summary_version", Integer.valueOf(1));
+      evidence.put("summary_version", Integer.valueOf(receipts.isEmpty() ? 1 : 2));
       evidence.put("source_constraint_summary_version", Integer.valueOf(2));
       evidence.put("candidate_count", Integer.valueOf(candidates.size()));
       evidence.put("candidates", Collections.unmodifiableList(candidates));

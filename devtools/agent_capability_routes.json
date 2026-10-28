@@ -204,6 +204,16 @@
       ]
     },
     {
+      "package": "neqsim.process.equipment.separator.emulsion",
+      "title": "Oil-water emulsion separation studies",
+      "keywords": "oil water emulsion rag layer densely packed zone DPZ coalescence separator troubleshooting dynamic capacity droplet size water-in-oil oil-in-water estimated uncalibrated",
+      "agent": "emulsion-separation",
+      "skill": "neqsim-emulsion-separation",
+      "docs": [
+        "docs/process/equipment/emulsion-separation-study.md"
+      ]
+    },
+    {
       "package": "neqsim.process.equipment.pipeline",
       "title": "Pipeline and well hydraulics",
       "keywords": "Beggs Brill two fluid slug transient pipeline riser flowline hydraulics restart pigging",

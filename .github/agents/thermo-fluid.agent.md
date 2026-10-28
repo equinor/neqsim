@@ -64,6 +64,20 @@ fluid.getCharacterization().characterisePlusFraction();
 
 ## Flash Calculations
 
+For pressure jumps near a gas dew point, inspect both flash phase fractions and
+the hydraulic friction closure. An aqueous trial appended after a beta solve
+must be solved before returning; a trial seed is not an equilibrium phase.
+Use `PipeBeggsAndBrillsDewPointTest` for repeated-flash conservation and fugacity
+checks and for the numerical dry-gas friction extension below one ppm liquid by
+flowing volume. See the [pipeline guide](../../docs/process/PipeBeggsAndBrills.md#friction-pressure-drop)
+for its qualification limits.
+
+For volume-translated UMR-CPA, refresh translation inputs and invalidate derivative
+caches before the inherited volume and fugacity calculations, as in translated PR.
+Check component balance and fugacity equality after warm composition or temperature
+changes with `PhaseUMRCPAvolcorTest`; a plausible phase count alone misses stale
+translation data. See the [CPA mixing-rule guidance](../../docs/thermo/mixing_rules_guide.md#6-cpa-mixing-rules).
+
 For parallel standard modified-NRTL SRK/PR-HV calculations, finish configuring and
 cloning each worker fluid before launching its own operations object. The HV clone
 path detaches parameters, GE and derivative work state, including runtime-tuned
@@ -160,6 +174,10 @@ physical dew side from the cricondentherm as described in `neqsim-phase-envelope
 ## Multi-Phase Flash Guidance
 - **Two-phase (gas + liquid):** Default behavior — use `TPflash()`
 - **Three-phase (gas + oil + aqueous):** Set `fluid.setMultiPhaseCheck(true)` before flash
+- **Aqueous seeds:** A phase label or seed beta does not establish equilibrium. For discontinuous
+  entropy near water dropout, check component balances and fugacity equality after phase seeding;
+  retain strict PS entropy closure. See `docs/thermodynamicoperations/TPflash_algorithm.md`
+  section 3.5.2 and `TPflashIssue4659WetRichGasTest`.
 - **Hydrate check:** Set `fluid.setHydrateCheck(true)` for hydrate stability
 - **Solid phase (wax, ice):** Set appropriate solid-phase models
 

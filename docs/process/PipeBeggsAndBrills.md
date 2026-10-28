@@ -226,6 +226,23 @@ For 1 < y < 1.2:  S = ln(2.2y - 1.2)
 Otherwise:       S = ln(y) / [-0.0523 + 3.18ln(y) - 0.872ln²(y) + 0.01853ln⁴(y)]
 ```
 
+For a no-slip liquid volume fraction below $10^{-6}$ (one part per million by
+flowing volume), the friction exponent is multiplied by $x^2(3-2x)$, where
+$x = \lambda_L/10^{-6}$. This joins the two-phase friction multiplier smoothly
+to one at the dry-gas limit and leaves the published exponent unchanged at and
+above $10^{-6}$. The blending weight has zero slope at both ends. The liquid phase,
+Beggs–Brill holdup and hydrostatic density remain in the calculation.
+
+This numerical extension prevents round-off-scale phase appearance at a gas
+dew point from causing a finite pressure jump, as reported in
+[issue #4654](https://github.com/equinor/neqsim/issues/4654). It is not an
+independently validated friction correlation for trace condensate. Pressure
+continuity is regression-tested with the reported separator gas in both default
+adiabatic and isothermal modes, using 1, 5 and 20 increments. This continuity
+check does not establish grid convergence or experimental pressure-drop accuracy.
+The associated multiphase-flash fix also solves aqueous trial phases added after
+the initial beta loop, so an unsolved trial fraction cannot enter the hydraulics.
+
 ---
 
 ## Heat Transfer Models

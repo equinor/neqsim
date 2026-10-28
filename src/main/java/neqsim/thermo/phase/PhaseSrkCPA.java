@@ -615,6 +615,244 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     }
   }
 
+  /**
+   * Calculates mixed amount-temperature, amount-volume, and second-amount derivatives of association-site fractions.
+   *
+   * <p>
+   * This operation is intentionally explicit because the complete amount Hessian requires
+   * {@code O(numberOfComponents^2)} association-Hessian solves and storage. Callers must first initialize this phase
+   * with derivative level one or higher. This operation refreshes the phase at level three before using its first
+   * derivatives. Ordinary CPA initialization does not allocate or calculate these tensors.
+   *
+   * <p>
+   * The derivatives use native EOS volume as the independent volume coordinate, consistently with
+   * {@link ComponentSrkCPA#getXsitedV()} and the other CPA site derivatives.
+   *
+   * @throws IllegalStateException if the phase has not been initialized at derivative level one or higher
+   */
+  public void calcAssociationSiteCompositionDerivatives() {
+    int siteCount = getTotalNumberOfAccociationSites();
+    if (siteCount == 0) {
+      return;
+    }
+    if (getInitType() < 1 || Klkni == null || KlkTMatrix == null || KlkVMatrix == null || ksiMatrix == null
+        || QMatksiksiksi == null || hessianMatrix == null) {
+      throw new IllegalStateException(
+          "Initialize the CPA phase with derivative level one or higher before calculating mixed site derivatives");
+    }
+
+    // Matrix allocation at level zero does not establish derivative availability. Refresh only on this explicit
+    // path, including component covolume derivatives, so ordinary flashes need no additional state tracking.
+    init(numberOfMolesInPhase / beta, numberOfComponents, 3, getType(), beta);
+
+    for (int component = 0; component < numberOfComponents; component++) {
+      ((ComponentSrkCPA) getComponent(component)).allocateAssociationSiteCompositionDerivatives(numberOfComponents);
+    }
+
+    SimpleMatrix xTemperature = associationSiteDerivativeVector(DerivativeCoordinate.TEMPERATURE, 0);
+    SimpleMatrix xVolume = associationSiteDerivativeVector(DerivativeCoordinate.VOLUME, 0);
+    SimpleMatrix[] xAmount = new SimpleMatrix[numberOfComponents];
+    SimpleMatrix[] kAmount = new SimpleMatrix[numberOfComponents];
+    for (int component = 0; component < numberOfComponents; component++) {
+      xAmount[component] = associationSiteDerivativeVector(DerivativeCoordinate.AMOUNT, component);
+      kAmount[component] = new SimpleMatrix(Klkni[component]);
+
+      SimpleMatrix inverseSiteSquared = amountIncidenceVector(component);
+      SimpleMatrix amountTemperature = applyHessianInv(
+          amountTemperatureMatrix(component).mult(ksiMatrix).plus(kAmount[component].mult(xTemperature))
+              .plus(KlkTMatrix.mult(xAmount[component])).plus(inverseSiteSquared.elementMult(xTemperature))
+              .minus(QMatksiksiksi.elementMult(xAmount[component].elementMult(xTemperature))));
+      SimpleMatrix amountVolume = applyHessianInv(
+          amountVolumeMatrix(component).mult(ksiMatrix).plus(kAmount[component].mult(xVolume))
+              .plus(KlkVMatrix.mult(xAmount[component])).plus(inverseSiteSquared.elementMult(xVolume))
+              .minus(QMatksiksiksi.elementMult(xAmount[component].elementMult(xVolume))));
+      storeMixedSiteDerivative(component, amountTemperature, true);
+      storeMixedSiteDerivative(component, amountVolume, false);
+    }
+
+    for (int first = 0; first < numberOfComponents; first++) {
+      SimpleMatrix firstIncidence = amountIncidenceVector(first);
+      for (int second = first; second < numberOfComponents; second++) {
+        SimpleMatrix secondIncidence = amountIncidenceVector(second);
+        SimpleMatrix amountAmount = applyHessianInv(amountAmountMatrix(first, second).mult(ksiMatrix)
+            .plus(kAmount[first].mult(xAmount[second])).plus(kAmount[second].mult(xAmount[first]))
+            .plus(firstIncidence.elementMult(xAmount[second])).plus(secondIncidence.elementMult(xAmount[first]))
+            .minus(QMatksiksiksi.elementMult(xAmount[first].elementMult(xAmount[second]))));
+        storeSecondAmountSiteDerivative(first, second, amountAmount);
+      }
+    }
+  }
+
+  /** Coordinates whose first site derivatives are already part of level-three CPA initialization. */
+  private enum DerivativeCoordinate {
+    TEMPERATURE, VOLUME, AMOUNT
+  }
+
+  /**
+   * Collects a first association-site derivative in global site order.
+   *
+   * @param coordinate derivative coordinate
+   * @param amountComponent amount component when {@code coordinate} is {@code AMOUNT}
+   * @return global site derivative vector
+   */
+  private SimpleMatrix associationSiteDerivativeVector(DerivativeCoordinate coordinate, int amountComponent) {
+    SimpleMatrix result = new SimpleMatrix(getTotalNumberOfAccociationSites(), 1);
+    int globalSite = 0;
+    for (int component = 0; component < numberOfComponents; component++) {
+      ComponentSrkCPA cpaComponent = (ComponentSrkCPA) getComponent(component);
+      for (int site = 0; site < cpaComponent.getNumberOfAssociationSites(); site++) {
+        double value;
+        if (coordinate == DerivativeCoordinate.TEMPERATURE) {
+          value = cpaComponent.getXsitedT()[site];
+        } else if (coordinate == DerivativeCoordinate.VOLUME) {
+          value = cpaComponent.getXsitedV()[site];
+        } else {
+          value = cpaComponent.getXsitedni(site, amountComponent);
+        }
+        result.set(globalSite++, 0, value);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Builds the diagonal contribution {@code m_ni / X^2} in global site order.
+   *
+   * @param amountComponent differentiated component
+   * @return incidence vector divided by squared site fractions
+   */
+  private SimpleMatrix amountIncidenceVector(int amountComponent) {
+    SimpleMatrix result = new SimpleMatrix(getTotalNumberOfAccociationSites(), 1);
+    for (int site = 0; site < getTotalNumberOfAccociationSites(); site++) {
+      if (moleculeNumber[site] == amountComponent) {
+        double x = ksiMatrix.get(site, 0);
+        result.set(site, 0, 1.0 / (x * x));
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Builds {@code d K_ni / dT}.
+   *
+   * @param amountComponent differentiated component
+   * @return mixed matrix derivative
+   */
+  private SimpleMatrix amountTemperatureMatrix(int amountComponent) {
+    SimpleMatrix result = new SimpleMatrix(getTotalNumberOfAccociationSites(), getTotalNumberOfAccociationSites());
+    for (int row = 0; row < getTotalNumberOfAccociationSites(); row++) {
+      for (int column = 0; column < getTotalNumberOfAccociationSites(); column++) {
+        result.set(row, column, KlkTMatrix.get(row, column) * amountMatrixFactor(amountComponent, row, column));
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Builds {@code d K_ni / dV} at fixed amounts.
+   *
+   * @param amountComponent differentiated component
+   * @return mixed matrix derivative
+   */
+  private SimpleMatrix amountVolumeMatrix(int amountComponent) {
+    SimpleMatrix result = new SimpleMatrix(getTotalNumberOfAccociationSites(), getTotalNumberOfAccociationSites());
+    double lngidV = ((ComponentSrkCPA) getComponent(amountComponent)).calc_lngidV(this);
+    for (int row = 0; row < getTotalNumberOfAccociationSites(); row++) {
+      for (int column = 0; column < getTotalNumberOfAccociationSites(); column++) {
+        result.set(row, column, KlkVMatrix.get(row, column) * amountMatrixFactor(amountComponent, row, column)
+            + KlkMatrix.get(row, column) * lngidV);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Builds {@code d2 K / (dn_i dn_j)} at fixed temperature and native EOS volume.
+   *
+   * @param first first amount component
+   * @param second second amount component
+   * @return second amount matrix derivative
+   */
+  private SimpleMatrix amountAmountMatrix(int first, int second) {
+    SimpleMatrix result = new SimpleMatrix(getTotalNumberOfAccociationSites(), getTotalNumberOfAccociationSites());
+    double lngij = ((ComponentSrkCPA) getComponent(first)).calc_lngij(second, this);
+    for (int row = 0; row < getTotalNumberOfAccociationSites(); row++) {
+      for (int column = 0; column < getTotalNumberOfAccociationSites(); column++) {
+        double factor = amountMatrixFactor(first, row, column) * amountMatrixFactor(second, row, column) + lngij;
+        if (moleculeNumber[row] == first && moleculeNumber[row] == second) {
+          double amount = mVector.get(row, 0);
+          factor -= 1.0 / (amount * amount);
+        }
+        if (moleculeNumber[column] == first && moleculeNumber[column] == second) {
+          double amount = mVector.get(column, 0);
+          factor -= 1.0 / (amount * amount);
+        }
+        result.set(row, column, KlkMatrix.get(row, column) * factor);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Returns the logarithmic amount factor multiplying one association matrix element.
+   *
+   * @param amountComponent differentiated component
+   * @param row global row site
+   * @param column global column site
+   * @return logarithmic amount derivative factor
+   */
+  private double amountMatrixFactor(int amountComponent, int row, int column) {
+    double factor = lngi[amountComponent];
+    if (moleculeNumber[row] == amountComponent) {
+      factor += 1.0 / mVector.get(row, 0);
+    }
+    if (moleculeNumber[column] == amountComponent) {
+      factor += 1.0 / mVector.get(column, 0);
+    }
+    return factor;
+  }
+
+  /**
+   * Stores one mixed site derivative in component-local site order.
+   *
+   * @param amountComponent differentiated amount component
+   * @param values values in global site order
+   * @param temperature whether the other coordinate is temperature rather than volume
+   */
+  private void storeMixedSiteDerivative(int amountComponent, SimpleMatrix values, boolean temperature) {
+    int globalSite = 0;
+    for (int component = 0; component < numberOfComponents; component++) {
+      ComponentSrkCPA cpaComponent = (ComponentSrkCPA) getComponent(component);
+      for (int site = 0; site < cpaComponent.getNumberOfAssociationSites(); site++) {
+        if (temperature) {
+          cpaComponent.setXsitednidT(site, amountComponent, values.get(globalSite, 0));
+        } else {
+          cpaComponent.setXsitednidV(site, amountComponent, values.get(globalSite, 0));
+        }
+        globalSite++;
+      }
+    }
+  }
+
+  /**
+   * Stores a symmetric second-amount site derivative in component-local site order.
+   *
+   * @param first first amount component
+   * @param second second amount component
+   * @param values values in global site order
+   */
+  private void storeSecondAmountSiteDerivative(int first, int second, SimpleMatrix values) {
+    int globalSite = 0;
+    for (int component = 0; component < numberOfComponents; component++) {
+      ComponentSrkCPA cpaComponent = (ComponentSrkCPA) getComponent(component);
+      for (int site = 0; site < cpaComponent.getNumberOfAssociationSites(); site++) {
+        double value = values.get(globalSite++, 0);
+        cpaComponent.setXsitednidnj(site, first, second, value);
+        cpaComponent.setXsitednidnj(site, second, first, value);
+      }
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void setMixingRule(MixingRuleTypeInterface mr) {

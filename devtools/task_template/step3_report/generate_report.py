@@ -2449,13 +2449,89 @@ def _constraint_opportunity_summary(ranked):
     }
 
 
+def _qualified_constraint_opportunity_valid(actual, expected, envelope):
+    """Return true only for an exact screen with structurally bound paired-relief receipts."""
+    if not isinstance(actual, dict) or not isinstance(expected, dict):
+        return False
+    for field in ("source_constraint_summary_version", "candidate_count", "advisory",
+                  "interpretation"):
+        if actual.get(field) != expected.get(field):
+            return False
+    candidates = actual.get("candidates")
+    expected_candidates = expected.get("candidates")
+    if (not isinstance(candidates, list) or not isinstance(expected_candidates, list)
+            or len(candidates) != len(expected_candidates)):
+        return False
+    paired_fields = {
+        "paired_relief_study_status", "paired_relief_study_required",
+        "paired_relief_study_receipt",
+    }
+    qualified_count = 0
+    for candidate, expected_candidate in zip(candidates, expected_candidates):
+        if not isinstance(candidate, dict):
+            return False
+        if ({key: value for key, value in candidate.items() if key not in paired_fields}
+                != {key: value for key, value in expected_candidate.items()
+                    if key not in paired_fields}):
+            return False
+        receipt = candidate.get("paired_relief_study_receipt")
+        if (candidate.get("paired_relief_study_status") == "NOT_PROVIDED"
+                and candidate.get("paired_relief_study_required") is True and receipt is None):
+            continue
+        if (candidate.get("paired_relief_study_status") != "QUALIFIED"
+                or candidate.get("paired_relief_study_required") is not False
+                or not isinstance(receipt, dict)):
+            return False
+        qualified_count += 1
+        objective = receipt.get("objective")
+        optimizer = envelope.get("optimizer_evidence")
+        alternative_values = receipt.get("alternative_action_values")
+        if (candidate.get("source") != "INSTALLED_EQUIPMENT"
+                or receipt.get("receipt_version") != 1
+                or receipt.get("action_set_id") != envelope.get("candidate_evaluator_id")
+                or receipt.get("accepted_action_ids") != envelope.get("accepted_action_ids")
+                or receipt.get("baseline_action_values") != envelope.get("accepted_candidate_values")
+                or not isinstance(alternative_values, list)
+                or any(not _report_number(value) for value in alternative_values)
+                or receipt.get("qualified_constraint_name") != candidate.get(
+                    "qualified_constraint_name")
+                or receipt.get("physical_unit") != candidate.get("physical_unit")
+                or receipt.get("original_applicable_limit") != candidate.get("applicable_limit")
+                or not _report_number(receipt.get("proposed_applicable_limit"))
+                or not isinstance(objective, dict) or not isinstance(optimizer, dict)
+                or objective.get("name") != optimizer.get("objective_name")
+                or objective.get("direction") != optimizer.get("objective_direction")
+                or objective.get("unit") != optimizer.get("objective_unit")
+                or objective.get("baseline_value") != optimizer.get("accepted_objective_value")
+                or not _report_number(objective.get("paired_baseline_value"))
+                or not _report_number(objective.get("baseline_binding_residual"))
+                or not _report_number(objective.get("baseline_binding_tolerance"))
+                or objective.get("baseline_binding_residual")
+                    != abs(objective.get("paired_baseline_value")
+                           - objective.get("baseline_value"))
+                or objective.get("baseline_binding_residual")
+                    > objective.get("baseline_binding_tolerance")
+                or not _report_number(objective.get("alternative_value"))
+                or not _report_number(objective.get("delta"))
+                or objective.get("alternative_value") - objective.get("paired_baseline_value")
+                    != objective.get("delta")
+                or receipt.get("study_outcome") != "COMPLETED"
+                or receipt.get("capacity_restored") is not True
+                or receipt.get("process_state_restored") is not True
+                or receipt.get("recovery_simulation_converged") is not True
+                or receipt.get("qualification_state") != "QUALIFIED_PAIRED_SAMPLED_RELIEF"
+                or receipt.get("advisory") is not True):
+            return False
+    return actual.get("summary_version") == (2 if qualified_count else 1)
+
+
 def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
     """Validate the report-facing lifecycle subset and independently replay identity deltas."""
     reasons = []
     if not isinstance(evidence, dict):
         return ["evidence is not an object"]
-    if evidence.get("schema_version") not in (8, 9, 10, 11):
-        reasons.append("schema_version must be 8, 9, 10, or 11")
+    if evidence.get("schema_version") not in (8, 9, 10, 11, 12):
+        reasons.append("schema_version must be 8, 9, 10, 11, or 12")
     if evidence.get("advisory") is not True:
         reasons.append("advisory flag is missing")
     if not _report_text(evidence.get("cycle_id")):
@@ -2507,9 +2583,9 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
             previous_elapsed = elapsed
         if period.get("time_unit") != evidence.get("time_unit"):
             reasons.append(prefix + " time unit does not match the lifecycle")
-        if evidence.get("schema_version") in (9, 10, 11):
+        if evidence.get("schema_version") in (9, 10, 11, 12):
             coverage = period.get("utilization_coverage")
-            expected_coverage_schema = "1.1" if evidence.get("schema_version") in (10, 11) else "1.0"
+            expected_coverage_schema = "1.1" if evidence.get("schema_version") in (10, 11, 12) else "1.0"
             if (not isinstance(coverage, dict)
                     or coverage.get("schema_version") != expected_coverage_schema
                     or coverage.get("coverage_scope") != "DECLARED_EQUIPMENT_AND_CONSTRAINTS"
@@ -2539,7 +2615,7 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
                 required_ids = coverage.get("required_constraint_ids")
                 if (not isinstance(expected_ids, list) or not expected_ids
                         or not isinstance(expected_plant_ids, list)
-                        or (evidence.get("schema_version") in (10, 11) and not expected_plant_ids)
+                        or (evidence.get("schema_version") in (10, 11, 12) and not expected_plant_ids)
                         or not isinstance(required_ids, list)
                         or len(coverage_ids) != len(set(coverage_ids))
                         or set(expected_ids) - set(coverage_ids)
@@ -2593,6 +2669,11 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
             if (expected_opportunities is None
                     or period.get("constraint_opportunity_summary") != expected_opportunities):
                 reasons.append(prefix + " has an invalid constraint opportunity summary")
+        if evidence.get("schema_version") == 12:
+            expected_opportunities = _constraint_opportunity_summary(ranked)
+            if not _qualified_constraint_opportunity_valid(
+                    period.get("constraint_opportunity_summary"), expected_opportunities, envelope):
+                reasons.append(prefix + " has an invalid qualified relief receipt")
         period_identities.append(identities)
 
     if expected_cycle_id and expected_cycle_id not in seen_period_ids:
@@ -2688,7 +2769,7 @@ def format_lifecycle_envelope_text(results, expected_cycle_id=None):
                 _fmt_number(row["applicable_limit"]) if row["applicable_limit"] is not None else "n/a",
                 _md_cell(row["physical_unit"]), _md_cell(row["applicable_limit_provenance"])))
 
-    if evidence["schema_version"] in (9, 10, 11):
+    if evidence["schema_version"] in (9, 10, 11, 12):
         lines += ["", "**Declared accepted-replay constraint coverage.** Every row is frozen at the accepted replay; "
                   "missing, screening-only, non-finite, or unqualified limits are withheld upstream.", "",
                   "| Period | Evidence | Exact constraint | Current / limit | Utilization | Limit basis | Provenance |",
@@ -2708,20 +2789,28 @@ def format_lifecycle_envelope_text(results, expected_cycle_id=None):
                         _md_cell(row["unit"]), _fmt_number(row["normalized_utilization"]),
                         _md_cell(row["basis"]), _md_cell(row["provenance"])))
 
-    if evidence["schema_version"] == 11:
-        lines += ["", "**Constraint follow-up opportunity screen.** Rows are qualified only as exact sampled or "
-                  "refined constraint evidence. A separate paired relief study is required before reporting "
-                  "debottleneck benefit.", "",
+    if evidence["schema_version"] in (11, 12):
+        lines += ["", "**Constraint follow-up opportunity screen.** Rows are qualified first as exact sampled or "
+                  "refined constraint evidence. A relief delta is shown only when an exact accepted-baseline-bound "
+                  "paired study receipt also passes convergence, feasibility, finiteness, and restoration gates.", "",
                   "| Period | Screen | Exact constraint | Current / limit | Physical headroom | Follow-up |",
                   "|---|---|---|---|---|---|"]
         for period in evidence["periods"]:
             for candidate in period["constraint_opportunity_summary"]["candidates"]:
-                lines.append("| {} | {} | `{}` | {} / {} {} | {} {} | Paired relief study required |".format(
+                receipt = candidate.get("paired_relief_study_receipt")
+                if candidate.get("paired_relief_study_status") == "QUALIFIED" and isinstance(receipt, dict):
+                    objective = receipt["objective"]
+                    follow_up = "Qualified paired sampled Δ {} {} ({})".format(
+                        _fmt_number(objective["delta"]), _md_cell(objective["unit"]),
+                        _md_cell(receipt["study_id"]))
+                else:
+                    follow_up = "Paired relief study required"
+                lines.append("| {} | {} | `{}` | {} / {} {} | {} {} | {} |".format(
                     _md_cell(period["period_name"]), _md_cell(candidate["screening_classification"]),
                     _md_cell(candidate["qualified_constraint_name"]),
                     _fmt_number(candidate["current_value"]), _fmt_number(candidate["applicable_limit"]),
                     _md_cell(candidate["physical_unit"]), _fmt_number(candidate["physical_headroom"]),
-                    _md_cell(candidate["physical_unit"])))
+                    _md_cell(candidate["physical_unit"]), follow_up))
 
     lines += ["", "**Exact adjacent-period identity migration.** Classification or limit-basis changes "
               "appear as one removed and one added identity; this is descriptive evidence, not causal attribution."]

@@ -32,6 +32,10 @@ exposes `getStandardsApplied()` and `toMap()` / `toJson()` so results drop strai
 - **Rigorous reaction kinetics** — load `neqsim-reaction-engineering`.
 - **Equipment root cause from historian data** — load `neqsim-root-cause-analysis`.
   `RootCauseAnalyser` here is the *chemical* RCA (deposit / chemistry symptoms).
+- **Dynamic separator emulsion or rag-layer growth** — load
+  [neqsim-emulsion-separation](../neqsim-emulsion-separation/SKILL.md) and use
+  `@emulsion-separation` to compare dispersed-water load and coalescence-limited
+  capacity. Its estimated kinetics do not establish a product-specific dose.
 
 ## Applicable Standards
 

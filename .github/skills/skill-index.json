@@ -1827,6 +1827,17 @@
   "neqsim-standards-lookup",
   "neqsim-flow-assurance"
  ],
+ "separator emulsion rag layer": [
+  "neqsim-emulsion-separation",
+  "neqsim-root-cause-analysis"
+ ],
+ "densely packed zone coalescence": [
+  "neqsim-emulsion-separation"
+ ],
+ "oil water emulsion separation": [
+  "neqsim-emulsion-separation",
+  "neqsim-production-chemistry"
+ ],
  "production chemistry": [
   "neqsim-production-chemistry",
   "neqsim-flow-assurance",

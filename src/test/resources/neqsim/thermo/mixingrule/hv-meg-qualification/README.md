@@ -5,6 +5,12 @@ mixing rule 4. It introduces no interaction coefficient, pure-component paramete
 alpha function or empirical acceptance tolerance. It must not be used to claim
 that the default inhibitor model is physically qualified.
 
+The separate [source-compatible assessment](../hv-source-compatible/README.md)
+uses the already catalogued Derawi MEG critical pressure and Mathias-Copeman
+alpha. It assesses the same pure-pressure observations without refitting or
+changing these default-model reports. Agreement of that pure alpha does not
+establish ternary partition accuracy.
+
 ## Sources and literal data
 
 - Kruger, Danielsen, Kontogeorgis, Solbraa and von Solms (2018),

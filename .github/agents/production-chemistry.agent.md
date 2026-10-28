@@ -96,6 +96,13 @@ temperature window.
 For equipment-level root cause from historian trends (vibration, efficiency, fouling), hand
 off to the root-cause agent instead; this agent owns the *chemical* diagnosis.
 
+For growing separator emulsion or rag layers, coalescence-limited capacity or
+droplet-size sensitivity, hand the solved separator to
+[@emulsion-separation](emulsion-separation.agent.md) and
+[neqsim-emulsion-separation](../skills/neqsim-emulsion-separation/SKILL.md).
+That optional study supplies diagnostic layer dynamics; it does not infer a
+product-specific demulsifier dose or modify the live separator streams.
+
 ## Output Requirements
 
 - Working, runnable code for every quoted number (Java 8 compatible — no `var`, no `List.of`).

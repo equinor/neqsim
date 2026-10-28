@@ -441,6 +441,52 @@ for (double t = 0; t <= 6.0; t += 0.1) {
 }
 ```
 
+### Transactional actuator steps
+
+`ThrottlingValve`, the field-free `ControlValve` specialization, `ESDValve`, and
+`BlowdownValve` participate in `ProcessSystem` transient step transactions. Their snapshots retain
+the actual and requested opening, travel model, deadband, stiction and hysteresis memory, flow and
+thermodynamic cache, outlet-stream state, physical-step identifier, and the ESD/blowdown state
+machine. Attached base PID controllers remain separate transaction participants; the process
+transaction validates and restores both objects without replacing either one.
+
+Rollback also restores the active sizing method's choked-flow switch and $x_T$ factor in place.
+Keep the mechanical design, sizing method, and other sizing configuration fixed during a trial.
+Every attached controller must be independently enumerated; a duplicate controller tag that hides
+an attached controller blocks transaction coverage. Subclasses of `ESDValve` and `BlowdownValve`
+must extend the snapshot and explicitly qualify their own state before participating.
+
+Physical-step idempotency is explicit and default-off for legacy compatibility:
+
+```java
+valve.setPhysicalStepIdempotencyEnabled(true);
+```
+
+When enabled, one non-null physical-step UUID advances actuator state at most once. Repeating a
+hydraulic calculation with the same UUID can update flow state but cannot apply travel, trip time,
+or blowdown time twice. Rejected full-step/two-half-step trials restore the actuator and safety
+state before retry. When disabled, legacy loops that reuse one UUID across multiple physical
+timesteps continue to advance on every call.
+
+For `FIRST_ORDER_LAG`, the implemented step is the exact constant-command response
+
+$$
+x_{n+1}=x_n+\left(1-e^{-\Delta t/\tau}\right)(u-x_n).
+$$
+
+The regression benchmark uses $x_0=20\%$, $u=80\%$, and $\tau=4\ \mathrm{s}$;
+one-second and 0.125-second steps give the same eight-second endpoint to $10^{-10}$ percentage
+points. Separate tests qualify asymmetric rate limits, deadband, breakaway stiction, reversal
+hysteresis, fail-close ESD travel, commanded blowdown opening, rollback/replay, and controller-chain
+coverage.
+
+Other `ThrottlingValve` subclasses currently fail the transaction coverage audit until they extend
+the snapshot for their own mutable state. This explicitly includes `HIPPSValve`, `PSDValve`,
+`LevelControlValve`, and `PressureControlValve`; their legacy non-transactional execution remains
+available. Transaction coverage establishes deterministic modeled response only. It does not
+establish valve sizing, actuator vendor qualification, SIL, voting, independence, proof-test
+interval, or suitability for a project safety function.
+
 ### Level Control Dynamic Response
 
 ```java
