@@ -30,7 +30,9 @@ specialists such as mechanical design, safety, plant data, and reporting.
 2. **Select the task pattern** from
    [oil-and-gas-task-patterns](references/oil-and-gas-task-patterns.md). Load only
    the relevant specialist skills. Discover additional capabilities rather than
-   treating an equipment class name as proof of a validated application.
+   treating an equipment class name as proof of a validated application. For
+   several platforms exchanging streams (hub plus satellites, shared export chain)
+   load [multi-platform-complex](references/multi-platform-complex.md).
 3. **Define fluids and feeds** with the EOS/component sequence in
    `neqsim-api-patterns`. Verify the EOS and phase options for the composition,
    pressure/temperature range and property being calculated.
@@ -332,6 +334,8 @@ of percent.
   step above.
 - `neqsim-relief-flare-network` — PSV sizing per API 520/521 and flare loads.
 - `neqsim-depressurization-mdmt` — blowdown time and low-temperature screening.
+- `neqsim-future-operation-study` — per-year strategy, modification register and
+  design-basis deviation register on top of a finished multi-year model.
 
 ## Diagnose unresolved recycles before accepting a plant result
 

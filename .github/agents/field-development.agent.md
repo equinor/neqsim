@@ -130,6 +130,7 @@ Additional skills as needed:
 - **`neqsim-troubleshooting`** — When simulations fail
 - **`neqsim-notebook-patterns`** — For Jupyter notebook formatting
 - **`neqsim-exploration-strategy-selection`** — APbo / VPbo / firm-well / PLX decisions (EMV, VOI, break-even chance of success); pair with `neqsim-tight-reservoir-test-design` for tight targets
+- **`neqsim-future-operation-study`** — per-year operating strategy, equipment modification register and design-basis deviation register on a finished multi-year model
 
 ### Step 1: Clarify Scope (Ask Before Starting)
 

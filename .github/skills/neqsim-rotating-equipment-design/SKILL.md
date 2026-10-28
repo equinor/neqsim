@@ -172,6 +172,39 @@ Not in Java: the Python snapshot evaluation without re-running the flowsheet (Ja
 callback), and automatic application of the recycle demand to the anti-surge valves (read `requiredRecycleFraction`
 and set the recycle yourself, or let the process anti-surge controller do it).
 
+## Chart gas similarity, efficiency calibration and chart-speed basis
+
+Lessons from a multi-platform compressor-limit study (generic; verify against the current classes before use).
+
+- **Fan-law collapse is not gas similarity.** A chart evaluated with `phi = Q/N`, `psi = H/N^2` knows neither the gas
+  nor the tip-speed Mach number. The first-order gas effect (molecular weight, kappa, Z) is already in the polytropic
+  head the thermodynamic model requires. A Mach / sound-speed similarity (`CompressorMapSimilarity` gives the
+  acoustic conversion `f = a_design / a`; equivalent state `N_eq = f N`, `Q_eq = f Q`, `H = H_chart / f^2`) changes a
+  result only for a **multi-line vendor chart**, whose line-to-line spread of head coefficient with speed carries the
+  Mach effect. For a chart with **one speed line**, a generic or anchored map, or any chart the fan laws collapse onto
+  one curve, `H_chart(f Q, f N) / f^2 = H_chart(Q, N)` exactly: the similarity is the identity there, so a result that
+  "moves" with it is a bug and one that does not move is correct. Treat a factor `f` outside about 0.75-1.25 as a
+  validity flag, not a result, and say which charts are informative before presenting a gas sensitivity. Nothing in
+  `CompressorMapSimilarity` changes a chart silently; connecting it to a chart lookup is an explicit, opt-in step.
+- **Effective efficiency absorbs losses.** Calibrating a polytropic efficiency on a measured discharge temperature
+  folds heat loss, instrument offset, seal/bearing losses and (for a turboexpander-driven compressor) shaft-closure
+  error into one number. It is a calibrated item, not a machine property: never score the discharge temperature as
+  independent validation, do not transfer the value to another year, gas or machine without a check, and flag
+  efficiencies above the vendor value. Power from a chart is `m_dot Hp g / eta_p / eta_mech`; check modelled train
+  power against driver load and a measured interstage pressure.
+- **Chart-speed basis.** Digitised chart speed grids, datasheet rated speeds, driver (power-turbine) speed and the
+  member speed through a gearbox are four different bases. Derive the effective ratio per machine from a measured
+  window, keep the other window as a check, and state whether a chart speed line is in rpm or percent of a reference
+  rpm. A model speed that differs systematically from measured speed at equal pressure ratio is a basis mismatch before
+  it is an efficiency problem.
+- **Decoupling dates are per-year modes.** When a stage is moved to its own driver on a known date, build each year
+  from parts: before the date one `CompressorShaft` with the controlling member setting the speed, after it two
+  shafts with the new pairing; a year containing the date is run as two time-weighted parts (for example H1/H2) and
+  reported with the weight. Keep the date and pairing in a table, not in code branches.
+- **Power turbine tied to the power module.** Drive the shaft power limit from the gas-turbine site rating at the
+  year's ambient temperature, report utilisation against the ISO rating separately from the site rating, and mark years
+  with shared shafts as the least certain.
+
 ## Gotchas
 
 - `AxialThrustScreening` rejects non-finite inputs/results and requires a positive fitted zero-crossing for a relative margin. An invalid case is not a safe margin or `NULL` thrust. Report the data range, extrapolation and OEM thrust sign convention.
