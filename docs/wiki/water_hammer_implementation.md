@@ -3,6 +3,50 @@ title: "Water Hammer Simulation in NeqSim"
 description: "Guide to NeqSim water hammer and liquid hammer screening with WaterHammerPipe, WaterHammerStudy, process JSON, automation variables, STID route data, tagreader event windows, and MCP runWaterHammer."
 ---
 
+## Safety Shutdown kernel verification
+
+The single-line acoustic kernel uses characteristic-foot interpolation at the actual internal
+time interval. An outer `runTransient(dt, id)` call is split into equal internal intervals no
+larger than `courantNumber * dx / a`; the entire requested duration is advanced. Courant number
+must be finite and in `(0, 1]`. Smaller intervals introduce interpolation diffusion and require
+mesh/time refinement; they no longer make waves propagate one full grid cell per call.
+
+The initialized open-valve flow is calibrated against an independent receiver pressure.
+`setValveBackPressure(double)` and `getValveBackPressure()` use **bara**, with a default of
+**1 bara**. The study JSON accepts `valveBackPressure_bara` at the top level or in `fieldData`.
+The hydraulic coefficient is internal, in cubic metres per second per square root metre of
+head; it is **not** an IEC/ISA Cv or Kv. Valve opening scales this coefficient linearly.
+The boundary solves the characteristic together with:
+
+$$Q^2+B(C\tau)^2Q-(C\tau)^2(C_+-H_r)=0$$
+
+Here $Q$ is volume flow in m³/s, $B=a/(gA)$ is characteristic impedance, $C$ is the
+calibrated hydraulic coefficient, $\tau$ is opening fraction, $C_+$ is incoming head and
+$H_r$ is receiver pressure head. The positive root is evaluated without subtractive cancellation.
+An open boundary requiring reverse flow rejects explicitly; a closed valve remains closed even
+when receiver pressure is higher. This is not a dynamic non-return-valve disc model.
+
+Initialization requires positive finite geometry/material/fluid properties, one inlet phase,
+an initially open forward-flow valve above its receiver pressure (when that boundary is used),
+and an available EOS sound speed. There is no silent water-property fallback. Density,
+viscosity, acoustic speed and Darcy friction coefficient are frozen at initialization. Pressure
+head is evolved with the linear terrain gravity source. This is a small-disturbance acoustic
+model, including when the single phase is gas, not a general large-decompression gas model.
+
+`WaterHammerKernelTest` is the executable public synthetic verification example. It checks
+unchanged-valve and inclined equilibrium, physical pre-arrival timing, Joukowsky first impulse
+over mesh/Courant refinements, receiver pressure, complete-duration subcycling, invalid intervals
+and deterministic Java restart. `WaterHammerPipeTest` retains adjacent API/regression checks.
+These are analytical/numerical checks, not experimental or plant qualification. Existing results
+can change because earlier sub-Courant timing and valve-boundary behavior were incorrect.
+
+The study wrapper advances the exact requested duration, including a final partial interval.
+It rejects non-valve events instead of silently skipping them. Pump trips, disc slam, network
+junctions, phase-change/cavity collapse and structural response remain separate qualification
+stages of the Safety Shutdown campaign. A single-line pressure envelope does not establish piping
+stress, support impact, SIL or proof-test coverage. The inlet phase check is not a transient
+cavitation detector; inspect the pressure envelope against the fluid's phase limits separately.
+
 ## Overview
 
 NeqSim provides water hammer and liquid hammer screening through the `WaterHammerPipe`

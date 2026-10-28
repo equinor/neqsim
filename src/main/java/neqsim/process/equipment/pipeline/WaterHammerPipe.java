@@ -143,6 +143,8 @@ public class WaterHammerPipe extends Pipeline {
   private double upstreamHead; // m (for reservoir BC)
   private double downstreamHead; // m (for reservoir BC)
   private double valveOpening = 1.0; // 0-1 (for valve BC)
+  private double valveBackPressureBara = 1.0;
+  private double stepFraction;
   private double valveCv = -1; // Valve coefficient (-1 = auto from steady state)
 
   // Fluid properties (cached)
@@ -472,11 +474,45 @@ public class WaterHammerPipe extends Pipeline {
   }
 
   /**
+   * Set the external valve receiver pressure; default is 1 bara.
+   *
+   * @param pressureBara positive absolute receiver pressure in bara
+   */
+  public void setValveBackPressure(double pressureBara) {
+    requirePositive(pressureBara, "valve receiver pressure");
+    valveBackPressureBara = pressureBara;
+  }
+
+  /**
+   * Get the external valve receiver pressure.
+   *
+   * @return absolute pressure in bara
+   */
+  public double getValveBackPressure() {
+    return valveBackPressureBara;
+  }
+
+  /**
+   * Require a finite strictly positive model input.
+   *
+   * @param value input value
+   * @param name diagnostic name
+   */
+  private static void requirePositive(double value, String name) {
+    if (!Double.isFinite(value) || value <= 0.0) {
+      throw new IllegalArgumentException(name + " must be finite and positive");
+    }
+  }
+
+  /**
    * Set the valve opening fraction (0 = closed, 1 = fully open).
    *
    * @param opening Valve opening (0-1)
    */
   public void setValveOpening(double opening) {
+    if (!Double.isFinite(opening)) {
+      throw new IllegalArgumentException("Valve opening must be finite");
+    }
     this.valveOpening = Math.max(0.0, Math.min(1.0, opening));
   }
 
@@ -513,6 +549,10 @@ public class WaterHammerPipe extends Pipeline {
    * @param cn Courant number (typically 1.0 for stability)
    */
   public void setCourantNumber(double cn) {
+    requirePositive(cn, "Courant number");
+    if (cn > 1.0) {
+      throw new IllegalArgumentException("Courant number cannot exceed one");
+    }
     this.courantNumber = cn;
   }
 
@@ -541,7 +581,7 @@ public class WaterHammerPipe extends Pipeline {
    */
   public double calcEffectiveWaveSpeed() {
     if (fluidDensity <= 0 || fluidSoundSpeed <= 0) {
-      return 1200; // Default for water
+      throw new IllegalStateException("Fluid acoustic properties are unavailable");
     }
 
     // Fluid bulk modulus: K = rho * c^2
@@ -604,6 +644,9 @@ public class WaterHammerPipe extends Pipeline {
    * @return Darcy friction factor
    */
   private double calcFrictionFactor(double reynoldsNumber) {
+    if (reynoldsNumber == 0.0) {
+      return 0.0;
+    }
     if (reynoldsNumber < 2300) {
       // Laminar flow
       return 64.0 / reynoldsNumber;
@@ -621,6 +664,16 @@ public class WaterHammerPipe extends Pipeline {
    * Initialize the simulation arrays and calculate initial conditions.
    */
   private void initialize() {
+    requirePositive(length, "length");
+    requirePositive(diameter, "diameter");
+    requirePositive(wallThickness, "wall thickness");
+    requirePositive(pipeElasticModulus, "elastic modulus");
+    if (!Double.isFinite(roughness) || roughness < 0.0 || !Double.isFinite(elevationChange)) {
+      throw new IllegalArgumentException("Invalid roughness or elevation");
+    }
+    if (!Double.isFinite(courantNumber) || courantNumber <= 0.0 || courantNumber > 1.0) {
+      throw new IllegalArgumentException("Courant number must be in (0, 1]");
+    }
     // Calculate area and segment length
     area = Math.PI * diameter * diameter / 4.0;
     segmentLength = length / (numberOfNodes - 1);
@@ -639,24 +692,25 @@ public class WaterHammerPipe extends Pipeline {
 
     // Get fluid properties from inlet stream
     SystemInterface system = inStream.getThermoSystem().clone();
-    system.initPhysicalProperties();
+    system.initProperties();
+    if (system.getNumberOfPhases() != 1) {
+      throw new IllegalArgumentException("WaterHammerPipe requires a single-phase inlet");
+    }
 
     fluidDensity = system.getDensity("kg/m3");
     fluidViscosity = system.getViscosity("kg/msec");
 
-    // Get speed of sound from thermodynamics
-    try {
-      fluidSoundSpeed = system.getPhase(0).getSoundSpeed();
-    } catch (Exception e) {
-      // Default to water if calculation fails
-      fluidSoundSpeed = 1200;
-      logger.warn("Could not calculate speed of sound, using default: " + fluidSoundSpeed);
-    }
+    requirePositive(fluidDensity, "fluid density");
+    requirePositive(fluidViscosity, "fluid viscosity");
+    fluidSoundSpeed = system.getPhase(0).getSoundSpeed();
+    requirePositive(fluidSoundSpeed, "fluid sound speed");
 
     // Calculate effective wave speed (with pipe elasticity)
     if (waveSpeed < 0) {
       waveSpeed = calcEffectiveWaveSpeed();
     }
+
+    requirePositive(waveSpeed, "wave speed");
 
     // Characteristic impedance
     characteristicImpedance = waveSpeed / (GRAVITY * area);
@@ -668,7 +722,7 @@ public class WaterHammerPipe extends Pipeline {
     double velocity = volumeFlow / area;
 
     // Calculate Reynolds number and friction factor
-    double reynoldsNumber = fluidDensity * velocity * diameter / fluidViscosity;
+    double reynoldsNumber = fluidDensity * Math.abs(velocity) * diameter / fluidViscosity;
     frictionFactor = calcFrictionFactor(reynoldsNumber);
 
     // Calculate steady-state head and pressure profile
@@ -698,16 +752,13 @@ public class WaterHammerPipe extends Pipeline {
     // Store downstream conditions for valve BC
     downstreamHead = head[numberOfNodes - 1];
 
-    // Calculate valve coefficient from steady state
-    if (valveCv < 0 && valveOpening > 0) {
-      // Q = Cv * tau * sqrt(delta_H)
-      // Cv = Q / (tau * sqrt(delta_H))
-      double deltaH = head[numberOfNodes - 2] - downstreamHead;
-      if (deltaH > 0) {
-        valveCv = volumeFlow / (valveOpening * Math.sqrt(deltaH));
-      } else {
-        valveCv = volumeFlow; // Simple coefficient
+    // Calibrate the hydraulic coefficient against the actual external receiver.
+    if (downstreamBoundary == BoundaryType.VALVE) {
+      double deltaH = downstreamHead - valveBackPressureBara * 1.0e5 / (fluidDensity * GRAVITY);
+      if (volumeFlow <= 0.0 || deltaH <= 0.0 || valveOpening <= 0.0) {
+        throw new IllegalArgumentException("Initialize a forward-flow open valve above receiver pressure");
       }
+      valveCv = volumeFlow / (valveOpening * Math.sqrt(deltaH));
     }
 
     currentTime = 0.0;
@@ -736,43 +787,38 @@ public class WaterHammerPipe extends Pipeline {
       initialize();
     }
 
-    // Check Courant condition
-    double maxDt = getMaxStableTimeStep();
-    if (dt > maxDt) {
-      logger.warn("Time step " + dt + " exceeds Courant limit " + maxDt + ". Results may be unstable.");
+    requirePositive(dt, "timestep");
+    double requestedEnd = currentTime + dt;
+    double count = Math.ceil(dt / getMaxStableTimeStep());
+    if (!Double.isFinite(requestedEnd) || count > 1000000.0) {
+      throw new IllegalArgumentException("Requested interval exceeds bounded acoustic substepping");
     }
+    int steps = Math.max(1, (int) count);
+    double internalDt = dt / steps;
+    for (int substep = 0; substep < steps; substep++) {
+      advanceAcoustics(internalDt);
+    }
+    currentTime = requestedEnd;
+    updateOutletStream();
+    setCalculationIdentifier(id);
+  }
 
+  /**
+   * Advance one Courant-limited characteristic interval, preserving its physical duration.
+   *
+   * @param dt internal timestep in seconds
+   */
+  private void advanceAcoustics(double dt) {
+    stepFraction = waveSpeed * dt / segmentLength;
     // Store old values
     System.arraycopy(head, 0, headOld, 0, numberOfNodes);
     System.arraycopy(flow, 0, flowOld, 0, numberOfNodes);
 
-    // Calculate friction term coefficient
-    // R = f * dx / (2 * g * D * A^2)
-    double R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
-
-    // Interior points using Method of Characteristics
     for (int i = 1; i < numberOfNodes - 1; i++) {
-      // C+ characteristic from upstream (point A)
-      double HA = headOld[i - 1];
-      double QA = flowOld[i - 1];
-
-      // C- characteristic from downstream (point B)
-      double HB = headOld[i + 1];
-      double QB = flowOld[i + 1];
-
-      // Friction terms
-      double frictionA = R * QA * Math.abs(QA);
-      double frictionB = R * QB * Math.abs(QB);
-
-      // Compatibility equations
-      // C+: Hp - HA + B*(Qp - QA) + friction = 0
-      // C-: Hp - HB - B*(Qp - QB) - friction = 0
-      double Cp = HA + characteristicImpedance * QA - frictionA;
-      double Cm = HB - characteristicImpedance * QB + frictionB;
-
-      // Solve for point P
-      head[i] = (Cp + Cm) / 2.0;
-      flow[i] = (Cp - Cm) / (2.0 * characteristicImpedance);
+      double cp = characteristic(i, -1);
+      double cm = characteristic(i, 1);
+      head[i] = (cp + cm) / 2.0;
+      flow[i] = (cp - cm) / (2.0 * characteristicImpedance);
     }
 
     // Apply boundary conditions
@@ -796,141 +842,70 @@ public class WaterHammerPipe extends Pipeline {
 
     pressureDrop = (pressureProfile[0] - pressureProfile[numberOfNodes - 1]) / 1e5;
 
-    // Update outlet stream
-    updateOutletStream();
-
-    setCalculationIdentifier(id);
   }
 
   /**
-   * Apply upstream boundary condition.
+   * Interpolate the characteristic foot and integrate frozen friction and gravity.
+   *
+   * @param node destination node
+   * @param direction minus one for C-plus, plus one for C-minus
+   * @return incoming head characteristic in metres
    */
+  private double characteristic(int node, int direction) {
+    double h = headOld[node] + stepFraction * (headOld[node + direction] - headOld[node]);
+    double q = flowOld[node] + stepFraction * (flowOld[node + direction] - flowOld[node]);
+    double distance = stepFraction * segmentLength;
+    double loss = frictionFactor * distance * q * Math.abs(q) / (2.0 * GRAVITY * diameter * area * area);
+    double slope = elevationChange / length;
+    return h - direction * characteristicImpedance * q + direction * (loss + slope * distance);
+  }
+
+  /** Apply the upstream physical boundary. */
   private void applyUpstreamBC() {
-    int i = 0;
-
-    switch (upstreamBoundary) {
-    case RESERVOIR:
-      // Constant head reservoir
-      head[i] = upstreamHead;
-      // Use C- from interior point
-      double HB = headOld[i + 1];
-      double QB = flowOld[i + 1];
-      double R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
-      double frictionB = R * QB * Math.abs(QB);
-      double Cm = HB - characteristicImpedance * QB + frictionB;
-      flow[i] = (head[i] - Cm) / characteristicImpedance;
-      break;
-
-    case CONSTANT_FLOW:
-      // Constant flow rate
-      flow[i] = flowOld[i];
-      HB = headOld[i + 1];
-      QB = flowOld[i + 1];
-      R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
-      frictionB = R * QB * Math.abs(QB);
-      Cm = HB - characteristicImpedance * QB + frictionB;
-      head[i] = Cm + characteristicImpedance * flow[i];
-      break;
-
-    case CLOSED_END:
-      // No flow
-      flow[i] = 0;
-      HB = headOld[i + 1];
-      QB = flowOld[i + 1];
-      R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
-      frictionB = R * QB * Math.abs(QB);
-      Cm = HB - characteristicImpedance * QB + frictionB;
-      head[i] = Cm;
-      break;
-
-    default:
-      head[i] = upstreamHead;
-      flow[i] = flowOld[i];
+    double cm = characteristic(0, 1);
+    if (upstreamBoundary == BoundaryType.RESERVOIR) {
+      head[0] = upstreamHead;
+      flow[0] = (head[0] - cm) / characteristicImpedance;
+    } else if (upstreamBoundary == BoundaryType.CLOSED_END || upstreamBoundary == BoundaryType.CONSTANT_FLOW) {
+      flow[0] = upstreamBoundary == BoundaryType.CLOSED_END ? 0.0 : flowOld[0];
+      head[0] = cm + characteristicImpedance * flow[0];
+    } else {
+      throw new IllegalArgumentException("Upstream valve boundary is unsupported");
     }
   }
 
-  /**
-   * Apply downstream boundary condition.
-   */
+  /** Apply the downstream physical boundary and forward-only valve equation. */
   private void applyDownstreamBC() {
     int i = numberOfNodes - 1;
-
+    double cp = characteristic(i, -1);
     switch (downstreamBoundary) {
     case RESERVOIR:
-      // Constant head reservoir
       head[i] = downstreamHead;
-      // Use C+ from interior point
-      double HA = headOld[i - 1];
-      double QA = flowOld[i - 1];
-      double R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
-      double frictionA = R * QA * Math.abs(QA);
-      double Cp = HA + characteristicImpedance * QA - frictionA;
-      flow[i] = (Cp - head[i]) / characteristicImpedance;
+      flow[i] = (cp - head[i]) / characteristicImpedance;
       break;
-
-    case VALVE:
-      // Valve with variable opening
-      // Q = Cv * tau * sqrt(H_upstream - H_downstream)
-      HA = headOld[i - 1];
-      QA = flowOld[i - 1];
-      R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
-      frictionA = R * QA * Math.abs(QA);
-      Cp = HA + characteristicImpedance * QA - frictionA;
-
-      if (valveOpening < 0.001) {
-        // Valve closed - no flow
-        flow[i] = 0;
-        head[i] = Cp;
-      } else {
-        // Solve valve equation with C+ characteristic
-        // Q = Cv * tau * sqrt(H - Hd) and H = Cp - B*Q
-        // Quadratic: B*Q^2 + 2*Cv^2*tau^2*Q + Cv^2*tau^2*(Hd-Cp) = 0
-        double tau = valveOpening;
-        double CvTau2 = valveCv * valveCv * tau * tau;
-        double a = characteristicImpedance;
-        double b = CvTau2;
-        double c = CvTau2 * (downstreamHead - Cp);
-
-        // Solve quadratic: a*Q^2 + b*Q + c = 0
-        double discriminant = b * b - 4 * a * c;
-        if (discriminant < 0) {
-          // No real solution - use previous flow
-          flow[i] = flowOld[i] * valveOpening;
-        } else {
-          flow[i] = (-b + Math.sqrt(discriminant)) / (2 * a);
-          if (flow[i] < 0) {
-            flow[i] = (-b - Math.sqrt(discriminant)) / (2 * a);
-          }
-        }
-        head[i] = Cp - characteristicImpedance * flow[i];
-      }
-      break;
-
-    case CLOSED_END:
-      // No flow
-      flow[i] = 0;
-      HA = headOld[i - 1];
-      QA = flowOld[i - 1];
-      R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
-      frictionA = R * QA * Math.abs(QA);
-      Cp = HA + characteristicImpedance * QA - frictionA;
-      head[i] = Cp;
-      break;
-
     case CONSTANT_FLOW:
-      // Constant flow rate
-      flow[i] = flowOld[i];
-      HA = headOld[i - 1];
-      QA = flowOld[i - 1];
-      R = frictionFactor * segmentLength / (2 * GRAVITY * diameter * area * area);
-      frictionA = R * QA * Math.abs(QA);
-      Cp = HA + characteristicImpedance * QA - frictionA;
-      head[i] = Cp - characteristicImpedance * flow[i];
+    case CLOSED_END:
+      flow[i] = downstreamBoundary == BoundaryType.CLOSED_END ? 0.0 : flowOld[i];
+      head[i] = cp - characteristicImpedance * flow[i];
       break;
-
+    case VALVE:
+      if (valveCv < 0.0) {
+        throw new IllegalStateException("Initialize the valve boundary before transient execution");
+      }
+      double receiverHead = valveBackPressureBara * 1.0e5 / (fluidDensity * GRAVITY);
+      if (valveOpening > 0.0 && cp < receiverHead) {
+        throw new IllegalStateException("Valve reverse flow requires a signed receiver model");
+      }
+      double coefficient = valveCv * valveOpening;
+      double c2 = coefficient * coefficient;
+      // Q^2 + B*C^2*Q - C^2*(Cp-Hreceiver) = 0, rationalized positive root.
+      double linear = characteristicImpedance * c2;
+      double forcing = c2 * (cp - receiverHead);
+      flow[i] = forcing == 0.0 ? 0.0 : 2.0 * forcing / (linear + Math.sqrt(linear * linear + 4.0 * forcing));
+      head[i] = cp - characteristicImpedance * flow[i];
+      break;
     default:
-      head[i] = downstreamHead;
-      flow[i] = flowOld[i];
+      throw new IllegalArgumentException("Unsupported downstream boundary");
     }
   }
 
