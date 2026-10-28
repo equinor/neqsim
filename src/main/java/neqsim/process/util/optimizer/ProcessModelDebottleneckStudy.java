@@ -15,6 +15,9 @@ import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ConstraintD
 import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.EvaluationResult;
 import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ObjectiveDefinition;
 import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ParameterDefinition;
+import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.CandidateConstraintEvidence;
+import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.CandidateObjectiveEvidence;
+import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.CandidateSetEvaluationResult;
 
 /**
  * Evaluates one installed-capacity alternative against a common deterministic production-search policy.
@@ -99,6 +102,26 @@ public final class ProcessModelDebottleneckStudy {
      * @return immutable search selection
      */
     SearchSelection search(ProcessModelSimulationEvaluator evaluator);
+  }
+
+  /** Serializable common search policy for transactional operating-action scenarios. */
+  public interface OperatingActionScenarioSearch extends Serializable {
+    /** @return stable search-policy identifier */
+    String getId();
+
+    /** @return human-readable search-policy name */
+    String getName();
+
+    /** @return source and assumptions for the search policy */
+    String getProvenance();
+
+    /**
+     * Selects one operating-action vector. The study independently verifies the selected vector.
+     *
+     * @param evaluator transactional operating-action evaluator
+     * @return immutable search selection
+     */
+    SearchSelection search(ProcessModelOperatingActionSetEvaluator evaluator);
   }
 
   /** Serializable metric callback sampled once at each verified scenario point. */
@@ -595,6 +618,153 @@ public final class ProcessModelDebottleneckStudy {
     }
   }
 
+  /** Deterministic common candidate-list search for transactional operating actions. */
+  public static final class OperatingActionCandidateListSearch implements OperatingActionScenarioSearch {
+    private static final long serialVersionUID = 1L;
+
+    private final String id;
+    private final String name;
+    private final String provenance;
+    private final List<double[]> candidates;
+    private final int objectiveIndex;
+    private final double objectiveTolerance;
+
+    /**
+     * Creates a direction-aware ordered search shared by the baseline and capacity alternative.
+     *
+     * @param id stable search identifier
+     * @param name human-readable search name
+     * @param provenance source and assumptions for the ordered candidates
+     * @param candidates operating-action vectors in action declaration order
+     * @param objectiveIndex registered objective used for selection
+     * @param objectiveTolerance absolute objective tolerance retaining the earlier candidate on ties
+     */
+    public OperatingActionCandidateListSearch(String id, String name, String provenance, List<double[]> candidates,
+        int objectiveIndex, double objectiveTolerance) {
+      this.id = requireText(id, "Search identifier");
+      this.name = requireText(name, "Search name");
+      this.provenance = requireText(provenance, "Search provenance");
+      if (candidates == null || candidates.isEmpty()) {
+        throw new IllegalArgumentException("Candidate-list search requires at least one candidate");
+      }
+      List<double[]> copied = new ArrayList<double[]>();
+      for (double[] candidate : candidates) {
+        if (candidate == null) {
+          throw new IllegalArgumentException("Search candidates must not be null");
+        }
+        copied.add(Arrays.copyOf(candidate, candidate.length));
+      }
+      this.candidates = Collections.unmodifiableList(copied);
+      if (objectiveIndex < 0) {
+        throw new IllegalArgumentException("Objective index must be non-negative");
+      }
+      this.objectiveIndex = objectiveIndex;
+      if (!isFinite(objectiveTolerance) || objectiveTolerance < 0.0) {
+        throw new IllegalArgumentException("Objective tolerance must be finite and non-negative");
+      }
+      this.objectiveTolerance = objectiveTolerance;
+    }
+
+    @Override
+    public String getId() {
+      return id;
+    }
+
+    @Override
+    public String getName() {
+      return name;
+    }
+
+    @Override
+    public String getProvenance() {
+      return provenance;
+    }
+
+    /** @return defensive ordered candidate vectors */
+    public List<double[]> getCandidates() {
+      List<double[]> copy = new ArrayList<double[]>();
+      for (double[] candidate : candidates) {
+        copy.add(Arrays.copyOf(candidate, candidate.length));
+      }
+      return Collections.unmodifiableList(copy);
+    }
+
+    /** @return selected objective index */
+    public int getObjectiveIndex() {
+      return objectiveIndex;
+    }
+
+    /** @return absolute objective tie tolerance */
+    public double getObjectiveTolerance() {
+      return objectiveTolerance;
+    }
+
+    @Override
+    public SearchSelection search(ProcessModelOperatingActionSetEvaluator evaluator) {
+      if (evaluator == null) {
+        return SearchSelection.failed("Operating-action evaluator was null");
+      }
+      ProcessModelSimulationEvaluator simulation = evaluator.getSimulationEvaluator();
+      if (objectiveIndex >= simulation.getObjectiveCount()) {
+        return SearchSelection.failed("Search objective index is not registered");
+      }
+      ObjectiveDefinition objective = simulation.getObjectives().get(objectiveIndex);
+      double[] selected = null;
+      double selectedValue = Double.NaN;
+      int candidateIndex = 0;
+      for (double[] candidate : candidates) {
+        String invalid = validateCandidate(evaluator, candidate, candidateIndex);
+        if (invalid != null) {
+          return SearchSelection.failed(invalid);
+        }
+        CandidateSetEvaluationResult result = evaluator.evaluate(candidate);
+        double[] rawObjectives = result.getRawObjectives();
+        if (result.isCandidateSimulationConverged() && result.isFeasible() && result.isBaselineRestored()
+            && result.isBaselineSimulationConverged() && objectiveIndex < rawObjectives.length
+            && isFinite(rawObjectives[objectiveIndex])) {
+          double value = rawObjectives[objectiveIndex];
+          if (selected == null || improves(value, selectedValue, objective.getDirection())) {
+            selected = Arrays.copyOf(candidate, candidate.length);
+            selectedValue = value;
+          }
+        }
+        candidateIndex++;
+      }
+      if (selected == null) {
+        return SearchSelection
+            .failed("No converged feasible and completely restored operating-action candidate was found");
+      }
+      return SearchSelection.selected(selected,
+          "Selected the first direction-aware best feasible candidate from the ordered operating-action list");
+    }
+
+    /** Returns a fail-closed validation diagnostic, or null. */
+    private String validateCandidate(ProcessModelOperatingActionSetEvaluator evaluator, double[] candidate,
+        int candidateIndex) {
+      List<ProcessModelOperatingAction> actions = evaluator.getActions();
+      if (candidate.length != actions.size()) {
+        return "Candidate " + candidateIndex + " length does not match operating-action count";
+      }
+      for (int index = 0; index < candidate.length; index++) {
+        if (!isFinite(candidate[index])) {
+          return "Candidate " + candidateIndex + " contains a non-finite action value";
+        }
+        if (!actions.get(index).accepts(candidate[index])) {
+          return "Candidate " + candidateIndex + " lies outside a declared action domain";
+        }
+      }
+      return null;
+    }
+
+    /** Returns true only for an objective improvement beyond the declared tolerance. */
+    private boolean improves(double candidate, double incumbent, ObjectiveDefinition.Direction direction) {
+      if (direction == ObjectiveDefinition.Direction.MAXIMIZE) {
+        return candidate > incumbent + objectiveTolerance;
+      }
+      return candidate < incumbent - objectiveTolerance;
+    }
+  }
+
   /** Immutable metric definition. */
   public static final class MetricDefinition {
     private final String id;
@@ -826,6 +996,17 @@ public final class ProcessModelDebottleneckStudy {
       this.minimizerValue = minimizerValue;
     }
 
+    /** Creates evidence from one transactional operating-action candidate objective. */
+    private ObjectiveEvidence(CandidateObjectiveEvidence evidence) {
+      index = evidence.getIndex();
+      name = safeText(evidence.getName());
+      direction = evidence.getDirection();
+      unit = safeText(evidence.getUnit());
+      weight = evidence.getWeight();
+      rawValue = evidence.getRawValue();
+      minimizerValue = evidence.getMinimizerValue();
+    }
+
     public int getIndex() {
       return index;
     }
@@ -877,6 +1058,17 @@ public final class ProcessModelDebottleneckStudy {
       this.margin = margin;
     }
 
+    /** Creates evidence from one transactional operating-action candidate constraint. */
+    private ConstraintEvidence(CandidateConstraintEvidence evidence) {
+      index = evidence.getIndex();
+      name = safeText(evidence.getName());
+      type = evidence.getType();
+      unit = safeText(evidence.getUnit());
+      hard = evidence.isHard();
+      value = evidence.getValue();
+      margin = evidence.getMargin();
+    }
+
     public int getIndex() {
       return index;
     }
@@ -918,6 +1110,7 @@ public final class ProcessModelDebottleneckStudy {
     private final double[] selectedParameters;
     private final boolean simulationConverged;
     private final boolean feasible;
+    private final boolean processStateRestored;
     private final int evaluationCount;
     private final List<ObjectiveEvidence> objectives;
     private final List<ConstraintEvidence> constraints;
@@ -938,6 +1131,33 @@ public final class ProcessModelDebottleneckStudy {
           : Arrays.copyOf(selectedParameters, selectedParameters.length);
       simulationConverged = result != null && result.isSimulationConverged();
       feasible = result != null && result.isFeasible();
+      processStateRestored = true;
+      this.evaluationCount = evaluationCount;
+      this.objectives = immutableList(objectives);
+      this.constraints = immutableList(constraints);
+      installedCapacityEvidence = result == null ? Collections.<InstalledEquipmentCapacityEvidence>emptyList()
+          : immutableList(result.getInstalledEquipmentCapacityEvidence());
+      boundaryEvidence = result == null ? Collections.<ProcessBoundaryConstraintEvidence>emptyList()
+          : immutableList(result.getProcessBoundaryConstraintEvidence());
+      this.metrics = immutableList(metrics);
+      this.diagnostics = immutableStrings(diagnostics);
+    }
+
+    /** Creates scenario evidence from one independently verified transactional action candidate. */
+    private ScenarioEvidence(String label, OperatingActionScenarioSearch search, ScenarioStatus status,
+        double[] selectedParameters, CandidateSetEvaluationResult result, int evaluationCount,
+        List<ObjectiveEvidence> objectives, List<ConstraintEvidence> constraints, List<MetricEvidence> metrics,
+        List<String> diagnostics) {
+      this.label = label;
+      searchId = search.getId();
+      searchName = search.getName();
+      searchProvenance = search.getProvenance();
+      this.status = status;
+      this.selectedParameters = selectedParameters == null ? new double[0]
+          : Arrays.copyOf(selectedParameters, selectedParameters.length);
+      simulationConverged = result != null && result.isCandidateSimulationConverged();
+      feasible = result != null && result.isFeasible();
+      processStateRestored = result != null && result.isBaselineRestored() && result.isBaselineSimulationConverged();
       this.evaluationCount = evaluationCount;
       this.objectives = immutableList(objectives);
       this.constraints = immutableList(constraints);
@@ -981,8 +1201,13 @@ public final class ProcessModelDebottleneckStudy {
       return feasible;
     }
 
+    /** @return true when transactional action state was fully restored and reconverged */
+    public boolean isProcessStateRestored() {
+      return processStateRestored;
+    }
+
     public boolean isQualified() {
-      return status == ScenarioStatus.QUALIFIED && simulationConverged && feasible;
+      return status == ScenarioStatus.QUALIFIED && simulationConverged && feasible && processStateRestored;
     }
 
     public int getEvaluationCount() {
@@ -1136,8 +1361,10 @@ public final class ProcessModelDebottleneckStudy {
   private final String name;
   private final String provenance;
   private final ProcessModelSimulationEvaluator evaluator;
+  private final ProcessModelOperatingActionSetEvaluator operatingActionEvaluator;
   private final CapacityAlternative alternative;
   private final ScenarioSearch search;
+  private final OperatingActionScenarioSearch operatingActionSearch;
   private final int objectiveIndex;
   private final List<MetricDefinition> metrics = new ArrayList<MetricDefinition>();
 
@@ -1165,10 +1392,55 @@ public final class ProcessModelDebottleneckStudy {
       throw new IllegalArgumentException("Study objective index is not registered");
     }
     this.evaluator = evaluator;
+    this.operatingActionEvaluator = null;
     this.alternative = alternative;
     this.search = search;
+    this.operatingActionSearch = null;
     this.objectiveIndex = objectiveIndex;
     if (search instanceof CandidateListSearch && ((CandidateListSearch) search).getObjectiveIndex() != objectiveIndex) {
+      throw new IllegalArgumentException("Candidate-list search and study must use the same objective index");
+    }
+  }
+
+  /**
+   * Creates a paired study around the existing transactional operating-action evaluator.
+   *
+   * <p>
+   * Every candidate is evaluated through the same action application, read-back, convergence, feasibility, and
+   * reverse-order restoration contract used by the operating-envelope workflow. The same search policy is rerun after
+   * the installed alternative is applied. Metric callbacks are intentionally unsupported in this mode because the
+   * transactional evaluator restores the model before returning; objective and constraint evidence remain frozen from
+   * the verified candidate simulation.
+   * </p>
+   *
+   * @param id stable study identifier
+   * @param name human-readable study name
+   * @param provenance engineering provenance for the study configuration
+   * @param evaluator configured transactional operating-action evaluator
+   * @param alternative installed-capacity alternative
+   * @param search common action search policy used for baseline and alternative
+   * @param objectiveIndex objective used for the paired delta
+   */
+  public ProcessModelDebottleneckStudy(String id, String name, String provenance,
+      ProcessModelOperatingActionSetEvaluator evaluator, CapacityAlternative alternative,
+      OperatingActionScenarioSearch search, int objectiveIndex) {
+    this.id = requireText(id, "Study identifier");
+    this.name = requireText(name, "Study name");
+    this.provenance = requireText(provenance, "Study provenance");
+    if (evaluator == null || alternative == null || search == null) {
+      throw new IllegalArgumentException("Evaluator, capacity alternative, and search are required");
+    }
+    if (objectiveIndex < 0 || objectiveIndex >= evaluator.getSimulationEvaluator().getObjectiveCount()) {
+      throw new IllegalArgumentException("Study objective index is not registered");
+    }
+    this.evaluator = null;
+    this.operatingActionEvaluator = evaluator;
+    this.alternative = alternative;
+    this.search = null;
+    this.operatingActionSearch = search;
+    this.objectiveIndex = objectiveIndex;
+    if (search instanceof OperatingActionCandidateListSearch
+        && ((OperatingActionCandidateListSearch) search).getObjectiveIndex() != objectiveIndex) {
       throw new IllegalArgumentException("Candidate-list search and study must use the same objective index");
     }
   }
@@ -1189,6 +1461,11 @@ public final class ProcessModelDebottleneckStudy {
     return evaluator;
   }
 
+  /** @return transactional operating-action evaluator, or null for legacy parameter studies */
+  public ProcessModelOperatingActionSetEvaluator getOperatingActionEvaluator() {
+    return operatingActionEvaluator;
+  }
+
   public CapacityAlternative getAlternative() {
     return alternative;
   }
@@ -1197,12 +1474,21 @@ public final class ProcessModelDebottleneckStudy {
     return search;
   }
 
+  /** @return transactional operating-action search, or null for legacy parameter studies */
+  public OperatingActionScenarioSearch getOperatingActionSearch() {
+    return operatingActionSearch;
+  }
+
   public int getObjectiveIndex() {
     return objectiveIndex;
   }
 
   /** Adds one physical or screening metric sampled at both selected operating points. */
   public ProcessModelDebottleneckStudy addMetric(MetricDefinition metric) {
+    if (operatingActionEvaluator != null) {
+      throw new IllegalStateException(
+          "Transactional operating-action studies expose frozen objective and constraint evidence, not metric callbacks");
+    }
     if (metric == null) {
       throw new IllegalArgumentException("Metric definition must not be null");
     }
@@ -1222,10 +1508,15 @@ public final class ProcessModelDebottleneckStudy {
 
   /** Executes the paired study and always attempts exact installed/process-state recovery. */
   public StudyResult evaluate() {
-    ProcessModel model = evaluator.getProcessModel();
-    double[] recoveryParameters = evaluator.getLastParameters();
-    if (recoveryParameters == null) {
-      recoveryParameters = evaluator.getInitialValues();
+    ProcessModelSimulationEvaluator activeEvaluator = evaluator != null ? evaluator
+        : operatingActionEvaluator.getSimulationEvaluator();
+    ProcessModel model = activeEvaluator.getProcessModel();
+    double[] recoveryParameters = null;
+    if (evaluator != null) {
+      recoveryParameters = evaluator.getLastParameters();
+      if (recoveryParameters == null) {
+        recoveryParameters = evaluator.getInitialValues();
+      }
     }
     List<String> diagnostics = new ArrayList<String>();
     diagnostics.add("Results are paired sampled evidence, not causal production loss, global "
@@ -1282,9 +1573,16 @@ public final class ProcessModelDebottleneckStudy {
         capacityRestored = false;
       }
       try {
-        EvaluationResult recovery = evaluator.evaluate(recoveryParameters);
-        recoveryConverged = recovery.isSimulationConverged();
-        processStateRestored = recoveryConverged && arraysEqual(recoveryParameters, recovery.getParameters(), 0.0);
+        if (evaluator != null) {
+          EvaluationResult recovery = evaluator.evaluate(recoveryParameters);
+          recoveryConverged = recovery.isSimulationConverged();
+          processStateRestored = recoveryConverged && arraysEqual(recoveryParameters, recovery.getParameters(), 0.0);
+        } else {
+          model.run();
+          recoveryConverged = model.isModelConverged();
+          processStateRestored = recoveryConverged && (baseline == null || baseline.isProcessStateRestored())
+              && (alternativeScenario == null || alternativeScenario.isProcessStateRestored());
+        }
       } catch (RuntimeException exception) {
         diagnostics.add("Pre-study process-state recovery failed: " + safeText(exception.getMessage()));
       }
@@ -1354,6 +1652,9 @@ public final class ProcessModelDebottleneckStudy {
   }
 
   private ScenarioEvidence runScenario(String label) {
+    if (operatingActionEvaluator != null) {
+      return runOperatingActionScenario(label);
+    }
     int before = evaluator.getEvaluationCount();
     List<String> diagnostics = new ArrayList<String>();
     SearchSelection selection;
@@ -1392,6 +1693,70 @@ public final class ProcessModelDebottleneckStudy {
         : notSampledMetrics();
     return new ScenarioEvidence(label, search, status, parameters, result, evaluator.getEvaluationCount() - before,
         objectives, constraints, metricEvidence, diagnostics);
+  }
+
+  /** Runs and independently verifies one transactional operating-action scenario. */
+  private ScenarioEvidence runOperatingActionScenario(String label) {
+    ProcessModelSimulationEvaluator simulation = operatingActionEvaluator.getSimulationEvaluator();
+    int before = simulation.getEvaluationCount();
+    List<String> diagnostics = new ArrayList<String>();
+    SearchSelection selection;
+    try {
+      selection = operatingActionSearch.search(operatingActionEvaluator);
+    } catch (RuntimeException exception) {
+      diagnostics.add("Search failed: " + safeText(exception.getMessage()));
+      return new ScenarioEvidence(label, operatingActionSearch, ScenarioStatus.SEARCH_FAILED, null, null,
+          simulation.getEvaluationCount() - before, Collections.<ObjectiveEvidence>emptyList(),
+          Collections.<ConstraintEvidence>emptyList(), Collections.<MetricEvidence>emptyList(), diagnostics);
+    }
+    diagnostics.addAll(selection.getDiagnostics());
+    if (!selection.isSelected()) {
+      return new ScenarioEvidence(label, operatingActionSearch, ScenarioStatus.SEARCH_FAILED, null, null,
+          simulation.getEvaluationCount() - before, Collections.<ObjectiveEvidence>emptyList(),
+          Collections.<ConstraintEvidence>emptyList(), Collections.<MetricEvidence>emptyList(), diagnostics);
+    }
+    double[] actions = selection.getParameters();
+    String invalid = validateSelectedActions(actions);
+    if (invalid != null) {
+      diagnostics.add(invalid);
+      return new ScenarioEvidence(label, operatingActionSearch, ScenarioStatus.VERIFICATION_FAILED, actions, null,
+          simulation.getEvaluationCount() - before, Collections.<ObjectiveEvidence>emptyList(),
+          Collections.<ConstraintEvidence>emptyList(), Collections.<MetricEvidence>emptyList(), diagnostics);
+    }
+    CandidateSetEvaluationResult result = operatingActionEvaluator.evaluate(actions);
+    diagnostics.addAll(result.getDiagnostics());
+    List<ObjectiveEvidence> objectives = new ArrayList<ObjectiveEvidence>();
+    for (CandidateObjectiveEvidence objective : result.getObjectiveEvidence()) {
+      objectives.add(new ObjectiveEvidence(objective));
+    }
+    List<ConstraintEvidence> constraints = new ArrayList<ConstraintEvidence>();
+    for (CandidateConstraintEvidence constraint : result.getConstraintEvidence()) {
+      constraints.add(new ConstraintEvidence(constraint));
+    }
+    ScenarioStatus status = result.isCandidateSimulationConverged() && result.isFeasible()
+        && result.isBaselineRestored() && result.isBaselineSimulationConverged() ? ScenarioStatus.QUALIFIED
+            : ScenarioStatus.VERIFICATION_FAILED;
+    if (status != ScenarioStatus.QUALIFIED) {
+      diagnostics.add(
+          "Selected operating-action point did not pass convergence, feasibility, and complete restoration verification");
+    }
+    return new ScenarioEvidence(label, operatingActionSearch, status, actions, result,
+        simulation.getEvaluationCount() - before, objectives, constraints, Collections.<MetricEvidence>emptyList(),
+        diagnostics);
+  }
+
+  /** Returns a fail-closed action-vector diagnostic, or null. */
+  private String validateSelectedActions(double[] values) {
+    List<ProcessModelOperatingAction> actions = operatingActionEvaluator.getActions();
+    if (values == null || values.length != actions.size()) {
+      return "Selected action vector does not match operating-action count";
+    }
+    for (int index = 0; index < values.length; index++) {
+      if (!actions.get(index).accepts(values[index])) {
+        return "Selected action vector contains a non-finite or out-of-domain value";
+      }
+    }
+    return null;
   }
 
   private String validateSelectedParameters(double[] parameters) {

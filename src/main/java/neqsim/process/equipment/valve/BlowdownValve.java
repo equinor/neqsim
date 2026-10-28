@@ -57,6 +57,8 @@ import neqsim.process.equipment.stream.StreamInterface;
 public class BlowdownValve extends ThrottlingValve {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Last physical-step identity that advanced the blowdown actuator state machine. */
+  private UUID lastSafetyStepId = null;
 
   /** Indicates if blowdown valve has been activated (ESD triggered). */
   private boolean isActivated = false;
@@ -189,7 +191,8 @@ public class BlowdownValve extends ThrottlingValve {
    */
   @Override
   public void runTransient(double dt, UUID id) {
-    if (isActivated && isOpening) {
+    boolean advanceSafetyState = !isPhysicalStepIdempotencyEnabled() || id == null || !id.equals(lastSafetyStepId);
+    if (advanceSafetyState && isActivated && isOpening) {
       // Increment time elapsed
       timeElapsed += dt;
 
@@ -205,9 +208,70 @@ public class BlowdownValve extends ThrottlingValve {
         isOpening = false;
       }
     }
+    if (advanceSafetyState && isPhysicalStepIdempotencyEnabled()) {
+      lastSafetyStepId = id;
+    }
 
     // Run base class transient calculation
     super.runTransient(dt, id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != BlowdownValve.class) {
+      return "valve subclass " + getClass().getName() + " must extend the snapshot for subclass-owned mutable state";
+    }
+    return getValveTransientStateCoverageIssue();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public TransientState captureTransientState() {
+    String coverageIssue = getTransientStateCoverageIssue();
+    if (coverageIssue != null) {
+      throw new IllegalStateException("Cannot capture blowdown valve '" + getName() + "': " + coverageIssue);
+    }
+    return new BlowdownTransientState(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected void restoreTransientStepState(TransientState snapshot) {
+    if (!(snapshot instanceof BlowdownTransientState)) {
+      throw new IllegalArgumentException("Blowdown valve requires a blowdown valve transient snapshot");
+    }
+    super.restoreTransientStepState(snapshot);
+    BlowdownTransientState blowdownState = (BlowdownTransientState) snapshot;
+    lastSafetyStepId = blowdownState.lastSafetyStepId;
+    isActivated = blowdownState.activated;
+    openingTime = blowdownState.openingTime;
+    isOpening = blowdownState.opening;
+    timeElapsed = blowdownState.timeElapsed;
+  }
+
+  /** Serializable checkpoint for blowdown activation and actuator state. */
+  public static final class BlowdownTransientState extends TransientState {
+    private static final long serialVersionUID = 1000L;
+    private final UUID lastSafetyStepId;
+    private final boolean activated;
+    private final double openingTime;
+    private final boolean opening;
+    private final double timeElapsed;
+
+    /**
+     * Creates a blowdown valve checkpoint.
+     *
+     * @param source blowdown valve to capture
+     */
+    private BlowdownTransientState(BlowdownValve source) {
+      super(source);
+      lastSafetyStepId = source.lastSafetyStepId;
+      activated = source.isActivated;
+      openingTime = source.openingTime;
+      opening = source.isOpening;
+      timeElapsed = source.timeElapsed;
+    }
   }
 
   /**

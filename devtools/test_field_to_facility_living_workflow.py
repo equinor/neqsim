@@ -1,7 +1,7 @@
 """Execute the Java ten-well lifecycle through the persistent production workflow.
 
 This is the source acceptance path for issue #4188. It deliberately calls the test-scope
-Java fixture, consumes only its exact schema-v10 JSON, and exercises the existing #4187
+Java fixture, consumes only its exact schema-v12 JSON, and exercises the existing #4187
 adapter, guard, ledger, promotion, living report, and canonical report implementation.
 """
 
@@ -239,7 +239,7 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             first_item = items[0]
             first_item_id = first_item["id"]
             evidence = items[0]["lifecycle_envelope_evidence"]
-            self.assertEqual(11, evidence["schema_version"])
+            self.assertEqual(12, evidence["schema_version"])
             self.assertEqual(cycle_id, evidence["cycle_id"])
             self.assertEqual(2, evidence["period_count"])
             self.assertEqual(12, evidence["requested_point_count"])
@@ -287,6 +287,32 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
                 items[0]["predicted"]["validated_gas_export_kg_hr"],
             )
             first_accepted_objective = optimizer["accepted_objective_value"]
+            opportunities = current["constraint_opportunity_summary"]
+            self.assertEqual(2, opportunities["summary_version"])
+            qualified = [
+                candidate for candidate in opportunities["candidates"]
+                if candidate["paired_relief_study_status"] == "QUALIFIED"
+            ]
+            self.assertEqual(1, len(qualified))
+            receipt = qualified[0]["paired_relief_study_receipt"]
+            self.assertEqual(
+                "Field::HP separator/gas handling",
+                receipt["qualified_constraint_name"],
+            )
+            self.assertEqual(
+                current["envelope_evidence"]["accepted_candidate_values"],
+                receipt["baseline_action_values"],
+            )
+            self.assertEqual(
+                optimizer["accepted_objective_value"],
+                receipt["objective"]["baseline_value"],
+            )
+            self.assertLessEqual(
+                receipt["objective"]["baseline_binding_residual"],
+                receipt["objective"]["baseline_binding_tolerance"],
+            )
+            self.assertIs(True, receipt["capacity_restored"])
+            self.assertIs(True, receipt["process_state_restored"])
             for field in (
                     "simulation_converged", "candidate_feasible", "candidate_finite",
                     "constraint_evidence_complete", "state_restore_complete",
@@ -319,6 +345,7 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertIn("Declared accepted-replay constraint coverage", report)
             self.assertIn("PLANT_CONSTRAINT", report)
             self.assertIn("synthetic lifecycle separation limit", report)
+            self.assertIn("Qualified paired sampled", report)
 
             input_path = task / "continuous" / "user_input.yaml"
             input_path.write_text(

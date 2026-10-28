@@ -1548,6 +1548,23 @@ The complete workflow in `TPmultiflash.run()` is:
 
 Beyond stability analysis, NeqSim uses heuristic phase seeding and guarded restarts to improve convergence:
 
+An aqueous trial added after the multiphase beta loop must pass through the existing
+bounded rerun before phase cleanup and return. Setting the flags for another solve
+does not execute it: otherwise the initial aqueous fraction of approximately
+$10^{-5}$ can escape as an unsolved phase, even for separator gas at its dew point.
+`PipeBeggsAndBrillsDewPointTest` checks repeated flashes, component balances and
+phase fugacity equality for this case, alongside the pressure-continuity checks
+described in the [pipeline guide](../process/PipeBeggsAndBrills.md#friction-pressure-drop).
+
+Solving the trial may remove it when the water remains undersaturated; the
+presence of water in the feed does not require an aqueous product phase.
+`EclipseFluidReadWriteTest.testFluidWater222` checks the imported PR-1978 fluid
+at 2.09997 bara through 30, 25, 20, 10 and 30 °C, with repeated flashes at each
+temperature. At 30 °C it has gas and trace oil, with gas water fugacity below
+the pure-liquid-water trial fugacity. Cooling to 20 and 10 °C produces a
+genuine third aqueous phase; reheating removes it. All states must retain
+normalized phases, component balances and equal component fugacities.
+
 #### 3.5.1 Water-rich Hydrocarbon Vapour Appearance
 
 A neutral OIL+AQUEOUS endpoint can still be unstable to a hydrocarbon vapour phase when water dominates the overall
@@ -1602,6 +1619,29 @@ if (oilAndAqueousWithoutGas && neutral && wilsonSubmixtureBracketsTwoPhases) {
 #### 3.5.2 Aqueous Phase Seeding
 
 When water is present but no aqueous phase exists:
+
+The fallback aqueous seed is introduced after the main phase-fraction iteration.
+Its initial beta of `1e-5` is a numerical guess, not an equilibrium phase amount.
+Normalize the seed through its logical phase index and run the existing bounded
+multiphase solve before phase cleanup. The per-operation seed guard prevents
+repeated insertion if the aqueous phase is unstable and disappears during that
+solve. Returning the unsolved seed can produce a finite entropy jump near water
+dropout and make a correctly strict PS flash fail.
+
+`TPflashIssue4659WetRichGasTest` covers the public PR78/classic wet-rich-gas
+example in issue #4659: a continuous entropy scan at 8 bara, component balances
+and fugacity equality, heating/cooling with reused and cloned states through
+phase disappearance, thermodynamic derivative checks, direct PS entropy
+closure, and the 40-step polytropic compressor. PS entropy acceptance tolerances
+are unchanged.
+
+The E300 regression `EclipseFluidReadWriteTest.testFluidWater222` also checks
+removal of an unstable aqueous seed. At 2.09997 bara and 30 °C this fixture's
+gas-water fugacity is about 0.774 of the EOS liquid-water fugacity, so its
+equilibrium has gas and oil only. Cooling to 25 °C produces a stable aqueous
+phase; heating back to 30 °C removes it. Each state must conserve components and
+satisfy fugacity equality, rather than retaining a third phase solely because
+water is present.
 
 ```java
 if (waterZ > 1.0e-6 && !system.hasPhaseType(PhaseType.AQUEOUS)) {

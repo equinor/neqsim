@@ -40,6 +40,13 @@ Represent reusable Java action sequences with `OperationalScenario` and
 `OperationalScenarioRunner`; for MCP clients, route the same study through
 `runOperationalStudy`.
 
+For separator troubleshooting involving a growing emulsion/rag layer,
+coalescence-limited capacity or changing water-in-oil quality, hand the solved
+`ThreePhaseSeparator` to [@emulsion-separation](emulsion-separation.agent.md)
+with [neqsim-emulsion-separation](../skills/neqsim-emulsion-separation/SKILL.md).
+The diagnostic study copies state and is run explicitly; it does not change
+the normal process calculation or its outlet streams.
+
 For NeqSim-to-P&ID or "complete DEXPI engineering model" requests, use the
 governed engineering path from `neqsim-pid-process-operations`:
 

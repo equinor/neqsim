@@ -377,6 +377,19 @@ defaults. The source inventory is in
 Reproducing a published correlation does not establish agreement within the
 measurement uncertainties or justify transferring its parameters to another EOS.
 
+The same explicit source-paired MEG alpha is also checked against 15 existing
+NIST pure-MEG vapor pressures at 307.7–384.5 K. Its pressure AARD is 5.86%, with
+15 predictions inside the supplied compiler-expanded 95% point-pressure
+uncertainties. This comparison does not propagate input or fitted-parameter
+uncertainty and does not qualify inhibitor partition in mixtures. The native
+identity and refined numerical checks are asserted for the source-compatible
+liquids, changed/repeated/reversed-order states and pure coexistence. Pure
+coexistence uses equal phase amounts at the unchanged bubble pressure to avoid
+roundoff in mole differences on the solver's infinitesimal incipient phase;
+mixture phase fractions are retained. The
+[source-compatible assessment protocol and raw results](../../src/test/resources/neqsim/thermo/mixingrule/hv-source-compatible/README.md)
+record this numerical conditioning limitation and the separate physical errors.
+
 Numerical qualification covers analytical temperature and composition
 derivatives, Gibbs-Duhem and Hessian symmetry, classical-rule recovery for both
 EoS, directed-parameter ordering, and gas-oil-water material balance and fugacity
@@ -632,6 +645,23 @@ solvers. Volume-translated UMR-CPA also differentiates its implemented,
 temperature-independent Peneloux translation as a constant. A stored database
 temperature coefficient does not enter that translation expression and must not
 be substituted for its derivative.
+
+`SystemUMRCPAvolcor` refreshes the extensive translation and its derivative caches
+after component initialization and before solving the volume or evaluating
+fugacities. This ordering also applies after composition or phase-inventory changes;
+using the preceding inventory's translation can corrupt the aqueous phase split.
+`PhaseUMRCPAvolcorTest` checks the translation derivatives and EOS pressure equation,
+plus repeated methane/water flashes with component conservation and phase-fugacity
+equality. These are numerical consistency checks, not experimental qualification
+of the UMR-CPA parameter set.
+
+For the built-in arithmetic volume-translation rule, the mixture translation and
+its first-derivative caches use factored sums with linear component-count cost.
+Subclasses retain the general pair-rule calculation and virtual mixing hooks;
+second-derivative storage remains quadratic. `PhaseUMRCPAvolcorMixingRuleTest`
+compares the factored expressions with independent pair sums across component
+inventories and mole scales, including custom pair rules and nonzero temperature
+responses. The equilibrium solver and its acceptance tolerances are unchanged.
 
 `SystemPrCPA` uses the existing PR-based CPA mass-action solver and analytical
 site responses, with its own generic PR-CPA component parameters and PR alpha.
