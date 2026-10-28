@@ -42,6 +42,42 @@ class TwoFluidRichGasDragQualificationTest {
   }
 
   /**
+   * An explicit same-gas downstream reservoir must fund signed fallback without inventing component or energy content.
+   */
+  @Test
+  void levelOutletAdvancesAcrossSignedFallbackWithExplicitThermodynamicDonor() {
+    TwoFluidPipe pipe = createRichGasPipe(12, true);
+    pipe.setOutletBoundaryFluid(pipe.getInletStream().getFluid());
+    pipe.setAllowOutletPhaseBackflow(true);
+    boolean observedSignedFallback = false;
+    double dt = 0.25;
+    int steps = (int) Math.round(40.0 / dt);
+    for (int step = 1; step <= steps; step++) {
+      double elapsed = step * dt;
+      pipe.setOutletPressure(150.0 - 140.0 * elapsed / 120.0, "bara");
+      pipe.runTransient(dt, null);
+      assertEquals(elapsed, pipe.getSimulationTime(), 1.0e-9);
+      TwoFluidComponentConservationReport components = pipe.getLastComponentConservationReport();
+      assertTrue(components.isConverged(), components.getMessage());
+      observedSignedFallback |= sum(components.getOutletBoundaryMassKg()) < 0.0;
+      TwoFluidConservativeEnergyReport energy = pipe.getLastConservativeEnergyReport();
+      assertTrue(energy.isWithinTolerance(1.0e-3, 1.0e-7));
+    }
+    double startingPressureBara = 150.0 - 140.0 * 40.0 / 120.0;
+    for (int step = 1; step <= 16; step++) {
+      double elapsed = 40.0 + step * dt;
+      pipe.setOutletPressure(startingPressureBara + (160.0 - startingPressureBara) * step / 16.0, "bara");
+      pipe.runTransient(dt, null);
+      assertEquals(elapsed, pipe.getSimulationTime(), 1.0e-9);
+      TwoFluidComponentConservationReport components = pipe.getLastComponentConservationReport();
+      assertTrue(components.isConverged(), components.getMessage());
+      observedSignedFallback |= sum(components.getOutletBoundaryMassKg()) < 0.0;
+      assertTrue(pipe.getLastConservativeEnergyReport().isWithinTolerance(1.0e-3, 1.0e-7));
+    }
+    assertTrue(observedSignedFallback, "The fixture must exercise rather than merely configure reversed outlet flow");
+  }
+
+  /**
    * Advance through the former 31.75--32.375 second rejection with all accepted ledgers intact.
    *
    * @param cells finite-volume cell count
@@ -148,5 +184,14 @@ class TwoFluidRichGasDragQualificationTest {
     pipe.closeInlet();
     pipe.setMassTransferRelaxationTime(30.0);
     return pipe;
+  }
+
+  /** Sum a component boundary vector. */
+  private static double sum(double[] values) {
+    double total = 0.0;
+    for (double value : values) {
+      total += value;
+    }
+    return total;
   }
 }

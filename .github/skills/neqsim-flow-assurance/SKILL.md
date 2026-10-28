@@ -688,9 +688,13 @@ for (double qgMSm3d : gasRates) {
 > verifies phase, total, component, interphase, and thermal ledgers around a
 > seeded in-domain marker. It is single-stage Euler evidence only. Multi-stage
 > phase appearance needs stage-local component inventories and fails before
-> mutation; named-component transport with signed outlet backflow likewise fails
-> unless a physical external outlet composition is supplied. Never infer that
-> composition from the last interior cell.
+> mutation. Named-component transport with signed outlet backflow requires
+> `setOutletBoundaryFluid(externalFluid)` before
+> `setAllowOutletPhaseBackflow(true)` so reversed phase composition, density,
+> and enthalpy have an explicit physical owner. Never infer that state from the
+> last interior cell. The current rich-gas pressure-ramp check is conservative
+> boundary evidence, not complete blowdown, pooling, restart, or evaporation-rate
+> qualification.
 >
 > **The coupled route is an opt-in four-part configuration.** For a pressure
 > outlet that physically permits phase fallback, use

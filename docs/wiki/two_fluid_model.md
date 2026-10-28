@@ -1177,9 +1177,11 @@ approximation. The sustained regression covers 120 s of gas, gas/oil and gas/oil
 heat and EOS updates active, plus heating/cooling transfer signs and conservative component
 ledgers. Positive-flow boundaries and a fixed named-component slate remain required.
 
-With component transport enabled, the downstream outlet composition follows the accepted boundary
+With component transport enabled, the downstream outlet composition follows the positive outbound
 component ledger rather than the latest inlet composition or the final cell's instantaneous phase
-split. The outlet TP flash preserves total component flow; closed outlets carry zero mass. Each
+split. The signed conservation ledger separately retains reversed material entering from an explicit
+external donor. The outlet TP flash preserves positive outbound component flow; closed or net-inflow
+outlets publish zero product when no phase leaves. Each
 component substep stages boundary/source/latent-heat ledgers together with inventory and discards
 all of them on failure. This is component-substep isolation, not whole-pipe transient rollback.
 Positive trace-phase component inventories receive the same bounded synchronization as larger
@@ -1212,9 +1214,14 @@ integrator. It rejects multi-stage integration before state mutation until inter
 appearance has a stage-local component inventory; this limitation does not change the existing
 stage-weighted paths for other named-component transport cases.
 
-Signed outlet backflow cannot be combined with named-component transport because no external
-outlet composition is configured. Either setter order now fails before state mutation instead of
-waiting for reverse inflow during an accepted transient step.
+For signed outlet backflow with named-component transport, call
+`setOutletBoundaryFluid(externalFluid)` before `setAllowOutletPhaseBackflow(true)`. The pressure outlet
+then uses the external flashed phase composition, density, and enthalpy for reversed phases while
+retaining the independently configured pressure traction. Without that external state, either setter
+order fails before state mutation; the last interior cell is never treated as a physical reservoir.
+The rich-gas pressure-ramp regression exercises actual same-gas fallback with conservative mass,
+component, and full-energy reports, but does not qualify complete blowdown, low-point pooling,
+physical restart, or predictive evaporation time.
 
 
 
