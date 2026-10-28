@@ -1,65 +1,14 @@
 package neqsim.process.equipment.valve;
 
+import java.util.UUID;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
  * Level control valve (LCV) for automatic level regulation in vessels.
  *
- * <p>
- * LevelControlValve automatically modulates its opening to maintain a vessel level setpoint. It extends ControlValve
- * and adds level control logic with proportional control action. This is essential for separator level control and
- * liquid discharge applications.
- * </p>
- *
- * <p>
- * Key features:
- * <ul>
- * <li>Automatic level control</li>
- * <li>Configurable level setpoint (0-100%)</li>
- * <li>Proportional control action</li>
- * <li>Configurable control gain</li>
- * <li>Fail-open or fail-closed configurations</li>
- * </ul>
- *
- * <p>
- * Control action:
- * <ul>
- * <li>DIRECT: Increase opening increases outflow, decreases level (most common for liquid discharge)</li>
- * <li>REVERSE: Increase opening decreases outflow, increases level (rare)</li>
- * </ul>
- *
- * <p>
- * Common applications:
- * <ul>
- * <li>Separator liquid level control</li>
- * <li>Vessel dump valves</li>
- * <li>Boot level control</li>
- * <li>Tank level regulation</li>
- * <li>Interface level control</li>
- * </ul>
- *
- * <p>
- * Example usage:
- *
- * <pre>
- * // Create separator with liquid outlet
- * Separator separator = new Separator("V-101", feedStream);
- * Stream liquidOut = new Stream("Liquid Out", separator.getLiquidOutStream());
- *
- * // Create level control valve
- * LevelControlValve lcv = new LevelControlValve("LCV-101", liquidOut);
- * lcv.setLevelSetpoint(50.0); // Control to 50% level
- * lcv.setControllerGain(3.0); // Proportional gain
- * lcv.setMeasuredLevel(45.0); // Current level from transmitter
- * lcv.setCv(150.0);
- * lcv.run();
- *
- * System.out.println("Valve opening: " + lcv.getPercentValveOpening() + "%");
- * System.out.println("Level error: " + lcv.getControlError() + "%");
- * </pre>
- *
- * @author ESOL
- * @version 1.0
+ * <p>The embedded controller uses an incremental proportional command. In transient mode the
+ * command is evaluated before the actuator and hydraulic calculation, so configured travel,
+ * deadband, stiction, and hysteresis remain active.</p>
  */
 public class LevelControlValve extends ControlValve {
   /** Serialization version UID. */
@@ -67,47 +16,28 @@ public class LevelControlValve extends ControlValve {
 
   /** Control action enumeration. */
   public enum ControlAction {
-    /**
-     * Direct action: increase opening increases outflow, decreases level (normal for discharge valves).
-     */
+    /** Increasing measured level increases the valve opening. */
     DIRECT,
-    /** Reverse action: increase opening decreases outflow, increases level. */
+    /** Increasing measured level decreases the valve opening. */
     REVERSE
   }
 
-  /** Level setpoint in % (0-100). */
   private double levelSetpoint = 50.0;
-
-  /** Measured level in % (0-100). */
   private double measuredLevel = 50.0;
-
-  /** Control action. */
   private ControlAction controlAction = ControlAction.DIRECT;
-
-  /** Proportional controller gain. */
   private double controllerGain = 3.0;
-
-  /** Control error (setpoint - measured level). */
   private double controlError = 0.0;
-
-  /** Enable/disable automatic control. */
   private boolean autoMode = true;
+  private double failSafePosition = 0.0;
+  /** Last physical-step identity that advanced the embedded control calculation. */
+  private UUID lastControlStepId = null;
 
-  /** Fail-safe position on loss of instrument air or power (% opening). */
-  private double failSafePosition = 0.0; // Default fail-closed
-
-  /**
-   * Constructor for LevelControlValve.
-   *
-   * @param name name of the level control valve
-   */
+  /** @param name name of the level control valve */
   public LevelControlValve(String name) {
     super(name);
   }
 
   /**
-   * Constructor for LevelControlValve.
-   *
    * @param name name of the level control valve
    * @param inStream inlet stream
    */
@@ -115,170 +45,203 @@ public class LevelControlValve extends ControlValve {
     super(name, inStream);
   }
 
-  /**
-   * Set the level setpoint.
-   *
-   * @param setpoint level setpoint in % (0-100)
-   */
+  /** @param setpoint level setpoint in percent */
   public void setLevelSetpoint(double setpoint) {
-    this.levelSetpoint = Math.max(0.0, Math.min(100.0, setpoint));
+    levelSetpoint = Math.max(0.0, Math.min(100.0, setpoint));
   }
 
-  /**
-   * Get the level setpoint.
-   *
-   * @return level setpoint in %
-   */
+  /** @return level setpoint in percent */
   public double getLevelSetpoint() {
     return levelSetpoint;
   }
 
-  /**
-   * Set the measured level from level transmitter.
-   *
-   * @param level measured level in % (0-100)
-   */
+  /** @param level measured level in percent */
   public void setMeasuredLevel(double level) {
-    this.measuredLevel = Math.max(0.0, Math.min(100.0, level));
+    measuredLevel = Math.max(0.0, Math.min(100.0, level));
   }
 
-  /**
-   * Get the measured level.
-   *
-   * @return measured level in %
-   */
+  /** @return measured level in percent */
   public double getMeasuredLevel() {
     return measuredLevel;
   }
 
-  /**
-   * Set the control action.
-   *
-   * @param action control action (DIRECT or REVERSE)
-   */
+  /** @param action control action */
   public void setControlAction(ControlAction action) {
-    this.controlAction = action;
+    controlAction = action;
   }
 
-  /**
-   * Get the control action.
-   *
-   * @return current control action
-   */
+  /** @return current control action */
   public ControlAction getControlAction() {
     return controlAction;
   }
 
-  /**
-   * Set the controller gain.
-   *
-   * @param gain proportional gain (typical range: 1.0 to 10.0)
-   */
+  /** @param gain incremental proportional gain in percent opening per percent error */
   public void setControllerGain(double gain) {
-    this.controllerGain = gain;
+    controllerGain = gain;
   }
 
-  /**
-   * Get the controller gain.
-   *
-   * @return controller gain
-   */
+  /** @return controller gain */
   public double getControllerGain() {
     return controllerGain;
   }
 
-  /**
-   * Get the control error.
-   *
-   * @return control error (setpoint - measured level) in %
-   */
+  /** @return control error (setpoint minus measured level) in percent */
   public double getControlError() {
     return controlError;
   }
 
-  /**
-   * Enable or disable automatic control mode.
-   *
-   * @param auto true for automatic, false for manual
-   */
+  /** @param auto true for automatic, false for manual */
   public void setAutoMode(boolean auto) {
-    this.autoMode = auto;
+    autoMode = auto;
   }
 
-  /**
-   * Check if valve is in automatic control mode.
-   *
-   * @return true if automatic, false if manual
-   */
+  /** @return true in automatic mode */
   public boolean isAutoMode() {
     return autoMode;
   }
 
-  /**
-   * Set the fail-safe position.
-   *
-   * @param position fail-safe position in % (0=fail-closed, 100=fail-open)
-   */
+  /** @param position fail-safe position in percent opening */
   public void setFailSafePosition(double position) {
-    this.failSafePosition = Math.max(0.0, Math.min(100.0, position));
+    failSafePosition = Math.max(0.0, Math.min(100.0, position));
   }
 
-  /**
-   * Get the fail-safe position.
-   *
-   * @return fail-safe position in %
-   */
+  /** @return fail-safe position in percent opening */
   public double getFailSafePosition() {
     return failSafePosition;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Override run method to implement level control logic.
-   * </p>
-   */
+  /** {@inheritDoc} */
   @Override
   public void run() {
-    if (!autoMode) {
-      // Manual mode - just run parent with current opening
-      super.run();
-      return;
-    }
-
-    // Calculate control error
-    controlError = levelSetpoint - measuredLevel;
-
-    // Proportional control action
-    double currentOpening = getPercentValveOpening();
-    double adjustment = controllerGain * controlError;
-
-    // Apply adjustment based on control action
-    double newOpening;
-    if (controlAction == ControlAction.DIRECT) {
-      // Direct action: high level -> open more to increase outflow
-      newOpening = currentOpening + adjustment;
-    } else {
-      // Reverse action: high level -> close to decrease outflow
-      newOpening = currentOpening - adjustment;
-    }
-
-    // Limit to 0-100%
-    newOpening = Math.max(0.0, Math.min(100.0, newOpening));
-
-    // Set new opening and run
-    setPercentValveOpening(newOpening);
-    super.run();
+    run(UUID.randomUUID());
   }
 
   /**
-   * {@inheritDoc}
+   * Runs one UUID-aware steady evaluation. Repeated evaluations advance the embedded controller
+   * once when physical-step idempotency is enabled.
    *
-   * <p>
-   * Returns a string representation specific to level control valves.
-   * </p>
+   * @param id calculation or physical-step identity
    */
+  @Override
+  public void run(UUID id) {
+    if (autoMode && shouldAdvanceControl(id)) {
+      applyControlCommand(false);
+    }
+    super.run(id);
+  }
+
+  /**
+   * Runs one transient scan in measurement-command-actuator-hydraulics order.
+   *
+   * @param dt physical timestep in seconds
+   * @param id physical-step identity
+   */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    if (getCalculateSteadyState()) {
+      super.runTransient(dt, id);
+      return;
+    }
+    if (autoMode && shouldAdvanceControl(id)) {
+      applyControlCommand(true);
+    }
+    super.runTransient(dt, id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setPhysicalStepIdempotencyEnabled(boolean enabled) {
+    super.setPhysicalStepIdempotencyEnabled(enabled);
+    if (!enabled) {
+      lastControlStepId = null;
+    }
+  }
+
+  private boolean shouldAdvanceControl(UUID id) {
+    boolean advance = !isPhysicalStepIdempotencyEnabled() || id == null || !id.equals(lastControlStepId);
+    if (advance && isPhysicalStepIdempotencyEnabled()) {
+      lastControlStepId = id;
+    }
+    return advance;
+  }
+
+  private void applyControlCommand(boolean transientMode) {
+    controlError = levelSetpoint - measuredLevel;
+    double currentCommand = transientMode ? getTargetPercentValveOpening() : getPercentValveOpening();
+    double adjustment = controllerGain * controlError;
+    double newCommand = controlAction == ControlAction.DIRECT ? currentCommand - adjustment
+        : currentCommand + adjustment;
+    if (transientMode) {
+      setTargetPercentValveOpening(newCommand);
+    } else {
+      setPercentValveOpening(newCommand);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != LevelControlValve.class) {
+      return "valve subclass " + getClass().getName()
+          + " must extend the snapshot for subclass-owned mutable state";
+    }
+    return getValveTransientStateCoverageIssue();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public TransientState captureTransientState() {
+    String coverageIssue = getTransientStateCoverageIssue();
+    if (coverageIssue != null) {
+      throw new IllegalStateException("Cannot capture level control valve '" + getName() + "': " + coverageIssue);
+    }
+    return new LevelControlTransientState(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected void restoreTransientStepState(TransientState snapshot) {
+    if (!(snapshot instanceof LevelControlTransientState)) {
+      throw new IllegalArgumentException("Level control valve requires a level control transient snapshot");
+    }
+    super.restoreTransientStepState(snapshot);
+    LevelControlTransientState state = (LevelControlTransientState) snapshot;
+    levelSetpoint = state.levelSetpoint;
+    measuredLevel = state.measuredLevel;
+    controlAction = state.controlAction;
+    controllerGain = state.controllerGain;
+    controlError = state.controlError;
+    autoMode = state.autoMode;
+    failSafePosition = state.failSafePosition;
+    lastControlStepId = state.lastControlStepId;
+  }
+
+  /** Serializable checkpoint for embedded level-control state. */
+  public static final class LevelControlTransientState extends TransientState {
+    private static final long serialVersionUID = 1000L;
+    private final double levelSetpoint;
+    private final double measuredLevel;
+    private final ControlAction controlAction;
+    private final double controllerGain;
+    private final double controlError;
+    private final boolean autoMode;
+    private final double failSafePosition;
+    private final UUID lastControlStepId;
+
+    private LevelControlTransientState(LevelControlValve source) {
+      super(source);
+      levelSetpoint = source.levelSetpoint;
+      measuredLevel = source.measuredLevel;
+      controlAction = source.controlAction;
+      controllerGain = source.controllerGain;
+      controlError = source.controlError;
+      autoMode = source.autoMode;
+      failSafePosition = source.failSafePosition;
+      lastControlStepId = source.lastControlStepId;
+    }
+  }
+
+  /** {@inheritDoc} */
   @Override
   public String toString() {
     return String.format(
