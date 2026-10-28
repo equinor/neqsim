@@ -58,19 +58,19 @@ public final class OilQualityQuickStartExample {
     oil.addTBPfraction("C30", 0.29, 0.450, 0.91);
     oil.setMixingRule(2);
 
-    Standard_ASTM_D4052 apiStandard = new Standard_ASTM_D4052(oil);
-    apiStandard.calculate();
-    double apiGravity = apiStandard.getValue("API");
-    String classification = apiStandard.getOilClassification();
+    Standard_ASTM_D4052 apiStd = new Standard_ASTM_D4052(oil);
+    apiStd.calculate();
+    double apiGravity = apiStd.getValue("API");
+    String classification = apiStd.getOilClassification();
     if (!Double.isFinite(apiGravity) || "Unknown".equals(classification)) {
       throw new IllegalStateException("API gravity calculation failed");
     }
 
-    Standard_ASTM_D86 distillationStandard = new Standard_ASTM_D86(oil);
-    distillationStandard.calculate();
-    double ibpC = distillationStandard.getValue("IBP", "C");
-    double t50C = distillationStandard.getValue("T50", "C");
-    double fbpC = distillationStandard.getValue("FBP", "C");
+    Standard_ASTM_D86 distStd = new Standard_ASTM_D86(oil);
+    distStd.calculate();
+    double ibpC = distStd.getValue("IBP", "C");
+    double t50C = distStd.getValue("T50", "C");
+    double fbpC = distStd.getValue("FBP", "C");
     if (!Double.isFinite(ibpC) || !Double.isFinite(t50C) || !Double.isFinite(fbpC)
         || ibpC > t50C || t50C > fbpC) {
       throw new IllegalStateException("Distillation curve must be finite and ordered");
