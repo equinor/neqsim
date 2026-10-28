@@ -149,8 +149,8 @@ class SpecializedControlValveTransientTest {
     assertEquals(valve.getControlError(), restartedValve.getControlError(), 0.0);
     assertEquals(valve.getTargetPercentValveOpening(), restartedValve.getTargetPercentValveOpening(), 0.0);
     assertEquals(valve.getPercentValveOpening(), restartedValve.getPercentValveOpening(), 0.0);
-    assertEquals(valve.getOutletStream().getFlowRate("kg/hr"),
-        restartedValve.getOutletStream().getFlowRate("kg/hr"), 0.0);
+    assertEquals(valve.getOutletStream().getFlowRate("kg/hr"), restartedValve.getOutletStream().getFlowRate("kg/hr"),
+        0.0);
   }
 
   private static LevelStudy createLevelStudy(String name) {

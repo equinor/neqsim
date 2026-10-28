@@ -6,10 +6,12 @@ import neqsim.process.equipment.stream.StreamInterface;
 /**
  * Pressure control valve (PCV) with an embedded incremental proportional control calculation.
  *
- * <p>Steady evaluation solves the current hydraulics before sampling pressure. Dynamic evaluation
- * samples the pressure state published by the preceding process scan, then applies the command,
- * actuator dynamics, and valve hydraulics once. This explicit one-scan measurement delay prevents
- * hidden algebraic iteration and gives deterministic event order.</p>
+ * <p>
+ * Steady evaluation solves the current hydraulics before sampling pressure. Dynamic evaluation samples the pressure
+ * state published by the preceding process scan, then applies the command, actuator dynamics, and valve hydraulics
+ * once. This explicit one-scan measurement delay prevents hidden algebraic iteration and gives deterministic event
+ * order.
+ * </p>
  */
 public class PressureControlValve extends ControlValve {
   /** Serialization version UID. */
@@ -104,8 +106,8 @@ public class PressureControlValve extends ControlValve {
   }
 
   /**
-   * Runs one UUID-aware steady evaluation. The current hydraulic state is solved before sampling
-   * the pressure and, when the command advances, solved once more at the new opening.
+   * Runs one UUID-aware steady evaluation. The current hydraulic state is solved before sampling the pressure and, when
+   * the command advances, solved once more at the new opening.
    *
    * @param id calculation or physical-step identity
    */
@@ -163,16 +165,16 @@ public class PressureControlValve extends ControlValve {
     double inletPressure = getInletStream().getPressure("bara");
     double outletPressure = getOutletStream() == null ? inletPressure : getOutletStream().getPressure("bara");
     switch (controlMode) {
-      case UPSTREAM:
-        processVariable = inletPressure;
-        break;
-      case DIFFERENTIAL:
-        processVariable = inletPressure - outletPressure;
-        break;
-      case DOWNSTREAM:
-      default:
-        processVariable = outletPressure;
-        break;
+    case UPSTREAM:
+      processVariable = inletPressure;
+      break;
+    case DIFFERENTIAL:
+      processVariable = inletPressure - outletPressure;
+      break;
+    case DOWNSTREAM:
+    default:
+      processVariable = outletPressure;
+      break;
     }
     controlError = pressureSetpoint - processVariable;
   }
@@ -193,8 +195,7 @@ public class PressureControlValve extends ControlValve {
   @Override
   public String getTransientStateCoverageIssue() {
     if (getClass() != PressureControlValve.class) {
-      return "valve subclass " + getClass().getName()
-          + " must extend the snapshot for subclass-owned mutable state";
+      return "valve subclass " + getClass().getName() + " must extend the snapshot for subclass-owned mutable state";
     }
     return getValveTransientStateCoverageIssue();
   }

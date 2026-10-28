@@ -6,9 +6,10 @@ import neqsim.process.equipment.stream.StreamInterface;
 /**
  * Level control valve (LCV) for automatic level regulation in vessels.
  *
- * <p>The embedded controller uses an incremental proportional command. In transient mode the
- * command is evaluated before the actuator and hydraulic calculation, so configured travel,
- * deadband, stiction, and hysteresis remain active.</p>
+ * <p>
+ * The embedded controller uses an incremental proportional command. In transient mode the command is evaluated before
+ * the actuator and hydraulic calculation, so configured travel, deadband, stiction, and hysteresis remain active.
+ * </p>
  */
 public class LevelControlValve extends ControlValve {
   /** Serialization version UID. */
@@ -117,8 +118,8 @@ public class LevelControlValve extends ControlValve {
   }
 
   /**
-   * Runs one UUID-aware steady evaluation. Repeated evaluations advance the embedded controller
-   * once when physical-step idempotency is enabled.
+   * Runs one UUID-aware steady evaluation. Repeated evaluations advance the embedded controller once when physical-step
+   * idempotency is enabled.
    *
    * @param id calculation or physical-step identity
    */
@@ -182,8 +183,7 @@ public class LevelControlValve extends ControlValve {
   @Override
   public String getTransientStateCoverageIssue() {
     if (getClass() != LevelControlValve.class) {
-      return "valve subclass " + getClass().getName()
-          + " must extend the snapshot for subclass-owned mutable state";
+      return "valve subclass " + getClass().getName() + " must extend the snapshot for subclass-owned mutable state";
     }
     return getValveTransientStateCoverageIssue();
   }
