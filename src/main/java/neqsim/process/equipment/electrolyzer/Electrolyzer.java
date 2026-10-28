@@ -409,8 +409,10 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Set the electrolyzer technology. Applies the technology's default cell voltage, current density, and faradaic
-   * efficiency unless they have already been set explicitly. Does not override an already-attached I-V characteristic.
+   * Set the electrolyzer technology. Overwrites cell voltage, current density, nominal current density and Faradaic
+   * efficiency with technology defaults. Apply equipment-specific overrides after this call. Inlet temperature and
+   * pressure and an already-attached I-V characteristic are retained. Technology current-efficiency defaults have the
+   * qualification limits documented in {@link ElectrolyzerTechnology#getDefaultFaradaicEfficiency()}.
    *
    * @param technology technology selector
    */

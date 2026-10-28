@@ -18,10 +18,10 @@ package neqsim.process.equipment.electrolyzer;
  * </ul>
  *
  * <p>
- * For a textbook PEM stack at 80&nbsp;&deg;C and 2&nbsp;A/cm&sup2; this yields about 1.85 V (Carmo et al., Int. J.
- * Hydrogen Energy 38 (2013) 4901-4934). For alkaline at 80&nbsp;&deg;C and 0.4&nbsp;A/cm&sup2; it yields about 1.85 V
- * (Ursua et al., Proc. IEEE 100 (2012) 410-426). The model is deliberately a coarse engineering correlation, not a
- * CFD-resolved electrochemistry model.
+ * The model is a coarse engineering correlation. For example, its default alkaline coefficients give 1.7064354 V at
+ * 80&nbsp;&deg;C and 0.4&nbsp;A/cm&sup2;, compared with the separate fixed-voltage default of 1.85 V. Technology
+ * default voltage/current-efficiency/SEC qualification remains tracked in issue 4682; the coefficients are not a
+ * validated equipment polarization curve.
  * </p>
  *
  * @author NeqSim contributors
@@ -52,9 +52,8 @@ public class ElectrolyzerIVCharacteristic implements java.io.Serializable {
    * Create an I-V characteristic with technology-specific defaults.
    *
    * <p>
-   * Default coefficients (Tafel slope, exchange current density, area-specific resistance) are picked to reproduce the
-   * cell voltage in {@link ElectrolyzerTechnology} at the technology's nominal current density and temperature within
-   * ~3%.
+   * Default coefficients (Tafel slope, exchange current density, area-specific resistance) define a screening curve.
+   * They do not necessarily reproduce the separate fixed-voltage values in {@link ElectrolyzerTechnology}.
    * </p>
    *
    * @param technology electrolyzer technology
