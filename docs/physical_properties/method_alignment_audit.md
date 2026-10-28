@@ -229,7 +229,7 @@ documents dispatch and the retained legacy pressure scales.
 | Isopentane shipped DIPPR fit | Independent NIST Antoine comparison at 290, 298.15 and 301 K, using the existing 1% comparison gate | Pressure agreement at these three points only; no universal uncertainty or derivative-accuracy claim. |
 | Explicit pow10/pow10KPa labels | Synthetic pressure and analytical-derivative values; pow10KPa finite differences and inverse checks at 260/300/350 K | These prescribed coefficients test scale and dispatch, not a physical substance. The pow10KPa label retains division by 100000, not a kPa-to-bar conversion. |
 | Zero-exponent log/exp | Synthetic 2-bar pressure and 1/15 bar/K derivative at 300 K | Numerical implementation check only. |
-| Wagner fallback | Pressure equals Pc at Tc; source inspection confirms the analytical derivative is implemented | Existing tests do not independently qualify the Wagner derivative, inverse or full fit range. |
+| Wagner fallback | `ComponentWagnerNumericalTest` adds frozen high-precision pressure/derivative and independent-pressure inverse checks, finite-difference refinement, critical/invalid neighbors and component lifecycle checks | Synthetic numerical qualification at the stated points below; no real-fluid fit range or physical accuracy is established. |
 | Domain/inverse behavior | CO2 pole-extrapolation refusal; consistent pressure/derivative/inverse states at 230/250/280 K; synthetic inverse bracketing through raw values above Pc; selected missing/invalid/ionic cases | These cases are not an exhaustive domain, solver-convergence or database audit. |
 
 The primary independent isopentane source is the
@@ -250,6 +250,40 @@ correlation family, systematic boundaries/lifecycle behavior, and sixth-edition
 conformance remain open. EOS saturation/phase enthalpy differences and the low-level
 latent-heat parameter discrepancy are separate contracts. This evidence complements
 #3792's broader worked-example harness and does not supersede #2937's flash campaign.
+
+### Wagner numerical API qualification
+
+`ComponentWagnerNumericalTest` exercises the existing component APIs using explicitly
+prescribed coefficients A=-7, B=1, C=-2, D=-3, E=0, Tc=500 K, Pc=50 bar and a
+100 K triple-point boundary. The isopentane component supplies an API instance only;
+these inputs are not an isopentane fit or a parameter set admitted for engineering use.
+
+The mathematical function under test is the implemented form:
+
+$$P=P_c\exp\left[\frac{T_c}{T}\left(Ax+Bx^{1.5}+Cx^3+Dx^6\right)\right],\quad x=1-T/T_c$$
+
+Frozen independent references use Python standard-library Decimal arithmetic with
+80-digit precision. Derivatives at 150, 200, 250, 350, 450, 490 and 499.5 K come
+from central differences with a 1e-25 K step, independently of Java's analytical
+derivative. A second high-precision step verifies reference stability. At Tc,
+P=Pc and the one-sided derivative limit is -Pc*A/Tc=0.7 bar/K.
+For example, at 350 K the references are 2.90517637138374536 bar and
+0.0797486275493922320 bar/K. Inverse tests consume the frozen pressures rather
+than Java getter output, including the critical endpoint. Pressure and derivative
+checks use relative tolerance 2e-13; recovered temperature tolerance is 0.001 K.
+
+Additional cases check finite-difference refinement at 200/350/450 K, pressure-scale
+linearity, amounts 0.001/1/1000 mol, isolated clone coefficients, repeated/reordered
+state evaluation, adjacent representable critical temperatures, invalid/nonfinite
+inputs and an inverse target below the prescribed triple-point bracket.
+No production equation, coefficient, inverse setting or default changes. The batch
+adds no work to simulation methods and makes no timing-speedup claim.
+
+This checks a mathematical implementation, not experimental validity, a real-fluid
+parameter range, near-critical physical accuracy, or original/sixth-edition conformance.
+Other correlation-family fit provenance and broader EOS/phase-equilibrium qualification
+remain separate. Reuse the existing public Java/Python component routes; no additional
+MCP wrapper or duplicate correlation is required.
 
 ## Coefficient-based saturation latent heat
 
