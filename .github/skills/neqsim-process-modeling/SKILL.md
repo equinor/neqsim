@@ -351,7 +351,7 @@ installed ejector at a new year / motive pressure / gas MW use the **fixed-geome
 `autoSizeFixedGeometry(designSuctionFlow, 0.10)` to size it once, then `run()`; flows are results (`getOperatingPoint()`, `getOperatingWindowReport()`, `isInBreakdown()`,
 `getBreakdownMargin()`, `generateFixedGeometryCurve`). Pitfalls: stream flow rates are ignored in this mode (use `setLimitEntrainmentToSuctionSupply(true)` to cap by supply),
 only the vapour phase is used, the regimes are CRITICAL / SUBCRITICAL (entrainment falling) / BREAKDOWN (ER = 0), and a subcritical result is not a capacity guarantee.
-See `docs/process/equipment/ejectors.md`. Practical rules learned on the Oseberg OSA ejector study:
+See `docs/process/equipment/ejectors.md`. Practical rules learned on an ejector off-design study:
 
 - **Outlet stream:** `run()` used to replace `mixedStream` (jneqsim 3.18: every run); wire downstream equipment to a `Mixer` outlet (adiabatic energy balance = the
   ejector outlet state, kinetic terms cancel) or re-fetch `getMixedStream()` after each run.
