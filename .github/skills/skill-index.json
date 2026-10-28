@@ -2320,6 +2320,22 @@
  "idea register": [
   "neqsim-capacity-increase-screening"
  ],
+ "future operation study": [
+  "neqsim-future-operation-study",
+  "neqsim-process-modeling"
+ ],
+ "equipment modification register": [
+  "neqsim-future-operation-study",
+  "neqsim-capacity-increase-screening"
+ ],
+ "multi-platform complex model": [
+  "neqsim-process-modeling",
+  "neqsim-platform-modeling",
+  "neqsim-future-operation-study"
+ ],
+ "design basis deviation register": [
+  "neqsim-future-operation-study"
+ ],
  "maturation pipeline": [
   "neqsim-capacity-increase-screening"
  ],

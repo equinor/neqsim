@@ -2006,6 +2006,7 @@ EMV model was hand-coded in four sibling tasks. Rules:
 | M1 notification | `enterprise-m1-notification-agent` | `enterprise-maintenance-agent`, `root-cause`, `enterprise-stid-reader-agent` |
 | Well-to-export plant model (ProcessPilot, all wells, formation fluids) | `enterprise-process-notebook-agent` | `enterprise-well-production-routing-agent`, `enterprise-fluid-generation-workflow-agent`, `enterprise-reservoir-history-match-agent`, `enterprise-process-model-build-verify-agent`, `plant-data` |
 | Topside process model from STID / UniSim | `enterprise-process-model-build-verify-agent` (or `unisim-reader`) | `enterprise-stid-reader-agent`, `technical-reader`, `process-model` |
+| Multi-platform complex model and future-operation / modification-register study | `process-model` (pattern: `neqsim-process-modeling` reference `multi-platform-complex`), then `field-development` with skill `neqsim-future-operation-study` | `enterprise-process-notebook-agent`, `rotating-equipment`, `optimize-processmodel`, `standards-review`, `plant-data` |
 | Reservoir simulator from open data (OPM Flow) / history match | `reservoir-simulator-agent` / `reservoir-history-match-agent` (enterprise variants with PDM/OSDU) | `near-well-injectivity-agent`, `enterprise-osdu-agent`, `enterprise-smda-opus-agent`, `enterprise-welldb-agent` (document evidence), `fluid-characterization-agent` |
 | Well documents / discovery-well evidence (final well report, completion and discovery evaluation reports; what exists for a field or wellbore; fluids, contacts, tests, pressure and sampling as page-referenced text) | `enterprise-welldb-agent` (skill `enterprise-welldb-search-api`) | `enterprise-geox-agent`, `enterprise-prospect-evidence-agent`, `enterprise-well-reservoir-context-agent`, `enterprise-reservoir-simulator-agent`, `enterprise-smda-opus-agent` |
 | Capacity increase / debottlenecking on a host | `capacity-increase-screening` (`enterprise-capacity-increase-screening-agent`) | `enterprise-ioc-bottleneck-agent`, `process-model`, `optimize-processmodel`, `field-development` |
@@ -2562,3 +2563,13 @@ L14. **Tornado data should be sorted by swing.** When writing tornado results to
 - **Idempotent finalizer scripts.** Scripts that append tables, figures or improvements to `results.json` must replace by key or deduplicate, so a rerun does not double the entries.
 - **Declare several outputs as a list.** `produces` in `analysis.scripts` accepts a YAML block list or a comma-separated string; each item (glob allowed) is checked separately by the report and the work record.
 - **Verdict versus package.** "Deliver according to gate X" means one register row per required product with status, evidence path and owner role, not only a readiness verdict (see `neqsim-field-development`, Gate Packages).
+
+## Multi-platform complex and future-operation study lessons (2026-10)
+
+Details: `neqsim-process-modeling` reference `multi-platform-complex` (package layout, boundary-stream contract, integrator, validation design, sweeps) and skill `neqsim-future-operation-study` (per-year strategy, modification register, deviation register).
+
+- **Resumable agents.** Every user message cancels running agents. Each builder or study agent writes `<name>_STATUS.md` (done, todo next, last command, key numbers) about every 10 minutes, commits early, keeps scratch under the task folder and resumes from the file. Give each parallel agent its own git worktree and branch; never edit the shared tree.
+- **Decoupled vs coupled scorecards, calibration window A vs untouched hold-out window B, `calibrated` flag on every scored row.** Recycle-contaminated flow transmitters, counters, flat-line or stale tags and tags with a unit or label error are never validation targets.
+- **Basis discipline.** State stream-day or calendar-day on every table; benchmark against a consultant or vendor report only after aligning mode definitions and rate basis.
+- **Sweeps.** Run each year/case in a watchdog worker, persist and resume, label `unsolved` and `RELAXED` rows, and feed Monte Carlo from a surrogate fitted to pre-solved runs rather than from flowsheet calls.
+- **Tooling gaps found during the work go to a numbered proposal list** (NIP-nn) with target repo, gap and priority, so the next task starts from implemented changes, not rediscovery.

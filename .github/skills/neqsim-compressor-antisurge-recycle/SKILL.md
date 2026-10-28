@@ -724,6 +724,10 @@ report = shaft.getOperatingReport()     # per member: speed, power, surge/stonew
   `shaft.removeCompressor(ka23003)` and give it a new `CompressorShaft` with `setMaxShaftPower(5, "MW")` or
   `setElectricSupplyLimit(MW, "MW", motorEff)`.
 - **Always-coupled trains** (LT 1st+2nd stage recompressors) are one `CompressorShaft` for all years.
+- **Decoupling dates and per-year modes.** Keep the membership per year (or per half-year when the date falls inside a
+  year) in a table, run each part with its own shaft set and report the time weight. Details, the efficiency-calibration
+  and chart-similarity pitfalls: `neqsim-rotating-equipment-design`, section "Chart gas similarity, efficiency
+  calibration and chart-speed basis".
 - **Idle members.** `setMemberActive(c, false)` locks the compressor inactive (flowsheet skips it), removes it
   from the power sum and limit checks; with no active member `solveSpeed` returns 0 rpm and status
   `SHAFT_IDLE` (feasible). The idle compressor's outlet is not updated, so give an idle train a bypass line or
