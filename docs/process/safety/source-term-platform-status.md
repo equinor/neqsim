@@ -6,7 +6,7 @@ description: Delivered capabilities, evidence boundaries and remaining acceptanc
 # Source-term platform implementation status
 
 Tracking issue: [#3860](https://github.com/equinor/neqsim/issues/3860).
-Implementation scope and consumer validation as of 2026-10-18; this does not confer qualification or replace domain review.
+Implementation scope and consumer validation as of 2026-10-28; this does not confer qualification or replace domain review.
 
 ## Delivered foundations
 
@@ -71,6 +71,11 @@ The current implementation includes:
   timestep-refinement evidence and schema-validated frames from both process containers. The
   compatibility API remains single-gas; an explicit phase-selected API supports equilibrium
   gas, oil, generic-liquid and aqueous withdrawal without inferring entrainment or phase fallback.
+- Opt-in cylindrical inventory geometry now derives live liquid level and gas/liquid interface area
+  from phase volumes, confirms that the declared withdrawal phase occupies the opening, and fails
+  closed inside a caller-declared unresolved interface/entrainment band. It supports vertical and
+  horizontal cylinders with one gas and at most one material liquid phase. It is an assessment
+  gate, not a predictive entrainment, wave, slip or finite-rate transfer model.
 - CPA inventory consumer regressions add gas/aqueous withdrawal, caller/export isolation,
   rejected-substep rollback and replay, nearby-temperature timestep refinement, and both native
   process-container paths. A prescribed test flux isolates bookkeeping; it does not qualify
@@ -125,7 +130,7 @@ caller-owned; no phase-count rule silently changes the requested physics.
 
 | Work item | Current boundary | Completion evidence required |
 |---|---|---|
-| Broader transient inventory regimes | Rigid adiabatic equilibrium inventory supports explicit phase-selected withdrawal, caller-declared ordered phase-exhaustion transitions, conservative receiving-pressure events, and balance/refinement tests. Short-opening finite-rate models provide uniform and component-selective phase-partition relaxation; the predictive bubbly transfer-zone path now derives bounded bubble size, phase velocity and residence time before Ranz-Marshall transfer. None alters inventory phase-transfer dynamics. | Assessed phase-level geometry and entrainment in the coupled inventory; coupled interfacial heat/latent and mass transfer and inventory feedback beyond short-opening relaxation. |
+| Broader transient inventory regimes | Rigid adiabatic equilibrium inventory supports explicit phase-selected withdrawal, caller-declared ordered phase-exhaustion transitions, conservative receiving-pressure events, and balance/refinement tests. An opt-in cylindrical geometry gate reports live level/interface area, confirms the opening phase and rejects a declared unresolved entrainment band. Short-opening finite-rate models provide uniform and component-selective phase-partition relaxation; the predictive bubbly transfer-zone path derives bounded bubble size, phase velocity and residence time before Ranz-Marshall transfer. None alters inventory phase-transfer dynamics. | Predictive/validated entrainment beyond the fail-closed interface band; coupled interfacial heat/latent and mass transfer and inventory feedback beyond short-opening relaxation. |
 | Full-bore/long-pipe and non-equilibrium regimes | Bounded ideal-gas and EOS-backed real-gas Fanno models cover quasi-steady one-sided constant-area single-gas pipe flow. Conservative perfect-gas and EOS-backed single-gas finite-volume units cover one-sided transient waves and line packing. Short-opening prescribed-slip, bounded vertical drift-flux and finite-rate phase-partition models cover one gas and one liquid within explicit screening limits. A predictive spherical-bubble transfer-zone adapter supplies bounded bubble size, phase-relative speed and residence time to Ranz-Marshall but deliberately rejects liquid-droplet hydrodynamics. | Pipe heat transfer/elasticity and upstream-vessel/two-sided coupling; measured or predictive population-balance, breakup/coalescence and entrainment models; liquid-droplet, annular/high-Weber and solid-bearing transport; independent dense-gas and multiphase validation data. |
 | Independent qualification and dense-fluid accuracy | Machine-readable evidence records distinguish applicability, limitations, evidence type and independence. The Fanno manifest retains one external analytical case with explicit error bounds; frames remain `UNQUALIFIED`. | Add independent experimental/dense-fluid datasets with range and uncertainty analysis, then obtain accountable domain review. |
 | Solid-formation applicability | Mixture-specific solid/hydrate station assessment now fails closed and retains machine-readable diagnostics. | Assessed solid-bearing release physics where supported, plus independent mixture validation. |

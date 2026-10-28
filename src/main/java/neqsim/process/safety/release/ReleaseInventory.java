@@ -57,6 +57,7 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
   private final List<PhaseType> withdrawalPhasePlan;
   private final double phaseExhaustionMassFraction;
   private final boolean phaseSelective;
+  private final ReleaseInventoryPhaseGeometry phaseGeometry;
   private final Map<String, Double> initialComponentMassKg;
   private final double initialEnergyJ;
   private SystemInterface inventory;
@@ -91,7 +92,7 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
   public ReleaseInventory(String name, SystemInterface initialFluid, double volumeM3, double diameterM,
       double dischargeCoefficient, double backPressurePa, ReleaseFlowModel releaseModel, double maxSubstepS) {
     this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
-        Collections.singletonList(PhaseType.GAS), 0.0, false, 0.0, 0.0);
+        Collections.singletonList(PhaseType.GAS), 0.0, false, 0.0, 0.0, null);
   }
 
   /**
@@ -112,7 +113,7 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
       double dischargeCoefficient, double backPressurePa, double flowPathLengthM, double darcyFrictionFactor,
       ReleaseFlowModel releaseModel, double maxSubstepS) {
     this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
-        Collections.singletonList(PhaseType.GAS), 0.0, false, flowPathLengthM, darcyFrictionFactor);
+        Collections.singletonList(PhaseType.GAS), 0.0, false, flowPathLengthM, darcyFrictionFactor, null);
   }
 
   /**
@@ -140,7 +141,35 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
       double dischargeCoefficient, double backPressurePa, ReleaseFlowModel releaseModel, double maxSubstepS,
       PhaseType withdrawalPhaseType) {
     this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
-        Collections.singletonList(withdrawalPhaseType), 0.0, true, 0.0, 0.0);
+        Collections.singletonList(withdrawalPhaseType), 0.0, true, 0.0, 0.0, null);
+  }
+
+  /**
+   * Creates a phase-selected equilibrium inventory with an explicit cylindrical geometry gate.
+   *
+   * <p>
+   * Geometry is assessed from live phase volumes before and after every candidate substep. The declared withdrawal
+   * phase must occupy the opening, and the opening must remain outside the caller-declared interface exclusion band.
+   * The band is a fail-closed entrainment assessment; no carry-over or interfacial-transfer rate is inferred.
+   * </p>
+   *
+   * @param name unique process equipment name
+   * @param initialFluid initial equilibrium inventory
+   * @param volumeM3 fixed vessel volume in m3; must match the geometry capacity
+   * @param diameterM physical opening diameter in m
+   * @param dischargeCoefficient discharge coefficient in (0,1]
+   * @param backPressurePa constant absolute receiving pressure in Pa
+   * @param releaseModel caller-selected release model
+   * @param maxSubstepS largest integration substep in seconds
+   * @param withdrawalPhaseType explicitly selected withdrawal phase
+   * @param phaseGeometry cylindrical vessel and opening geometry
+   */
+  public ReleaseInventory(String name, SystemInterface initialFluid, double volumeM3, double diameterM,
+      double dischargeCoefficient, double backPressurePa, ReleaseFlowModel releaseModel, double maxSubstepS,
+      PhaseType withdrawalPhaseType, ReleaseInventoryPhaseGeometry phaseGeometry) {
+    this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
+        Collections.singletonList(withdrawalPhaseType), 0.0, true, 0.0, 0.0,
+        Objects.requireNonNull(phaseGeometry, "phaseGeometry"));
   }
 
   /**
@@ -162,7 +191,32 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
       double dischargeCoefficient, double backPressurePa, double flowPathLengthM, double darcyFrictionFactor,
       ReleaseFlowModel releaseModel, double maxSubstepS, PhaseType withdrawalPhaseType) {
     this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
-        Collections.singletonList(withdrawalPhaseType), 0.0, true, flowPathLengthM, darcyFrictionFactor);
+        Collections.singletonList(withdrawalPhaseType), 0.0, true, flowPathLengthM, darcyFrictionFactor, null);
+  }
+
+  /**
+   * Creates a geometrically gated phase-selected inventory connected to a constant-area pipe.
+   *
+   * @param name unique process equipment name
+   * @param initialFluid initial equilibrium inventory
+   * @param volumeM3 fixed vessel volume in m3; must match the geometry capacity
+   * @param diameterM pipe internal diameter in m
+   * @param dischargeCoefficient effective full-bore area factor in (0,1]
+   * @param backPressurePa constant absolute receiving pressure in Pa
+   * @param flowPathLengthM pipe length from inventory boundary to release plane in m
+   * @param darcyFrictionFactor specified Darcy friction factor
+   * @param releaseModel caller-selected pipe release model
+   * @param maxSubstepS largest integration substep in seconds
+   * @param withdrawalPhaseType explicitly selected withdrawal phase
+   * @param phaseGeometry cylindrical vessel and opening geometry
+   */
+  public ReleaseInventory(String name, SystemInterface initialFluid, double volumeM3, double diameterM,
+      double dischargeCoefficient, double backPressurePa, double flowPathLengthM, double darcyFrictionFactor,
+      ReleaseFlowModel releaseModel, double maxSubstepS, PhaseType withdrawalPhaseType,
+      ReleaseInventoryPhaseGeometry phaseGeometry) {
+    this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
+        Collections.singletonList(withdrawalPhaseType), 0.0, true, flowPathLengthM, darcyFrictionFactor,
+        Objects.requireNonNull(phaseGeometry, "phaseGeometry"));
   }
 
   /**
@@ -189,7 +243,7 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
       double dischargeCoefficient, double backPressurePa, ReleaseFlowModel releaseModel, double maxSubstepS,
       List<PhaseType> withdrawalPhasePlan, double phaseExhaustionMassFraction) {
     this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
-        withdrawalPhasePlan, phaseExhaustionMassFraction, true, 0.0, 0.0);
+        withdrawalPhasePlan, phaseExhaustionMassFraction, true, 0.0, 0.0, null);
   }
 
   /**
@@ -213,13 +267,13 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
       ReleaseFlowModel releaseModel, double maxSubstepS, List<PhaseType> withdrawalPhasePlan,
       double phaseExhaustionMassFraction) {
     this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
-        withdrawalPhasePlan, phaseExhaustionMassFraction, true, flowPathLengthM, darcyFrictionFactor);
+        withdrawalPhasePlan, phaseExhaustionMassFraction, true, flowPathLengthM, darcyFrictionFactor, null);
   }
 
   private ReleaseInventory(String name, SystemInterface initialFluid, double volumeM3, double diameterM,
       double dischargeCoefficient, double backPressurePa, ReleaseFlowModel releaseModel, double maxSubstepS,
       List<PhaseType> withdrawalPhasePlan, double phaseExhaustionMassFraction, boolean phaseSelective,
-      double flowPathLengthM, double darcyFrictionFactor) {
+      double flowPathLengthM, double darcyFrictionFactor, ReleaseInventoryPhaseGeometry phaseGeometry) {
     super(name);
     this.volumeM3 = ReleaseFlowRequest.positive(volumeM3, "volumeM3");
     this.maxSubstepS = ReleaseFlowRequest.positive(maxSubstepS, "maxSubstepS");
@@ -231,6 +285,13 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
     }
     this.phaseExhaustionMassFraction = phaseExhaustionMassFraction;
     this.phaseSelective = phaseSelective;
+    if (phaseGeometry != null && withdrawalPhasePlan.size() != 1) {
+      throw new IllegalArgumentException("INVENTORY_GEOMETRY_PHASE_PLAN_UNSUPPORTED");
+    }
+    this.phaseGeometry = phaseGeometry;
+    if (phaseGeometry != null) {
+      phaseGeometry.requireCapacity(this.volumeM3);
+    }
     ReleaseFlowRequest configuration = new ReleaseFlowRequest(initialFluid, diameterM, dischargeCoefficient,
         backPressurePa, flowPathLengthM, darcyFrictionFactor);
     this.diameterM = configuration.getDiameterM();
@@ -253,6 +314,7 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
     inventory.init(3);
     requireInventory(inventory, true);
     requireInitialWithdrawalPhase(inventory);
+    requirePhaseGeometry(inventory, 0);
     if (!phaseSelective) {
       requireSingleGas(inventory);
     }
@@ -431,6 +493,7 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
     next.setMolarComposition(remainingMoleFractions);
     int solves = solveVolumeEnergy(next, targetEnergy, Math.max(Math.abs(beforeEnergy), Math.abs(outflowEnergy)));
     requireInventory(next, true);
+    requirePhaseGeometry(next, phaseIndex);
     close(next.getVolume("m3"), volumeM3, volumeM3, "VOLUME_CLOSURE_FAILED");
     close(next.getInternalEnergy("J"), targetEnergy, Math.max(Math.abs(beforeEnergy), Math.abs(outflowEnergy)),
         "ENERGY_CLOSURE_FAILED");
@@ -466,6 +529,7 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
   }
 
   private ReleaseFlowResult calculate(SystemInterface fluid, int phaseIndex) {
+    requirePhaseGeometry(fluid, phaseIndex);
     SystemInterface withdrawal = selectedPhase(fluid, phaseIndex);
     ReleaseFlowResult result = releaseModel.calculate(request(fluid, phaseIndex));
     if (result == null || !result.isUsable() || !releaseModel.getModelId().equals(result.getModelId())
@@ -724,6 +788,25 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
     throw new IllegalStateException("INVENTORY_SELECTED_PHASE_ABSENT: " + withdrawalPhaseType);
   }
 
+  private ReleaseInventoryPhaseGeometry.Assessment requirePhaseGeometry(SystemInterface fluid, int phaseIndex) {
+    if (phaseGeometry == null) {
+      return null;
+    }
+    ReleaseInventoryPhaseGeometry.Assessment assessment = phaseGeometry.assess(fluid);
+    if (!assessment.isInterfaceBandClear()) {
+      throw new IllegalStateException(
+          "INVENTORY_ENTRAINMENT_UNRESOLVED: opening=" + phaseGeometry.getOpeningElevationM() + ", level="
+              + assessment.getLiquidLevelM() + ", halfBand=" + phaseGeometry.getInterfaceExclusionHalfBandM());
+    }
+    PhaseType selected = withdrawalPhasePlan.get(phaseIndex);
+    if (assessment.getPhaseAtOpening() != selected) {
+      throw new IllegalStateException(
+          "INVENTORY_OPENING_PHASE_MISMATCH: selected=" + selected + ", opening=" + assessment.getPhaseAtOpening()
+              + ", elevation=" + phaseGeometry.getOpeningElevationM() + ", level=" + assessment.getLiquidLevelM());
+    }
+    return assessment;
+  }
+
   private static Map<String, Double> componentMasses(SystemInterface fluid) {
     Map<String, Double> masses = new TreeMap<String, Double>();
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
@@ -793,6 +876,9 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
   /** {@inheritDoc} */
   @Override
   public synchronized String getReleaseBasis() {
+    if (phaseGeometry != null) {
+      return "COUPLED_RIGID_ADIABATIC_GEOMETRY_GATED_PHASE_INVENTORY";
+    }
     if (hasPhaseTransitionPlan()) {
       return "COUPLED_RIGID_ADIABATIC_PHASE_TRANSITION_INVENTORY";
     }
@@ -820,6 +906,18 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
     provenance.put("inventoryPhaseExhaustionMassFraction", Double.toString(getPhaseExhaustionMassFraction()));
     provenance.put("inventoryLastPhaseTransitions", Integer.toString(getLastPhaseTransitions()));
     provenance.put("inventoryTotalPhaseTransitions", Integer.toString(getTotalPhaseTransitions()));
+    if (phaseGeometry != null) {
+      ReleaseInventoryPhaseGeometry.Assessment assessment = requirePhaseGeometry(inventory, withdrawalPhaseIndex);
+      provenance.put("inventoryGeometryOrientation", phaseGeometry.getOrientation().name());
+      provenance.put("inventoryGeometryDiameterM", Double.toString(phaseGeometry.getDiameterM()));
+      provenance.put("inventoryGeometryLengthM", Double.toString(phaseGeometry.getLengthM()));
+      provenance.put("inventoryOpeningElevationM", Double.toString(phaseGeometry.getOpeningElevationM()));
+      provenance.put("inventoryInterfaceExclusionHalfBandM",
+          Double.toString(phaseGeometry.getInterfaceExclusionHalfBandM()));
+      provenance.put("inventoryLiquidLevelM", Double.toString(assessment.getLiquidLevelM()));
+      provenance.put("inventoryInterfacialAreaM2", Double.toString(assessment.getInterfacialAreaM2()));
+      provenance.put("inventoryGeometryStatus", "OPENING_PHASE_CONFIRMED_ENTRAINMENT_BAND_CLEAR");
+    }
     provenance.put("rateTimeBasis", "INSTANTANEOUS_AT_FRAME_TIME");
     return Collections.unmodifiableMap(provenance);
   }
@@ -862,6 +960,11 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
   /** @return true when constructed with the explicit phase-selective API */
   public boolean isPhaseSelective() {
     return phaseSelective;
+  }
+
+  /** @return explicit immutable phase geometry, or {@code null} when geometry gating is disabled */
+  public ReleaseInventoryPhaseGeometry getPhaseGeometry() {
+    return phaseGeometry;
   }
 
   /** @return configured maximum integration substep in seconds */
