@@ -89,7 +89,12 @@ The four-component raw molar amounts are methane .65, nC10 .20, water .12 and
 MEG .03. The large fixture adds .005 each of ethane, propane, n-butane,
 i-butane, n-pentane, i-pentane, n-hexane, n-heptane, n-octane, n-nonane,
 nC11, nC12, nC13, nC14, nC15 and nitrogen; the total 1.08 is normalized by the
-existing fluid setup. Phase initialization uses a forced gas at 310 K/20 bara.
+existing fluid setup. Phase initialization requests one gas root at 310 K/20 bara.
+The saved result is GAS for 4 components and OIL for 20 components, for both EOS,
+rules and initialization levels. `PhaseEos.init` classifies the solved volume and
+composition after the requested root selection; the initial request is not a
+guarantee of the final phase label. These are prescribed one-phase initialization
+workloads, not globally stable one-phase flash results.
 Complete flashes alternate 298.15/298.25 K at 60 bara, with multiphase checking.
 No lower initialization level replaces a requested derivative calculation.
 
@@ -127,7 +132,8 @@ gates remain open; no coefficient or default was retuned by this batch.
 
 All 192 JVMs and 1,920 rounds completed (1,067,520 measured operations).
 All final states are exactly equal across HV baseline/candidate/control forks.
-Phase cases are one-phase forced gas; complete flashes retain three phases.
+Phase cases retain one phase: GAS for 4 components and OIL for 20 components.
+Complete flashes retain GAS, OIL and AQUEOUS phases.
 Maximum balance residual is 5.141e-14; maximum log-fugacity mismatch is 1.521e-12.
 Normalization is checked at 1e-12 by the unchanged harness.
 
@@ -214,3 +220,50 @@ does not recalculate or retrospectively upgrade their metadata. Protocol2 will
 reject legacy resume metadata rather than infer a missing contract. Start a new
 output directory for a new protocol2 experiment. Functional smoke timings used
 to verify the new guards are excluded from the performance characterization.
+
+### Protocol2 extended phase characterization
+
+The unresolved 20-component/init3 kernel observation was repeated using the
+unchanged evaluator binaries and harness, five independent forks per EOS,
+100 warmup batches and 30 measurement batches of 200 initializations. The
+matrix retains baseline HV, candidate HV, identical-baseline-binary control
+and classical rule2, with alternating arm/EOS order: **40 JVMs, 1,200 rounds
+and 240,000 measured initializations**. The 800,000 warmup initializations are
+excluded. Complete reports and the independently recomputed comparisons are
+under `extended-phase/`; this experiment is separate from the older 204-JVM
+archive, not a retrospective protocol upgrade or a pooled timing estimate.
+
+Both component binaries use class-file version 52, the same compiler/options,
+unchanged harness hash and ordered classpath hash
+`b6939cbb8370937e316451e3b53b48b1a630ad3610e778b18f4a2bb3edea5cbf`.
+Protocol2 verifies unchanged artifacts before completion. Runtime is Java17,
+fixed 512MiB heap, `-Xbatch`, CPU6 affinity on an AMD EPYC 9V74 host; the
+8-CPU-equivalent cgroup quota and affinity do not establish exclusive ownership.
+
+| EOS | Candidate/baseline median [range] | Identical control/baseline range | Candidate/control median [range] |
+|---|---:|---:|---:|
+| SRK | 0.858 [0.818, 0.922] | [0.972, 1.090] | 0.842 [0.809, 0.869] |
+| PR | 0.870 [0.821, 0.886] | [0.950, 1.027] | 0.862 [0.856, 0.869] |
+
+Ratios use per-JVM round medians, then five fork comparisons. Every candidate
+median is below both baseline binaries for its EOS/fork. This supports a local
+reduction in time for this fixed initialization workload. It does not qualify
+other sizes, initialization levels, complete flashes, machines or portable
+throughput. All earlier adverse flash/control observations remain retained.
+Median HV allocation is 135,723.04 bytes/operation for all three HV arms, versus
+667.04 for classical; this change does not establish another allocation saving.
+Baseline-HV/classical median time ratios remain 93.09 SRK/94.93 PR, which include
+different thermodynamics and cannot be assigned solely to evaluator overhead.
+
+Every original per-JVM round was independently compared with its combined
+receipt; all medians were recomputed, matrix/round membership checked and final
+states compared exactly across all 15 HV JVMs per EOS. All four EOS/rule state
+groups finish as one OIL-labeled phase at 310 K/20 bara. Normalization passes 1e-12;
+reported balance is 0 and the single-phase log-fugacity roundoff is at most
+1.777e-15. Interphase equality is vacuous in this kernel; these checks do not
+establish global phase stability or physical accuracy. The main matrix's
+gas/oil/aqueous flash evidence remains separate.
+
+The initial gas-request/final OIL-label distinction was also independently
+verified in the older clone and allocation archives. Their protocol text is
+corrected without changing any raw number, phase request, harness or EOS logic.

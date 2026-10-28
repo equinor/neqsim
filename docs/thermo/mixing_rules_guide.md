@@ -509,6 +509,10 @@ alpha-parameter changes are covered by the workspace lifecycle regression.
 See the [column-evaluation protocol and controls](../../src/test/resources/neqsim/thermo/mixingrule/hv-column-performance/README.md)
 for matched compiler settings, independent JVMs, identical-binary controls,
 classical-rule comparisons, full equilibrium states and timing limitations.
+Use the saved phase types when interpreting these measurements: the one-phase
+initialization fixtures finish as GAS for 4 components and OIL for 20 components,
+despite initially requesting a gas root. They do not establish global one-phase
+stability. The complete-flash fixtures retain gas, oil and aqueous phases.
 
 ---
 

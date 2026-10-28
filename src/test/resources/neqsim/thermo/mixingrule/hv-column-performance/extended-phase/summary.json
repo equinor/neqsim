@@ -1,0 +1,156 @@
+{
+  "jvms": 40,
+  "rounds": 1200,
+  "measured_operations": 240000,
+  "warmup_operations_excluded": 800000,
+  "state_groups": 4,
+  "actual_phase": "OIL",
+  "max_balance": 0.0,
+  "max_logfugacity": 1.7763568394002505e-15,
+  "independent_audit": "Every per-JVM round equals its combined receipt; unique complete matrix/rounds; recomputed medians; exact state equality across 15 HV JVMs per EOS; normalization 1e-12. Single-phase residuals do not establish global stability.",
+  "comparisons": {
+    "SRK": {
+      "candidate/baseline": {
+        "fork_ratios": [
+          0.8223520762952422,
+          0.8178849625605482,
+          0.9223236699718688,
+          0.8581745261303668,
+          0.8695545883207074
+        ],
+        "median": 0.8581745261303668,
+        "min": 0.8178849625605482,
+        "max": 0.9223236699718688
+      },
+      "control/baseline": {
+        "fork_ratios": [
+          0.9869713902308482,
+          0.9715806900363234,
+          1.089676847549225,
+          1.0610365323837645,
+          1.000629834303577
+        ],
+        "median": 1.000629834303577,
+        "min": 0.9715806900363234,
+        "max": 1.089676847549225
+      },
+      "candidate/control": {
+        "fork_ratios": [
+          0.8332076131435763,
+          0.8418085815702768,
+          0.8464194426505918,
+          0.8088077082533244,
+          0.8690072577397254
+        ],
+        "median": 0.8418085815702768,
+        "min": 0.8088077082533244,
+        "max": 0.8690072577397254
+      },
+      "baseline/classical": {
+        "fork_ratios": [
+          97.27895151633437,
+          93.28630684796306,
+          85.10925384535297,
+          87.02774257744318,
+          93.09015119271497
+        ],
+        "median": 93.09015119271497,
+        "min": 85.10925384535297,
+        "max": 97.27895151633437
+      }
+    },
+    "PR": {
+      "candidate/baseline": {
+        "fork_ratios": [
+          0.8632362370495583,
+          0.8702407584936045,
+          0.8754706749808876,
+          0.821138821100604,
+          0.8860204776353842
+        ],
+        "median": 0.8702407584936045,
+        "min": 0.821138821100604,
+        "max": 0.8860204776353842
+      },
+      "control/baseline": {
+        "fork_ratios": [
+          0.9936154663933863,
+          1.016514524868876,
+          1.0164875343763506,
+          0.950197268890032,
+          1.0272742872509364
+        ],
+        "median": 1.0164875343763506,
+        "min": 0.950197268890032,
+        "max": 1.0272742872509364
+      },
+      "candidate/control": {
+        "fork_ratios": [
+          0.8687830113825855,
+          0.8561026303149578,
+          0.8612704488481685,
+          0.8641772061288,
+          0.8624965003323912
+        ],
+        "median": 0.8624965003323912,
+        "min": 0.8561026303149578,
+        "max": 0.8687830113825855
+      },
+      "baseline/classical": {
+        "fork_ratios": [
+          97.12262586295502,
+          94.9335595080744,
+          85.83813820114891,
+          98.68890370507582,
+          92.64270645538096
+        ],
+        "median": 94.9335595080744,
+        "min": 85.83813820114891,
+        "max": 98.68890370507582
+      }
+    }
+  },
+  "files_sha256": {
+    "environment.json": "3b1c5d92f1ff91ba36949f96423d98eec2829c43afeb58176d7d94a5fa0cb883",
+    "rounds.csv": "67688a37d8f9788539f86a57b53f982ac061a354b69c72f0eeb8fb4dec32a50b",
+    "forks.csv": "f80ddbe856da845b7498eeadce188005b033d2b410dc2a5f362788aa1e402767",
+    "states.csv": "ce0e7da6e8adfd1dd9ef10a3d59e38beea85f1099f914f24cef7420a522ffca3"
+  },
+  "source_identity": {
+    "frozen_base": "a160d27fb5db6ecb8f5035e39597aa4c9ea4c339",
+    "candidate_head": "ddf66e035da509791d56888e8889f29a099c1973",
+    "candidate_component_blob": "ccda7017ce553a6c76ea6412e70c38053ef285b6",
+    "runner_blob": "704867900dd04f73235dc2d73e6d35be2a316023"
+  },
+  "hardware_observed_during_run": {
+    "cpu_model": "AMD EPYC 9V74 80-Core Processor",
+    "cpu_quota_period": "800000 100000",
+    "allowed_cpus": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "exclusive_host": false
+  },
+  "median_allocated_bytes_per_operation": {
+    "SRK": {
+      "baseline": 135723.04,
+      "candidate": 135723.04,
+      "control": 135723.04,
+      "classical": 667.04
+    },
+    "PR": {
+      "baseline": 135723.04,
+      "candidate": 135723.04,
+      "control": 135723.04,
+      "classical": 667.04
+    }
+  },
+  "interpretation": "Candidate medians are lower than both identical baseline binaries in all five forks for each EOS in this fixed 20-component phase/init3 workload. Control spread and a shared host remain; this is not portable/general or complete-flash throughput acceptance. Existing adverse flash results are retained separately."
+}

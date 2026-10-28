@@ -69,8 +69,12 @@ between-JVM min/max remain available; timing is not a CI assertion.
 The four-component feed is methane/nC10/water/MEG = 0.65/0.20/0.12/0.03 mol.
 The 20-component feed adds 0.005 mol each of ethane, propane, n/i-butane,
 n/i-pentane, n-hexane through n-nonane, nC11 through nC15 and nitrogen, then
-normalizes the 1.08 mol total. Phase initialization uses a forced gas at 310 K/
-20 bara. Other cases start at 298.15 K/60 bara with multiphase checking; flashes
+normalizes the 1.08 mol total. Phase initialization requests one gas root at
+310 K/20 bara. The archived final label is GAS for 4 components and OIL for
+20 components, for both EOS/rules/init levels. PhaseEos classifies the solved
+volume/composition after the request; these prescribed one-phase kernels do
+not establish global phase stability. Other cases start at 298.15 K/60 bara
+with multiphase checking; flashes
 alternate 298.15/298.25 K. Setup and result checks are outside the clock. Cloning
 is included only in clone/clone_flash, while internal solver clones remain part
 of complete TP-flash cost. Checksums consume calculated results in every batch.
