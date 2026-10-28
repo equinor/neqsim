@@ -189,3 +189,28 @@ Combined characterization: 204 JVMs, 2,280 measurement rounds and 1,074,720
 measured operations. This completes the bounded runtime experiment and its
 controls; independent domain review and portable throughput acceptance remain
 pending. It does not complete campaign #4576 or its physical-accuracy criteria.
+
+### Receipt identity and completion guards (protocol 2)
+
+The runner now freezes the exact selected EOS/component/operation/init matrix,
+Java/host identity, ordered classpath contents (classes, resources and dependency
+archives), compiler versions, JVM options and batch counts. Resume rejects any
+changed or missing identity before reusing a completed receipt. Duplicate matrix
+selectors, duplicate/out-of-matrix JVM receipts and missing/duplicate rounds are
+errors. A partial checkpoint can resume but cannot acquire a completion timestamp
+until the entire requested matrix is present. The classpath is checked again
+before completion so a concurrent rebuild invalidates the experiment.
+
+The two matrix/dependency-switch regressions fail against the original published
+runner and pass with these guards. Hermetic tests also exercise unchanged resume,
+changed/missing identities, altered core classes/resources/jars, classpath order,
+incomplete/duplicate/mislabeled receipts and atomic CSV output. Mocked-JVM tests
+check orchestration only; they do not qualify speed or thermodynamic accuracy.
+These tests are registered in the devtools CI suite and its Python3.11 floor.
+
+The archived 204-JVM reports above predate protocol2 and remain unchanged. They
+were independently checked for all requested cells and rounds; the runner repair
+does not recalculate or retrospectively upgrade their metadata. Protocol2 will
+reject legacy resume metadata rather than infer a missing contract. Start a new
+output directory for a new protocol2 experiment. Functional smoke timings used
+to verify the new guards are excluded from the performance characterization.

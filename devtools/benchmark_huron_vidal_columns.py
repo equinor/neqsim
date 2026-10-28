@@ -24,6 +24,62 @@ import time
 
 COMPONENT = Path("neqsim/thermo/component/ComponentGENRTLmodifiedHV.class")
 HARNESS = "neqsim.thermo.mixingrule.HuronVidalClonePerformanceBenchmark"
+ARMS = ("baseline", "candidate", "control", "classical")
+
+
+def artifact_fingerprint(entries):
+    """Hash ordered classpath contents, including resources and additional override classes."""
+    result = hashlib.sha256()
+    for index, entry in enumerate(entries):
+        path = Path(entry)
+        if not path.exists():
+            raise ValueError(f"Missing classpath entry: {path}")
+        files = sorted(path.rglob("*")) if path.is_dir() else [path]
+        kind = "directory" if path.is_dir() else "archive"
+        result.update(f"entry:{index}:{kind}\0".encode())
+        for file in files:
+            if not file.is_file():
+                continue
+            name = file.relative_to(path).as_posix() if path.is_dir() else "archive"
+            result.update(name.encode("utf-8") + b"\0")
+            result.update(hashlib.sha256(file.read_bytes()).digest())
+    return result.hexdigest()
+
+
+def validate_resume(previous, current):
+    """Reject incomplete identity metadata or a changed scientific/runtime matrix."""
+    keys = ("protocol_version", "base_sha", "component_class_sha256", "component_class_versions",
+            "harness_class_sha256", "classpath_sha256", "java", "matrix", "forks", "warmup_batches",
+            "measurement_batches", "cpu_affinity", "jvm_options", "phase_iterations", "flash_iterations",
+            "platform", "host_sha256")
+    for key in keys:
+        if key not in previous or previous[key] != current[key]:
+            raise ValueError(f"Cannot resume changed or missing input: {key}")
+
+
+def receipt_key(row):
+    """Return the unique fork/scenario/arm identity of a JVM receipt."""
+    return (str(row["fork"]), row["eos"], str(row["components"]), row["operation"],
+            str(row["init"]), row["arm"])
+
+
+def validate_receipts(summaries, rounds, cells, forks, measurement_batches, complete=False):
+    """Require unique matrix members and complete, uniquely numbered rounds for every receipt."""
+    expected = {(str(fork), eos, str(size), operation, str(init), arm)
+                for fork in range(forks) for eos, size, operation, init in cells for arm in ARMS}
+    keys = [receipt_key(row) for row in summaries]
+    if len(keys) != len(set(keys)) or not set(keys).issubset(expected):
+        raise ValueError("Duplicate or out-of-matrix JVM receipt")
+    if complete and set(keys) != expected:
+        raise ValueError("Incomplete JVM matrix")
+    by_label = {}
+    for row in rounds:
+        by_label.setdefault(row["sample"], []).append(int(row["round"]))
+    for fork, eos, size, operation, init, arm in keys:
+        label = f"f{fork}-{eos}-{size}-{operation}-i{init}-{arm}"
+        numbers = by_label.get(label, [])
+        if sorted(numbers) != list(range(measurement_batches)):
+            raise ValueError(f"Incomplete or duplicate rounds for {label}")
 
 
 def digest(path):
@@ -71,6 +127,10 @@ def main():
     args = parser.parse_args()
     if args.forks < 2 or args.warmups < 1 or args.rounds < 2:
         parser.error("Require multiple independent forks, positive warmup and multiple rounds")
+    for selection in (args.eos, args.components, args.operations, args.initializations):
+        if len(selection) != len(set(selection)):
+            parser.error("Matrix selectors must not contain duplicates")
+    cells = list(itertools.product(args.eos, args.components, args.operations, args.initializations))
     project = args.project.resolve()
     variants = {key: getattr(args, key).resolve() for key in ("baseline", "candidate")}
     inputs = {key: digest(path / COMPONENT) for key, path in variants.items()}
@@ -78,6 +138,11 @@ def main():
     if len(set(versions.values())) != 1:
         parser.error("Baseline and candidate class-file versions differ; rebuild with identical compiler options")
     dependencies = args.dependencies.read_text(encoding="utf-8").strip()
+    dependency_entries = dependencies.split(os.pathsep)
+    if any(not entry for entry in dependency_entries):
+        parser.error("Dependency classpath must contain explicit nonempty entries")
+    artifacts = [variants["baseline"], variants["candidate"], project / "target/classes",
+                 project / "target/test-classes", *dependency_entries]
     java = shutil.which("java")
     if not java:
         parser.error("java must already be installed")
@@ -89,9 +154,13 @@ def main():
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=args.resume)
     environment = {
+        "protocol_version": 2,
+        "matrix": cells,
+        "classpath_sha256": artifact_fingerprint(artifacts),
         "base_sha": args.base_sha,
         "utc_started": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "platform": platform.platform(),
+        "host_sha256": hashlib.sha256(platform.node().encode("utf-8")).hexdigest(),
         "cpu_affinity": args.cpu,
         "affinity_is_exclusive": False,
         "java": subprocess.run([java, "-version"], capture_output=True, text=True, check=True).stderr,
@@ -109,13 +178,12 @@ def main():
     }
     if args.resume:
         previous = json.loads((output / "environment.json").read_text(encoding="utf-8"))
-        for key in ("base_sha", "component_class_sha256", "component_class_versions", "harness_class_sha256",
-                    "forks", "warmup_batches", "measurement_batches", "cpu_affinity", "jvm_options"):
-            if previous[key] != environment[key]:
-                raise ValueError(f"Cannot resume changed input: {key}")
+        # JSON stores tuples as lists; normalize the current matrix before comparing.
+        environment["matrix"] = [list(cell) for cell in cells]
+        validate_resume(previous, environment)
         environment = previous
+        environment.pop("utc_finished", None)
     (output / "environment.json").write_text(json.dumps(environment, indent=2) + "\n", encoding="utf-8")
-    cells = list(itertools.product(args.eos, args.components, args.operations, args.initializations))
     combined = read_csv(output / "rounds.csv") if args.resume else []
     states = read_csv(output / "states.csv") if args.resume else []
     reference_states = {}
@@ -123,8 +191,8 @@ def main():
         key = (row["eos"], row["components"], row["operation"], row["init"], row["rule"])
         reference_states.setdefault(key, []).append(row)
     summaries = read_csv(output / "forks.csv") if args.resume else []
-    completed = {(str(row["fork"]), row["eos"], str(row["components"]), row["operation"],
-                  str(row["init"]), row["arm"]) for row in summaries}
+    validate_receipts(summaries, combined, cells, args.forks, args.rounds)
+    completed = {receipt_key(row) for row in summaries}
     completed_labels = {f"f{fork}-{eos}-{size}-{operation}-i{init}-{arm}"
                         for fork, eos, size, operation, init, arm in completed}
     combined = [row for row in combined if row["sample"] in completed_labels]
@@ -183,6 +251,9 @@ def main():
                 write_csv(output / "states.csv", states)
                 write_csv(output / "forks.csv", summaries)
                 print(json.dumps(summary), flush=True)
+    validate_receipts(summaries, combined, cells, args.forks, args.rounds, complete=True)
+    if artifact_fingerprint(artifacts) != environment["classpath_sha256"]:
+        raise RuntimeError("Classpath artifacts changed during measurement; completion rejected")
     environment["utc_finished"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     environment["jvms"] = len(summaries)
     environment["state_groups"] = len(reference_states)
