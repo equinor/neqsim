@@ -91,6 +91,14 @@ For effective multicomponent diffusivity, call `calcEffectiveDiffusionCoefficien
 [diffusivity guide](../physical_properties/diffusivity_models.md) documents model keys, equations,
 units, and executable access patterns.
 
+Fuller's maintained organic diffusion volumes use explicit published atomic
+sums and aromatic/heterocyclic ring corrections. Unknown-structure fallbacks
+remain approximate. Direct Fuller evaluation returns NaN for invalid state or
+mass inputs; its warning interval is not a universal accuracy range. The guide
+separates independent arithmetic checks from the selected CH4/He measured-fit
+comparisons. Gas-diffusion clones own their mutable coefficient/parameter arrays;
+clone the fluid or phase as well when thermodynamic states must be independent.
+
 ## Surface and interfacial tension
 
 Interfacial calculations belong to `InterphasePropertiesInterface`, not directly to

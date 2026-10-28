@@ -35,7 +35,7 @@ to `src/main/java/neqsim/`. The nearest guides document existing choices and con
 | Density | COSTALD, Rackett, Peneloux and EOS density | Present; see [density models](density_models). Existing correction/mixture methods should be qualified, rather than duplicated as detached utility code. |
 | Viscosity | PFCT, LBC, Chung gas, friction theory, pure-fluid reference choices | Present; see [viscosity models](viscosity_models). **Added:** bounded pure-liquid Letsou-Stiel estimation. **Repaired:** CO2 background viscosity now includes the missing initial-density term and passes published Table 6/8 checks. Critical enhancement remains unimplemented. |
 | Thermal conductivity | PFCT, dilute/dense Chung, polynomial, Filippov and reference choices | **Repaired:** dense Chung equation, units, original coefficients and conformal mixing. Filippov's pressure factor now implements the complete CHEMPAK Missenard-derived expression with independent equation/lifecycle checks. The original tabulated-Q variant, mixture accuracy and sixth-edition conformance remain unqualified. See [conductivity models](thermal_conductivity_models). |
-| Gas and liquid diffusivity | Chapman-Enskog, Wilke-Lee, Fuller, Wilke-Chang, Siddiqi-Lucas, Tyn-Calus, Hayduk-Minhas and specialized aqueous methods | Present; see [diffusivity models](diffusivity_models). Extend independent value/range checks per method; do not infer dense-fluid validity from dilute-gas accuracy. |
+| Gas and liquid diffusivity | Chapman-Enskog, Wilke-Lee, Fuller, Wilke-Chang, Siddiqi-Lucas, Tyn-Calus, Hayduk-Minhas and specialized aqueous methods | Fuller known-organic atomic sums, canonical nC10 identity and invalid-input behavior are repaired, with 27 frozen independent equation values and selected CH4/He measured-fit controls at 200/250/273.15 K. Shared gas-diffusion clone storage is isolated for Fuller/Chapman-Enskog/Wilke-Lee. See [diffusivity models](diffusivity_models) for units, sources, ranges and exclusions. Other methods and unknown-structure fallbacks remain unqualified; dilute-gas checks establish no dense-fluid accuracy. |
 | Surface tension | Parachor, gradient theory, linear gradient theory, density-functional and empirical interfaces | Present; see [interfacial properties](interfacial_properties). Qualify by phase pair, critical approach and parameter source. |
 | Uncertainty | Existing numerical and study-specific uncertainty utilities | General property-model validity/uncertainty contracts are incomplete. Avoid reporting a universal percentage uncertainty for a correlation or a handbook. |
 
@@ -463,3 +463,39 @@ not measure an entire flash/process calculation or establish a stable speedup gu
 - [Viscosity models](viscosity_models)
 - [Thermal conductivity models](thermal_conductivity_models)
 - [Extending physical properties](../development/extending_physical_properties)
+
+
+## Fuller gas-diffusivity parameter qualification
+
+The explicit Fuller route retains its existing low-pressure equation and rounded
+bar prefactor. The maintained organic table now uses the published additive
+increments rather than inconsistent literal sums: C=15.9, H=2.31, O=6.11 and
+-18.3 per aromatic/heterocyclic ring. Saturated cyclohexane has no such ring
+subtraction, and the canonical database name nC10 shares n-decane's sum.
+Regressed simple-molecule volumes retain priority and are unchanged.
+
+Accessible provenance is Gu, Cheng and Tang (2018), equation 2.3/Table 1,
+[doi:10.1098/rsos.171936](https://doi.org/10.1098/rsos.171936), CC BY 4.0,
+and the independently documented COMSOL 6.4 parameter tables linked in the
+[diffusivity guide](diffusivity_models). These are parameter/equation evidence
+from later public references, not verified fifth-/sixth-edition text or errata.
+The frozen 70-digit Decimal values isolate the molecular lookup with prescribed
+masses; they do not establish physical accuracy of 27 real-fluid models.
+
+A distinct CH4/He physical control uses the original AF/TT measured fits in
+Langenberg et al. (2020), Table 3,
+[doi:10.5194/acp-20-3669-2020](https://doi.org/10.5194/acp-20-3669-2020),
+CC BY 4.0, at 200/250/273.15 K and 1.01325 bara. The fixed 15% comparison gate
+is limited to six fit comparisons, not a universal uncertainty specification.
+The paper's C2H4 rows concern ethene and are not used as ethane measurements.
+Known-organic arithmetic repair must not be mistaken for new experimental
+qualification of every affected organic pair.
+
+The same increment isolates gas-diffusion clone work arrays and checks public
+fluid/phase/property evaluation, amount/composition/order, unit/scaling, invalid
+states, boundary neighbors and repeat behavior. No new estimator or generic
+specification harness duplicates #3792. Existing public component/phase Java
+and Python composition remains the route; no new JSON/MCP operation is needed.
+Unknown-structure critical-volume/mass fallbacks, component-count rebinding,
+other diffusion correlations, finite-concentration factors and dense-fluid
+validity remain separate. No constants are fitted to the control measurements.
