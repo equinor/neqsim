@@ -135,6 +135,16 @@ Key rules:
   couple of settling `run()` passes.
 - **Twice-run is obsolete as a *gate*** — `runUntilConverged` drives convergence;
   the extra passes only damp slow recompression loops. Raise `max_iter`, not hacks.
+- **Bound every trial with the solver watchdog (opt-in, NeqSim releases after 3.26).** A trial that
+  never converges must not hang the optimizer: call `plant.setMaxRunTimeSeconds(120.0)`
+  (spans all areas and all passes of `runUntilConverged`) and
+  `plant.setStallDetection(8, 1e-3)` (no residual improvement for 8 iterations) once, and
+  call `plant.requestStop()` from a watchdog thread to cancel from outside. A tripped run
+  returns normally; read `status["terminationReason"]` (`TIMED_OUT` / `STALLED` / `STOPPED`),
+  `getRunStatus().getBudgetUnitName()` (unit that was running) and
+  `plant.getLastRunDiagnostics().toJson()`, and score the trial as infeasible. Cooperative
+  only: one unit that never returns cannot be interrupted. Default is off.
+  See `docs/process/processmodel/run_status.md`.
 - **Record everything.** Keep a list of `record` dicts → tornado/trace plots and
   `results.json` later. Report the **best feasible trial** (min objective among
   `feasible=True`), never the last `evaluate()` result — the final call can land

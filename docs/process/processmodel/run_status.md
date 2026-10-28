@@ -114,6 +114,57 @@ String json = process.getRunStatusJson();
 
 For a `ProcessModel`, each unit entry additionally carries an `areaName` field.
 
+## Solver Watchdog: Time Budget, Stall Detection and Cooperative Stop
+
+A non-converging recycle flowsheet or a very slow unit can occupy a thread for minutes.
+`ProcessSystem` and `ProcessModel` therefore offer an **opt-in watchdog**. All features are
+**off by default**, so existing models run exactly as before.
+
+```java
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.processmodel.RunDiagnostics;
+import neqsim.process.processmodel.RunStatus;
+import neqsim.thermo.system.SystemSrkEos;
+
+SystemSrkEos fluid = new SystemSrkEos(303.15, 10.0);
+fluid.addComponent("methane", 1.0);
+fluid.setMixingRule("classic");
+Stream feed = new Stream("doc feed", fluid);
+feed.setFlowRate(1000.0, "kg/hr");
+ProcessSystem process = new ProcessSystem("doc");
+process.add(feed);
+process.setMaxRunTimeSeconds(30.0);   // wall-clock budget of one run() / runUntilConverged()
+process.setStallDetection(8, 1.0e-3); // 8 iterations without 0.1 % residual improvement
+process.run();                        // returns normally when the watchdog trips
+
+RunStatus status = process.getRunStatus();
+if (status.isTimedOut() || status.isStalled() || status.isStopped()) {
+  logger.info("{} at unit {}: {}", status.getTerminationReason(), status.getBudgetUnitName(),
+      status.getBudgetReason());
+}
+RunDiagnostics diag = process.getLastRunDiagnostics();
+logger.info("elapsed {} s, outcome {}", diag.getElapsedSeconds(), diag.getOutcome());
+```
+
+| Method | Description |
+|--------|-------------|
+| `setMaxRunTimeSeconds(double)` | Wall-clock limit of one run; zero or negative disables it |
+| `setStallDetection(int window, double minRelImprovement)` | Stops with `STALLED` when the worst tolerance-normalised recycle or adjuster residual (outer boundary residual for `ProcessModel`) does not improve for `window` consecutive iterations |
+| `requestStop()` | Thread-safe cooperative cancellation from another thread; the run reports `STOPPED` |
+| `getRunStatus()` | `getTerminationReason()` is `TIMED_OUT`, `STALLED` or `STOPPED`; `getBudgetUnitName()` and `getBudgetReason()` give the unit that was running and why |
+| `getLastRunDiagnostics()` | `RunDiagnostics` with elapsed time, outcome, unit, pass count and residual history (`toJson()`) |
+
+Notes:
+
+- The budget is **cooperative**: it is checked between unit operations and between recycle,
+  adjuster and (for `ProcessModel`) outer iterations, and one budget spans all passes of
+  `runUntilConverged(n)` and all areas of a `ProcessModel`. A single unit operation that never
+  returns cannot be interrupted.
+- A tripped watchdog is not a failure: `run()` returns normally, `isConverged()` is false and
+  the last computed state of the units is retained.
+- A `requestStop()` made while no run is active is discarded when the next run starts.
+
 ## Notes
 
 - **Additive and backward compatible** — `run()` still throws on failure exactly as before.
