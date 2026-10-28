@@ -849,6 +849,34 @@ or investment approval.
 
 ---
 
+## Evaluating Joint Installed-Capacity Alternatives
+
+Use the list-based `ProcessModelDebottleneckStudy` constructor when two or more direct installed
+constraints must be changed as one indivisible screening case. Alternatives are applied in declared
+order, evaluated by one common transactional search, and restored in reverse order. Alternative IDs
+and target constraint identities must be unique. A completed result exposes every original and
+applied state through `getOriginalCapacityStates()` and `getAppliedCapacityStates()`; the legacy
+singular getters continue to return the first state for one-alternative callers.
+
+After independently qualifying the same alternatives with
+`ProcessModelOperatingEnvelopeStudy.qualifyReliefPortfolio(...)`, qualify the joint result with
+`qualifyReliefCombination(...)`. The receipt binds exact portfolio membership, accepted action
+vector, objective policy, baseline objective and installed-capacity states. It reports:
+
+- the jointly observed objective delta;
+- the arithmetic sum of the independently observed deltas;
+- their signed interaction difference (`joint - independent sum`); and
+- the exact most-utilized installed constraint at the baseline and joint operating points.
+
+The joint delta is always taken from the simulator run. The independent sum is a comparison field,
+never a substitute prediction. Qualification fails closed on missing portfolio members, duplicate
+targets, foreign studies/results, non-finite evidence, incomplete restoration, or any baseline/action
+binding mismatch. A bottleneck identity change is sampled migration evidence, not causal proof,
+mechanical design qualification, permission to alter limits, investment approval, or operating
+approval.
+
+---
+
 ## Ranking Independent Debottleneck Alternatives
 
 Use `ProcessModelDebottleneckRanking` after two or more independent

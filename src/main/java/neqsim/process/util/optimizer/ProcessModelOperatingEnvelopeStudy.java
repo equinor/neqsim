@@ -1570,6 +1570,22 @@ public final class ProcessModelOperatingEnvelopeStudy {
     }
   }
 
+  /** Immutable exact receipt for one jointly evaluated qualified-relief combination. */
+  public static final class QualifiedReliefCombinationEvidence implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final Map<String, Object> evidence;
+
+    /** Creates one deeply immutable combination receipt after complete validation. */
+    private QualifiedReliefCombinationEvidence(Map<String, Object> evidence) {
+      this.evidence = Collections.unmodifiableMap(new LinkedHashMap<String, Object>(evidence));
+    }
+
+    /** @return deeply immutable JSON-friendly non-additive combination receipt */
+    public Map<String, Object> toEvidenceMap() {
+      return evidence;
+    }
+  }
+
   /**
    * Qualifies one existing paired debottleneck result against this study's accepted operating point.
    *
@@ -1786,6 +1802,217 @@ public final class ProcessModelOperatingEnvelopeStudy {
       throw new IllegalStateException("Qualified relief portfolio lost a ranked study receipt");
     }
     return new QualifiedReliefPortfolioEvidence(rankingResult, rankedReceipts);
+  }
+
+  /**
+   * Qualifies one jointly simulated combination against the independently ranked portfolio and accepted point.
+   *
+   * <p>
+   * The combination study must apply every portfolio member together through the same transactional evaluator and
+   * search policy. Its observed objective delta is retained separately from the sum of independent paired deltas; the
+   * difference is reported as an interaction diagnostic, never as an assumed additive benefit. Exact installed capacity
+   * evidence identifies the most utilized baseline and combined constraints so a bottleneck migration is reported from
+   * simulator evidence rather than inferred from rank order.
+   * </p>
+   *
+   * @param search independently replayed accepted operating point
+   * @param portfolio exact independently qualified portfolio
+   * @param combinationStudy paired study applying all portfolio members together
+   * @param combinationResult immutable result returned by {@code combinationStudy.evaluate()}
+   * @return exact non-additive combination and bottleneck-migration receipt
+   * @throws IllegalArgumentException if definitions or membership are inconsistent
+   * @throws IllegalStateException if convergence, finiteness, binding, or restoration evidence is incomplete
+   */
+  public QualifiedReliefCombinationEvidence qualifyReliefCombination(OperatingPointSearchResult search,
+      QualifiedReliefPortfolioEvidence portfolio, ProcessModelDebottleneckStudy combinationStudy,
+      ProcessModelDebottleneckStudy.StudyResult combinationResult) {
+    double[] acceptedValues = validateAcceptedSearch(search);
+    if (portfolio == null || combinationStudy == null || combinationResult == null) {
+      throw new IllegalArgumentException("Portfolio, combination study, and result must not be null");
+    }
+    if (combinationStudy.getOperatingActionEvaluator() != evaluator) {
+      throw new IllegalArgumentException("Combination study must use the exact operating-envelope evaluator");
+    }
+    if (!sameText(combinationStudy.getId(), combinationResult.getId())
+        || !sameText(combinationStudy.getName(), combinationResult.getName())
+        || !sameText(combinationStudy.getProvenance(), combinationResult.getProvenance())) {
+      throw new IllegalArgumentException("Combination result does not belong to the supplied study definition");
+    }
+    List<ProcessModelDebottleneckStudy.CapacityAlternative> combinationAlternatives = combinationStudy
+        .getAlternatives();
+    if (combinationAlternatives.size() < 2
+        || combinationAlternatives.size() != combinationResult.getAlternativeDefinitions().size()
+        || combinationAlternatives.size() != portfolio.getRankedStudies().size()) {
+      throw new IllegalArgumentException("Combination membership must exactly match the qualified portfolio");
+    }
+    Map<String, Map<String, Object>> portfolioMembers = new LinkedHashMap<String, Map<String, Object>>();
+    for (QualifiedReliefStudyEvidence study : portfolio.getRankedStudies()) {
+      Map<String, Object> receipt = study.toEvidenceMap();
+      portfolioMembers.put((String) receipt.get("alternative_id"), receipt);
+    }
+    for (ProcessModelDebottleneckStudy.CapacityAlternative capacity : combinationAlternatives) {
+      Map<String, Object> receipt = portfolioMembers.remove(capacity.getId());
+      if (receipt == null
+          || !sameText(capacity.getQualifiedConstraintName(), (String) receipt.get("qualified_constraint_name"))
+          || !sameDouble(capacity.getProposedLimit(), ((Number) receipt.get("proposed_applicable_limit")).doubleValue())
+          || !sameText(capacity.getUnit(), (String) receipt.get("physical_unit"))) {
+        throw new IllegalArgumentException(
+            "Combination member is not identical to its qualified portfolio receipt: " + capacity.getId());
+      }
+    }
+    if (!portfolioMembers.isEmpty()) {
+      throw new IllegalArgumentException("Combination omitted qualified portfolio members");
+    }
+    if (combinationResult.getOutcome() != ProcessModelDebottleneckStudy.StudyOutcome.COMPLETED
+        || !combinationResult.isCapacityRestored() || !combinationResult.isProcessStateRestored()
+        || !combinationResult.isRecoverySimulationConverged() || combinationResult.getBaseline() == null
+        || combinationResult.getAlternative() == null || !combinationResult.getBaseline().isQualified()
+        || !combinationResult.getAlternative().isQualified() || !combinationResult.isObjectiveDeltaCalculable()
+        || !Double.isFinite(combinationResult.getObjectiveDelta())
+        || combinationResult.getOriginalCapacityStates().size() != combinationAlternatives.size()
+        || combinationResult.getAppliedCapacityStates().size() != combinationAlternatives.size()) {
+      throw new IllegalStateException("Combined relief result is not completely qualified and restored");
+    }
+    if (!sameVector(acceptedValues, combinationResult.getBaseline().getSelectedParameters())) {
+      throw new IllegalStateException("Combined relief baseline does not match the accepted operating point exactly");
+    }
+    ProcessModelDebottleneckRanking.ObjectiveRankingResult rankingResult = portfolio.getRankingResult();
+    ProcessModelDebottleneckRanking.ObjectiveRankingPolicy policy = rankingResult.getPolicy();
+    int objectiveIndex = policy.getObjectiveIndex();
+    List<ProcessModelDebottleneckStudy.ObjectiveEvidence> baselineObjectives = combinationResult.getBaseline()
+        .getObjectives();
+    List<ProcessModelDebottleneckStudy.ObjectiveEvidence> alternativeObjectives = combinationResult.getAlternative()
+        .getObjectives();
+    List<CandidateObjectiveEvidence> acceptedObjectives = search.getAcceptedPointReplay().getEvaluation()
+        .getObjectiveEvidence();
+    if (objectiveIndex >= baselineObjectives.size() || objectiveIndex >= alternativeObjectives.size()
+        || objectiveIndex >= acceptedObjectives.size()) {
+      throw new IllegalStateException("Combined relief result lacks complete objective evidence");
+    }
+    ProcessModelDebottleneckStudy.ObjectiveEvidence baseline = baselineObjectives.get(objectiveIndex);
+    ProcessModelDebottleneckStudy.ObjectiveEvidence combined = alternativeObjectives.get(objectiveIndex);
+    CandidateObjectiveEvidence accepted = acceptedObjectives.get(objectiveIndex);
+    double bindingTolerance = Math.max(search.getObjectiveImprovementTolerance(),
+        Math.abs(accepted.getRawValue()) * search.getReplayRelativeTolerance());
+    double bindingResidual = Math.abs(baseline.getRawValue() - accepted.getRawValue());
+    if (baseline.getIndex() != objectiveIndex || !sameText(baseline.getName(), policy.getObjectiveName())
+        || baseline.getDirection() != policy.getObjectiveDirection() || !sameText(baseline.getUnit(), policy.getUnit())
+        || !sameDouble(baseline.getWeight(), policy.getWeight()) || !Double.isFinite(bindingResidual)
+        || bindingResidual > bindingTolerance || !Double.isFinite(combined.getRawValue())
+        || !sameDouble(combinationResult.getObjectiveDelta(), combined.getRawValue() - baseline.getRawValue())) {
+      throw new IllegalStateException("Combined relief objective evidence is stale, non-finite, or incompatible");
+    }
+    double independentDeltaSum = 0.0;
+    for (ProcessModelDebottleneckRanking.ObjectiveCandidateEvidence candidate : rankingResult.getRankedCandidates()) {
+      independentDeltaSum += candidate.getDelta();
+    }
+    double interactionDelta = combinationResult.getObjectiveDelta() - independentDeltaSum;
+    if (!Double.isFinite(independentDeltaSum) || !Double.isFinite(interactionDelta)) {
+      throw new IllegalStateException("Combined relief interaction evidence is non-finite");
+    }
+
+    List<Map<String, Object>> members = new ArrayList<Map<String, Object>>();
+    for (int index = 0; index < combinationAlternatives.size(); index++) {
+      ProcessModelDebottleneckStudy.CapacityAlternative capacity = combinationAlternatives.get(index);
+      ProcessModelDebottleneckStudy.CapacityState original = combinationResult.getOriginalCapacityStates().get(index);
+      ProcessModelDebottleneckStudy.CapacityState applied = combinationResult.getAppliedCapacityStates().get(index);
+      if (!sameText(original.getUnit(), capacity.getUnit()) || !sameText(applied.getUnit(), capacity.getUnit())
+          || !sameDouble(applied.getApplicableLimit(), capacity.getProposedLimit())) {
+        throw new IllegalStateException("Combined relief capacity-state evidence is incomplete: " + capacity.getId());
+      }
+      Map<String, Object> member = new LinkedHashMap<String, Object>();
+      member.put("alternative_id", capacity.getId());
+      member.put("alternative_name", capacity.getName());
+      member.put("alternative_provenance", capacity.getProvenance());
+      member.put("qualified_constraint_name", capacity.getQualifiedConstraintName());
+      member.put("original_applicable_limit", Double.valueOf(original.getApplicableLimit()));
+      member.put("proposed_applicable_limit", Double.valueOf(applied.getApplicableLimit()));
+      member.put("physical_unit", capacity.getUnit());
+      member.put("limit_direction", capacity.getLimitDirection().name());
+      member.put("proposal_source", capacity.getProposalSource());
+      members.add(Collections.unmodifiableMap(member));
+    }
+    Map<String, Object> objective = new LinkedHashMap<String, Object>();
+    objective.put("index", Integer.valueOf(objectiveIndex));
+    objective.put("name", policy.getObjectiveName());
+    objective.put("direction", policy.getObjectiveDirection().name());
+    objective.put("unit", policy.getUnit());
+    objective.put("weight", Double.valueOf(policy.getWeight()));
+    objective.put("baseline_value", Double.valueOf(accepted.getRawValue()));
+    objective.put("paired_baseline_value", Double.valueOf(baseline.getRawValue()));
+    objective.put("baseline_binding_residual", Double.valueOf(bindingResidual));
+    objective.put("baseline_binding_tolerance", Double.valueOf(bindingTolerance));
+    objective.put("combined_value", Double.valueOf(combined.getRawValue()));
+    objective.put("combined_delta", Double.valueOf(combinationResult.getObjectiveDelta()));
+    objective.put("independent_delta_sum", Double.valueOf(independentDeltaSum));
+    objective.put("interaction_delta", Double.valueOf(interactionDelta));
+    Map<String, Object> migration = new LinkedHashMap<String, Object>();
+    Map<String, Object> baselineBottleneck = mostUtilizedInstalledConstraint(
+        combinationResult.getBaseline().getInstalledCapacityEvidence());
+    Map<String, Object> combinedBottleneck = mostUtilizedInstalledConstraint(
+        combinationResult.getAlternative().getInstalledCapacityEvidence());
+    migration.put("baseline_bottleneck", baselineBottleneck);
+    migration.put("combined_bottleneck", combinedBottleneck);
+    migration.put("changed", Boolean.valueOf(!sameText((String) baselineBottleneck.get("qualified_constraint_name"),
+        (String) combinedBottleneck.get("qualified_constraint_name"))));
+    migration.put("basis", "highest finite normalized installed-capacity utilization at each qualified point");
+
+    List<String> actionIds = new ArrayList<String>();
+    for (ProcessModelOperatingAction action : evaluator.getActions()) {
+      actionIds.add(action.getId());
+    }
+    Map<String, Object> receipt = new LinkedHashMap<String, Object>();
+    receipt.put("receipt_version", Integer.valueOf(1));
+    receipt.put("study_id", combinationResult.getId());
+    receipt.put("study_name", combinationResult.getName());
+    receipt.put("study_provenance", combinationResult.getProvenance());
+    receipt.put("portfolio_id", rankingResult.getId());
+    receipt.put("policy_id", policy.getId());
+    receipt.put("action_set_id", evaluator.getId());
+    receipt.put("accepted_action_ids", Collections.unmodifiableList(actionIds));
+    receipt.put("baseline_action_values", doubleList(acceptedValues));
+    receipt.put("combined_action_values", doubleList(combinationResult.getAlternative().getSelectedParameters()));
+    receipt.put("members", Collections.unmodifiableList(members));
+    receipt.put("objective", Collections.unmodifiableMap(objective));
+    receipt.put("bottleneck_migration", Collections.unmodifiableMap(migration));
+    receipt.put("study_outcome", combinationResult.getOutcome().name());
+    receipt.put("capacity_restored", Boolean.TRUE);
+    receipt.put("process_state_restored", Boolean.TRUE);
+    receipt.put("recovery_simulation_converged", Boolean.TRUE);
+    receipt.put("qualification_state", "QUALIFIED_PAIRED_NON_ADDITIVE_RELIEF_COMBINATION");
+    receipt.put("advisory", Boolean.TRUE);
+    receipt.put("interpretation",
+        "Jointly simulated paired combination with explicit interaction and bottleneck migration; not an additive "
+            + "benefit assumption, causal attribution, shadow price, design approval, investment approval, permission "
+            + "to change a limit, or operating approval");
+    return new QualifiedReliefCombinationEvidence(receipt);
+  }
+
+  /** Returns exact evidence for the most utilized finite installed constraint at one qualified point. */
+  private static Map<String, Object> mostUtilizedInstalledConstraint(
+      List<InstalledEquipmentCapacityEvidence> evidence) {
+    InstalledEquipmentCapacityEvidence selected = null;
+    for (InstalledEquipmentCapacityEvidence candidate : evidence) {
+      if (!candidate.isEnabled() || !Double.isFinite(candidate.getNormalizedUtilization())) {
+        continue;
+      }
+      if (selected == null || candidate.getNormalizedUtilization() > selected.getNormalizedUtilization()
+          || sameDouble(candidate.getNormalizedUtilization(), selected.getNormalizedUtilization())
+              && candidate.getQualifiedConstraintName().compareTo(selected.getQualifiedConstraintName()) < 0) {
+        selected = candidate;
+      }
+    }
+    if (selected == null) {
+      throw new IllegalStateException("Qualified relief scenario lacks finite installed-capacity evidence");
+    }
+    Map<String, Object> result = new LinkedHashMap<String, Object>();
+    result.put("qualified_constraint_name", selected.getQualifiedConstraintName());
+    result.put("current_value", Double.valueOf(selected.getCurrentValue()));
+    result.put("applicable_limit", Double.valueOf(selected.getApplicableLimit()));
+    result.put("normalized_utilization", Double.valueOf(selected.getNormalizedUtilization()));
+    result.put("physical_unit", selected.getPhysicalUnit());
+    result.put("feasible", Boolean.valueOf(selected.isFeasible()));
+    return Collections.unmodifiableMap(result);
   }
 
   /** Converts a primitive vector to an immutable JSON-friendly number list. */

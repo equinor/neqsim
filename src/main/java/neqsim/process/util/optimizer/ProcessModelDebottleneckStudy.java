@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import neqsim.process.automation.ProcessAutomation;
@@ -1249,6 +1250,9 @@ public final class ProcessModelDebottleneckStudy {
     private final CapacityAlternative alternativeDefinition;
     private final CapacityState originalCapacityState;
     private final CapacityState appliedCapacityState;
+    private final List<CapacityAlternative> alternativeDefinitions;
+    private final List<CapacityState> originalCapacityStates;
+    private final List<CapacityState> appliedCapacityStates;
     private final StudyOutcome outcome;
     private final ScenarioEvidence baseline;
     private final ScenarioEvidence alternative;
@@ -1260,17 +1264,20 @@ public final class ProcessModelDebottleneckStudy {
     private final double objectiveDelta;
     private final List<String> diagnostics;
 
-    private StudyResult(String id, String name, String provenance, CapacityAlternative alternativeDefinition,
-        CapacityState originalCapacityState, CapacityState appliedCapacityState, StudyOutcome outcome,
+    private StudyResult(String id, String name, String provenance, List<CapacityAlternative> alternativeDefinitions,
+        List<CapacityState> originalCapacityStates, List<CapacityState> appliedCapacityStates, StudyOutcome outcome,
         ScenarioEvidence baseline, ScenarioEvidence alternative, boolean capacityRestored, boolean processStateRestored,
         boolean recoverySimulationConverged, List<MetricComparison> metricComparisons, boolean objectiveDeltaCalculable,
         double objectiveDelta, List<String> diagnostics) {
       this.id = id;
       this.name = name;
       this.provenance = provenance;
-      this.alternativeDefinition = alternativeDefinition;
-      this.originalCapacityState = originalCapacityState;
-      this.appliedCapacityState = appliedCapacityState;
+      this.alternativeDefinitions = immutableList(alternativeDefinitions);
+      this.originalCapacityStates = immutableList(originalCapacityStates);
+      this.appliedCapacityStates = immutableList(appliedCapacityStates);
+      this.alternativeDefinition = this.alternativeDefinitions.isEmpty() ? null : this.alternativeDefinitions.get(0);
+      this.originalCapacityState = this.originalCapacityStates.isEmpty() ? null : this.originalCapacityStates.get(0);
+      this.appliedCapacityState = this.appliedCapacityStates.isEmpty() ? null : this.appliedCapacityStates.get(0);
       this.outcome = outcome;
       this.baseline = baseline;
       this.alternative = alternative;
@@ -1299,12 +1306,27 @@ public final class ProcessModelDebottleneckStudy {
       return alternativeDefinition;
     }
 
+    /** @return immutable ordered alternatives applied in the paired scenario */
+    public List<CapacityAlternative> getAlternativeDefinitions() {
+      return immutableList(alternativeDefinitions);
+    }
+
     public CapacityState getOriginalCapacityState() {
       return originalCapacityState;
     }
 
+    /** @return immutable original capacity states in alternative declaration order */
+    public List<CapacityState> getOriginalCapacityStates() {
+      return immutableList(originalCapacityStates);
+    }
+
     public CapacityState getAppliedCapacityState() {
       return appliedCapacityState;
+    }
+
+    /** @return immutable applied capacity states in alternative declaration order */
+    public List<CapacityState> getAppliedCapacityStates() {
+      return immutableList(appliedCapacityStates);
     }
 
     public StudyOutcome getOutcome() {
@@ -1350,9 +1372,11 @@ public final class ProcessModelDebottleneckStudy {
 
   /** Internal resolved direct installed constraint. */
   private static final class CapacityTarget {
+    private final CapacityAlternative alternative;
     private final CapacityConstraint constraint;
 
-    private CapacityTarget(CapacityConstraint constraint) {
+    private CapacityTarget(CapacityAlternative alternative, CapacityConstraint constraint) {
+      this.alternative = alternative;
       this.constraint = constraint;
     }
   }
@@ -1363,6 +1387,7 @@ public final class ProcessModelDebottleneckStudy {
   private final ProcessModelSimulationEvaluator evaluator;
   private final ProcessModelOperatingActionSetEvaluator operatingActionEvaluator;
   private final CapacityAlternative alternative;
+  private final List<CapacityAlternative> alternatives;
   private final ScenarioSearch search;
   private final OperatingActionScenarioSearch operatingActionSearch;
   private final int objectiveIndex;
@@ -1382,18 +1407,43 @@ public final class ProcessModelDebottleneckStudy {
   public ProcessModelDebottleneckStudy(String id, String name, String provenance,
       ProcessModelSimulationEvaluator evaluator, CapacityAlternative alternative, ScenarioSearch search,
       int objectiveIndex) {
+    this(id, name, provenance, evaluator, Collections.singletonList(alternative), search, objectiveIndex);
+  }
+
+  /**
+   * Creates a paired study that applies a declared combination of direct installed-capacity alternatives atomically.
+   *
+   * <p>
+   * The baseline is evaluated once with the installed limits. Every alternative is then applied in declaration order,
+   * the common search is rerun once against the combined configuration, and all installed states are restored in
+   * reverse order. The observed combined objective delta is therefore simulator evidence and is never constructed by
+   * adding independent deltas.
+   * </p>
+   *
+   * @param id stable study identifier
+   * @param name human-readable study name
+   * @param provenance engineering provenance for the combination
+   * @param evaluator configured process-model evaluator
+   * @param alternatives two or more independent direct installed-capacity alternatives
+   * @param search common search policy used for baseline and combined alternative
+   * @param objectiveIndex objective used for the paired delta
+   */
+  public ProcessModelDebottleneckStudy(String id, String name, String provenance,
+      ProcessModelSimulationEvaluator evaluator, List<CapacityAlternative> alternatives, ScenarioSearch search,
+      int objectiveIndex) {
     this.id = requireText(id, "Study identifier");
     this.name = requireText(name, "Study name");
     this.provenance = requireText(provenance, "Study provenance");
-    if (evaluator == null || alternative == null || search == null) {
-      throw new IllegalArgumentException("Evaluator, capacity alternative, and search are required");
+    if (evaluator == null || search == null) {
+      throw new IllegalArgumentException("Evaluator, capacity alternatives, and search are required");
     }
     if (objectiveIndex < 0 || objectiveIndex >= evaluator.getObjectiveCount()) {
       throw new IllegalArgumentException("Study objective index is not registered");
     }
     this.evaluator = evaluator;
     this.operatingActionEvaluator = null;
-    this.alternative = alternative;
+    this.alternatives = validateAlternatives(alternatives);
+    this.alternative = this.alternatives.get(0);
     this.search = search;
     this.operatingActionSearch = null;
     this.objectiveIndex = objectiveIndex;
@@ -1424,18 +1474,36 @@ public final class ProcessModelDebottleneckStudy {
   public ProcessModelDebottleneckStudy(String id, String name, String provenance,
       ProcessModelOperatingActionSetEvaluator evaluator, CapacityAlternative alternative,
       OperatingActionScenarioSearch search, int objectiveIndex) {
+    this(id, name, provenance, evaluator, Collections.singletonList(alternative), search, objectiveIndex);
+  }
+
+  /**
+   * Creates a transactional paired study for one declared combination of direct capacity alternatives.
+   *
+   * @param id stable study identifier
+   * @param name human-readable study name
+   * @param provenance engineering provenance for the combination
+   * @param evaluator configured transactional operating-action evaluator
+   * @param alternatives two or more direct installed-capacity alternatives
+   * @param search common action search policy used for baseline and combined alternative
+   * @param objectiveIndex objective used for the paired delta
+   */
+  public ProcessModelDebottleneckStudy(String id, String name, String provenance,
+      ProcessModelOperatingActionSetEvaluator evaluator, List<CapacityAlternative> alternatives,
+      OperatingActionScenarioSearch search, int objectiveIndex) {
     this.id = requireText(id, "Study identifier");
     this.name = requireText(name, "Study name");
     this.provenance = requireText(provenance, "Study provenance");
-    if (evaluator == null || alternative == null || search == null) {
-      throw new IllegalArgumentException("Evaluator, capacity alternative, and search are required");
+    if (evaluator == null || search == null) {
+      throw new IllegalArgumentException("Evaluator, capacity alternatives, and search are required");
     }
     if (objectiveIndex < 0 || objectiveIndex >= evaluator.getSimulationEvaluator().getObjectiveCount()) {
       throw new IllegalArgumentException("Study objective index is not registered");
     }
     this.evaluator = null;
     this.operatingActionEvaluator = evaluator;
-    this.alternative = alternative;
+    this.alternatives = validateAlternatives(alternatives);
+    this.alternative = this.alternatives.get(0);
     this.search = null;
     this.operatingActionSearch = search;
     this.objectiveIndex = objectiveIndex;
@@ -1470,6 +1538,11 @@ public final class ProcessModelDebottleneckStudy {
     return alternative;
   }
 
+  /** @return immutable alternatives applied together in declaration order */
+  public List<CapacityAlternative> getAlternatives() {
+    return immutableList(alternatives);
+  }
+
   public ScenarioSearch getSearch() {
     return search;
   }
@@ -1481,6 +1554,28 @@ public final class ProcessModelDebottleneckStudy {
 
   public int getObjectiveIndex() {
     return objectiveIndex;
+  }
+
+  /** Validates and freezes ordered alternatives before any live model state is inspected. */
+  private static List<CapacityAlternative> validateAlternatives(List<CapacityAlternative> alternatives) {
+    if (alternatives == null || alternatives.isEmpty()) {
+      throw new IllegalArgumentException("At least one capacity alternative is required");
+    }
+    Map<String, CapacityAlternative> byId = new LinkedHashMap<String, CapacityAlternative>();
+    Map<String, CapacityAlternative> byConstraint = new LinkedHashMap<String, CapacityAlternative>();
+    for (CapacityAlternative candidate : alternatives) {
+      if (candidate == null) {
+        throw new IllegalArgumentException("Capacity alternatives must not contain null entries");
+      }
+      if (byId.put(candidate.getId(), candidate) != null) {
+        throw new IllegalArgumentException("Duplicate capacity alternative identifier: " + candidate.getId());
+      }
+      String constraint = candidate.getQualifiedConstraintName();
+      if (byConstraint.put(constraint, candidate) != null) {
+        throw new IllegalArgumentException("A capacity combination cannot change one constraint twice: " + constraint);
+      }
+    }
+    return Collections.unmodifiableList(new ArrayList<CapacityAlternative>(alternatives));
   }
 
   /** Adds one physical or screening metric sampled at both selected operating points. */
@@ -1522,22 +1617,28 @@ public final class ProcessModelDebottleneckStudy {
     diagnostics.add("Results are paired sampled evidence, not causal production loss, global "
         + "optimality, a shadow price, certified emissions, design approval, or investment approval");
 
-    CapacityTarget target;
+    List<CapacityTarget> targets = new ArrayList<CapacityTarget>();
     try {
-      target = resolveTarget(model);
+      for (CapacityAlternative capacityAlternative : alternatives) {
+        targets.add(resolveTarget(model, capacityAlternative));
+      }
     } catch (RuntimeException exception) {
       diagnostics.add(exception.getMessage());
-      return result(StudyOutcome.ALTERNATIVE_NOT_APPLICABLE, null, null, null, null, false, false, false, diagnostics);
+      return result(StudyOutcome.ALTERNATIVE_NOT_APPLICABLE, Collections.<CapacityState>emptyList(),
+          Collections.<CapacityState>emptyList(), null, null, false, false, false, diagnostics);
     }
 
-    CapacityState originalState = new CapacityState(target.constraint);
-    CapacityState appliedState = null;
+    List<CapacityState> originalStates = new ArrayList<CapacityState>();
+    for (CapacityTarget target : targets) {
+      originalStates.add(new CapacityState(target.constraint));
+    }
+    List<CapacityState> appliedStates = new ArrayList<CapacityState>();
     ScenarioEvidence baseline = null;
     ScenarioEvidence alternativeScenario = null;
     boolean capacityRestored = false;
     boolean processStateRestored = false;
     boolean recoveryConverged = false;
-    boolean alternativeApplied = false;
+    int appliedAlternativeCount = 0;
     StudyOutcome provisionalOutcome = StudyOutcome.BASELINE_FAILED;
 
     try {
@@ -1546,9 +1647,11 @@ public final class ProcessModelDebottleneckStudy {
         diagnostics.add("Baseline search or verification did not produce a qualified point");
         provisionalOutcome = StudyOutcome.BASELINE_FAILED;
       } else {
-        applyAlternative(target.constraint);
-        alternativeApplied = true;
-        appliedState = new CapacityState(target.constraint);
+        for (CapacityTarget target : targets) {
+          applyAlternative(target.constraint, target.alternative);
+          appliedAlternativeCount++;
+          appliedStates.add(new CapacityState(target.constraint));
+        }
         alternativeScenario = runScenario("alternative");
         if (!alternativeScenario.isQualified()) {
           diagnostics.add("Alternative search or verification did not produce a qualified point");
@@ -1565,12 +1668,21 @@ public final class ProcessModelDebottleneckStudy {
       provisionalOutcome = baseline == null || !baseline.isQualified() ? StudyOutcome.BASELINE_FAILED
           : StudyOutcome.ALTERNATIVE_FAILED;
     } finally {
-      try {
-        restoreConstraint(target.constraint, originalState);
-        capacityRestored = statesEqual(originalState, new CapacityState(target.constraint));
-      } catch (RuntimeException exception) {
-        diagnostics.add("Installed-capacity restoration failed: " + safeText(exception.getMessage()));
-        capacityRestored = false;
+      capacityRestored = true;
+      for (int index = targets.size() - 1; index >= 0; index--) {
+        try {
+          CapacityTarget target = targets.get(index);
+          CapacityState originalState = originalStates.get(index);
+          restoreConstraint(target.constraint, originalState);
+          if (!statesEqual(originalState, new CapacityState(target.constraint))) {
+            capacityRestored = false;
+            diagnostics.add("Installed-capacity restoration verification failed: "
+                + target.alternative.getQualifiedConstraintName());
+          }
+        } catch (RuntimeException exception) {
+          diagnostics.add("Installed-capacity restoration failed: " + safeText(exception.getMessage()));
+          capacityRestored = false;
+        }
       }
       try {
         if (evaluator != null) {
@@ -1588,65 +1700,67 @@ public final class ProcessModelDebottleneckStudy {
       }
     }
 
-    if (!alternativeApplied && appliedState != null) {
-      diagnostics.add("Internal diagnostic: applied capacity state was retained without an applied alternative");
+    if (appliedAlternativeCount != appliedStates.size()) {
+      diagnostics.add("Internal diagnostic: applied capacity evidence count did not match applied alternatives");
     }
     StudyOutcome outcome = capacityRestored && processStateRestored && recoveryConverged ? provisionalOutcome
         : StudyOutcome.RESTORATION_FAILED;
     if (capacityRestored) {
-      diagnostics.add("The complete installed-capacity state was restored and verified");
+      diagnostics.add("Every installed-capacity state was restored and verified in reverse declaration order");
     }
     if (processStateRestored && recoveryConverged) {
       diagnostics.add("The pre-study parameter vector was restored and the process model reconverged");
     }
-    return result(outcome, originalState, appliedState, baseline, alternativeScenario, capacityRestored,
+    return result(outcome, originalStates, appliedStates, baseline, alternativeScenario, capacityRestored,
         processStateRestored, recoveryConverged, diagnostics);
   }
 
-  private CapacityTarget resolveTarget(ProcessModel model) {
-    ProcessSystem area = model.get(alternative.getAreaName());
+  private CapacityTarget resolveTarget(ProcessModel model, CapacityAlternative capacityAlternative) {
+    ProcessSystem area = model.get(capacityAlternative.getAreaName());
     if (area == null) {
-      throw new IllegalArgumentException("Alternative process area was not found: " + alternative.getAreaName());
+      throw new IllegalArgumentException(
+          "Alternative process area was not found: " + capacityAlternative.getAreaName());
     }
-    ProcessEquipmentInterface equipment = area.getUnit(alternative.getEquipmentName());
+    ProcessEquipmentInterface equipment = area.getUnit(capacityAlternative.getEquipmentName());
     if (equipment == null) {
       throw new IllegalArgumentException(
-          "Alternative equipment was not found: " + alternative.getQualifiedConstraintName());
+          "Alternative equipment was not found: " + capacityAlternative.getQualifiedConstraintName());
     }
     Map<String, CapacityConstraint> direct = equipment.getCapacityConstraints();
-    CapacityConstraint constraint = direct == null ? null : direct.get(alternative.getConstraintName());
+    CapacityConstraint constraint = direct == null ? null : direct.get(capacityAlternative.getConstraintName());
     if (constraint == null) {
       throw new IllegalArgumentException(
-          "A direct installed capacity constraint was not found: " + alternative.getQualifiedConstraintName());
+          "A direct installed capacity constraint was not found: " + capacityAlternative.getQualifiedConstraintName());
     }
     if (!constraint.isEnabled()) {
       throw new IllegalArgumentException("The installed capacity constraint is disabled");
     }
-    if (!alternative.getUnit().equals(constraint.getUnit())) {
+    if (!capacityAlternative.getUnit().equals(constraint.getUnit())) {
       throw new IllegalArgumentException("Alternative unit does not match the installed constraint unit");
     }
     LimitDirection actual = constraint.isMinimumConstraint() ? LimitDirection.MINIMUM : LimitDirection.MAXIMUM;
-    if (actual != alternative.getLimitDirection()) {
+    if (actual != capacityAlternative.getLimitDirection()) {
       throw new IllegalArgumentException("Alternative direction does not match the installed constraint");
     }
     if (!isFinite(constraint.getApplicableLimit()) || constraint.getApplicableLimit() == Double.MAX_VALUE
         || constraint.getApplicableLimit() <= 0.0) {
       throw new IllegalArgumentException("Installed applicable limit must be finite and positive");
     }
-    return new CapacityTarget(constraint);
+    return new CapacityTarget(capacityAlternative, constraint);
   }
 
-  private void applyAlternative(CapacityConstraint constraint) {
-    constraint.setOperatingLimit(alternative.getProposedLimit(), CapacityConstraint.ConstraintSource.USER_RULE,
-        alternative.getProposalSource());
-    if (alternative.hasConfidence()) {
-      constraint.setOperatingLimitConfidence(alternative.getConfidence());
+  private void applyAlternative(CapacityConstraint constraint, CapacityAlternative capacityAlternative) {
+    constraint.setOperatingLimit(capacityAlternative.getProposedLimit(), CapacityConstraint.ConstraintSource.USER_RULE,
+        capacityAlternative.getProposalSource());
+    if (capacityAlternative.hasConfidence()) {
+      constraint.setOperatingLimitConfidence(capacityAlternative.getConfidence());
     }
-    if (alternative.hasValidityRange()) {
-      constraint.setOperatingLimitValidityRange(alternative.getValidityMinimum(), alternative.getValidityMaximum());
+    if (capacityAlternative.hasValidityRange()) {
+      constraint.setOperatingLimitValidityRange(capacityAlternative.getValidityMinimum(),
+          capacityAlternative.getValidityMaximum());
     }
     if (Double.doubleToLongBits(constraint.getApplicableLimit()) != Double
-        .doubleToLongBits(alternative.getProposedLimit())) {
+        .doubleToLongBits(capacityAlternative.getProposedLimit())) {
       throw new IllegalStateException("Proposed installed limit failed exact read-back verification");
     }
   }
@@ -1830,9 +1944,9 @@ public final class ProcessModelDebottleneckStudy {
     return false;
   }
 
-  private StudyResult result(StudyOutcome outcome, CapacityState originalState, CapacityState appliedState,
-      ScenarioEvidence baseline, ScenarioEvidence alternativeScenario, boolean capacityRestored,
-      boolean processStateRestored, boolean recoveryConverged, List<String> diagnostics) {
+  private StudyResult result(StudyOutcome outcome, List<CapacityState> originalStates,
+      List<CapacityState> appliedStates, ScenarioEvidence baseline, ScenarioEvidence alternativeScenario,
+      boolean capacityRestored, boolean processStateRestored, boolean recoveryConverged, List<String> diagnostics) {
     List<MetricComparison> comparisons = compareMetrics(baseline, alternativeScenario);
     boolean deltaCalculable = baseline != null && alternativeScenario != null
         && baseline.getObjectives().size() > objectiveIndex
@@ -1843,7 +1957,7 @@ public final class ProcessModelDebottleneckStudy {
         ? alternativeScenario.getObjectives().get(objectiveIndex).getRawValue()
             - baseline.getObjectives().get(objectiveIndex).getRawValue()
         : Double.NaN;
-    return new StudyResult(id, name, provenance, alternative, originalState, appliedState, outcome, baseline,
+    return new StudyResult(id, name, provenance, alternatives, originalStates, appliedStates, outcome, baseline,
         alternativeScenario, capacityRestored, processStateRestored, recoveryConverged, comparisons, deltaCalculable,
         delta, diagnostics);
   }

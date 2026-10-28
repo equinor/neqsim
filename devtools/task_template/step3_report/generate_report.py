@@ -2592,13 +2592,89 @@ def _qualified_constraint_opportunity_valid(actual, expected, envelope):
     return actual.get("summary_version") == (2 if qualified_count else 1)
 
 
+def _qualified_relief_combination_valid(actual, opportunity, envelope):
+    """Return true only for a portfolio-bound jointly simulated combination receipt."""
+    if not isinstance(actual, dict) or not isinstance(opportunity, dict):
+        return False
+    receipts = [candidate.get("paired_relief_study_receipt")
+                for candidate in opportunity.get("candidates", [])
+                if isinstance(candidate, dict)
+                and isinstance(candidate.get("paired_relief_study_receipt"), dict)
+                and candidate["paired_relief_study_receipt"].get("receipt_version") == 2]
+    if (len(receipts) < 2
+            or any(not isinstance(receipt.get("portfolio_ranking"), dict)
+                   or not isinstance(receipt.get("objective"), dict)
+                   or not _report_number(receipt["objective"].get("delta"))
+                   for receipt in receipts)):
+        return False
+    portfolio_ids = {receipt["portfolio_ranking"].get("portfolio_id") for receipt in receipts}
+    policy_ids = {receipt["portfolio_ranking"].get("policy_id") for receipt in receipts}
+    members = actual.get("members")
+    objective = actual.get("objective")
+    migration = actual.get("bottleneck_migration")
+    if (actual.get("receipt_version") != 1
+            or portfolio_ids != {actual.get("portfolio_id")}
+            or policy_ids != {actual.get("policy_id")}
+            or actual.get("action_set_id") != envelope.get("candidate_evaluator_id")
+            or actual.get("accepted_action_ids") != envelope.get("accepted_action_ids")
+            or actual.get("baseline_action_values") != envelope.get("accepted_candidate_values")
+            or not isinstance(actual.get("combined_action_values"), list)
+            or len(actual.get("combined_action_values")) != len(envelope.get("accepted_action_ids", []))
+            or any(not _report_number(value) for value in actual.get("combined_action_values"))
+            or not isinstance(members, list) or len(members) != len(receipts)
+            or not isinstance(objective, dict) or not isinstance(migration, dict)
+            or actual.get("study_outcome") != "COMPLETED"
+            or actual.get("capacity_restored") is not True
+            or actual.get("process_state_restored") is not True
+            or actual.get("recovery_simulation_converged") is not True
+            or actual.get("qualification_state")
+                != "QUALIFIED_PAIRED_NON_ADDITIVE_RELIEF_COMBINATION"
+            or actual.get("advisory") is not True):
+        return False
+    by_id = {receipt.get("alternative_id"): receipt for receipt in receipts}
+    if len(by_id) != len(receipts):
+        return False
+    seen = set()
+    for member in members:
+        receipt = by_id.get(member.get("alternative_id")) if isinstance(member, dict) else None
+        if (receipt is None or member.get("alternative_id") in seen
+                or member.get("qualified_constraint_name") != receipt.get("qualified_constraint_name")
+                or member.get("original_applicable_limit") != receipt.get("original_applicable_limit")
+                or member.get("proposed_applicable_limit") != receipt.get("proposed_applicable_limit")
+                or member.get("physical_unit") != receipt.get("physical_unit")):
+            return False
+        seen.add(member.get("alternative_id"))
+    independent_sum = sum(receipt["objective"]["delta"] for receipt in receipts)
+    if (seen != set(by_id)
+            or not all(_report_number(objective.get(field)) for field in (
+                "paired_baseline_value", "combined_value", "combined_delta",
+                "independent_delta_sum", "interaction_delta"))
+            or objective.get("combined_value") - objective.get("paired_baseline_value")
+                != objective.get("combined_delta")
+            or objective.get("independent_delta_sum") != independent_sum
+            or objective.get("combined_delta") - independent_sum
+                != objective.get("interaction_delta")):
+        return False
+    for field in ("baseline_bottleneck", "combined_bottleneck"):
+        row = migration.get(field)
+        if (not isinstance(row, dict) or not _report_text(row.get("qualified_constraint_name"))
+                or not _report_text(row.get("physical_unit"))
+                or not all(_report_number(row.get(number_field)) for number_field in (
+                    "current_value", "applicable_limit", "normalized_utilization"))
+                or row.get("feasible") is not True):
+            return False
+    return (migration.get("changed") is (
+        migration["baseline_bottleneck"]["qualified_constraint_name"]
+        != migration["combined_bottleneck"]["qualified_constraint_name"]))
+
+
 def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
     """Validate the report-facing lifecycle subset and independently replay identity deltas."""
     reasons = []
     if not isinstance(evidence, dict):
         return ["evidence is not an object"]
-    if evidence.get("schema_version") not in (8, 9, 10, 11, 12, 13):
-        reasons.append("schema_version must be 8, 9, 10, 11, 12, or 13")
+    if evidence.get("schema_version") not in (8, 9, 10, 11, 12, 13, 14):
+        reasons.append("schema_version must be 8, 9, 10, 11, 12, 13, or 14")
     if evidence.get("advisory") is not True:
         reasons.append("advisory flag is missing")
     if not _report_text(evidence.get("cycle_id")):
@@ -2629,6 +2705,7 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
     previous_elapsed = None
     seen_period_ids = set()
     qualified_relief_portfolio_found = False
+    qualified_relief_combination_found = False
     for index, period in enumerate(periods):
         prefix = "period {}".format(index + 1)
         if not isinstance(period, dict):
@@ -2651,10 +2728,10 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
             previous_elapsed = elapsed
         if period.get("time_unit") != evidence.get("time_unit"):
             reasons.append(prefix + " time unit does not match the lifecycle")
-        if evidence.get("schema_version") in (9, 10, 11, 12, 13):
+        if evidence.get("schema_version") in (9, 10, 11, 12, 13, 14):
             coverage = period.get("utilization_coverage")
             expected_coverage_schema = (
-                "1.1" if evidence.get("schema_version") in (10, 11, 12, 13) else "1.0")
+                "1.1" if evidence.get("schema_version") in (10, 11, 12, 13, 14) else "1.0")
             if (not isinstance(coverage, dict)
                     or coverage.get("schema_version") != expected_coverage_schema
                     or coverage.get("coverage_scope") != "DECLARED_EQUIPMENT_AND_CONSTRAINTS"
@@ -2684,7 +2761,7 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
                 required_ids = coverage.get("required_constraint_ids")
                 if (not isinstance(expected_ids, list) or not expected_ids
                         or not isinstance(expected_plant_ids, list)
-                        or (evidence.get("schema_version") in (10, 11, 12, 13)
+                        or (evidence.get("schema_version") in (10, 11, 12, 13, 14)
                             and not expected_plant_ids)
                         or not isinstance(required_ids, list)
                         or len(coverage_ids) != len(set(coverage_ids))
@@ -2739,12 +2816,12 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
             if (expected_opportunities is None
                     or period.get("constraint_opportunity_summary") != expected_opportunities):
                 reasons.append(prefix + " has an invalid constraint opportunity summary")
-        if evidence.get("schema_version") in (12, 13):
+        if evidence.get("schema_version") in (12, 13, 14):
             expected_opportunities = _constraint_opportunity_summary(ranked)
             if not _qualified_constraint_opportunity_valid(
                     period.get("constraint_opportunity_summary"), expected_opportunities, envelope):
                 reasons.append(prefix + " has an invalid qualified relief receipt")
-            if (evidence.get("schema_version") == 13
+            if (evidence.get("schema_version") in (13, 14)
                     and any(
                         isinstance(candidate, dict)
                         and isinstance(candidate.get("paired_relief_study_receipt"), dict)
@@ -2752,10 +2829,20 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
                         for candidate in period.get("constraint_opportunity_summary", {}).get(
                             "candidates", []))):
                 qualified_relief_portfolio_found = True
+        if (evidence.get("schema_version") == 14
+                and "qualified_relief_combination" in period):
+            if _qualified_relief_combination_valid(
+                    period.get("qualified_relief_combination"),
+                    period.get("constraint_opportunity_summary"), envelope):
+                qualified_relief_combination_found = True
+            else:
+                reasons.append(prefix + " has an invalid qualified relief combination")
         period_identities.append(identities)
 
-    if evidence.get("schema_version") == 13 and not qualified_relief_portfolio_found:
+    if evidence.get("schema_version") in (13, 14) and not qualified_relief_portfolio_found:
         reasons.append("lifecycle is missing a qualified relief portfolio")
+    if evidence.get("schema_version") == 14 and not qualified_relief_combination_found:
+        reasons.append("lifecycle is missing a qualified relief combination")
     if expected_cycle_id and expected_cycle_id not in seen_period_ids:
         reasons.append("promoted current-best cycle is missing from lifecycle periods")
 
@@ -2849,7 +2936,7 @@ def format_lifecycle_envelope_text(results, expected_cycle_id=None):
                 _fmt_number(row["applicable_limit"]) if row["applicable_limit"] is not None else "n/a",
                 _md_cell(row["physical_unit"]), _md_cell(row["applicable_limit_provenance"])))
 
-    if evidence["schema_version"] in (9, 10, 11, 12, 13):
+    if evidence["schema_version"] in (9, 10, 11, 12, 13, 14):
         lines += ["", "**Declared accepted-replay constraint coverage.** Every row is frozen at the accepted replay; "
                   "missing, screening-only, non-finite, or unqualified limits are withheld upstream.", "",
                   "| Period | Evidence | Exact constraint | Current / limit | Utilization | Limit basis | Provenance |",
@@ -2869,7 +2956,7 @@ def format_lifecycle_envelope_text(results, expected_cycle_id=None):
                         _md_cell(row["unit"]), _fmt_number(row["normalized_utilization"]),
                         _md_cell(row["basis"]), _md_cell(row["provenance"])))
 
-    if evidence["schema_version"] in (11, 12, 13):
+    if evidence["schema_version"] in (11, 12, 13, 14):
         lines += ["", "**Constraint follow-up opportunity screen.** Rows are qualified first as exact sampled or "
                   "refined constraint evidence. A relief delta is shown only when an exact accepted-baseline-bound "
                   "paired study receipt also passes convergence, feasibility, finiteness, and restoration gates.", "",
@@ -2895,6 +2982,27 @@ def format_lifecycle_envelope_text(results, expected_cycle_id=None):
                     _fmt_number(candidate["current_value"]), _fmt_number(candidate["applicable_limit"]),
                     _md_cell(candidate["physical_unit"]), _fmt_number(candidate["physical_headroom"]),
                     _md_cell(candidate["physical_unit"]), follow_up))
+
+    if evidence["schema_version"] == 14:
+        lines += ["", "**Joint relief combinations.** Combined deltas are independently simulated; the "
+                  "independent-delta sum is shown only to expose interaction, never as an additive prediction.", "",
+                  "| Period | Members | Combined Δ | Independent Δ sum | Interaction Δ | Bottleneck migration |",
+                  "|---|---|---|---|---|---|"]
+        for period in evidence["periods"]:
+            combination = period.get("qualified_relief_combination")
+            if not isinstance(combination, dict):
+                continue
+            objective = combination["objective"]
+            migration = combination["bottleneck_migration"]
+            lines.append("| {} | {} | {} {} | {} {} | {} {} | `{}` → `{}` |".format(
+                _md_cell(period["period_name"]),
+                ", ".join("`{}`".format(_md_cell(member["alternative_id"]))
+                          for member in combination["members"]),
+                _fmt_number(objective["combined_delta"]), _md_cell(objective["unit"]),
+                _fmt_number(objective["independent_delta_sum"]), _md_cell(objective["unit"]),
+                _fmt_number(objective["interaction_delta"]), _md_cell(objective["unit"]),
+                _md_cell(migration["baseline_bottleneck"]["qualified_constraint_name"]),
+                _md_cell(migration["combined_bottleneck"]["qualified_constraint_name"])))
 
     lines += ["", "**Exact adjacent-period identity migration.** Classification or limit-basis changes "
               "appear as one removed and one added identity; this is descriptive evidence, not causal attribution."]
