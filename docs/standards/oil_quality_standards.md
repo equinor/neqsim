@@ -35,36 +35,48 @@ This engineering approximation does not establish ASTM laboratory equivalence or
 
 ## Quick Start
 
+The following example is complete Java source. It creates a characterized crude oil, calculates API gravity and an atmospheric distillation curve with the current oil-quality APIs, and validates the returned values without console output.
+
+<!-- oil-quality-quick-start: complete -->
 ```java
+import neqsim.standards.oilquality.Standard_ASTM_D4052;
+import neqsim.standards.oilquality.Standard_ASTM_D86;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.standards.oilquality.*;
 
-// Create a characterized crude oil
-SystemSrkEos oil = new SystemSrkEos(273.15 + 15.0, 1.01325);
-oil.addComponent("methane", 0.01);
-oil.addComponent("ethane", 0.02);
-oil.addComponent("propane", 0.03);
-// TBP molar mass is kg/mol; density is specific gravity (g/cm3 numerically).
-oil.addTBPfraction("C7", 0.15, 0.095, 0.72);
-oil.addTBPfraction("C10", 0.20, 0.135, 0.78);
-oil.addTBPfraction("C20", 0.30, 0.280, 0.85);
-oil.addTBPfraction("C30", 0.29, 0.450, 0.91);
-oil.setMixingRule(2);
+public final class OilQualityQuickStartExample {
+  private OilQualityQuickStartExample() {}
 
-// API gravity
-Standard_ASTM_D4052 apiStd = new Standard_ASTM_D4052(oil);
-apiStd.calculate();
-double apiGravity = apiStd.getValue("API");
-String classification = apiStd.getOilClassification();
-System.out.println("API gravity: " + apiGravity + " (" + classification + ")");
+  public static void main(String[] args) {
+    SystemSrkEos oil = new SystemSrkEos(273.15 + 15.0, 1.01325);
+    oil.addComponent("methane", 0.01);
+    oil.addComponent("ethane", 0.02);
+    oil.addComponent("propane", 0.03);
+    // TBP molar mass is kg/mol; density is specific gravity (g/cm3 numerically).
+    oil.addTBPfraction("C7", 0.15, 0.095, 0.72);
+    oil.addTBPfraction("C10", 0.20, 0.135, 0.78);
+    oil.addTBPfraction("C20", 0.30, 0.280, 0.85);
+    oil.addTBPfraction("C30", 0.29, 0.450, 0.91);
+    oil.setMixingRule(2);
 
-// Distillation curve
-Standard_ASTM_D86 distStd = new Standard_ASTM_D86(oil);
-distStd.calculate();
-double ibp = distStd.getValue("IBP", "C");
-double t50 = distStd.getValue("T50", "C");
-double fbp = distStd.getValue("FBP", "C");
-System.out.println("IBP=" + ibp + ", T50=" + t50 + ", FBP=" + fbp + " C");
+    Standard_ASTM_D4052 apiStd = new Standard_ASTM_D4052(oil);
+    apiStd.calculate();
+    double apiGravity = apiStd.getValue("API");
+    String classification = apiStd.getOilClassification();
+    if (!Double.isFinite(apiGravity) || "Unknown".equals(classification)) {
+      throw new IllegalStateException("API gravity calculation failed");
+    }
+
+    Standard_ASTM_D86 distStd = new Standard_ASTM_D86(oil);
+    distStd.calculate();
+    double ibpC = distStd.getValue("IBP", "C");
+    double t50C = distStd.getValue("T50", "C");
+    double fbpC = distStd.getValue("FBP", "C");
+    if (!Double.isFinite(ibpC) || !Double.isFinite(t50C) || !Double.isFinite(fbpC)
+        || ibpC > t50C || t50C > fbpC) {
+      throw new IllegalStateException("Distillation curve must be finite and ordered");
+    }
+  }
+}
 ```
 
 ---
