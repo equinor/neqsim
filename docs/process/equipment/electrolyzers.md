@@ -103,8 +103,10 @@ System.out.println("Stack power:   " + power / 1.0e3 + " kW");
 
 ## Technologies and I-V Models
 
-Select a technology to apply representative defaults for cell voltage, current
-density, operating temperature/pressure and faradaic efficiency:
+Select a technology to apply cell voltage, current density and nominal Faradaic
+efficiency. Set inlet temperature and pressure separately; the enum's temperature
+and pressure getters are reference values. Calling `setTechnology` overwrites
+previous voltage/current-efficiency settings, so apply measured overrides afterwards:
 
 ```java
 import neqsim.process.equipment.electrolyzer.ElectrolyzerTechnology;
@@ -115,7 +117,45 @@ electrolyzer.setTechnology(ElectrolyzerTechnology.PEM);
 
 Available technologies: `PEM`, `ALKALINE`, `SOEC`, `AEM`.
 
-For a physically consistent operating voltage, attach an
+### Current-efficiency basis and remaining qualification
+
+Faradaic efficiency is $\eta_F=2F\dot n_{H_2}/I_{eq}$, a charge-utilization ratio.
+An LHV/HHV energy efficiency also depends on voltage, heating value and the
+stack/system boundary. External SOEC heat does not establish current efficiency.
+
+`ALKALINE` uses a nominal screening estimate from Ulleberg (2003),
+[DOI 10.1016/S0360-3199(02)00033-2](https://doi.org/10.1016/S0360-3199(02)00033-2),
+Eq. (9), Table 3, PHOEBUS: 80 °C, reported 7 bar, stationary 30 wt% KOH.
+The paper reports pressure without establishing a separate gauge/absolute
+conversion; the existing NeqSim reference remains 7 bara.
+With $j_m$ in **mA/cm²**, the published expression is
+$\eta_F=0.96j_m^2/(250+j_m^2)$; 250 has units (mA/cm²)².
+At the existing nominal 0.4 A/cm² this gives **0.9585023401**.
+This evaluates the fitted expression beyond the current-efficiency measurements
+in Fig. 6. It is an explicit extrapolation for screening, not a measured
+0.4 A/cm² benchmark, a universal alkaline constant or a qualified operating range.
+The source provides no uncertainty interval for that extrapolation.
+
+At fixed 1.85 V this changes native stack SEC from 79.33746 to **51.31884 kWh/kg**
+on the getter's 0.002016 kg/mol H₂ basis. The reference is frozen after technology
+selection: changing load, temperature or pressure does not update current
+efficiency. Supply an equipment-specific value with `setFaradaicEfficiency`
+after selecting the technology; low-load/crossover behavior needs separate evidence.
+
+The existing coarse alkaline I–V coefficients instead give **1.7064354 V**
+at 0.4 A/cm² and 80 °C, hence **47.33637 kWh/kg** with this same current efficiency.
+The two voltage models are different screening cases; neither is validated by
+agreement with a rounded industry SEC. `AlkalineFaradaicDefaultTest` executes
+both native POWER and matched WATER_FEED cases against independent Faraday-law,
+stoichiometry, power and SEC calculations.
+
+PEM (0.65), SOEC (0.85) and AEM (0.60) still have **unqualified legacy current
+efficiencies**. [#4682](https://github.com/equinor/neqsim/issues/4682) remains open
+for their primary-source basis, uncertainty/applicability, off-design behavior
+and coherent voltage/SEC qualification. The material-balance repair in
+[#4681](https://github.com/equinor/neqsim/issues/4681) is a separate completed change.
+
+For a current-dependent screening voltage, attach an
 `ElectrolyzerIVCharacteristic`. When set, the cell voltage is computed from the
 current density and temperature through the polarisation model:
 

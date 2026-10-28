@@ -198,7 +198,7 @@ feed.setPressure(1.0, "bara");
 feed.run();
 
 Electrolyzer el = new Electrolyzer("PEM stack", feed);
-el.setTechnology(ElectrolyzerTechnology.PEM);  // applies V/j/T/P/η_F defaults
+el.setTechnology(ElectrolyzerTechnology.PEM);  // applies V/j/η_F; retains inlet T/P
 el.setIVCharacteristic(new ElectrolyzerIVCharacteristic(ElectrolyzerTechnology.PEM));
 el.run();
 
@@ -209,14 +209,26 @@ double V_cell   = el.getCellVoltage();   // recomputed from I-V at run time
 
 **Technology selector**
 
-| Tech | V_cell | j (A/cm²) | T (°C) | P (bara) | η_F | Specific energy (kWh/kg) |
+| Tech | Fixed V_cell | j (A/cm²) | Reference T (°C) | Reference P (bara) | Nominal η_F | Fixed-voltage stack SEC (kWh/kg) |
 |---|---|---|---|---|---|---|
-| PEM | 1.80 | 2.0 | 80 | 30 | 0.65 | ~45–55 |
-| ALKALINE | 1.85 | 0.4 | 80 | 7 | 0.62 | ~50–60 |
-| SOEC | 1.30 | 1.0 | 800 | 1 | 0.85 | ~35–40 (HHV) |
-| AEM | 1.85 | 0.8 | 60 | 10 | 0.60 | ~55–65 |
+| PEM | 1.80 | 2.0 | 80 | 30 | 0.65 (unqualified legacy) | 73.63 |
+| ALKALINE | 1.85 | 0.4 | 80 | 7 | 0.95850234 (screening extrapolation) | 51.32 |
+| SOEC | 1.30 | 1.0 | 800 | 1 | 0.85 (unqualified legacy) | 40.67 (electricity only) |
+| AEM | 1.85 | 0.8 | 60 | 10 | 0.60 (unqualified legacy) | 81.98 |
 
-Sources: IRENA 2022 Hydrogen Decarbonisation Pathways; Buttler & Spliethoff RSER 82 (2018); IEA Global H₂ Review 2023.
+Distinguish current efficiency from LHV/HHV energy efficiency. Treat the table as
+implemented screening inputs and arithmetic, not measured technology performance.
+For alkaline, use Ulleberg (2003), Eq. (9), Table 3 PHOEBUS parameters
+(`f1=250 (mA/cm²)²`, `f2=0.96`, 80 °C, reported 7 bar), DOI
+10.1016/S0360-3199(02)00033-2. Evaluating at 400 mA/cm² extrapolates beyond
+Fig. 6; it has no established uncertainty interval or off-design qualification.
+Supply measured efficiency after `setTechnology`; that call overwrites prior
+voltage/efficiency settings and retains the inlet T/P. Set feed T/P separately.
+Consult [the equipment guide](../../../docs/process/equipment/electrolyzers.md#current-efficiency-basis-and-remaining-qualification)
+and open #4682 before using legacy defaults in a benchmark. At alkaline nominal
+j/T, the existing I–V model gives 1.7064354 V and 47.33637 kWh/kg instead of the
+fixed-voltage result. Do not infer a validated SEC from either model or use SOEC
+heat substitution as evidence of current efficiency.
 
 **I-V curve internals**
 
