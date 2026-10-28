@@ -36,7 +36,7 @@ neqsim.process.safety.risk
 
 ## Quick Start
 
-The following example is complete Java source. It builds a one-stream process, configures a reproducible dynamic risk screen, executes a one-day Monte Carlo simulation, and verifies the returned availability contract without console output.
+The following example is complete Java source. It builds a one-stream process, configures a reproducible dynamic risk screen, executes a one-day Monte Carlo simulation, and verifies the returned availability contract without console output. `getMeanAvailability()` returns a percentage from 0 to 100.
 
 <!-- risk-framework-quick-start: complete -->
 ```java
@@ -69,9 +69,10 @@ public final class RiskFrameworkReadmeExample {
     simulator.setTimestepHours(0.5);
 
     DynamicRiskResult result = simulator.runDynamicSimulation(10, 1.0);
-    double meanAvailability = result.getMeanAvailability();
-    if (!Double.isFinite(meanAvailability) || meanAvailability < 0.0 || meanAvailability > 1.0) {
-      throw new IllegalStateException("Availability must remain in [0, 1]");
+    double meanAvailabilityPercent = result.getMeanAvailability();
+    if (!Double.isFinite(meanAvailabilityPercent)
+        || meanAvailabilityPercent < 0.0 || meanAvailabilityPercent > 100.0) {
+      throw new IllegalStateException("Availability must remain in [0, 100] percent");
     }
   }
 }
