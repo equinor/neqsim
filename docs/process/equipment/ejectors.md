@@ -138,13 +138,107 @@ guarantee.
 series of discharge pressures. Each returned row is
 `[dischargePressureBara, entrainmentRatio, compressionRatio]`.
 
-Because the inlet stream flow rates remain fixed, the reported entrainment ratio also
-remains fixed unless the caller changes an inlet flow. The method does not solve the
-suction capacity available at each back pressure and must not be presented as a
-predictive vendor performance map. Failed pressure points are logged and omitted, so
+Because the inlet stream flow rates remain fixed in the default flow-input mode, the
+reported entrainment ratio also remains fixed unless the caller changes an inlet flow.
+In that mode the method does not solve the suction capacity available at each back
+pressure and must not be presented as a predictive vendor performance map. In
+fixed-geometry mode (previous section) the entrainment ratio is calculated at every
+point. Failed pressure points are logged and omitted, so
 callers must check the returned row count. The original discharge pressure is restored
 and the ejector is rerun before the method returns; do not operate the same mutable
 ejector concurrently.
+
+## Fixed-geometry (off-design) mode
+
+The default mode above takes both flow rates as inputs. When the nozzle and mixing
+section are already built, call `setFixedGeometry(throatAreaM2, mixingAreaM2)` (or
+`setFixedGeometryAreaRatio(throatAreaM2, areaRatio)`) to run the ejector off-design.
+Only the pressure, temperature and composition of the motive and suction streams are
+then used; the flows are results:
+
+1. the motive flow is the choked flow of the nozzle throat at the motive state;
+2. the entrained (suction vapour) flow follows from the one-dimensional constant-pressure
+   mixing model with the nozzle, suction, mixing, and diffuser efficiencies of the
+   `Ejector` (Keenan et al. 1950, ESDU 86030), maximised over the mixing pressure;
+3. the discharge pressure that the mixed stream can recover follows from the momentum
+   and energy balances. For a back pressure above that critical value the entrainment
+   falls (`Regime.SUBCRITICAL`) and finally collapses (`Regime.BREAKDOWN`,
+   `isInBreakdown()` is true).
+
+`getOperatingPoint()` returns an `EjectorOperatingPoint` with motive demand,
+entrainment capacity and ratio, compression and expansion ratios, mixing pressure,
+critical back pressure, `getBreakdownMargin()` (critical back pressure divided by
+discharge pressure minus one) and warnings. `getOperatingWindowReport()` adds the
+supply utilisation of the suction stream and the margin to a maximum discharge
+pressure set with `setMaxDischargePressureLimit`. `generatePerformanceCurve` returns a
+variable entrainment ratio in this mode, and `generateFixedGeometryCurve` and
+`generateSuctionPressureCurve` return full operating points without changing the
+streams. `autoSizeFixedGeometry(designSuctionFlow, margin)` sizes the area ratio for a
+critical back pressure of at least `(1 + margin)` times the discharge pressure.
+Only the vapour phase of a two-phase stream is used, and the suction flow of the stream
+is ignored unless `setLimitEntrainmentToSuctionSupply(true)` is set. The model is a
+screening calculation and is not a replacement for vendor performance curves.
+
+The following complete Java 8 program is compiled and executed by the documentation
+test.
+
+```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.ejector.Ejector;
+import neqsim.process.equipment.ejector.EjectorOperatingPoint;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+
+public final class FixedGeometryEjectorExample {
+  private static final Logger logger = LogManager.getLogger(FixedGeometryEjectorExample.class);
+
+  private FixedGeometryEjectorExample() {}
+
+  public static void main(String[] args) {
+    SystemInterface motiveFluid = new SystemSrkEos(353.15, 60.0);
+    motiveFluid.addComponent("methane", 1.0);
+    motiveFluid.createDatabase(true);
+    motiveFluid.setMixingRule(2);
+    Stream motive = new Stream("motive gas", motiveFluid);
+    motive.setFlowRate(1.0, "kg/sec");
+
+    SystemInterface suctionFluid = new SystemSrkEos(303.15, 2.0);
+    suctionFluid.addComponent("methane", 0.8);
+    suctionFluid.addComponent("ethane", 0.2);
+    suctionFluid.createDatabase(true);
+    suctionFluid.setMixingRule(2);
+    Stream suction = new Stream("suction gas", suctionFluid);
+    suction.setFlowRate(1.0, "kg/sec");
+
+    Ejector ejector = new Ejector("fixed ejector", motive, suction);
+    ejector.setDischargePressure(3.0);
+    ejector.setFixedGeometryAreaRatio(1.0e-4, 15.0);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(motive);
+    process.add(suction);
+    process.add(ejector);
+    process.run();
+
+    EjectorOperatingPoint point = ejector.getOperatingPoint();
+    assert point.getMotiveFlow() > 0.0;
+    assert point.getSuctionFlow() > 0.0;
+    assert point.getRegime() == EjectorOperatingPoint.Regime.CRITICAL;
+    assert ejector.getBreakdownMargin() > 0.0;
+    assert Math.abs(ejector.getMassBalance("kg/sec")) < 1.0e-6;
+    logger.info("entrainment ratio {}, critical back pressure {} bara", point.getEntrainmentRatio(),
+        point.getCriticalBackPressure());
+
+    ejector.setDischargePressure(40.0);
+    process.run();
+    assert ejector.isInBreakdown();
+    assert ejector.getEntrainmentCapacity() == 0.0;
+  }
+}
+```
 
 ## Engineering limits
 

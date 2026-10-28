@@ -76,6 +76,22 @@ public class Ejector extends ProcessEquipmentBaseClass
 
   private transient EjectorMechanicalDesign mechanicalDesign;
 
+  // ============ Fixed-geometry (off-design) mode ============
+  /** True when the ejector is solved for a fixed geometry (flows are results, not inputs). */
+  private boolean fixedGeometryMode = false;
+  /** Nozzle throat area in m2 for the fixed-geometry mode. */
+  private double fixedThroatArea = 0.0;
+  /** Mixing section area in m2 for the fixed-geometry mode. */
+  private double fixedMixingArea = 0.0;
+  /** Limit the entrained flow to the vapour flow supplied by the suction stream. */
+  private boolean limitEntrainmentToSupply = false;
+  /** Last fixed-geometry operating point. */
+  private EjectorOperatingPoint operatingPoint = null;
+  /** Vapour flow supplied by the suction stream at the last run in kg/s. */
+  private double suctionVaporSupply = Double.NaN;
+  /** Maximum allowed discharge pressure for the operating window in bara (NaN if not set). */
+  private double maxDischargePressureLimit = Double.NaN;
+
   // ============ Calculated performance results ============
   /** Compression ratio = discharge pressure / suction pressure. */
   private double compressionRatio = 0.0;
@@ -201,11 +217,382 @@ public class Ejector extends ProcessEquipmentBaseClass
   /**
    * Setter for the field <code>throatArea</code>.
    *
+   * <p>
+   * Retained for backwards compatibility and still a no-op in the default (flow-input) mode, where the areas are
+   * calculated from the hydraulic design. To run a fixed geometry use {@link #setFixedGeometry(double, double)} or
+   * {@link #setFixedGeometryAreaRatio(double, double)}.
+   * </p>
+   *
    * @param throatArea a double
    */
   public void setThroatArea(double throatArea) {
     // Retained for backwards compatibility. The area is now calculated from the
     // hydraulic design and therefore this setter is deprecated.
+  }
+
+  /**
+   * Switches the ejector to the fixed-geometry (off-design) mode. The nozzle throat and the constant-area mixing
+   * section are given; the motive flow is the choked flow of the nozzle at the motive stream state, the entrained flow
+   * is calculated from the 1-D constant-pressure mixing model with the nozzle, suction, mixing and diffuser
+   * efficiencies of this ejector, and the flow rates of the motive and suction streams are not used (only their
+   * composition, pressure and temperature). The discharge pressure set with {@link #setDischargePressure(double)} is
+   * the back pressure. The default flow-input mode is unchanged unless this method is called.
+   *
+   * @param nozzleThroatArea motive nozzle throat area in m2
+   * @param mixingSectionArea constant-area mixing section area in m2
+   * @throws IllegalArgumentException if an area is not positive or the mixing area is not larger than the throat area
+   */
+  public void setFixedGeometry(double nozzleThroatArea, double mixingSectionArea) {
+    if (nozzleThroatArea <= 0.0 || mixingSectionArea <= nozzleThroatArea) {
+      throw new IllegalArgumentException("fixed geometry needs 0 < throat area < mixing section area, got "
+          + nozzleThroatArea + " and " + mixingSectionArea);
+    }
+    this.fixedThroatArea = nozzleThroatArea;
+    this.fixedMixingArea = mixingSectionArea;
+    this.fixedGeometryMode = true;
+  }
+
+  /**
+   * Switches to the fixed-geometry mode with the mixing section area given as an area ratio.
+   *
+   * @param nozzleThroatArea motive nozzle throat area in m2
+   * @param areaRatio mixing section area divided by throat area (larger than one)
+   * @throws IllegalArgumentException if the throat area is not positive or the area ratio is not larger than one
+   */
+  public void setFixedGeometryAreaRatio(double nozzleThroatArea, double areaRatio) {
+    setFixedGeometry(nozzleThroatArea, nozzleThroatArea * areaRatio);
+  }
+
+  /**
+   * Returns to the default flow-input mode (both flows are inputs, areas are calculated).
+   */
+  public void clearFixedGeometry() {
+    this.fixedGeometryMode = false;
+    this.operatingPoint = null;
+  }
+
+  /**
+   * Returns whether the fixed-geometry mode is active.
+   *
+   * @return true if the ejector is solved for a fixed geometry
+   */
+  public boolean isFixedGeometryMode() {
+    return fixedGeometryMode;
+  }
+
+  /**
+   * Gets the nozzle throat area of the fixed geometry.
+   *
+   * @return area in m2 (zero if no fixed geometry is set)
+   */
+  public double getFixedThroatArea() {
+    return fixedThroatArea;
+  }
+
+  /**
+   * Gets the mixing section area of the fixed geometry.
+   *
+   * @return area in m2 (zero if no fixed geometry is set)
+   */
+  public double getFixedMixingArea() {
+    return fixedMixingArea;
+  }
+
+  /**
+   * When enabled, the entrained flow in the fixed-geometry mode is limited to the vapour flow the suction stream
+   * supplies; otherwise the suction stream flow rate is ignored and the entrainment capacity is used. The utilisation
+   * of the supply is reported in both cases.
+   *
+   * @param limit true to limit the entrained flow to the suction supply
+   */
+  public void setLimitEntrainmentToSuctionSupply(boolean limit) {
+    this.limitEntrainmentToSupply = limit;
+  }
+
+  /**
+   * Sets the maximum allowed discharge pressure used for the margin in the operating-window report.
+   *
+   * @param pressureBara maximum discharge pressure in bara
+   */
+  public void setMaxDischargePressureLimit(double pressureBara) {
+    this.maxDischargePressureLimit = pressureBara;
+  }
+
+  /**
+   * Sizes a fixed geometry for a design entrained flow with the current motive and suction streams and discharge
+   * pressure, and activates the fixed-geometry mode. The area ratio is the largest one for which the critical back
+   * pressure is at least (1 + margin) times the discharge pressure; the absolute areas scale to the entrained flow.
+   *
+   * @param designSuctionFlowKgPerSec design entrained (vapour) flow in kg/s
+   * @param backPressureMargin required relative margin of the critical back pressure over the discharge pressure (for
+   * example 0.10)
+   * @throws IllegalStateException if the discharge pressure is not set
+   */
+  public void autoSizeFixedGeometry(double designSuctionFlowKgPerSec, double backPressureMargin) {
+    if (dischargePressure <= 0.0) {
+      throw new IllegalStateException("set the discharge pressure before sizing the fixed geometry");
+    }
+    motiveStream.run();
+    suctionStream.run();
+    EjectorFixedGeometrySolver solver = newFixedSolver();
+    EjectorFixedGeometrySolver.UnitFluid fp = EjectorFixedGeometrySolver.vaporUnitFluid(motiveStream.getThermoSystem(),
+        Double.NaN);
+    EjectorFixedGeometrySolver.UnitFluid fs = EjectorFixedGeometrySolver.vaporUnitFluid(suctionStream.getThermoSystem(),
+        Double.NaN);
+    double[] areas = solver.autoSize(fp.getFluid(), fs.getFluid(), dischargePressure, designSuctionFlowKgPerSec,
+        backPressureMargin);
+    setFixedGeometry(areas[0], areas[1]);
+  }
+
+  /**
+   * Creates a fixed-geometry solver with the efficiencies of this ejector.
+   *
+   * @return new solver
+   */
+  private EjectorFixedGeometrySolver newFixedSolver() {
+    return new EjectorFixedGeometrySolver(efficiencyIsentropic, suctionNozzleEfficiency, mixingEfficiency,
+        diffuserEfficiency);
+  }
+
+  /**
+   * Gets the last fixed-geometry operating point.
+   *
+   * @return operating point, or null if the fixed-geometry mode has not been run
+   */
+  public EjectorOperatingPoint getOperatingPoint() {
+    return operatingPoint;
+  }
+
+  /**
+   * Gets the motive flow demanded by the nozzle (choked flow) in the fixed-geometry mode.
+   *
+   * @return motive flow in kg/s, zero if not run in fixed-geometry mode
+   */
+  public double getMotiveFlowCapacity() {
+    return operatingPoint == null ? 0.0 : operatingPoint.getMotiveFlow();
+  }
+
+  /**
+   * Gets the entrainment capacity (suction vapour flow) of the fixed geometry at the last run.
+   *
+   * @return entrained flow capacity in kg/s, zero if not run in fixed-geometry mode
+   */
+  public double getEntrainmentCapacity() {
+    return operatingPoint == null ? 0.0 : operatingPoint.getSuctionFlow();
+  }
+
+  /**
+   * Gets the margin to breakdown, critical back pressure divided by discharge pressure minus one (fixed-geometry mode).
+   * Negative when the back pressure is above the critical value.
+   *
+   * @return relative margin, NaN if not run in fixed-geometry mode
+   */
+  public double getBreakdownMargin() {
+    return operatingPoint == null ? Double.NaN : operatingPoint.getBreakdownMargin();
+  }
+
+  /**
+   * Returns the operating-window report of the last fixed-geometry run: motive demand, entrainment capacity and ratio,
+   * compression ratio, critical back pressure and margins, supply utilisation and warnings.
+   *
+   * @return ordered map of report items, empty if the fixed-geometry mode has not been run
+   */
+  public java.util.Map<String, Object> getOperatingWindowReport() {
+    java.util.Map<String, Object> r = new java.util.LinkedHashMap<String, Object>();
+    if (operatingPoint == null) {
+      return r;
+    }
+    r.putAll(operatingPoint.toMap());
+    double motiveSupplied = motiveStream.getFlowRate("kg/sec");
+    r.put("motiveStreamFlow_kg_s", motiveSupplied);
+    r.put("motiveSupplyMargin",
+        operatingPoint.getMotiveFlow() > 0.0 ? motiveSupplied / operatingPoint.getMotiveFlow() - 1.0 : Double.NaN);
+    r.put("suctionVaporSupply_kg_s", suctionVaporSupply);
+    r.put("suctionSupplyUtilisation",
+        operatingPoint.getSuctionFlow() > 0.0 ? suctionVaporSupply / operatingPoint.getSuctionFlow() : Double.NaN);
+    r.put("suctionStarved", isSuctionStarved());
+    r.put("limitEntrainmentToSuctionSupply", limitEntrainmentToSupply);
+    r.put("entrainedFlow_kg_s", mixedStream.getFlowRate("kg/sec") - operatingPoint.getMotiveFlow());
+    r.put("maxDischargePressure_bara", maxDischargePressureLimit);
+    r.put("dischargePressureMargin", Double.isNaN(maxDischargePressureLimit) ? Double.NaN
+        : maxDischargePressureLimit / operatingPoint.getDischargePressure() - 1.0);
+    return r;
+  }
+
+  /**
+   * Returns the operating-window report as JSON.
+   *
+   * @return JSON text
+   */
+  public String getOperatingWindowReportJson() {
+    return new com.google.gson.GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
+        .toJson(getOperatingWindowReport());
+  }
+
+  /**
+   * Returns whether the suction stream supplies less vapour than the ejector can entrain (fixed-geometry mode). The
+   * ejector then needs a recycle from the discharge or the suction pressure falls.
+   *
+   * @return true if the vapour supply is below the entrainment capacity
+   */
+  public boolean isSuctionStarved() {
+    return operatingPoint != null && !Double.isNaN(suctionVaporSupply)
+        && suctionVaporSupply < operatingPoint.getSuctionFlow() * (1.0 - 1.0e-9);
+  }
+
+  /**
+   * Generates the fixed-geometry performance curve over the discharge (back) pressure at constant motive and suction
+   * conditions. In contrast to {@link #generatePerformanceCurve(double, double, int)} the points are solved directly
+   * (the streams and the ejector state are not modified) and carry the full operating point including regime, critical
+   * back pressure and breakdown margin.
+   *
+   * @param minDischargePressure minimum discharge pressure in bara
+   * @param maxDischargePressure maximum discharge pressure in bara
+   * @param numPoints number of points (at least 2)
+   * @return operating points in order of increasing discharge pressure
+   * @throws IllegalStateException if the fixed-geometry mode is not active
+   */
+  public List<EjectorOperatingPoint> generateFixedGeometryCurve(double minDischargePressure,
+      double maxDischargePressure, int numPoints) {
+    requireFixedGeometry();
+    motiveStream.run();
+    suctionStream.run();
+    int n = Math.max(numPoints, 2);
+    EjectorFixedGeometrySolver solver = newFixedSolver();
+    SystemInterface fp = EjectorFixedGeometrySolver.vaporUnitFluid(motiveStream.getThermoSystem(), Double.NaN)
+        .getFluid();
+    SystemInterface fs = EjectorFixedGeometrySolver.vaporUnitFluid(suctionStream.getThermoSystem(), Double.NaN)
+        .getFluid();
+    List<EjectorOperatingPoint> curve = new ArrayList<EjectorOperatingPoint>();
+    for (int i = 0; i < n; i++) {
+      double pd = minDischargePressure + i * (maxDischargePressure - minDischargePressure) / (n - 1);
+      curve.add(solver.solvePoint(fp, fs, pd, fixedThroatArea, fixedMixingArea));
+    }
+    return curve;
+  }
+
+  /**
+   * Generates the fixed-geometry capacity curve over the suction pressure (entrained flow versus suction pressure) at
+   * constant motive conditions, suction temperature, composition and discharge pressure.
+   *
+   * @param minSuctionPressure minimum suction pressure in bara
+   * @param maxSuctionPressure maximum suction pressure in bara
+   * @param numPoints number of points (at least 2)
+   * @return operating points in order of increasing suction pressure
+   * @throws IllegalStateException if the fixed-geometry mode is not active
+   */
+  public List<EjectorOperatingPoint> generateSuctionPressureCurve(double minSuctionPressure, double maxSuctionPressure,
+      int numPoints) {
+    requireFixedGeometry();
+    motiveStream.run();
+    suctionStream.run();
+    int n = Math.max(numPoints, 2);
+    EjectorFixedGeometrySolver solver = newFixedSolver();
+    SystemInterface fp = EjectorFixedGeometrySolver.vaporUnitFluid(motiveStream.getThermoSystem(), Double.NaN)
+        .getFluid();
+    List<EjectorOperatingPoint> curve = new ArrayList<EjectorOperatingPoint>();
+    for (int i = 0; i < n; i++) {
+      double ps = minSuctionPressure + i * (maxSuctionPressure - minSuctionPressure) / (n - 1);
+      SystemInterface fs = EjectorFixedGeometrySolver.vaporUnitFluid(suctionStream.getThermoSystem(), ps).getFluid();
+      curve.add(solver.solvePoint(fp, fs, dischargePressure, fixedThroatArea, fixedMixingArea));
+    }
+    return curve;
+  }
+
+  /**
+   * Checks that the fixed-geometry mode is active.
+   *
+   * @throws IllegalStateException if the fixed-geometry mode is not active
+   */
+  private void requireFixedGeometry() {
+    if (!fixedGeometryMode) {
+      throw new IllegalStateException("fixed-geometry mode is not active; call setFixedGeometry first");
+    }
+  }
+
+  /**
+   * Runs the fixed-geometry calculation and updates the mixed stream and the mechanical design.
+   *
+   * @param id calculation identifier
+   */
+  private void runFixedGeometry(UUID id) {
+    if (dischargePressure <= 0.0) {
+      throw new IllegalStateException("discharge pressure must be set for the fixed-geometry ejector " + getName());
+    }
+    EjectorFixedGeometrySolver solver = newFixedSolver();
+    EjectorFixedGeometrySolver.UnitFluid fp = EjectorFixedGeometrySolver.vaporUnitFluid(motiveStream.getThermoSystem(),
+        Double.NaN);
+    EjectorFixedGeometrySolver.UnitFluid fs = EjectorFixedGeometrySolver.vaporUnitFluid(suctionStream.getThermoSystem(),
+        Double.NaN);
+    EjectorOperatingPoint op = solver.solvePoint(fp.getFluid(), fs.getFluid(), dischargePressure, fixedThroatArea,
+        fixedMixingArea);
+    suctionVaporSupply = suctionStream.getFlowRate("kg/sec") * fs.getVaporMassFraction();
+    double mEntrained = op.getSuctionFlow();
+    if (limitEntrainmentToSupply && suctionVaporSupply < mEntrained) {
+      mEntrained = suctionVaporSupply;
+      op.setSuctionFlow(mEntrained);
+      op.setEntrainmentRatio(op.getMotiveFlow() > 0.0 ? mEntrained / op.getMotiveFlow() : 0.0);
+    }
+    if (fp.getVaporMassFraction() < 0.999) {
+      op.getWarnings().add("motive stream is two-phase: only the vapour phase is used as motive");
+    }
+    if (fs.getVaporMassFraction() < 0.999) {
+      op.getWarnings().add("suction stream is two-phase: only the vapour phase is entrained");
+    }
+    if (suctionVaporSupply < op.getSuctionFlow() * (1.0 - 1.0e-9)) {
+      op.getWarnings().add("suction supply below the entrainment capacity: recycle or lower suction pressure");
+    }
+    operatingPoint = op;
+
+    SystemInterface mixedFluid = solver.buildMixedFluid(fp.getFluid(), op.getMotiveFlow(), fs.getFluid(), mEntrained,
+        dischargePressure);
+    if (mixedStream == null) {
+      mixedStream = motiveStream.clone();
+    }
+    mixedStream.setThermoSystem(mixedFluid);
+    mixedStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
+
+    compressionRatio = op.getCompressionRatio();
+    expansionRatio = op.getExpansionRatio();
+    criticalBackPressure = op.getCriticalBackPressure();
+    areaRatio = op.getAreaRatio();
+    motiveChoked = op.isMotiveChoked();
+    mixingMach = Double.isNaN(op.getMixingMach()) ? 0.0 : op.getMixingMach();
+    updateFixedGeometryDesign(op, mixedFluid, mEntrained);
+  }
+
+  /**
+   * Updates the mechanical design container from a fixed-geometry operating point.
+   *
+   * @param op operating point
+   * @param mixedFluid flashed mixed fluid at the discharge pressure
+   * @param mEntrained entrained flow in kg/s
+   */
+  private void updateFixedGeometryDesign(EjectorOperatingPoint op, SystemInterface mixedFluid, double mEntrained) {
+    double mTotal = op.getMotiveFlow() + mEntrained;
+    mixedFluid.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+    double rhoOut = Math.max(mixedFluid.getDensity("kg/m3"), 1.0e-6);
+    double diffuserVelocity = designDiffuserVelocityOverride ? designDiffuserOutletVelocity
+        : estimateDesignDiffuserOutletVelocity(op.getMixingPressure(), dischargePressure, rhoOut, mTotal);
+    diffuserVelocity = Math.max(diffuserVelocity, 1.0e-6);
+    double diffuserArea = mTotal / (rhoOut * diffuserVelocity);
+    double suctionArea = Math.max(fixedMixingArea - fixedThroatArea, 1.0e-9);
+    double nozzleLength = estimateLength(diameterFromArea(fixedThroatArea), DEFAULT_NOZZLE_LENGTH_FACTOR);
+    double suctionLength = estimateLength(diameterFromArea(suctionArea), DEFAULT_SUCTION_LENGTH_FACTOR);
+    double mixingLength = estimateLength(diameterFromArea(fixedMixingArea), DEFAULT_MIXING_LENGTH_FACTOR);
+    double diffuserLength = estimateLength(diameterFromArea(diffuserArea), DEFAULT_DIFFUSER_LENGTH_FACTOR);
+    double suctionConnection = suctionConnectionLengthOverride ? suctionConnectionLength
+        : estimateSuctionConnectionLength(diameterFromArea(suctionArea), op.getSuctionPressure(), dischargePressure);
+    double dischargeConnection = dischargeConnectionLengthOverride ? dischargeConnectionLength
+        : estimateDischargeConnectionLength(diameterFromArea(diffuserArea), op.getMixingPressure(), dischargePressure);
+    double bodyVolume = cylinderVolume(fixedThroatArea, nozzleLength) + cylinderVolume(suctionArea, suctionLength)
+        + cylinderVolume(fixedMixingArea, mixingLength) + cylinderVolume(diffuserArea, diffuserLength);
+    double piping = cylinderVolume(suctionArea, suctionConnection) + cylinderVolume(diffuserArea, dischargeConnection);
+    getMechanicalDesign().updateDesign(op.getMixingPressure(), fixedThroatArea, op.getNozzleExitVelocity(), suctionArea,
+        op.getSuctionVelocity(), fixedMixingArea, op.getMixingVelocity(), diffuserArea, diffuserVelocity,
+        op.getEntrainmentRatio(), nozzleLength, suctionLength, mixingLength, diffuserLength, bodyVolume, piping,
+        suctionConnection, dischargeConnection);
   }
 
   /**
@@ -284,6 +671,10 @@ public class Ejector extends ProcessEquipmentBaseClass
   public void run(UUID id) {
     motiveStream.run();
     suctionStream.run();
+    if (fixedGeometryMode) {
+      runFixedGeometry(id);
+      return;
+    }
     // Keep the same outlet stream object across runs so downstream equipment that was connected to
     // getOutStream()/getMixedStream() before the first run keeps receiving the updated results.
     if (mixedStream == null) {
@@ -478,6 +869,9 @@ public class Ejector extends ProcessEquipmentBaseClass
    * @return a double
    */
   public double getEntrainmentRatio() {
+    if (fixedGeometryMode && operatingPoint != null) {
+      return operatingPoint.getEntrainmentRatio();
+    }
     return suctionStream.getFlowRate("kg/sec") / motiveStream.getFlowRate("kg/sec");
   }
 
@@ -576,6 +970,9 @@ public class Ejector extends ProcessEquipmentBaseClass
    * @return true if the ejector is operating beyond its critical back pressure
    */
   public boolean isInBreakdown() {
+    if (fixedGeometryMode && operatingPoint != null) {
+      return operatingPoint.isInBreakdown();
+    }
     return criticalBackPressure > 0 && dischargePressure > criticalBackPressure;
   }
 
@@ -828,6 +1225,12 @@ public class Ejector extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public double getMassBalance(String unit) {
+    if (fixedGeometryMode && operatingPoint != null) {
+      double inKgS = operatingPoint.getMotiveFlow() + operatingPoint.getSuctionFlow();
+      double outKgS = mixedStream.getThermoSystem().getFlowRate("kg/sec");
+      double scale = mixedStream.getThermoSystem().getFlowRate(unit) / Math.max(outKgS, 1.0e-300);
+      return outKgS * scale - inKgS * scale;
+    }
     double inletFlow = motiveStream.getThermoSystem().getFlowRate(unit)
         + suctionStream.getThermoSystem().getFlowRate(unit);
     return mixedStream.getThermoSystem().getFlowRate(unit) - inletFlow;
