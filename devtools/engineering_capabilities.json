@@ -1665,6 +1665,29 @@
           ]
         }
       ]
+    },
+    {
+      "id": "vfp-table-pipeline",
+      "title": "VFPPROD table-driven pipeline hydraulics",
+      "domain": "process",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.process.equipment.pipeline.VfpTable",
+        "neqsim.process.equipment.pipeline.VfpPipeline",
+        "neqsim.process.equipment.pipeline.VfpTableArguments",
+        "neqsim.process.equipment.pipeline.StandardConditionsFlash"
+      ],
+      "skills": [
+        "neqsim-pipeline-and-terminal-networks"
+      ],
+      "agents": [
+        "flow-assurance"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/equipment/pipeline/VfpTableTest.java",
+        "src/test/java/neqsim/process/equipment/pipeline/VfpPipelineTest.java"
+      ],
+      "limitations": "Discovery/inspectApi route for composable Java/JPype objects, not a curated stateless MCP tool. Only METRIC GAS/WGR/GOR-or-OGR VFPPROD with singleton ALQ. Explicit temperature and provider-matched surface-volume definition required. No extrapolation, thermal prediction or network balancing. Synthetic analytical tests do not qualify supplied field hydraulics."
     }
   ]
 }

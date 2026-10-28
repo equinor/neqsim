@@ -8,7 +8,7 @@ non-abstract class that implements `ProcessEquipmentInterface`, directly or thro
 base class. Helper classes, result records, strategies, enums, and interfaces are intentionally
 excluded from the equipment count.
 
-**Current source inventory:** 242 concrete equipment classes in 33 packages.
+**Current source inventory:** 243 concrete equipment classes in 33 packages.
 
 Regenerate this page after adding or removing equipment:
 
@@ -39,7 +39,7 @@ uv run --project devtools --locked devtools/generate_equipment_documentation_cat
 | `membrane` | [Membranes](membranes)<br>Membrane separators | `MembraneSeparator` |
 | `mixer` | [Mixers and splitters](mixers_splitters)<br>Equilibrium, static, non-equilibrium, and phase mixers | `Mixer`, `StaticMixer`, `StaticNeqMixer`, `StaticPhaseMixer` |
 | `network` | [Networks](networks)<br>Pipe, looped, and well-flowline networks | `LoopedPipeNetwork`, `PipeFlowNetwork`, `WellFlowlineNetwork` |
-| `pipeline` | [Pipelines](pipelines)<br>Steady and transient single-, two-, and multiphase pipelines | `AdiabaticPipe`, `AdiabaticTwoPhasePipe`, `IncompressiblePipeFlow`, `MultiphasePipe`, `OnePhasePipeLine`, `PipeBeggsAndBrills`, `PipeGray`, `PipeHagedornBrown`, `PipeMukherjeeAndBrill`, `Pipeline`, `Riser`, `SimpleTPoutPipeline`, `TopsidePiping`, `TransientPipe`, `TransientWellbore`, `TubingPerformance`, `TwoFluidPipe`, `TwoPhasePipeLine`, `WaterHammerPipe` |
+| `pipeline` | [Pipelines](pipelines)<br>Steady and transient single-, two-, and multiphase pipelines | `AdiabaticPipe`, `AdiabaticTwoPhasePipe`, `IncompressiblePipeFlow`, `MultiphasePipe`, `OnePhasePipeLine`, `PipeBeggsAndBrills`, `PipeGray`, `PipeHagedornBrown`, `PipeMukherjeeAndBrill`, `Pipeline`, `Riser`, `SimpleTPoutPipeline`, `TopsidePiping`, `TransientPipe`, `TransientWellbore`, `TubingPerformance`, `TwoFluidPipe`, `TwoPhasePipeLine`, `VfpPipeline`, `WaterHammerPipe` |
 | `powergeneration` | [Power generation](power_generation)<br>Turbines, fuel cells, renewables, and combined-cycle systems | `CombinedCycleSystem`, `FuelCell`, `GasTurbine`, `GasTurbineUnit`, `GasTurbineVendorPerformance`, `HRSG`, `OffshoreEnergySystem`, `SolarPanel`, `SteamTurbine`, `WindFarm`, `WindTurbine` |
 | `pump` | [Pumps](pumps)<br>Centrifugal, ESP, jet, and sucker-rod pumps | `ESPPump`, `JetPump`, `Pump`, `SuckerRodPump` |
 | `reactor` | [Reactors](reactors) and [multi-burner hot-oil heater](multi_burner_fired_heater)<br>Chemical reactors and optional finite-rate gas-fired hot-oil equipment | `AmmoniaSynthesisReactor`, `AnaerobicDigester`, `AutothermalReformer`, `BiomassGasifier`, `CO2ImpurityKineticReactor`, `CatalyticTubeReformer`, `ClausCatalyticConverter`, `ClausReactionFurnace`, `EnzymeTreatment`, `FermentationReactor`, `Fermenter`, `FiniteRateCombustionReactor`, `FurnaceBurner`, `GibbsReactor`, `GibbsReactorCO2`, `IronSulfideOxidationSource`, `MultiBurnerFiredHeater`, `PartialOxidationReactor`, `PlugFlowReactor`, `PyrolysisReactor`, `QualifiedCO2ImpurityKineticReactor`, `QuenchSection`, `ReactiveWasteHeatBoiler`, `ReformerFurnace`, `StirredTankReactor`, `SubDewPointSulfurReactor`, `SulfurCondenser`, `SulfurDepositionAnalyser`, `SulfurOxidationReactor`, `SulfurRecoveryUnit`, `SyngasBurnerZone`, `TailGasTreatmentUnit`, `ThermalIncinerator`, `WaterGasShiftReactor` |

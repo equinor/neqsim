@@ -17,6 +17,19 @@ last_verified: "2026-10-20"
 
 Do not substitute the field-development `NetworkSolver` or a `Manifold` for `LoopedPipeNetwork` without checking the question. They are distinct APIs. Use a `Manifold` for stream routing in a conventional process flowsheet; the network package solves its own node-edge model.
 
+## Supplied VFPPROD pipeline hydraulics
+
+Use `VfpPipeline` when approved OLGA/Prosper/NeqSim VFPPROD tables define pipeline
+hydraulics between process areas. Read `docs/process/equipment/vfp_pipeline.md`.
+Load `VfpTable` and explicitly set outlet temperature and a `VfpTableArguments`
+provider. The provider returns total gas Sm3/day, WGR and canonical GOR; the unit
+converts GOR to OGR only for a declared OGR table. `StandardConditionsFlash` uses
+EOS phase volumes at required constructor T/P, which differs from the ideal-molar
+stream Sm3/day conversion. Match provider metering/separator definitions first.
+Forward mode inverts THP; backward mode reports required BHP without mutating the
+inlet. Tables are range-limited and have no network balancing or thermal model.
+Synthetic tests qualify interpolation/software contracts, not field hydraulics.
+
 ## Well/SURF hydraulic fidelity
 
 For campaign #4228, extend the detailed `neqsim.process.equipment.network.LoopedPipeNetwork`
