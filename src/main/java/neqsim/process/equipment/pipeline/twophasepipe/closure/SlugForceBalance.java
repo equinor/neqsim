@@ -33,6 +33,14 @@ public final class SlugForceBalance implements Serializable {
     public double gasWall;
     /** Signed liquid wall resistance, N/m. */
     public double liquidWall;
+    /** Independent gas-velocity wall resistance, kg/(m s). */
+    public double gasWallResistance;
+    /** Independent liquid-velocity wall resistance, kg/(m s). */
+    public double liquidWallResistance;
+    /** Gas wall resistance driven by mixture velocity, kg/(m s). */
+    public double gasMixtureResistance;
+    /** Liquid wall resistance driven by mixture velocity, kg/(m s). */
+    public double liquidMixtureResistance;
     /** Signed momentum transferred from gas to liquid, N/m. */
     public double interfaceForce;
   }
@@ -79,6 +87,16 @@ public final class SlugForceBalance implements Serializable {
       }
       result.gasWall += entry.getValue() * gasWall;
       result.liquidWall += entry.getValue() * liquidWall;
+      if (liquidWettedSlug) {
+        if (section.getLiquidVelocity() != 0.0) {
+          result.liquidWallResistance += entry.getValue() * liquidWall / section.getLiquidVelocity();
+        }
+      } else {
+        result.gasWallResistance += entry.getValue() * wall.gasWallResistance;
+        result.liquidWallResistance += entry.getValue() * wall.liquidWallResistance;
+        result.gasMixtureResistance += entry.getValue() * wall.gasMixtureResistance;
+        result.liquidMixtureResistance += entry.getValue() * wall.liquidMixtureResistance;
+      }
       if (section.getGasHoldup() > 0.0 && section.getLiquidHoldup() > 0.0) {
         InterfacialFriction.InterfacialFrictionResult drag = interfacialFriction.calculate(entry.getKey(),
             section.getGasVelocity(), section.getLiquidVelocity(), section.getGasDensity(), section.getLiquidDensity(),

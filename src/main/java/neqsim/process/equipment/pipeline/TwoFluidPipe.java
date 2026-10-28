@@ -6336,8 +6336,10 @@ public class TwoFluidPipe extends Pipeline {
         }
         equations.setLocalEquilibriumStates(localEquilibriumStates);
         double savedOutletFacePressure = equations.getOutletBoundaryPressure();
+        boolean savedConservativeDrag = equations.isConservativeFrictionEnabled();
         double[][] derivative;
         try {
+          equations.setConservativeFrictionEnabled(savedConservativeDrag || useConservativeEnergyRecovery);
           if (outletBCType == BoundaryCondition.CONSTANT_PRESSURE && outletPressureSet && outletPressure > 0.0
               && Double.isFinite(outletPressure)) {
             // The prescribed pressure is the outlet-face traction; the last cell pressure stays dynamic.
@@ -6346,6 +6348,7 @@ public class TwoFluidPipe extends Pipeline {
           derivative = equations.calcRHS(sections, dx);
         } finally {
           equations.setOutletBoundaryPressure(savedOutletFacePressure);
+          equations.setConservativeFrictionEnabled(savedConservativeDrag);
         }
         if (useConservativeEnergyRecovery) {
           double weight = phaseStageWeights[phaseStageIndex[0]];
@@ -6514,6 +6517,11 @@ public class TwoFluidPipe extends Pipeline {
         break;
       }
       consecutiveCoupledPressureMomentumFailures = 0;
+
+      // The conservative-energy Euler route advances wall and interfacial resistance as a passive
+      // first-order source split. Total energy stays fixed; the subsequent EOS recovery
+      // converts dissipated phase kinetic energy into internal energy exactly once.
+      U_new = applyConservativeFrictionSourceStep(U_new, dtFinal);
 
       // 4. Every mode must reject an invalid raw predictor before recovery can
       // borrow another phase's mass or silently replace a nonfinite value. Fixed
@@ -6789,6 +6797,26 @@ public class TwoFluidPipe extends Pipeline {
       return state;
     }
     return equations.applyConservativeSlugFriction(state, sections, timeStep);
+  }
+
+  /**
+   * Advance stiff wall and interfacial friction without changing phase inventories or conservative total energy.
+   *
+   * @param state post-predictor conservative cell state
+   * @param timeStep accepted predictor interval in seconds
+   * @return passively damped momenta, or the unchanged state for another energy owner or an invalid trial
+   */
+  private double[][] applyConservativeFrictionSourceStep(double[][] state, double timeStep) {
+    if (!useConservativeEnergyRecovery || !hasValidConservativeState(state)) {
+      return state;
+    }
+    boolean savedConservativeDrag = equations.isConservativeFrictionEnabled();
+    try {
+      equations.setConservativeFrictionEnabled(true);
+      return equations.applyConservativeFriction(state, sections, timeStep);
+    } finally {
+      equations.setConservativeFrictionEnabled(savedConservativeDrag);
+    }
   }
 
   private double[][] applyStiffBubbleDragSourceStep(double[][] state, double timeStep) {

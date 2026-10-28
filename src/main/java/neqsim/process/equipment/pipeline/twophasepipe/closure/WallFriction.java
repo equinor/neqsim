@@ -51,6 +51,18 @@ public class WallFriction implements Serializable {
     /** Signed liquid wall force per unit pipe length (N/m), positive for resistance to positive flow. */
     public double liquidWallForcePerLength;
 
+    /** Resistance multiplying gas velocity in the gas wall force, kg/(m s). */
+    public double gasWallResistance;
+
+    /** Resistance multiplying bulk liquid velocity in the liquid wall force, kg/(m s). */
+    public double liquidWallResistance;
+
+    /** Resistance multiplying volume-weighted mixture velocity in the gas wall force, kg/(m s). */
+    public double gasMixtureResistance;
+
+    /** Resistance multiplying volume-weighted mixture velocity in the liquid wall force, kg/(m s). */
+    public double liquidMixtureResistance;
+
     /** Gas Fanning friction factor. */
     public double gasFrictionFactor;
 
@@ -146,6 +158,23 @@ public class WallFriction implements Serializable {
     }
     result.gasWallForcePerLength = result.gasWallShear * gasPerimeter;
     result.liquidWallForcePerLength = result.liquidWallShear * liquidPerimeter;
+    // Preserve the native driving velocity in the frozen linear resistance. Mixture-based closures must not be
+    // replaced by independent phase resistances: an individual counterflowing phase may be accelerated by them.
+    if (flowRegime == FlowRegime.SLUG || flowRegime == FlowRegime.CHURN || flowRegime == FlowRegime.BUBBLE
+        || flowRegime == FlowRegime.DISPERSED_BUBBLE) {
+      double mixtureVelocity = (1.0 - liquidHoldup) * gasVelocity + liquidHoldup * liquidVelocity;
+      if (mixtureVelocity != 0.0) {
+        result.gasMixtureResistance = result.gasWallForcePerLength / mixtureVelocity;
+        result.liquidMixtureResistance = result.liquidWallForcePerLength / mixtureVelocity;
+      }
+    } else {
+      if (gasVelocity != 0.0) {
+        result.gasWallResistance = result.gasWallForcePerLength / gasVelocity;
+      }
+      if (liquidVelocity != 0.0) {
+        result.liquidWallResistance = result.liquidWallForcePerLength / liquidVelocity;
+      }
+    }
     return result;
   }
 

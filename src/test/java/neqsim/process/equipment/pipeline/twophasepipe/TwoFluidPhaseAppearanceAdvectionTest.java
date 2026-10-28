@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.process.equipment.pipeline.TwoFluidComponentConservationReport;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -54,6 +56,40 @@ class TwoFluidPhaseAppearanceAdvectionTest {
     assertTrue(fixture.transport.createReport(1.0, 1, 1e-8).isConverged());
   }
 
+  /**
+   * Every nonzero signed face transfer carries the source-stage composition, including trace transfers.
+   *
+   * @param signedFaceOilKgS signed internal oil transfer in kg/s
+   */
+  @ParameterizedTest
+  @ValueSource(doubles = {-4.0e-14, 4.0e-14})
+  void traceOilFaceTransferKeepsSourceStageComposition(double signedFaceOilKgS) {
+    Fixture fixture = new Fixture();
+    int donor = signedFaceOilKgS > 0.0 ? 0 : 1;
+    int receiver = 1 - donor;
+    double createdOilKg = 1.0e-6;
+    double transportedOilKg = Math.abs(signedFaceOilKgS);
+    double[][] flux = new double[3][3];
+    flux[1][1] = signedFaceOilKgS;
+    double[][] sources = new double[2][3];
+    sources[donor][0] = -createdOilKg;
+    sources[donor][1] = createdOilKg;
+    double[][][] componentSources = new double[2][3][2];
+    componentSources[donor][0][fixture.ethane] = -createdOilKg;
+    componentSources[donor][1][fixture.ethane] = createdOilKg;
+    fixture.sections[donor].setGasMassPerLength(1.0 - createdOilKg);
+    fixture.sections[donor].setOilMassPerLength(createdOilKg - transportedOilKg);
+    fixture.sections[receiver].setOilMassPerLength(transportedOilKg);
+
+    fixture.transport.advance(1.0, flux, sources, componentSources, new double[2], fixture.sections, fixture.fluid,
+        fixture.fluid, 1.0e-8);
+    double[][][] actual = fixture.transport.getInventoryKg();
+    assertEquals(createdOilKg - transportedOilKg, actual[donor][1][fixture.ethane], 1.0e-20);
+    assertEquals(transportedOilKg, actual[receiver][1][fixture.ethane], 1.0e-26);
+    assertEquals(0.0, actual[receiver][1][fixture.methane], 0.0);
+    assertTrue(fixture.transport.createReport(1.0, 1, 1.0e-8).isConverged());
+  }
+
   /** An empty donor without a conservative source must retain its existing fail-closed behavior. */
   @Test
   void emptyOilDonorWithoutSourceIsRejectedWithoutMutation() {
@@ -98,9 +134,9 @@ class TwoFluidPhaseAppearanceAdvectionTest {
     fixture.assertUnchanged();
   }
 
-  /** Incoming newly formed oil cannot fund a second departure from its receiving cell in the same step. */
+  /** Incoming newly formed oil can fund a conservative onward departure through an initially empty cell. */
   @Test
-  void incomingOilCannotFundSameStepOnwardDeparture() {
+  void incomingOilCanFundSameStepOnwardDeparture() {
     Fixture fixture = new Fixture();
     double[][] flux = new double[3][3];
     flux[1][1] = 0.0008;
@@ -114,10 +150,16 @@ class TwoFluidPhaseAppearanceAdvectionTest {
       fixture.sections[cell].setOilMassPerLength(cell == 0 ? 0.0002 : 0.0003);
     }
 
-    IllegalStateException failure = assertThrows(IllegalStateException.class, () -> fixture.transport.advance(1.0, flux,
-        sources, componentSources, new double[2], fixture.sections, fixture.fluid, fixture.fluid, 1e-8));
-    assertTrue(failure.getMessage().contains("Insufficient oil source-stage donor inventory in cell 1"));
-    fixture.assertUnchanged();
+    fixture.transport.advance(1.0, flux, sources, componentSources, new double[2], fixture.sections, fixture.fluid,
+        fixture.fluid, 1e-8);
+    double[][][] actual = fixture.transport.getInventoryKg();
+    assertEquals(0.0002, actual[0][1][fixture.ethane], 1e-14);
+    assertEquals(0.0003, actual[1][1][fixture.ethane], 1e-14);
+    assertEquals(0.0, actual[0][1][fixture.methane], 0.0);
+    assertEquals(0.0, actual[1][1][fixture.methane], 0.0);
+    TwoFluidComponentConservationReport report = fixture.transport.createReport(1.0, 1, 1e-8);
+    assertEquals(0.0015, report.getOutletBoundaryMassKg()[fixture.ethane], 1e-14);
+    assertTrue(report.isConverged(), report.getMessage());
   }
 
   /** Newly appearing oil can leave the outlet while its actual components close the boundary ledger. */
@@ -236,7 +278,7 @@ class TwoFluidPhaseAppearanceAdvectionTest {
     }
     IllegalStateException failure = assertThrows(IllegalStateException.class, () -> transport.advance(1.0, flux,
         sources, componentSources, new double[3], cells, fixture.fluid, fixture.fluid, 1e-8));
-    assertTrue(failure.getMessage().contains("Insufficient oil source-stage donor inventory"));
+    assertTrue(failure.getMessage().contains("Insufficient oil source/incoming donor inventory"));
     assertEquals(before, transport.createReport(0.0, 0, 1e-8).toJson());
   }
 
