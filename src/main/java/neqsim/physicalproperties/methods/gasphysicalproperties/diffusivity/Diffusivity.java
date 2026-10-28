@@ -188,19 +188,32 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-    if (this.binaryDiffusionCoefficients != null && this.binaryDiffusionCoefficients.length > 0) {
-      properties.binaryDiffusionCoefficients = this.binaryDiffusionCoefficients.clone();
-      for (int i = 0; i < this.binaryDiffusionCoefficients.length; i++) {
-        if (this.binaryDiffusionCoefficients[i] != null && properties.binaryDiffusionCoefficients[i] != null) {
-          System.arraycopy(this.binaryDiffusionCoefficients[i], 0, properties.binaryDiffusionCoefficients[i], 0,
-              this.binaryDiffusionCoefficients[i].length);
-        }
-      }
-    }
+    properties.binaryDiffusionCoefficients = copyMatrix(binaryDiffusionCoefficients);
+    properties.binaryLennardJonesOmega = copyMatrix(binaryLennardJonesOmega);
+    properties.binaryMolecularDiameter = copyMatrix(binaryMolecularDiameter);
+    properties.binaryEnergyParameter = copyMatrix(binaryEnergyParameter);
+    properties.binaryMolecularMass = copyMatrix(binaryMolecularMass);
     if (this.effectiveDiffusionCoefficient != null && this.effectiveDiffusionCoefficient.length > 0) {
       properties.effectiveDiffusionCoefficient = this.effectiveDiffusionCoefficient.clone();
     }
     return properties;
+  }
+
+  /**
+   * Copy mutable gas-diffusion scratch rows while preserving absent arrays and rows.
+   *
+   * @param source source matrix, possibly null
+   * @return independently owned matrix, or null when absent
+   */
+  private static double[][] copyMatrix(double[][] source) {
+    if (source == null) {
+      return null;
+    }
+    double[][] copy = source.clone();
+    for (int row = 0; row < source.length; row++) {
+      copy[row] = source[row] == null ? null : source[row].clone();
+    }
+    return copy;
   }
 
   /** {@inheritDoc} */

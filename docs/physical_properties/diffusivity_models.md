@@ -163,27 +163,85 @@ where:
 - $T$ is temperature (K)
 - $P$ is pressure (bar)
 - $M_i, M_j$ are molar masses (g/mol)
-- $\sum v_i$ is the sum of atomic diffusion volumes for species $i$ (cm³/mol)
+- $\sum v_i$ is the empirical Fuller diffusion-volume sum for species $i$
 
-**Diffusion volume table** (selected values):
+The displayed equation returns **cm²/s**; multiply by 1e-4 for the public m²/s
+result. The retained rounded bar prefactor 1.013e-3 is not an atm prefactor.
+Fuller diffusion volumes are empirical numbers, not EOS molar volumes. The
+accessible parameter evidence is Gu, Cheng and Tang (2018), equation 2.3/Table 1,
+and COMSOL 6.4, Tables 6-7/6-8; these do not establish sixth-edition conformance.
+
+**Diffusion volume table** (selected implemented values):
 
 | Species | $\sum v$ |
 |---|---|
-| H₂ | 7.07 |
-| N₂ | 17.9 |
-| O₂ | 16.6 |
+| H₂ | 6.12 |
+| N₂ | 18.5 |
+| O₂ | 16.3 |
 | CO₂ | 26.9 |
-| H₂O | 12.7 |
+| H₂O | 13.1 |
 | CH₄ | 25.14 |
 | C₂H₆ | 45.66 |
 | C₃H₈ | 66.18 |
+| Benzene, C₆H₆ | 90.96 |
+| Cyclohexane, C₆H₁₂ | 123.12 |
+| Methanol, CH₄O | 31.25 |
+| MEG, C₂H₆O₂ | 57.88 |
+| DEG, C₄H₁₀O₃ | 105.03 |
+| TEG, C₆H₁₄O₄ | 152.18 |
+
+Regressed simple-molecule values take precedence. Known organic values are
+assembled once from C=15.9, H=2.31 and O=6.11, with -18.3 for an aromatic or
+heterocyclic ring. Saturated cyclohexane receives no ring subtraction. This
+repairs erroneous literal sums in the previous organic table; for example,
+ethane changes 43.35→45.66 and propane 61.56→66.18. The canonical database
+identity `nC10` now shares n-decane's 209.82 sum rather than taking the fallback.
+This is a finite known-structure table, not a general molecular-formula parser.
 
 For components not in the table, the critical volume is used as fallback: $\sum v \approx 0.285 \, V_c$ where $V_c$ is in cm³/mol.
+If no positive critical volume is available, the retained fallback is
+`max(10, 0.95*M)` with M in g/mol. These estimates lack a general uncertainty
+contract and do not qualify TBP fractions or unknown structures. Nonfinite
+positive critical volume produces an unavailable result rather than zero.
+Known table entries do not require critical-volume data.
+
+Nonpositive/nonfinite temperature, pressure or either molar mass, and
+nonpositive/nonfinite calculated coefficients, return NaN through direct Fuller
+evaluation. Stored coefficients require recalculation after any state/model
+change. The 200–2000 K warning interval is an implementation warning, not an
+experimentally established universal validity range. No dense-gas pressure
+correction or mixture thermodynamic factor is added.
+
+`FullerDiffusivityQualificationTest` freezes 27 independent 70-digit Decimal
+equation evaluations with known diffusion volumes at 300 K and 1.01325 bara. These include all
+maintained organic table identities and selected simple-gas controls; masses
+are deliberately prescribed as 30/28 g/mol to isolate parameter lookup.
+For example, synthetic ethane/N₂ gives 1.4688939362492457e-5 m²/s. Additional
+checks cover pressure/temperature scaling, invalid inputs, approximate fallbacks,
+amount/composition/insertion order, repeated evaluation and boundary neighbors.
+These arithmetic checks are not experimental qualification of those substances.
+
+A separate physical control compares CH₄/He at 200/250/273.15 K and 1.01325 bara
+with Langenberg et al. (2020), Table 3: AF D₀=0.618 cm²/s, b=1.68; TT D₀=0.610
+cm²/s, b=1.69, using D=D₀(T/273.15)^b. A fixed 15% model-comparison gate applies
+only to these six comparisons. The reported fit errors do not include every
+systematic contribution and are not a universal model uncertainty. The table's
+C₂H₄ rows are ethene; the paper's isolated ethane wording is not used as ethane
+evidence. No parameter was fitted to these controls.
+
+Gas-diffusivity clones now independently own five mutable matrices and the
+effective-coefficient array. This fixes clone evaluation overwriting the source's
+stored results for Fuller, Chapman–Enskog and Wilke–Lee. Plain property-family
+clones retain their existing phase-binding semantics: clone the fluid/phase for
+independent thermodynamic state, or explicitly rebind a copied family.
+Component-count rebinding and other property-family storage are outside this
+increment. Default Chapman–Enskog equations and valid-input evaluation cost
+are unchanged by the clone repair.
 
 **Key features:**
 - Does not need Lennard-Jones parameters
 - Covers wide range of organic and inorganic species
-- Often the most accurate gas model (typically ±2-5%)
+- Low-pressure gas estimate; require independent evidence for the actual pair and domain
 - Temperature exponent is 1.75 (versus 1.5 for Chapman-Enskog)
 
 **Usage:**
@@ -398,7 +456,12 @@ The full list includes noble gases, halogenated compounds, and hydrocarbons up t
 
 ## Validation Against Experimental Data
 
-All models have been validated against published experimental data. The table below shows results at 298.15 K and 1 atm.
+The existing regression suite compares selected gas and liquid pairs against
+published values. Its broad 25% gas and 50% liquid gates do not establish
+universal model uncertainty. The following legacy illustrative table records
+selected comparisons at 298.15 K and 1 atm; it is not a full-range qualification.
+The independent Fuller parameter/lifecycle checks and CH₄/He controls above
+have separate numerical and physical acceptance criteria.
 
 ### Gas-Phase Validation
 
@@ -409,7 +472,7 @@ All models have been validated against published experimental data. The table be
 
 **Gas model accuracy summary:**
 - Chapman-Enskog: ±1-8%
-- Fuller-Schettler-Giddings: ±2-3% (best overall for gas)
+- Fuller-Schettler-Giddings: pair- and state-dependent; see the bounded CH₄/He control above
 - Wilke-Lee: ±0.3-5%
 
 ### Liquid-Phase Validation (CO₂ in water at 25°C)
@@ -438,7 +501,7 @@ All models pass the following consistency checks:
 
 | Application | Recommended Model | Model String | Typical Accuracy |
 |---|---|---|---|
-| Gas phase (general) | Fuller-Schettler-Giddings | `"Fuller-Schettler-Giddings"` | ±2-5% |
+| Low-pressure gas estimate | Fuller-Schettler-Giddings | `"Fuller-Schettler-Giddings"` | Qualify the actual pair and state; no universal percentage |
 | Gas phase (light gases) | Chapman-Enskog or Wilke-Lee | `"Chapman-Enskog"` / `"Wilke Lee"` | ±1-8% |
 | Aqueous liquids | Wilke-Chang | `"Wilke-Chang"` | ±10-15% |
 | Organic liquids | Tyn-Calus or Hayduk-Minhas | `"Tyn-Calus"` / `"Hayduk-Minhas"` | ±10-20% |
@@ -623,3 +686,18 @@ NeqSim calculates:
 8. Poling, B.E., Prausnitz, J.M., O'Connell, J.P. (2001). The Properties of Gases and Liquids, 5th Ed. McGraw-Hill.
 9. Bird, R.B., Stewart, W.E., Lightfoot, E.N. (2002). Transport Phenomena, 2nd Ed. Wiley.
 10. Marrero, T.R., Mason, E.A. (1972). Gaseous Diffusion Coefficients. J. Phys. Chem. Ref. Data, 1(1), 3-118.
+
+
+### Accessible Fuller qualification sources
+
+- Gu, W., Cheng, P. and Tang, M. (2018), *R. Soc. Open Sci.* 5:171936,
+  [equation 2.3 and Table 1](https://pmc.ncbi.nlm.nih.gov/articles/PMC6083652/),
+  [doi:10.1098/rsos.171936](https://doi.org/10.1098/rsos.171936), CC BY 4.0.
+  Parameter/additive-rule evidence; later evaluation, not the original handbook.
+- COMSOL 6.4, [Transport Properties, Tables 6-7/6-8](https://doc.comsol.com/6.4/doc/com.comsol.help.chem/chem_ug_thermo.11.27.html).
+  Independent vendor implementation documentation corroborates the structural
+  and simple-molecule distinction; it is not experimental validation.
+- Langenberg et al. (2020), *Atmos. Chem. Phys.* 20, 3669–3682,
+  [equation 5 and Table 3](https://acp.copernicus.org/articles/20/3669/2020/),
+  [doi:10.5194/acp-20-3669-2020](https://doi.org/10.5194/acp-20-3669-2020),
+  CC BY 4.0. Original AF/TT measured fits; selected CH₄/He controls only.

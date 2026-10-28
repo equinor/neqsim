@@ -8,21 +8,19 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * Fuller-Schettler-Giddings method for gas-phase binary diffusion coefficients.
  *
  * <p>
- * This is considered the most accurate and widely recommended general correlation for gas-phase diffusion coefficients.
- * It uses atomic diffusion volumes instead of Lennard-Jones parameters, making it applicable to a wider range of
- * compounds including polar molecules and complex hydrocarbons where L-J parameters may be unavailable or unreliable.
- * </p>
- *
- * <p>
- * The correlation is:
+ * Low-pressure gas correlation using regressed simple-molecule volumes or sums of atomic and structural increments.
+ * Known organic sums are assembled once, not inferred from a general molecular-formula parser. Unknown components
+ * retain approximate critical-volume or molar-mass fallbacks; these do not establish parameter validity.
  * </p>
  *
  * <pre>
- * D_AB = 1.013e-2 * T ^ 1.75 * sqrt(1 / M_A + 1 / M_B) / (P * (V_A ^ (1 / 3) + V_B ^ (1 / 3)) ^ 2)
+ * D_AB = 1.013e-7 * T ^ 1.75 * sqrt(1 / M_A + 1 / M_B) / (P * (V_A ^ (1 / 3) + V_B ^ (1 / 3)) ^ 2)
  * </pre>
  *
  * <p>
- * where D_AB is in cm^2/s, T in K, P in atm, M in g/mol, and V is the diffusion volume in cm^3/mol.
+ * D_AB is in m2/s, T in K, P in absolute bar and M in g/mol. V denotes empirical Fuller diffusion-volume numbers, not
+ * thermodynamic molar volumes. The legacy bar prefactor is rounded; invalid/nonfinite states or masses and
+ * nonpositive/nonfinite results return NaN. The warning interval is not a universal accuracy guarantee.
  * </p>
  *
  * <p>
@@ -35,6 +33,9 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * Chem., 73, 3679-3685.</li>
  * <li>Poling, B.E., Prausnitz, J.M. and O'Connell, J.P. (2001). "The Properties of Gases and Liquids." 5th ed.,
  * McGraw-Hill, Table 11-1.</li>
+ * <li>Gu, W., Cheng, P. and Tang, M. (2018). R. Soc. Open Sci. 5, 171936, equation 2.3 and Table 1,
+ * doi:10.1098/rsos.171936 (CC BY 4.0). Accessible parameter and additive-rule evidence, not sixth-edition
+ * conformance.</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -45,14 +46,14 @@ public class FullerSchettlerGiddingsDiffusivity extends Diffusivity {
   private static final long serialVersionUID = 1000;
 
   /**
-   * Atomic and structural diffusion volume increments (cm^3/mol) from Fuller, Schettler and Giddings (1966, 1969) and
+   * Atomic and structural empirical diffusion-volume increments from Fuller, Schettler and Giddings (1966, 1969) and
    * updated by Poling, Prausnitz and O'Connell (2001), Table 11-1.
    */
   private static final Map<String, Double> ATOMIC_DIFFUSION_VOLUMES = createAtomicVolumes();
 
   /**
-   * Special diffusion volumes for simple molecules (cm^3/mol). These are determined directly from experimental data and
-   * should be used in preference to summing atomic increments.
+   * Regressed simple-molecule diffusion volumes and explicitly assembled known organic sums. Regressed values take
+   * precedence over an atomic sum for the corresponding simple molecule.
    */
   private static final Map<String, Double> MOLECULAR_DIFFUSION_VOLUMES = createMolecularVolumes();
 
@@ -78,8 +79,8 @@ public class FullerSchettlerGiddingsDiffusivity extends Diffusivity {
   }
 
   /**
-   * Create the table of special molecular diffusion volumes. These are experimentally derived values for simple
-   * molecules that should be used instead of summing atomic increments.
+   * Create regressed simple-molecule values and known organic group sums. Only aromatic and heterocyclic rings receive
+   * the structural subtraction; saturated carbocyclic rings do not.
    *
    * @return map of component name to molecular diffusion volume
    */
@@ -118,36 +119,45 @@ public class FullerSchettlerGiddingsDiffusivity extends Diffusivity {
     v.put("SF6", 71.3);
     v.put("CCl2F2", 114.8);
 
-    // Light hydrocarbons
-    v.put("methane", 25.14); // C + 4H = 15.9 + 4*2.31 = 25.14
-    v.put("ethane", 43.35); // 2C + 6H = 2*15.9 + 6*2.31
-    v.put("propane", 61.56); // 3C + 8H
-    v.put("i-butane", 79.77); // 4C + 10H
-    v.put("n-butane", 79.77);
-    v.put("i-pentane", 97.98); // 5C + 12H
-    v.put("n-pentane", 97.98);
-    v.put("n-hexane", 116.19); // 6C + 14H
-    v.put("n-heptane", 134.40); // 7C + 16H
-    v.put("n-octane", 152.61); // 8C + 18H
-    v.put("n-nonane", 170.82); // 9C + 20H
-    v.put("n-decane", 189.03); // 10C + 22H
-
-    // Cyclic/aromatic hydrocarbons (with ring correction)
-    v.put("cyclohexane", 98.67); // 6C + 12H - 18.3(ring) = 6*15.9+12*2.31-18.3
-    v.put("benzene", 77.46); // 6C + 6H - 18.3(ring) = 6*15.9+6*2.31-18.3
-    v.put("toluene", 95.67); // 7C + 8H - 18.3(ring)
-
-    // Oxygenated compounds
-    v.put("methanol", 30.42); // C + 4H + O = 15.9 + 4*2.31 + 6.11
-    v.put("ethanol", 48.63); // 2C + 6H + O
-    v.put("acetone", 67.68); // 3C + 6H + O = 3*15.9+6*2.31+6.11
-
-    // MEG (ethylene glycol): C2H6O2
-    v.put("MEG", 54.74); // 2C + 6H + 2O = 2*15.9+6*2.31+2*6.11
-    v.put("DEG", 91.96); // 4C + 10H + 3O
-    v.put("TEG", 129.18); // 6C + 14H + 4O
+    // Known organic structures: C/H/O atom counts and aromatic/heterocyclic ring count.
+    v.put("methane", organicVolume(1, 4, 0, 0));
+    v.put("ethane", organicVolume(2, 6, 0, 0));
+    v.put("propane", organicVolume(3, 8, 0, 0));
+    v.put("i-butane", organicVolume(4, 10, 0, 0));
+    v.put("n-butane", organicVolume(4, 10, 0, 0));
+    v.put("i-pentane", organicVolume(5, 12, 0, 0));
+    v.put("n-pentane", organicVolume(5, 12, 0, 0));
+    v.put("n-hexane", organicVolume(6, 14, 0, 0));
+    v.put("n-heptane", organicVolume(7, 16, 0, 0));
+    v.put("n-octane", organicVolume(8, 18, 0, 0));
+    v.put("n-nonane", organicVolume(9, 20, 0, 0));
+    v.put("n-decane", organicVolume(10, 22, 0, 0));
+    v.put("nC10", organicVolume(10, 22, 0, 0)); // Canonical database name.
+    v.put("cyclohexane", organicVolume(6, 12, 0, 0));
+    v.put("benzene", organicVolume(6, 6, 0, 1));
+    v.put("toluene", organicVolume(7, 8, 0, 1));
+    v.put("methanol", organicVolume(1, 4, 1, 0));
+    v.put("ethanol", organicVolume(2, 6, 1, 0));
+    v.put("acetone", organicVolume(3, 6, 1, 0));
+    v.put("MEG", organicVolume(2, 6, 2, 0));
+    v.put("DEG", organicVolume(4, 10, 3, 0));
+    v.put("TEG", organicVolume(6, 14, 4, 0));
 
     return v;
+  }
+
+  /**
+   * Assemble a known structure at class initialization, retaining the published increments.
+   *
+   * @param carbon number of carbon atoms
+   * @param hydrogen number of hydrogen atoms
+   * @param oxygen number of oxygen atoms
+   * @param rings number of aromatic or heterocyclic rings
+   * @return empirical diffusion-volume sum
+   */
+  private static double organicVolume(int carbon, int hydrogen, int oxygen, int rings) {
+    return carbon * ATOMIC_DIFFUSION_VOLUMES.get("C") + hydrogen * ATOMIC_DIFFUSION_VOLUMES.get("H")
+        + oxygen * ATOMIC_DIFFUSION_VOLUMES.get("O") + rings * ATOMIC_DIFFUSION_VOLUMES.get("RING");
   }
 
   /**
@@ -163,16 +173,21 @@ public class FullerSchettlerGiddingsDiffusivity extends Diffusivity {
    * Get the diffusion volume for a component.
    *
    * <p>
-   * First checks for a special molecular value, then attempts estimation from molecular formula / critical properties.
+   * First checks for a special molecular value, then uses approximate critical-volume or molar-mass fallback data.
    * </p>
    *
    * @param componentIndex index of the component
-   * @return diffusion volume in cm^3/mol
+   * @return empirical Fuller diffusion-volume number
    */
   private double getDiffusionVolume(int componentIndex) {
     String name = gasPhase.getPhase().getComponent(componentIndex).getComponentName();
 
-    // Check special molecular volumes first (case-insensitive lookup)
+    // Fast exact lookup preserves live component identity without a state-dependent cache.
+    Double known = MOLECULAR_DIFFUSION_VOLUMES.get(name);
+    if (known != null) {
+      return known;
+    }
+    // Retain compatibility with case-insensitive identities.
     for (Map.Entry<String, Double> entry : MOLECULAR_DIFFUSION_VOLUMES.entrySet()) {
       if (entry.getKey().equalsIgnoreCase(name)) {
         return entry.getValue();
@@ -199,7 +214,12 @@ public class FullerSchettlerGiddingsDiffusivity extends Diffusivity {
     double T = gasPhase.getPhase().getTemperature();
     double P = gasPhase.getPhase().getPressure(); // in bara
 
-    // Temperature range validation
+    if (!(T > 0) || !Double.isFinite(T) || !(P > 0) || !Double.isFinite(P)) {
+      binaryDiffusionCoefficients[i][j] = Double.NaN;
+      return Double.NaN;
+    }
+
+    // This warning interval is not a physical qualification envelope.
     if (enableTemperatureWarnings && (T < T_MIN || T > T_MAX)) {
       logger.warn("Temperature {} K is outside validated range [{}-{}] for Fuller-Schettler-Giddings", T, T_MIN, T_MAX);
     }
@@ -208,23 +228,20 @@ public class FullerSchettlerGiddingsDiffusivity extends Diffusivity {
     double MA = gasPhase.getPhase().getComponent(i).getMolarMass() * 1000.0;
     double MB = gasPhase.getPhase().getComponent(j).getMolarMass() * 1000.0;
 
-    // Diffusion volumes in cm^3/mol
+    if (!(MA > 0) || !Double.isFinite(MA) || !(MB > 0) || !Double.isFinite(MB)) {
+      binaryDiffusionCoefficients[i][j] = Double.NaN;
+      return Double.NaN;
+    }
+
+    // Empirical Fuller diffusion-volume numbers.
     double VA = getDiffusionVolume(i);
     double VB = getDiffusionVolume(j);
 
-    // Fuller-Schettler-Giddings correlation
-    // D_AB [cm^2/s] = 1.013e-2 * T^1.75 * sqrt(1/M_A + 1/M_B)
-    // / (P_atm * (V_A^(1/3) + V_B^(1/3))^2)
+    // Legacy rounded bar prefactor; 1e-4 converts cm2/s to m2/s.
     double sigmaV = Math.pow(VA, 1.0 / 3.0) + Math.pow(VB, 1.0 / 3.0);
     double mFactor = Math.sqrt(1.0 / MA + 1.0 / MB);
-
-    // D in cm^2/s (P must be in atm; bara ≈ atm for this correlation)
-    // Constant 1.013e-3 from Fuller, Ensley & Giddings (1969), J. Phys. Chem. 73, 3679
-    binaryDiffusionCoefficients[i][j] = 1.013e-3 * Math.pow(T, 1.75) * mFactor / (P * sigmaV * sigmaV);
-
-    // Convert from cm^2/s to m^2/s
-    binaryDiffusionCoefficients[i][j] *= 1e-4;
-
+    double coefficient = 1.013e-3 * Math.pow(T, 1.75) * mFactor / (P * sigmaV * sigmaV) * 1e-4;
+    binaryDiffusionCoefficients[i][j] = coefficient > 0 && Double.isFinite(coefficient) ? coefficient : Double.NaN;
     return binaryDiffusionCoefficients[i][j];
   }
 }
