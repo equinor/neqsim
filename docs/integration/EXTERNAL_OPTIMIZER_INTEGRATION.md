@@ -1148,6 +1148,17 @@ axes, and evidence counts. This is screening evidence only—not causality, a sh
 to alter a limit, or operating approval. Run a separately qualified paired relief study before reporting a
 debottleneck benefit. Schemas v8-v10 remain readable for historical lifecycle evidence.
 
+Schema v12 adds a qualified paired-relief receipt to an exact installed-equipment opportunity row. Use
+`ProcessModelDebottleneckStudy.OperatingActionCandidateListSearch` with the same
+`ProcessModelOperatingActionSetEvaluator` as the operating-envelope study, evaluate the baseline and proposed direct
+capacity limit with the common ordered candidate policy, and pass the completed result through
+`ProcessModelOperatingEnvelopeStudy.qualifyReliefStudy(...)`. Qualification rejects a foreign evaluator or result,
+a baseline action-vector mismatch, an objective identity/value mismatch outside the declared replay/search tolerance,
+non-finite objective evidence, any failed scenario, or incomplete capacity/action/process restoration. The emitted
+receipt retains the accepted and paired baseline objective values, residual, allowed tolerance and provenance. It is
+paired sampled evidence only, not causal attribution, a shadow price, permission to alter a limit, design approval,
+investment approval, or operating approval.
+
 The block also carries ordered `accepted_action_ids` beside `accepted_candidate_values`. Attach it to
 the proposal as `accepted_point_envelope_evidence` and set
 `production.require_envelope_evidence: true` in a continuous field-study plan. The existing living-task guard

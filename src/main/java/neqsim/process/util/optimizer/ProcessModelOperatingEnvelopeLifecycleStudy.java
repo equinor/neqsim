@@ -103,7 +103,9 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       String configurationProvenance, ProcessModelOperatingEnvelopeStudy study, OperatingPointSearchResult search,
       SliceResult... slices) {
     return addPeriodInternal(periodId, periodName, elapsedTime, configurationProvenance,
-        Collections.<AcceptedStateMetric>emptyList(), null, study, search, slices);
+        Collections.<AcceptedStateMetric>emptyList(), null,
+        Collections.<ProcessModelOperatingEnvelopeStudy.QualifiedReliefStudyEvidence>emptyList(), study, search,
+        slices);
   }
 
   /**
@@ -123,7 +125,9 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       String configurationProvenance, UtilizationCoverageReport acceptedCoverage,
       ProcessModelOperatingEnvelopeStudy study, OperatingPointSearchResult search, SliceResult... slices) {
     return addPeriodInternal(periodId, periodName, elapsedTime, configurationProvenance,
-        Collections.<AcceptedStateMetric>emptyList(), acceptedCoverage, study, search, slices);
+        Collections.<AcceptedStateMetric>emptyList(), acceptedCoverage,
+        Collections.<ProcessModelOperatingEnvelopeStudy.QualifiedReliefStudyEvidence>emptyList(), study, search,
+        slices);
   }
 
   /**
@@ -150,7 +154,8 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       String configurationProvenance, List<AcceptedStateMetric> acceptedStateMetrics,
       ProcessModelOperatingEnvelopeStudy study, OperatingPointSearchResult search, SliceResult... slices) {
     return addPeriodInternal(periodId, periodName, elapsedTime, configurationProvenance, acceptedStateMetrics, null,
-        study, search, slices);
+        Collections.<ProcessModelOperatingEnvelopeStudy.QualifiedReliefStudyEvidence>emptyList(), study, search,
+        slices);
   }
 
   /**
@@ -172,14 +177,40 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       UtilizationCoverageReport acceptedCoverage, ProcessModelOperatingEnvelopeStudy study,
       OperatingPointSearchResult search, SliceResult... slices) {
     return addPeriodInternal(periodId, periodName, elapsedTime, configurationProvenance, acceptedStateMetrics,
-        acceptedCoverage, study, search, slices);
+        acceptedCoverage, Collections.<ProcessModelOperatingEnvelopeStudy.QualifiedReliefStudyEvidence>emptyList(),
+        study, search, slices);
+  }
+
+  /**
+   * Adds a validated period with accepted coverage and exact qualified paired-relief receipts.
+   *
+   * @param periodId unique stable period identifier
+   * @param periodName human-readable period name
+   * @param elapsedTime non-negative elapsed time from the lifecycle origin
+   * @param configurationProvenance period-specific engineering basis
+   * @param acceptedStateMetrics ordered accepted physical-state metrics
+   * @param acceptedCoverage complete declared coverage built from the accepted replay evidence
+   * @param qualifiedReliefStudies exact receipts returned by the period envelope study
+   * @param study exact runtime envelope study
+   * @param search accepted mixed operating-point search from the same evaluator
+   * @param slices one or more complete accepted-point slices from the same study
+   * @return this study
+   */
+  public ProcessModelOperatingEnvelopeLifecycleStudy addPeriod(String periodId, String periodName, double elapsedTime,
+      String configurationProvenance, List<AcceptedStateMetric> acceptedStateMetrics,
+      UtilizationCoverageReport acceptedCoverage,
+      List<ProcessModelOperatingEnvelopeStudy.QualifiedReliefStudyEvidence> qualifiedReliefStudies,
+      ProcessModelOperatingEnvelopeStudy study, OperatingPointSearchResult search, SliceResult... slices) {
+    return addPeriodInternal(periodId, periodName, elapsedTime, configurationProvenance, acceptedStateMetrics,
+        acceptedCoverage, qualifiedReliefStudies, study, search, slices);
   }
 
   /** Performs common validation and freezes one lifecycle period. */
   private ProcessModelOperatingEnvelopeLifecycleStudy addPeriodInternal(String periodId, String periodName,
       double elapsedTime, String configurationProvenance, List<AcceptedStateMetric> acceptedStateMetrics,
-      UtilizationCoverageReport acceptedCoverage, ProcessModelOperatingEnvelopeStudy study,
-      OperatingPointSearchResult search, SliceResult... slices) {
+      UtilizationCoverageReport acceptedCoverage,
+      List<ProcessModelOperatingEnvelopeStudy.QualifiedReliefStudyEvidence> qualifiedReliefStudies,
+      ProcessModelOperatingEnvelopeStudy study, OperatingPointSearchResult search, SliceResult... slices) {
     String validatedId = requireText(periodId, "Lifecycle period identifier");
     String validatedName = requireText(periodName, "Lifecycle period name");
     String validatedConfiguration = requireText(configurationProvenance, "Lifecycle period configuration provenance");
@@ -199,7 +230,7 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     }
     Map<String, Object> envelopeEvidence = study.getAcceptedPointEnvelopeEvidence(validatedId, search, slices);
     Map<String, Object> constraintOpportunityEvidence = freezeMap(
-        study.summarizeConstraints(slices).toConstraintOpportunityEvidenceMap());
+        study.summarizeConstraints(slices).toConstraintOpportunityEvidenceMap(qualifiedReliefStudies));
     LeadingConstraintEvidence bottleneck = study.getAcceptedPointBottleneck(search);
     validateAcceptedCoverage(acceptedCoverage, search);
     if (!periods.isEmpty() && (periods.get(0).getAcceptedCoverage() == null) != (acceptedCoverage == null)) {
@@ -358,12 +389,16 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     }
 
     List<Map<String, Object>> periodMaps = new ArrayList<Map<String, Object>>();
+    boolean hasQualifiedReliefReceipt = false;
     long evaluationCount = 0L;
     double runtimeSeconds = 0.0;
     int requestedPointCount = 0;
     int completedPointCount = 0;
     for (PeriodEvidence period : periods) {
       periodMaps.add(period.toEvidenceMap());
+      Object opportunityVersion = period.getConstraintOpportunityEvidence().get("summary_version");
+      hasQualifiedReliefReceipt = hasQualifiedReliefReceipt
+          || opportunityVersion instanceof Number && ((Number) opportunityVersion).intValue() == 2;
       Map<String, Object> envelope = period.getEnvelopeEvidence();
       evaluationCount = Math.addExact(evaluationCount,
           number(envelope.get("total_evaluation_count"), "total evaluation count").longValue());
@@ -383,8 +418,10 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     }
     Map<String, Object> evidence = new LinkedHashMap<String, Object>();
     boolean hasStateMetrics = acceptedStateMetricIds != null && !acceptedStateMetricIds.isEmpty();
-    evidence.put("schema_version", Integer.valueOf(periods.get(0).getAcceptedCoverage() == null ? 8
-        : periods.get(0).getAcceptedCoverage().getExpectedPlantConstraintIds().isEmpty() ? 9 : 11));
+    evidence.put("schema_version",
+        Integer.valueOf(hasQualifiedReliefReceipt ? 12
+            : periods.get(0).getAcceptedCoverage() == null ? 8
+                : periods.get(0).getAcceptedCoverage().getExpectedPlantConstraintIds().isEmpty() ? 9 : 11));
     evidence.put("cycle_id", currentCycleId);
     evidence.put("lifecycle_study_id", id);
     evidence.put("lifecycle_study_name", name);
@@ -420,8 +457,8 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
    * </p>
    *
    * @param cycleId current living-task cycle identifier and lifecycle period identifier
-   * @return compact JSON containing exact schema-v8, installed-coverage schema-v9, or plant-coverage schema-v11
-   * evidence
+   * @return compact JSON containing exact schema-v8, installed-coverage schema-v9, plant-coverage schema-v11, or
+   * qualified paired-relief schema-v12 evidence
    * @throws IllegalStateException if the current cycle is not an accepted lifecycle period
    */
   public String toEvidenceJson(String cycleId) {

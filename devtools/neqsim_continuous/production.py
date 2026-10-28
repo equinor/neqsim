@@ -1041,6 +1041,104 @@ def _constraint_opportunity_summary(envelope):
     }
 
 
+def _qualified_constraint_opportunity_reasons(actual, envelope):
+    """Validate an exact opportunity screen with optional qualified paired-relief receipts."""
+    expected = _constraint_opportunity_summary(envelope)
+    if expected is None or not isinstance(actual, dict):
+        return ["constraint_opportunity_summary_mismatch"]
+    reasons = []
+    for field in ("source_constraint_summary_version", "candidate_count", "advisory",
+                  "interpretation"):
+        if actual.get(field) != expected.get(field):
+            reasons.append("constraint_opportunity_summary_mismatch")
+            return reasons
+    candidates = actual.get("candidates")
+    expected_candidates = expected.get("candidates")
+    if (not isinstance(candidates, list) or len(candidates) != len(expected_candidates)):
+        return ["constraint_opportunity_summary_mismatch"]
+    qualified_count = 0
+    paired_fields = {
+        "paired_relief_study_status", "paired_relief_study_required",
+        "paired_relief_study_receipt",
+    }
+    for candidate, expected_candidate in zip(candidates, expected_candidates):
+        if not isinstance(candidate, dict):
+            return ["constraint_opportunity_summary_mismatch"]
+        projected = {key: value for key, value in candidate.items() if key not in paired_fields}
+        expected_projected = {
+            key: value for key, value in expected_candidate.items() if key not in paired_fields
+        }
+        if projected != expected_projected:
+            return ["constraint_opportunity_summary_mismatch"]
+        status = candidate.get("paired_relief_study_status")
+        required = candidate.get("paired_relief_study_required")
+        receipt = candidate.get("paired_relief_study_receipt")
+        if status == "NOT_PROVIDED" and required is True and receipt is None:
+            continue
+        if status != "QUALIFIED" or required is not False or not isinstance(receipt, dict):
+            return ["invalid_qualified_relief_receipt"]
+        qualified_count += 1
+        optimizer = envelope.get("optimizer_evidence")
+        objective = receipt.get("objective")
+        baseline_values = receipt.get("baseline_action_values")
+        alternative_values = receipt.get("alternative_action_values")
+        if (candidate.get("source") != "INSTALLED_EQUIPMENT"
+                or receipt.get("receipt_version") != 1
+                or not all(_text(receipt.get(field)) for field in (
+                    "study_id", "study_name", "study_provenance", "alternative_id",
+                    "alternative_name", "alternative_provenance", "proposal_source"))
+                or receipt.get("action_set_id") != envelope.get("candidate_evaluator_id")
+                or receipt.get("accepted_action_ids") != envelope.get("accepted_action_ids")
+                or baseline_values != envelope.get("accepted_candidate_values")
+                or not isinstance(alternative_values, list)
+                or len(alternative_values) != len(envelope.get("accepted_action_ids", []))
+                or any(not _number(value) for value in alternative_values)
+                or receipt.get("qualified_constraint_name") != candidate.get(
+                    "qualified_constraint_name")
+                or receipt.get("physical_unit") != candidate.get("physical_unit")
+                or receipt.get("original_applicable_limit") != candidate.get("applicable_limit")
+                or not _number(receipt.get("proposed_applicable_limit"))
+                or receipt.get("proposed_applicable_limit") <= 0
+                or receipt.get("limit_direction") not in ("MAXIMUM", "MINIMUM")
+                or not isinstance(objective, dict)
+                or not _non_negative_integer(objective.get("index"))
+                or not isinstance(optimizer, dict)
+                or objective.get("name") != optimizer.get("objective_name")
+                or objective.get("direction") != optimizer.get("objective_direction")
+                or objective.get("unit") != optimizer.get("objective_unit")
+                or objective.get("baseline_value") != optimizer.get("accepted_objective_value")
+                or not _number(objective.get("paired_baseline_value"))
+                or not _number(objective.get("baseline_binding_residual"))
+                or not _number(objective.get("baseline_binding_tolerance"))
+                or objective.get("baseline_binding_tolerance") < 0
+                or not _text(objective.get("baseline_binding_tolerance_provenance"))
+                or not math.isclose(
+                    abs(float(objective.get("paired_baseline_value"))
+                        - float(objective.get("baseline_value"))),
+                    float(objective.get("baseline_binding_residual")),
+                    rel_tol=0.0, abs_tol=0.0)
+                or objective.get("baseline_binding_residual")
+                    > objective.get("baseline_binding_tolerance")
+                or not _number(objective.get("alternative_value"))
+                or not _number(objective.get("delta"))
+                or not math.isclose(
+                    float(objective.get("alternative_value"))
+                    - float(objective.get("paired_baseline_value")),
+                    float(objective.get("delta")), rel_tol=0.0, abs_tol=0.0)
+                or receipt.get("study_outcome") != "COMPLETED"
+                or receipt.get("capacity_restored") is not True
+                or receipt.get("process_state_restored") is not True
+                or receipt.get("recovery_simulation_converged") is not True
+                or receipt.get("qualification_state") != "QUALIFIED_PAIRED_SAMPLED_RELIEF"
+                or receipt.get("advisory") is not True
+                or not _text(receipt.get("interpretation"))):
+            return ["invalid_qualified_relief_receipt"]
+    expected_version = 2 if qualified_count else 1
+    if actual.get("summary_version") != expected_version:
+        reasons.append("constraint_opportunity_summary_mismatch")
+    return reasons
+
+
 def _period_change_diagnostics(periods, action_ids, time_unit, state_metric_ids=None,
                                require_operating_transitions=False,
                                require_boundary_refinements=False,
@@ -1414,7 +1512,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
 
     reasons = []
     schema_version = evidence.get("schema_version")
-    if schema_version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11):
+    if schema_version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12):
         reasons.append("unsupported_lifecycle_envelope_schema")
     if evidence.get("cycle_id") != ctx.cycle_id:
         reasons.append("stale_lifecycle_envelope_evidence")
@@ -1429,7 +1527,8 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
         action_ids = []
     state_metric_ids = None
     if (schema_version == 3
-            or (schema_version in (4, 5, 6, 7, 8, 9, 10, 11) and "accepted_state_metric_ids" in evidence)):
+            or (schema_version in (4, 5, 6, 7, 8, 9, 10, 11, 12)
+                and "accepted_state_metric_ids" in evidence)):
         state_metric_ids = _action_ids(evidence.get("accepted_state_metric_ids"))
         if state_metric_ids is None:
             reasons.append("invalid_lifecycle_state_metric_ids")
@@ -1503,7 +1602,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             reasons.append(prefix + "_identity_mismatch")
         if envelope.get("accepted_action_ids") != action_ids:
             reasons.append(prefix + "_action_ids_mismatch")
-        if schema_version in (4, 5, 6, 7, 8, 9, 10, 11):
+        if schema_version in (4, 5, 6, 7, 8, 9, 10, 11, 12):
             slices = envelope.get("slices")
             if (not isinstance(slices, list)
                     or any(not isinstance(envelope_slice, dict)
@@ -1511,29 +1610,34 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
                            or "operating_region_transitions" not in envelope_slice
                            for envelope_slice in slices)):
                 reasons.append(prefix + "_missing_operating_region_transition_evidence")
-            if (schema_version in (5, 6, 7, 8, 9, 10, 11)
+            if (schema_version in (5, 6, 7, 8, 9, 10, 11, 12)
                     and (not isinstance(slices, list)
                          or any(not isinstance(envelope_slice, dict)
                                 or "operating_region_boundary_refinements" not in envelope_slice
                                 or "maximum_boundary_refinement_evaluations" not in envelope_slice
                                 for envelope_slice in slices))):
                 reasons.append(prefix + "_missing_operating_region_boundary_refinement_evidence")
-            if schema_version in (6, 7, 8, 9, 10, 11) and not _has_boundary_constraint_headroom(slices):
+            if schema_version in (6, 7, 8, 9, 10, 11, 12) and not _has_boundary_constraint_headroom(slices):
                 reasons.append(prefix + "_missing_boundary_constraint_headroom_evidence")
-            if (schema_version in (7, 8, 9, 10, 11)
+            if (schema_version in (7, 8, 9, 10, 11, 12)
                     and (envelope.get("schema_version") != 2
                          or "cross_slice_constraint_summary" not in envelope)):
                 reasons.append(prefix + "_missing_cross_slice_constraint_summary")
-        if schema_version in (9, 10, 11):
+        if schema_version in (9, 10, 11, 12):
             reasons.extend(prefix + "_" + reason
                            for reason in _utilization_coverage_reasons(
                                row.get("utilization_coverage"),
-                               require_plant=schema_version in (10, 11)))
+                               require_plant=schema_version in (10, 11, 12)))
         if schema_version == 11:
             expected_opportunities = _constraint_opportunity_summary(envelope)
             if (expected_opportunities is None
                     or row.get("constraint_opportunity_summary") != expected_opportunities):
                 reasons.append(prefix + "_constraint_opportunity_summary_mismatch")
+        if schema_version == 12:
+            reasons.extend(
+                prefix + "_" + reason
+                for reason in _qualified_constraint_opportunity_reasons(
+                    row.get("constraint_opportunity_summary"), envelope))
 
         accepted = envelope.get("accepted_candidate_values")
         optimizer = envelope.get("optimizer_evidence")
@@ -1596,12 +1700,12 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             })
     if evidence.get("bottleneck_transitions") != expected_transitions:
         reasons.append("lifecycle_bottleneck_transitions_mismatch")
-    if schema_version in (2, 3, 4, 5, 6, 7, 8, 9, 10, 11):
+    if schema_version in (2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12):
         expected_period_changes = _period_change_diagnostics(
             periods, action_ids, evidence.get("time_unit"), state_metric_ids,
-            require_operating_transitions=schema_version in (4, 5, 6, 7, 8, 9, 10, 11),
-            require_boundary_refinements=schema_version in (5, 6, 7, 8, 9, 10, 11),
-            require_constraint_summary_identities=schema_version in (8, 9, 10, 11))
+            require_operating_transitions=schema_version in (4, 5, 6, 7, 8, 9, 10, 11, 12),
+            require_boundary_refinements=schema_version in (5, 6, 7, 8, 9, 10, 11, 12),
+            require_constraint_summary_identities=schema_version in (8, 9, 10, 11, 12))
         if (expected_period_changes is None
                 or evidence.get("period_change_diagnostics") != expected_period_changes):
             reasons.append("lifecycle_period_change_diagnostics_mismatch")

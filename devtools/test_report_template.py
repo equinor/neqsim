@@ -314,7 +314,7 @@ def test_lifecycle_report_renders_schema11_constraint_opportunity_screen(tmp_pat
     assert "NEXT_BOTTLENECK_CANDIDATE" in html
     assert "CURRENT_REJECTING_CONSTRAINT" in html
     assert "Paired relief study required" in html
-    assert "before reporting debottleneck benefit" in html
+    assert "paired study receipt also passes convergence" in html
 
 
 def test_lifecycle_envelope_withholds_tampered_identity_migration(tmp_path):
