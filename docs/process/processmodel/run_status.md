@@ -121,7 +121,19 @@ A non-converging recycle flowsheet or a very slow unit can occupy a thread for m
 **off by default**, so existing models run exactly as before.
 
 ```java
-ProcessSystem process = buildProcess();
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.processmodel.RunDiagnostics;
+import neqsim.process.processmodel.RunStatus;
+import neqsim.thermo.system.SystemSrkEos;
+
+SystemSrkEos fluid = new SystemSrkEos(303.15, 10.0);
+fluid.addComponent("methane", 1.0);
+fluid.setMixingRule("classic");
+Stream feed = new Stream("doc feed", fluid);
+feed.setFlowRate(1000.0, "kg/hr");
+ProcessSystem process = new ProcessSystem("doc");
+process.add(feed);
 process.setMaxRunTimeSeconds(30.0);   // wall-clock budget of one run() / runUntilConverged()
 process.setStallDetection(8, 1.0e-3); // 8 iterations without 0.1 % residual improvement
 process.run();                        // returns normally when the watchdog trips

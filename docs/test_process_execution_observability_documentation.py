@@ -40,6 +40,10 @@ MODEL_HOOKS_TEST = (
     ROOT / "src" / "test" / "java" / "neqsim" / "process" / "processmodel"
     / "ProcessModelHooksTest.java"
 )
+RUN_BUDGET_TEST = (
+    ROOT / "src" / "test" / "java" / "neqsim" / "process" / "processmodel"
+    / "ProcessSystemRunBudgetTest.java"
+)
 
 
 def read(path: Path) -> str:
@@ -70,7 +74,10 @@ class ProcessExecutionObservabilityDocumentationContractTest(unittest.TestCase):
         assert not re.search(r"^# ", prose, flags=re.MULTILINE)
         assert "System.out" not in combined
         assert "System.err" not in combined
-        assert combined.count("logger.info(") == 12
+        info_messages = re.findall(r'logger\.info\("([^"\n]*)"\s*,', combined)
+        assert info_messages
+        assert len(info_messages) == combined.count("logger.info(")
+        assert all("{}" in message for message in info_messages)
         assert 'logger.error("Simulation error: {}", event.getDescription());' in hooks
         assert "LogManager.getLogger(YourClass.class)" in run_status
         assert "LogManager.getLogger(YourClass.class)" in hooks
@@ -82,6 +89,8 @@ class ProcessExecutionObservabilityDocumentationContractTest(unittest.TestCase):
         for block in java_blocks(guide):
             if "RunStatus status" in block:
                 assert "import neqsim.process.processmodel.RunStatus;" in block
+            if "RunDiagnostics diag" in block:
+                assert "import neqsim.process.processmodel.RunDiagnostics;" in block
 
         links = re.findall(r"\[[^]]+\]\(([^)]+)\)", guide)
         assert len(links) == 3
@@ -89,6 +98,38 @@ class ProcessExecutionObservabilityDocumentationContractTest(unittest.TestCase):
             path_text = destination.split("#", maxsplit=1)[0]
             assert path_text.endswith(".md")
             assert (RUN_STATUS_GUIDE.parent / path_text).resolve().is_file()
+
+    def test_watchdog_example_matches_executable_java_regression(self) -> None:
+        """Keep the watchdog setup runnable and tied to its Java regression."""
+
+        guide = read(RUN_STATUS_GUIDE)
+        watchdog = next(block for block in java_blocks(guide) if "RunDiagnostics diag" in block)
+        regression = read(RUN_BUDGET_TEST)
+
+        assert "docSnippetWatchdogOnConvergingProcessLeavesStatusClean" in regression
+        assert "buildProcess()" not in watchdog
+        for imported_type in (
+            "neqsim.process.equipment.stream.Stream",
+            "neqsim.process.processmodel.ProcessSystem",
+            "neqsim.thermo.system.SystemSrkEos",
+        ):
+            assert f"import {imported_type};" in watchdog
+        for statement in (
+            "SystemSrkEos fluid = new SystemSrkEos(303.15, 10.0);",
+            'fluid.addComponent("methane", 1.0);',
+            'fluid.setMixingRule("classic");',
+            'Stream feed = new Stream("doc feed", fluid);',
+            'feed.setFlowRate(1000.0, "kg/hr");',
+            'ProcessSystem process = new ProcessSystem("doc");',
+            "process.add(feed);",
+            "process.setMaxRunTimeSeconds(30.0);",
+            "process.setStallDetection(8, 1.0e-3);",
+            "process.run();",
+            "RunStatus status = process.getRunStatus();",
+            "RunDiagnostics diag = process.getLastRunDiagnostics();",
+        ):
+            assert statement in watchdog
+            assert statement in regression
 
     def test_documented_observability_apis_exist_in_current_source(self) -> None:
         """Keep the documented entry points aligned with Java source."""
