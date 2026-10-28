@@ -311,6 +311,16 @@ double Vcell   = el.getCellVoltage();   // recomputed from I-V at run time
 Sources: IRENA 2022 Hydrogen Decarbonisation Pathways; Buttler & Spliethoff,
 RSER 82 (2018); IEA Global Hydrogen Review 2023.
 
+The SEC column gives illustrative technology ranges, not verified predictions
+from the listed current-efficiency defaults. Their physical provenance and
+consistency are tracked separately in [#4682](https://github.com/equinor/neqsim/issues/4682).
+For any explicitly supplied current efficiency, both native operating modes
+now enforce the [stoichiometric water and Faraday-law contract](equipment/electrolyzers.md#operating-modes).
+Water-feed mode consumes all pure water supplied; power mode writes actual
+water demand to its dedicated inlet. Lower current efficiency increases
+electrical demand for the same hydrogen output. The heat getter includes
+unproductive-current losses on its documented fixed-HHV screening basis.
+
 ### I-V model
 
 $$
