@@ -368,6 +368,18 @@ public class ProcessSystem extends SimulationBaseClass {
   /** Whether the latest recycle iteration loop detected stagnation. */
   private transient boolean recycleSolveStagnated = false;
 
+  /** Opt-in time, cancellation and stall budget owned by this process (all features off by default). */
+  private transient volatile RunBudget ownRunBudget = null;
+
+  /** Budget used by the current run: the own budget, or the budget of the enclosing {@link ProcessModel}. */
+  private transient volatile RunBudget activeRunBudget = null;
+
+  /** Diagnostics of the last run, captured when the run scope closes. */
+  private transient volatile RunDiagnostics lastRunDiagnostics = null;
+
+  /** Number of iterations of the last iterative run loop. */
+  private transient int lastRunPasses = 0;
+
   /**
    * Immutable success records reused while the unit structure, names and types remain unchanged.
    */
@@ -2302,13 +2314,19 @@ public class ProcessSystem extends SimulationBaseClass {
       int iter = 0;
       double bestRecycleError = Double.POSITIVE_INFINITY;
       int recycleNoProgress = 0;
+      final RunBudget loopBudget = budget();
+      final RunBudget.StallTracker stallTracker = loopBudget.newStallTracker();
       do {
         iter++;
+        lastRunPasses = iter;
         isConverged = true;
 
         for (ProcessEquipmentInterface unit : plan.iterativeSection) {
           if (Thread.currentThread().isInterrupted()) {
             logger.debug("Process simulation was interrupted, exiting runHybrid()..." + getName());
+            break;
+          }
+          if (loopBudget.checkStop(null)) {
             break;
           }
           if (!(unit instanceof Recycle)) {
@@ -2389,8 +2407,11 @@ public class ProcessSystem extends SimulationBaseClass {
         } else {
           recycleNoProgress = 0;
         }
+        if (!isConverged && loopBudget.getStallWindow() > 0 && !loopBudget.isTripped()) {
+          stallTracker.record(normalizedLoopResidual(plan.iterativeSection, true), iter);
+        }
       } while ((!isConverged || (iter < 2 && (requireRecycleConfirmation || hasAutoDeactivatedRecycle()))) && iter < 100
-          && !Thread.currentThread().isInterrupted());
+          && !Thread.currentThread().isInterrupted() && !loopBudget.checkStop(null));
     }
 
     // Update calculation identifiers
@@ -3088,6 +3109,9 @@ public class ProcessSystem extends SimulationBaseClass {
   public synchronized void run(UUID id) {
     applyAutoRecycles();
     enterRunScope();
+    final RunBudget runBudget = budget();
+    runBudget.enter();
+    lastRunPasses = 0;
     if (lastRunStatus == null) {
       lastRunStatus = new RunStatus();
     }
@@ -3125,8 +3149,13 @@ public class ProcessSystem extends SimulationBaseClass {
       runThrew = true;
       throw ex;
     } finally {
-      finalizeRunStatus(runThrew);
-      exitRunScope();
+      try {
+        finalizeRunStatus(runThrew);
+      } finally {
+        lastRunDiagnostics = runBudget.snapshot(lastRunPasses);
+        runBudget.exit();
+        exitRunScope();
+      }
     }
   }
 
@@ -3161,6 +3190,10 @@ public class ProcessSystem extends SimulationBaseClass {
     lastRunStatus.markComplete(!runThrew);
     List<String> openRecycles = getOpenRecycles();
     boolean converged = !runThrew && openRecycles.isEmpty() && recycleController.solvedAll();
+    final RunBudget runBudget = budget();
+    if (runBudget.isTripped()) {
+      converged = false;
+    }
     if (converged) {
       // Active states were prepared before dispatch. Reuse them here instead of
       // calling solved(), which would repeat the locked-inactive scan.
@@ -3176,6 +3209,9 @@ public class ProcessSystem extends SimulationBaseClass {
             : Thread.currentThread().isInterrupted() ? "INTERRUPTED"
                 : recycleSolveStagnated ? "STAGNATED" : "NOT_CONVERGED";
     lastRunStatus.recordConvergence(converged, recycleSolveStagnated, 1, openRecycles, reason);
+    if (runBudget.isTripped()) {
+      lastRunStatus.recordBudget(runBudget.getOutcome(), runBudget.getReason(), runBudget.getTripUnit());
+    }
   }
 
   /**
@@ -3248,6 +3284,139 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Returns the run budget of this process, creating it on first use.
+   *
+   * @return the own run budget (never null)
+   */
+  private RunBudget ownBudget() {
+    RunBudget b = ownRunBudget;
+    if (b == null) {
+      synchronized (RunBudget.class) {
+        b = ownRunBudget;
+        if (b == null) {
+          b = new RunBudget();
+          ownRunBudget = b;
+        }
+      }
+    }
+    return b;
+  }
+
+  /**
+   * Returns the budget in force: the budget of the enclosing model run if one is attached, else the own budget.
+   *
+   * @return the active run budget (never null)
+   */
+  private RunBudget budget() {
+    RunBudget active = activeRunBudget;
+    return active != null ? active : ownBudget();
+  }
+
+  /**
+   * Attaches the budget of an enclosing {@link ProcessModel} run so that all areas share one clock and one stop flag.
+   *
+   * @param shared the model budget, or null to detach and use the own budget again
+   */
+  void attachRunBudget(RunBudget shared) {
+    this.activeRunBudget = shared;
+  }
+
+  /**
+   * Sets an opt-in wall-clock budget for {@link #run()}, {@link #run(UUID)} and {@link #runUntilConverged(int)}. The
+   * budget is checked cooperatively between unit operations and between recycle and adjuster iterations; when it is
+   * exceeded the run stops, returns normally and reports {@link RunStatus#TIMED_OUT} with the unit that was running
+   * through {@link #getRunStatus()} and {@link #getLastRunDiagnostics()}. A single unit operation that never returns
+   * cannot be interrupted. The default of zero disables the budget (no change in behaviour).
+   *
+   * @param seconds maximum wall-clock time of one run in seconds; zero or negative disables the budget
+   */
+  public void setMaxRunTimeSeconds(double seconds) {
+    ownBudget().setMaxRunTimeSeconds(seconds);
+  }
+
+  /**
+   * Returns the wall-clock budget of a run.
+   *
+   * @return maximum run time in seconds, zero if disabled
+   */
+  public double getMaxRunTimeSeconds() {
+    return ownBudget().getMaxRunTimeSeconds();
+  }
+
+  /**
+   * Enables opt-in stagnation detection of the recycle and adjuster iterations. When the worst tolerance-normalised
+   * residual (recycle error or adjuster error divided by its tolerance) does not improve by the minimum relative
+   * fraction for the given number of consecutive iterations, the run stops and reports {@link RunStatus#STALLED}. The
+   * default (window zero) keeps the existing behaviour.
+   *
+   * @param window number of consecutive iterations without improvement that stalls the run; zero or negative disables
+   * detection
+   * @param minRelativeImprovement minimum relative improvement of the best residual that counts as progress, for
+   * example 1.0e-3
+   */
+  public void setStallDetection(int window, double minRelativeImprovement) {
+    ownBudget().setStallDetection(window, minRelativeImprovement);
+  }
+
+  /**
+   * Requests cooperative cancellation of the run in progress from another thread. The run stops at the next check
+   * (between unit operations or iterations), returns normally and reports {@link RunStatus#STOPPED}. A request made
+   * while no run is active is discarded when the next run starts. A unit operation that is already executing is not
+   * interrupted.
+   */
+  public void requestStop() {
+    budget().requestStop();
+    ownBudget().requestStop();
+  }
+
+  /**
+   * Returns whether a stop request is pending.
+   *
+   * @return true if {@link #requestStop()} was called during the current run
+   */
+  public boolean isStopRequested() {
+    return budget().isStopRequested();
+  }
+
+  /**
+   * Returns the diagnostics of the last run: elapsed time, budget outcome (timed out, stopped, stalled), the unit that
+   * was running when the budget tripped, and the recent residual history. Safe to call from another thread while the
+   * run is in progress (then it reflects the previous run).
+   *
+   * @return diagnostics of the last run, or a snapshot of the idle budget before the first run
+   */
+  public RunDiagnostics getLastRunDiagnostics() {
+    RunDiagnostics d = lastRunDiagnostics;
+    return d != null ? d : ownBudget().snapshot(0);
+  }
+
+  /**
+   * Computes the worst tolerance-normalised residual of the recycle and adjuster loops for stall detection.
+   *
+   * @param units units in execution order
+   * @param hasRecycle whether the process has recycle units
+   * @return worst normalised residual, zero if nothing is open
+   */
+  private double normalizedLoopResidual(List<ProcessEquipmentInterface> units, boolean hasRecycle) {
+    double worst = 0.0;
+    if (hasRecycle && !recycleController.solvedAll()) {
+      double e = recycleController.getMaxNormalizedError();
+      worst = Double.isFinite(e) ? e : Double.POSITIVE_INFINITY;
+    }
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit instanceof Adjuster && unit.isActive() && !unit.isLockedInactive()) {
+        Adjuster adj = (Adjuster) unit;
+        if (!adj.solved()) {
+          double tol = Math.max(Math.abs(adj.getTolerance()), 1.0e-300);
+          double e = Math.abs(adj.getError()) / tol;
+          worst = Math.max(worst, Double.isFinite(e) ? e : Double.POSITIVE_INFINITY);
+        }
+      }
+    }
+    return worst;
+  }
+
+  /**
    * Runs the process system using sequential execution.
    *
    * <p>
@@ -3311,13 +3480,19 @@ public class ProcessSystem extends SimulationBaseClass {
     int iter = 0;
     double bestRecycleError = Double.POSITIVE_INFINITY;
     int recycleNoProgress = 0;
+    final RunBudget loopBudget = budget();
+    final RunBudget.StallTracker stallTracker = loopBudget.newStallTracker();
     do {
       iter++;
+      lastRunPasses = iter;
       isConverged = true;
       for (int i = 0; i < executionOrder.size(); i++) {
         ProcessEquipmentInterface unit = executionOrder.get(i);
         if (Thread.currentThread().isInterrupted()) {
           logger.debug("Process simulation was interrupted, exiting run()..." + getName());
+          break;
+        }
+        if (loopBudget.checkStop(null)) {
           break;
         }
         if (!(unit instanceof Recycle)) {
@@ -3383,12 +3558,15 @@ public class ProcessSystem extends SimulationBaseClass {
         isConverged = implicitRecycleStatesMatch(previousImplicitState, currentState) && isConverged;
         previousImplicitState = currentState;
       }
+      if (!isConverged && loopBudget.getStallWindow() > 0 && !loopBudget.isTripped()) {
+        stallTracker.record(normalizedLoopResidual(executionOrder, hasRecycle), iter);
+      }
     } while (((!isConverged || (iter < 2 && hasRecycle && (requireRecycleConfirmation || hasAutoDeactivatedRecycle())))
-        && iter < 100) && !runStep && !Thread.currentThread().isInterrupted());
+        && iter < 100) && !runStep && !Thread.currentThread().isInterrupted() && !loopBudget.checkStop(null));
 
     recycleSolveStagnated = hasRecycle && !recycleController.solvedAll()
         && recycleNoProgress >= RECYCLE_NO_PROGRESS_WINDOW && iter >= RECYCLE_MIN_STALL_ITERATIONS;
-    if (implicitRecycle && !isConverged && !runStep) {
+    if (implicitRecycle && !isConverged && !runStep && !loopBudget.isTripped()) {
       throw new IllegalStateException("Implicit recycle loop did not converge after " + iter + " iterations in process "
           + getName() + "; add an explicit Recycle for convergence control");
     }
@@ -3643,6 +3821,10 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param id the calculation identifier
    */
   private void runUnitProfiled(ProcessEquipmentInterface unit, UUID id) {
+    if (budget().checkStop(unit.getName())) {
+      // Opt-in run budget tripped (time, stop request or stall): cooperative cancellation between units.
+      return;
+    }
     if (unit.isLockedInactive() || !unit.isActive()) {
       // Equipment is manually bypassed or auto-deactivated by a previous run() call in this
       // solve pass (low-flow). Mark it as "executed" for the scheduler so downstream units
@@ -4251,30 +4433,40 @@ public class ProcessSystem extends SimulationBaseClass {
       resetAutoRecycleAdaptiveAcceleration();
       applyAutoRecycleAdaptiveAcceleration();
     }
-    run();
-    boolean tuned = false;
-    if (autoConvergenceTuning) {
-      double scale = getTotalFeedFlowRate();
-      if (scale > 0.0 && !Double.isInfinite(scale)) {
-        double noiseFloor = scale * autoTuningFlowFraction;
-        applyAutoRecycleFlowTolerance(noiseFloor);
-        tuned = applyAutoLowFlowThreshold(noiseFloor) > 0;
-      }
-    }
-    int passes = 1;
-    while (passes < maxIterations && !Thread.currentThread().isInterrupted()
-        && (tuned || !solved() || !getOpenRecycles().isEmpty())) {
+    final RunBudget passBudget = budget();
+    passBudget.enter();
+    try {
       run();
-      passes++;
-      tuned = false;
+      boolean tuned = false;
+      if (autoConvergenceTuning) {
+        double scale = getTotalFeedFlowRate();
+        if (scale > 0.0 && !Double.isInfinite(scale)) {
+          double noiseFloor = scale * autoTuningFlowFraction;
+          applyAutoRecycleFlowTolerance(noiseFloor);
+          tuned = applyAutoLowFlowThreshold(noiseFloor) > 0;
+        }
+      }
+      int passes = 1;
+      while (passes < maxIterations && !Thread.currentThread().isInterrupted() && !passBudget.checkStop(null)
+          && (tuned || !solved() || !getOpenRecycles().isEmpty())) {
+        run();
+        passes++;
+        tuned = false;
+      }
+      boolean converged = solved() && getOpenRecycles().isEmpty() && !passBudget.isTripped();
+      RunStatus status = getRunStatus();
+      String reason = converged ? "CONVERGED"
+          : Thread.currentThread().isInterrupted() ? "INTERRUPTED"
+              : recycleSolveStagnated ? "STAGNATED" : "ITERATION_LIMIT";
+      status.recordConvergence(converged, recycleSolveStagnated, passes, getOpenRecycles(), reason);
+      if (passBudget.isTripped()) {
+        status.recordBudget(passBudget.getOutcome(), passBudget.getReason(), passBudget.getTripUnit());
+      }
+      lastRunDiagnostics = passBudget.snapshot(passes);
+      return converged;
+    } finally {
+      passBudget.exit();
     }
-    boolean converged = solved() && getOpenRecycles().isEmpty();
-    RunStatus status = getRunStatus();
-    String reason = converged ? "CONVERGED"
-        : Thread.currentThread().isInterrupted() ? "INTERRUPTED"
-            : recycleSolveStagnated ? "STAGNATED" : "ITERATION_LIMIT";
-    status.recordConvergence(converged, recycleSolveStagnated, passes, getOpenRecycles(), reason);
-    return converged;
   }
 
   /**

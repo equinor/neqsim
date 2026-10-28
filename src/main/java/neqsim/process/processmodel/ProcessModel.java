@@ -55,6 +55,10 @@ public class ProcessModel implements Runnable, Serializable {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ProcessModel.class);
   private Map<String, ProcessSystem> processes = new LinkedHashMap<>();
+  /** Opt-in time, cancellation and stall budget shared by all areas during a run (off by default). */
+  private transient volatile RunBudget runBudget = null;
+  /** Diagnostics of the last run. */
+  private transient volatile RunDiagnostics lastRunDiagnostics = null;
   /** Whether run() closes implicit feedback loops with generated recycles. */
   private boolean autoRecycles = false;
   /** Re-entrancy guard so the seeding run inside makeRecycles() does not trigger insertion again. */
@@ -1350,6 +1354,12 @@ public class ProcessModel implements Runnable, Serializable {
       }
     }
     aggregate.markComplete(!anyFailure);
+    RunDiagnostics diag = lastRunDiagnostics;
+    if (diag != null && !RunBudget.Outcome.NONE.name().equals(diag.getOutcome())) {
+      aggregate.recordConvergence(false, false, diag.getPassCount(), Collections.<String>emptyList(),
+          diag.getOutcome());
+      aggregate.recordBudget(RunBudget.Outcome.valueOf(diag.getOutcome()), diag.getReason(), diag.getUnitName());
+    }
     return aggregate;
   }
 
@@ -2196,6 +2206,112 @@ public class ProcessModel implements Runnable, Serializable {
    */
   @Override
   public void run() {
+    final RunBudget budget = modelBudget();
+    budget.enter();
+    List<ProcessSystem> attached = new ArrayList<ProcessSystem>(processes.values());
+    for (ProcessSystem area : attached) {
+      area.attachRunBudget(budget);
+    }
+    try {
+      runInternal(budget);
+    } finally {
+      lastRunDiagnostics = budget.snapshot(lastIterationCount);
+      for (ProcessSystem area : attached) {
+        area.attachRunBudget(null);
+      }
+      budget.exit();
+    }
+  }
+
+  /**
+   * Returns the run budget of this model, creating it on first use.
+   *
+   * @return the model run budget (never null)
+   */
+  private RunBudget modelBudget() {
+    RunBudget b = runBudget;
+    if (b == null) {
+      synchronized (RunBudget.class) {
+        b = runBudget;
+        if (b == null) {
+          b = new RunBudget();
+          runBudget = b;
+        }
+      }
+    }
+    return b;
+  }
+
+  /**
+   * Sets an opt-in wall-clock budget for {@link #run()} that spans all process areas and all outer iterations. It is
+   * checked between unit operations of every area and between outer iterations; when exceeded the run stops, returns
+   * normally and {@link #getRunStatus()} reports {@link RunStatus#TIMED_OUT} with the unit that was running. A single
+   * unit operation that never returns cannot be interrupted. Zero (default) disables the budget.
+   *
+   * @param seconds maximum wall-clock time of one model run in seconds; zero or negative disables the budget
+   */
+  public void setMaxRunTimeSeconds(double seconds) {
+    modelBudget().setMaxRunTimeSeconds(seconds);
+  }
+
+  /**
+   * Returns the wall-clock budget of a model run.
+   *
+   * @return maximum run time in seconds, zero if disabled
+   */
+  public double getMaxRunTimeSeconds() {
+    return modelBudget().getMaxRunTimeSeconds();
+  }
+
+  /**
+   * Enables opt-in stagnation detection of the outer iterations (and of the recycle and adjuster iterations of every
+   * area). A run whose worst tolerance-normalised residual does not improve by the minimum fraction for the given
+   * number of consecutive iterations stops and reports {@link RunStatus#STALLED}. Window zero (default) disables it.
+   *
+   * @param window number of consecutive iterations without improvement; zero or negative disables detection
+   * @param minRelativeImprovement minimum relative improvement of the best residual that counts as progress
+   */
+  public void setStallDetection(int window, double minRelativeImprovement) {
+    modelBudget().setStallDetection(window, minRelativeImprovement);
+    for (ProcessSystem area : processes.values()) {
+      area.setStallDetection(window, minRelativeImprovement);
+    }
+  }
+
+  /**
+   * Requests cooperative cancellation of the model run in progress (see {@link ProcessSystem#requestStop()}). The run
+   * stops at the next check between unit operations or outer iterations and reports {@link RunStatus#STOPPED}.
+   */
+  public void requestStop() {
+    modelBudget().requestStop();
+  }
+
+  /**
+   * Returns whether a stop request is pending.
+   *
+   * @return true if {@link #requestStop()} was called during the current run
+   */
+  public boolean isStopRequested() {
+    return modelBudget().isStopRequested();
+  }
+
+  /**
+   * Returns the diagnostics of the last model run: elapsed time, budget outcome, the unit that was running when the
+   * budget tripped and the outer-iteration residual history.
+   *
+   * @return diagnostics of the last run
+   */
+  public RunDiagnostics getLastRunDiagnostics() {
+    RunDiagnostics d = lastRunDiagnostics;
+    return d != null ? d : modelBudget().snapshot(0);
+  }
+
+  /**
+   * Runs the model; see {@link #run()}.
+   *
+   * @param budget the run budget in force for this run
+   */
+  private void runInternal(RunBudget budget) {
     if (autoRecycles && !autoRecycleInProgress) {
       makeRecycles();
     }
@@ -2258,7 +2374,9 @@ public class ProcessModel implements Runnable, Serializable {
       }
 
       int iterations = 0;
-      while (!Thread.currentThread().isInterrupted() && iterations < maxIterations) {
+      double bestOuterResidual = Double.POSITIVE_INFINITY;
+      int outerNoProgress = 0;
+      while (!Thread.currentThread().isInterrupted() && iterations < maxIterations && !budget.checkStop(null)) {
         // Notify before-iteration
         notifyBeforeIteration(iterations + 1);
 
@@ -2316,6 +2434,24 @@ public class ProcessModel implements Runnable, Serializable {
         // Update previous states for next iteration
         previousBoundaryStreamStates = currentBoundaryStreamStates;
         dirtyAreas = autoTuningChanged ? null : getDirtyAreasForNextIteration(areaPlan, changedBoundaryStreams);
+        if (budget.getStallWindow() > 0 && !budget.isTripped()) {
+          double normalized = Math.max(lastMaxFlowError / Math.max(flowTolerance, 1.0e-300),
+              Math.max(lastMaxTemperatureError / Math.max(temperatureTolerance, 1.0e-300),
+                  lastMaxPressureError / Math.max(pressureTolerance, 1.0e-300)));
+          if (Double.isFinite(normalized) && normalized < bestOuterResidual * (1.0 - budget.getStallMinImprovement())) {
+            bestOuterResidual = normalized;
+            outerNoProgress = 0;
+          } else {
+            outerNoProgress++;
+          }
+          if (outerNoProgress >= budget.getStallWindow()) {
+            budget.trip(RunBudget.Outcome.STALLED,
+                String.format(Locale.US,
+                    "outer boundary residual %.3e did not improve (best %.3e) for %d iterations, stopped at "
+                        + "iteration %d",
+                    normalized, bestOuterResidual, outerNoProgress, iterations));
+          }
+        }
       }
       lastIterationCount = iterations;
 
@@ -2325,7 +2461,7 @@ public class ProcessModel implements Runnable, Serializable {
         massClosureAccepted();
       }
 
-      if (!modelConverged && iterations >= maxIterations) {
+      if (!modelConverged && iterations >= maxIterations && !budget.isTripped()) {
         logger.warn("ProcessModel reached max iterations (" + maxIterations + ") without full convergence. Flow error: "
             + lastMaxFlowError + formatWorstStreamSuffix("flow") + ", Temp error: " + lastMaxTemperatureError
             + formatWorstStreamSuffix("temperature"));
