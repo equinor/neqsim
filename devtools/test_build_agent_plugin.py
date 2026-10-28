@@ -566,6 +566,59 @@ class HookJavaResolutionTest(unittest.TestCase):
         self.assertTrue(self.ns["java_note_is_new"]("B"))  # relapse after a healthy session
 
 
+class HookPythonSelectionTest(unittest.TestCase):
+    """The hook must not install into an interpreter older than the toolkit supports."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        _write(self.root / "plugin.json", '{"name": "neqsim", "version": "0"}')
+        self.env = mock.patch.dict(os.environ, {"PLUGIN_ROOT": str(self.root)})
+        self.env.start()
+        os.environ.pop("NEQSIM_PYTHON", None)
+        src = bap.HOOK_PY.format(pinned="", editable_self=False, requirements=[],
+                                 prefetch_mcp=False, live_requirements="", verify_imports=[])
+        self.ns = {"__file__": str(self.root / "scripts" / "install_skill_packages.py")}
+        exec(src.replace("sys.exit(main())", ""), self.ns)  # noqa: S102 - generated code under test
+
+    def tearDown(self):
+        self.env.stop()
+        self.tmp.cleanup()
+
+    def test_floor_is_python_311_with_no_upper_limit(self):
+        """MIN_PYTHON is 3.11 and newer interpreters are never rejected."""
+        self.assertEqual(self.ns["MIN_PYTHON"], (3, 11))
+        self.assertGreaterEqual(max(self.ns["PREFERRED_MINORS"]), 15)
+
+    def test_current_interpreter_is_kept_when_new_enough(self):
+        """A 3.11+ default interpreter is returned without searching for alternatives."""
+        self.ns["MIN_PYTHON"] = tuple(sys.version_info[:2])
+        self.ns["alternate_pythons"] = mock.Mock(side_effect=AssertionError("no search needed"))
+        self.assertEqual(self.ns["pick_python"](), sys.executable)
+
+    def test_old_default_falls_back_to_newer_interpreter(self):
+        """A too-old default interpreter is skipped for a versioned one that is new enough."""
+        newer = str(Path(sys.executable).resolve())
+        self.ns["MIN_PYTHON"] = (sys.version_info[0], sys.version_info[1] + 1)
+        self.ns["alternate_pythons"] = lambda: iter([newer])
+        self.ns["python_version"] = lambda python: (
+            (sys.version_info[0], sys.version_info[1]) if python == sys.executable
+            else (sys.version_info[0], sys.version_info[1] + 1))
+        self.assertEqual(self.ns["pick_python"](), newer)
+
+    def test_no_new_enough_interpreter_returns_default_for_the_log(self):
+        """When nothing qualifies the default is returned so pip's real error is logged."""
+        self.ns["MIN_PYTHON"] = (3, 99)
+        self.ns["alternate_pythons"] = lambda: iter(())
+        self.assertEqual(self.ns["pick_python"](), sys.executable)
+
+    def test_explicit_neqsim_python_is_always_honoured(self):
+        """NEQSIM_PYTHON wins even when it is older than MIN_PYTHON."""
+        with mock.patch.dict(os.environ, {"NEQSIM_PYTHON": sys.executable}):
+            self.ns["MIN_PYTHON"] = (3, 99)
+            self.assertEqual(self.ns["pick_python"](), sys.executable)
+
+
 class HookPluginOnlyTest(unittest.TestCase):
     """Exercise the generated hook without a checkout, pip installs or network access."""
 

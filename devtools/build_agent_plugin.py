@@ -344,8 +344,9 @@ HOOK_PY = '''"""SessionStart hook: install this plugin's Python packages.
 Targets: the bundled skills (editable, when this plugin ships a pyproject) and
 any pinned requirement specs such as the NeqSim task-solving toolkit (vendored
 under ${{PLUGIN_ROOT}}/toolkit, so no git clone is needed). Target interpreter, in
-order: NEQSIM_PYTHON, a pinned build-time interpreter (if any), the interpreter
-running this script. Never selects or creates an environment.
+order: NEQSIM_PYTHON, then the first of a pinned build-time interpreter (if any), the
+interpreter running this script, or a versioned python3.11-3.15 that is Python 3.11 or
+newer. Never selects or creates an environment.
 
 The install runs in a detached background process so the first chat prompt is
 not delayed; progress is written to ~/.neqsim/plugin-install/<plugin>/install.log
@@ -371,11 +372,14 @@ import json
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import time
 from pathlib import Path
 
+MIN_PYTHON = (3, 11)
+PREFERRED_MINORS = (13, 12, 11, 14, 15)
 PINNED_PYTHON = {pinned!r}
 EDITABLE_SELF = {editable_self!r}
 REQUIREMENTS = {requirements!r}
@@ -777,11 +781,60 @@ def prefetch_mcp():
         return False, note
 
 
+def python_version(python):
+    """Return (major, minor) of an interpreter, or None when it cannot be run."""
+    try:
+        if Path(python).resolve() == Path(sys.executable).resolve():
+            return sys.version_info[0], sys.version_info[1]
+        res = subprocess.run([python, "-c", "import sys; print(sys.version_info[0], sys.version_info[1])"],
+                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=30,
+                             universal_newlines=True, creationflags=NO_WINDOW)
+        major, minor = res.stdout.split()[:2]
+        return int(major), int(minor)
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None
+
+
+def alternate_pythons():
+    """Versioned interpreters to try when the default one is older than MIN_PYTHON."""
+    for minor in PREFERRED_MINORS:
+        found = shutil.which("python3.{{}}".format(minor))
+        if found:
+            yield found
+        if os.name == "nt" and shutil.which("py"):
+            try:
+                res = subprocess.run(["py", "-3.{{}}".format(minor), "-c", "import sys; print(sys.executable)"],
+                                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=30,
+                                     universal_newlines=True, creationflags=NO_WINDOW)
+            except (OSError, subprocess.SubprocessError):
+                continue
+            exe = res.stdout.strip()
+            if res.returncode == 0 and exe:
+                yield exe
+
+
 def pick_python():
-    for cand in (os.environ.get("NEQSIM_PYTHON"), PINNED_PYTHON, sys.executable):
+    """NEQSIM_PYTHON if set, else the first interpreter that is at least MIN_PYTHON.
+
+    The default interpreter (``py -3``, ``python3``) can be older than the toolkit
+    supports, so versioned interpreters are tried before falling back to it; the
+    install log then shows the real pip error instead of a silent no-op.
+    """
+    explicit = os.environ.get("NEQSIM_PYTHON")
+    if explicit and Path(explicit).exists():
+        return explicit
+    first = None
+    for cand in (PINNED_PYTHON, sys.executable):
         if cand and Path(cand).exists():
+            first = first or cand
+            found = python_version(cand)
+            if found and found >= MIN_PYTHON:
+                return cand
+    for cand in alternate_pythons():
+        found = python_version(cand)
+        if found and found >= MIN_PYTHON:
             return cand
-    return None
+    return first
 
 
 def targets():
@@ -1248,7 +1301,7 @@ _HOOK_WINDOWS_SCRIPT_TEMPLATE = (
     "-ErrorAction SilentlyContinue | Sort-Object FullName -Descending | Select-Object -First 1; "
     "if ($f) {{ $p = @($f.FullName) }} }} }}; "
     "if ($p.Count -gt 0) {{ $x = $p[0]; $a = @($p | Select-Object -Skip 1) + @($s); & $x @a }} "
-    "else {{ Write-Output '{{\"systemMessage\":\"NeqSim plugin {name}: no Python 3.10+ found "
+    "else {{ Write-Output '{{\"systemMessage\":\"NeqSim plugin {name}: no Python 3.11+ found "
     "(checked NEQSIM_PYTHON, py, python on PATH and the usual install folders). Install Python "
     "from AccessIT or set NEQSIM_PYTHON to a python.exe, then start a new chat. Until then the "
     "neqsim_* MCP tools cannot be registered and the task toolkit is not installed.\"}}' }}")

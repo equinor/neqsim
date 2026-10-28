@@ -71,3 +71,27 @@ jobs:
 
       - name: Run report generator integration test (script)
         run: uv run --project devtools --locked --group test devtools/test_report_gen.py
+
+  devtools-tests-python311:
+    name: Run devtools Python tests (Python 3.11 floor)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          python-version: "3.11"
+          enable-cache: true
+          cache-dependency-glob: devtools/uv.lock
+
+      - name: Sync devtools test environment
+        run: uv sync --project devtools --locked --group test
+
+      - name: Run toolkit smoke tests on the minimum supported Python
+        run: |
+          uv run --project devtools --locked --group test python -m pytest -q \
+            devtools/test_agent_search.py \
+            devtools/test_skill_search.py \
+            devtools/test_new_task.py \
+            devtools/test_neqsim_doctor.py \
+            devtools/test_generate_sources_md.py

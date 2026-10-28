@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "neqsim-dev-setup"
 version = "0.2.0"
 description = "NeqSim task-solving toolkit: JVM bootstrap, task folders, runner, validators, report generator"
-requires-python = ">=3.11,<3.15"
+requires-python = ">=3.11"
 # `neqsim` supplies the packaged JAR that neqsim_dev_setup falls back to when
 # no source checkout is present (agent-plugin installs).
 dependencies = [
