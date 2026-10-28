@@ -17,6 +17,9 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   int cpaon = 1;
   double[] xsite = new double[0];
   private double[][] xsitedni = new double[0][0];
+  private double[][] xsitednidT;
+  private double[][] xsitednidV;
+  private double[][][] xsitednidnj;
   double[] xsiteOld = new double[0];
   double[] xsitedV = new double[0];
   double[] xsitedVdV = new double[0];
@@ -135,6 +138,28 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
     clonedComponent.xsitedni = xsitedni.clone();
     for (int site = 0; site < xsitedni.length; site++) {
       clonedComponent.xsitedni[site] = xsitedni[site] == null ? null : xsitedni[site].clone();
+    }
+    if (xsitednidT != null) {
+      clonedComponent.xsitednidT = xsitednidT.clone();
+      for (int site = 0; site < xsitednidT.length; site++) {
+        clonedComponent.xsitednidT[site] = xsitednidT[site] == null ? null : xsitednidT[site].clone();
+      }
+    }
+    if (xsitednidV != null) {
+      clonedComponent.xsitednidV = xsitednidV.clone();
+      for (int site = 0; site < xsitednidV.length; site++) {
+        clonedComponent.xsitednidV[site] = xsitednidV[site] == null ? null : xsitednidV[site].clone();
+      }
+    }
+    if (xsitednidnj != null) {
+      clonedComponent.xsitednidnj = xsitednidnj.clone();
+      for (int site = 0; site < xsitednidnj.length; site++) {
+        clonedComponent.xsitednidnj[site] = xsitednidnj[site].clone();
+        for (int component = 0; component < xsitednidnj[site].length; component++) {
+          clonedComponent.xsitednidnj[site][component] = xsitednidnj[site][component] == null ? null
+              : xsitednidnj[site][component].clone();
+        }
+      }
     }
     return clonedComponent;
   }
@@ -654,6 +679,74 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   }
 
   /**
+   * Returns a mixed amount-temperature derivative of an association-site fraction.
+   *
+   * @param site association-site index
+   * @param component amount-coordinate component index
+   * @return mixed amount-temperature site-fraction derivative
+   */
+  public double getXsitednidT(int site, int component) {
+    return xsitednidT[site][component];
+  }
+
+  /**
+   * Sets a mixed amount-temperature derivative of an association-site fraction.
+   *
+   * @param site association-site index
+   * @param component amount-coordinate component index
+   * @param value mixed amount-temperature site-fraction derivative
+   */
+  public void setXsitednidT(int site, int component, double value) {
+    xsitednidT[site][component] = value;
+  }
+
+  /**
+   * Returns a mixed amount-volume derivative of an association-site fraction.
+   *
+   * @param site association-site index
+   * @param component amount-coordinate component index
+   * @return mixed amount-volume site-fraction derivative
+   */
+  public double getXsitednidV(int site, int component) {
+    return xsitednidV[site][component];
+  }
+
+  /**
+   * Sets a mixed amount-volume derivative of an association-site fraction.
+   *
+   * @param site association-site index
+   * @param component amount-coordinate component index
+   * @param value mixed amount-volume site-fraction derivative
+   */
+  public void setXsitednidV(int site, int component, double value) {
+    xsitednidV[site][component] = value;
+  }
+
+  /**
+   * Returns a second amount derivative of an association-site fraction.
+   *
+   * @param site association-site index
+   * @param componentI first amount-coordinate component index
+   * @param componentJ second amount-coordinate component index
+   * @return second amount site-fraction derivative
+   */
+  public double getXsitednidnj(int site, int componentI, int componentJ) {
+    return xsitednidnj[site][componentI][componentJ];
+  }
+
+  /**
+   * Sets a second amount derivative of an association-site fraction.
+   *
+   * @param site association-site index
+   * @param componentI first amount-coordinate component index
+   * @param componentJ second amount-coordinate component index
+   * @param value second amount site-fraction derivative
+   */
+  public void setXsitednidnj(int site, int componentI, int componentJ, double value) {
+    xsitednidnj[site][componentI][componentJ] = value;
+  }
+
+  /**
    * Ensure that the xsitedni array has capacity for the specified number of components.
    *
    * @param numComp desired number of components
@@ -670,6 +763,17 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
       }
       xsitedni = newArr;
     }
+  }
+
+  /**
+   * Allocates storage for opt-in mixed association-site composition derivatives.
+   *
+   * @param numComp requested component count
+   */
+  public void allocateAssociationSiteCompositionDerivatives(int numComp) {
+    xsitednidT = new double[numberOfAssociationSites][numComp];
+    xsitednidV = new double[numberOfAssociationSites][numComp];
+    xsitednidnj = new double[numberOfAssociationSites][numComp][numComp];
   }
 
   /** {@inheritDoc} */
