@@ -137,55 +137,8 @@ can change phase residence inventories without creating an equilibrium driving f
 source without component transport still uses the reference-fluid no-slip volume fraction; it is
 an approximation and is unsuitable for preserving equilibrium in a slipping mixture.
 
-In the conservative-energy Euler route, a dry gas/oil grid instead relaxes each conserved
-phase/component inventory toward the local flashed target. For component $c$ in cell $i$,
-$$S_{i,o,c}=(M^{eq}_{i,o,c}-M_{i,o,c})/(L_i\tau),\qquad S_{i,g,c}=-S_{i,o,c}.$$
-Here $S$ is in kg/(m s), $M$ is in kg, $L_i$ is cell length in m, and $\tau$ is the
-existing relaxation time in s. The equilibrium phase masses are scaled to the cell's conserved
-total mass. A source-only Euler step with $\Delta t\leq\tau$ is a convex component-inventory
-update; combined transport still requires its ordinary CFL, admissibility and balance checks.
-No component inventory is clipped. Each signed component transfer carries its actual donor
-velocity, including counter-transfer at zero net phase mass. Total energy retains its existing
-single owner; latent/compositional heat is diagnostic and is not added again to conservative energy.
-
-This corrects a limitation of assigning every kilogram of new liquid its final equilibrium
-composition: an already heavy-enriched liquid may need very little additional heavy material
-even while considerable light material condenses. The new component targets are still an
-approximate relaxation closure, not a predictive hydrocarbon evaporation rate.
-
-The source-only disappearance control in `HydrocarbonComponentRelaxationTest` uses a
-50 bara gas target at 480, 500 and 520 K. Starting from retained oil, one Euler step
-of exactly the prescribed relaxation time transfers every oil component to gas with
-no liquid residue, preserves named-component totals and total momentum, and dissipates
-kinetic energy through donor mixing without adding internal transfer energy. These
-hot, frozen-target controls qualify the algebraic endpoint, not seabed heat supply or
-an elapsed physical evaporation time. A 330 K trial remained two-phase under the EOS
-and is not a liquid-free target.
-
-Other routes retain their mapped flash-driven phase transfer: evaporation withdraws the donor
-oil or water composition and condensation uses the receiving equilibrium phase composition.
-The dry component-target path declines the whole grid when either conserved aqueous inventory
-or an equilibrium aqueous phase has positive mass, including trace mass. The distinct aqueous
-finite-rate closure is unchanged. No additional user switch is required.
-
-The public `TwoFluidRichGasDragQualificationTest` now executes the original 5 km, ID 1.0148 m,
-six-component SRK/classic terrain fixture through its entire 120 s prescribed outlet-pressure
-ramp (150 to 10 bara), with a closed inlet, adiabatic walls and the approximate 30 s relaxation.
-The corrected-source replay from base `7197827e8e9fd88a47f26305db8963c9c4e7328e` gives:
-
-| Mesh / outer interval | Accepted time (s) | Oil inventory (t) | Oil carried out (t) | Mean cell pressure (bara) |
-|---|---:|---:|---:|---:|
-| Original 12 cells / 0.25 s | 120 | 50.121744 | 5.598652 | 34.997047 |
-| Original 12 cells / 0.125 s | 120 | 50.099465 | 5.581601 | 35.028743 |
-| Original 24 cells / 0.125 s | 120 | 49.466914 | 6.153514 | 35.436410 |
-
-The outlet **boundary** reaches 10 bara, while distributed inventory remains above it. Completing
-this interval therefore does not establish a settled 10 bara pipeline. The historical level-outlet
-12-cell/0.125 s case still rejects an inadmissible liquid velocity at 35.625 s with full rollback.
-Its 0.25 s counterpart reaches 120 s with 49.909212 t calculated oil. No retained-pool, same-gas
-inlet-refill, realistic seabed heating or predictive depletion-time qualification follows from these
-adiabatic numerical regressions. This source correction resolves the material heavy-component
-target deficit; it does not close the separate refinement and full-cycle gates.
+Flash-driven phase transfer is mapped by component name. Evaporation withdraws the donor oil or
+water composition. Condensation uses the receiving equilibrium phase composition.
 
 An initially empty phase may advect within the substep that creates it when stage-frozen
 component sources provide its composition. All outgoing faces together must fit within that
@@ -1506,11 +1459,22 @@ specific enthalpy in J/kg. The network then applies the same accepted source mas
 component and open-system energy ledgers. Missing source thermodynamics, a mismatched component
 slate or non-finite enthalpy fails before the interval advances.
 
+Signed fallback from a branch outlet keeps the same directed topology and signed conservation
+ledger. Create a fixed-pressure downstream node with the overload accepting a `SystemInterface`,
+or use a conservative storage node whose frozen inventory owns the downstream thermodynamic state.
+Then call `setBranchOutletPhaseBackflowAllowed(branchName, true)`. The network flashes and publishes
+that donor before enabling the pipe-level signed-outlet contract and refreshes conservative-node
+donors at each reporting interval. A pressure-only fixed node fails before the option is enabled.
+Negative outlet component and enthalpy transfers enter the branch from the downstream node and are
+applied with the existing simultaneous node update; the last interior pipe cell is never inferred to
+be an external reservoir.
+
 This first network implementation requires finite compressible storage at internal junctions.
 Fixed-pressure nodes are external reservoirs or sinks. Algebraic zero-volume junctions, a global
-Newton pressure-flow solve, reverse-flow boundary composition, and branch subcycling remain outside
-the validated scope. Conservative component/energy mixing and node sources have synthetic closure
-evidence; they are not independently qualified transient junction models.
+Newton pressure-flow solve, and branch subcycling remain outside the validated scope. Conservative
+component/energy mixing, node sources and the compositionally different pressure-reversal fixture
+have synthetic closure evidence; they are not independently qualified transient junction models or
+predictive restart/refill qualification.
 
 ### Choosing Time Step, Sections, and Pipeline Length
 

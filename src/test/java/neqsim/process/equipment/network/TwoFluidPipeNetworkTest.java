@@ -151,6 +151,81 @@ class TwoFluidPipeNetworkTest {
     assertEquals(0.0, network.getSimulationTimeSeconds(), 0.0);
   }
 
+  @Test
+  void reverseOutletFlowUsesFixedNodeThermodynamicDonorAndClosesNetworkLedgers() {
+    SystemInterface storageFluid = createFluid(0.80, 0.20);
+    SystemInterface fallbackFluid = createFluid(0.30, 0.70);
+    TwoFluidPipe pipe = createPipe("reverse branch", 0.80, 0.20);
+
+    TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("reverse conservative branch");
+    network.addConservativeCompressibleNode("storage", createVolume(50.0e5, 1000.0), storageFluid);
+    network.addFixedPressureNode("high pressure reservoir", 65.0e5, fallbackFluid);
+    network.addPipe("reverse branch", "storage", "high pressure reservoir", pipe);
+    network.setBranchOutletPhaseBackflowAllowed("reverse branch", true);
+
+    boolean observedSignedFallback = false;
+    for (int step = 0; step < 20; step++) {
+      network.runTransient(0.05, UUID.randomUUID());
+      double[] outletComponentKg = pipe.getLastComponentConservationReport().getOutletBoundaryMassKg();
+      observedSignedFallback |= outletComponentKg[0] < 0.0 || outletComponentKg[1] < 0.0;
+    }
+
+    assertTrue(observedSignedFallback, "Pressure reversal must exercise signed outlet component transport");
+    TwoFluidPipeNetwork.ThermodynamicBalanceReport report = network.getLastThermodynamicBalanceReport();
+    for (String componentName : report.getComponentNames()) {
+      assertTrue(report.getRelativeComponentResidual(componentName) < 1.0e-8,
+          componentName + " reverse-flow residual=" + report.getRelativeComponentResidual(componentName));
+    }
+    assertTrue(report.getRelativeEnergyResidual() < 1.0e-7,
+        "reverse-flow energy residual=" + report.getRelativeEnergyResidual());
+    assertTrue(network.getLastBalanceReport().getRelativeResidual(Phase.TOTAL) < 1.0e-8);
+    assertEquals(overallComponentMassFraction(fallbackFluid, "methane"),
+        overallComponentMassFraction(pipe.getOutletBoundaryFluid(), "methane"), 1.0e-12);
+  }
+
+  @Test
+  void reverseOutletFlowRequiresDownstreamThermodynamicOwner() {
+    TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("missing reverse donor");
+    network.addConservativeCompressibleNode("storage", createVolume(50.0e5, 1000.0), createFluid(0.95, 0.05));
+    network.addFixedPressureNode("pressure only reservoir", 65.0e5);
+    network.addPipe("reverse branch", "storage", "pressure only reservoir", createPipe("reverse branch"));
+
+    IllegalStateException error = assertThrows(IllegalStateException.class,
+        () -> network.setBranchOutletPhaseBackflowAllowed("reverse branch", true));
+
+    assertTrue(error.getMessage().contains("explicit downstream thermodynamic boundary fluid"));
+  }
+
+  @Test
+  void reverseOutletFlowUsesFrozenDownstreamStorageState() {
+    TwoFluidPipe pipe = createPipe("storage reversal", 0.85, 0.15);
+    SystemInterface highPressureFluid = createFluid(0.25, 0.75);
+    TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("two storage reversal");
+    network.addConservativeCompressibleNode("low pressure storage", createVolume(50.0e5, 1000.0),
+        createFluid(0.85, 0.15));
+    network.addConservativeCompressibleNode("high pressure storage", createVolume(65.0e5, 1000.0), highPressureFluid);
+    network.addPipe("storage reversal", "low pressure storage", "high pressure storage", pipe);
+    network.setBranchOutletPhaseBackflowAllowed("storage reversal", true);
+    assertEquals(overallComponentMassFraction(highPressureFluid, "methane"),
+        overallComponentMassFraction(pipe.getOutletBoundaryFluid(), "methane"), 1.0e-12);
+
+    boolean observedSignedFallback = false;
+    for (int step = 0; step < 20; step++) {
+      network.runTransient(0.05, UUID.randomUUID());
+      for (double componentKg : pipe.getLastComponentConservationReport().getOutletBoundaryMassKg()) {
+        observedSignedFallback |= componentKg < 0.0;
+      }
+    }
+
+    assertTrue(observedSignedFallback);
+    TwoFluidPipeNetwork.ThermodynamicBalanceReport report = network.getLastThermodynamicBalanceReport();
+    for (String componentName : report.getComponentNames()) {
+      assertTrue(report.getRelativeComponentResidual(componentName) < 1.0e-8);
+    }
+    assertTrue(report.getRelativeEnergyResidual() < 1.0e-7);
+    assertTrue(network.getLastBalanceReport().getRelativeResidual(Phase.TOTAL) < 1.0e-8);
+  }
+
   private static TwoFluidPipeNetwork createConservativeMerge(boolean reverseBranchOrder) {
     TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("conservative merge");
     network.addFixedPressureNode("gas source", 61.0e5);
