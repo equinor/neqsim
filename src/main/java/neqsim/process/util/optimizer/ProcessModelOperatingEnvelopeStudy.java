@@ -1541,6 +1541,35 @@ public final class ProcessModelOperatingEnvelopeStudy {
     }
   }
 
+  /** Immutable ranked collection of exact qualified paired-relief receipts. */
+  public static final class QualifiedReliefPortfolioEvidence implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final ProcessModelDebottleneckRanking.ObjectiveRankingResult rankingResult;
+    private final List<QualifiedReliefStudyEvidence> rankedStudies;
+
+    /**
+     * Creates one immutable qualified portfolio.
+     *
+     * @param rankingResult exact objective ranking result
+     * @param rankedStudies receipts in deterministic portfolio-rank order
+     */
+    private QualifiedReliefPortfolioEvidence(ProcessModelDebottleneckRanking.ObjectiveRankingResult rankingResult,
+        List<QualifiedReliefStudyEvidence> rankedStudies) {
+      this.rankingResult = rankingResult;
+      this.rankedStudies = Collections.unmodifiableList(new ArrayList<QualifiedReliefStudyEvidence>(rankedStudies));
+    }
+
+    /** @return immutable objective-ranking result */
+    public ProcessModelDebottleneckRanking.ObjectiveRankingResult getRankingResult() {
+      return rankingResult;
+    }
+
+    /** @return exact qualified receipts in deterministic portfolio-rank order */
+    public List<QualifiedReliefStudyEvidence> getRankedStudies() {
+      return Collections.unmodifiableList(new ArrayList<QualifiedReliefStudyEvidence>(rankedStudies));
+    }
+  }
+
   /**
    * Qualifies one existing paired debottleneck result against this study's accepted operating point.
    *
@@ -1626,6 +1655,7 @@ public final class ProcessModelOperatingEnvelopeStudy {
     objective.put("name", baseline.getName());
     objective.put("direction", baseline.getDirection().name());
     objective.put("unit", baseline.getUnit());
+    objective.put("weight", Double.valueOf(baseline.getWeight()));
     objective.put("baseline_value", Double.valueOf(accepted.getRawValue()));
     objective.put("paired_baseline_value", Double.valueOf(baseline.getRawValue()));
     objective.put("baseline_binding_residual", Double.valueOf(objectiveBindingResidual));
@@ -1662,6 +1692,100 @@ public final class ProcessModelOperatingEnvelopeStudy {
     receipt.put("interpretation",
         "Paired converged sampled evidence for the declared capacity alternative; not causal attribution, a shadow price, design approval, investment approval, permission to change a limit, or operating approval");
     return new QualifiedReliefStudyEvidence(capacity.getQualifiedConstraintName(), receipt);
+  }
+
+  /**
+   * Qualifies and ranks multiple independent paired-relief studies against one accepted operating point.
+   *
+   * <p>
+   * Every study first passes the exact single-study binding and restoration gates. The existing
+   * {@link ProcessModelDebottleneckRanking} then compares one declared raw objective across the common paired baseline.
+   * Partial portfolios are rejected so a published rank cannot silently omit an invalid candidate. Every returned
+   * receipt carries the same portfolio identity and candidate count plus its deterministic competition rank.
+   * </p>
+   *
+   * @param search independently replayed accepted operating point
+   * @param ranking existing debottleneck portfolio ranking configuration
+   * @param objectivePolicy exact single-objective comparison policy
+   * @param pairedStudies independent paired studies in deterministic submission order
+   * @param results immutable results corresponding one-to-one with {@code pairedStudies}
+   * @return exact qualified receipts in deterministic portfolio-rank order
+   * @throws IllegalArgumentException if inputs are incomplete, duplicated, or not paired one-to-one
+   * @throws IllegalStateException if any study, accepted-point binding, restoration, or ranking gate fails
+   */
+  public QualifiedReliefPortfolioEvidence qualifyReliefPortfolio(OperatingPointSearchResult search,
+      ProcessModelDebottleneckRanking ranking, ProcessModelDebottleneckRanking.ObjectiveRankingPolicy objectivePolicy,
+      List<ProcessModelDebottleneckStudy> pairedStudies, List<ProcessModelDebottleneckStudy.StudyResult> results) {
+    if (ranking == null || objectivePolicy == null) {
+      throw new IllegalArgumentException("Debottleneck ranking and objective policy must not be null");
+    }
+    if (pairedStudies == null || results == null || pairedStudies.size() < 2
+        || pairedStudies.size() != results.size()) {
+      throw new IllegalArgumentException("At least two one-to-one paired studies and results are required");
+    }
+    Map<String, QualifiedReliefStudyEvidence> receiptsByStudy = new LinkedHashMap<String, QualifiedReliefStudyEvidence>();
+    for (int index = 0; index < pairedStudies.size(); index++) {
+      ProcessModelDebottleneckStudy pairedStudy = pairedStudies.get(index);
+      ProcessModelDebottleneckStudy.StudyResult result = results.get(index);
+      QualifiedReliefStudyEvidence receipt = qualifyReliefStudy(search, pairedStudy, result);
+      if (receiptsByStudy.put(result.getId(), receipt) != null) {
+        throw new IllegalArgumentException("Duplicate paired relief study identifier: " + result.getId());
+      }
+    }
+
+    ProcessModelDebottleneckRanking.ObjectiveRankingResult rankingResult = ranking.rankObjectives(results,
+        objectivePolicy);
+    if (rankingResult.getOutcome() != ProcessModelDebottleneckRanking.RankingOutcome.COMPLETED
+        || rankingResult.getRankedCandidates().size() != results.size()
+        || !rankingResult.getRejectedCandidates().isEmpty()) {
+      throw new IllegalStateException(
+          "Qualified relief portfolio requires every submitted study to rank: " + rankingResult.getOutcome());
+    }
+
+    int candidateCount = rankingResult.getRankedCandidates().size();
+    List<QualifiedReliefStudyEvidence> rankedReceipts = new ArrayList<QualifiedReliefStudyEvidence>();
+    for (ProcessModelDebottleneckRanking.ObjectiveCandidateEvidence candidate : rankingResult.getRankedCandidates()) {
+      QualifiedReliefStudyEvidence receipt = receiptsByStudy.remove(candidate.getStudyResult().getId());
+      if (receipt == null || !sameDouble(candidate.getDelta(),
+          ((Number) ((Map<?, ?>) receipt.toEvidenceMap().get("objective")).get("delta")).doubleValue())) {
+        throw new IllegalStateException(
+            "Objective ranking is not bound to the qualified paired receipt: " + candidate.getStudyResult().getId());
+      }
+      Map<String, Object> portfolio = new LinkedHashMap<String, Object>();
+      portfolio.put("portfolio_id", rankingResult.getId());
+      portfolio.put("portfolio_name", rankingResult.getName());
+      portfolio.put("portfolio_provenance", rankingResult.getProvenance());
+      portfolio.put("policy_id", objectivePolicy.getId());
+      portfolio.put("policy_name", objectivePolicy.getName());
+      portfolio.put("policy_provenance", objectivePolicy.getProvenance());
+      portfolio.put("objective_index", Integer.valueOf(objectivePolicy.getObjectiveIndex()));
+      portfolio.put("objective_name", objectivePolicy.getObjectiveName());
+      portfolio.put("objective_direction", objectivePolicy.getObjectiveDirection().name());
+      portfolio.put("objective_unit", objectivePolicy.getUnit());
+      portfolio.put("objective_weight", Double.valueOf(objectivePolicy.getWeight()));
+      portfolio.put("tie_tolerance", Double.valueOf(objectivePolicy.getTieTolerance()));
+      portfolio.put("baseline_relative_tolerance", Double.valueOf(objectivePolicy.getBaselineRelativeTolerance()));
+      portfolio.put("candidate_count", Integer.valueOf(candidateCount));
+      portfolio.put("rank", Integer.valueOf(candidate.getRank()));
+      portfolio.put("input_index", Integer.valueOf(candidate.getInputIndex()));
+      portfolio.put("alternative_id", candidate.getAlternativeDefinition().getId());
+      portfolio.put("qualified_constraint_name", candidate.getAlternativeDefinition().getQualifiedConstraintName());
+      portfolio.put("objective_delta", Double.valueOf(candidate.getDelta()));
+      portfolio.put("ranking_outcome", rankingResult.getOutcome().name());
+      portfolio.put("qualification_state", "QUALIFIED_PAIRED_OBJECTIVE_PORTFOLIO_RANK");
+      portfolio.put("advisory", Boolean.TRUE);
+      portfolio.put("interpretation",
+          "Deterministic rank of compatible paired sampled objective deltas; not causal attribution, a shadow price, "
+              + "global optimality, investment approval, permission to change a limit, or operating approval");
+      Map<String, Object> enriched = new LinkedHashMap<String, Object>(receipt.toEvidenceMap());
+      enriched.put("receipt_version", Integer.valueOf(2));
+      enriched.put("portfolio_ranking", Collections.unmodifiableMap(portfolio));
+      rankedReceipts.add(new QualifiedReliefStudyEvidence(receipt.getQualifiedConstraintName(), enriched));
+    }
+    if (!receiptsByStudy.isEmpty()) {
+      throw new IllegalStateException("Qualified relief portfolio lost a ranked study receipt");
+    }
+    return new QualifiedReliefPortfolioEvidence(rankingResult, rankedReceipts);
   }
 
   /** Converts a primitive vector to an immutable JSON-friendly number list. */

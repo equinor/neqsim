@@ -336,7 +336,7 @@ def promote(task_dir, cycle_id, reviewer, note=""):
 
 
 def _guarded_lifecycle_evidence(task_dir, cycle_id, manifest):
-    """Return one exact current schema-v8/v9 block admitted by this cycle's guard and ledger."""
+    """Return one exact current lifecycle block admitted by this cycle's guard and ledger."""
     required = (load_plan(task_dir).get("production", {}) or {}).get(
         "require_lifecycle_envelope_evidence") is True
     stage_status = {row.get("name"): row.get("status") for row in manifest.get("stages", [])
@@ -364,8 +364,9 @@ def _guarded_lifecycle_evidence(task_dir, cycle_id, manifest):
                 or item.get("status") in ("rejected", "superseded")):
             reasons.append("ledger lifecycle evidence is not current and guard-approved")
         if (not isinstance(evidence, dict)
-                or evidence.get("schema_version") not in (8, 9, 10, 11, 12)):
-            reasons.append("promoted lifecycle evidence must use schema version 8, 9, 10, 11, or 12")
+                or evidence.get("schema_version") not in (8, 9, 10, 11, 12, 13)):
+            reasons.append(
+                "promoted lifecycle evidence must use schema version 8, 9, 10, 11, 12, or 13")
         else:
             reasons.extend(_lifecycle_evidence_reasons(
                 SimpleNamespace(cycle_id=cycle_id), item, required=True))

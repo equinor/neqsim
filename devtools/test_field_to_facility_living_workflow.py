@@ -1,16 +1,18 @@
 """Execute the Java ten-well lifecycle through the persistent production workflow.
 
 This is the source acceptance path for issue #4188. It deliberately calls the test-scope
-Java fixture, consumes only its exact schema-v12 JSON, and exercises the existing #4187
+Java fixture, consumes only its exact schema-v13 JSON, and exercises the existing #4187
 adapter, guard, ledger, promotion, living report, and canonical report implementation.
 """
 
+import copy
 import json
 import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 
 import jpype
@@ -25,6 +27,7 @@ from neqsim_continuous.evidence import accept, analyze, selected_stages  # noqa:
 from neqsim_continuous.ledger import Ledger  # noqa: E402
 from neqsim_continuous.living import make_living, promote  # noqa: E402
 from neqsim_continuous.plan import load_plan  # noqa: E402
+from neqsim_continuous import production  # noqa: E402
 
 
 OPTIMIZE_STAGE = '''"""Source-backed ten-well field-to-facility lifecycle stage."""
@@ -239,7 +242,7 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             first_item = items[0]
             first_item_id = first_item["id"]
             evidence = items[0]["lifecycle_envelope_evidence"]
-            self.assertEqual(12, evidence["schema_version"])
+            self.assertEqual(13, evidence["schema_version"])
             self.assertEqual(cycle_id, evidence["cycle_id"])
             self.assertEqual(2, evidence["period_count"])
             self.assertEqual(12, evidence["requested_point_count"])
@@ -293,26 +296,55 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
                 candidate for candidate in opportunities["candidates"]
                 if candidate["paired_relief_study_status"] == "QUALIFIED"
             ]
-            self.assertEqual(1, len(qualified))
-            receipt = qualified[0]["paired_relief_study_receipt"]
+            self.assertEqual(2, len(qualified))
+            receipts = [candidate["paired_relief_study_receipt"] for candidate in qualified]
             self.assertEqual(
-                "Field::HP separator/gas handling",
-                receipt["qualified_constraint_name"],
+                {"Field::HP separator/gas handling",
+                 "Field::LP suction scrubber/gas handling"},
+                {receipt["qualified_constraint_name"] for receipt in receipts},
             )
-            self.assertEqual(
-                current["envelope_evidence"]["accepted_candidate_values"],
-                receipt["baseline_action_values"],
+            self.assertEqual({2}, {receipt["receipt_version"] for receipt in receipts})
+            self.assertEqual({"accepted-relief-portfolio"}, {
+                receipt["portfolio_ranking"]["portfolio_id"] for receipt in receipts
+            })
+            self.assertEqual({2}, {
+                receipt["portfolio_ranking"]["candidate_count"] for receipt in receipts
+            })
+            self.assertEqual({0, 1}, {
+                receipt["portfolio_ranking"]["input_index"] for receipt in receipts
+            })
+            self.assertEqual({1}, {
+                receipt["portfolio_ranking"]["rank"] for receipt in receipts
+            })
+            for receipt in receipts:
+                self.assertEqual(
+                    current["envelope_evidence"]["accepted_candidate_values"],
+                    receipt["baseline_action_values"],
+                )
+                self.assertEqual(
+                    optimizer["accepted_objective_value"],
+                    receipt["objective"]["baseline_value"],
+                )
+                self.assertLessEqual(
+                    receipt["objective"]["baseline_binding_residual"],
+                    receipt["objective"]["baseline_binding_tolerance"],
+                )
+                self.assertIs(True, receipt["capacity_restored"])
+                self.assertIs(True, receipt["process_state_restored"])
+            tampered = copy.deepcopy(first_item)
+            tampered_current = next(
+                period for period in tampered["lifecycle_envelope_evidence"]["periods"]
+                if period["period_id"] == cycle_id)
+            tampered_receipt = next(
+                candidate["paired_relief_study_receipt"]
+                for candidate in tampered_current["constraint_opportunity_summary"]["candidates"]
+                if candidate["paired_relief_study_status"] == "QUALIFIED")
+            tampered_receipt["portfolio_ranking"]["rank"] = 2
+            self.assertIn(
+                "lifecycle_period_1_invalid_qualified_relief_portfolio",
+                production._lifecycle_evidence_reasons(
+                    SimpleNamespace(cycle_id=cycle_id), tampered, required=True),
             )
-            self.assertEqual(
-                optimizer["accepted_objective_value"],
-                receipt["objective"]["baseline_value"],
-            )
-            self.assertLessEqual(
-                receipt["objective"]["baseline_binding_residual"],
-                receipt["objective"]["baseline_binding_tolerance"],
-            )
-            self.assertIs(True, receipt["capacity_restored"])
-            self.assertIs(True, receipt["process_state_restored"])
             for field in (
                     "simulation_converged", "candidate_feasible", "candidate_finite",
                     "constraint_evidence_complete", "state_restore_complete",
@@ -346,6 +378,7 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertIn("PLANT_CONSTRAINT", report)
             self.assertIn("synthetic lifecycle separation limit", report)
             self.assertIn("Qualified paired sampled", report)
+            self.assertIn("Portfolio rank 1/2", report)
 
             input_path = task / "continuous" / "user_input.yaml"
             input_path.write_text(

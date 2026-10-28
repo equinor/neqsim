@@ -23,6 +23,9 @@ import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckRanking.CandidateEvidence;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckRanking.CandidateStatus;
+import neqsim.process.util.optimizer.ProcessModelDebottleneckRanking.ObjectiveCandidateEvidence;
+import neqsim.process.util.optimizer.ProcessModelDebottleneckRanking.ObjectiveRankingPolicy;
+import neqsim.process.util.optimizer.ProcessModelDebottleneckRanking.ObjectiveRankingResult;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckRanking.RankingDirection;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckRanking.RankingOutcome;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckRanking.RankingPolicy;
@@ -112,6 +115,43 @@ class ProcessModelDebottleneckRankingTest {
       assertEquals(expected.getRank(), actual.getRank());
       assertEquals(expected.getDelta(), actual.getDelta(), 0.0);
     }
+  }
+
+  /** Transactional objective evidence ranks without resampling callbacks after the live state is restored. */
+  @Test
+  void ranksCompatibleTransactionalObjectivesDeterministically() {
+    Fixture fixture = createFixture();
+    fixture.evaluator.evaluate(new double[] {800.0});
+    List<double[]> candidates = commonCandidates();
+    StudyResult result1100 = createStudy(fixture, "objective-1100", 1100.0, 0.90, "kg/hr", "wet feed mass rate",
+        candidates).evaluate();
+    StudyResult result1150 = createStudy(fixture, "objective-1150", 1150.0, 0.90, "kg/hr", "wet feed mass rate",
+        candidates).evaluate();
+    StudyResult result1200 = createStudy(fixture, "objective-1200", 1200.0, 0.90, "kg/hr", "wet feed mass rate",
+        candidates).evaluate();
+
+    ProcessModelDebottleneckRanking ranking = new ProcessModelDebottleneckRanking("objective-portfolio",
+        "Objective portfolio", "synthetic transactional objective ranking");
+    ObjectiveRankingPolicy policy = new ObjectiveRankingPolicy("production-objective", "Production objective",
+        "exact frozen evaluator objective", 0, "feed production",
+        ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE, "kg/hr", 1.0, 0.50, 1.0e-8);
+    ObjectiveRankingResult result = ranking.rankObjectives(Arrays.asList(result1100, result1150, result1200), policy);
+
+    assertEquals(RankingOutcome.COMPLETED, result.getOutcome());
+    assertEquals(3, result.getRankedCandidates().size());
+    assertEquals(0, result.getRejectedCandidates().size());
+    assertEquals("separator-gas-1200", result.getBestCandidate().getAlternativeDefinition().getId());
+    assertEquals(200.0, result.getBestCandidate().getDelta(), 1.0e-8);
+    assertEquals(1, result.getBestCandidate().getRank());
+    ObjectiveCandidateEvidence second = result.getRankedCandidates().get(1);
+    ObjectiveCandidateEvidence third = result.getRankedCandidates().get(2);
+    assertEquals("separator-gas-1100", second.getAlternativeDefinition().getId());
+    assertEquals("separator-gas-1150", third.getAlternativeDefinition().getId());
+    assertEquals(2, second.getRank());
+    assertEquals(2, third.getRank());
+    assertEquals("kg/hr", result.getPolicy().getUnit());
+    assertOriginalStateRestored(fixture);
+    assertThrows(IllegalStateException.class, () -> ranking.rank(Arrays.asList(result1100, result1150, result1200)));
   }
 
   /** Incompatible units, baselines and confidence must be rejected without a synthetic score. */

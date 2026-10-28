@@ -56,7 +56,7 @@ import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.Out
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.LeadingConstraintEvidence;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.OperatingRegionBoundaryRefinement;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.OperatingRegionTransition;
-import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.QualifiedReliefStudyEvidence;
+import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.QualifiedReliefPortfolioEvidence;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.SliceResult;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.CapacityAlternative;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.LimitDirection;
@@ -187,7 +187,7 @@ public class FieldToFacilityOptimizationAcceptanceTest {
   }
 
   /**
-   * Execute the source-backed ten-well lifecycle acceptance case and serialize its exact schema-v10 evidence.
+   * Execute the source-backed ten-well lifecycle acceptance case and serialize its exact schema-v13 evidence.
    *
    * <p>
    * This test-scope entry point lets the Python living-task acceptance workflow call the same Java fixture and physical
@@ -250,7 +250,7 @@ public class FieldToFacilityOptimizationAcceptanceTest {
         currentFixture.model.getPower("kW") * sharedPowerLimitMultiplier, reviewedIncumbentValues);
     current.study.setNearActiveConstraintNormalizedMargin(1.0,
         "synthetic complete installed-capacity follow-up audit threshold");
-    QualifiedReliefStudyEvidence relief = acceptance.qualifiedSeparatorRelief(current);
+    QualifiedReliefPortfolioEvidence reliefPortfolio = acceptance.qualifiedReliefPortfolio(current);
 
     return new ProcessModelOperatingEnvelopeLifecycleStudy("ten-well-lifecycle", "Ten-well field lifecycle envelope",
         "synthetic independent reservoir/facility operating definitions", "year")
@@ -260,31 +260,49 @@ public class FieldToFacilityOptimizationAcceptanceTest {
         .addPeriod(currentCycleId, "Current life", 5.0,
             "expanded separation capacity and tighter shared plant power budget",
             Collections.<ProcessModelOperatingEnvelopeLifecycleStudy.AcceptedStateMetric>emptyList(), current.coverage,
-            Arrays.asList(relief), current.study, current.search, current.slices)
+            reliefPortfolio.getRankedStudies(), current.study, current.search, current.slices)
         .toEvidenceJson(currentCycleId);
   }
 
-  /** Builds one exact paired installed-capacity receipt at the accepted ten-well operating point. */
-  private QualifiedReliefStudyEvidence qualifiedSeparatorRelief(LifecyclePeriod period) {
-    CapacityConstraint installed = period.fixture.highPressureSeparator.getCapacityConstraints().get("gas handling");
-    double originalLimit = installed.getApplicableLimit();
-    CapacityAlternative alternative = new CapacityAlternative("hp-separator-gas-relief",
-        "Raise HP separator gas handling limit", "synthetic qualified brownfield alternative", "Field", "HP separator",
-        "gas handling", originalLimit * 1.10, installed.getUnit(), LimitDirection.MAXIMUM,
-        "synthetic separator internals replacement basis", 0.90, originalLimit, originalLimit * 1.25);
+  /** Builds and ranks two exact paired installed-capacity receipts at the accepted ten-well operating point. */
+  private QualifiedReliefPortfolioEvidence qualifiedReliefPortfolio(LifecyclePeriod period) {
     List<double[]> candidates = new ArrayList<double[]>();
     candidates.add(period.search.getAcceptedCandidateValues());
     OperatingActionCandidateListSearch search = new OperatingActionCandidateListSearch("accepted-point-paired-relief",
         "Accepted-point paired relief", "same accepted ten-well action vector under baseline and capacity alternative",
         candidates, 0, 0.0);
-    ProcessModelDebottleneckStudy paired = new ProcessModelDebottleneckStudy("hp-separator-paired-relief",
-        "HP separator paired relief study", "synthetic accepted-baseline linkage acceptance",
-        period.study.getCandidateEvaluator(), alternative, search, 0);
-    StudyResult result = paired.evaluate();
-    assertEquals(ProcessModelDebottleneckStudy.StudyOutcome.COMPLETED, result.getOutcome(),
-        result.getDiagnostics().toString());
-    assertEquals(0.0, result.getObjectiveDelta(), 0.0);
-    return period.study.qualifyReliefStudy(period.search, paired, result);
+    List<ProcessModelDebottleneckStudy> studies = new ArrayList<ProcessModelDebottleneckStudy>();
+    List<StudyResult> results = new ArrayList<StudyResult>();
+    CapacityConstraint separator = period.fixture.highPressureSeparator.getCapacityConstraints().get("gas handling");
+    CapacityConstraint scrubber = period.fixture.lowPressureScrubber.getCapacityConstraints().get("gas handling");
+    for (CapacityAlternative alternative : Arrays.asList(
+        new CapacityAlternative("hp-separator-gas-relief", "Raise HP separator gas handling limit",
+            "synthetic qualified brownfield alternative", "Field", "HP separator", "gas handling",
+            separator.getApplicableLimit() * 1.10, separator.getUnit(), LimitDirection.MAXIMUM,
+            "synthetic separator internals replacement basis", 0.90, separator.getApplicableLimit(),
+            separator.getApplicableLimit() * 1.25),
+        new CapacityAlternative("lp-scrubber-gas-relief", "Raise LP scrubber gas handling limit",
+            "synthetic qualified brownfield alternative", "Field", "LP suction scrubber", "gas handling",
+            scrubber.getApplicableLimit() * 1.08, scrubber.getUnit(), LimitDirection.MAXIMUM,
+            "synthetic scrubber internals replacement basis", 0.90, scrubber.getApplicableLimit(),
+            scrubber.getApplicableLimit() * 1.20))) {
+      ProcessModelDebottleneckStudy paired = new ProcessModelDebottleneckStudy(alternative.getId() + "-paired",
+          alternative.getName() + " paired study", "synthetic accepted-baseline linkage acceptance",
+          period.study.getCandidateEvaluator(), alternative, search, 0);
+      StudyResult result = paired.evaluate();
+      assertEquals(ProcessModelDebottleneckStudy.StudyOutcome.COMPLETED, result.getOutcome(),
+          result.getDiagnostics().toString());
+      assertEquals(0.0, result.getObjectiveDelta(), 0.0);
+      studies.add(paired);
+      results.add(result);
+    }
+    ProcessModelDebottleneckRanking ranking = new ProcessModelDebottleneckRanking("accepted-relief-portfolio",
+        "Accepted-point relief portfolio", "synthetic exact accepted-point paired evidence");
+    ProcessModelDebottleneckRanking.ObjectiveRankingPolicy policy = new ProcessModelDebottleneckRanking.ObjectiveRankingPolicy(
+        "validated-gas-export-delta", "Validated gas export delta",
+        "same transactional evaluator objective and accepted baseline", 0, "validated gas export",
+        ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE, "kg/hr", 1.0, 0.0, 1.0e-8);
+    return period.study.qualifyReliefPortfolio(period.search, ranking, policy, studies, results);
   }
 
   /**

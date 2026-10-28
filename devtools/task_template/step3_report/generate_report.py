@@ -2467,6 +2467,7 @@ def _qualified_constraint_opportunity_valid(actual, expected, envelope):
         "paired_relief_study_receipt",
     }
     qualified_count = 0
+    portfolio_rows = []
     for candidate, expected_candidate in zip(candidates, expected_candidates):
         if not isinstance(candidate, dict):
             return False
@@ -2487,7 +2488,7 @@ def _qualified_constraint_opportunity_valid(actual, expected, envelope):
         optimizer = envelope.get("optimizer_evidence")
         alternative_values = receipt.get("alternative_action_values")
         if (candidate.get("source") != "INSTALLED_EQUIPMENT"
-                or receipt.get("receipt_version") != 1
+                or receipt.get("receipt_version") not in (1, 2)
                 or receipt.get("action_set_id") != envelope.get("candidate_evaluator_id")
                 or receipt.get("accepted_action_ids") != envelope.get("accepted_action_ids")
                 or receipt.get("baseline_action_values") != envelope.get("accepted_candidate_values")
@@ -2522,6 +2523,72 @@ def _qualified_constraint_opportunity_valid(actual, expected, envelope):
                 or receipt.get("qualification_state") != "QUALIFIED_PAIRED_SAMPLED_RELIEF"
                 or receipt.get("advisory") is not True):
             return False
+        if receipt.get("receipt_version") == 2:
+            portfolio = receipt.get("portfolio_ranking")
+            if (not isinstance(portfolio, dict)
+                    or not _report_number(objective.get("weight"))
+                    or portfolio.get("objective_index") != objective.get("index")
+                    or portfolio.get("objective_name") != objective.get("name")
+                    or portfolio.get("objective_direction") != objective.get("direction")
+                    or portfolio.get("objective_unit") != objective.get("unit")
+                    or portfolio.get("objective_weight") != objective.get("weight")
+                    or not _report_number(portfolio.get("tie_tolerance"))
+                    or portfolio.get("tie_tolerance") < 0
+                    or not _report_number(portfolio.get("baseline_relative_tolerance"))
+                    or not 0 <= portfolio.get("baseline_relative_tolerance") <= 1
+                    or not isinstance(portfolio.get("candidate_count"), int)
+                    or portfolio.get("candidate_count") <= 0
+                    or not isinstance(portfolio.get("rank"), int)
+                    or portfolio.get("rank") <= 0
+                    or not isinstance(portfolio.get("input_index"), int)
+                    or portfolio.get("input_index") < 0
+                    or portfolio.get("alternative_id") != receipt.get("alternative_id")
+                    or portfolio.get("qualified_constraint_name") != candidate.get(
+                        "qualified_constraint_name")
+                    or portfolio.get("objective_delta") != objective.get("delta")
+                    or portfolio.get("ranking_outcome") != "COMPLETED"
+                    or portfolio.get("qualification_state")
+                        != "QUALIFIED_PAIRED_OBJECTIVE_PORTFOLIO_RANK"
+                    or portfolio.get("advisory") is not True):
+                return False
+            portfolio_rows.append(portfolio)
+    if portfolio_rows:
+        identity_fields = (
+            "portfolio_id", "portfolio_name", "portfolio_provenance", "policy_id",
+            "policy_name", "policy_provenance", "objective_index", "objective_name",
+            "objective_direction", "objective_unit", "objective_weight", "tie_tolerance",
+            "baseline_relative_tolerance", "candidate_count", "ranking_outcome",
+        )
+        reference = portfolio_rows[0]
+        if (len(portfolio_rows) < 2
+                or any(any(row.get(field) != reference.get(field) for field in identity_fields)
+                       for row in portfolio_rows[1:])
+                or reference.get("candidate_count") != len(portfolio_rows)
+                or len({row.get("alternative_id") for row in portfolio_rows})
+                    != len(portfolio_rows)
+                or {row.get("input_index") for row in portfolio_rows}
+                    != set(range(len(portfolio_rows)))):
+            return False
+        ordered = sorted(
+            portfolio_rows,
+            key=lambda row: (
+                -float(row.get("objective_delta"))
+                if reference.get("objective_direction") == "MAXIMIZE"
+                else float(row.get("objective_delta")),
+                int(row.get("input_index")),
+            ),
+        )
+        start = 0
+        while start < len(ordered):
+            leader = float(ordered[start].get("objective_delta"))
+            end = start + 1
+            while (end < len(ordered)
+                   and abs(float(ordered[end].get("objective_delta")) - leader)
+                   <= float(reference.get("tie_tolerance"))):
+                end += 1
+            if any(row.get("rank") != start + 1 for row in ordered[start:end]):
+                return False
+            start = end
     return actual.get("summary_version") == (2 if qualified_count else 1)
 
 
@@ -2530,8 +2597,8 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
     reasons = []
     if not isinstance(evidence, dict):
         return ["evidence is not an object"]
-    if evidence.get("schema_version") not in (8, 9, 10, 11, 12):
-        reasons.append("schema_version must be 8, 9, 10, 11, or 12")
+    if evidence.get("schema_version") not in (8, 9, 10, 11, 12, 13):
+        reasons.append("schema_version must be 8, 9, 10, 11, 12, or 13")
     if evidence.get("advisory") is not True:
         reasons.append("advisory flag is missing")
     if not _report_text(evidence.get("cycle_id")):
@@ -2561,6 +2628,7 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
     period_identities = []
     previous_elapsed = None
     seen_period_ids = set()
+    qualified_relief_portfolio_found = False
     for index, period in enumerate(periods):
         prefix = "period {}".format(index + 1)
         if not isinstance(period, dict):
@@ -2583,9 +2651,10 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
             previous_elapsed = elapsed
         if period.get("time_unit") != evidence.get("time_unit"):
             reasons.append(prefix + " time unit does not match the lifecycle")
-        if evidence.get("schema_version") in (9, 10, 11, 12):
+        if evidence.get("schema_version") in (9, 10, 11, 12, 13):
             coverage = period.get("utilization_coverage")
-            expected_coverage_schema = "1.1" if evidence.get("schema_version") in (10, 11, 12) else "1.0"
+            expected_coverage_schema = (
+                "1.1" if evidence.get("schema_version") in (10, 11, 12, 13) else "1.0")
             if (not isinstance(coverage, dict)
                     or coverage.get("schema_version") != expected_coverage_schema
                     or coverage.get("coverage_scope") != "DECLARED_EQUIPMENT_AND_CONSTRAINTS"
@@ -2615,7 +2684,8 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
                 required_ids = coverage.get("required_constraint_ids")
                 if (not isinstance(expected_ids, list) or not expected_ids
                         or not isinstance(expected_plant_ids, list)
-                        or (evidence.get("schema_version") in (10, 11, 12) and not expected_plant_ids)
+                        or (evidence.get("schema_version") in (10, 11, 12, 13)
+                            and not expected_plant_ids)
                         or not isinstance(required_ids, list)
                         or len(coverage_ids) != len(set(coverage_ids))
                         or set(expected_ids) - set(coverage_ids)
@@ -2669,13 +2739,23 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
             if (expected_opportunities is None
                     or period.get("constraint_opportunity_summary") != expected_opportunities):
                 reasons.append(prefix + " has an invalid constraint opportunity summary")
-        if evidence.get("schema_version") == 12:
+        if evidence.get("schema_version") in (12, 13):
             expected_opportunities = _constraint_opportunity_summary(ranked)
             if not _qualified_constraint_opportunity_valid(
                     period.get("constraint_opportunity_summary"), expected_opportunities, envelope):
                 reasons.append(prefix + " has an invalid qualified relief receipt")
+            if (evidence.get("schema_version") == 13
+                    and any(
+                        isinstance(candidate, dict)
+                        and isinstance(candidate.get("paired_relief_study_receipt"), dict)
+                        and candidate["paired_relief_study_receipt"].get("receipt_version") == 2
+                        for candidate in period.get("constraint_opportunity_summary", {}).get(
+                            "candidates", []))):
+                qualified_relief_portfolio_found = True
         period_identities.append(identities)
 
+    if evidence.get("schema_version") == 13 and not qualified_relief_portfolio_found:
+        reasons.append("lifecycle is missing a qualified relief portfolio")
     if expected_cycle_id and expected_cycle_id not in seen_period_ids:
         reasons.append("promoted current-best cycle is missing from lifecycle periods")
 
@@ -2769,7 +2849,7 @@ def format_lifecycle_envelope_text(results, expected_cycle_id=None):
                 _fmt_number(row["applicable_limit"]) if row["applicable_limit"] is not None else "n/a",
                 _md_cell(row["physical_unit"]), _md_cell(row["applicable_limit_provenance"])))
 
-    if evidence["schema_version"] in (9, 10, 11, 12):
+    if evidence["schema_version"] in (9, 10, 11, 12, 13):
         lines += ["", "**Declared accepted-replay constraint coverage.** Every row is frozen at the accepted replay; "
                   "missing, screening-only, non-finite, or unqualified limits are withheld upstream.", "",
                   "| Period | Evidence | Exact constraint | Current / limit | Utilization | Limit basis | Provenance |",
@@ -2789,7 +2869,7 @@ def format_lifecycle_envelope_text(results, expected_cycle_id=None):
                         _md_cell(row["unit"]), _fmt_number(row["normalized_utilization"]),
                         _md_cell(row["basis"]), _md_cell(row["provenance"])))
 
-    if evidence["schema_version"] in (11, 12):
+    if evidence["schema_version"] in (11, 12, 13):
         lines += ["", "**Constraint follow-up opportunity screen.** Rows are qualified first as exact sampled or "
                   "refined constraint evidence. A relief delta is shown only when an exact accepted-baseline-bound "
                   "paired study receipt also passes convergence, feasibility, finiteness, and restoration gates.", "",
@@ -2800,8 +2880,12 @@ def format_lifecycle_envelope_text(results, expected_cycle_id=None):
                 receipt = candidate.get("paired_relief_study_receipt")
                 if candidate.get("paired_relief_study_status") == "QUALIFIED" and isinstance(receipt, dict):
                     objective = receipt["objective"]
-                    follow_up = "Qualified paired sampled Δ {} {} ({})".format(
-                        _fmt_number(objective["delta"]), _md_cell(objective["unit"]),
+                    portfolio = receipt.get("portfolio_ranking")
+                    rank = ("Portfolio rank {}/{} · ".format(
+                        portfolio["rank"], portfolio["candidate_count"])
+                            if isinstance(portfolio, dict) else "")
+                    follow_up = "{}Qualified paired sampled Δ {} {} ({})".format(
+                        rank, _fmt_number(objective["delta"]), _md_cell(objective["unit"]),
                         _md_cell(receipt["study_id"]))
                 else:
                     follow_up = "Paired relief study required"
