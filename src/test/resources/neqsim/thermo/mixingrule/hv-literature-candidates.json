@@ -439,5 +439,104 @@
     "points_inside_compiler_expanded_95_pressure_uncertainty": 15,
     "numerical_basis": "Pure coexistence only: original bubble beta0=1e-10; use equal 0.5/0.5 phase amounts at unchanged saturation pressure to resolve native mole differences. No mixed-phase fraction is adjusted.",
     "qualification": "All native identities and numerical checks asserted. Point pressure comparisons do not propagate input or fitted-parameter uncertainty and do not qualify mixture partition, PR transfer, hydrates or library defaults."
+  },
+  "PR_water_gas_source": {
+    "doi": "10.1016/j.fluid.2015.09.029",
+    "table": "Table1, printed page41, PDF page5; visually verified with earlier primary Yushchenko2015 Table1 printed76",
+    "pdf_sha256": "96c5980287ebbafa18149a4aa8919337c13f23904e42fde0832d0c22a1dc8f31",
+    "receipt": "https://github.com/equinor/neqsim/issues/4576#issuecomment-6463374933",
+    "component1": "water",
+    "convention": "PR infinite-pressure covolume-weighted modified NRTL; tau12=D12/T+DT12 and tau21=D21/T+DT21",
+    "units": {
+      "D12_D21": "K",
+      "DT12_DT21_alpha": "dimensionless"
+    },
+    "temperature_emphasis_K": [
+      323.15,
+      423.15
+    ],
+    "pressure_emphasis_bara": [
+      25,
+      700
+    ],
+    "qualification": "Staged research only. Exact source Tc/Pc/omega unresolved; library pure properties in executable assessment are explicit transfer assumptions. No default activation. Source expanded gamma equation15 has an inner-index inconsistency and PR log denominator13 a sign inconsistency; derive from GE/cubic rather than copying these expressions.",
+    "pure_alpha": "[1+m(1-sqrt(T/Tc))]^2; m=.37464+1.54226w-.26992w^2 for w<=.49, otherwise .3796+1.485w-.1644w^2+.01667w^3. Post-equilibrium volume shift does not affect fugacity.",
+    "pairs": [
+      {
+        "component2": "nitrogen",
+        "D12": -64.5,
+        "DT12": -1.05,
+        "D21": 3500,
+        "DT21": -1,
+        "alpha": 0.08
+      },
+      {
+        "component2": "CO2",
+        "D12": -4127,
+        "DT12": 8.9,
+        "D21": 5230,
+        "DT21": -8,
+        "alpha": 0.03
+      },
+      {
+        "component2": "H2S",
+        "D12": 0,
+        "DT12": 2.9,
+        "D21": 1250,
+        "DT21": -1.5,
+        "alpha": 0.03
+      },
+      {
+        "component2": "methane",
+        "D12": -1500,
+        "DT12": 11,
+        "D21": 4050,
+        "DT21": -5.2,
+        "alpha": 0.16
+      },
+      {
+        "component2": "ethane",
+        "D12": -804.3,
+        "DT12": -0.2,
+        "D21": 4280,
+        "DT21": -3,
+        "alpha": 0.09
+      },
+      {
+        "component2": "propane",
+        "D12": -1584,
+        "DT12": -0.44,
+        "D21": 4750,
+        "DT21": -3.3,
+        "alpha": 0.07
+      },
+      {
+        "component2": "n-butane",
+        "D12": 4968,
+        "DT12": -19.6,
+        "D21": 1567,
+        "DT21": 5.7,
+        "alpha": 0.06
+      }
+    ],
+    "nitrogen_water_assessment": {
+      "measurement_dois": [
+        "10.1021/je049676q",
+        "10.1021/je049869d"
+      ],
+      "rows": [
+        35,
+        52
+      ],
+      "uncertainty": "NIST compiler expanded95% absolute mole-fraction uncertainty; original table images remain unverified",
+      "protocol": "Separate binary flashes on declared synthetic equal-mole feed. No measured-feed or paired-tie-line inference. Current library pure properties retained. No experimental accuracy threshold.",
+      "inside_source_emphasis_rows": [
+        6,
+        5
+      ],
+      "test": "HuronVidalWaterNitrogenAssessmentTest",
+      "resources": "hv-water-nitrogen/",
+      "scope": "Only nitrogen/water has executable measured transfer diagnostics; other six PR tuples remain catalog-only and unqualified."
+    }
   }
 }

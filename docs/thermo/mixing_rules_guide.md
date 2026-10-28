@@ -1029,3 +1029,29 @@ new alpha function, fitted parameter or default retuning is introduced. Preserve
 missing observations, raw rounded feeds, source uncertainty scales and the distinction
 between liquid mass fractions and mole fractions. The fixture does not qualify oil
 partition, hydrate dissociation, brine, ice, clone concurrency or flash throughput.
+
+### Staged PR water/gas literature and bidirectional nitrogen assessment
+
+The research catalog now records seven complete water-first PR-HV tuples from
+Yushchenko/Brusilovsky2016 Table1, with visually verified signs, units, directed
+order and infinite-pressure covolume-weighted convention. They remain staged;
+no production database or default selection is changed. Expanded equations in
+the source contain index/sign inconsistencies; preserve the thermodynamically
+derived GE/fugacity expressions rather than transcribing those expansions.
+
+`HuronVidalWaterNitrogenAssessmentTest` assesses only the nitrogen tuple against
+35 water-in-nitrogen and52 nitrogen-in-water observations. It asserts native
+thermodynamic identities and numerical derivatives for SRK-HV/PR-HV defaults
+and the staged PR configuration, including component-order/state-history checks.
+The equal-mole feed is synthetic, and current library pure inputs are reported:
+the exact fitted-source Tc/Pc/acentric configuration remains unresolved.
+A pure-water vapor-pressure/alpha audit is required before attributing errors
+to the interaction parameters.
+
+The staged transfer AARD is8.44% for water in gas and32.02% in the reverse
+direction, over all87 observations. Only11 observations lie inside the source's
+stated T/P emphasis. Numerical consistency and improvement over defaults do
+not establish experimental accuracy or throughput acceptance. See the
+[fixture protocol and raw reports](../../src/test/resources/neqsim/thermo/mixingrule/hv-water-nitrogen/README.md).
+The other six cataloged PR pairs, inhibitors, brines, ice and hydrate dissociation
+remain outside this assessment. No source-fit error becomes a test tolerance.

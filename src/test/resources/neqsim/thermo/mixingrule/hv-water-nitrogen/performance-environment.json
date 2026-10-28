@@ -1,0 +1,11 @@
+{
+  "java": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment (build 17.0.20+8-1-24.04-Ubuntu)\nOpenJDK 64-Bit Server VM (build 17.0.20+8-1-24.04-Ubuntu, mixed mode, sharing)\n",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+  "warmup_operations_per_JVM": 100,
+  "measured_rounds": 5,
+  "operations_per_round": 100,
+  "JVMs": 30,
+  "order": "forward then reverse across independent forks",
+  "memory": "Xms256m Xmx512m",
+  "qualification": "Exploratory only; no CPU affinity or identical-binary timing control. Different equilibrium compositions imply different solver work, not code-overhead isolation."
+}
