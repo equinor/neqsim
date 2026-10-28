@@ -31,7 +31,7 @@ NeqSim provides specialized control valves for process automation and safety sys
 | `ESDValve` | Emergency shutdown | Process isolation |
 | `PSDValve` | Process shutdown | Overpressure protection |
 
-All control valves extend `ThrottlingValve` and inherit Cv sizing, JT effects, and dynamic capabilities.
+`LevelControlValve` and `PressureControlValve` extend `ThrottlingValve` through `ControlValve` and add an embedded incremental proportional command. Safety-valve subclasses have separate qualification limits described below.
 
 ---
 
@@ -117,8 +117,8 @@ A **level control valve** (LCV) modulates opening to maintain vessel level at se
 
 | Action | Description | Use Case |
 |--------|-------------|----------|
-| **DIRECT** | Increase opening → increase outflow → decrease level | Liquid discharge (most common) |
-| **REVERSE** | Increase opening → decrease outflow → increase level | Rare configurations |
+| **DIRECT** | Increasing measured level increases opening and outflow | Liquid discharge (most common) |
+| **REVERSE** | Increasing measured level decreases opening | Process-specific inverse configurations |
 
 ### Java Example
 
@@ -423,7 +423,7 @@ if psd_valve.hasTripped():
 
 ## Dynamic Simulation
 
-All control valves support dynamic simulation with `runTransient()`.
+`ThrottlingValve`, `ControlValve`, `LevelControlValve`, `PressureControlValve`, `ESDValve`, and `BlowdownValve` have qualified transient paths. Other subclasses must be audited individually; inheriting from a qualified valve does not by itself establish complete dynamic or transaction coverage.
 
 ### Valve Travel Dynamics
 
@@ -433,21 +433,23 @@ valve.setOpeningTravelTime(5.0);   // 5 seconds to fully open
 valve.setClosingTravelTime(3.0);   // 3 seconds to fully close
 
 // Simulate opening
-valve.setPercentValveOpening(100.0);  // Command full open
+valve.setTargetPercentValveOpening(100.0);  // Command full open
 for (double t = 0; t <= 6.0; t += 0.1) {
     valve.runTransient(0.1, UUID.randomUUID());
     System.out.printf("t=%.1f: Actual opening = %.1f%%%n", 
-        t, valve.getActualValveOpening());
+        t, valve.getPercentValveOpening());
 }
 ```
 
 ### Transactional actuator steps
 
-`ThrottlingValve`, the field-free `ControlValve` specialization, `ESDValve`, and
-`BlowdownValve` participate in `ProcessSystem` transient step transactions. Their snapshots retain
+`ThrottlingValve`, the field-free `ControlValve` specialization, `LevelControlValve`,
+`PressureControlValve`, `ESDValve`, and `BlowdownValve` participate in `ProcessSystem` transient
+step transactions. Their snapshots retain
 the actual and requested opening, travel model, deadband, stiction and hysteresis memory, flow and
-thermodynamic cache, outlet-stream state, physical-step identifier, and the ESD/blowdown state
-machine. Attached base PID controllers remain separate transaction participants; the process
+thermodynamic cache, outlet-stream state, physical-step identifier, embedded LCV/PCV setpoint,
+measurement, mode, gain, error and scan identity, and the ESD/blowdown state machine. Attached base
+PID controllers remain separate transaction participants; the process
 transaction validates and restores both objects without replacing either one.
 
 Rollback also restores the active sizing method's choked-flow switch and $x_T$ factor in place.
@@ -464,8 +466,8 @@ valve.setPhysicalStepIdempotencyEnabled(true);
 
 When enabled, one non-null physical-step UUID advances actuator state at most once. Repeating a
 hydraulic calculation with the same UUID can update flow state but cannot apply travel, trip time,
-or blowdown time twice. Rejected full-step/two-half-step trials restore the actuator and safety
-state before retry. When disabled, legacy loops that reuse one UUID across multiple physical
+embedded control command, blowdown time, or trip time twice. Rejected full-step/two-half-step
+trials restore the control, actuator, and safety state before retry. When disabled, legacy loops that reuse one UUID across multiple physical
 timesteps continue to advance on every call.
 
 For `FIRST_ORDER_LAG`, the implemented step is the exact constant-command response
@@ -481,11 +483,38 @@ hysteresis, fail-close ESD travel, commanded blowdown opening, rollback/replay, 
 coverage.
 
 Other `ThrottlingValve` subclasses currently fail the transaction coverage audit until they extend
-the snapshot for their own mutable state. This explicitly includes `HIPPSValve`, `PSDValve`,
-`LevelControlValve`, and `PressureControlValve`; their legacy non-transactional execution remains
-available. Transaction coverage establishes deterministic modeled response only. It does not
+the snapshot for their own mutable state. This explicitly includes `HIPPSValve` and `PSDValve`;
+their legacy non-transactional execution remains available. Transaction coverage establishes deterministic modeled response only. It does not
 establish valve sizing, actuator vendor qualification, SIL, voting, independence, proof-test
 interval, or suitability for a project safety function.
+
+### Embedded LCV/PCV scan contract and limits
+
+For a dynamic LCV scan, the caller first publishes the measured level with
+`setMeasuredLevel()`. The valve then computes the incremental command, applies actuator travel and
+nonlinearities, and solves the pressure-flow relation. A direct-acting discharge LCV uses
+
+$$
+u_{n+1}=u_n-K_p(SP-PV).
+$$
+
+so a measured level above setpoint opens the valve. The valve does not discover a separator or
+level transmitter implicitly; the tagged study model must wire and schedule that measurement.
+
+A dynamic PCV samples the inlet/outlet pressure state from the preceding process scan, computes its
+command, and then runs the actuator and hydraulics once. This is an explicit one-scan measurement
+delay. Downstream mode opens for pressure below setpoint; upstream and differential modes close for
+pressure below setpoint. When outlet pressure is imposed with `setOutletPressure()`, it is an
+algebraic boundary: changing opening changes flow but cannot make the imposed pressure respond. A
+closed pressure-control study therefore needs a qualified pressure inventory downstream or
+upstream. An attached external controller has final authority in the base actuator scan; do not
+combine it with the embedded automatic command unless that ownership is intentional.
+
+The regression contract checks documented command direction against actual valve flow, exact
+first-order actuator response, one control update per UUID, mass closure, in-place rollback/replay,
+complete transaction coverage, and Java restart equivalence. These tests qualify modeled response;
+they do not supply transmitter filtering/delay, fail-action actuation, controller tuning, vendor
+rangeability, or project safety-credit evidence.
 
 ### Level Control Dynamic Response
 
@@ -547,3 +576,4 @@ double rangeability = maxCv / actualCv;
 - [HIPPS Implementation](../../safety/hipps_implementation) - High Integrity Pressure Protection
 - [Dynamic Simulation](../../simulation/dynamic_simulation_guide) - Transient simulation guide
 - [Process Controllers](../controllers) - PID controller documentation
+

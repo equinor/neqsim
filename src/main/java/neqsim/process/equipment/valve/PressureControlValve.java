@@ -1,105 +1,47 @@
 package neqsim.process.equipment.valve;
 
+import java.util.UUID;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
- * Pressure control valve (PCV) for automatic pressure regulation.
+ * Pressure control valve (PCV) with an embedded incremental proportional control calculation.
  *
  * <p>
- * PressureControlValve automatically modulates its opening to maintain a downstream pressure setpoint. It extends
- * ControlValve and adds pressure control logic with proportional control action.
+ * Steady evaluation solves the current hydraulics before sampling pressure. Dynamic evaluation samples the pressure
+ * state published by the preceding process scan, then applies the command, actuator dynamics, and valve hydraulics
+ * once. This explicit one-scan measurement delay prevents hidden algebraic iteration and gives deterministic event
+ * order.
  * </p>
- *
- * <p>
- * Key features:
- * <ul>
- * <li>Automatic pressure control</li>
- * <li>Configurable pressure setpoint</li>
- * <li>Proportional control action</li>
- * <li>Configurable control gain</li>
- * <li>Min/max opening limits</li>
- * </ul>
- *
- * <p>
- * Control modes:
- * <ul>
- * <li>DOWNSTREAM: Maintains downstream (outlet) pressure at setpoint (most common)</li>
- * <li>UPSTREAM: Maintains upstream (inlet) pressure at setpoint (back-pressure control)</li>
- * <li>DIFFERENTIAL: Maintains pressure difference across valve</li>
- * </ul>
- *
- * <p>
- * Common applications:
- * <ul>
- * <li>Gas pressure reduction stations</li>
- * <li>Compressor anti-surge recycle control</li>
- * <li>Separator pressure control</li>
- * <li>Back-pressure control on vessels</li>
- * <li>Steam pressure regulation</li>
- * </ul>
- *
- * <p>
- * Example usage:
- *
- * <pre>
- * PressureControlValve pcv = new PressureControlValve("PCV-101", inletStream);
- * pcv.setPressureSetpoint(25.0); // Control to 25 bara downstream
- * pcv.setControlMode(PressureControlValve.ControlMode.DOWNSTREAM);
- * pcv.setControllerGain(5.0); // Proportional gain
- * pcv.setCv(300.0);
- * pcv.run();
- *
- * System.out.println("Valve opening: " + pcv.getPercentValveOpening() + "%");
- * System.out.println("Process variable: " + pcv.getProcessVariable() + " bara");
- * </pre>
- *
- * @author ESOL
- * @version 1.0
  */
 public class PressureControlValve extends ControlValve {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
-  /** Control mode enumeration. */
+  /** Controlled pressure definition. */
   public enum ControlMode {
-    /** Control downstream (outlet) pressure. */
+    /** Control downstream outlet pressure. */
     DOWNSTREAM,
-    /** Control upstream (inlet) pressure (back-pressure control). */
+    /** Control upstream inlet pressure as a back-pressure valve. */
     UPSTREAM,
-    /** Control differential pressure across valve. */
+    /** Control inlet minus outlet differential pressure. */
     DIFFERENTIAL
   }
 
-  /** Pressure setpoint in bara. */
   private double pressureSetpoint = 20.0;
-
-  /** Control mode. */
   private ControlMode controlMode = ControlMode.DOWNSTREAM;
-
-  /** Proportional controller gain. */
   private double controllerGain = 5.0;
-
-  /** Current process variable (measured pressure) in bara. */
   private double processVariable = 0.0;
-
-  /** Control error (setpoint - PV). */
   private double controlError = 0.0;
-
-  /** Enable/disable automatic control. */
   private boolean autoMode = true;
+  /** Last physical-step identity that advanced the embedded control calculation. */
+  private UUID lastControlStepId = null;
 
-  /**
-   * Constructor for PressureControlValve.
-   *
-   * @param name name of the pressure control valve
-   */
+  /** @param name name of the pressure control valve */
   public PressureControlValve(String name) {
     super(name);
   }
 
   /**
-   * Constructor for PressureControlValve.
-   *
    * @param name name of the pressure control valve
    * @param inStream inlet stream
    */
@@ -107,168 +49,208 @@ public class PressureControlValve extends ControlValve {
     super(name, inStream);
   }
 
-  /**
-   * Set the pressure setpoint.
-   *
-   * @param setpoint pressure setpoint in bara
-   */
+  /** @param setpoint pressure setpoint in bara */
   public void setPressureSetpoint(double setpoint) {
-    this.pressureSetpoint = setpoint;
+    pressureSetpoint = setpoint;
   }
 
-  /**
-   * Get the pressure setpoint.
-   *
-   * @return pressure setpoint in bara
-   */
+  /** @return pressure setpoint in bara */
   public double getPressureSetpoint() {
     return pressureSetpoint;
   }
 
-  /**
-   * Set the control mode.
-   *
-   * @param mode control mode (DOWNSTREAM, UPSTREAM, or DIFFERENTIAL)
-   */
+  /** @param mode controlled pressure definition */
   public void setControlMode(ControlMode mode) {
-    this.controlMode = mode;
+    controlMode = mode;
   }
 
-  /**
-   * Get the control mode.
-   *
-   * @return current control mode
-   */
+  /** @return controlled pressure definition */
   public ControlMode getControlMode() {
     return controlMode;
   }
 
-  /**
-   * Set the controller gain.
-   *
-   * @param gain proportional gain (typical range: 1.0 to 10.0)
-   */
+  /** @param gain incremental proportional gain in percent opening per bara error */
   public void setControllerGain(double gain) {
-    this.controllerGain = gain;
+    controllerGain = gain;
   }
 
-  /**
-   * Get the controller gain.
-   *
-   * @return controller gain
-   */
+  /** @return controller gain */
   public double getControllerGain() {
     return controllerGain;
   }
 
-  /**
-   * Get the current process variable (measured pressure).
-   *
-   * @return process variable in bara
-   */
+  /** @return sampled process variable in bara */
   public double getProcessVariable() {
     return processVariable;
   }
 
-  /**
-   * Get the control error.
-   *
-   * @return control error (setpoint - PV) in bara
-   */
+  /** @return setpoint minus sampled process variable in bara */
   public double getControlError() {
     return controlError;
   }
 
-  /**
-   * Enable or disable automatic control mode.
-   *
-   * @param auto true for automatic, false for manual
-   */
+  /** @param auto true for automatic, false for manual */
   public void setAutoMode(boolean auto) {
-    this.autoMode = auto;
+    autoMode = auto;
   }
 
-  /**
-   * Check if valve is in automatic control mode.
-   *
-   * @return true if automatic, false if manual
-   */
+  /** @return true in automatic mode */
   public boolean isAutoMode() {
     return autoMode;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Override run method to implement pressure control logic.
-   * </p>
-   */
+  /** {@inheritDoc} */
   @Override
   public void run() {
+    run(UUID.randomUUID());
+  }
+
+  /**
+   * Runs one UUID-aware steady evaluation. The current hydraulic state is solved before sampling the pressure and, when
+   * the command advances, solved once more at the new opening.
+   *
+   * @param id calculation or physical-step identity
+   */
+  @Override
+  public void run(UUID id) {
     if (!autoMode) {
-      // Manual mode - just run parent with current opening
-      super.run();
+      super.run(id);
       return;
     }
-
-    // Get inlet and outlet pressures
-    double inletPressure = getInletStream().getPressure("bara");
-    double outletPressure = inletPressure; // Initial estimate
-
-    // First run to get outlet pressure
-    super.run();
-    if (getOutletStream() != null) {
-      outletPressure = getOutletStream().getPressure("bara");
+    super.run(id);
+    samplePressure();
+    if (shouldAdvanceControl(id)) {
+      applyControlCommand(false);
+      super.run(id);
     }
+  }
 
-    // Determine process variable based on control mode
+  /**
+   * Runs one transient scan in previous-pressure-command-actuator-hydraulics order.
+   *
+   * @param dt physical timestep in seconds
+   * @param id physical-step identity
+   */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    if (getCalculateSteadyState()) {
+      super.runTransient(dt, id);
+      return;
+    }
+    if (autoMode && shouldAdvanceControl(id)) {
+      samplePressure();
+      applyControlCommand(true);
+    }
+    super.runTransient(dt, id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setPhysicalStepIdempotencyEnabled(boolean enabled) {
+    super.setPhysicalStepIdempotencyEnabled(enabled);
+    if (!enabled) {
+      lastControlStepId = null;
+    }
+  }
+
+  private boolean shouldAdvanceControl(UUID id) {
+    boolean advance = !isPhysicalStepIdempotencyEnabled() || id == null || !id.equals(lastControlStepId);
+    if (advance && isPhysicalStepIdempotencyEnabled()) {
+      lastControlStepId = id;
+    }
+    return advance;
+  }
+
+  private void samplePressure() {
+    double inletPressure = getInletStream().getPressure("bara");
+    double outletPressure = getOutletStream() == null ? inletPressure : getOutletStream().getPressure("bara");
     switch (controlMode) {
-    case DOWNSTREAM:
-      processVariable = outletPressure;
-      break;
     case UPSTREAM:
       processVariable = inletPressure;
       break;
     case DIFFERENTIAL:
       processVariable = inletPressure - outletPressure;
       break;
+    case DOWNSTREAM:
     default:
       processVariable = outletPressure;
+      break;
     }
-
-    // Calculate control error
     controlError = pressureSetpoint - processVariable;
-
-    // Proportional control action
-    double currentOpening = getPercentValveOpening();
-    double adjustment = controllerGain * controlError;
-
-    // Apply adjustment (reverse action for downstream control)
-    double newOpening;
-    if (controlMode == ControlMode.UPSTREAM) {
-      // Direct action: increase opening to increase upstream pressure
-      newOpening = currentOpening + adjustment;
-    } else {
-      // Reverse action: increase opening to decrease downstream pressure
-      newOpening = currentOpening - adjustment;
-    }
-
-    // Limit to 0-100%
-    newOpening = Math.max(0.0, Math.min(100.0, newOpening));
-
-    // Set new opening and run
-    setPercentValveOpening(newOpening);
-    super.run();
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Returns a string representation specific to pressure control valves.
-   * </p>
-   */
+  private void applyControlCommand(boolean transientMode) {
+    double currentCommand = transientMode ? getTargetPercentValveOpening() : getPercentValveOpening();
+    double adjustment = controllerGain * controlError;
+    double newCommand = controlMode == ControlMode.DOWNSTREAM ? currentCommand + adjustment
+        : currentCommand - adjustment;
+    if (transientMode) {
+      setTargetPercentValveOpening(newCommand);
+    } else {
+      setPercentValveOpening(newCommand);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != PressureControlValve.class) {
+      return "valve subclass " + getClass().getName() + " must extend the snapshot for subclass-owned mutable state";
+    }
+    return getValveTransientStateCoverageIssue();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public TransientState captureTransientState() {
+    String coverageIssue = getTransientStateCoverageIssue();
+    if (coverageIssue != null) {
+      throw new IllegalStateException("Cannot capture pressure control valve '" + getName() + "': " + coverageIssue);
+    }
+    return new PressureControlTransientState(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected void restoreTransientStepState(TransientState snapshot) {
+    if (!(snapshot instanceof PressureControlTransientState)) {
+      throw new IllegalArgumentException("Pressure control valve requires a pressure control transient snapshot");
+    }
+    super.restoreTransientStepState(snapshot);
+    PressureControlTransientState state = (PressureControlTransientState) snapshot;
+    pressureSetpoint = state.pressureSetpoint;
+    controlMode = state.controlMode;
+    controllerGain = state.controllerGain;
+    processVariable = state.processVariable;
+    controlError = state.controlError;
+    autoMode = state.autoMode;
+    lastControlStepId = state.lastControlStepId;
+  }
+
+  /** Serializable checkpoint for embedded pressure-control state. */
+  public static final class PressureControlTransientState extends TransientState {
+    private static final long serialVersionUID = 1000L;
+    private final double pressureSetpoint;
+    private final ControlMode controlMode;
+    private final double controllerGain;
+    private final double processVariable;
+    private final double controlError;
+    private final boolean autoMode;
+    private final UUID lastControlStepId;
+
+    private PressureControlTransientState(PressureControlValve source) {
+      super(source);
+      pressureSetpoint = source.pressureSetpoint;
+      controlMode = source.controlMode;
+      controllerGain = source.controllerGain;
+      processVariable = source.processVariable;
+      controlError = source.controlError;
+      autoMode = source.autoMode;
+      lastControlStepId = source.lastControlStepId;
+    }
+  }
+
+  /** {@inheritDoc} */
   @Override
   public String toString() {
     return String.format(
