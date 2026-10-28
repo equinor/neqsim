@@ -426,6 +426,30 @@ For time series, call `process.runTransient(dt, UUID.randomUUID())` once per phy
 with `dt` in seconds. Read the measured value, `getControllerSetPoint`, and `getResponse` for
 results. Reuse a UUID only for repeated evaluations of the same physical step.
 
+When an opt-in sampled transmitter uses its default unit, percent-domain PID scaling is calculated from the held value
+already selected for that scan. The controller does not read the mutable instrument chain a second time. For a sampled
+vessel-level loop, the scan order is scheduled events and field inputs, instrument sample, equipment and equipment-owned
+controller, standalone controllers not already executed, then history and alarm evaluation. The held level is therefore
+the start-of-step value and the updated vessel inventory appears on the next scan.
+
+The public synthetic separator-level regression uses a 2.2 m diameter by 7.0 m separator at 55 bara, a 20 to 28 kg/s
+wet-gas feed step, one-second scans, a direct-acting PID (`Kp = 0.8`, `Ti = 120 s`) and a liquid valve with a 4 s travel
+time constant. It is a numerical qualification fixture, not proposed plant tuning.
+
+| 30 s result | Observed | Test limit |
+| --- | ---: | ---: |
+| Peak total level fraction | 0.51223755 | 0.513 |
+| Peak liquid-valve opening | 51.08374% | 51.1% |
+| Held-sample peak absolute error | 0.01193237 | 0.012 |
+| Level IAE | 0.18775940 fraction-s | 0.19 fraction-s |
+| Controller-output travel | 1.08374023 percentage points | 1.09 percentage points |
+| Maximum component inventory residual per step | 3.64e-12 mol | 1e-8 mol |
+
+The fixture also requires exact rejected-step replay, exact next-step serialization/restart agreement, bit-for-bit
+repeatability between independent chains, physical bounds, and one shared held sample across the controller event log
+and process history. It does not establish vendor sizing, alarm/trip margins, SIL, independence, voting, or project
+acceptance.
+
 ## Native Dynamic Control Blocks
 
 `TransferFunctionBlock` supplies first-order lag, lead-lag, dead-time, and second-order signal

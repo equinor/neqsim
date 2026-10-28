@@ -743,13 +743,22 @@ Base class for stream-based measurement devices.
 
 ## Physical-step sample and hold
 
-`PressureTransmitter` supports an additive physical-step sampling mode that is disabled by default. When explicitly
-enabled and registered with a `ProcessSystem`, it advances its fault, noise, first-order filter and discrete-delay state
-once per physical-step UUID using the actual timestep. Controllers, history and alarm evaluation reuse the same held
-sample. This removes read-count dependence from qualified transient studies while preserving legacy direct-read
-behaviour for existing models and all unaudited instrument families.
+`PressureTransmitter` and the total-vessel-level `LevelTransmitter` support an additive physical-step sampling mode that
+is disabled by default. When explicitly enabled and registered with a `ProcessSystem`, each advances its fault, noise,
+first-order filter and discrete-delay state once per physical-step UUID using the actual timestep. Controllers, history
+and alarm evaluation reuse the same held sample. This removes read-count dependence from qualified transient studies
+while preserving legacy direct-read behaviour for existing models and all unaudited instrument families.
 
-The scan occurs after scheduled events and INPUT field values and before equipment/controller execution. Linear-drift
+Level is the unitless total-liquid fraction returned by a `Separator` or `Tank`; it is not an oil/water interface
+measurement. The first-order filter uses the exact constant-input update
+`y = y0 + (1 - exp(-dt/tau)) * (x - y0)`. Linear drift is level fraction per second, and discrete delay is an integer
+number of scans. Repeated calls with the same physical-step UUID do not advance filter, noise, drift or delay state.
+Transient transactions and Java serialization retain the held sample, physical-step identity, signal state and vessel
+binding. Concrete subclasses and external online-signal operation fail the transaction preflight until they define a
+complete state or external-I/O contract.
+
+The scan occurs after scheduled events and INPUT field values and before equipment/controller execution. A controller
+therefore consumes the start-of-step held value while the vessel inventory advances during that step. Linear-drift
 parameters are engineering units per second in this mode; delay remains an integer number of scans. Use declared
 vendor/project response and fault data where available. The numerical model is study evidence, not instrument
 certification, alarm rationalization, SIL selection or detector-coverage approval.

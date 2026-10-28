@@ -218,9 +218,11 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     boolean usesDefaultUnit = unit == null || unit.isEmpty() || unit.equals("[?]");
 
     if (usesDefaultUnit) {
-      double measurementPercent = transmitter.getMeasuredPercentValue();
-      double setPointPercent = (controllerSetPoint - transmitter.getMinimumValue())
-          / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100.0;
+      double measurementRange = transmitter.getMaximumValue() - transmitter.getMinimumValue();
+      double measurementPercent = measurementRange == 0.0 ? 0.0
+          : (measurement - transmitter.getMinimumValue()) / measurementRange * 100.0;
+      double setPointPercent = measurementRange == 0.0 ? 0.0
+          : (controllerSetPoint - transmitter.getMinimumValue()) / measurementRange * 100.0;
       error = measurementPercent - setPointPercent;
       if (deadBand > 0.0 && Math.abs(error) <= deadBand) {
         // Within deadband: freeze controller output (hold last valve position).
