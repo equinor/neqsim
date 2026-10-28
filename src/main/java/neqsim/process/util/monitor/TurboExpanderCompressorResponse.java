@@ -34,7 +34,42 @@ public class TurboExpanderCompressorResponse extends BaseResponse {
     this.compresorFeedTemperature = turboExpanderCompressor.getCompressorFeedStream().getTemperature("C");
     this.compresorDischargePressure = turboExpanderCompressor.getCompressorOutletStream().getPressure("bara");
     this.compresorDischargeTemperature = turboExpanderCompressor.getCompressorOutletStream().getTemperature("C");
+    this.nozzleCapacityEnabled = turboExpanderCompressor.isNozzleCapacityEnabled();
+    this.nozzleCapacity = turboExpanderCompressor.getNozzleCapacity();
+    this.nozzleCapacityFullOpen = turboExpanderCompressor.getNozzleCapacityFullOpen();
+    this.nozzleCapacityUtilisation = turboExpanderCompressor.getNozzleCapacityUtilisation();
+    this.fullOpenCapacityUtilisation = turboExpanderCompressor.getFullOpenCapacityUtilisation();
+    this.capacityLimited = turboExpanderCompressor.isCapacityLimited();
+    this.igvOpening = turboExpanderCompressor.getIGVopening();
+    this.jtBypassEnabled = turboExpanderCompressor.isJtBypassEnabled();
+    this.jtBypassFlow = turboExpanderCompressor.getJtBypassFlow();
+    this.jtBypassFraction = turboExpanderCompressor.getJtBypassFraction();
+    this.speedRatioUC0 = turboExpanderCompressor.getSpeedRatioUC0();
+    this.speedUtilisation = turboExpanderCompressor.getSpeedUtilisation();
+    this.speedStatus = turboExpanderCompressor.getSpeedStatus();
+    this.shaftClosureFactor = turboExpanderCompressor.getShaftClosureFactor();
+    this.bearingLoss = turboExpanderCompressor.getBearingLoss();
+    this.shaftPowerResidual = turboExpanderCompressor.getShaftPowerResidual();
+    this.expanderWheelOutletTemperature = turboExpanderCompressor.getExpanderWheelOutletTemperature("C");
   }
+
+  private Boolean nozzleCapacityEnabled = false;
+  private Double nozzleCapacity = 0.0;
+  private Double nozzleCapacityFullOpen = 0.0;
+  private Double nozzleCapacityUtilisation = 0.0;
+  private Double fullOpenCapacityUtilisation = 0.0;
+  private Boolean capacityLimited = false;
+  private Double igvOpening = 0.0;
+  private Boolean jtBypassEnabled = false;
+  private Double jtBypassFlow = 0.0;
+  private Double jtBypassFraction = 0.0;
+  private Double speedRatioUC0 = 0.0;
+  private Double speedUtilisation = 0.0;
+  private String speedStatus = "ok";
+  private Double shaftClosureFactor = 1.0;
+  private Double bearingLoss = 0.0;
+  private Double shaftPowerResidual = 0.0;
+  private Double expanderWheelOutletTemperature = 0.0;
 
   private Double speed = 0.0;
   private Double powerExpander = 0.0;

@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.expander.TurboExpanderCompressorMechanicalDesign;
 import neqsim.process.util.monitor.TurboExpanderCompressorResponse;
@@ -144,6 +145,69 @@ public class TurboExpanderCompressor extends Expander {
   /** Multiplicative efficiency penalty factors matching {@link #igvPenaltyOpenings} (0..1). */
   private double[] igvPenaltyFactors = null;
 
+  // --- Nozzle swallowing capacity, JT bypass, shaft closure (all optional, defaults reproduce the legacy model) ---
+  /** Lower bound of the IGV opening used by the capacity model (fraction). */
+  private static final double MIN_IGV = 1.0e-3;
+  /** When {@code true} the nozzle swallowing capacity m = k s sqrt(rho P) f(IGV) is evaluated in {@link #run(UUID)}. */
+  private boolean nozzleCapacityEnabled = false;
+  /** Nozzle capacity coefficient k [kg/s per sqrt(kg/m3 * Pa)] at fully open IGV. */
+  private double nozzleCapacityCoefficient = 0.0;
+  /** Exponent n of the power-law IGV flow function f(IGV) = IGV^n. */
+  private double nozzleCapacityExponent = 1.0;
+  /** Train scale factor s applied to the nozzle capacity. */
+  private double nozzleCapacityScale = 1.0;
+  /** Optional tabulated IGV openings of the flow function (null = power law). */
+  private double[] nozzleIgvTable = null;
+  /** Optional tabulated flow function values matching {@link #nozzleIgvTable}. */
+  private double[] nozzleFlowFactorTable = null;
+  /** When {@code true} flow above the nozzle capacity is routed through a JT valve. */
+  private boolean jtBypassEnabled = false;
+  /** Nozzle capacity at the current IGV [kg/s] (0 when the capacity model is off). */
+  private double nozzleCapacity = 0.0;
+  /** Nozzle capacity at fully open IGV [kg/s]. */
+  private double nozzleCapacityFullOpen = 0.0;
+  /** Feed flow divided by the capacity at the current IGV. */
+  private double nozzleCapacityUtilisation = 0.0;
+  /** Feed flow divided by the capacity at fully open IGV. */
+  private double fullOpenCapacityUtilisation = 0.0;
+  /** IGV opening required to pass the feed flow (above 1 means more than the fully open capacity). */
+  private double requiredIgvOpening = 0.0;
+  /** True when the expander is at its swallowing capacity (fully open in automatic IGV mode). */
+  private boolean capacityLimited = false;
+  /** Mass flow routed through the JT bypass valve [kg/s]. */
+  private double jtBypassFlow = 0.0;
+  /** Mass flow through the expander wheel [kg/s]. */
+  private double expanderMassFlow = 0.0;
+  /** Shaft closure factor k in k * P_expander = P_compressor + P_loss. */
+  private double shaftClosureFactor = 1.0;
+  /** Maximum allowed shaft speed [rpm] (also the upper clamp of the speed solver). */
+  private double maximumSpeed = 9000.0;
+  /** Minimum allowed shaft speed [rpm] (lower clamp of the speed solver). */
+  private double minimumSpeed = 1000.0;
+  /** Solver status of the speed matching: ok, speed_max or speed_min. */
+  private String speedStatus = "ok";
+  /** Mechanical (bearing) loss at the solved speed [W]. */
+  private double bearingLossResult = 0.0;
+  /** Shaft power residual closure * P_expander - P_compressor - P_loss [W]. */
+  private double shaftPowerResidual = 0.0;
+  /** Raw expander speed ratio U/C0 at the solved speed. */
+  private double speedRatioUC0 = 0.0;
+  /** Expander-wheel-only outlet temperature before mixing with the JT bypass stream [K]. */
+  private double expanderWheelOutletTemperature = 0.0;
+  /** When {@code true} the expander efficiency is eta = max(floor, etaMax - a (x - xOpt)^2) with x = U/C0. */
+  private boolean expanderParabolaEnabled = false;
+  private double expanderParabolaEtaMax = 0.0;
+  private double expanderParabolaXopt = 0.0;
+  private double expanderParabolaCurvature = 0.0;
+  private double expanderParabolaFloor = 0.0;
+  /** Compressor head polynomial H/(N/Nd)^2 = c2 phi^2 + c1 phi + c0 [kJ/kg], phi = Q * 60 / N (null = Q/N curve). */
+  private double[] compressorHeadPolynomial = null;
+  /** Compressor polytropic efficiency polynomial e2 phi^2 + e1 phi + e0 (null = Q/N curve). */
+  private double[] compressorEfficiencyPolynomial = null;
+  private double compressorEfficiencyScale = 1.0;
+  private double compressorEfficiencyMin = 0.0;
+  private double compressorEfficiencyMax = 1.0;
+
   /**
    * Construct a TurboExpanderCompressor with the specified name and inlet stream.
    *
@@ -171,8 +235,6 @@ public class TurboExpanderCompressor extends Expander {
   @Override
   public void run(UUID id) {
     double N = designSpeed; // initial guess for speed [rpm]
-    final double N_max = 9000.0;
-    final double N_min = 1000.0;
     double eta_p = 0.0;
     double W_compressor = 0.0;
     double W_expander = 0.0;
@@ -246,6 +308,43 @@ public class TurboExpanderCompressor extends Expander {
     m_comp = compressorFeedStream.getFluid().getFlowRate("kg/sec");
     Q_comp = compressorFeedStream.getFluid().getFlowRate("m3/sec");
 
+    // Nozzle swallowing capacity and JT bypass (inactive unless enabled): the wheel only sees m_exp.
+    double m_exp = m1;
+    double m_jt = 0.0;
+    nozzleCapacity = 0.0;
+    nozzleCapacityFullOpen = 0.0;
+    nozzleCapacityUtilisation = 0.0;
+    fullOpenCapacityUtilisation = 0.0;
+    requiredIgvOpening = 0.0;
+    capacityLimited = false;
+    if (nozzleCapacityEnabled) {
+      double rhoIn = expanderFeedStream.getFluid().getDensity("kg/m3");
+      double pInBara = expanderFeedStream.getPressure("bara");
+      nozzleCapacityFullOpen = calcNozzleCapacity(1.0, rhoIn, pInBara);
+      requiredIgvOpening = calcRequiredIgvOpening(m1, rhoIn, pInBara);
+      double igvUsed = igvControlMode ? Math.max(MIN_IGV, Math.min(1.0, IGVopening))
+          : Math.min(1.0, Math.max(MIN_IGV, requiredIgvOpening));
+      nozzleCapacity = calcNozzleCapacity(igvUsed, rhoIn, pInBara);
+      nozzleCapacityUtilisation = nozzleCapacity > 0.0 ? m1 / nozzleCapacity : 0.0;
+      fullOpenCapacityUtilisation = nozzleCapacityFullOpen > 0.0 ? m1 / nozzleCapacityFullOpen : 0.0;
+      capacityLimited = igvControlMode ? nozzleCapacityUtilisation > 1.0 + 1e-9 : (requiredIgvOpening >= 1.0 - 1e-9);
+      if (jtBypassEnabled && m1 > nozzleCapacity) {
+        m_exp = nozzleCapacity;
+        m_jt = m1 - nozzleCapacity;
+        if (m1 > 0.0) {
+          Q_exp = Q_exp * m_exp / m1;
+        }
+      }
+      IGVopening = igvUsed;
+      currentIGVArea = IGVopening * maximumIGVArea;
+      usingExpandedIGVArea = false;
+    }
+    jtBypassFlow = m_jt;
+    expanderMassFlow = m_exp;
+    double ucRawLast = 0.0;
+    double W_bearingLast = 0.0;
+    String speedStatusLocal = "ok";
+
     do {
       double U = Math.PI * D * N / 60.0;
       uc = U / C / designUC;
@@ -269,7 +368,7 @@ public class TurboExpanderCompressor extends Expander {
       if (useOutTemperatureSpec && eta_s_required > 0.0) {
         eta_s = eta_s_required;
       }
-      W_expander = m1 * h_s * eta_s;
+      W_expander = m_exp * h_s * eta_s;
       qn_ratio = (Q_comp * 60.0 / N) / designQn;
       CF_eff_comp = getEfficiencyFromQN(qn_ratio);
       CF_eff_comp = Math.max(CF_eff_comp, 1e-6);
@@ -277,10 +376,18 @@ public class TurboExpanderCompressor extends Expander {
       CF_head_comp = Math.max(CF_head_comp, 1e-6);
       Hp = Hp_design * (N / N_design) * (N / N_design) * CF_head_comp;
       eta_p = CF_eff_comp * eta_p_design;
+      if (compressorHeadPolynomial != null) {
+        Hp = polynomialHead(N, Q_comp, N_design);
+      }
+      if (compressorEfficiencyPolynomial != null) {
+        eta_p = polynomialEfficiency(Q_comp, N);
+      }
       W_compressor = m_comp * Hp / eta_p * 1000.0;
       W_bearing = bearingLossPower * (N / N_design) * (N / N_design);
 
-      double fN = W_expander - (W_compressor + W_bearing);
+      W_bearingLast = W_bearing;
+      ucRawLast = ucRaw;
+      double fN = shaftClosureFactor * W_expander - (W_compressor + W_bearing);
       // Finite difference for derivative
       double N2 = N + dN;
       double U2 = Math.PI * D * N2 / 60.0;
@@ -300,7 +407,7 @@ public class TurboExpanderCompressor extends Expander {
       if (useOutTemperatureSpec && eta_s_required > 0.0) {
         eta_s2 = eta_s_required;
       }
-      double W_expander2 = m1 * h_s * eta_s2;
+      double W_expander2 = m_exp * h_s * eta_s2;
       qn_ratio2 = (Q_comp * 60.0 / N2) / designQn;
       double CF_eff_comp2 = getEfficiencyFromQN(qn_ratio2);
       CF_eff_comp2 = Math.max(CF_eff_comp2, 1e-6);
@@ -310,9 +417,15 @@ public class TurboExpanderCompressor extends Expander {
       CF_head_comp2 = Math.max(CF_head_comp2, 1e-6);
       Hp2 = Hp_design * (N2 / N_design) * (N2 / N_design) * CF_head_comp2;
       eta_p2 = CF_eff_comp2 * eta_p_design;
+      if (compressorHeadPolynomial != null) {
+        Hp2 = polynomialHead(N2, Q_comp, N_design);
+      }
+      if (compressorEfficiencyPolynomial != null) {
+        eta_p2 = polynomialEfficiency(Q_comp, N2);
+      }
       double W_compressor2 = m_comp * Hp2 / eta_p2 * 1000.0;
       double W_bearing2 = bearingLossPower * (N2 / N_design) * (N2 / N_design);
-      double fN2 = W_expander2 - (W_compressor2 + W_bearing2);
+      double fN2 = shaftClosureFactor * W_expander2 - (W_compressor2 + W_bearing2);
       double df_dN = (fN2 - fN) / dN;
       if (Math.abs(df_dN) < 1e-8) {
         dN += 10.0;
@@ -320,17 +433,20 @@ public class TurboExpanderCompressor extends Expander {
       } else {
         N = N - (1.0 + iter) / (iter + 5) * fN / df_dN;
       }
-      if (N > N_max) {
-        N = N_max;
+      if (N > maximumSpeed) {
+        N = maximumSpeed;
+        speedStatusLocal = "speed_max";
         break;
       }
-      if (N < N_min) {
-        N = N_min;
+      if (N < minimumSpeed) {
+        N = minimumSpeed;
+        speedStatusLocal = "speed_min";
         break;
       }
       // System.out.println("speed: " + N + " iter: " + iter);
       iter++;
-    } while (Math.abs(W_expander - (W_compressor + W_bearing)) * 100 > 1e-3 && iter < maxIter || iter < minIter);
+    } while (Math.abs(shaftClosureFactor * W_expander - (W_compressor + W_bearing)) * 100 > 1e-3 && iter < maxIter
+        || iter < minIter);
     if (iter >= maxIter) {
       logger.warn("TurboExpanderCompressor {} did not converge in {} speed-matching iterations.", getName(), maxIter);
     }
@@ -351,23 +467,34 @@ public class TurboExpanderCompressor extends Expander {
     powerCompressor = W_compressor;
     setUCratioexpander(uc);
     setQNratioexpander(qn_ratio_exp);
-    if (!igvControlMode) {
+    if (nozzleCapacityEnabled) {
+      lastStageEnthalpyDrop = h_s;
+    } else if (!igvControlMode) {
       updateIGVState(h_s, m1, Q_exp);
     } else {
       lastStageEnthalpyDrop = h_s;
     }
     setQNratiocompressor(qn_ratio);
     setQn(N / 60.0 * Q_comp / designQn);
+    speedStatus = speedStatusLocal;
+    bearingLossResult = W_bearingLast;
+    shaftPowerResidual = shaftClosureFactor * W_expander - (W_compressor + W_bearingLast);
+    speedRatioUC0 = ucRawLast;
 
-    Expander expander = new Expander("tempExpander", expanderFeedStream);
-    expander.setOutletPressure(getExpanderOutPressure());
-    // The coupled turbo-expander model may require an actual stage efficiency above 1.0 to
-    // reproduce a requested outlet temperature after the map-correction back-calculation.
-    // Replay that internal efficiency directly on the temporary expander instead of using the
-    // compressor-bound setter, which clamps at 1.0 for compressor robustness.
-    expander.isentropicEfficiency = eta_s;
-    expander.run();
-    expanderOutletStream.setFluid(expander.getOutletStream().getFluid());
+    if (m_jt > 0.0 && m_exp > 0.0) {
+      runWithJtBypass(eta_s, m_exp, m_jt, h_in);
+    } else {
+      Expander expander = new Expander("tempExpander", expanderFeedStream);
+      expander.setOutletPressure(getExpanderOutPressure());
+      // The coupled turbo-expander model may require an actual stage efficiency above 1.0 to
+      // reproduce a requested outlet temperature after the map-correction back-calculation.
+      // Replay that internal efficiency directly on the temporary expander instead of using the
+      // compressor-bound setter, which clamps at 1.0 for compressor robustness.
+      expander.isentropicEfficiency = eta_s;
+      expander.run();
+      expanderOutletStream.setFluid(expander.getOutletStream().getFluid());
+      expanderWheelOutletTemperature = expanderOutletStream.getTemperature();
+    }
 
     Compressor tempCompressor = new Compressor("tempCompressor", compressorFeedStream);
     tempCompressor.setUsePolytropicCalc(true);
@@ -417,6 +544,552 @@ public class TurboExpanderCompressor extends Expander {
     double h_out_target = fluid.getEnthalpy("kJ/kg");
     double actualDrop = h_in - h_out_target;
     return actualDrop / isentropicDrop;
+  }
+
+  /**
+   * Run the expander wheel on the part of the feed that fits through the nozzle and mix its outlet with the part that
+   * is throttled through the JT bypass valve (isenthalpic) at the expander outlet pressure.
+   *
+   * @param etaS actual expander isentropic efficiency (0..1)
+   * @param mExp mass flow through the wheel [kg/s]
+   * @param mJt mass flow through the JT bypass valve [kg/s]
+   * @param hInKjPerKg feed specific enthalpy [kJ/kg]
+   */
+  private void runWithJtBypass(double etaS, double mExp, double mJt, double hInKjPerKg) {
+    SystemInterface feedFluid = expanderFeedStream.getThermoSystem().clone();
+    Stream wheelFeed = new Stream(getName() + " wheel feed", feedFluid.clone());
+    wheelFeed.setFlowRate(mExp, "kg/sec");
+    wheelFeed.run();
+    Expander wheel = new Expander("tempExpander", wheelFeed);
+    wheel.setOutletPressure(getExpanderOutPressure());
+    wheel.isentropicEfficiency = etaS;
+    wheel.run();
+    SystemInterface wheelOut = wheel.getOutletStream().getThermoSystem();
+    expanderWheelOutletTemperature = wheelOut.getTemperature();
+    double hTotalJ = wheelOut.getEnthalpy() + hInKjPerKg * 1000.0 * mJt;
+    SystemInterface mix = feedFluid.clone();
+    mix.setPressure(getExpanderOutPressure(), "bara");
+    mix.setTemperature(wheelOut.getTemperature());
+    new ThermodynamicOperations(mix).PHflash(hTotalJ);
+    mix.initProperties();
+    expanderOutletStream.setFluid(mix);
+  }
+
+  /**
+   * Evaluate the IGV flow function f(IGV) of the nozzle capacity, normalised to 1.0 at fully open IGV. A power law
+   * IGV^n is used unless a table has been supplied with {@link #setNozzleCapacityModel(double, double[], double[])}.
+   *
+   * @param igv IGV opening (fraction 0..1)
+   * @return the dimensionless flow function
+   */
+  public double calcNozzleFlowFunction(double igv) {
+    double x = Math.max(MIN_IGV, Math.min(1.0, igv));
+    if (nozzleIgvTable == null) {
+      return Math.pow(x, nozzleCapacityExponent);
+    }
+    double full = interpolateTable(nozzleIgvTable, nozzleFlowFactorTable, 1.0);
+    return full > 0.0 ? interpolateTable(nozzleIgvTable, nozzleFlowFactorTable, x) / full : 0.0;
+  }
+
+  /**
+   * Nozzle swallowing capacity m = k s sqrt(rho P) f(IGV) for the supplied inlet state.
+   *
+   * @param igv IGV opening (fraction 0..1)
+   * @param inletDensity expander inlet density [kg/m3]
+   * @param inletPressureBara expander inlet pressure [bara]
+   * @return the swallowing capacity [kg/s]
+   */
+  public double calcNozzleCapacity(double igv, double inletDensity, double inletPressureBara) {
+    double rhoP = Math.max(inletDensity, 0.0) * Math.max(inletPressureBara, 0.0) * 1.0e5;
+    return nozzleCapacityCoefficient * nozzleCapacityScale * Math.sqrt(rhoP) * calcNozzleFlowFunction(igv);
+  }
+
+  /**
+   * IGV opening needed to pass a mass flow. A value above 1.0 means the flow exceeds the capacity of the fully open
+   * nozzle.
+   *
+   * @param massFlow gas mass flow [kg/s]
+   * @param inletDensity expander inlet density [kg/m3]
+   * @param inletPressureBara expander inlet pressure [bara]
+   * @return the required IGV opening (fraction, not clipped at 1.0)
+   */
+  public double calcRequiredIgvOpening(double massFlow, double inletDensity, double inletPressureBara) {
+    double full = calcNozzleCapacity(1.0, inletDensity, inletPressureBara);
+    if (!(full > 0.0)) {
+      return 0.0;
+    }
+    double f = massFlow / full;
+    if (nozzleIgvTable == null) {
+      return Math.pow(f, 1.0 / nozzleCapacityExponent);
+    }
+    if (f >= 1.0) {
+      return f;
+    }
+    double lo = MIN_IGV;
+    double hi = 1.0;
+    for (int i = 0; i < 60; i++) {
+      double mid = 0.5 * (lo + hi);
+      if (calcNozzleFlowFunction(mid) < f) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
+    return 0.5 * (lo + hi);
+  }
+
+  /**
+   * Linear interpolation with edge clamping in an ascending table.
+   *
+   * @param x ascending abscissa values
+   * @param y ordinate values
+   * @param v query value
+   * @return interpolated ordinate
+   */
+  private static double interpolateTable(double[] x, double[] y, double v) {
+    int n = x.length;
+    if (v <= x[0]) {
+      return y[0];
+    }
+    if (v >= x[n - 1]) {
+      return y[n - 1];
+    }
+    for (int i = 0; i < n - 1; i++) {
+      if (v >= x[i] && v <= x[i + 1]) {
+        double t = (v - x[i]) / (x[i + 1] - x[i]);
+        return y[i] + t * (y[i + 1] - y[i]);
+      }
+    }
+    return y[n - 1];
+  }
+
+  /**
+   * Compressor polytropic head from the polynomial map: H = (N/Nd)^2 (c2 phi^2 + c1 phi + c0) with phi = Q 60 / N.
+   *
+   * @param speed shaft speed [rpm]
+   * @param volumeFlow compressor suction volume flow [m3/s]
+   * @param speedDesign design speed [rpm]
+   * @return polytropic head [kJ/kg]
+   */
+  private double polynomialHead(double speed, double volumeFlow, double speedDesign) {
+    double phi = volumeFlow * 60.0 / speed;
+    double[] c = compressorHeadPolynomial;
+    return (c[0] * phi * phi + c[1] * phi + c[2]) * (speed / speedDesign) * (speed / speedDesign);
+  }
+
+  /**
+   * Compressor polytropic efficiency from the polynomial map, scaled and clipped to the configured limits.
+   *
+   * @param volumeFlow compressor suction volume flow [m3/s]
+   * @param speed shaft speed [rpm]
+   * @return polytropic efficiency (0..1)
+   */
+  private double polynomialEfficiency(double volumeFlow, double speed) {
+    double phi = volumeFlow * 60.0 / speed;
+    double[] e = compressorEfficiencyPolynomial;
+    double eta = (e[0] * phi * phi + e[1] * phi + e[2]) * compressorEfficiencyScale;
+    return Math.min(Math.max(eta, compressorEfficiencyMin), compressorEfficiencyMax);
+  }
+
+  // --- Nozzle capacity / JT bypass / shaft closure configuration and results ---
+  /**
+   * Enable the nozzle swallowing capacity model m = k sqrt(rho P) IGV^n (k in kg/s per sqrt(kg/m3 * Pa), P in Pa). In
+   * automatic IGV mode the IGV opens as far as needed; in {@link #setIgvControlMode(boolean) control mode} the supplied
+   * IGV is held.
+   *
+   * @param coefficient capacity coefficient k at fully open IGV
+   * @param exponent power-law exponent n of the IGV flow function
+   */
+  public void setNozzleCapacityModel(double coefficient, double exponent) {
+    this.nozzleCapacityCoefficient = coefficient;
+    this.nozzleCapacityExponent = exponent > 0.0 ? exponent : 1.0;
+    this.nozzleIgvTable = null;
+    this.nozzleFlowFactorTable = null;
+    this.nozzleCapacityEnabled = coefficient > 0.0;
+  }
+
+  /**
+   * Enable the nozzle swallowing capacity model with a fitted IGV flow function table. The table is normalised to the
+   * value at the largest opening used (IGV = 1 is clamped to the last point).
+   *
+   * @param coefficient capacity coefficient k at fully open IGV
+   * @param igvOpenings IGV openings (fraction), any order
+   * @param flowFactors flow function values at those openings
+   */
+  public void setNozzleCapacityModel(double coefficient, double[] igvOpenings, double[] flowFactors) {
+    if (igvOpenings == null || flowFactors == null || igvOpenings.length != flowFactors.length
+        || igvOpenings.length < 2) {
+      throw new IllegalArgumentException("IGV flow table needs at least two matching points");
+    }
+    int n = igvOpenings.length;
+    double[][] pairs = new double[n][2];
+    for (int i = 0; i < n; i++) {
+      pairs[i][0] = igvOpenings[i];
+      pairs[i][1] = flowFactors[i];
+    }
+    Arrays.sort(pairs, new java.util.Comparator<double[]>() {
+      @Override
+      public int compare(double[] a, double[] b) {
+        return Double.compare(a[0], b[0]);
+      }
+    });
+    nozzleIgvTable = new double[n];
+    nozzleFlowFactorTable = new double[n];
+    for (int i = 0; i < n; i++) {
+      nozzleIgvTable[i] = pairs[i][0];
+      nozzleFlowFactorTable[i] = pairs[i][1];
+    }
+    this.nozzleCapacityCoefficient = coefficient;
+    this.nozzleCapacityEnabled = coefficient > 0.0;
+  }
+
+  /**
+   * Set the train scale factor s of the nozzle capacity (for example 1.088 on train B).
+   *
+   * @param scale capacity scale factor
+   */
+  public void setNozzleCapacityScale(double scale) {
+    this.nozzleCapacityScale = scale;
+  }
+
+  /**
+   * Check whether the nozzle capacity model is active.
+   *
+   * @return {@code true} if the capacity model is enabled
+   */
+  public boolean isNozzleCapacityEnabled() {
+    return nozzleCapacityEnabled;
+  }
+
+  /**
+   * Switch the nozzle capacity model on or off without losing the parameters.
+   *
+   * @param enabled {@code true} to evaluate the capacity in run()
+   */
+  public void setNozzleCapacityEnabled(boolean enabled) {
+    this.nozzleCapacityEnabled = enabled && nozzleCapacityCoefficient > 0.0;
+  }
+
+  /**
+   * Route flow above the nozzle capacity through a JT valve instead of forcing it through the wheel. Needs the nozzle
+   * capacity model.
+   *
+   * @param enabled {@code true} to bypass the surplus
+   */
+  public void setJtBypassEnabled(boolean enabled) {
+    this.jtBypassEnabled = enabled;
+  }
+
+  /**
+   * Check whether the JT bypass option is on.
+   *
+   * @return {@code true} if surplus flow is routed through the JT valve
+   */
+  public boolean isJtBypassEnabled() {
+    return jtBypassEnabled;
+  }
+
+  /**
+   * Nozzle swallowing capacity at the current IGV opening from the last run.
+   *
+   * @return capacity [kg/s], 0 when the capacity model is off
+   */
+  public double getNozzleCapacity() {
+    return nozzleCapacity;
+  }
+
+  /**
+   * Nozzle swallowing capacity at fully open IGV from the last run.
+   *
+   * @return capacity [kg/s]
+   */
+  public double getNozzleCapacityFullOpen() {
+    return nozzleCapacityFullOpen;
+  }
+
+  /**
+   * Feed flow divided by the capacity at the current IGV opening.
+   *
+   * @return utilisation (above 1 means the flow exceeds the capacity at this IGV)
+   */
+  public double getNozzleCapacityUtilisation() {
+    return nozzleCapacityUtilisation;
+  }
+
+  /**
+   * Feed flow divided by the capacity of the fully open nozzle.
+   *
+   * @return utilisation (above 1 means more gas than the fully open nozzle can swallow)
+   */
+  public double getFullOpenCapacityUtilisation() {
+    return fullOpenCapacityUtilisation;
+  }
+
+  /**
+   * IGV opening required for the feed flow in the last run.
+   *
+   * @return required IGV opening (fraction, above 1 means over capacity)
+   */
+  public double getRequiredIgvOpening() {
+    return requiredIgvOpening;
+  }
+
+  /**
+   * Check whether the expander is at its swallowing capacity (IGV fully open in automatic mode, flow above the capacity
+   * at the held IGV in control mode).
+   *
+   * @return {@code true} if capacity limited
+   */
+  public boolean isCapacityLimited() {
+    return capacityLimited;
+  }
+
+  /**
+   * Mass flow routed through the JT bypass valve in the last run.
+   *
+   * @return bypass flow [kg/s]
+   */
+  public double getJtBypassFlow() {
+    return jtBypassFlow;
+  }
+
+  /**
+   * JT bypass flow as a fraction of the expander feed flow.
+   *
+   * @return bypass fraction (0..1)
+   */
+  public double getJtBypassFraction() {
+    double total = jtBypassFlow + expanderMassFlow;
+    return total > 0.0 ? jtBypassFlow / total : 0.0;
+  }
+
+  /**
+   * Mass flow through the expander wheel in the last run.
+   *
+   * @return wheel flow [kg/s]
+   */
+  public double getExpanderMassFlow() {
+    return expanderMassFlow;
+  }
+
+  /**
+   * Expander wheel outlet temperature before mixing with the JT bypass stream.
+   *
+   * @param unit temperature unit ("K", "C", "F" or "R")
+   * @return outlet temperature in the requested unit
+   */
+  public double getExpanderWheelOutletTemperature(String unit) {
+    return new neqsim.util.unit.TemperatureUnit(expanderWheelOutletTemperature, "K").getValue(unit);
+  }
+
+  /**
+   * Set the shaft closure factor k of the power balance k * P_expander = P_compressor + P_loss. A value above 1 absorbs
+   * shaft work that is not modelled explicitly (seal gas, heat soak, mass flow bias).
+   *
+   * @param factor shaft closure factor (default 1.0)
+   */
+  public void setShaftClosureFactor(double factor) {
+    this.shaftClosureFactor = factor;
+  }
+
+  /**
+   * Get the shaft closure factor.
+   *
+   * @return shaft closure factor
+   */
+  public double getShaftClosureFactor() {
+    return shaftClosureFactor;
+  }
+
+  /**
+   * Set the mechanical (bearing) loss at design speed; the loss scales with (N / design speed)^2.
+   *
+   * @param bearingLossPower bearing loss at design speed [W]
+   */
+  public void setBearingLossPower(double bearingLossPower) {
+    this.bearingLossPower = bearingLossPower;
+  }
+
+  /**
+   * Set the speed window of the shaft speed solver.
+   *
+   * @param minimumSpeed lower speed clamp [rpm]
+   * @param maximumSpeed upper speed clamp and reference of the speed utilisation [rpm]
+   */
+  public void setSpeedLimits(double minimumSpeed, double maximumSpeed) {
+    this.minimumSpeed = minimumSpeed;
+    this.maximumSpeed = maximumSpeed;
+  }
+
+  /**
+   * Get the maximum shaft speed.
+   *
+   * @return maximum speed [rpm]
+   */
+  public double getMaximumSpeed() {
+    return maximumSpeed;
+  }
+
+  /**
+   * Get the minimum shaft speed.
+   *
+   * @return minimum speed [rpm]
+   */
+  public double getMinimumSpeed() {
+    return minimumSpeed;
+  }
+
+  /**
+   * Solved shaft speed divided by the maximum speed.
+   *
+   * @return speed utilisation (fraction)
+   */
+  public double getSpeedUtilisation() {
+    return maximumSpeed > 0.0 ? expanderSpeed / maximumSpeed : 0.0;
+  }
+
+  /**
+   * Status of the speed solver in the last run.
+   *
+   * @return "ok", "speed_max" or "speed_min"
+   */
+  public String getSpeedStatus() {
+    return speedStatus;
+  }
+
+  /**
+   * Mechanical (bearing) loss at the solved speed.
+   *
+   * @return loss [W]
+   */
+  public double getBearingLoss() {
+    return bearingLossResult;
+  }
+
+  /**
+   * Shaft power residual closure * P_expander - P_compressor - P_loss of the last run.
+   *
+   * @return residual [W]
+   */
+  public double getShaftPowerResidual() {
+    return shaftPowerResidual;
+  }
+
+  /**
+   * Raw expander speed ratio U/C0 (tip speed over spouting velocity) at the solved speed.
+   *
+   * @return U/C0
+   */
+  public double getSpeedRatioUC0() {
+    return speedRatioUC0;
+  }
+
+  /**
+   * Use an absolute expander efficiency map eta = max(floor, etaMax - a (x - xOpt)^2) of the speed ratio x = U/C0
+   * instead of the design-efficiency scaled UC parabola. A 2-D chart set with
+   * {@link #setExpanderChart(ExpanderChartKhader)} still takes precedence.
+   *
+   * @param etaMax peak isentropic efficiency
+   * @param xOpt speed ratio U/C0 of the peak
+   * @param curvature curvature a of the parabola
+   * @param floor lower efficiency bound
+   */
+  public void setExpanderEfficiencyParabola(double etaMax, double xOpt, double curvature, double floor) {
+    this.expanderParabolaEnabled = true;
+    this.expanderParabolaEtaMax = etaMax;
+    this.expanderParabolaXopt = xOpt;
+    this.expanderParabolaCurvature = curvature;
+    this.expanderParabolaFloor = floor;
+  }
+
+  /**
+   * Use a polynomial recompressor head map H = (N/Nd)^2 (c2 phi^2 + c1 phi + c0) in kJ/kg with phi = Q 60 / N (Q in
+   * m3/s) instead of the Q/N head curve.
+   *
+   * @param c2 quadratic coefficient
+   * @param c1 linear coefficient
+   * @param c0 constant coefficient
+   */
+  public void setCompressorHeadPolynomial(double c2, double c1, double c0) {
+    this.compressorHeadPolynomial = new double[] {c2, c1, c0};
+  }
+
+  /**
+   * Use a polynomial recompressor polytropic efficiency map eta = scale (e2 phi^2 + e1 phi + e0) clipped to [min, max]
+   * instead of the Q/N efficiency curve.
+   *
+   * @param e2 quadratic coefficient
+   * @param e1 linear coefficient
+   * @param e0 constant coefficient
+   * @param scale train scale of the map
+   * @param min lower efficiency bound
+   * @param max upper efficiency bound
+   */
+  public void setCompressorEfficiencyPolynomial(double e2, double e1, double e0, double scale, double min, double max) {
+    this.compressorEfficiencyPolynomial = new double[] {e2, e1, e0};
+    this.compressorEfficiencyScale = scale;
+    this.compressorEfficiencyMin = min;
+    this.compressorEfficiencyMax = max;
+  }
+
+  /**
+   * Copy the performance map and capacity configuration of another unit (design data, curves, polynomials, nozzle
+   * model, speed window, closure factor) so that a second train can start from the same machine and then override
+   * train-specific scales.
+   *
+   * @param other the unit to copy the maps from
+   */
+  public void copyPerformanceMapFrom(TurboExpanderCompressor other) {
+    impellerDiameter = other.impellerDiameter;
+    designSpeed = other.designSpeed;
+    designUC = other.designUC;
+    designQn = other.designQn;
+    designExpanderQn = other.designExpanderQn;
+    maximumIGVArea = other.maximumIGVArea;
+    compressorDesignPolytropicEfficiency = other.compressorDesignPolytropicEfficiency;
+    compressorDesignPolytropicHead = other.compressorDesignPolytropicHead;
+    expanderDesignIsentropicEfficiency = other.expanderDesignIsentropicEfficiency;
+    bearingLossPower = other.bearingLossPower;
+    ucCurveA = other.ucCurveA;
+    ucCurveH = other.ucCurveH;
+    ucCurveK = other.ucCurveK;
+    qnEffCurveQnValues = copyOrNull(other.qnEffCurveQnValues);
+    qnEffCurveEffValues = copyOrNull(other.qnEffCurveEffValues);
+    qnHeadCurveQnValues = copyOrNull(other.qnHeadCurveQnValues);
+    qnHeadCurveHeadValues = copyOrNull(other.qnHeadCurveHeadValues);
+    igvPenaltyOpenings = copyOrNull(other.igvPenaltyOpenings);
+    igvPenaltyFactors = copyOrNull(other.igvPenaltyFactors);
+    expanderChart = other.expanderChart;
+    nozzleCapacityEnabled = other.nozzleCapacityEnabled;
+    nozzleCapacityCoefficient = other.nozzleCapacityCoefficient;
+    nozzleCapacityExponent = other.nozzleCapacityExponent;
+    nozzleCapacityScale = other.nozzleCapacityScale;
+    nozzleIgvTable = copyOrNull(other.nozzleIgvTable);
+    nozzleFlowFactorTable = copyOrNull(other.nozzleFlowFactorTable);
+    jtBypassEnabled = other.jtBypassEnabled;
+    shaftClosureFactor = other.shaftClosureFactor;
+    maximumSpeed = other.maximumSpeed;
+    minimumSpeed = other.minimumSpeed;
+    expanderParabolaEnabled = other.expanderParabolaEnabled;
+    expanderParabolaEtaMax = other.expanderParabolaEtaMax;
+    expanderParabolaXopt = other.expanderParabolaXopt;
+    expanderParabolaCurvature = other.expanderParabolaCurvature;
+    expanderParabolaFloor = other.expanderParabolaFloor;
+    compressorHeadPolynomial = copyOrNull(other.compressorHeadPolynomial);
+    compressorEfficiencyPolynomial = copyOrNull(other.compressorEfficiencyPolynomial);
+    compressorEfficiencyScale = other.compressorEfficiencyScale;
+    compressorEfficiencyMin = other.compressorEfficiencyMin;
+    compressorEfficiencyMax = other.compressorEfficiencyMax;
+  }
+
+  /**
+   * Copy an array, preserving null.
+   *
+   * @param a array or null
+   * @return copy or null
+   */
+  private static double[] copyOrNull(double[] a) {
+    return a == null ? null : a.clone();
   }
 
   // --- Getters and Setters for all configuration and result fields ---
@@ -644,6 +1317,9 @@ public class TurboExpanderCompressor extends Expander {
     double baseEff;
     if (expanderChart != null && expanderChart.isMapDefined()) {
       baseEff = expanderChart.getEfficiency(ucRaw, igv);
+    } else if (expanderParabolaEnabled) {
+      double dx = ucRaw - expanderParabolaXopt;
+      baseEff = Math.max(expanderParabolaFloor, expanderParabolaEtaMax - expanderParabolaCurvature * dx * dx);
     } else {
       double cf = getEfficiencyFromUC(ucNorm);
       if (cf < 0.0) {

@@ -39,6 +39,10 @@ Use this skill when an agent needs to create, correct, apply or interpret compre
 
 Turboexpander map work is separate: create `TurboExpanderMapIngestion`, add vendor/test anchor points with velocity ratio, IGV opening and measured efficiency, configure the reference fluid and impeller diameters, then validate against the expander/compressor operating envelope. Geometry-derived maps and `ExpanderChartKhader` are correlations/models, not converted vendor data.
 
+### Turboexpander capacity / IGV / JT bypass
+
+`TurboExpanderCompressor` can model nozzle swallowing capacity m = k·s·sqrt(rho_in·P_in[Pa])·IGV^n (`setNozzleCapacityModel(k, n)` or a flow-function table, `setNozzleCapacityScale(s)` per train). In automatic IGV mode (default) the IGV opens as needed and `isCapacityLimited()` means fully open at capacity (`getRequiredIgvOpening() > 1`); with `setIgvControlMode(true)` the held `setIGVopening(...)` fixes the capacity. `setJtBypassEnabled(true)` throttles the surplus isenthalpically and mixes it with the wheel outlet (`getJtBypassFraction()`, `getExpanderWheelOutletTemperature(unit)`); without it the over-capacity flow still passes the wheel and only `getNozzleCapacityUtilisation() > 1` flags it. Shaft closure is `k_c·P_exp = P_comp + P_bearing` (`setShaftClosureFactor`, `setBearingLossPower`, `getShaftPowerResidual()`); the speed is solved from it inside `setSpeedLimits(min, max)` (`getSpeedStatus()` = ok/speed_max/speed_min, `getSpeedUtilisation()`). Absolute maps for fitted machines: `setExpanderEfficiencyParabola(etaMax, xOpt, a, floor)` in U/C0 and `setCompressorHeadPolynomial` / `setCompressorEfficiencyPolynomial` in phi = Q·60/N; `copyPerformanceMapFrom(other)` gives per-train variants. Defaults leave the legacy model unchanged. Reference: `TurboExpanderCapacityTest` (cross-checked to 1 % against an independent reference implementation of the same model); doc: `docs/process/equipment/expanders.md`.
+
 ## Dry gas seal systems, conditioning and troubleshooting
 
 Read [the engineering review](../../../docs/process/equipment/dry_gas_seal_engineering_review.md)
