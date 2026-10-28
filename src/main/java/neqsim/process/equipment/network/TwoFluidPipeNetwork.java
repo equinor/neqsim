@@ -1,14 +1,19 @@
 package neqsim.process.equipment.network;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import neqsim.process.equipment.pipeline.TwoFluidComponentConservationReport;
+import neqsim.process.equipment.pipeline.TwoFluidConservativeEnergyReport;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport.Phase;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pipeline.TwoFluidPipe.BoundaryCondition;
 import neqsim.process.equipment.pipeline.UpstreamCompressibleVolume;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Phase-conservative transient hydraulic network of {@link TwoFluidPipe} branches.
@@ -22,8 +27,8 @@ import neqsim.process.equipment.pipeline.UpstreamCompressibleVolume;
  *
  * <p>
  * This first network layer is intentionally storage based. Algebraic zero-volume junctions, global Newton pressure-flow
- * iteration, component/enthalpy mixing, reverse-flow boundary composition, and branch subcycling are outside its
- * current scope.
+ * iteration, reverse-flow boundary composition, and branch subcycling are outside its current scope. Component and
+ * total-energy mixing are available as an explicit opt-in on compressible nodes.
  * </p>
  */
 public final class TwoFluidPipeNetwork implements Serializable {
@@ -36,6 +41,7 @@ public final class TwoFluidPipeNetwork implements Serializable {
   private boolean initialized;
   private double simulationTimeSeconds;
   private BalanceReport lastBalanceReport;
+  private ThermodynamicBalanceReport lastThermodynamicBalanceReport;
 
   /** Create an empty network. */
   public TwoFluidPipeNetwork(String name) {
@@ -52,6 +58,32 @@ public final class TwoFluidPipeNetwork implements Serializable {
       throw new IllegalArgumentException("Compressible node volume cannot be null");
     }
     nodes.put(nodeName, NetworkNode.compressible(nodeName, volume));
+  }
+
+  /**
+   * Add a storage node with conservative named-component and total-energy inventory.
+   *
+   * <p>
+   * The existing {@link UpstreamCompressibleVolume} remains the hydraulic pressure and phase-mass owner. The supplied
+   * fluid defines the component slate, composition and caloric state of the same total node mass. During a network
+   * step, every outgoing branch sees one frozen start-of-step node state; all accepted branch transfers are then
+   * applied simultaneously. This makes merge and split routing independent of branch insertion order.
+   * </p>
+   *
+   * @param nodeName unique node name
+   * @param volume existing hydraulic storage model
+   * @param initialFluid initial node composition and caloric state
+   */
+  public void addConservativeCompressibleNode(String nodeName, UpstreamCompressibleVolume volume,
+      SystemInterface initialFluid) {
+    requireUniqueNodeName(nodeName);
+    if (volume == null) {
+      throw new IllegalArgumentException("Compressible node volume cannot be null");
+    }
+    if (initialFluid == null || initialFluid.getNumberOfComponents() == 0) {
+      throw new IllegalArgumentException("Conservative node fluid must contain at least one component");
+    }
+    nodes.put(nodeName, NetworkNode.conservative(nodeName, volume, initialFluid));
   }
 
   /** Add an external fixed-pressure reservoir or sink node. */
@@ -99,7 +131,14 @@ public final class TwoFluidPipeNetwork implements Serializable {
     for (NetworkBranch branch : branches.values()) {
       branch.pipe.setOutletPressure(branch.toNode.getPressurePa());
       branch.pipe.run(id);
+      if (hasConservativeNodes() && !branch.pipe.isUseConservativeEnergyRecovery()) {
+        branch.pipe.prepareConservativeEnergyTransientFromSteadyState();
+      }
       configureTransientPressures(branch);
+    }
+    if (hasConservativeNodes()) {
+      validateConservativeNetwork();
+      publishFrozenNodeStates();
     }
     initialized = true;
   }
@@ -118,8 +157,35 @@ public final class TwoFluidPipeNetwork implements Serializable {
     double[] sourceMassKg = new double[PHASE_COUNT];
     Map<String, double[]> nodeTransferKg = new LinkedHashMap<String, double[]>();
 
+    boolean conservative = hasConservativeNodes();
+    String[] componentNames = conservative ? conservativeComponentNames() : new String[0];
+    int componentCount = componentNames.length;
+    double[] initialComponentKg = new double[componentCount];
+    double[] finalComponentKg = new double[componentCount];
+    double[] externalInletComponentKg = new double[componentCount];
+    double[] externalOutletComponentKg = new double[componentCount];
+    double initialEnergyJ = 0.0;
+    double finalEnergyJ = 0.0;
+    double externalInletEnergyJ = 0.0;
+    double externalOutletEnergyJ = 0.0;
+    double gravitationalWorkJ = 0.0;
+    double wallHeatJ = 0.0;
+    Map<String, double[]> nodeComponentTransferKg = new LinkedHashMap<String, double[]>();
+    Map<String, Double> nodeEnergyTransferJ = new LinkedHashMap<String, Double>();
+
+    if (conservative) {
+      validateConservativeNetwork();
+      publishFrozenNodeStates();
+    }
+
     for (NetworkNode node : nodes.values()) {
       nodeTransferKg.put(node.name, new double[PHASE_COUNT]);
+      if (conservative && !node.fixedPressure) {
+        nodeComponentTransferKg.put(node.name, new double[componentCount]);
+        nodeEnergyTransferJ.put(node.name, 0.0);
+        add(initialComponentKg, node.thermodynamicInventory.componentMassKg, 1.0);
+        initialEnergyJ += node.thermodynamicInventory.internalEnergyJ;
+      }
       if (!node.fixedPressure) {
         for (int phase = 0; phase < PHASE_COUNT; phase++) {
           initialMassKg[phase] += node.volume.getPhaseMassKg(phase);
@@ -153,11 +219,47 @@ public final class TwoFluidPipeNetwork implements Serializable {
           nodeTransferKg.get(branch.toNode.name)[phase] -= outletMass;
         }
       }
+      if (conservative) {
+        TwoFluidComponentConservationReport componentReport = branch.pipe.getLastComponentConservationReport();
+        TwoFluidConservativeEnergyReport energyReport = branch.pipe.getLastConservativeEnergyReport();
+        validateBranchThermodynamicReports(branch, componentNames, componentReport, energyReport);
+        add(initialComponentKg, componentReport.getInitialInventoryKg(), 1.0);
+        add(finalComponentKg, componentReport.getFinalInventoryKg(), 1.0);
+        initialEnergyJ += energyReport.getInitialEnergyJ();
+        finalEnergyJ += energyReport.getFinalEnergyJ();
+        gravitationalWorkJ += energyReport.getGravitationalWorkJ();
+        wallHeatJ += energyReport.getWallHeatToFluidJ();
+
+        double[] inletComponentKg = componentReport.getInletBoundaryMassKg();
+        double[] outletComponentKg = componentReport.getOutletBoundaryMassKg();
+        if (branch.fromNode.fixedPressure) {
+          add(externalInletComponentKg, inletComponentKg, 1.0);
+          externalInletEnergyJ += energyReport.getInletAdvectedEnergyJ();
+        } else {
+          add(nodeComponentTransferKg.get(branch.fromNode.name), inletComponentKg, -1.0);
+          nodeEnergyTransferJ.put(branch.fromNode.name,
+              nodeEnergyTransferJ.get(branch.fromNode.name) - energyReport.getInletAdvectedEnergyJ());
+        }
+        if (branch.toNode.fixedPressure) {
+          add(externalOutletComponentKg, outletComponentKg, 1.0);
+          externalOutletEnergyJ += energyReport.getOutletAdvectedEnergyJ();
+        } else {
+          add(nodeComponentTransferKg.get(branch.toNode.name), outletComponentKg, 1.0);
+          nodeEnergyTransferJ.put(branch.toNode.name,
+              nodeEnergyTransferJ.get(branch.toNode.name) + energyReport.getOutletAdvectedEnergyJ());
+        }
+      }
     }
 
     for (NetworkNode node : nodes.values()) {
       if (!node.fixedPressure) {
         node.volume.advance(timeStepSeconds, nodeTransferKg.get(node.name));
+        if (conservative) {
+          node.thermodynamicInventory.advance(nodeComponentTransferKg.get(node.name),
+              nodeEnergyTransferJ.get(node.name), node.getPressurePa());
+          add(finalComponentKg, node.thermodynamicInventory.componentMassKg, 1.0);
+          finalEnergyJ += node.thermodynamicInventory.internalEnergyJ;
+        }
         for (int phase = 0; phase < PHASE_COUNT; phase++) {
           finalMassKg[phase] += node.volume.getPhaseMassKg(phase);
         }
@@ -167,6 +269,103 @@ public final class TwoFluidPipeNetwork implements Serializable {
     simulationTimeSeconds += timeStepSeconds;
     lastBalanceReport = new BalanceReport(timeStepSeconds, initialMassKg, finalMassKg, externalInletMassKg,
         externalOutletMassKg, sourceMassKg);
+    lastThermodynamicBalanceReport = conservative
+        ? new ThermodynamicBalanceReport(timeStepSeconds, componentNames, initialComponentKg, finalComponentKg,
+            externalInletComponentKg, externalOutletComponentKg, initialEnergyJ, finalEnergyJ, externalInletEnergyJ,
+            externalOutletEnergyJ, gravitationalWorkJ, wallHeatJ)
+        : null;
+  }
+
+  private boolean hasConservativeNodes() {
+    for (NetworkNode node : nodes.values()) {
+      if (node.thermodynamicInventory != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private String[] conservativeComponentNames() {
+    for (NetworkNode node : nodes.values()) {
+      if (node.thermodynamicInventory != null) {
+        return node.thermodynamicInventory.componentNames.clone();
+      }
+    }
+    return new String[0];
+  }
+
+  private void validateConservativeNetwork() {
+    String[] names = conservativeComponentNames();
+    for (NetworkNode node : nodes.values()) {
+      if (!node.fixedPressure) {
+        if (node.thermodynamicInventory == null) {
+          throw new IllegalStateException(
+              "Conservative routing requires thermodynamic inventory on node '" + node.name + "'");
+        }
+        if (!Arrays.equals(names, node.thermodynamicInventory.componentNames)) {
+          throw new IllegalStateException("Conservative node '" + node.name + "' has a different component slate");
+        }
+        for (int phase = 0; phase < PHASE_COUNT; phase++) {
+          if (node.volume.getSourceMassFlowRateKgS(phase) != 0.0) {
+            throw new IllegalStateException("Conservative node '" + node.name
+                + "' does not yet support hydraulic source terms without an explicit source fluid and enthalpy");
+          }
+        }
+      }
+    }
+    for (NetworkBranch branch : branches.values()) {
+      if (!Arrays.equals(names, branch.pipe.getInletStream().getFluid().getComponentNames())) {
+        throw new IllegalStateException("Branch '" + branch.name + "' has a different component slate");
+      }
+      if (!branch.pipe.isComponentTransportEnabled() || !branch.pipe.isUseConservativeEnergyRecovery()) {
+        throw new IllegalStateException(
+            "Branch '" + branch.name + "' must use component transport and conservative energy recovery");
+      }
+    }
+  }
+
+  private void publishFrozenNodeStates() {
+    for (NetworkBranch branch : branches.values()) {
+      if (!branch.fromNode.fixedPressure) {
+        SystemInterface boundaryFluid = branch.fromNode.thermodynamicInventory.fluid.clone();
+        boundaryFluid.setPressure(branch.fromNode.getPressurePa(), "Pa");
+        branch.pipe.getInletStream().setFluid(boundaryFluid);
+      }
+    }
+  }
+
+  private static void validateBranchThermodynamicReports(NetworkBranch branch, String[] componentNames,
+      TwoFluidComponentConservationReport componentReport, TwoFluidConservativeEnergyReport energyReport) {
+    if (componentReport == null || energyReport == null) {
+      throw new IllegalStateException("Branch '" + branch.name + "' returned no conservative thermodynamic report");
+    }
+    if (!componentReport.isConverged()) {
+      throw new IllegalStateException(
+          "Branch '" + branch.name + "' component report did not converge: " + componentReport.getMessage());
+    }
+    if (!Arrays.equals(componentNames, componentReport.getComponentNames())) {
+      throw new IllegalStateException("Branch '" + branch.name + "' reported a different component slate");
+    }
+    requireForwardBoundaryTransfer(branch, componentReport.getInletBoundaryMassKg(), "inlet");
+    requireForwardBoundaryTransfer(branch, componentReport.getOutletBoundaryMassKg(), "outlet");
+  }
+
+  private static void requireForwardBoundaryTransfer(NetworkBranch branch, double[] componentMassKg, String boundary) {
+    for (double massKg : componentMassKg) {
+      if (massKg < -1.0e-12) {
+        throw new IllegalStateException("Branch '" + branch.name + "' has reverse " + boundary
+            + " component transfer; reverse-flow composition routing is not supported");
+      }
+    }
+  }
+
+  private static void add(double[] target, double[] values, double factor) {
+    if (target.length != values.length) {
+      throw new IllegalArgumentException("Array dimensions differ");
+    }
+    for (int index = 0; index < target.length; index++) {
+      target[index] += factor * values[index];
+    }
   }
 
   private void configureTransientPressures(NetworkBranch branch) {
@@ -239,6 +438,11 @@ public final class TwoFluidPipeNetwork implements Serializable {
     return lastBalanceReport;
   }
 
+  /** @return latest whole-network component and energy balance, or {@code null} when not enabled */
+  public ThermodynamicBalanceReport getLastThermodynamicBalanceReport() {
+    return lastThermodynamicBalanceReport;
+  }
+
   public TwoFluidPipe getPipe(String branchName) {
     NetworkBranch branch = branches.get(branchName);
     if (branch == null)
@@ -250,32 +454,112 @@ public final class TwoFluidPipeNetwork implements Serializable {
     return requireNode(nodeName).getPressurePa();
   }
 
+  /** Get the recovered temperature of a conservative storage node. */
+  public double getNodeTemperatureK(String nodeName) {
+    NetworkNode node = requireNode(nodeName);
+    if (node.thermodynamicInventory == null) {
+      throw new IllegalStateException("Node '" + nodeName + "' has no thermodynamic inventory");
+    }
+    return node.thermodynamicInventory.fluid.getTemperature("K");
+  }
+
+  /** Get one named-component inventory from a conservative storage node. */
+  public double getNodeComponentMassKg(String nodeName, String componentName) {
+    NetworkNode node = requireNode(nodeName);
+    if (node.thermodynamicInventory == null) {
+      throw new IllegalStateException("Node '" + nodeName + "' has no thermodynamic inventory");
+    }
+    return node.thermodynamicInventory.getComponentMassKg(componentName);
+  }
+
   private static final class NetworkNode implements Serializable {
     private static final long serialVersionUID = 1000L;
     private final String name;
     private final boolean fixedPressure;
     private final double fixedPressurePa;
     private final UpstreamCompressibleVolume volume;
+    private final ThermodynamicInventory thermodynamicInventory;
     private int incomingCount;
     private int outgoingCount;
 
-    private NetworkNode(String name, boolean fixedPressure, double fixedPressurePa, UpstreamCompressibleVolume volume) {
+    private NetworkNode(String name, boolean fixedPressure, double fixedPressurePa, UpstreamCompressibleVolume volume,
+        ThermodynamicInventory thermodynamicInventory) {
       this.name = name;
       this.fixedPressure = fixedPressure;
       this.fixedPressurePa = fixedPressurePa;
       this.volume = volume;
+      this.thermodynamicInventory = thermodynamicInventory;
     }
 
     private static NetworkNode fixed(String name, double pressurePa) {
-      return new NetworkNode(name, true, pressurePa, null);
+      return new NetworkNode(name, true, pressurePa, null, null);
     }
 
     private static NetworkNode compressible(String name, UpstreamCompressibleVolume volume) {
-      return new NetworkNode(name, false, Double.NaN, volume);
+      return new NetworkNode(name, false, Double.NaN, volume, null);
+    }
+
+    private static NetworkNode conservative(String name, UpstreamCompressibleVolume volume,
+        SystemInterface initialFluid) {
+      return new NetworkNode(name, false, Double.NaN, volume,
+          new ThermodynamicInventory(initialFluid, volume.getTotalMassKg(), volume.getPressurePa()));
     }
 
     private double getPressurePa() {
       return fixedPressure ? fixedPressurePa : volume.getPressurePa();
+    }
+  }
+
+  private static final class ThermodynamicInventory implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String[] componentNames;
+    private final double[] molarMassKgPerMol;
+    private final double[] componentMassKg;
+    private final SystemInterface fluid;
+    private double internalEnergyJ;
+
+    private ThermodynamicInventory(SystemInterface initialFluid, double totalMassKg, double pressurePa) {
+      this.fluid = initialFluid.clone();
+      this.fluid.setPressure(pressurePa, "Pa");
+      this.fluid.setTotalFlowRate(totalMassKg, "kg/sec");
+      new ThermodynamicOperations(this.fluid).TPflash();
+      this.componentNames = this.fluid.getComponentNames();
+      this.molarMassKgPerMol = new double[componentNames.length];
+      this.componentMassKg = new double[componentNames.length];
+      for (int index = 0; index < componentNames.length; index++) {
+        molarMassKgPerMol[index] = this.fluid.getComponent(index).getMolarMass();
+        componentMassKg[index] = this.fluid.getComponent(index).getNumberOfmoles() * molarMassKgPerMol[index];
+      }
+      this.internalEnergyJ = this.fluid.getInternalEnergy("J");
+    }
+
+    private void advance(double[] transferredComponentKg, double transferredEnergyJ, double pressurePa) {
+      double[] molarFlow = new double[componentNames.length];
+      for (int index = 0; index < componentNames.length; index++) {
+        componentMassKg[index] += transferredComponentKg[index];
+        if (!Double.isFinite(componentMassKg[index]) || componentMassKg[index] < -1.0e-10) {
+          throw new IllegalStateException(
+              "Conservative node component inventory became negative or nonfinite for '" + componentNames[index] + "'");
+        }
+        componentMassKg[index] = Math.max(0.0, componentMassKg[index]);
+        molarFlow[index] = componentMassKg[index] / molarMassKgPerMol[index];
+      }
+      internalEnergyJ += transferredEnergyJ;
+      if (!Double.isFinite(internalEnergyJ)) {
+        throw new IllegalStateException("Conservative node energy inventory became nonfinite");
+      }
+      fluid.setMolarFlowRates(molarFlow);
+      fluid.setPressure(pressurePa, "Pa");
+      new ThermodynamicOperations(fluid).PUflash(internalEnergyJ, "J");
+    }
+
+    private double getComponentMassKg(String componentName) {
+      for (int index = 0; index < componentNames.length; index++) {
+        if (componentNames[index].equals(componentName)) {
+          return componentMassKg[index];
+        }
+      }
+      throw new IllegalArgumentException("Component '" + componentName + "' is not in the node slate");
     }
   }
 
@@ -365,6 +649,140 @@ public final class TwoFluidPipeNetwork implements Serializable {
       default:
         throw new IllegalArgumentException("Unsupported phase " + aggregation);
       }
+    }
+  }
+
+  /** Whole-network named-component and total-energy balance for the latest accepted interval. */
+  public static final class ThermodynamicBalanceReport implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final double elapsedTimeSeconds;
+    private final String[] componentNames;
+    private final double[] initialComponentKg;
+    private final double[] finalComponentKg;
+    private final double[] externalInletComponentKg;
+    private final double[] externalOutletComponentKg;
+    private final double initialEnergyJ;
+    private final double finalEnergyJ;
+    private final double externalInletEnergyJ;
+    private final double externalOutletEnergyJ;
+    private final double gravitationalWorkJ;
+    private final double wallHeatJ;
+
+    private ThermodynamicBalanceReport(double elapsedTimeSeconds, String[] componentNames, double[] initialComponentKg,
+        double[] finalComponentKg, double[] externalInletComponentKg, double[] externalOutletComponentKg,
+        double initialEnergyJ, double finalEnergyJ, double externalInletEnergyJ, double externalOutletEnergyJ,
+        double gravitationalWorkJ, double wallHeatJ) {
+      this.elapsedTimeSeconds = elapsedTimeSeconds;
+      this.componentNames = componentNames.clone();
+      this.initialComponentKg = initialComponentKg.clone();
+      this.finalComponentKg = finalComponentKg.clone();
+      this.externalInletComponentKg = externalInletComponentKg.clone();
+      this.externalOutletComponentKg = externalOutletComponentKg.clone();
+      this.initialEnergyJ = initialEnergyJ;
+      this.finalEnergyJ = finalEnergyJ;
+      this.externalInletEnergyJ = externalInletEnergyJ;
+      this.externalOutletEnergyJ = externalOutletEnergyJ;
+      this.gravitationalWorkJ = gravitationalWorkJ;
+      this.wallHeatJ = wallHeatJ;
+    }
+
+    /** @return accepted elapsed time in seconds */
+    public double getElapsedTimeSeconds() {
+      return elapsedTimeSeconds;
+    }
+
+    /** @return deterministic named-component order */
+    public String[] getComponentNames() {
+      return componentNames.clone();
+    }
+
+    /** Get initial whole-network inventory of a component. */
+    public double getInitialComponentMassKg(String componentName) {
+      return initialComponentKg[componentIndex(componentName)];
+    }
+
+    /** Get final whole-network inventory of a component. */
+    public double getFinalComponentMassKg(String componentName) {
+      return finalComponentKg[componentIndex(componentName)];
+    }
+
+    /** Get component mass entering through fixed-pressure external boundaries. */
+    public double getExternalInletComponentMassKg(String componentName) {
+      return externalInletComponentKg[componentIndex(componentName)];
+    }
+
+    /** Get component mass leaving through fixed-pressure external boundaries. */
+    public double getExternalOutletComponentMassKg(String componentName) {
+      return externalOutletComponentKg[componentIndex(componentName)];
+    }
+
+    /** Get component residual {@code final - initial - inlet + outlet}. */
+    public double getComponentResidualKg(String componentName) {
+      int index = componentIndex(componentName);
+      return finalComponentKg[index] - initialComponentKg[index] - externalInletComponentKg[index]
+          + externalOutletComponentKg[index];
+    }
+
+    /** Get a component residual scaled by inventory and external transfer magnitudes. */
+    public double getRelativeComponentResidual(String componentName) {
+      int index = componentIndex(componentName);
+      double scale = Math.max(Math.abs(initialComponentKg[index]), Math.abs(finalComponentKg[index]));
+      scale = Math.max(scale, Math.abs(externalInletComponentKg[index]) + Math.abs(externalOutletComponentKg[index]));
+      return Math.abs(getComponentResidualKg(componentName)) / Math.max(scale, 1.0e-12);
+    }
+
+    /** @return initial pipe plus node energy in joules */
+    public double getInitialEnergyJ() {
+      return initialEnergyJ;
+    }
+
+    /** @return final pipe plus node energy in joules */
+    public double getFinalEnergyJ() {
+      return finalEnergyJ;
+    }
+
+    /** @return energy entering through fixed-pressure external boundaries in joules */
+    public double getExternalInletEnergyJ() {
+      return externalInletEnergyJ;
+    }
+
+    /** @return energy leaving through fixed-pressure external boundaries in joules */
+    public double getExternalOutletEnergyJ() {
+      return externalOutletEnergyJ;
+    }
+
+    /** @return branch gravitational work added to the network fluid in joules */
+    public double getGravitationalWorkJ() {
+      return gravitationalWorkJ;
+    }
+
+    /** @return branch wall heat added to the network fluid in joules */
+    public double getWallHeatJ() {
+      return wallHeatJ;
+    }
+
+    /** @return whole-network first-law residual in joules */
+    public double getEnergyResidualJ() {
+      return finalEnergyJ - initialEnergyJ - externalInletEnergyJ + externalOutletEnergyJ - gravitationalWorkJ
+          - wallHeatJ;
+    }
+
+    /** @return whole-network first-law residual scaled by storage and transfer magnitudes */
+    public double getRelativeEnergyResidual() {
+      double scale = Math.max(Math.abs(finalEnergyJ - initialEnergyJ),
+          Math.abs(externalInletEnergyJ - externalOutletEnergyJ));
+      scale = Math.max(scale, Math.abs(gravitationalWorkJ));
+      scale = Math.max(scale, Math.abs(wallHeatJ));
+      return Math.abs(getEnergyResidualJ()) / Math.max(scale, 1.0e-12);
+    }
+
+    private int componentIndex(String componentName) {
+      for (int index = 0; index < componentNames.length; index++) {
+        if (componentNames[index].equals(componentName)) {
+          return index;
+        }
+      }
+      throw new IllegalArgumentException("Unknown component '" + componentName + "'");
     }
   }
 }
