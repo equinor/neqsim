@@ -86,6 +86,30 @@ public final class TwoFluidPipeNetwork implements Serializable {
     nodes.put(nodeName, NetworkNode.conservative(nodeName, volume, initialFluid));
   }
 
+  /**
+   * Define the thermodynamic state of mass entering a conservative storage node through its hydraulic source terms.
+   *
+   * <p>
+   * The phase-resolved source rates remain owned by {@link UpstreamCompressibleVolume}. This contract supplies the
+   * named-component composition and open-system specific enthalpy required to apply the same accepted source mass to
+   * the node's component and total-energy inventories. The fluid is defensively copied and later mutations do not
+   * change the source definition.
+   * </p>
+   *
+   * @param nodeName existing conservative compressible node
+   * @param sourceFluid source composition; its flow rate is ignored
+   * @param specificEnthalpyJPerKg source specific enthalpy in J/kg
+   */
+  public void setConservativeNodeSourceThermodynamics(String nodeName, SystemInterface sourceFluid,
+      double specificEnthalpyJPerKg) {
+    NetworkNode node = requireNode(nodeName);
+    if (node.fixedPressure || node.thermodynamicInventory == null) {
+      throw new IllegalArgumentException("Node '" + nodeName + "' is not a conservative compressible node");
+    }
+    node.sourceThermodynamics = new NodeSourceThermodynamics(sourceFluid, specificEnthalpyJPerKg,
+        node.thermodynamicInventory.componentNames);
+  }
+
   /** Add an external fixed-pressure reservoir or sink node. */
   public void addFixedPressureNode(String nodeName, double pressurePa) {
     requireUniqueNodeName(nodeName);
@@ -164,10 +188,12 @@ public final class TwoFluidPipeNetwork implements Serializable {
     double[] finalComponentKg = new double[componentCount];
     double[] externalInletComponentKg = new double[componentCount];
     double[] externalOutletComponentKg = new double[componentCount];
+    double[] sourceComponentKg = new double[componentCount];
     double initialEnergyJ = 0.0;
     double finalEnergyJ = 0.0;
     double externalInletEnergyJ = 0.0;
     double externalOutletEnergyJ = 0.0;
+    double sourceEnergyJ = 0.0;
     double gravitationalWorkJ = 0.0;
     double wallHeatJ = 0.0;
     Map<String, double[]> nodeComponentTransferKg = new LinkedHashMap<String, double[]>();
@@ -185,6 +211,15 @@ public final class TwoFluidPipeNetwork implements Serializable {
         nodeEnergyTransferJ.put(node.name, 0.0);
         add(initialComponentKg, node.thermodynamicInventory.componentMassKg, 1.0);
         initialEnergyJ += node.thermodynamicInventory.internalEnergyJ;
+        double nodeSourceMassKg = node.getTotalSourceMassFlowRateKgS() * timeStepSeconds;
+        if (nodeSourceMassKg > 0.0) {
+          double[] nodeSourceComponentKg = node.sourceThermodynamics.componentMasses(nodeSourceMassKg);
+          add(nodeComponentTransferKg.get(node.name), nodeSourceComponentKg, 1.0);
+          add(sourceComponentKg, nodeSourceComponentKg, 1.0);
+          double nodeSourceEnergyJ = nodeSourceMassKg * node.sourceThermodynamics.specificEnthalpyJPerKg;
+          nodeEnergyTransferJ.put(node.name, nodeSourceEnergyJ);
+          sourceEnergyJ += nodeSourceEnergyJ;
+        }
       }
       if (!node.fixedPressure) {
         for (int phase = 0; phase < PHASE_COUNT; phase++) {
@@ -271,8 +306,8 @@ public final class TwoFluidPipeNetwork implements Serializable {
         externalOutletMassKg, sourceMassKg);
     lastThermodynamicBalanceReport = conservative
         ? new ThermodynamicBalanceReport(timeStepSeconds, componentNames, initialComponentKg, finalComponentKg,
-            externalInletComponentKg, externalOutletComponentKg, initialEnergyJ, finalEnergyJ, externalInletEnergyJ,
-            externalOutletEnergyJ, gravitationalWorkJ, wallHeatJ)
+            externalInletComponentKg, externalOutletComponentKg, sourceComponentKg, initialEnergyJ, finalEnergyJ,
+            externalInletEnergyJ, externalOutletEnergyJ, sourceEnergyJ, gravitationalWorkJ, wallHeatJ)
         : null;
   }
 
@@ -307,8 +342,14 @@ public final class TwoFluidPipeNetwork implements Serializable {
         }
         for (int phase = 0; phase < PHASE_COUNT; phase++) {
           if (node.volume.getSourceMassFlowRateKgS(phase) != 0.0) {
-            throw new IllegalStateException("Conservative node '" + node.name
-                + "' does not yet support hydraulic source terms without an explicit source fluid and enthalpy");
+            if (node.sourceThermodynamics == null) {
+              throw new IllegalStateException("Conservative node '" + node.name
+                  + "' has hydraulic source terms but no explicit source fluid and enthalpy");
+            }
+            if (!Arrays.equals(names, node.sourceThermodynamics.componentNames)) {
+              throw new IllegalStateException(
+                  "Conservative node '" + node.name + "' source has a different component slate");
+            }
           }
         }
       }
@@ -479,6 +520,7 @@ public final class TwoFluidPipeNetwork implements Serializable {
     private final double fixedPressurePa;
     private final UpstreamCompressibleVolume volume;
     private final ThermodynamicInventory thermodynamicInventory;
+    private NodeSourceThermodynamics sourceThermodynamics;
     private int incomingCount;
     private int outgoingCount;
 
@@ -507,6 +549,72 @@ public final class TwoFluidPipeNetwork implements Serializable {
 
     private double getPressurePa() {
       return fixedPressure ? fixedPressurePa : volume.getPressurePa();
+    }
+
+    private double getTotalSourceMassFlowRateKgS() {
+      double totalKgS = 0.0;
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        totalKgS += volume.getSourceMassFlowRateKgS(phase);
+      }
+      return totalKgS;
+    }
+  }
+
+  /** Immutable component and enthalpy definition for one conservative-node source. */
+  private static final class NodeSourceThermodynamics implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String[] componentNames;
+    private final double[] componentMassFractions;
+    private final double specificEnthalpyJPerKg;
+
+    /**
+     * Create a defensive source definition.
+     *
+     * @param sourceFluid source composition
+     * @param specificEnthalpyJPerKg source specific enthalpy in J/kg
+     * @param requiredComponentNames required conservative-network component slate
+     */
+    private NodeSourceThermodynamics(SystemInterface sourceFluid, double specificEnthalpyJPerKg,
+        String[] requiredComponentNames) {
+      if (sourceFluid == null || sourceFluid.getNumberOfComponents() == 0) {
+        throw new IllegalArgumentException("Conservative node source fluid must contain at least one component");
+      }
+      if (!Double.isFinite(specificEnthalpyJPerKg)) {
+        throw new IllegalArgumentException("Conservative node source specific enthalpy must be finite");
+      }
+      SystemInterface source = sourceFluid.clone();
+      this.componentNames = source.getComponentNames();
+      if (!Arrays.equals(requiredComponentNames, componentNames)) {
+        throw new IllegalArgumentException("Conservative node source fluid has a different component slate");
+      }
+      this.componentMassFractions = new double[componentNames.length];
+      double totalMass = 0.0;
+      for (int index = 0; index < componentNames.length; index++) {
+        componentMassFractions[index] = source.getComponent(index).getNumberOfmoles()
+            * source.getComponent(index).getMolarMass();
+        totalMass += componentMassFractions[index];
+      }
+      if (!Double.isFinite(totalMass) || totalMass <= 0.0) {
+        throw new IllegalArgumentException("Conservative node source fluid must have positive finite component mass");
+      }
+      for (int index = 0; index < componentMassFractions.length; index++) {
+        componentMassFractions[index] /= totalMass;
+      }
+      this.specificEnthalpyJPerKg = specificEnthalpyJPerKg;
+    }
+
+    /**
+     * Allocate one accepted source mass to the stored named-component fractions.
+     *
+     * @param sourceMassKg accepted source mass in kg
+     * @return named-component source masses in kg
+     */
+    private double[] componentMasses(double sourceMassKg) {
+      double[] componentMassKg = new double[componentMassFractions.length];
+      for (int index = 0; index < componentMassKg.length; index++) {
+        componentMassKg[index] = sourceMassKg * componentMassFractions[index];
+      }
+      return componentMassKg;
     }
   }
 
@@ -661,27 +769,31 @@ public final class TwoFluidPipeNetwork implements Serializable {
     private final double[] finalComponentKg;
     private final double[] externalInletComponentKg;
     private final double[] externalOutletComponentKg;
+    private final double[] sourceComponentKg;
     private final double initialEnergyJ;
     private final double finalEnergyJ;
     private final double externalInletEnergyJ;
     private final double externalOutletEnergyJ;
+    private final double sourceEnergyJ;
     private final double gravitationalWorkJ;
     private final double wallHeatJ;
 
     private ThermodynamicBalanceReport(double elapsedTimeSeconds, String[] componentNames, double[] initialComponentKg,
         double[] finalComponentKg, double[] externalInletComponentKg, double[] externalOutletComponentKg,
-        double initialEnergyJ, double finalEnergyJ, double externalInletEnergyJ, double externalOutletEnergyJ,
-        double gravitationalWorkJ, double wallHeatJ) {
+        double[] sourceComponentKg, double initialEnergyJ, double finalEnergyJ, double externalInletEnergyJ,
+        double externalOutletEnergyJ, double sourceEnergyJ, double gravitationalWorkJ, double wallHeatJ) {
       this.elapsedTimeSeconds = elapsedTimeSeconds;
       this.componentNames = componentNames.clone();
       this.initialComponentKg = initialComponentKg.clone();
       this.finalComponentKg = finalComponentKg.clone();
       this.externalInletComponentKg = externalInletComponentKg.clone();
       this.externalOutletComponentKg = externalOutletComponentKg.clone();
+      this.sourceComponentKg = sourceComponentKg.clone();
       this.initialEnergyJ = initialEnergyJ;
       this.finalEnergyJ = finalEnergyJ;
       this.externalInletEnergyJ = externalInletEnergyJ;
       this.externalOutletEnergyJ = externalOutletEnergyJ;
+      this.sourceEnergyJ = sourceEnergyJ;
       this.gravitationalWorkJ = gravitationalWorkJ;
       this.wallHeatJ = wallHeatJ;
     }
@@ -716,11 +828,16 @@ public final class TwoFluidPipeNetwork implements Serializable {
       return externalOutletComponentKg[componentIndex(componentName)];
     }
 
-    /** Get component residual {@code final - initial - inlet + outlet}. */
+    /** Get component mass entering through conservative-node source terms. */
+    public double getSourceComponentMassKg(String componentName) {
+      return sourceComponentKg[componentIndex(componentName)];
+    }
+
+    /** Get component residual {@code final - initial - inlet + outlet - source}. */
     public double getComponentResidualKg(String componentName) {
       int index = componentIndex(componentName);
       return finalComponentKg[index] - initialComponentKg[index] - externalInletComponentKg[index]
-          + externalOutletComponentKg[index];
+          + externalOutletComponentKg[index] - sourceComponentKg[index];
     }
 
     /** Get a component residual scaled by inventory and external transfer magnitudes. */
@@ -728,6 +845,7 @@ public final class TwoFluidPipeNetwork implements Serializable {
       int index = componentIndex(componentName);
       double scale = Math.max(Math.abs(initialComponentKg[index]), Math.abs(finalComponentKg[index]));
       scale = Math.max(scale, Math.abs(externalInletComponentKg[index]) + Math.abs(externalOutletComponentKg[index]));
+      scale = Math.max(scale, Math.abs(sourceComponentKg[index]));
       return Math.abs(getComponentResidualKg(componentName)) / Math.max(scale, 1.0e-12);
     }
 
@@ -751,6 +869,11 @@ public final class TwoFluidPipeNetwork implements Serializable {
       return externalOutletEnergyJ;
     }
 
+    /** @return enthalpy entering through conservative-node source terms in joules */
+    public double getSourceEnergyJ() {
+      return sourceEnergyJ;
+    }
+
     /** @return branch gravitational work added to the network fluid in joules */
     public double getGravitationalWorkJ() {
       return gravitationalWorkJ;
@@ -764,7 +887,7 @@ public final class TwoFluidPipeNetwork implements Serializable {
     /** @return whole-network first-law residual in joules */
     public double getEnergyResidualJ() {
       return finalEnergyJ - initialEnergyJ - externalInletEnergyJ + externalOutletEnergyJ - gravitationalWorkJ
-          - wallHeatJ;
+          - wallHeatJ - sourceEnergyJ;
     }
 
     /** @return whole-network first-law residual scaled by storage and transfer magnitudes */
@@ -773,6 +896,7 @@ public final class TwoFluidPipeNetwork implements Serializable {
           Math.abs(externalInletEnergyJ - externalOutletEnergyJ));
       scale = Math.max(scale, Math.abs(gravitationalWorkJ));
       scale = Math.max(scale, Math.abs(wallHeatJ));
+      scale = Math.max(scale, Math.abs(sourceEnergyJ));
       return Math.abs(getEnergyResidualJ()) / Math.max(scale, 1.0e-12);
     }
 

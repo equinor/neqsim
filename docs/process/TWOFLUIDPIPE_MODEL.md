@@ -1441,12 +1441,18 @@ Every branch sees the node pressures at the beginning of the network step. After
 advance, their accepted gas, oil, and water boundary transfers update every compressible node
 simultaneously. Branch iteration order therefore does not become an implicit pressure solve.
 The whole-network report includes pipe and node inventories, fixed-boundary transfers, phase
-sources, and gas/oil/water/liquid/total residuals.
+sources, and gas/oil/water/liquid/total residuals. Conservative storage nodes additionally retain
+named-component and internal-energy inventories. When an `UpstreamCompressibleVolume` has positive
+phase source rates, call `setConservativeNodeSourceThermodynamics` with the source composition and
+specific enthalpy in J/kg. The network then applies the same accepted source mass to the hydraulic,
+component and open-system energy ledgers. Missing source thermodynamics, a mismatched component
+slate or non-finite enthalpy fails before the interval advances.
 
 This first network implementation requires finite compressible storage at internal junctions.
 Fixed-pressure nodes are external reservoirs or sinks. Algebraic zero-volume junctions, a global
-Newton pressure-flow solve, component and enthalpy mixing, reverse-flow boundary composition, and
-branch subcycling remain outside the validated scope.
+Newton pressure-flow solve, reverse-flow boundary composition, and branch subcycling remain outside
+the validated scope. Conservative component/energy mixing and node sources have synthetic closure
+evidence; they are not independently qualified transient junction models.
 
 ### Choosing Time Step, Sections, and Pipeline Length
 
