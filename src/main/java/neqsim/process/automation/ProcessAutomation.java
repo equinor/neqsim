@@ -592,6 +592,10 @@ public class ProcessAutomation {
 
     ProcessEquipmentInterface unit = findUnit(areaName, unitName);
 
+    if (unit instanceof AutomationAddressable && parts.length >= 2) {
+      return ((AutomationAddressable) unit).getAutomationValue(localAddress.substring(unitName.length() + 1),
+          unitOfMeasure);
+    }
     if (unit instanceof FieldWellNetworkProcessUnit && parts.length == 3 && "route".equals(parts[1])) {
       return getFieldRouteProperty((FieldWellNetworkProcessUnit) unit, parts[2], unitOfMeasure);
     }
@@ -654,6 +658,12 @@ public class ProcessAutomation {
 
     ProcessEquipmentInterface unit = findUnit(areaName, unitName);
 
+    if (unit instanceof AutomationAddressable && parts.length >= 2) {
+      ((AutomationAddressable) unit).setAutomationValue(localAddress.substring(unitName.length() + 1), value,
+          unitOfMeasure);
+      this.dirty = true;
+      return;
+    }
     if (unit instanceof FieldWellNetworkProcessUnit && parts.length == 3 && "route".equals(parts[1])) {
       setFieldRouteProperty((FieldWellNetworkProcessUnit) unit, parts[2], value, unitOfMeasure);
       this.dirty = true;
@@ -888,6 +898,10 @@ public class ProcessAutomation {
   private List<SimulationVariable> buildVariableList(String unitName, ProcessEquipmentInterface unit) {
     List<SimulationVariable> vars = new ArrayList<SimulationVariable>();
     boolean handledOutlets = false;
+
+    if (unit instanceof AutomationAddressable) {
+      return enrichVariableMetadata(((AutomationAddressable) unit).getAutomationVariables(unitName));
+    }
 
     LoopedPipeNetwork addressableNetwork = getAddressableNetwork(unit);
     if (addressableNetwork != null) {

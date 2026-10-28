@@ -173,8 +173,15 @@ when the stages sit in different platform models. Full code pattern: `neqsim-com
 | fuel, exhaust, waste heat | `updateDriverOperatingPoint()` then the `GasTurbineUnit` getters |
 
 Not in Java: the Python snapshot evaluation without re-running the flowsheet (Java always re-runs through the
-callback), and automatic application of the recycle demand to the anti-surge valves (read `requiredRecycleFraction`
-and set the recycle yourself, or let the process anti-surge controller do it).
+callback).
+
+Also in Java: `setAntiSurgeValve(member, valve)` / `setAntiSurgeController(member, controller)` +
+`applyRequiredRecycle()` (idempotent, positions each member's recycle valve at its `requiredRecycleFraction`);
+`setMotorDriverUnit(ElectricMotor)` / `setDriverCurve(curve)` derive the speed band from the VFD or fixed-speed motor;
+`CompressorShaftCalculator` and `PlatformPowerSystemUnit` publish automation addresses (`<calc>.speed`,
+`<calc>.member.<tag>.surgeMargin|recycleFraction|active`, `<unit>.availablePower|deficit|n1Margin|fuel|co2`,
+`ambientTemperature` writable) via `AutomationAddressable`; `PlatformPowerSystemUnit.connectToBus(EnergyBus)` couples
+the platform to `CoupledProcessEnergySolver`. Details: `docs/process/equipment/compressor_shaft.md`.
 
 ## Chart gas similarity, efficiency calibration and chart-speed basis
 

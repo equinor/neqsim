@@ -4,13 +4,18 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.DoubleUnaryOperator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.controllerdevice.AntiSurgeController;
+import neqsim.process.equipment.compressor.driver.DriverCurve;
+import neqsim.process.equipment.energy.ElectricMotor;
 import neqsim.process.equipment.powergeneration.GasTurbine;
 import neqsim.process.equipment.powergeneration.gasturbine.GasTurbineUnit;
+import neqsim.process.equipment.valve.ThrottlingValve;
 
 /**
  * Groups several {@link Compressor} bodies that sit on ONE common shaft (driven by a single gas turbine or motor) so
@@ -125,6 +130,27 @@ public class CompressorShaft implements Serializable {
 
   /** Upper speed bound in rpm. */
   private double maxSpeed = 25000.0;
+
+  /** Driver performance curve (for example an {@code ElectricMotorDriver} with VFD) giving speed band and power. */
+  private DriverCurve driverCurve = null;
+
+  /** Electric motor process unit whose performance model is the driver curve. */
+  private ElectricMotor motorDriverUnit = null;
+
+  /** True while the speed bounds follow the driver curve; an explicit {@link #setSpeedBounds} switches it off. */
+  private boolean speedBandFromDriver = false;
+
+  /** Recycle (anti-surge) valve per member. */
+  private final Map<Compressor, ThrottlingValve> antiSurgeValves = new IdentityHashMap<Compressor, ThrottlingValve>();
+
+  /** Anti-surge controller per member, as an alternative way to reach the recycle valve. */
+  private final Map<Compressor, AntiSurgeController> antiSurgeControllers = new IdentityHashMap<Compressor, AntiSurgeController>();
+
+  /** Members whose built-in anti-surge was activated by {@link #applyRequiredRecycle()}. */
+  private final Map<Compressor, Boolean> recycleAutoActivated = new IdentityHashMap<Compressor, Boolean>();
+
+  /** Recycle fraction at which a recycle valve is fully open (linear opening, screening). */
+  private double recycleValveFullOpenFraction = 0.5;
 
   /** Maximum root-finding iterations. */
   private int maxIterations = 60;
@@ -501,6 +527,11 @@ public class CompressorShaft implements Serializable {
     compressors.remove(compressor);
     gearRatios.remove(compressor);
     requiredDischargeBara.remove(compressor);
+    antiSurgeValves.remove(compressor);
+    antiSurgeControllers.remove(compressor);
+    if (recycleAutoActivated.remove(compressor) != null) {
+      compressor.getAntiSurge().setActive(false);
+    }
     if (turbineDriver != null) {
       turbineDriver.getDrivenLoads().remove(compressor);
     }
@@ -637,8 +668,8 @@ public class CompressorShaft implements Serializable {
    *
    * <p>
    * Resolution order: an explicit {@link #setMaxShaftPower(double, String)} limit wins, then a {@link CompressorDriver}
-   * curve evaluated at the current speed (ambient-derated for a gas-turbine driver), then the rated power of an
-   * attached {@link GasTurbine}. Returns 0 when no limit is configured.
+   * curve evaluated at the current speed (ambient-derated for a gas-turbine driver), then a driver curve or electric
+   * motor ({@link #setDriverCurve(DriverCurve)}), then the rated power of an attached {@link GasTurbine}.
    * </p>
    *
    * @param unit power unit: "W", "kW" or "MW"
@@ -650,6 +681,8 @@ public class CompressorShaft implements Serializable {
       availableW = maxShaftPowerW;
     } else if (driver != null && driver.getMaxAvailablePowerAtSpeed(speed) > 0.0) {
       availableW = driver.getMaxAvailablePowerAtSpeed(speed) * 1.0e3;
+    } else if (driverCurvePowerW() > 0.0) {
+      availableW = driverCurvePowerW();
     } else if (turbineDriver != null && turbineDriver.getRatedPower() > 0.0) {
       availableW = turbineDriver.getRatedPower();
     } else if (gasTurbineUnitDriver != null) {
@@ -659,6 +692,25 @@ public class CompressorShaft implements Serializable {
       availableW = availableW > 0.0 ? Math.min(availableW, supplyShaftPowerLimitW) : supplyShaftPowerLimitW;
     }
     return availableW / powerFactor(unit);
+  }
+
+  /**
+   * Power the driver curve (or the electric motor with its environmental derating) can deliver at the common speed.
+   *
+   * @return power in W, 0 when no curve is attached or the speed is outside the curve
+   */
+  private double driverCurvePowerW() {
+    if (driverCurve == null || !(speed > 0.0)) {
+      return 0.0;
+    }
+    double w;
+    if (motorDriverUnit != null && motorDriverUnit.hasPerformanceModel()) {
+      motorDriverUnit.setOperatingSpeed(speed);
+      w = motorDriverUnit.getAvailableShaftPower();
+    } else {
+      w = driverCurve.getAvailablePower(speed) * 1.0e3;
+    }
+    return Double.isFinite(w) && w > 0.0 ? w : 0.0;
   }
 
   /**
@@ -822,7 +874,8 @@ public class CompressorShaft implements Serializable {
   }
 
   /**
-   * Set the speed search bounds used by {@link #solveSpeed}.
+   * Set the speed search bounds used by {@link #solveSpeed}. An explicit call overrides a speed band derived from a
+   * driver ({@link #setDriverCurve(DriverCurve)}, {@link #setMotorDriverUnit(ElectricMotor)}).
    *
    * @param min the lower speed bound in rpm
    * @param max the upper speed bound in rpm
@@ -830,6 +883,112 @@ public class CompressorShaft implements Serializable {
   public void setSpeedBounds(double min, double max) {
     this.minSpeed = min;
     this.maxSpeed = max;
+    this.speedBandFromDriver = false;
+  }
+
+  /**
+   * Whether the speed bounds follow a driver (VFD range) attached to the shaft.
+   *
+   * @return true while the bounds are derived from the driver
+   */
+  public boolean isSpeedBandFromDriver() {
+    return speedBandFromDriver;
+  }
+
+  /**
+   * Get the lower speed bound in force.
+   *
+   * @return the lower bound in rpm
+   */
+  public double getMinSpeed() {
+    return minSpeed;
+  }
+
+  /**
+   * Get the upper speed bound in force.
+   *
+   * @return the upper bound in rpm
+   */
+  public double getMaxSpeed() {
+    return maxSpeed;
+  }
+
+  /**
+   * Attach a driver performance curve and take the speed band from it. For an electric motor with a variable-frequency
+   * drive this is the VFD range (minimum speed ratio to maximum speed ratio times the rated speed, including a cell
+   * bypass derating of the drive); for a fixed-speed motor it is the narrow band around the rated speed. The band is
+   * re-read at the start of every speed solve, so a change of the drive configuration is picked up. The curve also
+   * supplies the available shaft power at the common speed when no explicit limit, {@link CompressorDriver} or turbine
+   * is configured. The driver speed is the shaft speed: member speeds follow from the gear ratios.
+   *
+   * @param curve the driver performance curve, or {@code null} to detach it (the speed bounds stay as they are)
+   */
+  public void setDriverCurve(DriverCurve curve) {
+    this.driverCurve = curve;
+    if (curve == null) {
+      this.speedBandFromDriver = false;
+      return;
+    }
+    this.speedBandFromDriver = true;
+    refreshSpeedBandFromDriver();
+  }
+
+  /**
+   * Get the driver performance curve.
+   *
+   * @return the curve, or {@code null}
+   */
+  public DriverCurve getDriverCurve() {
+    return driverCurve;
+  }
+
+  /**
+   * Attach an electric motor process unit as the shaft driver. Its performance model (for example an
+   * {@code ElectricMotorDriver} with VFD data) becomes the driver curve, so the speed band is derived from the VFD
+   * automatically, and the available shaft power is evaluated at the common speed including the environmental derating
+   * of the motor. A motor without a performance model gives no speed band and no power limit.
+   *
+   * @param motor the motor, or {@code null} to detach it
+   */
+  public void setMotorDriverUnit(ElectricMotor motor) {
+    this.motorDriverUnit = motor;
+    if (motor != null && motor.hasPerformanceModel()) {
+      setDriverCurve(motor.getPerformanceModel());
+    } else if (motor == null) {
+      setDriverCurve(null);
+    }
+  }
+
+  /**
+   * Get the electric motor driving this shaft.
+   *
+   * @return the motor, or {@code null}
+   */
+  public ElectricMotor getMotorDriverUnit() {
+    return motorDriverUnit;
+  }
+
+  /**
+   * Re-read the speed bounds from the driver curve. Does nothing when no curve is attached or after an explicit
+   * {@link #setSpeedBounds(double, double)}. A non-positive minimum speed of the curve keeps the present lower bound; a
+   * curve with a maximum below the minimum is ignored.
+   */
+  public void refreshSpeedBandFromDriver() {
+    if (driverCurve == null || !speedBandFromDriver) {
+      return;
+    }
+    double lo = driverCurve.getMinSpeed();
+    double hi = driverCurve.getMaxSpeed();
+    if (!Double.isFinite(hi) || hi <= 0.0) {
+      return;
+    }
+    if (Double.isFinite(lo) && lo > 0.0 && lo > hi) {
+      return;
+    }
+    if (Double.isFinite(lo) && lo > 0.0) {
+      minSpeed = lo;
+    }
+    maxSpeed = hi;
   }
 
   /**
@@ -884,6 +1043,7 @@ public class CompressorShaft implements Serializable {
     if (compressors.isEmpty()) {
       throw new RuntimeException("CompressorShaft " + name + ": no compressors on the shaft.");
     }
+    refreshSpeedBandFromDriver();
     if (!isTurning()) {
       return recordIdle("solveSpeed");
     }
@@ -1228,6 +1388,7 @@ public class CompressorShaft implements Serializable {
     if (target == null || target == ControlTarget.DISCHARGE_PRESSURE) {
       return solveSpeed(controlling, value, unit, processRun);
     }
+    refreshSpeedBandFromDriver();
     if (compressors.isEmpty()) {
       throw new RuntimeException("CompressorShaft " + name + ": no compressors on the shaft.");
     }
@@ -1332,6 +1493,7 @@ public class CompressorShaft implements Serializable {
     if (compressors.isEmpty()) {
       throw new RuntimeException("CompressorShaft " + name + ": no compressors on the shaft.");
     }
+    refreshSpeedBandFromDriver();
     if (!isTurning()) {
       return recordIdle("findMaxSpeedWithinPowerLimit");
     }
@@ -1380,6 +1542,124 @@ public class CompressorShaft implements Serializable {
     runOnce(processRun);
     double available = getAvailableShaftPower("W");
     return available <= 0.0 ? Double.POSITIVE_INFINITY : available - getRequiredDriverPower("W");
+  }
+
+  /**
+   * Register the recycle (anti-surge) valve of a member so that {@link #applyRequiredRecycle()} can position it.
+   *
+   * @param compressor a member of this shaft
+   * @param valve the member's recycle valve, or {@code null} to remove the registration
+   * @throws IllegalArgumentException if the compressor is not on the shaft
+   */
+  public void setAntiSurgeValve(Compressor compressor, ThrottlingValve valve) {
+    requireMember(compressor);
+    if (valve == null) {
+      antiSurgeValves.remove(compressor);
+    } else {
+      antiSurgeValves.put(compressor, valve);
+    }
+  }
+
+  /**
+   * Register the anti-surge controller of a member. Its recycle valve is positioned by {@link #applyRequiredRecycle()}
+   * (steady-state set point; the controller itself acts only in a transient run).
+   *
+   * @param compressor a member of this shaft
+   * @param controller the member's anti-surge controller, or {@code null} to remove the registration
+   * @throws IllegalArgumentException if the compressor is not on the shaft
+   */
+  public void setAntiSurgeController(Compressor compressor, AntiSurgeController controller) {
+    requireMember(compressor);
+    if (controller == null) {
+      antiSurgeControllers.remove(compressor);
+    } else {
+      antiSurgeControllers.put(compressor, controller);
+    }
+  }
+
+  /**
+   * Set the recycle fraction at which a registered recycle valve is fully open. The valve opening is taken as linear in
+   * the recycle fraction, which is a screening relation; calibrate it to the valve and line when the opening matters.
+   *
+   * @param fraction recycle fraction of the suction flow at 100 percent opening, in (0, 1]
+   * @throws IllegalArgumentException if the fraction is outside (0, 1]
+   */
+  public void setRecycleValveFullOpenFraction(double fraction) {
+    if (!(fraction > 0.0 && fraction <= 1.0)) {
+      throw new IllegalArgumentException("full-open recycle fraction must be in the range (0, 1]");
+    }
+    this.recycleValveFullOpenFraction = fraction;
+  }
+
+  /**
+   * Feed the recycle fraction each member needs (from {@link #getOperatingReport()}, the distance of the operating
+   * point to the anti-surge control line) into the member's anti-surge: the built-in {@link AntiSurge} of the
+   * compressor is activated with the control line of the member (surge control factor from its surge control margin)
+   * and its valve position is set, and a registered recycle valve
+   * ({@link #setAntiSurgeValve(Compressor, ThrottlingValve)} or {@link #setAntiSurgeController}) is opened in
+   * proportion to the fraction. The built-in anti-surge acts inside the compressor run when the operating point is left
+   * of the surge line; between the surge line and the control line the recycle is carried by the valve opening and by
+   * the recycle power of the report. Re-run the flowsheet afterwards.
+   *
+   * <p>
+   * The call is idempotent: the fractions are a function of the current operating point only, so repeating it without a
+   * change of that point gives the same state. A member that needs no recycle (or is idle) has its recycle set to zero,
+   * and a built-in anti-surge that this method switched on is switched off again; an anti-surge the user had activated
+   * stays active.
+   * </p>
+   *
+   * @return applied recycle fraction per member name, in flow order
+   */
+  public Map<String, Double> applyRequiredRecycle() {
+    CompressorShaftReport report = getOperatingReport();
+    Map<String, Double> applied = new LinkedHashMap<String, Double>();
+    for (int i = 0; i < compressors.size(); i++) {
+      Compressor c = compressors.get(i);
+      CompressorShaftReport.MemberReport mr = report.getMembers().get(i);
+      double f = mr.isActive() ? Math.max(0.0, Math.min(0.99, mr.getRequiredRecycleFraction())) : 0.0;
+      if (Double.isNaN(f)) {
+        f = 0.0;
+      }
+      applyRecycle(c, f);
+      applied.put(c.getName(), Double.valueOf(f));
+    }
+    return applied;
+  }
+
+  /**
+   * Apply one recycle fraction to the anti-surge of a member.
+   *
+   * @param c the member
+   * @param f the recycle fraction of the suction flow, in [0, 1)
+   */
+  private void applyRecycle(Compressor c, double f) {
+    AntiSurge as = c.getAntiSurge();
+    double opening = Math.min(1.0, f / recycleValveFullOpenFraction);
+    if (f > 1.0e-6) {
+      if (!as.isActive()) {
+        as.setActive(true);
+        recycleAutoActivated.put(c, Boolean.TRUE);
+      }
+      if (recycleAutoActivated.containsKey(c) && c.isSurgeControlMarginSet()) {
+        as.setSurgeControlFactor(1.0 + c.getSurgeControlMargin());
+      }
+      as.setValvePosition(opening);
+      as.setTargetValvePosition(opening);
+    } else {
+      as.setValvePosition(0.0);
+      as.setTargetValvePosition(0.0);
+      if (recycleAutoActivated.remove(c) != null) {
+        as.setActive(false);
+        as.setCurrentSurgeFraction(0.0);
+      }
+    }
+    ThrottlingValve valve = antiSurgeValves.get(c);
+    if (valve == null && antiSurgeControllers.containsKey(c)) {
+      valve = antiSurgeControllers.get(c).getRecycleValve();
+    }
+    if (valve != null) {
+      valve.setPercentValveOpening(100.0 * opening);
+    }
   }
 
   /**
