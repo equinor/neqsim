@@ -1177,6 +1177,16 @@ approximation. The sustained regression covers 120 s of gas, gas/oil and gas/oil
 heat and EOS updates active, plus heating/cooling transfer signs and conservative component
 ledgers. Positive-flow boundaries and a fixed named-component slate remain required.
 
+For dry gas/oil grids in conservative-energy Euler mode, interphase sources now relax each
+conserved component phase inventory toward its local equilibrium inventory. This avoids
+withdrawing a depleted heavy species merely because the bulk gas phase is still condensing.
+Signed component transfers use their actual donor velocities, including opposing species fluxes
+at zero net phase transfer. Total energy remains owned once. This is the existing approximate
+relaxation model with corrected component targets; its chosen time constant is not an
+independently validated evaporation rate. Positive aqueous inventory or equilibrium aqueous mass
+retains the previous source path. The original 12/24-cell pressure ramps are regression evidence;
+the refined flat-outlet case and full pooling/restart qualification remain open.
+
 With component transport enabled, the downstream outlet composition follows the positive outbound
 component ledger rather than the latest inlet composition or the final cell's instantaneous phase
 split. The signed conservation ledger separately retains reversed material entering from an explicit

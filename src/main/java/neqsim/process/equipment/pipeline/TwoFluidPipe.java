@@ -6332,6 +6332,7 @@ public class TwoFluidPipe extends Pipeline {
         double[][][] finiteRateSources = nonEquilibriumFilmTransfer == null ? null
             : nonEquilibriumFilmTransfer.calculate(componentTransport, sections, referenceFluid, dtFinal);
         equations.setFiniteRateComponentSources(finiteRateSources);
+        boolean hydrocarbonRelaxation = false;
         if (componentTransportEnabled && includeMassTransfer && finiteRateSources == null) {
           localEquilibriumStates = new SystemInterface[numberOfSections];
           for (int cell = 0; cell < numberOfSections; cell++) {
@@ -6339,6 +6340,12 @@ public class TwoFluidPipe extends Pipeline {
             // read that conserved composition at each stage's P/T and cannot alter a rejected step.
             localEquilibriumStates[cell] = componentTransport.createThermodynamicState(cell, referenceFluid,
                 sections[cell].getPressure(), sections[cell].getTemperature());
+          }
+          if (useConservativeEnergyRecovery) {
+            finiteRateSources = componentTransport.createHydrocarbonRelaxationSourceRates(localEquilibriumStates,
+                sections, equations.getMassTransferRelaxationTime());
+            hydrocarbonRelaxation = finiteRateSources != null;
+            equations.setComponentMassTransferSources(finiteRateSources);
           }
         }
         equations.setLocalEquilibriumStates(localEquilibriumStates);
@@ -6381,7 +6388,8 @@ public class TwoFluidPipe extends Pipeline {
               double[][][] componentSources = finiteRateSources != null ? finiteRateSources
                   : componentTransport.createComponentSourceRates(phaseSources, localEquilibriumStates,
                       componentConservationTolerance);
-              double[] latentHeatSources = finiteRateSources != null ? new double[numberOfSections]
+              double[] latentHeatSources = finiteRateSources != null && !hydrocarbonRelaxation
+                  ? new double[numberOfSections]
                   : componentTransport.createLatentHeatSourceRates(componentSources, localEquilibriumStates);
               for (int cell = 0; cell < numberOfSections; cell++) {
                 weightedLatentHeatSources[cell] += phaseStageWeights[stage] * latentHeatSources[cell];

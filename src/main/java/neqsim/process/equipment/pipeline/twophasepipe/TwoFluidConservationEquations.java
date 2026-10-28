@@ -1067,7 +1067,7 @@ public class TwoFluidConservationEquations implements Serializable {
     return copy;
   }
 
-  /** Paired gas/aqueous component sources for the current finite-rate Euler stage. */
+  /** Paired gas/liquid component sources for the current Euler stage. */
   private transient double[][][] finiteRateComponentSources;
 
   /**
@@ -1090,6 +1090,36 @@ public class TwoFluidConservationEquations implements Serializable {
       }
     }
     finiteRateComponentSources = sources;
+  }
+
+  /**
+   * Supply paired gas/oil or gas/aqueous component sources to the existing stage owner.
+   *
+   * @param sources cell/phase/component sources in kg/(m s), or null to restore the legacy source
+   */
+  public void setComponentMassTransferSources(double[][][] sources) {
+    if (sources != null) {
+      for (double[][] cell : sources) {
+        if (cell == null || cell.length != 3 || cell[0] == null || cell[1] == null || cell[2] == null
+            || cell[0].length != cell[1].length || cell[0].length != cell[2].length) {
+          throw new IllegalArgumentException("Component mass sources require three matching phase arrays");
+        }
+        for (int component = 0; component < cell[0].length; component++) {
+          if (!Double.isFinite(cell[0][component]) || !Double.isFinite(cell[1][component])
+              || !Double.isFinite(cell[2][component])
+              || cell[0][component] != -(cell[1][component] + cell[2][component])
+              || cell[1][component] != 0.0 && cell[2][component] != 0.0) {
+            throw new IllegalArgumentException("Component transfer must be finite and paired through gas");
+          }
+        }
+      }
+    }
+    finiteRateComponentSources = sources;
+  }
+
+  /** @return current approximate phase-relaxation time in seconds */
+  public double getMassTransferRelaxationTime() {
+    return massTransferRelaxationTime;
   }
 
   /** Read-only local component-equilibrium states supplied for the current RHS evaluation. */
@@ -2510,10 +2540,18 @@ public class TwoFluidConservationEquations implements Serializable {
             throw new IllegalStateException("Finite-rate sources must cover every cell");
           }
           double gasRate = 0.0;
+          double oilRate = 0.0;
+          double waterRate = 0.0;
           for (double rate : finiteRateComponentSources[i][0]) {
             gasRate += rate;
           }
-          phaseMassTransfer = new PhaseMassTransfer(gasRate, 0.0, -gasRate, true, true, null);
+          for (double rate : finiteRateComponentSources[i][1]) {
+            oilRate += rate;
+          }
+          for (double rate : finiteRateComponentSources[i][2]) {
+            waterRate += rate;
+          }
+          phaseMassTransfer = new PhaseMassTransfer(gasRate, oilRate, waterRate, true, true, null);
         } else if (localEquilibriumStates != null && thermodynamicCoupling != null) {
           if (localEquilibriumStates.length != sections.length || localEquilibriumStates[i] == null) {
             throw new IllegalStateException("Local equilibrium states must cover every hydrodynamic cell");
@@ -2531,11 +2569,7 @@ public class TwoFluidConservationEquations implements Serializable {
       double[] transferMomentum = calcTransferMomentumSources(sec, phaseMassTransfer);
       if (includeMassTransfer && finiteRateComponentSources != null) {
         // Opposing component fluxes carry their respective donor momentum even at zero net mass flux.
-        double momentum = 0.0;
-        for (double rate : finiteRateComponentSources[i][0]) {
-          momentum += rate * (rate >= 0.0 ? sec.getWaterVelocity() : sec.getGasVelocity());
-        }
-        transferMomentum = new double[] {momentum, 0.0, -momentum};
+        transferMomentum = componentTransferMomentumSources(sec, finiteRateComponentSources[i]);
       }
 
       // Assemble source terms - now with separate oil and water mass equations
@@ -3102,6 +3136,28 @@ public class TwoFluidConservationEquations implements Serializable {
       throw new IllegalStateException("Section length must be positive for mass transfer");
     }
     return prescribedRate / sectionLength;
+  }
+
+  /**
+   * Carry each component's momentum from its actual gas or liquid donor.
+   *
+   * @param section phase velocities at the source stage
+   * @param rates validated gas/oil/water component source rates in kg/(m s)
+   * @return paired gas/oil/water momentum sources in N/m
+   */
+  static double[] componentTransferMomentumSources(TwoFluidSection section, double[][] rates) {
+    double[] momentum = new double[3];
+    double[] velocity = {section.getGasVelocity(), section.getOilVelocity(), section.getWaterVelocity()};
+    for (int liquid = 1; liquid < 3; liquid++) {
+      for (double rate : rates[liquid]) {
+        if (rate != 0.0) {
+          double transfer = rate * (rate > 0.0 ? velocity[0] : velocity[liquid]);
+          momentum[liquid] += transfer;
+        }
+      }
+    }
+    momentum[0] = -momentum[1] - momentum[2];
+    return momentum;
   }
 
   /**

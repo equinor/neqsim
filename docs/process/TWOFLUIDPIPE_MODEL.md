@@ -137,8 +137,46 @@ can change phase residence inventories without creating an equilibrium driving f
 source without component transport still uses the reference-fluid no-slip volume fraction; it is
 an approximation and is unsuitable for preserving equilibrium in a slipping mixture.
 
-Flash-driven phase transfer is mapped by component name. Evaporation withdraws the donor oil or
-water composition. Condensation uses the receiving equilibrium phase composition.
+In the conservative-energy Euler route, a dry gas/oil grid instead relaxes each conserved
+phase/component inventory toward the local flashed target. For component $c$ in cell $i$,
+$$S_{i,o,c}=(M^{eq}_{i,o,c}-M_{i,o,c})/(L_i\tau),\qquad S_{i,g,c}=-S_{i,o,c}.$$
+Here $S$ is in kg/(m s), $M$ is in kg, $L_i$ is cell length in m, and $\tau$ is the
+existing relaxation time in s. The equilibrium phase masses are scaled to the cell's conserved
+total mass. A source-only Euler step with $\Delta t\leq\tau$ is a convex component-inventory
+update; combined transport still requires its ordinary CFL, admissibility and balance checks.
+No component inventory is clipped. Each signed component transfer carries its actual donor
+velocity, including counter-transfer at zero net phase mass. Total energy retains its existing
+single owner; latent/compositional heat is diagnostic and is not added again to conservative energy.
+
+This corrects a limitation of assigning every kilogram of new liquid its final equilibrium
+composition: an already heavy-enriched liquid may need very little additional heavy material
+even while considerable light material condenses. The new component targets are still an
+approximate relaxation closure, not a predictive hydrocarbon evaporation rate.
+
+Other routes retain their mapped flash-driven phase transfer: evaporation withdraws the donor
+oil or water composition and condensation uses the receiving equilibrium phase composition.
+The dry component-target path declines the whole grid when either conserved aqueous inventory
+or an equilibrium aqueous phase has positive mass, including trace mass. The distinct aqueous
+finite-rate closure is unchanged. No additional user switch is required.
+
+The public `TwoFluidRichGasDragQualificationTest` now executes the original 5 km, ID 1.0148 m,
+six-component SRK/classic terrain fixture through its entire 120 s prescribed outlet-pressure
+ramp (150 to 10 bara), with a closed inlet, adiabatic walls and the approximate 30 s relaxation.
+The corrected-source replay from base `7197827e8e9fd88a47f26305db8963c9c4e7328e` gives:
+
+| Mesh / outer interval | Accepted time (s) | Oil inventory (t) | Oil carried out (t) | Mean cell pressure (bara) |
+|---|---:|---:|---:|---:|
+| Original 12 cells / 0.25 s | 120 | 50.121744 | 5.598652 | 34.997047 |
+| Original 12 cells / 0.125 s | 120 | 50.099465 | 5.581601 | 35.028743 |
+| Original 24 cells / 0.125 s | 120 | 49.466914 | 6.153514 | 35.436410 |
+
+The outlet **boundary** reaches 10 bara, while distributed inventory remains above it. Completing
+this interval therefore does not establish a settled 10 bara pipeline. The historical level-outlet
+12-cell/0.125 s case still rejects an inadmissible liquid velocity at 35.625 s with full rollback.
+Its 0.25 s counterpart reaches 120 s with 49.909212 t calculated oil. No retained-pool, same-gas
+inlet-refill, realistic seabed heating or predictive depletion-time qualification follows from these
+adiabatic numerical regressions. This source correction resolves the material heavy-component
+target deficit; it does not close the separate refinement and full-cycle gates.
 
 An initially empty phase may advect within the substep that creates it when stage-frozen
 component sources provide its composition. All outgoing faces together must fit within that
