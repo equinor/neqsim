@@ -2,6 +2,18 @@
   "$comment": "Golden cases for devtools/agent_eval.py. routing: a user prompt must surface the expected agent handle / skill names within top-k via the same retrievers agents use. contracts: a results.json shape must pass, or fail on the named rule. Deterministic; no LLM.",
   "routing": [
     {
+      "id": "separator-rag-layer-troubleshooting",
+      "prompt": "Troubleshoot a growing oil-water emulsion rag layer in a separator after a production increase; compare droplet coalescence and dispersed-water load using a dynamic study.",
+      "expect_agent_top3": ["emulsion-separation"],
+      "expect_skills_top5": ["neqsim-emulsion-separation"]
+    },
+    {
+      "id": "emulsion-screening-without-measurements",
+      "prompt": "Screen oil-water emulsion separation and densely packed zone capacity with no measured droplet sizes or coalescence times; start estimated and show sensitivity.",
+      "expect_agent_top3": ["emulsion-separation"],
+      "expect_skills_top5": ["neqsim-emulsion-separation"]
+    },
+    {
       "id": "dry-gas-seal-conditioning",
       "prompt": "Troubleshoot dry gas seal supply conditioning with regulator JT condensation, water and hydrocarbon dewpoint margin, API 692 and ISO 6368, startup and standby booster pressure",
       "expect_agent_top3": [

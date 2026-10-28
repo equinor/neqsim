@@ -1,0 +1,15 @@
+# Zlobin et al., AIChE Journal 2026, DOI 10.1002/aic.70429, Figures 11 and 13.
+# Primary numerical data, not experimental field qualification; selected original rows unchanged except decimal delimiter.
+# Source: https://zenodo.org/records/18781329, version DOI 10.5281/zenodo.18781329.
+# Original: data_Fig11_and_Fig13.txt, MD5 a1b9652e489611e6e8c7a645824cc897.
+# Authors: A. Zlobin, J.E. Andino-Enriquez, T. Gouezec, M. Bourrel, E. Santanach-Carreras,
+# N. Passade-Boupat, L. Talini, F. Lequeux and P. Panizza. License CC BY 4.0.
+# Source rounds phi, Smax and numerical prefactors; tolerances reflect the published precision.
+phi,L_over_ell,S_over_Smax,dimensionless_coalescence_flux
+0.0026080,9.7366,0.82498,3.8231
+0.026008,2.6847,0.55481,2.5711
+0.052008,1.5490,0.41449,1.9208
+0.10401,0.64840,0.22657,1.0499
+0.15601,0.24644,0.10001,0.46348
+0.20801,0.055831,0.024591,0.11396
+0.24701,0.0033120,0.0014950,0.0069270
