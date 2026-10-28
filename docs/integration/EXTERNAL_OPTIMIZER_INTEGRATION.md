@@ -1159,6 +1159,18 @@ receipt retains the accepted and paired baseline objective values, residual, all
 paired sampled evidence only, not causal attribution, a shadow price, permission to alter a limit, design approval,
 investment approval, or operating approval.
 
+Schema v13 adds a deterministic portfolio rank when at least two independent direct installed-capacity alternatives
+each have an exact qualified receipt. Construct a `ProcessModelDebottleneckRanking` portfolio identity and an
+`ObjectiveRankingPolicy` for the exact transactional objective, then call
+`ProcessModelOperatingEnvelopeStudy.qualifyReliefPortfolio(...)` with one-to-one study and result lists. This path
+uses `rankObjectives(...)` because an operating-action study freezes objective evidence before restoring the accepted
+process state; it never samples a metric callback from the restored model. Every candidate must share the exact action
+search, accepted baseline, objective metadata, objective and constraint baseline evidence, and verified restoration.
+The production guard and canonical report independently reconstruct the portfolio identity, membership, input indices,
+candidate count and competition ranks. Any partial, non-finite, stale or incompatible portfolio fails closed. Ranks
+compare only the sampled objective deltas and do not make alternative benefits additive or establish interactions,
+causality, a shadow price, global optimality, investment approval, limit-change permission or operating approval.
+
 The block also carries ordered `accepted_action_ids` beside `accepted_candidate_values`. Attach it to
 the proposal as `accepted_point_envelope_evidence` and set
 `production.require_envelope_evidence: true` in a continuous field-study plan. The existing living-task guard

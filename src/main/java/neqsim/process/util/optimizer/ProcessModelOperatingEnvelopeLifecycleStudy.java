@@ -390,6 +390,7 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
 
     List<Map<String, Object>> periodMaps = new ArrayList<Map<String, Object>>();
     boolean hasQualifiedReliefReceipt = false;
+    boolean hasQualifiedReliefPortfolio = false;
     long evaluationCount = 0L;
     double runtimeSeconds = 0.0;
     int requestedPointCount = 0;
@@ -399,6 +400,8 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       Object opportunityVersion = period.getConstraintOpportunityEvidence().get("summary_version");
       hasQualifiedReliefReceipt = hasQualifiedReliefReceipt
           || opportunityVersion instanceof Number && ((Number) opportunityVersion).intValue() == 2;
+      hasQualifiedReliefPortfolio = hasQualifiedReliefPortfolio
+          || containsQualifiedReliefPortfolio(period.getConstraintOpportunityEvidence());
       Map<String, Object> envelope = period.getEnvelopeEvidence();
       evaluationCount = Math.addExact(evaluationCount,
           number(envelope.get("total_evaluation_count"), "total evaluation count").longValue());
@@ -419,9 +422,10 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     Map<String, Object> evidence = new LinkedHashMap<String, Object>();
     boolean hasStateMetrics = acceptedStateMetricIds != null && !acceptedStateMetricIds.isEmpty();
     evidence.put("schema_version",
-        Integer.valueOf(hasQualifiedReliefReceipt ? 12
-            : periods.get(0).getAcceptedCoverage() == null ? 8
-                : periods.get(0).getAcceptedCoverage().getExpectedPlantConstraintIds().isEmpty() ? 9 : 11));
+        Integer.valueOf(hasQualifiedReliefPortfolio ? 13
+            : hasQualifiedReliefReceipt ? 12
+                : periods.get(0).getAcceptedCoverage() == null ? 8
+                    : periods.get(0).getAcceptedCoverage().getExpectedPlantConstraintIds().isEmpty() ? 9 : 11));
     evidence.put("cycle_id", currentCycleId);
     evidence.put("lifecycle_study_id", id);
     evidence.put("lifecycle_study_name", name);
@@ -446,6 +450,28 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     return Collections.unmodifiableMap(evidence);
   }
 
+  /** Returns true when an opportunity screen contains an exact portfolio-ranked receipt. */
+  private static boolean containsQualifiedReliefPortfolio(Map<String, Object> opportunityEvidence) {
+    Object candidates = opportunityEvidence.get("candidates");
+    if (!(candidates instanceof List<?>)) {
+      return false;
+    }
+    for (Object candidateValue : (List<?>) candidates) {
+      if (!(candidateValue instanceof Map<?, ?>)) {
+        continue;
+      }
+      Object receiptValue = ((Map<?, ?>) candidateValue).get("paired_relief_study_receipt");
+      if (receiptValue instanceof Map<?, ?>) {
+        Object receiptVersion = ((Map<?, ?>) receiptValue).get("receipt_version");
+        if (receiptVersion instanceof Number && ((Number) receiptVersion).intValue() == 2
+            && ((Map<?, ?>) receiptValue).get("portfolio_ranking") instanceof Map<?, ?>) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   /**
    * Serializes lifecycle evidence for the continuous-task proposal boundary.
    *
@@ -457,8 +483,8 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
    * </p>
    *
    * @param cycleId current living-task cycle identifier and lifecycle period identifier
-   * @return compact JSON containing exact schema-v8, installed-coverage schema-v9, plant-coverage schema-v11, or
-   * qualified paired-relief schema-v12 evidence
+   * @return compact JSON containing exact schema-v8, installed-coverage schema-v9, plant-coverage schema-v11, qualified
+   * paired-relief schema-v12, or ranked paired-relief schema-v13 evidence
    * @throws IllegalStateException if the current cycle is not an accepted lifecycle period
    */
   public String toEvidenceJson(String cycleId) {
