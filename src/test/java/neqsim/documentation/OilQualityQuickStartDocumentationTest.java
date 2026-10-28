@@ -90,30 +90,13 @@ class OilQualityQuickStartDocumentationTest {
     assertNotNull(compiler, "A JDK is required to validate documentation examples");
     String classpath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
     StringWriter diagnostics = new StringWriter();
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
-      Boolean successful =
-          compiler
-              .getTask(
-                  diagnostics,
-                  manager,
-                  null,
-                  Arrays.asList(
-                      "-source",
-                      "8",
-                      "-target",
-                      "8",
-                      "-proc:none",
-                      "-classpath",
-                      classpath,
-                      "-d",
-                      classes.toString()),
-                  null,
-                  manager.getJavaFileObjects(javaFile.toFile()))
-              .call();
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(diagnostics, manager, null, Arrays.asList("-source", "8", "-target", "8", "-proc:none", "-classpath",
+              classpath, "-d", classes.toString()), null, manager.getJavaFileObjects(javaFile.toFile()))
+          .call();
       assertTrue(successful, diagnostics.toString());
     }
-    return new URLClassLoader(
-        new URL[] {classes.toUri().toURL()}, getClass().getClassLoader());
+    return new URLClassLoader(new URL[] {classes.toUri().toURL()}, getClass().getClassLoader());
   }
 }
