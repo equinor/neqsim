@@ -921,18 +921,29 @@ ranks are deterministic, retain input order inside the declared tie tolerance, a
 They do not imply additive benefits, interaction effects, causality, a shadow price, global optimality, investment
 approval, permission to alter an installed limit, or operating approval.
 
+Schema v14 is emitted when a schema-v13 period also carries one qualified joint evaluation of two or more portfolio
+members. Construct one list-based `ProcessModelDebottleneckStudy` with those exact alternatives and the same
+transactional evaluator, accepted action vector, ordered candidate search and objective policy, then call
+`ProcessModelOperatingEnvelopeStudy.qualifyReliefCombination(...)`. The study applies all direct limits in declared
+order, evaluates the combined process once, restores every limit in reverse order and reconverges the original state.
+The receipt records the actual joint objective delta, the arithmetic sum of the already-qualified independent deltas,
+their signed interaction difference, and exact baseline-to-joint installed-constraint bottleneck migration. The guard
+and report recompute all arithmetic and membership bindings. They never infer the joint response from additive
+assumptions, and reject non-finite, stale, foreign, partially restored or incomplete evidence.
+
 Schema v11 retains the schema-v10 requirement for non-empty, independently declared plant-constraint IDs in addition to the
 schema-v9 equipment scope, complete finite rated evidence, explicit unit/basis/provenance/direction/category, and exact
 calculation binding to the accepted-point replay. Supply both
 `getInstalledEquipmentCapacityEvidence()` and `getPlantConstraintEvidence()` through the frozen-evidence builder path;
-this never resamples the mutable process after baseline restoration. Current schema-v11/v12/v13 exports retain optional
+this never resamples the mutable process after baseline restoration. Current schema-v11/v12/v13/v14 exports retain optional
 accepted-state metrics and require schema-v2
 cross-slice summaries in every period. The guard reconstructs each summary from persisted sampled and refined
 endpoint rows before trusting it, independently reconstructs the constraint opportunity screen, validates any v12/v13
 receipt against the exact installed identity, limit, unit, action set, accepted action vector, objective identity,
 accepted value, paired residual/tolerance, finite delta and restoration flags, reconstructs each schema-v13 portfolio
 identity, candidate count, input indices, alternative identities, common objective policy and competition rank from
-the persisted deltas, and then recomputes every
+the persisted deltas, reconstructs each schema-v14 joint membership, objective arithmetic, restoration state and
+bottleneck migration without assuming additivity, and then recomputes every
 period-change diagnostic from the persisted periods before accepting it, including exact operating-region event
 migration, refined-boundary endpoint constraints and physical margins, exact ranked constraint-identity migration,
 and, when present, state-metric identity,

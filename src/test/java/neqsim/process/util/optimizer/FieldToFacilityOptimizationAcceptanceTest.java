@@ -57,6 +57,7 @@ import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.LeadingC
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.OperatingRegionBoundaryRefinement;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.OperatingRegionTransition;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.QualifiedReliefPortfolioEvidence;
+import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.QualifiedReliefCombinationEvidence;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.SliceResult;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.CapacityAlternative;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.LimitDirection;
@@ -186,8 +187,19 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     }
   }
 
+  /** Independently ranked alternatives plus one jointly simulated non-additive combination. */
+  private static final class ReliefEvidence {
+    private final QualifiedReliefPortfolioEvidence portfolio;
+    private final QualifiedReliefCombinationEvidence combination;
+
+    private ReliefEvidence(QualifiedReliefPortfolioEvidence portfolio, QualifiedReliefCombinationEvidence combination) {
+      this.portfolio = portfolio;
+      this.combination = combination;
+    }
+  }
+
   /**
-   * Execute the source-backed ten-well lifecycle acceptance case and serialize its exact schema-v13 evidence.
+   * Execute the source-backed ten-well lifecycle acceptance case and serialize its exact schema-v14 evidence.
    *
    * <p>
    * This test-scope entry point lets the Python living-task acceptance workflow call the same Java fixture and physical
@@ -250,7 +262,7 @@ public class FieldToFacilityOptimizationAcceptanceTest {
         currentFixture.model.getPower("kW") * sharedPowerLimitMultiplier, reviewedIncumbentValues);
     current.study.setNearActiveConstraintNormalizedMargin(1.0,
         "synthetic complete installed-capacity follow-up audit threshold");
-    QualifiedReliefPortfolioEvidence reliefPortfolio = acceptance.qualifiedReliefPortfolio(current);
+    ReliefEvidence relief = acceptance.qualifiedReliefEvidence(current);
 
     return new ProcessModelOperatingEnvelopeLifecycleStudy("ten-well-lifecycle", "Ten-well field lifecycle envelope",
         "synthetic independent reservoir/facility operating definitions", "year")
@@ -260,12 +272,12 @@ public class FieldToFacilityOptimizationAcceptanceTest {
         .addPeriod(currentCycleId, "Current life", 5.0,
             "expanded separation capacity and tighter shared plant power budget",
             Collections.<ProcessModelOperatingEnvelopeLifecycleStudy.AcceptedStateMetric>emptyList(), current.coverage,
-            reliefPortfolio.getRankedStudies(), current.study, current.search, current.slices)
+            relief.portfolio.getRankedStudies(), relief.combination, current.study, current.search, current.slices)
         .toEvidenceJson(currentCycleId);
   }
 
-  /** Builds and ranks two exact paired installed-capacity receipts at the accepted ten-well operating point. */
-  private QualifiedReliefPortfolioEvidence qualifiedReliefPortfolio(LifecyclePeriod period) {
+  /** Builds two independent receipts and one jointly evaluated combination at the accepted ten-well point. */
+  private ReliefEvidence qualifiedReliefEvidence(LifecyclePeriod period) {
     List<double[]> candidates = new ArrayList<double[]>();
     candidates.add(period.search.getAcceptedCandidateValues());
     OperatingActionCandidateListSearch search = new OperatingActionCandidateListSearch("accepted-point-paired-relief",
@@ -273,6 +285,7 @@ public class FieldToFacilityOptimizationAcceptanceTest {
         candidates, 0, 0.0);
     List<ProcessModelDebottleneckStudy> studies = new ArrayList<ProcessModelDebottleneckStudy>();
     List<StudyResult> results = new ArrayList<StudyResult>();
+    List<CapacityAlternative> alternatives = new ArrayList<CapacityAlternative>();
     CapacityConstraint separator = period.fixture.highPressureSeparator.getCapacityConstraints().get("gas handling");
     CapacityConstraint scrubber = period.fixture.lowPressureScrubber.getCapacityConstraints().get("gas handling");
     for (CapacityAlternative alternative : Arrays.asList(
@@ -295,6 +308,7 @@ public class FieldToFacilityOptimizationAcceptanceTest {
       assertEquals(0.0, result.getObjectiveDelta(), 0.0);
       studies.add(paired);
       results.add(result);
+      alternatives.add(alternative);
     }
     ProcessModelDebottleneckRanking ranking = new ProcessModelDebottleneckRanking("accepted-relief-portfolio",
         "Accepted-point relief portfolio", "synthetic exact accepted-point paired evidence");
@@ -302,7 +316,18 @@ public class FieldToFacilityOptimizationAcceptanceTest {
         "validated-gas-export-delta", "Validated gas export delta",
         "same transactional evaluator objective and accepted baseline", 0, "validated gas export",
         ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE, "kg/hr", 1.0, 0.0, 1.0e-8);
-    return period.study.qualifyReliefPortfolio(period.search, ranking, policy, studies, results);
+    QualifiedReliefPortfolioEvidence portfolio = period.study.qualifyReliefPortfolio(period.search, ranking, policy,
+        studies, results);
+    ProcessModelDebottleneckStudy combinationStudy = new ProcessModelDebottleneckStudy(
+        "accepted-relief-combination-paired", "Accepted-point combined relief paired study",
+        "synthetic jointly simulated non-additive relief acceptance", period.study.getCandidateEvaluator(),
+        alternatives, search, 0);
+    StudyResult combinationResult = combinationStudy.evaluate();
+    assertEquals(ProcessModelDebottleneckStudy.StudyOutcome.COMPLETED, combinationResult.getOutcome(),
+        combinationResult.getDiagnostics().toString());
+    QualifiedReliefCombinationEvidence combination = period.study.qualifyReliefCombination(period.search, portfolio,
+        combinationStudy, combinationResult);
+    return new ReliefEvidence(portfolio, combination);
   }
 
   /**

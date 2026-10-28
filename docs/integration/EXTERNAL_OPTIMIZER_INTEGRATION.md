@@ -1171,6 +1171,19 @@ candidate count and competition ranks. Any partial, non-finite, stale or incompa
 compare only the sampled objective deltas and do not make alternative benefits additive or establish interactions,
 causality, a shadow price, global optimality, investment approval, limit-change permission or operating approval.
 
+Schema v14 adds one qualified joint evaluation of two or more exact schema-v13 portfolio members. Build a list-based
+`ProcessModelDebottleneckStudy` with the same transactional evaluator, accepted baseline, ordered candidate search and
+objective policy, then pass the completed result to
+`ProcessModelOperatingEnvelopeStudy.qualifyReliefCombination(...)`. The combined study changes every declared direct
+installed limit, observes one simulator response, restores every capacity state in reverse order and reconverges the
+original process. Its receipt carries exact portfolio membership, the observed combined objective delta, the sum of
+the independently observed deltas, their signed interaction difference, and the baseline/joint most-utilized installed
+constraint identities. External consumers must preserve those fields rather than synthesizing an additive benefit.
+The production guard and canonical report independently reconstruct membership, objective arithmetic, action/baseline
+bindings, restoration and bottleneck migration; incomplete, foreign, non-finite, stale or partially restored evidence
+fails closed. The interaction and migration remain sampled screening evidence, not causality, a shadow price,
+mechanical design qualification, investment approval, limit-change permission or operating approval.
+
 The block also carries ordered `accepted_action_ids` beside `accepted_candidate_values`. Attach it to
 the proposal as `accepted_point_envelope_evidence` and set
 `production.require_envelope_evidence: true` in a continuous field-study plan. The existing living-task guard
