@@ -237,4 +237,3 @@ public final class DynamicCapabilityResolver {
     }
   }
 }
-
