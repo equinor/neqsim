@@ -2108,7 +2108,6 @@ public class Compressor extends TwoPortEquipment
     Compressor reference = createPolytropicReference();
     reference.setPolytropicEfficiency(efficiency);
     double lower = 0.0;
-    double lowerResidual = -head;
     double upper = Double.isFinite(idealPressure) && idealPressure > inletPressure
         ? Math.log(idealPressure / inletPressure)
         : Math.log(2.0);
@@ -2116,7 +2115,6 @@ public class Compressor extends TwoPortEquipment
     double upperResidual = polytropicHeadResidual(reference, inletPressure * Math.exp(upper), head);
     for (int expansion = 0; upperResidual < 0.0 && expansion < 12; expansion++) {
       lower = upper;
-      lowerResidual = upperResidual;
       upper *= 2.0;
       upperResidual = polytropicHeadResidual(reference, inletPressure * Math.exp(upper), head);
     }
@@ -2136,10 +2134,8 @@ public class Compressor extends TwoPortEquipment
       }
       if (residual < 0.0) {
         lower = trial;
-        lowerResidual = residual;
       } else {
         upper = trial;
-        upperResidual = residual;
       }
     }
     throw new IllegalStateException("Compressor chart head-pressure solve did not converge for " + getName());
