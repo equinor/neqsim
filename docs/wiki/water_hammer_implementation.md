@@ -11,6 +11,15 @@ larger than `courantNumber * dx / a`; the entire requested duration is advanced.
 must be finite and in `(0, 1]`. Smaller intervals introduce interpolation diffusion and require
 mesh/time refinement; they no longer make waves propagate one full grid cell per call.
 
+Geometry, grid, roughness, material modulus and wave-speed overrides are static configuration.
+Changing any of these after initialization requires an explicit `run()` before advancing again;
+otherwise `runTransient` rejects before changing the clock, arrays or histories. `run()` deliberately
+starts a new initialized case and resets the hydraulic histories. Repeating an unchanged setter
+does not invalidate the state. Valve opening, receiver pressure and a valid Courant number remain
+live controls. A positive finite wave-speed override is retained across explicit reinitialization;
+`setWaveSpeed(-1)` selects EOS/elastic calculation, recalculated for the current material/geometry.
+Zero, other negative, nonfinite and NaN speed overrides reject immediately.
+
 The initialized open-valve flow is calibrated against an independent receiver pressure.
 `setValveBackPressure(double)` and `getValveBackPressure()` use **bara**, with a default of
 **1 bara**. The study JSON accepts `valveBackPressure_bara` at the top level or in `fieldData`.

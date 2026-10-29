@@ -13,6 +13,71 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 class WaterHammerKernelTest {
+  /** Static model edits cannot reuse old grid or impedance state. */
+  @Test
+  void staticConfigurationRequiresExplicitInitialization() {
+    java.util.List<java.util.function.Consumer<WaterHammerPipe>> changes = java.util.Arrays.asList(
+        p -> p.setWaveSpeed(2000.0), p -> p.setLength(2000.0), p -> p.setLength(2.0, "km"), p -> p.setDiameter(0.3),
+        p -> p.setDiameter(300.0, "mm"), p -> p.setWallThickness(0.02), p -> p.setRoughness(0.0001),
+        p -> p.setPipeWallRoughness(0.0001), p -> p.setNumberOfNodes(51), p -> p.setNumberOfIncrements(51),
+        p -> p.setPipeElasticModulus(100.0e9), p -> p.setElevation(10.0), p -> p.setElevationChange(10.0));
+    for (java.util.function.Consumer<WaterHammerPipe> change : changes) {
+      WaterHammerPipe pipe = pipe();
+      double[] before = pipe.getPressureProfile();
+      change.accept(pipe);
+      assertThrows(IllegalStateException.class, () -> pipe.runTransient(0.005, UUID.randomUUID()));
+      assertArrayEquals(before, pipe.getPressureProfile(), 0.0);
+      assertEquals(0.0, pipe.getCurrentTime());
+      assertTrue(pipe.getTimeHistory().isEmpty());
+      pipe.run(UUID.randomUUID());
+      pipe.runTransient(0.005, UUID.randomUUID());
+      assertEquals(0.005, pipe.getCurrentTime(), 1.0e-15);
+    }
+  }
+
+  /** Wave-speed inputs reject nonphysical overrides at their API boundary. */
+  @Test
+  void invalidWaveSpeedOverride() {
+    WaterHammerPipe pipe = pipe();
+    for (double speed : new double[] {0.0, -2.0, Double.NaN, Double.POSITIVE_INFINITY}) {
+      assertThrows(IllegalArgumentException.class, () -> pipe.setWaveSpeed(speed));
+    }
+    pipe.runTransient(0.005, UUID.randomUUID());
+    assertEquals(0.005, pipe.getCurrentTime());
+  }
+
+  /** Unchanged static inputs and supported live controls retain transient state. */
+  @Test
+  void unchangedConfigurationAndLiveControls() {
+    WaterHammerPipe pipe = pipe();
+    pipe.setLength(1000.0);
+    pipe.setDiameter(0.2);
+    pipe.setNumberOfNodes(101);
+    pipe.setWaveSpeed(1000.0);
+    pipe.setCourantNumber(0.5);
+    pipe.setValveBackPressure(1.1);
+    pipe.setValveOpening(0.9);
+    pipe.runTransient(0.005, UUID.randomUUID());
+    assertEquals(0.005, pipe.getCurrentTime());
+    assertEquals(1, pipe.getTimeHistory().size());
+  }
+
+  /** Explicit reinitialization recomputes EOS/elastic speed but preserves a user override. */
+  @Test
+  void reinitializeAutomaticAndOverriddenWaveSpeed() {
+    WaterHammerPipe pipe = pipe();
+    pipe.setWaveSpeed(-1.0);
+    pipe.run(UUID.randomUUID());
+    double steelSpeed = pipe.getWaveSpeed();
+    pipe.setPipeElasticModulus(100.0e9);
+    pipe.run(UUID.randomUUID());
+    assertTrue(pipe.getWaveSpeed() < steelSpeed);
+    pipe.setWaveSpeed(900.0);
+    pipe.setPipeElasticModulus(200.0e9);
+    pipe.run(UUID.randomUUID());
+    assertEquals(900.0, pipe.getWaveSpeed());
+  }
+
   /** Study duration and unsupported events have explicit execution semantics. */
   @Test
   void studyDurationAndEventValidation() {

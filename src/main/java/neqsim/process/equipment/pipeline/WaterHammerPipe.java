@@ -160,6 +160,12 @@ public class WaterHammerPipe extends Pipeline {
 
   // Initialization flag
   private boolean initialized = false;
+  /** Revision of static geometry, material, grid and acoustic inputs. */
+  private long configurationVersion;
+  /** Static revision represented by the current hydraulic arrays and coefficients. */
+  private long initializedConfigurationVersion;
+  /** Whether wave speed is an explicit measured/user override rather than EOS-derived. */
+  private boolean waveSpeedOverride;
 
   /**
    * Constructor for WaterHammerPipe.
@@ -188,6 +194,9 @@ public class WaterHammerPipe extends Pipeline {
   @Override
   public void setLength(double length) {
     super.setLength(length);
+    if (this.length != length) {
+      configurationVersion++;
+    }
     this.length = length;
   }
 
@@ -201,18 +210,30 @@ public class WaterHammerPipe extends Pipeline {
     switch (unit.toLowerCase()) {
     case "m":
       super.setLength(length);
+      if (this.length != length) {
+        configurationVersion++;
+      }
       this.length = length;
       break;
     case "km":
       super.setLength(length * 1000);
+      if (this.length != length * 1000) {
+        configurationVersion++;
+      }
       this.length = length * 1000;
       break;
     case "ft":
       super.setLength(length * 0.3048);
+      if (this.length != length * 0.3048) {
+        configurationVersion++;
+      }
       this.length = length * 0.3048;
       break;
     default:
       super.setLength(length);
+      if (this.length != length) {
+        configurationVersion++;
+      }
       this.length = length;
     }
   }
@@ -225,6 +246,9 @@ public class WaterHammerPipe extends Pipeline {
   @Override
   public void setDiameter(double diameter) {
     super.setDiameter(diameter);
+    if (this.diameter != diameter) {
+      configurationVersion++;
+    }
     this.diameter = diameter;
   }
 
@@ -238,19 +262,31 @@ public class WaterHammerPipe extends Pipeline {
     switch (unit.toLowerCase()) {
     case "m":
       super.setDiameter(diameter);
+      if (this.diameter != diameter) {
+        configurationVersion++;
+      }
       this.diameter = diameter;
       break;
     case "mm":
       super.setDiameter(diameter / 1000);
+      if (this.diameter != diameter / 1000) {
+        configurationVersion++;
+      }
       this.diameter = diameter / 1000;
       break;
     case "in":
     case "inch":
       super.setDiameter(diameter * 0.0254);
+      if (this.diameter != diameter * 0.0254) {
+        configurationVersion++;
+      }
       this.diameter = diameter * 0.0254;
       break;
     default:
       super.setDiameter(diameter);
+      if (this.diameter != diameter) {
+        configurationVersion++;
+      }
       this.diameter = diameter;
     }
   }
@@ -263,6 +299,9 @@ public class WaterHammerPipe extends Pipeline {
   @Override
   public void setWallThickness(double thickness) {
     super.setWallThickness(thickness);
+    if (this.wallThickness != thickness) {
+      configurationVersion++;
+    }
     this.wallThickness = thickness;
   }
 
@@ -283,6 +322,9 @@ public class WaterHammerPipe extends Pipeline {
    */
   public void setRoughness(double roughness) {
     super.setPipeWallRoughness(roughness);
+    if (this.roughness != roughness) {
+      configurationVersion++;
+    }
     this.roughness = roughness;
   }
 
@@ -312,6 +354,9 @@ public class WaterHammerPipe extends Pipeline {
    * @param nodes Number of nodes (minimum 10)
    */
   public void setNumberOfNodes(int nodes) {
+    if (this.numberOfNodes != Math.max(10, nodes)) {
+      configurationVersion++;
+    }
     this.numberOfNodes = Math.max(10, nodes);
   }
 
@@ -342,6 +387,9 @@ public class WaterHammerPipe extends Pipeline {
    * @param modulus Elastic modulus in Pa
    */
   public void setPipeElasticModulus(double modulus) {
+    if (this.pipeElasticModulus != modulus) {
+      configurationVersion++;
+    }
     this.pipeElasticModulus = modulus;
   }
 
@@ -352,6 +400,9 @@ public class WaterHammerPipe extends Pipeline {
    */
   public void setElevationChange(double elevation) {
     super.setElevation(elevation);
+    if (this.elevationChange != elevation) {
+      configurationVersion++;
+    }
     this.elevationChange = elevation;
   }
 
@@ -568,9 +619,18 @@ public class WaterHammerPipe extends Pipeline {
   /**
    * Override the automatically calculated wave speed.
    *
-   * @param speed Wave speed in m/s
+   * Static edits require an explicit {@link #run(UUID)} before further transient execution.
+   *
+   * @param speed finite positive wave speed in m/s, or -1 for EOS/elasticity calculation
    */
   public void setWaveSpeed(double speed) {
+    if (speed != -1.0) {
+      requirePositive(speed, "wave speed override");
+    }
+    waveSpeedOverride = speed > 0.0;
+    if (this.waveSpeed != speed) {
+      configurationVersion++;
+    }
     this.waveSpeed = speed;
   }
 
@@ -706,7 +766,7 @@ public class WaterHammerPipe extends Pipeline {
     requirePositive(fluidSoundSpeed, "fluid sound speed");
 
     // Calculate effective wave speed (with pipe elasticity)
-    if (waveSpeed < 0) {
+    if (!waveSpeedOverride) {
       waveSpeed = calcEffectiveWaveSpeed();
     }
 
@@ -762,6 +822,7 @@ public class WaterHammerPipe extends Pipeline {
     }
 
     currentTime = 0.0;
+    initializedConfigurationVersion = configurationVersion;
     initialized = true;
 
     logger.info("WaterHammerPipe initialized: wave speed = " + waveSpeed + " m/s, " + "max time step = "
@@ -783,11 +844,12 @@ public class WaterHammerPipe extends Pipeline {
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
+    requirePositive(dt, "timestep");
     if (!initialized) {
       initialize();
+    } else if (configurationVersion != initializedConfigurationVersion) {
+      throw new IllegalStateException("Static acoustic configuration changed; call run() explicitly to reinitialize");
     }
-
-    requirePositive(dt, "timestep");
     double requestedEnd = currentTime + dt;
     double count = Math.ceil(dt / getMaxStableTimeStep());
     if (!Double.isFinite(requestedEnd) || count > 1000000.0) {
