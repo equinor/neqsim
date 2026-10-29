@@ -18,6 +18,19 @@ def units_recipe():
 class PythonQuickstartUnitsTest(unittest.TestCase):
     """Check syntax, standalone setup, lifecycle order and documented units."""
 
+    def test_page_uses_current_published_runtime_requirements(self):
+        text = PAGE.read_text(encoding="utf-8")
+        self.assertNotIn("\n# Python Quickstart\n", text)
+        self.assertNotIn("Java 8+", text)
+        self.assertIn("requires Python 3.10+", text)
+        self.assertIn("requires Java 17 or newer", text)
+        self.assertIn("conda install -c conda-forge neqsim", text)
+        self.assertIn("Conda package installs OpenJDK automatically", text)
+        self.assertIn(
+            "https://github.com/equinor/neqsim-python#install",
+            text,
+        )
+
     def test_recipe_has_no_undefined_top_level_names(self):
         code = units_recipe()
         tree = ast.parse(code)
