@@ -16,6 +16,13 @@ FOUNDATIONAL_PACKAGE_TARGETS = {
     "chemicalreactions/README.html": DOCS / "chemicalreactions" / "README.md",
     "statistics/README.html": DOCS / "statistics" / "README.md",
 }
+STANDARDS_NAVIGATION_TARGETS = {
+    "standards/index.html": DOCS / "standards" / "index.md",
+    "standards/dew_point_standards.html": DOCS / "standards" / "dew_point_standards.md",
+    "standards/en16723_en16726_gas_quality.html": (
+        DOCS / "standards" / "en16723_en16726_gas_quality.md"
+    ),
+}
 
 FRONT_MATTER = re.compile(r"\A---\n(?P<fields>.*?)\n---\n", re.DOTALL)
 MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
@@ -151,6 +158,27 @@ def test_main_landing_routes_to_foundational_package_guides() -> None:
         assert package_landing in _target_candidates(LANDING_PAGE, destination)
         assert package_landing.is_file()
 
+
+
+def test_main_landing_routes_to_standards_and_measurement_guides() -> None:
+    text = LANDING_PAGE.read_text(encoding="utf-8")
+    visible = _without_fenced_code(text)
+    targets = _link_targets(text)
+
+    assert visible.count(">📏 Standards &amp; Measurement</h3>") == 1
+    for destination, source in STANDARDS_NAVIGATION_TARGETS.items():
+        assert targets.count(destination) == 1, (
+            f"{LANDING_PAGE}: expected one maintained {destination} route"
+        )
+        assert source in _target_candidates(LANDING_PAGE, destination)
+        assert source.is_file()
+
+    dew_point_line = next(
+        line for line in visible.splitlines()
+        if 'href="standards/dew_point_standards.html"' in line
+    )
+    assert "sampling-system transport" in dew_point_line.lower()
+    assert "interpretation limits" in dew_point_line.lower()
 
 
 def test_reference_index_places_henry_database_with_component_guides() -> None:
@@ -346,6 +374,7 @@ def load_tests(
             test_all_landing_pages_use_front_matter_title_only,
             test_top_level_landing_relative_targets_resolve,
             test_main_landing_routes_to_foundational_package_guides,
+            test_main_landing_routes_to_standards_and_measurement_guides,
             test_reference_index_places_henry_database_with_component_guides,
             test_global_navigation_is_task_oriented_and_complete,
             test_global_navigation_script_synchronizes_accessible_state,

@@ -49,6 +49,15 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 </ul>
 </div>
 
+<div class="nav-card" style="background: linear-gradient(135deg, #eef7f2 0%, #ffffff 100%); border: 1px solid #b7d8c2; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+<h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #2e7d32; color: #24292e; font-size: 1.25rem;">📏 Standards &amp; Measurement</h3>
+<ul style="list-style: none; padding: 0; margin: 0;">
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="standards/index.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Standards Overview</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Calculation methods, reference conditions, and engineering boundaries</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="standards/dew_point_standards.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Dew-Point &amp; Analyser Methods</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Sampling-system transport, equilibrium methods, and interpretation limits</span></li>
+<li style="padding: 0.5rem 0;"><a href="standards/en16723_en16726_gas_quality.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Gas Quality Screening</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">European H-gas and biomethane composition checks</span></li>
+</ul>
+</div>
+
 <div class="nav-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border: 1px solid #e1e4e8; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
 <h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #ff9800; color: #24292e; font-size: 1.25rem;">🏭 Process Simulation</h3>
 <ul style="list-style: none; padding: 0; margin: 0;">
