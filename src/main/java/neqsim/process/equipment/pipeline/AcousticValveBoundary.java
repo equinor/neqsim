@@ -1,7 +1,6 @@
 package neqsim.process.equipment.pipeline;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import neqsim.process.mechanicaldesign.valve.TabulatedValveCharacteristic;
 
 /**
@@ -98,7 +97,9 @@ public final class AcousticValveBoundary implements Serializable {
   }
 
   /**
-   * Evaluate prescribed actual position, independent of call order.
+   * Evaluate prescribed actual position, independent of call order. Exact absolute knots use the same
+   * command-plus-delay-plus-travel sums as nextKnotAfter and return the tabulated position exactly. Interpolation uses
+   * those representable absolute times, without an epsilon.
    *
    * @param time physical pipe time in seconds, finite and nonnegative
    * @return actual opening fraction, zero to one
@@ -106,20 +107,31 @@ public final class AcousticValveBoundary implements Serializable {
    */
   public double getOpening(double time) {
     validateTime(time);
-    double elapsed = time - travelStart;
-    if (elapsed <= 0.0) {
+    if (time <= travelStart) {
       return position[0];
     }
-    int index = Arrays.binarySearch(travelTime, elapsed);
-    if (index >= 0) {
-      return position[index];
+    int last = travelTime.length - 1;
+    if (time >= travelStart + travelTime[last]) {
+      return position[last];
     }
-    int upper = -index - 1;
-    if (upper == travelTime.length) {
-      return position[position.length - 1];
+    int lower = 0;
+    int upper = last;
+    while (upper - lower > 1) {
+      int middle = (lower + upper) >>> 1;
+      double knot = travelStart + travelTime[middle];
+      if (time == knot) {
+        return position[middle];
+      }
+      if (time < knot) {
+        upper = middle;
+      } else {
+        lower = middle;
+      }
     }
-    double fraction = (elapsed - travelTime[upper - 1]) / (travelTime[upper] - travelTime[upper - 1]);
-    return position[upper - 1] + fraction * (position[upper] - position[upper - 1]);
+    double lowerTime = travelStart + travelTime[lower];
+    double upperTime = travelStart + travelTime[upper];
+    double fraction = (time - lowerTime) / (upperTime - lowerTime);
+    return position[lower] + fraction * (position[upper] - position[lower]);
   }
 
   /**

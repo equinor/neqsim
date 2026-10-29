@@ -15,6 +15,22 @@ Kv uses reference water density1000 kg/m3 in Q=Kv/3600 sqrt(deltaP_bar/(rho/1000
 
 ## Frozen verification and explicit physical verdicts
 
+Exact-knot regressions also cover starts0.4/1000000.4/1000000000000.4s,
+intermediate positions/reopening, the adjacent representable times, declared leakage,
+serialization and closure into an elevated receiver pressure. Lookup uses the same
+absolute knot sums as event localization; no epsilon, early closure or capacity
+clipping is used. The earlier relative-time subtraction left tiny positive capacity
+at nominal closure and falsely rejected the coupled receiver case. These tests do
+not change the separate physical conservation verdict below.
+
+The three endpoint regressions first produced two assertion failures and the
+coupled reverse-flow exception on head `05f71913e1be3a1d5525b5ba8b3fcbef5fa147f2`.
+They pass after the absolute-axis repair, alongside the existing tests (229 on
+the original PR lineage; 232 on publication base `c02e7cf52cf7ac4d77f688f82be2d455afa088aa`,
+including three subsequently merged valve-initialization regressions).
+The committed JSON files retain the original qualification run at that head; the
+endpoint continuation does not relabel those original timings as new measurements.
+
 | Check | Criterion / interpretation | Verdict |
 | --- | --- | --- |
 | Initial capacity consistency | 1e-9 +1e-6 abs(Q) m3/s; inconsistent declared capacity rejects | PASS |

@@ -215,6 +215,13 @@ piecewise linear, may include reopening, begins at elapsed time zero, and holds 
 first/last position outside its table. Zero capacity closes the boundary exactly;
 positive capacity at zero position explicitly represents leakage.
 
+Travel lookup and event localization use the same representable absolute knots:
+`(commandTime_s + delay_s) + travelTime_s[i]`. At an exact knot the tabulated
+position is returned exactly, including zero at full closure. Between knots the
+position is interpolated on this absolute time axis; no epsilon closes a valve
+early. This avoids residual capacity caused by subtracting a nonzero start time
+before looking up a relative knot. Serialized inputs and field layout are unchanged.
+
 For metric Kv, the independently checkable non-choked liquid relation is
 
 $$Q=\frac{K_v(x)}{3600}\sqrt{\frac{\Delta p_{bar}}{\rho/1000}}$$
