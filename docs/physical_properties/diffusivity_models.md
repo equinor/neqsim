@@ -254,9 +254,21 @@ fluid.getPhase("gas").getPhysicalProperties()
 
 ## Liquid-Phase Models
 
-All liquid-phase models calculate infinite-dilution binary diffusion coefficients. The Vignes mixing rule is applied for finite concentrations:
+Models inheriting the shared liquid `Diffusivity` base calculate ordered infinite-dilution coefficients $D_{ij}^0$ (solute $i$ in solvent $j$), in m²/s. The base uses **Wesselingh–Krishna generalized Vignes interpolation** for finite concentrations:
 
-$$D_{ij}^{mix} = (D_{ij}^0)^{x_j} (D_{ji}^0)^{x_i}$$
+$$D_{ij}^{mix}=(D_{ij}^0)^{(1+x_j-x_i)/2}(D_{ji}^0)^{(1+x_i-x_j)/2}$$
+
+Here $x_i$ and $x_j$ are liquid mole fractions. The empirical assumption is that the limiting friction of pair $i,j$ in each third solvent $k$ is represented by the geometric-mean diffusivity $D_{ij}^{x_k\to1}=\sqrt{D_{ij}^0D_{ji}^0}$. The two combined exponents sum to one, so the result retains units m²/s. For a binary mixture, $x_i+x_j=1$ and this reduces to binary Vignes interpolation with exponents $x_j,x_i$. At infinite dilution in solvent $j$, it recovers $D_{ij}^0$.
+
+Each unordered pair reads both original limiting directions and publishes the same mixed value in both matrix positions. Recalculation restarts from the limiting correlation, and cloned pair/effective arrays are independently owned. A nonpositive or nonfinite off-diagonal limiting value is rejected; no lower bound or substitute diffusivity is introduced. Diagonal correlation values are retained and excluded from the effective-diffusion sum.
+
+**Qualification and migration.** Earlier shared liquid mixing omitted the third-solvent contribution and overwrote reverse pairs during interpolation. Multicomponent coefficients therefore lost dimensional scale covariance and depended on component insertion order; cloned matrices also aliased their original rows. Correcting these defects changes liquid transport and downstream film rates, sometimes substantially. Revisit previously fitted mass-transfer coefficients or film results; do not preserve them by fitting a compensating parameter. Gas diffusion correlations, the infinite-dilution correlation selected by the user, and the pipeline's approximate relaxation source are unchanged.
+
+`LiquidPairMixingTest` checks independently specified constant coefficients, binary/infinite-dilution limits, a high-precision three-solvent reference product, unit-scale covariance, exact pair symmetry, cloning, recalculation and reversed insertion of the public six-component SRK oil fixture. These are analytical and numerical consistency checks. The Wesselingh–Krishna third-solvent approximation and each underlying infinite-dilution correlation still require application-specific physical data and validity ranges. They do not qualify stationary hydrocarbon pool area, heat supply, coupled multicomponent evaporation or predictive depletion times. The separate conservative pipeline root/phase-label limitation remains outside this property correction.
+
+The executable [LiquidMixingBenchmark](../../src/test/java/neqsim/physicalproperties/methods/liquidphysicalproperties/diffusivity/LiquidMixingBenchmark.java) writes seven raw timing batches for two and six components, with 30,000 warm-up calls per operation and 100,000 measured calls per batch. It measures inherited pair mixing and matrix cloning separately, excluding EOS initialization. Compare repeated forks in reversed order; do not interpret these microbenchmarks as whole-process speed. Correct clone isolation requires separate row allocation, so its cost must be reported separately from mixing throughput. The underlying infinite-dilution correlation and its solvent-selection options are unchanged; this correction does not automatically select a hydrocarbon-specific correlation.
+
+Provenance: Wesselingh and Krishna, *Mass Transfer* (1990); the independently documented formula is also in [COMSOL Liquid & Gas Properties Guide 6.2, equations 2-250–2-256, pp.108–109](https://doc.comsol.com/6.2/doc/com.comsol.help.lgp/LiquidAndGasPropertiesModuleUsersGuide.pdf). This is an implementation-equation cross-check, not experimental validation. For limitations of third-solvent limiting-friction estimates, see [Liu, Bardow and Vlugt (2011), DOI:10.1021/ie102515w](https://doi.org/10.1021/ie102515w).
 
 ### Siddiqi-Lucas
 
