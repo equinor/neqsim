@@ -123,6 +123,44 @@ class CompressorChartPolytropicMethodTest extends NeqSimTest {
   }
 
   /**
+   * The isentropic reference must retain the selected head basis across efficiency levels.
+   *
+   * @param efficiency chart efficiency as a fraction
+   */
+  @ParameterizedTest
+  @ValueSource(doubles = {0.65, 0.80, 0.95})
+  void solvedSpeedRetainsSchultzBasisAcrossEfficiencies(double efficiency) {
+    Compressor compressor = chart("schultz", "kJ/kg");
+    compressor.getCompressorChart().setCurves(new double[0], new double[] {8000.0, 10000.0},
+        new double[][] {{1500.0, 2000.0, 2500.0}, {1875.0, 2500.0, 3125.0}},
+        new double[][] {{110.0, 100.0, 85.0}, {171.9, 156.3, 132.8}},
+        new double[][] {{100.0 * efficiency, 100.0 * efficiency, 100.0 * efficiency},
+            {100.0 * efficiency, 100.0 * efficiency, 100.0 * efficiency}});
+    compressor.run();
+    assertSpeedReplay(compressor);
+    assertSameBasis(compressor);
+  }
+
+  /**
+   * Recover a fixed-speed operating point through an independently initialized speed solve.
+   *
+   * @param compressor evaluated fixed-speed compressor
+   */
+  private void assertSpeedReplay(Compressor compressor) {
+    double expectedPressure = compressor.getOutletStream().getPressure("bara");
+    compressor.setOutletPressure(expectedPressure, "bara");
+    compressor.setSpeed(8500.0);
+    compressor.setSolveSpeed(true);
+    compressor.run();
+    assertTrue(compressor.isSpeedSolveConverged());
+    assertEquals(expectedPressure, compressor.getOutletStream().getPressure("bara"), 1.0e-3);
+    Compressor plain = reference(compressor);
+    assertEquals(plain.getPolytropicHead("kJ/kg"), compressor.getPolytropicHead("kJ/kg"), 1.0e-5);
+    assertEquals(plain.getOutletStream().getTemperature(), compressor.getOutletStream().getTemperature(), 1.0e-4);
+    assertEquals(plain.getPower(), compressor.getPower(), 0.1);
+  }
+
+  /**
    * Checks head, power, temperature and map-head closure independently of the speed solver.
    *
    * @param compressor evaluated chart compressor
@@ -189,6 +227,7 @@ class CompressorChartPolytropicMethodTest extends NeqSimTest {
     assertEquals(plain.getPolytropicHead("kJ/kg"), compressor.getPolytropicHead("kJ/kg"), 1.0e-5);
     assertEquals(plain.getOutletStream().getTemperature(), compressor.getOutletStream().getTemperature(), 1.0e-4);
     assertEquals(plain.getPower(), compressor.getPower(), 0.1);
+    assertSpeedReplay(compressor);
   }
 
   /** A fixed-speed chart calculation must retain absolute units after a non-bara setpoint. */
@@ -256,5 +295,6 @@ class CompressorChartPolytropicMethodTest extends NeqSimTest {
     assertEquals(plain.getPolytropicHead("kJ/kg"), compressor.getPolytropicHead("kJ/kg"), 1.0e-5);
     assertEquals(plain.getOutletStream().getTemperature(), compressor.getOutletStream().getTemperature(), 1.0e-4);
     assertEquals(plain.getPower(), compressor.getPower(), 0.1);
+    assertSpeedReplay(compressor);
   }
 }

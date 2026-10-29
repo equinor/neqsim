@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.DoubleUnaryOperator;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -1543,9 +1544,12 @@ public class Compressor extends TwoPortEquipment
         }
         double bestSpeed = Double.NaN;
         double bestResidualMagnitude = Double.POSITIVE_INFINITY;
-        Compressor headReference = usePolytropicCalc && !"ideal_inlet_properties".equals(polytropicMethod)
-            ? createPolytropicReference()
-            : null;
+        DoubleUnaryOperator schultzHead = usePolytropicCalc && "schultz".equals(polytropicMethod)
+            && targetPressure > thermoSystem.getPressure("bara") + 1.0e-6
+                ? createSchultzHeadFunction(targetPressure, entropy, densInn)
+                : null;
+        Compressor headReference = schultzHead == null && usePolytropicCalc
+            && !"ideal_inlet_properties".equals(polytropicMethod) ? createPolytropicReference() : null;
 
         double maxIterations = 200; // Maximum number of iterations
         double deltaSpeed = 100.0; // Small increment for numerical derivative
@@ -1606,7 +1610,10 @@ public class Compressor extends TwoPortEquipment
               n / (n - 1.0));
           double currentResidual;
           double residualTolerance = tolerance;
-          if (headReference != null) {
+          if (schultzHead != null) {
+            currentResidual = polytropicFluidHead - schultzHead.applyAsDouble(polytropEff / 100.0);
+            residualTolerance = 1.0e-8 * Math.max(1.0, polytropicFluidHead);
+          } else if (headReference != null) {
             // At a specified pressure, matching head avoids a nested pressure solve at every speed trial.
             headReference.setPolytropicEfficiency(polytropEff / 100.0);
             currentResidual = -polytropicHeadResidual(headReference, targetPressure, polytropicFluidHead);
@@ -1651,7 +1658,9 @@ public class Compressor extends TwoPortEquipment
                   / (nDelta / (nDelta - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW),
               nDelta / (nDelta - 1.0));
           double deltaResidual;
-          if (headReference != null) {
+          if (schultzHead != null) {
+            deltaResidual = polytropicFluidHeadDelta - schultzHead.applyAsDouble(polytropEffDelta / 100.0);
+          } else if (headReference != null) {
             headReference.setPolytropicEfficiency(polytropEffDelta / 100.0);
             deltaResidual = -polytropicHeadResidual(headReference, targetPressure, polytropicFluidHeadDelta);
           } else {
@@ -2165,6 +2174,60 @@ public class Compressor extends TwoPortEquipment
     reference.setUseLeachman(useLeachman);
     reference.setUseVega(useVega);
     return reference;
+  }
+
+  /**
+   * Builds the Schultz head relation for a fixed discharge pressure. The isentropic endpoint does not depend on
+   * polytropic efficiency, so one pressure-entropy flash supplies every efficiency trial in a speed solve. The accepted
+   * speed is still replayed through the complete chart calculation.
+   *
+   * @param outletPressure requested absolute discharge pressure in bara
+   * @param entropy selected-model inlet entropy in J/K
+   * @param inletDensity selected-model inlet density in kg/m3
+   * @return polytropic head in kJ/kg as a function of fractional efficiency
+   */
+  private DoubleUnaryOperator createSchultzHeadFunction(double outletPressure, double entropy, double inletDensity) {
+    double inletPressure = thermoSystem.getPressure("bara");
+    double schultzX = thermoSystem.getTemperature() / thermoSystem.getVolume() * thermoSystem.getdVdTpn() - 1.0;
+    double schultzY = -inletPressure / thermoSystem.getVolume() * thermoSystem.getdVdPtn();
+    Compressor reference = createPolytropicReference();
+    reference.thermoSystem = reference.inStream.getThermoSystem().clone();
+    reference.thermoSystem.setPressure(outletPressure, "bara");
+    reference.runPsFlashForSelectedModel(new ThermodynamicOperations(reference.thermoSystem), entropy);
+    reference.thermoSystem.initProperties();
+    double isentropicDensity = reference.thermoSystem.getDensity("kg/m3");
+    double isentropicEnthalpy = reference.thermoSystem.getEnthalpy();
+    if (inStream.getThermoSystem().getNumberOfPhases() == 1) {
+      if (useGERG2008) {
+        double[] properties = reference.thermoSystem.getPhase(0).getProperties_GERG2008();
+        isentropicDensity = reference.thermoSystem.getPhase(0).getDensity_GERG2008();
+        isentropicEnthalpy = properties[7] * reference.thermoSystem.getPhase(0).getNumberOfMolesInPhase();
+      }
+      if (useLeachman) {
+        double[] properties = reference.thermoSystem.getPhase(0).getProperties_Leachman();
+        isentropicDensity = reference.thermoSystem.getPhase(0).getDensity_Leachman();
+        isentropicEnthalpy = properties[7] * reference.thermoSystem.getPhase(0).getNumberOfMolesInPhase();
+      }
+      if (useVega) {
+        double[] properties = reference.thermoSystem.getPhase(0).getProperties_Vega();
+        isentropicDensity = reference.thermoSystem.getPhase(0).getDensity_Vega();
+        isentropicEnthalpy = properties[7] * reference.thermoSystem.getPhase(0).getNumberOfMolesInPhase();
+      }
+    }
+    double pressureRatio = outletPressure / inletPressure;
+    double isentropicExponent = Math.log(pressureRatio) / Math.log(isentropicDensity / inletDensity);
+    double correctionFactor = (isentropicEnthalpy - inletEnthalpy)
+        / (1.0e5 * (outletPressure / isentropicDensity - inletPressure / inletDensity) * isentropicExponent
+            / (isentropicExponent - 1.0));
+    double headFactor = correctionFactor * 1.0e5 * inletPressure / inletDensity / thermoSystem.getFlowRate("kg/sec")
+        / 1000.0;
+    return efficiency -> {
+      double inverseEfficiency = 1.0 / efficiency;
+      double exponent = (1.0 + schultzX)
+          / ((inverseEfficiency + schultzX) / isentropicExponent - schultzY * (inverseEfficiency - 1.0));
+      double term = exponent / (exponent - 1.0);
+      return term * headFactor * (Math.pow(pressureRatio, 1.0 / term) - 1.0);
+    };
   }
 
   /**

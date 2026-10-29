@@ -95,6 +95,9 @@ the configured number of pressure steps. In chart mode, NeqSim solves the outlet
 pressure at which the selected method reproduces the chart head and efficiency.
 The pressure solve uses bracketed interpolation with periodic bisection, retaining
 the same head-residual criterion while reducing repeated thermodynamic flashes.
+During Schultz speed solving, the target-pressure isentropic state is evaluated
+once and reused as efficiency changes. Each accepted speed is still checked
+through the forward chart calculation.
 The final power satisfies $W=\dot{m}H_p/\eta_p$, where $W$ is power in W,
 $\dot{m}$ is mass flow in kg/s, $H_p$ is head in J/kg and $\eta_p$ is efficiency.
 
