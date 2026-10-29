@@ -146,6 +146,96 @@ equilibrium, especially in dry gas. Earlier stored dew-point values from this
 operation should be recalculated. Retain the input composition, water basis,
 pressure, model, NeqSim version and convergence diagnostics with each result.
 
+## Screen an extractive analyser sample system
+
+A dew-point calculation alone does not prove that an extractive analyser sees the
+process gas. The public `AnalyserSampleSystem` class added in
+[#4715](https://github.com/equinor/neqsim/pull/4715) screens four common
+sample-system effects:
+
+- water or hydrocarbon condensation in the high-pressure tube;
+- transport lag from the process tap to the regulator;
+- minimum water-film dry-out time at a stated flow and temperature;
+- glycol-film persistence when a CPA fluid contains the selected glycol.
+
+Flows are normal litres per hour at 0 °C and 1.01325 bara. Pressures are absolute
+bara, tube dimensions are metres, and temperatures supplied to the sample-system
+setters are degrees Celsius. The water model uses Bukacek. Hydrocarbon dew point
+uses a NeqSim flash after removing water and glycols. Film calculations assume a
+saturated outlet: water dry-out is therefore a lower bound for the stated film
+mass and flow. Glycol dry-out uses a CPA flash with a vapour-pressure fallback;
+it is not a sensor-recovery guarantee.
+
+### Executable Java 8 screening example
+
+<!-- analyser-sample-system-example: complete -->
+```java
+import neqsim.process.measurementdevice.AnalyserSampleSystem;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermo.util.empiric.BukacekWaterInGas;
+
+public class AnalyserSampleSystemGuideExample {
+  public static void main(String[] args) {
+    double pressureBara = 63.0;
+    double waterMoleFraction =
+        BukacekWaterInGas.getWaterInGas(273.15 - 40.0, pressureBara);
+    double dryMoleFraction = 1.0 - waterMoleFraction;
+
+    SystemInterface sampleGas =
+        new SystemSrkCPAstatoil(273.15 + 25.0, pressureBara);
+    sampleGas.addComponent("methane", 0.85 * dryMoleFraction);
+    sampleGas.addComponent("ethane", 0.08 * dryMoleFraction);
+    sampleGas.addComponent("propane", 0.04 * dryMoleFraction);
+    sampleGas.addComponent("n-butane", 0.02 * dryMoleFraction);
+    sampleGas.addComponent("n-hexane", 0.01 * dryMoleFraction);
+    sampleGas.addComponent("water", waterMoleFraction);
+    sampleGas.addComponent("TEG", 0.0);
+    sampleGas.setMixingRule(10);
+
+    AnalyserSampleSystem sampleSystem =
+        new AnalyserSampleSystem(sampleGas);
+    sampleSystem.setTubeTemperatureC(20.0);
+    sampleSystem.setRegulatorOutletPressureBara(3.5);
+    sampleSystem.setFlowsNlPerHour(15.0, 90.0);
+    sampleSystem.setTubeGeometry(1.4e-3, 9.0);
+
+    double tapDewPointC = sampleSystem.getWaterDewPointAtTapC();
+    double condensationMarginK =
+        sampleSystem.getWaterCondensationMarginK();
+    double transportLagSeconds = sampleSystem.getTransportLagSeconds();
+    double waterFilmDryOutHours =
+        sampleSystem.getWaterFilmDryOutTimeHours(
+            1.0e-3, 60.0, 2.0, 15.0);
+
+    if (Math.abs(tapDewPointC + 40.0) > 0.05
+        || sampleSystem.isWaterCondensingInTube()
+        || Math.abs(condensationMarginK - 60.0) > 0.1
+        || !Double.isFinite(transportLagSeconds)
+        || transportLagSeconds <= 1.0
+        || transportLagSeconds >= 600.0
+        || !Double.isFinite(waterFilmDryOutHours)
+        || waterFilmDryOutHours <= 0.0) {
+      throw new IllegalStateException(
+          "Sample-system screening is outside the documented bounds");
+    }
+  }
+}
+```
+
+This synthetic dry-gas case should give a water dew point near −40 °C at the tap,
+a positive condensation margin near 60 K, no water condensation, and a finite
+transport lag. Those checks validate the documented API and qualitative
+engineering bounds; they do not validate an installed sample system.
+
+Before using the result, replace the synthetic composition and geometry with
+controlled data and verify the process tap, heat tracing, regulator, bypass,
+analyser flow, material compatibility, calibration, response test, uncertainty,
+and governing measurement procedure. A positive margin is a screening result,
+not evidence of representative sampling. Do not interpret the lower-bound film
+time as an allowed restart delay or the glycol estimate as a maintenance
+interval.
+
 ## Hydrocarbon dew point with `BestPracticeHydrocarbonDewPoint`
 
 The constructor copies every phase-0 component except exact component name
