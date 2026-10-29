@@ -127,6 +127,7 @@ The same facade provides the following public operations:
 | Dew temperature at current pressure | `dewPointTemperatureFlash()` |
 | Water dew temperature | `waterDewPointTemperatureFlash()` |
 | Water-rich liquid dew temperature including dissolved gas | `waterDewPointTemperatureFlash(true)` |
+| CPA liquid-water, ice and hydrate boundaries together | `cpaWaterPhaseBoundaryTemperatures()`; see the [setup and phase-reference guide](cpa_water_phase_boundaries) |
 | Hydrate formation temperature | `hydrateFormationTemperature()` |
 | Hydrate formation pressure | `hydrateFormationPressure()` |
 | Multiliquid equilibrium | Enable `setMultiPhaseCheck(true)`, then call `TPflash()` |

@@ -109,8 +109,21 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
   /** {@inheritDoc} */
   @Override
   public void run() {
+    Niterations = 0;
+    result = FreezingPointResult.failed(0, Double.NaN, "", "Calculation did not complete.");
+    if (!Double.isFinite(system.getPressure()) || system.getPressure() <= 0.0) {
+      result = FreezingPointResult.failed(0, Double.NaN, "",
+          "Freezing point requires positive finite absolute pressure.");
+      throw new IllegalArgumentException(result.getFailureReason());
+    }
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
-    PhaseInterface solidPhase = getConfiguredSolidPhase(system);
+    PhaseInterface solidPhase;
+    try {
+      solidPhase = getConfiguredSolidPhase(system);
+    } catch (IllegalStateException exception) {
+      result = FreezingPointResult.failed(0, Double.NaN, "", exception.getMessage());
+      throw exception;
+    }
     double originalTemperature = system.getTemperature();
     double maxTemperature = Double.NEGATIVE_INFINITY;
     int numbComponents = system.getPhases()[0].getNumberOfComponents();
@@ -119,6 +132,7 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
     int totalIterations = 0;
     double controllingResidual = Double.NaN;
     String controllingComponent = "";
+    int controllingComponentNumber = -1;
     String lastFailureReason = "No component was enabled for solid checking.";
 
     try {
@@ -138,20 +152,25 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
               maxTemperature = componentTemperature;
               controllingResidual = componentResult.getResidual();
               controllingComponent = componentName;
+              controllingComponentNumber = componentNumber;
             }
           } else {
             lastFailureReason = componentResult.getFailureReason();
+            result = FreezingPointResult.failed(totalIterations, componentResult.getResidual(), componentName,
+                lastFailureReason);
+            Niterations = totalIterations;
+            throw new IllegalStateException("Freezing-point flash did not converge. " + lastFailureReason);
           }
         }
       }
 
       if (solidForms && Double.isFinite(maxTemperature) && maxTemperature > 0.0) {
-        system.setTemperature(maxTemperature);
-        if (!(solidPhase instanceof PhaseSolidHelmholtzEos)) {
-          ops.TPflash(false);
+        controllingResidual = evaluateResidual(system, controllingComponentNumber, maxTemperature, solidPhase, ops);
+        if (Math.abs(controllingResidual) >= 1.0e-10) {
+          result = FreezingPointResult.failed(totalIterations, controllingResidual, controllingComponent,
+              "The committed freezing-point state does not satisfy equilibrium.");
+          throw new IllegalStateException(result.getFailureReason());
         }
-        initializeCoexistingFluidPhase(system, solidPhase);
-        initializeSolidPhase(system, solidPhase);
         result = FreezingPointResult.converged(maxTemperature, totalIterations, controllingResidual,
             controllingComponent);
         Niterations = totalIterations;
@@ -162,10 +181,14 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
       Niterations = totalIterations;
       result = FreezingPointResult.failed(totalIterations, Double.NaN, controllingComponent, lastFailureReason);
       throw new IllegalStateException("Freezing-point flash did not converge. " + lastFailureReason);
+    } catch (RuntimeException exception) {
+      if ("Calculation did not complete.".equals(result.getFailureReason())) {
+        result = FreezingPointResult.failed(totalIterations, Double.NaN, controllingComponent, exception.getMessage());
+      }
+      throw exception;
     } finally {
       if (!calculationSucceeded) {
         system.setTemperature(originalTemperature);
-        system.init(1);
       }
     }
   }
