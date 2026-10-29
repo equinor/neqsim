@@ -931,11 +931,24 @@ their signed interaction difference, and exact baseline-to-joint installed-const
 and report recompute all arithmetic and membership bindings. They never infer the joint response from additive
 assumptions, and reject non-finite, stale, foreign, partially restored or incomplete evidence.
 
+Schema v15 extends the same exact joint-combination binding to paired operating-envelope slices. First evaluate one
+or more complete baseline slices from the accepted replay. Then call
+`ProcessModelDebottleneckStudy.evaluateCombinedEnvelope(...)` with those exact runtime slices; the study applies every
+combination member together, repeats the identical axes, grids, anchors and refinement policy, stops on any unsafe
+point recovery, restores every installed limit in reverse order and reconverges the restored process. Finally call
+`ProcessModelOperatingEnvelopeStudy.qualifyReliefEnvelope(...)` with the same accepted search, portfolio, combination
+study and accepted-point result. Qualification rejects foreign, deserialized, partial, non-finite, stale or
+structurally mismatched slices. The receipt retains both complete slice blocks, exact sampled feasibility/outcome and
+leading-constraint identity changes, and signed shifts of terminal feasible/infeasible refinement-bracket endpoints
+only when exactly one baseline and one relieved continuous boundary are comparable on an axis. A bracket endpoint is
+not promoted to an exact boundary, discrete routes are never interpolated, and no independent relief delta is treated
+as additive.
+
 Schema v11 retains the schema-v10 requirement for non-empty, independently declared plant-constraint IDs in addition to the
 schema-v9 equipment scope, complete finite rated evidence, explicit unit/basis/provenance/direction/category, and exact
 calculation binding to the accepted-point replay. Supply both
 `getInstalledEquipmentCapacityEvidence()` and `getPlantConstraintEvidence()` through the frozen-evidence builder path;
-this never resamples the mutable process after baseline restoration. Current schema-v11/v12/v13/v14 exports retain optional
+this never resamples the mutable process after baseline restoration. Current schema-v11/v12/v13/v14/v15 exports retain optional
 accepted-state metrics and require schema-v2
 cross-slice summaries in every period. The guard reconstructs each summary from persisted sampled and refined
 endpoint rows before trusting it, independently reconstructs the constraint opportunity screen, validates any v12/v13
@@ -943,7 +956,9 @@ receipt against the exact installed identity, limit, unit, action set, accepted 
 accepted value, paired residual/tolerance, finite delta and restoration flags, reconstructs each schema-v13 portfolio
 identity, candidate count, input indices, alternative identities, common objective policy and competition rank from
 the persisted deltas, reconstructs each schema-v14 joint membership, objective arithmetic, restoration state and
-bottleneck migration without assuming additivity, and then recomputes every
+bottleneck migration without assuming additivity, reconstructs every schema-v15 paired slice grid, point identity
+change, refinement count and bracket-endpoint shift from the persisted baseline and jointly relieved slices, and then
+recomputes every
 period-change diagnostic from the persisted periods before accepting it, including exact operating-region event
 migration, refined-boundary endpoint constraints and physical margins, exact ranked constraint-identity migration,
 and, when present, state-metric identity,
