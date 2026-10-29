@@ -656,6 +656,52 @@ def vscode_user_mcp_files():
     return [d / "mcp.json" for d in dirs if d.is_dir()]
 
 
+def vscode_version():
+    """Installed VS Code ``(major, minor)`` read from its package.json, or None when not found."""
+    dirs = []
+    askpass = os.environ.get("VSCODE_GIT_ASKPASS_NODE")
+    if askpass:
+        dirs.append(Path(askpass).parent / "resources" / "app")
+    code = shutil.which("code")
+    if code:
+        try:
+            dirs += [Path(code).resolve().parent.parent / "resources" / "app",
+                     Path(code).resolve().parent.parent]
+        except OSError:
+            pass
+    if os.name == "nt":
+        for var in ("LOCALAPPDATA", "ProgramFiles"):
+            base = os.environ.get(var)
+            if base:
+                sub = ("Programs" if var == "LOCALAPPDATA" else "")
+                dirs.append(Path(base) / sub / "Microsoft VS Code" / "resources" / "app")
+    elif sys.platform == "darwin":
+        dirs.append(Path("/Applications/Visual Studio Code.app/Contents/Resources/app"))
+    else:
+        dirs += [Path("/usr/share/code/resources/app"), Path("/opt/visual-studio-code/resources/app")]
+    for d in dirs:
+        try:
+            ver = json.loads((d / "package.json").read_text(encoding="utf-8")).get("version", "")
+            parts = ver.split(".")
+            return int(parts[0]), int(parts[1])
+        except (OSError, ValueError, IndexError, AttributeError):
+            continue
+    return None
+
+
+def vscode_expands_plugin_root():
+    """True when VS Code resolves ``${{PLUGIN_ROOT}}`` in a plugin mcp.json itself (1.141+).
+
+    Then the plugin's own ``neqsim`` server works and the user mcp.json workaround is
+    unnecessary - and harmful: newer VS Code treats entries in the user mcp.json as legacy
+    and nags the user to migrate them. ``NEQSIM_SKIP_USER_MCP=1`` forces the same opt-out.
+    """
+    if os.environ.get("NEQSIM_SKIP_USER_MCP", "").strip().lower() in ("1", "true", "yes"):
+        return True
+    version = vscode_version()
+    return version is not None and version >= (1, 141)
+
+
 def ensure_mcp_entry(java, path_major):
     """Register / repair the plugin's ``neqsim`` server in the VS Code user mcp.json.
 
@@ -673,8 +719,11 @@ def ensure_mcp_entry(java, path_major):
       or an absolute path that vanished / is too old (JDK upgrade renamed its folder);
     - a foreign ``neqsim`` server is never modified.
     ``command`` stays the portable bare ``java`` while PATH java is usable.
-    Returns ``(created, patched)`` lists of file paths.
+    Returns ``(created, patched)`` lists of file paths. Does nothing (``([], [])``) when
+    VS Code 1.141+ expands the placeholder itself (see ``vscode_expands_plugin_root``).
     """
+    if vscode_expands_plugin_root():
+        return [], []
     launcher = str(root / "servers" / "NeqsimMcpLauncher.java")
     path_ok = path_major is not None and path_major >= MCP_MIN_JAVA
     created, patched = [], []
