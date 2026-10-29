@@ -16,14 +16,18 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <p>
  * This class simulates fast transient pressure waves (water hammer / hydraulic shock) in pipelines. Unlike the
  * advection-based transient model in {@link PipeBeggsAndBrills}, this model propagates pressure waves at the speed of
- * sound, enabling accurate simulation of:
+ * sound. Current analytical evidence is bounded to single-line, frozen-property valve-closure acoustics:
  * </p>
  * <ul>
- * <li>Rapid valve closures (emergency shutdown)</li>
- * <li>Pump trips</li>
- * <li>Check valve slam</li>
- * <li>Pressure surge analysis for pipe stress design</li>
+ * <li>Rapid Safety Shutdown valve closures</li>
+ * <li>Prescribed actual valve travel and absolute liquid capacity</li>
+ * <li>Pressure-wave screening, subject to interpolation diffusion and nodal-volume discretization error</li>
  * </ul>
+ * <p>
+ * Pump/disc dynamics, cavitation, structural support/stress loads and plant-wide coupling are not qualified by this
+ * model. For changing boundary flow below unit Courant, nodal acoustic storage is not exactly conservative against
+ * trapezoidal physical boundary flux; refine space/time and inspect the documented volume defect.
+ * </p>
  *
  * <p>
  * The Method of Characteristics transforms the hyperbolic partial differential equations for one-dimensional transient
@@ -146,6 +150,8 @@ public class WaterHammerPipe extends Pipeline {
   private double valveBackPressureBara = 1.0;
   private double stepFraction;
   private double valveCv = -1; // Valve coefficient (-1 = auto from steady state)
+  /** Optional absolute-capacity and prescribed-travel boundary; null preserves calibrated legacy mode. */
+  private AcousticValveBoundary valveBoundary;
 
   // Fluid properties (cached)
   private double fluidDensity; // kg/m³
@@ -561,6 +567,9 @@ public class WaterHammerPipe extends Pipeline {
    * @param opening Valve opening (0-1)
    */
   public void setValveOpening(double opening) {
+    if (valveBoundary != null) {
+      throw new IllegalStateException("Actual travel is prescribed by the acoustic valve boundary");
+    }
     if (!Double.isFinite(opening)) {
       throw new IllegalArgumentException("Valve opening must be finite");
     }
@@ -574,6 +583,39 @@ public class WaterHammerPipe extends Pipeline {
    */
   public double getValveOpening() {
     return valveOpening;
+  }
+
+  /**
+   * Install prescribed physical travel and absolute liquid capacity. Call run() to initialize or reinitialize.
+   *
+   * @param boundary immutable boundary, or null to restore calibrated linear legacy mode
+   */
+  public void setValveBoundary(AcousticValveBoundary boundary) {
+    if (valveBoundary != boundary) {
+      valveBoundary = boundary;
+      configurationVersion++;
+      if (boundary != null) {
+        valveOpening = boundary.getOpening(0.0);
+      }
+    }
+  }
+
+  /**
+   * Get the prescribed boundary without mutable actuator or clock state.
+   *
+   * @return immutable prescribed boundary, or null in legacy mode
+   */
+  public AcousticValveBoundary getValveBoundary() {
+    return valveBoundary;
+  }
+
+  /**
+   * Get position-adjusted capacity in physical mode.
+   *
+   * @return metric Kv at current physical time, or NaN in calibrated legacy mode
+   */
+  public double getEffectiveValveKv() {
+    return valveBoundary == null ? Double.NaN : valveBoundary.getKv(currentTime);
   }
 
   /**
@@ -756,6 +798,9 @@ public class WaterHammerPipe extends Pipeline {
     if (system.getNumberOfPhases() != 1) {
       throw new IllegalArgumentException("WaterHammerPipe requires a single-phase inlet");
     }
+    if (valveBoundary != null && !neqsim.thermo.phase.StateOfMatter.isLiquid(system.getPhase(0).getType())) {
+      throw new IllegalArgumentException("Physical Kv boundary requires a single liquid phase");
+    }
 
     fluidDensity = system.getDensity("kg/m3");
     fluidViscosity = system.getViscosity("kg/msec");
@@ -813,12 +858,29 @@ public class WaterHammerPipe extends Pipeline {
     downstreamHead = head[numberOfNodes - 1];
 
     // Calibrate the hydraulic coefficient against the actual external receiver.
+    if (valveBoundary != null && downstreamBoundary != BoundaryType.VALVE) {
+      throw new IllegalArgumentException("Prescribed acoustic valve requires downstream boundary VALVE");
+    }
     if (downstreamBoundary == BoundaryType.VALVE) {
+      if (valveBoundary != null) {
+        valveOpening = valveBoundary.getOpening(0.0);
+      }
       double deltaH = downstreamHead - valveBackPressureBara * 1.0e5 / (fluidDensity * GRAVITY);
-      if (volumeFlow <= 0.0 || deltaH <= 0.0 || valveOpening <= 0.0) {
+      if (volumeFlow <= 0.0 || deltaH <= 0.0) {
         throw new IllegalArgumentException("Initialize a forward-flow open valve above receiver pressure");
       }
-      valveCv = volumeFlow / (valveOpening * Math.sqrt(deltaH));
+      if (valveBoundary == null) {
+        if (valveOpening <= 0.0) {
+          throw new IllegalArgumentException("Initialize an open legacy valve");
+        }
+        valveCv = volumeFlow / (valveOpening * Math.sqrt(deltaH));
+      } else {
+        double predicted = hydraulicCoefficient(valveBoundary.getKv(0.0)) * Math.sqrt(deltaH);
+        if (!Double.isFinite(predicted) || Math.abs(predicted - volumeFlow) > 1.0e-9 + 1.0e-6 * Math.abs(volumeFlow)) {
+          throw new IllegalArgumentException("Initial flow/pressure is inconsistent with declared valve capacity; "
+              + "provide a consistent feed, receiver pressure and actual initial position");
+        }
+      }
     }
 
     currentTime = 0.0;
@@ -845,6 +907,9 @@ public class WaterHammerPipe extends Pipeline {
   @Override
   public void runTransient(double dt, UUID id) {
     requirePositive(dt, "timestep");
+    if (valveBoundary != null && downstreamBoundary != BoundaryType.VALVE) {
+      throw new IllegalStateException("Prescribed acoustic valve requires downstream boundary VALVE");
+    }
     if (!initialized) {
       initialize();
     } else if (configurationVersion != initializedConfigurationVersion) {
@@ -852,13 +917,23 @@ public class WaterHammerPipe extends Pipeline {
     }
     double requestedEnd = currentTime + dt;
     double count = Math.ceil(dt / getMaxStableTimeStep());
-    if (!Double.isFinite(requestedEnd) || count > 1000000.0) {
+    if (!Double.isFinite(requestedEnd) || requestedEnd <= currentTime || count > 1000000.0) {
       throw new IllegalArgumentException("Requested interval exceeds bounded acoustic substepping");
     }
-    int steps = Math.max(1, (int) count);
-    double internalDt = dt / steps;
-    for (int substep = 0; substep < steps; substep++) {
-      advanceAcoustics(internalDt);
+    while (currentTime < requestedEnd) {
+      double end = valveBoundary == null ? requestedEnd
+          : Math.min(requestedEnd, valveBoundary.nextKnotAfter(currentTime));
+      double interval = valveBoundary == null ? dt : end - currentTime;
+      int steps = Math.max(1, (int) (valveBoundary == null ? count : Math.ceil(interval / getMaxStableTimeStep())));
+      double start = currentTime;
+      for (int substep = 1; substep <= steps; substep++) {
+        double endpoint = substep == steps ? end : start + interval * substep / steps;
+        if (valveBoundary != null) {
+          valveOpening = valveBoundary.getOpening(endpoint);
+        }
+        advanceAcoustics(valveBoundary == null ? interval / steps : endpoint - currentTime, endpoint);
+        currentTime = endpoint;
+      }
     }
     currentTime = requestedEnd;
     updateOutletStream();
@@ -869,8 +944,9 @@ public class WaterHammerPipe extends Pipeline {
    * Advance one Courant-limited characteristic interval, preserving its physical duration.
    *
    * @param dt internal timestep in seconds
+   * @param endpoint exact physical endpoint for prescribed boundary evaluation, seconds
    */
-  private void advanceAcoustics(double dt) {
+  private void advanceAcoustics(double dt, double endpoint) {
     stepFraction = waveSpeed * dt / segmentLength;
     // Store old values
     System.arraycopy(head, 0, headOld, 0, numberOfNodes);
@@ -885,7 +961,7 @@ public class WaterHammerPipe extends Pipeline {
 
     // Apply boundary conditions
     applyUpstreamBC();
-    applyDownstreamBC();
+    applyDownstreamBC(endpoint);
 
     // Update pressure and velocity profiles
     for (int i = 0; i < numberOfNodes; i++) {
@@ -936,8 +1012,12 @@ public class WaterHammerPipe extends Pipeline {
     }
   }
 
-  /** Apply the downstream physical boundary and forward-only valve equation. */
-  private void applyDownstreamBC() {
+  /**
+   * Apply the downstream physical boundary and forward-only valve equation.
+   *
+   * @param endpoint exact physical endpoint in seconds
+   */
+  private void applyDownstreamBC(double endpoint) {
     int i = numberOfNodes - 1;
     double cp = characteristic(i, -1);
     switch (downstreamBoundary) {
@@ -951,24 +1031,38 @@ public class WaterHammerPipe extends Pipeline {
       head[i] = cp - characteristicImpedance * flow[i];
       break;
     case VALVE:
-      if (valveCv < 0.0) {
+      if (valveBoundary == null && valveCv < 0.0) {
         throw new IllegalStateException("Initialize the valve boundary before transient execution");
       }
       double receiverHead = valveBackPressureBara * 1.0e5 / (fluidDensity * GRAVITY);
-      if (valveOpening > 0.0 && cp < receiverHead) {
+      double coefficient = valveBoundary == null ? valveCv * valveOpening
+          : hydraulicCoefficient(valveBoundary.getKv(endpoint));
+      if (coefficient > 0.0 && cp < receiverHead) {
         throw new IllegalStateException("Valve reverse flow requires a signed receiver model");
       }
-      double coefficient = valveCv * valveOpening;
       double c2 = coefficient * coefficient;
       // Q^2 + B*C^2*Q - C^2*(Cp-Hreceiver) = 0, rationalized positive root.
       double linear = characteristicImpedance * c2;
       double forcing = c2 * (cp - receiverHead);
-      flow[i] = forcing == 0.0 ? 0.0 : 2.0 * forcing / (linear + Math.sqrt(linear * linear + 4.0 * forcing));
+      if (!Double.isFinite(linear) || !Double.isFinite(forcing)) {
+        throw new IllegalStateException("Nonfinite acoustic valve coefficient or characteristic");
+      }
+      flow[i] = forcing == 0.0 ? 0.0 : forcing / (0.5 * linear + 0.5 * Math.hypot(linear, 2.0 * Math.sqrt(forcing)));
       head[i] = cp - characteristicImpedance * flow[i];
       break;
     default:
       throw new IllegalArgumentException("Unsupported downstream boundary");
     }
+  }
+
+  /**
+   * Convert metric Kv to the square-root-pressure-head coefficient. Reference water density is 1000 kg/m3.
+   *
+   * @param kv metric capacity including actual position
+   * @return coefficient in m3/s per square root metre
+   */
+  private static double hydraulicCoefficient(double kv) {
+    return kv / 3600.0 * Math.sqrt(GRAVITY / 100.0);
   }
 
   /**
@@ -1281,7 +1375,7 @@ public class WaterHammerPipe extends Pipeline {
   public void reset() {
     initialized = false;
     currentTime = 0.0;
-    valveOpening = 1.0;
+    valveOpening = valveBoundary == null ? 1.0 : valveBoundary.getOpening(0.0);
     if (pressureHistory != null) {
       pressureHistory.clear();
     }

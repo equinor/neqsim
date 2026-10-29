@@ -105,7 +105,7 @@ the same runner when `mode`, `analysis`, or `studyType` is set to `waterHammer`,
 
 ```json
 {
-    "studyName": "ESD valve closure screening",
+    "studyName": "Safety Shutdown valve closure screening",
     "model": "SRK",
     "temperature_C": 20.0,
     "pressure_bara": 45.0,
@@ -197,6 +197,86 @@ and MCP automation tools:
 valve position before the water-hammer runner performs the high-speed transient.
 
 ## Quick Start
+
+### Safety Shutdown with prescribed actual valve travel
+
+`AcousticValveBoundary` adds an opt-in physical liquid-capacity boundary. The legacy
+`setValveOpening` mode still infers a square-root-head coefficient from steady flow;
+that coefficient is **not** vendor Cv or Kv. In physical mode, supply absolute capacity
+versus position and actual travel versus time. Commands and measured actual travel are
+different inputs: this boundary replays actual travel after a command time and delay;
+it does not integrate an actuator or execute safety logic.
+
+The capacity table must span opening fractions 0 to 1, with finite, nonnegative,
+nondecreasing coefficients and a positive fully open coefficient. The existing strict
+`TabulatedValveCharacteristic` supplies monotone cubic capacity interpolation. No
+noisy-data cleaning, isotonic fitting or hidden calibration is performed. Travel is
+piecewise linear, may include reopening, begins at elapsed time zero, and holds the
+first/last position outside its table. Zero capacity closes the boundary exactly;
+positive capacity at zero position explicitly represents leakage.
+
+For metric Kv, the independently checkable non-choked liquid relation is
+
+$$Q=\frac{K_v(x)}{3600}\sqrt{\frac{\Delta p_{bar}}{\rho/1000}}$$
+
+Here $Q$ is actual volume flow in m³/s, $x$ actual opening fraction, $\rho$ frozen
+liquid density in kg/m³, and $\Delta p_{bar}$ the valve inlet minus external receiver
+pressure in bar. Kv is reference-water m³/h capacity at one bar drop. `CV_US` uses
+the existing NeqSim convention $C_{v,US}=1.156 K_v$; Imperial Cv is unsupported.
+The [manufacturer capacity definitions](https://www.spiraxsarco.com/learn-about-steam/control-hardware-electric-pneumatic-actuation/control-valve-capacity)
+give a more precise US conversion of 1.156099; retaining the library convention
+introduces about 0.0086% conversion rounding. This is a simplified liquid law, not
+an IEC 60534 sizing implementation, installed recovery-factor model or cavitation check.
+
+An initialized feed/pipe and independent receiver pressure must agree with declared
+initial capacity within $10^{-9}+10^{-6}|Q|$ m³/s. Inconsistent inputs reject; the
+solver does not adjust the feed or fit a vendor coefficient. Supply a physically
+consistent steady state first. Physical mode requires a single liquid phase and
+downstream `VALVE`. Manual opening control rejects until the boundary is removed.
+Changing/removing the prescribed boundary requires explicit `run()` reinitialization,
+which resets the local clock and histories. `reset()` retains the immutable profile.
+When returning to legacy mode, set the desired positive initial opening before `run()`.
+
+Every acoustic internal endpoint evaluates actual position and effective Kv. Substeps
+split at delay/travel knots, including a final partial interval. The boundary owns no
+clock or mutable actuator state; Java serialization/restart reuses the pipe clock.
+It does not provide model-wide transaction rollback or physical UUID idempotency.
+
+The [public synthetic input and executed evidence](../../src/test/resources/neqsim/process/pipeline/safety-shutdown-valve/README.md)
+are verified by `AcousticValveBoundaryTest.studyInputAndOutput` and the full boundary
+qualification suite. `WaterHammerStudy.run` accepts a `valveBoundary` object with:
+
+| Field | Units/meaning |
+| --- | --- |
+| `openingFraction`, `capacity` | matching capacity-position arrays; opening spans [0,1] |
+| `capacityUnit` | required `KV` or `CV_US` |
+| `travelTime_s`, `actualOpeningFraction` | matching actual-travel arrays; first time zero |
+| `commandTime_s`, `delay_s` | nonnegative physical seconds, default zero |
+
+Do not combine a profile with a nonempty `eventSchedule` or closure-time shortcuts.
+The facade returns synchronized `time_s`, `valveOpening`, `effectiveValveKv` and
+`outletFlow_m3_s`, plus the full boundary input and `frozenDensity_kg_m3` in
+`inputSummary` so the liquid law can be checked independently. Output sampling can miss an internal
+knot; the pipe's internal time/pressure histories retain it. There is no additional
+scheduler, control loop or plant pressure-flow coupling in this interface.
+
+**Known conservation failure:** with changing boundary flow below unit Courant,
+the existing nodal MOC stored volume does not exactly match trapezoidally integrated
+physical boundary flow. In the zero-friction discrete limit, the per-step defect is
+$(\Delta x/a-\Delta t)\Delta(Q_{in}-Q_{out})/2$. This is numerical storage error,
+not real fluid inventory and not an allowed mass correction. The public evidence
+retains the physical $10^{-9}$ m³ target and records **FAIL**, separately from the
+passing discrete-identity regression. The earlier instantaneous-closure balance test
+does not qualify arbitrary travel. A conservative kernel increment is required;
+this prescribed-boundary mode is experimental and does not qualify coupled inventory
+or Safety Shutdown loads. `status=success` means the study executed.
+
+**Evidence boundary:** analytical capacity/passivity, equilibrium, fast Joukowsky,
+knot timing, refinement characterization and local restart/replay are software
+verification. Pump torque/coastdown, check-valve disc/contact slam, acoustic
+junctions, vapor-cavity/column separation, large thermodynamic excursions and vector
+support/stress loads remain unqualified. Asset validation and safety approval are
+NOT_EVALUATED. No SIL, SRS or proof-test approval follows from this calculation.
 
 ```java
 import neqsim.process.equipment.pipeline.WaterHammerPipe;
@@ -595,7 +675,7 @@ WaterHammerPipe(String name, StreamInterface inStream)
 **When to use which:**
 
 - **PipeBeggsAndBrills**: Production rate changes, separator upsets, slow valve operations
-- **WaterHammerPipe**: ESD events, pump trips, check valve slam, pressure-surge screening
+- **WaterHammerPipe**: bounded single-line Safety Shutdown valve-closure acoustics; pump/disc slam and coupled-inventory qualification remain open
 
 ## Limitations
 

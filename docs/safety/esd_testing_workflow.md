@@ -110,6 +110,15 @@ qualify pressure-surge timing. See the [water-hammer guide](../wiki/water_hammer
 for the executable analytical checks and current single-phase, reverse-flow and coupling limits.
 The test runner does not automatically couple a pump or check-valve disc to an acoustic boundary.
 
+For prescribed measured or synthetic **actual** travel, `AcousticValveBoundary` couples
+tabulated position/time and explicit Kv/US-Cv(position) to that existing kernel. Its
+command delay and travel knots are evaluated on the pipe clock, with event-localized
+acoustic substeps. `WaterHammerStudy` accepts the same `valveBoundary` data and exports
+synchronized actual opening and effective Kv. The [public Safety Shutdown valve case](../../src/test/resources/neqsim/process/pipeline/safety-shutdown-valve/README.md)
+records analytical PASS/FAIL and asset/coupled-plant NOT_EVALUATED boundaries. A
+prescribed travel record does not qualify detection, logic, actuator mechanics or
+safe-state deadlines; these still require the canonical safety runner/coordinator.
+
 - [ESD Blowdown System](ESD_BLOWDOWN_SYSTEM.md)
 - [Pressure Monitoring ESD](PRESSURE_MONITORING_ESD.md)
 - [Barrier Management](barrier_management.md)
