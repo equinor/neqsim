@@ -61,6 +61,15 @@ scavenger sizing, demulsifier vs oil-in-water spec, and chemical root-cause of a
 load `neqsim-production-chemistry` (`neqsim.process.chemistry`) and feed it the numbers
 computed here.
 
+For local dry hydrocarbon gas/oil interface investigations, the existing film boundary
+has a default-off `setCoupledMassHeatTransferEnabled(true)` numerical option. Read
+`docs/fluidmechanics/InterphaseHeatMassTransfer.md` for its residual gates and limited
+positive-composition/finite-transport range. It is not connected to the transient
+`TwoFluidPipe` source. Zero liquid Reynolds number currently gives an unsupported
+stratified transfer coefficient and rejects; never interpret the old unit-matrix
+fallback as stationary-pool evaporation. Keep #4674 physical boundary/full-cycle and
+#4675 heat/area/diffusion qualification separate from numerical convergence.
+
 ## 1. Hydrate Analysis
 
 ### EOS Selection for Hydrate Calculations
