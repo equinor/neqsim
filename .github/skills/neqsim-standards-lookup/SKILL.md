@@ -1,6 +1,6 @@
 ---
 name: neqsim-standards-lookup
-description: "Industry standards lookup and compliance tracking for NeqSim engineering tasks. USE WHEN: any engineering task requires standards compliance (API, ISO, NORSOK, DNV, ASME, EN, ASTM), risk assessment, or safety analysis. Provides equipment-to-standards mapping, database query patterns, results.json schema for standards_applied, and risk standards quick-reference."
+description: "Industry standards lookup and compliance tracking for NeqSim engineering tasks. USE WHEN: any engineering task requires standards compliance (API, ISO, NORSOK, DNV, ASME, EN, ASTM), ISO 18453 / GERG-water water dew point, risk assessment, or safety analysis. Provides equipment-to-standards mapping, calculation setup rules, database query patterns, results.json schema for standards_applied, and risk standards quick-reference."
 last_verified: "2026-08-02"
 ---
 
@@ -82,6 +82,42 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | Submarine-pipeline pipe-soil interaction | DNV-RP-F114 | Use `DnvRpF114PipeSoilInteractionScreeningKernel` for the current caller-controlled vertical/axial/lateral demand-resistance envelope; keep geotechnical model derivation and F109/F110/F105/ST-F101 acceptance separate |
 | Fixed-roof tank venting | API 2000 | Use `Api2000TankVentingScreeningKernel` for the current 7th-edition caller-controlled demand/capacity screen; do not infer licensed demand factors or report it as device sizing/conformity |
 | Mineral scale / produced water | (industry practice; Davies + Ksp(T)) | `ElectrolyteScaleCalculator` / `ScaleKinetics` / `BrineMixingScaleEvaluator` (`process.chemistry.scale`) |
+
+### ISO 18453 / GERG-water execution rule
+
+For a natural-gas **water dew point** request with a named **ISO 18453:2004** or
+**GERG-water** basis, use this setup and retain its model basis:
+
+1. Prefer `neqsim.standards.gasquality.Standard_ISO18453` for a water dew point
+   at a specified pressure. Its constructor sets up `SystemGERGwaterEos` and
+   `setMixingRule(8)`; explicitly call `setPressure(pressureBara)` before
+   `calculate()`, then read `getValue("dewPointTemperature", "C")`. Do not assume
+   the feed pressure replaces the wrapper's reference pressure.
+2. For a direct calculation, construct `SystemGERGwaterEos(temperatureK,
+   pressureBara)`, add the composition, call `setMixingRule(8)`, initialize, then
+   create `ThermodynamicOperations` for that fluid and call
+   `waterDewPointTemperatureFlash()`. Use a clone when the original process
+   fluid must be preserved. Do not substitute
+   GERG-2008, ordinary PR with `"classic"`, or CPA for an ISO 18453 model basis.
+3. Require positive finite water mole fraction and positive finite absolute
+   pressure. State whether moisture is on a wet-gas or dry-gas basis. For wet-gas
+   ppmv, `y_water = ppmv * 1e-6`; scale dry-component fractions by `1 - y_water`
+   and verify the complete wet composition sums to one. Convert dry-basis
+   moisture before using it as a wet-gas mole fraction. For mass per volume,
+   retain the specified reference temperature, pressure, and dry/real-gas basis.
+4. Below **273.16 K**, ISO 18453 uses an **ice reference**, not supercooled
+   liquid water. CPA liquid-water and hydrate boundaries are different
+   calculations. Reject non-finite output and report convergence failures.
+5. Report pressure, water basis, composition, NeqSim version, model and mixing
+   rule. Check the standard's composition limits: the validated range is
+   **−15 to +5 °C and 5–100 bara**; the extended range is **−50 to +40 °C and
+   1–300 bara**, with unknown correlation uncertainty. A converged result or a
+   class name does not establish full ISO compliance.
+
+Use the [maintained executable example and validation boundaries](../../../docs/standards/dew_point_standards.md)
+and route the task to the [gas-quality agent](../../agents/gas-quality.agent.md).
+`Draft_ISO18453` remains the legacy contract path; new direct calculations use
+`Standard_ISO18453`. Keep hydrocarbon dew point and cricondentherm separate.
 
 ### DNV-RP-F109 implementation status
 

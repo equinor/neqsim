@@ -262,9 +262,13 @@ the gas above the dew-point spec?" Worked task: `2026-09-29_steady_state_megh2o_
   explicit coding is stable only below `2 / (d y*_H2O / d r)` kg gas per kg film MEG per step.
 - **Dew point is logarithmic** (~6 % in water content per K at these conditions) and, for CPA, nearly
   pressure independent at 70-140 bara: reading the same gas as a dew point at pipe pressure adds ~0.9 K.
-- **Basis traps:** CPA has no ice phase (the -18 C spec is a supercooled-liquid dew point; frost reading is
-  ~16 % lower in y_in); `SystemGERGwaterEos.waterDewPointTemperatureFlash()` is unreliable below 0 C
-  (2.5x below CPA at -18 C/70 bara, below ideal Psat/P at -18 C/140 bara). Carry the spread as a sensitivity.
+- **Basis traps:** CPA liquid-water dew point is a supercooled-liquid reference below freezing;
+  ISO 18453 / GERG-water uses an ice reference below 273.16 K. These are different phase boundaries.
+  For GERG-water, use `SystemGERGwaterEos`, `setMixingRule(8)`, and a
+  `ThermodynamicOperations` instance's `waterDewPointTemperatureFlash()`; follow the ISO 18453 execution rule
+  in `neqsim-standards-lookup` and the [dew-point guide](../../../docs/standards/dew_point_standards.md).
+  Recalculate outputs from the former non-convergent solver before comparing models. Neither an
+  ideal-gas estimate nor a CPA/GERG difference alone identifies an ISO implementation error.
 - **Numerics:** for N >= 100 film cells use `solve_ivp(method="BDF")`; LSODA stalls on the film-exhaustion
   switch. Regularise `r = W/(M + delta)` so a film-free cell cannot return a spurious composition.
 

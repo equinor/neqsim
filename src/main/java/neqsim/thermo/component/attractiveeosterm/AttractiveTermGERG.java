@@ -3,7 +3,7 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * AttractiveTermGERG class.
+ * ISO 18453 water attraction function and its branch-local temperature derivatives.
  *
  * @author esol
  * @version $Id: $Id
@@ -11,7 +11,11 @@ import neqsim.thermo.component.ComponentEosInterface;
 public class AttractiveTermGERG extends AttractiveTermPr {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Ice/liquid-water coefficient boundary specified by ISO 18453, in kelvin. */
+  private static final double WATER_TRIPLE_POINT = 273.16;
+  /** Attraction coefficients over liquid water. */
   protected double[] parametersGERG = {0.905436, -0.213781, 0.26005};
+  /** Attraction coefficients over ice. */
   protected double[] parametersSolidGERG = {0.106025, 2.683845, -4.75638};
 
   /**
@@ -49,15 +53,10 @@ public class AttractiveTermGERG extends AttractiveTermPr {
   @Override
   public double alpha(double temperature) {
     if (getComponent().getName().equals("water")) {
-      if (temperature < 273.15) {
-        System.arraycopy(parametersSolidGERG, 0, this.parameters, 0, parametersSolidGERG.length);
-      } else {
-        System.arraycopy(parametersGERG, 0, this.parameters, 0, parametersGERG.length);
-      }
-      // System.out.println("alpha GERG");
-      double Tr = temperature / getComponent().getTC();
-      return Math.pow(1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
-          + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 4.0), 2.0);
+      selectWaterParameters(temperature);
+      double u = 1.0 - Math.sqrt(temperature / getComponent().getTC());
+      double polynomial = waterPolynomial(u);
+      return polynomial * polynomial;
     } else {
       return super.alpha(temperature);
     }
@@ -74,55 +73,85 @@ public class AttractiveTermGERG extends AttractiveTermPr {
   }
 
   /**
-   * diffalphaTGERG.
+   * Returns the first temperature derivative through the legacy GERG entry point.
    *
-   * @param temperature a double
-   * @return a double
+   * @param temperature temperature in kelvin
+   * @return first alpha derivative in inverse kelvin
    */
   public double diffalphaTGERG(double temperature) {
-    // ikke beregnet riktig
-    if (temperature < 273.15) {
-      System.arraycopy(parametersSolidGERG, 0, this.parameters, 0, parametersSolidGERG.length);
-    } else {
-      System.arraycopy(parametersGERG, 0, this.parameters, 0, parametersGERG.length);
-    }
-
-    double Tr = temperature / getComponent().getTC();
-    double TC = getComponent().getTC();
-    return 2.0
-        * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
-            + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0))
-        * (-parameters[0] / Math.sqrt(Tr) / TC / 2.0 - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC
-            - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr) / TC);
+    return diffalphaT(temperature);
   }
 
   /**
-   * diffdiffalphaTGERG.
+   * Returns the second temperature derivative through the legacy GERG entry point.
    *
-   * @param temperature a double
-   * @return a double
+   * @param temperature temperature in kelvin
+   * @return second alpha derivative in inverse kelvin squared
    */
   public double diffdiffalphaTGERG(double temperature) {
-    // ikke beregnet riktig
-    if (temperature < 273.15) {
-      System.arraycopy(parametersSolidGERG, 0, this.parameters, 0, parametersSolidGERG.length);
-    } else {
-      System.arraycopy(parametersGERG, 0, this.parameters, 0, parametersGERG.length);
-    }
+    return diffdiffalphaT(temperature);
+  }
 
-    double Tr = temperature / getComponent().getTC();
-    double TC = getComponent().getTC();
-    return 2.0
-        * Math
-            .pow(-parameters[0] / Math.sqrt(Tr) / TC / 2.0 - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC
-                - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr) / TC, 2.0)
-        + 2.0
-            * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
-                + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0))
-            * (parameters[0] / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 4.0 + parameters[1] / temperature / TC / 2.0
-                + parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 2.0
-                + 3.0 / 2.0 * parameters[2] * (1.0 - Math.sqrt(Tr)) / temperature / TC
-                + 3.0 / 4.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
+  /** {@inheritDoc} */
+  @Override
+  public double diffalphaT(double temperature) {
+    if (!getComponent().getName().equals("water")) {
+      return super.diffalphaT(temperature);
+    }
+    selectWaterParameters(temperature);
+    double sqrtTr = Math.sqrt(temperature / getComponent().getTC());
+    double u = 1.0 - sqrtTr;
+    double duDt = -sqrtTr / (2.0 * temperature);
+    return 2.0 * waterPolynomial(u) * waterPolynomialSlope(u) * duDt;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double diffdiffalphaT(double temperature) {
+    if (!getComponent().getName().equals("water")) {
+      return super.diffdiffalphaT(temperature);
+    }
+    selectWaterParameters(temperature);
+    double sqrtTr = Math.sqrt(temperature / getComponent().getTC());
+    double u = 1.0 - sqrtTr;
+    double duDt = -sqrtTr / (2.0 * temperature);
+    double d2uDt2 = sqrtTr / (4.0 * temperature * temperature);
+    double slope = waterPolynomialSlope(u);
+    double curvature = 2.0 * parameters[1] + 12.0 * parameters[2] * u * u;
+    double first = slope * duDt;
+    double second = curvature * duDt * duDt + slope * d2uDt2;
+    return 2.0 * (first * first + waterPolynomial(u) * second);
+  }
+
+  /**
+   * Selects the same ice or liquid-water coefficients for values and derivatives.
+   *
+   * @param temperature temperature in kelvin
+   */
+  private void selectWaterParameters(double temperature) {
+    double[] selected = temperature < WATER_TRIPLE_POINT ? parametersSolidGERG : parametersGERG;
+    System.arraycopy(selected, 0, parameters, 0, selected.length);
+  }
+
+  /**
+   * Evaluates the unsquared ISO polynomial in the square-root temperature coordinate.
+   *
+   * @param u one minus the square root of reduced temperature
+   * @return unsquared attraction polynomial
+   */
+  private double waterPolynomial(double u) {
+    double u2 = u * u;
+    return 1.0 + parameters[0] * u + parameters[1] * u2 + parameters[2] * u2 * u2;
+  }
+
+  /**
+   * Differentiates the unsquared polynomial with respect to its temperature coordinate.
+   *
+   * @param u one minus the square root of reduced temperature
+   * @return polynomial derivative with respect to u
+   */
+  private double waterPolynomialSlope(double u) {
+    return parameters[0] + 2.0 * parameters[1] * u + 4.0 * parameters[2] * u * u * u;
   }
 
   /** {@inheritDoc} */
