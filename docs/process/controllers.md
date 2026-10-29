@@ -450,6 +450,32 @@ repeatability between independent chains, physical bounds, and one shared held s
 and process history. It does not establish vendor sizing, alarm/trip margins, SIL, independence, voting, or project
 acceptance.
 
+The corresponding pressure-inventory fixture uses the same public wet-gas basis and separator geometry. The separator
+gas inventory is the pressure capacitance: a fixed-volume/internal-energy flash advances pressure from the discrete
+component and energy balances. A sampled `PressureTransmitter` drives an engineering-unit PID (`Kp = 6.0`,
+`Ti = 30 s`) attached to a `PressureControlValve` with a 4 s travel time constant and a fixed 45 bara downstream
+boundary. A 20 to 28 kg/s feed step is run for 70 one-second scans. This is a public numerical reference case, not
+proposed plant tuning or a general pressure-flow network qualification.
+
+| 70 s result | Observed | Test limit |
+| --- | ---: | ---: |
+| Peak separator pressure | 56.67285 bara | 56.68 bara |
+| Final separator pressure | 55.71307 bara | 55.72 bara |
+| Peak gas-PCV opening | 71.36980% | 71.38% |
+| Held-sample peak absolute error | 1.67285 bar | 1.68 bar |
+| Pressure IAE | 84.53193 bar-s | 84.6 bar-s |
+| Controller-output travel | 21.36980 percentage points | 21.38 percentage points |
+| Default 2% settling-band time | 53 s | 53 s |
+| Maximum component inventory residual per step | 7.28e-12 mol | 1e-8 mol |
+| Maximum relative energy residual | 3.70e-6 | 5e-6 |
+| Maximum relative fixed-volume residual | 5.07e-7 | 1e-6 |
+
+The qualification also requires a shared start-of-step pressure across the controller event and process history, exact
+rollback/replay, exact serialization/restart, deterministic independent repeat, and 1.0/0.5 s refinement. At 10 s,
+the refined pressure differs by less than 0.05 bar and PCV opening by less than 0.35 percentage point. The fixed
+downstream pressure remains an algebraic boundary; this fixture does not establish a simultaneous plant-wide
+pressure-flow solve, compressor response, linepack, relief/depressuring sizing, alarm/trip margins or safety credit.
+
 ## Native Dynamic Control Blocks
 
 `TransferFunctionBlock` supplies first-order lag, lead-lag, dead-time, and second-order signal

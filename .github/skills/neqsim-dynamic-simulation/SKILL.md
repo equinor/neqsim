@@ -316,6 +316,29 @@ After the run, use `ControllerPerformanceMetrics.fromEventLog(LC100.getEventLog(
 (or `LC100.getPerformanceMetrics()`) to score the tuning (IAE/ISE/ITAE, PV
 variability, valve travel and reversals, settling time) — see the KPI section below.
 
+### Dynamic pressure-inventory loop recipe
+
+A pressure loop needs a real compressible inventory. A valve between two imposed-pressure
+streams verifies action and hydraulics, but it cannot demonstrate pressure regulation. For the
+canonical separator chain:
+
+1. Configure separator diameter, length and starting level, then disable steady-state calculation.
+2. Put a gas pressure-control valve on the outlet with a lower declared downstream pressure,
+   actuator lag and physical-step idempotency enabled.
+3. Set the PCV embedded controller to manual when an external PID owns the command.
+4. Register a physical-step-sampled `PressureTransmitter` on the separator gas outlet and attach an
+   engineering-unit, direct-acting PID to the PCV.
+5. Check each component inventory, the fixed-volume/internal-energy flash residual, pressure and
+   temperature bounds, held scan order, valve travel and timestep sensitivity.
+
+`SeparatorPressureControlChainTest` is the public reference implementation. Its SRK/classic wet-gas
+case uses a 2.2 m by 7.0 m separator, 55 bara initial pressure, 45 bara downstream boundary,
+20 to 28 kg/s feed step, one-second scans, `Kp = 6.0`, `Ti = 30 s` and 4 s actuator lag. The
+70 s regression limits peak pressure to 56.68 bara, pressure IAE to 84.6 bar-s and PCV travel to
+21.38 percentage points; it also requires exact rollback/restart/repeatability and 1.0/0.5 s
+refinement. These values qualify only the synthetic numerical chain. Do not reuse the tuning or
+limits as a plant design basis.
+
 ### Loop-tuning KPIs (ControllerPerformanceMetrics)
 
 `ControllerPerformanceMetrics`
