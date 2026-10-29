@@ -89,6 +89,20 @@ double isentropicPower = compressor.getPower("kW");
 
 More accurate for real gas behavior.
 
+`setPolytropicMethod(...)` selects the head basis for both pressure-specified and
+chart-based polytropic calculations. The default is `schultz`; `detailed` uses
+the configured number of pressure steps. In chart mode, NeqSim solves the outlet
+pressure at which the selected method reproduces the chart head and efficiency.
+The final power satisfies $W=\dot{m}H_p/\eta_p$, where $W$ is power in W,
+$\dot{m}$ is mass flow in kg/s, $H_p$ is head in J/kg and $\eta_p$ is efficiency.
+
+**Compatibility:** chart-based polytropic results now use the selected method.
+Existing models can consequently change outlet pressure, solved speed, discharge
+temperature and power. Select `ideal_inlet_properties` to retain the historical
+chart relation with constant inlet $Z$ and heat-capacity ratio. This explicit
+method also works without a chart; its caloric outlet still uses the selected
+fluid property model. Recheck tuned chart factors against the vendor's head basis.
+
 ```java
 compressor.setPolytropicEfficiency(0.80);  // 80%
 compressor.setUsePolytropicCalc(true);
@@ -118,11 +132,21 @@ to reach the target raises `IllegalStateException` instead of returning an
 unconverged efficiency. In particular, a discharge temperature below that
 attainable at unity efficiency cannot be fitted at fixed pressure.
 
+For polytropic calculations without a chart, `setOutTemperature(...)` uses this
+same inverse calculation and selected method. It no longer estimates efficiency
+from a separate pressure-density logarithmic fit. A temperature specification
+combined with an active chart retains its existing separate behavior.
+
 Treat a fitted value as an effective efficiency when composition uncertainty or
 anti-surge recycle heating is included in the measurement. Check the resulting
 power against an independent measurement before using it for calibration.
 
 ### Power Specified
+
+With polytropic calculation and outlet-pressure solving enabled, the specified
+power is converted to head and inverted using the selected polytropic method.
+This also changes historical outlet pressures that used the inlet-property
+formula; `ideal_inlet_properties` retains that formula.
 
 ```java
 compressor.setPower(5000.0, "kW");  // Specify power

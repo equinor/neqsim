@@ -184,9 +184,8 @@ class CompressorTest extends neqsim.NeqSimTest {
     // logger.info("gerg fluid head " + compressor1.getPolytropicFluidHead()
     // + " kJ/kg");
     // logger.info("gerg power " + compressor1.getPower() + " W");
-    assertEquals(compressor1.getPolytropicEfficiency() * 100, 89.99367027631443, 0.01);
-    // "Test case for rigorous polytropic efficiency with GER2008 calculation should return
-    // approximate 89.992296751");
+    // Temperature fitting now inverts the selected Schultz calculation with GERG properties.
+    assertEquals(90.06534985867269, compressor1.getPolytropicEfficiency() * 100, 0.01);
   }
 
   /**
@@ -269,7 +268,7 @@ class CompressorTest extends neqsim.NeqSimTest {
     processOps.add(inletStream);
     processOps.add(compressor1);
     processOps.run();
-    assertEquals(30.610386, compressor1.getOutletPressure(), 0.01);
+    assertEquals(30.48213527317651, compressor1.getOutletPressure(), 0.01);
     // compressor1.getOutletStream().getFluid().prettyPrint();
 
     processOps = new ProcessSystem();
@@ -331,7 +330,7 @@ class CompressorTest extends neqsim.NeqSimTest {
     processOps.add(compressor1);
     processOps.run();
 
-    assertEquals(81.52079245659715, compressor1.getOutletPressure(), 0.01);
+    assertEquals(80.71446256929818, compressor1.getOutletPressure(), 0.01);
   }
 
   /**
@@ -362,7 +361,8 @@ class CompressorTest extends neqsim.NeqSimTest {
     compressor1.run();
 
     // Assertions to verify the expected outcomes
-    assertEquals(compressor1.getPolytropicEfficiency() * 100, 63.29499883086769, 0.01);
+    // Temperature fitting now inverts the selected Schultz calculation with Leachman properties.
+    assertEquals(63.43004185655317, compressor1.getPolytropicEfficiency() * 100, 0.01);
     // assertEquals(compressor1.getPower("MW"), 6.820449828263508, 0.0001);
   }
 
