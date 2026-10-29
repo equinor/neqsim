@@ -2108,6 +2108,7 @@ public class Compressor extends TwoPortEquipment
     Compressor reference = createPolytropicReference();
     reference.setPolytropicEfficiency(efficiency);
     double lower = 0.0;
+    double lowerResidual = -head;
     double upper = Double.isFinite(idealPressure) && idealPressure > inletPressure
         ? Math.log(idealPressure / inletPressure)
         : Math.log(2.0);
@@ -2115,6 +2116,7 @@ public class Compressor extends TwoPortEquipment
     double upperResidual = polytropicHeadResidual(reference, inletPressure * Math.exp(upper), head);
     for (int expansion = 0; upperResidual < 0.0 && expansion < 12; expansion++) {
       lower = upper;
+      lowerResidual = upperResidual;
       upper *= 2.0;
       upperResidual = polytropicHeadResidual(reference, inletPressure * Math.exp(upper), head);
     }
@@ -2124,9 +2126,14 @@ public class Compressor extends TwoPortEquipment
     if (upperResidual < 0.0) {
       throw new IllegalStateException("Cannot bracket compressor chart head for " + getName());
     }
-    for (int iteration = 0; iteration < 60; iteration++) {
-      // Bisection guarantees progress even when a thermodynamic residual is strongly curved.
-      double trial = 0.5 * (lower + upper);
+    for (int iteration = 0; iteration < 72; iteration++) {
+      // Interpolate within the bracket to avoid repeated expensive caloric flashes.
+      // Periodic bisection prevents false-position stagnation on strongly curved residuals.
+      // Retain the full sixty-step bisection budget after twelve accelerated trials.
+      double trial = upper - upperResidual * (upper - lower) / (upperResidual - lowerResidual);
+      if (iteration >= 12 || !Double.isFinite(trial) || trial <= lower || trial >= upper || iteration % 5 == 4) {
+        trial = 0.5 * (lower + upper);
+      }
       double trialPressure = inletPressure * Math.exp(trial);
       double residual = polytropicHeadResidual(reference, trialPressure, head);
       if (Math.abs(residual) <= tolerance) {
@@ -2134,8 +2141,10 @@ public class Compressor extends TwoPortEquipment
       }
       if (residual < 0.0) {
         lower = trial;
+        lowerResidual = residual;
       } else {
         upper = trial;
+        upperResidual = residual;
       }
     }
     throw new IllegalStateException("Compressor chart head-pressure solve did not converge for " + getName());

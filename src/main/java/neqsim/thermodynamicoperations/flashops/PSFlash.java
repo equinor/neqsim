@@ -414,6 +414,11 @@ public class PSFlash extends QfuncFlash {
       double tolerance = entropyTolerance(system, Sspec);
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
       if (coldEndpointRequiresRecovery(tolerance)) {
+        // Discard the inner flash's iteration history, just as the independent cold
+        // candidate does. Reusing it can select the rejected homogeneous root again.
+        TPflash recoveryFlash = new TPflash(system);
+        recoveryFlash.setConservativeHomogeneousRecoveryAllowed(true);
+        tpFlash = recoveryFlash;
         tpFlash.run();
         system.init(2);
         if (Math.abs(system.getEntropy() - Sspec) > tolerance) {
