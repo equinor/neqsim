@@ -1,0 +1,242 @@
+[
+  {
+    "nodes": 51,
+    "courantFraction": 1.0,
+    "travel_s": 0.02,
+    "surge_Pa": 319538.3268281943,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 2.98325
+  },
+  {
+    "nodes": 51,
+    "courantFraction": 1.0,
+    "travel_s": 0.1,
+    "surge_Pa": 319465.22082696157,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 3.00139
+  },
+  {
+    "nodes": 51,
+    "courantFraction": 1.0,
+    "travel_s": 4.0,
+    "surge_Pa": 266953.95555569464,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 46.16509
+  },
+  {
+    "nodes": 51,
+    "courantFraction": 0.5,
+    "travel_s": 0.02,
+    "surge_Pa": 319562.2889247779,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 8.56883
+  },
+  {
+    "nodes": 51,
+    "courantFraction": 0.5,
+    "travel_s": 0.1,
+    "surge_Pa": 319507.49437423283,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 7.183734
+  },
+  {
+    "nodes": 51,
+    "courantFraction": 0.5,
+    "travel_s": 4.0,
+    "surge_Pa": 266355.59312700434,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 60.796348
+  },
+  {
+    "nodes": 101,
+    "courantFraction": 1.0,
+    "travel_s": 0.02,
+    "surge_Pa": 319532.6174561479,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 4.364709
+  },
+  {
+    "nodes": 101,
+    "courantFraction": 1.0,
+    "travel_s": 0.1,
+    "surge_Pa": 319487.75288825063,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 5.8254
+  },
+  {
+    "nodes": 101,
+    "courantFraction": 1.0,
+    "travel_s": 4.0,
+    "surge_Pa": 269609.19370957464,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 72.619363
+  },
+  {
+    "nodes": 101,
+    "courantFraction": 0.5,
+    "travel_s": 0.02,
+    "surge_Pa": 319545.8727462641,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 23.353933
+  },
+  {
+    "nodes": 101,
+    "courantFraction": 0.5,
+    "travel_s": 0.1,
+    "surge_Pa": 319495.22948214086,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 27.354867
+  },
+  {
+    "nodes": 101,
+    "courantFraction": 0.5,
+    "travel_s": 4.0,
+    "surge_Pa": 269437.80747012096,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 166.849995
+  },
+  {
+    "nodes": 201,
+    "courantFraction": 1.0,
+    "travel_s": 0.02,
+    "surge_Pa": 319530.46236060886,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 10.578584
+  },
+  {
+    "nodes": 201,
+    "courantFraction": 1.0,
+    "travel_s": 0.1,
+    "surge_Pa": 319483.7733783014,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 9.712169
+  },
+  {
+    "nodes": 201,
+    "courantFraction": 1.0,
+    "travel_s": 4.0,
+    "surge_Pa": 273179.7498456142,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 127.746915
+  },
+  {
+    "nodes": 201,
+    "courantFraction": 0.5,
+    "travel_s": 0.02,
+    "surge_Pa": 319533.8432844551,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 16.858173
+  },
+  {
+    "nodes": 201,
+    "courantFraction": 0.5,
+    "travel_s": 0.1,
+    "surge_Pa": 319486.6571547794,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 16.734151
+  },
+  {
+    "nodes": 201,
+    "courantFraction": 0.5,
+    "travel_s": 4.0,
+    "surge_Pa": 271598.58492647065,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 783.406216
+  },
+  {
+    "nodes": 401,
+    "courantFraction": 1.0,
+    "travel_s": 0.02,
+    "surge_Pa": 319523.651472738,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 17.944734
+  },
+  {
+    "nodes": 401,
+    "courantFraction": 1.0,
+    "travel_s": 0.1,
+    "surge_Pa": 319480.5311179459,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 20.994723
+  },
+  {
+    "nodes": 401,
+    "courantFraction": 1.0,
+    "travel_s": 4.0,
+    "surge_Pa": 274980.20075862156,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 151.221782
+  },
+  {
+    "nodes": 401,
+    "courantFraction": 0.5,
+    "travel_s": 0.02,
+    "surge_Pa": 319525.261829915,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 40.617719
+  },
+  {
+    "nodes": 401,
+    "courantFraction": 0.5,
+    "travel_s": 0.1,
+    "surge_Pa": 319481.2074199044,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 27.593393
+  },
+  {
+    "nodes": 401,
+    "courantFraction": 0.5,
+    "travel_s": 4.0,
+    "surge_Pa": 273113.2103463961,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 318.250694
+  },
+  {
+    "nodes": 801,
+    "courantFraction": 1.0,
+    "travel_s": 0.02,
+    "surge_Pa": 319517.52664998267,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 33.070168
+  },
+  {
+    "nodes": 801,
+    "courantFraction": 1.0,
+    "travel_s": 0.1,
+    "surge_Pa": 319476.2924005748,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 35.730822
+  },
+  {
+    "nodes": 801,
+    "courantFraction": 1.0,
+    "travel_s": 4.0,
+    "surge_Pa": 275853.23902287614,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 373.930144
+  },
+  {
+    "nodes": 801,
+    "courantFraction": 0.5,
+    "travel_s": 0.02,
+    "surge_Pa": 319519.13823056594,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 58.037233
+  },
+  {
+    "nodes": 801,
+    "courantFraction": 0.5,
+    "travel_s": 0.1,
+    "surge_Pa": 319477.80377772124,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 67.866433
+  },
+  {
+    "nodes": 801,
+    "courantFraction": 0.5,
+    "travel_s": 4.0,
+    "surge_Pa": 274178.91447867965,
+    "joukowsky_Pa": 318309.8861837907,
+    "wall_ms": 648.454811
+  }
+]

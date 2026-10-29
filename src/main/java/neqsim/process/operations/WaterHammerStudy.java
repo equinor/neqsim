@@ -11,6 +11,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.pipeline.WaterHammerPipe;
+import neqsim.process.equipment.pipeline.AcousticValveBoundary;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
@@ -109,6 +110,12 @@ public final class WaterHammerStudy {
     JsonArray sampledTime = new JsonArray();
     JsonArray sampledOutletPressure = new JsonArray();
     JsonArray sampledValveOpening = new JsonArray();
+    JsonArray sampledKv = new JsonArray();
+    JsonArray sampledFlow = new JsonArray();
+    if (pipe.getValveBoundary() != null) {
+      sampledKv.add(pipe.getEffectiveValveKv());
+      sampledFlow.add(last(pipe.getFlowProfile()));
+    }
     addSample(sampledTime, sampledOutletPressure, sampledValveOpening, 0.0, initialOutletPressureBar,
         pipe.getValveOpening());
 
@@ -120,20 +127,38 @@ public final class WaterHammerStudy {
       if (step % sampleInterval == 0 || step == numberOfSteps) {
         addSample(sampledTime, sampledOutletPressure, sampledValveOpening, time, last(pipe.getPressureProfile("bar")),
             pipe.getValveOpening());
+        if (pipe.getValveBoundary() != null) {
+          sampledKv.add(pipe.getEffectiveValveKv());
+          sampledFlow.add(last(pipe.getFlowProfile()));
+        }
       }
     }
 
     JsonObject result = new JsonObject();
     result.addProperty("status", "success");
     result.addProperty("studyType", "water_hammer_screening");
-    result.addProperty("studyName", getString(input, "studyName", "Water hammer screening"));
+    result.addProperty("studyName", getString(input, "studyName", "Safety Shutdown water hammer screening"));
     result.addProperty("calculation", "Method of Characteristics single-line acoustic transient");
     result.add("inputSummary", buildInputSummary(input, geometry, pipe, feed));
     result.add("keyResults",
         buildKeyResults(input, pipe, initialOutletPressureBar, initialVelocity, timeStep, simulationTime));
     result.add("timeSeries", buildTimeSeries(sampledTime, sampledOutletPressure, sampledValveOpening));
+    if (pipe.getValveBoundary() != null) {
+      result.getAsJsonObject("timeSeries").add("effectiveValveKv", sampledKv);
+      result.getAsJsonObject("timeSeries").add("outletFlow_m3_s", sampledFlow);
+      result.getAsJsonObject("inputSummary").add("valveBoundary", input.get("valveBoundary").deepCopy());
+      result.getAsJsonObject("inputSummary").addProperty("frozenDensity_kg_m3",
+          feed.getThermoSystem().getDensity("kg/m3"));
+      result.getAsJsonObject("inputSummary").addProperty("valveBoundaryMode", "PRESCRIBED_ACTUAL_TRAVEL");
+      warnings.add("Prescribed travel/capacity is experimental: changing boundary flow exposes a nodal MOC volume "
+          + "defect below unit Courant. Success indicates execution, not conservation or Safety Shutdown qualification.");
+    }
     result.add("pressureEnvelope", buildPressureEnvelope(pipe));
     result.add("validation", buildValidation(input, pipe, warnings));
+    if (pipe.getValveBoundary() != null) {
+      result.getAsJsonObject("validation").addProperty("physicalConservation", "NOT_EVALUATED");
+      result.getAsJsonObject("validation").addProperty("safetyShutdownQualification", "NOT_EVALUATED");
+    }
     result.add("sourceReferences", getSourceReferences(input, geometry));
     result.add("warnings", toJsonArray(warnings));
     result.addProperty("screeningLimitations",
@@ -229,7 +254,34 @@ public final class WaterHammerStudy {
         getDoubleAny(fieldData, getDoubleAny(input, 1.0, "valveBackPressure_bara"), "valveBackPressure_bara"));
     pipe.setValveOpening(getDoubleAny(fieldData, getDoubleAny(input, 1.0, "valveOpening", "initialValveOpening"),
         "valveOpening", "initialValveOpening"));
+    if (input.has("valveBoundary")) {
+      JsonObject boundary = input.getAsJsonObject("valveBoundary");
+      pipe.setValveBoundary(
+          new AcousticValveBoundary(readArray(boundary, "openingFraction"), readArray(boundary, "capacity"),
+              AcousticValveBoundary.CapacityUnit.valueOf(boundary.get("capacityUnit").getAsString()),
+              readArray(boundary, "travelTime_s"), readArray(boundary, "actualOpeningFraction"),
+              getDoubleAny(boundary, 0.0, "commandTime_s"), getDoubleAny(boundary, 0.0, "delay_s")));
+    }
     return pipe;
+  }
+
+  /**
+   * Read an explicit finite numerical table; physical range checks belong to the boundary constructor.
+   *
+   * @param object input boundary object
+   * @param name required array name
+   * @return numerical array without fitting, filtering or unit conversion
+   */
+  private static double[] readArray(JsonObject object, String name) {
+    if (!object.has(name) || !object.get(name).isJsonArray()) {
+      throw new IllegalArgumentException("Prescribed valve requires array " + name);
+    }
+    JsonArray array = object.getAsJsonArray(name);
+    double[] values = new double[array.size()];
+    for (int i = 0; i < values.length; i++) {
+      values[i] = array.get(i).getAsDouble();
+    }
+    return values;
   }
 
   /**
@@ -333,6 +385,16 @@ public final class WaterHammerStudy {
    * @return event schedule array
    */
   private static JsonArray getEventSchedule(JsonObject input, double initialOpening) {
+    if (input.has("valveBoundary")) {
+      if (input.has("eventSchedule") && input.getAsJsonArray("eventSchedule").size() != 0) {
+        throw new IllegalArgumentException("Prescribed actual travel cannot be combined with valve eventSchedule");
+      }
+      if (input.has("closureTime_s") || input.has("valveClosureTime_s") || input.has("closureDuration_s")
+          || input.has("closureStart_s")) {
+        throw new IllegalArgumentException("Prescribed actual travel cannot be combined with closure-time shortcuts");
+      }
+      return new JsonArray();
+    }
     if (input.has("eventSchedule") && input.get("eventSchedule").isJsonArray()) {
       return input.getAsJsonArray("eventSchedule");
     }
