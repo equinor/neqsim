@@ -762,3 +762,10 @@ therefore consumes the start-of-step held value while the vessel inventory advan
 parameters are engineering units per second in this mode; delay remains an integer number of scans. Use declared
 vendor/project response and fault data where available. The numerical model is study evidence, not instrument
 certification, alarm rationalization, SIL selection or detector-coverage approval.
+
+The public separator pressure-control qualification registers a sampled `PressureTransmitter` on the separator gas
+outlet. Its held start-of-step value is shared bit-for-bit by the PID event log and process history while the separator
+fixed-volume inventory advances and the gas PCV moves. The declared feed-step response, conservation residuals,
+rollback/restart evidence and timestep sensitivity are reported in
+[Process Controllers and Logic](../controllers.md#pid-controllers). That fixture qualifies the stated synthetic chain
+only; ranges, response time, impulse-line design, proof testing, alarm/trip setpoints and voting remain project inputs.

@@ -242,12 +242,12 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             first_item = items[0]
             first_item_id = first_item["id"]
             evidence = items[0]["lifecycle_envelope_evidence"]
-            self.assertEqual(15, evidence["schema_version"])
+            self.assertEqual(16, evidence["schema_version"])
             self.assertEqual(cycle_id, evidence["cycle_id"])
             self.assertEqual(2, evidence["period_count"])
-            self.assertEqual(16, evidence["requested_point_count"])
-            self.assertEqual(16, evidence["completed_point_count"])
-            self.assertGreater(evidence["total_evaluation_count"], 16)
+            self.assertEqual(28, evidence["requested_point_count"])
+            self.assertEqual(28, evidence["completed_point_count"])
+            self.assertGreater(evidence["total_evaluation_count"], 28)
             self.assertGreaterEqual(evidence["envelope_runtime_seconds"], 0.0)
             self.assertEqual(1, len(evidence["bottleneck_transitions"]))
             self.assertTrue(all(
@@ -348,8 +348,17 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertIn("baseline_bottleneck", combination["bottleneck_migration"])
             self.assertIn("combined_bottleneck", combination["bottleneck_migration"])
             relief_envelope = current["qualified_relief_envelope"]
-            self.assertEqual(3, relief_envelope["slice_pair_count"])
+            self.assertEqual(2, relief_envelope["receipt_version"])
+            self.assertEqual(4, relief_envelope["slice_pair_count"])
+            self.assertEqual(2, relief_envelope["sampled_cell_comparison_count"])
             self.assertIs(True, relief_envelope["capacity_restored"])
+            coupled_pair = next(pair for pair in relief_envelope["slice_pairs"]
+                                if len(pair["axis_action_ids"]) == 2)
+            self.assertEqual(2, len(coupled_pair["sampled_cell_comparisons"]))
+            self.assertTrue(all(
+                comparison["interpolated"] is False
+                and comparison["baseline_cell"]["sampled_cell_only"] is True
+                for comparison in coupled_pair["sampled_cell_comparisons"]))
             early = next(period for period in evidence["periods"]
                          if period["period_id"] == "early-life")
             self.assertGreaterEqual(
@@ -394,6 +403,20 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
                 production._lifecycle_evidence_reasons(
                     SimpleNamespace(cycle_id=cycle_id), tampered_envelope, required=True),
             )
+            tampered_cell = copy.deepcopy(first_item)
+            tampered_current = next(
+                period for period in tampered_cell["lifecycle_envelope_evidence"]["periods"]
+                if period["period_id"] == cycle_id)
+            tampered_coupled_pair = next(
+                pair for pair in tampered_current["qualified_relief_envelope"]["slice_pairs"]
+                if len(pair["axis_action_ids"]) == 2)
+            tampered_coupled_pair["sampled_cell_comparisons"][0]["baseline_cell"][
+                "classification"] = "ALL_CORNERS_FEASIBLE"
+            self.assertIn(
+                "lifecycle_period_1_invalid_qualified_relief_envelope",
+                production._lifecycle_evidence_reasons(
+                    SimpleNamespace(cycle_id=cycle_id), tampered_cell, required=True),
+            )
             for field in (
                     "simulation_converged", "candidate_feasible", "candidate_finite",
                     "constraint_evidence_complete", "state_restore_complete",
@@ -428,6 +451,7 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertIn("synthetic lifecycle separation limit", report)
             self.assertIn("Qualified paired sampled", report)
             self.assertIn("Portfolio rank 1/2", report)
+            self.assertIn("Changed / compared cells", report)
 
             input_path = task / "continuous" / "user_input.yaml"
             input_path.write_text(

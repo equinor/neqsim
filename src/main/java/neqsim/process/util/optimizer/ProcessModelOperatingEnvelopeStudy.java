@@ -2088,14 +2088,23 @@ public final class ProcessModelOperatingEnvelopeStudy {
     List<Map<String, Object>> slicePairs = new ArrayList<Map<String, Object>>();
     int changedPointCount = 0;
     int boundaryComparisonCount = 0;
+    int sampledCellComparisonCount = 0;
+    int changedSampledCellCount = 0;
     for (int index = 0; index < baselineSlices.size(); index++) {
       SliceResult baseline = baselineSlices.get(index);
       SliceResult relieved = relievedSlices.get(index);
       validateRelievedSlicePair(baseline, relieved, acceptedValues);
       List<Map<String, Object>> pointChanges = pointIdentityChanges(baseline, relieved);
       List<Map<String, Object>> boundaryComparisons = boundaryComparisons(baseline, relieved);
+      List<Map<String, Object>> sampledCellComparisons = sampledCellComparisons(baseline, relieved);
       changedPointCount += pointChanges.size();
       boundaryComparisonCount += boundaryComparisons.size();
+      sampledCellComparisonCount += sampledCellComparisons.size();
+      for (Map<String, Object> comparison : sampledCellComparisons) {
+        if (Boolean.TRUE.equals(comparison.get("changed"))) {
+          changedSampledCellCount++;
+        }
+      }
       Map<String, Object> pair = new LinkedHashMap<String, Object>();
       pair.put("slice_id", baseline.getId());
       pair.put("axis_action_ids", Collections.unmodifiableList(Arrays.asList(baseline.getAxisActionIds())));
@@ -2103,12 +2112,13 @@ public final class ProcessModelOperatingEnvelopeStudy {
       pair.put("relieved_slice", relieved.toEvidenceMap());
       pair.put("sampled_point_identity_changes", Collections.unmodifiableList(pointChanges));
       pair.put("continuous_boundary_comparisons", Collections.unmodifiableList(boundaryComparisons));
+      pair.put("sampled_cell_comparisons", Collections.unmodifiableList(sampledCellComparisons));
       pair.put("baseline_boundary_count", Integer.valueOf(baseline.getBoundaryRefinements().size()));
       pair.put("relieved_boundary_count", Integer.valueOf(relieved.getBoundaryRefinements().size()));
       slicePairs.add(Collections.unmodifiableMap(pair));
     }
     Map<String, Object> receipt = new LinkedHashMap<String, Object>();
-    receipt.put("receipt_version", Integer.valueOf(1));
+    receipt.put("receipt_version", Integer.valueOf(2));
     receipt.put("combination", combination.toEvidenceMap());
     receipt.put("envelope_study_id", id);
     receipt.put("candidate_evaluator_id", evaluator.getId());
@@ -2116,6 +2126,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
     receipt.put("slice_pair_count", Integer.valueOf(slicePairs.size()));
     receipt.put("sampled_point_identity_change_count", Integer.valueOf(changedPointCount));
     receipt.put("continuous_boundary_comparison_count", Integer.valueOf(boundaryComparisonCount));
+    receipt.put("sampled_cell_comparison_count", Integer.valueOf(sampledCellComparisonCount));
+    receipt.put("changed_sampled_cell_count", Integer.valueOf(changedSampledCellCount));
     receipt.put("slice_pairs", Collections.unmodifiableList(slicePairs));
     receipt.put("capacity_restored", Boolean.TRUE);
     receipt.put("process_state_restored", Boolean.TRUE);
@@ -2123,8 +2135,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
     receipt.put("qualification_state", "QUALIFIED_PAIRED_NON_ADDITIVE_RELIEF_ENVELOPE");
     receipt.put("advisory", Boolean.TRUE);
     receipt.put("interpretation",
-        "Exact sampled/refined baseline versus jointly relieved envelope evidence; boundary values remain brackets, "
-            + "discrete routes are never interpolated, and results are not causal attribution, global optimality, "
+        "Exact sampled-cell/refined baseline versus jointly relieved envelope evidence; boundary values remain "
+            + "brackets, discrete routes are never interpolated, and results are not causal attribution, global optimality, "
             + "design approval, investment approval, permission to change a limit, or operating approval");
     return new QualifiedReliefEnvelopeEvidence(receipt);
   }
@@ -2190,6 +2202,37 @@ public final class ProcessModelOperatingEnvelopeStudy {
       changes.add(Collections.unmodifiableMap(change));
     }
     return changes;
+  }
+
+  /** Builds exact paired comparisons for every sampled two-dimensional grid cell. */
+  private static List<Map<String, Object>> sampledCellComparisons(SliceResult baseline, SliceResult relieved) {
+    List<SampledCell> before = baseline.getSampledCells();
+    List<SampledCell> after = relieved.getSampledCells();
+    if (before.size() != after.size()) {
+      throw new IllegalStateException("Baseline and relieved sampled-cell counts differ");
+    }
+    List<Map<String, Object>> comparisons = new ArrayList<Map<String, Object>>();
+    for (int index = 0; index < before.size(); index++) {
+      SampledCell baselineCell = before.get(index);
+      SampledCell relievedCell = after.get(index);
+      if (!Arrays.equals(baselineCell.getGridIndexes(), relievedCell.getGridIndexes())
+          || !Arrays.equals(baselineCell.getCornerSequenceIndexes(), relievedCell.getCornerSequenceIndexes())) {
+        throw new IllegalStateException("Baseline and relieved sampled-cell identities differ");
+      }
+      Map<String, Object> baselineEvidence = baselineCell.toEvidenceMap();
+      Map<String, Object> relievedEvidence = relievedCell.toEvidenceMap();
+      Map<String, Object> comparison = new LinkedHashMap<String, Object>();
+      comparison.put("grid_indexes", toIntegerList(baselineCell.getGridIndexes()));
+      comparison.put("corner_sequence_indexes", toIntegerList(baselineCell.getCornerSequenceIndexes()));
+      comparison.put("baseline_cell", baselineEvidence);
+      comparison.put("relieved_cell", relievedEvidence);
+      comparison.put("changed", Boolean.valueOf(!baselineEvidence.equals(relievedEvidence)));
+      comparison.put("interpolated", Boolean.FALSE);
+      comparison.put("interpretation",
+          "Exact corner and sampled perimeter-edge comparison; no cell interior, area, or discrete-route boundary is inferred");
+      comparisons.add(Collections.unmodifiableMap(comparison));
+    }
+    return comparisons;
   }
 
   /** Builds exact single-boundary bracket comparisons for axes with one boundary in each scenario. */
@@ -3639,6 +3682,109 @@ public final class ProcessModelOperatingEnvelopeStudy {
   }
 
   /**
+   * Immutable exact topology for one sampled two-dimensional grid cell.
+   *
+   * <p>
+   * A cell is classified only from its four independently evaluated corner points. Boundary families are exact sampled
+   * perimeter edges whose endpoint feasibility differs. No interior feasibility, boundary geometry, area, or
+   * interpolation is inferred, which is particularly important when either axis represents a discrete routing choice.
+   * </p>
+   *
+   * @author NeqSim Development Team
+   * @version 1.0
+   */
+  public static final class SampledCell implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /** Exact corner-feasibility classification. */
+    public enum Classification {
+      /** All four independently evaluated corners are feasible. */
+      ALL_CORNERS_FEASIBLE,
+      /** No independently evaluated corner is feasible. */
+      NO_CORNERS_FEASIBLE,
+      /** Feasible and infeasible independently evaluated corners coexist. */
+      MIXED_CORNER_FEASIBILITY
+    }
+
+    private final int[] gridIndexes;
+    private final int[] cornerSequenceIndexes;
+    private final boolean[] cornerFeasible;
+    private final Classification classification;
+    private final List<OperatingRegionTransition> boundaryFamilies;
+
+    /**
+     * Creates one exact sampled-cell topology record.
+     *
+     * @param gridIndexes lower grid coordinate
+     * @param corners clockwise independently evaluated corner points
+     * @param boundaryFamilies exact sampled perimeter feasibility-transition edges
+     */
+    private SampledCell(int[] gridIndexes, Point[] corners, List<OperatingRegionTransition> boundaryFamilies) {
+      this.gridIndexes = Arrays.copyOf(gridIndexes, gridIndexes.length);
+      this.cornerSequenceIndexes = new int[corners.length];
+      this.cornerFeasible = new boolean[corners.length];
+      int feasibleCount = 0;
+      for (int index = 0; index < corners.length; index++) {
+        cornerSequenceIndexes[index] = corners[index].getSequenceIndex();
+        cornerFeasible[index] = corners[index].isFeasible();
+        if (cornerFeasible[index]) {
+          feasibleCount++;
+        }
+      }
+      classification = feasibleCount == corners.length ? Classification.ALL_CORNERS_FEASIBLE
+          : feasibleCount == 0 ? Classification.NO_CORNERS_FEASIBLE : Classification.MIXED_CORNER_FEASIBILITY;
+      this.boundaryFamilies = Collections.unmodifiableList(new ArrayList<OperatingRegionTransition>(boundaryFamilies));
+    }
+
+    /** @return defensive lower grid coordinate of this cell */
+    public int[] getGridIndexes() {
+      return Arrays.copyOf(gridIndexes, gridIndexes.length);
+    }
+
+    /** @return defensive clockwise corner sequence indexes starting at the lower grid coordinate */
+    public int[] getCornerSequenceIndexes() {
+      return Arrays.copyOf(cornerSequenceIndexes, cornerSequenceIndexes.length);
+    }
+
+    /** @return defensive clockwise corner-feasibility flags */
+    public boolean[] getCornerFeasible() {
+      return Arrays.copyOf(cornerFeasible, cornerFeasible.length);
+    }
+
+    /** @return exact corner-feasibility classification */
+    public Classification getClassification() {
+      return classification;
+    }
+
+    /** @return exact sampled perimeter feasibility-transition families */
+    public List<OperatingRegionTransition> getBoundaryFamilies() {
+      return Collections.unmodifiableList(new ArrayList<OperatingRegionTransition>(boundaryFamilies));
+    }
+
+    /** Converts this exact sampled-cell topology to a compact JSON-friendly map. */
+    public Map<String, Object> toEvidenceMap() {
+      List<Boolean> feasible = new ArrayList<Boolean>();
+      for (boolean value : cornerFeasible) {
+        feasible.add(Boolean.valueOf(value));
+      }
+      List<Map<String, Object>> families = new ArrayList<Map<String, Object>>();
+      for (OperatingRegionTransition family : boundaryFamilies) {
+        families.add(family.toEvidenceMap());
+      }
+      Map<String, Object> evidence = new LinkedHashMap<String, Object>();
+      evidence.put("grid_indexes", toIntegerList(gridIndexes));
+      evidence.put("corner_sequence_indexes", toIntegerList(cornerSequenceIndexes));
+      evidence.put("corner_feasible", Collections.unmodifiableList(feasible));
+      evidence.put("classification", classification.name());
+      evidence.put("boundary_family_count", Integer.valueOf(boundaryFamilies.size()));
+      evidence.put("sampled_boundary_families", Collections.unmodifiableList(families));
+      evidence.put("interpolated", Boolean.FALSE);
+      evidence.put("sampled_cell_only", Boolean.TRUE);
+      return Collections.unmodifiableMap(evidence);
+    }
+  }
+
+  /**
    * Immutable serializable result for an operating-envelope slice.
    *
    * @author NeqSim Development Team
@@ -3825,6 +3971,61 @@ public final class ProcessModelOperatingEnvelopeStudy {
       return Collections.unmodifiableList(new ArrayList<OperatingRegionBoundaryRefinement>(boundaryRefinements));
     }
 
+    /**
+     * Returns exact sampled-cell topology for a complete two-dimensional slice.
+     *
+     * <p>
+     * Corner order is clockwise from the lower grid coordinate: lower/lower, lower/upper, upper/upper, upper/lower.
+     * One-dimensional or incomplete slices return an empty list. Discrete axes remain sampled categories and are never
+     * interpolated.
+     * </p>
+     *
+     * @return fresh immutable sampled-cell list in row-major order
+     */
+    public List<SampledCell> getSampledCells() {
+      if (!isComplete() || axisValues.length != 2) {
+        return Collections.emptyList();
+      }
+      int secondCount = axisValues[1].length;
+      List<SampledCell> cells = new ArrayList<SampledCell>();
+      for (int first = 0; first < axisValues[0].length - 1; first++) {
+        for (int second = 0; second < secondCount - 1; second++) {
+          Point lowerLower = points.get(first * secondCount + second);
+          Point lowerUpper = points.get(first * secondCount + second + 1);
+          Point upperLower = points.get((first + 1) * secondCount + second);
+          Point upperUpper = points.get((first + 1) * secondCount + second + 1);
+          Point[] corners = new Point[] {lowerLower, lowerUpper, upperUpper, upperLower};
+          List<OperatingRegionTransition> families = new ArrayList<OperatingRegionTransition>();
+          addBoundaryFamily(families, lowerLower, lowerUpper);
+          addBoundaryFamily(families, lowerUpper, upperUpper);
+          addBoundaryFamily(families, upperUpper, upperLower);
+          addBoundaryFamily(families, upperLower, lowerLower);
+          cells.add(new SampledCell(new int[] {first, second}, corners, families));
+        }
+      }
+      return Collections.unmodifiableList(cells);
+    }
+
+    /**
+     * Adds the exact sampled feasibility-transition edge matching two cell corners, when present.
+     *
+     * @param families mutable exact boundary-family list
+     * @param first first perimeter corner
+     * @param second adjacent perimeter corner
+     */
+    private void addBoundaryFamily(List<OperatingRegionTransition> families, Point first, Point second) {
+      for (OperatingRegionTransition transition : getOperatingRegionTransitions()) {
+        boolean sameDirection = transition.getFromSequenceIndex() == first.getSequenceIndex()
+            && transition.getToSequenceIndex() == second.getSequenceIndex();
+        boolean reverseDirection = transition.getFromSequenceIndex() == second.getSequenceIndex()
+            && transition.getToSequenceIndex() == first.getSequenceIndex();
+        if ((sameDirection || reverseDirection) && transition.isFromFeasible() != transition.isToFeasible()) {
+          families.add(transition);
+          return;
+        }
+      }
+    }
+
     /** @return fresh immutable study diagnostics */
     public List<String> getDiagnostics() {
       return Collections.unmodifiableList(new ArrayList<String>(diagnostics));
@@ -3887,6 +4088,10 @@ public final class ProcessModelOperatingEnvelopeStudy {
       for (OperatingRegionBoundaryRefinement refinement : getBoundaryRefinements()) {
         boundaryRefinementEvidence.add(refinement.toEvidenceMap());
       }
+      List<Map<String, Object>> sampledCellEvidence = new ArrayList<Map<String, Object>>();
+      for (SampledCell cell : getSampledCells()) {
+        sampledCellEvidence.add(cell.toEvidenceMap());
+      }
       Map<String, Object> evidence = new LinkedHashMap<String, Object>();
       evidence.put("study_id", id);
       evidence.put("study_name", name);
@@ -3910,6 +4115,7 @@ public final class ProcessModelOperatingEnvelopeStudy {
       evidence.put("boundary_refinement_relative_tolerance", finiteOrNull(boundaryRefinementRelativeTolerance));
       evidence.put("boundary_refinement_tolerance_provenance", boundaryRefinementToleranceProvenance);
       evidence.put("operating_region_boundary_refinements", Collections.unmodifiableList(boundaryRefinementEvidence));
+      evidence.put("sampled_cells", Collections.unmodifiableList(sampledCellEvidence));
       evidence.put("diagnostics", Collections.unmodifiableList(new ArrayList<String>(diagnostics)));
       return Collections.unmodifiableMap(evidence);
     }

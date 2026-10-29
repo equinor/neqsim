@@ -1,5 +1,6 @@
 package neqsim.process.util.optimizer;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Collections;
 import java.util.Map;
@@ -418,14 +419,20 @@ public class ProcessOptimizationExampleTest {
     // Set up compressor charts
     setupCompressorCharts();
 
-    // Increase feed to create a bottleneck situation
-    feedStream.setFlowRate(80000.0, "kg/hr");
+    // Exceed the second-stage stonewall limit before its extrapolated head becomes negative.
+    feedStream.setFlowRate(65000.0, "kg/hr");
     process.run();
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Feed rate: %.0f kg/hr%n", feedStream.getFlowRate("kg/hr"));
 
     // Find detailed bottleneck information
     BottleneckResult bottleneck = process.findBottleneck();
+
+    assertNotNull(bottleneck, "Increasing throughput must reveal a capacity bottleneck");
+    assertNotNull(bottleneck.getConstraint(), "The limiting capacity constraint must be identified");
+    assertTrue(bottleneck.getConstraint().isViolated(), "The high-flow point must exceed a capacity limit");
+    assertTrue(secondStageCompressor.getPolytropicFluidHead() > 0.0,
+        "Bottleneck analysis must retain a valid positive-head compressor point");
 
     if (bottleneck != null) {
       logger.info("\n--- Bottleneck Details ---");
@@ -504,13 +511,25 @@ public class ProcessOptimizationExampleTest {
   public void testManualFlowOptimization() {
     logger.info("\n=== Manual Flow Optimization ===");
 
+    // Give the scrubber capacity above the map design duty so that a feasible interval exists.
+    gasScrubber.setInternalDiameter(2.6);
+
     // Set up compressor charts
     setupCompressorCharts();
 
-    double lowRate = 10000.0;
-    double highRate = 150000.0;
+    double lowRate = 48000.0;
+    double highRate = 65000.0;
     double tolerance = 500.0;
-    double targetUtilization = 0.95;
+    // The fixed design speed is already 95.24% of the generated map maximum.
+    // Search against the physical 100% limits and include every registered constraint.
+    double targetUtilization = 1.0;
+
+    feedStream.setFlowRate(lowRate, "kg/hr");
+    process.run();
+    assertTrue(getMaxSystemUtilization() <= targetUtilization, "The lower search endpoint must be feasible");
+    feedStream.setFlowRate(highRate, "kg/hr");
+    process.run();
+    assertTrue(getMaxSystemUtilization() > targetUtilization, "The upper endpoint must exceed a capacity limit");
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "Target utilization: %.0f%%%n", targetUtilization * 100);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Search range: %.0f - %.0f kg/hr%n", lowRate, highRate);
@@ -541,6 +560,11 @@ public class ProcessOptimizationExampleTest {
     double optimalRate = lowRate;
     feedStream.setFlowRate(optimalRate, "kg/hr");
     process.run();
+    assertTrue(getMaxSystemUtilization() <= targetUtilization, "The selected operating point must remain feasible");
+    assertTrue(highRate - optimalRate <= tolerance, "The search must bracket the capacity boundary within tolerance");
+    assertTrue(
+        firstStageCompressor.getPolytropicFluidHead() > 0.0 && secondStageCompressor.getPolytropicFluidHead() > 0.0,
+        "Both compressor operating points must retain positive head");
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%nOptimal rate: %.0f kg/hr%n", optimalRate);
     logger.printf(org.apache.logging.log4j.Level.INFO, "Final max utilization: %.1f%%%n",
@@ -667,7 +691,8 @@ public class ProcessOptimizationExampleTest {
   }
 
   /**
-   * Gets the maximum utilization across all equipment in the system.
+   * Gets the maximum utilization across legacy capacities and all registered equipment constraints, including
+   * compressor surge, stonewall, speed and power.
    *
    * @return maximum utilization (0.0 to 1.0+)
    */
@@ -675,6 +700,13 @@ public class ProcessOptimizationExampleTest {
     double maxUtil = 0.0;
 
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (unit instanceof CapacityConstrainedEquipment) {
+        double constrainedUtilization = ((CapacityConstrainedEquipment) unit).getMaxUtilization();
+        if (!Double.isFinite(constrainedUtilization)) {
+          return Double.POSITIVE_INFINITY;
+        }
+        maxUtil = Math.max(maxUtil, constrainedUtilization);
+      }
       double capacity = unit.getCapacityMax();
       double duty = unit.getCapacityDuty();
 

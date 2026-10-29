@@ -498,7 +498,7 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     Map<String, Object> evidence = new LinkedHashMap<String, Object>();
     boolean hasStateMetrics = acceptedStateMetricIds != null && !acceptedStateMetricIds.isEmpty();
     evidence.put("schema_version",
-        Integer.valueOf(hasQualifiedReliefEnvelope ? 15
+        Integer.valueOf(hasQualifiedReliefEnvelope ? 16
             : hasQualifiedReliefCombination ? 14
                 : hasQualifiedReliefPortfolio ? 13
                     : hasQualifiedReliefReceipt ? 12
@@ -562,7 +562,8 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
    *
    * @param cycleId current living-task cycle identifier and lifecycle period identifier
    * @return compact JSON containing exact schema-v8, installed-coverage schema-v9, plant-coverage schema-v11, qualified
-   * paired-relief schema-v12, ranked paired-relief schema-v13, or joint-relief schema-v14 evidence
+   * paired-relief schema-v12, ranked paired-relief schema-v13, joint-relief schema-v14, paired-envelope schema-v15, or
+   * sampled-cell paired-envelope schema-v16 evidence
    * @throws IllegalStateException if the current cycle is not an accepted lifecycle period
    */
   public String toEvidenceJson(String cycleId) {

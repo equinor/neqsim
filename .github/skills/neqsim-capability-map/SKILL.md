@@ -126,7 +126,7 @@ and campaign #3153 completion gates.
 | Hydrate P | `ops.hydrateFormationPressure()` | Hydrate formation pressure |
 | Wax T | `ops.calcWAT()` | Wax appearance temperature |
 | Freeze T | `ops.freezingPointTemperatureFlash()` | Freeze-out temperature |
-| Water dew point | `ops.waterDewPointTemperature()` | Water content specification |
+| Water dew point | `ops.waterDewPointTemperatureFlash()` | ISO 18453 / GERG-water: `SystemGERGwaterEos` with `setMixingRule(8)`; follow the `neqsim-standards-lookup` execution rule |
 
 **CRITICAL:** After any flash, call `fluid.initProperties()` before reading
 transport properties (viscosity, thermal conductivity, density).

@@ -113,6 +113,32 @@ measurements are discussed by
 [Rajzinger (2012)](https://doi.org/10.26552/com.C.2012.4A.29-35), Table 2;
 matching that model is distinct from matching experimental data.
 
+### Temperature-derivative consistency
+
+The GERG-water attraction function uses a fourth-power term. Its first and
+second temperature derivatives must differentiate that same expression, for
+both the generic `diffalphaT`/`diffdiffalphaT` APIs and the legacy GERG-specific
+aliases. All paths select the ice coefficients below 273.16 K and liquid-water
+coefficients at or above that temperature. The derivatives are branch-local;
+a finite-difference check must not straddle the coefficient switch.
+
+The former implementation differentiated a cubic term and inherited ordinary
+PR alpha derivatives through the generic APIs. Recalculate derivative-dependent
+properties, including enthalpy and heat capacity, obtained with that version.
+The direct bracketed dew-point operation does not use those temperature
+derivatives. Its existing control values are retained, apart from the corrected
+coefficient selection in the narrow interval 273.15–273.16 K.
+
+Regression coverage compares both derivatives with finite differences, checks
+the mixed-gas fugacity derivatives with `ThermodynamicModelTest`, and compares
+synthetic methane/ethane/propane dew points with an independent PR-root
+calculation using ISO 18453 Table 2–3 parameters. The bundled component database
+uses slightly different constants; the comparison tolerance is a numerical
+fixture tolerance, not the standard's experimental correlation uncertainty.
+This establishes the checked mathematical identities and model comparisons;
+full ISO conformity still requires the governing standard's controlled examples
+and complete composition and applicability checks.
+
 ### Trace-water process analyser
 
 `WaterDewPointAnalyser`'s `CPA` method solves fixed-feed-gas equilibrium against

@@ -90,6 +90,9 @@ be finite, bounded by zero and one, and normalized.
 The temperature solver uses bounded Newton steps and a sign-changing bracket
 across mixture phase boundaries. If progress stalls, it rebuilds the bracket with
 cold TP flashes before checking the endpoint with a final cold TP flash. The
+independent endpoint check can reject a metastable homogeneous root even when
+its entropy residual is small. Recovery then uses a fresh inner TP flash so
+that its previous iteration history cannot reselect the rejected root. The
 iteration first seeks the tighter `max(1e-8 * n, 1e-10 * abs(Sspecified))`
 J/K residual. Only when a cold sign-changing bracket narrows to four floating-point
 temperature spacings may the solver accept the best endpoint within the stated
