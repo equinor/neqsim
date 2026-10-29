@@ -27,8 +27,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <p>
  * This first network layer is intentionally storage based. Algebraic zero-volume junctions, global Newton pressure-flow
- * iteration, reverse-flow boundary composition, and branch subcycling are outside its current scope. Component and
- * total-energy mixing are available as an explicit opt-in on compressible nodes.
+ * iteration, and branch subcycling are outside its current scope. Component and total-energy mixing are available as an
+ * explicit opt-in on compressible nodes. Signed outlet fallback is supported only when the downstream node or pipe owns
+ * an explicit thermodynamic donor.
  * </p>
  */
 public final class TwoFluidPipeNetwork implements Serializable {
@@ -117,6 +118,28 @@ public final class TwoFluidPipeNetwork implements Serializable {
     nodes.put(nodeName, NetworkNode.fixed(nodeName, pressurePa));
   }
 
+  /**
+   * Add an external fixed-pressure node with an explicit thermodynamic boundary state.
+   *
+   * <p>
+   * The fluid is defensively copied and supplies composition, density and enthalpy only when a connected pipe accepts
+   * signed outlet fallback from this node. Pressure remains owned by {@code pressurePa}. Forward pipe outflow is
+   * unaffected. Use {@link #setBranchOutletPhaseBackflowAllowed(String, boolean)} to opt a branch into signed fallback.
+   * </p>
+   *
+   * @param nodeName unique node name
+   * @param pressurePa fixed mechanical pressure in Pa
+   * @param boundaryFluid thermodynamic state of material entering the network from this node
+   */
+  public void addFixedPressureNode(String nodeName, double pressurePa, SystemInterface boundaryFluid) {
+    requireUniqueNodeName(nodeName);
+    requirePositiveFinite(pressurePa, "Fixed-node pressure");
+    if (boundaryFluid == null || boundaryFluid.getNumberOfComponents() == 0) {
+      throw new IllegalArgumentException("Fixed-node boundary fluid must contain at least one component");
+    }
+    nodes.put(nodeName, NetworkNode.fixed(nodeName, pressurePa, boundaryFluid));
+  }
+
   /** Add a directed two-fluid pipe branch between existing nodes. */
   public void addPipe(String branchName, String fromNodeName, String toNodeName, TwoFluidPipe pipe) {
     requireName(branchName, "Branch");
@@ -143,6 +166,26 @@ public final class TwoFluidPipeNetwork implements Serializable {
   }
 
   /**
+   * Enable or disable signed outlet fallback on one branch using its downstream node as thermodynamic owner.
+   *
+   * <p>
+   * A conservative storage node publishes its frozen start-of-step inventory. A fixed-pressure node must have been
+   * created with an explicit boundary fluid. The donor is installed before the pipe option is enabled, preserving the
+   * pipe's fail-closed configuration contract.
+   * </p>
+   *
+   * @param branchName existing branch name
+   * @param allow true to permit signed outlet fallback
+   */
+  public void setBranchOutletPhaseBackflowAllowed(String branchName, boolean allow) {
+    NetworkBranch branch = requireBranch(branchName);
+    if (allow) {
+      publishOutletBoundaryState(branch, true);
+    }
+    branch.pipe.setAllowOutletPhaseBackflow(allow);
+  }
+
+  /**
    * Initialize each branch from its configured stream and the downstream node pressure.
    *
    * <p>
@@ -154,6 +197,7 @@ public final class TwoFluidPipeNetwork implements Serializable {
     validateRunnableNetwork();
     for (NetworkBranch branch : branches.values()) {
       branch.pipe.setOutletPressure(branch.toNode.getPressurePa());
+      publishOutletBoundaryState(branch, false);
       branch.pipe.run(id);
       if (hasConservativeNodes() && !branch.pipe.isUseConservativeEnergyRecovery()) {
         branch.pipe.prepareConservativeEnergyTransientFromSteadyState();
@@ -362,6 +406,15 @@ public final class TwoFluidPipeNetwork implements Serializable {
         throw new IllegalStateException(
             "Branch '" + branch.name + "' must use component transport and conservative energy recovery");
       }
+      if (branch.pipe.isOutletPhaseBackflowAllowed() && branch.pipe.getOutletBoundaryFluid() == null) {
+        throw new IllegalStateException("Branch '" + branch.name
+            + "' allows outlet fallback but its downstream node owns no thermodynamic boundary fluid");
+      }
+      if (branch.pipe.isOutletPhaseBackflowAllowed()
+          && !Arrays.equals(names, branch.pipe.getOutletBoundaryFluid().getComponentNames())) {
+        throw new IllegalStateException(
+            "Branch '" + branch.name + "' outlet thermodynamic boundary fluid has a different component slate");
+      }
     }
   }
 
@@ -372,7 +425,22 @@ public final class TwoFluidPipeNetwork implements Serializable {
         boundaryFluid.setPressure(branch.fromNode.getPressurePa(), "Pa");
         branch.pipe.getInletStream().setFluid(boundaryFluid);
       }
+      publishOutletBoundaryState(branch, branch.pipe.isOutletPhaseBackflowAllowed());
     }
+  }
+
+  private void publishOutletBoundaryState(NetworkBranch branch, boolean required) {
+    SystemInterface boundaryFluid = branch.toNode.getBoundaryFluid();
+    if (boundaryFluid == null) {
+      if (required && branch.pipe.getOutletBoundaryFluid() == null) {
+        throw new IllegalStateException("Branch '" + branch.name
+            + "' requires an explicit downstream thermodynamic boundary fluid before outlet fallback is enabled");
+      }
+      return;
+    }
+    boundaryFluid.setPressure(branch.toNode.getPressurePa(), "Pa");
+    new ThermodynamicOperations(boundaryFluid).TPflash();
+    branch.pipe.setOutletBoundaryFluid(boundaryFluid);
   }
 
   private static void validateBranchThermodynamicReports(NetworkBranch branch, String[] componentNames,
@@ -387,15 +455,14 @@ public final class TwoFluidPipeNetwork implements Serializable {
     if (!Arrays.equals(componentNames, componentReport.getComponentNames())) {
       throw new IllegalStateException("Branch '" + branch.name + "' reported a different component slate");
     }
-    requireForwardBoundaryTransfer(branch, componentReport.getInletBoundaryMassKg(), "inlet");
-    requireForwardBoundaryTransfer(branch, componentReport.getOutletBoundaryMassKg(), "outlet");
-  }
-
-  private static void requireForwardBoundaryTransfer(NetworkBranch branch, double[] componentMassKg, String boundary) {
-    for (double massKg : componentMassKg) {
-      if (massKg < -1.0e-12) {
-        throw new IllegalStateException("Branch '" + branch.name + "' has reverse " + boundary
-            + " component transfer; reverse-flow composition routing is not supported");
+    for (double massKg : componentReport.getInletBoundaryMassKg()) {
+      if (!Double.isFinite(massKg)) {
+        throw new IllegalStateException("Branch '" + branch.name + "' reported nonfinite inlet component transfer");
+      }
+    }
+    for (double massKg : componentReport.getOutletBoundaryMassKg()) {
+      if (!Double.isFinite(massKg)) {
+        throw new IllegalStateException("Branch '" + branch.name + "' reported nonfinite outlet component transfer");
       }
     }
   }
@@ -440,6 +507,14 @@ public final class TwoFluidPipeNetwork implements Serializable {
       throw new IllegalArgumentException("Node '" + nodeName + "' does not exist");
     }
     return node;
+  }
+
+  private NetworkBranch requireBranch(String branchName) {
+    NetworkBranch branch = branches.get(branchName);
+    if (branch == null) {
+      throw new IllegalArgumentException("Branch '" + branchName + "' does not exist");
+    }
+    return branch;
   }
 
   private static void requireName(String value, String label) {
@@ -520,31 +595,37 @@ public final class TwoFluidPipeNetwork implements Serializable {
     private final double fixedPressurePa;
     private final UpstreamCompressibleVolume volume;
     private final ThermodynamicInventory thermodynamicInventory;
+    private final SystemInterface fixedBoundaryFluid;
     private NodeSourceThermodynamics sourceThermodynamics;
     private int incomingCount;
     private int outgoingCount;
 
     private NetworkNode(String name, boolean fixedPressure, double fixedPressurePa, UpstreamCompressibleVolume volume,
-        ThermodynamicInventory thermodynamicInventory) {
+        ThermodynamicInventory thermodynamicInventory, SystemInterface fixedBoundaryFluid) {
       this.name = name;
       this.fixedPressure = fixedPressure;
       this.fixedPressurePa = fixedPressurePa;
       this.volume = volume;
       this.thermodynamicInventory = thermodynamicInventory;
+      this.fixedBoundaryFluid = fixedBoundaryFluid;
     }
 
     private static NetworkNode fixed(String name, double pressurePa) {
-      return new NetworkNode(name, true, pressurePa, null, null);
+      return new NetworkNode(name, true, pressurePa, null, null, null);
+    }
+
+    private static NetworkNode fixed(String name, double pressurePa, SystemInterface boundaryFluid) {
+      return new NetworkNode(name, true, pressurePa, null, null, boundaryFluid.clone());
     }
 
     private static NetworkNode compressible(String name, UpstreamCompressibleVolume volume) {
-      return new NetworkNode(name, false, Double.NaN, volume, null);
+      return new NetworkNode(name, false, Double.NaN, volume, null, null);
     }
 
     private static NetworkNode conservative(String name, UpstreamCompressibleVolume volume,
         SystemInterface initialFluid) {
       return new NetworkNode(name, false, Double.NaN, volume,
-          new ThermodynamicInventory(initialFluid, volume.getTotalMassKg(), volume.getPressurePa()));
+          new ThermodynamicInventory(initialFluid, volume.getTotalMassKg(), volume.getPressurePa()), null);
     }
 
     private double getPressurePa() {
@@ -557,6 +638,13 @@ public final class TwoFluidPipeNetwork implements Serializable {
         totalKgS += volume.getSourceMassFlowRateKgS(phase);
       }
       return totalKgS;
+    }
+
+    private SystemInterface getBoundaryFluid() {
+      if (thermodynamicInventory != null) {
+        return thermodynamicInventory.fluid.clone();
+      }
+      return fixedBoundaryFluid == null ? null : fixedBoundaryFluid.clone();
     }
   }
 

@@ -1506,11 +1506,22 @@ specific enthalpy in J/kg. The network then applies the same accepted source mas
 component and open-system energy ledgers. Missing source thermodynamics, a mismatched component
 slate or non-finite enthalpy fails before the interval advances.
 
+Signed fallback from a branch outlet keeps the same directed topology and signed conservation
+ledger. Create a fixed-pressure downstream node with the overload accepting a `SystemInterface`,
+or use a conservative storage node whose frozen inventory owns the downstream thermodynamic state.
+Then call `setBranchOutletPhaseBackflowAllowed(branchName, true)`. The network flashes and publishes
+that donor before enabling the pipe-level signed-outlet contract and refreshes conservative-node
+donors at each reporting interval. A pressure-only fixed node fails before the option is enabled.
+Negative outlet component and enthalpy transfers enter the branch from the downstream node and are
+applied with the existing simultaneous node update; the last interior pipe cell is never inferred to
+be an external reservoir.
+
 This first network implementation requires finite compressible storage at internal junctions.
 Fixed-pressure nodes are external reservoirs or sinks. Algebraic zero-volume junctions, a global
-Newton pressure-flow solve, reverse-flow boundary composition, and branch subcycling remain outside
-the validated scope. Conservative component/energy mixing and node sources have synthetic closure
-evidence; they are not independently qualified transient junction models.
+Newton pressure-flow solve, and branch subcycling remain outside the validated scope. Conservative
+component/energy mixing, node sources and the compositionally different pressure-reversal fixture
+have synthetic closure evidence; they are not independently qualified transient junction models or
+predictive restart/refill qualification.
 
 ### Choosing Time Step, Sections, and Pipeline Length
 

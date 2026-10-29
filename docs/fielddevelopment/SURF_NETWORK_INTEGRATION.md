@@ -25,7 +25,7 @@ none of this completes field, vendor, independent-verification or AFC qualificat
 | `NetworkNewtonSolver`, `WellBranch`, `FlowlineBranch`, `IntegratedProductionModel` | Separate fast lifecycle/optimization graph in surface volumetric units; reduced deliverability curves and fitted quadratic flowline resistance. | Preserve the fast reduced-order workflow. Supply validated surrogates from detailed results later; do not confuse Sm3/day with the detailed graph's kg/s or treat one-point fits as full hydraulics. |
 | `SubseaProductionSystem`, `TiebackRouteNetwork` | Direct/cluster/daisy-chain/template builders and cost/geometry metadata; forward equipment execution with configured rates/choke pressures. Route network is explicitly screening metadata. | Reuse architecture/design equipment and route provenance. Add a mapping to detailed network identities rather than assuming architecture labels already provide coupled pressure/flow solution. |
 | `SubseaTree`, `SubseaManifold`, `SubseaJumper`, `PLET`, `PLEM`, risers, mechanical-design classes and SURF cost estimators | Existing process/design objects and design/cost screening workflows. | Keep real equipment as owners of geometry, mechanical design and cost. Template/manifold/PLEM labels alone add no junction physics; junction conservation belongs to the network. |
-| `TwoFluidPipe`, `TwoFluidPipeNetwork` | Mechanistic pipe steady/transient states; a storage-node transient network with phase mass balance and opt-in named-component/total-energy inventory. Conservative nodes route exact accepted branch transfers synchronously and publish one frozen mixed state to every outgoing branch. Algebraic zero-volume junctions, reverse boundary composition and branch subcycling remain excluded. | Use `TwoFluidPipe` for steady resistance evaluation here. Reuse the existing transient network in #2911; do not build a second transient engine or claim general mixed-fidelity dynamics. |
+| `TwoFluidPipe`, `TwoFluidPipeNetwork` | Mechanistic pipe steady/transient states; a storage-node transient network with phase mass balance and opt-in named-component/total-energy inventory. Conservative nodes route exact accepted signed branch transfers synchronously and publish one frozen mixed state to every connected branch. Fixed-pressure reverse-flow boundaries require an explicit thermodynamic fluid owner. Algebraic zero-volume junctions and branch subcycling remain excluded. | Use `TwoFluidPipe` for steady resistance evaluation here. Reuse the existing transient network in #2911; do not build a second transient engine or claim general mixed-fidelity dynamics. |
 | `TransientGasNetwork`, `TransientCompositionalPipeNetwork` | Dedicated gas linepack and bounded prescribed-flow species transport. | Retain their documented applicability. Neither qualifies general oil/gas/water dynamic SURF networks. |
 | `FieldLifecycleModel`, `FieldLifecycleSimulator` | Existing SURF + facility `ProcessSystem`/`ProcessModel` composition, reservoir and injection streams, lifecycle economics and constraints. | Connect solved network outlets to these existing streams and areas. Preserve existing detailed user-built equipment instead of regenerating it. |
 | Agent/MCP inventory | Pipe tools, API discovery and capability evidence distinguish source presence from executable operations. | Register discovery and regression evidence without claiming the instance-based network builder is already an MCP invocation contract; coordinate exposure with #3153. |
@@ -202,15 +202,22 @@ inventory and temperature. Serialization and a second accepted interval are also
 This is implementation and synthetic conservation evidence, not independent qualification.
 
 The route fails before accepting an interval when a compressible node lacks thermodynamic
-inventory, component slates differ, branch reports are missing/unconverged, a component boundary
-transfer reverses, or a node source term lacks an explicit source fluid and enthalpy. A conservative
+inventory, component slates differ, branch reports are missing/unconverged, signed outlet fallback
+lacks an explicit downstream thermodynamic owner, or a node source term lacks an explicit source fluid and enthalpy. A conservative
 node source now binds the existing phase-resolved `UpstreamCompressibleVolume` source rates to one
 defensively copied composition and explicit specific enthalpy. The same accepted mass is added to
 the hydraulic, named-component and open-system energy ledgers, and the whole-network report exposes
 source component masses and source enthalpy separately. Missing provenance, mismatched component
-slates and non-finite enthalpy fail before time advances. It does not yet implement reverse-flow
-boundary thermodynamics, algebraic zero-volume junctions, branch subcycling or a general
-conservative multi-edge Newton junction solve.
+slates and non-finite enthalpy fail before time advances. `setBranchOutletPhaseBackflowAllowed(...)`
+publishes a frozen downstream conservative-node state, or the explicit fluid supplied by the
+fixed-pressure-node overload, before enabling the existing `TwoFluidPipe` signed-outlet contract.
+Signed component, phase-mass and enthalpy transfers then use the same simultaneous node update as
+forward flow. A synthetic pressure-reversal regression exercises actual negative outlet component
+transport with compositionally different storage and reservoir fluids and closes the network mass,
+component and first-law reports. This is implementation/conservation evidence only; refill,
+terrain pooling, restart and predictive reversal rates remain unqualified. The network still does
+not implement algebraic zero-volume junctions, branch subcycling or a general conservative
+multi-edge Newton junction solve.
 
 Transient multi-edge junction conservation, energy/component closure, representative
 large-field runtime and independent field data remain open qualification work.
