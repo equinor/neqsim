@@ -2127,10 +2127,8 @@ public class Compressor extends TwoPortEquipment
       throw new IllegalStateException("Cannot bracket compressor chart head for " + getName());
     }
     for (int iteration = 0; iteration < 60; iteration++) {
-      double trial = lower - lowerResidual * (upper - lower) / (upperResidual - lowerResidual);
-      // Safeguard a nearly stationary secant while retaining fast interpolation near the root.
-      double margin = 0.01 * (upper - lower);
-      trial = Math.max(lower + margin, Math.min(upper - margin, trial));
+      // Bisection guarantees progress even when a thermodynamic residual is strongly curved.
+      double trial = 0.5 * (lower + upper);
       double trialPressure = inletPressure * Math.exp(trial);
       double residual = polytropicHeadResidual(reference, trialPressure, head);
       if (Math.abs(residual) <= tolerance) {
