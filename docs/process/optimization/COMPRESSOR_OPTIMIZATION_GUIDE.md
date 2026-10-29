@@ -626,6 +626,13 @@ logger.info("{}", result.toSummary());
 
 ### Python Usage
 
+Start load balancing at a verified feasible flow, then use that flow as the lower
+bound for the binary throughput search. In the synthetic three-train example,
+the nominal flow exceeds the helper's default 95% utilization limit with Schultz
+head. Start at 90% of nominal and search up to 110%; a 50% lower bound falls below
+surge and can miss the feasible interval. Recheck the starting point and bounds
+after changing the fluid, chart, pressure target or polytropic method.
+
 ```python
 from neqsim import jneqsim
 import jpype
@@ -656,10 +663,21 @@ for index, compressor in enumerate([comp1, comp2, comp3]):
     compressors.add(compressor)
     setters.add(train_setter(index))
 
-config = OptimizationConfig(50000.0, 150000.0).rateUnit("kg/hr").maxIterations(50)
-result = Helper.optimizeTwoStage(process, feed, compressors, setters, 50000.0, 150000.0, config)
-if not result.getStage1Result().isFeasible() or not result.getStage2Result().isFeasible():
-    raise RuntimeError("Two-stage search did not find a feasible candidate")
+current_flow = feed.getFlowRate("kg/hr")
+low_flow, high_flow = 0.90 * current_flow, 1.10 * current_flow
+# Stage 1 balances at the live feed rate; initialize it inside the feasible envelope.
+feed.setFlowRate(low_flow, "kg/hr")
+process.run()
+config = OptimizationConfig(low_flow, high_flow).rateUnit("kg/hr").maxIterations(50)
+result = Helper.optimizeTwoStage(process, feed, compressors, setters, low_flow, high_flow, config)
+stage1 = result.getStage1Result()
+stage2 = result.getStage2Result()
+if not stage1.isFeasible() or not stage2.isFeasible():
+    raise RuntimeError(
+        "No feasible two-stage solution: stage 1: "
+        f"{stage1.getInfeasibilityDiagnosis()}; stage 2: "
+        f"{stage2.getInfeasibilityDiagnosis()}"
+    )
 print(result.toSummary())
 ```
 

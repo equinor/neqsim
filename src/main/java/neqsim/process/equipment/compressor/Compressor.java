@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.DoubleUnaryOperator;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -30,6 +31,7 @@ import neqsim.process.equipment.stream.EnergyPortDirection;
 import neqsim.process.equipment.stream.EnergyPortMode;
 import neqsim.process.equipment.stream.EnergyStream;
 import neqsim.process.equipment.stream.EnergyType;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign;
 import neqsim.process.ml.StateVector;
@@ -190,6 +192,8 @@ public class Compressor extends TwoPortEquipment
   private double lastOutletPressure = Double.NaN;
   /** Unit of the cached pressure setpoint. */
   private String lastPressureUnit = null;
+  /** Polytropic method used by the cached calculation. */
+  private String lastPolytropicMethod = null;
   /** Minimum speed used by the cached speed solve. */
   private double lastMinimumSpeed = Double.NaN;
   /** Maximum speed used by the cached speed solve. */
@@ -977,7 +981,8 @@ public class Compressor extends TwoPortEquipment
         || compressorChart.isUseCompressorChart() != lastUseCompressorChart
         || useEnergyEfficiencyChart != lastUseEnergyEfficiencyChart
         || useRigorousPolytropicMethod != lastUseRigorousPolytropicMethod || useGERG2008 != lastUseGERG2008
-        || useLeachman != lastUseLeachman || useVega != lastUseVega) {
+        || useLeachman != lastUseLeachman || useVega != lastUseVega
+        || !java.util.Objects.equals(polytropicMethod, lastPolytropicMethod)) {
       return true;
     }
     double flow = inletSystem.getFlowRate("kg/hr");
@@ -1009,6 +1014,7 @@ public class Compressor extends TwoPortEquipment
     lastInletComposition = inletSystem.getMolarComposition();
     lastOutletPressure = pressure;
     lastPressureUnit = pressureUnit;
+    lastPolytropicMethod = polytropicMethod;
     lastMinimumSpeed = minspeed;
     lastMaximumSpeed = maxspeed;
     lastLimitSpeed = limitSpeed;
@@ -1294,13 +1300,35 @@ public class Compressor extends TwoPortEquipment
       return;
     }
 
-    if (Math.abs(pressure - thermoSystem.getPressure(pressureUnit)) < 1e-6 && !compressorChart.isUseCompressorChart()) {
+    // A finite pressure rise must retain its head even below one microbar; otherwise
+    // inversion of a small, nonzero duty encounters a discontinuous zero-head interval.
+    if ((pressure == thermoSystem.getPressure(pressureUnit)
+        || (!usePolytropicCalc && Math.abs(pressure - thermoSystem.getPressure(pressureUnit)) < 1.0e-6))
+        && !compressorChart.isUseCompressorChart()) {
       thermoSystem.initProperties();
+      inletEnthalpy = thermoSystem.getEnthalpy();
+      if (inStream.getThermoSystem().getNumberOfPhases() == 1) {
+        double[] properties = null;
+        // Match the enthalpy basis used by getTotalWork(), including its existing precedence.
+        if (useGERG2008) {
+          properties = thermoSystem.getPhase(0).getProperties_GERG2008();
+        } else if (useLeachman) {
+          properties = thermoSystem.getPhase(0).getProperties_Leachman();
+        } else if (useVega) {
+          properties = thermoSystem.getPhase(0).getProperties_Vega();
+        }
+        if (properties != null) {
+          inletEnthalpy = properties[7] * thermoSystem.getPhase(0).getNumberOfMolesInPhase();
+        }
+      }
       outStream.setThermoSystem(getThermoSystem());
       outStream.setCalculationIdentifier(id);
       dH = 0.0;
+      polytropicHead = 0.0;
       polytropicFluidHead = 0.0;
       polytropicHeadMeter = 0.0;
+      polytropicExponent = 0.0;
+      actualCompressionRatio = 1.0;
       finishRun(id);
       return;
     }
@@ -1407,17 +1435,19 @@ public class Compressor extends TwoPortEquipment
               + (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
               / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW),
           n / (n - 1.0));
-      setOutletPressure(pressureRatio * getInletPressure());
+      setOutletPressure(chartPressureForHead(polytropicFluidHead, efficiency, pressureRatio * getInletPressure()),
+          "bara");
     }
     if (useOutTemperature)
 
     {
-      if (useRigorousPolytropicMethod) {
+      if (useRigorousPolytropicMethod || (usePolytropicCalc && !compressorChart.isUseCompressorChart())) {
         solveEfficiency(outTemperature);
         polytropicHead = getPower() / getThermoSystem().getFlowRate("kg/sec") / 1000.0 * getPolytropicEfficiency();
         polytropicFluidHead = polytropicHead;
         polytropicHeadMeter = polytropicFluidHead * 1000.0 / ThermodynamicConstantsInterface.gravity;
         getThermoSystem().setMultiPhaseCheck(originalMultiPhaseCheck);
+        finishRun(id);
         return;
       } else {
         double MW = thermoSystem.getMolarMass();
@@ -1535,7 +1565,13 @@ public class Compressor extends TwoPortEquipment
           currentSpeed = Math.max(minSpeed, Math.min(maxSpeed, currentSpeed));
         }
         double bestSpeed = Double.NaN;
-        double bestPressureError = Double.POSITIVE_INFINITY;
+        double bestResidualMagnitude = Double.POSITIVE_INFINITY;
+        DoubleUnaryOperator schultzHead = usePolytropicCalc && "schultz".equals(polytropicMethod)
+            && targetPressure > thermoSystem.getPressure("bara") + 1.0e-6
+                ? createSchultzHeadFunction(targetPressure, entropy, densInn)
+                : null;
+        Compressor headReference = schultzHead == null && usePolytropicCalc
+            && !"ideal_inlet_properties".equals(polytropicMethod) ? createPolytropicReference() : null;
 
         double maxIterations = 200; // Maximum number of iterations
         double deltaSpeed = 100.0; // Small increment for numerical derivative
@@ -1594,22 +1630,38 @@ public class Compressor extends TwoPortEquipment
                   + (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
                   / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW),
               n / (n - 1.0));
-          double currentPressure = thermoSystem.getPressure() * pressureRatio;
-          if (!Double.isFinite(currentPressure) || currentPressure <= 0.0) {
+          double currentResidual;
+          double residualTolerance = tolerance;
+          if (schultzHead != null) {
+            currentResidual = polytropicFluidHead - schultzHead.applyAsDouble(polytropEff / 100.0);
+            residualTolerance = 1.0e-8 * Math.max(1.0, polytropicFluidHead);
+          } else if (headReference != null) {
+            // At a specified pressure, matching head avoids a nested pressure solve at every speed trial.
+            headReference.setPolytropicEfficiency(polytropEff / 100.0);
+            currentResidual = -polytropicHeadResidual(headReference, targetPressure, polytropicFluidHead);
+            residualTolerance = 1.0e-8 * Math.max(1.0, polytropicFluidHead);
+          } else {
+            double currentPressure = thermoSystem.getPressure() * pressureRatio;
+            if (!Double.isFinite(currentPressure) || currentPressure <= 0.0) {
+              break;
+            }
+            currentResidual = currentPressure - targetPressure;
+          }
+          if (!Double.isFinite(currentResidual)) {
             break;
           }
-          double pressureError = Math.abs(currentPressure - targetPressure);
-          if (pressureError < bestPressureError) {
-            bestPressureError = pressureError;
+          double residualMagnitude = Math.abs(currentResidual);
+          if (residualMagnitude < bestResidualMagnitude) {
+            bestResidualMagnitude = residualMagnitude;
             bestSpeed = currentSpeed;
           }
 
           // Retain an accepted root before attempting another derivative or speed update.
-          if (pressureError <= tolerance) {
+          if (residualMagnitude <= residualTolerance) {
             break;
           }
 
-          // Calculate the derivative of pressure with respect to speed
+          // Differentiate the pressure or selected-method head residual with respect to speed
           double polytropEffDelta = applyInletGuideVaneEfficiency(
               getCompressorChart().getPolytropicEfficiency(actualFlowRate, currentSpeed + deltaSpeed));
           double polytropicHeadDelta = applyInletGuideVaneHead(
@@ -1618,32 +1670,43 @@ public class Compressor extends TwoPortEquipment
           double polytropicFluidHeadDelta = (getCompressorChart().getHeadUnit().equals("meter"))
               ? polytropicHeadDelta / 1000.0 * 9.81
               : polytropicHeadDelta;
+          if (!Double.isFinite(polytropicFluidHeadDelta) || polytropicFluidHeadDelta < 0.0
+              || !Double.isFinite(polytropEffDelta) || polytropEffDelta <= 0.0 || polytropEffDelta > 100.0) {
+            break;
+          }
           double pressureRatioDelta = Math.pow(
               (polytropicFluidHeadDelta * 1000.0
                   + (nDelta / (nDelta - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
                   / (nDelta / (nDelta - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW),
               nDelta / (nDelta - 1.0));
-          double pressureNew = thermoSystem.getPressure() * pressureRatioDelta;
+          double deltaResidual;
+          if (schultzHead != null) {
+            deltaResidual = polytropicFluidHeadDelta - schultzHead.applyAsDouble(polytropEffDelta / 100.0);
+          } else if (headReference != null) {
+            headReference.setPolytropicEfficiency(polytropEffDelta / 100.0);
+            deltaResidual = -polytropicHeadResidual(headReference, targetPressure, polytropicFluidHeadDelta);
+          } else {
+            deltaResidual = thermoSystem.getPressure() * pressureRatioDelta - targetPressure;
+          }
 
-          double dPressure_dSpeed = (pressureNew - currentPressure) / deltaSpeed;
-          if (!Double.isFinite(dPressure_dSpeed)) {
+          double dResidual_dSpeed = (deltaResidual - currentResidual) / deltaSpeed;
+          if (!Double.isFinite(dResidual_dSpeed)) {
             break;
           }
 
           // Handle case where derivative is too small or wrong sign
-          if (Math.abs(dPressure_dSpeed) < 1e-6) {
+          if (Math.abs(dResidual_dSpeed) < 1e-6) {
             // Derivative too small - use a reasonable default based on typical
             // compressor
             // behavior
-            // Pressure typically increases with speed, so assume positive
-            // relationship
-            dPressure_dSpeed = 0.01; // Approximate 0.01 bar per RPM
+            // Head and pressure normally increase with speed.
+            dResidual_dSpeed = 0.01;
           }
 
           // Update speed using Newton-Raphson method
           double relaxationFactor = Math.min(0.8, iteration / (iteration + 3.0));
 
-          double speedUpdate = (targetPressure - currentPressure) / dPressure_dSpeed;
+          double speedUpdate = -currentResidual / dResidual_dSpeed;
 
           // Limit speed update to avoid large oscillations
           double maxSpeedUpdate = Math.max(500.0, 0.2 * currentSpeed);
@@ -1734,7 +1797,7 @@ public class Compressor extends TwoPortEquipment
           polytropicHead = chartHead;
           double temperature_inlet = thermoSystem.getTemperature();
           double n = 1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEff / 100.0));
-          polytropicExponent = n;
+          polytropicExponent = usePolytropicCalc && !"ideal_inlet_properties".equals(polytropicMethod) ? 0.0 : n;
           if (getCompressorChart().getHeadUnit().equals("meter")) {
             polytropicFluidHead = polytropicHead / 1000.0 * 9.81;
             polytropicHeadMeter = polytropicHead;
@@ -1747,7 +1810,8 @@ public class Compressor extends TwoPortEquipment
                   + (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
                   / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW),
               n / (n - 1.0));
-          setOutletPressure(thermoSystem.getPressure() * pressureRatio);
+          setOutletPressure(chartPressureForHead(polytropicFluidHead, polytropEff / 100.0,
+              thermoSystem.getPressure() * pressureRatio), "bara");
           if (getAntiSurge().isActive()) {
             logger.info("surge flow " + getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead) + " m3/hr");
             surgeCheck = isSurge(polytropicHead, actualFlowRate);
@@ -1774,22 +1838,70 @@ public class Compressor extends TwoPortEquipment
     if (usePolytropicCalc)
 
     {
-      if (powerSet) {
+      double pressureRise = new neqsim.util.unit.PressureUnit(pressure, pressureUnit).getValue("bara") - presinn;
+      // The differential work avoids subtracting almost equal isentropic enthalpies.
+      // Scale by efficiency so that the associated temperature perturbation also remains small.
+      boolean differentialStep = pressureRise > 0.0 && pressureRise <= 1.0e-7 * presinn * polytropicEfficiency;
+      if (differentialStep) {
+        double differentialWork = powerSet ? dH
+            : thermoSystem.getFlowRate("kg/sec") * 1.0e5 * pressureRise / densInn / polytropicEfficiency;
+        double temperatureRise = differentialPolytropicTemperatureRise(pressureRise, differentialWork);
+        double relativeVolumeChange = Math
+            .abs((thermoSystem.getdVdPtn() * pressureRise + thermoSystem.getdVdTpn() * temperatureRise)
+                / thermoSystem.getVolume());
+        double head = differentialWork * polytropicEfficiency / thermoSystem.getFlowRate("kg/sec") / 1000.0;
+        // Reserve a decade below the head solve tolerance for the local first-order error.
+        differentialStep = Double.isFinite(temperatureRise) && Double.isFinite(relativeVolumeChange)
+            && 0.5 * Math.abs(head) * relativeVolumeChange <= 1.0e-9;
+        if (differentialStep) {
+          dH = differentialWork;
+          thermoSystem.setTemperature(thermoSystem.getTemperature() + temperatureRise);
+        }
+      }
+      if (powerSet || differentialStep) {
         double hout = hinn * (1 - 0 + fractionAntiSurge) + dH;
         thermoSystem.setPressure(pressure, pressureUnit);
         thermoOps = new ThermodynamicOperations(getThermoSystem());
-        runPHflashWithNaNRetry(thermoOps, hout);
-        if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-          thermoOps.PHflashGERG2008(hout);
-        }
-        if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-          thermoOps.PHflashLeachman(hout);
-        }
-        if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-          thermoOps.PHflashVega(hout);
+        if (differentialStep && inStream.getThermoSystem().getNumberOfPhases() == 1
+            && (useGERG2008 || useLeachman || useVega)) {
+          // Retain the differential seed on the selected enthalpy basis rather than first
+          // solving an unrelated cubic-EOS enthalpy target at an almost unchanged pressure.
+          if (useVega) {
+            thermoOps.PHflashVega(hout);
+          } else if (useLeachman) {
+            thermoOps.PHflashLeachman(hout);
+          } else {
+            thermoOps.PHflashGERG2008(hout);
+          }
+        } else {
+          runPHflashWithNaNRetry(thermoOps, hout);
+          if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+            thermoOps.PHflashGERG2008(hout);
+          }
+          if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+            thermoOps.PHflashLeachman(hout);
+          }
+          if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+            thermoOps.PHflashVega(hout);
+          }
         }
       } else {
-        if (polytropicMethod.equals("detailed")) {
+        if (polytropicMethod.equals("ideal_inlet_properties")) {
+          dH = idealInletPolytropicHead(getOutletPressure(), polytropicEfficiency) * 1000.0
+              * thermoSystem.getFlowRate("kg/sec") / polytropicEfficiency;
+          thermoSystem.setPressure(getOutletPressure(), pressureUnit);
+          double hout = hinn + dH;
+          runPHflashWithNaNRetry(thermoOps, hout);
+          if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+            thermoOps.PHflashGERG2008(hout);
+          }
+          if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+            thermoOps.PHflashLeachman(hout);
+          }
+          if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+            thermoOps.PHflashVega(hout);
+          }
+        } else if (polytropicMethod.equals("detailed")) {
           // TODO: add detailed output of compressor calculations
           int numbersteps = numberOfCompressorCalcSteps;
           double dp = (pressure - getThermoSystem().getPressure()) / (1.0 * numbersteps);
@@ -2033,6 +2145,226 @@ public class Compressor extends TwoPortEquipment
 
     // Evaluate capacity constraints after run and log warnings for violated constraints
     evaluateCapacityConstraints();
+  }
+
+  /**
+   * Seeds a very small compression step from the enthalpy differential. The subsequent selected-model PH flash still
+   * closes the outlet energy and phase equilibrium; the frozen-phase derivatives here are only an initial guess.
+   *
+   * @param pressureRise positive absolute pressure increment in bar
+   * @param power compression duty in W
+   * @return initial temperature increment in K
+   */
+  private double differentialPolytropicTemperatureRise(double pressureRise, double power) {
+    double temperatureRise = (power
+        + pressureRise * (thermoSystem.getTemperature() * thermoSystem.getdVdTpn() - thermoSystem.getVolume()))
+        / thermoSystem.getCp();
+    if (inStream.getThermoSystem().getNumberOfPhases() == 1) {
+      double[] properties = null;
+      if (useGERG2008) {
+        properties = thermoSystem.getPhase(0).getProperties_GERG2008();
+      }
+      if (useLeachman) {
+        properties = thermoSystem.getPhase(0).getProperties_Leachman();
+      }
+      if (useVega) {
+        properties = thermoSystem.getPhase(0).getProperties_Vega();
+      }
+      if (properties != null) {
+        double heatCapacity = properties[10] * thermoSystem.getPhase(0).getNumberOfMolesInPhase();
+        temperatureRise = power / heatCapacity + 100.0 * properties[13] * pressureRise;
+      }
+    }
+    return temperatureRise;
+  }
+
+  /**
+   * Inverts the selected chart-free polytropic calculation without changing the live inlet or chart. The historical
+   * inlet-property pressure is only an initial bracket estimate. The same forward calculation therefore defines chart
+   * head, power and discharge temperature.
+   *
+   * @param head chart head in kJ/kg
+   * @param efficiency chart efficiency as a fraction
+   * @param idealPressure inlet-property pressure estimate in bara
+   * @return outlet pressure in bara
+   * @throws IllegalStateException if no finite, converged head-pressure relation is found
+   */
+  private double chartPressureForHead(double head, double efficiency, double idealPressure) {
+    if (!usePolytropicCalc || "ideal_inlet_properties".equals(polytropicMethod)) {
+      return idealPressure;
+    }
+    if (!Double.isFinite(head) || head < 0.0 || !Double.isFinite(efficiency) || efficiency <= 0.0 || efficiency > 1.0) {
+      return Double.NaN;
+    }
+    double inletPressure = thermoSystem.getPressure("bara");
+    if (head == 0.0) {
+      return inletPressure;
+    }
+    Compressor reference = createPolytropicReference();
+    reference.setPolytropicEfficiency(efficiency);
+    double lower = 0.0;
+    double lowerResidual = -head;
+    double upper = Double.isFinite(idealPressure) && idealPressure > inletPressure
+        ? Math.log(idealPressure / inletPressure)
+        : Math.log(2.0);
+    double tolerance = 1.0e-8 * Math.max(1.0, head);
+    double upperResidual = polytropicHeadResidual(reference, inletPressure * Math.exp(upper), head);
+    for (int expansion = 0; upperResidual < 0.0 && expansion < 12; expansion++) {
+      lower = upper;
+      lowerResidual = upperResidual;
+      upper *= 2.0;
+      upperResidual = polytropicHeadResidual(reference, inletPressure * Math.exp(upper), head);
+    }
+    if (Math.abs(upperResidual) <= tolerance) {
+      return inletPressure * Math.exp(upper);
+    }
+    if (upperResidual < 0.0) {
+      throw new IllegalStateException("Cannot bracket compressor chart head for " + getName());
+    }
+    for (int iteration = 0; iteration < 72; iteration++) {
+      // Interpolate within the bracket to avoid repeated expensive caloric flashes.
+      // Periodic bisection prevents false-position stagnation on strongly curved residuals.
+      // Retain the full sixty-step bisection budget after twelve accelerated trials.
+      double trial = upper - upperResidual * (upper - lower) / (upperResidual - lowerResidual);
+      if (iteration >= 12 || !Double.isFinite(trial) || trial <= lower || trial >= upper || iteration % 5 == 4) {
+        trial = 0.5 * (lower + upper);
+      }
+      double trialPressure = inletPressure * Math.exp(trial);
+      double residual = polytropicHeadResidual(reference, trialPressure, head);
+      if (Math.abs(residual) <= tolerance) {
+        return trialPressure;
+      }
+      if (residual < 0.0) {
+        lower = trial;
+        lowerResidual = residual;
+      } else {
+        upper = trial;
+        upperResidual = residual;
+      }
+    }
+    throw new IllegalStateException("Compressor chart head-pressure solve did not converge for " + getName());
+  }
+
+  /**
+   * Creates an isolated chart-free evaluator with this compressor's polytropic and property models.
+   *
+   * @return pressure-specified polytropic reference compressor
+   */
+  private Compressor createPolytropicReference() {
+    Stream referenceInlet = new Stream(getName() + " polytropic reference inlet", thermoSystem.clone());
+    Compressor reference = new Compressor(getName() + " polytropic reference", referenceInlet);
+    reference.setUsePolytropicCalc(true);
+    reference.setPolytropicMethod(polytropicMethod);
+    reference.setNumberOfCompressorCalcSteps(numberOfCompressorCalcSteps);
+    reference.setUseGERG2008(useGERG2008);
+    reference.setUseLeachman(useLeachman);
+    reference.setUseVega(useVega);
+    return reference;
+  }
+
+  /**
+   * Builds the Schultz head relation for a fixed discharge pressure. The isentropic endpoint does not depend on
+   * polytropic efficiency, so one pressure-entropy flash supplies every efficiency trial in a speed solve. The accepted
+   * speed is still replayed through the complete chart calculation.
+   *
+   * @param outletPressure requested absolute discharge pressure in bara
+   * @param entropy selected-model inlet entropy in J/K
+   * @param inletDensity selected-model inlet density in kg/m3
+   * @return polytropic head in kJ/kg as a function of fractional efficiency
+   */
+  private DoubleUnaryOperator createSchultzHeadFunction(double outletPressure, double entropy, double inletDensity) {
+    double inletPressure = thermoSystem.getPressure("bara");
+    double schultzX = thermoSystem.getTemperature() / thermoSystem.getVolume() * thermoSystem.getdVdTpn() - 1.0;
+    double schultzY = -inletPressure / thermoSystem.getVolume() * thermoSystem.getdVdPtn();
+    Compressor reference = createPolytropicReference();
+    reference.thermoSystem = reference.inStream.getThermoSystem().clone();
+    reference.thermoSystem.setPressure(outletPressure, "bara");
+    reference.runPsFlashForSelectedModel(new ThermodynamicOperations(reference.thermoSystem), entropy);
+    reference.thermoSystem.initProperties();
+    double isentropicDensity = reference.thermoSystem.getDensity("kg/m3");
+    double isentropicEnthalpy = reference.thermoSystem.getEnthalpy();
+    if (inStream.getThermoSystem().getNumberOfPhases() == 1) {
+      if (useGERG2008) {
+        double[] properties = reference.thermoSystem.getPhase(0).getProperties_GERG2008();
+        isentropicDensity = reference.thermoSystem.getPhase(0).getDensity_GERG2008();
+        isentropicEnthalpy = properties[7] * reference.thermoSystem.getPhase(0).getNumberOfMolesInPhase();
+      }
+      if (useLeachman) {
+        double[] properties = reference.thermoSystem.getPhase(0).getProperties_Leachman();
+        isentropicDensity = reference.thermoSystem.getPhase(0).getDensity_Leachman();
+        isentropicEnthalpy = properties[7] * reference.thermoSystem.getPhase(0).getNumberOfMolesInPhase();
+      }
+      if (useVega) {
+        double[] properties = reference.thermoSystem.getPhase(0).getProperties_Vega();
+        isentropicDensity = reference.thermoSystem.getPhase(0).getDensity_Vega();
+        isentropicEnthalpy = properties[7] * reference.thermoSystem.getPhase(0).getNumberOfMolesInPhase();
+      }
+    }
+    double pressureRatio = outletPressure / inletPressure;
+    double isentropicExponent = Math.log(pressureRatio) / Math.log(isentropicDensity / inletDensity);
+    double correctionFactor = (isentropicEnthalpy - inletEnthalpy)
+        / (1.0e5 * (outletPressure / isentropicDensity - inletPressure / inletDensity) * isentropicExponent
+            / (isentropicExponent - 1.0));
+    double headFactor = correctionFactor * 1.0e5 * inletPressure / inletDensity / thermoSystem.getFlowRate("kg/sec")
+        / 1000.0;
+    return efficiency -> {
+      double inverseEfficiency = 1.0 / efficiency;
+      double exponent = (1.0 + schultzX)
+          / ((inverseEfficiency + schultzX) / isentropicExponent - schultzY * (inverseEfficiency - 1.0));
+      double term = exponent / (exponent - 1.0);
+      return term * headFactor * (Math.pow(pressureRatio, 1.0 / term) - 1.0);
+    };
+  }
+
+  /**
+   * Evaluates a chart-free head residual using the selected thermodynamic model.
+   *
+   * @param reference isolated pressure-specified compressor
+   * @param outletPressure trial absolute pressure in bara
+   * @param head target head in kJ/kg
+   * @return calculated minus target head in kJ/kg
+   * @throws IllegalStateException if the forward calculation is non-finite
+   */
+  private double polytropicHeadResidual(Compressor reference, double outletPressure, double head) {
+    reference.setOutletPressure(outletPressure, "bara");
+    reference.run();
+    double residual = reference.getPolytropicHead("kJ/kg") - head;
+    if (!Double.isFinite(residual)) {
+      throw new IllegalStateException("Non-finite compressor chart head for " + getName());
+    }
+    return residual;
+  }
+
+  /**
+   * Calculates the historical constant-inlet-property polytropic head explicitly.
+   *
+   * @param outletPressure discharge pressure in the configured pressure unit
+   * @param efficiency polytropic efficiency as a fraction
+   * @return head in kJ/kg
+   */
+  private double idealInletPolytropicHead(double outletPressure, double efficiency) {
+    double z = thermoSystem.getZ();
+    double kappa = compressorChart.useRealKappa() ? thermoSystem.getGamma() : thermoSystem.getGamma2();
+    if (inStream.getThermoSystem().getNumberOfPhases() == 1) {
+      double[] properties = null;
+      if (useGERG2008) {
+        properties = thermoSystem.getPhase(0).getProperties_GERG2008();
+      } else if (useLeachman) {
+        properties = thermoSystem.getPhase(0).getProperties_Leachman();
+      } else if (useVega) {
+        properties = thermoSystem.getPhase(0).getProperties_Vega();
+      }
+      if (properties != null) {
+        z = properties[1];
+        kappa = properties[14];
+      }
+    }
+    double exponent = (kappa - 1.0) / kappa / efficiency;
+    double absolutePressure = new neqsim.util.unit.PressureUnit(outletPressure, pressureUnit).getValue("bara");
+    double logRatio = Math.log(absolutePressure / thermoSystem.getPressure("bara"));
+    double integral = Math.abs(exponent) < 1.0e-12 ? logRatio : Math.expm1(exponent * logRatio) / exponent;
+    return z * ThermodynamicConstantsInterface.R * thermoSystem.getTemperature() / thermoSystem.getMolarMass()
+        * integral / 1000.0;
   }
 
   /**
@@ -3905,9 +4237,12 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * Setter for the field <code>polytropicMethod</code>.
+   * Selects the polytropic method used for pressure-specified and chart calculations. Chart head is inverted on this
+   * same basis. The default is {@code schultz}; {@code detailed} integrates in pressure steps. Select
+   * {@code ideal_inlet_properties} to reproduce the historical chart pressure relation using constant inlet
+   * compressibility and heat-capacity ratio.
    *
-   * @param polytropicMethod a {@link java.lang.String} object
+   * @param polytropicMethod selected method name
    */
   public void setPolytropicMethod(String polytropicMethod) {
     this.polytropicMethod = polytropicMethod;

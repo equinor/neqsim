@@ -44,6 +44,8 @@ public class CompressorChartTest {
     Stream stream_1 = new Stream("Stream1", testFluid);
     comp1 = new Compressor("cmp1", stream_1);
     comp1.setUsePolytropicCalc(true);
+    // Preserve the inlet-property basis of the historical chart regression values.
+    comp1.setPolytropicMethod("ideal_inlet_properties");
     // comp1.getAntiSurge().setActive(true);
     comp1.setSpeed(11918);
 
@@ -231,6 +233,8 @@ public class CompressorChartTest {
     Compressor comp1 = new Compressor("compressor 1", stream_1);
     comp1.setCompressorChartType("interpolate and extrapolate");
     comp1.setUsePolytropicCalc(true);
+    // Preserve the inlet-property basis of the historical chart regression values.
+    comp1.setPolytropicMethod("ideal_inlet_properties");
     comp1.setSpeed(8765);
     comp1.setUseGERG2008(false);
 
@@ -319,6 +323,8 @@ public class CompressorChartTest {
     Compressor comp1 = new Compressor("compressor 1", stream_1);
     comp1.setCompressorChartType("interpolate and extrapolate");
     comp1.setUsePolytropicCalc(true);
+    // Preserve the inlet-property basis of the historical chart regression values.
+    comp1.setPolytropicMethod("ideal_inlet_properties");
     comp1.setPolytropicEfficiency(0.85);
     comp1.setSpeed(9000);
     double[] chartConditions = new double[] {0.3, 1.0, 1.0, 1.0};
@@ -412,6 +418,8 @@ public class CompressorChartTest {
     Compressor comp1 = new Compressor("compressor 1", stream_1);
     // comp1.setCompressorChartType("interpolate and extrapolate");
     comp1.setUsePolytropicCalc(true);
+    // Preserve the inlet-property basis of the historical chart regression values.
+    comp1.setPolytropicMethod("ideal_inlet_properties");
     comp1.setPolytropicEfficiency(0.85);
     comp1.setSpeed(9000);
     double[] chartConditions = new double[] {0.3, 1.0, 1.0, 1.0};

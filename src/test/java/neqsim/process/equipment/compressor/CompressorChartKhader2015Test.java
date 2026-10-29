@@ -37,6 +37,8 @@ public class CompressorChartKhader2015Test {
     stream_1.run();
     Compressor comp1 = new Compressor("cmp1", stream_1);
     comp1.setUsePolytropicCalc(true);
+    // Preserve the inlet-property basis of the historical chart regression values.
+    comp1.setPolytropicMethod("ideal_inlet_properties");
     double compspeed = 10000;
     comp1.setSpeed(compspeed);
 
@@ -298,6 +300,8 @@ public class CompressorChartKhader2015Test {
     stream_1.run();
     Compressor comp1 = new Compressor("cmp1", stream_1);
     comp1.setUsePolytropicCalc(true);
+    // Preserve the inlet-property basis of the historical chart regression values.
+    comp1.setPolytropicMethod("ideal_inlet_properties");
     double compspeed = 12913; // IMPORTANT: Match the single speed curve!
     comp1.setSpeed(compspeed);
 
