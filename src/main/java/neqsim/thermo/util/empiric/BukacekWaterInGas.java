@@ -57,6 +57,20 @@ public class BukacekWaterInGas {
       newppm = getWaterInGas(newTemp, pressure);
       newTemp -= (newppm - moleFractionWaterInGas) * 1e5;
     } while (Math.abs((newppm - moleFractionWaterInGas) / moleFractionWaterInGas) > 1e-8 && iter < 1000);
+    if (iter >= 1000 || !Double.isFinite(newTemp) || newTemp < 150.0 || newTemp > 500.0) {
+      // the fixed-step iteration does not converge for wet gas or low pressure: fall back to bisection
+      double lo = 150.0;
+      double hi = 500.0;
+      for (int i = 0; i < 200; i++) {
+        double mid = 0.5 * (lo + hi);
+        if (getWaterInGas(mid, pressure) > moleFractionWaterInGas) {
+          hi = mid;
+        } else {
+          lo = mid;
+        }
+      }
+      newTemp = 0.5 * (lo + hi);
+    }
     return newTemp;
   }
 

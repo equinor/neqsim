@@ -1258,7 +1258,7 @@ PAPER_SECTIONS = {
 # ── Task-local overrides ─────────────────────────────────
 # Hand-written report content lives in step3_report/report_sections.json, not
 # in a forked copy of this script. Keys: title, author, classification,
-# doc_number, revision, manual_sections, appendix_sections, paper_sections, paper_* metadata.
+# doc_number, revision, manual_sections, body_sections, appendix_sections, paper_sections, paper_* metadata.
 REPORT_SECTIONS_FILE = os.path.join(TASK_REPORT_DIR, "report_sections.json")
 
 
@@ -6795,6 +6795,18 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
             "has_risk": True,
         })
         next_section_num += 1
+
+    # Hand-written body chapters (report_sections.json "body_sections": [{"title", "content"}]) are placed after the
+    # results chapters and before the assumptions/gaps chapter, e.g. a dedicated chapter for an added study scope.
+    for _authored in (REPORT_SECTIONS.get("body_sections") or []):
+        if isinstance(_authored, dict) and str(_authored.get("title", "")).strip() and str(
+                _authored.get("content", "")).strip():
+            sections.append({
+                "heading": "{}. {}".format(next_section_num, str(_authored["title"]).strip()),
+                "content": str(_authored["content"]),
+                "has_markdown": True,
+            })
+            next_section_num += 1
 
     assumptions_text = format_assumptions_text(results)
     if assumptions_text:

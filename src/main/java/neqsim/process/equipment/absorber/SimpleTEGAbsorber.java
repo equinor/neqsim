@@ -53,6 +53,12 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   private boolean isSetWaterInDryGas = false;
   private double waterInDryGas = 30e-6;
   private static final double COMPONENT_INVENTORY_RELATIVE_TOLERANCE = 1.0e-10;
+  /** Minimum TEG weight fraction for the absorber liquid phase to be treated as glycol-rich. */
+  public static final double GLYCOL_RICH_TEG_WEIGHT_FRACTION = 0.5;
+  /** Kremser absorption factor A = L / (K_water G) of the last run. */
+  private double absorptionFactor = 0.0;
+  /** TEG weight fraction of the equilibrium liquid phase used for the water K-value in the last run. */
+  private double equilibriumLiquidTEGWeightFraction = Double.NaN;
 
   /** Raised when an absorber operation changes the conserved component inventory. */
   private static final class ComponentInventoryException extends IllegalStateException {
@@ -338,6 +344,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   public double calcEa() {
     double A = mixedStream.getThermoSystem().getPhase(1).getNumberOfMolesInPhase()
         / mixedStream.getThermoSystem().getPhase(0).getNumberOfMolesInPhase() / kwater;
+    absorptionFactor = A;
     absorptionEfficiency = (Math.pow(A, getNumberOfTheoreticalStages() + 1) - A)
         / (Math.pow(A, getNumberOfTheoreticalStages() + 1) - 1.0);
     return absorptionEfficiency;
@@ -410,6 +417,15 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
       feedInventory.requireActivePhaseSum(mixedStream.getThermoSystem(), "PH flash phase recombination");
 
       double xWaterLiquid = mixedStream.getThermoSystem().getPhase(1).getComponent("water").getx();
+      equilibriumLiquidTEGWeightFraction = tegWeightFraction(mixedStream.getThermoSystem().getPhase(1));
+      if (!Double.isNaN(equilibriumLiquidTEGWeightFraction)
+          && equilibriumLiquidTEGWeightFraction < GLYCOL_RICH_TEG_WEIGHT_FRACTION) {
+        logger.warn(
+            "SimpleTEGAbsorber '{}': the liquid phase used for the water K-value is not glycol-rich "
+                + "(TEG weight fraction {}). Condensed hydrocarbon is lumped with the glycol, which overstates "
+                + "K_water and understates water absorption. Check the gas/TEG ratio or remove condensate upstream.",
+            getName(), String.format("%.3f", equilibriumLiquidTEGWeightFraction));
+      }
       if (xWaterLiquid > 1.0e-10) {
         kwater = mixedStream.getThermoSystem().getPhase(0).getComponent("water").getx() / xWaterLiquid;
       } else {
@@ -857,7 +873,70 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     return sb.toString();
   }
 
+  /**
+   * Returns the water K-value (y/x) used by the Kremser calculation in the last run.
+   *
+   * @return water K-value (-)
+   */
   public double getKwater() {
     return kwater;
+  }
+
+  /**
+   * Returns the Kremser absorption factor A = L / (K_water G) of the last run.
+   *
+   * <p>
+   * Values close to or below 1 mean the glycol circulation cannot absorb the water load in the available theoretical
+   * stages; the absorption efficiency then falls steeply.
+   * </p>
+   *
+   * @return absorption factor (-), 0 before the first run
+   */
+  public double getAbsorptionFactor() {
+    return absorptionFactor;
+  }
+
+  /**
+   * Returns the TEG weight fraction of the equilibrium liquid phase that set the water K-value in the last run.
+   *
+   * @return TEG weight fraction (0-1), or NaN when the fluid has no TEG component or the absorber has not run
+   */
+  public double getEquilibriumLiquidTEGWeightFraction() {
+    return equilibriumLiquidTEGWeightFraction;
+  }
+
+  /**
+   * Checks whether the liquid phase used for the water K-value in the last run was glycol-rich.
+   *
+   * <p>
+   * The absorber flashes the mixed gas and solvent as two phases. When hydrocarbon condensate forms (high gas to glycol
+   * ratio, cold contactor, rich gas), the liquid phase can become hydrocarbon-dominated. The water K-value then rises
+   * by several times and the calculated dew point jumps although the glycol itself is unchanged. Results with this
+   * method returning false should not be used for dew point predictions.
+   * </p>
+   *
+   * @return true when the TEG weight fraction is at least {@link #GLYCOL_RICH_TEG_WEIGHT_FRACTION} (or no TEG is
+   * present to check)
+   */
+  public boolean isEquilibriumLiquidGlycolRich() {
+    return Double.isNaN(equilibriumLiquidTEGWeightFraction)
+        || equilibriumLiquidTEGWeightFraction >= GLYCOL_RICH_TEG_WEIGHT_FRACTION;
+  }
+
+  /**
+   * TEG weight fraction of a phase.
+   *
+   * @param phase the phase to evaluate
+   * @return TEG weight fraction (0-1), or NaN when the phase has no TEG component
+   */
+  private static double tegWeightFraction(PhaseInterface phase) {
+    if (!phase.hasComponent("TEG")) {
+      return Double.NaN;
+    }
+    try {
+      return phase.getWtFrac("TEG");
+    } catch (Exception ex) {
+      return Double.NaN;
+    }
   }
 }
