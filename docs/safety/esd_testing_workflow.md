@@ -103,6 +103,13 @@ The JSON report includes:
 
 ## Related Documentation
 
+For Safety Shutdown pressure-wave studies, use the separately verified single-line
+`WaterHammerPipe` kernel and its independent receiver-pressure input. Resolve acoustic travel
+and valve motion on their physical timescales; a process-level test timestep alone does not
+qualify pressure-surge timing. See the [water-hammer guide](../wiki/water_hammer_implementation.md)
+for the executable analytical checks and current single-phase, reverse-flow and coupling limits.
+The test runner does not automatically couple a pump or check-valve disc to an acoustic boundary.
+
 - [ESD Blowdown System](ESD_BLOWDOWN_SYSTEM.md)
 - [Pressure Monitoring ESD](PRESSURE_MONITORING_ESD.md)
 - [Barrier Management](barrier_management.md)

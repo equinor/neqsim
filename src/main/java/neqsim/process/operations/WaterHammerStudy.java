@@ -85,6 +85,9 @@ public final class WaterHammerStudy {
     double initialVelocity = last(pipe.getVelocityProfile());
     double stableTimeStep = pipe.getMaxStableTimeStep();
     double requestedTimeStep = getDoubleAny(input, stableTimeStep, "timeStep_s", "dt_s");
+    if (!Double.isFinite(requestedTimeStep) || requestedTimeStep <= 0.0) {
+      throw new IllegalArgumentException("timeStep_s must be finite and positive");
+    }
     double timeStep = Math.min(requestedTimeStep, stableTimeStep);
     if (requestedTimeStep > stableTimeStep) {
       warnings.add("Requested time step exceeded the Courant limit and was reduced to " + stableTimeStep + " s");
@@ -92,6 +95,9 @@ public final class WaterHammerStudy {
 
     double defaultDuration = Math.max(pipe.getWaveRoundTripTime() * 3.0, getDefaultClosureDuration(input) * 4.0);
     double simulationTime = getDoubleAny(input, defaultDuration, "simulationTime_s", "duration_s");
+    if (!Double.isFinite(simulationTime) || simulationTime <= 0.0) {
+      throw new IllegalArgumentException("simulationTime_s must be finite and positive");
+    }
     int numberOfSteps = (int) Math.ceil(simulationTime / timeStep);
     if (numberOfSteps > MAX_TIME_STEPS) {
       numberOfSteps = MAX_TIME_STEPS;
@@ -107,9 +113,10 @@ public final class WaterHammerStudy {
         pipe.getValveOpening());
 
     for (int step = 1; step <= numberOfSteps; step++) {
-      double time = step * timeStep;
+      double previousTime = (step - 1) * timeStep;
+      double time = Math.min(step * timeStep, simulationTime);
       applyValveEvents(pipe, events, time);
-      pipe.runTransient(timeStep, id);
+      pipe.runTransient(time - previousTime, id);
       if (step % sampleInterval == 0 || step == numberOfSteps) {
         addSample(sampledTime, sampledOutletPressure, sampledValveOpening, time, last(pipe.getPressureProfile("bar")),
             pipe.getValveOpening());
@@ -218,6 +225,8 @@ public final class WaterHammerStudy {
     }
     pipe.setUpstreamBoundary(getString(input, "upstreamBoundary", "RESERVOIR"));
     pipe.setDownstreamBoundary(getString(input, "downstreamBoundary", "VALVE"));
+    pipe.setValveBackPressure(
+        getDoubleAny(fieldData, getDoubleAny(input, 1.0, "valveBackPressure_bara"), "valveBackPressure_bara"));
     pipe.setValveOpening(getDoubleAny(fieldData, getDoubleAny(input, 1.0, "valveOpening", "initialValveOpening"),
         "valveOpening", "initialValveOpening"));
     return pipe;
@@ -361,7 +370,7 @@ public final class WaterHammerStudy {
       JsonObject event = element.getAsJsonObject();
       String type = getString(event, "type", "VALVE_CLOSURE").toUpperCase(Locale.ROOT);
       if (!type.contains("VALVE")) {
-        continue;
+        throw new IllegalArgumentException("Unsupported acoustic event: " + type);
       }
       double startTime = getDoubleAny(event, 0.0, "startTime_s", "time_s");
       double duration = Math.max(1.0e-12, getDoubleAny(event, 0.0, "duration_s"));
@@ -420,6 +429,7 @@ public final class WaterHammerStudy {
     summary.addProperty("numberOfNodes", pipe.getNumberOfNodes());
     summary.addProperty("upstreamBoundary", pipe.getUpstreamBoundaryName());
     summary.addProperty("downstreamBoundary", pipe.getDownstreamBoundaryName());
+    summary.addProperty("valveBackPressure_bara", pipe.getValveBackPressure());
     summary.add("events", getEventSchedule(input, pipe.getValveOpening()));
     return summary;
   }
