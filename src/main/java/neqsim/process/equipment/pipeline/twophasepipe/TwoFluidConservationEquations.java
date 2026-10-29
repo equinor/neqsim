@@ -1227,6 +1227,13 @@ public class TwoFluidConservationEquations implements Serializable {
         outletFlux);
     lastEnergyFaceFluxes = populateEnergyFaceFluxes(lastEnergyFaceFluxes, nCells, fluxes, inletFlux, outletFlux);
 
+    boolean separatePressure = consistentPhasePressureEnabled || enableInterfacialPressure;
+    TwoFluidSection inletBoundary = inletFaceState(sections[0]);
+    double[] inletVelocity = {inletBoundary.getGasVelocity(), inletBoundary.getOilVelocity(),
+        inletBoundary.getWaterVelocity()};
+    double[] outletVelocity = {outletBoundary.getGasVelocity(), outletBoundary.getOilVelocity(),
+        outletBoundary.getWaterVelocity()};
+
     // Assemble RHS: dU/dt = -1/dx_i * (F_{i+1/2} - F_{i-1/2}) + S_i
     //
     // Boundary treatment:
@@ -1260,11 +1267,20 @@ public class TwoFluidConservationEquations implements Serializable {
       double secDx = sections[i].getLength();
 
       for (int j = 0; j < NUM_EQUATIONS; j++) {
-        dUdt[i][j] = -1.0 / secDx * (fluxRight[j] - fluxLeft[j]) + sources[i][j];
+        if (separatePressure && j >= IDX_GAS_MOMENTUM && j <= IDX_WATER_MOMENTUM) {
+          int phase = j - IDX_GAS_MOMENTUM;
+          double left = i == 0 ? (inletFlux[phase] == 0.0 ? 0.0 : inletFlux[phase] * inletVelocity[phase])
+              : lastDirectionalPhaseFaceFluxes[i - 1][phase].getAdvectiveMomentumN();
+          double right = i == nCells - 1 ? (outletFlux[phase] == 0.0 ? 0.0 : outletFlux[phase] * outletVelocity[phase])
+              : lastDirectionalPhaseFaceFluxes[i][phase].getAdvectiveMomentumN();
+          dUdt[i][j] = -(right - left) / secDx + sources[i][j];
+        } else {
+          dUdt[i][j] = -1.0 / secDx * (fluxRight[j] - fluxLeft[j]) + sources[i][j];
+        }
       }
     }
 
-    applyInterfacialPressure(sections, dUdt);
+    applyInterfacialPressure(sections, dUdt, !separatePressure);
     applyVirtualMassCoupling(sections, dUdt);
     applySteadyMomentumCorrection(sections, dUdt);
 
@@ -1742,6 +1758,8 @@ public class TwoFluidConservationEquations implements Serializable {
       outletBackflowClamped = true;
     }
 
+    // The external donor owns advection only. Pressure traction uses the same interior/reconstructed
+    // phase fractions as applyInterfacialPressure, including absent and trace phases.
     // Gas flux (positive velocity means outflow) - use default density if not set
     double vG = allowOutletPhaseBackflow ? sec.getGasVelocity() : Math.max(0.0, sec.getGasVelocity());
     TwoFluidSection gasDonor = outletDonor(sec, vG);
@@ -1750,7 +1768,8 @@ public class TwoFluidConservationEquations implements Serializable {
       rhoG = 1.0; // Default gas density
     double alphaG = gasDonor.getGasHoldup();
     flux[IDX_GAS_MASS] = alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * A;
-    flux[IDX_GAS_MOMENTUM] = alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * vG * A + alphaG * facePressure * A;
+    flux[IDX_GAS_MOMENTUM] = (alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * vG * A)
+        + sec.getGasHoldup() * facePressure * A;
 
     // Oil flux - use default density if not set
     double vO = allowOutletPhaseBackflow ? sec.getOilVelocity() : Math.max(0.0, sec.getOilVelocity());
@@ -1761,7 +1780,8 @@ public class TwoFluidConservationEquations implements Serializable {
     // Recover oil and water independently; subtracting gas holdup would erase positive trace liquid.
     double alphaO = oilDonor.getOilHoldup();
     flux[IDX_OIL_MASS] = alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * A;
-    flux[IDX_OIL_MOMENTUM] = alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * vO * A + alphaO * facePressure * A;
+    flux[IDX_OIL_MOMENTUM] = (alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * vO * A)
+        + sec.getOilHoldup() * facePressure * A;
 
     // Water flux - use default density if not set
     double vW = allowOutletPhaseBackflow ? sec.getWaterVelocity() : Math.max(0.0, sec.getWaterVelocity());
@@ -1771,7 +1791,8 @@ public class TwoFluidConservationEquations implements Serializable {
       rhoW = 1000.0; // Default water density
     double alphaW = waterDonor.getWaterHoldup();
     flux[IDX_WATER_MASS] = alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * A;
-    flux[IDX_WATER_MOMENTUM] = alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * vW * A + alphaW * facePressure * A;
+    flux[IDX_WATER_MOMENTUM] = (alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * vW * A)
+        + sec.getWaterHoldup() * facePressure * A;
 
     // Energy flux
     if (includeEnergyEquation) {
@@ -2146,12 +2167,10 @@ public class TwoFluidConservationEquations implements Serializable {
       PhaseState oilR = createLiquidPhaseState(right, false);
       PhaseState waterL = createLiquidPhaseState(left, true);
       PhaseState waterR = createLiquidPhaseState(right, true);
-      lastDirectionalPhaseFaceFluxes[i][1] = directionalFlux(fluxes[i][IDX_OIL_MASS],
-          fluxes[i][IDX_OIL_MOMENTUM] - upwindOilFrac * liquidPressureFlux, upwindOilFrac * liquidPressureFlux, oilL,
-          oilR, A);
-      lastDirectionalPhaseFaceFluxes[i][2] = directionalFlux(fluxes[i][IDX_WATER_MASS],
-          fluxes[i][IDX_WATER_MOMENTUM] - upwindWaterCut * liquidPressureFlux, upwindWaterCut * liquidPressureFlux,
-          waterL, waterR, A);
+      lastDirectionalPhaseFaceFluxes[i][1] = directionalFlux(fluxes[i][IDX_OIL_MASS], fluxes[i][IDX_OIL_MASS] * vO,
+          upwindOilFrac * liquidPressureFlux, oilL, oilR, A);
+      lastDirectionalPhaseFaceFluxes[i][2] = directionalFlux(fluxes[i][IDX_WATER_MASS], fluxes[i][IDX_WATER_MASS] * vW,
+          upwindWaterCut * liquidPressureFlux, waterL, waterR, A);
 
       if (includeEnergyEquation) {
         fluxes[i][IDX_ENERGY] = gasFlux.energyFlux + liqFlux.energyFlux;
@@ -2165,7 +2184,9 @@ public class TwoFluidConservationEquations implements Serializable {
   private static DirectionalPhaseFaceFlux directionalFlux(PhaseFlux flux, PhaseState left, PhaseState right,
       double area) {
     double pressureTraction = flux.interfaceHoldup * flux.interfacePressure * area;
-    return directionalFlux(flux.massFlux, flux.momentumFlux - pressureTraction, pressureTraction, left, right, area);
+    double donorVelocity = flux.massFlux >= 0.0 ? left.velocity : right.velocity;
+    return directionalFlux(flux.massFlux, flux.massFlux == 0.0 ? 0.0 : flux.massFlux * donorVelocity, pressureTraction,
+        left, right, area);
   }
 
   /** Build the immutable donor ledger from explicit signed transport. */
@@ -2682,6 +2703,17 @@ public class TwoFluidConservationEquations implements Serializable {
    * @param dUdt complete uncoupled conservative-variable rates, modified in place
    */
   void applyInterfacialPressure(TwoFluidSection[] sections, double[][] dUdt) {
+    applyInterfacialPressure(sections, dUdt, true);
+  }
+
+  /**
+   * Apply pressure forces consistently with full or separately assembled advective momentum fluxes.
+   *
+   * @param sections current stage state
+   * @param dUdt conservative-variable rates, modified in place
+   * @param fluxContainsPressure whether the incoming momentum divergence already includes pressure traction
+   */
+  private void applyInterfacialPressure(TwoFluidSection[] sections, double[][] dUdt, boolean fluxContainsPressure) {
     int nCells = sections.length;
     if (nCells == 0 || interfaceGasHoldup.length != nCells - 1) {
       return;
@@ -2721,7 +2753,10 @@ public class TwoFluidConservationEquations implements Serializable {
         if (consistentPhasePressureEnabled || enableInterfacialPressure) {
           double spurious = alphaRight * phasePRight - alphaLeft * phasePLeft - cellHoldups[phase] * dp;
           double stabilizer = implicitInterfacialPressure ? 0.0 : deltaPi * (alphaRight - alphaLeft);
-          pressureSource += (spurious - stabilizer) * area;
+          // Assemble the surviving pressure force directly when advection was kept separate.
+          // Cancelling large face tractions after adding tiny advective momentum loses trace-phase inertia.
+          pressureSource = fluxContainsPressure ? pressureSource + (spurious - stabilizer) * area
+              : (-cellHoldups[phase] * dp - stabilizer) * area;
         }
         dUdt[i][IDX_GAS_MOMENTUM + phase] += pressureSource / secDx;
       }

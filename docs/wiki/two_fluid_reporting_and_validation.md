@@ -152,6 +152,12 @@ legacy momentum-consistency calibration, not just during time-integration stages
 against an extrapolated pressure and then stepping against a prescribed pressure creates an
 artificial outlet acceleration with unchanged boundaries.
 
+For explicitly enabled reversed outlet flow, the external thermodynamic donor supplies
+advected phase mass, composition and enthalpy. Pressure traction uses the pipe-side phase
+fractions, consistently with the phase-pressure source. Substituting a different donor's
+fractions into that force creates an artificial momentum impulse at flow reversal,
+especially when a phase in the pipe is absent or present only as a trace.
+
 `setLiquidHoldupMultiplier(...)` changes the **steady** closure. It does not multiply the
 holdup recovered from transient conserved phase masses. Likewise,
 `setSteadyConsistentTransient(true)` balances the initial legacy momentum residual, not the
@@ -407,7 +413,16 @@ corrections. This is a narrower result than steady-to-transient consistency: the
 1800-second fixed-point test still exceeds its original 5% inventory-drift limit.
 
 The coupled solver applies donor-bounded phase transfers and a common damping factor for pressure
-corrections. Its positive numerical pressure bound is configurable in Pa and defaults to 1 Pa;
+corrections. The accepted correction fluxes also transport phase momentum using implicit upwind
+velocities. This conservative mixing update remains bounded when a donor is almost emptied or
+incoming mass supplies simultaneous through-flow. The pressure impulse uses the corrected phase
+inventory, so an exhausted phase cannot retain finite momentum. These corrections are covered
+by nonuniform-cell mass/momentum conservation and trace-phase velocity regressions.
+Consistent phase-pressure assembly keeps advective momentum separate from pressure traction
+and applies the surviving cell pressure gradient directly. This avoids cancelling large
+face-pressure terms after adding a trace phase's much smaller momentum flux. The trace-phase
+regression checks finite acceleration across a jump in holdup without an inventory floor.
+Its positive numerical pressure bound is configurable in Pa and defaults to 1 Pa;
 an atmospheric outlet is not an interior lower bound. The standalone solver retains the affine
 sound-speed-based density response for compatibility. The coupled pipe defaults to a local
 polytropic gas response, anchored in the supplied pressure, density and sound speed. It also
