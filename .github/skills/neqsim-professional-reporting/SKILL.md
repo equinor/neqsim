@@ -507,6 +507,14 @@ Name any unreleased NeqSim change the results depend on.
 
 ## Word output — use the configured template
 
+For a formatting redesign or professional-presentation review, also load
+[neqsim-report-design-and-visual-qa](../neqsim-report-design-and-visual-qa/SKILL.md).
+Its opt-in `neqsim report-design` command creates a separate template-preserving
+Word revision and, with `--render`, a PDF plus every page preview. Inspect the
+rendered pages before claiming layout quality; XML checks alone cannot detect
+awkward breaks, dense tables or header collisions. A formatting pilot must leave
+the original report and technical evidence unchanged.
+
 The Word report is built from the template the user configured, so the
 deliverable carries their organisation's styles, fonts, headers and footers.
 Resolution: `generate_report.py --template PATH` > `NEQSIM_REPORT_TEMPLATE` >

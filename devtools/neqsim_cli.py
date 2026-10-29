@@ -11,6 +11,7 @@ Usage:
     neqsim new-task TITLE    Create a task-solving workspace
     neqsim tasks CMD         Across solved tasks: index/search/relink/env/duplicates
     neqsim report [DIR]      Generate the report (files named after its title)
+    neqsim report-design DOCX --output COPY  Finish a separate Word copy; --render for visual QA
     neqsim process-report SRC  Process-study report (stream tables, BFD/PFD, balances, validation)
     neqsim flow-assurance-report DIR  Flow-assurance report + pipeline drawings
     neqsim pvt-study YAML     PVT samples, characterization, experiments, E300 and controlled report
@@ -52,6 +53,10 @@ CONTINUOUS_COMMANDS = ("living", "cycle", "solve", "resume", "update", "backtest
                        "ledger", "status", "report", "reference-case", "note")
 
 COMMANDS = {
+    "report-design": {
+        "module": "report_design",
+        "desc": "Finish a separate Word report copy; --render exports PDF and page previews",
+    },
     "pvt-study": {
         "module": "pvt_study",
         "desc": "Traceable PVT fluid study, characterization, verified E300 export and report",
@@ -637,6 +642,10 @@ def main():
 
     if cmd == "report":
         sys.exit(_handle_report(sys.argv[2:]))
+
+    if cmd == "report-design":
+        import report_design
+        sys.exit(report_design.main(sys.argv[2:]))
 
     if cmd in ("flow-assurance-report", "flow_assurance_report"):
         import flow_assurance_report

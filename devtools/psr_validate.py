@@ -213,8 +213,9 @@ def validate_all(data, basis, standards, balances, diagrams, docx_path=None, fac
     exceptions = {str(e["id"]): e for e in basis.get("known_balance_exceptions", [])}
     unit_fail = [f for f in balances["fail_items"] if f["level"] == "unit"]
     undocumented = [f for f in unit_fail if f["id"] not in exceptions]
-    checks.append(_check("BAL-OVERALL", "Overall mass and energy balance within tolerance for every case (mass %.0e, energy %.0e)" % (tol["overall_mass_rel"], tol["energy_rel"]),
-                         "FAIL" if bad_overall else "PASS", "failed: %s" % bad_overall if bad_overall else "all cases closed"))
+    checks.append(_check("BAL-OVERALL", "Overall mass and energy balance within tolerance for every case (mass %.0e, energy %.0e); a documented 'overall' exception turns FAIL into WARN" % (tol["overall_mass_rel"], tol["energy_rel"]),
+                         ("WARN" if "overall" in exceptions else "FAIL") if bad_overall else "PASS",
+                         ("failed (documented in the basis): %s" if "overall" in exceptions else "failed: %s") % bad_overall if bad_overall else "all cases closed"))
     undocumented_area = [b for b in bad_area if b[1] not in exceptions]
     checks.append(_check("BAL-AREA", "Area balances within tolerance; documented exceptions are listed in the basis",
                          "FAIL" if undocumented_area else ("WARN" if bad_area else "PASS"),
