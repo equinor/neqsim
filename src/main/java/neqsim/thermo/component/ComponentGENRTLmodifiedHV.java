@@ -49,7 +49,7 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
   }
 
   /**
-   * getGamma.
+   * Evaluates modified NRTL with invocation-local reuse of classical column pure terms.
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -274,6 +274,12 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
       dDdTdT = 0;
       // System.out.println("hei");
 
+      // A column's pure term is independent of l. Keep it call-local and lazy so
+      // HV-only columns do not evaluate an unused pure-component alpha model.
+      boolean columnPureReady = false;
+      double columnPure = 0.0;
+      double columnPureDT = 0.0;
+      double columnPureDTT = 0.0;
       for (l = 0; l < numberOfComponents; l++) {
         if (mixRule[l][j].equals("HV")) {
           Dij = HVgij[l][j];
@@ -283,7 +289,15 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
           dtaudt = -Dij / (temperature * temperature);
           dtaudtdt = 2.0 * Dij / (temperature * temperature * temperature);
         } else {
-          gjj = -deltaEOS * comp_Array[j].aT(temperature) / comp_Array[j].getb();
+          if (!columnPureReady) {
+            columnPure = -deltaEOS * comp_Array[j].aT(temperature) / comp_Array[j].getb();
+            if (type > 1) {
+              columnPureDT = -deltaEOS * comp_Array[j].diffaT(temperature) / comp_Array[j].getb();
+              columnPureDTT = -deltaEOS * comp_Array[j].diffdiffaT(temperature) / comp_Array[j].getb();
+            }
+            columnPureReady = true;
+          }
+          gjj = columnPure;
           gii = -deltaEOS * comp_Array[l].aT(temperature) / comp_Array[l].getb();
           gij = -2.0 * Math.sqrt(comp_Array[l].getb() * comp_Array[j].getb())
               / (comp_Array[l].getb() + comp_Array[j].getb()) * Math.sqrt(gii * gjj) * (1.0 - intparam[l][j]);
@@ -292,8 +306,8 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
           alpha = 0.0;
 
           if (phase.getInitType() > 1) {
-            double dgjjdt = -deltaEOS * comp_Array[j].diffaT(temperature) / comp_Array[j].getb();
-            double dgjjdtdt = -deltaEOS * comp_Array[j].diffdiffaT(temperature) / comp_Array[j].getb();
+            double dgjjdt = columnPureDT;
+            double dgjjdtdt = columnPureDTT;
             double dgiidt = -deltaEOS * comp_Array[l].diffaT(temperature) / comp_Array[l].getb();
             double dgiidtdt = -deltaEOS * comp_Array[l].diffdiffaT(temperature) / comp_Array[l].getb();
 

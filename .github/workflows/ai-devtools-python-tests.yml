@@ -52,6 +52,7 @@ jobs:
             devtools/test_evidence_sources.py \
             devtools/test_collect_electrolyte_evidence.py \
             devtools/test_summarize_huron_vidal_clone.py \
+            devtools/test_benchmark_huron_vidal_columns.py \
             devtools/test_task_corpus.py \
             devtools/test_new_task.py \
             devtools/test_file_neqsim_issue.py \
@@ -95,3 +96,6 @@ jobs:
             devtools/test_new_task.py \
             devtools/test_neqsim_doctor.py \
             devtools/test_generate_sources_md.py
+
+      - name: Verify HV benchmark receipt guards on the minimum supported Python
+        run: uv run --project devtools --locked --group test python -m pytest -q devtools/test_benchmark_huron_vidal_columns.py

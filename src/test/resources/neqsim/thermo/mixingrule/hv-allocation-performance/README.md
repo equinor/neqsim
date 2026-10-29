@@ -18,7 +18,8 @@ four-JVM cell. Independent CSV/math.fsum reconstruction of 356 snapshots gives m
 1.555e-15, balance5.241e-14 and log-fugacity1.716e-12, below the unchanged gates.
 All 1,512 activity/derivative fingerprint values also match byte-for-byte.
 
-Both EOS give these warmed forced-gas system.init allocation centers in the longer phase matrix:
+Both EOS give these warmed one-phase system.init allocation centers in the longer phase matrix
+(saved GAS for 4 components and OIL for 20 components):
 
 | Components | Init level | Baseline bytes/call | Candidate bytes/call | Removed bytes/call |
 |---:|---:|---:|---:|---:|
@@ -71,7 +72,11 @@ use a single best round or compare different EOS/scenarios in one type-profile-c
 
 Four-component feed is methane/decane/water/MEG = .65/.20/.12/.03 mol. The 20-component fixture
 adds 16 species at .005 mol each and normalizes the total1.08 mol. Phase initialization is a
-forced gas at310 K/20 bara. Flash workloads use298.15/298.25 K and60 bara with multiphase checking.
+gas-root request at310 K/20 bara, followed by initialization. The archived final phase label is
+GAS for 4 components and OIL for 20 components, for both EOS/rules/init levels; the request does
+not fix the label assigned by PhaseEos after its volume/composition classification. These
+one-phase kernels do not establish global phase stability. Flash workloads use298.15/298.25 K
+and60 bara with multiphase checking.
 All raw phase types, beta, x and logphi are included. The harness checks every measured round:
 balance1e-10, normalization1e-12, interphase log-fugacity1e-8. Classical and HV can give different
 compositions/solver work; their cost ratio is not a physical-accuracy comparison. There is no
