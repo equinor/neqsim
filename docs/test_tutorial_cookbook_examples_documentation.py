@@ -66,6 +66,7 @@ INDEX_PAGES = (
     DOCS / "tutorials/index.md",
 )
 
+TASK_SOLVING_TUTORIAL = DOCS / "tutorials/solve-engineering-task.md"
 PROCESS_COMPARISON_PAGE = DOCS / "examples/comparesimulations_quickstart.md"
 COMBINED_MODELS_TEST = (
     DOCS.parent
@@ -177,6 +178,23 @@ def section_after_heading(source, heading):
 
 class TutorialCookbookExamplesDocumentationContractTest(unittest.TestCase):
     """Protect the frozen rotation-scope-6 documentation surface."""
+
+    def test_task_solving_pull_request_example_keeps_further_reading_rendered(self):
+        page = TASK_SOLVING_TUTORIAL.read_text(encoding="utf-8")
+        rendered = remove_fenced_code(page)
+        contribution = section_after_heading(page, "## After the Task: Contributing Back")
+        command = (
+            'gh pr create --title "Add hydrate formation analysis" '
+            '--body "From task-solving workflow"'
+        )
+
+        self.assertIn(command, contribution)
+        self.assertNotIn(command, rendered)
+        self.assertIn("## Further Reading", rendered)
+        self.assertIn(
+            "[Agentic Workflow Examples](../integration/ai_workflow_examples)",
+            rendered,
+        )
 
     def test_process_comparison_quickstart_matches_executable_regression(self):
         page = PROCESS_COMPARISON_PAGE.read_text(encoding="utf-8")
