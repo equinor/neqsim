@@ -709,7 +709,7 @@ See the [property method alignment audit](physical_properties/method_alignment_a
 | --------------------- | ---------------------------------------------------------------------------------- | --------------------- |
 | Transient Simulation  | [docs/wiki/pipeline_transient_simulation.md](wiki/pipeline_transient_simulation.md)   | Transient pipeline    |
 | Model Recommendations | [docs/wiki/pipeline_model_recommendations.md](wiki/pipeline_model_recommendations.md) | Model recommendations |
-| Safety Shutdown water hammer | [docs/wiki/water_hammer_implementation.md](wiki/water_hammer_implementation.md) | Acoustic kernel, prescribed valve travel/capacity and qualification limits |
+| Safety Shutdown water hammer | [docs/wiki/water_hammer_implementation.md](wiki/water_hammer_implementation.md) | Conservative acoustic cell inventory, prescribed valve travel/capacity and qualification limits |
 
 ---
 

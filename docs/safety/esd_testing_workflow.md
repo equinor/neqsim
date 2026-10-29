@@ -119,6 +119,14 @@ records analytical PASS/FAIL and asset/coupled-plant NOT_EVALUATED boundaries. A
 prescribed travel record does not qualify detection, logic, actuator mechanics or
 safe-state deadlines; these still require the canonical safety runner/coordinator.
 
+The acoustic kernel carries pressure/flow means in physical cells and reports
+separate face traces. Use its accepted-substep inlet/outlet exchanges and cell
+storage ledger when checking the linear acoustic volume balance; sparse endpoint
+flow samples are not interval fluxes. The study's `acousticVolumeBalance` PASS
+does not qualify full thermodynamic conservation, global rollback, phase changes,
+or coupled Safety Shutdown execution. See the guide for equations, first-order
+boundary-time quadrature and the independent standing-wave/passivity checks.
+
 - [ESD Blowdown System](ESD_BLOWDOWN_SYSTEM.md)
 - [Pressure Monitoring ESD](PRESSURE_MONITORING_ESD.md)
 - [Barrier Management](barrier_management.md)

@@ -5,10 +5,10 @@ description: "Guide to NeqSim water hammer and liquid hammer screening with Wate
 
 ## Safety Shutdown kernel verification
 
-The single-line acoustic kernel uses characteristic-foot interpolation at the actual internal
-time interval. An outer `runTransient(dt, id)` call is split into equal internal intervals no
+The single-line acoustic kernel integrates the two acoustic characteristics over physical
+cells, using their shared linear Riemann traces as fluxes. An outer `runTransient(dt, id)` call is split into equal internal intervals no
 larger than `courantNumber * dx / a`; the entire requested duration is advanced. Courant number
-must be finite and in `(0, 1]`. Smaller intervals introduce interpolation diffusion and require
+must be finite and in `(0, 1]`. First-order characteristic transport introduces numerical diffusion and requires
 mesh/time refinement; they no longer make waves propagate one full grid cell per call.
 
 Geometry, grid, roughness, material modulus and wave-speed overrides are static configuration.
@@ -39,7 +39,7 @@ Initialization requires positive finite geometry/material/fluid properties, one 
 an initially open forward-flow valve above its receiver pressure (when that boundary is used),
 and an available EOS sound speed. There is no silent water-property fallback. Density,
 viscosity, acoustic speed and Darcy friction coefficient are frozen at initialization. Pressure
-head is evolved with the linear terrain gravity source. This is a small-disturbance acoustic
+head is evolved with the linear terrain gravity source and signed implicit Darcy resistance. This is a small-disturbance acoustic
 model, including when the single phase is gas, not a general large-decompression gas model.
 
 `WaterHammerKernelTest` is the executable public synthetic verification example. It checks
@@ -267,16 +267,42 @@ The facade returns synchronized `time_s`, `valveOpening`, `effectiveValveKv` and
 knot; the pipe's internal time/pressure histories retain it. There is no additional
 scheduler, control loop or plant pressure-flow coupling in this interface.
 
-**Known conservation failure:** with changing boundary flow below unit Courant,
-the existing nodal MOC stored volume does not exactly match trapezoidally integrated
-physical boundary flow. In the zero-friction discrete limit, the per-step defect is
-$(\Delta x/a-\Delta t)\Delta(Q_{in}-Q_{out})/2$. This is numerical storage error,
-not real fluid inventory and not an allowed mass correction. The public evidence
-retains the physical $10^{-9}$ m³ target and records **FAIL**, separately from the
-passing discrete-identity regression. The earlier instantaneous-closure balance test
-does not qualify arbitrary travel. A conservative kernel increment is required;
-this prescribed-boundary mode is experimental and does not qualify coupled inventory
-or Safety Shutdown loads. `status=success` means the study executed.
+**Inventory semantics:** N configured nodes are N physical faces bounding N-1 cells.
+`getCellPressureProfile()` and `getCellFlowProfile()` return defensive cell means;
+`getCellPositions()` returns their centres in metres. Existing nodal profiles remain
+physical face traces at $x_i=iL/(N-1)$. Trapezoidal quadrature of these traces is a
+reconstruction, not the discrete inventory. Historical nodal-MOC FAIL evidence remains
+in the public case folder; it must not be relabelled as a conservative-kernel run.
+
+The new kernel computes cell storage directly from mean pressure, and separately
+accumulates the physical inlet/outlet fluxes actually used in each accepted substep.
+`getAcousticStoredVolume()`, `getIntegratedInletVolume()`, `getIntegratedOutletVolume()`
+and `getAcousticVolumeResidual()` use actual equivalent m³. Positive inlet exchange
+enters the line; positive outlet exchange leaves it. Effective wave speed includes
+pipe elasticity. This linear acoustic volume ledger is not a full EOS mass/energy
+or changing-phase inventory. No pressure correction, flux rescaling or conservation
+clipping is applied. The fixed physical acoustic volume gate remains $10^{-9}$ m³.
+
+Boundary capacity is held at the right endpoint of each internal interval, preserving
+existing exact-knot semantics. This is a first-order time quadrature; a reported endpoint
+flow differs from the interval flux after the cell update. Integrating sparsely sampled
+endpoint flows cannot replace the substep exchange ledger. Continuous travel and slow
+waveforms require time/mesh refinement. Rejection preserves the last accepted local
+interval, not an entire multi-substep call or a global ProcessSystem transaction.
+Serialized conservative states carry cell means and exchanges; old nodal checkpoints
+require explicit `run()` reinitialization and reject transient continuation.
+
+The facade exports these volume diagnostics and pressure/terrain/friction momentum
+impulses under `validation`. `acousticVolumeBalance` is PASS/FAIL for the simulated
+discrete acoustic equations; `physicalConservation` and integrated Safety Shutdown
+qualification remain NOT_EVALUATED for the full thermodynamic/coupled system.
+`status=success` means the study executed.
+
+`finalCellState` exports initial and final mean absolute pressure [Pa], mean actual
+flow [m³/s], centre coordinates and cell width [m], physical time [s] and frozen
+density [kg/m³]. It permits an independent storage sum from the JSON output;
+the separate `pressureEnvelope` remains a face-trace envelope. These are final
+cell means, not synchronized spatial force/load histories.
 
 **Evidence boundary:** analytical capacity/passivity, equilibrium, fast Joukowsky,
 knot timing, refinement characterization and local restart/replay are software
@@ -333,7 +359,7 @@ System.out.println("Max surge pressure: " + maxPressure + " bar");
 
 ### Method of Characteristics (MOC)
 
-The MOC transforms the hyperbolic partial differential equations for 1D transient pipe flow into ordinary differential equations along characteristic lines.
+The MOC transforms the hyperbolic partial differential equations for 1D transient pipe flow into characteristic transport. The current kernel uses its conservative cell-integrated form.
 
 **Governing Equations:**
 
@@ -341,7 +367,36 @@ Continuity:
 $$\frac{\partial H}{\partial t} + \frac{c^2}{gA}\frac{\partial Q}{\partial x} = 0$$
 
 Momentum:
-$$\frac{\partial Q}{\partial t} + gA\frac{\partial H}{\partial x} + \frac{f}{2DA}Q|Q| = 0$$
+$$\frac{\partial Q}{\partial t} + gA\left(\frac{\partial H}{\partial x}+\frac{\partial z}{\partial x}\right) + \frac{f}{2DA}Q|Q| = 0$$
+
+Here $H=p/(\rho g)$ is pressure head in metres and $z$ is terrain elevation in metres.
+For a face between cells, the incoming invariants are $C_+=H_L+BQ_L$ and
+$C_-=H_R-BQ_R$, with $B=a/(gA)$. Their common trace is
+$H^*=(C_++C_-)/2$, $Q^*=(C_+-C_-)/(2B)$. The initialized linear steady head
+gradient is reconstructed exactly at the face, so terrain and steady Darcy resistance
+balance to roundoff. Advancing the cell mean gives:
+
+$$\bar H_j^{n+1}=\bar H_j^n-\frac{a^2\Delta t}{gA\Delta x}(Q^*_{j+1/2}-Q^*_{j-1/2})$$
+
+Summing over physical cells cancels every interior face flux. Hence independent mean-pressure
+storage $\Delta V=(Ag/a^2)\sum_j\Delta x(\bar H_j-\bar H_{j,0})$ equals
+$\sum_n\Delta t_n(Q^*_{in}-Q^*_{out})$ to roundoff at any allowed Courant number.
+This is a local conservative update, not a correction applied to the final sum.
+
+With $k=f/(2DA)$, $\delta H^*=H^*-H_0(x)$, the well-balanced momentum step solves
+$Q^{n+1}+k\Delta t Q^{n+1}|Q^{n+1}|=Q^n-gA\Delta t\Delta(\delta H^*)/\Delta x+k\Delta t Q_0|Q_0|$.
+The signed rationalized quadratic root dissipates resistance in both flow directions.
+Line momentum change is $\rho\sum_j\Delta x(\bar Q_j-Q_0)$ in kg m/s.
+Independent physical pressure, gravity and implicit-friction impulses are accumulated
+with this same interval quadrature and compared against that inventory.
+
+`WaterHammerConservationTest` seeds explicitly ideal linear-PDE data after real-fluid
+initialization for independent d'Alembert standing-wave, closed-line energy, signed
+friction and pre-arrival $Q_0t$ storage checks. It does not replace water or EOS properties.
+The first-order method is mathematically consistent with the acoustic Riemann and
+control-volume derivations in [Ketcheson, LeVeque and del Razo](https://www.clawpack.org/riemann_book/html/Acoustics.html)
+and [LeVeque's finite-volume lectures](https://faculty.washington.edu/rjl/classes/am574w2011/slides/am574lecture5.pdf).
+These mathematical references and synthetic tests do not supply asset validation.
 
 **Characteristic Lines:**
 - C⁺ line: dx/dt = +c (forward wave)
@@ -349,12 +404,17 @@ $$\frac{\partial Q}{\partial t} + gA\frac{\partial H}{\partial x} + \frac{f}{2DA
 
 **Compatibility Equations:**
 
+For a horizontal line, traditional adjacent-foot MOC expresses friction through
+the following first-order compatibility approximations. The current implementation
+uses the conservative cell update and signed implicit source derived above;
+these foot equations are background, not its inventory discretization.
+
 Along C⁺: $H_P - H_A + B(Q_P - Q_A) + R \cdot Q_A|Q_A| = 0$
 
 Along C⁻: $H_P - H_B - B(Q_P - Q_B) - R \cdot Q_B|Q_B| = 0$
 
 Where:
-- H = piezometric head (m)
+- H = pressure head (m); terrain is carried separately
 - Q = volumetric flow rate (m³/s)
 - c = wave speed (m/s)
 - B = c/(gA) — characteristic impedance
