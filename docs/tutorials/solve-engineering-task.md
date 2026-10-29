@@ -514,6 +514,8 @@ Copy-Item task_solve/.../notebook.ipynb examples/notebooks/
 git add src/test/ examples/notebooks/
 git commit -m "Add hydrate formation temperature analysis"
 git push -u origin task/hydrate-formation
+gh pr create --title "Add hydrate formation analysis" --body "From task-solving workflow"
+```
 
 ---
 
@@ -524,8 +526,6 @@ git push -u origin task/hydrate-formation
 - [Agentic Workflow Examples](../integration/ai_workflow_examples) — Step-by-step walkthroughs from simple to complex
 - [Code Patterns](../development/CODE_PATTERNS) — Copy-paste code starters for common tasks
 - Local task log (`docs/development/TASK_LOG.md`; ignored by Git) — Search past solved tasks before starting
-gh pr create --title "Add hydrate formation analysis" --body "From task-solving workflow"
-```
 
 > **Safety:** Never commit `task_solve/` contents directly — copy the
 > reusable files to their proper locations first.
