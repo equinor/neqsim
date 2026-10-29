@@ -299,49 +299,41 @@ class AcousticValveBoundaryTest {
   }
 
   /**
-   * Characterize the known nodal-volume defect against an independent zero-friction discrete identity. The physical
-   * 1e-9 m3 conservation verdict is retained as FAIL, separate from the identity assertion.
+   * Verify physical cell storage against integrated boundary exchange for the formerly failing changing-flow case.
+   * Historical nodal FAIL evidence remains saved separately; face traces are not inventory means.
    *
-   * @throws Exception if ideal test-state seeding or evidence output fails
+   * @throws Exception if evidence output fails
    */
   @Test
   void characterizeAcousticVolumeDefect() throws Exception {
     JsonArray evidence = new JsonArray();
     for (int nodes : new int[] {51, 101, 201}) {
       WaterHammerPipe pipe = pipe(nodes, 36000.0, 0.1);
-      // Ideal linear-PDE diagnostic only: turn off the frozen momentum source after consistent initialization.
-      java.lang.reflect.Field friction = WaterHammerPipe.class.getDeclaredField("frictionFactor");
-      friction.setAccessible(true);
-      friction.setDouble(pipe, 0.0);
-      double[] initial = pipe.getPressureProfile();
+      double[] initial = pipe.getCellPressureProfile();
       double rho = pipe.getInletStream().getThermoSystem().getDensity("kg/m3");
       double dx = 1000.0 / (nodes - 1);
-      double boundaryVolume = 0.0;
-      double predictedDefect = 0.0;
       while (pipe.getCurrentTime() < 0.6) {
         double end = Math.min(0.6, Math.min(pipe.getCurrentTime() + 0.5 * dx / 1000.0,
             pipe.getValveBoundary().nextKnotAfter(pipe.getCurrentTime())));
         double dt = end - pipe.getCurrentTime();
-        double[] before = pipe.getFlowProfile();
         pipe.runTransient(dt, UUID.randomUUID());
-        double[] after = pipe.getFlowProfile();
-        boundaryVolume += dt * 0.5 * (before[0] + after[0] - before[nodes - 1] - after[nodes - 1]);
-        predictedDefect += 0.5 * (dx / 1000.0 - dt) * (after[0] - after[nodes - 1] - before[0] + before[nodes - 1]);
       }
       double integral = 0.0;
-      double[] pressure = pipe.getPressureProfile();
-      for (int i = 0; i < nodes; i++) {
-        integral += (i == 0 || i == nodes - 1 ? 0.5 : 1.0) * (pressure[i] - initial[i]) * dx;
+      double[] pressure = pipe.getCellPressureProfile();
+      for (int i = 0; i < pressure.length; i++) {
+        integral += (pressure[i] - initial[i]) * dx;
       }
       double storedVolume = Math.PI * 0.01 * integral / (rho * 1.0e6);
+      double boundaryVolume = pipe.getIntegratedInletVolume() - pipe.getIntegratedOutletVolume();
       double residual = storedVolume - boundaryVolume;
-      assertEquals(predictedDefect, residual, 1.0e-9, "Independent nodal MOC consistency identity");
+      assertEquals(0.0, residual, 1.0e-9, "Physical cell inventory, unchanged volume tolerance");
+      assertEquals(0.0, pipe.getMomentumResidual(), 1.0e-7);
       JsonObject row = new JsonObject();
       row.addProperty("nodes", nodes);
       row.addProperty("boundaryVolume_m3", boundaryVolume);
       row.addProperty("storedVolume_m3", storedVolume);
       row.addProperty("physicalResidual_m3", residual);
-      row.addProperty("predictedDiscretizationDefect_m3", predictedDefect);
+      row.addProperty("momentumResidual_kg_m_s", pipe.getMomentumResidual());
       row.addProperty("physicalTolerance_m3", 1.0e-9);
       row.addProperty("physicalConservation", Math.abs(residual) <= 1.0e-9 ? "PASS" : "FAIL");
       evidence.add(row);
@@ -404,7 +396,19 @@ class AcousticValveBoundaryTest {
         StandardCharsets.UTF_8)).getAsJsonObject();
     JsonObject result = JsonParser.parseString(WaterHammerStudy.run(input.toString())).getAsJsonObject();
     assertEquals("success", result.get("status").getAsString(), result.toString());
-    assertEquals("NOT_EVALUATED", result.getAsJsonObject("validation").get("physicalConservation").getAsString());
+    assertEquals("PASS", result.getAsJsonObject("validation").get("acousticVolumeBalance").getAsString());
+    JsonObject cells = result.getAsJsonObject("finalCellState");
+    assertEquals("PHYSICAL_CELL_MEANS", cells.get("basis").getAsString());
+    assertEquals(100, cells.getAsJsonArray("pressure_Pa").size());
+    assertEquals(5.0, cells.getAsJsonArray("centre_m").get(0).getAsDouble(), 0.0);
+    double integral = 0.0;
+    for (int i = 0; i < cells.getAsJsonArray("pressure_Pa").size(); i++) {
+      integral += cells.getAsJsonArray("pressure_Pa").get(i).getAsDouble()
+          - cells.getAsJsonArray("initialPressure_Pa").get(i).getAsDouble();
+    }
+    double stored = Math.PI * 0.01 * cells.get("cellWidth_m").getAsDouble() * integral
+        / (cells.get("frozenDensity_kg_m3").getAsDouble() * 1.0e6);
+    assertEquals(stored, result.getAsJsonObject("validation").get("acousticStoredVolume_m3").getAsDouble(), 1.0e-9);
     assertEquals("NOT_EVALUATED",
         result.getAsJsonObject("validation").get("safetyShutdownQualification").getAsString());
     Files.write(Paths.get("target", "ss-physical-valve-input.json"), input.toString().getBytes(StandardCharsets.UTF_8));

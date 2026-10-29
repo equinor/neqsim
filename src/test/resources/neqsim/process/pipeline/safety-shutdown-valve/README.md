@@ -1,5 +1,10 @@
 # Safety Shutdown prescribed valve travel — SS-02a
 
+**Current kernel follow-up:** see the [conservative acoustic qualification](conservative-kernel/README.md)
+for cell-mean inventory, physical exchange/momentum ledgers and independent wave/energy checks.
+The original run and FAIL artifacts below are retained as historical evidence under
+their stated source provenance; they do not describe the replacement kernel's results.
+
 Experimental single-line acoustic boundary, campaign [#4707](https://github.com/equinor/neqsim/issues/4707).
 Source baseline: `8b89915c2465b1b27cd8e4fd2ffd0a2bc620860f`. Exact delivered head and commands are recorded in the campaign ledger and draft PR. No asset or vendor measurements are used.
 

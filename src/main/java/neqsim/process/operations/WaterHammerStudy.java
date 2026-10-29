@@ -81,6 +81,7 @@ public final class WaterHammerStudy {
     UUID id = UUID.randomUUID();
     pipe.run(id);
     pipe.resetEnvelopes();
+    double[] initialCellPressure = pipe.getCellPressureProfile();
 
     double initialOutletPressureBar = last(pipe.getPressureProfile("bar"));
     double initialVelocity = last(pipe.getVelocityProfile());
@@ -150,13 +151,22 @@ public final class WaterHammerStudy {
       result.getAsJsonObject("inputSummary").addProperty("frozenDensity_kg_m3",
           feed.getThermoSystem().getDensity("kg/m3"));
       result.getAsJsonObject("inputSummary").addProperty("valveBoundaryMode", "PRESCRIBED_ACTUAL_TRAVEL");
-      warnings.add("Prescribed travel/capacity is experimental: changing boundary flow exposes a nodal MOC volume "
-          + "defect below unit Courant. Success indicates execution, not conservation or Safety Shutdown qualification.");
+      warnings.add("Prescribed travel/capacity uses first-order characteristic transport and endpoint-held boundary "
+          + "forcing. Refine space/time; success does not establish Safety Shutdown or asset qualification.");
     }
     result.add("pressureEnvelope", buildPressureEnvelope(pipe));
+    JsonObject cells = new JsonObject();
+    cells.addProperty("basis", "PHYSICAL_CELL_MEANS");
+    cells.addProperty("time_s", pipe.getCurrentTime());
+    cells.addProperty("cellWidth_m", pipe.getLength() / (pipe.getNumberOfNodes() - 1));
+    cells.addProperty("frozenDensity_kg_m3", feed.getThermoSystem().getDensity("kg/m3"));
+    cells.add("centre_m", toJsonArray(pipe.getCellPositions()));
+    cells.add("initialPressure_Pa", toJsonArray(initialCellPressure));
+    cells.add("pressure_Pa", toJsonArray(pipe.getCellPressureProfile()));
+    cells.add("flow_m3_s", toJsonArray(pipe.getCellFlowProfile()));
+    result.add("finalCellState", cells);
     result.add("validation", buildValidation(input, pipe, warnings));
     if (pipe.getValveBoundary() != null) {
-      result.getAsJsonObject("validation").addProperty("physicalConservation", "NOT_EVALUATED");
       result.getAsJsonObject("validation").addProperty("safetyShutdownQualification", "NOT_EVALUATED");
     }
     result.add("sourceReferences", getSourceReferences(input, geometry));
@@ -571,8 +581,22 @@ public final class WaterHammerStudy {
    */
   private static JsonObject buildValidation(JsonObject input, WaterHammerPipe pipe, List<String> warnings) {
     JsonObject validation = new JsonObject();
-    validation.addProperty("method", "MOC transient with Courant-limited time step");
+    validation.addProperty("method", "Conservative cell-integrated acoustic characteristics; first order");
     validation.addProperty("timeStepWithinCourantLimit", true);
+    validation.addProperty("boundaryTimeQuadrature", "RIGHT_ENDPOINT_HOLD");
+    validation.addProperty("acousticStoredVolume_m3", pipe.getAcousticStoredVolume());
+    validation.addProperty("integratedInletVolume_m3", pipe.getIntegratedInletVolume());
+    validation.addProperty("integratedOutletVolume_m3", pipe.getIntegratedOutletVolume());
+    validation.addProperty("acousticVolumeResidual_m3", pipe.getAcousticVolumeResidual());
+    validation.addProperty("acousticVolumeTolerance_m3", 1.0e-9);
+    validation.addProperty("acousticVolumeBalance",
+        Math.abs(pipe.getAcousticVolumeResidual()) <= 1.0e-9 ? "PASS" : "FAIL");
+    validation.addProperty("momentumChange_kg_m_s", pipe.getMomentumChange());
+    validation.addProperty("pressureImpulse_kg_m_s", pipe.getIntegratedPressureImpulse());
+    validation.addProperty("gravityImpulse_kg_m_s", pipe.getIntegratedGravityImpulse());
+    validation.addProperty("frictionImpulse_kg_m_s", pipe.getIntegratedFrictionImpulse());
+    validation.addProperty("momentumResidual_kg_m_s", pipe.getMomentumResidual());
+    validation.addProperty("physicalConservation", "NOT_EVALUATED");
     double designPressure = getDoubleAny(input, Double.NaN, "designPressure_bara", "maxAllowablePressure_bara",
         "MAOP_bara");
     if (!Double.isNaN(designPressure)) {

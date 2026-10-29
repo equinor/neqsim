@@ -1,7 +1,7 @@
 ---
 name: neqsim-water-hammer
 description: "Water hammer and liquid hammer screening workflow for NeqSim. USE WHEN: evaluating fast valve closures, pump trips, check-valve slam, hydraulic surge, STID/P&ID route extraction, tagreader event windows, or MCP runWaterHammer studies. Covers WaterHammerPipe, WaterHammerStudy, STID route geometry, tagreader field-data overrides, pressure envelopes, Joukowsky checks, and screening limitations."
-last_verified: "2026-05-10"
+last_verified: "2026-10-29"
 ---
 
 # Water Hammer and Liquid Hammer Screening
@@ -24,6 +24,17 @@ The core model is `WaterHammerPipe`; the workflow facade is
 Do not use this as final pipe-stress approval. Treat it as a fast screening and
 evidence-pack workflow.
 
+For **Safety Shutdown**, read the current
+[kernel and prescribed-travel guide](../../../docs/wiki/water_hammer_implementation.md)
+and [campaign acceptance](https://github.com/equinor/neqsim/issues/4707) first.
+The single-line kernel integrates characteristic fluxes over physical cells.
+Use cell mean pressure and accepted-substep inlet/outlet exchanges for its linear
+acoustic volume ledger; nodal pressure/flow are face traces, not inventory means.
+Report first-order space/time refinement and boundary endpoint-hold quadrature.
+A PASS acoustic balance does not qualify full EOS conservation, pump coastdown,
+disc slam, network coupling, cavitation, support loads or integrated safety logic.
+Reuse the canonical coordinator and existing ESD APIs for future integration.
+
 ## Workflow
 
 1. Extract line geometry from STID/P&ID/E3D/stress isometrics: length, internal
@@ -45,7 +56,7 @@ evidence-pack workflow.
 
 ```json
 {
-  "studyName": "ESD valve closure screening",
+  "studyName": "Safety Shutdown valve closure screening",
   "model": "SRK",
   "temperature_C": 20.0,
   "pressure_bara": 45.0,
