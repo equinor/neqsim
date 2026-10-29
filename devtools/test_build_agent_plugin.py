@@ -380,7 +380,31 @@ class HookJavaResolutionTest(unittest.TestCase):
         self.registry_java_candidates = self.ns["registry_java_candidates"]
         self.ns["vscode_java_candidates"] = lambda: iter(())
         self.ns["registry_java_candidates"] = lambda: iter(())
+        # Behave like VS Code < 1.141 (no ${PLUGIN_ROOT} expansion) unless a test says otherwise.
+        self.ns["vscode_version"] = lambda: (1, 138)
+        os.environ.pop("NEQSIM_SKIP_USER_MCP", None)
 
+    def test_user_mcp_json_untouched_when_vscode_expands_plugin_root(self):
+        """VS Code 1.141+ resolves ${PLUGIN_ROOT}; writing the user mcp.json would only
+        trigger its 'migrate legacy MCP server' prompt."""
+        user = self.root / "User"
+        user.mkdir()
+        mcp = user / "mcp.json"
+        self.ns["vscode_user_mcp_files"] = lambda: [mcp]
+        java25 = str(self._java(self.jdk25))
+        for version in ((1, 141), (1, 144), (2, 0)):
+            self.ns["vscode_version"] = lambda v=version: v
+            self.assertEqual(self.ns["ensure_mcp_entry"](java25, 25), ([], []))
+            self.assertFalse(mcp.exists())
+        self.ns["vscode_version"] = lambda: (1, 140)
+        self.assertEqual(self.ns["ensure_mcp_entry"](java25, 25), ([str(mcp)], []))
+        mcp.unlink()
+        self.ns["vscode_version"] = lambda: None
+        self.assertEqual(self.ns["ensure_mcp_entry"](java25, 25), ([str(mcp)], []))
+        mcp.unlink()
+        os.environ["NEQSIM_SKIP_USER_MCP"] = "1"
+        self.assertEqual(self.ns["ensure_mcp_entry"](java25, 25), ([], []))
+        self.assertFalse(mcp.exists())
     def test_registry_jdk_found_without_path_or_java_home(self):
         """An MSI-installed JDK is found from the registry when PATH and JAVA_HOME are unset."""
         tree = {(2, "SOFTWARE\\Eclipse Adoptium\\JDK"): (["21.0.4.7"], {}),
