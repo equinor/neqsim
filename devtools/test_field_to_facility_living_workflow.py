@@ -1,7 +1,7 @@
 """Execute the Java ten-well lifecycle through the persistent production workflow.
 
 This is the source acceptance path for issue #4188. It deliberately calls the test-scope
-Java fixture, consumes only its exact schema-v14 JSON, and exercises the existing #4187
+Java fixture, consumes only its exact schema-v15 JSON, and exercises the existing #4187
 adapter, guard, ledger, promotion, living report, and canonical report implementation.
 """
 
@@ -242,12 +242,12 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             first_item = items[0]
             first_item_id = first_item["id"]
             evidence = items[0]["lifecycle_envelope_evidence"]
-            self.assertEqual(14, evidence["schema_version"])
+            self.assertEqual(15, evidence["schema_version"])
             self.assertEqual(cycle_id, evidence["cycle_id"])
             self.assertEqual(2, evidence["period_count"])
-            self.assertEqual(12, evidence["requested_point_count"])
-            self.assertEqual(12, evidence["completed_point_count"])
-            self.assertGreater(evidence["total_evaluation_count"], 12)
+            self.assertEqual(16, evidence["requested_point_count"])
+            self.assertEqual(16, evidence["completed_point_count"])
+            self.assertGreater(evidence["total_evaluation_count"], 16)
             self.assertGreaterEqual(evidence["envelope_runtime_seconds"], 0.0)
             self.assertEqual(1, len(evidence["bottleneck_transitions"]))
             self.assertTrue(all(
@@ -347,6 +347,17 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertIs(True, combination["process_state_restored"])
             self.assertIn("baseline_bottleneck", combination["bottleneck_migration"])
             self.assertIn("combined_bottleneck", combination["bottleneck_migration"])
+            relief_envelope = current["qualified_relief_envelope"]
+            self.assertEqual(3, relief_envelope["slice_pair_count"])
+            self.assertIs(True, relief_envelope["capacity_restored"])
+            early = next(period for period in evidence["periods"]
+                         if period["period_id"] == "early-life")
+            self.assertGreaterEqual(
+                early["qualified_relief_envelope"][
+                    "sampled_point_identity_change_count"], 1)
+            self.assertGreaterEqual(
+                early["qualified_relief_envelope"][
+                    "continuous_boundary_comparison_count"], 1)
             tampered = copy.deepcopy(first_item)
             tampered_current = next(
                 period for period in tampered["lifecycle_envelope_evidence"]["periods"]
@@ -371,6 +382,17 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
                 "lifecycle_period_1_invalid_qualified_relief_combination",
                 production._lifecycle_evidence_reasons(
                     SimpleNamespace(cycle_id=cycle_id), tampered_combination, required=True),
+            )
+            tampered_envelope = copy.deepcopy(first_item)
+            tampered_current = next(
+                period for period in tampered_envelope["lifecycle_envelope_evidence"]["periods"]
+                if period["period_id"] == cycle_id)
+            tampered_current["qualified_relief_envelope"][
+                "sampled_point_identity_change_count"] += 1
+            self.assertIn(
+                "lifecycle_period_1_invalid_qualified_relief_envelope",
+                production._lifecycle_evidence_reasons(
+                    SimpleNamespace(cycle_id=cycle_id), tampered_envelope, required=True),
             )
             for field in (
                     "simulation_converged", "candidate_feasible", "candidate_finite",

@@ -740,6 +740,16 @@ part of the grouping identity, so separator, compressor, shaft, driver, and shar
 not blended across incompatible engineering bases. The summary does not add or replace any SURF,
 compressor-map, or host-constraint physics.
 
+The ten-well lifecycle acceptance also repeats the exact accepted choke/routing slices with the qualified HP-separator
+and LP-scrubber alternatives active together. It preserves the same field/network/host evaluator, axes, grids, anchors,
+common-shaft, driver and shared-power constraints, then restores both installed-capacity states in reverse order. The
+schema-v15 receipt reports sampled constraint-identity handoffs and, where both scenarios contain one comparable
+continuous boundary, the signed movement of the terminal feasible and infeasible bracket endpoints. The synthetic
+early-life case exercises an actual refined bracket comparison; the current-life case retains the tighter shared-power
+bottleneck and exercises an installed-capacity-to-host constraint identity handoff. These are advisory sampled/refined
+diagnostics, not new compressor/network physics, additive relief predictions, interpolated routes, or permission to
+change an operating limit.
+
 ### Repeated production periods and moving host limits
 
 `FieldToFacilityOptimizationAcceptanceTest.replaysLifecyclePeriodsWithMovingHostLimits`

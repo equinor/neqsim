@@ -1222,6 +1222,15 @@ baseline restoration, accepts bracket updates only from converged feasible or ex
 rejections, and checks terminal tolerance/status closure. Missing or edited refinement configuration,
 midpoints, outcomes, recovery flags, brackets, summary identities, or lifecycle migration rows fail closed.
 
+Schema v15 adds an exact paired baseline/joint-relief envelope receipt. Each pair must carry the original complete
+accepted-point slice unchanged plus a complete relieved slice with identical study/evaluator identity, ordered axes,
+grid, anchor, candidate vectors and boundary-refinement policy. The production guard and canonical report independently
+reconstruct sampled feasibility/outcome/leading-constraint changes, boundary counts and signed terminal bracket-endpoint
+shifts. They reject copied, foreign, partial, non-finite, stale or partially restored evidence and never interpret a
+bracket endpoint as an exact boundary or interpolate discrete routing actions. The jointly applied installed limits are
+restored in reverse order and the process must reconverge before the receipt can enter the existing ledger, promotion
+and report path.
+
 Schema versions 4 through 8 may additionally bind independently accepted physical-state metrics to every period. Each period must
 carry the same ordered metric IDs and units, finite values, and explicit provenance. The guard reconstructs exact
 adjacent-period state deltas and rejects missing, reordered, non-finite, unit-changed, or modified state evidence.

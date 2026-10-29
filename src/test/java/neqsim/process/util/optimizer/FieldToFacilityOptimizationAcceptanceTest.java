@@ -58,8 +58,10 @@ import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.Operatin
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.OperatingRegionTransition;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.QualifiedReliefPortfolioEvidence;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.QualifiedReliefCombinationEvidence;
+import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.QualifiedReliefEnvelopeEvidence;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.SliceResult;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.CapacityAlternative;
+import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.CombinedEnvelopeResult;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.LimitDirection;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.OperatingActionCandidateListSearch;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.StudyResult;
@@ -191,15 +193,18 @@ public class FieldToFacilityOptimizationAcceptanceTest {
   private static final class ReliefEvidence {
     private final QualifiedReliefPortfolioEvidence portfolio;
     private final QualifiedReliefCombinationEvidence combination;
+    private final QualifiedReliefEnvelopeEvidence envelope;
 
-    private ReliefEvidence(QualifiedReliefPortfolioEvidence portfolio, QualifiedReliefCombinationEvidence combination) {
+    private ReliefEvidence(QualifiedReliefPortfolioEvidence portfolio, QualifiedReliefCombinationEvidence combination,
+        QualifiedReliefEnvelopeEvidence envelope) {
       this.portfolio = portfolio;
       this.combination = combination;
+      this.envelope = envelope;
     }
   }
 
   /**
-   * Execute the source-backed ten-well lifecycle acceptance case and serialize its exact schema-v14 evidence.
+   * Execute the source-backed ten-well lifecycle acceptance case and serialize its exact schema-v15 evidence.
    *
    * <p>
    * This test-scope entry point lets the Python living-task acceptance workflow call the same Java fixture and physical
@@ -252,12 +257,15 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     }
     FieldToFacilityOptimizationAcceptanceTest acceptance = new FieldToFacilityOptimizationAcceptanceTest();
     Fixture earlyFixture = acceptance.createFixture(10);
-    acceptance.configureLifecycleCapacityLimits(earlyFixture, 1.03);
+    acceptance.configureLifecycleCapacityLimits(earlyFixture, 1.01);
     LifecyclePeriod early = acceptance.evaluateLifecyclePeriod("early-life", earlyFixture,
         earlyFixture.model.getPower("kW") * 1.8);
+    early.study.setNearActiveConstraintNormalizedMargin(1.0,
+        "synthetic complete installed-capacity follow-up audit threshold");
+    ReliefEvidence earlyRelief = acceptance.qualifiedReliefEvidence(early);
 
     Fixture currentFixture = acceptance.createFixture(10);
-    acceptance.configureLifecycleCapacityLimits(currentFixture, 10.0);
+    acceptance.configureLifecycleCapacityLimits(currentFixture, 1.0294);
     LifecyclePeriod current = acceptance.evaluateLifecyclePeriod(currentCycleId, currentFixture,
         currentFixture.model.getPower("kW") * sharedPowerLimitMultiplier, reviewedIncumbentValues);
     current.study.setNearActiveConstraintNormalizedMargin(1.0,
@@ -267,12 +275,15 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     return new ProcessModelOperatingEnvelopeLifecycleStudy("ten-well-lifecycle", "Ten-well field lifecycle envelope",
         "synthetic independent reservoir/facility operating definitions", "year")
         .addPeriod("early-life", "Early life", 0.0,
-            "tight separator and scrubber operating limits; qualified compressor maps retained", early.coverage,
-            early.study, early.search, early.slices)
+            "tight separator and scrubber operating limits; qualified compressor maps retained",
+            Collections.<ProcessModelOperatingEnvelopeLifecycleStudy.AcceptedStateMetric>emptyList(), early.coverage,
+            earlyRelief.portfolio.getRankedStudies(), earlyRelief.combination, earlyRelief.envelope, early.study,
+            early.search, early.slices)
         .addPeriod(currentCycleId, "Current life", 5.0,
             "expanded separation capacity and tighter shared plant power budget",
             Collections.<ProcessModelOperatingEnvelopeLifecycleStudy.AcceptedStateMetric>emptyList(), current.coverage,
-            relief.portfolio.getRankedStudies(), relief.combination, current.study, current.search, current.slices)
+            relief.portfolio.getRankedStudies(), relief.combination, relief.envelope, current.study, current.search,
+            current.slices)
         .toEvidenceJson(currentCycleId);
   }
 
@@ -327,7 +338,15 @@ public class FieldToFacilityOptimizationAcceptanceTest {
         combinationResult.getDiagnostics().toString());
     QualifiedReliefCombinationEvidence combination = period.study.qualifyReliefCombination(period.search, portfolio,
         combinationStudy, combinationResult);
-    return new ReliefEvidence(portfolio, combination);
+    CombinedEnvelopeResult envelopeResult = combinationStudy.evaluateCombinedEnvelope(period.study, period.slices);
+    assertTrue(envelopeResult.isQualified(), envelopeResult.getDiagnostics().toString());
+    ProcessModelOperatingEnvelopeStudy foreignStudy = new ProcessModelOperatingEnvelopeStudy(period.study.getId(),
+        period.study.getName(), period.study.getProvenance(), period.study.getCandidateEvaluator());
+    assertThrows(IllegalStateException.class,
+        () -> combinationStudy.evaluateCombinedEnvelope(foreignStudy, period.slices[0]));
+    QualifiedReliefEnvelopeEvidence envelope = period.study.qualifyReliefEnvelope(period.search, portfolio,
+        combinationStudy, combinationResult, envelopeResult);
+    return new ReliefEvidence(portfolio, combination, envelope);
   }
 
   /**
@@ -636,8 +655,8 @@ public class FieldToFacilityOptimizationAcceptanceTest {
             && Double.isFinite(candidate.get("physical_headroom").getAsDouble())));
     assertThrows(IllegalStateException.class, () -> lifecycle.toEvidenceJson("missing-cycle"));
     assertEquals(Integer.valueOf(2), lifecycleEvidence.get("period_count"));
-    assertEquals(Integer.valueOf(12), lifecycleEvidence.get("requested_point_count"));
-    assertEquals(Integer.valueOf(12), lifecycleEvidence.get("completed_point_count"));
+    assertEquals(Integer.valueOf(16), lifecycleEvidence.get("requested_point_count"));
+    assertEquals(Integer.valueOf(16), lifecycleEvidence.get("completed_point_count"));
     assertEquals(1, ((List<?>) lifecycleEvidence.get("bottleneck_transitions")).size());
     List<?> periodChanges = (List<?>) lifecycleEvidence.get("period_change_diagnostics");
     assertEquals(1, periodChanges.size());
@@ -857,18 +876,20 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     assertTrue(search.isAcceptedPointReplayed(), search.getOutcome() + ": " + search.getDiagnostics());
 
     ProcessModelOperatingEnvelopeStudy study = new ProcessModelOperatingEnvelopeStudy("ten-well-lifecycle-envelope",
-        "Ten-well lifecycle operating envelope", "synthetic independent lifecycle period", candidates);
+        "Ten-well lifecycle operating envelope", "synthetic independent lifecycle period", candidates)
+        .setMaximumBoundaryRefinementEvaluations(8)
+        .setBoundaryRefinementRelativeTolerance(1.0e-3, "synthetic action-range boundary diagnostic");
     double[] accepted = search.getAcceptedCandidateValues();
     double nearbyChokeA = Math.max(actions.get(0).getLowerBound(), accepted[0] - 5.0);
-    SliceResult choke = study.evaluateOneDimensional(actions.get(0).getId(), new double[] {nearbyChokeA, accepted[0]},
-        search);
+    SliceResult choke = study.evaluateOneDimensional(actions.get(0).getId(),
+        new double[] {nearbyChokeA, accepted[0], actions.get(0).getUpperBound()}, search);
     int firstRouteIndex = fixture.wellSuffixes.size();
     double acceptedRouteA = accepted[firstRouteIndex];
     SliceResult route = study.evaluateOneDimensional(actions.get(firstRouteIndex).getId(),
         new double[] {acceptedRouteA, acceptedRouteA == 0.0 ? 1.0 : 0.0}, search);
     double nearbyChokeB = Math.max(actions.get(1).getLowerBound(), accepted[1] - 5.0);
     SliceResult hostPower = study.evaluateOneDimensional(actions.get(1).getId(),
-        new double[] {nearbyChokeB, accepted[1]}, search);
+        new double[] {nearbyChokeB, accepted[1], actions.get(1).getUpperBound()}, search);
     assertTrue(choke.isComplete(), choke.getDiagnostics().toString());
     assertTrue(route.isComplete(), route.getDiagnostics().toString());
     assertTrue(hostPower.isComplete(), hostPower.getDiagnostics().toString());
