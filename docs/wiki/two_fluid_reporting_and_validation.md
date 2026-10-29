@@ -143,7 +143,47 @@ inclined_section_gas_carryover_number,inclined_section_liquid_fallback_potential
 severe_slugging_number,severe_slug_potential
 ```
 
+### Steady-to-transient handoff and empirical holdup tuning
+
+With an explicit cell-face elevation profile, steady and legacy transient pressure marching
+use the same two half-cell gradients between neighboring midpoints, including nonuniform
+lengths and changing inclinations. The prescribed outlet-face pressure is also used during
+legacy momentum-consistency calibration, not just during time-integration stages. Calibrating
+against an extrapolated pressure and then stepping against a prescribed pressure creates an
+artificial outlet acceleration with unchanged boundaries.
+
+`setLiquidHoldupMultiplier(...)` changes the **steady** closure. It does not multiply the
+holdup recovered from transient conserved phase masses. Likewise,
+`setSteadyConsistentTransient(true)` balances the initial legacy momentum residual, not the
+complete phase-mass and thermal operator, and is not applied on the coupled-pressure route.
+Neither option qualifies a fitted steady state for transient operation.
+
+For external-simulator comparisons, distinguish phase-fraction or PVT tuning from hydraulic
+holdup tuning. Matching pressure with a holdup multiplier does not establish matching free-gas
+and liquid mass flows, superficial velocities or slip. Audit the phase-flow split at common
+pressure and temperature before attributing a transient discrepancy to the numerical solver.
+
+Before interpreting a choke or reservoir-inflow response, run an unchanged-boundary interval
+and check pressure, temperature, individual phase flows, inventory and the outlet-backflow
+diagnostic. Exact finite-volume mass balance and completion of the requested simulation
+time alone do not establish a physical steady-to-transient fixed point. A calibrated case
+that still drifts or develops trapped outlet phases must remain unqualified; do not hide
+that failure by repeatedly calling the steady solver or retuning to the resulting drift.
+
 ### Thermal-energy validation
+
+The steady and transient property flashes initialize both caloric and transport properties
+before publishing enthalpy or sound speed. Separate oil and aqueous enthalpies follow the
+local flash rather than a stale bulk-liquid value. This matters when transferring a
+nonuniform steady state to conservative total-energy recovery.
+
+On the conservative-energy route, phase change relaxes each named component toward its
+gas/oil/aqueous equilibrium partition. The source preserves each species total and has a
+nonnegative source-only Euler endpoint for intervals no longer than the relaxation time.
+Liquid-to-liquid dissolved-component exchange carries momentum directly from its actual
+donor; an absent gas phase is not a momentum intermediary. This is an approximate relaxation
+law, not qualified interfacial kinetics, and does not by itself qualify simultaneous
+advection, pressure correction or a long-horizon liquid-rich transient.
 
 For a closed-boundary thermal `runTransient(...)`, call
 `getLastThermalEnergyBalanceReport()` to validate the same post-step sensible-energy model that

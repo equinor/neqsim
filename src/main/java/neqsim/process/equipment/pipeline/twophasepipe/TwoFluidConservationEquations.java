@@ -1093,7 +1093,7 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   /**
-   * Supply paired gas/oil or gas/aqueous component sources to the existing stage owner.
+   * Supply component-conservative gas, oil and aqueous sources to the existing stage owner.
    *
    * @param sources cell/phase/component sources in kg/(m s), or null to restore the legacy source
    */
@@ -1107,9 +1107,8 @@ public class TwoFluidConservationEquations implements Serializable {
         for (int component = 0; component < cell[0].length; component++) {
           if (!Double.isFinite(cell[0][component]) || !Double.isFinite(cell[1][component])
               || !Double.isFinite(cell[2][component])
-              || cell[0][component] != -(cell[1][component] + cell[2][component])
-              || cell[1][component] != 0.0 && cell[2][component] != 0.0) {
-            throw new IllegalArgumentException("Component transfer must be finite and paired through gas");
+              || cell[0][component] != -(cell[1][component] + cell[2][component])) {
+            throw new IllegalArgumentException("Component transfer must be finite and conserve each species");
           }
         }
       }
@@ -2539,18 +2538,16 @@ public class TwoFluidConservationEquations implements Serializable {
           if (finiteRateComponentSources.length != sections.length) {
             throw new IllegalStateException("Finite-rate sources must cover every cell");
           }
-          double gasRate = 0.0;
           double oilRate = 0.0;
           double waterRate = 0.0;
-          for (double rate : finiteRateComponentSources[i][0]) {
-            gasRate += rate;
-          }
           for (double rate : finiteRateComponentSources[i][1]) {
             oilRate += rate;
           }
           for (double rate : finiteRateComponentSources[i][2]) {
             waterRate += rate;
           }
+          // Source setters validate each species; close the aggregate after component cancellation.
+          double gasRate = -(oilRate + waterRate);
           phaseMassTransfer = new PhaseMassTransfer(gasRate, oilRate, waterRate, true, true, null);
         } else if (localEquilibriumStates != null && thermodynamicCoupling != null) {
           if (localEquilibriumStates.length != sections.length || localEquilibriumStates[i] == null) {
@@ -3139,24 +3136,36 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   /**
-   * Carry each component's momentum from its actual gas or liquid donor.
+   * Carry each component's momentum directly from its donating phases to its receiving phases.
    *
    * @param section phase velocities at the source stage
    * @param rates validated gas/oil/water component source rates in kg/(m s)
-   * @return paired gas/oil/water momentum sources in N/m
+   * @return conservative gas/oil/water momentum sources in N/m
    */
   static double[] componentTransferMomentumSources(TwoFluidSection section, double[][] rates) {
     double[] momentum = new double[3];
     double[] velocity = {section.getGasVelocity(), section.getOilVelocity(), section.getWaterVelocity()};
-    for (int liquid = 1; liquid < 3; liquid++) {
-      for (double rate : rates[liquid]) {
-        if (rate != 0.0) {
-          double transfer = rate * (rate > 0.0 ? velocity[0] : velocity[liquid]);
-          momentum[liquid] += transfer;
+    for (int component = 0; component < rates[0].length; component++) {
+      double receivingRate = 0.0;
+      for (int phase = 0; phase < 3; phase++) {
+        receivingRate += Math.max(0.0, rates[phase][component]);
+      }
+      if (receivingRate == 0.0) {
+        continue;
+      }
+      for (int donor = 0; donor < 3; donor++) {
+        if (rates[donor][component] >= 0.0) {
+          continue;
+        }
+        for (int receiver = 0; receiver < 3; receiver++) {
+          if (rates[receiver][component] > 0.0) {
+            double transfer = -rates[donor][component] * (rates[receiver][component] / receivingRate) * velocity[donor];
+            momentum[donor] -= transfer;
+            momentum[receiver] += transfer;
+          }
         }
       }
     }
-    momentum[0] = -momentum[1] - momentum[2];
     return momentum;
   }
 
