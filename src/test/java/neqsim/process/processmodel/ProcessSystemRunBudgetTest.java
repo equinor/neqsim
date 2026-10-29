@@ -32,6 +32,8 @@ class ProcessSystemRunBudgetTest {
     private static final long serialVersionUID = 1L;
     private final long sleepMillis;
     private final AtomicInteger runs = new AtomicInteger();
+    /** Optional callback after the loop starts, before its first simulated delay. */
+    private transient Runnable onFirstRun;
 
     /**
      * Creates the loop.
@@ -47,7 +49,9 @@ class ProcessSystemRunBudgetTest {
     /** {@inheritDoc} */
     @Override
     public void run(UUID id) {
-      runs.incrementAndGet();
+      if (runs.incrementAndGet() == 1 && onFirstRun != null) {
+        onFirstRun.run();
+      }
       try {
         Thread.sleep(sleepMillis);
       } catch (InterruptedException e) {
@@ -112,10 +116,13 @@ class ProcessSystemRunBudgetTest {
   @ParameterizedTest
   @ValueSource(booleans = {false, true})
   void timeBudgetStopsRunAndNamesTheUnit(boolean optimized) {
-    Object[] parts = slowProcess("p", "slow loop", 60L, optimized);
+    Object[] parts = slowProcess("p", "slow loop", 300L, optimized);
     ProcessSystem process = (ProcessSystem) parts[0];
     SlowOpenLoop loop = (SlowOpenLoop) parts[1];
-    process.setMaxRunTimeSeconds(0.25);
+    // Arm only after the intended unit starts: feed/mixer initialization may exceed
+    // 250 ms on a loaded runner. Its first delay then crosses the deadline before
+    // another unit can run, so the exact diagnostic name is independent of timing.
+    loop.onFirstRun = () -> process.setMaxRunTimeSeconds(0.25);
     long t0 = System.nanoTime();
     process.run();
     double elapsed = (System.nanoTime() - t0) * 1.0e-9;
@@ -126,7 +133,7 @@ class ProcessSystemRunBudgetTest {
     assertEquals("slow loop", status.getBudgetUnitName());
     assertTrue(status.getBudgetReason().contains("wall-clock"));
     assertTrue(elapsed < 1.2, "run must stop near the budget, took " + elapsed);
-    assertTrue(loop.runs.get() < 12, "loop ran " + loop.runs.get());
+    assertEquals(1, loop.runs.get(), "the budget must stop the run after the first slow unit invocation");
     RunDiagnostics diag = process.getLastRunDiagnostics();
     assertTrue(diag.isTimedOut());
     assertEquals("slow loop", diag.getUnitName());
