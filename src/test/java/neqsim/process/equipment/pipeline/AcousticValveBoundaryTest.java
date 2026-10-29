@@ -24,6 +24,70 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 class AcousticValveBoundaryTest {
+  /** Exact absolute knots preserve tabulated positions without an epsilon or early closure. */
+  @Test
+  void exactAbsoluteTravelKnots() {
+    double[] relative = {0.0, 0.125, 0.25, 0.3};
+    double[] positions = {1.0, 0.25, 0.8, 0.0};
+    for (double start : new double[] {0.4, 1000000.4, 1000000000000.4}) {
+      AcousticValveBoundary boundary = new AcousticValveBoundary(new double[] {0.0, 1.0}, new double[] {0.0, 10.0},
+          AcousticValveBoundary.CapacityUnit.KV, relative, positions, start, 0.0);
+      for (int i = 0; i < relative.length; i++) {
+        assertEquals(positions[i], boundary.getOpening(start + relative[i]), 0.0);
+      }
+      double end = start + 0.3;
+      assertTrue(boundary.getOpening(Math.nextAfter(end, Double.NEGATIVE_INFINITY)) > 0.0);
+      assertEquals(0.0, boundary.getKv(end), 0.0);
+      assertEquals(0.0, boundary.getKv(Math.nextAfter(end, Double.POSITIVE_INFINITY)), 0.0);
+      assertEquals(start + 0.125, boundary.nextKnotAfter(start), 0.0);
+      assertEquals(start + 0.25, boundary.nextKnotAfter(start + 0.125), 0.0);
+    }
+  }
+
+  /**
+   * Absolute-knot equality survives serialized checkpoints, including explicitly declared leakage.
+   *
+   * @throws Exception if serialization fails
+   */
+  @Test
+  void exactKnotSerializationAndLeakage() throws Exception {
+    for (double leakage : new double[] {0.0, 1.0}) {
+      AcousticValveBoundary boundary = new AcousticValveBoundary(new double[] {0.0, 1.0}, new double[] {leakage, 10.0},
+          AcousticValveBoundary.CapacityUnit.KV, new double[] {0.0, 0.3}, new double[] {1.0, 0.0}, 0.3, 0.1);
+      ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+      try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+        output.writeObject(boundary);
+      }
+      AcousticValveBoundary restored;
+      try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+        restored = (AcousticValveBoundary) input.readObject();
+      }
+      double end = (0.3 + 0.1) + 0.3;
+      assertEquals(0.0, restored.getOpening(end), 0.0);
+      assertEquals(leakage, restored.getKv(end), 0.0);
+      assertTrue(restored.getOpening(Math.nextAfter(end, Double.NEGATIVE_INFINITY)) > 0.0);
+    }
+  }
+
+  /** Exact closure must not leave residual capacity that falsely requests receiver backflow. */
+  @Test
+  void exactClosureWithElevatedReceiver() {
+    WaterHammerPipe pipe = pipe(101, 36000.0, 0.1);
+    double kv = pipe.getEffectiveValveKv();
+    pipe.setValveBoundary(new AcousticValveBoundary(new double[] {0.0, 1.0}, new double[] {0.0, kv},
+        AcousticValveBoundary.CapacityUnit.KV, new double[] {0.0, 0.3}, new double[] {1.0, 0.0}, 0.4, 0.0));
+    pipe.run(UUID.randomUUID());
+    pipe.runTransient(0.699, UUID.randomUUID());
+    pipe.setValveBackPressure(100.0);
+    pipe.runTransient(0.001, UUID.randomUUID());
+    assertEquals(0.7, pipe.getCurrentTime(), 0.0);
+    assertEquals(0.0, pipe.getEffectiveValveKv(), 0.0);
+    assertEquals(0.0, pipe.getFlowProfile()[100], 0.0);
+    for (double pressure : pipe.getPressureProfile()) {
+      assertTrue(Double.isFinite(pressure));
+    }
+  }
+
   /**
    * Build a public synthetic consistent pipe/receiver/capacity fixture without altering vendor data.
    *
