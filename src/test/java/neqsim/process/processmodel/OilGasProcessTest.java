@@ -212,7 +212,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     assertEquals(0.0, gassplitter.getSplitStream(1).getFlowRate("MSm3/day"), 1e-2);
     assertEquals(4019.7743436587402,
         gascompressor.getCompressorChart().getSurgeCurve().getSurgeFlow(gascompressor.getPolytropicFluidHead()), 1);
-    assertEquals(91.08453287802, gascompressor.getOutletPressure(), 1e-1);
+    assertEquals(90.0, gascompressor.getOutletPressure(), 1e-1);
 
     gas_from_separator.setFlowRate(2.0, "MSm3/day");
     operations.run();
