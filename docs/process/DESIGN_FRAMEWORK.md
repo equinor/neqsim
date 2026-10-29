@@ -909,10 +909,11 @@ pipe.enableAllConstraints();
 process.applyMechanicalDesignCapacityConstraints();
 process.run();
 
-// Start inside the generated compressor map's feasible flow range. A binary
-// feasibility search cannot use a lower endpoint that is already in surge.
+// Start with enough surge margin on the generated map using the selected
+// polytropic method. A binary feasibility search needs a feasible lower endpoint;
+// being inside the map alone does not satisfy the surge-margin constraint.
 ProductionOptimizer.OptimizationConfig config =
-    new ProductionOptimizer.OptimizationConfig(7000.0, 15000.0)
+    new ProductionOptimizer.OptimizationConfig(7800.0, 15000.0)
         .rateUnit("kg/hr").tolerance(1.0).defaultUtilizationLimit(0.95);
 
 ProductionOptimizer.OptimizationResult result =

@@ -34,7 +34,7 @@ installed machine requires its vendor map, operating limits and driver rating.
 All throughput claims are bounded by the specified search interval.
 
 
-**Runtime:** Use Git and JDK 17 or newer. The setup uses compiled repository classes when present; otherwise it fetches and builds the corrected documentation source from `refs/pull/3597/head`. Set `NEQSIM_GIT_REF` to validate another fixed revision. The public Python package alone does not contain all Java fixes exercised here. Run all cells from a fresh kernel.
+**Runtime:** Use Git and JDK 17 or newer. The setup uses compiled repository classes when present; otherwise it fetches and builds the corrected documentation source from `8ea72ed81e247742935db6c582d41da7cba75cf5`. Set `NEQSIM_GIT_REF` to validate another fixed revision. The public Python package alone does not contain all Java fixes exercised here. Run all cells from a fresh kernel.
 
 
 ```python
@@ -62,7 +62,7 @@ if PROJECT_ROOT is None:
     # The public package alone predates fixes exercised by these examples.
     # Use the validated documentation PR's source; override with another fixed
     # commit or ref through NEQSIM_GIT_REF when validating a newer revision.
-    source_ref = os.environ.get("NEQSIM_GIT_REF", "refs/pull/3597/head")
+    source_ref = os.environ.get("NEQSIM_GIT_REF", "8ea72ed81e247742935db6c582d41da7cba75cf5")
     PROJECT_ROOT = Path(tempfile.mkdtemp(prefix="neqsim-optimization-"))
     subprocess.check_call(["git", "init", "-q", str(PROJECT_ROOT)])
     subprocess.check_call(["git", "-C", str(PROJECT_ROOT), "remote", "add", "origin",
@@ -93,7 +93,6 @@ from neqsim_dev_setup import neqsim_init, neqsim_classes
 ns = neqsim_classes(neqsim_init(project_root=PROJECT_ROOT,
                               recompile=False, verbose=False))
 NEQSIM_MODE = "workspace target/classes"
-from neqsim import jneqsim
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -152,6 +151,14 @@ Everything below is reused by all three scenarios.
   `ProductionOptimizer` finds the highest feed rate that keeps every unit below its
   capacity limit. It searches around the duty the plant was sized for, so it works
   whether the equipment is small or large.
+The binary feasibility search starts at 75% of design flow in this synthetic case
+to retain surge margin with the default Schultz head calculation. Check a feasible
+lower endpoint again after changing the fluid, map, pressure ratio or head method.
+
+The throughput sweeps resolve 75–80% of design flow more finely: with Schultz
+head, the overlap between the required surge margin and the 95% speed limit is
+narrow. Every retained point must still pass the original capacity checks.
+
 
 ```python
 def build_plant(feed_rate_kghr=8000.0):
@@ -223,9 +230,10 @@ def show_bottleneck(process):
     )
 
 
-def maximize_throughput(plant, util_limit=0.95, span=0.30):
+def maximize_throughput(plant, util_limit=0.95, span=0.25):
     """One call = full optimization. Searches around the duty the plant was sized
-    for (the current feed rate), so it stays inside the compressor operating window."""
+    for (the current feed rate). The lower endpoint must also satisfy the surge
+    margin with the selected polytropic method, not just lie inside the map."""
     process, feed = plant["process"], plant["feed"]
     design = feed.getFlowRate("kg/hr")
     lo, hi = (1.0 - span) * design, design
@@ -295,10 +303,10 @@ print("Utilization at optimum:", utilization(A["process"]))
 
 ```
 Auto-sized 3 units from flow conditions
-Utilization at design point: {'inlet separator': 83.0, 'export compressor': 98.7, 'export cooler': 82.8}
-  bottleneck: export compressor [speed] @ 98.7%
-Scenario A: optimal 6375 kg/hr | feasible=True | bottleneck=export compressor @ 95.0%
-Utilization at optimum: {'inlet separator': 66.1, 'export compressor': 95.0, 'export cooler': 64.6}
+Utilization at design point: {'inlet separator': 83.0, 'export compressor': 100.4, 'export cooler': 84.9}
+  bottleneck: export compressor [speed] @ 100.4%
+Scenario A: optimal 6295 kg/hr | feasible=True | bottleneck=export compressor @ 95.0%
+Utilization at optimum: {'inlet separator': 65.3, 'export compressor': 95.0, 'export cooler': 65.6}
 ```
 
 </details>
@@ -331,10 +339,10 @@ print("Utilization at optimum:", utilization(B["process"]))
 <summary>Output</summary>
 
 ```
-Utilization at design point: {'inlet separator': 68.3, 'export compressor': 98.7, 'export cooler': 82.8}
-  bottleneck: export compressor [speed] @ 98.7%
-Scenario B: optimal 9562 kg/hr | feasible=True | bottleneck=export compressor @ 95.0%
-Utilization at optimum: {'inlet separator': 54.4, 'export compressor': 95.0, 'export cooler': 64.6}
+Utilization at design point: {'inlet separator': 87.5, 'export compressor': 100.4, 'export cooler': 84.9}
+  bottleneck: export compressor [speed] @ 100.4%
+Scenario B: optimal 9444 kg/hr | feasible=True | bottleneck=export compressor @ 95.0%
+Utilization at optimum: {'inlet separator': 68.8, 'export compressor': 95.0, 'export cooler': 65.6}
 ```
 
 </details>
@@ -366,10 +374,10 @@ print(
 <summary>Output</summary>
 
 ```
-Scenario C (auto-sized): optimal 6375 kg/hr | feasible=True | bottleneck=export compressor @ 95.0%
-Scenario C (real sizes): optimal 7968 kg/hr | feasible=True | bottleneck=export compressor @ 95.0%
-Utilization at real-size optimum: {'inlet separator': 66.1, 'export compressor': 95.0, 'export cooler': 64.6}
-Throughput change after using real sizes: +1594 kg/hr
+Scenario C (auto-sized): optimal 6295 kg/hr | feasible=True | bottleneck=export compressor @ 95.0%
+Scenario C (real sizes): optimal 7870 kg/hr | feasible=True | bottleneck=export compressor @ 95.0%
+Utilization at real-size optimum: {'inlet separator': 65.3, 'export compressor': 95.0, 'export cooler': 65.6}
+Throughput change after using real sizes: +1575 kg/hr
 ```
 
 </details>
@@ -516,7 +524,7 @@ constraints.add(
 )
 
 cfg = (
-    OptimizationConfig(0.70 * DESIGN, DESIGN)
+    OptimizationConfig(0.75 * DESIGN, DESIGN)
     .rateUnit("kg/hr")
     .tolerance(50.0)
     .maxIterations(25)
@@ -536,14 +544,12 @@ print(pareto.toMarkdownTable())
 <summary>Output</summary>
 
 ```
-Pareto front points: 5
+Pareto front points: 3
 | # | Feasible | production | energy_co2 | Weights |
 |---|---|---|---|---|
-| 1 | yes | 0.7768 | 0.9207 | [0.83, 0.17] |
-| 2 | yes | 0.7768 | 0.9207 | [0.67, 0.33] |
-| 3 | yes | 0.7078 | 0.8348 | [0.50, 0.50] |
-| 4 | yes | 0.7078 | 0.8348 | [0.17, 0.83] |
-| 5 | yes | 0.7078 | 0.8348 | [0.00, 1.00] |
+| 1 | yes | 0.7672 | 0.9614 | [1.00, 0.00] |
+| 2 | yes | 0.7672 | 0.9614 | [0.83, 0.17] |
+| 3 | yes | 0.7536 | 0.9433 | [0.50, 0.50] |
 
 ```
 
@@ -555,7 +561,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 # Continuous feasible frontier: sweep the feed across the operating window.
-rates = np.linspace(0.70 * DESIGN, 0.95 * DESIGN, 12)
+rates = np.linspace(0.75 * DESIGN, 0.80 * DESIGN, 31)
 prod, co2 = [], []
 for r in rates:
     pr_feed.setFlowRate(float(r), "kg/hr")
@@ -620,7 +626,7 @@ print(
 <summary>Output</summary>
 
 ```
-Specific emissions: 0.0177 -> 0.0178 kg CO₂/kg gas (0.3% rise across the window)
+Specific emissions: 0.0188 -> 0.0188 kg CO₂/kg gas (0.1% rise across the window)
 ```
 
 </details>
@@ -631,8 +637,8 @@ Specific emissions: 0.0177 -> 0.0178 kg CO₂/kg gas (0.3% rise across the windo
 trade-off is almost a straight line: CO₂ scales nearly linearly with throughput, so *every*
 feasible rate between the CO₂-minimum (lowest throughput) and the production-maximum
 (the configured utilization limit) is **non-dominated** — picking an operating point is a business preference,
-not a hidden technical optimum. The specific emissions (kg CO₂ / kg gas) still rise modestly
-toward the high-flow end, where the compressor runs less efficiently.
+not a hidden technical optimum. The specific emissions (kg CO₂ / kg gas) vary little over this narrow feasible
+interval; the printed range reports the calculated variation.
 
 The front becomes a genuinely *curved* 2-D Pareto surface as soon as a second knob enters that
 trades power against recovery (e.g. export pressure, or a recompression/recycle that recovers
@@ -745,7 +751,7 @@ feed_addr = SEP_AREA + "::feed.flowRate"
 prod_addr = SEP_AREA + "::inlet separator.gasOutStream.flowRate"
 pwr_addr = COMP_AREA + "::export compressor.power"
 
-rates = np.linspace(0.70 * PM_DESIGN, 0.98 * PM_DESIGN, 15)
+rates = np.linspace(0.75 * PM_DESIGN, 0.80 * PM_DESIGN, 31)
 pm_prod, pm_co2 = [], []
 for r in rates:
     setpoints = LinkedHashMap()
@@ -773,21 +779,28 @@ print("CO₂ range          : %.0f - %.0f kg/hr" % (pm_co2.min(), pm_co2.max()))
 ```
 ProcessModel areas : ['separation', 'compression']
 units auto-sized   : 3
-  feed    8400 kg/hr -> infeasible (skipped)
-  feed    8640 kg/hr -> infeasible (skipped)
+  feed    9000 kg/hr -> infeasible (skipped)
+  feed    9020 kg/hr -> infeasible (skipped)
+  feed    9040 kg/hr -> infeasible (skipped)
+  feed    9060 kg/hr -> infeasible (skipped)
+  feed    9080 kg/hr -> infeasible (skipped)
+  feed    9100 kg/hr -> infeasible (skipped)
+  feed    9120 kg/hr -> infeasible (skipped)
+  feed    9140 kg/hr -> infeasible (skipped)
+  feed    9160 kg/hr -> infeasible (skipped)
+  feed    9180 kg/hr -> infeasible (skipped)
+  feed    9200 kg/hr -> infeasible (skipped)
+  feed    9460 kg/hr -> infeasible (skipped)
+  feed    9480 kg/hr -> infeasible (skipped)
+  feed    9500 kg/hr -> infeasible (skipped)
+  feed    9520 kg/hr -> infeasible (skipped)
+  feed    9540 kg/hr -> infeasible (skipped)
+  feed    9560 kg/hr -> infeasible (skipped)
+  feed    9580 kg/hr -> infeasible (skipped)
   feed    9600 kg/hr -> infeasible (skipped)
-  feed    9840 kg/hr -> infeasible (skipped)
-  feed   10080 kg/hr -> infeasible (skipped)
-  feed   10320 kg/hr -> infeasible (skipped)
-  feed   10560 kg/hr -> infeasible (skipped)
-  feed   10800 kg/hr -> infeasible (skipped)
-  feed   11040 kg/hr -> infeasible (skipped)
-  feed   11280 kg/hr -> infeasible (skipped)
-  feed   11520 kg/hr -> infeasible (skipped)
-  feed   11760 kg/hr -> infeasible (skipped)
-feasible trials    : 3
-production range   : 8662 - 9131 kg/hr
-CO₂ range          : 153 - 162 kg/hr
+feasible trials    : 12
+production range   : 8994 - 9209 kg/hr
+CO₂ range          : 169 - 173 kg/hr
 ```
 
 </details>
@@ -836,7 +849,7 @@ print(
 <summary>Output</summary>
 
 ```
-Specific emissions: 0.0177 -> 0.0178 kg CO₂/kg gas across the feasible window (0.3% rise)
+Specific emissions: 0.0188 -> 0.0188 kg CO₂/kg gas across the feasible window (0.1% rise)
 ```
 
 </details>
