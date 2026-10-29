@@ -1329,13 +1329,86 @@ def _qualified_relief_combination_reasons(actual, envelope, opportunity):
     return []
 
 
-def _qualified_relief_envelope_reasons(actual, combination, envelope):
+def _sampled_cells_valid(envelope_slice):
+    """Validate exact four-corner topology reconstructed from a persisted 2D slice."""
+    if not isinstance(envelope_slice, dict):
+        return False
+    cells = envelope_slice.get("sampled_cells")
+    axes = envelope_slice.get("axis_values")
+    points = envelope_slice.get("points")
+    transitions = envelope_slice.get("operating_region_transitions")
+    if not isinstance(cells, list) or not isinstance(axes, list):
+        return False
+    if len(axes) != 2:
+        return cells == []
+    if (not all(isinstance(axis, list) and len(axis) >= 1 for axis in axes)
+            or not isinstance(points, list) or not isinstance(transitions, list)):
+        return False
+    second_count = len(axes[1])
+    expected = []
+    for first in range(len(axes[0]) - 1):
+        for second in range(second_count - 1):
+            corner_indexes = [
+                first * second_count + second,
+                first * second_count + second + 1,
+                (first + 1) * second_count + second + 1,
+                (first + 1) * second_count + second,
+            ]
+            if any(index >= len(points) or not isinstance(points[index], dict)
+                   for index in corner_indexes):
+                return False
+            corners = [points[index] for index in corner_indexes]
+            if ([corner.get("sequence_index") for corner in corners] != corner_indexes
+                    or any(corner.get("grid_indexes") != coordinate for corner, coordinate in zip(
+                        corners,
+                        ([first, second], [first, second + 1],
+                         [first + 1, second + 1], [first + 1, second])))):
+                return False
+            feasible = [corner.get("feasible") for corner in corners]
+            if any(not isinstance(value, bool) for value in feasible):
+                return False
+            if all(feasible):
+                classification = "ALL_CORNERS_FEASIBLE"
+            elif not any(feasible):
+                classification = "NO_CORNERS_FEASIBLE"
+            else:
+                classification = "MIXED_CORNER_FEASIBILITY"
+            families = []
+            for start, end in zip(corner_indexes, corner_indexes[1:] + corner_indexes[:1]):
+                if points[start].get("feasible") == points[end].get("feasible"):
+                    continue
+                matches = [transition for transition in transitions
+                           if isinstance(transition, dict)
+                           and {transition.get("from_sequence_index"),
+                                transition.get("to_sequence_index")} == {start, end}
+                           and isinstance(transition.get("from_feasible"), bool)
+                           and isinstance(transition.get("to_feasible"), bool)
+                           and transition.get("from_feasible")
+                               is not transition.get("to_feasible")]
+                if len(matches) != 1:
+                    return False
+                families.append(matches[0])
+            expected.append({
+                "grid_indexes": [first, second],
+                "corner_sequence_indexes": corner_indexes,
+                "corner_feasible": feasible,
+                "classification": classification,
+                "boundary_family_count": len(families),
+                "sampled_boundary_families": families,
+                "interpolated": False,
+                "sampled_cell_only": True,
+            })
+    return cells == expected
+
+
+def _qualified_relief_envelope_reasons(actual, combination, envelope,
+                                       require_sampled_cells=False):
     """Validate exact paired baseline/joint-relief slices and their derived migrations."""
     if not isinstance(actual, dict):
         return ["missing_qualified_relief_envelope"]
     pairs = actual.get("slice_pairs")
     baseline_slices = envelope.get("slices") if isinstance(envelope, dict) else None
-    if (actual.get("receipt_version") != 1
+    if (actual.get("receipt_version") != (2 if require_sampled_cells else 1)
             or actual.get("combination") != combination
             or actual.get("envelope_study_id") != envelope.get("study_id")
             or actual.get("candidate_evaluator_id") != envelope.get("candidate_evaluator_id")
@@ -1353,12 +1426,15 @@ def _qualified_relief_envelope_reasons(actual, combination, envelope):
         return ["invalid_qualified_relief_envelope"]
     point_change_count = 0
     boundary_comparison_count = 0
+    sampled_cell_comparison_count = 0
+    changed_sampled_cell_count = 0
     for pair, baseline in zip(pairs, baseline_slices):
         if not isinstance(pair, dict) or pair.get("baseline_slice") != baseline:
             return ["invalid_qualified_relief_envelope"]
         relieved = pair.get("relieved_slice")
         changes = pair.get("sampled_point_identity_changes")
         comparisons = pair.get("continuous_boundary_comparisons")
+        cell_comparisons = pair.get("sampled_cell_comparisons")
         baseline_points = baseline.get("points") if isinstance(baseline, dict) else None
         relieved_points = relieved.get("points") if isinstance(relieved, dict) else None
         baseline_boundaries = (baseline.get("operating_region_boundary_refinements")
@@ -1377,11 +1453,39 @@ def _qualified_relief_envelope_reasons(actual, combination, envelope):
                 or not isinstance(baseline_points, list) or not isinstance(relieved_points, list)
                 or len(baseline_points) != len(relieved_points)
                 or not isinstance(changes, list) or not isinstance(comparisons, list)
+                or (require_sampled_cells and not isinstance(cell_comparisons, list))
                 or not isinstance(baseline_boundaries, list)
                 or not isinstance(relieved_boundaries, list)
                 or pair.get("baseline_boundary_count") != len(baseline_boundaries)
                 or pair.get("relieved_boundary_count") != len(relieved_boundaries)):
             return ["invalid_qualified_relief_envelope"]
+        if require_sampled_cells:
+            if (not _sampled_cells_valid(baseline) or not _sampled_cells_valid(relieved)
+                    or len(cell_comparisons) != len(baseline.get("sampled_cells", []))):
+                return ["invalid_qualified_relief_envelope"]
+            expected_cell_comparisons = []
+            for before_cell, after_cell in zip(
+                    baseline.get("sampled_cells", []), relieved.get("sampled_cells", [])):
+                if (before_cell.get("grid_indexes") != after_cell.get("grid_indexes")
+                        or before_cell.get("corner_sequence_indexes")
+                            != after_cell.get("corner_sequence_indexes")):
+                    return ["invalid_qualified_relief_envelope"]
+                expected_cell_comparisons.append({
+                    "grid_indexes": before_cell.get("grid_indexes"),
+                    "corner_sequence_indexes": before_cell.get("corner_sequence_indexes"),
+                    "baseline_cell": before_cell,
+                    "relieved_cell": after_cell,
+                    "changed": before_cell != after_cell,
+                    "interpolated": False,
+                    "interpretation": (
+                        "Exact corner and sampled perimeter-edge comparison; no cell interior, "
+                        "area, or discrete-route boundary is inferred"),
+                })
+            if cell_comparisons != expected_cell_comparisons:
+                return ["invalid_qualified_relief_envelope"]
+            sampled_cell_comparison_count += len(cell_comparisons)
+            changed_sampled_cell_count += sum(
+                comparison.get("changed") is True for comparison in cell_comparisons)
         expected_changes = []
         for before, after in zip(baseline_points, relieved_points):
             before_constraint = ((before.get("leading_constraint") or {}).get(
@@ -1432,6 +1536,13 @@ def _qualified_relief_envelope_reasons(actual, combination, envelope):
         boundary_comparison_count += len(comparisons)
     if (actual.get("sampled_point_identity_change_count") != point_change_count
             or actual.get("continuous_boundary_comparison_count") != boundary_comparison_count):
+        return ["invalid_qualified_relief_envelope"]
+    if (require_sampled_cells
+            and (sampled_cell_comparison_count < 1
+                 or actual.get("sampled_cell_comparison_count")
+                    != sampled_cell_comparison_count
+                 or actual.get("changed_sampled_cell_count")
+                    != changed_sampled_cell_count)):
         return ["invalid_qualified_relief_envelope"]
     return []
 
@@ -1809,7 +1920,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
 
     reasons = []
     schema_version = evidence.get("schema_version")
-    if schema_version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15):
+    if schema_version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16):
         reasons.append("unsupported_lifecycle_envelope_schema")
     if evidence.get("cycle_id") != ctx.cycle_id:
         reasons.append("stale_lifecycle_envelope_evidence")
@@ -1824,7 +1935,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
         action_ids = []
     state_metric_ids = None
     if (schema_version == 3
-            or (schema_version in (4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+            or (schema_version in (4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)
                 and "accepted_state_metric_ids" in evidence)):
         state_metric_ids = _action_ids(evidence.get("accepted_state_metric_ids"))
         if state_metric_ids is None:
@@ -1902,7 +2013,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             reasons.append(prefix + "_identity_mismatch")
         if envelope.get("accepted_action_ids") != action_ids:
             reasons.append(prefix + "_action_ids_mismatch")
-        if schema_version in (4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15):
+        if schema_version in (4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16):
             slices = envelope.get("slices")
             if (not isinstance(slices, list)
                     or any(not isinstance(envelope_slice, dict)
@@ -1910,49 +2021,50 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
                            or "operating_region_transitions" not in envelope_slice
                            for envelope_slice in slices)):
                 reasons.append(prefix + "_missing_operating_region_transition_evidence")
-            if (schema_version in (5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+            if (schema_version in (5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)
                     and (not isinstance(slices, list)
                          or any(not isinstance(envelope_slice, dict)
                                 or "operating_region_boundary_refinements" not in envelope_slice
                                 or "maximum_boundary_refinement_evaluations" not in envelope_slice
                                 for envelope_slice in slices))):
                 reasons.append(prefix + "_missing_operating_region_boundary_refinement_evidence")
-            if schema_version in (6, 7, 8, 9, 10, 11, 12, 13, 14, 15) and not _has_boundary_constraint_headroom(slices):
+            if schema_version in (6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16) and not _has_boundary_constraint_headroom(slices):
                 reasons.append(prefix + "_missing_boundary_constraint_headroom_evidence")
-            if (schema_version in (7, 8, 9, 10, 11, 12, 13, 14, 15)
+            if (schema_version in (7, 8, 9, 10, 11, 12, 13, 14, 15, 16)
                     and (envelope.get("schema_version") != 2
                          or "cross_slice_constraint_summary" not in envelope)):
                 reasons.append(prefix + "_missing_cross_slice_constraint_summary")
-        if schema_version in (9, 10, 11, 12, 13, 14, 15):
+        if schema_version in (9, 10, 11, 12, 13, 14, 15, 16):
             reasons.extend(prefix + "_" + reason
                            for reason in _utilization_coverage_reasons(
                                row.get("utilization_coverage"),
-                               require_plant=schema_version in (10, 11, 12, 13, 14, 15)))
+                               require_plant=schema_version in (10, 11, 12, 13, 14, 15, 16)))
         if schema_version == 11:
             expected_opportunities = _constraint_opportunity_summary(envelope)
             if (expected_opportunities is None
                     or row.get("constraint_opportunity_summary") != expected_opportunities):
                 reasons.append(prefix + "_constraint_opportunity_summary_mismatch")
-        if schema_version in (12, 13, 14, 15):
+        if schema_version in (12, 13, 14, 15, 16):
             reasons.extend(
                 prefix + "_" + reason
                 for reason in _qualified_constraint_opportunity_reasons(
                     row.get("constraint_opportunity_summary"), envelope))
-        if (schema_version in (13, 14, 15)
+        if (schema_version in (13, 14, 15, 16)
                 and _has_qualified_relief_portfolio(
                     row.get("constraint_opportunity_summary"))):
             qualified_relief_portfolio_found = True
-        if schema_version in (14, 15) and "qualified_relief_combination" in row:
+        if schema_version in (14, 15, 16) and "qualified_relief_combination" in row:
             combination_reasons = _qualified_relief_combination_reasons(
                 row.get("qualified_relief_combination"), envelope,
                 row.get("constraint_opportunity_summary"))
             reasons.extend(prefix + "_" + reason for reason in combination_reasons)
             if not combination_reasons:
                 qualified_relief_combination_found = True
-        if schema_version == 15 and "qualified_relief_envelope" in row:
+        if schema_version in (15, 16) and "qualified_relief_envelope" in row:
             envelope_reasons = _qualified_relief_envelope_reasons(
                 row.get("qualified_relief_envelope"),
-                row.get("qualified_relief_combination"), envelope)
+                row.get("qualified_relief_combination"), envelope,
+                require_sampled_cells=schema_version == 16)
             reasons.extend(prefix + "_" + reason for reason in envelope_reasons)
             if not envelope_reasons:
                 qualified_relief_envelope_found = True
@@ -1989,11 +2101,11 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
         if period_id == ctx.cycle_id:
             current_envelope = envelope
 
-    if schema_version in (13, 14, 15) and not qualified_relief_portfolio_found:
+    if schema_version in (13, 14, 15, 16) and not qualified_relief_portfolio_found:
         reasons.append("missing_qualified_relief_portfolio")
-    if schema_version in (14, 15) and not qualified_relief_combination_found:
+    if schema_version in (14, 15, 16) and not qualified_relief_combination_found:
         reasons.append("missing_qualified_relief_combination")
-    if schema_version == 15 and not qualified_relief_envelope_found:
+    if schema_version in (15, 16) and not qualified_relief_envelope_found:
         reasons.append("missing_qualified_relief_envelope")
     if current_envelope is None:
         reasons.append("missing_current_lifecycle_period")
@@ -2024,12 +2136,12 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             })
     if evidence.get("bottleneck_transitions") != expected_transitions:
         reasons.append("lifecycle_bottleneck_transitions_mismatch")
-    if schema_version in (2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15):
+    if schema_version in (2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16):
         expected_period_changes = _period_change_diagnostics(
             periods, action_ids, evidence.get("time_unit"), state_metric_ids,
-            require_operating_transitions=schema_version in (4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
-            require_boundary_refinements=schema_version in (5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
-            require_constraint_summary_identities=schema_version in (8, 9, 10, 11, 12, 13, 14, 15))
+            require_operating_transitions=schema_version in (4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16),
+            require_boundary_refinements=schema_version in (5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16),
+            require_constraint_summary_identities=schema_version in (8, 9, 10, 11, 12, 13, 14, 15, 16))
         if (expected_period_changes is None
                 or evidence.get("period_change_diagnostics") != expected_period_changes):
             reasons.append("lifecycle_period_change_diagnostics_mismatch")

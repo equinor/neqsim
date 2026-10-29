@@ -1231,6 +1231,12 @@ bracket endpoint as an exact boundary or interpolate discrete routing actions. T
 restored in reverse order and the process must reconverge before the receipt can enter the existing ledger, promotion
 and report path.
 
+Schema v16 extends that receipt for coupled two-dimensional studies with exact sampled cells. The guard reconstructs
+each cell from its four persisted row-major corner points and the exact sampled perimeter feasibility-transition
+edges, then verifies the paired baseline/relieved cell comparison and aggregate counts. A cell is only a sampled
+topology record: it does not establish feasible interior area, interpolate a continuous contour, or bridge a discrete
+route choice.
+
 Schema versions 4 through 8 may additionally bind independently accepted physical-state metrics to every period. Each period must
 carry the same ordered metric IDs and units, finite values, and explicit provenance. The guard reconstructs exact
 adjacent-period state deltas and rejects missing, reordered, non-finite, unit-changed, or modified state evidence.

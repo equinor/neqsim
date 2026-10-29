@@ -944,11 +944,18 @@ only when exactly one baseline and one relieved continuous boundary are comparab
 not promoted to an exact boundary, discrete routes are never interpolated, and no independent relief delta is treated
 as additive.
 
+Schema v16 adds exact sampled-cell topology when an accepted envelope contains a two-dimensional slice. Each cell is
+identified by its lower grid indexes and four clockwise corner sequence indexes, classified only from independently
+evaluated corner feasibility, and linked to the exact sampled perimeter edges where feasibility changes. The paired
+combined-relief receipt compares those complete baseline and relieved cell records. It does not infer feasible area,
+an interior contour, or a boundary between discrete pressure-level routes; any continuous refinement remains a
+separate fail-closed bracket.
+
 Schema v11 retains the schema-v10 requirement for non-empty, independently declared plant-constraint IDs in addition to the
 schema-v9 equipment scope, complete finite rated evidence, explicit unit/basis/provenance/direction/category, and exact
 calculation binding to the accepted-point replay. Supply both
 `getInstalledEquipmentCapacityEvidence()` and `getPlantConstraintEvidence()` through the frozen-evidence builder path;
-this never resamples the mutable process after baseline restoration. Current schema-v11/v12/v13/v14/v15 exports retain optional
+this never resamples the mutable process after baseline restoration. Current schema-v11/v12/v13/v14/v15/v16 exports retain optional
 accepted-state metrics and require schema-v2
 cross-slice summaries in every period. The guard reconstructs each summary from persisted sampled and refined
 endpoint rows before trusting it, independently reconstructs the constraint opportunity screen, validates any v12/v13
@@ -957,7 +964,8 @@ accepted value, paired residual/tolerance, finite delta and restoration flags, r
 identity, candidate count, input indices, alternative identities, common objective policy and competition rank from
 the persisted deltas, reconstructs each schema-v14 joint membership, objective arithmetic, restoration state and
 bottleneck migration without assuming additivity, reconstructs every schema-v15 paired slice grid, point identity
-change, refinement count and bracket-endpoint shift from the persisted baseline and jointly relieved slices, and then
+change, refinement count and bracket-endpoint shift from the persisted baseline and jointly relieved slices,
+reconstructs every schema-v16 sampled cell and perimeter boundary family from the persisted 2D grid, and then
 recomputes every
 period-change diagnostic from the persisted periods before accepting it, including exact operating-region event
 migration, refined-boundary endpoint constraints and physical margins, exact ranked constraint-identity migration,

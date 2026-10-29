@@ -1748,7 +1748,7 @@ on `ProcessSimulationEvaluator`.
 | `evaluateOneDimensional(actionId, values, search)` | Validate the accepted replay and sample one axis around its exact action vector |
 | `evaluateTwoDimensional(firstId, firstValues, secondId, secondValues, search)` | Validate the accepted replay and sample two axes around its exact action vector |
 | `getAcceptedPointBottleneck(search)` | Return the replayed point's unit-safe leading constraint without another model evaluation |
-| `SliceResult.toEvidenceMap()` | Return strict-JSON-friendly sampled points, exact leading/rejecting constraints, transitions, evaluation count, runtime, and recovery diagnostics |
+| `SliceResult.getSampledCells()` / `toEvidenceMap()` | Return strict-JSON-friendly sampled points and, for a 2D slice, exact four-corner cell classifications and sampled perimeter boundary families without inferring an interior or interpolating discrete routes |
 | `getAcceptedPointEnvelopeEvidence(cycleId, search, slices...)` | Combine the current accepted point and one or more exact-runtime complete slices into one immutable live-task evidence block without rerunning the model |
 
 ### ProcessModelDebottleneckStudy
