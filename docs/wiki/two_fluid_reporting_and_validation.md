@@ -185,6 +185,15 @@ donor; an absent gas phase is not a momentum intermediary. This is an approximat
 law, not qualified interfacial kinetics, and does not by itself qualify simultaneous
 advection, pressure correction or a long-horizon liquid-rich transient.
 
+The source-only `RichGasEquilibriumSourceQualificationTest` uses the public six-component
+rich gas and a separately declared water extension at two nonunit cell lengths. Imposed
+hot single-gas targets remove every liquid species over one relaxation interval, retaining
+component mass and donor momentum without a total-energy source. A cyclic species exchange
+checks nonzero donor momentum and kinetic dissipation even when each phase has zero net
+mass source. These local algebraic limits do not exercise axial transport, EOS recovery,
+stationary-pool heat supply or a physical evaporation timescale. They do not supersede
+long-horizon rich-gas or reverse-boundary regressions.
+
 For a closed-boundary thermal `runTransient(...)`, call
 `getLastThermalEnergyBalanceReport()` to validate the same post-step sensible-energy model that
 changed the fluid and wall temperatures. Its discrete balance is
