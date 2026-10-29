@@ -1300,13 +1300,35 @@ public class Compressor extends TwoPortEquipment
       return;
     }
 
-    if (Math.abs(pressure - thermoSystem.getPressure(pressureUnit)) < 1e-6 && !compressorChart.isUseCompressorChart()) {
+    // A finite pressure rise must retain its head even below one microbar; otherwise
+    // inversion of a small, nonzero duty encounters a discontinuous zero-head interval.
+    if ((pressure == thermoSystem.getPressure(pressureUnit)
+        || (!usePolytropicCalc && Math.abs(pressure - thermoSystem.getPressure(pressureUnit)) < 1.0e-6))
+        && !compressorChart.isUseCompressorChart()) {
       thermoSystem.initProperties();
+      inletEnthalpy = thermoSystem.getEnthalpy();
+      if (inStream.getThermoSystem().getNumberOfPhases() == 1) {
+        double[] properties = null;
+        // Match the enthalpy basis used by getTotalWork(), including its existing precedence.
+        if (useGERG2008) {
+          properties = thermoSystem.getPhase(0).getProperties_GERG2008();
+        } else if (useLeachman) {
+          properties = thermoSystem.getPhase(0).getProperties_Leachman();
+        } else if (useVega) {
+          properties = thermoSystem.getPhase(0).getProperties_Vega();
+        }
+        if (properties != null) {
+          inletEnthalpy = properties[7] * thermoSystem.getPhase(0).getNumberOfMolesInPhase();
+        }
+      }
       outStream.setThermoSystem(getThermoSystem());
       outStream.setCalculationIdentifier(id);
       dH = 0.0;
+      polytropicHead = 0.0;
       polytropicFluidHead = 0.0;
       polytropicHeadMeter = 0.0;
+      polytropicExponent = 0.0;
+      actualCompressionRatio = 1.0;
       finishRun(id);
       return;
     }
@@ -1816,19 +1838,52 @@ public class Compressor extends TwoPortEquipment
     if (usePolytropicCalc)
 
     {
-      if (powerSet) {
+      double pressureRise = new neqsim.util.unit.PressureUnit(pressure, pressureUnit).getValue("bara") - presinn;
+      // The differential work avoids subtracting almost equal isentropic enthalpies.
+      // Scale by efficiency so that the associated temperature perturbation also remains small.
+      boolean differentialStep = pressureRise > 0.0 && pressureRise <= 1.0e-7 * presinn * polytropicEfficiency;
+      if (differentialStep) {
+        double differentialWork = powerSet ? dH
+            : thermoSystem.getFlowRate("kg/sec") * 1.0e5 * pressureRise / densInn / polytropicEfficiency;
+        double temperatureRise = differentialPolytropicTemperatureRise(pressureRise, differentialWork);
+        double relativeVolumeChange = Math
+            .abs((thermoSystem.getdVdPtn() * pressureRise + thermoSystem.getdVdTpn() * temperatureRise)
+                / thermoSystem.getVolume());
+        double head = differentialWork * polytropicEfficiency / thermoSystem.getFlowRate("kg/sec") / 1000.0;
+        // Reserve a decade below the head solve tolerance for the local first-order error.
+        differentialStep = Double.isFinite(temperatureRise) && Double.isFinite(relativeVolumeChange)
+            && 0.5 * Math.abs(head) * relativeVolumeChange <= 1.0e-9;
+        if (differentialStep) {
+          dH = differentialWork;
+          thermoSystem.setTemperature(thermoSystem.getTemperature() + temperatureRise);
+        }
+      }
+      if (powerSet || differentialStep) {
         double hout = hinn * (1 - 0 + fractionAntiSurge) + dH;
         thermoSystem.setPressure(pressure, pressureUnit);
         thermoOps = new ThermodynamicOperations(getThermoSystem());
-        runPHflashWithNaNRetry(thermoOps, hout);
-        if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-          thermoOps.PHflashGERG2008(hout);
-        }
-        if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-          thermoOps.PHflashLeachman(hout);
-        }
-        if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-          thermoOps.PHflashVega(hout);
+        if (differentialStep && inStream.getThermoSystem().getNumberOfPhases() == 1
+            && (useGERG2008 || useLeachman || useVega)) {
+          // Retain the differential seed on the selected enthalpy basis rather than first
+          // solving an unrelated cubic-EOS enthalpy target at an almost unchanged pressure.
+          if (useVega) {
+            thermoOps.PHflashVega(hout);
+          } else if (useLeachman) {
+            thermoOps.PHflashLeachman(hout);
+          } else {
+            thermoOps.PHflashGERG2008(hout);
+          }
+        } else {
+          runPHflashWithNaNRetry(thermoOps, hout);
+          if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+            thermoOps.PHflashGERG2008(hout);
+          }
+          if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+            thermoOps.PHflashLeachman(hout);
+          }
+          if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+            thermoOps.PHflashVega(hout);
+          }
         }
       } else {
         if (polytropicMethod.equals("ideal_inlet_properties")) {
@@ -2090,6 +2145,37 @@ public class Compressor extends TwoPortEquipment
 
     // Evaluate capacity constraints after run and log warnings for violated constraints
     evaluateCapacityConstraints();
+  }
+
+  /**
+   * Seeds a very small compression step from the enthalpy differential. The subsequent selected-model PH flash still
+   * closes the outlet energy and phase equilibrium; the frozen-phase derivatives here are only an initial guess.
+   *
+   * @param pressureRise positive absolute pressure increment in bar
+   * @param power compression duty in W
+   * @return initial temperature increment in K
+   */
+  private double differentialPolytropicTemperatureRise(double pressureRise, double power) {
+    double temperatureRise = (power
+        + pressureRise * (thermoSystem.getTemperature() * thermoSystem.getdVdTpn() - thermoSystem.getVolume()))
+        / thermoSystem.getCp();
+    if (inStream.getThermoSystem().getNumberOfPhases() == 1) {
+      double[] properties = null;
+      if (useGERG2008) {
+        properties = thermoSystem.getPhase(0).getProperties_GERG2008();
+      }
+      if (useLeachman) {
+        properties = thermoSystem.getPhase(0).getProperties_Leachman();
+      }
+      if (useVega) {
+        properties = thermoSystem.getPhase(0).getProperties_Vega();
+      }
+      if (properties != null) {
+        double heatCapacity = properties[10] * thermoSystem.getPhase(0).getNumberOfMolesInPhase();
+        temperatureRise = power / heatCapacity + 100.0 * properties[13] * pressureRise;
+      }
+    }
+    return temperatureRise;
   }
 
   /**
