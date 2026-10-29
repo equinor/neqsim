@@ -26,6 +26,27 @@ The mass transfer model provides tools for simulating interphase mass transfer i
 - **Complete phase transitions**: Handling total evaporation or dissolution
 - **Three-phase systems**: Gas-oil-water configurations
 
+### Local coupled gas/oil film option
+
+The existing `FluidBoundaryInterface` exposes:
+
+| Method | Default / contract |
+|---|---|
+| `setCoupledMassHeatTransferEnabled(boolean)` | `false`; opt-in simultaneous residual-based mass/heat solution in `KrishnaStandartFilmModel` |
+| `isCoupledMassHeatTransferEnabled()` | Reports the selected local numerical route |
+
+Set both mass and heat calculation enabled before using the option. Other boundary
+implementations reject enabling an unsupported route. The coupled route currently
+requires nonreactive hydrocarbon gas/oil, strictly positive interface fractions and
+positive finite transport. It restores its published local interface state on failed
+convergence; it does not mutate a bulk inventory or integrate a pipeline timestep.
+The legacy/default route remains unchanged except that invalid binary transport and
+nonfinite resistance inversion now reject instead of creating unit conductance.
+
+See [interphase numerical method and limits](InterphaseHeatMassTransfer#residual-based-gasoil-option).
+`CoupledGasOilFilmTest` executes the API and its numerical acceptance checks. This is
+not a new `MassTransferConfig` setting and does not enable transient pool evaporation.
+
 ### Architecture
 
 ```

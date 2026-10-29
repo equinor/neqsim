@@ -139,6 +139,27 @@ public interface FluidBoundaryInterface extends Cloneable {
   public void setHeatTransferCalc(boolean heatTransferCalc);
 
   /**
+   * Enables simultaneous residual-based mass/heat solution where implemented. Disabled by default.
+   *
+   * @param enabled true to require the coupled numerical route
+   * @throws UnsupportedOperationException if this boundary does not implement that route
+   */
+  default void setCoupledMassHeatTransferEnabled(boolean enabled) {
+    if (enabled) {
+      throw new UnsupportedOperationException("Coupled mass/heat solution is not implemented by this boundary");
+    }
+  }
+
+  /**
+   * Reports whether simultaneous residual-based mass/heat solution is selected.
+   *
+   * @return true if the coupled numerical route is enabled
+   */
+  default boolean isCoupledMassHeatTransferEnabled() {
+    return false;
+  }
+
+  /**
    * setMassTransferCalc.
    *
    * @param heatTransferCalc a boolean
