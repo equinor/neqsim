@@ -30,6 +30,7 @@ import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.LeadingC
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.OperatingRegionBoundaryRefinement;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.OperatingRegionTransition;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.Outcome;
+import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.SampledCell;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.SliceResult;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.Transition;
 import neqsim.process.util.optimizer.ProcessModelOperatingPointOptimizer.OperatingPointSearchResult;
@@ -415,6 +416,16 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals(ProcessModelOperatingAction.ValueSemantics.DISCRETE, transition.getActionValueSemantics());
     assertEquals(Boolean.FALSE, transition.toEvidenceMap().get("interpolated"));
     assertTrue(result.getBoundaryRefinements().isEmpty());
+    SliceResult grid = study.evaluateTwoDimensional(lineUp.getId(), new double[] {300.0, 900.0}, producerB.getId(),
+        new double[] {200.0, 300.0}, new double[] {300.0, 300.0});
+    assertTrue(grid.isComplete(), grid.getDiagnostics().toString());
+    assertEquals(1, grid.getSampledCells().size());
+    SampledCell cell = grid.getSampledCells().get(0);
+    assertEquals(SampledCell.Classification.MIXED_CORNER_FEASIBILITY, cell.getClassification());
+    assertEquals(2, cell.getBoundaryFamilies().size());
+    assertTrue(cell.getBoundaryFamilies().stream().allMatch(OperatingRegionTransition::isDiscreteAction));
+    assertTrue(cell.getBoundaryFamilies().stream()
+        .allMatch(edge -> Boolean.FALSE.equals(edge.toEvidenceMap().get("interpolated"))));
     assertEquals(600.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
     assertEquals(400.0, fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
   }
@@ -449,6 +460,19 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals(1, second.getFromSequenceIndex());
     assertEquals(3, second.getToSequenceIndex());
     assertEquals("gathering::gathering sink/producer A rate", second.getToConstraint());
+    assertEquals(1, result.getSampledCells().size());
+    SampledCell cell = result.getSampledCells().get(0);
+    assertArrayEquals(new int[] {0, 0}, cell.getGridIndexes());
+    assertArrayEquals(new int[] {0, 1, 3, 2}, cell.getCornerSequenceIndexes());
+    assertEquals(SampledCell.Classification.MIXED_CORNER_FEASIBILITY, cell.getClassification());
+    assertEquals(2, cell.getBoundaryFamilies().size());
+    assertTrue(cell.getBoundaryFamilies().stream().allMatch(edge -> edge.isFromFeasible() != edge.isToFeasible()));
+    Map<String, Object> cellEvidence = cell.toEvidenceMap();
+    assertEquals(Integer.valueOf(2), cellEvidence.get("boundary_family_count"));
+    assertEquals(Boolean.FALSE, cellEvidence.get("interpolated"));
+    assertEquals(Boolean.TRUE, cellEvidence.get("sampled_cell_only"));
+    assertEquals(1, ((List<?>) result.toEvidenceMap().get("sampled_cells")).size());
+    assertThrows(UnsupportedOperationException.class, () -> result.getSampledCells().clear());
     assertEquals(600.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
     assertEquals(400.0, fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
   }

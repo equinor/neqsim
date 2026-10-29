@@ -204,7 +204,7 @@ public class FieldToFacilityOptimizationAcceptanceTest {
   }
 
   /**
-   * Execute the source-backed ten-well lifecycle acceptance case and serialize its exact schema-v15 evidence.
+   * Execute the source-backed ten-well lifecycle acceptance case and serialize its exact schema-v16 evidence.
    *
    * <p>
    * This test-scope entry point lets the Python living-task acceptance workflow call the same Java fixture and physical
@@ -655,14 +655,14 @@ public class FieldToFacilityOptimizationAcceptanceTest {
             && Double.isFinite(candidate.get("physical_headroom").getAsDouble())));
     assertThrows(IllegalStateException.class, () -> lifecycle.toEvidenceJson("missing-cycle"));
     assertEquals(Integer.valueOf(2), lifecycleEvidence.get("period_count"));
-    assertEquals(Integer.valueOf(16), lifecycleEvidence.get("requested_point_count"));
-    assertEquals(Integer.valueOf(16), lifecycleEvidence.get("completed_point_count"));
+    assertEquals(Integer.valueOf(28), lifecycleEvidence.get("requested_point_count"));
+    assertEquals(Integer.valueOf(28), lifecycleEvidence.get("completed_point_count"));
     assertEquals(1, ((List<?>) lifecycleEvidence.get("bottleneck_transitions")).size());
     List<?> periodChanges = (List<?>) lifecycleEvidence.get("period_change_diagnostics");
     assertEquals(1, periodChanges.size());
     Map<?, ?> periodChange = (Map<?, ?>) periodChanges.get(0);
-    assertEquals(Integer.valueOf(3), periodChange.get("comparable_slice_count"));
-    assertEquals(Integer.valueOf(3), Integer.valueOf(((List<?>) periodChange.get("slice_changes")).size()));
+    assertEquals(Integer.valueOf(4), periodChange.get("comparable_slice_count"));
+    assertEquals(Integer.valueOf(4), Integer.valueOf(((List<?>) periodChange.get("slice_changes")).size()));
     assertTrue(((List<?>) periodChange.get("removed_slice_axes")).isEmpty());
     assertTrue(((List<?>) periodChange.get("added_slice_axes")).isEmpty());
     assertEquals(Integer.valueOf(20), Integer.valueOf(((List<?>) periodChange.get("accepted_action_changes")).size()));
@@ -829,7 +829,7 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     assertBaselineRestored(fixture);
   }
 
-  /** Evaluate one independent ten-well accepted point and its choke, route and host-power slices. */
+  /** Evaluate one accepted point and its choke, route, coupled choke-route and host-power slices. */
   private LifecyclePeriod evaluateLifecyclePeriod(String periodId, Fixture fixture, double sharedPowerLimitKw) {
     return evaluateLifecyclePeriod(periodId, fixture, sharedPowerLimitKw, null);
   }
@@ -887,15 +887,21 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     double acceptedRouteA = accepted[firstRouteIndex];
     SliceResult route = study.evaluateOneDimensional(actions.get(firstRouteIndex).getId(),
         new double[] {acceptedRouteA, acceptedRouteA == 0.0 ? 1.0 : 0.0}, search);
+    SliceResult coupledChokeRoute = study.evaluateTwoDimensional(actions.get(0).getId(),
+        new double[] {nearbyChokeA, accepted[0], actions.get(0).getUpperBound()}, actions.get(firstRouteIndex).getId(),
+        new double[] {acceptedRouteA, acceptedRouteA == 0.0 ? 1.0 : 0.0}, search);
     double nearbyChokeB = Math.max(actions.get(1).getLowerBound(), accepted[1] - 5.0);
     SliceResult hostPower = study.evaluateOneDimensional(actions.get(1).getId(),
         new double[] {nearbyChokeB, accepted[1], actions.get(1).getUpperBound()}, search);
     assertTrue(choke.isComplete(), choke.getDiagnostics().toString());
     assertTrue(route.isComplete(), route.getDiagnostics().toString());
+    assertTrue(coupledChokeRoute.isComplete(), coupledChokeRoute.getDiagnostics().toString());
+    assertEquals(2, coupledChokeRoute.getSampledCells().size());
     assertTrue(hostPower.isComplete(), hostPower.getDiagnostics().toString());
     UtilizationCoverageReport coverage = acceptedCoverage(fixture, search);
     assertTrue(coverage.isComplete(), coverage.getDiagnostics().toString());
-    return new LifecyclePeriod(fixture, study, search, coverage, new SliceResult[] {choke, route, hostPower});
+    return new LifecyclePeriod(fixture, study, search, coverage,
+        new SliceResult[] {choke, route, coupledChokeRoute, hostPower});
   }
 
   /** Build declared capacity coverage from the accepted replay without resampling the restored fixture. */
