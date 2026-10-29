@@ -41,6 +41,16 @@ CATEGORY_TITLES = {"valve": "Valves", "mixer": "Mixers and headers", "splitter":
                    "column": "Columns", "pipe": "Pipes", "reactor": "Reactors", "other": "Other units"}
 
 
+def _fmt_optional(value, fmt):
+    """Format a number with ``fmt``; ``None``/non-numeric (e.g. an absolute-tolerance validation row) prints ``n/a``."""
+    if value is None:
+        return "n/a"
+    try:
+        return fmt % float(value)
+    except (TypeError, ValueError):
+        return str(value)
+
+
 # ── reference resolution ─────────────────────────────────────
 
 def _dotget(obj, path):
@@ -558,7 +568,8 @@ class ReportBuilder:
         val = b.get("validation", {})
         self.P(val.get("statement", "No measured data comparison is part of this report."))
         rows = [(r["name"], r["window"], r["kind"], fmt_value(r["measured"], 5), fmt_value(r["model"], 5), r["unit"],
-                 "%+.1f" % r["error_pct"], "%.0f" % r["tolerance_pct"], r["status"]) for r in val.get("rows", [])]
+                 _fmt_optional(r.get("error_pct"), "%+.1f"), _fmt_optional(r.get("tolerance_pct"), "%.0f"), r["status"])
+                for r in val.get("rows", [])]
         if rows:
             self.table(["Quantity", "Case", "Kind", "Measured", "Model", "Unit", "Error %", "Tol. %", "Status"], rows,
                        caption="Model versus measured data (quoted from the preceding calibration study; not recomputed here)",

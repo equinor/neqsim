@@ -659,6 +659,16 @@ public class TwoFluidPipe extends Pipeline {
    */
   private boolean enforceMinimumSlip = true;
 
+  /**
+   * Calibration multiplier applied to the steady-state closure liquid holdup (1.0 = closure used unchanged).
+   *
+   * <p>
+   * It scales the holdup returned by the selected closure set for a section that carries both gas and liquid. It is a
+   * tuning lever for matching a measured hydrostatic head, not a physical closure.
+   * </p>
+   */
+  private double liquidHoldupMultiplier = 1.0;
+
   // ============ Annular Film Closure Parameters ============
 
   /**
@@ -3387,6 +3397,26 @@ public class TwoFluidPipe extends Pipeline {
    */
   private double[] calculateLocalHoldup(TwoFluidSection sec, TwoFluidSection prev, double mDotGas, double mDotLiq,
       double area) {
+    double[] holdups = calculateClosureHoldup(sec, prev, mDotGas, mDotLiq, area);
+    if (liquidHoldupMultiplier == 1.0 || !(holdups[0] > 0.0) || !(holdups[1] > 0.0)) {
+      return holdups;
+    }
+    double scaled = Math.max(1.0e-6, Math.min(1.0 - 1.0e-6, holdups[0] * liquidHoldupMultiplier));
+    return new double[] {scaled, 1.0 - scaled};
+  }
+
+  /**
+   * Evaluate the selected closure set for the local liquid holdup, without calibration.
+   *
+   * @param sec Current section
+   * @param prev Previous section (upstream)
+   * @param mDotGas Gas mass flow rate [kg/s]
+   * @param mDotLiq Liquid mass flow rate [kg/s]
+   * @param area Pipe cross-sectional area [m²]
+   * @return Array with [liquidHoldup, gasHoldup]
+   */
+  private double[] calculateClosureHoldup(TwoFluidSection sec, TwoFluidSection prev, double mDotGas, double mDotLiq,
+      double area) {
     double rhoG = sec.getGasDensity();
     double rhoL = sec.getLiquidDensity();
     double sigma = sec.getSurfaceTension();
@@ -6059,6 +6089,7 @@ public class TwoFluidPipe extends Pipeline {
     minimumSlipFactor = candidate.minimumSlipFactor;
     useAdaptiveMinimumOnly = candidate.useAdaptiveMinimumOnly;
     enforceMinimumSlip = candidate.enforceMinimumSlip;
+    liquidHoldupMultiplier = candidate.liquidHoldupMultiplier;
     minimumFilmThickness = candidate.minimumFilmThickness;
     annularEntrainmentFraction = candidate.annularEntrainmentFraction;
     enableAnnularFilmModel = candidate.enableAnnularFilmModel;
@@ -11321,6 +11352,36 @@ public class TwoFluidPipe extends Pipeline {
    */
   public boolean isEnforceMinimumSlip() {
     return enforceMinimumSlip;
+  }
+
+  /**
+   * Set the calibration multiplier applied to the steady-state closure liquid holdup.
+   *
+   * <p>
+   * The multiplier is applied after the closure set (and its minimum-slip bound) to every section that carries both gas
+   * and liquid; the resulting holdup is kept inside (0, 1) and phase velocities are recovered from continuity. A value
+   * below 1 lowers the liquid inventory and the hydrostatic head, for example to reproduce a measured tubing pressure
+   * drop when the closure over-predicts holdup. A value of 1 (default) leaves the closure unchanged. The factor does
+   * not act on single-phase sections and is not a physical closure: report it with the calibration it was fitted to.
+   * </p>
+   *
+   * @param multiplier positive holdup multiplier, 1.0 for no calibration
+   * @throws IllegalArgumentException if the multiplier is not finite and positive
+   */
+  public void setLiquidHoldupMultiplier(double multiplier) {
+    if (!Double.isFinite(multiplier) || multiplier <= 0.0) {
+      throw new IllegalArgumentException("Liquid holdup multiplier must be finite and positive: " + multiplier);
+    }
+    this.liquidHoldupMultiplier = multiplier;
+  }
+
+  /**
+   * Get the calibration multiplier applied to the steady-state closure liquid holdup.
+   *
+   * @return holdup multiplier, 1.0 when no calibration is applied
+   */
+  public double getLiquidHoldupMultiplier() {
+    return liquidHoldupMultiplier;
   }
 
   /**
