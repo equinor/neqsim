@@ -61,6 +61,8 @@ class DynamicSafetyScenarioEventTimingTest {
 
     assertTrue(result.isPassed());
     assertEquals("EVENT_EXACT", result.getTimingPolicy());
+    assertEquals(0.4, result.getTriggerTimeSeconds(), 1.0e-12);
+    assertEquals(2.3, result.getRequestedDurationSeconds(), 1.0e-12);
     assertEquals(2.3, result.getCompletedDurationSeconds(), 1.0e-12);
     assertEquals(3, result.getPhysicalStepSeconds().size());
     assertEquals(0.4, result.getPhysicalStepSeconds().get(0).doubleValue(), 1.0e-12);
