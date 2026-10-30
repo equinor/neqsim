@@ -67,6 +67,28 @@
       "limitations": "Discovery and inspectApi only; instance-based Java/Python history builder, no executable static MCP operation. Two surface components with independently calibrated, path-consistent PVT and net cumulative withdrawals on one surface basis. Aquifer influx and rock/water expansion are supplied, not fitted. Synthetic conservation and tank/EOS tests are not independent laboratory/field qualification, pressure-error statistics, full compositional injection, recoverable reserves or confidence intervals. The SimpleReservoir adapter rejects unrecorded injection and truncated/nonzero-origin history. CalibratedPvtModel freezes original/tuned EOS checkpoints and compares complete independently identified CCE/CVD/DLE/separator holdouts through existing solvers. MaterialBalancePvtHistory validates declared path, standard basis and measured-pressure alignment; records and path-validation evidence remain externally supplied. Identity checks cannot establish laboratory independence or qualify CVD-to-generalized-PVT conversion."
     },
     {
+      "id": "compositional-reservoir-history",
+      "title": "Frozen-EOS compositional tank replay and bounded volume matching",
+      "domain": "reservoir",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.util.CompositionalReservoirHistory",
+        "neqsim.process.equipment.reservoir.SimpleReservoir",
+        "neqsim.pvtsimulation.util.CalibratedPvtModel"
+      ],
+      "skills": [
+        "neqsim-eos-regression",
+        "neqsim-integrated-production-and-lifecycle"
+      ],
+      "agents": [
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/pvtsimulation/util/CompositionalReservoirHistoryTest.java"
+      ],
+      "limitations": "Discovery and inspectApi only; instance-based Java/Python API. Isothermal fixed-volume tank with measured named component mol per interval, frozen laboratory EOS and fixed initial gas/oil/water volume fractions. Bounded fitting changes total initial pore volume only, with independent supplied pressure sigma and held-out pressures excluded. Injection species must already exist in the accepted EOS. Rejects overdrawn components and failed volume closure. Prescribed produced GOR/composition is not independent validation. Synthetic/ideal-limit/direct-EOS tests are not public field/laboratory qualification. No aquifer or rock support, thermal/spatial model, correlated pressure errors, PVT/history uncertainty, confidence intervals, Bayesian posterior or recoverable-reserves estimate."
+    },
+    {
       "id": "pvt-fluid-study-report",
       "title": "Traceable PVT characterization study and E300 handover",
       "domain": "pvt",

@@ -213,6 +213,11 @@ forward.
 For measured reservoir history, freeze independently accepted original/tuned models
 with `CalibratedPvtModel`, compare whole held-out laboratory experiments and supply
 an explicitly attributed `MaterialBalancePvtHistory` on the same separator basis.
+For measured component production/injection, `CompositionalReservoirHistory` instead
+replays the accepted EOS directly through `SimpleReservoir`, fitting only bounded
+initial pore volume with separate calibration and held-out pressure residuals.
+See [the material-balance guide](reservoir_material_balance.md#compositional-measured-history-replay)
+for units, interval assumptions, validation evidence and remaining limitations.
 See the [material-balance handoff](reservoir_material_balance.md#immutable-calibration-and-pressure-path-handoff).
 The container requires externally evaluated, path-consistent PVT records; it does
 not automatically convert a constant-composition table into depletion PVT.

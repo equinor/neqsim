@@ -9,6 +9,7 @@ package neqsim.process.equipment.reservoir;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.apache.commons.lang3.SerializationUtils;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.process.equipment.stream.Stream;
@@ -62,6 +63,8 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
 
   /** Flag enabling recording of the pressure/production surveillance history during transient runs. */
   private boolean recordProductionHistory = true;
+  /** True after molar replay, whose surface-volume production history is deliberately unavailable. */
+  private boolean componentHistoryReplayUsed = false;
   /** Reservoir time at each recorded history point (s). */
   private final ArrayList<Double> timeHistory = new ArrayList<Double>();
   /** Average reservoir pressure at each recorded history point (bara). */
@@ -502,6 +505,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
+    if (componentHistoryReplayUsed) {
+      throw new IllegalStateException("A component-replay tank cannot resume stream-based production accounting");
+    }
     increaseTime(dt);
     if (thermoSystem.getPressure("bara") < lowPressureLimit) {
       if (!lowPressureLimitReached) {
@@ -616,6 +622,74 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
       gasInjector.get(k).getStream().setPressure(thermoSystem.getPressure());
     }
     recordProductionHistoryPoint();
+    setCalculationIdentifier(id);
+  }
+
+  /**
+   * Replays measured component amounts through the existing isothermal, fixed-volume tank TV flash.
+   *
+   * <p>
+   * Amounts are mol per interval, in {@link SystemInterface#getComponentNames()} order, not flow rates or surface
+   * volumes. Injection is mixed before withdrawal for the interval inventory check. Use a dedicated tank with no
+   * connected wells and production-history recording disabled: surface production counters cannot be reconstructed from
+   * component amounts without a separator protocol. This path does not apply the stream production pressure cutoff. All
+   * checks and flashes run on a deep copy; rejection leaves fluid, time and calculation identity intact.
+   * </p>
+   *
+   * @param dt interval duration in seconds, strictly positive
+   * @param producedMoles nonnegative component amounts withdrawn during the interval
+   * @param injectedMoles nonnegative component amounts injected during the interval
+   * @param id accepted calculation identity
+   * @throws IllegalArgumentException if inputs are invalid or a component inventory is overdrawn
+   * @throws IllegalStateException if setup is incompatible or the flash fails conservation/volume checks
+   */
+  public void advanceComponentAmounts(double dt, double[] producedMoles, double[] injectedMoles, UUID id) {
+    if (thermoSystem == null || recordProductionHistory || !getInletStreams().isEmpty() || !getOutletStreams().isEmpty()
+        || !(reservoirVolume > 0.0) || !Double.isFinite(reservoirVolume)) {
+      throw new IllegalStateException("Component replay requires an initialized dedicated tank, no wells and "
+          + "setRecordProductionHistory(false)");
+    }
+    int count = thermoSystem.getNumberOfComponents();
+    if (!Double.isFinite(dt) || dt <= 0.0 || !Double.isFinite(getTime() + dt) || id == null || producedMoles == null
+        || injectedMoles == null || producedMoles.length != count || injectedMoles.length != count) {
+      throw new IllegalArgumentException("Positive finite duration, identity and one amount per component required");
+    }
+    double[] remaining = new double[count];
+    double total = 0.0;
+    for (int i = 0; i < count; i++) {
+      double available = thermoSystem.getComponent(i).getNumberOfmoles() + injectedMoles[i];
+      remaining[i] = available - producedMoles[i];
+      if (!Double.isFinite(producedMoles[i]) || producedMoles[i] < 0.0 || !Double.isFinite(injectedMoles[i])
+          || injectedMoles[i] < 0.0 || !Double.isFinite(remaining[i]) || remaining[i] < 0.0) {
+        throw new IllegalArgumentException("Invalid or overdrawn component: " + thermoSystem.getComponentNames()[i]);
+      }
+      total += remaining[i];
+    }
+    if (!Double.isFinite(total) || total <= 0.0) {
+      throw new IllegalArgumentException("The replay interval must retain a positive finite tank inventory");
+    }
+    SystemInterface candidate = SerializationUtils.clone(thermoSystem);
+    for (int i = 0; i < count; i++) {
+      candidate.addComponent(i, remaining[i] - candidate.getComponent(i).getNumberOfmoles());
+    }
+    new ThermodynamicOperations(candidate).TVflash(reservoirVolume, "m3");
+    candidate.initProperties();
+    if (!Double.isFinite(candidate.getPressure()) || candidate.getPressure() <= 0.0
+        || !Double.isFinite(candidate.getVolume("m3"))
+        || Math.abs(candidate.getVolume("m3") - reservoirVolume) > reservoirVolume * 1.0e-7
+        || Math.abs(candidate.getTemperature() - thermoSystem.getTemperature()) > 1.0e-8) {
+      throw new IllegalStateException("Component replay TV flash did not close the isothermal tank volume");
+    }
+    for (int i = 0; i < count; i++) {
+      double actual = candidate.getComponent(i).getNumberOfmoles();
+      if (!Double.isFinite(actual) || Math.abs(actual - remaining[i]) > 1.0e-8 * Math.max(1.0, remaining[i])) {
+        throw new IllegalStateException("Component replay flash did not conserve " + candidate.getComponentNames()[i]);
+      }
+    }
+    thermoSystem = candidate;
+    componentHistoryReplayUsed = true;
+    clearProductionHistory();
+    increaseTime(dt);
     setCalculationIdentifier(id);
   }
 
@@ -870,6 +944,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
    * @param record {@code true} to record the history (default), {@code false} to disable
    */
   public void setRecordProductionHistory(boolean record) {
+    if (record && componentHistoryReplayUsed) {
+      throw new IllegalStateException("Surface production recording is unavailable after component replay");
+    }
     this.recordProductionHistory = record;
   }
 
