@@ -165,7 +165,6 @@ class DynamicSafetyScenarioEventTimingTest {
     ESDValve valve = new ESDValve("ESDV-101", feed);
     valve.setCv(500.0);
     valve.setStrokeTime(2.0);
-    valve.setPhysicalStepIdempotencyEnabled(true);
     process.add(feed);
     process.add(valve);
     process.run();
