@@ -88,6 +88,7 @@ Internal network values are discoverable through `ProcessAutomation`:
 allocation network.node.delivery.pressure
 allocation network.source.field-a.rate
 allocation network.sink.delivery.nomination
+allocation network.sink.delivery.pressure
 allocation network.edge.export.flowRate
 allocation network.edge.export.availability
 allocation network.choke.well-a.opening
@@ -97,8 +98,10 @@ allocation network.pump.oil booster.speed
 ```
 
 Address get/set performs unit conversion and rejects non-writable calculated
-values. This lets generic automation and agentic optimization inspect network
-internals without bypassing the bounded network API.
+values. Sink pressure is exposed as a writable absolute-pressure input only when
+the named node is both a sink and a fixed-pressure boundary; a solved junction or
+free-pressure sink remains read-only. This lets generic automation and agentic
+optimization inspect network internals without bypassing the bounded network API.
 
 ## Legacy choke optimization
 

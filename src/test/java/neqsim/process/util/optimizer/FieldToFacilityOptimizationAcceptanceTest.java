@@ -462,6 +462,7 @@ public class FieldToFacilityOptimizationAcceptanceTest {
       seed[index] = 70.0;
       seed[index + fixture.wellSuffixes.size()] = index % 2;
     }
+    seed[actions.size() - 1] = 45.0;
     ProcessModelOperatingPointOptimizer optimizer = new ProcessModelOperatingPointOptimizer("ten-well-field-search",
         "Ten-well field search", "synthetic bounded choke and HP/LP routing search", candidates)
         .setInitialCandidate(seed).setMaximumEvaluations(35).setInitialStepFraction(0.5).setRelativeStepTolerance(0.1)
@@ -483,6 +484,8 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     assertEquals("kg/hr", evidence.get("objective_unit"));
     assertEquals(result.getCandidates().get(0).getRawObjective(), evidence.get("initial_objective_value"));
     assertEquals(result.getAcceptedPointReplay().getRawObjective(), evidence.get("accepted_objective_value"));
+    assertEquals(Double.valueOf(1.0e-9), evidence.get("replay_relative_tolerance"));
+    assertEquals("deterministic simulator replay tolerance", evidence.get("replay_tolerance_provenance"));
     assertEquals(Boolean.TRUE, evidence.get("simulation_converged"));
     assertEquals(Boolean.TRUE, evidence.get("candidate_feasible"));
     assertEquals(Boolean.TRUE, evidence.get("candidate_finite"));
@@ -655,17 +658,17 @@ public class FieldToFacilityOptimizationAcceptanceTest {
             && Double.isFinite(candidate.get("physical_headroom").getAsDouble())));
     assertThrows(IllegalStateException.class, () -> lifecycle.toEvidenceJson("missing-cycle"));
     assertEquals(Integer.valueOf(2), lifecycleEvidence.get("period_count"));
-    assertEquals(Integer.valueOf(28), lifecycleEvidence.get("requested_point_count"));
-    assertEquals(Integer.valueOf(28), lifecycleEvidence.get("completed_point_count"));
+    assertEquals(Integer.valueOf(40), lifecycleEvidence.get("requested_point_count"));
+    assertEquals(Integer.valueOf(40), lifecycleEvidence.get("completed_point_count"));
     assertEquals(1, ((List<?>) lifecycleEvidence.get("bottleneck_transitions")).size());
     List<?> periodChanges = (List<?>) lifecycleEvidence.get("period_change_diagnostics");
     assertEquals(1, periodChanges.size());
     Map<?, ?> periodChange = (Map<?, ?>) periodChanges.get(0);
-    assertEquals(Integer.valueOf(4), periodChange.get("comparable_slice_count"));
-    assertEquals(Integer.valueOf(4), Integer.valueOf(((List<?>) periodChange.get("slice_changes")).size()));
+    assertEquals(Integer.valueOf(5), periodChange.get("comparable_slice_count"));
+    assertEquals(Integer.valueOf(5), Integer.valueOf(((List<?>) periodChange.get("slice_changes")).size()));
     assertTrue(((List<?>) periodChange.get("removed_slice_axes")).isEmpty());
     assertTrue(((List<?>) periodChange.get("added_slice_axes")).isEmpty());
-    assertEquals(Integer.valueOf(20), Integer.valueOf(((List<?>) periodChange.get("accepted_action_changes")).size()));
+    assertEquals(Integer.valueOf(21), Integer.valueOf(((List<?>) periodChange.get("accepted_action_changes")).size()));
     List<?> removedConstraintIdentities = (List<?>) periodChange.get("removed_ranked_constraint_identities");
     List<?> addedConstraintIdentities = (List<?>) periodChange.get("added_ranked_constraint_identities");
     int retainedConstraintIdentityCount = ((Integer) periodChange.get("retained_ranked_constraint_identity_count"))
@@ -829,7 +832,7 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     assertBaselineRestored(fixture);
   }
 
-  /** Evaluate one accepted point and its choke, route, coupled choke-route and host-power slices. */
+  /** Evaluate one accepted point and its choke, route, coupled route-pressure and host-power slices. */
   private LifecyclePeriod evaluateLifecyclePeriod(String periodId, Fixture fixture, double sharedPowerLimitKw) {
     return evaluateLifecyclePeriod(periodId, fixture, sharedPowerLimitKw, null);
   }
@@ -863,6 +866,7 @@ public class FieldToFacilityOptimizationAcceptanceTest {
       seed[index] = 70.0;
       seed[index + fixture.wellSuffixes.size()] = index % 2;
     }
+    seed[actions.size() - 1] = 45.0;
     if (reviewedIncumbentValues != null) {
       if (reviewedIncumbentValues.length != seed.length) {
         throw new IllegalArgumentException("Reviewed incumbent action count does not match the current action set");
@@ -890,6 +894,10 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     SliceResult coupledChokeRoute = study.evaluateTwoDimensional(actions.get(0).getId(),
         new double[] {nearbyChokeA, accepted[0], actions.get(0).getUpperBound()}, actions.get(firstRouteIndex).getId(),
         new double[] {acceptedRouteA, acceptedRouteA == 0.0 ? 1.0 : 0.0}, search);
+    int separatorPressureIndex = actions.size() - 1;
+    SliceResult routeSeparatorPressure = study.evaluateTwoDimensional(actions.get(firstRouteIndex).getId(),
+        new double[] {acceptedRouteA, acceptedRouteA == 0.0 ? 1.0 : 0.0}, actions.get(separatorPressureIndex).getId(),
+        new double[] {42.0, 45.0, 48.0}, search);
     double nearbyChokeB = Math.max(actions.get(1).getLowerBound(), accepted[1] - 5.0);
     SliceResult hostPower = study.evaluateOneDimensional(actions.get(1).getId(),
         new double[] {nearbyChokeB, accepted[1], actions.get(1).getUpperBound()}, search);
@@ -897,11 +905,13 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     assertTrue(route.isComplete(), route.getDiagnostics().toString());
     assertTrue(coupledChokeRoute.isComplete(), coupledChokeRoute.getDiagnostics().toString());
     assertEquals(2, coupledChokeRoute.getSampledCells().size());
+    assertTrue(routeSeparatorPressure.isComplete(), routeSeparatorPressure.getDiagnostics().toString());
+    assertEquals(2, routeSeparatorPressure.getSampledCells().size());
     assertTrue(hostPower.isComplete(), hostPower.getDiagnostics().toString());
     UtilizationCoverageReport coverage = acceptedCoverage(fixture, search);
     assertTrue(coverage.isComplete(), coverage.getDiagnostics().toString());
     return new LifecyclePeriod(fixture, study, search, coverage,
-        new SliceResult[] {choke, route, coupledChokeRoute, hostPower});
+        new SliceResult[] {choke, route, coupledChokeRoute, routeSeparatorPressure, hostPower});
   }
 
   /** Build declared capacity coverage from the accepted replay without resampling the restored fixture. */
@@ -952,11 +962,12 @@ public class FieldToFacilityOptimizationAcceptanceTest {
           .requireHydraulicConstraint(HydraulicLimitRole.GATHERING_HYDRAULICS, "Field", "field network",
               suffix + " LP route capacity", "synthetic per-line operating limit");
     }
-    double[] baseline = new double[20];
+    double[] baseline = new double[21];
     for (int index = 0; index < 10; index++) {
       baseline[index] = 70.0;
       baseline[index + 10] = index % 2;
     }
+    baseline[20] = 45.0;
     double[] reservoirPressures = new double[10];
     for (int index = 0; index < 10; index++) {
       reservoirPressures[index] = fixture.networkUnit.getCoupler().getBindings().get(index).getWellFlow()
@@ -1080,9 +1091,11 @@ public class FieldToFacilityOptimizationAcceptanceTest {
       assertEquals(LoopedPipeNetwork.PipeModelType.DARCY_WEISBACH,
           fixture.networkUnit.getHydraulicNetwork().getEffectiveHydraulicModelType(suffix + " HP route"));
     }
+    assertEquals(45.0, fixture.networkUnit.getHydraulicNetwork().getNodePressure("HP host"), 0.0);
+    assertEquals(30.0, fixture.networkUnit.getHydraulicNetwork().getNodePressure("LP host"), 0.0);
   }
 
-  /** Create all ten-well choke and HP/LP route actions in deterministic groups. */
+  /** Create all ten-well choke, HP/LP route and HP separator-pressure actions in deterministic groups. */
   private List<ProcessModelOperatingAction> createFieldActions(Fixture fixture) {
     List<ProcessModelOperatingAction> actions = new ArrayList<ProcessModelOperatingAction>();
     for (String suffix : fixture.wellSuffixes) {
@@ -1096,6 +1109,9 @@ public class FieldToFacilityOptimizationAcceptanceTest {
           "Field::field network.route.producer " + suffix + " pressure level.selection", new double[] {0.0, 1.0}, "-",
           "synthetic qualified HP/LP route line-up"));
     }
+    actions.add(ProcessModelOperatingAction.continuous("hp-separator-pressure", "HP separator pressure",
+        "Field::field network.sink.HP host.pressure", 42.0, 48.0, "bara",
+        "synthetic qualified HP separator operating-pressure envelope"));
     return actions;
   }
 
@@ -1520,6 +1536,8 @@ public class FieldToFacilityOptimizationAcceptanceTest {
       assertEquals(expectedRoute == 0 ? 1.0 : 0.0, network.getPipe(suffix + " HP route").getAvailability(), 0.0);
       assertEquals(expectedRoute == 1 ? 1.0 : 0.0, network.getPipe(suffix + " LP route").getAvailability(), 0.0);
     }
+    assertEquals(45.0, network.getNodePressure("HP host"), 0.0);
+    assertEquals(30.0, network.getNodePressure("LP host"), 0.0);
     assertEquals(fixture.baselineRouteAHigh, massFlow(network, "A HP route"), fixture.baselineRouteAHigh * 1.0e-5);
     assertTrue(fixture.highPressureScrubber.solved());
     assertTrue(fixture.lowPressureScrubber.solved());

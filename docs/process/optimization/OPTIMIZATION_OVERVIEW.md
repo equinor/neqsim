@@ -274,6 +274,13 @@ consistency uses the explicitly configured power-balance tolerance; stale calcul
 identities, non-finite evidence and discrepancies outside that tolerance still fail
 closed.
 
+A fixed separator-arrival boundary can be declared as a continuous action through
+`sink.<node>.pressure`. Discovery exposes that input only for a fixed-pressure sink;
+calculated node pressure remains an output and attempts to address a junction as a sink
+are rejected. Route-conditioned pressure studies should use a separate exact 2D
+route × pressure slice. They must not collapse route choice into a continuous variable
+or promote the combined controls to an interpolated 3D operating surface.
+
 Use `ProcessModelDebottleneckStudy` after the evaluator and direct installed constraints are configured when one documented capacity replacement or expansion must be compared with the installed baseline. It uses the same search policy for both scenarios, freezes immutable objective/constraint/metric evidence, and restores the installed limit plus pre-study operating point. This is a paired screening study, not an equipment-sizing algorithm or economic approval.
 
 Use `ProcessModelDebottleneckRanking` after independent paired studies complete when alternatives
@@ -994,8 +1001,12 @@ the JSON and cycle context to `neqsim_continuous.production.proposal_from_lifecy
 stale, duplicate, non-finite, incomplete, or edited evidence, derives exact setpoints and the accepted envelope, and
 reuses the same production validators that guard and promotion use. It also binds the Java search's selected-objective
 name, direction, unit, initial value, and accepted value to the task-local `goal.yaml` objective and reviewed baseline
-KPI. The task must declare `objective.metric`, `objective.source_name`, `objective.direction`, and `objective.unit`;
-the initial Java objective must exactly equal the reviewed baseline for that KPI. The adapter derives the directional
+KPI. The task must declare `objective.metric`, `objective.source_name`, `objective.direction`, and `objective.unit`.
+Historical evidence without replay metadata still requires exact baseline equality. Current Java evidence may bind the
+initial objective within its explicit `replay_relative_tolerance` and `replay_tolerance_provenance`; the production
+guard rejects missing provenance, non-finite/negative values, or a relative tolerance above $10^{-6}$. This uses the
+same simulator-replay qualification as terminal optimizer acceptance and does not permit a physical-constraint or
+operating-limit tolerance. The adapter derives the directional
 gain and objective prediction instead of trusting task-script constants. Set
 `production.require_objective_evidence: true` with the existing envelope requirements so the guard repeats this
 binding before publication. The task may supply additional finite constraint predictions but must not rebuild Java
