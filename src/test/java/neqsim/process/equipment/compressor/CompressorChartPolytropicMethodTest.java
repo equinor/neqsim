@@ -10,7 +10,10 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.NeqSimTest;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.ThermodynamicModelSettings;
+import neqsim.thermo.ThermodynamicModelTest;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -272,10 +275,13 @@ class CompressorChartPolytropicMethodTest extends NeqSimTest {
    * A small coupled shaft duty must retain its finite pressure rise in a wet-gas inlet.
    *
    * @param method selected polytropic method
+   * @param power small specified shaft power in W
    */
   @ParameterizedTest
-  @ValueSource(strings = {"schultz", "detailed", "ideal_inlet_properties"})
-  void smallWetGasPowerRetainsFinitePressureRise(String method) {
+  @CsvSource({"schultz,0.02", "schultz,0.2", "schultz,0.663991527050103", "detailed,0.02", "detailed,0.2",
+      "detailed,0.663991527050103", "ideal_inlet_properties,0.02", "ideal_inlet_properties,0.2",
+      "ideal_inlet_properties,0.663991527050103"})
+  void smallWetGasPowerRetainsFinitePressureRise(String method, double power) {
     SystemSrkEos fluid = new SystemSrkEos(250.15, 55.95);
     fluid.addComponent("nitrogen", 0.006);
     fluid.addComponent("CO2", 0.014);
@@ -294,16 +300,40 @@ class CompressorChartPolytropicMethodTest extends NeqSimTest {
     compressor.setUsePolytropicCalc(true);
     compressor.setPolytropicMethod(method);
     compressor.setPolytropicEfficiency(0.2118026423311206);
-    double power = 0.663991527050103;
     compressor.setPower(power);
     compressor.setCalcPressureOut(true);
+    boolean warmStartBefore = ThermodynamicModelSettings.isUseWarmStartKValues();
     compressor.run();
+    assertEquals(warmStartBefore, ThermodynamicModelSettings.isUseWarmStartKValues());
     double pressureRise = compressor.getOutletStream().getPressure("bara") - feed.getPressure("bara");
     assertTrue(pressureRise > 0.0 && pressureRise < 1.0e-6);
     double targetHead = power * compressor.getPolytropicEfficiency() / feed.getFlowRate("kg/sec") / 1000.0;
     assertEquals(targetHead, reference(compressor).getPolytropicHead("kJ/kg"), 1.0e-8);
     assertEquals(power, compressor.getPower(), 1.0e-5);
+    assertEquals(power, compressor.getOutletStream().getFluid().getEnthalpy() - feed.getFluid().getEnthalpy(), 1.0e-5);
     assertEquals(feed.getFlowRate("kg/hr"), compressor.getOutletStream().getFlowRate("kg/hr"), 1.0e-6);
+    compressor.run();
+    assertEquals(power, compressor.getPower(), 1.0e-5);
+    assertEquals(warmStartBefore, ThermodynamicModelSettings.isUseWarmStartKValues());
+    SystemInterface outlet = compressor.getOutletStream().getFluid().clone();
+    outlet.init(3);
+    assertEquals(2, outlet.getNumberOfPhases());
+    for (int component = 0; component < outlet.getNumberOfComponents(); component++) {
+      double gasFugacity = outlet.getPhase(0).getComponent(component).getx()
+          * outlet.getPhase(0).getComponent(component).getFugacityCoefficient();
+      double liquidFugacity = outlet.getPhase(1).getComponent(component).getx()
+          * outlet.getPhase(1).getComponent(component).getFugacityCoefficient();
+      assertEquals(0.0, Math.log(gasFugacity / liquidFugacity), 1.0e-8);
+    }
+    ThermodynamicModelTest checker = new ThermodynamicModelTest(outlet);
+    checker.setMaxError(1.0e-8);
+    assertTrue(checker.checkFugacityCoefficients());
+    assertTrue(checker.checkFugacityCoefficientsDn());
+    assertTrue(checker.checkFugacityCoefficientsDn2());
+    assertTrue(checker.checkFugacityCoefficientsDP());
+    assertTrue(checker.checkFugacityCoefficientsDT());
+    checker.setMaxError(1.0e-5);
+    assertTrue(checker.checkNumerically());
   }
 
   /**
