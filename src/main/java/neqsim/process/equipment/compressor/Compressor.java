@@ -2207,7 +2207,9 @@ public class Compressor extends TwoPortEquipment
     double upper = Double.isFinite(idealPressure) && idealPressure > inletPressure
         ? Math.log(idealPressure / inletPressure)
         : Math.log(2.0);
-    double tolerance = 1.0e-8 * Math.max(1.0, head);
+    // Scale convergence to the requested head: an absolute 1e-8 kJ/kg tolerance can
+    // accept a sizeable relative error for sub-watt compressor duties.
+    double tolerance = Math.max(1.0e-12, 1.0e-8 * head);
     double upperResidual = polytropicHeadResidual(reference, inletPressure * Math.exp(upper), head);
     for (int expansion = 0; upperResidual < 0.0 && expansion < 12; expansion++) {
       lower = upper;
