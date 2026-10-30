@@ -642,6 +642,97 @@ public final class TwoFluidComponentTransport implements Serializable {
   }
 
   /**
+   * Relax each conserved component toward its gas, oil and aqueous equilibrium partition.
+   *
+   * <p>
+   * Each component retains its own total inventory. Its equilibrium phase masses supply partition weights, not a
+   * receiving-phase composition that can withdraw an unavailable species from a donor. A source-only Euler interval no
+   * longer than the relaxation time is a convex update toward nonnegative component targets. This is an approximate
+   * equilibrium-relaxation law, not a predictive interfacial mass-transfer coefficient.
+   * </p>
+   *
+   * @param equilibriumStates source-stage flashes of the conserved local compositions
+   * @param sections physical cells supplying lengths
+   * @param relaxationTimeSeconds positive finite relaxation time in seconds
+   * @return cell/phase/component rates in kg/(m s), with each component conserved across phases
+   * @throws IllegalArgumentException if the grid, states, time or phase masses are invalid
+   * @throws IllegalStateException if an equilibrium partition loses a conserved component
+   */
+  public double[][][] createEquilibriumRelaxationSourceRates(SystemInterface[] equilibriumStates,
+      TwoFluidSection[] sections, double relaxationTimeSeconds) {
+    if (equilibriumStates == null || equilibriumStates.length != cellCount || sections == null
+        || sections.length != cellCount || !(relaxationTimeSeconds > 0.0) || !Double.isFinite(relaxationTimeSeconds)) {
+      throw new IllegalArgumentException("Equilibrium relaxation requires matching cells, flashes and positive time");
+    }
+    double[][][] result = new double[cellCount][PHASE_COUNT][componentNames.length];
+    for (int cell = 0; cell < cellCount; cell++) {
+      SystemInterface equilibrium = equilibriumStates[cell];
+      if (equilibrium == null || sections[cell] == null || !(sections[cell].getLength() > 0.0)
+          || !Double.isFinite(sections[cell].getLength())) {
+        throw new IllegalArgumentException("Equilibrium relaxation requires flashed states and finite cell lengths");
+      }
+      validateComponentSlate(equilibrium);
+      double[] phaseMass = new double[PHASE_COUNT];
+      for (int phase = 0; phase < equilibrium.getNumberOfPhases(); phase++) {
+        PhaseInterface phaseState = equilibrium.getPhase(phase);
+        double mass = phaseState.getMass();
+        int identity = phaseIndex(phaseState.getType());
+        if (!Double.isFinite(mass) || mass < 0.0 || identity < 0 && mass > 0.0) {
+          throw new IllegalArgumentException("Unsupported equilibrium phase mass or type " + phaseState.getType());
+        }
+        if (identity >= 0) {
+          phaseMass[identity] += mass;
+        }
+      }
+      if (!(sum(phaseMass) > 0.0)) {
+        throw new IllegalArgumentException("Equilibrium state must contain positive mass");
+      }
+      double[][] fractions = phaseMassFractions(equilibrium);
+      for (int component = 0; component < componentNames.length; component++) {
+        double inventory = 0.0;
+        double partitionSum = 0.0;
+        double[] target = new double[PHASE_COUNT];
+        int balancePhase = GAS;
+        for (int phase = 0; phase < PHASE_COUNT; phase++) {
+          inventory += componentInventoryKg[cell][phase][component];
+          target[phase] = phaseMass[phase] * fractions[phase][component];
+          partitionSum += target[phase];
+          if (target[phase] > target[balancePhase]) {
+            balancePhase = phase;
+          }
+        }
+        if (inventory == 0.0) {
+          continue;
+        }
+        if (!(partitionSum > 0.0) || !Double.isFinite(partitionSum)) {
+          throw new IllegalStateException(
+              "Equilibrium partition lost component '" + componentNames[component] + "' in cell " + cell);
+        }
+        double otherTargets = 0.0;
+        double otherRates = 0.0;
+        for (int phase = 0; phase < PHASE_COUNT; phase++) {
+          if (phase != balancePhase) {
+            target[phase] = inventory * (target[phase] / partitionSum);
+            otherTargets += target[phase];
+            double rate = (target[phase] - componentInventoryKg[cell][phase][component]) / sections[cell].getLength()
+                / relaxationTimeSeconds;
+            result[cell][phase][component] = rate;
+            otherRates += rate;
+          }
+        }
+        // Balance the largest partition so roundoff cannot make an absent trace target negative.
+        target[balancePhase] = inventory - otherTargets;
+        if (!(target[balancePhase] >= 0.0) || !Double.isFinite(target[balancePhase])) {
+          throw new IllegalStateException("Invalid equilibrium component partition in cell " + cell);
+        }
+        result[cell][balancePhase][component] = -otherRates;
+        result[cell][GAS][component] = -(result[cell][OIL][component] + result[cell][WATER][component]);
+      }
+    }
+    return result;
+  }
+
+  /**
    * Calculate composition-resolved latent-heat source rates at the same local equilibrium states as the component
    * source allocation.
    *

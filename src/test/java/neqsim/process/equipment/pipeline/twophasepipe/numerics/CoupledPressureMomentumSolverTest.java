@@ -10,6 +10,69 @@ import org.junit.jupiter.api.Test;
 import neqsim.util.util.ArrayUtils;
 
 class CoupledPressureMomentumSolverTest {
+  /**
+   * A correction that drains a trace phase must transport its momentum without an unbounded residual velocity.
+   */
+  @Test
+  void drainingTracePhaseTransportsMomentumConservatively() {
+    double[] length = {1.0, 2.0, 3.0};
+    double[][] density = {ArrayUtils.filledArray(3, 10.0), ArrayUtils.filledArray(3, 800.0),
+        ArrayUtils.filledArray(3, 1000.0)};
+    for (int phase = 0; phase < 3; phase++) {
+      double[][] state = new double[3][7];
+      double initialMomentum = 0.0;
+      double[] velocity = {-3.0, 20.0, 2.0};
+      for (int cell = 0; cell < 3; cell++) {
+        state[cell][phase] = cell == 1 ? 1.0e-6 : 1.0;
+        state[cell][phase + 3] = state[cell][phase] * velocity[cell];
+        initialMomentum += state[cell][phase + 3] * length[cell];
+      }
+      double[] initialMass = weightedPhaseMass(state, length);
+      CoupledPressureMomentumSolver.applyConservativeMassFluxCorrection(state, 0.1, new double[] {0.0, 1.0e8, 0.0},
+          phaseAreas(state, density), ArrayUtils.filledArray(3, 1.0), length, density, false);
+      assertTrue(state[1][phase] < 1.0e-18, "The regression must exercise an almost emptied donor");
+      double finalMomentum = 0.0;
+      for (int cell = 0; cell < 3; cell++) {
+        double speed = state[cell][phase] > 0.0 ? state[cell][phase + 3] / state[cell][phase] : 0.0;
+        assertTrue(speed >= -3.0 - 1.0e-12 && speed <= 20.0 + 1.0e-12,
+            "Accepted mass transfers must retain bounded donor velocities");
+        finalMomentum += state[cell][phase + 3] * length[cell];
+      }
+      assertEquals(initialMomentum, finalMomentum, 1.0e-12);
+      assertArrayEquals(initialMass, weightedPhaseMass(state, length), 1.0e-12);
+    }
+  }
+
+  /**
+   * Feasible through-flow mixes velocities conservatively when incoming correction mass funds outgoing mass.
+   */
+  @Test
+  void correctionThroughFlowRetainsConservativeBoundedMomentum() {
+    for (boolean reverse : new boolean[] {false, true}) {
+      double[][] state = new double[3][7];
+      double[][] density = {ArrayUtils.filledArray(3, 1.0), ArrayUtils.filledArray(3, 800.0),
+          ArrayUtils.filledArray(3, 1000.0)};
+      int donor = reverse ? 2 : 0;
+      double initialMomentum = 0.0;
+      for (int cell = 0; cell < 3; cell++) {
+        state[cell][0] = cell == donor ? 100.0 : 1.0;
+        state[cell][3] = state[cell][0] * (cell == donor ? 8.0 : -2.0);
+        initialMomentum += state[cell][3];
+      }
+      density[0][donor] = 100.0;
+      double[] correction = reverse ? new double[] {0.0, 2.0, 4.0} : new double[] {4.0, 2.0, 0.0};
+      CoupledPressureMomentumSolver.applyConservativeMassFluxCorrection(state, 1.0, correction,
+          phaseAreas(state, density), ArrayUtils.filledArray(3, 1.0), ArrayUtils.filledArray(3, 1.0), density, false);
+      double finalMomentum = 0.0;
+      for (double[] cell : state) {
+        assertTrue(cell[3] / cell[0] >= -2.0 && cell[3] / cell[0] <= 8.0);
+        finalMomentum += cell[3];
+      }
+      assertTrue(state[1][3] > 0.0, "Incoming donor momentum must fund through-flow");
+      assertEquals(initialMomentum, finalMomentum, 1.0e-12);
+    }
+  }
+
   @Test
   void feasibleIncomingCorrectionSuppliesThroughFlowInEitherDirection() {
     for (boolean reverse : new boolean[] {false, true}) {

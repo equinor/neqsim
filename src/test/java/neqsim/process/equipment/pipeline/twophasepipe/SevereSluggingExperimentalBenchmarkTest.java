@@ -61,6 +61,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * The steady-state initialization runs without a wall-clock guard, and every realization asserts that the guard did not
  * fire, so the reported results do not depend on how fast or how loaded the executing machine is.
  * </p>
+ *
+ * @author NeqSim
+ * @version 1.0
  */
 @Tag("slow")
 class SevereSluggingExperimentalBenchmarkTest {
@@ -452,22 +455,27 @@ class SevereSluggingExperimentalBenchmarkTest {
     return result;
   }
 
-  private static LowProductionCycleMetrics analyzeLowProductionCycles(List<Double> times, List<Double> liquidRates) {
-    double minimum = minimum(liquidRates);
-    double threshold = minimum + 0.15 * (maximum(liquidRates) - minimum);
+  /**
+   * Measure recovered fallback events using the fixture's existing feed-relative blowout/fallback gates.
+   *
+   * @param times settled sample times, s
+   * @param liquidRates signed liquid outlet rates, kg/s
+   * @return completed trough intervals and their mean period
+   */
+  static LowProductionCycleMetrics analyzeLowProductionCycles(List<Double> times, List<Double> liquidRates) {
+    double fallbackThreshold = 0.75 * LIQUID_FEED_KG_PER_S;
+    double blowoutThreshold = 1.25 * LIQUID_FEED_KG_PER_S;
     List<Integer> troughIndices = new ArrayList<>();
-    int index = 0;
-    while (index < liquidRates.size()) {
-      if (liquidRates.get(index) > threshold) {
-        index++;
-        continue;
+    int minimumIndex = -1;
+    for (int index = 0; index < liquidRates.size(); index++) {
+      double rate = liquidRates.get(index);
+      if (rate <= fallbackThreshold && (minimumIndex < 0 || rate < liquidRates.get(minimumIndex))) {
+        minimumIndex = index;
       }
-      int minimumIndex = index;
-      while (index + 1 < liquidRates.size() && liquidRates.get(index + 1) <= threshold) {
-        index++;
-        if (liquidRates.get(index) < liquidRates.get(minimumIndex)) {
-          minimumIndex = index;
-        }
+      // Require recovery above the feed before another fallback can be a separate event. Global
+      // extrema are unsuitable: one reverse-flow spike can hide all otherwise repeated cycles.
+      if (minimumIndex < 0 || rate < blowoutThreshold) {
+        continue;
       }
       // Merge secondary minima inside one blowout/fallback event. Ten seconds is below both
       // the measured 38 s cycle and the modelled cycle, while rejecting high-frequency ripples.
@@ -477,7 +485,7 @@ class SevereSluggingExperimentalBenchmarkTest {
       } else if (liquidRates.get(minimumIndex) < liquidRates.get(troughIndices.get(troughIndices.size() - 1))) {
         troughIndices.set(troughIndices.size() - 1, minimumIndex);
       }
-      index++;
+      minimumIndex = -1;
     }
     int completedCycleCount = Math.max(0, troughIndices.size() - 1);
     if (completedCycleCount == 0) {
@@ -571,10 +579,17 @@ class SevereSluggingExperimentalBenchmarkTest {
     return Math.abs(first - second) / Math.max(Math.max(Math.abs(first), Math.abs(second)), 1.0e-12);
   }
 
-  private static final class LowProductionCycleMetrics {
-    private final double periodSeconds;
-    private final int completedCycleCount;
+  /** Test-local liquid-production event summary, shared with the detector's fast controls. */
+  static final class LowProductionCycleMetrics {
+    final double periodSeconds;
+    final int completedCycleCount;
 
+    /**
+     * Store the measured event intervals.
+     *
+     * @param periodSeconds mean interval, or NaN without repeated recovered events
+     * @param completedCycleCount number of intervals between recovered troughs
+     */
     private LowProductionCycleMetrics(double periodSeconds, int completedCycleCount) {
       this.periodSeconds = periodSeconds;
       this.completedCycleCount = completedCycleCount;
