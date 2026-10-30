@@ -37,8 +37,7 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 class ProcessSystemDocumentationTest {
   private static final Path GUIDE = Paths.get("docs", "process", "README.md");
   private static final String MARKER = "<!-- process-overview-example: valve-separator -->";
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
+  private static final Pattern JAVA_FENCE = Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
 
   @TempDir
   Path temporaryDirectory;
@@ -79,16 +78,10 @@ class ProcessSystemDocumentationTest {
     assertTrue(TwoPortEquipment.class.isAssignableFrom(ThrottlingValve.class));
     assertFalse(TwoPortEquipment.class.isAssignableFrom(Separator.class));
 
-    assertSame(
-        StreamInterface.class,
-        TwoPortEquipment.class.getMethod("getInletStream").getReturnType());
-    assertSame(
-        StreamInterface.class,
-        TwoPortEquipment.class.getMethod("getOutletStream").getReturnType());
-    assertSame(
-        StreamInterface.class, Separator.class.getMethod("getGasOutStream").getReturnType());
-    assertSame(
-        StreamInterface.class, Separator.class.getMethod("getLiquidOutStream").getReturnType());
+    assertSame(StreamInterface.class, TwoPortEquipment.class.getMethod("getInletStream").getReturnType());
+    assertSame(StreamInterface.class, TwoPortEquipment.class.getMethod("getOutletStream").getReturnType());
+    assertSame(StreamInterface.class, Separator.class.getMethod("getGasOutStream").getReturnType());
+    assertSame(StreamInterface.class, Separator.class.getMethod("getLiquidOutStream").getReturnType());
   }
 
   /**
@@ -101,8 +94,7 @@ class ProcessSystemDocumentationTest {
     String markdown = new String(Files.readAllBytes(GUIDE), StandardCharsets.UTF_8);
     int markerPosition = markdown.indexOf(MARKER);
     assertTrue(markerPosition >= 0, "Missing marker: " + MARKER);
-    assertEquals(
-        markerPosition, markdown.lastIndexOf(MARKER), "Marker must be unique: " + MARKER);
+    assertEquals(markerPosition, markdown.lastIndexOf(MARKER), "Marker must be unique: " + MARKER);
 
     Matcher fence = JAVA_FENCE.matcher(markdown.substring(markerPosition));
     assertTrue(fence.find(), "Missing Java fence after marker: " + MARKER);
@@ -125,33 +117,15 @@ class ProcessSystemDocumentationTest {
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "A JDK is required to validate documentation examples");
-    String classpath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    String classpath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
     StringWriter diagnostics = new StringWriter();
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
-      Boolean successful =
-          compiler
-              .getTask(
-                  diagnostics,
-                  manager,
-                  null,
-                  Arrays.asList(
-                      "-source",
-                      "8",
-                      "-target",
-                      "8",
-                      "-proc:none",
-                      "-classpath",
-                      classpath,
-                      "-d",
-                      classes.toString()),
-                  null,
-                  manager.getJavaFileObjects(javaFile.toFile()))
-              .call();
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(diagnostics, manager, null, Arrays.asList("-source", "8", "-target", "8", "-proc:none", "-classpath",
+              classpath, "-d", classes.toString()), null, manager.getJavaFileObjects(javaFile.toFile()))
+          .call();
       assertTrue(successful, diagnostics.toString());
     }
-    return new URLClassLoader(
-        new URL[] {classes.toUri().toURL()}, getClass().getClassLoader());
+    return new URLClassLoader(new URL[] {classes.toUri().toURL()}, getClass().getClassLoader());
   }
 }
