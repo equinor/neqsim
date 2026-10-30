@@ -281,6 +281,12 @@ are rejected. Route-conditioned pressure studies should use a separate exact 2D
 route × pressure slice. They must not collapse route choice into a continuous variable
 or promote the combined controls to an interpolated 3D operating surface.
 
+A variable common-shaft speed can likewise be exposed through a fixed-speed
+`CompressorShaftCalculator` action. Sample separator arrival pressure × shaft speed as an exact 2D slice: each cell
+runs the coupled process and retains the existing export-pressure, compressor-map, common-speed, driver/gearbox and
+shared-power evidence. Reject incomplete, stale or non-finite cells; do not relax those constraints to fill the slice
+or infer an unsampled continuous surface.
+
 Use `ProcessModelDebottleneckStudy` after the evaluator and direct installed constraints are configured when one documented capacity replacement or expansion must be compared with the installed baseline. It uses the same search policy for both scenarios, freezes immutable objective/constraint/metric evidence, and restores the installed limit plus pre-study operating point. This is a paired screening study, not an equipment-sizing algorithm or economic approval.
 
 Use `ProcessModelDebottleneckRanking` after independent paired studies complete when alternatives

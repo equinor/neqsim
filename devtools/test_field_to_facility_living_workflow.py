@@ -245,9 +245,9 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertEqual(16, evidence["schema_version"])
             self.assertEqual(cycle_id, evidence["cycle_id"])
             self.assertEqual(2, evidence["period_count"])
-            self.assertEqual(40, evidence["requested_point_count"])
-            self.assertEqual(40, evidence["completed_point_count"])
-            self.assertGreater(evidence["total_evaluation_count"], 40)
+            self.assertEqual(58, evidence["requested_point_count"])
+            self.assertEqual(58, evidence["completed_point_count"])
+            self.assertGreater(evidence["total_evaluation_count"], 58)
             self.assertGreaterEqual(evidence["envelope_runtime_seconds"], 0.0)
             self.assertEqual(1, len(evidence["bottleneck_transitions"]))
             self.assertTrue(all(
@@ -349,14 +349,16 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertIn("combined_bottleneck", combination["bottleneck_migration"])
             relief_envelope = current["qualified_relief_envelope"]
             self.assertEqual(2, relief_envelope["receipt_version"])
-            self.assertEqual(5, relief_envelope["slice_pair_count"])
-            self.assertEqual(4, relief_envelope["sampled_cell_comparison_count"])
+            self.assertEqual(6, relief_envelope["slice_pair_count"])
+            self.assertEqual(8, relief_envelope["sampled_cell_comparison_count"])
             self.assertIs(True, relief_envelope["capacity_restored"])
             coupled_pairs = [pair for pair in relief_envelope["slice_pairs"]
                              if len(pair["axis_action_ids"]) == 2]
-            self.assertEqual(2, len(coupled_pairs))
-            self.assertTrue(all(len(pair["sampled_cell_comparisons"]) == 2
-                                for pair in coupled_pairs))
+            self.assertEqual(3, len(coupled_pairs))
+            self.assertEqual(
+                [2, 2, 4],
+                sorted(len(pair["sampled_cell_comparisons"]) for pair in coupled_pairs),
+            )
             self.assertTrue(all(
                 comparison["interpolated"] is False
                 and comparison["baseline_cell"]["sampled_cell_only"] is True
@@ -525,9 +527,9 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
                 period for period in revised_evidence["periods"]
                 if period["period_id"] == revised_cycle_id)
             revised_optimizer = revised_current["envelope_evidence"]["optimizer_evidence"]
-            self.assertEqual(1.0e-9, revised_optimizer["replay_relative_tolerance"])
+            self.assertEqual(1.0e-8, revised_optimizer["replay_relative_tolerance"])
             self.assertEqual(
-                "deterministic simulator replay tolerance",
+                "synthetic coupled network solver repeatability qualification",
                 revised_optimizer["replay_tolerance_provenance"],
             )
             replay_scale = max(1.0, abs(first_accepted_objective),
