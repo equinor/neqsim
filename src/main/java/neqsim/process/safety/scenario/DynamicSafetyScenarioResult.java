@@ -64,10 +64,16 @@ public final class DynamicSafetyScenarioResult implements Serializable {
   private final Map<String, Map<String, Object>> logicEvidence;
   private final List<String> errors;
   private final boolean steadyStateConverged;
+  private final String timingPolicy;
+  private final double triggerTimeSeconds;
+  private final double requestedDurationSeconds;
+  private final double completedDurationSeconds;
+  private final List<Double> physicalStepSeconds;
 
   DynamicSafetyScenarioResult(String scenarioId, String scenarioName, Map<String, CriterionResult> criterionResults,
       Map<String, String> finalLogicStates, Map<String, Map<String, Object>> logicEvidence, List<String> errors,
-      boolean steadyStateConverged) {
+      boolean steadyStateConverged, String timingPolicy, double triggerTimeSeconds, double requestedDurationSeconds,
+      double completedDurationSeconds, List<Double> physicalStepSeconds) {
     this.scenarioId = scenarioId;
     this.scenarioName = scenarioName;
     this.criterionResults = Collections.unmodifiableMap(new LinkedHashMap<String, CriterionResult>(criterionResults));
@@ -75,6 +81,11 @@ public final class DynamicSafetyScenarioResult implements Serializable {
     this.logicEvidence = Collections.unmodifiableMap(new LinkedHashMap<String, Map<String, Object>>(logicEvidence));
     this.errors = Collections.unmodifiableList(new ArrayList<String>(errors));
     this.steadyStateConverged = steadyStateConverged;
+    this.timingPolicy = timingPolicy;
+    this.triggerTimeSeconds = triggerTimeSeconds;
+    this.requestedDurationSeconds = requestedDurationSeconds;
+    this.completedDurationSeconds = completedDurationSeconds;
+    this.physicalStepSeconds = Collections.unmodifiableList(new ArrayList<Double>(physicalStepSeconds));
   }
 
   public boolean isPassed() {
@@ -103,12 +114,32 @@ public final class DynamicSafetyScenarioResult implements Serializable {
     return logicEvidence;
   }
 
+  /** @return execution policy used by the scenario runner */
+  public String getTimingPolicy() {
+    return timingPolicy;
+  }
+
+  /** @return accepted physical-step durations in execution order, seconds */
+  public List<Double> getPhysicalStepSeconds() {
+    return physicalStepSeconds;
+  }
+
+  /** @return physical time advanced by the isolated process, seconds */
+  public double getCompletedDurationSeconds() {
+    return completedDurationSeconds;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("schemaVersion", "dynamic_safety_scenario_result.v2");
     result.put("scenarioId", scenarioId);
     result.put("scenarioName", scenarioName);
     result.put("steadyStateConverged", Boolean.valueOf(steadyStateConverged));
+    result.put("timingPolicy", timingPolicy);
+    result.put("triggerTimeSeconds", Double.valueOf(triggerTimeSeconds));
+    result.put("requestedDurationSeconds", Double.valueOf(requestedDurationSeconds));
+    result.put("completedDurationSeconds", Double.valueOf(completedDurationSeconds));
+    result.put("physicalStepSeconds", new ArrayList<Double>(physicalStepSeconds));
     Map<String, Object> criteria = new LinkedHashMap<String, Object>();
     for (Map.Entry<String, CriterionResult> entry : criterionResults.entrySet()) {
       criteria.put(entry.getKey(), entry.getValue().toMap());
