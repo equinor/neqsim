@@ -203,7 +203,8 @@ class PvtFlowAssuranceStandardsDocumentationContractTest(unittest.TestCase):
         for marker in workflow_markers:
             with self.subTest(marker=marker):
                 self.assertIn(marker, section)
-                self.assertIn(marker, java_test)
+                # The exact-source gate embeds these markers in Java string literals.
+                self.assertIn(marker.replace('"', r'\"'), java_test)
 
         regression_markers = (
             "assertEquals(3, stages.size())",
