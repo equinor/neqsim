@@ -56,8 +56,8 @@ class PvtSimulationDocumentationTest {
     assertTrue(source.contains("new MultiStageSeparatorTest(reservoirFluid)"));
     assertTrue(source.contains("new SystemSrkEos(373.15, 300.0)"));
     assertTrue(source.contains("setReservoirConditions(300.0, 100.0)"));
-    assertTrue(source.contains("addSeparatorStage(50.0, 40.0, \"HP separator\")"));
-    assertTrue(source.contains("addSeparatorStage(10.0, 30.0, \"LP separator\")"));
+    assertTrue(source.contains("addSeparatorStage(50.0, 40.0, " + '"HP separator"'+ ")"));
+    assertTrue(source.contains("addSeparatorStage(10.0, 30.0, " + '"LP separator"'+ ")"));
     assertTrue(source.contains("separatorTest.addStockTankStage();"));
     assertTrue(source.contains("separatorTest.run();"));
 
