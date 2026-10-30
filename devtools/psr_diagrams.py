@@ -2756,9 +2756,13 @@ def _main_tags(model, tags):
 
 def _block_node(model, bi, blk):
     tags = blk["tags"]
-    main = _main_tags(model, tags)[:4]
-    more = len(tags) - len(main)
-    txt = ", ".join(main) + (" +%d more" % more if more > 0 else "")
+    ranked = _main_tags(model, tags)
+    for n_main in (4, 3, 2, 1):        # show as many main tags as fit in four lines (long tags are listed in the equipment register)
+        main = ranked[:n_main]
+        more = len(tags) - len(main)
+        txt = ", ".join(main) + (" +%d more" % more if more > 0 else "")
+        if len(_wrap(txt, 2.1, BOX_W - 4.0, max_lines=99)) <= 4:
+            break
     name_lines = _wrap(blk["name"][:1].upper() + blk["name"][1:], 3.0, BOX_W - 4.0, bold=True, max_lines=2)
     tag_lines = _wrap(txt, 2.1, BOX_W - 4.0, max_lines=4)
     desc_lines = _wrap(blk.get("description") or "", 2.0, BOX_W - 4.0, max_lines=2) if blk.get("description") else []

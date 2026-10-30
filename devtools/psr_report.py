@@ -311,12 +311,28 @@ class ReportBuilder:
             for i, v in enumerate(r):
                 _set_cell(cells[i], v, font, bold=first_bold and i == 0,
                           align=(align[i] if align else ("right" if i > 0 and _numlike(v) else None)))
-        if widths:
-            for row in tbl.rows:
-                for i, w in enumerate(widths):
-                    row.cells[i].width = Mm(w)
+        if not widths:
+            widths = self._auto_widths(header, rows)
+        avail = self.usable_width() * 0.995
+        total = float(sum(widths))
+        if total > avail:                                  # never let a table run over the page margins
+            widths = [w * avail / total for w in widths]
+        for row in tbl.rows:
+            for i, w in enumerate(widths):
+                row.cells[i].width = Mm(w)
         self.doc.add_paragraph().paragraph_format.space_after = Pt(2)
         return tbl
+
+    def _auto_widths(self, header, rows):
+        """Column widths (mm) in proportion to the content length (longest header word, 0.7 x mean cell length), scaled to the usable width."""
+        weights = []
+        for i, h in enumerate(header):
+            lens = [len(str(r[i])) for r in rows[:300] if i < len(r)] or [0]
+            word = max([len(w) for w in str(h).split()] or [4])
+            weights.append(min(40.0, max(5.0, word * 1.0, 0.7 * sum(lens) / len(lens))))
+        avail = self.usable_width() * 0.995
+        total = sum(weights)
+        return [w * avail / total for w in weights]
 
     def section(self, landscape=False, a3=False):
         sec = self.doc.add_section(WD_SECTION.NEW_PAGE)
@@ -650,16 +666,26 @@ class ReportBuilder:
         self._case_comparison(figure_dir)
         self.H("8.6 Sensitivities", 2)
         for sens in self.basis.get("sensitivities", []):
+            wide = len(sens.get("columns") or []) >= 9          # wide tables go to a landscape page and back
+            if wide:
+                self.section(landscape=True)
             self.P(sens["title"], bold=True)
             self.P(self.res.expand(sens["description"]))
             self.P("Source: " + sens["source"], italic=True, size=9)
             if sens.get("columns"):
-                self.table(sens["columns"], [[str(c) for c in r] for r in sens["rows"]], caption=sens["title"], font=8)
+                self.table(sens["columns"], [[str(c) for c in r] for r in sens["rows"]], caption=sens["title"], font=7.5 if wide else 8)
+            if wide:
+                self.section()
         self.H("8.7 Constraints and utilisation", 2)
         for tab in self.basis.get("constraint_tables", []):
+            wide = len(tab.get("columns") or []) >= 9
+            if wide:
+                self.section(landscape=True)
             self.P(self.res.expand(tab.get("description", "")))
             self.P("Source: " + tab["source"], italic=True, size=9)
-            self.table(tab["columns"], [[str(c) for c in r] for r in tab["rows"]], caption=tab["title"], font=8)
+            self.table(tab["columns"], [[str(c) for c in r] for r in tab["rows"]], caption=tab["title"], font=7.5 if wide else 8)
+            if wide:
+                self.section()
         self.H("8.8 Engineering interpretation", 2)
         for block in self.basis.get("interpretation", []):
             self.P(block["topic"], bold=True)
@@ -814,7 +840,16 @@ class ReportBuilder:
         for fig_spec in self.basis.get("figures", []):
             p = fig_spec["path"]
             if os.path.exists(p):
-                self.picture(p, 150, alt=fig_spec["alt"], caption=fig_spec["caption"])
+                if fig_spec.get("a3_landscape"):               # drawings: own A3 landscape page, then back to portrait
+                    self.section(landscape=True, a3=True)
+                    self.picture(p, 355, alt=fig_spec["alt"], caption=fig_spec["caption"])
+                    self.section()
+                elif fig_spec.get("a4_landscape"):             # wide charts: own A4 landscape page, then back to portrait
+                    self.section(landscape=True)
+                    self.picture(p, 262, alt=fig_spec["alt"], caption=fig_spec["caption"])
+                    self.section()
+                else:
+                    self.picture(p, 150, alt=fig_spec["alt"], caption=fig_spec["caption"])
 
     def conclusions(self):
         self.H("9 Conclusions and recommendations", 1)
