@@ -1,7 +1,7 @@
 {
  "schema": "neqsim.pfd_layout.v1",
  "kind": "pfd",
- "name": "teg_defective (Norne fig_pd_pfd_teg original)",
+ "name": "teg_defective (original TEG dehydration PFD layout)",
  "canvas": {
   "width": 100.0,
   "height": 74.0,

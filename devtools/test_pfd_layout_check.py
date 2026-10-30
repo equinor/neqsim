@@ -1,6 +1,6 @@
 """Tests for the deterministic PFD layout checker (pfd_layout_check), the SVG loader and the PfdDiagram builder.
 
-Good and bad examples: synthetic specs for each rule, the defective Norne TEG PFD (negative case, reconstructed from the
+Good and bad examples: synthetic specs for each rule, the defective TEG dehydration PFD (negative case, reconstructed from the
 original generator geometry) and its re-laid-out version (positive case), small SVG drawings and raster files.
 """
 import copy
@@ -224,7 +224,7 @@ def test_whitespace_pocket():
     assert "WHITESPACE_POCKET" in codes(rep, "WARN"), rep.to_markdown()
 
 
-def test_negative_norne_teg_example_fails_and_fixed_passes():
+def test_negative_teg_example_fails_and_fixed_passes():
     bad = chk.review(os.path.join(EXAMPLES, "teg_defective.json"))
     assert bad.status == "FAIL"
     assert {"BOX_OVERLAP", "CROSSING", "VESSEL_ORIENTATION", "PHASE_SIDE", "MISSING_STREAM_ID", "LINE_DIAGONAL"} <= codes(bad)

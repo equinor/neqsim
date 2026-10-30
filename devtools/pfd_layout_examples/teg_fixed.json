@@ -1,7 +1,7 @@
 {
  "schema": "neqsim.pfd_layout.v1",
  "kind": "pfd",
- "name": "fig_pd_pfd_teg",
+ "name": "teg_fixed (re-laid-out TEG dehydration PFD)",
  "canvas": {
   "width": 100.0,
   "height": 82.85714285714286,
@@ -776,7 +776,7 @@
    "owner_edge": "e9"
   },
   {
-   "text": "Regeneration duty is a model prediction;\nSTID conflicts: 500 kW (PFD) and 1000 kW\n(P&ID); 500 kW used for utilisation.",
+   "text": "Regeneration duty is a model prediction;\nSource conflict: 500 kW (PFD) and 1000 kW\n(P&ID); 500 kW used for utilisation.",
    "x": 58,
    "y": 24,
    "font_size": 1.1904761904761905,
@@ -802,7 +802,7 @@
    "kind": "annotation"
   },
   {
-   "text": "MODEL values: tuned NeqSim well-to-export model, window W1 (2026-02-23..03-01); topology from STID (unverified); screening level. Stream numbers are local to this\nfigure.",
+   "text": "MODEL values: tuned NeqSim model, example window; topology from source drawings (unverified); screening level. Stream numbers are local to this\nfigure.",
    "x": 1.5,
    "y": 79.50158730158732,
    "font_size": 1.1111111111111112,
