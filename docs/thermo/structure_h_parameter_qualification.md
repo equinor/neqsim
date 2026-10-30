@@ -4,8 +4,6 @@ description: "Reproduce preliminary fits to experimental structure-H dissociatio
 keywords: "structure H, sH, hydrate, experimental data, parameter fitting, Langmuir, Kihara, COMP, dissociation pressure, qualification"
 ---
 
-# Structure-H data and parameter qualification
-
 Experimental data are available for a bounded first step in
 [issue #4730](https://github.com/equinor/neqsim/issues/4730). The repository
 contains 24 experimental markers extracted from a primary supporting-material
