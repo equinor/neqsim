@@ -42,6 +42,28 @@
       "limitations": "Experimental input and fluid characterization must be supplied; test presence is not a fluid-specific calibration."
     },
     {
+      "id": "generalized-reservoir-material-balance",
+      "title": "Generalized reservoir history balance with vaporized oil",
+      "domain": "reservoir",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalance",
+        "neqsim.process.equipment.reservoir.ReservoirSurveillance"
+      ],
+      "skills": [
+        "neqsim-eos-regression",
+        "neqsim-integrated-production-and-lifecycle"
+      ],
+      "agents": [
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/GeneralizedMaterialBalanceTest.java",
+        "src/test/java/neqsim/process/equipment/reservoir/GeneralizedReservoirSurveillanceTest.java"
+      ],
+      "limitations": "Discovery and inspectApi only; instance-based Java/Python history builder, no executable static MCP operation. Two surface components with independently calibrated, path-consistent PVT and net cumulative withdrawals on one surface basis. Aquifer influx and rock/water expansion are supplied, not fitted. Synthetic conservation and tank/EOS tests are not independent laboratory/field qualification, pressure-error statistics, full compositional injection, recoverable reserves or confidence intervals. The SimpleReservoir adapter rejects unrecorded injection and truncated/nonzero-origin history."
+    },
+    {
       "id": "pvt-fluid-study-report",
       "title": "Traceable PVT characterization study and E300 handover",
       "domain": "pvt",

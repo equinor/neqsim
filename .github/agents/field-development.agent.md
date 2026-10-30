@@ -44,6 +44,7 @@ You are an expert in these field development disciplines:
 - Volumetric estimation (GIIP/STOIIP) with uncertainty ranges (P10/P50/P90)
 - Material balance modeling — forward tank model (`SimpleReservoir`)
 - Inverse material balance / reserves surveillance from measured pressure-vs-production history (`GasMaterialBalance` P/Z line & OGIP, Cole plot; `OilMaterialBalance` OOIP, gas-cap ratio & Pirson drive indices)
+- Generalized history balance with vaporized oil (`GeneralizedMaterialBalance`): use measured net cumulative withdrawals and independently calibrated, pressure-aligned `Rs/Rv/Bo/Bg/Bw`. See `docs/pvtsimulation/reservoir_material_balance.md`; use `ReservoirSurveillance.generalizedMaterialBalance` for recorded depletion, and do not infer confidence intervals or injectors' unrecorded history from a small residual.
 - Aquifer support (`VanEverdingenHurstAquifer` — Van Everdingen-Hurst / Carter-Tracy influx, ECLIPSE AQUTAB export)
 - Recovery factor estimation by drive mechanism and development concept
 - Depletion strategy (natural depletion, water injection, gas injection, WAG)

@@ -1047,6 +1047,34 @@
       }
     },
     {
+      "id": "generalized-reservoir-material-balance",
+      "title": "Generalized reservoir history balance with vaporized oil",
+      "domain": "reservoir",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalance",
+        "neqsim.process.equipment.reservoir.ReservoirSurveillance"
+      ],
+      "skills": [
+        "neqsim-eos-regression",
+        "neqsim-integrated-production-and-lifecycle"
+      ],
+      "agents": [
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/GeneralizedMaterialBalanceTest.java",
+        "src/test/java/neqsim/process/equipment/reservoir/GeneralizedReservoirSurveillanceTest.java"
+      ],
+      "limitations": "Discovery and inspectApi only; instance-based Java/Python history builder, no executable static MCP operation. Two surface components with independently calibrated, path-consistent PVT and net cumulative withdrawals on one surface basis. Aquifer influx and rock/water expansion are supplied, not fitted. Synthetic conservation and tank/EOS tests are not independent laboratory/field qualification, pressure-error statistics, full compositional injection, recoverable reserves or confidence intervals. The SimpleReservoir adapter rejects unrecorded injection and truncated/nonzero-origin history.",
+      "evidence": {
+        "route": "declared",
+        "testSources": "present",
+        "execution": "not_recorded",
+        "engineeringQualification": "not_assessed"
+      }
+    },
+    {
       "id": "multi-area-process",
       "title": "Compose a multi-area process",
       "domain": "process",
@@ -3248,7 +3276,7 @@
     {"id":"neqsim.process.equipment.reservoir.RadialDarcyWaterInjectivity","kind":"class","source":"src/main/java/neqsim/process/equipment/reservoir/RadialDarcyWaterInjectivity.java","sourceDigest":"e256101185c0769f90d2ecd82c260645b227fa0f0ad961a3946b52de4afc6f39","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.reservoir.ReservoirCVDsim","kind":"class","source":"src/main/java/neqsim/process/equipment/reservoir/ReservoirCVDsim.java","sourceDigest":"681bff1741d0377b2a44606aa959280f8e445098db98c7744e4bc4f84feac7c1","domain":"process","skills":["neqsim-integrated-production-and-lifecycle"],"agents":["capacity-increase-screening","field-development","network-energy-systems","surf-design-study"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.reservoir.ReservoirDiffLibsim","kind":"class","source":"src/main/java/neqsim/process/equipment/reservoir/ReservoirDiffLibsim.java","sourceDigest":"5f27c27a28fdacb98d7620c6fea988869ca26811532bac1d7f6655f5c3be5a39","domain":"process","skills":["neqsim-integrated-production-and-lifecycle"],"agents":["capacity-increase-screening","field-development","network-energy-systems","surf-design-study"],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.process.equipment.reservoir.ReservoirSurveillance","kind":"class","source":"src/main/java/neqsim/process/equipment/reservoir/ReservoirSurveillance.java","sourceDigest":"02b2435b099e4e5d50f3513c781c2fb4559cdf5b183981c8defc2fe54e4c6ded","domain":"process","skills":["neqsim-integrated-production-and-lifecycle"],"agents":["capacity-increase-screening","field-development","network-energy-systems","surf-design-study"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.equipment.reservoir.ReservoirSurveillance","kind":"class","source":"src/main/java/neqsim/process/equipment/reservoir/ReservoirSurveillance.java","sourceDigest":"6ac691d8ff40abcbd5bf2da581b4d205659a937b8f42ace6ee7e8939be6e23ff","domain":"process","skills":["neqsim-integrated-production-and-lifecycle"],"agents":["capacity-increase-screening","field-development","network-energy-systems","surf-design-study"],"capabilities":["generalized-reservoir-material-balance"],"disposition":"registered_anchor"},
     {"id":"neqsim.process.equipment.reservoir.ReservoirTPsim","kind":"class","source":"src/main/java/neqsim/process/equipment/reservoir/ReservoirTPsim.java","sourceDigest":"524b3879ebbf1704734641ce4e1de02bb32e1d137e3ba0d185faca8b0c67f0e0","domain":"process","skills":["neqsim-integrated-production-and-lifecycle"],"agents":["capacity-increase-screening","field-development","network-energy-systems","surf-design-study"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.reservoir.SimpleReservoir","kind":"class","source":"src/main/java/neqsim/process/equipment/reservoir/SimpleReservoir.java","sourceDigest":"6e374d36e683c5d28ace9c93465e1357ba3e8c1c5b7c28aba17deb174707504b","domain":"process","skills":["neqsim-capability-map","neqsim-dynamic-equipment-implementation","neqsim-field-development","neqsim-integrated-production-and-lifecycle","neqsim-pipeline-and-terminal-networks","neqsim-process-extraction","neqsim-production-optimization","neqsim-production-system-modeling","neqsim-subsea-and-wells","neqsim-task-workflow","neqsim-troubleshooting","neqsim-vfp-lift-curves"],"agents":["capability-scout","capacity-increase-screening","ccs-hydrogen","dynamic-equipment","engineering-deliverables","extract-process","field-development","flow-assurance","gas-processing-refining","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","process-model","process-study-report","reaction-engineering","root-cause","rotating-equipment","solve-process","solve-task","surf-design-study","thermo-fluid","unisim-reader"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.reservoir.TubingPerformance","kind":"class","source":"src/main/java/neqsim/process/equipment/reservoir/TubingPerformance.java","sourceDigest":"f11cc0d0c041ec61600af65a7b8d91df74bb116af658f378c8812f195e5bc0d0","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
@@ -4555,6 +4583,7 @@
     {"id":"neqsim.pvtsimulation.regression.ViscosityDataPoint","kind":"class","source":"src/main/java/neqsim/pvtsimulation/regression/ViscosityDataPoint.java","sourceDigest":"d0d0aab8b29abdf3256ec0ab1a635025461ab1838928ab5a7f4ec9d44b01df14","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.reservoirproperties.CompositionEstimation","kind":"class","source":"src/main/java/neqsim/pvtsimulation/reservoirproperties/CompositionEstimation.java","sourceDigest":"2382fb498c62804b65f792a645913c9a74c2c5e3665fd41f9b715aa3d9b9bcb9","domain":"pvtsimulation","skills":["neqsim-capability-map"],"agents":["capability-scout","engineering-deliverables","mechanical-design","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.reservoirproperties.materialbalance.GasMaterialBalance","kind":"class","source":"src/main/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/GasMaterialBalance.java","sourceDigest":"13c56d0ee9ce9e7982ee69ddc323b70ebcf88fd85fcd056669fc6fef1c4a767e","domain":"pvtsimulation","skills":["neqsim-capability-map","neqsim-field-development","neqsim-production-optimization"],"agents":["capability-scout","engineering-deliverables","field-development","mechanical-design","solve-task","surf-design-study"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalance","kind":"class","source":"src/main/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/GeneralizedMaterialBalance.java","sourceDigest":"a2a3da2e02734b472042e3fce97bee62333c947466b17aa3179a138614820655","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":["generalized-reservoir-material-balance"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.reservoirproperties.materialbalance.OilMaterialBalance","kind":"class","source":"src/main/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/OilMaterialBalance.java","sourceDigest":"ff4e7e2ddc0d309ffc25319a90d59fbee94504de3a8e5c24a1c7e219de33b2e0","domain":"pvtsimulation","skills":["neqsim-capability-map","neqsim-field-development","neqsim-production-optimization"],"agents":["capability-scout","engineering-deliverables","field-development","mechanical-design","solve-task","surf-design-study"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.reservoirproperties.materialbalance.VanEverdingenHurstAquifer","kind":"class","source":"src/main/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/VanEverdingenHurstAquifer.java","sourceDigest":"bec1ea3912e8b5b2f4b3020ba42b6bee3c3901a2577578e577632a03f61a2182","domain":"pvtsimulation","skills":["neqsim-capability-map","neqsim-field-development","neqsim-production-optimization"],"agents":["capability-scout","engineering-deliverables","field-development","mechanical-design","solve-task","surf-design-study"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.reservoirproperties.relpermeability.RelPermModelFamily","kind":"enum","source":"src/main/java/neqsim/pvtsimulation/reservoirproperties/relpermeability/RelPermModelFamily.java","sourceDigest":"80f825cd11a0a6f5543c8be911fb72e8f2f7326cd474b2b35255ac2c4c7ba69c","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},

@@ -124,6 +124,6 @@ Javadocs before building an automated regression workflow.
 - [Eclipse E300 fluid import](eclipse_e300_fluid_import)
 - [NeqSim JSON fluid format](json_fluid_format)
 - [Black-oil package](../blackoil/README)
-- [Reservoir material balance](reservoir_material_balance)
+- [Reservoir material balance, generalized Rs/Rv history estimates and tuned PVT](reservoir_material_balance)
 - [Relative-permeability tables](relative_permeability)
 - [Flow-assurance screening](flowassurance/README)
