@@ -10,6 +10,7 @@ import neqsim.standards.gasquality.Draft_ISO18453;
 import neqsim.standards.gasquality.Standard_ISO18453;
 import neqsim.thermo.system.SystemGERGwaterEos;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -46,6 +47,30 @@ class WaterDewPointConvergenceTest {
     SystemInterface gas = methane(70.0, 0.0);
     assertThrows(IllegalArgumentException.class,
         () -> new ThermodynamicOperations(gas).waterDewPointTemperatureFlash());
+  }
+
+  /** Missing or zero moisture must fail before converting a single gas phase to a trial two-phase state. */
+  @Test
+  void invalidMoisturePreservesInputPhaseState() {
+    for (boolean addZeroWater : new boolean[] {false, true}) {
+      for (boolean mixedLiquid : new boolean[] {false, true}) {
+        SystemInterface gas = new SystemSrkCPAstatoil(300.0, 50.0);
+        gas.addComponent("methane", 1.0);
+        if (addZeroWater) {
+          gas.addComponent("water", 0.0);
+        }
+        gas.setMixingRule(10);
+        new ThermodynamicOperations(gas).TPflash();
+        int phaseCount = gas.getNumberOfPhases();
+        double beta = gas.getBeta(0);
+        WaterDewPointTemperatureFlash flash = new WaterDewPointTemperatureFlash(gas, mixedLiquid);
+        assertThrows(IllegalArgumentException.class, flash::run);
+        assertEquals(300.0, gas.getTemperature(), 0.0);
+        assertEquals(phaseCount, gas.getNumberOfPhases());
+        assertEquals(beta, gas.getBeta(0), 0.0);
+        assertEquals(1.0, gas.getTotalNumberOfMoles(), 1.0e-15);
+      }
+    }
   }
 
   /** Invalid absolute pressure must fail rather than produce a finite temperature. */
