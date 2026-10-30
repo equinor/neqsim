@@ -267,6 +267,7 @@ The following complete Java 8 program builds and runs a valve-and-separator flow
 the normal entry point; with the default settings it delegates to the topology-aware optimized
 dispatcher and falls back conservatively when parallel execution is not suitable.
 
+<!-- process-overview-example: valve-separator -->
 ```java
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
