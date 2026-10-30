@@ -29,6 +29,13 @@ below. See [the study guide](../../docs/pvtsimulation/pvt_fluid_study_report.md)
 
 ## Qualification and swelling calculations
 
+For reservoir-history delivery, use `neqsim-eos-regression` and the
+`CalibratedPvtModel` / `MaterialBalancePvtHistory` contract documented in
+`docs/pvtsimulation/reservoir_material_balance.md`. Preserve independently tuned
+EOS checkpoints and complete held-out laboratory protocols, then hand off volume
+estimation to `@field-development`. Do not use reservoir-volume misfit to change
+the laboratory model or substitute independent flashes for a depletion path.
+
 Read `docs/pvtsimulation/pedersen_method_qualification.md` before asserting reservoir-fluid
 method coverage or accuracy. Distinguish source availability, numerical verification and
 experimental validation. Compare fluids only after matching EOS/alpha/mixing rules, component

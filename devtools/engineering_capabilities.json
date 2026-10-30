@@ -48,7 +48,9 @@
       "tool": "runCapability",
       "apis": [
         "neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalance",
-        "neqsim.process.equipment.reservoir.ReservoirSurveillance"
+        "neqsim.process.equipment.reservoir.ReservoirSurveillance",
+        "neqsim.pvtsimulation.util.CalibratedPvtModel",
+        "neqsim.pvtsimulation.util.MaterialBalancePvtHistory"
       ],
       "skills": [
         "neqsim-eos-regression",
@@ -59,9 +61,10 @@
       ],
       "testSources": [
         "src/test/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/GeneralizedMaterialBalanceTest.java",
-        "src/test/java/neqsim/process/equipment/reservoir/GeneralizedReservoirSurveillanceTest.java"
+        "src/test/java/neqsim/process/equipment/reservoir/GeneralizedReservoirSurveillanceTest.java",
+        "src/test/java/neqsim/pvtsimulation/util/CalibratedPvtModelTest.java"
       ],
-      "limitations": "Discovery and inspectApi only; instance-based Java/Python history builder, no executable static MCP operation. Two surface components with independently calibrated, path-consistent PVT and net cumulative withdrawals on one surface basis. Aquifer influx and rock/water expansion are supplied, not fitted. Synthetic conservation and tank/EOS tests are not independent laboratory/field qualification, pressure-error statistics, full compositional injection, recoverable reserves or confidence intervals. The SimpleReservoir adapter rejects unrecorded injection and truncated/nonzero-origin history."
+      "limitations": "Discovery and inspectApi only; instance-based Java/Python history builder, no executable static MCP operation. Two surface components with independently calibrated, path-consistent PVT and net cumulative withdrawals on one surface basis. Aquifer influx and rock/water expansion are supplied, not fitted. Synthetic conservation and tank/EOS tests are not independent laboratory/field qualification, pressure-error statistics, full compositional injection, recoverable reserves or confidence intervals. The SimpleReservoir adapter rejects unrecorded injection and truncated/nonzero-origin history. CalibratedPvtModel freezes original/tuned EOS checkpoints and compares complete independently identified CCE/CVD/DLE/separator holdouts through existing solvers. MaterialBalancePvtHistory validates declared path, standard basis and measured-pressure alignment; records and path-validation evidence remain externally supplied. Identity checks cannot establish laboratory independence or qualify CVD-to-generalized-PVT conversion."
     },
     {
       "id": "pvt-fluid-study-report",
