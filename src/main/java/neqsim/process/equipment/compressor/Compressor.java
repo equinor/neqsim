@@ -1884,6 +1884,10 @@ public class Compressor extends TwoPortEquipment
           if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
             thermoOps.PHflashVega(hout);
           }
+          if (differentialStep
+              && !(inStream.getThermoSystem().getNumberOfPhases() == 1 && (useGERG2008 || useLeachman || useVega))) {
+            refineDifferentialEnthalpy(thermoOps, hout);
+          }
         }
       } else {
         if (polytropicMethod.equals("ideal_inlet_properties")) {
@@ -2176,6 +2180,58 @@ public class Compressor extends TwoPortEquipment
       }
     }
     return temperatureRise;
+  }
+
+  /**
+   * Refines a differential EOS compression step when the PH flash's total-enthalpy tolerance cannot resolve its duty.
+   * Each temperature correction is followed by a TP flash, so phase fractions and compositions remain equilibrated. A
+   * secant slope accounts for latent heat after the first heat-capacity estimate. Ordinary steps and selected-model
+   * single-phase PH flashes retain their existing convergence behavior.
+   *
+   * @param thermoOps thermodynamic operations bound to the compressor fluid
+   * @param targetEnthalpy requested total outlet enthalpy in J
+   * @throws IllegalStateException if the differential energy balance cannot be resolved
+   */
+  private void refineDifferentialEnthalpy(ThermodynamicOperations thermoOps, double targetEnthalpy) {
+    double tolerance = Math.max(16.0 * Math.ulp(Math.max(Math.abs(inletEnthalpy), Math.abs(targetEnthalpy))),
+        1.0e-8 * Math.abs(targetEnthalpy - inletEnthalpy));
+    double previousTemperature = Double.NaN;
+    double previousResidual = Double.NaN;
+    for (int iteration = 0; iteration < 10; iteration++) {
+      thermoSystem.init(2);
+      double residual = thermoSystem.getEnthalpy() - targetEnthalpy;
+      if (Math.abs(residual) <= tolerance) {
+        return;
+      }
+      double temperature = thermoSystem.getTemperature();
+      double derivative = thermoSystem.getCp();
+      if (temperature != previousTemperature && Double.isFinite(previousResidual)) {
+        double secantDerivative = (residual - previousResidual) / (temperature - previousTemperature);
+        if (Double.isFinite(secantDerivative) && secantDerivative > 0.0) {
+          derivative = secantDerivative;
+        }
+      }
+      if (!Double.isFinite(residual) || !Double.isFinite(derivative) || derivative <= 0.0) {
+        break;
+      }
+      double correctedTemperature = temperature - residual / derivative;
+      if (!Double.isFinite(correctedTemperature) || correctedTemperature <= 0.0
+          || correctedTemperature == temperature) {
+        break;
+      }
+      previousTemperature = temperature;
+      previousResidual = residual;
+      thermoSystem.setTemperature(correctedTemperature);
+      boolean previousWarmStart = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+      try {
+        neqsim.thermo.ThermodynamicModelSettings
+            .setUseWarmStartKValues(neqsim.thermo.ThermodynamicModelSettings.isInnerFlashWarmStartSafe(thermoSystem));
+        thermoOps.TPflash();
+      } finally {
+        neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(previousWarmStart);
+      }
+    }
+    throw new IllegalStateException("Differential compressor energy balance did not converge for " + getName());
   }
 
   /**
