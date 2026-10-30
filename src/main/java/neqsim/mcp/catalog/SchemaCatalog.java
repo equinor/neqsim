@@ -1036,7 +1036,9 @@ public final class SchemaCatalog {
     properties.put("analysis",
         enumProp("Analysis type",
             Arrays.asList("hydrateRiskMap", "waxAppearance", "asphalteneStability", "CO2Corrosion", "scalePrediction",
-                "erosion", "pipelineCooldown", "emulsionViscosity", "demulsifierDoseOptimization")));
+                "erosion", "pipelineCooldown", "emulsionViscosity", "demulsifierDoseOptimization",
+                "waterPhaseBoundaries")));
+    properties.put("mixingRule", stringProp("Model-specific mixing rule; waterPhaseBoundaries requires CPA rule 10"));
 
     Map<String, Object> components = new LinkedHashMap<String, Object>();
     components.put("type", "object");
@@ -1049,8 +1051,42 @@ public final class SchemaCatalog {
     properties.put("temperature_C", numberProp("Temperature in Celsius"));
     properties.put("pressure_bara", numberProp("Pressure in bara"));
 
+    Map<String, Object> oilFraction = new LinkedHashMap<String, Object>();
+    oilFraction.put("type", "object");
+    oilFraction.put("description",
+        "Characterized oil fraction for waterPhaseBoundaries; retained in all phase calculations");
+    Map<String, Object> fractionProperties = new LinkedHashMap<String, Object>();
+    fractionProperties.put("name", stringProp("Oil-fraction component name"));
+    fractionProperties.put("moleFraction", numberProp("Fraction amount on the same mole basis as components"));
+    fractionProperties.put("molarMass_kg_mol", numberProp("Fraction molar mass in kg/mol"));
+    fractionProperties.put("density_g_cm3", numberProp("Fraction density in g/cm3 (specific gravity)"));
+    oilFraction.put("properties", fractionProperties);
+    oilFraction.put("required", Arrays.asList("name", "moleFraction", "molarMass_kg_mol", "density_g_cm3"));
+    Map<String, Object> tbpFractions = new LinkedHashMap<String, Object>();
+    tbpFractions.put("type", "array");
+    tbpFractions.put("items", oilFraction);
+    properties.put("tbpFractions", tbpFractions);
+    properties.put("plusFraction", oilFraction);
+
     schema.put("properties", properties);
     schema.put("required", Arrays.asList("components", "analysis"));
+    Map<String, Object> boundaryAnalysis = new LinkedHashMap<String, Object>();
+    Map<String, Object> analysisConstant = new LinkedHashMap<String, Object>();
+    analysisConstant.put("const", "waterPhaseBoundaries");
+    Map<String, Object> analysisProperty = new LinkedHashMap<String, Object>();
+    analysisProperty.put("analysis", analysisConstant);
+    Map<String, Object> condition = new LinkedHashMap<String, Object>();
+    condition.put("properties", analysisProperty);
+    boundaryAnalysis.put("if", condition);
+    Map<String, Object> requirements = new LinkedHashMap<String, Object>();
+    requirements.put("required", Arrays.asList("pressure_bara"));
+    Map<String, Object> modelConstant = new LinkedHashMap<String, Object>();
+    modelConstant.put("const", "CPA");
+    Map<String, Object> modelProperty = new LinkedHashMap<String, Object>();
+    modelProperty.put("model", modelConstant);
+    requirements.put("properties", modelProperty);
+    boundaryAnalysis.put("then", requirements);
+    schema.put("allOf", Arrays.asList(boundaryAnalysis));
 
     return GSON.toJson(schema);
   }
@@ -2737,7 +2773,10 @@ public final class SchemaCatalog {
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
     addStandardOutputProperties(properties);
-    properties.put("status", enumProp("Result status", Arrays.asList("success", "ok", "error")));
+    properties.put("status",
+        enumProp("Result status",
+            "run_flow_assurance".equals(toolName) ? Arrays.asList("success", "ok", "partial", "error")
+                : Arrays.asList("success", "ok", "error")));
     properties.put("message", stringProp("Human-readable status or error message"));
     properties.put("errors", typedArraySchema("Tool-specific error details"));
     schema.put("properties", properties);

@@ -1,6 +1,6 @@
 ---
 name: process-model
-description: "Builds executable NeqSim process simulations, including total well-to-export plant models with all wells, formation fluids from PVT, and plant production data benchmarks. Assembles and validates ProcessSystem flowsheets with separators, compressors, heat exchangers, valves, distillation, pipe flow, recycles and adjusters. Covers gas compression, HP/LP separation, TEG dehydration, and P&ID valve/action scenarios via neqsim.process.operations or MCP runOperationalStudy."
+description: "Builds executable NeqSim process simulations from PVT and plant data, including well-to-export models. Assembles and validates ProcessSystem flowsheets with separators, compressors, heat exchangers, valves, distillation, pipelines, recycles and adjusters. Covers TEG dehydration of wet gas to a water dew point specification, glycol regeneration and still vent balances, gas compression, HP/LP separation, and P&ID valve/action scenarios via neqsim.process.operations or MCP runOperationalStudy."
 required_skills:
 - neqsim-process-modeling
 - neqsim-api-patterns
@@ -27,6 +27,15 @@ Loaded skills: neqsim-process-modeling, neqsim-api-patterns, neqsim-input-valida
 
 ## Primary Objective
 Convert an engineering process description into working, runnable code. Produce code — not theory explanations.
+
+For TEG dehydration, build and balance the gas/lean-glycol contactor and rich-glycol
+regeneration loop, including the still vent. Select model fidelity using the
+[absorber and stripper guide](../../docs/process/equipment/absorbers.md).
+Pass the solved dry-gas stream to [@gas-quality](gas-quality.agent.md) for the
+specified water-dew-point model and phase reference, and the solved vent streams
+to [@emissions-environmental](emissions-environmental.agent.md) for emissions.
+BTEX predictions require the corresponding feed components and a suitable
+thermodynamic model; missing composition remains a data gap.
 
 When the model comes from a P&ID, use `neqsim-pid-process-operations` to map
 symbols, valves, instruments, and control links into NeqSim equipment and
