@@ -30,8 +30,8 @@ class DynamicSafetyScenarioEventTimingTest {
   void splitsTriggerAndDurationBoundariesExactly() {
     ProcessSystem base = streamProcess();
     double originalPressure = ((Stream) base.getUnit("FEED")).getPressure("bara");
-    DynamicSafetyScenario scenario = DynamicSafetyScenario.builder("EVENT-EXACT", "Non-grid event")
-        .durationSeconds(2.3).timeStepSeconds(1.0).triggerTimeSeconds(0.4).eventExactTiming(true)
+    DynamicSafetyScenario scenario = DynamicSafetyScenario.builder("EVENT-EXACT", "Non-grid event").durationSeconds(2.3)
+        .timeStepSeconds(1.0).triggerTimeSeconds(0.4).eventExactTiming(true)
         .initiatingEvent(new DynamicSafetyScenario.ProcessManipulator() {
           private static final long serialVersionUID = 1000L;
 
@@ -66,8 +66,8 @@ class DynamicSafetyScenarioEventTimingTest {
     assertEquals(0.4, result.getPhysicalStepSeconds().get(0).doubleValue(), 1.0e-12);
     assertEquals(1.0, result.getPhysicalStepSeconds().get(1).doubleValue(), 1.0e-12);
     assertEquals(0.9, result.getPhysicalStepSeconds().get(2).doubleValue(), 1.0e-12);
-    assertEquals(1.0,
-        result.getCriterionResults().get("safe-pressure").getFirstSatisfiedSeconds().doubleValue(), 1.0e-12);
+    assertEquals(1.0, result.getCriterionResults().get("safe-pressure").getFirstSatisfiedSeconds().doubleValue(),
+        1.0e-12);
     assertEquals(originalPressure, ((Stream) base.getUnit("FEED")).getPressure("bara"), 1.0e-12);
     assertTrue(result.toJson().contains("\"timingPolicy\": \"EVENT_EXACT\""));
   }
@@ -84,8 +84,7 @@ class DynamicSafetyScenarioEventTimingTest {
     Map<String, Object> evidence = first.getLogicEvidence().get("2oo3 HP isolation");
     assertEquals(1.0, ((Double) evidence.get("firstVoteSeconds")).doubleValue(), 1.0e-12);
     assertEquals(1.5, ((Double) evidence.get("finalElementActuationSeconds")).doubleValue(), 1.0e-12);
-    assertEquals(3.5,
-        first.getCriterionResults().get("esdv-closed").getFirstSatisfiedSeconds().doubleValue(), 1.0e-12);
+    assertEquals(3.5, first.getCriterionResults().get("esdv-closed").getFirstSatisfiedSeconds().doubleValue(), 1.0e-12);
     assertEquals(16, first.getPhysicalStepSeconds().size());
     assertEquals(first.toJson(), second.toJson(), "independent exact-timing runs must be deterministic");
   }
@@ -105,8 +104,7 @@ class DynamicSafetyScenarioEventTimingTest {
 
   private static DynamicSafetyScenario esdScenario(String id, SafetyFunctionChannel.FaultMode secondChannelFault) {
     return DynamicSafetyScenario.builder(id, "HP inlet isolation").durationSeconds(4.0).timeStepSeconds(0.25)
-        .triggerTimeSeconds(0.0).eventExactTiming(true)
-        .initiatingEvent(new DynamicSafetyScenario.ProcessManipulator() {
+        .triggerTimeSeconds(0.0).eventExactTiming(true).initiatingEvent(new DynamicSafetyScenario.ProcessManipulator() {
           private static final long serialVersionUID = 1000L;
 
           @Override
@@ -125,8 +123,8 @@ class DynamicSafetyScenarioEventTimingTest {
                 .builder(id, "2oo3 HP isolation", process, VotingPattern.TWO_OUT_OF_THREE, finalElements)
                 .addChannel(channel("PT-A", SafetyFunctionChannel.FaultMode.HEALTHY))
                 .addChannel(channel("PT-B", secondChannelFault))
-                .addChannel(channel("PT-C", SafetyFunctionChannel.FaultMode.BYPASSED))
-                .logicSolverDelaySeconds(0.5).build();
+                .addChannel(channel("PT-C", SafetyFunctionChannel.FaultMode.BYPASSED)).logicSolverDelaySeconds(0.5)
+                .build();
           }
         }).addCriterion(DynamicScenarioCriterion
             .builder("esdv-closed", "Inlet ESD valve closed", "%", new DynamicScenarioCriterion.Extractor() {
