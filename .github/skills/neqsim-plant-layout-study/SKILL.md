@@ -37,6 +37,9 @@ Reuse `ProcessDiagramGraphAdapter` and `EngineeringGraph` for semantic identitie
 
 ## Standards and maturity
 
+**Flow-diagram gate:** accompanying flow/connection diagrams pass `neqsim pfd-check` (skill `neqsim-pfd-layout-review`) before use;
+plot/deck drawings follow the geometry and delivery checks.
+
 Establish applicability and the adopted edition. Candidate sources include Havtil regulations where in scope; NORSOK
 S-001, S-002, L-002, P-002 and relevant C/R standards; ISO 13702/17776 for applicable offshore installations;
 IEC 60079-10-1 for its hazardous-area scope; API RP 752/753/756 for applicable onshore buildings/tents.

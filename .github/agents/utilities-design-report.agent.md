@@ -55,6 +55,10 @@ interpreter and privacy rules. The usage guide is
    inspect every drawing and report page. Request an independent `@review` pass
    with the input basis, raw outputs, criteria and calculations.
 
+## Flow-diagram gate (mandatory)
+
+Utility flow diagrams and block diagrams must pass `@pfd-layout-review` (`neqsim pfd-check`, then visual sign-off) before delivery.
+
 ## Deliver
 
 Provide the controlled report, process evidence appendix, consumer/load/capacity and

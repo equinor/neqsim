@@ -12,6 +12,9 @@ experience. A well-formed DOCX is not proof of good pagination.
 
 ## Boundaries
 
+- Flow diagrams (PFD/BFD/P&ID sketches) are first checked geometrically with `neqsim pfd-check`
+  ([neqsim-pfd-layout-review](../neqsim-pfd-layout-review/SKILL.md)); this skill covers page-level presentation.
+
 - Preserve the configured corporate template, fonts, heading colours, logos,
   classification, revision history and header/footer content.
 - Work on a separately named derivative under the existing task's

@@ -1,0 +1,662 @@
+{
+ "schema": "neqsim.pfd_layout.v1",
+ "kind": "pfd",
+ "name": "teg_defective (original TEG dehydration PFD layout)",
+ "canvas": {
+  "width": 100.0,
+  "height": 74.0,
+  "unit": "u",
+  "intended_width_mm": 165.0
+ },
+ "nodes": [
+  {
+   "id": "g",
+   "kind": "boundary",
+   "bbox": [
+    2.0,
+    26.5,
+    12,
+    7
+   ],
+   "style": {
+    "shape": "boundary",
+    "dash": "dashed"
+   },
+   "texts": [
+    {
+     "text": "Wet gas from\n26H0003A/B",
+     "x": 8,
+     "y": 30.0,
+     "font_size": 1.0885885885885884,
+     "anchor": "middle",
+     "baseline": false,
+     "bbox": [
+      4.7342342342342345,
+      28.748123123123122,
+      6.531531531531531,
+      2.5037537537537533
+     ]
+    }
+   ]
+  },
+  {
+   "id": "c",
+   "kind": "column",
+   "bbox": [
+    25.5,
+    26.0,
+    13,
+    8
+   ],
+   "style": {
+    "shape": "column",
+    "dash": ""
+   },
+   "texts": [
+    {
+     "text": "24V0003A/B\ncontactors",
+     "x": 32,
+     "y": 30.0,
+     "font_size": 1.0885885885885884,
+     "anchor": "middle",
+     "baseline": false,
+     "bbox": [
+      29.27852852852853,
+      28.748123123123122,
+      5.442942942942942,
+      2.5037537537537533
+     ]
+    }
+   ]
+  },
+  {
+   "id": "dry",
+   "kind": "boundary",
+   "bbox": [
+    51.0,
+    26.5,
+    14,
+    7
+   ],
+   "style": {
+    "shape": "boundary",
+    "dash": "dashed"
+   },
+   "texts": [
+    {
+     "text": "Dry gas to\n26V0003A/B",
+     "x": 58,
+     "y": 30.0,
+     "font_size": 1.0885885885885884,
+     "anchor": "middle",
+     "baseline": false,
+     "bbox": [
+      55.278528528528525,
+      28.748123123123122,
+      5.442942942942942,
+      2.5037537537537533
+     ]
+    }
+   ]
+  },
+  {
+   "id": "rich",
+   "kind": "boundary",
+   "bbox": [
+    18.5,
+    45.5,
+    11,
+    5
+   ],
+   "style": {
+    "shape": "boundary",
+    "dash": "dashed"
+   },
+   "texts": [
+    {
+     "text": "rich TEG",
+     "x": 24,
+     "y": 48.0,
+     "font_size": 1.0885885885885884,
+     "anchor": "middle",
+     "baseline": false,
+     "bbox": [
+      21.822822822822822,
+      47.37406156156156,
+      4.354354354354354,
+      1.2518768768768767
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fl",
+   "kind": "vessel",
+   "bbox": [
+    44.0,
+    44.5,
+    12,
+    7
+   ],
+   "style": {
+    "shape": "vessel",
+    "dash": ""
+   },
+   "texts": [
+    {
+     "text": "24V0008\nflash drum",
+     "x": 50,
+     "y": 48.0,
+     "font_size": 1.0885885885885884,
+     "anchor": "middle",
+     "baseline": false,
+     "bbox": [
+      47.278528528528525,
+      46.74812312312312,
+      5.442942942942942,
+      2.5037537537537533
+     ]
+    }
+   ]
+  },
+  {
+   "id": "hx",
+   "kind": "hx",
+   "bbox": [
+    63.0,
+    45.0,
+    12,
+    6
+   ],
+   "style": {
+    "shape": "hx",
+    "dash": ""
+   },
+   "texts": [
+    {
+     "text": "24H0005\nlean/rich HX",
+     "x": 69,
+     "y": 48.0,
+     "font_size": 1.0885885885885884,
+     "anchor": "middle",
+     "baseline": false,
+     "bbox": [
+      65.73423423423424,
+      46.74812312312312,
+      6.531531531531531,
+      2.5037537537537533
+     ]
+    }
+   ]
+  },
+  {
+   "id": "still",
+   "kind": "vessel",
+   "bbox": [
+    82.0,
+    43.0,
+    16,
+    10
+   ],
+   "style": {
+    "shape": "vessel",
+    "dash": ""
+   },
+   "texts": [
+    {
+     "text": "24V0005 still,\n24V0004 reboiler,\n24V0006 stripper",
+     "x": 90,
+     "y": 48.0,
+     "font_size": 1.0885885885885884,
+     "anchor": "middle",
+     "baseline": false,
+     "bbox": [
+      85.37349849849849,
+      46.12218468468468,
+      9.253003003003002,
+      3.75563063063063
+     ]
+    }
+   ]
+  },
+  {
+   "id": "flash",
+   "kind": "boundary",
+   "bbox": [
+    43.5,
+    61.0,
+    13,
+    6
+   ],
+   "style": {
+    "shape": "boundary",
+    "dash": "dashed"
+   },
+   "texts": [
+    {
+     "text": "Flash gas to\n20V0002",
+     "x": 50,
+     "y": 64.0,
+     "font_size": 1.0885885885885884,
+     "anchor": "middle",
+     "baseline": false,
+     "bbox": [
+      46.734234234234236,
+      62.74812312312312,
+      6.531531531531531,
+      2.5037537537537533
+     ]
+    }
+   ]
+  },
+  {
+   "id": "lean",
+   "kind": "boundary",
+   "bbox": [
+    55.0,
+    60.5,
+    26,
+    7
+   ],
+   "style": {
+    "shape": "boundary",
+    "dash": "dashed"
+   },
+   "texts": [
+    {
+     "text": "24V0002 surge, 24H0002 cooler,\n24P0002A-C pumps",
+     "x": 68,
+     "y": 64.0,
+     "font_size": 1.0885885885885884,
+     "anchor": "middle",
+     "baseline": false,
+     "bbox": [
+      59.83558558558559,
+      62.74812312312312,
+      16.328828828828826,
+      2.5037537537537533
+     ]
+    }
+   ]
+  },
+  {
+   "id": "vent",
+   "kind": "boundary",
+   "bbox": [
+    89.0,
+    61.0,
+    10,
+    6
+   ],
+   "style": {
+    "shape": "boundary",
+    "dash": "dashed"
+   },
+   "texts": [
+    {
+     "text": "Still vent\nLP flare",
+     "x": 94,
+     "y": 64.0,
+     "font_size": 1.0885885885885884,
+     "anchor": "middle",
+     "baseline": false,
+     "bbox": [
+      91.27852852852853,
+      62.74812312312312,
+      5.442942942942942,
+      2.5037537537537533
+     ]
+    }
+   ]
+  }
+ ],
+ "edges": [
+  {
+   "id": "e1",
+   "from": "g",
+   "to": "c",
+   "points": [
+    [
+     14.0,
+     30.0
+    ],
+    [
+     25.5,
+     30.0
+    ]
+   ],
+   "arrow_end": true,
+   "fluid": "gas",
+   "style": {
+    "color": "#C0392B",
+    "width": "1.1"
+   },
+   "label": {
+    "text": "108.4 bara/30 \u00b0C\n108 t/h",
+    "x": 16.146396396396398,
+    "y": 26.827927927927927,
+    "font_size": 0.9009009009009009,
+    "bbox": [
+     16.146396396396398,
+     26.827927927927927,
+     7.207207207207207,
+     2.072072072072072
+    ],
+    "kind": "stream"
+   }
+  },
+  {
+   "id": "e2",
+   "from": "c",
+   "to": "dry",
+   "points": [
+    [
+     38.5,
+     30.0
+    ],
+    [
+     51.0,
+     30.0
+    ]
+   ],
+   "arrow_end": true,
+   "fluid": "gas",
+   "style": {
+    "color": "#C0392B",
+    "width": "1.1"
+   },
+   "label": {
+    "text": "108.4 bara/30 \u00b0C",
+    "x": 41.1463963963964,
+    "y": 27.86396396396396,
+    "font_size": 0.9009009009009009,
+    "bbox": [
+     41.1463963963964,
+     27.86396396396396,
+     7.207207207207207,
+     1.036036036036036
+    ],
+    "kind": "stream"
+   }
+  },
+  {
+   "id": "e3",
+   "from": "c",
+   "to": "rich",
+   "points": [
+    [
+     26,
+     34.0
+    ],
+    [
+     26,
+     45.5
+    ]
+   ],
+   "arrow_end": true,
+   "fluid": "glycol",
+   "style": {
+    "color": "#7D3C98",
+    "width": "1.1"
+   },
+   "label": {
+    "text": "108.4 bara/30 \u00b0C",
+    "x": 17.892792792792793,
+    "y": 39.23198198198198,
+    "font_size": 0.9009009009009009,
+    "bbox": [
+     17.892792792792793,
+     39.23198198198198,
+     7.207207207207207,
+     1.036036036036036
+    ],
+    "kind": "stream"
+   }
+  },
+  {
+   "id": "e4",
+   "from": "rich",
+   "to": "fl",
+   "points": [
+    [
+     29.5,
+     48.0
+    ],
+    [
+     44.0,
+     48.0
+    ]
+   ],
+   "arrow_end": true,
+   "fluid": "glycol",
+   "style": {
+    "color": "#7D3C98",
+    "width": "1.1"
+   }
+  },
+  {
+   "id": "e5",
+   "from": "fl",
+   "to": "hx",
+   "points": [
+    [
+     56.0,
+     48.0
+    ],
+    [
+     63.0,
+     48.0
+    ]
+   ],
+   "arrow_end": true,
+   "fluid": "glycol",
+   "style": {
+    "color": "#7D3C98",
+    "width": "1.1"
+   },
+   "label": {
+    "text": "5.1 bara/56 \u00b0C",
+    "x": 56.346846846846844,
+    "y": 45.86396396396396,
+    "font_size": 0.9009009009009009,
+    "bbox": [
+     56.346846846846844,
+     45.86396396396396,
+     6.306306306306307,
+     1.036036036036036
+    ],
+    "kind": "stream"
+   }
+  },
+  {
+   "id": "e6",
+   "from": "hx",
+   "to": "still",
+   "points": [
+    [
+     75.0,
+     48.0
+    ],
+    [
+     82.0,
+     48.0
+    ]
+   ],
+   "arrow_end": true,
+   "fluid": "glycol",
+   "style": {
+    "color": "#7D3C98",
+    "width": "1.1"
+   }
+  },
+  {
+   "id": "e7",
+   "from": "fl",
+   "to": "flash",
+   "points": [
+    [
+     50,
+     51.5
+    ],
+    [
+     50,
+     61.0
+    ]
+   ],
+   "arrow_end": true,
+   "fluid": "gas",
+   "style": {
+    "color": "#C0392B",
+    "width": "1.1"
+   },
+   "label": {
+    "text": "5.1 bara/56 \u00b0C",
+    "x": 50.9,
+    "y": 55.73198198198198,
+    "font_size": 0.9009009009009009,
+    "bbox": [
+     50.9,
+     55.73198198198198,
+     6.306306306306307,
+     1.036036036036036
+    ],
+    "kind": "stream"
+   }
+  },
+  {
+   "id": "e8",
+   "from": "still",
+   "to": "vent",
+   "points": [
+    [
+     93,
+     53.0
+    ],
+    [
+     94,
+     61.0
+    ]
+   ],
+   "arrow_end": true,
+   "fluid": "gas",
+   "style": {
+    "color": "#C0392B",
+    "width": "1.1"
+   },
+   "label": {
+    "text": "0.1 t/h",
+    "x": 94.4,
+    "y": 56.48198198198198,
+    "font_size": 0.9009009009009009,
+    "bbox": [
+     94.4,
+     56.48198198198198,
+     3.1531531531531534,
+     1.036036036036036
+    ],
+    "kind": "stream"
+   }
+  },
+  {
+   "id": "e9",
+   "from": "still",
+   "to": "lean",
+   "points": [
+    [
+     87,
+     53.0
+    ],
+    [
+     86,
+     64.0
+    ],
+    [
+     81.0,
+     64.0
+    ]
+   ],
+   "arrow_end": true,
+   "fluid": "glycol",
+   "style": {
+    "color": "#7D3C98",
+    "width": "1.1"
+   },
+   "label": {
+    "text": "108.1 bara/33 \u00b0C",
+    "x": 78.39279279279279,
+    "y": 57.98198198198198,
+    "font_size": 0.9009009009009009,
+    "bbox": [
+     78.39279279279279,
+     57.98198198198198,
+     7.207207207207207,
+     1.036036036036036
+    ],
+    "kind": "stream"
+   }
+  },
+  {
+   "id": "e10",
+   "from": "lean",
+   "to": "c",
+   "points": [
+    [
+     68,
+     60.5
+    ],
+    [
+     68,
+     55.0
+    ],
+    [
+     36,
+     55.0
+    ],
+    [
+     36,
+     34.0
+    ]
+   ],
+   "arrow_end": true,
+   "fluid": "glycol",
+   "style": {
+    "color": "#7D3C98",
+    "width": "1.1"
+   },
+   "label": {
+    "text": "108.1 bara/33 \u00b0C\n1.6 t/h",
+    "x": 62.3963963963964,
+    "y": 51.827927927927924,
+    "font_size": 0.9009009009009009,
+    "bbox": [
+     62.3963963963964,
+     51.827927927927924,
+     7.207207207207207,
+     2.072072072072072
+    ],
+    "kind": "stream"
+   }
+  }
+ ],
+ "labels": [],
+ "junctions": [],
+ "title": true,
+ "legend": {
+  "bbox": [
+   1,
+   72.0,
+   80.0,
+   3.0
+  ]
+ },
+ "footer": true,
+ "flow_direction": "lr",
+ "y_axis": "down",
+ "arrow_length": 1.6,
+ "drawing_area": [
+  0,
+  2,
+  100,
+  65
+ ]
+}

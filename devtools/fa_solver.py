@@ -77,21 +77,107 @@ class FluidFactory:
         if abs(total - 1.0) > 1.0e-6:
             raise FlowAssuranceError("fluid %s: mole fractions sum to %.8f, expected 1 (+-1e-6)" % (fluid_def.get("id"), total))
         self.comps = [(c["name"], float(c["mole_fraction"])) for c in comps]
-        probe = ns.thermo.system.SystemSrkEos(300.0, 1.0)
-        for n, x in self.comps:
-            probe.addComponent(n, x)
-        self.mw = {n: probe.getComponent(n).getMolarMass() for n, _ in self.comps}
+        # Optional data-driven characterised fluid (pseudo-components with explicit critical data, volume shift and BIPs).
+        # The hydraulics then use PR78 (+ volume correction) built from the basis, not a database SRK fluid.
+        self.char = fluid_def.get("characterisation") or None
+        if self.char:
+            self._char = {c["name"]: c for c in self.char["components"]}
+            missing = [n for n, _ in self.comps if n not in self._char]
+            if missing:
+                raise FlowAssuranceError("fluid %s: components %s have no characterisation record" % (fluid_def.get("id"), missing))
+            self.mw = {n: float(self._char[n]["molar_mass_g_mol"]) * 1.0e-3 for n, _ in self.comps}
+            self._bips = {}
+            for key, val in (self.char.get("bips") or {}).items():
+                a, b = key.split("|")
+                self._bips[(a, b)] = self._bips[(b, a)] = float(val)
+            self._water_bips = {k: float(v) for k, v in (self.char.get("water_bips") or {}).items()}
+        else:
+            probe = ns.thermo.system.SystemSrkEos(300.0, 1.0)
+            for n, x in self.comps:
+                probe.addComponent(n, x)
+            self.mw = {n: probe.getComponent(n).getMolarMass() for n, _ in self.comps}
         self.mw_hc = sum(self.mw[n] * x for n, x in self.comps)  # kg/mol
+        # hydrate fluid: light database components only (C7+ pseudo-components can stall the CPA hydrate solver)
+        hyd = fluid_def.get("hydrate_components") or None
+        if hyd:
+            tot_h = sum(float(c["mole_fraction"]) for c in hyd)
+            if abs(tot_h - 1.0) > 1.0e-6:
+                raise FlowAssuranceError("fluid %s: hydrate_components mole fractions sum to %.8f, expected 1 (+-1e-6)" % (fluid_def.get("id"), tot_h))
+            self.hyd_comps = [(c["name"], float(c["mole_fraction"])) for c in hyd]
+            probe = ns.thermo.system.SystemSrkEos(300.0, 1.0)
+            for n, _x in self.hyd_comps:
+                probe.addComponent(n, 1.0)
+            self.mw_hyd = sum(probe.getComponent(n).getMolarMass() * x for n, x in self.hyd_comps)
+        else:
+            self.hyd_comps, self.mw_hyd = self.comps, self.mw_hc
 
     def _system(self, eos):
         s = self.ns.thermo.system
-        return s.SystemSrkCPAstatoil(300.0, 100.0) if eos == "SRK-CPA" else s.SystemSrkEos(300.0, 100.0)
+        if eos == "SRK-CPA":
+            return s.SystemSrkCPAstatoil(300.0, 100.0)
+        if self.char:
+            return s.SystemPrEos1978(300.0, 100.0)
+        return s.SystemSrkEos(300.0, 100.0)
+
+    def _build_characterised(self, n_hc, water_mol, inh_mol, inhibitor):
+        """PR78 fluid from the basis characterisation: database or TBP components, explicit critical data, volume shift, BIPs."""
+        f = self._system("PR")
+        names = []
+        for n, x in self.comps:
+            rec = self._char[n]
+            moles = max(n_hc * x, 1.0e-20)
+            if rec.get("db_name"):
+                f.addComponent(rec["db_name"], moles)
+            else:
+                f.addTBPfraction(n, moles, float(rec["molar_mass_g_mol"]) * 1.0e-3, float(rec["density_g_cm3"]))
+            names.append(n)
+        has_water, has_inh = water_mol > 0, inh_mol > 0
+        if has_water:
+            f.addComponent("water", water_mol)
+        if has_inh:
+            f.addComponent(inhibitor, inh_mol)
+        for p in range(f.getMaxNumberOfPhases()):
+            ph = f.getPhase(p)
+            for i, n in enumerate(names):
+                rec = self._char[n]
+                c = ph.getComponent(i)
+                c.setMolarMass(float(rec["molar_mass_g_mol"]) * 1.0e-3)
+                if rec.get("tb_k") is not None:
+                    c.setNormalBoilingPoint(float(rec["tb_k"]))
+                c.setTC(float(rec["tc_k"]))
+                c.setPC(float(rec["pc_bara"]))
+                c.setAcentricFactor(float(rec["acentric"]))
+                if rec.get("volume_shift") is not None:
+                    c.setVolumeCorrectionConst(float(rec["volume_shift"]))
+        f.setMixingRule(2)
+        for i, ni in enumerate(names):
+            for j, nj in enumerate(names):
+                if i != j and (ni, nj) in self._bips:
+                    f.setBinaryInteractionParameter(i, j, self._bips[(ni, nj)])
+        if has_water:
+            iw = len(names)
+            for j, nj in enumerate(names):
+                if nj in self._water_bips:
+                    f.setBinaryInteractionParameter(iw, j, self._water_bips[nj])
+                    f.setBinaryInteractionParameter(j, iw, self._water_bips[nj])
+        f.useVolumeCorrection(True)
+        f.init(0)
+        return f
 
     def build(self, hc_kg_s, water_kg_s=0.0, inhibitor_kg_s=0.0, inhibitor="MEG", eos="SRK", t_c=20.0, p_bara=100.0):
         """Fluid with the given mass rates. Amounts are moles per second; the returned fluid is initialised but not flashed."""
+        if self.char and eos != "SRK-CPA":
+            n_hc = hc_kg_s / self.mw_hc
+            f = self._build_characterised(n_hc, water_kg_s / (MW["water"] * 1.0e-3) if water_kg_s > 0 else 0.0,
+                                          inhibitor_kg_s / (MW[inhibitor] * 1.0e-3) if inhibitor_kg_s > 0 else 0.0, inhibitor)
+            f.setMultiPhaseCheck(True)
+            f.setTemperature(273.15 + t_c)
+            f.setPressure(p_bara)
+            return f
         f = self._system(eos)
-        n_hc = hc_kg_s / self.mw_hc
-        for n, x in self.comps:
+        comps, mw = (self.hyd_comps, self.mw_hyd) if eos == "SRK-CPA" else (self.comps, self.mw_hc)
+        n_hc = hc_kg_s / mw
+        for n, x in comps:
             f.addComponent(n, n_hc * x)
         if water_kg_s > 0:
             f.addComponent("water", water_kg_s / (MW["water"] * 1.0e-3))
@@ -260,9 +346,55 @@ def secant_root(func, x0, x1, tol, max_iter=MAX_ITER, lower=None):
             x_new = x_new + 0.5 * tol
         evaluate(x_new)
     best = min(valid, key=lambda t: abs(t[1])) if valid else None
+    if best is None or abs(best[1]) > tol:
+        fb = _bracket_bisect(func, valid, infeasible, tol, lower, x0, x1, max_iter)
+        if fb is not None:
+            return fb
+        best = min(valid, key=lambda t: abs(t[1])) if valid else None
     if best is None:
         return None, None, max_iter, False, None
     return best[0], best[1], max_iter, False, best[2]
+
+
+def _bracket_bisect(func, valid, infeasible, tol, lower, x0, x1, max_iter, n_scan=28, max_bisect=45):
+    """Fallback root finder when the secant iteration stalls (non-monotonic or regime-switching residual): geometric scan for a sign
+    change, then bisection. Returns the same tuple as :func:`secant_root` or ``None`` when no sign change is found."""
+    def ev(x):
+        try:
+            r, payload = func(x)
+        except SolverError:
+            infeasible.append(x)
+            return None
+        valid.append((x, r, payload))
+        return (x, r, payload)
+    lo = lower if lower is not None else 0.5 * min(x0, x1)
+    if infeasible:
+        lo = max(lo, max(infeasible) * 1.001)
+    hi = max([v[0] for v in valid] + [x0, x1]) * 2.5
+    if hi <= lo:
+        return None
+    for k in range(n_scan):
+        ev(lo * (hi / lo) ** (k / (n_scan - 1.0)))
+    pts = sorted(valid, key=lambda t: t[0])
+    bracket = next(((a, b) for a, b in zip(pts[:-1], pts[1:]) if a[1] * b[1] <= 0.0), None)
+    if bracket is None:
+        return None
+    a, b = bracket
+    n = 0
+    for n in range(max_bisect):
+        m = ev(0.5 * (a[0] + b[0]))
+        if m is None:
+            break
+        if abs(m[1]) <= tol:
+            return m[0], m[1], max_iter + n + 1, True, m[2]
+        if a[1] * m[1] <= 0.0:
+            b = m
+        else:
+            a = m
+        if abs(b[0] - a[0]) < 1.0e-7:
+            break
+    best = min(valid, key=lambda t: abs(t[1]))
+    return best[0], best[1], max_iter + n + 1, abs(best[1]) <= tol, best[2]
 
 
 # --- inhibitor / water bookkeeping ------------------------------------------------------------------
@@ -296,12 +428,13 @@ class HydrateCurves:
 
     def point(self, p_bara, wt, inhibitor="MEG"):
         """T_hyd (degC) at one pressure and aqueous inhibitor mass fraction; ``None`` when the CPA solver does not return."""
-        key = ("%.4f" % p_bara, "%.5f" % wt, inhibitor)
+        comp_key = hashlib.sha256(json.dumps([self.factory.hyd_comps, HYDRATE_WATER_MOL]).encode("utf-8")).hexdigest()[:10]  # cache is shared across fluids
+        key = ("%.4f" % p_bara, "%.5f" % wt, inhibitor, comp_key)
         if key in self.cache:
             return self.cache[key]
         water_mass = HYDRATE_WATER_MOL / (1.0 - HYDRATE_WATER_MOL) * MW["water"] * 1.0e-3  # kg water per mol hydrocarbon
         inh_mass = water_mass * wt / (1.0 - wt) if wt > 0 else 0.0
-        f = self.factory.build(self.factory.mw_hc, water_kg_s=water_mass, inhibitor_kg_s=inh_mass, inhibitor=inhibitor, eos="SRK-CPA",
+        f = self.factory.build(self.factory.mw_hyd, water_kg_s=water_mass, inhibitor_kg_s=inh_mass, inhibitor=inhibitor, eos="SRK-CPA",
                                t_c=20.0, p_bara=p_bara)
         t0 = 273.15 + 20.0
         val = None
