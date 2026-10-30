@@ -15,3 +15,4 @@ read it whole). Repeated below for tools that read only this file (e.g. code rev
 - **Serializable** classes: non-serializable fields must be `transient`.
 - **Verify** constructor and method signatures before using an API; doc snippets need a passing test.
 - After a flash, call `fluid.initProperties()` before reading transport properties; always set a mixing rule.
+- **Every flow diagram (PFD/BFD/P&ID sketch) must pass `pfd-layout-review` (`neqsim pfd-check`) before it is used.**

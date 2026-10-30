@@ -2563,6 +2563,20 @@
   "neqsim-plant-layout-geometry",
   "neqsim-plant-layout-delivery"
  ],
+ "pfd layout review": [
+  "neqsim-pfd-layout-review",
+  "neqsim-report-design-and-visual-qa"
+ ],
+ "check process flow diagram overlap crossing label": [
+  "neqsim-pfd-layout-review"
+ ],
+ "flow diagram quality gate before report": [
+  "neqsim-pfd-layout-review",
+  "neqsim-professional-reporting"
+ ],
+ "bfd pfd drawing arrowheads tags stream numbers": [
+  "neqsim-pfd-layout-review"
+ ],
  "a complete pvt report": [
   "neqsim-pvt-fluid-study-report"
  ],

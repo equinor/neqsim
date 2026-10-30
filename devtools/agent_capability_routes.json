@@ -447,6 +447,16 @@
       ]
     },
     {
+      "package": "neqsim.process.processmodel.diagram",
+      "title": "Process flow diagram generation and layout review",
+      "keywords": "PFD BFD process flow diagram layout overlap crossing label arrowhead review figure drawing quality",
+      "agent": "pfd-layout-review",
+      "skill": "neqsim-pfd-layout-review",
+      "docs": [
+        "docs/development/PROCESS_STUDY_REPORT.md"
+      ]
+    },
+    {
       "package": "neqsim.process.safety",
       "title": "Safety release and consequence models",
       "keywords": "safety relief flare blowdown source term leak fire dispersion risk HAZOP",

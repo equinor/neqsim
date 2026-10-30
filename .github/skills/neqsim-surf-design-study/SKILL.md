@@ -51,6 +51,9 @@ Exit codes: 0 ok, 1 strict validation failure, 2 input or usage error (nothing i
 
 ## Rules that keep the study honest
 
+**Flow-diagram gate:** SURF process/network schematics, arrangement sheets and any PFD/BFD figure pass `neqsim pfd-check`
+(skill `neqsim-pfd-layout-review`, agent `pfd-layout-review`) before drawings or the report are issued.
+
 - **Maturity states are separate**: numerical screening, supplier confirmation, specialist analysis, independent verification and approval. A polished report or a passing test promotes none of them.
 - **Reuse, do not rebuild**: no new pressure-flow solver, optimizer, mechanical kernel, cost estimator or report framework. Hydraulics = `LoopedPipeNetwork` with per-edge `PipeModelType`; wells = live `WellFlow` through `FieldWellNetworkCoupler`; cost = `SubseaProductionSystem.estimateSurfCosts`.
 - **Wells**: producers are solved (productivity-index inflow, VLP not modelled); injectors use the explicit liquid mass-injectivity contract. Do not use the legacy gas-standard-volume injection law for liquid injectivity.

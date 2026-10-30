@@ -244,6 +244,64 @@ def test_source_pressure_is_not_an_input_in_cases(route_model):
             assert "p_bara" not in s
 
 
+# --- toolkit additions: root-finder fallback, field validation records, characterised fluids ------------
+def test_root_finder_falls_back_to_bisection_for_a_stalling_secant():
+    import fa_solver
+
+    # a cubic residual converges slowly for the secant iteration (two iterations allowed): the bracket-and-bisect fallback must finish the job
+    def func(x):
+        return 100.0 * (x - 7.5) ** 3, x
+    x, r, _it, ok, payload = fa_solver.secant_root(func, 10.0, 12.0, 0.05, max_iter=2, lower=1.0)
+    assert ok and abs(r) <= 0.05 and abs(x - 7.5) < 0.2 and payload is not None
+
+
+def test_field_validation_records_use_declared_tolerance_and_never_pass_unavailable():
+    import fa_benchmarks
+
+    basis = {"field_validation": [
+        {"id": "V1", "title": "p", "kind": "field_validation", "case": "C1", "quantity": "source_pressure_bara", "node": "S", "measured": 50.0, "unit": "bara", "tolerance": 3.0},
+        {"id": "V2", "title": "t", "kind": "field_calibration", "case": "C1", "quantity": "host_arrival_t_c", "measured": 20.0, "unit": "C", "tolerance": 5.0},
+        {"id": "V3", "title": "missing", "kind": "field_validation", "case": "C2", "quantity": "host_arrival_t_c", "measured": 20.0, "unit": "C", "tolerance": 5.0}]}
+    results = {"C1": {"status": "converged", "sink": "H", "streams": {"S": {"p_bara": 52.0, "t_c": 0.0}, "H": {"p_bara": 20.0, "t_c": 27.0}}}}
+    recs = {r["id"]: r for r in fa_benchmarks.field_validation(basis, results)}
+    assert recs["V1"]["status"] == "PASS" and recs["V1"]["deviation"] == pytest.approx(2.0)
+    assert recs["V2"]["status"] == "FAIL" and recs["V2"]["kind"] == "field_calibration"
+    assert recs["V3"]["status"] == "UNAVAILABLE"
+
+
+def test_schematic_real_route_is_not_labelled_synthetic():
+    ds = {"route": {"status": "schematic"}, "sources": [{"input_class": "measured"}], "threats": [], "data_gaps": []}
+    ready = fa_validate_compute(ds)
+    assert ready["label"] == "SCREENING" and "synthetic" not in ready["note"]
+    assert any("schematic" in r for r in ready["reasons"])
+
+
+def fa_validate_compute(ds):
+    import fa_validate
+
+    return fa_validate.compute_readiness(ds, [], {"readiness": "SCREENING"})
+
+
+def test_characterised_fluid_with_pseudo_component_flashes():
+    jneqsim = pytest.importorskip("jneqsim")
+    import fa_solver
+
+    ns = fa_solver.neqsim_handle()
+    char = {"model": "PR78", "components": [
+        {"name": "C1", "db_name": "methane", "molar_mass_g_mol": 16.043, "tc_k": 190.6, "pc_bara": 46.0, "acentric": 0.008, "tb_k": 111.7, "volume_shift": -0.15},
+        {"name": "C10P", "db_name": None, "molar_mass_g_mol": 134.0, "tc_k": 640.0, "pc_bara": 20.6, "acentric": 0.45, "tb_k": 445.0, "volume_shift": 0.0, "density_g_cm3": 0.78}],
+        "bips": {}, "water_bips": {}}
+    fd = {"id": "F", "components": [{"name": "C1", "mole_fraction": 0.9}, {"name": "C10P", "mole_fraction": 0.1}], "characterisation": char,
+          "hydrate_components": [{"name": "methane", "mole_fraction": 1.0}]}
+    fac = fa_solver.FluidFactory(ns, fd)
+    assert fac.mw_hc == pytest.approx(0.9 * 0.016043 + 0.1 * 0.134, rel=1e-6)
+    f = fac.build(1.0, water_kg_s=0.2, t_c=40.0, p_bara=80.0)
+    ns.thermodynamicoperations.ThermodynamicOperations(f).TPflash()
+    assert f.getNumberOfPhases() >= 2
+    hyd = fac.build(fac.mw_hyd, water_kg_s=0.05, eos="SRK-CPA", t_c=20.0, p_bara=100.0)
+    assert hyd.getNumberOfComponents() == 2      # methane + water: the C7+ lump is not in the hydrate fluid
+
+
 # --- CLI ---------------------------------------------------------------------------------------------
 def test_cli_init_writes_templates_and_no_results(tmp_path, capsys):
     rc = flow_assurance_report.main(["--init", str(tmp_path / "tpl")])

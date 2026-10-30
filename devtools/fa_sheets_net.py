@@ -232,7 +232,7 @@ def route_plan(sh, ds, rs, ctx):
     X = lambda v: ox + (v - xlo) * s
     Y = lambda v: oy + (yhi - v) * s
     sh.add(K.rect(ox, oy, (xhi - xlo) * s, (yhi - ylo) * s, fill="#fff", sw=0.35))
-    xt, xstep = fa_draw.nice_ticks(xlo, xhi, 6)
+    xt, xstep = fa_draw.nice_ticks(xlo, xhi, max(2, min(6, int((xhi - xlo) * s / 16.0))))   # tick count follows the plot width (labels need ~16 mm)
     yt, ystep = fa_draw.nice_ticks(ylo, yhi, 4)
     for v in xt:
         sh.add(K.line(X(v), oy, X(v), oy + (yhi - ylo) * s, stroke="#d8d8d8", sw=0.15))
@@ -293,7 +293,9 @@ def route_plan(sh, ds, rs, ctx):
                 n = math.hypot(dx, dy) or 1.0
                 nx, ny = -dy / n, dx / n
                 sh.add(K.line(X(x) - nx * 1.6, Y(y) + ny * 1.6, X(x) + nx * 1.6, Y(y) - ny * 1.6, sw=0.5))
-                sh.text(X(x) + nx * 3.0 - (0 if nx >= 0 else 0), Y(y) - ny * 3.0 + 0.9, "%s %.0f" % (label, k / 1000.0), 2.5, "start" if nx >= 0 else "end")
+                near_asset = any(math.hypot(X(a["x_m"]) - X(x), Y(a["y_m"]) - Y(y)) < 14.0 for a in nodes.values() if a.get("x_m") is not None and a["kind"] not in ("waypoint", "well"))
+                if not near_asset:      # a KP label next to an asset label would collide with it; the tick stays
+                    sh.text(X(x) + nx * 3.0 - (0 if nx >= 0 else 0), Y(y) - ny * 3.0 + 0.9, "%s %.0f" % (label, k / 1000.0), 2.5, "start" if nx >= 0 else "end")
             k += 5000.0
     # asset markers
     for n, a in nodes.items():
@@ -302,17 +304,24 @@ def route_plan(sh, ds, rs, ctx):
         x, y = X(a["x_m"]), Y(a["y_m"])
         if a["kind"] == "template":
             sh.add(K.rect(x - 2.5, y - 2.5, 5, 5, fill="#fff", sw=0.7))
-            sh.text(x, y + 8.0, n, 2.8, "middle", bold=True)
+            sh.text(x, y - 4.5, n, 2.8, "middle", bold=True)       # above the symbol: the line leaves downstream and would strike a label below
         elif a["kind"] == "plem":
             sh.add(K.polygon([(x, y - 3), (x - 3, y + 2.5), (x + 3, y + 2.5)], fill="#fff", sw=0.7))
-            sh.text(x + 4.5, y - 4.0, n, 2.8, "start", bold=True)
+            colocated = any(o["kind"] == "template" and o.get("x_m") is not None and math.hypot(X(o["x_m"]) - x, Y(o["y_m"]) - y) < 4.0 for o in nodes.values())
+            sh.text(x + 4.5, y + (7.5 if colocated else -4.0), n, 2.8, "start", bold=True)     # label below when a template label sits above the same point
         elif a["kind"] == "riser_base":
             sh.add(K.circle(x, y, 1.6, fill=INK))
-            sh.text(x - 2.0, y + 6.5, n, 2.8, "end", bold=True)
+            if x - ox < 24.0:      # near the left frame the label would collide with the y-axis tick labels: put it to the right
+                sh.text(x + 2.0, y + 6.5, n, 2.8, "start", bold=True)
+            else:
+                sh.text(x - 2.0, y + 6.5, n, 2.8, "end", bold=True)
         elif a["kind"] == "host_interface":
             sh.add(K.rect(x - 3.2, y - 3.2, 6.4, 6.4, fill="#fff", sw=0.9))
             sh.add(K.line(x - 3.2, y - 3.2, x + 3.2, y + 3.2, sw=0.5) + K.line(x - 3.2, y + 3.2, x + 3.2, y - 3.2, sw=0.5))
-            sh.text(x - 4.5, y - 4.5, n, 2.8, "end", bold=True)
+            if x - ox < 24.0:
+                sh.text(x + 4.5, y - 4.5, n, 2.8, "start", bold=True)
+            else:
+                sh.text(x - 4.5, y - 4.5, n, 2.8, "end", bold=True)
         sh.items.append({"type": "asset_plan", "id": n, "x_m": a["x_m"], "y_m": a["y_m"]})
     for f in route.get("features") or []:
         if f["kind"] == "crossing" and f.get("segment"):
@@ -331,11 +340,19 @@ def route_plan(sh, ds, rs, ctx):
                 sh.add(K.line(x - 2, y - 2, x + 2, y + 2, sw=0.7) + K.line(x - 2, y + 2, x + 2, y - 2, sw=0.7))
                 sh.text(x, y + 7.5, "%s (unverified)" % f["id"], 2.6, "middle")
     # scale bar and north arrow
-    bar_m = 5000.0
-    bx, by = ox + 4.0, oy + (yhi - ylo) * s - 7.0
+    # bar length: the largest round value that spans at most a quarter of the plan width; placed just below the plot frame
+    span_m = max(xhi - xlo, 1.0)
+    bar_m = 100.0
+    cands = (100.0, 200.0, 500.0, 1000.0, 2000.0, 5000.0, 10000.0, 20000.0, 50000.0, 100000.0)
+    for cand in cands:
+        if cand <= 0.25 * span_m:
+            bar_m = cand
+    if bar_m * s < 16.0:       # the "0" and length labels need about 16 mm of bar between them
+        bar_m = next((c for c in cands if c * s >= 16.0), bar_m)
+    bx, by = ox + 4.0, oy + (yhi - ylo) * s + 12.0
     sh.add(K.rect(bx, by, bar_m * s, 1.6, fill=INK, sw=0.3) + K.rect(bx + bar_m * s / 2, by, bar_m * s / 2, 1.6, fill="#fff", sw=0.3))
     sh.text(bx, by - 1.2, "0", 2.5, "middle")
-    sh.text(bx + bar_m * s, by - 1.2, "%.0f km" % (bar_m / 1000.0), 2.5, "middle")
+    sh.text(bx + bar_m * s, by - 1.2, ("%.0f km" % (bar_m / 1000.0)) if bar_m >= 1000.0 else ("%.0f m" % bar_m), 2.5, "middle")
     nx_, ny_ = px0 + pw + 14.0, oy + 14.0
     sh.add(K.arrowhead(nx_, ny_ - 9.0, 0, -1, length=4.0, width=3.0) + K.line(nx_, ny_ - 9.0, nx_, ny_ + 2.0, sw=0.6))
     sh.text(nx_, ny_ + 6.0, "N (grid north)", 2.6, "middle")

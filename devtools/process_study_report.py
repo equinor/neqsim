@@ -93,7 +93,25 @@ def build_diagrams(data, basis, out_dir, max_units_per_sheet=14, dpi=220):
     pfd_pngs = psr_report.render_pdf_pages(pfd["pdf"], fdir, "pfd", dpi=dpi)
     for sheet, png in zip(pfd["sheets"], pfd_pngs):
         pages.append((png, "PFD sheet %s of %d: %s (drawing %s)" % (sheet["number"], n, sheet["title"], sheet["drawing_number"])))
-    return {"bfd": bfd, "pfd": pfd, "pages": pages}
+    return {"bfd": bfd, "pfd": pfd, "pages": pages, "layout_review": review_diagram_layout(bfd, pfd, os.path.join(ddir, "layout_review"))}
+
+
+def review_diagram_layout(bfd, pfd, review_dir):
+    """Mandatory layout review of every BFD/PFD sheet (``pfd_layout_check``); returns a summary, never raises.
+
+    Writes one review JSON per sheet plus ``summary.json`` and ``review.md`` to ``review_dir``. The agent
+    ``pfd-layout-review`` must see PASS (or justified waivers) for every sheet before the report is issued.
+    """
+    try:
+        import pfd_layout_check
+    except ImportError:  # toolkit without the checker: report instead of failing the report build
+        return {"status": "NOT_RUN", "reason": "pfd_layout_check not importable"}
+    paths = [p for p in [bfd.get("svg")] + [s.get("svg") for s in pfd.get("sheets", [])] if p]
+    reports = pfd_layout_check.review_many(paths, review_dir, kind="pfd")
+    counts = {"PASS": 0, "WARN": 0, "FAIL": 0}
+    for _, rep in reports:
+        counts[rep.status] += 1
+    return {"status": pfd_layout_check.worst_status(reports), "sheets": len(reports), "counts": counts, "dir": review_dir}
 
 
 def run_pipeline(data, basis, standards, out_dir, use_word=True, max_units_per_sheet=14, tolerances=None, allow_fail=True):
@@ -150,7 +168,8 @@ def run_pipeline(data, basis, standards, out_dir, use_word=True, max_units_per_s
                "validation_md": mp, "exports": exports, "diagrams": {"bfd": diagrams["bfd"]["svg"], "pfd_pdf": diagrams["pfd"]["pdf"],
                "pfd_sheets": [s["svg"] for s in diagrams["pfd"]["sheets"]], "pfd_spec": diagrams["pfd"]["spec"],
                             "crossings_total": diagrams["pfd"].get("crossings_total", 0),
-                            "sparse_sheets": diagrams["pfd"].get("sparse_sheets", [])},
+                            "sparse_sheets": diagrams["pfd"].get("sparse_sheets", []),
+                            "layout_review": diagrams.get("layout_review")},
                "balances_summary": balances["summary"], "word_updated": word_ok, "timings_s": timings,
                "validation_checks": {c["id"]: c["status"] for c in final["checks"]}}
     if not allow_fail and final["n_fail"]:
