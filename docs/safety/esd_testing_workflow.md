@@ -147,3 +147,15 @@ it does not replace disc/contact physics or prove a safe state. Detection,
 logic, driver/shaft dynamics, global rollback and integrated replay remain
 with the existing safety/coordinator owners. SIL, SRS, proof-test and asset
 qualification remain **NOT_EVALUATED**.
+
+### Safety Shutdown ideal lift/contact applicability
+
+The optional experimental `AcousticLiftCheckValve` now solves ideal translating
+pressure/flow/mechanics together at the existing downstream acoustic boundary.
+It includes signed orifice and reciprocal swept flow, spring/damping/inertia,
+separate physical/numerical/impact losses and inelastic numerical contact.
+See the [model, executable isolation example and limits](../wiki/water_hammer_implementation.md#safety-shutdown-ideal-translating-check-valve).
+This does not extend the forward pump curve through a full trip or connect the
+ESD runner automatically. Existing detection/logic/coordinator contracts own
+that integration; vendor disc/slam, phase change and asset qualification remain
+NOT_EVALUATED. Use accepted interval fluxes and refine contact/pressure together.

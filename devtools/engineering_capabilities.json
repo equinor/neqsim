@@ -1710,6 +1710,29 @@
         "src/test/java/neqsim/process/equipment/pipeline/VfpPipelineTest.java"
       ],
       "limitations": "Discovery/inspectApi route for composable Java/JPype objects, not a curated stateless MCP tool. Only METRIC GAS/WGR/GOR-or-OGR VFPPROD with singleton ALQ. Explicit temperature and provider-matched surface-volume definition required. No extrapolation, thermal prediction or network balancing. Synthetic analytical tests do not qualify supplied field hydraulics."
+    },
+    {
+      "id": "acoustic-lift-check-valve",
+      "title": "Experimental ideal translating check-valve acoustic screening",
+      "domain": "flow-assurance",
+      "tool": "runWaterHammer",
+      "apis": [
+        "neqsim.process.equipment.pipeline.AcousticLiftCheckValve",
+        "neqsim.process.equipment.pipeline.WaterHammerPipe",
+        "neqsim.process.operations.WaterHammerStudy"
+      ],
+      "skills": [
+        "neqsim-water-hammer",
+        "neqsim-dynamic-simulation"
+      ],
+      "agents": [
+        "flow-assurance",
+        "process-model"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/equipment/pipeline/AcousticLiftCheckValveTest.java"
+      ],
+      "limitations": "EXPERIMENTAL ideal translating equal-pressure/swept-area single-liquid model with backward Euler, previous-lift orifice area and perfectly inelastic discrete contact. Signed flow and local energy/conservation/restart verification do not qualify vendor slam, mesh-independent sharp-front impact, full pump trips, cavitation, global Safety Shutdown, structural loads or asset approval."
     }
   ]
 }

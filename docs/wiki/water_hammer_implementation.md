@@ -64,7 +64,7 @@ the **Method of Characteristics (MOC)** to simulate fast pressure transients cau
 
 - Rapid valve closures (emergency shutdown)
 - Forward pump coastdown within an explicit curve domain
-- Prescribed valve closure (dynamic check-valve disc/slam remains unsupported)
+- Prescribed valve closure and experimental ideal translating check-valve contact
 - Sudden flow changes
 
 Unlike the advection-based transient model in `PipeBeggsAndBrills`, `WaterHammerPipe`
@@ -854,3 +854,128 @@ the external request endpoint. Validation `requestedInterval` is `FAIL`. Earlier
 accepted intervals remain visible and are not reinterpreted as a completed trip.
 
 Agent workflow: [water-hammer skill](../../.github/skills/neqsim-water-hammer/SKILL.md#forward-acoustic-pump-coastdown).
+
+
+## Safety Shutdown ideal translating check valve
+
+`AcousticLiftCheckValve` is an **experimental**, optional downstream `VALVE`
+boundary inside `WaterHammerPipe`. It models one ideal translating element with
+constant equal pressure/swept-volume area, linear spring/preload/damping, signed
+orifice flow and perfectly inelastic seat/upper-stop contact. Existing `CheckValve`
+and calibrated/prescribed valve modes retain their behavior. This increment does
+not qualify a swing disc, a vendor lift valve, cavitation or a full pump trip.
+
+The [complete executed public input, output, oracles and refinement evidence](../../src/test/resources/neqsim/process/pipeline/safety-shutdown-lift/README.md)
+uses synthetic parameters, actual SRK/classic liquid-water properties, a 100 m
+line and inlet isolation. There is no asset calibration. The existing forward
+pump boundary still rejects stopped/reverse states; attaching a check valve does
+not extend its curve domain. Integrated safety logic and global transactions
+remain with the canonical coordinator and existing ESD APIs.
+
+### Physical and discrete work contract
+
+With lift $y$ in m, velocity $v$ in m/s, pressure difference $\Delta p=p_u-p_r$
+in Pa, effective mass $m$ in kg, damping $c$ in N s/m, stiffness $k$ in N/m,
+closing preload $F_0$ in N, effective area $A_e$ in m², discharge coefficient
+$C_d$, orifice width $w$ in m and actual liquid density $\rho$ in kg/m³:
+
+$$m\dot v=A_e\Delta p-F_0-ky-cv,\qquad\dot y=v$$
+
+$$Q_j=C_dwy\,\operatorname{sgn}(\Delta p)\sqrt{2|\Delta p|/\rho},\qquad Q=Q_j+A_ev$$
+
+$$E=\tfrac12mv^2+\tfrac12ky^2+F_0y,\qquad\Delta pQ=\Delta pQ_j+A_e\Delta p\,v$$
+
+The swept-flow term $A_ev$ is essential: omitting it violates reciprocal pressure
+work. It is an explicit ideal equal-area two-port assumption, not a substitute
+for measured valve geometry or hydrodynamic flow forces. The orifice term is
+passive for either flow direction. Negative jet flow before closure is retained.
+
+Each existing Courant-limited interval holds the **previous accepted lift** for
+orifice area and solves the incoming acoustic characteristic simultaneously with
+backward-Euler pressure force and velocity. For acoustic pressure impedance
+$R=\rho a/A_{pipe}$ in Pa s/m³, the local equation reduces to
+$\alpha\Delta p+\beta\operatorname{sgn}(\Delta p)\sqrt{|\Delta p|}=f$,
+with $\alpha>0$ and $\beta\ge0$. Its unique signed root uses a rationalized
+quadratic; no generic pressure-flow solver or separate clock is introduced.
+This first-order area hold differs from the prescribed valve's endpoint hold.
+
+For a free interval of duration $h$, with new velocity $v_1$ and position $y_1$:
+
+$$hA_e\Delta p\,v_1=E_1-E_0+hc v_1^2+\tfrac12m(v_1-v_0)^2+\tfrac12k(y_1-y_0)^2$$
+
+The final two terms are **numerical loss**, not physical damping. A contact
+interval additionally loses $\tfrac12m(v^-)^2$ when velocity is reset to zero.
+Trial bound crossings shorten the numerical interval by a bounded root solve;
+only a root within the documented position residual is accepted at a stop. The
+remaining requested time is advanced. A resting stop supplies a unilateral
+reaction until pressure/spring force releases it. There is no rebound parameter.
+
+This localizes contact on the **discrete implicit trajectory**. It is not an exact
+continuous impact/grazing-time solver. Refine pressure, reverse-flow volume and
+contact time together; a coarse implicit step can underresolve an excursion.
+The continuous constant-acceleration contact oracle and its step refinement are
+separate from the numerical root-residual check. No pressure impulse is inferred
+from disc velocity alone. Structural/support impact remains NOT_EVALUATED.
+
+### Configuration and output
+
+Construct `AcousticLiftCheckValve` with arguments in this order:
+`mass_kg`, `damping_N_s_m`, `stiffness_N_m`, `preload_N`, `pressureArea_m2`,
+`dischargeCoefficient`, `orificeWidth_m`, `maximumLift_m`, `initialLift_m`,
+`provenance`. Configure with `pipe.setLiftCheckValve(...)` before explicit
+`run()`. Initial velocity is zero; the declared initial lift must satisfy both
+static force and orifice flow at the independently supplied receiver pressure.
+Parameters are never fitted automatically. Boundary replacement requires
+reinitialization. Prescribed travel and self-actuating lift are mutually
+exclusive; commanded opening is rejected in either physical mode.
+
+`WaterHammerStudy.run` accepts a `liftCheckValve` object with those named fields.
+All values are SI; receiver pressure remains `valveBackPressure_bara` in absolute
+bar. Supply an empty `eventSchedule`; closure-time shortcuts/commanded valve
+events conflict with a self-actuating disc and reject. In the public isolation
+case the feed describes the initial steady flow and `upstreamBoundary=CLOSED_END`
+applies inlet closure at time zero. This is a prescribed boundary switch, not a
+simulation of shutdown detection, logic or pump-driver mechanics.
+
+`timeSeries.liftCheckValve` contains named samples aligned with `timeSeries.time_s`:
+lift/velocity, mechanical storage, pressure work, orifice/damping/numerical/impact
+losses, energy residual and contact count/time. `acceptedLiftIntervals` retains
+every accepted internal interval, including contact points between outer samples.
+Its explicit columns distinguish held jet/swept **interval fluxes** from
+post-contact endpoint velocity. `getLiftHistory()` returns a deep copy. Sparse
+endpoint traces must not be integrated as accepted exchange.
+
+`getLiftEnergyResidual()` independently compares accumulated pressure work,
+orifice loss, mechanical storage change and the three declared mechanical losses.
+This is a boundary/mechanical identity, **not full pipe EOS energy closure**.
+The existing cell volume and momentum ledgers use the actual total accepted
+flow, including swept flow. Rejected local intervals preserve the accepted disc,
+cells, clock, work, exchange and internal histories; earlier accepted intervals
+remain accepted. Java serialization/replay covers this local state, not global
+coordinator rollback. Study errors retain last accepted diagnostics and histories.
+
+### Evidence and qualification boundary
+
+`AcousticLiftCheckValveTest` compares the production update with the independent
+SciPy matrix-exponential oracle saved in #4707, checks stiff/large-inertia limits,
+signed power/characteristic residuals, explicit discrete energy, equilibrium,
+contact refinement, public isolation, nearby mass/damping, mesh/time refinement,
+rejection and deterministic serialization. Public source/results retain earlier
+midpoint stiff-limit and omitted-swept-flow **FAIL** controls. Passing these checks
+is analytical/numerical verification of this ideal model. No experimental curve
+or asset data were fitted or independently validated.
+
+Missing flow-force/added-mass correlations, elastic contact/rebound, friction and
+stiction, real disc geometry, two-phase/cavity collapse, stopped/reverse pump
+curves and structural loads are distinct physical-model increments. Inlet liquid
+checking does not detect transient phase-boundary crossing. Check actual fluid
+phase limits separately; never add a pressure floor. Full pump-trip/slam,
+separator/compression Safety Shutdown, SIL/SRS/proof-test and piping/support
+approval remain **NOT_EVALUATED**. NRC-4707 acceptance and compatibility review
+remain separate from executed tests and draft delivery.
+
+The retained sharp inlet-isolation example is deliberately **not mesh-qualified
+for slam**: first impact loss grows from 0.00945 J on 26 faces to 0.15431 J on 801 faces,
+and the finest diagnostic resolves a second contact missed by coarse meshes.
+The separate nonlinear constant-characteristic oracle does pass first-order
+refinement. Stable balances do not establish a mesh-independent impact history.

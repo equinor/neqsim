@@ -1237,6 +1237,28 @@ public final class SchemaCatalog {
     properties.put("timeStep_s", numberProp("Requested transient time step in seconds"));
     properties.put("closureTime_s", numberProp("Default valve closure duration in seconds"));
 
+    properties.put("valveBackPressure_bara", numberProp("Independent absolute valve receiver pressure, bara"));
+    properties.put("upstreamBoundary", enumProp("Initial acoustic inlet condition",
+        Arrays.asList("RESERVOIR", "CLOSED_END", "CONSTANT_FLOW", "PUMP")));
+    Map<String, Object> liftValve = new LinkedHashMap<String, Object>();
+    liftValve.put("type", "object");
+    liftValve.put("description", "EXPERIMENTAL ideal translating equal-area inelastic check valve; requires static "
+        + "initial force/flow balance, downstream VALVE and empty eventSchedule. No vendor/full-trip qualification.");
+    Map<String, Object> liftProperties = new LinkedHashMap<String, Object>();
+    liftProperties.put("mass_kg", numberProp("Positive effective translating mass, kg"));
+    liftProperties.put("damping_N_s_m", numberProp("Nonnegative physical damping, N s/m"));
+    liftProperties.put("stiffness_N_m", numberProp("Nonnegative spring stiffness, N/m"));
+    liftProperties.put("preload_N", numberProp("Nonnegative closing preload, N"));
+    liftProperties.put("pressureArea_m2", numberProp("Positive equal pressure/swept-volume area, m2"));
+    liftProperties.put("dischargeCoefficient", numberProp("Positive orifice discharge coefficient at most one"));
+    liftProperties.put("orificeWidth_m", numberProp("Positive orifice area per unit lift, m"));
+    liftProperties.put("maximumLift_m", numberProp("Positive upper stop, m"));
+    liftProperties.put("initialLift_m", numberProp("Initial force/flow-balanced open lift, m"));
+    liftProperties.put("provenance", stringProp("Required source/applicability; declare synthetic inputs"));
+    liftValve.put("properties", liftProperties);
+    liftValve.put("required", new ArrayList<String>(liftProperties.keySet()));
+    properties.put("liftCheckValve", liftValve);
+
     Map<String, Object> flowRate = new LinkedHashMap<String, Object>();
     flowRate.put("type", "object");
     Map<String, Object> frProps = new LinkedHashMap<String, Object>();

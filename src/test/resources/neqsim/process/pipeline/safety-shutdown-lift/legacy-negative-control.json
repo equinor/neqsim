@@ -1,0 +1,5 @@
+{
+  "expectedLegacyRejection": "PASS",
+  "acceptedTime_s": 0.10100000000000187,
+  "message": "Acoustic interval [0.10100000000000187, 0.10110000000000187] s not accepted: Valve reverse flow requires a signed receiver model"
+}

@@ -154,3 +154,22 @@ classes. Escalate to detailed study if any of these apply:
 - `neqsim-plant-data` for tagreader snapshots and event windows.
 - `neqsim-process-safety` for risk framing and escalation into safety studies.
 - `neqsim-flow-assurance` for broader pipeline operating-envelope work.
+
+## Ideal translating acoustic check valve
+
+`AcousticLiftCheckValve` is experimental: equal pressure/swept area, signed
+orifice flow, declared translating mass/spring/preload/damping and perfectly
+inelastic numerical contact. Supply independent initial force/flow equilibrium;
+no automatic parameter calibration. `WaterHammerStudy` accepts `liftCheckValve`
+SI fields and an empty eventSchedule. Keep accepted interval jet plus swept
+flow; omitting swept flow violates pressure work. Separate physical damping,
+BE numerical loss and impact loss. Refine contact and pressure together; do not
+claim continuous grazing-event accuracy or vendor slam from numerical contact.
+
+Read the [API, equations, public executed case and limits](../../../docs/wiki/water_hammer_implementation.md#safety-shutdown-ideal-translating-check-valve).
+Use defensive `getLiftHistory()` and aligned named study diagnostics. Rejection
+retains last accepted local cells/disc/clock/work; serialization is local replay,
+not global rollback. Forward-pump domains remain unchanged. Full trips, swing
+discs, flow-force/added-mass, rebound, cavitation, structural loads and integrated
+Safety Shutdown remain NOT_EVALUATED. Hand off shared stepping/logic to
+`neqsim-dynamic-simulation`; add no parallel scheduler or generic solver.
