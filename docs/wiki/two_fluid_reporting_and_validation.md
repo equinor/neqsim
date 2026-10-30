@@ -398,12 +398,23 @@ Across 26 severe and 15 stable observations, the current Taitel system screen ha
 positives, 4 false negatives, 8 false positives, and 7 true negatives (70.7% accuracy). The 14
 transition observations are reported separately as 6 predicted severe and 8 predicted stable.
 
-`SevereSluggingExperimentalBenchmarkTest` contains the large-facility Test 3 geometry, but is
-currently disabled at class level: the existing transient routes do not produce a valid unclamped
-solution (issues #2909 and #2911). The previously reported ensemble numbers are historical
-exploratory output, not current passing validation. Sensitivity to tiny perturbations alone does
-not establish physical chaos; numerical instability must first be excluded through mesh and
-timestep studies. The active flow-map screen above does not time-march the pipe.
+`SevereSluggingExperimentalBenchmarkTest` contains active 180-second supporting trajectories
+for the large-facility Test 3 geometry. The separate 600-second experimental qualification
+remains disabled under #3298: amplitude, period, holdup and nonlinear-quality gates do not all
+pass. The active cases check numerical progress, conservation, reproducibility and broad
+pressure/cycle diagnostics; they do not qualify the experiment.
+
+The liquid-production cycle detector uses the same feed-relative gates as the active test:
+fallback at or below 75% of liquid feed, followed by recovery at or above 125%. It measures
+intervals between recovered troughs and retains the ten-second secondary-minimum merge rule.
+A single extreme signed outlet-flow sample therefore cannot move the detection threshold and
+hide later cycles. Unrecovered fallback, isolated excursions, flat signals and low-flow ripples
+without blowout do not establish a repeated cycle. The extrema, pressure, conservation and
+solver-diagnostic checks remain separate; cycle detection does not excuse a reverse-flow spike
+or a pressure-correction limit. Six fast synthetic detector controls cover the event measurement
+without running the pipe. Sensitivity to tiny perturbations alone does not establish physical
+chaos; numerical instability must first be excluded through mesh and timestep studies. The
+active flow-map screen above does not time-march the pipe.
 
 The opt-in coupled-pressure progress and long-horizon tests check numerical progress, residuals
 and boundedness. They do not establish measured severe-slugging period, amplitude or outlet slug
