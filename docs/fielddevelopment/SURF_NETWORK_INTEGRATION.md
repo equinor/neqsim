@@ -577,6 +577,15 @@ therefore feeds back through the same live well/network coupling instead of acti
 downstream flow split. Copies preserve selector definitions but keep independent edge
 state.
 
+The same canonical network exposes a fixed sink's delivery pressure through
+`sink.<node>.pressure` as a writable `ProcessAutomation` input in absolute-pressure
+units. This is intentionally narrower than the solved `node.<node>.pressure` output:
+only a node declared as both `SINK` and fixed-pressure can be changed. Junctions and
+free-pressure sinks are rejected, so a separator-pressure action cannot silently turn a
+calculated hydraulic state into a boundary condition. Candidate evaluation still has to
+rerun the coupled well/network/host model and restore the original pressure before it is
+accepted.
+
 For a line-up that changes several edges together, construct named
 `FieldWellNetworkProcessUnit.RouteConfiguration` objects and register them with
 `registerRouteConfigurationSelector(...)`. Automation exposes
@@ -717,7 +726,8 @@ well/per-route-line/separator/scrubber operating limits, compressor surge/stonew
 evidence, driver and gearbox power, a shared plant-power budget, transactional discrete
 route actions, qualified export-pressure evidence, exact action restoration and an
 operating-envelope slice. A second deterministic acceptance case instantiates ten live
-wells with twenty alternative route edges and verifies complete well, line, vessel,
+well chokes, twenty HP/LP route actions, and one reversible HP separator-pressure
+action. It verifies complete well, line, vessel,
 shaft, shared-power and export-boundary evidence without changing the two-well physical
 model or introducing a separate optimizer. The lower
 pressure route must reduce well backpressure and increase deliverability. A route
@@ -741,7 +751,9 @@ not blended across incompatible engineering bases. The summary does not add or r
 compressor-map, or host-constraint physics.
 
 The ten-well lifecycle acceptance also repeats the exact accepted choke/routing slices, including a coupled choke ×
-HP/LP pressure-level route grid, with the qualified HP-separator
+HP/LP pressure-level route grid and a separate exact HP/LP route × HP separator-pressure grid. The latter contains
+six independently evaluated points and exact four-corner cell classifications; it is not a generalized 3D surface or
+an interpolation across route selection. The workflow retains the qualified HP-separator
 and LP-scrubber alternatives active together. It preserves the same field/network/host evaluator, axes, grids, anchors,
 common-shaft, driver and shared-power constraints, then restores both installed-capacity states in reverse order. The
 schema-v16 receipt reports sampled constraint-identity handoffs, exact four-corner cell classifications and sampled

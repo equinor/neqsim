@@ -1111,6 +1111,16 @@ sampled interval width. The row is explicitly marked `interpolated: false` and
 route/line-up edge, and must not treat a continuous sampled edge as an approved set point without a
 separate qualified refinement and replay.
 
+For field-to-facility studies, a fixed separator-arrival pressure may be an explicit continuous action while the
+HP/LP route remains discrete. Consume their jointly sampled behavior only from the exact route × pressure slice and
+its sampled cells. Do not interpolate between route indexes, infer an unsampled pressure contour, or combine that
+surface with a choke axis into a generalized 3D envelope.
+
+Current optimizer evidence also exports the relative simulator replay tolerance and its provenance. A persistent task
+may use that value only to bind a reviewed objective baseline to a fresh initial replay; the guard caps it at
+$10^{-6}$ and rejects invalid or unsourced tolerance metadata. Constraint feasibility, restoration, action read-back,
+and operating limits remain exact under their existing contracts.
+
 When opt-in refinement is enabled, `operating_region_boundary_refinements` retains the action bounds,
 relative and absolute tolerances with provenance, every exact midpoint candidate/outcome/recovery gate,
 the final independently evaluated feasible/infeasible bracket, and the exact leading or rejecting

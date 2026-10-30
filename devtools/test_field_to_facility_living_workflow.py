@@ -1,7 +1,7 @@
 """Execute the Java ten-well lifecycle through the persistent production workflow.
 
 This is the source acceptance path for issue #4188. It deliberately calls the test-scope
-Java fixture, consumes only its exact schema-v15 JSON, and exercises the existing #4187
+Java fixture, consumes only its exact schema-v16 JSON, and exercises the existing #4187
 adapter, guard, ledger, promotion, living report, and canonical report implementation.
 """
 
@@ -245,9 +245,9 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertEqual(16, evidence["schema_version"])
             self.assertEqual(cycle_id, evidence["cycle_id"])
             self.assertEqual(2, evidence["period_count"])
-            self.assertEqual(28, evidence["requested_point_count"])
-            self.assertEqual(28, evidence["completed_point_count"])
-            self.assertGreater(evidence["total_evaluation_count"], 28)
+            self.assertEqual(40, evidence["requested_point_count"])
+            self.assertEqual(40, evidence["completed_point_count"])
+            self.assertGreater(evidence["total_evaluation_count"], 40)
             self.assertGreaterEqual(evidence["envelope_runtime_seconds"], 0.0)
             self.assertEqual(1, len(evidence["bottleneck_transitions"]))
             self.assertTrue(all(
@@ -349,16 +349,19 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertIn("combined_bottleneck", combination["bottleneck_migration"])
             relief_envelope = current["qualified_relief_envelope"]
             self.assertEqual(2, relief_envelope["receipt_version"])
-            self.assertEqual(4, relief_envelope["slice_pair_count"])
-            self.assertEqual(2, relief_envelope["sampled_cell_comparison_count"])
+            self.assertEqual(5, relief_envelope["slice_pair_count"])
+            self.assertEqual(4, relief_envelope["sampled_cell_comparison_count"])
             self.assertIs(True, relief_envelope["capacity_restored"])
-            coupled_pair = next(pair for pair in relief_envelope["slice_pairs"]
-                                if len(pair["axis_action_ids"]) == 2)
-            self.assertEqual(2, len(coupled_pair["sampled_cell_comparisons"]))
+            coupled_pairs = [pair for pair in relief_envelope["slice_pairs"]
+                             if len(pair["axis_action_ids"]) == 2]
+            self.assertEqual(2, len(coupled_pairs))
+            self.assertTrue(all(len(pair["sampled_cell_comparisons"]) == 2
+                                for pair in coupled_pairs))
             self.assertTrue(all(
                 comparison["interpolated"] is False
                 and comparison["baseline_cell"]["sampled_cell_only"] is True
-                for comparison in coupled_pair["sampled_cell_comparisons"]))
+                for pair in coupled_pairs
+                for comparison in pair["sampled_cell_comparisons"]))
             early = next(period for period in evidence["periods"]
                          if period["period_id"] == "early-life")
             self.assertGreaterEqual(
@@ -522,9 +525,17 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
                 period for period in revised_evidence["periods"]
                 if period["period_id"] == revised_cycle_id)
             revised_optimizer = revised_current["envelope_evidence"]["optimizer_evidence"]
+            self.assertEqual(1.0e-9, revised_optimizer["replay_relative_tolerance"])
             self.assertEqual(
-                first_accepted_objective,
-                revised_optimizer["initial_objective_value"],
+                "deterministic simulator replay tolerance",
+                revised_optimizer["replay_tolerance_provenance"],
+            )
+            replay_scale = max(1.0, abs(first_accepted_objective),
+                               abs(revised_optimizer["initial_objective_value"]))
+            self.assertLessEqual(
+                abs(first_accepted_objective
+                    - revised_optimizer["initial_objective_value"]),
+                revised_optimizer["replay_relative_tolerance"] * replay_scale,
             )
             self.assertGreater(
                 revised_optimizer["accepted_objective_value"],

@@ -211,7 +211,7 @@ def _objective_evidence_reasons(ctx, proposal, required=False):
     if not all(_number(value) for value in (initial, accepted, baseline)):
         reasons.append("non_finite_objective_evidence")
         return reasons
-    if float(initial) != float(baseline):
+    if not _objective_replay_matches(evidence, initial, baseline):
         reasons.append("objective_baseline_mismatch")
     if proposal.get("objective_kpi") != metric:
         reasons.append("objective_kpi_mismatch")
@@ -243,7 +243,30 @@ def _validate_optimizer_evidence(evidence, expected_cycle_id):
     runtime_seconds = evidence.get("runtime_seconds")
     if not _number(runtime_seconds) or runtime_seconds < 0:
         reasons.append("invalid_runtime_seconds")
+    tolerance_present = ("replay_relative_tolerance" in evidence
+                         or "replay_tolerance_provenance" in evidence)
+    if tolerance_present and not _valid_objective_replay_tolerance(evidence):
+        reasons.append("invalid_objective_replay_tolerance")
     return reasons
+
+
+def _valid_objective_replay_tolerance(evidence):
+    """Return true for a bounded, explicitly sourced simulator replay tolerance."""
+    tolerance = evidence.get("replay_relative_tolerance")
+    return (_number(tolerance) and 0.0 <= float(tolerance) <= 1.0e-6
+            and _text(evidence.get("replay_tolerance_provenance")))
+
+
+def _objective_replay_matches(evidence, first, second):
+    """Compare objective values using only the optimizer's qualified replay tolerance."""
+    if not all(_number(value) for value in (first, second)):
+        return False
+    if "replay_relative_tolerance" not in evidence:
+        return float(first) == float(second)
+    if not _valid_objective_replay_tolerance(evidence):
+        return False
+    scale = max(1.0, abs(float(first)), abs(float(second)))
+    return abs(float(first) - float(second)) <= float(evidence["replay_relative_tolerance"]) * scale
 
 
 def _positive_integer(value):
@@ -1890,7 +1913,7 @@ def proposal_from_lifecycle_context(evidence_json, ctx, title, predicted=None,
     task_baseline = baseline.get(metric)
     if not all(_number(value) for value in (initial, accepted, task_baseline)):
         raise ValueError("Lifecycle and task objective values must be finite")
-    if float(initial) != float(task_baseline):
+    if not _objective_replay_matches(optimizer, initial, task_baseline):
         raise ValueError("Reviewed task baseline does not match lifecycle search baseline")
     gain = (float(accepted) - float(initial)) * (1.0 if direction == "maximize" else -1.0)
     predictions = dict(predicted or {})

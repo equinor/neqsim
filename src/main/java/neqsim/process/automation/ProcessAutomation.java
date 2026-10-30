@@ -1193,6 +1193,11 @@ public class ProcessAutomation {
         vars.add(
             new SimulationVariable(unitName + ".sink." + nodeName + ".nomination", "sink." + nodeName + ".nomination",
                 VariableType.INPUT, "kg/hr", "Sink mass nomination").withBounds(Double.valueOf(0.0), null));
+        if (node.isPressureFixed()) {
+          vars.add(new SimulationVariable(unitName + ".sink." + nodeName + ".pressure",
+              "sink." + nodeName + ".pressure", VariableType.INPUT, "bara", "Fixed sink delivery-pressure decision")
+              .withBounds(Double.valueOf(0.01), null));
+        }
       }
     }
 
@@ -1357,8 +1362,17 @@ public class ProcessAutomation {
       if ("pressure".equals(property)) {
         return convertPressureFromPa(node.getPressure(), unit, "bara");
       }
-    } else if ("sink".equals(group) && "nomination".equals(property)) {
-      return convertMassRateFromKgS(network.getNode(target).getDemand(), unit, "kg/hr");
+    } else if ("sink".equals(group)) {
+      LoopedPipeNetwork.NetworkNode node = network.getNode(target);
+      if (node.getType() != LoopedPipeNetwork.NodeType.SINK) {
+        throw new IllegalArgumentException("Network node is not a sink: " + target);
+      }
+      if ("nomination".equals(property)) {
+        return convertMassRateFromKgS(node.getDemand(), unit, "kg/hr");
+      }
+      if ("pressure".equals(property) && node.isPressureFixed()) {
+        return convertPressureFromPa(node.getPressure(), unit, "bara");
+      }
     } else {
       LoopedPipeNetwork.NetworkPipe edge = network.getPipe(target);
       if ("edge".equals(group)) {
@@ -1418,9 +1432,19 @@ public class ProcessAutomation {
         node.setPressure(convertPressureToPa(value, unit, "bara"));
         return;
       }
-    } else if ("sink".equals(group) && "nomination".equals(property)) {
-      network.getNode(target).setDemand(convertMassRateToKgS(value, unit, "kg/hr"));
-      return;
+    } else if ("sink".equals(group)) {
+      LoopedPipeNetwork.NetworkNode node = network.getNode(target);
+      if (node.getType() != LoopedPipeNetwork.NodeType.SINK) {
+        throw new IllegalArgumentException("Network node is not a sink: " + target);
+      }
+      if ("nomination".equals(property)) {
+        node.setDemand(convertMassRateToKgS(value, unit, "kg/hr"));
+        return;
+      }
+      if ("pressure".equals(property) && node.isPressureFixed()) {
+        node.setPressure(convertPressureToPa(value, unit, "bara"));
+        return;
+      }
     } else {
       LoopedPipeNetwork.NetworkPipe edge = network.getPipe(target);
       if ("edge".equals(group) && "availability".equals(property)) {

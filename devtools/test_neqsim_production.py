@@ -1865,6 +1865,42 @@ def test_lifecycle_context_binds_source_objective_to_reviewed_baseline(tmp_path)
     assert [row["title"] for row in ctx.proposals] == ["Increase validated field export"]
 
 
+def test_lifecycle_context_uses_bounded_source_replay_tolerance(tmp_path):
+    _, evidence, _ = _promotable_schema8_task(tmp_path)
+    candidate = _objective_bound_lifecycle(evidence)
+    optimizer = next(period for period in candidate["periods"]
+                     if period["period_id"] == "C-1")["envelope_evidence"]["optimizer_evidence"]
+    optimizer["replay_relative_tolerance"] = 1.0e-9
+    optimizer["replay_tolerance_provenance"] = "deterministic simulator replay tolerance"
+    optimizer["initial_objective_value"] += 1.0e-7
+
+    proposal = production.proposal_from_lifecycle_context(
+        json.dumps(candidate), _objective_context(tmp_path),
+        "Replay-tolerant validated field export")
+    assert proposal["optimizer_evidence"]["replay_relative_tolerance"] == 1.0e-9
+
+    optimizer["initial_objective_value"] += 1.0e-3
+    with pytest.raises(ValueError, match="baseline"):
+        production.proposal_from_lifecycle_context(
+            json.dumps(candidate), _objective_context(tmp_path),
+            "Out-of-tolerance field export")
+
+
+@pytest.mark.parametrize("value", [-1.0, 1.0e-5, float("nan")])
+def test_optimizer_rejects_invalid_replay_tolerance(tmp_path, value):
+    _, evidence, _ = _promotable_schema8_task(tmp_path)
+    candidate = _objective_bound_lifecycle(evidence)
+    optimizer = next(period for period in candidate["periods"]
+                     if period["period_id"] == "C-1")["envelope_evidence"]["optimizer_evidence"]
+    optimizer["replay_relative_tolerance"] = value
+    optimizer["replay_tolerance_provenance"] = "test tolerance"
+
+    with pytest.raises(ValueError, match="Lifecycle|lifecycle"):
+        production.proposal_from_lifecycle_context(
+            json.dumps(candidate), _objective_context(tmp_path),
+            "Invalid replay tolerance")
+
+
 @pytest.mark.parametrize("failure", ["name", "direction", "unit", "baseline", "accepted", "prediction"])
 def test_lifecycle_context_rejects_mismatched_objective_metadata(tmp_path, failure):
     _, evidence, _ = _promotable_schema8_task(tmp_path)

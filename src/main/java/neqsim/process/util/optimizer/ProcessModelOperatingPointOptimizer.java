@@ -988,6 +988,8 @@ public final class ProcessModelOperatingPointOptimizer {
           acceptedPointReplay != null && isFinite(acceptedPointReplay.getRawObjective())
               ? Double.valueOf(acceptedPointReplay.getRawObjective())
               : null);
+      evidence.put("replay_relative_tolerance", Double.valueOf(replayRelativeTolerance));
+      evidence.put("replay_tolerance_provenance", replayToleranceProvenance);
       evidence.put("simulation_converged", replay != null && replay.isCandidateSimulationConverged());
       evidence.put("candidate_feasible", replay != null && replay.isFeasible());
       evidence.put("candidate_finite", isCandidateFinite());
