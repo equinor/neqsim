@@ -18,6 +18,17 @@ Guide for fitting equation-of-state parameters to experimental data using NeqSim
 
 ## Regression Strategy
 
+For reservoir material-balance handoff, use `CalibratedPvtModel` to freeze original
+and independently tuned fluids with sample/model/laboratory revision references.
+Compare complete held-out CCE/CVD/DLE and separator experiments before accepting
+the tuned model. Never split rows from one depletion experiment between tuning and
+validation. `MaterialBalancePvtHistory` requires an explicitly attributed depletion
+and separator path; constant-composition flash tables cannot be passed as CVD/DLE
+history. It checks alignment and provenance fields, not the external evidence's
+truth or experimental accuracy. See `docs/pvtsimulation/reservoir_material_balance.md`
+and hand off measured-history volume estimation to `@field-development`, keeping
+laboratory EOS calibration separate from reservoir/aquifer fitting.
+
 ### Step 1: Select Base EOS
 
 | Fluid System | Recommended EOS | Reason |

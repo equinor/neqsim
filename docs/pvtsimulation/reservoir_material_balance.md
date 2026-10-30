@@ -33,6 +33,7 @@ laboratory simulations.
 | `GasMaterialBalance` | Gas P/Z straight line (OGIP), Cole plot aquifer diagnostic, Havlena-Odeh gas balance | `pvtsimulation.reservoirproperties.materialbalance` |
 | `OilMaterialBalance` | Havlena-Odeh oil balance (OOIP, gas-cap ratio `m`, water drive, Pirson drive indices) | `pvtsimulation.reservoirproperties.materialbalance` |
 | `GeneralizedMaterialBalance` | Generalized oil/gas balance with both `Rs` and `Rv`, measured net withdrawals, known aquifer/rock support and identifiability checks | `pvtsimulation.reservoirproperties.materialbalance` |
+| `CalibratedPvtModel`, `MaterialBalancePvtHistory` | Immutable original/tuned model handoff, held-out laboratory residuals and explicitly attributed pressure-aligned PVT | `pvtsimulation.util` |
 | `VanEverdingenHurstAquifer` | Radial aquifer influence functions, Carter-Tracy cumulative water influx, ECLIPSE `AQUTAB` export | `pvtsimulation.reservoirproperties.materialbalance` |
 | `DeclineCurveAnalysis` | Arps + Duong (2011) decline: forward rate/EUR and least-squares history matching | `pvtsimulation.util` |
 
@@ -192,6 +193,68 @@ Measured field data do not need to be inserted into a simulated tank's recorder.
 | `fitInitiallyGas()` | No initial free oil | Total OGIP and vaporized-oil-inclusive OOIP |
 | `fitKnownGasCap(m)` | Known initial free-gas/free-oil reservoir-volume ratio | Both total inventories |
 | `fitOilAndGas()` | Both initial free phases; independent expansion signals required | Both total inventories and inferred gas-cap ratio |
+
+### Immutable calibration and pressure-path handoff
+
+`CalibratedPvtModel` freezes serialized original and tuned fluids, sample and model
+revision references, the laboratory calibration report reference and the identities
+of complete experiments used for calibration. Fluid getters restore independent
+copies, including nested EOS parameters. Neither laboratory replay nor reservoir
+matching changes those checkpoints. Store the NeqSim/software revision in the model
+references; native checkpoints require compatible software to deserialize.
+
+Use `compareHoldout` for a complete CCE, CVD or DLE pressure schedule. Select a
+normalized `PVTFluidStudy` property key, such as `relativeVolume` for CCE,
+`liquidRelativeVolume` for CVD, or `boM3PerSm3` for DLE. Supply one measured value
+and positive measurement standard deviation per pressure, in the property's units.
+Both models run the full experiment, preserving gas removal and the final DLE
+reference. The returned JSON retains original and tuned predictions, raw residuals
+and residuals divided by the supplied measurement standard deviations. Residuals
+are **measured minus predicted**. These are laboratory-property residuals, not
+reservoir-pressure likelihoods or parameter confidence intervals.
+Evidence JSON declares `schemaVersion` 1.0 and a `schemaUri` pointing to the
+[versioned schema](../../src/main/resources/neqsim/pvt/calibrated-pvt-evidence-v1.schema.json).
+Readers must reject unsupported major versions rather than interpreting them as v1.
+
+`compareSeparatorHoldout` replays an entire multi-stage separator/stock-tank train,
+including reservoir conditions and every stage's pressure and temperature. Available
+comparison properties are total GOR (`totalGORSm3PerSm3`), oil FVF (`boM3PerSm3`)
+and stock-tank oil density (`stockTankOilDensityKgPerM3`). The supported standard
+basis is 288.15 K and 1.01325 bara, also used by the existing solvers and recorder.
+The final stage must use that basis. Other standard conditions require a separately
+qualified conversion; relabeling the units is insufficient.
+
+An experiment used in calibration cannot be labeled as held out. Identify the
+**whole experiment**, not individual CVD/DLE rows, to avoid sharing depletion history
+between training and validation. Identity checks cannot verify an external laboratory
+record or establish independence when the same experiment is given different names.
+The caller must review that provenance and set acceptance tolerances; a finite
+residual report is not automatic model acceptance.
+
+`MaterialBalancePvtHistory` then retains the checkpoint bundle, isothermal reservoir
+temperature, ordered separator path, a path-validation evidence reference, and
+pressure-aligned `BlackOilPVTTable.Record` values including the original state.
+Declare `CVD`, `DLE`, `COMPOSITIONAL_HISTORY` or `CONSTANT_COMPOSITION` explicitly.
+The records must be evaluated externally from the accepted tuned model on that
+path. The container checks numeric validity, sequence and basis; it does not generate
+generalized CVD PVT or independently verify caller-supplied records against the EOS.
+
+Its `materialBalance` method accepts measured average pressures and cumulative net
+oil/gas/water withdrawals, reservoir-volume influx and dimensionless expansion
+support. All arrays must include the original zero-withdrawal/support state and
+match the PVT pressures. CVD/DLE paths decrease strictly; externally evaluated
+compositional paths can include repressurization. Constant-composition tables are
+rejected for depletion matching. The result is the existing `GeneralizedMaterialBalance`
+builder; laboratory calibration and EOS parameters remain separate from volume fitting.
+Substantial injection composition changes still require compositional replay.
+
+The [handoff tests](../../src/test/java/neqsim/pvtsimulation/util/CalibratedPvtModelTest.java)
+compare full protocol replay with separately executed existing PVT solvers and
+recover an analytically specified synthetic gas inventory. These establish software
+consistency and analytical conservation, not independent laboratory/field accuracy.
+Public laboratory qualification, automatic path-dependent generalized PVT generation,
+bounded compositional tank replay, physical finite-aquifer matching and uncertainty
+propagation remain open under [issue #4740](https://github.com/equinor/neqsim/issues/4740).
 
 ### Conservation equations and diagnostics
 

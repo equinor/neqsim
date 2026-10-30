@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/equinor/neqsim/master/src/main/resources/neqsim/pvt/calibrated-pvt-evidence-v1.schema.json",
+  "title": "Original/tuned PVT provenance and held-out comparison evidence, version 1",
+  "oneOf": [{"$ref": "#/$defs/provenance"}, {"$ref": "#/$defs/comparison"}],
+  "$defs": {
+    "reference": {"type": "string", "minLength": 1},
+    "numbers": {"type": "array", "minItems": 1, "items": {"type": "number"}},
+    "header": {
+      "type": "object",
+      "required": ["schemaVersion", "schemaUri"],
+      "properties": {
+        "schemaVersion": {"const": "1.0"},
+        "schemaUri": {"const": "https://raw.githubusercontent.com/equinor/neqsim/master/src/main/resources/neqsim/pvt/calibrated-pvt-evidence-v1.schema.json"}
+      }
+    },
+    "provenance": {
+      "allOf": [{"$ref": "#/$defs/header"}],
+      "type": "object",
+      "required": ["sampleReference", "originalRevision", "tunedRevision", "calibrationReference", "calibrationExperiments"],
+      "properties": {
+        "sampleReference": {"$ref": "#/$defs/reference"},
+        "originalRevision": {"$ref": "#/$defs/reference"},
+        "tunedRevision": {"$ref": "#/$defs/reference"},
+        "calibrationReference": {"$ref": "#/$defs/reference"},
+        "calibrationExperiments": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/reference"}}
+      },
+      "unevaluatedProperties": false
+    },
+    "row": {
+      "type": "object",
+      "required": ["measured", "sigma", "originalPrediction", "tunedPrediction", "originalResidual", "tunedResidual", "originalStandardizedResidual", "tunedStandardizedResidual"],
+      "properties": {
+        "measured": {"type": "number"},
+        "sigma": {"type": "number", "exclusiveMinimum": 0},
+        "originalPrediction": {"type": "number"},
+        "tunedPrediction": {"type": "number"},
+        "originalResidual": {"type": "number"},
+        "tunedResidual": {"type": "number"},
+        "originalStandardizedResidual": {"type": "number"},
+        "tunedStandardizedResidual": {"type": "number"}
+      },
+      "additionalProperties": false
+    },
+    "comparison": {
+      "allOf": [{"$ref": "#/$defs/header"}],
+      "type": "object",
+      "required": ["provenance", "experimentId", "property", "residualDefinition", "rows", "kind"],
+      "properties": {
+        "provenance": {"$ref": "#/$defs/provenance"},
+        "experimentId": {"$ref": "#/$defs/reference"},
+        "property": {"$ref": "#/$defs/reference"},
+        "residualDefinition": {"const": "measured minus predicted; standardized by supplied measurement sigma"},
+        "rows": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/row"}},
+        "kind": {"enum": ["CCE", "CVD", "DLE", "SEPARATOR"]},
+        "temperatureK": {"type": "number", "exclusiveMinimum": 0},
+        "pressuresBara": {"$ref": "#/$defs/numbers"},
+        "reservoirTemperatureK": {"type": "number", "exclusiveMinimum": 0},
+        "reservoirPressureBara": {"type": "number", "exclusiveMinimum": 0},
+        "separatorStages": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "required": ["pressureBara", "temperatureK"],
+            "properties": {"pressureBara": {"type": "number", "exclusiveMinimum": 0}, "temperatureK": {"type": "number", "exclusiveMinimum": 0}},
+            "additionalProperties": false
+          }
+        }
+      },
+      "if": {"properties": {"kind": {"const": "SEPARATOR"}}},
+      "then": {"required": ["reservoirTemperatureK", "reservoirPressureBara", "separatorStages"]},
+      "else": {"required": ["temperatureK", "pressuresBara"]},
+      "unevaluatedProperties": false
+    }
+  }
+}
