@@ -106,7 +106,14 @@ avoids subtracting nearly equal isentropic enthalpies. A local volume-derivative
 estimate must also place its first-order
 head error below $10^{-9}$ kJ/kg. The differential temperature is only an initial
 guess for the selected model's PH flash, which retains the outlet energy and
-phase-equilibrium calculation. An exactly unchanged pressure returns zero duty
+phase-equilibrium calculation. On the EOS route, a differential step additionally
+resolves the enthalpy increment to a duty-relative tolerance with a floating-point
+roundoff floor. This prevents the much larger total-enthalpy reference from hiding
+a sub-watt energy-balance error. Equilibrated temperature corrections include
+phase redistribution; they do not replace the calculated duty with its setpoint.
+Failure to resolve that energy balance raises an exception. Ordinary compression
+steps and the GERG/Leachman/Vega single-phase PH routes retain their existing criteria.
+An exactly unchanged pressure returns zero duty
 and clears the stored head, exponent and compression-ratio values.
 The final power satisfies $W=\dot{m}H_p/\eta_p$, where $W$ is power in W,
 $\dot{m}$ is mass flow in kg/s, $H_p$ is head in J/kg and $\eta_p$ is efficiency.
