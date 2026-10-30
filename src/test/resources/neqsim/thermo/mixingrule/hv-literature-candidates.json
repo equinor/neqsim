@@ -536,7 +536,143 @@
       ],
       "test": "HuronVidalWaterNitrogenAssessmentTest",
       "resources": "hv-water-nitrogen/",
-      "scope": "Only nitrogen/water has executable measured transfer diagnostics; other six PR tuples remain catalog-only and unqualified."
+      "scope": "Nitrogen fixture qualifies only its stated numerical scope. Separate staged CO2 diagnostics retain failed physical comparisons; neither activates production coefficients."
     }
+  },
+  "CO2_water_source_diagnostics": {
+    "status": "Staged declared-input diagnostics; physical/source-author reproduction unqualified; no default activation",
+    "component1": "CO2",
+    "component2": "water",
+    "convention": "Infinite-pressure covolume-weighted modified NRTL, linear covolume, tau12=D12[K]/T+DT12, tau21=D21[K]/T+DT21",
+    "alpha_dimensionless": 0.03,
+    "primary_sources": [
+      {
+        "doi": "10.1016/j.fluid.2015.09.029",
+        "table": "Table1; water-first source order must be reversed here",
+        "receipt": "https://github.com/equinor/neqsim/issues/4576#issuecomment-6463374933"
+      },
+      {
+        "doi": "10.1016/j.fluid.2017.02.006",
+        "tables": "Tables1 and5; paired Twu and HV",
+        "receipt": "https://github.com/equinor/neqsim/issues/4576#issuecomment-6494390915"
+      }
+    ],
+    "profiles": [
+      {
+        "profile": 0,
+        "EOS": "PR",
+        "source_year": 2016,
+        "D12_K": 5230,
+        "DT12": -8,
+        "D21_K": -4127,
+        "DT21": 8.9,
+        "pure": "Current library CO2 Tc304.19K/Pc73.815bara/omega.2276; water647.30/220.89/.344; ordinary source PR alpha; native cubic OmegaA.45724333333/OmegaB.077803333"
+      },
+      {
+        "profile": 1,
+        "EOS": "SRK",
+        "source_year": 2017,
+        "D12_K": 5820,
+        "DT12": -2.565,
+        "D21_K": -3339,
+        "DT21": 0.139,
+        "CO2_Twu_LMN": [
+          0.046115,
+          0.91388,
+          6.8838
+        ],
+        "water_Twu_LMN": [
+          0.36117,
+          0.87308,
+          2.4389
+        ]
+      },
+      {
+        "profile": 2,
+        "EOS": "PR",
+        "source_year": 2017,
+        "D12_K": 5831,
+        "DT12": -2.559,
+        "D21_K": -3311,
+        "DT21": 0.0377,
+        "CO2_Twu_LMN": [
+          0.022762,
+          0.92848,
+          7.7217
+        ],
+        "water_Twu_LMN": [
+          0.40274,
+          0.87,
+          1.8869
+        ],
+        "OmegaA": 0.4572355289213822,
+        "OmegaB": 0.07779607390388846
+      }
+    ],
+    "profiles1_2_declared_reference_critical_inputs": {
+      "CO2_TC_K": 304.1282,
+      "CO2_PC_bara": 73.773,
+      "water_TC_K": 647.096,
+      "water_PC_bara": 220.64,
+      "qualification": "Explicit reference inputs; exact original author configuration unresolved"
+    },
+    "measurement_sources": [
+      {
+        "doi": "10.1002/aic.14818",
+        "rows": 58,
+        "direction": "water in CO2",
+        "uncertainty": "Author expanded enhancement factor f; not direct ywater interval",
+        "fit_relation": "In-sample Aasen2017"
+      },
+      {
+        "doi": "10.1016/j.fluid.2018.02.002",
+        "rows": 29,
+        "direction": "CO2 in water",
+        "uncertainty": "Original absolute U(x),k2 retained",
+        "fit_relation": "Post-2017 holdout"
+      },
+      {
+        "doi": "10.3390/physchem1020012",
+        "rows": 33,
+        "usable_rows": 32,
+        "direction": "CO2 in water",
+        "uncertainty": "Original absolute U(x),k2 retained",
+        "blocked": "A1row6 original P=1.0.0180MPa unresolved in PDF and HTML",
+        "fit_relation": "Post-2017 holdout"
+      }
+    ],
+    "resources": "hv-co2-source/",
+    "test": "HuronVidalCo2SourceDiagnosticTest",
+    "benchmark": "HuronVidalCo2SourcePerformanceBenchmark",
+    "tested_base": "9975919e7908fe4ef34bbfeca37055d8883116fa",
+    "native_evidence": "All-five identities1e-8/checkNumerically1e-6 with serialization preservation; independent liquid T h=.001/.0005K; 411 complete flashes including357 usable observation/profile endpoints; all360 attempted rows retained",
+    "AARD_percent_gas2015_reverse2018_reverse2021": [
+      [
+        10.226503053835104,
+        75.86518212744764,
+        83.6450028017046
+      ],
+      [
+        1.7066817759321689,
+        7.686267878589651,
+        5.4448304308523845
+      ],
+      [
+        1.617461396786688,
+        6.007318480856138,
+        4.948557910084073
+      ]
+    ],
+    "physical_limits": "No accuracy threshold passed or source-author exact-input reproduction. Most reverse2017 predictions exceed author uncertainty. Reconcile pure vapor pressure and source inputs; no MEG/methanol/heavy/hydrate/ice/brine/general-extrapolation claim.",
+    "performance_limits": "Binary CLASSICAL/HV characterization changes thermodynamics/solver work. No code optimization, large-mixture, allocation, portable throughput or absolute-optimality claim.",
+    "selection_control": "102 forced-GAS five-component controls (water/CO2/methane/methanol/MEG), both component orders, three profiles and repeated/changed states; all ordinary kij unchanged; only CO2/water HV; dormant coefficient invariance and CLASSICAL rule2 reduction. Numerical scope only; no inhibitor partition or phase-stability qualification.",
+    "uncertainty_and_lineage": "gas-primary.csv/reverse-primary.csv retain author uncertainty and malformed original pressure; offline devtools/audit_huron_vidal_co2_source.py verifies primary hashes and exact decimal/unit/direction projection. Gas U(f) is not U(y). No parameter covariance available.",
+    "source_fit_range_not_acceptance": {
+      "2016": "Source emphasis323.15\u2013423.15K/25\u2013700bara; no continuous qualification claim",
+      "2017": "Mixed fit approximately274\u2013478K/below60.8MPa; original pure-input reconciliation incomplete",
+      "composition": "Only individual measured solubility endpoints assessed; synthetic feed is not measured feed"
+    },
+    "native_requalification_base": "8a2438b99b9a2ac03e2d923406d3660cc98a59f8",
+    "timing_base_remains": "9975919e7908fe4ef34bbfeca37055d8883116fa; no new-head timing claim"
   }
 }
