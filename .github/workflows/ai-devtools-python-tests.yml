@@ -7,12 +7,16 @@ on:
   pull_request:
     paths:
       - "devtools/**"
+      - "src/test/resources/data/chemistry_benchmarks/structure_h_jin2023_digitized.*"
+      - "docs/thermo/structure_h_parameter_qualification.md"
       - "examples/mechanical_design_json_to_mesh.py"
       - ".github/workflows/ai-devtools-python-tests.yml"
   push:
     branches: [master]
     paths:
       - "devtools/**"
+      - "src/test/resources/data/chemistry_benchmarks/structure_h_jin2023_digitized.*"
+      - "docs/thermo/structure_h_parameter_qualification.md"
       - "examples/mechanical_design_json_to_mesh.py"
 
 jobs:
@@ -67,6 +71,9 @@ jobs:
       - name: Run mechanical design mesh contract tests
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_mechanical_design_json_to_mesh.py -v
 
+      - name: Verify structure-H experimental fitting qualification
+        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_fit_structure_h_dissociation.py -v
+
       - name: Run plant layout geometry and delivery contract tests
         run: uv run --project devtools --locked --group test python devtools/test_layout_study.py -v
 
@@ -99,3 +106,6 @@ jobs:
 
       - name: Verify HV benchmark receipt guards on the minimum supported Python
         run: uv run --project devtools --locked --group test python -m pytest -q devtools/test_benchmark_huron_vidal_columns.py
+
+      - name: Verify structure-H experimental fitting qualification on the minimum supported Python
+        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_fit_structure_h_dissociation.py -v

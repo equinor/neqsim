@@ -361,6 +361,12 @@ Parameters for Cubic-Plus-Association (CPA) and PC-SAFT models.
 
 Parameters for gas hydrate equilibrium calculations.
 
+Source-derived sH dissociation data and a preliminary fitting tool are documented
+in [Structure-H parameter qualification](./structure_h_parameter_qualification.md).
+Their system-correlation coefficients do not populate COMP. Qualified sH
+Langmuir/Kihara component parameters remain unavailable; missing values and the
+existing sI/sII parameters and hydrate-former flags are unchanged.
+
 | Column | Description | Unit | Model Usage |
 |--------|-------------|------|-------------|
 | `HydrateFormer` | Hydrate-forming capability | - | `yes` or `no` |

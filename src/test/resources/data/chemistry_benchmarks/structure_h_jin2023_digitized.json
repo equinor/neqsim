@@ -1,0 +1,88 @@
+{
+  "source_title": "Enlargement of Structure-H Clathrate Hydrates by New Large Molecular Guest Substances and Lattice Size Limitation",
+  "source_doi": "10.1021/acs.jced.3c00252",
+  "supporting_material_doi": "10.1021/acs.jced.3c00252.s001",
+  "source_url": "https://acs.figshare.com/articles/journal_contribution/23557761",
+  "source_download_url": "https://ndownloader.figshare.com/files/41329983",
+  "source_filename": "je3c00252_si_001.pdf",
+  "source_pdf_sha256": "b1a7e33e9070cbd30e740b5b5b778e3ca959ae2ce557a24a7d1a160e3fbd2905",
+  "source_page_one_based": 4,
+  "source_figure": "S3",
+  "data_kind": "EXPERIMENTAL_MARKERS_EXTRACTED_FROM_VECTOR_FIGURE",
+  "derived_csv_sha256": "e4c6117900e49f96110f7fce0d5b7d185651c6bbfebc9f1087feb51e0435a8d9",
+  "source_artifact_license": "CC BY-NC 4.0; source PDF not redistributed",
+  "attribution": "Primary supporting-material Figure S3; derived factual marker coordinates, not fitted-line samples",
+  "reported_pressure_basis": "Reported MPa; absolute/gauge reference not explicitly established by the retrieved supplement",
+  "measurement_uncertainty": "Not supplied in the retrieved supporting material",
+  "phase_basis": "Methane-water-large-guest systems identified as structure H by the source; complete fluid compositions and phase basis require main-article review",
+  "systems": {
+    "ICP": {
+      "large_guest": "iodocyclopentane",
+      "number_of_points": 7
+    },
+    "ClCHP": {
+      "large_guest": "chlorocycloheptane",
+      "number_of_points": 6
+    },
+    "BrCHP": {
+      "large_guest": "bromocycloheptane",
+      "number_of_points": 5
+    },
+    "t14DClCH": {
+      "large_guest": "trans-1,4-dichlorocyclohexane",
+      "number_of_points": 6
+    }
+  },
+  "vector_extraction": {
+    "axes_pdf_pt": {
+      "left": 210.1625213623047,
+      "right": 419.4969177246094,
+      "top": 117.73756408691406,
+      "bottom": 340.48748779296875
+    },
+    "inverse_temperature_bounds_K_inverse": [
+      0.00345,
+      0.00365
+    ],
+    "reported_pressure_bounds_MPa": [
+      1,
+      10
+    ],
+    "pressure_scale": "log10",
+    "legend_exclusion_rectangle_pdf_pt": [
+      220,
+      270,
+      290,
+      330
+    ],
+    "marker_colors_rgb": {
+      "ICP": [
+        0,
+        0.501960813999176,
+        0.06666667014360428
+      ],
+      "ClCHP": [
+        0,
+        0,
+        0
+      ],
+      "BrCHP": [
+        1,
+        0.027450980618596077,
+        0.019592585042119026
+      ],
+      "t14DClCH": [
+        0,
+        0,
+        0.8313573002815247
+      ]
+    },
+    "precision_note": "Full-precision extracted coordinates aid reproduction; they do not imply measured temperature/pressure precision",
+    "conservative_coordinate_sensitivity_pt": 0.253125
+  },
+  "qualification": {
+    "component_parameters_available": false,
+    "independent_study_holdout_available": false,
+    "COMP_insertion_permitted": false
+  }
+}
