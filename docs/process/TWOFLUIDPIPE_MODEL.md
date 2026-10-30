@@ -50,6 +50,26 @@ Later sections preserve earlier measurements to explain the repair history.
 Read those results with their stated configuration and revision; they are not
 additional claims about the current defaults or released experimental accuracy.
 
+### Opt-in static local geometry reference
+
+A cell-average holdup-derived level is not necessarily its maximum local depth.
+`TwoFluidSection.getHydrostaticCellGeometry()` reconstructs a horizontal plane
+inside one straight finite-volume cell while preserving its existing total liquid
+volume. The immutable result reports end/min/max normal depths, interface and
+liquid-wall areas, minimum gas cross-section and volume residual in SI units.
+The implementation is in the existing `GeometryCalculator`; no extra solver,
+state owner, runtime switch or default closure update is introduced.
+
+This read-only query is a static geometric reference, not a prediction of an
+arbitrary moving interface, stable pool, oil/water layering, gas-flow capacity or
+finite-rate evaporation. It does not alter holdup, conservative inventories,
+friction or transfer area used by the transient solver. Neighboring cell planes
+need not share one global level. The straight-cell arclength abstraction excludes
+capillarity and curved-pipe volume corrections. Invalid/near-vertical or
+unresolvable cases fail explicitly. See the
+[reporting guide](../wiki/two_fluid_reporting_and_validation#static-subcell-depth-and-area-diagnostic)
+for units, supported limits and executable regression evidence.
+
 ## Overview
 
 The NeqSim `TwoFluidPipe` model implements a transient two-fluid multiphase flow solver for pipeline and riser simulations. It solves phase-resolved gas, hydrocarbon-liquid, and aqueous-liquid conservation equations, enabling prediction of:

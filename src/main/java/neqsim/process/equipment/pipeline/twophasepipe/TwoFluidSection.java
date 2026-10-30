@@ -291,6 +291,23 @@ public class TwoFluidSection extends PipeSection {
   }
 
   /**
+   * Get an opt-in static horizontal-surface reconstruction of this cell's total liquid volume.
+   *
+   * <p>
+   * This read-only diagnostic changes no inventory, closure geometry or solver state. It assumes one straight cell and
+   * a hydrostatic horizontal surface. It is not an inference of the actual interface in a moving, annular, dispersed or
+   * separate oil/water flow.
+   * </p>
+   *
+   * @return immutable local depth and area diagnostic in SI units
+   * @throws IllegalArgumentException if the cell geometry or volume cannot be reconstructed
+   */
+  public GeometryCalculator.HydrostaticCellGeometry getHydrostaticCellGeometry() {
+    return new GeometryCalculator().calculateHydrostaticCell(getLiquidHoldup(), getDiameter(), getLength(),
+        getInclination());
+  }
+
+  /**
    * Update stratified flow geometry based on current liquid holdup.
    */
   public void updateStratifiedGeometry() {

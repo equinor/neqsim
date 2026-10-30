@@ -24,6 +24,44 @@ The recommended production workflow is:
 5. If available, compare against traceable experimental, field, or external-simulator data using
    the benchmark harness. Keep model-to-model checks distinct from experimental validation.
 
+## Static subcell depth and area diagnostic
+
+`TwoFluidSection.getStratifiedLiquidLevel()` describes the circular segment inferred
+from **cell-average** total liquid holdup. On inclined terrain that value need not
+resolve the deepest part of a cell or its smallest gas cross-section.
+
+For an explicitly assumed horizontal surface inside a straight cell, use
+`section.getHydrostaticCellGeometry()` or
+`new GeometryCalculator().calculateHydrostaticCell(holdup, diameter, length, inclination)`.
+The immutable result exposes start/end and min/max normal depth (m), integrated
+liquid volume (m3), horizontal interface and liquid-wall areas (m2), minimum gas
+cross-section (m2), and relative volume residual. Length is pipe arclength;
+inclination is in radians. The result integrates partial dry/full cross-sections,
+rather than interpreting midpoint depth as a cell volume.
+
+This query preserves the supplied total liquid volume and changes no solver state
+or ordinary flow-closure geometry. Exactly empty/full cells have zero interfacial
+area. Invalid inputs, near-vertical cells (cosine below 1e-8), overflow and
+unresolvable trace volumes throw `IllegalArgumentException`; no inventory is repaired.
+
+The horizontal-plane assumption is a **static geometric reference**. It is not a
+reconstruction of an arbitrary moving, annular or dispersed interface, a gas-flow
+capacity calculation, an oil/water-layer model, or an evaporation closure. Local
+horizontal planes in neighboring cells need not have the same global elevation.
+Do not use these areas for predictive transfer rates without qualifying that
+physical assumption and the separate heat/mass-transfer model. Curved-pipe volume
+Jacobian corrections, capillarity and wall roughness are excluded.
+
+The new `HydrostaticCellGeometryTest` checks independent axial quadrature,
+horizontal and signed-slope limits, partition consistency, positive trace volume,
+exact absence/fullness, serialization and unchanged conservative/closure state.
+Rich-gas geometry qualification is tracked in [#3298](https://github.com/equinor/neqsim/issues/3298),
+with boundary/retention work in [#4674](https://github.com/equinor/neqsim/issues/4674)
+and physical hydrocarbon rates in [#4675](https://github.com/equinor/neqsim/issues/4675).
+These tests do not establish stable transient pools or predictive depletion times.
+The [public static qualification inputs and independent generator](../../src/test/resources/neqsim/process/pipeline/hydrostatic-cell/README.md)
+retain 3060 cell references, fixed tolerances, provenance and mesh tables.
+
 ## Steady-state profile reporting
 
 After `pipe.run()`, the following methods provide one value per pipe section:

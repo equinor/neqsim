@@ -171,3 +171,14 @@ The five-stage evidence chain is recorded in issue
 
 Open or draft work is not a released capability. Confirm the target release contains the referenced
 implementation before using its row.
+
+## Static subcell geometry diagnostic
+
+`GeometryCalculator.calculateHydrostaticCell` and the read-only section accessor
+are numerically verified static geometry references. `HydrostaticCellGeometryTest`
+checks independent volume/area quadrature, exact empty/full cells, horizontal and
+signed-slope limits, partition consistency, serialization and unchanged state.
+They are not a flowing-interface closure, stable-gravity-pool validation or a
+physical hydrocarbon evaporation-rate model. The existing cell-average closure
+geometry and transient solver remain the numerical owners. See the
+[reporting contract](../wiki/two_fluid_reporting_and_validation#static-subcell-depth-and-area-diagnostic).
