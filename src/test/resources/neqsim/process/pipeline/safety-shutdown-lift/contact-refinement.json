@@ -1,0 +1,17 @@
+[
+  {
+    "dt_s": 0.001,
+    "contactTime_s": 0.04422611077089289,
+    "continuousTimeError_s": 4.952487791029039E-4
+  },
+  {
+    "dt_s": 5.0E-4,
+    "contactTime_s": 0.04447220505424425,
+    "continuousTimeError_s": 2.491544957515454E-4
+  },
+  {
+    "dt_s": 2.5E-4,
+    "contactTime_s": 0.044596699980086564,
+    "continuousTimeError_s": 1.246595699092301E-4
+  }
+]

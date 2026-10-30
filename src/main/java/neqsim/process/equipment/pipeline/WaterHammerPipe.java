@@ -185,6 +185,22 @@ public class WaterHammerPipe extends Pipeline {
   private AcousticValveBoundary valveBoundary;
   /** Optional detached forward pump characteristic. */
   private AcousticPumpBoundary pumpBoundary;
+  /** Optional ideal translating check-valve parameters. */
+  private AcousticLiftCheckValve liftCheckValve;
+  /** Accepted translating position, m. */
+  private double liftPosition;
+  /** Accepted translating velocity, m/s. */
+  private double liftVelocity;
+  /** Initial mechanical storage, J. */
+  private double initialLiftEnergy;
+  /** Accepted work, orifice, damping, numerical and impact integrals, J. */
+  private double[] liftEnergy = new double[5];
+  /** Accepted contact count. */
+  private long liftContactCount;
+  /** Last accepted contact time, s, or NaN before contact. */
+  private double lastLiftContactTime = Double.NaN;
+  /** Deep-owned internal histories: time, lift, velocity, work/losses, jet and swept flow. */
+  private List<double[]> liftHistory = new ArrayList<>();
   /** Accepted hydraulic pump work, J; excludes shaft and thermal energy. */
   private double pumpHydraulicWork;
 
@@ -602,8 +618,8 @@ public class WaterHammerPipe extends Pipeline {
    * @param opening Valve opening (0-1)
    */
   public void setValveOpening(double opening) {
-    if (valveBoundary != null) {
-      throw new IllegalStateException("Actual travel is prescribed by the acoustic valve boundary");
+    if (valveBoundary != null || liftCheckValve != null) {
+      throw new IllegalStateException("Actual travel belongs to the configured acoustic valve boundary");
     }
     if (!Double.isFinite(opening)) {
       throw new IllegalArgumentException("Valve opening must be finite");
@@ -626,6 +642,9 @@ public class WaterHammerPipe extends Pipeline {
    * @param boundary immutable boundary, or null to restore calibrated linear legacy mode
    */
   public void setValveBoundary(AcousticValveBoundary boundary) {
+    if (boundary != null && liftCheckValve != null) {
+      throw new IllegalArgumentException("Prescribed travel and self-actuating lift are mutually exclusive");
+    }
     if (valveBoundary != boundary) {
       valveBoundary = boundary;
       configurationVersion++;
@@ -672,6 +691,237 @@ public class WaterHammerPipe extends Pipeline {
    */
   public double getPumpHydraulicWork() {
     return pumpHydraulicWork;
+  }
+
+  /**
+   * Install an ideal translating/inelastic check valve; call run() to initialize static force/flow balance.
+   *
+   * @param boundary immutable declared parameters, or null to restore legacy downstream mode
+   */
+  public void setLiftCheckValve(AcousticLiftCheckValve boundary) {
+    if (boundary != null && valveBoundary != null) {
+      throw new IllegalArgumentException("Prescribed travel and self-actuating lift are mutually exclusive");
+    }
+    if (boundary != liftCheckValve) {
+      liftCheckValve = boundary;
+      configurationVersion++;
+      if (boundary != null) {
+        valveOpening = boundary.getInitialLift() / boundary.getMaximumLift();
+      }
+    }
+  }
+
+  /**
+   * Get the configured translating parameters.
+   *
+   * @return immutable parameters, or null in other modes
+   */
+  public AcousticLiftCheckValve getLiftCheckValve() {
+    return liftCheckValve;
+  }
+
+  /**
+   * Get accepted translating position.
+   *
+   * @return lift, m
+   */
+  public double getLiftPosition() {
+    return liftPosition;
+  }
+
+  /**
+   * Get accepted translating velocity after any inelastic contact.
+   *
+   * @return velocity, m/s
+   */
+  public double getLiftVelocity() {
+    return liftVelocity;
+  }
+
+  /**
+   * Get accepted mechanical storage, zero at the stationary seat.
+   *
+   * @return kinetic plus spring/preload energy, J
+   */
+  public double getLiftMechanicalEnergy() {
+    return liftCheckValve == null ? 0.0 : liftCheckValve.energy(liftPosition, liftVelocity);
+  }
+
+  /**
+   * Get pressure-difference work including jet and swept flow, not full EOS/shaft work.
+   *
+   * @return cumulative signed pressure work, J
+   */
+  public double getLiftPressureWork() {
+    return liftCheckValve == null ? 0.0 : liftEnergy[0];
+  }
+
+  /**
+   * Get passive signed-orifice dissipation.
+   *
+   * @return cumulative orifice loss, J
+   */
+  public double getLiftOrificeLoss() {
+    return liftCheckValve == null ? 0.0 : liftEnergy[1];
+  }
+
+  /**
+   * Get physical viscous damping loss.
+   *
+   * @return cumulative damping loss, J
+   */
+  public double getLiftDampingLoss() {
+    return liftCheckValve == null ? 0.0 : liftEnergy[2];
+  }
+
+  /**
+   * Get explicit backward-Euler algorithmic loss, separate from physical damping.
+   *
+   * @return cumulative numerical loss, J
+   */
+  public double getLiftNumericalLoss() {
+    return liftCheckValve == null ? 0.0 : liftEnergy[3];
+  }
+
+  /**
+   * Get perfectly inelastic kinetic-energy loss at seat and upper stop.
+   *
+   * @return cumulative impact loss, J
+   */
+  public double getLiftImpactLoss() {
+    return liftCheckValve == null ? 0.0 : liftEnergy[4];
+  }
+
+  /**
+   * Get pressure work less orifice loss, storage change and all declared losses.
+   *
+   * @return discrete boundary/mechanical energy residual, J, not full pipe EOS energy
+   */
+  public double getLiftEnergyResidual() {
+    if (liftCheckValve == null) {
+      return 0.0;
+    }
+    return liftEnergy[0] - liftEnergy[1] - (getLiftMechanicalEnergy() - initialLiftEnergy) - liftEnergy[2]
+        - liftEnergy[3] - liftEnergy[4];
+  }
+
+  /**
+   * Get the accepted perfectly inelastic contact count.
+   *
+   * @return seat and upper-stop contacts
+   */
+  public long getLiftContactCount() {
+    return liftContactCount;
+  }
+
+  /**
+   * Get the last accepted discrete contact time.
+   *
+   * @return time, s, or NaN before any contact
+   */
+  public double getLastLiftContactTime() {
+    return liftCheckValve == null ? Double.NaN : lastLiftContactTime;
+  }
+
+  /**
+   * Get defensive internal lift histories synchronized with accepted pipe intervals. Columns are time_s, lift_m,
+   * velocity_m_s, pressureWork_J, orificeLoss_J, dampingLoss_J, numericalLoss_J, impactLoss_J, jetFlow_m3_s,
+   * sweptFlow_m3_s, pressureDifference_Pa, contactEvent (one for contact, zero otherwise). Contact/restart can add
+   * samples between external requests.
+   *
+   * @return deep copy of accepted rows, excluding initialization
+   */
+  public List<double[]> getLiftHistory() {
+    List<double[]> copy = new ArrayList<>();
+    if (liftHistory != null) {
+      for (double[] row : liftHistory) {
+        copy.add(row.clone());
+      }
+    }
+    return copy;
+  }
+
+  /**
+   * Advance a complete request with Courant limits, existing pump knots and localized discrete lift contact.
+   *
+   * @param requestedEnd exact requested physical endpoint, s
+   */
+  private void advanceLiftRequest(double requestedEnd) {
+    int intervals = 0;
+    while (currentTime < requestedEnd) {
+      if (++intervals > 1000000) {
+        throw new IllegalStateException("Lift interval count exceeds bounded acoustic substepping");
+      }
+      double end = Math.min(requestedEnd, currentTime + getMaxStableTimeStep());
+      if (pumpBoundary != null) {
+        end = Math.min(end, pumpBoundary.nextKnotAfter(currentTime));
+      }
+      double drive = fluidDensity * GRAVITY
+          * cellCharacteristic(cellHead, cellFlow, cellHead.length - 1, numberOfNodes - 1, 1)
+          - valveBackPressureBara * 1e5;
+      try {
+        AcousticLiftCheckValve.Step tentative = liftCheckValve.step(drive,
+            fluidDensity * GRAVITY * characteristicImpedance, fluidDensity, liftPosition, liftVelocity,
+            end - currentTime);
+        if (tentative.duration < end - currentTime) {
+          end = currentTime + tentative.duration;
+        }
+        if (end <= currentTime) {
+          throw new IllegalStateException("Lift contact cannot advance representable physical time");
+        }
+        advanceAcoustics(tentative.duration, end, tentative);
+      } catch (IllegalArgumentException | IllegalStateException failure) {
+        throw new IllegalStateException(
+            "Acoustic lift interval [" + currentTime + ", " + end + "] s not accepted: " + failure.getMessage(),
+            failure);
+      }
+      currentTime = end;
+    }
+  }
+
+  /**
+   * Evaluate a compatible instantaneous lift trace without changing the disc state.
+   *
+   * @param cp incoming pressure-head characteristic, m
+   * @param position accepted position, m
+   * @param velocity accepted velocity, m/s
+   * @param heads destination face heads, m
+   * @param flows destination face flows, m3/s
+   */
+  private void applyLiftTrace(double cp, double position, double velocity, double[] heads, double[] flows) {
+    double receiver = valveBackPressureBara * 1e5;
+    double pressure = liftCheckValve.tracePressure(fluidDensity * GRAVITY * cp - receiver,
+        fluidDensity * GRAVITY * characteristicImpedance, fluidDensity, position, velocity);
+    int last = numberOfNodes - 1;
+    heads[last] = (receiver + pressure) / (fluidDensity * GRAVITY);
+    flows[last] = liftCheckValve.jetFlow(position, pressure, fluidDensity) + liftCheckValve.sweptFlow(velocity);
+  }
+
+  /**
+   * Validate candidate boundary energy/work before committing any hydraulic or disc state.
+   *
+   * @param step tentative physical interval
+   * @return candidate cumulative work/loss integrals, J
+   */
+  private double[] tentativeLiftEnergy(AcousticLiftCheckValve.Step step) {
+    double work = step.duration * step.pressure * (step.jetFlow + step.sweptFlow);
+    double orifice = step.duration * step.pressure * step.jetFlow;
+    double[] increments = {work, orifice, step.dampingLoss, step.numericalLoss, step.impactLoss};
+    double[] candidate = new double[5];
+    for (int i = 0; i < candidate.length; i++) {
+      candidate[i] = liftEnergy[i] + increments[i];
+      if (!Double.isFinite(candidate[i]) || (i > 0 && increments[i] < 0.0)) {
+        throw new IllegalStateException("Invalid lift work/loss; interval not accepted");
+      }
+    }
+    double change = liftCheckValve.energy(step.lift, step.velocity) - getLiftMechanicalEnergy();
+    double residual = work - orifice - change - step.dampingLoss - step.numericalLoss - step.impactLoss;
+    double scale = Math.abs(work) + Math.abs(orifice) + Math.abs(change) + step.dampingLoss + step.numericalLoss
+        + step.impactLoss;
+    if (!Double.isFinite(residual) || Math.abs(residual) > 1e-10 + 1e-12 * scale) {
+      throw new IllegalStateException("Lift discrete work identity unresolved; interval not accepted");
+    }
+    return candidate;
   }
 
   /**
@@ -871,6 +1121,13 @@ public class WaterHammerPipe extends Pipeline {
     minPressureEnvelope = new double[numberOfNodes];
     pressureHistory = new ArrayList<>();
     timeHistory = new ArrayList<>();
+    liftPosition = liftCheckValve == null ? 0.0 : liftCheckValve.getInitialLift();
+    liftVelocity = 0.0;
+    initialLiftEnergy = liftCheckValve == null ? 0.0 : liftCheckValve.energy(liftPosition, 0.0);
+    liftEnergy = new double[5];
+    liftHistory = new ArrayList<>();
+    liftContactCount = 0L;
+    lastLiftContactTime = Double.NaN;
 
     // Get fluid properties from inlet stream
     SystemInterface system = inStream.getThermoSystem().clone();
@@ -878,9 +1135,9 @@ public class WaterHammerPipe extends Pipeline {
     if (system.getNumberOfPhases() != 1) {
       throw new IllegalArgumentException("WaterHammerPipe requires a single-phase inlet");
     }
-    if ((valveBoundary != null || pumpBoundary != null)
+    if ((valveBoundary != null || pumpBoundary != null || liftCheckValve != null)
         && !neqsim.thermo.phase.StateOfMatter.isLiquid(system.getPhase(0).getType())) {
-      throw new IllegalArgumentException("Physical Kv/pump boundary requires a single liquid phase");
+      throw new IllegalArgumentException("Physical acoustic boundary requires a single liquid phase");
     }
 
     fluidDensity = system.getDensity("kg/m3");
@@ -963,8 +1220,8 @@ public class WaterHammerPipe extends Pipeline {
     downstreamHead = head[numberOfNodes - 1];
 
     // Calibrate the hydraulic coefficient against the actual external receiver.
-    if (valveBoundary != null && downstreamBoundary != BoundaryType.VALVE) {
-      throw new IllegalArgumentException("Prescribed acoustic valve requires downstream boundary VALVE");
+    if ((valveBoundary != null || liftCheckValve != null) && downstreamBoundary != BoundaryType.VALVE) {
+      throw new IllegalArgumentException("Configured physical acoustic valve requires downstream boundary VALVE");
     }
     if (downstreamBoundary == BoundaryType.VALVE) {
       if (valveBoundary != null) {
@@ -974,7 +1231,10 @@ public class WaterHammerPipe extends Pipeline {
       if (volumeFlow <= 0.0 || deltaH <= 0.0) {
         throw new IllegalArgumentException("Initialize a forward-flow open valve above receiver pressure");
       }
-      if (valveBoundary == null) {
+      if (liftCheckValve != null) {
+        liftCheckValve.validateInitial(deltaH * fluidDensity * GRAVITY, volumeFlow, fluidDensity);
+        valveOpening = liftPosition / liftCheckValve.getMaximumLift();
+      } else if (valveBoundary == null) {
         if (valveOpening <= 0.0) {
           throw new IllegalArgumentException("Initialize an open legacy valve");
         }
@@ -1013,8 +1273,8 @@ public class WaterHammerPipe extends Pipeline {
   public void runTransient(double dt, UUID id) {
     requirePositive(dt, "timestep");
     validatePumpMode();
-    if (valveBoundary != null && downstreamBoundary != BoundaryType.VALVE) {
-      throw new IllegalStateException("Prescribed acoustic valve requires downstream boundary VALVE");
+    if ((valveBoundary != null || liftCheckValve != null) && downstreamBoundary != BoundaryType.VALVE) {
+      throw new IllegalStateException("Configured physical acoustic valve requires downstream boundary VALVE");
     }
     if (!initialized) {
       initialize();
@@ -1028,6 +1288,12 @@ public class WaterHammerPipe extends Pipeline {
     double count = Math.ceil(dt / getMaxStableTimeStep());
     if (!Double.isFinite(requestedEnd) || requestedEnd <= currentTime || count > 1000000.0) {
       throw new IllegalArgumentException("Requested interval exceeds bounded acoustic substepping");
+    }
+    if (liftCheckValve != null) {
+      advanceLiftRequest(requestedEnd);
+      updateOutletStream();
+      setCalculationIdentifier(id);
+      return;
     }
     while (currentTime < requestedEnd) {
       boolean prescribed = valveBoundary != null || pumpBoundary != null;
@@ -1063,8 +1329,27 @@ public class WaterHammerPipe extends Pipeline {
    * @param endpoint exact physical endpoint for prescribed boundary evaluation, seconds
    */
   private void advanceAcoustics(double dt, double endpoint) {
+    advanceAcoustics(dt, endpoint, null);
+  }
+
+  /**
+   * Advance cells and an optional tentative lift state as one locally accepted physical interval.
+   *
+   * @param dt accepted interval duration, s
+   * @param endpoint accepted endpoint, s
+   * @param lift tentative translating state, or null for legacy modes
+   */
+  private void advanceAcoustics(double dt, double endpoint, AcousticLiftCheckValve.Step lift) {
     // Each shared Riemann trace is the flux for both adjoining physical cells.
     acousticFaces(cellHead, cellFlow, endpoint, faceHead, faceFlow);
+    if (lift != null) {
+      int last = numberOfNodes - 1;
+      faceHead[last] = (valveBackPressureBara * 1e5 + lift.pressure) / (fluidDensity * GRAVITY);
+      faceFlow[last] = lift.jetFlow + lift.sweptFlow;
+      if (!Double.isFinite(faceHead[last]) || faceHead[last] <= 0.0) {
+        throw new IllegalStateException("Invalid lift interval pressure; interval not accepted");
+      }
+    }
     double source = dt * frictionFactor / (2.0 * diameter * area);
     double signedReference = referenceFlow * Math.abs(referenceFlow);
     double frictionSum = 0.0;
@@ -1087,6 +1372,10 @@ public class WaterHammerPipe extends Pipeline {
     }
     // Validate the new endpoint before committing any state, inventory or history.
     acousticFaces(trialHead, trialFlow, endpoint, traceHead, traceFlow);
+    if (lift != null) {
+      applyLiftTrace(cellCharacteristic(trialHead, trialFlow, trialHead.length - 1, numberOfNodes - 1, 1), lift.lift,
+          lift.velocity, traceHead, traceFlow);
+    }
     for (int i = 0; i < numberOfNodes; i++) {
       if (!Double.isFinite(traceHead[i]) || traceHead[i] <= 0.0 || !Double.isFinite(traceFlow[i])) {
         throw new IllegalStateException("Invalid acoustic endpoint trace; interval not accepted");
@@ -1097,6 +1386,7 @@ public class WaterHammerPipe extends Pipeline {
     if (!Double.isFinite(pumpWork) || !Double.isFinite(pumpHydraulicWork + pumpWork)) {
       throw new IllegalStateException("Nonfinite pump hydraulic work; interval not accepted");
     }
+    double[] nextLiftEnergy = lift == null ? null : tentativeLiftEnergy(lift);
     System.arraycopy(trialHead, 0, cellHead, 0, cellHead.length);
     System.arraycopy(trialFlow, 0, cellFlow, 0, cellFlow.length);
     System.arraycopy(traceHead, 0, head, 0, numberOfNodes);
@@ -1107,7 +1397,18 @@ public class WaterHammerPipe extends Pipeline {
     pressureImpulse += dt * fluidDensity * GRAVITY * area * (faceHead[0] - faceHead[numberOfNodes - 1]);
     gravityImpulse -= dt * fluidDensity * GRAVITY * area * elevationChange;
     frictionImpulse -= dt * fluidDensity * frictionFactor * segmentLength / (2.0 * diameter * area) * frictionSum;
-    if (valveBoundary != null) {
+    if (lift != null) {
+      liftPosition = lift.lift;
+      liftVelocity = lift.velocity;
+      liftEnergy = nextLiftEnergy;
+      valveOpening = liftPosition / liftCheckValve.getMaximumLift();
+      if (lift.contact) {
+        liftContactCount++;
+        lastLiftContactTime = endpoint;
+      }
+      liftHistory.add(new double[] {endpoint, liftPosition, liftVelocity, liftEnergy[0], liftEnergy[1], liftEnergy[2],
+          liftEnergy[3], liftEnergy[4], lift.jetFlow, lift.sweptFlow, lift.pressure, lift.contact ? 1.0 : 0.0});
+    } else if (valveBoundary != null) {
       valveOpening = valveBoundary.getOpening(endpoint);
     }
 
@@ -1221,6 +1522,10 @@ public class WaterHammerPipe extends Pipeline {
       heads[i] = cp - characteristicImpedance * flows[i];
       break;
     case VALVE:
+      if (liftCheckValve != null) {
+        applyLiftTrace(cp, liftPosition, liftVelocity, heads, flows);
+        break;
+      }
       if (valveBoundary == null && valveCv < 0.0) {
         throw new IllegalStateException("Initialize the valve boundary before transient execution");
       }
