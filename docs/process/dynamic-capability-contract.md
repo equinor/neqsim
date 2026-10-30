@@ -788,3 +788,19 @@ families other than the concrete pressure transmitter remain on that legacy path
 must be registered in the process measurement list to participate in the shared scan. Sample delay is a discrete scan
 delay, not a continuous transport delay. Noise and fault parameters remain study inputs; this contract does not validate
 vendor response data, alarm settings, detector coverage, control tuning, SIL, voting, independence or safety approval.
+
+### Optional forward acoustic pump inlet
+
+`WaterHammerPipe` can use `AcousticPumpBoundary` with upstream `PUMP` for a
+single-liquid, positive-speed, forward-curve calculation. It reuses the existing
+pipe clock and conservative cells; it adds no scheduler, topology, pump driver
+or process coordinator. Actual-speed knots and physical valve knots localize
+that same step. The immutable optional boundary and hydraulic-work ledger
+survive Java restart. Replacing the boundary requires explicit reinitialization.
+
+See the [physical/numerical contract and public evidence](../wiki/water_hammer_implementation.md#safety-shutdown-forward-pump-coastdown).
+This additive capability does not change the equipment's dynamic classification,
+qualify complete pump trips/slam or satisfy exact-once coordinator identities.
+Rejected internal intervals preserve accepted pipe state; a full request is not
+an atomic global transaction. Full EOS/shaft energy, stopped/reverse operation,
+cavity formation and integrated Safety Shutdown remain `NOT_EVALUATED`.

@@ -12,6 +12,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.pipeline.WaterHammerPipe;
 import neqsim.process.equipment.pipeline.AcousticValveBoundary;
+import neqsim.process.equipment.pipeline.AcousticPumpBoundary;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
@@ -113,6 +114,11 @@ public final class WaterHammerStudy {
     JsonArray sampledValveOpening = new JsonArray();
     JsonArray sampledKv = new JsonArray();
     JsonArray sampledFlow = new JsonArray();
+    JsonArray sampledPumpSpeed = new JsonArray();
+    JsonArray sampledInletFlow = new JsonArray();
+    JsonArray sampledInletPressure = new JsonArray();
+    JsonArray sampledPumpWork = new JsonArray();
+    addPumpSample(pipe, sampledPumpSpeed, sampledInletFlow, sampledInletPressure, sampledPumpWork);
     if (pipe.getValveBoundary() != null) {
       sampledKv.add(pipe.getEffectiveValveKv());
       sampledFlow.add(last(pipe.getFlowProfile()));
@@ -124,8 +130,16 @@ public final class WaterHammerStudy {
       double previousTime = (step - 1) * timeStep;
       double time = Math.min(step * timeStep, simulationTime);
       applyValveEvents(pipe, events, time);
-      pipe.runTransient(time - previousTime, id);
+      try {
+        pipe.runTransient(time - previousTime, id);
+      } catch (IllegalStateException exception) {
+        if (pipe.getPumpBoundary() == null) {
+          throw exception;
+        }
+        return failedPumpStudy(input, pipe, time, exception);
+      }
       if (step % sampleInterval == 0 || step == numberOfSteps) {
+        addPumpSample(pipe, sampledPumpSpeed, sampledInletFlow, sampledInletPressure, sampledPumpWork);
         addSample(sampledTime, sampledOutletPressure, sampledValveOpening, time, last(pipe.getPressureProfile("bar")),
             pipe.getValveOpening());
         if (pipe.getValveBoundary() != null) {
@@ -144,6 +158,17 @@ public final class WaterHammerStudy {
     result.add("keyResults",
         buildKeyResults(input, pipe, initialOutletPressureBar, initialVelocity, timeStep, simulationTime));
     result.add("timeSeries", buildTimeSeries(sampledTime, sampledOutletPressure, sampledValveOpening));
+    if (pipe.getPumpBoundary() != null) {
+      JsonObject series = result.getAsJsonObject("timeSeries");
+      series.add("actualPumpSpeed_rpm", sampledPumpSpeed);
+      series.add("inletFlow_m3_s", sampledInletFlow);
+      series.add("inletPressure_bara", sampledInletPressure);
+      series.add("pumpHydraulicWork_J", sampledPumpWork);
+      result.getAsJsonObject("inputSummary").add("pumpBoundary", input.get("pumpBoundary").deepCopy());
+      warnings.add("Forward-only prescribed-speed pump curve: no stopped/reverse pump, shaft inertia, suction-line "
+          + "storage, fluid corrections, cavitation or check-valve slam qualification. Endpoint-held hydraulic work "
+          + "is not shaft/EOS energy closure. Refine space/time and qualify actual data independently.");
+    }
     if (pipe.getValveBoundary() != null) {
       result.getAsJsonObject("timeSeries").add("effectiveValveKv", sampledKv);
       result.getAsJsonObject("timeSeries").add("outletFlow_m3_s", sampledFlow);
@@ -166,7 +191,7 @@ public final class WaterHammerStudy {
     cells.add("flow_m3_s", toJsonArray(pipe.getCellFlowProfile()));
     result.add("finalCellState", cells);
     result.add("validation", buildValidation(input, pipe, warnings));
-    if (pipe.getValveBoundary() != null) {
+    if (pipe.getValveBoundary() != null || pipe.getPumpBoundary() != null) {
       result.getAsJsonObject("validation").addProperty("safetyShutdownQualification", "NOT_EVALUATED");
     }
     result.add("sourceReferences", getSourceReferences(input, geometry));
@@ -174,6 +199,75 @@ public final class WaterHammerStudy {
     result.addProperty("screeningLimitations",
         "Equivalent single-line acoustic model. Validate high-risk cases with detailed surge "
             + "software, vendor valve curves, support loads, and as-built isometrics.");
+    return result;
+  }
+
+  /**
+   * Append synchronized pump data at an existing study sample; no independent sample clock is introduced.
+   *
+   * @param pipe current acoustic pipe
+   * @param speed actual speed samples, rpm
+   * @param flow inlet actual flow samples, m3/s
+   * @param pressure inlet absolute pressure samples, bara
+   * @param work cumulative accepted hydraulic work samples, J
+   */
+  private static void addPumpSample(WaterHammerPipe pipe, JsonArray speed, JsonArray flow, JsonArray pressure,
+      JsonArray work) {
+    if (pipe.getPumpBoundary() != null) {
+      speed.add(pipe.getPumpBoundary().getSpeed(pipe.getCurrentTime()));
+      flow.add(pipe.getFlowProfile()[0]);
+      pressure.add(pipe.getPressureProfile()[0] / 1.0e5);
+      work.add(pipe.getPumpHydraulicWork());
+    }
+  }
+
+  /**
+   * Preserve rejected pump-domain evidence and every accepted internal outlet sample instead of returning success for a
+   * truncated trip. This reports local acceptance, not a global transaction rollback.
+   *
+   * @param input original public input
+   * @param pipe last accepted acoustic state
+   * @param requestedEnd rejected external request endpoint, s
+   * @param failure interval failure with physical endpoint in its message
+   * @return explicit error with partial accepted state and unqualified physics flags
+   */
+  private static JsonObject failedPumpStudy(JsonObject input, WaterHammerPipe pipe, double requestedEnd,
+      IllegalStateException failure) {
+    JsonObject result = new JsonObject();
+    result.addProperty("status", "error");
+    result.addProperty("studyName", getString(input, "studyName", "Safety Shutdown forward pump coastdown"));
+    result.addProperty("message", failure.getMessage());
+    result.addProperty("requestedEnd_s", requestedEnd);
+    result.addProperty("lastAcceptedTime_s", pipe.getCurrentTime());
+    result.add("input", input.deepCopy());
+    JsonArray time = new JsonArray();
+    JsonArray pressure = new JsonArray();
+    for (int i = 0; i < pipe.getTimeHistory().size(); i++) {
+      time.add(pipe.getTimeHistory().get(i));
+      pressure.add(pipe.getPressureHistory().get(i));
+    }
+    result.add("acceptedInternalTime_s", time);
+    result.add("acceptedOutletPressure_Pa", pressure);
+    JsonObject state = new JsonObject();
+    state.addProperty("basis", "PHYSICAL_CELL_MEANS");
+    state.addProperty("cellWidth_m", pipe.getLength() / (pipe.getNumberOfNodes() - 1));
+    state.addProperty("frozenDensity_kg_m3", pipe.getInletStream().getThermoSystem().getDensity("kg/m3"));
+    state.add("pressure_Pa", toJsonArray(pipe.getCellPressureProfile()));
+    state.add("flow_m3_s", toJsonArray(pipe.getCellFlowProfile()));
+    state.addProperty("pumpHydraulicWork_J", pipe.getPumpHydraulicWork());
+    state.addProperty("integratedInletVolume_m3", pipe.getIntegratedInletVolume());
+    state.addProperty("integratedOutletVolume_m3", pipe.getIntegratedOutletVolume());
+    state.addProperty("acousticVolumeResidual_m3", pipe.getAcousticVolumeResidual());
+    state.addProperty("momentumResidual_kg_m_s", pipe.getMomentumResidual());
+    result.add("lastAcceptedState", state);
+    JsonObject validation = new JsonObject();
+    validation.addProperty("requestedInterval", "FAIL");
+    validation.addProperty("fullTripAndSlam", "NOT_EVALUATED");
+    validation.addProperty("safetyShutdownQualification", "NOT_EVALUATED");
+    validation.addProperty("physicalConservation", "NOT_EVALUATED");
+    result.add("validation", validation);
+    result.addProperty("remediation", "Qualify a signed/stopped pump/check-valve continuation or restrict the declared "
+        + "study to its valid forward domain. Earlier accepted substeps remain accepted; this is not global rollback.");
     return result;
   }
 
@@ -264,6 +358,15 @@ public final class WaterHammerStudy {
         getDoubleAny(fieldData, getDoubleAny(input, 1.0, "valveBackPressure_bara"), "valveBackPressure_bara"));
     pipe.setValveOpening(getDoubleAny(fieldData, getDoubleAny(input, 1.0, "valveOpening", "initialValveOpening"),
         "valveOpening", "initialValveOpening"));
+    if (input.has("pumpBoundary")) {
+      JsonObject boundary = input.getAsJsonObject("pumpBoundary");
+      pipe.setPumpBoundary(new AcousticPumpBoundary(boundary.get("referenceSpeed_rpm").getAsDouble(),
+          readArray(boundary, "flow_m3_hr"), readArray(boundary, "head"), readArray(boundary, "efficiency_percent"),
+          boundary.get("headUnit").getAsString(), boundary.get("minimumSpeed_rpm").getAsDouble(),
+          boundary.get("maximumSpeed_rpm").getAsDouble(), readArray(boundary, "time_s"),
+          readArray(boundary, "actualSpeed_rpm"), boundary.get("suctionPressure_bara").getAsDouble(),
+          boundary.get("provenance").getAsString()));
+    }
     if (input.has("valveBoundary")) {
       JsonObject boundary = input.getAsJsonObject("valveBoundary");
       pipe.setValveBoundary(

@@ -156,3 +156,6 @@ public final class NeqSimQuickStart {
 - **Source Code**: [github.com/equinor/neqsim](https://github.com/equinor/neqsim)
 - **Issues**: [Report bugs or request features](https://github.com/equinor/neqsim/issues)
 - **Discussions**: [Ask questions](https://github.com/equinor/neqsim/discussions)
+
+- [Safety Shutdown forward pump coastdown](water_hammer_implementation.md#safety-shutdown-forward-pump-coastdown):
+  declared actual speed, curve domain, conservation, hydraulic work and applicability.
