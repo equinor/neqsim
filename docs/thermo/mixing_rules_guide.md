@@ -1098,3 +1098,11 @@ reduction, and asserts all native checks across both component orders and change
 states. It does not qualify multicomponent equilibrium partition. General
 throughput, source/pure-pressure reconciliation,
 light-gas inhibitor partition and independent hydrate accuracy remain open.
+
+
+The same staged fixture also checks native pure-water saturation against14
+independently bracketed roots and IAPWS reference pressures, using the declared
+paired2017 Twu inputs. Both mixing rules, starting pressures and repeated calls
+retain distinct stable roots. This reconciles implementation under the declared
+pure inputs; original-author input reconstruction and mixture accuracy remain open.
+The600K pure point does not qualify mixture extrapolation.

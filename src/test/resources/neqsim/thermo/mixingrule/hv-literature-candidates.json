@@ -673,6 +673,36 @@
       "composition": "Only individual measured solubility endpoints assessed; synthetic feed is not measured feed"
     },
     "native_requalification_base": "8a2438b99b9a2ac03e2d923406d3660cc98a59f8",
-    "timing_base_remains": "9975919e7908fe4ef34bbfeca37055d8883116fa; no new-head timing claim"
+    "timing_base_remains": "9975919e7908fe4ef34bbfeca37055d8883116fa; no new-head timing claim",
+    "native_pure_water_prerequisite": {
+      "reference_receipt": "https://github.com/equinor/neqsim/issues/4576#issuecomment-6494390915",
+      "reference": "IAPWS SR1-86(1992); correlation, not experimental uncertainty",
+      "inputs": "Declared Tc647.096K/Pc220.64bara and paired2017 Twu; exact original author inputs unresolved",
+      "temperatures_K": [
+        274.18,
+        298.15,
+        323.15,
+        353.15,
+        373.15,
+        473.15,
+        600
+      ],
+      "calculations": 112,
+      "retained_endpoint_rows": 56,
+      "numerical_relative_pressure_parity_limit": 5e-08,
+      "diagnostics": {
+        "SRK": {
+          "controls": 28,
+          "AARD_percent": 0.5759076051433284,
+          "max_relative_independent_error": 1.509903313490213e-14
+        },
+        "PR": {
+          "controls": 28,
+          "AARD_percent": 0.5644582854952792,
+          "max_relative_independent_error": 9.547918011776346e-15
+        }
+      },
+      "qualification": "Native declared-input parity only; no physical acceptance tolerance or mixture extrapolation"
+    }
   }
 }

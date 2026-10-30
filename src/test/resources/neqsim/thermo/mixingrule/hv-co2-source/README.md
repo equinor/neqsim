@@ -220,3 +220,32 @@ The runner defaults to4 forks/all3 profiles/all3 scenarios, records source/class
 hashes, and refuses to overwrite an evidence directory. `--plan-only` verifies
 ordering without timing. Restricted `--profiles`, `--scenarios` and `--forks`
 are smoke/subset runs and do not reproduce the full acceptance protocol.
+
+## Native pure-water prerequisite
+
+The additional `declaredPureWaterPressuresMatchIndependentRoots` test uses the
+paired2017 SRK/PR Twu water coefficients with the same declared IAPWS
+Tc647.096K/Pc220.64bara and exact-critical cubic constants as the mixture fixture.
+`pure-water-reference.csv` preserves all14 independent spinodal/bracketed roots
+and IAPWS SR1-86(1992) reference pressures from
+[primary-source receipt6494390915](https://github.com/equinor/neqsim/issues/4576#issuecomment-6494390915).
+Re-executing that receipt's standalone Python reproduces its original CSV
+SHA25617979798ae455238ff4eb38444576c8cdb4584c0314c9500964fdc53245e0384
+before LF canonicalization. Its20 alpha states and two-step differences also pass.
+The IAPWS formulation is a reference correlation, not a new measurement or uncertainty.
+
+Seven temperatures274.18/298.15/323.15/353.15/373.15/473.15/600K are checked
+for both CLASSICAL rule2 and pure-limit rule4, starting at0.1 and100bara,
+with repeated saturation calls:112 calculations,56 retained endpoint rows in
+`pure-water-native.csv`. Assertions require distinct mechanically stable roots,
+pure compositions1e-12, log-fugacity closure1e-8, and the existing pure-saturation
+EOS pressure residual limit5e-7bara. Independent-pressure parity5e-8 relative
+is a numerical comparison, not an IAPWS accuracy tolerance.
+
+Native/reference-root relative differences are below4e-12; native IAPWS pressure
+AARD remains0.575908%SRK/0.564458%PR on this14-state matrix. Thus the native
+implementation reproduces the declared independent pure-water configuration.
+This does not recover the original authors' complete inputs, establish parameter
+uncertainty, qualify mixture accuracy, or explain away the reverse-solubility errors.
+600K is outside the mixture-fit window; no mixture extrapolation or ice/brine
+acceptance follows. Existing measured-data errors and historical timings are unchanged.

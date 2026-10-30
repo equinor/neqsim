@@ -30,6 +30,60 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 class HuronVidalCo2SourceDiagnosticTest {
   /**
+   * Reconciles declared Twu pure-water inputs with independent stable-root and IAPWS diagnostics.
+   *
+   * @throws Exception if input, saturation calculation or report writing fails
+   */
+  @Test
+  void declaredPureWaterPressuresMatchIndependentRoots() throws Exception {
+    List<String> input = Files.readAllLines(Paths.get("src", "test", "resources", "neqsim", "thermo", "mixingrule",
+        "hv-co2-source", "pure-water-reference.csv"), StandardCharsets.UTF_8);
+    List<String> report = new ArrayList<String>();
+    report.add("EOS,T_K,rule,start_bara,native_bara,independent_bara,IAPWS_bara,relative_IAPWS_error");
+    for (int line = 1; line < input.size(); line++) {
+      String[] row = input.get(line).split(",");
+      boolean srk = row[0].equals("SRK");
+      double t = Double.parseDouble(row[1]);
+      double expected = Double.parseDouble(row[2]);
+      double reference = Double.parseDouble(row[3]);
+      for (int rule : new int[] {2, 4}) {
+        for (double start : new double[] {.1, 100.0}) {
+          SystemInterface fluid = srk ? new SystemSrkEos(t, start) : new SystemPrEos(t, start);
+          fluid.addComponent("water", 1.0);
+          fluid.setMixingRule(rule);
+          for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+            pure(fluid.getPhase(phase).getComponent(0), 647.096, 220.64,
+                srk ? new double[] {.36117, .87308, 2.4389} : new double[] {.40274, .87000, 1.8869});
+          }
+          for (int repeat = 0; repeat < 2; repeat++) {
+            new ThermodynamicOperations(fluid).bubblePointPressureFlash();
+            fluid.init(3);
+            assertEquals(expected, fluid.getPressure(), expected * 5e-8,
+                "Independent cubic root parity, not experimental accuracy");
+            assertEquals(2, fluid.getNumberOfPhases());
+            for (int phase = 0; phase < 2; phase++) {
+              neqsim.thermo.phase.PhaseEos state = (neqsim.thermo.phase.PhaseEos) fluid.getPhase(phase);
+              assertTrue(state.calcPressuredV() < 0, "Mechanically stable coexistence roots");
+              assertEquals(fluid.getPressure(), state.calcPressure(), 5e-7,
+                  "Existing pure-saturation absolute EOS pressure contract, bara");
+              assertEquals(1.0, state.getComponent(0).getx(), 1e-12);
+            }
+            assertTrue(Math.abs(fluid.getPhase(0).getMolarVolume() - fluid.getPhase(1).getMolarVolume()) > 1e-5
+                * Math.max(fluid.getPhase(0).getMolarVolume(), fluid.getPhase(1).getMolarVolume()));
+            assertEquals(fluid.getPhase(0).getComponent(0).getLogFugacityCoefficient(),
+                fluid.getPhase(1).getComponent(0).getLogFugacityCoefficient(), 1e-8);
+          }
+          report.add(row[0] + "," + t + "," + rule + "," + start + "," + fluid.getPressure() + "," + expected + ","
+              + reference + "," + (fluid.getPressure() / reference - 1));
+        }
+      }
+    }
+    assertEquals(57, report.size(), "Four controls for every independent reference state");
+    Files.createDirectories(Paths.get("target", "hv-co2-native"));
+    Files.write(Paths.get("target", "hv-co2-native", "pure-water.csv"), report, StandardCharsets.UTF_8);
+  }
+
+  /**
    * Runs every native identity, refined numerical check and fresh/history comparison.
    *
    * @throws IOException if the diagnostic report cannot be written
