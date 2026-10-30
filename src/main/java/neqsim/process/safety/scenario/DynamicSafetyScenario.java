@@ -28,6 +28,7 @@ public final class DynamicSafetyScenario implements Serializable {
   private final double durationSeconds;
   private final double timeStepSeconds;
   private final double triggerTimeSeconds;
+  private final boolean eventExactTimingEnabled;
   private final ProcessManipulator caseConfiguration;
   private final ProcessManipulator initiatingEvent;
   private final List<LogicFactory> logicFactories;
@@ -40,6 +41,7 @@ public final class DynamicSafetyScenario implements Serializable {
     durationSeconds = builder.durationSeconds;
     timeStepSeconds = builder.timeStepSeconds;
     triggerTimeSeconds = builder.triggerTimeSeconds;
+    eventExactTimingEnabled = builder.eventExactTimingEnabled;
     caseConfiguration = builder.caseConfiguration;
     initiatingEvent = builder.initiatingEvent;
     logicFactories = Collections.unmodifiableList(new ArrayList<LogicFactory>(builder.logicFactories));
@@ -71,6 +73,15 @@ public final class DynamicSafetyScenario implements Serializable {
     return triggerTimeSeconds;
   }
 
+  /**
+   * Reports whether the runner must split trigger and duration boundaries exactly.
+   *
+   * @return true for event-exact timing; false for the legacy fixed-scan policy
+   */
+  public boolean isEventExactTimingEnabled() {
+    return eventExactTimingEnabled;
+  }
+
   ProcessManipulator getCaseConfiguration() {
     return caseConfiguration;
   }
@@ -98,6 +109,7 @@ public final class DynamicSafetyScenario implements Serializable {
     result.put("durationSeconds", Double.valueOf(durationSeconds));
     result.put("timeStepSeconds", Double.valueOf(timeStepSeconds));
     result.put("triggerTimeSeconds", Double.valueOf(triggerTimeSeconds));
+    result.put("timingPolicy", eventExactTimingEnabled ? "EVENT_EXACT" : "LEGACY_FIXED_SCAN");
     result.put("logicCount", Integer.valueOf(logicFactories.size()));
     List<Map<String, Object>> criterionMaps = new ArrayList<Map<String, Object>>();
     for (DynamicScenarioCriterion criterion : criteria) {
@@ -116,6 +128,7 @@ public final class DynamicSafetyScenario implements Serializable {
     private double durationSeconds = 60.0;
     private double timeStepSeconds = 1.0;
     private double triggerTimeSeconds;
+    private boolean eventExactTimingEnabled;
     private ProcessManipulator caseConfiguration;
     private ProcessManipulator initiatingEvent;
     private final List<LogicFactory> logicFactories = new ArrayList<LogicFactory>();
@@ -142,6 +155,21 @@ public final class DynamicSafetyScenario implements Serializable {
         throw new IllegalArgumentException("triggerTimeSeconds must be finite and non-negative");
       }
       triggerTimeSeconds = value;
+      return this;
+    }
+
+    /**
+     * Selects exact trigger/duration boundaries and end-of-step logic sampling.
+     *
+     * <p>
+     * The default remains the legacy fixed-scan execution policy for compatibility.
+     * </p>
+     *
+     * @param enabled true to split physical steps at scenario event boundaries
+     * @return this builder
+     */
+    public Builder eventExactTiming(boolean enabled) {
+      eventExactTimingEnabled = enabled;
       return this;
     }
 

@@ -25,6 +25,25 @@ assessment. Those lifecycle activities remain controlled engineering decisions u
 6. Dynamic criteria observe the physical process and final elements until their deadlines.
 7. The result records channel traces, vote time, actuation time, final state, and criteria verdicts.
 
+## Event-exact timing policy
+
+The default runner policy remains `LEGACY_FIXED_SCAN` for compatibility. For quantitative response-time
+verification, opt in with `.eventExactTiming(true)`. The event-exact policy:
+
+- splits accepted process steps at a non-grid initiating-event time and at the requested scenario duration;
+- applies the initiating event at that exact boundary and records a zero-second criterion sample;
+- advances the physical process first, then samples sensor/voting/logic and criteria at the accepted
+  end-of-step state;
+- uses deterministic physical-step identities and exports every accepted step duration;
+- reports `triggerTimeSeconds`, requested and completed duration, and `timingPolicy` in the result.
+
+The policy does not interpolate inside a sensor, logic-solver, or actuator scan. Choose a scan interval that
+resolves the shortest declared response time and repeat at a smaller interval. In the public 0.25 s synthetic
+2oo3 case, two healthy 1.0 s channels vote at 1.0 s, the 0.5 s logic delay actuates at 1.5 s, and the 2.0 s
+ESD-valve stroke reaches the closed criterion at 3.5 s. Replacing one healthy channel by
+`STUCK_NORMAL` while another is bypassed leaves the scenario FAIL with no vote or actuation timestamp.
+These are executable software-timing checks, not vendor response data or safety credit.
+
 ## 2oo3 high-pressure isolation example
 
 ```java
