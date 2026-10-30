@@ -69,11 +69,14 @@ public final class DynamicSafetyScenarioResult implements Serializable {
   private final double requestedDurationSeconds;
   private final double completedDurationSeconds;
   private final List<Double> physicalStepSeconds;
+  private final List<String> requirementIds;
+  private final List<String> equipmentTags;
 
   DynamicSafetyScenarioResult(String scenarioId, String scenarioName, Map<String, CriterionResult> criterionResults,
       Map<String, String> finalLogicStates, Map<String, Map<String, Object>> logicEvidence, List<String> errors,
       boolean steadyStateConverged, String timingPolicy, double triggerTimeSeconds, double requestedDurationSeconds,
-      double completedDurationSeconds, List<Double> physicalStepSeconds) {
+      double completedDurationSeconds, List<Double> physicalStepSeconds, List<String> requirementIds,
+      List<String> equipmentTags) {
     this.scenarioId = scenarioId;
     this.scenarioName = scenarioName;
     this.criterionResults = Collections.unmodifiableMap(new LinkedHashMap<String, CriterionResult>(criterionResults));
@@ -86,6 +89,8 @@ public final class DynamicSafetyScenarioResult implements Serializable {
     this.requestedDurationSeconds = requestedDurationSeconds;
     this.completedDurationSeconds = completedDurationSeconds;
     this.physicalStepSeconds = Collections.unmodifiableList(new ArrayList<Double>(physicalStepSeconds));
+    this.requirementIds = Collections.unmodifiableList(new ArrayList<String>(requirementIds));
+    this.equipmentTags = Collections.unmodifiableList(new ArrayList<String>(equipmentTags));
   }
 
   public boolean isPassed() {
@@ -139,6 +144,16 @@ public final class DynamicSafetyScenarioResult implements Serializable {
     return completedDurationSeconds;
   }
 
+  /** @return controlled requirement identifiers verified by the scenario */
+  public List<String> getRequirementIds() {
+    return requirementIds;
+  }
+
+  /** @return ordered equipment and instrument tags exercised by the scenario */
+  public List<String> getEquipmentTags() {
+    return equipmentTags;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("schemaVersion", "dynamic_safety_scenario_result.v2");
@@ -150,6 +165,8 @@ public final class DynamicSafetyScenarioResult implements Serializable {
     result.put("requestedDurationSeconds", Double.valueOf(requestedDurationSeconds));
     result.put("completedDurationSeconds", Double.valueOf(completedDurationSeconds));
     result.put("physicalStepSeconds", new ArrayList<Double>(physicalStepSeconds));
+    result.put("requirementIds", new ArrayList<String>(requirementIds));
+    result.put("equipmentTags", new ArrayList<String>(equipmentTags));
     Map<String, Object> criteria = new LinkedHashMap<String, Object>();
     for (Map.Entry<String, CriterionResult> entry : criterionResults.entrySet()) {
       criteria.put(entry.getKey(), entry.getValue().toMap());
