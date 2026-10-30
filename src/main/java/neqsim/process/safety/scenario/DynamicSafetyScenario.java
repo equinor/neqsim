@@ -161,7 +161,9 @@ public final class DynamicSafetyScenario implements Serializable {
     /**
      * Selects exact trigger/duration boundaries and end-of-step logic sampling.
      *
-     * <p>The default remains the legacy fixed-scan execution policy for compatibility.</p>
+     * <p>
+     * The default remains the legacy fixed-scan execution policy for compatibility.
+     * </p>
      *
      * @param enabled true to split physical steps at scenario event boundaries
      * @return this builder
