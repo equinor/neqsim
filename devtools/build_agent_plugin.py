@@ -94,6 +94,9 @@ MCP_LATEST = "latest"
 # hook installs (best effort, wheelhouse first). ``dependencies`` is always included.
 LIVE_REQUIREMENTS_FILE = "requirements-live.txt"
 INTERNAL_REQUIREMENTS_FILE = "requirements-internal.txt"
+SESSION_WARMUP_FILE = "session_warmup.json"
+WARMUP_PLUGIN_FILE = "session-warmup.json"
+_WARMUP_MODULE_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.]*$")
 # Community skills publish as ``neqsim-skill-*`` distributions that are never on an index;
 # an enterprise skill that depends on one gets it from the neqsim-community plugin.
 SKILL_DIST_PREFIX = "neqsim-skill-"
@@ -359,6 +362,10 @@ the server jar in the background (``java servers/NeqsimMcpLauncher.java
 user's first prompt, and afterwards it fetches a newer release once a day so the
 next server start is instant. Skipped when java is missing or the cache is fresh.
 
+Skills may declare a silent background warm-up in ``session_warmup.json`` (for example
+refreshing a shared sign-in token cache). The build collects them into one file and the
+hook starts each detached once the packages are installed, throttled per module.
+
 The launcher runs in Java source-launch mode and therefore needs a JDK 21+. A
 Java 8 first on PATH (Oracle javapath, an old Software Center install) makes
 ``java NeqsimMcpLauncher.java`` fail before the launcher's own version check can
@@ -387,6 +394,7 @@ LIVE_REQUIREMENTS = {live_requirements!r}
 INTERNAL_REQUIREMENTS = "requirements-internal.txt"
 VERIFY_IMPORTS = {verify_imports!r}
 PREFETCH_MCP = {prefetch_mcp!r}
+WARMUP_FILE = {warmup_file!r}
 LOCK_MAX_AGE_S = 45 * 60
 MCP_REFRESH_S = 24 * 3600
 MCP_MIN_JAVA = 21
@@ -1189,6 +1197,7 @@ def install_packages(python, release=lambda: None):
         out.write("== {{}} {{}}\\n".format(time.strftime("%Y-%m-%d %H:%M:%S"), status))
     if ok:
         stamp.write_text(stamp_text(python), encoding="utf-8")
+        run_warmups(python)
     elif stamp.exists():
         stamp.unlink()
     try:
@@ -1202,6 +1211,42 @@ def spawn_worker(python):
     state.mkdir(parents=True, exist_ok=True)
     lock.write_text(str(os.getpid()), encoding="utf-8")
     detached([python, str(Path(__file__).resolve()), "--run"])
+
+
+def run_warmups(python):
+    """Start each skill-declared warm-up detached (silent background step such as a token cache refresh).
+
+    Entries come from the skills' session_warmup.json files, collected at build time into
+    WARMUP_FILE. Each runs as ``python -m module args`` with a hidden console, throttled per module by
+    ``min_interval_minutes``. Never raises, never waits and never opens a window.
+    """
+    if not WARMUP_FILE or not python:
+        return 0
+    try:
+        entries = json.loads((root / WARMUP_FILE).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return 0
+    started = 0
+    for entry in entries if isinstance(entries, list) else []:
+        try:
+            module = str(entry["module"])
+            args = [str(a) for a in entry.get("args", [])]
+            minutes = float(entry.get("min_interval_minutes", 20))
+            if not re.match(r"^[A-Za-z_][A-Za-z0-9_.]*$", module):
+                continue
+            mark = state / ("warmup-" + module + ".stamp")
+            if mark.is_file() and time.time() - mark.stat().st_mtime < minutes * 60:
+                continue
+            state.mkdir(parents=True, exist_ok=True)
+            mark.write_text(str(int(time.time())), encoding="utf-8")
+            with open(str(state / "warmup.log"), "a", encoding="utf-8") as out:
+                out.write("== " + time.strftime("%Y-%m-%d %H:%M:%S") + " " + module + " " + " ".join(args) + "\\n")
+                out.flush()
+                detached([python, "-m", module] + args, out)
+            started += 1
+        except Exception:
+            continue
+    return started
 
 
 def java_note_is_new(note):
@@ -1259,6 +1304,8 @@ def main():
                         "afterwards to verify.{{}}".format(plugin_name, version, python, log, mcp_note))
     ready = bool(python and stamp.exists()
                  and stamp.read_text(encoding="utf-8") == stamp_text(python))
+    if ready:
+        run_warmups(python)
     print(json.dumps({{"systemMessage": " ".join(messages),
                       "hookSpecificOutput": {{"hookEventName": "SessionStart",
                                              "additionalContext": runtime_context(python, ready)}}}}))
@@ -1388,7 +1435,7 @@ def hook_commands(plugin_name: str) -> Tuple[str, str]:
 def write_hooks(dest_root: Path, pip_roots: List[Path], python: str,
                 requirements: Optional[List[str]] = None, prefetch_mcp: bool = False,
                 live_requirements: str = "", plugin_name: str = "",
-                verify_imports: Optional[List[str]] = None) -> None:
+                verify_imports: Optional[List[str]] = None, warmup_file: str = "") -> None:
     """SessionStart hook that installs the plugin's Python packages.
 
     The hook is portable: OS-specific launchers (``sh`` / PowerShell) find an
@@ -1402,7 +1449,8 @@ def write_hooks(dest_root: Path, pip_roots: List[Path], python: str,
     plugin-relative requirements file of the skills' live-path dependencies that
     the hook installs after the editable install (empty: none). ``verify_imports``
     names packages (e.g. ``neqsim``) the hook import-checks after a successful
-    install, in addition to the plugin's own bundled skill packages.
+    install, in addition to the plugin's own bundled skill packages. ``warmup_file`` names
+    the plugin-relative JSON of skill warm-ups the hook starts in the background (empty: none).
     """
     requirements = list(requirements or [])
     if not pip_roots and not requirements and not prefetch_mcp:
@@ -1417,7 +1465,8 @@ def write_hooks(dest_root: Path, pip_roots: List[Path], python: str,
         HOOK_PY.format(pinned=python or "", editable_self=bool(pip_roots),
                        requirements=requirements, prefetch_mcp=bool(prefetch_mcp),
                        live_requirements=live_requirements or "",
-                       verify_imports=list(verify_imports or [])),
+                       verify_imports=list(verify_imports or []),
+                       warmup_file=warmup_file or ""),
         encoding="utf-8")
     (scripts / "install_skill_packages.sh").write_text(HOOK_SH, encoding="utf-8", newline="\n")
     (scripts / "install_skill_packages.ps1").write_text(HOOK_PS1, encoding="utf-8")
@@ -1597,6 +1646,53 @@ def write_live_requirements(dest_root: Path, skill_dirs: Iterable[Path]) -> int:
     return len(lines)
 
 
+def collect_session_warmups(skill_dirs: Iterable[Path], errors: Optional[List[str]] = None) -> List[Dict[str, object]]:
+    """Collect the validated ``session_warmup.json`` entries of the skills.
+
+    A skill declares one silent background step (for example refreshing a shared token cache)
+    as ``{"module": "pkg", "args": ["warm"], "min_interval_minutes": 20}``. The module must be a
+    dotted Python name, ``args`` plain strings and the interval 1..1440 minutes; anything else is
+    reported in ``errors`` and skipped. Duplicates (same module and args) are kept once.
+    """
+    entries: List[Dict[str, object]] = []
+    seen = set()
+    for skill_dir in skill_dirs:
+        path = skill_dir / SESSION_WARMUP_FILE
+        if not path.is_file():
+            continue
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            if errors is not None:
+                errors.append("{}: unreadable ({})".format(path, exc))
+            continue
+        module, args = raw.get("module"), raw.get("args", [])
+        interval = raw.get("min_interval_minutes", 20)
+        valid = (isinstance(module, str) and _WARMUP_MODULE_RE.match(module)
+                 and isinstance(args, list) and all(isinstance(a, str) for a in args)
+                 and isinstance(interval, (int, float)) and not isinstance(interval, bool)
+                 and 1 <= interval <= 1440)
+        if not valid:
+            if errors is not None:
+                errors.append("{}: invalid session warm-up (need dotted module name, string args, "
+                              "min_interval_minutes 1..1440)".format(path))
+            continue
+        key = (module, tuple(args))
+        if key not in seen:
+            seen.add(key)
+            entries.append({"module": module, "args": list(args), "min_interval_minutes": interval})
+    return entries
+
+
+def write_session_warmups(dest_root: Path, skill_dirs: Iterable[Path],
+                          errors: Optional[List[str]] = None) -> int:
+    """Write ``<plugin>/session-warmup.json`` for the hook; returns the number of entries (0: no file)."""
+    entries = collect_session_warmups(skill_dirs, errors)
+    if entries:
+        (dest_root / WARMUP_PLUGIN_FILE).write_text(json.dumps(entries, indent=2) + "\n", encoding="utf-8")
+    return len(entries)
+
+
 def toolkit_files(devtools: Path = DEVTOOLS) -> List[Path]:
     """Files that make up the ``neqsim-dev-setup`` distribution, per its pyproject.
 
@@ -1772,12 +1868,16 @@ def build_plugin(spec: PluginSpec, out_root: Path, known_skills: set, args) -> D
             write_toolkit(staging)
     live_requirements = ""
     live_count = 0
+    warmup_file = ""
     if spec.pip_install_roots:
         live_count = write_live_requirements(staging, skill_sources)
         live_requirements = LIVE_REQUIREMENTS_FILE
+        if write_session_warmups(staging, skill_sources, errors):
+            warmup_file = WARMUP_PLUGIN_FILE
     write_hooks(staging, spec.pip_install_roots, args.python, pip_targets,
                 prefetch_mcp=spec.include_mcp, live_requirements=live_requirements,
-                plugin_name=spec.name, verify_imports=spec.verify_imports)
+                plugin_name=spec.name, verify_imports=spec.verify_imports,
+                warmup_file=warmup_file)
     (staging / "automations").mkdir(exist_ok=True)
 
     digest = content_hash(staging)
