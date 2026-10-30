@@ -326,7 +326,7 @@ Parameters for Cubic-Plus-Association (CPA) and PC-SAFT models.
 | Column | Description | Unit | Model Usage |
 |--------|-------------|------|-------------|
 | `associationsites` | Number of association sites | - | 0, 1, 2, 3, or 4 |
-| `associationscheme` | Association scheme | - | `0`, `1A`, `2A`, `2B`, `3B`, `4C` |
+| `associationscheme` | Association scheme | - | `0`, `1A`, `2A`, `2B`, `3B`, `4C`, `4P`, `4N` |
 | `associationenergy` | Association energy (ε^AB) | J/mol | CPA association term |
 | `associationboundingvolume_SRK` | Association volume (β) for SRK-CPA | - | SRK-CPA |
 | `associationboundingvolume_PR` | Association volume (β) for PR-CPA | - | PR-CPA |
@@ -356,6 +356,21 @@ Parameters for Cubic-Plus-Association (CPA) and PC-SAFT models.
 | `2B` | 2 | Alcohols (1 proton donor, 1 acceptor) |
 | `3B` | 3 | Amines |
 | `4C` | 4 | Water, glycols (2 donors, 2 acceptors) |
+| `4P` | 4 | Generic positive-selector topology; no standard COMP assignment |
+| `4N` | 4 | Generic negative-selector topology; no standard COMP assignment |
+
+The `4P` and `4N` labels are explicit association-site selector topologies.
+Their P/N signs are not electrical charges: like signs do not associate and opposite
+signs do. They are infrastructure only; no standard component row, parameter,
+default, or model qualification is introduced by supporting the labels.
+
+The generic topology has an independent, permissively licensed implementation basis:
+[Clapeyron.jl at commit `c8b2b3f`](https://github.com/ClapeyronThermo/Clapeyron.jl/tree/c8b2b3f860c3f80b858d90416a043c55cd109185)
+stores arbitrary association-site labels and integer multiplicities in
+[`SiteParam.jl`](https://github.com/ClapeyronThermo/Clapeyron.jl/blob/c8b2b3f860c3f80b858d90416a043c55cd109185/src/database/params/SiteParam.jl).
+Its MIT-licensed ePC-SAFT database also contains multi-site, single-polarity ion
+examples. This evidence supports the generic representation only; it is not a source
+for NeqSim KCl parameters or a KCl/hydrate qualification.
 
 ### Hydrate Parameters
 
