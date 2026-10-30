@@ -124,6 +124,16 @@ public final class DynamicSafetyScenarioResult implements Serializable {
     return physicalStepSeconds;
   }
 
+  /** @return configured initiating-event boundary, seconds from scenario start */
+  public double getTriggerTimeSeconds() {
+    return triggerTimeSeconds;
+  }
+
+  /** @return requested scenario duration, seconds */
+  public double getRequestedDurationSeconds() {
+    return requestedDurationSeconds;
+  }
+
   /** @return physical time advanced by the isolated process, seconds */
   public double getCompletedDurationSeconds() {
     return completedDurationSeconds;
