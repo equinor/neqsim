@@ -530,6 +530,7 @@ All models pass the following consistency checks:
 This complete example uses the public `PhysicalProperties` API. The returned Maxwell-Stefan
 coefficient is in m²/s.
 
+<!-- diffusivity-guide-example: binary-gas -->
 ```java
 import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.system.SystemInterface;
@@ -556,13 +557,17 @@ public final class GasDiffusivityExample {
 
     double diffusivityM2PerS =
         properties.getDiffusionCoefficient("methane", "nitrogen");
-    if (!(diffusivityM2PerS > 0.0)
-        || !Double.isFinite(diffusivityM2PerS)) {
-      throw new IllegalStateException("Invalid binary diffusivity");
+    if (!Double.isFinite(diffusivityM2PerS)
+        || diffusivityM2PerS < 1.0e-5
+        || diffusivityM2PerS > 1.0e-4) {
+      throw new IllegalStateException("Binary diffusivity is outside the ambient gas range");
     }
   }
 }
 ```
+
+The numerical guard uses the broad ambient-pressure gas range in [Typical Values](#typical-values).
+It is a sanity check for this methane/nitrogen state, not a model-accuracy claim for other mixtures.
 
 Use component indexes with `getDiffusionCoefficient(i, j)` when the caller already owns a
 validated component ordering. The name overload is clearer in user-facing workflows.

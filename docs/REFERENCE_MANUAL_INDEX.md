@@ -186,6 +186,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Reactive Distillation | [docs/process/reactive_distillation.md](process/reactive_distillation.md)                        | Reactive distillation column with equilibrium-based reactive flash on each tray |
 | Phase Envelope Algorithm | [docs/thermodynamicoperations/phase_envelope_algorithm.md](thermodynamicoperations/phase_envelope_algorithm.md) | Michelsen continuation method, cricondenbar/cricondentherm Newton refinement, critical point detection |
 | Thermo Ops Overview | [docs/thermodynamicoperations/README.md](thermodynamicoperations/README.md)                             | Thermodynamic operations module |
+| CPA Water, Ice and Hydrate Boundaries | [CPA water-phase boundaries](thermodynamicoperations/cpa_water_phase_boundaries.md) | One-call Statoil-CPA/rule-10 onset comparison, inhibitors, multiphase references and convergence diagnostics |
 
 ### Chapter 8: Fluid Characterization
 
@@ -1302,3 +1303,6 @@ badges; version history and merge dates remain available in Git.
 ---
 
 *Curated index entries are validated against repository source paths by CI.*
+
+- [Safety Shutdown forward pump coastdown and evidence](wiki/water_hammer_implementation.md#safety-shutdown-forward-pump-coastdown):
+  bounded actual-speed/forward-curve acoustic inlet; complete trip/slam remains unqualified.

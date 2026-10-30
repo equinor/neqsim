@@ -35,6 +35,26 @@ A PASS acoustic balance does not qualify full EOS conservation, pump coastdown,
 disc slam, network coupling, cavitation, support loads or integrated safety logic.
 Reuse the canonical coordinator and existing ESD APIs for future integration.
 
+## Forward acoustic pump coastdown
+
+`AcousticPumpBoundary` optionally couples one declared reference-speed curve
+through existing `PumpChart` affinity scaling and a prescribed actual-speed
+table to upstream `PUMP`. Supply explicit positive speed limits, original
+forward-flow data, head units and suction pressure with matching velocity and
+elevation bases. Configure before `run()` and reinitialize after replacing the
+boundary. Speed and valve knots share the existing conservative pipe clock.
+An explicit empty `eventSchedule` selects a pump-only study.
+
+Use the [complete API/JSON contract and executed evidence](../../../docs/wiki/water_hammer_implementation.md#safety-shutdown-forward-pump-coastdown).
+Read `pumpHydraulicWork_J` as accepted interval hydraulic work, not shaft/EOS
+energy. Study errors retain last accepted time/cells/work/internal outlet history;
+never report an unsupported transition as a completed trip. Do not extrapolate
+clamped forward curves or invent stopped/reverse/check-valve continuations.
+Actual-speed data must have declared provenance; the public example is synthetic.
+Full trips, shaft inertia, disc/slam, NPSH/cavitation and integrated Safety Shutdown
+remain NOT_EVALUATED. `neqsim-dynamic-simulation` owns the canonical coordinator
+and ESD handoff; this boundary adds no independent scheduler or solver.
+
 ## Workflow
 
 1. Extract line geometry from STID/P&ID/E3D/stress isometrics: length, internal

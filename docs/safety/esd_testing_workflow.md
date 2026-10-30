@@ -131,3 +131,19 @@ boundary-time quadrature and the independent standing-wave/passivity checks.
 - [Pressure Monitoring ESD](PRESSURE_MONITORING_ESD.md)
 - [Barrier Management](barrier_management.md)
 - [Process Safety Package](../process/safety/README.md)
+
+### Safety Shutdown pump coastdown applicability
+
+An optional `AcousticPumpBoundary` now couples a declared forward pump curve and
+actual-speed table to the existing `WaterHammerPipe` inlet. It solves pressure
+and flow together, localizes speed knots and records accepted hydraulic work.
+See the [forward-pump contract and executed public example](../wiki/water_hammer_implementation.md#safety-shutdown-forward-pump-coastdown).
+The table can represent measured delay/coastdown only when actual measurements
+and applicability are supplied; the repository example is synthetic.
+
+A forward-only curve cannot continue a full pump trip through zero speed,
+reverse flow or check-valve slam. The adapter rejects an inadmissible root;
+it does not replace disc/contact physics or prove a safe state. Detection,
+logic, driver/shaft dynamics, global rollback and integrated replay remain
+with the existing safety/coordinator owners. SIL, SRS, proof-test and asset
+qualification remain **NOT_EVALUATED**.

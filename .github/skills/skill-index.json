@@ -1,4 +1,10 @@
 {
+ "vannduggpunkt med CPA": [
+  "neqsim-cpa-water-boundaries"
+ ],
+ "CPA water phase boundaries": [
+  "neqsim-cpa-water-boundaries"
+ ],
  "living task": [
   "neqsim-continuous-task-improvement"
  ],

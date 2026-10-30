@@ -483,3 +483,7 @@ See [Future Infrastructure Overview](future-infrastructure) for complete documen
 - [Safety Systems](../safety/SAFETY_SIMULATION_ROADMAP) - Safety simulation
 - [Alarm System](../safety/alarm_system_guide) - Process alarms
 - [Future Infrastructure](future-infrastructure) - Digital twin, AI integration, sustainability
+
+The [Safety Shutdown forward pump coastdown](../wiki/water_hammer_implementation#safety-shutdown-forward-pump-coastdown)
+example couples a bounded `PumpChart` characteristic and prescribed actual speed
+to `WaterHammerPipe`. Complete pump trip and check-valve slam remain unqualified.

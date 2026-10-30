@@ -62,6 +62,8 @@ Performs a temperature-pressure flash calculation including hydrate phase equili
 3. Couple guest uptake to both small and large cavity occupancies, weighted by cavities per water molecule.
    Use distribution-ratio iteration with a damped Newton fallback in logarithmic fluid amounts for guest-limited feeds.
 4. Bracket and solve water-fugacity equality with safeguarded interpolation and bisection.
+   If a trial amount fails the inner guest-inventory solve, reduce that trial toward the last
+   balanced state. Do not use the failed trial's fugacity residual as a bracket endpoint.
 5. Assemble the solved fluid and hydrate inventories on the original feed basis, validate every component balance,
    and only then replace the caller's phase state.
 
@@ -92,6 +94,20 @@ an absolute log-fugacity residual below $10^{-8}$ and component and normalizatio
 Material components present above $10^{-12}$ in two residual fluid phases must also match fugacities within $10^{-6}$
 in logarithmic ratio.
 Failure diagnostics do not represent an accepted hydrate-free result.
+
+In guest-limited feeds, cage occupancies change as gas is consumed. The first occupancy-based
+amount estimate is therefore only a search estimate. In particular, cold water-rich CPA feeds
+can require a smaller trial step before water-fugacity equality is bracketed. The retry budget
+is bounded; exhausting it still throws, retaining the original caller state and the inner
+failure diagnostic. Invalid thermodynamic states and unrelated fluid-flash errors are not
+converted to successful hydrate-free results.
+
+`getHydrateFraction()` reports a **mole fraction of material in the hydrate phase**, including
+both host water and guest molecules. It is neither a mass fraction nor the fraction of feed
+water converted. Calculate hydrate mass from the hydrate component mole amounts and molar
+masses, and compare each component's sum over all phases with its original feed amount.
+Numerical material balance and fugacity closure establish consistency with the chosen model;
+experimental accuracy requires a separate comparison with independent measurements.
 
 **Example:**
 ```java

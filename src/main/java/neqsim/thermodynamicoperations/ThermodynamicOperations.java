@@ -1336,6 +1336,16 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
+   * Compares liquid-water, ice and hydrate equilibrium boundaries on independent copies of the configured CPA fluid.
+   *
+   * @return immutable temperatures, residuals, reference-fluid information and individual convergence status
+   * @throws IllegalArgumentException if the fluid is not configured Statoil CPA/rule 10 or its inputs are invalid
+   */
+  public WaterPhaseBoundaryResult cpaWaterPhaseBoundaryTemperatures() {
+    return new CpaWaterPhaseBoundaryCalculator(system).calculate();
+  }
+
+  /**
    * waterDewPointTemperatureMultiphaseFlash.
    *
    * @throws neqsim.util.exception.IsNaNException if any.

@@ -128,6 +128,40 @@ class TPHydrateFlashBalanceTest {
     assertTrue(flash.getHydrateFraction() < 0.10, "Methane supply limits hydrate formation");
   }
 
+  /** Verify cold CPA guest-limited feeds against the original component and mass inventories. */
+  @Test
+  void coldCpaWaterRichFeedConservesOriginalInventory() {
+    for (double temperature : new double[] {258.15, 268.15}) {
+      for (boolean solids : new boolean[] {false, true}) {
+        SystemInterface fluid = new SystemSrkCPAstatoil(temperature, 100.0);
+        fluid.addComponent("methane", 0.01);
+        fluid.addComponent("water", 0.99);
+        fluid.setMixingRule(10);
+        fluid.setMultiPhaseCheck(true);
+        if (solids) {
+          fluid.setSolidPhaseCheck("water");
+        }
+        TPHydrateFlash flash = new TPHydrateFlash(fluid, solids);
+        flash.run();
+        assertEquilibrium(fluid, flash);
+        double[] expected = {0.01, 0.99};
+        double massIn = 0.0;
+        double massOut = 0.0;
+        for (int i = 0; i < expected.length; i++) {
+          double amount = 0.0;
+          for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
+            amount += fluid.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
+          }
+          assertEquals(expected[i], amount, 1e-10, fluid.getComponent(i).getName());
+          massIn += expected[i] * fluid.getComponent(i).getMolarMass();
+          massOut += amount * fluid.getComponent(i).getMolarMass();
+        }
+        assertEquals(massIn, massOut, 1e-10 * massIn);
+        assertTrue(flash.getHydrateFraction() > 0.0 && flash.getHydrateFraction() < 0.10);
+      }
+    }
+  }
+
   @Test
   void noWaterAndNoGuestsRemainHydrateFree() {
     for (String component : new String[] {"methane", "water"}) {

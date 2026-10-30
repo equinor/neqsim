@@ -61,14 +61,18 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
     if (!Double.isFinite(system.getPressure()) || system.getPressure() <= 0.0) {
       throw new IllegalArgumentException("Water dew point requires positive finite absolute pressure");
     }
+    boolean hasWater = hasPositiveOverallAmount("water");
+    if (allowDissolvedComponents) {
+      if (system.isChemicalSystem() || !hasWater) {
+        throw new IllegalArgumentException("Mixed-liquid water dew point requires water in a non-reacting gas");
+      }
+    } else if (!hasWater && !hasPositiveOverallAmount("MEG")) {
+      throw new IllegalArgumentException("Water dew point requires a positive water or MEG mole fraction");
+    }
     system.init(0);
     system.setNumberOfPhases(2);
     system.setBeta(1, 1.0e-15);
     if (allowDissolvedComponents) {
-      if (system.isChemicalSystem() || !system.getPhase(0).hasComponent("water")
-          || !(system.getPhase(0).getComponent("water").getz() > 0.0)) {
-        throw new IllegalArgumentException("Mixed-liquid water dew point requires water in a non-reacting gas");
-      }
       int water = system.getPhase(0).getComponent("water").getComponentNumber();
       system.setBeta(0, 1.0 - 1.0e-10);
       system.setBeta(1, 1.0e-10);
@@ -113,6 +117,20 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
     }
     preparePhases(controllingComponent);
     residual(maximumTemperature, controllingComponent);
+  }
+
+  /**
+   * Checks the supplied inventory before initialization or phase-state mutation.
+   *
+   * @param name component name
+   * @return true when the component has a positive finite overall mole amount
+   */
+  private boolean hasPositiveOverallAmount(String name) {
+    if (!system.getPhase(0).hasComponent(name)) {
+      return false;
+    }
+    double moles = system.getPhase(0).getComponent(name).getNumberOfmoles();
+    return Double.isFinite(moles) && moles > 0.0;
   }
 
   /**
