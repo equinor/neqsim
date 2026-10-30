@@ -1069,3 +1069,40 @@ not establish experimental accuracy or throughput acceptance. See the
 [fixture protocol and raw reports](../../src/test/resources/neqsim/thermo/mixingrule/hv-water-nitrogen/README.md).
 The other six cataloged PR pairs, inhibitors, brines, ice and hydrate dissociation
 remain outside this assessment. No source-fit error becomes a test tolerance.
+
+
+### Staged CO2/water source configurations
+
+The separate [CO2 fixture protocol](../../src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/README.md)
+records the recovered2016 PR tuple and paired2017 SRK/PR Twu configurations.
+These are declared-input research diagnostics, not new defaults or an accepted
+public profile. Complete directed tuples and explicit pure critical/cubic inputs
+remain separate by EOS. Original-author pure inputs are not fully established.
+
+The native test asserts all five ThermodynamicModelTest identities, numerical
+derivatives, serialization preservation, repeated/changed/order behavior and
+independently resolved liquid temperature differences. All357 usable
+measurement/profile flashes close numerically; physical errors remain visible.
+The2016 transfer has75.87%/83.65% reverse-solubility AARD on two post-fit studies.
+The2017 declared SRK/PR configurations perform better, but most reverse
+predictions still exceed author uncertainty. No empirical error becomes a test
+tolerance. One original malformed pressure remains explicitly unresolved.
+
+The matched binary benchmark records CLASSICAL/HV init1/init3 and complete
+nearby-temperature flashes in separate JVMs, with untimed endpoint topology,
+compositions and residuals. Model differences change solver work; timing ratios
+do not isolate code overhead or qualify physical accuracy. Preserve every raw
+fork and round, including adverse/control variability. The separate forced-phase five-component control preserves ordinary kij for
+every unselected pair, checks dormant-coefficient invariance and CLASSICAL
+reduction, and asserts all native checks across both component orders and changed
+states. It does not qualify multicomponent equilibrium partition. General
+throughput, source/pure-pressure reconciliation,
+light-gas inhibitor partition and independent hydrate accuracy remain open.
+
+
+The same staged fixture also checks native pure-water saturation against14
+independently bracketed roots and IAPWS reference pressures, using the declared
+paired2017 Twu inputs. Both mixing rules, starting pressures and repeated calls
+retain distinct stable roots. This reconciles implementation under the declared
+pure inputs; original-author input reconstruction and mixture accuracy remain open.
+The600K pure point does not qualify mixture extrapolation.
