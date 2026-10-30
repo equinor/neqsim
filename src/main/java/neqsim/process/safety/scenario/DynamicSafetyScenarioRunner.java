@@ -39,8 +39,7 @@ public final class DynamicSafetyScenarioRunner {
     for (DynamicSafetyScenario.LogicFactory factory : scenario.getLogicFactories()) {
       logic.add(factory.create(process));
     }
-    Map<String, DynamicSafetyScenarioResult.CriterionResult> criteria =
-        new LinkedHashMap<String, DynamicSafetyScenarioResult.CriterionResult>();
+    Map<String, DynamicSafetyScenarioResult.CriterionResult> criteria = new LinkedHashMap<String, DynamicSafetyScenarioResult.CriterionResult>();
     for (DynamicScenarioCriterion criterion : scenario.getCriteria()) {
       criteria.put(criterion.getId(), new DynamicSafetyScenarioResult.CriterionResult(criterion));
     }
