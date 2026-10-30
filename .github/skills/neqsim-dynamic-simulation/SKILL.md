@@ -915,3 +915,23 @@ mode and register the transmitter in the `ProcessSystem`. The process then sampl
 and before equipment/controllers; controller, history and alarm consumers share that held value. Declare the physical
 scan interval, filter time constant, integer sample delay, noise basis and any sensor-fault rate. Direct reads and other
 instrument families retain legacy read-driven behavior until they receive separate qualification.
+
+## Safety Shutdown forward acoustic pump boundary
+
+Use `AcousticPumpBoundary` with upstream `WaterHammerPipe.BoundaryType.PUMP`
+for a declared single-liquid forward curve and actual positive-speed table.
+Its constructor fits copied reference data through existing `PumpChart`, checks
+monotonicity/domain/units and preserves Java restart state. Configure before
+`run()`; changing the boundary requires explicit reinitialization. Actual-speed
+and valve-travel knots use the same pipe clock. Use an explicit empty
+`eventSchedule` for pump-only `WaterHammerStudy` JSON. Study output includes
+aligned speed/inlet-flow/inlet-pressure/hydraulic-work histories. Unsupported
+curve transitions return an error with last accepted state and internal outlet
+history, never a successful truncated trip.
+
+Follow the [physical inputs, equations, public example and limits](../../../docs/wiki/water_hammer_implementation.md#safety-shutdown-forward-pump-coastdown).
+Do not extrapolate clamped curves, turn stopped pumps into closed valves or
+claim a prescribed-speed adapter supplies shaft inertia, four-quadrant operation,
+check-valve disc/contact slam, NPSH/cavity physics, global rollback or integrated
+Safety Shutdown qualification. Existing canonical coordinator and ESD APIs own
+those integrations; do not create another scheduler or pressure-flow architecture.

@@ -1,0 +1,34 @@
+{
+  "benchmark": "Public synthetic forward pump coastdown, ideal single-phase acoustic limit",
+  "status": "PASS",
+  "fullTripAndSlam": "NOT_EVALUATED",
+  "refinement": [
+    {
+      "faces": 51,
+      "normalizedCellPressureRms": 2.5384982537793386E-4,
+      "volumeResidual_m3": 4.743384504624082E-19,
+      "momentumResidual_kg_m_s": -1.8474111129762605E-13,
+      "hydraulicWork_J": 1932.1801540954857,
+      "independentWork_J": 1932.1801540951549,
+      "elapsed_ms": 8.928068
+    },
+    {
+      "faces": 101,
+      "normalizedCellPressureRms": 1.3034685724775048E-4,
+      "volumeResidual_m3": 5.624298769768554E-18,
+      "momentumResidual_kg_m_s": -1.0658141036401503E-13,
+      "hydraulicWork_J": 1932.790231258667,
+      "independentWork_J": 1932.7902312584329,
+      "elapsed_ms": 17.855611
+    },
+    {
+      "faces": 201,
+      "normalizedCellPressureRms": 6.640524864244469E-5,
+      "volumeResidual_m3": -9.886568560352194E-18,
+      "momentumResidual_kg_m_s": 1.7053025658242404E-13,
+      "hydraulicWork_J": 1933.0953028979445,
+      "independentWork_J": 1933.0953028977276,
+      "elapsed_ms": 34.0714
+    }
+  ]
+}

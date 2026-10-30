@@ -63,8 +63,8 @@ class and the higher-level `WaterHammerStudy` workflow facade. The pipe model us
 the **Method of Characteristics (MOC)** to simulate fast pressure transients caused by:
 
 - Rapid valve closures (emergency shutdown)
-- Pump trips
-- Check valve slam
+- Forward pump coastdown within an explicit curve domain
+- Prescribed valve closure (dynamic check-valve disc/slam remains unsupported)
 - Sudden flow changes
 
 Unlike the advection-based transient model in `PipeBeggsAndBrills`, `WaterHammerPipe`
@@ -461,7 +461,8 @@ double surgeBar = pipe.calcJoukowskyPressureSurge(velocityChange, "bar");
 | `RESERVOIR` | Constant pressure head | Upstream tank/reservoir |
 | `VALVE` | Variable opening (0-1) | Downstream control valve |
 | `CLOSED_END` | No flow (Q=0) | Dead end, closed valve |
-| `CONSTANT_FLOW` | Fixed flow rate | Pump at constant speed |
+| `CONSTANT_FLOW` | Fixed flow rate | Prescribed flow; not a speed-dependent pump |
+| `PUMP` | Declared curve and actual speed | Upstream forward single-liquid adapter |
 
 ### Setting Boundary Conditions
 
@@ -767,3 +768,89 @@ Current implementation limitations:
 - [Pipeline Index](pipeline_index.md) - All pipeline documentation
 - [Piping Route Builder](../process/piping_route_builder.md) - STID/E3D route extraction for steady hydraulics and surge screening
 - [MCP Server Guide](../integration/mcp_server_guide.md) - MCP tool usage including `runWaterHammer`
+
+## Safety Shutdown forward pump coastdown
+
+`AcousticPumpBoundary` adds an optional **upstream** `PUMP` boundary to the existing
+single-line conservative acoustic kernel. It uses the existing `PumpChart`
+quadratic reference-curve fit and affinity scaling, with copied source arrays and
+serializable fit state. Supply at least three reference points: actual flow in
+m3/hour, nonnegative nonincreasing head in `meter` or `kJ/kg`, and efficiency in
+percent. The fitted quadratic must also be nonincreasing throughout the source
+interval. Declare a positive applicable speed range and an actual-speed table on
+the existing pipe clock, starting at zero. Speeds interpolate linearly; the final
+speed is held. A command-to-motion delay must therefore be represented by a flat
+initial portion of the **actual** speed history. State the data source and its
+applicability; the public example is synthetic, not a measured coastdown.
+
+At the inlet, the incoming characteristic and pump must satisfy
+
+$$H_s+H_p(Q,n)=C_-+BQ,\qquad B=\frac{a}{gA}.$$
+
+Here $H_s=p_s/(\rho g)$ is fixed absolute suction pressure head in metres, $H_p$
+is pump head in metres, $Q$ is actual flow in m3/s, $n$ is rpm and $C_-$ is the
+incoming pressure-head characteristic. Equal suction/discharge velocity and
+elevation bases are assumed. The pump has no resolved inventory or suction line.
+A distinct suction velocity/elevation requires its own physical model and cannot
+be hidden in an arbitrary pressure offset. The prescribed curve must already be
+applicable to the selected liquid; no density/viscosity correction is inferred.
+
+The boundary brackets a unique root strictly within the original reduced-flow
+interval. Zero speed, negative speed, negative flow, an invalid fitted head and
+loss of an admissible root reject explicitly. It never interprets PumpChart's
+endpoint clamping as physical extrapolation, makes a stopped pump a closed valve,
+or invents reverse/four-quadrant curves. Positive-speed zero-flow shutoff is a
+mathematical endpoint only when explicitly included in the reference data.
+Initialization requires consistency between feed pressure/flow, suction pressure,
+initial actual speed and fitted head (absolute head mismatch at most 1e-8 m).
+Configure both `setPumpBoundary(...)` and upstream `PUMP`, then call `run()`;
+changes to the boundary require explicit reinitialization.
+
+Speed and physical valve-travel knots share the pipe's existing acoustic
+substeps. Both retain the first-order right-endpoint hold, including the full
+requested remainder. `getPumpHydraulicWork()` accumulates $\rho g QH_p\Delta t$
+from the same **accepted interval flow** used for inventory exchange. It is
+hydraulic work in joules, not shaft work, motor energy, heat or a full EOS energy
+balance. Endpoint trace flow differs from the interval flux and must not be used
+to reconstruct that ledger. Refine time and space before interpreting waveforms.
+A rejected internal interval leaves its accepted cells, clock, exchange, impulses,
+work and history unchanged; earlier accepted substeps in a longer request remain
+accepted. This is local interval safety, not coordinator-wide transactional rollback.
+
+`WaterHammerStudy` accepts a `pumpBoundary` object with required fields
+`referenceSpeed_rpm`, `flow_m3_hr`, `head`, `efficiency_percent`, `headUnit`,
+`minimumSpeed_rpm`, `maximumSpeed_rpm`, `time_s`, `actualSpeed_rpm`,
+`suctionPressure_bara` and `provenance`. Also declare `upstreamBoundary: PUMP`.
+Use an explicit empty `eventSchedule` for a pump-only study; existing valve
+schedules and physical `valveBoundary` remain separate. The result echoes all
+pump inputs and adds aligned `actualPumpSpeed_rpm`, `inletFlow_m3_s`,
+`inletPressure_bara` and cumulative `pumpHydraulicWork_J` arrays to `timeSeries`.
+An unsupported transition returns study status `error`; it is not a successful
+completed trip. A successful bounded study retains Safety Shutdown qualification
+`NOT_EVALUATED`.
+
+The [public input, full output and analytical refinement evidence](../../src/test/resources/neqsim/process/pipeline/safety-shutdown-pump/README.md)
+are produced by `AcousticPumpBoundaryTest.publicStudyExample` and its independent
+quadratic, conservation, work, wave/refinement and restart tests. No calibration
+was performed. The reference curve and speed history are openly declared
+synthetic data. No vendor/plant accuracy is inferred from analytical agreement.
+
+Full pump trips through stopped/reverse operation, disc/lift/contact check-valve
+slam, four-quadrant characteristics, torque/inertia, suction NPSH/cavitation,
+network coupling, structural loads and integrated Safety Shutdown remain
+**NOT_EVALUATED**. Existing `Pump` speed/pressure modes and ESD APIs are unchanged.
+The independent review and compatibility decision in
+[NRC-4707](../rfcs/4707-conservative-acoustic-inventory.md) remain separate gates.
+
+Primary model context: [Hydraulic Institute pump curves and affinity rules](https://datatool.pumps.org/pump-fundamentals/pump-curves)
+and [KSB pump affinity laws](https://www.ksb.com/en-global/centrifugal-pump-lexicon/article/pump-affinity-laws-1117584).
+These explain similarity and hydraulic power, not experimental validation of
+this transient example or an applicable pump operating region.
+
+For a rejected pump study, `lastAcceptedTime_s`, `acceptedInternalTime_s`,
+`acceptedOutletPressure_Pa` and `lastAcceptedState` retain the accepted evidence.
+The error message identifies the rejected internal interval; `requestedEnd_s` is
+the external request endpoint. Validation `requestedInterval` is `FAIL`. Earlier
+accepted intervals remain visible and are not reinterpreted as a completed trip.
+
+Agent workflow: [water-hammer skill](../../.github/skills/neqsim-water-hammer/SKILL.md#forward-acoustic-pump-coastdown).

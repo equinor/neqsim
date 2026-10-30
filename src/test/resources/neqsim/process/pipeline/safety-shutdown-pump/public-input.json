@@ -1,0 +1,51 @@
+{
+  "studyName": "Safety Shutdown forward pump coastdown",
+  "temperature_C": 25,
+  "pressure_bara": 20,
+  "flowRate": {
+    "value": 10.021021643347616,
+    "unit": "kg/sec"
+  },
+  "pipe": {
+    "length_m": 1000,
+    "diameter_m": 0.2,
+    "numberOfNodes": 101,
+    "waveSpeed_m_s": 1000
+  },
+  "upstreamBoundary": "PUMP",
+  "downstreamBoundary": "RESERVOIR",
+  "eventSchedule": [],
+  "simulationTime_s": 0.4,
+  "timeStep_s": 0.0037,
+  "pumpBoundary": {
+    "referenceSpeed_rpm": 600,
+    "flow_m3_hr": [
+      0,
+      36,
+      72
+    ],
+    "head": [
+      60,
+      50,
+      20
+    ],
+    "efficiency_percent": [
+      70,
+      75,
+      70
+    ],
+    "headUnit": "meter",
+    "minimumSpeed_rpm": 6,
+    "maximumSpeed_rpm": 600,
+    "time_s": [
+      0,
+      0.4
+    ],
+    "actualSpeed_rpm": [
+      600,
+      580
+    ],
+    "suctionPressure_bara": 15.084688883937995,
+    "provenance": "Public synthetic forward-only curve and actual-speed table"
+  }
+}

@@ -1302,3 +1302,6 @@ badges; version history and merge dates remain available in Git.
 ---
 
 *Curated index entries are validated against repository source paths by CI.*
+
+- [Safety Shutdown forward pump coastdown and evidence](wiki/water_hammer_implementation.md#safety-shutdown-forward-pump-coastdown):
+  bounded actual-speed/forward-curve acoustic inlet; complete trip/slam remains unqualified.
