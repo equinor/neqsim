@@ -1402,6 +1402,33 @@
       }
     },
     {
+      "id": "reservoir-history-discrete-posterior",
+      "title": "Discrete joint Bayesian pressure-history hypotheses",
+      "domain": "reservoir",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.util.ReservoirHistoryEnsemble",
+        "neqsim.pvtsimulation.util.CompositionalReservoirHistory"
+      ],
+      "skills": [
+        "neqsim-integrated-production-and-lifecycle",
+        "neqsim-eos-regression"
+      ],
+      "agents": [
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/pvtsimulation/util/ReservoirHistoryEnsembleTest.java"
+      ],
+      "limitations": "Discovery and inspectApi only; Java/Python object workflow, no new static MCP operation. Explicit joint prior probability masses propagate pore volume, initial phase fractions, optional finite-aquifer, accepted PVT model and measured-flow realizations using common independent Gaussian pressure errors. Held-out pressures excluded; rejected prior mass, correlations, prior shifts and lower-tail model forecast quantiles retained. Centered likelihoods preserve prior odds at huge common finite residual offsets. Grid refinement and independent field qualification remain required. No continuous posterior identifiability proof, automatic uncertainty distributions, correlated errors, ES-MDA, water mixing or recoverable-reserves estimate.",
+      "evidence": {
+        "route": "declared",
+        "testSources": "present",
+        "execution": "not_recorded",
+        "engineeringQualification": "not_assessed"
+      }
+    },
+    {
       "id": "slug-impact-force-screening",
       "title": "Static slug impact-force screening",
       "domain": "flow-assurance",
@@ -4731,7 +4758,7 @@
     {"id":"neqsim.pvtsimulation.util.BlackOilTableValidator","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/BlackOilTableValidator.java","sourceDigest":"116bbfa3cc9d0d7f88ab08f3c4ffca6f257cca484e0440287230e7fdf7c3e61a","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.BlackOilUnits","kind":"enum","source":"src/main/java/neqsim/pvtsimulation/util/BlackOilUnits.java","sourceDigest":"86bb80de016bf3410b85758de684bf09b1355e56c8188a4dd95bc8cf5aa1a457","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.CalibratedPvtModel","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/CalibratedPvtModel.java","sourceDigest":"053bb493bbaa898a18545cabc9dbeb77facea2f7519493849d47b551404ca2e7","domain":"pvtsimulation","skills":["neqsim-eos-regression"],"agents":["pvt-fluid-study-report","pvt-simulation","thermo-fluid"],"capabilities":["generalized-reservoir-material-balance","compositional-reservoir-history"],"disposition":"registered_anchor"},
-    {"id":"neqsim.pvtsimulation.util.CompositionalReservoirHistory","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/CompositionalReservoirHistory.java","sourceDigest":"cdc6c19b0b28ca900a2faf2f35bfd091b97c6eb45011a26dc14be0f77ee9e336","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":["compositional-reservoir-history","finite-aquifer-reservoir-history"],"disposition":"registered_anchor"},
+    {"id":"neqsim.pvtsimulation.util.CompositionalReservoirHistory","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/CompositionalReservoirHistory.java","sourceDigest":"cdc6c19b0b28ca900a2faf2f35bfd091b97c6eb45011a26dc14be0f77ee9e336","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":["compositional-reservoir-history","finite-aquifer-reservoir-history","reservoir-history-discrete-posterior"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.DeclineCurveAnalysis","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/DeclineCurveAnalysis.java","sourceDigest":"326d8c437e8aa77db684a558b235d9deb638b7b0a1dde6f3af9e091cc06ae908","domain":"pvtsimulation","skills":["neqsim-capability-map","neqsim-field-development","neqsim-production-optimization"],"agents":["capability-scout","engineering-deliverables","field-development","mechanical-design","solve-task","surf-design-study"],"capabilities":["exponential-decline-screening"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.DepletionPvtHistoryGenerator","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator.java","sourceDigest":"9665fa17e91e081c0f6035372428f95c6097c3ce5fc1e3eab8a4b22210295773","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":["depletion-path-generalized-pvt"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.GasPseudoCriticalProperties","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/GasPseudoCriticalProperties.java","sourceDigest":"64a5f0daa74fd1424e5b0ed10d71882a797fd622627532882171f1a69d9a8af6","domain":"pvtsimulation","skills":["neqsim-capability-map"],"agents":["capability-scout","engineering-deliverables","mechanical-design","solve-task"],"capabilities":["sweet-gas-pseudocritical-screening"],"disposition":"registered_anchor"},
@@ -4739,6 +4766,7 @@
     {"id":"neqsim.pvtsimulation.util.MaterialBalancePvtHistory","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/MaterialBalancePvtHistory.java","sourceDigest":"e1cd6be9555e501ad62f69fa5579d76d056fcaf3ec1313e096d2aad185354600","domain":"pvtsimulation","skills":["neqsim-eos-regression"],"agents":["pvt-fluid-study-report","pvt-simulation","thermo-fluid"],"capabilities":["generalized-reservoir-material-balance"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.PVTFluidStudy","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/PVTFluidStudy.java","sourceDigest":"c56f17e77c05628201f397cda063ef27ab116830a07b01c52fe2c3375f3b8cb9","domain":"pvtsimulation","skills":["neqsim-pvt-fluid-study-report"],"agents":["pvt-fluid-study-report","pvt-simulation"],"capabilities":["pvt-fluid-study-report"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.PVTReportGenerator","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/PVTReportGenerator.java","sourceDigest":"7b318865c264540e984a17ae89a2e7346254bca40b1370645309cd45bb2b890e","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.pvtsimulation.util.ReservoirHistoryEnsemble","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/ReservoirHistoryEnsemble.java","sourceDigest":"fe6ba7cd0e535b8efc76c71d8a97e60ea0b6916632a1290ca7d347a53e170bf1","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":["reservoir-history-discrete-posterior"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.SaturationPressureCorrelation","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/SaturationPressureCorrelation.java","sourceDigest":"908edd67352adb8bf34044bb595aa8254ee2630563b6c84bcbff14a04e27ddf1","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.WaterPropertyCorrelations","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/WaterPropertyCorrelations.java","sourceDigest":"cd2eb33e381f9cbd668edb021030cacbd7ee09c9ac4aa92685386623c11d571b","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.ZFactorCorrelations","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/ZFactorCorrelations.java","sourceDigest":"1977c24c1ea6af58be378d1161d0a57f9985b0d5572d8ff68a780a59d87ed66f","domain":"pvtsimulation","skills":["neqsim-capability-map"],"agents":["capability-scout","engineering-deliverables","mechanical-design","solve-task"],"capabilities":[],"disposition":"review_required"},

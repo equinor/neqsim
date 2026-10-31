@@ -1,9 +1,9 @@
 ---
-title: "Finite-aquifer history replay"
-description: "Physical reservoir-volume aquifer support and implicit compositional tank pressure/volume coupling."
+title: "Finite-aquifer history replay and discrete Bayesian uncertainty"
+description: "Physical reservoir-volume aquifer support, implicit compositional tank coupling, joint prior scenarios and pressure-history posterior diagnostics."
 ---
 
-# Finite-aquifer history replay
+# Finite-aquifer history replay and discrete Bayesian uncertainty
 
 This workflow extends the [frozen-EOS measured-history tank](reservoir_material_balance.md#compositional-measured-history-replay).
 Keep the original sample and independently laboratory-tuned EOS in `CalibratedPvtModel`.
@@ -75,9 +75,61 @@ bound-limited solutions and rejected trials. Refine the measurement/flow interva
 exact integration of a prescribed linear pressure path does not make the unknown
 coupled nonlinear pressure trajectory exact.
 
-## Qualification boundary
+## Joint Bayesian scenarios
 
-Analytical finite-storage limits, independent RK4 comparisons, dilute-gas interval
-refinement and reservoir/component volume closure are synthetic qualification.
-Independent public laboratory/field matching, joint Bayesian uncertainty and the
-remaining multi-tank/research deliveries remain under issue #4740.
+`ReservoirHistoryEnsemble.Candidate` combines one frozen history, pore volume,
+optional physical aquifer, positive prior probability mass and provenance.
+Use initial gas/oil/aqueous fractions in each history to encode geological gas-cap
+assumptions. Different independently accepted laboratory models and measured
+component-amount realizations can represent PVT and production-history uncertainty.
+These uncertainties are propagated only when explicitly supplied; the utility does
+not infer missing distributions or repair a miscalibrated EOS.
+
+All candidates must share named component order, initial temperature/pressure,
+observation/forecast times, pressure observations, sigmas and holdout selection.
+For independent Gaussian pressure errors, evaluation uses
+
+$$w_i=\frac{\pi_i\exp(-\chi_i^2/2)}{\sum_j\pi_j\exp(-\chi_j^2/2)}.$$
+
+Here $\pi_i$ is a complete **joint prior mass**, not a density at a grid point.
+A nonuniform grid needs cell-integrated masses. Logarithmic normalization prevents
+likelihood underflow. Correlated pressure errors require another likelihood;
+production realizations and laboratory uncertainty should not count the same
+measurement uncertainty twice.
+
+| Returned evidence | Interpretation |
+| --- | --- |
+| Normalized prior/posterior masses | Discrete joint hypotheses, including EOS/history assumptions |
+| Best likelihood index | Minimum calibration chi-square, separately from prior preference |
+| Rejected candidates and prior mass fraction | Infeasible hypotheses retain explicit diagnostic weight |
+| Posterior means and parameter correlations | Volume, initial gas/aqueous fractions, aquifer capacity and productivity; constant/non-finite dimensions report NaN |
+| Prior standardized shifts | Posterior-minus-prior mean in prior standard deviations; a conflict diagnostic, not a significance test |
+| Effective scenario count | Inverse sum of squared weights; concentration of this ensemble, not MCMC sample size |
+| Log evidence without Gaussian constant | Relative normalizer only; not absolute data-density evidence |
+| `pressureQuantiles(q)` | Lower-tail model-pressure quantiles over all history/forecast times |
+
+Held-out pressures never enter the posterior likelihood. Prediction-only intervals
+use NaN pressure/sigma pairs and remain available for forecast quantiles. Quantile
+0.1 is the lower tenth percentile, not the petroleum exceedance convention.
+Quantiles exclude future measurement noise. Only the product $C=c_tW_i$ enters pressure/storage response; pressure history
+cannot distinguish $c_t$ from $W_i$ separately. Include observations around the
+response timescale $C/J$ and independent geological bounds. Refine the joint hypothesis grid and
+check sensitivity to prior/support assumptions before interpreting intervals.
+
+The tests check independent Bayes odds, heldout exclusion, sigma weighting,
+underflow-resistant normalization, rejected prior mass, volume/aquifer confounding,
+production-realization uncertainty, serialization and quantile ordering.
+Aquifer tests compare analytical storage limits and an independent RK4 integration;
+coupled tests check separate inventories, pore-volume closure, known-volume recovery
+and interval refinement. These are analytical/synthetic software qualifications.
+They are not a matched public laboratory-to-field validation or recoverable-reserves
+estimate.
+
+## Remaining qualification
+
+Issue [#4740](https://github.com/equinor/neqsim/issues/4740) also requires independent
+laboratory/field qualification, broader phase-path coverage and independently
+predicted produced-phase validation. Multi-tank transmissibility follows qualified
+single-tank matching. ES-MDA/external ensemble integration and the 2025 rescaled-CVD
+research method are separate gated extensions. None is implied by this finite
+scenario integrator.
