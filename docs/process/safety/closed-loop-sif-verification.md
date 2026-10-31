@@ -60,10 +60,10 @@ The runner does not infer approval or safety credit from these identifiers. When
 `EngineeringProject`, `EngineeringProject.validate()` checks that every requirement identifier exists and that
 every exercised tag resolves to process equipment, a stream, or a measurement device. Give the case configuration,
 initiating event, each logic factory, and each criterion extractor stable definition-and-revision identifiers through
-the overloads that accept a definition ID. Legacy overloads remain available but are exported as `UNSPECIFIED` and
+the overloads that accept a definition ID. Change that ID whenever the callback behavior or its controlled source
+revision changes. Legacy overloads remain available but are exported as `UNSPECIFIED` and
 produce the `ENG-DYNAMIC-006` review finding. Unregistered evidence references remain review findings rather than
-simulated proof of an approved SRS, P&ID, instrument index, or
-cause-and-effect chart.
+simulated proof of an approved SRS, P&ID, instrument index, or cause-and-effect chart.
 
 The public regression matrix uses the same 1.0 s sensor delay and 0.5 s logic delay for every case:
 
