@@ -70,6 +70,34 @@ unresolvable cases fail explicitly. See the
 [reporting guide](../wiki/two_fluid_reporting_and_validation#static-subcell-depth-and-area-diagnostic)
 for units, supported limits and executable regression evidence.
 
+### Stratified hydrostatic pressure moments
+
+The opt-in geometry query `GeometryCalculator.calculateStratifiedPressureMoments(depth, diameter)`
+returns immutable signed first moments `getLiquidMoment()` and `getGasMoment()` in m3, plus
+`getLiquidArea()` and `getGasArea()` in m2. Depth is normal to the circular pipe cross-section.
+For interface depth $h$, height $y$ above the invert and chord width
+$w(y)=2\sqrt{y(D-y)}$, the definitions are
+
+$$J_l=\int_0^h(h-y)w(y)\,dy,\qquad J_g=\int_h^D(h-y)w(y)\,dy.$$
+
+Thus $J_l\geq0$, $J_g\leq0$, and $dJ_k/dh=A_k$. The hydrostatic contribution to
+phase pressure traction is $\rho_k g\cos(\theta)J_k$ in N; the separate interface-pressure
+contribution is $p_I A_k$. These are signed pressure moments about the interface,
+including the gas region above it, rather than moments about the pipe invert.
+The method integrates the smaller segment with positive 16-point quadrature and recovers
+its complement from the exact full-section moment. Empty phases have exactly zero moment;
+unrepresentable geometry fails explicitly without changing the supplied depth.
+
+`StratifiedPressureMomentsTest` verifies independent angular quadrature, analytical half/full
+sections, trace limits, complement symmetry, area derivatives, serialization and signed
+finite-volume gravity/traction identities. The [executed numerical record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/README.md)
+retains every case, refinement and measured opt-in query cost. This query has no automatic
+runtime call site. It does not change momentum, energy, boundary states or transient results.
+Coupled interfacial pressure forces and conservative energy work remain prerequisites for
+using these moments to demonstrate a retained pool. Capillarity, waves, entrainment,
+separate oil/water interfaces and predictive hydrocarbon evaporation remain outside this API.
+
+
 ## Overview
 
 The NeqSim `TwoFluidPipe` model implements a transient two-fluid multiphase flow solver for pipeline and riser simulations. It solves phase-resolved gas, hydrocarbon-liquid, and aqueous-liquid conservation equations, enabling prediction of:
@@ -2655,6 +2683,7 @@ $$T_\infty = T_{surf} + \frac{q}{U \pi D}$$
 
 rather than toward the surface temperature. This is exact for a uniform source, so the profile
 cannot overshoot the balance temperature — unlike explicit per-increment stepping, which does.
+
 
 
 ## Validation Status

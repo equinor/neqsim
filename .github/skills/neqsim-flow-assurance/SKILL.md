@@ -1627,6 +1627,14 @@ Use this as numerical hydrostatic-initialization evidence only. A stationary gas
 densities, moving terrain drainage, restart, slugging and pigging remain unsupported until their own conservation,
 refinement and public experimental gates pass.
 
+For an explicit static phase-traction diagnostic, use
+`GeometryCalculator.calculateStratifiedPressureMoments(depth, diameter)`: signed liquid/gas moments
+about the interface in m3 and their area derivatives in m2. Multiply each moment by its phase density,
+gravity and cosine of inclination for the hydrostatic traction contribution; interface pressure times
+phase area is separate. This opt-in query has no solver call site. Its independent integral, trace-limit
+and force-identity tests do not establish dynamic pool retention or hydrocarbon evaporation.
+See `StratifiedPressureMomentsTest` and the hydrostatic-pressure-moments public numerical record.
+
 ## Residual MEG/water liquid after pigging
 
 For the bounded experimental Java/Python route, use `TwoFluidPipe` with

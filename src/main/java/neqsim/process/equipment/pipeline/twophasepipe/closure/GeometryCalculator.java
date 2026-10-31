@@ -37,6 +37,127 @@ public class GeometryCalculator implements Serializable {
       0.1495959888165767, 0.1246289712555339, 0.0951585116824928, 0.0622535239386479, 0.0271524594117541};
 
   /**
+   * Calculate signed first pressure moments about a stratified interface in a circular section.
+   *
+   * <p>
+   * For normal depth h and chord width w(y), the liquid moment is the integral of (h-y)w(y) from zero to h; the gas
+   * moment integrates the same expression from h to D. Multiplication by phase density, gravity and cosine of
+   * inclination gives the hydrostatic contribution to axial pressure traction in N. The pressure at the interface
+   * contributes separately as interface pressure times phase area. Derivatives with respect to h are the corresponding
+   * phase areas. Positive quadrature of the minority segment avoids cancellation at phase disappearance. This explicit
+   * geometry query does not change solver forces or energy fluxes.
+   * </p>
+   *
+   * @param liquidDepth interface depth normal to the pipe, in m, from zero to diameter inclusive
+   * @param diameter internal diameter in m
+   * @return immutable signed moments in m3 and phase areas in m2
+   * @throws IllegalArgumentException if geometry or its moments cannot be represented
+   */
+  public StratifiedPressureMoments calculateStratifiedPressureMoments(double liquidDepth, double diameter) {
+    if (!Double.isFinite(liquidDepth) || !Double.isFinite(diameter) || !(diameter > 0.0) || liquidDepth < 0.0
+        || liquidDepth > diameter) {
+      throw new IllegalArgumentException("Pressure moments require finite depth in [0, D] and positive diameter");
+    }
+    double area = Math.PI * diameter * diameter / 4.0;
+    double minorityDepth = Math.min(liquidDepth, diameter - liquidDepth);
+    double areaIntegral = 0.0;
+    double momentIntegral = 0.0;
+    if (minorityDepth > 0.0) {
+      double fraction = minorityDepth / diameter;
+      for (int node = 0; node < CELL_NODES.length; node++) {
+        for (int sign = -1; sign <= 1; sign += 2) {
+          double t = 0.5 * (1.0 + sign * CELL_NODES[node]);
+          double tSquared = t * t;
+          double integrand = tSquared * Math.sqrt(1.0 - fraction * tSquared);
+          double weight = 0.5 * CELL_WEIGHTS[node];
+          areaIntegral += weight * integrand;
+          momentIntegral += weight * integrand * (1.0 - tSquared);
+        }
+      }
+    }
+    double scale = 4.0 * minorityDepth * Math.sqrt(minorityDepth * diameter);
+    double minorityArea = scale * areaIntegral;
+    double minorityMoment = scale * minorityDepth * momentIntegral;
+    double wholeMoment = (liquidDepth - 0.5 * diameter) * area;
+    boolean liquidIsMinority = liquidDepth <= 0.5 * diameter;
+    double liquidArea = liquidIsMinority ? minorityArea : area - minorityArea;
+    double gasArea = liquidIsMinority ? area - minorityArea : minorityArea;
+    double liquidMoment = liquidIsMinority ? minorityMoment : wholeMoment + minorityMoment;
+    double gasMoment = liquidIsMinority ? wholeMoment - minorityMoment : -minorityMoment;
+    if (!Double.isFinite(area) || !(0.5 * diameter * area > 0.0) || !Double.isFinite(liquidMoment)
+        || !Double.isFinite(gasMoment) || liquidMoment < 0.0 || gasMoment > 0.0
+        || (minorityDepth > 0.0 && (!(minorityArea > 0.0) || !(minorityMoment > 0.0)))) {
+      throw new IllegalArgumentException("Pressure moments exceed representable geometry");
+    }
+    return new StratifiedPressureMoments(liquidMoment, gasMoment, liquidArea, gasArea);
+  }
+
+  /**
+   * Signed pressure moments for a circular stratified section; excludes the interface-pressure term.
+   *
+   * @author NeqSim
+   * @version 1.0
+   */
+  public static final class StratifiedPressureMoments implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final double liquidMoment;
+    private final double gasMoment;
+    private final double liquidArea;
+    private final double gasArea;
+
+    /**
+     * Store an independently owned pressure-moment result.
+     *
+     * @param liquidMoment nonnegative liquid first moment in m3
+     * @param gasMoment nonpositive gas first moment in m3
+     * @param liquidArea liquid cross-sectional area in m2
+     * @param gasArea gas cross-sectional area in m2
+     */
+    private StratifiedPressureMoments(double liquidMoment, double gasMoment, double liquidArea, double gasArea) {
+      this.liquidMoment = liquidMoment;
+      this.gasMoment = gasMoment;
+      this.liquidArea = liquidArea;
+      this.gasArea = gasArea;
+    }
+
+    /**
+     * Get the nonnegative liquid pressure moment about the interface.
+     *
+     * @return integral of interface depth minus height over liquid area, in m3
+     */
+    public double getLiquidMoment() {
+      return liquidMoment;
+    }
+
+    /**
+     * Get the nonpositive gas pressure moment about the interface.
+     *
+     * @return integral of interface depth minus height over gas area, in m3
+     */
+    public double getGasMoment() {
+      return gasMoment;
+    }
+
+    /**
+     * Get the occupied liquid cross-sectional area.
+     *
+     * @return liquid area, also the derivative of its moment with respect to depth, in m2
+     */
+    public double getLiquidArea() {
+      return liquidArea;
+    }
+
+    /**
+     * Get the occupied gas cross-sectional area.
+     *
+     * @return gas area, also the derivative of its moment with respect to depth, in m2
+     */
+    public double getGasArea() {
+      return gasArea;
+    }
+  }
+
+  /**
    * Reconstruct a horizontal free surface within one straight, constant-diameter cell.
    *
    * <p>

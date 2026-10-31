@@ -1,0 +1,200 @@
+{
+  "base": "b018bc708b64927890a7ba072ba806d370a86b26",
+  "runtime": "OpenJDK 17.0.20",
+  "test_command": "./mvnw -q -Dtest=StratifiedPressureMomentsTest,HydrostaticCellGeometryTest,ClosedWallPressureCompatibilityTest,HydrostaticPressureReconstructionTest,MultiphaseHydrostaticForceQualificationTest,ConservativeInterfacialDragTest,TwoFluidPhaseAppearanceAdvectionTest,ConservativeEnergyTransportTest,TwoFluidComponentOutletTest,TwoFluidMomentumSourceConservationTest,TwoFluidTransactionalEvaluationTest,TwoFluidPipeTransactionalTest test",
+  "test_exit_code": 0,
+  "classes": [
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.closure.StratifiedPressureMomentsTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.052
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.closure.HydrostaticCellGeometryTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.138
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ClosedWallPressureCompatibilityTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.053
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.HydrostaticPressureReconstructionTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.173
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.MultiphaseHydrostaticForceQualificationTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.568
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ConservativeInterfacialDragTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.019
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidPhaseAppearanceAdvectionTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.584
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.ConservativeEnergyTransportTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.015
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidComponentOutletTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.872
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidMomentumSourceConservationTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.022
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidTransactionalEvaluationTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.014
+    },
+    {
+      "class": "neqsim.process.equipment.pipeline.TwoFluidPipeTransactionalTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 5.63
+    }
+  ],
+  "java8_api_compile": {
+    "exit_code": 0,
+    "command": "java --module jdk.compiler/com.sun.tools.javac.Main --release 8 -cp <current classes and dependency jars> -d <isolated output> <both changed Java files>",
+    "actual_java8_runtime_executed": false
+  },
+  "csv_main_exit_code": 0,
+  "deterministic_csv_replay": "moments.csv and forces.csv byte-identical after final source edit",
+  "plot_command": "python3 src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/plot_results.py",
+  "plot_exit_code": 0,
+  "javadoc": {
+    "exit_code": 0,
+    "command": "./mvnw -q javadoc:javadoc -Dsubpackages=neqsim.process.equipment.pipeline.twophasepipe.closure -DjavadocExecutable=<environment-only adapter to installed JDK module>",
+    "note": "No JDK launcher executable; adapter uses installed jdk.javadoc module. No source or POM workaround."
+  },
+  "checkstyle": {
+    "exit_code": 0,
+    "command": "./mvnw -q checkstyle:check -Dcheckstyle.includes=neqsim/process/equipment/pipeline/twophasepipe/closure/GeometryCalculator.java",
+    "warnings": 27,
+    "new_code_warnings": 0,
+    "note": "Existing HydrostaticCellGeometry getter Javadocs at lines 372-412 have 27 unchanged warning entries; none in added API."
+  },
+  "publication_gates": [
+    {
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "pre-commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-commit"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "check"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "devtools/check_documentation_search.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "pre-commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-push"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "limitations": [
+    "No full repository test pass claimed.",
+    "No local Java 8 JVM run.",
+    "No dynamic pool, physical boundary/refill or predictive finite-rate depletion qualification."
+  ],
+  "maven_bootstrap": "work-with-neqsim scripts/prepare_maven.py evaluated before Maven and Spotless; private settings/cache outside feature branch",
+  "documentation_search": "824 Markdown pages and one standalone HTML page",
+  "source_stable_through_final_gates": true,
+  "existing_selected_tests_match_exact_base": true,
+  "final_comment_cleanup": "Removed three Javadoc blank-line trailing spaces after the 83-test run. Both Java sources recompiled --release 8 and all class files were byte-identical to the tested version; no executable change.",
+  "exact_base_changed_file_whitespace_check": {
+    "command": "git diff --check in isolated 17-file subset against six hash-verified exact base blobs",
+    "exit_code": 0
+  }
+}
