@@ -786,6 +786,14 @@ configuration fits a numerically verified or experimentally qualified evidence-m
 severe-slugging, slug-statistics, and boundary-composition cases to a separately qualified model or controlled
 experimental study.
 
+For closed or near-static terrain initialization, the interior pressure operator is analytically well balanced for a
+common mixture pressure: 90 flat/affine/curved, constant/smooth/alternating-density, 12--192-cell pure-gas/oil cases
+and a separate 45-case pure-water extension remain below `1e-10 m/s2` with exactly zero local mass and energy rates.
+Its signed energy correction is `Q * deltaP`
+with the mass donor and its diagnostic is transaction-safe. This is numerical fixed-point evidence only. Do not use it
+to qualify a two-density stationary pool, a moving interface, shutdown/restart, severe slugging, or pigging; those still
+require their separate evidence-matrix gates.
+
 1. **Always run steady state first**: Call `process.run()` before `runTransient()`
 2. **Timestep size**: Start with 1.0 s, reduce if oscillating (0.1-0.5 s)
 3. **Liquid-outlet level-controller direction**: use `setReverseActing(false)` so level up drives the outlet valve further open. Reverse acting on this configuration drives the loop the wrong way.

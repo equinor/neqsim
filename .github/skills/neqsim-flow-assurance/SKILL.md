@@ -1616,6 +1616,17 @@ impact; `neqsim-electrolyte-systems` for the aqueous-phase corrosivity of wet su
 | A new tie-back looks feasible on its own line but is routed through a shared trunk | Compute the back-pressure the added rate puts on the trunk inlet and compare it with the choke dP of the existing wells (Trestakk: +23/+51/+93 bar for +1.5/+3/+5 kSm3/d on a 12-in trunk against 14-95 bar of headroom); beyond the headroom the existing wells are throttled out or a dedicated line is needed |
 | Trunk ID and host arrival pressure are unknown | Calibrate the arrival pressure to measured wellhead/choke data for each plausible ID (10 and 12 in), show both, and bracket the arrival pressure with the host PSD window instead of reporting one number |
 
+### TwoFluidPipe static terrain initialization
+
+The conservative interior operator reconstructs a common face pressure from adjacent mixture inertia and signed
+half-cell heads. The public 90-case analytical matrix covers flat, affine and curved terrain, three density patterns,
+12--192 cells and pure gas/oil below `1e-10 m/s2`, with zero local mass and energy rates; a separate 45-case
+pure-water extension passes the same gates. Signed face work uses
+`Q * deltaP` with the mass donor, horizontal pressure flux is unchanged and rollback restores the accepted diagnostic.
+Use this as numerical hydrostatic-initialization evidence only. A stationary gas/liquid pool with different phase
+densities, moving terrain drainage, restart, slugging and pigging remain unsupported until their own conservation,
+refinement and public experimental gates pass.
+
 ## Residual MEG/water liquid after pigging
 
 For the bounded experimental Java/Python route, use `TwoFluidPipe` with

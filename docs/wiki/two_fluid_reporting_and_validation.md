@@ -648,10 +648,19 @@ hydrostatic acceleration tolerance is 1e-10 m/s2. The earlier asymmetric
 cell-centre outlet traction fails the affine condition; linear extrapolation at
 both closed faces instead changes the horizontal acoustic boundary response.
 
-This boundary reconstruction does not repair the interior pressure/body-force
-stencil on curved terrain. Closed gravity retention, moving interfaces, enriched
-phase boundaries and physical evaporation remain separate qualification gates
-under #3298, #4674 and #4675. No seeded liquid or force correction is applied to
-make a pool stationary.
+The interior operator separately reconstructs a common face pressure from both
+adjacent conservative mixture inertias and signed half-cell heads. Its correction
+is carried consistently by momentum traction, phase-pressure diagnostics and
+signed `Q * deltaP` energy work. The 90-case analytical matrix spans flat,
+affine and curved terrain, three density patterns, 12--192 cells and pure gas/oil;
+all cases remain below `1e-10 m/s2` with exactly zero local mass and energy rates.
+A separate 45-case pure-water extension passes the same gates.
+Horizontal pressure flux and transactional rollback remain exact.
+
+This is a numerical common-mixture-pressure qualification. Moving interfaces,
+stationary multiphase pools with different phase densities, enriched phase
+boundaries and physical evaporation remain separate gates under #3298, #4674 and
+#4675. No seeded liquid or fitted force correction is applied to make a pool
+stationary. See the [public analytical record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-interior-pressure/README.md).
 
 The [closed-wall reproduction record](../../src/test/resources/neqsim/process/equipment/pipeline/closed-wall-pressure/README.md) includes exact source provenance, analytical acceptance, all 12–192-cell operator data, and measured RHS cost with shared-runner limitations.

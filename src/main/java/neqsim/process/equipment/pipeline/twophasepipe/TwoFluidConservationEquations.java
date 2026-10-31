@@ -428,6 +428,9 @@ public class TwoFluidConservationEquations implements Serializable {
   /** Interface pressure used by the pressure part of the momentum flux, one per interface. */
   private double[] interfacePressure = new double[0];
 
+  /** Well-balanced pressure correction applied at each internal face, in Pa. */
+  private double[] hydrostaticFacePressureCorrection = new double[0];
+
   /**
    * Enable virtual mass force term in momentum equations. The virtual mass force accounts for the inertia of the
    * displaced phase during rapid acceleration/deceleration. Reference: Drew, D.A. and Lahey, R.T. (1987), "The virtual
@@ -1468,6 +1471,7 @@ public class TwoFluidConservationEquations implements Serializable {
     private final double[] savedGasHoldup = interfaceGasHoldup.clone();
     private final double[] savedLiquidHoldup = interfaceLiquidHoldup.clone();
     private final double[] savedPressure = interfacePressure.clone();
+    private final double[] savedHydrostaticCorrection = hydrostaticFacePressureCorrection.clone();
     private final double[][] savedPhaseHoldup = copyMatrixArray(interfacePhaseHoldup);
     private final double[][] savedPhasePressure = copyMatrixArray(interfacePhasePressure);
     private final TwoFluidSection savedOutlet = reconstructedOutlet;
@@ -1483,6 +1487,7 @@ public class TwoFluidConservationEquations implements Serializable {
       interfaceGasHoldup = savedGasHoldup;
       interfaceLiquidHoldup = savedLiquidHoldup;
       interfacePressure = savedPressure;
+      hydrostaticFacePressureCorrection = savedHydrostaticCorrection;
       interfacePhaseHoldup = savedPhaseHoldup;
       interfacePhasePressure = savedPhasePressure;
       reconstructedOutlet = savedOutlet;
@@ -1561,6 +1566,21 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   public double[] getLastEnergyFaceFluxes() {
     return lastEnergyFaceFluxes.clone();
+  }
+
+  /**
+   * Get the well-balanced pressure correction applied at every internal finite-volume face.
+   *
+   * <p>
+   * Positive values increase the original AUSM+ interface pressure. The correction is zero for a horizontal
+   * constant-area line and is reported separately from the final interface pressure so diagnostics can distinguish
+   * hydrostatic reconstruction from dynamic pressure transport.
+   * </p>
+   *
+   * @return defensive pressure corrections in Pa, or an empty array before the first evaluation
+   */
+  public double[] getLastHydrostaticFacePressureCorrections() {
+    return hydrostaticFacePressureCorrection.clone();
   }
 
   /**
@@ -2028,6 +2048,85 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   /**
+   * Reconstruct the pressure correction that makes cell-centred gravity and face traction well balanced.
+   *
+   * <p>
+   * Each cell is the finite-volume owner of a piecewise-constant conservative mixture inertia. Extrapolating the two
+   * adjacent cell-centre pressures through their own half-cell gravity heads gives two estimates of the common face
+   * pressure. Their average preserves a centred horizontal pressure flux exactly and is exact for the discrete
+   * hydrostatic state, including curved terrain and changing density. The common mixture correction balances total
+   * momentum only; it does not assert that phases of different density can remain individually stationary under one
+   * pressure gradient.
+   * </p>
+   *
+   * @param left section to the left of the face
+   * @param right section to the right of the face
+   * @return additive correction to the centred face pressure in Pa
+   * @throws IllegalStateException if conservative inertia, geometry, or the reconstructed pressure is inadmissible
+   */
+  private static double hydrostaticFacePressureCorrection(TwoFluidSection left, TwoFluidSection right) {
+    double leftDensity = conservativeMixtureDensity(left);
+    double rightDensity = conservativeMixtureDensity(right);
+    double leftHead = 0.5 * left.getLength() * GRAVITY * Math.sin(left.getInclination()) * leftDensity;
+    double rightHead = 0.5 * right.getLength() * GRAVITY * Math.sin(right.getInclination()) * rightDensity;
+    double correction = 0.5 * (rightHead - leftHead);
+    double reconstructedPressure = 0.5 * (left.getPressure() + right.getPressure()) + correction;
+    if (!Double.isFinite(correction) || !Double.isFinite(reconstructedPressure) || !(reconstructedPressure > 0.0)) {
+      throw new IllegalStateException("Hydrostatic face pressure requires positive finite pressure and geometry");
+    }
+    return correction;
+  }
+
+  /**
+   * Recover mixture density from the conservative phase inventories owned by one cell.
+   *
+   * @param section finite-volume section
+   * @return mixture density in kg/m3
+   * @throws IllegalStateException if the conservative state or area is inadmissible
+   */
+  private static double conservativeMixtureDensity(TwoFluidSection section) {
+    double mass = section.getGasMassPerLength() + section.getOilMassPerLength() + section.getWaterMassPerLength();
+    double area = section.getArea();
+    if (!Double.isFinite(mass) || mass < 0.0 || !Double.isFinite(area) || !(area > 0.0)
+        || !Double.isFinite(section.getLength()) || !(section.getLength() > 0.0)) {
+      throw new IllegalStateException("Hydrostatic reconstruction requires admissible conservative inertia");
+    }
+    return mass / area;
+  }
+
+  /**
+   * Apply one pressure reconstruction consistently to momentum traction and signed enthalpy transport.
+   *
+   * <p>
+   * The energy correction is {@code Q * deltaP}, where the signed volume flow {@code Q} uses the same donor density as
+   * the AUSM+ mass flux. It therefore preserves the donor direction for reversed flow and adds no energy when the phase
+   * is absent or stationary.
+   * </p>
+   *
+   * @param flux calculated phase flux, modified in place
+   * @param left left phase state
+   * @param right right phase state
+   * @param area face area in m2
+   * @param pressureCorrection additive pressure correction in Pa
+   * @throws IllegalStateException if a transported phase has no admissible donor density
+   */
+  private static void applyHydrostaticFaceCorrection(PhaseFlux flux, PhaseState left, PhaseState right, double area,
+      double pressureCorrection) {
+    if (pressureCorrection == 0.0 || left.holdup == 0.0 && right.holdup == 0.0) {
+      return;
+    }
+    double donorDensity = flux.massFlux >= 0.0 ? left.density : right.density;
+    if (flux.massFlux != 0.0 && (!Double.isFinite(donorDensity) || !(donorDensity > 0.0))) {
+      throw new IllegalStateException("Hydrostatic pressure work requires a positive finite donor density");
+    }
+    flux.momentumFlux += flux.interfaceHoldup * pressureCorrection * area;
+    if (flux.massFlux != 0.0) {
+      flux.energyFlux += flux.massFlux * pressureCorrection / donorDensity;
+    }
+    flux.interfacePressure += pressureCorrection;
+  }
+
+  /**
    * Calculate a local inclined-section gas-carryover screen.
    *
    * <p>
@@ -2080,6 +2179,9 @@ public class TwoFluidConservationEquations implements Serializable {
       interfaceLiquidHoldup = new double[nInterfaces];
       interfacePressure = new double[nInterfaces];
     }
+    if (hydrostaticFacePressureCorrection.length != nInterfaces) {
+      hydrostaticFacePressureCorrection = new double[nInterfaces];
+    }
 
     interfacePhaseHoldup = new double[nInterfaces][3];
     interfacePhasePressure = new double[nInterfaces][3];
@@ -2099,6 +2201,8 @@ public class TwoFluidConservationEquations implements Serializable {
       TwoFluidSection right = reconstructions[i + 1] == null ? sections[i + 1]
           : reconstructions[i + 1].getLeftFaceState();
       double A = 0.5 * (left.getArea() + right.getArea());
+      double pressureCorrection = hydrostaticFacePressureCorrection(left, right);
+      hydrostaticFacePressureCorrection[i] = pressureCorrection;
 
       // Create phase states for AUSM+
       PhaseState gasL = createGasState(left);
@@ -2108,6 +2212,7 @@ public class TwoFluidConservationEquations implements Serializable {
       double gradientDefect = pressureGradientDefects == null ? 0.0 : pressureGradientDefects[i];
       PhaseFlux gasFlux = fluxCalculator.calcPhaseFlux(gasL, gasR, A,
           pressureInterpolationVelocity(gasL, gasR, gradientDefect));
+      applyHydrostaticFaceCorrection(gasFlux, gasL, gasR, A, pressureCorrection);
       fluxes[i][IDX_GAS_MASS] = gasFlux.massFlux;
       fluxes[i][IDX_GAS_MOMENTUM] = gasFlux.momentumFlux;
       interfaceGasHoldup[i] = gasFlux.interfaceHoldup;
@@ -2126,6 +2231,8 @@ public class TwoFluidConservationEquations implements Serializable {
             pressureInterpolationVelocity(oilL, oilR, gradientDefect));
         PhaseFlux waterFlux = fluxCalculator.calcPhaseFlux(waterL, waterR, A,
             pressureInterpolationVelocity(waterL, waterR, gradientDefect));
+        applyHydrostaticFaceCorrection(oilFlux, oilL, oilR, A, pressureCorrection);
+        applyHydrostaticFaceCorrection(waterFlux, waterL, waterR, A, pressureCorrection);
         fluxes[i][IDX_OIL_MASS] = oilFlux.massFlux;
         fluxes[i][IDX_WATER_MASS] = waterFlux.massFlux;
         fluxes[i][IDX_OIL_MOMENTUM] = oilFlux.momentumFlux;
@@ -2153,6 +2260,7 @@ public class TwoFluidConservationEquations implements Serializable {
       PhaseState liqL = createLiquidState(left);
       PhaseState liqR = createLiquidState(right);
       PhaseFlux liqFlux = fluxCalculator.calcPhaseFlux(liqL, liqR, A);
+      applyHydrostaticFaceCorrection(liqFlux, liqL, liqR, A, pressureCorrection);
       interfaceLiquidHoldup[i] = liqFlux.interfaceHoldup;
       if (gasFlux.interfaceHoldup == 0.0) {
         interfacePressure[i] = liqFlux.interfacePressure;

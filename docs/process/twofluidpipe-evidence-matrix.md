@@ -193,6 +193,28 @@ nonphysical reconstructed pressure fails explicitly without a numerical floor.
 `ClosedWallPressureCompatibilityTest` covers affine pure-phase hydrostatics,
 horizontal acoustic pressure response and closed-flux limits. These are numerical
 boundary controls, not qualification of a static two-phase pool or physical
-hydrocarbon transfer rates. General curved-terrain retention remains unqualified.
+hydrocarbon transfer rates.
 
 The [closed-wall reproduction record](../../src/test/resources/neqsim/process/equipment/pipeline/closed-wall-pressure/README.md) includes exact source provenance, analytical acceptance, all 12–192-cell operator data, and measured RHS cost with shared-runner limitations.
+
+### Interior hydrostatic pressure and signed work
+
+Every internal face now reconstructs a common mechanical pressure from the two
+adjacent conservative mixture inertias and signed half-cell gravity heads. The
+same additive correction is applied to phase momentum traction, phase-pressure
+diagnostics and total-energy pressure work. Energy uses the signed mass donor, so
+the correction is exactly `Q * deltaP` for either flow direction. A horizontal
+face retains the established AUSM pressure flux exactly, and rejected
+transactional evaluations restore the accepted correction ledger.
+
+`HydrostaticPressureReconstructionTest` passes 90 analytical stationary controls:
+flat, affine and public curved terrain; constant, smooth and alternating cell
+density; 12/24/48/96/192 cells; and pure gas or oil. The unchanged maximum
+acceleration gate is `1e-10 m/s2`; every local mass and energy rate is exactly
+zero. A separate 45-case pure-water extension passes the same terrain, density,
+mesh and conservation gates without changing that predeclared basis. Signed
+-2/+2 m/s controls verify pressure work, horizontal correction is
+exactly zero, and rollback is exact. This is numerical well-balancing of a common
+mixture pressure, not validation of a stationary two-density pool, a moving
+interface, severe slugging, restart, phase-transfer rates, pigging or commercial
+parity. See the [public analytical record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-interior-pressure/README.md).
