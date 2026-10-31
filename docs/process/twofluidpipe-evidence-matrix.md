@@ -218,3 +218,14 @@ exactly zero, and rollback is exact. This is numerical well-balancing of a commo
 mixture pressure, not validation of a stationary two-density pool, a moving
 interface, severe slugging, restart, phase-transfer rates, pigging or commercial
 parity. See the [public analytical record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-interior-pressure/README.md).
+
+`MultiphaseHydrostaticForceQualificationTest` adds 720 unequal-density controls
+and 48 signed gas/oil/water work controls. At initially zero velocity, a common
+mixture-hydrostatic pressure gives phase acceleration
+`(rhoMix / rhoPhase - 1) * g * sin(theta)` while the summed mixture force is zero.
+The fixed gates are `1e-10 m/s2` phase-acceleration error and `1e-8 N/m` mixture-force
+residual; absent-phase mass and momentum rates and stationary energy rates are
+exactly zero. The work controls retain the individual donor under countercurrent
+flow. These are instantaneous force/flux identities, with refinement through 192
+cells; no elapsed pool-retention interval, pool level, or depletion time is inferred.
+The public record retains every case, inspected plots, and RHS-only timing data.

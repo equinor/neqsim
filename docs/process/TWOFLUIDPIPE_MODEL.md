@@ -2114,6 +2114,19 @@ slugging/restart behavior. The original riser fixture and its historical measure
 their original sampling convention. Reproduction details and the unchanged gates are in the
 [interior hydrostatic record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-interior-pressure/README.md).
 
+The unequal-density extension checks the instantaneous inviscid phase force
+`alpha[k] * A * (-dp/ds - rho[k] * g * sin(theta))`. Under a common mixture-hydrostatic
+pressure gradient, the present-phase acceleration is
+`(rhoMix / rho[k] - 1) * g * sin(theta)`. Opposing phase accelerations can therefore
+coexist with zero total mixture force. The 720-control matrix includes exact
+absent phases and 1e-12 gas holdup, signed terrain and 12–192 cells; 48 additional
+controls verify signed gas/oil/water pressure work with independent donors.
+These tests qualify the force and flux operators at the initial instant. A
+closed or low-flow pool-retention trajectory with resolved liquid levels still
+requires separate evidence. All cases and RHS-only cost observations are retained
+in the same public record.
+
+
 The separately named `TwoFluidCellFaceTengesdalPreparationTest` uses the same fluid, lengths and
 flow rates with explicit faces. Its represented elevation rise is **13.9032247068273 m** on both
 16 and 24 cells, rather than the historical mesh-dependent rise. All three 0.1 s backward-Euler /
