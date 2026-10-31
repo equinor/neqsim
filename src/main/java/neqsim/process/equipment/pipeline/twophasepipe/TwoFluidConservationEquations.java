@@ -244,7 +244,7 @@ public class TwoFluidConservationEquations implements Serializable {
 
   /** Obtain consistent inlet traction and source metadata without mutating the prescribed state. */
   private TwoFluidSection inletFaceState(TwoFluidSection inletCell) {
-    if (inletBoundaryState == null) {
+    if (inletClosed || inletBoundaryState == null) {
       return inletCell;
     }
     if (!inletPhaseFlowPrescribed) {
@@ -266,10 +266,15 @@ public class TwoFluidConservationEquations implements Serializable {
    * seeded an odd-even velocity mode in the first transient step.
    * </p>
    *
+   * Explicitly closed faces instead use local mechanical wall compatibility and ignore external donor states.
+   *
    * @param sections current stage state
    * @return inlet-face pressure in Pa
    */
   private double inletFacePressure(TwoFluidSection[] sections) {
+    if (inletClosed) {
+      return closedWallPressure(sections[0], -1.0);
+    }
     if (inletBoundaryState != null) {
       return inletPhaseFlowPrescribed ? sections[0].getPressure() : inletBoundaryState.getPressure();
     }
@@ -285,13 +290,44 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   private double outletFacePressure(TwoFluidSection[] sections, TwoFluidSection boundary) {
     if (outletClosed) {
-      return boundary.getPressure();
+      return closedWallPressure(boundary, 1.0);
     }
     if (!Double.isNaN(outletBoundaryPressure)) {
       return outletBoundaryPressure;
     }
     int n = sections.length;
     return extrapolatedFacePressure(boundary, n > 1 ? sections[n - 2] : null);
+  }
+
+  /**
+   * Pressure traction at an impermeable face with local hydrostatic wall compatibility.
+   *
+   * <p>
+   * A rigid wall has zero normal advective flux. Its pressure gradient balances the local mixture body force;
+   * conservative phase masses supply the same inertia used by the gravity source. This half-cell reconstruction leaves
+   * horizontal closed-wall pressure unchanged. It is not a general interior hydrostatic reconstruction, and does not
+   * assert that phases of different density can remain stationary with a common axial pressure.
+   * </p>
+   *
+   * @param section adjacent cell or conservative subcell boundary
+   * @param direction minus one for the inlet, plus one for the outlet
+   * @return finite positive wall-face pressure in Pa
+   * @throws IllegalStateException if the mechanical wall state is inadmissible
+   */
+  private static double closedWallPressure(TwoFluidSection section, double direction) {
+    double mass = section.getGasMassPerLength() + section.getOilMassPerLength() + section.getWaterMassPerLength();
+    double area = section.getArea();
+    double length = section.getLength();
+    double pressure = section.getPressure();
+    if (!Double.isFinite(mass) || mass < 0.0 || !Double.isFinite(area) || !(area > 0.0) || !Double.isFinite(length)
+        || !(length > 0.0)) {
+      throw new IllegalStateException("Closed-wall pressure requires admissible conservative inertia and geometry");
+    }
+    double wall = pressure - direction * 0.5 * length * GRAVITY * Math.sin(section.getInclination()) * mass / area;
+    if (!Double.isFinite(wall) || !(wall > 0.0)) {
+      throw new IllegalStateException("Closed-wall hydrostatic pressure must be finite and positive");
+    }
+    return wall;
   }
 
   /**

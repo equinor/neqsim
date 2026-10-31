@@ -622,3 +622,36 @@ industrial report workflow should still add:
 
 - Plot templates for pressure, temperature, holdup, water cut, flow regime, and slug events.
 - Direct import of additional third-party export formats where licensing allows it.
+
+
+## Closed-wall pressure compatibility
+
+An explicitly closed external face has zero advective mass and enthalpy flux.
+Its pressure traction remains part of the momentum balance. The wall pressure
+uses a local half-cell hydrostatic reconstruction from the sum of conservative
+phase masses per length, divided by area. The inlet adds this signed head; the
+outlet subtracts it. This is the same inertia used by the gravity source.
+A horizontal wall retains exactly its adjacent cell pressure, including for a
+nonuniform acoustic pressure profile; extrapolating the interior pressure slope
+would change that zero-normal-gradient reflection condition.
+
+A nonfinite or nonpositive reconstructed pressure is rejected rather than
+floored. This mechanical rejection must propagate through the existing complete
+interval rollback; it supplies no external donor or receiver through a closed
+face. With different phase densities the wall condition balances total mixture
+body force, not a fictitious static equilibrium of every phase.
+
+`ClosedWallPressureCompatibilityTest` retains affine pure-gas/oil/water controls
+on 1/12/24/48 cells with both slope signs, a horizontal acoustic cosine, exact
+closed mass/energy flux and explicit inadmissible-head rejection. The fixed
+hydrostatic acceleration tolerance is 1e-10 m/s2. The earlier asymmetric
+cell-centre outlet traction fails the affine condition; linear extrapolation at
+both closed faces instead changes the horizontal acoustic boundary response.
+
+This boundary reconstruction does not repair the interior pressure/body-force
+stencil on curved terrain. Closed gravity retention, moving interfaces, enriched
+phase boundaries and physical evaporation remain separate qualification gates
+under #3298, #4674 and #4675. No seeded liquid or force correction is applied to
+make a pool stationary.
+
+The [closed-wall reproduction record](../../src/test/resources/neqsim/process/equipment/pipeline/closed-wall-pressure/README.md) includes exact source provenance, analytical acceptance, all 12–192-cell operator data, and measured RHS cost with shared-runner limitations.
