@@ -35,7 +35,9 @@ laboratory simulations.
 | `OilMaterialBalance` | Havlena-Odeh oil balance (OOIP, gas-cap ratio `m`, water drive, Pirson drive indices) | `pvtsimulation.reservoirproperties.materialbalance` |
 | `GeneralizedMaterialBalance` | Generalized oil/gas balance with both `Rs` and `Rv`, measured net withdrawals, known aquifer/rock support and identifiability checks | `pvtsimulation.reservoirproperties.materialbalance` |
 | `CalibratedPvtModel`, `MaterialBalancePvtHistory` | Immutable original/tuned model handoff, held-out laboratory residuals and explicitly attributed pressure-aligned PVT | `pvtsimulation.util` |
-| `CompositionalReservoirHistory` | Frozen-EOS component production/injection replay, bounded pore-volume matching and separate held-out pressure residuals | `pvtsimulation.util` |
+| `CompositionalReservoirHistory` | Frozen-EOS component production/injection replay, bounded pore-volume matching, optional segregated aquifer and separate held-out pressure residuals | `pvtsimulation.util` |
+| `FetkovichAquifer`, `ReservoirHistoryEnsemble` | Physical finite-storage support, implicit EOS coupling and discrete joint Bayesian pressure-history hypotheses | `pvtsimulation.reservoirproperties.materialbalance`, `pvtsimulation.util` |
+| `DepletionPvtHistoryGenerator` | Dry two-hydrocarbon-phase CVD/DLE generalized PVT with native snapshots and separator/component-closure evidence | `pvtsimulation.util` |
 | `VanEverdingenHurstAquifer` | Radial aquifer influence functions, Carter-Tracy cumulative water influx, ECLIPSE `AQUTAB` export | `pvtsimulation.reservoirproperties.materialbalance` |
 | `DeclineCurveAnalysis` | Arps + Duong (2011) decline: forward rate/EUR and least-squares history matching | `pvtsimulation.util` |
 
@@ -237,8 +239,8 @@ residual report is not automatic model acceptance.
 temperature, ordered separator path, a path-validation evidence reference, and
 pressure-aligned `BlackOilPVTTable.Record` values including the original state.
 Declare `CVD`, `DLE`, `COMPOSITIONAL_HISTORY` or `CONSTANT_COMPOSITION` explicitly.
-The records must be evaluated externally from the accepted tuned model on that
-path. The container checks numeric validity, sequence and basis; it does not generate
+Records must be evaluated from the accepted tuned model on that path, either
+externally or through the bounded `DepletionPvtHistoryGenerator` route below. The container checks numeric validity, sequence and basis; it does not generate
 generalized CVD PVT or independently verify caller-supplied records against the EOS.
 
 Its `materialBalance` method accepts measured average pressures and cumulative net
@@ -254,9 +256,9 @@ The [handoff tests](../../src/test/java/neqsim/pvtsimulation/util/CalibratedPvtM
 compare full protocol replay with separately executed existing PVT solvers and
 recover an analytically specified synthetic gas inventory. These establish software
 consistency and analytical conservation, not independent laboratory/field accuracy.
-Public laboratory qualification, automatic path-dependent generalized PVT generation,
-broader compositional qualification, physical finite-aquifer matching and uncertainty
-propagation remain open under [issue #4740](https://github.com/equinor/neqsim/issues/4740).
+The bounded native-depletion generator, physical aquifer and discrete uncertainty
+extensions are described below. Independent laboratory/field qualification and
+broader compositional/phase-path coverage remain open under [issue #4740](https://github.com/equinor/neqsim/issues/4740).
 
 ### Conservation equations and diagnostics
 
@@ -300,9 +302,9 @@ software behavior; they are not a field or laboratory validation.
 | --- | --- |
 | Walsh generalized balance (1995), [10.2118/95-01-07](https://doi.org/10.2118/95-01-07) | Implemented above; retain `Rv`, consistent surface basis and phase-inventory distinctions. |
 | Whitson & Torp CVD analysis (1983), [10.2118/10067-PA](https://doi.org/10.2118/10067-PA) | CVD and EOS tuning exist; qualify depletion-path generation of generalized PVT against public measured data, rather than treating unrelated constant-composition flashes as a CVD experiment. |
-| Fetkovich finite aquifer (1971), [10.2118/2603-PA](https://doi.org/10.2118/2603-PA) | Carter-Tracy/VEH utilities exist. `AquiferDrive` is a gas-equivalent linear surrogate; add a physical reservoir-volume finite-aquifer model with aquifer depletion, consistent integration and timestep convergence before quantitative joint aquifer matching. |
+| Fetkovich finite aquifer (1971), [10.2118/2603-PA](https://doi.org/10.2118/2603-PA) | `FetkovichAquifer` now supplies physical reservoir-volume storage and aquifer depletion; optional compositional replay couples segregated water support to EOS volume closure. Analytical/RK4 and interval-refinement checks are synthetic qualification; independent field matching remains required. `AquiferDrive` remains a separate gas-equivalent surrogate. |
 | Walsh pressure uncertainty (1999), [10.2118/56691-MS](https://doi.org/10.2118/56691-MS) | Undivided volume residuals above avoid dividing by small expansion terms, but do not handle pressure error statistically. `CompositionalReservoirHistory` provides bounded fixed-volume replay of measured component amounts with independent pressure-sigma residuals and withheld pressures. Correlated errors, independent produced GOR/composition predictions and public field qualification remain open. |
-| Ogele et al. Bayesian integration (2006), [10.2118/100257-MS](https://doi.org/10.2118/100257-MS) | Prioritize a low-dimensional Bayesian combination of geological volume/gas-cap priors and pressure-history likelihood; expose correlated parameters and conflicts between priors and history. This is a closer first uncertainty layer for tank estimates than a full geological ensemble workflow. |
+| Ogele et al. Bayesian integration (2006), [10.2118/100257-MS](https://doi.org/10.2118/100257-MS) | `ReservoirHistoryEnsemble` now combines explicit discrete joint geological volume/phase-fraction/aquifer/PVT/history prior masses with the pressure-history likelihood, correlations and prior shifts. Refine the supplied joint grid; this is not continuous posterior or field qualification. |
 | Emerick & Reynolds ES-MDA (2013), [10.1016/j.cageo.2012.03.011](https://doi.org/10.1016/j.cageo.2012.03.011) | Candidate uncertainty layer after forward matching is qualified; propagate PVT/volume/aquifer priors and report posterior correlations and forecast uncertainty. Reuse external ensemble tooling where appropriate. |
 | Tran et al. rescaled CVD/density-based analysis (2025), [10.1016/j.jgsce.2025.205551](https://doi.org/10.1016/j.jgsce.2025.205551) | Research candidate for near-critical gas condensate with variable BHP under boundary-dominated flow. Obtain the full method and reproduce its numerical cases before implementation; it is not a general substitute for average-pressure material balance. |
 
@@ -353,8 +355,9 @@ grid basin by golden-section search. At least two calibration pressures and info
 feasible trials are required. Inspect `isAtBound()`, `getRejectedTrials()` and all
 residuals. The search bounds, objective and sensitivity are not confidence intervals;
 the search does not prove a global optimum. An infeasible trial is reported, never
-replaced by a plausible pressure. PVT and production uncertainty, pressure covariance,
-aquifer/rock support, thermal effects and spatial displacement are not represented.
+replaced by a plausible pressure. The basic no-aquifer, single-volume fit does not represent pressure covariance,
+rock support, thermal effects or spatial displacement. Optional segregated aquifer
+support and explicit joint PVT/history uncertainty scenarios are described below.
 
 The complete example below is executed by
 [`CompositionalReservoirHistoryTest.documentedWorkflow`](../../src/test/java/neqsim/pvtsimulation/util/CompositionalReservoirHistoryTest.java).
@@ -401,10 +404,11 @@ composition, oil/gas appearance, aqueous injection, interval refinement, ownersh
 serialization. Independent checks use the low-density ideal-gas limit and direct EOS
 volume evaluation at predicted pressures. These establish analytical/software consistency,
 not independent laboratory or field validation. Remaining work under
-[#4740](https://github.com/equinor/neqsim/issues/4740) includes automatic path-dependent
-generalized PVT, independent field/laboratory cases, independent produced-phase validation,
-physical finite-aquifer matching, pressure/PVT/history uncertainty, Bayesian priors,
-multi-tank transmissibility and the separately gated rescaled-CVD research candidate.
+[#4740](https://github.com/equinor/neqsim/issues/4740) includes independent field/laboratory
+cases, broader depletion phase-path coverage, independently predicted produced-phase
+validation, multi-tank transmissibility and the separately gated rescaled-CVD research
+candidate. The bounded PVT generator, finite-aquifer and discrete posterior extensions
+follow below.
 
 ## Aquifer influx
 
@@ -505,3 +509,18 @@ double dP = well.getTotalPressureDrop(); // bar
 - [Relative Permeability](relative_permeability.md)
 - [Gas Pseudopressure & Pseudocritical Properties](gas_pseudopressure_pseudocritical.md)
 - [Field Development](../fielddevelopment/index.md)
+
+## Finite aquifer, uncertainty and native depletion PVT
+
+The optional `FetkovichAquifer` overload of `CompositionalReservoirHistory` couples
+segregated immiscible reservoir-volume water support to the existing TV flash.
+`ReservoirHistoryEnsemble` integrates explicit joint geological, aquifer, PVT and
+component-history hypotheses with common pressure observations and independent
+Gaussian sigmas. See [physical assumptions and posterior evidence](reservoir_aquifer_uncertainty.md).
+
+`DepletionPvtHistoryGenerator` uses opt-in native CVD/DLE snapshots, one multistage
+separator basis and a separately accepted pure-water EOS to construct limited dry
+two-hydrocarbon-phase generalized PVT. It rejects absent phases and unacceptable
+approximate surface-component closure; see the [generation and acceptance contract](depletion_pvt_generation.md).
+These extensions do not complete independent laboratory/field qualification or the
+remaining multi-tank/research acceptance in issue #4740.

@@ -19,6 +19,9 @@ public class DifferentialLiberation extends BasePVTsimulation {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(DifferentialLiberation.class);
 
+  private boolean recordDepletionSnapshots;
+  private DepletionSnapshot[] depletionSnapshots = new DepletionSnapshot[0];
+
   double VoilStd = 0.0;
   double[] relativeVolume = null;
   double[] totalVolume = null;
@@ -85,6 +88,8 @@ public class DifferentialLiberation extends BasePVTsimulation {
    */
   public void runCalc() {
     saturationConditionFound = false;
+    depletionSnapshots = recordDepletionSnapshots ? new DepletionSnapshot[pressures.length] : new DepletionSnapshot[0];
+    double[] previousInventory = recordDepletionSnapshots ? DepletionSnapshot.inventory(getThermoSystem()) : null;
     relativeVolume = new double[pressures.length];
     double[] mass = new double[pressures.length];
     totalVolume = new double[pressures.length];
@@ -117,6 +122,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
 
       totalVolume[i] = mass[i] / oilDensity[i];
       liquidVolume[i] = totalVolume[i];
+      SystemInterface equilibriumSnapshot = null;
       if (getThermoSystem().getNumberOfPhases() > 1) {
         if (!saturationConditionFound) {
           calcSaturationConditions();
@@ -153,7 +159,17 @@ public class DifferentialLiberation extends BasePVTsimulation {
         }
 
         liquidVolumeRelativeToVsat[i] = liquidVolume[i] / saturationVolume;
+        if (recordDepletionSnapshots) {
+          equilibriumSnapshot = org.apache.commons.lang3.SerializationUtils
+              .deserialize(org.apache.commons.lang3.SerializationUtils.serialize(getThermoSystem()));
+        }
         getThermoSystem().removePhase(0);
+      }
+      if (recordDepletionSnapshots) {
+        depletionSnapshots[i] = new DepletionSnapshot(
+            equilibriumSnapshot == null ? getThermoSystem() : equilibriumSnapshot, getThermoSystem(),
+            previousInventory);
+        previousInventory = DepletionSnapshot.inventory(getThermoSystem());
       }
     }
     getThermoSystem().setPressure(ThermodynamicConstantsInterface.referencePressure);
@@ -185,6 +201,24 @@ public class DifferentialLiberation extends BasePVTsimulation {
        * " gasstdvol " + getGasStandardVolume()[i]);
        */
     }
+  }
+
+  /**
+   * Enables immutable per-pressure native phase and component-withdrawal evidence for the next run.
+   *
+   * @param record true to record; false preserves the default calculation and memory cost
+   */
+  public void setRecordDepletionSnapshots(boolean record) {
+    recordDepletionSnapshots = record;
+  }
+
+  /**
+   * Returns a copy of the recorded snapshot array, empty when recording was disabled.
+   *
+   * @return immutable completed-step evidence in supplied pressure order
+   */
+  public DepletionSnapshot[] getDepletionSnapshots() {
+    return depletionSnapshots.clone();
   }
 
   /**
