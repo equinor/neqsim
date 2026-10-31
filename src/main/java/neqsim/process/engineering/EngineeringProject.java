@@ -27,6 +27,7 @@ import neqsim.process.engineering.production.EngineeringProductionReadinessBasis
 import neqsim.process.engineering.verticalslice.InletCompressionExportSliceQualification;
 import neqsim.process.engineering.verticalslice.ProductionVerticalSliceExecutionManifest;
 import neqsim.process.materials.MaterialsReviewInput;
+import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.depressurization.DynamicBlowdownFlareStudyDataSource;
 import neqsim.process.safety.depressurization.CoupledReliefBlowdownFlareInput;
@@ -68,6 +69,7 @@ public final class EngineeringProject implements Serializable {
   private final List<DynamicSafetyScenario> dynamicSafetyScenarios = new ArrayList<DynamicSafetyScenario>();
   private final List<EngineeringDesignModule> engineeringDesignModules = new ArrayList<EngineeringDesignModule>();
   private transient EngineeringDesignLoopResult latestEngineeringDesignLoopResult;
+  private transient EngineeringSimulationResult latestEngineeringSimulationResult;
   private final Map<String, EmergencyShutdownTestResult> shutdownVerificationResults = new LinkedHashMap<String, EmergencyShutdownTestResult>();
   private MaterialsReviewInput materialsReviewInput;
   private EngineeringProductionReadinessBasis productionReadinessBasis;
@@ -155,6 +157,16 @@ public final class EngineeringProject implements Serializable {
   /** @return latest design-loop result, or null when the loop has not been run */
   public EngineeringDesignLoopResult getLatestEngineeringDesignLoopResult() {
     return latestEngineeringDesignLoopResult;
+  }
+
+  /** Records the latest coordinated engineering simulation for revision-controlled evidence graphs. */
+  void recordEngineeringSimulationResult(EngineeringSimulationResult result) {
+    latestEngineeringSimulationResult = result;
+  }
+
+  /** @return latest coordinated engineering simulation, or null when it has not been run */
+  public EngineeringSimulationResult getLatestEngineeringSimulationResult() {
+    return latestEngineeringSimulationResult;
   }
 
   /** Records the latest fail-closed inlet/compression/export vertical-slice qualification. */
@@ -531,6 +543,20 @@ public final class EngineeringProject implements Serializable {
    */
   public EngineeringValidationReport validate() {
     EngineeringValidationReport report = new EngineeringValidationReport();
+    Set<String> scenarioTags = new HashSet<String>();
+    for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
+      if (unit != null && unit.getName() != null && !unit.getName().trim().isEmpty()) {
+        scenarioTags.add(unit.getName());
+      }
+    }
+    for (MeasurementDeviceInterface device : processSystem.getMeasurementDevices()) {
+      if (device.getName() != null && !device.getName().trim().isEmpty()) {
+        scenarioTags.add(device.getName());
+      }
+      if (device.getTag() != null && !device.getTag().trim().isEmpty()) {
+        scenarioTags.add(device.getTag());
+      }
+    }
     Set<String> tags = new HashSet<String>();
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit == null || unit instanceof Stream) {
@@ -584,12 +610,6 @@ public final class EngineeringProject implements Serializable {
             "Engineering metric references unknown equipment: " + metric.getId());
       }
     }
-    for (DynamicSafetyScenario scenario : dynamicSafetyScenarios) {
-      if (scenario.getEvidenceReferences().isEmpty()) {
-        report.add(Severity.REVIEW, "ENG-DYNAMIC-001", scenario.getId(),
-            "Dynamic protection scenario has no SRS, cause-and-effect, or hazard-review evidence reference");
-      }
-    }
     Set<String> boundaryIds = new HashSet<String>();
     for (EngineeringBoundary boundary : boundaries) {
       if (!boundaryIds.add(boundary.getId())) {
@@ -608,6 +628,40 @@ public final class EngineeringProject implements Serializable {
     for (EngineeringRequirement requirement : requirements) {
       if (!requirementIds.add(requirement.getId())) {
         report.add(Severity.ERROR, "ENG-REQ-001", requirement.getId(), "Requirement ID is not unique");
+      }
+    }
+    Set<String> evidenceReferences = new HashSet<String>();
+    for (EngineeringEvidenceRecord evidence : evidenceRecords) {
+      evidenceReferences.add(evidence.getDocumentId());
+      evidenceReferences.add(evidence.getDocumentId() + "@" + evidence.getRevision());
+    }
+    Set<String> scenarioIds = new HashSet<String>();
+    for (DynamicSafetyScenario scenario : dynamicSafetyScenarios) {
+      if (!scenarioIds.add(scenario.getId())) {
+        report.add(Severity.ERROR, "ENG-DYNAMIC-002", scenario.getId(),
+            "Dynamic protection scenario ID is not unique");
+      }
+      if (scenario.getEvidenceReferences().isEmpty()) {
+        report.add(Severity.REVIEW, "ENG-DYNAMIC-001", scenario.getId(),
+            "Dynamic protection scenario has no SRS, cause-and-effect, or hazard-review evidence reference");
+      }
+      for (String evidenceReference : scenario.getEvidenceReferences()) {
+        if (!evidenceReferences.contains(evidenceReference)) {
+          report.add(Severity.REVIEW, "ENG-DYNAMIC-005", scenario.getId(),
+              "Dynamic protection scenario evidence is not registered in the project: " + evidenceReference);
+        }
+      }
+      for (String requirementId : scenario.getRequirementIds()) {
+        if (!requirementIds.contains(requirementId)) {
+          report.add(Severity.ERROR, "ENG-DYNAMIC-003", scenario.getId(),
+              "Dynamic protection scenario requirement ID does not exist: " + requirementId);
+        }
+      }
+      for (String equipmentTag : scenario.getEquipmentTags()) {
+        if (!scenarioTags.contains(equipmentTag)) {
+          report.add(Severity.ERROR, "ENG-DYNAMIC-004", scenario.getId(),
+              "Dynamic protection scenario tag does not exist: " + equipmentTag);
+        }
       }
     }
     Set<String> sifTags = new HashSet<String>();
