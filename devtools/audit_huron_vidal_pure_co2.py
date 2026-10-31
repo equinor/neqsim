@@ -150,6 +150,10 @@ if args.native:
         assert int(observed["history"]) in range(4)
         assert float(observed["independent_bara"]) == expected["P_bara"]
         assert float(observed["reference_bara"]) == expected["reference_P_bara"]
+        for column, limit in (("max_EOS_pressure_error_bara", 5e-7),
+                              ("log_fugacity_error", 1e-8)):
+            residual = float(observed[column])
+            assert math.isfinite(residual) and 0 <= residual < limit, (column, residual)
         error = abs(float(observed["native_bara"]) / expected["P_bara"] - 1)
         assert error < 5e-8
         maximum = max(maximum, error)

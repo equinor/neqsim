@@ -186,7 +186,13 @@ or qualification of mixture partition.
 Run the JUnit method `declaredPureCo2PressuresMatchIndependentRoots`, then
 `python3 devtools/audit_huron_vidal_pure_co2.py --native target/hv-co2-native/pure-co2.csv`.
 The auditor preserves every row and rejects mismatched profiles/temperatures,
-projection values or incomplete native output. Below the triple point, solids,
+projection values or incomplete native output. Each retained residual must be
+finite, non-negative and below its existing numerical limit before computing
+aggregate maxima. This prevents NaN or negative error fields in later rows from
+being hidden by an otherwise valid maximum. Run
+`python3 -m unittest discover -s devtools -p test_audit_huron_vidal_pure_co2.py`
+for the valid matrix and 30 first/middle/last-row corruption controls.
+Below the triple point, solids,
 ice/brine, hydrate dissociation and mixture extrapolation are outside this
 pure-fluid test. The216.592K point is the reference triple-point endpoint;
 solid equilibrium is not calculated. Original-author pure-input reconstruction
