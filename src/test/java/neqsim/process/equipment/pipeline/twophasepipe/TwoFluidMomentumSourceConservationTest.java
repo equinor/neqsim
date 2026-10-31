@@ -181,45 +181,62 @@ class TwoFluidMomentumSourceConservationTest {
   /** No-slip pressure-flux cancellation follows liquid holdup shares, including the pure-water endpoint. */
   @Test
   void noSlipInterfacialPressureCancelsEachPresentLiquidPressureFlux() {
-    for (double waterCut : new double[] {1.0, 0.0, 0.35}) {
-      TwoFluidConservationEquations equations = createEquations(false);
-      equations.setEnableInterfacialPressure(true);
-      double[] gasHoldups = {0.2, 0.4, 0.6};
-      TwoFluidSection[] sections = new TwoFluidSection[gasHoldups.length];
-      for (int cell = 0; cell < sections.length; cell++) {
-        double liquidHoldup = 1.0 - gasHoldups[cell];
-        sections[cell] = createSection(gasHoldups[cell], liquidHoldup * (1.0 - waterCut), liquidHoldup * waterCut);
-        sections[cell].setPressure(1e5);
-        sections[cell].setGasSoundSpeed(300.0);
-        sections[cell].setLiquidSoundSpeed(1200.0);
-        sections[cell].setGasVelocity(0.0);
-        sections[cell].setLiquidVelocity(0.0);
-        sections[cell].setOilVelocity(0.0);
-        sections[cell].setWaterVelocity(0.0);
-        sections[cell].updateConservativeVariables();
-      }
-      // This public flux calculation caches the interface holdups/pressure used by the correction.
-      equations.calcPhaseMassFaceFluxes(sections, sections[0].getLength());
-      double[][] rates = new double[sections.length][TwoFluidConservationEquations.NUM_EQUATIONS];
-      equations.applyInterfacialPressure(sections, rates);
-
-      for (int cell = 0; cell < sections.length; cell++) {
-        double alphaRight = cell < sections.length - 1 ? 0.5 * (gasHoldups[cell] + gasHoldups[cell + 1])
-            : gasHoldups[cell];
-        double alphaLeft = cell > 0 ? 0.5 * (gasHoldups[cell - 1] + gasHoldups[cell]) : gasHoldups[cell];
-        // Equal pressure and zero velocities leave exactly p * A * d(alpha)/dx to cancel.
-        double gasForce = 1e5 * sections[cell].getArea() * (alphaRight - alphaLeft) / sections[cell].getLength();
-        double liquidForce = -gasForce;
-        assertTrue(gasForce > 0.0);
-        assertEquals(gasForce, rates[cell][3], 1e-10);
-        assertEquals(liquidForce * (1.0 - waterCut), rates[cell][4], 1e-10, "Water cut=" + waterCut);
-        assertEquals(liquidForce * waterCut, rates[cell][5], 1e-10);
-        assertEquals(0.0, rates[cell][3] + rates[cell][4] + rates[cell][5], 1e-10);
-        if (waterCut == 1.0) {
-          assertEquals(0.0, rates[cell][4], 0.0, "Absent oil must not receive pressure correction");
+    for (double inclination : new double[] {0.0, 0.1}) {
+      for (double waterCut : new double[] {1.0, 0.0, 0.35}) {
+        TwoFluidConservationEquations equations = createEquations(false);
+        equations.setEnableInterfacialPressure(true);
+        double[] gasHoldups = {0.2, 0.4, 0.6};
+        TwoFluidSection[] sections = new TwoFluidSection[gasHoldups.length];
+        for (int cell = 0; cell < sections.length; cell++) {
+          double liquidHoldup = 1.0 - gasHoldups[cell];
+          sections[cell] = createSection(gasHoldups[cell], liquidHoldup * (1.0 - waterCut), liquidHoldup * waterCut);
+          sections[cell].setInclination(inclination);
+          sections[cell].setPressure(1e5);
+          sections[cell].setGasSoundSpeed(300.0);
+          sections[cell].setLiquidSoundSpeed(1200.0);
+          sections[cell].setGasVelocity(0.0);
+          sections[cell].setLiquidVelocity(0.0);
+          sections[cell].setOilVelocity(0.0);
+          sections[cell].setWaterVelocity(0.0);
+          sections[cell].updateConservativeVariables();
         }
-        if (waterCut == 0.0) {
-          assertEquals(0.0, rates[cell][5], 0.0, "Absent water must not receive pressure correction");
+        // Independently reconstruct pressure from the prescribed phase densities and half-cell heads.
+        double[] facePressure = new double[sections.length + 1];
+        facePressure[0] = 1e5;
+        facePressure[sections.length] = 1e5;
+        double liquidDensity = 800.0 * (1.0 - waterCut) + 1000.0 * waterCut;
+        for (int face = 1; face < sections.length; face++) {
+          double leftDensity = 30.0 * gasHoldups[face - 1] + liquidDensity * (1.0 - gasHoldups[face - 1]);
+          double rightDensity = 30.0 * gasHoldups[face] + liquidDensity * (1.0 - gasHoldups[face]);
+          facePressure[face] = 1e5
+              + 0.25 * 9.81 * sections[0].getLength() * Math.sin(inclination) * (rightDensity - leftDensity);
+        }
+        // This public flux calculation caches the interface holdups/pressure used by the correction.
+        equations.calcPhaseMassFaceFluxes(sections, sections[0].getLength());
+        double[][] rates = new double[sections.length][TwoFluidConservationEquations.NUM_EQUATIONS];
+        equations.applyInterfacialPressure(sections, rates);
+
+        for (int cell = 0; cell < sections.length; cell++) {
+          double alphaRight = cell < sections.length - 1 ? 0.5 * (gasHoldups[cell] + gasHoldups[cell + 1])
+              : gasHoldups[cell];
+          double alphaLeft = cell > 0 ? 0.5 * (gasHoldups[cell - 1] + gasHoldups[cell]) : gasHoldups[cell];
+          // Cancel alpha-face traction minus the physical cell-alpha pressure gradient. Equal cell pressures
+          // imply equal face pressures only in the horizontal control when conservative mixture density varies.
+          double gasForce = sections[cell].getArea() / sections[cell].getLength()
+              * ((alphaRight - gasHoldups[cell]) * facePressure[cell + 1]
+                  - (alphaLeft - gasHoldups[cell]) * facePressure[cell]);
+          double liquidForce = -gasForce;
+          assertTrue(gasForce > 0.0);
+          assertEquals(gasForce, rates[cell][3], 1e-10);
+          assertEquals(liquidForce * (1.0 - waterCut), rates[cell][4], 1e-10, "Water cut=" + waterCut);
+          assertEquals(liquidForce * waterCut, rates[cell][5], 1e-10);
+          assertEquals(0.0, rates[cell][3] + rates[cell][4] + rates[cell][5], 1e-10);
+          if (waterCut == 1.0) {
+            assertEquals(0.0, rates[cell][4], 0.0, "Absent oil must not receive pressure correction");
+          }
+          if (waterCut == 0.0) {
+            assertEquals(0.0, rates[cell][5], 0.0, "Absent water must not receive pressure correction");
+          }
         }
       }
     }

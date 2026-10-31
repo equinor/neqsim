@@ -137,6 +137,11 @@ NeqSim work. Use a separately qualified simulator or controlled experiment for
 those cases, while preserving NeqSim fluids and boundary conditions for a
 traceable handoff.
 
+The evidence matrix now includes analytical interior hydrostatic well-balancing for one common mixture pressure,
+including signed pressure work and transaction-safe diagnostics. Route that row only for static numerical
+initialization checks. It does not change the handoff requirement for a stationary two-density pool, terrain drainage,
+shutdown/restart, severe slugging, dynamic pigging, or field/commercial qualification.
+
 When a pipeline hydraulics/environment study feeds an explicit current `DNV-RP-F105 2025-12`
 basis, use `DnvRpF105FreeSpanScreeningKernel` for the simply supported first-mode and dimensionless
 screen. Do not infer effective mass, axial force, hydrodynamic diameter, or trigger values silently

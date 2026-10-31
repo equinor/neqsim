@@ -66,7 +66,8 @@ FAIL is fixed, every WARN is explained in the report. Do not weaken a gate.
 
 ### 5. Hand off
 
-- Unsupported transients (restart, ramp-up, pigging, slugging): the `handoff/EVT-*.json` packages go to the
+- Unsupported transients (restart, ramp-up, pigging, slugging) remain unsupported after the analytical common-pressure
+  hydrostatic fixed-point update: the `handoff/EVT-*.json` packages go to the
   community `olga-simulation-agent` or the user's qualified simulator; results return via `--external-results`.
 - Standards: verify editions with `neqsim-standards-lookup`; never state compliance.
 - Independent review: `@review`; the software never assigns REVIEWED.
