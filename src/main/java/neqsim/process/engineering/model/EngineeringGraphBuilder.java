@@ -19,6 +19,8 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.measurementdevice.StreamMeasurementDeviceBaseClass;
 import neqsim.process.processmodel.ProcessConnection;
+import neqsim.process.safety.scenario.DynamicSafetyScenario;
+import neqsim.process.safety.scenario.DynamicSafetyScenarioResult;
 
 /** Materializes an {@link EngineeringProject} as the canonical engineering graph. */
 public final class EngineeringGraphBuilder {
@@ -69,6 +71,7 @@ public final class EngineeringGraphBuilder {
     addConnections(project, graph, projectNodeId, processElementIds);
     addInstruments(project, graph, projectNodeId);
     addRequirements(project, graph, projectNodeId, processElementIds);
+    addDynamicSafetyScenarios(project, graph, projectNodeId, processElementIds);
     addBoundaries(project, graph, projectNodeId, processElementIds);
     addDesignCases(project, graph, projectNodeId);
     List<EngineeringCalculation> allCalculations = new ArrayList<EngineeringCalculation>(project.getCalculations());
@@ -307,6 +310,71 @@ public final class EngineeringGraphBuilder {
       if (equipmentId != null) {
         addEdge(graph, EngineeringEdge.Kind.APPLIES_TO, nodeId, equipmentId, requirement.getType().name());
       }
+    }
+  }
+
+  /**
+   * Adds executable scenario definitions and their latest quantitative results to the canonical graph.
+   *
+   * @param project governed engineering project
+   * @param graph graph receiving scenario evidence
+   * @param projectNodeId canonical project node identifier
+   * @param processElementIds process equipment and line node identifiers keyed by tag
+   */
+  private static void addDynamicSafetyScenarios(EngineeringProject project, EngineeringGraph graph,
+      String projectNodeId, Map<String, String> processElementIds) {
+    Map<String, String> scenarioNodeIds = new LinkedHashMap<String, String>();
+    for (DynamicSafetyScenario scenario : project.getDynamicSafetyScenarios()) {
+      String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.SCENARIO, scenario.getId());
+      EngineeringNode node = new EngineeringNode(nodeId, EngineeringNode.Kind.SCENARIO, scenario.getId(),
+          scenario.getName()).putProperty("definition", scenario.toMap())
+          .putProperty("engineeringApprovalRequired", Boolean.TRUE)
+          .addProvenance(new EngineeringProvenance("EXECUTABLE_SCENARIO", scenario.getId())
+              .setMethod("DynamicSafetyScenario"));
+      for (String evidenceReference : scenario.getEvidenceReferences()) {
+        node.addProvenance(new EngineeringProvenance("EVIDENCE", evidenceReference));
+      }
+      graph.addNode(node);
+      addEdge(graph, EngineeringEdge.Kind.CONTAINS, projectNodeId, nodeId, "dynamicSafetyScenario");
+      scenarioNodeIds.put(scenario.getId(), nodeId);
+      for (String requirementId : scenario.getRequirementIds()) {
+        String requirementNodeId = EngineeringIds.nodeId(EngineeringNode.Kind.REQUIREMENT, requirementId);
+        if (graph.getNode(requirementNodeId) != null) {
+          addEdge(graph, EngineeringEdge.Kind.REFERENCES, nodeId, requirementNodeId, "verifiedRequirement");
+        }
+      }
+      for (String equipmentTag : scenario.getEquipmentTags()) {
+        String targetNodeId = processElementIds.get(equipmentTag);
+        if (targetNodeId == null) {
+          String instrumentNodeId = EngineeringIds.nodeId(EngineeringNode.Kind.INSTRUMENT, equipmentTag);
+          if (graph.getNode(instrumentNodeId) != null) {
+            targetNodeId = instrumentNodeId;
+          }
+        }
+        if (targetNodeId != null) {
+          addEdge(graph, EngineeringEdge.Kind.APPLIES_TO, nodeId, targetNodeId, "exercisedTag");
+        }
+      }
+    }
+    EngineeringSimulationResult simulation = project.getLatestEngineeringSimulationResult();
+    if (simulation == null) {
+      return;
+    }
+    for (DynamicSafetyScenarioResult result : simulation.getDynamicScenarioResults()) {
+      String scenarioNodeId = scenarioNodeIds.get(result.getScenarioId());
+      if (scenarioNodeId == null) {
+        continue;
+      }
+      String resultNodeId = EngineeringIds.nodeId(EngineeringNode.Kind.SCENARIO_RESULT, result.getScenarioId());
+      EngineeringNode resultNode = new EngineeringNode(resultNodeId, EngineeringNode.Kind.SCENARIO_RESULT,
+          result.getScenarioId(), result.getScenarioId() + " execution result").putProperty("result", result.toMap())
+          .putProperty("passed", Boolean.valueOf(result.isPassed()))
+          .putProperty("engineeringApprovalRequired", Boolean.TRUE)
+          .addProvenance(new EngineeringProvenance("SIMULATION_RESULT",
+              project.getProjectId() + "@" + project.getRevision()).setMethod("DynamicSafetyScenarioRunner"));
+      graph.addNode(resultNode);
+      addEdge(graph, EngineeringEdge.Kind.CONTAINS, projectNodeId, resultNodeId, "dynamicSafetyScenarioResult");
+      addEdge(graph, EngineeringEdge.Kind.GENERATED_FROM, resultNodeId, scenarioNodeId, "executableDefinition");
     }
   }
 
