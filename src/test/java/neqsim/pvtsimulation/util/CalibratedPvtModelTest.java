@@ -67,13 +67,25 @@ class CalibratedPvtModelTest {
     return JsonParser.parseString(value).getAsJsonObject();
   }
 
+  /**
+   * Captures every model field without the wall-clock timestamp of the convenience export.
+   *
+   * @param fluid checkpoint copy to inspect
+   * @return complete comparable capture, excluding only portableFluidJson.generatedAt
+   */
+  private JsonObject modelCapture(SystemInterface fluid) {
+    JsonObject capture = json(PVTFluidStudy.capture(fluid));
+    capture.getAsJsonObject("portableFluidJson").remove("generatedAt");
+    return capture;
+  }
+
   /** Snapshots own all nested EOS state and survive serialization without exposing mutable model references. */
   @Test
   void immutableCheckpointsRetainBothModelsAndProvenance() {
     SystemInterface original = fluid(0.0);
     SystemInterface tuned = fluid(0.15);
-    String originalCapture = PVTFluidStudy.capture(original);
-    String tunedCapture = PVTFluidStudy.capture(tuned);
+    JsonObject originalCapture = modelCapture(original);
+    JsonObject tunedCapture = modelCapture(tuned);
     String[] ids = {"calibration-CVD"};
     CalibratedPvtModel bundle = new CalibratedPvtModel(original, tuned, "sample v1", "original v1", "tuned v2",
         "lab protocol v1", ids);
@@ -83,8 +95,8 @@ class CalibratedPvtModelTest {
     SystemInterface exposed = bundle.getTunedFluid();
     ((PhaseEosInterface) exposed.getPhase(0)).getEosMixingRule().setBinaryInteractionParameter(3, 4, 0.9);
     CalibratedPvtModel restored = SerializationUtils.clone(bundle);
-    assertEquals(originalCapture, PVTFluidStudy.capture(restored.getOriginalFluid()));
-    assertEquals(tunedCapture, PVTFluidStudy.capture(restored.getTunedFluid()));
+    assertEquals(originalCapture, modelCapture(restored.getOriginalFluid()));
+    assertEquals(tunedCapture, modelCapture(restored.getTunedFluid()));
     assertEquals("calibration-CVD",
         json(bundle.getProvenance()).getAsJsonArray("calibrationExperiments").get(0).getAsString());
     assertNotEquals(originalCapture, tunedCapture);
@@ -114,7 +126,7 @@ class CalibratedPvtModelTest {
     double[][] observations = {cce.getRelativeVolume(), cvd.getLiquidRelativeVolume(), dle.getBo()};
     boolean originalDiffers = false;
     CalibratedPvtModel bundle = model();
-    String before = PVTFluidStudy.capture(bundle.getTunedFluid());
+    JsonObject before = modelCapture(bundle.getTunedFluid());
     for (int experiment = 0; experiment < kinds.length; experiment++) {
       JsonObject result = json(bundle.compareHoldout("holdout-" + kinds[experiment], kinds[experiment], 323.15,
           pressures, properties[experiment], observations[experiment], sigma));
@@ -130,7 +142,7 @@ class CalibratedPvtModelTest {
       }
     }
     assertTrue(originalDiffers, "A changed EOS must remain visible in the untuned residuals");
-    assertEquals(before, PVTFluidStudy.capture(bundle.getTunedFluid()));
+    assertEquals(before, modelCapture(bundle.getTunedFluid()));
   }
 
   /** Separator replay preserves every stage and the common standard basis. */
