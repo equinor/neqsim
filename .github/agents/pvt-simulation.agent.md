@@ -29,6 +29,14 @@ below. See [the study guide](../../docs/pvtsimulation/pvt_fluid_study_report.md)
 
 ## Qualification and swelling calculations
 
+Before fitting same-state gas p/T/Z/molar-mass/density tuples, use the opt-in
+`PvtGasDensityConsistency` interval gate and preserve source identities and raw
+values. Attach passing same-sample evidence through the `CalibratedPvtModel`
+overload; never drop failing rows to pass. Bounds require a documented basis and
+are not automatically sigmas. Read
+`docs/pvtsimulation/laboratory_gas_density_consistency.md`; a compatible tuple does
+not establish measured accuracy, whole-protocol qualification or a field match.
+
 For reservoir-history delivery, use `neqsim-eos-regression` and the
 `CalibratedPvtModel` / `MaterialBalancePvtHistory` contract documented in
 `docs/pvtsimulation/reservoir_material_balance.md`. Preserve independently tuned

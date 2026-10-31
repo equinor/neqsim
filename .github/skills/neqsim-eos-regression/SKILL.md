@@ -42,6 +42,16 @@ laboratory EOS calibration separate from reservoir/aquifer fitting.
 
 ### Step 2: Gather Experimental Data
 
+For reported gas-phase p/T/Z/molar-mass/density tuples, apply the optional
+`PvtGasDensityConsistency` gate before regression. All quantities must describe
+the same phase/state and molar-volume basis; pressure is absolute Pa, temperature
+K, molar mass kg/mol, density kg/m3. Freeze justified absolute bounds first and
+retain failing rows and source/page/table/row identities. Do not treat printed
+precision as measurement sigma or widen bounds to manufacture agreement. Passing
+same-sample evidence can be frozen in `CalibratedPvtModel` via its overload.
+See `docs/pvtsimulation/laboratory_gas_density_consistency.md` and its executable
+regression; the check is arithmetic compatibility, not independent accuracy.
+
 Required data types by priority:
 1. **Saturation pressure** (bubble/dew point) at reservoir temperature — most critical
 2. **Liquid density** at reservoir conditions — validates volume translation

@@ -1195,6 +1195,34 @@
       }
     },
     {
+      "id": "laboratory-gas-density-consistency",
+      "title": "Source-identified laboratory gas density interval consistency",
+      "domain": "pvt",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.util.PvtGasDensityConsistency",
+        "neqsim.pvtsimulation.util.CalibratedPvtModel"
+      ],
+      "skills": [
+        "neqsim-eos-regression"
+      ],
+      "agents": [
+        "pvt-simulation",
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/pvtsimulation/util/PvtGasDensityConsistencyTest.java",
+        "src/test/java/neqsim/pvtsimulation/util/CalibratedPvtModelTest.java"
+      ],
+      "limitations": "Discovery and inspectApi only; instance-based Java/JPype evidence, no stateless MCP execution route. Opt-in same-state gas p/T/Z/molar-mass/density interval identity check using explicit SI inputs and caller-justified absolute bounds; preserves source/raw data and rejects incompatible same-sample checkpoint attachments. Conservative box bounds are not sigmas, correlated inference, EOS calibration, protocol replay or independent accuracy. Public primary Duvernay table18 is a consistency fixture: 8 of 9 tuples compatible under printed-resolution bounds, saturation row retained and incompatible; final pressure is 1300 psia. Does not qualify measured laboratory-to-field matching, absent phases or the Tran rescaled-CVD method.",
+      "evidence": {
+        "route": "declared",
+        "testSources": "present",
+        "execution": "not_recorded",
+        "engineeringQualification": "not_assessed"
+      }
+    },
+    {
       "id": "multi-area-process",
       "title": "Compose a multi-area process",
       "domain": "process",
@@ -4760,7 +4788,7 @@
     {"id":"neqsim.pvtsimulation.util.BlackOilCorrelations","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/BlackOilCorrelations.java","sourceDigest":"831712aaab0fee69003b87a6323e3a43103773ffc5420802b1b55e103dc6d27b","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.BlackOilTableValidator","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/BlackOilTableValidator.java","sourceDigest":"116bbfa3cc9d0d7f88ab08f3c4ffca6f257cca484e0440287230e7fdf7c3e61a","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.BlackOilUnits","kind":"enum","source":"src/main/java/neqsim/pvtsimulation/util/BlackOilUnits.java","sourceDigest":"86bb80de016bf3410b85758de684bf09b1355e56c8188a4dd95bc8cf5aa1a457","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.pvtsimulation.util.CalibratedPvtModel","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/CalibratedPvtModel.java","sourceDigest":"053bb493bbaa898a18545cabc9dbeb77facea2f7519493849d47b551404ca2e7","domain":"pvtsimulation","skills":["neqsim-eos-regression"],"agents":["pvt-fluid-study-report","pvt-simulation","thermo-fluid"],"capabilities":["generalized-reservoir-material-balance","compositional-reservoir-history"],"disposition":"registered_anchor"},
+    {"id":"neqsim.pvtsimulation.util.CalibratedPvtModel","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/CalibratedPvtModel.java","sourceDigest":"77641e60e774377dd2fff746ac2c530c2aef6114ae111c80517e408a33759811","domain":"pvtsimulation","skills":["neqsim-eos-regression"],"agents":["pvt-fluid-study-report","pvt-simulation","thermo-fluid"],"capabilities":["generalized-reservoir-material-balance","compositional-reservoir-history","laboratory-gas-density-consistency"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.CompositionalReservoirHistory","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/CompositionalReservoirHistory.java","sourceDigest":"083c444449cdde377895b083d63e204bf693be3e5d21dd19cfe1fdc38b4caeb2","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":["compositional-reservoir-history","finite-aquifer-reservoir-history","reservoir-history-discrete-posterior"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.DeclineCurveAnalysis","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/DeclineCurveAnalysis.java","sourceDigest":"326d8c437e8aa77db684a558b235d9deb638b7b0a1dde6f3af9e091cc06ae908","domain":"pvtsimulation","skills":["neqsim-capability-map","neqsim-field-development","neqsim-production-optimization"],"agents":["capability-scout","engineering-deliverables","field-development","mechanical-design","solve-task","surf-design-study"],"capabilities":["exponential-decline-screening"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.DepletionPvtHistoryGenerator","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator.java","sourceDigest":"99d7eab891039388293441987f6c8b74c3d12c58e41867c234d3604e01782b7e","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":["depletion-path-generalized-pvt"],"disposition":"registered_anchor"},
@@ -4769,6 +4797,7 @@
     {"id":"neqsim.pvtsimulation.util.MaterialBalancePvtHistory","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/MaterialBalancePvtHistory.java","sourceDigest":"e1cd6be9555e501ad62f69fa5579d76d056fcaf3ec1313e096d2aad185354600","domain":"pvtsimulation","skills":["neqsim-eos-regression"],"agents":["pvt-fluid-study-report","pvt-simulation","thermo-fluid"],"capabilities":["generalized-reservoir-material-balance"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.PVTFluidStudy","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/PVTFluidStudy.java","sourceDigest":"c56f17e77c05628201f397cda063ef27ab116830a07b01c52fe2c3375f3b8cb9","domain":"pvtsimulation","skills":["neqsim-pvt-fluid-study-report"],"agents":["pvt-fluid-study-report","pvt-simulation"],"capabilities":["pvt-fluid-study-report"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.PVTReportGenerator","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/PVTReportGenerator.java","sourceDigest":"7b318865c264540e984a17ae89a2e7346254bca40b1370645309cd45bb2b890e","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.pvtsimulation.util.PvtGasDensityConsistency","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/PvtGasDensityConsistency.java","sourceDigest":"bc8d5a82f2d456180a89a5088ca845a4d5297ae494c8a79a31c3e2bb1c78a0e8","domain":"pvtsimulation","skills":["neqsim-eos-regression"],"agents":["pvt-fluid-study-report","pvt-simulation","thermo-fluid"],"capabilities":["laboratory-gas-density-consistency"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.PvtSeparatorPath","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/PvtSeparatorPath.java","sourceDigest":"a8d888b86c0b18fd0765364b801dcd8ed953e22339ea9660fe8a05215708a642","domain":"pvtsimulation","skills":["neqsim-integrated-production-and-lifecycle"],"agents":["capacity-increase-screening","field-development","network-energy-systems","surf-design-study"],"capabilities":["compositional-reservoir-history"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.ReservoirHistoryEnsemble","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/ReservoirHistoryEnsemble.java","sourceDigest":"fe6ba7cd0e535b8efc76c71d8a97e60ea0b6916632a1290ca7d347a53e170bf1","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":["reservoir-history-discrete-posterior"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.SaturationPressureCorrelation","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/SaturationPressureCorrelation.java","sourceDigest":"908edd67352adb8bf34044bb595aa8254ee2630563b6c84bcbff14a04e27ddf1","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
