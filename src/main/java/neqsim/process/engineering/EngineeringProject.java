@@ -34,6 +34,7 @@ import neqsim.process.safety.depressurization.CoupledReliefBlowdownFlareInput;
 import neqsim.process.safety.esd.EmergencyShutdownTestResult;
 import neqsim.process.safety.overpressure.OverpressureProtectionStudy;
 import neqsim.process.safety.scenario.DynamicSafetyScenario;
+import neqsim.process.safety.scenario.DynamicScenarioCriterion;
 
 /**
  * Governed engineering representation associated with a runnable NeqSim process.
@@ -644,6 +645,17 @@ public final class EngineeringProject implements Serializable {
       if (scenario.getEvidenceReferences().isEmpty()) {
         report.add(Severity.REVIEW, "ENG-DYNAMIC-001", scenario.getId(),
             "Dynamic protection scenario has no SRS, cause-and-effect, or hazard-review evidence reference");
+      }
+      boolean unspecifiedBehavior =
+          "UNSPECIFIED".equals(scenario.getCaseConfigurationDefinitionId())
+              || "UNSPECIFIED".equals(scenario.getInitiatingEventDefinitionId())
+              || scenario.getLogicDefinitionIds().contains("UNSPECIFIED");
+      for (DynamicScenarioCriterion criterion : scenario.getCriteria()) {
+        unspecifiedBehavior |= "UNSPECIFIED".equals(criterion.getExtractorDefinitionId());
+      }
+      if (unspecifiedBehavior) {
+        report.add(Severity.REVIEW, "ENG-DYNAMIC-006", scenario.getId(),
+            "Dynamic protection scenario has executable behavior without controlled definition identifiers");
       }
       for (String evidenceReference : scenario.getEvidenceReferences()) {
         if (!evidenceReferences.contains(evidenceReference)) {
