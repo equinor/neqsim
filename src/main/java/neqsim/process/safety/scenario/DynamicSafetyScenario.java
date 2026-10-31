@@ -47,13 +47,11 @@ public final class DynamicSafetyScenario implements Serializable {
     timeStepSeconds = builder.timeStepSeconds;
     triggerTimeSeconds = builder.triggerTimeSeconds;
     eventExactTimingEnabled = builder.eventExactTimingEnabled;
-    caseConfigurationDefinitionId =
-        builder.caseConfiguration == null ? "NONE" : builder.caseConfigurationDefinitionId;
+    caseConfigurationDefinitionId = builder.caseConfiguration == null ? "NONE" : builder.caseConfigurationDefinitionId;
     caseConfiguration = builder.caseConfiguration;
     initiatingEventDefinitionId = builder.initiatingEventDefinitionId;
     initiatingEvent = builder.initiatingEvent;
-    logicDefinitionIds = Collections
-        .unmodifiableList(new ArrayList<String>(builder.logicDefinitionIds));
+    logicDefinitionIds = Collections.unmodifiableList(new ArrayList<String>(builder.logicDefinitionIds));
     logicFactories = Collections.unmodifiableList(new ArrayList<LogicFactory>(builder.logicFactories));
     criteria = Collections.unmodifiableList(new ArrayList<DynamicScenarioCriterion>(builder.criteria));
     evidenceReferences = Collections.unmodifiableList(new ArrayList<String>(builder.evidenceReferences));
