@@ -18,12 +18,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.ToNumberPolicy;
 import neqsim.process.engineering.validation.EngineeringSchemaCatalog;
 
 /** Canonical, exchange-format-independent engineering model with stable node identities. */
 public final class EngineeringGraph implements Serializable {
   private static final long serialVersionUID = 1000L;
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder().setObjectToNumberStrategy(ToNumberPolicy.LAZILY_PARSED_NUMBER)
+      .create();
   public static final String SCHEMA_VERSION = EngineeringSchemaCatalog.GRAPH;
   private final String projectId;
   private final String revision;
@@ -104,7 +106,17 @@ public final class EngineeringGraph implements Serializable {
     return new GsonBuilder().setPrettyPrinting().create().toJson(toMap());
   }
 
-  /** Reconstructs a graph snapshot previously written by {@link #toJson()}. */
+  /**
+   * Reconstructs a graph snapshot previously written by {@link #toJson()}.
+   *
+   * <p>
+   * Property numbers retain their JSON representation, including nested evidence counters and values beyond double
+   * precision, so persistence does not change the graph fingerprint or revision identity.
+   *
+   * @param json persisted graph snapshot
+   * @return reconstructed graph with its original numerical evidence
+   * @throws IllegalArgumentException if the snapshot is invalid or its fingerprint does not match
+   */
   public static EngineeringGraph fromJson(String json) {
     if (json == null || json.trim().isEmpty()) {
       throw new IllegalArgumentException("json must not be blank");

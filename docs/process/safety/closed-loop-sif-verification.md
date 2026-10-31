@@ -94,6 +94,10 @@ propagates revision impact to its result, while a changed quantitative result ca
 it never silently carries approval across a changed executable definition or result. The latest result is transient:
 rerun the coordinated simulation before compiling an evidence graph after restart or deserialization.
 
+Persisted graph snapshots retain the number representations in nested scenario evidence, including integer logic
+counters. Reloading an unchanged snapshot preserves its fingerprint and produces no revision impact; changing
+stored evidence without updating the fingerprint is rejected during graph reconstruction.
+
 Controlled definition IDs are project-governed identities, not hashes of callback bytecode. Configuration control must
 change an ID when implementation behavior changes and rerun the scenario before review.
 
