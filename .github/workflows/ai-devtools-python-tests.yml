@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - "devtools/**"
+      - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/**"
       - "src/test/resources/data/chemistry_benchmarks/structure_h_jin2023_digitized.*"
       - "docs/thermo/structure_h_parameter_qualification.md"
       - "examples/mechanical_design_json_to_mesh.py"
@@ -15,6 +16,7 @@ on:
     branches: [master]
     paths:
       - "devtools/**"
+      - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/**"
       - "src/test/resources/data/chemistry_benchmarks/structure_h_jin2023_digitized.*"
       - "docs/thermo/structure_h_parameter_qualification.md"
       - "examples/mechanical_design_json_to_mesh.py"
@@ -68,6 +70,9 @@ jobs:
             devtools/test_unisim_outputs.py \
             devtools/test_stid_download.py
 
+      - name: Verify pure-CO2 retained-data auditor guards
+        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_pure_co2.py -v
+
       - name: Run mechanical design mesh contract tests
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_mechanical_design_json_to_mesh.py -v
 
@@ -106,6 +111,9 @@ jobs:
 
       - name: Verify HV benchmark receipt guards on the minimum supported Python
         run: uv run --project devtools --locked --group test python -m pytest -q devtools/test_benchmark_huron_vidal_columns.py
+
+      - name: Verify pure-CO2 auditor guards on the minimum supported Python
+        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_pure_co2.py -v
 
       - name: Verify structure-H experimental fitting qualification on the minimum supported Python
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_fit_structure_h_dissociation.py -v
