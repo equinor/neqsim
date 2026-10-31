@@ -1803,6 +1803,27 @@
         "src/test/java/neqsim/pvtsimulation/util/CompositionalReservoirAquiferRefinementTest.java"
       ],
       "limitations": "Discovery and inspectApi only; Java/Python object workflow, no new static MCP operation. Constant-property Fetkovich reservoir-volume storage, exact prescribed linear-pressure integration, implicit fixed-pore-volume EOS coupling through segregated immiscible water. Aquifer water cannot mix or be produced through component schedules; interval minimum/maximum water volumes bound admissible roots. Known aquifer properties may be supplied for bounded volume fitting. No rock/thermal/spatial behavior, continuous joint identifiability, independent field qualification or recoverable reserves."
+    },
+    {
+      "id": "reservoir-history-discrete-posterior",
+      "title": "Discrete joint Bayesian pressure-history hypotheses",
+      "domain": "reservoir",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.util.ReservoirHistoryEnsemble",
+        "neqsim.pvtsimulation.util.CompositionalReservoirHistory"
+      ],
+      "skills": [
+        "neqsim-integrated-production-and-lifecycle",
+        "neqsim-eos-regression"
+      ],
+      "agents": [
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/pvtsimulation/util/ReservoirHistoryEnsembleTest.java"
+      ],
+      "limitations": "Discovery and inspectApi only; Java/Python object workflow, no new static MCP operation. Explicit joint prior probability masses propagate pore volume, initial phase fractions, optional finite-aquifer, accepted PVT model and measured-flow realizations using common independent Gaussian pressure errors. Held-out pressures excluded; rejected prior mass, correlations, prior shifts and lower-tail model forecast quantiles retained. Centered likelihoods preserve prior odds at huge common finite residual offsets. Grid refinement and independent field qualification remain required. No continuous posterior identifiability proof, automatic uncertainty distributions, correlated errors, ES-MDA, water mixing or recoverable-reserves estimate."
     }
   ]
 }
