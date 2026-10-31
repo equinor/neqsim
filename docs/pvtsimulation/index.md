@@ -10,6 +10,6 @@ keywords: "PVT, CME, CVD, differential liberation, separator test, swelling test
 - [PVT and fluid-characterization study report](pvt_fluid_study_report.md)
 - [Reservoir material balance, compositional history replay and original/tuned PVT handoff](reservoir_material_balance.md)
 - [Finite-aquifer replay and discrete Bayesian uncertainty](reservoir_aquifer_uncertainty.md)
-- [Path-preserving CVD/DLE generalized PVT generation](depletion_pvt_generation.md)
+- [Native depletion handoff and bounded PVT conversion](depletion_pvt_generation.md)
 - [Phase-selective reservoir production and separator outputs](reservoir_phase_production.md)
 - [Laboratory gas-density consistency before EOS handoff](laboratory_gas_density_consistency.md)

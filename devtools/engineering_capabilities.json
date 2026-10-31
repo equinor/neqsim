@@ -1779,9 +1779,10 @@
         "field-development"
       ],
       "testSources": [
-        "src/test/java/neqsim/pvtsimulation/util/DepletionPvtHistoryGeneratorTest.java"
+        "src/test/java/neqsim/pvtsimulation/util/DepletionPvtHistoryGeneratorTest.java",
+        "src/test/java/neqsim/pvtsimulation/util/NativeDepletionHandoffTest.java"
       ],
-      "limitations": "Discovery and inspectApi only; instance data/protocol inputs, no new executable static MCP operation. Dry samples with both hydrocarbon phases at every pressure only; CVD uses restored retained states and DLE pre-removal equilibrium with retained-oil origin. Fixed multistage separator/stock-tank basis and separately accepted frozen pure-water EOS for Bw. Native component closure is distinct from approximate surface pseudo-component closure; reject above caller-justified conversion tolerance. No absent-phase/critical extrapolation, aqueous depletion samples or independent public laboratory/field qualification is implied."
+      "limitations": "Discovery and inspectApi only; instance data/protocol inputs, no new executable static MCP operation. Dry samples with both hydrocarbon phases at every pressure only; CVD uses restored retained states and DLE pre-removal equilibrium with retained-oil origin. Fixed multistage separator/stock-tank basis and separately accepted frozen pure-water EOS for Bw. Native component closure is distinct from approximate surface pseudo-component closure; reject above caller-justified conversion tolerance. No absent-phase/critical extrapolation, aqueous depletion samples or independent public laboratory/field qualification is implied. Native replayNative additionally preserves dry oil-only DLE and pre-dew gas-only CVD states, selected original/tuned EOS and whole-cell/interval separator products on an explicit final basis. No absent-phase Bo/Bg/Rs/Rv is fabricated. CVD requires a sampled gas/oil boundary and rejects later phase-disappearance tails; wet/critical-degenerate paths remain unqualified. DLE flash failures propagate with context. Native component and independent SRK-root consistency do not establish measured field accuracy."
     },
     {
       "id": "finite-aquifer-reservoir-history",
