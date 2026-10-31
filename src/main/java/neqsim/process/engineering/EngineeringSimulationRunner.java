@@ -44,8 +44,8 @@ public final class EngineeringSimulationRunner {
     for (DynamicSafetyScenario scenario : project.getDynamicSafetyScenarios()) {
       dynamicResults.add(DynamicSafetyScenarioRunner.run(designedProcess, scenario));
     }
-    EngineeringSimulationResult result = new EngineeringSimulationResult(project.getProjectId(),
-        project.getRevision(), caseReport, designLoopResult, coupledResults, dynamicResults);
+    EngineeringSimulationResult result = new EngineeringSimulationResult(project.getProjectId(), project.getRevision(),
+        caseReport, designLoopResult, coupledResults, dynamicResults);
     project.recordEngineeringSimulationResult(result);
     return result;
   }
