@@ -54,36 +54,39 @@ public final class VerticalSliceDynamicScenarioFactory {
             logic.addAction(safeState, 0.0);
             return logic;
           }
-        }).addCriterion(DynamicScenarioCriterion.builder("suction-isolated",
-            "Suction ESD valve reaches safe closed position", "%", scenarioId + ":suction-position-v1",
-            new DynamicScenarioCriterion.Extractor() {
-              private static final long serialVersionUID = 1000L;
+        })
+        .addCriterion(
+            DynamicScenarioCriterion.builder("suction-isolated", "Suction ESD valve reaches safe closed position", "%",
+                scenarioId + ":suction-position-v1", new DynamicScenarioCriterion.Extractor() {
+                  private static final long serialVersionUID = 1000L;
 
-              @Override
-              public double extract(ProcessSystem process) {
-                return require(process, policy.getSuctionEsdValveTag(), ESDValve.class).getPercentValveOpening();
-              }
-            }).acceptanceRange(null, Double.valueOf(1.0)).deadlineSeconds(isolationDeadlineSeconds).build())
-        .addCriterion(DynamicScenarioCriterion.builder("anti-surge-open",
-            "Anti-surge recycle valve reaches protective open position", "%", scenarioId + ":recycle-position-v1",
-            new DynamicScenarioCriterion.Extractor() {
-              private static final long serialVersionUID = 1000L;
+                  @Override
+                  public double extract(ProcessSystem process) {
+                    return require(process, policy.getSuctionEsdValveTag(), ESDValve.class).getPercentValveOpening();
+                  }
+                }).acceptanceRange(null, Double.valueOf(1.0)).deadlineSeconds(isolationDeadlineSeconds).build())
+        .addCriterion(DynamicScenarioCriterion
+            .builder("anti-surge-open", "Anti-surge recycle valve reaches protective open position", "%",
+                scenarioId + ":recycle-position-v1", new DynamicScenarioCriterion.Extractor() {
+                  private static final long serialVersionUID = 1000L;
 
-              @Override
-              public double extract(ProcessSystem process) {
-                return require(process, policy.getRecycleValveTag(), ThrottlingValve.class).getPercentValveOpening();
-              }
-            }).acceptanceRange(Double.valueOf(90.0), null).deadlineSeconds(isolationDeadlineSeconds).build())
-        .addCriterion(DynamicScenarioCriterion.builder("discharge-isolated",
-            "Discharge ESD valve reaches safe closed position", "%", scenarioId + ":discharge-position-v1",
-            new DynamicScenarioCriterion.Extractor() {
-              private static final long serialVersionUID = 1000L;
+                  @Override
+                  public double extract(ProcessSystem process) {
+                    return require(process, policy.getRecycleValveTag(), ThrottlingValve.class)
+                        .getPercentValveOpening();
+                  }
+                })
+            .acceptanceRange(Double.valueOf(90.0), null).deadlineSeconds(isolationDeadlineSeconds).build())
+        .addCriterion(
+            DynamicScenarioCriterion.builder("discharge-isolated", "Discharge ESD valve reaches safe closed position",
+                "%", scenarioId + ":discharge-position-v1", new DynamicScenarioCriterion.Extractor() {
+                  private static final long serialVersionUID = 1000L;
 
-              @Override
-              public double extract(ProcessSystem process) {
-                return require(process, policy.getDischargeEsdValveTag(), ESDValve.class).getPercentValveOpening();
-              }
-            }).acceptanceRange(null, Double.valueOf(1.0)).deadlineSeconds(isolationDeadlineSeconds).build())
+                  @Override
+                  public double extract(ProcessSystem process) {
+                    return require(process, policy.getDischargeEsdValveTag(), ESDValve.class).getPercentValveOpening();
+                  }
+                }).acceptanceRange(null, Double.valueOf(1.0)).deadlineSeconds(isolationDeadlineSeconds).build())
         .addCriterion(DynamicScenarioCriterion.builder("blowdown-open", "Blowdown valve reaches safe open position",
             "%", scenarioId + ":blowdown-position-v1", new DynamicScenarioCriterion.Extractor() {
               private static final long serialVersionUID = 1000L;
