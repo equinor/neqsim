@@ -1,0 +1,32 @@
+{
+  "baseline_commit": "f57ea4fbe0a49b81d3a4fd28096d83561e7b3fb2",
+  "baseline_production_blob": "9fcd175997b02fd55555cb569293e7f39e7f9794",
+  "candidate_production_blob": "2cb8ac3fad322f94061780864a5a22534d9690ab",
+  "runtime": "OpenJDK 17.0.20; all 3618 main Java sources compiled with --release 8",
+  "performance": {
+    "baseline_open": {
+      "median_us": 8.597756799999999,
+      "min": 6.1550626,
+      "max": 31.0757886
+    },
+    "candidate_open": {
+      "median_us": 6.5825822,
+      "min": 5.709278599999999,
+      "max": 32.798146800000005
+    },
+    "baseline_closed": {
+      "median_us": 10.230482799999999,
+      "min": 6.6181652,
+      "max": 32.2787926
+    },
+    "candidate_closed": {
+      "median_us": 5.8731012,
+      "min": 5.5665192,
+      "max": 35.318851
+    },
+    "open_ratio": 0.7656162360861383,
+    "closed_ratio": 0.5740785957824005,
+    "conditions": "Independent warmed JVMs executed sequentially while broad regression JVM was active; not isolated throughput or significance claim."
+  },
+  "scope": "Closed external-face mechanical pressure compatibility only; no interior well-balancing or pooling/evaporation claim"
+}

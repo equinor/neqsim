@@ -182,3 +182,17 @@ They are not a flowing-interface closure, stable-gravity-pool validation or a
 physical hydrocarbon evaporation-rate model. The existing cell-average closure
 geometry and transient solver remain the numerical owners. See the
 [reporting contract](../wiki/two_fluid_reporting_and_validation#static-subcell-depth-and-area-diagnostic).
+
+
+### Closed-wall mechanical pressure compatibility
+
+The explicitly impermeable external face reconstructs its pressure from the
+adjacent conservative mixture inertia and half-cell gravity head. Mass and
+enthalpy transport remain zero. Horizontal closed-wall pressure is unchanged;
+nonphysical reconstructed pressure fails explicitly without a numerical floor.
+`ClosedWallPressureCompatibilityTest` covers affine pure-phase hydrostatics,
+horizontal acoustic pressure response and closed-flux limits. These are numerical
+boundary controls, not qualification of a static two-phase pool or physical
+hydrocarbon transfer rates. General curved-terrain retention remains unqualified.
+
+The [closed-wall reproduction record](../../src/test/resources/neqsim/process/equipment/pipeline/closed-wall-pressure/README.md) includes exact source provenance, analytical acceptance, all 12–192-cell operator data, and measured RHS cost with shared-runner limitations.
