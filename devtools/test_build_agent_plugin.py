@@ -82,6 +82,16 @@ class BuildPluginTest(unittest.TestCase):
         known = {n for n, _ in bap.iter_skills(self.spec.skills_roots)}
         return bap.build_plugin(self.spec, self.out, known, _args(**kw))
 
+    def test_test_scratch_output_does_not_change_plugin_content(self):
+        self.assertEqual(self._build()["errors"], [])
+        scratch = self.spec.skills_roots[0] / "cat" / "neqsim-beta" / "tests" / "_out"
+        _write(scratch / "chart.png", "generated chart")
+        _write(scratch / "results.json", '{"result": 1}')
+        result = self._build(check=True)
+        self.assertEqual(result["errors"], [])
+        self.assertFalse(result["changed"])
+        self.assertFalse((self.out / "demo" / "skills" / "neqsim-beta" / "tests" / "_out").exists())
+
     def test_layout_and_manifest(self):
         result = self._build()
         self.assertEqual(result["errors"], [])
