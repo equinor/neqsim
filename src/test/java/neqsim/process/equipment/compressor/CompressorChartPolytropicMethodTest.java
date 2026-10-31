@@ -146,6 +146,103 @@ class CompressorChartPolytropicMethodTest extends NeqSimTest {
   }
 
   /**
+   * Disabling a chart must restore efficiency-based calculation on the same compressor.
+   *
+   * @param method polytropic head basis
+   * @param solveSpeed whether the initial chart run solves speed
+   * @param polytropic whether the chart-free run uses polytropic compression
+   */
+  @ParameterizedTest
+  @CsvSource({"schultz,false,true", "schultz,true,true", "detailed,false,true", "detailed,true,true",
+      "ideal_inlet_properties,false,true", "ideal_inlet_properties,true,true", "schultz,false,false",
+      "schultz,true,false"})
+  void chartFreeRunUsesCurrentEfficiency(String method, boolean solveSpeed, boolean polytropic) {
+    Compressor compressor = chart(method, "kJ/kg");
+    compressor.setUsePolytropicCalc(polytropic);
+    compressor.setOutletPressure(100.0, "bara");
+    compressor.setSolveSpeed(solveSpeed);
+    compressor.run();
+    double outletPressure = compressor.getOutletPressure();
+    compressor.getCompressorChart().setUseCompressorChart(false);
+    compressor.setSolveSpeed(false);
+
+    Compressor plain = new Compressor("plain", compressor.getInletStream());
+    plain.setUsePolytropicCalc(polytropic);
+    plain.setPolytropicMethod(method);
+    plain.setOutletPressure(outletPressure, "bara");
+    double previousTemperature = Double.NaN;
+    for (double efficiency : new double[] {0.70, 0.90}) {
+      compressor.setPolytropicEfficiency(efficiency);
+      compressor.setIsentropicEfficiency(efficiency);
+      plain.setPolytropicEfficiency(efficiency);
+      plain.setIsentropicEfficiency(efficiency);
+      compressor.run();
+      plain.run();
+      double temperature = compressor.getOutletStream().getTemperature();
+      assertEquals(plain.getOutletStream().getTemperature(), temperature, 1.0e-6);
+      assertEquals(plain.getPower(), compressor.getPower(), 0.1);
+      if (Double.isFinite(previousTemperature)) {
+        assertTrue(temperature < previousTemperature - 1.0);
+      }
+      previousTemperature = temperature;
+    }
+    assertFalse(compressor.powerSet, "A calculated chart duty is not an explicit power specification");
+  }
+
+  /**
+   * A measured discharge temperature must remain fit-able after leaving chart mode.
+   *
+   * @param solveSpeed whether the initial chart run solves speed
+   */
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void solveEfficiencyAfterChartRun(boolean solveSpeed) {
+    Compressor compressor = chart("schultz", "kJ/kg");
+    compressor.setOutletPressure(100.0, "bara");
+    compressor.setSolveSpeed(solveSpeed);
+    compressor.run();
+    double chartEfficiency = compressor.getPolytropicEfficiency();
+    double target = compressor.getOutletStream().getTemperature() + 3.0;
+    compressor.getCompressorChart().setUseCompressorChart(false);
+    compressor.setSolveSpeed(false);
+    double efficiency = compressor.solveEfficiency(target);
+    assertTrue(efficiency > 0.0 && efficiency < chartEfficiency);
+    assertEquals(target, compressor.getOutletStream().getTemperature(), 0.01);
+    compressor.run();
+    assertEquals(target, compressor.getOutletStream().getTemperature(), 0.01);
+    assertFalse(compressor.powerSet);
+  }
+
+  /**
+   * An explicit power specification must still override chart-free efficiency changes.
+   *
+   * @param polytropic whether to use polytropic compression
+   */
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void explicitPowerAfterChartRunRemainsSpecified(boolean polytropic) {
+    Compressor compressor = chart("schultz", "kJ/kg");
+    compressor.run();
+    double power = 1.1 * compressor.getPower();
+    compressor.getCompressorChart().setUseCompressorChart(false);
+    compressor.setUsePolytropicCalc(polytropic);
+    compressor.setPower(power);
+    double previousTemperature = Double.NaN;
+    for (double efficiency : new double[] {0.70, 0.90}) {
+      compressor.setPolytropicEfficiency(efficiency);
+      compressor.setIsentropicEfficiency(efficiency);
+      compressor.run();
+      assertTrue(compressor.powerSet);
+      assertEquals(power, compressor.getPower(), 1.0e-6);
+      double temperature = compressor.getOutletStream().getTemperature();
+      if (Double.isFinite(previousTemperature)) {
+        assertEquals(previousTemperature, temperature, 1.0e-8);
+      }
+      previousTemperature = temperature;
+    }
+  }
+
+  /**
    * Recover a fixed-speed operating point through an independently initialized speed solve.
    *
    * @param compressor evaluated fixed-speed compressor
