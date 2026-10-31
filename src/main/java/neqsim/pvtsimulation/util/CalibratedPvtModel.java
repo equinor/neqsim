@@ -32,6 +32,7 @@ public final class CalibratedPvtModel implements Serializable {
   private final String tunedRevision;
   private final String calibrationReference;
   private final String[] calibrationExperiments;
+  private final String gasDensityConsistency;
 
   /**
    * Freezes independently calibrated fluid versions and their evidence references.
@@ -46,7 +47,40 @@ public final class CalibratedPvtModel implements Serializable {
    */
   public CalibratedPvtModel(SystemInterface original, SystemInterface tuned, String sampleReference,
       String originalRevision, String tunedRevision, String calibrationReference, String[] calibrationExperiments) {
+    this(original, tuned, sampleReference, originalRevision, tunedRevision, calibrationReference,
+        calibrationExperiments, null);
+  }
+
+  /**
+   * Freezes model versions after an optional, source-identified gas-density consistency gate.
+   *
+   * <p>
+   * Non-null evidence must match the sample identity and every supplied row must pass. Its complete JSON is frozen in
+   * the checkpoint provenance and therefore also in held-out comparisons. This gate does not establish measurement
+   * accuracy, laboratory independence or complete experiment qualification. A null value preserves the legacy
+   * constructor's behavior and makes no consistency claim. Never omit failing rows merely to pass this gate.
+   * </p>
+   *
+   * @param original original characterized sample model
+   * @param tuned model calibrated against laboratory data only
+   * @param sampleReference sample/composition/characterization revision reference
+   * @param originalRevision original model/software revision
+   * @param tunedRevision accepted tuned model/software revision
+   * @param calibrationReference laboratory protocols, separator basis and fitting report reference
+   * @param calibrationExperiments complete experiment identities used in tuning
+   * @param gasDensityConsistency optional same-sample gas-phase measurement consistency evidence
+   */
+  public CalibratedPvtModel(SystemInterface original, SystemInterface tuned, String sampleReference,
+      String originalRevision, String tunedRevision, String calibrationReference, String[] calibrationExperiments,
+      PvtGasDensityConsistency gasDensityConsistency) {
     this.sampleReference = reference(sampleReference);
+    if (gasDensityConsistency != null) {
+      if (!this.sampleReference.equals(gasDensityConsistency.getSampleReference())) {
+        throw new IllegalArgumentException("Gas-density evidence belongs to a different sample");
+      }
+      gasDensityConsistency.requireCompatible();
+    }
+    this.gasDensityConsistency = gasDensityConsistency == null ? null : gasDensityConsistency.toJson();
     this.originalRevision = reference(originalRevision);
     this.tunedRevision = reference(tunedRevision);
     this.calibrationReference = reference(calibrationReference);
@@ -105,6 +139,9 @@ public final class CalibratedPvtModel implements Serializable {
       identities.add(identity);
     }
     result.add("calibrationExperiments", identities);
+    if (gasDensityConsistency != null) {
+      result.add("gasDensityConsistency", JsonParser.parseString(gasDensityConsistency));
+    }
     return result.toString();
   }
 

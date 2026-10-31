@@ -1,0 +1,68 @@
+{
+  "method": "50-digit Decimal; direct raw-unit interval arithmetic",
+  "rows": [
+    {
+      "rowId": "Psat",
+      "impliedDensityKgPerM3": 333.6884347909451,
+      "impliedLowerKgPerM3": 332.9774398725015,
+      "impliedUpperKgPerM3": 334.4016147375003,
+      "compatible": false
+    },
+    {
+      "rowId": "Step1",
+      "impliedDensityKgPerM3": 324.17096315396736,
+      "impliedLowerKgPerM3": 323.4731671969712,
+      "impliedUpperKgPerM3": 324.87091710797614,
+      "compatible": true
+    },
+    {
+      "rowId": "Step2",
+      "impliedDensityKgPerM3": 301.3025980046301,
+      "impliedLowerKgPerM3": 300.64249726676627,
+      "impliedUpperKgPerM3": 301.9647615431253,
+      "compatible": true
+    },
+    {
+      "rowId": "Step3",
+      "impliedDensityKgPerM3": 269.32960181151776,
+      "impliedLowerKgPerM3": 268.7274716958532,
+      "impliedUpperKgPerM3": 269.9336351517058,
+      "compatible": true
+    },
+    {
+      "rowId": "Step4",
+      "impliedDensityKgPerM3": 223.4633104529688,
+      "impliedLowerKgPerM3": 222.95403825275142,
+      "impliedUpperKgPerM3": 223.9742063761429,
+      "compatible": true
+    },
+    {
+      "rowId": "Step5",
+      "impliedDensityKgPerM3": 171.7848667508742,
+      "impliedLowerKgPerM3": 171.3853108742104,
+      "impliedUpperKgPerM3": 172.1857051899968,
+      "compatible": true
+    },
+    {
+      "rowId": "Step6",
+      "impliedDensityKgPerM3": 132.56205744875533,
+      "impliedLowerKgPerM3": 132.24813948917154,
+      "impliedUpperKgPerM3": 132.87698695072774,
+      "compatible": true
+    },
+    {
+      "rowId": "Step7",
+      "impliedDensityKgPerM3": 98.34714907653012,
+      "impliedLowerKgPerM3": 98.10877197717444,
+      "impliedUpperKgPerM3": 98.58629742111907,
+      "compatible": true
+    },
+    {
+      "rowId": "Step8",
+      "impliedDensityKgPerM3": 75.27816287269631,
+      "impliedLowerKgPerM3": 75.0909100103168,
+      "impliedUpperKgPerM3": 75.46602393648229,
+      "compatible": true
+    }
+  ]
+}

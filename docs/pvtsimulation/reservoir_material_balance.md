@@ -200,6 +200,14 @@ Measured field data do not need to be inserted into a simulated tank's recorder.
 
 ### Immutable calibration and pressure-path handoff
 
+Before accepting laboratory tuples, use the opt-in
+[gas-density interval consistency gate](laboratory_gas_density_consistency.md)
+when same-state gas p/T/Z/molar-mass/density data are available. The
+`CalibratedPvtModel` overload accepts immutable same-sample evidence, rejects any
+incompatible row and freezes it in checkpoint/holdout provenance. The original
+constructor retains its behavior without making this consistency claim. Passing
+the identity check does not establish measured accuracy or independent provenance.
+
 `CalibratedPvtModel` freezes serialized original and tuned fluids, sample and model
 revision references, the laboratory calibration report reference and the identities
 of complete experiments used for calibration. Fluid getters restore independent

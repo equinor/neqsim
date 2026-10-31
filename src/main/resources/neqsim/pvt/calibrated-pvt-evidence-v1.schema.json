@@ -23,9 +23,51 @@
         "originalRevision": {"$ref": "#/$defs/reference"},
         "tunedRevision": {"$ref": "#/$defs/reference"},
         "calibrationReference": {"$ref": "#/$defs/reference"},
-        "calibrationExperiments": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/reference"}}
+        "calibrationExperiments": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/reference"}},
+        "gasDensityConsistency": {"$ref": "#/$defs/gasDensityConsistency"}
       },
       "unevaluatedProperties": false
+    },
+    "gasDensityConsistency": {
+      "type": "object",
+      "required": ["schemaVersion", "sampleReference", "boundsReference", "dataUseReference", "identity", "gasConstantJPerMolK", "allCompatible", "rows"],
+      "properties": {
+        "schemaVersion": {"const": "gas-density-consistency/1"},
+        "sampleReference": {"$ref": "#/$defs/reference"},
+        "boundsReference": {"$ref": "#/$defs/reference"},
+        "dataUseReference": {"$ref": "#/$defs/reference"},
+        "identity": {"type": "string"},
+        "gasConstantJPerMolK": {"type": "number", "exclusiveMinimum": 0},
+        "allCompatible": {"const": true},
+        "rows": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/gasDensityRow"}}
+      },
+      "additionalProperties": false
+    },
+    "boundedQuantity": {
+      "type": "object", "required": ["value", "absoluteBound"],
+      "properties": {"value": {"type": "number", "exclusiveMinimum": 0}, "absoluteBound": {"type": "number", "minimum": 0}},
+      "additionalProperties": false
+    },
+    "gasDensityRow": {
+      "type": "object",
+      "required": ["rowId", "experimentId", "stateReference", "sourceReference", "pressurePa", "temperatureK", "gasZ", "molarMassKgPerMol", "densityKgPerM3", "impliedDensityKgPerM3", "impliedLowerKgPerM3", "impliedUpperKgPerM3", "observedMinusImpliedKgPerM3", "compatible"],
+      "properties": {
+        "rowId": {"$ref": "#/$defs/reference"},
+        "experimentId": {"$ref": "#/$defs/reference"},
+        "stateReference": {"$ref": "#/$defs/reference"},
+        "sourceReference": {"$ref": "#/$defs/reference"},
+        "pressurePa": {"$ref": "#/$defs/boundedQuantity"},
+        "temperatureK": {"$ref": "#/$defs/boundedQuantity"},
+        "gasZ": {"$ref": "#/$defs/boundedQuantity"},
+        "molarMassKgPerMol": {"$ref": "#/$defs/boundedQuantity"},
+        "densityKgPerM3": {"$ref": "#/$defs/boundedQuantity"},
+        "impliedDensityKgPerM3": {"type": "number", "exclusiveMinimum": 0},
+        "impliedLowerKgPerM3": {"type": "number", "exclusiveMinimum": 0},
+        "impliedUpperKgPerM3": {"type": "number", "exclusiveMinimum": 0},
+        "observedMinusImpliedKgPerM3": {"type": "number"},
+        "compatible": {"const": true}
+      },
+      "additionalProperties": false
     },
     "row": {
       "type": "object",

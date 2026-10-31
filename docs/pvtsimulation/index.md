@@ -12,3 +12,4 @@ keywords: "PVT, CME, CVD, differential liberation, separator test, swelling test
 - [Finite-aquifer replay and discrete Bayesian uncertainty](reservoir_aquifer_uncertainty.md)
 - [Path-preserving CVD/DLE generalized PVT generation](depletion_pvt_generation.md)
 - [Phase-selective reservoir production and separator outputs](reservoir_phase_production.md)
+- [Laboratory gas-density consistency before EOS handoff](laboratory_gas_density_consistency.md)
