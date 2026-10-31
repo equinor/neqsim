@@ -1381,4 +1381,3 @@ Choose based on your use case:
 - **Fixed-total continuous allocation across coupled actions** → `ProcessModelAllocationOptimizer`
 - **Mixed choke/setpoint and discrete line-up search** → `ProcessModelOperatingPointOptimizer`
 - **Model calibration** → `BatchParameterEstimator`
-
