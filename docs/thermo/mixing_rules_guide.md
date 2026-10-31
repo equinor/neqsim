@@ -1106,3 +1106,13 @@ paired2017 Twu inputs. Both mixing rules, starting pressures and repeated calls
 retain distinct stable roots. This reconciles implementation under the declared
 pure inputs; original-author input reconstruction and mixture accuracy remain open.
 The600K pure point does not qualify mixture extrapolation.
+
+The staged pure-CO2 prerequisite now compares all three declared profiles with
+24 independent stable-root solutions and a pinned CO2 reference correlation.
+The executable fixture tests384 native fresh/repeated/changed/returned
+saturations, rules2/4 and two pressure starts; all native identities and refined
+numerical checks are asserted. See the fixture protocol for coefficients,
+reference limits, errors and commands. This confirms implementation under the
+declared pure inputs; it does not activate parameters or establish source-author
+reproduction, bidirectional partition accuracy, solid/hydrate equilibrium or
+mixture extrapolation.

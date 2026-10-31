@@ -703,6 +703,35 @@
         }
       },
       "qualification": "Native declared-input parity only; no physical acceptance tolerance or mixture extrapolation"
+    },
+    "native_pure_co2_prerequisite": {
+      "base": "19abb3270c18c7a9c74938893173cb37917460c1",
+      "reference": "CoolProp/CoolProp@626c95bc670b58ce64603907ed3fc192f946d4f2 dev/fluids/CarbonDioxide.json ANCILLARIES.pS; Span/Wagner1996 DOI10.1063/1.555991",
+      "reference_kind": "Saturation correlation, not direct measurements or full Helmholtz EOS; fit error is not experimental uncertainty or acceptance tolerance",
+      "temperatures_K": [
+        216.592,
+        220,
+        230,
+        250,
+        273.15,
+        290,
+        298.15,
+        301
+      ],
+      "configurations": "Existing declared profiles0/1/2, unchanged critical/alpha/cubic inputs; no author-input reproduction claim",
+      "independent_points": 24,
+      "native_saturations": 384,
+      "native_controls": "rules2/4; starts0.1/100bara; fresh/repeated/next-retained-temperature/returned states; stable distinct roots; pressure closure5e-7bara; log-fugacity1e-8; root parity5e-8relative; balanced pure amounts for all-five identities1e-8/checkNumerically1e-6; source serialization unchanged",
+      "AARD_percent_by_profile": [
+        0.7763853275393708,
+        0.20000530372055736,
+        0.1980951409067372
+      ],
+      "max_native_relative_root_difference": 5.684341886080802e-14,
+      "artifacts": "hv-co2-source/pure-co2-{reference.csv,reference.json,independent.csv,native.csv}; devtools/audit_huron_vidal_pure_co2.py",
+      "qualification": "Declared-input numerical parity only. No parameter activation/retuning, experimental acceptance, author reconstruction, mixture partition, solid/hydrate or extrapolation qualification",
+      "max_native_EOS_pressure_error_bara": 8.846257060213247e-13,
+      "max_native_log_fugacity_error": 1.149080830487037e-14
     }
   }
 }
