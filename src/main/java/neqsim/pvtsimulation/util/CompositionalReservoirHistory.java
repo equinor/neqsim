@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.SerializationUtils;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
+import neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquifer;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -16,8 +17,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Reuses SimpleReservoir's fixed-volume, isothermal TV flash. Every trial restores the accepted tuned fluid and the
  * same initial pressure, temperature and phase-volume fractions. Only total initial pore volume is fitted. Pressure
  * errors are independent supplied one-sigma scales; held-out pressures never enter the objective. Component amounts are
- * measured inputs, so produced composition/GOR is not an independent prediction. Aquifer influx, rock expansion, energy
- * balances, spatial displacement, correlated errors and EOS retuning are outside this bounded model.
+ * measured inputs, so produced composition/GOR is not an independent prediction. An optional finite aquifer uses
+ * segregated immiscible water support. Rock expansion, energy balances, spatial displacement, correlated errors and EOS
+ * retuning are outside this bounded model.
  * </p>
  *
  * @author Even Solbraa
@@ -140,6 +142,8 @@ public final class CompositionalReservoirHistory implements Serializable {
     private final double[] pressure;
     private final double[][] inventory;
     private final double[] residuals;
+    private final double[] aquiferPressures;
+    private final double[] waterInflux;
     private final double calibrationChiSquare;
     private final double holdoutChiSquare;
     private final byte[] finalFluid;
@@ -154,10 +158,15 @@ public final class CompositionalReservoirHistory implements Serializable {
      * @param residuals measured-minus-predicted standardized pressure residuals, one per interval
      * @param calibrationChiSquare sum of squared standardized calibration residuals
      * @param holdoutChiSquare sum of squared standardized held-out residuals
+     * @param aquiferPressures aquifer pressures including initial state, bara; NaN without an aquifer
+     * @param waterInflux cumulative segregated aquifer volume including initial zero, reservoir m3
      * @param finalFluid accepted final fluid to freeze
      */
     private Result(double volume, double[] time, double[] pressure, double[][] inventory, double[] residuals,
-        double calibrationChiSquare, double holdoutChiSquare, SystemInterface finalFluid) {
+        double calibrationChiSquare, double holdoutChiSquare, double[] aquiferPressures, double[] waterInflux,
+        SystemInterface finalFluid) {
+      this.aquiferPressures = aquiferPressures;
+      this.waterInflux = waterInflux;
       this.volume = volume;
       this.time = time;
       this.pressure = pressure;
@@ -236,12 +245,55 @@ public final class CompositionalReservoirHistory implements Serializable {
     }
 
     /**
+     * Returns average aquifer pressures including the initial state.
+     *
+     * @return aquifer pressure in bara, or NaN entries without an aquifer
+     */
+    public double[] getAquiferPressuresBara() {
+      return aquiferPressures.clone();
+    }
+
+    /**
+     * Returns segregated aquifer water occupying pore space, excluding measured component injection.
+     *
+     * @return cumulative influx in reservoir m3 including the initial zero
+     */
+    public double[] getAquiferInfluxM3() {
+      return waterInflux.clone();
+    }
+
+    /**
      * Returns independent final EOS state, including phase and component compositions.
      *
      * @return independent final EOS state, including phase and component compositions
      */
     public SystemInterface getFinalFluid() {
       return SerializationUtils.deserialize(finalFluid);
+    }
+  }
+
+  /**
+   * One pressure/volume root evaluation. Invalid support endpoints carry a sign only and are never accepted.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  private static final class AquiferTrial {
+    private final SimpleReservoir tank;
+    private final FetkovichAquifer.State state;
+    private final double mismatch;
+
+    /**
+     * Captures a root evaluation.
+     *
+     * @param tank feasible trial tank, or null outside the admissible support-volume interval
+     * @param state aquifer state
+     * @param mismatch flashed-minus-assumed end pressure in bar, or an interval-bound sign
+     */
+    private AquiferTrial(SimpleReservoir tank, FetkovichAquifer.State state, double mismatch) {
+      this.tank = tank;
+      this.state = state;
+      this.mismatch = mismatch;
     }
   }
 
@@ -374,6 +426,33 @@ public final class CompositionalReservoirHistory implements Serializable {
   }
 
   /**
+   * Returns fixed reservoir temperature.
+   *
+   * @return temperature in K
+   */
+  public double getTemperatureK() {
+    return temperatureK;
+  }
+
+  /**
+   * Returns initial reservoir pressure.
+   *
+   * @return pressure in bara
+   */
+  public double getInitialPressureBara() {
+    return pressureBara;
+  }
+
+  /**
+   * Returns supplied initial gas, oil and aqueous volume fractions.
+   *
+   * @return defensive copy of phase-volume fractions
+   */
+  public double[] getInitialPhaseVolumeFractions() {
+    return fractions.clone();
+  }
+
+  /**
    * Replays the complete schedule from the frozen initial state for one volume.
    *
    * @param initialVolumeM3 total initial gas/oil/aqueous pore volume, m3
@@ -381,6 +460,27 @@ public final class CompositionalReservoirHistory implements Serializable {
    * @throws IllegalStateException if initialization or any interval is infeasible
    */
   public Result replay(double initialVolumeM3) {
+    return replay(initialVolumeM3, null);
+  }
+
+  /**
+   * Replays a fixed-pore-volume tank coupled implicitly to segregated, immiscible finite-aquifer support.
+   *
+   * <p>
+   * The aquifer integrates a linear reservoir-pressure path over each measured interval. Its water occupies {@code We}
+   * reservoir m3 separately; the existing tank TV flash closes the tracked EOS volume to {@code initialVolumeM3 - We}.
+   * Aquifer water neither mixes with nor can be produced through the measured component schedule. Initial EOS water
+   * remains tracked. No Bw conversion, invented water moles, thermal/rock expansion or water chemistry is applied.
+   * Reversal is allowed only while cumulative segregated water stays nonnegative. Check interval refinement for a
+   * nonlinear pressure trajectory.
+   * </p>
+   *
+   * @param initialVolumeM3 total fixed initial pore volume in m3
+   * @param aquifer immutable finite/constant-pressure aquifer, or null for no support
+   * @return pressure, aquifer, volume and component-balance evidence
+   * @throws IllegalStateException if pressure/volume closure or any interval is infeasible
+   */
+  public Result replay(double initialVolumeM3, FetkovichAquifer aquifer) {
     requirePositive(initialVolumeM3, "Initial volume");
     SystemInterface fluid = model.getTunedFluid();
     fluid.setTemperature(temperatureK);
@@ -407,6 +507,13 @@ public final class CompositionalReservoirHistory implements Serializable {
     double[] pressures = new double[times.length];
     double[][] inventories = new double[times.length][];
     double[] residuals = new double[steps.length];
+    double[] aquiferPressures = new double[times.length];
+    double[] waterInflux = new double[times.length];
+    java.util.Arrays.fill(aquiferPressures, Double.NaN);
+    FetkovichAquifer.State aquiferState = aquifer == null ? null : aquifer.initialState();
+    if (aquifer != null) {
+      aquiferPressures[0] = aquiferState.getPressureBara();
+    }
     pressures[0] = tank.getReservoirFluid().getPressure();
     inventories[0] = inventory(tank.getReservoirFluid(), order);
     double calibration = 0.0;
@@ -420,10 +527,26 @@ public final class CompositionalReservoirHistory implements Serializable {
         injected[order[i]] = step.injected[i];
       }
       try {
-        tank.advanceComponentAmounts(step.durationSeconds, produced, injected, UUID.randomUUID());
+        if (aquifer == null || aquifer.getProductivityM3PerSecondPerBar() == 0.0
+            || aquifer.getCapacityM3PerBar() == 0.0) {
+          tank.advanceComponentAmounts(step.durationSeconds, produced, injected, UUID.randomUUID());
+          if (aquifer != null) {
+            aquiferState = aquifer.advance(aquiferState, step.durationSeconds, pressures[row],
+                tank.getReservoirFluid().getPressure());
+          }
+        } else {
+          AquiferTrial accepted = advanceAquifer(tank, aquifer, aquiferState, step, produced, injected,
+              initialVolumeM3);
+          tank = accepted.tank;
+          aquiferState = accepted.state;
+        }
       } catch (RuntimeException failure) {
         throw new IllegalStateException(
             "History interval " + row + " at volume " + initialVolumeM3 + " m3: " + failure.getMessage(), failure);
+      }
+      if (aquifer != null) {
+        aquiferPressures[row + 1] = aquiferState.getPressureBara();
+        waterInflux[row + 1] = aquiferState.getCumulativeInfluxM3();
       }
       times[row + 1] = tank.getTime();
       pressures[row + 1] = tank.getReservoirFluid().getPressure();
@@ -444,8 +567,83 @@ public final class CompositionalReservoirHistory implements Serializable {
     if (!Double.isFinite(calibration) || !Double.isFinite(holdout)) {
       throw new IllegalStateException("Non-finite pressure objective");
     }
-    return new Result(initialVolumeM3, times, pressures, inventories, residuals, calibration, holdout,
-        tank.getReservoirFluid());
+    return new Result(initialVolumeM3, times, pressures, inventories, residuals, calibration, holdout, aquiferPressures,
+        waterInflux, tank.getReservoirFluid());
+  }
+
+  /**
+   * Solves the common aquifer end pressure and EOS pore-volume closure without accepting a partial trial.
+   *
+   * @param tank accepted start tank
+   * @param aquifer immutable aquifer model
+   * @param state accepted start aquifer state
+   * @param step measured interval
+   * @param produced measured withdrawals in EOS component order
+   * @param injected measured injections in EOS component order
+   * @param volume total pore volume in m3
+   * @return feasible coupled interval
+   */
+  private static AquiferTrial advanceAquifer(SimpleReservoir tank, FetkovichAquifer aquifer,
+      FetkovichAquifer.State state, Step step, double[] produced, double[] injected, double volume) {
+    double low = 1.0e-6;
+    double high = Math.max(tank.getReservoirFluid().getPressure(), state.getPressureBara()) * 2.0;
+    AquiferTrial left = aquiferTrial(tank, aquifer, state, step, produced, injected, volume, low);
+    AquiferTrial right = aquiferTrial(tank, aquifer, state, step, produced, injected, volume, high);
+    for (int i = 0; right.mismatch > 0.0 && i < 30; i++) {
+      high *= 2.0;
+      right = aquiferTrial(tank, aquifer, state, step, produced, injected, volume, high);
+    }
+    if (!(left.mismatch >= 0.0 && right.mismatch <= 0.0)) {
+      throw new IllegalStateException("No admissible coupled aquifer pressure bracket");
+    }
+    for (int iteration = 0; iteration < 100; iteration++) {
+      double pressure = low + 0.5 * (high - low);
+      AquiferTrial trial = aquiferTrial(tank, aquifer, state, step, produced, injected, volume, pressure);
+      if (trial.tank != null && Math.abs(trial.mismatch) <= Math.max(1.0e-7, pressure * 1.0e-9)) {
+        return trial;
+      }
+      if (trial.mismatch > 0.0) {
+        low = pressure;
+      } else {
+        high = pressure;
+      }
+    }
+    throw new IllegalStateException("Coupled aquifer pressure/volume root did not converge");
+  }
+
+  /**
+   * Evaluates a guessed common end pressure. Support outside pore space supplies a bracket sign, never a prediction.
+   *
+   * @param tank accepted start tank
+   * @param aquifer aquifer model
+   * @param state accepted start aquifer state
+   * @param step measured interval
+   * @param produced measured withdrawals in EOS order
+   * @param injected measured injections in EOS order
+   * @param volume fixed total pore volume, m3
+   * @param pressure guessed end pressure, bara
+   * @return trial and pressure mismatch
+   */
+  private static AquiferTrial aquiferTrial(SimpleReservoir tank, FetkovichAquifer aquifer, FetkovichAquifer.State state,
+      Step step, double[] produced, double[] injected, double volume, double pressure) {
+    FetkovichAquifer.State next;
+    try {
+      next = aquifer.advance(state, step.durationSeconds, tank.getReservoirFluid().getPressure(), pressure);
+    } catch (FetkovichAquifer.InventoryExhaustedException outsideStorage) {
+      // Lower end pressure increases influx throughout a prescribed ramp with fixed start conditions.
+      // Exhausted-water probes bound the root but never become accepted predictions.
+      return new AquiferTrial(null, null, Double.POSITIVE_INFINITY);
+    }
+    double water = next.getCumulativeInfluxM3();
+    if (next.getIntervalMinimumCumulativeInfluxM3() < 0.0) {
+      return new AquiferTrial(null, next, Double.NEGATIVE_INFINITY);
+    }
+    if (next.getIntervalMaximumCumulativeInfluxM3() >= volume) {
+      return new AquiferTrial(null, next, Double.POSITIVE_INFINITY);
+    }
+    SimpleReservoir candidate = SerializationUtils.clone(tank);
+    candidate.advanceComponentAmounts(step.durationSeconds, produced, injected, water, UUID.randomUUID());
+    return new AquiferTrial(candidate, next, candidate.getReservoirFluid().getPressure() - pressure);
   }
 
   /**
@@ -463,6 +661,19 @@ public final class CompositionalReservoirHistory implements Serializable {
    * @throws IllegalStateException if no informative feasible calibration trials exist
    */
   public Fit fitVolume(double minimumVolumeM3, double maximumVolumeM3) {
+    return fitVolume(minimumVolumeM3, maximumVolumeM3, null);
+  }
+
+  /**
+   * Fits bounded pore volume while keeping aquifer properties fixed and laboratory EOS independent.
+   *
+   * @param minimumVolumeM3 positive lower volume bound, m3
+   * @param maximumVolumeM3 finite strictly larger upper volume bound, m3
+   * @param aquifer independently supplied physical aquifer, or null for no support
+   * @return selected replay and rejected/bound-limited trial diagnostics
+   * @throws IllegalStateException if no informative feasible trials exist
+   */
+  public Fit fitVolume(double minimumVolumeM3, double maximumVolumeM3, FetkovichAquifer aquifer) {
     requirePositive(minimumVolumeM3, "Minimum volume");
     requirePositive(maximumVolumeM3, "Maximum volume");
     if (maximumVolumeM3 <= minimumVolumeM3) {
@@ -486,7 +697,7 @@ public final class CompositionalReservoirHistory implements Serializable {
     int selected = -1;
     for (int i = 0; i <= 16; i++) {
       double volume = i == 0 ? minimumVolumeM3 : i == 16 ? maximumVolumeM3 : Math.exp(low + i * width);
-      Result trial = trial(volume, rejected);
+      Result trial = trial(volume, aquifer, rejected);
       if (trial != null) {
         largest = Math.max(largest, trial.calibrationChiSquare);
         if (best == null || trial.calibrationChiSquare < best.calibrationChiSquare) {
@@ -503,8 +714,8 @@ public final class CompositionalReservoirHistory implements Serializable {
     double ratio = (Math.sqrt(5.0) - 1.0) / 2.0;
     double x1 = right - ratio * (right - left);
     double x2 = left + ratio * (right - left);
-    Result r1 = trial(Math.exp(x1), rejected);
-    Result r2 = trial(Math.exp(x2), rejected);
+    Result r1 = trial(Math.exp(x1), aquifer, rejected);
+    Result r2 = trial(Math.exp(x2), aquifer, rejected);
     for (int iteration = 0; iteration < 80 && right - left > 1.0e-7; iteration++) {
       if (r1 != null && r1.calibrationChiSquare < best.calibrationChiSquare) {
         best = r1;
@@ -517,13 +728,13 @@ public final class CompositionalReservoirHistory implements Serializable {
         x2 = x1;
         r2 = r1;
         x1 = right - ratio * (right - left);
-        r1 = trial(Math.exp(x1), rejected);
+        r1 = trial(Math.exp(x1), aquifer, rejected);
       } else {
         left = x1;
         x1 = x2;
         r1 = r2;
         x2 = left + ratio * (right - left);
-        r2 = trial(Math.exp(x2), rejected);
+        r2 = trial(Math.exp(x2), aquifer, rejected);
       }
     }
     return new Fit(best, best.volume == minimumVolumeM3 || best.volume == maximumVolumeM3, rejected);
@@ -533,12 +744,13 @@ public final class CompositionalReservoirHistory implements Serializable {
    * Evaluates one complete volume trial, retaining infeasibility evidence.
    *
    * @param volume trial pore volume in m3
+   * @param aquifer fixed physical aquifer, or null
    * @param rejected trial rejection evidence collector
    * @return successful replay or null for a rejected trial
    */
-  private Result trial(double volume, List<String> rejected) {
+  private Result trial(double volume, FetkovichAquifer aquifer, List<String> rejected) {
     try {
-      return replay(volume);
+      return replay(volume, aquifer);
     } catch (IllegalArgumentException | IllegalStateException failure) {
       rejected.add(volume + " m3: " + failure.getMessage());
       return null;

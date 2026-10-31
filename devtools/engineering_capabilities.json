@@ -1779,6 +1779,30 @@
         "src/test/java/neqsim/pvtsimulation/util/DepletionPvtHistoryGeneratorTest.java"
       ],
       "limitations": "Discovery and inspectApi only; instance data/protocol inputs, no new executable static MCP operation. Dry samples with both hydrocarbon phases at every pressure only; CVD uses restored retained states and DLE pre-removal equilibrium with retained-oil origin. Fixed multistage separator/stock-tank basis and separately accepted frozen pure-water EOS for Bw. Native component closure is distinct from approximate surface pseudo-component closure; reject above caller-justified conversion tolerance. No absent-phase/critical extrapolation, aqueous depletion samples or independent public laboratory/field qualification is implied."
+    },
+    {
+      "id": "finite-aquifer-reservoir-history",
+      "title": "Physical finite-aquifer measured-history replay",
+      "domain": "reservoir",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquifer",
+        "neqsim.pvtsimulation.util.CompositionalReservoirHistory",
+        "neqsim.process.equipment.reservoir.SimpleReservoir"
+      ],
+      "skills": [
+        "neqsim-integrated-production-and-lifecycle",
+        "neqsim-eos-regression"
+      ],
+      "agents": [
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/FetkovichAquiferTest.java",
+        "src/test/java/neqsim/pvtsimulation/util/CompositionalReservoirAquiferTest.java",
+        "src/test/java/neqsim/pvtsimulation/util/CompositionalReservoirAquiferRefinementTest.java"
+      ],
+      "limitations": "Discovery and inspectApi only; Java/Python object workflow, no new static MCP operation. Constant-property Fetkovich reservoir-volume storage, exact prescribed linear-pressure integration, implicit fixed-pore-volume EOS coupling through segregated immiscible water. Aquifer water cannot mix or be produced through component schedules; interval minimum/maximum water volumes bound admissible roots. Known aquifer properties may be supplied for bounded volume fitting. No rock/thermal/spatial behavior, continuous joint identifiability, independent field qualification or recoverable reserves."
     }
   ]
 }

@@ -515,3 +515,10 @@ and approximate surface-component closure are checked separately. See the
 [generation and acceptance contract](depletion_pvt_generation.md). Above-saturation,
 wet-sample, critical extrapolation and independent public laboratory/field
 qualification remain open under issue #4740.
+
+## Physical finite-aquifer replay
+
+The optional `FetkovichAquifer` overload of `CompositionalReservoirHistory` couples
+segregated immiscible reservoir-volume water to the existing TV flash. Water
+cannot be mixed or produced through tracked component schedules. Inspect both
+interval extrema and endpoint volumes. See [the physical model and qualification](reservoir_aquifer_uncertainty.md).
