@@ -29,8 +29,11 @@ public final class DynamicSafetyScenario implements Serializable {
   private final double timeStepSeconds;
   private final double triggerTimeSeconds;
   private final boolean eventExactTimingEnabled;
+  private final String caseConfigurationDefinitionId;
   private final ProcessManipulator caseConfiguration;
+  private final String initiatingEventDefinitionId;
   private final ProcessManipulator initiatingEvent;
+  private final List<String> logicDefinitionIds;
   private final List<LogicFactory> logicFactories;
   private final List<DynamicScenarioCriterion> criteria;
   private final List<String> evidenceReferences;
@@ -44,8 +47,11 @@ public final class DynamicSafetyScenario implements Serializable {
     timeStepSeconds = builder.timeStepSeconds;
     triggerTimeSeconds = builder.triggerTimeSeconds;
     eventExactTimingEnabled = builder.eventExactTimingEnabled;
+    caseConfigurationDefinitionId = builder.caseConfiguration == null ? "NONE" : builder.caseConfigurationDefinitionId;
     caseConfiguration = builder.caseConfiguration;
+    initiatingEventDefinitionId = builder.initiatingEventDefinitionId;
     initiatingEvent = builder.initiatingEvent;
+    logicDefinitionIds = Collections.unmodifiableList(new ArrayList<String>(builder.logicDefinitionIds));
     logicFactories = Collections.unmodifiableList(new ArrayList<LogicFactory>(builder.logicFactories));
     criteria = Collections.unmodifiableList(new ArrayList<DynamicScenarioCriterion>(builder.criteria));
     evidenceReferences = Collections.unmodifiableList(new ArrayList<String>(builder.evidenceReferences));
@@ -86,12 +92,27 @@ public final class DynamicSafetyScenario implements Serializable {
     return eventExactTimingEnabled;
   }
 
+  /** @return stable identifier for optional case-configuration behavior */
+  public String getCaseConfigurationDefinitionId() {
+    return caseConfigurationDefinitionId;
+  }
+
   ProcessManipulator getCaseConfiguration() {
     return caseConfiguration;
   }
 
+  /** @return stable identifier for initiating-event behavior */
+  public String getInitiatingEventDefinitionId() {
+    return initiatingEventDefinitionId;
+  }
+
   ProcessManipulator getInitiatingEvent() {
     return initiatingEvent;
+  }
+
+  /** @return ordered stable identifiers for protection-logic implementations */
+  public List<String> getLogicDefinitionIds() {
+    return logicDefinitionIds;
   }
 
   public List<LogicFactory> getLogicFactories() {
@@ -124,6 +145,9 @@ public final class DynamicSafetyScenario implements Serializable {
     result.put("timeStepSeconds", Double.valueOf(timeStepSeconds));
     result.put("triggerTimeSeconds", Double.valueOf(triggerTimeSeconds));
     result.put("timingPolicy", eventExactTimingEnabled ? "EVENT_EXACT" : "LEGACY_FIXED_SCAN");
+    result.put("caseConfigurationDefinitionId", caseConfigurationDefinitionId);
+    result.put("initiatingEventDefinitionId", initiatingEventDefinitionId);
+    result.put("logicDefinitionIds", new ArrayList<String>(logicDefinitionIds));
     result.put("logicCount", Integer.valueOf(logicFactories.size()));
     List<Map<String, Object>> criterionMaps = new ArrayList<Map<String, Object>>();
     for (DynamicScenarioCriterion criterion : criteria) {
@@ -145,8 +169,11 @@ public final class DynamicSafetyScenario implements Serializable {
     private double timeStepSeconds = 1.0;
     private double triggerTimeSeconds;
     private boolean eventExactTimingEnabled;
+    private String caseConfigurationDefinitionId = "UNSPECIFIED";
     private ProcessManipulator caseConfiguration;
+    private String initiatingEventDefinitionId = "UNSPECIFIED";
     private ProcessManipulator initiatingEvent;
+    private final List<String> logicDefinitionIds = new ArrayList<String>();
     private final List<LogicFactory> logicFactories = new ArrayList<LogicFactory>();
     private final List<DynamicScenarioCriterion> criteria = new ArrayList<DynamicScenarioCriterion>();
     private final List<String> evidenceReferences = new ArrayList<String>();
@@ -192,19 +219,61 @@ public final class DynamicSafetyScenario implements Serializable {
     }
 
     public Builder configureCase(ProcessManipulator value) {
+      return configureCase("UNSPECIFIED", value);
+    }
+
+    /**
+     * Sets optional case-configuration behavior with an explicit controlled identity.
+     *
+     * @param definitionId stable implementation and revision identifier
+     * @param value case configuration
+     * @return this builder
+     */
+    public Builder configureCase(String definitionId, ProcessManipulator value) {
+      if (value == null) {
+        throw new IllegalArgumentException("case configuration must not be null");
+      }
+      caseConfigurationDefinitionId = requireText(definitionId, "caseConfigurationDefinitionId");
       caseConfiguration = value;
       return this;
     }
 
     public Builder initiatingEvent(ProcessManipulator value) {
+      return initiatingEvent("UNSPECIFIED", value);
+    }
+
+    /**
+     * Sets initiating-event behavior with an explicit controlled identity.
+     *
+     * @param definitionId stable implementation and revision identifier
+     * @param value initiating event
+     * @return this builder
+     */
+    public Builder initiatingEvent(String definitionId, ProcessManipulator value) {
+      if (value == null) {
+        throw new IllegalArgumentException("initiating event must not be null");
+      }
+      initiatingEventDefinitionId = requireText(definitionId, "initiatingEventDefinitionId");
       initiatingEvent = value;
       return this;
     }
 
     public Builder addLogic(LogicFactory value) {
+      return addLogic("UNSPECIFIED", value);
+    }
+
+    /**
+     * Adds protection logic with an explicit controlled identity.
+     *
+     * @param definitionId stable implementation and revision identifier
+     * @param value protection-logic factory
+     * @return this builder
+     */
+    public Builder addLogic(String definitionId, LogicFactory value) {
       if (value == null) {
         throw new IllegalArgumentException("logic factory must not be null");
       }
+      logicDefinitionIds.add(requireText(definitionId, "logicDefinitionId"));
       logicFactories.add(value);
       return this;
     }

@@ -56,8 +56,14 @@ position or by treating an unavailable valve as closed.
 Attach controlled identities to each executable case with `addRequirementId(...)` and
 `addEquipmentTag(...)`. The scenario and `dynamic_safety_scenario_result.v2` retain these values in
 insertion order, providing a stable requirement-to-tag-to-scenario-to-result join for study reports.
-The runner does not infer that the identifiers exist in an approved SRS, P&ID, instrument index, or
-cause-and-effect chart; project validation must establish those links.
+The runner does not infer approval or safety credit from these identifiers. When a scenario belongs to an
+`EngineeringProject`, `EngineeringProject.validate()` checks that every requirement identifier exists and that
+every exercised tag resolves to process equipment, a stream, or a measurement device. Give the case configuration,
+initiating event, each logic factory, and each criterion extractor stable definition-and-revision identifiers through
+the overloads that accept a definition ID. Change that ID whenever the callback behavior or its controlled source
+revision changes. Legacy overloads remain available but are exported as `UNSPECIFIED` and
+produce the `ENG-DYNAMIC-006` review finding. Unregistered evidence references remain review findings rather than
+simulated proof of an approved SRS, P&ID, instrument index, or cause-and-effect chart.
 
 The public regression matrix uses the same 1.0 s sensor delay and 0.5 s logic delay for every case:
 
@@ -72,6 +78,32 @@ transient trials and serialized restart preserve the availability flag. These va
 synthetic software case only; use reviewed vendor stroke data, utility architecture, site test data,
 and project response-time requirements for engineering decisions.
 
+## Revision-controlled scenario evidence
+
+After `EngineeringSimulationRunner` executes a project, the project retains the latest coordinated result as
+transient run evidence. `EngineeringGraphBuilder` then materializes two stable identities for each case:
+
+- a `SCENARIO` node containing the executable public definition, evidence references, requirement links, and
+  exercised equipment/instrument links;
+- a `SCENARIO_RESULT` node containing the quantitative traces, verdict, timing policy, accepted physical steps,
+  logic evidence, requirement identifiers, and equipment tags.
+
+The result node is `GENERATED_FROM` the scenario node. Consequently, a changed public scenario definition
+propagates revision impact to its result, while a changed quantitative result can invalidate only the result.
+`EngineeringApprovalLedger` reports existing approvals as `REVALIDATION_REQUIRED` for the affected node(s);
+it never silently carries approval across a changed executable definition or result. The latest result is transient:
+rerun the coordinated simulation before compiling an evidence graph after restart or deserialization.
+
+Persisted graph snapshots retain the number representations in nested scenario evidence, including integer logic
+counters. Reloading an unchanged snapshot preserves its fingerprint and produces no revision impact; changing
+stored evidence without updating the fingerprint is rejected during graph reconstruction.
+
+Controlled definition IDs are project-governed identities, not hashes of callback bytecode. Configuration control must
+change an ID when implementation behavior changes and rerun the scenario before review.
+
+This graph contract records simulation evidence and review state. It does not approve the scenario, assign SIL or
+IPL credit, or establish detector coverage, voting independence, vendor response, or site acceptance.
+
 ## 2oo3 high-pressure isolation example
 
 ```java
@@ -79,9 +111,9 @@ DynamicSafetyScenario scenario = DynamicSafetyScenario
     .builder("SIF-HP-101", "HP inlet isolation")
     .durationSeconds(8.0)
     .timeStepSeconds(0.25)
-    .initiatingEvent(process ->
+    .initiatingEvent("feed-high-pressure-v1", process ->
         ((Stream) process.getUnit("FEED")).setPressure(70.0, "bara"))
-    .addLogic(process -> {
+    .addLogic("sif-hp-101-2oo3-v1", process -> {
       ESDValve valve = (ESDValve) process.getUnit("ESDV-101");
       ESDLogic finalElements = new ESDLogic("ESD-101 final elements");
       finalElements.addAction(new TripValveAction(valve), 0.0);
@@ -105,7 +137,8 @@ DynamicSafetyScenario scenario = DynamicSafetyScenario
           .build();
     })
     .addCriterion(DynamicScenarioCriterion
-        .builder("esdv-closed", "ESD valve closed", "%", process ->
+        .builder("esdv-closed", "ESD valve closed", "%",
+            "esdv-101-opening-percent-v1", process ->
             ((ESDValve) process.getUnit("ESDV-101"))
                 .getPercentValveOpening())
         .acceptanceRange(null, 5.0)
