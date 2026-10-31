@@ -39,16 +39,20 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
     assertFalse(report.hasErrors());
     assertFalse(hasCode(report, "ENG-DYNAMIC-003"));
     assertFalse(hasCode(report, "ENG-DYNAMIC-004"));
+    assertFalse(hasCode(report, "ENG-DYNAMIC-005"));
     assertFalse(hasCode(report, "ENG-DYNAMIC-006"));
 
     EngineeringProject invalid = new EngineeringProject(PROJECT_ID, "Invalid traceability", process(),
         new EngineeringDesignBasis());
     invalid.addDynamicSafetyScenario(scenario(5.0, "UNKNOWN-REQ", "UNKNOWN-TAG"));
+    invalid.addDynamicSafetyScenario(scenario(5.0, "UNKNOWN-REQ", "UNKNOWN-TAG"));
 
     EngineeringValidationReport invalidReport = invalid.validate();
     assertTrue(invalidReport.hasErrors());
+    assertTrue(hasCode(invalidReport, "ENG-DYNAMIC-002"));
     assertTrue(hasCode(invalidReport, "ENG-DYNAMIC-003"));
     assertTrue(hasCode(invalidReport, "ENG-DYNAMIC-004"));
+    assertTrue(hasCode(invalidReport, "ENG-DYNAMIC-005"));
   }
 
   @Test
