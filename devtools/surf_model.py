@@ -113,7 +113,9 @@ def build_plan(spec, model, concept_id, case_id, domain, segment_factor=1):
         base = {"op": "node", "id": nid, "tag": n["tag"], "role": NODE_ROLE[k], "service": domain.upper(), "elevation_m": n["z_m"]}
         if k == "production_well":
             w = n["well"]
-            ops.append(dict(base, type="live_well", wellhead_t_c=w["wellhead_temperature_c"], initial_p_bara=round(0.5 * case["production_reservoir_pressure_bara"], 3)))
+            # an optional case-level ``wellhead_temperature_c`` overrides the node value (rate-dependent flowing wellhead temperature)
+            ops.append(dict(base, type="live_well", wellhead_t_c=case.get("wellhead_temperature_c", w["wellhead_temperature_c"]),
+                            initial_p_bara=round(0.5 * case["production_reservoir_pressure_bara"], 3)))
         elif k == "injection_well":
             ops.append(dict(base, type="live_well", wellhead_t_c=spec["host"].get("injection_supply_temperature_c", 30.0),
                             initial_p_bara=case["injection_pump_discharge_bara"]))
@@ -136,7 +138,8 @@ def build_plan(spec, model, concept_id, case_id, domain, segment_factor=1):
     for nid, n in nodes.items():
         if n["kind"] == "production_well":
             w = n["well"]
-            ops.append({"op": "well_production", "node": nid, "reservoir_t_c": w["wellhead_temperature_c"], "reservoir_p_bara": case["production_reservoir_pressure_bara"],
+            ops.append({"op": "well_production", "node": nid, "reservoir_t_c": case.get("wellhead_temperature_c", w["wellhead_temperature_c"]),
+                        "reservoir_p_bara": case["production_reservoir_pressure_bara"],
                         "pi_msm3d_per_bar2": w["productivity_index_msm3d_per_bar2"] * case["productivity_scale"], "fluid": fluid_def(spec, case["production_fluid"])})
         elif n["kind"] == "injection_well":
             w = n["well"]

@@ -11,6 +11,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.pipeline.WaterHammerPipe;
+import neqsim.process.equipment.pipeline.AcousticLiftCheckValve;
 import neqsim.process.equipment.pipeline.AcousticValveBoundary;
 import neqsim.process.equipment.pipeline.AcousticPumpBoundary;
 import neqsim.process.equipment.stream.Stream;
@@ -118,6 +119,8 @@ public final class WaterHammerStudy {
     JsonArray sampledInletFlow = new JsonArray();
     JsonArray sampledInletPressure = new JsonArray();
     JsonArray sampledPumpWork = new JsonArray();
+    JsonArray sampledLift = new JsonArray();
+    addLiftSample(pipe, sampledLift);
     addPumpSample(pipe, sampledPumpSpeed, sampledInletFlow, sampledInletPressure, sampledPumpWork);
     if (pipe.getValveBoundary() != null) {
       sampledKv.add(pipe.getEffectiveValveKv());
@@ -133,12 +136,13 @@ public final class WaterHammerStudy {
       try {
         pipe.runTransient(time - previousTime, id);
       } catch (IllegalStateException exception) {
-        if (pipe.getPumpBoundary() == null) {
+        if (pipe.getPumpBoundary() == null && pipe.getLiftCheckValve() == null) {
           throw exception;
         }
-        return failedPumpStudy(input, pipe, time, exception);
+        return failedBoundaryStudy(input, pipe, time, exception);
       }
       if (step % sampleInterval == 0 || step == numberOfSteps) {
+        addLiftSample(pipe, sampledLift);
         addPumpSample(pipe, sampledPumpSpeed, sampledInletFlow, sampledInletPressure, sampledPumpWork);
         addSample(sampledTime, sampledOutletPressure, sampledValveOpening, time, last(pipe.getPressureProfile("bar")),
             pipe.getValveOpening());
@@ -169,6 +173,14 @@ public final class WaterHammerStudy {
           + "storage, fluid corrections, cavitation or check-valve slam qualification. Endpoint-held hydraulic work "
           + "is not shaft/EOS energy closure. Refine space/time and qualify actual data independently.");
     }
+    if (pipe.getLiftCheckValve() != null) {
+      result.getAsJsonObject("timeSeries").add("liftCheckValve", sampledLift);
+      result.getAsJsonObject("inputSummary").add("liftCheckValve", input.get("liftCheckValve").deepCopy());
+      result.add("acceptedLiftIntervals", liftIntervals(pipe));
+      warnings.add("EXPERIMENTAL ideal translating/equal-area inelastic check valve: signed jet plus swept flow, "
+          + "backward Euler with previous-lift orifice area. Refine numerical contact/pressure histories. No vendor "
+          + "flow-force, added mass, rebound, cavitation, full pump-trip or Safety Shutdown qualification.");
+    }
     if (pipe.getValveBoundary() != null) {
       result.getAsJsonObject("timeSeries").add("effectiveValveKv", sampledKv);
       result.getAsJsonObject("timeSeries").add("outletFlow_m3_s", sampledFlow);
@@ -191,7 +203,7 @@ public final class WaterHammerStudy {
     cells.add("flow_m3_s", toJsonArray(pipe.getCellFlowProfile()));
     result.add("finalCellState", cells);
     result.add("validation", buildValidation(input, pipe, warnings));
-    if (pipe.getValveBoundary() != null || pipe.getPumpBoundary() != null) {
+    if (pipe.getValveBoundary() != null || pipe.getPumpBoundary() != null || pipe.getLiftCheckValve() != null) {
       result.getAsJsonObject("validation").addProperty("safetyShutdownQualification", "NOT_EVALUATED");
     }
     result.add("sourceReferences", getSourceReferences(input, geometry));
@@ -199,6 +211,67 @@ public final class WaterHammerStudy {
     result.addProperty("screeningLimitations",
         "Equivalent single-line acoustic model. Validate high-risk cases with detailed surge "
             + "software, vendor valve curves, support loads, and as-built isometrics.");
+    return result;
+  }
+
+  /**
+   * Append the translating state at an existing study sample, sharing the pipe clock.
+   *
+   * @param pipe accepted pipe state
+   * @param samples destination synchronized rows
+   */
+  private static void addLiftSample(WaterHammerPipe pipe, JsonArray samples) {
+    if (pipe.getLiftCheckValve() != null) {
+      samples.add(liftSample(pipe));
+    }
+  }
+
+  /**
+   * Describe accepted mechanical state and separate work/loss terms with explicit SI units.
+   *
+   * @param pipe accepted pipe state
+   * @return named diagnostics, without inferring full EOS energy qualification
+   */
+  private static JsonObject liftSample(WaterHammerPipe pipe) {
+    JsonObject row = new JsonObject();
+    row.addProperty("time_s", pipe.getCurrentTime());
+    row.addProperty("lift_m", pipe.getLiftPosition());
+    row.addProperty("velocity_m_s", pipe.getLiftVelocity());
+    row.addProperty("outletFlow_m3_s", last(pipe.getFlowProfile()));
+    row.addProperty("mechanicalEnergy_J", pipe.getLiftMechanicalEnergy());
+    row.addProperty("pressureWork_J", pipe.getLiftPressureWork());
+    row.addProperty("orificeLoss_J", pipe.getLiftOrificeLoss());
+    row.addProperty("dampingLoss_J", pipe.getLiftDampingLoss());
+    row.addProperty("numericalLoss_J", pipe.getLiftNumericalLoss());
+    row.addProperty("impactLoss_J", pipe.getLiftImpactLoss());
+    row.addProperty("energyResidual_J", pipe.getLiftEnergyResidual());
+    row.addProperty("contactCount", pipe.getLiftContactCount());
+    if (Double.isFinite(pipe.getLastLiftContactTime())) {
+      row.addProperty("lastContactTime_s", pipe.getLastLiftContactTime());
+    }
+    return row;
+  }
+
+  /**
+   * Export every accepted internal disc interval, including localized contacts between external samples.
+   *
+   * @param pipe accepted pipe state
+   * @return columns and rows; endpoint velocity follows contact, interval swept flow precedes impact
+   */
+  private static JsonObject liftIntervals(WaterHammerPipe pipe) {
+    JsonObject result = new JsonObject();
+    JsonArray columns = new JsonArray();
+    for (String name : new String[] {"time_s", "lift_m", "velocity_m_s", "pressureWork_J", "orificeLoss_J",
+        "dampingLoss_J", "numericalLoss_J", "impactLoss_J", "jetFlow_m3_s", "sweptFlow_m3_s", "pressureDifference_Pa",
+        "contactEvent"}) {
+      columns.add(name);
+    }
+    result.add("columns", columns);
+    JsonArray rows = new JsonArray();
+    for (double[] values : pipe.getLiftHistory()) {
+      rows.add(toJsonArray(values));
+    }
+    result.add("rows", rows);
     return result;
   }
 
@@ -222,8 +295,8 @@ public final class WaterHammerStudy {
   }
 
   /**
-   * Preserve rejected pump-domain evidence and every accepted internal outlet sample instead of returning success for a
-   * truncated trip. This reports local acceptance, not a global transaction rollback.
+   * Preserve rejected dynamic-boundary evidence and every accepted internal outlet sample instead of returning success
+   * for a truncated trip. This reports local acceptance, not a global transaction rollback.
    *
    * @param input original public input
    * @param pipe last accepted acoustic state
@@ -231,11 +304,11 @@ public final class WaterHammerStudy {
    * @param failure interval failure with physical endpoint in its message
    * @return explicit error with partial accepted state and unqualified physics flags
    */
-  private static JsonObject failedPumpStudy(JsonObject input, WaterHammerPipe pipe, double requestedEnd,
+  private static JsonObject failedBoundaryStudy(JsonObject input, WaterHammerPipe pipe, double requestedEnd,
       IllegalStateException failure) {
     JsonObject result = new JsonObject();
     result.addProperty("status", "error");
-    result.addProperty("studyName", getString(input, "studyName", "Safety Shutdown forward pump coastdown"));
+    result.addProperty("studyName", getString(input, "studyName", "Safety Shutdown dynamic acoustic boundary"));
     result.addProperty("message", failure.getMessage());
     result.addProperty("requestedEnd_s", requestedEnd);
     result.addProperty("lastAcceptedTime_s", pipe.getCurrentTime());
@@ -259,6 +332,10 @@ public final class WaterHammerStudy {
     state.addProperty("integratedOutletVolume_m3", pipe.getIntegratedOutletVolume());
     state.addProperty("acousticVolumeResidual_m3", pipe.getAcousticVolumeResidual());
     state.addProperty("momentumResidual_kg_m_s", pipe.getMomentumResidual());
+    if (pipe.getLiftCheckValve() != null) {
+      state.add("liftCheckValve", liftSample(pipe));
+      result.add("acceptedLiftIntervals", liftIntervals(pipe));
+    }
     result.add("lastAcceptedState", state);
     JsonObject validation = new JsonObject();
     validation.addProperty("requestedInterval", "FAIL");
@@ -266,8 +343,8 @@ public final class WaterHammerStudy {
     validation.addProperty("safetyShutdownQualification", "NOT_EVALUATED");
     validation.addProperty("physicalConservation", "NOT_EVALUATED");
     result.add("validation", validation);
-    result.addProperty("remediation", "Qualify a signed/stopped pump/check-valve continuation or restrict the declared "
-        + "study to its valid forward domain. Earlier accepted substeps remain accepted; this is not global rollback.");
+    result.addProperty("remediation", "Inspect the rejected interval, refine within the declared physical domain and "
+        + "qualify any missing continuation. Earlier accepted substeps remain accepted; this is not global rollback.");
     return result;
   }
 
@@ -374,6 +451,15 @@ public final class WaterHammerStudy {
               AcousticValveBoundary.CapacityUnit.valueOf(boundary.get("capacityUnit").getAsString()),
               readArray(boundary, "travelTime_s"), readArray(boundary, "actualOpeningFraction"),
               getDoubleAny(boundary, 0.0, "commandTime_s"), getDoubleAny(boundary, 0.0, "delay_s")));
+    }
+    if (input.has("liftCheckValve")) {
+      JsonObject valve = input.getAsJsonObject("liftCheckValve");
+      pipe.setLiftCheckValve(
+          new AcousticLiftCheckValve(valve.get("mass_kg").getAsDouble(), valve.get("damping_N_s_m").getAsDouble(),
+              valve.get("stiffness_N_m").getAsDouble(), valve.get("preload_N").getAsDouble(),
+              valve.get("pressureArea_m2").getAsDouble(), valve.get("dischargeCoefficient").getAsDouble(),
+              valve.get("orificeWidth_m").getAsDouble(), valve.get("maximumLift_m").getAsDouble(),
+              valve.get("initialLift_m").getAsDouble(), valve.get("provenance").getAsString()));
     }
     return pipe;
   }
@@ -498,13 +584,14 @@ public final class WaterHammerStudy {
    * @return event schedule array
    */
   private static JsonArray getEventSchedule(JsonObject input, double initialOpening) {
-    if (input.has("valveBoundary")) {
+    if (input.has("valveBoundary") || input.has("liftCheckValve")) {
       if (input.has("eventSchedule") && input.getAsJsonArray("eventSchedule").size() != 0) {
-        throw new IllegalArgumentException("Prescribed actual travel cannot be combined with valve eventSchedule");
+        throw new IllegalArgumentException(
+            "Configured physical valve cannot be combined with commanded valve eventSchedule");
       }
       if (input.has("closureTime_s") || input.has("valveClosureTime_s") || input.has("closureDuration_s")
           || input.has("closureStart_s")) {
-        throw new IllegalArgumentException("Prescribed actual travel cannot be combined with closure-time shortcuts");
+        throw new IllegalArgumentException("Configured physical valve cannot be combined with closure-time shortcuts");
       }
       return new JsonArray();
     }
@@ -687,6 +774,14 @@ public final class WaterHammerStudy {
     validation.addProperty("method", "Conservative cell-integrated acoustic characteristics; first order");
     validation.addProperty("timeStepWithinCourantLimit", true);
     validation.addProperty("boundaryTimeQuadrature", "RIGHT_ENDPOINT_HOLD");
+    if (pipe.getLiftCheckValve() != null) {
+      validation.addProperty("liftTimeQuadrature", "PREVIOUS_ACCEPTED_LIFT_ORIFICE_WITH_BACKWARD_EULER_MECHANICS");
+      validation.addProperty("liftContactModel", "PERFECTLY_INELASTIC_DISCRETE_EVENT_REQUIRES_REFINEMENT");
+      validation.addProperty("vendorSlamQualification", "NOT_EVALUATED");
+      validation.addProperty("liftEnergyResidual_J", pipe.getLiftEnergyResidual());
+      validation.addProperty("liftDiscreteEnergyBalance",
+          Math.abs(pipe.getLiftEnergyResidual()) <= 1e-10 ? "PASS" : "FAIL");
+    }
     validation.addProperty("acousticStoredVolume_m3", pipe.getAcousticStoredVolume());
     validation.addProperty("integratedInletVolume_m3", pipe.getIntegratedInletVolume());
     validation.addProperty("integratedOutletVolume_m3", pipe.getIntegratedOutletVolume());

@@ -73,6 +73,12 @@ FAIL is fixed, every WARN is explained in the report. Do not weaken a gate.
 - Report out: `report/*.docx|pdf`, `drawings/`, `dataset/flow_assurance_study.json`; merge a summary into
   `results.json` with `--task DIR`.
 
+## Flow-diagram gate (mandatory)
+
+Schematic and network sheets (field/network schematic, riser/PLEM arrangement) are flow diagrams: run `@pfd-layout-review`
+(`neqsim pfd-check`) on them and on any PFD/BFD figure you add, and fix every ERROR before the report is issued. Map, profile
+and chart sheets are reviewed visually with `neqsim-report-design-and-visual-qa`.
+
 ## Rules
 
 - No invented data, no hidden failures, no "safe" for an unassessed threat.

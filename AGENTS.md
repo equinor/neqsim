@@ -49,6 +49,10 @@
 - **Documentation code must be test-verified:** every Java/Python snippet in docs gets a JUnit
   test (e.g. `DocExamplesCompilationTest`) that is run and passes before the doc is done.
 - **Notebooks must be executed** end to end (NeqSim Runner by default); unexecuted = incomplete.
+- **Every flow diagram must pass `pfd-layout-review` before it is used** (PFD/BFD/P&ID sketch/flow network in a report,
+  paper or figure folder): `neqsim pfd-check <svg|layout.json>` must give PASS (no overlaps, labels on lines, crossings,
+  missing arrowheads/tags; WARNs fixed or explained), then view the picture; fix the generator (`devtools/pfd_diagram.py`),
+  never the PNG. Skill `neqsim-pfd-layout-review`.
 - **Linux-only engines** (FluidMagic, OpenFOAM, OPM Flow) need Docker Desktop/WSL2 on Windows;
   run `neqsim docker ensure --linux` before container work to start installed Docker
   automatically and wait for readiness (source checkout:

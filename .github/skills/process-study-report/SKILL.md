@@ -192,6 +192,11 @@ evidence) and are rendered in Appendix G.
 
 ## Diagrams
 
+**Gate:** every BFD/PFD sheet must pass `neqsim pfd-check` (skill `neqsim-pfd-layout-review`, agent `pfd-layout-review`)
+before issue. `process_study_report.build_diagrams` runs it and writes `diagrams/layout_review/summary.json`
+(`diagrams.layout_review` in the run summary); FAIL sheets are fixed in the layout inputs and regenerated, WARN sheets
+explained, then every sheet is viewed.
+
 Evidence for building our own generator: the native NeqSim renderer
 (`EngineeringDiagramDelivery` + `NativeEngineeringDiagramRenderer`) produces generic boxes labelled
 EQUIPMENT in one row, no stream numbers, overlapping labels and no ISO-style symbols; it is kept for

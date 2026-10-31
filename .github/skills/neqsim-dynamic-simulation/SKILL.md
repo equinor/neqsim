@@ -935,3 +935,14 @@ claim a prescribed-speed adapter supplies shaft inertia, four-quadrant operation
 check-valve disc/contact slam, NPSH/cavity physics, global rollback or integrated
 Safety Shutdown qualification. Existing canonical coordinator and ESD APIs own
 those integrations; do not create another scheduler or pressure-flow architecture.
+
+## Safety Shutdown ideal acoustic lift/contact handoff
+
+The experimental `AcousticLiftCheckValve` couples declared translating mechanics
+and signed jet/swept flow inside existing WaterHammerPipe substeps. Numerical
+inelastic contact and local Java restart do not qualify continuous impact/grazing
+timing, a full pump trip or global coordinator rollback. Keep the existing
+physical-step/event identities and ESD chain; no parallel scheduler or solver.
+Read the [acoustic model, accepted histories and public evidence](../../../docs/wiki/water_hammer_implementation.md#safety-shutdown-ideal-translating-check-valve)
+and hand specialist hydraulic cases to `neqsim-water-hammer`. Asset/vendor,
+phase-change, structural and integrated Safety Shutdown remain NOT_EVALUATED.

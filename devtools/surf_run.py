@@ -145,6 +145,12 @@ def run_domain_case(spec, model, concept_id, case_id, domain_name, segment_facto
     """Solve and extract one domain of one concept/case; returns the cached record when the key matches."""
     say = log or (lambda m: None)
     plan = surf_model.build_plan(spec, model, concept_id, case_id, domain_name, segment_factor)
+    if not any(o["op"] == "node" for o in plan[1:]):
+        # a service that is absent from the study (for example no injection system): nothing to solve; an explicit empty, converged record
+        return {"coupling": {"converged": True, "iterations": 0, "rate_residual_kg_s": 0.0, "pressure_residual_bar": 0.0, "network_residual_pa": 0.0, "mass_balance_residual_kg_s": 0.0,
+                             "message": "no %s service in this study" % domain_name}, "unit_solved": True, "wells": [], "nodes": {}, "edges": {}, "node_balance": {},
+                "domain": domain_name, "concept": concept_id if domain_name == "production" else None, "case": case_id, "mesh_factor": segment_factor, "model_converged": True,
+                "plan_ops": len(plan), "timings_s": {"build": 0.0, "solve": 0.0, "extract": 0.0}, "cache": {"hit": True, "key": "empty"}, "pump_power_kw": 0.0, "empty_service": True}
     key = cache_key(plan, domain_name, segment_factor)
     path = os.path.join(cache_dir, "%s_%s_%s_x%s_%s.json" % (domain_name, concept_id if domain_name == "production" else "all", case_id, segment_factor, key)) if cache_dir else None
     if path and os.path.isfile(path) and not force:

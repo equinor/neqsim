@@ -711,7 +711,7 @@ See the [property method alignment audit](physical_properties/method_alignment_a
 | --------------------- | ---------------------------------------------------------------------------------- | --------------------- |
 | Transient Simulation  | [docs/wiki/pipeline_transient_simulation.md](wiki/pipeline_transient_simulation.md)   | Transient pipeline    |
 | Model Recommendations | [docs/wiki/pipeline_model_recommendations.md](wiki/pipeline_model_recommendations.md) | Model recommendations |
-| Safety Shutdown water hammer | [docs/wiki/water_hammer_implementation.md](wiki/water_hammer_implementation.md) | Conservative acoustic cell inventory, prescribed valve travel/capacity and qualification limits |
+| Safety Shutdown water hammer | [docs/wiki/water_hammer_implementation.md](wiki/water_hammer_implementation.md) | Conservative acoustics, prescribed valve travel, forward pumps, experimental ideal lift/contact and qualification limits |
 
 ---
 
@@ -902,7 +902,7 @@ capability routes, numerical evidence, measured-data gaps and gas-injection limi
 | PVT Workflow Module                     | [docs/pvtsimulation/pvt_workflow.md](pvtsimulation/pvt_workflow.md)                                           | PVT workflow module                                                                                              |
 | Property Flash                          | [docs/wiki/property_flash_workflows.md](wiki/property_flash_workflows.md)                                     | Property flash workflows                                                                                         |
 | **Relative Permeability**               | [docs/pvtsimulation/relative_permeability.md](pvtsimulation/relative_permeability.md)                         | **Corey and LET relative permeability models, Eclipse table export (SWOF/SGOF/SOF3)**                            |
-| **Reservoir Material Balance & Decline** | [docs/pvtsimulation/reservoir_material_balance.md](pvtsimulation/reservoir_material_balance.md)              | **Gas/oil and generalized Rs/Rv material balance, measured/tank history with tuned PVT, OGIP/OOIP and drive indices, aquifer influx, decline history matching** |
+| **Reservoir Material Balance & Decline** | [docs/pvtsimulation/reservoir_material_balance.md](pvtsimulation/reservoir_material_balance.md)              | **Gas/oil and generalized Rs/Rv material balance, immutable original/tuned PVT and held-out laboratory residuals, measured/tank history, frozen-EOS compositional replay and bounded pore-volume fitting, OGIP/OOIP and drive indices, aquifer influx, decline history matching** |
 | **Gas Pseudopressure & Pseudocritical** | [docs/pvtsimulation/gas_pseudopressure_pseudocritical.md](pvtsimulation/gas_pseudopressure_pseudocritical.md) | **Real gas pseudopressure integral, Standing/Sutton/Piper pseudocritical correlations, Wichert-Aziz correction** |
 | Whitson Reader                          | [docs/pvtsimulation/whitson_pvt_reader.md](pvtsimulation/whitson_pvt_reader.md)                               | Whitson PVT reader                                                                                               |
 | **Eclipse E300 Fluid Import**           | [docs/pvtsimulation/eclipse_e300_fluid_import.md](pvtsimulation/eclipse_e300_fluid_import.md)                 | **E300 file format reference, reading/writing Eclipse fluids, PVTsim integration, reservoir coupling workflows** |
@@ -1306,3 +1306,7 @@ badges; version history and merge dates remain available in Git.
 
 - [Safety Shutdown forward pump coastdown and evidence](wiki/water_hammer_implementation.md#safety-shutdown-forward-pump-coastdown):
   bounded actual-speed/forward-curve acoustic inlet; complete trip/slam remains unqualified.
+
+- [Safety Shutdown ideal translating check valve and evidence](wiki/water_hammer_implementation.md#safety-shutdown-ideal-translating-check-valve):
+  experimental signed jet/swept acoustic coupling, discrete energy, inelastic
+  contact/refinement, local restart and explicit qualification limits.

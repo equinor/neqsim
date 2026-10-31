@@ -18,6 +18,7 @@ Usage:
                             from a Python model, JSON definition, .neqsim file or process_data.json
     neqsim surf-study SPEC   SURF design study: generated NeqSim model, cases, drawings and report
     neqsim layout-study SPEC Physical plant layout: checked alternatives, CAD and study report
+    neqsim pfd-check FILES   Deterministic layout check of PFD/BFD/flow diagrams (SVG, JSON spec, PNG); mandatory before use
     neqsim work-record [DIR] Generate WORK_RECORD.md (method, data, file map)
     neqsim file-issue [DIR]  Offer to file a NeqSim gap as a GitHub issue (and PR)
     neqsim --set-task-root P Set the folder new tasks are created in (created if
@@ -145,6 +146,8 @@ def _print_usage():
                                 "SURF design study: generated model, drawings and report (--init, --demo)"))
     print("  {:<18s} {}".format("layout-study SPEC",
                                 "Physical plant layout screening: alternatives, CAD and report (--init, --demo)"))
+    print("  {:<18s} {}".format("pfd-check FILES",
+                                "Layout check of flow diagrams (overlaps, label/line collisions, crossings, arrows, tags); PASS/WARN/FAIL"))
     print("  {:<18s} {}".format("work-record [DIR]",
                                 "Generate WORK_RECORD.md (method, data, file map)"))
     print("  {:<18s} {}".format("file-issue [DIR]",
@@ -656,6 +659,9 @@ def main():
     if cmd in ("layout-study", "layout_study"):
         import layout_study
         sys.exit(layout_study.main(sys.argv[2:]))
+    if cmd in ("pfd-check", "pfd_check", "pfd-layout-check"):
+        import pfd_layout_check
+        sys.exit(pfd_layout_check.main(sys.argv[2:]))
     if cmd in ("process-report", "process_report"):
         import process_report
         sys.exit(process_report.main(sys.argv[2:]))
