@@ -94,6 +94,9 @@ propagates revision impact to its result, while a changed quantitative result ca
 it never silently carries approval across a changed executable definition or result. The latest result is transient:
 rerun the coordinated simulation before compiling an evidence graph after restart or deserialization.
 
+Controlled definition IDs are project-governed identities, not hashes of callback bytecode. Configuration control must
+change an ID when implementation behavior changes and rerun the scenario before review.
+
 This graph contract records simulation evidence and review state. It does not approve the scenario, assign SIL or
 IPL credit, or establish detector coverage, voting independence, vendor response, or site acceptance.
 
