@@ -67,6 +67,9 @@ INDEX_PAGES = (
 )
 
 TASK_SOLVING_TUTORIAL = DOCS / "tutorials/solve-engineering-task.md"
+PYTHON_QUICKSTART = DOCS / "quickstart/python-quickstart.md"
+DEVTOOLS_PYPROJECT = DOCS.parent / "devtools/pyproject.toml"
+NEQSIM_CLI = DOCS.parent / "devtools/neqsim_cli.py"
 PROCESS_COMPARISON_PAGE = DOCS / "examples/comparesimulations_quickstart.md"
 COMBINED_MODELS_TEST = (
     DOCS.parent
@@ -195,6 +198,36 @@ class TutorialCookbookExamplesDocumentationContractTest(unittest.TestCase):
             "[Agentic Workflow Examples](../integration/ai_workflow_examples)",
             rendered,
         )
+
+    def test_task_solving_runtime_and_report_commands_match_current_sources(self):
+        page = TASK_SOLVING_TUTORIAL.read_text(encoding="utf-8")
+        quickstart = PYTHON_QUICKSTART.read_text(encoding="utf-8")
+        pyproject = DEVTOOLS_PYPROJECT.read_text(encoding="utf-8")
+        cli = NEQSIM_CLI.read_text(encoding="utf-8")
+        prerequisites = section_after_heading(page, "## Prerequisites")
+        report = section_after_heading(page, "### Step 3: Generate Reports")
+
+        for marker in (
+            "| Python 3.11+ |",
+            "| Java JDK 17+ |",
+            "Source compatibility is not the same as the runtime prerequisite.",
+        ):
+            with self.subTest(prerequisite=marker):
+                self.assertIn(marker, prerequisites)
+
+        self.assertIn('requires-python = ">=3.11"', pyproject)
+        self.assertIn("requires Java 17 or newer", quickstart)
+        self.assertIn("neqsim report .", report)
+        self.assertIn('print("Usage: neqsim report [TASK_DIR]', cli)
+
+        for stale in (
+            "Python 3.8+",
+            "Java JDK 8+",
+            "python step3_report/generate_report.py",
+            "python -m pip install python-docx matplotlib",
+        ):
+            with self.subTest(stale=stale):
+                self.assertNotIn(stale, page)
 
     def test_process_comparison_quickstart_matches_executable_regression(self):
         page = PROCESS_COMPARISON_PAGE.read_text(encoding="utf-8")
