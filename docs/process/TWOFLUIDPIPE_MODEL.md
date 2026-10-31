@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 50649)
-Total output lines: 3098
-
 ---
 title: TwoFluidPipe Model Documentation
 description: The NeqSim `TwoFluidPipe` model implements a transient multiphase-flow solver with phase-resolved gas, hydrocarbon-liquid, and aqueous-liquid conservation equations.
@@ -1614,7 +1611,51 @@ Select the time integration method via `setTimeIntegrationMethod(TimeIntegrator.
 | `SSP_RK3` | Acoustic/void-wave | Strong Stability Preserving RK3 |
 | `RK2` | Acoustic/void-wave | Heun's method (2nd order) |
 | `EULER` | Acoustic/void-wave | Forward Euler (1st order) |
-| `IMEX_PRESSURE_CORRECTION` | Convective and explicit drag relaxation | Semi-implicit momentum pressure correction with conservati…649 tokens truncated… sticky diagnostics
+| `IMEX_PRESSURE_CORRECTION` | Convective and explicit drag relaxation | Semi-implicit momentum pressure correction with conservative explicit phase-mass transport. The usable timestep depends on the remaining explicit sources. Not recommended for vertical risers. |
+
+```java
+pipe.setTimeIntegrationMethod(TimeIntegrator.Method.RK4);       // default
+pipe.setTimeIntegrationMethod(TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION); // semi-implicit
+TimeIntegrator.Method current = pipe.getTimeIntegrationMethod(); // query
+```
+
+### Coupled pressure-momentum transient correction
+
+The historical transient path advances conservative phase mass and momentum and then reconstructs
+pressure from the steady friction-and-gravity gradient. That sequential reconstruction cannot
+provide compressibility feedback to a momentum instability. It is retained as the default for
+compatibility.
+
+The opt-in coupled correction solves a finite-volume pressure equation from the cell-volume
+constraint and phase compressibilities. The pressure correction changes phase mass fluxes
+conservatively and corrects gas, oil, and water momenta with the same face pressure gradients.
+It therefore advances pressure and momentum in one accepted substep and does not call the
+steady pressure reconstruction afterward.
+
+```java
+pipe.setEnableInterfacialPressure(true);
+pipe.setImplicitInterfacialPressureCoupling(true);
+pipe.setEnableCoupledPressureMomentum(true);
+pipe.setAllowOutletPhaseBackflow(true);
+pipe.setCoupledPressureMomentumMaximumIterations(24); // default
+pipe.setCoupledPressureMomentumRelativeVolumeTolerance(1.0e-7); // default
+```
+
+Use the four settings together for liquid-rich transients whose pressure outlet permits phase
+fallback. The interfacial-pressure term makes the phase-momentum system hyperbolic, its implicit
+treatment removes the small void-wave CFL limit, the coupled correction supplies compressibility
+feedback, and the signed outlet prevents a reversed liquid phase from being silently pinned at
+zero. Signed fallback extrapolates the interior phase state and remains opt-in because a one-way
+export boundary may instead require a check valve or a supplied external inflow composition. The mode reports
+`isCoupledPressureMomentumConverged()`,
+`getCoupledPressureMomentumVolumeResidual()`, and
+`getCoupledPressureMomentumIterations()`. The nonlinear gate is available through
+`get/setCoupledPressureMomentumMaximumIterations()` and
+`get/setCoupledPressureMomentumRelativeVolumeTolerance()`. The default iteration budget is 24;
+the former budget of 12 stopped the Tengesdal progress case at about $6\times10^{-7}$ relative
+cell-volume residual, above the $10^{-7}$ default gate.
+
+After a transient window, also read the sticky diagnostics
 `isTransientCoupledPressureMomentumFailureDetected()`,
 `isTransientCoupledPressureMomentumCorrectionLimited()`, and
 `getTransientCoupledPressureMomentumRejectedSubsteps()`. They are cleared by the next steady
