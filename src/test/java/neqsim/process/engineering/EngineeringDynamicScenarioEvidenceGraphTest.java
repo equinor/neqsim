@@ -39,6 +39,7 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
     assertFalse(report.hasErrors());
     assertFalse(hasCode(report, "ENG-DYNAMIC-003"));
     assertFalse(hasCode(report, "ENG-DYNAMIC-004"));
+    assertFalse(hasCode(report, "ENG-DYNAMIC-006"));
 
     EngineeringProject invalid = new EngineeringProject(PROJECT_ID, "Invalid traceability", process(),
         new EngineeringDesignBasis());
@@ -138,14 +139,14 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
       String equipmentTag, double durationSeconds) {
     return DynamicSafetyScenario.builder(SCENARIO_ID, "High-pressure isolation").durationSeconds(durationSeconds)
         .timeStepSeconds(1.0).triggerTimeSeconds(0.0).eventExactTiming(true)
-        .initiatingEvent(new DynamicSafetyScenario.ProcessManipulator() {
+        .initiatingEvent("feed-pressure-step-v1", new DynamicSafetyScenario.ProcessManipulator() {
           private static final long serialVersionUID = 1000L;
 
           @Override
           public void apply(ProcessSystem process) {
             ((Stream) process.getUnit("FEED")).setPressure(60.0, "bara");
           }
-        }).addLogic(new DynamicSafetyScenario.LogicFactory() {
+        }).addLogic("pressure-trip-v1", new DynamicSafetyScenario.LogicFactory() {
           private static final long serialVersionUID = 1000L;
 
           @Override
@@ -153,7 +154,8 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
             return new PressureTripLogic((Stream) process.getUnit("FEED"), safePressureBara);
           }
         }).addCriterion(DynamicScenarioCriterion
-            .builder("safe-pressure", "Safe pressure", "bara", new DynamicScenarioCriterion.Extractor() {
+            .builder("safe-pressure", "Safe pressure", "bara", "feed-pressure-bara-v1",
+                new DynamicScenarioCriterion.Extractor() {
               private static final long serialVersionUID = 1000L;
 
               @Override
