@@ -39,6 +39,7 @@ This complete example uses kelvin and bara in the thermodynamic-system
 constructor. `setReservoirConditions` and `addSeparatorStage` use degrees Celsius
 and bara.
 
+<!-- pvt-separator-quickstart-example: multi-stage -->
 ```java
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
@@ -48,13 +49,46 @@ import neqsim.pvtsimulation.simulation.MultiStageSeparatorTest.SeparatorStageRes
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
+/**
+ * Runs the PVT landing-page separator workflow.
+ *
+ * @author NeqSim Development Team
+ * @version 1.0
+ */
 public final class PvtSeparatorQuickStart {
   private static final Logger logger =
       LogManager.getLogger(PvtSeparatorQuickStart.class);
 
   private PvtSeparatorQuickStart() {}
 
+  /**
+   * Runs the example and reports its stage results.
+   *
+   * @param args command-line arguments; not used
+   */
   public static void main(String[] args) {
+    MultiStageSeparatorTest separatorTest = runExample();
+    List<SeparatorStageResult> stages = separatorTest.getStageResults();
+    for (SeparatorStageResult stage : stages) {
+      logger.info(
+          "{}: {} bara, {} C, cumulative GOR {} Sm3/Sm3",
+          stage.getStageName(), stage.getPressure(), stage.getTemperature(),
+          stage.getCumulativeGOR());
+    }
+
+    logger.info("Total GOR: {} Sm3/Sm3", separatorTest.getTotalGOR());
+    logger.info("Oil FVF: {} m3/Sm3", separatorTest.getBo());
+    logger.info(
+        "Stock-tank density: {} kg/m3",
+        separatorTest.getStockTankOilDensity());
+  }
+
+  /**
+   * Builds and executes the documented multi-stage separator study.
+   *
+   * @return completed separator study
+   */
+  public static MultiStageSeparatorTest runExample() {
     SystemInterface reservoirFluid = new SystemSrkEos(373.15, 300.0);
     reservoirFluid.addComponent("nitrogen", 0.5);
     reservoirFluid.addComponent("CO2", 2.0);
@@ -77,27 +111,14 @@ public final class PvtSeparatorQuickStart {
     separatorTest.addSeparatorStage(10.0, 30.0, "LP separator");
     separatorTest.addStockTankStage();
     separatorTest.run();
-
-    List<SeparatorStageResult> stages = separatorTest.getStageResults();
-    for (SeparatorStageResult stage : stages) {
-      logger.info(
-          "{}: {} bara, {} C, cumulative GOR {} Sm3/Sm3",
-          stage.getStageName(), stage.getPressure(), stage.getTemperature(),
-          stage.getCumulativeGOR());
-    }
-
-    logger.info("Total GOR: {} Sm3/Sm3", separatorTest.getTotalGOR());
-    logger.info("Oil FVF: {} m3/Sm3", separatorTest.getBo());
-    logger.info(
-        "Stock-tank density: {} kg/m3",
-        separatorTest.getStockTankOilDensity());
+    return separatorTest;
   }
 }
 ```
 
 The repository test
-`neqsim.pvtsimulation.PvtSimulationDocumentationTest` compiles and executes this
-same workflow. The result magnitudes depend on the fluid characterization and
+`neqsim.pvtsimulation.PvtSimulationDocumentationTest` extracts, compiles, and executes this exact
+marked source, then checks the returned stage results. The result magnitudes depend on the fluid characterization and
 equation of state; do not use the example composition as calibrated field data.
 
 ## Working with laboratory data
