@@ -159,6 +159,7 @@ public class Compressor extends TwoPortEquipment
   public double isentropicEfficiency = 1.0;
   public double polytropicEfficiency = 1.0;
   public boolean usePolytropicCalc = false;
+  /** Whether shaft power is explicitly specified rather than calculated from a compressor chart. */
   public boolean powerSet = false;
   public boolean calcPressureOut = false;
   private CompressorChartInterface compressorChart = new CompressorChart();
@@ -671,9 +672,9 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * setPower.
+   * Specifies shaft power for the compressor calculation.
    *
-   * @param p a double
+   * @param p shaft power in watts
    */
   public void setPower(double p) {
     powerSet = true;
@@ -1541,6 +1542,8 @@ public class Compressor extends TwoPortEquipment
         return;
       }
     }
+    // A chart duty constrains only this run; it must not latch an explicit power input.
+    boolean usePowerForOutlet = powerSet;
     if (compressorChart.isUseCompressorChart()) {
       if (solveSpeed) {
         double targetPressure = new neqsim.util.unit.PressureUnit(pressure, pressureUnit).getValue("bara");
@@ -1828,7 +1831,7 @@ public class Compressor extends TwoPortEquipment
             getAntiSurge().setCurrentSurgeFraction(fractionAntiSurge);
           }
 
-          powerSet = true;
+          usePowerForOutlet = true;
           dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()
               * thermoSystem.getTotalNumberOfMoles();
         } while (surgeCheck && getAntiSurge().isActive());
@@ -1843,7 +1846,7 @@ public class Compressor extends TwoPortEquipment
       // Scale by efficiency so that the associated temperature perturbation also remains small.
       boolean differentialStep = pressureRise > 0.0 && pressureRise <= 1.0e-7 * presinn * polytropicEfficiency;
       if (differentialStep) {
-        double differentialWork = powerSet ? dH
+        double differentialWork = usePowerForOutlet ? dH
             : thermoSystem.getFlowRate("kg/sec") * 1.0e5 * pressureRise / densInn / polytropicEfficiency;
         double temperatureRise = differentialPolytropicTemperatureRise(pressureRise, differentialWork);
         double relativeVolumeChange = Math
@@ -1858,7 +1861,7 @@ public class Compressor extends TwoPortEquipment
           thermoSystem.setTemperature(thermoSystem.getTemperature() + temperatureRise);
         }
       }
-      if (powerSet || differentialStep) {
+      if (usePowerForOutlet || differentialStep) {
         double hout = hinn * (1 - 0 + fractionAntiSurge) + dH;
         thermoSystem.setPressure(pressure, pressureUnit);
         thermoOps = new ThermodynamicOperations(getThermoSystem());
@@ -2069,7 +2072,7 @@ public class Compressor extends TwoPortEquipment
       runPsFlashForSelectedModel(thermoOps, entropy);
       // double densOutIdeal = getThermoSystem().getDensity();
       double newEnt = getThermoSystem().getEnthalpy();
-      if (!powerSet) {
+      if (!usePowerForOutlet) {
         dH = (getThermoSystem().getEnthalpy() - hinn) / isentropicEfficiency;
         if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
           double[] gergProps;

@@ -138,6 +138,13 @@ double polytropicExponent = compressor.getPolytropicExponent();
 
 `solveEfficiency(targetTemperatureK)` fits the efficiency selected by
 `setUsePolytropicCalc(...)` while keeping the inlet and outlet pressure fixed.
+To fit an efficiency after a chart calculation, disable the chart with
+`getCompressorChart().setUseCompressorChart(false)` and disable speed solving with
+`setSolveSpeed(false)`. The same compressor then uses the selected efficiency at
+its outlet pressure; its previously calculated chart duty does not fix the power
+of later chart-free runs. An explicit `setPower(...)` or connected shaft-power
+specification still takes precedence over efficiency in a chart-free run.
+
 It uses a safeguarded secant step and bisects when a trial leaves the feasible
 efficiency interval. If that sign bracket stalls on a phase-boundary temperature
 jump, the solve continues with a short local secant around the closest sample and,
