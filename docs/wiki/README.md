@@ -78,7 +78,7 @@ For the complete structured documentation, see:
 
 - [GitHub Repository](https://github.com/equinor/neqsim)
 - [Maven Central](https://search.maven.org/artifact/com.equinor.neqsim/neqsim)
-- [API Javadoc](https://equinor.github.io/neqsim/apidocs/)
+- [API Javadoc](https://equinor.github.io/neqsim/javadoc/index.html)
 - [Python Package (neqsim-python)](https://github.com/equinor/neqsim-python)
 
 ---
