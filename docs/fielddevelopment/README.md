@@ -22,6 +22,7 @@ See [Well and SURF Network Integration](SURF_NETWORK_INTEGRATION) for the curren
 | [HOST_TIE_IN_CAPACITY.md](HOST_TIE_IN_CAPACITY) | Host capacity, holdback, process-equipment bottlenecks, and debottleneck decisions for brownfield tiebacks |
 | [INTEGRATED_PRODUCTION_MODELLING.md](INTEGRATED_PRODUCTION_MODELLING) | **Reservoir-to-market IPM** &mdash; reservoir drives, well deliverability curves, network solver, gas-lift allocation, well-test matching, artificial-lift pumps, and choke optimisation (GAP/PROSPER/MBAL + Pipesim style) |
 | [FIELD_LIFECYCLE_SIMULATION.md](FIELD_LIFECYCLE_SIMULATION) | Time-marching field and area concepts with multi-host routing, facility sizing, product specifications, NPV and break-even |
+| [WELL_PLANNING_PHYSICS.md](WELL_PLANNING_PHYSICS) | Screening well-planning physics: wellbore temperature, drift-flux tubing, gas-condensate inflow, APB and tubing movement, hydrate-inhibitor treatment, injector hydraulics, nodal analysis |
 
 ---
 

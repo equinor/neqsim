@@ -13,6 +13,7 @@ Usage:
     neqsim report [DIR]      Generate the report (files named after its title)
     neqsim report-design DOCX --output COPY  Finish a separate Word copy; --render for visual QA
     neqsim process-report SRC  Process-study report (stream tables, BFD/PFD, balances, validation)
+    neqsim process-overview SRC --out DIR  One-sheet A3 process overview (colour + mono) and 16:9 presentation version
     neqsim flow-assurance-report DIR  Flow-assurance report + pipeline drawings
     neqsim pvt-study YAML     PVT samples, characterization, experiments, E300 and controlled report
                             from a Python model, JSON definition, .neqsim file or process_data.json
@@ -140,6 +141,8 @@ def _print_usage():
                                 "Generate the report (files named after its title)"))
     print("  {:<18s} {}".format("process-report SRC",
                                 "Process-study report from a model file (Python/JSON/.neqsim/data)"))
+    print("  {:<18s} {}".format("process-overview SRC",
+                                "One-sheet A3 process overview (colour + mono, detail sheets) and 16:9 presentation version"))
     print("  {:<18s} {}".format("flow-assurance-report DIR",
                                 "Flow-assurance study report + pipeline drawings (--init, --demo)"))
     print("  {:<18s} {}".format("surf-study SPEC",
@@ -665,6 +668,9 @@ def main():
     if cmd in ("process-report", "process_report"):
         import process_report
         sys.exit(process_report.main(sys.argv[2:]))
+    if cmd in ("process-overview", "process_overview"):
+        import process_overview
+        sys.exit(process_overview.main(sys.argv[2:]))
 
     if cmd == "pvt-study" and not _is_checkout() \
             and not _packaged_jar_has("neqsim/pvtsimulation/util/PVTFluidStudy.class"):

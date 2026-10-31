@@ -977,6 +977,23 @@
  ],
  "pfd": [
   "neqsim-process-extraction",
+  "process-study-report",
+  "professional-process-overview"
+ ],
+ "process overview": [
+  "professional-process-overview"
+ ],
+ "one-sheet PFD": [
+  "professional-process-overview"
+ ],
+ "A3 process flow diagram": [
+  "professional-process-overview"
+ ],
+ "presentation diagram 16:9": [
+  "professional-process-overview"
+ ],
+ "block flow overview": [
+  "professional-process-overview",
   "process-study-report"
  ],
  "pfr)": [

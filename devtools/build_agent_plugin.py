@@ -103,12 +103,14 @@ SKILL_DIST_PREFIX = "neqsim-skill-"
 LIVE_EXTRAS = ("live", "network")
 # ``build`` / ``dist`` are setuptools output left behind by ``pip install <skill>``;
 # they duplicate the package under build/lib and must never ship in the plugin.
-SKIP_DIRS = {"__pycache__", ".pytest_cache", "node_modules", ".git", "build", "dist"}
+SKIP_DIRS = {"__pycache__", ".pytest_cache", "node_modules", ".git", "build", "dist", "_out"}
 SKIP_SUFFIXES = {".pyc"}
 # Local state a live API session drops next to a skill (MSAL/DPAPI token cache,
 # dotenv secrets). The skills repos gitignore them, but the builder copies skill
 # folders verbatim from the checkout, so they must be filtered here too.
 SKIP_FILES = {"token_cache.bin", ".env"}
+# Plugins whose content is Equinor-internal and ships under LicenseRef-Internal.
+INTERNAL_PLUGINS = {"neqsim-enterprise", "energy-project-agents"}
 
 
 class PluginSpec:
@@ -139,6 +141,8 @@ def default_specs() -> List[PluginSpec]:
     community_agents = WORKSPACE / "neqsim-community-agents" / "agents"
     enterprise_skills = WORKSPACE / "neqsim-enterprise-skills" / "skills"
     enterprise_agents = WORKSPACE / "neqsim-enterprise-agents" / "agents"
+    # Project-orchestration layer: agents and skills live in one repo (agents/ + skills/).
+    project_root = WORKSPACE / "energy-project-agents"
     return [
         PluginSpec(
             "neqsim",
@@ -167,6 +171,15 @@ def default_specs() -> List[PluginSpec]:
             "company policies). Internal use only.",
             [enterprise_skills], [enterprise_agents], [], False,
             [enterprise_skills.parent],
+        ),
+        PluginSpec(
+            "energy-project-agents",
+            "Agentic project development for Equinor investment projects (DG0-DG2 on the "
+            "Capital Value Process): project manager, planning, concept, integration, "
+            "assurance and decision-gate agents with the common contracts, DG workflows and "
+            "WR2704 deliverables. Uses the enterprise and community plugins. Internal use only.",
+            [project_root / "skills"], [project_root / "agents"], [], False,
+            [project_root],
         ),
     ]
 
@@ -1899,7 +1912,7 @@ def build_plugin(spec: PluginSpec, out_root: Path, known_skills: set, args) -> D
         "author": {"name": "Equinor / NeqSim"},
         "homepage": "https://github.com/equinor/neqsim",
         "repository": "https://github.com/equinor/neqsim",
-        "license": "Apache-2.0" if spec.name != "neqsim-enterprise" else "LicenseRef-Internal",
+        "license": "Apache-2.0" if spec.name not in INTERNAL_PLUGINS else "LicenseRef-Internal",
         "keywords": ["neqsim", "thermodynamics", "process-simulation", "oil-and-gas"],
     }
     (staging / "plugin.json").write_text(json.dumps(plugin_json, indent=2) + "\n", encoding="utf-8")
