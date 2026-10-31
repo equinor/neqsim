@@ -80,7 +80,35 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
     assertEquals(Integer.valueOf(1), summary.get("revalidationRequiredCount"));
   }
 
+  @Test
+  void definitionChangePropagatesRevalidationToGeneratedResult() {
+    EngineeringProject revisionA = project("A", 5.0, 2.0);
+    addApprovals(revisionA);
+    EngineeringSimulationRunner.run(revisionA, null);
+    EngineeringGraph graphA = EngineeringGraphBuilder.fromProject(revisionA);
+
+    EngineeringProject revisionB = project("B", 5.0, 3.0);
+    addApprovals(revisionB);
+    EngineeringSimulationRunner.run(revisionB, null);
+    EngineeringGraph graphB = EngineeringGraphBuilder.fromProject(revisionB);
+    EngineeringGraphDiff diff = graphA.compareTo(graphB);
+
+    String scenarioNodeId = EngineeringIds.nodeId(EngineeringNode.Kind.SCENARIO, SCENARIO_ID);
+    String resultNodeId = EngineeringIds.nodeId(EngineeringNode.Kind.SCENARIO_RESULT, SCENARIO_ID);
+    assertTrue(diff.getModifiedNodeIds().contains(scenarioNodeId));
+    assertTrue(diff.getImpactedNodeIds().contains(resultNodeId));
+
+    Map<String, Object> ledger = EngineeringApprovalLedger.build(revisionB, graphB, diff);
+    @SuppressWarnings("unchecked")
+    Map<String, Object> summary = (Map<String, Object>) ledger.get("summary");
+    assertEquals(Integer.valueOf(2), summary.get("revalidationRequiredCount"));
+  }
+
   private static EngineeringProject project(String revision, double safePressureBara) {
+    return project(revision, safePressureBara, 2.0);
+  }
+
+  private static EngineeringProject project(String revision, double safePressureBara, double durationSeconds) {
     EngineeringProject project = new EngineeringProject(PROJECT_ID, "Dynamic evidence", process(),
         new EngineeringDesignBasis()).setRevision(revision);
     project.addRequirement(new EngineeringRequirement(REQUIREMENT_ID, "FEED", EngineeringRequirement.Type.TRIP,
@@ -88,7 +116,7 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
     project.addEvidenceRecord(new EngineeringEvidenceRecord(EVIDENCE_ID, "SRS", "A")
         .setTitle("High-pressure shutdown requirement").setSourceOrganization("Synthetic qualification")
         .linkRequirement(REQUIREMENT_ID).linkEquipment("FEED"));
-    project.addDynamicSafetyScenario(scenario(safePressureBara, REQUIREMENT_ID, "FEED"));
+    project.addDynamicSafetyScenario(scenario(safePressureBara, REQUIREMENT_ID, "FEED", durationSeconds));
     return project;
   }
 
@@ -103,7 +131,12 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
 
   private static DynamicSafetyScenario scenario(final double safePressureBara, String requirementId,
       String equipmentTag) {
-    return DynamicSafetyScenario.builder(SCENARIO_ID, "High-pressure isolation").durationSeconds(2.0)
+    return scenario(safePressureBara, requirementId, equipmentTag, 2.0);
+  }
+
+  private static DynamicSafetyScenario scenario(final double safePressureBara, String requirementId,
+      String equipmentTag, double durationSeconds) {
+    return DynamicSafetyScenario.builder(SCENARIO_ID, "High-pressure isolation").durationSeconds(durationSeconds)
         .timeStepSeconds(1.0).triggerTimeSeconds(0.0).eventExactTiming(true)
         .initiatingEvent(new DynamicSafetyScenario.ProcessManipulator() {
           private static final long serialVersionUID = 1000L;
