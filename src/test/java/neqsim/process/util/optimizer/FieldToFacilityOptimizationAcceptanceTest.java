@@ -978,6 +978,160 @@ public class FieldToFacilityOptimizationAcceptanceTest {
   }
 
   /**
+   * Verify one casing-map operating margin refines the common-speed boundary, then migrates to the driver limit when
+   * only the declared operating restriction changes.
+   */
+  @Test
+  void refinesCasingMapBoundaryAndMigratesToDriverLimit() {
+    Fixture fixture = createFixture();
+    configureLifecycleCapacityLimits(fixture, 10.0);
+    double minimumSpeedRpm = fixture.shaftCalculator.getMinSpeed();
+    double maximumSpeedRpm = fixture.shaftCalculator.getMaxSpeed();
+    Compressor[] casings = new Compressor[] {fixture.highPressureCompressor, fixture.lowPressureCompressor};
+    String[] mapConstraintNames = new String[] {"surgeMargin", "stonewallMargin"};
+    double[][] minimumMapValues = new double[casings.length][mapConstraintNames.length];
+    double[][] maximumMapValues = new double[casings.length][mapConstraintNames.length];
+
+    fixture.shaftCalculator.setAutomationValue("speed", minimumSpeedRpm, "rpm");
+    fixture.model.run();
+    assertTrue(fixture.model.isModelConverged());
+    double minimumSpeedDriverPowerKw = fixture.commonShaftEvidence("map-driver-minimum-speed").getGearboxInputPowerKw();
+    for (int casing = 0; casing < casings.length; casing++) {
+      for (int constraint = 0; constraint < mapConstraintNames.length; constraint++) {
+        CapacityConstraint mapConstraint = casings[casing].getCapacityConstraints().get(mapConstraintNames[constraint]);
+        assertTrue(mapConstraint != null && mapConstraint.isEnabled());
+        minimumMapValues[casing][constraint] = mapConstraint.getCurrentValue();
+        assertTrue(Double.isFinite(minimumMapValues[casing][constraint]));
+      }
+    }
+
+    fixture.shaftCalculator.setAutomationValue("speed", maximumSpeedRpm, "rpm");
+    fixture.model.run();
+    assertTrue(fixture.model.isModelConverged());
+    double maximumSpeedDriverPowerKw = fixture.commonShaftEvidence("map-driver-maximum-speed").getGearboxInputPowerKw();
+    for (int casing = 0; casing < casings.length; casing++) {
+      for (int constraint = 0; constraint < mapConstraintNames.length; constraint++) {
+        maximumMapValues[casing][constraint] = casings[casing].getCapacityConstraints()
+            .get(mapConstraintNames[constraint]).getCurrentValue();
+        assertTrue(Double.isFinite(maximumMapValues[casing][constraint]));
+      }
+    }
+    assertTrue(maximumSpeedDriverPowerKw > minimumSpeedDriverPowerKw);
+
+    int selectedCasing = -1;
+    int selectedConstraint = -1;
+    double largestMapChange = 0.0;
+    for (int casing = 0; casing < casings.length; casing++) {
+      for (int constraint = 0; constraint < mapConstraintNames.length; constraint++) {
+        double change = Math.abs(maximumMapValues[casing][constraint] - minimumMapValues[casing][constraint]);
+        if (change > largestMapChange) {
+          largestMapChange = change;
+          selectedCasing = casing;
+          selectedConstraint = constraint;
+        }
+      }
+    }
+    assertTrue(selectedCasing >= 0 && largestMapChange > 1.0e-8,
+        "Qualified casing-map evidence must respond to the declared common-speed range");
+
+    Compressor selectedCompressor = casings[selectedCasing];
+    String selectedConstraintName = mapConstraintNames[selectedConstraint];
+    CapacityConstraint selectedMapConstraint = selectedCompressor.getCapacityConstraints().get(selectedConstraintName);
+    double minimumMapValue = minimumMapValues[selectedCasing][selectedConstraint];
+    double maximumMapValue = maximumMapValues[selectedCasing][selectedConstraint];
+    double mapOperatingLimit = 0.5 * (minimumMapValue + maximumMapValue);
+    selectedMapConstraint.setOperatingLimit(mapOperatingLimit, ConstraintSource.USER_RULE,
+        "synthetic reviewed casing-map operating margin");
+    String qualifiedMapConstraint = "Field::" + selectedCompressor.getName() + "/" + selectedConstraintName;
+
+    fixture.shaftCalculator.setAutomationValue("speed", fixture.baselineShaftSpeedRpm, "rpm");
+    fixture.driver.setMaxPower(maximumSpeedDriverPowerKw * 10.0);
+    fixture.model.run();
+    assertTrue(fixture.model.isModelConverged());
+
+    ProcessModelSimulationEvaluator simulation = createSimulationEvaluator(fixture, fixture.sharedPowerLimitKw * 10.0);
+    ProcessModelOperatingAction shaftSpeed = ProcessModelOperatingAction.continuous("map-to-driver-common-speed",
+        "Map-to-driver common shaft speed", "Field::export shaft control.speed", minimumSpeedRpm, maximumSpeedRpm,
+        "rpm", "synthetic casing-map and driver bottleneck migration");
+    ProcessModelOperatingActionSetEvaluator candidates = new ProcessModelOperatingActionSetEvaluator(
+        "map-to-driver-speed-actions", "Map-to-driver speed actions",
+        "synthetic exact casing-map and driver boundary refinement", simulation, Arrays.asList(shaftSpeed))
+        .requireHydraulicConstraint(HydraulicLimitRole.WELL_INFLOW_OUTFLOW, "Field", "field network",
+            "producer A deliverability", "synthetic well deliverability")
+        .requireHydraulicConstraint(HydraulicLimitRole.GATHERING_HYDRAULICS, "Field", "field network",
+            "A HP route capacity", "synthetic per-line operating limit");
+
+    ProcessModelOperatingEnvelopeStudy mapStudy = new ProcessModelOperatingEnvelopeStudy(
+        "casing-map-limited-speed-envelope", "Casing-map-limited common-speed envelope",
+        "synthetic exact casing-map transition", candidates).setMaximumBoundaryRefinementEvaluations(8)
+        .setBoundaryRefinementRelativeTolerance(0.01, "synthetic one-percent common-speed range tolerance");
+    SliceResult mapSlice = mapStudy.evaluateOneDimensional(shaftSpeed.getId(),
+        new double[] {minimumSpeedRpm, maximumSpeedRpm}, new double[] {fixture.baselineShaftSpeedRpm});
+
+    assertTrue(mapSlice.isComplete(), mapSlice.getDiagnostics().toString());
+    assertEquals(2, mapSlice.getCompletedPointCount());
+    assertTrue(mapSlice.getPoints().stream().allMatch(point -> point.getEvaluation().isCandidateSimulationConverged()
+        && point.getEvaluation().isBaselineRestored() && point.getEvaluation().isBaselineSimulationConverged()));
+    assertEquals(1, mapSlice.getOperatingRegionTransitions().size());
+    OperatingRegionTransition mapTransition = mapSlice.getOperatingRegionTransitions().get(0);
+    assertTrue(mapTransition.getKind() == OperatingRegionTransition.Kind.BECAME_INFEASIBLE
+        || mapTransition.getKind() == OperatingRegionTransition.Kind.BECAME_FEASIBLE);
+    assertEquals(qualifiedMapConstraint,
+        mapTransition.isFromFeasible() ? mapTransition.getToConstraint() : mapTransition.getFromConstraint());
+    assertEquals(LeadingConstraintEvidence.Source.INSTALLED_EQUIPMENT,
+        mapTransition.isFromFeasible() ? mapTransition.getToConstraintSource()
+            : mapTransition.getFromConstraintSource());
+
+    assertEquals(1, mapSlice.getBoundaryRefinements().size());
+    OperatingRegionBoundaryRefinement mapBoundary = mapSlice.getBoundaryRefinements().get(0);
+    assertTrue(mapBoundary.isConverged(), mapBoundary.getStatus().name());
+    assertTrue(mapBoundary.getBracketWidth() <= mapBoundary.getAbsoluteTolerance());
+    assertEquals(qualifiedMapConstraint, mapBoundary.getFeasibleBoundaryConstraint().getQualifiedConstraintName());
+    assertEquals(qualifiedMapConstraint, mapBoundary.getInfeasibleBoundaryConstraint().getQualifiedConstraintName());
+    assertTrue(mapBoundary.getFeasibleBoundaryConstraint().isFeasible());
+    assertTrue(mapBoundary.getFeasibleBoundaryConstraint().getPhysicalMargin() >= 0.0);
+    assertFalse(mapBoundary.getInfeasibleBoundaryConstraint().isFeasible());
+    assertTrue(mapBoundary.getInfeasibleBoundaryConstraint().getPhysicalMargin() < 0.0);
+    assertEquals("CONFIGURED_OPERATING", mapBoundary.getInfeasibleBoundaryConstraint().getApplicableLimitRole());
+    assertTrue(mapBoundary.getSteps().stream().allMatch(step -> step.isCandidateSimulationConverged()
+        && step.isBaselineRestored() && step.isBaselineSimulationConverged()));
+    assertTrue(mapBoundary.getSteps().stream().filter(step -> !step.isFeasible())
+        .allMatch(step -> step.getLeadingConstraint() != null
+            && qualifiedMapConstraint.equals(step.getLeadingConstraint().getQualifiedConstraintName())));
+
+    selectedMapConstraint.clearOperatingLimit();
+    double driverLimitKw = 0.5 * (minimumSpeedDriverPowerKw + maximumSpeedDriverPowerKw);
+    fixture.driver.setMaxPower(driverLimitKw);
+    ProcessModelOperatingEnvelopeStudy driverStudy = new ProcessModelOperatingEnvelopeStudy(
+        "migrated-driver-limited-speed-envelope", "Migrated driver-limited common-speed envelope",
+        "synthetic exact driver transition after casing-map limit restoration", candidates)
+        .setMaximumBoundaryRefinementEvaluations(8)
+        .setBoundaryRefinementRelativeTolerance(0.01, "synthetic one-percent common-speed range tolerance");
+    SliceResult driverSlice = driverStudy.evaluateOneDimensional(shaftSpeed.getId(),
+        new double[] {minimumSpeedRpm, maximumSpeedRpm}, new double[] {fixture.baselineShaftSpeedRpm});
+
+    assertTrue(driverSlice.isComplete(), driverSlice.getDiagnostics().toString());
+    assertEquals(1, driverSlice.getOperatingRegionTransitions().size());
+    OperatingRegionTransition driverTransition = driverSlice.getOperatingRegionTransitions().get(0);
+    assertEquals(OperatingRegionTransition.Kind.BECAME_INFEASIBLE, driverTransition.getKind());
+    assertTrue(isCommonShaftDriverPowerConstraint(driverTransition.getToConstraint()),
+        driverTransition.getToConstraint());
+    assertFalse(qualifiedMapConstraint.equals(driverTransition.getToConstraint()));
+    assertEquals(1, driverSlice.getBoundaryRefinements().size());
+    OperatingRegionBoundaryRefinement driverBoundary = driverSlice.getBoundaryRefinements().get(0);
+    assertTrue(driverBoundary.isConverged(), driverBoundary.getStatus().name());
+    assertTrue(isCommonShaftDriverPowerConstraint(
+        driverBoundary.getInfeasibleBoundaryConstraint().getQualifiedConstraintName()));
+    assertTrue(driverBoundary.getSteps().stream().allMatch(step -> step.isCandidateSimulationConverged()
+        && step.isBaselineRestored() && step.isBaselineSimulationConverged()));
+    assertTrue(driverSlice.getPoints().stream()
+        .allMatch(point -> point.getEvaluation().getInstalledEquipmentCapacityEvidence().stream()
+            .anyMatch(evidence -> qualifiedMapConstraint.equals(evidence.getQualifiedConstraintName())
+                && evidence.hasFiniteEvidence() && !evidence.hasOperatingLimit())));
+    assertBaselineRestored(fixture);
+  }
+
+  /**
    * Check whether a leading boundary is one of the two exact representations of the common-shaft driver limit.
    *
    * <p>

@@ -1127,6 +1127,13 @@ Refine only when exact low/high points straddle feasibility, and retain the feas
 per-casing map rows and every converged/restored midpoint receipt. The bracket is local diagnostic evidence—not proof
 of monotonicity beyond the bracket, an approved set point, or permission to change the driver rating.
 
+For a casing-map-led crossing, preserve the exact installed `surgeMargin` or `stonewallMargin` identity, configured
+operating-limit provenance, physical unit and signed endpoint margins. A facility-specific clearance override may be
+more conservative than the preserved map default, but an external tool must not rewrite map curves, relax the default
+limit or reinterpret a non-finite row as available. Driver-versus-map migration requires two fresh evaluations of the
+same speed endpoints: restore the map override before tightening the driver rating, and reject the driver-led result if
+any casing map row is negative, stale or unavailable.
+
 Current optimizer evidence also exports the relative simulator replay tolerance and its provenance. A persistent task
 may use that value only to bind a reviewed objective baseline to a fresh initial replay; the guard caps it at
 $10^{-6}$ and rejects invalid or unsourced tolerance metadata. Constraint feasibility, restoration, action read-back,
@@ -1816,3 +1823,4 @@ on `ProcessSimulationEvaluator`.
 - [flow-rate-optimization.md](../process/optimization/flow-rate-optimization.md) - FlowRateOptimizer for lift curve generation
 - [pressure_boundary_optimization.md](../process/pressure_boundary_optimization.md) - Simplified pressure boundary optimizer
 - [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) - Complete production optimization examples
+
