@@ -229,6 +229,7 @@ public class CompressorShaftAutomationTest {
     }
     assertTrue(member && writableActive);
     assertTrue(auto.isWritableAddress("HT shaft calc.ambientTemperature"));
+    assertTrue(auto.isWritableAddress("HT shaft calc.fixedSpeedMode"));
     assertFalse(auto.isWritableAddress("HT shaft calc.power"));
 
     assertEquals(s.getTotalPower() / 1.0e3, auto.getVariableValue("HT shaft calc.power", "kW"), 1.0e-6);
@@ -253,6 +254,9 @@ public class CompressorShaftAutomationTest {
     assertTrue(s.isMemberActive(c2));
 
     assertFalse(auto.setVariableValueSafe("HT shaft calc.speed", design * 2.0, "rpm").contains("success"));
+    assertFalse(auto.setVariableValueSafe("HT shaft calc.fixedSpeedMode", 0.5, "").contains("success"));
+    assertTrue(auto.setVariableValueSafe("HT shaft calc.fixedSpeedMode", 1.0, "").contains("success"));
+    assertTrue(calc.isFixedSpeedMode());
     assertTrue(auto.setVariableValueSafe("HT shaft calc.speed", design, "rpm").contains("success"));
     assertEquals(design, s.getSpeed(), 1.0e-9);
     assertFalse(auto.setVariableValueSafe("HT shaft calc.member.stage 4.gearRatio", -1.0, "").contains("success"));
@@ -265,6 +269,45 @@ public class CompressorShaftAutomationTest {
     assertTrue(c1.getAntiSurge().isActive());
     assertFalse(auto.setVariableValueSafe("HT shaft calc.applyRecycle", 2.0, "").contains("success"));
     assertNotNull(auto.getVariableValueSafe("HT shaft calc.unknown", ""));
+  }
+
+  /**
+   * Fixed-speed mode preserves a bounded external common-speed selection across process runs while applying the same
+   * physical speed to every shaft member.
+   */
+  @Test
+  void fixedSpeedModePreservesExternalCommonSpeed() {
+    buildTrain();
+    CompressorShaft s = shaft();
+    s.setMaxShaftPower(50.0, "MW");
+    CompressorShaftCalculator calc = new CompressorShaftCalculator("variable-speed calc", s, c2, 40.0, "bara");
+    calc.setSpeedBounds(design * 0.92, design * 1.08);
+    calc.setFixedSpeedMode(true);
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(c1);
+    process.add(c2);
+    process.add(calc);
+
+    double selectedSpeed = design * 1.03;
+    process.getAutomation().setVariableValue("variable-speed calc.speed", selectedSpeed, "rpm");
+    process.run();
+    assertTrue(calc.isFixedSpeedMode());
+    assertEquals(selectedSpeed, calc.getSpeed(), 0.0);
+    assertEquals(selectedSpeed, s.getSpeed(), 0.0);
+    assertEquals(selectedSpeed, c1.getSpeed(), 0.0);
+    assertEquals(selectedSpeed, c2.getSpeed(), 0.0);
+    assertTrue(calc.getLastSolveResult().isFeasible(), calc.getLastSolveResult().getMessage());
+
+    process.run();
+    assertEquals(selectedSpeed, calc.getSpeed(), 0.0);
+    assertEquals(selectedSpeed, c1.getSpeed(), 0.0);
+    assertEquals(selectedSpeed, c2.getSpeed(), 0.0);
+    process.getAutomation().setVariableValue("variable-speed calc.speed", design, "rpm");
+    process.run();
+    assertEquals(design, calc.getSpeed(), 0.0);
+    assertEquals(design, c1.getSpeed(), 0.0);
+    assertEquals(design, c2.getSpeed(), 0.0);
   }
 
   /**

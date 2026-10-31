@@ -1116,6 +1116,12 @@ HP/LP route remains discrete. Consume their jointly sampled behavior only from t
 its sampled cells. Do not interpolate between route indexes, infer an unsampled pressure contour, or combine that
 surface with a choke axis into a generalized 3D envelope.
 
+The same rule applies when common shaft speed is an explicit bounded action. Use the existing
+`CompressorShaftCalculator` in fixed-speed mode and consume separator pressure × shaft speed only from the exact 2D
+slice. Every point remains subject to the export-pressure boundary, per-casing surge/stonewall map evidence,
+common-speed consistency, shaft/driver/gearbox limits and the shared plant-power budget. Missing, non-finite, stale or
+unrestored points are rejected rather than interpolated or repaired by weakening a physical constraint.
+
 Current optimizer evidence also exports the relative simulator replay tolerance and its provenance. A persistent task
 may use that value only to bind a reviewed objective baseline to a fresh initial replay; the guard caps it at
 $10^{-6}$ and rejects invalid or unsourced tolerance metadata. Constraint feasibility, restoration, action read-back,
