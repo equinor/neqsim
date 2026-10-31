@@ -65,6 +65,8 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   private boolean recordProductionHistory = true;
   /** True after molar replay, whose surface-volume production history is deliberately unavailable. */
   private boolean componentHistoryReplayUsed = false;
+  /** Segregated support volume retained between measured-component intervals, reservoir m3. */
+  private double externalReplayWaterVolumeM3;
   /** Reservoir time at each recorded history point (s). */
   private final ArrayList<Double> timeHistory = new ArrayList<Double>();
   /** Average reservoir pressure at each recorded history point (bara). */
@@ -341,6 +343,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
    * @param waterVolume a double
    */
   public void setReservoirFluid(SystemInterface thermoSystem, double gasVolume, double oilVolume, double waterVolume) {
+    externalReplayWaterVolumeM3 = 0.0;
     this.thermoSystem = thermoSystem;
     this.oilVolume = oilVolume;
     this.gasVolume = gasVolume;
@@ -644,10 +647,37 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
    * @throws IllegalStateException if setup is incompatible or the flash fails conservation/volume checks
    */
   public void advanceComponentAmounts(double dt, double[] producedMoles, double[] injectedMoles, UUID id) {
+    advanceComponentAmounts(dt, producedMoles, injectedMoles, externalReplayWaterVolumeM3, id);
+  }
+
+  /**
+   * Replays component amounts with an explicitly segregated, immiscible external water volume.
+   *
+   * <p>
+   * The external water occupies pore space but is not mixed into the tracked EOS inventory. It cannot be produced
+   * through the component schedule. The caller must supply its complete cumulative volume on every step; this is not an
+   * incremental injection amount. This overload supports an immiscible aquifer approximation, not compositional water
+   * mixing, water chemistry, rock expansion or a change in total pore volume.
+   * </p>
+   *
+   * @param dt interval duration in seconds
+   * @param producedMoles nonnegative tracked component withdrawals in mol
+   * @param injectedMoles nonnegative tracked component injections in mol
+   * @param externalWaterVolumeM3 cumulative segregated water occupying the fixed pore volume, reservoir m3
+   * @param id accepted calculation identity
+   * @throws IllegalArgumentException if amounts or the remaining tracked-fluid volume are invalid
+   * @throws IllegalStateException if setup or conservation checks fail
+   */
+  public void advanceComponentAmounts(double dt, double[] producedMoles, double[] injectedMoles,
+      double externalWaterVolumeM3, UUID id) {
     if (thermoSystem == null || recordProductionHistory || !getInletStreams().isEmpty() || !getOutletStreams().isEmpty()
         || !(reservoirVolume > 0.0) || !Double.isFinite(reservoirVolume)) {
       throw new IllegalStateException("Component replay requires an initialized dedicated tank, no wells and "
           + "setRecordProductionHistory(false)");
+    }
+    double trackedVolume = reservoirVolume - externalWaterVolumeM3;
+    if (!Double.isFinite(externalWaterVolumeM3) || externalWaterVolumeM3 < 0.0 || !(trackedVolume > 0.0)) {
+      throw new IllegalArgumentException("Segregated water must be nonnegative and smaller than total pore volume");
     }
     int count = thermoSystem.getNumberOfComponents();
     if (!Double.isFinite(dt) || dt <= 0.0 || !Double.isFinite(getTime() + dt) || id == null || producedMoles == null
@@ -672,11 +702,11 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     for (int i = 0; i < count; i++) {
       candidate.addComponent(i, remaining[i] - candidate.getComponent(i).getNumberOfmoles());
     }
-    new ThermodynamicOperations(candidate).TVflash(reservoirVolume, "m3");
+    new ThermodynamicOperations(candidate).TVflash(trackedVolume, "m3");
     candidate.initProperties();
     if (!Double.isFinite(candidate.getPressure()) || candidate.getPressure() <= 0.0
         || !Double.isFinite(candidate.getVolume("m3"))
-        || Math.abs(candidate.getVolume("m3") - reservoirVolume) > reservoirVolume * 1.0e-7
+        || Math.abs(candidate.getVolume("m3") - trackedVolume) > trackedVolume * 1.0e-7
         || Math.abs(candidate.getTemperature() - thermoSystem.getTemperature()) > 1.0e-8) {
       throw new IllegalStateException("Component replay TV flash did not close the isothermal tank volume");
     }
@@ -687,6 +717,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
       }
     }
     thermoSystem = candidate;
+    externalReplayWaterVolumeM3 = externalWaterVolumeM3;
     componentHistoryReplayUsed = true;
     clearProductionHistory();
     increaseTime(dt);
