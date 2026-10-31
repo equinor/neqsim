@@ -639,17 +639,15 @@ public final class EngineeringProject implements Serializable {
     Set<String> scenarioIds = new HashSet<String>();
     for (DynamicSafetyScenario scenario : dynamicSafetyScenarios) {
       if (!scenarioIds.add(scenario.getId())) {
-        report.add(Severity.ERROR, "ENG-DYNAMIC-002", scenario.getId(),
-            "Dynamic protection scenario ID is not unique");
+        report.add(Severity.ERROR, "ENG-DYNAMIC-002", scenario.getId(), "Dynamic protection scenario ID is not unique");
       }
       if (scenario.getEvidenceReferences().isEmpty()) {
         report.add(Severity.REVIEW, "ENG-DYNAMIC-001", scenario.getId(),
             "Dynamic protection scenario has no SRS, cause-and-effect, or hazard-review evidence reference");
       }
-      boolean unspecifiedBehavior =
-          "UNSPECIFIED".equals(scenario.getCaseConfigurationDefinitionId())
-              || "UNSPECIFIED".equals(scenario.getInitiatingEventDefinitionId())
-              || scenario.getLogicDefinitionIds().contains("UNSPECIFIED");
+      boolean unspecifiedBehavior = "UNSPECIFIED".equals(scenario.getCaseConfigurationDefinitionId())
+          || "UNSPECIFIED".equals(scenario.getInitiatingEventDefinitionId())
+          || scenario.getLogicDefinitionIds().contains("UNSPECIFIED");
       for (DynamicScenarioCriterion criterion : scenario.getCriteria()) {
         unspecifiedBehavior |= "UNSPECIFIED".equals(criterion.getExtractorDefinitionId());
       }
