@@ -34,6 +34,8 @@ public final class DynamicSafetyScenario implements Serializable {
   private final List<LogicFactory> logicFactories;
   private final List<DynamicScenarioCriterion> criteria;
   private final List<String> evidenceReferences;
+  private final List<String> requirementIds;
+  private final List<String> equipmentTags;
 
   private DynamicSafetyScenario(Builder builder) {
     id = requireText(builder.id, "id");
@@ -47,6 +49,8 @@ public final class DynamicSafetyScenario implements Serializable {
     logicFactories = Collections.unmodifiableList(new ArrayList<LogicFactory>(builder.logicFactories));
     criteria = Collections.unmodifiableList(new ArrayList<DynamicScenarioCriterion>(builder.criteria));
     evidenceReferences = Collections.unmodifiableList(new ArrayList<String>(builder.evidenceReferences));
+    requirementIds = Collections.unmodifiableList(new ArrayList<String>(builder.requirementIds));
+    equipmentTags = Collections.unmodifiableList(new ArrayList<String>(builder.equipmentTags));
   }
 
   public static Builder builder(String id, String name) {
@@ -102,6 +106,16 @@ public final class DynamicSafetyScenario implements Serializable {
     return evidenceReferences;
   }
 
+  /** @return controlled requirement identifiers verified by this scenario */
+  public List<String> getRequirementIds() {
+    return requirementIds;
+  }
+
+  /** @return ordered equipment and instrument tags exercised by this scenario */
+  public List<String> getEquipmentTags() {
+    return equipmentTags;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("id", id);
@@ -117,6 +131,8 @@ public final class DynamicSafetyScenario implements Serializable {
     }
     result.put("criteria", criterionMaps);
     result.put("evidenceReferences", new ArrayList<String>(evidenceReferences));
+    result.put("requirementIds", new ArrayList<String>(requirementIds));
+    result.put("equipmentTags", new ArrayList<String>(equipmentTags));
     result.put("silTargetInferred", Boolean.FALSE);
     return result;
   }
@@ -134,6 +150,8 @@ public final class DynamicSafetyScenario implements Serializable {
     private final List<LogicFactory> logicFactories = new ArrayList<LogicFactory>();
     private final List<DynamicScenarioCriterion> criteria = new ArrayList<DynamicScenarioCriterion>();
     private final List<String> evidenceReferences = new ArrayList<String>();
+    private final List<String> requirementIds = new ArrayList<String>();
+    private final List<String> equipmentTags = new ArrayList<String>();
 
     private Builder(String id, String name) {
       this.id = id;
@@ -208,6 +226,34 @@ public final class DynamicSafetyScenario implements Serializable {
       String normalized = value == null ? "" : value.trim();
       if (!normalized.isEmpty() && !evidenceReferences.contains(normalized)) {
         evidenceReferences.add(normalized);
+      }
+      return this;
+    }
+
+    /**
+     * Adds a controlled requirement identifier verified by the scenario.
+     *
+     * @param value stable requirement identifier
+     * @return this builder
+     */
+    public Builder addRequirementId(String value) {
+      String normalized = requireText(value, "requirementId");
+      if (!requirementIds.contains(normalized)) {
+        requirementIds.add(normalized);
+      }
+      return this;
+    }
+
+    /**
+     * Adds an equipment or instrument tag exercised by the scenario.
+     *
+     * @param value stable project tag
+     * @return this builder
+     */
+    public Builder addEquipmentTag(String value) {
+      String normalized = requireText(value, "equipmentTag");
+      if (!equipmentTags.contains(normalized)) {
+        equipmentTags.add(normalized);
       }
       return this;
     }

@@ -76,6 +76,9 @@ public class ESDValve extends ThrottlingValve {
   /** Last physical-step identity that advanced the ESD actuator state machine. */
   private UUID lastSafetyStepId = null;
 
+  /** Whether the actuator has motive force and can travel toward its fail-safe position. */
+  private boolean actuatorAvailable = true;
+
   /** Energization state of the valve solenoid/actuator. */
   private boolean isEnergized = true; // Normally energized (open)
 
@@ -160,6 +163,30 @@ public class ESDValve extends ThrottlingValve {
    */
   public double getFailSafePosition() {
     return failSafePosition;
+  }
+
+  /**
+   * Declares whether the actuator can move when a shutdown demand is present.
+   *
+   * <p>
+   * The default is {@code true}. Setting this to {@code false} models a demanded but unavailable or mechanically stuck
+   * final element: the solenoid state can change, while the valve position remains fixed. Use {@link #setStrokeTime}
+   * for an explicitly slow but moving actuator.
+   * </p>
+   *
+   * @param available true when the actuator can travel; false to hold its current position
+   */
+  public void setActuatorAvailable(boolean available) {
+    actuatorAvailable = available;
+  }
+
+  /**
+   * Reports whether the actuator can move on a shutdown demand.
+   *
+   * @return true when actuator travel is available
+   */
+  public boolean isActuatorAvailable() {
+    return actuatorAvailable;
   }
 
   /**
@@ -318,7 +345,7 @@ public class ESDValve extends ThrottlingValve {
   @Override
   public void runTransient(double dt, UUID id) {
     boolean advanceSafetyState = !isPhysicalStepIdempotencyEnabled() || id == null || !id.equals(lastSafetyStepId);
-    if (advanceSafetyState && !isEnergized && isClosing) {
+    if (advanceSafetyState && !isEnergized && isClosing && actuatorAvailable) {
       // Valve is de-energized and closing
       timeElapsedSinceTrip += dt;
 
@@ -336,7 +363,7 @@ public class ESDValve extends ThrottlingValve {
         hasTripCompleted = true;
         setPercentValveOpening(failSafePosition);
       }
-    } else if (advanceSafetyState && partialStrokeTestActive) {
+    } else if (advanceSafetyState && partialStrokeTestActive && actuatorAvailable) {
       // Partial stroke test - close to test position then return
       double currentOpening = getPercentValveOpening();
       if (currentOpening > partialStrokeTestPosition) {
@@ -383,6 +410,7 @@ public class ESDValve extends ThrottlingValve {
     super.restoreTransientStepState(snapshot);
     EsdTransientState esdState = (EsdTransientState) snapshot;
     lastSafetyStepId = esdState.lastSafetyStepId;
+    actuatorAvailable = esdState.actuatorAvailable;
     isEnergized = esdState.energized;
     strokeTime = esdState.strokeTime;
     timeElapsedSinceTrip = esdState.timeElapsedSinceTrip;
@@ -398,6 +426,7 @@ public class ESDValve extends ThrottlingValve {
   public static final class EsdTransientState extends TransientState {
     private static final long serialVersionUID = 1000L;
     private final UUID lastSafetyStepId;
+    private final boolean actuatorAvailable;
     private final boolean energized;
     private final double strokeTime;
     private final double timeElapsedSinceTrip;
@@ -416,6 +445,7 @@ public class ESDValve extends ThrottlingValve {
     private EsdTransientState(ESDValve source) {
       super(source);
       lastSafetyStepId = source.lastSafetyStepId;
+      actuatorAvailable = source.actuatorAvailable;
       energized = source.isEnergized;
       strokeTime = source.strokeTime;
       timeElapsedSinceTrip = source.timeElapsedSinceTrip;
@@ -437,7 +467,8 @@ public class ESDValve extends ThrottlingValve {
   public String toString() {
     String status;
     if (!isEnergized) {
-      status = hasTripCompleted ? "TRIPPED (CLOSED)" : "TRIPPING";
+      status = !actuatorAvailable ? "TRIP DEMANDED (ACTUATOR UNAVAILABLE)"
+          : hasTripCompleted ? "TRIPPED (CLOSED)" : "TRIPPING";
     } else if (partialStrokeTestActive) {
       status = "PARTIAL STROKE TEST";
     } else {

@@ -44,6 +44,34 @@ ESD-valve stroke reaches the closed criterion at 3.5 s. Replacing one healthy ch
 `STUCK_NORMAL` while another is bypassed leaves the scenario FAIL with no vote or actuation timestamp.
 These are executable software-timing checks, not vendor response data or safety credit.
 
+## Final-element availability and traceability
+
+`ESDValve` is available by default. Set `setActuatorAvailable(false)` only when a declared
+unavailable-actuator or mechanically stuck case must hold the valve at its current
+position after a shutdown demand. The solenoid and trip logic still change state, so the result
+distinguishes a missing demand from a demanded final element that cannot travel. Use
+`setStrokeTime(...)` for a slow but moving case; do not represent slow travel by clipping the
+position or by treating an unavailable valve as closed.
+
+Attach controlled identities to each executable case with `addRequirementId(...)` and
+`addEquipmentTag(...)`. The scenario and `dynamic_safety_scenario_result.v2` retain these values in
+insertion order, providing a stable requirement-to-tag-to-scenario-to-result join for study reports.
+The runner does not infer that the identifiers exist in an approved SRS, P&ID, instrument index, or
+cause-and-effect chart; project validation must establish those links.
+
+The public regression matrix uses the same 1.0 s sensor delay and 0.5 s logic delay for every case:
+
+| Final-element case | Declared behavior | First safe position | 3.5 s deadline |
+| --- | --- | ---: | --- |
+| Healthy | 2.0 s full stroke | 3.5 s | PASS |
+| Slow | 4.0 s full stroke | 5.5 s | FAIL |
+| Unavailable | demanded, no travel | not reached | FAIL |
+
+The 0.25 s and 0.125 s scans both resolve the healthy safe-position time at 3.5 s. Rejected
+transient trials and serialized restart preserve the availability flag. These values qualify the
+synthetic software case only; use reviewed vendor stroke data, utility architecture, site test data,
+and project response-time requirements for engineering decisions.
+
 ## 2oo3 high-pressure isolation example
 
 ```java
@@ -83,6 +111,11 @@ DynamicSafetyScenario scenario = DynamicSafetyScenario
         .acceptanceRange(null, 5.0)
         .deadlineSeconds(5.0)
         .build())
+    .addRequirementId("REQ-SIF-HP-101")
+    .addEquipmentTag("PT-101A")
+    .addEquipmentTag("PT-101B")
+    .addEquipmentTag("PT-101C")
+    .addEquipmentTag("ESDV-101")
     .addEvidenceReference("SRS-SIF-HP-101")
     .build();
 
@@ -116,6 +149,7 @@ criterion traces and final logic states. Closed-loop evidence uses
 - channel configuration, raw/indicated readings, availability, fault mode, and trip state;
 - first vote and final-element actuation times;
 - final-element logic state and a complete step trace;
+- ordered requirement identifiers and equipment/instrument tags;
 - an explicit `engineeringApprovalRequired` flag.
 
 Define criteria from the SRS response-time and safe-state requirements. Use sufficiently small
@@ -134,3 +168,4 @@ degraded mode, reset/restart behavior, and failure to reach the safe state.
 
 Project requirements, vendor data, cause-and-effect charts, proof-test procedures, and approved
 SRS values take precedence over screening examples in NeqSim.
+

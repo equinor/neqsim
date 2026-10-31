@@ -175,7 +175,7 @@ public final class DynamicSafetyScenarioRunner {
     }
     return new DynamicSafetyScenarioResult(scenario.getId(), scenario.getName(), criteria, finalStates, logicEvidence,
         errors, converged, timingPolicy, scenario.getTriggerTimeSeconds(), scenario.getDurationSeconds(),
-        completedDurationSeconds, physicalStepSeconds);
+        completedDurationSeconds, physicalStepSeconds, scenario.getRequirementIds(), scenario.getEquipmentTags());
   }
 
   private static double sum(List<Double> values) {

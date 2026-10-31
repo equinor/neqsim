@@ -21,7 +21,7 @@ Use this skill for risk simulations and structured evidence reviews that are not
 | `PhysicsBasedRiskMonitor`, `RealTimeRiskAssessment` | `neqsim.process.safety.risk.realtime` | Equipment/system condition and live risk assessment records | `getOverallRiskScore()`, `getBottleneckEquipment()`, `addKRI(String,double)` |
 | `RiskModel`, `RiskMatrix` | `neqsim.process.safety.risk` | Risk-model and matrix primitives | See `neqsim-process-safety` for HAZOP/LOPA/SIL and matrix workflow |
 | `AutomaticScenarioGenerator`, `ProcessSafetyScenario` | `neqsim.process.safety.scenario`, `neqsim.process.safety` | Generates equipment failure deviations and reusable process-safety scenarios | `addFailureModes(FailureMode...)`, `generateSingleFailures()`, `generateCombinations(int)` |
-| `DynamicSafetyScenarioRunner`, `DynamicSafetyScenario`, `DynamicScenarioCriterion` | `neqsim.process.safety.scenario` | Applies an event and protection logic to a copied process transient; evaluates criteria | `run(ProcessSystem,DynamicSafetyScenario)`, `isPassed()`, `getFirstSatisfiedSeconds()` |
+| `DynamicSafetyScenarioRunner`, `DynamicSafetyScenario`, `DynamicScenarioCriterion` | `neqsim.process.safety.scenario` | Applies an event and protection logic to a copied process transient; evaluates criteria | `run(ProcessSystem,DynamicSafetyScenario)`, `isPassed()`, `getFirstSatisfiedSeconds()`, `getRequirementIds()`, `getEquipmentTags()` |
 | `EmergencyShutdownTestRunner`, `EmergencyShutdownTestPlan`, `EmergencyShutdownTestResult` | `neqsim.process.safety.esd` | Runs configured ESD logic sequences and records field/tag samples and criterion verdicts | `run(ProcessSystem,EmergencyShutdownTestPlan,ProcessLogic...)`, `getVerdict()`, `getWarnings()`, `getTimeSeries()` |
 | `OpenDrainReviewEngine`, `OpenDrainReviewInput`, `OpenDrainReviewItem` | `neqsim.process.safety.opendrain` | Deterministic evidence review of open-drain capacity, segregation, seals, backflow and related design evidence | `evaluate(OpenDrainReviewInput)`, `evaluateItem(OpenDrainReviewItem,double)` |
 | `ProcessSafetySystemReviewEngine`, `S001SecondaryPressureProtectionCriteria` | `neqsim.process.safety.processsafetysystem` | Reviews normalized Clause 10 process-safety-system evidence, including secondary pressure protection | `evaluate(ProcessSafetySystemReviewInput)`, criteria `setMaximumEventPressureBara(...)`, `setDemandFrequencyPerYear(...)` |
@@ -143,6 +143,7 @@ availability_percent = result.getMeanAvailability()
 | `getMeanDowntimeHours()`, `getMaxDowntimeHours()` | Hours over Monte Carlo iterations |
 | `DynamicSafetyScenarioResult.isPassed()` / `getFirstSatisfiedSeconds()` | Criterion verdict and first relative time satisfied; null when never satisfied |
 | `getTimingPolicy()`, `getPhysicalStepSeconds()`, `getCompletedDurationSeconds()` | Executed scenario timing; use `EVENT_EXACT` for quantitative boundary/response studies |
+| `getRequirementIds()`, `getEquipmentTags()` | Ordered controlled identities carried from scenario to result for report joins |
 | `EmergencyShutdownTestResult.getVerdict()`, `getErrors()`, `getWarnings()`, `getTimeSeries()` | Structured transient evidence and test outcome |
 | `OpenDrainReviewReport.getOverallVerdict()` | Evidence-review verdict such as PASS / PASS_WITH_WARNINGS / FAIL |
 | `NorsokP002ComplianceChecker.getFindings()` / `isCompliant()` | Supplied point checks only; an empty finding list is not evidence of full compliance |
@@ -152,6 +153,8 @@ availability_percent = result.getMeanAvailability()
 
 - `EmergencyShutdownTestRunner.run(...)` operates on the supplied `ProcessSystem`; protect or copy it yourself if the base case must remain unchanged. `DynamicSafetyScenarioRunner.run(...)` explicitly calls `baseProcess.copy()`.
 - `DynamicSafetyScenario` defaults to `LEGACY_FIXED_SCAN`. Use `.eventExactTiming(true)` when response-time evidence must split a non-grid trigger and final duration exactly. This policy samples logic at accepted end-of-step states; it does not interpolate inside sensor, solver, or actuator scans, so refine the scan interval.
+- `ESDValve.setActuatorAvailable(false)` holds the demanded valve at its current position; use `setStrokeTime(...)` for slow travel. Availability defaults to true and persists through rollback/restart. Neither setting supplies vendor evidence.
+- Add requirement and equipment/instrument identities explicitly with `addRequirementId(...)` and `addEquipmentTag(...)`; the runner preserves order but does not validate the identifiers against an approved SRS, P&ID, or instrument index.
 - The ESD runner does not emulate a certified SIS logic solver. Its conclusions cover only the NeqSim logic/equipment and test plan supplied.
 - Scenario generation identifies modeled equipment and creates candidate failures. It does not establish initiating-event frequency, independence, safeguards, or credible combinations for a site.
 - `OperationalRiskSimulator` uses the caller's failure-rate/MTTR inputs and process impact model. It is not a reliability database; seed the random generator and document data provenance.
@@ -163,7 +166,7 @@ availability_percent = result.getMeanAvailability()
 
 ## Validation / benchmarks
 
-Regression tests include `OperationalRiskSimulatorTest`, `DynamicSafetyScenarioRunnerTest`, `EmergencyShutdownTestRunnerTest`, `OpenDrainReviewEngineTest`, `ProcessSafetySystemReviewEngineTest`, `NorsokP002ComplianceCheckerTest`, and `Sts0131GateTest`. Use test cases to verify the API behavior, then validate assumptions with independent site data and reviewed safety requirements. For dynamic studies, retain initialization/convergence errors, time series, criterion thresholds, timing policy, accepted physical-step durations, trigger time and first-satisfied time. For evidence reviews, retain input provenance and every finding.
+Regression tests include `OperationalRiskSimulatorTest`, `DynamicSafetyScenarioRunnerTest`, `DynamicSafetyScenarioFinalElementFaultTest`, `EmergencyShutdownTestRunnerTest`, `OpenDrainReviewEngineTest`, `ProcessSafetySystemReviewEngineTest`, `NorsokP002ComplianceCheckerTest`, and `Sts0131GateTest`. Use test cases to verify the API behavior, then validate assumptions with independent site data and reviewed safety requirements. For dynamic studies, retain initialization/convergence errors, time series, criterion thresholds, timing policy, accepted physical-step durations, trigger time and first-satisfied time. For evidence reviews, retain input provenance and every finding.
 
 Verified MCP runner classes include `OpenDrainReviewRunner`, `NorsokS001Clause10ReviewRunner`, and `SafetySystemPerformanceRunner` under `neqsim.mcp.runners`. The checks above do not expose a direct runner for the Java `OperationalRiskSimulator`, `EmergencyShutdownTestRunner`, or `DynamicSafetyScenarioRunner`; do not imply those calculations are available through MCP.
 
