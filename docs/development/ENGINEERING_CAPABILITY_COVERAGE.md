@@ -73,12 +73,17 @@ JSON conflicts by hand: the result must describe the merged sources.
 
 CI rebuilds the inventory before running its contract tests instead of failing on
 stale generated output. The `coverage` job checks out the source-branch commit and
-has `contents: write` permission. After validation, a conditional step reuses that
-checkout and pushes only the changed inventory to same-repository PR branches or
-`master`, without starting another runner or regenerating again. It skips unchanged output and branches
-that have advanced. Fork and Dependabot PRs remain validation-only. Repository
-policy and branch protection must permit the bot push; this workflow does not
-bypass either. Commits made with `GITHUB_TOKEN` do not trigger another workflow run.
+retains the validated resource in the `engineering-capability-inventory` workflow
+artifact for seven days. After validation and artifact retention, a conditional
+step reuses that checkout and pushes only the changed inventory to eligible
+same-repository PR branches, without starting another runner or regenerating again.
+It skips unchanged output and branches that have advanced. Default-branch runs,
+fork PRs and Dependabot PRs validate and retain output without pushing. The default
+branch receives inventory updates through normal reviewed pull requests; a
+merge that changes the combined source inventory can be followed by a regeneration
+PR using the command above. Repository policy and branch protection must permit
+any PR-branch bot push; the job's `contents: write` permission does not bypass
+either. Commits made with `GITHUB_TOKEN` do not trigger another workflow run.
 The optional local `--check` mode still detects stale output, including changes
 inside an existing Java type. Generation rejects unknown API/tool/skill/agent/test references
 and duplicate IDs. The catalog digest is the SHA-256 of the packaged inventory file, so it binds the generated inventory and source-type digests;
