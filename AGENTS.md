@@ -38,8 +38,9 @@
   `uv run --project devtools --locked devtools/build_engineering_coverage.py` and stage the output.
   For merge conflicts, resolve source and registry conflicts first, then regenerate and `git add` this file.
   Never hand-merge its JSON or combine branch copies; neither produces a valid inventory of the merged sources.
-  CI rebuilds and validates the snapshot, then commits changed output back to same-repository PR branches
-  and `master` when permissions and branch protection allow. Fork PRs remain validation-only.
+  CI rebuilds, validates and retains the snapshot as an artifact. It commits changed output back to
+  eligible same-repository PR branches when permissions and branch protection allow. Default-branch
+  runs, fork PRs and Dependabot PRs validate and retain output without pushing.
   Register new engineering operations with routes and evidence; source presence is not validation.
 - **AI workflow names:** GitHub Actions workflows for agent, skill, MCP, task, or research
   tooling MUST use `ai-<purpose>.yml` in lowercase kebab-case, directly in `.github/workflows/`.
