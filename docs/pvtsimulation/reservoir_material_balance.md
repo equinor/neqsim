@@ -237,8 +237,8 @@ residual report is not automatic model acceptance.
 temperature, ordered separator path, a path-validation evidence reference, and
 pressure-aligned `BlackOilPVTTable.Record` values including the original state.
 Declare `CVD`, `DLE`, `COMPOSITIONAL_HISTORY` or `CONSTANT_COMPOSITION` explicitly.
-The records must be evaluated externally from the accepted tuned model on that
-path. The container checks numeric validity, sequence and basis; it does not generate
+Records must be evaluated from the accepted tuned model on that path, either
+externally or through the bounded `DepletionPvtHistoryGenerator` route below. The container checks numeric validity, sequence and basis; it does not generate
 generalized CVD PVT or independently verify caller-supplied records against the EOS.
 
 Its `materialBalance` method accepts measured average pressures and cumulative net
@@ -505,3 +505,13 @@ double dP = well.getTotalPressureDrop(); // bar
 - [Relative Permeability](relative_permeability.md)
 - [Gas Pseudopressure & Pseudocritical Properties](gas_pseudopressure_pseudocritical.md)
 - [Field Development](../fielddevelopment/index.md)
+
+## Native depletion PVT generation
+
+`DepletionPvtHistoryGenerator` builds limited dry two-hydrocarbon-phase CVD/DLE
+generalized PVT from actual solver snapshots, one fixed multistage separator basis
+and a separately accepted pure-water EOS for Bw. Native component conservation
+and approximate surface-component closure are checked separately. See the
+[generation and acceptance contract](depletion_pvt_generation.md). Above-saturation,
+wet-sample, critical extrapolation and independent public laboratory/field
+qualification remain open under issue #4740.
