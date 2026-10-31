@@ -7,6 +7,7 @@ import java.util.Map;
 import neqsim.process.engineering.EngineeringBoundary;
 import neqsim.process.engineering.EngineeringApprovalRecord;
 import neqsim.process.engineering.EngineeringProject;
+import neqsim.process.engineering.EngineeringSimulationResult;
 import neqsim.process.engineering.design.EngineeringDesignValue;
 import neqsim.process.engineering.EngineeringRequirement;
 import neqsim.process.engineering.LineDesignInput;
