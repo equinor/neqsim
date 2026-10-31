@@ -211,6 +211,11 @@ off-page connectors (other sheet **and** drawing number), per-equipment data lin
 spirit; **never** claim conformance. Always render and look (see Step 7); check text at A3 print size
 with a 200 dpi crop.
 
+**One-sheet overview:** when the report or a presentation needs the *complete* process on one A3 sheet (and a
+16:9 slide), run `neqsim process-overview <report>/data/process_data.json --case A --out <task>/deliverables/process_overview`
+(skill `professional-process-overview`, [docs/development/PROCESS_OVERVIEW.md](../../../docs/development/PROCESS_OVERVIEW.md)).
+It reuses this extraction and `psr_diagrams` for the detail sheets it references, so numbers and sheet numbers agree.
+
 ## Validation checks (all must be PASS or explained WARN)
 
 Basis complete; standards register complete and no overclaim; standard conditions match; every stream
