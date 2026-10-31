@@ -40,8 +40,8 @@ The project is developed by Equinor with contributions from the community. Conta
 
 ### What Java version is required?
 
-The standard Maven artifact and `neqsim-3.26.0.jar` require Java 17 or newer.
-Use the separate `neqsim-3.26.0-Java8.jar` release asset for Java 8 compatibility.
+The standard Maven artifact and `neqsim-3.27.0.jar` require Java 17 or newer.
+Use the separate `neqsim-3.27.0-Java8.jar` release asset for Java 8 compatibility.
 The MCP server requires Java 21 or newer.
 
 ---
@@ -55,13 +55,13 @@ The MCP server requires Java 21 or newer.
 <dependency>
     <groupId>com.equinor.neqsim</groupId>
     <artifactId>neqsim</artifactId>
-    <version>3.26.0</version>
+    <version>3.27.0</version>
 </dependency>
 ```
 
 **Gradle:**
 ```groovy
-implementation 'com.equinor.neqsim:neqsim:3.26.0'
+implementation 'com.equinor.neqsim:neqsim:3.27.0'
 ```
 
 **Direct Download:**
