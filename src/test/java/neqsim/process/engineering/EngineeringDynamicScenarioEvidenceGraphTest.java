@@ -33,7 +33,7 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
 
   @Test
   void validatesRequirementAndTagReferencesAgainstCanonicalProjectIdentities() {
-    EngineeringProject project = project("A", 5.0);
+    EngineeringProject project = project("A", 50.0);
     EngineeringValidationReport report = project.validate();
 
     assertFalse(report.hasErrors());
@@ -44,8 +44,8 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
 
     EngineeringProject invalid = new EngineeringProject(PROJECT_ID, "Invalid traceability", process(),
         new EngineeringDesignBasis());
-    invalid.addDynamicSafetyScenario(scenario(5.0, "UNKNOWN-REQ", "UNKNOWN-TAG"));
-    invalid.addDynamicSafetyScenario(scenario(5.0, "UNKNOWN-REQ", "UNKNOWN-TAG"));
+    invalid.addDynamicSafetyScenario(scenario("UNKNOWN-REQ", "UNKNOWN-TAG"));
+    invalid.addDynamicSafetyScenario(scenario("UNKNOWN-REQ", "UNKNOWN-TAG"));
 
     EngineeringValidationReport invalidReport = invalid.validate();
     assertTrue(invalidReport.hasErrors());
@@ -57,7 +57,7 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
 
   @Test
   void resultChangeInvalidatesOnlyTheAffectedScenarioResultApproval() {
-    EngineeringProject revisionA = project("A", 5.0);
+    EngineeringProject revisionA = project("A", 50.0);
     addApprovals(revisionA);
     EngineeringSimulationResult resultA = EngineeringSimulationRunner.run(revisionA, null);
     EngineeringGraph graphA = EngineeringGraphBuilder.fromProject(revisionA);
@@ -69,7 +69,7 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
     assertNotNull(graphA.getNode(resultNodeId));
     assertTrue(resultA.getDynamicScenarioResults().get(0).isPassed());
 
-    EngineeringProject revisionB = project("B", 4.0);
+    EngineeringProject revisionB = project("B", 40.0);
     addApprovals(revisionB);
     EngineeringSimulationRunner.run(revisionB, null);
     EngineeringGraph graphB = EngineeringGraphBuilder.fromProject(revisionB);
@@ -87,12 +87,12 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
 
   @Test
   void definitionChangePropagatesRevalidationToGeneratedResult() {
-    EngineeringProject revisionA = project("A", 5.0, 2.0);
+    EngineeringProject revisionA = project("A", 50.0, 2.0);
     addApprovals(revisionA);
     EngineeringSimulationRunner.run(revisionA, null);
     EngineeringGraph graphA = EngineeringGraphBuilder.fromProject(revisionA);
 
-    EngineeringProject revisionB = project("B", 5.0, 3.0);
+    EngineeringProject revisionB = project("B", 50.0, 3.0);
     addApprovals(revisionB);
     EngineeringSimulationRunner.run(revisionB, null);
     EngineeringGraph graphB = EngineeringGraphBuilder.fromProject(revisionB);
@@ -109,19 +109,19 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
     assertEquals(Integer.valueOf(2), summary.get("revalidationRequiredCount"));
   }
 
-  private static EngineeringProject project(String revision, double safePressureBara) {
-    return project(revision, safePressureBara, 2.0);
+  private static EngineeringProject project(String revision, double initialPressureBara) {
+    return project(revision, initialPressureBara, 2.0);
   }
 
-  private static EngineeringProject project(String revision, double safePressureBara, double durationSeconds) {
-    EngineeringProject project = new EngineeringProject(PROJECT_ID, "Dynamic evidence", process(),
-        new EngineeringDesignBasis()).setRevision(revision);
+  private static EngineeringProject project(String revision, double initialPressureBara, double durationSeconds) {
+    EngineeringProject project = new EngineeringProject(PROJECT_ID, "Dynamic evidence",
+        process(initialPressureBara), new EngineeringDesignBasis()).setRevision(revision);
     project.addRequirement(new EngineeringRequirement(REQUIREMENT_ID, "FEED", EngineeringRequirement.Type.TRIP,
         "Isolate high pressure", "Protect the downstream pressure envelope"));
     project.addEvidenceRecord(new EngineeringEvidenceRecord(EVIDENCE_ID, "SRS", "A")
         .setTitle("High-pressure shutdown requirement").setSourceOrganization("Synthetic qualification")
         .linkRequirement(REQUIREMENT_ID).linkEquipment("FEED"));
-    project.addDynamicSafetyScenario(scenario(safePressureBara, REQUIREMENT_ID, "FEED", durationSeconds));
+    project.addDynamicSafetyScenario(scenario(REQUIREMENT_ID, "FEED", durationSeconds));
     return project;
   }
 
@@ -134,13 +134,12 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
         EngineeringApprovalRecord.Status.APPROVED, "Synthetic reviewer", "TEST-REVIEW-A", "2026-10-31"));
   }
 
-  private static DynamicSafetyScenario scenario(final double safePressureBara, String requirementId,
-      String equipmentTag) {
-    return scenario(safePressureBara, requirementId, equipmentTag, 2.0);
+  private static DynamicSafetyScenario scenario(String requirementId, String equipmentTag) {
+    return scenario(requirementId, equipmentTag, 2.0);
   }
 
-  private static DynamicSafetyScenario scenario(final double safePressureBara, String requirementId,
-      String equipmentTag, double durationSeconds) {
+  private static DynamicSafetyScenario scenario(String requirementId, String equipmentTag,
+      double durationSeconds) {
     return DynamicSafetyScenario.builder(SCENARIO_ID, "High-pressure isolation").durationSeconds(durationSeconds)
         .timeStepSeconds(1.0).triggerTimeSeconds(0.0).eventExactTiming(true)
         .initiatingEvent("feed-pressure-step-v1", new DynamicSafetyScenario.ProcessManipulator() {
@@ -148,14 +147,15 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
 
           @Override
           public void apply(ProcessSystem process) {
-            ((Stream) process.getUnit("FEED")).setPressure(60.0, "bara");
+            Stream feed = (Stream) process.getUnit("FEED");
+            feed.setPressure(feed.getPressure("bara") + 10.0, "bara");
           }
         }).addLogic("pressure-trip-v1", new DynamicSafetyScenario.LogicFactory() {
           private static final long serialVersionUID = 1000L;
 
           @Override
           public ProcessLogic create(ProcessSystem process) {
-            return new PressureTripLogic((Stream) process.getUnit("FEED"), safePressureBara);
+            return new PressureTripLogic((Stream) process.getUnit("FEED"));
           }
         }).addCriterion(DynamicScenarioCriterion
             .builder("safe-pressure", "Safe pressure", "bara", "feed-pressure-bara-v1",
@@ -172,7 +172,11 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
   }
 
   private static ProcessSystem process() {
-    SystemInterface fluid = new SystemSrkEos(300.0, 50.0);
+    return process(50.0);
+  }
+
+  private static ProcessSystem process(double pressureBara) {
+    SystemInterface fluid = new SystemSrkEos(300.0, pressureBara);
     fluid.addComponent("methane", 1.0);
     fluid.setMixingRule("classic");
     Stream feed = new Stream("FEED", fluid);
@@ -195,12 +199,10 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
   private static final class PressureTripLogic implements ProcessLogic {
     private static final long serialVersionUID = 1000L;
     private final Stream stream;
-    private final double safePressureBara;
     private LogicState state = LogicState.IDLE;
 
-    private PressureTripLogic(Stream stream, double safePressureBara) {
+    private PressureTripLogic(Stream stream) {
       this.stream = stream;
-      this.safePressureBara = safePressureBara;
     }
 
     @Override
@@ -231,7 +233,7 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
 
     @Override
     public void execute(double timeStep) {
-      stream.setPressure(safePressureBara, "bara");
+      stream.setPressure(stream.getPressure("bara") * 0.1, "bara");
       state = LogicState.COMPLETED;
     }
 
