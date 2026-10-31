@@ -146,6 +146,7 @@ of later chart-free runs. An explicit `setPower(...)` or connected shaft-power
 specification still takes precedence over efficiency in a chart-free run.
 
 <!-- compressor-guide-example: chart-to-efficiency -->
+{% raw %}
 ```java
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.stream.Stream;
@@ -223,6 +224,7 @@ public final class CompressorChartEfficiencyExample {
   }
 }
 ```
+{% endraw %}
 
 It uses a safeguarded secant step and bisects when a trial leaves the feasible
 efficiency interval. If that sign bracket stalls on a phase-boundary temperature
