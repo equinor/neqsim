@@ -47,6 +47,31 @@ public final class ConservativeEnergyTransport {
    */
   public static double[] applyFaceTransfers(double[][] state, double[][] phaseMassTransfersKg,
       double[][] cellPhaseTotalEnthalpyJPerKg, double[] inletPhaseTotalEnthalpyJPerKg, double[] cellLengths) {
+    double[][] phaseBoundaryEnergyJ = applyPhaseResolvedFaceTransfers(state, phaseMassTransfersKg,
+        cellPhaseTotalEnthalpyJPerKg, inletPhaseTotalEnthalpyJPerKg, cellLengths);
+    return new double[] {sum(phaseBoundaryEnergyJ[0]), sum(phaseBoundaryEnergyJ[1])};
+  }
+
+  /**
+   * Add energy associated with signed phase mass transfers and retain each boundary phase contribution.
+   *
+   * <p>
+   * This is the phase-resolved form of
+   * {@link #applyFaceTransfers(double[][], double[][], double[][], double[], double[])}. It applies the same
+   * transactional cell-energy update and returns inlet/outlet rows with gas, oil and water columns. A row sum is
+   * therefore exactly the legacy boundary routing term apart from floating-point round-off.
+   * </p>
+   *
+   * @param state conservative state with seven entries per cell, modified only in the total-energy column, J/m
+   * @param phaseMassTransfersKg signed integrated phase masses at each face, shape {@code [cells + 1][3]}, kg
+   * @param cellPhaseTotalEnthalpyJPerKg donor specific total enthalpies, shape {@code [cells][3]}, J/kg
+   * @param inletPhaseTotalEnthalpyJPerKg inlet gas/oil/water specific total enthalpies, J/kg
+   * @param cellLengths finite positive physical cell lengths, m
+   * @return inlet/outlet phase energy transfers in J with shape {@code [2][3]}
+   * @throws IllegalArgumentException if shapes, lengths or used donor properties are invalid
+   */
+  public static double[][] applyPhaseResolvedFaceTransfers(double[][] state, double[][] phaseMassTransfersKg,
+      double[][] cellPhaseTotalEnthalpyJPerKg, double[] inletPhaseTotalEnthalpyJPerKg, double[] cellLengths) {
     int cells = state == null ? 0 : state.length;
     if (cells == 0 || phaseMassTransfersKg == null || phaseMassTransfersKg.length != cells + 1
         || cellPhaseTotalEnthalpyJPerKg == null || cellPhaseTotalEnthalpyJPerKg.length != cells
@@ -63,7 +88,7 @@ public final class ConservativeEnergyTransport {
             "Energy transport requires seven finite-energy variables and positive lengths");
       }
     }
-    double[] boundaryEnergyJ = new double[2];
+    double[][] boundaryEnergyJ = new double[2][PHASE_COUNT];
     for (int face = 0; face <= cells; face++) {
       if (phaseMassTransfersKg[face] == null || phaseMassTransfersKg[face].length != PHASE_COUNT) {
         throw new IllegalArgumentException("Each energy-transport face requires three phase transfers");
@@ -90,12 +115,12 @@ public final class ConservativeEnergyTransport {
         if (face > 0) {
           energyChangesJ[face - 1] -= transferJ;
         } else {
-          boundaryEnergyJ[0] += transferJ;
+          boundaryEnergyJ[0][phase] += transferJ;
         }
         if (face < cells) {
           energyChangesJ[face] += transferJ;
         } else {
-          boundaryEnergyJ[1] += transferJ;
+          boundaryEnergyJ[1][phase] += transferJ;
         }
       }
     }
@@ -110,5 +135,13 @@ public final class ConservativeEnergyTransport {
       state[cell][ENERGY] = candidateEnergyPerLength[cell];
     }
     return boundaryEnergyJ;
+  }
+
+  private static double sum(double[] values) {
+    double result = 0.0;
+    for (double value : values) {
+      result += value;
+    }
+    return result;
   }
 }

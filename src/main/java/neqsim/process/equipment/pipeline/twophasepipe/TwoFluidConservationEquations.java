@@ -563,6 +563,9 @@ public class TwoFluidConservationEquations implements Serializable {
   /** Total-energy flow at each face from the most recent {@link #calcRHS} evaluation. */
   private double[] lastEnergyFaceFluxes = new double[0];
 
+  /** Gas/oil/water energy flow at the inlet and outlet faces from the most recent evaluation. */
+  private double[][] lastBoundaryPhaseEnergyFluxes = new double[0][3];
+
   /** Transactional directional mass/momentum decomposition at internal faces. */
   private DirectionalPhaseFaceFlux[][] lastDirectionalPhaseFaceFluxes = new DirectionalPhaseFaceFlux[0][3];
 
@@ -1256,6 +1259,7 @@ public class TwoFluidConservationEquations implements Serializable {
 
     // Calculate the two external boundary fluxes once. These exact values are also
     // retained for a stage-consistent domain mass-balance diagnostic.
+    lastBoundaryPhaseEnergyFluxes = new double[2][3];
     double[] inletFlux = calcInletFlux(sections[0], inletFacePressure(sections));
     TwoFluidSection outletBoundary = reconstructedOutlet == null ? sections[nCells - 1] : reconstructedOutlet;
     double[] outletFlux = calcOutletFlux(outletBoundary, outletFacePressure(sections, outletBoundary));
@@ -1475,6 +1479,7 @@ public class TwoFluidConservationEquations implements Serializable {
     private final MassBalanceRate savedBalance = lastMassBalanceRate;
     private final double[][] savedFaces = copyMatrixArray(lastPhaseMassFaceFluxes);
     private final double[] savedEnergyFaces = lastEnergyFaceFluxes.clone();
+    private final double[][] savedBoundaryPhaseEnergy = copyMatrixArray(lastBoundaryPhaseEnergyFluxes);
     private final DirectionalPhaseFaceFlux[][] savedDirectionalFaces = copyMatrixArray(lastDirectionalPhaseFaceFluxes);
     private final double[][] savedSources = copyMatrixArray(lastPhaseMassSourcesPerLength);
     private final double[][] savedForces = copyMatrixArray(lastMomentumSourceForcesPerLength);
@@ -1490,6 +1495,7 @@ public class TwoFluidConservationEquations implements Serializable {
       lastMassBalanceRate = savedBalance;
       lastPhaseMassFaceFluxes = savedFaces;
       lastEnergyFaceFluxes = savedEnergyFaces;
+      lastBoundaryPhaseEnergyFluxes = savedBoundaryPhaseEnergy;
       lastDirectionalPhaseFaceFluxes = savedDirectionalFaces;
       lastPhaseMassSourcesPerLength = savedSources;
       lastMomentumSourceForcesPerLength = savedForces;
@@ -1579,6 +1585,44 @@ public class TwoFluidConservationEquations implements Serializable {
     }
     for (int face = 0; face < lastEnergyFaceFluxes.length; face++) {
       accumulator[face] += weight * lastEnergyFaceFluxes[face];
+    }
+  }
+
+  /**
+   * Get phase-resolved energy flow at the external inlet and outlet faces.
+   *
+   * <p>
+   * Rows are inlet and outlet; columns are gas, oil and water. Summing a row reproduces the corresponding first or last
+   * entry of {@link #getLastEnergyFaceFluxes()} apart from floating-point round-off.
+   * </p>
+   *
+   * @return defensive energy-flow array in W with shape {@code [2][3]}, or empty before the first evaluation
+   */
+  public double[][] getLastBoundaryPhaseEnergyFluxes() {
+    return copyMatrixArray(lastBoundaryPhaseEnergyFluxes);
+  }
+
+  /**
+   * Add the most recently evaluated phase-resolved boundary energy flows to an accumulator.
+   *
+   * @param accumulator destination with inlet/outlet rows and gas/oil/water columns
+   * @param weight integration-stage weight
+   * @throws IllegalArgumentException if the accumulator shape is incompatible or the weight is not finite
+   */
+  public void accumulateLastBoundaryPhaseEnergyFluxes(double[][] accumulator, double weight) {
+    if (accumulator == null || accumulator.length != lastBoundaryPhaseEnergyFluxes.length) {
+      throw new IllegalArgumentException("Accumulator must match the most recent boundary energy-flux shape");
+    }
+    if (!Double.isFinite(weight)) {
+      throw new IllegalArgumentException("Integration-stage weight must be finite");
+    }
+    for (int boundary = 0; boundary < lastBoundaryPhaseEnergyFluxes.length; boundary++) {
+      if (accumulator[boundary] == null || accumulator[boundary].length != 3) {
+        throw new IllegalArgumentException("Accumulator must contain three phase columns at each boundary");
+      }
+      for (int phase = 0; phase < 3; phase++) {
+        accumulator[boundary][phase] += weight * lastBoundaryPhaseEnergyFluxes[boundary][phase];
+      }
     }
   }
 
@@ -1703,6 +1747,10 @@ public class TwoFluidConservationEquations implements Serializable {
    * @return array of flux values for each conserved variable
    */
   private double[] calcInletFlux(TwoFluidSection sec, double facePressure) {
+    ensureBoundaryPhaseEnergyBuffer();
+    for (int phase = 0; phase < 3; phase++) {
+      lastBoundaryPhaseEnergyFluxes[0][phase] = 0.0;
+    }
     sec = inletFaceState(sec);
     if (inletClosed) {
       return closedFaceFlux(sec);
@@ -1750,9 +1798,11 @@ public class TwoFluidConservationEquations implements Serializable {
       double HO = sec.getOilEnthalpy();
       double HW = sec.getWaterEnthalpy();
       // Exactly absent phases have no enthalpy flux even when their unused properties are non-finite.
-      flux[IDX_ENERGY] = ((alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * (HG + 0.5 * vG * vG))
-          + (alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * (HO + 0.5 * vO * vO))
-          + (alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * (HW + 0.5 * vW * vW))) * A;
+      lastBoundaryPhaseEnergyFluxes[0][0] = (alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * (HG + 0.5 * vG * vG)) * A;
+      lastBoundaryPhaseEnergyFluxes[0][1] = (alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * (HO + 0.5 * vO * vO)) * A;
+      lastBoundaryPhaseEnergyFluxes[0][2] = (alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * (HW + 0.5 * vW * vW)) * A;
+      flux[IDX_ENERGY] = lastBoundaryPhaseEnergyFluxes[0][0] + lastBoundaryPhaseEnergyFluxes[0][1]
+          + lastBoundaryPhaseEnergyFluxes[0][2];
     }
 
     return flux;
@@ -1782,6 +1832,10 @@ public class TwoFluidConservationEquations implements Serializable {
    * @return array of flux values for each conserved variable
    */
   private double[] calcOutletFlux(TwoFluidSection sec, double facePressure) {
+    ensureBoundaryPhaseEnergyBuffer();
+    for (int phase = 0; phase < 3; phase++) {
+      lastBoundaryPhaseEnergyFluxes[1][phase] = 0.0;
+    }
     if (outletClosed) {
       return closedFaceFlux(sec);
     }
@@ -1836,12 +1890,20 @@ public class TwoFluidConservationEquations implements Serializable {
       double HO = oilDonor.getOilEnthalpy();
       double HW = waterDonor.getWaterEnthalpy();
       // Exactly absent phases have no enthalpy flux even when their unused properties are non-finite.
-      flux[IDX_ENERGY] = ((alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * (HG + 0.5 * vG * vG))
-          + (alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * (HO + 0.5 * vO * vO))
-          + (alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * (HW + 0.5 * vW * vW))) * A;
+      lastBoundaryPhaseEnergyFluxes[1][0] = (alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * (HG + 0.5 * vG * vG)) * A;
+      lastBoundaryPhaseEnergyFluxes[1][1] = (alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * (HO + 0.5 * vO * vO)) * A;
+      lastBoundaryPhaseEnergyFluxes[1][2] = (alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * (HW + 0.5 * vW * vW)) * A;
+      flux[IDX_ENERGY] = lastBoundaryPhaseEnergyFluxes[1][0] + lastBoundaryPhaseEnergyFluxes[1][1]
+          + lastBoundaryPhaseEnergyFluxes[1][2];
     }
 
     return flux;
+  }
+
+  private void ensureBoundaryPhaseEnergyBuffer() {
+    if (lastBoundaryPhaseEnergyFluxes.length != 2) {
+      lastBoundaryPhaseEnergyFluxes = new double[2][3];
+    }
   }
 
   /**

@@ -186,6 +186,33 @@ For multi-edge continuation, `TwoFluidConservativeEnergyReport` retains the inte
 accepted inlet and outlet total-energy transfers separately, including pressure-correction mass
 transport, while preserving the existing net-advection and first-law residual API. These signed
 boundary terms are the routing contract consumed by `TwoFluidPipeNetwork` storage nodes.
+Both the component and conservative-energy reports also retain those accepted boundary transfers
+by hydrodynamic phase. `getOutletBoundaryMassKg(Phase)` returns the named-component vector for gas,
+oil or water, while `getOutletAdvectedEnergyJ(Phase)` returns that phase's total-enthalpy and kinetic
+energy transfer. The three phase rows reproduce the existing aggregate report values. Opposite row
+signs therefore expose gas/liquid countercurrent transport that a scalar mixture transfer would
+hide; no outlet state or equilibrium flash is used to reconstruct these ledgers.
+
+```java
+TwoFluidComponentConservationReport components =
+    branch.getLastComponentConservationReport();
+TwoFluidConservativeEnergyReport energy =
+    branch.getLastConservativeEnergyReport();
+
+double[] gasComponents = components.getOutletBoundaryMassKg(
+    TwoFluidComponentConservationReport.Phase.GAS);
+double[] oilComponents = components.getOutletBoundaryMassKg(
+    TwoFluidComponentConservationReport.Phase.OIL);
+double gasEnergy = energy.getOutletAdvectedEnergyJ(
+    TwoFluidConservativeEnergyReport.Phase.GAS);
+double oilEnergy = energy.getOutletAdvectedEnergyJ(
+    TwoFluidConservativeEnergyReport.Phase.OIL);
+```
+
+These are accepted finite-volume diagnostics and a prerequisite for a future phase-coupled
+algebraic junction boundary solve. They do not make the current single mixed-state algebraic
+junction approximation conservative under countercurrent phase transport and are not independent
+qualification of the two-fluid closures.
 `addConservativeCompressibleNode(...)` keeps `UpstreamCompressibleVolume` as the hydraulic
 pressure and phase-mass owner while adding named-component and internal-energy inventory to the
 same node. A pressure/internal-energy flash recovers its mixed temperature at the accepted
