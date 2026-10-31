@@ -202,6 +202,7 @@ neqsim.process.equipment.blackoil
 neqsim.process.equipment.capacity
 neqsim.process.equipment.compressor
 neqsim.process.equipment.compressor.driver
+neqsim.process.equipment.compressor.seal
 neqsim.process.equipment.diffpressure
 neqsim.process.equipment.distillation
 neqsim.process.equipment.distillation.internals
@@ -237,6 +238,7 @@ neqsim.process.equipment.reactor.digestion
 neqsim.process.equipment.reactor.sulfurrecovery
 neqsim.process.equipment.reservoir
 neqsim.process.equipment.separator
+neqsim.process.equipment.separator.emulsion
 neqsim.process.equipment.separator.entrainment
 neqsim.process.equipment.separator.sectiontype
 neqsim.process.equipment.solidhandling
