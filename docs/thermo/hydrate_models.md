@@ -44,6 +44,10 @@ Gas hydrates (clathrate hydrates) are ice-like crystalline compounds formed when
 
 NeqSim supports two common hydrate crystal structures:
 
+Structure H experimental data and preliminary system-correlation fits are
+available for [parameter qualification](./structure_h_parameter_qualification.md).
+They do not enable sH equilibrium or supply qualified sH component parameters.
+
 ### Structure I (sI)
 
 | Property | Small Cavity (5¹²) | Large Cavity (5¹²6²) |
