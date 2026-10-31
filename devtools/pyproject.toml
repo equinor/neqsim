@@ -73,6 +73,7 @@ py-modules = [
     "layout_model", "layout_engine", "layout_process", "layout_examples", "layout_study",
     "layout_drawings", "layout_cad", "layout_report",
     "pfd_layout_check", "pfd_layout_svg", "pfd_diagram",
+    "process_overview", "ppo_graph", "ppo_layout", "ppo_render", "ppo_validate", "ppo_examples",
 ]
 packages = [
     "neqsim_runner",
