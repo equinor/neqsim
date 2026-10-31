@@ -114,13 +114,13 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
   }
 
   private static EngineeringProject project(String revision, double initialPressureBara, double durationSeconds) {
-    EngineeringProject project = new EngineeringProject(PROJECT_ID, "Dynamic evidence",
-        process(initialPressureBara), new EngineeringDesignBasis()).setRevision(revision);
+    EngineeringProject project = new EngineeringProject(PROJECT_ID, "Dynamic evidence", process(initialPressureBara),
+        new EngineeringDesignBasis()).setRevision(revision);
     project.addRequirement(new EngineeringRequirement(REQUIREMENT_ID, "FEED", EngineeringRequirement.Type.TRIP,
         "Isolate high pressure", "Protect the downstream pressure envelope"));
-    project.addEvidenceRecord(new EngineeringEvidenceRecord(EVIDENCE_ID, "SRS", "A")
-        .setTitle("High-pressure shutdown requirement").setSourceOrganization("Synthetic qualification")
-        .linkRequirement(REQUIREMENT_ID).linkEquipment("FEED"));
+    project.addEvidenceRecord(
+        new EngineeringEvidenceRecord(EVIDENCE_ID, "SRS", "A").setTitle("High-pressure shutdown requirement")
+            .setSourceOrganization("Synthetic qualification").linkRequirement(REQUIREMENT_ID).linkEquipment("FEED"));
     project.addDynamicSafetyScenario(scenario(REQUIREMENT_ID, "FEED", durationSeconds));
     return project;
   }
@@ -138,8 +138,7 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
     return scenario(requirementId, equipmentTag, 2.0);
   }
 
-  private static DynamicSafetyScenario scenario(String requirementId, String equipmentTag,
-      double durationSeconds) {
+  private static DynamicSafetyScenario scenario(String requirementId, String equipmentTag, double durationSeconds) {
     return DynamicSafetyScenario.builder(SCENARIO_ID, "High-pressure isolation").durationSeconds(durationSeconds)
         .timeStepSeconds(1.0).triggerTimeSeconds(0.0).eventExactTiming(true)
         .initiatingEvent("feed-pressure-step-v1", new DynamicSafetyScenario.ProcessManipulator() {
@@ -157,9 +156,8 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
           public ProcessLogic create(ProcessSystem process) {
             return new PressureTripLogic((Stream) process.getUnit("FEED"));
           }
-        }).addCriterion(DynamicScenarioCriterion
-            .builder("safe-pressure", "Safe pressure", "bara", "feed-pressure-bara-v1",
-                new DynamicScenarioCriterion.Extractor() {
+        }).addCriterion(DynamicScenarioCriterion.builder("safe-pressure", "Safe pressure", "bara",
+            "feed-pressure-bara-v1", new DynamicScenarioCriterion.Extractor() {
               private static final long serialVersionUID = 1000L;
 
               @Override
@@ -167,8 +165,7 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
                 return ((Stream) process.getUnit("FEED")).getPressure("bara");
               }
             }).acceptanceRange(null, Double.valueOf(10.0)).deadlineSeconds(1.0).build())
-        .addEvidenceReference(EVIDENCE_ID + "@A").addRequirementId(requirementId).addEquipmentTag(equipmentTag)
-        .build();
+        .addEvidenceReference(EVIDENCE_ID + "@A").addRequirementId(requirementId).addEquipmentTag(equipmentTag).build();
   }
 
   private static ProcessSystem process() {
