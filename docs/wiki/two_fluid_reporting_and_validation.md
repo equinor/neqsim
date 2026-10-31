@@ -62,6 +62,18 @@ These tests do not establish stable transient pools or predictive depletion time
 The [public static qualification inputs and independent generator](../../src/test/resources/neqsim/process/pipeline/hydrostatic-cell/README.md)
 retain 3060 cell references, fixed tolerances, provenance and mesh tables.
 
+### Signed pressure moments at a stratified interface
+
+For pressure-traction diagnostics, use the immutable result from
+`GeometryCalculator.calculateStratifiedPressureMoments(depth, diameter)`. Its liquid/gas
+moments are in m3 and signed about the interface; multiplying by phase density, gravity
+and cosine of inclination gives the hydrostatic part of axial traction in N. The interface
+pressure times phase area is separate. The returned areas are also the depth derivatives
+of the corresponding moments. There is no transient solver call site or state mutation.
+See the [model definition and qualification limits](../process/TWOFLUIDPIPE_MODEL#stratified-hydrostatic-pressure-moments)
+and [executed integral/force record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/README.md).
+These static identities do not establish liquid retention, pool levels or depletion times.
+
 ## Steady-state profile reporting
 
 After `pipe.run()`, the following methods provide one value per pipe section:
