@@ -19,6 +19,7 @@ import neqsim.process.logic.LogicState;
 import neqsim.process.logic.ProcessLogic;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.scenario.DynamicSafetyScenario;
+import neqsim.process.safety.scenario.DynamicSafetyScenarioResult;
 import neqsim.process.safety.scenario.DynamicScenarioCriterion;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -67,11 +68,20 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
     assertNotNull(revisionA.getLatestEngineeringSimulationResult());
     assertNotNull(graphA.getNode(scenarioNodeId));
     assertNotNull(graphA.getNode(resultNodeId));
-    assertTrue(resultA.getDynamicScenarioResults().get(0).isPassed());
+    DynamicSafetyScenarioResult scenarioResultA = resultA.getDynamicScenarioResults().get(0);
+    assertTrue(scenarioResultA.isPassed());
+    assertEquals(6.0, lastCriterionValue(scenarioResultA, "safe-pressure"), 1.0e-9);
+    assertEquals(1.0,
+        scenarioResultA.getCriterionResults().get("safe-pressure").getFirstSatisfiedSeconds().doubleValue(), 1.0e-9);
 
     EngineeringProject revisionB = project("B", 40.0);
     addApprovals(revisionB);
-    EngineeringSimulationRunner.run(revisionB, null);
+    EngineeringSimulationResult resultB = EngineeringSimulationRunner.run(revisionB, null);
+    DynamicSafetyScenarioResult scenarioResultB = resultB.getDynamicScenarioResults().get(0);
+    assertTrue(scenarioResultB.isPassed());
+    assertEquals(5.0, lastCriterionValue(scenarioResultB, "safe-pressure"), 1.0e-9);
+    assertEquals(1.0,
+        scenarioResultB.getCriterionResults().get("safe-pressure").getFirstSatisfiedSeconds().doubleValue(), 1.0e-9);
     EngineeringGraph graphB = EngineeringGraphBuilder.fromProject(revisionB);
     EngineeringGraphDiff diff = graphA.compareTo(graphB);
 
@@ -182,6 +192,14 @@ class EngineeringDynamicScenarioEvidenceGraphTest {
     process.add(feed);
     process.run();
     return process;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static double lastCriterionValue(DynamicSafetyScenarioResult result, String criterionId) {
+    Map<String, Object> criteria = (Map<String, Object>) result.toMap().get("criteria");
+    Map<String, Object> criterion = (Map<String, Object>) criteria.get(criterionId);
+    List<Double> values = (List<Double>) criterion.get("values");
+    return values.get(values.size() - 1).doubleValue();
   }
 
   private static boolean hasCode(EngineeringValidationReport report, String code) {
