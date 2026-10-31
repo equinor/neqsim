@@ -103,7 +103,7 @@ SKILL_DIST_PREFIX = "neqsim-skill-"
 LIVE_EXTRAS = ("live", "network")
 # ``build`` / ``dist`` are setuptools output left behind by ``pip install <skill>``;
 # they duplicate the package under build/lib and must never ship in the plugin.
-SKIP_DIRS = {"__pycache__", ".pytest_cache", "node_modules", ".git", "build", "dist"}
+SKIP_DIRS = {"__pycache__", ".pytest_cache", "node_modules", ".git", "build", "dist", "_out"}
 SKIP_SUFFIXES = {".pyc"}
 # Local state a live API session drops next to a skill (MSAL/DPAPI token cache,
 # dotenv secrets). The skills repos gitignore them, but the builder copies skill
