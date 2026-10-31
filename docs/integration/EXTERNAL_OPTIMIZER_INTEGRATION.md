@@ -1122,6 +1122,11 @@ slice. Every point remains subject to the export-pressure boundary, per-casing s
 common-speed consistency, shaft/driver/gearbox limits and the shared plant-power budget. Missing, non-finite, stale or
 unrestored points are rejected rather than interpolated or repaired by weakening a physical constraint.
 
+To qualify a declared driver-power crossing, external consumers may additionally use a separate exact 1D speed slice.
+Refine only when exact low/high points straddle feasibility, and retain the feasible/infeasible endpoint driver margins,
+per-casing map rows and every converged/restored midpoint receipt. The bracket is local diagnostic evidence—not proof
+of monotonicity beyond the bracket, an approved set point, or permission to change the driver rating.
+
 Current optimizer evidence also exports the relative simulator replay tolerance and its provenance. A persistent task
 may use that value only to bind a reviewed objective baseline to a fresh initial replay; the guard caps it at
 $10^{-6}$ and rejects invalid or unsourced tolerance metadata. Constraint feasibility, restoration, action read-back,
@@ -1811,3 +1816,4 @@ on `ProcessSimulationEvaluator`.
 - [flow-rate-optimization.md](../process/optimization/flow-rate-optimization.md) - FlowRateOptimizer for lift curve generation
 - [pressure_boundary_optimization.md](../process/pressure_boundary_optimization.md) - Simplified pressure boundary optimizer
 - [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) - Complete production optimization examples
+

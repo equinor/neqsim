@@ -287,6 +287,12 @@ runs the coupled process and retains the existing export-pressure, compressor-ma
 shared-power evidence. Reject incomplete, stale or non-finite cells; do not relax those constraints to fill the slice
 or infer an unsampled continuous surface.
 
+When a declared driver limit is the qualification target, add a separate exact 1D shaft-speed slice and refine only
+an evaluated feasible/infeasible crossing. Preserve both terminal bracket endpoints, their signed driver-power
+margins, every refinement recovery gate, and the per-casing surge/stonewall evidence. The refined bracket is diagnostic:
+do not infer monotonic behavior outside it or promote its midpoint to an operating set point without the normal
+optimizer acceptance and replay.
+
 Use `ProcessModelDebottleneckStudy` after the evaluator and direct installed constraints are configured when one documented capacity replacement or expansion must be compared with the installed baseline. It uses the same search policy for both scenarios, freezes immutable objective/constraint/metric evidence, and restores the installed limit plus pre-study operating point. This is a paired screening study, not an equipment-sizing algorithm or economic approval.
 
 Use `ProcessModelDebottleneckRanking` after independent paired studies complete when alternatives
@@ -1375,3 +1381,4 @@ Choose based on your use case:
 - **Fixed-total continuous allocation across coupled actions** → `ProcessModelAllocationOptimizer`
 - **Mixed choke/setpoint and discrete line-up search** → `ProcessModelOperatingPointOptimizer`
 - **Model calibration** → `BatchParameterEstimator`
+

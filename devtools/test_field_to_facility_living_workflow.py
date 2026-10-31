@@ -245,9 +245,9 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertEqual(16, evidence["schema_version"])
             self.assertEqual(cycle_id, evidence["cycle_id"])
             self.assertEqual(2, evidence["period_count"])
-            self.assertEqual(58, evidence["requested_point_count"])
-            self.assertEqual(58, evidence["completed_point_count"])
-            self.assertGreater(evidence["total_evaluation_count"], 58)
+            self.assertEqual(64, evidence["requested_point_count"])
+            self.assertEqual(64, evidence["completed_point_count"])
+            self.assertGreater(evidence["total_evaluation_count"], 64)
             self.assertGreaterEqual(evidence["envelope_runtime_seconds"], 0.0)
             self.assertEqual(1, len(evidence["bottleneck_transitions"]))
             self.assertTrue(all(
@@ -349,7 +349,7 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertIn("combined_bottleneck", combination["bottleneck_migration"])
             relief_envelope = current["qualified_relief_envelope"]
             self.assertEqual(2, relief_envelope["receipt_version"])
-            self.assertEqual(6, relief_envelope["slice_pair_count"])
+            self.assertEqual(7, relief_envelope["slice_pair_count"])
             self.assertEqual(8, relief_envelope["sampled_cell_comparison_count"])
             self.assertIs(True, relief_envelope["capacity_restored"])
             coupled_pairs = [pair for pair in relief_envelope["slice_pairs"]
@@ -556,3 +556,4 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
