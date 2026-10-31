@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - "devtools/**"
+      - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/**"
       - "src/test/resources/data/chemistry_benchmarks/structure_h_jin2023_digitized.*"
       - "docs/thermo/structure_h_parameter_qualification.md"
@@ -16,6 +17,7 @@ on:
     branches: [master]
     paths:
       - "devtools/**"
+      - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/**"
       - "src/test/resources/data/chemistry_benchmarks/structure_h_jin2023_digitized.*"
       - "docs/thermo/structure_h_parameter_qualification.md"
@@ -36,6 +38,16 @@ jobs:
 
       - name: Sync devtools test environment
         run: uv sync --project devtools --locked --group test
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Verify pressure-moment auditor guards
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series -p test_audit.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series -p test_audit.py -v
 
       - name: Run hermetic pytest suites
         run: |
@@ -99,6 +111,16 @@ jobs:
 
       - name: Sync devtools test environment
         run: uv sync --project devtools --locked --group test
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Verify pressure-moment auditor guards
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series -p test_audit.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series -p test_audit.py -v
 
       - name: Run toolkit smoke tests on the minimum supported Python
         run: |

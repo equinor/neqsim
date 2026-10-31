@@ -151,3 +151,25 @@ limits. Increasing the independent series from 100 to 160 terms changes moments 
 [inputs](independent-series/inputs.csv) and [summary](independent-series/summary.json) are complete.
 No defect requiring a runtime/API change was found. The new evidence remains static geometry;
 it adds no elapsed retention, dynamic area or evaporation-rate qualification.
+
+
+### Auditor completeness and rejection contract
+
+The native matrix reader now requires exactly 222 unique expected inputs, the exact CSV schema,
+finite values in every field, matching ordered diameter/depth identities, physical signs and exact
+absent-phase zeros. It rejects missing, duplicate, added, reordered, malformed or nonfinite rows
+before numerical qualification. Source identity and the unchanged numerical tolerance use explicit
+exceptions, so `python3 -O` cannot disable them. Before this repair, a probe emitting only its first
+row exited zero with `rows: 1`; the retained published 222-row data itself was complete and remains
+unchanged.
+
+Run `python3 independent-series/test_audit.py` from this record's directory, and repeat with `-O`.
+Both modes exercise the valid matrix, 88 corrupt matrices and three end-to-end source/probe
+mutations (truncation, ordinary-section moment error and source-hash mismatch). Normal and
+optimized complete executions preserve all four stored numerical CSV/summary artifacts byte for
+byte. This evidence-tool repair changes no geometry formula, numerical threshold, production Java,
+solver, physical closure, performance path or transient qualification.
+
+The existing AI Devtools Python workflow runs the guard suite in normal and optimized modes
+on its Python 3.11 and 3.13 jobs, with an explicit JDK 17 compiler for the read-only probe.
+Local validation used Python 3.12 / JDK 17; hosted versions remain CI acceptance.
