@@ -303,7 +303,7 @@ software behavior; they are not a field or laboratory validation.
 | Walsh generalized balance (1995), [10.2118/95-01-07](https://doi.org/10.2118/95-01-07) | Implemented above; retain `Rv`, consistent surface basis and phase-inventory distinctions. |
 | Whitson & Torp CVD analysis (1983), [10.2118/10067-PA](https://doi.org/10.2118/10067-PA) | CVD and EOS tuning exist; qualify depletion-path generation of generalized PVT against public measured data, rather than treating unrelated constant-composition flashes as a CVD experiment. |
 | Fetkovich finite aquifer (1971), [10.2118/2603-PA](https://doi.org/10.2118/2603-PA) | `FetkovichAquifer` now supplies physical reservoir-volume storage and aquifer depletion; optional compositional replay couples segregated water support to EOS volume closure. Analytical/RK4 and interval-refinement checks are synthetic qualification; independent field matching remains required. `AquiferDrive` remains a separate gas-equivalent surrogate. |
-| Walsh pressure uncertainty (1999), [10.2118/56691-MS](https://doi.org/10.2118/56691-MS) | Undivided volume residuals above avoid dividing by small expansion terms, but do not handle pressure error statistically. `CompositionalReservoirHistory` provides bounded fixed-volume replay of measured component amounts with independent pressure-sigma residuals and withheld pressures. Correlated errors, independent produced GOR/composition predictions and public field qualification remain open. |
+| Walsh pressure uncertainty (1999), [10.2118/56691-MS](https://doi.org/10.2118/56691-MS) | Undivided volume residuals above avoid dividing by small expansion terms, but do not handle pressure error statistically. `CompositionalReservoirHistory` provides bounded fixed-volume replay of measured component amounts with independent pressure-sigma residuals and withheld pressures. Phase-selective replay now predicts produced composition and separator GOR; independent measured produced-phase and public field qualification and correlated errors remain open. |
 | Ogele et al. Bayesian integration (2006), [10.2118/100257-MS](https://doi.org/10.2118/100257-MS) | `ReservoirHistoryEnsemble` now combines explicit discrete joint geological volume/phase-fraction/aquifer/PVT/history prior masses with the pressure-history likelihood, correlations and prior shifts. Refine the supplied joint grid; this is not continuous posterior or field qualification. |
 | Emerick & Reynolds ES-MDA (2013), [10.1016/j.cageo.2012.03.011](https://doi.org/10.1016/j.cageo.2012.03.011) | Candidate uncertainty layer after forward matching is qualified; propagate PVT/volume/aquifer priors and report posterior correlations and forecast uncertainty. Reuse external ensemble tooling where appropriate. |
 | Tran et al. rescaled CVD/density-based analysis (2025), [10.1016/j.jgsce.2025.205551](https://doi.org/10.1016/j.jgsce.2025.205551) | Research candidate for near-critical gas condensate with variable BHP under boundary-dominated flow. Obtain the full method and reproduce its numerical cases before implementation; it is not a general substitute for average-pressure material balance. |
@@ -348,7 +348,10 @@ sigma. Calibration and held-out sums of squared standardized residuals are separ
 held-out pressures never enter volume selection. A zero held-out sum with no held-out
 observations is not validation; inspect the interval observation flags. The initial pressure is fixed and is
 not a fitted observation. Amounts and their component compositions are prescribed,
-so produced GOR/composition is not an independent validation prediction.
+so produced GOR/composition in this measured-component mode is not an independent validation prediction.
+For independently predicted composition, use opt-in equilibrium phase withdrawals and
+[explicit separator-path outputs](reservoir_phase_production.md); prescribed phase molar
+amounts remain inputs, and independent measured validation is still required.
 
 The bounded search evaluates 17 logarithmically spaced volumes, then refines the best
 grid basin by golden-section search. At least two calibration pressures and informative

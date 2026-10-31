@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.apache.commons.lang3.SerializationUtils;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquifer;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -17,9 +18,10 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Reuses SimpleReservoir's fixed-volume, isothermal TV flash. Every trial restores the accepted tuned fluid and the
  * same initial pressure, temperature and phase-volume fractions. Only total initial pore volume is fitted. Pressure
  * errors are independent supplied one-sigma scales; held-out pressures never enter the objective. Component amounts are
- * measured inputs, so produced composition/GOR is not an independent prediction. An optional finite aquifer uses
- * segregated immiscible water support. Rock expansion, energy balances, spatial displacement, correlated errors and EOS
- * retuning are outside this bounded model.
+ * measured inputs in the original mode. Opt-in phase-selective molar withdrawals instead predict produced composition
+ * from each substep's equilibrium phase. They prescribe phase molar rates, not relative permeability or well
+ * deliverability. An optional finite aquifer uses segregated immiscible water support. Rock expansion, energy balances,
+ * spatial displacement, correlated errors and EOS retuning are outside this bounded model.
  * </p>
  *
  * @author Even Solbraa
@@ -44,6 +46,8 @@ public final class CompositionalReservoirHistory implements Serializable {
     private final double pressure;
     private final double sigma;
     private final boolean holdout;
+    private final double[] phaseProduced;
+    private final int substeps;
 
     /**
      * Freezes one complete measured interval, using the history's named component order.
@@ -57,6 +61,23 @@ public final class CompositionalReservoirHistory implements Serializable {
      */
     public Step(double durationSeconds, double[] producedMoles, double[] injectedMoles, double pressureBara,
         double sigmaBara, boolean holdout) {
+      this(durationSeconds, producedMoles, injectedMoles, pressureBara, sigmaBara, holdout, null, 1);
+    }
+
+    /**
+     * Freezes either measured-component or phase-selective production.
+     *
+     * @param durationSeconds interval duration in seconds
+     * @param producedMoles measured component amounts, or zeros for phase selection
+     * @param injectedMoles measured component injection amounts
+     * @param pressureBara observed pressure, or NaN
+     * @param sigmaBara pressure uncertainty, or NaN
+     * @param holdout pressure exclusion flag
+     * @param phaseProduced gas/oil/aqueous withdrawals in mol, or null for measured components
+     * @param substeps equal-rate explicit substeps
+     */
+    private Step(double durationSeconds, double[] producedMoles, double[] injectedMoles, double pressureBara,
+        double sigmaBara, boolean holdout, double[] phaseProduced, int substeps) {
       requirePositive(durationSeconds, "Interval duration");
       if (producedMoles == null || injectedMoles == null || producedMoles.length == 0
           || producedMoles.length != injectedMoles.length) {
@@ -77,6 +98,79 @@ public final class CompositionalReservoirHistory implements Serializable {
       this.pressure = pressureBara;
       this.sigma = sigmaBara;
       this.holdout = holdout;
+      this.phaseProduced = phaseProduced == null ? null : phaseProduced.clone();
+      this.substeps = substeps;
+    }
+
+    /**
+     * Prescribes reservoir-phase molar withdrawals and predicts their component composition.
+     *
+     * <p>
+     * Gas/oil/aqueous totals and component injections are spread uniformly over the explicit substeps. Each substep
+     * withdraws the start-state equilibrium phase composition before adding injection and running the existing TV
+     * flash. Missing or insufficient requested phases fail; no seed or fabricated composition is used. Refine substeps
+     * until pressure, compositions and separator outputs converge. This is a well-mixed tank extraction protocol, not a
+     * measured surface-rate inversion or a mobility/well model.
+     * </p>
+     *
+     * @param durationSeconds positive interval duration in seconds
+     * @param producedPhaseMoles nonnegative gas, oil and aqueous amounts in mol, exactly three entries
+     * @param injectedMoles nonnegative injected mol on the complete named component basis
+     * @param pressureBara measured end pressure, or NaN for prediction only
+     * @param sigmaBara positive pressure uncertainty, or NaN for prediction only
+     * @param holdout true to exclude pressure from volume fitting
+     * @param substeps positive number of equal explicit substeps
+     * @return immutable phase-selective schedule interval
+     */
+    public static Step phaseWithdrawal(double durationSeconds, double[] producedPhaseMoles, double[] injectedMoles,
+        double pressureBara, double sigmaBara, boolean holdout, int substeps) {
+      if (producedPhaseMoles == null || producedPhaseMoles.length != 3 || substeps <= 0 || injectedMoles == null) {
+        throw new IllegalArgumentException("Three phase amounts, component injection and positive substeps required");
+      }
+      for (double amount : producedPhaseMoles) {
+        if (!Double.isFinite(amount) || amount < 0.0 || amount > 0.0 && amount / substeps == 0.0) {
+          throw new IllegalArgumentException("Phase amounts must be finite and nonnegative");
+        }
+      }
+      requirePositive(durationSeconds / substeps, "Substep duration");
+      for (double amount : injectedMoles) {
+        if (amount > 0.0 && amount / substeps == 0.0) {
+          throw new IllegalArgumentException("Injected substep amount underflows");
+        }
+      }
+      return new Step(durationSeconds, new double[injectedMoles.length], injectedMoles, pressureBara, sigmaBara,
+          holdout, producedPhaseMoles, substeps);
+    }
+
+    /**
+     * Returns whether produced composition is predicted from equilibrium phases.
+     *
+     * @return true for phase-selective withdrawals
+     */
+    public boolean isPhaseWithdrawal() {
+      return phaseProduced != null;
+    }
+
+    /**
+     * Returns prescribed gas/oil/aqueous amounts; these are not surface product amounts.
+     *
+     * @return defensive phase withdrawal array in mol
+     * @throws IllegalStateException for a measured-component interval
+     */
+    public double[] getProducedPhaseMoles() {
+      if (!isPhaseWithdrawal()) {
+        throw new IllegalStateException("This interval specifies measured component amounts");
+      }
+      return phaseProduced.clone();
+    }
+
+    /**
+     * Returns the explicit subdivision count, one for the original measured-component mode.
+     *
+     * @return positive substep count
+     */
+    public int getSubsteps() {
+      return substeps == 0 ? 1 : substeps;
     }
 
     /**
@@ -92,8 +186,12 @@ public final class CompositionalReservoirHistory implements Serializable {
      * Returns measured produced component amounts in mol.
      *
      * @return measured produced component amounts in mol
+     * @throws IllegalStateException when composition is predicted; use the replay result instead
      */
     public double[] getProducedMoles() {
+      if (isPhaseWithdrawal()) {
+        throw new IllegalStateException("Produced components are predicted during replay; inspect Result");
+      }
       return produced.clone();
     }
 
@@ -147,6 +245,8 @@ public final class CompositionalReservoirHistory implements Serializable {
     private final double calibrationChiSquare;
     private final double holdoutChiSquare;
     private final byte[] finalFluid;
+    private final double[][] production;
+    private final String[] components;
 
     /**
      * Freezes successful replay evidence.
@@ -161,10 +261,14 @@ public final class CompositionalReservoirHistory implements Serializable {
      * @param aquiferPressures aquifer pressures including initial state, bara; NaN without an aquifer
      * @param waterInflux cumulative segregated aquifer volume including initial zero, reservoir m3
      * @param finalFluid accepted final fluid to freeze
+     * @param production actual withdrawn component mol per interval on the named basis
+     * @param components component identities in result-array order
      */
     private Result(double volume, double[] time, double[] pressure, double[][] inventory, double[] residuals,
         double calibrationChiSquare, double holdoutChiSquare, double[] aquiferPressures, double[] waterInflux,
-        SystemInterface finalFluid) {
+        SystemInterface finalFluid, double[][] production, String[] components) {
+      this.production = production;
+      this.components = components.clone();
       this.aquiferPressures = aquiferPressures;
       this.waterInflux = waterInflux;
       this.volume = volume;
@@ -215,6 +319,62 @@ public final class CompositionalReservoirHistory implements Serializable {
         copy[i] = inventory[i].clone();
       }
       return copy;
+    }
+
+    /**
+     * Returns actual measured or predicted component withdrawals on the history's named basis.
+     *
+     * @return interval-by-component production in mol, without an initial-state row
+     * @throws IllegalStateException for a result serialized before production evidence was recorded
+     */
+    public double[][] getProducedComponentMoles() {
+      requireProductionEvidence();
+      double[][] result = new double[production.length][];
+      for (int i = 0; i < result.length; i++) {
+        result[i] = production[i].clone();
+      }
+      return result;
+    }
+
+    /**
+     * Reconstructs the complete interval's withdrawn mixture using the accepted EOS.
+     *
+     * <p>
+     * This amounts-weighted mixture combines every substep and produced reservoir phase. Its component inventory is
+     * suitable for streams or {@link PvtSeparatorPath}; its restored tank pressure/temperature is not a measured
+     * production state. Separating the aggregate assumes the interval withdrawals are commingled before separation.
+     * </p>
+     *
+     * @param interval zero-based completed interval
+     * @return independently owned produced fluid with exact interval component amounts
+     * @throws IllegalStateException if the interval has zero production
+     */
+    public SystemInterface getProducedFluid(int interval) {
+      requireProductionEvidence();
+      double total = 0.0;
+      for (double amount : production[interval]) {
+        total += amount;
+      }
+      if (!Double.isFinite(total) || total <= 0.0) {
+        throw new IllegalStateException("Interval has no positive finite produced mixture");
+      }
+      SystemInterface fluid = getFinalFluid();
+      double[] amounts = new double[components.length];
+      for (int i = 0; i < components.length; i++) {
+        amounts[fluid.getComponent(components[i]).getComponentNumber()] = production[interval][i] / total;
+      }
+      fluid.setTotalNumberOfMoles(total);
+      fluid.setMolarComposition(amounts);
+      return fluid;
+    }
+
+    /**
+     * Rejects unavailable production evidence from an older native result serialization.
+     */
+    private void requireProductionEvidence() {
+      if (production == null || components == null) {
+        throw new IllegalStateException("This older serialized result has no recorded production evidence");
+      }
     }
 
     /**
@@ -506,6 +666,7 @@ public final class CompositionalReservoirHistory implements Serializable {
     double[] times = new double[steps.length + 1];
     double[] pressures = new double[times.length];
     double[][] inventories = new double[times.length][];
+    double[][] production = new double[steps.length][order.length];
     double[] residuals = new double[steps.length];
     double[] aquiferPressures = new double[times.length];
     double[] waterInflux = new double[times.length];
@@ -520,29 +681,41 @@ public final class CompositionalReservoirHistory implements Serializable {
     double holdout = 0.0;
     for (int row = 0; row < steps.length; row++) {
       Step step = steps[row];
-      double[] produced = new double[order.length];
-      double[] injected = new double[order.length];
-      for (int i = 0; i < order.length; i++) {
-        produced[order[i]] = step.produced[i];
-        injected[order[i]] = step.injected[i];
-      }
+      int substep = 0;
       try {
-        if (aquifer == null || aquifer.getProductivityM3PerSecondPerBar() == 0.0
-            || aquifer.getCapacityM3PerBar() == 0.0) {
-          tank.advanceComponentAmounts(step.durationSeconds, produced, injected, UUID.randomUUID());
-          if (aquifer != null) {
-            aquiferState = aquifer.advance(aquiferState, step.durationSeconds, pressures[row],
-                tank.getReservoirFluid().getPressure());
+        int subdivisions = step.getSubsteps();
+        for (; substep < subdivisions; substep++) {
+          double[] produced = step.isPhaseWithdrawal()
+              ? phaseWithdrawals(tank.getReservoirFluid(), step.phaseProduced, subdivisions)
+              : new double[order.length];
+          double[] injected = new double[order.length];
+          for (int i = 0; i < order.length; i++) {
+            if (!step.isPhaseWithdrawal()) {
+              produced[order[i]] = step.produced[i];
+            }
+            injected[order[i]] = step.injected[i] / subdivisions;
+            production[row][i] += produced[order[i]];
           }
-        } else {
-          AquiferTrial accepted = advanceAquifer(tank, aquifer, aquiferState, step, produced, injected,
-              initialVolumeM3);
-          tank = accepted.tank;
-          aquiferState = accepted.state;
+          Step interval = subdivisions == 1 ? step
+              : new Step(step.durationSeconds / subdivisions, produced, injected, Double.NaN, Double.NaN, false);
+          double startPressure = tank.getReservoirFluid().getPressure();
+          if (aquifer == null || aquifer.getProductivityM3PerSecondPerBar() == 0.0
+              || aquifer.getCapacityM3PerBar() == 0.0) {
+            tank.advanceComponentAmounts(interval.durationSeconds, produced, injected, UUID.randomUUID());
+            if (aquifer != null) {
+              aquiferState = aquifer.advance(aquiferState, interval.durationSeconds, startPressure,
+                  tank.getReservoirFluid().getPressure());
+            }
+          } else {
+            AquiferTrial accepted = advanceAquifer(tank, aquifer, aquiferState, interval, produced, injected,
+                initialVolumeM3);
+            tank = accepted.tank;
+            aquiferState = accepted.state;
+          }
         }
       } catch (RuntimeException failure) {
-        throw new IllegalStateException(
-            "History interval " + row + " at volume " + initialVolumeM3 + " m3: " + failure.getMessage(), failure);
+        throw new IllegalStateException("History interval " + row + ", substep " + substep + " at volume "
+            + initialVolumeM3 + " m3: " + failure.getMessage(), failure);
       }
       if (aquifer != null) {
         aquiferPressures[row + 1] = aquiferState.getPressureBara();
@@ -568,7 +741,46 @@ public final class CompositionalReservoirHistory implements Serializable {
       throw new IllegalStateException("Non-finite pressure objective");
     }
     return new Result(initialVolumeM3, times, pressures, inventories, residuals, calibration, holdout, aquiferPressures,
-        waterInflux, tank.getReservoirFluid());
+        waterInflux, tank.getReservoirFluid(), production, components);
+  }
+
+  /**
+   * Evaluates explicit start-state equilibrium-phase withdrawals in EOS component order.
+   *
+   * @param fluid accepted substep start state
+   * @param amounts gas/oil/aqueous interval totals in mol
+   * @param subdivisions equal-rate subdivision count
+   * @return withdrawn component mol for this substep
+   */
+  private static double[] phaseWithdrawals(SystemInterface fluid, double[] amounts, int subdivisions) {
+    String[] names = {"gas", "oil", "aqueous"};
+    double[] produced = new double[fluid.getNumberOfComponents()];
+    for (int p = 0; p < names.length; p++) {
+      double amount = amounts[p] / subdivisions;
+      if (amount == 0.0) {
+        continue;
+      }
+      if (!fluid.hasPhaseType(names[p])) {
+        throw new IllegalStateException("Requested produced phase is absent: " + names[p]);
+      }
+      PhaseInterface phase = fluid.getPhase(names[p]);
+      if (amount > phase.getNumberOfMolesInPhase()) {
+        throw new IllegalStateException("Requested produced phase exceeds available inventory: " + names[p]);
+      }
+      double sum = 0.0;
+      for (int i = 0; i < produced.length; i++) {
+        double fraction = phase.getComponent(i).getx();
+        if (!Double.isFinite(fraction) || fraction < 0.0) {
+          throw new IllegalStateException("Invalid produced phase composition");
+        }
+        sum += fraction;
+        produced[i] += amount * fraction;
+      }
+      if (Math.abs(sum - 1.0) > 1.0e-8) {
+        throw new IllegalStateException("Produced phase composition is not normalized");
+      }
+    }
+    return produced;
   }
 
   /**

@@ -57,6 +57,10 @@ Water mixing, dissolution, salinity, water chemistry, rock expansion and thermal
 balances are not added by this approximation. Use a different qualified model when
 those effects matter.
 
+For opt-in [phase-selective withdrawals](reservoir_phase_production.md), the aquifer
+is coupled on each explicit extraction substep. Only tracked EOS aqueous fluid
+can be selected for production; segregated support water remains separate.
+
 Each accepted result retains initial/end reservoir pressures, average aquifer
 pressures, cumulative aquifer volume, times and tracked component amounts.
 Reject a nonpositive remaining fluid volume, unavailable components, negative
