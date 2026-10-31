@@ -8,7 +8,6 @@ import neqsim.pvtsimulation.simulation.ConstantVolumeDepletion;
 import neqsim.pvtsimulation.simulation.DepletionSnapshot;
 import neqsim.pvtsimulation.simulation.DifferentialLiberation;
 import neqsim.pvtsimulation.util.MaterialBalancePvtHistory.Path;
-import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -392,30 +391,6 @@ public final class DepletionPvtHistoryGenerator {
       }
     }
 
-    /**
-     * Accounts every stock-tank phase, including condensate from separator offgas.
-     *
-     * @param fluid fully flashed standard-condition output
-     */
-    private void addStandard(SystemInterface fluid) {
-      for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
-        PhaseInterface phase = fluid.getPhase(p);
-        double volume = phase.getCorrectedVolume();
-        if (!positive(volume)) {
-          throw new IllegalStateException("Nonpositive separator output phase volume");
-        }
-        if ("gas".equals(phase.getType().getDesc())) {
-          gas += volume;
-        } else if ("oil".equals(phase.getType().getDesc())) {
-          oil += volume;
-        } else {
-          throw new IllegalStateException("Only gas/oil surface phases are supported");
-        }
-        for (int i = 0; i < components.length; i++) {
-          components[i] += phase.getNumberOfMolesInPhase() * phase.getComponent(i).getx();
-        }
-      }
-    }
   }
 
   /**
@@ -443,36 +418,18 @@ public final class DepletionPvtHistoryGenerator {
    * @return both surface product volumes and exact native-component accounting
    */
   private static Surface separate(SystemInterface feed, double[] pressures, double[] temperatures) {
-    SystemInterface current = copy(feed);
-    double[] initial = inventory(current);
-    Surface outputs = new Surface(initial.length);
-    for (int stage = 0; stage < pressures.length; stage++) {
-      current.setPressure(pressures[stage]);
-      current.setTemperature(temperatures[stage]);
-      flash(current);
-      if (current.hasPhaseType("aqueous") || current.getNumberOfPhases() > 2) {
-        throw new IllegalStateException("Unsupported separator phase topology");
-      }
-      if (stage == pressures.length - 1) {
-        outputs.addStandard(current);
-        break;
-      }
-      if (current.hasPhaseType("gas")) {
-        SystemInterface gas = extract(current, current.getPhaseNumberOfPhase("gas"));
-        gas.setPressure(1.01325);
-        gas.setTemperature(288.15);
-        flash(gas);
-        outputs.addStandard(gas);
-      }
-      if (!current.hasPhaseType("oil")) {
-        break;
-      }
-      current = extract(current, current.getPhaseNumberOfPhase("oil"));
+    PvtSeparatorPath.Result separated = new PvtSeparatorPath(pressures, temperatures,
+        "Depletion generator fixed 1.01325 bara / 288.15 K separator basis").separate(feed);
+    Surface outputs = new Surface(feed.getNumberOfComponents());
+    double[] volumes = separated.getVolumesM3();
+    if (volumes[2] != 0.0) {
+      throw new IllegalStateException("Only gas/oil surface phases are supported");
     }
-    for (int i = 0; i < initial.length; i++) {
-      if (Math.abs(initial[i] - outputs.components[i]) > 1.0e-8 * Math.max(1.0, initial[i])) {
-        throw new IllegalStateException("Separator native component balance failed at component " + i);
-      }
+    outputs.gas = volumes[0];
+    outputs.oil = volumes[1];
+    double[][] amounts = separated.getComponentMoles();
+    for (int i = 0; i < outputs.components.length; i++) {
+      outputs.components[i] = amounts[0][i] + amounts[1][i];
     }
     return outputs;
   }

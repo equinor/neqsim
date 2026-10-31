@@ -53,6 +53,10 @@ before gas removal and retained liquid afterwards. Component withdrawals are
 differences between consecutive retained inventories, including the original
 sample for the first step. Solver results are unchanged when recording is used.
 
+The separator calculation is shared with `PvtSeparatorPath`; see
+[phase-selective production and surface accounting](reservoir_phase_production.md).
+The generator retains its existing dry/two-hydrocarbon-phase restrictions.
+
 The generator interprets oil and gas from each actual equilibrium snapshot
 through the same surface process. Reservoir and surface volumes consistently
 include the EOS volume correction. Formation factors are reservoir m3/Sm3,
