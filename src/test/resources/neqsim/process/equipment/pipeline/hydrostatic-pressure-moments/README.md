@@ -128,3 +128,26 @@ inlet refill, complete rollback, local heavy-component enrichment, heat supply a
 multicomponent transfer rates remain necessary. Only after those pass can the fixed rich-gas
 example supply pool inventories/levels versus elapsed time and mesh/time refinement. This record
 contains no pool positions, imposed pool volumes or predictive evaporation time.
+
+
+## Independent analytical-series follow-up
+
+An additional [stdlib-only executable auditor](independent-series/audit.py) evaluates the exact
+published Java geometry blob `550330da7ad6226d80819ade11d88d9a0a70a564` against an independent
+80-digit Decimal binomial expansion of the circular chord. Each power integrates analytically;
+pi is calculated with Machin's arctangent formula. This differs from both production Gauss
+quadrature and the original angular Simpson reference. Run the script with Python 3 from any
+working directory in the checkout; it compiles a temporary read-only Java 8 API probe and writes
+all inputs, native outputs, references and errors beside the script. No external Python package
+or Maven dependency is needed. Java 17 execution is not a Java 8 runtime qualification.
+
+The [222 retained controls](independent-series/audit.csv) span six diameters
+(0.001/0.01/0.2/1.0148/3/10 m), exact absence/fullness, ordinary depths and traces down to h/D=1e-16.
+The original `1e-14 D³ + 1e-10 abs(reference)` moment gate passes unchanged. Maximum normalized
+absolute moment error is **7.413e-17 D³**. Observed minority-moment and minority-area relative errors
+are **4.850e-16** and **6.418e-16**, respectively; these are observations, not newly fitted acceptance
+limits. Increasing the independent series from 100 to 160 terms changes moments by at most
+**1.469e-38 D³**. [Raw native values](independent-series/native.csv),
+[inputs](independent-series/inputs.csv) and [summary](independent-series/summary.json) are complete.
+No defect requiring a runtime/API change was found. The new evidence remains static geometry;
+it adds no elapsed retention, dynamic area or evaporation-rate qualification.
