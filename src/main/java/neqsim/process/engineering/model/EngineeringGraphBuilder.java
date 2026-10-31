@@ -329,9 +329,8 @@ public final class EngineeringGraphBuilder {
       String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.SCENARIO, scenario.getId());
       EngineeringNode node = new EngineeringNode(nodeId, EngineeringNode.Kind.SCENARIO, scenario.getId(),
           scenario.getName()).putProperty("definition", scenario.toMap())
-          .putProperty("engineeringApprovalRequired", Boolean.TRUE)
-          .addProvenance(new EngineeringProvenance("EXECUTABLE_SCENARIO", scenario.getId())
-              .setMethod("DynamicSafetyScenario"));
+          .putProperty("engineeringApprovalRequired", Boolean.TRUE).addProvenance(
+              new EngineeringProvenance("EXECUTABLE_SCENARIO", scenario.getId()).setMethod("DynamicSafetyScenario"));
       for (String evidenceReference : scenario.getEvidenceReferences()) {
         node.addProvenance(new EngineeringProvenance("EVIDENCE", evidenceReference));
       }
@@ -370,9 +369,9 @@ public final class EngineeringGraphBuilder {
       EngineeringNode resultNode = new EngineeringNode(resultNodeId, EngineeringNode.Kind.SCENARIO_RESULT,
           result.getScenarioId(), result.getScenarioId() + " execution result").putProperty("result", result.toMap())
           .putProperty("passed", Boolean.valueOf(result.isPassed()))
-          .putProperty("engineeringApprovalRequired", Boolean.TRUE)
-          .addProvenance(new EngineeringProvenance("SIMULATION_RESULT",
-              project.getProjectId() + "@" + project.getRevision()).setMethod("DynamicSafetyScenarioRunner"));
+          .putProperty("engineeringApprovalRequired", Boolean.TRUE).addProvenance(
+              new EngineeringProvenance("SIMULATION_RESULT", project.getProjectId() + "@" + project.getRevision())
+                  .setMethod("DynamicSafetyScenarioRunner"));
       graph.addNode(resultNode);
       addEdge(graph, EngineeringEdge.Kind.CONTAINS, projectNodeId, resultNodeId, "dynamicSafetyScenarioResult");
       addEdge(graph, EngineeringEdge.Kind.GENERATED_FROM, resultNodeId, scenarioNodeId, "executableDefinition");
