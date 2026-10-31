@@ -218,11 +218,13 @@ class TutorialCookbookExamplesDocumentationContractTest(unittest.TestCase):
         self.assertIn('requires-python = ">=3.11"', pyproject)
         self.assertIn("requires Java 17 or newer", quickstart)
         self.assertIn("neqsim report .", report)
+        self.assertIn("Install JDK 17+ and set `JAVA_HOME`", page)
         self.assertIn('print("Usage: neqsim report [TASK_DIR]', cli)
 
         for stale in (
             "Python 3.8+",
             "Java JDK 8+",
+            "Install JDK 8+",
             "python step3_report/generate_report.py",
             "python -m pip install python-docx matplotlib",
         ):
