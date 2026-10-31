@@ -146,6 +146,52 @@ solver counters limit interpretation. Larger mixtures/allocation and matched
 baseline/candidate code optimization remain distinct campaign gates. No timing
 assertion can weaken physical, numerical or state-isolation checks.
 
+## Declared pure-CO2 prerequisite
+
+The independent auditor `devtools/audit_huron_vidal_pure_co2.py` solves the
+SRK/PR cubic independently in reduced volume and equates fugacities between
+separate mechanically stable roots. It checks EOS pressure closure and refines
+each volume by bisection. The 24 retained independent rows cover the three
+configurations above at216.592,220,230,250,273.15,290,298.15 and301K.
+`pure-co2-reference.csv` is the exact executable projection; the full independent
+results, correlation coefficients/provenance and native results are retained
+beside it. No interaction parameter contributes to this pure-fluid calculation.
+
+The reference is CoolProp's CO2 saturation-pressure ancillary at pinned commit
+`626c95bc670b58ce64603907ed3fc192f946d4f2`, file
+`dev/fluids/CarbonDioxide.json`, `ANCILLARIES.pS`, associated with the
+Span/Wagner1996 EOS (DOI10.1063/1.555991). This evaluates the published repository
+correlation, not the full Helmholtz EOS or direct experimental observations.
+Its declared maximum fit deviation0.0010595686337877552% is not experimental
+uncertainty and is never an accuracy acceptance threshold. Profile pressure
+AARD versus this correlation is0.776385% (PR2016/library),0.200005%
+(SRK2017/declared) and0.198095% (PR2017/declared). No coefficients were fitted.
+
+The native JUnit method runs384 saturations:24 reference rows × two rules ×
+two initial pressures(0.1/100bara) × fresh/repeated/changed/returned states.
+The changed temperature is the next retained temperature of the same profile,
+wrapping at the end; it is not a fixed nearby-temperature experiment. Every
+endpoint must have two distinct stable roots, EOS pressure closure5e-7bara,
+log-fugacity equality1e-8 and independent saturation-pressure agreement5e-8
+relative. These use the existing pure-saturation numerical contracts.
+After saturation, equal0.5/0.5 phase amounts at unchanged T/P resolve mole
+finite differences; pure coexistence does not determine a phase fraction.
+All five native identities(1e-8), `checkNumerically`(1e-6) and byte-identical
+source serialization are asserted for every endpoint. No checker/tolerance was
+modified. The observed maximum native/independent relative pressure difference
+is5.69e-14, EOS pressure error8.85e-13bara and log-fugacity error1.15e-14;
+the reference comparison remains a physical diagnostic, not a fit
+or qualification of mixture partition.
+
+Run the JUnit method `declaredPureCo2PressuresMatchIndependentRoots`, then
+`python3 devtools/audit_huron_vidal_pure_co2.py --native target/hv-co2-native/pure-co2.csv`.
+The auditor preserves every row and rejects mismatched profiles/temperatures,
+projection values or incomplete native output. Below the triple point, solids,
+ice/brine, hydrate dissociation and mixture extrapolation are outside this
+pure-fluid test. The216.592K point is the reference triple-point endpoint;
+solid equilibrium is not calculated. Original-author pure-input reconstruction
+and bidirectional mixture acceptance remain open.
+
 ## Retained binary characterization on master9975919e
 
 The four-fork rule2/rule4 experiment contains72 JVMs/720 rounds/4824000
