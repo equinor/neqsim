@@ -229,8 +229,26 @@ class TwoFluidPipeConservativeQualificationTest {
     assertTrue(energy.isWithinTolerance(1.0e-6, 1.0e-7), "First-law residual is " + energy.getResidualJ());
     assertTrue(energy.getMaxRelativeVolumeResidual() < 1.0e-7);
     assertTrue(energy.getMaxRelativeThermodynamicEnergyResidual() < 1.0e-7);
+    double[] inletPhaseEnergy = energy.getInletPhaseAdvectedEnergyJ();
+    double[] outletPhaseEnergy = energy.getOutletPhaseAdvectedEnergyJ();
+    assertEquals(energy.getInletAdvectedEnergyJ(), inletPhaseEnergy[0] + inletPhaseEnergy[1] + inletPhaseEnergy[2],
+        1.0e-10);
+    assertEquals(energy.getOutletAdvectedEnergyJ(), outletPhaseEnergy[0] + outletPhaseEnergy[1] + outletPhaseEnergy[2],
+        1.0e-10);
     TwoFluidComponentConservationReport components = pipe.getLastComponentConservationReport();
     assertTrue(components.isConverged(), components.getMessage());
+    for (int component = 0; component < components.getComponentNames().length; component++) {
+      double inletPhaseMass = components
+          .getInletBoundaryMassKg(TwoFluidComponentConservationReport.Phase.GAS)[component]
+          + components.getInletBoundaryMassKg(TwoFluidComponentConservationReport.Phase.OIL)[component]
+          + components.getInletBoundaryMassKg(TwoFluidComponentConservationReport.Phase.WATER)[component];
+      double outletPhaseMass = components
+          .getOutletBoundaryMassKg(TwoFluidComponentConservationReport.Phase.GAS)[component]
+          + components.getOutletBoundaryMassKg(TwoFluidComponentConservationReport.Phase.OIL)[component]
+          + components.getOutletBoundaryMassKg(TwoFluidComponentConservationReport.Phase.WATER)[component];
+      assertEquals(components.getInletBoundaryMassKg()[component], inletPhaseMass, 1.0e-12);
+      assertEquals(components.getOutletBoundaryMassKg()[component], outletPhaseMass, 1.0e-12);
+    }
     for (TwoFluidMassBalanceReport.Phase phase : TwoFluidMassBalanceReport.Phase.values()) {
       assertEquals(0.0, pipe.getLastMassBalanceReport().getResidualKg(phase), 1.0e-10);
     }

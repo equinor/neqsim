@@ -74,7 +74,8 @@
       "apis": [
         "neqsim.pvtsimulation.util.CompositionalReservoirHistory",
         "neqsim.process.equipment.reservoir.SimpleReservoir",
-        "neqsim.pvtsimulation.util.CalibratedPvtModel"
+        "neqsim.pvtsimulation.util.CalibratedPvtModel",
+        "neqsim.pvtsimulation.util.PvtSeparatorPath"
       ],
       "skills": [
         "neqsim-eos-regression",
@@ -84,9 +85,11 @@
         "field-development"
       ],
       "testSources": [
-        "src/test/java/neqsim/pvtsimulation/util/CompositionalReservoirHistoryTest.java"
+        "src/test/java/neqsim/pvtsimulation/util/CompositionalReservoirHistoryTest.java",
+        "src/test/java/neqsim/pvtsimulation/util/PhaseWithdrawalReservoirHistoryTest.java",
+        "src/test/java/neqsim/pvtsimulation/util/PvtSeparatorPathTest.java"
       ],
-      "limitations": "Discovery and inspectApi only; instance-based Java/Python API. Isothermal fixed-volume tank with measured named component mol per interval, frozen laboratory EOS and fixed initial gas/oil/water volume fractions. Bounded fitting changes total initial pore volume only, with independent supplied pressure sigma and held-out pressures excluded. Injection species must already exist in the accepted EOS. Rejects overdrawn components and failed volume closure. Prescribed produced GOR/composition is not independent validation. Synthetic/ideal-limit/direct-EOS tests are not public field/laboratory qualification. No aquifer or rock support, thermal/spatial model, correlated pressure errors, PVT/history uncertainty, confidence intervals, Bayesian posterior or recoverable-reserves estimate."
+      "limitations": "Discovery and inspectApi only; instance-based Java/Python API. Frozen laboratory EOS, fixed-temperature pore volume and supplied initial phase fractions. Original measured-component mode preserves prescribed composition. Opt-in equilibrium-phase molar extraction predicts produced component amounts using explicit substeps; refine pressure/composition/outputs and reject unavailable or exhausted phases. PvtSeparatorPath gives component-conservative equilibrium surface products on an explicit final T/P basis, retaining offgas condensate and water. No inferred phase rates, relative permeability, well deliverability or measured surface-rate inversion. Pressure-only bounded volume matching/heldouts and optional segregated finite aquifer retain their existing limits; aquifer water cannot be produced as EOS aqueous phase. Synthetic/analytical/direct-EOS checks are not independent public laboratory-to-field or measured produced-phase validation. No EOS retuning, rock/thermal/spatial model, correlated-error inference or recoverable-reserves claim."
     },
     {
       "id": "pvt-fluid-study-report",

@@ -29,6 +29,8 @@ public final class TwoFluidComponentTransport implements Serializable {
   private double[] intervalInletMassKg;
   private double[] intervalOutletMassKg;
   private double[] intervalOutboundMassKg;
+  private double[][] intervalInletPhaseMassKg;
+  private double[][] intervalOutletPhaseMassKg;
   private double[][] intervalInterphaseTransferKg;
   private double[][][] intervalCellInterphaseTransferKg;
   private double intervalLatentHeatEnergyJ;
@@ -102,6 +104,8 @@ public final class TwoFluidComponentTransport implements Serializable {
     intervalInletMassKg = accepted.intervalInletMassKg.clone();
     intervalOutletMassKg = accepted.intervalOutletMassKg.clone();
     intervalOutboundMassKg = accepted.intervalOutboundMassKg.clone();
+    intervalInletPhaseMassKg = copyMatrix(accepted.intervalInletPhaseMassKg);
+    intervalOutletPhaseMassKg = copyMatrix(accepted.intervalOutletPhaseMassKg);
     intervalInterphaseTransferKg = new double[PHASE_COUNT][];
     for (int phase = 0; phase < PHASE_COUNT; phase++) {
       intervalInterphaseTransferKg[phase] = accepted.intervalInterphaseTransferKg[phase].clone();
@@ -168,6 +172,8 @@ public final class TwoFluidComponentTransport implements Serializable {
     intervalInletMassKg = new double[componentNames.length];
     intervalOutletMassKg = new double[componentNames.length];
     intervalOutboundMassKg = new double[componentNames.length];
+    intervalInletPhaseMassKg = new double[PHASE_COUNT][componentNames.length];
+    intervalOutletPhaseMassKg = new double[PHASE_COUNT][componentNames.length];
     intervalInterphaseTransferKg = new double[PHASE_COUNT][componentNames.length];
     intervalCellInterphaseTransferKg = new double[cellCount][PHASE_COUNT][componentNames.length];
     intervalLatentHeatEnergyJ = 0.0;
@@ -274,6 +280,8 @@ public final class TwoFluidComponentTransport implements Serializable {
     intervalInletMassKg = candidate.intervalInletMassKg;
     intervalOutletMassKg = candidate.intervalOutletMassKg;
     intervalOutboundMassKg = candidate.intervalOutboundMassKg;
+    intervalInletPhaseMassKg = candidate.intervalInletPhaseMassKg;
+    intervalOutletPhaseMassKg = candidate.intervalOutletPhaseMassKg;
     intervalInterphaseTransferKg = candidate.intervalInterphaseTransferKg;
     intervalCellInterphaseTransferKg = candidate.intervalCellInterphaseTransferKg;
     intervalLatentHeatEnergyJ = candidate.intervalLatentHeatEnergyJ;
@@ -285,6 +293,10 @@ public final class TwoFluidComponentTransport implements Serializable {
     requireFiniteValues(intervalInletMassKg);
     requireFiniteValues(intervalOutletMassKg);
     requireFiniteValues(intervalOutboundMassKg);
+    for (int phase = 0; phase < PHASE_COUNT; phase++) {
+      requireFiniteValues(intervalInletPhaseMassKg[phase]);
+      requireFiniteValues(intervalOutletPhaseMassKg[phase]);
+    }
     for (double[] transfer : intervalInterphaseTransferKg) {
       requireFiniteValues(transfer);
     }
@@ -900,11 +912,13 @@ public final class TwoFluidComponentTransport implements Serializable {
         updated[face - 1][phase][component] -= transportedMassKg;
       } else {
         intervalInletMassKg[component] += transportedMassKg;
+        intervalInletPhaseMassKg[phase][component] += transportedMassKg;
       }
       if (face < cellCount) {
         updated[face][phase][component] += transportedMassKg;
       } else {
         intervalOutletMassKg[component] += transportedMassKg;
+        intervalOutletPhaseMassKg[phase][component] += transportedMassKg;
         intervalOutboundMassKg[component] += transportedMassKg;
       }
     }
@@ -927,6 +941,7 @@ public final class TwoFluidComponentTransport implements Serializable {
         double transportedMassKg = timeStepSeconds * phaseFlowKgS * donorFractions[component];
         updated[cellCount - 1][phase][component] += transportedMassKg;
         intervalOutletMassKg[component] -= transportedMassKg;
+        intervalOutletPhaseMassKg[phase][component] -= transportedMassKg;
       }
       return;
     }
@@ -1133,7 +1148,8 @@ public final class TwoFluidComponentTransport implements Serializable {
         intervalInitialInventoryKg, finalInventory, intervalInletMassKg, intervalOutletMassKg, residual,
         relativeResidual, maximumRelativeResidual, finalPhaseInventory, intervalInterphaseTransferKg,
         maximumTransferResidualKg, profiles, minimumFraction, maximumFraction, maximumSumError,
-        maximumPhaseMassSynchronizationErrorKg, intervalLatentHeatEnergyJ, converged, message);
+        maximumPhaseMassSynchronizationErrorKg, intervalLatentHeatEnergyJ, intervalInletPhaseMassKg,
+        intervalOutletPhaseMassKg, converged, message);
   }
 
   /**
@@ -1598,6 +1614,14 @@ public final class TwoFluidComponentTransport implements Serializable {
       for (int second = 0; second < values[first].length; second++) {
         result[first][second] = Arrays.copyOf(values[first][second], values[first][second].length);
       }
+    }
+    return result;
+  }
+
+  private static double[][] copyMatrix(double[][] values) {
+    double[][] result = new double[values.length][];
+    for (int row = 0; row < values.length; row++) {
+      result[row] = Arrays.copyOf(values[row], values[row].length);
     }
     return result;
   }

@@ -48,6 +48,19 @@ class ConservativeEnergyTransportTest {
     }
   }
 
+  /** Pressure-correction energy keeps each phase contribution for conservative network routing. */
+  @Test
+  void phaseResolvedBoundaryTransfersPreserveCountercurrentSigns() {
+    double[][] state = {{1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 100.0}};
+    double[][] boundary = ConservativeEnergyTransport.applyPhaseResolvedFaceTransfers(state,
+        new double[][] {{0.2, -0.1, 0.0}, {0.0, 0.0, 0.0}}, new double[][] {{1000.0, 2000.0, Double.NaN}},
+        new double[] {1000.0, 3000.0, Double.NaN}, new double[] {2.0});
+    assertArrayEquals(new double[] {200.0, -200.0, 0.0}, boundary[0], 0.0);
+    assertArrayEquals(new double[3], boundary[1], 0.0);
+    assertEquals(100.0, state[0][6], 0.0,
+        "Equal-and-opposite phase energy must leave the aggregate conservative energy unchanged");
+  }
+
   /** Unsupported reverse outlet flow cannot partially apply an earlier valid internal transfer. */
   @Test
   void outletBackflowRejectsWithoutChangingAnyCellEnergy() {

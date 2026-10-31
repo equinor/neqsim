@@ -131,6 +131,31 @@ class TwoFluidComponentOutletTest {
     }
   }
 
+  /** Opposite signed phase transfers must remain visible instead of cancelling in a mixture total. */
+  @Test
+  void phaseResolvedOutletLedgerRetainsCountercurrentComponentTransport() {
+    SystemInterface fluid = fluid(false);
+    TwoFluidSection[] cells = cells();
+    TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, cells);
+    cells[0].setGasMassPerLength(cells[0].getGasMassPerLength() - 0.02);
+    cells[0].setOilMassPerLength(cells[0].getOilMassPerLength() + 0.01);
+    transport.advance(0.1, new double[][] {{0.0, 0.0, 0.0}, {0.2, -0.1, 0.0}}, new double[1][3], cells, fluid, fluid,
+        fluid, 1.0e-8);
+
+    TwoFluidComponentConservationReport report = transport.createReport(0.1, 1, 1.0e-8);
+    assertTrue(report.isConverged(), report.getMessage());
+    assertEquals(0.02, sum(report.getOutletBoundaryMassKg(TwoFluidComponentConservationReport.Phase.GAS)), 1.0e-12);
+    assertEquals(-0.01, sum(report.getOutletBoundaryMassKg(TwoFluidComponentConservationReport.Phase.OIL)), 1.0e-12);
+    assertEquals(0.0, sum(report.getOutletBoundaryMassKg(TwoFluidComponentConservationReport.Phase.WATER)), 0.0);
+    assertEquals(0.01, sum(report.getOutletBoundaryMassKg()), 1.0e-12);
+    for (int component = 0; component < report.getComponentNames().length; component++) {
+      double phaseSum = report.getOutletBoundaryMassKg(TwoFluidComponentConservationReport.Phase.GAS)[component]
+          + report.getOutletBoundaryMassKg(TwoFluidComponentConservationReport.Phase.OIL)[component]
+          + report.getOutletBoundaryMassKg(TwoFluidComponentConservationReport.Phase.WATER)[component];
+      assertEquals(report.getOutletBoundaryMassKg()[component], phaseSum, 1.0e-15);
+    }
+  }
+
   /** A missing reversed-outlet donor must reject without changing accepted component state. */
   @Test
   void reversedOutletWithoutDonorRollsBackComponentCandidate() {
