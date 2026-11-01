@@ -743,11 +743,17 @@ Base class for stream-based measurement devices.
 
 ## Physical-step sample and hold
 
-`PressureTransmitter` and the total-vessel-level `LevelTransmitter` support an additive physical-step sampling mode that
-is disabled by default. When explicitly enabled and registered with a `ProcessSystem`, each advances its fault, noise,
-first-order filter and discrete-delay state once per physical-step UUID using the actual timestep. Controllers, history
-and alarm evaluation reuse the same held sample. This removes read-count dependence from qualified transient studies
-while preserving legacy direct-read behaviour for existing models and all unaudited instrument families.
+`PressureTransmitter`, `TemperatureTransmitter` and the total-vessel-level `LevelTransmitter` support an additive
+physical-step sampling mode that is disabled by default. When explicitly enabled and registered with a `ProcessSystem`,
+each advances its fault, noise, first-order filter and discrete-delay state once per physical-step UUID using the actual
+timestep. Controllers, history and alarm evaluation reuse the same held sample. This removes read-count dependence from
+qualified transient studies while preserving legacy direct-read behaviour for existing models and all unaudited
+instrument families.
+
+For temperature loops, configure the transmitter unit before enabling sampling. The held value retains that engineering
+unit and `getTransientSample(String)` performs explicit temperature conversion. The scan is a simulation contract, not
+vendor evidence for sensor accuracy, response time, diagnostic coverage, independence, voting or a safety integrity
+level.
 
 Level is the unitless total-liquid fraction returned by a `Separator` or `Tank`; it is not an oil/water interface
 measurement. The first-order filter uses the exact constant-input update
