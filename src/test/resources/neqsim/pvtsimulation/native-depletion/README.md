@@ -1,8 +1,9 @@
 # Independent native depletion qualification
 
 This is an analytical implementation check of a **declared synthetic SRK model**,
-not independent measured PVT/field accuracy. The full equilibrium-reference CVD
-check currently **fails** its frozen tolerance. Do not interpret the conditional
+not independent measured PVT/field accuracy. The historical equilibrium-reference CVD
+check below **fails** its frozen tolerance on the legacy scan. The refined native
+path now passes; see the continuation below. Do not interpret the conditional
 scan-pressure check as a pass for independently predicted saturation pressure.
 
 ## Provenance and frozen question
@@ -115,3 +116,36 @@ runtime (including interpreter/import overhead). No production simulation calls
 this audit and no simulation speed claim is made. Wet, critical-degenerate and
 phase-disappearance paths remain outside this artifact and the native API's
 qualified domain; measured laboratory-to-field acceptance remains separate.
+
+
+## Checked upper-dew refinement continuation
+
+Merged #4784 supplies the shared constant-duty pressure convergence repair;
+this continuation uses that API rather than copying its solver. The native
+handoff now enables checked refinement of the coarse scan-selected upper dew.
+The direct CVD default and modified-black-oil route retain the legacy scan.
+No equation, independent input, tolerance or legacy artifact above is changed.
+
+`refined-native-states.json` and `refined-equilibrium-reference.json` retain the
+new complete nine-state export and independent comparison. Reproduce with the
+same `NativeDepletionBenchmarkProbe.java` command, choosing the refined filename,
+then run `independent_srk.py --states refined-native-states.json --output <output>`.
+The independent script is unchanged and exits zero, including under `python3 -O`.
+Its legacy `--scan-pressure-reference` mode diagnoses only the historical states;
+it is not the reference used to accept the refined result.
+
+The native CVD maximum errors are `4.7298e-11` relative volume,
+`4.0698e-11 mol` inventory/withdrawal, `4.5297e-14` phase composition and
+`5.5512e-17 mol` closure. DLE outputs are unchanged. `RefinedCvdHandoffTest`
+compares independent algebraic depletion at 0.001/1/1000 mol and verifies the
+upper reference from three initial pressures, legacy-default preservation and
+explicit rejection of missing brackets. Original/tuned native handoff and fixed
+separator conservation remain covered by `NativeDepletionHandoffTest`.
+
+The phase-count scan is a branch locator, not the accepted equilibrium boundary.
+Refinement validates the coarse pressure bracket, nontrivial normalized phase
+compositions, feed reconstruction and component log-fugacity equality before
+reflashing the original inventory at the accepted pressure. Unsupported domains
+are rejected, not extrapolated. This resolves the declared binary native-CVD
+precision blocker only; wet/critical states, CVD disappearance tails, measured
+lab/field accuracy and the full #4740 acceptance remain open.
