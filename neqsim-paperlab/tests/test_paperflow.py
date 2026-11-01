@@ -2525,6 +2525,51 @@ class TestBookImprovementTools:
 class TestBookRenderHTML:
     """Tests for book HTML rendering (no external deps)."""
 
+    def test_numbered_citations_render_as_links(self, tmp_path):
+        """Resolved prose and table citations retain their bibliography links."""
+        from book_builder import create_book_project
+        from book_render_html import render_book_html
+        bd = create_book_project("Citation Test", n_chapters=1, books_dir=tmp_path / "books")
+        (bd / "refs.bib").write_text(
+            "@misc{alpha,\n  title={Alpha},\n  year={2026}\n}\n"
+            "@misc{beta,\n  title={Beta},\n  year={2026}\n}\n",
+            encoding="utf-8",
+        )
+        (bd / "chapters" / "ch01" / "chapter.md").write_text(
+            "# Chapter 1\n\nEvidence \\cite{alpha,beta}; pressure <5 bara.\n\n"
+            "| Source |\n|---|\n| \\cite{alpha} |\n",
+            encoding="utf-8",
+        )
+        html = Path(render_book_html(bd)).read_text(encoding="utf-8")
+        assert html.count('<a href="#ref-1" class="cite">1</a>') == 2
+        assert '<a href="#ref-2" class="cite">2</a>' in html
+        assert 'id="ref-1"' in html
+        assert 'id="ref-2"' in html
+        assert "&lt;a href=" not in html
+        assert "pressure &lt;5 bara" in html
+
+    @pytest.mark.parametrize("markup", [
+        '<a href="https://example.com" class="cite">1</a>',
+        '<a href="#ref-1" class="cite" onclick="bad()">1</a>',
+        '<a href="#ref-1" class="cite">2</a>',
+        '<a href="#ref-1" class="cite"><script>bad()</script></a>',
+    ])
+    def test_citation_preservation_does_not_allow_arbitrary_html(self, markup):
+        """Only the exact generated numbered-link shape bypasses prose escaping."""
+        from book_render_html import _inline_fmt
+        rendered = _inline_fmt(markup)
+        assert "<a " not in rendered
+        assert "<script>" not in rendered
+        assert "&lt;a " in rendered
+
+    def test_numbered_citation_in_code_remains_literal(self):
+        """Citation-looking markup inside code is escaped instead of linked."""
+        from book_render_html import _inline_fmt
+        rendered = _inline_fmt('`<a href="#ref-1" class="cite">1</a>`')
+        assert rendered.startswith("<code>&lt;a ")
+        assert '<a href="#ref-1"' not in rendered
+        assert rendered.endswith("</code>")
+
     def test_render_produces_html(self, tmp_path):
         """render_book_html produces an .html file."""
         from book_builder import create_book_project
@@ -3115,4 +3160,3 @@ class TestListJournals:
         assert "fluid_phase_equilibria" in out
         assert "achemso" in out  # at least one ACS profile listed
         assert f"{n_profiles} journal profiles total" in out
-

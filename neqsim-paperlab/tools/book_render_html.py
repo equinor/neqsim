@@ -1848,8 +1848,9 @@ def _inline_fmt(text):
     """Apply inline formatting and escape prose safely.
 
     The renderer accepts normal manuscript text, inline code, inline math,
-    Markdown links, and Markdown autolinks. Raw angle brackets in prose must be
-    escaped so expressions such as ``<5%`` do not become malformed HTML.
+    Markdown links, Markdown autolinks, and generated numbered citation links.
+    Raw angle brackets in prose must be escaped so expressions such as ``<5%``
+    do not become malformed HTML.
     """
     placeholders = []
 
@@ -1883,6 +1884,11 @@ def _inline_fmt(text):
         lambda m: stash("<{}>{}</{}>".format(m.group(1), _esc(m.group(2)), m.group(1))),
         text,
         flags=re.IGNORECASE,
+    )
+    text = re.sub(
+        r'<a href="#ref-(\d+)" class="cite">\1</a>',
+        lambda m: stash(m.group(0)),
+        text,
     )
 
     # Markdown links and autolinks.
