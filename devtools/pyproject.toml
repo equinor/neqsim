@@ -58,7 +58,7 @@ py-modules = [
     "new_task", "task_roots", "task_corpus", "generate_work_record", "report_design",
     "validate_task_results", "consistency_checker", "generate_sources_md",
     "pdf_to_figures", "skill_search", "agent_search", "agent_frontmatter", "bm25",
-    "discovery_registry",
+    "discovery_registry", "discipline_report_manifest",
     "ensure_on_path", "paperlab_install", "new_skill", "neqsim_doctor", "onboard",
     "neqsim_try", "neqsim_contribute", "java_locator", "doc_retriever", "stid_download",
     "process_study_report", "psr_extract", "psr_balances", "psr_basis", "psr_diagrams", "psr_report", "psr_validate", "psr_demo",
