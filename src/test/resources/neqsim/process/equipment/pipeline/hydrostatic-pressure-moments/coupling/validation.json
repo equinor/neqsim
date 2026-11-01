@@ -2,6 +2,9 @@
   "base": "0ed75c2f10d9030ec8d9270c51e4ade28f5603f8",
   "validation_start_base": "a049b0c147a7dc27999f4182fe8f7c5041614daa",
   "base_transition": "Two intervening master commits changed only plant-layout tooling and top-level compressor navigation; all files in this record are unchanged.",
+  "published_parent_head": "bfd538c46d3b64a2e02273cc02554a692febaf33",
+  "generated_inventory_head": "5d4c1ba049dd3039d91677796ca01c01c426964b",
+  "generated_inventory_note": "Repository automation appended only src/main/resources/neqsim/mcp/engineering-coverage.json. Its bot-authored push produced action_required workflow records with zero jobs, so a validation-record child commit retriggers exact-head CI without altering production source or tests.",
   "runtime": "OpenJDK 17",
   "focused_test": {
     "command": "./mvnw -q -Dtest=StratifiedPressureMomentCouplingTest test",
