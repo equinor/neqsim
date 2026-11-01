@@ -184,10 +184,12 @@ jobs:
               status=$?
             fi
             # Surefire wraps provider-download failures in MojoExecutionException.
-            # Match its resolution diagnostic, never generic execution or test failures.
+            # Include nested provider-POM descriptor errors (for example a Central HTTP 403).
+            # Match resolution diagnostics, never generic execution or test failures.
             if [ "$attempt" -eq 2 ] || ! grep -Eq \
               -e '^\[ERROR\] \[Help [0-9]+\] https?://[^ ]+/(PluginResolutionException|DependencyResolutionException)$' \
               -e '^\[ERROR\] Failed to execute goal org\.apache\.maven\.plugins:maven-surefire-plugin:[^ :]+:test .*: The following artifacts could not be resolved: org\.apache\.maven\.surefire:surefire-[[:alnum:]_-]+:jar:' \
+              -e '^\[ERROR\] Failed to execute goal org\.apache\.maven\.plugins:maven-surefire-plugin:[^ :]+:test .*: Failed to collect dependencies at org\.apache\.maven\.surefire:surefire-[[:alnum:]_-]+:jar:[^ :]+: Failed to read artifact descriptor for org\.apache\.maven\.surefire:surefire-[[:alnum:]_-]+:jar:[^ :]+: The following artifacts could not be resolved: org\.apache\.maven\.surefire:surefire-[[:alnum:]_-]+:pom:' \
               "$RUNNER_TEMP/model-spec-maven-$attempt.log"; then
               exit "$status"
             fi
@@ -317,10 +319,12 @@ jobs:
               status=$?
             fi
             # Surefire wraps provider-download failures in MojoExecutionException.
-            # Match its resolution diagnostic, never generic execution or test failures.
+            # Include nested provider-POM descriptor errors (for example a Central HTTP 403).
+            # Match resolution diagnostics, never generic execution or test failures.
             if [ "$attempt" -eq 2 ] || ! grep -Eq \
               -e '^\[ERROR\] \[Help [0-9]+\] https?://[^ ]+/(PluginResolutionException|DependencyResolutionException)$' \
               -e '^\[ERROR\] Failed to execute goal org\.apache\.maven\.plugins:maven-surefire-plugin:[^ :]+:test .*: The following artifacts could not be resolved: org\.apache\.maven\.surefire:surefire-[[:alnum:]_-]+:jar:' \
+              -e '^\[ERROR\] Failed to execute goal org\.apache\.maven\.plugins:maven-surefire-plugin:[^ :]+:test .*: Failed to collect dependencies at org\.apache\.maven\.surefire:surefire-[[:alnum:]_-]+:jar:[^ :]+: Failed to read artifact descriptor for org\.apache\.maven\.surefire:surefire-[[:alnum:]_-]+:jar:[^ :]+: The following artifacts could not be resolved: org\.apache\.maven\.surefire:surefire-[[:alnum:]_-]+:pom:' \
               "$RUNNER_TEMP/slow-test-maven-$SHARD_INDEX-$attempt.log"; then
               exit "$status"
             fi

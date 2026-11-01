@@ -375,6 +375,13 @@ cancel the Ubuntu tests or hide their diagnostics. Each job retains its Surefire
 reports as `fast-test-reports-<platform>`, including after failure when reports are
 available. The existing Java 8 dependency on the fast-test matrix is unchanged.
 
+The model-specification jobs and Java 21 slow shards retry a recognized Maven
+dependency-resolution failure once after 10 seconds, using `-U` to recheck cached
+missing releases. This includes Surefire provider downloads whose POM descriptor
+cannot be fetched from Maven Central, such as an HTTP 403 response wrapped in
+`MojoExecutionException`. A second failure retains Maven's nonzero exit status.
+Compilation failures, test failures and JVM crashes do not trigger this retry.
+
 The Windows Java 21 step interprets the EJML LU `solve` and
 `PhaseSrkCPA.initCPAMatrix` methods after retained HotSpot logs identified native
 access violations in their C2-compiled code on Temurin 21.0.12.1. The exclusions
