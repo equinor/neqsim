@@ -860,14 +860,21 @@ def _chapter_hero_html(ch_dir, ch_title):
 
     Prefers files whose names match common 'opener' hints (e.g. *_s01_*,
     overview, layout); falls back to the alphabetically-first PNG/SVG.
-    Returns an empty string when no figure exists.
+    Figures that the chapter text already places inline are skipped so a
+    figure is not shown twice. Returns an empty string when no figure exists.
     """
     fig_dir = ch_dir / "figures"
     if not fig_dir.is_dir():
         return ""
+    md_path = ch_dir / "chapter.md"
+    chapter_text = (
+        md_path.read_text(encoding="utf-8", errors="ignore")
+        if md_path.exists() else ""
+    )
     candidates = sorted(
         f for f in fig_dir.iterdir()
         if f.suffix.lower() in (".png", ".svg", ".jpg", ".jpeg", ".webp")
+        and f.name not in chapter_text
     )
     if not candidates:
         return ""
