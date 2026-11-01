@@ -1,6 +1,7 @@
 package neqsim.pvtsimulation.simulation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -97,6 +98,57 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   @Override
   public double getSaturationPressure() {
     return saturationPressure;
+  }
+
+  /**
+   * Executes the closed-mass experiment and captures absolute native states without estimating saturation.
+   *
+   * <p>
+   * The complete cell remains at every supplied pressure. No phase is removed and no saturation-normalized property is
+   * inferred. This route does not change or populate the legacy relative-volume arrays.
+   * </p>
+   *
+   * @return independently owned immutable equilibrium/retained states, in the supplied pressure order
+   * @throws IllegalArgumentException if pressures or temperature are invalid
+   * @throws IllegalStateException if a pressure-step flash or closed-mass conservation check fails
+   */
+  public DepletionSnapshot[] runNativeExpansion() {
+    if (pressures == null || pressures.length == 0) {
+      throw new IllegalArgumentException("CCE requires at least one pressure point");
+    }
+    if (!Double.isNaN(temperature)) {
+      getThermoSystem().setTemperature(temperature, temperatureUnit);
+    }
+    double[] initialInventory = DepletionSnapshot.inventory(getThermoSystem());
+    String[] names = getThermoSystem().getComponentNames();
+    if (!Double.isFinite(getThermoSystem().getTemperature()) || getThermoSystem().getTemperature() <= 0) {
+      throw new IllegalArgumentException("CCE requires a positive finite temperature");
+    }
+    DepletionSnapshot[] states = new DepletionSnapshot[pressures.length];
+    for (int row = 0; row < pressures.length; row++) {
+      if (!Double.isFinite(pressures[row]) || pressures[row] <= 0) {
+        throw new IllegalArgumentException("CCE pressures must be positive and finite");
+      }
+      getThermoSystem().setPressure(pressures[row]);
+      try {
+        thermoOps.TPflash();
+      } catch (Exception failure) {
+        throw new IllegalStateException("CCE equilibrium flash failed at " + pressures[row] + " bara", failure);
+      }
+      getThermoSystem().initProperties();
+      double[] current = DepletionSnapshot.inventory(getThermoSystem());
+      if (!Arrays.equals(names, getThermoSystem().getComponentNames())) {
+        throw new IllegalStateException("CCE component identities changed at row " + row);
+      }
+      for (int component = 0; component < current.length; component++) {
+        if (Math.abs(current[component] - initialInventory[component]) > 1e-10
+            * Math.max(1, initialInventory[component])) {
+          throw new IllegalStateException("CCE closed-mass balance failed for " + names[component] + " at row " + row);
+        }
+      }
+      states[row] = new DepletionSnapshot(getThermoSystem(), getThermoSystem(), current);
+    }
+    return states;
   }
 
   /**
