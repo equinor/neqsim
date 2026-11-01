@@ -1660,3 +1660,13 @@ are user inputs, not calibrated defaults. This is a gas/aqueous two-fluid route;
 Use `getFilmDryingStatus` with a positive residual threshold and horizon, preserve boundary
 and component ledgers, and distinguish seeded pool motion from validated terrain trapping.
 Short-time conservation, refinement and CPA equilibrium tests do not qualify 10 km drying duration.
+
+
+### Cross-sectional gravitational energy budget
+
+Use the existing `GeometryCalculator.StratifiedPressureMoments` derived centre-referenced phase
+first moments [m3] and `getGravityPotentialEnergyPerLength(gasDensity, liquidDensity, normalGravity)`
+[J/m] for an explicit static normal-gravity budget. No solver state or serialized field is added.
+See [the executed analytical/high-precision energy record](../../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/README.md).
+This does not resolve the documented dry/wet pressure impulse or qualify dynamic pools, inlet refill
+or hydrocarbon evaporation; those still require conservative phase-front transport/work and heat/mass transfer.

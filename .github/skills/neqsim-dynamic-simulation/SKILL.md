@@ -970,3 +970,13 @@ physical-step/event identities and ESD chain; no parallel scheduler or solver.
 Read the [acoustic model, accepted histories and public evidence](../../../docs/wiki/water_hammer_implementation.md#safety-shutdown-ideal-translating-check-valve)
 and hand specialist hydraulic cases to `neqsim-water-hammer`. Asset/vendor,
 phase-change, structural and integrated Safety Shutdown remain NOT_EVALUATED.
+
+
+### Cross-sectional gravitational energy budget
+
+Use the existing `GeometryCalculator.StratifiedPressureMoments` derived centre-referenced phase
+first moments [m3] and `getGravityPotentialEnergyPerLength(gasDensity, liquidDensity, normalGravity)`
+[J/m] for an explicit static normal-gravity budget. No solver state or serialized field is added.
+See [the executed analytical/high-precision energy record](../../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/README.md).
+This does not resolve the documented dry/wet pressure impulse or qualify dynamic pools, inlet refill
+or hydrocarbon evaporation; those still require conservative phase-front transport/work and heat/mass transfer.
