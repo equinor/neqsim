@@ -24,9 +24,13 @@ that a workflow invokes an LLM.
 
 The model-specification and slow-test steps retry Maven once after 10 seconds only
 when it reports a plugin or dependency resolution failure, such as a Maven Central
-HTTP 429 response. Both attempts use `-U` to recheck failed downloads. Compilation
-errors and test failures fail immediately; the retry preserves the selected tests
-and the final Maven exit status.
+HTTP 429 response. This includes Surefire's explicit unresolved-provider-artifact
+diagnostic, which Maven reports as `MojoExecutionException` instead of
+`DependencyResolutionException`. Other execution exceptions are not retryable.
+Both attempts use `-U` to recheck failed downloads. Compilation errors and test
+failures fail immediately; the retry preserves the selected tests and the final
+Maven exit status. `devtools/test_maven_resolution_retry.py` executes the actual
+workflow steps with controlled Maven outcomes in both Python CI jobs.
 
 ### Windows JVM crash workaround
 
