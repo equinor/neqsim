@@ -301,6 +301,17 @@ reevaluate the same low/high speed points with the same evaluator. The two recei
 driver row independently; a driver-limited result must never hide a negative casing-map margin, and neither receipt
 authorizes changing an OEM map or protection setting.
 
+The source-backed living acceptance also exports this pair as `map_driver_migration_evidence`. The receipt is bound
+to the living-task cycle, evaluator, continuous speed action, unit and identical sampled endpoints. It retains both
+complete slice records, the configured map-limit role and provenance, the independently refined map and driver
+boundaries, explicit map-override clearance, and complete baseline restoration. Set
+`production.require_map_driver_migration_evidence: true` when the receipt is required. The existing #4187 production
+guard reconstructs sampled transitions and every midpoint recovery gate before the proposal can enter the ledger;
+promotion then carries the unchanged receipt into `results.json` and the reviewed baseline snapshot. A changed or
+tampered constraint identity, limit role, provenance, endpoint grid, cycle ID, refinement, or restoration flag fails
+closed. This is persistence of advisory qualification evidence, not a second optimizer or permission to change an
+OEM map, driver rating, or operating set point.
+
 Use `ProcessModelDebottleneckStudy` after the evaluator and direct installed constraints are configured when one documented capacity replacement or expansion must be compared with the installed baseline. It uses the same search policy for both scenarios, freezes immutable objective/constraint/metric evidence, and restores the installed limit plus pre-study operating point. This is a paired screening study, not an equipment-sizing algorithm or economic approval.
 
 Use `ProcessModelDebottleneckRanking` after independent paired studies complete when alternatives
@@ -1389,4 +1400,5 @@ Choose based on your use case:
 - **Fixed-total continuous allocation across coupled actions** → `ProcessModelAllocationOptimizer`
 - **Mixed choke/setpoint and discrete line-up search** → `ProcessModelOperatingPointOptimizer`
 - **Model calibration** → `BatchParameterEstimator`
+
 

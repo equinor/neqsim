@@ -1,5 +1,6 @@
 package neqsim.process.util.optimizer;
 
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -12,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -296,6 +298,29 @@ public class FieldToFacilityOptimizationAcceptanceTest {
             relief.portfolio.getRankedStudies(), relief.combination, relief.envelope, current.study, current.search,
             current.slices)
         .toEvidenceJson(currentCycleId);
+  }
+
+  /**
+   * Execute the exact casing-map-to-driver boundary migration acceptance and serialize its receipt.
+   *
+   * <p>
+   * The receipt is test-scope source evidence for the existing continuous-task workflow. It contains both complete
+   * sampled/refined speed slices and is bound to the current living-task cycle. The first slice uses a reviewed
+   * configured casing-map operating restriction; the second clears that restriction, changes only the driver rating,
+   * and re-evaluates the same action and endpoints. It is advisory evidence, not an operating set point.
+   * </p>
+   *
+   * @param currentCycleId living-task cycle identifier
+   * @return strict JSON migration receipt
+   * @throws IllegalArgumentException if the cycle identifier is blank
+   */
+  public static String createMapToDriverMigrationEvidenceJson(String currentCycleId) {
+    if (currentCycleId == null || currentCycleId.trim().isEmpty()) {
+      throw new IllegalArgumentException("Map-to-driver migration cycle identifier must not be blank");
+    }
+    Map<String, Object> receipt = new FieldToFacilityOptimizationAcceptanceTest()
+        .evaluateMapToDriverMigration(currentCycleId);
+    return new GsonBuilder().disableHtmlEscaping().serializeNulls().create().toJson(receipt);
   }
 
   /** Builds two independent receipts and one jointly evaluated combination at the accepted ten-well point. */
@@ -983,6 +1008,21 @@ public class FieldToFacilityOptimizationAcceptanceTest {
    */
   @Test
   void refinesCasingMapBoundaryAndMigratesToDriverLimit() {
+    Map<String, Object> receipt = evaluateMapToDriverMigration("synthetic-map-driver-cycle");
+    assertEquals(Integer.valueOf(1), receipt.get("receipt_version"));
+    assertEquals("synthetic-map-driver-cycle", receipt.get("cycle_id"));
+    assertEquals(Boolean.TRUE, receipt.get("map_operating_limit_cleared"));
+    assertEquals(Boolean.TRUE, receipt.get("state_restore_complete"));
+    assertEquals(Boolean.TRUE, receipt.get("advisory"));
+  }
+
+  /**
+   * Evaluate and freeze the exact configured-map-to-driver boundary migration receipt.
+   *
+   * @param cycleId evidence cycle identifier
+   * @return immutable JSON-friendly receipt
+   */
+  private Map<String, Object> evaluateMapToDriverMigration(String cycleId) {
     Fixture fixture = createFixture();
     configureLifecycleCapacityLimits(fixture, 10.0);
     double minimumSpeedRpm = fixture.shaftCalculator.getMinSpeed();
@@ -1129,6 +1169,28 @@ public class FieldToFacilityOptimizationAcceptanceTest {
             .anyMatch(evidence -> qualifiedMapConstraint.equals(evidence.getQualifiedConstraintName())
                 && evidence.hasFiniteEvidence() && !evidence.hasOperatingLimit())));
     assertBaselineRestored(fixture);
+
+    Map<String, Object> receipt = new LinkedHashMap<String, Object>();
+    receipt.put("receipt_version", Integer.valueOf(1));
+    receipt.put("cycle_id", cycleId);
+    receipt.put("candidate_evaluator_id", candidates.getId());
+    receipt.put("action_id", shaftSpeed.getId());
+    receipt.put("action_unit", shaftSpeed.getUnit());
+    receipt.put("sampled_axis_values", Collections.unmodifiableList(
+        Arrays.asList(Double.valueOf(minimumSpeedRpm), Double.valueOf(maximumSpeedRpm))));
+    receipt.put("configured_map_constraint_name", qualifiedMapConstraint);
+    receipt.put("configured_map_limit", Double.valueOf(mapOperatingLimit));
+    receipt.put("configured_map_limit_role", "CONFIGURED_OPERATING");
+    receipt.put("configured_map_limit_provenance", "synthetic reviewed casing-map operating margin");
+    receipt.put("map_limited_slice", mapSlice.toEvidenceMap());
+    receipt.put("driver_constraint_name",
+        driverBoundary.getInfeasibleBoundaryConstraint().getQualifiedConstraintName());
+    receipt.put("driver_limit_kw", Double.valueOf(driverLimitKw));
+    receipt.put("map_operating_limit_cleared", Boolean.TRUE);
+    receipt.put("driver_limited_slice", driverSlice.toEvidenceMap());
+    receipt.put("state_restore_complete", Boolean.TRUE);
+    receipt.put("advisory", Boolean.TRUE);
+    return Collections.unmodifiableMap(receipt);
   }
 
   /**
@@ -1917,3 +1979,4 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     return fluid;
   }
 }
+
