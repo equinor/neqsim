@@ -151,6 +151,8 @@ def _print_usage():
                                 "Physical plant layout screening: alternatives, CAD and report (--init, --demo)"))
     print("  {:<18s} {}".format("pfd-check FILES",
                                 "Layout check of flow diagrams (overlaps, label/line collisions, crossings, arrows, tags); PASS/WARN/FAIL"))
+    print("  {:<18s} {}".format("report-manifest DIR",
+                                "Hand a solved task to project-development gates (discipline_report.v1 folder)"))
     print("  {:<18s} {}".format("work-record [DIR]",
                                 "Generate WORK_RECORD.md (method, data, file map)"))
     print("  {:<18s} {}".format("file-issue [DIR]",
@@ -671,6 +673,9 @@ def main():
     if cmd in ("process-overview", "process_overview"):
         import process_overview
         sys.exit(process_overview.main(sys.argv[2:]))
+    if cmd in ("report-manifest", "report_manifest"):
+        import discipline_report_manifest
+        sys.exit(discipline_report_manifest.main(sys.argv[2:]))
 
     if cmd == "pvt-study" and not _is_checkout() \
             and not _packaged_jar_has("neqsim/pvtsimulation/util/PVTFluidStudy.class"):

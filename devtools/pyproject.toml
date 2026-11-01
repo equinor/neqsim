@@ -55,7 +55,7 @@ neqsim = "neqsim_cli:main"
 # new_task -> task_template/ work in both.
 py-modules = [
     "neqsim_dev_setup", "neqsim_cli", "docker_runtime", "install_skill", "install_agent",
-    "new_task", "task_roots", "task_corpus", "generate_work_record", "report_design",
+    "new_task", "task_roots", "task_corpus", "generate_work_record", "report_design", "discipline_report_manifest",
     "validate_task_results", "consistency_checker", "generate_sources_md",
     "pdf_to_figures", "skill_search", "agent_search", "agent_frontmatter", "bm25",
     "discovery_registry",
