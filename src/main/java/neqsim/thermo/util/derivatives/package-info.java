@@ -1,5 +1,5 @@
 /**
- * Automatic differentiation and gradient computation for thermodynamic calculations.
+ * Implicit equilibrium sensitivities and semi-analytical property gradients for thermodynamic calculations.
  *
  * <p>
  * This package provides classes for computing and storing derivatives of thermodynamic properties with respect to
@@ -21,26 +21,14 @@
  * <li>{@link neqsim.thermo.util.derivatives.FugacityJacobian} - Jacobian matrix of fugacity coefficients</li>
  * </ul>
  *
- * <h2>Usage with Python/JAX:</h2>
- *
- * <pre>
- * {@code
- * # Define custom VJP for JAX
- * # Use @jax.custom_vjp decorator
- * def flash_density(T, P, z):
- *     # Forward: call NeqSim
- *     system = create_system(z)
- *     system.setTemperature(T)
- *     system.setPressure(P)
- *     ops.TPflash()
- *     return system.getDensity()
- *
- * def flash_density_bwd(res, g):
- *     # Backward: use NeqSim's analytical gradients
- *     grads = DifferentiableFlash(system).computePropertyGradient("density")
- *     return (g * grads.dT, g * grads.dP, g * grads.dz)
- * }
- * </pre>
+ * <p>
+ * {@link neqsim.thermo.util.derivatives.DifferentiableFlash} operates on detached current snapshots. It uses one
+ * factorized equilibrium Jacobian and local property evaluations rather than differentiating iterative solver history.
+ * Composition columns follow normalized additions (z + h e_j)/(1+h), and pressure derivatives are per bar. Batched
+ * properties share the local states. The interface requires a smooth supported fluid equilibrium; reactions, ions,
+ * liquid-liquid and three-phase splits are not supported. Machine-learning integrations must retain the returned
+ * forward-state gradients and handle unsupported states explicitly.
+ * </p>
  *
  * @author ESOL
  * @since 3.0
