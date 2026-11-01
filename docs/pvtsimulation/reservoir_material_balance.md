@@ -200,6 +200,12 @@ Measured field data do not need to be inserted into a simulated tank's recorder.
 
 ### Immutable calibration and pressure-path handoff
 
+For dry oil-only DLE or pre-dew gas-only CVD rows, use the
+[native compositional handoff](depletion_pvt_generation.md#native-compositional-handoff-through-phase-appearance).
+It retains actual native EOS states and separator products without absent-phase
+formation-factor extrapolation; it does not create a generalized black-oil table.
+Wet, critical-degenerate and CVD phase-disappearance-tail qualification remains open.
+
 Before accepting laboratory tuples, use the opt-in
 [gas-density interval consistency gate](laboratory_gas_density_consistency.md)
 when same-state gas p/T/Z/molar-mass/density data are available. The

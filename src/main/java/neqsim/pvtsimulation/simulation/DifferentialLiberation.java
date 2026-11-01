@@ -114,7 +114,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        throw new IllegalStateException("DLE equilibrium flash failed at " + pressures[i] + " bara", ex);
       }
       getThermoSystem().initPhysicalProperties();
       oilDensity[i] = getThermoSystem().getDensity("kg/m3");
@@ -130,7 +130,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
           try {
             thermoOps.TPflash();
           } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
+            throw new IllegalStateException("DLE post-saturation flash failed at " + pressures[i] + " bara", ex);
           }
         }
         gasStandardVolume[i] = getThermoSystem().getPhase(PhaseType.GAS).getMass()
@@ -177,7 +177,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
     try {
       thermoOps.TPflash();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      throw new IllegalStateException("DLE final standard-condition flash failed", ex);
     }
     getThermoSystem().initPhysicalProperties();
     VoilStd = getThermoSystem().getPhase(PhaseType.OIL).getMass()

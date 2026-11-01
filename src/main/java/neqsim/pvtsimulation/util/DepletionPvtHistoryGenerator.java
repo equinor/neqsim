@@ -1,6 +1,7 @@
 package neqsim.pvtsimulation.util;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import org.apache.commons.lang3.SerializationUtils;
 import neqsim.blackoil.BlackOilPVTTable.Record;
 import neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalance;
@@ -12,15 +13,21 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Evaluates modified black-oil PVT from the actual CVD or DLE depletion path and one fixed separator process.
+ * Evaluates native compositional or modified-black-oil evidence from an actual CVD/DLE depletion path.
  *
  * <p>
- * The Whitson-Torp phase-flash interpretation is an approximation to full component conservation. This API checks
+ * The Whitson-Torp phase-flash interpretation is an approximation to full component conservation. Its conversion checks
  * native component conservation separately, evaluates its surface oil/gas closure error, and refuses a handoff above
  * the caller's justified acceptance tolerance. It never substitutes independent original-composition flashes for a
- * depletion experiment. The supported grid has two hydrocarbon phases at every interpreted point. Water-containing
- * depletion samples, absent-phase extrapolation, critical closure, injection paths and separator changes are rejected
- * or outside this bounded model. Bw comes from a separately accepted pure-water EOS, not an invented default.
+ * depletion experiment. The modified-black-oil grid requires both hydrocarbon phases at every interpreted point.
+ * Water-containing depletion samples, absent-phase extrapolation, critical closure, injection paths and separator
+ * changes are rejected or outside this bounded model. Bw comes from a separately accepted pure-water EOS, not an
+ * invented default.
+ * </p>
+ *
+ * <p>
+ * For supported dry paths through phase appearance, {@link #replayNative} preserves actual native states and separator
+ * products instead of assigning modified-black-oil properties to an absent phase.
  * </p>
  *
  * @author Even Solbraa
@@ -30,6 +37,248 @@ public final class DepletionPvtHistoryGenerator {
 
   /** Prevents construction of this stateless evaluator. */
   private DepletionPvtHistoryGenerator() {
+  }
+
+  /**
+   * Immutable native laboratory states and surface products without absent-phase extrapolation.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  public static final class NativeResult implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final CalibratedPvtModel model;
+    private final boolean tuned;
+    private final Path path;
+    private final String reference;
+    private final PvtSeparatorPath separator;
+    private final DepletionSnapshot[] snapshots;
+    private final PvtSeparatorPath.Result[] retained;
+    private final PvtSeparatorPath.Result[] withdrawn;
+
+    /**
+     * Freezes actual completed protocol evidence.
+     *
+     * @param model original/tuned immutable checkpoints
+     * @param tuned selected checkpoint
+     * @param path actual CVD/DLE protocol
+     * @param reference whole-experiment identity
+     * @param separator immutable separator and final product basis
+     * @param snapshots native pressure-ordered states
+     * @param retained products of each retained cell
+     * @param withdrawn interval products, null for a zero withdrawal
+     */
+    private NativeResult(CalibratedPvtModel model, boolean tuned, Path path, String reference,
+        PvtSeparatorPath separator, DepletionSnapshot[] snapshots, PvtSeparatorPath.Result[] retained,
+        PvtSeparatorPath.Result[] withdrawn) {
+      this.model = model;
+      this.tuned = tuned;
+      this.path = path;
+      this.reference = reference;
+      this.separator = separator;
+      this.snapshots = snapshots.clone();
+      this.retained = retained.clone();
+      this.withdrawn = withdrawn.clone();
+    }
+
+    /**
+     * Returns both frozen model revisions.
+     *
+     * @return immutable checkpoint bundle
+     */
+    public CalibratedPvtModel getModel() {
+      return model;
+    }
+
+    /**
+     * Identifies the checkpoint replayed.
+     *
+     * @return true for tuned EOS, false for original EOS
+     */
+    public boolean isTuned() {
+      return tuned;
+    }
+
+    /**
+     * Identifies the withdrawal protocol.
+     *
+     * @return CVD or DLE
+     */
+    public Path getPath() {
+      return path;
+    }
+
+    /**
+     * Returns whole-experiment provenance.
+     *
+     * @return declared protocol identity
+     */
+    public String getPathReference() {
+      return reference;
+    }
+
+    /**
+     * Returns the fixed surface process.
+     *
+     * @return immutable separator and final volume basis
+     */
+    public PvtSeparatorPath getSeparatorPath() {
+      return separator;
+    }
+
+    /**
+     * Returns actual states without assigning absent-phase properties.
+     *
+     * @return immutable snapshots in a defensive pressure-ordered array
+     */
+    public DepletionSnapshot[] getSnapshots() {
+      return snapshots.clone();
+    }
+
+    /**
+     * Returns products of the whole retained cell.
+     *
+     * @param row pressure-step index
+     * @return immutable separated products
+     */
+    public PvtSeparatorPath.Result getRetainedProducts(int row) {
+      return retained[row];
+    }
+
+    /**
+     * Tests whether fluid was actually withdrawn.
+     *
+     * @param row pressure-step index
+     * @return false when no withdrawal exists
+     */
+    public boolean hasWithdrawal(int row) {
+      return withdrawn[row] != null;
+    }
+
+    /**
+     * Returns interval products only when a fluid withdrawal exists.
+     *
+     * @param row pressure-step index
+     * @return immutable interval, not cumulative, products
+     * @throws IllegalStateException if no fluid was withdrawn
+     */
+    public PvtSeparatorPath.Result getWithdrawalProducts(int row) {
+      if (!hasWithdrawal(row)) {
+        throw new IllegalStateException("No laboratory fluid withdrawal at row " + row);
+      }
+      return withdrawn[row];
+    }
+  }
+
+  /**
+   * Replays native dry depletion without requiring both hydrocarbon phases at every point.
+   *
+   * <p>
+   * Oil-only DLE and pre-dew gas-only CVD states retain their actual inventories. CVD requires a sampled gas/oil
+   * boundary and rejects later phase-disappearance tails pending volume-restoration qualification. Wet/other-phase
+   * samples and critical-degenerate splits remain unqualified. No absent-phase Bo/Bg/Rs/Rv, Bw, surface
+   * pseudo-component closure assumption or reservoir production prediction is supplied.
+   * </p>
+   *
+   * @param model independently calibrated original/tuned checkpoints
+   * @param tuned true for tuned EOS; false for original EOS
+   * @param path actual CVD or DLE protocol
+   * @param pathReference whole experiment/sample/protocol identity
+   * @param temperatureK experiment temperature in K
+   * @param pressuresBara complete strictly decreasing pressure schedule, bara, at least two points
+   * @param separator immutable fixed surface process and final volume basis
+   * @return native compositional evidence and physically present separator products
+   */
+  public static NativeResult replayNative(CalibratedPvtModel model, boolean tuned, Path path, String pathReference,
+      double temperatureK, double[] pressuresBara, PvtSeparatorPath separator) {
+    if (model == null || separator == null || (path != Path.CVD && path != Path.DLE) || !positive(temperatureK)
+        || pressuresBara == null || pressuresBara.length < 2) {
+      throw new IllegalArgumentException("Model, separator, CVD/DLE, temperature and complete pressure path required");
+    }
+    String reference = CalibratedPvtModel.reference(pathReference);
+    double[] pressures = pressuresBara.clone();
+    double firstSeparator = separator.getPressuresBara()[0];
+    for (int i = 0; i < pressures.length; i++) {
+      if (!positive(pressures[i]) || pressures[i] <= firstSeparator || i > 0 && pressures[i] >= pressures[i - 1]) {
+        throw new IllegalArgumentException("Pressures must decrease strictly above the separator process");
+      }
+    }
+    SystemInterface feed = tuned ? model.getTunedFluid() : model.getOriginalFluid();
+    if (Arrays.asList(feed.getComponentNames()).contains("water")) {
+      throw new IllegalArgumentException("Wet native depletion requires separate protocol qualification");
+    }
+    String[] names = feed.getComponentNames();
+    double[] initial = inventory(feed);
+    SystemInterface probe = copy(feed);
+    probe.setTemperature(temperatureK);
+    probe.setPressure(pressures[0]);
+    flash(probe);
+    if (path == Path.DLE && !probe.hasPhaseType("oil")) {
+      throw new IllegalArgumentException("DLE requires an initially present oil phase");
+    }
+    DepletionSnapshot[] snapshots = replay(feed, path, temperatureK, pressures);
+    PvtSeparatorPath.Result[] retained = new PvtSeparatorPath.Result[snapshots.length];
+    PvtSeparatorPath.Result[] withdrawn = new PvtSeparatorPath.Result[snapshots.length];
+    double[] cumulative = new double[initial.length];
+    boolean sampledTwoPhase = false;
+    for (int row = 0; row < snapshots.length; row++) {
+      DepletionSnapshot snapshot = snapshots[row];
+      SystemInterface equilibrium = snapshot.getEquilibriumFluid();
+      SystemInterface cell = snapshot.getRetainedFluid();
+      if (!Arrays.equals(names, snapshot.getComponents()) || !Arrays.equals(names, cell.getComponentNames())) {
+        throw new IllegalStateException("Native component identities changed at row " + row);
+      }
+      for (int phase = 0; phase < equilibrium.getNumberOfPhases(); phase++) {
+        String type = equilibrium.getPhase(phase).getType().getDesc();
+        if (!"gas".equals(type) && !"oil".equals(type)) {
+          throw new IllegalStateException("Unsupported native phase at row " + row);
+        }
+      }
+      boolean twoPhase = equilibrium.hasPhaseType("gas") && equilibrium.hasPhaseType("oil");
+      if (path == Path.CVD && sampledTwoPhase && !twoPhase) {
+        throw new IllegalStateException(
+            "CVD phase-disappearance tail requires separate volume-restoration qualification");
+      }
+      if (twoPhase) {
+        double distance = 0;
+        for (int i = 0; i < names.length; i++) {
+          distance += Math.abs(
+              equilibrium.getPhase("gas").getComponent(i).getx() - equilibrium.getPhase("oil").getComponent(i).getx());
+        }
+        if (distance <= 1e-8) {
+          throw new IllegalStateException("Critical-degenerate native phase split is not qualified");
+        }
+      }
+      sampledTwoPhase |= twoPhase;
+      if (path == Path.DLE && !cell.hasPhaseType("oil")) {
+        throw new IllegalStateException("DLE exhausted its retained oil at row " + row);
+      }
+      double[] amounts = snapshot.getProducedComponentMoles();
+      double[] remaining = inventory(cell);
+      double total = 0;
+      for (int i = 0; i < initial.length; i++) {
+        cumulative[i] += amounts[i];
+        total += amounts[i];
+        if (Math.abs(initial[i] - cumulative[i] - remaining[i]) > 1e-10 * Math.max(1, initial[i])) {
+          throw new IllegalStateException("Native component closure failed at row " + row + ", component " + names[i]);
+        }
+      }
+      retained[row] = separator.separate(cell);
+      if (total > 0) {
+        SystemInterface output = tuned ? model.getTunedFluid() : model.getOriginalFluid();
+        output.setTotalNumberOfMoles(total);
+        double[] composition = amounts.clone();
+        for (int i = 0; i < composition.length; i++) {
+          composition[i] /= total;
+        }
+        output.setMolarComposition(composition);
+        withdrawn[row] = separator.separate(output);
+      }
+    }
+    if (path == Path.CVD && !sampledTwoPhase) {
+      throw new IllegalStateException("Native CVD reference requires a sampled gas/oil phase boundary");
+    }
+    return new NativeResult(model, tuned, path, reference, separator, snapshots, retained, withdrawn);
   }
 
   /** Immutable protocol and approximation evidence accompanying an accepted PVT handoff. */
