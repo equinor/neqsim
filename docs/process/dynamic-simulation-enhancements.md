@@ -653,6 +653,11 @@ excursion; it is retained as a fail-loud safety limitation, not a passed
 safeguarding case. These synthetic limits qualify numerical execution only. They
 do not establish vendor response, hazard completeness, alarm/trip settings,
 independence, voting, SIL, relief adequacy or an approved control tuning.
+The cooler's physical-step UUID guard prevents double advancement inside one
+accepted step, but the cooler is not claimed here as a complete
+`TransientStateParticipant`. Do not use this chain as evidence for adaptive
+trial rejection or whole-step rollback until every equipment-owned state has
+explicit transaction coverage.
 
 Valve `autoSize(safetyFactor, designOpeningPercent)` evaluates the sizing
 correlation at the requested design opening, including when it differs from the
