@@ -65,6 +65,9 @@ bbox[x,y,w,h], texts[], style}`, `edges[] {id, from, to, points[], arrow_end, fl
 style}`, `labels[]`, `junctions[]`, `title`, `legend`, `footer`, `flow_direction`, `waivers`, `options`.
 SVG written by `psr_diagrams` (`data-tag`/`data-block` node groups, `data-stream`/`data-edge` edge groups) is parsed
 directly; other SVG is read as free shapes and text (limited checks).
+External utility/driver text uses `data-layout-kind="outside"` on its SVG text element. This identifies
+intentional outside-symbol placement; it does not waive label collisions, line-through-text, font-size
+or arrowhead checks. Keep this metadata in generated SVG rather than suppressing overflow codes globally.
 
 ## Where the gate is mandatory
 

@@ -351,7 +351,10 @@ def _draw_stream_table(sc, L, graph, fonts, style, pal, x, y, w, h):
     rows = key_stream_rows(L, graph)
     rh = fonts.height(pt) * 1.12
     no_w = max([fonts.width(r["id"], pt, True) for r in rows] + [fonts.width("No.", pt, True)]) + 2.0
-    cols = [("No.", no_w, "start"), ("Stream", w - no_w - 16.0 - 14.0 - 15.0 - 3.0, "start"), ("t/h", 16.0, "end"), ("C", 14.0, "end"),
+    mass_values = [ppo_layout._fmt_mass_number(r["mass_kg_h"] / 1000.0, 1e-6)
+                   if r["mass_kg_h"] is not None else None for r in rows]
+    mass_w = max([16.0] + [fonts.width(v or "-", pt) + 2.0 for v in mass_values])
+    cols = [("No.", no_w, "start"), ("Stream", w - no_w - mass_w - 14.0 - 15.0 - 3.0, "start"), ("t/h", mass_w, "end"), ("C", 14.0, "end"),
             ("bara", 15.0, "end")]
     yy = y + 4.0 + rh * 1.3
     xx = x + 1.5
@@ -373,7 +376,7 @@ def _draw_stream_table(sc, L, graph, fonts, style, pal, x, y, w, h):
     for r in shown:
         xx = x + 1.5
         vals = [r["id"] + ("" if r["drawn"] else " *"), fonts.wrap(r["label"], pt, cols[1][1] - 1.0, max_lines=1)[0],
-                ("%.1f" % (r["mass_kg_h"] / 1000.0)) if r["mass_kg_h"] is not None else "-",
+                (ppo_layout._fmt_mass_number(r["mass_kg_h"] / 1000.0, 1e-6) or "-") if r["mass_kg_h"] is not None else "-",
                 ("%.0f" % r["t_c"]) if r["t_c"] is not None else ("%.0f-%.0f" % tuple(r["t_range"]) if r.get("t_range") else "-"),
                 ("%.1f" % r["p_bara"]) if r["p_bara"] is not None else ("%.0f-%.0f" % tuple(r["p_range"]) if r.get("p_range") else "-")]
         for (name, cw, anchor), v in zip(cols, vals):
@@ -664,7 +667,7 @@ def build_detail_sheets(data, out_dir, tb_detail, sections, log=None):
 
 def build_overview(data, out_dir, case_id=None, title_block=None, level="overview", config=None, detail_sheets="collapsed",
                    style_overrides=None, collapse_sections=(), source_path=None, embed_svg_font=True, png_dpi=150,
-                   mono=True, presentation=True, log=None, command=None):
+                   mono=True, presentation=True, log=None, command=None, supporting_slides=True):
     """Generate the A3 overview (colour + mono), the 16:9 presentation version, detail sheets and the validation record.
 
     Args:
@@ -683,6 +686,8 @@ def build_overview(data, out_dir, case_id=None, title_block=None, level="overvie
         png_dpi: raster preview resolution.
         mono: also write monochrome variants.
         presentation: also write the 16:9 presentation adaptation.
+        supporting_slides: write validated detail slides for collapsed sections. Set False
+            to keep only the main slides; this does not disable the A3 detail PFD sheets.
         log: optional callable for progress lines.
         command: the command line that regenerates the output (recorded in the manifest).
 
@@ -767,15 +772,29 @@ def build_overview(data, out_dir, case_id=None, title_block=None, level="overvie
         _write_json(os.path.join(out_dir, "layout_16x9.json"), _layout_record(Lp, spec_p))
         _write_json(os.path.join(out_dir, "process_graph_presentation.json"), graph_p)
         supporting = []
-        for k, sid in enumerate(Lp.collapsed, start=1):
+        for k, sid in enumerate(Lp.collapsed if supporting_slides else [], start=1):
             sub = ppo_graph.subgraph(graph_p, sid)
             Ls = fit_layout(sub, fonts_p, style_p, {}, collapsed=[], max_collapse=0, log=log)
             ppo_layout.place_annotations(Ls, sub, fonts_p, style_p, getattr(Ls, "annotate_used", sub["display"]["annotate"]), area_p)
             name = next(s["name"] for s in graph_p["sections"] if s["id"] == sid)
             tb_s = dict(tb, title="%s - %s" % (tb["title"], name))
-            sc_s, _ = draw_sheet(Ls, sub, fonts_p, style_p, pal_c, False, tb_s, "slide")
-            variants_p.append(("overview_16x9_detail_%02d" % k, sc_s, "16:9 supporting slide: %s" % name))
-            supporting.append({"section": sid, "name": name, "file": "overview_16x9_detail_%02d" % k, "fits": Ls.fits})
+            sc_s, extra_s = draw_sheet(Ls, sub, fonts_p, style_p, pal_c, False, tb_s, "slide")
+            filename = "overview_16x9_detail_%02d" % k
+            spec_s = ppo_layout.to_layout_spec(Ls, sub, fonts_p, style_p, style_p["page"], filename,
+                                               extra_bboxes=extra_s)
+            entry = {"section": sid, "name": name, "file": filename, "fits": Ls.fits,
+                     "layout": (Ls, spec_s, style_p, [sc_s]), "graph": sub}
+            checks_s = ppo_validate._supporting_checks(entry, data)
+            failures = [c for c in checks_s if c["status"] == "FAIL"]
+            support_status = "FAIL" if failures else ("WARN" if any(c["status"] == "WARN" for c in checks_s) else "PASS")
+            _write_json(os.path.join(out_dir, filename + "_validation.json"), {"status": support_status, "checks": checks_s})
+            if failures:
+                raise OverviewError("supporting slide %s (%s) failed validation: %s; split the section or use "
+                                    "supporting_slides=False / --no-supporting-slides and retain A3 detail sheets" % (
+                                        filename, name, "; ".join(c["title"] for c in failures)))
+            _write_json(os.path.join(out_dir, filename + "_layout.json"), _layout_record(Ls, spec_s))
+            variants_p.append((filename, sc_s, "16:9 supporting slide: %s" % name))
+            supporting.append(entry)
         layouts["16x9_supporting"] = supporting
     # export
     for name, scene, label in variants:
@@ -799,6 +818,7 @@ def build_overview(data, out_dir, case_id=None, title_block=None, level="overvie
         "files": files, "graph": os.path.join(out_dir, "process_graph.json"), "layout": os.path.join(out_dir, "layout_A3.json"),
         "validation": os.path.join(out_dir, "validation.json"), "validation_status": record["status"],
         "collapsed_sections": L.collapsed, "detail_sheet_refs": refs, "symbol_scale": L.scale, "fits": L.fits,
+        "supporting_slides": supporting_slides,
         "detail_sheets": detail_manifest and {"pdf": detail_manifest["pdf"], "sheets": [(s["drawing_number"], s["title"]) for s in detail_manifest["sheets"]]},
         "warnings": list(L.warnings) + (["graph: " + p for p in problems]),
         "command": command, "seconds": round(time.time() - t0, 1),
@@ -867,6 +887,7 @@ def build_parser():
     p.add_argument("--collapse", action="append", default=[], help="section name forced to block representation (repeatable)")
     p.add_argument("--no-mono", action="store_true", help="skip the monochrome variants")
     p.add_argument("--no-presentation", action="store_true", help="skip the 16:9 version")
+    p.add_argument("--no-supporting-slides", action="store_true", help="keep main 16:9 overviews without supporting slides; A3 detail sheets unchanged")
     p.add_argument("--no-embed-font", action="store_true", help="do not embed the font subset in the SVG files")
     p.add_argument("--dpi", type=int, default=150, help="PNG preview resolution")
     p.add_argument("--quiet", action="store_true")
@@ -884,7 +905,8 @@ def main(argv=None):
         manifest = build_overview(data, args.out, case_id=args.case, title_block=_load_title_block(args.title_block), level=args.level,
                                   config=config, detail_sheets=args.detail_sheets, style_overrides=style, collapse_sections=args.collapse,
                                   source_path=os.path.abspath(args.source), embed_svg_font=not args.no_embed_font, png_dpi=args.dpi,
-                                  mono=not args.no_mono, presentation=not args.no_presentation, log=log, command=cmd)
+                                  mono=not args.no_mono, presentation=not args.no_presentation, log=log, command=cmd,
+                                  supporting_slides=not args.no_supporting_slides)
     except (OverviewError, ValueError, FileNotFoundError) as exc:
         print("process-overview: %s" % exc, file=sys.stderr)
         return 2
