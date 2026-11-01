@@ -41,10 +41,11 @@ public final class CoupledRichGasRampProbe {
           double requested = step * dt;
           pipe.setOutletPressure(150 - 140 * requested / 120, "bara");
           TwoFluidSection[] before = pipe.getSectionSnapshots();
+          double timeBefore = pipe.getSimulationTime();
           try {
             pipe.runTransient(dt, null);
           } catch (RuntimeException error) {
-            boolean restored = pipe.getSimulationTime() == requested - dt;
+            boolean restored = pipe.getSimulationTime() == timeBefore;
             TwoFluidSection[] after = pipe.getSectionSnapshots();
             for (int cell = 0; cell < cells; cell++)
               restored &= Arrays.equals(before[cell].getStateVector(), after[cell].getStateVector());

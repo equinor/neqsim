@@ -154,3 +154,39 @@ pool-level history, cooldown, phase-change rate, restart ramp, slug frequency, m
 capacity, field trace or commercial-simulator comparison. It therefore closes a conservative
 traction/work prerequisite only and cannot qualify retained pools, severe slugging, restart or
 pigging by itself.
+
+## Pressure-stage investigation: coordinate-only candidate rejected
+
+The existing `ConservativeThermodynamicRecovery` owns endpoint volume acceptance at 1e-9
+(and passes 2e-9 to `setConservativeEndpoint`). The new geometry assertion at 1e-10 can therefore
+reject an already accepted endpoint. A focused diagnostic reproduced that mismatch for a mixed
+endpoint scaled by 1+5e-10; conservative variables remained owned by endpoint recovery.
+
+`qualify_stage_ownership.py` compiles an isolated, source-pinned experimental classpath. Its
+retained one-line patch replaces the raw unit-sum assertion with a positive finite total and uses
+the already implemented relative geometry coordinates. It never edits production source or any
+EOS, energy, velocity or endpoint tolerance. **This candidate is rejected, not shipped.**
+
+The first exploratory run advanced the 12-cell case to36s, then rejected at36.25s for oil speed
+-479527m/s. The24-cell case completed120s, with49.47t oil and minimum temperature184K. Neither
+result is physical pool/evaporation evidence: the adiabatic tau30s fixture remains approximate,
+and the two meshes do not both complete. Final retained outputs use the corrected rollback
+probe, which compares actual pre-call time rather than nominal requested time minus dt.
+
+A simpler production-head counterexample isolates the fundamental problem without a timestep,
+EOS recovery, phase transfer, terrain or volume residual. Two horizontal10m cells at rest have
+identical pressure/densities: left gas/oil fractions1/0, right0.4/0.6, D1.0148m. Both ends close.
+
+| Pressure moments | Dry-cell oil mass kg/m | Oil mass rate kg/(m s) | Oil momentum rate N/m | Internal oil traction N |
+| --- | ---: | ---: | ---: | ---: |
+| Off | 0 | 0 | 0 | 0 |
+| On | 0 | 0 | -27.2519251517 | 272.519251517 |
+
+At any positive Euler interval, zero oil mass and finite oil momentum violate the exact absent-phase
+contract before thermodynamic recovery. Global force telescoping does not guarantee local phase
+admissibility. `DryWetPressureProbe.java` and `dry-wet-pressure.csv` retain this counterexample;
+the executable check deliberately verifies that the defect still exists rather than calling it a
+passing physics test. The next implementation must resolve pressure traction at a dry/wet phase
+front together with conservative phase transport/work in the existing solver. Merely removing or
+raising the volume assertion is not a safe fix. Production source and the prior physics gates
+remain unchanged in this investigation.
