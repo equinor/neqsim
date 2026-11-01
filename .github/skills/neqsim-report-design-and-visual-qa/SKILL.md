@@ -1,6 +1,6 @@
 ---
 name: neqsim-report-design-and-visual-qa
-description: "Use when improving technical report formatting, Word typography, table layout, captions, pagination, or professional presentation. Produces a separate template-preserving DOCX revision, PDF and all-page previews, with explicit visual QA. Complements neqsim-professional-reporting."
+description: "USE WHEN: improving technical report formatting, Word typography, table layout, captions, pagination, or professional presentation. Produces a separate template-preserving DOCX revision, PDF and all-page previews, with explicit visual QA. Complements neqsim-professional-reporting."
 ---
 
 # Report design and visual QA

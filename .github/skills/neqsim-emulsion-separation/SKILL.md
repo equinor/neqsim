@@ -1,6 +1,6 @@
 ---
 name: neqsim-emulsion-separation
-description: "Run optional NeqSim oil-water emulsion separation studies and separator troubleshooting: rag-layer or densely packed zone (DPZ) growth, coalescence-limited capacity, water-in-oil and oil-in-water symptoms, droplet-size and temperature sensitivity, changing water cut, and comparison with measured separator trends. Start with explicitly estimated inputs when droplet or coalescence measurements are absent; preserve existing process calculations and mark uncalibrated screening results."
+description: "Run optional NeqSim oil-water emulsion separation studies and separator troubleshooting: rag-layer or densely packed zone (DPZ) growth, coalescence-limited capacity, water-in-oil and oil-in-water symptoms, droplet-size and temperature sensitivity, changing water cut, and comparison with measured separator trends. USE WHEN: a separator shows rag-layer or DPZ growth, carryover or capacity loss tied to emulsions or water cut. Start with explicitly estimated inputs when droplet or coalescence measurements are absent; preserve existing process calculations and mark uncalibrated screening results."
 last_verified: "2026-10-27"
 ---
 
