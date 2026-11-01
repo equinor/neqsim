@@ -1,0 +1,11 @@
+--- production
++++ experiment
+@@ -2320,7 +2320,7 @@
+     }
+     double alphaLiquid = alphaOil + alphaWater;
+     double closure = alphaGas + alphaLiquid;
+-    if (!Double.isFinite(closure) || Math.abs(closure - 1.0) > 1.0e-10) {
++    if (!Double.isFinite(closure) || !(closure > 0.0)) {
+       throw new IllegalStateException("Stratified pressure moments require volume-closed face holdups");
+     }
+     // Conservative thermodynamic recovery retains its occupied-volume residual, including all-gas values a few

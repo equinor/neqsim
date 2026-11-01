@@ -1,0 +1,2 @@
+cells=12,requested_s=0.5,accepted_s=0.25,rollback_primary_state=true,error=java.lang.IllegalStateException: Stratified pressure moments require volume-closed face holdups,wall_s=0.660819331
+cells=24,requested_s=0.375,accepted_s=0.25,rollback_primary_state=true,error=java.lang.IllegalStateException: Stratified pressure moments require volume-closed face holdups,wall_s=0.47820632

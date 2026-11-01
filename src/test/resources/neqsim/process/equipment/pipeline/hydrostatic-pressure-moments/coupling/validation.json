@@ -1,0 +1,92 @@
+{
+  "base": "0ed75c2f10d9030ec8d9270c51e4ade28f5603f8",
+  "validation_start_base": "a049b0c147a7dc27999f4182fe8f7c5041614daa",
+  "base_transition": "Two intervening master commits changed only plant-layout tooling and top-level compressor navigation; all files in this record are unchanged.",
+  "published_parent_head": "bfd538c46d3b64a2e02273cc02554a692febaf33",
+  "generated_inventory_head": "5d4c1ba049dd3039d91677796ca01c01c426964b",
+  "generated_inventory_note": "Repository automation appended only src/main/resources/neqsim/mcp/engineering-coverage.json. Its bot-authored push produced action_required workflow records with zero jobs, so a validation-record child commit retriggers exact-head CI without altering production source or tests.",
+  "runtime": "OpenJDK 17",
+  "focused_test": {
+    "command": "./mvnw -q -Dtest=StratifiedPressureMomentCouplingTest test",
+    "exit_code": 0,
+    "tests": 6,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "broader_test": {
+    "command": "./mvnw -q -Dtest=StratifiedPressureMomentCouplingTest,StratifiedPressureMomentsTest,HydrostaticCellGeometryTest,HydrostaticPressureReconstructionTest,ClosedWallPressureCompatibilityTest,MultiphaseHydrostaticForceQualificationTest,TwoFluidThermalFaceFluxTest,TwoFluidPressureInterpolationTest,TwoFluidTotalEnergyContractTest,TwoFluidVariableAreaPressureRegressionTest test",
+    "exit_code": 0,
+    "tests": 52,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "full_repository_test": {
+    "command": "./mvnw -q test",
+    "exit_code": 130,
+    "completed_test_classes": 1032,
+    "completed_tests": 7519,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 67,
+    "note": "Stopped manually after about 36 minutes in unrelated suites; this is not a full-suite pass claim."
+  },
+  "compile_gates": [
+    {
+      "command": "./mvnw -q -DskipTests compile",
+      "exit_code": 0
+    },
+    {
+      "command": "./mvnw -q -DskipTests test-compile",
+      "exit_code": 0
+    }
+  ],
+  "package_gate": {
+    "command": "./mvnw -q -DskipTests -Dmaven.javadoc.skip=true package",
+    "exit_code": 1,
+    "note": "The Maven enforcer plugin was not cached and Maven Central DNS was unavailable; exact-head CI remains authoritative."
+  },
+  "javadoc_gate": {
+    "exit_code": 1,
+    "note": "The local runtime contains java but no javadoc launcher; source Javadocs are included and exact-head CI remains authoritative."
+  },
+  "publication_gates": [
+    {
+      "command": "python devtools/run_spotless.py apply",
+      "exit_code": 0,
+      "runs": 2
+    },
+    {
+      "command": "python devtools/run_spotless.py check",
+      "exit_code": 0,
+      "note": "Passed on the final Java source. A later retry after the validation-record edit could not resolve the already-used Spotless Maven plugin while Maven Central DNS was unavailable; no Java source changed between checks."
+    },
+    {
+      "command": "python devtools/check_documentation_search.py",
+      "exit_code": 0,
+      "markdown_pages": 827,
+      "standalone_html_pages": 1
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    },
+    {
+      "command": "pre-commit run --all-files --hook-stage pre-commit",
+      "exit_code": 127,
+      "note": "pre-commit is not installed in the local runtime."
+    },
+    {
+      "command": "pre-commit run --all-files --hook-stage pre-push",
+      "exit_code": 127,
+      "note": "pre-commit is not installed in the local runtime."
+    }
+  ],
+  "maven_bootstrap": "work-with-neqsim prepare_maven.py ran before the first Maven or Spotless command.",
+  "limitations": [
+    "No full repository test pass is claimed.",
+    "No local Javadoc or package pass is claimed.",
+    "No retained-pool, severe-slugging, restart, pigging, field-trace or commercial-simulator qualification is claimed."
+  ]
+}
