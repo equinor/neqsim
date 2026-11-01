@@ -1176,8 +1176,8 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     receipt.put("candidate_evaluator_id", candidates.getId());
     receipt.put("action_id", shaftSpeed.getId());
     receipt.put("action_unit", shaftSpeed.getUnit());
-    receipt.put("sampled_axis_values", Collections.unmodifiableList(
-        Arrays.asList(Double.valueOf(minimumSpeedRpm), Double.valueOf(maximumSpeedRpm))));
+    receipt.put("sampled_axis_values",
+        Collections.unmodifiableList(Arrays.asList(Double.valueOf(minimumSpeedRpm), Double.valueOf(maximumSpeedRpm))));
     receipt.put("configured_map_constraint_name", qualifiedMapConstraint);
     receipt.put("configured_map_limit", Double.valueOf(mapOperatingLimit));
     receipt.put("configured_map_limit_role", "CONFIGURED_OPERATING");
@@ -1979,4 +1979,3 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     return fluid;
   }
 }
-
