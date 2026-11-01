@@ -309,7 +309,7 @@ class HuronVidalCo2SourceDiagnosticTest {
    * @param profile declared source configuration
    * @param selectPair whether CO2/water uses HV or the all-classical reduction control
    */
-  private static void configureProfile(SystemInterface fluid, int profile, boolean selectPair) {
+  static void configureProfile(SystemInterface fluid, int profile, boolean selectPair) {
     int water = fluid.getPhase(0).getComponent("water").getComponentNumber();
     int gas = fluid.getPhase(0).getComponent("CO2").getComponentNumber();
     for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {

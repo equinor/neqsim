@@ -9,19 +9,23 @@ on:
       - "devtools/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/**"
+      - "src/test/resources/neqsim/thermo/mixingrule/hv-selected-pair-performance/**"
       - "src/test/resources/data/chemistry_benchmarks/structure_h_jin2023_digitized.*"
       - "docs/thermo/structure_h_parameter_qualification.md"
       - "examples/mechanical_design_json_to_mesh.py"
       - ".github/workflows/ai-devtools-python-tests.yml"
+      - ".github/workflows/core-run-build-test-and-javadoc.yml"
   push:
     branches: [master]
     paths:
       - "devtools/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/**"
+      - "src/test/resources/neqsim/thermo/mixingrule/hv-selected-pair-performance/**"
       - "src/test/resources/data/chemistry_benchmarks/structure_h_jin2023_digitized.*"
       - "docs/thermo/structure_h_parameter_qualification.md"
       - "examples/mechanical_design_json_to_mesh.py"
+      - ".github/workflows/core-run-build-test-and-javadoc.yml"
 
 jobs:
   devtools-tests:
@@ -85,6 +89,12 @@ jobs:
       - name: Verify pure-CO2 retained-data auditor guards
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_pure_co2.py -v
 
+      - name: Verify selected-pair performance receipt guards
+        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_run_huron_vidal_selected_pair_benchmark.py -v
+
+      - name: Verify Maven resolution retry boundaries
+        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_maven_resolution_retry.py -v
+
       - name: Run mechanical design mesh contract tests
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_mechanical_design_json_to_mesh.py -v
 
@@ -136,6 +146,12 @@ jobs:
 
       - name: Verify pure-CO2 auditor guards on the minimum supported Python
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_pure_co2.py -v
+
+      - name: Verify selected-pair receipts on the minimum supported Python
+        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_run_huron_vidal_selected_pair_benchmark.py -v
+
+      - name: Verify Maven retry boundaries on the minimum supported Python
+        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_maven_resolution_retry.py -v
 
       - name: Verify structure-H experimental fitting qualification on the minimum supported Python
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_fit_structure_h_dissociation.py -v

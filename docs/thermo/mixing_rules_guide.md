@@ -1099,6 +1099,16 @@ states. It does not qualify multicomponent equilibrium partition. General
 throughput, source/pure-pressure reconciliation,
 light-gas inhibitor partition and independent hydrate accuracy remain open.
 
+The [selected-pair multicomponent cost protocol](../../src/test/resources/neqsim/thermo/mixingrule/hv-selected-pair-performance/README.md)
+extends this characterization to five- and fifteen-component synthetic feeds,
+including gas/oil/aqueous flashes and allocation counters. It uses the same staged
+CO2/water profiles; methanol, MEG and all other unselected interactions remain
+CLASSICAL. All native identities, detached numerical checks, history/order and
+full CLASSICAL reduction are asserted before timing. Complete phase vectors and
+an independent raw-data auditor distinguish numerical closure from physical
+inhibitor qualification. No production optimization or default retuning follows
+from these timing ratios.
+
 
 The same staged fixture also checks native pure-water saturation against14
 independently bracketed roots and IAPWS reference pressures, using the declared

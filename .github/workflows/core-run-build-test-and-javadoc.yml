@@ -183,9 +183,11 @@ jobs:
             else
               status=$?
             fi
-            # Retry only Maven resolution failures, never compilation or test failures.
+            # Surefire wraps provider-download failures in MojoExecutionException.
+            # Match its resolution diagnostic, never generic execution or test failures.
             if [ "$attempt" -eq 2 ] || ! grep -Eq \
-              '^\[ERROR\] \[Help [0-9]+\] https?://[^ ]+/(PluginResolutionException|DependencyResolutionException)$' \
+              -e '^\[ERROR\] \[Help [0-9]+\] https?://[^ ]+/(PluginResolutionException|DependencyResolutionException)$' \
+              -e '^\[ERROR\] Failed to execute goal org\.apache\.maven\.plugins:maven-surefire-plugin:[^ :]+:test .*: The following artifacts could not be resolved: org\.apache\.maven\.surefire:surefire-[[:alnum:]_-]+:jar:' \
               "$RUNNER_TEMP/model-spec-maven-$attempt.log"; then
               exit "$status"
             fi
@@ -314,9 +316,11 @@ jobs:
             else
               status=$?
             fi
-            # Retry only Maven resolution failures, never compilation or test failures.
+            # Surefire wraps provider-download failures in MojoExecutionException.
+            # Match its resolution diagnostic, never generic execution or test failures.
             if [ "$attempt" -eq 2 ] || ! grep -Eq \
-              '^\[ERROR\] \[Help [0-9]+\] https?://[^ ]+/(PluginResolutionException|DependencyResolutionException)$' \
+              -e '^\[ERROR\] \[Help [0-9]+\] https?://[^ ]+/(PluginResolutionException|DependencyResolutionException)$' \
+              -e '^\[ERROR\] Failed to execute goal org\.apache\.maven\.plugins:maven-surefire-plugin:[^ :]+:test .*: The following artifacts could not be resolved: org\.apache\.maven\.surefire:surefire-[[:alnum:]_-]+:jar:' \
               "$RUNNER_TEMP/slow-test-maven-$SHARD_INDEX-$attempt.log"; then
               exit "$status"
             fi
