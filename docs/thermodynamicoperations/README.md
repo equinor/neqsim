@@ -163,21 +163,43 @@ equation of state.
 the facade's named result accessor for the extrema; the internal operation
 interface does not expose `getCricondenbar()` or `getCricondentherm()` methods.
 
+<!-- thermodynamic-operations-example: pt-phase-envelope -->
 ```java
-SystemInterface fluid = new SystemSrkEos(280.0, 10.0);
-fluid.addComponent("methane", 0.75);
-fluid.addComponent("ethane", 0.12);
-fluid.addComponent("propane", 0.08);
-fluid.addComponent("n-butane", 0.05);
-fluid.setMixingRule("classic");
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
-operations.calcPTphaseEnvelope();
+public final class PhaseEnvelopeExample {
+  private PhaseEnvelopeExample() {}
 
-double[] cricondenbar = operations.get("cricondenbar");
-double[] cricondentherm = operations.get("cricondentherm");
-double cricondenbarPressureBara = cricondenbar[1];
-double cricondenthermTemperatureK = cricondentherm[0];
+  public static double[] run() {
+    SystemInterface fluid = new SystemSrkEos(280.0, 10.0);
+    fluid.addComponent("methane", 0.75);
+    fluid.addComponent("ethane", 0.12);
+    fluid.addComponent("propane", 0.08);
+    fluid.addComponent("n-butane", 0.05);
+    fluid.setMixingRule("classic");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.calcPTphaseEnvelope();
+
+    double[] cricondenbar = operations.get("cricondenbar");
+    double[] cricondentherm = operations.get("cricondentherm");
+    double[] extrema = {
+      cricondenbar[0], cricondenbar[1], cricondentherm[0], cricondentherm[1]
+    };
+    for (double value : extrema) {
+      if (!Double.isFinite(value) || value <= 0.0) {
+        throw new IllegalStateException("Phase-envelope extremum is not finite and positive");
+      }
+    }
+    return extrema;
+  }
+
+  public static void main(String[] args) {
+    run();
+  }
+}
 ```
 
 Each named extremum is returned as `[temperature K, pressure bara]`. Phase
