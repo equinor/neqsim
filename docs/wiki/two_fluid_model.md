@@ -846,6 +846,13 @@ Momentum exchange:
 
 ### Stratified Geometry
 
+For normal-depth gravitational energy, query the existing immutable pressure-moment result's
+`getLiquidFirstMomentAboutCentre()`, `getGasFirstMomentAboutCentre()` [m3] and
+`getGravityPotentialEnergyPerLength(gasDensity, liquidDensity, normalGravity)` [J/m]. This is a
+read-only cross-sectional budget relative to the pipe centre, with no change to the transient
+energy state. Its analytical and high-precision evidence is in the
+[gravity-energy record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/README.md).
+
 `GeometryCalculator` computes for stratified flow:
 - Liquid level from holdup
 - Wetted perimeters (gas, liquid, interface)

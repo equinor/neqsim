@@ -1,0 +1,14 @@
+{
+  "source_sha": "98a9e7509391dc0b713e6ea985dc3dc236299f6a",
+  "meshes": [
+    12,
+    24
+  ],
+  "intervals_s": [
+    0.25,
+    0.125
+  ],
+  "requested_time_s": 120,
+  "completed": true,
+  "elapsed_wall_s": 51.117680295
+}

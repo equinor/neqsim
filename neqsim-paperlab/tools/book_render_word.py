@@ -335,9 +335,22 @@ def _insert_inline_math(paragraph, latex_str):
 # ---------------------------------------------------------------------------
 
 def _insert_figure(doc, img_path, caption, chapter_num=None, fig_counter=None):
-    """Insert a figure with scientific-style caption."""
+    """Insert a figure with scientific-style caption.
+
+    Wide graphics (aspect ratio of 1.5 or more, such as infographics with
+    small text) use the full text width so that they stay readable.
+    """
     try:
-        doc.add_picture(str(img_path), width=Inches(4.5))
+        width = Inches(4.5)
+        try:
+            from docx.image.image import Image as _DocxImage
+
+            image = _DocxImage.from_file(str(img_path))
+            if image.px_height and image.px_width / image.px_height >= 1.5:
+                width = Inches(6.0)
+        except Exception:
+            pass
+        doc.add_picture(str(img_path), width=width)
         last_p = doc.paragraphs[-1]
         last_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         last_p.paragraph_format.first_line_indent = Cm(0)

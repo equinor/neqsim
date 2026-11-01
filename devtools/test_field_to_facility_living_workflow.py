@@ -482,6 +482,11 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertEqual(results, snapshot)
             living_report = (task / "continuous" / "LIVING_REPORT.md").read_text(encoding="utf-8")
             self.assertIn(cycle_id, living_report)
+            self.assertIn("Map-to-driver bottleneck timeline", living_report)
+            self.assertIn(migration["configured_map_constraint_name"], living_report)
+            self.assertIn(migration["driver_constraint_name"], living_report)
+            self.assertIn("CONFIGURED_OPERATING", living_report)
+            self.assertIn(migration["configured_map_limit_provenance"], living_report)
 
             generator = ROOT / "devtools" / "task_template" / "step3_report" / "generate_report.py"
             completed = subprocess.run([
@@ -500,6 +505,11 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertIn("Qualified paired sampled", report)
             self.assertIn("Portfolio rank 1/2", report)
             self.assertIn("Changed / compared cells", report)
+            self.assertIn("Map-to-driver Bottleneck Migration", report)
+            self.assertIn(migration["configured_map_constraint_name"], report)
+            self.assertIn(migration["driver_constraint_name"], report)
+            self.assertIn("same sampled endpoints", report)
+            self.assertIn("advisory", report)
 
             input_path = task / "continuous" / "user_input.yaml"
             input_path.write_text(
@@ -573,6 +583,16 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
                              revised_migration["configured_map_constraint_name"])
             self.assertEqual(migration["driver_constraint_name"],
                              revised_migration["driver_constraint_name"])
+            revised_living_report = (
+                task / "continuous" / "LIVING_REPORT.md").read_text(encoding="utf-8")
+            self.assertIn(cycle_id, revised_living_report)
+            self.assertIn(revised_cycle_id, revised_living_report)
+            self.assertIn("superseded; stale since {}".format(revised_cycle_id),
+                          revised_living_report)
+            self.assertIn(revised_migration["configured_map_constraint_name"],
+                          revised_living_report)
+            self.assertIn(revised_migration["driver_constraint_name"],
+                          revised_living_report)
             revised_current = next(
                 period for period in revised_evidence["periods"]
                 if period["period_id"] == revised_cycle_id)

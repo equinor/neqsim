@@ -44,7 +44,7 @@ SRK pressure-equation roots and six binary SRK coexistence states. The bounded
 [independent reference](../../src/test/resources/neqsim/pvtsimulation/native-cce/README.md)
 contains explicit inputs and outputs. These are analytical software checks, not
 measured laboratory calibration/holdouts or an accepted laboratory-to-field chain.
-The CVD saturation-reference limitation below remains separate and unresolved.
+The native CVD saturation-reference refinement below remains separate from closed-mass CCE.
 
 ## Native compositional handoff through phase appearance
 
@@ -136,17 +136,35 @@ wet/critical qualification or recoverable-reserves acceptance.
 
 The [reproducible binary SRK audit](../../src/test/resources/neqsim/pvtsimulation/native-depletion/README.md)
 adds independent phase-equilibrium, lever-rule and gas-withdrawal predictions for
-nine synthetic DLE/CVD states. DLE retained volumes agree within `1.066e-13`
-relative. **The full independent CVD check fails** its frozen `1e-6` relative
-volume gate: the existing phase-count saturation scan selects 359.241739 bara,
-versus 359.245071 bara from the independent dew equilibrium. Its resulting cell
-volume differs by `6.530e-6` relative. Constant volume against the first retained
-cell is therefore a different claim from an independently correct saturation
-reference. Supplying the scan pressure explicitly to the independent calculation
-isolates restoration accounting (agreement within `4.832e-12`); it does not pass
-the independent saturation gate. Keep this precision limitation explicit until
-the shared saturation path is independently qualified. No EOS parameter or
-acceptance tolerance is changed to obtain agreement.
+nine synthetic DLE/CVD states. The historical legacy phase-count scan selects
+359.241739 bara versus the independent upper dew of 359.245071 bara; its CVD
+cell volume misses the frozen `1e-6` relative bound by `6.530e-6`.
+
+Native `replayNative` now enables `ConstantVolumeDepletion.setRefineSaturationConditions(true)`.
+The scan first selects a coarse upper gas/oil-to-gas bracket below 1000 bara.
+A cloned two-phase warm state then feeds the existing constant-duty pressure
+solver with an incipient liquid fraction of `1e-10`. Acceptance requires the
+same coarse branch (`1e-5 bara` numerical allowance), normalized nonnegative
+phase compositions and component reconstruction within `1e-8`, nontrivial
+composition distance above `1e-8`, and maximum component log-fugacity mismatch
+at most `1e-8`. The accepted pressure is reflashed with the original whole-cell
+inventory before defining the CVD reference volume. No EOS input is fitted.
+Missing/unsupported brackets and failed equilibrium gates throw; there is no
+fallback to the scan or an unrelated lower-pressure dew root.
+
+The full independent CVD check now passes: maximum relative retained-volume
+error `4.730e-11`, inventory/withdrawal error `4.070e-11 mol`, phase mole-fraction
+error `4.530e-14`, and component closure `5.552e-17 mol` for the one-mole
+reference. The original `1e-6` volume/composition/inventory and `1e-10 mol`
+closure bounds are unchanged. Three sample scales also have regression coverage.
+DLE remains within `1.066e-13` relative volume error.
+
+The direct CVD default and modified-black-oil `generate` route retain their
+legacy scan and its precision limitation. The opt-in refinement supports dry,
+nondegenerate upper dew boundaries; pure fluids, wet paths, oil bubble boundaries,
+unbracketed/1000-bara domains and later CVD phase disappearance remain outside
+its qualified domain. These are analytical synthetic consistency checks, not
+measured laboratory/field accuracy or full phase-boundary qualification.
 
 ## Bounded modified-black-oil conversion
 

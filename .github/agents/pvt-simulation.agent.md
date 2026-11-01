@@ -34,7 +34,7 @@ CVD handoffs. CCE uses `ConstantMassExpansion.runNativeExpansion` without a satu
 scan; preserve the complete cell and zero protocol withdrawal. Do not infer a
 saturation-normalized volume from this absolute evidence. Check actual phase presence and `hasWithdrawal(row)` before reading
 phase or withdrawal outputs. Preserve complete experiment and separator-basis provenance.
-The modified-black-oil `generate` route still requires both phases. Read
+Native CVD uses opt-in checked upper-dew refinement: require a dry gas/oil-to-gas scan bracket below 1000 bara, then validate the existing pressure solver result. Do not fall back after a failed equilibrium or branch gate. The legacy CVD default and modified-black-oil `generate` route retain the scan; the latter still requires both phases. Read
 `docs/pvtsimulation/depletion_pvt_generation.md`; wet/critical paths, gas-withdrawal CVD phase-disappearance
 tails and measured field accuracy remain unqualified. Closed-mass CCE disappearance
 is a distinct protocol and preserves all components. DLE flash failures propagate.

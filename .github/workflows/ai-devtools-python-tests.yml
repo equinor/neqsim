@@ -8,6 +8,7 @@ on:
     paths:
       - "devtools/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series/**"
+      - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-selected-pair-performance/**"
       - "src/test/resources/data/chemistry_benchmarks/structure_h_jin2023_digitized.*"
@@ -20,6 +21,7 @@ on:
     paths:
       - "devtools/**"
       - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series/**"
+      - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-selected-pair-performance/**"
       - "src/test/resources/data/chemistry_benchmarks/structure_h_jin2023_digitized.*"
@@ -47,6 +49,11 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+
+      - name: Verify gravity-energy receipt guards
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy -p test_energy_receipts.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy -p test_energy_receipts.py -v
 
       - name: Verify pressure-moment auditor guards
         run: |
@@ -134,6 +141,11 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+
+      - name: Verify gravity-energy receipt guards
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy -p test_energy_receipts.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy -p test_energy_receipts.py -v
 
       - name: Verify pressure-moment auditor guards
         run: |

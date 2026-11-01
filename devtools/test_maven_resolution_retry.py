@@ -23,6 +23,20 @@ SUREFIRE_RESOLUTION_FAILURE = (
     "in central (https://repo.maven.apache.org/maven2/) -> [Help 1]\n"
     "[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException\n"
 )
+SUREFIRE_DESCRIPTOR_FAILURE = (
+    "[ERROR] Failed to execute goal "
+    "org.apache.maven.plugins:maven-surefire-plugin:3.6.1:test (default-test) "
+    "on project neqsim: Failed to collect dependencies at "
+    "org.apache.maven.surefire:surefire-junit-platform:jar:3.6.1: "
+    "Failed to read artifact descriptor for "
+    "org.apache.maven.surefire:surefire-junit-platform:jar:3.6.1: "
+    "The following artifacts could not be resolved: "
+    "org.apache.maven.surefire:surefire-junit-platform:pom:3.6.1 (absent): "
+    "Could not transfer artifact org.apache.maven.surefire:surefire-junit-platform:pom:3.6.1 "
+    "from/to central (https://repo.maven.apache.org/maven2/): "
+    "status code: 403, reason phrase: Forbidden (403) -> [Help 1]\n"
+    "[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException\n"
+)
 
 
 @unittest.skipUnless(shutil.which("bash"), "CI retry steps require Bash")
@@ -109,15 +123,17 @@ class MavenResolutionRetryTest(unittest.TestCase):
 
     def test_provider_resolution_retries_and_recovers(self):
         for job, pom in self.contexts():
-            with self.subTest(job=job, pom=pom):
-                result, calls, sleeps = self.run_step(job, pom, SUREFIRE_RESOLUTION_FAILURE, 2)
-                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-                self.assertEqual(calls, 2)
-                self.assertEqual(sleeps, ["10"])
+            for failure in (SUREFIRE_RESOLUTION_FAILURE, SUREFIRE_DESCRIPTOR_FAILURE):
+                with self.subTest(job=job, pom=pom, failure=failure):
+                    result, calls, sleeps = self.run_step(job, pom, failure, 2)
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertEqual(calls, 2)
+                    self.assertEqual(sleeps, ["10"])
 
     def test_resolution_retries_are_bounded_and_preserve_exit_status(self):
         failures = (
             SUREFIRE_RESOLUTION_FAILURE,
+            SUREFIRE_DESCRIPTOR_FAILURE,
             "[ERROR] [Help 1] https://cwiki.apache.org/confluence/display/MAVEN/PluginResolutionException\n",
             "[ERROR] [Help 2] http://cwiki.apache.org/confluence/display/MAVEN/DependencyResolutionException\n",
         )
@@ -138,6 +154,12 @@ class MavenResolutionRetryTest(unittest.TestCase):
             "[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException\n",
             "[ERROR] The forked VM terminated without properly saying goodbye.\n"
             "[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException\n",
+            SUREFIRE_DESCRIPTOR_FAILURE.replace(
+                "org.apache.maven.surefire:surefire-junit-platform", "example:unrelated-library"
+            ),
+            SUREFIRE_DESCRIPTOR_FAILURE.replace(
+                "maven-surefire-plugin:3.6.1:test", "maven-compiler-plugin:3.16.0:compile"
+            ),
         )
         for job, pom in self.contexts():
             for failure in failures:

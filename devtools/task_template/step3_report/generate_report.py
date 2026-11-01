@@ -3057,6 +3057,132 @@ def _promoted_cycle_id():
     return baseline.get("source_cycle") if isinstance(baseline, dict) else None
 
 
+def _validate_map_driver_migration_report_evidence(receipt, expected_cycle_id=None):
+    """Validate the report-facing map-to-driver identity transition without inferring physics."""
+    reasons = []
+    if not isinstance(receipt, dict):
+        return ["evidence is not an object"]
+    if receipt.get("receipt_version") != 1:
+        reasons.append("receipt_version must be 1")
+    if not _report_text(receipt.get("cycle_id")):
+        reasons.append("cycle_id is missing")
+    elif expected_cycle_id and receipt.get("cycle_id") != expected_cycle_id:
+        reasons.append("cycle_id does not match the promoted current-best cycle")
+    if (not _report_text(receipt.get("candidate_evaluator_id"))
+            or not _report_text(receipt.get("action_id"))
+            or receipt.get("action_unit") != "rpm"):
+        reasons.append("evaluator or continuous common-speed action identity is incomplete")
+    if (not _report_text(receipt.get("configured_map_constraint_name"))
+            or not _report_number(receipt.get("configured_map_limit"))
+            or receipt.get("configured_map_limit_role") != "CONFIGURED_OPERATING"
+            or not _report_text(receipt.get("configured_map_limit_provenance"))):
+        reasons.append("configured map restriction identity or provenance is incomplete")
+    if (not _report_text(receipt.get("driver_constraint_name"))
+            or not _report_number(receipt.get("driver_limit_kw"))
+            or receipt.get("driver_limit_kw") <= 0):
+        reasons.append("driver restriction identity or rating is incomplete")
+    if (receipt.get("map_operating_limit_cleared") is not True
+            or receipt.get("state_restore_complete") is not True
+            or receipt.get("advisory") is not True):
+        reasons.append("override clearance, restoration, or advisory classification is missing")
+    axis_values = receipt.get("sampled_axis_values")
+    if (not isinstance(axis_values, list) or len(axis_values) != 2
+            or any(not _report_number(value) for value in axis_values)
+            or not float(axis_values[0]) < float(axis_values[1])):
+        reasons.append("sampled common-speed endpoint grid is invalid")
+        return reasons
+
+    slices = [receipt.get("map_limited_slice"), receipt.get("driver_limited_slice")]
+    for index, envelope_slice in enumerate(slices):
+        prefix = "map" if index == 0 else "driver"
+        if (not isinstance(envelope_slice, dict)
+                or envelope_slice.get("candidate_evaluator_id") != receipt.get("candidate_evaluator_id")
+                or envelope_slice.get("axis_action_ids") != [receipt.get("action_id")]
+                or envelope_slice.get("axis_action_semantics") != ["CONTINUOUS"]
+                or envelope_slice.get("axis_values") != [axis_values]
+                or envelope_slice.get("complete") is not True
+                or envelope_slice.get("outcome") != "COMPLETE"
+                or envelope_slice.get("requested_point_count") != 2
+                or envelope_slice.get("completed_point_count") != 2):
+            reasons.append(prefix + " slice identity, endpoint grid, or completeness is invalid")
+            continue
+        transitions = envelope_slice.get("operating_region_transitions")
+        refinements = envelope_slice.get("operating_region_boundary_refinements")
+        if (not isinstance(transitions, list) or len(transitions) != 1
+                or not isinstance(refinements, list) or len(refinements) != 1):
+            reasons.append(prefix + " slice does not contain one sampled transition and one refined boundary")
+    if reasons:
+        return reasons
+
+    map_transition = slices[0]["operating_region_transitions"][0]
+    driver_transition = slices[1]["operating_region_transitions"][0]
+    map_boundary = slices[0]["operating_region_boundary_refinements"][0]
+    driver_boundary = slices[1]["operating_region_boundary_refinements"][0]
+    map_rejecting = (map_transition.get("to_constraint")
+                     if map_transition.get("to_feasible") is False
+                     else map_transition.get("from_constraint"))
+    driver_rejecting = (driver_transition.get("to_constraint")
+                        if driver_transition.get("to_feasible") is False
+                        else driver_transition.get("from_constraint"))
+    map_infeasible = map_boundary.get("infeasible_boundary_constraint")
+    driver_infeasible = driver_boundary.get("infeasible_boundary_constraint")
+    if (receipt.get("configured_map_constraint_name") == receipt.get("driver_constraint_name")
+            or map_rejecting != receipt.get("configured_map_constraint_name")
+            or driver_rejecting != receipt.get("driver_constraint_name")
+            or not isinstance(map_infeasible, dict)
+            or map_infeasible.get("qualified_constraint_name")
+               != receipt.get("configured_map_constraint_name")
+            or map_infeasible.get("source") != "INSTALLED_EQUIPMENT"
+            or map_infeasible.get("applicable_limit_role") != "CONFIGURED_OPERATING"
+            or map_infeasible.get("applicable_limit_provenance")
+               != receipt.get("configured_map_limit_provenance")
+            or map_infeasible.get("applicable_limit") != receipt.get("configured_map_limit")
+            or not isinstance(driver_infeasible, dict)
+            or driver_infeasible.get("qualified_constraint_name")
+               != receipt.get("driver_constraint_name")
+            or driver_infeasible.get("feasible") is not False):
+        reasons.append("sampled and refined rejecting identities do not reproduce the receipt")
+    return reasons
+
+
+def format_map_driver_migration_text(results, expected_cycle_id=None):
+    """Render one promoted advisory map-to-driver migration receipt for canonical reports."""
+    receipt = (results or {}).get("map_driver_migration_evidence")
+    if receipt is None:
+        return ""
+    reasons = _validate_map_driver_migration_report_evidence(receipt, expected_cycle_id)
+    if reasons:
+        return ("**Map-to-driver evidence withheld.** The report did not accept this receipt because: {}. "
+                "No bottleneck-migration claim is rendered.".format("; ".join(reasons)))
+
+    map_boundary = receipt["map_limited_slice"][
+        "operating_region_boundary_refinements"][0]["infeasible_boundary_constraint"]
+    endpoints = "{} → {} {}".format(
+        _fmt_number(receipt["sampled_axis_values"][0]),
+        _fmt_number(receipt["sampled_axis_values"][1]), receipt["action_unit"])
+    return "\n".join([
+        "**Migration receipt.** Cycle `{}` used evaluator `{}` and continuous action `{}` over the same sampled "
+        "endpoints {} for both complete, refined slices.".format(
+            receipt["cycle_id"], receipt["candidate_evaluator_id"], receipt["action_id"], endpoints),
+        "",
+        "| Boundary qualification | Exact rejecting constraint | Applicable limit | Role / provenance |",
+        "|---|---|---|---|",
+        "| Configured casing-map restriction | `{}` | {} {} | {} / {} |".format(
+            _md_cell(receipt["configured_map_constraint_name"]),
+            _fmt_number(receipt["configured_map_limit"]),
+            _md_cell(map_boundary.get("physical_unit") or "-"),
+            receipt["configured_map_limit_role"],
+            _md_cell(receipt["configured_map_limit_provenance"])),
+        "| Driver-power restriction after map override clearance | `{}` | {} kW | driver rating |".format(
+            _md_cell(receipt["driver_constraint_name"]), _fmt_number(receipt["driver_limit_kw"])),
+        "",
+        "**Interpretation.** The rejecting boundary migrated from the configured casing-map operating restriction "
+        "to driver power only after the map override was cleared and the identical common-speed grid was freshly "
+        "evaluated. The model baseline was restored. This receipt is advisory: it is not an operating set point, "
+        "equipment qualification, or permission to relax an OEM map, protection setting, or driver rating.",
+    ])
+
+
 def _identity_text(identity):
     """Render one exact identity without comparing physical margins across units."""
     limit = identity.get("applicable_limit")
@@ -6925,6 +7051,15 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
         sections.append({
             "heading": "{}. Lifecycle Operating Envelope".format(next_section_num),
             "content": lifecycle_text,
+            "has_markdown": True,
+        })
+        next_section_num += 1
+
+    migration_text = format_map_driver_migration_text(results, _promoted_cycle_id())
+    if migration_text:
+        sections.append({
+            "heading": "{}. Map-to-driver Bottleneck Migration".format(next_section_num),
+            "content": migration_text,
             "has_markdown": True,
         })
         next_section_num += 1

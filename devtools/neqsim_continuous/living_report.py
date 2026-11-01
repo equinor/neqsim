@@ -18,6 +18,7 @@ import os
 import subprocess
 import sys
 from datetime import datetime, timezone
+from types import SimpleNamespace
 
 from . import figures as figure_kit
 from . import user_input
@@ -50,6 +51,52 @@ def _constraint_text(constraint):
         constraint.get("name") or constraint.get("kpi"), constraint.get("kpi"), constraint.get("op", "<="),
         "NOT SET" if limit is None else _fmt(limit),
         " (hard)" if constraint.get("hard", True) else "")
+
+
+def _map_driver_migration_timeline(items):
+    """Return fail-closed operator rows for guarded map-to-driver receipts in the ledger."""
+    from .production import _map_driver_migration_evidence_reasons
+
+    rows = []
+    withheld = 0
+    ordered = sorted(items.items(), key=lambda pair: (
+        str(pair[1].get("cycle") or ""), str(pair[0])))
+    for item_id, item in ordered:
+        receipt = item.get("map_driver_migration_evidence")
+        if receipt is None:
+            continue
+        reasons = _map_driver_migration_evidence_reasons(
+            SimpleNamespace(cycle_id=item.get("cycle")), item, required=True)
+        if reasons:
+            withheld += 1
+            continue
+        map_boundary = receipt["map_limited_slice"][
+            "operating_region_boundary_refinements"][0]["infeasible_boundary_constraint"]
+        evidence_state = "current"
+        if item.get("evidence_current") is False:
+            evidence_state = "stale since {}".format(
+                item.get("evidence_invalidated_cycle") or "unknown cycle")
+        if item.get("status") == "superseded":
+            evidence_state = "superseded; " + evidence_state
+        receipt_link = item_id
+        if item.get("revalidation_of"):
+            receipt_link += " (revalidates {})".format(item["revalidation_of"])
+        rows.append((
+            item.get("cycle"), receipt_link,
+            receipt["configured_map_constraint_name"],
+            "{} {} — {}; {}".format(
+                _fmt(receipt["configured_map_limit"]),
+                map_boundary.get("physical_unit") or "-",
+                receipt["configured_map_limit_role"],
+                receipt["configured_map_limit_provenance"]),
+            receipt["driver_constraint_name"],
+            "{} kW".format(_fmt(receipt["driver_limit_kw"])),
+            "{} → {} {}".format(
+                _fmt(receipt["sampled_axis_values"][0]),
+                _fmt(receipt["sampled_axis_values"][1]), receipt["action_unit"]),
+            evidence_state,
+        ))
+    return rows, withheld
 
 
 STATE_TEXT = {
@@ -451,6 +498,21 @@ def build(task_dir):
                     " (`neqsim task-ledger <task> set ID STATUS --by NAME`)."]
     else:
         out += ["The ledger is empty."]
+
+    migration_rows, withheld_migrations = _map_driver_migration_timeline(items)
+    if migration_rows or withheld_migrations:
+        out += ["", "## Map-to-driver bottleneck timeline", "",
+                "*Cycle-bound advisory receipts showing when the rejecting common-speed boundary moved from a "
+                "configured casing-map operating restriction to total driver power. Historical rows remain visible "
+                "but are labelled stale or superseded; they are not current operating instructions.*", ""]
+        if migration_rows:
+            out += _table([
+                "Cycle", "Ledger receipt", "Configured map restriction", "Map limit / basis",
+                "Driver constraint", "Driver limit", "Common-speed endpoints", "Evidence state",
+            ], migration_rows)
+        if withheld_migrations:
+            out += ["", "{} malformed or cycle-mismatched migration receipt(s) were withheld; no map-to-driver "
+                    "claim was rendered from them.".format(withheld_migrations)]
 
     out += ["", "## Baseline history", "",
             "*Every reviewed baseline the task has had. A new baseline is only created by a named reviewer.*", ""]

@@ -212,6 +212,61 @@ public class GeometryCalculator implements Serializable {
     public double getGasArea() {
       return gasArea;
     }
+
+    /**
+     * Get the liquid first area moment about the pipe centre in the normal-depth direction.
+     *
+     * <p>
+     * The minority segment is evaluated first so neither a thin film nor a thin gas cap subtracts two full-section
+     * moments. The complementary moment is its exact negative.
+     * </p>
+     *
+     * @return nonpositive integral of normal height minus half diameter over liquid area, in m3
+     */
+    public double getLiquidFirstMomentAboutCentre() {
+      double offset = (liquidMoment + gasMoment) / (liquidArea + gasArea);
+      return liquidArea <= gasArea ? offset * liquidArea - liquidMoment : -(offset * gasArea - gasMoment);
+    }
+
+    /**
+     * Get the gas first area moment about the pipe centre in the normal-depth direction.
+     *
+     * @return nonnegative integral of normal height minus half diameter over gas area, in m3
+     */
+    public double getGasFirstMomentAboutCentre() {
+      return -getLiquidFirstMomentAboutCentre();
+    }
+
+    /**
+     * Calculate normal-gravity potential energy relative to the pipe centre per unit axial length.
+     *
+     * <p>
+     * Supply normal gravity as g times cosine of inclination. This read-only energy budget excludes centreline
+     * elevation, internal/kinetic energy and wall energy; it does not modify a solver state. No new serialized fields
+     * are needed. An absent phase's density is unused.
+     * </p>
+     *
+     * @param gasDensity positive gas density in kg/m3 when gas is present
+     * @param liquidDensity positive liquid density in kg/m3 when liquid is present
+     * @param normalGravity finite signed normal component of gravity in m/s2
+     * @return cross-sectional gravitational energy relative to the centre, in J/m
+     * @throws IllegalArgumentException if present-phase density or gravity is invalid, or energy overflows
+     */
+    public double getGravityPotentialEnergyPerLength(double gasDensity, double liquidDensity, double normalGravity) {
+      if (!Double.isFinite(normalGravity) || gasArea > 0.0 && (!(gasDensity > 0.0) || !Double.isFinite(gasDensity))
+          || liquidArea > 0.0 && (!(liquidDensity > 0.0) || !Double.isFinite(liquidDensity))) {
+        throw new IllegalArgumentException(
+            "Gravity energy requires finite gravity and positive present-phase densities");
+      }
+      if (gasArea == 0.0 || liquidArea == 0.0) {
+        return 0.0;
+      }
+      double energy = (liquidDensity - gasDensity) * normalGravity * getLiquidFirstMomentAboutCentre();
+      if (!Double.isFinite(energy)) {
+        throw new IllegalArgumentException("Cross-sectional gravity energy is not representable");
+      }
+      return energy;
+    }
   }
 
   /**

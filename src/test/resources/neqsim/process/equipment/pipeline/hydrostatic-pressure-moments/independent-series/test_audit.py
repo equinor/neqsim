@@ -61,7 +61,7 @@ class AuditTest(unittest.TestCase):
         mutations = [
             ('while ((line = input.readLine()) != null)', 'if ((line = input.readLine()) != null)'),
             ('value.getLiquidMoment() +', '(value.getLiquidMoment() + (depth > 0.0 && depth < diameter ? 1.0 : 0.0)) +'),
-            ('e62e0a03a8eeb92d9cbad04b109142501a0903a4', '0000000000000000000000000000000000000000'),
+            ('6eea54142e2668717a7b756e1b252da6810a7e21', '0000000000000000000000000000000000000000'),
         ]
         for old, new in mutations:
             self.assertIn(old, source)

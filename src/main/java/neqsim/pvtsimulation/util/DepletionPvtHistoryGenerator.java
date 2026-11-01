@@ -178,7 +178,9 @@ public final class DepletionPvtHistoryGenerator {
    * CCE retains the complete closed-mass cell at each pressure and withdraws no components. Its absolute native states
    * do not supply a saturation-pressure estimate or saturation-normalized volume. Oil-only DLE and pre-dew gas-only CVD
    * states retain their actual inventories. CVD requires a sampled gas/oil boundary and rejects later
-   * phase-disappearance tails pending volume-restoration qualification. Wet/other-phase samples and critical-degenerate
+   * phase-disappearance tails pending volume-restoration qualification. Its upper dew cell uses the checked refinement
+   * in {@link ConstantVolumeDepletion#setRefineSaturationConditions(boolean)}; missing or unclosed gas/oil-to-gas
+   * brackets fail rather than falling back to the phase-count scan. Wet/other-phase samples and critical-degenerate
    * splits remain unqualified. No absent-phase Bo/Bg/Rs/Rv, Bw, surface pseudo-component closure assumption or
    * reservoir production prediction is supplied.
    * </p>
@@ -220,7 +222,7 @@ public final class DepletionPvtHistoryGenerator {
     if (path == Path.DLE && !probe.hasPhaseType("oil")) {
       throw new IllegalArgumentException("DLE requires an initially present oil phase");
     }
-    DepletionSnapshot[] snapshots = replay(feed, path, temperatureK, pressures);
+    DepletionSnapshot[] snapshots = replay(feed, path, temperatureK, pressures, true);
     PvtSeparatorPath.Result[] retained = new PvtSeparatorPath.Result[snapshots.length];
     PvtSeparatorPath.Result[] withdrawn = new PvtSeparatorPath.Result[snapshots.length];
     double[] cumulative = new double[initial.length];
@@ -469,7 +471,7 @@ public final class DepletionPvtHistoryGenerator {
       }
     }
     double[] initialComponents = inventory(feed);
-    DepletionSnapshot[] snapshots = replay(feed, path, temperatureK, pressures);
+    DepletionSnapshot[] snapshots = replay(feed, path, temperatureK, pressures, false);
     checkComponentClosure(snapshots, initialComponents);
     Record[] records = new Record[pressures.length];
     double[][] closure = new double[pressures.length][2];
@@ -561,9 +563,11 @@ public final class DepletionPvtHistoryGenerator {
    * @param path supported closed-mass CCE or depletion protocol
    * @param temperature temperature in K
    * @param pressures decreasing pressure schedule in bara
+   * @param refineCvd whether native CVD requires checked upper-dew refinement
    * @return native step snapshots
    */
-  private static DepletionSnapshot[] replay(SystemInterface feed, Path path, double temperature, double[] pressures) {
+  private static DepletionSnapshot[] replay(SystemInterface feed, Path path, double temperature, double[] pressures,
+      boolean refineCvd) {
     if (path == Path.CCE) {
       ConstantMassExpansion simulation = new ConstantMassExpansion(feed);
       simulation.setTemperature(temperature, "K");
@@ -572,6 +576,7 @@ public final class DepletionPvtHistoryGenerator {
     }
     if (path == Path.CVD) {
       ConstantVolumeDepletion simulation = new ConstantVolumeDepletion(feed);
+      simulation.setRefineSaturationConditions(refineCvd);
       simulation.setTemperature(temperature, "K");
       simulation.setPressures(pressures);
       simulation.setRecordDepletionSnapshots(true);
