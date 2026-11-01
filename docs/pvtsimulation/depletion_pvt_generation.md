@@ -91,6 +91,22 @@ Soave alpha and library EOS gas constant, with 1e-8 relative volume acceptance.
 This is numerical EOS consistency, not measured laboratory-to-field accuracy,
 wet/critical qualification or recoverable-reserves acceptance.
 
+### Independent binary qualification and the CVD saturation reference
+
+The [reproducible binary SRK audit](../../src/test/resources/neqsim/pvtsimulation/native-depletion/README.md)
+adds independent phase-equilibrium, lever-rule and gas-withdrawal predictions for
+nine synthetic DLE/CVD states. DLE retained volumes agree within `1.066e-13`
+relative. **The full independent CVD check fails** its frozen `1e-6` relative
+volume gate: the existing phase-count saturation scan selects 359.241739 bara,
+versus 359.245071 bara from the independent dew equilibrium. Its resulting cell
+volume differs by `6.530e-6` relative. Constant volume against the first retained
+cell is therefore a different claim from an independently correct saturation
+reference. Supplying the scan pressure explicitly to the independent calculation
+isolates restoration accounting (agreement within `4.832e-12`); it does not pass
+the independent saturation gate. Keep this precision limitation explicit until
+the shared saturation path is independently qualified. No EOS parameter or
+acceptance tolerance is changed to obtain agreement.
+
 ## Bounded modified-black-oil conversion
 
 `DepletionPvtHistoryGenerator.generate` evaluates pressure-aligned
