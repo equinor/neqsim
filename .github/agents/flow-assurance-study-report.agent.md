@@ -67,8 +67,9 @@ FAIL is fixed, every WARN is explained in the report. Do not weaken a gate.
 ### 5. Hand off
 
 - Unsupported transients (restart, ramp-up, pigging, slugging) remain unsupported after the analytical common-pressure
-  hydrostatic fixed-point update: the `handoff/EVT-*.json` packages go to the
-  community `olga-simulation-agent` or the user's qualified simulator; results return via `--external-results`.
+  fixed-point and opt-in stratified phase-traction/work updates. Those updates verify an instantaneous conservative
+  operator, not elapsed retention or event response. The `handoff/EVT-*.json` packages still go to the community
+  `olga-simulation-agent` or the user's qualified simulator; results return via `--external-results`.
 - Standards: verify editions with `neqsim-standards-lookup`; never state compliance.
 - Independent review: `@review`; the software never assigns REVIEWED.
 - Report out: `report/*.docx|pdf`, `drawings/`, `dataset/flow_assurance_study.json`; merge a summary into

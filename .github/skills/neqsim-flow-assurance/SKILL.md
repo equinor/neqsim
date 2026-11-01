@@ -1631,9 +1631,14 @@ For an explicit static phase-traction diagnostic, use
 `GeometryCalculator.calculateStratifiedPressureMoments(depth, diameter)`: signed liquid/gas moments
 about the interface in m3 and their area derivatives in m2. Multiply each moment by its phase density,
 gravity and cosine of inclination for the hydrostatic traction contribution; interface pressure times
-phase area is separate. This opt-in query has no solver call site. Its independent integral, trace-limit
-and force-identity tests do not establish dynamic pool retention or hydrocarbon evaporation.
-See `StratifiedPressureMomentsTest` and the hydrostatic-pressure-moments public numerical record.
+phase area is separate. To use the same geometry in the transient operator, explicitly call
+`setStratifiedHydrostaticPressureMomentsEnabled(true)`. It adds phase traction at every face and
+matching `Q * F / A` work with the signed mass donor; inspect
+`getLastStratifiedHydrostaticPressureForces()` in N. The supported face contains gas and at most one
+liquid in a constant-diameter circular pipe; oil+water and diameter steps reject. Its independent
+integral, signed-work, conservation and rollback tests do not establish elapsed dynamic pool
+retention, terrain drainage, shutdown/cooldown, restart, slugging, pigging or hydrocarbon evaporation.
+See `StratifiedPressureMomentsTest`, `StratifiedPressureMomentCouplingTest` and the public numerical record.
 
 ## Residual MEG/water liquid after pigging
 

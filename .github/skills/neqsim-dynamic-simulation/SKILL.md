@@ -794,6 +794,14 @@ with the mass donor and its diagnostic is transaction-safe. This is numerical fi
 to qualify a two-density stationary pool, a moving interface, shutdown/restart, severe slugging, or pigging; those still
 require their separate evidence-matrix gates.
 
+For a gas/one-liquid circular section, the default-off
+`setStratifiedHydrostaticPressureMomentsEnabled(true)` option adds the phase-density pressure moments to internal and
+external momentum traction and the matching `Q * F / A` total-energy work with the mass donor. Exact phase endpoints,
+closed-domain force telescoping, signed flow, rollback and default-off restoration are covered by
+`StratifiedPressureMomentCouplingTest`. Simultaneous positive oil and water and diameter steps reject explicitly. This
+completes an operator prerequisite only; do not route it as evidence of elapsed pool retention, shutdown/cooldown,
+restart, severe slugging, hydraulic pigging or predictive evaporation.
+
 1. **Always run steady state first**: Call `process.run()` before `runTransient()`
 2. **Timestep size**: Start with 1.0 s, reduce if oscillating (0.1-0.5 s)
 3. **Liquid-outlet level-controller direction**: use `setReverseActing(false)` so level up drives the outlet valve further open. Reverse acting on this configuration drives the loop the wrong way.

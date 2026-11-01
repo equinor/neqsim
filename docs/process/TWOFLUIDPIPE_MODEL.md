@@ -91,11 +91,24 @@ unrepresentable geometry fails explicitly without changing the supplied depth.
 `StratifiedPressureMomentsTest` verifies independent angular quadrature, analytical half/full
 sections, trace limits, complement symmetry, area derivatives, serialization and signed
 finite-volume gravity/traction identities. The [executed numerical record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/README.md)
-retains every case, refinement and measured opt-in query cost. This query has no automatic
-runtime call site. It does not change momentum, energy, boundary states or transient results.
-Coupled interfacial pressure forces and conservative energy work remain prerequisites for
-using these moments to demonstrate a retained pool. Capillarity, waves, entrainment,
-separate oil/water interfaces and predictive hydrocarbon evaporation remain outside this API.
+retains every case, refinement and measured opt-in query cost. The geometry query remains
+side-effect free.
+
+`TwoFluidPipe.setStratifiedHydrostaticPressureMomentsEnabled(true)` now couples those moments to
+the finite-volume phase momentum and total-energy operators. The solved thermodynamic pressure is
+the interface pressure; each face receives $F_k=\rho_k g\cos(\theta)J_k$, and its energy flux receives
+$Q_kF_k/A_k$ with the same signed mass donor used by phase advection. Internal forces telescope,
+closed walls retain traction without mass or energy leakage, and exact all-gas/all-liquid endpoints
+need no seeded phase. `getLastStratifiedHydrostaticPressureForces()` reports inlet, internal and
+outlet forces in N. The option is off by default, branches before geometry evaluation when disabled,
+and restores its diagnostic during transactional trials.
+
+The qualified circular geometry owns one gas/liquid interface and one constant diameter per face.
+Simultaneous positive oil and water or a diameter step therefore fail explicitly. This coupling is
+analytical/numerical operator evidence, not elapsed pool retention, terrain drainage, cooldown,
+restart, severe-slugging or pigging qualification. Capillarity, waves, entrainment, separate
+oil/water interfaces and predictive hydrocarbon evaporation remain outside this API. See the
+[coupling record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/coupling/README.md).
 
 
 ## Overview

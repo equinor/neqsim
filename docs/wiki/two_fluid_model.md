@@ -92,6 +92,29 @@ neqsim.process.equipment.pipeline.twophasepipe/
 
 ## Conservation Equations
 
+### Opt-in stratified hydrostatic pressure traction
+
+The default transient operator remains unchanged. For gas with one resolved liquid phase in a
+constant-diameter circular face, enable signed cross-sectional pressure moments explicitly:
+
+```java
+pipe.setStratifiedHydrostaticPressureMomentsEnabled(true);
+```
+
+The thermodynamic pressure is then interpreted at the gas/liquid interface. For phase $k$, the
+additional axial face force is $F_k=\rho_k g\cos(\theta)J_k$ and the matching total-energy flow is
+$Q_kF_k/A_k$, where $Q_k=\dot m_k/\rho_{k,donor}$ uses the same signed donor as mass advection.
+Internal face forces cancel pairwise in the domain ledger; closed faces carry traction but no mass
+or energy. `getLastStratifiedHydrostaticPressureForces()` returns a defensive matrix in N with rows
+in inlet/internal/outlet order and columns in gas/oil/water order.
+
+Exact all-gas and all-liquid limits are supported without seeding an absent phase. Simultaneous
+positive oil and water and diameter changes across a face fail closed because the qualified geometry
+contains one liquid interface. This is operator-level analytical and conservation evidence only; it
+does not qualify elapsed pool retention, shutdown/cooldown/restart, severe slugging, pigging, waves,
+entrainment or hydrocarbon evaporation. See the
+[evidence matrix](../process/twofluidpipe-evidence-matrix#stratified-hydrostatic-pressure-moments).
+
 The two-fluid model solves the following 1D PDEs:
 
 ### Mass Conservation

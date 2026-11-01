@@ -10554,6 +10554,42 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Couple circular-stratified cross-sectional hydrostatic pressure moments to transient momentum and energy.
+   *
+   * <p>
+   * The option treats the solved thermodynamic pressure as the gas-liquid interface pressure, adds the signed
+   * cross-sectional pressure traction to every finite-volume face, and transports the matching pressure work with the
+   * same phase donor as mass. It supports gas with one liquid phase, including exact all-gas and all-liquid endpoints.
+   * Simultaneous positive oil and water fail explicitly because the qualified geometry has only one liquid interface.
+   * The option is off by default and does not alter the historical operator when disabled.
+   * </p>
+   *
+   * @param enabled true to couple signed stratified pressure moments
+   */
+  public void setStratifiedHydrostaticPressureMomentsEnabled(boolean enabled) {
+    equations.setStratifiedHydrostaticPressureMomentsEnabled(enabled);
+  }
+
+  /** @return whether signed circular-stratified pressure moments are coupled to the transient operator */
+  public boolean isStratifiedHydrostaticPressureMomentsEnabled() {
+    return equations.isStratifiedHydrostaticPressureMomentsEnabled();
+  }
+
+  /**
+   * Get the signed stratified hydrostatic pressure force retained at each numerical face.
+   *
+   * <p>
+   * Rows are inlet, internal faces in order, then outlet; columns are gas, oil, and water. An empty matrix means that
+   * the option was disabled for the most recent operator evaluation.
+   * </p>
+   *
+   * @return defensive face-by-phase pressure-force matrix in N
+   */
+  public double[][] getLastStratifiedHydrostaticPressureForces() {
+    return equations.getLastStratifiedHydrostaticPressureForces();
+  }
+
+  /**
    * Allow signed phase flow through the zero-gradient outlet boundary.
    *
    * <p>

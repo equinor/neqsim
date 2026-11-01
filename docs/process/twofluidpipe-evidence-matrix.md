@@ -252,8 +252,19 @@ unrepresentable geometry fails explicitly without changing the supplied depth.
 `StratifiedPressureMomentsTest` verifies independent angular quadrature, analytical half/full
 sections, trace limits, complement symmetry, area derivatives, serialization and signed
 finite-volume gravity/traction identities. The [executed numerical record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/README.md)
-retains every case, refinement and measured opt-in query cost. This query has no automatic
-runtime call site. It does not change momentum, energy, boundary states or transient results.
-Coupled interfacial pressure forces and conservative energy work remain prerequisites for
-using these moments to demonstrate a retained pool. Capillarity, waves, entrainment,
-separate oil/water interfaces and predictive hydrocarbon evaporation remain outside this API.
+retains every case, refinement and measured opt-in query cost.
+
+The default-off production switch
+`TwoFluidPipe.setStratifiedHydrostaticPressureMomentsEnabled(true)` couples
+$F_k=\rho_k g\cos(\theta)J_k$ into phase pressure traction at internal and external faces and adds
+the conservative work $Q_kF_k/A_k$ with the mass-flux donor density. The retained force matrix is
+ordered inlet/internal/outlet by gas/oil/water and is transaction-safe. The six-test coupling matrix
+covers both flow directions, exact phase endpoints, a vertical control, closed-domain force
+telescoping, unsupported-interface and diameter rejection, rollback, public API state and bitwise
+default-off restoration. The [executed coupling record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/coupling/README.md)
+states the analytical references, units and commands.
+
+This closes the phase-traction/work operator prerequisite only. The one-interface circular geometry
+rejects simultaneous positive oil and water and diameter steps. No elapsed retained-pool, terrain
+drainage, cooldown, restart, severe-slugging, pigging or predictive evaporation claim follows.
+Capillarity, waves, entrainment and separate oil/water interfaces remain outside this API.

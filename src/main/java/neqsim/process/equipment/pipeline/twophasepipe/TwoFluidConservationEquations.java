@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.BubbleSizeClosure;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator.StratifiedPressureMoments;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.SlugForceBalance;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.WallFriction;
@@ -52,6 +53,8 @@ public class TwoFluidConservationEquations implements Serializable {
 
   private static final long serialVersionUID = 1L;
   private static final double GRAVITY = 9.81;
+  /** Shared immutable-by-shape empty force ledger for the default-off hot path. */
+  private static final double[][] EMPTY_PHASE_FORCE_MATRIX = new double[0][3];
 
   /**
    * Number of conservation equations (7 for three-phase with water-oil slip: gas mass, oil mass, water mass, gas
@@ -397,6 +400,9 @@ public class TwoFluidConservationEquations implements Serializable {
   /** Apply consistent phase pressure forces independently of the optional Bestion stabilization. */
   private boolean consistentPhasePressureEnabled;
 
+  /** Add opt-in circular-stratified cross-sectional pressure moments to phase traction and work. */
+  private boolean stratifiedHydrostaticPressureMomentsEnabled;
+
   /** Whether the Bestion stabilizer is handled by the time integrator instead of the explicit RHS. */
   private boolean implicitInterfacialPressure = false;
 
@@ -430,6 +436,12 @@ public class TwoFluidConservationEquations implements Serializable {
 
   /** Well-balanced pressure correction applied at each internal face, in Pa. */
   private double[] hydrostaticFacePressureCorrection = new double[0];
+
+  /** Signed circular-stratified pressure force at each internal face, indexed by gas/oil/water. */
+  private double[][] interfaceStratifiedPressureForce = EMPTY_PHASE_FORCE_MATRIX;
+
+  /** Signed circular-stratified pressure force at inlet/outlet, indexed by gas/oil/water. */
+  private double[][] boundaryStratifiedPressureForce = EMPTY_PHASE_FORCE_MATRIX;
 
   /**
    * Enable virtual mass force term in momentum equations. The virtual mass force accounts for the inertia of the
@@ -1250,6 +1262,8 @@ public class TwoFluidConservationEquations implements Serializable {
     validatePressureInterpolationConfiguration();
     int nCells = sections.length;
     double[][] dUdt = new double[nCells][NUM_EQUATIONS];
+    boundaryStratifiedPressureForce = stratifiedHydrostaticPressureMomentsEnabled ? new double[2][3]
+        : EMPTY_PHASE_FORCE_MATRIX;
 
     // First pass: update flow regimes, geometry, and closure relations
     updateClosureRelations(sections);
@@ -1270,7 +1284,8 @@ public class TwoFluidConservationEquations implements Serializable {
         outletFlux);
     lastEnergyFaceFluxes = populateEnergyFaceFluxes(lastEnergyFaceFluxes, nCells, fluxes, inletFlux, outletFlux);
 
-    boolean separatePressure = consistentPhasePressureEnabled || enableInterfacialPressure;
+    boolean separatePressure = consistentPhasePressureEnabled || enableInterfacialPressure
+        || stratifiedHydrostaticPressureMomentsEnabled;
     TwoFluidSection inletBoundary = inletFaceState(sections[0]);
     double[] inletVelocity = {inletBoundary.getGasVelocity(), inletBoundary.getOilVelocity(),
         inletBoundary.getWaterVelocity()};
@@ -1386,7 +1401,7 @@ public class TwoFluidConservationEquations implements Serializable {
       double[][] rates = calcRHS(sections, dx);
       return new TransactionalEvaluation(rates, lastMassBalanceRate, lastPhaseMassFaceFluxes, lastEnergyFaceFluxes,
           lastDirectionalPhaseFaceFluxes, lastPhaseMassSourcesPerLength, lastMomentumSourceForcesPerLength,
-          outletBackflowClamped);
+          getLastStratifiedHydrostaticPressureForces(), outletBackflowClamped);
     } finally {
       saved.restore();
     }
@@ -1402,11 +1417,13 @@ public class TwoFluidConservationEquations implements Serializable {
     private final DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes;
     private final double[][] phaseMassSourcesPerLength;
     private final double[][] momentumSourceForcesPerLength;
+    private final double[][] stratifiedHydrostaticPressureForces;
     private final boolean outletBackflowClamped;
 
     private TransactionalEvaluation(double[][] rates, MassBalanceRate massBalanceRate, double[][] phaseMassFaceFluxes,
         double[] energyFaceFluxes, DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes,
-        double[][] phaseMassSourcesPerLength, double[][] momentumSourceForcesPerLength, boolean outletBackflowClamped) {
+        double[][] phaseMassSourcesPerLength, double[][] momentumSourceForcesPerLength,
+        double[][] stratifiedHydrostaticPressureForces, boolean outletBackflowClamped) {
       this.rates = copyMatrixArray(rates);
       this.massBalanceRate = massBalanceRate;
       this.phaseMassFaceFluxes = copyMatrixArray(phaseMassFaceFluxes);
@@ -1414,6 +1431,7 @@ public class TwoFluidConservationEquations implements Serializable {
       this.directionalPhaseFaceFluxes = copyMatrixArray(directionalPhaseFaceFluxes);
       this.phaseMassSourcesPerLength = copyMatrixArray(phaseMassSourcesPerLength);
       this.momentumSourceForcesPerLength = copyMatrixArray(momentumSourceForcesPerLength);
+      this.stratifiedHydrostaticPressureForces = copyMatrixArray(stratifiedHydrostaticPressureForces);
       this.outletBackflowClamped = outletBackflowClamped;
     }
 
@@ -1464,6 +1482,15 @@ public class TwoFluidConservationEquations implements Serializable {
       return copyMatrixArray(momentumSourceForcesPerLength);
     }
 
+    /**
+     * Return the signed circular-stratified pressure force owned by this trial evaluation.
+     *
+     * @return defensive matrix in N, with inlet/internal/outlet rows and gas/oil/water columns; empty when disabled
+     */
+    public double[][] getStratifiedHydrostaticPressureForces() {
+      return copyMatrixArray(stratifiedHydrostaticPressureForces);
+    }
+
     /** @return whether this trial clamped a reversed outlet phase */
     public boolean isOutletBackflowClamped() {
       return outletBackflowClamped;
@@ -1476,6 +1503,8 @@ public class TwoFluidConservationEquations implements Serializable {
     private final double[] savedLiquidHoldup = interfaceLiquidHoldup.clone();
     private final double[] savedPressure = interfacePressure.clone();
     private final double[] savedHydrostaticCorrection = hydrostaticFacePressureCorrection.clone();
+    private final double[][] savedInterfaceStratifiedPressureForce = copyMatrixArray(interfaceStratifiedPressureForce);
+    private final double[][] savedBoundaryStratifiedPressureForce = copyMatrixArray(boundaryStratifiedPressureForce);
     private final double[][] savedPhaseHoldup = copyMatrixArray(interfacePhaseHoldup);
     private final double[][] savedPhasePressure = copyMatrixArray(interfacePhasePressure);
     private final TwoFluidSection savedOutlet = reconstructedOutlet;
@@ -1493,6 +1522,8 @@ public class TwoFluidConservationEquations implements Serializable {
       interfaceLiquidHoldup = savedLiquidHoldup;
       interfacePressure = savedPressure;
       hydrostaticFacePressureCorrection = savedHydrostaticCorrection;
+      interfaceStratifiedPressureForce = savedInterfaceStratifiedPressureForce;
+      boundaryStratifiedPressureForce = savedBoundaryStratifiedPressureForce;
       interfacePhaseHoldup = savedPhaseHoldup;
       interfacePhasePressure = savedPhasePressure;
       reconstructedOutlet = savedOutlet;
@@ -1587,6 +1618,29 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   public double[] getLastHydrostaticFacePressureCorrections() {
     return hydrostaticFacePressureCorrection.clone();
+  }
+
+  /**
+   * Get the signed circular-stratified pressure forces used at every numerical face.
+   *
+   * <p>
+   * Rows are inlet, internal faces in order, then outlet; columns are gas, oil, and water. Values are in newtons. An
+   * empty matrix means the opt-in closure has not been enabled for the most recent evaluation.
+   * </p>
+   *
+   * @return defensive face-by-phase force matrix in N
+   */
+  public double[][] getLastStratifiedHydrostaticPressureForces() {
+    if (!stratifiedHydrostaticPressureMomentsEnabled || boundaryStratifiedPressureForce.length != 2) {
+      return EMPTY_PHASE_FORCE_MATRIX;
+    }
+    double[][] result = new double[interfaceStratifiedPressureForce.length + 2][3];
+    result[0] = boundaryStratifiedPressureForce[0].clone();
+    for (int face = 0; face < interfaceStratifiedPressureForce.length; face++) {
+      result[face + 1] = interfaceStratifiedPressureForce[face].clone();
+    }
+    result[result.length - 1] = boundaryStratifiedPressureForce[1].clone();
+    return result;
   }
 
   /**
@@ -1772,8 +1826,16 @@ public class TwoFluidConservationEquations implements Serializable {
       lastBoundaryPhaseEnergyFluxes[0][phase] = 0.0;
     }
     sec = inletFaceState(sec);
+    StratifiedPressureFace stratified = stratifiedHydrostaticPressureMomentsEnabled ? calculateStratifiedPressureFace(
+        sec, sec,
+        new PhaseState[] {createGasState(sec), createLiquidPhaseState(sec, false), createLiquidPhaseState(sec, true)},
+        new PhaseState[] {createGasState(sec), createLiquidPhaseState(sec, false), createLiquidPhaseState(sec, true)},
+        new double[] {sec.getGasHoldup(), sec.getOilHoldup(), sec.getWaterHoldup()}) : NO_STRATIFIED_PRESSURE;
+    if (stratifiedHydrostaticPressureMomentsEnabled) {
+      boundaryStratifiedPressureForce[0] = stratified.force.clone();
+    }
     if (inletClosed) {
-      return closedFaceFlux(sec);
+      return closedFaceFlux(sec, stratified.force);
     }
     double[] flux = new double[NUM_EQUATIONS];
     double A = sec.getArea();
@@ -1788,6 +1850,7 @@ public class TwoFluidConservationEquations implements Serializable {
     alphaG = Math.max(0.0, Math.min(1.0, alphaG));
     flux[IDX_GAS_MASS] = alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * A;
     flux[IDX_GAS_MOMENTUM] = alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * vG * A + alphaG * facePressure * A;
+    flux[IDX_GAS_MOMENTUM] += stratified.force[0];
 
     // Oil flux - use holdup directly for inlet BC stability
     double rhoO = sec.getOilDensity();
@@ -1800,6 +1863,7 @@ public class TwoFluidConservationEquations implements Serializable {
     alphaO = Math.max(0, Math.min(1.0, alphaO));
     flux[IDX_OIL_MASS] = alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * A;
     flux[IDX_OIL_MOMENTUM] = alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * vO * A + alphaO * facePressure * A;
+    flux[IDX_OIL_MOMENTUM] += stratified.force[1];
 
     // Water flux - use holdup directly for inlet BC stability
     double rhoW = sec.getWaterDensity();
@@ -1811,6 +1875,7 @@ public class TwoFluidConservationEquations implements Serializable {
     alphaW = Math.max(0, Math.min(1.0, alphaW));
     flux[IDX_WATER_MASS] = alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * A;
     flux[IDX_WATER_MOMENTUM] = alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * vW * A + alphaW * facePressure * A;
+    flux[IDX_WATER_MOMENTUM] += stratified.force[2];
 
     // Energy flux
     if (includeEnergyEquation) {
@@ -1821,6 +1886,12 @@ public class TwoFluidConservationEquations implements Serializable {
       lastBoundaryPhaseEnergyFluxes[0][0] = (alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * (HG + 0.5 * vG * vG)) * A;
       lastBoundaryPhaseEnergyFluxes[0][1] = (alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * (HO + 0.5 * vO * vO)) * A;
       lastBoundaryPhaseEnergyFluxes[0][2] = (alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * (HW + 0.5 * vW * vW)) * A;
+      lastBoundaryPhaseEnergyFluxes[0][0] += stratifiedPressureWork(flux[IDX_GAS_MASS], rhoG, stratified.force[0],
+          stratified.area[0]);
+      lastBoundaryPhaseEnergyFluxes[0][1] += stratifiedPressureWork(flux[IDX_OIL_MASS], rhoO, stratified.force[1],
+          stratified.area[1]);
+      lastBoundaryPhaseEnergyFluxes[0][2] += stratifiedPressureWork(flux[IDX_WATER_MASS], rhoW, stratified.force[2],
+          stratified.area[2]);
       flux[IDX_ENERGY] = lastBoundaryPhaseEnergyFluxes[0][0] + lastBoundaryPhaseEnergyFluxes[0][1]
           + lastBoundaryPhaseEnergyFluxes[0][2];
     }
@@ -1856,8 +1927,16 @@ public class TwoFluidConservationEquations implements Serializable {
     for (int phase = 0; phase < 3; phase++) {
       lastBoundaryPhaseEnergyFluxes[1][phase] = 0.0;
     }
+    StratifiedPressureFace stratified = stratifiedHydrostaticPressureMomentsEnabled ? calculateStratifiedPressureFace(
+        sec, sec,
+        new PhaseState[] {createGasState(sec), createLiquidPhaseState(sec, false), createLiquidPhaseState(sec, true)},
+        new PhaseState[] {createGasState(sec), createLiquidPhaseState(sec, false), createLiquidPhaseState(sec, true)},
+        new double[] {sec.getGasHoldup(), sec.getOilHoldup(), sec.getWaterHoldup()}) : NO_STRATIFIED_PRESSURE;
+    if (stratifiedHydrostaticPressureMomentsEnabled) {
+      boundaryStratifiedPressureForce[1] = stratified.force.clone();
+    }
     if (outletClosed) {
-      return closedFaceFlux(sec);
+      return closedFaceFlux(sec, stratified.force);
     }
     double[] flux = new double[NUM_EQUATIONS];
     double A = sec.getArea();
@@ -1880,6 +1959,7 @@ public class TwoFluidConservationEquations implements Serializable {
     flux[IDX_GAS_MASS] = alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * A;
     flux[IDX_GAS_MOMENTUM] = (alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * vG * A)
         + sec.getGasHoldup() * facePressure * A;
+    flux[IDX_GAS_MOMENTUM] += stratified.force[0];
 
     // Oil flux - use default density if not set
     double vO = allowOutletPhaseBackflow ? sec.getOilVelocity() : Math.max(0.0, sec.getOilVelocity());
@@ -1892,6 +1972,7 @@ public class TwoFluidConservationEquations implements Serializable {
     flux[IDX_OIL_MASS] = alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * A;
     flux[IDX_OIL_MOMENTUM] = (alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * vO * A)
         + sec.getOilHoldup() * facePressure * A;
+    flux[IDX_OIL_MOMENTUM] += stratified.force[1];
 
     // Water flux - use default density if not set
     double vW = allowOutletPhaseBackflow ? sec.getWaterVelocity() : Math.max(0.0, sec.getWaterVelocity());
@@ -1903,6 +1984,7 @@ public class TwoFluidConservationEquations implements Serializable {
     flux[IDX_WATER_MASS] = alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * A;
     flux[IDX_WATER_MOMENTUM] = (alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * vW * A)
         + sec.getWaterHoldup() * facePressure * A;
+    flux[IDX_WATER_MOMENTUM] += stratified.force[2];
 
     // Energy flux
     if (includeEnergyEquation) {
@@ -1913,6 +1995,12 @@ public class TwoFluidConservationEquations implements Serializable {
       lastBoundaryPhaseEnergyFluxes[1][0] = (alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * (HG + 0.5 * vG * vG)) * A;
       lastBoundaryPhaseEnergyFluxes[1][1] = (alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * (HO + 0.5 * vO * vO)) * A;
       lastBoundaryPhaseEnergyFluxes[1][2] = (alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * (HW + 0.5 * vW * vW)) * A;
+      lastBoundaryPhaseEnergyFluxes[1][0] += stratifiedPressureWork(flux[IDX_GAS_MASS], rhoG, stratified.force[0],
+          stratified.area[0]);
+      lastBoundaryPhaseEnergyFluxes[1][1] += stratifiedPressureWork(flux[IDX_OIL_MASS], rhoO, stratified.force[1],
+          stratified.area[1]);
+      lastBoundaryPhaseEnergyFluxes[1][2] += stratifiedPressureWork(flux[IDX_WATER_MASS], rhoW, stratified.force[2],
+          stratified.area[2]);
       flux[IDX_ENERGY] = lastBoundaryPhaseEnergyFluxes[1][0] + lastBoundaryPhaseEnergyFluxes[1][1]
           + lastBoundaryPhaseEnergyFluxes[1][2];
     }
@@ -1938,12 +2026,12 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   /** A closed face carries pressure traction but no advected mass or energy. */
-  private double[] closedFaceFlux(TwoFluidSection sec) {
+  private double[] closedFaceFlux(TwoFluidSection sec, double[] stratifiedForce) {
     double[] flux = new double[NUM_EQUATIONS];
     double pressureForce = sec.getPressure() * sec.getArea();
-    flux[IDX_GAS_MOMENTUM] = sec.getGasHoldup() * pressureForce;
-    flux[IDX_OIL_MOMENTUM] = sec.getOilHoldup() * pressureForce;
-    flux[IDX_WATER_MOMENTUM] = sec.getWaterHoldup() * pressureForce;
+    flux[IDX_GAS_MOMENTUM] = sec.getGasHoldup() * pressureForce + stratifiedForce[0];
+    flux[IDX_OIL_MOMENTUM] = sec.getOilHoldup() * pressureForce + stratifiedForce[1];
+    flux[IDX_WATER_MOMENTUM] = sec.getWaterHoldup() * pressureForce + stratifiedForce[2];
     return flux;
   }
 
@@ -2188,6 +2276,122 @@ public class TwoFluidConservationEquations implements Serializable {
     flux.interfacePressure += pressureCorrection;
   }
 
+  /** Phase-resolved cross-sectional hydrostatic traction at one face. */
+  private static final class StratifiedPressureFace {
+    private final double[] force = new double[3];
+    private final double[] area = new double[3];
+  }
+
+  /** Shared read-only zero result on the default-off path. */
+  private static final StratifiedPressureFace NO_STRATIFIED_PRESSURE = new StratifiedPressureFace();
+
+  /**
+   * Evaluate the circular-stratified pressure moment using the same phase fractions as pressure transport.
+   *
+   * <p>
+   * The thermodynamic pressure is interpreted as interface pressure. The limiting interface is the invert for an
+   * all-gas section and the crown for an all-liquid section, so the force is continuous through exact phase
+   * disappearance without a numerical seed. The qualified geometry owns one liquid surface; simultaneous positive oil
+   * and water therefore reject instead of silently inventing a second interface or partitioning the moment.
+   * </p>
+   */
+  private StratifiedPressureFace calculateStratifiedPressureFace(TwoFluidSection left, TwoFluidSection right,
+      PhaseState[] leftPhases, PhaseState[] rightPhases, double[] phaseHoldups) {
+    if (!stratifiedHydrostaticPressureMomentsEnabled) {
+      return NO_STRATIFIED_PRESSURE;
+    }
+    StratifiedPressureFace result = new StratifiedPressureFace();
+    double diameter = left.getDiameter();
+    double rightDiameter = right.getDiameter();
+    double diameterScale = Math.max(Math.abs(diameter), Math.abs(rightDiameter));
+    if (!(diameter > 0.0) || !Double.isFinite(diameter) || !Double.isFinite(rightDiameter)
+        || Math.abs(diameter - rightDiameter) > 1.0e-12 * diameterScale) {
+      throw new IllegalStateException("Stratified pressure moments require one positive constant face diameter");
+    }
+    if (phaseHoldups.length != 3 || leftPhases.length != 3 || rightPhases.length != 3) {
+      throw new IllegalArgumentException("Stratified pressure moments require gas, oil, and water face states");
+    }
+    double alphaGas = checkedHoldup(phaseHoldups[0]);
+    double alphaOil = checkedHoldup(phaseHoldups[1]);
+    double alphaWater = checkedHoldup(phaseHoldups[2]);
+    if (alphaOil > 0.0 && alphaWater > 0.0) {
+      throw new IllegalStateException(
+          "Stratified pressure moments support one liquid phase; simultaneous oil and water need two-interface geometry");
+    }
+    double alphaLiquid = alphaOil + alphaWater;
+    double closure = alphaGas + alphaLiquid;
+    if (!Double.isFinite(closure) || Math.abs(closure - 1.0) > 1.0e-10) {
+      throw new IllegalStateException("Stratified pressure moments require volume-closed face holdups");
+    }
+    alphaLiquid = Math.max(0.0, Math.min(1.0, alphaLiquid));
+    double depth = alphaLiquid == 0.0 ? 0.0
+        : alphaLiquid == 1.0 ? diameter : geometryCalc.calculateFromHoldup(alphaLiquid, diameter).liquidLevel;
+    StratifiedPressureMoments moments = geometryCalc.calculateStratifiedPressureMoments(depth, diameter);
+    result.area[0] = moments.getGasArea();
+    result.area[1] = alphaOil > 0.0 ? moments.getLiquidArea() : 0.0;
+    result.area[2] = alphaWater > 0.0 ? moments.getLiquidArea() : 0.0;
+    double normalGravity = GRAVITY * 0.5 * (Math.cos(left.getInclination()) + Math.cos(right.getInclination()));
+    if (!Double.isFinite(normalGravity)) {
+      throw new IllegalStateException("Stratified pressure moments require finite face inclination");
+    }
+    if (result.area[0] > 0.0) {
+      result.force[0] = facePhaseDensity(leftPhases[0], rightPhases[0]) * normalGravity * moments.getGasMoment();
+    }
+    if (result.area[1] > 0.0) {
+      result.force[1] = facePhaseDensity(leftPhases[1], rightPhases[1]) * normalGravity * moments.getLiquidMoment();
+    }
+    if (result.area[2] > 0.0) {
+      result.force[2] = facePhaseDensity(leftPhases[2], rightPhases[2]) * normalGravity * moments.getLiquidMoment();
+    }
+    return result;
+  }
+
+  /** Reject nonphysical phase fractions without clipping positive trace inventory. */
+  private static double checkedHoldup(double holdup) {
+    if (!Double.isFinite(holdup) || holdup < 0.0 || holdup > 1.0) {
+      throw new IllegalStateException("Stratified pressure moments require finite face holdups in [0, 1]");
+    }
+    return holdup;
+  }
+
+  /** Recover a volume-weighted face density from the two states that own the reported face holdup. */
+  private static double facePhaseDensity(PhaseState left, PhaseState right) {
+    double holdup = left.holdup + right.holdup;
+    double density = holdup == 0.0 ? Double.NaN : (left.holdup * left.density + right.holdup * right.density) / holdup;
+    if (!Double.isFinite(density) || !(density > 0.0)) {
+      throw new IllegalStateException("Stratified pressure moments require positive finite present-phase density");
+    }
+    return density;
+  }
+
+  /** Add one phase's moment traction and matching signed pressure work to its conservative face flux. */
+  private static void applyStratifiedPressureFace(PhaseFlux flux, PhaseState left, PhaseState right, double force,
+      double phaseArea) {
+    flux.momentumFlux += force;
+    if (flux.massFlux == 0.0 || force == 0.0) {
+      return;
+    }
+    if (!(phaseArea > 0.0) || !Double.isFinite(phaseArea)) {
+      throw new IllegalStateException("Stratified pressure work requires positive finite transported phase area");
+    }
+    double donorDensity = flux.massFlux >= 0.0 ? left.density : right.density;
+    if (!Double.isFinite(donorDensity) || !(donorDensity > 0.0)) {
+      throw new IllegalStateException("Stratified pressure work requires positive finite donor density");
+    }
+    flux.energyFlux += flux.massFlux / donorDensity * force / phaseArea;
+  }
+
+  /** Calculate signed boundary pressure work from the transported donor volume. */
+  private static double stratifiedPressureWork(double massFlow, double donorDensity, double force, double phaseArea) {
+    if (massFlow == 0.0 || force == 0.0) {
+      return 0.0;
+    }
+    if (!(phaseArea > 0.0) || !Double.isFinite(phaseArea) || !(donorDensity > 0.0) || !Double.isFinite(donorDensity)) {
+      throw new IllegalStateException("Stratified boundary pressure work requires finite phase area and donor density");
+    }
+    return massFlow / donorDensity * force / phaseArea;
+  }
+
   /**
    * Calculate a local inclined-section gas-carryover screen.
    *
@@ -2244,6 +2448,8 @@ public class TwoFluidConservationEquations implements Serializable {
     if (hydrostaticFacePressureCorrection.length != nInterfaces) {
       hydrostaticFacePressureCorrection = new double[nInterfaces];
     }
+    interfaceStratifiedPressureForce = stratifiedHydrostaticPressureMomentsEnabled ? new double[nInterfaces][3]
+        : EMPTY_PHASE_FORCE_MATRIX;
 
     interfacePhaseHoldup = new double[nInterfaces][3];
     interfacePhasePressure = new double[nInterfaces][3];
@@ -2281,7 +2487,6 @@ public class TwoFluidConservationEquations implements Serializable {
       interfacePressure[i] = gasFlux.interfacePressure;
       interfacePhaseHoldup[i][0] = gasFlux.interfaceHoldup;
       interfacePhasePressure[i][0] = gasFlux.interfacePressure;
-      lastDirectionalPhaseFaceFluxes[i][0] = directionalFlux(gasFlux, gasL, gasR, A);
 
       if (enableWaterOilSlip) {
         // Each phase has its own donor and velocity, including countercurrent oil/water flow.
@@ -2295,6 +2500,18 @@ public class TwoFluidConservationEquations implements Serializable {
             pressureInterpolationVelocity(waterL, waterR, gradientDefect));
         applyHydrostaticFaceCorrection(oilFlux, oilL, oilR, A, pressureCorrection);
         applyHydrostaticFaceCorrection(waterFlux, waterL, waterR, A, pressureCorrection);
+        StratifiedPressureFace stratified = stratifiedHydrostaticPressureMomentsEnabled
+            ? calculateStratifiedPressureFace(left, right, new PhaseState[] {gasL, oilL, waterL},
+                new PhaseState[] {gasR, oilR, waterR},
+                new double[] {gasFlux.interfaceHoldup, oilFlux.interfaceHoldup, waterFlux.interfaceHoldup})
+            : NO_STRATIFIED_PRESSURE;
+        applyStratifiedPressureFace(gasFlux, gasL, gasR, stratified.force[0], stratified.area[0]);
+        applyStratifiedPressureFace(oilFlux, oilL, oilR, stratified.force[1], stratified.area[1]);
+        applyStratifiedPressureFace(waterFlux, waterL, waterR, stratified.force[2], stratified.area[2]);
+        fluxes[i][IDX_GAS_MOMENTUM] = gasFlux.momentumFlux;
+        if (stratifiedHydrostaticPressureMomentsEnabled) {
+          interfaceStratifiedPressureForce[i] = stratified.force.clone();
+        }
         fluxes[i][IDX_OIL_MASS] = oilFlux.massFlux;
         fluxes[i][IDX_WATER_MASS] = waterFlux.massFlux;
         fluxes[i][IDX_OIL_MOMENTUM] = oilFlux.momentumFlux;
@@ -2303,8 +2520,9 @@ public class TwoFluidConservationEquations implements Serializable {
         interfacePhaseHoldup[i][2] = waterFlux.interfaceHoldup;
         interfacePhasePressure[i][1] = oilFlux.interfacePressure;
         interfacePhasePressure[i][2] = waterFlux.interfacePressure;
-        lastDirectionalPhaseFaceFluxes[i][1] = directionalFlux(oilFlux, oilL, oilR, A);
-        lastDirectionalPhaseFaceFluxes[i][2] = directionalFlux(waterFlux, waterL, waterR, A);
+        lastDirectionalPhaseFaceFluxes[i][0] = directionalFlux(gasFlux, gasL, gasR, A, stratified.force[0]);
+        lastDirectionalPhaseFaceFluxes[i][1] = directionalFlux(oilFlux, oilL, oilR, A, stratified.force[1]);
+        lastDirectionalPhaseFaceFluxes[i][2] = directionalFlux(waterFlux, waterL, waterR, A, stratified.force[2]);
         interfaceLiquidHoldup[i] = oilFlux.interfaceHoldup + waterFlux.interfaceHoldup;
         if (gasFlux.interfaceHoldup == 0.0) {
           interfacePressure[i] = oilFlux.interfaceHoldup > 0.0 ? oilFlux.interfacePressure
@@ -2355,6 +2573,24 @@ public class TwoFluidConservationEquations implements Serializable {
       interfacePhasePressure[i][1] = liqFlux.interfacePressure;
       interfacePhasePressure[i][2] = liqFlux.interfacePressure;
 
+      PhaseState oilL = createLiquidPhaseState(left, false);
+      PhaseState oilR = createLiquidPhaseState(right, false);
+      PhaseState waterL = createLiquidPhaseState(left, true);
+      PhaseState waterR = createLiquidPhaseState(right, true);
+      StratifiedPressureFace stratified = stratifiedHydrostaticPressureMomentsEnabled
+          ? calculateStratifiedPressureFace(left, right, new PhaseState[] {gasL, oilL, waterL},
+              new PhaseState[] {gasR, oilR, waterR},
+              new double[] {gasFlux.interfaceHoldup, interfacePhaseHoldup[i][1], interfacePhaseHoldup[i][2]})
+          : NO_STRATIFIED_PRESSURE;
+      double liquidStratifiedForce = stratified.force[1] + stratified.force[2];
+      applyStratifiedPressureFace(gasFlux, gasL, gasR, stratified.force[0], stratified.area[0]);
+      applyStratifiedPressureFace(liqFlux, liqL, liqR, liquidStratifiedForce, stratified.area[1] + stratified.area[2]);
+      fluxes[i][IDX_GAS_MOMENTUM] = gasFlux.momentumFlux;
+      if (stratifiedHydrostaticPressureMomentsEnabled) {
+        interfaceStratifiedPressureForce[i] = stratified.force.clone();
+      }
+      lastDirectionalPhaseFaceFluxes[i][0] = directionalFlux(gasFlux, gasL, gasR, A, stratified.force[0]);
+
       // Split liquid mass flux by water cut (volume-based)
       // But account for density difference: m_oil/m_water = (1-wc)*rho_o / (wc*rho_w)
       double totalLiqMassFlux = liqFlux.massFlux;
@@ -2365,14 +2601,10 @@ public class TwoFluidConservationEquations implements Serializable {
       fluxes[i][IDX_WATER_MASS] = totalLiqMassFlux * waterMassFrac;
 
       // Split momentum flux similarly, but use individual velocities if available
-      double liquidPressureFlux = liqFlux.interfaceHoldup * liqFlux.interfacePressure * A;
+      double liquidPressureFlux = liqFlux.interfaceHoldup * liqFlux.interfacePressure * A + liquidStratifiedForce;
       fluxes[i][IDX_OIL_MOMENTUM] = fluxes[i][IDX_OIL_MASS] * vO + upwindOilFrac * liquidPressureFlux;
       fluxes[i][IDX_WATER_MOMENTUM] = fluxes[i][IDX_WATER_MASS] * vW + upwindWaterCut * liquidPressureFlux;
 
-      PhaseState oilL = createLiquidPhaseState(left, false);
-      PhaseState oilR = createLiquidPhaseState(right, false);
-      PhaseState waterL = createLiquidPhaseState(left, true);
-      PhaseState waterR = createLiquidPhaseState(right, true);
       lastDirectionalPhaseFaceFluxes[i][1] = directionalFlux(fluxes[i][IDX_OIL_MASS], fluxes[i][IDX_OIL_MASS] * vO,
           upwindOilFrac * liquidPressureFlux, oilL, oilR, A);
       lastDirectionalPhaseFaceFluxes[i][2] = directionalFlux(fluxes[i][IDX_WATER_MASS], fluxes[i][IDX_WATER_MASS] * vW,
@@ -2389,7 +2621,13 @@ public class TwoFluidConservationEquations implements Serializable {
   /** Build the immutable donor ledger from one phase flux. */
   private static DirectionalPhaseFaceFlux directionalFlux(PhaseFlux flux, PhaseState left, PhaseState right,
       double area) {
-    double pressureTraction = flux.interfaceHoldup * flux.interfacePressure * area;
+    return directionalFlux(flux, left, right, area, 0.0);
+  }
+
+  /** Build the immutable donor ledger with an additional cross-sectional pressure traction. */
+  private static DirectionalPhaseFaceFlux directionalFlux(PhaseFlux flux, PhaseState left, PhaseState right,
+      double area, double additionalPressureTraction) {
+    double pressureTraction = flux.interfaceHoldup * flux.interfacePressure * area + additionalPressureTraction;
     double donorVelocity = flux.massFlux >= 0.0 ? left.velocity : right.velocity;
     return directionalFlux(flux.massFlux, flux.massFlux == 0.0 ? 0.0 : flux.massFlux * donorVelocity, pressureTraction,
         left, right, area);
@@ -2956,13 +3194,21 @@ public class TwoFluidConservationEquations implements Serializable {
         // are exactly zero on a uniform-area mesh, preserving the established transport operator there.
         double pressureSource = (rightArea - area) * alphaRight * phasePRight
             - (leftArea - area) * alphaLeft * phasePLeft;
-        if (consistentPhasePressureEnabled || enableInterfacialPressure) {
+        if (consistentPhasePressureEnabled || enableInterfacialPressure
+            || stratifiedHydrostaticPressureMomentsEnabled) {
           double spurious = alphaRight * phasePRight - alphaLeft * phasePLeft - cellHoldups[phase] * dp;
           double stabilizer = implicitInterfacialPressure ? 0.0 : deltaPi * (alphaRight - alphaLeft);
           // Assemble the surviving pressure force directly when advection was kept separate.
           // Cancelling large face tractions after adding tiny advective momentum loses trace-phase inertia.
           pressureSource = fluxContainsPressure ? pressureSource + (spurious - stabilizer) * area
               : (-cellHoldups[phase] * dp - stabilizer) * area;
+        }
+        if (stratifiedHydrostaticPressureMomentsEnabled) {
+          double rightMomentForce = i < nCells - 1 ? interfaceStratifiedPressureForce[i][phase]
+              : boundaryStratifiedPressureForce[1][phase];
+          double leftMomentForce = i > 0 ? interfaceStratifiedPressureForce[i - 1][phase]
+              : boundaryStratifiedPressureForce[0][phase];
+          pressureSource -= rightMomentForce - leftMomentForce;
         }
         dUdt[i][IDX_GAS_MOMENTUM + phase] += pressureSource / secDx;
       }
@@ -3647,6 +3893,31 @@ public class TwoFluidConservationEquations implements Serializable {
   /** @return whether phase-pressure consistency is independently enabled */
   public boolean isConsistentPhasePressureEnabled() {
     return consistentPhasePressureEnabled;
+  }
+
+  /**
+   * Enable circular-stratified cross-sectional hydrostatic pressure traction and work.
+   *
+   * <p>
+   * The option uses the qualified signed pressure moments at internal and external faces and automatically assembles
+   * pressure separately from advective momentum. It supports gas with exactly one liquid phase, including exact all-gas
+   * and all-liquid limits. Simultaneous positive oil and water fail closed because they require two resolved liquid
+   * interfaces. The option is off by default.
+   * </p>
+   *
+   * @param enabled true to couple the signed pressure moments
+   */
+  public void setStratifiedHydrostaticPressureMomentsEnabled(boolean enabled) {
+    stratifiedHydrostaticPressureMomentsEnabled = enabled;
+    if (!enabled) {
+      interfaceStratifiedPressureForce = EMPTY_PHASE_FORCE_MATRIX;
+      boundaryStratifiedPressureForce = EMPTY_PHASE_FORCE_MATRIX;
+    }
+  }
+
+  /** @return whether signed circular-stratified pressure moments are coupled to the operator */
+  public boolean isStratifiedHydrostaticPressureMomentsEnabled() {
+    return stratifiedHydrostaticPressureMomentsEnabled;
   }
 
   /**
