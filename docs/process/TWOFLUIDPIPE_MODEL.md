@@ -94,6 +94,21 @@ finite-volume gravity/traction identities. The [executed numerical record](../..
 retains every case, refinement and measured opt-in query cost. The geometry query remains
 side-effect free.
 
+The paired-fraction query `calculateStratifiedPressureMomentsFromHoldups(gas, liquid, diameter)`
+inverts the minority area with a relative tolerance and algebraic reflection. The pressure operator
+uses this query so a positive gas or liquid trace retains its own area even when the complementary
+fraction rounds to one. Recovered occupied-volume weights are checked against the existing
+1e-10 closure bound and converted to geometric fractions only; conserved variables are unchanged. The historical `calculateFromHoldup` depth floor and absolute area tolerance
+are unsuitable for this pressure-work adapter and are not used by it. An independent 162-section,
+80-digit series inversion covers both phase limits and positive fractions down to `1e-30`; see the
+[coupling record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/coupling/README.md).
+
+**Transient qualification blocker:** with the switch enabled, the historical 12/24-cell rich-gas
+ramp currently rejects the requested 0.5/0.375 s intervals after 0.25 s accepted time on both meshes.
+The next face-volume sum exceeds the unchanged 1e-10 closure bound; primary-state rollback passes.
+See the coupling record and executable `qualify_ramp.py`. This option has instantaneous analytical
+operator evidence and must not be treated as a qualified blowdown or pooling model.
+
 `TwoFluidPipe.setStratifiedHydrostaticPressureMomentsEnabled(true)` now couples those moments to
 the finite-volume phase momentum and total-energy operators. The solved thermodynamic pressure is
 the interface pressure; each face receives $F_k=\rho_k g\cos(\theta)J_k$, and its energy flux receives

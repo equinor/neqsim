@@ -115,6 +115,15 @@ does not qualify elapsed pool retention, shutdown/cooldown/restart, severe slugg
 entrainment or hydrocarbon evaporation. See the
 [evidence matrix](../process/twofluidpipe-evidence-matrix#stratified-hydrostatic-pressure-moments).
 
+The force/work adapter uses `GeometryCalculator.calculateStratifiedPressureMomentsFromHoldups`
+with both independently retained phase fractions. It resolves the smaller area with relative
+accuracy and reflects the moments algebraically, preserving positive traces even when subtracting
+them from one would lose them. The old general-purpose holdup-to-depth approximation is unchanged
+and is not a pressure-work reference. The coupling record includes independent 80-digit inversion,
+trace-force and countercurrent unequal-density work controls. The enabled historical ramp still
+rejects after 0.25 s on both meshes at the unchanged face-volume closure guard; the retained probe
+records that incomplete transient and primary-state rollback.
+
 The two-fluid model solves the following 1D PDEs:
 
 ### Mass Conservation

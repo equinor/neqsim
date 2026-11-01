@@ -16,7 +16,7 @@ PROBE = CLASSES / 'PressureMomentProbe.java'
 PROBE.write_text('import java.io.BufferedReader;\nimport java.io.InputStreamReader;\nimport java.io.PrintWriter;\nimport java.nio.charset.StandardCharsets;\nimport java.nio.file.Files;\nimport java.nio.file.Paths;\nimport neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator;\n/** Read-only probe of published pressure moments.\n * @author NeqSim\n * @version 1.0\n */\npublic class PressureMomentProbe {\n  /** Evaluate supplied sections without changing any solver state.\n   * @param args output CSV path\n   * @throws Exception if reading or writing fails\n   */\n  public static void main(String[] args) throws Exception {\n    GeometryCalculator geometry = new GeometryCalculator();\n    try (BufferedReader input = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));\n        PrintWriter output = new PrintWriter(Files.newBufferedWriter(Paths.get(args[0]), StandardCharsets.UTF_8))) {\n      output.println("diameter_m,depth_m,liquid_m3,gas_m3,liquid_m2,gas_m2");\n      String line;\n      while ((line = input.readLine()) != null) {\n        String[] fields = line.split(",");\n        double diameter = Double.parseDouble(fields[0]);\n        double depth = Double.parseDouble(fields[1]);\n        GeometryCalculator.StratifiedPressureMoments value = geometry.calculateStratifiedPressureMoments(depth, diameter);\n        output.println(diameter + "," + depth + "," + value.getLiquidMoment() + "," + value.getGasMoment()\n            + "," + value.getLiquidArea() + "," + value.getGasArea());\n      }\n    }\n  }\n}\n')
 SOURCE = REPO / 'src/main/java/neqsim/process/equipment/pipeline/twophasepipe/closure/GeometryCalculator.java'
 raw = SOURCE.read_bytes()
-if hashlib.sha1(b'blob ' + str(len(raw)).encode() + b'\0' + raw).hexdigest() != '550330da7ad6226d80819ade11d88d9a0a70a564':
+if hashlib.sha1(b'blob ' + str(len(raw)).encode() + b'\0' + raw).hexdigest() != 'e62e0a03a8eeb92d9cbad04b109142501a0903a4':
     raise ValueError('Unexpected pressure-moment source blob')
 subprocess.run(['java', '--module', 'jdk.compiler/com.sun.tools.javac.Main', '--release', '8', '-d', str(CLASSES), str(SOURCE), str(PROBE)], check=True)
 fractions = sorted(set([0.0, 0.25, 0.5, 0.75, 1.0] + [10.0**-k for k in range(1, 17)] + [1.0 - 10.0**-k for k in range(1, 17)]))
@@ -69,7 +69,10 @@ with localcontext() as context:
         rows.append({**native, 'reference_liquid_m3':str(jl), 'reference_gas_m3':str(jg), 'error_over_D3':str(max(errors)/d**3), 'minority_relative_moment_error':str(rel_m), 'minority_relative_area_error':str(rel_a), 'series_refinement_over_D3':str(refinement)})
 with (ROOT/'audit.csv').open('w') as output:
     writer = csv.DictWriter(output, fieldnames=list(rows[0]), lineterminator="\n"); writer.writeheader(); writer.writerows(rows)
-summary = {'head':'2561eb8df00baab7f7b33f55ca0c6b27c629f8ac','rows':len(rows),'precision':80,'terms':[100,160]}
+summary = {'reference_head':'2561eb8df00baab7f7b33f55ca0c6b27c629f8ac',
+           'source_parent_sha':'3dbfef974a2e8d50ce59f44030b2c5dad0f7ad4b',
+           'source_blob':'e62e0a03a8eeb92d9cbad04b109142501a0903a4',
+           'rows':len(rows),'precision':80,'terms':[100,160]}
 for key in ['error_over_D3','minority_relative_moment_error','minority_relative_area_error','series_refinement_over_D3']:
     summary['maximum_'+key]=str(max(Q(row[key]) for row in rows))
 (ROOT/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')

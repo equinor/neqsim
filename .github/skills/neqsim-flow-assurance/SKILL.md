@@ -1638,7 +1638,15 @@ matching `Q * F / A` work with the signed mass donor; inspect
 liquid in a constant-diameter circular pipe; oil+water and diameter steps reject. Its independent
 integral, signed-work, conservation and rollback tests do not establish elapsed dynamic pool
 retention, terrain drainage, shutdown/cooldown, restart, slugging, pigging or hydrocarbon evaporation.
+
+Preserve both face fractions when adapting holdup to pressure moments: use
+`calculateStratifiedPressureMomentsFromHoldups(gas, liquid, diameter)`. Its relative minority-area
+inversion and algebraic reflection retain positive traces; the legacy general holdup-to-depth
+approximation has an absolute area tolerance and must not supply this pressure-work geometry.
 See `StratifiedPressureMomentsTest`, `StratifiedPressureMomentCouplingTest` and the public numerical record.
+The enabled historical 12/24-cell ramp currently stops at 0.25 s on the unchanged face-volume
+closure guard. Keep the executable coupling rejection record attached; instantaneous operator
+identities do not qualify full elapsed transient operation.
 
 ## Residual MEG/water liquid after pigging
 

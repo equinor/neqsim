@@ -2311,9 +2311,9 @@ public class TwoFluidConservationEquations implements Serializable {
     if (phaseHoldups.length != 3 || leftPhases.length != 3 || rightPhases.length != 3) {
       throw new IllegalArgumentException("Stratified pressure moments require gas, oil, and water face states");
     }
-    double alphaGas = checkedHoldup(phaseHoldups[0]);
-    double alphaOil = checkedHoldup(phaseHoldups[1]);
-    double alphaWater = checkedHoldup(phaseHoldups[2]);
+    double alphaGas = checkedPhaseVolumeWeight(phaseHoldups[0]);
+    double alphaOil = checkedPhaseVolumeWeight(phaseHoldups[1]);
+    double alphaWater = checkedPhaseVolumeWeight(phaseHoldups[2]);
     if (alphaOil > 0.0 && alphaWater > 0.0) {
       throw new IllegalStateException(
           "Stratified pressure moments support one liquid phase; simultaneous oil and water need two-interface geometry");
@@ -2323,10 +2323,11 @@ public class TwoFluidConservationEquations implements Serializable {
     if (!Double.isFinite(closure) || Math.abs(closure - 1.0) > 1.0e-10) {
       throw new IllegalStateException("Stratified pressure moments require volume-closed face holdups");
     }
-    alphaLiquid = Math.max(0.0, Math.min(1.0, alphaLiquid));
-    double depth = alphaLiquid == 0.0 ? 0.0
-        : alphaLiquid == 1.0 ? diameter : geometryCalc.calculateFromHoldup(alphaLiquid, diameter).liquidLevel;
-    StratifiedPressureMoments moments = geometryCalc.calculateStratifiedPressureMoments(depth, diameter);
+    // Conservative thermodynamic recovery retains its occupied-volume residual, including all-gas values a few
+    // ulps above one. Convert those nonnegative weights to geometric fractions only after the unchanged closure
+    // check. This does not alter stored holdups, mass, momentum, energy or the thermodynamic recovery tolerance.
+    StratifiedPressureMoments moments = geometryCalc.calculateStratifiedPressureMomentsFromHoldups(alphaGas / closure,
+        alphaLiquid / closure, diameter);
     result.area[0] = moments.getGasArea();
     result.area[1] = alphaOil > 0.0 ? moments.getLiquidArea() : 0.0;
     result.area[2] = alphaWater > 0.0 ? moments.getLiquidArea() : 0.0;
@@ -2346,10 +2347,16 @@ public class TwoFluidConservationEquations implements Serializable {
     return result;
   }
 
-  /** Reject nonphysical phase fractions without clipping positive trace inventory. */
-  private static double checkedHoldup(double holdup) {
-    if (!Double.isFinite(holdup) || holdup < 0.0 || holdup > 1.0) {
-      throw new IllegalStateException("Stratified pressure moments require finite face holdups in [0, 1]");
+  /**
+   * Reject invalid occupied-volume weights; the face sum separately enforces the existing volume-closure bound.
+   *
+   * @param holdup independently retained occupied-volume weight
+   * @return the unchanged nonnegative finite weight
+   * @throws IllegalStateException if the weight is negative or nonfinite
+   */
+  private static double checkedPhaseVolumeWeight(double holdup) {
+    if (!Double.isFinite(holdup) || holdup < 0.0) {
+      throw new IllegalStateException("Stratified pressure moments require nonnegative finite face volume weights");
     }
     return holdup;
   }

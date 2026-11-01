@@ -120,6 +120,83 @@ class StratifiedPressureMomentCouplingTest {
     }
   }
 
+  /** Positive trace forces approach the circular-segment limit on either side of phase disappearance. */
+  @Test
+  void tracePhaseTractionUsesItsTransportedAreaWithoutASeed() {
+    double area = Math.PI * DIAMETER * DIAMETER / 4.0;
+    for (double minority : new double[] {1.0e-12, 1.0e-16, 1.0e-30}) {
+      double depth = DIAMETER * Math.pow(3.0 * Math.PI * minority / 16.0, 2.0 / 3.0);
+      double limitingMoment = 0.4 * minority * area * depth;
+      for (boolean gasIsMinority : new boolean[] {false, true}) {
+        double gas = gasIsMinority ? minority : 1.0 - minority;
+        double oil = gasIsMinority ? 1.0 - minority : minority;
+        TwoFluidSection cell = section(0, DIAMETER, gas, oil, 0.0, 1.0, 1.0);
+        TwoFluidConservationEquations equations = equations(true, false);
+        equations.calcRHS(new TwoFluidSection[] {cell}, LENGTH);
+        int phase = gasIsMinority ? 0 : 1;
+        double expected = (gasIsMinority ? -GAS_DENSITY : OIL_DENSITY) * GRAVITY * limitingMoment;
+        for (double[] face : equations.getLastStratifiedHydrostaticPressureForces()) {
+          assertEquals(1.0, face[phase] / expected, 3.0e-8);
+          assertEquals(0.0, face[2], 0.0);
+        }
+      }
+    }
+  }
+
+  /** Opposite gas/oil transport and unequal phase densities retain independent signed donors in pressure work. */
+  @Test
+  void countercurrentPressureWorkUsesEachPhasesOwnTransportAreaAndDonor() {
+    double area = Math.PI * DIAMETER * DIAMETER / 4.0;
+    for (double direction : new double[] {-1.0, 1.0}) {
+      for (boolean separateLiquid : new boolean[] {false, true}) {
+        TwoFluidSection left = section(0, DIAMETER, 0.3, 0.7, 0.0, 2.0 * direction, -0.5 * direction);
+        TwoFluidSection right = section(1, DIAMETER, 0.6, 0.4, 0.0, 2.0 * direction, -0.5 * direction);
+        right.setGasDensity(2.0 * GAS_DENSITY);
+        right.setOilDensity(1.25 * OIL_DENSITY);
+        right.setLiquidDensity(1.25 * OIL_DENSITY);
+        right.updateConservativeVariables();
+        TwoFluidSection[] cells = {left, right};
+        TwoFluidConservationEquations baseline = equations(false, separateLiquid);
+        baseline.calcRHS(copy(cells), LENGTH);
+        TwoFluidConservationEquations coupled = equations(true, separateLiquid);
+        coupled.calcRHS(copy(cells), LENGTH);
+        double[][] mass = coupled.getLastPhaseMassFaceFluxes();
+        double[][] forces = coupled.getLastStratifiedHydrostaticPressureForces();
+        double gasDonor = direction > 0.0 ? left.getGasDensity() : right.getGasDensity();
+        double oilDonor = direction < 0.0 ? left.getOilDensity() : right.getOilDensity();
+        double expected = mass[1][0] / gasDonor * forces[1][0] / (0.45 * area)
+            + mass[1][1] / oilDonor * forces[1][1] / (0.55 * area);
+        assertTrue(mass[1][0] * mass[1][1] < 0.0);
+        assertEquals(expected, coupled.getLastEnergyFaceFluxes()[1] - baseline.getLastEnergyFaceFluxes()[1], 1.0e-7);
+        assertArrayEquals(baseline.getLastPhaseMassFaceFluxes()[1], mass[1], 0.0);
+      }
+    }
+  }
+
+  /** Thermodynamic volume roundoff changes geometric fractions only, preserving the conservative state exactly. */
+  @Test
+  void recoveredOccupiedVolumeRoundoffRetainsTheExactSinglePhaseLimit() {
+    double fullGasForce = -GAS_DENSITY * GRAVITY * Math.PI * DIAMETER * DIAMETER * DIAMETER / 8.0;
+    for (double residual : new double[] {-2.7e-15, 1.3e-15, 2.7e-15}) {
+      TwoFluidSection cell = section(0, DIAMETER, 1.0, 0.0, 0.0, 0.0, 0.0);
+      cell.setGasHoldup(1.0 + residual);
+      cell.updateConservativeVariables();
+      double[] accepted = cell.getStateVector();
+      TwoFluidConservationEquations equations = equations(true, false);
+      equations.calcRHS(new TwoFluidSection[] {cell}, LENGTH);
+      assertArrayEquals(accepted, cell.getStateVector(), 0.0);
+      assertEquals(1.0 + residual, cell.getGasHoldup(), 0.0);
+      for (double[] face : equations.getLastStratifiedHydrostaticPressureForces()) {
+        assertArrayEquals(new double[] {fullGasForce, 0.0, 0.0}, face, 1.0e-10);
+      }
+    }
+    TwoFluidSection invalid = section(0, DIAMETER, 1.0, 0.0, 0.0, 0.0, 0.0);
+    invalid.setGasHoldup(1.0 + 1.0e-6);
+    invalid.updateConservativeVariables();
+    assertThrows(IllegalStateException.class,
+        () -> equations(true, false).calcRHS(new TwoFluidSection[] {invalid}, LENGTH));
+  }
+
   /** One-interface ownership rejects unsupported liquid layering and discontinuous face geometry. */
   @Test
   void unsupportedInterfacesAndDiameterStepsFailClosed() {

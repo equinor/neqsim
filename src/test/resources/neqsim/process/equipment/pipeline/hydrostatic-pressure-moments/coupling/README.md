@@ -19,7 +19,7 @@ it is not a proprietary trace or fitted dataset.
 
 ## Frozen acceptance matrix
 
-`StratifiedPressureMomentCouplingTest` executes six tests:
+`StratifiedPressureMomentCouplingTest` now executes nine tests (the original six plus trace, countercurrent and recovered-volume controls below):
 
 | Gate | Control | Acceptance |
 | --- | --- | --- |
@@ -29,6 +29,9 @@ it is not a proprietary trace or fitted dataset.
 | Model boundary | Gas/oil/water and a diameter step | Both reject explicitly; no second interface or face geometry is invented |
 | Transaction | Valid and rejected trial evaluations | Accepted force ledger is restored bit for bit |
 | Compatibility/API | Disable after one enabled evaluation; `TwoFluidPipe` switch | Disabled rates return bit for bit; force ledger becomes empty; public state is explicit and default false |
+| Trace traction | Gas or oil fraction 1e-12, 1e-16 and 1e-30 | Minority force divided by the analytical small-segment limit differs from one by at most 3e-8; absent water stays exactly zero |
+| Recovered volume | Nonnegative occupied-volume weights within the existing 1e-10 closure bound | Geometric fractions alone use weights divided by their sum; exact single-phase traction and unchanged stored state; 1e-6 closure error still rejects |
+| Countercurrent work | Gas/oil opposite directions, nonuniform holdup and unequal densities; both liquid transport modes | Enabled-minus-disabled internal energy flow agrees with the independently signed donor-volume work within 1e-7 W; mass transport is bitwise unchanged |
 
 The focused command passed all six tests on the working tree above that exact base:
 
@@ -40,6 +43,108 @@ The disabled branch returns before geometry evaluation and allocates no force-fa
 existing retained geometry timing bounds only the explicit moment query; no end-to-end timestep
 speed claim is made. Broader test, formatting, documentation and hook results belong in the PR
 ledger and exact-head CI because those results can change with the final published tree.
+
+## Trace-area adapter repair
+
+On unmodified PR head `3dbfef974a2e8d50ce59f44030b2c5dad0f7ad4b`, the old
+`calculateFromHoldup` adapter supplies a depth floor of 1e-10 m and an absolute area tolerance.
+It therefore passes an incorrect area into the otherwise independently qualified moment integral.
+At D = 1.0148 m, the read-only reproducer retained in `holdup-adapter-before.csv` gives:
+
+| Requested liquid fraction | Recovered fraction | Relative area error |
+| --- | --- | --- |
+| 1e-16 | 1.66065022018e-15 | +1560.6502% |
+| 1e-14 | 1.66065022018e-15 | -83.3935% |
+| 1e-12 | 1.66065022018e-15 | -99.8339% |
+
+The new trace-force regression fails on that head: measured/analytical limiting force is
+`2.3287897398171062e-5` instead of one for liquid fraction 1e-12. This is a geometry-to-operator
+adapter defect, distinct from the already-merged explicit-drag repair in #4678. No phase inventory
+is changed by either the original geometry query or this repair.
+
+![Trace liquid-area adapter error against the independent reference](holdup-area-error.png)
+
+The plot compares area accuracy only. It contains no liquid-pool or evaporation-time result.
+`plot_holdup.py` reproduces it from the retained CSV files with Matplotlib.
+
+The operator now uses the paired API
+`GeometryCalculator.calculateStratifiedPressureMomentsFromHoldups(gas, liquid, diameter)`.
+A safeguarded Newton iteration inverts the minority segment's positive quadrature with relative
+area accuracy; gas-minority results are reflected algebraically without subtracting trace depth
+from D. Both fractions are retained even when the majority fraction rounds to one. Exact absence
+still yields exact zero force/area; unrepresentable geometry rejects. The historical general-purpose
+holdup geometry and the default-off operator path are unchanged.
+
+The moment-enabled historical ramp also exposed valid recovered gas volume weights
+`1.0000000000000013` (12 cells) and `1.0000000000000027` (24 cells). The original per-fraction
+guard rejected both first intervals and restored the primary state. The adapter now validates
+nonnegative finite weights and their sum against the unchanged 1e-10 volume-closure bound, then
+uses weights divided by that sum for geometry only. Stored holdups and all conservative variables
+remain unchanged; no EOS/Jacobian tolerance or mass/momentum clipping is involved. The paired
+public geometry API continues to require fractions in [0,1].
+
+### Independent reference and replay
+
+`qualify_holdup.py` compiles the current geometry and native probe with Java 8 API compatibility,
+then compares all 162 fixed identities against 80-digit Decimal integration of the binomial series
+for the circular chord. It independently inverts that series, with pi from Machin's formula.
+The retained matrix spans D = 0.001/0.01/0.2/1.0148/3/10 m, both exact endpoints, half-full and
+both positive minority fractions from 1e-30 to 0.25. Every row, order, finite value and exact absence
+is checked explicitly, including under optimized Python. Frozen relative acceptance is 5e-13 for
+every nonzero area and moment; zero values require exact equality. Refinement uses 120/180 terms.
+
+Results: maximum relative error **1.20312e-14**; maximum unit-section series-refinement difference
+**1.84754e-42**. `holdup-native.csv`, `holdup-reference.csv` and `holdup-summary.json` retain all
+outputs, the source-parent SHA and the exact geometry blob. JUnit replays all 162 references.
+The existing 222 depth-input controls remain byte-identical after the class extension; their strict
+source guard was repinned to the formatted class blob, with normal/-O corruption controls retained.
+
+Run from the repository root, after the documented Maven bootstrap:
+
+```bash
+python3 src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/coupling/qualify_holdup.py
+./mvnw -q -Dtest=StratifiedPressureMomentCouplingTest,StratifiedPressureMomentsTest test
+python3 src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/coupling/qualify_runtime.py
+```
+
+All 16 focused tests and the proportionate 150-test/24-class geometry, phase-appearance, drag,
+component, boundary and energy suite pass. The historical 12/24-cell 120 s rich-gas ramp is separately
+replayed; its source identity and outcome are recorded in `holdup-validation.json`. This prescribed
+pressure regression is not a physical receiver/valve, retained-pool or inlet-refill qualification.
+
+## Enabled transient gate: FAIL
+
+The pressure-moment switch is explicitly enabled by `qualify_ramp.py`, using the existing public
+rich-gas test fixture and solver rather than a separate model. After the trace/roundoff repair:
+
+| Mesh | Interval | Last accepted time | Rejected requested time | Diagnostic face-volume sum |
+| --- | --- | --- | --- | --- |
+| 12 cells | 0.25 s | 0.25 s | 0.5 s | 1.0000000001001803 |
+| 24 cells | 0.125 s | 0.25 s | 0.375 s | 1.000000000132666 |
+
+The sums were obtained with exception-message-only instrumentation; no expression or decision was
+changed. Both exceed the unchanged 1e-10 geometry volume-closure bound. The rejection is in
+`calculateStratifiedPressureFace -> calcInterfaceFluxes -> calcRHS -> TimeIntegrator.stepEuler`.
+Elapsed time and all seven primary conservative variables restore exactly on both meshes. This
+probe does not independently audit every wall/component/cache rollback field; their existing
+transaction regressions remain separate evidence.
+
+`optin-ramp.csv` retains all three accepted intervals, including zero oil, P/T/speed bounds and
+mass residuals; `optin-ramp-status.txt` retains both failures. The probe exits nonzero when either
+requested ramp fails. This is a numerical integration blocker, not a receiver/thermal model or
+hydrocarbon-rate finding. A consistent face-geometry/pressure-stage ownership contract is the next
+dependency under the same sole PR. Raising the closure tolerance, seeding, clipping, deleting
+phases or hiding the incomplete physical interval is not an accepted resolution.
+
+### Runtime interpretation
+
+`qualify_runtime.py` uses the completed focused-test classpath, the existing 24-cell fixture,
+1500 warmups per mode, alternating mode order and nine 1000-evaluation samples. Reflection is only
+used in fixture setup. `runtime.csv` and `runtime-parent.csv` retain every sample. In this shared
+runtime the repaired disabled median is 252.34 us/RHS versus 258.35 us/RHS on the original PR head
+(-2.33%, overlapping ranges). Enabled medians are 282.81 versus 292.73 us/RHS. These noisy,
+RHS-only observations establish no speedup or complete-timestep performance claim. The repaired
+code is only called on explicit opt-in; ordinary calculations retain the same disabled branch.
 
 ## Limits
 

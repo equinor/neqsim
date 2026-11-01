@@ -93,6 +93,63 @@ public class GeometryCalculator implements Serializable {
   }
 
   /**
+   * Calculate signed pressure moments from independently retained gas and liquid face fractions.
+   *
+   * <p>
+   * The smaller phase area is inverted using the positive segment quadrature and a safeguarded Newton iteration. Both
+   * fractions are required: subtracting a trace gas fraction from unity can round the liquid fraction to one. A
+   * gas-minority result is reflected algebraically, without subtracting its depth from the diameter. No depth floor or
+   * absolute area tolerance is used, and the historical general-purpose holdup geometry is unchanged.
+   * </p>
+   *
+   * @param gasHoldup gas face volume fraction in [0, 1]
+   * @param liquidHoldup liquid face volume fraction in [0, 1], closing the occupied volume with gas
+   * @param diameter internal diameter in m
+   * @return immutable signed moments in m3 and phase areas in m2
+   * @throws IllegalArgumentException if fractions do not close or geometry cannot be represented or inverted
+   */
+  public StratifiedPressureMoments calculateStratifiedPressureMomentsFromHoldups(double gasHoldup, double liquidHoldup,
+      double diameter) {
+    if (!Double.isFinite(gasHoldup) || !Double.isFinite(liquidHoldup) || gasHoldup < 0.0 || gasHoldup > 1.0
+        || liquidHoldup < 0.0 || liquidHoldup > 1.0 || Math.abs(gasHoldup + liquidHoldup - 1.0) > 1.0e-10) {
+      throw new IllegalArgumentException("Pressure moments require finite volume-closed gas and liquid fractions");
+    }
+    StratifiedPressureMoments empty = calculateStratifiedPressureMoments(0.0, diameter);
+    if (liquidHoldup == 0.0) {
+      return empty;
+    }
+    if (gasHoldup == 0.0) {
+      return calculateStratifiedPressureMoments(diameter, diameter);
+    }
+    double minority = Math.min(gasHoldup, liquidHoldup);
+    double targetArea = minority * empty.getGasArea();
+    if (!(targetArea > 0.0)) {
+      throw new IllegalArgumentException("Pressure-moment phase area is not representable");
+    }
+    double lower = 0.0;
+    double upper = 0.5 * diameter;
+    double depth = diameter * Math.pow(3.0 * Math.PI * minority / 16.0, 2.0 / 3.0);
+    for (int iteration = 0; iteration < 64; iteration++) {
+      StratifiedPressureMoments value = calculateStratifiedPressureMoments(depth, diameter);
+      double relativeError = (value.getLiquidArea() - targetArea) / targetArea;
+      if (Math.abs(relativeError) <= 8.0e-15) {
+        return liquidHoldup <= gasHoldup ? value
+            : new StratifiedPressureMoments(-value.getGasMoment(), -value.getLiquidMoment(), value.getGasArea(),
+                value.getLiquidArea());
+      }
+      if (relativeError > 0.0) {
+        upper = depth;
+      } else {
+        lower = depth;
+      }
+      double chord = 2.0 * Math.sqrt(depth * (diameter - depth));
+      double next = depth - (value.getLiquidArea() - targetArea) / chord;
+      depth = next > lower && next < upper ? next : lower + 0.5 * (upper - lower);
+    }
+    throw new IllegalArgumentException("Pressure-moment phase area inversion did not converge");
+  }
+
+  /**
    * Signed pressure moments for a circular stratified section; excludes the interface-pressure term.
    *
    * @author NeqSim

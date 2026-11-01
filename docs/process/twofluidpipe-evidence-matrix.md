@@ -258,13 +258,26 @@ The default-off production switch
 `TwoFluidPipe.setStratifiedHydrostaticPressureMomentsEnabled(true)` couples
 $F_k=\rho_k g\cos(\theta)J_k$ into phase pressure traction at internal and external faces and adds
 the conservative work $Q_kF_k/A_k$ with the mass-flux donor density. The retained force matrix is
-ordered inlet/internal/outlet by gas/oil/water and is transaction-safe. The six-test coupling matrix
+ordered inlet/internal/outlet by gas/oil/water and is transaction-safe. The nine-test coupling matrix
 covers both flow directions, exact phase endpoints, a vertical control, closed-domain force
 telescoping, unsupported-interface and diameter rejection, rollback, public API state and bitwise
-default-off restoration. The [executed coupling record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/coupling/README.md)
+default-off restoration, trace forces and countercurrent unequal-density signed donors. Its paired-fraction
+geometry adapter inverts the minority area without a depth floor or absolute area cutoff, including
+gas traces whose complementary liquid fraction rounds to one. Recovered nonnegative volume
+weights must satisfy the unchanged 1e-10 sum bound; only geometric fractions use weights divided
+by their sum, with no mutation of the conserved state. An independent 80-digit series
+inversion supplies 162 retained controls over six diameters and positive fractions down to `1e-30`.
+The [executed coupling record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/coupling/README.md)
 states the analytical references, units and commands.
 
-This closes the phase-traction/work operator prerequisite only. The one-interface circular geometry
+The enabled historical rich-gas 120 s ramp **fails**: last accepted time is 0.25 s on both meshes;
+the requested 12-cell 0.5 s and 24-cell 0.375 s intervals reject the existing face-volume closure
+guard. Primary conservative state and elapsed time restore exactly. The default-off master ramp
+passes, so that result cannot qualify enabled pressure moments. The retained executable probe,
+accepted-interval data and rejection statuses make this dependency explicit; no closure threshold
+was changed to produce a transient pass.
+
+This qualifies instantaneous phase-traction/work identities only. The one-interface circular geometry
 rejects simultaneous positive oil and water and diameter steps. No elapsed retained-pool, terrain
 drainage, cooldown, restart, severe-slugging, pigging or predictive evaporation claim follows.
 Capillarity, waves, entrainment and separate oil/water interfaces remain outside this API.

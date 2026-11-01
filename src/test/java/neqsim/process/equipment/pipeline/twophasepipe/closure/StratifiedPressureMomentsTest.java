@@ -3,6 +3,9 @@ package neqsim.process.equipment.pipeline.twophasepipe.closure;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -32,6 +35,42 @@ class StratifiedPressureMomentsTest {
   @Test
   void independentIntegralAndPhaseLimits() {
     assertEquals(52, qualify(null));
+  }
+
+  /**
+   * Replay independently inverted 80-digit series references, including positive gas/liquid traces down to 1e-30.
+   *
+   * @throws IOException if the retained reference matrix cannot be read
+   */
+  @Test
+  void independentlyInvertedHoldupMatrixPreservesBothTracePhases() throws IOException {
+    String resource = "/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/coupling/holdup-reference.csv";
+    int count = 0;
+    try (InputStream input = getClass().getResourceAsStream(resource);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8))) {
+      assertEquals("diameter_m,gas_holdup,liquid_holdup,liquid_m3,gas_m3,liquid_m2,gas_m2", reader.readLine());
+      String line;
+      while ((line = reader.readLine()) != null) {
+        String[] fields = line.split(",");
+        assertEquals(7, fields.length);
+        double diameter = Double.parseDouble(fields[0]);
+        double gas = Double.parseDouble(fields[1]);
+        double liquid = Double.parseDouble(fields[2]);
+        StratifiedPressureMoments value = GEOMETRY.calculateStratifiedPressureMomentsFromHoldups(gas, liquid, diameter);
+        double[] actual = {value.getLiquidMoment(), value.getGasMoment(), value.getLiquidArea(), value.getGasArea()};
+        for (int column = 0; column < actual.length; column++) {
+          double expected = Double.parseDouble(fields[column + 3]);
+          assertEquals(expected, actual[column], 5.0e-13 * Math.abs(expected), line);
+        }
+        count++;
+      }
+    }
+    assertEquals(162, count);
+    for (double[] invalid : new double[][] {{0.0, 0.0}, {0.5, 0.6}, {-1.0e-30, 1.0}, {1.0, -1.0e-30}, {Double.NaN, 1.0},
+        {1.0, Double.POSITIVE_INFINITY}}) {
+      assertThrows(IllegalArgumentException.class,
+          () -> GEOMETRY.calculateStratifiedPressureMomentsFromHoldups(invalid[0], invalid[1], 1.0));
+    }
   }
 
   /** The derivative of each signed moment is its phase area. */
