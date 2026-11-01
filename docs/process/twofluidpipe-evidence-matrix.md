@@ -240,6 +240,11 @@ limits, exact absence and invalid inputs, query purity and the unchanged four-fi
 contract. No dynamic force, energy-recovery or phase-transfer call site is added. The
 [executed energy budget](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/README.md)
 distinguishes a static potential-energy change from an elapsed drainage or evaporation result.
+Its receipt tests reject incomplete/nonfinite timing and static-budget artifacts, validate the
+fixed work counts/checksum roundoff bound, and compare all three two-cell energies against
+independent 80-digit series references at the unchanged 5e-13 relative gate. 211 corrupted receipts
+and four real compiled-probe mutations reject in normal/optimized Python; no speed threshold or
+new dynamic qualification follows.
 
 The opt-in geometry query `GeometryCalculator.calculateStratifiedPressureMoments(depth, diameter)`
 returns immutable signed first moments `getLiquidMoment()` and `getGasMoment()` in m3, plus

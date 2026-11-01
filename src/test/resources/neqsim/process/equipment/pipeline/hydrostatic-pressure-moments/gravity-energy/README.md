@@ -50,6 +50,7 @@ Run from the repository root after Maven bootstrap:
 
 ```bash
 python3 src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/qualify.py
+python3 -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy -p test_energy_receipts.py -v
 ./mvnw -q -Dtest=StratifiedGravityEnergyTest,StratifiedPressureMomentsTest,StratifiedPressureMomentCouplingTest,HydrostaticCellGeometryTest test
 ```
 
@@ -58,6 +59,42 @@ optimized Python; no assertion owns an acceptance gate. `timing.csv` has seven20
 after100000warmups, cycling all162 immutable objects. Query cost is observational and includes
 selection/checksum work; it establishes no whole-simulation speedup. Ordinary calculations gain
 no new computation because these methods run only when explicitly called.
+
+### Complete static-budget and timing receipts
+
+The qualifier at parent `9b9c784a77f9ed76b42f8640423e7e1756a0c347` checked the162-row native
+matrix but did not audit the static two-cell file and accepted incomplete or nonfinite timing data.
+A replay with the valid native matrix, one all-NaN timing row and an all-NaN budget incorrectly
+emitted a success summary containing JSON NaN. This was an evidence-reader defect; the retained
+valid numerical files and production geometry are unchanged.
+
+The qualifier now requires the exact ordered schema, row/column counts and finite numbers for
+every artifact. Seven timing rounds must each contain 200000 queries with positive elapsed time.
+The accumulated checksum is compared with an exact rational sum of the retained double energies,
+including 100000 warmup additions and a fresh cyclic index for each timing loop. The standard
+sequential-rounding bound is `gamma_n * sum(abs(x_i))`, with `gamma_n = n*u/(1-n*u)` and
+`u = 2^-53`; this is a checksum roundoff bound, not a relaxed engineering tolerance. No timing
+speed threshold is imposed.
+
+The three static energies are independently evaluated using the existing pinned 80-digit segment
+series/inversion in `coupling/qualify_holdup.py`, with the original **5e-13 relative** gate.
+`budget-reference.csv` retains these references; the maximum relative difference is
+**8.77382e-16**. The geometric reference, native and two-cell numerical CSVs reproduce byte for
+byte in normal/optimized Python and match the previously retained files. Timing observations
+naturally vary; no performance improvement is inferred.
+
+`test_energy_receipts.py` rejects **211 corrupted receipts** per Python mode (108 native,
+24 static-budget, 79 timing), including malformed, extra, missing, repeated or reordered fields,
+nonfinite values, false work counts, invalid elapsed times, unfunded checksums and changed
+energies. Four real compiled-probe mutations reject at the CLI boundary: truncated timing,
+NaN budget, altered potential drop and altered native identity. A failed replay removes any
+stale success summary. These tests run normally and with `-O`; hosted jobs cover Python 3.11/3.13.
+The final candidate's hosted conclusions remain separate from local evidence.
+
+Use `--output-dir <directory>` for an isolated replay without replacing the retained observations.
+Repeat the test command above with `python3 -O` to test optimized Python. The executed commands,
+source identities, local results and baseline fault injection are in `receipt-validation.json`.
+No solver, source, force, energy variable, public API or model threshold is changed by this repair.
 
 ## Static two-cell energy bound
 
