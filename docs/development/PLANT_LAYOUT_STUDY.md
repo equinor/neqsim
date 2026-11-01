@@ -43,6 +43,9 @@ Runtime validation additionally checks references, finite numbers, unique identi
 | Plot/decks | Extents/elevations and any supplied height or mass limits |
 | Equipment | Tag, dimensions/provenance, allowed decks/orientations, optional fixed placement and separate envelopes |
 | Connectivity | Source equipment/stream IDs and explicit import mapping; boundary and parallel streams retained |
+| Physical inventory scope | Stable scope/revision, controlled source reference and required connection, equipment-volume and isolation-section IDs |
+| Routed piping | Connection and line IDs, three-dimensional centreline points, internal diameter and revisioned physical-source status |
+| Isolation inventory | Located isolation devices with explicit normal/fail states, contained equipment volumes and bounded isolation sections |
 | Reservations | Corridor geometry, exits, obstacles and source of project assumptions |
 | Rules | Stable ID, applicability, source/access, inspected edition/clause where applicable, units and method |
 | Assessment | Saved coordinates, independent checks, solver settings/status, input fingerprint and artifact hashes |
@@ -50,6 +53,26 @@ Runtime validation additionally checks references, finite numbers, unique identi
 Metres are the model length unit; CAD conversion is explicit. Dry/operating/test mass and CoG, construction/maintenance
 loads and marine/structural inputs need separate qualified cases before design use. The initial mass rollup does not
 prove structural adequacy or vessel stability.
+
+### Physical piping and isolation evidence
+
+The optional physical-inventory contract is additive to the arrangement model. `physical_inventory_scope` declares the
+exact process connections, equipment tags and isolation sections that must be covered. `physical_routes` records actual
+three-dimensional centreline points and internal diameters against existing connection IDs. `equipment_volumes` records
+separately evidenced contained volumes. `isolation_devices` records route chainage, device type and explicit normal/fail
+state; `isolation_sections` names the two or more boundary devices and the route/equipment-volume records they contain.
+
+The toolkit calculates routed length as the sum of Euclidean centreline segments and pipe inventory as
+$V=\pi D_i^2L/4$. Isolation-section inventory is the sum of referenced pipe and equipment volumes. A synthetic regression
+uses a 5 m plus 12 m routed centreline with 2 m internal diameter: route volume is exactly $17\pi$ m³, and the section
+total is $17\pi+3$ m³ after adding a separately supplied 3 m³ equipment volume.
+
+Each physical record requires a source kind, document/model reference, revision and one of
+`CONTROLLED_PROJECT_INPUT`, `REVIEW_REQUIRED` or `ASSUMPTION`. Required missing or uncontrolled evidence produces named
+blockers and keeps `ready_for_dynamic_safeguarding_design` false. The study fingerprint includes every scope, route,
+device, volume and section field, so a geometry or isolation revision invalidates retained calculations and requires a
+rerun. This is traceable inventory evidence, not relief sizing, source-term prediction, SIL/IPL credit or design approval.
+The toolkit never substitutes process connectivity or the centre-to-centre arrangement proxy for actual pipe length.
 
 ## Constraints and result interpretation
 
@@ -100,9 +123,10 @@ optional; their absence cannot be reported as successful export. Parametric sour
 Export metadata records supported objects, identifiers, dimensions/units and format losses. A GLB view is a tessellated
 review representation, not a complete plant-design exchange contract.
 
-Keep input snapshots, JSON alternatives/findings, coordinate/check CSVs, vector drawings, report and supported CAD exports
-in the task output directory. Render every drawing/report page and inspect tags, dimensions, scale, legends and title
-blocks. Reopen supported CAD output and compare identity/count/bounds within declared tolerances.
+Keep input snapshots, JSON alternatives/findings, physical-inventory JSON, route/isolation CSVs, coordinate/check CSVs,
+vector drawings, report and supported CAD exports in the task output directory. Render every drawing/report page and
+inspect tags, dimensions, scale, legends and title blocks. Reopen supported CAD output and compare identity/count/bounds
+within declared tolerances.
 
 HTML and machine-readable report evidence remain available without the PDF adapter. ReportLab supplies report PDFs;
 CadQuery and ezdxf supply the optional CAD formats. Their versions are recorded in the dataset. Install optional tools
@@ -123,10 +147,12 @@ assessments.
 
 ## Deferred engineering interfaces
 
-Detailed pipe routing/stress and hydraulic feedback, irregular terrain/structures, CFD/QRA hazard contours, evacuation
-capacity/hazard independence, fire/blast loads, crane capacity/removal operations, full vendor packages and floating-facility
-structural/marine qualification require explicit specialist adapters and evidence. IFC federation and commercial CAD
-authoring profiles require separate exchange qualification. Track these gaps without claiming them solved by box placement.
+The physical-inventory contract records supplied centreline geometry and volumes; it does not generate routes, size piping,
+calculate pressure drop or perform flexibility/stress analysis. Hydraulic feedback, irregular terrain/structures, CFD/QRA
+hazard contours, evacuation capacity/hazard independence, fire/blast loads, crane capacity/removal operations, full vendor
+packages and floating-facility structural/marine qualification require explicit specialist adapters and evidence. IFC
+federation and commercial CAD authoring profiles require separate exchange qualification. Track these gaps without
+claiming them solved by box placement or inventory arithmetic.
 
 Related workflows: [SURF design](SURF_DESIGN_STUDY.md), [process reports](PROCESS_STUDY_REPORT.md) and
 [agent capability discovery](AGENT_CAPABILITY_DISCOVERY.md). This physical-layout increment supports the direction of
