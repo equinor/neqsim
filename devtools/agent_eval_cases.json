@@ -231,7 +231,7 @@
     {
       "id": "compressor-chart-extrapolation",
       "prompt": "load vendor compressor chart, calibrate surge line and check the operating point does not extrapolate beyond stonewall",
-      "expect_agent_top3": ["rotating-equipment", "process-model", "mechanical-design"],
+      "expect_agent_top3": ["rotating-equipment", "process-model", "mechanical-design", "enterprise-rotating-equipment-curves-agent"],
       "expect_skills_top5": ["neqsim-rotating-equipment-design"]
     },
     {
