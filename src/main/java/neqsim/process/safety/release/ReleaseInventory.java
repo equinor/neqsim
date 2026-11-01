@@ -18,7 +18,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Rigid, adiabatic, well-mixed inventory with an explicitly selected withdrawal phase plan and release model.
+ * Rigid, well-mixed inventory with an explicitly selected withdrawal phase plan, release model and external heat
+ * boundary.
  *
  * <p>
  * Native transient calls remove selected-phase composition and upstream stagnation enthalpy, then solve the remaining
@@ -32,12 +33,13 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * The supplied fluid is cloned and scaled to the specified volume at its initial temperature and pressure. Its original
  * mole count is not treated as a vessel size or flow rate. The compatibility constructor retains the historical
  * single-gas restriction; the phase-selective constructor accepts equilibrium gas, oil, generic-liquid or aqueous
- * withdrawal from a fluid inventory containing only those phases. Reacting/forced phases, solids, hydrates, heat input,
- * inflow, entrainment, pipe decompression and non-equilibrium transfer are outside scope. An optional ordered plan can
- * transition to a caller-selected phase after the current phase falls below an explicit inventory mass-fraction
- * threshold. A step crossing the receiving pressure is located by bounded bisection and conservatively lands on the
- * no-flow boundary while the process clock advances through the caller's full timestep. Numerical closure does not
- * confer engineering qualification.
+ * withdrawal from a fluid inventory containing only those phases. Reacting/forced phases, solids, hydrates, inflow,
+ * entrainment, pipe decompression and non-equilibrium transfer are outside scope. External heat is adiabatic by
+ * default; opt-in constant-power and lumped-conductance boundaries retain a separate signed energy ledger but do not
+ * infer fire, wall or interfacial physics. An optional ordered plan can transition to a caller-selected phase after the
+ * current phase falls below an explicit inventory mass-fraction threshold. A step crossing the receiving pressure is
+ * located by bounded bisection and conservatively lands on the no-flow boundary while the process clock advances
+ * through the caller's full timestep. Numerical closure does not confer engineering qualification.
  * </p>
  */
 public final class ReleaseInventory extends ProcessEquipmentBaseClass implements CoupledReleaseSource {
@@ -58,11 +60,13 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
   private final double phaseExhaustionMassFraction;
   private final boolean phaseSelective;
   private final ReleaseInventoryPhaseGeometry phaseGeometry;
+  private final ReleaseInventoryHeatTransfer heatTransfer;
   private final Map<String, Double> initialComponentMassKg;
   private final double initialEnergyJ;
   private SystemInterface inventory;
   private double releasedMassKg;
   private double releasedEnergyJ;
+  private double heatTransferEnergyJ;
   private Map<String, Double> releasedComponentMassKg = new TreeMap<String, Double>();
   private boolean releaseEnabled = true;
   private int lastSubsteps;
@@ -92,7 +96,28 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
   public ReleaseInventory(String name, SystemInterface initialFluid, double volumeM3, double diameterM,
       double dischargeCoefficient, double backPressurePa, ReleaseFlowModel releaseModel, double maxSubstepS) {
     this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
-        Collections.singletonList(PhaseType.GAS), 0.0, false, 0.0, 0.0, null);
+        Collections.singletonList(PhaseType.GAS), 0.0, false, 0.0, 0.0, null, ReleaseInventoryHeatTransfer.adiabatic());
+  }
+
+  /**
+   * Creates an independently owned single-gas inventory with an explicit external heat boundary.
+   *
+   * @param name unique process equipment name
+   * @param initialFluid initial gas composition, EOS, temperature in K and absolute pressure
+   * @param volumeM3 fixed vessel volume in m3
+   * @param diameterM physical opening diameter in m
+   * @param dischargeCoefficient discharge coefficient in (0,1]
+   * @param backPressurePa constant absolute receiving pressure in Pa
+   * @param releaseModel caller-selected release model
+   * @param maxSubstepS largest integration substep in seconds
+   * @param heatTransfer explicit immutable external heat boundary
+   */
+  public ReleaseInventory(String name, SystemInterface initialFluid, double volumeM3, double diameterM,
+      double dischargeCoefficient, double backPressurePa, ReleaseFlowModel releaseModel, double maxSubstepS,
+      ReleaseInventoryHeatTransfer heatTransfer) {
+    this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
+        Collections.singletonList(PhaseType.GAS), 0.0, false, 0.0, 0.0, null,
+        Objects.requireNonNull(heatTransfer, "heatTransfer"));
   }
 
   /**
@@ -113,7 +138,8 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
       double dischargeCoefficient, double backPressurePa, double flowPathLengthM, double darcyFrictionFactor,
       ReleaseFlowModel releaseModel, double maxSubstepS) {
     this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
-        Collections.singletonList(PhaseType.GAS), 0.0, false, flowPathLengthM, darcyFrictionFactor, null);
+        Collections.singletonList(PhaseType.GAS), 0.0, false, flowPathLengthM, darcyFrictionFactor, null,
+        ReleaseInventoryHeatTransfer.adiabatic());
   }
 
   /**
@@ -141,7 +167,30 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
       double dischargeCoefficient, double backPressurePa, ReleaseFlowModel releaseModel, double maxSubstepS,
       PhaseType withdrawalPhaseType) {
     this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
-        Collections.singletonList(withdrawalPhaseType), 0.0, true, 0.0, 0.0, null);
+        Collections.singletonList(withdrawalPhaseType), 0.0, true, 0.0, 0.0, null,
+        ReleaseInventoryHeatTransfer.adiabatic());
+  }
+
+  /**
+   * Creates a phase-selected equilibrium inventory with an explicit external heat boundary.
+   *
+   * @param name unique process equipment name
+   * @param initialFluid initial equilibrium inventory
+   * @param volumeM3 fixed vessel volume in m3
+   * @param diameterM physical opening diameter in m
+   * @param dischargeCoefficient discharge coefficient in (0,1]
+   * @param backPressurePa constant absolute receiving pressure in Pa
+   * @param releaseModel caller-selected release model
+   * @param maxSubstepS largest integration substep in seconds
+   * @param withdrawalPhaseType explicitly selected withdrawal phase
+   * @param heatTransfer explicit immutable external heat boundary
+   */
+  public ReleaseInventory(String name, SystemInterface initialFluid, double volumeM3, double diameterM,
+      double dischargeCoefficient, double backPressurePa, ReleaseFlowModel releaseModel, double maxSubstepS,
+      PhaseType withdrawalPhaseType, ReleaseInventoryHeatTransfer heatTransfer) {
+    this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
+        Collections.singletonList(withdrawalPhaseType), 0.0, true, 0.0, 0.0, null,
+        Objects.requireNonNull(heatTransfer, "heatTransfer"));
   }
 
   /**
@@ -169,7 +218,7 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
       PhaseType withdrawalPhaseType, ReleaseInventoryPhaseGeometry phaseGeometry) {
     this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
         Collections.singletonList(withdrawalPhaseType), 0.0, true, 0.0, 0.0,
-        Objects.requireNonNull(phaseGeometry, "phaseGeometry"));
+        Objects.requireNonNull(phaseGeometry, "phaseGeometry"), ReleaseInventoryHeatTransfer.adiabatic());
   }
 
   /**
@@ -191,7 +240,8 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
       double dischargeCoefficient, double backPressurePa, double flowPathLengthM, double darcyFrictionFactor,
       ReleaseFlowModel releaseModel, double maxSubstepS, PhaseType withdrawalPhaseType) {
     this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
-        Collections.singletonList(withdrawalPhaseType), 0.0, true, flowPathLengthM, darcyFrictionFactor, null);
+        Collections.singletonList(withdrawalPhaseType), 0.0, true, flowPathLengthM, darcyFrictionFactor, null,
+        ReleaseInventoryHeatTransfer.adiabatic());
   }
 
   /**
@@ -216,7 +266,7 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
       ReleaseInventoryPhaseGeometry phaseGeometry) {
     this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
         Collections.singletonList(withdrawalPhaseType), 0.0, true, flowPathLengthM, darcyFrictionFactor,
-        Objects.requireNonNull(phaseGeometry, "phaseGeometry"));
+        Objects.requireNonNull(phaseGeometry, "phaseGeometry"), ReleaseInventoryHeatTransfer.adiabatic());
   }
 
   /**
@@ -243,7 +293,8 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
       double dischargeCoefficient, double backPressurePa, ReleaseFlowModel releaseModel, double maxSubstepS,
       List<PhaseType> withdrawalPhasePlan, double phaseExhaustionMassFraction) {
     this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
-        withdrawalPhasePlan, phaseExhaustionMassFraction, true, 0.0, 0.0, null);
+        withdrawalPhasePlan, phaseExhaustionMassFraction, true, 0.0, 0.0, null,
+        ReleaseInventoryHeatTransfer.adiabatic());
   }
 
   /**
@@ -267,13 +318,15 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
       ReleaseFlowModel releaseModel, double maxSubstepS, List<PhaseType> withdrawalPhasePlan,
       double phaseExhaustionMassFraction) {
     this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
-        withdrawalPhasePlan, phaseExhaustionMassFraction, true, flowPathLengthM, darcyFrictionFactor, null);
+        withdrawalPhasePlan, phaseExhaustionMassFraction, true, flowPathLengthM, darcyFrictionFactor, null,
+        ReleaseInventoryHeatTransfer.adiabatic());
   }
 
   private ReleaseInventory(String name, SystemInterface initialFluid, double volumeM3, double diameterM,
       double dischargeCoefficient, double backPressurePa, ReleaseFlowModel releaseModel, double maxSubstepS,
       List<PhaseType> withdrawalPhasePlan, double phaseExhaustionMassFraction, boolean phaseSelective,
-      double flowPathLengthM, double darcyFrictionFactor, ReleaseInventoryPhaseGeometry phaseGeometry) {
+      double flowPathLengthM, double darcyFrictionFactor, ReleaseInventoryPhaseGeometry phaseGeometry,
+      ReleaseInventoryHeatTransfer heatTransfer) {
     super(name);
     this.volumeM3 = ReleaseFlowRequest.positive(volumeM3, "volumeM3");
     this.maxSubstepS = ReleaseFlowRequest.positive(maxSubstepS, "maxSubstepS");
@@ -289,6 +342,7 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
       throw new IllegalArgumentException("INVENTORY_GEOMETRY_PHASE_PLAN_UNSUPPORTED");
     }
     this.phaseGeometry = phaseGeometry;
+    this.heatTransfer = Objects.requireNonNull(heatTransfer, "heatTransfer");
     if (phaseGeometry != null) {
       phaseGeometry.requireCapacity(this.volumeM3);
     }
@@ -372,6 +426,7 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
     Map<String, Double> componentLoss = new TreeMap<String, Double>(releasedComponentMassKg);
     double massLoss = releasedMassKg;
     double energyLoss = releasedEnergyJ;
+    double heatInput = heatTransferEnergyJ;
     double elapsed = 0.0;
     int steps = 0;
     int volumeEnergySolves = 0;
@@ -379,7 +434,7 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
     double releaseDurationS = 0.0;
     int phaseIndex = withdrawalPhaseIndex;
     int phaseTransitions = 0;
-    while (releaseEnabled && elapsed < dt) {
+    while ((releaseEnabled || heatTransfer.isActive()) && elapsed < dt) {
       if (Thread.currentThread().isInterrupted()) {
         throw new IllegalStateException("INVENTORY_STEP_INTERRUPTED");
       }
@@ -389,23 +444,27 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
       int resolvedPhaseIndex = resolveWithdrawalPhaseIndex(candidate, phaseIndex);
       phaseTransitions += resolvedPhaseIndex - phaseIndex;
       phaseIndex = resolvedPhaseIndex;
-      ReleaseFlowResult release = calculate(candidate, phaseIndex);
-      double rate = release.getMassFlowRateKgS();
-      if (rate == 0.0) {
+      ReleaseFlowResult release = releaseEnabled ? calculate(candidate, phaseIndex) : null;
+      double rate = release == null ? 0.0 : release.getMassFlowRateKgS();
+      double heatRateW = heatTransfer.getHeatTransferRateW(ReleaseState.fromFluid(candidate, 0.0));
+      if (rate == 0.0 && heatRateW == 0.0) {
         break;
       }
       double selectedPhaseMass = selectedPhase(candidate, phaseIndex).getMass("kg");
-      double h = Math.min(Math.min(maxSubstepS, dt - elapsed), 0.01 * selectedPhaseMass / rate);
+      double h = Math.min(maxSubstepS, dt - elapsed);
+      if (rate > 0.0) {
+        h = Math.min(h, 0.01 * selectedPhaseMass / rate);
+      }
       if (!(h > 0.0) || elapsed + h <= elapsed) {
         throw new IllegalStateException("INVENTORY_TIMESTEP_UNREPRESENTABLE");
       }
-      InventoryStep step = advance(candidate, rate, h, phaseIndex);
+      InventoryStep step = advance(candidate, rate, heatRateW, h, phaseIndex);
       volumeEnergySolves += step.volumeEnergySolves;
       double pressurePa = step.next.getPressure() * 1e5;
       double pressureTolerance = Math.max(1e-3, backPressurePa * PRESSURE_EVENT_RELATIVE_TOLERANCE);
-      boolean reachesPressureBoundary = pressurePa <= backPressurePa + pressureTolerance;
-      if (pressurePa < backPressurePa) {
-        PressureEvent located = locateReceivingPressureEvent(candidate, rate, h, phaseIndex);
+      boolean reachesPressureBoundary = rate > 0.0 && pressurePa <= backPressurePa + pressureTolerance;
+      if (rate > 0.0 && pressurePa < backPressurePa) {
+        PressureEvent located = locateReceivingPressureEvent(candidate, rate, heatRateW, h, phaseIndex);
         step = located.step;
         volumeEnergySolves += located.additionalVolumeEnergySolves;
         pressurePa = step.next.getPressure() * 1e5;
@@ -420,13 +479,18 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
       }
       massLoss = finite(massLoss + step.removedMassKg, "cumulative released mass");
       energyLoss = finite(energyLoss + step.outflowEnergyJ, "cumulative released enthalpy");
+      heatInput = finite(heatInput + step.heatTransferEnergyJ, "cumulative heat transfer");
       elapsed += step.durationS;
-      releaseDurationS = elapsed;
+      if (rate > 0.0) {
+        releaseDurationS += step.durationS;
+      }
       candidate = step.next;
       if (reachesPressureBoundary) {
         close(pressurePa, backPressurePa, backPressurePa, "RECEIVING_PRESSURE_EVENT_FAILED");
         pressureEquilibrationEvent = true;
-        break;
+        if (!heatTransfer.isActive()) {
+          break;
+        }
       }
     }
     // Check accumulated residuals too, so individually acceptable flash errors cannot drift silently.
@@ -435,8 +499,9 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
       close(remaining.get(component) + componentLoss.get(component), initialComponentMassKg.get(component),
           initialComponentMassKg.get(component), "CUMULATIVE_COMPONENT_CLOSURE_FAILED");
     }
-    close(candidate.getInternalEnergy("J") + energyLoss, initialEnergyJ,
-        Math.max(Math.abs(initialEnergyJ), Math.abs(energyLoss)), "CUMULATIVE_ENERGY_CLOSURE_FAILED");
+    close(candidate.getInternalEnergy("J") + energyLoss - heatInput, initialEnergyJ,
+        Math.max(Math.abs(initialEnergyJ), Math.max(Math.abs(energyLoss), Math.abs(heatInput))),
+        "CUMULATIVE_ENERGY_CLOSURE_FAILED");
     if (releaseEnabled) {
       int resolvedPhaseIndex = resolveWithdrawalPhaseIndex(candidate, phaseIndex);
       phaseTransitions += resolvedPhaseIndex - phaseIndex;
@@ -447,6 +512,7 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
     releasedComponentMassKg = componentLoss;
     releasedMassKg = massLoss;
     releasedEnergyJ = energyLoss;
+    heatTransferEnergyJ = heatInput;
     lastSubsteps = steps;
     lastVolumeEnergySolves = volumeEnergySolves;
     lastTransientId = id;
@@ -460,17 +526,19 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
     setCalculationIdentifier(id);
   }
 
-  private InventoryStep advance(SystemInterface candidate, double rate, double durationS, int phaseIndex) {
+  private InventoryStep advance(SystemInterface candidate, double rate, double heatRateW, double durationS,
+      int phaseIndex) {
     double beforeMass = candidate.getMass("kg");
     double removedMass = rate * durationS;
     SystemInterface withdrawal = selectedPhase(candidate, phaseIndex);
     double withdrawalMass = withdrawal.getMass("kg");
-    if (!(removedMass > 0.0) || removedMass >= withdrawalMass) {
+    if (!Double.isFinite(removedMass) || removedMass < 0.0 || removedMass >= withdrawalMass) {
       throw new IllegalStateException("INVENTORY_SELECTED_PHASE_OVERDRAW");
     }
     double outflowEnergy = removedMass * withdrawal.getEnthalpy("J/kg");
+    double heatEnergy = finite(heatRateW * durationS, "substep heat transfer");
     double beforeEnergy = finite(candidate.getInternalEnergy("J"), "internal energy");
-    double targetEnergy = finite(beforeEnergy - outflowEnergy, "target energy");
+    double targetEnergy = finite(beforeEnergy - outflowEnergy + heatEnergy, "target energy");
     Map<String, Double> beforeComponents = componentMasses(candidate);
     Map<String, Double> withdrawalComponents = componentMasses(withdrawal);
     Map<String, Double> removedComponents = new TreeMap<String, Double>();
@@ -495,14 +563,16 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
     requireInventory(next, true);
     requirePhaseGeometry(next, phaseIndex);
     close(next.getVolume("m3"), volumeM3, volumeM3, "VOLUME_CLOSURE_FAILED");
-    close(next.getInternalEnergy("J"), targetEnergy, Math.max(Math.abs(beforeEnergy), Math.abs(outflowEnergy)),
+    close(next.getInternalEnergy("J"), targetEnergy,
+        Math.max(Math.abs(beforeEnergy), Math.max(Math.abs(outflowEnergy), Math.abs(heatEnergy))),
         "ENERGY_CLOSURE_FAILED");
     close(next.getMass("kg") + removedMass, beforeMass, beforeMass, "MASS_CLOSURE_FAILED");
-    return new InventoryStep(next, beforeComponents, removedComponents, removedMass, outflowEnergy, durationS, solves);
+    return new InventoryStep(next, beforeComponents, removedComponents, removedMass, outflowEnergy, heatEnergy,
+        durationS, solves);
   }
 
-  private PressureEvent locateReceivingPressureEvent(SystemInterface candidate, double rate, double upperDurationS,
-      int phaseIndex) {
+  private PressureEvent locateReceivingPressureEvent(SystemInterface candidate, double rate, double heatRateW,
+      double upperDurationS, int phaseIndex) {
     double lower = 0.0;
     double upper = upperDurationS;
     double pressureTolerance = Math.max(1e-3, backPressurePa * PRESSURE_EVENT_RELATIVE_TOLERANCE);
@@ -512,7 +582,7 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
       if (!(duration > lower) || !(duration < upper)) {
         break;
       }
-      InventoryStep trial = advance(candidate, rate, duration, phaseIndex);
+      InventoryStep trial = advance(candidate, rate, heatRateW, duration, phaseIndex);
       additionalSolves += trial.volumeEnergySolves;
       double pressurePa = trial.next.getPressure() * 1e5;
       if (pressurePa >= backPressurePa) {
@@ -877,10 +947,15 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
   @Override
   public synchronized String getReleaseBasis() {
     if (phaseGeometry != null) {
-      return "COUPLED_RIGID_ADIABATIC_GEOMETRY_GATED_PHASE_INVENTORY";
+      return heatTransfer.isActive() ? "COUPLED_RIGID_HEATED_GEOMETRY_GATED_PHASE_INVENTORY"
+          : "COUPLED_RIGID_ADIABATIC_GEOMETRY_GATED_PHASE_INVENTORY";
     }
     if (hasPhaseTransitionPlan()) {
-      return "COUPLED_RIGID_ADIABATIC_PHASE_TRANSITION_INVENTORY";
+      return heatTransfer.isActive() ? "COUPLED_RIGID_HEATED_PHASE_TRANSITION_INVENTORY"
+          : "COUPLED_RIGID_ADIABATIC_PHASE_TRANSITION_INVENTORY";
+    }
+    if (heatTransfer.isActive()) {
+      return phaseSelective ? "COUPLED_RIGID_HEATED_PHASE_SELECTED_INVENTORY" : "COUPLED_RIGID_HEATED_GAS_INVENTORY";
     }
     return phaseSelective ? "COUPLED_RIGID_ADIABATIC_PHASE_SELECTED_INVENTORY"
         : "COUPLED_RIGID_ADIABATIC_GAS_INVENTORY";
@@ -895,7 +970,10 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
     provenance.put("inventoryVolumeM3", Double.toString(balance.getVolumeM3()));
     provenance.put("cumulativeReleasedMassKg", Double.toString(balance.getReleasedMassKg()));
     provenance.put("cumulativeReleasedEnthalpyJ", Double.toString(balance.getReleasedEnergyJ()));
-    provenance.put("inventoryIntegrator", "EXPLICIT_EULER_VOLUME_INTERNAL_ENERGY_V1");
+    provenance.put("cumulativeExternalHeatTransferJ", Double.toString(balance.getHeatTransferEnergyJ()));
+    provenance.put("inventoryHeatTransferType", heatTransfer.getType().name());
+    provenance.put("inventoryHeatTransferProvenance", heatTransfer.getProvenance());
+    provenance.put("inventoryIntegrator", "EXPLICIT_EULER_VOLUME_INTERNAL_ENERGY_V2");
     provenance.put("inventoryMaxSubstepS", Double.toString(getMaxSubstepS()));
     provenance.put("inventoryLastSubsteps", Integer.toString(balance.getSubsteps()));
     provenance.put("inventoryVolumeEnergySolves", Integer.toString(getLastVolumeEnergySolves()));
@@ -967,6 +1045,11 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
     return phaseGeometry;
   }
 
+  /** @return explicit immutable external heat boundary */
+  public ReleaseInventoryHeatTransfer getHeatTransfer() {
+    return heatTransfer;
+  }
+
   /** @return configured maximum integration substep in seconds */
   public double getMaxSubstepS() {
     return maxSubstepS;
@@ -1006,7 +1089,8 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
   /** @return immutable mass/energy accounting snapshot with explicit SI units */
   public synchronized Balance getBalance() {
     return new Balance(getTime(), volumeM3, initialEnergyJ, inventory.getInternalEnergy("J"), releasedEnergyJ,
-        releasedMassKg, initialComponentMassKg, componentMasses(inventory), releasedComponentMassKg, lastSubsteps);
+        heatTransferEnergyJ, releasedMassKg, initialComponentMassKg, componentMasses(inventory),
+        releasedComponentMassKg, lastSubsteps);
   }
 
   private static final class InventoryStep {
@@ -1015,17 +1099,19 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
     private final Map<String, Double> removedComponentMassKg;
     private final double removedMassKg;
     private final double outflowEnergyJ;
+    private final double heatTransferEnergyJ;
     private final double durationS;
     private final int volumeEnergySolves;
 
     private InventoryStep(SystemInterface next, Map<String, Double> beforeComponentMassKg,
-        Map<String, Double> removedComponentMassKg, double removedMassKg, double outflowEnergyJ, double durationS,
-        int volumeEnergySolves) {
+        Map<String, Double> removedComponentMassKg, double removedMassKg, double outflowEnergyJ,
+        double heatTransferEnergyJ, double durationS, int volumeEnergySolves) {
       this.next = next;
       this.beforeComponentMassKg = beforeComponentMassKg;
       this.removedComponentMassKg = removedComponentMassKg;
       this.removedMassKg = removedMassKg;
       this.outflowEnergyJ = outflowEnergyJ;
+      this.heatTransferEnergyJ = heatTransferEnergyJ;
       this.durationS = durationS;
       this.volumeEnergySolves = volumeEnergySolves;
     }
@@ -1049,6 +1135,7 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
     private final double initialEnergyJ;
     private final double internalEnergyJ;
     private final double releasedEnergyJ;
+    private final double heatTransferEnergyJ;
     private final double releasedMassKg;
     private final Map<String, Double> initialComponentMassKg;
     private final Map<String, Double> remainingComponentMassKg;
@@ -1056,13 +1143,14 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
     private final int substeps;
 
     private Balance(double timeS, double volumeM3, double initialEnergyJ, double internalEnergyJ,
-        double releasedEnergyJ, double releasedMassKg, Map<String, Double> initial, Map<String, Double> remaining,
-        Map<String, Double> released, int substeps) {
+        double releasedEnergyJ, double heatTransferEnergyJ, double releasedMassKg, Map<String, Double> initial,
+        Map<String, Double> remaining, Map<String, Double> released, int substeps) {
       this.timeS = timeS;
       this.volumeM3 = volumeM3;
       this.initialEnergyJ = initialEnergyJ;
       this.internalEnergyJ = internalEnergyJ;
       this.releasedEnergyJ = releasedEnergyJ;
+      this.heatTransferEnergyJ = heatTransferEnergyJ;
       this.releasedMassKg = releasedMassKg;
       initialComponentMassKg = Collections.unmodifiableMap(new TreeMap<String, Double>(initial));
       remainingComponentMassKg = Collections.unmodifiableMap(new TreeMap<String, Double>(remaining));
@@ -1093,6 +1181,11 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass implements
     /** @return integrated outgoing stagnation enthalpy in J; may be negative for an EOS reference */
     public double getReleasedEnergyJ() {
       return releasedEnergyJ;
+    }
+
+    /** @return cumulative signed external heat transferred into the inventory in J */
+    public double getHeatTransferEnergyJ() {
+      return heatTransferEnergyJ;
     }
 
     /** @return cumulative released mass in kg */

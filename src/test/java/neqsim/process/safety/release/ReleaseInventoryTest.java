@@ -109,9 +109,91 @@ class ReleaseInventoryTest extends neqsim.NeqSimTest {
       released += b.getReleasedComponentMassKg().get(name);
     }
     assertEquals(released, b.getReleasedMassKg(), 1e-12);
-    assertEquals(b.getInitialEnergyJ(), b.getInternalEnergyJ() + b.getReleasedEnergyJ(),
+    assertEquals(b.getInitialEnergyJ(), b.getInternalEnergyJ() + b.getReleasedEnergyJ() - b.getHeatTransferEnergyJ(),
         Math.max(1.0, Math.abs(b.getInitialEnergyJ())) * 1e-7);
     assertEquals(b.getVolumeM3(), inventory.getFluid().getVolume("m3"), b.getVolumeM3() * 1e-7);
+  }
+
+  @Test
+  void constantHeatBoundaryAdvancesIsolatedInventoryAndClosesSignedEnergy() {
+    ReleaseInventoryHeatTransfer heat = ReleaseInventoryHeatTransfer.constantPower(250.0, "fire-study-imposed-duty:v1");
+    ReleaseInventory vessel = new ReleaseInventory("heated", gas(2.0), 1.0, 0.01, 0.7, 10000.0,
+        new IdealGasReleaseModel(), 0.25, heat);
+    vessel.setReleaseEnabled(false);
+    double initialTemperature = vessel.getFluid().getTemperature();
+
+    vessel.runTransient(4.0, UUID.randomUUID());
+
+    ReleaseInventory.Balance balance = vessel.getBalance();
+    assertEquals(1000.0, balance.getHeatTransferEnergyJ(), 1e-9);
+    assertEquals(balance.getInitialEnergyJ(),
+        balance.getInternalEnergyJ() + balance.getReleasedEnergyJ() - balance.getHeatTransferEnergyJ(),
+        Math.max(1.0, Math.abs(balance.getInitialEnergyJ())) * 1e-7);
+    assertEquals(0.0, balance.getReleasedMassKg(), 0.0);
+    assertTrue(vessel.getFluid().getTemperature() > initialTemperature);
+    assertEquals("CONSTANT_POWER", vessel.getReleaseProvenance().get("inventoryHeatTransferType"));
+    assertEquals("fire-study-imposed-duty:v1", vessel.getReleaseProvenance().get("inventoryHeatTransferProvenance"));
+    assertEquals("COUPLED_RIGID_HEATED_GAS_INVENTORY", vessel.getReleaseBasis());
+    balanced(vessel);
+  }
+
+  @Test
+  void releaseAndHeatBoundaryCloseComponentsMassAndEnergyTogether() {
+    ReleaseInventory vessel = new ReleaseInventory("heated-release", gas(3.0), 1.0, 0.008, 0.7, 10000.0,
+        new IdealGasReleaseModel(), 0.02,
+        ReleaseInventoryHeatTransfer.constantPower(125.0, "coupled-release-energy-test:v1"));
+
+    vessel.runTransient(0.5, UUID.randomUUID());
+
+    assertTrue(vessel.getBalance().getReleasedMassKg() > 0.0);
+    assertEquals(62.5, vessel.getBalance().getHeatTransferEnergyJ(), 1e-9);
+    balanced(vessel);
+  }
+
+  @Test
+  void linearHeatBoundaryRefinesAndWritesExecutableBenchmark() throws Exception {
+    List<String> rows = new ArrayList<String>();
+    rows.add("max_substep_s,temperature_k,heat_transfer_j,energy_residual_j");
+    double[] steps = {1.0, 0.5, 0.25, 0.125};
+    double previousTemperature = Double.NaN;
+    double previousDifference = Double.POSITIVE_INFINITY;
+    for (double step : steps) {
+      ReleaseInventory vessel = new ReleaseInventory("conductance-" + step, gas(2.0), 1.0, 0.01, 0.7, 10000.0,
+          new IdealGasReleaseModel(), step,
+          ReleaseInventoryHeatTransfer.linearConductance(20.0, 350.0, "lumped-ua-screen:v1"));
+      vessel.setReleaseEnabled(false);
+      vessel.runTransient(5.0, UUID.randomUUID());
+      ReleaseInventory.Balance balance = vessel.getBalance();
+      double temperature = vessel.getFluid().getTemperature();
+      double residual = balance.getInternalEnergyJ() + balance.getReleasedEnergyJ() - balance.getHeatTransferEnergyJ()
+          - balance.getInitialEnergyJ();
+      rows.add(step + "," + temperature + "," + balance.getHeatTransferEnergyJ() + "," + residual);
+      assertTrue(temperature > 300.0 && temperature < 350.0);
+      assertEquals(0.0, residual, Math.max(1.0, Math.abs(balance.getInitialEnergyJ())) * 1e-7);
+      if (Double.isFinite(previousTemperature)) {
+        double difference = Math.abs(temperature - previousTemperature);
+        assertTrue(difference < previousDifference);
+        previousDifference = difference;
+      }
+      previousTemperature = temperature;
+    }
+    Path directory = Paths.get("target", "source-term-benchmarks");
+    Files.createDirectories(directory);
+    Files.write(directory.resolve("release-inventory-heat-boundary.csv"), rows, StandardCharsets.UTF_8);
+    assertTrue(previousDifference < 0.01);
+  }
+
+  @Test
+  void heatBoundaryValidatesInputsAndIsImmutable() {
+    assertSame(ReleaseInventoryHeatTransfer.adiabatic(), ReleaseInventoryHeatTransfer.adiabatic());
+    assertFalse(ReleaseInventoryHeatTransfer.adiabatic().isActive());
+    assertThrows(IllegalArgumentException.class,
+        () -> ReleaseInventoryHeatTransfer.constantPower(Double.NaN, "source"));
+    assertThrows(IllegalArgumentException.class, () -> ReleaseInventoryHeatTransfer.constantPower(1.0, " "));
+    assertThrows(IllegalArgumentException.class,
+        () -> ReleaseInventoryHeatTransfer.linearConductance(0.0, 300.0, "source"));
+    assertThrows(IllegalArgumentException.class,
+        () -> ReleaseInventoryHeatTransfer.linearConductance(1.0, 0.0, "source"));
   }
 
   @Test
