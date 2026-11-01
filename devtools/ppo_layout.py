@@ -67,12 +67,24 @@ def _fmt_power(kw):
     return "%.1f kW" % kw
 
 
+def _fmt_mass_number(value, trace_limit=0.001):
+    """Three significant figures, signed trace bounds, or None for unavailable flow."""
+    if value is None or not math.isfinite(value):
+        return None
+    if value == 0:
+        return "0"
+    if abs(value) < trace_limit:
+        return ("<%.3g" % trace_limit) if value > 0 else (">-%.3g" % trace_limit)
+    return "%.3g" % value
+
+
 def _fmt_mass(kg_h):
-    if kg_h is None:
+    """Mass-flow label; trace means magnitude below 0.001 kg/h, never exact zero."""
+    if kg_h is None or not math.isfinite(kg_h):
         return None
     if abs(kg_h) >= 1000.0:
-        return "%.1f t/h" % (kg_h / 1000.0)
-    return "%.0f kg/h" % kg_h
+        return _fmt_mass_number(kg_h / 1000.0, 1e-6) + " t/h"
+    return _fmt_mass_number(kg_h) + " kg/h"
 
 
 def _fmt_std_gas(sm3_h):

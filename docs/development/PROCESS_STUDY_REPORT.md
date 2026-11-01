@@ -509,6 +509,11 @@ a NeqSim model does not contain.
 
 **Limitations.** The topology is what the solved model contains; plant systems that are not modelled are listed on
 every sheet. Utility media, drivers, sparing, vessel sizes and control loops appear only if the model has them.
+External utility and shaft-power labels carry `data-layout-kind="outside"` in the SVG. The layout
+loader preserves that ownership without requiring these labels to fit inside the process symbol;
+label collisions, line-through-text, font-size and arrowhead checks remain active. Driver footprints
+include the full off-centre shaft-power label width.
+
 Streams consumed by several units are counted once per area in the area balances. The layout is heuristic (layered
 layout with crossing reduction); some crossings and sparse sheets can remain, so always look at the images. The
 report is a description of a simulation, not an approved design document.

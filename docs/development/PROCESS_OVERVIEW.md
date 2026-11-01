@@ -20,7 +20,7 @@ mandatory layout gate `pfd_layout_check`:
 | `ppo_graph` | structured graph `neqsim.process_overview.graph/1`: equipment, ports, streams, sections, trains, values of one case, reductions with explicit mapping (`merge_sections`, `subgraph` helpers) |
 | `ppo_layout` | hierarchical layout: section ordering (mass-flow weighted feedback-arc set), rows of layers, section-internal Sugiyama layout, corridor/channel routing with interval-coloured tracks, bubbles and attached annotations, `neqsim.pfd_layout.v1` spec |
 | `ppo_render` | styles (A3 and 16:9), fonts with real metrics, symbol library, ISO 5457-style frame, ISO 7200-style title block, SVG/PDF/PNG exporters |
-| `ppo_validate` | checks V01-V14 and the Markdown/JSON validation record |
+| `ppo_validate` | checks V01-V16, including every supporting slide, and the Markdown/JSON validation record |
 | `process_overview` | orchestrator, fit strategy, detail sheets, supporting slides, CLI |
 | `ppo_examples` | synthetic two-train gas plant used by the tests |
 
@@ -46,6 +46,10 @@ manifest = process_overview.build_overview(data, "out/overview", case_id="A",
 print(manifest["validation_status"], manifest["collapsed_sections"])
 ```
 
+Use `--no-supporting-slides` (Python: `supporting_slides=False`) to generate the A3 and main 16:9
+overviews without supporting presentation slides. A3 detail PFDs still follow `--detail-sheets`;
+use `--detail-sheets all` to keep a complete equipment drawing set.
+
 ## Outputs
 
 | File | Content |
@@ -55,6 +59,7 @@ print(manifest["validation_status"], manifest["collapsed_sections"])
 | `detail_sheets/` | A3 PFD drawing set (`psr_diagrams.build_pfd`) for the sections referenced as `sheet PFD-nn` |
 | `process_graph.json` | the structured source data (plus `process_graph_presentation.json`; `process_graph_drawn.json` when sections were merged) |
 | `layout_A3.json`, `layout_16x9.json`, `pfd_layout_spec_A3.json`, `pfd_layout_spec_16x9.json` | positions, ports, routes, bubbles, bundles, fit attempts; `neqsim.pfd_layout.v1` specs for `neqsim pfd-check` |
+| `overview_16x9_detail_NN_layout.json`, `overview_16x9_detail_NN_validation.json` | supporting slide geometry and pre-export checks; a failed slide writes its validation record and blocks export |
 | `validation.json`, `validation.md` | validation record |
 | `manifest.json` | files with page sizes, refs, warnings and the regeneration command |
 
@@ -76,6 +81,21 @@ sheet: smaller symbol scale -> the section whose block representation reduces th
 with a detail-sheet reference -> single-unit sections -> bubbles limited to boundary streams -> compact text step
 at the target -> contiguous groups of sections in process order (`section_groups` / `presentation_groups` in the
 config give the user control over this hierarchy). All attempts are logged in `layout_*.json`.
+
+Supporting slides retain the full section instead of collapsing it again. If a supporting section
+does not fit, has clipped text, undersized process labels, invalid values, missing arrows or collision
+errors, generation raises `OverviewError` before exporting the overview images/PDFs. Split the section
+into smaller coordinated sections, or disable supporting slides and retain the A3 detail sheets.
+Page size and font embedding alone do not establish that slide content fits.
+
+## Mass-flow precision
+
+Boundary annotations and the KEY STREAMS table use three significant figures. Boundary annotations
+use kg/h below an absolute flow of 1000 kg/h and t/h at or above it; the table keeps its t/h header.
+Exact zero is `0`. Nonzero magnitudes below 0.001 kg/h use signed bounds (`<0.001 kg/h` or
+`>-0.001 kg/h`; `<1e-06` or `>-1e-06` in the t/h column). A flow of 0.04 kg/h is `0.04 kg/h`, and
+22 kg/h appears as `0.022` in the table. Missing or nonfinite values are unavailable, never zero.
+The table reserves width for the formatted mass values. Source values in JSON retain full precision.
 
 ## Configuration
 
@@ -113,6 +133,8 @@ palette) defined in the legend; the monochrome variant encodes the service by da
 | V10 | fits without shrinking text |
 | V11 | stream data placed without collisions |
 | V12-V14 | the same for the 16:9 version |
+| V15:slide:check | every supporting slide: fit, page bounds, minimum process font, layout/arrow review, source values, endpoints and annotation placement; missing review geometry blocks validation |
+| V16 | main 16:9 layout fits without shrinking text |
 
 Status `FAIL` blocks delivery; `WARN` (typically the crossing count) needs the reviewer's judgement.
 
@@ -121,6 +143,8 @@ Status `FAIL` blocks delivery; `WARN` (typically the crossing count) needs the r
 `devtools/test_process_overview.py` runs the complete pipeline on the synthetic plant (`ppo_examples`) without a
 JVM: reductions and mapping, train grouping, layout determinism and orthogonality, symbol library, exports
 (page size, embedded fonts, editable SVG), validation record and CLI.
+`devtools/test_process_report_regressions.py` adds signed small/trace/unavailable flow cases, table
+precision, external driver-label review, an oversized single-section slide and the main-overview-only option.
 
 Related: [process-study report](PROCESS_STUDY_REPORT.md), skill `professional-process-overview`, skill
 `neqsim-pfd-layout-review`.

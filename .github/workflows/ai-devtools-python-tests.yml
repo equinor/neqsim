@@ -89,6 +89,14 @@ jobs:
       - name: Verify pure-CO2 retained-data auditor guards
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_pure_co2.py -v
 
+      - name: Verify process overview and drawing regressions
+        run: |
+          uv run --project devtools --locked --group test python -m pytest -q \
+            devtools/test_process_overview.py \
+            devtools/test_process_report_regressions.py \
+            devtools/test_psr_diagrams.py \
+            devtools/test_pfd_layout_check.py
+
       - name: Verify selected-pair performance receipt guards
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_run_huron_vidal_selected_pair_benchmark.py -v
 
@@ -143,6 +151,9 @@ jobs:
 
       - name: Verify HV benchmark receipt guards on the minimum supported Python
         run: uv run --project devtools --locked --group test python -m pytest -q devtools/test_benchmark_huron_vidal_columns.py
+
+      - name: Verify process report regressions on the minimum supported Python
+        run: uv run --project devtools --locked --group test python -m pytest -q devtools/test_process_report_regressions.py
 
       - name: Verify pure-CO2 auditor guards on the minimum supported Python
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_pure_co2.py -v

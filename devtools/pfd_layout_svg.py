@@ -74,7 +74,8 @@ class _Loader:
         fs = _f(el.get("font-size"), 3.0) * m[0]
         x, y = _apply(m, (x_raw, y_raw))
         return {"text": txt, "x": x, "y": y, "font_size": fs, "anchor": el.get("text-anchor", "start"),
-                "bold": (el.get("font-weight") or "") == "bold", "fill": el.get("fill", "")}
+                "bold": (el.get("font-weight") or "") == "bold", "fill": el.get("fill", ""),
+                "layout_kind": el.get("data-layout-kind")}
 
     def shapes(self, el, m):
         out = []
@@ -161,6 +162,10 @@ class _Loader:
             outside = tb[1] + tb[3] <= y0 + 0.05 * h or tb[1] >= y0 + h - 0.05 * h
             ov = max(0.0, min(tb[0] + tb[2], x0 + w) - max(tb[0], x0)) * max(0.0, min(tb[1] + tb[3], y0 + h) - max(tb[1], y0)) / max(tb[2] * tb[3], 1e-9)
             kind_t = "tag_above" if tb[1] + tb[3] <= y0 + 0.2 * h and node_kind != "block" else ("subtitle" if outside and node_kind != "block" else ("outside" if ov < 0.3 else "inside"))
+            # Generator metadata identifies external driver/utility text. It remains
+            # owned by this node and participates in all other collision checks.
+            if t.get("layout_kind") == "outside":
+                kind_t = "outside"
             n_texts.append(dict(t, kind=kind_t, bbox=tb))
         first = body[0][2] if body else None
         style = {"shape": use[0][0], "fill": (first.get("fill") if first is not None else "") or "", "dash": (first.get("stroke-dasharray") if first is not None else "") or ""}

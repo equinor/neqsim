@@ -2,7 +2,7 @@
 name: professional-process-overview
 version: "1.0.0"
 description: "Generates a professional one-sheet A3 process flow diagram (colour + monochrome, ISO 5457 / 7200 / 10628-2 conventions, embedded fonts, PDF + editable SVG) and a coordinated 16:9 presentation version from a solved NeqSim model or process_data.json, with detail sheets, a structured process graph and automatic validation. USE WHEN: a report, review or presentation needs the complete process on one overview sheet, a section-level process picture with traceable grouping, or a slide version of a PFD."
-last_verified: "2026-10-31"
+last_verified: "2026-11-01"
 requires:
   python_packages: [pymupdf, matplotlib, fonttools, pyyaml]
 ---
@@ -38,6 +38,7 @@ neqsim process-overview model.py --cases cases.yaml --case A --out out/overview
 #   --collapse "<section name>"                 force a section to block representation (repeatable)
 #   --config cfg.json  --style style.json       graph / style overrides (see below)
 #   --no-mono  --no-presentation  --no-embed-font  --dpi 150  --quiet
+#   --no-supporting-slides                     keep main slides; A3 detail sheets unchanged
 ```
 
 Without `neqsim` on PATH: `<python> -m neqsim_cli process-overview ...` (plugin install) or
@@ -52,7 +53,7 @@ Without `neqsim` on PATH: `<python> -m neqsim_cli process-overview ...` (plugin 
 | `detail_sheets/` | `psr_diagrams.build_pfd` drawing set for the sections referenced on the overview (`sheet PFD-nn`) |
 | `process_graph.json` (+ `process_graph_presentation.json`, `process_graph_drawn.json` when sections were merged) | structured source data: equipment, ports, streams, sections, trains, values of the case, mapping of every reduction |
 | `layout_A3.json`, `layout_16x9.json`, `pfd_layout_spec_A3.json`, `pfd_layout_spec_16x9.json` | positions, routes, bubbles, bundles, fit attempts; the `neqsim.pfd_layout.v1` specs for `neqsim pfd-check` |
-| `validation.json`, `validation.md` | checks V01-V14 (see below), pfd_layout_check findings, limitations |
+| `validation.json`, `validation.md` | checks V01-V16 (see below), pfd_layout_check findings, limitations |
 | `manifest.json` | files, page sizes, collapsed sections, refs, warnings, the exact regeneration command |
 
 ## Procedure
@@ -98,6 +99,9 @@ Without `neqsim` on PATH: `<python> -m neqsim_cli process-overview ...` (plugin 
 - **Values**: boundary streams carry flow, T, P under their label; key cross-section streams carry a
   stream-number bubble and appear in the KEY STREAMS table (t/h, C, bara; totals for shaft power and duties).
   Standard conditions are stated in note 1.
+- **Small mass flows**: use three significant figures, preserve signed nonzero flows and distinguish exact
+  zero from trace bounds below 0.001 kg/h. The table retains t/h, including scientific notation when needed;
+  the source JSON keeps full precision. See `docs/development/PROCESS_OVERVIEW.md` for the formatting policy.
 - **Colour** (project convention, Okabe-Ito palette, defined in the legend): gas vermilion, oil/condensate
   bluish green, produced water blue, multiphase black, utility grey dashed, recycle dashed. The mono variant
   encodes the service by dash pattern; the heavy line is the main path in both.
@@ -120,7 +124,11 @@ V01 unique traceable ids - V02 valid endpoints, no dangling legs - V03 every sou
 stream represented - V04 explicit mapping for grouped/bundled/collapsed items - V05 displayed values
 re-derived from the source case - V06 inside the frame - V07 label size >= target - V08 `pfd_layout_check`
 (overlaps, line-through-box, crossings) - V09 PDF page size, embedded fonts, exports - V10 fits without
-shrinking text - V11 stream data placed - V12-V14 the same for the 16:9 version. Status FAIL blocks delivery.
+shrinking text - V11 stream data placed - V12-V14 the same for the 16:9 version - V15 every supporting
+slide (fit, page bounds, process fonts, layout/arrows, source values, endpoints and annotations) - V16 main
+slide fit. Failed supporting slides block export and write a validation record. Split their sections or use
+`supporting_slides=False` / `--no-supporting-slides`, retaining A3 detail PFDs. Review each supporting slide's
+`overview_16x9_detail_NN_layout.json` and `_validation.json`. Status FAIL blocks delivery.
 
 ## Limitations
 

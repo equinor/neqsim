@@ -152,8 +152,7 @@ def _inside_frame(L, scenes, fonts, style):
                 continue
             bx = ppo_render.text_bbox(fonts, t)
             if bx[0] < x0 - 0.3 or bx[2] > x1 + 0.3 or bx[1] < y0 - 0.3 or bx[3] > y1 + 0.3:
-                if style["line"]["frame"] > 0:
-                    bad.append("text %r" % t["text"][:30])
+                bad.append("text %r" % t["text"][:30])
     return _check("V06", "Labels, symbols and lines stay inside the drawing frame", FAIL if bad else PASS,
                   "frame (%.0f, %.0f)-(%.0f, %.0f) mm" % (x0, y0, x1, y1), sorted(set(bad)))
 
@@ -247,6 +246,28 @@ def _annotations(L, graph):
                   ["forced: " + s for s in fb] + ["not placed: " + s for s in missing])
 
 
+def _supporting_checks(entry, data):
+    """Review one detail slide using its own graph, geometry, fonts and scene."""
+    name = entry["file"]
+    geometry = entry.get("layout")
+    graph = entry.get("graph")
+    if not entry.get("fits") or geometry is None or graph is None:
+        return [_check("V15:" + name, "Supporting slide fits and has review geometry", FAIL,
+                       "%s: fits=%r; geometry and graph required" % (name, entry.get("fits")))]
+    layout, spec, style, scenes = geometry
+    fonts = ppo_render.Fonts(style)
+    review, _ = _layout_review(spec, name)
+    font_check = _font_sizes(scenes, style)
+    if font_check["status"] != PASS:
+        font_check["status"] = FAIL
+    checks = [_fit(layout), _inside_frame(layout, scenes, fonts, style), font_check,
+              review, _values(graph, data, layout), _endpoints(graph, layout), _annotations(layout, graph)]
+    for index, check in enumerate(checks, start=1):
+        check["id"] = "V15:%s:%d" % (name, index)
+        check["title"] = name + ": " + check["title"]
+    return checks
+
+
 def validate(graph, data, layouts, files, fonts, problems, detail_manifest=None, refs=None):
     """Run all checks; ``layouts`` is ``{"a3": (Layout, spec, style, scenes), "16x9": ...}``."""
     L, spec, style, scenes = layouts["a3"]
@@ -272,6 +293,17 @@ def validate(graph, data, layouts, files, fonts, problems, detail_manifest=None,
         f = _font_sizes(scenes_p, style_p)
         f["id"], f["title"] = "V14", "16:9 version: label text at or above %.1f pt" % style_p["min_label_pt"]
         checks.append(f)
+        fit = _fit(Lp)
+        fit["id"], fit["title"] = "V16", "16:9 version: " + fit["title"]
+        checks.append(fit)
+    supporting = layouts.get("16x9_supporting", [])
+    for entry in supporting:
+        checks.extend(_supporting_checks(entry, data))
+    tracked = {entry["file"] for entry in supporting}
+    missing = [name for name in files if name.startswith("overview_16x9_detail_") and name not in tracked]
+    if missing:
+        checks.append(_check("V15:exports", "Every supporting export has review geometry", FAIL,
+                             "Supporting slide exports missing from layouts", missing))
     statuses = [c["status"] for c in checks]
     status = FAIL if FAIL in statuses else (WARN if WARN in statuses else PASS)
     limitations = [
