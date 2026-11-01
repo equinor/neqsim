@@ -294,9 +294,9 @@ class NativeDepletionHandoffTest {
     assertEquals("injected post-saturation failure", failure.getCause().getMessage());
   }
 
-  /** A real gas/oil-to-gas CVD tail stays rejected until single-phase volume restoration is qualified. */
+  /** A dry gas/oil-to-gas CVD tail restores the cell while conserving named components. */
   @Test
-  void rejectsUnqualifiedPhaseDisappearanceTail() {
+  void restoresGasOnlyPhaseDisappearanceTail() {
     SystemInterface fluid = new SystemSrkEos(275, 500);
     fluid.addComponent("methane", 0.95);
     fluid.addComponent("n-butane", 0.05);
@@ -307,8 +307,21 @@ class NativeDepletionHandoffTest {
         new String[] {"CCE-1"});
     PvtSeparatorPath separator = new PvtSeparatorPath(new double[] {1.0133}, new double[] {288.71},
         "single final basis");
-    IllegalStateException failure = assertThrows(IllegalStateException.class, () -> DepletionPvtHistoryGenerator
-        .replayNative(model, true, Path.CVD, "CVD tail", 275, new double[] {500, 200, 100, 50, 20, 5, 2}, separator));
-    assertTrue(failure.getMessage().contains("phase-disappearance tail"));
+    NativeResult result = DepletionPvtHistoryGenerator.replayNative(model, true, Path.CVD, "CVD tail", 275,
+        new double[] {500, 200, 100, 50, 20, 5, 2}, separator);
+    NativeResult original = DepletionPvtHistoryGenerator.replayNative(model, false, Path.CVD, "CVD tail", 275,
+        new double[] {500, 200, 100, 50, 20, 5, 2}, separator);
+    assertFalse(original.isTuned());
+    assertClosure(original, new double[] {0.95, 0.05});
+    assertClosure(result, new double[] {0.95, 0.05});
+    DepletionSnapshot[] rows = result.getSnapshots();
+    double volume = rows[3].getRetainedFluid().getCorrectedVolume();
+    for (int i = 4; i < rows.length; i++) {
+      assertEquals(volume, rows[i].getRetainedFluid().getCorrectedVolume(), volume * 1e-8);
+    }
+    assertFalse(rows[rows.length - 1].getRetainedFluid().hasPhaseType("oil"));
+    assertTrue(result.hasWithdrawal(rows.length - 1));
+    assertArrayEquals(original.getSnapshots()[rows.length - 1].getProducedComponentMoles(),
+        rows[rows.length - 1].getProducedComponentMoles(), 1e-12);
   }
 }

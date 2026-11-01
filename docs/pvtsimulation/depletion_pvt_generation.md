@@ -36,7 +36,7 @@ Oil-only, gas-only and nondegenerate gas/oil CCE states are represented without
 invented absent-phase properties. The qualified synthetic closed-mass gas/oil/gas
 path preserves all material through phase appearance and disappearance. This is
 different from gas-withdrawal CVD, whose later single-phase volume-restoration
-tail remains unqualified. Wet and critical-degenerate paths remain rejected.
+tail is separately qualified below. Wet and critical-degenerate paths remain rejected.
 
 `NativeCceHandoffTest` verifies provenance/ownership, both EOS selections, no-flow
 and phase limits, failures, named cell/separator conservation, independent pure
@@ -66,8 +66,9 @@ retained explicitly rather than relabeled as 15 C volumes.
   retained oil are required; a gas-only DLE feed is rejected.
 - CVD can begin with gas-only states before a sampled gas/oil boundary, then
   follow the volume-restored two-phase path. A sampled boundary is required.
-  A later phase-disappearance tail is rejected because single-phase volume
-  restoration still requires separate qualification.
+  After liquid disappears, gas continues to be withdrawn below the saturation
+  reference to restore the fixed cell volume. The retained gas composition is
+  conserved during each single-phase withdrawal; absent oil has no assigned PVT.
 - Wet/other-phase samples remain unsupported. Gas/oil composition vectors with
   L1 distance at most 1e-8 are rejected as an unqualified critical-degenerate
   split. This rejection bound is not a fit parameter or a near-critical accuracy
@@ -162,7 +163,7 @@ DLE remains within `1.066e-13` relative volume error.
 The direct CVD default and modified-black-oil `generate` route retain their
 legacy scan and its precision limitation. The opt-in refinement supports dry,
 nondegenerate upper dew boundaries; pure fluids, wet paths, oil bubble boundaries,
-unbracketed/1000-bara domains and later CVD phase disappearance remain outside
+unbracketed/1000-bara domains remain outside
 its qualified domain. These are analytical synthetic consistency checks, not
 measured laboratory/field accuracy or full phase-boundary qualification.
 
@@ -268,3 +269,26 @@ also explains the fixed surface-process and surface-density approximation.
 See [reservoir material balance](reservoir_material_balance.md) for the measured
 history workflow and [issue #4740](https://github.com/equinor/neqsim/issues/4740)
 for the broader qualification contract.
+
+
+## Gas-only CVD continuation
+
+A CVD cell remains at its selected saturation volume after the final liquid
+phase evaporates. At a lower pressure, withdraw the present gas in its actual
+component proportions until the cell returns to that volume. In a single phase
+at fixed temperature, pressure and composition, volume is extensive in moles;
+therefore the remaining fraction is the target volume divided by pre-withdrawal
+volume. The existing bounded gas-withdrawal loop performs this operation and
+reflashes/checks the cell. Above the saturation reference pressure, single-phase
+rows remain closed expansion states with zero withdrawal.
+
+This correction also applies to direct legacy CVD; it retains that route's
+selected scan reference and precision limitation. Native CVD uses the qualified
+refined upper dew. It does not assign absent oil density, Bo or Rs. The modified
+black-oil route still requires both phases and rejects these rows.
+
+The dry methane/n-butane275K synthetic reference covers500/200/100/50/20/5/2bara,
+including two-phase depletion and a gas-only tail. Independent SRK cubic roots,
+fugacity equality, two-phase algebraic gas removal and single-phase extensivity
+provide numerical references. This is model consistency, not measured lab/field
+accuracy, critical behavior, water support or recoverable reserves.

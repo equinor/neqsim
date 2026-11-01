@@ -35,8 +35,7 @@ scan; preserve the complete cell and zero protocol withdrawal. Do not infer a
 saturation-normalized volume from this absolute evidence. Check actual phase presence and `hasWithdrawal(row)` before reading
 phase or withdrawal outputs. Preserve complete experiment and separator-basis provenance.
 Native CVD uses opt-in checked upper-dew refinement: require a dry gas/oil-to-gas scan bracket below 1000 bara, then validate the existing pressure solver result. Do not fall back after a failed equilibrium or branch gate. The legacy CVD default and modified-black-oil `generate` route retain the scan; the latter still requires both phases. Read
-`docs/pvtsimulation/depletion_pvt_generation.md`; wet/critical paths, gas-withdrawal CVD phase-disappearance
-tails and measured field accuracy remain unqualified. Closed-mass CCE disappearance
+`docs/pvtsimulation/depletion_pvt_generation.md`; wet/critical paths and measured field accuracy remain unqualified. Dry CVD gas-only tails restore the reference cell volume by gas withdrawal below the saturation pressure; above saturation retain the closed sample. Closed-mass CCE disappearance
 is a distinct protocol and preserves all components. DLE flash failures propagate.
 
 Before fitting same-state gas p/T/Z/molar-mass/density tuples, use the opt-in

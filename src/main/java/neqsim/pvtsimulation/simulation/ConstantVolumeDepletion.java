@@ -301,7 +301,9 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       }
       getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
-      if (getThermoSystem().getNumberOfPhases() > 1
+      // Below the cell reference pressure, CVD still removes gas after the last liquid evaporates.
+      // Above that pressure the original sample expands without withdrawal.
+      if ((getThermoSystem().getNumberOfPhases() > 1 || pressures[i] < saturationPressure)
           && getThermoSystem().getCorrectedVolume() > saturationVolume * (1.0 + CELL_VOLUME_RELATIVE_TOLERANCE)) {
         restoreSaturationVolume();
       }
