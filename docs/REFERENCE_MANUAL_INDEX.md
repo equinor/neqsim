@@ -1069,6 +1069,7 @@ capability routes, numerical evidence, measured-data gaps and gas-injection limi
 | Recycle Acceleration  | [docs/simulation/recycle_acceleration_guide.md](simulation/recycle_acceleration_guide.md)                     | Recycle acceleration      |
 | Process Calculator    | [docs/simulation/process_calculator.md](simulation/process_calculator.md)                                     | Process calculator        |
 | Integrated Workflow   | [docs/simulation/INTEGRATED_WORKFLOW_GUIDE.md](simulation/INTEGRATED_WORKFLOW_GUIDE.md)                       | Integrated workflow       |
+| Numerical Mathematics | [docs/simulation/recent_numerical_mathematics.md](simulation/recent_numerical_mathematics.md) | Research selection, derivative qualification and reproducible performance evidence |
 | Differentiable Thermo | [docs/simulation/differentiable_thermodynamics.md](simulation/differentiable_thermodynamics.md)               | Auto-differentiation      |
 | Derivatives           | [docs/simulation/derivatives_and_gradients.md](simulation/derivatives_and_gradients.md)                       | Derivatives and gradients |
 | Equipment Factory     | [docs/simulation/equipment_factory.md](simulation/equipment_factory.md)                                       | Equipment factory         |

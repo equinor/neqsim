@@ -1,0 +1,442 @@
+{
+  "source_baseline": "d24403ccdf41fd6d9003b84537784f2953bc256f",
+  "date": "2026-11-01",
+  "java": "OpenJDK 17.0.20",
+  "jvm_options": [
+    "-Xms512m",
+    "-Xmx512m",
+    "-XX:ActiveProcessorCount=2"
+  ],
+  "properties": [
+    "density",
+    "enthalpy",
+    "entropy",
+    "Cp",
+    "compressibility"
+  ],
+  "warmup_pairs": 40,
+  "repetitions_per_pair": 100,
+  "rounds_per_jvm": 5,
+  "jvms": 2,
+  "candidate_pairs": [
+    {
+      "repeat": "benchmark-final-0",
+      "model": 0,
+      "round": 0,
+      "scalar_ns": 5454007.49,
+      "batch_ns": 424700.6
+    },
+    {
+      "repeat": "benchmark-final-0",
+      "model": 0,
+      "round": 1,
+      "scalar_ns": 4994960.44,
+      "batch_ns": 532773.91
+    },
+    {
+      "repeat": "benchmark-final-0",
+      "model": 0,
+      "round": 2,
+      "scalar_ns": 4265434.65,
+      "batch_ns": 320322.07
+    },
+    {
+      "repeat": "benchmark-final-0",
+      "model": 0,
+      "round": 3,
+      "scalar_ns": 3733979.0,
+      "batch_ns": 324603.53
+    },
+    {
+      "repeat": "benchmark-final-0",
+      "model": 0,
+      "round": 4,
+      "scalar_ns": 3745868.17,
+      "batch_ns": 303980.28
+    },
+    {
+      "repeat": "benchmark-final-0",
+      "model": 1,
+      "round": 0,
+      "scalar_ns": 5424515.69,
+      "batch_ns": 373564.11
+    },
+    {
+      "repeat": "benchmark-final-0",
+      "model": 1,
+      "round": 1,
+      "scalar_ns": 4457760.74,
+      "batch_ns": 353848.0
+    },
+    {
+      "repeat": "benchmark-final-0",
+      "model": 1,
+      "round": 2,
+      "scalar_ns": 4857938.08,
+      "batch_ns": 366367.71
+    },
+    {
+      "repeat": "benchmark-final-0",
+      "model": 1,
+      "round": 3,
+      "scalar_ns": 5232191.05,
+      "batch_ns": 369420.44
+    },
+    {
+      "repeat": "benchmark-final-0",
+      "model": 1,
+      "round": 4,
+      "scalar_ns": 3975981.27,
+      "batch_ns": 312621.13
+    },
+    {
+      "repeat": "benchmark-final-0",
+      "model": 2,
+      "round": 0,
+      "scalar_ns": 42999696.52,
+      "batch_ns": 830975.56
+    },
+    {
+      "repeat": "benchmark-final-0",
+      "model": 2,
+      "round": 1,
+      "scalar_ns": 43373024.41,
+      "batch_ns": 846570.04
+    },
+    {
+      "repeat": "benchmark-final-0",
+      "model": 2,
+      "round": 2,
+      "scalar_ns": 43470570.24,
+      "batch_ns": 836497.08
+    },
+    {
+      "repeat": "benchmark-final-0",
+      "model": 2,
+      "round": 3,
+      "scalar_ns": 44756996.89,
+      "batch_ns": 815564.58
+    },
+    {
+      "repeat": "benchmark-final-0",
+      "model": 2,
+      "round": 4,
+      "scalar_ns": 45062253.77,
+      "batch_ns": 818252.79
+    },
+    {
+      "repeat": "benchmark-final-1",
+      "model": 0,
+      "round": 0,
+      "scalar_ns": 5325715.08,
+      "batch_ns": 454118.99
+    },
+    {
+      "repeat": "benchmark-final-1",
+      "model": 0,
+      "round": 1,
+      "scalar_ns": 4818281.73,
+      "batch_ns": 400542.69
+    },
+    {
+      "repeat": "benchmark-final-1",
+      "model": 0,
+      "round": 2,
+      "scalar_ns": 4515976.6,
+      "batch_ns": 313050.0
+    },
+    {
+      "repeat": "benchmark-final-1",
+      "model": 0,
+      "round": 3,
+      "scalar_ns": 3969472.81,
+      "batch_ns": 318556.58
+    },
+    {
+      "repeat": "benchmark-final-1",
+      "model": 0,
+      "round": 4,
+      "scalar_ns": 4048680.03,
+      "batch_ns": 307508.47
+    },
+    {
+      "repeat": "benchmark-final-1",
+      "model": 1,
+      "round": 0,
+      "scalar_ns": 5444113.14,
+      "batch_ns": 358632.42
+    },
+    {
+      "repeat": "benchmark-final-1",
+      "model": 1,
+      "round": 1,
+      "scalar_ns": 5127769.74,
+      "batch_ns": 378140.11
+    },
+    {
+      "repeat": "benchmark-final-1",
+      "model": 1,
+      "round": 2,
+      "scalar_ns": 4631176.96,
+      "batch_ns": 395715.42
+    },
+    {
+      "repeat": "benchmark-final-1",
+      "model": 1,
+      "round": 3,
+      "scalar_ns": 4473958.78,
+      "batch_ns": 373079.98
+    },
+    {
+      "repeat": "benchmark-final-1",
+      "model": 1,
+      "round": 4,
+      "scalar_ns": 5032911.36,
+      "batch_ns": 553663.91
+    },
+    {
+      "repeat": "benchmark-final-1",
+      "model": 2,
+      "round": 0,
+      "scalar_ns": 44583423.58,
+      "batch_ns": 824625.94
+    },
+    {
+      "repeat": "benchmark-final-1",
+      "model": 2,
+      "round": 1,
+      "scalar_ns": 44634835.83,
+      "batch_ns": 912937.55
+    },
+    {
+      "repeat": "benchmark-final-1",
+      "model": 2,
+      "round": 2,
+      "scalar_ns": 44098975.54,
+      "batch_ns": 891052.98
+    },
+    {
+      "repeat": "benchmark-final-1",
+      "model": 2,
+      "round": 3,
+      "scalar_ns": 45860486.83,
+      "batch_ns": 897008.13
+    },
+    {
+      "repeat": "benchmark-final-1",
+      "model": 2,
+      "round": 4,
+      "scalar_ns": 44408755.81,
+      "batch_ns": 876451.69
+    }
+  ],
+  "historical_scalar_measurements": [
+    {
+      "repeat": "baseline-benchmark-0",
+      "model": 0,
+      "round": 0,
+      "scalar_ns": 2737406.09
+    },
+    {
+      "repeat": "baseline-benchmark-0",
+      "model": 0,
+      "round": 1,
+      "scalar_ns": 2336722.83
+    },
+    {
+      "repeat": "baseline-benchmark-0",
+      "model": 0,
+      "round": 2,
+      "scalar_ns": 2436401.22
+    },
+    {
+      "repeat": "baseline-benchmark-0",
+      "model": 0,
+      "round": 3,
+      "scalar_ns": 2302569.3
+    },
+    {
+      "repeat": "baseline-benchmark-0",
+      "model": 0,
+      "round": 4,
+      "scalar_ns": 2159310.47
+    },
+    {
+      "repeat": "baseline-benchmark-0",
+      "model": 1,
+      "round": 0,
+      "scalar_ns": 4292687.61
+    },
+    {
+      "repeat": "baseline-benchmark-0",
+      "model": 1,
+      "round": 1,
+      "scalar_ns": 3050538.14
+    },
+    {
+      "repeat": "baseline-benchmark-0",
+      "model": 1,
+      "round": 2,
+      "scalar_ns": 2890875.32
+    },
+    {
+      "repeat": "baseline-benchmark-0",
+      "model": 1,
+      "round": 3,
+      "scalar_ns": 2950059.34
+    },
+    {
+      "repeat": "baseline-benchmark-0",
+      "model": 1,
+      "round": 4,
+      "scalar_ns": 2722447.67
+    },
+    {
+      "repeat": "baseline-benchmark-0",
+      "model": 2,
+      "round": 0,
+      "scalar_ns": 37491944.95
+    },
+    {
+      "repeat": "baseline-benchmark-0",
+      "model": 2,
+      "round": 1,
+      "scalar_ns": 35415045.77
+    },
+    {
+      "repeat": "baseline-benchmark-0",
+      "model": 2,
+      "round": 2,
+      "scalar_ns": 36167206.7
+    },
+    {
+      "repeat": "baseline-benchmark-0",
+      "model": 2,
+      "round": 3,
+      "scalar_ns": 36524358.65
+    },
+    {
+      "repeat": "baseline-benchmark-0",
+      "model": 2,
+      "round": 4,
+      "scalar_ns": 36306141.73
+    },
+    {
+      "repeat": "baseline-benchmark-1",
+      "model": 0,
+      "round": 0,
+      "scalar_ns": 2859530.91
+    },
+    {
+      "repeat": "baseline-benchmark-1",
+      "model": 0,
+      "round": 1,
+      "scalar_ns": 2366832.05
+    },
+    {
+      "repeat": "baseline-benchmark-1",
+      "model": 0,
+      "round": 2,
+      "scalar_ns": 2106387.18
+    },
+    {
+      "repeat": "baseline-benchmark-1",
+      "model": 0,
+      "round": 3,
+      "scalar_ns": 1989150.33
+    },
+    {
+      "repeat": "baseline-benchmark-1",
+      "model": 0,
+      "round": 4,
+      "scalar_ns": 2041269.44
+    },
+    {
+      "repeat": "baseline-benchmark-1",
+      "model": 1,
+      "round": 0,
+      "scalar_ns": 3280950.69
+    },
+    {
+      "repeat": "baseline-benchmark-1",
+      "model": 1,
+      "round": 1,
+      "scalar_ns": 3036019.53
+    },
+    {
+      "repeat": "baseline-benchmark-1",
+      "model": 1,
+      "round": 2,
+      "scalar_ns": 2898354.24
+    },
+    {
+      "repeat": "baseline-benchmark-1",
+      "model": 1,
+      "round": 3,
+      "scalar_ns": 2852841.14
+    },
+    {
+      "repeat": "baseline-benchmark-1",
+      "model": 1,
+      "round": 4,
+      "scalar_ns": 2588896.4
+    },
+    {
+      "repeat": "baseline-benchmark-1",
+      "model": 2,
+      "round": 0,
+      "scalar_ns": 36524841.49
+    },
+    {
+      "repeat": "baseline-benchmark-1",
+      "model": 2,
+      "round": 1,
+      "scalar_ns": 36293512.92
+    },
+    {
+      "repeat": "baseline-benchmark-1",
+      "model": 2,
+      "round": 2,
+      "scalar_ns": 36284534.0
+    },
+    {
+      "repeat": "baseline-benchmark-1",
+      "model": 2,
+      "round": 3,
+      "scalar_ns": 37025562.12
+    },
+    {
+      "repeat": "baseline-benchmark-1",
+      "model": 2,
+      "round": 4,
+      "scalar_ns": 34807341.71
+    }
+  ],
+  "historical_comparison_limit": "Historical scalar API returned zero composition gradients; historical timing is context, not an equal-accuracy comparison.",
+  "comparison": "Final retained scalar full-reflash method versus additive implicit/local batch method, both with complete T/P/composition columns.",
+  "source_sha256": {
+    "src/main/java/neqsim/thermo/util/derivatives/DifferentiableFlash.java": "20f165c40b2dbafab13405993c43e7a2713b08b0a50691e3168d3adc17b4a389",
+    "src/test/java/neqsim/thermo/util/derivatives/DifferentiableFlashBenchmark.java": "a1a3c9376b185d6e1495e2580570972d8a9ba3245b9eacf29301b0c00cd97b6a",
+    "src/test/java/neqsim/thermo/util/derivatives/DifferentiableFlashCompositionTest.java": "d66e2ab86afb9f219f3a2e267f5e8cfda37cf766df645702e0e07ba7d52eaaad"
+  },
+  "summary": [
+    {
+      "model": "SRK",
+      "scalar_median_ms": 4.390705625,
+      "batch_median_ms": 0.32246280000000005,
+      "paired_speedup_median": 12.391771737129766
+    },
+    {
+      "model": "PR",
+      "scalar_median_ms": 4.945424720000001,
+      "batch_median_ms": 0.37125020999999997,
+      "paired_speedup_median": 12.988971730599921
+    },
+    {
+      "model": "CPA",
+      "scalar_median_ms": 44.496089695,
+      "batch_median_ms": 0.84153356,
+      "paired_speedup_median": 51.489935524126395
+    }
+  ]
+}
