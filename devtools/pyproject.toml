@@ -70,7 +70,7 @@ py-modules = [
     "pvt_data", "pvt_study", "pvt_report",
     "surf_spec", "surf_model", "surf_run", "surf_design", "surf_quantities", "surf_dataset", "surf_draw", "surf_sheets_a", "surf_sheets_b", "surf_diagrams",
     "surf_report", "surf_validate", "surf_study",
-    "layout_model", "layout_engine", "layout_process", "layout_examples", "layout_study",
+    "layout_model", "layout_engine", "layout_process", "layout_inventory", "layout_examples", "layout_study",
     "layout_drawings", "layout_cad", "layout_report",
     "pfd_layout_check", "pfd_layout_svg", "pfd_diagram",
     "process_overview", "ppo_graph", "ppo_layout", "ppo_render", "ppo_validate", "ppo_examples",

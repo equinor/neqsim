@@ -27,6 +27,7 @@ sys.path.insert(0, str(DEVTOOLS))
 
 import layout_engine  # noqa: E402
 import layout_examples  # noqa: E402
+import layout_inventory  # noqa: E402
 import layout_model  # noqa: E402
 import layout_process  # noqa: E402
 import layout_study  # noqa: E402
@@ -87,6 +88,46 @@ def project_source():
             "access_status": "verified_full_text"}
 
 
+def physical_source(status="CONTROLLED_PROJECT_INPUT"):
+    """A controlled synthetic physical-input source for inventory tests."""
+    return {"kind": "synthetic_assumption", "reference": "Synthetic route and inventory basis",
+            "revision": "A", "evidence_status": status}
+
+
+def inventory_fixture():
+    """Return a complete synthetic physical route and isolation inventory."""
+    study = fixture()
+    study["physical_inventory_scope"] = {
+        "id": "TEST-INVENTORY", "revision": "A", "source_reference": "Synthetic scope A",
+        "required_connection_ids": ["L1"], "required_equipment_tags": ["A"],
+        "required_isolation_section_ids": ["ISO-1"],
+    }
+    study["physical_routes"] = [{
+        "id": "ROUTE-1", "connection_id": "L1", "line_tag": "L-100",
+        "internal_diameter_m": 2.0,
+        "centerline_m": [[0, 0, 0], [3, 4, 0], [3, 4, 12]],
+        "source": physical_source(),
+    }]
+    study["equipment_volumes"] = [{
+        "id": "A-INTERNAL", "equipment_tag": "A", "volume_m3": 3.0,
+        "source": physical_source(),
+    }]
+    study["isolation_devices"] = [
+        {"id": "ISO-A", "tag": "XV-100A", "route_id": "ROUTE-1", "chainage_m": 0.0,
+         "device_type": "emergency_shutdown_valve", "normal_state": "OPEN",
+         "fail_state": "CLOSED", "source": physical_source()},
+        {"id": "ISO-B", "tag": "XV-100B", "route_id": "ROUTE-1", "chainage_m": 17.0,
+         "device_type": "emergency_shutdown_valve", "normal_state": "OPEN",
+         "fail_state": "CLOSED", "source": physical_source()},
+    ]
+    study["isolation_sections"] = [{
+        "id": "ISO-1", "route_ids": ["ROUTE-1"],
+        "equipment_volume_ids": ["A-INTERNAL"], "boundary_device_ids": ["ISO-A", "ISO-B"],
+        "source": physical_source(),
+    }]
+    return study
+
+
 class LayoutModelTests(unittest.TestCase):
     def test_normalization_owns_data_and_fingerprint_tracks_geometry(self):
         original = fixture()
@@ -145,6 +186,85 @@ class LayoutModelTests(unittest.TestCase):
         envelope = {"kind": "maintenance", "bounds_m": [4, 0, 0, 7, 2, 3]}
         withdrawal = layout_model.equipment_bounds(item, pos, deck, envelope)
         self.assertEqual(list(withdrawal), [10, 24, 5, 12, 27, 8])
+
+
+class PhysicalInventoryTests(unittest.TestCase):
+    def test_routed_length_and_isolated_volume_match_analytical_geometry(self):
+        study = layout_model.normalize_study(inventory_fixture())
+        inventory = layout_inventory.build_inventory(study)
+        self.assertEqual(inventory["status"], "COMPLETE")
+        self.assertTrue(inventory["ready_for_dynamic_safeguarding_design"])
+        self.assertAlmostEqual(inventory["routes"][0]["length_m"], 17.0, places=12)
+        self.assertAlmostEqual(inventory["routes"][0]["pipe_volume_m3"], 17.0 * math.pi, places=12)
+        section = inventory["isolation_sections"][0]
+        self.assertAlmostEqual(section["total_isolated_volume_m3"], 17.0 * math.pi + 3.0, places=12)
+        self.assertFalse(inventory["blockers"])
+
+    def test_inventory_changes_invalidate_the_study_fingerprint(self):
+        study = layout_model.normalize_study(inventory_fixture())
+        before = layout_model.study_fingerprint(study)
+        study["physical_routes"][0]["centerline_m"][1][0] += 0.25
+        self.assertNotEqual(before, layout_model.study_fingerprint(study))
+
+    def test_declared_missing_inventory_remains_explicit_blockers(self):
+        study = fixture()
+        study["physical_inventory_scope"] = {
+            "id": "MISSING-EVIDENCE", "revision": "A", "source_reference": "Synthetic scope A",
+            "required_connection_ids": ["L1"], "required_equipment_tags": ["A"],
+            "required_isolation_section_ids": ["ISO-MISSING"],
+        }
+        inventory = layout_inventory.build_inventory(layout_model.normalize_study(study))
+        self.assertEqual(inventory["status"], "INCOMPLETE")
+        self.assertFalse(inventory["ready_for_dynamic_safeguarding_design"])
+        self.assertEqual({item["code"] for item in inventory["blockers"]}, {
+            "LAYOUT-PIPE-ROUTE-MISSING", "LAYOUT-EQUIPMENT-VOLUME-MISSING",
+            "LAYOUT-ISOLATION-SECTION-MISSING",
+        })
+
+    def test_uncontrolled_required_route_is_a_blocker_not_a_silent_pass(self):
+        study = inventory_fixture()
+        study["physical_routes"][0]["source"] = physical_source("REVIEW_REQUIRED")
+        inventory = layout_inventory.build_inventory(layout_model.normalize_study(study))
+        self.assertEqual(inventory["status"], "INCOMPLETE")
+        self.assertIn("LAYOUT-PIPE-ROUTE-REVIEW",
+                      {item["code"] for item in inventory["blockers"]})
+
+    def test_unknown_boundary_fail_state_remains_a_design_blocker(self):
+        study = inventory_fixture()
+        study["isolation_devices"][1]["fail_state"] = "UNKNOWN"
+        inventory = layout_inventory.build_inventory(layout_model.normalize_study(study))
+        self.assertEqual(inventory["status"], "INCOMPLETE")
+        self.assertIn("LAYOUT-ISOLATION-FAIL-STATE-MISSING",
+                      {item["code"] for item in inventory["blockers"]})
+
+    def test_device_chainage_cannot_exceed_supplied_route(self):
+        study = inventory_fixture()
+        study["isolation_devices"][1]["chainage_m"] = 17.01
+        with self.assertRaises(ValueError):
+            layout_model.normalize_study(study)
+
+    def test_isolation_boundaries_must_belong_to_the_section_route_set(self):
+        study = inventory_fixture()
+        study["connections"].append({"id": "L2", "from_tag": "A", "to_tag": "B"})
+        study["physical_routes"].append({
+            "id": "ROUTE-2", "connection_id": "L2", "line_tag": "L-200",
+            "internal_diameter_m": 0.2, "centerline_m": [[0, 0, 0], [1, 0, 0]],
+            "source": physical_source(),
+        })
+        study["isolation_devices"][1]["route_id"] = "ROUTE-2"
+        with self.assertRaises(ValueError):
+            layout_model.normalize_study(study)
+
+    def test_study_delivery_retains_inventory_json_csv_and_report_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            summary = layout_study.run_study(inventory_fixture(), directory, stage="all", no_cad=True)
+            self.assertEqual(summary["physical_inventory_status"], "COMPLETE")
+            self.assertTrue(summary["physical_inventory_ready_for_dynamic_safeguarding_design"])
+            for key in ("physical_inventory", "physical_routes", "isolation_sections"):
+                self.assertTrue(Path(summary["tables"][key]).is_file())
+            html_report = Path(summary["artifacts"]["report"]["html"]).read_text(encoding="utf-8")
+            self.assertIn("Physical piping and isolation inventory", html_report)
+            self.assertIn("ISO-1", html_report)
 
 
 class LayoutCheckTests(unittest.TestCase):
@@ -559,7 +679,7 @@ class LayoutStudyIntegrationTests(unittest.TestCase):
     def test_all_runtime_modules_are_in_installed_distribution(self):
         project = tomllib.loads((DEVTOOLS / "pyproject.toml").read_text(encoding="utf-8"))
         modules = set(project["tool"]["setuptools"]["py-modules"])
-        expected = {"layout_model", "layout_engine", "layout_process", "layout_examples",
+        expected = {"layout_model", "layout_engine", "layout_process", "layout_inventory", "layout_examples",
                     "layout_study", "layout_drawings", "layout_report", "layout_cad"}
         self.assertTrue(expected <= modules, expected - modules)
 

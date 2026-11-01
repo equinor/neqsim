@@ -19,6 +19,7 @@ import tempfile
 import time
 
 from layout_model import normalize_study, study_fingerprint
+from layout_inventory import build_inventory
 from layout_engine import generate_layouts, check_layout
 from layout_examples import demo_study
 
@@ -26,7 +27,7 @@ TOOLKIT_VERSION = "plant-layout-screening.v1"
 DATASET_SCHEMA = "plant_layout_dataset.v1"
 STAGES = ("all", "place", "check", "drawings", "report")
 IMPLEMENTATION_MODULES = ("layout_study", "layout_model", "layout_engine", "layout_examples",
-                          "layout_process", "layout_drawings", "layout_report", "layout_cad")
+                          "layout_process", "layout_inventory", "layout_drawings", "layout_report", "layout_cad")
 
 
 def _json_write(path, value):
@@ -133,7 +134,46 @@ def _write_csvs(dataset, out_dir):
                     if isinstance(row[key], (dict, list, tuple)):
                         row[key] = json.dumps(row[key], sort_keys=True, allow_nan=False)
                 writer.writerow({"alternative": alternative["id"], **row})
-    return {"coordinates": str(coordinates), "checks": str(checks)}
+    inventory = dataset["physical_inventory"]
+    inventory_json = directory / "physical_inventory.json"
+    _json_write(inventory_json, inventory)
+    routes = directory / "physical_routes.csv"
+    route_fields = ["id", "connection_id", "line_tag", "length_m", "internal_diameter_m",
+                    "pipe_volume_m3", "source_reference", "source_revision", "evidence_status"]
+    with routes.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=route_fields)
+        writer.writeheader()
+        for route in inventory["routes"]:
+            source = route["source"]
+            writer.writerow({"id": route["id"], "connection_id": route["connection_id"],
+                             "line_tag": route["line_tag"], "length_m": route["length_m"],
+                             "internal_diameter_m": route["internal_diameter_m"],
+                             "pipe_volume_m3": route["pipe_volume_m3"],
+                             "source_reference": source["reference"],
+                             "source_revision": source["revision"],
+                             "evidence_status": source["evidence_status"]})
+    sections = directory / "isolation_sections.csv"
+    section_fields = ["id", "route_ids", "equipment_volume_ids", "boundary_device_ids",
+                      "pipe_volume_m3", "equipment_volume_m3", "total_isolated_volume_m3",
+                      "source_reference", "source_revision", "evidence_status"]
+    with sections.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=section_fields)
+        writer.writeheader()
+        for section in inventory["isolation_sections"]:
+            source = section["source"]
+            writer.writerow({"id": section["id"],
+                             "route_ids": json.dumps(section["route_ids"]),
+                             "equipment_volume_ids": json.dumps(section["equipment_volume_ids"]),
+                             "boundary_device_ids": json.dumps(section["boundary_device_ids"]),
+                             "pipe_volume_m3": section["pipe_volume_m3"],
+                             "equipment_volume_m3": section["equipment_volume_m3"],
+                             "total_isolated_volume_m3": section["total_isolated_volume_m3"],
+                             "source_reference": source["reference"],
+                             "source_revision": source["revision"],
+                             "evidence_status": source["evidence_status"]})
+    return {"coordinates": str(coordinates), "checks": str(checks),
+            "physical_inventory": str(inventory_json), "physical_routes": str(routes),
+            "isolation_sections": str(sections)}
 
 
 def _manifest_paths(value):
@@ -215,7 +255,9 @@ def _delivery_assessment(stage, dataset, out_dir, dataset_path, tables, artifact
 
     base_files = {"DATASET": dataset_path, "SOURCE": Path(out_dir) / "inputs" / "source_study.json",
                   "STUDY": Path(out_dir) / "inputs" / "study.json", "COORDINATES": tables["coordinates"],
-                  "CHECKS": tables["checks"], "MANIFEST": artifact_manifest}
+                  "CHECKS": tables["checks"], "PHYSICAL-INVENTORY": tables["physical_inventory"],
+                  "PHYSICAL-ROUTES": tables["physical_routes"],
+                  "ISOLATION-SECTIONS": tables["isolation_sections"], "MANIFEST": artifact_manifest}
     for identifier, path in base_files.items():
         present("DELIVERY-" + identifier, path, identifier.lower().replace("_", " "))
 
@@ -302,7 +344,8 @@ def run_study(study, out_dir, stage="all", **options):
                             "source_study_fingerprint": study_fingerprint(original),
                             "toolkit_version": TOOLKIT_VERSION, "versions": _versions(),
                             "stage": stage, "elapsed_s": 0.0},
-                   "study": spec, "alternatives": alternatives, "artifacts": {}}
+                   "study": spec, "alternatives": alternatives,
+                   "physical_inventory": build_inventory(spec), "artifacts": {}}
     else:
         if not dataset_path.is_file():
             raise ValueError("no retained dataset; run --stage place or --stage all first")
@@ -320,6 +363,8 @@ def run_study(study, out_dir, stage="all", **options):
         if meta.get("results_fingerprint") != _results_fingerprint(alternatives):
             raise ValueError("retained dataset results changed; rerun placement from reviewed inputs")
         _refresh_checks(spec, alternatives)
+        if dataset.get("physical_inventory") != build_inventory(spec):
+            raise ValueError("retained physical inventory changed; rerun placement from reviewed inputs")
     if stage in ("all", "drawings", "report"):
         from layout_drawings import build_drawings
         dataset["artifacts"]["drawings"] = build_drawings(spec, alternatives, str(out_dir))
@@ -353,6 +398,10 @@ def run_study(study, out_dir, stage="all", **options):
                "n_alternatives": len(alternatives), "check_counts": dict(sorted(counts.items())),
                "alternatives": [{"id": a["id"], "status": a["status"], "metrics": a.get("metrics", {}),
                                  "solver": a.get("solver", {})} for a in alternatives],
+               "physical_inventory_status": dataset["physical_inventory"]["status"],
+               "physical_inventory_ready_for_dynamic_safeguarding_design":
+                   dataset["physical_inventory"]["ready_for_dynamic_safeguarding_design"],
+               "physical_inventory_blockers": dataset["physical_inventory"]["blockers"],
                "artifacts": dataset["artifacts"], "tables": tables,
                "elapsed_s": dataset["meta"]["elapsed_s"]}
     _json_write(out_dir / "summary.json", summary)

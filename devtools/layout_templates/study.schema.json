@@ -234,6 +234,201 @@
         }
       }
     },
+    "physical_inventory_scope": {
+      "type": "object",
+      "required": [
+        "id",
+        "revision",
+        "source_reference",
+        "required_connection_ids",
+        "required_equipment_tags",
+        "required_isolation_section_ids"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_reference": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_connection_ids": {
+          "$ref": "#/$defs/uniqueIds"
+        },
+        "required_equipment_tags": {
+          "$ref": "#/$defs/uniqueIds"
+        },
+        "required_isolation_section_ids": {
+          "$ref": "#/$defs/uniqueIds"
+        }
+      }
+    },
+    "physical_routes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "connection_id",
+          "line_tag",
+          "internal_diameter_m",
+          "centerline_m",
+          "source"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "connection_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "line_tag": {
+            "type": "string",
+            "minLength": 1
+          },
+          "internal_diameter_m": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "centerline_m": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "$ref": "#/$defs/point3"
+            }
+          },
+          "source": {
+            "$ref": "#/$defs/physicalSource"
+          }
+        }
+      }
+    },
+    "equipment_volumes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "equipment_tag",
+          "volume_m3",
+          "source"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "equipment_tag": {
+            "type": "string",
+            "minLength": 1
+          },
+          "volume_m3": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "source": {
+            "$ref": "#/$defs/physicalSource"
+          }
+        }
+      }
+    },
+    "isolation_devices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "tag",
+          "route_id",
+          "chainage_m",
+          "device_type",
+          "normal_state",
+          "fail_state",
+          "source"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tag": {
+            "type": "string",
+            "minLength": 1
+          },
+          "route_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "chainage_m": {
+            "type": "number",
+            "minimum": 0
+          },
+          "device_type": {
+            "enum": [
+              "blind",
+              "check_valve",
+              "emergency_shutdown_valve",
+              "manual_valve",
+              "other",
+              "process_shutdown_valve"
+            ]
+          },
+          "normal_state": {
+            "$ref": "#/$defs/deviceState"
+          },
+          "fail_state": {
+            "$ref": "#/$defs/deviceState"
+          },
+          "source": {
+            "$ref": "#/$defs/physicalSource"
+          }
+        }
+      }
+    },
+    "isolation_sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "route_ids",
+          "equipment_volume_ids",
+          "boundary_device_ids",
+          "source"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "route_ids": {
+            "$ref": "#/$defs/uniqueIds"
+          },
+          "equipment_volume_ids": {
+            "$ref": "#/$defs/uniqueIds"
+          },
+          "boundary_device_ids": {
+            "type": "array",
+            "minItems": 2,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "source": {
+            "$ref": "#/$defs/physicalSource"
+          }
+        }
+      }
+    },
     "corridors": {
       "type": "array",
       "items": {
@@ -413,6 +608,62 @@
     }
   },
   "$defs": {
+    "uniqueIds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "deviceState": {
+      "enum": [
+        "OPEN",
+        "CLOSED",
+        "VARIABLE",
+        "AS_IS",
+        "NOT_APPLICABLE",
+        "UNKNOWN"
+      ]
+    },
+    "physicalSource": {
+      "type": "object",
+      "required": [
+        "kind",
+        "reference",
+        "revision",
+        "evidence_status"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "as_built",
+            "layout_model",
+            "line_list",
+            "piping_model",
+            "project_assumption",
+            "survey",
+            "synthetic_assumption",
+            "vendor_document"
+          ]
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_status": {
+          "enum": [
+            "CONTROLLED_PROJECT_INPUT",
+            "REVIEW_REQUIRED",
+            "ASSUMPTION"
+          ]
+        }
+      }
+    },
     "point3": {
       "type": "array",
       "prefixItems": [
