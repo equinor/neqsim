@@ -1,6 +1,7 @@
 package neqsim.pvtsimulation.simulation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Locale;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -12,6 +13,7 @@ import neqsim.statistics.parameterfitting.SampleValue;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyPressureFlash;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
@@ -28,6 +30,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   private static final int MAX_CELL_VOLUME_ITERATIONS = 100;
 
   private boolean recordDepletionSnapshots;
+  private boolean refineSaturationConditions;
   private DepletionSnapshot[] depletionSnapshots = new DepletionSnapshot[0];
 
   private double[] relativeVolume = null;
@@ -69,20 +72,38 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * calcSaturationConditions.
+   * Computes the cell reference with the legacy scan or opt-in checked upper-dew refinement.
+   *
+   * @throws IllegalArgumentException if refinement is requested for a wet sample
+   * @throws IllegalStateException if a scan flash fails or refinement cannot establish an accepted boundary
    */
   public void calcSaturationConditions() {
+    if (refineSaturationConditions && Arrays.asList(getThermoSystem().getComponentNames()).contains("water")) {
+      throw new IllegalArgumentException("CVD upper dew refinement is not qualified for wet samples");
+    }
     getThermoSystem().setPressure(1.0);
     do {
       getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
       runSaturationTPflash();
     } while (getThermoSystem().getNumberOfPhases() == 1 && getThermoSystem().getPressure() < 1000.0);
+    SystemInterface twoPhase = refineSaturationConditions && getThermoSystem().getNumberOfPhases() == 2
+        ? getThermoSystem().clone()
+        : null;
     do {
+      if (refineSaturationConditions && getThermoSystem().getNumberOfPhases() == 2) {
+        twoPhase = getThermoSystem().clone();
+      }
       getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
       runSaturationTPflash();
     } while (getThermoSystem().getNumberOfPhases() > 1 && getThermoSystem().getPressure() < 1000.0);
     double minPres = getThermoSystem().getPressure() - 10.0;
     double maxPres = getThermoSystem().getPressure();
+    double branchMinimum = minPres;
+    double branchMaximum = maxPres;
+    if (refineSaturationConditions
+        && (getThermoSystem().getNumberOfPhases() != 1 || !getThermoSystem().hasPhaseType("gas"))) {
+      throw new IllegalStateException("CVD upper dew refinement requires gas above the upper scan bracket");
+    }
     do {
       getThermoSystem().setPressure((minPres + maxPres) / 2.0);
       runSaturationTPflash();
@@ -92,6 +113,10 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         maxPres = getThermoSystem().getPressure();
       }
     } while (Math.abs(maxPres - minPres) > 1e-5);
+    if (refineSaturationConditions) {
+      refineUpperDew(twoPhase, branchMinimum, branchMaximum);
+      runSaturationTPflash();
+    }
     /*
      * try { thermoOps.dewPointPressureFlash(); } catch (Exception ex) { logger.error(ex.getMessage(), ex); }
      */
@@ -100,6 +125,76 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     saturationPressure = getThermoSystem().getPressure();
     Zsaturation = getThermoSystem().getZvolcorr();
     saturationConditionFound = true;
+  }
+
+  /**
+   * Enables checked upper-dew refinement of the phase-count scan for the next run.
+   *
+   * <p>
+   * The default remains the legacy scan. Refinement requires a dry, nondegenerate gas/oil bracket below 1000 bara. It
+   * preserves the scan's upper branch, uses the existing constant-duty pressure solver, and rejects a wrong branch,
+   * trivial split or unclosed equilibrium instead of falling back to the scan. Pure fluids, oil bubble boundaries, wet
+   * samples and unbracketed domains are not supported by this mode.
+   * </p>
+   *
+   * @param refine true to refine and validate the upper dew boundary
+   */
+  public void setRefineSaturationConditions(boolean refine) {
+    refineSaturationConditions = refine;
+  }
+
+  /**
+   * Refines a warm gas/oil state while retaining the coarse scan's branch identity.
+   *
+   * @param twoPhase last gas/oil state within the coarse upper boundary bracket
+   * @param minimum lower coarse bracket pressure in bara
+   * @param maximum upper coarse bracket pressure in bara
+   * @throws IllegalStateException if the branch or phase-equilibrium checks fail
+   */
+  private void refineUpperDew(SystemInterface twoPhase, double minimum, double maximum) {
+    if (twoPhase == null || !twoPhase.hasPhaseType("gas") || !twoPhase.hasPhaseType("oil")
+        || twoPhase.getNumberOfPhases() != 2 || maximum >= 1000.0
+        || !"gas".equals(twoPhase.getPhase(0).getType().getDesc())
+        || !"oil".equals(twoPhase.getPhase(1).getType().getDesc())) {
+      throw new IllegalStateException("CVD upper dew refinement requires a dry gas/oil-to-gas bracket below 1000 bara");
+    }
+    twoPhase.setBeta(0, 1.0 - 1e-10);
+    twoPhase.setBeta(1, 1e-10);
+    new ConstantDutyPressureFlash(twoPhase).run();
+    twoPhase.init(1);
+    double pressure = twoPhase.getPressure();
+    if (!Double.isFinite(pressure) || pressure < minimum - 1e-5 || pressure > maximum + 1e-5) {
+      throw new IllegalStateException("CVD refined dew pressure left the upper scan bracket");
+    }
+    double distance = 0.0;
+    double residual = 0.0;
+    double gasSum = 0.0;
+    double oilSum = 0.0;
+    for (int i = 0; i < twoPhase.getNumberOfComponents(); i++) {
+      double gas = twoPhase.getPhase("gas").getComponent(i).getx();
+      double oil = twoPhase.getPhase("oil").getComponent(i).getx();
+      double gasFugacity = gas * twoPhase.getPhase("gas").getComponent(i).getFugacityCoefficient();
+      double oilFugacity = oil * twoPhase.getPhase("oil").getComponent(i).getFugacityCoefficient();
+      double z = twoPhase.getComponent(i).getz();
+      if (!Double.isFinite(gas) || !Double.isFinite(oil) || !Double.isFinite(z) || gas < 0.0 || oil < 0.0 || z < 0.0
+          || Math.abs((1.0 - 1e-10) * gas + 1e-10 * oil - z) > 1e-8) {
+        throw new IllegalStateException("CVD refined dew composition is invalid");
+      }
+      if (z > 0.0) {
+        double error = Math.abs(Math.log(gasFugacity) - Math.log(oilFugacity));
+        if (!Double.isFinite(error)) {
+          throw new IllegalStateException("CVD refined dew fugacity is invalid");
+        }
+        residual = Math.max(residual, error);
+      }
+      distance += Math.abs(gas - oil);
+      gasSum += gas;
+      oilSum += oil;
+    }
+    if (distance <= 1e-8 || residual > 1e-8 || Math.abs(gasSum - 1.0) > 1e-8 || Math.abs(oilSum - 1.0) > 1e-8) {
+      throw new IllegalStateException("CVD refined dew equilibrium is degenerate or not converged");
+    }
+    getThermoSystem().setPressure(pressure);
   }
 
   /**
