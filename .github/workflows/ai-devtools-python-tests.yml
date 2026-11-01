@@ -7,23 +7,23 @@ on:
   pull_request:
     paths:
       - "devtools/**"
-      - ".github/workflows/core-run-build-test-and-javadoc.yml"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-selected-pair-performance/**"
       - "src/test/resources/data/chemistry_benchmarks/structure_h_jin2023_digitized.*"
       - "docs/thermo/structure_h_parameter_qualification.md"
       - "examples/mechanical_design_json_to_mesh.py"
       - ".github/workflows/ai-devtools-python-tests.yml"
+      - ".github/workflows/core-run-build-test-and-javadoc.yml"
   push:
     branches: [master]
     paths:
       - "devtools/**"
-      - ".github/workflows/core-run-build-test-and-javadoc.yml"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-selected-pair-performance/**"
       - "src/test/resources/data/chemistry_benchmarks/structure_h_jin2023_digitized.*"
       - "docs/thermo/structure_h_parameter_qualification.md"
       - "examples/mechanical_design_json_to_mesh.py"
+      - ".github/workflows/core-run-build-test-and-javadoc.yml"
 
 jobs:
   devtools-tests:
