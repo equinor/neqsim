@@ -1933,6 +1933,97 @@ def proposal_from_lifecycle_context(evidence_json, ctx, title, predicted=None,
     )
 
 
+def _map_driver_migration_evidence_reasons(ctx, proposal, required=False):
+    """Validate exact configured-map-to-driver boundary migration evidence."""
+    if "map_driver_migration_evidence" not in proposal:
+        return ["missing_map_driver_migration_evidence"] if required else []
+    receipt = proposal.get("map_driver_migration_evidence")
+    if not isinstance(receipt, dict):
+        return ["invalid_map_driver_migration_evidence"]
+
+    if (receipt.get("receipt_version") != 1
+            or receipt.get("cycle_id") != getattr(ctx, "cycle_id", None)
+            or not _text(receipt.get("candidate_evaluator_id"))
+            or not _text(receipt.get("action_id"))
+            or receipt.get("action_unit") != "rpm"
+            or not _text(receipt.get("configured_map_constraint_name"))
+            or not _number(receipt.get("configured_map_limit"))
+            or receipt.get("configured_map_limit_role") != "CONFIGURED_OPERATING"
+            or not _text(receipt.get("configured_map_limit_provenance"))
+            or not _text(receipt.get("driver_constraint_name"))
+            or not _number(receipt.get("driver_limit_kw"))
+            or receipt.get("map_operating_limit_cleared") is not True
+            or receipt.get("state_restore_complete") is not True
+            or receipt.get("advisory") is not True):
+        return ["invalid_map_driver_migration_evidence"]
+
+    axis_values = receipt.get("sampled_axis_values")
+    if (not isinstance(axis_values, list) or len(axis_values) != 2
+            or any(not _number(value) for value in axis_values)
+            or not float(axis_values[0]) < float(axis_values[1])):
+        return ["invalid_map_driver_migration_evidence"]
+
+    action_id = receipt["action_id"]
+    evaluator_id = receipt["candidate_evaluator_id"]
+    slices = [receipt.get("map_limited_slice"), receipt.get("driver_limited_slice")]
+    for envelope_slice in slices:
+        if (not isinstance(envelope_slice, dict)
+                or envelope_slice.get("candidate_evaluator_id") != evaluator_id
+                or envelope_slice.get("axis_action_ids") != [action_id]
+                or envelope_slice.get("axis_action_semantics") != ["CONTINUOUS"]
+                or envelope_slice.get("axis_values") != [axis_values]
+                or envelope_slice.get("complete") is not True
+                or envelope_slice.get("outcome") != "COMPLETE"
+                or envelope_slice.get("requested_point_count") != 2
+                or envelope_slice.get("completed_point_count") != 2
+                or not _valid_operating_region_transitions(
+                    envelope_slice, [action_id], envelope_slice.get("points"))
+                or not _valid_operating_region_boundary_refinements(envelope_slice)):
+            return ["invalid_map_driver_migration_evidence"]
+
+    map_slice, driver_slice = slices
+    map_transitions = map_slice.get("operating_region_transitions")
+    driver_transitions = driver_slice.get("operating_region_transitions")
+    map_refinements = map_slice.get("operating_region_boundary_refinements")
+    driver_refinements = driver_slice.get("operating_region_boundary_refinements")
+    if (not isinstance(map_transitions, list) or len(map_transitions) != 1
+            or not isinstance(driver_transitions, list) or len(driver_transitions) != 1
+            or not isinstance(map_refinements, list) or len(map_refinements) != 1
+            or not isinstance(driver_refinements, list) or len(driver_refinements) != 1):
+        return ["invalid_map_driver_migration_evidence"]
+
+    map_name = receipt["configured_map_constraint_name"]
+    driver_name = receipt["driver_constraint_name"]
+    map_transition = map_transitions[0]
+    driver_transition = driver_transitions[0]
+    map_boundary = map_refinements[0]
+    driver_boundary = driver_refinements[0]
+    map_rejecting_name = (map_transition.get("to_constraint")
+                          if map_transition.get("to_feasible") is False
+                          else map_transition.get("from_constraint"))
+    driver_rejecting_name = (driver_transition.get("to_constraint")
+                             if driver_transition.get("to_feasible") is False
+                             else driver_transition.get("from_constraint"))
+    map_infeasible = map_boundary.get("infeasible_boundary_constraint")
+    driver_infeasible = driver_boundary.get("infeasible_boundary_constraint")
+    if (map_name == driver_name
+            or map_rejecting_name != map_name
+            or driver_rejecting_name != driver_name
+            or not isinstance(map_infeasible, dict)
+            or map_infeasible.get("qualified_constraint_name") != map_name
+            or map_infeasible.get("source") != "INSTALLED_EQUIPMENT"
+            or map_infeasible.get("applicable_limit_role") != "CONFIGURED_OPERATING"
+            or map_infeasible.get("applicable_limit_provenance")
+               != receipt.get("configured_map_limit_provenance")
+            or map_infeasible.get("applicable_limit") != receipt.get("configured_map_limit")
+            or not isinstance(driver_infeasible, dict)
+            or driver_infeasible.get("qualified_constraint_name") != driver_name
+            or driver_infeasible.get("feasible") is not False
+            or driver_name == map_name):
+        return ["invalid_map_driver_migration_evidence"]
+    return []
+
+
 def _lifecycle_evidence_reasons(ctx, proposal, required=False):
     """Validate persisted lifecycle envelopes and bind the current period to the proposal."""
     if "lifecycle_envelope_evidence" not in proposal:
@@ -2332,6 +2423,9 @@ def guard(ctx, spec):
         reasons.extend(_lifecycle_evidence_reasons(
             ctx, proposal,
             required=settings.get("require_lifecycle_envelope_evidence") is True))
+        reasons.extend(_map_driver_migration_evidence_reasons(
+            ctx, proposal,
+            required=settings.get("require_map_driver_migration_evidence") is True))
         for constraint in hard:
             name = constraint.get("name") or constraint["kpi"]
             room = slack(constraint, predicted.get(constraint["kpi"]))
@@ -2386,3 +2480,4 @@ for _name, _stage in (("gates", gates), ("constraints", constraints), ("guard", 
 
 __all__ = ["effective_limit", "slack", "evaluate_constraints", "demonstrated_limit", "gates", "constraints",
            "guard", "outcome"]
+

@@ -79,6 +79,7 @@ production:
   outcome_tolerance: 0.5
   require_envelope_evidence: false
   require_lifecycle_envelope_evidence: false
+  require_map_driver_migration_evidence: false
   evidence_sensitive_stages: ["script:model_update", "script:optimize", gates, constraints, guard]
 # Each proposal must include optimizer_evidence for this cycle: converged and finite candidate,
 # complete constraint evidence, complete state restoration, accepted-point replay, and all actions applied.
@@ -86,6 +87,8 @@ production:
 # multi-slice/bottleneck evidence bound exactly to the proposed action identifiers and values.
 # Set require_lifecycle_envelope_evidence true when the same proposal must retain independently
 # validated ordered periods; one period ID must equal the current cycle and reuse the current envelope.
+# Set require_map_driver_migration_evidence true when promotion must retain the exact guarded
+# configured casing-map operating restriction to driver-power migration receipt for this cycle.
 drift:
   signals: []
   settings: {lambda: 0.2, L: 3.5, k: 0.5, h: 6.0, warmup: 30}
@@ -297,15 +300,20 @@ def promote(task_dir, cycle_id, reviewer, note=""):
     if not manifest or manifest.get("status") != "complete":
         raise ValueError("Cycle {} is not complete".format(cycle_id))
     lifecycle_evidence = _guarded_lifecycle_evidence(task_dir, cycle_id, manifest)
+    map_driver_migration_evidence = _guarded_map_driver_migration_evidence(
+        task_dir, cycle_id, manifest)
     candidate = os.path.join(cycle_dir, "results.json")
     promoted_results = None
-    if lifecycle_evidence is not None:
+    if lifecycle_evidence is not None or map_driver_migration_evidence is not None:
         source = candidate if os.path.exists(candidate) else os.path.join(task_dir, "results.json")
         promoted_results = read_json(source)
         if not isinstance(promoted_results, dict):
-            raise ValueError("Cycle {} has no results object for guarded lifecycle evidence".format(cycle_id))
+            raise ValueError("Cycle {} has no results object for guarded evidence".format(cycle_id))
         promoted_results = dict(promoted_results)
-        promoted_results["lifecycle_envelope_evidence"] = lifecycle_evidence
+        if lifecycle_evidence is not None:
+            promoted_results["lifecycle_envelope_evidence"] = lifecycle_evidence
+        if map_driver_migration_evidence is not None:
+            promoted_results["map_driver_migration_evidence"] = map_driver_migration_evidence
     base = os.path.join(cont, "baseline")
     old = load_baseline(task_dir)["meta"]
     old_kpis = load_baseline(task_dir)["kpis"] or {}
@@ -383,6 +391,53 @@ def _guarded_lifecycle_evidence(task_dir, cycle_id, manifest):
     return next(iter(accepted.values()))
 
 
+def _guarded_map_driver_migration_evidence(task_dir, cycle_id, manifest):
+    """Return one exact map-to-driver receipt admitted by this cycle's guard and ledger."""
+    required = (load_plan(task_dir).get("production", {}) or {}).get(
+        "require_map_driver_migration_evidence") is True
+    stage_status = {row.get("name"): row.get("status") for row in manifest.get("stages", [])
+                    if isinstance(row, dict)}
+    ledger = Ledger(os.path.join(continuous_dir(task_dir), "ledger", "events.jsonl"))
+    items = [item for item in ledger.current().values()
+             if item.get("cycle") == cycle_id and "map_driver_migration_evidence" in item]
+    if not items:
+        if required:
+            raise ValueError(
+                "Cycle {} has no guarded map-to-driver migration evidence to promote".format(
+                    cycle_id))
+        return None
+    if (stage_status.get("guard") not in ("ok", "warn")
+            or stage_status.get("ledger") not in ("ok", "warn")):
+        raise ValueError(
+            "Cycle {} map-to-driver migration evidence did not pass guard and ledger "
+            "publication".format(cycle_id))
+
+    from .production import _map_driver_migration_evidence_reasons
+
+    accepted = {}
+    invalid = []
+    for item in items:
+        evidence = item.get("map_driver_migration_evidence")
+        reasons = []
+        if (item.get("guard") != "passed" or item.get("requires_approval") is not True
+                or item.get("evidence_current") is not True
+                or item.get("status") in ("rejected", "superseded")):
+            reasons.append("ledger map-to-driver evidence is not current and guard-approved")
+        reasons.extend(_map_driver_migration_evidence_reasons(
+            SimpleNamespace(cycle_id=cycle_id), item, required=True))
+        if reasons:
+            invalid.append("{}: {}".format(item.get("title", "untitled"), ", ".join(reasons)))
+            continue
+        frozen = json.dumps(evidence, sort_keys=True, separators=(",", ":"))
+        accepted.setdefault(frozen, copy.deepcopy(evidence))
+    if invalid:
+        raise ValueError("Cycle {} map-to-driver evidence is not promotable ({})".format(
+            cycle_id, "; ".join(invalid)))
+    if len(accepted) != 1:
+        raise ValueError("Cycle {} has ambiguous guarded map-to-driver evidence".format(cycle_id))
+    return next(iter(accepted.values()))
+
+
 
 def note_reopen(task_dir, manifest):
     """Mark a stopped task for reopening when a monitor cycle raised a reopen trigger."""
@@ -430,3 +485,4 @@ def dumps(data):
 
 __all__ = ["make_living", "promote", "read_state", "write_state", "note_reopen", "status",
            "resume", "CATEGORIES"]
+

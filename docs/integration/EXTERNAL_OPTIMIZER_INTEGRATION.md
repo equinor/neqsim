@@ -1134,6 +1134,14 @@ limit or reinterpret a non-finite row as available. Driver-versus-map migration 
 same speed endpoints: restore the map override before tightening the driver rating, and reject the driver-led result if
 any casing map row is negative, stale or unavailable.
 
+For continuous-task hand-off, retain the exact Java receipt under `map_driver_migration_evidence` and require it in
+the production plan. Consumers must preserve its cycle ID, evaluator/action identity, rpm endpoint grid, configured
+map constraint/limit/provenance, driver constraint/rating, both full slice records, override-clearance flag,
+restoration flag and advisory classification. The #4187 guard independently reconstructs the sampled transitions and
+refined brackets from the persisted points; editing only the summary identities is therefore insufficient to make a
+receipt pass. Revalidation emits a new cycle-bound receipt and supersedes the earlier ledger item rather than treating
+historical map or driver evidence as current.
+
 Current optimizer evidence also exports the relative simulator replay tolerance and its provenance. A persistent task
 may use that value only to bind a reviewed objective baseline to a fresh initial replay; the guard caps it at
 $10^{-6}$ and rejects invalid or unsourced tolerance metadata. Constraint feasibility, restoration, action read-back,
@@ -1823,4 +1831,5 @@ on `ProcessSimulationEvaluator`.
 - [flow-rate-optimization.md](../process/optimization/flow-rate-optimization.md) - FlowRateOptimizer for lift curve generation
 - [pressure_boundary_optimization.md](../process/pressure_boundary_optimization.md) - Simplified pressure boundary optimizer
 - [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) - Complete production optimization examples
+
 

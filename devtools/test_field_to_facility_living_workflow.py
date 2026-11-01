@@ -1,8 +1,9 @@
 """Execute the Java ten-well lifecycle through the persistent production workflow.
 
 This is the source acceptance path for issue #4188. It deliberately calls the test-scope
-Java fixture, consumes only its exact schema-v16 JSON, and exercises the existing #4187
-adapter, guard, ledger, promotion, living report, and canonical report implementation.
+Java fixture, consumes its exact schema-v16 lifecycle JSON plus the exact configured
+casing-map-to-driver migration receipt, and exercises the existing #4187 adapter, guard,
+ledger, promotion, living report, and canonical report implementation.
 """
 
 import copy
@@ -78,6 +79,8 @@ def run(ctx):
             incumbent_array,
         ))
     evidence = json.loads(encoded)
+    migration = json.loads(str(
+        acceptance.createMapToDriverMigrationEvidenceJson(ctx.cycle_id)))
     current = next(period for period in evidence["periods"]
                    if period["period_id"] == ctx.cycle_id)
     envelope = current["envelope_evidence"]
@@ -87,6 +90,7 @@ def run(ctx):
         title="Review validated ten-well field operating point",
         predicted={},
     )
+    proposal["map_driver_migration_evidence"] = migration
     return {
         "proposals": [proposal],
         "kpis": {
@@ -161,6 +165,7 @@ def create_task(parent):
     plan["production"]["require_envelope_evidence"] = True
     plan["production"]["require_lifecycle_envelope_evidence"] = True
     plan["production"]["require_objective_evidence"] = True
+    plan["production"]["require_map_driver_migration_evidence"] = True
     plan["production"]["evidence_sensitive_stages"] = ["script:optimize"]
     plan["evidence"] = {
         "rules": [{
@@ -242,6 +247,7 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             first_item = items[0]
             first_item_id = first_item["id"]
             evidence = items[0]["lifecycle_envelope_evidence"]
+            migration = items[0]["map_driver_migration_evidence"]
             self.assertEqual(16, evidence["schema_version"])
             self.assertEqual(cycle_id, evidence["cycle_id"])
             self.assertEqual(2, evidence["period_count"])
@@ -250,6 +256,31 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertGreater(evidence["total_evaluation_count"], 64)
             self.assertGreaterEqual(evidence["envelope_runtime_seconds"], 0.0)
             self.assertEqual(1, len(evidence["bottleneck_transitions"]))
+            self.assertEqual(1, migration["receipt_version"])
+            self.assertEqual(cycle_id, migration["cycle_id"])
+            self.assertEqual("CONFIGURED_OPERATING",
+                             migration["configured_map_limit_role"])
+            self.assertTrue(migration["configured_map_constraint_name"].endswith(
+                ("/surgeMargin", "/stonewallMargin")))
+            self.assertNotEqual(migration["configured_map_constraint_name"],
+                                migration["driver_constraint_name"])
+            self.assertTrue(migration["driver_constraint_name"].endswith(
+                ("#driver-maximum-power", "::export shaft control/shaftPower")))
+            self.assertIs(True, migration["map_operating_limit_cleared"])
+            self.assertIs(True, migration["state_restore_complete"])
+            self.assertIs(True, migration["advisory"])
+            self.assertEqual(
+                [migration["action_id"]],
+                migration["map_limited_slice"]["axis_action_ids"],
+            )
+            self.assertEqual(
+                [migration["action_id"]],
+                migration["driver_limited_slice"]["axis_action_ids"],
+            )
+            self.assertEqual(
+                migration["map_limited_slice"]["axis_values"],
+                migration["driver_limited_slice"]["axis_values"],
+            )
             self.assertTrue(all(
                 "constraint_opportunity_summary" in period for period in evidence["periods"]))
             current = next(period for period in evidence["periods"]
@@ -422,6 +453,17 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
                 production._lifecycle_evidence_reasons(
                     SimpleNamespace(cycle_id=cycle_id), tampered_cell, required=True),
             )
+            tampered_migration = copy.deepcopy(first_item)
+            tampered_migration["map_driver_migration_evidence"][
+                "configured_map_limit_role"] = "DESIGN_RATED"
+            self.assertIn(
+                "invalid_map_driver_migration_evidence",
+                production._map_driver_migration_evidence_reasons(
+                    SimpleNamespace(cycle_id=cycle_id),
+                    tampered_migration,
+                    required=True,
+                ),
+            )
             for field in (
                     "simulation_converged", "candidate_feasible", "candidate_finite",
                     "constraint_evidence_complete", "state_restore_complete",
@@ -436,6 +478,7 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             snapshot = json.loads((task / "continuous" / "baseline" /
                                    "results_snapshot.json").read_text(encoding="utf-8"))
             self.assertEqual(evidence, results["lifecycle_envelope_evidence"])
+            self.assertEqual(migration, results["map_driver_migration_evidence"])
             self.assertEqual(results, snapshot)
             living_report = (task / "continuous" / "LIVING_REPORT.md").read_text(encoding="utf-8")
             self.assertIn(cycle_id, living_report)
@@ -522,7 +565,14 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertEqual(first_item_id, revised_item["revalidation_of"])
             self.assertIs(True, revised_item["evidence_current"])
             revised_evidence = revised_item["lifecycle_envelope_evidence"]
+            revised_migration = revised_item["map_driver_migration_evidence"]
             self.assertEqual(revised_cycle_id, revised_evidence["cycle_id"])
+            self.assertEqual(revised_cycle_id, revised_migration["cycle_id"])
+            self.assertNotEqual(migration["cycle_id"], revised_migration["cycle_id"])
+            self.assertEqual(migration["configured_map_constraint_name"],
+                             revised_migration["configured_map_constraint_name"])
+            self.assertEqual(migration["driver_constraint_name"],
+                             revised_migration["driver_constraint_name"])
             revised_current = next(
                 period for period in revised_evidence["periods"]
                 if period["period_id"] == revised_cycle_id)
@@ -556,3 +606,4 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
