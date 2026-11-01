@@ -72,6 +72,14 @@ for units, supported limits and executable regression evidence.
 
 ### Stratified hydrostatic pressure moments
 
+The immutable pressure-moment result also exposes signed phase first area moments about the pipe
+centre and `getGravityPotentialEnergyPerLength(gasDensity, liquidDensity, normalGravity)` in J/m.
+Normal gravity is `g*cos(inclination)`. These explicit, read-only cross-sectional energy budgets
+have independent analytical/80-digit reference qualification; they add no serialized fields and
+do not enter the transient solver or thermodynamic recovery. Centreline-elevation, internal,
+kinetic and wall energy remain separate. See the
+[executed gravity-energy record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/README.md).
+
 The opt-in geometry query `GeometryCalculator.calculateStratifiedPressureMoments(depth, diameter)`
 returns immutable signed first moments `getLiquidMoment()` and `getGasMoment()` in m3, plus
 `getLiquidArea()` and `getGasArea()` in m2. Depth is normal to the circular pipe cross-section.

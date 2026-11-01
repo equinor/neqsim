@@ -1,0 +1,99 @@
+{
+  "base_sha": "98a9e7509391dc0b713e6ea985dc3dc236299f6a",
+  "source_blobs": {
+    "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/closure/GeometryCalculator.java": "6eea54142e2668717a7b756e1b252da6810a7e21",
+    "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/closure/StratifiedGravityEnergyTest.java": "1a1a5879c910fc21a19af3dd4a5d9b39a7fd6d6f"
+  },
+  "scope": "Explicit normal-gravity energy budget from existing immutable pressure moments; no solver, force, EOS recovery, component transfer or transaction change",
+  "runtime": {
+    "Java": "17.0.20",
+    "Python": "3.12.14",
+    "Matplotlib": "3.10.8",
+    "actual_local_Java8_runtime": false
+  },
+  "tests": {
+    "classes": 11,
+    "tests": 61,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "new_tests": 6,
+    "command": "./mvnw -q -Dtest=StratifiedGravityEnergyTest,StratifiedPressureMomentsTest,StratifiedPressureMomentCouplingTest,HydrostaticCellGeometryTest,GeometryCalculatorTest,ConservativeInterfacialDragTest,TwoFluidTotalEnergyContractTest,TwoFluidThermalFaceFluxTest,MultiphaseHydrostaticForceQualificationTest,HydrostaticPressureReconstructionTest,TwoFluidVariableAreaPressureRegressionTest test",
+    "exit_code": 0
+  },
+  "independent_reference": {
+    "source_base": "98a9e7509391dc0b713e6ea985dc3dc236299f6a",
+    "source_blob": "6eea54142e2668717a7b756e1b252da6810a7e21",
+    "rows": 162,
+    "reference_digits": 80,
+    "relative_gate": "5e-13",
+    "maximum_relative_error": "7.087111935198039229073992724E-15",
+    "query_ns_min_median_max": [
+      6.31273,
+      17.53486,
+      75.625785
+    ],
+    "scope": "Explicit cross-sectional energy query only; no dynamic integration or evaporation claim"
+  },
+  "optimized_python": {
+    "exit_code": 0,
+    "reference_and_native_csv_byte_identical": true,
+    "timing_samples_are_observational_not_byte_identity_claims": true
+  },
+  "legacy_serialization": {
+    "legacy_geometry_blob": "e62e0a03a8eeb92d9cbad04b109142501a0903a4",
+    "bytes_identical": true,
+    "serialized_bytes": 202,
+    "sha256": "157086d6bc2d9238d8081757cda0bf7134d51d5e0cb12d0f72652aaa9357e6c1",
+    "recipe": "Compile SerializationProbe.java with baseline and candidate GeometryCalculator.java into separate classpaths; compare outputs"
+  },
+  "current_unmodified_master_reproduction": {
+    "result": {
+      "source_sha": "98a9e7509391dc0b713e6ea985dc3dc236299f6a",
+      "meshes": [
+        12,
+        24
+      ],
+      "intervals_s": [
+        0.25,
+        0.125
+      ],
+      "requested_time_s": 120,
+      "completed": true,
+      "elapsed_wall_s": 51.117680295
+    },
+    "classpath": "All production source matches fresh master except extended GeometryCalculator; baseline geometry e62e0a03a8eeb92d9cbad04b109142501a0903a4 compiled into precedence classpath. Existing unchanged JUnit12/24-case method invoked reflectively.",
+    "kernel_hash": "704966f147522007f13c535ae1d65a8492e0c759",
+    "moment_switch_enabled": false,
+    "component_mass_and_energy_interval_assertions_pass": true
+  },
+  "gates": {
+    "Maven_bootstrap": "prepare_maven.py before Maven/Spotless",
+    "stable_direct_spotless_apply": 0,
+    "direct_spotless_check": 0,
+    "documentation_search_828md_1html": 0,
+    "source_generated_inventory": 0,
+    "all_file_precommit": 0,
+    "all_file_prepush": 0,
+    "full_Javadoc_installed_module_adapter": 0,
+    "changed_source_and_test_explicit_release8_compile": 0,
+    "original_depth_auditor_normal": 0,
+    "original_depth_auditor_optimized": 0
+  },
+  "prior_222_depth_outputs": "Numerical CSVs unchanged; strict source guard repinned to the extended class and normal/-O corruption suites passed",
+  "visual_inspection": {
+    "figure": "gravity-energy.png",
+    "renderer": "Matplotlib Agg",
+    "result": "PASS: axes, units, title, negative-energy labels and potential-drop annotation readable, no overlap/clipping",
+    "figure_count": 1,
+    "notebook": false
+  },
+  "documentation_impact": [
+    "API Javadocs",
+    "model/evidence/wiki",
+    "dynamic/flow assurance routing",
+    "executed report/reference/serialization/timing data",
+    "generated source inventory"
+  ],
+  "remaining": "Dry/wet unfunded impulse remains; no elapsed pool retention, inlet refill/hold or physical hydrocarbon evaporation qualification. No full-repository or local Java8 JVM pass claimed."
+}

@@ -233,6 +233,14 @@ The public record retains every case, inspected plots, and RHS-only timing data.
 
 ### Stratified hydrostatic pressure moments
 
+The result's derived centre-referenced phase first area moments and normal-gravity energy [J/m]
+are qualified by `StratifiedGravityEnergyTest`: closed circular-segment formula, 162 retained
+80-digit references including positive phase traces down to 1e-30, equal-density/zero-gravity
+limits, exact absence and invalid inputs, query purity and the unchanged four-field serialized
+contract. No dynamic force, energy-recovery or phase-transfer call site is added. The
+[executed energy budget](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/README.md)
+distinguishes a static potential-energy change from an elapsed drainage or evaporation result.
+
 The opt-in geometry query `GeometryCalculator.calculateStratifiedPressureMoments(depth, diameter)`
 returns immutable signed first moments `getLiquidMoment()` and `getGasMoment()` in m3, plus
 `getLiquidArea()` and `getGasArea()` in m2. Depth is normal to the circular pipe cross-section.
