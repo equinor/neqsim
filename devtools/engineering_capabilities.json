@@ -1779,9 +1779,10 @@
         "field-development"
       ],
       "testSources": [
-        "src/test/java/neqsim/pvtsimulation/util/DepletionPvtHistoryGeneratorTest.java"
+        "src/test/java/neqsim/pvtsimulation/util/DepletionPvtHistoryGeneratorTest.java",
+        "src/test/java/neqsim/pvtsimulation/util/NativeDepletionHandoffTest.java"
       ],
-      "limitations": "Discovery and inspectApi only; instance data/protocol inputs, no new executable static MCP operation. Dry samples with both hydrocarbon phases at every pressure only; CVD uses restored retained states and DLE pre-removal equilibrium with retained-oil origin. Fixed multistage separator/stock-tank basis and separately accepted frozen pure-water EOS for Bw. Native component closure is distinct from approximate surface pseudo-component closure; reject above caller-justified conversion tolerance. No absent-phase/critical extrapolation, aqueous depletion samples or independent public laboratory/field qualification is implied."
+      "limitations": "Discovery and inspectApi only; instance data/protocol inputs, no new executable static MCP operation. Dry samples with both hydrocarbon phases at every pressure only; CVD uses restored retained states and DLE pre-removal equilibrium with retained-oil origin. Fixed multistage separator/stock-tank basis and separately accepted frozen pure-water EOS for Bw. Native component closure is distinct from approximate surface pseudo-component closure; reject above caller-justified conversion tolerance. No absent-phase/critical extrapolation, aqueous depletion samples or independent public laboratory/field qualification is implied. Native replayNative additionally preserves dry oil-only DLE and pre-dew gas-only CVD states, selected original/tuned EOS and whole-cell/interval separator products on an explicit final basis. No absent-phase Bo/Bg/Rs/Rv is fabricated. CVD requires a sampled gas/oil boundary and rejects later phase-disappearance tails; wet/critical-degenerate paths remain unqualified. DLE flash failures propagate with context. Native component and independent SRK-root consistency do not establish measured field accuracy."
     },
     {
       "id": "finite-aquifer-reservoir-history",
@@ -1827,6 +1828,28 @@
         "src/test/java/neqsim/pvtsimulation/util/ReservoirHistoryEnsembleTest.java"
       ],
       "limitations": "Discovery and inspectApi only; Java/Python object workflow, no new static MCP operation. Explicit joint prior probability masses propagate pore volume, initial phase fractions, optional finite-aquifer, accepted PVT model and measured-flow realizations using common independent Gaussian pressure errors. Held-out pressures excluded; rejected prior mass, correlations, prior shifts and lower-tail model forecast quantiles retained. Centered likelihoods preserve prior odds at huge common finite residual offsets. Grid refinement and independent field qualification remain required. No continuous posterior identifiability proof, automatic uncertainty distributions, correlated errors, ES-MDA, water mixing or recoverable-reserves estimate."
+    },
+    {
+      "id": "laboratory-gas-density-consistency",
+      "title": "Source-identified laboratory gas density interval consistency",
+      "domain": "pvt",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.util.PvtGasDensityConsistency",
+        "neqsim.pvtsimulation.util.CalibratedPvtModel"
+      ],
+      "skills": [
+        "neqsim-eos-regression"
+      ],
+      "agents": [
+        "pvt-simulation",
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/pvtsimulation/util/PvtGasDensityConsistencyTest.java",
+        "src/test/java/neqsim/pvtsimulation/util/CalibratedPvtModelTest.java"
+      ],
+      "limitations": "Discovery and inspectApi only; instance-based Java/JPype evidence, no stateless MCP execution route. Opt-in same-state gas p/T/Z/molar-mass/density interval identity check using explicit SI inputs and caller-justified absolute bounds; preserves source/raw data and rejects incompatible same-sample checkpoint attachments. Conservative box bounds are not sigmas, correlated inference, EOS calibration, protocol replay or independent accuracy. Public primary Duvernay table18 is a consistency fixture: 8 of 9 tuples compatible under printed-resolution bounds, saturation row retained and incompatible; final pressure is 1300 psia. Does not qualify measured laboratory-to-field matching, absent phases or the Tran rescaled-CVD method."
     }
   ]
 }

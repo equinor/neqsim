@@ -162,7 +162,7 @@ def _discover_roots(repo_root: Path,
     roots.append((repo_root / ".github" / "agents", "neqsim", "*.agent.md", False))
     # 2) sibling *-agents repos — agents/<name>/AGENT.md
     workspace_root = repo_root.parent
-    for sibling in ("neqsim-community-agents", "neqsim-enterprise-agents"):
+    for sibling in ("neqsim-community-agents", "neqsim-enterprise-agents", "energy-project-agents"):
         cand = workspace_root / sibling / "agents"
         roots.append((cand, sibling, "*/AGENT.md", False))
     # 3) explicit extra roots (auto-detect layout: flat vs nested)

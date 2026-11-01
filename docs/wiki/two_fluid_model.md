@@ -1055,9 +1055,15 @@ tolerances and retry budgets remain unchanged. See the
 The separate `setCellFaceElevationProfile` option accepts N+1 finite-volume face elevations.
 It integrates each specified terrain rise once, uses midpoint steady pressure with external-face
 boundary offsets, and preserves signed gravity/energy work under nonuniform mesh refinement.
-Legacy elevation samples retain their convention. These geometry tests do not establish general
-transient hydrostatic well-balancing or a steady/unsplit fixed point; see the
-[explicit face contract](../process/TWOFLUIDPIPE_MODEL.md#explicit-cell-face-terrain).
+Legacy elevation samples retain their convention. The interior operator additionally reconstructs
+the common face pressure from adjacent conservative mixture inertia and signed half-cell heads,
+with the same correction in momentum, phase-pressure diagnostics and signed energy work. Its
+90-case analytical pure-gas/oil matrix passes below `1e-10 m/s2` on flat, affine and curved terrain
+with constant, smooth and alternating density over 12--192 cells; a separate 45-case pure-water
+extension passes the same gates. This is not qualification of a
+stationary multiphase pool with different phase densities or moving-interface dynamics; see the
+[explicit face contract](../process/TWOFLUIDPIPE_MODEL.md#explicit-cell-face-terrain) and
+[analytical record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-interior-pressure/README.md).
 The separately named corrected-face riser represents the same 13.9032247068273 m rise on both
 meshes and passes three 0.1 s preparations. Its five-second attempts at `477964b5` rejected at
 0.8875/0.8014/0.5801 s; those results are kept separate from historical geometry measurements.

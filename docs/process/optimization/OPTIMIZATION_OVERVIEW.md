@@ -293,6 +293,14 @@ margins, every refinement recovery gate, and the per-casing surge/stonewall evid
 do not infer monotonic behavior outside it or promote its midpoint to an operating set point without the normal
 optimizer acceptance and replay.
 
+A casing-map boundary uses the same exact speed action and the installed `surgeMargin` or `stonewallMargin` row.
+When a reviewed facility procedure requires more clearance than the preserved map default, configure an operating
+override on that row and keep the map-derived value supplier, physical unit, source reference and signed margin in the
+receipt. To demonstrate bottleneck migration, restore that override before applying a tighter driver rating and
+reevaluate the same low/high speed points with the same evaluator. The two receipts must identify the map row and the
+driver row independently; a driver-limited result must never hide a negative casing-map margin, and neither receipt
+authorizes changing an OEM map or protection setting.
+
 Use `ProcessModelDebottleneckStudy` after the evaluator and direct installed constraints are configured when one documented capacity replacement or expansion must be compared with the installed baseline. It uses the same search policy for both scenarios, freezes immutable objective/constraint/metric evidence, and restores the installed limit plus pre-study operating point. This is a paired screening study, not an equipment-sizing algorithm or economic approval.
 
 Use `ProcessModelDebottleneckRanking` after independent paired studies complete when alternatives
@@ -1381,3 +1389,4 @@ Choose based on your use case:
 - **Fixed-total continuous allocation across coupled actions** → `ProcessModelAllocationOptimizer`
 - **Mixed choke/setpoint and discrete line-up search** → `ProcessModelOperatingPointOptimizer`
 - **Model calibration** → `BatchParameterEstimator`
+

@@ -29,6 +29,21 @@ below. See [the study guide](../../docs/pvtsimulation/pvt_fluid_study_report.md)
 
 ## Qualification and swelling calculations
 
+Use `DepletionPvtHistoryGenerator.replayNative` for dry oil-only DLE/pre-dew gas-only
+CVD handoffs. Check actual phase presence and `hasWithdrawal(row)` before reading
+phase or withdrawal outputs. Preserve complete experiment and separator-basis provenance.
+The modified-black-oil `generate` route still requires both phases. Read
+`docs/pvtsimulation/depletion_pvt_generation.md`; wet/critical/phase-disappearance
+tails and measured field accuracy remain unqualified. DLE flash failures propagate.
+
+Before fitting same-state gas p/T/Z/molar-mass/density tuples, use the opt-in
+`PvtGasDensityConsistency` interval gate and preserve source identities and raw
+values. Attach passing same-sample evidence through the `CalibratedPvtModel`
+overload; never drop failing rows to pass. Bounds require a documented basis and
+are not automatically sigmas. Read
+`docs/pvtsimulation/laboratory_gas_density_consistency.md`; a compatible tuple does
+not establish measured accuracy, whole-protocol qualification or a field match.
+
 For reservoir-history delivery, use `neqsim-eos-regression` and the
 `CalibratedPvtModel` / `MaterialBalancePvtHistory` contract documented in
 `docs/pvtsimulation/reservoir_material_balance.md`. Preserve independently tuned

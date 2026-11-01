@@ -1,0 +1,15 @@
+{
+  "default_branch_base": "b018bc708b64927890a7ba072ba806d370a86b26",
+  "runtime": "OpenJDK 17.0.20",
+  "api_compile": "javac --release 8 (both changed Java files)",
+  "sources": {
+    "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/closure/GeometryCalculator.java": {
+      "git_blob_sha": "550330da7ad6226d80819ade11d88d9a0a70a564",
+      "sha256": "30ecb1890e5f3112d047d8cfa67bc7514bc73649f72fc3e968fcac6d28fb731c"
+    },
+    "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/closure/StratifiedPressureMomentsTest.java": {
+      "git_blob_sha": "b7ec39683cf766d6d17fe1bff903b9082c02fdd9",
+      "sha256": "1b811908ac9b52c7535c8a6ab721a37994320dbcd3c1b860b3485314d436bd52"
+    }
+  }
+}

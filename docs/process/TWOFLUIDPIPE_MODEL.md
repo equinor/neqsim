@@ -70,6 +70,34 @@ unresolvable cases fail explicitly. See the
 [reporting guide](../wiki/two_fluid_reporting_and_validation#static-subcell-depth-and-area-diagnostic)
 for units, supported limits and executable regression evidence.
 
+### Stratified hydrostatic pressure moments
+
+The opt-in geometry query `GeometryCalculator.calculateStratifiedPressureMoments(depth, diameter)`
+returns immutable signed first moments `getLiquidMoment()` and `getGasMoment()` in m3, plus
+`getLiquidArea()` and `getGasArea()` in m2. Depth is normal to the circular pipe cross-section.
+For interface depth $h$, height $y$ above the invert and chord width
+$w(y)=2\sqrt{y(D-y)}$, the definitions are
+
+$$J_l=\int_0^h(h-y)w(y)\,dy,\qquad J_g=\int_h^D(h-y)w(y)\,dy.$$
+
+Thus $J_l\geq0$, $J_g\leq0$, and $dJ_k/dh=A_k$. The hydrostatic contribution to
+phase pressure traction is $\rho_k g\cos(\theta)J_k$ in N; the separate interface-pressure
+contribution is $p_I A_k$. These are signed pressure moments about the interface,
+including the gas region above it, rather than moments about the pipe invert.
+The method integrates the smaller segment with positive 16-point quadrature and recovers
+its complement from the exact full-section moment. Empty phases have exactly zero moment;
+unrepresentable geometry fails explicitly without changing the supplied depth.
+
+`StratifiedPressureMomentsTest` verifies independent angular quadrature, analytical half/full
+sections, trace limits, complement symmetry, area derivatives, serialization and signed
+finite-volume gravity/traction identities. The [executed numerical record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/README.md)
+retains every case, refinement and measured opt-in query cost. This query has no automatic
+runtime call site. It does not change momentum, energy, boundary states or transient results.
+Coupled interfacial pressure forces and conservative energy work remain prerequisites for
+using these moments to demonstrate a retained pool. Capillarity, waves, entrainment,
+separate oil/water interfaces and predictive hydrocarbon evaporation remain outside this API.
+
+
 ## Overview
 
 The NeqSim `TwoFluidPipe` model implements a transient two-fluid multiphase flow solver for pipeline and riser simulations. It solves phase-resolved gas, hydrocarbon-liquid, and aqueous-liquid conservation equations, enabling prediction of:
@@ -2099,9 +2127,33 @@ the caller must supply elevations resampled on the chosen mesh.
 
 `TwoFluidCellFaceTerrainTest` checks signed gravity and energy work under nonuniform refinement,
 both end cells, constant-density midpoint/boundary hydrostatics, defensive copying, invalid
-configuration isolation and legacy behavior. These analytic geometry checks do not establish
-general transient hydrostatic well-balancing or a steady/unsplit force fixed point. The original
-riser fixture and its historical measurements above retain their original sampling convention.
+configuration isolation and legacy behavior. The separate interior pressure reconstruction now
+uses adjacent conservative mixture inertia and each signed half-cell gravity head. It applies the
+same face correction to momentum traction, phase-pressure diagnostics and signed total-energy
+pressure work. `HydrostaticPressureReconstructionTest` passes the 90-case flat/affine/curved,
+constant/smooth/alternating-density, 12--192-cell pure-gas/oil matrix below `1e-10 m/s2`, with
+exactly zero local mass and energy rates. A separate 45-case pure-water extension passes the same
+gates without changing the predeclared 90-case basis. Horizontal correction and transactional
+rollback are exact, and -2/+2 m/s controls preserve `Q * deltaP` with the mass donor.
+
+This establishes an analytical common-mixture-pressure fixed point. It does not establish a
+stationary gas/liquid pool with different phase densities, a moving-interface closure, or physical
+slugging/restart behavior. The original riser fixture and its historical measurements above retain
+their original sampling convention. Reproduction details and the unchanged gates are in the
+[interior hydrostatic record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-interior-pressure/README.md).
+
+The unequal-density extension checks the instantaneous inviscid phase force
+`alpha[k] * A * (-dp/ds - rho[k] * g * sin(theta))`. Under a common mixture-hydrostatic
+pressure gradient, the present-phase acceleration is
+`(rhoMix / rho[k] - 1) * g * sin(theta)`. Opposing phase accelerations can therefore
+coexist with zero total mixture force. The 720-control matrix includes exact
+absent phases and 1e-12 gas holdup, signed terrain and 12–192 cells; 48 additional
+controls verify signed gas/oil/water pressure work with independent donors.
+These tests qualify the force and flux operators at the initial instant. A
+closed or low-flow pool-retention trajectory with resolved liquid levels still
+requires separate evidence. All cases and RHS-only cost observations are retained
+in the same public record.
+
 
 The separately named `TwoFluidCellFaceTengesdalPreparationTest` uses the same fluid, lengths and
 flow rates with explicit faces. Its represented elevation rise is **13.9032247068273 m** on both
@@ -2120,6 +2172,12 @@ The separate corrected-face **5 s** gate at `477964b5` remained unqualified:
 These failures retain the same nonlinear and independent tolerances and discard all local
 progress. Fixing the terrain integral does not qualify the transient transition dynamics. The
 180/600 s sequence and experimental slug statistics remain blocked.
+
+An exact-head replay on master `3c1c5dda4` and the interior-reconstruction candidate keeps this
+gate failed, but does not hide the nearby-point effect. At 16/0.1 the failure time is effectively
+unchanged (1.101171875 versus 1.1 s). At 16/0.05 it moves from 1.15625 to 1.5080078125 s, and at
+24/0.05 from 0.57265625 to 0.5884765625 s. All six runs fail line search at the unchanged
+`1e-9` nonlinear tolerance, so none is a passing five-second or physical qualification result.
 
 The preceding `477964b5` component-publication, component-transaction,
 bubble-domain and face-terrain update passed **365 tests in 53 classes**: 362 affected
@@ -2625,6 +2683,7 @@ $$T_\infty = T_{surf} + \frac{q}{U \pi D}$$
 
 rather than toward the surface temperature. This is exact for a uniform source, so the profile
 cannot overshoot the balance temperature — unlike explicit per-increment stepping, which does.
+
 
 
 ## Validation Status

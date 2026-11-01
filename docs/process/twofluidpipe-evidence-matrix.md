@@ -193,6 +193,67 @@ nonphysical reconstructed pressure fails explicitly without a numerical floor.
 `ClosedWallPressureCompatibilityTest` covers affine pure-phase hydrostatics,
 horizontal acoustic pressure response and closed-flux limits. These are numerical
 boundary controls, not qualification of a static two-phase pool or physical
-hydrocarbon transfer rates. General curved-terrain retention remains unqualified.
+hydrocarbon transfer rates.
 
 The [closed-wall reproduction record](../../src/test/resources/neqsim/process/equipment/pipeline/closed-wall-pressure/README.md) includes exact source provenance, analytical acceptance, all 12–192-cell operator data, and measured RHS cost with shared-runner limitations.
+
+### Interior hydrostatic pressure and signed work
+
+Every internal face now reconstructs a common mechanical pressure from the two
+adjacent conservative mixture inertias and signed half-cell gravity heads. The
+same additive correction is applied to phase momentum traction, phase-pressure
+diagnostics and total-energy pressure work. Energy uses the signed mass donor, so
+the correction is exactly `Q * deltaP` for either flow direction. A horizontal
+face retains the established AUSM pressure flux exactly, and rejected
+transactional evaluations restore the accepted correction ledger.
+
+`HydrostaticPressureReconstructionTest` passes 90 analytical stationary controls:
+flat, affine and public curved terrain; constant, smooth and alternating cell
+density; 12/24/48/96/192 cells; and pure gas or oil. The unchanged maximum
+acceleration gate is `1e-10 m/s2`; every local mass and energy rate is exactly
+zero. A separate 45-case pure-water extension passes the same terrain, density,
+mesh and conservation gates without changing that predeclared basis. Signed
+-2/+2 m/s controls verify pressure work, horizontal correction is
+exactly zero, and rollback is exact. This is numerical well-balancing of a common
+mixture pressure, not validation of a stationary two-density pool, a moving
+interface, severe slugging, restart, phase-transfer rates, pigging or commercial
+parity. See the [public analytical record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-interior-pressure/README.md).
+
+`MultiphaseHydrostaticForceQualificationTest` adds 720 unequal-density controls
+and 48 signed gas/oil/water work controls. At initially zero velocity, a common
+mixture-hydrostatic pressure gives phase acceleration
+`(rhoMix / rhoPhase - 1) * g * sin(theta)` while the summed mixture force is zero.
+The fixed gates are `1e-10 m/s2` phase-acceleration error and `1e-8 N/m` mixture-force
+residual; absent-phase mass and momentum rates and stationary energy rates are
+exactly zero. The work controls retain the individual donor under countercurrent
+flow. These are instantaneous force/flux identities, with refinement through 192
+cells; no elapsed pool-retention interval, pool level, or depletion time is inferred.
+The public record retains every case, inspected plots, and RHS-only timing data.
+
+
+### Stratified hydrostatic pressure moments
+
+The opt-in geometry query `GeometryCalculator.calculateStratifiedPressureMoments(depth, diameter)`
+returns immutable signed first moments `getLiquidMoment()` and `getGasMoment()` in m3, plus
+`getLiquidArea()` and `getGasArea()` in m2. Depth is normal to the circular pipe cross-section.
+For interface depth $h$, height $y$ above the invert and chord width
+$w(y)=2\sqrt{y(D-y)}$, the definitions are
+
+$$J_l=\int_0^h(h-y)w(y)\,dy,\qquad J_g=\int_h^D(h-y)w(y)\,dy.$$
+
+Thus $J_l\geq0$, $J_g\leq0$, and $dJ_k/dh=A_k$. The hydrostatic contribution to
+phase pressure traction is $\rho_k g\cos(\theta)J_k$ in N; the separate interface-pressure
+contribution is $p_I A_k$. These are signed pressure moments about the interface,
+including the gas region above it, rather than moments about the pipe invert.
+The method integrates the smaller segment with positive 16-point quadrature and recovers
+its complement from the exact full-section moment. Empty phases have exactly zero moment;
+unrepresentable geometry fails explicitly without changing the supplied depth.
+
+`StratifiedPressureMomentsTest` verifies independent angular quadrature, analytical half/full
+sections, trace limits, complement symmetry, area derivatives, serialization and signed
+finite-volume gravity/traction identities. The [executed numerical record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/README.md)
+retains every case, refinement and measured opt-in query cost. This query has no automatic
+runtime call site. It does not change momentum, energy, boundary states or transient results.
+Coupled interfacial pressure forces and conservative energy work remain prerequisites for
+using these moments to demonstrate a retained pool. Capillarity, waves, entrainment,
+separate oil/water interfaces and predictive hydrocarbon evaporation remain outside this API.

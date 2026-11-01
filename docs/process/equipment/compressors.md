@@ -138,6 +138,94 @@ double polytropicExponent = compressor.getPolytropicExponent();
 
 `solveEfficiency(targetTemperatureK)` fits the efficiency selected by
 `setUsePolytropicCalc(...)` while keeping the inlet and outlet pressure fixed.
+To fit an efficiency after a chart calculation, disable the chart with
+`getCompressorChart().setUseCompressorChart(false)` and disable speed solving with
+`setSolveSpeed(false)`. The same compressor then uses the selected efficiency at
+its outlet pressure; its previously calculated chart duty does not fix the power
+of later chart-free runs. An explicit `setPower(...)` or connected shaft-power
+specification still takes precedence over efficiency in a chart-free run.
+
+<!-- compressor-guide-example: chart-to-efficiency -->
+{% raw %}
+```java
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+/** Demonstrates a chart run followed by a chart-free efficiency fit. */
+public final class CompressorChartEfficiencyExample {
+  private static final Logger logger =
+      LogManager.getLogger(CompressorChartEfficiencyExample.class);
+
+  private CompressorChartEfficiencyExample() {}
+
+  /**
+   * Runs the complete compressor chart-to-efficiency workflow.
+   *
+   * @param args command-line arguments; not used
+   */
+  public static void main(String[] args) {
+    SystemSrkEos fluid = new SystemSrkEos(313.15, 40.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.06);
+    fluid.addComponent("propane", 0.03);
+    fluid.addComponent("nitrogen", 0.01);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("compressor feed", fluid);
+    feed.setFlowRate(2.0e6, "Sm3/day");
+    feed.run();
+
+    Compressor compressor = new Compressor("chart compressor", feed);
+    compressor.setUsePolytropicCalc(true);
+    compressor.setPolytropicMethod("schultz");
+    compressor.setCompressorChartType("interpolate and extrapolate");
+    compressor.getCompressorChart().setCurves(
+        new double[0],
+        new double[] {8000.0, 10000.0},
+        new double[][] {{1500.0, 2000.0, 2500.0}, {1875.0, 2500.0, 3125.0}},
+        new double[][] {{110.0, 100.0, 85.0}, {171.9, 156.3, 132.8}},
+        new double[][] {{78.0, 80.0, 77.0}, {78.0, 80.0, 77.0}});
+    compressor.getCompressorChart().setHeadUnit("kJ/kg");
+    compressor.setSpeed(9000.0);
+    compressor.setOutletPressure(100.0, "bara");
+    compressor.setSolveSpeed(true);
+    compressor.run();
+
+    double chartEfficiency = compressor.getPolytropicEfficiency();
+    double targetTemperatureK = compressor.getOutletStream().getTemperature() + 3.0;
+
+    compressor.getCompressorChart().setUseCompressorChart(false);
+    compressor.setSolveSpeed(false);
+    double fittedEfficiency = compressor.solveEfficiency(targetTemperatureK);
+
+    if (!Double.isFinite(fittedEfficiency)
+        || fittedEfficiency <= 0.0
+        || fittedEfficiency >= chartEfficiency) {
+      throw new IllegalStateException("Expected a lower finite fitted efficiency");
+    }
+    if (Math.abs(compressor.getOutletStream().getTemperature() - targetTemperatureK)
+        > 0.01) {
+      throw new IllegalStateException("Efficiency solve missed the temperature target");
+    }
+
+    compressor.run();
+    if (Math.abs(compressor.getOutletStream().getTemperature() - targetTemperatureK)
+        > 0.01) {
+      throw new IllegalStateException("Chart-free rerun did not preserve the fit");
+    }
+
+    logger.info(
+        "Fitted polytropic efficiency {} at outlet temperature {} K",
+        fittedEfficiency,
+        compressor.getOutletStream().getTemperature());
+  }
+}
+```
+{% endraw %}
+
 It uses a safeguarded secant step and bisects when a trial leaves the feasible
 efficiency interval. If that sign bracket stalls on a phase-boundary temperature
 jump, the solve continues with a short local secant around the closest sample and,
