@@ -1,9 +1,50 @@
 ---
-title: "Generate pressure-path PVT from CVD and DLE"
-description: "Bounded modified-black-oil generation from a frozen laboratory EOS, native depletion snapshots, a fixed multistage separator process and a separate accepted water EOS."
+title: "Native CCE, CVD and DLE laboratory PVT handoff"
+description: "Closed-mass CCE evidence and bounded depletion-PVT generation with frozen original/tuned EOS, immutable native snapshots and fixed separator provenance."
 ---
 
-# Generate pressure-path PVT from CVD and DLE
+# Native CCE, CVD and DLE laboratory PVT handoff
+
+## Closed-mass CCE without an inferred saturation reference
+
+Use `DepletionPvtHistoryGenerator.replayNative` with `Path.CCE` for a complete dry
+closed-mass constant-composition expansion (also called CME). The selected original
+or tuned EOS is restored independently; its complete component inventory remains
+in the cell at every pressure. Gas is **not** removed. Both native equilibrium and
+retained snapshots describe that same whole cell. `hasWithdrawal(row)` is false;
+`getWithdrawalProducts(row)` throws because no laboratory withdrawal exists.
+
+This route invokes `ConstantMassExpansion.runNativeExpansion`, which TP-flashes
+the closed cell on the declared pressure path and returns immutable snapshots.
+It does not search for saturation or populate the legacy CME relative-volume,
+Y-factor, formation-factor or transport arrays. Inspect actual phase presence and
+call `initProperties()` on restored states before using properties. Absolute cell
+volumes are in m3; any reported relative volume must name an actual reference row.
+Do not relabel that reference as a measured or predicted saturation point.
+
+Supply the same immutable sample/model, complete experiment identity, temperature
+in K, decreasing pressures in bara and fixed `PvtSeparatorPath` as the native
+depletion route below. Pressure points must remain above the first separator.
+`getRetainedProducts(row)` evaluates the whole cell through that train; these
+products are a declared surface process, not fluids withdrawn during the CCE.
+Named closed-cell component closure is checked at `1e-10 * max(1, initial mol)`.
+Numerical closure error is not converted into invented CCE production. A failed
+flash propagates its original cause and pressure context; no successful result or
+partial snapshot array is returned.
+
+Oil-only, gas-only and nondegenerate gas/oil CCE states are represented without
+invented absent-phase properties. The qualified synthetic closed-mass gas/oil/gas
+path preserves all material through phase appearance and disappearance. This is
+different from gas-withdrawal CVD, whose later single-phase volume-restoration
+tail remains unqualified. Wet and critical-degenerate paths remain rejected.
+
+`NativeCceHandoffTest` verifies provenance/ownership, both EOS selections, no-flow
+and phase limits, failures, named cell/separator conservation, independent pure
+SRK pressure-equation roots and six binary SRK coexistence states. The bounded
+[independent reference](../../src/test/resources/neqsim/pvtsimulation/native-cce/README.md)
+contains explicit inputs and outputs. These are analytical software checks, not
+measured laboratory calibration/holdouts or an accepted laboratory-to-field chain.
+The CVD saturation-reference limitation below remains separate and unresolved.
 
 ## Native compositional handoff through phase appearance
 

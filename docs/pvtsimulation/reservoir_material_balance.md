@@ -37,7 +37,7 @@ laboratory simulations.
 | `CalibratedPvtModel`, `MaterialBalancePvtHistory` | Immutable original/tuned model handoff, held-out laboratory residuals and explicitly attributed pressure-aligned PVT | `pvtsimulation.util` |
 | `CompositionalReservoirHistory` | Frozen-EOS component production/injection replay, bounded pore-volume matching, optional segregated aquifer and separate held-out pressure residuals | `pvtsimulation.util` |
 | `FetkovichAquifer`, `ReservoirHistoryEnsemble` | Physical finite-storage support, implicit EOS coupling and discrete joint Bayesian pressure-history hypotheses | `pvtsimulation.reservoirproperties.materialbalance`, `pvtsimulation.util` |
-| `DepletionPvtHistoryGenerator` | Dry two-hydrocarbon-phase CVD/DLE generalized PVT with native snapshots and separator/component-closure evidence | `pvtsimulation.util` |
+| `DepletionPvtHistoryGenerator` | Dry native closed-mass CCE and depletion handoffs; bounded two-phase CVD/DLE generalized PVT with separator/component-closure evidence | `pvtsimulation.util` |
 | `VanEverdingenHurstAquifer` | Radial aquifer influence functions, Carter-Tracy cumulative water influx, ECLIPSE `AQUTAB` export | `pvtsimulation.reservoirproperties.materialbalance` |
 | `DeclineCurveAnalysis` | Arps + Duong (2011) decline: forward rate/EUR and least-squares history matching | `pvtsimulation.util` |
 
@@ -202,6 +202,11 @@ Measured field data do not need to be inserted into a simulated tank's recorder.
 
 For dry oil-only DLE or pre-dew gas-only CVD rows, use the
 [native compositional handoff](depletion_pvt_generation.md#native-compositional-handoff-through-phase-appearance).
+For actual closed-mass laboratory CCE, use `Path.CCE`: the complete sample remains
+in every native state, with zero protocol withdrawal and the original/tuned EOS
+and separator identities preserved. These absolute states do not infer saturation
+or populate a measured reservoir production history. Keep laboratory calibration
+and whole-experiment holdouts separate from reservoir matching and holdouts.
 It retains actual native EOS states and separator products without absent-phase
 formation-factor extrapolation; it does not create a generalized black-oil table.
 Wet, critical-degenerate and CVD phase-disappearance-tail qualification remains open.

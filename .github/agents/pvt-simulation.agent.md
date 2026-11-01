@@ -29,12 +29,15 @@ below. See [the study guide](../../docs/pvtsimulation/pvt_fluid_study_report.md)
 
 ## Qualification and swelling calculations
 
-Use `DepletionPvtHistoryGenerator.replayNative` for dry oil-only DLE/pre-dew gas-only
-CVD handoffs. Check actual phase presence and `hasWithdrawal(row)` before reading
+Use `DepletionPvtHistoryGenerator.replayNative` for dry closed-mass CCE, oil-only DLE and pre-dew gas-only
+CVD handoffs. CCE uses `ConstantMassExpansion.runNativeExpansion` without a saturation
+scan; preserve the complete cell and zero protocol withdrawal. Do not infer a
+saturation-normalized volume from this absolute evidence. Check actual phase presence and `hasWithdrawal(row)` before reading
 phase or withdrawal outputs. Preserve complete experiment and separator-basis provenance.
 The modified-black-oil `generate` route still requires both phases. Read
-`docs/pvtsimulation/depletion_pvt_generation.md`; wet/critical/phase-disappearance
-tails and measured field accuracy remain unqualified. DLE flash failures propagate.
+`docs/pvtsimulation/depletion_pvt_generation.md`; wet/critical paths, gas-withdrawal CVD phase-disappearance
+tails and measured field accuracy remain unqualified. Closed-mass CCE disappearance
+is a distinct protocol and preserves all components. DLE flash failures propagate.
 
 Before fitting same-state gas p/T/Z/molar-mass/density tuples, use the opt-in
 `PvtGasDensityConsistency` interval gate and preserve source identities and raw

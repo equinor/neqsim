@@ -30,7 +30,9 @@ public final class MaterialBalancePvtHistory implements Serializable {
     /** Externally evaluated, composition-aware production/injection path. */
     COMPOSITIONAL_HISTORY,
     /** Independent fixed-composition flashes; not a depletion experiment. */
-    CONSTANT_COMPOSITION
+    CONSTANT_COMPOSITION,
+    /** Actual closed-mass constant-composition expansion of one laboratory cell, without withdrawal. */
+    CCE
   }
 
   private final CalibratedPvtModel model;

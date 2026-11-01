@@ -6,6 +6,7 @@ import org.apache.commons.lang3.SerializationUtils;
 import neqsim.blackoil.BlackOilPVTTable.Record;
 import neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalance;
 import neqsim.pvtsimulation.simulation.ConstantVolumeDepletion;
+import neqsim.pvtsimulation.simulation.ConstantMassExpansion;
 import neqsim.pvtsimulation.simulation.DepletionSnapshot;
 import neqsim.pvtsimulation.simulation.DifferentialLiberation;
 import neqsim.pvtsimulation.util.MaterialBalancePvtHistory.Path;
@@ -13,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Evaluates native compositional or modified-black-oil evidence from an actual CVD/DLE depletion path.
+ * Evaluates native compositional CCE/CVD/DLE or bounded modified-black-oil depletion evidence.
  *
  * <p>
  * The Whitson-Torp phase-flash interpretation is an approximation to full component conservation. Its conversion checks
@@ -40,7 +41,7 @@ public final class DepletionPvtHistoryGenerator {
   }
 
   /**
-   * Immutable native laboratory states and surface products without absent-phase extrapolation.
+   * Immutable native CCE/CVD/DLE laboratory states and surface products without absent-phase extrapolation.
    *
    * @author Even Solbraa
    * @version 1.0
@@ -100,9 +101,9 @@ public final class DepletionPvtHistoryGenerator {
     }
 
     /**
-     * Identifies the withdrawal protocol.
+     * Identifies the laboratory protocol, including closed-mass CCE without withdrawal.
      *
-     * @return CVD or DLE
+     * @return CCE, CVD or DLE
      */
     public Path getPath() {
       return path;
@@ -171,18 +172,20 @@ public final class DepletionPvtHistoryGenerator {
   }
 
   /**
-   * Replays native dry depletion without requiring both hydrocarbon phases at every point.
+   * Replays a native dry laboratory path without requiring both hydrocarbon phases at every point.
    *
    * <p>
-   * Oil-only DLE and pre-dew gas-only CVD states retain their actual inventories. CVD requires a sampled gas/oil
-   * boundary and rejects later phase-disappearance tails pending volume-restoration qualification. Wet/other-phase
-   * samples and critical-degenerate splits remain unqualified. No absent-phase Bo/Bg/Rs/Rv, Bw, surface
-   * pseudo-component closure assumption or reservoir production prediction is supplied.
+   * CCE retains the complete closed-mass cell at each pressure and withdraws no components. Its absolute native states
+   * do not supply a saturation-pressure estimate or saturation-normalized volume. Oil-only DLE and pre-dew gas-only CVD
+   * states retain their actual inventories. CVD requires a sampled gas/oil boundary and rejects later
+   * phase-disappearance tails pending volume-restoration qualification. Wet/other-phase samples and critical-degenerate
+   * splits remain unqualified. No absent-phase Bo/Bg/Rs/Rv, Bw, surface pseudo-component closure assumption or
+   * reservoir production prediction is supplied.
    * </p>
    *
    * @param model independently calibrated original/tuned checkpoints
    * @param tuned true for tuned EOS; false for original EOS
-   * @param path actual CVD or DLE protocol
+   * @param path actual closed-mass CCE, CVD or DLE protocol
    * @param pathReference whole experiment/sample/protocol identity
    * @param temperatureK experiment temperature in K
    * @param pressuresBara complete strictly decreasing pressure schedule, bara, at least two points
@@ -191,9 +194,10 @@ public final class DepletionPvtHistoryGenerator {
    */
   public static NativeResult replayNative(CalibratedPvtModel model, boolean tuned, Path path, String pathReference,
       double temperatureK, double[] pressuresBara, PvtSeparatorPath separator) {
-    if (model == null || separator == null || (path != Path.CVD && path != Path.DLE) || !positive(temperatureK)
-        || pressuresBara == null || pressuresBara.length < 2) {
-      throw new IllegalArgumentException("Model, separator, CVD/DLE, temperature and complete pressure path required");
+    if (model == null || separator == null || (path != Path.CCE && path != Path.CVD && path != Path.DLE)
+        || !positive(temperatureK) || pressuresBara == null || pressuresBara.length < 2) {
+      throw new IllegalArgumentException(
+          "Model, separator, CCE/CVD/DLE, temperature and complete pressure path required");
     }
     String reference = CalibratedPvtModel.reference(pathReference);
     double[] pressures = pressuresBara.clone();
@@ -554,12 +558,18 @@ public final class DepletionPvtHistoryGenerator {
    * Runs the existing depletion solver with opt-in native evidence.
    *
    * @param feed independent accepted hydrocarbon sample
-   * @param path supported depletion protocol
+   * @param path supported closed-mass CCE or depletion protocol
    * @param temperature temperature in K
    * @param pressures decreasing pressure schedule in bara
    * @return native step snapshots
    */
   private static DepletionSnapshot[] replay(SystemInterface feed, Path path, double temperature, double[] pressures) {
+    if (path == Path.CCE) {
+      ConstantMassExpansion simulation = new ConstantMassExpansion(feed);
+      simulation.setTemperature(temperature, "K");
+      simulation.setPressures(pressures);
+      return simulation.runNativeExpansion();
+    }
     if (path == Path.CVD) {
       ConstantVolumeDepletion simulation = new ConstantVolumeDepletion(feed);
       simulation.setTemperature(temperature, "K");

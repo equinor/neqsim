@@ -5,13 +5,15 @@ import org.apache.commons.lang3.SerializationUtils;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Immutable native EOS evidence for one CVD or DLE pressure step.
+ * Immutable native EOS evidence for one CCE, CVD or DLE pressure step.
  *
  * <p>
- * Equilibrium is the state used to interpret phase PVT; retained is the state after the step's gas withdrawal. CVD
- * records its equilibrated, volume-restored cell as both states. DLE records equilibrium before removing gas, and the
- * remaining liquid afterwards. Component withdrawals are differences of consecutive retained inventories, including the
- * original sample for the first step. Recording is opt-in in the existing solvers.
+ * CCE retains the complete closed-mass cell as both states and has no component withdrawals. Equilibrium is the state
+ * used to interpret phase PVT; retained is the state after the step's gas withdrawal. CVD records its equilibrated,
+ * volume-restored cell as both states. DLE records equilibrium before removing gas, and the remaining liquid
+ * afterwards. Component withdrawals are differences of consecutive retained inventories, including the original sample
+ * for the first step. CCE constrains withdrawal to zero after checking the initial named inventory; numerical closure
+ * error is not production. Native execution/recording is explicit in the existing solvers.
  * </p>
  *
  * @author Even Solbraa
