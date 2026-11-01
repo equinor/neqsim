@@ -312,6 +312,13 @@ tampered constraint identity, limit role, provenance, endpoint grid, cycle ID, r
 closed. This is persistence of advisory qualification evidence, not a second optimizer or permission to change an
 OEM map, driver rating, or operating set point.
 
+The living report renders every valid ledger receipt in a cycle-ordered map-to-driver timeline. Superseded receipts
+remain visible with their invalidating cycle, while malformed or cycle-mismatched receipts are withheld. The canonical
+current-best and immutable final reports independently validate the promoted receipt before rendering the exact map
+restriction, configured operating-limit role and provenance, driver restriction/rating, and identical common-speed
+endpoints. These report views are advisory consumers of guarded evidence; they do not recalculate compressor physics
+or turn a refined boundary into an approved operating point.
+
 Use `ProcessModelDebottleneckStudy` after the evaluator and direct installed constraints are configured when one documented capacity replacement or expansion must be compared with the installed baseline. It uses the same search policy for both scenarios, freezes immutable objective/constraint/metric evidence, and restores the installed limit plus pre-study operating point. This is a paired screening study, not an equipment-sizing algorithm or economic approval.
 
 Use `ProcessModelDebottleneckRanking` after independent paired studies complete when alternatives
@@ -1063,7 +1070,8 @@ selected-objective identity and reviewed-baseline binding, schema-v11 persistenc
 reconstruction, complete declared installed and
 plant-wide constraint coverage with operating-limit provenance, common-shaft/compressor-map/driver/shared-power
 evidence, the separator/scrubber-to-shared-power bottleneck migration, and report
-rendering. It is a
+rendering, including the cycle-by-cycle map-to-driver ledger timeline and the promoted canonical migration section.
+It is a
 synthetic software acceptance test, not a reservoir forecast, equipment qualification, operating approval, or an
 instruction to relax any physical constraint.
 

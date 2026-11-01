@@ -1142,6 +1142,13 @@ refined brackets from the persisted points; editing only the summary identities 
 receipt pass. Revalidation emits a new cycle-bound receipt and supersedes the earlier ledger item rather than treating
 historical map or driver evidence as current.
 
+The living report presents valid receipts as a cycle-ordered timeline and labels superseded evidence with the cycle
+that invalidated it. The canonical current-best/final report accepts only a promoted receipt whose cycle matches the
+reviewed baseline, then shows the exact configured map restriction and provenance, driver rating, and common-speed
+endpoint grid. Invalid receipts are explicitly withheld. Reporting remains downstream of the production guard and
+must not recompute a boundary, substitute a different constraint identity, or imply permission to relax equipment
+limits.
+
 Current optimizer evidence also exports the relative simulator replay tolerance and its provenance. A persistent task
 may use that value only to bind a reviewed objective baseline to a fresh initial replay; the guard caps it at
 $10^{-6}$ and rejects invalid or unsourced tolerance metadata. Constraint feasibility, restoration, action read-back,
