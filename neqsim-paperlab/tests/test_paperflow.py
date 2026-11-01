@@ -2562,6 +2562,21 @@ class TestBookRenderHTML:
         assert "<script>" not in rendered
         assert "&lt;a " in rendered
 
+    def test_chapter_hero_skips_figure_already_inline(self, tmp_path):
+        """A figure placed inline in the chapter is not repeated as the opener."""
+        from book_render_html import _chapter_hero_html
+        fig_dir = tmp_path / "figures"
+        fig_dir.mkdir()
+        (fig_dir / "fig_inline.png").write_bytes(b"x")
+        (fig_dir / "fig_other.png").write_bytes(b"x")
+        (tmp_path / "chapter.md").write_text(
+            "![Figure 1.1: Shown inline.](figures/fig_inline.png)\n", encoding="utf-8")
+        html = _chapter_hero_html(tmp_path, "Title")
+        assert "fig_other.png" in html
+        assert "fig_inline.png" not in html
+        (fig_dir / "fig_other.png").unlink()
+        assert _chapter_hero_html(tmp_path, "Title") == ""
+
     def test_numbered_citation_in_code_remains_literal(self):
         """Citation-looking markup inside code is escaped instead of linked."""
         from book_render_html import _inline_fmt
