@@ -932,13 +932,17 @@ FlowRatioMeter rxn = new FlowRatioMeter("FR-1", recycleStream, feedStream,
 ```
 
 
-### Use one physical pressure-transmitter sample per control scan
+### Use one physical pressure-, temperature- or flow-transmitter sample per control scan
 
-For qualified controller or alarm studies, explicitly enable the concrete `PressureTransmitter` physical-step sampling
-mode and register the transmitter in the `ProcessSystem`. The process then samples once after events and field inputs
-and before equipment/controllers; controller, history and alarm consumers share that held value. Declare the physical
-scan interval, filter time constant, integer sample delay, noise basis and any sensor-fault rate. Direct reads and other
-instrument families retain legacy read-driven behavior until they receive separate qualification.
+For qualified controller or alarm studies, explicitly enable physical-step sampling on the concrete
+`PressureTransmitter`, `TemperatureTransmitter` or `VolumeFlowTransmitter` and register it in the `ProcessSystem`. The
+process samples once after events and field inputs and before equipment/controllers; controller, history and alarm
+consumers share that held value. For a flow loop, use for example `FT100.setUnit("kg/hr")` followed by
+`FT100.setTransientSamplingEnabled(true)`. Declare the physical scan interval, configured phase/unit, filter time
+constant, integer sample delay, noise basis and any sensor-fault rate. Flow conversions to `kg/hr`, `m^3/hr`,
+`Nm^3/day` and `Sm^3/day` are frozen at the sample instant. Direct pressure/temperature reads retain the legacy
+read-driven modifier path; direct flow reads remain raw. Treat a stuck or biased FT as a study failure mode, not an
+independent safeguard. Vendor dynamics, alarm/trip integrity, SIL, voting and independence remain external evidence.
 
 ## Safety Shutdown forward acoustic pump boundary
 

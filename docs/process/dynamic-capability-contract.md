@@ -546,9 +546,10 @@ one process system and coordinated multi-area process models, and restart eviden
 its closed snapshot. Concrete descendants and online-signal operation remain fail-closed.
 
 This tranche is limited to local instruments whose production measured-value path actually calls
-`applySignalModifiers(...)`. `VolumeFlowTransmitter` and the total/oil/water level-transmitter families still return
-raw values without advancing that inherited signal state, so they are intentionally not presented as transaction
-participants. Other state-owning analysers remain unaudited until all device-specific iteration, cache,
+`applySignalModifiers(...)`. `VolumeFlowTransmitter` is covered separately by the opt-in physical-scan contract below;
+its legacy direct-read path intentionally remains raw for compatibility. The total/oil/water level-transmitter families
+still return raw values without advancing inherited signal state, so they are intentionally not presented as
+transaction participants. Other state-owning analysers remain unaudited until all device-specific iteration, cache,
 configuration and binding state is covered.
 
 Passing this rollback gate does not qualify laboratory or online analyser accuracy, phase-sampling fidelity, wet-gas or
@@ -770,13 +771,13 @@ fail-closed in-memory orchestration and deterministic replay only; it does not q
 side-effect compensation, safety action, virtual commissioning, OTS behavior or adaptive timestep rejection.
 
 
-## Opt-in physical pressure- and temperature-transmitter scans
+## Opt-in physical pressure-, temperature- and flow-transmitter scans
 
-A registered `PressureTransmitter` or `TemperatureTransmitter` can opt into one sample-and-hold update per physical
-transient step. The devices are disabled by default for compatibility. When enabled, `ProcessSystem` samples them after
-due events and INPUT field values have been applied and before equipment and controller execution. An equipment-owned or
-standalone controller, the measurement-history row and alarm evaluation then consume the same held value for that
-physical-step UUID.
+A registered concrete `PressureTransmitter`, `TemperatureTransmitter` or `VolumeFlowTransmitter` can opt into one
+sample-and-hold update per physical transient step. The devices are disabled by default for compatibility. When enabled,
+`ProcessSystem` samples them after due events and INPUT field values have been applied and before equipment and controller
+execution. An equipment-owned or standalone controller, the measurement-history row and alarm evaluation then consume
+the same held value for that physical-step UUID.
 
 The signal order is fault transformation, Gaussian noise, exact first-order filter and discrete sample delay. The
 first-order coefficient is `1 - exp(-dt/tau)` using the actual finite positive physical timestep. On this opt-in path a
@@ -784,11 +785,23 @@ first-order coefficient is `1 - exp(-dt/tau)` using the actual finite positive p
 Repeated sampling with the same physical-step UUID is idempotent. Rejected transactional/adaptive trials restore the
 held value, engineering unit, UUID, delay/filter/fault state and random-generator continuation before replay.
 
-Legacy direct `getMeasuredValue(...)` calls retain the historical one-second-per-read modifier behavior. Instrument
-families other than the concrete pressure transmitter remain on that legacy path until separately audited. The device
-must be registered in the process measurement list to participate in the shared scan. Sample delay is a discrete scan
-delay, not a continuous transport delay. Noise and fault parameters remain study inputs; this contract does not validate
-vendor response data, alarm settings, detector coverage, control tuning, SIL, voting, independence or safety approval.
+For flow sampling, the configured unit is held together with frozen sample-instant equivalents in `kg/hr`, `m^3/hr`,
+`Nm^3/day` and `Sm^3/day`; actual- and standard-volume readings retain the configured phase number. A modified nonzero
+signal cannot be converted from a zero raw-flow basis and therefore fails explicitly. The public synthetic inlet chain
+uses a 90/10 methane/ethane feed, a 20-to-24 bara upstream disturbance, 10 bara downstream pressure, a 4 s valve-actuator
+lag and a 1 s scan. Across 150 s the sampled FT/PID/valve chain reaches 1120.365 kg/hr from a 1106.734 kg/hr setpoint,
+with 1440.835 kg/hr peak, 123 s settling, 10836.375 kg/hr-s IAE and 22.298 percentage-point actuator travel. Maximum
+mass, component and relative enthalpy-rate residuals are respectively 2.274e-13 kg/hr, 3.553e-15 mol/s and 1.054e-14.
+Changing the scan from 1.0 s to 0.5 s changes the 60 s flow by 0.653 kg/hr and opening by 0.023 percentage points.
+
+Legacy direct `getMeasuredValue(...)` calls retain their prior behavior: pressure and temperature use the historical
+one-second-per-read modifier path, while flow remains an unmodified raw reading. Other instrument families remain on
+their existing paths until separately audited. The device must be registered in the process measurement list to
+participate in the shared scan. Sample delay is a discrete scan delay, not a continuous transport delay. The synthetic
+stuck-FT case demonstrates that a frozen sensor can hide more than 300 kg/hr of actual error; it is a failed-control
+limitation, not safeguarding credit. Noise, fault, process and tuning parameters remain study inputs. This contract does
+not validate vendor sensor/valve data, alarm or trip settings, detector coverage, SIL, voting, independence or safety
+approval.
 
 ### Optional forward acoustic pump inlet
 
@@ -805,3 +818,4 @@ qualify complete pump trips/slam or satisfy exact-once coordinator identities.
 Rejected internal intervals preserve accepted pipe state; a full request is not
 an atomic global transaction. Full EOS/shaft energy, stopped/reverse operation,
 cavity formation and integrated Safety Shutdown remain `NOT_EVALUATED`.
+
