@@ -1,0 +1,178 @@
+{
+  "parent": "c2b9eac5fe85120c89703fa90f9044d06d6d588e",
+  "base": "5d0edbdf6f9e75a89f8f7337b4769d8cb24b2694",
+  "selection_master": "98893a50a5fc88e04cb2940a6c529338752a8b10",
+  "source_blobs": {
+    "src/main/java/neqsim/thermo/phase/Phase.java": "d70db6cd21402067409bb6355ced189a7772d38e",
+    "src/main/java/neqsim/thermo/system/SystemSrkEos.java": "24606395cdfa40c420294ecebbe7de94c660b1f8",
+    "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/ConservativeThermodynamicRecovery.java": "95cef0bcd00d65d32067023acdd44db7c5c1dfbf",
+    "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/numerics/AUSMPlusFluxCalculator.java": "61c647164d40187e07be29d5cdfe96112944f6fd",
+    "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/numerics/RusanovRichGasFluxTest.java": "5d3c4fa7841b54eb759bd99a68a8dfc6217f5ec7"
+  },
+  "matrix": {
+    "rows": 324,
+    "decimal_digits": 80,
+    "normalized_flux_gate": "3E-14",
+    "normalized_eos_unit_gate": "3E-13",
+    "maximum_normalized_flux_error": "1.7619773911190298519551807556345883993993708648797544976089874597741340077505771E-16",
+    "maximum_normalized_eos_unit_error": "9.6809531804213907328784406077967682003056264512385388467456529406849578331965838E-17",
+    "transition_rows": 54,
+    "negative_reference_energy_rows": 261,
+    "maximum_absolute_volume_work_J_kg": "1516.5165185435961803195499082114185043403862187051461010214283768194105770841208",
+    "scope": "SRK phase API/units and optional local numerical flux; no independent EOS/rate or transient qualification"
+  },
+  "junit": {
+    "classes": [
+      "RusanovRichGasFluxTest",
+      "RusanovConservativeFluxTest",
+      "AUSMImplicitPressureSplitTest",
+      "DirectionalPhaseFaceFluxTest",
+      "TwoFluidPressureInterpolationTest",
+      "StratifiedPressureMomentCouplingTest",
+      "StratifiedGravityEnergyTest",
+      "ConservativeInterfacialDragTest",
+      "TwoFluidTotalEnergyContractTest",
+      "TwoFluidThermalFaceFluxTest",
+      "TwoFluidComponentOutletTest",
+      "TwoFluidConservativeEnergyReportTest",
+      "HydrocarbonComponentRelaxationTest",
+      "TwoFluidMixtureDragPartitionTest"
+    ],
+    "totals": {
+      "tests": 79,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "replay": {
+    "replay_wall_s": 1.6705254369990143
+  },
+  "runtime": {
+    "java": "17.0.20",
+    "python": "3.12.14",
+    "java8_api_compile": true,
+    "java8_api_compiled_replay_byte_identical": true,
+    "java8_jvm_run": false
+  },
+  "first_control_failure": {
+    "reason": "The initial reference incorrectly mixed untranslated EOS internal energy with volume-corrected physical density",
+    "T_K": 260.0,
+    "p_bara": 10.0,
+    "phase": "gas",
+    "h_minus_eEOS_J_kg": 117427.8565287262,
+    "p_over_rhoPhysical_J_kg": 117373.8856055669,
+    "exit": 1,
+    "resolution": "Explicit pressure-volume conversion; no gate, EOS, volume-correction or production-code change"
+  },
+  "replay_guard_tests": {
+    "methods": 2,
+    "corrupt_receipts_rejected_per_mode": 12,
+    "modes": [
+      "normal",
+      "-O"
+    ],
+    "stale_success_receipt_deleted": true
+  },
+  "normal_optimized_reference_and_summary_byte_identical": true,
+  "documented_maven_classpath_replay_byte_identical": true,
+  "figure": "srk-inputs.png: visually inspected, all titles/units/legend visible",
+  "production_runtime_changes": false,
+  "source_generated_inventory_changed": false,
+  "commands": [
+    {
+      "command": "work-with-neqsim scripts/prepare_maven.py exports before Maven/Spotless",
+      "exit": 0
+    },
+    {
+      "command": "python3 devtools/run_spotless.py apply (stable)",
+      "exit": 0
+    },
+    {
+      "command": "python3 devtools/run_spotless.py check",
+      "exit": 0
+    },
+    {
+      "command": "./mvnw -q -Dtest=RusanovRichGasFluxTest,RusanovConservativeFluxTest,AUSMImplicitPressureSplitTest,DirectionalPhaseFaceFluxTest,TwoFluidPressureInterpolationTest,StratifiedPressureMomentCouplingTest,StratifiedGravityEnergyTest,ConservativeInterfacialDragTest,TwoFluidTotalEnergyContractTest,TwoFluidThermalFaceFluxTest,TwoFluidComponentOutletTest,TwoFluidConservativeEnergyReportTest,HydrocarbonComponentRelaxationTest,TwoFluidMixtureDragPartitionTest test",
+      "exit": 0
+    },
+    {
+      "command": "java --module jdk.compiler/com.sun.tools.javac.Main --release 8 -cp <Surefire classpath> -d target/srk-release8 <RusanovRichGasFluxTest.java>",
+      "exit": 0
+    },
+    {
+      "command": "java -cp <Surefire classpath> neqsim.process.equipment.pipeline.twophasepipe.numerics.RusanovRichGasFluxTest <srk-native.csv>",
+      "exit": 0
+    },
+    {
+      "command": "java -cp target/srk-release8:<Surefire classpath> neqsim.process.equipment.pipeline.twophasepipe.numerics.RusanovRichGasFluxTest target/srk-release8.csv",
+      "exit": 0
+    },
+    {
+      "command": "./mvnw -q dependency:build-classpath -Dmdep.outputFile=target/srk-classpath.txt",
+      "exit": 0
+    },
+    {
+      "command": "java -cp target/test-classes:target/classes:<Maven classpath> neqsim.process.equipment.pipeline.twophasepipe.numerics.RusanovRichGasFluxTest target/srk-native.csv",
+      "exit": 0
+    },
+    {
+      "command": "python3 <resource>/qualify_srk.py",
+      "exit": 0
+    },
+    {
+      "command": "python3 -O <resource>/qualify_srk.py --output-dir target/srk-optimized",
+      "exit": 0
+    },
+    {
+      "command": "python3 -m unittest discover -s <resource> -p test_srk_receipts.py -v",
+      "exit": 0
+    },
+    {
+      "command": "python3 -O -m unittest discover -s <resource> -p test_srk_receipts.py -v",
+      "exit": 0
+    },
+    {
+      "command": "python3 <resource>/plot_srk.py",
+      "exit": 0
+    },
+    {
+      "command": "./mvnw -q -DskipTests -DjavadocExecutable=<environment-only module adapter> javadoc:javadoc",
+      "exit": 0
+    },
+    {
+      "command": "UV_NO_SYNC=1 uv run --project devtools --locked devtools/build_engineering_coverage.py",
+      "exit": 0
+    },
+    {
+      "command": "python3 devtools/check_documentation_search.py",
+      "exit": 0
+    },
+    {
+      "command": "pre-commit run --all-files --hook-stage pre-commit",
+      "exit": 0
+    },
+    {
+      "command": "pre-commit run --all-files --hook-stage pre-push",
+      "exit": 0
+    },
+    {
+      "command": "Workflow YAML parse and both SRK step insertions check",
+      "exit": 0
+    }
+  ],
+  "environment_repair": {
+    "failed_command": "./mvnw -q -Dmaven.javadoc.executable=<module adapter> javadoc:javadoc",
+    "exit": 1,
+    "reason": "Incorrect property did not select the environment adapter; no javadoc executable",
+    "successful_retry": "-DjavadocExecutable=<module adapter>; no repository JDK/build configuration edit"
+  },
+  "limits": [
+    "Independent analytic ideal-gas evidence remains in the parent report; these SRK controls test numerical/API consistency, not independent EOS accuracy.",
+    "EOS phase-volume fractions are local query inputs, not elapsed spatial holdups. Trace multipliers do not seed a pipe.",
+    "Mechanical internal energy follows existing physical-density h-p/rho ownership; this does not qualify a thermodynamically complete translated EOS.",
+    "Prior 12/24-cell default-AUSM ramp is retained from parent validation, not rerun or counted in this79-test selection.",
+    "No production solver/component donor/normal-gravity/volume or finite-rate transfer closure changed; pooling/refill/evaporation remain unresolved.",
+    "Hosted new-head CI and independent domain review pending; draft only."
+  ]
+}

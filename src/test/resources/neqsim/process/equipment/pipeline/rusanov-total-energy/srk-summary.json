@@ -1,0 +1,12 @@
+{
+  "rows": 324,
+  "decimal_digits": 80,
+  "normalized_flux_gate": "3E-14",
+  "normalized_eos_unit_gate": "3E-13",
+  "maximum_normalized_flux_error": "1.7619773911190298519551807556345883993993708648797544976089874597741340077505771E-16",
+  "maximum_normalized_eos_unit_error": "9.6809531804213907328784406077967682003056264512385388467456529406849578331965838E-17",
+  "transition_rows": 54,
+  "negative_reference_energy_rows": 261,
+  "maximum_absolute_volume_work_J_kg": "1516.5165185435961803195499082114185043403862187051461010214283768194105770841208",
+  "scope": "SRK phase API/units and optional local numerical flux; no independent EOS/rate or transient qualification"
+}
