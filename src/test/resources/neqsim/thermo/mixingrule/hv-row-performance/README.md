@@ -123,3 +123,12 @@ master blobfaf53fdc. Both new HV workflow steps are combined with all existing
 gravity-energy and prior HV gates. No HV runtime source or parameter/alpha input
 changed in those merges. Timing receipts remain explicitly on the frozenf198
 baseline; no timing requalification on a later head is implied.
+
+Source-inventory reconciliation (2026-11-02): the earlier campaign receipt
+[6432934660](https://github.com/equinor/neqsim/issues/4573#issuecomment-6432934660)
+already records a successful Epelle thesis download and text inspection. That
+inspection found a publication-list citation, not the original2020 coefficient
+tables. Later failed reader/transfer attempts are route limitations, not evidence
+that the thesis was never inspected. The catalog now preserves that distinction
+and the earlier reported PDF fingerprint; no new download, table recovery,
+parameter activation or physical qualification is claimed.

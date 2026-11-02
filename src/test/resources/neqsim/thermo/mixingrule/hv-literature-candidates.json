@@ -749,7 +749,14 @@
     "epelle": {
       "doi": "10.1016/j.jngse.2020.103259",
       "primary_record": "https://era.ed.ac.uk/items/9d0657a0-c135-4494-aeff-f119ac035cf2/full",
-      "blocked": "Record links a 43.22MB thesis; accessible reader size limit and blocked browser transfer prevented verification of numeric table images. Metadata is not numeric qualification"
+      "blocked": "The earlier completed thesis inspection found the 2020 article only in the publication list, not its original numeric HV tables. Later reader/transfer limits do not supersede that completed inspection. The original article coefficient tables remain missing; no tuple is qualified by the thesis citation.",
+      "prior_retrieval_receipt": "https://github.com/equinor/neqsim/issues/4573#issuecomment-6432934660",
+      "prior_receipt_reported_pdf": {
+        "url": "https://era.ed.ac.uk/bitstreams/b0b6bd91-7c16-4d3e-a557-23572522c7a4/download",
+        "bytes": 45319923,
+        "sha256": "6152bdcd49290a818fcbf91e8fc54c9157d22238e40f5b0513f0668c40520c24",
+        "qualification": "Earlier campaign receipt, not a fresh PDF download or independently recovered coefficient table"
+      }
     },
     "hemmingsen": {
       "doi": "10.1016/j.fluid.2011.05.010",
