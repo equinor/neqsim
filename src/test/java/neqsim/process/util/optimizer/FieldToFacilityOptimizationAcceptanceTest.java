@@ -214,7 +214,7 @@ public class FieldToFacilityOptimizationAcceptanceTest {
   }
 
   /**
-   * Execute the source-backed ten-well lifecycle acceptance case and serialize its exact schema-v16 evidence.
+   * Execute the source-backed ten-well lifecycle acceptance case and serialize its exact schema-v17 evidence.
    *
    * <p>
    * This test-scope entry point lets the Python living-task acceptance workflow call the same Java fixture and physical

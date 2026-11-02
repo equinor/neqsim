@@ -982,6 +982,7 @@ public final class ProcessModelOperatingPointOptimizer {
       evidence.put("objective_name", objective.getName());
       evidence.put("objective_direction", objective.getDirection().name());
       evidence.put("objective_unit", objective.getUnit());
+      evidence.put("termination_reason", outcome.name());
       evidence.put("initial_objective_value",
           initial != null && isFinite(initial.getRawObjective()) ? Double.valueOf(initial.getRawObjective()) : null);
       evidence.put("accepted_objective_value",

@@ -1162,6 +1162,13 @@ may use that value only to bind a reviewed objective baseline to a fresh initial
 $10^{-6}$ and rejects invalid or unsourced tolerance metadata. Constraint feasibility, restoration, action read-back,
 and operating limits remain exact under their existing contracts.
 
+It also exports the exact terminal search classification. Schema-v17 field lifecycle evidence requires each period to
+retain either `CONVERGED_WITH_REPLAYED_FEASIBLE_CANDIDATE` or
+`BUDGET_EXHAUSTED_WITH_REPLAYED_FEASIBLE_CANDIDATE`; missing, unknown, unconverged, recovery-failed, or
+replay-failed values are withheld. Reports show this reason beside the validated objective, evaluation count, and
+runtime. A budget-limited feasible incumbent remains advisory sampled evidence and is never presented as converged or
+globally optimal.
+
 When opt-in refinement is enabled, `operating_region_boundary_refinements` retains the action bounds,
 relative and absolute tolerances with provenance, every exact midpoint candidate/outcome/recovery gate,
 the final independently evaluated feasible/infeasible bracket, and the exact leading or rejecting

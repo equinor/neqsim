@@ -499,10 +499,12 @@ def build(task_dir):
                 evidence = "stale since {}".format(item.get("evidence_invalidated_cycle") or "unknown cycle")
             rows.append((key, item.get("status"), item.get("category"), item.get("title"),
                          value.get("value") if isinstance(value, dict) else value,
+                         (item.get("optimizer_evidence") or {}).get(
+                             "termination_reason", "not recorded"),
                          evidence,
                          "{} {}".format(decided[-1].get("by"), str(decided[-1].get("at", ""))[:10])
                          if decided else "-"))
-        out += _table(["Id", "Status", "Category", "Title", "Latest value", "Evidence",
+        out += _table(["Id", "Status", "Category", "Title", "Latest value", "Search termination", "Evidence",
                        "Last decision"], rows)
         waiting = [k for k, v in items.items() if v.get("status") == "proposed"]
         if waiting:
