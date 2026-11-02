@@ -17,6 +17,7 @@ relief design, an operability proof, or final facility design. Inspect the phase
 and validate the thermodynamic model, binary interaction parameters, compressor chart, and thermal
 and mechanical limits for the intended service.
 
+<!-- process-recipes-example: reference-process -->
 ```java
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
