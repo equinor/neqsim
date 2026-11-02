@@ -193,11 +193,11 @@ purchased standard edition, project specification, and vendor documentation for 
 This Java 8 example runs a single-phase liquid pump with a vendor curve, checks NPSH, performs
 the API 610 screen, and exports the structured mechanical-design response. The inlet uses
 n-hexane so the actual-volume flow conversion is based on one stable liquid phase at the stated
-temperature and pressure.
+temperature and pressure. The example is silent and returns four finite, positive operating
+metrics so the published source can be executed as a documentation contract.
 
+<!-- pump-example: api-610-screen -->
 ```java
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.mechanicaldesign.pump.PumpApi610DesignCalculator;
@@ -206,11 +206,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public final class PumpDesignExample {
-  private static final Logger logger = LogManager.getLogger(PumpDesignExample.class);
-
   private PumpDesignExample() {}
 
-  public static void main(String[] args) {
+  public static double[] run() {
     SystemInterface fluid = new SystemSrkEos(298.15, 5.0);
     fluid.addComponent("n-hexane", 1.0);
     fluid.setMixingRule("classic");
@@ -249,9 +247,20 @@ public final class PumpDesignExample {
     PumpApi610DesignCalculator.AssessmentStatus status = assessment.getAssessmentStatus();
     String responseJson = design.getResponse().toJson();
 
-    logger.info("Power: {} kW; vendor head: {} m", powerKw, vendorHeadM);
-    logger.info("NPSHa: {} m; NPSHr: {} m", npshAvailableM, npshRequiredM);
-    logger.info("API 610 status: {}; response: {}", status, responseJson);
+    double[] metrics = {powerKw, vendorHeadM, npshAvailableM, npshRequiredM};
+    for (double value : metrics) {
+      if (!Double.isFinite(value) || value <= 0.0) {
+        throw new IllegalStateException("Pump metric is not finite and positive");
+      }
+    }
+    if (status == null || responseJson == null || responseJson.trim().isEmpty()) {
+      throw new IllegalStateException("API 610 screening result is incomplete");
+    }
+    return metrics;
+  }
+
+  public static void main(String[] args) {
+    run();
   }
 }
 ```
