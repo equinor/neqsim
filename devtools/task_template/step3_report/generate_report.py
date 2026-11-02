@@ -2347,6 +2347,12 @@ def _report_text(value):
     return isinstance(value, str) and bool(value.strip())
 
 
+_ACCEPTED_OPTIMIZER_TERMINATION_REASONS = (
+    "CONVERGED_WITH_REPLAYED_FEASIBLE_CANDIDATE",
+    "BUDGET_EXHAUSTED_WITH_REPLAYED_FEASIBLE_CANDIDATE",
+)
+
+
 def _report_non_negative_integer(value):
     """Return true only for non-negative finite report-facing integers."""
     return _report_number(value) and value >= 0 and float(value) == int(value)
@@ -2839,8 +2845,8 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
     reasons = []
     if not isinstance(evidence, dict):
         return ["evidence is not an object"]
-    if evidence.get("schema_version") not in (8, 9, 10, 11, 12, 13, 14, 15, 16):
-        reasons.append("schema_version must be 8 through 16")
+    if evidence.get("schema_version") not in (8, 9, 10, 11, 12, 13, 14, 15, 16, 17):
+        reasons.append("schema_version must be 8 through 17")
     if evidence.get("advisory") is not True:
         reasons.append("advisory flag is missing")
     if not _report_text(evidence.get("cycle_id")):
@@ -2895,10 +2901,10 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
             previous_elapsed = elapsed
         if period.get("time_unit") != evidence.get("time_unit"):
             reasons.append(prefix + " time unit does not match the lifecycle")
-        if evidence.get("schema_version") in (9, 10, 11, 12, 13, 14, 15, 16):
+        if evidence.get("schema_version") in (9, 10, 11, 12, 13, 14, 15, 16, 17):
             coverage = period.get("utilization_coverage")
             expected_coverage_schema = (
-                "1.1" if evidence.get("schema_version") in (10, 11, 12, 13, 14, 15, 16) else "1.0")
+                "1.1" if evidence.get("schema_version") in (10, 11, 12, 13, 14, 15, 16, 17) else "1.0")
             if (not isinstance(coverage, dict)
                     or coverage.get("schema_version") != expected_coverage_schema
                     or coverage.get("coverage_scope") != "DECLARED_EQUIPMENT_AND_CONSTRAINTS"
@@ -2928,7 +2934,7 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
                 required_ids = coverage.get("required_constraint_ids")
                 if (not isinstance(expected_ids, list) or not expected_ids
                         or not isinstance(expected_plant_ids, list)
-                        or (evidence.get("schema_version") in (10, 11, 12, 13, 14, 15, 16)
+                        or (evidence.get("schema_version") in (10, 11, 12, 13, 14, 15, 16, 17)
                             and not expected_plant_ids)
                         or not isinstance(required_ids, list)
                         or len(coverage_ids) != len(set(coverage_ids))
@@ -2941,6 +2947,11 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
             reasons.append(prefix + " is missing schema-v2 envelope evidence")
             period_identities.append([])
             continue
+        if (evidence.get("schema_version") == 17
+                and (not isinstance(envelope.get("optimizer_evidence"), dict)
+                     or envelope["optimizer_evidence"].get("termination_reason")
+                     not in _ACCEPTED_OPTIMIZER_TERMINATION_REASONS)):
+            reasons.append(prefix + " has an invalid optimizer termination reason")
         slices = envelope.get("slices")
         if (not isinstance(slices, list) or not slices
                 or any(not isinstance(row, dict) or row.get("complete") is not True
@@ -2983,12 +2994,12 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
             if (expected_opportunities is None
                     or period.get("constraint_opportunity_summary") != expected_opportunities):
                 reasons.append(prefix + " has an invalid constraint opportunity summary")
-        if evidence.get("schema_version") in (12, 13, 14, 15, 16):
+        if evidence.get("schema_version") in (12, 13, 14, 15, 16, 17):
             expected_opportunities = _constraint_opportunity_summary(ranked)
             if not _qualified_constraint_opportunity_valid(
                     period.get("constraint_opportunity_summary"), expected_opportunities, envelope):
                 reasons.append(prefix + " has an invalid qualified relief receipt")
-            if (evidence.get("schema_version") in (13, 14, 15, 16)
+            if (evidence.get("schema_version") in (13, 14, 15, 16, 17)
                     and any(
                         isinstance(candidate, dict)
                         and isinstance(candidate.get("paired_relief_study_receipt"), dict)
@@ -2996,7 +3007,7 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
                         for candidate in period.get("constraint_opportunity_summary", {}).get(
                             "candidates", []))):
                 qualified_relief_portfolio_found = True
-        if (evidence.get("schema_version") in (14, 15, 16)
+        if (evidence.get("schema_version") in (14, 15, 16, 17)
                 and "qualified_relief_combination" in period):
             if _qualified_relief_combination_valid(
                     period.get("qualified_relief_combination"),
@@ -3004,22 +3015,22 @@ def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
                 qualified_relief_combination_found = True
             else:
                 reasons.append(prefix + " has an invalid qualified relief combination")
-        if (evidence.get("schema_version") in (15, 16)
+        if (evidence.get("schema_version") in (15, 16, 17)
                 and "qualified_relief_envelope" in period):
             if _qualified_relief_envelope_valid(
                     period.get("qualified_relief_envelope"),
                     period.get("qualified_relief_combination"), envelope,
-                    require_sampled_cells=evidence.get("schema_version") == 16):
+                    require_sampled_cells=evidence.get("schema_version") in (16, 17)):
                 qualified_relief_envelope_found = True
             else:
                 reasons.append(prefix + " has an invalid qualified relief envelope")
         period_identities.append(identities)
 
-    if evidence.get("schema_version") in (13, 14, 15, 16) and not qualified_relief_portfolio_found:
+    if evidence.get("schema_version") in (13, 14, 15, 16, 17) and not qualified_relief_portfolio_found:
         reasons.append("lifecycle is missing a qualified relief portfolio")
-    if evidence.get("schema_version") in (14, 15, 16) and not qualified_relief_combination_found:
+    if evidence.get("schema_version") in (14, 15, 16, 17) and not qualified_relief_combination_found:
         reasons.append("lifecycle is missing a qualified relief combination")
-    if evidence.get("schema_version") in (15, 16) and not qualified_relief_envelope_found:
+    if evidence.get("schema_version") in (15, 16, 17) and not qualified_relief_envelope_found:
         reasons.append("lifecycle is missing a qualified relief envelope")
     if expected_cycle_id and expected_cycle_id not in seen_period_ids:
         reasons.append("promoted current-best cycle is missing from lifecycle periods")
@@ -3304,6 +3315,25 @@ def format_lifecycle_envelope_text(results, expected_cycle_id=None):
             evidence["lifecycle_study_name"], evidence["lifecycle_study_id"], evidence["cycle_id"],
             evidence["completed_point_count"], evidence["total_evaluation_count"],
             _fmt_number(evidence["envelope_runtime_seconds"]), evidence["lifecycle_study_provenance"]),
+    ]
+    if evidence["schema_version"] == 17:
+        lines += [
+            "",
+            "**Validated optimization termination.** Each reason comes from the same fail-closed search that "
+            "replayed the accepted point. Budget exhaustion is reported explicitly and is not convergence or "
+            "proof of global optimality.",
+            "",
+            "| Period | Search termination | Validated objective | Search evaluations | Search runtime |",
+            "|---|---|---|---|---|",
+        ]
+        for period in evidence["periods"]:
+            optimizer = period["envelope_evidence"]["optimizer_evidence"]
+            lines.append("| {} | `{}` | {} {} | {} | {} s |".format(
+                _md_cell(period["period_name"]), _md_cell(optimizer["termination_reason"]),
+                _fmt_number(optimizer["accepted_objective_value"]),
+                _md_cell(optimizer["objective_unit"]), optimizer["evaluation_count"],
+                _fmt_number(optimizer["runtime_seconds"])))
+    lines += [
         "",
         "Rows below retain exact per-period engineering units and representative physical headroom. "
         "Rank applies only inside one period; margins are never ranked or compared across unlike units.",
@@ -3333,7 +3363,7 @@ def format_lifecycle_envelope_text(results, expected_cycle_id=None):
                 _fmt_number(row["applicable_limit"]) if row["applicable_limit"] is not None else "n/a",
                 _md_cell(row["physical_unit"]), _md_cell(row["applicable_limit_provenance"])))
 
-    if evidence["schema_version"] in (9, 10, 11, 12, 13, 14, 15, 16):
+    if evidence["schema_version"] in (9, 10, 11, 12, 13, 14, 15, 16, 17):
         lines += ["", "**Declared accepted-replay constraint coverage.** Every row is frozen at the accepted replay; "
                   "missing, screening-only, non-finite, or unqualified limits are withheld upstream.", "",
                   "| Period | Evidence | Exact constraint | Current / limit | Utilization | Limit basis | Provenance |",
@@ -3353,7 +3383,7 @@ def format_lifecycle_envelope_text(results, expected_cycle_id=None):
                         _md_cell(row["unit"]), _fmt_number(row["normalized_utilization"]),
                         _md_cell(row["basis"]), _md_cell(row["provenance"])))
 
-    if evidence["schema_version"] in (11, 12, 13, 14, 15, 16):
+    if evidence["schema_version"] in (11, 12, 13, 14, 15, 16, 17):
         lines += ["", "**Constraint follow-up opportunity screen.** Rows are qualified first as exact sampled or "
                   "refined constraint evidence. A relief delta is shown only when an exact accepted-baseline-bound "
                   "paired study receipt also passes convergence, feasibility, finiteness, and restoration gates.", "",
@@ -3380,7 +3410,7 @@ def format_lifecycle_envelope_text(results, expected_cycle_id=None):
                     _md_cell(candidate["physical_unit"]), _fmt_number(candidate["physical_headroom"]),
                     _md_cell(candidate["physical_unit"]), follow_up))
 
-    if evidence["schema_version"] in (14, 15, 16):
+    if evidence["schema_version"] in (14, 15, 16, 17):
         lines += ["", "**Joint relief combinations.** Combined deltas are independently simulated; the "
                   "independent-delta sum is shown only to expose interaction, never as an additive prediction.", "",
                   "| Period | Members | Combined Δ | Independent Δ sum | Interaction Δ | Bottleneck migration |",
@@ -3401,7 +3431,7 @@ def format_lifecycle_envelope_text(results, expected_cycle_id=None):
                 _md_cell(migration["baseline_bottleneck"]["qualified_constraint_name"]),
                 _md_cell(migration["combined_bottleneck"]["qualified_constraint_name"])))
 
-    if evidence["schema_version"] in (15, 16):
+    if evidence["schema_version"] in (15, 16, 17):
         lines += ["", "**Paired relief operating envelopes.** Every row reuses the exact baseline slice grid and "
                   "anchor under the jointly simulated capacity configuration. Sampled cells retain exact corner "
                   "and perimeter-edge evidence only. Boundary shifts compare terminal bracket endpoints; neither "

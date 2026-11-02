@@ -17,6 +17,7 @@ import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator.HydraulicLimitRole;
 import neqsim.process.util.optimizer.ProcessModelOperatingPointOptimizer.OperatingPointSearchResult;
+import neqsim.process.util.optimizer.ProcessModelOperatingPointOptimizer.SearchOutcome;
 import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ObjectiveDefinition;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -127,6 +128,7 @@ class ProcessModelOperatingPointOptimizerTest {
     assertEquals("mixed production value", evidence.get("objective_name"));
     assertEquals("MAXIMIZE", evidence.get("objective_direction"));
     assertEquals("value-unit/hr", evidence.get("objective_unit"));
+    assertEquals(result.getOutcome().name(), evidence.get("termination_reason"));
     assertEquals(result.getCandidates().get(0).getRawObjective(), evidence.get("initial_objective_value"));
     assertEquals(result.getAcceptedPointReplay().getRawObjective(), evidence.get("accepted_objective_value"));
     assertEquals(Boolean.TRUE, evidence.get("simulation_converged"));
@@ -149,6 +151,8 @@ class ProcessModelOperatingPointOptimizerTest {
     assertTrue(result.isAcceptedPointReplayed());
     assertEquals(2, result.getEvaluationCount());
     assertFalse(result.isConverged());
+    assertEquals(SearchOutcome.BUDGET_EXHAUSTED_WITH_REPLAYED_FEASIBLE_CANDIDATE, result.getOutcome());
+    assertEquals(result.getOutcome().name(), result.getOptimizerEvidence("budget-cycle").get("termination_reason"));
     assertArrayEquals(new double[] {500.0, 500.0}, result.getAcceptedCandidateValues(), 0.0);
     double[] mutated = result.getAcceptedCandidateValues();
     mutated[0] = -1.0;

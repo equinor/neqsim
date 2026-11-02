@@ -828,9 +828,11 @@ double[] acceptedChokesAndRoutes = search.getAcceptedCandidateValues();
 ```
 
 `getOptimizerEvidence(cycleId)` emits the exact fail-closed fields used by the living-task production
-guard: current cycle identity, candidate convergence/feasibility/finiteness, complete constraint and
+guard: current cycle identity, exact optimizer termination reason, candidate convergence/feasibility/finiteness, complete constraint and
 action evidence, complete state restoration, accepted-point replay, evaluation count, and measured
-runtime. When boundary refinement is enabled, it also records the configured per-direction maximum
+runtime. The termination reason distinguishes tolerance convergence from an evaluation-budget stop; both still require
+the same feasible accepted-point replay, and budget exhaustion is never relabelled as convergence. When boundary
+refinement is enabled, it also records the configured per-direction maximum
 and the number of midpoint evaluations actually performed. A `true` evidence block qualifies only
 the configured steady-state model and limits. It is
 not a global-optimality claim, a dynamic/safety study, or permission to write to a control system.
@@ -1008,7 +1010,7 @@ Schema v11 retains the schema-v10 requirement for non-empty, independently decla
 schema-v9 equipment scope, complete finite rated evidence, explicit unit/basis/provenance/direction/category, and exact
 calculation binding to the accepted-point replay. Supply both
 `getInstalledEquipmentCapacityEvidence()` and `getPlantConstraintEvidence()` through the frozen-evidence builder path;
-this never resamples the mutable process after baseline restoration. Current schema-v11/v12/v13/v14/v15/v16 exports retain optional
+this never resamples the mutable process after baseline restoration. Current schema-v11/v12/v13/v14/v15/v16/v17 exports retain optional
 accepted-state metrics and require schema-v2
 cross-slice summaries in every period. The guard reconstructs each summary from persisted sampled and refined
 endpoint rows before trusting it, independently reconstructs the constraint opportunity screen, validates any v12/v13
@@ -1019,6 +1021,7 @@ the persisted deltas, reconstructs each schema-v14 joint membership, objective a
 bottleneck migration without assuming additivity, reconstructs every schema-v15 paired slice grid, point identity
 change, refinement count and bracket-endpoint shift from the persisted baseline and jointly relieved slices,
 reconstructs every schema-v16 sampled cell and perimeter boundary family from the persisted 2D grid, and then
+requires every schema-v17 period to retain an accepted optimizer termination reason from the same replayed search, and then
 recomputes every
 period-change diagnostic from the persisted periods before accepting it, including exact operating-region event
 migration, refined-boundary endpoint constraints and physical margins, exact ranked constraint-identity migration,

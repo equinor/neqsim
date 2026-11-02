@@ -1,7 +1,7 @@
 """Execute the Java ten-well lifecycle through the persistent production workflow.
 
 This is the source acceptance path for issue #4188. It deliberately calls the test-scope
-Java fixture, consumes its exact schema-v16 lifecycle JSON plus the exact configured
+Java fixture, consumes its exact schema-v17 lifecycle JSON plus the exact configured
 casing-map-to-driver migration receipt, and exercises the existing #4187 adapter, guard,
 ledger, promotion, living report, and canonical report implementation.
 """
@@ -248,7 +248,7 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             first_item_id = first_item["id"]
             evidence = items[0]["lifecycle_envelope_evidence"]
             migration = items[0]["map_driver_migration_evidence"]
-            self.assertEqual(16, evidence["schema_version"])
+            self.assertEqual(17, evidence["schema_version"])
             self.assertEqual(cycle_id, evidence["cycle_id"])
             self.assertEqual(2, evidence["period_count"])
             self.assertEqual(64, evidence["requested_point_count"])
@@ -318,6 +318,10 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertEqual("validated gas export", optimizer["objective_name"])
             self.assertEqual("MAXIMIZE", optimizer["objective_direction"])
             self.assertEqual("kg/hr", optimizer["objective_unit"])
+            self.assertIn(optimizer["termination_reason"], (
+                "CONVERGED_WITH_REPLAYED_FEASIBLE_CANDIDATE",
+                "BUDGET_EXHAUSTED_WITH_REPLAYED_FEASIBLE_CANDIDATE",
+            ))
             self.assertEqual(
                 optimizer["initial_objective_value"],
                 items[0]["baseline_value"],
@@ -487,6 +491,17 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
                 production._map_driver_lifecycle_link_reasons(
                     SimpleNamespace(cycle_id=cycle_id), tampered_link, required=True),
             )
+            tampered_termination = copy.deepcopy(first_item)
+            tampered_current = next(
+                period for period in tampered_termination["lifecycle_envelope_evidence"]["periods"]
+                if period["period_id"] == cycle_id)
+            tampered_current["envelope_evidence"]["optimizer_evidence"][
+                "termination_reason"] = "UNCONVERGED_PARTIAL_RESULT"
+            self.assertIn(
+                "lifecycle_period_1_invalid_optimizer_termination_reason",
+                production._lifecycle_evidence_reasons(
+                    SimpleNamespace(cycle_id=cycle_id), tampered_termination, required=True),
+            )
             for field in (
                     "simulation_converged", "candidate_feasible", "candidate_finite",
                     "constraint_evidence_complete", "state_restore_complete",
@@ -513,6 +528,7 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertIn("Accepted replay: map current / limit", living_report)
             self.assertIn(link["map_row"]["qualified_constraint_id"], living_report)
             self.assertIn(link["driver_row"]["qualified_constraint_id"], living_report)
+            self.assertIn(optimizer["termination_reason"], living_report)
 
             generator = ROOT / "devtools" / "task_template" / "step3_report" / "generate_report.py"
             completed = subprocess.run([
@@ -538,6 +554,8 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertIn("Accepted-replay comparison", report)
             self.assertIn(link["map_row"]["qualified_constraint_id"], report)
             self.assertIn(link["driver_row"]["qualified_constraint_id"], report)
+            self.assertIn("Validated optimization termination", report)
+            self.assertIn(optimizer["termination_reason"], report)
             self.assertIn("advisory", report)
 
             input_path = task / "continuous" / "user_input.yaml"

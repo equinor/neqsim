@@ -1131,6 +1131,7 @@ exactly `true`; missing, false, or stale evidence withholds the proposal rather 
 ```yaml
 optimizer_evidence:
   cycle_id: <ctx.cycle_id>
+  termination_reason: CONVERGED_WITH_REPLAYED_FEASIBLE_CANDIDATE
   simulation_converged: true
   candidate_feasible: true
   candidate_finite: true
@@ -1142,6 +1143,9 @@ optimizer_evidence:
   runtime_seconds: 12.8
 ```
 
+`termination_reason` is the optimizer's exact terminal classification. The guard accepts only a replayed feasible
+candidate that either reached its configured step tolerance or exhausted its evaluation budget; the latter remains
+explicitly budget-limited and is not reported as convergence or proof of a global optimum.
 `state_restore_complete` covers restoration after every rejected/intermediate evaluation;
 `accepted_point_replayed` confirms the selected point was then applied and re-simulated from a known state.
 `actions_complete` must be false when any requested setpoint or routing action was rejected. The accepted ledger
