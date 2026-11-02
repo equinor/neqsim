@@ -13,6 +13,10 @@
  * selected release model</li>
  * <li>{@link neqsim.process.safety.release.ReleaseInventoryHeatTransfer} - Explicit adiabatic, constant-power or
  * lumped-conductance external inventory heat boundary</li>
+ * <li>{@link neqsim.process.safety.release.NonEquilibriumReleaseInventory} - Opt-in retained gas/liquid component
+ * inventory with finite-rate two-way transfer and rigid volume/energy closure</li>
+ * <li>{@link neqsim.process.safety.release.ReleaseInventoryInterphaseTransfer} - Provenance-required prescribed
+ * component-film coefficients with donor limits</li>
  * <li>{@link neqsim.process.safety.release.DriftFluxHomogeneousEquilibriumReleaseModel} - Bounded vertical-upward
  * gas/liquid drift-flux short-opening screening</li>
  * <li>{@link neqsim.process.safety.release.FiniteRateDriftFluxReleaseModel} - Caller-parameterized first-order
@@ -59,7 +63,9 @@
  * component-transfer calculations to a checked fixed point. These models retain explicit phase-area and kinetic-energy
  * closure; none predicts interfacial heat transfer, entrainment, annular jets or solid-bearing flow. Both real-gas pipe
  * models fail closed if an equilibrium phase appears. The inventory heat boundary accepts caller-imposed power or
- * conductance with provenance; it does not predict fire heat flux, wall inertia or interfacial heat/latent transfer.
+ * conductance with provenance; it does not predict fire heat flux or wall inertia. The opt-in non-equilibrium inventory
+ * retains gas/liquid component partitions and thermodynamic latent-energy effects, but assumes one common phase
+ * temperature and prescribed film coefficients; it does not predict nucleation, entrainment or population balance.
  *
  * <p>
  * Example usage:
