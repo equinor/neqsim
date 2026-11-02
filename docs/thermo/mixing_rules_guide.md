@@ -528,6 +528,11 @@ Those proposals passed numerical checks yet failed the performance gate, so
 they are held outside production. Lower request counts alone do not establish
 lower full-flash cost or justify a runtime change.
 
+The [quarantined CO2-in-MEG source receipts](../../src/test/resources/neqsim/thermo/mixingrule/hv-co2-meg-receipts/README.md)
+retain both manuscript/archive phase labels and duplicate measurements. Their
+offline audit preserves source identities and uncertainty semantics; it supplies
+no HV fit, measured feed or experimental acceptance threshold.
+
 ---
 
 ## 5. Wong-Sandler Mixing Rule
