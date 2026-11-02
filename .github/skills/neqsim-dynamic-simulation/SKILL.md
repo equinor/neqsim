@@ -980,3 +980,14 @@ first moments [m3] and `getGravityPotentialEnergyPerLength(gasDensity, liquidDen
 See [the executed analytical/high-precision energy record](../../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/README.md).
 This does not resolve the documented dry/wet pressure impulse or qualify dynamic pools, inlet refill
 or hydrocarbon evaporation; those still require conservative phase-front transport/work and heat/mass transfer.
+
+
+### Optional Rusanov phase-flux contract
+
+`AUSMPlusFluxCalculator.calcRusanovFlux` is an explicit local comparison/reserve query.
+Its dissipated energy is `alpha * (rho * H - p)` with total specific enthalpy;
+exact absence ignores unused properties and positive traces retain the same formula.
+See the [executed conservative-flux evidence](../../../src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/README.md).
+This is not selected by the production solver: two-sided diffusion requires compatible
+component/energy donors, a Courant bound and coupled gravitational-energy qualification.
+Do not use it as proof of dry/wet fronts, terrain pools, refill or physical evaporation.
