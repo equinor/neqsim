@@ -9,6 +9,10 @@
  * <li>{@link neqsim.process.safety.release.ReleaseOrientation} - Jet orientation for dispersion modeling</li>
  * <li>{@link neqsim.process.safety.release.ReleaseSolidRiskAssessment} - Fail-closed mixture-specific solid and hydrate
  * applicability assessment</li>
+ * <li>{@link neqsim.process.safety.release.ReleaseInventory} - Conservative rigid-inventory depletion coupled to a
+ * selected release model</li>
+ * <li>{@link neqsim.process.safety.release.ReleaseInventoryHeatTransfer} - Explicit adiabatic, constant-power or
+ * lumped-conductance external inventory heat boundary</li>
  * <li>{@link neqsim.process.safety.release.DriftFluxHomogeneousEquilibriumReleaseModel} - Bounded vertical-upward
  * gas/liquid drift-flux short-opening screening</li>
  * <li>{@link neqsim.process.safety.release.FiniteRateDriftFluxReleaseModel} - Caller-parameterized first-order
@@ -54,7 +58,8 @@
  * velocities and gas residence time from explicit transfer-zone geometry before iterating the Ranz-Marshall and
  * component-transfer calculations to a checked fixed point. These models retain explicit phase-area and kinetic-energy
  * closure; none predicts interfacial heat transfer, entrainment, annular jets or solid-bearing flow. Both real-gas pipe
- * models fail closed if an equilibrium phase appears.
+ * models fail closed if an equilibrium phase appears. The inventory heat boundary accepts caller-imposed power or
+ * conductance with provenance; it does not predict fire heat flux, wall inertia or interfacial heat/latent transfer.
  *
  * <p>
  * Example usage:

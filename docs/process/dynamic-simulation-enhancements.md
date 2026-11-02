@@ -640,6 +640,25 @@ new UUID for each physical timestep. If the inlet is at or below the cooling
 medium temperature, this cooling-only model passes through the inlet temperature
 and adds no heat.
 
+For a scan-consistent temperature loop, register the outlet `TemperatureTransmitter`
+with the `ProcessSystem` and enable its physical-step sampling mode. The public
+synthetic qualification uses a 10,000 kg/h methane/ethane feed, an 80/35/20 C
+design point, 5 s utility-actuator and 10 s thermal time constants, and a 4/30/0
+PID. Following an 80 to 100 C inlet step, the 1 s scan case limits the 60 s outlet
+peak/final temperature to 38.3/37.6 C, IAE to 161 C-s, peak held-sample error to
+3.3 C and controller-output travel to 5.6 percentage points. The 1.0/0.5 s
+ten-second comparison limits outlet and opening differences to 0.75 C and one
+percentage point. A stuck-at-35 C sensor case must mask more than a 5 C real
+excursion; it is retained as a fail-loud safety limitation, not a passed
+safeguarding case. These synthetic limits qualify numerical execution only. They
+do not establish vendor response, hazard completeness, alarm/trip settings,
+independence, voting, SIL, relief adequacy or an approved control tuning.
+The cooler's physical-step UUID guard prevents double advancement inside one
+accepted step, but the cooler is not claimed here as a complete
+`TransientStateParticipant`. Do not use this chain as evidence for adaptive
+trial rejection or whole-step rollback until every equipment-owned state has
+explicit transaction coverage.
+
 Valve `autoSize(safetyFactor, designOpeningPercent)` evaluates the sizing
 correlation at the requested design opening, including when it differs from the
 current valve position. With a safety factor of 1 and no minimum-Cv floor
