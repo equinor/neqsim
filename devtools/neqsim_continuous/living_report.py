@@ -55,7 +55,7 @@ def _constraint_text(constraint):
 
 def _map_driver_migration_timeline(items):
     """Return fail-closed operator rows for guarded map-to-driver receipts in the ledger."""
-    from .production import _map_driver_migration_evidence_reasons
+    from .production import _map_driver_lifecycle_link, _map_driver_migration_evidence_reasons
 
     rows = []
     withheld = 0
@@ -67,7 +67,9 @@ def _map_driver_migration_timeline(items):
             continue
         reasons = _map_driver_migration_evidence_reasons(
             SimpleNamespace(cycle_id=item.get("cycle")), item, required=True)
-        if reasons:
+        link, link_reasons = _map_driver_lifecycle_link(
+            SimpleNamespace(cycle_id=item.get("cycle")), item, required=True)
+        if reasons or link_reasons:
             withheld += 1
             continue
         map_boundary = receipt["map_limited_slice"][
@@ -94,6 +96,16 @@ def _map_driver_migration_timeline(items):
             "{} → {} {}".format(
                 _fmt(receipt["sampled_axis_values"][0]),
                 _fmt(receipt["sampled_axis_values"][1]), receipt["action_unit"]),
+            "{}: {} / {} {}; {}".format(
+                link["map_row"]["qualified_constraint_id"],
+                _fmt(link["map_row"]["current_value"]),
+                _fmt(link["map_row"]["applicable_limit"]),
+                link["map_row"]["unit"], link["map_row"]["provenance"]),
+            "{}: {} / {} {}; {}".format(
+                link["driver_row"]["qualified_constraint_id"],
+                _fmt(link["driver_row"]["current_value"]),
+                _fmt(link["driver_row"]["applicable_limit"]),
+                link["driver_row"]["unit"], link["driver_row"]["provenance"]),
             evidence_state,
         ))
     return rows, withheld
@@ -503,16 +515,20 @@ def build(task_dir):
     if migration_rows or withheld_migrations:
         out += ["", "## Map-to-driver bottleneck timeline", "",
                 "*Cycle-bound advisory receipts showing when the rejecting common-speed boundary moved from a "
-                "configured casing-map operating restriction to total driver power. Historical rows remain visible "
-                "but are labelled stale or superseded; they are not current operating instructions.*", ""]
+                "configured casing-map operating restriction to total driver power. Each receipt is linked to the "
+                "same cycle's exact accepted-replay coverage rows after the temporary map override was cleared. "
+                "Historical rows remain visible but are labelled stale or superseded; they are not current operating "
+                "instructions.*", ""]
         if migration_rows:
             out += _table([
                 "Cycle", "Ledger receipt", "Configured map restriction", "Map limit / basis",
-                "Driver constraint", "Driver limit", "Common-speed endpoints", "Evidence state",
+                "Driver constraint", "Driver limit", "Common-speed endpoints",
+                "Accepted replay: map current / limit", "Accepted replay: driver current / limit",
+                "Evidence state",
             ], migration_rows)
         if withheld_migrations:
             out += ["", "{} malformed or cycle-mismatched migration receipt(s) were withheld; no map-to-driver "
-                    "claim was rendered from them.".format(withheld_migrations)]
+                    "or accepted-replay comparison was rendered from them.".format(withheld_migrations)]
 
     out += ["", "## Baseline history", "",
             "*Every reviewed baseline the task has had. A new baseline is only created by a named reviewer.*", ""]
@@ -605,3 +621,4 @@ def regenerate_formal(task_dir):
     except OSError as error:
         logger.warning("formal report not regenerated: %s", error)
         return None
+

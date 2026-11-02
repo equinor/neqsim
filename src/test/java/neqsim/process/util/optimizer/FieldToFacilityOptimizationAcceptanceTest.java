@@ -688,9 +688,9 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     JsonObject coverage = jsonPeriods.get(1).getAsJsonObject().getAsJsonObject("utilization_coverage");
     assertTrue(coverage.get("complete").getAsBoolean());
     assertEquals("1.1", coverage.get("schema_version").getAsString());
-    assertEquals(34, coverage.getAsJsonArray("expected_constraint_ids").size());
+    assertEquals(39, coverage.getAsJsonArray("expected_constraint_ids").size());
     assertEquals(10, coverage.getAsJsonArray("expected_plant_constraint_ids").size());
-    assertEquals(44, coverage.getAsJsonArray("rows").size());
+    assertEquals(49, coverage.getAsJsonArray("rows").size());
     assertTrue(coverage.getAsJsonArray("rows").asList().stream().map(JsonElement::getAsJsonObject)
         .anyMatch(row -> "PLANT_CONSTRAINT".equals(row.get("evidence_kind").getAsString())
             && row.get("qualified_constraint_id").getAsString().endsWith("#driver-maximum-power")));
@@ -1310,15 +1310,24 @@ public class FieldToFacilityOptimizationAcceptanceTest {
   /** Build declared capacity coverage from the accepted replay without resampling the restored fixture. */
   private UtilizationCoverageReport acceptedCoverage(Fixture fixture, OperatingPointSearchResult search) {
     UtilizationCoverageReport.Builder coverage = UtilizationCoverageReport.builder("ten-well-field");
+    List<InstalledEquipmentCapacityEvidence> accepted = search.getAcceptedPointReplay().getEvaluation()
+        .getInstalledEquipmentCapacityEvidence();
     for (String suffix : fixture.wellSuffixes) {
-      coverage.expectConstraint("Field", "field network", "producer " + suffix + " deliverability")
-          .expectConstraint("Field", "field network", suffix + " HP route capacity")
-          .expectConstraint("Field", "field network", suffix + " LP route capacity");
+      expectAcceptedCoverageConstraint(coverage, accepted, "field network", "producer " + suffix + " deliverability");
+      expectAcceptedCoverageConstraint(coverage, accepted, "field network", suffix + " HP route capacity");
+      expectAcceptedCoverageConstraint(coverage, accepted, "field network", suffix + " LP route capacity");
     }
     for (String equipmentName : Arrays.asList("HP separator", "LP separator", "HP suction scrubber",
         "LP suction scrubber")) {
-      coverage.expectConstraint("Field", equipmentName, "gas handling");
+      expectAcceptedCoverageConstraint(coverage, accepted, equipmentName, "gas handling");
     }
+    // Either casing margin or the equipment-local driver constraint can lead the diagnostic boundary.
+    // Declare these rows before consuming accepted replay evidence; do not resample the restored model.
+    for (String equipmentName : Arrays.asList("HP compressor", "LP compressor")) {
+      expectAcceptedCoverageConstraint(coverage, accepted, equipmentName, "surgeMargin");
+      expectAcceptedCoverageConstraint(coverage, accepted, equipmentName, "stonewallMargin");
+    }
+    expectAcceptedCoverageConstraint(coverage, accepted, "export shaft control", "shaftPower");
     PlantConstraintScope shaftGroup = PlantConstraintScope.coupledGroup("synthetic field", "Host",
         "export common shaft");
     for (String constraintName : Arrays.asList("common-speed-deviation", "shaft-maximum-speed", "shaft-power-balance",
@@ -1331,8 +1340,31 @@ public class FieldToFacilityOptimizationAcceptanceTest {
           .expectPlantConstraint(compressor.getStableId() + "#" + PlantConstraintScope.escape("compressor-map-margin"));
     }
     coverage.expectPlantConstraint(sharedPowerDefinition().getQualifiedId());
-    return coverage.evidence(search.getAcceptedPointReplay().getEvaluation().getInstalledEquipmentCapacityEvidence())
-        .plantEvidence(search.getAcceptedPointReplay().getEvaluation().getPlantConstraintEvidence()).build();
+    return coverage.plantEvidence(search.getAcceptedPointReplay().getEvaluation().getPlantConstraintEvidence()).build();
+  }
+
+  /**
+   * Declare one required row and supply only its exact frozen accepted-replay evidence.
+   *
+   * <p>
+   * Coverage is limited to the declared constraint identities, not undeclared design-only compressor defaults. Missing,
+   * duplicate or unavailable declared evidence still fails coverage validation.
+   * </p>
+   *
+   * @param coverage declared-scope coverage builder
+   * @param accepted immutable accepted-replay evidence
+   * @param equipmentName exact equipment display name in the Field area
+   * @param constraintName exact equipment-local constraint name
+   */
+  private void expectAcceptedCoverageConstraint(UtilizationCoverageReport.Builder coverage,
+      List<InstalledEquipmentCapacityEvidence> accepted, String equipmentName, String constraintName) {
+    coverage.expectConstraint("Field", equipmentName, constraintName);
+    for (InstalledEquipmentCapacityEvidence evidence : accepted) {
+      if ("Field".equals(evidence.getAreaName()) && equipmentName.equals(evidence.getEquipmentName())
+          && constraintName.equals(evidence.getConstraintName())) {
+        coverage.evidence(evidence);
+      }
+    }
   }
 
   /**
@@ -1612,6 +1644,12 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     lowPressureCompressor.getCompressorChart().setUseCompressorChart(true);
     highPressureCompressor.reinitializeCapacityConstraints();
     lowPressureCompressor.reinitializeCapacityConstraints();
+    for (Compressor compressor : Arrays.asList(highPressureCompressor, lowPressureCompressor)) {
+      for (String constraintName : Arrays.asList("surgeMargin", "stonewallMargin")) {
+        compressor.getCapacityConstraints().get(constraintName).setSource(ConstraintSource.USER_RULE,
+            "synthetic generated compressor chart with built-in minimum map margin");
+      }
+    }
     model.run();
     assertTrue(model.isModelConverged());
 

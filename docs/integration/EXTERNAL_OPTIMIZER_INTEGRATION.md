@@ -1145,9 +1145,17 @@ historical map or driver evidence as current.
 The living report presents valid receipts as a cycle-ordered timeline and labels superseded evidence with the cycle
 that invalidated it. The canonical current-best/final report accepts only a promoted receipt whose cycle matches the
 reviewed baseline, then shows the exact configured map restriction and provenance, driver rating, and common-speed
-endpoint grid. Invalid receipts are explicitly withheld. Reporting remains downstream of the production guard and
-must not recompute a boundary, substitute a different constraint identity, or imply permission to relax equipment
-limits.
+endpoint grid. If the production plan requires both lifecycle and migration evidence, the guard additionally joins the
+map and driver names to unique, independently `AVAILABLE` rows in the same current-period accepted-replay coverage.
+Installed-equipment names use the Java exporter's `area::equipment/constraint` form; the coverage model name remains
+part of the separate stable equipment ID. Declare both casing-map margin rows and the shaft-power row when either
+can lead a diagnostic boundary. Resolve them from accepted-replay evidence, without sampling the restored model.
+Keep this coverage scoped to explicitly declared constraint identities and retain each row's real provenance;
+generated test charts must identify their synthetic source rather than imply vendor qualification.
+The joined view keeps exact current value, limit, utilization, basis, and provenance, and rejects configured map
+provenance that survives despite an override-clearance claim. Invalid or ambiguous links are explicitly withheld.
+Reporting remains downstream of the production guard and must not recompute a boundary, substitute a different
+constraint identity, or imply permission to relax equipment limits.
 
 Current optimizer evidence also exports the relative simulator replay tolerance and its provenance. A persistent task
 may use that value only to bind a reviewed objective baseline to a fresh initial replay; the guard caps it at
@@ -1838,5 +1846,6 @@ on `ProcessSimulationEvaluator`.
 - [flow-rate-optimization.md](../process/optimization/flow-rate-optimization.md) - FlowRateOptimizer for lift curve generation
 - [pressure_boundary_optimization.md](../process/pressure_boundary_optimization.md) - Simplified pressure boundary optimizer
 - [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) - Complete production optimization examples
+
 
 
