@@ -215,6 +215,17 @@ neqsim-process-safety / discipline   (consequence, if the cause is a hazard)
   topology classification -> Bayesian scoring) so the agent only supplies data +
   flowsheet.
 
+## Periodic oscillation on a gas node (compressor suction / separator pressure)
+
+Lessons from a solved export-compressor-inlet oscillation study (cross-spectral workflow, Python on the historian pull):
+
+1. **Characterise before explaining:** hourly Welch band power (3-10 min), amplitude-envelope coefficient of variation (about 0.52 = Rayleigh = noise-driven lightly damped mode; about 0.1-0.2 = limit cycle), peak width (Q, damping ratio), harmonics (nonlinear limiter or burst valve).
+2. **Cross-spectrum against the pressure, not time-domain correlation:** coherence and phase at the peak for every covered tag (60 s grid for sparse on-change tags). Convention: scipy `csd(ref, y)` angle > 0 means y leads ref. Check the UTC offset of the pull before matching an operator's local-time window.
+3. **Limit signature:** a driver speed anti-phase (about 180 deg, coherence above 0.8) with suction pressure, a flat-topped current/temperature, and a pinned gas-generator speed or exhaust/CDP temperature mean the machine is on a power limit: speed droops with load, flow stiffness is cut, and no pressure controller has authority. Quantify with a band-passed log regression `d ln m / d ln N`, `d ln m / d ln P1`.
+4. **Time constant test:** node time constant `tau = V * d(rho)/dP / (dm/dP)` (NeqSim SRK for `d(rho)/dP`); if it is much shorter than the period, a slower element (liquid inventory, riser transport, integrators, anti-surge recycle) closes the loop.
+5. **Phasor mass budget:** `F_in = m_out + V rho' dP/dt` at the peak frequency for a range of V; its phase against P gives the delay of a feedback path (`tau_d = (180 deg - phase) / (360 deg * f)` for negative feedback). It is a consistency test, not proof; state it that way.
+6. **Anti-surge on one train:** a mean valve position of several percent with a mass-versus-volume flow discrepancy (IOC net flow vs transmitter volume times NeqSim density) indicates permanent recycle that costs power on a power-limited machine.
+
 ## Limitations
 
 - Correlation and lead-lag are **screening** signals, not proof of causation.
