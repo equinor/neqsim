@@ -13,6 +13,7 @@ on:
       - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-selected-pair-performance/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-row-performance/**"
+      - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-meg-receipts/**"
       - "src/test/resources/data/chemistry_benchmarks/structure_h_jin2023_digitized.*"
       - "docs/thermo/structure_h_parameter_qualification.md"
       - "examples/mechanical_design_json_to_mesh.py"
@@ -28,6 +29,7 @@ on:
       - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-selected-pair-performance/**"
       - "src/test/resources/neqsim/thermo/mixingrule/hv-row-performance/**"
+      - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-meg-receipts/**"
       - "src/test/resources/data/chemistry_benchmarks/structure_h_jin2023_digitized.*"
       - "docs/thermo/structure_h_parameter_qualification.md"
       - "examples/mechanical_design_json_to_mesh.py"
@@ -120,6 +122,11 @@ jobs:
       - name: Verify HV binary controls and retained performance evidence
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_benchmark_huron_vidal_rows.py -v
 
+      - name: Verify quarantined HV measurement provenance
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_meg_receipts.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s devtools -p test_audit_huron_vidal_meg_receipts.py -v
+
       - name: Verify Maven resolution retry boundaries
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_maven_resolution_retry.py -v
 
@@ -193,6 +200,11 @@ jobs:
 
       - name: Verify HV binary evidence on the minimum supported Python
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_benchmark_huron_vidal_rows.py -v
+
+      - name: Verify quarantined HV measurement provenance
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_meg_receipts.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s devtools -p test_audit_huron_vidal_meg_receipts.py -v
 
       - name: Verify Maven retry boundaries on the minimum supported Python
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_maven_resolution_retry.py -v

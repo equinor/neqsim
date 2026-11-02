@@ -668,8 +668,8 @@
     "selection_control": "102 forced-GAS five-component controls (water/CO2/methane/methanol/MEG), both component orders, three profiles and repeated/changed states; all ordinary kij unchanged; only CO2/water HV; dormant coefficient invariance and CLASSICAL rule2 reduction. Numerical scope only; no inhibitor partition or phase-stability qualification.",
     "uncertainty_and_lineage": "gas-primary.csv/reverse-primary.csv retain author uncertainty and malformed original pressure; offline devtools/audit_huron_vidal_co2_source.py verifies primary hashes and exact decimal/unit/direction projection. Gas U(f) is not U(y). No parameter covariance available.",
     "source_fit_range_not_acceptance": {
-      "2016": "Source emphasis323.15\u2013423.15K/25\u2013700bara; no continuous qualification claim",
-      "2017": "Mixed fit approximately274\u2013478K/below60.8MPa; original pure-input reconciliation incomplete",
+      "2016": "Source emphasis323.15–423.15K/25–700bara; no continuous qualification claim",
+      "2017": "Mixed fit approximately274–478K/below60.8MPa; original pure-input reconciliation incomplete",
       "composition": "Only individual measured solubility endpoints assessed; synthetic feed is not measured feed"
     },
     "native_requalification_base": "8a2438b99b9a2ac03e2d923406d3660cc98a59f8",
@@ -762,5 +762,12 @@
       "doi": "10.1016/j.fluid.2011.05.010",
       "blocked": "Legally accessible primary numeric Tables2/3 and pure-MEG configuration not recovered; separate SRK/PR water-MEG tuples remain inactive"
     }
+  },
+  "CO2_MEG_measurement_receipt": {
+    "doi": "10.1021/acs.jced.7b00537",
+    "resource": "hv-co2-meg-receipts/",
+    "auditor": "devtools/audit_huron_vidal_meg_receipts.py",
+    "status": "Quarantined source receipts; no HV parameters or measured overall feed",
+    "qualification": "Primary manuscript images verified; original archive identities, both phase representations, duplicate observations and distinct author/compiler uncertainties retained. Final-publication reconciliation, source-compatible HV/pure inputs and reverse MEG partition remain missing."
   }
 }
