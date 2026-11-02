@@ -254,9 +254,26 @@ Monitors volumetric flow rate.
 import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 
 VolumeFlowTransmitter vft = new VolumeFlowTransmitter(stream);
-vft.setUnit("m3/hr");
+vft.setUnit("m^3/hr");
 double volumeFlow = vft.getMeasuredValue();
 ```
+
+For a declared dynamic control scan, opt into held physical-step sampling and register the device:
+
+```java
+VolumeFlowTransmitter ft = new VolumeFlowTransmitter("FT-101", feed);
+ft.setUnit("kg/hr");
+ft.setTransientSamplingEnabled(true);
+process.add(ft);
+```
+
+The scan advances signal fault/noise/filter/delay state once with the actual physical timestep. Controller, history and
+alarm consumers then share the same held value and physical-step UUID. Held conversions are frozen at the sample instant
+for `kg/hr`, `m^3/hr`, `Nm^3/day` and `Sm^3/day`; actual- and standard-volume signals use the selected phase number.
+Rollback and Java restart restore the stream binding, phase selection, held conversions, sample identity and inherited
+signal state. Sampling is disabled by default, and legacy direct reads remain raw and unmodified. Declare the scan,
+phase, unit and fault assumptions explicitly: this mechanism does not validate vendor meter dynamics, custody/allocation
+accuracy, alarm integrity or safeguarding independence.
 
 ### DifferentialPressureTransmitter
 
