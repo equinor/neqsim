@@ -36,7 +36,8 @@ Oil-only, gas-only and nondegenerate gas/oil CCE states are represented without
 invented absent-phase properties. The qualified synthetic closed-mass gas/oil/gas
 path preserves all material through phase appearance and disappearance. This is
 different from gas-withdrawal CVD, whose later single-phase volume-restoration
-tail is separately qualified below. Wet and critical-degenerate paths remain rejected.
+tail is separately qualified below. Closed-mass wet CCE support is described below;
+wet withdrawal protocols and critical-degenerate splits remain rejected.
 
 `NativeCceHandoffTest` verifies provenance/ownership, both EOS selections, no-flow
 and phase limits, failures, named cell/separator conservation, independent pure
@@ -69,7 +70,7 @@ retained explicitly rather than relabeled as 15 C volumes.
   After a sampled gas/oil stage and subsequent liquid disappearance, gas
   continues to be withdrawn below the saturation reference to restore the fixed
   cell volume. The retained gas composition is conserved during each single-phase withdrawal; absent oil has no assigned PVT.
-- Wet/other-phase samples remain unsupported. Gas/oil composition vectors with
+- Wet CVD/DLE and other-phase samples remain unsupported. Gas/oil composition vectors with
   L1 distance at most 1e-8 are rejected as an unqualified critical-degenerate
   split. This rejection bound is not a fit parameter or a near-critical accuracy
   claim.
@@ -295,3 +296,32 @@ including two-phase depletion and a gas-only tail. Independent SRK cubic roots,
 fugacity equality, two-phase algebraic gas removal and single-phase extensivity
 provide numerical references. This is model consistency, not measured lab/field
 accuracy, critical behavior, water support or recoverable reserves.
+
+
+## Closed-mass wet CCE
+
+`replayNative` accepts gas, oil and aqueous phases for CCE only. The complete
+cell and every named water/hydrocarbon component remain at each pressure;
+protocol withdrawal is exactly zero. Existing `PvtSeparatorPath` processing
+retains all three product inventories and the explicit final pressure/temperature
+basis. An absent cell or surface phase has no invented composition or PVT.
+
+Supply an independently accepted wet EOS and its appropriate multiphase-check
+configuration in each original/tuned checkpoint. The handoff does not select or
+retune that model, infer water density, estimate saturation, or calibrate a
+reservoir. Every present phase pair must have composition L1 distance greater
+than1e-8; this is an unchanged critical-degeneracy rejection threshold, not an
+accuracy tolerance. Solids/hydrates and other phase types remain unsupported.
+Wet CVD/DLE and modified-black-oil water conversion require separate qualification.
+
+`WetCceHandoffTest` checks original/tuned serialization, aqueous separator
+closure, pure-water and single-phase wet-gas limits, nine independently solved
+gas/aqueous states and three independent gas/oil/aqueous states. The references
+use unshifted classic SRK and shared explicit component parameters, not measured
+water/hydrocarbon data. Volume relative and phase-composition/fraction absolute
+bounds are1e-8; cell component closure is1e-10mol and separator closure1e-8mol
+for the one-mole fixtures. These bounds establish numerical consistency within
+the stated synthetic cases, not measured-fluid accuracy or near-critical validity.
+
+Full equations, probe inputs, predictions and provenance are retained in
+`src/test/resources/neqsim/pvtsimulation/native-wet-cce`.

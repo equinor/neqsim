@@ -27,8 +27,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  *
  * <p>
- * For supported dry paths through phase appearance, {@link #replayNative} preserves actual native states and separator
- * products instead of assigning modified-black-oil properties to an absent phase.
+ * For supported dry depletion paths and closed-mass wet CCE, {@link #replayNative} preserves actual native states and
+ * separator products instead of assigning modified-black-oil properties to an absent phase.
  * </p>
  *
  * @author Even Solbraa
@@ -172,17 +172,19 @@ public final class DepletionPvtHistoryGenerator {
   }
 
   /**
-   * Replays a native dry laboratory path without requiring both hydrocarbon phases at every point.
+   * Replays a native laboratory path without requiring both hydrocarbon phases at every point.
    *
    * <p>
    * CCE retains the complete closed-mass cell at each pressure and withdraws no components. Its absolute native states
-   * do not supply a saturation-pressure estimate or saturation-normalized volume. Oil-only DLE and pre-dew gas-only CVD
+   * do not supply a saturation-pressure estimate or saturation-normalized volume. Wet CCE preserves the aqueous phase
+   * and all water components through the closed cell and the fixed separator process. It requires the caller's accepted
+   * wet EOS and phase-check configuration; this is not a water-model calibration. Oil-only DLE and pre-dew gas-only CVD
    * states retain their actual inventories. CVD requires a sampled gas/oil boundary and continues equilibrium-gas
    * withdrawal to the fixed cell volume after liquid disappearance. No absent oil properties are assigned. Its upper
    * dew cell uses the checked refinement in {@link ConstantVolumeDepletion#setRefineSaturationConditions(boolean)};
-   * missing or unclosed gas/oil-to-gas brackets fail rather than falling back to the phase-count scan. Wet/other-phase
-   * samples and critical-degenerate splits remain unqualified. No absent-phase Bo/Bg/Rs/Rv, Bw, surface
-   * pseudo-component closure assumption or reservoir production prediction is supplied.
+   * missing or unclosed gas/oil-to-gas brackets fail rather than falling back to the phase-count scan. Wet CVD/DLE,
+   * phases other than gas/oil/aqueous, and critical-degenerate splits remain unqualified. No absent-phase Bo/Bg/Rs/Rv,
+   * Bw, surface pseudo-component closure assumption or reservoir production prediction is supplied.
    * </p>
    *
    * @param model independently calibrated original/tuned checkpoints
@@ -210,8 +212,8 @@ public final class DepletionPvtHistoryGenerator {
       }
     }
     SystemInterface feed = tuned ? model.getTunedFluid() : model.getOriginalFluid();
-    if (Arrays.asList(feed.getComponentNames()).contains("water")) {
-      throw new IllegalArgumentException("Wet native depletion requires separate protocol qualification");
+    if (path != Path.CCE && Arrays.asList(feed.getComponentNames()).contains("water")) {
+      throw new IllegalArgumentException("Wet CVD/DLE requires separate protocol qualification");
     }
     String[] names = feed.getComponentNames();
     double[] initial = inventory(feed);
@@ -236,7 +238,7 @@ public final class DepletionPvtHistoryGenerator {
       }
       for (int phase = 0; phase < equilibrium.getNumberOfPhases(); phase++) {
         String type = equilibrium.getPhase(phase).getType().getDesc();
-        if (!"gas".equals(type) && !"oil".equals(type)) {
+        if (!"gas".equals(type) && !"oil".equals(type) && !(path == Path.CCE && "aqueous".equals(type))) {
           throw new IllegalStateException("Unsupported native phase at row " + row);
         }
       }
@@ -244,14 +246,16 @@ public final class DepletionPvtHistoryGenerator {
       if (path == Path.CVD && sampledTwoPhase && !twoPhase && !cell.hasPhaseType("gas")) {
         throw new IllegalStateException("CVD requires retained gas for post-boundary volume restoration");
       }
-      if (twoPhase) {
-        double distance = 0;
-        for (int i = 0; i < names.length; i++) {
-          distance += Math.abs(
-              equilibrium.getPhase("gas").getComponent(i).getx() - equilibrium.getPhase("oil").getComponent(i).getx());
-        }
-        if (distance <= 1e-8) {
-          throw new IllegalStateException("Critical-degenerate native phase split is not qualified");
+      for (int first = 0; first < equilibrium.getNumberOfPhases(); first++) {
+        for (int second = 0; second < first; second++) {
+          double distance = 0;
+          for (int i = 0; i < names.length; i++) {
+            distance += Math.abs(equilibrium.getPhase(first).getComponent(i).getx()
+                - equilibrium.getPhase(second).getComponent(i).getx());
+          }
+          if (distance <= 1e-8) {
+            throw new IllegalStateException("Critical-degenerate native phase split is not qualified");
+          }
         }
       }
       sampledTwoPhase |= twoPhase;
