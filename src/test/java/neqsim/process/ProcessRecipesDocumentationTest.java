@@ -199,6 +199,7 @@ class ProcessRecipesDocumentationTest {
     process.run();
     assertTrue(adjuster.solved());
   }
+
   /**
    * Extracts the uniquely marked Java fence from the process cookbook.
    *
