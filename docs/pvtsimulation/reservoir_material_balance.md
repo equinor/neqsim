@@ -209,7 +209,7 @@ or populate a measured reservoir production history. Keep laboratory calibration
 and whole-experiment holdouts separate from reservoir matching and holdouts.
 It retains actual native EOS states and separator products without absent-phase
 formation-factor extrapolation; it does not create a generalized black-oil table.
-Native CVD refines and validates a scan-selected upper dew boundary; the declared independent binary reference now passes. Legacy/default and modified-black-oil paths retain the scan precision limitation. Wet and critical-degenerate qualification remain open. Dry gas-only CVD tails retain the fixed cell volume through equilibrium gas withdrawal; no absent oil PVT is extrapolated.
+Native CVD refines and validates a scan-selected upper dew boundary; the declared independent binary reference now passes. Legacy/default and modified-black-oil paths retain the scan precision limitation. Wet and critical-degenerate qualification remain open. After a sampled gas/oil stage, dry gas-only CVD tails retain the fixed cell volume through equilibrium gas withdrawal; an unbracketed single-phase schedule does not start tail withdrawal; no absent oil PVT is extrapolated.
 
 Before accepting laboratory tuples, use the opt-in
 [gas-density interval consistency gate](laboratory_gas_density_consistency.md)

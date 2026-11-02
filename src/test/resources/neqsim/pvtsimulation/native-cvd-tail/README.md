@@ -38,7 +38,10 @@ outputs are retained here. Java tests cover three sample scales, original/tuned
 handoff, named cell/separator conservation and gas-only pressure-step refinement.
 
 The default direct CVD path also receives this protocol correction, relative to
-its existing scan reference. Native replay uses the independently qualified
-refined upper dew. Modified-black-oil conversion still requires both phases.
+its existing scan reference, only after a gas/oil stage is sampled in the
+pressure schedule. A pure supercritical regression checks that an unbracketed
+single-phase schedule preserves its inventory; this is a compatibility guard,
+not qualification of the legacy reference or a pure-fluid CVD protocol. Native
+replay uses the independently qualified refined upper dew. Modified-black-oil conversion still requires both phases.
 Wet/critical paths, near-critical field accuracy and the full Tran method remain
 outside this benchmark. In-place volumes are not recoverable reserves.

@@ -266,7 +266,15 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * runCalc.
+   * Runs the pressure-ordered depletion schedule using the selected cell reference.
+   *
+   * <p>
+   * Gas-only volume restoration continues below the reference pressure only after the schedule has sampled gas/oil
+   * coexistence. An entirely single-phase schedule retains its inventory; the legacy scan reference alone does not
+   * qualify an unbracketed or pure-fluid CVD experiment.
+   * </p>
+   *
+   * @throws IllegalStateException if a flash, boundary refinement or volume restoration fails
    */
   public void runCalc() {
     saturationConditionFound = false;
@@ -288,6 +296,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       getThermoSystem().setTemperature(temperature, temperatureUnit);
     }
     calcSaturationConditions();
+    boolean sampledHydrocarbonSplit = false;
 
     for (int i = 0; i < pressures.length; i++) {
       getThermoSystem().setPressure(pressures[i]);
@@ -301,9 +310,10 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       }
       getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
-      // Below the cell reference pressure, CVD still removes gas after the last liquid evaporates.
-      // Above that pressure the original sample expands without withdrawal.
-      if ((getThermoSystem().getNumberOfPhases() > 1 || pressures[i] < saturationPressure)
+      sampledHydrocarbonSplit |= getThermoSystem().hasPhaseType("gas") && getThermoSystem().hasPhaseType("oil");
+      // Continue gas withdrawal after a sampled gas/oil stage, even when the last liquid evaporates.
+      // An unbracketed legacy scan reference alone must not start single-phase withdrawal.
+      if ((getThermoSystem().getNumberOfPhases() > 1 || sampledHydrocarbonSplit && pressures[i] < saturationPressure)
           && getThermoSystem().getCorrectedVolume() > saturationVolume * (1.0 + CELL_VOLUME_RELATIVE_TOLERANCE)) {
         restoreSaturationVolume();
       }

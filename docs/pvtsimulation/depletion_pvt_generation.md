@@ -66,9 +66,9 @@ retained explicitly rather than relabeled as 15 C volumes.
   retained oil are required; a gas-only DLE feed is rejected.
 - CVD can begin with gas-only states before a sampled gas/oil boundary, then
   follow the volume-restored two-phase path. A sampled boundary is required.
-  After liquid disappears, gas continues to be withdrawn below the saturation
-  reference to restore the fixed cell volume. The retained gas composition is
-  conserved during each single-phase withdrawal; absent oil has no assigned PVT.
+  After a sampled gas/oil stage and subsequent liquid disappearance, gas
+  continues to be withdrawn below the saturation reference to restore the fixed
+  cell volume. The retained gas composition is conserved during each single-phase withdrawal; absent oil has no assigned PVT.
 - Wet/other-phase samples remain unsupported. Gas/oil composition vectors with
   L1 distance at most 1e-8 are rejected as an unqualified critical-degenerate
   split. This rejection bound is not a fit parameter or a near-critical accuracy
@@ -282,9 +282,12 @@ volume. The existing bounded gas-withdrawal loop performs this operation and
 reflashes/checks the cell. Above the saturation reference pressure, single-phase
 rows remain closed expansion states with zero withdrawal.
 
-This correction also applies to direct legacy CVD; it retains that route's
-selected scan reference and precision limitation. Native CVD uses the qualified
-refined upper dew. It does not assign absent oil density, Bo or Rs. The modified
+This correction also applies to direct legacy CVD only after a gas/oil stage
+has been sampled in the pressure schedule. An unbracketed or entirely single-phase
+schedule must not trigger tail withdrawal from the legacy scan's arbitrary
+reference. This guard does not qualify that reference for pure or supercritical
+samples. The direct route retains its selected scan reference and precision
+limitation. Native CVD uses the qualified refined upper dew. It does not assign absent oil density, Bo or Rs. The modified
 black-oil route still requires both phases and rejects these rows.
 
 The dry methane/n-butane275K synthetic reference covers500/200/100/50/20/5/2bara,

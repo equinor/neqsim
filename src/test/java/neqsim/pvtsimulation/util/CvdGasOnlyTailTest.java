@@ -127,4 +127,35 @@ class CvdGasOnlyTailTest {
       assertFalse(rows[row].getRetainedFluid().hasPhaseType("oil"));
     }
   }
+
+  /** A supercritical sample without any gas/oil stage must not acquire synthetic gas withdrawal. */
+  @Test
+  void unbracketedSupercriticalSampleDoesNotStartTailWithdrawal() {
+    SystemInterface gas = new SystemSrkEos(373.15, 500);
+    gas.addComponent("methane", 1);
+    gas.setMixingRule("classic");
+    gas.useVolumeCorrection(false);
+    gas.init(0);
+    ConstantVolumeDepletion cvd = new ConstantVolumeDepletion(gas);
+    cvd.setPressures(new double[] {500, 300});
+    cvd.setRecordDepletionSnapshots(true);
+    cvd.runCalc();
+    for (DepletionSnapshot row : cvd.getDepletionSnapshots()) {
+      assertEquals(1, row.getRetainedFluid().getTotalNumberOfMoles(), 1e-12);
+      assertArrayEquals(new double[] {0}, row.getProducedComponentMoles(), 0);
+    }
+  }
+
+  /** A schedule that skips gas/oil coexistence cannot establish the gas-only continuation path. */
+  @Test
+  void unsampledGasOilBoundaryDoesNotStartTailWithdrawal() {
+    ConstantVolumeDepletion cvd = run(1, new double[] {500, 200, 100, 20, 5, 2}, false);
+    for (DepletionSnapshot row : cvd.getDepletionSnapshots()) {
+      SystemInterface cell = row.getRetainedFluid();
+      assertEquals(1, cell.getNumberOfPhases());
+      assertEquals(1, cell.getTotalNumberOfMoles(), 1e-12);
+      assertArrayEquals(new double[] {0, 0}, row.getProducedComponentMoles(), 0);
+    }
+  }
+
 }
