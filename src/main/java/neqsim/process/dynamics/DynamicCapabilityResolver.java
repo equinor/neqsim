@@ -60,6 +60,7 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.processmodel.ModuleInterface;
 import neqsim.process.safety.release.IdealGasPipeDecompression;
+import neqsim.process.safety.release.NonEquilibriumReleaseInventory;
 import neqsim.process.safety.release.RealGasPipeDecompression;
 import neqsim.process.safety.release.ReleaseInventory;
 
@@ -161,8 +162,8 @@ public final class DynamicCapabilityResolver {
         VesselDepressurization.class, HeatExchanger.class, Cooler.class, Compressor.class, Expander.class, Pump.class,
         ThrottlingValve.class, LevelControlValve.class, PressureControlValve.class, BlowdownValve.class, ESDValve.class,
         HIPPSValve.class, PSDValve.class, RuptureDisk.class, SafetyValve.class, EnergyConverter.class, Inverter.class,
-        BatteryStorage.class, Filter.class, CommittedEnergyGenerator.class, Electrolyzer.class,
-        ReleaseInventory.class)) {
+        BatteryStorage.class, Filter.class, CommittedEnergyGenerator.class, Electrolyzer.class, ReleaseInventory.class,
+        NonEquilibriumReleaseInventory.class)) {
       return DynamicCapability.DYNAMIC_LUMPED;
     }
 

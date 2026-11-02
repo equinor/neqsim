@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import neqsim.process.dynamics.DynamicCapability;
+import neqsim.process.dynamics.DynamicCapabilityReport;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.phase.PhaseType;
@@ -222,16 +224,23 @@ class NonEquilibriumReleaseInventoryTest extends neqsim.NeqSimTest {
       NonEquilibriumReleaseInventory vessel = inventory(0.02, 1.0e-3);
       ProcessSystem process = new ProcessSystem();
       process.add(vessel);
+      assertEquals(DynamicCapability.DYNAMIC_LUMPED, vessel.getDynamicCapability());
       SourceTermSession session;
+      DynamicCapabilityReport report;
       if (useModel) {
         ProcessModel model = new ProcessModel();
         model.add("release-area", process);
+        report = DynamicCapabilityReport.from(model);
         session = new SourceTermSession("finite-rate-study", model, CLOCK);
         session.addInventorySource("opening", "release-area", vessel.getName());
       } else {
+        report = DynamicCapabilityReport.from(process);
         session = new SourceTermSession("finite-rate-study", process, CLOCK);
         session.addInventorySource("opening", vessel.getName());
       }
+      assertEquals(Integer.valueOf(1), report.getCapabilityCounts().get(DynamicCapability.DYNAMIC_LUMPED));
+      assertTrue(report.isFullyAudited(), report.toJson());
+      assertEquals(1, report.getUnverifiedActivationElements().size());
       assertEquals(SourceTermFrame.Status.VALID, session.runSteadyState().get(0).getStatus());
       SourceTermFrame frame = session.step(0.10).get(0);
       assertEquals(SourceTermFrame.Status.VALID, frame.getStatus(), frame.toJson());
@@ -240,6 +249,8 @@ class NonEquilibriumReleaseInventoryTest extends neqsim.NeqSimTest {
       assertEquals(frame.toJson(), frame.toJson());
       assertEquals(0.10, vessel.getTime(), 0.0);
       balanced(vessel);
+      vessel.setReleaseEnabled(false);
+      assertEquals(DynamicCapability.DYNAMIC_LUMPED, vessel.getDynamicCapability());
     }
   }
 

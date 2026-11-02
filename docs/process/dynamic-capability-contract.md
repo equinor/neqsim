@@ -361,7 +361,7 @@ boundary has an audited state-ownership category:
   `AdiabaticPipe`;
 - lumped: separators, `Tank`, `MountainCavern` and `VesselDepressurization`, two-stream heat exchangers, compressors/expanders, pumps,
   throttling/control/safety valves, `EnergyConverter` families, `BatteryStorage`, `Filter`,
-  `CommittedEnergyGenerator`, `Electrolyzer`, and `ReleaseInventory`;
+  `CommittedEnergyGenerator`, `Electrolyzer`, `ReleaseInventory`, and `NonEquilibriumReleaseInventory`;
 - distributed: `OnePhasePipeLine`, `TwoFluidPipe`, drift-flux `TransientPipe`, `WaterHammerPipe`, the generic
   `Pipeline` family (including `MultiphasePipe` and `PipeBeggsAndBrills`), `DistillationColumn`, `AdsorptionBed`,
   `MercuryRemovalBed`, `PipeFlowNetwork`, and `WellFlowlineNetwork`;
@@ -408,6 +408,12 @@ zero/reversed flow, phase appearance and multiphase operation remain outside tha
 The classification applies to both process containers and does not elevate runtime activation or qualification:
 activation remains `UNVERIFIED`, and source-frame evidence remains `UNQUALIFIED`. See the
 [coupled gas inventory guide](safety/coupled-release-inventory) for the rigid, adiabatic, single-gas-phase boundary.
+
+`NonEquilibriumReleaseInventory` also has capability `DYNAMIC_LUMPED`: it retains separate gas/liquid component masses
+and total internal energy between accepted substeps at a common pressure and temperature. Closing its release opening
+preserves that state and category. Runtime activation remains `UNVERIFIED` and source-frame evidence remains
+`UNQUALIFIED`. This mapping does not qualify the prescribed interphase-transfer coefficients or imply whole-process
+transaction participation. See the [retained-phase inventory contract](safety/coupled-release-inventory#retained-phase-finite-rate-inventory).
 
 `IdealGasPipeDecompression` and `RealGasPipeDecompression` own cell-resolved conservative mass, momentum and
 total-energy state, so their capability is `DYNAMIC_DISTRIBUTED`. The category describes spatial state ownership only:

@@ -97,6 +97,11 @@ and conservation benchmark, not independent fire, wall or blowdown validation.
 
 ## Retained-phase finite-rate inventory
 
+The dynamic capability resolver classifies `NonEquilibriumReleaseInventory` as `DYNAMIC_LUMPED`
+for both `ProcessSystem` and `ProcessModel`, including when its release opening is closed.
+This describes stored-state ownership; runtime activation remains `UNVERIFIED` and source-frame
+evidence remains `UNQUALIFIED` under the [dynamic capability contract](../dynamic-capability-contract).
+
 `NonEquilibriumReleaseInventory` is a separate opt-in model for exactly one gas and one oil,
 generic-liquid or aqueous phase. It does not call a TP or VU equilibrium flash after a component
 transfer. Instead, it retains gas and liquid component masses separately and evaluates forced
