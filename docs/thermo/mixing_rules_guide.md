@@ -514,6 +514,20 @@ initialization fixtures finish as GAS for 4 components and OIL for 20 components
 despite initially requesting a gas root. They do not establish global one-phase
 stability. The complete-flash fixtures retain gas, oil and aqueous phases.
 
+The [request and selector regression](../../src/test/resources/neqsim/thermo/mixingrule/hv-row-pure/README.md)
+freezes existing pure-function counts and complete activity/derivative values
+for both EOS families, selected/classical/all-HV cells, every evaluated
+component and padded/distinct raw selector strings. The primary reduction's
+trimmed comparison and the nested reduction's exact comparison remain unchanged.
+These synthetic fixtures do not introduce physical parameter profiles.
+
+The [binary qualification protocol](../../src/test/resources/neqsim/thermo/mixingrule/hv-row-performance/README.md)
+retains warmed independent JVM comparisons, identical-binary controls,
+allocations, full equilibrium vectors and rejected row-cache/selector proposals.
+Those proposals passed numerical checks yet failed the performance gate, so
+they are held outside production. Lower request counts alone do not establish
+lower full-flash cost or justify a runtime change.
+
 ---
 
 ## 5. Wong-Sandler Mixing Rule
