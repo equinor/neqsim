@@ -42,6 +42,12 @@ study results as coupled outlet-quality predictions.
 
 ## Handle missing measurements without blocking screening
 
+Screen every online oil-in-water or water-cut analyser for validity before using it
+(fraction of samples identical to the previous sample, a single repeated value, zero or
+negative readings, comm-fault sentinels such as 307 or 499.8). On Johan Sverdrup P1 in
+Oct 2026 all three OIW analysers were frozen or zero while the water was visibly oily;
+report such tags as unusable and fall back to bottle tests rather than computing with them.
+
 Start an explicitly estimated case when droplet and coalescence measurements
 are absent. Use a droplet radius of **1.35e-3 m** and a coalescence time of
 **60 s** as the documented starting assumptions, retaining
