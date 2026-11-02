@@ -237,7 +237,7 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             cycle_id = manifest["cycle_id"]
             cycle_dir = task / "continuous" / "cycles" / cycle_id
             guard = json.loads((cycle_dir / "guard.json").read_text(encoding="utf-8"))
-            self.assertEqual(["Review validated ten-well field operating point"], guard["accepted"])
+            self.assertEqual(["Review validated ten-well field operating point"], guard["accepted"], guard)
             self.assertEqual([], guard["withheld"])
 
             items = [item for item in Ledger(
@@ -288,9 +288,9 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             coverage = current["utilization_coverage"]
             self.assertIs(True, coverage["complete"])
             self.assertEqual([], coverage["diagnostics"])
-            self.assertEqual(34, len(coverage["expected_constraint_ids"]))
+            self.assertEqual(39, len(coverage["expected_constraint_ids"]))
             self.assertEqual(10, len(coverage["expected_plant_constraint_ids"]))
-            self.assertEqual(44, len(coverage["rows"]))
+            self.assertEqual(49, len(coverage["rows"]))
             self.assertTrue(all(row["statuses"] == ["AVAILABLE"]
                                 for row in coverage["rows"]))
             self.assertTrue(any(row["evidence_kind"] == "PLANT_CONSTRAINT"

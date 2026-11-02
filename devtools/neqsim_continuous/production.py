@@ -2032,14 +2032,7 @@ def _migration_coverage_rows(coverage, qualified_name):
     rows = coverage.get("rows")
     if not isinstance(rows, list):
         return []
-    model_prefix = "{}::".format(coverage.get("model_name"))
-    display_equipment = None
-    display_constraint = None
-    if qualified_name.startswith(model_prefix):
-        local_name = qualified_name[len(model_prefix):]
-        if "/" in local_name:
-            display_equipment, display_constraint = local_name.rsplit("/", 1)
-
+    model_name = coverage.get("model_name")
     matches = []
     for row in rows:
         if not isinstance(row, dict):
@@ -2047,14 +2040,19 @@ def _migration_coverage_rows(coverage, qualified_name):
         if row.get("qualified_constraint_id") == qualified_name:
             matches.append(row)
             continue
-        if (row.get("evidence_kind", "INSTALLED_EQUIPMENT") != "INSTALLED_EQUIPMENT"
-                or display_equipment is None
-                or row.get("constraint_name") != display_constraint):
-            continue
         equipment_id = row.get("equipment_id")
-        stable_equipment = (equipment_id.partition("/")[2]
-                            if _text(equipment_id) and "/" in equipment_id else "")
-        if unquote(stable_equipment) == display_equipment:
+        constraint_name = row.get("constraint_name")
+        if (row.get("evidence_kind", "INSTALLED_EQUIPMENT") != "INSTALLED_EQUIPMENT"
+                or not _text(model_name) or not _text(equipment_id)
+                or not _text(constraint_name)):
+            continue
+        scope_parts = equipment_id.split("/")
+        if (len(scope_parts) != 3
+                or unquote(scope_parts[0]) != "equipment:{}".format(model_name)):
+            continue
+        display_name = "{}::{}/{}".format(
+            unquote(scope_parts[1]), unquote(scope_parts[2]), constraint_name)
+        if qualified_name == display_name:
             matches.append(row)
     return matches
 

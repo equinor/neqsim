@@ -1147,6 +1147,11 @@ that invalidated it. The canonical current-best/final report accepts only a prom
 reviewed baseline, then shows the exact configured map restriction and provenance, driver rating, and common-speed
 endpoint grid. If the production plan requires both lifecycle and migration evidence, the guard additionally joins the
 map and driver names to unique, independently `AVAILABLE` rows in the same current-period accepted-replay coverage.
+Installed-equipment names use the Java exporter's `area::equipment/constraint` form; the coverage model name remains
+part of the separate stable equipment ID. Declare both casing-map margin rows and the shaft-power row when either
+can lead a diagnostic boundary. Resolve them from accepted-replay evidence, without sampling the restored model.
+Keep this coverage scoped to explicitly declared constraint identities and retain each row's real provenance;
+generated test charts must identify their synthetic source rather than imply vendor qualification.
 The joined view keeps exact current value, limit, utilization, basis, and provenance, and rejects configured map
 provenance that survives despite an override-clearance claim. Invalid or ambiguous links are explicitly withheld.
 Reporting remains downstream of the production guard and must not recompute a boundary, substitute a different

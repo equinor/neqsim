@@ -97,6 +97,7 @@ jobs:
             devtools/test_task_publication_schedule.py \
             devtools/test_neqsim_continuous.py \
             devtools/test_neqsim_production.py \
+            devtools/test_map_driver_lifecycle_link.py \
             devtools/test_neqsim_living_tasks.py \
             devtools/test_neqsim_doctor.py \
             devtools/test_unisim_outputs.py \

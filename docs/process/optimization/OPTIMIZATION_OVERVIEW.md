@@ -322,7 +322,10 @@ an ambiguous or missing identity, the same row used twice, or configured map pro
 says the temporary override was cleared. Both report views show the joined accepted-replay current value, applicable
 limit, utilization, basis, and provenance for the map and driver identities. These report views are advisory consumers
 of guarded evidence; they do not recalculate compressor physics or turn a refined boundary into an approved operating
-point.
+point. Installed-equipment display identities are qualified by process area (`area::equipment/constraint`), while
+stable IDs preserve the coverage model, area, and equipment separately. Declared coverage must include both
+compressor map margins and the equipment-local shaft-power constraint alongside registered plant driver limits,
+because either driver representation can lead the diagnostic boundary.
 
 Use `ProcessModelDebottleneckStudy` after the evaluator and direct installed constraints are configured when one documented capacity replacement or expansion must be compared with the installed baseline. It uses the same search policy for both scenarios, freezes immutable objective/constraint/metric evidence, and restores the installed limit plus pre-study operating point. This is a paired screening study, not an equipment-sizing algorithm or economic approval.
 
