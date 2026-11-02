@@ -98,6 +98,9 @@ neqsim.process.fielddevelopment/
 
 The following Java 8 program exercises the current public APIs for concept evaluation, option ranking, host-capacity holdback, process generation, reservoir export, and SURF cost screening. It validates key results before logging them. Replace the illustrative assumptions and screening correlations with project data and independently reviewed models before using the results for an engineering decision.
 
+The documentation regression suite extracts, compiles, and executes this exact marked source so the public workflow cannot drift from the current API.
+
+<!-- field-development-overview-example: screening-workflow -->
 ```java
 import java.nio.file.Files;
 import java.nio.file.Path;
