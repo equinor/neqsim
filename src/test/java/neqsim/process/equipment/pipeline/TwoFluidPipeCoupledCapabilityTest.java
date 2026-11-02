@@ -76,6 +76,36 @@ class TwoFluidPipeCoupledCapabilityTest {
     assertEquals(acceptedPressure, backflowFirst.getOutletBoundaryFluid().getPressure("Pa"), 0.0);
   }
 
+  /** Gas-only takeoff is an existing pressure boundary mode, not a manufactured reservoir mixture. */
+  @Test
+  void gasOnlyOutletTakeoffRequiresConstantPressureBeforeStateMutation() {
+    TwoFluidPipe pipe = uninitializedPipe("gas-only-outlet");
+    pipe.setGasOnlyOutletTakeoff(true);
+    assertTrue(pipe.isGasOnlyOutletTakeoffEnabled());
+    pipe.setOutletBoundaryCondition(TwoFluidPipe.BoundaryCondition.CLOSED);
+    byte[] before = SerializationUtils.serialize(pipe);
+
+    IllegalStateException exception = assertThrows(IllegalStateException.class,
+        () -> pipe.runTransient(0.01, TRANSIENT_ID));
+
+    assertTrue(exception.getMessage().contains("constant-pressure outlet"));
+    assertArrayEquals(before, SerializationUtils.serialize(pipe));
+  }
+
+  /** Repressurization through a gas-only outlet must have an independently specified gas donor. */
+  @Test
+  void gasOnlyOutletPressureInjectionRequiresExternalDonor() {
+    TwoFluidPipe pipe = uninitializedPipe("gas-only-pressure-injection");
+    pipe.setGasOnlyOutletTakeoff(true);
+
+    IllegalStateException exception = assertThrows(IllegalStateException.class,
+        () -> pipe.validateGasOnlyOutletCorrectionDonor(new double[] {-1.0e-12, 0.0, 0.0}));
+    assertTrue(exception.getMessage().contains("setOutletBoundaryFluid"));
+
+    pipe.setOutletBoundaryFluid(pipe.getInletStream().getFluid());
+    pipe.validateGasOnlyOutletCorrectionDonor(new double[] {-1.0, 0.0, 0.0});
+  }
+
   @Test
   void multistageConservativeSlugPhaseTransferFailsBeforeStateMutation() {
     TwoFluidPipe pipe = uninitializedPipe("multistage-source");

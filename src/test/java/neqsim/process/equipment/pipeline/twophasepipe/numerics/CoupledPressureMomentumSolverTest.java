@@ -248,6 +248,46 @@ class CoupledPressureMomentumSolverTest {
     assertTrue(outletCorrection[0] + outletCorrection[1] + outletCorrection[2] > 0.0);
   }
 
+  /** A gas-only pressure face closes volume with gas while preserving retained liquid mass and momentum bitwise. */
+  @Test
+  void gasOnlyOutletProjectionCannotRescaleRetainedLiquid() {
+    double[][] state = {{5.0, 400.0, 100.0, 10.0, 120.0, -20.0, 1.0e6}};
+    double[][] density = {{10.0}, {800.0}, {1000.0}};
+    double oilMass = state[0][1];
+    double waterMass = state[0][2];
+    double oilMomentum = state[0][4];
+    double waterMomentum = state[0][5];
+
+    double[] outlet = CoupledPressureMomentumSolver.applyConservativeMassFluxCorrection(state, 0.1, new double[] {0.0},
+        phaseAreas(state, density), new double[] {1.0}, new double[] {1.0}, density, true,
+        new boolean[] {true, false, false});
+
+    assertEquals(4.0, state[0][0], 1.0e-12, "Gas must fill the 0.4 m2 left by retained liquid");
+    assertEquals(1.0, outlet[0], 1.0e-12);
+    assertEquals(0.0, outlet[1], 0.0);
+    assertEquals(0.0, outlet[2], 0.0);
+    assertEquals(oilMass, state[0][1], 0.0);
+    assertEquals(waterMass, state[0][2], 0.0);
+    assertEquals(oilMomentum, state[0][4], 0.0);
+    assertEquals(waterMomentum, state[0][5], 0.0);
+  }
+
+  /** A pressure projection reports gas addition with a negative outlet transfer for donor validation upstream. */
+  @Test
+  void gasOnlyOutletProjectionReportsSignedGasInjection() {
+    double[][] state = {{3.0, 400.0, 100.0, 6.0, 120.0, -20.0, 1.0e6}};
+    double[][] density = {{10.0}, {800.0}, {1000.0}};
+
+    double[] outlet = CoupledPressureMomentumSolver.applyConservativeMassFluxCorrection(state, 0.1, new double[] {0.0},
+        phaseAreas(state, density), new double[] {1.0}, new double[] {1.0}, density, true,
+        new boolean[] {true, false, false});
+
+    assertEquals(4.0, state[0][0], 1.0e-12);
+    assertEquals(-1.0, outlet[0], 1.0e-12);
+    assertEquals(0.0, outlet[1], 0.0);
+    assertEquals(0.0, outlet[2], 0.0);
+  }
+
   /** A centered interface must not extract gas from a gas-free donor in either correction direction. */
   @Test
   void pressureCorrectionCannotExportAnAbsentDonorPhase() {

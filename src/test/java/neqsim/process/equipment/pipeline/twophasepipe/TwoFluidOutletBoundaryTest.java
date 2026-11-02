@@ -47,6 +47,44 @@ class TwoFluidOutletBoundaryTest {
     assertFalse(equations.isOutletBackflowClamped());
   }
 
+  /** A gas-only takeoff keeps liquid traction but carries no liquid mass or energy across the external face. */
+  @Test
+  void gasOnlyTakeoffRetainsBothLiquidPhasesWithoutHidingTheirPressureTraction() {
+    TwoFluidSection outlet = boundaryCell(0.5, 0.3, 0.2);
+    outlet.setGasVelocity(2.0);
+    outlet.setOilVelocity(1.0);
+    outlet.setWaterVelocity(-1.0);
+    outlet.setPhaseEnthalpies(2.0e5, 3.0e5);
+    outlet.updateConservativeVariables();
+
+    TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+    equations.setIncludeEnergyEquation(true);
+    equations.setConsistentPhasePressureEnabled(true);
+    equations.setGasOnlyOutletTakeoff(true);
+    equations.setOutletBoundaryPressure(outlet.getPressure());
+    double[][] phaseFluxes = equations.calcPhaseMassFaceFluxes(new TwoFluidSection[] {outlet}, outlet.getLength());
+    double[][] phaseEnergy = equations.getLastBoundaryPhaseEnergyFluxes();
+
+    assertTrue(phaseFluxes[1][0] > 0.0);
+    assertEquals(0.0, phaseFluxes[1][1], 0.0);
+    assertEquals(0.0, phaseFluxes[1][2], 0.0);
+    assertTrue(phaseEnergy[1][0] > 0.0);
+    assertEquals(0.0, phaseEnergy[1][1], 0.0);
+    assertEquals(0.0, phaseEnergy[1][2], 0.0);
+    assertFalse(equations.isOutletBackflowClamped(), "A retained liquid is closed, not an unresolved backflow");
+
+    double[][] reference = equations.calcRHS(new TwoFluidSection[] {outlet}, outlet.getLength());
+    double pressureChange = 1.0e4;
+    equations.setOutletBoundaryPressure(outlet.getPressure() + pressureChange);
+    double[][] disturbed = equations.calcRHS(new TwoFluidSection[] {outlet}, outlet.getLength());
+    double[] holdups = {outlet.getGasHoldup(), outlet.getOilHoldup(), outlet.getWaterHoldup()};
+    for (int phase = 0; phase < 3; phase++) {
+      assertEquals(-holdups[phase] * pressureChange * outlet.getArea() / outlet.getLength(),
+          disturbed[0][phase + 3] - reference[0][phase + 3], 1.0e-9,
+          "Retained phase pressure traction must remain active: phase " + phase);
+    }
+  }
+
   /**
    * A different reversed-flow donor supplies advection, while pressure accelerates the phases in the pipe.
    */

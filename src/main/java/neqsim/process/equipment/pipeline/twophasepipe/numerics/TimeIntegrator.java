@@ -527,6 +527,9 @@ public class TimeIntegrator implements Serializable {
   /** Whether outlet pressure BC is fixed for IMEX. */
   private boolean imexOutletPressureFixed = true;
 
+  /** Gas, oil and water ownership of external pressure-face mass transfer. */
+  private boolean[] coupledOutletPhaseOpen = {true, true, true};
+
   /**
    * Set cell properties required for the IMEX pressure correction step. Must be called before stepping with
    * IMEX_PRESSURE_CORRECTION.
@@ -633,6 +636,18 @@ public class TimeIntegrator implements Serializable {
   }
 
   /**
+   * Set phase ownership of external pressure-outlet mass correction.
+   *
+   * @param outletPhaseOpen gas, oil and water flags; retained phases remain closed externally
+   */
+  public void setCoupledPressureMomentumOutletPhaseOpen(boolean[] outletPhaseOpen) {
+    if (outletPhaseOpen == null || outletPhaseOpen.length != 3) {
+      throw new IllegalArgumentException("Outlet phase ownership must contain gas, oil and water flags");
+    }
+    coupledOutletPhaseOpen = outletPhaseOpen.clone();
+  }
+
+  /**
    * Enable or disable the coupled pressure-momentum correction.
    *
    * @param enabled true to apply the configured correction
@@ -722,7 +737,8 @@ public class TimeIntegrator implements Serializable {
     }
     lastCoupledPressureMomentumResult = coupledPressureMomentumSolver.correct(state, dt, coupledCellPressure, cellAreas,
         coupledCellLengths, cellGasDensities, cellOilDensities, cellWaterDensities, coupledGasSoundSpeeds,
-        coupledOilSoundSpeeds, coupledWaterSoundSpeeds, imexOutletPressure, imexOutletPressureFixed);
+        coupledOilSoundSpeeds, coupledWaterSoundSpeeds, imexOutletPressure, imexOutletPressureFixed,
+        coupledOutletPhaseOpen);
     return lastCoupledPressureMomentumResult.getState();
   }
 
