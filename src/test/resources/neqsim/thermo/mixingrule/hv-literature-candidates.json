@@ -733,5 +733,34 @@
       "max_native_EOS_pressure_error_bara": 8.846257060213247e-13,
       "max_native_log_fugacity_error": 1.149080830487037e-14
     }
+  },
+  "quarantined_2020_primary_leads": {
+    "screened_utc": "2026-11-01",
+    "campaign_receipt": "https://github.com/equinor/neqsim/issues/4576#issuecomment-6563508130",
+    "activation": "None; existing seven PR2016 tuples and opt-in profiles unchanged",
+    "cavalcanti_filho_chapoy_burgass": {
+      "doi": "10.1016/j.jngse.2020.103654",
+      "primary_url": "https://pure.hw.ac.uk/ws/portalfiles/portal/42418315/On_water_content_final_version.pdf",
+      "inspected": "Rendered accepted-manuscript PDF pages13/17/20: pure-alpha Table4, PR-HV Tables5/6, equations6/8-12",
+      "licence": "Institutional accepted manuscript CC BY-NC-ND; manuscript and table images not redistributed",
+      "blocked": "Printed alpha/tau expressions differ from existing model conventions. Exact author critical inputs, directed energy/temperature convention, fitted range, uncertainty and both-direction measurements require reconciliation before any transfer",
+      "qualification": "Primary research lead only; hydrate Table7 is not ordinary TP or independent inhibitor-partition qualification"
+    },
+    "epelle": {
+      "doi": "10.1016/j.jngse.2020.103259",
+      "primary_record": "https://era.ed.ac.uk/items/9d0657a0-c135-4494-aeff-f119ac035cf2/full",
+      "blocked": "The earlier completed thesis inspection found the 2020 article only in the publication list, not its original numeric HV tables. Later reader/transfer limits do not supersede that completed inspection. The original article coefficient tables remain missing; no tuple is qualified by the thesis citation.",
+      "prior_retrieval_receipt": "https://github.com/equinor/neqsim/issues/4573#issuecomment-6432934660",
+      "prior_receipt_reported_pdf": {
+        "url": "https://era.ed.ac.uk/bitstreams/b0b6bd91-7c16-4d3e-a557-23572522c7a4/download",
+        "bytes": 45319923,
+        "sha256": "6152bdcd49290a818fcbf91e8fc54c9157d22238e40f5b0513f0668c40520c24",
+        "qualification": "Earlier campaign receipt, not a fresh PDF download or independently recovered coefficient table"
+      }
+    },
+    "hemmingsen": {
+      "doi": "10.1016/j.fluid.2011.05.010",
+      "blocked": "Legally accessible primary numeric Tables2/3 and pure-MEG configuration not recovered; separate SRK/PR water-MEG tuples remain inactive"
+    }
   }
 }
