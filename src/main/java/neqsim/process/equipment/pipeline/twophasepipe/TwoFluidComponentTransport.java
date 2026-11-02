@@ -269,12 +269,45 @@ public final class TwoFluidComponentTransport implements Serializable {
       double[][] phaseMassSourceKgPerMetreSecond, double[][][] componentSourceKgPerMetreSecond,
       double[] latentHeatSourceWPerMetre, TwoFluidSection[] sections, SystemInterface inletFluid,
       SystemInterface outletFluid, SystemInterface fluidTemplate, double tolerance) {
+    return advance(timeStepSeconds, phaseMassFaceFluxKgS, null, phaseMassSourceKgPerMetreSecond,
+        componentSourceKgPerMetreSecond, latentHeatSourceWPerMetre, sections, inletFluid, outletFluid, fluidTemplate,
+        tolerance);
+  }
+
+  /**
+   * Advance stage-frozen components while retaining both donor streams at every internal face.
+   *
+   * <p>
+   * {@code directionalInternalPhaseMassFluxKgS[face][phase][0]} is the nonnegative left-to-right stream and index 1 is
+   * the nonnegative right-to-left stream. Their difference must reproduce the corresponding internal entry in
+   * {@code phaseMassFaceFluxKgS}. Supplying {@code null} preserves the historical single-donor interpretation of the
+   * signed net flow. External faces remain signed because their donor compositions are explicit boundary states.
+   * </p>
+   *
+   * @param timeStepSeconds accepted substep duration
+   * @param phaseMassFaceFluxKgS stage-weighted net gas/oil/water face mass flows
+   * @param directionalInternalPhaseMassFluxKgS internal forward/reverse streams, or {@code null}
+   * @param phaseMassSourceKgPerMetreSecond stage-weighted cell phase sources
+   * @param componentSourceKgPerMetreSecond stage-weighted component sources, or {@code null}
+   * @param latentHeatSourceWPerMetre stage-weighted latent heat sources, or {@code null}
+   * @param sections accepted hydrodynamic cells
+   * @param inletFluid inlet donor state
+   * @param outletFluid reversed-outlet donor state, or {@code null}
+   * @param fluidTemplate thermodynamic template
+   * @param tolerance relative conservation tolerance
+   * @return cell latent heat energies in joules
+   */
+  public double[] advance(double timeStepSeconds, double[][] phaseMassFaceFluxKgS,
+      double[][][] directionalInternalPhaseMassFluxKgS, double[][] phaseMassSourceKgPerMetreSecond,
+      double[][][] componentSourceKgPerMetreSecond, double[] latentHeatSourceWPerMetre, TwoFluidSection[] sections,
+      SystemInterface inletFluid, SystemInterface outletFluid, SystemInterface fluidTemplate, double tolerance) {
     validateAdvanceArguments(timeStepSeconds, phaseMassFaceFluxKgS, phaseMassSourceKgPerMetreSecond, sections,
         tolerance);
+    validateDirectionalInternalFlows(phaseMassFaceFluxKgS, directionalInternalPhaseMassFluxKgS, tolerance);
     TwoFluidComponentTransport candidate = new TwoFluidComponentTransport(this);
     double[] latentHeat = candidate.advanceCandidate(timeStepSeconds, phaseMassFaceFluxKgS,
-        phaseMassSourceKgPerMetreSecond, componentSourceKgPerMetreSecond, latentHeatSourceWPerMetre, sections,
-        inletFluid, outletFluid, fluidTemplate, tolerance);
+        directionalInternalPhaseMassFluxKgS, phaseMassSourceKgPerMetreSecond, componentSourceKgPerMetreSecond,
+        latentHeatSourceWPerMetre, sections, inletFluid, outletFluid, fluidTemplate, tolerance);
     candidate.validateFiniteState();
     componentInventoryKg = candidate.componentInventoryKg;
     intervalInletMassKg = candidate.intervalInletMassKg;
@@ -318,9 +351,9 @@ public final class TwoFluidComponentTransport implements Serializable {
   }
 
   private double[] advanceCandidate(double timeStepSeconds, double[][] phaseMassFaceFluxKgS,
-      double[][] phaseMassSourceKgPerMetreSecond, double[][][] componentSourceKgPerMetreSecond,
-      double[] latentHeatSourceWPerMetre, TwoFluidSection[] sections, SystemInterface inletFluid,
-      SystemInterface outletFluid, SystemInterface fluidTemplate, double tolerance) {
+      double[][][] directionalInternalPhaseMassFluxKgS, double[][] phaseMassSourceKgPerMetreSecond,
+      double[][][] componentSourceKgPerMetreSecond, double[] latentHeatSourceWPerMetre, TwoFluidSection[] sections,
+      SystemInterface inletFluid, SystemInterface outletFluid, SystemInterface fluidTemplate, double tolerance) {
     if (fluidTemplate == null) {
       throw new IllegalArgumentException("Fluid template cannot be null for component transport");
     }
@@ -348,17 +381,19 @@ public final class TwoFluidComponentTransport implements Serializable {
         frozenComponentTransferKg[cell] = componentTransferFromSourceRates(cell, timeStepSeconds,
             sections[cell].getLength(), phaseTransferKg, componentSourceKgPerMetreSecond, tolerance);
       }
-      prepareAppearingPhaseDonors(timeStepSeconds, phaseMassFaceFluxKgS, frozenComponentTransferKg, inletPhaseFractions,
-          outletPhaseFractions, oldFractions, tolerance);
+      prepareAppearingPhaseDonors(timeStepSeconds, phaseMassFaceFluxKgS, directionalInternalPhaseMassFluxKgS,
+          frozenComponentTransferKg, inletPhaseFractions, outletPhaseFractions, oldFractions, tolerance);
     }
 
     for (int face = 0; face <= cellCount; face++) {
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
-        double phaseFlowKgS = phaseMassFaceFluxKgS[face][phase];
-        if (phaseFlowKgS >= 0.0) {
-          advectPositiveFace(timeStepSeconds, face, phase, phaseFlowKgS, inletPhaseFractions, oldFractions, updated);
-        } else {
-          advectNegativeFace(timeStepSeconds, face, phase, -phaseFlowKgS, outletPhaseFractions, oldFractions, updated);
+        double forwardFlowKgS = forwardFlow(phaseMassFaceFluxKgS, directionalInternalPhaseMassFluxKgS, face, phase);
+        double reverseFlowKgS = reverseFlow(phaseMassFaceFluxKgS, directionalInternalPhaseMassFluxKgS, face, phase);
+        if (forwardFlowKgS > 0.0) {
+          advectPositiveFace(timeStepSeconds, face, phase, forwardFlowKgS, inletPhaseFractions, oldFractions, updated);
+        }
+        if (reverseFlowKgS > 0.0) {
+          advectNegativeFace(timeStepSeconds, face, phase, reverseFlowKgS, outletPhaseFractions, oldFractions, updated);
         }
       }
     }
@@ -425,8 +460,8 @@ public final class TwoFluidComponentTransport implements Serializable {
    * @throws IllegalStateException if an empty donor cannot fund its outgoing transfers
    */
   private void prepareAppearingPhaseDonors(double timeStepSeconds, double[][] faceFlowsKgS,
-      double[][][] componentTransferKg, double[][] inletFractions, double[][] outletFractions,
-      double[][][] donorFractions, double tolerance) {
+      double[][][] directionalInternalFlowsKgS, double[][][] componentTransferKg, double[][] inletFractions,
+      double[][] outletFractions, double[][][] donorFractions, double tolerance) {
     for (int pass = 0; pass < cellCount; pass++) {
       boolean changed = false;
       for (int cell = 0; cell < cellCount; cell++) {
@@ -434,15 +469,15 @@ public final class TwoFluidComponentTransport implements Serializable {
           if (sum(donorFractions[cell][phase]) > 0.0) {
             continue;
           }
-          double outgoingKg = timeStepSeconds
-              * (Math.max(0.0, -faceFlowsKgS[cell][phase]) + Math.max(0.0, faceFlowsKgS[cell + 1][phase]));
+          double outgoingKg = timeStepSeconds * (reverseFlow(faceFlowsKgS, directionalInternalFlowsKgS, cell, phase)
+              + forwardFlow(faceFlowsKgS, directionalInternalFlowsKgS, cell + 1, phase));
           if (outgoingKg <= 0.0) {
             continue;
           }
           double[] availableComponentKg = componentTransferKg[cell][phase].clone();
           double availableKg = sum(availableComponentKg);
           boolean unresolvedIncoming = false;
-          double leftIncomingKg = timeStepSeconds * Math.max(0.0, faceFlowsKgS[cell][phase]);
+          double leftIncomingKg = timeStepSeconds * forwardFlow(faceFlowsKgS, directionalInternalFlowsKgS, cell, phase);
           if (leftIncomingKg > 0.0) {
             double[] leftFractions = cell == 0 ? inletFractions[phase] : donorFractions[cell - 1][phase];
             if (sum(leftFractions) <= 0.0) {
@@ -454,7 +489,8 @@ public final class TwoFluidComponentTransport implements Serializable {
               }
             }
           }
-          double rightIncomingKg = timeStepSeconds * Math.max(0.0, -faceFlowsKgS[cell + 1][phase]);
+          double rightIncomingKg = timeStepSeconds
+              * reverseFlow(faceFlowsKgS, directionalInternalFlowsKgS, cell + 1, phase);
           if (rightIncomingKg > 0.0) {
             double[] rightFractions = cell + 1 < cellCount ? donorFractions[cell + 1][phase]
                 : outletFractions == null ? null : outletFractions[phase];
@@ -493,8 +529,8 @@ public final class TwoFluidComponentTransport implements Serializable {
     }
     for (int cell = 0; cell < cellCount; cell++) {
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
-        double outgoingKg = timeStepSeconds
-            * (Math.max(0.0, -faceFlowsKgS[cell][phase]) + Math.max(0.0, faceFlowsKgS[cell + 1][phase]));
+        double outgoingKg = timeStepSeconds * (reverseFlow(faceFlowsKgS, directionalInternalFlowsKgS, cell, phase)
+            + forwardFlow(faceFlowsKgS, directionalInternalFlowsKgS, cell + 1, phase));
         if (outgoingKg > 0.0 && sum(donorFractions[cell][phase]) <= 0.0) {
           throw new IllegalStateException("Insufficient " + phaseName(phase)
               + " source/incoming donor inventory in cell " + cell + ": outgoing=" + outgoingKg + " kg");
@@ -1420,6 +1456,53 @@ public final class TwoFluidComponentTransport implements Serializable {
         phaseMassKg(section, phase);
       }
     }
+  }
+
+  /** Validate optional two-donor streams against the conservative net hydrodynamic flux. */
+  private void validateDirectionalInternalFlows(double[][] netFaces, double[][][] directionalInternalFlows,
+      double tolerance) {
+    if (directionalInternalFlows == null) {
+      return;
+    }
+    if (directionalInternalFlows.length != Math.max(0, cellCount - 1)) {
+      throw new IllegalArgumentException("Directional component flows must match the internal finite-volume faces");
+    }
+    for (int face = 0; face < directionalInternalFlows.length; face++) {
+      if (directionalInternalFlows[face] == null || directionalInternalFlows[face].length != PHASE_COUNT) {
+        throw new IllegalArgumentException("Every directional component face must contain three phases");
+      }
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        double[] streams = directionalInternalFlows[face][phase];
+        if (streams == null || streams.length != 2 || !Double.isFinite(streams[0]) || !Double.isFinite(streams[1])
+            || streams[0] < 0.0 || streams[1] < 0.0) {
+          throw new IllegalArgumentException("Directional component streams must be finite and nonnegative");
+        }
+        double directionalNet = streams[0] - streams[1];
+        double hydrodynamicNet = netFaces[face + 1][phase];
+        double scale = Math.max(MASS_FLOOR_KG, Math.max(Math.abs(hydrodynamicNet), Math.max(streams[0], streams[1])));
+        if (Math.abs(directionalNet - hydrodynamicNet) > Math.max(MASS_SYNCHRONIZATION_ABSOLUTE_TOLERANCE_KG,
+            tolerance * scale)) {
+          throw new IllegalArgumentException("Directional donor streams do not reproduce the hydrodynamic net at face "
+              + face + ", phase " + phase + ": directional=" + directionalNet + ", net=" + hydrodynamicNet);
+        }
+      }
+    }
+  }
+
+  /** Return the nonnegative left-to-right stream at one physical face. */
+  private double forwardFlow(double[][] netFaces, double[][][] directionalInternalFlows, int face, int phase) {
+    if (directionalInternalFlows != null && face > 0 && face < cellCount) {
+      return directionalInternalFlows[face - 1][phase][0];
+    }
+    return Math.max(0.0, netFaces[face][phase]);
+  }
+
+  /** Return the nonnegative right-to-left stream at one physical face. */
+  private double reverseFlow(double[][] netFaces, double[][][] directionalInternalFlows, int face, int phase) {
+    if (directionalInternalFlows != null && face > 0 && face < cellCount) {
+      return directionalInternalFlows[face - 1][phase][1];
+    }
+    return Math.max(0.0, -netFaces[face][phase]);
   }
 
   private static SystemInterface prepareFluid(SystemInterface source, String context) {

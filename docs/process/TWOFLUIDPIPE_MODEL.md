@@ -70,23 +70,39 @@ unresolvable cases fail explicitly. See the
 [reporting guide](../wiki/two_fluid_reporting_and_validation#static-subcell-depth-and-area-diagnostic)
 for units, supported limits and executable regression evidence.
 
-### Optional Rusanov phase-flux contract
+### Optional two-donor Rusanov phase-flux contract
 
-The existing optional `AUSMPlusFluxCalculator.calcRusanovFlux` is a local comparison/reserve
-flux; it is not automatically selected by the pipeline solver. Phase inputs carry total specific
+The default pipeline operator remains AUSM+. `AUSMPlusFluxCalculator.calcRusanovFlux` is also
+available as a local query, and `TwoFluidPipe.setRusanovInternalFluxEnabled(true)` selects it on
+internal independently resolved gas/oil/water faces. Phase inputs carry total specific
 enthalpy including kinetic energy. Rusanov dissipates `alpha * (rho * H - p)`, while the physical
 energy flux remains `alpha * rho * u * H`. It returns consistent pressure/area metadata and a
 Rusanov holdup flux. Exactly absent phase properties are unused; positive traces use the same
 equations. Invalid occupied states, unrepresentable interface holdup and nonfinite outputs reject explicitly.
 The [executed local-flux record](../../src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/README.md)
-includes independent ideal-gas controls, dry/trace limits, default-AUSM equivalence and324 SRK
+includes independent ideal-gas controls, dry/trace limits, default-AUSM equivalence and 324 SRK
 gas/oil local queries. SRK controls explicitly convert EOS internal energy to the existing
 physical-density mechanical-energy convention; they do not validate translated-EOS thermodynamics
 or elapsed pooling.
 Explicit updates require an appropriate Courant bound and admissible thermodynamics; there is
-no unconditional stability guarantee. Two-sided diffusion needs compatible named-component and
-energy donor ledgers before solver integration. This does not repair the enabled pressure-moment
-front or qualify pools, inlet refill or hydrocarbon evaporation.
+no unconditional stability guarantee. The operator retains nonnegative left-to-right and
+right-to-left mass streams separately, carries both through Runge-Kutta stage weights, pressure
+work and transactional named-component transport, and verifies that their difference equals the
+net hydrodynamic flux. Pressure-only numerical energy diffusion remains a separate energy term.
+
+Enable water/oil slip before selecting the operator:
+
+```java
+pipe.setEnableWaterOilSlip(true);
+pipe.setRusanovInternalFluxEnabled(true);
+pipe.setComponentTransportEnabled(true); // when evolving composition is required
+```
+
+The combined-liquid one-upwind split, AUSM pressure interpolation, reconstructed slug faces and
+the current one-direction unsplit complementarity block reject this option explicitly. These are
+algorithmic ownership boundaries, not automatic fallbacks. This does not repair the remaining
+dry/wet pressure-moment front or qualify pools, inlet refill, physical evaporation, shutdown/restart
+or hydraulic pigging.
 
 ### Stratified hydrostatic pressure moments
 

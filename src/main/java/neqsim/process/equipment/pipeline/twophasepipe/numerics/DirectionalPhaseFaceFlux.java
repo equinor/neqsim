@@ -41,27 +41,51 @@ public final class DirectionalPhaseFaceFlux implements Serializable {
   public DirectionalPhaseFaceFlux(double signedMassFlowKgPerSecond, double advectiveMomentumN, double pressureTractionN,
       double leftDonorMassKgPerM, double rightDonorMassKgPerM, double leftDonorMomentumKgPerSecond,
       double rightDonorMomentumKgPerSecond) {
-    requireFinite(signedMassFlowKgPerSecond, "signed mass flow");
-    requireFinite(advectiveMomentumN, "advective momentum flux");
+    this(Math.max(0.0, signedMassFlowKgPerSecond), Math.max(0.0, -signedMassFlowKgPerSecond),
+        signedMassFlowKgPerSecond >= 0.0 ? advectiveMomentumN : 0.0,
+        signedMassFlowKgPerSecond < 0.0 ? advectiveMomentumN : 0.0, pressureTractionN, leftDonorMassKgPerM,
+        rightDonorMassKgPerM, leftDonorMomentumKgPerSecond, rightDonorMomentumKgPerSecond);
+  }
+
+  /**
+   * Build an explicit two-donor directional representation.
+   *
+   * <p>
+   * This overload retains simultaneous counter-transport such as the two one-sided contributions of a Rusanov face. The
+   * signed conservative flow remains {@code forward - reverse}; neither donor stream is inferred from that net.
+   * </p>
+   *
+   * @param forwardMassFlowKgPerSecond nonnegative left-to-right mass flow
+   * @param reverseMassFlowKgPerSecond nonnegative right-to-left mass flow
+   * @param forwardAdvectiveMomentumN left-donor momentum contribution
+   * @param reverseAdvectiveMomentumN right-donor momentum contribution with signed face orientation
+   * @param pressureTractionN phase pressure traction at the face
+   * @param leftDonorMassKgPerM left cell phase mass per length
+   * @param rightDonorMassKgPerM right cell phase mass per length
+   * @param leftDonorMomentumKgPerSecond left cell phase momentum per length
+   * @param rightDonorMomentumKgPerSecond right cell phase momentum per length
+   */
+  public DirectionalPhaseFaceFlux(double forwardMassFlowKgPerSecond, double reverseMassFlowKgPerSecond,
+      double forwardAdvectiveMomentumN, double reverseAdvectiveMomentumN, double pressureTractionN,
+      double leftDonorMassKgPerM, double rightDonorMassKgPerM, double leftDonorMomentumKgPerSecond,
+      double rightDonorMomentumKgPerSecond) {
+    requireFinite(forwardMassFlowKgPerSecond, "forward mass flow");
+    requireFinite(reverseMassFlowKgPerSecond, "reverse mass flow");
+    requireFinite(forwardAdvectiveMomentumN, "forward advective momentum flux");
+    requireFinite(reverseAdvectiveMomentumN, "reverse advective momentum flux");
     requireFinite(pressureTractionN, "pressure traction");
     requireFinite(leftDonorMassKgPerM, "left donor mass");
     requireFinite(rightDonorMassKgPerM, "right donor mass");
     requireFinite(leftDonorMomentumKgPerSecond, "left donor momentum");
     requireFinite(rightDonorMomentumKgPerSecond, "right donor momentum");
-    if (leftDonorMassKgPerM < 0.0 || rightDonorMassKgPerM < 0.0) {
-      throw new IllegalArgumentException("Directional donors require nonnegative phase mass");
+    if (forwardMassFlowKgPerSecond < 0.0 || reverseMassFlowKgPerSecond < 0.0 || leftDonorMassKgPerM < 0.0
+        || rightDonorMassKgPerM < 0.0) {
+      throw new IllegalArgumentException("Directional flows and donor phase masses must be nonnegative");
     }
-    if (signedMassFlowKgPerSecond >= 0.0) {
-      forwardMassFlowKgPerSecond = signedMassFlowKgPerSecond;
-      reverseMassFlowKgPerSecond = 0.0;
-      forwardAdvectiveMomentumN = advectiveMomentumN;
-      reverseAdvectiveMomentumN = 0.0;
-    } else {
-      forwardMassFlowKgPerSecond = 0.0;
-      reverseMassFlowKgPerSecond = -signedMassFlowKgPerSecond;
-      forwardAdvectiveMomentumN = 0.0;
-      reverseAdvectiveMomentumN = advectiveMomentumN;
-    }
+    this.forwardMassFlowKgPerSecond = forwardMassFlowKgPerSecond;
+    this.reverseMassFlowKgPerSecond = reverseMassFlowKgPerSecond;
+    this.forwardAdvectiveMomentumN = forwardAdvectiveMomentumN;
+    this.reverseAdvectiveMomentumN = reverseAdvectiveMomentumN;
     this.pressureTractionN = pressureTractionN;
     this.leftDonorMassKgPerM = leftDonorMassKgPerM;
     this.rightDonorMassKgPerM = rightDonorMassKgPerM;

@@ -868,6 +868,15 @@ The `AUSMPlusFluxCalculator` implements AUSM+ flux splitting for:
 - Shock capturing
 - Low diffusion
 
+The default remains AUSM+. An opt-in internal-face Rusanov operator is available through
+`TwoFluidPipe.setRusanovInternalFluxEnabled(true)` after enabling independent oil/water phase
+faces. Rusanov retains simultaneous left and right donor streams instead of reducing them to one
+net donor; Runge-Kutta staging, pressure work and named-component transport use those same streams.
+The combined-liquid split, AUSM pressure interpolation, reconstructed slug faces and the
+one-direction unsplit complementarity route reject this configuration. An acoustic CFL bound and
+admissible thermodynamic states are still required. This is numerical conservation qualification,
+not physical restart, terrain-pool, evaporation, severe-slugging or pigging validation.
+
 ### Temporal Integration
 
 `TimeIntegrator` supports:

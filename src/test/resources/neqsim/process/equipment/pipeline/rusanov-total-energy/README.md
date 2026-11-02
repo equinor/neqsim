@@ -2,8 +2,9 @@
 
 Base: `5d0edbdf6f9e75a89f8f7337b4769d8cb24b2694`. The exact candidate source blob,
 commands, local runtimes and qualification limits are retained in `summary.json` and
-`validation.json`. This repairs the existing public local flux query; the production pipeline
-continues to use its existing AUSM path. No Riemann solver, topology or transaction owner is added.
+`validation.json`. The original #4809 increment repaired the public local flux query while the
+production pipeline retained AUSM. The later bidirectional-face extension below adds an explicit
+opt-in internal-face integration; AUSM remains the unchanged default.
 
 ## Equation and root cause
 
@@ -64,7 +65,8 @@ Exact-zero scale requires exact agreement. No Python assertion owns an acceptanc
 
 Maximum observed normalized error: **2.63970e-16**. Full input/native/reference matrices are retained.
 Normal and optimized Python reproduce identical numerical files. The default-AUSM408-row
-output is byte-identical before/after the repair. No runtime solver-selection call was changed.
+output is byte-identical before/after the repair. No runtime solver-selection call was changed in
+the original #4809 increment.
 
 JUnit additionally checks exact absence with unused NaN extensions, positive traces, identical-state
 Euler consistency, signed flow, total-enthalpy kinetic energy, negative reference-energy shifts,
@@ -158,7 +160,7 @@ python3 src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energ
 The classpath separator above is for Linux/macOS. The Java main and Python audit are the executed
 paths; no Maven/Java8 runtime execution is inferred from API compilation alone. Plot regeneration:
 `python3 src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/plot_srk.py`.
-The unchanged production AUSM path gains no work from this test-only increment. The18 flashes
+The unchanged default AUSM path gains no work from this SRK test-only increment. The18 flashes
 are test/replay overhead, not measured pipeline calculation cost. Full-cycle limitations below remain.
 
 ## Public output and applicability
@@ -176,20 +178,43 @@ No state is clipped, seeded or thermodynamically recovered by this query. No ser
 `FluxTiming.java` retains seven200000-query observations after100000 warmups, separately for
 baseline/candidate AUSM and Rusanov in independent JVMs. Raw timing/checksum CSVs and observed
 min/median/max are retained. Shared-runtime observations are not a whole-simulation speedup claim.
-The normal AUSM implementation has no added arithmetic or branches, and its control data are unchanged.
+The original total-energy repair added no AUSM arithmetic. The later directional integration adds
+fixed scalar metadata to the existing `PhaseFlux` object without a second per-face allocation.
+`BidirectionalFluxTiming.java` consumes every conservative and directional output to prevent those
+stores from becoming a dead-code benchmark. On the shared Java17 runtime its seven observations
+gave median **43.35141ns/query** for AUSM and **41.55155ns/query** for Rusanov; raw observations and
+checksums are retained in `bidirectional-*-timing.csv`. The earlier candidate medians were
+44.02/40.95ns with a narrower checksum, so this observation does not identify a material local-query
+regression. It is not a whole-pipe throughput claim or a stable cross-host performance comparison.
 The repaired optional query includes validation and output metadata; do not equate its cost with
 ordinary pipeline calculation cost.
 
-Rusanov's two-sided numerical diffusion does not satisfy the existing one-donor component ledger
-merely by substituting a net mass flux. No automatic fallback or solver switch is enabled here.
-Explicit time integration needs an appropriate Courant bound, admissible EOS states and independent
-coupled positivity/energy/rollback evidence. A two-phase volume constraint, normal-gravity pressure
-reconstruction and gravitational/internal/kinetic energy ownership still need a coherent integration.
+Replay the complete-output timing from the repository root after compiling main sources:
+
+```bash
+java -cp target/classes src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/BidirectionalFluxTiming.java target/bidirectional-ausm.csv ausm
+java -cp target/classes src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/BidirectionalFluxTiming.java target/bidirectional-rusanov.csv rusanov
+```
+
+Rusanov's two-sided numerical diffusion does not satisfy a one-donor component ledger merely by
+substituting a net mass flux. The bidirectional extension decomposes mass as
+
+$$F_m^+=\tfrac12U_{m,L}(u_L+s),\qquad F_m^-=\tfrac12U_{m,R}(s-u_R),\qquad F_m=F_m^+-F_m^-,$$
+
+retains both nonnegative streams through Runge-Kutta stage weights and named-component transport,
+and keeps the pressure-inventory energy diffusion
+$\tfrac12s(\alpha_Rp_R-\alpha_Lp_L)A$ separate from donor enthalpy. Hydrostatic and stratified
+pressure work use the same signed donor-volume flow $F_m^+/\rho_L-F_m^-/\rho_R$.
+`TwoFluidPipe.setRusanovInternalFluxEnabled(true)` is an explicit opt-in; there is no automatic
+fallback. Explicit time integration still needs an appropriate Courant bound and admissible EOS
+states. The combined-liquid one-upwind split, AUSM pressure interpolation, reconstructed slug faces
+and one-direction unsplit complementarity block reject this option.
 
 The documented dry/wet unfunded pressure impulse therefore remains unresolved. No elapsed terrain
 retention, pool level/inventory, gas-over-pool motion, same-feed inlet refill or physical evaporation
 time is demonstrated by this repair. No thermodynamic-reference value was used to tune it.
-#4674/#4675/#3298 remain open. This prerequisite stops at the existing local-flux API boundary.
+#4674/#4675/#3298 remain open. This prerequisite stops at conservative internal-face integration;
+it does not resolve the remaining dry/wet pressure-moment front or physical restart/evaporation.
 
 ## Final local validation
 
@@ -202,10 +227,31 @@ enabled pressure-moment or retained-pool result.
 
 Observed baseline/candidate median local-query times: AUSM31.42/44.02ns; Rusanov25.38/40.95ns.
 Sample ranges overlap for AUSM; these shared-runtime measurements do not resolve a speed change.
-The optional Rusanov query performs additional validation/metadata work. No Rusanov call was
-added to ordinary calculations, and the default408-row numerical output/checksums are unchanged.
+The optional Rusanov query and selected runtime route perform additional validation/metadata work.
+No Rusanov call is added to ordinary calculations, and the default408-row numerical
+output/checksums are unchanged.
 
 Maven helper, stable direct formatting, full Javadoc, documentation search828Markdown+1HTML,
 source-generated inventory and all-file pre-commit/pre-push pass. LocalJava17.0.20/Python3.12.14;
 Java8 API compilation passes, but no localJava8 JVM or full-repository suite is claimed.
 `validation.json` retains command exits, provenance, complete timing samples and limits.
+
+### Bidirectional integration extension
+
+The 2026-11-02 extension was selected from current master
+`cfe19920f508047341547a5af5eab92ad41fcb89`. The focused matrix passes **39 tests in seven
+classes**: ideal/SRK Rusanov controls, explicit two-donor ledgers, stage accumulation, fail-closed
+one-direction complementarity, transactional component transport, independent phase fluxes and
+thermal pressure work. A proportionate regression matrix passes **82 tests in nine classes** for
+phase/component/energy conservation, trace transport, three-phase dynamics and stratified pressure
+moments. The short rich-gas whole-pipe case selects Rusanov explicitly and closes its component
+report; the default selector remains AUSM.
+
+The independent 408-row/80-digit replay retains maximum normalized error
+`2.6396993913077747e-16`, including byte-identical default-AUSM control output. The independent
+324-row SRK replay retains maximum flux error `1.76197739111903e-16` and EOS/unit identity error
+`9.680953180421391e-17`. Java8-source compilation, Spotless and the documentation-search audit pass.
+Repository Javadoc generation was attempted but the local runtime lacks a `javadoc` executable;
+no Javadoc pass is inferred from that environmental failure. A later full Maven `verify` attempt
+was blocked before execution because the isolated environment could not resolve the uncached
+Maven Enforcer plugin; focused tests use the prepared cached repository and passed as stated.
