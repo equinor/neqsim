@@ -177,12 +177,12 @@ public final class DepletionPvtHistoryGenerator {
    * <p>
    * CCE retains the complete closed-mass cell at each pressure and withdraws no components. Its absolute native states
    * do not supply a saturation-pressure estimate or saturation-normalized volume. Oil-only DLE and pre-dew gas-only CVD
-   * states retain their actual inventories. CVD requires a sampled gas/oil boundary and rejects later
-   * phase-disappearance tails pending volume-restoration qualification. Its upper dew cell uses the checked refinement
-   * in {@link ConstantVolumeDepletion#setRefineSaturationConditions(boolean)}; missing or unclosed gas/oil-to-gas
-   * brackets fail rather than falling back to the phase-count scan. Wet/other-phase samples and critical-degenerate
-   * splits remain unqualified. No absent-phase Bo/Bg/Rs/Rv, Bw, surface pseudo-component closure assumption or
-   * reservoir production prediction is supplied.
+   * states retain their actual inventories. CVD requires a sampled gas/oil boundary and continues equilibrium-gas
+   * withdrawal to the fixed cell volume after liquid disappearance. No absent oil properties are assigned. Its upper
+   * dew cell uses the checked refinement in {@link ConstantVolumeDepletion#setRefineSaturationConditions(boolean)};
+   * missing or unclosed gas/oil-to-gas brackets fail rather than falling back to the phase-count scan. Wet/other-phase
+   * samples and critical-degenerate splits remain unqualified. No absent-phase Bo/Bg/Rs/Rv, Bw, surface
+   * pseudo-component closure assumption or reservoir production prediction is supplied.
    * </p>
    *
    * @param model independently calibrated original/tuned checkpoints
@@ -241,9 +241,8 @@ public final class DepletionPvtHistoryGenerator {
         }
       }
       boolean twoPhase = equilibrium.hasPhaseType("gas") && equilibrium.hasPhaseType("oil");
-      if (path == Path.CVD && sampledTwoPhase && !twoPhase) {
-        throw new IllegalStateException(
-            "CVD phase-disappearance tail requires separate volume-restoration qualification");
+      if (path == Path.CVD && sampledTwoPhase && !twoPhase && !cell.hasPhaseType("gas")) {
+        throw new IllegalStateException("CVD requires retained gas for post-boundary volume restoration");
       }
       if (twoPhase) {
         double distance = 0;
