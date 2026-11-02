@@ -13,3 +13,6 @@ keywords: "PVT, CME, CVD, differential liberation, separator test, swelling test
 - [Native CCE/CVD/DLE handoff, checked upper-dew reference, gas-only CVD continuation and bounded PVT conversion](depletion_pvt_generation.md)
 - [Phase-selective reservoir production and separator outputs](reservoir_phase_production.md)
 - [Laboratory gas-density consistency before EOS handoff](laboratory_gas_density_consistency.md)
+
+Closed-mass wet CCE handoff and its synthetic gas/aqueous and three-phase
+qualification are described in the [depletion PVT guide](depletion_pvt_generation.md).
