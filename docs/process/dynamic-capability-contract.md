@@ -770,18 +770,19 @@ fail-closed in-memory orchestration and deterministic replay only; it does not q
 side-effect compensation, safety action, virtual commissioning, OTS behavior or adaptive timestep rejection.
 
 
-## Opt-in physical pressure-transmitter scans
+## Opt-in physical pressure- and temperature-transmitter scans
 
-A registered `PressureTransmitter` can opt into one sample-and-hold update per physical transient step. The device is
-disabled by default for compatibility. When enabled, `ProcessSystem` samples it after due events and INPUT field values
-have been applied and before equipment and controller execution. An equipment-owned or standalone controller, the
-measurement-history row and alarm evaluation then consume the same held value for that physical-step UUID.
+A registered `PressureTransmitter` or `TemperatureTransmitter` can opt into one sample-and-hold update per physical
+transient step. The devices are disabled by default for compatibility. When enabled, `ProcessSystem` samples them after
+due events and INPUT field values have been applied and before equipment and controller execution. An equipment-owned or
+standalone controller, the measurement-history row and alarm evaluation then consume the same held value for that
+physical-step UUID.
 
 The signal order is fault transformation, Gaussian noise, exact first-order filter and discrete sample delay. The
 first-order coefficient is `1 - exp(-dt/tau)` using the actual finite positive physical timestep. On this opt-in path a
 `LINEAR_DRIFT` parameter is an engineering-unit rate per second, so its increment is rate times accepted seconds.
 Repeated sampling with the same physical-step UUID is idempotent. Rejected transactional/adaptive trials restore the
-held value, UUID, delay/filter/fault state and random-generator continuation before replay.
+held value, engineering unit, UUID, delay/filter/fault state and random-generator continuation before replay.
 
 Legacy direct `getMeasuredValue(...)` calls retain the historical one-second-per-read modifier behavior. Instrument
 families other than the concrete pressure transmitter remain on that legacy path until separately audited. The device
