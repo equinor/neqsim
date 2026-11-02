@@ -70,6 +70,21 @@ unresolvable cases fail explicitly. See the
 [reporting guide](../wiki/two_fluid_reporting_and_validation#static-subcell-depth-and-area-diagnostic)
 for units, supported limits and executable regression evidence.
 
+### Optional Rusanov phase-flux contract
+
+The existing optional `AUSMPlusFluxCalculator.calcRusanovFlux` is a local comparison/reserve
+flux; it is not automatically selected by the pipeline solver. Phase inputs carry total specific
+enthalpy including kinetic energy. Rusanov dissipates `alpha * (rho * H - p)`, while the physical
+energy flux remains `alpha * rho * u * H`. It returns consistent pressure/area metadata and a
+Rusanov holdup flux. Exactly absent phase properties are unused; positive traces use the same
+equations. Invalid occupied states, unrepresentable interface holdup and nonfinite outputs reject explicitly.
+The [executed local-flux record](../../src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/README.md)
+includes independent ideal-gas controls, dry/trace limits and default-AUSM equivalence.
+Explicit updates require an appropriate Courant bound and admissible thermodynamics; there is
+no unconditional stability guarantee. Two-sided diffusion needs compatible named-component and
+energy donor ledgers before solver integration. This does not repair the enabled pressure-moment
+front or qualify pools, inlet refill or hydrocarbon evaporation.
+
 ### Stratified hydrostatic pressure moments
 
 The immutable pressure-moment result also exposes signed phase first area moments about the pipe

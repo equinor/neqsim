@@ -231,6 +231,16 @@ cells; no elapsed pool-retention interval, pool level, or depletion time is infe
 The public record retains every case, inspected plots, and RHS-only timing data.
 
 
+### Optional Rusanov phase-flux contract
+
+`RusanovConservativeFluxTest` separately qualifies the existing optional Rusanov phase-flux
+formula against ideal-gas Euler conserved variables: total-energy pressure subtraction, kinetic
+energy, pressure/holdup metadata, exact absence, positive traces, signed flow, energy-reference
+shifts and finite arithmetic. Its mass-positivity control has an explicit Courant condition.
+The [executed local-flux record](../../src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/README.md)
+does not qualify a coupled two-fluid Riemann solver, wet/dry transport, component-donor integration
+or gravitational energy recovery. Production pipelines still select AUSM; no default changes.
+
 ### Stratified hydrostatic pressure moments
 
 The result's derived centre-referenced phase first area moments and normal-gravity energy [J/m]
