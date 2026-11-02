@@ -1,11 +1,11 @@
 ---
 title: Coupled release and inventory depletion
-description: Rigid adiabatic equilibrium inventory coupled to phase-selected release physics, native process dynamics, component and energy balances, and supplier-neutral source frames.
+description: Rigid equilibrium inventory coupled to phase-selected release physics, explicit external heat boundaries, native process dynamics, component and energy balances, and supplier-neutral source frames.
 ---
 
 # Coupled release and inventory depletion
 
-`ReleaseInventory` is an opt-in process unit for one rigid, adiabatic, well-mixed equilibrium
+`ReleaseInventory` is an opt-in process unit for one rigid, well-mixed equilibrium
 inventory and one short opening. Unlike a hypothetical source sample, its native
 `runTransient` removes mass and energy. The changed temperature, pressure and composition
 then determine the next release calculation. It works within both `ProcessSystem` and
@@ -44,21 +44,31 @@ activation remains `UNVERIFIED` and source-frame evidence remains `UNQUALIFIED`.
 For component inventory $m_i$ in kg, selected-phase component mass fraction $w_{i,s}$,
 internal energy $U$ in J, fixed volume $V$ in m3, and release rate $\dot m$ in kg/s:
 
-$$\frac{dm_i}{dt}=-w_{i,s}\dot m,\qquad \frac{dU}{dt}=-h_{0,s}\dot m,\qquad V=\mathrm{constant}$$
+$$\frac{dm_i}{dt}=-w_{i,s}\dot m,\qquad
+\frac{dU}{dt}=\dot Q_{ext}-h_{0,s}\dot m,\qquad V=\mathrm{constant}$$
 
 $h_{0,s}$ is the selected phase's EOS upstream stagnation enthalpy in J/kg. The discharge removes enthalpy,
 including flow work; subtracting only specific internal energy would predict the wrong
 cooling. Enthalpy and internal energy can be negative under the selected EOS reference.
-Their signed balance is retained. No heat input, boundary work, inflow, kinetic inventory
-energy or potential-energy change is included.
+Their signed balance is retained. The default `ReleaseInventoryHeatTransfer.adiabatic()` boundary
+sets $\dot Q_{ext}=0$. Opt-in `constantPower(...)` and `linearConductance(...)` boundaries add a
+caller-declared signed heat rate in W, positive into the inventory. The linear form uses
+$\dot Q_{ext}=UA(T_{environment}-T_{inventory})$ with explicit W/K and K inputs. Both require
+provenance and are evaluated from the immutable beginning-of-substep state. They do not predict
+fire heat flux, wall thermal inertia, radiation, interfacial heat/latent transfer or phase-transfer
+rates. No boundary work, inflow, kinetic inventory energy or potential-energy change is included.
 
-Each explicit Euler substep removes selected-phase composition and integrated $h_{0,s}\dot m$,
+Each explicit Euler substep removes selected-phase composition, integrates
+$\dot Q_{ext}-h_{0,s}\dot m$,
 then calls NeqSim's volume/internal-energy flash with explicit `m3` and `J` units.
 It verifies component, volume and energy closure to relative $10^{-7}$, including cumulative
-closure against the original inventory. The substep is limited by `maxSubstepS`, remaining
+closure $U+H_{released}-Q_{ext}=U_0$ against the original inventory. The substep is limited by `maxSubstepS`, remaining
 duration, and 1% of current selected-phase mass. This bound prevents overdraw; it is **not** an
 accuracy estimate. Refine `maxSubstepS` and the external output timestep for each study.
 A call needing more than 10,000 substeps fails without committing this unit's state.
+An isolated inventory can continue integrating an active heat boundary while its opening is
+closed. The cumulative signed heat is exposed by `Balance.getHeatTransferEnergyJ()` and by
+deterministic source-frame provenance together with the boundary type and provenance string.
 
 For an ordered plan, the phase-exhaustion threshold is a model input, not a numerical tolerance.
 It represents the minimum phase inventory for which the selected homogeneous withdrawal boundary
@@ -78,6 +88,12 @@ repeated diagonal updates without changing the inventory closure target or gener
 Failure to meet the target produces `INVENTORY_VU_REFINEMENT_FAILED`. The total number of
 VU solves/refinements is available through `getLastVolumeEnergySolves()` and frame provenance;
 it does not count the TP trials internal to each refinement.
+
+`ReleaseInventoryTest.linearHeatBoundaryRefinesAndWritesExecutableBenchmark` executes the
+lumped-conductance boundary at 1.0, 0.5, 0.25 and 0.125 s maximum substeps. It checks monotone
+successive refinement, temperature bounds and the signed energy ledger, and writes
+`target/source-term-benchmarks/release-inventory-heat-boundary.csv`. This is a numerical boundary
+and conservation benchmark, not independent fire, wall or blowdown validation.
 
 The general VU solver refreshes caloric derivatives on its final TP state before
 returning, so inventory checks use current enthalpy and internal energy. Its update
@@ -343,8 +359,9 @@ step refinement is non-increasing within the asserted numerical tolerance.
 
 This increment covers equilibrium, phase-selected withdrawal, explicit ordered phase-exhaustion
 transitions, and opt-in live cylindrical phase geometry with a fail-closed entrainment/interface
-band. Predictive entrainment and slip, finite-rate interfacial heat/latent/component transfer,
-wall/fire heat transfer, real-gas transient decompression, non-equilibrium transfer, solid-bearing
+band. The opt-in external energy boundary covers only caller-imposed constant power or lumped
+conductance. Predictive entrainment and slip, finite-rate interfacial heat/latent/component transfer,
+qualified fire/wall heat-transfer physics, real-gas transient decompression, non-equilibrium transfer, solid-bearing
 flow physics and experimental qualification remain separate work in
 [#3860](https://github.com/equinor/neqsim/issues/3860).
 The numerical limit of the selected release model still applies. No facility qualification
