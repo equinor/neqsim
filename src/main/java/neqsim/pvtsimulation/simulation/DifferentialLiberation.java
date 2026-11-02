@@ -88,7 +88,8 @@ public class DifferentialLiberation extends BasePVTsimulation {
       cell.setPressure(schedule[row]);
       try {
         new neqsim.thermodynamicoperations.ThermodynamicOperations(cell).TPflash();
-        cell.initProperties();
+        cell.init(1);
+        cell.initPhysicalProperties(neqsim.physicalproperties.PhysicalPropertyType.MASS_DENSITY);
       } catch (Exception ex) {
         throw new IllegalStateException("Native DLE equilibrium failed at " + schedule[row] + " bara", ex);
       }
@@ -119,7 +120,8 @@ public class DifferentialLiberation extends BasePVTsimulation {
         cell.removePhase(gas);
         cell.initBeta();
         cell.init_x_y();
-        cell.initProperties();
+        cell.init(1);
+        cell.initPhysicalProperties(neqsim.physicalproperties.PhysicalPropertyType.MASS_DENSITY);
       }
       completed[row] = new DepletionSnapshot(equilibrium, cell, previous);
       previous = DepletionSnapshot.inventory(cell);
