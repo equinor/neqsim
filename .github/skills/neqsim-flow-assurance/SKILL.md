@@ -1677,6 +1677,8 @@ or hydrocarbon evaporation; those still require conservative phase-front transpo
 `AUSMPlusFluxCalculator.calcRusanovFlux` is an explicit local comparison/reserve query.
 Its dissipated energy is `alpha * (rho * H - p)` with total specific enthalpy;
 exact absence ignores unused properties and positive traces retain the same formula.
+SRK gas/oil controls distinguish EOS-volume internal energy from physical-density mechanical
+energy using explicit pressure-volume work; do not mix these API conventions in a reference.
 See the [executed conservative-flux evidence](../../../src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/README.md).
 This is not selected by the production solver: two-sided diffusion requires compatible
 component/energy donors, a Courant bound and coupled gravitational-energy qualification.

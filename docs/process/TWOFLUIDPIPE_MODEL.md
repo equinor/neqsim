@@ -79,7 +79,10 @@ energy flux remains `alpha * rho * u * H`. It returns consistent pressure/area m
 Rusanov holdup flux. Exactly absent phase properties are unused; positive traces use the same
 equations. Invalid occupied states, unrepresentable interface holdup and nonfinite outputs reject explicitly.
 The [executed local-flux record](../../src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/README.md)
-includes independent ideal-gas controls, dry/trace limits and default-AUSM equivalence.
+includes independent ideal-gas controls, dry/trace limits, default-AUSM equivalence and324 SRK
+gas/oil local queries. SRK controls explicitly convert EOS internal energy to the existing
+physical-density mechanical-energy convention; they do not validate translated-EOS thermodynamics
+or elapsed pooling.
 Explicit updates require an appropriate Courant bound and admissible thermodynamics; there is
 no unconditional stability guarantee. Two-sided diffusion needs compatible named-component and
 energy donor ledgers before solver integration. This does not repair the enabled pressure-moment

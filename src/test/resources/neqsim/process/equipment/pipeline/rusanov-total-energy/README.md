@@ -85,6 +85,82 @@ are retained separately. `plot.py` reproduces the following figure from the stor
 
 ![Independent energy-flux controls before and after repair](energy-flux.png)
 
+## Executed SRK gas/oil follow-up
+
+The same public six-component SRK/classic composition is flashed at18 fixed states:
+260/277.15/290K and10/40/80/115/125/150bara. Adjacent pressures, including150→10bara,
+are paired independently at each temperature. Each gas/oil query uses velocities(0,0),(-5,3),
+(7,-2)m/s and phase-fraction multipliers1/1e-12/1e-30. These query fractions do not seed a
+pipeline. EOS phase-volume fractions define the local query inputs. The full18-state grid
+and all324 local-flux rows are retained in `srk-native.csv`,
+including both densities, h/e, sound speed, all six phase mole fractions and native/reference fluxes.
+Exactly absent oil has a zero evidence record and unused NaN query extensions.
+
+The324 controls include54 one-sided oil appearance/disappearance rows and261 rows with
+negative reference internal energy. Negative energy under an EOS reference is not by itself
+an inadmissible state. `RusanovRichGasFluxTest` checks every query in CI and also exposes an
+asserted CSV replay. `qualify_srk.py` independently evaluates every complete, ordered, finite
+row with80-digit arithmetic and constructs energy from internal energy plus kinetic energy.
+This is a numerical/API consistency reference, not independent experimental EOS validation.
+
+### Explicit density and energy convention
+
+The first test incorrectly combined `phase.getInternalEnergy("J/kg")` with
+`phase.getDensity("kg/m3")`. At260K/10bara gas, h-e is117427.8565287262J/kg while
+p/rhoPhysical is117373.8856055669J/kg. That control **failed**; its tolerance was not relaxed.
+`Phase.getInternalEnergy` uses the untranslated EOS molar volume, whereas the density method
+with a unit reads physical properties with the default Peneloux correction. The no-argument
+`phase.getDensity()` uses that EOS molar volume. This is an API convention distinction,
+not evidence that the local flux or EOS itself failed.
+
+The reference now explicitly converts the internal-energy API value to the existing pipeline
+mechanical-energy convention (also used in `ConservativeThermodynamicRecovery.evaluate`):
+
+$$e_m=e_{EOS}+p\left(\frac{1}{\rho_{EOS}}-\frac{1}{\rho_{physical}}\right).$$
+
+It then builds Uenergy=alpha*rhoPhysical*(em+u*u/2), without using the flux implementation's
+rho*H-p conversion. Both h-eEOS=p/rhoEOS and the volume-work conversion are checked separately.
+No volume correction, EOS guard, production density or energy definition is changed.
+
+| Fixed gate/result | Value |
+| --- | ---: |
+| Normalized flux gate, set before execution |3e-14|
+| Maximum normalized flux error |1.76198e-16|
+| Normalized EOS/unit identity gate, set before execution |3e-13|
+| Maximum normalized EOS/unit error |9.68095e-17|
+| Maximum explicit volume-work correction |1516.5165J/kg|
+| Measured asserted CSV replay wall time, shared runtime |1.67053s|
+
+Normal/-O reference and summary files are byte-identical. Both Python modes also pass two
+receipt tests that reject12 corrupted records per mode and remove stale success receipts.
+The existing devtools workflow runs these controls on Python3.11/3.13; hosted results are pending.
+Full explicit-source provenance,
+failed-reference diagnosis, Java8 compilation/replay, negative controls and command exits
+are recorded in `srk-validation.json`. Source is parentc2b9eac5fe85120c89703fa90f9044d06d6d588e
+plus this test/evidence follow-up; the flux implementation remains blob61c647164d40187e07be29d5cdfe96112944f6fd.
+
+![SRK sample volume convention and equilibrium heavy-component fractions](srk-inputs.png)
+
+The figure shows input equilibrium states only, not spatial pools or time histories. Sampled oil
+n-heptane mole fractions span0.20795–0.76619, versus the bulk feed0.004. These are equilibrium
+phase compositions of the fixed bulk feed; they do not demonstrate the enrichment or depletion
+history of retained pools. No evaporation coefficient or reference inventory was fitted.
+
+Replay after Maven bootstrap and the focused Maven test compilation:
+
+```bash
+./mvnw -q -Dtest=RusanovRichGasFluxTest test
+./mvnw -q dependency:build-classpath -Dmdep.outputFile=target/srk-classpath.txt
+java -cp "target/test-classes:target/classes:$(cat target/srk-classpath.txt)" neqsim.process.equipment.pipeline.twophasepipe.numerics.RusanovRichGasFluxTest target/srk-native.csv
+python3 src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/qualify_srk.py --native target/srk-native.csv --output-dir target/srk-check
+```
+
+The classpath separator above is for Linux/macOS. The Java main and Python audit are the executed
+paths; no Maven/Java8 runtime execution is inferred from API compilation alone. Plot regeneration:
+`python3 src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/plot_srk.py`.
+The unchanged production AUSM path gains no work from this test-only increment. The18 flashes
+are test/replay overhead, not measured pipeline calculation cost. Full-cycle limitations below remain.
+
 ## Public output and applicability
 
 `interfaceHoldup` is the arithmetic mean fraction. `interfacePressure` is phase-area weighted,
@@ -117,7 +193,9 @@ time is demonstrated by this repair. No thermodynamic-reference value was used t
 
 ## Final local validation
 
-78 tests across13 classes pass, including6 new Rusanov tests; zero failures/errors/skips.
+79 tests across14 classes pass, including7 new Rusanov tests; zero failures/errors/skips.
+The original78-test result and unchanged pipeline control are retained in `validation.json`;
+`srk-validation.json` records the combined selection and new SRK follow-up.
 The unchanged public12/24-cell default-AUSM120s ramp completes with its original per-interval
 mass/component/energy assertions (65.946266521s wall on the shared runtime). This is not an
 enabled pressure-moment or retained-pool result.
