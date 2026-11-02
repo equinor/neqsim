@@ -145,6 +145,34 @@ public final class ReleaseInventoryPhaseGeometry implements Serializable {
         throw new IllegalStateException("INVENTORY_GEOMETRY_PHASE_UNSUPPORTED: " + type);
       }
     }
+    return assess(gasVolume, liquidVolume, liquidType);
+  }
+
+  /**
+   * Assesses independently retained gas and liquid volumes.
+   *
+   * <p>
+   * This overload is intended for non-equilibrium inventories whose phase compositions must not be recombined and
+   * reflashed merely to evaluate vessel geometry. The caller remains responsible for proving that the two volumes use
+   * the same pressure and that their sum closes the rigid capacity.
+   * </p>
+   *
+   * @param gasVolumeM3 live gas volume in m3
+   * @param liquidVolumeM3 live liquid volume in m3
+   * @param liquidType explicit OIL, LIQUID or AQUEOUS identity when liquid volume is present
+   * @return immutable level, area and phase assessment
+   */
+  public Assessment assess(double gasVolumeM3, double liquidVolumeM3, PhaseType liquidType) {
+    if (!Double.isFinite(gasVolumeM3) || gasVolumeM3 < 0.0 || !Double.isFinite(liquidVolumeM3)
+        || liquidVolumeM3 < 0.0) {
+      throw new IllegalArgumentException("INVENTORY_GEOMETRY_PHASE_VOLUME_INVALID");
+    }
+    if (liquidVolumeM3 > GEOMETRY_TOLERANCE * getCapacityM3()
+        && !(liquidType == PhaseType.OIL || liquidType == PhaseType.LIQUID || liquidType == PhaseType.AQUEOUS)) {
+      throw new IllegalArgumentException("INVENTORY_GEOMETRY_LIQUID_TYPE_INVALID");
+    }
+    double gasVolume = gasVolumeM3;
+    double liquidVolume = liquidVolumeM3;
     double totalVolume = gasVolume + liquidVolume;
     if (Math.abs(totalVolume - getCapacityM3()) > 1.0e-6 * getCapacityM3()) {
       throw new IllegalStateException(

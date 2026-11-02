@@ -1,6 +1,6 @@
 ---
 title: Coupled release and inventory depletion
-description: Rigid equilibrium inventory coupled to phase-selected release physics, explicit external heat boundaries, native process dynamics, component and energy balances, and supplier-neutral source frames.
+description: Rigid equilibrium and retained-phase inventories coupled to selected release physics, explicit heat and interphase boundaries, native process dynamics, conservative balances, and supplier-neutral source frames.
 ---
 
 # Coupled release and inventory depletion
@@ -94,6 +94,73 @@ lumped-conductance boundary at 1.0, 0.5, 0.25 and 0.125 s maximum substeps. It c
 successive refinement, temperature bounds and the signed energy ledger, and writes
 `target/source-term-benchmarks/release-inventory-heat-boundary.csv`. This is a numerical boundary
 and conservation benchmark, not independent fire, wall or blowdown validation.
+
+## Retained-phase finite-rate inventory
+
+`NonEquilibriumReleaseInventory` is a separate opt-in model for exactly one gas and one oil,
+generic-liquid or aqueous phase. It does not call a TP or VU equilibrium flash after a component
+transfer. Instead, it retains gas and liquid component masses separately and evaluates forced
+homogeneous EOS phases at one common pressure and temperature. A coupled Newton solve enforces
+
+$$V_g(P,T,\mathbf{m}_g)+V_l(P,T,\mathbf{m}_l)=V_{vessel}$$
+
+and
+
+$$U_g(P,T,\mathbf{m}_g)+U_l(P,T,\mathbf{m}_l)=U_{target}$$
+
+after every candidate substep. The state is committed only after per-component, total-mass,
+volume and energy residuals close. The selected withdrawal phase supplies the source composition
+and stagnation enthalpy. The other phase remains in the inventory rather than being re-partitioned
+by an equilibrium flash.
+
+`ReleaseInventoryInterphaseTransfer` requires component coefficients in m/s, a donor-fraction
+bound and a non-empty provenance string. For live interface area $A$ in m2, gas molar
+concentration $c_g$ in mol/m3, component molar mass $M_i$ in kg/mol and explicit timestep
+$\Delta t$ in s, signed liquid-to-gas transfer is
+
+$$\Delta m_i=k_i A c_g M_i\left(x_i\frac{\phi_i^l}{\phi_i^g}-y_i\right)\Delta t$$
+
+Each component is bounded independently to the configured fraction of its donor inventory.
+Positive values evaporate and negative values condense. The phase-enthalpy difference associated
+with the transfer is retained as `Balance.getInterphaseLatentEnergyJ()` and deterministic frame
+provenance. It is an internal diagnostic, not an energy source: the total-energy solve already
+retains the complete thermodynamic effect and the global balance remains
+$U+H_{released}-Q_{external}=U_0$.
+
+The model assumes thermal equilibrium between phases, prescribed film coefficients and one live
+cylindrical interface. It fails closed on phase disappearance, an opening inside the exclusion
+band, an unsupported phase assemblage, invalid fugacity/property data or a non-converged state
+solve. It does not predict separate phase temperatures, interfacial heat-transfer coefficients,
+nucleation delay, wall inertia, entrainment, droplets, population balance, pipe waves or solids.
+Its current evidence level is `UNQUALIFIED`.
+
+The executable construction and both process-container paths are covered by
+`NonEquilibriumReleaseInventoryTest`:
+
+```java
+Map<String, Double> coefficientsMS = new TreeMap<String, Double>();
+coefficientsMS.put("methane", 2.0e-3);
+coefficientsMS.put("n-butane", 2.0e-3);
+ReleaseInventoryInterphaseTransfer film = new ReleaseInventoryInterphaseTransfer(
+    coefficientsMS, 0.25, "synthetic-screening-input:v1");
+ReleaseInventoryPhaseGeometry vesselGeometry = new ReleaseInventoryPhaseGeometry(
+    ReleaseInventoryPhaseGeometry.Orientation.VERTICAL,
+    vesselDiameterM, vesselLengthM, gasOpeningElevationM, interfaceExclusionHalfBandM);
+NonEquilibriumReleaseInventory finiteRate = new NonEquilibriumReleaseInventory(
+    "finite-rate-inventory", flashedFluid, vesselVolumeM3,
+    openingDiameterM, 0.70, receiverPressurePa,
+    selectedReleaseModel, maximumSubstepS, PhaseType.GAS,
+    vesselGeometry, film);
+process.add(finiteRate);
+session.addInventorySource("opening", "finite-rate-inventory");
+SourceTermFrame frame = session.runSteadyState().get(0);
+frame = session.step(0.10).get(0);
+NonEquilibriumReleaseInventory.Balance balance = finiteRate.getBalance();
+```
+
+`getThermoSystem()` returns a defensive clone of the selected withdrawal phase because a single
+`SystemInterface` cannot represent two retained compositions without reflashing them. Whole-
+inventory consumers must use `getGasPhase()`, `getLiquidPhase()` and `getBalance()`.
 
 The general VU solver refreshes caloric derivatives on its final TP state before
 returning, so inventory checks use current enthalpy and internal energy. Its update
