@@ -428,6 +428,9 @@ public class TwoFluidConservationEquations implements Serializable {
   /** Allow a zero-gradient pressure outlet to carry a phase back into the domain. */
   private boolean allowOutletPhaseBackflow = false;
 
+  /** Retain oil and water at a gas-only pressure outlet while leaving gas transmissive. */
+  private boolean gasOnlyOutletTakeoff = false;
+
   /** Interface gas holdup used by the pressure part of the momentum flux, one per interface. */
   private double[] interfaceGasHoldup = new double[0];
 
@@ -1981,8 +1984,8 @@ public class TwoFluidConservationEquations implements Serializable {
     double A = sec.getArea();
 
     if (!allowOutletPhaseBackflow && (sec.getGasHoldup() > 0.0 && sec.getGasVelocity() < 0.0
-        || sec.getOilHoldup() > 0.0 && sec.getOilVelocity() < 0.0
-        || sec.getWaterHoldup() > 0.0 && sec.getWaterVelocity() < 0.0)) {
+        || !gasOnlyOutletTakeoff && sec.getOilHoldup() > 0.0 && sec.getOilVelocity() < 0.0
+        || !gasOnlyOutletTakeoff && sec.getWaterHoldup() > 0.0 && sec.getWaterVelocity() < 0.0)) {
       outletBackflowClamped = true;
     }
 
@@ -2001,7 +2004,8 @@ public class TwoFluidConservationEquations implements Serializable {
     flux[IDX_GAS_MOMENTUM] += stratified.force[0];
 
     // Oil flux - use default density if not set
-    double vO = allowOutletPhaseBackflow ? sec.getOilVelocity() : Math.max(0.0, sec.getOilVelocity());
+    double vO = gasOnlyOutletTakeoff ? 0.0
+        : allowOutletPhaseBackflow ? sec.getOilVelocity() : Math.max(0.0, sec.getOilVelocity());
     TwoFluidSection oilDonor = outletDonor(sec, vO);
     double rhoO = oilDonor.getOilDensity();
     if (!Double.isFinite(rhoO) || rhoO <= 0.0)
@@ -2014,7 +2018,8 @@ public class TwoFluidConservationEquations implements Serializable {
     flux[IDX_OIL_MOMENTUM] += stratified.force[1];
 
     // Water flux - use default density if not set
-    double vW = allowOutletPhaseBackflow ? sec.getWaterVelocity() : Math.max(0.0, sec.getWaterVelocity());
+    double vW = gasOnlyOutletTakeoff ? 0.0
+        : allowOutletPhaseBackflow ? sec.getWaterVelocity() : Math.max(0.0, sec.getWaterVelocity());
     TwoFluidSection waterDonor = outletDonor(sec, vW);
     double rhoW = waterDonor.getWaterDensity();
     if (!Double.isFinite(rhoW) || rhoW <= 0.0)
@@ -4078,6 +4083,25 @@ public class TwoFluidConservationEquations implements Serializable {
   /** @return true when signed outlet phase flow is enabled */
   public boolean isOutletPhaseBackflowAllowed() {
     return allowOutletPhaseBackflow;
+  }
+
+  /**
+   * Select a phase-selective pressure outlet that transmits gas and retains hydrocarbon and aqueous liquid.
+   *
+   * <p>
+   * Retained liquid phases keep their pressure and hydrostatic traction, but carry exactly zero external mass, momentum
+   * advection and energy. Internal liquid face transport remains unchanged.
+   * </p>
+   *
+   * @param enabled true for a gas-only external takeoff
+   */
+  public void setGasOnlyOutletTakeoff(boolean enabled) {
+    gasOnlyOutletTakeoff = enabled;
+  }
+
+  /** @return true when the pressure outlet transmits gas only */
+  public boolean isGasOnlyOutletTakeoffEnabled() {
+    return gasOnlyOutletTakeoff;
   }
 
   /** @return interfacial pressure coefficient delta */

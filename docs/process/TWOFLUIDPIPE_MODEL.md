@@ -248,6 +248,17 @@ phase composition, density, and enthalpy while retaining the signed face speed a
 pressure traction. Integrated boundary component masses use the same Euler, Runge-Kutta, or IMEX
 stage weights as the accepted phase update.
 
+For a top-side blowdown connection that physically discharges gas while retaining liquid, call
+`setGasOnlyOutletTakeoff(true)` with a constant-pressure outlet. Gas keeps the ordinary signed
+mass/component/enthalpy boundary contract. Oil and water retain their pressure and hydrostatic
+traction, but their external mass, component and advected-energy fluxes are exactly zero; internal
+liquid drainage between cells remains active. In the coupled pressure correction, only gas is
+rescaled to close the outlet-cell volume, so the pressure boundary cannot remove or create retained
+liquid. This is a phase-selective takeoff contract, not a separator, level controller, valve-area
+model or evaporation closure. Any pressure-projection gas inflow, including repressurization, requires an explicit
+external donor through `setOutletBoundaryFluid(...)`; the step fails instead of assigning pipe-side composition or
+enthalpy to an unspecified reservoir.
+
 With component transport and mass transfer enabled, each RHS evaluation flashes the conserved
 local component composition. Its equilibrium gas **mass fraction** sets the transfer target,
 `(totalCellMass * equilibriumGasMassFraction - currentGasMass) / relaxationTime`. Hydraulic slip

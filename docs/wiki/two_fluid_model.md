@@ -1287,6 +1287,14 @@ The rich-gas pressure-ramp regression exercises actual same-gas fallback with co
 component, and full-energy reports, but does not qualify complete blowdown, low-point pooling,
 physical restart, or predictive evaporation time.
 
+`setGasOnlyOutletTakeoff(true)` defines a narrower constant-pressure boundary for a gas takeoff above
+retained liquid. Gas remains open; oil and water keep pressure/hydrostatic traction but have exactly
+zero external mass, component and advected-energy flux. The coupled pressure projection uses gas
+alone to close the outlet-cell volume and therefore cannot rescale retained liquid inventory.
+Liquid can still drain across internal faces. This mode does not infer a separator, valve area or
+evaporation law. If signed gas fallback is enabled, the existing explicit external donor requirement
+still applies.
+
 
 
 ### Flash Calculations

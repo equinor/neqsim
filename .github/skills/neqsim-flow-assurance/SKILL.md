@@ -707,7 +707,11 @@ for (double qgMSm3d : gasRates) {
 > and enthalpy have an explicit physical owner. Never infer that state from the
 > last interior cell. The current rich-gas pressure-ramp check is conservative
 > boundary evidence, not complete blowdown, pooling, restart, or evaporation-rate
-> qualification.
+> qualification. For a gas takeoff above retained liquid, use
+> `setGasOnlyOutletTakeoff(true)` only with a constant-pressure outlet. Oil and
+> water remain externally closed while retaining traction and internal drainage;
+> do not replace this contract with inventory clipping or a manufactured boundary
+> mixture.
 >
 > **The coupled route is an opt-in four-part configuration.** For a pressure
 > outlet that physically permits phase fallback, use

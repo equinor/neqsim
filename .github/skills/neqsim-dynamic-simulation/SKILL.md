@@ -548,7 +548,10 @@ with named-component transport requires `setOutletBoundaryFluid(externalFluid)` 
 `setAllowOutletPhaseBackflow(true)`; this explicitly owns reversed phase composition, density, and
 enthalpy. The last interior composition is not a valid inflow boundary. Treat the synthetic
 same-gas pressure-ramp regression as boundary-contract evidence only, not complete restart or
-evaporation-rate qualification. None of these numerical contracts establishes equivalence with a
+evaporation-rate qualification. When the physical outlet is a gas takeoff above retained liquid,
+use `setGasOnlyOutletTakeoff(true)` with a constant-pressure outlet; do not zero liquid inventories
+or manufacture a separator mixture. The mode closes external oil/water mass, component and
+advected-energy flux while preserving their traction and internal drainage. None of these numerical contracts establishes equivalence with a
 commercial transient multiphase simulator.
 
 ## TwoFluidPipe Regime-Transition Continuation

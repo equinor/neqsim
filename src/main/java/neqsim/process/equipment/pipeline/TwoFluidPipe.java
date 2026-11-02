@@ -5207,6 +5207,7 @@ public class TwoFluidPipe extends Pipeline {
    */
   @Override
   public void run(UUID id) {
+    validateOutletTakeoffCompatibility();
     if (cellFaceElevationProfile != null) {
       validateCellFaceElevationProfile(cellFaceElevationProfile);
     }
@@ -5559,6 +5560,7 @@ public class TwoFluidPipe extends Pipeline {
    */
   @Override
   public synchronized void runTransient(double dt, UUID id) {
+    validateOutletTakeoffCompatibility();
     if (useConservativeEnergyRecovery) {
       validateConservativeEnergyConfiguration();
     }
@@ -5679,12 +5681,38 @@ public class TwoFluidPipe extends Pipeline {
     if (outletBoundaryFluid != null && outletBCType != BoundaryCondition.CONSTANT_PRESSURE) {
       throw new IllegalStateException("An outlet boundary fluid requires a constant-pressure outlet");
     }
+    validateOutletTakeoffCompatibility();
     if (!(inletBCType == BoundaryCondition.CLOSED || inletBCType == BoundaryCondition.STREAM_CONNECTED
         || inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet
         || inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet)
         || !(outletBCType == BoundaryCondition.CLOSED || outletBCType == BoundaryCondition.CONSTANT_PRESSURE)) {
       throw new IllegalStateException("Conservative energy recovery supports a phase-flow, pressure-face or closed "
           + "inlet and a pressure-face or closed outlet");
+    }
+  }
+
+  /** Reject a phase-selective outlet unless pressure traction has an explicit constant-pressure owner. */
+  private void validateOutletTakeoffCompatibility() {
+    if (equations.isGasOnlyOutletTakeoffEnabled() && outletBCType != BoundaryCondition.CONSTANT_PRESSURE) {
+      throw new IllegalStateException("Gas-only outlet takeoff requires a constant-pressure outlet");
+    }
+  }
+
+  /**
+   * Reject pressure-projection inflow when no external gas state owns the added mass and energy.
+   *
+   * @param outletCorrectionKg signed gas, oil and water pressure-correction transfers; positive is outflow
+   */
+  void validateGasOnlyOutletCorrectionDonor(double[] outletCorrectionKg) {
+    if (!equations.isGasOnlyOutletTakeoffEnabled() || outletBoundaryFluid != null) {
+      return;
+    }
+    if (outletCorrectionKg == null || outletCorrectionKg.length != 3) {
+      throw new IllegalArgumentException("Outlet pressure correction must provide gas, oil and water transfers");
+    }
+    if (outletCorrectionKg[0] < 0.0) {
+      throw new IllegalStateException("Gas-only outlet pressure correction attempted gas inflow without an external "
+          + "thermodynamic donor; configure setOutletBoundaryFluid(...) before repressurization");
     }
   }
 
@@ -6513,6 +6541,9 @@ public class TwoFluidPipe extends Pipeline {
         timeIntegrator.setCoupledPressureMomentumProperties(pressures, areas, lengths, gasDensities, oilDensities,
             waterDensities, gasSoundSpeeds, oilSoundSpeeds, waterSoundSpeeds, transientOutletCellPressure(),
             outletFixed, coupledPressureMomentumEnabled);
+        timeIntegrator.setCoupledPressureMomentumOutletPhaseOpen(
+            equations.isGasOnlyOutletTakeoffEnabled() ? new boolean[] {true, false, false}
+                : new boolean[] {true, true, true});
       } else {
         timeIntegrator.setCoupledPressureMomentumEnabled(false);
       }
@@ -6577,6 +6608,7 @@ public class TwoFluidPipe extends Pipeline {
         break;
       }
       consecutiveCoupledPressureMomentumFailures = 0;
+      validateGasOnlyOutletCorrectionDonor(timeIntegrator.getCoupledPressureMomentumOutletMassCorrectionKg());
 
       // The conservative-energy Euler route advances wall and interfacial resistance as a passive
       // first-order source split. Total energy stays fixed; the subsequent EOS recovery
@@ -9798,6 +9830,27 @@ public class TwoFluidPipe extends Pipeline {
    */
   public SystemInterface getOutletBoundaryFluid() {
     return outletBoundaryFluid == null ? null : outletBoundaryFluid.clone();
+  }
+
+  /**
+   * Select a gas-only constant-pressure outlet that retains oil and water in the pipe.
+   *
+   * <p>
+   * Gas keeps the existing signed pressure-face mass, component and energy contracts. Oil and water keep their pressure
+   * and hydrostatic traction but have exactly zero external mass, component and advected-energy transfer. Internal
+   * liquid transport and gravity drainage remain active. When signed gas fallback is enabled, an explicit external
+   * thermodynamic donor is still required for named-component transport.
+   * </p>
+   *
+   * @param enabled true to retain both liquid phases at the outlet
+   */
+  public void setGasOnlyOutletTakeoff(boolean enabled) {
+    equations.setGasOnlyOutletTakeoff(enabled);
+  }
+
+  /** @return true when only gas may cross the external pressure outlet */
+  public boolean isGasOnlyOutletTakeoffEnabled() {
+    return equations.isGasOnlyOutletTakeoffEnabled();
   }
 
   /**
