@@ -223,7 +223,7 @@ class NativeDepletionHandoffTest {
     }
   }
 
-  /** Wet samples, gas-only DLE, unsampled CVD boundaries and invalid schedules remain unsupported. */
+  /** Wet CVD, gas-only DLE, unsampled CVD boundaries and invalid schedules remain unsupported. */
   @Test
   void rejectsUnsupportedDomains() {
     assertThrows(IllegalArgumentException.class, () -> DepletionPvtHistoryGenerator.replayNative(model(0.95), true,
@@ -237,8 +237,8 @@ class NativeDepletionHandoffTest {
     wet.setMixingRule("classic");
     wet.init(0);
     CalibratedPvtModel bundle = new CalibratedPvtModel(wet, wet, "wet", "a", "b", "protocol", new String[] {"CCE-1"});
-    assertThrows(IllegalArgumentException.class, () -> DepletionPvtHistoryGenerator.replayNative(bundle, true, Path.DLE,
-        "wet DLE", 323.15, new double[] {500, 300}, separator()));
+    assertThrows(IllegalArgumentException.class, () -> DepletionPvtHistoryGenerator.replayNative(bundle, true, Path.CVD,
+        "wet CVD", 323.15, new double[] {500, 300}, separator()));
   }
 
   /** Initial and final flash failures propagate the original cause rather than reading stale phases. */

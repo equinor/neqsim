@@ -2,7 +2,7 @@
 
 Author-generated synthetic classic SRK references; numerical consistency only,
 not measured water/hydrocarbon accuracy. No EOS input is fitted to these outputs.
-Whole-cell CCE retains every component, unlike wet CVD/DLE, which remain unsupported.
+Whole-cell CCE retains every component, without the gas withdrawal used by native wet DLE; wet CVD remains unsupported.
 No absent phase density, composition or modified-black-oil property is invented.
 
 `independent_srk_cce.py` solves nine methane/water0.5/0.5 coexistence states:

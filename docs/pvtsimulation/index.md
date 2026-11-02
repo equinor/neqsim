@@ -16,3 +16,6 @@ keywords: "PVT, CME, CVD, differential liberation, separator test, swelling test
 
 Closed-mass wet CCE handoff and its synthetic gas/aqueous and three-phase
 qualification are described in the [depletion PVT guide](depletion_pvt_generation.md).
+
+Native [wet differential liberation](depletion_pvt_generation.md#native-wet-differential-liberation)
+removes gas while retaining oil/aqueous inventories, with independent synthetic references.

@@ -125,10 +125,10 @@ class WetCceHandoffTest {
     }
   }
 
-  /** Wet withdrawal paths remain explicit unsupported domains. */
+  /** Wet constant-volume withdrawal remains an explicit unsupported domain. */
   @Test
-  void doesNotEnableWetCvdOrDle() {
-    for (Path path : new Path[] {Path.CVD, Path.DLE}) {
+  void doesNotEnableWetCvd() {
+    for (Path path : new Path[] {Path.CVD}) {
       assertThrows(IllegalArgumentException.class, () -> DepletionPvtHistoryGenerator.replayNative(model(.5, 0), false,
           path, "unsupported wet withdrawal", 350, new double[] {300, 150, 50}, separator()));
     }
