@@ -304,6 +304,16 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertTrue(any(row["provenance"] ==
                                 "synthetic lifecycle separation limit"
                                 for row in coverage["rows"]))
+            link, link_reasons = production._map_driver_lifecycle_link(
+                SimpleNamespace(cycle_id=cycle_id), first_item, required=True)
+            self.assertEqual([], link_reasons)
+            self.assertEqual(cycle_id, link["period_id"])
+            self.assertEqual(["AVAILABLE"], link["map_row"]["statuses"])
+            self.assertEqual(["AVAILABLE"], link["driver_row"]["statuses"])
+            self.assertNotEqual(link["map_row"]["qualified_constraint_id"],
+                                link["driver_row"]["qualified_constraint_id"])
+            self.assertNotEqual(migration["configured_map_limit_provenance"],
+                                link["map_row"]["provenance"])
             optimizer = current["envelope_evidence"]["optimizer_evidence"]
             self.assertEqual("validated gas export", optimizer["objective_name"])
             self.assertEqual("MAXIMIZE", optimizer["objective_direction"])
@@ -464,6 +474,19 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
                     required=True,
                 ),
             )
+            tampered_link = copy.deepcopy(first_item)
+            tampered_current = next(
+                period for period in tampered_link["lifecycle_envelope_evidence"]["periods"]
+                if period["period_id"] == cycle_id)
+            tampered_map_row = next(
+                row for row in tampered_current["utilization_coverage"]["rows"]
+                if row["qualified_constraint_id"] == link["map_row"]["qualified_constraint_id"])
+            tampered_map_row["provenance"] = migration["configured_map_limit_provenance"]
+            self.assertIn(
+                "map_driver_lifecycle_override_not_cleared",
+                production._map_driver_lifecycle_link_reasons(
+                    SimpleNamespace(cycle_id=cycle_id), tampered_link, required=True),
+            )
             for field in (
                     "simulation_converged", "candidate_feasible", "candidate_finite",
                     "constraint_evidence_complete", "state_restore_complete",
@@ -487,6 +510,9 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertIn(migration["driver_constraint_name"], living_report)
             self.assertIn("CONFIGURED_OPERATING", living_report)
             self.assertIn(migration["configured_map_limit_provenance"], living_report)
+            self.assertIn("Accepted replay: map current / limit", living_report)
+            self.assertIn(link["map_row"]["qualified_constraint_id"], living_report)
+            self.assertIn(link["driver_row"]["qualified_constraint_id"], living_report)
 
             generator = ROOT / "devtools" / "task_template" / "step3_report" / "generate_report.py"
             completed = subprocess.run([
@@ -509,6 +535,9 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertIn(migration["configured_map_constraint_name"], report)
             self.assertIn(migration["driver_constraint_name"], report)
             self.assertIn("same sampled endpoints", report)
+            self.assertIn("Accepted-replay comparison", report)
+            self.assertIn(link["map_row"]["qualified_constraint_id"], report)
+            self.assertIn(link["driver_row"]["qualified_constraint_id"], report)
             self.assertIn("advisory", report)
 
             input_path = task / "continuous" / "user_input.yaml"
@@ -626,4 +655,5 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
 

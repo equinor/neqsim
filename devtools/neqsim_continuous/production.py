@@ -20,6 +20,7 @@ import json
 import math
 import os
 from types import SimpleNamespace
+from urllib.parse import unquote
 
 from .contracts import StageResult, register
 from .ledger import Ledger
@@ -2024,6 +2025,92 @@ def _map_driver_migration_evidence_reasons(ctx, proposal, required=False):
     return []
 
 
+def _migration_coverage_rows(coverage, qualified_name):
+    """Resolve one migration identity against exact accepted-replay coverage rows."""
+    if not isinstance(coverage, dict) or not _text(qualified_name):
+        return []
+    rows = coverage.get("rows")
+    if not isinstance(rows, list):
+        return []
+    model_prefix = "{}::".format(coverage.get("model_name"))
+    display_equipment = None
+    display_constraint = None
+    if qualified_name.startswith(model_prefix):
+        local_name = qualified_name[len(model_prefix):]
+        if "/" in local_name:
+            display_equipment, display_constraint = local_name.rsplit("/", 1)
+
+    matches = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if row.get("qualified_constraint_id") == qualified_name:
+            matches.append(row)
+            continue
+        if (row.get("evidence_kind", "INSTALLED_EQUIPMENT") != "INSTALLED_EQUIPMENT"
+                or display_equipment is None
+                or row.get("constraint_name") != display_constraint):
+            continue
+        equipment_id = row.get("equipment_id")
+        stable_equipment = (equipment_id.partition("/")[2]
+                            if _text(equipment_id) and "/" in equipment_id else "")
+        if unquote(stable_equipment) == display_equipment:
+            matches.append(row)
+    return matches
+
+
+def _map_driver_lifecycle_link(ctx, proposal, required=False):
+    """Bind a diagnostic migration receipt to the same cycle's accepted replay coverage."""
+    has_receipt = "map_driver_migration_evidence" in proposal
+    has_lifecycle = "lifecycle_envelope_evidence" in proposal
+    if not has_receipt or not has_lifecycle:
+        return None, (["missing_map_driver_lifecycle_link"] if required else [])
+    if (_map_driver_migration_evidence_reasons(ctx, proposal, required=True)
+            or _lifecycle_evidence_reasons(ctx, proposal, required=True)):
+        return None, ["invalid_map_driver_lifecycle_link_source"]
+
+    receipt = proposal["map_driver_migration_evidence"]
+    lifecycle = proposal["lifecycle_envelope_evidence"]
+    current = [period for period in lifecycle["periods"]
+               if period.get("period_id") == getattr(ctx, "cycle_id", None)]
+    if len(current) != 1:
+        return None, ["map_driver_lifecycle_period_mismatch"]
+    coverage = current[0].get("utilization_coverage")
+    map_rows = _migration_coverage_rows(
+        coverage, receipt["configured_map_constraint_name"])
+    driver_rows = _migration_coverage_rows(
+        coverage, receipt["driver_constraint_name"])
+    reasons = []
+    if len(map_rows) != 1:
+        reasons.append("map_driver_lifecycle_map_identity_mismatch")
+    if len(driver_rows) != 1:
+        reasons.append("map_driver_lifecycle_driver_identity_mismatch")
+    if reasons:
+        return None, reasons
+    map_row, driver_row = map_rows[0], driver_rows[0]
+    if (map_row.get("statuses") != ["AVAILABLE"]
+            or driver_row.get("statuses") != ["AVAILABLE"]
+            or map_row.get("qualified_constraint_id")
+               == driver_row.get("qualified_constraint_id")):
+        reasons.append("map_driver_lifecycle_rows_not_independently_available")
+    if map_row.get("provenance") == receipt.get("configured_map_limit_provenance"):
+        reasons.append("map_driver_lifecycle_override_not_cleared")
+    if reasons:
+        return None, reasons
+    return {
+        "period_id": current[0]["period_id"],
+        "period_name": current[0]["period_name"],
+        "map_row": map_row,
+        "driver_row": driver_row,
+    }, []
+
+
+def _map_driver_lifecycle_link_reasons(ctx, proposal, required=False):
+    """Return fail-closed reasons for the migration-to-lifecycle accepted-replay link."""
+    _, reasons = _map_driver_lifecycle_link(ctx, proposal, required=required)
+    return reasons
+
+
 def _lifecycle_evidence_reasons(ctx, proposal, required=False):
     """Validate persisted lifecycle envelopes and bind the current period to the proposal."""
     if "lifecycle_envelope_evidence" not in proposal:
@@ -2426,6 +2513,10 @@ def guard(ctx, spec):
         reasons.extend(_map_driver_migration_evidence_reasons(
             ctx, proposal,
             required=settings.get("require_map_driver_migration_evidence") is True))
+        reasons.extend(_map_driver_lifecycle_link_reasons(
+            ctx, proposal,
+            required=(settings.get("require_lifecycle_envelope_evidence") is True
+                      and settings.get("require_map_driver_migration_evidence") is True)))
         for constraint in hard:
             name = constraint.get("name") or constraint["kpi"]
             room = slack(constraint, predicted.get(constraint["kpi"]))
@@ -2480,4 +2571,5 @@ for _name, _stage in (("gates", gates), ("constraints", constraints), ("guard", 
 
 __all__ = ["effective_limit", "slack", "evaluate_constraints", "demonstrated_limit", "gates", "constraints",
            "guard", "outcome"]
+
 

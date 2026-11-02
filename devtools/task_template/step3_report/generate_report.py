@@ -76,6 +76,7 @@ import shutil
 import sqlite3
 import subprocess
 from datetime import date
+from urllib.parse import unquote
 
 try:
     from docx import Document
@@ -3160,7 +3161,7 @@ def format_map_driver_migration_text(results, expected_cycle_id=None):
     endpoints = "{} → {} {}".format(
         _fmt_number(receipt["sampled_axis_values"][0]),
         _fmt_number(receipt["sampled_axis_values"][1]), receipt["action_unit"])
-    return "\n".join([
+    lines = [
         "**Migration receipt.** Cycle `{}` used evaluator `{}` and continuous action `{}` over the same sampled "
         "endpoints {} for both complete, refined slices.".format(
             receipt["cycle_id"], receipt["candidate_evaluator_id"], receipt["action_id"], endpoints),
@@ -3180,7 +3181,100 @@ def format_map_driver_migration_text(results, expected_cycle_id=None):
         "to driver power only after the map override was cleared and the identical common-speed grid was freshly "
         "evaluated. The model baseline was restored. This receipt is advisory: it is not an operating set point, "
         "equipment qualification, or permission to relax an OEM map, protection setting, or driver rating.",
-    ])
+    ]
+    lifecycle = (results or {}).get("lifecycle_envelope_evidence")
+    if lifecycle is not None:
+        link, link_reasons = _map_driver_lifecycle_report_link(
+            lifecycle, receipt, expected_cycle_id)
+        if link_reasons:
+            lines += ["", "**Accepted-replay comparison withheld.** {} No joined lifecycle claim is rendered."
+                      .format("; ".join(link_reasons))]
+        else:
+            lines += [
+                "",
+                "**Accepted-replay comparison.** The same current lifecycle period contains one independently "
+                "available declared-coverage row for each diagnostic identity. The temporary configured map "
+                "provenance is absent from the accepted replay.",
+                "",
+                "| Diagnostic role | Exact accepted-replay constraint | Current / limit | Utilization | Basis / provenance |",
+                "|---|---|---|---|---|",
+            ]
+            for role, row in (("Map identity after override clearance", link["map_row"]),
+                              ("Driver identity", link["driver_row"])):
+                lines.append("| {} | `{}` | {} / {} {} | {} | {} / {} |".format(
+                    role, _md_cell(row["qualified_constraint_id"]),
+                    _fmt_number(row["current_value"]), _fmt_number(row["applicable_limit"]),
+                    _md_cell(row["unit"]), _fmt_number(row["normalized_utilization"]),
+                    _md_cell(row["basis"]), _md_cell(row["provenance"])))
+    return "\n".join(lines)
+
+
+def _migration_coverage_report_rows(coverage, qualified_name):
+    """Resolve one migration name against declared accepted-replay rows."""
+    if not isinstance(coverage, dict) or not _report_text(qualified_name):
+        return []
+    rows = coverage.get("rows")
+    if not isinstance(rows, list):
+        return []
+    model_prefix = "{}::".format(coverage.get("model_name"))
+    display_equipment = None
+    display_constraint = None
+    if qualified_name.startswith(model_prefix):
+        local_name = qualified_name[len(model_prefix):]
+        if "/" in local_name:
+            display_equipment, display_constraint = local_name.rsplit("/", 1)
+    matches = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if row.get("qualified_constraint_id") == qualified_name:
+            matches.append(row)
+            continue
+        equipment_id = row.get("equipment_id")
+        stable_equipment = (equipment_id.partition("/")[2]
+                            if _report_text(equipment_id) and "/" in equipment_id else "")
+        if (row.get("evidence_kind", "INSTALLED_EQUIPMENT") == "INSTALLED_EQUIPMENT"
+                and display_equipment is not None
+                and row.get("constraint_name") == display_constraint
+                and unquote(stable_equipment) == display_equipment):
+            matches.append(row)
+    return matches
+
+
+def _map_driver_lifecycle_report_link(lifecycle, receipt, expected_cycle_id=None):
+    """Return current accepted-replay rows corresponding to one migration receipt."""
+    if not isinstance(lifecycle, dict):
+        return None, ["lifecycle evidence is not an object"]
+    cycle_id = expected_cycle_id or receipt.get("cycle_id")
+    periods = lifecycle.get("periods")
+    current = ([period for period in periods
+                if isinstance(period, dict) and period.get("period_id") == cycle_id]
+               if isinstance(periods, list) else [])
+    if lifecycle.get("cycle_id") != cycle_id or len(current) != 1:
+        return None, ["current lifecycle period does not match the migration cycle"]
+    coverage = current[0].get("utilization_coverage")
+    map_rows = _migration_coverage_report_rows(
+        coverage, receipt.get("configured_map_constraint_name"))
+    driver_rows = _migration_coverage_report_rows(
+        coverage, receipt.get("driver_constraint_name"))
+    reasons = []
+    if len(map_rows) != 1:
+        reasons.append("configured map identity is not unique in accepted replay")
+    if len(driver_rows) != 1:
+        reasons.append("driver identity is not unique in accepted replay")
+    if reasons:
+        return None, reasons
+    map_row, driver_row = map_rows[0], driver_rows[0]
+    if (map_row.get("statuses") != ["AVAILABLE"]
+            or driver_row.get("statuses") != ["AVAILABLE"]
+            or map_row.get("qualified_constraint_id")
+               == driver_row.get("qualified_constraint_id")):
+        reasons.append("accepted-replay identities are not independently available")
+    if map_row.get("provenance") == receipt.get("configured_map_limit_provenance"):
+        reasons.append("temporary configured map provenance leaked into accepted replay")
+    if reasons:
+        return None, reasons
+    return {"period": current[0], "map_row": map_row, "driver_row": driver_row}, []
 
 
 def _identity_text(identity):
@@ -9283,3 +9377,4 @@ if __name__ == "__main__":
         print("TIP: Create results.json in the task root to auto-populate")
         print("     the Results and Validation sections. See the task README")
         print("     for the results.json pattern.")
+
