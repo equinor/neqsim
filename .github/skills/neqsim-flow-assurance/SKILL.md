@@ -1674,12 +1674,17 @@ or hydrocarbon evaporation; those still require conservative phase-front transpo
 
 ### Optional Rusanov phase-flux contract
 
-`AUSMPlusFluxCalculator.calcRusanovFlux` is an explicit local comparison/reserve query.
+The default remains AUSM+. `AUSMPlusFluxCalculator.calcRusanovFlux` is an explicit local query,
+and `TwoFluidPipe.setRusanovInternalFluxEnabled(true)` selects the qualified two-donor operator on
+independent gas/oil/water internal faces after `setEnableWaterOilSlip(true)`.
 Its dissipated energy is `alpha * (rho * H - p)` with total specific enthalpy;
 exact absence ignores unused properties and positive traces retain the same formula.
 SRK gas/oil controls distinguish EOS-volume internal energy from physical-density mechanical
 energy using explicit pressure-volume work; do not mix these API conventions in a reference.
 See the [executed conservative-flux evidence](../../../src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/README.md).
-This is not selected by the production solver: two-sided diffusion requires compatible
-component/energy donors, a Courant bound and coupled gravitational-energy qualification.
+Forward and reverse donor streams remain separate through Runge-Kutta staging, pressure work and
+transactional component transport; their difference must reproduce the hydrodynamic net. The
+combined-liquid split, pressure interpolation, reconstructed slug faces and one-direction unsplit
+complementarity route reject this option. Apply a wave-speed Courant bound and inspect component,
+phase, total-energy and rollback reports.
 Do not use it as proof of dry/wet fronts, terrain pools, refill or physical evaporation.

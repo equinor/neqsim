@@ -117,6 +117,30 @@ public class AUSMPlusFluxCalculator implements Serializable {
     /** Energy flux: α * ρ * v * H (W/m² or J/(m²·s)). */
     public double energyFlux;
 
+    /** Nonnegative mass flow carried from the left donor to the right cell (kg/s). */
+    public double forwardMassFlux;
+
+    /** Nonnegative mass flow carried from the right donor to the left cell (kg/s). */
+    public double reverseMassFlux;
+
+    /** Left-donor advective momentum contribution, excluding pressure traction (N). */
+    public double forwardAdvectiveMomentumFlux;
+
+    /** Right-donor advective momentum contribution with its signed face orientation (N). */
+    public double reverseAdvectiveMomentumFlux;
+
+    /** Left-donor total-enthalpy contribution to {@link #energyFlux} (W). */
+    public double forwardAdvectiveEnergyFlux;
+
+    /** Right-donor total-enthalpy contribution with its signed face orientation (W). */
+    public double reverseAdvectiveEnergyFlux;
+
+    /** Numerical pressure-inventory contribution to {@link #energyFlux} (W). */
+    public double numericalPressureEnergyFlux;
+
+    /** Whether the directional donor fields above were populated by the numerical operator. */
+    public boolean directionalAdvectionAvailable;
+
     /** Holdup flux: α * v (m/s). */
     public double holdupFlux;
 
@@ -202,6 +226,7 @@ public class AUSMPlusFluxCalculator implements Serializable {
     // Only an exactly absent phase has no flux. A positive trace inventory must use
     // the same transport at internal and external faces, without a numerical holdup cutoff.
     if (left.holdup == 0.0 && right.holdup == 0.0) {
+      flux.directionalAdvectionAvailable = true;
       return flux;
     }
 
@@ -252,6 +277,16 @@ public class AUSMPlusFluxCalculator implements Serializable {
     flux.massFlux = mDot * area;
     flux.momentumFlux = mDot * v * area + Phalf * area;
     flux.energyFlux = mDot * H * area;
+    if (flux.massFlux >= 0.0) {
+      flux.forwardMassFlux = flux.massFlux;
+      flux.forwardAdvectiveMomentumFlux = flux.massFlux * v;
+      flux.forwardAdvectiveEnergyFlux = flux.energyFlux;
+    } else {
+      flux.reverseMassFlux = -flux.massFlux;
+      flux.reverseAdvectiveMomentumFlux = flux.massFlux * v;
+      flux.reverseAdvectiveEnergyFlux = flux.energyFlux;
+    }
+    flux.directionalAdvectionAvailable = true;
     flux.holdupFlux = faceVelocityCorrection == 0.0
         ? (Mhalf >= 0 ? left.holdup * left.velocity : right.holdup * right.velocity)
         : alpha * faceVelocity;
@@ -393,6 +428,16 @@ public class AUSMPlusFluxCalculator implements Serializable {
         + upwind.holdup * upwind.pressure * area;
     flux.energyFlux = upwind.holdup * upwind.density * upwind.velocity * upwind.enthalpy * area;
     flux.holdupFlux = upwind.holdup * upwind.velocity;
+    if (flux.massFlux >= 0.0) {
+      flux.forwardMassFlux = flux.massFlux;
+      flux.forwardAdvectiveMomentumFlux = flux.massFlux * upwind.velocity;
+      flux.forwardAdvectiveEnergyFlux = flux.energyFlux;
+    } else {
+      flux.reverseMassFlux = -flux.massFlux;
+      flux.reverseAdvectiveMomentumFlux = flux.massFlux * upwind.velocity;
+      flux.reverseAdvectiveEnergyFlux = flux.energyFlux;
+    }
+    flux.directionalAdvectionAvailable = true;
 
     return flux;
   }
@@ -428,6 +473,7 @@ public class AUSMPlusFluxCalculator implements Serializable {
     boolean presentLeft = left.holdup > 0.0;
     boolean presentRight = right.holdup > 0.0;
     if (!presentLeft && !presentRight) {
+      flux.directionalAdvectionAvailable = true;
       return flux;
     }
 
@@ -456,6 +502,19 @@ public class AUSMPlusFluxCalculator implements Serializable {
     double FL_ene = presentLeft ? UL_mom * left.enthalpy : 0.0;
     double FR_ene = presentRight ? UR_mom * right.enthalpy : 0.0;
 
+    // Rusanov can be written as two nonnegative donor streams plus pressure-only
+    // numerical energy diffusion. Retaining both streams is necessary for named-
+    // component transport: cancelling them to one net mass flux would discard one
+    // donor composition even though the conservative phase update used both.
+    flux.forwardMassFlux = 0.5 * UL_mass * (uLeft + sMax) * area;
+    flux.reverseMassFlux = 0.5 * UR_mass * (sMax - uRight) * area;
+    flux.forwardAdvectiveMomentumFlux = flux.forwardMassFlux * uLeft;
+    flux.reverseAdvectiveMomentumFlux = -flux.reverseMassFlux * uRight;
+    flux.forwardAdvectiveEnergyFlux = presentLeft ? flux.forwardMassFlux * left.enthalpy : 0.0;
+    flux.reverseAdvectiveEnergyFlux = presentRight ? -flux.reverseMassFlux * right.enthalpy : 0.0;
+    flux.numericalPressureEnergyFlux = 0.5 * sMax * (pressureRight - pressureLeft) * area;
+    flux.directionalAdvectionAvailable = true;
+
     // Rusanov flux: F = 0.5*(F_L + F_R) - 0.5*s_max*(U_R - U_L)
     flux.massFlux = (0.5 * (FL_mass + FR_mass) - 0.5 * sMax * (UR_mass - UL_mass)) * area;
     flux.momentumFlux = (0.5 * (FL_mom + FR_mom) - 0.5 * sMax * (UR_mom - UL_mom)) * area;
@@ -468,7 +527,10 @@ public class AUSMPlusFluxCalculator implements Serializable {
     flux.interfacePressure = (0.5 * pressureLeft + 0.5 * pressureRight) / flux.interfaceHoldup;
     if (!Double.isFinite(sMax) || !Double.isFinite(flux.massFlux) || !Double.isFinite(flux.momentumFlux)
         || !Double.isFinite(flux.energyFlux) || !Double.isFinite(flux.holdupFlux)
-        || !Double.isFinite(flux.interfacePressure)) {
+        || !Double.isFinite(flux.interfacePressure) || !Double.isFinite(flux.forwardMassFlux)
+        || !Double.isFinite(flux.reverseMassFlux) || !Double.isFinite(flux.forwardAdvectiveMomentumFlux)
+        || !Double.isFinite(flux.reverseAdvectiveMomentumFlux) || !Double.isFinite(flux.forwardAdvectiveEnergyFlux)
+        || !Double.isFinite(flux.reverseAdvectiveEnergyFlux) || !Double.isFinite(flux.numericalPressureEnergyFlux)) {
       throw new IllegalArgumentException("Rusanov flux exceeds finite representable outputs");
     }
 
@@ -483,7 +545,8 @@ public class AUSMPlusFluxCalculator implements Serializable {
    */
   private static void validateRusanovState(PhaseState state) {
     if (state == null || !Double.isFinite(state.holdup) || state.holdup < 0.0 || state.holdup > 1.0) {
-      throw new IllegalArgumentException("Rusanov phase holdup must be finite and between zero and one");
+      throw new IllegalArgumentException(
+          "Rusanov phase holdup must be finite and between zero and one: " + (state == null ? "null" : state.holdup));
     }
     if (state.holdup > 0.0 && (!(state.density > 0.0) || !Double.isFinite(state.density)
         || !Double.isFinite(state.velocity) || !Double.isFinite(state.pressure) || !Double.isFinite(state.enthalpy)

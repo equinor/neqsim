@@ -5529,9 +5529,9 @@ public class TwoFluidPipe extends Pipeline {
     if (componentTransportEnabled || includeEnergyEquation || includeMassTransfer || enableHeatTransfer
         || directElectricalHeatingPowerPerMeter != 0.0 || upstreamCompressibleVolume != null
         || enableSlugTracking && slugTrackingMode != SlugTrackingMode.DISABLED || equations.isStiffBubbleDragEnabled()
-        || equations.isConservativeSlugForceIntegrationEnabled()) {
+        || equations.isConservativeSlugForceIntegrationEnabled() || equations.isRusanovInternalFluxEnabled()) {
       throw new IllegalStateException("Unsplit preparation requires isothermal flow without component/phase transfer, "
-          + "heat, slug tracking, upstream volume or separately integrated bubble/subcell sources");
+          + "heat, slug tracking, upstream volume, two-sided Rusanov transport or separately integrated bubble/subcell sources");
     }
     if (!(inletBCType == BoundaryCondition.CLOSED || inletBCType == BoundaryCondition.STREAM_CONNECTED
         || inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet)
@@ -6354,6 +6354,9 @@ public class TwoFluidPipe extends Pipeline {
       final double[] phaseStageWeights = capturePhaseStageTerms ? getTimeIntegrationStageWeights() : new double[0];
       final double[][] weightedPhaseMassFaceFluxes = capturePhaseStageTerms ? new double[numberOfSections + 1][3]
           : new double[0][0];
+      final double[][][] weightedDirectionalPhaseMassFaceFluxes = captureComponentStageFluxes
+          ? new double[Math.max(0, numberOfSections - 1)][3][2]
+          : null;
       final double[][] weightedBoundaryPhaseEnergyFluxes = useConservativeEnergyRecovery ? new double[2][3]
           : new double[0][0];
       final double[][] weightedPhaseMassSources = captureComponentStageFluxes ? new double[numberOfSections][3]
@@ -6421,6 +6424,8 @@ public class TwoFluidPipe extends Pipeline {
           }
           equations.accumulateLastPhaseMassFaceFluxes(weightedPhaseMassFaceFluxes, phaseStageWeights[stage]);
           if (captureComponentStageFluxes) {
+            equations.accumulateLastDirectionalPhaseMassFaceFluxes(weightedDirectionalPhaseMassFaceFluxes,
+                phaseStageWeights[stage]);
             equations.accumulateLastPhaseMassSourcesPerLength(weightedPhaseMassSources, phaseStageWeights[stage]);
             if (includeMassTransfer) {
               double[][] phaseSources = new double[numberOfSections][3];
@@ -6693,15 +6698,24 @@ public class TwoFluidPipe extends Pipeline {
         }
         for (int face = 0; face < correctionKg.length; face++) {
           for (int phase = 0; phase < 3; phase++) {
-            weightedPhaseMassFaceFluxes[face][phase] += correctionKg[face][phase] / dtActual;
+            double correctionFlowKgS = correctionKg[face][phase] / dtActual;
+            weightedPhaseMassFaceFluxes[face][phase] += correctionFlowKgS;
+            if (captureComponentStageFluxes && face > 0 && face < numberOfSections) {
+              if (correctionFlowKgS >= 0.0) {
+                weightedDirectionalPhaseMassFaceFluxes[face - 1][phase][0] += correctionFlowKgS;
+              } else {
+                weightedDirectionalPhaseMassFaceFluxes[face - 1][phase][1] -= correctionFlowKgS;
+              }
+            }
           }
         }
       }
       double[] latentHeatEnergyByCellJ = new double[numberOfSections];
       if (captureComponentStageFluxes) {
         latentHeatEnergyByCellJ = componentTransport.advance(dtActual, weightedPhaseMassFaceFluxes,
-            weightedPhaseMassSources, weightedComponentSources, weightedLatentHeatSources, sections,
-            getInletStream().getFluid(), outletBoundaryFluid, referenceFluid, componentConservationTolerance);
+            weightedDirectionalPhaseMassFaceFluxes, weightedPhaseMassSources, weightedComponentSources,
+            weightedLatentHeatSources, sections, getInletStream().getFluid(), outletBoundaryFluid, referenceFluid,
+            componentConservationTolerance);
       }
       if (useConservativeEnergyRecovery) {
         recoverConservativeThermodynamics();
@@ -10534,6 +10548,27 @@ public class TwoFluidPipe extends Pipeline {
       return equations.isEnableWaterOilSlip();
     }
     return false;
+  }
+
+  /**
+   * Select the optional two-sided Rusanov operator for internal phase faces.
+   *
+   * <p>
+   * This experimental route retains both donor compositions through accepted Runge-Kutta component transport. It
+   * requires {@link #setEnableWaterOilSlip(boolean) independent oil/water faces}; it is deliberately rejected by the
+   * one-direction unsplit complementarity route and by reconstructed slug-face transport. The default AUSM+ operator is
+   * unchanged.
+   * </p>
+   *
+   * @param enabled true to select Rusanov on internal faces
+   */
+  public void setRusanovInternalFluxEnabled(boolean enabled) {
+    equations.setRusanovInternalFluxEnabled(enabled);
+  }
+
+  /** @return true when the optional Rusanov internal-face operator is selected */
+  public boolean isRusanovInternalFluxEnabled() {
+    return equations.isRusanovInternalFluxEnabled();
   }
 
   /**

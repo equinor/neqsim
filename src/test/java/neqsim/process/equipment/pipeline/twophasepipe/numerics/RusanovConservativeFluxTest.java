@@ -159,6 +159,19 @@ class RusanovConservativeFluxTest {
       double scale = area * (Math.abs(fl[i]) + Math.abs(fr[i]) + speed * (Math.abs(ul[i]) + Math.abs(ur[i])));
       assertEquals(expected, actual[i], 3e-14 * scale);
     }
+    double expectedForward = 0.5 * ul[0] * (left.velocity + speed) * area;
+    double expectedReverse = 0.5 * ur[0] * (speed - right.velocity) * area;
+    assertTrue(value.directionalAdvectionAvailable);
+    assertEquals(expectedForward, value.forwardMassFlux, 3e-15 * Math.max(1.0, expectedForward));
+    assertEquals(expectedReverse, value.reverseMassFlux, 3e-15 * Math.max(1.0, expectedReverse));
+    assertEquals(value.massFlux, value.forwardMassFlux - value.reverseMassFlux,
+        3e-14 * Math.max(1.0, Math.abs(value.massFlux)));
+    assertEquals(value.momentumFlux - area * 0.5 * (pl + pr),
+        value.forwardAdvectiveMomentumFlux + value.reverseAdvectiveMomentumFlux,
+        3e-14 * Math.max(1.0, Math.abs(value.momentumFlux)));
+    assertEquals(value.energyFlux,
+        value.forwardAdvectiveEnergyFlux + value.reverseAdvectiveEnergyFlux + value.numericalPressureEnergyFlux,
+        3e-14 * Math.max(1.0, Math.abs(value.energyFlux)));
     assertEquals(0.5 * (left.holdup + right.holdup), value.interfaceHoldup, 0.0);
     assertEquals(area * 0.5 * (pl + pr), area * value.interfaceHoldup * value.interfacePressure,
         area * (Math.abs(pl) + Math.abs(pr)) * 3e-15);

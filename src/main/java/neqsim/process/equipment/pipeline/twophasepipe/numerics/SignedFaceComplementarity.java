@@ -59,6 +59,10 @@ final class SignedFaceComplementarity implements Serializable {
           int phaseFace = phaseFace(face, phase);
           int offset = variableOffset(face, phase);
           DirectionalPhaseFaceFlux free = faces[face][phase];
+          if (free.getForwardMassFlowKgPerSecond() > 0.0 && free.getReverseMassFlowKgPerSecond() > 0.0) {
+            throw new IllegalStateException("Signed-face complementarity owns one donor direction per phase face and "
+                + "cannot represent simultaneous two-sided numerical transport");
+          }
           double signed = free.getSignedMassFlowKgPerSecond();
           direction[phaseFace] = signed < 0.0 ? -1 : 1;
           values[offset + MASS_FLOW] = Math.abs(signed);

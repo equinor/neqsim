@@ -63,6 +63,7 @@ the iteration limit; the rest fail line search). Explicit-face-terrain cases sto
 | Five-second gas execution and uniform three-phase fixed point | Opt-in | Selected configurations | No | Four-cell gas runs at 0.1 s and eight/sixteen-cell runs at 0.05 s pass consecutive accepted calls with unchanged nonlinear/interval tolerances of 1e-10/1e-8. Consistent outlet phase fractions repair the single-phase Jacobian kink; the coarse case now runs in ordinary CI. These are continuation/conservation checks, not spatial-accuracy qualification. A separate closed uniform three-phase fixed point passes. |
 | Inclined annular film eligibility, transition blending and trace-phase Jacobian | Opt-in criteria; derivative correction enabled | Local branch and analytic derivatives | No | The captured 0.594-liquid-holdup conflict converges with the film constraint. A separate opt-in annular/slug force blend removes the gas-lift point switch and advances the historical backward-Euler 16-cell gates from 0.663/0.688 s to 1.451/1.671 s; the 24-cell gate reaches 0.95 s. All still fail before five seconds. Phase-relative probes retain trace drag/volume derivatives. Neither local criterion implements full film/droplet/reversal physics. |
 | Directional phase-face complementarity | Experimental opt-in augmented solve | Unit, coupled adapter, exact-absent donor, conservation and 53-color layout coverage; six unchanged 0.1 s Tengesdal lanes pass | No | The nonlinear vector adds signed-direction mass, advective momentum and donor multiplier variables per internal phase face. Present donors use normalized conservative advection; exactly absent donors use exact donor-presence/zero-momentum rows. Solved transport replaces the free internal flux conservatively and prepared-step verification reuses it. No inventory is clipped and no donor smearing is used. The unchanged 15-case five-second matrix still fails at 0.1251953125–0.831640625 s, so phase-transition, restart and pigging qualification remain open. |
+| Bidirectional Rusanov internal phase transport | Experimental opt-in | Analytical two-stream decomposition, exact net recovery, dry/trace/SRK local controls, Runge–Kutta staging, pressure-work ownership, transactional named-component conservation and fail-closed configuration tests | No | `setRusanovInternalFluxEnabled(true)` requires independent gas/oil/water faces. Forward and reverse donor streams remain separate through component transport while their difference is the hydrodynamic net. AUSM remains default. Combined-liquid splitting, pressure interpolation, reconstructed slug faces and one-direction unsplit complementarity reject. This is numerical face-transport qualification, not dry/wet-front, restart, evaporation, slugging or pigging qualification. |
 | Current unsplit Tengesdal five-second matrix with film constraint | Harness implemented | **Failed** | No | After the outlet repair, corrected-face 16/0.1, 16/0.05 and 24/0.05 cases stop near 1.303, 1.881 and 1.736 s. All six historical/face cases reject their prefixes and are unchanged by the inclined transition blend, showing that their blockers occur earlier. The transition-blended backward-Euler historical lane advances materially but all three cases still fail line search. Later closure/domain transitions, trial velocity guards and unsplit 180/600 s qualification remain open. |
 | Explicit finite-volume face terrain | Opt-in | Yes | No | N+1 elevations, actual cell arc lengths and midpoint pressure with external-face offsets. Signed gravity/energy and constant-density hydrostatics are checked under nonuniform refinement. This is not general transient well-balancing. |
 | Conservative slug/film + named components + phase transfer + thermal balance | Yes | Yes | No | A closed four-cell wet-gas cooling case over 0.05 s closes all ledgers on 0.05/0.025/0.0125 s outer partitions. Adjacent-grid water/heat sensitivity is below 4%; marker-displacement sensitivity decreases from 3.14% to 1.99%. Marker length/age are partition-invariant, and transactions reproduce the same-grid result. See the model guide for numerical values. This is coupled-ledger evidence, not spontaneous slug initiation. |
@@ -233,17 +234,20 @@ The public record retains every case, inspected plots, and RHS-only timing data.
 
 ### Optional Rusanov phase-flux contract
 
-`RusanovConservativeFluxTest` separately qualifies the existing optional Rusanov phase-flux
+`RusanovConservativeFluxTest` qualifies the optional Rusanov phase-flux
 formula against ideal-gas Euler conserved variables: total-energy pressure subtraction, kinetic
 energy, pressure/holdup metadata, exact absence, positive traces, signed flow, energy-reference
 shifts and finite arithmetic. Its mass-positivity control has an explicit Courant condition.
-`RusanovRichGasFluxTest` adds324 SRK gas/oil local queries over18 P/T samples, signed flow,
+`RusanovRichGasFluxTest` adds 324 SRK gas/oil local queries over 18 P/T samples, signed flow,
 one-sided oil absence and traces. Its internal-energy reference explicitly accounts for EOS
 versus physical-density volume work. These are API/numerical consistency controls, not independent
 EOS accuracy, translated-EOS thermodynamic qualification or elapsed pool/evaporation evidence.
-The [executed local-flux record](../../src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/README.md)
-does not qualify a coupled two-fluid Riemann solver, wet/dry transport, component-donor integration
-or gravitational energy recovery. Production pipelines still select AUSM; no default changes.
+The [executed conservative-flux record](../../src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/README.md)
+also records the two nonnegative donor streams, their exact net, pressure-only numerical energy
+term, stage accumulation, donor-volume pressure work and transactional component integration.
+The pipeline can select this operator explicitly on independent phase faces; production default
+remains AUSM. The current combined-liquid, reconstructed-slug and one-direction unsplit routes are
+deliberately incompatible. This does not qualify wet/dry fronts, pools, restart or evaporation.
 
 ### Stratified hydrostatic pressure moments
 

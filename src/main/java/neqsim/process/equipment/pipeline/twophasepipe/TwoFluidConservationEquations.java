@@ -103,6 +103,9 @@ public class TwoFluidConservationEquations implements Serializable {
   private AUSMPlusFluxCalculator fluxCalculator;
   private MUSCLReconstructor reconstructor;
 
+  /** Opt-in two-sided local Lax-Friedrichs operator for independently resolved internal phase faces. */
+  private boolean rusanovInternalFluxEnabled;
+
   /** Pressure-gradient interpolation impulse in seconds; zero retains the original spatial operator. */
   private double pressureInterpolationTimeScale;
 
@@ -1592,6 +1595,42 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   /**
+   * Add the most recent internal-face donor streams to a caller-owned Runge-Kutta accumulator.
+   *
+   * <p>
+   * The final dimension is ordered as left-to-right then right-to-left nonnegative mass flow. Unlike the net face flux,
+   * both entries may be positive for a diffusive numerical operator. Boundary faces remain represented by
+   * {@link #accumulateLastPhaseMassFaceFluxes(double[][], double)} because their external donor states are handled
+   * explicitly by component transport.
+   * </p>
+   *
+   * @param accumulator destination with shape {@code [sections.length - 1][3][2]}
+   * @param weight integration-stage weight
+   * @throws IllegalArgumentException if dimensions or weight are invalid
+   */
+  public void accumulateLastDirectionalPhaseMassFaceFluxes(double[][][] accumulator, double weight) {
+    if (accumulator == null || accumulator.length != lastDirectionalPhaseFaceFluxes.length
+        || !Double.isFinite(weight)) {
+      throw new IllegalArgumentException("Directional accumulator must match the internal faces and finite weight");
+    }
+    for (int face = 0; face < lastDirectionalPhaseFaceFluxes.length; face++) {
+      if (accumulator[face] == null || accumulator[face].length != 3) {
+        throw new IllegalArgumentException("Directional accumulator must contain three phases at every face");
+      }
+      for (int phase = 0; phase < 3; phase++) {
+        if (accumulator[face][phase] == null || accumulator[face][phase].length != 2
+            || lastDirectionalPhaseFaceFluxes[face][phase] == null) {
+          throw new IllegalArgumentException("Each directional phase accumulator requires two donor streams");
+        }
+        accumulator[face][phase][0] += weight
+            * lastDirectionalPhaseFaceFluxes[face][phase].getForwardMassFlowKgPerSecond();
+        accumulator[face][phase][1] += weight
+            * lastDirectionalPhaseFaceFluxes[face][phase].getReverseMassFlowKgPerSecond();
+      }
+    }
+  }
+
+  /**
    * Get a defensive copy of the total-energy flow at every finite-volume face.
    *
    * <p>
@@ -2265,14 +2304,17 @@ public class TwoFluidConservationEquations implements Serializable {
     if (pressureCorrection == 0.0 || left.holdup == 0.0 && right.holdup == 0.0) {
       return;
     }
-    double donorDensity = flux.massFlux >= 0.0 ? left.density : right.density;
-    if (flux.massFlux != 0.0 && (!Double.isFinite(donorDensity) || !(donorDensity > 0.0))) {
-      throw new IllegalStateException("Hydrostatic pressure work requires a positive finite donor density");
-    }
+    boolean twoDonors = hasTwoDonors(flux);
+    double donorDensity = twoDonors ? Double.NaN
+        : requireNetDonorDensity(flux, left, right, "Hydrostatic pressure work");
     flux.momentumFlux += flux.interfaceHoldup * pressureCorrection * area;
-    if (flux.massFlux != 0.0) {
-      flux.energyFlux += flux.massFlux * pressureCorrection / donorDensity;
-    }
+    flux.energyFlux += twoDonors
+        ? directionalVolumeFlow(flux, left, right, "Hydrostatic pressure work") * pressureCorrection
+        : flux.massFlux == 0.0 ? 0.0 : flux.massFlux * pressureCorrection / donorDensity;
+    flux.forwardAdvectiveEnergyFlux += flux.forwardMassFlux == 0.0 ? 0.0
+        : flux.forwardMassFlux * pressureCorrection / left.density;
+    flux.reverseAdvectiveEnergyFlux -= flux.reverseMassFlux == 0.0 ? 0.0
+        : flux.reverseMassFlux * pressureCorrection / right.density;
     flux.interfacePressure += pressureCorrection;
   }
 
@@ -2375,17 +2417,54 @@ public class TwoFluidConservationEquations implements Serializable {
   private static void applyStratifiedPressureFace(PhaseFlux flux, PhaseState left, PhaseState right, double force,
       double phaseArea) {
     flux.momentumFlux += force;
-    if (flux.massFlux == 0.0 || force == 0.0) {
+    if (force == 0.0) {
       return;
     }
     if (!(phaseArea > 0.0) || !Double.isFinite(phaseArea)) {
       throw new IllegalStateException("Stratified pressure work requires positive finite transported phase area");
     }
-    double donorDensity = flux.massFlux >= 0.0 ? left.density : right.density;
-    if (!Double.isFinite(donorDensity) || !(donorDensity > 0.0)) {
-      throw new IllegalStateException("Stratified pressure work requires positive finite donor density");
+    double pressureIncrement = force / phaseArea;
+    boolean twoDonors = hasTwoDonors(flux);
+    double donorDensity = twoDonors ? Double.NaN
+        : requireNetDonorDensity(flux, left, right, "Stratified pressure work");
+    flux.energyFlux += twoDonors
+        ? directionalVolumeFlow(flux, left, right, "Stratified pressure work") * pressureIncrement
+        : flux.massFlux == 0.0 ? 0.0 : flux.massFlux / donorDensity * force / phaseArea;
+    flux.forwardAdvectiveEnergyFlux += flux.forwardMassFlux == 0.0 ? 0.0
+        : flux.forwardMassFlux * pressureIncrement / left.density;
+    flux.reverseAdvectiveEnergyFlux -= flux.reverseMassFlux == 0.0 ? 0.0
+        : flux.reverseMassFlux * pressureIncrement / right.density;
+  }
+
+  /** Return signed volume flow from the exact directional mass donors. */
+  private static double directionalVolumeFlow(PhaseFlux flux, PhaseState left, PhaseState right, String context) {
+    if (!flux.directionalAdvectionAvailable) {
+      double donorDensity = flux.massFlux >= 0.0 ? left.density : right.density;
+      if (flux.massFlux != 0.0 && (!Double.isFinite(donorDensity) || !(donorDensity > 0.0))) {
+        throw new IllegalStateException(context + " requires a positive finite donor density");
+      }
+      return flux.massFlux == 0.0 ? 0.0 : flux.massFlux / donorDensity;
     }
-    flux.energyFlux += flux.massFlux / donorDensity * force / phaseArea;
+    if (flux.forwardMassFlux > 0.0 && (!Double.isFinite(left.density) || !(left.density > 0.0))
+        || flux.reverseMassFlux > 0.0 && (!Double.isFinite(right.density) || !(right.density > 0.0))) {
+      throw new IllegalStateException(context + " requires positive finite directional donor densities");
+    }
+    return (flux.forwardMassFlux == 0.0 ? 0.0 : flux.forwardMassFlux / left.density)
+        - (flux.reverseMassFlux == 0.0 ? 0.0 : flux.reverseMassFlux / right.density);
+  }
+
+  /** @return whether the numerical operator retained simultaneous counter-transport */
+  private static boolean hasTwoDonors(PhaseFlux flux) {
+    return flux.directionalAdvectionAvailable && flux.forwardMassFlux > 0.0 && flux.reverseMassFlux > 0.0;
+  }
+
+  /** Return the historical single net donor density, preserving default arithmetic order. */
+  private static double requireNetDonorDensity(PhaseFlux flux, PhaseState left, PhaseState right, String context) {
+    double donorDensity = flux.massFlux >= 0.0 ? left.density : right.density;
+    if (flux.massFlux != 0.0 && (!Double.isFinite(donorDensity) || !(donorDensity > 0.0))) {
+      throw new IllegalStateException(context + " requires a positive finite donor density");
+    }
+    return donorDensity;
   }
 
   /** Calculate signed boundary pressure work from the transported donor volume. */
@@ -2428,7 +2507,7 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   /**
-   * Calculate fluxes at cell interfaces using AUSM+.
+   * Calculate fluxes at cell interfaces using the selected phase operator.
    *
    * <p>
    * For three-phase flow with water-oil slip, we track oil and water mass and momentum fluxes separately. Water
@@ -2441,6 +2520,7 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   private double[][] calcInterfaceFluxes(TwoFluidSection[] sections, double dx) {
     validatePressureInterpolationConfiguration();
+    validateInternalFluxConfiguration();
     int nCells = sections.length;
     int nInterfaces = nCells - 1;
     double[][] fluxes = new double[nInterfaces][NUM_EQUATIONS];
@@ -2479,13 +2559,13 @@ public class TwoFluidConservationEquations implements Serializable {
       double pressureCorrection = hydrostaticFacePressureCorrection(left, right);
       hydrostaticFacePressureCorrection[i] = pressureCorrection;
 
-      // Create phase states for AUSM+
+      // Create phase states for the selected internal-face operator.
       PhaseState gasL = createGasState(left);
       PhaseState gasR = createGasState(right);
 
-      // Calculate gas flux using AUSM+
+      // Calculate gas flux using the selected internal-face operator.
       double gradientDefect = pressureGradientDefects == null ? 0.0 : pressureGradientDefects[i];
-      PhaseFlux gasFlux = fluxCalculator.calcPhaseFlux(gasL, gasR, A,
+      PhaseFlux gasFlux = calcInternalPhaseFlux(gasL, gasR, A,
           pressureInterpolationVelocity(gasL, gasR, gradientDefect));
       applyHydrostaticFaceCorrection(gasFlux, gasL, gasR, A, pressureCorrection);
       fluxes[i][IDX_GAS_MASS] = gasFlux.massFlux;
@@ -2501,9 +2581,9 @@ public class TwoFluidConservationEquations implements Serializable {
         PhaseState oilR = createLiquidPhaseState(right, false);
         PhaseState waterL = createLiquidPhaseState(left, true);
         PhaseState waterR = createLiquidPhaseState(right, true);
-        PhaseFlux oilFlux = fluxCalculator.calcPhaseFlux(oilL, oilR, A,
+        PhaseFlux oilFlux = calcInternalPhaseFlux(oilL, oilR, A,
             pressureInterpolationVelocity(oilL, oilR, gradientDefect));
-        PhaseFlux waterFlux = fluxCalculator.calcPhaseFlux(waterL, waterR, A,
+        PhaseFlux waterFlux = calcInternalPhaseFlux(waterL, waterR, A,
             pressureInterpolationVelocity(waterL, waterR, gradientDefect));
         applyHydrostaticFaceCorrection(oilFlux, oilL, oilR, A, pressureCorrection);
         applyHydrostaticFaceCorrection(waterFlux, waterL, waterR, A, pressureCorrection);
@@ -2546,7 +2626,7 @@ public class TwoFluidConservationEquations implements Serializable {
       // This ensures oil and water move together proportionally.
       PhaseState liqL = createLiquidState(left);
       PhaseState liqR = createLiquidState(right);
-      PhaseFlux liqFlux = fluxCalculator.calcPhaseFlux(liqL, liqR, A);
+      PhaseFlux liqFlux = calcInternalPhaseFlux(liqL, liqR, A, 0.0);
       applyHydrostaticFaceCorrection(liqFlux, liqL, liqR, A, pressureCorrection);
       interfaceLiquidHoldup[i] = liqFlux.interfaceHoldup;
       if (gasFlux.interfaceHoldup == 0.0) {
@@ -2635,6 +2715,13 @@ public class TwoFluidConservationEquations implements Serializable {
   private static DirectionalPhaseFaceFlux directionalFlux(PhaseFlux flux, PhaseState left, PhaseState right,
       double area, double additionalPressureTraction) {
     double pressureTraction = flux.interfaceHoldup * flux.interfacePressure * area + additionalPressureTraction;
+    if (flux.directionalAdvectionAvailable) {
+      double leftMass = left.holdup * left.density * area;
+      double rightMass = right.holdup * right.density * area;
+      return new DirectionalPhaseFaceFlux(flux.forwardMassFlux, flux.reverseMassFlux, flux.forwardAdvectiveMomentumFlux,
+          flux.reverseAdvectiveMomentumFlux, pressureTraction, leftMass, rightMass, leftMass * left.velocity,
+          rightMass * right.velocity);
+    }
     double donorVelocity = flux.massFlux >= 0.0 ? left.velocity : right.velocity;
     return directionalFlux(flux.massFlux, flux.massFlux == 0.0 ? 0.0 : flux.massFlux * donorVelocity, pressureTraction,
         left, right, area);
@@ -2673,6 +2760,30 @@ public class TwoFluidConservationEquations implements Serializable {
     if (pressureInterpolationTimeScale > 0.0 && (!enableWaterOilSlip || !conservativeSlugs.isEmpty())) {
       throw new IllegalStateException(
           "Pressure interpolation requires independent phase advection without slug reconstruction");
+    }
+  }
+
+  /** Select the internal phase operator while preserving the default AUSM+ path. */
+  private PhaseFlux calcInternalPhaseFlux(PhaseState left, PhaseState right, double area,
+      double faceVelocityCorrection) {
+    return rusanovInternalFluxEnabled ? fluxCalculator.calcRusanovFlux(left, right, area)
+        : fluxCalculator.calcPhaseFlux(left, right, area, faceVelocityCorrection);
+  }
+
+  /** Reject numerical combinations whose donor contracts are not representable. */
+  private void validateInternalFluxConfiguration() {
+    if (!rusanovInternalFluxEnabled) {
+      return;
+    }
+    if (!enableWaterOilSlip) {
+      throw new IllegalStateException(
+          "Rusanov internal flux requires independent oil/water phase faces; the combined-liquid one-donor split is incompatible");
+    }
+    if (pressureInterpolationTimeScale != 0.0) {
+      throw new IllegalStateException("Rusanov internal flux cannot use the AUSM face-velocity interpolation");
+    }
+    if (!conservativeSlugs.isEmpty()) {
+      throw new IllegalStateException("Rusanov internal flux is not qualified with reconstructed slug faces");
     }
   }
 
@@ -4054,6 +4165,26 @@ public class TwoFluidConservationEquations implements Serializable {
 
   public AUSMPlusFluxCalculator getFluxCalculator() {
     return fluxCalculator;
+  }
+
+  /**
+   * Select the optional two-sided Rusanov operator for internal phase faces.
+   *
+   * <p>
+   * The default remains AUSM+. Rusanov requires independent oil/water phase faces and is rejected with AUSM-specific
+   * pressure interpolation, reconstructed slug faces, or the current one-direction unsplit complementarity block. The
+   * caller remains responsible for an explicit wave-speed Courant bound and admissible thermodynamic states.
+   * </p>
+   *
+   * @param enabled true to use the qualified two-donor internal operator
+   */
+  public void setRusanovInternalFluxEnabled(boolean enabled) {
+    rusanovInternalFluxEnabled = enabled;
+  }
+
+  /** @return true when internal phase faces use the optional Rusanov operator */
+  public boolean isRusanovInternalFluxEnabled() {
+    return rusanovInternalFluxEnabled;
   }
 
   public MUSCLReconstructor getReconstructor() {
