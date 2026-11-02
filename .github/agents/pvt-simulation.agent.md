@@ -35,7 +35,7 @@ scan; preserve the complete cell and zero protocol withdrawal. Do not infer a
 saturation-normalized volume from this absolute evidence. Check actual phase presence and `hasWithdrawal(row)` before reading
 phase or withdrawal outputs. Preserve complete experiment and separator-basis provenance.
 Native CVD uses opt-in checked upper-dew refinement: require a dry gas/oil-to-gas scan bracket below 1000 bara, then validate the existing pressure solver result. Do not fall back after a failed equilibrium or branch gate. The legacy CVD default and modified-black-oil `generate` route retain the scan; the latter still requires both phases. Read
-`docs/pvtsimulation/depletion_pvt_generation.md`; wet CVD/DLE, critical splits and measured field accuracy remain unqualified. Wet CCE retains the aqueous phase and all named components with zero protocol withdrawal; use the caller-accepted wet EOS/multiphase settings and preserve aqueous separator products. After a sampled gas/oil stage, dry CVD gas-only tails restore the reference cell volume by gas withdrawal below the saturation pressure; an unbracketed single-phase schedule must not trigger tail withdrawal from the legacy scan reference; above saturation retain the closed sample. Closed-mass CCE disappearance
+`docs/pvtsimulation/depletion_pvt_generation.md`; wet CVD, critical splits and measured field accuracy remain unqualified. Wet CCE retains the aqueous phase and all named components with zero protocol withdrawal; use the caller-accepted wet EOS/multiphase settings and preserve aqueous separator products. After a sampled gas/oil stage, dry CVD gas-only tails restore the reference cell volume by gas withdrawal below the saturation pressure; an unbracketed single-phase schedule must not trigger tail withdrawal from the legacy scan reference; above saturation retain the closed sample. Closed-mass CCE disappearance
 is a distinct protocol and preserves all components. DLE flash failures propagate.
 
 Before fitting same-state gas p/T/Z/molar-mass/density tuples, use the opt-in
@@ -184,3 +184,9 @@ After creating or editing any `.java` file, run `./mvnw spotless:apply` (Windows
 `mvnw.cmd spotless:apply`) and `git add` the reformatted files before committing —
 CI runs `spotless:check` and fails the build on any unformatted file. Never bypass
 with `git commit --no-verify`.
+
+Native DLE handoff uses `DifferentialLiberation.runNativeLiberation`: equilibrate each
+pressure, remove only gas, retain oil/aqueous inventories and recompute retained
+phase fractions/composition. Two liquids without gas have zero withdrawal. Oil
+must remain present. See the native wet DLE guide and `WetDleHandoffTest`; this
+is synthetic qualification, not measured calibration, wet CVD or critical accuracy.

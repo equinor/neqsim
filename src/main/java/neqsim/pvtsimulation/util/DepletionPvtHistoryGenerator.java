@@ -27,8 +27,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  *
  * <p>
- * For supported dry depletion paths and closed-mass wet CCE, {@link #replayNative} preserves actual native states and
- * separator products instead of assigning modified-black-oil properties to an absent phase.
+ * For supported dry depletion paths and closed-mass wet CCE and gas-only withdrawal wet DLE, {@link #replayNative}
+ * preserves actual native states and separator products instead of assigning modified-black-oil properties to an absent
+ * phase.
  * </p>
  *
  * @author Even Solbraa
@@ -182,9 +183,9 @@ public final class DepletionPvtHistoryGenerator {
    * states retain their actual inventories. CVD requires a sampled gas/oil boundary and continues equilibrium-gas
    * withdrawal to the fixed cell volume after liquid disappearance. No absent oil properties are assigned. Its upper
    * dew cell uses the checked refinement in {@link ConstantVolumeDepletion#setRefineSaturationConditions(boolean)};
-   * missing or unclosed gas/oil-to-gas brackets fail rather than falling back to the phase-count scan. Wet CVD/DLE,
-   * phases other than gas/oil/aqueous, and critical-degenerate splits remain unqualified. No absent-phase Bo/Bg/Rs/Rv,
-   * Bw, surface pseudo-component closure assumption or reservoir production prediction is supplied.
+   * missing or unclosed gas/oil-to-gas brackets fail rather than falling back to the phase-count scan. Wet CVD, phases
+   * other than gas/oil/aqueous, and critical-degenerate splits remain unqualified. No absent-phase Bo/Bg/Rs/Rv, Bw,
+   * surface pseudo-component closure assumption or reservoir production prediction is supplied.
    * </p>
    *
    * @param model independently calibrated original/tuned checkpoints
@@ -212,8 +213,8 @@ public final class DepletionPvtHistoryGenerator {
       }
     }
     SystemInterface feed = tuned ? model.getTunedFluid() : model.getOriginalFluid();
-    if (path != Path.CCE && Arrays.asList(feed.getComponentNames()).contains("water")) {
-      throw new IllegalArgumentException("Wet CVD/DLE requires separate protocol qualification");
+    if (path == Path.CVD && Arrays.asList(feed.getComponentNames()).contains("water")) {
+      throw new IllegalArgumentException("Wet CVD requires separate protocol qualification");
     }
     String[] names = feed.getComponentNames();
     double[] initial = inventory(feed);
@@ -238,7 +239,7 @@ public final class DepletionPvtHistoryGenerator {
       }
       for (int phase = 0; phase < equilibrium.getNumberOfPhases(); phase++) {
         String type = equilibrium.getPhase(phase).getType().getDesc();
-        if (!"gas".equals(type) && !"oil".equals(type) && !(path == Path.CCE && "aqueous".equals(type))) {
+        if (!"gas".equals(type) && !"oil".equals(type) && !(path != Path.CVD && "aqueous".equals(type))) {
           throw new IllegalStateException("Unsupported native phase at row " + row);
         }
       }
@@ -566,11 +567,11 @@ public final class DepletionPvtHistoryGenerator {
    * @param path supported closed-mass CCE or depletion protocol
    * @param temperature temperature in K
    * @param pressures decreasing pressure schedule in bara
-   * @param refineCvd whether native CVD requires checked upper-dew refinement
+   * @param nativeProtocol whether to use native DLE and checked native CVD upper-dew refinement
    * @return native step snapshots
    */
   private static DepletionSnapshot[] replay(SystemInterface feed, Path path, double temperature, double[] pressures,
-      boolean refineCvd) {
+      boolean nativeProtocol) {
     if (path == Path.CCE) {
       ConstantMassExpansion simulation = new ConstantMassExpansion(feed);
       simulation.setTemperature(temperature, "K");
@@ -579,7 +580,7 @@ public final class DepletionPvtHistoryGenerator {
     }
     if (path == Path.CVD) {
       ConstantVolumeDepletion simulation = new ConstantVolumeDepletion(feed);
-      simulation.setRefineSaturationConditions(refineCvd);
+      simulation.setRefineSaturationConditions(nativeProtocol);
       simulation.setTemperature(temperature, "K");
       simulation.setPressures(pressures);
       simulation.setRecordDepletionSnapshots(true);
@@ -589,6 +590,9 @@ public final class DepletionPvtHistoryGenerator {
     DifferentialLiberation simulation = new DifferentialLiberation(feed);
     simulation.setTemperature(temperature, "K");
     simulation.setPressures(pressures);
+    if (nativeProtocol) {
+      return simulation.runNativeLiberation();
+    }
     simulation.setRecordDepletionSnapshots(true);
     simulation.runCalc();
     return simulation.getDepletionSnapshots();

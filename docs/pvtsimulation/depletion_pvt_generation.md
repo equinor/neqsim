@@ -70,7 +70,7 @@ retained explicitly rather than relabeled as 15 C volumes.
   After a sampled gas/oil stage and subsequent liquid disappearance, gas
   continues to be withdrawn below the saturation reference to restore the fixed
   cell volume. The retained gas composition is conserved during each single-phase withdrawal; absent oil has no assigned PVT.
-- Wet CVD/DLE and other-phase samples remain unsupported. Gas/oil composition vectors with
+- Wet CVD and other-phase samples remain unsupported. Gas/oil composition vectors with
   L1 distance at most 1e-8 are rejected as an unqualified critical-degenerate
   split. This rejection bound is not a fit parameter or a near-critical accuracy
   claim.
@@ -312,7 +312,7 @@ retune that model, infer water density, estimate saturation, or calibrate a
 reservoir. Every present phase pair must have composition L1 distance greater
 than1e-8; this is an unchanged critical-degeneracy rejection threshold, not an
 accuracy tolerance. Solids/hydrates and other phase types remain unsupported.
-Wet CVD/DLE and modified-black-oil water conversion require separate qualification.
+Wet CVD and modified-black-oil water conversion require separate qualification.
 
 `WetCceHandoffTest` checks original/tuned serialization, aqueous separator
 closure, pure-water and single-phase wet-gas limits, nine independently solved
@@ -325,3 +325,35 @@ the stated synthetic cases, not measured-fluid accuracy or near-critical validit
 
 Full equations, probe inputs, predictions and provenance are retained in
 `src/test/resources/neqsim/pvtsimulation/native-wet-cce`.
+
+
+## Native wet differential liberation
+
+`DifferentialLiberation.runNativeLiberation` is a separate absolute-state route.
+The supplied sample is copied; completed immutable snapshots are published only
+after the complete decreasing pressure schedule succeeds. Legacy normalized PVT
+arrays, saturation estimation and default `runCalc` behavior are unchanged.
+`DepletionPvtHistoryGenerator.replayNative` uses this route for dry and wet DLE.
+
+At each pressure the retained sample is equilibrated, then the entire physically
+present gas phase is removed. Both oil and aqueous phases stay in the cell.
+Vaporized water leaves with the gas; dissolved gas stays with the liquids.
+An oil/aqueous state without gas has exactly zero protocol withdrawal and does
+not trigger a phase-count saturation scan. Oil must remain present; unsupported
+phase types and, in the handoff, critical-degenerate splits fail explicitly.
+A removed phase changes the sample total: phase fractions and overall composition
+are recomputed from retained inventories before properties or separation are read.
+
+`WetDleHandoffTest` compares a methane/n-decane/water SRK path at 350 K and
+200/100/50 bara against six independent fugacity equations and three component
+balances, followed by complete gas removal. Inputs, equations and complete
+reference outputs are in `src/test/resources/neqsim/pvtsimulation/native-wet-dle`.
+Frozen relative volume and absolute phase-composition/amount bounds are 1e-8;
+whole-cell component closure is 1e-10 mol for the one-mole fixture. Tests also
+check two-liquid no-gas behavior, checkpoint ownership, repeat replay, separator
+closure and rejected schedules/oil absence. These are synthetic consistency
+checks, not measured wet-fluid calibration or laboratory-to-field accuracy.
+
+Keep original/tuned model, whole experiment and separator provenance distinct.
+This route supplies no absent-phase black-oil properties, no wet CVD reference,
+no critical accuracy claim and no reservoir production or recoverable reserves.
