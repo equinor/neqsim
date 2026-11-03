@@ -231,6 +231,11 @@ public class PSFlash extends QfuncFlash {
    */
   private double evaluateColdResidual(double temperature) {
     system.setTemperature(temperature);
+    // Disabling warm K-values does not clear the TP operation's convergence history.
+    // A fresh operation is required so that bracket signs use independent cold roots.
+    TPflash coldFlash = new TPflash(system);
+    coldFlash.setConservativeHomogeneousRecoveryAllowed(true);
+    tpFlash = coldFlash;
     tpFlash.run();
     system.init(2);
     double residual = system.getEntropy() - Sspec;

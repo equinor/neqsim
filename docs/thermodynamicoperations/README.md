@@ -90,7 +90,11 @@ be finite, bounded by zero and one, and normalized.
 The temperature solver uses bounded Newton steps and a sign-changing bracket
 across mixture phase boundaries. If progress stalls, it rebuilds the bracket with
 cold TP flashes before checking the endpoint with a final cold TP flash. The
-independent endpoint check can reject a metastable homogeneous root even when
+bracket trials each use a fresh TP-flash operation: disabling K-value warm starts
+alone does not discard the operation's convergence history. Reusing that history
+can make entropy evaluations with a trace liquid depend on earlier trials and
+collapse the bracket away from the smooth equilibrium root. The independent
+endpoint check can reject a metastable homogeneous root even when
 its entropy residual is small. Recovery then uses a fresh inner TP flash so
 that its previous iteration history cannot reselect the rejected root. The
 iteration first seeks the tighter `max(1e-8 * n, 1e-10 * abs(Sspecified))`
@@ -117,6 +121,10 @@ Regression coverage is in `PSFlashEntropyClosureTest`: fresh and continuation
 starts for CO2/nitrogen and CO2/hydrogen, pure-CO2 phase entry, independent cold
 TP-root comparisons, component inventory and phase checks, entropy units and
 system amounts, and explicit failure behavior.
+`PSFlashTraceLiquidTest` adds the issue #4828 PR78 heavy-end reproducer, an
+independent TP-only root, the complete 216-point compression and amount sweep,
+and a gas-only control. It checks the tighter iteration tolerance, independent
+cold-TP agreement, pressure, phase fractions and component conservation.
 
 ## Saturation and phase-aware operations
 
