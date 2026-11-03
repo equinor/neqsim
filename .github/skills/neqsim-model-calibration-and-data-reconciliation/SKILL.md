@@ -39,6 +39,12 @@ load `neqsim-dynamic-simulation` in addition.
 6. Run bounded optimization and re-simulate the full NeqSim process each iteration.
 7. Validate on holdout windows and publish fit diagnostics.
 
+For the replay and validation steps use `neqsim.process.operations.replay.ProcessReplay`:
+it runs a tag-bound time series through the calibrated model with a convergence gate,
+records failed rows without aborting, and gives per-window bias/RMS, baseline-standardised
+residuals and CUSUM change points (`ReplayResult.setBaselineWindow`, `detectChangePoints`),
+exportable as CSV/JSON. See `docs/process/process_replay.md`.
+
 ## Typical Tunable Parameters
 
 | Equipment | Parameters to Tune | Keep Fixed Unless Needed |
