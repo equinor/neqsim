@@ -1,6 +1,5 @@
 package neqsim.process.equipment.absorber;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -76,10 +75,11 @@ class SimpleTEGAbsorberPhaseDiagnosticsTest extends NeqSimTest {
   }
 
   @Test
-  void highGasToGlycolRatioIsFlaggedAsHydrocarbonDominatedLiquid() {
+  void highGasToGlycolRatioSeparatesHydrocarbonLiquidFromGlycol() {
     SimpleTEGAbsorber absorber = runCase(21.6); // 900 kSm3/h with the same glycol rate
-    assertFalse(absorber.isEquilibriumLiquidGlycolRich(),
-        "hydrocarbon-dominated liquid must be reported; TEG wt frac = "
-            + absorber.getEquilibriumLiquidTEGWeightFraction());
+    // The three-phase contactor flash keeps condensed hydrocarbon out of the glycol phase used for the K-value.
+    assertTrue(absorber.hasHydrocarbonLiquid(), "the condensed hydrocarbon must be reported as a separate liquid");
+    assertTrue(absorber.isEquilibriumLiquidGlycolRich(),
+        "glycol phase must stay glycol-rich; TEG wt frac = " + absorber.getEquilibriumLiquidTEGWeightFraction());
   }
 }
