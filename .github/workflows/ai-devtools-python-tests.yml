@@ -122,6 +122,11 @@ jobs:
       - name: Verify HV binary controls and retained performance evidence
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_benchmark_huron_vidal_rows.py -v
 
+      - name: Verify nitrogen-water source versions and uncertainty boundaries
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_nitrogen_sources.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s devtools -p test_audit_huron_vidal_nitrogen_sources.py -v
+
       - name: Verify quarantined HV measurement provenance
         run: |
           uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_meg_receipts.py -v
@@ -200,6 +205,11 @@ jobs:
 
       - name: Verify HV binary evidence on the minimum supported Python
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_benchmark_huron_vidal_rows.py -v
+
+      - name: Verify nitrogen-water source versions and uncertainty boundaries
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_nitrogen_sources.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s devtools -p test_audit_huron_vidal_nitrogen_sources.py -v
 
       - name: Verify quarantined HV measurement provenance
         run: |

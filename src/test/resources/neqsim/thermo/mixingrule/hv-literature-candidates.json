@@ -528,7 +528,7 @@
         35,
         52
       ],
-      "uncertainty": "NIST compiler expanded95% absolute mole-fraction uncertainty; original table images remain unverified",
+      "uncertainty": "NIST compiler expanded95% absolute mole-fraction uncertainty preserved. Primary-thesis Tables6.6/6.16 images verified separately; original journal-table/version and full uncertainty reconciliation remain unresolved",
       "protocol": "Separate binary flashes on declared synthetic equal-mole feed. No measured-feed or paired-tie-line inference. Current library pure properties retained. No experimental accuracy threshold.",
       "inside_source_emphasis_rows": [
         6,
@@ -769,5 +769,12 @@
     "auditor": "devtools/audit_huron_vidal_meg_receipts.py",
     "status": "Quarantined source receipts; no HV parameters or measured overall feed",
     "qualification": "Primary manuscript images verified; original archive identities, both phase representations, duplicate observations and distinct author/compiler uncertainties retained. Final-publication reconciliation, source-compatible HV/pure inputs and reverse MEG partition remain missing."
+  },
+  "nitrogen_water_measurement_versions": {
+    "resource": "hv-water-nitrogen/thesis-2004/",
+    "auditor": "devtools/audit_huron_vidal_nitrogen_sources.py",
+    "status": "Source-version audit only; no HV activation or independent new holdout",
+    "primary": "Chapoy2004, pastel-00001202, Table6.6 PDF162/printed161; nitrogen Table6.16 PDF190/printed189",
+    "qualification": "35 gas rows agree exactly; 52 liquid rows retain 41 concentration differences at common T/P and two temperature versions. Author nitrogen-mole calibration, printed AD_exp and compiler U95 remain distinct. Final-journal/version history, complete measurement uncertainty and source-compatible PR pure inputs remain unresolved."
   }
 }

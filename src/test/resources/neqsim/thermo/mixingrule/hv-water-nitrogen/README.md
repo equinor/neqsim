@@ -16,9 +16,12 @@ The [nitrogen-in-water record](https://trc.nist.gov/ThermoML/10.1021/je049869d.h
 provides52 liquid-nitrogen mole fractions at274.18–363.02K and915–7160kPa.
 The CSVs preserve source row order, literal fractions and absolute pointwise
 compiler-expanded95% uncertainties. These are not new uncertainty estimates or
-verified original-author uncertainty statements. Original measurement-table
-images have not been inspected. All87 JSON/XML numeric quadruples were checked
-exactly; these formats represent the same compiler data, not independent experiments.
+verified original-author uncertainty statements. All87 JSON/XML numeric quadruples
+were checked exactly; these formats represent the same compiler data, not independent
+experiments. The separate [primary-thesis source-version audit](thesis-2004/README.md)
+now preserves image-verified Tables6.6/6.16 and their differences from these compiler
+fixtures. Original journal-table/version history and full uncertainty reconciliation
+remain unresolved. The assessment below continues to use the unchanged compiler data.
 
 The [durable source audit](https://github.com/equinor/neqsim/issues/4576#issuecomment-6466609726)
 contains download URLs, SHA256s, complete raw rows, units and the executed audit script.
