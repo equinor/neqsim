@@ -2669,5 +2669,17 @@
  ],
  "t\u00f8rre gasstetninger": [
   "neqsim-rotating-equipment-design"
+ ],
+ "p&id quality control": [
+  "neqsim-pid-quality-review"
+ ],
+ "independent p&id standards review": [
+  "neqsim-pid-quality-review"
+ ],
+ "pid-review": [
+  "neqsim-pid-quality-review"
+ ],
+ "p&id source drawing consistency": [
+  "neqsim-pid-quality-review"
  ]
 }

@@ -20,6 +20,7 @@ Usage:
     neqsim surf-study SPEC   SURF design study: generated NeqSim model, cases, drawings and report
     neqsim layout-study SPEC Physical plant layout: checked alternatives, CAD and study report
     neqsim pfd-check FILES   Deterministic layout check of PFD/BFD/flow diagrams (SVG, JSON spec, PNG); mandatory before use
+    neqsim pid-review DIR    Review P&ID package integrity, drawings and standards evidence
     neqsim work-record [DIR] Generate WORK_RECORD.md (method, data, file map)
     neqsim file-issue [DIR]  Offer to file a NeqSim gap as a GitHub issue (and PR)
     neqsim --set-task-root P Set the folder new tasks are created in (created if
@@ -151,6 +152,8 @@ def _print_usage():
                                 "Physical plant layout screening: alternatives, CAD and report (--init, --demo)"))
     print("  {:<18s} {}".format("pfd-check FILES",
                                 "Layout check of flow diagrams (overlaps, label/line collisions, crossings, arrows, tags); PASS/WARN/FAIL"))
+    print("  {:<18s} {}".format("pid-review DIR",
+                                "P&ID package quality gate with hash-bound visual/standards evidence; PASS/HOLD/FAIL"))
     print("  {:<18s} {}".format("report-manifest DIR",
                                 "Hand a solved task to project-development gates (discipline_report.v1 folder)"))
     print("  {:<18s} {}".format("work-record [DIR]",
@@ -667,6 +670,9 @@ def main():
     if cmd in ("pfd-check", "pfd_check", "pfd-layout-check"):
         import pfd_layout_check
         sys.exit(pfd_layout_check.main(sys.argv[2:]))
+    if cmd in ("pid-review", "pid_review"):
+        import pid_quality_review
+        sys.exit(pid_quality_review.main(sys.argv[2:]))
     if cmd in ("process-report", "process_report"):
         import process_report
         sys.exit(process_report.main(sys.argv[2:]))

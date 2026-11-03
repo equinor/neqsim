@@ -31,6 +31,19 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class ProfessionalPidDiagramRendererTest extends NeqSimTest {
+  /** Verifies sensing touches a dished head and the straight vertical shell, rather than its bounding box. */
+  @Test
+  void sensingTapIntersectsActualVesselHull() {
+    NativeEngineeringDiagramRenderer.Point horizontal = ProfessionalPidSymbolLibrary.vesselSensingTap(320, 280, 100, 60,
+        262);
+    assertEquals(364, horizontal.x, .15);
+    assertEquals(262, horizontal.y, 1e-12);
+    NativeEngineeringDiagramRenderer.Point vertical = ProfessionalPidSymbolLibrary.vesselSensingTap(320, 280, 46, 90,
+        280);
+    assertEquals(343, vertical.x, 1e-12);
+    assertEquals(280, vertical.y, 1e-12);
+  }
+
   /** Ensures source orientation is used instead of assigning all vessels a vertical generic box. */
   @Test
   void respectsVesselOrientationAndEquipmentFamily() {

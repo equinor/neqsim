@@ -114,6 +114,7 @@ jobs:
             devtools/test_process_overview.py \
             devtools/test_process_report_regressions.py \
             devtools/test_psr_diagrams.py \
+            devtools/test_pid_quality_review.py \
             devtools/test_pfd_layout_check.py
 
       - name: Verify selected-pair performance receipt guards
@@ -190,6 +191,9 @@ jobs:
             devtools/test_new_task.py \
             devtools/test_neqsim_doctor.py \
             devtools/test_generate_sources_md.py
+
+      - name: Verify P&ID quality evidence guards on the minimum supported Python
+        run: uv run --project devtools --locked --group test python -m pytest -q devtools/test_pid_quality_review.py
 
       - name: Verify HV benchmark receipt guards on the minimum supported Python
         run: uv run --project devtools --locked --group test python -m pytest -q devtools/test_benchmark_huron_vidal_columns.py

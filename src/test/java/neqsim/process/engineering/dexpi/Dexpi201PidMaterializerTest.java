@@ -46,6 +46,49 @@ public class Dexpi201PidMaterializerTest extends NeqSimTest {
   Path temporaryDirectory;
 
   /**
+   * Reproduces proposal-order dependent recycle tees crossing isolation and non-return barriers.
+   *
+   * @throws Exception if native export or inspection fails
+   */
+  @Test
+  void equipmentSideAuxiliaryTeesDoNotMoveAcrossLaterInlineProposals() throws Exception {
+    ProcessSystem process = process();
+    EngineeringProject project = project(process);
+    PidDesignModel pid = new PidDesignModel(project.getProjectId(), "ORDERED-TIES");
+    pid.add(new PidElement("ascv", "ASCV-101", PidElementType.CONTROL_VALVE).equipment("K-101")
+        .attribute("proposalPurpose", "ANTI-SURGE").attribute("physicalSourceEquipmentTag", "K-101")
+        .attribute("physicalSourceStreamTag", "COMP-OUT").attribute("physicalTargetEquipmentTag", "K-101")
+        .attribute("physicalTargetStreamTag", "GAS"));
+    pid.add(new PidElement("out-sdv", "SDV-OUT", PidElementType.SHUTDOWN_VALVE).equipment("K-101").line("COMP-OUT"));
+    pid.add(new PidElement("check", "NRV", PidElementType.CHECK_VALVE).equipment("K-101").line("COMP-OUT"));
+    pid.add(new PidElement("in-sdv", "SDV-IN", PidElementType.SHUTDOWN_VALVE).equipment("K-101").line("GAS"));
+    pid.add(new PidElement("bdv", "BDV-101", PidElementType.BLOWDOWN_VALVE).equipment("K-101")
+        .attribute("physicalSourceEquipmentTag", "K-101").attribute("physicalSourceStreamTag", "COMP-OUT")
+        .attribute("destinationTag", "FLARE"));
+    Path file = temporaryDirectory.resolve("equipment-side-ties.xml");
+    DexpiEngineeringExporter.exportDexpi201(project, file, metadata());
+    Dexpi201PidMaterializer.Result result = Dexpi201PidMaterializer.materialize(project, pid,
+        PidSimulationBindings.from(project, pid), file);
+    assertTrue(result.isComplete(), result.toJson());
+    Map<String, Element> objects = objects(parse(file));
+    Element compressor = null;
+    for (Element object : objects.values()) {
+      if ("K-101".equals(stringData(object, "TagName"))) {
+        compressor = object;
+      }
+    }
+    assertNotNull(compressor);
+    String owner = compressor.getAttribute("id");
+    assertEquals(1, directedPipes(objects, owner + "Outlet1", "PidTee_Source_ascv"));
+    assertEquals(1, directedPipes(objects, "PidTee_Source_ascv", "PidTee_Source_bdv"));
+    assertEquals(1, directedPipes(objects, "PidTee_Source_bdv", result.getNativeIds().get("SDV-OUT")));
+    assertEquals(1, directedPipes(objects, result.getNativeIds().get("SDV-OUT"), result.getNativeIds().get("NRV")));
+    assertEquals(1, directedPipes(objects, result.getNativeIds().get("SDV-IN"), "PidTee_Target_ascv"));
+    assertEquals(1, directedPipes(objects, "PidTee_Target_ascv", owner + "Inlet"));
+    assertOwnedNodes(objects);
+  }
+
+  /**
    * Reproduces missing mandatory Method properties on compression and cooling steps.
    *
    * @throws Exception if export fails

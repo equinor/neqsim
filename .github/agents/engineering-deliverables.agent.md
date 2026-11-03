@@ -40,6 +40,13 @@ registers and simulation tests. Use the professional package exporter and
 explicit P&ID-to-simulation bindings described there; retain missing design
 inputs and unsupported projection content as visible HOLD items.
 
+Before handing over a regenerated P&ID, request `@pid-quality-review` using
+`neqsim-pid-quality-review`. Retain the untouched package, run `neqsim pid-review`,
+and provide separately recorded, content-bound visual and controlled standards
+evidence. Generation or layout PASS must not be presented as the integrated QC
+verdict. The generating owner fixes source defects and regenerates; the review
+agent preserves independent findings and does not grant construction approval.
+
 Bind an instrument, controller or valve only to its actual executable object.
 Resolve the binding against each isolated simulation copy, run steady state
 first, and require the configured-copy transient preflight before dynamic

@@ -135,7 +135,9 @@ public final class ProfessionalPidPackageExporter {
       EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessSystem(process,
           project.getProjectId(), project.getRevision(), drawingNumber, project.getName(), ContentProfile.PID,
           new EngineeringDiagramDesignationRegister(), layouts);
-      EngineeringDiagramPidRegisters registers = EngineeringDiagramPidRegisters.fromDocumentSet(documents, model);
+      PidPhysicalProjection physicalProjection = PidPhysicalProjection.resolve(process, model, bindings);
+      EngineeringDiagramPidRegisters registers = EngineeringDiagramPidRegisters.fromDocumentSet(documents, model,
+          project, physicalProjection);
       NativeEngineeringDiagramRenderer renderer = new NativeEngineeringDiagramRenderer(documents,
           NativeEngineeringDiagramRenderer.SheetFormat.A3_LANDSCAPE, conventions,
           NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL, registers, true);

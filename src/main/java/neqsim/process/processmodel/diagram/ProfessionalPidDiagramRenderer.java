@@ -562,10 +562,9 @@ public final class ProfessionalPidDiagramRenderer {
       if (vessel) {
         double py = body.y - body.height / 2 + body.height * (vesselIndex + 1) / (vesselSensors.size() + 1);
         double channel = 415 - vesselIndex * 11;
-        scene.sensing(body, new Point(body.x + body.width / 2, py), measurement, "l",
-            points(new Point(body.x + body.width / 2, py), new Point(channel, py), new Point(channel, y),
-                measurement.left()),
-            sensor.getTag());
+        Point tap = ProfessionalPidSymbolLibrary.vesselSensingTap(body.x, body.y, body.width, body.height, py);
+        scene.sensing(body, tap, measurement, "l",
+            points(tap, new Point(channel, py), new Point(channel, y), measurement.left()), sensor.getTag());
         vesselIndex++;
       } else {
         double tap = 425 - row * 9;
@@ -664,7 +663,14 @@ public final class ProfessionalPidDiagramRenderer {
       }
       if (!unit.getInletStreams().isEmpty() && a.getTargetEquipmentTag().equals(unit.getName())
           && a.getTargetStreamTag().equals(unit.getInletStreams().get(0).getName())) {
-        double x = 260 - targetIndex++ * 35;
+        int inletDevices = inline(unit.getName(), unit.getInletStreams().get(0).getName(), "INLET").size();
+        double x = Math.max(250, 130 + Math.max(0, inletDevices - 1) * 65 + 18) + targetIndex++ * 25;
+        double inletBoundary = 320 - (ProfessionalPidSymbolLibrary.family(unit) == Family.HORIZONTAL_VESSEL ? 50 : 23);
+        if (x >= inletBoundary - 8) {
+          hold("ADDITIONAL_AUXILIARY_RETURN_LAYOUT", element.getTag(), "ISO 10628-1:2014",
+              "Additional returns require a controlled detail downstream of all inlet devices");
+          continue;
+        }
         Point tap = new Point(x, 280);
         Node terminal = scene.verticalTerminal("aux-main-target:" + element.getTag(), x, 370,
             element.getTag() + " / PID-" + sheet, true);
@@ -739,18 +745,16 @@ public final class ProfessionalPidDiagramRenderer {
         int position = 0;
         for (PidElement member : group) {
           Node valve = proposalValve(scene, member, group.size() == 1 ? 410 : 350 + position++ * 140, y);
-          scene.route(last, "r", valve, "l", "AUX:" + member.getTag(), false, null);
+          scene.route(last, "r", valve, "l", a.getMaterialLineTag(), false, null);
           signalEnds(scene, member.getTag(), valve);
           last = valve;
         }
         Node to = scene.terminal("aux-out:" + element.getTag(), 710, y, target, true);
-        scene.route(last, "r", to, "l", "AUX-OUT:" + element.getTag(), false, null);
+        scene.route(last, "r", to, "l", a.getMaterialLineTag(), false, null);
         scene.text(90, y + 22, "SOURCE / " + sheetLabel(a.getSourceEquipmentTag()), 2.5, null);
-        scene.text(660, y + 22, "DESTINATION / TIE-IN", 2.5, null);
-        scene.text(210, y + 35,
-            "LINE: " + (textValue(a.toMap().get("physicalRouteId")).isEmpty() ? "AUX-" + element.getTag()
-                : textValue(a.toMap().get("physicalRouteId"))) + " / SIZE: HOLD / CLASS: HOLD",
-            2.5, null);
+        scene.text(660, y + 22, a.getTargetEquipmentTag().isEmpty() ? "DESTINATION / BATTERY LIMIT"
+            : "DESTINATION / " + sheetLabel(a.getTargetEquipmentTag()), 2.5, null);
+        scene.lineLabel(a.getMaterialLineTag(), 410, y + 31, unit.getName());
         for (PidElement member : group) {
           if (member.getType() == PidElementType.SAFETY_RELIEF_VALVE) {
             for (String id : member.getConnectedElementIds()) {
