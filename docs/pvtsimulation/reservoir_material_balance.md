@@ -546,3 +546,10 @@ two-hydrocarbon-phase generalized PVT. It rejects absent phases and unacceptable
 approximate surface-component closure; see the [generation and acceptance contract](depletion_pvt_generation.md).
 These extensions do not complete independent laboratory/field qualification or the
 remaining multi-tank/research acceptance in issue #4740.
+
+
+Explicit initial occupied-volume experiments can use
+[the transactional native fixed-cell route](depletion_pvt_generation.md#explicit-initial-occupied-volume-reference).
+It preserves selected original/tuned EOS, sample/experiment and separator provenance,
+with an explicit reference convention. Its bounded synthetic qualification does not
+complete wet upper-dew laboratory or independently measured field acceptance.

@@ -190,3 +190,13 @@ pressure, remove only gas, retain oil/aqueous inventories and recompute retained
 phase fractions/composition. Two liquids without gas have zero withdrawal. Oil
 must remain present. See the native wet DLE guide and `WetDleHandoffTest`; this
 is synthetic qualification, not measured calibration, wet CVD or critical accuracy.
+
+
+For an independently declared initial occupied-volume experiment, use
+`DepletionPvtHistoryGenerator.replayNativeFixedCell` and preserve its explicit
+`FixedCellResult` reference metadata. It runs transactionally on checkpoint copies,
+retains liquids and removes equilibrium gas only. Initial gas must be present;
+phase-family changes, critical and other-phase states fail. Do not substitute this
+convention for a saturation-referenced laboratory CVD experiment. `replayNative`
+continues to reject wet upper-dew CVD. Read the explicit-reference guide and
+`FixedCellDepletionHandoffTest` for numerical scope and separator evidence.
