@@ -200,3 +200,10 @@ phase-family changes, critical and other-phase states fail. Do not substitute th
 convention for a saturation-referenced laboratory CVD experiment. `replayNative`
 continues to reject wet upper-dew CVD. Read the explicit-reference guide and
 `FixedCellDepletionHandoffTest` for numerical scope and separator evidence.
+
+
+Explicit-reference fixed-cell replay refines accepted endpoints through the existing
+multiphase beta solver to 1e-12 equilibrium and relative volume targets. Preserve all
+phase-family, Gibbs and component gates; failed refinement rejects the transaction.
+Do not weaken absolute inventory bounds or claim arbitrary-scale/measured accuracy.
+The original 216-state and intermediate 480-state matrices use identical frozen bounds.

@@ -29,3 +29,22 @@ independent measurements. Named-phase equilibrium agreement is not proof of glob
 stability. Measured laboratory/field, phase-family transitions, critical states,
 wet upper-dew inference and normalized black-oil conversion remain unqualified.
 The explicit path requires separate immutable experiment/provenance identity.
+
+
+## Intermediate T/P precision qualification
+
+Run the same generator with `--off-grid` to reproduce `off-grid-reference.json`.
+Use the same pinned Python/NumPy/SciPy versions above. The 96 complete paths
+contain 480 states: 342.5/347.5/352.5/357.5 K; 195/160/125/90/55 bara; the same eight
+feeds and 0.001/1/1000 mol. Both checkpoint selections give 960 state executions.
+The original default generator and reference remain unchanged numerically.
+
+The off-grid test uses all the original frozen bounds, including 1e-8 mol absolute
+amount error at every scale. It fails on unmodified master 75a04732 before the
+precision repair: the initial 342.5 K/195 bara methane/decane 800/200 mol split differs
+by 2.04e-6 mol even before withdrawal. This is not lost total inventory. Reusing
+TPmultiflash.solveBeta in this opt-in PVT route refines accepted endpoints; its
+internal 1e-12 equilibrium/volume targets are not relaxed benchmark bounds. Phase
+family, energy, conservation and transactional failure gates remain required.
+Diagnostics: target/fixed-cell-off-grid-metrics.json. This is synthetic numerical
+qualification, not measured accuracy, global stability or critical acceptance.

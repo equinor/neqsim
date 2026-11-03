@@ -379,6 +379,17 @@ a late failed trial cannot mutate the caller's sample or publish partial results
 Repeated calls restart from identical input. The core API is
 `ConstantVolumeDepletion.runFixedCellDepletion(temperatureK, pressuresBara)`.
 
+The opt-in route refines already accepted phase endpoints with the existing
+multiphase beta solver to a dimensionless log-fugacity residual of 1e-12 against
+the reference phase and a relative cell-volume residual of 1e-12. It permits at
+most 12 beta-refinement calls at each endpoint. Refinement must preserve the
+named phase family, component balance and Gibbs-energy acceptance; failure rejects
+the whole transaction. These internal stopping criteria improve absolute phase
+inventory precision at large sample amounts. They are distinct from the frozen
+independent benchmark bounds and do not guarantee absolute accuracy at arbitrary
+sample scales or prove global phase stability. Shared flash defaults and legacy
+CVD stopping criteria remain unchanged.
+
 This explicit initial-volume convention does **not** infer a wet upper dew point,
 normalize measured PVT to saturation, replace `replayNative`'s upper-dew protocol,
 or extend modified-black-oil conversion. Existing `replayNative(..., Path.CVD, ...)`
@@ -388,7 +399,8 @@ Keep original/tuned laboratory calibration and whole-experiment holdouts separat
 from reservoir-volume matching and held-out field pressures/GOR/composition.
 
 The [independent reference and reproduction instructions](../../src/test/resources/neqsim/pvtsimulation/fixed-cell/README.md)
-cover216synthetic states across72complete pressure paths, including wet gas without
+cover the original216synthetic states across72complete pressure paths and480
+additional states across96five-pressure paths, including wet gas without
 oil, nearby temperatures and three sample sizes. Both checkpoint selections and
 all separator products are tested. This is bounded numerical consistency, not
 measured laboratory/field accuracy, critical or global phase-stability acceptance.

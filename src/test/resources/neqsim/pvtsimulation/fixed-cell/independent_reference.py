@@ -5,6 +5,7 @@ synthetic numerical consistency, not a dew reference or laboratory wet-CVD
 accuracy claim. Solve fugacity equalities and component lever rules, set the
 cell to the first equilibrium occupied volume, then withdraw gas only.
 """
+import argparse
 import json
 import numpy as np
 from scipy.optimize import least_squares
@@ -17,7 +18,7 @@ OMEGA = np.array([.0115, .4923, .344])
 KIJ = np.array([[0, .041099999, .45], [.041099999, 0, 0], [.45, 0, 0]])
 
 
-def reference(temperature, feed, amount, family):
+def reference(temperature, feed, amount, family, pressures):
     """Solve a named phase family without inventing absent-phase properties."""
     indices = [0, 1, 2] if family == 'gas-oil-aqueous' else ([0, 1] if family == 'gas-oil' else [0, 2])
     names = [['methane', 'n-decane', 'water'][i] for i in indices]
@@ -63,7 +64,7 @@ def reference(temperature, feed, amount, family):
     cumulative = np.zeros(ncomponent)
     target = None
     rows = []
-    for pressure_bara in [200, 100, 50]:
+    for pressure_bara in pressures:
         pressure = pressure_bara * 1e5
         solution = least_squares(residual, guess, args=(pressure,), bounds=(-60, 60),
                                  xtol=1e-13, ftol=1e-13, gtol=1e-13, max_nfev=1000)
@@ -99,12 +100,17 @@ def reference(temperature, feed, amount, family):
                 componentNames=names, phaseNames=phase_names, targetVolumeM3=target, rows=rows)
 
 
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--off-grid', action='store_true', help='Generate the intermediate T/P qualification')
+args = parser.parse_args()
+temperatures = [342.5, 347.5, 352.5, 357.5] if args.off_grid else [340., 350., 360.]
+pressures = [195, 160, 125, 90, 55] if args.off_grid else [200, 100, 50]
 cases = []
-for temperature in [340., 350., 360.]:
+for temperature in temperatures:
     for family, feeds in [('gas-oil-aqueous', [[.5, .3, .2], [.6, .2, .2], [.6, .1, .3]]),
                           ('gas-aqueous', [[.8, .2], [.6, .4], [.9, .1]]),
                           ('gas-oil', [[.6, .4], [.8, .2]])]:
         for feed in feeds:
             for amount in [.001, 1., 1000.]:
-                cases.append(reference(temperature, feed, amount, family))
+                cases.append(reference(temperature, feed, amount, family, pressures))
 print(json.dumps(cases, indent=2, allow_nan=False))

@@ -108,9 +108,35 @@ class FixedCellDepletionHandoffTest {
    */
   @Test
   void independentMatrixPreservesBothVersionsAndNamedInventories() throws Exception {
+    compareIndependentMatrix("reference.json", new double[] {200, 100, 50}, 72, 432, "fixed-cell-metrics.json");
+  }
+
+  /**
+   * Qualifies intermediate temperatures and five-pressure paths at the same fixed numeric bounds.
+   *
+   * @throws Exception if complete reference or diagnostics cannot be read or written
+   */
+  @Test
+  void independentOffGridMatrixPreservesAbsoluteInventoryPrecision() throws Exception {
+    compareIndependentMatrix("off-grid-reference.json", new double[] {195, 160, 125, 90, 55}, 96, 960,
+        "fixed-cell-off-grid-metrics.json");
+  }
+
+  /**
+   * Compares both checkpoints and all separator inventories against a complete independent matrix.
+   *
+   * @param resource independent JSON resource filename
+   * @param pressures complete depletion schedule, bara
+   * @param expectedCases number of independent paths
+   * @param expectedExecutions number of checkpoint-selected states
+   * @param metricsFile output filename within target
+   * @throws Exception if complete reference or diagnostics cannot be read or written
+   */
+  private void compareIndependentMatrix(String resource, double[] pressures, int expectedCases, int expectedExecutions,
+      String metricsFile) throws Exception {
     JsonArray cases;
     try (InputStreamReader reader = new InputStreamReader(
-        getClass().getResourceAsStream("/neqsim/pvtsimulation/fixed-cell/reference.json"), StandardCharsets.UTF_8)) {
+        getClass().getResourceAsStream("/neqsim/pvtsimulation/fixed-cell/" + resource), StandardCharsets.UTF_8)) {
       cases = new Gson().fromJson(reader, JsonArray.class);
     }
     int states = 0;
@@ -133,17 +159,17 @@ class FixedCellDepletionHandoffTest {
       for (boolean selected : new boolean[] {false, true}) {
         NativeResult result = DepletionPvtHistoryGenerator.replayNativeFixedCell(checkpoints, selected,
             "synthetic path " + c + "; initial occupied EOS cell; full experiment; no measured accuracy claim",
-            temperature, new double[] {200, 100, 50}, separator());
+            temperature, pressures, separator());
         assertSame(checkpoints, result.getModel());
         assertEquals(selected, result.isTuned());
         assertEquals(Path.CVD, result.getPath());
         assertTrue(result.hasFixedCellReference());
         assertEquals(temperature, result.getFixedCellReference().getTemperatureK(), 0);
-        assertEquals(200, result.getFixedCellReference().getReferencePressureBara(), 0);
+        assertEquals(pressures[0], result.getFixedCellReference().getReferencePressureBara(), 0);
         double target = entry.get("targetVolumeM3").getAsDouble();
         double[] cumulative = new double[initial.length];
         DepletionSnapshot[] snapshots = result.getSnapshots();
-        assertEquals(3, snapshots.length);
+        assertEquals(pressures.length, snapshots.length);
         for (int row = 0; row < snapshots.length; row++) {
           JsonObject expected = entry.getAsJsonArray("rows").get(row).getAsJsonObject();
           SystemInterface cell = snapshots[row].getRetainedFluid();
@@ -195,8 +221,8 @@ class FixedCellDepletionHandoffTest {
         assertArrayEquals(tuned, SerializationUtils.serialize(checkpoints.getTunedFluid()));
       }
     }
-    assertEquals(72, cases.size());
-    assertEquals(432, states);
+    assertEquals(expectedCases, cases.size());
+    assertEquals(expectedExecutions, states);
     Map<String, Object> metrics = new LinkedHashMap<>();
     metrics.put("uniqueIndependentStates", states / 2);
     metrics.put("checkpointSelectedStateExecutions", states);
@@ -206,8 +232,7 @@ class FixedCellDepletionHandoffTest {
     metrics.put("maximumComponentClosureMol", maxClosure);
     metrics.put("secondsIncludingSeparatorProducts", (System.nanoTime() - start) / 1e9);
     Files.createDirectories(Paths.get("target"));
-    Files.write(Paths.get("target/fixed-cell-metrics.json"),
-        new Gson().toJson(metrics).getBytes(StandardCharsets.UTF_8));
+    Files.write(Paths.get("target", metricsFile), new Gson().toJson(metrics).getBytes(StandardCharsets.UTF_8));
   }
 
   /** Checks primitive pressure inputs, absent gas, repeated execution and defensive immutable result boundaries. */
