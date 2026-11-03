@@ -70,7 +70,7 @@ retained explicitly rather than relabeled as 15 C volumes.
   After a sampled gas/oil stage and subsequent liquid disappearance, gas
   continues to be withdrawn below the saturation reference to restore the fixed
   cell volume. The retained gas composition is conserved during each single-phase withdrawal; absent oil has no assigned PVT.
-- Wet CVD and other-phase samples remain unsupported. Gas/oil composition vectors with
+- Saturation-referenced wet CVD and other-phase samples remain unsupported; the explicit initial-volume route below has separate bounded semantics. Gas/oil composition vectors with
   L1 distance at most 1e-8 are rejected as an unqualified critical-degenerate
   split. This rejection bound is not a fit parameter or a near-critical accuracy
   claim.
@@ -357,3 +357,38 @@ checks, not measured wet-fluid calibration or laboratory-to-field accuracy.
 Keep original/tuned model, whole experiment and separator provenance distinct.
 This route supplies no absent-phase black-oil properties, no wet CVD reference,
 no critical accuracy claim and no reservoir production or recoverable reserves.
+
+## Explicit initial occupied-volume reference
+
+`DepletionPvtHistoryGenerator.replayNativeFixedCell` is a separate opt-in for an
+experiment whose reference is the accepted EOS sample's occupied volume at the
+first supplied pressure. It preserves selected original/tuned checkpoints,
+whole-experiment/sample provenance and one immutable `PvtSeparatorPath`. The
+returned `NativeResult.hasFixedCellReference()` identifies this convention;
+`getFixedCellReference()` supplies reference pressure in bara, temperature in K,
+actual occupied cell volume in m3, and immutable completed snapshots. It throws
+when called on the existing laboratory routes, which have no such reference.
+
+At the first pressure withdrawal is zero. At each later pressure equilibrium gas
+alone is removed to restore that occupied volume; all nongas phases remain.
+The bounded route accepts unchanged gas, gas/oil, gas/aqueous or gas/oil/aqueous
+phase families. It rejects an absent gas, phase-family changes, critical-degenerate
+splits, unclosed equilibrium and unreachable volume restoration. It does not
+assign properties to absent oil or water. The entire run uses independent copies;
+a late failed trial cannot mutate the caller's sample or publish partial results.
+Repeated calls restart from identical input. The core API is
+`ConstantVolumeDepletion.runFixedCellDepletion(temperatureK, pressuresBara)`.
+
+This explicit initial-volume convention does **not** infer a wet upper dew point,
+normalize measured PVT to saturation, replace `replayNative`'s upper-dew protocol,
+or extend modified-black-oil conversion. Existing `replayNative(..., Path.CVD, ...)`
+still rejects water-bearing CVD. Choose the route from the actual experiment
+protocol; an attractive numerical match cannot change that protocol's identity.
+Keep original/tuned laboratory calibration and whole-experiment holdouts separate
+from reservoir-volume matching and held-out field pressures/GOR/composition.
+
+The [independent reference and reproduction instructions](../../src/test/resources/neqsim/pvtsimulation/fixed-cell/README.md)
+cover216synthetic states across72complete pressure paths, including wet gas without
+oil, nearby temperatures and three sample sizes. Both checkpoint selections and
+all separator products are tested. This is bounded numerical consistency, not
+measured laboratory/field accuracy, critical or global phase-stability acceptance.

@@ -296,3 +296,16 @@ report saturation pressures 24% apart, no EOS will fit both; tuning harder just
 fits noise. Report bias and scatter separately, and stop when the scatter matches
 the data's own inconsistency.
 
+
+
+### Explicit initial-volume depletion handoff
+
+`DepletionPvtHistoryGenerator.replayNativeFixedCell` preserves original/tuned
+checkpoints and fixed separator provenance for independently declared initial
+occupied-volume experiments. Its immutable reference is not a dew-point estimate
+or measured saturation normalization. The bounded gas-bearing phase family must
+remain unchanged; critical and other-phase states fail. Keep the ordinary
+`replayNative` laboratory protocol separate. See
+`docs/pvtsimulation/depletion_pvt_generation.md` and
+`FixedCellDepletionHandoffTest`; synthetic EOS consistency does not establish
+measured calibration, held-out experiment accuracy or recoverable reserves.

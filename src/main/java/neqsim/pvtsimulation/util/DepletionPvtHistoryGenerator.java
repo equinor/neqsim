@@ -57,6 +57,7 @@ public final class DepletionPvtHistoryGenerator {
     private final DepletionSnapshot[] snapshots;
     private final PvtSeparatorPath.Result[] retained;
     private final PvtSeparatorPath.Result[] withdrawn;
+    private final ConstantVolumeDepletion.FixedCellResult fixedCell;
 
     /**
      * Freezes actual completed protocol evidence.
@@ -68,11 +69,12 @@ public final class DepletionPvtHistoryGenerator {
      * @param separator immutable separator and final product basis
      * @param snapshots native pressure-ordered states
      * @param retained products of each retained cell
+     * @param fixedCell explicit occupied-volume reference, null for the existing laboratory routes
      * @param withdrawn interval products, null for a zero withdrawal
      */
     private NativeResult(CalibratedPvtModel model, boolean tuned, Path path, String reference,
         PvtSeparatorPath separator, DepletionSnapshot[] snapshots, PvtSeparatorPath.Result[] retained,
-        PvtSeparatorPath.Result[] withdrawn) {
+        PvtSeparatorPath.Result[] withdrawn, ConstantVolumeDepletion.FixedCellResult fixedCell) {
       this.model = model;
       this.tuned = tuned;
       this.path = path;
@@ -81,6 +83,29 @@ public final class DepletionPvtHistoryGenerator {
       this.snapshots = snapshots.clone();
       this.retained = retained.clone();
       this.withdrawn = withdrawn.clone();
+      this.fixedCell = fixedCell;
+    }
+
+    /**
+     * Tests whether this is an explicitly initial-occupied-volume-referenced experiment.
+     *
+     * @return true only for replayNativeFixedCell, never for an inferred upper-dew reference
+     */
+    public boolean hasFixedCellReference() {
+      return fixedCell != null;
+    }
+
+    /**
+     * Returns explicit initial reference conditions and completed immutable cell states.
+     *
+     * @return the initial occupied-volume reference, not a dew-point measurement
+     * @throws IllegalStateException if this result used an existing laboratory route
+     */
+    public ConstantVolumeDepletion.FixedCellResult getFixedCellReference() {
+      if (!hasFixedCellReference()) {
+        throw new IllegalStateException("This experiment has no explicit fixed-cell reference");
+      }
+      return fixedCell;
     }
 
     /**
@@ -199,6 +224,49 @@ public final class DepletionPvtHistoryGenerator {
    */
   public static NativeResult replayNative(CalibratedPvtModel model, boolean tuned, Path path, String pathReference,
       double temperatureK, double[] pressuresBara, PvtSeparatorPath separator) {
+    return replayNative(model, tuned, path, pathReference, temperatureK, pressuresBara, separator, false);
+  }
+
+  /**
+   * Replays a declared fixed-cell experiment with the sample's initial occupied EOS volume as its reference.
+   *
+   * <p>
+   * This explicit opt-in supports unchanged gas/oil/aqueous phase families, including wet gas without oil. It does not
+   * infer a wet upper dew, normalize laboratory data to saturation or extend generalized black-oil conversion.
+   * Original/tuned checkpoints, sample/experiment identity and one unchanged separator basis are retained. All trials
+   * run on independent copies; no partial results escape a failed pressure path.
+   * </p>
+   *
+   * @param model independently calibrated original/tuned checkpoints
+   * @param tuned true for tuned EOS, false for original EOS
+   * @param pathReference immutable sample, experiment, reference-volume convention and data-use provenance
+   * @param temperatureK common experiment temperature, K
+   * @param pressuresBara strictly decreasing positive pressures above the separator, first defines the reference
+   * @param separator immutable separator and final product-volume basis
+   * @return native states, explicit reference metadata and retained/withdrawn separator products
+   * @throws IllegalArgumentException if the declared experiment inputs are invalid
+   * @throws IllegalStateException if phase-domain, flash, volume, component or separator closure fails
+   */
+  public static NativeResult replayNativeFixedCell(CalibratedPvtModel model, boolean tuned, String pathReference,
+      double temperatureK, double[] pressuresBara, PvtSeparatorPath separator) {
+    return replayNative(model, tuned, Path.CVD, pathReference, temperatureK, pressuresBara, separator, true);
+  }
+
+  /**
+   * Evaluates one selected native reference convention without changing the caller's checkpoints.
+   *
+   * @param model original/tuned immutable checkpoints
+   * @param tuned selected checkpoint
+   * @param path native protocol
+   * @param pathReference experiment identity
+   * @param temperatureK common temperature, K
+   * @param pressuresBara complete decreasing pressure schedule, bara
+   * @param separator fixed separator process
+   * @param explicitCell true for the initial occupied-volume convention
+   * @return completed immutable evidence
+   */
+  private static NativeResult replayNative(CalibratedPvtModel model, boolean tuned, Path path, String pathReference,
+      double temperatureK, double[] pressuresBara, PvtSeparatorPath separator, boolean explicitCell) {
     if (model == null || separator == null || (path != Path.CCE && path != Path.CVD && path != Path.DLE)
         || !positive(temperatureK) || pressuresBara == null || pressuresBara.length < 2) {
       throw new IllegalArgumentException(
@@ -213,7 +281,7 @@ public final class DepletionPvtHistoryGenerator {
       }
     }
     SystemInterface feed = tuned ? model.getTunedFluid() : model.getOriginalFluid();
-    if (path == Path.CVD && Arrays.asList(feed.getComponentNames()).contains("water")) {
+    if (path == Path.CVD && !explicitCell && Arrays.asList(feed.getComponentNames()).contains("water")) {
       throw new IllegalArgumentException("Wet CVD requires separate protocol qualification");
     }
     String[] names = feed.getComponentNames();
@@ -225,7 +293,11 @@ public final class DepletionPvtHistoryGenerator {
     if (path == Path.DLE && !probe.hasPhaseType("oil")) {
       throw new IllegalArgumentException("DLE requires an initially present oil phase");
     }
-    DepletionSnapshot[] snapshots = replay(feed, path, temperatureK, pressures, true);
+    ConstantVolumeDepletion.FixedCellResult fixedCell = explicitCell
+        ? new ConstantVolumeDepletion(feed).runFixedCellDepletion(temperatureK, pressures)
+        : null;
+    DepletionSnapshot[] snapshots = explicitCell ? fixedCell.getSnapshots()
+        : replay(feed, path, temperatureK, pressures, true);
     PvtSeparatorPath.Result[] retained = new PvtSeparatorPath.Result[snapshots.length];
     PvtSeparatorPath.Result[] withdrawn = new PvtSeparatorPath.Result[snapshots.length];
     double[] cumulative = new double[initial.length];
@@ -239,7 +311,8 @@ public final class DepletionPvtHistoryGenerator {
       }
       for (int phase = 0; phase < equilibrium.getNumberOfPhases(); phase++) {
         String type = equilibrium.getPhase(phase).getType().getDesc();
-        if (!"gas".equals(type) && !"oil".equals(type) && !(path != Path.CVD && "aqueous".equals(type))) {
+        if (!"gas".equals(type) && !"oil".equals(type)
+            && !((path != Path.CVD || explicitCell) && "aqueous".equals(type))) {
           throw new IllegalStateException("Unsupported native phase at row " + row);
         }
       }
@@ -285,10 +358,10 @@ public final class DepletionPvtHistoryGenerator {
         withdrawn[row] = separator.separate(output);
       }
     }
-    if (path == Path.CVD && !sampledTwoPhase) {
+    if (path == Path.CVD && !explicitCell && !sampledTwoPhase) {
       throw new IllegalStateException("Native CVD reference requires a sampled gas/oil phase boundary");
     }
-    return new NativeResult(model, tuned, path, reference, separator, snapshots, retained, withdrawn);
+    return new NativeResult(model, tuned, path, reference, separator, snapshots, retained, withdrawn, fixedCell);
   }
 
   /** Immutable protocol and approximation evidence accompanying an accepted PVT handoff. */
