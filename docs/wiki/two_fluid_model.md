@@ -1261,6 +1261,17 @@ across the cubic model's diagnostic $V/B=1.75$ phase-label transition while pres
 compressibility and Jacobian/admissibility guards. This is numerical screening for the declared heat
 input, not physical shutdown/restart or predictive depletion qualification.
 
+For a stationary or slowly draining stratified pool, opt into
+`HydrocarbonPoolTransfer.forHydrostaticPool(...)`. It uses the volume-preserving inclined-cell
+horizontal-surface diagnostic, reports the actual cell interface area, and uses the equilibrium
+target geometry for an unseeded appearance step. A sub-resolution retained trace uses a reported
+local-stratified chord fallback without changing mass. This is not an annular, slug-front or pig
+interface closure. Initialize a deliberate wall inventory with
+`setInitialWallTemperatureProfile(profile, "K")` before `run()`; both configured and accepted wall
+profiles are defensive and survive copy/rollback/replay. The wall-coupled 12/24-cell 780 s screening
+run produces 22.82%/24.29% peak/final oil mesh differences and 43.223/45.037 K maximum wall changes.
+Those broad differences keep physical restart, public validation and hydraulic pigging open.
+
 With component transport enabled, the downstream outlet composition follows the positive outbound
 component ledger rather than the latest inlet composition or the final cell's instantaneous phase
 split. The signed conservation ledger separately retains reversed material entering from an explicit

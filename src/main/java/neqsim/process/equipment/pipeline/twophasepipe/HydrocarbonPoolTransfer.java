@@ -2,6 +2,7 @@ package neqsim.process.equipment.pipeline.twophasepipe;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -39,6 +40,7 @@ public final class HydrocarbonPoolTransfer implements Serializable {
   private final double[] evaporationEnthalpiesJPerKg;
   private final double interfaceWidthFraction;
   private final double maximumHeatSupplyWPerMetre;
+  private final boolean hydrostaticInterfaceArea;
 
   /**
    * Immutable diagnostics and component sources for one stage.
@@ -47,14 +49,21 @@ public final class HydrocarbonPoolTransfer implements Serializable {
     private static final long serialVersionUID = 1L;
     private final double[][][] sources;
     private final double[][] rateConstants;
+    private final double[] interfaceAreasSquareMetres;
+    private final boolean[] equilibriumAppearanceArea;
+    private final boolean[] unresolvedTraceAreaFallback;
     private final double[] unconstrainedLatentHeatWPerMetre;
     private final double[] heatScale;
     private final boolean[] donorLimited;
 
-    private Result(double[][][] sources, double[][] rateConstants, double[] unconstrainedLatentHeatWPerMetre,
-        double[] heatScale, boolean[] donorLimited) {
+    private Result(double[][][] sources, double[][] rateConstants, double[] interfaceAreasSquareMetres,
+        boolean[] equilibriumAppearanceArea, boolean[] unresolvedTraceAreaFallback,
+        double[] unconstrainedLatentHeatWPerMetre, double[] heatScale, boolean[] donorLimited) {
       this.sources = sources;
       this.rateConstants = rateConstants;
+      this.interfaceAreasSquareMetres = interfaceAreasSquareMetres;
+      this.equilibriumAppearanceArea = equilibriumAppearanceArea;
+      this.unresolvedTraceAreaFallback = unresolvedTraceAreaFallback;
       this.unconstrainedLatentHeatWPerMetre = unconstrainedLatentHeatWPerMetre;
       this.heatScale = heatScale;
       this.donorLimited = donorLimited;
@@ -79,6 +88,27 @@ public final class HydrocarbonPoolTransfer implements Serializable {
         copy[cell] = rateConstants[cell].clone();
       }
       return copy;
+    }
+
+    /** @return gas/oil interface area used by each cell in square metres */
+    public double[] getInterfaceAreasSquareMetres() {
+      return interfaceAreasSquareMetres.clone();
+    }
+
+    /**
+     * @return whether each zero-area accepted cell used the equilibrium target geometry to admit physical phase
+     * appearance
+     */
+    public boolean[] getEquilibriumAppearanceArea() {
+      return equilibriumAppearanceArea.clone();
+    }
+
+    /**
+     * @return whether a sub-resolution retained pool used the local stratified chord area instead of an unresolved
+     * inclined hydrostatic reconstruction
+     */
+    public boolean[] getUnresolvedTraceAreaFallback() {
+      return unresolvedTraceAreaFallback.clone();
     }
 
     /** @return latent heat before the heat-supply limit by cell in W/m; evaporation is negative */
@@ -109,6 +139,47 @@ public final class HydrocarbonPoolTransfer implements Serializable {
    */
   public HydrocarbonPoolTransfer(String[] components, double[] coefficients, double[] evaporationEnthalpiesJPerKg,
       double interfaceWidthFraction, double maximumHeatSupplyWPerMetre) {
+    this(components, coefficients, evaporationEnthalpiesJPerKg, interfaceWidthFraction, maximumHeatSupplyWPerMetre,
+        false);
+  }
+
+  /**
+   * Construct a transfer closure using the volume-preserving static hydrostatic interface diagnostic in every cell.
+   *
+   * <p>
+   * This is appropriate only for a resolved stationary or slowly draining stratified pool. It is not an annular,
+   * dispersed, slug-front or moving-pig area closure. A zero-area accepted gas cell with a positive equilibrium oil
+   * target uses that target's volume-preserving hydrostatic area for the appearance step; accepted pool geometry owns
+   * subsequent steps. When an inclined cell's retained volume is below the hydrostatic diagnostic's representable
+   * relative-volume tolerance, the closure reports and uses the local stratified chord area rather than deleting or
+   * clipping the trace inventory. A full liquid cell without a gas interface remains blocked.
+   * </p>
+   *
+   * @param components unique NeqSim component names
+   * @param coefficients overall transfer coefficients in m/s, one per component
+   * @param evaporationEnthalpiesJPerKg positive evaporation heat requirements in J/kg, one per component
+   * @param maximumHeatSupplyWPerMetre maximum external heat available to net evaporation in W/m; positive infinity
+   * disables this limit
+   * @return immutable hydrostatic-pool transfer closure
+   */
+  public static HydrocarbonPoolTransfer forHydrostaticPool(String[] components, double[] coefficients,
+      double[] evaporationEnthalpiesJPerKg, double maximumHeatSupplyWPerMetre) {
+    return new HydrocarbonPoolTransfer(components, coefficients, evaporationEnthalpiesJPerKg, 0.0,
+        maximumHeatSupplyWPerMetre, true);
+  }
+
+  /**
+   * Validate and store immutable transfer inputs.
+   *
+   * @param components unique component names
+   * @param coefficients overall transfer coefficients in m/s
+   * @param evaporationEnthalpiesJPerKg positive evaporation enthalpies in J/kg
+   * @param interfaceWidthFraction fixed interface width divided by diameter
+   * @param maximumHeatSupplyWPerMetre maximum evaporation heat supply in W/m
+   * @param hydrostaticInterfaceArea whether to reconstruct the stationary pool area
+   */
+  private HydrocarbonPoolTransfer(String[] components, double[] coefficients, double[] evaporationEnthalpiesJPerKg,
+      double interfaceWidthFraction, double maximumHeatSupplyWPerMetre, boolean hydrostaticInterfaceArea) {
     if (components == null || coefficients == null || evaporationEnthalpiesJPerKg == null || components.length == 0
         || components.length != coefficients.length || components.length != evaporationEnthalpiesJPerKg.length
         || !Double.isFinite(interfaceWidthFraction) || interfaceWidthFraction < 0.0 || interfaceWidthFraction > 1.0
@@ -134,6 +205,7 @@ public final class HydrocarbonPoolTransfer implements Serializable {
     this.evaporationEnthalpiesJPerKg = evaporationEnthalpiesJPerKg.clone();
     this.interfaceWidthFraction = interfaceWidthFraction;
     this.maximumHeatSupplyWPerMetre = maximumHeatSupplyWPerMetre;
+    this.hydrostaticInterfaceArea = hydrostaticInterfaceArea;
   }
 
   /**
@@ -166,19 +238,61 @@ public final class HydrocarbonPoolTransfer implements Serializable {
     double[][][] inventory = transport.getInventoryKg();
     double[][][] sources = new double[sections.length][3][names.length];
     double[][] rateConstants = new double[sections.length][components.length];
+    double[] interfaceAreas = new double[sections.length];
+    boolean[] equilibriumAppearanceArea = new boolean[sections.length];
+    boolean[] unresolvedTraceAreaFallback = new boolean[sections.length];
     boolean[] donorLimited = new boolean[sections.length];
     for (int cell = 0; cell < sections.length; cell++) {
       TwoFluidSection section = sections[cell];
       double diameter = section.getDiameter();
       double volumePerMetre = Math.PI * diameter * diameter / 4.0;
-      double interfaceWidth = interfaceWidthFraction * diameter;
       if (!(diameter > 0.0) || !Double.isFinite(diameter) || !(section.getLength() > 0.0)
           || !Double.isFinite(section.getLength())) {
         throw new IllegalStateException("Pool-transfer cells require finite positive diameter and length");
       }
+      double interfaceArea;
+      if (hydrostaticInterfaceArea) {
+        try {
+          interfaceArea = section.getHydrostaticCellGeometry().getInterfaceArea();
+        } catch (IllegalArgumentException exception) {
+          if (!"Static liquid volume is not resolvable at this cell scale".equals(exception.getMessage())) {
+            throw exception;
+          }
+          interfaceArea = new GeometryCalculator().calculateFromHoldup(section.getLiquidHoldup(),
+              diameter).interfacialWidth * section.getLength();
+          unresolvedTraceAreaFallback[cell] = true;
+        }
+      } else {
+        interfaceArea = interfaceWidthFraction * diameter * section.getLength();
+      }
+      if (hydrostaticInterfaceArea && interfaceArea == 0.0) {
+        double targetOilMassPerMetre = 0.0;
+        for (double oilChange : targetChanges[cell][1]) {
+          targetOilMassPerMetre += oilChange;
+        }
+        if (targetOilMassPerMetre > 0.0 && equilibriumStates[cell].hasPhaseType("oil")) {
+          for (double oilInventory : inventory[cell][1]) {
+            targetOilMassPerMetre += oilInventory / section.getLength();
+          }
+          double oilDensity = equilibriumStates[cell].getPhaseOfType("oil").getDensity("kg/m3");
+          double targetHoldup = targetOilMassPerMetre / oilDensity / volumePerMetre;
+          if (!Double.isFinite(targetHoldup) || targetHoldup <= 0.0) {
+            throw new IllegalStateException("Equilibrium oil target must have finite positive volume");
+          }
+          targetHoldup = Math.min(1.0, targetHoldup);
+          interfaceArea = new GeometryCalculator()
+              .calculateHydrostaticCell(targetHoldup, diameter, section.getLength(), section.getInclination())
+              .getInterfaceArea();
+          equilibriumAppearanceArea[cell] = interfaceArea > 0.0;
+        }
+      }
+      if (!Double.isFinite(interfaceArea) || interfaceArea < 0.0) {
+        throw new IllegalStateException("Pool-transfer interface area must be finite and nonnegative");
+      }
+      interfaceAreas[cell] = interfaceArea;
       for (int configured = 0; configured < components.length; configured++) {
         int component = indices[configured];
-        double rateConstant = coefficients[configured] * interfaceWidth / volumePerMetre;
+        double rateConstant = coefficients[configured] * interfaceArea / (volumePerMetre * section.getLength());
         rateConstants[cell][configured] = rateConstant;
         double oilRate = rateConstant * targetChanges[cell][1][component];
         int donor = oilRate > 0.0 ? 0 : 1;
@@ -213,6 +327,7 @@ public final class HydrocarbonPoolTransfer implements Serializable {
         }
       }
     }
-    return new Result(sources, rateConstants, unconstrainedLatentHeat, heatScale, donorLimited);
+    return new Result(sources, rateConstants, interfaceAreas, equilibriumAppearanceArea, unresolvedTraceAreaFallback,
+        unconstrainedLatentHeat, heatScale, donorLimited);
   }
 }

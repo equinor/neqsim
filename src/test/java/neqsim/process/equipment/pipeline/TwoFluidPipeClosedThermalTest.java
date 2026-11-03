@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,41 @@ class TwoFluidPipeClosedThermalTest {
   private static final double CLOSED_ENERGY_TOLERANCE_J = 1.0e-5;
 
   private static final UUID TRANSIENT_ID = UUID.fromString("00000000-0000-0000-0000-000000002792");
+
+  @Test
+  void configuredWallInventorySurvivesInitializationAndIsDefensive() {
+    SystemInterface fluid = new SystemSrkEos(300.0, 60.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.10);
+    fluid.setMixingRule("classic");
+    Stream inlet = new Stream("wall-inventory-inlet", fluid);
+    inlet.setFlowRate(6.0, "kg/sec");
+    inlet.setTemperature(300.0, "K");
+    inlet.setPressure(60.0, "bara");
+    inlet.run();
+    TwoFluidPipe pipe = new TwoFluidPipe("wall-inventory-pipe", inlet);
+    pipe.setLength(40.0);
+    pipe.setDiameter(0.20);
+    pipe.setNumberOfSections(4);
+    pipe.setEnableJouleThomson(false);
+    pipe.setSteadyStateMaxWallClockTime(Double.POSITIVE_INFINITY);
+    double[] configured = {295.0, 294.0, 293.0, 292.0};
+    pipe.setInitialWallTemperatureProfile(configured, "K");
+    configured[0] = 100.0;
+
+    pipe.run();
+
+    assertArrayEquals(new double[] {295.0, 294.0, 293.0, 292.0}, pipe.getWallTemperatureProfile(), 0.0);
+    double[] escaped = pipe.getWallTemperatureProfile();
+    escaped[0] = 100.0;
+    assertEquals(295.0, pipe.getWallTemperatureProfile()[0], 0.0);
+    assertArrayEquals(pipe.getInitialWallTemperatureProfile(), pipe.getWallTemperatureProfile(), 0.0);
+    assertThrows(IllegalArgumentException.class,
+        () -> pipe.setInitialWallTemperatureProfile(new double[] {300.0}, "K"));
+    assertThrows(IllegalArgumentException.class,
+        () -> pipe.setInitialWallTemperatureProfile(new double[] {300.0, 300.0, 300.0, 0.0}, "K"));
+    assertThrows(IllegalArgumentException.class, () -> pipe.setWallProperties(0.0, 7800.0, 500.0));
+  }
 
   @Test
   void closedTemperatureHistoryIgnoresDisconnectedInletNominalFlow() {

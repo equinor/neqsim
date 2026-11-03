@@ -708,6 +708,12 @@ for (double qgMSm3d : gasRates) {
 > $V/B=1.75$ label transition while positive-compressibility, Jacobian and
 > energy-admissibility guards remain active. Do not clip composition or change
 > the configured root to manufacture a restart result.
+> The opt-in hydrostatic-pool mode uses volume-preserving inclined-cell area,
+> reports equilibrium appearance and a sub-resolution stratified trace fallback,
+> and can retain an explicitly initialized wall profile across event intervals.
+> Its wall-coupled 12/24-cell cycle changes wall temperature by 43.223/45.037 K
+> but retains 22.82%/24.29% peak/final oil mesh differences. Treat that as a
+> screening prerequisite, not physical restart, public validation or pigging.
 >
 > **Coupled component/phase/thermal slug transport has a narrower envelope.**
 > For the conservative Lagrangian slug/film path, named-component phase sources

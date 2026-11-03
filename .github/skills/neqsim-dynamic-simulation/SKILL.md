@@ -527,6 +527,13 @@ The 100 W/m finite-heat 780 s rich-gas cycle is numerical mesh evidence only. It
 EOS diagnostic $V/B=1.75$ label transition by explicitly retaining the requested root while the
 positive-compressibility, Jacobian and energy-admissibility guards remain active. Do not clip
 composition or change the configured root to manufacture a restart result.
+Use `HydrocarbonPoolTransfer.forHydrostaticPool(...)` only for stationary or slowly draining
+stratified terrain pools. Inspect interface-area, equilibrium-appearance and unresolved-trace-area
+diagnostics. Configure deliberate wall inventory with `setInitialWallTemperatureProfile(...)`
+before `run()` and retain the wall profile through every event/replay. The current wall-coupled
+12/24-cell cycle has 22.82%/24.29% peak/final oil mesh differences; it is screening, not physical
+restart qualification. A moving pig needs separate moving-volume, face-flux and pressure-work
+conservation.
 Condensation must use equilibrium hydrocarbon-liquid and aqueous-liquid **mass**
 contributions; never use the current cell water cut to identify a phase that is not yet present.
 For evaporation, withdraw from the actual oil and water conservative inventories and bound each
