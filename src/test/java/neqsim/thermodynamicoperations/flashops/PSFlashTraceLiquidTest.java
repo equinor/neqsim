@@ -9,7 +9,9 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemPrEos1978;
+import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -60,8 +62,11 @@ class PSFlashTraceLiquidTest {
     double target = inlet.getEntropy();
     SystemInterface state = inlet.clone();
     state.setPressure(9.5);
-    new ThermodynamicOperations(state).PSflash(target);
+    PSFlash flash = new PSFlash(state, target, 0);
+    flash.run();
     assertClosure(inlet, state, target, 9.5);
+    assertTrue(flash.getColdBracketEvaluations() <= 12,
+        "Smooth trace-liquid recovery must not require dozens of cold TP evaluations");
     SystemInterface reference = independentTpRoot(inlet, target, 9.5);
     assertEquals(reference.getTemperature(), state.getTemperature(), 1.0e-6);
     assertEquals(350.2384, state.getTemperature(), 5.0e-4);
@@ -121,6 +126,47 @@ class PSFlashTraceLiquidTest {
     new ThermodynamicOperations(state).PSflash(inlet.getEntropy());
     assertClosure(inlet, state, inlet.getEntropy(), 9.5);
     assertEquals(1, state.getNumberOfPhases());
+  }
+
+  /** Checks cold-recovery work at the CO2 control point that otherwise needs 35 bisection evaluations. */
+  @Test
+  void co2ColdRecoveryHasBoundedTpWork() {
+    SystemInterface inlet = new SystemPrEos(298.15, 150.0);
+    inlet.addComponent("CO2", 0.98);
+    inlet.addComponent("nitrogen", 0.02);
+    inlet.setMixingRule(2);
+    inlet.useVolumeCorrection(false);
+    new ThermodynamicOperations(inlet).TPflash();
+    inlet.init(2);
+    SystemInterface state = inlet.clone();
+    state.setPressure(49.95);
+    PSFlash flash = new PSFlash(state, inlet.getEntropy(), 0);
+    flash.run();
+    assertClosure(inlet, state, inlet.getEntropy(), 49.95);
+    assertTrue(flash.getColdBracketEvaluations() <= 12,
+        "Smooth CO2 recovery must keep independent cold TP work bounded");
+    SystemInterface reference = state.clone();
+    coldTpFlash(reference);
+    assertEquals(inlet.getEntropy(), reference.getEntropy(), PSFlash.entropyTolerance(state, inlet.getEntropy()));
+  }
+
+  /** Checks that the normal gas-compression path retains its warm-started Newton solve. */
+  @Test
+  void ordinaryGasCompressionDoesNotEnterColdRecovery() {
+    SystemInterface inlet = new SystemSrkEos(300.0, 30.0);
+    inlet.addComponent("methane", 0.85);
+    inlet.addComponent("ethane", 0.10);
+    inlet.addComponent("propane", 0.05);
+    inlet.setMixingRule("classic");
+    inlet.setMultiPhaseCheck(true);
+    new ThermodynamicOperations(inlet).TPflash();
+    inlet.init(2);
+    SystemInterface state = inlet.clone();
+    state.setPressure(60.0);
+    PSFlash flash = new PSFlash(state, inlet.getEntropy(), 0);
+    flash.run();
+    assertClosure(inlet, state, inlet.getEntropy(), 60.0);
+    assertEquals(0, flash.getColdBracketEvaluations());
   }
 
   /**

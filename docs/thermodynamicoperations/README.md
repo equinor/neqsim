@@ -94,6 +94,10 @@ bracket trials each use a fresh TP-flash operation: disabling K-value warm start
 alone does not discard the operation's convergence history. Reusing that history
 can make entropy evaluations with a trace liquid depend on earlier trials and
 collapse the bracket away from the smooth equilibrium root. The independent
+bracket uses secant interpolation for smooth roots and bisects at least every
+third trial to guarantee progress. Rounded or out-of-bracket interpolants fall
+back to bisection. This bounds the additional TP work without changing entropy
+acceptance or the normal warm-started Newton path. The independent
 endpoint check can reject a metastable homogeneous root even when
 its entropy residual is small. Recovery then uses a fresh inner TP flash so
 that its previous iteration history cannot reselect the rejected root. The
@@ -125,6 +129,8 @@ system amounts, and explicit failure behavior.
 independent TP-only root, the complete 216-point compression and amount sweep,
 and a gas-only control. It checks the tighter iteration tolerance, independent
 cold-TP agreement, pressure, phase fractions and component conservation.
+Deterministic evaluation-count checks also guard smooth trace-liquid and CO2
+cold recovery and confirm that ordinary gas compression does not enter it.
 
 ## Saturation and phase-aware operations
 
