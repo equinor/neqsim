@@ -241,8 +241,7 @@ class FieldDevelopmentOverviewDocumentationTest extends neqsim.NeqSimTest {
     String markdown = new String(Files.readAllBytes(GUIDE), StandardCharsets.UTF_8);
     int markerPosition = markdown.indexOf(HORNER_MARKER);
     assertTrue(markerPosition >= 0, "Missing marker: " + HORNER_MARKER);
-    assertEquals(markerPosition, markdown.lastIndexOf(HORNER_MARKER),
-        "Marker must be unique: " + HORNER_MARKER);
+    assertEquals(markerPosition, markdown.lastIndexOf(HORNER_MARKER), "Marker must be unique: " + HORNER_MARKER);
 
     Matcher fence = JAVA_FENCE.matcher(markdown.substring(markerPosition));
     assertTrue(fence.find(), "Missing Java fence after marker: " + HORNER_MARKER);
