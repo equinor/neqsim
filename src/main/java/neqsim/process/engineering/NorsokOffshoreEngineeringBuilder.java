@@ -34,14 +34,40 @@ public final class NorsokOffshoreEngineeringBuilder {
   private boolean registerProposedInstruments;
 
   private NorsokOffshoreEngineeringBuilder(String name, ProcessSystem processSystem) {
+    this(name, processSystem, "2.0");
+  }
+
+  /**
+   * Creates a builder with an explicitly selected exchange edition.
+   *
+   * @param name project name
+   * @param processSystem source process
+   * @param dexpiEdition supported DEXPI edition
+   */
+  private NorsokOffshoreEngineeringBuilder(String name, ProcessSystem processSystem, String dexpiEdition) {
+    if (!"2.0".equals(dexpiEdition) && !"2.0.0".equals(dexpiEdition) && !"2.0.1".equals(dexpiEdition)) {
+      throw new IllegalArgumentException("Supported DEXPI editions are 2.0, 2.0.0 and 2.0.1");
+    }
     this.name = name;
     this.processSystem = processSystem;
-    this.designBasis = createDefaultDesignBasis();
+    this.designBasis = createDefaultDesignBasis(dexpiEdition);
   }
 
   /** Creates a builder for a process and engineering-project name. */
   public static NorsokOffshoreEngineeringBuilder from(String name, ProcessSystem processSystem) {
     return new NorsokOffshoreEngineeringBuilder(name, processSystem);
+  }
+
+  /**
+   * Starts a project whose standards register explicitly declares the selected DEXPI edition.
+   *
+   * @param name project name
+   * @param processSystem source process
+   * @param dexpiEdition supported exchange edition, normally {@code 2.0.1} for professional P&amp;ID packages
+   * @return configured builder; legacy two-argument calls retain edition 2.0
+   */
+  public static NorsokOffshoreEngineeringBuilder from(String name, ProcessSystem processSystem, String dexpiEdition) {
+    return new NorsokOffshoreEngineeringBuilder(name, processSystem, dexpiEdition);
   }
 
   /**
@@ -60,6 +86,20 @@ public final class NorsokOffshoreEngineeringBuilder {
    */
   public static List<EngineeringProject> fromProcessModel(String name, ProcessModel processModel,
       boolean registerProposedInstruments) {
+    return fromProcessModel(name, processModel, registerProposedInstruments, "2.0");
+  }
+
+  /**
+   * Builds area-scoped projects with an explicit DEXPI edition while preserving area execution boundaries.
+   *
+   * @param name common project name
+   * @param processModel source multi-area model
+   * @param registerProposedInstruments whether to register proposed devices
+   * @param dexpiEdition selected supported exchange edition
+   * @return engineering projects in area insertion order
+   */
+  public static List<EngineeringProject> fromProcessModel(String name, ProcessModel processModel,
+      boolean registerProposedInstruments, String dexpiEdition) {
     if (processModel == null) {
       throw new IllegalArgumentException("processModel must not be null");
     }
@@ -67,8 +107,8 @@ public final class NorsokOffshoreEngineeringBuilder {
     for (String areaName : processModel.getProcessSystemNames()) {
       ProcessSystem area = processModel.get(areaName);
       if (area != null) {
-        projects
-            .add(from(name + " - " + areaName, area).registerProposedInstruments(registerProposedInstruments).build());
+        projects.add(from(name + " - " + areaName, area, dexpiEdition)
+            .registerProposedInstruments(registerProposedInstruments).build());
       }
     }
     return projects;
@@ -153,13 +193,19 @@ public final class NorsokOffshoreEngineeringBuilder {
     return project;
   }
 
-  private static EngineeringDesignBasis createDefaultDesignBasis() {
+  /**
+   * Creates the offshore applicability profile without changing the caller-selected exchange edition.
+   *
+   * @param dexpiEdition supported DEXPI edition
+   * @return proposed offshore design basis
+   */
+  private static EngineeringDesignBasis createDefaultDesignBasis(String dexpiEdition) {
     return new EngineeringDesignBasis().setJurisdiction("Norwegian continental shelf")
         .setFacilityType("Offshore hydrocarbon production facility").setProjectPhase("Concept / pre-FEED")
         .addDesignCase("normal operation").addDesignCase("maximum production")
         .addDesignCase("minimum/turndown operation").addDesignCase("start-up and shutdown")
         .addDesignCase("blocked outlet and utility failure").addDesignCase("fire and depressurization")
-        .addStandard(new EngineeringStandard("DEXPI", "2.0", "Data Exchange in the Process Industry",
+        .addStandard(new EngineeringStandard("DEXPI", dexpiEdition, "Data Exchange in the Process Industry",
             "Plant/process information model and XML exchange"))
         .addStandard(new EngineeringStandard("ISO 10628-1/2", "2014", "Diagrams for the chemical industry",
             "Flowsheet and graphical-diagram conventions"))

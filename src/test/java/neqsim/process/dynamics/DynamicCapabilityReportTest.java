@@ -92,6 +92,59 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     assertEquals(DynamicCapability.CONTROL_DYNAMIC, controller.getDynamicCapability());
   }
 
+  /** Attached-only controller inputs remain visible and are not counted twice through shared registrations. */
+  @Test
+  public void attachedOnlyControllerInputIsAuditedOnce() {
+    Stream feed = createFeed("control feed");
+    PressureTransmitter sensor = new PressureTransmitter("attached-only sensor", feed);
+    ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass("pressure controller");
+    controller.setTransmitter(sensor);
+    ThrottlingValve valve = new ThrottlingValve("control valve", feed);
+    valve.setController(controller);
+    ProcessSystem process = new ProcessSystem("implicit control wiring");
+    process.add(feed);
+    process.add(valve);
+    process.add(controller);
+
+    DynamicCapabilityReport report = DynamicCapabilityReport.from(process);
+    assertEquals(4, report.getEntries().size());
+    assertEquals(2, report.getCapabilityCounts().get(DynamicCapability.CONTROL_DYNAMIC).intValue());
+    int sensors = 0;
+    for (DynamicCapabilityReport.Entry entry : report.getEntries()) {
+      if ("attached-only sensor".equals(entry.getName())) {
+        sensors++;
+        assertEquals("measurement", entry.getCategory());
+      }
+    }
+    assertEquals(1, sensors);
+    assertTrue(report.isStrictPreflightReady());
+  }
+
+  /** A controller cannot hide an unsupported input merely by leaving it out of the standalone device list. */
+  @Test
+  public void unsupportedAttachedOnlyInputBlocksStrictPreflight() {
+    Stream feed = createFeed("control feed");
+    PressureTransmitter sensor = new PressureTransmitter("unsupported attached sensor", feed) {
+      private static final long serialVersionUID = 1000L;
+
+      /** {@inheritDoc} */
+      @Override
+      public DynamicCapability getDynamicCapability() {
+        return DynamicCapability.UNSUPPORTED_DYNAMIC;
+      }
+    };
+    ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass("pressure controller");
+    controller.setTransmitter(sensor);
+    ProcessSystem process = new ProcessSystem("registered controller with implicit input");
+    process.add(feed);
+    process.add(controller);
+
+    DynamicCapabilityReport report = DynamicCapabilityReport.from(process);
+    assertFalse(report.isStrictPreflightReady());
+    assertTrue(report.getBlockingIssues().get(0).contains("unsupported attached sensor"));
+    assertEquals(1, report.getCapabilityCounts().get(DynamicCapability.UNSUPPORTED_DYNAMIC).intValue());
+  }
+
   /** An audited algebraic energy-network step may participate without creating a strict-preflight review item. */
   @Test
   public void algebraicEnergyNetworkSolverPassesCapabilityPreflight() {

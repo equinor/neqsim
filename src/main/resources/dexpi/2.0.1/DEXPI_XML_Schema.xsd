@@ -1,0 +1,862 @@
+<!DOCTYPE xsd[
+    <!ENTITY leading-identifier-char "[A-Za-z_]">
+    <!ENTITY following-identifier-char "[A-Za-z_0-9]">
+    <!ENTITY name-pattern "(&leading-identifier-char;&following-identifier-char;*)">
+    <!ENTITY name-reference-pattern "(&name-pattern;?/&name-pattern;(\.&name-pattern;)*)">
+    <!ENTITY name-references-pattern "(&name-reference-pattern;( &name-reference-pattern;)*)">
+    <!ENTITY name-or-name-reference-pattern "(&name-pattern;)|(&name-reference-pattern;)">
+    <!ENTITY id-pattern "(&leading-identifier-char;&following-identifier-char;*)">
+    <!ENTITY id-reference-pattern "(#&id-pattern;)">
+    <!ENTITY name-or-id-reference-pattern "(&name-reference-pattern;|&id-reference-pattern;)">
+    <!ENTITY name-or-id-references-pattern "(&name-or-id-reference-pattern;( &name-or-id-reference-pattern;)*)">
+]>
+<xsd:schema
+    xmlns:xsd = "http://www.w3.org/2001/XMLSchema"
+    version = "1.0.0">
+	<xsd:annotation>
+		<xsd:documentation>DEXPI XML Schema</xsd:documentation>
+	</xsd:annotation>
+    <xsd:simpleType name = "name">
+        <xsd:restriction base = "xsd:string">
+            <xsd:pattern value = "&name-pattern;"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <xsd:simpleType name = "nameReference">
+        <xsd:restriction base = "xsd:string">
+            <xsd:pattern value = "&name-reference-pattern;"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <xsd:simpleType name = "nameOrNameReference">
+        <xsd:restriction base = "xsd:string">
+            <xsd:pattern value = "&name-or-name-reference-pattern;"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <xsd:simpleType name = "nameReferences">
+        <xsd:restriction base = "xsd:string">
+            <xsd:pattern value = "&name-references-pattern;"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <xsd:simpleType name = "ID">
+        <xsd:restriction base = "xsd:ID">
+            <xsd:pattern value = "&id-pattern;"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <xsd:simpleType name = "IDREF">
+        <xsd:restriction base = "xsd:IDREF">
+            <xsd:pattern value = "&id-reference-pattern;"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <xsd:simpleType name = "nameOrIdReference">
+        <xsd:restriction base = "xsd:string">
+            <xsd:pattern value = "&name-or-id-reference-pattern;"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <xsd:simpleType name = "nameOrIdReferences">
+        <xsd:restriction base = "xsd:string">
+            <xsd:pattern value = "&name-or-id-references-pattern;"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <xsd:complexType name = "Model">
+        <xsd:sequence>
+            <xsd:element
+                name = "Import"
+                type = "Import"
+                minOccurs = "0"
+                maxOccurs = "unbounded"/>
+            <xsd:choice
+                minOccurs = "0"
+                maxOccurs = "unbounded">
+                <xsd:element
+                    name = "Package"
+                    type = "Package"/>
+                <xsd:element
+                    name = "AbstractClass"
+                    type = "AbstractClass"/>
+                <xsd:element
+                    name = "ConcreteClass"
+                    type = "ConcreteClass"/>
+                <xsd:element
+                    name = "ClassExtension"
+                    type = "ClassExtension"/>
+                <xsd:element
+                    name = "AbstractDataType"
+                    type = "AbstractDataType"/>
+                <xsd:element
+                    name = "AggregatedDataType"
+                    type = "AggregatedDataType"/>
+                <xsd:element
+                    name = "Enumeration"
+                    type = "Enumeration"/>
+                <xsd:element
+                    name = "BooleanType"
+                    type = "BooleanType"/>
+                <xsd:element
+                    name = "DateTimeType"
+                    type = "DateTimeType"/>
+                <xsd:element
+                    name = "DoubleType"
+                    type = "DoubleType"/>
+                <xsd:element
+                    name = "IntegerType"
+                    type = "IntegerType"/>
+                <xsd:element
+                    name = "StringType"
+                    type = "StringType"/>
+                <xsd:element
+                    name = "UndefinedType"
+                    type = "UndefinedType"/>
+                <xsd:element
+                    name = "Object"
+                    type = "Object"/>
+            </xsd:choice>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+        <xsd:attribute
+            name = "uri"
+            type = "xsd:anyURI"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "Package">
+        <xsd:sequence>
+            <xsd:choice
+                minOccurs = "0"
+                maxOccurs = "unbounded">
+                <xsd:element
+                    name = "Package"
+                    type = "Package"/>
+                <xsd:element
+                    name = "AbstractClass"
+                    type = "AbstractClass"/>
+                <xsd:element
+                    name = "ConcreteClass"
+                    type = "ConcreteClass"/>
+                <xsd:element
+                    name = "ClassExtension"
+                    type = "ClassExtension"/>
+                <xsd:element
+                    name = "AbstractDataType"
+                    type = "AbstractDataType"/>
+                <xsd:element
+                    name = "AggregatedDataType"
+                    type = "AggregatedDataType"/>
+                <xsd:element
+                    name = "Enumeration"
+                    type = "Enumeration"/>
+                <xsd:element
+                    name = "BooleanType"
+                    type = "BooleanType"/>
+                <xsd:element
+                    name = "DateTimeType"
+                    type = "DateTimeType"/>
+                <xsd:element
+                    name = "DoubleType"
+                    type = "DoubleType"/>
+                <xsd:element
+                    name = "IntegerType"
+                    type = "IntegerType"/>
+                <xsd:element
+                    name = "StringType"
+                    type = "StringType"/>
+                <xsd:element
+                    name = "UndefinedType"
+                    type = "UndefinedType"/>
+                <xsd:element
+                    name = "Object"
+                    type = "Object"/>
+            </xsd:choice>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "Import">
+        <xsd:attribute
+            name = "source"
+            type = "xsd:anyURI"
+            use = "required"/>
+        <xsd:attribute
+            name = "prefix"
+            type = "name"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "ConcreteClass">
+        <xsd:sequence>
+            <xsd:choice
+                minOccurs = "0"
+                maxOccurs = "unbounded">
+                <xsd:element
+                    name = "CompositionProperty"
+                    type = "CompositionProperty"/>
+                <xsd:element
+                    name = "DataProperty"
+                    type = "DataProperty"/>
+                <xsd:element
+                    name = "ReferenceProperty"
+                    type = "ReferenceProperty"/>
+                <xsd:element
+                    name = "DataTypeParameter"
+                    type = "DataTypeParameter"/>
+                <xsd:element
+                    name = "ClassParameter"
+                    type = "ClassParameter"/>
+            </xsd:choice>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+        <xsd:attribute
+            name = "superTypes"
+            type = "nameReferences"/>
+    </xsd:complexType>
+    <xsd:complexType name = "AbstractClass">
+        <xsd:sequence>
+            <xsd:choice
+                minOccurs = "0"
+                maxOccurs = "unbounded">
+                <xsd:element
+                    name = "CompositionProperty"
+                    type = "CompositionProperty"/>
+                <xsd:element
+                    name = "DataProperty"
+                    type = "DataProperty"/>
+                <xsd:element
+                    name = "ReferenceProperty"
+                    type = "ReferenceProperty"/>
+                <xsd:element
+                    name = "DataTypeParameter"
+                    type = "DataTypeParameter"/>
+                <xsd:element
+                    name = "ClassParameter"
+                    type = "ClassParameter"/>
+            </xsd:choice>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+        <xsd:attribute
+            name = "superTypes"
+            type = "nameReferences"/>
+    </xsd:complexType>
+    <xsd:complexType name = "ClassExtension">
+        <xsd:sequence>
+            <xsd:choice
+                minOccurs = "0"
+                maxOccurs = "unbounded">
+                <xsd:element
+                    name = "CompositionProperty"
+                    type = "CompositionProperty"/>
+                <xsd:element
+                    name = "DataProperty"
+                    type = "DataProperty"/>
+                <xsd:element
+                    name = "ReferenceProperty"
+                    type = "ReferenceProperty"/>
+            </xsd:choice>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+        <xsd:attribute
+            name = "baseType"
+            type = "nameReference"/>
+    </xsd:complexType>
+    <xsd:complexType name = "AbstractDataType">
+        <xsd:sequence>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+        <xsd:attribute
+            name = "superTypes"
+            type = "nameReferences"/>
+    </xsd:complexType>
+    <xsd:complexType name = "AggregatedDataType">
+        <xsd:sequence>
+            <xsd:choice
+                minOccurs = "0"
+                maxOccurs = "unbounded">
+                <xsd:element
+                    name = "DataProperty"
+                    type = "DataProperty"/>
+                <xsd:element
+                    name = "DataTypeParameter"
+                    type = "DataTypeParameter"/>
+            </xsd:choice>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+        <xsd:attribute
+            name = "superTypes"
+            type = "nameReferences"/>
+    </xsd:complexType>
+    <xsd:complexType name = "ClassParameter">
+        <xsd:sequence>
+            <xsd:choice>
+                <xsd:element
+                    name = "ClassReference"
+                    type = "ClassReference"/>
+                <xsd:element
+                    name = "UnionClass"
+                    type = "UnionClass"/>
+                <xsd:element
+                    name = "BoundClass"
+                    type = "BoundClass"/>
+            </xsd:choice>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "DataTypeParameter">
+        <xsd:sequence>
+            <xsd:choice>
+                <xsd:element
+                    name = "DataTypeReference"
+                    type = "DataTypeReference"/>
+                <xsd:element
+                    name = "UnionDataType"
+                    type = "UnionDataType"/>
+                <xsd:element
+                    name = "BoundDataType"
+                    type = "BoundDataType"/>
+            </xsd:choice>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "Enumeration">
+        <xsd:sequence>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "EnumerationLiteral"
+                type = "EnumerationLiteral"/>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+        <xsd:attribute
+            name = "superTypes"
+            type = "nameReferences"/>
+    </xsd:complexType>
+    <xsd:complexType name = "EnumerationLiteral">
+        <xsd:sequence>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "BooleanType">
+        <xsd:sequence>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+        <xsd:attribute
+            name = "superTypes"
+            type = "nameReferences"/>
+    </xsd:complexType>
+    <xsd:complexType name = "DateTimeType">
+        <xsd:sequence>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "DoubleType">
+        <xsd:sequence>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+        <xsd:attribute
+            name = "superTypes"
+            type = "nameReferences"/>
+    </xsd:complexType>
+    <xsd:complexType name = "IntegerType">
+        <xsd:sequence>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "StringType">
+        <xsd:sequence>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "UndefinedType">
+        <xsd:sequence>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "CompositionProperty">
+        <xsd:sequence>
+            <xsd:choice
+                minOccurs = "1"
+                maxOccurs = "1">
+                <xsd:element
+                    name = "ClassReference"
+                    type = "ClassReference"/>
+                <xsd:element
+                    name = "UnionClass"
+                    type = "UnionClass"/>
+                <xsd:element
+                    name = "BoundClass"
+                    type = "BoundClass"/>
+            </xsd:choice>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+        <xsd:attribute
+            name = "lower"
+            type = "xsd:integer"
+            use = "required"/>
+        <xsd:attribute
+            name = "upper"
+            type = "xsd:integer"/>
+        <xsd:attribute
+            name = "isOrdered"
+            type = "xsd:boolean"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "ClassReference">
+        <xsd:attribute
+            name = "type"
+            type = "nameReference"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "UnionClass">
+        <xsd:sequence>
+            <xsd:choice
+                minOccurs = "1"
+                maxOccurs = "unbounded">
+                <xsd:element
+                    name = "ClassReference"
+                    type = "ClassReference"/>
+                <xsd:element
+                    name = "UnionClass"
+                    type = "UnionClass"/>
+                <xsd:element
+                    name = "BoundClass"
+                    type = "BoundClass"/>
+            </xsd:choice>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name = "BoundClass">
+        <xsd:sequence>
+            <xsd:element
+                name = "ClassReference"
+                type = "ClassReference"/>
+            <xsd:choice
+                minOccurs = "1"
+                maxOccurs = "unbounded">
+                <xsd:element
+                    name = "ClassBinding"
+                    type = "ClassBinding"/>
+                <xsd:element
+                    name = "DataTypeBinding"
+                    type = "DataTypeBinding"/>
+            </xsd:choice>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name = "ClassBinding">
+        <xsd:choice
+            minOccurs = "1"
+            maxOccurs = "unbounded">
+            <xsd:element
+                name = "ClassReference"
+                type = "ClassReference"/>
+            <xsd:element
+                name = "UnionClass"
+                type = "UnionClass"/>
+            <xsd:element
+                name = "BoundClass"
+                type = "BoundClass"/>
+        </xsd:choice>
+        <xsd:attribute
+            name = "parameter"
+            type = "nameReference"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "DataProperty">
+        <xsd:sequence>
+            <xsd:choice
+                minOccurs = "1"
+                maxOccurs = "1">
+                <xsd:element
+                    name = "DataTypeReference"
+                    type = "DataTypeReference"/>
+                <xsd:element
+                    name = "UnionDataType"
+                    type = "UnionDataType"/>
+                <xsd:element
+                    name = "BoundDataType"
+                    type = "BoundDataType"/>
+            </xsd:choice>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+        <xsd:attribute
+            name = "lower"
+            type = "xsd:integer"
+            use = "required"/>
+        <xsd:attribute
+            name = "upper"
+            type = "xsd:integer"/>
+        <xsd:attribute
+            name = "isOrdered"
+            type = "xsd:boolean"
+            use = "required"/>
+        <xsd:attribute
+            name = "isUnique"
+            type = "xsd:boolean"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "DataTypeReference">
+        <xsd:attribute
+            name = "type"
+            type = "nameReference"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "UnionDataType">
+        <xsd:sequence>
+            <xsd:choice
+                minOccurs = "1"
+                maxOccurs = "unbounded">
+                <xsd:element
+                    name = "DataTypeReference"
+                    type = "DataTypeReference"/>
+                <xsd:element
+                    name = "UnionDataType"
+                    type = "UnionDataType"/>
+                <xsd:element
+                    name = "BoundDataType"
+                    type = "BoundDataType"/>
+            </xsd:choice>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name = "BoundDataType">
+        <xsd:sequence>
+            <xsd:element
+                name = "DataTypeReference"
+                type = "DataTypeReference"/>
+            <xsd:element
+                minOccurs = "1"
+                maxOccurs = "unbounded"
+                name = "DataTypeBinding"
+                type = "DataTypeBinding"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name = "DataTypeBinding">
+        <xsd:choice
+            minOccurs = "1"
+            maxOccurs = "unbounded">
+            <xsd:element
+                name = "DataTypeReference"
+                type = "DataTypeReference"/>
+            <xsd:element
+                name = "UnionDataType"
+                type = "UnionDataType"/>
+            <xsd:element
+                name = "BoundDataType"
+                type = "BoundDataType"/>
+        </xsd:choice>
+        <xsd:attribute
+            name = "parameter"
+            type = "nameReference"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "ReferenceProperty">
+        <xsd:sequence>
+            <xsd:choice
+                minOccurs = "1"
+                maxOccurs = "1">
+                <xsd:element
+                    name = "ClassReference"
+                    type = "ClassReference"/>
+                <xsd:element
+                    name = "UnionClass"
+                    type = "UnionClass"/>
+                <xsd:element
+                    name = "BoundClass"
+                    type = "BoundClass"/>
+            </xsd:choice>
+            <xsd:element
+                minOccurs = "0"
+                maxOccurs = "unbounded"
+                name = "Data"
+                type = "Data"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"
+            use = "required"/>
+        <xsd:attribute
+            name = "lower"
+            type = "xsd:integer"
+            use = "required"/>
+        <xsd:attribute
+            name = "upper"
+            type = "xsd:integer"/>
+        <xsd:attribute
+            name = "oppositeLower"
+            type = "xsd:integer"
+            use = "required"/>
+        <xsd:attribute
+            name = "oppositeUpper"
+            type = "xsd:integer"/>
+        <xsd:attribute
+            name = "isOrdered"
+            type = "xsd:boolean"
+            use = "required"/>
+        <xsd:attribute
+            name = "isUnique"
+            type = "xsd:boolean"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "Object">
+        <xsd:sequence>
+            <xsd:choice
+                minOccurs = "0"
+                maxOccurs = "unbounded">
+                <xsd:element
+                    name = "Components"
+                    type = "Components"/>
+                <xsd:element
+                    name = "Data"
+                    type = "Data"/>
+                <xsd:element
+                    name = "References"
+                    type = "References"/>
+            </xsd:choice>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "name"
+            type = "name"/>
+        <xsd:attribute
+            name = "id"
+            type = "ID"/>
+        <xsd:attribute
+            name = "type"
+            type = "nameReference"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "Components">
+        <xsd:sequence>
+            <xsd:choice
+                minOccurs = "1"
+                maxOccurs = "unbounded">
+                <xsd:element
+                    name = "Object"
+                    type = "Object"/>
+                <xsd:element
+                    name = "ObjectReference"
+                    type = "ObjectReference"/>
+            </xsd:choice>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "property"
+            type = "nameOrNameReference"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "ObjectReference">
+        <xsd:attribute
+            name = "object"
+            type = "nameOrIdReference"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "References">
+        <xsd:attribute
+            name = "property"
+            type = "nameOrNameReference"
+            use = "required"/>
+        <xsd:attribute
+            name = "objects"
+            type = "nameOrIdReferences"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "Data">
+        <xsd:sequence>
+            <xsd:choice
+                minOccurs = "1"
+                maxOccurs = "unbounded">
+                <xsd:element
+                    name = "AggregatedDataValue"
+                    type = "AggregatedDataValue"/>
+                <xsd:element
+                    name = "DataReference"
+                    type = "DataReference"/>
+                <xsd:element
+                    name = "Boolean"
+                    type = "xsd:boolean"/>
+                <xsd:element
+                    name = "DateTime"
+                    type = "xsd:dateTime"/>
+                <xsd:element
+                    name = "Double"
+                    type = "xsd:double"/>
+                <xsd:element
+                    name = "Integer"
+                    type = "xsd:integer"/>
+                <xsd:element
+                    name = "String"
+                    type = "xsd:string"/>
+                <xsd:element
+                    name = "Undefined"
+                    type = "Undefined"/>
+            </xsd:choice>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "property"
+            type = "nameOrNameReference"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "DataReference">
+        <xsd:attribute
+            name = "data"
+            type = "nameOrIdReference"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "AggregatedDataValue">
+        <xsd:sequence>
+            <xsd:element
+                name = "Data"
+                type = "Data"
+                minOccurs = "0"
+                maxOccurs = "unbounded"/>
+        </xsd:sequence>
+        <xsd:attribute
+            name = "type"
+            type = "nameReference"
+            use = "required"/>
+    </xsd:complexType>
+    <xsd:complexType name = "Undefined"/>
+    <xsd:element
+        name = "Model"
+        type = "Model"/>
+</xsd:schema>

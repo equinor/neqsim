@@ -29,7 +29,23 @@ public final class Dexpi20XmlValidator {
     if (file == null) {
       throw new IllegalArgumentException("file must not be null");
     }
-    InputStream schemaStream = Dexpi20XmlValidator.class.getResourceAsStream(SCHEMA_RESOURCE);
+    validate(file, false);
+  }
+
+  /**
+   * Validates against the exact bundled specification schema.
+   *
+   * @param file document to validate
+   * @param specification201 whether to select the schema published with 2.0.1
+   * @throws IOException if the document or schema is unavailable
+   * @throws SAXException if the document is not schema-valid
+   */
+  public static void validate(Path file, boolean specification201) throws IOException, SAXException {
+    if (file == null) {
+      throw new IllegalArgumentException("file must not be null");
+    }
+    String resource = specification201 ? "/dexpi/2.0.1/DEXPI_XML_Schema.xsd" : SCHEMA_RESOURCE;
+    InputStream schemaStream = Dexpi20XmlValidator.class.getResourceAsStream(resource);
     if (schemaStream == null) {
       throw new IOException("Bundled DEXPI XML schema is unavailable: " + SCHEMA_RESOURCE);
     }

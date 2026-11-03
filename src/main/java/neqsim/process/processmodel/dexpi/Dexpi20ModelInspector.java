@@ -81,14 +81,15 @@ public final class Dexpi20ModelInspector {
       for (int i = 0; i < objects.getLength(); i++) {
         Element object = (Element) objects.item(i);
         String type = object.getAttribute("type");
-        if (type.startsWith("Plant/ProcessEquipment.") && !type.endsWith(".Nozzle")) {
+        if (type.startsWith("Plant/ProcessEquipment.") && !type.endsWith("Nozzle")) {
           String tag = directStringData(object, "TagName");
           if (tag != null) {
             equipment.put(tag, type);
           }
         } else if ("Plant/Piping.Pipe".equals(type)) {
           pipes++;
-        } else if ("Plant/Instrumentation.ProcessInstrumentationFunction".equals(type)) {
+        } else if (("Plant/Instrumentation.ProcessInstrumentationFunction".equals(type)
+            || "Plant/Instrumentation.ProcessSafetyFunction".equals(type))) {
           functions++;
         } else if (type.endsWith("PipeOffPageConnector")) {
           boundaries++;
