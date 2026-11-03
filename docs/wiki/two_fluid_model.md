@@ -1253,10 +1253,11 @@ These are analytical/conservation gates for an explicit parameter set. They do n
 coefficients, elapsed pool depletion, shutdown/restart or hydraulic pigging; independent public
 multicomponent rate data and full-cycle/refinement evidence remain required for those claims. See
 the [process-model contract](../process/TWOFLUIDPIPE_MODEL.md#opt-in-finite-rate-hydrocarbon-pool-transfer).
-The executed unlimited-heat 780 s rich-gas cycle passes on 12/24 cells with 1.13% peak-oil and
-5.99% final-oil mesh differences. Finite-heat full-cycle and closed-outlet settling currently fail
-loud on forced-phase EOS branch consistency; they remain prerequisites for physical shutdown and
-restart claims.
+The executed unlimited-heat 780 s rich-gas cycle uses gas-only blowdown, closed settling,
+same-composition inlet refill with the outlet closed, and a closed hold. It passes on 12/24 cells
+with 0.322% peak-oil and 8.998% final-oil mesh differences. Finite-heat full-cycle and finite-heat
+closed-outlet settling currently fail loud on forced-phase EOS branch consistency; they remain
+prerequisites for physical shutdown and restart claims.
 
 With component transport enabled, the downstream outlet composition follows the positive outbound
 component ledger rather than the latest inlet composition or the final cell's instantaneous phase

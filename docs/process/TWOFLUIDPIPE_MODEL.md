@@ -683,11 +683,13 @@ calibrated and then validated against independent public multicomponent rate dat
 is a conservative parameterized screening model—not a predictive pool-depletion, physical restart,
 severe-slugging or hydraulic-pigging qualification.
 
-The declared unlimited-heat rich-gas cycle completes 780 s on 12 and 24 cells. Peak oil inventories
-are 69,983 and 70,786 kg; final oil is 11.467 and 12.198 kg. The 1.13% peak and 5.99% final spatial
-differences are numerical evidence only. A finite 100 W/m full-cycle sensitivity rejects when a
-far-from-equilibrium forced phase changes its EOS branch; closed-outlet settling reaches the same
-fail-loud prerequisite. Neither case is clipped or reclassified. See the
+The declared unlimited-heat rich-gas cycle completes 780 s on 12 and 24 cells: 120 s gas-only
+blowdown, 120 s closed settling, 420 s same-composition inlet refill at 1000 kg/s with the outlet
+closed, then 120 s closed hold. Peak oil inventories are 64,036 and 64,243 kg; final oil is 10.171
+and 11.177 kg. The 0.322% peak and 8.998% final spatial differences are numerical evidence only.
+A finite 100 W/m full-cycle sensitivity rejects when a far-from-equilibrium forced phase changes its
+EOS branch; the finite-heat closed-outlet sensitivity reaches the same fail-loud prerequisite.
+Neither case is clipped or reclassified. See the
 [qualification receipt](../../src/test/resources/neqsim/process/pipeline/hydrocarbon-pool-transfer/README.md).
 
 `getLastConservativeEnergyReport()` exposes the fluid first-law ledger and separate maximum

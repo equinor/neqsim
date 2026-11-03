@@ -76,38 +76,41 @@ class TwoFluidRichGasDragQualificationTest {
       assertAcceptedPoolInterval(pipe);
     }
 
-    pipe.setOutletPressure(10.0, "bara");
-    for (int step = 0; step < (int) Math.round(300.0 / dt); step++) {
+    pipe.setGasOnlyOutletTakeoff(false);
+    pipe.closeOutlet();
+    for (int step = 0; step < (int) Math.round(120.0 / dt); step++) {
       pipe.runTransient(dt, null);
       cumulativeBoundaryMass += acceptedBoundaryMass(pipe);
       maximumOil = Math.max(maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL));
+      assertEquals(0.0, pipe.getLastMassBalanceReport().getOutletMassKg(Phase.TOTAL), 0.0);
       assertAcceptedPoolInterval(pipe);
     }
 
-    pipe.setOutletBoundaryFluid(pipe.getInletStream().getFluid());
-    pipe.setAllowOutletPhaseBackflow(true);
-    pipe.openOutlet(10.0, "bara");
-    for (int step = 1; step <= rampSteps; step++) {
-      pipe.setOutletPressure(10.0 + 140.0 * step / rampSteps, "bara");
+    pipe.setInletBoundaryCondition(TwoFluidPipe.BoundaryCondition.CONSTANT_FLOW);
+    pipe.setInletMassFlow(1000.0, "kg/sec");
+    for (int step = 0; step < (int) Math.round(420.0 / dt); step++) {
       pipe.runTransient(dt, null);
       double boundaryMass = acceptedBoundaryMass(pipe);
       cumulativeBoundaryMass += boundaryMass;
-      observedRefill |= boundaryMass > 0.0;
+      observedRefill |= pipe.getLastMassBalanceReport().getInletMassKg(Phase.TOTAL) > 0.0;
       maximumOil = Math.max(maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL));
+      assertEquals(0.0, pipe.getLastMassBalanceReport().getOutletMassKg(Phase.TOTAL), 0.0);
       assertAcceptedPoolInterval(pipe);
     }
-    for (int step = 0; step < (int) Math.round(240.0 / dt); step++) {
+
+    pipe.closeInlet();
+    for (int step = 0; step < (int) Math.round(120.0 / dt); step++) {
       pipe.runTransient(dt, null);
       double boundaryMass = acceptedBoundaryMass(pipe);
       cumulativeBoundaryMass += boundaryMass;
-      observedRefill |= boundaryMass > 0.0;
       maximumOil = Math.max(maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL));
+      assertEquals(0.0, pipe.getLastMassBalanceReport().getOutletMassKg(Phase.TOTAL), 0.0);
       assertAcceptedPoolInterval(pipe);
     }
 
     assertEquals(780.0, pipe.getSimulationTime(), 1.0e-9);
     assertTrue(maximumOil > 0.0, "The full cycle must exercise a hydrocarbon-liquid pool");
-    assertTrue(observedRefill, "The explicit same-gas donor must fund actual reversed boundary flow");
+    assertTrue(observedRefill, "The original same-gas inlet donor must fund actual inlet refill");
     assertEquals(initialMass + cumulativeBoundaryMass, pipe.getTotalMassInventory(), 1.0e-5);
     return new double[] {maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL)};
   }
