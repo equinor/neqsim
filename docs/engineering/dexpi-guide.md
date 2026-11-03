@@ -43,7 +43,11 @@ NeqSim model, including instrumentation, safeguards and a simulation handoff.
 Then run steady-state and dynamic valve tests on the bound process model."**
 Use `@engineering-deliverables` with `neqsim-pid-process-operations` for that
 workflow. The [P&ID handoff guide](../pid-design-synthesis.md#professional-pid-and-simulation-handoff)
-defines the package, binding, test and review boundaries.
+defines the package, binding, test and review boundaries. The default professional
+path now emits native ISO-basis A1 drawings with a separate content/standards
+report and source-connected proposal materialization. Inspect
+`pid-drawing-content-report.json` and `plant.dexpi.xml.pid-projection.json`;
+a schema PASS or a layout PASS alone is not ISO qualification.
 
 ### Proteus-compatible exchange
 

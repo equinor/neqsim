@@ -27,6 +27,8 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
+import neqsim.process.equipment.heatexchanger.AirCooler;
+import neqsim.process.equipment.heatexchanger.FiredHeater;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.mixer.Mixer;
@@ -591,6 +593,16 @@ public final class Dexpi20XmlWriter {
    * @return official native 2.0.1 class
    */
   private static String dexpi201Type(ProcessEquipmentInterface unit) {
+    if (unit instanceof AirCooler) {
+      return "Plant/ProcessEquipment.AirCoolingSystem";
+    }
+    if (unit instanceof FiredHeater) {
+      return "Plant/ProcessEquipment.FiredHeater";
+    }
+    if (unit instanceof Cooler || unit instanceof HeatExchanger || unit instanceof Heater) {
+      // A generic duty model does not establish air cooling, tube construction or firing.
+      return "Plant/ProcessEquipment.HeatExchanger";
+    }
     if (unit instanceof Mixer) {
       return "Plant/ProcessEquipment.Mixer";
     }

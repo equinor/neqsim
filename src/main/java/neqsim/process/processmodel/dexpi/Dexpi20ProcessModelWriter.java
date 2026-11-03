@@ -194,6 +194,9 @@ public final class Dexpi20ProcessModelWriter {
       int stepNumber = 1;
       for (ProcessEquipmentInterface unit : topology.units) {
         Step step = appendStep(document, processSteps, "ProcessStep" + stepNumber++, unit.getName(), type(unit));
+        if (metadata != null) {
+          appendRequired201Method(document, step, unit);
+        }
         steps.put(unit, step);
       }
       for (Link link : topology.links) {
@@ -230,6 +233,21 @@ public final class Dexpi20ProcessModelWriter {
       throw new IOException("Could not create DEXPI 2.0 Process XML document", ex);
     } catch (TransformerException ex) {
       throw new IOException("Could not serialize DEXPI 2.0 Process XML document", ex);
+    }
+  }
+
+  /**
+   * Supplies mandatory 2.0.1 method values without inventing a physical machine or exchanger subtype.
+   *
+   * @param document native instance document
+   * @param step exported process step
+   * @param unit actual source equipment
+   */
+  private static void appendRequired201Method(Document document, Step step, ProcessEquipmentInterface unit) {
+    if (unit instanceof Compressor && !(unit instanceof Expander)) {
+      dataReference(document, step.processStep, "Method", "Process/Enumerations.CompressionMethod.Unspecified");
+    } else if (unit instanceof Cooler || unit instanceof HeatExchanger) {
+      dataReference(document, step.processStep, "Method", "Process/Enumerations.HeatExchangeMethod.Generic");
     }
   }
 

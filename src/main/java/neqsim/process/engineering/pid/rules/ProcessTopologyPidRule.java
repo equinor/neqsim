@@ -8,8 +8,23 @@ import neqsim.process.engineering.pid.PidElement;
 import neqsim.process.engineering.pid.PidElementType;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.util.Adjuster;
+import neqsim.process.equipment.util.Calculator;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.equipment.valve.ThrottlingValve;
 
-/** Represents every process unit and its stream boundaries in the generated P&amp;ID model. */
+/**
+ * Represents equipment process nozzles without inventing nozzles on piping components or numerical helpers.
+ *
+ * <p>
+ * Valves and tees retain their real piping-node identities through the source process graph. A stream boundary,
+ * calculator or recycle helper is not a tagged nozzle-bearing vessel.
+ * </p>
+ *
+ * @author NeqSim development team
+ * @version 1.0
+ */
 public final class ProcessTopologyPidRule implements PidDesignRule {
   public static final String RULE_ID = "PID-PROCESS-TOPOLOGY";
 
@@ -25,12 +40,17 @@ public final class ProcessTopologyPidRule implements PidDesignRule {
 
   @Override
   public boolean supports(ProcessEquipmentInterface equipment) {
-    return equipment != null;
+    return equipment != null && !(equipment instanceof StreamInterface) && !(equipment instanceof ThrottlingValve)
+        && !(equipment instanceof Splitter) && !(equipment instanceof Recycle) && !(equipment instanceof Calculator)
+        && !(equipment instanceof Adjuster);
   }
 
   @Override
   public List<PidElement> propose(PidDesignContext context, ProcessEquipmentInterface equipment) {
     List<PidElement> result = new ArrayList<PidElement>();
+    if (!supports(equipment)) {
+      return result;
+    }
     addBoundaries(result, context, equipment, equipment.getInletStreams(), "INLET");
     addBoundaries(result, context, equipment, equipment.getOutletStreams(), "OUTLET");
     if (result.isEmpty()) {

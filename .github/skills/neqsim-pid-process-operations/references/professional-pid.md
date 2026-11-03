@@ -62,7 +62,16 @@ and dynamic tests based on the final drawing."
    `nativeProposalConnectivityQualification=REQUIRED` and
    `fullPidSemanticEquivalence=NOT_QUALIFIED` retain the separate connection
    and full-exchange gates even when every proposal tag is present.
-8. Inspect every sheet at final paper size and detail scale. Apply the existing
+8. For ISO-basis professional drawings, use the native professional profile;
+   do not substitute an independently hand-laid-out PDF/SVG and claim the
+   requested NeqSim capability has passed. Inspect
+   `pid-drawing-content-report.json`, `pid-physical-projection.json`, and the
+   exact native `.pid-projection.json`. Close unresolved physical connections,
+   utility sensing, explicit auxiliary series ordering, pipe-size/class and
+   symbol-review gaps before claiming the applicable completeness/conformance.
+   Distinguish standards-basis implementation from independently reviewed ISO
+   conformance. Preserve manual layout intent and its reported profile.
+   Inspect every sheet at final paper size and detail scale. Apply the existing
    PFD/P&ID layout-review checks. Fix the generator for overlap, clipping,
    ambiguous junctions, missing arrows, unreadable labels, incorrect symbols or
    broken off-page references. Preserve manual placement/routing evidence.

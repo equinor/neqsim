@@ -321,3 +321,17 @@ def test_diagram_builder_produces_passing_png_svg_and_spec(tmp_path):
     d2.node("b", "20V0002\nseparator", 36, 22, kind="vessel", tag="20V0002")
     d2.edge("a", "r", "b", "l", fluid="gas", stream="1")
     assert d2.render(str(tmp_path / "bad.png")).status == "FAIL"
+
+
+def test_pid_sensing_connection_needs_no_material_flow_arrow():
+    """A declared P&ID impulse line ends at a field instrument, not a flow outlet."""
+    spec = good_spec()
+    spec["kind"] = "pid"
+    spec["nodes"][1]["kind"] = "instrument"
+    spec["edges"][0].update(arrow_end=False, role="sensing", fluid="sensing")
+    assert "NO_ARROWHEAD" not in codes(chk.check_spec(spec))
+    spec["edges"][0]["fluid"] = "gas"
+    assert "NO_ARROWHEAD" in codes(chk.check_spec(spec))
+    spec["edges"][0]["fluid"] = "sensing"
+    spec["kind"] = "pfd"
+    assert "NO_ARROWHEAD" in codes(chk.check_spec(spec))

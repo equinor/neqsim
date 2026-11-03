@@ -652,6 +652,24 @@ The adapter reuses `ProcessDiagramGraphAdapter`. It does not modify the source `
 `ProcessModel`, and it does not change legacy `toDOT()`, `ProcessDiagramExporter`, native DEXPI 2.0,
 or Proteus/P&ID output.
 
+## Professional P&ID native scene profile
+
+`ProfessionalPidPackageExporter` additionally supports the source-connected
+professional native scene profile described in the
+[P&ID synthesis guide](../pid-design-synthesis.md#native-iso-basis-drawing-and-connectivity-checks).
+It uses ISO A1 paper dimensions, controlled document/issue fields, function-specific
+symbols and actual source orientation, with separate sensing and control-signal
+styles. Its derived sheet index and complete geometry specifications are retained
+beside the source-area document set. The generic renderer and explicit manual
+layout inputs keep their existing behavior.
+
+The shared `PidPhysicalProjection` resolves the source and proposal attachments
+for both this drawing profile and native DEXPI. Unknown source types, missing
+utility tie-ins, ambiguous series order and missing line design remain explicit
+HOLDs; no generic symbol or guessed pipe can establish a complete professional
+P&ID. Independent standard/catalogue review and accountable drawing approval
+remain separate from native file generation and automated geometry checks.
+
 ## Engineering and approval boundary
 
 Generated document sets start with status `WORKING` and issue purpose `ENGINEERING_PROPOSAL`.

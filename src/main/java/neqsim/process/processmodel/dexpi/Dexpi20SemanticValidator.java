@@ -48,6 +48,12 @@ public final class Dexpi20SemanticValidator {
           "Process/Process.StoringFluids", "Process/Process.RegulatingFlow", "Process/Process.MixingSimple",
           "Process/Process.SplittingMaterial")));
 
+  /** Reviewed native 2.0.1 instrumentation relationships exercised by the connected P&amp;ID projector. */
+  private static final Set<String> SUPPORTED_201_TYPES = Collections
+      .unmodifiableSet(new LinkedHashSet<String>(Arrays.asList("Plant/Instrumentation.SignalLineFunction",
+          "Plant/ProcessEquipment.HeatExchanger", "Plant/Instrumentation.ActuatingFunction",
+          "Plant/Instrumentation.ActuatingSystem", "Plant/Instrumentation.OperatedValveReference")));
+
   private Dexpi20SemanticValidator() {
   }
 
@@ -208,7 +214,8 @@ public final class Dexpi20SemanticValidator {
     }
     if (!imports.containsKey(type.substring(0, separator))) {
       errors.add("Object type uses an undeclared import prefix: " + type);
-    } else if (requireSupportedType && !SUPPORTED_TYPES.contains(type)) {
+    } else if (requireSupportedType && !SUPPORTED_TYPES.contains(type)
+        && !(Dexpi201XmlWriter.CORE_MODEL.equals(imports.get("Core")) && SUPPORTED_201_TYPES.contains(type))) {
       errors.add("Type is outside the supported NeqSim DEXPI 2.0 profile: " + type);
     }
   }
