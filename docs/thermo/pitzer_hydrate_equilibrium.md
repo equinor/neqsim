@@ -142,6 +142,14 @@ A fluid TP flash is executed at every trial, and a bracketed search accepts only
 `abs(log(f_water_hydrate/f_water_aqueous)) <= 1e-8`. Numerical convergence is separate from model
 accuracy. Bounds and missing-parameter errors are exceptions, not successful equilibrium results.
 
+Within the selected bracket, the search reuses both endpoint residuals for a
+secant prediction and bisects at least every second trial. Non-finite, rounded
+or out-of-bracket predictions also use bisection. Every accepted trial still
+executes a complete fluid TP flash; no water-activity or guest-fugacity result
+is reused at a different state. Pressure searches preserve the first crossing
+found by scanning upward from the lower pressure bound. The residual tolerance,
+search bounds, structure selection and parameter coverage are unchanged.
+
 ## Scope and qualification
 
 - Numerical bounds are at most 323.15 K and 1000 bara. The actual lower temperature is the largest

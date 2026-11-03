@@ -43,6 +43,9 @@ public class PSFlash extends QfuncFlash {
   /** Whether this solve has exhausted a cold entropy bracket's floating-point temperature resolution. */
   private boolean temperatureResolutionReached = false;
 
+  /** Number of independent cold residual evaluations in the current solve. */
+  private int coldBracketEvaluations = 0;
+
   double Sspec = 0;
   Flash tpFlash;
   int type = 0;
@@ -170,6 +173,8 @@ public class PSFlash extends QfuncFlash {
 
     double lowerTemperature = residual < 0.0 ? trialTemperature : Double.NaN;
     double upperTemperature = residual > 0.0 ? trialTemperature : Double.NaN;
+    double lowerResidual = residual < 0.0 ? residual : Double.NaN;
+    double upperResidual = residual > 0.0 ? residual : Double.NaN;
     for (int expansion = 0; expansion < MAX_BRACKET_EXPANSIONS
         && (!Double.isFinite(lowerTemperature) || !Double.isFinite(upperTemperature)); expansion++) {
       double previousTemperature = trialTemperature;
@@ -187,8 +192,10 @@ public class PSFlash extends QfuncFlash {
       }
       if (residual < 0.0) {
         lowerTemperature = trialTemperature;
+        lowerResidual = residual;
       } else {
         upperTemperature = trialTemperature;
+        upperResidual = residual;
       }
     }
     if (!Double.isFinite(lowerTemperature) || !Double.isFinite(upperTemperature)) {
@@ -196,7 +203,15 @@ public class PSFlash extends QfuncFlash {
     }
 
     for (int iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
-      trialTemperature = 0.5 * (lowerTemperature + upperTemperature);
+      double fraction = -lowerResidual / (upperResidual - lowerResidual);
+      trialTemperature = lowerTemperature + fraction * (upperTemperature - lowerTemperature);
+      // Interpolation closes smooth entropy roots without dozens of cold TP flashes.
+      // Bisect every third step, and reject rounded or invalid interpolants, so that
+      // a poorly conditioned or discontinuous root still has guaranteed bracket progress.
+      if (iteration % 3 == 2 || !Double.isFinite(trialTemperature) || trialTemperature <= lowerTemperature
+          || trialTemperature >= upperTemperature) {
+        trialTemperature = 0.5 * (lowerTemperature + upperTemperature);
+      }
       residual = evaluateColdResidual(trialTemperature);
       if (Math.abs(residual) <= tolerance) {
         return trialTemperature;
@@ -204,8 +219,8 @@ public class PSFlash extends QfuncFlash {
       if (upperTemperature - lowerTemperature <= 4.0 * Math.ulp(trialTemperature)) {
         // TP stability/phase iteration has finite entropy resolution even when no
         // representable temperature remains between the two sides of the root.
-        double lowerResidual = evaluateColdResidual(lowerTemperature);
-        double upperResidual = evaluateColdResidual(upperTemperature);
+        lowerResidual = evaluateColdResidual(lowerTemperature);
+        upperResidual = evaluateColdResidual(upperTemperature);
         trialTemperature = Math.abs(lowerResidual) < Math.abs(upperResidual) ? lowerTemperature : upperTemperature;
         residual = evaluateColdResidual(trialTemperature);
         if (Math.abs(residual) <= ENTROPY_RESOLUTION_FACTOR * tolerance) {
@@ -216,8 +231,10 @@ public class PSFlash extends QfuncFlash {
       }
       if (residual < 0.0) {
         lowerTemperature = trialTemperature;
+        lowerResidual = residual;
       } else {
         upperTemperature = trialTemperature;
+        upperResidual = residual;
       }
     }
     throw convergenceFailure(system, Sspec, "cold bracket iteration limit reached");
@@ -230,7 +247,13 @@ public class PSFlash extends QfuncFlash {
    * @return total entropy residual in J/K
    */
   private double evaluateColdResidual(double temperature) {
+    coldBracketEvaluations++;
     system.setTemperature(temperature);
+    // Disabling warm K-values does not clear the TP operation's convergence history.
+    // A fresh operation is required so that bracket signs use independent cold roots.
+    TPflash coldFlash = new TPflash(system);
+    coldFlash.setConservativeHomogeneousRecoveryAllowed(true);
+    tpFlash = coldFlash;
     tpFlash.run();
     system.init(2);
     double residual = system.getEntropy() - Sspec;
@@ -238,6 +261,15 @@ public class PSFlash extends QfuncFlash {
       throw convergenceFailure(system, Sspec, "non-finite cold-bracket entropy");
     }
     return residual;
+  }
+
+  /**
+   * Returns cold TP work for package-level regression and performance qualification.
+   *
+   * @return number of independent cold residual evaluations in the most recent solve
+   */
+  int getColdBracketEvaluations() {
+    return coldBracketEvaluations;
   }
 
   /**
@@ -388,6 +420,7 @@ public class PSFlash extends QfuncFlash {
   public void run() {
     validateInput(system, Sspec);
     temperatureResolutionReached = false;
+    coldBracketEvaluations = 0;
     double specifiedPressure = system.getPressure();
     // First TPflash runs COLD (Wilson initial K) so that stale K from a
     // previous unrelated flash (at different P/T) does not bias the solution.

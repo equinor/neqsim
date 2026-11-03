@@ -90,7 +90,15 @@ be finite, bounded by zero and one, and normalized.
 The temperature solver uses bounded Newton steps and a sign-changing bracket
 across mixture phase boundaries. If progress stalls, it rebuilds the bracket with
 cold TP flashes before checking the endpoint with a final cold TP flash. The
-independent endpoint check can reject a metastable homogeneous root even when
+bracket trials each use a fresh TP-flash operation: disabling K-value warm starts
+alone does not discard the operation's convergence history. Reusing that history
+can make entropy evaluations with a trace liquid depend on earlier trials and
+collapse the bracket away from the smooth equilibrium root. The independent
+bracket uses secant interpolation for smooth roots and bisects at least every
+third trial to guarantee progress. Rounded or out-of-bracket interpolants fall
+back to bisection. This bounds the additional TP work without changing entropy
+acceptance or the normal warm-started Newton path. The independent
+endpoint check can reject a metastable homogeneous root even when
 its entropy residual is small. Recovery then uses a fresh inner TP flash so
 that its previous iteration history cannot reselect the rejected root. The
 iteration first seeks the tighter `max(1e-8 * n, 1e-10 * abs(Sspecified))`
@@ -117,6 +125,12 @@ Regression coverage is in `PSFlashEntropyClosureTest`: fresh and continuation
 starts for CO2/nitrogen and CO2/hydrogen, pure-CO2 phase entry, independent cold
 TP-root comparisons, component inventory and phase checks, entropy units and
 system amounts, and explicit failure behavior.
+`PSFlashTraceLiquidTest` adds the issue #4828 PR78 heavy-end reproducer, an
+independent TP-only root, the complete 216-point compression and amount sweep,
+and a gas-only control. It checks the tighter iteration tolerance, independent
+cold-TP agreement, pressure, phase fractions and component conservation.
+Deterministic evaluation-count checks also guard smooth trace-liquid and CO2
+cold recovery and confirm that ordinary gas compression does not enter it.
 
 ## Saturation and phase-aware operations
 
@@ -145,6 +159,15 @@ failed measurements return `NaN`. Use the full multiphase operation for
 hydrocarbon liquids or glycol-rich condensates. See the
 [dew-point guide](../standards/dew_point_standards#trace-water-process-analyser)
 for the distinction from GERG-water's ISO ice reference and validity range.
+
+The direct water/MEG dew-point and Pitzer hydrate temperature/pressure searches
+reuse bracket-endpoint fugacity residuals for secant interpolation, with
+bisection at least every second refinement trial. Non-finite, rounded or
+out-of-bracket predictions use bisection. The logarithmic fugacity tolerances
+remain `1e-9` for water/MEG dew points and `1e-8` for Pitzer hydrate onset.
+Pitzer pressure searches retain the first crossing located by the low-pressure
+scan. `BracketedSaturationPerformanceTest` checks the previous equilibrium
+roots, strict residuals, physical state and bounded refinement work.
 
 Solid selection preserves the fluid multiphase-check setting. Request additional
 liquid phases explicitly with `setMultiPhaseCheck(true)`. The empirical solid model
