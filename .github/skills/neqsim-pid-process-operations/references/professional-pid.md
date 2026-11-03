@@ -122,6 +122,14 @@ pressure-flow or transient solve from area-by-area execution.
 
 ## Acceptance and reporting
 
+After regeneration, use `@pid-quality-review` and
+[`neqsim-pid-quality-review`](../../neqsim-pid-quality-review/SKILL.md).
+Run `neqsim pid-review PACKAGE --output REVIEW_DIR` outside the reviewed
+package. Preserve its automatic, visual, standards and qualification findings;
+missing controlled references or design inputs remain HOLD even when geometry
+and native DEXPI checks pass. Review receipts must match the current artifact
+hashes. Never edit drawings, readiness reports or evidence to obtain a pass.
+
 Report each item as PASS, FAIL, NOT TESTED or NOT APPLICABLE:
 
 | Item | Required evidence |

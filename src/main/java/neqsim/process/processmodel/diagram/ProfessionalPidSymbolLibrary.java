@@ -176,21 +176,68 @@ public final class ProfessionalPidSymbolLibrary {
    * @param tag controlled identity
    */
   private static void vessel(Page page, double x, double y, double width, double height, String tag) {
+    page.commands.add(Command.polygon(vesselOutline(x, y, width, height), "#111111", "#ffffff", .5, tag));
+  }
+
+  /**
+   * Returns the same polygon used for vessel drawing and physical sensing attachments.
+   *
+   * @param x centre x
+   * @param y centre y
+   * @param width symbol width
+   * @param height symbol height
+   * @return closed hull vertices in drawing units
+   */
+  static List<Point> vesselOutline(double x, double y, double width, double height) {
     List<Point> points = new ArrayList<Point>();
     double radius = Math.min(width, height) / 2.0;
     boolean vertical = height >= width;
-    for (int index = 0; index <= 40; index++) {
-      double angle = index * Math.PI / 20.0;
-      double px = radius * Math.cos(angle);
-      double py = radius * Math.sin(angle);
-      if (vertical) {
-        py += Math.sin(angle) < 0 ? -(height / 2 - radius) : height / 2 - radius;
-      } else {
-        px += Math.cos(angle) < 0 ? -(width / 2 - radius) : width / 2 - radius;
+    for (int head = 0; head < 2; head++) {
+      for (int index = 0; index <= 20; index++) {
+        double angle = (vertical ? Math.PI + head * Math.PI : -Math.PI / 2 + head * Math.PI) + index * Math.PI / 20;
+        double px = radius * Math.cos(angle);
+        double py = radius * Math.sin(angle);
+        if (vertical) {
+          py += head == 0 ? -(height / 2 - radius) : height / 2 - radius;
+        } else {
+          px += head == 0 ? width / 2 - radius : -(width / 2 - radius);
+        }
+        points.add(new Point(x + px, y + py));
       }
-      points.add(new Point(x + px, y + py));
     }
-    page.commands.add(Command.polygon(points, "#111111", "#ffffff", .5, tag));
+    return points;
+  }
+
+  /**
+   * Intersects a sensing ordinate with the actually drawn dished vessel hull.
+   *
+   * @param x vessel centre x
+   * @param y vessel centre y
+   * @param width symbol width
+   * @param height symbol height
+   * @param tapY requested sensing ordinate
+   * @return actual right-side hull point, not its bounding rectangle
+   * @throws IllegalArgumentException if the ordinate does not intersect the vessel
+   */
+  static Point vesselSensingTap(double x, double y, double width, double height, double tapY) {
+    List<Point> hull = vesselOutline(x, y, width, height);
+    double right = -Double.MAX_VALUE;
+    for (int index = 0; index < hull.size(); index++) {
+      Point a = hull.get(index);
+      Point b = hull.get((index + 1) % hull.size());
+      if (tapY < Math.min(a.y, b.y) - 1e-9 || tapY > Math.max(a.y, b.y) + 1e-9) {
+        continue;
+      }
+      if (Math.abs(b.y - a.y) < 1e-9) {
+        right = Math.max(right, Math.max(a.x, b.x));
+      } else {
+        right = Math.max(right, a.x + (tapY - a.y) * (b.x - a.x) / (b.y - a.y));
+      }
+    }
+    if (right == -Double.MAX_VALUE) {
+      throw new IllegalArgumentException("Sensing ordinate lies outside the drawn vessel");
+    }
+    return new Point(right, tapY);
   }
 
   /**

@@ -12,9 +12,11 @@ import java.nio.file.Paths;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import neqsim.NeqSimTest;
 import neqsim.process.engineering.EngineeringProject;
+import neqsim.process.engineering.LineDesignInput;
 import neqsim.process.engineering.NorsokOffshoreEngineeringBuilder;
 import neqsim.process.engineering.model.EngineeringDiagramConventionRegister;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister;
@@ -167,6 +169,105 @@ public class ProfessionalPidPackageExporterTest extends NeqSimTest {
     assertFalse(readiness.get("documentModelValid").getAsBoolean());
     assertEquals("INCOMPLETE_DOCUMENT_MODEL", readiness.get("generationStatus").getAsString());
     assertTrue(Files.exists(target.resolve("pid-document-set.json")));
+  }
+
+  /**
+   * Retains actual and boundary line-design values and one coordinated auxiliary-series line without approval.
+   *
+   * @throws Exception if the coordinated synthetic package cannot be generated or inspected
+   */
+  @Test
+  void exportsProjectLineInputsAndAuxiliaryRouteRegisterWithoutApproval() throws Exception {
+    ProcessSystem process = process();
+    Separator separator = (Separator) process.getUnit("20-VG-001");
+    separator.getGasOutStream().setName("20-GAS-TO-VALVE");
+    process.getUnit("20-PCV-001").getOutletStreams().get(0).setName("20-GAS-PRODUCT");
+    EngineeringProject project = NorsokOffshoreEngineeringBuilder.from("Synthetic line fidelity", process, "2.0.1")
+        .projectId("PID-201-REFERENCE").registerProposedInstruments(false).build().setRevision("A");
+    project.addLineDesignInput(syntheticLine("20-GAS-TO-VALVE", "20-VG-001"));
+    project.addLineDesignInput(syntheticLine("20-GAS-PRODUCT", "20-PCV-001"));
+    PidDesignModel pid = new PidDesignModel(project.getProjectId(), "SYNTHETIC-AUXILIARY");
+    pid.add(auxiliarySeriesValve("AUX-BDV", PidElementType.BLOWDOWN_VALVE, 20));
+    pid.add(auxiliarySeriesValve("AUX-XV", PidElementType.ISOLATION_VALVE, 10));
+    Path target = ProfessionalPidPackageExporter.export(project, pid, PidSimulationBindings.from(project, pid),
+        metadata(), temporaryDirectory.resolve("line-fidelity"));
+    JsonObject registers = JsonParser.parseString(text(target.resolve("pid-engineering-registers.json")))
+        .getAsJsonObject();
+    JsonObject actual = registerLine(registers, "20-GAS-TO-VALVE");
+    assertEquals("DN 50", actual.get("nominalPipeSize").getAsString());
+    assertEquals("SYNTHETIC-CLASS", actual.get("pipingClass").getAsString());
+    assertEquals(60.0, actual.get("designPressureBara").getAsDouble(), 0.0);
+    assertEquals("SYNTHETIC-LINE-LIST-A", actual.getAsJsonArray("evidenceReferences").get(0).getAsString());
+    assertEquals("REVIEW_REQUIRED", actual.get("qualificationStatus").getAsString());
+    JsonObject product = registerLine(registers, "20-GAS-PRODUCT");
+    assertEquals("ACTUAL_STREAM_BOUNDARY", product.get("lineOrigin").getAsString());
+    assertEquals("20-PCV-001", product.get("sourceEquipmentTag").getAsString());
+    assertFalse(product.has("semanticConnectionId"));
+    JsonObject auxiliary = registerLine(registers, "SYNTHETIC-FLARE-ROUTE");
+    assertEquals("AUX-XV", auxiliary.getAsJsonArray("sourceProposalTags").get(0).getAsString());
+    assertEquals("AUX-BDV", auxiliary.getAsJsonArray("sourceProposalTags").get(1).getAsString());
+    assertEquals("20-VG-001", auxiliary.get("physicalSourceEquipmentTag").getAsString());
+    assertEquals("20-GAS-TO-VALVE", auxiliary.get("physicalSourceStreamTag").getAsString());
+    assertEquals("SYNTHETIC-FLARE-HEADER", auxiliary.get("destinationTag").getAsString());
+    assertEquals("HOLD", auxiliary.get("sizingStatus").getAsString());
+    assertEquals("HOLD", auxiliary.get("pipingClassStatus").getAsString());
+    assertFalse(auxiliary.has("semanticConnectionId"));
+    JsonObject readiness = JsonParser.parseString(text(target.resolve("professional-pid-readiness.json")))
+        .getAsJsonObject();
+    assertEquals(registers.getAsJsonArray("gaps").size(), readiness.get("engineeringGapCount").getAsInt());
+    assertEquals("REVIEW_REQUIRED", registers.get("qualificationStatus").getAsString());
+    assertFalse(registers.get("fitnessForConstruction").getAsBoolean());
+    assertFalse(readiness.get("fitnessForConstruction").getAsBoolean());
+    assertTrue(text(target.resolve("pid-physical-projection.json")).contains("SYNTHETIC-FLARE-ROUTE"));
+  }
+
+  /**
+   * Creates complete synthetic design data used only to verify package fidelity.
+   *
+   * @param tag actual stream designation
+   * @param equipment associated actual source equipment
+   * @return review-required synthetic line input
+   */
+  private static LineDesignInput syntheticLine(String tag, String equipment) {
+    return new LineDesignInput(tag, equipment).setNominalPipeSize("DN 50").setPipingClass("SYNTHETIC-CLASS")
+        .setSchedule("40").setMaterialGrade("SYNTHETIC-MATERIAL").setOuterDiameter(60.3, "mm")
+        .setNominalWallThickness(3.91, "mm").setCorrosionAllowance(1.0, "mm").setDesignPressureBara(60.0)
+        .setDesignTemperatureC(80.0).addEvidenceReference("SYNTHETIC-LINE-LIST-A");
+  }
+
+  /**
+   * Creates one explicitly routed member of a synthetic gas-to-flare proposal series.
+   *
+   * @param tag proposed valve identity
+   * @param type proposed valve category
+   * @param order explicit series order
+   * @return source-backed auxiliary proposal
+   */
+  private static PidElement auxiliarySeriesValve(String tag, PidElementType type, int order) {
+    return new PidElement(tag, tag, type).equipment("20-VG-001").attribute("physicalSourceEquipmentTag", "20-VG-001")
+        .attribute("physicalSourceStreamTag", "20-GAS-TO-VALVE").attribute("destinationTag", "SYNTHETIC-FLARE-HEADER")
+        .attribute("physicalRouteId", "SYNTHETIC-FLARE-ROUTE").attribute("physicalRouteOrder", Integer.valueOf(order))
+        .attribute("designEvidenceReference", "SYNTHETIC-AUX-A");
+  }
+
+  /**
+   * Selects one exact line designation from the emitted register.
+   *
+   * @param registers emitted register object
+   * @param lineTag exact material line designation
+   * @return matching row
+   */
+  private static JsonObject registerLine(JsonObject registers, String lineTag) {
+    JsonObject found = null;
+    for (JsonElement candidate : registers.getAsJsonArray("lines")) {
+      JsonObject row = candidate.getAsJsonObject();
+      if (row.has("lineTag") && lineTag.equals(row.get("lineTag").getAsString())) {
+        assertTrue(found == null, "Duplicate material line " + lineTag);
+        found = row;
+      }
+    }
+    assertNotNull(found, "Missing material line " + lineTag);
+    return found;
   }
 
   /**

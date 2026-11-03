@@ -80,6 +80,7 @@ Analyze the request and match it to one or more agents:
 | "Can NeqSim do X?", capability check, gap analysis, implementation plan | `@capability-scout` | — |
 | Complex multi-discipline task needing pre-assessment | `@capability-scout` | then specialist agents |
 | Engineering deliverables, PFD, alarm schedule, spare parts, thermal utilities, noise assessment, study class A/B deliverables | `@engineering-deliverables` | `@process-model` for process system, `@field-development` for full study |
+| Independently quality-control a generated P&ID against its source, drawings and controlled ISO/IEC/ISA standards; `neqsim pid-review` | `@pid-quality-review` | Integrates `@pfd-layout-review` and `@standards-review`; unresolved design data or controlled references remain HOLD |
 | Reactor, reaction, equilibrium, kinetic, CSTR, PFR, catalyst | `@reaction-engineering` | `@thermo-fluid` for reaction chemistry |
 | UniSim, HYSYS, .usc file, convert simulation | `@unisim-reader` | `@process-model` for NeqSim model build |
 | Control system, PID, controller tuning, dynamic, transient | `@control-system` | `@process-model` for base simulation |

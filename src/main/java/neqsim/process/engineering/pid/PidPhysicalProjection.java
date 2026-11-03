@@ -136,6 +136,14 @@ public final class PidPhysicalProjection {
       return string("physicalRouteId");
     }
 
+    /** @return coordinated material line tag, or empty when this attachment is not an auxiliary material route */
+    public String getMaterialLineTag() {
+      if (getKind() != Kind.AUXILIARY_ROUTE) {
+        return "";
+      }
+      return getPhysicalRouteId().isEmpty() ? getPidTag() + "-ROUTE" : getPhysicalRouteId();
+    }
+
     /** @return explicit nonnegative series order, or -1 when absent/invalid */
     public int getPhysicalRouteOrder() {
       return ((Number) values.get("physicalRouteOrder")).intValue();
@@ -153,7 +161,9 @@ public final class PidPhysicalProjection {
 
     /** @return immutable machine-readable values */
     public Map<String, Object> toMap() {
-      return values;
+      Map<String, Object> result = new LinkedHashMap<String, Object>(values);
+      result.put("materialLineTag", getMaterialLineTag());
+      return Collections.unmodifiableMap(result);
     }
 
     /**

@@ -192,6 +192,8 @@ public final class Dexpi201PidMaterializer {
     private final Map<String, Element> functionOwners = new LinkedHashMap<String, Element>();
     private final Map<String, String> unresolved = new LinkedHashMap<String, String>();
     private final Map<String, Element> tails = new LinkedHashMap<String, Element>();
+    /** Flow-ordered auxiliary tees on the equipment side of synthesized inline devices. */
+    private final Map<String, Element> auxiliaryPortTails = new LinkedHashMap<String, Element>();
     private final Map<String, Element> designedNozzles = new LinkedHashMap<String, Element>();
     private final Map<String, String> designedNozzleInputs = new LinkedHashMap<String, String>();
     private final List<Map<String, String>> proposedOwnedNozzles = new ArrayList<Map<String, String>>();
@@ -245,18 +247,27 @@ public final class Dexpi201PidMaterializer {
         }
       }
       Set<String> projectedGroups = new LinkedHashSet<String>();
-      for (PidElement element : model.getElements()) {
-        Attachment attachment = projection.getAttachments().get(element.getTag());
-        if (!attachment.getPhysicalRouteId().isEmpty()) {
-          if (projectedGroups.add(attachment.getPhysicalRouteId())) {
-            projectSeries(groups.get(attachment.getPhysicalRouteId()));
+      // Inline devices must exist before equipment-owned tee anchors are resolved.
+      // Otherwise proposal iteration order can move a recycle across isolation/check valves.
+      for (int phase = 0; phase < 2; phase++) {
+        for (PidElement element : model.getElements()) {
+          Attachment attachment = projection.getAttachments().get(element.getTag());
+          boolean auxiliary = attachment.getKind() == Kind.AUXILIARY_ROUTE
+              || !attachment.getPhysicalRouteId().isEmpty();
+          if (auxiliary != (phase == 1)) {
+            continue;
           }
-          continue;
-        }
-        try {
-          projectOne(element, attachment);
-        } catch (IllegalArgumentException ex) {
-          unresolved.put(element.getTag(), ex.getMessage());
+          if (!attachment.getPhysicalRouteId().isEmpty()) {
+            if (projectedGroups.add(attachment.getPhysicalRouteId())) {
+              projectSeries(groups.get(attachment.getPhysicalRouteId()));
+            }
+            continue;
+          }
+          try {
+            projectOne(element, attachment);
+          } catch (IllegalArgumentException ex) {
+            unresolved.put(element.getTag(), ex.getMessage());
+          }
         }
       }
       for (PidElement element : model.getElements()) {
@@ -581,11 +592,9 @@ public final class Dexpi201PidMaterializer {
       String sourceNode = sourceEndpoint.getAttribute("id")
           + (attachment.getSourceNozzleTag().isEmpty() ? "Branch" : "Node");
       Element segment = object("PidAuxiliarySegment_" + safe(element.getId()), "Plant/Piping.PipingNetworkSegment");
-      setData(segment, "SegmentNumber",
-          attachment.getPhysicalRouteId().isEmpty() ? element.getTag() + "-ROUTE" : attachment.getPhysicalRouteId());
+      setData(segment, "SegmentNumber", attachment.getMaterialLineTag());
       Element system = object("PidAuxiliarySystem_" + safe(element.getId()), "Plant/Piping.PipingNetworkSystem");
-      setData(system, "LineNumber",
-          attachment.getPhysicalRouteId().isEmpty() ? element.getTag() + "-ROUTE" : attachment.getPhysicalRouteId());
+      setData(system, "LineNumber", attachment.getMaterialLineTag());
       components(system, "Segments").appendChild(segment);
       components(plant, "PipingNetworkSystems").appendChild(system);
       List<Element> valves = new ArrayList<Element>();
@@ -733,14 +742,18 @@ public final class Dexpi201PidMaterializer {
      * @return connected native tee with one unused branch node
      */
     private Element tee(String owner, String stream, String suffix) {
-      Element pipe = pipeForStream(owner, stream);
+      String key = owner + "\n" + stream;
+      Element pipe = auxiliaryPortTails.get(key);
+      if (pipe == null) {
+        pipe = pipeForStream(owner, stream);
+      }
       Element segment = ancestor(pipe, "Plant/Piping.PipingNetworkSegment");
       Element tee = object("PidTee_" + suffix, "Plant/Piping.PipeTee");
       for (String node : new String[] {"Inlet", "Outlet", "Branch"}) {
         components(tee, "Nodes").appendChild(object(tee.getAttribute("id") + node, "Plant/Piping.PipingNode"));
       }
       components(segment, "Items").appendChild(tee);
-      insert(pipe, tee, "Inlet", "Outlet");
+      auxiliaryPortTails.put(key, insert(pipe, tee, "Inlet", "Outlet"));
       return tee;
     }
 

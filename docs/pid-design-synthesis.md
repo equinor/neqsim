@@ -104,6 +104,24 @@ simulated or approved.
 
 ## Native ISO-basis drawing and connectivity checks
 
+After generation, apply the separate
+[P&ID quality and standards review](engineering/pid-quality-review.md).
+`neqsim pid-review` rechecks actual artifacts and integrates content-bound visual
+and controlled standards receipts. Native/geometry success alone cannot produce
+a completed standards review. The generating owner fixes defects and regenerates;
+the independent reviewer retains findings and engineering HOLDs.
+
+Auxiliary material lines use the same line identity in the physical projection,
+native XML, drawing routes and engineering registers. Project line-design inputs
+retain their values/evidence as REVIEW_REQUIRED, including actual product
+boundaries; series auxiliary devices share one line row. Absent auxiliary data
+remain HOLD. Vessel sensing strokes meet the actual dished hull, rather than its
+bounding rectangle. Equipment/stream-owned tee anchors are on the equipment side
+of synthesized inline devices. Inline projection precedes auxiliary tees so
+proposal iteration order cannot move a recycle across isolation or check valves.
+Use an explicit supported source-port owner for other locations; do not infer an
+arbitrary point along a stream that contains several devices.
+
 The professional exporter now uses `ProfessionalPidDiagramRenderer` and
 `ProfessionalPidSymbolLibrary` for default native A1 landscape scenes. It
 preserves the actual separator orientation, uses distinct control, isolation,

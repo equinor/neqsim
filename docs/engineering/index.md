@@ -21,6 +21,7 @@ has been supplied and accepted for the declared purpose.
 | [Engineering Guide](guide.md) | A practical, gated path from a validated process model to a review-ready package |
 | [Design Cases and Governing Envelopes](design-cases-and-envelopes.md) | Controlled case definitions, metrics, isolated execution, limits, and governing-value selection |
 | [DEXPI Engineering Guide](dexpi-guide.md) | Selecting, generating, validating, and qualifying DEXPI Plant, Process, Proteus, and pyDEXPI exchanges |
+| [P&ID Quality and Standards Review](pid-quality-review.md) | Independent source/drawing review, deterministic package checks and controlled standards evidence |
 | [Engineering Deliverables and Handover](deliverables-and-handover.md) | Coordinated packages, registers, DEXPI, CFIHOS, approvals, manifests, and revisions |
 | [Engineering Simulator Foundations](../integration/engineering-simulator-foundations.md) | Core concepts: isolated cases, provenance, readiness, uncertainty, and verification |
 | [Process-to-Engineering Simulator](../integration/process-to-engineering-simulator.md) | Closed-loop case execution, sizing, application of selected dimensions, reruns, and convergence |

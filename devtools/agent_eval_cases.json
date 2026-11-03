@@ -491,6 +491,16 @@
       "expect_skills_top5": [
         "neqsim-utilities-design-report"
       ]
+    },
+    {
+      "id": "pid-quality-standards-review",
+      "prompt": "independent P&ID quality control: review native DEXPI drawings against source piping instrumentation sensing utility circuits and controlled ISO ISA standards, run pid-review and retain missing evidence as HOLD",
+      "expect_agent_top3": [
+        "pid-quality-review"
+      ],
+      "expect_skills_top5": [
+        "neqsim-pid-quality-review"
+      ]
     }
   ],
   "contracts": [
