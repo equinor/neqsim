@@ -1,0 +1,34 @@
+[
+  {
+    "dt_s": 1.0E-4,
+    "lift_m": 0.008383534848860653,
+    "velocity_m_s": 0.2994119348140351,
+    "normalizedStateError": 0.03563436466272556,
+    "dampingLoss_J": 0.08034641242495628,
+    "numericalLoss_J": 0.00807587731928889
+  },
+  {
+    "dt_s": 5.0E-5,
+    "lift_m": 0.00831806246388276,
+    "velocity_m_s": 0.3155017120495586,
+    "normalizedStateError": 0.01826349805698555,
+    "dampingLoss_J": 0.08304150898996984,
+    "numericalLoss_J": 0.0041754441040136635
+  },
+  {
+    "dt_s": 2.5E-5,
+    "lift_m": 0.008283998377398873,
+    "velocity_m_s": 0.3238508696440426,
+    "normalizedStateError": 0.009246179672983761,
+    "dampingLoss_J": 0.08444388998880334,
+    "numericalLoss_J": 0.002123509865500694
+  },
+  {
+    "dt_s": 1.25E-5,
+    "lift_m": 0.0082666208851754,
+    "velocity_m_s": 0.32810365090376153,
+    "normalizedStateError": 0.004652061775810581,
+    "dampingLoss_J": 0.08515931110284161,
+    "numericalLoss_J": 0.0010708851678572127
+  }
+]

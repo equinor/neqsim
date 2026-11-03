@@ -85,6 +85,9 @@ public class TransientWellModel implements Serializable {
   private static final double EULER_GAMMA = 0.5772156649;
   private static final double PI = Math.PI;
 
+  /** Natural logarithm of 10, converting ln-based slopes to per-log-cycle slopes. */
+  private static final double LN10 = Math.log(10.0);
+
   /**
    * Well type.
    */
@@ -418,32 +421,31 @@ public class TransientWellModel implements Serializable {
     result.initialPressure = initialPressure;
     result.pressureRecovery = pws - calculatePressureWithSuperposition(shutInStartTime);
 
-    // Horner analysis
-    // slope m = q·μ·B / (4πkh) × 2.303 = q·B / (4π × transmissibility) × 2.303
+    // Horner analysis in SI units, consistent with the line-source solution used by
+    // calculatePressureDrop: m = 2.303·q_res·μ / (4π·k·h) [Pa/cycle], reported in bar/cycle.
+    // q_res already includes the formation volume factor.
     double qReservoir = result.rateBeforeShutIn * formationVolumeFactor / 86400.0; // m³/s
-    double m = qReservoir / (4 * PI * transmissibility) * 2.303; // bar/log cycle
+    double m = qReservoir / (4 * PI * transmissibility) * LN10; // bar/log cycle
     result.hornerSlope = m;
 
-    // Permeability from slope: k = q·μ·B / (4πmh)
-    // m in bar/log cycle, h in m
-    double kCalc = qReservoir * fluidViscosity * 1e-3 * formationVolumeFactor / (4 * PI * m / 1e5 * formationThickness);
+    // Permeability from slope: k = 2.303·q_res·μ / (4π·m·h), with m converted from bar to Pa
+    double muSI = fluidViscosity * 1e-3;
+    double kCalc = LN10 * qReservoir * muSI / (4 * PI * m * 1e5 * formationThickness); // m²
     result.permeabilityFromSlope = kCalc / 9.869233e-16; // Convert to mD
 
-    // Extrapolated pressure P* (Horner time → 1)
-    // P* = Pws(Δt→∞) + m × log((tp+Δt)/Δt) as Δt→∞ → P* ≈ Pi
-    result.extrapolatedPressure = initialPressure;
+    // Extrapolated pressure P*: extend the Horner line to (tp + dt)/dt = 1,
+    // P* = Pws(dt) + m·log10((tp + dt)/dt). Equals Pi for an infinite-acting reservoir.
+    double tp = result.producingTime;
+    result.extrapolatedPressure = pws + m * Math.log10((tp + shutInTimeHours) / shutInTimeHours);
 
-    // Skin from intercept
-    // S = 1.151 × [(P1hr - Pwf) / m - log(k/(φμctrw²)) + 3.23]
-    // Simplified: use pressure at 1 hour shut-in
+    // Skin from the 1-hour Horner intercept (SI form):
+    // S = 1.1513·[(P1hr - Pwf)/m - log10(k·3600/(φ·μ·ct·rw²)) - 0.3513 + log10((tp + 1)/tp)]
     double p1hr = calculatePressureWithSuperposition(shutInStartTime + 1.0);
     double pwfAtShutIn = calculatePressureWithSuperposition(shutInStartTime);
     if (m > 0) {
-      double logTerm = Math
-          .log10(permeability * 9.869233e-16
-              / (porosity * fluidViscosity * 1e-3 * totalCompressibility / 1e5 * wellboreRadius * wellboreRadius))
-          - 3.23;
-      result.skinFromIntercept = 1.151 * ((p1hr - pwfAtShutIn) / m - logTerm);
+      double tD1hr = kCalc * 3600.0 / (porosity * muSI * totalCompressibility / 1e5 * wellboreRadius * wellboreRadius);
+      result.skinFromIntercept = 1.1513
+          * ((p1hr - pwfAtShutIn) / m - Math.log10(tD1hr) - 0.3513 + Math.log10((tp + 1.0) / tp));
     } else {
       result.skinFromIntercept = skinFactor;
     }

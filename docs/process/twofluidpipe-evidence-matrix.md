@@ -63,13 +63,16 @@ the iteration limit; the rest fail line search). Explicit-face-terrain cases sto
 | Five-second gas execution and uniform three-phase fixed point | Opt-in | Selected configurations | No | Four-cell gas runs at 0.1 s and eight/sixteen-cell runs at 0.05 s pass consecutive accepted calls with unchanged nonlinear/interval tolerances of 1e-10/1e-8. Consistent outlet phase fractions repair the single-phase Jacobian kink; the coarse case now runs in ordinary CI. These are continuation/conservation checks, not spatial-accuracy qualification. A separate closed uniform three-phase fixed point passes. |
 | Inclined annular film eligibility, transition blending and trace-phase Jacobian | Opt-in criteria; derivative correction enabled | Local branch and analytic derivatives | No | The captured 0.594-liquid-holdup conflict converges with the film constraint. A separate opt-in annular/slug force blend removes the gas-lift point switch and advances the historical backward-Euler 16-cell gates from 0.663/0.688 s to 1.451/1.671 s; the 24-cell gate reaches 0.95 s. All still fail before five seconds. Phase-relative probes retain trace drag/volume derivatives. Neither local criterion implements full film/droplet/reversal physics. |
 | Directional phase-face complementarity | Experimental opt-in augmented solve | Unit, coupled adapter, exact-absent donor, conservation and 53-color layout coverage; six unchanged 0.1 s Tengesdal lanes pass | No | The nonlinear vector adds signed-direction mass, advective momentum and donor multiplier variables per internal phase face. Present donors use normalized conservative advection; exactly absent donors use exact donor-presence/zero-momentum rows. Solved transport replaces the free internal flux conservatively and prepared-step verification reuses it. No inventory is clipped and no donor smearing is used. The unchanged 15-case five-second matrix still fails at 0.1251953125–0.831640625 s, so phase-transition, restart and pigging qualification remain open. |
+| Bidirectional Rusanov internal phase transport | Experimental opt-in | Analytical two-stream decomposition, exact net recovery, dry/trace/SRK local controls, Runge–Kutta staging, pressure-work ownership, transactional named-component conservation and fail-closed configuration tests | No | `setRusanovInternalFluxEnabled(true)` requires independent gas/oil/water faces. Forward and reverse donor streams remain separate through component transport while their difference is the hydrodynamic net. AUSM remains default. Combined-liquid splitting, pressure interpolation, reconstructed slug faces and one-direction unsplit complementarity reject. This is numerical face-transport qualification, not dry/wet-front, restart, evaporation, slugging or pigging qualification. |
 | Current unsplit Tengesdal five-second matrix with film constraint | Harness implemented | **Failed** | No | After the outlet repair, corrected-face 16/0.1, 16/0.05 and 24/0.05 cases stop near 1.303, 1.881 and 1.736 s. All six historical/face cases reject their prefixes and are unchanged by the inclined transition blend, showing that their blockers occur earlier. The transition-blended backward-Euler historical lane advances materially but all three cases still fail line search. Later closure/domain transitions, trial velocity guards and unsplit 180/600 s qualification remain open. |
 | Explicit finite-volume face terrain | Opt-in | Yes | No | N+1 elevations, actual cell arc lengths and midpoint pressure with external-face offsets. Signed gravity/energy and constant-density hydrostatics are checked under nonuniform refinement. This is not general transient well-balancing. |
 | Conservative slug/film + named components + phase transfer + thermal balance | Yes | Yes | No | A closed four-cell wet-gas cooling case over 0.05 s closes all ledgers on 0.05/0.025/0.0125 s outer partitions. Adjacent-grid water/heat sensitivity is below 4%; marker-displacement sensitivity decreases from 3.14% to 1.99%. Marker length/age are partition-invariant, and transactions reproduce the same-grid result. See the model guide for numerical values. This is coupled-ledger evidence, not spontaneous slug initiation. |
 | Non-equilibrium post-pigging MEG/water transfer | Experimental opt-in | Short-time component/coupling tests | No | Separate initial aqueous inventory, independent signed species fluxes, Euler/isothermal restriction. Seeded low-point motion is tested; long-horizon drying, pool formation and experimental accuracy remain unqualified. See [film transfer](TwoFluidPipeFilmDrying.md). |
 | Dry gas/oil component-target relaxation in conservative Euler | Experimental approximation | Frozen-inventory exponential/refinement and donor-momentum controls; complete source-only oil disappearance into single-gas targets at 50 bara/480–520 K; original 12/24-cell pressure-ramp regression | No | Each source uses its conserved component inventory difference from the local equilibrium target. Counter-transfers carry actual donor momentum with one total-energy owner. The hot disappearance test qualifies the frozen algebraic endpoint, not seabed heating or evaporation time. Aqueous grids retain the previous closure. The historical flat-outlet 12-cell/0.125 s case still rejects an inadmissible liquid velocity at 35.625 s; full pooling, inlet refill, heat/area/transport-rate and experimental qualification remain open. |
 | Reverse outlet inflow with named-component transport and no external composition | **Unsupported** | Fail-closed | No | Configuration is rejected in either setter order. The last interior composition is not a physical external boundary condition. |
+| Local gas/oil film simultaneous mass/heat solve | Separate default-off boundary option; not integrated into transient source | Binary/six-component zero-driving-force and nearby equation/refinement controls | No | `setCoupledMassHeatTransferEnabled(true)` uses the existing film/EOS equations with full residual acceptance. Requires positive finite transport and strictly positive nonreactive hydrocarbon interface composition. Stationary liquid with zero correlation coefficient rejects; no unit-conductance fallback. See `CoupledGasOilFilmTest` and the [film-method limits](../fluidmechanics/InterphaseHeatMassTransfer#residual-based-gasoil-option). This does not qualify stagnant-pool diffusion, interfacial area/heat supply, phase disappearance or predictive depletion time under #4675. |
 | Reverse pressure-outlet inflow with an explicit external thermodynamic donor | Experimental opt-in | Signed component/mass/enthalpy unit tests and synthetic rich-gas pressure-ramp regression | No | `setOutletBoundaryFluid(...)` owns reversed phase composition, density and enthalpy; `setAllowOutletPhaseBackflow(true)` enables signed transport. The net conservation ledger stays signed while downstream publication contains only positive outbound material. The 40 s depressurization plus pressure reversal closes mass, named-component and full-energy reports. This is boundary-contract evidence, not complete blowdown, pooling, refill or predictive transfer-rate qualification. |
+| Gas-only constant-pressure outlet retaining oil and water | Experimental opt-in | Phase-flux/energy, coupled pressure projection and 33 s rich-gas phase-appearance ramp at 0.25/0.125 s | No | `setGasOnlyOutletTakeoff(true)` leaves gas transmissive while oil/water external mass, component and advected-energy transfers are exactly zero. Retained phases keep pressure traction and internal drainage. The outlet pressure projection changes only gas inventory and rejects negative gas transfer unless `setOutletBoundaryFluid(...)` supplies the external composition and enthalpy. Halving the rich-gas interval changes cumulative gas discharge from 75,177.35 to 74,994.75 kg (0.244%, below the predeclared 1% boundary tolerance), while peak trace-oil inventory falls from 0.892 to 0.684 kg (23.3%). The boundary conservation result is qualified; the near-onset liquid peak is not mesh/time-converged and is not a pool prediction. This does not model valve area, separator carryover, pool geometry or evaporation rate, and does not by itself qualify the complete blowdown/refill cycle. |
 | Multi-stage conservative slug + component + phase-transfer coupling | **Unsupported** | Fail-closed | No | Phase appearance inside an intermediate stage needs stage-local component inventories. The coupled four-way path is currently restricted to single-stage Euler. |
 
 The Mohmmed source provenance, exact spreadsheet cells, point selection, missing-data policy, and
@@ -170,3 +173,143 @@ The five-stage evidence chain is recorded in issue
 
 Open or draft work is not a released capability. Confirm the target release contains the referenced
 implementation before using its row.
+
+## Static subcell geometry diagnostic
+
+`GeometryCalculator.calculateHydrostaticCell` and the read-only section accessor
+are numerically verified static geometry references. `HydrostaticCellGeometryTest`
+checks independent volume/area quadrature, exact empty/full cells, horizontal and
+signed-slope limits, partition consistency, serialization and unchanged state.
+They are not a flowing-interface closure, stable-gravity-pool validation or a
+physical hydrocarbon evaporation-rate model. The existing cell-average closure
+geometry and transient solver remain the numerical owners. See the
+[reporting contract](../wiki/two_fluid_reporting_and_validation#static-subcell-depth-and-area-diagnostic).
+
+
+### Closed-wall mechanical pressure compatibility
+
+The explicitly impermeable external face reconstructs its pressure from the
+adjacent conservative mixture inertia and half-cell gravity head. Mass and
+enthalpy transport remain zero. Horizontal closed-wall pressure is unchanged;
+nonphysical reconstructed pressure fails explicitly without a numerical floor.
+`ClosedWallPressureCompatibilityTest` covers affine pure-phase hydrostatics,
+horizontal acoustic pressure response and closed-flux limits. These are numerical
+boundary controls, not qualification of a static two-phase pool or physical
+hydrocarbon transfer rates.
+
+The [closed-wall reproduction record](../../src/test/resources/neqsim/process/equipment/pipeline/closed-wall-pressure/README.md) includes exact source provenance, analytical acceptance, all 12–192-cell operator data, and measured RHS cost with shared-runner limitations.
+
+### Interior hydrostatic pressure and signed work
+
+Every internal face now reconstructs a common mechanical pressure from the two
+adjacent conservative mixture inertias and signed half-cell gravity heads. The
+same additive correction is applied to phase momentum traction, phase-pressure
+diagnostics and total-energy pressure work. Energy uses the signed mass donor, so
+the correction is exactly `Q * deltaP` for either flow direction. A horizontal
+face retains the established AUSM pressure flux exactly, and rejected
+transactional evaluations restore the accepted correction ledger.
+
+`HydrostaticPressureReconstructionTest` passes 90 analytical stationary controls:
+flat, affine and public curved terrain; constant, smooth and alternating cell
+density; 12/24/48/96/192 cells; and pure gas or oil. The unchanged maximum
+acceleration gate is `1e-10 m/s2`; every local mass and energy rate is exactly
+zero. A separate 45-case pure-water extension passes the same terrain, density,
+mesh and conservation gates without changing that predeclared basis. Signed
+-2/+2 m/s controls verify pressure work, horizontal correction is
+exactly zero, and rollback is exact. This is numerical well-balancing of a common
+mixture pressure, not validation of a stationary two-density pool, a moving
+interface, severe slugging, restart, phase-transfer rates, pigging or commercial
+parity. See the [public analytical record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-interior-pressure/README.md).
+
+`MultiphaseHydrostaticForceQualificationTest` adds 720 unequal-density controls
+and 48 signed gas/oil/water work controls. At initially zero velocity, a common
+mixture-hydrostatic pressure gives phase acceleration
+`(rhoMix / rhoPhase - 1) * g * sin(theta)` while the summed mixture force is zero.
+The fixed gates are `1e-10 m/s2` phase-acceleration error and `1e-8 N/m` mixture-force
+residual; absent-phase mass and momentum rates and stationary energy rates are
+exactly zero. The work controls retain the individual donor under countercurrent
+flow. These are instantaneous force/flux identities, with refinement through 192
+cells; no elapsed pool-retention interval, pool level, or depletion time is inferred.
+The public record retains every case, inspected plots, and RHS-only timing data.
+
+
+### Optional Rusanov phase-flux contract
+
+`RusanovConservativeFluxTest` qualifies the optional Rusanov phase-flux
+formula against ideal-gas Euler conserved variables: total-energy pressure subtraction, kinetic
+energy, pressure/holdup metadata, exact absence, positive traces, signed flow, energy-reference
+shifts and finite arithmetic. Its mass-positivity control has an explicit Courant condition.
+`RusanovRichGasFluxTest` adds 324 SRK gas/oil local queries over 18 P/T samples, signed flow,
+one-sided oil absence and traces. Its internal-energy reference explicitly accounts for EOS
+versus physical-density volume work. These are API/numerical consistency controls, not independent
+EOS accuracy, translated-EOS thermodynamic qualification or elapsed pool/evaporation evidence.
+The [executed conservative-flux record](../../src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/README.md)
+also records the two nonnegative donor streams, their exact net, pressure-only numerical energy
+term, stage accumulation, donor-volume pressure work and transactional component integration.
+The pipeline can select this operator explicitly on independent phase faces; production default
+remains AUSM. The current combined-liquid, reconstructed-slug and one-direction unsplit routes are
+deliberately incompatible. This does not qualify wet/dry fronts, pools, restart or evaporation.
+
+### Stratified hydrostatic pressure moments
+
+The result's derived centre-referenced phase first area moments and normal-gravity energy [J/m]
+are qualified by `StratifiedGravityEnergyTest`: closed circular-segment formula, 162 retained
+80-digit references including positive phase traces down to 1e-30, equal-density/zero-gravity
+limits, exact absence and invalid inputs, query purity and the unchanged four-field serialized
+contract. No dynamic force, energy-recovery or phase-transfer call site is added. The
+[executed energy budget](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/README.md)
+distinguishes a static potential-energy change from an elapsed drainage or evaporation result.
+Its receipt tests reject incomplete/nonfinite timing and static-budget artifacts, validate the
+fixed work counts/checksum roundoff bound, and compare all three two-cell energies against
+independent 80-digit series references at the unchanged 5e-13 relative gate. 211 corrupted receipts
+and four real compiled-probe mutations reject in normal/optimized Python; no speed threshold or
+new dynamic qualification follows.
+
+The opt-in geometry query `GeometryCalculator.calculateStratifiedPressureMoments(depth, diameter)`
+returns immutable signed first moments `getLiquidMoment()` and `getGasMoment()` in m3, plus
+`getLiquidArea()` and `getGasArea()` in m2. Depth is normal to the circular pipe cross-section.
+For interface depth $h$, height $y$ above the invert and chord width
+$w(y)=2\sqrt{y(D-y)}$, the definitions are
+
+$$J_l=\int_0^h(h-y)w(y)\,dy,\qquad J_g=\int_h^D(h-y)w(y)\,dy.$$
+
+Thus $J_l\geq0$, $J_g\leq0$, and $dJ_k/dh=A_k$. The hydrostatic contribution to
+phase pressure traction is $\rho_k g\cos(\theta)J_k$ in N; the separate interface-pressure
+contribution is $p_I A_k$. These are signed pressure moments about the interface,
+including the gas region above it, rather than moments about the pipe invert.
+The method integrates the smaller segment with positive 16-point quadrature and recovers
+its complement from the exact full-section moment. Empty phases have exactly zero moment;
+unrepresentable geometry fails explicitly without changing the supplied depth.
+
+`StratifiedPressureMomentsTest` verifies independent angular quadrature, analytical half/full
+sections, trace limits, complement symmetry, area derivatives, serialization and signed
+finite-volume gravity/traction identities. The [executed numerical record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/README.md)
+retains every case, refinement and measured opt-in query cost.
+
+The default-off production switch
+`TwoFluidPipe.setStratifiedHydrostaticPressureMomentsEnabled(true)` couples
+$F_k=\rho_k g\cos(\theta)J_k$ into phase pressure traction at internal and external faces and adds
+the conservative work $Q_kF_k/A_k$ with the mass-flux donor density. The retained force matrix is
+ordered inlet/internal/outlet by gas/oil/water and is transaction-safe. The nine-test coupling matrix
+covers both flow directions, exact phase endpoints, a vertical control, closed-domain force
+telescoping, unsupported-interface and diameter rejection, rollback, public API state and bitwise
+default-off restoration, trace forces and countercurrent unequal-density signed donors. Its paired-fraction
+geometry adapter inverts the minority area without a depth floor or absolute area cutoff, including
+gas traces whose complementary liquid fraction rounds to one. Recovered nonnegative volume
+weights must satisfy the unchanged 1e-10 sum bound; only geometric fractions use weights divided
+by their sum, with no mutation of the conserved state. An independent 80-digit series
+inversion supplies 162 retained controls over six diameters and positive fractions down to `1e-30`.
+The [executed coupling record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/coupling/README.md)
+states the analytical references, units and commands.
+
+The enabled historical rich-gas 120 s ramp **fails**: last accepted time is 0.25 s on both meshes;
+the requested 12-cell 0.5 s and 24-cell 0.375 s intervals reject the existing face-volume closure
+guard. Primary conservative state and elapsed time restore exactly. The default-off master ramp
+passes, so that result cannot qualify enabled pressure moments. The retained executable probe,
+accepted-interval data and rejection statuses make this dependency explicit; no closure threshold
+was changed to produce a transient pass.
+
+This qualifies instantaneous phase-traction/work identities only. The one-interface circular geometry
+rejects simultaneous positive oil and water and diameter steps. No elapsed retained-pool, terrain
+drainage, cooldown, restart, severe-slugging, pigging or predictive evaporation claim follows.
+Capillarity, waves, entrainment and separate oil/water interfaces remain outside this API.

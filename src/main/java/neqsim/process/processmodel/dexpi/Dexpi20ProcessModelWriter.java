@@ -138,18 +138,53 @@ public final class Dexpi20ProcessModelWriter {
 
   private static void write(ProcessSystem processSystem, OutputStream outputStream, ModelTopology topology,
       OperatingValues operatingValues) throws IOException {
+    write(processSystem, outputStream, topology, operatingValues, null);
+  }
+
+  /**
+   * Writes the current Process topology using exact 2.0.1 definitions and controlled provenance.
+   *
+   * @param processSystem source simulation
+   * @param outputStream output XML stream
+   * @param metadata controlled export provenance
+   * @throws IOException if serialization fails
+   */
+  static void write201(ProcessSystem processSystem, OutputStream outputStream, Dexpi20PlantExportMetadata metadata)
+      throws IOException {
+    if (processSystem == null || outputStream == null || metadata == null) {
+      throw new IllegalArgumentException("processSystem, outputStream and metadata must not be null");
+    }
+    write(processSystem, outputStream, topology(processSystem), new DirectOperatingValues(), metadata);
+  }
+
+  /**
+   * Serializes one supported Process snapshot.
+   *
+   * @param processSystem source process
+   * @param outputStream output stream
+   * @param topology material topology
+   * @param operatingValues value source
+   * @param metadata 2.0.1 provenance or null for byte-compatible legacy output
+   * @throws IOException if serialization fails
+   */
+  private static void write(ProcessSystem processSystem, OutputStream outputStream, ModelTopology topology,
+      OperatingValues operatingValues, Dexpi20PlantExportMetadata metadata) throws IOException {
     try {
       Document document = createDocument();
       Element model = document.createElement("Model");
       String modelName = identifier(processSystem.getName(), "NeqSimProcessModel");
       model.setAttribute("name", modelName);
-      model.setAttribute("uri", "urn:neqsim:dexpi:2.0:process:" + modelName);
+      model.setAttribute("uri", "urn:neqsim:dexpi:" + (metadata == null ? "2.0" : "2.0.1") + ":process:" + modelName);
       document.appendChild(model);
-      appendImport(document, model, "Core", CORE_MODEL);
-      appendImport(document, model, "Process", PROCESS_MODEL);
+      appendImport(document, model, "Core", metadata == null ? CORE_MODEL : Dexpi201XmlWriter.CORE_MODEL);
+      appendImport(document, model, "Process",
+          metadata == null ? PROCESS_MODEL : "https://data.dexpi.org/models/2.0.1/Process.xml");
 
       Element engineeringModel = object(document, null, "Core/EngineeringModel");
       model.appendChild(engineeringModel);
+      if (metadata != null) {
+        Dexpi20XmlWriter.appendEngineeringModelMetadata(document, engineeringModel, metadata);
+      }
       Element conceptualModel = components(document, engineeringModel, "ConceptualModel");
       Element processModel = object(document, "ProcessModel1", "Process/ProcessModel");
       conceptualModel.appendChild(processModel);
@@ -472,6 +507,10 @@ public final class Dexpi20ProcessModelWriter {
     }
     Element values = components(document, stream, property);
     Element qualified = object(document, null, "Core/QualifiedValue");
+    if (Dexpi201XmlWriter.isSpecification201(document)) {
+      data(document, qualified, "DisplayText",
+          Double.toString(value.doubleValue()) + " " + unitReference.substring(unitReference.lastIndexOf('.') + 1));
+    }
     Element data = document.createElement("Data");
     data.setAttribute("property", "Value");
     Element quantity = document.createElement("AggregatedDataValue");

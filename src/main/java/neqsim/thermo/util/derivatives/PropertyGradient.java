@@ -12,7 +12,7 @@ import java.util.Arrays;
  * <ul>
  * <li>Temperature (T)</li>
  * <li>Pressure (P)</li>
- * <li>Composition (mole fractions or moles)</li>
+ * <li>Normalized composition directions, (z + h e_j)/(1+h), at fixed total moles</li>
  * </ul>
  *
  * <p>
@@ -49,7 +49,7 @@ public class PropertyGradient implements Serializable {
   /** Derivative with respect to pressure [property_unit/bar]. */
   private final double dP;
 
-  /** Derivatives with respect to composition (mole fractions) [property_unit/mol_frac]. */
+  /** Normalized-addition composition derivatives [property_unit per dimensionless addition]. */
   private final double[] dz;
 
   /** Component names corresponding to composition derivatives. */
@@ -137,7 +137,8 @@ public class PropertyGradient implements Serializable {
   }
 
   /**
-   * Get derivatives with respect to composition.
+   * Get normalized-addition composition derivatives. For a tangent direction whose entries sum to zero, their dot
+   * product gives the physical composition directional derivative.
    *
    * @return array of dProperty/dz_i
    */

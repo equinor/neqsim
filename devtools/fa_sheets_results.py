@@ -27,7 +27,7 @@ def _x_range(length, ds=None):
 
 
 def _profile_cases(ds, pid, roles=("design", "scenario")):
-    return [c for c in ds["cases"] if c["role"] in roles and pid in ds["results"][c["id"]]["profiles"]]
+    return [c for c in ds["cases"] if c["role"] in roles and ds["results"][c["id"]]["status"] == "converged" and pid in ds["results"][c["id"]]["profiles"]]
 
 
 def _y_range(values, pad=0.06, floor=None, ceil=None, head=0.16):
@@ -132,19 +132,37 @@ def profile_sheet(sh, ds, rs, ctx, k):
 
 
 def _critical_column(sh, rs, ds, ctx, title, entries):
-    """Right-hand text column listing governing cases and locations; ``entries`` = list of (bold heading, [(token-bound text parts)])."""
+    """Right-hand text column listing governing cases and locations; ``entries`` = list of (bold heading, [(token-bound text parts)]).
+
+    Many cases (more than the frame can hold) switch to a compact layout: the lines of a case are joined and the type is reduced
+    stepwise; the text never leaves the frame.
+    """
     sh.add(K.rect(COL_X - 3.0, 34.0, 408.0 - COL_X + 1.0, 180.0, fill="none", sw=0.3))
+    width = 408.0 - COL_X - 3.0
+    avail = 214.0 - 5.0 - 44.5
+    modes = [(2.6, 2.5, 3.6, 3.1, 1.8, False), (2.6, 2.5, 3.2, 2.9, 0.9, True), (2.4, 2.3, 2.9, 2.7, 0.6, True), (2.3, 2.2, 2.7, 2.55, 0.4, True)]
+    chosen = None
+    for mode in modes:
+        fh, fl_, dyh, dyl, gap, join = mode
+        total = 0.0
+        for head, lines in entries:
+            lns = [" | ".join(lines)] if join else lines
+            total += dyh + gap + sum(dyl * len(K.wrap(ln, fl_, width, max_lines=3)) for ln in lns)
+        chosen = mode
+        if total <= avail:
+            break
+    fh, fl_, dyh, dyl, gap, join = chosen
     y = 39.5
     sh.text(COL_X, y, title, 2.9, "start", bold=True)
     y += 5.0
     for head, lines in entries:
-        sh.text(COL_X, y, head, 2.6, "start", bold=True)
-        y += 3.6
-        for ln in lines:
-            for t in K.wrap(ln, 2.5, 408.0 - COL_X - 3.0, max_lines=3):
-                sh.text(COL_X + 1.0, y, t[0], 2.5, "start")
-                y += 3.1
-        y += 1.8
+        sh.text(COL_X, y, head, fh, "start", bold=True)
+        y += dyh
+        for ln in ([" | ".join(lines)] if join else lines):
+            for t in K.wrap(ln, fl_, width, max_lines=3):
+                sh.text(COL_X + 1.0, y, t[0], fl_, "start")
+                y += dyl
+        y += gap
 
 
 def _loc_line(rs, case, ext):
@@ -251,7 +269,17 @@ def hydrate_sheet(sh, ds, rs, ctx):
         if series[i] is not None:
             sh.text(ax.px(xs_[i]) + (1.5 if anchor == "start" else -1.5), ax.py(series[i]) + dy, text, 2.5, anchor, layer="label")
 
-    _inline(prof["t_c"], 0.10, "fluid temperature", -2.0)
+    # the fluid-temperature label goes where the temperature curve is farthest from both hydrate curves, on the side away from them
+    best_i, best_sep, below = int(0.10 * (len(xs_) - 1)), -1.0, False
+    for fr in (0.10, 0.25, 0.40, 0.55, 0.70, 0.85):
+        i = int(fr * (len(xs_) - 1))
+        refs = [v[i] for v in (der["t_hyd_c"], der["t_hyd_unin_c"]) if v[i] is not None]
+        if prof["t_c"][i] is None or not refs:
+            continue
+        sep = min(abs(prof["t_c"][i] - v) for v in refs)
+        if sep > best_sep:
+            best_i, best_sep, below = i, sep, prof["t_c"][i] < min(refs)
+    _inline(prof["t_c"], best_i / float(max(len(xs_) - 1, 1)), "fluid temperature", 4.2 if below else -2.0)
     _inline(der["t_hyd_unin_c"], 0.02, "hydrate T, no inhibitor (reference)", -1.6)
     _inline(der["t_hyd_c"], 0.02, "hydrate T, inhibited", 4.2)
     entries = []

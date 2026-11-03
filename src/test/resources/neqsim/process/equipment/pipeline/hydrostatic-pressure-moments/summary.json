@@ -1,0 +1,24 @@
+{
+  "moment_cases": 52,
+  "maximum_moment_error_over_D_cubed": 2.6020852139652106e-15,
+  "force_cases_per_refinement": 48,
+  "force_relative_residual_by_intervals": {
+    "64": 1.1194548393345844e-09,
+    "256": 4.397096695055189e-12,
+    "1024": 1.8058070573265328e-14,
+    "4096": 4.193502164965431e-15
+  },
+  "query_nanoseconds": {
+    "minimum": 171.18768,
+    "median": 241.69353,
+    "maximum": 629.89482
+  },
+  "acceptance": {
+    "moment_absolute_D_cubed": 1e-14,
+    "moment_relative": 1e-10,
+    "area_derivative_absolute_D_squared": 1e-07,
+    "force_absolute_N": 1e-12,
+    "force_relative": 1e-10
+  },
+  "visual_review": "All three panels inspected from generated PNG; axes, units, signs, legends, refinement and limits readable. SVG is the same figure."
+}

@@ -316,6 +316,29 @@ After the run, use `ControllerPerformanceMetrics.fromEventLog(LC100.getEventLog(
 (or `LC100.getPerformanceMetrics()`) to score the tuning (IAE/ISE/ITAE, PV
 variability, valve travel and reversals, settling time) — see the KPI section below.
 
+### Dynamic pressure-inventory loop recipe
+
+A pressure loop needs a real compressible inventory. A valve between two imposed-pressure
+streams verifies action and hydraulics, but it cannot demonstrate pressure regulation. For the
+canonical separator chain:
+
+1. Configure separator diameter, length and starting level, then disable steady-state calculation.
+2. Put a gas pressure-control valve on the outlet with a lower declared downstream pressure,
+   actuator lag and physical-step idempotency enabled.
+3. Set the PCV embedded controller to manual when an external PID owns the command.
+4. Register a physical-step-sampled `PressureTransmitter` on the separator gas outlet and attach an
+   engineering-unit, direct-acting PID to the PCV.
+5. Check each component inventory, the fixed-volume/internal-energy flash residual, pressure and
+   temperature bounds, held scan order, valve travel and timestep sensitivity.
+
+`SeparatorPressureControlChainTest` is the public reference implementation. Its SRK/classic wet-gas
+case uses a 2.2 m by 7.0 m separator, 55 bara initial pressure, 45 bara downstream boundary,
+20 to 28 kg/s feed step, one-second scans, `Kp = 6.0`, `Ti = 30 s` and 4 s actuator lag. The
+70 s regression limits peak pressure to 56.68 bara, pressure IAE to 84.6 bar-s and PCV travel to
+21.38 percentage points; it also requires exact rollback/restart/repeatability and 1.0/0.5 s
+refinement. These values qualify only the synthetic numerical chain. Do not reuse the tuning or
+limits as a plant design basis.
+
 ### Loop-tuning KPIs (ControllerPerformanceMetrics)
 
 `ControllerPerformanceMetrics`
@@ -525,7 +548,10 @@ with named-component transport requires `setOutletBoundaryFluid(externalFluid)` 
 `setAllowOutletPhaseBackflow(true)`; this explicitly owns reversed phase composition, density, and
 enthalpy. The last interior composition is not a valid inflow boundary. Treat the synthetic
 same-gas pressure-ramp regression as boundary-contract evidence only, not complete restart or
-evaporation-rate qualification. None of these numerical contracts establishes equivalence with a
+evaporation-rate qualification. When the physical outlet is a gas takeoff above retained liquid,
+use `setGasOnlyOutletTakeoff(true)` with a constant-pressure outlet; do not zero liquid inventories
+or manufacture a separator mixture. The mode closes external oil/water mass, component and
+advected-energy flux while preserving their traction and internal drainage. None of these numerical contracts establishes equivalence with a
 commercial transient multiphase simulator.
 
 ## TwoFluidPipe Regime-Transition Continuation
@@ -763,6 +789,30 @@ configuration fits a numerically verified or experimentally qualified evidence-m
 severe-slugging, slug-statistics, and boundary-composition cases to a separately qualified model or controlled
 experimental study.
 
+For closed or near-static terrain initialization, the interior pressure operator is analytically well balanced for a
+common mixture pressure: 90 flat/affine/curved, constant/smooth/alternating-density, 12--192-cell pure-gas/oil cases
+and a separate 45-case pure-water extension remain below `1e-10 m/s2` with exactly zero local mass and energy rates.
+Its signed energy correction is `Q * deltaP`
+with the mass donor and its diagnostic is transaction-safe. This is numerical fixed-point evidence only. Do not use it
+to qualify a two-density stationary pool, a moving interface, shutdown/restart, severe slugging, or pigging; those still
+require their separate evidence-matrix gates.
+
+For a gas/one-liquid circular section, the default-off
+`setStratifiedHydrostaticPressureMomentsEnabled(true)` option adds the phase-density pressure moments to internal and
+external momentum traction and the matching `Q * F / A` total-energy work with the mass donor. Exact phase endpoints,
+closed-domain force telescoping, signed flow, rollback and default-off restoration are covered by
+`StratifiedPressureMomentCouplingTest`. Simultaneous positive oil and water and diameter steps reject explicitly. This
+completes an operator prerequisite only; do not route it as evidence of elapsed pool retention, shutdown/cooldown,
+restart, severe slugging, hydraulic pigging or predictive evaporation.
+
+For phase appearance, retain both face fractions in
+`GeometryCalculator.calculateStratifiedPressureMomentsFromHoldups(gas, liquid, diameter)`.
+The minority-area inversion uses relative accuracy and algebraic reflection; do not pass the legacy
+general holdup-to-depth approximation into pressure work, where its absolute area cutoff distorts traces.
+The enabled historical 12/24-cell ramp currently stops at 0.25 s on the unchanged face-volume
+closure guard. Keep the executable coupling rejection record attached; instantaneous operator
+identities do not qualify full elapsed transient operation.
+
 1. **Always run steady state first**: Call `process.run()` before `runTransient()`
 2. **Timestep size**: Start with 1.0 s, reduce if oscillating (0.1-0.5 s)
 3. **Liquid-outlet level-controller direction**: use `setReverseActing(false)` so level up drives the outlet valve further open. Reverse acting on this configuration drives the loop the wrong way.
@@ -885,10 +935,73 @@ FlowRatioMeter rxn = new FlowRatioMeter("FR-1", recycleStream, feedStream,
 ```
 
 
-### Use one physical pressure-transmitter sample per control scan
+### Use one physical pressure-, temperature- or flow-transmitter sample per control scan
 
-For qualified controller or alarm studies, explicitly enable the concrete `PressureTransmitter` physical-step sampling
-mode and register the transmitter in the `ProcessSystem`. The process then samples once after events and field inputs
-and before equipment/controllers; controller, history and alarm consumers share that held value. Declare the physical
-scan interval, filter time constant, integer sample delay, noise basis and any sensor-fault rate. Direct reads and other
-instrument families retain legacy read-driven behavior until they receive separate qualification.
+For qualified controller or alarm studies, explicitly enable physical-step sampling on the concrete
+`PressureTransmitter`, `TemperatureTransmitter` or `VolumeFlowTransmitter` and register it in the `ProcessSystem`. The
+process samples once after events and field inputs and before equipment/controllers; controller, history and alarm
+consumers share that held value. For a flow loop, use for example `FT100.setUnit("kg/hr")` followed by
+`FT100.setTransientSamplingEnabled(true)`. Declare the physical scan interval, configured phase/unit, filter time
+constant, integer sample delay, noise basis and any sensor-fault rate. Flow conversions to `kg/hr`, `m^3/hr`,
+`Nm^3/day` and `Sm^3/day` are frozen at the sample instant. Direct pressure/temperature reads retain the legacy
+read-driven modifier path; direct flow reads remain raw. Treat a stuck or biased FT as a study failure mode, not an
+independent safeguard. Vendor dynamics, alarm/trip integrity, SIL, voting and independence remain external evidence.
+
+## Safety Shutdown forward acoustic pump boundary
+
+Use `AcousticPumpBoundary` with upstream `WaterHammerPipe.BoundaryType.PUMP`
+for a declared single-liquid forward curve and actual positive-speed table.
+Its constructor fits copied reference data through existing `PumpChart`, checks
+monotonicity/domain/units and preserves Java restart state. Configure before
+`run()`; changing the boundary requires explicit reinitialization. Actual-speed
+and valve-travel knots use the same pipe clock. Use an explicit empty
+`eventSchedule` for pump-only `WaterHammerStudy` JSON. Study output includes
+aligned speed/inlet-flow/inlet-pressure/hydraulic-work histories. Unsupported
+curve transitions return an error with last accepted state and internal outlet
+history, never a successful truncated trip.
+
+Follow the [physical inputs, equations, public example and limits](../../../docs/wiki/water_hammer_implementation.md#safety-shutdown-forward-pump-coastdown).
+Do not extrapolate clamped curves, turn stopped pumps into closed valves or
+claim a prescribed-speed adapter supplies shaft inertia, four-quadrant operation,
+check-valve disc/contact slam, NPSH/cavity physics, global rollback or integrated
+Safety Shutdown qualification. Existing canonical coordinator and ESD APIs own
+those integrations; do not create another scheduler or pressure-flow architecture.
+
+## Safety Shutdown ideal acoustic lift/contact handoff
+
+The experimental `AcousticLiftCheckValve` couples declared translating mechanics
+and signed jet/swept flow inside existing WaterHammerPipe substeps. Numerical
+inelastic contact and local Java restart do not qualify continuous impact/grazing
+timing, a full pump trip or global coordinator rollback. Keep the existing
+physical-step/event identities and ESD chain; no parallel scheduler or solver.
+Read the [acoustic model, accepted histories and public evidence](../../../docs/wiki/water_hammer_implementation.md#safety-shutdown-ideal-translating-check-valve)
+and hand specialist hydraulic cases to `neqsim-water-hammer`. Asset/vendor,
+phase-change, structural and integrated Safety Shutdown remain NOT_EVALUATED.
+
+
+### Cross-sectional gravitational energy budget
+
+Use the existing `GeometryCalculator.StratifiedPressureMoments` derived centre-referenced phase
+first moments [m3] and `getGravityPotentialEnergyPerLength(gasDensity, liquidDensity, normalGravity)`
+[J/m] for an explicit static normal-gravity budget. No solver state or serialized field is added.
+See [the executed analytical/high-precision energy record](../../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/README.md).
+This does not resolve the documented dry/wet pressure impulse or qualify dynamic pools, inlet refill
+or hydrocarbon evaporation; those still require conservative phase-front transport/work and heat/mass transfer.
+
+
+### Optional Rusanov phase-flux contract
+
+The default remains AUSM+. `AUSMPlusFluxCalculator.calcRusanovFlux` is an explicit local query,
+and `TwoFluidPipe.setRusanovInternalFluxEnabled(true)` selects the qualified two-donor operator on
+independent gas/oil/water internal faces after `setEnableWaterOilSlip(true)`.
+Its dissipated energy is `alpha * (rho * H - p)` with total specific enthalpy;
+exact absence ignores unused properties and positive traces retain the same formula.
+SRK gas/oil controls distinguish EOS-volume internal energy from physical-density mechanical
+energy using explicit pressure-volume work; do not mix these API conventions in a reference.
+See the [executed conservative-flux evidence](../../../src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/README.md).
+Forward and reverse donor streams remain separate through Runge-Kutta staging, pressure work and
+transactional component transport; their difference must reproduce the hydrodynamic net. The
+combined-liquid split, pressure interpolation, reconstructed slug faces and one-direction unsplit
+complementarity route reject this option. Apply a wave-speed Courant bound and inspect component,
+phase, total-energy and rollback reports.
+Do not use it as proof of dry/wet fronts, terrain pools, refill or physical evaporation.

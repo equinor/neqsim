@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -27,11 +29,20 @@ import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.equipment.util.Calculator;
+import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.tank.Tank;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.equipment.valve.CheckValve;
+import neqsim.process.equipment.valve.RuptureDisk;
+import neqsim.process.equipment.valve.SafetyValve;
+import neqsim.process.equipment.valve.SafetyReliefValve;
 import neqsim.process.processmodel.ProcessSystem;
 
 /** Writes the native object/property/reference serialization introduced by DEXPI 2.0. */
@@ -91,7 +102,7 @@ public final class Dexpi20XmlWriter {
       stream.close();
     }
     try {
-      Dexpi20XmlValidator.validate(file.toPath());
+      Dexpi20XmlValidator.validate(file.toPath(), options != null && options.isSpecification201());
       Dexpi20SemanticValidator.validateOrThrow(file.toPath());
     } catch (org.xml.sax.SAXException ex) {
       throw new IOException("Generated DEXPI 2.0 XML failed schema validation", ex);
@@ -132,7 +143,8 @@ public final class Dexpi20XmlWriter {
   public static Dexpi20ConformanceAssessment.Report writeAndAssess(ProcessSystem processSystem, File file,
       Dexpi20PlantExportOptions options) throws IOException {
     write(processSystem, file, options);
-    return Dexpi20ConformanceAssessment.assess(file.toPath(), Dexpi20ConformanceAssessment.Profile.PLANT_P_ID);
+    return Dexpi20ConformanceAssessment.assess(file.toPath(), Dexpi20ConformanceAssessment.Profile.PLANT_P_ID,
+        options.isSpecification201());
   }
 
   /** Writes a native DEXPI 2.0 model to a stream using the compatibility path. */
@@ -178,16 +190,18 @@ public final class Dexpi20XmlWriter {
       throw new IllegalArgumentException("processSystem and outputStream must not be null");
     }
     Dexpi20PlantExportMetadata metadata = options == null ? null : options.getMetadata();
+    boolean specification201 = options != null && options.isSpecification201();
     boolean explicitBoundaryConnectors = options != null && options
         .getBoundaryConnectionMode() == Dexpi20PlantExportOptions.BoundaryConnectionMode.EXPLICIT_OFF_PAGE_CONNECTORS;
     try {
       Document document = createDocument();
       Element model = document.createElement("Model");
       model.setAttribute("name", identifier(processSystem.getName(), "NeqSimProcess"));
-      model.setAttribute("uri", "urn:neqsim:dexpi:2.0:" + identifier(processSystem.getName(), "process"));
+      model.setAttribute("uri", "urn:neqsim:dexpi:" + (specification201 ? "2.0.1:" : "2.0:")
+          + identifier(processSystem.getName(), "process"));
       document.appendChild(model);
-      appendImport(document, model, "Core", CORE_MODEL);
-      appendImport(document, model, "Plant", PLANT_MODEL);
+      appendImport(document, model, "Core", specification201 ? Dexpi201XmlWriter.CORE_MODEL : CORE_MODEL);
+      appendImport(document, model, "Plant", specification201 ? Dexpi201XmlWriter.PLANT_MODEL : PLANT_MODEL);
 
       Element engineeringModel = object(document, null, "Core/EngineeringModel");
       model.appendChild(engineeringModel);
@@ -208,6 +222,9 @@ public final class Dexpi20XmlWriter {
       Element segments = components(document, pipingSystem, "Segments");
       pipingSystems.appendChild(pipingSystem);
 
+      Map<StreamInterface, StreamInterface> aliases = specification201 ? numericalAliases(processSystem)
+          : Collections.<StreamInterface, StreamInterface>emptyMap();
+      Map<String, List<String>> distinctInletNodes = new LinkedHashMap<String, List<String>>();
       Map<StreamInterface, String> outletNodes = new IdentityHashMap<StreamInterface, String>();
       Map<String, String> inletNodes = new LinkedHashMap<String, String>();
       Map<String, String> nodeOwners = new LinkedHashMap<String, String>();
@@ -215,31 +232,53 @@ public final class Dexpi20XmlWriter {
       int equipmentNumber = 1;
       int nodeNumber = 1;
       for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
-        if (unit == null || unit instanceof Stream) {
+        if (unit == null || unit instanceof Stream || specification201 && isNumericalHelper(unit)) {
           continue;
         }
         String equipmentId = "Equipment" + equipmentNumber++;
-        Element equipment = object(document, equipmentId, dexpiType(unit));
-        data(document, equipment, "TagName", unit.getName());
-        Element nozzles = components(document, equipment, "Nozzles");
+        String equipmentType = specification201 ? dexpi201Type(unit) : dexpiType(unit);
+        if (specification201 && "Plant/ProcessEquipment.ProcessEquipment".equals(equipmentType)) {
+          throw new IOException(
+              "No reviewed DEXPI 2.0.1 Plant mapping for " + unit.getClass().getName() + " (" + unit.getName() + ")");
+        }
+        Element equipment = object(document, equipmentId, equipmentType);
+        boolean pipingComponent = specification201 && (unit instanceof ThrottlingValve || unit instanceof Splitter);
+        data(document, equipment,
+            pipingComponent
+                ? ("Plant/Piping.SafetyValveOrFitting".equals(equipmentType)
+                    || "Plant/Piping.RuptureDisc".equals(equipmentType) ? "PositionNumber" : "PipingComponentNumber")
+                : "TagName",
+            unit.getName());
+        Element nozzles = components(document, equipment, pipingComponent ? "Nodes" : "Nozzles");
 
-        String inletNode = "PipingNode" + nodeNumber++;
-        String inletNozzleId = equipmentId + "Inlet";
-        appendNozzle(document, nozzles, inletNozzleId, inletNode, "INLET");
-        inletNodes.put(unit.getName(), inletNode);
-        nodeOwners.put(inletNode, inletNozzleId);
+        List<StreamInterface> actualInlets = unit.getInletStreams();
+        int inletCount = specification201 && actualInlets != null ? Math.max(1, actualInlets.size()) : 1;
+        List<String> unitInletNodes = new ArrayList<String>();
+        for (int inletIndex = 0; inletIndex < inletCount; inletIndex++) {
+          String inletNode = "PipingNode" + nodeNumber++;
+          String inletNozzleId = pipingComponent ? equipmentId
+              : equipmentId + "Inlet" + (inletIndex == 0 ? "" : Integer.toString(inletIndex + 1));
+          appendNozzle(document, nozzles, inletNozzleId, inletNode,
+              inletCount == 1 ? "INLET" : "INLET_" + (inletIndex + 1));
+          if (inletIndex == 0) {
+            inletNodes.put(unit.getName(), inletNode);
+          }
+          unitInletNodes.add(inletNode);
+          nodeOwners.put(inletNode, inletNozzleId);
+        }
+        distinctInletNodes.put(unit.getName(), unitInletNodes);
 
         List<StreamInterface> outlets = unit.getOutletStreams();
         if (outlets == null || outlets.isEmpty()) {
           String outletNode = "PipingNode" + nodeNumber++;
-          String outletNozzleId = equipmentId + "Outlet";
+          String outletNozzleId = pipingComponent ? equipmentId : equipmentId + "Outlet";
           appendNozzle(document, nozzles, outletNozzleId, outletNode, "OUTLET");
           nodeOwners.put(outletNode, outletNozzleId);
           boundaryOutletNodes.put(outletNode, unit.getName() + " product");
         } else {
           for (int i = 0; i < outlets.size(); i++) {
             String outletNode = "PipingNode" + nodeNumber++;
-            String outletNozzleId = equipmentId + "Outlet" + (i + 1);
+            String outletNozzleId = pipingComponent ? equipmentId : equipmentId + "Outlet" + (i + 1);
             appendNozzle(document, nozzles, outletNozzleId, outletNode, "OUTLET_" + (i + 1));
             nodeOwners.put(outletNode, outletNozzleId);
             if (outlets.get(i) != null) {
@@ -251,13 +290,19 @@ public final class Dexpi20XmlWriter {
             }
           }
         }
-        taggedItems.appendChild(equipment);
+        if (pipingComponent) {
+          Element valveSegment = object(document, "ValveSegment_" + equipmentId, "Plant/Piping.PipingNetworkSegment");
+          components(document, valveSegment, "Items").appendChild(equipment);
+          segments.appendChild(valveSegment);
+        } else {
+          taggedItems.appendChild(equipment);
+        }
       }
 
       int segmentNumber = 1;
       Set<String> connectedOutletNodes = new LinkedHashSet<String>();
       for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
-        if (unit == null || unit instanceof Stream) {
+        if (unit == null || unit instanceof Stream || specification201 && isNumericalHelper(unit)) {
           continue;
         }
         String targetNode = inletNodes.get(unit.getName());
@@ -266,8 +311,12 @@ public final class Dexpi20XmlWriter {
           appendBoundarySegment(document, segments, segmentNumber++, true, targetNode, nodeOwners.get(targetNode),
               unit.getName() + " feed");
         } else if (inlets != null) {
-          for (StreamInterface inlet : inlets) {
-            String sourceNode = outletNodes.get(inlet);
+          for (int inletIndex = 0; inletIndex < inlets.size(); inletIndex++) {
+            StreamInterface inlet = inlets.get(inletIndex);
+            if (specification201) {
+              targetNode = distinctInletNodes.get(unit.getName()).get(inletIndex);
+            }
+            String sourceNode = outletNodes.get(specification201 ? resolveAlias(inlet, aliases) : inlet);
             if (sourceNode == null || targetNode == null) {
               if (explicitBoundaryConnectors && targetNode != null) {
                 appendBoundarySegment(document, segments, segmentNumber++, true, targetNode, nodeOwners.get(targetNode),
@@ -275,7 +324,8 @@ public final class Dexpi20XmlWriter {
               }
               continue;
             }
-            appendSegment(document, segments, segmentNumber++, sourceNode, targetNode);
+            appendSegment(document, segments, segmentNumber++, sourceNode, targetNode, nodeOwners.get(sourceNode),
+                nodeOwners.get(targetNode));
             connectedOutletNodes.add(sourceNode);
           }
         }
@@ -289,10 +339,10 @@ public final class Dexpi20XmlWriter {
         }
       }
 
-      if (equipmentNumber == 1) {
+      if (equipmentNumber == 1 || specification201 && !taggedItems.hasChildNodes()) {
         plant.removeChild(taggedItems);
       }
-      if (segmentNumber == 1) {
+      if (segmentNumber == 1 && (!specification201 || !segments.hasChildNodes())) {
         plant.removeChild(pipingSystems);
       }
 
@@ -346,7 +396,7 @@ public final class Dexpi20XmlWriter {
     parent.appendChild(data);
   }
 
-  private static void appendEngineeringModelMetadata(Document document, Element engineeringModel,
+  static void appendEngineeringModelMetadata(Document document, Element engineeringModel,
       Dexpi20PlantExportMetadata metadata) {
     data(document, engineeringModel, "OriginatingSystemName", metadata.getOriginatingSystemName());
     data(document, engineeringModel, "OriginatingSystemVendorName", metadata.getOriginatingSystemVendorName());
@@ -373,7 +423,13 @@ public final class Dexpi20XmlWriter {
   }
 
   private static void appendNozzle(Document document, Element nozzles, String nozzleId, String nodeId, String subTag) {
-    Element nozzle = object(document, nozzleId, "Plant/ProcessEquipment.Nozzle");
+    if ("Nodes".equals(nozzles.getAttribute("property"))) {
+      nozzles.appendChild(object(document, nodeId, "Plant/Piping.PipingNode"));
+      return;
+    }
+    Element nozzle = object(document, nozzleId,
+        Dexpi201XmlWriter.isSpecification201(document) ? "Plant/ProcessEquipment.ProcessNozzle"
+            : "Plant/ProcessEquipment.Nozzle");
     Element nodes = components(document, nozzle, "Nodes");
     nodes.appendChild(object(document, nodeId, "Plant/Piping.PipingNode"));
     data(document, nozzle, "SubTagName", subTag);
@@ -414,10 +470,16 @@ public final class Dexpi20XmlWriter {
   }
 
   private static void appendSegment(Document document, Element segments, int number, String sourceNode,
-      String targetNode) {
+      String targetNode, String sourceItem, String targetItem) {
     Element segment = object(document, "PipingNetworkSegment" + number, "Plant/Piping.PipingNetworkSegment");
     Element connections = components(document, segment, "Connections");
     Element pipe = object(document, "Pipe" + number, "Plant/Piping.Pipe");
+    if (Dexpi201XmlWriter.isSpecification201(document)) {
+      references(document, pipe, "SourceItem", sourceItem);
+      references(document, pipe, "TargetItem", targetItem);
+      references(document, segment, "SourceItem", sourceItem);
+      references(document, segment, "TargetItem", targetItem);
+    }
     references(document, pipe, "SourceNode", sourceNode);
     references(document, pipe, "TargetNode", targetNode);
     connections.appendChild(pipe);
@@ -441,6 +503,117 @@ public final class Dexpi20XmlWriter {
     } catch (RuntimeException ex) {
       return fallback;
     }
+  }
+
+  /**
+   * Recognizes convergence/control utilities that have no physical equipment symbol.
+   *
+   * @param unit source simulation object
+   * @return whether the unit is numerical rather than physical
+   */
+  static boolean isNumericalHelper(ProcessEquipmentInterface unit) {
+    return unit instanceof Recycle || unit instanceof Calculator || unit instanceof Adjuster;
+  }
+
+  /**
+   * Builds stream-identity aliases without introducing physical recycle equipment.
+   *
+   * @param process source model
+   * @return directed aliases for single-stream tear utilities and stream wrappers
+   * @throws IOException when a recycle cannot be projected without inventing a mixer
+   */
+  static Map<StreamInterface, StreamInterface> numericalAliases(ProcessSystem process) throws IOException {
+    Map<StreamInterface, StreamInterface> result = new IdentityHashMap<StreamInterface, StreamInterface>();
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (unit instanceof Recycle || unit instanceof StreamInterface) {
+        List<StreamInterface> inlets = unit.getInletStreams();
+        List<StreamInterface> outlets = unit instanceof Recycle ? unit.getOutletStreams()
+            : Collections.<StreamInterface>emptyList();
+        if (unit instanceof Recycle) {
+          if (inlets == null || inlets.size() != 1 || outlets == null || outlets.size() != 1 || inlets.get(0) == null
+              || outlets.get(0) == null) {
+            throw new IOException(
+                "DEXPI 2.0.1 recycle projection requires one actual inlet and outlet: " + unit.getName());
+          }
+          putAlias(result, outlets.get(0), inlets.get(0));
+        } else if (inlets != null && inlets.size() == 1 && inlets.get(0) != null) {
+          putAlias(result, (StreamInterface) unit, inlets.get(0));
+        }
+      }
+    }
+    for (StreamInterface stream : result.keySet()) {
+      resolveAlias(stream, result);
+    }
+    return result;
+  }
+
+  /**
+   * Adds an unambiguous directed alias.
+   *
+   * @param aliases identity map
+   * @param target downstream stream identity
+   * @param source actual upstream stream identity
+   * @throws IOException when aliases conflict or refer directly to themselves
+   */
+  private static void putAlias(Map<StreamInterface, StreamInterface> aliases, StreamInterface target,
+      StreamInterface source) throws IOException {
+    if (target == source || aliases.containsKey(target) && aliases.get(target) != source) {
+      throw new IOException("Ambiguous or self-referential DEXPI 2.0.1 stream alias: " + target.getName());
+    }
+    aliases.put(target, source);
+  }
+
+  /**
+   * Resolves a tear/wrapper stream to its physical upstream identity.
+   *
+   * @param stream requested identity
+   * @param aliases directed identity aliases
+   * @return physical stream identity
+   * @throws IOException when alias chains form a cycle
+   */
+  private static StreamInterface resolveAlias(StreamInterface stream, Map<StreamInterface, StreamInterface> aliases)
+      throws IOException {
+    Set<StreamInterface> visited = Collections.newSetFromMap(new IdentityHashMap<StreamInterface, Boolean>());
+    StreamInterface current = stream;
+    while (aliases.containsKey(current)) {
+      if (!visited.add(current)) {
+        throw new IOException("Cyclic DEXPI 2.0.1 stream alias: " + current.getName());
+      }
+      current = aliases.get(current);
+    }
+    return current;
+  }
+
+  /**
+   * Maps functional valve families without inventing an unprovided body or spring design.
+   *
+   * @param unit source equipment
+   * @return official native 2.0.1 class
+   */
+  private static String dexpi201Type(ProcessEquipmentInterface unit) {
+    if (unit instanceof Mixer) {
+      return "Plant/ProcessEquipment.Mixer";
+    }
+    if (unit instanceof Splitter) {
+      List<StreamInterface> outlets = unit.getOutletStreams();
+      if (outlets == null || outlets.size() != 2) {
+        throw new IllegalArgumentException("DEXPI 2.0.1 PipeTee requires a two-outlet Splitter: " + unit.getName());
+      }
+      return "Plant/Piping.PipeTee";
+    }
+    if (unit instanceof RuptureDisk) {
+      return "Plant/Piping.RuptureDisc";
+    }
+    if (unit instanceof SafetyValve || unit instanceof SafetyReliefValve) {
+      return "Plant/Piping.SafetyValveOrFitting";
+    }
+    if (unit instanceof CheckValve) {
+      return "Plant/Piping.CheckValve";
+    }
+    if (unit instanceof ThrottlingValve) {
+      return "Plant/Piping.OperatedValve";
+    }
+    return dexpiType(unit);
   }
 
   private static String dexpiType(ProcessEquipmentInterface unit) {

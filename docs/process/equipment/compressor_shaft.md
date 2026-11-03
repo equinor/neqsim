@@ -110,6 +110,20 @@ process.run();          // shaft speed converges with the recycles in one run()
 double rpm = shaftCalc.getSpeed();
 ```
 
+For a bounded variable-speed operating study, switch the same calculator to manual speed input instead of creating a
+second shaft abstraction:
+
+```java
+shaftCalc.setFixedSpeedMode(true);
+process.getAutomation().setVariableValue("23-KA shaft speed.speed", 11799.0, "rpm");
+process.run();
+```
+
+In fixed-speed mode the selected speed is applied to every active body and is not moved toward `targetPressure`.
+Discharge pressure, casing power, surge/stonewall margin and driver utilization remain calculated outputs. A process
+boundary pressure constraint, the per-casing compressor-map evidence and the shaft/driver evidence must therefore gate
+each candidate; fixed-speed mode does not turn a pressure mismatch or an invalid map point into a feasible result.
+
 How it converges: higher speed raises discharge on a centrifugal map, so the
 calculator drives the reference outlet-pressure error to zero. The first pass (or
 a stalled secant) takes a proportional bump; subsequent passes take a secant step
@@ -391,6 +405,7 @@ and [Compressor Performance Curves](compressor_curves.md).
 <tr><th>Method</th><th>Purpose</th></tr>
 <tr><td><code>CompressorShaftCalculator(name, shaft, reference, targetP, unit)</code></td><td>Wire the calculator to a shaft; <code>reference == null</code> uses the last body added.</td></tr>
 <tr><td><code>setSpeedBounds(min, max)</code></td><td>Clamp the common-speed search (rpm).</td></tr>
+<tr><td><code>setFixedSpeedMode(boolean)</code> / <code>isFixedSpeedMode()</code></td><td>Hold an externally selected bounded common speed instead of solving it to the reference pressure target.</td></tr>
 <tr><td><code>setMaxStepFraction(fraction)</code></td><td>Max fractional speed change per internal pass (damping, e.g. 0.10).</td></tr>
 <tr><td><code>getSpeed()</code></td><td>Read the converged common shaft speed (rpm).</td></tr>
 <tr><td><code>getLastSolveResult()</code> / <code>isFeasible()</code></td><td>Feasibility result of the last pass (same <code>SolveResult</code> type as <code>CompressorShaft</code>).</td></tr>
@@ -410,7 +425,7 @@ and [Compressor Performance Curves](compressor_curves.md).
   (a VFD gives the converter speed range, a fixed-speed motor a narrow band around synchronous speed);
   `CompressorShaftCalculator` picks it up unless `setSpeedBounds` was called.
 - `CompressorShaftCalculator` and `PlatformPowerSystemUnit` implement `AutomationAddressable`, so
-  `ProcessAutomation` exposes them. Shaft: `<calc>.speed`, `targetPressure`, `ambientTemperature`, `maxShaftPower`,
+  `ProcessAutomation` exposes them. Shaft: `<calc>.speed`, `fixedSpeedMode`, `targetPressure`, `ambientTemperature`, `maxShaftPower`,
   `applyRecycle` (writable), `power`, `availablePower`, `powerUtilization`, `overPower`, `feasible`, `minSpeed`,
   `maxSpeed`, `recycleFractionMax`, and per member `<calc>.member.<tag>.speed|power|surgeMargin|stonewallMargin|
   recycleFraction|recyclePower|dischargeMargin` plus the writable `member.<tag>.active` and `gearRatio`.

@@ -139,6 +139,13 @@ label, the list of open gaps (unconfirmed basis items, unverified standards, NOT
 image-based drawing assessment, how to re-run (exact command), and the `results.json` block that was written. Mention
 limitations that matter for the audience (utilities, drivers, vessel sizes, control loops and unmodelled systems).
 
+## Flow-diagram gate (mandatory)
+
+Every BFD/PFD sheet must pass `@pfd-layout-review` before the report is issued: `neqsim process-report` writes
+`diagrams/layout_review/` (deterministic `neqsim pfd-check` of every sheet). Fix ERRORs (overlaps, label on line, line
+through box, missing arrowheads, tiny text) in the diagram inputs (`layout_overrides`, `pfd_sheets`, unit packing) and
+re-run; explain or fix every WARN; then view each sheet. Do not issue with a FAIL sheet.
+
 ## Rules
 
 1. The model is the only source of numbers; the basis is the only source of statements. No invented plant data.

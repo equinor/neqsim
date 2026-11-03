@@ -1,0 +1,136 @@
+[
+  {
+    "path": "DLE",
+    "errors": {
+      "volumeRelative": 1.0658141036401503e-13,
+      "compositionAbsolute": 2.0328183580886616e-13,
+      "inventoryAbsoluteMol": 1.0144662887512368e-13,
+      "closureMol": 4.163336342344337e-17
+    },
+    "rows": [
+      {
+        "pressureBara": 500.0,
+        "retainedMoles": [
+          0.7,
+          0.30000000000000004
+        ],
+        "withdrawnMoles": [
+          0.0,
+          0.0
+        ],
+        "volumeM3": 0.00010623642203996608
+      },
+      {
+        "pressureBara": 300.0,
+        "retainedMoles": [
+          0.7,
+          0.30000000000000004
+        ],
+        "withdrawnMoles": [
+          0.0,
+          0.0
+        ],
+        "volumeM3": 0.00011219550140053194
+      },
+      {
+        "pressureBara": 200.0,
+        "retainedMoles": [
+          0.3810151286208359,
+          0.29822184648488875
+        ],
+        "withdrawnMoles": [
+          0.31898487137916404,
+          0.0017781535151112817
+        ],
+        "volumeM3": 9.39667080230185e-05
+      },
+      {
+        "pressureBara": 100.0,
+        "retainedMoles": [
+          0.15612228260110073,
+          0.29793669820031304
+        ],
+        "withdrawnMoles": [
+          0.2248928460197352,
+          0.00028514828457571893
+        ],
+        "volumeM3": 8.10463128943868e-05
+      },
+      {
+        "pressureBara": 50.0,
+        "retainedMoles": [
+          0.0712654774472145,
+          0.29787912369937913
+        ],
+        "withdrawnMoles": [
+          0.08485680515388623,
+          5.7574500933897676e-05
+        ],
+        "volumeM3": 7.614040356959267e-05
+      }
+    ],
+    "scanPressureReference": true,
+    "dewPressureBara": null
+  },
+  {
+    "path": "CVD",
+    "errors": {
+      "volumeRelative": 4.831801625471144e-12,
+      "compositionAbsolute": 3.2529534621517087e-14,
+      "inventoryAbsoluteMol": 4.153344335122711e-12,
+      "closureMol": 5.551115123125783e-17
+    },
+    "rows": [
+      {
+        "pressureBara": 500.0,
+        "retainedMoles": [
+          0.95,
+          0.050000000000000044
+        ],
+        "withdrawnMoles": [
+          0.0,
+          0.0
+        ],
+        "volumeM3": 7.858393383590287e-05
+      },
+      {
+        "pressureBara": 300.0,
+        "retainedMoles": [
+          0.8273177269236935,
+          0.04637433382349548
+        ],
+        "withdrawnMoles": [
+          0.1226822730763064,
+          0.003625666176504568
+        ],
+        "volumeM3": 9.332061853278912e-05
+      },
+      {
+        "pressureBara": 200.0,
+        "retainedMoles": [
+          0.5787298700633745,
+          0.04328682367659302
+        ],
+        "withdrawnMoles": [
+          0.24858785686031903,
+          0.0030875101469024597
+        ],
+        "volumeM3": 9.332061853278912e-05
+      },
+      {
+        "pressureBara": 100.0,
+        "retainedMoles": [
+          0.2924947358944125,
+          0.041699146782887164
+        ],
+        "withdrawnMoles": [
+          0.286235134168962,
+          0.001587676893705858
+        ],
+        "volumeM3": 9.332061853278912e-05
+      }
+    ],
+    "scanPressureReference": true,
+    "dewPressureBara": 359.2450710350704
+  }
+]

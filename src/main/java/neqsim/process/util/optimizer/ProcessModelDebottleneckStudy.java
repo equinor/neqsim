@@ -1370,6 +1370,140 @@ public final class ProcessModelDebottleneckStudy {
     }
   }
 
+  /** Outcome of one transactional combined-capacity operating-envelope evaluation. */
+  public enum CombinedEnvelopeOutcome {
+    /** Every requested slice completed and all mutable state was restored. */
+    COMPLETED,
+    /** A direct installed-capacity alternative could not be resolved or applied exactly. */
+    ALTERNATIVE_NOT_APPLICABLE,
+    /** At least one relieved slice did not complete with safe point-level recovery. */
+    SLICE_FAILED,
+    /** Installed-capacity or process-state recovery was incomplete. */
+    RESTORATION_FAILED
+  }
+
+  /**
+   * Immutable result of evaluating exact baseline slice definitions under one combined capacity configuration.
+   *
+   * <p>
+   * Baseline slices are retained as immutable templates and are never resampled. Relieved slices use the same exact
+   * study, axes, grids, and anchors while all declared capacity alternatives are active together. The result is
+   * qualified only after reverse-order capacity restoration and process reconvergence.
+   * </p>
+   *
+   * @author NeqSim Development Team
+   * @version 1.0
+   */
+  public static final class CombinedEnvelopeResult implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final String studyId;
+    private final String envelopeStudyId;
+    private final CombinedEnvelopeOutcome outcome;
+    private final List<ProcessModelOperatingEnvelopeStudy.SliceResult> baselineSlices;
+    private final List<ProcessModelOperatingEnvelopeStudy.SliceResult> relievedSlices;
+    private final List<CapacityState> originalCapacityStates;
+    private final List<CapacityState> appliedCapacityStates;
+    private final boolean capacityRestored;
+    private final boolean processStateRestored;
+    private final boolean recoverySimulationConverged;
+    private final List<String> diagnostics;
+    private final transient ProcessModelDebottleneckStudy sourceStudy;
+    private final transient ProcessModelOperatingEnvelopeStudy sourceEnvelopeStudy;
+
+    /** Creates one immutable combined-envelope result. */
+    private CombinedEnvelopeResult(String studyId, String envelopeStudyId, CombinedEnvelopeOutcome outcome,
+        List<ProcessModelOperatingEnvelopeStudy.SliceResult> baselineSlices,
+        List<ProcessModelOperatingEnvelopeStudy.SliceResult> relievedSlices, List<CapacityState> originalCapacityStates,
+        List<CapacityState> appliedCapacityStates, boolean capacityRestored, boolean processStateRestored,
+        boolean recoverySimulationConverged, List<String> diagnostics, ProcessModelDebottleneckStudy sourceStudy,
+        ProcessModelOperatingEnvelopeStudy sourceEnvelopeStudy) {
+      this.studyId = studyId;
+      this.envelopeStudyId = envelopeStudyId;
+      this.outcome = outcome;
+      this.baselineSlices = immutableList(baselineSlices);
+      this.relievedSlices = immutableList(relievedSlices);
+      this.originalCapacityStates = immutableList(originalCapacityStates);
+      this.appliedCapacityStates = immutableList(appliedCapacityStates);
+      this.capacityRestored = capacityRestored;
+      this.processStateRestored = processStateRestored;
+      this.recoverySimulationConverged = recoverySimulationConverged;
+      this.diagnostics = immutableStrings(diagnostics);
+      this.sourceStudy = sourceStudy;
+      this.sourceEnvelopeStudy = sourceEnvelopeStudy;
+    }
+
+    /** @return combination-study identifier */
+    public String getStudyId() {
+      return studyId;
+    }
+
+    /** @return operating-envelope study identifier */
+    public String getEnvelopeStudyId() {
+      return envelopeStudyId;
+    }
+
+    /** @return terminal combined-envelope outcome */
+    public CombinedEnvelopeOutcome getOutcome() {
+      return outcome;
+    }
+
+    /** @return immutable exact baseline slice templates */
+    public List<ProcessModelOperatingEnvelopeStudy.SliceResult> getBaselineSlices() {
+      return immutableList(baselineSlices);
+    }
+
+    /** @return immutable jointly relieved slices */
+    public List<ProcessModelOperatingEnvelopeStudy.SliceResult> getRelievedSlices() {
+      return immutableList(relievedSlices);
+    }
+
+    /** @return immutable original installed-capacity states */
+    public List<CapacityState> getOriginalCapacityStates() {
+      return immutableList(originalCapacityStates);
+    }
+
+    /** @return immutable applied installed-capacity states */
+    public List<CapacityState> getAppliedCapacityStates() {
+      return immutableList(appliedCapacityStates);
+    }
+
+    /** @return true when every capacity state was restored exactly */
+    public boolean isCapacityRestored() {
+      return capacityRestored;
+    }
+
+    /** @return true when the pre-evaluation process state was restored */
+    public boolean isProcessStateRestored() {
+      return processStateRestored;
+    }
+
+    /** @return true when the final recovery simulation converged */
+    public boolean isRecoverySimulationConverged() {
+      return recoverySimulationConverged;
+    }
+
+    /** @return true only for a complete, exactly restored evaluation */
+    public boolean isQualified() {
+      return outcome == CombinedEnvelopeOutcome.COMPLETED && capacityRestored && processStateRestored
+          && recoverySimulationConverged && baselineSlices.size() == relievedSlices.size();
+    }
+
+    /** @return immutable diagnostics */
+    public List<String> getDiagnostics() {
+      return immutableStrings(diagnostics);
+    }
+
+    /** @return exact runtime combination study, or null after serialization */
+    ProcessModelDebottleneckStudy getSourceStudy() {
+      return sourceStudy;
+    }
+
+    /** @return exact runtime envelope study, or null after serialization */
+    ProcessModelOperatingEnvelopeStudy getSourceEnvelopeStudy() {
+      return sourceEnvelopeStudy;
+    }
+  }
+
   /** Internal resolved direct installed constraint. */
   private static final class CapacityTarget {
     private final CapacityAlternative alternative;
@@ -1599,6 +1733,128 @@ public final class ProcessModelDebottleneckStudy {
   /** @return fresh immutable metric definitions in registration order */
   public List<MetricDefinition> getMetrics() {
     return Collections.unmodifiableList(new ArrayList<MetricDefinition>(metrics));
+  }
+
+  /**
+   * Evaluates exact completed baseline slice definitions while all declared capacity alternatives are active together.
+   *
+   * <p>
+   * This method is available only for the transactional operating-action mode and requires the exact envelope study
+   * backed by the same evaluator. Alternatives are applied in declaration order, each slice is re-evaluated with its
+   * original axes, grid and anchor, and installed states are restored and verified in reverse declaration order. A
+   * partial, unconverged, non-finite, foreign, deserialized, or stale baseline slice fails before mutation. A relieved
+   * slice that cannot restore its action baseline stops further sampling, after which capacity and process recovery are
+   * still attempted.
+   * </p>
+   *
+   * @param envelopeStudy exact runtime operating-envelope study
+   * @param baselineSlices one or more complete exact-runtime baseline slices
+   * @return immutable paired baseline/relieved slice result
+   */
+  public CombinedEnvelopeResult evaluateCombinedEnvelope(ProcessModelOperatingEnvelopeStudy envelopeStudy,
+      ProcessModelOperatingEnvelopeStudy.SliceResult... baselineSlices) {
+    if (operatingActionEvaluator == null) {
+      throw new IllegalStateException("Combined envelope evaluation requires the transactional action evaluator");
+    }
+    if (envelopeStudy == null || envelopeStudy.getCandidateEvaluator() != operatingActionEvaluator) {
+      throw new IllegalArgumentException("Envelope study must use the exact combination-study evaluator");
+    }
+    List<ProcessModelOperatingEnvelopeStudy.SliceResult> templates = envelopeStudy
+        .validateCombinedReliefTemplates(baselineSlices);
+    ProcessModel model = operatingActionEvaluator.getSimulationEvaluator().getProcessModel();
+    List<String> diagnostics = new ArrayList<String>();
+    diagnostics.add("Relieved slices reuse exact baseline axes, grids, anchors, evaluator and refinement policy");
+    diagnostics.add("Capacity alternatives are applied together; no independent relief delta is treated as additive");
+    List<CapacityTarget> targets = new ArrayList<CapacityTarget>();
+    try {
+      for (CapacityAlternative capacityAlternative : alternatives) {
+        targets.add(resolveTarget(model, capacityAlternative));
+      }
+    } catch (RuntimeException exception) {
+      diagnostics.add(safeText(exception.getMessage()));
+      return combinedEnvelopeResult(envelopeStudy, CombinedEnvelopeOutcome.ALTERNATIVE_NOT_APPLICABLE, templates,
+          Collections.<ProcessModelOperatingEnvelopeStudy.SliceResult>emptyList(),
+          Collections.<CapacityState>emptyList(), Collections.<CapacityState>emptyList(), false, false, false,
+          diagnostics);
+    }
+
+    List<CapacityState> originalStates = new ArrayList<CapacityState>();
+    for (CapacityTarget target : targets) {
+      originalStates.add(new CapacityState(target.constraint));
+    }
+    List<CapacityState> appliedStates = new ArrayList<CapacityState>();
+    List<ProcessModelOperatingEnvelopeStudy.SliceResult> relievedSlices = new ArrayList<ProcessModelOperatingEnvelopeStudy.SliceResult>();
+    CombinedEnvelopeOutcome provisionalOutcome = CombinedEnvelopeOutcome.COMPLETED;
+    boolean capacityRestored = false;
+    boolean processStateRestored = false;
+    boolean recoveryConverged = false;
+    try {
+      for (CapacityTarget target : targets) {
+        applyAlternative(target.constraint, target.alternative);
+        appliedStates.add(new CapacityState(target.constraint));
+      }
+      for (ProcessModelOperatingEnvelopeStudy.SliceResult template : templates) {
+        ProcessModelOperatingEnvelopeStudy.SliceResult relieved = envelopeStudy.evaluateMatchingSlice(template);
+        relievedSlices.add(relieved);
+        if (!relieved.isComplete()) {
+          provisionalOutcome = CombinedEnvelopeOutcome.SLICE_FAILED;
+          diagnostics.add("Stopped after an incomplete relieved slice: " + template.getId());
+          break;
+        }
+      }
+    } catch (RuntimeException exception) {
+      provisionalOutcome = appliedStates.size() == alternatives.size() ? CombinedEnvelopeOutcome.SLICE_FAILED
+          : CombinedEnvelopeOutcome.ALTERNATIVE_NOT_APPLICABLE;
+      diagnostics.add("Combined envelope execution failed: " + safeText(exception.getMessage()));
+    } finally {
+      capacityRestored = true;
+      for (int index = targets.size() - 1; index >= 0; index--) {
+        try {
+          CapacityTarget target = targets.get(index);
+          CapacityState originalState = originalStates.get(index);
+          restoreConstraint(target.constraint, originalState);
+          if (!statesEqual(originalState, new CapacityState(target.constraint))) {
+            capacityRestored = false;
+            diagnostics.add("Installed-capacity restoration verification failed: "
+                + target.alternative.getQualifiedConstraintName());
+          }
+        } catch (RuntimeException exception) {
+          capacityRestored = false;
+          diagnostics.add("Installed-capacity restoration failed: " + safeText(exception.getMessage()));
+        }
+      }
+      try {
+        model.run();
+        recoveryConverged = model.isModelConverged();
+        processStateRestored = recoveryConverged && relievedSlices.size() == templates.size();
+        for (ProcessModelOperatingEnvelopeStudy.SliceResult relieved : relievedSlices) {
+          processStateRestored = processStateRestored && relieved.isComplete();
+        }
+      } catch (RuntimeException exception) {
+        diagnostics.add("Combined envelope process-state recovery failed: " + safeText(exception.getMessage()));
+      }
+    }
+    CombinedEnvelopeOutcome outcome = capacityRestored && processStateRestored && recoveryConverged ? provisionalOutcome
+        : CombinedEnvelopeOutcome.RESTORATION_FAILED;
+    if (capacityRestored) {
+      diagnostics.add("Every installed-capacity state was restored and verified in reverse declaration order");
+    }
+    if (processStateRestored && recoveryConverged) {
+      diagnostics.add("Every relieved slice and the final restored-capacity process model recovered safely");
+    }
+    return combinedEnvelopeResult(envelopeStudy, outcome, templates, relievedSlices, originalStates, appliedStates,
+        capacityRestored, processStateRestored, recoveryConverged, diagnostics);
+  }
+
+  /** Builds one immutable combined-envelope result. */
+  private CombinedEnvelopeResult combinedEnvelopeResult(ProcessModelOperatingEnvelopeStudy envelopeStudy,
+      CombinedEnvelopeOutcome outcome, List<ProcessModelOperatingEnvelopeStudy.SliceResult> baselineSlices,
+      List<ProcessModelOperatingEnvelopeStudy.SliceResult> relievedSlices, List<CapacityState> originalStates,
+      List<CapacityState> appliedStates, boolean capacityRestored, boolean processStateRestored,
+      boolean recoveryConverged, List<String> diagnostics) {
+    return new CombinedEnvelopeResult(id, envelopeStudy.getId(), outcome, baselineSlices, relievedSlices,
+        originalStates, appliedStates, capacityRestored, processStateRestored, recoveryConverged, diagnostics, this,
+        envelopeStudy);
   }
 
   /** Executes the paired study and always attempts exact installed/process-state recovery. */

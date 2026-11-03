@@ -1,0 +1,17 @@
+{
+  "cells": 24,
+  "warmup_per_mode": 1500,
+  "repetitions_per_sample": 1000,
+  "samples_per_mode": 9,
+  "scope": "RHS only; observational, no complete-timestep speed claim",
+  "enabled_false_ns": {
+    "minimum": 220379.02,
+    "median": 258351.746,
+    "maximum": 316431.093
+  },
+  "enabled_true_ns": {
+    "minimum": 237795.917,
+    "median": 292734.591,
+    "maximum": 342149.098
+  }
+}

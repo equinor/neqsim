@@ -158,3 +158,6 @@ benchmark_results.txt
 
 # Local pip HTTP cache (may hold authenticated download responses)
 /pip/
+
+# Local OTS SDK authentication cache (credentials)
+/ots_sdk_auth.json

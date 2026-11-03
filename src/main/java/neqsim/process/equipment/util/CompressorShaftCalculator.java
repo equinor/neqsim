@@ -122,6 +122,9 @@ public class CompressorShaftCalculator extends Calculator
   /** Current common shaft speed in rpm. */
   private double speed = 10000.0;
 
+  /** True when the common speed is an externally selected operating input instead of a pressure-control output. */
+  private boolean fixedSpeedMode = false;
+
   /** Previous speed (for the secant step). */
   private double prevSpeed = Double.NaN;
 
@@ -307,6 +310,37 @@ public class CompressorShaftCalculator extends Calculator
   }
 
   /**
+   * Select whether the calculator holds an externally supplied common speed instead of solving speed to the reference
+   * discharge-pressure target.
+   *
+   * <p>
+   * Fixed-speed mode is intended for bounded variable-speed operating studies. The compressor bodies remain in common
+   * fixed-speed chart-forward mode, while discharge pressure, power and map margins remain calculated results. The
+   * default is {@code false}, preserving pressure-target speed control.
+   * </p>
+   *
+   * @param fixedSpeedMode {@code true} to hold the current common speed; {@code false} to solve speed to target
+   * pressure
+   */
+  public void setFixedSpeedMode(boolean fixedSpeedMode) {
+    this.fixedSpeedMode = fixedSpeedMode;
+    this.prevSpeed = Double.NaN;
+    this.prevError = Double.NaN;
+    if (fixedSpeedMode) {
+      applySpeed();
+    }
+  }
+
+  /**
+   * Check whether the common speed is currently an externally supplied operating input.
+   *
+   * @return {@code true} in fixed-speed mode
+   */
+  public boolean isFixedSpeedMode() {
+    return fixedSpeedMode;
+  }
+
+  /**
    * Set the pressure-control action used when the requested pressure is below what the string makes at minimum speed.
    *
    * @param control the pressure-control action (must not be {@code null})
@@ -387,6 +421,17 @@ public class CompressorShaftCalculator extends Calculator
       minSpeed = shaft.getMinSpeed();
       maxSpeed = shaft.getMaxSpeed();
     }
+    if (fixedSpeedMode) {
+      applySpeed();
+      for (Compressor compressor : bodies) {
+        if (shaft == null || shaft.isMemberActive(compressor)) {
+          compressor.run(id);
+        }
+      }
+      updateFixedSpeedFeasibility();
+      setCalculationIdentifier(id);
+      return;
+    }
     double pout = reference.getOutletStream().getPressure(pressureUnit);
     double error = pout - targetPressure; // drive to zero
     double newSpeed;
@@ -420,6 +465,27 @@ public class CompressorShaftCalculator extends Calculator
     applySpeed();
     updateFeasibility();
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Store the feasibility of one externally selected common-speed operating point.
+   *
+   * <p>
+   * Discharge pressure is deliberately not classified against {@link #targetPressure} here because it is a calculated
+   * result in fixed-speed mode. Process-level export-pressure constraints and each member's chart evidence remain the
+   * authoritative feasibility gates. The shared driver limit is still enforced directly.
+   * </p>
+   */
+  private void updateFixedSpeedFeasibility() {
+    double pout = reference.getOutletStream().getPressure(pressureUnit);
+    if (shaft != null && shaft.isOverPower()) {
+      lastResult = new CompressorShaft.SolveResult(false, CompressorShaft.SolveStatus.OVER_POWER, targetPressure, pout,
+          Double.NaN, Double.NaN, speed, pressureUnit, String.format("shaft draws %.0f kW of %.0f kW installed",
+              shaft.getRequiredDriverPower("kW"), shaft.getAvailableShaftPower("kW")));
+      return;
+    }
+    lastResult = new CompressorShaft.SolveResult(true, CompressorShaft.SolveStatus.FEASIBLE, targetPressure, pout,
+        Double.NaN, Double.NaN, speed, pressureUnit, "fixed common-speed operating point evaluated");
   }
 
   /**
@@ -470,7 +536,10 @@ public class CompressorShaftCalculator extends Calculator
     List<SimulationVariable> vars = new ArrayList<SimulationVariable>();
     String p = unitAddress + ".";
     vars.add(new SimulationVariable(p + "speed", "speed", VariableType.INPUT, "rpm", "Common shaft speed")
-        .withBounds(Double.valueOf(0.0), null));
+        .withBounds(Double.valueOf(minSpeed), Double.valueOf(maxSpeed)));
+    vars.add(new SimulationVariable(p + "fixedSpeedMode", "fixedSpeedMode", VariableType.INPUT, "-",
+        "Hold the externally selected common speed (1) or solve speed to target pressure (0)")
+        .withBounds(Double.valueOf(0.0), Double.valueOf(1.0)));
     vars.add(new SimulationVariable(p + "targetPressure", "targetPressure", VariableType.INPUT, pressureUnit,
         "Controlled discharge pressure of the reference body").withBounds(Double.valueOf(0.0), null));
     vars.add(new SimulationVariable(p + "ambientTemperature", "ambientTemperature", VariableType.INPUT, "C",
@@ -521,6 +590,8 @@ public class CompressorShaftCalculator extends Calculator
     switch (property) {
     case "speed":
       return shaft.getSpeed();
+    case "fixedSpeedMode":
+      return fixedSpeedMode ? 1.0 : 0.0;
     case "targetPressure":
       return targetPressure;
     case "ambientTemperature":
@@ -638,6 +709,12 @@ public class CompressorShaftCalculator extends Calculator
       prevSpeed = Double.NaN;
       prevError = Double.NaN;
       applySpeed();
+      break;
+    case "fixedSpeedMode":
+      if (Math.abs(value) > 1.0e-9 && Math.abs(value - 1.0) > 1.0e-9) {
+        throw new IllegalArgumentException("fixed-speed mode must be 0 or 1");
+      }
+      setFixedSpeedMode(value > 0.5);
       break;
     case "targetPressure":
       if (!(value > 0.0)) {

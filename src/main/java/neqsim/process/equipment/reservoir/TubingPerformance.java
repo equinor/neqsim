@@ -538,13 +538,14 @@ public class TubingPerformance extends TwoPortEquipment {
       A = 100.0; // Default relaxation distance for low flow
     }
 
-    // Ramey temperature profile
-    // T(z) = Tf(z) - gG*A + [Tbh - Tf(L) + gG*A] * exp(-(L-z)/A)
+    // Ramey temperature profile for upward flow, z = depth from surface:
+    // T(z) = Tf(z) + gG*A + [Tbh - Tf(L) - gG*A] * exp(-(L-z)/A)
+    // High-rate limit (A -> infinity): T(z) -> Tbh, i.e. no heat loss.
     double gG = geothermalGradient;
     double L = tubingLength;
     double TfL = Ts + gG * L; // Formation temp at BH
 
-    double T = Tf - gG * A + (bhTemp - TfL + gG * A) * Math.exp(-(L - depth) / A);
+    double T = Tf + gG * A + (bhTemp - TfL - gG * A) * Math.exp(-(L - depth) / A);
 
     return T;
   }

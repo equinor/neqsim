@@ -14,6 +14,7 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
@@ -53,6 +54,41 @@ public class ControlInstrumentationPidSynthesisTest extends NeqSimTest {
     assertFalse(separatorPressure.getRequirementIds().isEmpty());
     assertTrue(
         separatorPressure.getStandardReferences().stream().anyMatch(reference -> reference.contains("IEC 62424")));
+
+    Separator separator = (Separator) project.getProcessSystem().getUnit("20-VG-001");
+    assertEquals(separator.getLiquidOutStream().getName(),
+        findByPurpose(model, "LEVEL-CONTROL-VALVE", "20-VG-001").getLineTag());
+    assertEquals(separator.getGasOutStream().getName(),
+        findByPurpose(model, "PRESSURE-CONTROL-VALVE", "20-VG-001").getLineTag());
+  }
+
+  /** Verifies distinct gas, oil and water paths and vessel-mounted interface measurement. */
+  @Test
+  void separatesThreePhaseOutletControlsAndInterfaceSensing() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 40.0);
+    fluid.addComponent("methane", 0.8);
+    fluid.addComponent("n-heptane", 0.1);
+    fluid.addComponent("water", 0.1);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("feed", fluid);
+    ThreePhaseSeparator separator = new ThreePhaseSeparator("three-phase-separator", feed);
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(separator);
+    EngineeringProject project = NorsokOffshoreEngineeringBuilder.from("Three-phase control proposals", process)
+        .projectId("THREE-PHASE-PID").registerProposedInstruments(false).build();
+    PidDesignModel model = PidDesignSynthesizer.synthesize(project, new PidDesignBasis("THREE-PHASE", "20"),
+        NorsokPidRuleCatalog.controlAndInstrumentation());
+    PidElement oilValve = findByPurpose(model, "LEVEL-CONTROL-VALVE", separator.getName());
+    PidElement waterValve = findByPurpose(model, "INTERFACE-LEVEL-CONTROL-VALVE", separator.getName());
+    PidElement sensor = findByPurpose(model, "INTERFACE-LEVEL-MEASUREMENT", separator.getName());
+    assertEquals(separator.getOilOutStream().getName(), oilValve.getLineTag());
+    assertEquals(separator.getWaterOutStream().getName(), waterValve.getLineTag());
+    assertEquals("INTERFACE_LEVEL", sensor.getAttributes().get("measuredVariable"));
+    assertEquals("VESSEL", sensor.getAttributes().get("sensingLocation"));
+    PidElement controller = findByPurpose(model, "INTERFACE-LEVEL-CONTROLLER", separator.getName());
+    assertTrue(sensor.getConnectedElementIds().contains(controller.getId()));
+    assertTrue(controller.getConnectedElementIds().contains(waterValve.getId()));
   }
 
   private static PidElement findByFunction(PidDesignModel model, String function) {

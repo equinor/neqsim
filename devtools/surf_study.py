@@ -92,6 +92,9 @@ def build_model_stage(spec, model, out_dir, jp, say):
         domains = {}
         for dom in ("production", "injection"):
             plan = surf_model.build_plan(spec, model, cid, design_case, dom)
+            if not any(o["op"] == "node" for o in plan[1:]):
+                say("model %s/%s: service absent in this study, skipped" % (cid, dom))
+                continue
             with open(os.path.join(mdir, "plans", "%s_%s_%s.json" % (cid, design_case, dom)), "w", encoding="utf-8") as fh:
                 json.dump(plan, fh, indent=1)
             surf_model.emit_python(plan, spec, cid, design_case, os.path.join(mdir, "builders", "build_%s_%s.py" % (cid, dom)))

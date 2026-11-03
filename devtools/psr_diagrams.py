@@ -440,7 +440,7 @@ class _Sym:
     def extra_width(self):
         """Width (mm) of the text used by the utility / driver interface."""
         if self.extra == "power":
-            return max(text_w("driver (not modelled)", DESC_FS), 2 * 3.3 + text_w("shaft power", DESC_FS))
+            return max(text_w("driver (not modelled)", DESC_FS), 2 * (3.3 + text_w("shaft power", DESC_FS)))
         if self.extra:
             return text_w(self.extra, DESC_FS) + 1.0
         return 0.0
@@ -455,9 +455,10 @@ class _Sym:
             top = cy + self.edge_below(0.0)
             e.append(_dashed_poly([(cx, top), (cx, b + 3.6)]))
             e.append(_circle(cx, b + 5.4, 1.8))
-            e.append(_text(cx, b + 6.1, "W", 1.9, "middle", bold=True))
-            e.append(_text(cx + 3.3, b + 6.0, "shaft power", DESC_FS, "start", fill=GREY))
-            e.append(_text(cx, b + 9.8, "driver (not modelled)", DESC_FS, "middle", fill=GREY, italic=True))
+            external = ' data-layout-kind="outside"'
+            e.append(_text(cx, b + 6.1, "W", 1.9, "middle", bold=True, extra=external))
+            e.append(_text(cx + 3.3, b + 6.0, "shaft power", DESC_FS, "start", fill=GREY, extra=external))
+            e.append(_text(cx, b + 9.8, "driver (not modelled)", DESC_FS, "middle", fill=GREY, italic=True, extra=external))
             wd = self.extra_width()
             return e, (cx - wd / 2, b, cx + wd / 2, b + 10.5)
         dx = min(self.w * 0.22, 3.6)
@@ -469,7 +470,8 @@ class _Sym:
                 e.append(_arrowhead(sx, y0, 0, -1, 1.7, 1.2))
             else:
                 e.append(_arrowhead(sx, y1, 0, 1, 1.7, 1.2))
-        e.append(_text(cx, b + 8.5, self.extra, DESC_FS, "middle", fill=GREY, italic=True))
+        e.append(_text(cx, b + 8.5, self.extra, DESC_FS, "middle", fill=GREY, italic=True,
+                       extra=' data-layout-kind="outside"'))
         wd = self.extra_width()
         return e, (cx - wd / 2, b, cx + wd / 2, b + 9.2)
 
@@ -2756,9 +2758,13 @@ def _main_tags(model, tags):
 
 def _block_node(model, bi, blk):
     tags = blk["tags"]
-    main = _main_tags(model, tags)[:4]
-    more = len(tags) - len(main)
-    txt = ", ".join(main) + (" +%d more" % more if more > 0 else "")
+    ranked = _main_tags(model, tags)
+    for n_main in (4, 3, 2, 1):        # show as many main tags as fit in four lines (long tags are listed in the equipment register)
+        main = ranked[:n_main]
+        more = len(tags) - len(main)
+        txt = ", ".join(main) + (" +%d more" % more if more > 0 else "")
+        if len(_wrap(txt, 2.1, BOX_W - 4.0, max_lines=99)) <= 4:
+            break
     name_lines = _wrap(blk["name"][:1].upper() + blk["name"][1:], 3.0, BOX_W - 4.0, bold=True, max_lines=2)
     tag_lines = _wrap(txt, 2.1, BOX_W - 4.0, max_lines=4)
     desc_lines = _wrap(blk.get("description") or "", 2.0, BOX_W - 4.0, max_lines=2) if blk.get("description") else []
@@ -3206,4 +3212,3 @@ class kit:  # noqa: N801 - namespace of stable aliases for the sheet primitives
     to_pdf = staticmethod(_svgs_to_pdf)
     write_text = staticmethod(_write)
     safe_name = staticmethod(_safe_name)
-

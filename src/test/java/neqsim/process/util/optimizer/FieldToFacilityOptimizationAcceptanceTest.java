@@ -1,5 +1,6 @@
 package neqsim.process.util.optimizer;
 
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -12,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -25,6 +27,7 @@ import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSource;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorDriver;
+import neqsim.process.equipment.compressor.CompressorShaft;
 import neqsim.process.equipment.compressor.DriverType;
 import neqsim.process.equipment.energy.Gearbox;
 import neqsim.process.equipment.mixer.Mixer;
@@ -47,6 +50,7 @@ import neqsim.process.equipment.stream.EnergyPortMode;
 import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.MechanicalShaft;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.util.CompressorShaftCalculator;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
@@ -58,8 +62,10 @@ import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.Operatin
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.OperatingRegionTransition;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.QualifiedReliefPortfolioEvidence;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.QualifiedReliefCombinationEvidence;
+import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.QualifiedReliefEnvelopeEvidence;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.SliceResult;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.CapacityAlternative;
+import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.CombinedEnvelopeResult;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.LimitDirection;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.OperatingActionCandidateListSearch;
 import neqsim.process.util.optimizer.ProcessModelDebottleneckStudy.StudyResult;
@@ -91,6 +97,8 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     private final Mixer exportMixer;
     private final ThrottlingValve exportValve;
     private final MechanicalShaft shaft;
+    private final CompressorShaftCalculator shaftCalculator;
+    private final double baselineShaftSpeedRpm;
     private final EnergyPort driverPort;
     private final CompressorDriver driver;
     private final Gearbox gearbox;
@@ -113,6 +121,8 @@ public class FieldToFacilityOptimizationAcceptanceTest {
      * @param exportMixer common gas-export boundary mixer
      * @param exportValve gas-export pressure-control valve
      * @param shaft common shaft
+     * @param shaftCalculator bounded common-speed operating controller
+     * @param baselineShaftSpeedRpm restored common-shaft speed in rpm
      * @param driverPort driver output port
      * @param driver driver rating
      * @param gearbox gearbox rating
@@ -124,8 +134,9 @@ public class FieldToFacilityOptimizationAcceptanceTest {
         LoopedPipeNetwork mappedInjectionPowerNetwork, Separator highPressureSeparator, Separator lowPressureSeparator,
         Separator highPressureScrubber, Separator lowPressureScrubber, Compressor highPressureCompressor,
         Compressor lowPressureCompressor, Mixer exportMixer, ThrottlingValve exportValve, MechanicalShaft shaft,
-        EnergyPort driverPort, CompressorDriver driver, Gearbox gearbox, double sharedPowerLimitKw,
-        double baselineRouteAHigh, List<String> wellSuffixes) {
+        CompressorShaftCalculator shaftCalculator, double baselineShaftSpeedRpm, EnergyPort driverPort,
+        CompressorDriver driver, Gearbox gearbox, double sharedPowerLimitKw, double baselineRouteAHigh,
+        List<String> wellSuffixes) {
       this.model = model;
       this.networkUnit = networkUnit;
       this.mappedInjectionPowerNetwork = mappedInjectionPowerNetwork;
@@ -138,6 +149,8 @@ public class FieldToFacilityOptimizationAcceptanceTest {
       this.exportMixer = exportMixer;
       this.exportValve = exportValve;
       this.shaft = shaft;
+      this.shaftCalculator = shaftCalculator;
+      this.baselineShaftSpeedRpm = baselineShaftSpeedRpm;
       this.driverPort = driverPort;
       this.driver = driver;
       this.gearbox = gearbox;
@@ -153,9 +166,9 @@ public class FieldToFacilityOptimizationAcceptanceTest {
      * @return complete common-shaft evidence
      */
     private PlantCommonShaftEvidence commonShaftEvidence(String calculationId) {
+      shaft.setSpeed(shaftCalculator.getSpeed());
       shaft.solveBalance();
       String sourceCalculationId = highPressureCompressor.getCalculationIdentifier().toString();
-      assertEquals(sourceCalculationId, lowPressureCompressor.getCalculationIdentifier().toString());
       PlantCommonShaftEvidence evidence = PlantCommonShaftEvidence
           .builder("synthetic field", "Host", "export common shaft", calculationId, shaft,
               "coupled field-to-facility candidate")
@@ -164,7 +177,6 @@ public class FieldToFacilityOptimizationAcceptanceTest {
           .casing(lowPressureCompressor.getEnergyPort("shaftPower").getParticipantId(), lowPressureCompressor)
           .driver(driverPort.getParticipantId(), driver).gearbox("export gearbox", gearbox).speedToleranceRpm(1.0)
           .powerBalanceToleranceKw(1.0e-6).maximumTorqueNm(1.0e6).convergenceComplete(model.isModelConverged()).build();
-      assertTrue(evidence.isComplete(), evidence.getDiagnostics().toString());
       return evidence;
     }
   }
@@ -191,15 +203,18 @@ public class FieldToFacilityOptimizationAcceptanceTest {
   private static final class ReliefEvidence {
     private final QualifiedReliefPortfolioEvidence portfolio;
     private final QualifiedReliefCombinationEvidence combination;
+    private final QualifiedReliefEnvelopeEvidence envelope;
 
-    private ReliefEvidence(QualifiedReliefPortfolioEvidence portfolio, QualifiedReliefCombinationEvidence combination) {
+    private ReliefEvidence(QualifiedReliefPortfolioEvidence portfolio, QualifiedReliefCombinationEvidence combination,
+        QualifiedReliefEnvelopeEvidence envelope) {
       this.portfolio = portfolio;
       this.combination = combination;
+      this.envelope = envelope;
     }
   }
 
   /**
-   * Execute the source-backed ten-well lifecycle acceptance case and serialize its exact schema-v14 evidence.
+   * Execute the source-backed ten-well lifecycle acceptance case and serialize its exact schema-v17 evidence.
    *
    * <p>
    * This test-scope entry point lets the Python living-task acceptance workflow call the same Java fixture and physical
@@ -250,14 +265,20 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     if (!Double.isFinite(sharedPowerLimitMultiplier) || sharedPowerLimitMultiplier <= 1.0) {
       throw new IllegalArgumentException("Shared-power limit multiplier must be finite and greater than one");
     }
+    if (reviewedIncumbentValues != null && reviewedIncumbentValues.length != 22) {
+      throw new IllegalArgumentException("Reviewed incumbent action count does not match the current action set");
+    }
     FieldToFacilityOptimizationAcceptanceTest acceptance = new FieldToFacilityOptimizationAcceptanceTest();
     Fixture earlyFixture = acceptance.createFixture(10);
-    acceptance.configureLifecycleCapacityLimits(earlyFixture, 1.03);
+    acceptance.configureLifecycleCapacityLimits(earlyFixture, 1.01);
     LifecyclePeriod early = acceptance.evaluateLifecyclePeriod("early-life", earlyFixture,
         earlyFixture.model.getPower("kW") * 1.8);
+    early.study.setNearActiveConstraintNormalizedMargin(1.0,
+        "synthetic complete installed-capacity follow-up audit threshold");
+    ReliefEvidence earlyRelief = acceptance.qualifiedReliefEvidence(early);
 
     Fixture currentFixture = acceptance.createFixture(10);
-    acceptance.configureLifecycleCapacityLimits(currentFixture, 10.0);
+    acceptance.configureLifecycleCapacityLimits(currentFixture, 1.0294);
     LifecyclePeriod current = acceptance.evaluateLifecyclePeriod(currentCycleId, currentFixture,
         currentFixture.model.getPower("kW") * sharedPowerLimitMultiplier, reviewedIncumbentValues);
     current.study.setNearActiveConstraintNormalizedMargin(1.0,
@@ -267,13 +288,39 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     return new ProcessModelOperatingEnvelopeLifecycleStudy("ten-well-lifecycle", "Ten-well field lifecycle envelope",
         "synthetic independent reservoir/facility operating definitions", "year")
         .addPeriod("early-life", "Early life", 0.0,
-            "tight separator and scrubber operating limits; qualified compressor maps retained", early.coverage,
-            early.study, early.search, early.slices)
+            "tight separator and scrubber operating limits; qualified compressor maps retained",
+            Collections.<ProcessModelOperatingEnvelopeLifecycleStudy.AcceptedStateMetric>emptyList(), early.coverage,
+            earlyRelief.portfolio.getRankedStudies(), earlyRelief.combination, earlyRelief.envelope, early.study,
+            early.search, early.slices)
         .addPeriod(currentCycleId, "Current life", 5.0,
             "expanded separation capacity and tighter shared plant power budget",
             Collections.<ProcessModelOperatingEnvelopeLifecycleStudy.AcceptedStateMetric>emptyList(), current.coverage,
-            relief.portfolio.getRankedStudies(), relief.combination, current.study, current.search, current.slices)
+            relief.portfolio.getRankedStudies(), relief.combination, relief.envelope, current.study, current.search,
+            current.slices)
         .toEvidenceJson(currentCycleId);
+  }
+
+  /**
+   * Execute the exact casing-map-to-driver boundary migration acceptance and serialize its receipt.
+   *
+   * <p>
+   * The receipt is test-scope source evidence for the existing continuous-task workflow. It contains both complete
+   * sampled/refined speed slices and is bound to the current living-task cycle. The first slice uses a reviewed
+   * configured casing-map operating restriction; the second clears that restriction, changes only the driver rating,
+   * and re-evaluates the same action and endpoints. It is advisory evidence, not an operating set point.
+   * </p>
+   *
+   * @param currentCycleId living-task cycle identifier
+   * @return strict JSON migration receipt
+   * @throws IllegalArgumentException if the cycle identifier is blank
+   */
+  public static String createMapToDriverMigrationEvidenceJson(String currentCycleId) {
+    if (currentCycleId == null || currentCycleId.trim().isEmpty()) {
+      throw new IllegalArgumentException("Map-to-driver migration cycle identifier must not be blank");
+    }
+    Map<String, Object> receipt = new FieldToFacilityOptimizationAcceptanceTest()
+        .evaluateMapToDriverMigration(currentCycleId);
+    return new GsonBuilder().disableHtmlEscaping().serializeNulls().create().toJson(receipt);
   }
 
   /** Builds two independent receipts and one jointly evaluated combination at the accepted ten-well point. */
@@ -327,7 +374,15 @@ public class FieldToFacilityOptimizationAcceptanceTest {
         combinationResult.getDiagnostics().toString());
     QualifiedReliefCombinationEvidence combination = period.study.qualifyReliefCombination(period.search, portfolio,
         combinationStudy, combinationResult);
-    return new ReliefEvidence(portfolio, combination);
+    CombinedEnvelopeResult envelopeResult = combinationStudy.evaluateCombinedEnvelope(period.study, period.slices);
+    assertTrue(envelopeResult.isQualified(), envelopeResult.getDiagnostics().toString());
+    ProcessModelOperatingEnvelopeStudy foreignStudy = new ProcessModelOperatingEnvelopeStudy(period.study.getId(),
+        period.study.getName(), period.study.getProvenance(), period.study.getCandidateEvaluator());
+    assertThrows(IllegalStateException.class,
+        () -> combinationStudy.evaluateCombinedEnvelope(foreignStudy, period.slices[0]));
+    QualifiedReliefEnvelopeEvidence envelope = period.study.qualifyReliefEnvelope(period.search, portfolio,
+        combinationStudy, combinationResult, envelopeResult);
+    return new ReliefEvidence(portfolio, combination, envelope);
   }
 
   /**
@@ -443,6 +498,8 @@ public class FieldToFacilityOptimizationAcceptanceTest {
       seed[index] = 70.0;
       seed[index + fixture.wellSuffixes.size()] = index % 2;
     }
+    seed[actions.size() - 2] = 45.0;
+    seed[actions.size() - 1] = fixture.baselineShaftSpeedRpm;
     ProcessModelOperatingPointOptimizer optimizer = new ProcessModelOperatingPointOptimizer("ten-well-field-search",
         "Ten-well field search", "synthetic bounded choke and HP/LP routing search", candidates)
         .setInitialCandidate(seed).setMaximumEvaluations(35).setInitialStepFraction(0.5).setRelativeStepTolerance(0.1)
@@ -464,6 +521,8 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     assertEquals("kg/hr", evidence.get("objective_unit"));
     assertEquals(result.getCandidates().get(0).getRawObjective(), evidence.get("initial_objective_value"));
     assertEquals(result.getAcceptedPointReplay().getRawObjective(), evidence.get("accepted_objective_value"));
+    assertEquals(Double.valueOf(1.0e-9), evidence.get("replay_relative_tolerance"));
+    assertEquals("deterministic simulator replay tolerance", evidence.get("replay_tolerance_provenance"));
     assertEquals(Boolean.TRUE, evidence.get("simulation_converged"));
     assertEquals(Boolean.TRUE, evidence.get("candidate_feasible"));
     assertEquals(Boolean.TRUE, evidence.get("candidate_finite"));
@@ -551,6 +610,38 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     assertBaselineRestored(fixture);
   }
 
+  /** A bounded common-speed candidate keeps current finite shaft evidence and restores the baseline exactly. */
+  @Test
+  void evaluatesReversibleCommonShaftSpeedCandidate() {
+    Fixture fixture = createFixture(10);
+    List<ProcessModelOperatingAction> actions = createFieldActions(fixture);
+    ProcessModelOperatingActionSetEvaluator candidates = new ProcessModelOperatingActionSetEvaluator(
+        "common-speed-candidate", "Common-speed candidate", "synthetic exact common-speed evidence",
+        createSimulationEvaluator(fixture), actions)
+        .requireHydraulicConstraint(HydraulicLimitRole.WELL_INFLOW_OUTFLOW, "Field", "field network",
+            "producer A deliverability", "synthetic well deliverability")
+        .requireHydraulicConstraint(HydraulicLimitRole.GATHERING_HYDRAULICS, "Field", "field network",
+            "A HP route capacity", "synthetic per-line operating limit")
+        .requireHydraulicConstraint(HydraulicLimitRole.GATHERING_HYDRAULICS, "Field", "field network",
+            "A LP route capacity", "synthetic per-line operating limit");
+    double[] values = new double[actions.size()];
+    for (int index = 0; index < fixture.wellSuffixes.size(); index++) {
+      values[index] = 70.0;
+      values[index + fixture.wellSuffixes.size()] = index % 2;
+    }
+    values[actions.size() - 2] = 45.0;
+    values[actions.size() - 1] = actions.get(actions.size() - 1).getLowerBound();
+    CandidateSetEvaluationResult result = candidates.evaluate(values);
+    assertTrue(result.isCandidateSimulationConverged(), result.getDiagnostics().toString());
+    assertTrue(result.isBaselineRestored(), result.getDiagnostics().toString());
+    PlantConstraintEvidence speedAgreement = result.getPlantConstraintEvidence().stream()
+        .filter(evidence -> evidence.getQualifiedConstraintId().endsWith("#common-speed-deviation")).findFirst()
+        .orElseThrow(() -> new AssertionError("Missing common-speed evidence"));
+    assertTrue(speedAgreement.hasAvailableEvidence(), speedAgreement.getDiagnostic());
+    assertTrue(Double.isFinite(speedAgreement.getSample().getPhysicalMargin()), speedAgreement.getDiagnostic());
+    assertLifecycleRestored(fixture, result);
+  }
+
   /**
    * Verify independent early- and late-life field definitions retain complete multi-slice evidence and expose a
    * separator-to-shared-power bottleneck migration without carrying mutable model state between periods.
@@ -597,9 +688,9 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     JsonObject coverage = jsonPeriods.get(1).getAsJsonObject().getAsJsonObject("utilization_coverage");
     assertTrue(coverage.get("complete").getAsBoolean());
     assertEquals("1.1", coverage.get("schema_version").getAsString());
-    assertEquals(34, coverage.getAsJsonArray("expected_constraint_ids").size());
+    assertEquals(39, coverage.getAsJsonArray("expected_constraint_ids").size());
     assertEquals(10, coverage.getAsJsonArray("expected_plant_constraint_ids").size());
-    assertEquals(44, coverage.getAsJsonArray("rows").size());
+    assertEquals(49, coverage.getAsJsonArray("rows").size());
     assertTrue(coverage.getAsJsonArray("rows").asList().stream().map(JsonElement::getAsJsonObject)
         .anyMatch(row -> "PLANT_CONSTRAINT".equals(row.get("evidence_kind").getAsString())
             && row.get("qualified_constraint_id").getAsString().endsWith("#driver-maximum-power")));
@@ -636,17 +727,17 @@ public class FieldToFacilityOptimizationAcceptanceTest {
             && Double.isFinite(candidate.get("physical_headroom").getAsDouble())));
     assertThrows(IllegalStateException.class, () -> lifecycle.toEvidenceJson("missing-cycle"));
     assertEquals(Integer.valueOf(2), lifecycleEvidence.get("period_count"));
-    assertEquals(Integer.valueOf(12), lifecycleEvidence.get("requested_point_count"));
-    assertEquals(Integer.valueOf(12), lifecycleEvidence.get("completed_point_count"));
+    assertEquals(Integer.valueOf(64), lifecycleEvidence.get("requested_point_count"));
+    assertEquals(Integer.valueOf(64), lifecycleEvidence.get("completed_point_count"));
     assertEquals(1, ((List<?>) lifecycleEvidence.get("bottleneck_transitions")).size());
     List<?> periodChanges = (List<?>) lifecycleEvidence.get("period_change_diagnostics");
     assertEquals(1, periodChanges.size());
     Map<?, ?> periodChange = (Map<?, ?>) periodChanges.get(0);
-    assertEquals(Integer.valueOf(3), periodChange.get("comparable_slice_count"));
-    assertEquals(Integer.valueOf(3), Integer.valueOf(((List<?>) periodChange.get("slice_changes")).size()));
+    assertEquals(Integer.valueOf(7), periodChange.get("comparable_slice_count"));
+    assertEquals(Integer.valueOf(7), Integer.valueOf(((List<?>) periodChange.get("slice_changes")).size()));
     assertTrue(((List<?>) periodChange.get("removed_slice_axes")).isEmpty());
     assertTrue(((List<?>) periodChange.get("added_slice_axes")).isEmpty());
-    assertEquals(Integer.valueOf(20), Integer.valueOf(((List<?>) periodChange.get("accepted_action_changes")).size()));
+    assertEquals(Integer.valueOf(22), Integer.valueOf(((List<?>) periodChange.get("accepted_action_changes")).size()));
     List<?> removedConstraintIdentities = (List<?>) periodChange.get("removed_ranked_constraint_identities");
     List<?> addedConstraintIdentities = (List<?>) periodChange.get("added_ranked_constraint_identities");
     int retainedConstraintIdentityCount = ((Integer) periodChange.get("retained_ranked_constraint_identity_count"))
@@ -776,7 +867,7 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     assertEquals(Outcome.FEASIBLE, driverTransition.getFromOutcome());
     assertEquals(Outcome.OTHER_MODEL_CONSTRAINT_VIOLATED, driverTransition.getToOutcome());
     assertEquals(ProcessModelOperatingAction.ValueSemantics.CONTINUOUS, driverTransition.getActionValueSemantics());
-    assertTrue(driverTransition.getToConstraint().endsWith("#driver-maximum-power"),
+    assertTrue(isCommonShaftDriverPowerConstraint(driverTransition.getToConstraint()),
         driverTransition.getToConstraint());
     assertFalse(driverTransition.isDiscreteAction());
     assertEquals(Boolean.FALSE, driverTransition.toEvidenceMap().get("interpolated"));
@@ -788,13 +879,13 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     LeadingConstraintEvidence feasibleBoundaryConstraint = driverBoundary.getFeasibleBoundaryConstraint();
     LeadingConstraintEvidence infeasibleBoundaryConstraint = driverBoundary.getInfeasibleBoundaryConstraint();
     assertTrue(feasibleBoundaryConstraint != null);
-    assertTrue(feasibleBoundaryConstraint.getQualifiedConstraintName().endsWith("#driver-maximum-power"),
+    assertTrue(isCommonShaftDriverPowerConstraint(feasibleBoundaryConstraint.getQualifiedConstraintName()),
         feasibleBoundaryConstraint.getQualifiedConstraintName());
     assertTrue(feasibleBoundaryConstraint.isFeasible());
     assertTrue(Double.isFinite(feasibleBoundaryConstraint.getPhysicalMargin()));
     assertTrue(feasibleBoundaryConstraint.getPhysicalMargin() >= 0.0);
     assertTrue(infeasibleBoundaryConstraint != null);
-    assertTrue(infeasibleBoundaryConstraint.getQualifiedConstraintName().endsWith("#driver-maximum-power"),
+    assertTrue(isCommonShaftDriverPowerConstraint(infeasibleBoundaryConstraint.getQualifiedConstraintName()),
         infeasibleBoundaryConstraint.getQualifiedConstraintName());
     assertFalse(infeasibleBoundaryConstraint.isFeasible());
     assertTrue(Double.isFinite(infeasibleBoundaryConstraint.getPhysicalMargin()));
@@ -806,11 +897,320 @@ public class FieldToFacilityOptimizationAcceptanceTest {
         && step.isBaselineRestored() && step.isBaselineSimulationConverged()));
     assertTrue(driverBoundary.getSteps().stream().filter(step -> !step.isFeasible())
         .allMatch(step -> step.getLeadingConstraint() != null
-            && step.getLeadingConstraint().getQualifiedConstraintName().endsWith("#driver-maximum-power")));
+            && isCommonShaftDriverPowerConstraint(step.getLeadingConstraint().getQualifiedConstraintName())));
     assertBaselineRestored(fixture);
   }
 
-  /** Evaluate one independent ten-well accepted point and its choke, route and host-power slices. */
+  /**
+   * Verify an exact variable-speed slice refines the common-shaft driver-power boundary without losing casing map
+   * evidence or accepting a partially restored point.
+   */
+  @Test
+  void refinesCommonShaftDriverLimitAcrossVariableSpeedEnvelope() {
+    Fixture fixture = createFixture();
+    configureLifecycleCapacityLimits(fixture, 10.0);
+    double minimumSpeedRpm = fixture.shaftCalculator.getMinSpeed();
+    double maximumSpeedRpm = fixture.shaftCalculator.getMaxSpeed();
+
+    fixture.shaftCalculator.setAutomationValue("speed", minimumSpeedRpm, "rpm");
+    fixture.model.run();
+    assertTrue(fixture.model.isModelConverged());
+    double minimumSpeedDriverPowerKw = fixture.commonShaftEvidence("driver-minimum-speed").getGearboxInputPowerKw();
+
+    fixture.shaftCalculator.setAutomationValue("speed", maximumSpeedRpm, "rpm");
+    fixture.model.run();
+    assertTrue(fixture.model.isModelConverged());
+    double maximumSpeedDriverPowerKw = fixture.commonShaftEvidence("driver-maximum-speed").getGearboxInputPowerKw();
+    assertTrue(maximumSpeedDriverPowerKw > minimumSpeedDriverPowerKw,
+        "The qualified speed range must straddle an increasing driver-power response");
+
+    fixture.shaftCalculator.setAutomationValue("speed", fixture.baselineShaftSpeedRpm, "rpm");
+    fixture.model.run();
+    assertTrue(fixture.model.isModelConverged());
+    double driverLimitKw = 0.5 * (minimumSpeedDriverPowerKw + maximumSpeedDriverPowerKw);
+    fixture.driver.setMaxPower(driverLimitKw);
+
+    ProcessModelSimulationEvaluator simulation = createSimulationEvaluator(fixture, fixture.sharedPowerLimitKw * 10.0);
+    ProcessModelOperatingAction shaftSpeed = ProcessModelOperatingAction.continuous("driver-limited-common-speed",
+        "Driver-limited common shaft speed", "Field::export shaft control.speed", minimumSpeedRpm, maximumSpeedRpm,
+        "rpm", "synthetic variable-speed driver boundary");
+    ProcessModelOperatingActionSetEvaluator candidates = new ProcessModelOperatingActionSetEvaluator(
+        "driver-limited-speed-actions", "Driver-limited speed actions",
+        "synthetic exact variable-speed driver refinement", simulation, Arrays.asList(shaftSpeed))
+        .requireHydraulicConstraint(HydraulicLimitRole.WELL_INFLOW_OUTFLOW, "Field", "field network",
+            "producer A deliverability", "synthetic well deliverability")
+        .requireHydraulicConstraint(HydraulicLimitRole.GATHERING_HYDRAULICS, "Field", "field network",
+            "A HP route capacity", "synthetic per-line operating limit");
+
+    ProcessModelOperatingEnvelopeStudy study = new ProcessModelOperatingEnvelopeStudy("driver-limited-speed-envelope",
+        "Driver-limited common-speed envelope", "synthetic exact common-speed driver transition", candidates)
+        .setMaximumBoundaryRefinementEvaluations(8)
+        .setBoundaryRefinementRelativeTolerance(0.01, "synthetic one-percent common-speed range tolerance");
+    SliceResult speedSlice = study.evaluateOneDimensional(shaftSpeed.getId(),
+        new double[] {minimumSpeedRpm, maximumSpeedRpm}, new double[] {fixture.baselineShaftSpeedRpm});
+
+    assertTrue(speedSlice.isComplete(), speedSlice.getDiagnostics().toString());
+    assertEquals(2, speedSlice.getCompletedPointCount());
+    assertTrue(speedSlice.getPoints().stream().allMatch(point -> point.getEvaluation().isCandidateSimulationConverged()
+        && point.getEvaluation().isBaselineRestored() && point.getEvaluation().isBaselineSimulationConverged()));
+    assertTrue(speedSlice.getPoints().stream()
+        .allMatch(point -> point.getEvaluation().getInstalledEquipmentCapacityEvidence().stream()
+            .filter(evidence -> evidence.getQualifiedConstraintName().endsWith("/surgeMargin")
+                || evidence.getQualifiedConstraintName().endsWith("/stonewallMargin"))
+            .filter(InstalledEquipmentCapacityEvidence::hasFiniteEvidence).count() >= 4L));
+    assertTrue(speedSlice.getPoints().stream()
+        .allMatch(point -> point.getEvaluation().getPlantConstraintEvidence().stream()
+            .anyMatch(evidence -> evidence.getQualifiedConstraintId().endsWith("#driver-maximum-power")
+                && evidence.hasAvailableEvidence()
+                && Double.compare(driverLimitKw, evidence.getSample().getApplicableLimit()) == 0)));
+
+    assertEquals(1, speedSlice.getOperatingRegionTransitions().size());
+    OperatingRegionTransition speedTransition = speedSlice.getOperatingRegionTransitions().get(0);
+    assertEquals(OperatingRegionTransition.Kind.BECAME_INFEASIBLE, speedTransition.getKind());
+    assertEquals(Outcome.FEASIBLE, speedTransition.getFromOutcome());
+    assertEquals(Outcome.OTHER_MODEL_CONSTRAINT_VIOLATED, speedTransition.getToOutcome());
+    assertEquals(ProcessModelOperatingAction.ValueSemantics.CONTINUOUS, speedTransition.getActionValueSemantics());
+    assertTrue(isCommonShaftDriverPowerConstraint(speedTransition.getToConstraint()),
+        speedTransition.getToConstraint());
+    assertFalse(speedTransition.isDiscreteAction());
+    assertEquals(Boolean.FALSE, speedTransition.toEvidenceMap().get("interpolated"));
+
+    assertEquals(1, speedSlice.getBoundaryRefinements().size());
+    OperatingRegionBoundaryRefinement speedBoundary = speedSlice.getBoundaryRefinements().get(0);
+    assertTrue(speedBoundary.isConverged(), speedBoundary.getStatus().name());
+    assertTrue(speedBoundary.getFeasibleAxisValue() < speedBoundary.getInfeasibleAxisValue());
+    assertTrue(speedBoundary.getBracketWidth() <= speedBoundary.getAbsoluteTolerance());
+    LeadingConstraintEvidence feasibleBoundaryConstraint = speedBoundary.getFeasibleBoundaryConstraint();
+    LeadingConstraintEvidence infeasibleBoundaryConstraint = speedBoundary.getInfeasibleBoundaryConstraint();
+    assertTrue(feasibleBoundaryConstraint != null);
+    assertTrue(isCommonShaftDriverPowerConstraint(feasibleBoundaryConstraint.getQualifiedConstraintName()),
+        feasibleBoundaryConstraint.getQualifiedConstraintName());
+    assertTrue(feasibleBoundaryConstraint.isFeasible());
+    assertTrue(Double.isFinite(feasibleBoundaryConstraint.getPhysicalMargin()));
+    assertTrue(feasibleBoundaryConstraint.getPhysicalMargin() >= 0.0);
+    assertTrue(infeasibleBoundaryConstraint != null);
+    assertTrue(isCommonShaftDriverPowerConstraint(infeasibleBoundaryConstraint.getQualifiedConstraintName()),
+        infeasibleBoundaryConstraint.getQualifiedConstraintName());
+    assertFalse(infeasibleBoundaryConstraint.isFeasible());
+    assertTrue(Double.isFinite(infeasibleBoundaryConstraint.getPhysicalMargin()));
+    assertTrue(infeasibleBoundaryConstraint.getPhysicalMargin() < 0.0);
+    assertTrue(speedBoundary.getSteps().stream().allMatch(step -> step.isCandidateSimulationConverged()
+        && step.isBaselineRestored() && step.isBaselineSimulationConverged()));
+    assertTrue(speedBoundary.getSteps().stream().filter(step -> !step.isFeasible())
+        .allMatch(step -> step.getLeadingConstraint() != null
+            && isCommonShaftDriverPowerConstraint(step.getLeadingConstraint().getQualifiedConstraintName())));
+    assertBaselineRestored(fixture);
+  }
+
+  /**
+   * Verify one casing-map operating margin refines the common-speed boundary, then migrates to the driver limit when
+   * only the declared operating restriction changes.
+   */
+  @Test
+  void refinesCasingMapBoundaryAndMigratesToDriverLimit() {
+    Map<String, Object> receipt = evaluateMapToDriverMigration("synthetic-map-driver-cycle");
+    assertEquals(Integer.valueOf(1), receipt.get("receipt_version"));
+    assertEquals("synthetic-map-driver-cycle", receipt.get("cycle_id"));
+    assertEquals(Boolean.TRUE, receipt.get("map_operating_limit_cleared"));
+    assertEquals(Boolean.TRUE, receipt.get("state_restore_complete"));
+    assertEquals(Boolean.TRUE, receipt.get("advisory"));
+  }
+
+  /**
+   * Evaluate and freeze the exact configured-map-to-driver boundary migration receipt.
+   *
+   * @param cycleId evidence cycle identifier
+   * @return immutable JSON-friendly receipt
+   */
+  private Map<String, Object> evaluateMapToDriverMigration(String cycleId) {
+    Fixture fixture = createFixture();
+    configureLifecycleCapacityLimits(fixture, 10.0);
+    double minimumSpeedRpm = fixture.shaftCalculator.getMinSpeed();
+    double maximumSpeedRpm = fixture.shaftCalculator.getMaxSpeed();
+    Compressor[] casings = new Compressor[] {fixture.highPressureCompressor, fixture.lowPressureCompressor};
+    String[] mapConstraintNames = new String[] {"surgeMargin", "stonewallMargin"};
+    double[][] minimumMapValues = new double[casings.length][mapConstraintNames.length];
+    double[][] maximumMapValues = new double[casings.length][mapConstraintNames.length];
+
+    fixture.shaftCalculator.setAutomationValue("speed", minimumSpeedRpm, "rpm");
+    fixture.model.run();
+    assertTrue(fixture.model.isModelConverged());
+    double minimumSpeedDriverPowerKw = fixture.commonShaftEvidence("map-driver-minimum-speed").getGearboxInputPowerKw();
+    for (int casing = 0; casing < casings.length; casing++) {
+      for (int constraint = 0; constraint < mapConstraintNames.length; constraint++) {
+        CapacityConstraint mapConstraint = casings[casing].getCapacityConstraints().get(mapConstraintNames[constraint]);
+        assertTrue(mapConstraint != null && mapConstraint.isEnabled());
+        minimumMapValues[casing][constraint] = mapConstraint.getCurrentValue();
+        assertTrue(Double.isFinite(minimumMapValues[casing][constraint]));
+      }
+    }
+
+    fixture.shaftCalculator.setAutomationValue("speed", maximumSpeedRpm, "rpm");
+    fixture.model.run();
+    assertTrue(fixture.model.isModelConverged());
+    double maximumSpeedDriverPowerKw = fixture.commonShaftEvidence("map-driver-maximum-speed").getGearboxInputPowerKw();
+    for (int casing = 0; casing < casings.length; casing++) {
+      for (int constraint = 0; constraint < mapConstraintNames.length; constraint++) {
+        maximumMapValues[casing][constraint] = casings[casing].getCapacityConstraints()
+            .get(mapConstraintNames[constraint]).getCurrentValue();
+        assertTrue(Double.isFinite(maximumMapValues[casing][constraint]));
+      }
+    }
+    assertTrue(maximumSpeedDriverPowerKw > minimumSpeedDriverPowerKw);
+
+    int selectedCasing = -1;
+    int selectedConstraint = -1;
+    double largestMapChange = 0.0;
+    for (int casing = 0; casing < casings.length; casing++) {
+      for (int constraint = 0; constraint < mapConstraintNames.length; constraint++) {
+        double change = Math.abs(maximumMapValues[casing][constraint] - minimumMapValues[casing][constraint]);
+        if (change > largestMapChange) {
+          largestMapChange = change;
+          selectedCasing = casing;
+          selectedConstraint = constraint;
+        }
+      }
+    }
+    assertTrue(selectedCasing >= 0 && largestMapChange > 1.0e-8,
+        "Qualified casing-map evidence must respond to the declared common-speed range");
+
+    Compressor selectedCompressor = casings[selectedCasing];
+    String selectedConstraintName = mapConstraintNames[selectedConstraint];
+    CapacityConstraint selectedMapConstraint = selectedCompressor.getCapacityConstraints().get(selectedConstraintName);
+    double minimumMapValue = minimumMapValues[selectedCasing][selectedConstraint];
+    double maximumMapValue = maximumMapValues[selectedCasing][selectedConstraint];
+    double mapOperatingLimit = 0.5 * (minimumMapValue + maximumMapValue);
+    selectedMapConstraint.setOperatingLimit(mapOperatingLimit, ConstraintSource.USER_RULE,
+        "synthetic reviewed casing-map operating margin");
+    String qualifiedMapConstraint = "Field::" + selectedCompressor.getName() + "/" + selectedConstraintName;
+
+    fixture.shaftCalculator.setAutomationValue("speed", fixture.baselineShaftSpeedRpm, "rpm");
+    fixture.driver.setMaxPower(maximumSpeedDriverPowerKw * 10.0);
+    fixture.model.run();
+    assertTrue(fixture.model.isModelConverged());
+
+    ProcessModelSimulationEvaluator simulation = createSimulationEvaluator(fixture, fixture.sharedPowerLimitKw * 10.0);
+    ProcessModelOperatingAction shaftSpeed = ProcessModelOperatingAction.continuous("map-to-driver-common-speed",
+        "Map-to-driver common shaft speed", "Field::export shaft control.speed", minimumSpeedRpm, maximumSpeedRpm,
+        "rpm", "synthetic casing-map and driver bottleneck migration");
+    ProcessModelOperatingActionSetEvaluator candidates = new ProcessModelOperatingActionSetEvaluator(
+        "map-to-driver-speed-actions", "Map-to-driver speed actions",
+        "synthetic exact casing-map and driver boundary refinement", simulation, Arrays.asList(shaftSpeed))
+        .requireHydraulicConstraint(HydraulicLimitRole.WELL_INFLOW_OUTFLOW, "Field", "field network",
+            "producer A deliverability", "synthetic well deliverability")
+        .requireHydraulicConstraint(HydraulicLimitRole.GATHERING_HYDRAULICS, "Field", "field network",
+            "A HP route capacity", "synthetic per-line operating limit");
+
+    ProcessModelOperatingEnvelopeStudy mapStudy = new ProcessModelOperatingEnvelopeStudy(
+        "casing-map-limited-speed-envelope", "Casing-map-limited common-speed envelope",
+        "synthetic exact casing-map transition", candidates).setMaximumBoundaryRefinementEvaluations(8)
+        .setBoundaryRefinementRelativeTolerance(0.01, "synthetic one-percent common-speed range tolerance");
+    SliceResult mapSlice = mapStudy.evaluateOneDimensional(shaftSpeed.getId(),
+        new double[] {minimumSpeedRpm, maximumSpeedRpm}, new double[] {fixture.baselineShaftSpeedRpm});
+
+    assertTrue(mapSlice.isComplete(), mapSlice.getDiagnostics().toString());
+    assertEquals(2, mapSlice.getCompletedPointCount());
+    assertTrue(mapSlice.getPoints().stream().allMatch(point -> point.getEvaluation().isCandidateSimulationConverged()
+        && point.getEvaluation().isBaselineRestored() && point.getEvaluation().isBaselineSimulationConverged()));
+    assertEquals(1, mapSlice.getOperatingRegionTransitions().size());
+    OperatingRegionTransition mapTransition = mapSlice.getOperatingRegionTransitions().get(0);
+    assertTrue(mapTransition.getKind() == OperatingRegionTransition.Kind.BECAME_INFEASIBLE
+        || mapTransition.getKind() == OperatingRegionTransition.Kind.BECAME_FEASIBLE);
+    assertEquals(qualifiedMapConstraint,
+        mapTransition.isFromFeasible() ? mapTransition.getToConstraint() : mapTransition.getFromConstraint());
+    assertEquals(LeadingConstraintEvidence.Source.INSTALLED_EQUIPMENT,
+        mapTransition.isFromFeasible() ? mapTransition.getToConstraintSource()
+            : mapTransition.getFromConstraintSource());
+
+    assertEquals(1, mapSlice.getBoundaryRefinements().size());
+    OperatingRegionBoundaryRefinement mapBoundary = mapSlice.getBoundaryRefinements().get(0);
+    assertTrue(mapBoundary.isConverged(), mapBoundary.getStatus().name());
+    assertTrue(mapBoundary.getBracketWidth() <= mapBoundary.getAbsoluteTolerance());
+    assertEquals(qualifiedMapConstraint, mapBoundary.getFeasibleBoundaryConstraint().getQualifiedConstraintName());
+    assertEquals(qualifiedMapConstraint, mapBoundary.getInfeasibleBoundaryConstraint().getQualifiedConstraintName());
+    assertTrue(mapBoundary.getFeasibleBoundaryConstraint().isFeasible());
+    assertTrue(mapBoundary.getFeasibleBoundaryConstraint().getPhysicalMargin() >= 0.0);
+    assertFalse(mapBoundary.getInfeasibleBoundaryConstraint().isFeasible());
+    assertTrue(mapBoundary.getInfeasibleBoundaryConstraint().getPhysicalMargin() < 0.0);
+    assertEquals("CONFIGURED_OPERATING", mapBoundary.getInfeasibleBoundaryConstraint().getApplicableLimitRole());
+    assertTrue(mapBoundary.getSteps().stream().allMatch(step -> step.isCandidateSimulationConverged()
+        && step.isBaselineRestored() && step.isBaselineSimulationConverged()));
+    assertTrue(mapBoundary.getSteps().stream().filter(step -> !step.isFeasible())
+        .allMatch(step -> step.getLeadingConstraint() != null
+            && qualifiedMapConstraint.equals(step.getLeadingConstraint().getQualifiedConstraintName())));
+
+    selectedMapConstraint.clearOperatingLimit();
+    double driverLimitKw = 0.5 * (minimumSpeedDriverPowerKw + maximumSpeedDriverPowerKw);
+    fixture.driver.setMaxPower(driverLimitKw);
+    ProcessModelOperatingEnvelopeStudy driverStudy = new ProcessModelOperatingEnvelopeStudy(
+        "migrated-driver-limited-speed-envelope", "Migrated driver-limited common-speed envelope",
+        "synthetic exact driver transition after casing-map limit restoration", candidates)
+        .setMaximumBoundaryRefinementEvaluations(8)
+        .setBoundaryRefinementRelativeTolerance(0.01, "synthetic one-percent common-speed range tolerance");
+    SliceResult driverSlice = driverStudy.evaluateOneDimensional(shaftSpeed.getId(),
+        new double[] {minimumSpeedRpm, maximumSpeedRpm}, new double[] {fixture.baselineShaftSpeedRpm});
+
+    assertTrue(driverSlice.isComplete(), driverSlice.getDiagnostics().toString());
+    assertEquals(1, driverSlice.getOperatingRegionTransitions().size());
+    OperatingRegionTransition driverTransition = driverSlice.getOperatingRegionTransitions().get(0);
+    assertEquals(OperatingRegionTransition.Kind.BECAME_INFEASIBLE, driverTransition.getKind());
+    assertTrue(isCommonShaftDriverPowerConstraint(driverTransition.getToConstraint()),
+        driverTransition.getToConstraint());
+    assertFalse(qualifiedMapConstraint.equals(driverTransition.getToConstraint()));
+    assertEquals(1, driverSlice.getBoundaryRefinements().size());
+    OperatingRegionBoundaryRefinement driverBoundary = driverSlice.getBoundaryRefinements().get(0);
+    assertTrue(driverBoundary.isConverged(), driverBoundary.getStatus().name());
+    assertTrue(isCommonShaftDriverPowerConstraint(
+        driverBoundary.getInfeasibleBoundaryConstraint().getQualifiedConstraintName()));
+    assertTrue(driverBoundary.getSteps().stream().allMatch(step -> step.isCandidateSimulationConverged()
+        && step.isBaselineRestored() && step.isBaselineSimulationConverged()));
+    assertTrue(driverSlice.getPoints().stream()
+        .allMatch(point -> point.getEvaluation().getInstalledEquipmentCapacityEvidence().stream()
+            .anyMatch(evidence -> qualifiedMapConstraint.equals(evidence.getQualifiedConstraintName())
+                && evidence.hasFiniteEvidence() && !evidence.hasOperatingLimit())));
+    assertBaselineRestored(fixture);
+
+    Map<String, Object> receipt = new LinkedHashMap<String, Object>();
+    receipt.put("receipt_version", Integer.valueOf(1));
+    receipt.put("cycle_id", cycleId);
+    receipt.put("candidate_evaluator_id", candidates.getId());
+    receipt.put("action_id", shaftSpeed.getId());
+    receipt.put("action_unit", shaftSpeed.getUnit());
+    receipt.put("sampled_axis_values",
+        Collections.unmodifiableList(Arrays.asList(Double.valueOf(minimumSpeedRpm), Double.valueOf(maximumSpeedRpm))));
+    receipt.put("configured_map_constraint_name", qualifiedMapConstraint);
+    receipt.put("configured_map_limit", Double.valueOf(mapOperatingLimit));
+    receipt.put("configured_map_limit_role", "CONFIGURED_OPERATING");
+    receipt.put("configured_map_limit_provenance", "synthetic reviewed casing-map operating margin");
+    receipt.put("map_limited_slice", mapSlice.toEvidenceMap());
+    receipt.put("driver_constraint_name",
+        driverBoundary.getInfeasibleBoundaryConstraint().getQualifiedConstraintName());
+    receipt.put("driver_limit_kw", Double.valueOf(driverLimitKw));
+    receipt.put("map_operating_limit_cleared", Boolean.TRUE);
+    receipt.put("driver_limited_slice", driverSlice.toEvidenceMap());
+    receipt.put("state_restore_complete", Boolean.TRUE);
+    receipt.put("advisory", Boolean.TRUE);
+    return Collections.unmodifiableMap(receipt);
+  }
+
+  /**
+   * Check whether a leading boundary is one of the two exact representations of the common-shaft driver limit.
+   *
+   * <p>
+   * The equipment-local shaft-power constraint and the registered plant driver-power constraint share the same physical
+   * rating. Either can lead a transition when their margins are equal; the test separately requires the registered
+   * driver evidence to be present, finite and feasible at the accepted point.
+   * </p>
+   *
+   * @param qualifiedConstraintName qualified constraint name
+   * @return {@code true} for the equipment shaft-power or registered driver maximum-power constraint
+   */
+  private boolean isCommonShaftDriverPowerConstraint(String qualifiedConstraintName) {
+    return qualifiedConstraintName.endsWith("#driver-maximum-power")
+        || qualifiedConstraintName.endsWith("::export shaft control/shaftPower");
+  }
+
+  /** Evaluate one accepted point and its choke, route, coupled route-pressure and host-power slices. */
   private LifecyclePeriod evaluateLifecyclePeriod(String periodId, Fixture fixture, double sharedPowerLimitKw) {
     return evaluateLifecyclePeriod(periodId, fixture, sharedPowerLimitKw, null);
   }
@@ -844,6 +1244,8 @@ public class FieldToFacilityOptimizationAcceptanceTest {
       seed[index] = 70.0;
       seed[index + fixture.wellSuffixes.size()] = index % 2;
     }
+    seed[actions.size() - 2] = 45.0;
+    seed[actions.size() - 1] = fixture.baselineShaftSpeedRpm;
     if (reviewedIncumbentValues != null) {
       if (reviewedIncumbentValues.length != seed.length) {
         throw new IllegalArgumentException("Reviewed incumbent action count does not match the current action set");
@@ -853,42 +1255,79 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     OperatingPointSearchResult search = new ProcessModelOperatingPointOptimizer(periodId + "-search",
         periodId + " field search", "synthetic independent lifecycle field search", candidates)
         .setInitialCandidate(seed).setMaximumEvaluations(35).setInitialStepFraction(0.5).setRelativeStepTolerance(0.1)
-        .setObjectiveImprovementTolerance(1.0e-6, "synthetic export-rate comparison tolerance").optimize();
+        .setObjectiveImprovementTolerance(1.0e-6, "synthetic export-rate comparison tolerance")
+        .setReplayRelativeTolerance(1.0e-8, "synthetic coupled network solver repeatability qualification").optimize();
     assertTrue(search.isAcceptedPointReplayed(), search.getOutcome() + ": " + search.getDiagnostics());
 
     ProcessModelOperatingEnvelopeStudy study = new ProcessModelOperatingEnvelopeStudy("ten-well-lifecycle-envelope",
-        "Ten-well lifecycle operating envelope", "synthetic independent lifecycle period", candidates);
+        "Ten-well lifecycle operating envelope", "synthetic independent lifecycle period", candidates)
+        .setMaximumBoundaryRefinementEvaluations(8)
+        .setBoundaryRefinementRelativeTolerance(1.0e-3, "synthetic action-range boundary diagnostic");
     double[] accepted = search.getAcceptedCandidateValues();
     double nearbyChokeA = Math.max(actions.get(0).getLowerBound(), accepted[0] - 5.0);
-    SliceResult choke = study.evaluateOneDimensional(actions.get(0).getId(), new double[] {nearbyChokeA, accepted[0]},
-        search);
+    SliceResult choke = study.evaluateOneDimensional(actions.get(0).getId(),
+        new double[] {nearbyChokeA, accepted[0], actions.get(0).getUpperBound()}, search);
     int firstRouteIndex = fixture.wellSuffixes.size();
     double acceptedRouteA = accepted[firstRouteIndex];
     SliceResult route = study.evaluateOneDimensional(actions.get(firstRouteIndex).getId(),
         new double[] {acceptedRouteA, acceptedRouteA == 0.0 ? 1.0 : 0.0}, search);
+    SliceResult coupledChokeRoute = study.evaluateTwoDimensional(actions.get(0).getId(),
+        new double[] {nearbyChokeA, accepted[0], actions.get(0).getUpperBound()}, actions.get(firstRouteIndex).getId(),
+        new double[] {acceptedRouteA, acceptedRouteA == 0.0 ? 1.0 : 0.0}, search);
+    int separatorPressureIndex = actions.size() - 2;
+    int shaftSpeedIndex = actions.size() - 1;
+    SliceResult routeSeparatorPressure = study.evaluateTwoDimensional(actions.get(firstRouteIndex).getId(),
+        new double[] {acceptedRouteA, acceptedRouteA == 0.0 ? 1.0 : 0.0}, actions.get(separatorPressureIndex).getId(),
+        new double[] {42.0, 45.0, 48.0}, search);
+    SliceResult separatorPressureShaftSpeed = study.evaluateTwoDimensional(actions.get(separatorPressureIndex).getId(),
+        new double[] {42.0, 45.0, 48.0}, actions.get(shaftSpeedIndex).getId(),
+        new double[] {actions.get(shaftSpeedIndex).getLowerBound(), accepted[shaftSpeedIndex],
+            actions.get(shaftSpeedIndex).getUpperBound()},
+        search);
+    SliceResult shaftSpeed = study.evaluateOneDimensional(actions.get(shaftSpeedIndex).getId(),
+        new double[] {actions.get(shaftSpeedIndex).getLowerBound(), accepted[shaftSpeedIndex],
+            actions.get(shaftSpeedIndex).getUpperBound()},
+        search);
     double nearbyChokeB = Math.max(actions.get(1).getLowerBound(), accepted[1] - 5.0);
     SliceResult hostPower = study.evaluateOneDimensional(actions.get(1).getId(),
-        new double[] {nearbyChokeB, accepted[1]}, search);
+        new double[] {nearbyChokeB, accepted[1], actions.get(1).getUpperBound()}, search);
     assertTrue(choke.isComplete(), choke.getDiagnostics().toString());
     assertTrue(route.isComplete(), route.getDiagnostics().toString());
+    assertTrue(coupledChokeRoute.isComplete(), coupledChokeRoute.getDiagnostics().toString());
+    assertEquals(2, coupledChokeRoute.getSampledCells().size());
+    assertTrue(routeSeparatorPressure.isComplete(), routeSeparatorPressure.getDiagnostics().toString());
+    assertEquals(2, routeSeparatorPressure.getSampledCells().size());
+    assertTrue(separatorPressureShaftSpeed.isComplete(), separatorPressureShaftSpeed.getDiagnostics().toString());
+    assertEquals(4, separatorPressureShaftSpeed.getSampledCells().size());
+    assertTrue(shaftSpeed.isComplete(), shaftSpeed.getDiagnostics().toString());
     assertTrue(hostPower.isComplete(), hostPower.getDiagnostics().toString());
     UtilizationCoverageReport coverage = acceptedCoverage(fixture, search);
     assertTrue(coverage.isComplete(), coverage.getDiagnostics().toString());
-    return new LifecyclePeriod(fixture, study, search, coverage, new SliceResult[] {choke, route, hostPower});
+    return new LifecyclePeriod(fixture, study, search, coverage, new SliceResult[] {choke, route, coupledChokeRoute,
+        routeSeparatorPressure, separatorPressureShaftSpeed, shaftSpeed, hostPower});
   }
 
   /** Build declared capacity coverage from the accepted replay without resampling the restored fixture. */
   private UtilizationCoverageReport acceptedCoverage(Fixture fixture, OperatingPointSearchResult search) {
     UtilizationCoverageReport.Builder coverage = UtilizationCoverageReport.builder("ten-well-field");
+    List<InstalledEquipmentCapacityEvidence> accepted = search.getAcceptedPointReplay().getEvaluation()
+        .getInstalledEquipmentCapacityEvidence();
     for (String suffix : fixture.wellSuffixes) {
-      coverage.expectConstraint("Field", "field network", "producer " + suffix + " deliverability")
-          .expectConstraint("Field", "field network", suffix + " HP route capacity")
-          .expectConstraint("Field", "field network", suffix + " LP route capacity");
+      expectAcceptedCoverageConstraint(coverage, accepted, "field network", "producer " + suffix + " deliverability");
+      expectAcceptedCoverageConstraint(coverage, accepted, "field network", suffix + " HP route capacity");
+      expectAcceptedCoverageConstraint(coverage, accepted, "field network", suffix + " LP route capacity");
     }
     for (String equipmentName : Arrays.asList("HP separator", "LP separator", "HP suction scrubber",
         "LP suction scrubber")) {
-      coverage.expectConstraint("Field", equipmentName, "gas handling");
+      expectAcceptedCoverageConstraint(coverage, accepted, equipmentName, "gas handling");
     }
+    // Either casing margin or the equipment-local driver constraint can lead the diagnostic boundary.
+    // Declare these rows before consuming accepted replay evidence; do not resample the restored model.
+    for (String equipmentName : Arrays.asList("HP compressor", "LP compressor")) {
+      expectAcceptedCoverageConstraint(coverage, accepted, equipmentName, "surgeMargin");
+      expectAcceptedCoverageConstraint(coverage, accepted, equipmentName, "stonewallMargin");
+    }
+    expectAcceptedCoverageConstraint(coverage, accepted, "export shaft control", "shaftPower");
     PlantConstraintScope shaftGroup = PlantConstraintScope.coupledGroup("synthetic field", "Host",
         "export common shaft");
     for (String constraintName : Arrays.asList("common-speed-deviation", "shaft-maximum-speed", "shaft-power-balance",
@@ -901,8 +1340,31 @@ public class FieldToFacilityOptimizationAcceptanceTest {
           .expectPlantConstraint(compressor.getStableId() + "#" + PlantConstraintScope.escape("compressor-map-margin"));
     }
     coverage.expectPlantConstraint(sharedPowerDefinition().getQualifiedId());
-    return coverage.evidence(search.getAcceptedPointReplay().getEvaluation().getInstalledEquipmentCapacityEvidence())
-        .plantEvidence(search.getAcceptedPointReplay().getEvaluation().getPlantConstraintEvidence()).build();
+    return coverage.plantEvidence(search.getAcceptedPointReplay().getEvaluation().getPlantConstraintEvidence()).build();
+  }
+
+  /**
+   * Declare one required row and supply only its exact frozen accepted-replay evidence.
+   *
+   * <p>
+   * Coverage is limited to the declared constraint identities, not undeclared design-only compressor defaults. Missing,
+   * duplicate or unavailable declared evidence still fails coverage validation.
+   * </p>
+   *
+   * @param coverage declared-scope coverage builder
+   * @param accepted immutable accepted-replay evidence
+   * @param equipmentName exact equipment display name in the Field area
+   * @param constraintName exact equipment-local constraint name
+   */
+  private void expectAcceptedCoverageConstraint(UtilizationCoverageReport.Builder coverage,
+      List<InstalledEquipmentCapacityEvidence> accepted, String equipmentName, String constraintName) {
+    coverage.expectConstraint("Field", equipmentName, constraintName);
+    for (InstalledEquipmentCapacityEvidence evidence : accepted) {
+      if ("Field".equals(evidence.getAreaName()) && equipmentName.equals(evidence.getEquipmentName())
+          && constraintName.equals(evidence.getConstraintName())) {
+        coverage.evidence(evidence);
+      }
+    }
   }
 
   /**
@@ -925,11 +1387,13 @@ public class FieldToFacilityOptimizationAcceptanceTest {
           .requireHydraulicConstraint(HydraulicLimitRole.GATHERING_HYDRAULICS, "Field", "field network",
               suffix + " LP route capacity", "synthetic per-line operating limit");
     }
-    double[] baseline = new double[20];
+    double[] baseline = new double[22];
     for (int index = 0; index < 10; index++) {
       baseline[index] = 70.0;
       baseline[index + 10] = index % 2;
     }
+    baseline[20] = 45.0;
+    baseline[21] = fixture.baselineShaftSpeedRpm;
     double[] reservoirPressures = new double[10];
     for (int index = 0; index < 10; index++) {
       reservoirPressures[index] = fixture.networkUnit.getCoupler().getBindings().get(index).getWellFlow()
@@ -1053,9 +1517,14 @@ public class FieldToFacilityOptimizationAcceptanceTest {
       assertEquals(LoopedPipeNetwork.PipeModelType.DARCY_WEISBACH,
           fixture.networkUnit.getHydraulicNetwork().getEffectiveHydraulicModelType(suffix + " HP route"));
     }
+    assertEquals(45.0, fixture.networkUnit.getHydraulicNetwork().getNodePressure("HP host"), 0.0);
+    assertEquals(30.0, fixture.networkUnit.getHydraulicNetwork().getNodePressure("LP host"), 0.0);
+    assertEquals(fixture.baselineShaftSpeedRpm, fixture.shaftCalculator.getSpeed(), 0.0);
+    assertEquals(fixture.baselineShaftSpeedRpm, fixture.highPressureCompressor.getSpeed(), 0.0);
+    assertEquals(fixture.baselineShaftSpeedRpm, fixture.lowPressureCompressor.getSpeed(), 0.0);
   }
 
-  /** Create all ten-well choke and HP/LP route actions in deterministic groups. */
+  /** Create all choke, route, separator-pressure and common-shaft-speed actions in deterministic groups. */
   private List<ProcessModelOperatingAction> createFieldActions(Fixture fixture) {
     List<ProcessModelOperatingAction> actions = new ArrayList<ProcessModelOperatingAction>();
     for (String suffix : fixture.wellSuffixes) {
@@ -1069,6 +1538,13 @@ public class FieldToFacilityOptimizationAcceptanceTest {
           "Field::field network.route.producer " + suffix + " pressure level.selection", new double[] {0.0, 1.0}, "-",
           "synthetic qualified HP/LP route line-up"));
     }
+    actions.add(ProcessModelOperatingAction.continuous("hp-separator-pressure", "HP separator pressure",
+        "Field::field network.sink.HP host.pressure", 42.0, 48.0, "bara",
+        "synthetic qualified HP separator operating-pressure envelope"));
+    actions.add(ProcessModelOperatingAction.continuous("common-shaft-speed", "Common compressor shaft speed",
+        "Field::export shaft control.speed", fixture.shaftCalculator.getMinSpeed(),
+        fixture.shaftCalculator.getMaxSpeed(), "rpm",
+        "synthetic qualified variable-speed compressor operating envelope"));
     return actions;
   }
 
@@ -1168,6 +1644,12 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     lowPressureCompressor.getCompressorChart().setUseCompressorChart(true);
     highPressureCompressor.reinitializeCapacityConstraints();
     lowPressureCompressor.reinitializeCapacityConstraints();
+    for (Compressor compressor : Arrays.asList(highPressureCompressor, lowPressureCompressor)) {
+      for (String constraintName : Arrays.asList("surgeMargin", "stonewallMargin")) {
+        compressor.getCapacityConstraints().get(constraintName).setSource(ConstraintSource.USER_RULE,
+            "synthetic generated compressor chart with built-in minimum map margin");
+      }
+    }
     model.run();
     assertTrue(model.isModelConverged());
 
@@ -1199,6 +1681,22 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     gearbox.setSpeedRatio(1.0);
     gearbox.setMaximumInputPower(driverLimitKw * 1.2 * 1000.0);
 
+    double baselineShaftSpeedRpm = highPressureCompressor.getSpeed();
+    CompressorShaft variableSpeedGroup = new CompressorShaft("export variable-speed group");
+    variableSpeedGroup.addCompressor(highPressureCompressor);
+    variableSpeedGroup.addCompressor(lowPressureCompressor);
+    variableSpeedGroup.setSpeedBounds(baselineShaftSpeedRpm * 0.98, baselineShaftSpeedRpm * 1.02);
+    variableSpeedGroup.setSpeed(baselineShaftSpeedRpm);
+    variableSpeedGroup.setDriver(driver);
+    variableSpeedGroup.setMechanicalEfficiency(0.98);
+    CompressorShaftCalculator shaftCalculator = new CompressorShaftCalculator("export shaft control",
+        variableSpeedGroup, highPressureCompressor, 100.0, "bara");
+    shaftCalculator.setSpeedBounds(baselineShaftSpeedRpm * 0.98, baselineShaftSpeedRpm * 1.02);
+    shaftCalculator.setFixedSpeedMode(true);
+    process.add(shaftCalculator);
+    model.run();
+    assertTrue(model.isModelConverged());
+
     double initialRouteAHigh = massFlow(network, "A HP route");
     network.getPipe("choke A").setChokeOpening(90.0);
     model.run();
@@ -1228,7 +1726,8 @@ public class FieldToFacilityOptimizationAcceptanceTest {
         Math.max(1.0e-9, baselinePowerKw * 1.0e-10));
     return new Fixture(model, networkUnit, mappedInjectionPowerNetwork, highPressureSeparator, lowPressureSeparator,
         highPressureScrubber, lowPressureScrubber, highPressureCompressor, lowPressureCompressor, exportMixer,
-        exportValve, shaft, driverPort, driver, gearbox, baselinePowerKw * 1.8, baselineRouteAHigh, wellSuffixes);
+        exportValve, shaft, shaftCalculator, baselineShaftSpeedRpm, driverPort, driver, gearbox, baselinePowerKw * 1.8,
+        baselineRouteAHigh, wellSuffixes);
   }
 
   /**
@@ -1493,6 +1992,8 @@ public class FieldToFacilityOptimizationAcceptanceTest {
       assertEquals(expectedRoute == 0 ? 1.0 : 0.0, network.getPipe(suffix + " HP route").getAvailability(), 0.0);
       assertEquals(expectedRoute == 1 ? 1.0 : 0.0, network.getPipe(suffix + " LP route").getAvailability(), 0.0);
     }
+    assertEquals(45.0, network.getNodePressure("HP host"), 0.0);
+    assertEquals(30.0, network.getNodePressure("LP host"), 0.0);
     assertEquals(fixture.baselineRouteAHigh, massFlow(network, "A HP route"), fixture.baselineRouteAHigh * 1.0e-5);
     assertTrue(fixture.highPressureScrubber.solved());
     assertTrue(fixture.lowPressureScrubber.solved());

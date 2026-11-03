@@ -82,6 +82,16 @@ class BuildPluginTest(unittest.TestCase):
         known = {n for n, _ in bap.iter_skills(self.spec.skills_roots)}
         return bap.build_plugin(self.spec, self.out, known, _args(**kw))
 
+    def test_test_scratch_output_does_not_change_plugin_content(self):
+        self.assertEqual(self._build()["errors"], [])
+        scratch = self.spec.skills_roots[0] / "cat" / "neqsim-beta" / "tests" / "_out"
+        _write(scratch / "chart.png", "generated chart")
+        _write(scratch / "results.json", '{"result": 1}')
+        result = self._build(check=True)
+        self.assertEqual(result["errors"], [])
+        self.assertFalse(result["changed"])
+        self.assertFalse((self.out / "demo" / "skills" / "neqsim-beta" / "tests" / "_out").exists())
+
     def test_layout_and_manifest(self):
         result = self._build()
         self.assertEqual(result["errors"], [])
@@ -362,7 +372,8 @@ class HookJavaResolutionTest(unittest.TestCase):
         self.jdk25 = self._fake_jdk("jdk-25.0.4.7-hotspot", "25.0.4")
         # Render the hook and load its functions without running main().
         src = bap.HOOK_PY.format(pinned="", editable_self=False, requirements=[],
-                                 prefetch_mcp=True, live_requirements="", verify_imports=[])
+                                 prefetch_mcp=True, live_requirements="", verify_imports=[],
+                                 warmup_file="")
         (self.root / "plugin.json").write_text('{"name": "neqsim", "version": "0"}', encoding="utf-8")
         (self.root / "servers").mkdir()
         (self.root / "servers" / "NeqsimMcpLauncher.java").write_text("// stub", encoding="utf-8")
@@ -380,7 +391,31 @@ class HookJavaResolutionTest(unittest.TestCase):
         self.registry_java_candidates = self.ns["registry_java_candidates"]
         self.ns["vscode_java_candidates"] = lambda: iter(())
         self.ns["registry_java_candidates"] = lambda: iter(())
+        # Behave like VS Code < 1.141 (no ${PLUGIN_ROOT} expansion) unless a test says otherwise.
+        self.ns["vscode_version"] = lambda: (1, 138)
+        os.environ.pop("NEQSIM_SKIP_USER_MCP", None)
 
+    def test_user_mcp_json_untouched_when_vscode_expands_plugin_root(self):
+        """VS Code 1.141+ resolves ${PLUGIN_ROOT}; writing the user mcp.json would only
+        trigger its 'migrate legacy MCP server' prompt."""
+        user = self.root / "User"
+        user.mkdir()
+        mcp = user / "mcp.json"
+        self.ns["vscode_user_mcp_files"] = lambda: [mcp]
+        java25 = str(self._java(self.jdk25))
+        for version in ((1, 141), (1, 144), (2, 0)):
+            self.ns["vscode_version"] = lambda v=version: v
+            self.assertEqual(self.ns["ensure_mcp_entry"](java25, 25), ([], []))
+            self.assertFalse(mcp.exists())
+        self.ns["vscode_version"] = lambda: (1, 140)
+        self.assertEqual(self.ns["ensure_mcp_entry"](java25, 25), ([str(mcp)], []))
+        mcp.unlink()
+        self.ns["vscode_version"] = lambda: None
+        self.assertEqual(self.ns["ensure_mcp_entry"](java25, 25), ([str(mcp)], []))
+        mcp.unlink()
+        os.environ["NEQSIM_SKIP_USER_MCP"] = "1"
+        self.assertEqual(self.ns["ensure_mcp_entry"](java25, 25), ([], []))
+        self.assertFalse(mcp.exists())
     def test_registry_jdk_found_without_path_or_java_home(self):
         """An MSI-installed JDK is found from the registry when PATH and JAVA_HOME are unset."""
         tree = {(2, "SOFTWARE\\Eclipse Adoptium\\JDK"): (["21.0.4.7"], {}),
@@ -577,7 +612,8 @@ class HookPythonSelectionTest(unittest.TestCase):
         self.env.start()
         os.environ.pop("NEQSIM_PYTHON", None)
         src = bap.HOOK_PY.format(pinned="", editable_self=False, requirements=[],
-                                 prefetch_mcp=False, live_requirements="", verify_imports=[])
+                                 prefetch_mcp=False, live_requirements="", verify_imports=[],
+                                 warmup_file="")
         self.ns = {"__file__": str(self.root / "scripts" / "install_skill_packages.py")}
         exec(src.replace("sys.exit(main())", ""), self.ns)  # noqa: S102 - generated code under test
 
@@ -619,6 +655,87 @@ class HookPythonSelectionTest(unittest.TestCase):
             self.assertEqual(self.ns["pick_python"](), sys.executable)
 
 
+class SessionWarmupTest(unittest.TestCase):
+    """Skill-declared background warm-ups: collection at build time, detached start in the hook."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _skill(self, name, payload):
+        path = self.root / name
+        path.mkdir()
+        _write(path / bap.SESSION_WARMUP_FILE, payload if isinstance(payload, str) else json.dumps(payload))
+        return path
+
+    def test_collects_valid_entries_once_and_reports_invalid_ones(self):
+        good = {"module": "pkg.auth", "args": ["warm", "--quiet"], "min_interval_minutes": 20}
+        dirs = [self._skill("a", good), self._skill("b", good),
+                self._skill("c", {"module": "bad name; rm", "args": []}),
+                self._skill("d", {"module": "ok", "args": [1]}),
+                self._skill("e", {"module": "ok", "args": [], "min_interval_minutes": 0}),
+                self._skill("f", "not json"), self.root]
+        errors: list = []
+        entries = bap.collect_session_warmups(dirs, errors)
+        self.assertEqual(entries, [good])
+        self.assertEqual(len(errors), 4)
+
+    def test_no_declared_warmup_writes_no_file(self):
+        dest = self.root / "out"
+        dest.mkdir()
+        self.assertEqual(bap.write_session_warmups(dest, [self.root]), 0)
+        self.assertFalse((dest / bap.WARMUP_PLUGIN_FILE).exists())
+
+    def _hook(self, warmup_file="session-warmup.json"):
+        plugin = self.root / "plugin"
+        plugin.mkdir(exist_ok=True)
+        _write(plugin / "plugin.json", '{"name":"p","version":"1"}')
+        src = bap.HOOK_PY.format(pinned="", editable_self=False, requirements=[],
+                                 prefetch_mcp=False, live_requirements="", verify_imports=[],
+                                 warmup_file=warmup_file)
+        ns = {"__file__": str(plugin / "scripts" / "install_skill_packages.py")}
+        with mock.patch.dict(os.environ, {"PLUGIN_ROOT": str(plugin)}):
+            exec(src.replace("sys.exit(main())", ""), ns)  # noqa: S102 - generated code under test
+        ns["state"] = self.root / "state"
+        ns["detached"] = mock.Mock()
+        return plugin, ns
+
+    def test_hook_starts_each_warmup_detached_and_throttles(self):
+        plugin, ns = self._hook()
+        _write(plugin / "session-warmup.json", json.dumps(
+            [{"module": "pkg.auth", "args": ["warm", "--quiet"], "min_interval_minutes": 20}]))
+        self.assertEqual(ns["run_warmups"]("py"), 1)
+        cmd = ns["detached"].call_args[0][0]
+        self.assertEqual(cmd, ["py", "-m", "pkg.auth", "warm", "--quiet"])
+        self.assertEqual(ns["run_warmups"]("py"), 0)
+        mark = ns["state"] / "warmup-pkg.auth.stamp"
+        old = mark.stat().st_mtime - 21 * 60
+        os.utime(str(mark), (old, old))
+        self.assertEqual(ns["run_warmups"]("py"), 1)
+
+    def test_hook_never_raises_and_skips_unsafe_entries(self):
+        plugin, ns = self._hook()
+        self.assertEqual(ns["run_warmups"]("py"), 0)  # file missing
+        _write(plugin / "session-warmup.json", "{broken")
+        self.assertEqual(ns["run_warmups"]("py"), 0)
+        _write(plugin / "session-warmup.json", json.dumps(
+            [{"module": "x; calc", "args": []}, {"args": []}, "text"]))
+        self.assertEqual(ns["run_warmups"]("py"), 0)
+        ns["detached"].assert_not_called()
+        ns["detached"].side_effect = OSError("no")
+        _write(plugin / "session-warmup.json", json.dumps([{"module": "ok.mod", "args": []}]))
+        self.assertEqual(ns["run_warmups"]("py"), 0)
+
+    def test_hook_without_warmup_file_or_python_does_nothing(self):
+        _plugin, ns = self._hook(warmup_file="")
+        self.assertEqual(ns["run_warmups"]("py"), 0)
+        _plugin2, ns2 = self._hook()
+        self.assertEqual(ns2["run_warmups"](None), 0)
+
+
 class HookPluginOnlyTest(unittest.TestCase):
     """Exercise the generated hook without a checkout, pip installs or network access."""
 
@@ -630,7 +747,8 @@ class HookPluginOnlyTest(unittest.TestCase):
         self.env = mock.patch.dict(os.environ, {"PLUGIN_ROOT": str(self.root)})
         self.env.start()
         src = bap.HOOK_PY.format(pinned="", editable_self=False, requirements=[],
-                                 prefetch_mcp=False, live_requirements="", verify_imports=["json"])
+                                 prefetch_mcp=False, live_requirements="", verify_imports=["json"],
+                                 warmup_file="")
         self.ns = {"__file__": str(self.root / "scripts" / "install_skill_packages.py")}
         exec(src.replace("sys.exit(main())", ""), self.ns)
         state = self.root / "state"

@@ -656,3 +656,13 @@ For detailed FIV documentation, see [Capacity Constraint Framework](../CAPACITY_
 - [Pipeline Mechanical Design](../pipeline_mechanical_design) - Wall thickness, stress, costs
 - [Riser Mechanical Design](../riser_mechanical_design) - Riser-specific design
 - [Valves](valves) - Flow control
+
+## Safety Shutdown translating check-valve boundary
+
+`WaterHammerPipe.setLiftCheckValve` optionally configures an experimental ideal
+translating/inelastic downstream valve with signed flow and reciprocal swept
+volume. It reuses the existing acoustic cells, clock and volume/momentum ledgers.
+The [physical contract and complete public example](../../wiki/water_hammer_implementation.md#safety-shutdown-ideal-translating-check-valve)
+state initialization, SI inputs, JSON output, energy losses and refinement gates.
+Legacy `CheckValve` remains a separate simple mode. Full pump trips, vendor slam,
+cavitation, network junctions and integrated Safety Shutdown are not qualified.

@@ -59,7 +59,7 @@ This documentation is organized into the following sections:
 | [controllers.md](controllers) | Process controllers and logic |
 | [unisim-to-neqsim-conversion.md](unisim-to-neqsim-conversion) | **UniSim/HYSYS conversion** — convert `.usc` models to NeqSim with E300 full-fluid transfer and export back to UniSim |
 | [piping_route_builder.md](piping_route_builder) | **STID/E3D line-list piping route builder** — convert route tables into serial Beggs-and-Brill hydraulic models and water-hammer screening handoffs |
-| [water_hammer_implementation.md](../wiki/water_hammer_implementation) | **Water hammer/liquid hammer screening** — fast valve closure, pump trip, STID route, tagreader event, and MCP runWaterHammer workflow |
+| [water_hammer_implementation.md](../wiki/water_hammer_implementation) | **Safety Shutdown water-hammer screening** — conservative cell acoustics, tabulated actual travel and Kv/US-Cv; pump/disc coupling remains unqualified |
 | [operational_evidence_package.md](operational_evidence_package) | **Operational evidence package** — combine P&ID/STID references, tagreader values, scenario actions, and bottleneck detection |
 | [process_replay.md](process_replay) | **Process replay of plant time series** — tag-bound inputs/outputs, convergence-gated steps, residual bias/RMS, baseline standardisation, CUSUM change points, CSV/JSON export |
 | [exergy-analysis.md](exergy-analysis) | **Exergy analysis** — plant-wide destruction hotspots for ProcessSystem and ProcessModel |
@@ -268,6 +268,7 @@ The following complete Java 8 program builds and runs a valve-and-separator flow
 the normal entry point; with the default settings it delegates to the topology-aware optimized
 dispatcher and falls back conservatively when parallel execution is not suitable.
 
+<!-- process-overview-example: valve-separator -->
 ```java
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
@@ -484,3 +485,7 @@ See [Future Infrastructure Overview](future-infrastructure) for complete documen
 - [Safety Systems](../safety/SAFETY_SIMULATION_ROADMAP) - Safety simulation
 - [Alarm System](../safety/alarm_system_guide) - Process alarms
 - [Future Infrastructure](future-infrastructure) - Digital twin, AI integration, sustainability
+
+The [Safety Shutdown forward pump coastdown](../wiki/water_hammer_implementation#safety-shutdown-forward-pump-coastdown)
+example couples a bounded `PumpChart` characteristic and prescribed actual speed
+to `WaterHammerPipe`. Complete pump trip and check-valve slam remain unqualified.

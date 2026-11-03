@@ -1,0 +1,73 @@
+{
+  "implementation_head": "2561eb8df00baab7f7b33f55ca0c6b27c629f8ac",
+  "runtime": "OpenJDK 17.0.20",
+  "command": "python3 src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series/audit.py",
+  "exit_code": 0,
+  "repeated_exit_code": 0,
+  "probe_compile": "installed compiler module --release 8",
+  "fixed_moment_gate": "1e-14 D^3 + 1e-10 abs(reference)",
+  "publication_gates": [
+    {
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "pre-commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-commit"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "devtools/run_spotless.py",
+        "check"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "devtools/check_documentation_search.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "pre-commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-push"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "selected_diff_whitespace": 0,
+  "documentation_impact": "Existing public numerical record extended; no API/default/runtime/physical qualification change.",
+  "limits": "Static geometry only; no dynamic pooling, physical boundary cycle or predictive depletion-rate result."
+}

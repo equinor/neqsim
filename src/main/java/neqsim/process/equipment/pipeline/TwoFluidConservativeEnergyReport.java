@@ -25,11 +25,29 @@ public final class TwoFluidConservativeEnergyReport implements Serializable {
   private static final long serialVersionUID = 1L;
   private static final double RELATIVE_SCALE_FLOOR_J = 1.0e-12;
 
+  /** Hydrodynamic phase identity used by boundary-energy arrays. */
+  public enum Phase {
+    /** Gas phase. */
+    GAS(0),
+    /** Hydrocarbon-liquid phase. */
+    OIL(1),
+    /** Aqueous phase. */
+    WATER(2);
+
+    private final int index;
+
+    Phase(int index) {
+      this.index = index;
+    }
+  }
+
   private final double elapsedTimeSeconds;
   private final double initialEnergyJ;
   private final double finalEnergyJ;
   private final double inletAdvectedEnergyJ;
   private final double outletAdvectedEnergyJ;
+  private final double[] inletPhaseAdvectedEnergyJ;
+  private final double[] outletPhaseAdvectedEnergyJ;
   private final double gravitationalWorkJ;
   private final double wallHeatToFluidJ;
   private final double maxRelativeVolumeResidual;
@@ -81,11 +99,42 @@ public final class TwoFluidConservativeEnergyReport implements Serializable {
   public TwoFluidConservativeEnergyReport(double elapsedTimeSeconds, double initialEnergyJ, double finalEnergyJ,
       double inletAdvectedEnergyJ, double outletAdvectedEnergyJ, double gravitationalWorkJ, double wallHeatToFluidJ,
       double maxRelativeVolumeResidual, double maxRelativeThermodynamicEnergyResidual) {
+    this(elapsedTimeSeconds, initialEnergyJ, finalEnergyJ, inletAdvectedEnergyJ, outletAdvectedEnergyJ,
+        legacyPhaseEnergy(inletAdvectedEnergyJ), legacyPhaseEnergy(outletAdvectedEnergyJ), gravitationalWorkJ,
+        wallHeatToFluidJ, maxRelativeVolumeResidual, maxRelativeThermodynamicEnergyResidual);
+  }
+
+  /**
+   * Construct an accepted-interval fluid energy ledger with phase-resolved boundary advection.
+   *
+   * @param elapsedTimeSeconds accepted elapsed time in seconds
+   * @param initialEnergyJ initial integrated internal plus kinetic energy in joules
+   * @param finalEnergyJ final integrated internal plus kinetic energy in joules
+   * @param inletAdvectedEnergyJ signed accepted energy through the inlet face in joules
+   * @param outletAdvectedEnergyJ signed accepted energy through the outlet face in joules
+   * @param inletPhaseAdvectedEnergyJ inlet gas/oil/water energy transfers in joules
+   * @param outletPhaseAdvectedEnergyJ outlet gas/oil/water energy transfers in joules
+   * @param gravitationalWorkJ integrated gravitational work on the fluid in joules
+   * @param wallHeatToFluidJ integrated heat added to the fluid, including electrical heating, in joules
+   * @param maxRelativeVolumeResidual maximum absolute occupied-volume residual relative to cell volume
+   * @param maxRelativeThermodynamicEnergyResidual maximum absolute discrepancy between conservative and reconstructed
+   * thermodynamic total energy, relative to the recovery solver's energy scale
+   * @throws IllegalArgumentException if a quantity is nonfinite, a time/residual is negative, or phase transfers do not
+   * reproduce the corresponding total
+   */
+  public TwoFluidConservativeEnergyReport(double elapsedTimeSeconds, double initialEnergyJ, double finalEnergyJ,
+      double inletAdvectedEnergyJ, double outletAdvectedEnergyJ, double[] inletPhaseAdvectedEnergyJ,
+      double[] outletPhaseAdvectedEnergyJ, double gravitationalWorkJ, double wallHeatToFluidJ,
+      double maxRelativeVolumeResidual, double maxRelativeThermodynamicEnergyResidual) {
     requireNonnegativeFinite(elapsedTimeSeconds, "elapsedTimeSeconds");
     requireFinite(initialEnergyJ, "initialEnergyJ");
     requireFinite(finalEnergyJ, "finalEnergyJ");
     requireFinite(inletAdvectedEnergyJ, "inletAdvectedEnergyJ");
     requireFinite(outletAdvectedEnergyJ, "outletAdvectedEnergyJ");
+    this.inletPhaseAdvectedEnergyJ = requirePhaseEnergy(inletPhaseAdvectedEnergyJ, inletAdvectedEnergyJ,
+        "inletPhaseAdvectedEnergyJ");
+    this.outletPhaseAdvectedEnergyJ = requirePhaseEnergy(outletPhaseAdvectedEnergyJ, outletAdvectedEnergyJ,
+        "outletPhaseAdvectedEnergyJ");
     requireFinite(gravitationalWorkJ, "gravitationalWorkJ");
     requireFinite(wallHeatToFluidJ, "wallHeatToFluidJ");
     requireNonnegativeFinite(maxRelativeVolumeResidual, "maxRelativeVolumeResidual");
@@ -99,6 +148,35 @@ public final class TwoFluidConservativeEnergyReport implements Serializable {
     this.wallHeatToFluidJ = wallHeatToFluidJ;
     this.maxRelativeVolumeResidual = maxRelativeVolumeResidual;
     this.maxRelativeThermodynamicEnergyResidual = maxRelativeThermodynamicEnergyResidual;
+  }
+
+  private static double[] legacyPhaseEnergy(double totalEnergyJ) {
+    return new double[] {totalEnergyJ, 0.0, 0.0};
+  }
+
+  private static double[] requirePhaseEnergy(double[] values, double totalEnergyJ, String name) {
+    if (values == null || values.length != 3) {
+      throw new IllegalArgumentException(name + " must contain gas, oil, and water entries");
+    }
+    double[] result = values.clone();
+    double sum = 0.0;
+    double scale = Math.abs(totalEnergyJ);
+    for (double value : result) {
+      requireFinite(value, name);
+      sum += value;
+      scale = Math.max(scale, Math.abs(value));
+    }
+    if (Math.abs(sum - totalEnergyJ) > 32.0 * Math.ulp(Math.max(1.0, scale))) {
+      throw new IllegalArgumentException(name + " must sum to the corresponding total boundary energy");
+    }
+    return result;
+  }
+
+  private static Phase requirePhase(Phase phase) {
+    if (phase == null) {
+      throw new IllegalArgumentException("phase cannot be null");
+    }
+    return phase;
   }
 
   /**
@@ -156,6 +234,36 @@ public final class TwoFluidConservativeEnergyReport implements Serializable {
   /** @return signed total-enthalpy and kinetic energy leaving through the outlet face, in joules */
   public double getOutletAdvectedEnergyJ() {
     return outletAdvectedEnergyJ;
+  }
+
+  /**
+   * Get the signed accepted inlet energy carried by one phase.
+   *
+   * @param phase phase identity
+   * @return interval-integrated total-enthalpy and kinetic-energy transfer in joules
+   */
+  public double getInletAdvectedEnergyJ(Phase phase) {
+    return inletPhaseAdvectedEnergyJ[requirePhase(phase).index];
+  }
+
+  /**
+   * Get the signed accepted outlet energy carried by one phase.
+   *
+   * @param phase phase identity
+   * @return interval-integrated total-enthalpy and kinetic-energy transfer in joules
+   */
+  public double getOutletAdvectedEnergyJ(Phase phase) {
+    return outletPhaseAdvectedEnergyJ[requirePhase(phase).index];
+  }
+
+  /** @return defensive gas/oil/water inlet energy-transfer array in joules */
+  public double[] getInletPhaseAdvectedEnergyJ() {
+    return inletPhaseAdvectedEnergyJ.clone();
+  }
+
+  /** @return defensive gas/oil/water outlet energy-transfer array in joules */
+  public double[] getOutletPhaseAdvectedEnergyJ() {
+    return outletPhaseAdvectedEnergyJ.clone();
   }
 
   /** @return net external-face total-enthalpy and kinetic energy entering the fluid, in joules */

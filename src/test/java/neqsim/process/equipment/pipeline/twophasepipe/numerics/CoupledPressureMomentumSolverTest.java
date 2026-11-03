@@ -10,6 +10,69 @@ import org.junit.jupiter.api.Test;
 import neqsim.util.util.ArrayUtils;
 
 class CoupledPressureMomentumSolverTest {
+  /**
+   * A correction that drains a trace phase must transport its momentum without an unbounded residual velocity.
+   */
+  @Test
+  void drainingTracePhaseTransportsMomentumConservatively() {
+    double[] length = {1.0, 2.0, 3.0};
+    double[][] density = {ArrayUtils.filledArray(3, 10.0), ArrayUtils.filledArray(3, 800.0),
+        ArrayUtils.filledArray(3, 1000.0)};
+    for (int phase = 0; phase < 3; phase++) {
+      double[][] state = new double[3][7];
+      double initialMomentum = 0.0;
+      double[] velocity = {-3.0, 20.0, 2.0};
+      for (int cell = 0; cell < 3; cell++) {
+        state[cell][phase] = cell == 1 ? 1.0e-6 : 1.0;
+        state[cell][phase + 3] = state[cell][phase] * velocity[cell];
+        initialMomentum += state[cell][phase + 3] * length[cell];
+      }
+      double[] initialMass = weightedPhaseMass(state, length);
+      CoupledPressureMomentumSolver.applyConservativeMassFluxCorrection(state, 0.1, new double[] {0.0, 1.0e8, 0.0},
+          phaseAreas(state, density), ArrayUtils.filledArray(3, 1.0), length, density, false);
+      assertTrue(state[1][phase] < 1.0e-18, "The regression must exercise an almost emptied donor");
+      double finalMomentum = 0.0;
+      for (int cell = 0; cell < 3; cell++) {
+        double speed = state[cell][phase] > 0.0 ? state[cell][phase + 3] / state[cell][phase] : 0.0;
+        assertTrue(speed >= -3.0 - 1.0e-12 && speed <= 20.0 + 1.0e-12,
+            "Accepted mass transfers must retain bounded donor velocities");
+        finalMomentum += state[cell][phase + 3] * length[cell];
+      }
+      assertEquals(initialMomentum, finalMomentum, 1.0e-12);
+      assertArrayEquals(initialMass, weightedPhaseMass(state, length), 1.0e-12);
+    }
+  }
+
+  /**
+   * Feasible through-flow mixes velocities conservatively when incoming correction mass funds outgoing mass.
+   */
+  @Test
+  void correctionThroughFlowRetainsConservativeBoundedMomentum() {
+    for (boolean reverse : new boolean[] {false, true}) {
+      double[][] state = new double[3][7];
+      double[][] density = {ArrayUtils.filledArray(3, 1.0), ArrayUtils.filledArray(3, 800.0),
+          ArrayUtils.filledArray(3, 1000.0)};
+      int donor = reverse ? 2 : 0;
+      double initialMomentum = 0.0;
+      for (int cell = 0; cell < 3; cell++) {
+        state[cell][0] = cell == donor ? 100.0 : 1.0;
+        state[cell][3] = state[cell][0] * (cell == donor ? 8.0 : -2.0);
+        initialMomentum += state[cell][3];
+      }
+      density[0][donor] = 100.0;
+      double[] correction = reverse ? new double[] {0.0, 2.0, 4.0} : new double[] {4.0, 2.0, 0.0};
+      CoupledPressureMomentumSolver.applyConservativeMassFluxCorrection(state, 1.0, correction,
+          phaseAreas(state, density), ArrayUtils.filledArray(3, 1.0), ArrayUtils.filledArray(3, 1.0), density, false);
+      double finalMomentum = 0.0;
+      for (double[] cell : state) {
+        assertTrue(cell[3] / cell[0] >= -2.0 && cell[3] / cell[0] <= 8.0);
+        finalMomentum += cell[3];
+      }
+      assertTrue(state[1][3] > 0.0, "Incoming donor momentum must fund through-flow");
+      assertEquals(initialMomentum, finalMomentum, 1.0e-12);
+    }
+  }
+
   @Test
   void feasibleIncomingCorrectionSuppliesThroughFlowInEitherDirection() {
     for (boolean reverse : new boolean[] {false, true}) {
@@ -183,6 +246,46 @@ class CoupledPressureMomentumSolverTest {
       assertEquals(10.0 * (finalPhaseMass[phase] - initialPhaseMass[phase]), -outletCorrection[phase], 1.0e-10);
     }
     assertTrue(outletCorrection[0] + outletCorrection[1] + outletCorrection[2] > 0.0);
+  }
+
+  /** A gas-only pressure face closes volume with gas while preserving retained liquid mass and momentum bitwise. */
+  @Test
+  void gasOnlyOutletProjectionCannotRescaleRetainedLiquid() {
+    double[][] state = {{5.0, 400.0, 100.0, 10.0, 120.0, -20.0, 1.0e6}};
+    double[][] density = {{10.0}, {800.0}, {1000.0}};
+    double oilMass = state[0][1];
+    double waterMass = state[0][2];
+    double oilMomentum = state[0][4];
+    double waterMomentum = state[0][5];
+
+    double[] outlet = CoupledPressureMomentumSolver.applyConservativeMassFluxCorrection(state, 0.1, new double[] {0.0},
+        phaseAreas(state, density), new double[] {1.0}, new double[] {1.0}, density, true,
+        new boolean[] {true, false, false});
+
+    assertEquals(4.0, state[0][0], 1.0e-12, "Gas must fill the 0.4 m2 left by retained liquid");
+    assertEquals(1.0, outlet[0], 1.0e-12);
+    assertEquals(0.0, outlet[1], 0.0);
+    assertEquals(0.0, outlet[2], 0.0);
+    assertEquals(oilMass, state[0][1], 0.0);
+    assertEquals(waterMass, state[0][2], 0.0);
+    assertEquals(oilMomentum, state[0][4], 0.0);
+    assertEquals(waterMomentum, state[0][5], 0.0);
+  }
+
+  /** A pressure projection reports gas addition with a negative outlet transfer for donor validation upstream. */
+  @Test
+  void gasOnlyOutletProjectionReportsSignedGasInjection() {
+    double[][] state = {{3.0, 400.0, 100.0, 6.0, 120.0, -20.0, 1.0e6}};
+    double[][] density = {{10.0}, {800.0}, {1000.0}};
+
+    double[] outlet = CoupledPressureMomentumSolver.applyConservativeMassFluxCorrection(state, 0.1, new double[] {0.0},
+        phaseAreas(state, density), new double[] {1.0}, new double[] {1.0}, density, true,
+        new boolean[] {true, false, false});
+
+    assertEquals(4.0, state[0][0], 1.0e-12);
+    assertEquals(-1.0, outlet[0], 1.0e-12);
+    assertEquals(0.0, outlet[1], 0.0);
+    assertEquals(0.0, outlet[2], 0.0);
   }
 
   /** A centered interface must not extract gas from a gas-free donor in either correction direction. */

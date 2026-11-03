@@ -28,14 +28,16 @@ salinity, and phase range of interest.
 
 ## Executable first screen
 
-The following complete Java 8 program runs three independent screens and reports results through
-the repository's Log4j2 logging contract. It uses:
+The following uniquely marked complete Java 8 program runs three independent screens and reports
+results through the repository's Log4j2 logging contract. The literal published source is compiled
+and executed by the documentation test suite. It uses:
 
 - a hydrate equilibrium calculation for a specified gas, water, MEG, and salt mixture;
 - the repository's De Boer implementation, using absolute pressure in bar and in-situ
   oil density in kg/m³;
 - mineral saturation indices from explicit produced-water chemistry in mg/L.
 
+<!-- flow-assurance-overview-example: integrated-screen -->
 ```java
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

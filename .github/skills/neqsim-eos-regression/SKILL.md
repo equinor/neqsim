@@ -18,6 +18,17 @@ Guide for fitting equation-of-state parameters to experimental data using NeqSim
 
 ## Regression Strategy
 
+For reservoir material-balance handoff, use `CalibratedPvtModel` to freeze original
+and independently tuned fluids with sample/model/laboratory revision references.
+Compare complete held-out CCE/CVD/DLE and separator experiments before accepting
+the tuned model. Never split rows from one depletion experiment between tuning and
+validation. `MaterialBalancePvtHistory` requires an explicitly attributed depletion
+and separator path; constant-composition flash tables cannot be passed as CVD/DLE
+history. It checks alignment and provenance fields, not the external evidence's
+truth or experimental accuracy. See `docs/pvtsimulation/reservoir_material_balance.md`
+and hand off measured-history volume estimation to `@field-development`, keeping
+laboratory EOS calibration separate from reservoir/aquifer fitting.
+
 ### Step 1: Select Base EOS
 
 | Fluid System | Recommended EOS | Reason |
@@ -30,6 +41,16 @@ Guide for fitting equation-of-state parameters to experimental data using NeqSim
 | Electrolytes | Electrolyte-CPA | Ion interactions |
 
 ### Step 2: Gather Experimental Data
+
+For reported gas-phase p/T/Z/molar-mass/density tuples, apply the optional
+`PvtGasDensityConsistency` gate before regression. All quantities must describe
+the same phase/state and molar-volume basis; pressure is absolute Pa, temperature
+K, molar mass kg/mol, density kg/m3. Freeze justified absolute bounds first and
+retain failing rows and source/page/table/row identities. Do not treat printed
+precision as measurement sigma or widen bounds to manufacture agreement. Passing
+same-sample evidence can be frozen in `CalibratedPvtModel` via its overload.
+See `docs/pvtsimulation/laboratory_gas_density_consistency.md` and its executable
+regression; the check is arithmetic compatibility, not independent accuracy.
 
 Required data types by priority:
 1. **Saturation pressure** (bubble/dew point) at reservoir temperature — most critical
@@ -275,3 +296,16 @@ report saturation pressures 24% apart, no EOS will fit both; tuning harder just
 fits noise. Report bias and scatter separately, and stop when the scatter matches
 the data's own inconsistency.
 
+
+
+### Explicit initial-volume depletion handoff
+
+`DepletionPvtHistoryGenerator.replayNativeFixedCell` preserves original/tuned
+checkpoints and fixed separator provenance for independently declared initial
+occupied-volume experiments. Its immutable reference is not a dew-point estimate
+or measured saturation normalization. The bounded gas-bearing phase family must
+remain unchanged; critical and other-phase states fail. Keep the ordinary
+`replayNative` laboratory protocol separate. See
+`docs/pvtsimulation/depletion_pvt_generation.md` and
+`FixedCellDepletionHandoffTest`; synthetic EOS consistency does not establish
+measured calibration, held-out experiment accuracy or recoverable reserves.

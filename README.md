@@ -65,13 +65,16 @@ See [neqsim-python](https://github.com/equinor/neqsim-python) for more details.
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.26.0</version>
+  <version>3.27.0</version>
 </dependency>
 ```
 
 Verify availability on Maven Central before using a newly announced version.
-Read the [3.26.0 release and migration notes](docs/development/release-notes-3.26.0.md)
-before upgrading, especially if you use matrix APIs or saved numerical solvers.
+Read the [3.27.0 release and migration notes](docs/development/release-notes-3.27.0.md)
+before upgrading, especially if you use saved models, trace-water flashes,
+compressor charts, or experimental transient models. The
+[3.26.0 migration notes](docs/development/release-notes-3.26.0.md) remain relevant
+when upgrading from an older version.
 Release publishing retains the Maven 3.9.16 wrapper qualified for 3.25.0: the
 Java 8 release profile still uses Sonatype publishing plugin 0.11.0, whose
 bundles include local metadata with Maven 3.10.0. The standard release profile
@@ -377,7 +380,7 @@ See [VISION_AGENTS.md](VISION_AGENTS.md) and the [Where Does This Go? guide](htt
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.26.0</version>
+  <version>3.27.0</version>
 </dependency>
 ```
 
@@ -789,7 +792,7 @@ If NeqSim contributes to a publication, report, or product, please cite it. The 
 
 **APA-style citation** (software):
 
-> Solbraa, E., & NeqSim Contributors. (2026). *NeqSim: A library for thermodynamic and process simulation* (Version 3.26.0) [Computer software]. Equinor. https://github.com/equinor/neqsim
+> Solbraa, E., & NeqSim Contributors. (2026). *NeqSim: A library for thermodynamic and process simulation* (Version 3.27.0) [Computer software]. Equinor. https://github.com/equinor/neqsim
 
 **BibTeX:**
 
@@ -798,7 +801,7 @@ If NeqSim contributes to a publication, report, or product, please cite it. The 
   author       = {Solbraa, Even and {NeqSim Contributors}},
   title        = {NeqSim: A library for thermodynamic and process simulation},
   year         = {2026},
-  version      = {3.26.0},
+  version      = {3.27.0},
   publisher    = {Equinor},
   url          = {https://github.com/equinor/neqsim},
   license      = {Apache-2.0}

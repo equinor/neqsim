@@ -1,0 +1,232 @@
+{
+  "source_base": "98a9e7509391dc0b713e6ea985dc3dc236299f6a",
+  "parent_head": "9b9c784a77f9ed76b42f8640423e7e1756a0c347",
+  "fresh_master_inspected": "f1982968aac7dd2bf02340fe13a97635462e624f",
+  "production_geometry_blob": "6eea54142e2668717a7b756e1b252da6810a7e21",
+  "qualifier_sha256": "d470d37339839bb8e8e51516d2a1e7e6987742986f9c25c1cb5da9c1eb2c21cb",
+  "java_runtime": "openjdk version \"17.0.20\" 2026-07-21",
+  "python": "3.12.14",
+  "baseline_reproduction": {
+    "source_head": "9b9c784a77f9ed76b42f8640423e7e1756a0c347",
+    "method": "Mock only the subprocess producer: retain valid native162 rows; supply one NaN timing row and an all-NaN static budget. Run unmodified main().",
+    "incorrectly_accepted": true,
+    "emitted_nonstandard_json_nan": true
+  },
+  "fixed_scope": "Complete finite native, timing and static-budget receipts; existing static API only",
+  "relative_engineering_gate": "5e-13, unchanged",
+  "checksum_gate": "Exact rational sum with standard gamma_n sequential-addition roundoff bound; 100000 warmup additions plus 7 samples of 200000 additions, cyclic index restarts per loop",
+  "negative_receipts_per_mode": {
+    "native": 108,
+    "static_budget": 24,
+    "timing": 79,
+    "total": 211
+  },
+  "real_probe_mutations_per_mode": [
+    "truncated timing",
+    "NaN budget",
+    "changed potential drop",
+    "changed native identity"
+  ],
+  "stale_success_removed_on_rejection": true,
+  "python_tests": {
+    "energy_receipts_methods": 3,
+    "depth_receipts_methods": 2,
+    "normal_and_optimized": "PASS"
+  },
+  "focused_java": {
+    "classes": 11,
+    "tests": 61,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "replays": {
+    "normal": {
+      "summary": {
+        "source_base": "98a9e7509391dc0b713e6ea985dc3dc236299f6a",
+        "source_blob": "6eea54142e2668717a7b756e1b252da6810a7e21",
+        "rows": 162,
+        "reference_digits": 80,
+        "relative_gate": "5e-13",
+        "maximum_relative_error": "7.087111935198039229073992724E-15",
+        "query_ns_min_median_max": [
+          13.2607,
+          18.59002,
+          38.194605
+        ],
+        "timing_rows": 7,
+        "queries_per_sample": 200000,
+        "budget_maximum_relative_error": "8.773812056792126474210241220E-16",
+        "scope": "Explicit cross-sectional energy query only; no dynamic integration or evaporation claim"
+      },
+      "timing_samples": [
+        {
+          "round": "0",
+          "queries": "200000",
+          "ns_per_query": "38.194605",
+          "checksum": "-4.165983860375492E9"
+        },
+        {
+          "round": "1",
+          "queries": "200000",
+          "ns_per_query": "16.607225",
+          "checksum": "-6.943085123954964E9"
+        },
+        {
+          "round": "2",
+          "queries": "200000",
+          "ns_per_query": "13.2607",
+          "checksum": "-9.720186387532736E9"
+        },
+        {
+          "round": "3",
+          "queries": "200000",
+          "ns_per_query": "15.00284",
+          "checksum": "-1.2497287651107716E10"
+        },
+        {
+          "round": "4",
+          "queries": "200000",
+          "ns_per_query": "19.42321",
+          "checksum": "-1.5274388914682695E10"
+        },
+        {
+          "round": "5",
+          "queries": "200000",
+          "ns_per_query": "18.59002",
+          "checksum": "-1.8051490178256935E10"
+        },
+        {
+          "round": "6",
+          "queries": "200000",
+          "ns_per_query": "18.65101",
+          "checksum": "-2.082859144182956E10"
+        }
+      ],
+      "numerical_matches_retained": {
+        "reference.csv": true,
+        "native.csv": true,
+        "two-cell-budget.csv": true
+      }
+    },
+    "optimized": {
+      "summary": {
+        "source_base": "98a9e7509391dc0b713e6ea985dc3dc236299f6a",
+        "source_blob": "6eea54142e2668717a7b756e1b252da6810a7e21",
+        "rows": 162,
+        "reference_digits": 80,
+        "relative_gate": "5e-13",
+        "maximum_relative_error": "7.087111935198039229073992724E-15",
+        "query_ns_min_median_max": [
+          10.893135,
+          13.073975,
+          70.34051
+        ],
+        "timing_rows": 7,
+        "queries_per_sample": 200000,
+        "budget_maximum_relative_error": "8.773812056792126474210241220E-16",
+        "scope": "Explicit cross-sectional energy query only; no dynamic integration or evaporation claim"
+      },
+      "timing_samples": [
+        {
+          "round": "0",
+          "queries": "200000",
+          "ns_per_query": "70.34051",
+          "checksum": "-4.165983860375492E9"
+        },
+        {
+          "round": "1",
+          "queries": "200000",
+          "ns_per_query": "16.271275",
+          "checksum": "-6.943085123954964E9"
+        },
+        {
+          "round": "2",
+          "queries": "200000",
+          "ns_per_query": "10.893135",
+          "checksum": "-9.720186387532736E9"
+        },
+        {
+          "round": "3",
+          "queries": "200000",
+          "ns_per_query": "11.86373",
+          "checksum": "-1.2497287651107716E10"
+        },
+        {
+          "round": "4",
+          "queries": "200000",
+          "ns_per_query": "13.073975",
+          "checksum": "-1.5274388914682695E10"
+        },
+        {
+          "round": "5",
+          "queries": "200000",
+          "ns_per_query": "15.838535",
+          "checksum": "-1.8051490178256935E10"
+        },
+        {
+          "round": "6",
+          "queries": "200000",
+          "ns_per_query": "12.43658",
+          "checksum": "-2.082859144182956E10"
+        }
+      ],
+      "numerical_matches_retained": {
+        "reference.csv": true,
+        "native.csv": true,
+        "two-cell-budget.csv": true
+      }
+    }
+  },
+  "commands": [
+    {
+      "command": "python3 -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy -p test_energy_receipts.py -v",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -O -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy -p test_energy_receipts.py -v",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series -p test_audit.py -v",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -O -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series -p test_audit.py -v",
+      "exit_code": 0
+    },
+    {
+      "command": "./mvnw -q -Dtest=StratifiedGravityEnergyTest,StratifiedPressureMomentsTest,StratifiedPressureMomentCouplingTest,HydrostaticCellGeometryTest,GeometryCalculatorTest,ConservativeInterfacialDragTest,TwoFluidTotalEnergyContractTest,TwoFluidThermalFaceFluxTest,MultiphaseHydrostaticForceQualificationTest,HydrostaticPressureReconstructionTest,TwoFluidVariableAreaPressureRegressionTest -DskipITs -Djacoco.skip=true test",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 devtools/run_spotless.py apply",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 devtools/run_spotless.py check",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 devtools/check_documentation_search.py",
+      "exit_code": 0
+    },
+    {
+      "command": "pre-commit run --all-files --hook-stage pre-commit",
+      "exit_code": 0
+    },
+    {
+      "command": "pre-commit run --all-files --hook-stage pre-push",
+      "exit_code": 0
+    }
+  ],
+  "bootstrap": "Skill prepare_maven.py evaluated before Maven/Spotless; environment-only settings",
+  "documentation_search": {
+    "markdown": 828,
+    "html": 1
+  },
+  "documentation_impact": "Extended executed report and model evidence matrix; no API/model/default change; no notebook. Existing plot and numerical raw files unchanged; plot visually inspected again.",
+  "initial_test_correction": "Checksum reference initially treated timing rounds as one continuous cyclic index. Corrected to the actual declared reset of i to zero in each loop; no bound or engineering tolerance changed.",
+  "local_checkout": "9774 unchanged head blobs verified plus four intended tracked edits before publication; two unrelated HV ZIP archives unavailable locally and preserved remotely; no full-repository local suite claim",
+  "limits": "No production Java or solver change. Does not repair dry/wet pressure-front impulse, qualify dynamic pools, full inlet refill/hold or physical evaporation times. Historical12/24 master ramp is prior evidence, not relabeled as rerun. Hosted CI and independent review remain separate gates."
+}

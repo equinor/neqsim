@@ -122,6 +122,7 @@ def run_pipeline(inputs, out_dir, use_word=True, strict=False, quiet=False, run_
         t0 = time.time()
         first_fluid = basis["fluids"][cases[0]["fluid"]]
         bms = fa_benchmarks.run_all(ns, dict(first_fluid, id=cases[0]["fluid"]), log=say)
+        bms.extend(fa_benchmarks.field_validation(basis, results))
         timings["benchmarks"] = round(time.time() - t0, 2)
         mesh = None
         if run_mesh:

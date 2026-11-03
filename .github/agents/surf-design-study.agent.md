@@ -55,6 +55,11 @@ Write `study.yaml` (`neqsim surf-study --init DIR`): at least two meaningful con
 ### 6. Hand off and close
 Specialist hand-offs `handoff/HO-*.json` (riser analysis, stability/span/buckling, umbilical, electrical, marine operations, controls/safety, transient FA, vendor data). Independent review with `@review`. Merge a summary into `results.json` with `--task DIR`. Update the tooling when a gap appears (Java + JUnit for NeqSim gaps, skill/agent edits for workflow gaps).
 
+## Flow-diagram gate (mandatory)
+
+SURF process/network schematics, arrangement and layout sheets and any PFD/BFD figure go through `@pfd-layout-review`
+(`neqsim pfd-check`, then a visual sign-off) before drawings or the report are issued; fix ERRORs in the sheet generator, never in the PNG.
+
 ## Rules
 
 - NeqSim generates and solves the SURF process; decorative or hand-typed results are not a deliverable.

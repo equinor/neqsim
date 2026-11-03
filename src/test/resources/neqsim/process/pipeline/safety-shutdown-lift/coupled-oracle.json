@@ -1,0 +1,40 @@
+{
+  "study": "Safety Shutdown independent constant-characteristic ideal lift oracle",
+  "method": "SciPy DOP853 + Brent signed pressure + terminal seat event",
+  "python": "3.12.14",
+  "scipy": "1.17.0",
+  "rtol": 1e-12,
+  "atol": 1e-14,
+  "maxStep_s": 1e-05,
+  "physicalInputs": {
+    "mass_kg": 0.2,
+    "damping_N_s_m": 2.0,
+    "stiffness_N_m": 2000.0,
+    "pressureArea_m2": 0.0001,
+    "density_kg_m3": 1000.0,
+    "dischargeCoefficient": 0.65,
+    "orificeWidth_m": 0.05,
+    "resistance_Pa_s_m3": 500000000.0,
+    "drive_Pa": -100000.0,
+    "initialLift_m": 0.005
+  },
+  "result": {
+    "contactTime_s": 0.016061492246790415,
+    "preImpactVelocity_m_s": -0.49872262825416125,
+    "inelasticImpactEnergy_J": 0.02487242599327383,
+    "jetVolume_m3": -2.5503473226212426e-06,
+    "sweptVolume_m3": -5.000000000000001e-07,
+    "totalVolume_m3": -3.0503473226212425e-06,
+    "rhsEvaluations": 19433
+  },
+  "independentRefinement": {
+    "contactTime_s": 0.016061492246790418,
+    "preImpactVelocity_m_s": -0.49872262825478425,
+    "inelasticImpactEnergy_J": 0.024872425993335976,
+    "jetVolume_m3": -2.550347322618745e-06,
+    "sweptVolume_m3": -5.000000000000001e-07,
+    "totalVolume_m3": -3.0503473226187455e-06,
+    "rhsEvaluations": 9761
+  },
+  "experimentalAndAssetQualification": "NOT_EVALUATED"
+}

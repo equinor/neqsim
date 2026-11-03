@@ -44,10 +44,14 @@ Before you start, make sure you have:
 
 | Requirement | Install Command | Purpose |
 |-------------|----------------|---------|
-| Python 3.8+ | [python.org](https://python.org) | Runs notebooks and reports |
-| Java JDK 8+ | [adoptium.net](https://adoptium.net) | NeqSim physics engine |
+| Python 3.11+ | [python.org](https://python.org) | Runs the task toolkit, notebooks, and reports |
+| Java JDK 17+ | [adoptium.net](https://adoptium.net) | Runs NeqSim and builds Java 8-compatible sources |
 | Git | [git-scm.com](https://git-scm.com) | Clone the repo |
 | VS Code + Copilot Chat | VS Code marketplace | AI assistance (optional) |
+
+The task-solving toolkit declares Python 3.11 or newer in `devtools/pyproject.toml`.
+NeqSim's Java sources remain Java 8 compatible, but the supported Python gateway requires a
+Java 17 or newer runtime. Source compatibility is not the same as the runtime prerequisite.
 
 **One-time setup:**
 
@@ -60,9 +64,8 @@ cd neqsim
 ./mvnw install          # Linux/Mac
 mvnw.cmd install        # Windows
 
-# Install Python helpers (finds Python + uses `python -m pip` for you)
+# Install the task-solving CLI and its report/notebook dependencies
 ./install.ps1                         # Windows (macOS/Linux: ./install.sh)
-python -m pip install python-docx matplotlib    # For reports and plots
 
 # Optional: put solved tasks outside the clone (default: <repo>/task_solve)
 neqsim --set-task-root "D:/Engineering Tasks"   # or: cwd, to follow the terminal folder
@@ -73,10 +76,9 @@ neqsim --set-report-template "C:/Users/you/Documents/company report template.doc
 neqsim --show-report-template
 ```
 
-> **Important:** Installing `devtools/` (editable) ensures your notebooks
-> run against your local Java build, not the released package. When you add a
-> new method and rebuild, it's immediately available. Use `python -m pip`
-> (not bare `pip`) if you install manually.
+> **Important:** The installation scripts install the task toolkit and its report
+> dependencies. The toolkit then loads your local Java build, not a released JAR.
+> When you add a Java method and rebuild, notebooks can use it immediately.
 
 ---
 
@@ -449,10 +451,11 @@ Run the report generator:
 
 ```powershell
 cd task_solve/2026-03-07_hydrate_formation_temperature_for_wet_gas
-python step3_report/generate_report.py
+neqsim report .
 ```
 
-This produces two files:
+The CLI invokes the canonical generator from the current toolkit, so fixes reach existing task
+folders without copying or editing `generate_report.py`. It produces two files:
 - **`<Report title>.docx`** — Word document for formal distribution
 - **`<Report title>.html`** — Interactive HTML with navigation sidebar
 
@@ -663,7 +666,7 @@ heater.getDuty()                     # Watts
 | Problem | Cause | Solution |
 |---------|-------|----------|
 | `ModuleNotFoundError: neqsim` | Not installed | Run `.\install.ps1` (or `uv sync --project devtools`) |
-| JVM won't start | Java not found | Install JDK 8+ and set `JAVA_HOME` |
+| JVM won't start | Java not found | Install JDK 17+ and set `JAVA_HOME` |
 | Flash doesn't converge | Wrong EOS or bad composition | Check mole fractions sum to 1.0, try different EOS |
 | Report generator fails | Missing python-docx | Run `pip install python-docx matplotlib` |
 | Word file permission error | File open in Word | Close the .docx file and rerun |

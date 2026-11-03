@@ -108,6 +108,31 @@ class ProcessReplayTest extends NeqSimTest {
   }
 
   @Test
+  void moleFractionOutputOfAStreamComponent() {
+    ProcessSystem process = buildProcess();
+    ProcessAutomation automation = process.getAutomation();
+    double fraction = automation.getVariableValue("separator.gasOutStream.moleFraction_methane", "");
+    double ppm = automation.getVariableValue("separator.gasOutStream.moleFraction_methane", "ppm");
+    double percent = automation.getVariableValue("separator.gasOutStream.moleFraction_methane", "mol%");
+    assertTrue(fraction > 0.8 && fraction < 1.0, "methane fraction " + fraction);
+    assertEquals(fraction * 1.0e6, ppm, 1.0e-6 * ppm);
+    assertEquals(fraction * 100.0, percent, 1.0e-9);
+
+    double[] pressure = {50.0, 45.0, 40.0};
+    ReplayTimeSeries data = ReplayTimeSeries.uniform(3, 60.0).addColumn("PT-100", pressure);
+    ReplayResult result = new ProcessReplay(process).addInput(ReplayBinding.input("PT-100", "feed.pressure", "bara"))
+        .addOutput(ReplayBinding.output("separator.gasOutStream.moleFraction_n-hexane", "AT-500", "ppm")).run(data);
+    assertEquals(3, result.getConvergedCount(), result.getSummary());
+    double first = result.getStep(0).getPredicted().get("AT-500");
+    double last = result.getStep(2).getPredicted().get("AT-500");
+    assertTrue(first > 0.0 && last > 0.0 && Math.abs(last - first) > 1.0e-3,
+        "hexane in the gas must respond to the separator pressure: " + first + " -> " + last);
+
+    String unknown = automation.getVariableValueSafe("separator.gasOutStream.moleFraction_xenon", "ppm");
+    assertFalse(unknown.contains("\"success\""), unknown);
+  }
+
+  @Test
   void replayDetectsHiddenBiasAndRecordsInvalidStep() {
     ReplayTimeSeries series = syntheticData();
     ReplayResult result = configure(buildProcess()).setMaxIterations(5).run(series);

@@ -1,6 +1,6 @@
 ---
 name: neqsim-emulsion-separation
-description: "Run optional NeqSim oil-water emulsion separation studies and separator troubleshooting: rag-layer or densely packed zone (DPZ) growth, coalescence-limited capacity, water-in-oil and oil-in-water symptoms, droplet-size and temperature sensitivity, changing water cut, and comparison with measured separator trends. Start with explicitly estimated inputs when droplet or coalescence measurements are absent; preserve existing process calculations and mark uncalibrated screening results."
+description: "Run optional NeqSim oil-water emulsion separation studies. USE WHEN: troubleshooting rag-layer or densely packed zone (DPZ) growth, emulsion carryover, coalescence-limited capacity, water-cut changes, droplet-size or temperature sensitivity, or measured separator trends. Preserve existing process calculations; use explicitly estimated inputs when measurements are absent and label uncalibrated screening results."
 last_verified: "2026-10-27"
 ---
 
@@ -41,6 +41,12 @@ entrainment. Ordinary process runs do not execute the study. Do not describe
 study results as coupled outlet-quality predictions.
 
 ## Handle missing measurements without blocking screening
+
+Screen every online oil-in-water or water-cut analyser for validity before using it
+(fraction of samples identical to the previous sample, a single repeated value, zero or
+negative readings, comm-fault sentinels such as 307 or 499.8). On Johan Sverdrup P1 in
+Oct 2026 all three OIW analysers were frozen or zero while the water was visibly oily;
+report such tags as unusable and fall back to bottle tests rather than computing with them.
 
 Start an explicitly estimated case when droplet and coalescence measurements
 are absent. Use a droplet radius of **1.35e-3 m** and a coalescence time of

@@ -304,8 +304,11 @@ public class TwoFluidSectionTest {
     assertEquals(first.getWaterSourceKgPerMetreSecond(), second.getWaterSourceKgPerMetreSecond(), 0.0);
   }
 
+  /** Closure diagnostics use initialized positive absolute pressure in both horizontal and inclined cells. */
   @Test
   void testClosurePassUpdatesEntrainmentAndSevereSlugDiagnostics() {
+    section.setPressure(50.0e5);
+    section.setTemperature(300.0);
     section.setGasDensity(25.0);
     section.setLiquidDensity(750.0);
     section.setGasViscosity(1.2e-5);
@@ -329,6 +332,8 @@ public class TwoFluidSectionTest {
     assertTrue(section.getEntrainedDropletDiameter() >= 0.0);
 
     TwoFluidSection riserBase = new TwoFluidSection(0.0, 10.0, 0.1, Math.toRadians(30.0));
+    riserBase.setPressure(50.0e5);
+    riserBase.setTemperature(300.0);
     riserBase.setGasDensity(20.0);
     riserBase.setLiquidDensity(800.0);
     riserBase.setGasViscosity(1.0e-5);

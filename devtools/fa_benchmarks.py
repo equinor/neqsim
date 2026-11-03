@@ -142,6 +142,31 @@ def cooldown_ode_check():
                 0.005, "relative deviation", "analytic: exponential cooldown", "Verifies the implementation of the lumped formula only; it is not an experimental qualification.", tol_kind="rel")
 
 
+def field_validation(basis, results):
+    """Model-versus-measured records declared in ``basis['field_validation']`` (measured data supplied by the study team).
+
+    Each declaration: ``{id, title, kind (field_calibration | field_validation), case, quantity (source_pressure_bara |
+    host_arrival_t_c), node (source node for source pressure), measured, unit, tolerance, tolerance_kind, provenance, note}``.
+    The tolerance is part of the declaration (declared before the comparison); records are never loosened here. A case that
+    did not converge gives status UNAVAILABLE, never a pass. ``field_calibration`` marks data the model inputs were tuned to.
+    """
+    out = []
+    for d in basis.get("field_validation") or []:
+        res = results.get(d.get("case"))
+        value = None
+        if res and res.get("status") == "converged":
+            if d.get("quantity") == "source_pressure_bara":
+                st = (res.get("streams") or {}).get(d.get("node"))
+                value = None if not st else st.get("p_bara")
+            elif d.get("quantity") == "host_arrival_t_c":
+                st = (res.get("streams") or {}).get(res.get("sink"))
+                value = None if not st else st.get("t_c")
+        kind = d.get("kind", "field_validation")
+        out.append(_rec(d["id"], d["title"], kind, value, d.get("measured"), float(d["tolerance"]), d.get("unit", ""), d.get("provenance", "measured (unverified)"),
+                        d.get("note", ""), tol_kind=d.get("tolerance_kind", "abs")))
+    return out
+
+
 def run_all(ns, fluid_def, log=None):
     """Run every fixture; a fixture that raises is recorded as FAIL with the message (never silently skipped)."""
     say = log or (lambda m: None)

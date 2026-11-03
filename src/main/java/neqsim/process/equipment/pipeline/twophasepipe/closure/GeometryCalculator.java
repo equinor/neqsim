@@ -29,6 +29,504 @@ public class GeometryCalculator implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
+  /** Positive nodes of the sixteen-point Gauss-Legendre rule. */
+  private static final double[] CELL_NODES = {0.09501250983763744, 0.2816035507792589, 0.4580167776572274,
+      0.6178762444026438, 0.7554044083550030, 0.8656312023878318, 0.9445750230732326, 0.9894009349916499};
+  /** Corresponding weights; symmetry supplies the negative nodes. */
+  private static final double[] CELL_WEIGHTS = {0.1894506104550685, 0.1826034150449236, 0.1691565193950025,
+      0.1495959888165767, 0.1246289712555339, 0.0951585116824928, 0.0622535239386479, 0.0271524594117541};
+
+  /**
+   * Calculate signed first pressure moments about a stratified interface in a circular section.
+   *
+   * <p>
+   * For normal depth h and chord width w(y), the liquid moment is the integral of (h-y)w(y) from zero to h; the gas
+   * moment integrates the same expression from h to D. Multiplication by phase density, gravity and cosine of
+   * inclination gives the hydrostatic contribution to axial pressure traction in N. The pressure at the interface
+   * contributes separately as interface pressure times phase area. Derivatives with respect to h are the corresponding
+   * phase areas. Positive quadrature of the minority segment avoids cancellation at phase disappearance. This explicit
+   * geometry query does not change solver forces or energy fluxes.
+   * </p>
+   *
+   * @param liquidDepth interface depth normal to the pipe, in m, from zero to diameter inclusive
+   * @param diameter internal diameter in m
+   * @return immutable signed moments in m3 and phase areas in m2
+   * @throws IllegalArgumentException if geometry or its moments cannot be represented
+   */
+  public StratifiedPressureMoments calculateStratifiedPressureMoments(double liquidDepth, double diameter) {
+    if (!Double.isFinite(liquidDepth) || !Double.isFinite(diameter) || !(diameter > 0.0) || liquidDepth < 0.0
+        || liquidDepth > diameter) {
+      throw new IllegalArgumentException("Pressure moments require finite depth in [0, D] and positive diameter");
+    }
+    double area = Math.PI * diameter * diameter / 4.0;
+    double minorityDepth = Math.min(liquidDepth, diameter - liquidDepth);
+    double areaIntegral = 0.0;
+    double momentIntegral = 0.0;
+    if (minorityDepth > 0.0) {
+      double fraction = minorityDepth / diameter;
+      for (int node = 0; node < CELL_NODES.length; node++) {
+        for (int sign = -1; sign <= 1; sign += 2) {
+          double t = 0.5 * (1.0 + sign * CELL_NODES[node]);
+          double tSquared = t * t;
+          double integrand = tSquared * Math.sqrt(1.0 - fraction * tSquared);
+          double weight = 0.5 * CELL_WEIGHTS[node];
+          areaIntegral += weight * integrand;
+          momentIntegral += weight * integrand * (1.0 - tSquared);
+        }
+      }
+    }
+    double scale = 4.0 * minorityDepth * Math.sqrt(minorityDepth * diameter);
+    double minorityArea = scale * areaIntegral;
+    double minorityMoment = scale * minorityDepth * momentIntegral;
+    double wholeMoment = (liquidDepth - 0.5 * diameter) * area;
+    boolean liquidIsMinority = liquidDepth <= 0.5 * diameter;
+    double liquidArea = liquidIsMinority ? minorityArea : area - minorityArea;
+    double gasArea = liquidIsMinority ? area - minorityArea : minorityArea;
+    double liquidMoment = liquidIsMinority ? minorityMoment : wholeMoment + minorityMoment;
+    double gasMoment = liquidIsMinority ? wholeMoment - minorityMoment : -minorityMoment;
+    if (!Double.isFinite(area) || !(0.5 * diameter * area > 0.0) || !Double.isFinite(liquidMoment)
+        || !Double.isFinite(gasMoment) || liquidMoment < 0.0 || gasMoment > 0.0
+        || (minorityDepth > 0.0 && (!(minorityArea > 0.0) || !(minorityMoment > 0.0)))) {
+      throw new IllegalArgumentException("Pressure moments exceed representable geometry");
+    }
+    return new StratifiedPressureMoments(liquidMoment, gasMoment, liquidArea, gasArea);
+  }
+
+  /**
+   * Calculate signed pressure moments from independently retained gas and liquid face fractions.
+   *
+   * <p>
+   * The smaller phase area is inverted using the positive segment quadrature and a safeguarded Newton iteration. Both
+   * fractions are required: subtracting a trace gas fraction from unity can round the liquid fraction to one. A
+   * gas-minority result is reflected algebraically, without subtracting its depth from the diameter. No depth floor or
+   * absolute area tolerance is used, and the historical general-purpose holdup geometry is unchanged.
+   * </p>
+   *
+   * @param gasHoldup gas face volume fraction in [0, 1]
+   * @param liquidHoldup liquid face volume fraction in [0, 1], closing the occupied volume with gas
+   * @param diameter internal diameter in m
+   * @return immutable signed moments in m3 and phase areas in m2
+   * @throws IllegalArgumentException if fractions do not close or geometry cannot be represented or inverted
+   */
+  public StratifiedPressureMoments calculateStratifiedPressureMomentsFromHoldups(double gasHoldup, double liquidHoldup,
+      double diameter) {
+    if (!Double.isFinite(gasHoldup) || !Double.isFinite(liquidHoldup) || gasHoldup < 0.0 || gasHoldup > 1.0
+        || liquidHoldup < 0.0 || liquidHoldup > 1.0 || Math.abs(gasHoldup + liquidHoldup - 1.0) > 1.0e-10) {
+      throw new IllegalArgumentException("Pressure moments require finite volume-closed gas and liquid fractions");
+    }
+    StratifiedPressureMoments empty = calculateStratifiedPressureMoments(0.0, diameter);
+    if (liquidHoldup == 0.0) {
+      return empty;
+    }
+    if (gasHoldup == 0.0) {
+      return calculateStratifiedPressureMoments(diameter, diameter);
+    }
+    double minority = Math.min(gasHoldup, liquidHoldup);
+    double targetArea = minority * empty.getGasArea();
+    if (!(targetArea > 0.0)) {
+      throw new IllegalArgumentException("Pressure-moment phase area is not representable");
+    }
+    double lower = 0.0;
+    double upper = 0.5 * diameter;
+    double depth = diameter * Math.pow(3.0 * Math.PI * minority / 16.0, 2.0 / 3.0);
+    for (int iteration = 0; iteration < 64; iteration++) {
+      StratifiedPressureMoments value = calculateStratifiedPressureMoments(depth, diameter);
+      double relativeError = (value.getLiquidArea() - targetArea) / targetArea;
+      if (Math.abs(relativeError) <= 8.0e-15) {
+        return liquidHoldup <= gasHoldup ? value
+            : new StratifiedPressureMoments(-value.getGasMoment(), -value.getLiquidMoment(), value.getGasArea(),
+                value.getLiquidArea());
+      }
+      if (relativeError > 0.0) {
+        upper = depth;
+      } else {
+        lower = depth;
+      }
+      double chord = 2.0 * Math.sqrt(depth * (diameter - depth));
+      double next = depth - (value.getLiquidArea() - targetArea) / chord;
+      depth = next > lower && next < upper ? next : lower + 0.5 * (upper - lower);
+    }
+    throw new IllegalArgumentException("Pressure-moment phase area inversion did not converge");
+  }
+
+  /**
+   * Signed pressure moments for a circular stratified section; excludes the interface-pressure term.
+   *
+   * @author NeqSim
+   * @version 1.0
+   */
+  public static final class StratifiedPressureMoments implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final double liquidMoment;
+    private final double gasMoment;
+    private final double liquidArea;
+    private final double gasArea;
+
+    /**
+     * Store an independently owned pressure-moment result.
+     *
+     * @param liquidMoment nonnegative liquid first moment in m3
+     * @param gasMoment nonpositive gas first moment in m3
+     * @param liquidArea liquid cross-sectional area in m2
+     * @param gasArea gas cross-sectional area in m2
+     */
+    private StratifiedPressureMoments(double liquidMoment, double gasMoment, double liquidArea, double gasArea) {
+      this.liquidMoment = liquidMoment;
+      this.gasMoment = gasMoment;
+      this.liquidArea = liquidArea;
+      this.gasArea = gasArea;
+    }
+
+    /**
+     * Get the nonnegative liquid pressure moment about the interface.
+     *
+     * @return integral of interface depth minus height over liquid area, in m3
+     */
+    public double getLiquidMoment() {
+      return liquidMoment;
+    }
+
+    /**
+     * Get the nonpositive gas pressure moment about the interface.
+     *
+     * @return integral of interface depth minus height over gas area, in m3
+     */
+    public double getGasMoment() {
+      return gasMoment;
+    }
+
+    /**
+     * Get the occupied liquid cross-sectional area.
+     *
+     * @return liquid area, also the derivative of its moment with respect to depth, in m2
+     */
+    public double getLiquidArea() {
+      return liquidArea;
+    }
+
+    /**
+     * Get the occupied gas cross-sectional area.
+     *
+     * @return gas area, also the derivative of its moment with respect to depth, in m2
+     */
+    public double getGasArea() {
+      return gasArea;
+    }
+
+    /**
+     * Get the liquid first area moment about the pipe centre in the normal-depth direction.
+     *
+     * <p>
+     * The minority segment is evaluated first so neither a thin film nor a thin gas cap subtracts two full-section
+     * moments. The complementary moment is its exact negative.
+     * </p>
+     *
+     * @return nonpositive integral of normal height minus half diameter over liquid area, in m3
+     */
+    public double getLiquidFirstMomentAboutCentre() {
+      double offset = (liquidMoment + gasMoment) / (liquidArea + gasArea);
+      return liquidArea <= gasArea ? offset * liquidArea - liquidMoment : -(offset * gasArea - gasMoment);
+    }
+
+    /**
+     * Get the gas first area moment about the pipe centre in the normal-depth direction.
+     *
+     * @return nonnegative integral of normal height minus half diameter over gas area, in m3
+     */
+    public double getGasFirstMomentAboutCentre() {
+      return -getLiquidFirstMomentAboutCentre();
+    }
+
+    /**
+     * Calculate normal-gravity potential energy relative to the pipe centre per unit axial length.
+     *
+     * <p>
+     * Supply normal gravity as g times cosine of inclination. This read-only energy budget excludes centreline
+     * elevation, internal/kinetic energy and wall energy; it does not modify a solver state. No new serialized fields
+     * are needed. An absent phase's density is unused.
+     * </p>
+     *
+     * @param gasDensity positive gas density in kg/m3 when gas is present
+     * @param liquidDensity positive liquid density in kg/m3 when liquid is present
+     * @param normalGravity finite signed normal component of gravity in m/s2
+     * @return cross-sectional gravitational energy relative to the centre, in J/m
+     * @throws IllegalArgumentException if present-phase density or gravity is invalid, or energy overflows
+     */
+    public double getGravityPotentialEnergyPerLength(double gasDensity, double liquidDensity, double normalGravity) {
+      if (!Double.isFinite(normalGravity) || gasArea > 0.0 && (!(gasDensity > 0.0) || !Double.isFinite(gasDensity))
+          || liquidArea > 0.0 && (!(liquidDensity > 0.0) || !Double.isFinite(liquidDensity))) {
+        throw new IllegalArgumentException(
+            "Gravity energy requires finite gravity and positive present-phase densities");
+      }
+      if (gasArea == 0.0 || liquidArea == 0.0) {
+        return 0.0;
+      }
+      double energy = (liquidDensity - gasDensity) * normalGravity * getLiquidFirstMomentAboutCentre();
+      if (!Double.isFinite(energy)) {
+        throw new IllegalArgumentException("Cross-sectional gravity energy is not representable");
+      }
+      return energy;
+    }
+  }
+
+  /**
+   * Reconstruct a horizontal free surface within one straight, constant-diameter cell.
+   *
+   * <p>
+   * This is an explicit static geometry diagnostic, not a flowing-interface closure. It preserves the specified
+   * cell-average liquid volume and changes no solver state. The coordinate is pipe arclength; depth is measured in the
+   * cross-section normal to the pipe. Capillarity, curvature-volume corrections and separate oil/water surfaces are
+   * excluded. Near-vertical cells and volumes not resolvable in double precision fail explicitly.
+   * </p>
+   *
+   * @param liquidHoldup cell-average total liquid volume fraction, in [0, 1]
+   * @param diameter internal diameter in metres
+   * @param length cell arclength in metres
+   * @param inclination signed angle above horizontal in radians, strictly between +/- pi/2
+   * @return immutable volume-preserving static geometry
+   * @throws IllegalArgumentException if inputs or the reconstruction are inadmissible
+   */
+  public HydrostaticCellGeometry calculateHydrostaticCell(double liquidHoldup, double diameter, double length,
+      double inclination) {
+    if (!Double.isFinite(liquidHoldup) || liquidHoldup < 0.0 || liquidHoldup > 1.0 || !Double.isFinite(diameter)
+        || !(diameter > 0.0) || !Double.isFinite(length) || !(length > 0.0) || !Double.isFinite(inclination)
+        || !(Math.abs(inclination) < Math.PI / 2.0) || Math.cos(inclination) < 1.0e-8) {
+      throw new IllegalArgumentException("Static cell geometry requires finite admissible volume and geometry");
+    }
+    double area = Math.PI * diameter * diameter / 4.0;
+    double volume = area * length;
+    double wallArea = Math.PI * diameter * length;
+    double halfRange = Math.abs(Math.tan(inclination)) * length / (2.0 * diameter);
+    if (!Double.isFinite(volume) || !(volume > 0.0) || !Double.isFinite(wallArea) || !Double.isFinite(halfRange)) {
+      throw new IllegalArgumentException("Static cell geometry exceeds representable dimensions");
+    }
+    if (liquidHoldup == 0.0 || liquidHoldup == 1.0) {
+      double depth = liquidHoldup * diameter;
+      return new HydrostaticCellGeometry(depth, depth, liquidHoldup * volume, 0.0, liquidHoldup * wallArea,
+          (1.0 - liquidHoldup) * area, 0.0);
+    }
+    // Solve the minority volume to avoid subtracting a trace inventory from a full pipe.
+    double fraction = Math.min(liquidHoldup, 1.0 - liquidHoldup);
+    double target = fraction * Math.PI / 4.0;
+    double lower = -halfRange;
+    double upper = 0.5;
+    double centre = 0.0;
+    for (int iteration = 0; iteration < 120; iteration++) {
+      centre = lower + (upper - lower) / 2.0;
+      double occupied = cellAverage(centre, halfRange, 0);
+      if (occupied < target) {
+        lower = centre;
+      } else {
+        upper = centre;
+      }
+    }
+    double occupied = cellAverage(centre, halfRange, 0);
+    double residual = (occupied - target) / target;
+    if (!Double.isFinite(residual) || Math.abs(residual) > 1.0e-9) {
+      throw new IllegalArgumentException("Static liquid volume is not resolvable at this cell scale");
+    }
+    double wetWall = cellAverage(centre, halfRange, 2) * diameter * length;
+    double interfaceArea = cellAverage(centre, halfRange, 1) * diameter * length / Math.cos(inclination);
+    if (liquidHoldup > 0.5) {
+      centre = 1.0 - centre;
+      wetWall = wallArea - wetWall;
+      residual = -residual * fraction / liquidHoldup;
+    }
+    double signedRange = Math.copySign(halfRange, inclination);
+    double start = boundedDepth(centre + signedRange) * diameter;
+    double end = boundedDepth(centre - signedRange) * diameter;
+    // Evaluate the complementary segment directly, rather than subtracting nearly equal areas.
+    double minimumGasArea = segmentMetric(1.0 - Math.max(start, end) / diameter, 0) * diameter * diameter;
+    double reconstructedVolume = liquidHoldup * volume * (1.0 + residual);
+    if (!Double.isFinite(interfaceArea) || !Double.isFinite(wetWall) || !Double.isFinite(reconstructedVolume)) {
+      throw new IllegalArgumentException("Nonfinite static cell geometry result");
+    }
+    return new HydrostaticCellGeometry(start, end, reconstructedVolume, interfaceArea, wetWall, minimumGasArea,
+        residual);
+  }
+
+  /**
+   * Integrate a unit-diameter segment metric over normalized axial depth.
+   *
+   * @param centre normal depth at cell centre divided by diameter
+   * @param halfRange positive axial half-range of normalized depth
+   * @param metric area=0, interface width=1, wall perimeter=2
+   * @return cell-average metric for a unit-diameter pipe
+   */
+  private static double cellAverage(double centre, double halfRange, int metric) {
+    if (halfRange == 0.0) {
+      return segmentMetric(centre, metric);
+    }
+    // For a nearly horizontal, entirely partial cell, integrate directly in arclength.
+    // This avoids subtracting almost equal angular endpoints, including sub-ulp slopes.
+    if (centre > halfRange && centre + halfRange < 1.0 && halfRange < 1.0e-3 * Math.min(centre, 1.0 - centre)) {
+      double average = 0.0;
+      for (int node = 0; node < CELL_NODES.length; node++) {
+        average += 0.5 * CELL_WEIGHTS[node] * (segmentMetric(centre - halfRange * CELL_NODES[node], metric)
+            + segmentMetric(centre + halfRange * CELL_NODES[node], metric));
+      }
+      return average;
+    }
+    double low = centre - halfRange;
+    double high = centre + halfRange;
+    double full = metric == 0 ? Math.PI / 4.0 : metric == 2 ? Math.PI : 0.0;
+    double integral = Math.max(0.0, high - Math.max(1.0, low)) * full;
+    double a = boundedDepth(low);
+    double b = boundedDepth(high);
+    if (b > a) {
+      // h=(1-cos(theta))/2 removes the circular-segment endpoint singularity.
+      double thetaA = 2.0 * Math.asin(Math.sqrt(a));
+      double thetaB = 2.0 * Math.asin(Math.sqrt(b));
+      double mid = (thetaA + thetaB) / 2.0;
+      double radius = (thetaB - thetaA) / 2.0;
+      for (int node = 0; node < CELL_NODES.length; node++) {
+        for (int sign = -1; sign <= 1; sign += 2) {
+          double theta = mid + sign * radius * CELL_NODES[node];
+          double value = metric == 0 ? segmentAreaFromAngle(theta) : metric == 1 ? Math.sin(theta) : theta;
+          integral += radius * CELL_WEIGHTS[node] * value * 0.5 * Math.sin(theta);
+        }
+      }
+    }
+    return integral / (2.0 * halfRange);
+  }
+
+  /**
+   * Evaluate a unit-diameter circular-segment metric, including exact absence/fullness.
+   *
+   * @param depth normalized normal depth
+   * @param metric area=0, interface width=1, wall perimeter=2
+   * @return segment metric
+   */
+  private static double segmentMetric(double depth, int metric) {
+    double h = boundedDepth(depth);
+    if (h == 0.0) {
+      return 0.0;
+    }
+    if (h == 1.0) {
+      return metric == 0 ? Math.PI / 4.0 : metric == 2 ? Math.PI : 0.0;
+    }
+    double theta = 2.0 * Math.asin(Math.sqrt(h));
+    return metric == 0 ? segmentAreaFromAngle(theta) : metric == 1 ? 2.0 * Math.sqrt(h * (1.0 - h)) : theta;
+  }
+
+  /**
+   * Stable segment area for a unit diameter, using symmetry and the small-angle series.
+   *
+   * @param angle segment half-angle in radians
+   * @return area in unit-diameter square units
+   */
+  private static double segmentAreaFromAngle(double angle) {
+    if (angle > Math.PI / 2.0) {
+      return Math.PI / 4.0 - segmentAreaFromAngle(Math.PI - angle);
+    }
+    if (angle < 0.01) {
+      double squared = angle * angle;
+      return angle * squared * (1.0 / 6.0 + squared * (-1.0 / 30.0 + squared * (1.0 / 315.0 - squared / 5670.0)));
+    }
+    return (angle - Math.sin(angle) * Math.cos(angle)) / 4.0;
+  }
+
+  /**
+   * Intersect a geometric depth with the pipe cross-section; no material state is changed.
+   *
+   * @param depth normalized geometric plane depth
+   * @return depth within the circular cross-section
+   */
+  private static double boundedDepth(double depth) {
+    return Math.max(0.0, Math.min(1.0, depth));
+  }
+
+  /**
+   * Immutable static diagnostic for one straight finite-volume cell.
+   *
+   * @author NeqSim
+   * @version 1.0
+   */
+  public static final class HydrostaticCellGeometry implements Serializable {
+    private static final long serialVersionUID = 1L;
+    /** Normal depth at the cell start, metres. */
+    private final double startDepth;
+    /** Normal depth at the cell end, metres. */
+    private final double endDepth;
+    /** Integrated liquid volume, cubic metres. */
+    private final double liquidVolume;
+    /** Horizontal gas-liquid interface area, square metres. */
+    private final double interfaceArea;
+    /** Liquid contact area on the cylindrical wall, square metres. */
+    private final double liquidWallArea;
+    /** Smallest gas cross-section within the cell, square metres. */
+    private final double minimumGasArea;
+    /** Reconstructed minus requested volume divided by requested volume. */
+    private final double relativeVolumeResidual;
+
+    /**
+     * Store a verified static reconstruction.
+     *
+     * @param startDepth normal start depth in metres
+     * @param endDepth normal end depth in metres
+     * @param liquidVolume integrated liquid volume in cubic metres
+     * @param interfaceArea horizontal interface area in square metres
+     * @param liquidWallArea liquid-wall contact area in square metres
+     * @param minimumGasArea minimum gas cross-section in square metres
+     * @param relativeVolumeResidual relative volume error
+     */
+    private HydrostaticCellGeometry(double startDepth, double endDepth, double liquidVolume, double interfaceArea,
+        double liquidWallArea, double minimumGasArea, double relativeVolumeResidual) {
+      this.startDepth = startDepth;
+      this.endDepth = endDepth;
+      this.liquidVolume = liquidVolume;
+      this.interfaceArea = interfaceArea;
+      this.liquidWallArea = liquidWallArea;
+      this.minimumGasArea = minimumGasArea;
+      this.relativeVolumeResidual = relativeVolumeResidual;
+    }
+
+    /** @return normal liquid depth at the cell start in metres */
+    public double getStartDepth() {
+      return startDepth;
+    }
+
+    /** @return normal liquid depth at the cell end in metres */
+    public double getEndDepth() {
+      return endDepth;
+    }
+
+    /** @return maximum local normal depth in metres */
+    public double getMaximumDepth() {
+      return Math.max(startDepth, endDepth);
+    }
+
+    /** @return minimum local normal depth in metres */
+    public double getMinimumDepth() {
+      return Math.min(startDepth, endDepth);
+    }
+
+    /** @return integrated liquid volume in cubic metres */
+    public double getLiquidVolume() {
+      return liquidVolume;
+    }
+
+    /** @return horizontal gas-liquid interface area in square metres */
+    public double getInterfaceArea() {
+      return interfaceArea;
+    }
+
+    /** @return cylindrical liquid-wall contact area in square metres */
+    public double getLiquidWallArea() {
+      return liquidWallArea;
+    }
+
+    /** @return minimum gas cross-section in square metres, not a flow-capacity prediction */
+    public double getMinimumGasArea() {
+      return minimumGasArea;
+    }
+
+    /** @return relative integrated volume residual */
+    public double getRelativeVolumeResidual() {
+      return relativeVolumeResidual;
+    }
+  }
+
   /**
    * Result container for stratified flow geometry calculations.
    */

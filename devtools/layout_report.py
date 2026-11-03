@@ -134,12 +134,30 @@ def _cad_summary(cad):
     return rows
 
 
-def _html_report(study, alternatives, drawings, cad):
+def _inventory_tables(inventory):
+    """Return compact physical-route, isolation-section and blocker tables."""
+    inventory = inventory or {}
+    routes = [[route["id"], route["connection_id"], route["line_tag"], route["length_m"],
+               route["internal_diameter_m"], route["pipe_volume_m3"],
+               route["source"]["reference"], route["source"]["revision"],
+               route["source"]["evidence_status"]]
+              for route in inventory.get("routes", [])]
+    sections = [[section["id"], section["route_ids"], section["equipment_volume_ids"],
+                 section["boundary_device_ids"], section["pipe_volume_m3"],
+                 section["equipment_volume_m3"], section["total_isolated_volume_m3"]]
+                for section in inventory.get("isolation_sections", [])]
+    blockers = [[blocker.get("code"), blocker.get("subject", "study"), blocker.get("message")]
+                for blocker in inventory.get("blockers", [])]
+    return routes, sections, blockers
+
+
+def _html_report(study, alternatives, drawings, cad, inventory=None):
     """Build a portable HTML report with inline vector drawing views."""
     esc = lambda v: html.escape(_value(v))
     p = study["project"]
     headers, rows = _comparison(alternatives)
     coordinate_headers, coordinate_rows = _coordinates(study, alternatives)
+    route_rows, section_rows, blocker_rows = _inventory_tables(inventory)
     title = p.get("title", "Plant layout study")
     out = ["<!doctype html><html lang='en'><meta charset='utf-8'>",
            "<meta name='viewport' content='width=device-width,initial-scale=1'>",
@@ -179,6 +197,20 @@ def _html_report(study, alternatives, drawings, cad):
                     _table_html(["Item", "Value"], process["summary"]),
                     _table_html(["Stream", "Case", "Temperature C", "Pressure bara", "Mass flow kg/h"], process["streams"]),
                     _table_html(["Equipment", "Case", "Shaft power kW", "Heat duty kW"], process["equipment"])])
+    out.extend(["<h2>Physical piping and isolation inventory</h2>",
+                "<p>Only supplied routed centrelines, internal diameters, equipment volumes and isolation "
+                "boundaries are included. Process connectivity and centre-to-centre proxies are never used "
+                "as pipe length or isolated inventory.</p>",
+                _table_html(["Status", "Ready for dynamic safeguarding design", "Calculation basis"],
+                            [[(inventory or {}).get("status", "NOT_EVALUATED"),
+                              (inventory or {}).get("ready_for_dynamic_safeguarding_design", False),
+                              (inventory or {}).get("calculation_basis", "No inventory supplied")]]),
+                _table_html(["Route", "Connection", "Line", "Length m", "ID m", "Volume m3",
+                             "Source", "Revision", "Evidence status"], route_rows),
+                _table_html(["Isolation section", "Routes", "Equipment volumes", "Boundary devices",
+                             "Pipe m3", "Equipment m3", "Total isolated m3"], section_rows),
+                "<h3>Physical inventory blockers</h3>",
+                _table_html(["Code", "Subject", "Blocker"], blocker_rows)])
     groups = _drawing_groups(drawings, alternatives)
     for a in alternatives:
         out.append("<h2>%s</h2><p>%s</p>" % (esc(a["id"]), esc(a.get("label", ""))))
@@ -203,7 +235,7 @@ def _html_report(study, alternatives, drawings, cad):
                 _table_html(["Document", "Edition", "Access status", "Reference"], _source_rows(study)),
                 "<h2>Exchange coverage and limitations</h2>",
                 "<p>All physical checks concern the documented conceptual rectangular envelope model. "
-                "Vendor internals, nozzle orientation, detailed piping, structural adequacy, fire and blast loads, "
+                "Vendor internals, nozzle orientation, route generation, pipe sizing/hydraulics/stress, structural adequacy, fire and blast loads, "
                 "ventilation, human performance and evacuation under accident scenarios require appropriate specialist evidence.</p>",
                 _table_html(["Adapter or exchange evidence", "Result"], _cad_summary(cad)),
                 "<h2>Complete check evidence</h2>"])
@@ -216,7 +248,7 @@ def _html_report(study, alternatives, drawings, cad):
     return "\n".join(out)
 
 
-def _pdf_report(path, study, alternatives, drawings, cad=None):
+def _pdf_report(path, study, alternatives, drawings, cad=None, inventory=None):
     """Generate a paginated report with wrapped evidence tables and plan views."""
     import matplotlib
     from reportlab.lib import colors
@@ -315,6 +347,28 @@ def _pdf_report(path, study, alternatives, drawings, cad=None):
         body.append(table(["Stream", "Case", "T C", "P bara", "Flow kg/h"], process["streams"], [45, 22, 30, 30, 37]))
         if process["equipment"]:
             body.append(table(["Equipment", "Case", "Power kW", "Duty kW"], process["equipment"], [55, 25, 42, 42]))
+    route_rows, section_rows, blocker_rows = _inventory_tables(inventory)
+    body.append(PageBreak())
+    body.append(paragraph("Physical piping and isolation inventory", "Heading1"))
+    body.append(paragraph("Status: %s. Only supplied routed geometry and volumes are included; process connectivity "
+                          "and arrangement proxies are not substituted for actual pipe length or inventory." %
+                          (inventory or {}).get("status", "NOT_EVALUATED")))
+    totals = (inventory or {}).get("totals", {})
+    body.append(table(["Quantity", "Value", "Unit"],
+                      [["Routed centreline", totals.get("route_length_m"), "m"],
+                       ["Pipe inventory", totals.get("pipe_volume_m3"), "m3"],
+                       ["Equipment inventory", totals.get("equipment_volume_m3"), "m3"]],
+                      [65, 55, 44]))
+    if route_rows:
+        body.append(table(["Route", "Connection", "Length m", "ID m", "Volume m3"],
+                          [[row[i] for i in (0, 1, 3, 4, 5)] for row in route_rows], [35, 42, 28, 27, 32]))
+    if section_rows:
+        body.append(table(["Section", "Routes", "Boundary devices", "Total m3"],
+                          [[row[i] for i in (0, 1, 3, 6)] for row in section_rows], [35, 43, 54, 32]))
+    if blocker_rows:
+        body.append(table(["Blocker", "Subject", "Action"], blocker_rows, [43, 38, 83]))
+    else:
+        body.append(paragraph("No physical-inventory completeness blockers are recorded for the declared scope."))
     groups = _drawing_groups(drawings, alternatives)
     for a in alternatives:
         solver = a.get("solver", {})
@@ -357,7 +411,7 @@ def _pdf_report(path, study, alternatives, drawings, cad=None):
                           "The HTML report and canonical dataset retain source links and every calculated check."))
     body.append(paragraph("Limitations and next engineering work", "Heading1"))
     body.append(paragraph("The model checks rectangular conceptual envelopes and reserved corridors. "
-                          "Vendor package confirmation, nozzles, detailed piping and pipe stress, fire and blast, "
+                          "Vendor package confirmation, nozzles, route generation, pipe sizing/hydraulics/stress, fire and blast, "
                           "dispersion and ventilation, structural loads, lifting operations and evacuation under "
                           "accident scenarios require appropriately scoped engineering evidence. "
                           "Existing model checks must be rerun after layout or basis changes."))
@@ -382,7 +436,7 @@ def _pdf_report(path, study, alternatives, drawings, cad=None):
     doc.build(body, onFirstPage=footer, onLaterPages=footer)
 
 
-def _docx_report(path, study, alternatives, drawings, cad=None):
+def _docx_report(path, study, alternatives, drawings, cad=None, inventory=None):
     """Write an editable Word companion with controlled section and table styles."""
     from docx import Document
     from docx.shared import Inches, Pt, RGBColor
@@ -445,6 +499,16 @@ def _docx_report(path, study, alternatives, drawings, cad=None):
         table(["Stream", "Case", "T C", "P bara", "Flow kg/h"], process["streams"])
         if process["equipment"]:
             table(["Equipment", "Case", "Power kW", "Duty kW"], process["equipment"])
+    route_rows, section_rows, blocker_rows = _inventory_tables(inventory)
+    doc.add_heading("Physical piping and isolation inventory", 1)
+    doc.add_paragraph("Status: %s. Only supplied route geometry and contained volumes are used." %
+                      (inventory or {}).get("status", "NOT_EVALUATED"))
+    table(["Route", "Connection", "Length m", "ID m", "Volume m3"],
+          [[row[i] for i in (0, 1, 3, 4, 5)] for row in route_rows])
+    table(["Section", "Routes", "Boundary devices", "Total m3"],
+          [[row[i] for i in (0, 1, 3, 6)] for row in section_rows])
+    if blocker_rows:
+        table(["Blocker", "Subject", "Action"], blocker_rows)
     groups = _drawing_groups(drawings, alternatives)
     for a in alternatives:
         doc.add_page_break()
@@ -468,7 +532,8 @@ def _docx_report(path, study, alternatives, drawings, cad=None):
     doc.add_heading("CAD exchange evidence", 1)
     table(["Adapter or exchange evidence", "Result"], _cad_summary(cad))
     doc.add_heading("Limitations and traceability", 1)
-    doc.add_paragraph("The geometry consists of conceptual equipment envelopes. Vendor dimensions, detailed piping, "
+    doc.add_paragraph("The geometry consists of conceptual equipment envelopes. Vendor dimensions, route generation, "
+                      "pipe sizing/hydraulics/stress, "
                       "structural adequacy, hazard effects, lifting operations and evacuation assessment require specialist evidence. "
                       "The CSV coordinate schedule and JSON check register use the same tags and alternative IDs as the drawings.")
     doc.core_properties.author = "NeqSim layout tooling"
@@ -476,12 +541,15 @@ def _docx_report(path, study, alternatives, drawings, cad=None):
     doc.save(str(path))
 
 
-def build_report(study, alternatives, out_dir, drawings=None, cad=None):
+def build_report(study, alternatives, out_dir, drawings=None, cad=None, inventory=None):
     """Write the report, exact coordinate CSV and complete JSON check evidence."""
+    if inventory is None:
+        from layout_inventory import build_inventory
+        inventory = build_inventory(study)
     root = Path(out_dir) / "reports"
     root.mkdir(parents=True, exist_ok=True)
     html_path = root / "plant_layout_report.html"
-    html_path.write_text(_html_report(study, alternatives, drawings, cad), encoding="utf-8")
+    html_path.write_text(_html_report(study, alternatives, drawings, cad, inventory), encoding="utf-8")
     coord_path = root / "coordinate_schedule.csv"
     headers, rows = _coordinates(study, alternatives)
     with coord_path.open("w", newline="", encoding="utf-8") as fh:
@@ -500,7 +568,7 @@ def build_report(study, alternatives, out_dir, drawings=None, cad=None):
         # generation prevents an unavailable adapter from exposing stale bytes.
         path.unlink(missing_ok=True)
         try:
-            builder(path, study, alternatives, drawings, cad)
+            builder(path, study, alternatives, drawings, cad, inventory)
         except ImportError as exc:
             warnings.append("%s report adapter unavailable: %s" % (format_.upper(), exc))
             path.unlink(missing_ok=True)

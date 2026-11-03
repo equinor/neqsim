@@ -1,0 +1,91 @@
+{
+  "study": "Safety Shutdown conservative acoustics",
+  "base": "cc35f058e6076ce634fa7321fdc12bfb55501a28",
+  "runtime": "OpenJDK 17.0.20",
+  "java8Runtime": "NOT_EVALUATED locally; separate release-8 compilation and hosted matrix",
+  "totalTests": 238,
+  "tests": [
+    {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "class": "WaterHammerConservationTest"
+    },
+    {
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "class": "AcousticValveBoundaryTest"
+    },
+    {
+      "tests": 16,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "class": "WaterHammerKernelTest"
+    },
+    {
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "class": "WaterHammerPipeTest"
+    },
+    {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "class": "WaterHammerPipeValveInitializationTest"
+    },
+    {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "class": "TransientForceCalculatorTest"
+    },
+    {
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "class": "PipelineRunnerTest"
+    },
+    {
+      "tests": 101,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "class": "ProcessAutomationTest"
+    },
+    {
+      "tests": 54,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "class": "JsonProcessBuilderTest"
+    },
+    {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "class": "TabulatedValveCharacteristicTest"
+    },
+    {
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "class": "CompressorFixedSpeedControlTest"
+    }
+  ],
+  "scope": "Frozen-property linear acoustic equations; not full EOS mass/energy or coupled Safety Shutdown",
+  "boundaryTimeQuadrature": "RIGHT_ENDPOINT_HOLD",
+  "candidateHead": "See #4707 exact-head delivery ledger; no self-referential embedded commit SHA",
+  "baselineFile": "nodal-baseline.json is unmodified base; original ideal nodal diagnostic, not a candidate trajectory",
+  "calibration": "Synthetic steady Kv selection; no asset/vendor fit; analytical wave oracles are independent"
+}

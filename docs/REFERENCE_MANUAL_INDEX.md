@@ -186,6 +186,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Reactive Distillation | [docs/process/reactive_distillation.md](process/reactive_distillation.md)                        | Reactive distillation column with equilibrium-based reactive flash on each tray |
 | Phase Envelope Algorithm | [docs/thermodynamicoperations/phase_envelope_algorithm.md](thermodynamicoperations/phase_envelope_algorithm.md) | Michelsen continuation method, cricondenbar/cricondentherm Newton refinement, critical point detection |
 | Thermo Ops Overview | [docs/thermodynamicoperations/README.md](thermodynamicoperations/README.md)                             | Thermodynamic operations module |
+| CPA Water, Ice and Hydrate Boundaries | [CPA water-phase boundaries](thermodynamicoperations/cpa_water_phase_boundaries.md) | One-call Statoil-CPA/rule-10 onset comparison, inhibitors, multiphase references and convergence diagnostics |
 
 ### Chapter 8: Fluid Characterization
 
@@ -241,6 +242,7 @@ See the [property method alignment audit](physical_properties/method_alignment_a
 | **pH Stabilization & Corrosion** | [docs/pvtsimulation/ph_stabilization_corrosion.md](pvtsimulation/ph_stabilization_corrosion.md)                       | **Corrosion control, FeCO3 layer, Electrolyte CPA EoS**           |
 | **Chemical Compatibility & RCA** | [docs/chemistry/chemical_compatibility_guide.md](chemistry/chemical_compatibility_guide.md)                           | **Production chemistry: compatibility, scale/CI/acid/scavenger, root cause analysis** |
 | Hydrate Models                   | [docs/thermo/hydrate_models.md](thermo/hydrate_models.md)                                                             | Hydrate equilibrium models                                        |
+| Structure-H Parameter Qualification | [docs/thermo/structure_h_parameter_qualification.md](thermo/structure_h_parameter_qualification.md) | Source-derived experimental data, offline preliminary fits, internal validation, and remaining component-parameter requirements |
 | CO2–KCl Interaction Provenance   | [docs/thermo/co2_kcl_interaction_provenance.md](thermo/co2_kcl_interaction_provenance.md)                               | Electrolyte-CPA coefficient source, holdout diagnostics, override semantics, and qualification boundary |
 | Pitzer Hydrate Equilibrium       | [docs/thermo/pitzer_hydrate_equilibrium.md](thermo/pitzer_hydrate_equilibrium.md) | CO2/chloride brines, Pitzer water activities, bounded onset calculations and qualification limits |
 | Hydrate Flash                    | [docs/thermodynamicoperations/hydrate_flash_operations.md](thermodynamicoperations/hydrate_flash_operations.md)       | Hydrate flash operations                                          |
@@ -623,6 +625,7 @@ See the [property method alignment audit](physical_properties/method_alignment_a
 | --- | --- | --- |
 | NeqSim Requests for Comments | [docs/rfcs/index.md](rfcs/index.md) | Architecture proposals, recorded decisions and qualification boundaries |
 | NRC-2937: TP-flash state contracts | [docs/rfcs/2937-tpflash-state-contracts.md](rfcs/2937-tpflash-state-contracts.md) | Proposed shared fluid, hydrate and process-consumer contracts; not accepted |
+| NRC-4707: Safety Shutdown acoustic inventory | [docs/rfcs/4707-conservative-acoustic-inventory.md](rfcs/4707-conservative-acoustic-inventory.md) | Proposed conservative characteristics and checkpoint migration; not accepted |
 | **Engineering Hub** | [docs/engineering/index.md](engineering/index.md) | **Dedicated entry point for design cases, closed-loop sizing, discipline verification, safety, handover, and lifecycle evidence** |
 | **Engineering Guide** | [docs/engineering/guide.md](engineering/guide.md) | **Practical, gated workflow from a validated process model to review-ready deliverables** |
 | **Current Engineering Capabilities** | [docs/engineering/current-capabilities.md](engineering/current-capabilities.md) | **Implemented entry points, discipline coverage, qualification layers, readiness levels, and accountable-review boundaries** |
@@ -709,7 +712,7 @@ See the [property method alignment audit](physical_properties/method_alignment_a
 | --------------------- | ---------------------------------------------------------------------------------- | --------------------- |
 | Transient Simulation  | [docs/wiki/pipeline_transient_simulation.md](wiki/pipeline_transient_simulation.md)   | Transient pipeline    |
 | Model Recommendations | [docs/wiki/pipeline_model_recommendations.md](wiki/pipeline_model_recommendations.md) | Model recommendations |
-| Water Hammer          | [docs/wiki/water_hammer_implementation.md](wiki/water_hammer_implementation.md)       | Water hammer          |
+| Safety Shutdown water hammer | [docs/wiki/water_hammer_implementation.md](wiki/water_hammer_implementation.md) | Conservative acoustics, prescribed valve travel, forward pumps, experimental ideal lift/contact and qualification limits |
 
 ---
 
@@ -900,7 +903,11 @@ capability routes, numerical evidence, measured-data gaps and gas-injection limi
 | PVT Workflow Module                     | [docs/pvtsimulation/pvt_workflow.md](pvtsimulation/pvt_workflow.md)                                           | PVT workflow module                                                                                              |
 | Property Flash                          | [docs/wiki/property_flash_workflows.md](wiki/property_flash_workflows.md)                                     | Property flash workflows                                                                                         |
 | **Relative Permeability**               | [docs/pvtsimulation/relative_permeability.md](pvtsimulation/relative_permeability.md)                         | **Corey and LET relative permeability models, Eclipse table export (SWOF/SGOF/SOF3)**                            |
-| **Reservoir Material Balance & Decline** | [docs/pvtsimulation/reservoir_material_balance.md](pvtsimulation/reservoir_material_balance.md)              | **Gas/oil material balance (OGIP/OOIP, drive indices), Van Everdingen-Hurst / Carter-Tracy aquifer influx, Arps + Duong decline history matching** |
+| **Reservoir Material Balance & Decline** | [docs/pvtsimulation/reservoir_material_balance.md](pvtsimulation/reservoir_material_balance.md)              | **Gas/oil and generalized Rs/Rv material balance, immutable original/tuned PVT and held-out laboratory residuals, measured/tank history, frozen-EOS compositional replay and bounded pore-volume fitting, OGIP/OOIP and drive indices, aquifer influx, decline history matching** |
+| Finite-Aquifer History and Uncertainty | [Finite-aquifer replay and discrete Bayesian uncertainty](pvtsimulation/reservoir_aquifer_uncertainty.md) | Physical reservoir-volume support, joint prior hypotheses and pressure posterior diagnostics |
+| Phase-selective Reservoir Production | [Equilibrium withdrawal and separator outputs](pvtsimulation/reservoir_phase_production.md) | Predicted component withdrawals, refinement and explicit product-volume basis |
+| Laboratory Gas-density Consistency | [Source-identified interval gate](pvtsimulation/laboratory_gas_density_consistency.md) | Independent p/T/Z/molar-mass/density checks and opt-in checkpoint provenance |
+| Laboratory PVT Handoff | [Native CCE/CVD/DLE and bounded PVT generation](pvtsimulation/depletion_pvt_generation.md) | Closed-mass absolute CCE, native phase-appearance handoff, explicit separator basis, separate Bw and bounded conversion closure |
 | **Gas Pseudopressure & Pseudocritical** | [docs/pvtsimulation/gas_pseudopressure_pseudocritical.md](pvtsimulation/gas_pseudopressure_pseudocritical.md) | **Real gas pseudopressure integral, Standing/Sutton/Piper pseudocritical correlations, Wichert-Aziz correction** |
 | Whitson Reader                          | [docs/pvtsimulation/whitson_pvt_reader.md](pvtsimulation/whitson_pvt_reader.md)                               | Whitson PVT reader                                                                                               |
 | **Eclipse E300 Fluid Import**           | [docs/pvtsimulation/eclipse_e300_fluid_import.md](pvtsimulation/eclipse_e300_fluid_import.md)                 | **E300 file format reference, reading/writing Eclipse fluids, PVTsim integration, reservoir coupling workflows** |
@@ -1063,6 +1070,7 @@ capability routes, numerical evidence, measured-data gaps and gas-injection limi
 | Recycle Acceleration  | [docs/simulation/recycle_acceleration_guide.md](simulation/recycle_acceleration_guide.md)                     | Recycle acceleration      |
 | Process Calculator    | [docs/simulation/process_calculator.md](simulation/process_calculator.md)                                     | Process calculator        |
 | Integrated Workflow   | [docs/simulation/INTEGRATED_WORKFLOW_GUIDE.md](simulation/INTEGRATED_WORKFLOW_GUIDE.md)                       | Integrated workflow       |
+| Numerical Mathematics | [docs/simulation/recent_numerical_mathematics.md](simulation/recent_numerical_mathematics.md) | Research selection, derivative qualification and reproducible performance evidence |
 | Differentiable Thermo | [docs/simulation/differentiable_thermodynamics.md](simulation/differentiable_thermodynamics.md)               | Auto-differentiation      |
 | Derivatives           | [docs/simulation/derivatives_and_gradients.md](simulation/derivatives_and_gradients.md)                       | Derivatives and gradients |
 | Equipment Factory     | [docs/simulation/equipment_factory.md](simulation/equipment_factory.md)                                       | Equipment factory         |
@@ -1080,6 +1088,7 @@ capability routes, numerical evidence, measured-data gaps and gas-injection limi
 | **Decision Engine Workflows**      | [docs/fielddevelopment/DECISION_ENGINE_WORKFLOWS.md](fielddevelopment/DECISION_ENGINE_WORKFLOWS.md)                           | Tieback, greenfield, portfolio, process, reservoir, and reporting workflows |
 | **Host Tie-In Capacity**          | [docs/fielddevelopment/HOST_TIE_IN_CAPACITY.md](fielddevelopment/HOST_TIE_IN_CAPACITY.md)                                     | Base-host and satellite production capacity, holdback, process bottlenecks, and debottleneck decisions |
 | **Integrated Production Modelling** | [docs/fielddevelopment/INTEGRATED_PRODUCTION_MODELLING.md](fielddevelopment/INTEGRATED_PRODUCTION_MODELLING.md)             | Reservoir-to-market IPM: reservoir drives, deliverability curves, network solver, gas-lift allocation, well-test matching, artificial-lift pumps, choke optimisation |
+| **Well Planning Physics**         | [docs/fielddevelopment/WELL_PLANNING_PHYSICS.md](fielddevelopment/WELL_PLANNING_PHYSICS.md)                                   | Screening well-planning physics: drift-flux tubing, wellbore temperature, gas-condensate inflow, APB and tubing movement, hydrate-inhibitor treatment, injector hydraulics, nodal analysis |
 | **Strategy**                      | [docs/fielddevelopment/FIELD_DEVELOPMENT_STRATEGY.md](fielddevelopment/FIELD_DEVELOPMENT_STRATEGY.md)                         | Field development strategy and roadmap                                  |
 | **Late-Life Operations**          | [docs/fielddevelopment/LATE_LIFE_OPERATIONS.md](fielddevelopment/LATE_LIFE_OPERATIONS.md)                                     | **Turndown, debottlenecking, and decommissioning timing analysis**      |
 | **Multi-Scenario VFP Generation** | [docs/fielddevelopment/MULTI_SCENARIO_PRODUCTION_OPTIMIZATION.md](fielddevelopment/MULTI_SCENARIO_PRODUCTION_OPTIMIZATION.md) | VFP tables with varying GOR/water cut for reservoir simulation coupling |
@@ -1123,6 +1132,7 @@ capability routes, numerical evidence, measured-data gaps and gas-injection limi
 | Document                           | Path                                                                                             | Description                                                                           |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
 | Development Overview               | [docs/development/README.md](development/README.md)                                                       | Development overview                                                                  |
+| NeqSim 3.27.0 release notes          | [docs/development/release-notes-3.27.0.md](development/release-notes-3.27.0.md)                         | Release candidate, numerical changes, experimental boundaries, distributions, and publication gates |
 | NeqSim 3.26.0 release notes          | [docs/development/release-notes-3.26.0.md](development/release-notes-3.26.0.md)                         | Release candidate, highlights, migration requirements, distributions, and publication gates |
 | Contributing Structure             | [docs/development/contributing-structure.md](development/contributing-structure.md)                 | Contributing guidelines                                                               |
 | Developer Setup                    | [docs/development/DEVELOPER_SETUP.md](development/DEVELOPER_SETUP.md)                               | Developer setup                                                                       |
@@ -1134,6 +1144,7 @@ capability routes, numerical evidence, measured-data gaps and gas-injection limi
 | **Task Solving Guide**             | [docs/development/TASK_SOLVING_GUIDE.md](development/TASK_SOLVING_GUIDE.md)                         | **Step-by-step workflow for solving engineering tasks, including study_config.yaml, intake pauses, document inputs, NeqSim Runner execution, and detailed multi-notebook studies** |
 | **Process Utilities Design Report** | [docs/development/UTILITIES_DESIGN_REPORT.md](development/UTILITIES_DESIGN_REPORT.md) | **Agent workflow based on the process report: utility consumer/load/capacity registers, simultaneous cases, generation/distribution, utility-loss checks, drawings, standards and acceptance** |
 | **Process-Study Report**           | [docs/development/PROCESS_STUDY_REPORT.md](development/PROCESS_STUDY_REPORT.md)                     | **One-step process-study report (`neqsim process-report`): all-stream tables per case, balances, BFD/PFD, standards register and fail-closed validation from a Python/JSON/.neqsim/extracted-data model; draft basis, cases.yaml, outputs, agent, troubleshooting** |
+| **Process Overview (A3 PFD + 16:9)** | [docs/development/PROCESS_OVERVIEW.md](development/PROCESS_OVERVIEW.md)                           | **One-sheet A3 process flow diagram and 16:9 presentation version (`neqsim process-overview`): structured process graph with traceable reductions, hierarchical layout, ISO 5457/7200/10628-2 conventions, embedded fonts, detail sheets, validation record; skill `professional-process-overview`** |
 | **Flow-Assurance Study Report**    | [docs/development/FLOW_ASSURANCE_STUDY_REPORT.md](development/FLOW_ASSURANCE_STUDY_REPORT.md)       | **One-step flow-assurance study report and ten-sheet A3 pipeline drawing package (`neqsim flow-assurance-report`): hydrate margin, cooldown, hydraulics, inhibitor balance, threat matrix, mitigation comparison, external-simulator hand-offs, fail-closed validation; supported/unsupported analyses, agent, skill** |
 | **SURF Design Study**             | [docs/development/SURF_DESIGN_STUDY.md](development/SURF_DESIGN_STUDY.md)                           | **One-step SURF design study (`neqsim surf-study`): generated and solved NeqSim field network, concept comparison, 15 A3 drawings, MTO/cost, 20-chapter report, fail-closed validation; maturity, hand-offs, agent, skills** |
 | **Plant Layout Study** | [docs/development/PLANT_LAYOUT_STUDY.md](development/PLANT_LAYOUT_STUDY.md) | **Physical onshore/offshore layout screening (`neqsim layout-study`): equipment/envelopes, checked alternatives, drawings, optional CAD, reports and independent review** |
@@ -1302,3 +1313,10 @@ badges; version history and merge dates remain available in Git.
 ---
 
 *Curated index entries are validated against repository source paths by CI.*
+
+- [Safety Shutdown forward pump coastdown and evidence](wiki/water_hammer_implementation.md#safety-shutdown-forward-pump-coastdown):
+  bounded actual-speed/forward-curve acoustic inlet; complete trip/slam remains unqualified.
+
+- [Safety Shutdown ideal translating check valve and evidence](wiki/water_hammer_implementation.md#safety-shutdown-ideal-translating-check-valve):
+  experimental signed jet/swept acoustic coupling, discrete energy, inelastic
+  contact/refinement, local restart and explicit qualification limits.

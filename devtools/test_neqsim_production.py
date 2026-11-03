@@ -1149,6 +1149,21 @@ def test_guard_rejects_missing_and_stale_optimizer_evidence(tmp_path):
     assert reasons == {"candidate": ["missing_optimizer_evidence"], "stale": ["stale_candidate"]}
 
 
+def test_optimizer_termination_reason_is_fail_closed_when_declared_or_required(tmp_path):
+    proposal = _valid_proposal()
+    proposal["optimizer_evidence"]["termination_reason"] = "UNCONVERGED_PARTIAL_RESULT"
+    ctx = _guard_context(tmp_path, proposal)
+    production.guard(ctx, {})
+    assert ctx.proposals == []
+    assert "invalid_optimizer_termination_reason" in json.loads(
+        (tmp_path / "guard.json").read_text())["withheld"][0]["reasons"]
+
+    evidence = _valid_proposal()["optimizer_evidence"]
+    assert production._validate_optimizer_evidence(
+        evidence, "C-1", require_termination_reason=True) == [
+            "invalid_optimizer_termination_reason"]
+
+
 def test_guard_keeps_optimizer_only_proposal_when_envelope_is_optional(tmp_path):
     proposal = _valid_proposal()
     proposal.pop("accepted_point_envelope_evidence")
@@ -1863,6 +1878,42 @@ def test_lifecycle_context_binds_source_objective_to_reviewed_baseline(tmp_path)
     ctx.plan["production"]["require_objective_evidence"] = True
     production.guard(ctx, {})
     assert [row["title"] for row in ctx.proposals] == ["Increase validated field export"]
+
+
+def test_lifecycle_context_uses_bounded_source_replay_tolerance(tmp_path):
+    _, evidence, _ = _promotable_schema8_task(tmp_path)
+    candidate = _objective_bound_lifecycle(evidence)
+    optimizer = next(period for period in candidate["periods"]
+                     if period["period_id"] == "C-1")["envelope_evidence"]["optimizer_evidence"]
+    optimizer["replay_relative_tolerance"] = 1.0e-9
+    optimizer["replay_tolerance_provenance"] = "deterministic simulator replay tolerance"
+    optimizer["initial_objective_value"] += 1.0e-7
+
+    proposal = production.proposal_from_lifecycle_context(
+        json.dumps(candidate), _objective_context(tmp_path),
+        "Replay-tolerant validated field export")
+    assert proposal["optimizer_evidence"]["replay_relative_tolerance"] == 1.0e-9
+
+    optimizer["initial_objective_value"] += 1.0e-3
+    with pytest.raises(ValueError, match="baseline"):
+        production.proposal_from_lifecycle_context(
+            json.dumps(candidate), _objective_context(tmp_path),
+            "Out-of-tolerance field export")
+
+
+@pytest.mark.parametrize("value", [-1.0, 1.0e-5, float("nan")])
+def test_optimizer_rejects_invalid_replay_tolerance(tmp_path, value):
+    _, evidence, _ = _promotable_schema8_task(tmp_path)
+    candidate = _objective_bound_lifecycle(evidence)
+    optimizer = next(period for period in candidate["periods"]
+                     if period["period_id"] == "C-1")["envelope_evidence"]["optimizer_evidence"]
+    optimizer["replay_relative_tolerance"] = value
+    optimizer["replay_tolerance_provenance"] = "test tolerance"
+
+    with pytest.raises(ValueError, match="Lifecycle|lifecycle"):
+        production.proposal_from_lifecycle_context(
+            json.dumps(candidate), _objective_context(tmp_path),
+            "Invalid replay tolerance")
 
 
 @pytest.mark.parametrize("failure", ["name", "direction", "unit", "baseline", "accepted", "prediction"])

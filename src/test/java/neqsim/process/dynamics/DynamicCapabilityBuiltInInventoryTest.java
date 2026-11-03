@@ -38,6 +38,7 @@ import neqsim.process.equipment.tank.VesselDepressurization;
 import neqsim.process.equipment.valve.LevelControlValve;
 import neqsim.process.equipment.valve.PressureControlValve;
 import neqsim.process.safety.release.IdealGasPipeDecompression;
+import neqsim.process.safety.release.NonEquilibriumReleaseInventory;
 import neqsim.process.safety.release.RealGasPipeDecompression;
 import neqsim.process.safety.release.ReleaseInventory;
 
@@ -100,7 +101,7 @@ public class DynamicCapabilityBuiltInInventoryTest extends neqsim.NeqSimTest {
         AdiabaticPipe.class);
     assertCapability(DynamicCapability.DYNAMIC_LUMPED, Filter.class, CommittedEnergyGenerator.class,
         VesselDepressurization.class, MountainCavern.class, Electrolyzer.class, ReleaseInventory.class,
-        LevelControlValve.class, PressureControlValve.class);
+        NonEquilibriumReleaseInventory.class, LevelControlValve.class, PressureControlValve.class);
     assertCapability(DynamicCapability.DYNAMIC_DISTRIBUTED, DistillationColumn.class, AdsorptionBed.class,
         MercuryRemovalBed.class, Pipeline.class, MultiphasePipe.class, PipeBeggsAndBrills.class, PipeFlowNetwork.class,
         WellFlowlineNetwork.class, IdealGasPipeDecompression.class, RealGasPipeDecompression.class);

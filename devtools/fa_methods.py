@@ -19,7 +19,7 @@ METHODS = [
      "use": "steady-state pressure drop, holdup, flow-regime label and mixture velocity along a route",
      "not_for": "transient or resolved slugging, severe/terrain slugging, pig tracking, restart sweep-out, long-duration liquid-rich transients",
      "limits": "empirical correlation derived from small-diameter laboratory data; accuracy for large-diameter, long, wet-gas subsea lines is not established here; "
-               "SRK equation of state with classic mixing rule (no association) is used for the hydraulic fluid"},
+               "SRK equation of state with classic mixing rule (no association) is used for the hydraulic fluid unless the basis supplies a characterised PR78 fluid (pseudo-components, volume shift, BIPs)"},
     {"id": "M-HYD-CPA", "name": "Hydrate equilibrium temperature - SRK-CPA with hydrate check (ThermodynamicOperations.hydrateFormationTemperature)",
      "implemented": "yes", "numerically_verified": "partly (grid interpolation check; methane benchmark against secondary literature points)",
      "experimentally_qualified": "no (secondary-source methane check only; no study-fluid or inhibitor measurements)",

@@ -2,6 +2,8 @@ package neqsim.process.equipment.pipeline.twophasepipe.numerics;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -39,6 +41,17 @@ class DirectionalPhaseFaceFluxTest {
   }
 
   @Test
+  void explicitCounterTransportRetainsBothDonorsAndConservativeNet() {
+    DirectionalPhaseFaceFlux both = new DirectionalPhaseFaceFlux(2.5, 1.75, 7.5, 3.5, 11.0, 4.0, 5.0, 12.0, -10.0);
+    assertEquals(2.5, both.getForwardMassFlowKgPerSecond(), 0.0);
+    assertEquals(1.75, both.getReverseMassFlowKgPerSecond(), 0.0);
+    assertEquals(0.75, both.getSignedMassFlowKgPerSecond(), 0.0);
+    assertEquals(11.0, both.getAdvectiveMomentumN(), 0.0);
+    assertEquals(0.0, both.getForwardDonorResidualN(), 0.0);
+    assertEquals(0.0, both.getReverseDonorResidualN(), 0.0);
+  }
+
+  @Test
   void operatorAndAdapterCarryTheSameImmutableDirectionalLedger() throws Exception {
     TwoFluidSection left = section(0.5, 2.0, -1.0);
     TwoFluidSection right = section(1.5, 2.0, -1.0);
@@ -57,6 +70,13 @@ class DirectionalPhaseFaceFluxTest {
     assertEquals(direct.getPhaseMassFaceFluxes()[1][2], directFaces[0][2].getSignedMassFlowKgPerSecond(), 1.0e-12);
     assertEquals(0.0, directFaces[0][1].getForwardDonorResidualN(), 1.0e-12);
     assertEquals(0.0, directFaces[0][2].getReverseDonorResidualN(), 1.0e-12);
+    equations.calcRHS(cloneSections(cells), 1.0);
+    double[][][] accumulated = new double[1][3][2];
+    equations.accumulateLastDirectionalPhaseMassFaceFluxes(accumulated, 0.25);
+    for (int phase = 0; phase < 3; phase++) {
+      assertEquals(0.25 * directFaces[0][phase].getForwardMassFlowKgPerSecond(), accumulated[0][phase][0], 0.0);
+      assertEquals(0.25 * directFaces[0][phase].getReverseMassFlowKgPerSecond(), accumulated[0][phase][1], 0.0);
+    }
 
     TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, cells, 1.0,
         (cell, state, pressure, time) -> new double[] {10.0, 800.0, 1000.0});
@@ -83,6 +103,30 @@ class DirectionalPhaseFaceFluxTest {
       assertEquals(adaptedFaces[0][1].getSignedMassFlowKgPerSecond(), restored.getSignedMassFlowKgPerSecond(), 0.0);
       assertEquals(adaptedFaces[0][1].getPressureTractionN(), restored.getPressureTractionN(), 0.0);
     }
+  }
+
+  @Test
+  void optInRusanovOperatorPublishesBothDonorsAndRejectsCombinedLiquidSplit() {
+    TwoFluidSection[] cells = {section(0.5, 0.5, 0.2), section(1.5, -0.3, -0.1)};
+    TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+    equations.setIncludeEnergyEquation(true);
+    equations.setIncludeMassTransfer(false);
+    equations.setEnableWaterOilSlip(true);
+    equations.setRusanovInternalFluxEnabled(true);
+
+    TransactionalEvaluation evaluation = equations.evaluateTransactional(cloneSections(cells), 1.0);
+    DirectionalPhaseFaceFlux[][] faces = evaluation.getDirectionalPhaseFaceFluxes();
+    for (int phase = 0; phase < 3; phase++) {
+      assertTrue(faces[0][phase].getForwardMassFlowKgPerSecond() > 0.0);
+      assertTrue(faces[0][phase].getReverseMassFlowKgPerSecond() > 0.0);
+      assertEquals(evaluation.getPhaseMassFaceFluxes()[1][phase], faces[0][phase].getSignedMassFlowKgPerSecond(),
+          1.0e-12);
+    }
+
+    equations.setEnableWaterOilSlip(false);
+    IllegalStateException exception = assertThrows(IllegalStateException.class,
+        () -> equations.calcRHS(cloneSections(cells), 1.0));
+    assertTrue(exception.getMessage().contains("independent oil/water"));
   }
 
   private static TwoFluidSection section(double position, double oilVelocity, double waterVelocity) {

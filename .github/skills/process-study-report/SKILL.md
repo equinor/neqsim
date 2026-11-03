@@ -192,6 +192,11 @@ evidence) and are rendered in Appendix G.
 
 ## Diagrams
 
+**Gate:** every BFD/PFD sheet must pass `neqsim pfd-check` (skill `neqsim-pfd-layout-review`, agent `pfd-layout-review`)
+before issue. `process_study_report.build_diagrams` runs it and writes `diagrams/layout_review/summary.json`
+(`diagrams.layout_review` in the run summary); FAIL sheets are fixed in the layout inputs and regenerated, WARN sheets
+explained, then every sheet is viewed.
+
 Evidence for building our own generator: the native NeqSim renderer
 (`EngineeringDiagramDelivery` + `NativeEngineeringDiagramRenderer`) produces generic boxes labelled
 EQUIPMENT in one row, no stream numbers, overlapping labels and no ISO-style symbols; it is kept for
@@ -205,6 +210,11 @@ off-page connectors (other sheet **and** drawing number), per-equipment data lin
 `pfd_layout_spec.json` allows regeneration. Symbols follow ISO 10628-2 / ISO 14617 conventions in
 spirit; **never** claim conformance. Always render and look (see Step 7); check text at A3 print size
 with a 200 dpi crop.
+
+**One-sheet overview:** when the report or a presentation needs the *complete* process on one A3 sheet (and a
+16:9 slide), run `neqsim process-overview <report>/data/process_data.json --case A --out <task>/deliverables/process_overview`
+(skill `professional-process-overview`, [docs/development/PROCESS_OVERVIEW.md](../../../docs/development/PROCESS_OVERVIEW.md)).
+It reuses this extraction and `psr_diagrams` for the detail sheets it references, so numbers and sheet numbers agree.
 
 ## Validation checks (all must be PASS or explained WARN)
 

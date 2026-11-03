@@ -144,6 +144,34 @@ public final class DexpiEngineeringExporter {
   }
 
   /**
+   * Writes native DEXPI 2.0.1 with governed instrumentation and safeguarding requirements. The result is a
+   * review-required semantic exchange; drawing and named-tool qualification remain separate evidence scopes.
+   *
+   * @param project governed engineering project
+   * @param file destination native XML file
+   * @param metadata controlled export and plant provenance
+   * @return conformance assessment for the final enriched XML bytes
+   * @throws IOException if serialization or validation fails
+   */
+  public static neqsim.process.processmodel.dexpi.Dexpi20ConformanceAssessment.Report exportDexpi201(
+      EngineeringProject project, Path file, neqsim.process.processmodel.dexpi.Dexpi20PlantExportMetadata metadata)
+      throws IOException {
+    if (project == null || file == null || metadata == null) {
+      throw new IllegalArgumentException("project, file and metadata must not be null");
+    }
+    if (project.validate().hasErrors()) {
+      throw new IllegalStateException("Engineering project has blocking validation errors");
+    }
+    neqsim.process.processmodel.dexpi.Dexpi201XmlWriter.writeAndAssess(project.getEngineeringProcessSystem(),
+        file.toFile(), metadata);
+    Dexpi20EngineeringMaterializer.materialize(project, file);
+    Path evidence = file.resolveSibling(file.getFileName().toString() + ".engineering-projection.json");
+    Files.write(evidence, new GsonBuilder().setPrettyPrinting().create()
+        .toJson(Dexpi20EngineeringMaterializer.projectionEvidence(project)).getBytes(StandardCharsets.UTF_8));
+    return neqsim.process.processmodel.dexpi.Dexpi201XmlWriter.assess(file);
+  }
+
+  /**
    * Writes a complete exchange package.
    *
    * @param project engineering project

@@ -7,13 +7,33 @@ on:
   pull_request:
     paths:
       - "devtools/**"
+      - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series/**"
+      - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/**"
+      - "src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/**"
+      - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/**"
+      - "src/test/resources/neqsim/thermo/mixingrule/hv-selected-pair-performance/**"
+      - "src/test/resources/neqsim/thermo/mixingrule/hv-row-performance/**"
+      - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-meg-receipts/**"
+      - "src/test/resources/data/chemistry_benchmarks/structure_h_jin2023_digitized.*"
+      - "docs/thermo/structure_h_parameter_qualification.md"
       - "examples/mechanical_design_json_to_mesh.py"
       - ".github/workflows/ai-devtools-python-tests.yml"
+      - ".github/workflows/core-run-build-test-and-javadoc.yml"
   push:
     branches: [master]
     paths:
       - "devtools/**"
+      - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series/**"
+      - "src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/**"
+      - "src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/**"
+      - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/**"
+      - "src/test/resources/neqsim/thermo/mixingrule/hv-selected-pair-performance/**"
+      - "src/test/resources/neqsim/thermo/mixingrule/hv-row-performance/**"
+      - "src/test/resources/neqsim/thermo/mixingrule/hv-co2-meg-receipts/**"
+      - "src/test/resources/data/chemistry_benchmarks/structure_h_jin2023_digitized.*"
+      - "docs/thermo/structure_h_parameter_qualification.md"
       - "examples/mechanical_design_json_to_mesh.py"
+      - ".github/workflows/core-run-build-test-and-javadoc.yml"
 
 jobs:
   devtools-tests:
@@ -22,7 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v10.3.2
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
           python-version: "3.13"
           enable-cache: true
@@ -30,6 +50,26 @@ jobs:
 
       - name: Sync devtools test environment
         run: uv sync --project devtools --locked --group test
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Verify SRK local-flux receipts and rejection controls
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy -p test_srk_receipts.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy -p test_srk_receipts.py -v
+
+      - name: Verify gravity-energy receipt guards
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy -p test_energy_receipts.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy -p test_energy_receipts.py -v
+
+      - name: Verify pressure-moment auditor guards
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series -p test_audit.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series -p test_audit.py -v
 
       - name: Run hermetic pytest suites
         run: |
@@ -59,13 +99,42 @@ jobs:
             devtools/test_task_publication_schedule.py \
             devtools/test_neqsim_continuous.py \
             devtools/test_neqsim_production.py \
+            devtools/test_map_driver_lifecycle_link.py \
             devtools/test_neqsim_living_tasks.py \
             devtools/test_neqsim_doctor.py \
             devtools/test_unisim_outputs.py \
             devtools/test_stid_download.py
 
+      - name: Verify pure-CO2 retained-data auditor guards
+        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_pure_co2.py -v
+
+      - name: Verify process overview and drawing regressions
+        run: |
+          uv run --project devtools --locked --group test python -m pytest -q \
+            devtools/test_process_overview.py \
+            devtools/test_process_report_regressions.py \
+            devtools/test_psr_diagrams.py \
+            devtools/test_pfd_layout_check.py
+
+      - name: Verify selected-pair performance receipt guards
+        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_run_huron_vidal_selected_pair_benchmark.py -v
+
+      - name: Verify HV binary controls and retained performance evidence
+        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_benchmark_huron_vidal_rows.py -v
+
+      - name: Verify quarantined HV measurement provenance
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_meg_receipts.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s devtools -p test_audit_huron_vidal_meg_receipts.py -v
+
+      - name: Verify Maven resolution retry boundaries
+        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_maven_resolution_retry.py -v
+
       - name: Run mechanical design mesh contract tests
         run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_mechanical_design_json_to_mesh.py -v
+
+      - name: Verify structure-H experimental fitting qualification
+        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_fit_structure_h_dissociation.py -v
 
       - name: Run plant layout geometry and delivery contract tests
         run: uv run --project devtools --locked --group test python devtools/test_layout_study.py -v
@@ -79,7 +148,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v10.3.2
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
           python-version: "3.11"
           enable-cache: true
@@ -87,6 +156,26 @@ jobs:
 
       - name: Sync devtools test environment
         run: uv sync --project devtools --locked --group test
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Verify SRK local-flux receipts and rejection controls
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy -p test_srk_receipts.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy -p test_srk_receipts.py -v
+
+      - name: Verify gravity-energy receipt guards
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy -p test_energy_receipts.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy -p test_energy_receipts.py -v
+
+      - name: Verify pressure-moment auditor guards
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series -p test_audit.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series -p test_audit.py -v
 
       - name: Run toolkit smoke tests on the minimum supported Python
         run: |
@@ -99,3 +188,26 @@ jobs:
 
       - name: Verify HV benchmark receipt guards on the minimum supported Python
         run: uv run --project devtools --locked --group test python -m pytest -q devtools/test_benchmark_huron_vidal_columns.py
+
+      - name: Verify process report regressions on the minimum supported Python
+        run: uv run --project devtools --locked --group test python -m pytest -q devtools/test_process_report_regressions.py
+
+      - name: Verify pure-CO2 auditor guards on the minimum supported Python
+        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_pure_co2.py -v
+
+      - name: Verify selected-pair receipts on the minimum supported Python
+        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_run_huron_vidal_selected_pair_benchmark.py -v
+
+      - name: Verify HV binary evidence on the minimum supported Python
+        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_benchmark_huron_vidal_rows.py -v
+
+      - name: Verify quarantined HV measurement provenance
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_meg_receipts.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s devtools -p test_audit_huron_vidal_meg_receipts.py -v
+
+      - name: Verify Maven retry boundaries on the minimum supported Python
+        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_maven_resolution_retry.py -v
+
+      - name: Verify structure-H experimental fitting qualification on the minimum supported Python
+        run: uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_fit_structure_h_dissociation.py -v

@@ -105,6 +105,9 @@ drawings and narrative traceable to the canonical dataset and source revision.
 
 ## 5. Validate and release honestly
 
+**Flow-diagram gate:** utility flow diagrams and block diagrams pass `neqsim pfd-check` (skill `neqsim-pfd-layout-review`,
+agent `pfd-layout-review`) before release.
+
 Apply process-report validation without weakening checks. Additionally check:
 
 - Unique IDs; every consumer covered in each applicable case; unknown distinct from zero.

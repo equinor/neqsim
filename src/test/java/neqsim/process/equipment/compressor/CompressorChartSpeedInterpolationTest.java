@@ -77,6 +77,8 @@ class CompressorChartSpeedInterpolationTest extends NeqSimTest {
       compressor.getCompressorChart().setUseCompressorChart(true);
       compressor.getCompressorChart().setHeadUnit("kJ/kg");
       compressor.setUsePolytropicCalc(true);
+      // Preserve the inlet-property basis of the historical chart regression values.
+      compressor.setPolytropicMethod("ideal_inlet_properties");
       compressor.setOutletPressure(50.0 * pressureRatio, "bara");
       compressor.setSpeed(initialSpeed);
       compressor.setSolveSpeed(true);

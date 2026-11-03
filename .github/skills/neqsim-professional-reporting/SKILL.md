@@ -587,6 +587,8 @@ generator:
 
 ## Validation Checklist (RUN BEFORE FINALIZING)
 
+- [ ] **Every flow diagram (PFD/BFD/P&ID sketch/flow network) passed `neqsim pfd-check` and `pfd-layout-review` sign-off** (skill `neqsim-pfd-layout-review`); no figure with overlaps, labels on lines or missing arrowheads.
+
 **Depth (Principle 0) — check these first; they cannot be fixed by editing prose:**
 
 - [ ] `depth_score` recorded, ≥ 6/9 (Standard) or 9/9 (Comprehensive / root-cause)

@@ -1,6 +1,6 @@
 ---
 name: neqsim-report-design-and-visual-qa
-description: "Use when improving technical report formatting, Word typography, table layout, captions, pagination, or professional presentation. Produces a separate template-preserving DOCX revision, PDF and all-page previews, with explicit visual QA. Complements neqsim-professional-reporting."
+description: "USE WHEN: improving technical report formatting, Word typography, table layout, captions, pagination, or professional presentation. Produces a separate template-preserving DOCX revision, PDF and all-page previews, with explicit visual QA. Complements neqsim-professional-reporting."
 ---
 
 # Report design and visual QA
@@ -11,6 +11,9 @@ traceability, evidence and analytical depth; use this skill for the reader's
 experience. A well-formed DOCX is not proof of good pagination.
 
 ## Boundaries
+
+- Flow diagrams (PFD/BFD/P&ID sketches) are first checked geometrically with `neqsim pfd-check`
+  ([neqsim-pfd-layout-review](../neqsim-pfd-layout-review/SKILL.md)); this skill covers page-level presentation.
 
 - Preserve the configured corporate template, fonts, heading colours, logos,
   classification, revision history and header/footer content.

@@ -39,7 +39,7 @@ specialists and optional authorized enterprise overlays. For formal reports,
 
 Java library for thermodynamic fluid properties and process simulation.
 Developed at NTNU, maintained by Equinor. Apache-2.0 license.
-`com.equinor.neqsim:neqsim` version 3.26.0 — **must compile with Java 8**.
+`com.equinor.neqsim:neqsim` version 3.27.0 — **must compile with Java 8**.
 
 ## Repo Map
 
@@ -144,7 +144,7 @@ devtools/                Unified CLI (`neqsim` command), Jupyter dev setup, task
 
 # Package JAR + copy to Python
 .\mvnw.cmd package -DskipTests
-Copy-Item target\neqsim-3.26.0.jar C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\ -Force
+Copy-Item target\neqsim-3.27.0.jar C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\ -Force
 ```
 
 ## Code Patterns — Copy-Paste Starters

@@ -54,6 +54,7 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
   /**
    * {@inheritDoc}
    *
+   * @throws IllegalArgumentException if pressure, initial temperature or water inventory is not positive and finite
    * @throws IllegalStateException if a non-reactive electrolyte fluid evaluation fails conservation or phase checks
    */
   @Override
@@ -62,6 +63,7 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
     minimumCo2TrialDistance = Double.NaN;
     converged = false;
     lastResidual = Double.NaN;
+    validateInput();
     if (system instanceof neqsim.thermo.system.SystemPitzer) {
       PitzerHydrateFlash flash = new PitzerHydrateFlash((neqsim.thermo.system.SystemPitzer) system, false);
       flash.run();
@@ -90,6 +92,27 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
       throw ex;
     } finally {
       system.setMultiPhaseCheck(originalMultiPhaseCheck);
+    }
+  }
+
+  /**
+   * Rejects an undefined hydrate-water equilibrium before changing the fluid or phase options.
+   *
+   * @throws IllegalArgumentException if pressure, initial temperature or the amount of water is invalid
+   */
+  private void validateInput() {
+    if (!Double.isFinite(system.getPressure()) || !(system.getPressure() > 0.0)) {
+      throw new IllegalArgumentException("Hydrate temperature requires positive finite absolute pressure");
+    }
+    if (!Double.isFinite(system.getTemperature()) || !(system.getTemperature() > 0.0)) {
+      throw new IllegalArgumentException("Hydrate temperature requires a positive finite initial temperature");
+    }
+    if (!system.getPhase(0).hasComponent("water")) {
+      throw new IllegalArgumentException("Hydrate temperature requires a positive finite water inventory");
+    }
+    double waterMoles = system.getPhase(0).getComponent("water").getNumberOfmoles();
+    if (!Double.isFinite(waterMoles) || !(waterMoles > 0.0)) {
+      throw new IllegalArgumentException("Hydrate temperature requires a positive finite water inventory");
     }
   }
 
@@ -138,11 +161,17 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
     double tolerance = 1e-6;
 
     double temp = system.getTemperature();
+    temp = Math.max(150.0, Math.min(350.0, temp));
+    system.setTemperature(temp);
     double oldTemp = temp;
     double oldOldTemp = temp;
     double diff = 0.0;
     double oldDiff = 0.0;
     double oldOldDiff = 0.0;
+    double lowerTemperature = Double.NaN;
+    double lowerResidual = Double.NaN;
+    double upperTemperature = Double.NaN;
+    double upperResidual = Double.NaN;
 
     // Initial flash to get starting fugacities
     updateFluidAndHydrate(ops, conservedMoles);
@@ -152,6 +181,13 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
 
     do {
       iter++;
+      if (diff > 0.0) {
+        lowerTemperature = temp;
+        lowerResidual = diff;
+      } else if (diff < 0.0) {
+        upperTemperature = temp;
+        upperResidual = diff;
+      }
       oldOldTemp = oldTemp;
       oldTemp = temp;
       oldOldDiff = oldDiff;
@@ -161,21 +197,22 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
       double dT;
       if (iter < 3) {
         // Initial steps: use simple proportional step
-        dT = diff * 5.0; // Scale factor for initial convergence
+        // Positive residual is below the hydrate boundary and must warm the trial.
+        dT = -diff * 5.0;
         if (Math.abs(dT) > 10.0) {
           dT = Math.signum(dT) * 10.0;
         }
       } else {
         // Secant method for faster convergence
         double dDiffdT = (oldDiff - oldOldDiff) / (oldTemp - oldOldTemp);
-        if (Math.abs(dDiffdT) > 1e-10) {
+        if (Double.isFinite(dDiffdT) && Math.abs(dDiffdT) > 1e-10) {
           dT = oldDiff / dDiffdT;
           // Limit step size
           if (Math.abs(dT) > 10.0) {
             dT = Math.signum(dT) * 10.0;
           }
         } else {
-          dT = diff * 3.0;
+          dT = -diff * 3.0;
           if (Math.abs(dT) > 5.0) {
             dT = Math.signum(dT) * 5.0;
           }
@@ -183,12 +220,26 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
       }
 
       // Handle NaN
-      if (Double.isNaN(dT)) {
-        dT = 1.0;
+      if (!Double.isFinite(dT)) {
+        dT = diff > 0.0 ? -5.0 : 5.0;
       }
 
       // Update temperature
       temp = system.getTemperature() - dT;
+
+      // Once opposite signs have been evaluated, retain the root bracket. A periodic
+      // bisection prevents a nearly flat secant from repeatedly selecting one endpoint.
+      if (Double.isFinite(lowerTemperature) && Double.isFinite(upperTemperature)
+          && lowerTemperature < upperTemperature) {
+        double width = upperTemperature - lowerTemperature;
+        double interpolated = lowerTemperature + width * lowerResidual / (lowerResidual - upperResidual);
+        double margin = 0.1 * width;
+        if (iter % 4 == 0 || !Double.isFinite(interpolated) || interpolated <= lowerTemperature + margin
+            || interpolated >= upperTemperature - margin) {
+          interpolated = lowerTemperature + 0.5 * width;
+        }
+        temp = interpolated;
+      }
 
       // Ensure temperature stays in reasonable range (150K to 350K)
       if (temp < 150.0) {

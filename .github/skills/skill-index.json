@@ -1,4 +1,10 @@
 {
+ "vannduggpunkt med CPA": [
+  "neqsim-cpa-water-boundaries"
+ ],
+ "CPA water phase boundaries": [
+  "neqsim-cpa-water-boundaries"
+ ],
  "living task": [
   "neqsim-continuous-task-improvement"
  ],
@@ -971,6 +977,23 @@
  ],
  "pfd": [
   "neqsim-process-extraction",
+  "process-study-report",
+  "professional-process-overview"
+ ],
+ "process overview": [
+  "professional-process-overview"
+ ],
+ "one-sheet PFD": [
+  "professional-process-overview"
+ ],
+ "A3 process flow diagram": [
+  "professional-process-overview"
+ ],
+ "presentation diagram 16:9": [
+  "professional-process-overview"
+ ],
+ "block flow overview": [
+  "professional-process-overview",
   "process-study-report"
  ],
  "pfr)": [
@@ -2556,6 +2579,20 @@
  "layout independent review": [
   "neqsim-plant-layout-geometry",
   "neqsim-plant-layout-delivery"
+ ],
+ "pfd layout review": [
+  "neqsim-pfd-layout-review",
+  "neqsim-report-design-and-visual-qa"
+ ],
+ "check process flow diagram overlap crossing label": [
+  "neqsim-pfd-layout-review"
+ ],
+ "flow diagram quality gate before report": [
+  "neqsim-pfd-layout-review",
+  "neqsim-professional-reporting"
+ ],
+ "bfd pfd drawing arrowheads tags stream numbers": [
+  "neqsim-pfd-layout-review"
  ],
  "a complete pvt report": [
   "neqsim-pvt-fluid-study-report"

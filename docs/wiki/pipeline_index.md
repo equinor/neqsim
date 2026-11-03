@@ -45,3 +45,7 @@ this page does not duplicate those details.
 For API signatures, verify the linked guide against the current Java source and
 [JavaDoc](https://equinor.github.io/neqsim/javadoc/index.html). For defects or missing coverage,
 use the [NeqSim issue tracker](https://github.com/equinor/neqsim/issues).
+
+- [Safety Shutdown ideal translating check valve](water_hammer_implementation.md#safety-shutdown-ideal-translating-check-valve):
+  experimental equal-area mechanics, signed flow, inelastic numerical contact
+  and complete public analytical/refinement evidence.

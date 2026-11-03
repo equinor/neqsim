@@ -66,12 +66,20 @@ FAIL is fixed, every WARN is explained in the report. Do not weaken a gate.
 
 ### 5. Hand off
 
-- Unsupported transients (restart, ramp-up, pigging, slugging): the `handoff/EVT-*.json` packages go to the
-  community `olga-simulation-agent` or the user's qualified simulator; results return via `--external-results`.
+- Unsupported transients (restart, ramp-up, pigging, slugging) remain unsupported after the analytical common-pressure
+  fixed-point and opt-in stratified phase-traction/work updates. Those updates verify an instantaneous conservative
+  operator, not elapsed retention or event response. The `handoff/EVT-*.json` packages still go to the community
+  `olga-simulation-agent` or the user's qualified simulator; results return via `--external-results`.
 - Standards: verify editions with `neqsim-standards-lookup`; never state compliance.
 - Independent review: `@review`; the software never assigns REVIEWED.
 - Report out: `report/*.docx|pdf`, `drawings/`, `dataset/flow_assurance_study.json`; merge a summary into
   `results.json` with `--task DIR`.
+
+## Flow-diagram gate (mandatory)
+
+Schematic and network sheets (field/network schematic, riser/PLEM arrangement) are flow diagrams: run `@pfd-layout-review`
+(`neqsim pfd-check`) on them and on any PFD/BFD figure you add, and fix every ERROR before the report is issued. Map, profile
+and chart sheets are reviewed visually with `neqsim-report-design-and-visual-qa`.
 
 ## Rules
 

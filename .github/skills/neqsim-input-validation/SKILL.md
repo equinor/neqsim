@@ -67,9 +67,15 @@ Common correct names:
 |-------|------|-------------------|
 | Mixing rule is set | `setMixingRule()` must be called after `addComponent()` | Flash gives wrong results or crashes |
 | CPA systems use numeric rule | `setMixingRule(10)` for CPA EOS | String mixing rules don't work with CPA |
-| Classic rule for cubic EOS | `setMixingRule("classic")` for SRK/PR | Wrong rule type causes errors |
+| Default for ordinary cubic EOS | `setMixingRule("classic")` for SRK/PR when no specific model basis requires another rule | A generic default can override the governing model |
+| ISO 18453 / GERG-water | `SystemGERGwaterEos` with `setMixingRule(8)` | Classic or CPA defaults change the named ISO model basis |
 
-**Corrective action:** Always call `fluid.setMixingRule("classic")` (or `10` for CPA) after adding all components.
+**Corrective action:** Select the EOS and mixing rule from the governing named standard or validated
+task model before applying defaults. For ordinary SRK/PR, `"classic"` is a default; for CPA,
+numeric rule `10` is the usual setup. For ISO 18453 / GERG-water, retain rule `8` and follow the
+[ISO 18453 / GERG-water execution rule](../neqsim-standards-lookup/SKILL.md#iso-18453--gerg-water-execution-rule).
+Set the selected rule after adding all components; never replace a specified model with a generic
+CPA or classic-rule recommendation.
 
 ## Process Equipment Inputs
 
@@ -125,13 +131,16 @@ Common correct names:
 
 | Fluid Type | Required EOS | Wrong EOS Symptom |
 |-----------|-------------|-------------------|
-| Hydrocarbons + water | CPA (`SystemSrkCPAstatoil`) | SRK/PR gives near-zero water solubility in HC |
+| ISO 18453 / GERG-water water dew point | `SystemGERGwaterEos` with mixing rule `8`, or `Standard_ISO18453` | CPA, GERG-2008, or ordinary PR changes the requested model basis |
+| General hydrocarbons + water, without a specified model basis | CPA (`SystemSrkCPAstatoil`) | SRK/PR gives near-zero water solubility in HC |
 | Hydrocarbons + MEG/methanol | CPA (`SystemSrkCPAstatoil`) | Wrong hydrate inhibition prediction |
 | Pure hydrocarbons (no polar) | SRK or PR | CPA is slower with no benefit |
 | Custody transfer / fiscal metering | GERG-2008 (`SystemGERG2008Eos`) | Cubic EOS not accurate enough for custody |
 | Electrolyte / brine / pH | Electrolyte CPA | SRK/CPA ignores ionic interactions |
 
-**Corrective action:** Match EOS to fluid type. When in doubt, CPA handles the widest range of systems.
+**Corrective action:** Match EOS to the governing standard and task model, then the fluid type.
+CPA is a general water/polar-system option; it does not replace the named ISO 18453 / GERG-water
+calculation. Resolve an unspecified model basis before claiming standard-specific results.
 
 ## Order-of-Operations Validation
 
@@ -162,7 +171,7 @@ Use this checklist before every simulation setup:
 - [ ] Mole fractions sum to ~1.0
 - [ ] Component names match COMP.csv exactly
 - [ ] Mixing rule set after all components added
-- [ ] EOS matches fluid type (CPA for water/polar systems)
+- [ ] EOS and mixing rule match the named standard/task basis (ISO 18453: GERG-water and rule 8)
 - [ ] Flash called before reading properties
 - [ ] `initProperties()` called after flash
 - [ ] Equipment connected via outlet streams (not new streams)

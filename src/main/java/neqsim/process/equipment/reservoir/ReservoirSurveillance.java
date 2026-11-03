@@ -2,7 +2,9 @@ package neqsim.process.equipment.reservoir;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import neqsim.blackoil.BlackOilPVTTable.Record;
 import neqsim.pvtsimulation.reservoirproperties.materialbalance.GasMaterialBalance;
+import neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalance;
 import neqsim.pvtsimulation.reservoirproperties.materialbalance.OilMaterialBalance;
 import neqsim.pvtsimulation.reservoirproperties.materialbalance.VanEverdingenHurstAquifer;
 import neqsim.pvtsimulation.util.DeclineCurveAnalysis;
@@ -61,6 +63,53 @@ public class ReservoirSurveillance implements java.io.Serializable {
    */
   public ReservoirSurveillance(SimpleReservoir reservoir) {
     this.reservoir = reservoir;
+  }
+
+  /**
+   * Builds a generalized material balance from the tank's recorded depletion history.
+   *
+   * <p>
+   * PVT records must be aligned with the recorded average pressures and evaluated from laboratory data or a separately
+   * tuned EOS on one consistent separator basis. The tank's production totals use 288.15 K and 1.01325 bara. This
+   * adapter rejects injection because SimpleReservoir does not record cumulative injection history; use
+   * GeneralizedMaterialBalance.addObservation with measured net withdrawals for injection cases. Known aquifer influx
+   * is already in reservoir m3.
+   * </p>
+   *
+   * @param pvt pressure-aligned PVT records, including the initial state
+   * @param waterInflux cumulative aquifer influx in reservoir m3 at each history point
+   * @param expansionFraction rock/connate-water expansion per initial hydrocarbon volume
+   * @return history ready for an initially-oil, initially-gas or gas-cap fit
+   */
+  public GeneralizedMaterialBalance generalizedMaterialBalance(Record[] pvt, double[] waterInflux,
+      double[] expansionFraction) {
+    if (!reservoir.getInletStreams().isEmpty()) {
+      throw new IllegalArgumentException("injection history is not recorded; supply measured net withdrawals directly");
+    }
+    double[] pressure = reservoir.getPressureHistory();
+    double[] oil = reservoir.getOilProductionHistory();
+    double[] gas = reservoir.getGasProductionHistory();
+    double[] water = reservoir.getWaterProductionHistory();
+    int count = pressure.length;
+    if (count < 3 || pvt == null || waterInflux == null || expansionFraction == null || pvt.length != count
+        || waterInflux.length != count || expansionFraction.length != count) {
+      throw new IllegalArgumentException("PVT and support arrays must match at least three recorded history points");
+    }
+    if (oil[0] != 0.0 || gas[0] != 0.0 || water[0] != 0.0 || waterInflux[0] != 0.0 || expansionFraction[0] != 0.0) {
+      throw new IllegalArgumentException(
+          "history must begin at the original state with zero cumulative withdrawals/support");
+    }
+    for (int i = 0; i < count; i++) {
+      if (pvt[i] == null || !Double.isFinite(pvt[i].p)
+          || Math.abs(pvt[i].p - pressure[i]) > 1.0e-6 * Math.max(1.0, pressure[i])) {
+        throw new IllegalArgumentException("PVT pressure must match recorded reservoir pressure at index " + i);
+      }
+    }
+    GeneralizedMaterialBalance balance = new GeneralizedMaterialBalance(pvt[0]);
+    for (int i = 1; i < count; i++) {
+      balance.addObservation(pvt[i], oil[i], gas[i], water[i], waterInflux[i], expansionFraction[i]);
+    }
+    return balance;
   }
 
   // ============================================================

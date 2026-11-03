@@ -92,6 +92,38 @@ neqsim.process.equipment.pipeline.twophasepipe/
 
 ## Conservation Equations
 
+### Opt-in stratified hydrostatic pressure traction
+
+The default transient operator remains unchanged. For gas with one resolved liquid phase in a
+constant-diameter circular face, enable signed cross-sectional pressure moments explicitly:
+
+```java
+pipe.setStratifiedHydrostaticPressureMomentsEnabled(true);
+```
+
+The thermodynamic pressure is then interpreted at the gas/liquid interface. For phase $k$, the
+additional axial face force is $F_k=\rho_k g\cos(\theta)J_k$ and the matching total-energy flow is
+$Q_kF_k/A_k$, where $Q_k=\dot m_k/\rho_{k,donor}$ uses the same signed donor as mass advection.
+Internal face forces cancel pairwise in the domain ledger; closed faces carry traction but no mass
+or energy. `getLastStratifiedHydrostaticPressureForces()` returns a defensive matrix in N with rows
+in inlet/internal/outlet order and columns in gas/oil/water order.
+
+Exact all-gas and all-liquid limits are supported without seeding an absent phase. Simultaneous
+positive oil and water and diameter changes across a face fail closed because the qualified geometry
+contains one liquid interface. This is operator-level analytical and conservation evidence only; it
+does not qualify elapsed pool retention, shutdown/cooldown/restart, severe slugging, pigging, waves,
+entrainment or hydrocarbon evaporation. See the
+[evidence matrix](../process/twofluidpipe-evidence-matrix#stratified-hydrostatic-pressure-moments).
+
+The force/work adapter uses `GeometryCalculator.calculateStratifiedPressureMomentsFromHoldups`
+with both independently retained phase fractions. It resolves the smaller area with relative
+accuracy and reflects the moments algebraically, preserving positive traces even when subtracting
+them from one would lose them. The old general-purpose holdup-to-depth approximation is unchanged
+and is not a pressure-work reference. The coupling record includes independent 80-digit inversion,
+trace-force and countercurrent unequal-density work controls. The enabled historical ramp still
+rejects after 0.25 s on both meshes at the unchanged face-volume closure guard; the retained probe
+records that incomplete transient and primary-state rollback.
+
 The two-fluid model solves the following 1D PDEs:
 
 ### Mass Conservation
@@ -814,6 +846,13 @@ Momentum exchange:
 
 ### Stratified Geometry
 
+For normal-depth gravitational energy, query the existing immutable pressure-moment result's
+`getLiquidFirstMomentAboutCentre()`, `getGasFirstMomentAboutCentre()` [m3] and
+`getGravityPotentialEnergyPerLength(gasDensity, liquidDensity, normalGravity)` [J/m]. This is a
+read-only cross-sectional budget relative to the pipe centre, with no change to the transient
+energy state. Its analytical and high-precision evidence is in the
+[gravity-energy record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/README.md).
+
 `GeometryCalculator` computes for stratified flow:
 - Liquid level from holdup
 - Wetted perimeters (gas, liquid, interface)
@@ -828,6 +867,15 @@ The `AUSMPlusFluxCalculator` implements AUSM+ flux splitting for:
 - Pressure-velocity coupling
 - Shock capturing
 - Low diffusion
+
+The default remains AUSM+. An opt-in internal-face Rusanov operator is available through
+`TwoFluidPipe.setRusanovInternalFluxEnabled(true)` after enabling independent oil/water phase
+faces. Rusanov retains simultaneous left and right donor streams instead of reducing them to one
+net donor; Runge-Kutta staging, pressure work and named-component transport use those same streams.
+The combined-liquid split, AUSM pressure interpolation, reconstructed slug faces and the
+one-direction unsplit complementarity route reject this configuration. An acoustic CFL bound and
+admissible thermodynamic states are still required. This is numerical conservation qualification,
+not physical restart, terrain-pool, evaporation, severe-slugging or pigging validation.
 
 ### Temporal Integration
 
@@ -1055,9 +1103,15 @@ tolerances and retry budgets remain unchanged. See the
 The separate `setCellFaceElevationProfile` option accepts N+1 finite-volume face elevations.
 It integrates each specified terrain rise once, uses midpoint steady pressure with external-face
 boundary offsets, and preserves signed gravity/energy work under nonuniform mesh refinement.
-Legacy elevation samples retain their convention. These geometry tests do not establish general
-transient hydrostatic well-balancing or a steady/unsplit fixed point; see the
-[explicit face contract](../process/TWOFLUIDPIPE_MODEL.md#explicit-cell-face-terrain).
+Legacy elevation samples retain their convention. The interior operator additionally reconstructs
+the common face pressure from adjacent conservative mixture inertia and signed half-cell heads,
+with the same correction in momentum, phase-pressure diagnostics and signed energy work. Its
+90-case analytical pure-gas/oil matrix passes below `1e-10 m/s2` on flat, affine and curved terrain
+with constant, smooth and alternating density over 12--192 cells; a separate 45-case pure-water
+extension passes the same gates. This is not qualification of a
+stationary multiphase pool with different phase densities or moving-interface dynamics; see the
+[explicit face contract](../process/TWOFLUIDPIPE_MODEL.md#explicit-cell-face-terrain) and
+[analytical record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-interior-pressure/README.md).
 The separately named corrected-face riser represents the same 13.9032247068273 m rise on both
 meshes and passes three 0.1 s preparations. Its five-second attempts at `477964b5` rejected at
 0.8875/0.8014/0.5801 s; those results are kept separate from historical geometry measurements.
@@ -1232,6 +1286,14 @@ order fails before state mutation; the last interior cell is never treated as a 
 The rich-gas pressure-ramp regression exercises actual same-gas fallback with conservative mass,
 component, and full-energy reports, but does not qualify complete blowdown, low-point pooling,
 physical restart, or predictive evaporation time.
+
+`setGasOnlyOutletTakeoff(true)` defines a narrower constant-pressure boundary for a gas takeoff above
+retained liquid. Gas remains open; oil and water keep pressure/hydrostatic traction but have exactly
+zero external mass, component and advected-energy flux. The coupled pressure projection uses gas
+alone to close the outlet-cell volume and therefore cannot rescale retained liquid inventory.
+Liquid can still drain across internal faces. This mode does not infer a separator, valve area or
+evaporation law. If signed gas fallback is enabled, the existing explicit external donor requirement
+still applies.
 
 
 

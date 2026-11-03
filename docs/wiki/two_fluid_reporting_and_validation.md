@@ -24,6 +24,56 @@ The recommended production workflow is:
 5. If available, compare against traceable experimental, field, or external-simulator data using
    the benchmark harness. Keep model-to-model checks distinct from experimental validation.
 
+## Static subcell depth and area diagnostic
+
+`TwoFluidSection.getStratifiedLiquidLevel()` describes the circular segment inferred
+from **cell-average** total liquid holdup. On inclined terrain that value need not
+resolve the deepest part of a cell or its smallest gas cross-section.
+
+For an explicitly assumed horizontal surface inside a straight cell, use
+`section.getHydrostaticCellGeometry()` or
+`new GeometryCalculator().calculateHydrostaticCell(holdup, diameter, length, inclination)`.
+The immutable result exposes start/end and min/max normal depth (m), integrated
+liquid volume (m3), horizontal interface and liquid-wall areas (m2), minimum gas
+cross-section (m2), and relative volume residual. Length is pipe arclength;
+inclination is in radians. The result integrates partial dry/full cross-sections,
+rather than interpreting midpoint depth as a cell volume.
+
+This query preserves the supplied total liquid volume and changes no solver state
+or ordinary flow-closure geometry. Exactly empty/full cells have zero interfacial
+area. Invalid inputs, near-vertical cells (cosine below 1e-8), overflow and
+unresolvable trace volumes throw `IllegalArgumentException`; no inventory is repaired.
+
+The horizontal-plane assumption is a **static geometric reference**. It is not a
+reconstruction of an arbitrary moving, annular or dispersed interface, a gas-flow
+capacity calculation, an oil/water-layer model, or an evaporation closure. Local
+horizontal planes in neighboring cells need not have the same global elevation.
+Do not use these areas for predictive transfer rates without qualifying that
+physical assumption and the separate heat/mass-transfer model. Curved-pipe volume
+Jacobian corrections, capillarity and wall roughness are excluded.
+
+The new `HydrostaticCellGeometryTest` checks independent axial quadrature,
+horizontal and signed-slope limits, partition consistency, positive trace volume,
+exact absence/fullness, serialization and unchanged conservative/closure state.
+Rich-gas geometry qualification is tracked in [#3298](https://github.com/equinor/neqsim/issues/3298),
+with boundary/retention work in [#4674](https://github.com/equinor/neqsim/issues/4674)
+and physical hydrocarbon rates in [#4675](https://github.com/equinor/neqsim/issues/4675).
+These tests do not establish stable transient pools or predictive depletion times.
+The [public static qualification inputs and independent generator](../../src/test/resources/neqsim/process/pipeline/hydrostatic-cell/README.md)
+retain 3060 cell references, fixed tolerances, provenance and mesh tables.
+
+### Signed pressure moments at a stratified interface
+
+For pressure-traction diagnostics, use the immutable result from
+`GeometryCalculator.calculateStratifiedPressureMoments(depth, diameter)`. Its liquid/gas
+moments are in m3 and signed about the interface; multiplying by phase density, gravity
+and cosine of inclination gives the hydrostatic part of axial traction in N. The interface
+pressure times phase area is separate. The returned areas are also the depth derivatives
+of the corresponding moments. There is no transient solver call site or state mutation.
+See the [model definition and qualification limits](../process/TWOFLUIDPIPE_MODEL#stratified-hydrostatic-pressure-moments)
+and [executed integral/force record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/README.md).
+These static identities do not establish liquid retention, pool levels or depletion times.
+
 ## Steady-state profile reporting
 
 After `pipe.run()`, the following methods provide one value per pipe section:
@@ -143,7 +193,62 @@ inclined_section_gas_carryover_number,inclined_section_liquid_fallback_potential
 severe_slugging_number,severe_slug_potential
 ```
 
+### Steady-to-transient handoff and empirical holdup tuning
+
+With an explicit cell-face elevation profile, steady and legacy transient pressure marching
+use the same two half-cell gradients between neighboring midpoints, including nonuniform
+lengths and changing inclinations. The prescribed outlet-face pressure is also used during
+legacy momentum-consistency calibration, not just during time-integration stages. Calibrating
+against an extrapolated pressure and then stepping against a prescribed pressure creates an
+artificial outlet acceleration with unchanged boundaries.
+
+For explicitly enabled reversed outlet flow, the external thermodynamic donor supplies
+advected phase mass, composition and enthalpy. Pressure traction uses the pipe-side phase
+fractions, consistently with the phase-pressure source. Substituting a different donor's
+fractions into that force creates an artificial momentum impulse at flow reversal,
+especially when a phase in the pipe is absent or present only as a trace.
+
+`setLiquidHoldupMultiplier(...)` changes the **steady** closure. It does not multiply the
+holdup recovered from transient conserved phase masses. Likewise,
+`setSteadyConsistentTransient(true)` balances the initial legacy momentum residual, not the
+complete phase-mass and thermal operator, and is not applied on the coupled-pressure route.
+Neither option qualifies a fitted steady state for transient operation.
+
+For external-simulator comparisons, distinguish phase-fraction or PVT tuning from hydraulic
+holdup tuning. Matching pressure with a holdup multiplier does not establish matching free-gas
+and liquid mass flows, superficial velocities or slip. Audit the phase-flow split at common
+pressure and temperature before attributing a transient discrepancy to the numerical solver.
+
+Before interpreting a choke or reservoir-inflow response, run an unchanged-boundary interval
+and check pressure, temperature, individual phase flows, inventory and the outlet-backflow
+diagnostic. Exact finite-volume mass balance and completion of the requested simulation
+time alone do not establish a physical steady-to-transient fixed point. A calibrated case
+that still drifts or develops trapped outlet phases must remain unqualified; do not hide
+that failure by repeatedly calling the steady solver or retuning to the resulting drift.
+
 ### Thermal-energy validation
+
+The steady and transient property flashes initialize both caloric and transport properties
+before publishing enthalpy or sound speed. Separate oil and aqueous enthalpies follow the
+local flash rather than a stale bulk-liquid value. This matters when transferring a
+nonuniform steady state to conservative total-energy recovery.
+
+On the conservative-energy route, phase change relaxes each named component toward its
+gas/oil/aqueous equilibrium partition. The source preserves each species total and has a
+nonnegative source-only Euler endpoint for intervals no longer than the relaxation time.
+Liquid-to-liquid dissolved-component exchange carries momentum directly from its actual
+donor; an absent gas phase is not a momentum intermediary. This is an approximate relaxation
+law, not qualified interfacial kinetics, and does not by itself qualify simultaneous
+advection, pressure correction or a long-horizon liquid-rich transient.
+
+The source-only `RichGasEquilibriumSourceQualificationTest` uses the public six-component
+rich gas and a separately declared water extension at two nonunit cell lengths. Imposed
+hot single-gas targets remove every liquid species over one relaxation interval, retaining
+component mass and donor momentum without a total-energy source. A cyclic species exchange
+checks nonzero donor momentum and kinetic dissipation even when each phase has zero net
+mass source. These local algebraic limits do not exercise axial transport, EOS recovery,
+stationary-pool heat supply or a physical evaporation timescale. They do not supersede
+long-horizon rich-gas or reverse-boundary regressions.
 
 For a closed-boundary thermal `runTransient(...)`, call
 `getLastThermalEnergyBalanceReport()` to validate the same post-step sensible-energy model that
@@ -343,12 +448,23 @@ Across 26 severe and 15 stable observations, the current Taitel system screen ha
 positives, 4 false negatives, 8 false positives, and 7 true negatives (70.7% accuracy). The 14
 transition observations are reported separately as 6 predicted severe and 8 predicted stable.
 
-`SevereSluggingExperimentalBenchmarkTest` contains the large-facility Test 3 geometry, but is
-currently disabled at class level: the existing transient routes do not produce a valid unclamped
-solution (issues #2909 and #2911). The previously reported ensemble numbers are historical
-exploratory output, not current passing validation. Sensitivity to tiny perturbations alone does
-not establish physical chaos; numerical instability must first be excluded through mesh and
-timestep studies. The active flow-map screen above does not time-march the pipe.
+`SevereSluggingExperimentalBenchmarkTest` contains active 180-second supporting trajectories
+for the large-facility Test 3 geometry. The separate 600-second experimental qualification
+remains disabled under #3298: amplitude, period, holdup and nonlinear-quality gates do not all
+pass. The active cases check numerical progress, conservation, reproducibility and broad
+pressure/cycle diagnostics; they do not qualify the experiment.
+
+The liquid-production cycle detector uses the same feed-relative gates as the active test:
+fallback at or below 75% of liquid feed, followed by recovery at or above 125%. It measures
+intervals between recovered troughs and retains the ten-second secondary-minimum merge rule.
+A single extreme signed outlet-flow sample therefore cannot move the detection threshold and
+hide later cycles. Unrecovered fallback, isolated excursions, flat signals and low-flow ripples
+without blowout do not establish a repeated cycle. The extrema, pressure, conservation and
+solver-diagnostic checks remain separate; cycle detection does not excuse a reverse-flow spike
+or a pressure-correction limit. Six fast synthetic detector controls cover the event measurement
+without running the pipe. Sensitivity to tiny perturbations alone does not establish physical
+chaos; numerical instability must first be excluded through mesh and timestep studies. The
+active flow-map screen above does not time-march the pipe.
 
 The opt-in coupled-pressure progress and long-horizon tests check numerical progress, residuals
 and boundedness. They do not establish measured severe-slugging period, amplitude or outlet slug
@@ -358,7 +474,16 @@ corrections. This is a narrower result than steady-to-transient consistency: the
 1800-second fixed-point test still exceeds its original 5% inventory-drift limit.
 
 The coupled solver applies donor-bounded phase transfers and a common damping factor for pressure
-corrections. Its positive numerical pressure bound is configurable in Pa and defaults to 1 Pa;
+corrections. The accepted correction fluxes also transport phase momentum using implicit upwind
+velocities. This conservative mixing update remains bounded when a donor is almost emptied or
+incoming mass supplies simultaneous through-flow. The pressure impulse uses the corrected phase
+inventory, so an exhausted phase cannot retain finite momentum. These corrections are covered
+by nonuniform-cell mass/momentum conservation and trace-phase velocity regressions.
+Consistent phase-pressure assembly keeps advective momentum separate from pressure traction
+and applies the surviving cell pressure gradient directly. This avoids cancelling large
+face-pressure terms after adding a trace phase's much smaller momentum flux. The trace-phase
+regression checks finite acceleration across a jump in holdup without an inventory floor.
+Its positive numerical pressure bound is configurable in Pa and defaults to 1 Pa;
 an atmospheric outlet is not an interior lower bound. The standalone solver retains the affine
 sound-speed-based density response for compatibility. The coupled pipe defaults to a local
 polytropic gas response, anchored in the supplied pressure, density and sound speed. It also
@@ -509,3 +634,45 @@ industrial report workflow should still add:
 
 - Plot templates for pressure, temperature, holdup, water cut, flow regime, and slug events.
 - Direct import of additional third-party export formats where licensing allows it.
+
+
+## Closed-wall pressure compatibility
+
+An explicitly closed external face has zero advective mass and enthalpy flux.
+Its pressure traction remains part of the momentum balance. The wall pressure
+uses a local half-cell hydrostatic reconstruction from the sum of conservative
+phase masses per length, divided by area. The inlet adds this signed head; the
+outlet subtracts it. This is the same inertia used by the gravity source.
+A horizontal wall retains exactly its adjacent cell pressure, including for a
+nonuniform acoustic pressure profile; extrapolating the interior pressure slope
+would change that zero-normal-gradient reflection condition.
+
+A nonfinite or nonpositive reconstructed pressure is rejected rather than
+floored. This mechanical rejection must propagate through the existing complete
+interval rollback; it supplies no external donor or receiver through a closed
+face. With different phase densities the wall condition balances total mixture
+body force, not a fictitious static equilibrium of every phase.
+
+`ClosedWallPressureCompatibilityTest` retains affine pure-gas/oil/water controls
+on 1/12/24/48 cells with both slope signs, a horizontal acoustic cosine, exact
+closed mass/energy flux and explicit inadmissible-head rejection. The fixed
+hydrostatic acceleration tolerance is 1e-10 m/s2. The earlier asymmetric
+cell-centre outlet traction fails the affine condition; linear extrapolation at
+both closed faces instead changes the horizontal acoustic boundary response.
+
+The interior operator separately reconstructs a common face pressure from both
+adjacent conservative mixture inertias and signed half-cell heads. Its correction
+is carried consistently by momentum traction, phase-pressure diagnostics and
+signed `Q * deltaP` energy work. The 90-case analytical matrix spans flat,
+affine and curved terrain, three density patterns, 12--192 cells and pure gas/oil;
+all cases remain below `1e-10 m/s2` with exactly zero local mass and energy rates.
+A separate 45-case pure-water extension passes the same gates.
+Horizontal pressure flux and transactional rollback remain exact.
+
+This is a numerical common-mixture-pressure qualification. Moving interfaces,
+stationary multiphase pools with different phase densities, enriched phase
+boundaries and physical evaporation remain separate gates under #3298, #4674 and
+#4675. No seeded liquid or fitted force correction is applied to make a pool
+stationary. See the [public analytical record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-interior-pressure/README.md).
+
+The [closed-wall reproduction record](../../src/test/resources/neqsim/process/equipment/pipeline/closed-wall-pressure/README.md) includes exact source provenance, analytical acceptance, all 12–192-cell operator data, and measured RHS cost with shared-runner limitations.

@@ -180,6 +180,12 @@ def normalize_study(study):
     for connection in result["connections"]:
         if connection.get("from_tag") not in tags or connection.get("to_tag") not in tags:
             raise ValueError("Connection %s references unknown equipment" % connection["id"])
+    from layout_inventory import normalize_inventory_fields
+    normalize_inventory_fields(
+        result,
+        {connection["id"] for connection in result["connections"]},
+        tags,
+    )
     for collection in ("corridors", "obstacles", "exits"):
         _unique(result[collection], "id", collection)
         for entry in result[collection]:

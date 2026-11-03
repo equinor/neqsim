@@ -37,3 +37,6 @@ Default scope is orthogonal equipment/envelope boxes on rectangular plots/decks.
 detailed pipe routing/stress, fire/blast/dispersion, escape capacity/hazard independence, structural and marine assessments
 as explicit handoffs. Use the existing community/enterprise catalogs when available; public examples must remain usable
 without them. Follow repository task-folder, interpreter, privacy, validation and publication rules.
+
+Flow diagrams that accompany a layout study (block/process flow, connection schematics) must pass `@pfd-layout-review`
+(`neqsim pfd-check`, then visual sign-off) before use; plot/deck plans are reviewed with `@plant-layout-review`.

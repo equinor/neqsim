@@ -982,12 +982,15 @@ public final class ProcessModelOperatingPointOptimizer {
       evidence.put("objective_name", objective.getName());
       evidence.put("objective_direction", objective.getDirection().name());
       evidence.put("objective_unit", objective.getUnit());
+      evidence.put("termination_reason", outcome.name());
       evidence.put("initial_objective_value",
           initial != null && isFinite(initial.getRawObjective()) ? Double.valueOf(initial.getRawObjective()) : null);
       evidence.put("accepted_objective_value",
           acceptedPointReplay != null && isFinite(acceptedPointReplay.getRawObjective())
               ? Double.valueOf(acceptedPointReplay.getRawObjective())
               : null);
+      evidence.put("replay_relative_tolerance", Double.valueOf(replayRelativeTolerance));
+      evidence.put("replay_tolerance_provenance", replayToleranceProvenance);
       evidence.put("simulation_converged", replay != null && replay.isCandidateSimulationConverged());
       evidence.put("candidate_feasible", replay != null && replay.isFeasible());
       evidence.put("candidate_finite", isCandidateFinite());

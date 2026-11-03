@@ -39,6 +39,8 @@ public class CompressorChartReaderTest {
     Compressor compressor = new Compressor("compressor1", stream);
     compressor.setCompressorChartType("interpolate and extrapolate");
     compressor.setUsePolytropicCalc(true);
+    // Preserve the inlet-property basis of the historical chart regression values.
+    compressor.setPolytropicMethod("ideal_inlet_properties");
     // compressor.setMaximumSpeed(7383);
     // compressor.setMinimumSpeed(4922);
     compressor.setSpeed(3000);

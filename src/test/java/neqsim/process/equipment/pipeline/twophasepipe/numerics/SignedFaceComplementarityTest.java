@@ -3,6 +3,7 @@ package neqsim.process.equipment.pipeline.twophasepipe.numerics;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,18 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 /** Conservation, phase-limit and structural tests for signed face complementarity. */
 class SignedFaceComplementarityTest {
+  @Test
+  void simultaneousTwoDonorFluxRejectsOneDirectionComplementarity() {
+    DirectionalPhaseFaceFlux gas = new DirectionalPhaseFaceFlux(0.4, 0.2, 1.2, -0.3, 7.0, 0.2, 0.3, 0.6, -1.5);
+    DirectionalPhaseFaceFlux[][] faces = {{gas, new DirectionalPhaseFaceFlux(0.0, 0.0, 8.0, 1.0, 1.0, 0.0, 0.0),
+        new DirectionalPhaseFaceFlux(0.0, 0.0, 9.0, 1.0, 1.0, 0.0, 0.0)}};
+    UnsplitTransientSolver.Evaluation free = evaluation(new double[2][6], faces, new double[] {1.0, 1.0});
+    double[][] endpoint = {{0.2, 1.0, 1.0, 0.6, 0.0, 0.0, 0.0}, {0.3, 1.0, 1.0, -1.5, 0.0, 0.0, 0.0}};
+    IllegalStateException exception = assertThrows(IllegalStateException.class,
+        () -> SignedFaceComplementarity.initialize(free, endpoint));
+    assertTrue(exception.getMessage().contains("simultaneous two-sided"));
+  }
+
   @Test
   void solvedFaceReplacementIsConservativeOnNonuniformCells() {
     double[][] rates = new double[2][6];

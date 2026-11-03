@@ -24,9 +24,13 @@ that a workflow invokes an LLM.
 
 The model-specification and slow-test steps retry Maven once after 10 seconds only
 when it reports a plugin or dependency resolution failure, such as a Maven Central
-HTTP 429 response. Both attempts use `-U` to recheck failed downloads. Compilation
-errors and test failures fail immediately; the retry preserves the selected tests
-and the final Maven exit status.
+HTTP 429 response. This includes Surefire's explicit unresolved-provider-artifact
+diagnostic, which Maven reports as `MojoExecutionException` instead of
+`DependencyResolutionException`. Other execution exceptions are not retryable.
+Both attempts use `-U` to recheck failed downloads. Compilation errors and test
+failures fail immediately; the retry preserves the selected tests and the final
+Maven exit status. `devtools/test_maven_resolution_retry.py` executes the actual
+workflow steps with controlled Maven outcomes in both Python CI jobs.
 
 ### Windows JVM crash workaround
 
@@ -73,7 +77,7 @@ files; do not rewrite tags or use a publishing dispatch as a migration smoke tes
 |---|---|---|---|
 | [ai-devtools-python-tests.yml](workflows/ai-devtools-python-tests.yml) | [AI] Devtools Python Tests | PR, push | Python toolkit, hermetic agent installation/discovery, production guard, and ledger tests. |
 | [ai-skills-and-agents-lint.yml](workflows/ai-skills-and-agents-lint.yml) | [AI] Skills and Agents Lint | PR, push | Agent/skill structure, API references, and mapping consistency. |
-| [ai-engineering-capability-coverage.yml](workflows/ai-engineering-capability-coverage.yml) | [AI] Engineering Capability Coverage | PR, push | Rebuilds and validates the engineering capability inventory. A conditional step in the coverage job commits changed inventory to same-repository PR branches or master; fork PRs remain validation-only. |
+| [ai-engineering-capability-coverage.yml](workflows/ai-engineering-capability-coverage.yml) | [AI] Engineering Capability Coverage | PR, push | Rebuilds, validates and retains the engineering capability inventory as an artifact. A conditional step updates eligible same-repository PR branches; default-branch, fork and Dependabot runs never push. |
 | [ai-mcp-protocol-qualification.yml](workflows/ai-mcp-protocol-qualification.yml) | [AI] MCP Protocol Qualification | PR, push | Packaged MCP protocol and capability contracts. |
 | [ai-agent-install-smoke-test.yml](workflows/ai-agent-install-smoke-test.yml) | [AI] Agent Install Smoke Test | PR, push, schedule, manual | Community agent installer smoke tests. |
 | [ai-task-quality-gate.yml](workflows/ai-task-quality-gate.yml) | [AI] Task Quality Gate | PR | Changed task result schemas and consistency checks. |

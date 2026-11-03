@@ -254,9 +254,26 @@ Monitors volumetric flow rate.
 import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 
 VolumeFlowTransmitter vft = new VolumeFlowTransmitter(stream);
-vft.setUnit("m3/hr");
+vft.setUnit("m^3/hr");
 double volumeFlow = vft.getMeasuredValue();
 ```
+
+For a declared dynamic control scan, opt into held physical-step sampling and register the device:
+
+```java
+VolumeFlowTransmitter ft = new VolumeFlowTransmitter("FT-101", feed);
+ft.setUnit("kg/hr");
+ft.setTransientSamplingEnabled(true);
+process.add(ft);
+```
+
+The scan advances signal fault/noise/filter/delay state once with the actual physical timestep. Controller, history and
+alarm consumers then share the same held value and physical-step UUID. Held conversions are frozen at the sample instant
+for `kg/hr`, `m^3/hr`, `Nm^3/day` and `Sm^3/day`; actual- and standard-volume signals use the selected phase number.
+Rollback and Java restart restore the stream binding, phase selection, held conversions, sample identity and inherited
+signal state. Sampling is disabled by default, and legacy direct reads remain raw and unmodified. Declare the scan,
+phase, unit and fault assumptions explicitly: this mechanism does not validate vendor meter dynamics, custody/allocation
+accuracy, alarm integrity or safeguarding independence.
 
 ### DifferentialPressureTransmitter
 
@@ -743,11 +760,17 @@ Base class for stream-based measurement devices.
 
 ## Physical-step sample and hold
 
-`PressureTransmitter` and the total-vessel-level `LevelTransmitter` support an additive physical-step sampling mode that
-is disabled by default. When explicitly enabled and registered with a `ProcessSystem`, each advances its fault, noise,
-first-order filter and discrete-delay state once per physical-step UUID using the actual timestep. Controllers, history
-and alarm evaluation reuse the same held sample. This removes read-count dependence from qualified transient studies
-while preserving legacy direct-read behaviour for existing models and all unaudited instrument families.
+`PressureTransmitter`, `TemperatureTransmitter` and the total-vessel-level `LevelTransmitter` support an additive
+physical-step sampling mode that is disabled by default. When explicitly enabled and registered with a `ProcessSystem`,
+each advances its fault, noise, first-order filter and discrete-delay state once per physical-step UUID using the actual
+timestep. Controllers, history and alarm evaluation reuse the same held sample. This removes read-count dependence from
+qualified transient studies while preserving legacy direct-read behaviour for existing models and all unaudited
+instrument families.
+
+For temperature loops, configure the transmitter unit before enabling sampling. The held value retains that engineering
+unit and `getTransientSample(String)` performs explicit temperature conversion. The scan is a simulation contract, not
+vendor evidence for sensor accuracy, response time, diagnostic coverage, independence, voting or a safety integrity
+level.
 
 Level is the unitless total-liquid fraction returned by a `Separator` or `Tank`; it is not an oil/water interface
 measurement. The first-order filter uses the exact constant-input update
@@ -762,3 +785,10 @@ therefore consumes the start-of-step held value while the vessel inventory advan
 parameters are engineering units per second in this mode; delay remains an integer number of scans. Use declared
 vendor/project response and fault data where available. The numerical model is study evidence, not instrument
 certification, alarm rationalization, SIL selection or detector-coverage approval.
+
+The public separator pressure-control qualification registers a sampled `PressureTransmitter` on the separator gas
+outlet. Its held start-of-step value is shared bit-for-bit by the PID event log and process history while the separator
+fixed-volume inventory advances and the gas PCV moves. The declared feed-step response, conservation residuals,
+rollback/restart evidence and timestep sensitivity are reported in
+[Process Controllers and Logic](../controllers.md#pid-controllers). That fixture qualifies the stated synthetic chain
+only; ranges, response time, impulse-line design, proof testing, alarm/trip setpoints and voting remain project inputs.

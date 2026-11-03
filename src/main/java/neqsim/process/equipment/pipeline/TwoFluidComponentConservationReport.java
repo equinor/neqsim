@@ -39,6 +39,8 @@ public final class TwoFluidComponentConservationReport implements Serializable {
   private final double[] finalInventoryKg;
   private final double[] inletBoundaryMassKg;
   private final double[] outletBoundaryMassKg;
+  private final double[][] inletBoundaryPhaseMassKg;
+  private final double[][] outletBoundaryPhaseMassKg;
   private final double[] inventoryResidualKg;
   private final double[] relativeInventoryResidual;
   private final double maximumRelativeInventoryResidual;
@@ -73,6 +75,31 @@ public final class TwoFluidComponentConservationReport implements Serializable {
       double maximumInterphaseTransferResidualKg, double[][][] phaseMassFractionProfile, double minimumMassFraction,
       double maximumMassFraction, double maximumMassFractionSumError, double maximumPhaseMassSynchronizationErrorKg,
       double interphaseLatentHeatEnergyJ, boolean converged, String message) {
+    this(elapsedTimeSeconds, acceptedSubsteps, componentNames, initialInventoryKg, finalInventoryKg,
+        inletBoundaryMassKg, outletBoundaryMassKg, inventoryResidualKg, relativeInventoryResidual,
+        maximumRelativeInventoryResidual, finalPhaseInventoryKg, interphaseTransferKg,
+        maximumInterphaseTransferResidualKg, phaseMassFractionProfile, minimumMassFraction, maximumMassFraction,
+        maximumMassFractionSumError, maximumPhaseMassSynchronizationErrorKg, interphaseLatentHeatEnergyJ,
+        legacyPhaseBoundaryMass(inletBoundaryMassKg), legacyPhaseBoundaryMass(outletBoundaryMassKg), converged,
+        message);
+  }
+
+  /**
+   * Create an immutable component-conservation snapshot with phase-resolved boundary transfers.
+   *
+   * @param inletBoundaryPhaseMassKg signed inlet component transfers in gas/oil/water order, kg
+   * @param outletBoundaryPhaseMassKg signed outlet component transfers in gas/oil/water order, kg
+   * @throws IllegalArgumentException if names or array dimensions are inconsistent, required numeric values are
+   * non-finite, or elapsed time/substep count is negative
+   */
+  public TwoFluidComponentConservationReport(double elapsedTimeSeconds, int acceptedSubsteps, String[] componentNames,
+      double[] initialInventoryKg, double[] finalInventoryKg, double[] inletBoundaryMassKg,
+      double[] outletBoundaryMassKg, double[] inventoryResidualKg, double[] relativeInventoryResidual,
+      double maximumRelativeInventoryResidual, double[][] finalPhaseInventoryKg, double[][] interphaseTransferKg,
+      double maximumInterphaseTransferResidualKg, double[][][] phaseMassFractionProfile, double minimumMassFraction,
+      double maximumMassFraction, double maximumMassFractionSumError, double maximumPhaseMassSynchronizationErrorKg,
+      double interphaseLatentHeatEnergyJ, double[][] inletBoundaryPhaseMassKg, double[][] outletBoundaryPhaseMassKg,
+      boolean converged, String message) {
     this.elapsedTimeSeconds = requireFiniteNonNegative(elapsedTimeSeconds, "elapsedTimeSeconds");
     if (acceptedSubsteps < 0) {
       throw new IllegalArgumentException("acceptedSubsteps must be non-negative");
@@ -84,6 +111,12 @@ public final class TwoFluidComponentConservationReport implements Serializable {
     this.finalInventoryKg = requireComponentValues(finalInventoryKg, "finalInventoryKg", componentCount);
     this.inletBoundaryMassKg = requireComponentValues(inletBoundaryMassKg, "inletBoundaryMassKg", componentCount);
     this.outletBoundaryMassKg = requireComponentValues(outletBoundaryMassKg, "outletBoundaryMassKg", componentCount);
+    this.inletBoundaryPhaseMassKg = requirePhaseComponentValues(inletBoundaryPhaseMassKg, "inletBoundaryPhaseMassKg",
+        componentCount);
+    this.outletBoundaryPhaseMassKg = requirePhaseComponentValues(outletBoundaryPhaseMassKg, "outletBoundaryPhaseMassKg",
+        componentCount);
+    requireBoundaryPhaseTotals(this.inletBoundaryPhaseMassKg, this.inletBoundaryMassKg, "inletBoundaryPhaseMassKg");
+    requireBoundaryPhaseTotals(this.outletBoundaryPhaseMassKg, this.outletBoundaryMassKg, "outletBoundaryPhaseMassKg");
     this.inventoryResidualKg = requireComponentValues(inventoryResidualKg, "inventoryResidualKg", componentCount);
     this.relativeInventoryResidual = requireComponentValues(relativeInventoryResidual, "relativeInventoryResidual",
         componentCount);
@@ -143,6 +176,54 @@ public final class TwoFluidComponentConservationReport implements Serializable {
   /** @return integrated outlet component masses in kg */
   public double[] getOutletBoundaryMassKg() {
     return copyArrayOrEmpty(outletBoundaryMassKg);
+  }
+
+  /**
+   * Get integrated inlet component transfers for one hydrodynamic phase.
+   *
+   * @param phase phase identity
+   * @return defensive component array in the report's deterministic component order, kg
+   */
+  public double[] getInletBoundaryMassKg(Phase phase) {
+    return copyArrayOrEmpty(inletBoundaryPhaseMassKg[requirePhase(phase).index]);
+  }
+
+  /**
+   * Get integrated outlet component transfers for one hydrodynamic phase.
+   *
+   * <p>
+   * Positive values leave through the downstream boundary. Negative values enter from the explicit downstream donor.
+   * Opposite signs between phases therefore identify phase-countercurrent boundary transport without collapsing it to a
+   * net mixture transfer.
+   * </p>
+   *
+   * @param phase phase identity
+   * @return defensive component array in the report's deterministic component order, kg
+   */
+  public double[] getOutletBoundaryMassKg(Phase phase) {
+    return copyArrayOrEmpty(outletBoundaryPhaseMassKg[requirePhase(phase).index]);
+  }
+
+  /**
+   * Get one phase-resolved inlet component transfer.
+   *
+   * @param phase phase identity
+   * @param componentName NeqSim component name
+   * @return signed transferred mass in kg
+   */
+  public double getInletBoundaryMassKg(Phase phase, String componentName) {
+    return inletBoundaryPhaseMassKg[requirePhase(phase).index][componentIndex(componentName)];
+  }
+
+  /**
+   * Get one phase-resolved outlet component transfer.
+   *
+   * @param phase phase identity
+   * @param componentName NeqSim component name
+   * @return signed transferred mass in kg
+   */
+  public double getOutletBoundaryMassKg(Phase phase, String componentName) {
+    return outletBoundaryPhaseMassKg[requirePhase(phase).index][componentIndex(componentName)];
   }
 
   /** @return total component residuals {@code final - initial - inlet + outlet} in kg */
@@ -277,6 +358,37 @@ public final class TwoFluidComponentConservationReport implements Serializable {
       }
     }
     throw new IllegalArgumentException("Component '" + componentName + "' is not present in this report");
+  }
+
+  private static Phase requirePhase(Phase phase) {
+    if (phase == null) {
+      throw new IllegalArgumentException("phase cannot be null");
+    }
+    return phase;
+  }
+
+  private static double[][] legacyPhaseBoundaryMass(double[] totals) {
+    if (totals == null) {
+      return null;
+    }
+    double[][] result = new double[PHASE_COUNT][totals.length];
+    result[Phase.GAS.index] = copyArrayOrEmpty(totals);
+    return result;
+  }
+
+  private static void requireBoundaryPhaseTotals(double[][] phaseValues, double[] totals, String name) {
+    for (int component = 0; component < totals.length; component++) {
+      double phaseSum = 0.0;
+      double scale = Math.abs(totals[component]);
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        phaseSum += phaseValues[phase][component];
+        scale = Math.max(scale, Math.abs(phaseValues[phase][component]));
+      }
+      double tolerance = 32.0 * Math.ulp(Math.max(1.0, scale));
+      if (Math.abs(phaseSum - totals[component]) > tolerance) {
+        throw new IllegalArgumentException(name + " rows must sum to the total boundary component transfers");
+      }
+    }
   }
 
   private static String[] requireComponentNames(String[] values) {

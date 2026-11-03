@@ -514,6 +514,25 @@ initialization fixtures finish as GAS for 4 components and OIL for 20 components
 despite initially requesting a gas root. They do not establish global one-phase
 stability. The complete-flash fixtures retain gas, oil and aqueous phases.
 
+The [request and selector regression](../../src/test/resources/neqsim/thermo/mixingrule/hv-row-pure/README.md)
+freezes existing pure-function counts and complete activity/derivative values
+for both EOS families, selected/classical/all-HV cells, every evaluated
+component and padded/distinct raw selector strings. The primary reduction's
+trimmed comparison and the nested reduction's exact comparison remain unchanged.
+These synthetic fixtures do not introduce physical parameter profiles.
+
+The [binary qualification protocol](../../src/test/resources/neqsim/thermo/mixingrule/hv-row-performance/README.md)
+retains warmed independent JVM comparisons, identical-binary controls,
+allocations, full equilibrium vectors and rejected row-cache/selector proposals.
+Those proposals passed numerical checks yet failed the performance gate, so
+they are held outside production. Lower request counts alone do not establish
+lower full-flash cost or justify a runtime change.
+
+The [quarantined CO2-in-MEG source receipts](../../src/test/resources/neqsim/thermo/mixingrule/hv-co2-meg-receipts/README.md)
+retain both manuscript/archive phase labels and duplicate measurements. Their
+offline audit preserves source identities and uncertainty semantics; it supplies
+no HV fit, measured feed or experimental acceptance threshold.
+
 ---
 
 ## 5. Wong-Sandler Mixing Rule
@@ -1069,3 +1088,60 @@ not establish experimental accuracy or throughput acceptance. See the
 [fixture protocol and raw reports](../../src/test/resources/neqsim/thermo/mixingrule/hv-water-nitrogen/README.md).
 The other six cataloged PR pairs, inhibitors, brines, ice and hydrate dissociation
 remain outside this assessment. No source-fit error becomes a test tolerance.
+
+
+### Staged CO2/water source configurations
+
+The separate [CO2 fixture protocol](../../src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/README.md)
+records the recovered2016 PR tuple and paired2017 SRK/PR Twu configurations.
+These are declared-input research diagnostics, not new defaults or an accepted
+public profile. Complete directed tuples and explicit pure critical/cubic inputs
+remain separate by EOS. Original-author pure inputs are not fully established.
+
+The native test asserts all five ThermodynamicModelTest identities, numerical
+derivatives, serialization preservation, repeated/changed/order behavior and
+independently resolved liquid temperature differences. All357 usable
+measurement/profile flashes close numerically; physical errors remain visible.
+The2016 transfer has75.87%/83.65% reverse-solubility AARD on two post-fit studies.
+The2017 declared SRK/PR configurations perform better, but most reverse
+predictions still exceed author uncertainty. No empirical error becomes a test
+tolerance. One original malformed pressure remains explicitly unresolved.
+
+The matched binary benchmark records CLASSICAL/HV init1/init3 and complete
+nearby-temperature flashes in separate JVMs, with untimed endpoint topology,
+compositions and residuals. Model differences change solver work; timing ratios
+do not isolate code overhead or qualify physical accuracy. Preserve every raw
+fork and round, including adverse/control variability. The separate forced-phase five-component control preserves ordinary kij for
+every unselected pair, checks dormant-coefficient invariance and CLASSICAL
+reduction, and asserts all native checks across both component orders and changed
+states. It does not qualify multicomponent equilibrium partition. General
+throughput, source/pure-pressure reconciliation,
+light-gas inhibitor partition and independent hydrate accuracy remain open.
+
+The [selected-pair multicomponent cost protocol](../../src/test/resources/neqsim/thermo/mixingrule/hv-selected-pair-performance/README.md)
+extends this characterization to five- and fifteen-component synthetic feeds,
+including gas/oil/aqueous flashes and allocation counters. It uses the same staged
+CO2/water profiles; methanol, MEG and all other unselected interactions remain
+CLASSICAL. All native identities, detached numerical checks, history/order and
+full CLASSICAL reduction are asserted before timing. Complete phase vectors and
+an independent raw-data auditor distinguish numerical closure from physical
+inhibitor qualification. No production optimization or default retuning follows
+from these timing ratios.
+
+
+The same staged fixture also checks native pure-water saturation against14
+independently bracketed roots and IAPWS reference pressures, using the declared
+paired2017 Twu inputs. Both mixing rules, starting pressures and repeated calls
+retain distinct stable roots. This reconciles implementation under the declared
+pure inputs; original-author input reconstruction and mixture accuracy remain open.
+The600K pure point does not qualify mixture extrapolation.
+
+The staged pure-CO2 prerequisite now compares all three declared profiles with
+24 independent stable-root solutions and a pinned CO2 reference correlation.
+The executable fixture tests384 native fresh/repeated/changed/returned
+saturations, rules2/4 and two pressure starts; all native identities and refined
+numerical checks are asserted. See the fixture protocol for coefficients,
+reference limits, errors and commands. This confirms implementation under the
+declared pure inputs; it does not activate parameters or establish source-author
+reproduction, bidirectional partition accuracy, solid/hydrate equilibrium or
+mixture extrapolation.

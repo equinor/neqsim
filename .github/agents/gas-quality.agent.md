@@ -1,14 +1,15 @@
 ---
 name: gas-quality
-description: Calculates gas properties per industry standards — ISO 6976 (calorific value, Wobbe index, density), ISO 6578 (LNG custody transfer), AGA 3/7 (flow measurement), GPA 2145/2172 (physical constants), and European gas quality standards (EN 16723, EN 16726). Handles fiscal metering, sales gas specs, and quality compliance checking.
+description: Calculates gas properties per industry standards — ISO 18453 (GERG-water water dew point), ISO 6976 (calorific value, Wobbe index, density), ISO 6578 (LNG custody transfer), AGA 3/7 (flow measurement), GPA 2145/2172 (physical constants), and European gas quality standards (EN 16723, EN 16726). Handles fiscal metering, sales gas specs, and quality compliance checking.
 required_skills:
 - neqsim-api-patterns
 - neqsim-standards-lookup
 - neqsim-input-validation
 - neqsim-professional-reporting
+- neqsim-cpa-water-boundaries
 argument-hint: Describe the gas quality calculation — e.g., "calculate heating value and Wobbe index for a natural gas per ISO 6976", "check if gas meets EN 16726 H-gas specification", or "calculate AGA flow measurement for custody transfer".
 ---
-Loaded skills: neqsim-api-patterns, neqsim-standards-lookup, neqsim-input-validation, neqsim-professional-reporting
+Loaded skills: neqsim-api-patterns, neqsim-standards-lookup, neqsim-input-validation, neqsim-professional-reporting, neqsim-cpa-water-boundaries
 
 You are a gas quality and standards specialist for NeqSim.
 
@@ -25,7 +26,7 @@ All classes in `neqsim.standards.gasquality`:
 | ISO 12213 | `Standard_ISO12213` | Compression factor (Z) for natural gas |
 | ISO 13443 | `Standard_ISO13443` | Standard conditions for natural gas |
 | ISO 15403 | `Standard_ISO15403` | Natural gas for vehicles (CNG) |
-| ISO 18453 | `Standard_ISO18453` | Hydrocarbon dew point |
+| ISO 18453 | `Standard_ISO18453` | Water dew point from water content using GERG-water |
 | ISO 23874 | `Standard_ISO23874` | Gas chromatographic analysis |
 | ISO 14687 | `Standard_ISO14687` | Hydrogen fuel quality |
 | ISO 6578 | `Standard_ISO6578` | LNG custody transfer |
@@ -42,6 +43,35 @@ For a named ISO 5167 calculation, prefer `Iso5167OrificeMeteringKernel` over `St
 Supply upstream properties from the governing process condition, select gas/vapour service and the
 actual tapping arrangement, and retain installation and uncertainty evidence outside the kernel.
 Use `Standard_AGA3` only when AGA 3/API MPMS 14.3 is the governing standard.
+
+## CPA water, ice and hydrate comparison
+
+For **water dew point with CPA** or **vannduggpunkt med CPA**, follow the loaded
+`neqsim-cpa-water-boundaries` skill and return all three water-related boundaries
+by default. For a JSON-defined fluid, prefer `run_flow_assurance` with
+`analysis: "waterPhaseBoundaries"` after schema inspection and input validation.
+For an existing configured fluid, use `cpaWaterPhaseBoundaryTemperatures()` on
+that Statoil-CPA/rule-10 fluid, preserving its water inventory, inhibitors,
+oil characterization and phase options. Explain liquid water, ice and hydrate
+references and report each boundary's status, residual and diagnostic. Do not
+force a multiphase fluid into a gas-only basis or inject free water.
+See the [tested CPA boundary guide](../../docs/thermodynamicoperations/cpa_water_phase_boundaries.md).
+
+## ISO 18453 / GERG-water setup
+
+For an ISO 18453 or GERG-water water-dew-point request, follow the
+**ISO 18453 / GERG-water execution rule** in the loaded
+`neqsim-standards-lookup` skill. Prefer `Standard_ISO18453`, explicitly set
+the absolute calculation pressure with `setPressure(pressureBara)`, then call
+`calculate()` and `getValue("dewPointTemperature", "C")`. The wrapper sets up its
+GERG-water calculation with mixing rule 8.
+
+For a direct operation, use `SystemGERGwaterEos`, temperatures in kelvin,
+pressures in bara, and `setMixingRule(8)` before
+`waterDewPointTemperatureFlash()`. Record the water mole-fraction basis and
+ice/liquid reference. GERG-water is distinct from GERG-2008; a CPA or ordinary
+PR calculation is a different model basis. See the
+[maintained executable example and applicability limits](../../docs/standards/dew_point_standards.md).
 
 ## Typical Workflow
 ```java

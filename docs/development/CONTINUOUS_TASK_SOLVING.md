@@ -1131,6 +1131,7 @@ exactly `true`; missing, false, or stale evidence withholds the proposal rather 
 ```yaml
 optimizer_evidence:
   cycle_id: <ctx.cycle_id>
+  termination_reason: CONVERGED_WITH_REPLAYED_FEASIBLE_CANDIDATE
   simulation_converged: true
   candidate_feasible: true
   candidate_finite: true
@@ -1142,6 +1143,9 @@ optimizer_evidence:
   runtime_seconds: 12.8
 ```
 
+`termination_reason` is the optimizer's exact terminal classification. The guard accepts only a replayed feasible
+candidate that either reached its configured step tolerance or exhausted its evaluation budget; the latter remains
+explicitly budget-limited and is not reported as convergence or proof of a global optimum.
 `state_restore_complete` covers restoration after every rejected/intermediate evaluation;
 `accepted_point_replayed` confirms the selected point was then applied and re-simulated from a known state.
 `actions_complete` must be false when any requested setpoint or routing action was rejected. The accepted ledger
@@ -1221,6 +1225,21 @@ replays the midpoint arithmetic from the persisted trace, requires finite candid
 baseline restoration, accepts bracket updates only from converged feasible or explicit hard/validity
 rejections, and checks terminal tolerance/status closure. Missing or edited refinement configuration,
 midpoints, outcomes, recovery flags, brackets, summary identities, or lifecycle migration rows fail closed.
+
+Schema v15 adds an exact paired baseline/joint-relief envelope receipt. Each pair must carry the original complete
+accepted-point slice unchanged plus a complete relieved slice with identical study/evaluator identity, ordered axes,
+grid, anchor, candidate vectors and boundary-refinement policy. The production guard and canonical report independently
+reconstruct sampled feasibility/outcome/leading-constraint changes, boundary counts and signed terminal bracket-endpoint
+shifts. They reject copied, foreign, partial, non-finite, stale or partially restored evidence and never interpret a
+bracket endpoint as an exact boundary or interpolate discrete routing actions. The jointly applied installed limits are
+restored in reverse order and the process must reconverge before the receipt can enter the existing ledger, promotion
+and report path.
+
+Schema v16 extends that receipt for coupled two-dimensional studies with exact sampled cells. The guard reconstructs
+each cell from its four persisted row-major corner points and the exact sampled perimeter feasibility-transition
+edges, then verifies the paired baseline/relieved cell comparison and aggregate counts. A cell is only a sampled
+topology record: it does not establish feasible interior area, interpolate a continuous contour, or bridge a discrete
+route choice.
 
 Schema versions 4 through 8 may additionally bind independently accepted physical-state metrics to every period. Each period must
 carry the same ordered metric IDs and units, finite values, and explicit provenance. The guard reconstructs exact

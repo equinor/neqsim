@@ -110,7 +110,52 @@ qualify pressure-surge timing. See the [water-hammer guide](../wiki/water_hammer
 for the executable analytical checks and current single-phase, reverse-flow and coupling limits.
 The test runner does not automatically couple a pump or check-valve disc to an acoustic boundary.
 
+For prescribed measured or synthetic **actual** travel, `AcousticValveBoundary` couples
+tabulated position/time and explicit Kv/US-Cv(position) to that existing kernel. Its
+command delay and travel knots are evaluated on the pipe clock, with event-localized
+acoustic substeps. `WaterHammerStudy` accepts the same `valveBoundary` data and exports
+synchronized actual opening and effective Kv. The [public Safety Shutdown valve case](../../src/test/resources/neqsim/process/pipeline/safety-shutdown-valve/README.md)
+records analytical PASS/FAIL and asset/coupled-plant NOT_EVALUATED boundaries. A
+prescribed travel record does not qualify detection, logic, actuator mechanics or
+safe-state deadlines; these still require the canonical safety runner/coordinator.
+
+The acoustic kernel carries pressure/flow means in physical cells and reports
+separate face traces. Use its accepted-substep inlet/outlet exchanges and cell
+storage ledger when checking the linear acoustic volume balance; sparse endpoint
+flow samples are not interval fluxes. The study's `acousticVolumeBalance` PASS
+does not qualify full thermodynamic conservation, global rollback, phase changes,
+or coupled Safety Shutdown execution. See the guide for equations, first-order
+boundary-time quadrature and the independent standing-wave/passivity checks.
+
 - [ESD Blowdown System](ESD_BLOWDOWN_SYSTEM.md)
 - [Pressure Monitoring ESD](PRESSURE_MONITORING_ESD.md)
 - [Barrier Management](barrier_management.md)
 - [Process Safety Package](../process/safety/README.md)
+
+### Safety Shutdown pump coastdown applicability
+
+An optional `AcousticPumpBoundary` now couples a declared forward pump curve and
+actual-speed table to the existing `WaterHammerPipe` inlet. It solves pressure
+and flow together, localizes speed knots and records accepted hydraulic work.
+See the [forward-pump contract and executed public example](../wiki/water_hammer_implementation.md#safety-shutdown-forward-pump-coastdown).
+The table can represent measured delay/coastdown only when actual measurements
+and applicability are supplied; the repository example is synthetic.
+
+A forward-only curve cannot continue a full pump trip through zero speed,
+reverse flow or check-valve slam. The adapter rejects an inadmissible root;
+it does not replace disc/contact physics or prove a safe state. Detection,
+logic, driver/shaft dynamics, global rollback and integrated replay remain
+with the existing safety/coordinator owners. SIL, SRS, proof-test and asset
+qualification remain **NOT_EVALUATED**.
+
+### Safety Shutdown ideal lift/contact applicability
+
+The optional experimental `AcousticLiftCheckValve` now solves ideal translating
+pressure/flow/mechanics together at the existing downstream acoustic boundary.
+It includes signed orifice and reciprocal swept flow, spring/damping/inertia,
+separate physical/numerical/impact losses and inelastic numerical contact.
+See the [model, executable isolation example and limits](../wiki/water_hammer_implementation.md#safety-shutdown-ideal-translating-check-valve).
+This does not extend the forward pump curve through a full trip or connect the
+ESD runner automatically. Existing detection/logic/coordinator contracts own
+that integration; vendor disc/slam, phase change and asset qualification remain
+NOT_EVALUATED. Use accepted interval fluxes and refine contact/pressure together.

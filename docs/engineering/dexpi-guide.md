@@ -1,7 +1,7 @@
 ---
 title: "DEXPI Engineering Guide"
 description: "Practical guide to selecting, generating, validating, qualifying, and governing DEXPI exchanges, including SIS and HIPPS semantics."
-keywords: "DEXPI, DEXPI 2.0, Proteus, P&ID, PFD, BFD, pyDEXPI, SIS, HIPPS, safety function, engineering graph, conformance, round trip"
+keywords: "DEXPI, DEXPI 2.0.1, DEXPI 2.0, professional P&ID, simulation bindings, dynamic tests, Proteus, PFD, BFD, pyDEXPI, SIS, HIPPS, safety function, engineering graph, conformance, round trip"
 ---
 
 This guide helps you choose the correct NeqSim DEXPI workflow. DEXPI is an engineering information-exchange format:
@@ -15,12 +15,35 @@ simulation, an approved P&ID, or a construction release.
 | Import an existing Proteus-compatible P&ID and build a process scaffold | `DexpiXmlReader`, `DexpiSimulationBuilder` | [DEXPI import, export, and visualization](../integration/dexpi-reader.md) |
 | Export a quick Proteus-compatible P&ID | `DexpiXmlWriter.write(...)` | [DEXPI import, export, and visualization](../integration/dexpi-reader.md#exporting-to-dexpi-xml) |
 | Render through pyDEXPI | `DexpiXmlWriter.writeForPyDexpi(...)` or `DexpiDiagramBridge.exportForPyDexpi(...)` | [pyDEXPI-friendly export](../integration/dexpi-reader.md#pydexpi-friendly-export-namespace-omitted) |
+| Export a native DEXPI 2.0.1 P&ID Plant model | `Dexpi201XmlWriter.writeAndAssess(...)` with controlled metadata | [Native DEXPI conformance](../integration/dexpi-20-conformance.md) |
+| Prepare a professional P&ID review package and executable tag handoff | `ProfessionalPidPackageExporter`, `PidSimulationBindings`, `PidSimulationSession` | [Governed P&ID design synthesis](../pid-design-synthesis.md#professional-pid-and-simulation-handoff) |
 | Export a native DEXPI 2.0 P&ID Plant model | `Dexpi20XmlWriter.writeAndAssess(...)` | [DEXPI 2.0 conformance](../integration/dexpi-20-conformance.md) |
 | Export a native DEXPI 2.0 PFD/BFD Process model | `Dexpi20ProcessModelWriter.writeAndAssess(...)` or opt-in `writeAndAssessTopology(..., operatingCaseId)` | [DEXPI 2.0 conformance](../integration/dexpi-20-conformance.md#process-model-export) |
 | Generate a governed engineering package with DEXPI, registers, cases, and evidence | `EngineeringDeliverableCompiler` | [Standards-based DEXPI engineering generation](../integration/dexpi-engineering-generation.md) |
 | Generate a review-required P&ID proposal | `PidDesignSynthesizer`, `PidEngineeringPackageExporter` | [Governed P&ID design synthesis](../pid-design-synthesis.md) |
 
 ## Understand the exchange profiles
+
+### Native DEXPI 2.0.1 and professional P&ID requests
+
+Select `Dexpi201XmlWriter` explicitly for the 2.0.1 Plant model. Supply controlled
+`Dexpi20PlantExportMetadata` and retain the assessment of the exact exported
+bytes. The metadata class name is shared with the compatibility API; it does
+not determine the output model version. Use the official 2.0.1 reference models
+and semantic checks as well as XSD validation: the XML schema alone cannot
+distinguish all model changes.
+
+For engineering content, use `DexpiEngineeringExporter.exportDexpi201(...)` or
+the coordinated `ProfessionalPidPackageExporter`. Keep legacy 2.0.0 and Proteus
+files labelled by their actual profiles. Neither a namespace change nor a
+successful legacy assessment qualifies an export as 2.0.1.
+
+Users can request: **"Prepare a professional P&ID with DEXPI 2.0.1 from this
+NeqSim model, including instrumentation, safeguards and a simulation handoff.
+Then run steady-state and dynamic valve tests on the bound process model."**
+Use `@engineering-deliverables` with `neqsim-pid-process-operations` for that
+workflow. The [P&ID handoff guide](../pid-design-synthesis.md#professional-pid-and-simulation-handoff)
+defines the package, binding, test and review boundaries.
 
 ### Proteus-compatible exchange
 

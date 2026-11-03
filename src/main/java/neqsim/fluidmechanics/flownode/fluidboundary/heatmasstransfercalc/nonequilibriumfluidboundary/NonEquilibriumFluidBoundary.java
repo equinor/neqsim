@@ -561,6 +561,203 @@ public abstract class NonEquilibriumFluidBoundary
   }
 
   /**
+   * Solves the existing nonreactive film equations and interface heat balance together.
+   *
+   * <p>
+   * The segregated temperature/flux fixed point can amplify roundoff even from an equilibrium state. This Newton update
+   * includes temperature, checks every residual before taking a step, and accepts only finite positive-composition
+   * states with decreasing residual. No flux is overwritten to enforce equilibrium. Bulk inventories are never changed
+   * here.
+   *
+   * @throws IllegalStateException if transport, thermodynamics or convergence is invalid
+   */
+  protected final void solveCoupledMassHeatTransfer() {
+    SystemInterface savedInterface = interphaseSystem.clone();
+    DMatrixRMaj savedFlux = nFlux.copy();
+    double savedTotalFlux = totalFlux;
+    double[] savedHeatFlux = interphaseHeatFlux.clone();
+    try {
+      initInterphaseSystem();
+      setuMassTrans();
+      double[] state = new double[neq + 1];
+      System.arraycopy(uMassTrans.getData(), 0, state, 0, neq);
+      state[neq] = interphaseSystem.getTemperature();
+      double[] residual = evaluateCoupledFilm(state);
+      for (int iteration = 0; iteration < 50; iteration++) {
+        double norm = coupledFilmResidualNorm(residual);
+        if (norm <= 1.0) {
+          return;
+        }
+        DMatrixRMaj jacobian = new DMatrixRMaj(neq + 1, neq + 1);
+        for (int column = 0; column <= neq; column++) {
+          double step = coupledFilmDifferenceStep(state, column);
+          double[] plus = state.clone();
+          double[] minus = state.clone();
+          plus[column] += step;
+          minus[column] -= step;
+          double[] plusResidual = evaluateCoupledFilm(plus);
+          double[] minusResidual = evaluateCoupledFilm(minus);
+          for (int row = 0; row <= neq; row++) {
+            jacobian.set(row, column, (plusResidual[row] - minusResidual[row]) / (2.0 * step));
+          }
+        }
+        DMatrixRMaj rightHandSide = new DMatrixRMaj(neq + 1, 1, true, residual.clone());
+        for (int row = 0; row <= neq; row++) {
+          double scale = 0.0;
+          for (int column = 0; column <= neq; column++) {
+            scale = Math.max(scale, Math.abs(jacobian.get(row, column)));
+          }
+          if (!(scale > 0.0) || !Double.isFinite(scale)) {
+            throw new IllegalStateException("Invalid coupled film Jacobian row " + row);
+          }
+          for (int column = 0; column <= neq; column++) {
+            jacobian.set(row, column, jacobian.get(row, column) / scale);
+          }
+          rightHandSide.set(row, 0, rightHandSide.get(row, 0) / scale);
+        }
+        DMatrixRMaj update = new DMatrixRMaj(neq + 1, 1);
+        if (!CommonOps_DDRM.solve(jacobian, rightHandSide, update)) {
+          throw new IllegalStateException("Singular coupled film Jacobian");
+        }
+        boolean accepted = false;
+        for (double fraction = 1.0; fraction >= 1.0e-8; fraction *= 0.5) {
+          double[] candidate = state.clone();
+          for (int column = 0; column <= neq; column++) {
+            candidate[column] -= fraction * update.get(column, 0);
+          }
+          if (!isCoupledFilmStateAdmissible(candidate)) {
+            continue;
+          }
+          double[] candidateResidual;
+          try {
+            candidateResidual = evaluateCoupledFilm(candidate);
+          } catch (RuntimeException invalidCandidate) {
+            continue;
+          }
+          if (coupledFilmResidualNorm(candidateResidual) < norm) {
+            state = candidate;
+            residual = candidateResidual;
+            accepted = true;
+            break;
+          }
+        }
+        if (!accepted) {
+          throw new IllegalStateException("Coupled film line search failed; scaled residual=" + norm);
+        }
+      }
+      throw new IllegalStateException(
+          "Coupled film did not converge; scaled residual=" + coupledFilmResidualNorm(residual));
+    } catch (RuntimeException failure) {
+      interphaseSystem = savedInterface;
+      nFlux = savedFlux;
+      totalFlux = savedTotalFlux;
+      interphaseHeatFlux = savedHeatFlux;
+      throw failure;
+    }
+  }
+
+  /**
+   * Selects a centered-difference interval, keeping both composition probes positive.
+   *
+   * @param state interface compositions, component molar fluxes and temperature
+   * @param column variable to perturb
+   * @return finite-difference interval in that variable's units
+   */
+  protected double coupledFilmDifferenceStep(double[] state, int column) {
+    if (column == neq) {
+      return 1.0e-4;
+    }
+    if (column < 2 * bulkSystem.getNumberOfComponents()) {
+      return Math.min(Math.max(Math.abs(state[column]) * 1.0e-5, 1.0e-9), state[column] * 0.25);
+    }
+    return Math.max(Math.abs(state[column]) * 1.0e-5, 1.0e-8);
+  }
+
+  /**
+   * Tests the domain before thermodynamic recovery; no composition or temperature is clipped.
+   *
+   * @param state candidate interface state
+   * @return true for finite fluxes, strictly positive fractions below one and positive temperature
+   */
+  private boolean isCoupledFilmStateAdmissible(double[] state) {
+    for (double value : state) {
+      if (!Double.isFinite(value)) {
+        return false;
+      }
+    }
+    for (int component = 0; component < 2 * bulkSystem.getNumberOfComponents(); component++) {
+      if (!(state[component] > 0.0 && state[component] < 1.0)) {
+        return false;
+      }
+    }
+    return state[neq] > 0.0;
+  }
+
+  /**
+   * Evaluates the actual corrected film residuals and one interface energy balance.
+   *
+   * @param state interface mole fractions, molar fluxes in mol/(m2 s), temperature in K
+   * @return fugacity, normalization, film-flux and heat residuals (last entry in W/m2)
+   * @throws IllegalStateException if the candidate has invalid thermodynamics or transport
+   */
+  private double[] evaluateCoupledFilm(double[] state) {
+    if (!isCoupledFilmStateAdmissible(state)) {
+      throw new IllegalStateException("Inadmissible coupled film state");
+    }
+    for (int variable = 0; variable < neq; variable++) {
+      uMassTrans.set(variable, 0, state[variable]);
+    }
+    updateMassTrans();
+    calcFluxes();
+    interphaseSystem.setTemperature(state[neq]);
+    init();
+    setfvecMassTrans2();
+    double[] residual = new double[neq + 1];
+    System.arraycopy(fvec.getData(), 0, residual, 0, neq);
+    double transferredEnthalpy = 0.0;
+    for (int component = 0; component < bulkSystem.getNumberOfComponents(); component++) {
+      double gasTemperature = bulkSystem.getPhase(0).getTemperature();
+      double liquidTemperature = bulkSystem.getPhase(1).getTemperature();
+      double gasEnthalpy = bulkSystem.getPhase(0).getComponent(component).getHID(gasTemperature)
+          + bulkSystem.getPhase(0).getComponent(component).getHresTP(gasTemperature);
+      double liquidEnthalpy = bulkSystem.getPhase(1).getComponent(component).getHID(liquidTemperature)
+          + bulkSystem.getPhase(1).getComponent(component).getHresTP(liquidTemperature);
+      transferredEnthalpy += nFlux.get(component, 0) * (gasEnthalpy - liquidEnthalpy);
+    }
+    for (int phase = 0; phase < 2; phase++) {
+      double conductance = heatTransferCoefficient[phase] * heatTransferCorrection[phase];
+      if (!(conductance > 0.0) || !Double.isFinite(conductance)) {
+        throw new IllegalStateException("Invalid interfacial heat conductance for phase " + phase);
+      }
+      interphaseHeatFlux[phase] = -conductance * (bulkSystem.getPhase(phase).getTemperature() - state[neq]);
+    }
+    residual[neq] = interphaseHeatFlux[0] + interphaseHeatFlux[1] - transferredEnthalpy;
+    if (!Double.isFinite(coupledFilmResidualNorm(residual))) {
+      throw new IllegalStateException("Nonfinite coupled film residual");
+    }
+    return residual;
+  }
+
+  /**
+   * Scales every equation by its absolute convergence requirement rather than flux changes.
+   *
+   * @param residual complete coupled residual vector
+   * @return maximum normalized residual, or positive infinity for a nonfinite entry
+   */
+  private double coupledFilmResidualNorm(double[] residual) {
+    int components = bulkSystem.getNumberOfComponents();
+    double norm = 0.0;
+    for (int row = 0; row < residual.length; row++) {
+      if (!Double.isFinite(residual[row])) {
+        return Double.POSITIVE_INFINITY;
+      }
+      double tolerance = row < components ? 1.0e-10 : row < components + 2 ? 1.0e-12 : row < neq ? 1.0e-10 : 1.0e-6;
+      norm = Math.max(norm, Math.abs(residual[row]) / tolerance);
+    }
+    return norm;
+  }
+
+  /**
    * Solves the Newton system with EJML factors and the established column-update substitution order.
    *
    * @return Newton step, including non-finite entries for the existing recovery branch to inspect

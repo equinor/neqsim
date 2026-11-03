@@ -274,6 +274,59 @@ consistency uses the explicitly configured power-balance tolerance; stale calcul
 identities, non-finite evidence and discrepancies outside that tolerance still fail
 closed.
 
+A fixed separator-arrival boundary can be declared as a continuous action through
+`sink.<node>.pressure`. Discovery exposes that input only for a fixed-pressure sink;
+calculated node pressure remains an output and attempts to address a junction as a sink
+are rejected. Route-conditioned pressure studies should use a separate exact 2D
+route × pressure slice. They must not collapse route choice into a continuous variable
+or promote the combined controls to an interpolated 3D operating surface.
+
+A variable common-shaft speed can likewise be exposed through a fixed-speed
+`CompressorShaftCalculator` action. Sample separator arrival pressure × shaft speed as an exact 2D slice: each cell
+runs the coupled process and retains the existing export-pressure, compressor-map, common-speed, driver/gearbox and
+shared-power evidence. Reject incomplete, stale or non-finite cells; do not relax those constraints to fill the slice
+or infer an unsampled continuous surface.
+
+When a declared driver limit is the qualification target, add a separate exact 1D shaft-speed slice and refine only
+an evaluated feasible/infeasible crossing. Preserve both terminal bracket endpoints, their signed driver-power
+margins, every refinement recovery gate, and the per-casing surge/stonewall evidence. The refined bracket is diagnostic:
+do not infer monotonic behavior outside it or promote its midpoint to an operating set point without the normal
+optimizer acceptance and replay.
+
+A casing-map boundary uses the same exact speed action and the installed `surgeMargin` or `stonewallMargin` row.
+When a reviewed facility procedure requires more clearance than the preserved map default, configure an operating
+override on that row and keep the map-derived value supplier, physical unit, source reference and signed margin in the
+receipt. To demonstrate bottleneck migration, restore that override before applying a tighter driver rating and
+reevaluate the same low/high speed points with the same evaluator. The two receipts must identify the map row and the
+driver row independently; a driver-limited result must never hide a negative casing-map margin, and neither receipt
+authorizes changing an OEM map or protection setting.
+
+The source-backed living acceptance also exports this pair as `map_driver_migration_evidence`. The receipt is bound
+to the living-task cycle, evaluator, continuous speed action, unit and identical sampled endpoints. It retains both
+complete slice records, the configured map-limit role and provenance, the independently refined map and driver
+boundaries, explicit map-override clearance, and complete baseline restoration. Set
+`production.require_map_driver_migration_evidence: true` when the receipt is required. The existing #4187 production
+guard reconstructs sampled transitions and every midpoint recovery gate before the proposal can enter the ledger;
+promotion then carries the unchanged receipt into `results.json` and the reviewed baseline snapshot. A changed or
+tampered constraint identity, limit role, provenance, endpoint grid, cycle ID, refinement, or restoration flag fails
+closed. This is persistence of advisory qualification evidence, not a second optimizer or permission to change an
+OEM map, driver rating, or operating set point.
+
+The living report renders every valid ledger receipt in a cycle-ordered map-to-driver timeline. Superseded receipts
+remain visible with their invalidating cycle, while malformed or cycle-mismatched receipts are withheld. The canonical
+current-best and immutable final reports independently validate the promoted receipt before rendering the exact map
+restriction, configured operating-limit role and provenance, driver restriction/rating, and identical common-speed
+endpoints. When lifecycle and migration evidence are both required, the guard also resolves each diagnostic identity
+to exactly one `AVAILABLE` row in the same current period's complete accepted-replay utilization coverage. It rejects
+an ambiguous or missing identity, the same row used twice, or configured map provenance that remains after the receipt
+says the temporary override was cleared. Both report views show the joined accepted-replay current value, applicable
+limit, utilization, basis, and provenance for the map and driver identities. These report views are advisory consumers
+of guarded evidence; they do not recalculate compressor physics or turn a refined boundary into an approved operating
+point. Installed-equipment display identities are qualified by process area (`area::equipment/constraint`), while
+stable IDs preserve the coverage model, area, and equipment separately. Declared coverage must include both
+compressor map margins and the equipment-local shaft-power constraint alongside registered plant driver limits,
+because either driver representation can lead the diagnostic boundary.
+
 Use `ProcessModelDebottleneckStudy` after the evaluator and direct installed constraints are configured when one documented capacity replacement or expansion must be compared with the installed baseline. It uses the same search policy for both scenarios, freezes immutable objective/constraint/metric evidence, and restores the installed limit plus pre-study operating point. This is a paired screening study, not an equipment-sizing algorithm or economic approval.
 
 Use `ProcessModelDebottleneckRanking` after independent paired studies complete when alternatives
@@ -775,9 +828,11 @@ double[] acceptedChokesAndRoutes = search.getAcceptedCandidateValues();
 ```
 
 `getOptimizerEvidence(cycleId)` emits the exact fail-closed fields used by the living-task production
-guard: current cycle identity, candidate convergence/feasibility/finiteness, complete constraint and
+guard: current cycle identity, exact optimizer termination reason, candidate convergence/feasibility/finiteness, complete constraint and
 action evidence, complete state restoration, accepted-point replay, evaluation count, and measured
-runtime. When boundary refinement is enabled, it also records the configured per-direction maximum
+runtime. The termination reason distinguishes tolerance convergence from an evaluation-budget stop; both still require
+the same feasible accepted-point replay, and budget exhaustion is never relabelled as convergence. When boundary
+refinement is enabled, it also records the configured per-direction maximum
 and the number of midpoint evaluations actually performed. A `true` evidence block qualifies only
 the configured steady-state model and limits. It is
 not a global-optimality claim, a dynamic/safety study, or permission to write to a control system.
@@ -931,11 +986,31 @@ their signed interaction difference, and exact baseline-to-joint installed-const
 and report recompute all arithmetic and membership bindings. They never infer the joint response from additive
 assumptions, and reject non-finite, stale, foreign, partially restored or incomplete evidence.
 
+Schema v15 extends the same exact joint-combination binding to paired operating-envelope slices. First evaluate one
+or more complete baseline slices from the accepted replay. Then call
+`ProcessModelDebottleneckStudy.evaluateCombinedEnvelope(...)` with those exact runtime slices; the study applies every
+combination member together, repeats the identical axes, grids, anchors and refinement policy, stops on any unsafe
+point recovery, restores every installed limit in reverse order and reconverges the restored process. Finally call
+`ProcessModelOperatingEnvelopeStudy.qualifyReliefEnvelope(...)` with the same accepted search, portfolio, combination
+study and accepted-point result. Qualification rejects foreign, deserialized, partial, non-finite, stale or
+structurally mismatched slices. The receipt retains both complete slice blocks, exact sampled feasibility/outcome and
+leading-constraint identity changes, and signed shifts of terminal feasible/infeasible refinement-bracket endpoints
+only when exactly one baseline and one relieved continuous boundary are comparable on an axis. A bracket endpoint is
+not promoted to an exact boundary, discrete routes are never interpolated, and no independent relief delta is treated
+as additive.
+
+Schema v16 adds exact sampled-cell topology when an accepted envelope contains a two-dimensional slice. Each cell is
+identified by its lower grid indexes and four clockwise corner sequence indexes, classified only from independently
+evaluated corner feasibility, and linked to the exact sampled perimeter edges where feasibility changes. The paired
+combined-relief receipt compares those complete baseline and relieved cell records. It does not infer feasible area,
+an interior contour, or a boundary between discrete pressure-level routes; any continuous refinement remains a
+separate fail-closed bracket.
+
 Schema v11 retains the schema-v10 requirement for non-empty, independently declared plant-constraint IDs in addition to the
 schema-v9 equipment scope, complete finite rated evidence, explicit unit/basis/provenance/direction/category, and exact
 calculation binding to the accepted-point replay. Supply both
 `getInstalledEquipmentCapacityEvidence()` and `getPlantConstraintEvidence()` through the frozen-evidence builder path;
-this never resamples the mutable process after baseline restoration. Current schema-v11/v12/v13/v14 exports retain optional
+this never resamples the mutable process after baseline restoration. Current schema-v11/v12/v13/v14/v15/v16/v17 exports retain optional
 accepted-state metrics and require schema-v2
 cross-slice summaries in every period. The guard reconstructs each summary from persisted sampled and refined
 endpoint rows before trusting it, independently reconstructs the constraint opportunity screen, validates any v12/v13
@@ -943,7 +1018,11 @@ receipt against the exact installed identity, limit, unit, action set, accepted 
 accepted value, paired residual/tolerance, finite delta and restoration flags, reconstructs each schema-v13 portfolio
 identity, candidate count, input indices, alternative identities, common objective policy and competition rank from
 the persisted deltas, reconstructs each schema-v14 joint membership, objective arithmetic, restoration state and
-bottleneck migration without assuming additivity, and then recomputes every
+bottleneck migration without assuming additivity, reconstructs every schema-v15 paired slice grid, point identity
+change, refinement count and bracket-endpoint shift from the persisted baseline and jointly relieved slices,
+reconstructs every schema-v16 sampled cell and perimeter boundary family from the persisted 2D grid, and then
+requires every schema-v17 period to retain an accepted optimizer termination reason from the same replayed search, and then
+recomputes every
 period-change diagnostic from the persisted periods before accepting it, including exact operating-region event
 migration, refined-boundary endpoint constraints and physical margins, exact ranked constraint-identity migration,
 and, when present, state-metric identity,
@@ -971,8 +1050,12 @@ the JSON and cycle context to `neqsim_continuous.production.proposal_from_lifecy
 stale, duplicate, non-finite, incomplete, or edited evidence, derives exact setpoints and the accepted envelope, and
 reuses the same production validators that guard and promotion use. It also binds the Java search's selected-objective
 name, direction, unit, initial value, and accepted value to the task-local `goal.yaml` objective and reviewed baseline
-KPI. The task must declare `objective.metric`, `objective.source_name`, `objective.direction`, and `objective.unit`;
-the initial Java objective must exactly equal the reviewed baseline for that KPI. The adapter derives the directional
+KPI. The task must declare `objective.metric`, `objective.source_name`, `objective.direction`, and `objective.unit`.
+Historical evidence without replay metadata still requires exact baseline equality. Current Java evidence may bind the
+initial objective within its explicit `replay_relative_tolerance` and `replay_tolerance_provenance`; the production
+guard rejects missing provenance, non-finite/negative values, or a relative tolerance above $10^{-6}$. This uses the
+same simulator-replay qualification as terminal optimizer acceptance and does not permit a physical-constraint or
+operating-limit tolerance. The adapter derives the directional
 gain and objective prediction instead of trusting task-script constants. Set
 `production.require_objective_evidence: true` with the existing envelope requirements so the guard repeats this
 binding before publication. The task may supply additional finite constraint predictions but must not rebuild Java
@@ -980,25 +1063,36 @@ evidence dictionaries. The separate `report.prepare` hook refreshes report input
 not a proposal-ingestion path. The lower-level `proposal_from_lifecycle_json(...)` remains available for compatibility
 when callers already own separately qualified proposal metadata.
 
-The executable source acceptance is
-`devtools.test_field_to_facility_living_workflow.FieldToFacilityLivingWorkflowTest`. It calls the ten-well Java
-fixture from `target/test-classes`, assigns the generated living-task cycle ID to the current lifecycle period, and
-then exercises the adapter, production guard, append-only ledger, reviewed promotion, living report, and canonical
-HTML report. Run it after compiling tests and generating the Maven dependency classpath:
+The engineer-runnable source example is `devtools/field_to_facility_living_example.py`. It calls the exact ten-well
+Java fixture from `target/test-classes`, assigns generated living-task cycle IDs to the current lifecycle periods, and
+then exercises the adapter, production guard, append-only ledger, reviewed promotion, selective limit revalidation,
+living report, and canonical HTML report. Run it after compiling tests and generating the Maven dependency classpath:
 
 ```bash
 ./mvnw -B -ntp -DskipTests test-compile dependency:build-classpath \
   -Dmdep.outputFile=target/optimization-classpath.txt
 NEQSIM_TEST_CLASSPATH="target/classes:target/test-classes:$(cat target/optimization-classpath.txt)" \
-  python -m unittest devtools.test_field_to_facility_living_workflow -v
+  python devtools/field_to_facility_living_example.py \
+  --output-parent target/field-to-facility-example
 ```
+
+The command refuses an existing task directory, runs the initial 1.01 shared-power-limit case, promotes only its
+guard-approved exact replay, changes the declared multiplier to 1.02, selectively recomputes the affected evidence,
+promotes the replacement cycle, and prints a compact JSON summary. The retained task folder contains the append-only
+ledger, both cycle receipts, `continuous/LIVING_REPORT.md`, the canonical HTML report, and
+`field_to_facility_acceptance_summary.json`. Use
+`--initial-shared-power-multiplier` and `--revised-shared-power-multiplier` only for finite values greater than 1.0.
+The complete regression remains
+`devtools.test_field_to_facility_living_workflow.FieldToFacilityLivingWorkflowTest`; it exercises the same reusable
+Python orchestration helpers and adds tamper-rejection assertions.
 
 The workflow asserts finite evaluation counts and runtime, full convergence/feasibility/restoration receipts, exact
 selected-objective identity and reviewed-baseline binding, schema-v11 persistence and constraint-opportunity
 reconstruction, complete declared installed and
 plant-wide constraint coverage with operating-limit provenance, common-shaft/compressor-map/driver/shared-power
 evidence, the separator/scrubber-to-shared-power bottleneck migration, and report
-rendering. It is a
+rendering, including the cycle-by-cycle map-to-driver ledger timeline and the promoted canonical migration section.
+It is a
 synthetic software acceptance test, not a reservoir forecast, equipment qualification, operating approval, or an
 instruction to relax any physical constraint.
 
@@ -1335,3 +1429,6 @@ Choose based on your use case:
 - **Fixed-total continuous allocation across coupled actions** → `ProcessModelAllocationOptimizer`
 - **Mixed choke/setpoint and discrete line-up search** → `ProcessModelOperatingPointOptimizer`
 - **Model calibration** → `BatchParameterEstimator`
+
+
+

@@ -104,6 +104,15 @@ detail in the enterprise repos and community content plant-agnostic; follow each
 repo's front-matter/validation conventions; note the improvements in the task
 summary; do not over-engineer.
 
+### Flow diagram gate (PFD/BFD/P&ID sketch)
+
+Every flow diagram must pass `pfd-layout-review` before it is used: `neqsim pfd-check <diagram.svg|*.layout.json>`
+(deterministic: box overlap, label on line/box/label, line through box, crossings, collinear overlap, missing
+arrowheads, flow direction, tags/stream numbers, ports, legend/title/footer, whitespace) must be PASS, then the picture
+is inspected. Build generators on `devtools/pfd_diagram.py` (`PfdDiagram`: grid, port sides, orthogonal routing,
+collision-aware labels, exports `*.layout.json`) so figures pass first time. Review log per figure in
+`step3_report/pfd_layout_review/`. Previous figures go to `figures_prev/`. Details: skill `neqsim-pfd-layout-review`.
+
 ### Build & Test
 
 ```bash
@@ -1678,7 +1687,7 @@ git add <the reformatted files>
 - **Package and Update Python**: When the user says "package and update python" or similar, run these commands:
   ```powershell
   .\mvnw.cmd package -DskipTests
-   Copy-Item -Path "C:\Users\ESOL\Documents\GitHub\neqsim\target\neqsim-3.26.0.jar" -Destination "C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\" -Force
+   Copy-Item -Path "C:\Users\ESOL\Documents\GitHub\neqsim\target\neqsim-3.27.0.jar" -Destination "C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\" -Force
   ```
   This builds the NeqSim JAR and copies it to the Python neqsim package for immediate use. Note: the runtime loads `lib/*` (flat), so copy the JAR directly into `neqsim\lib\`, not a `java11`/`java8` subfolder.
 

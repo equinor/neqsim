@@ -61,6 +61,15 @@ scavenger sizing, demulsifier vs oil-in-water spec, and chemical root-cause of a
 load `neqsim-production-chemistry` (`neqsim.process.chemistry`) and feed it the numbers
 computed here.
 
+For local dry hydrocarbon gas/oil interface investigations, the existing film boundary
+has a default-off `setCoupledMassHeatTransferEnabled(true)` numerical option. Read
+`docs/fluidmechanics/InterphaseHeatMassTransfer.md` for its residual gates and limited
+positive-composition/finite-transport range. It is not connected to the transient
+`TwoFluidPipe` source. Zero liquid Reynolds number currently gives an unsupported
+stratified transfer coefficient and rejects; never interpret the old unit-matrix
+fallback as stationary-pool evaporation. Keep #4674 physical boundary/full-cycle and
+#4675 heat/area/diffusion qualification separate from numerical convergence.
+
 ## 1. Hydrate Analysis
 
 ### EOS Selection for Hydrate Calculations
@@ -253,9 +262,13 @@ the gas above the dew-point spec?" Worked task: `2026-09-29_steady_state_megh2o_
   explicit coding is stable only below `2 / (d y*_H2O / d r)` kg gas per kg film MEG per step.
 - **Dew point is logarithmic** (~6 % in water content per K at these conditions) and, for CPA, nearly
   pressure independent at 70-140 bara: reading the same gas as a dew point at pipe pressure adds ~0.9 K.
-- **Basis traps:** CPA has no ice phase (the -18 C spec is a supercooled-liquid dew point; frost reading is
-  ~16 % lower in y_in); `SystemGERGwaterEos.waterDewPointTemperatureFlash()` is unreliable below 0 C
-  (2.5x below CPA at -18 C/70 bara, below ideal Psat/P at -18 C/140 bara). Carry the spread as a sensitivity.
+- **Basis traps:** CPA liquid-water dew point is a supercooled-liquid reference below freezing;
+  ISO 18453 / GERG-water uses an ice reference below 273.16 K. These are different phase boundaries.
+  For GERG-water, use `SystemGERGwaterEos`, `setMixingRule(8)`, and a
+  `ThermodynamicOperations` instance's `waterDewPointTemperatureFlash()`; follow the ISO 18453 execution rule
+  in `neqsim-standards-lookup` and the [dew-point guide](../../../docs/standards/dew_point_standards.md).
+  Recalculate outputs from the former non-convergent solver before comparing models. Neither an
+  ideal-gas estimate nor a CPA/GERG difference alone identifies an ISO implementation error.
 - **Numerics:** for N >= 100 film cells use `solve_ivp(method="BDF")`; LSODA stalls on the film-exhaustion
   switch. Regularise `r = W/(M + delta)` so a film-free cell cannot return a spurious composition.
 
@@ -694,7 +707,11 @@ for (double qgMSm3d : gasRates) {
 > and enthalpy have an explicit physical owner. Never infer that state from the
 > last interior cell. The current rich-gas pressure-ramp check is conservative
 > boundary evidence, not complete blowdown, pooling, restart, or evaporation-rate
-> qualification.
+> qualification. For a gas takeoff above retained liquid, use
+> `setGasOnlyOutletTakeoff(true)` only with a constant-pressure outlet. Oil and
+> water remain externally closed while retaining traction and internal drainage;
+> do not replace this contract with inventory clipping or a manufactured boundary
+> mixture.
 >
 > **The coupled route is an opt-in four-part configuration.** For a pressure
 > outlet that physically permits phase fallback, use
@@ -1603,6 +1620,38 @@ impact; `neqsim-electrolyte-systems` for the aqueous-phase corrosivity of wet su
 | A new tie-back looks feasible on its own line but is routed through a shared trunk | Compute the back-pressure the added rate puts on the trunk inlet and compare it with the choke dP of the existing wells (Trestakk: +23/+51/+93 bar for +1.5/+3/+5 kSm3/d on a 12-in trunk against 14-95 bar of headroom); beyond the headroom the existing wells are throttled out or a dedicated line is needed |
 | Trunk ID and host arrival pressure are unknown | Calibrate the arrival pressure to measured wellhead/choke data for each plausible ID (10 and 12 in), show both, and bracket the arrival pressure with the host PSD window instead of reporting one number |
 
+### TwoFluidPipe static terrain initialization
+
+The conservative interior operator reconstructs a common face pressure from adjacent mixture inertia and signed
+half-cell heads. The public 90-case analytical matrix covers flat, affine and curved terrain, three density patterns,
+12--192 cells and pure gas/oil below `1e-10 m/s2`, with zero local mass and energy rates; a separate 45-case
+pure-water extension passes the same gates. Signed face work uses
+`Q * deltaP` with the mass donor, horizontal pressure flux is unchanged and rollback restores the accepted diagnostic.
+Use this as numerical hydrostatic-initialization evidence only. A stationary gas/liquid pool with different phase
+densities, moving terrain drainage, restart, slugging and pigging remain unsupported until their own conservation,
+refinement and public experimental gates pass.
+
+For an explicit static phase-traction diagnostic, use
+`GeometryCalculator.calculateStratifiedPressureMoments(depth, diameter)`: signed liquid/gas moments
+about the interface in m3 and their area derivatives in m2. Multiply each moment by its phase density,
+gravity and cosine of inclination for the hydrostatic traction contribution; interface pressure times
+phase area is separate. To use the same geometry in the transient operator, explicitly call
+`setStratifiedHydrostaticPressureMomentsEnabled(true)`. It adds phase traction at every face and
+matching `Q * F / A` work with the signed mass donor; inspect
+`getLastStratifiedHydrostaticPressureForces()` in N. The supported face contains gas and at most one
+liquid in a constant-diameter circular pipe; oil+water and diameter steps reject. Its independent
+integral, signed-work, conservation and rollback tests do not establish elapsed dynamic pool
+retention, terrain drainage, shutdown/cooldown, restart, slugging, pigging or hydrocarbon evaporation.
+
+Preserve both face fractions when adapting holdup to pressure moments: use
+`calculateStratifiedPressureMomentsFromHoldups(gas, liquid, diameter)`. Its relative minority-area
+inversion and algebraic reflection retain positive traces; the legacy general holdup-to-depth
+approximation has an absolute area tolerance and must not supply this pressure-work geometry.
+See `StratifiedPressureMomentsTest`, `StratifiedPressureMomentCouplingTest` and the public numerical record.
+The enabled historical 12/24-cell ramp currently stops at 0.25 s on the unchanged face-volume
+closure guard. Keep the executable coupling rejection record attached; instantaneous operator
+identities do not qualify full elapsed transient operation.
+
 ## Residual MEG/water liquid after pigging
 
 For the bounded experimental Java/Python route, use `TwoFluidPipe` with
@@ -1615,3 +1664,31 @@ are user inputs, not calibrated defaults. This is a gas/aqueous two-fluid route;
 Use `getFilmDryingStatus` with a positive residual threshold and horizon, preserve boundary
 and component ledgers, and distinguish seeded pool motion from validated terrain trapping.
 Short-time conservation, refinement and CPA equilibrium tests do not qualify 10 km drying duration.
+
+
+### Cross-sectional gravitational energy budget
+
+Use the existing `GeometryCalculator.StratifiedPressureMoments` derived centre-referenced phase
+first moments [m3] and `getGravityPotentialEnergyPerLength(gasDensity, liquidDensity, normalGravity)`
+[J/m] for an explicit static normal-gravity budget. No solver state or serialized field is added.
+See [the executed analytical/high-precision energy record](../../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy/README.md).
+This does not resolve the documented dry/wet pressure impulse or qualify dynamic pools, inlet refill
+or hydrocarbon evaporation; those still require conservative phase-front transport/work and heat/mass transfer.
+
+
+### Optional Rusanov phase-flux contract
+
+The default remains AUSM+. `AUSMPlusFluxCalculator.calcRusanovFlux` is an explicit local query,
+and `TwoFluidPipe.setRusanovInternalFluxEnabled(true)` selects the qualified two-donor operator on
+independent gas/oil/water internal faces after `setEnableWaterOilSlip(true)`.
+Its dissipated energy is `alpha * (rho * H - p)` with total specific enthalpy;
+exact absence ignores unused properties and positive traces retain the same formula.
+SRK gas/oil controls distinguish EOS-volume internal energy from physical-density mechanical
+energy using explicit pressure-volume work; do not mix these API conventions in a reference.
+See the [executed conservative-flux evidence](../../../src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy/README.md).
+Forward and reverse donor streams remain separate through Runge-Kutta staging, pressure work and
+transactional component transport; their difference must reproduce the hydrodynamic net. The
+combined-liquid split, pressure interpolation, reconstructed slug faces and one-direction unsplit
+complementarity route reject this option. Apply a wave-speed Courant bound and inspect component,
+phase, total-energy and rollback reports.
+Do not use it as proof of dry/wet fronts, terrain pools, refill or physical evaporation.

@@ -34,6 +34,9 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
   final int[] charge1A = {-1};
   final int[] charge2A = {-1, -1};
   final int[] charge2B = {1, -1};
+  // P/N are association-site selector signs, not electrical charges.
+  final int[] charge4P = {1, 1, 1, 1};
+  final int[] charge4N = {-1, -1, -1, -1};
 
   /**
    * Constructor for CPAMixingRules.
@@ -665,6 +668,10 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
   public int[][] setAssociationScheme(int compnumb, PhaseInterface phase) {
     if (phase.getComponent(compnumb).getAssociationScheme().equals("4C")) {
       return getInteractionMatrix(charge4C, charge4C);
+    } else if (phase.getComponent(compnumb).getAssociationScheme().equals("4P")) {
+      return getInteractionMatrix(charge4P, charge4P);
+    } else if (phase.getComponent(compnumb).getAssociationScheme().equals("4N")) {
+      return getInteractionMatrix(charge4N, charge4N);
     } else if (phase.getComponent(compnumb).getAssociationScheme().equals("2B")) {
       return getInteractionMatrix(charge2B, charge2B);
     } else if (phase.getComponent(compnumb).getAssociationScheme().equals("1A")) {
@@ -695,6 +702,12 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
       if (phase.getComponent(compnumb).getAssociationScheme().equals("4C")) {
         comp1Scheme = charge4C;
       }
+      if (phase.getComponent(compnumb).getAssociationScheme().equals("4P")) {
+        comp1Scheme = charge4P;
+      }
+      if (phase.getComponent(compnumb).getAssociationScheme().equals("4N")) {
+        comp1Scheme = charge4N;
+      }
       if (phase.getComponent(compnumb).getAssociationScheme().equals("2A")) {
         comp1Scheme = charge2A;
       }
@@ -707,6 +720,12 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
 
       if (phase.getComponent(compnumb2).getAssociationScheme().equals("4C")) {
         comp2Scheme = charge4C;
+      }
+      if (phase.getComponent(compnumb2).getAssociationScheme().equals("4P")) {
+        comp2Scheme = charge4P;
+      }
+      if (phase.getComponent(compnumb2).getAssociationScheme().equals("4N")) {
+        comp2Scheme = charge4N;
       }
       if (phase.getComponent(compnumb2).getAssociationScheme().equals("2A")) {
         comp2Scheme = charge2A;

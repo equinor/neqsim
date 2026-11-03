@@ -81,6 +81,45 @@ class TwoFluidThermalFaceFluxTest {
     }
   }
 
+  @Test
+  void countercurrentBoundaryEnergyRetainsOppositePhaseSignsAndExactTotal() {
+    TwoFluidSection section = createGasSection(0.0, 1.5);
+    section.setGasHoldup(0.4);
+    section.setLiquidHoldup(0.6);
+    section.setOilHoldup(0.6);
+    section.setWaterHoldup(0.0);
+    section.setGasVelocity(1.5);
+    section.setLiquidVelocity(-0.2);
+    section.setOilVelocity(-0.2);
+    section.setWaterVelocity(0.0);
+    section.setPhaseEnthalpies(5.0e4, 4.0e4);
+    section.updateConservativeVariables();
+    section.updateDerivedQuantities();
+    TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+    equations.setAllowOutletPhaseBackflow(true);
+
+    equations.calcRHS(new TwoFluidSection[] {section}, 10.0);
+    double[] total = equations.getLastEnergyFaceFluxes();
+    double[][] phase = equations.getLastBoundaryPhaseEnergyFluxes();
+    assertTrue(phase[0][0] > 0.0);
+    assertTrue(phase[0][1] < 0.0);
+    assertTrue(phase[1][0] > 0.0);
+    assertTrue(phase[1][1] < 0.0);
+    assertEquals(total[0], phase[0][0] + phase[0][1] + phase[0][2], 0.0);
+    assertEquals(total[1], phase[1][0] + phase[1][1] + phase[1][2], 0.0);
+
+    double[][] accumulated = new double[2][3];
+    equations.accumulateLastBoundaryPhaseEnergyFluxes(accumulated, 0.25);
+    equations.accumulateLastBoundaryPhaseEnergyFluxes(accumulated, 0.75);
+    for (int boundary = 0; boundary < 2; boundary++) {
+      for (int phaseIndex = 0; phaseIndex < 3; phaseIndex++) {
+        assertEquals(phase[boundary][phaseIndex], accumulated[boundary][phaseIndex], 1.0e-12);
+      }
+    }
+    phase[0][0] = 0.0;
+    assertTrue(equations.getLastBoundaryPhaseEnergyFluxes()[0][0] > 0.0);
+  }
+
   private TwoFluidSection createGasSection(double position, double gasVelocity) {
     TwoFluidSection section = new TwoFluidSection(position, 10.0, 0.20, 0.0);
     section.setPressure(60.0e5);

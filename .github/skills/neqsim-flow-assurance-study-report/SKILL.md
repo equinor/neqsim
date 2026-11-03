@@ -95,6 +95,9 @@ Readiness is `NOT_READY` / `SCREENING` / `REVIEWED`. `REVIEWED` needs a human re
 
 ## Agent procedure
 
+**Flow-diagram gate:** schematic/network sheets and any PFD/BFD figure must pass `neqsim pfd-check` (skill
+`neqsim-pfd-layout-review`, agent `pfd-layout-review`) before the report is issued; map/profile/chart sheets get the visual QA only.
+
 1. Read the task folder, then the route, basis and cases. Ask in ONE message only for what is missing:
    objective, maturity, cases and rates, criteria and their sources, fluid/PVT, insulation and burial data.
 2. `--init`, fill from sources, record every inspected source and gap. Never fill from memory.

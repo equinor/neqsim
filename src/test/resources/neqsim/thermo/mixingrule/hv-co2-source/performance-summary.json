@@ -1,0 +1,5017 @@
+{
+  "base": "9975919e7908fe4ef34bbfeca37055d8883116fa",
+  "model_comparison": {
+    "base": "9975919e7908fe4ef34bbfeca37055d8883116fa",
+    "jvms": 72,
+    "rounds": 720,
+    "measured_operations": 4824000,
+    "maximum_endpoint_residuals": {
+      "balance": 5.551115123125783e-16,
+      "normalization": 1.1102230246251565e-16,
+      "log_fugacity": 2.9289626279904724e-12
+    },
+    "summary": [
+      {
+        "profile": 0,
+        "scenario": "init1",
+        "four_paired_HV_classic_ratios": [
+          1.4030455256501924,
+          2.470330614660314,
+          2.186844822167215,
+          2.1019504478821567
+        ],
+        "median_ratio": 2.144397635024686,
+        "min_ratio": 1.4030455256501924,
+        "max_ratio": 2.470330614660314,
+        "same_binary_later_earlier_controls": {
+          "2": [
+            0.5629696698125555,
+            0.6599315252410141
+          ],
+          "4": [
+            0.9912160261647128,
+            0.6343126640678658
+          ]
+        },
+        "endpoint_results": [
+          {
+            "rule": "2",
+            "T_K": "353.15000000000000",
+            "P_bara": "50.000000000000000",
+            "topology": "GAS/AQUEOUS",
+            "beta0": "0.50613108209900510",
+            "rich_water": "0.012646599746623561",
+            "aqueous_CO2": "0.00054620792248426010"
+          },
+          {
+            "rule": "4",
+            "T_K": "353.15000000000000",
+            "P_bara": "50.000000000000000",
+            "topology": "GAS/AQUEOUS",
+            "beta0": "0.50521157918463190",
+            "rich_water": "0.012777055476930746",
+            "aqueous_CO2": "0.0025132705978621380"
+          }
+        ]
+      },
+      {
+        "profile": 0,
+        "scenario": "init3",
+        "four_paired_HV_classic_ratios": [
+          3.576568679714298,
+          3.277002271253109,
+          2.943694542859146,
+          3.3045236171743313
+        ],
+        "median_ratio": 3.29076294421372,
+        "min_ratio": 2.943694542859146,
+        "max_ratio": 3.576568679714298,
+        "same_binary_later_earlier_controls": {
+          "2": [
+            1.1365394188994455,
+            0.8848716657474861
+          ],
+          "4": [
+            1.0413450965520634,
+            0.9933365283175287
+          ]
+        },
+        "endpoint_results": [
+          {
+            "rule": "2",
+            "T_K": "353.15000000000000",
+            "P_bara": "50.000000000000000",
+            "topology": "GAS/AQUEOUS",
+            "beta0": "0.50613108209900510",
+            "rich_water": "0.012646599746623561",
+            "aqueous_CO2": "0.00054620792248426010"
+          },
+          {
+            "rule": "4",
+            "T_K": "353.15000000000000",
+            "P_bara": "50.000000000000000",
+            "topology": "GAS/AQUEOUS",
+            "beta0": "0.50521157918463190",
+            "rich_water": "0.012777055476930746",
+            "aqueous_CO2": "0.0025132705978621380"
+          }
+        ]
+      },
+      {
+        "profile": 0,
+        "scenario": "flash",
+        "four_paired_HV_classic_ratios": [
+          2.2051034037455466,
+          1.5962949658133399,
+          1.627613537784568,
+          1.5366108410261219
+        ],
+        "median_ratio": 1.611954251798954,
+        "min_ratio": 1.5366108410261219,
+        "max_ratio": 2.2051034037455466,
+        "same_binary_later_earlier_controls": {
+          "2": [
+            1.0710991872657492,
+            1.0615647000856474
+          ],
+          "4": [
+            0.7753787135854301,
+            1.0022107759207872
+          ]
+        },
+        "endpoint_results": [
+          {
+            "rule": "2",
+            "T_K": "353.34999999999997",
+            "P_bara": "50.000000000000000",
+            "topology": "GAS/AQUEOUS",
+            "beta0": "0.50618046875956710",
+            "rich_water": "0.012744792845397876",
+            "aqueous_CO2": "0.00054816879453841510"
+          },
+          {
+            "rule": "4",
+            "T_K": "353.34999999999997",
+            "P_bara": "50.000000000000000",
+            "topology": "GAS/AQUEOUS",
+            "beta0": "0.50526262049569710",
+            "rich_water": "0.012875207272495633",
+            "aqueous_CO2": "0.0025119194985314653"
+          }
+        ]
+      },
+      {
+        "profile": 1,
+        "scenario": "init1",
+        "four_paired_HV_classic_ratios": [
+          6.38806967432223,
+          6.50623163734421,
+          6.114308004331316,
+          6.474962662712119
+        ],
+        "median_ratio": 6.431516168517174,
+        "min_ratio": 6.114308004331316,
+        "max_ratio": 6.50623163734421,
+        "same_binary_later_earlier_controls": {
+          "2": [
+            0.9407465206635783,
+            0.9729779672029835
+          ],
+          "4": [
+            0.9581477797692095,
+            1.030369422805982
+          ]
+        },
+        "endpoint_results": [
+          {
+            "rule": "2",
+            "T_K": "353.15000000000000",
+            "P_bara": "50.000000000000000",
+            "topology": "GAS/AQUEOUS",
+            "beta0": "0.50661699642068940",
+            "rich_water": "0.014305331771711140",
+            "aqueous_CO2": "0.0012775628461522930"
+          },
+          {
+            "rule": "4",
+            "T_K": "353.15000000000000",
+            "P_bara": "50.000000000000000",
+            "topology": "GAS/AQUEOUS",
+            "beta0": "0.50219751199417010",
+            "rich_water": "0.013093240869369027",
+            "aqueous_CO2": "0.0087944136476798970"
+          }
+        ]
+      },
+      {
+        "profile": 1,
+        "scenario": "init3",
+        "four_paired_HV_classic_ratios": [
+          5.885934214063504,
+          5.12360911882835,
+          6.206845710102662,
+          5.673254885780323
+        ],
+        "median_ratio": 5.779594549921914,
+        "min_ratio": 5.12360911882835,
+        "max_ratio": 6.206845710102662,
+        "same_binary_later_earlier_controls": {
+          "2": [
+            1.1743788903779704,
+            1.1132213094544217
+          ],
+          "4": [
+            1.0222775472622994,
+            1.017519772166627
+          ]
+        },
+        "endpoint_results": [
+          {
+            "rule": "2",
+            "T_K": "353.15000000000000",
+            "P_bara": "50.000000000000000",
+            "topology": "GAS/AQUEOUS",
+            "beta0": "0.50661699642068940",
+            "rich_water": "0.014305331771711140",
+            "aqueous_CO2": "0.0012775628461522930"
+          },
+          {
+            "rule": "4",
+            "T_K": "353.15000000000000",
+            "P_bara": "50.000000000000000",
+            "topology": "GAS/AQUEOUS",
+            "beta0": "0.50219751199417010",
+            "rich_water": "0.013093240869369027",
+            "aqueous_CO2": "0.0087944136476798970"
+          }
+        ]
+      },
+      {
+        "profile": 1,
+        "scenario": "flash",
+        "four_paired_HV_classic_ratios": [
+          2.994524496868287,
+          2.701846213964515,
+          3.0177098708353873,
+          3.1331846734708777
+        ],
+        "median_ratio": 3.0061171838518375,
+        "min_ratio": 2.701846213964515,
+        "max_ratio": 3.1331846734708777,
+        "same_binary_later_earlier_controls": {
+          "2": [
+            0.9710893947702322,
+            0.9922361036068319
+          ],
+          "4": [
+            0.8761772386317025,
+            1.0302047199205295
+          ]
+        },
+        "endpoint_results": [
+          {
+            "rule": "2",
+            "T_K": "353.34999999999997",
+            "P_bara": "50.000000000000000",
+            "topology": "GAS/AQUEOUS",
+            "beta0": "0.50667030225556910",
+            "rich_water": "0.014410760181577447",
+            "aqueous_CO2": "0.0012794728641895897"
+          },
+          {
+            "rule": "4",
+            "T_K": "353.34999999999997",
+            "P_bara": "50.000000000000000",
+            "topology": "GAS/AQUEOUS",
+            "beta0": "0.50225859886548000",
+            "rich_water": "0.013192062170782984",
+            "aqueous_CO2": "0.0087740898920793300"
+          }
+        ]
+      },
+      {
+        "profile": 2,
+        "scenario": "init1",
+        "four_paired_HV_classic_ratios": [
+          4.954064525948848,
+          6.434887951057552,
+          6.646541338122946,
+          3.365887367441903
+        ],
+        "median_ratio": 5.694476238503199,
+        "min_ratio": 3.365887367441903,
+        "max_ratio": 6.646541338122946,
+        "same_binary_later_earlier_controls": {
+          "2": [
+            0.7316266527472662,
+            1.8052798800902643
+          ],
+          "4": [
+            0.9503177659023818,
+            0.914215143482262
+          ]
+        },
+        "endpoint_results": [
+          {
+            "rule": "2",
+            "T_K": "353.15000000000000",
+            "P_bara": "50.000000000000000",
+            "topology": "GAS/AQUEOUS",
+            "beta0": "0.50664128425724260",
+            "rich_water": "0.013660517720736634",
+            "aqueous_CO2": "0.00056692620497997850"
+          },
+          {
+            "rule": "4",
+            "T_K": "353.15000000000000",
+            "P_bara": "50.000000000000000",
+            "topology": "GAS/AQUEOUS",
+            "beta0": "0.50207168559817860",
+            "rich_water": "0.013179396452721865",
+            "aqueous_CO2": "0.0091284549653830770"
+          }
+        ]
+      },
+      {
+        "profile": 2,
+        "scenario": "init3",
+        "four_paired_HV_classic_ratios": [
+          5.1910155608964095,
+          6.547691441682367,
+          5.9476332517394255,
+          5.345317299578641
+        ],
+        "median_ratio": 5.646475275659033,
+        "min_ratio": 5.1910155608964095,
+        "max_ratio": 6.547691441682367,
+        "same_binary_later_earlier_controls": {
+          "2": [
+            0.8773225406527411,
+            1.1629774592441575
+          ],
+          "4": [
+            1.1066114565903953,
+            1.045202901523855
+          ]
+        },
+        "endpoint_results": [
+          {
+            "rule": "2",
+            "T_K": "353.15000000000000",
+            "P_bara": "50.000000000000000",
+            "topology": "GAS/AQUEOUS",
+            "beta0": "0.50664128425724260",
+            "rich_water": "0.013660517720736634",
+            "aqueous_CO2": "0.00056692620497997850"
+          },
+          {
+            "rule": "4",
+            "T_K": "353.15000000000000",
+            "P_bara": "50.000000000000000",
+            "topology": "GAS/AQUEOUS",
+            "beta0": "0.50207168559817860",
+            "rich_water": "0.013179396452721865",
+            "aqueous_CO2": "0.0091284549653830770"
+          }
+        ]
+      },
+      {
+        "profile": 2,
+        "scenario": "flash",
+        "four_paired_HV_classic_ratios": [
+          3.6600509775853216,
+          3.2352492581437335,
+          2.297887730557681,
+          3.012106494124978
+        ],
+        "median_ratio": 3.123677876134356,
+        "min_ratio": 2.297887730557681,
+        "max_ratio": 3.6600509775853216,
+        "same_binary_later_earlier_controls": {
+          "2": [
+            1.0150604768617255,
+            0.8259303081424233
+          ],
+          "4": [
+            0.8972480642617954,
+            1.082642120312235
+          ]
+        },
+        "endpoint_results": [
+          {
+            "rule": "2",
+            "T_K": "353.34999999999997",
+            "P_bara": "50.000000000000000",
+            "topology": "GAS/AQUEOUS",
+            "beta0": "0.50669318170537290",
+            "rich_water": "0.013763053625488998",
+            "aqueous_CO2": "0.00056853810996733780"
+          },
+          {
+            "rule": "4",
+            "T_K": "353.34999999999997",
+            "P_bara": "50.000000000000000",
+            "topology": "GAS/AQUEOUS",
+            "beta0": "0.50213289038849740",
+            "rich_water": "0.013278948191045137",
+            "aqueous_CO2": "0.0091086680771699300"
+          }
+        ]
+      }
+    ],
+    "forks": [
+      {
+        "selection": [
+          0,
+          0,
+          "init1",
+          2
+        ],
+        "median_ns_per_operation": 1461.1927500000002,
+        "min_ns_per_operation": 821.2812,
+        "max_ns_per_operation": 12893.2346
+      },
+      {
+        "selection": [
+          0,
+          0,
+          "init1",
+          4
+        ],
+        "median_ns_per_operation": 2050.1199500000002,
+        "min_ns_per_operation": 1825.1604,
+        "max_ns_per_operation": 54365.6902
+      },
+      {
+        "selection": [
+          0,
+          0,
+          "init3",
+          2
+        ],
+        "median_ns_per_operation": 1162.8521,
+        "min_ns_per_operation": 1082.5508,
+        "max_ns_per_operation": 5205.4014
+      },
+      {
+        "selection": [
+          0,
+          0,
+          "init3",
+          4
+        ],
+        "median_ns_per_operation": 4159.020399999999,
+        "min_ns_per_operation": 3613.3777,
+        "max_ns_per_operation": 7588.002
+      },
+      {
+        "selection": [
+          0,
+          0,
+          "flash",
+          2
+        ],
+        "median_ns_per_operation": 85908.155,
+        "min_ns_per_operation": 79294.13,
+        "max_ns_per_operation": 169804.02
+      },
+      {
+        "selection": [
+          0,
+          0,
+          "flash",
+          4
+        ],
+        "median_ns_per_operation": 189436.365,
+        "min_ns_per_operation": 159176.71,
+        "max_ns_per_operation": 244929.25
+      },
+      {
+        "selection": [
+          0,
+          1,
+          "init1",
+          2
+        ],
+        "median_ns_per_operation": 993.221,
+        "min_ns_per_operation": 933.37,
+        "max_ns_per_operation": 14084.8242
+      },
+      {
+        "selection": [
+          0,
+          1,
+          "init1",
+          4
+        ],
+        "median_ns_per_operation": 6344.76495,
+        "min_ns_per_operation": 6042.9511,
+        "max_ns_per_operation": 60071.9187
+      },
+      {
+        "selection": [
+          0,
+          1,
+          "init3",
+          2
+        ],
+        "median_ns_per_operation": 2677.9371,
+        "min_ns_per_operation": 2468.7725,
+        "max_ns_per_operation": 6392.3601
+      },
+      {
+        "selection": [
+          0,
+          1,
+          "init3",
+          4
+        ],
+        "median_ns_per_operation": 15762.1616,
+        "min_ns_per_operation": 14782.999,
+        "max_ns_per_operation": 22693.4838
+      },
+      {
+        "selection": [
+          0,
+          1,
+          "flash",
+          2
+        ],
+        "median_ns_per_operation": 105251.515,
+        "min_ns_per_operation": 91758.24,
+        "max_ns_per_operation": 134686.04
+      },
+      {
+        "selection": [
+          0,
+          1,
+          "flash",
+          4
+        ],
+        "median_ns_per_operation": 315178.24,
+        "min_ns_per_operation": 295314.55,
+        "max_ns_per_operation": 451758.99
+      },
+      {
+        "selection": [
+          0,
+          2,
+          "init1",
+          2
+        ],
+        "median_ns_per_operation": 1377.0708,
+        "min_ns_per_operation": 889.854,
+        "max_ns_per_operation": 16420.5951
+      },
+      {
+        "selection": [
+          0,
+          2,
+          "init1",
+          4
+        ],
+        "median_ns_per_operation": 6822.0976,
+        "min_ns_per_operation": 6286.0023,
+        "max_ns_per_operation": 56750.606
+      },
+      {
+        "selection": [
+          0,
+          2,
+          "init3",
+          2
+        ],
+        "median_ns_per_operation": 2996.8581999999997,
+        "min_ns_per_operation": 2588.8727,
+        "max_ns_per_operation": 6999.4205
+      },
+      {
+        "selection": [
+          0,
+          2,
+          "init3",
+          4
+        ],
+        "median_ns_per_operation": 15556.737550000002,
+        "min_ns_per_operation": 14725.6534,
+        "max_ns_per_operation": 46638.0784
+      },
+      {
+        "selection": [
+          0,
+          2,
+          "flash",
+          2
+        ],
+        "median_ns_per_operation": 97423.20999999999,
+        "min_ns_per_operation": 91879.92,
+        "max_ns_per_operation": 120322.61
+      },
+      {
+        "selection": [
+          0,
+          2,
+          "flash",
+          4
+        ],
+        "median_ns_per_operation": 356573.91500000004,
+        "min_ns_per_operation": 313999.73,
+        "max_ns_per_operation": 393862.68
+      },
+      {
+        "selection": [
+          1,
+          2,
+          "flash",
+          4
+        ],
+        "median_ns_per_operation": 319935.255,
+        "min_ns_per_operation": 293202.04,
+        "max_ns_per_operation": 428866.76
+      },
+      {
+        "selection": [
+          1,
+          2,
+          "flash",
+          2
+        ],
+        "median_ns_per_operation": 98890.45000000001,
+        "min_ns_per_operation": 89097.79,
+        "max_ns_per_operation": 121079.29
+      },
+      {
+        "selection": [
+          1,
+          2,
+          "init3",
+          4
+        ],
+        "median_ns_per_operation": 17215.264,
+        "min_ns_per_operation": 14989.9062,
+        "max_ns_per_operation": 22643.6946
+      },
+      {
+        "selection": [
+          1,
+          2,
+          "init3",
+          2
+        ],
+        "median_ns_per_operation": 2629.2112500000003,
+        "min_ns_per_operation": 2533.2201,
+        "max_ns_per_operation": 6070.3634
+      },
+      {
+        "selection": [
+          1,
+          2,
+          "init1",
+          4
+        ],
+        "median_ns_per_operation": 6483.1605500000005,
+        "min_ns_per_operation": 5828.5121,
+        "max_ns_per_operation": 65363.8713
+      },
+      {
+        "selection": [
+          1,
+          2,
+          "init1",
+          2
+        ],
+        "median_ns_per_operation": 1007.5017,
+        "min_ns_per_operation": 874.264,
+        "max_ns_per_operation": 13450.8288
+      },
+      {
+        "selection": [
+          1,
+          1,
+          "flash",
+          4
+        ],
+        "median_ns_per_operation": 276152.0,
+        "min_ns_per_operation": 263828.82,
+        "max_ns_per_operation": 368495.01
+      },
+      {
+        "selection": [
+          1,
+          1,
+          "flash",
+          2
+        ],
+        "median_ns_per_operation": 102208.63,
+        "min_ns_per_operation": 87341.98,
+        "max_ns_per_operation": 285995.98
+      },
+      {
+        "selection": [
+          1,
+          1,
+          "init3",
+          4
+        ],
+        "median_ns_per_operation": 16113.303899999999,
+        "min_ns_per_operation": 15003.6269,
+        "max_ns_per_operation": 19727.4813
+      },
+      {
+        "selection": [
+          1,
+          1,
+          "init3",
+          2
+        ],
+        "median_ns_per_operation": 3144.9128,
+        "min_ns_per_operation": 2504.3469,
+        "max_ns_per_operation": 7086.5191
+      },
+      {
+        "selection": [
+          1,
+          1,
+          "init1",
+          4
+        ],
+        "median_ns_per_operation": 6079.222449999999,
+        "min_ns_per_operation": 5894.6969,
+        "max_ns_per_operation": 58542.7116
+      },
+      {
+        "selection": [
+          1,
+          1,
+          "init1",
+          2
+        ],
+        "median_ns_per_operation": 934.3692,
+        "min_ns_per_operation": 873.3003,
+        "max_ns_per_operation": 13886.5968
+      },
+      {
+        "selection": [
+          1,
+          0,
+          "flash",
+          4
+        ],
+        "median_ns_per_operation": 146884.925,
+        "min_ns_per_operation": 135328.09,
+        "max_ns_per_operation": 227471.58
+      },
+      {
+        "selection": [
+          1,
+          0,
+          "flash",
+          2
+        ],
+        "median_ns_per_operation": 92016.155,
+        "min_ns_per_operation": 78261.75,
+        "max_ns_per_operation": 133821.66
+      },
+      {
+        "selection": [
+          1,
+          0,
+          "init3",
+          4
+        ],
+        "median_ns_per_operation": 4330.9755000000005,
+        "min_ns_per_operation": 3803.9569,
+        "max_ns_per_operation": 7624.5354
+      },
+      {
+        "selection": [
+          1,
+          0,
+          "init3",
+          2
+        ],
+        "median_ns_per_operation": 1321.62725,
+        "min_ns_per_operation": 1129.0909,
+        "max_ns_per_operation": 4545.1245
+      },
+      {
+        "selection": [
+          1,
+          0,
+          "init1",
+          4
+        ],
+        "median_ns_per_operation": 2032.11175,
+        "min_ns_per_operation": 1816.3558,
+        "max_ns_per_operation": 49521.0536
+      },
+      {
+        "selection": [
+          1,
+          0,
+          "init1",
+          2
+        ],
+        "median_ns_per_operation": 822.6072,
+        "min_ns_per_operation": 719.1603,
+        "max_ns_per_operation": 12284.7823
+      },
+      {
+        "selection": [
+          2,
+          0,
+          "init1",
+          2
+        ],
+        "median_ns_per_operation": 1319.27445,
+        "min_ns_per_operation": 810.6195,
+        "max_ns_per_operation": 12716.9146
+      },
+      {
+        "selection": [
+          2,
+          0,
+          "init1",
+          4
+        ],
+        "median_ns_per_operation": 2885.0485,
+        "min_ns_per_operation": 1859.5781,
+        "max_ns_per_operation": 57691.8343
+      },
+      {
+        "selection": [
+          2,
+          0,
+          "init3",
+          2
+        ],
+        "median_ns_per_operation": 1289.5544,
+        "min_ns_per_operation": 1155.5605,
+        "max_ns_per_operation": 4679.9881
+      },
+      {
+        "selection": [
+          2,
+          0,
+          "init3",
+          4
+        ],
+        "median_ns_per_operation": 3796.05425,
+        "min_ns_per_operation": 3299.4433,
+        "max_ns_per_operation": 7707.8135
+      },
+      {
+        "selection": [
+          2,
+          0,
+          "flash",
+          2
+        ],
+        "median_ns_per_operation": 90720.9,
+        "min_ns_per_operation": 77136.4,
+        "max_ns_per_operation": 124962.92
+      },
+      {
+        "selection": [
+          2,
+          0,
+          "flash",
+          4
+        ],
+        "median_ns_per_operation": 147658.565,
+        "min_ns_per_operation": 139009.8,
+        "max_ns_per_operation": 226259.25
+      },
+      {
+        "selection": [
+          2,
+          1,
+          "init1",
+          2
+        ],
+        "median_ns_per_operation": 955.96805,
+        "min_ns_per_operation": 895.065,
+        "max_ns_per_operation": 14557.2911
+      },
+      {
+        "selection": [
+          2,
+          1,
+          "init1",
+          4
+        ],
+        "median_ns_per_operation": 5845.0831,
+        "min_ns_per_operation": 5658.0985,
+        "max_ns_per_operation": 59137.654
+      },
+      {
+        "selection": [
+          2,
+          1,
+          "init3",
+          2
+        ],
+        "median_ns_per_operation": 2582.5297499999997,
+        "min_ns_per_operation": 2487.4548,
+        "max_ns_per_operation": 5846.635
+      },
+      {
+        "selection": [
+          2,
+          1,
+          "init3",
+          4
+        ],
+        "median_ns_per_operation": 16029.3637,
+        "min_ns_per_operation": 14559.6532,
+        "max_ns_per_operation": 18214.3538
+      },
+      {
+        "selection": [
+          2,
+          1,
+          "flash",
+          2
+        ],
+        "median_ns_per_operation": 95223.45000000001,
+        "min_ns_per_operation": 90478.54,
+        "max_ns_per_operation": 125248.44
+      },
+      {
+        "selection": [
+          2,
+          1,
+          "flash",
+          4
+        ],
+        "median_ns_per_operation": 287356.745,
+        "min_ns_per_operation": 264561.3,
+        "max_ns_per_operation": 303359.49
+      },
+      {
+        "selection": [
+          2,
+          2,
+          "init1",
+          2
+        ],
+        "median_ns_per_operation": 987.60955,
+        "min_ns_per_operation": 876.272,
+        "max_ns_per_operation": 12910.5568
+      },
+      {
+        "selection": [
+          2,
+          2,
+          "init1",
+          4
+        ],
+        "median_ns_per_operation": 6564.1877,
+        "min_ns_per_operation": 5878.1979,
+        "max_ns_per_operation": 59179.9284
+      },
+      {
+        "selection": [
+          2,
+          2,
+          "init3",
+          2
+        ],
+        "median_ns_per_operation": 2556.0323,
+        "min_ns_per_operation": 2447.9742,
+        "max_ns_per_operation": 5808.4031
+      },
+      {
+        "selection": [
+          2,
+          2,
+          "init3",
+          4
+        ],
+        "median_ns_per_operation": 15202.342700000001,
+        "min_ns_per_operation": 14394.6872,
+        "max_ns_per_operation": 21866.1706
+      },
+      {
+        "selection": [
+          2,
+          2,
+          "flash",
+          2
+        ],
+        "median_ns_per_operation": 125287.51999999999,
+        "min_ns_per_operation": 97853.66,
+        "max_ns_per_operation": 151145.03
+      },
+      {
+        "selection": [
+          2,
+          2,
+          "flash",
+          4
+        ],
+        "median_ns_per_operation": 287896.655,
+        "min_ns_per_operation": 277978.65,
+        "max_ns_per_operation": 320281.45
+      },
+      {
+        "selection": [
+          3,
+          2,
+          "flash",
+          4
+        ],
+        "median_ns_per_operation": 311689.04500000004,
+        "min_ns_per_operation": 297128.43,
+        "max_ns_per_operation": 344176.69
+      },
+      {
+        "selection": [
+          3,
+          2,
+          "flash",
+          2
+        ],
+        "median_ns_per_operation": 103478.76000000001,
+        "min_ns_per_operation": 95424.84,
+        "max_ns_per_operation": 134280.31
+      },
+      {
+        "selection": [
+          3,
+          2,
+          "init3",
+          4
+        ],
+        "median_ns_per_operation": 15889.5327,
+        "min_ns_per_operation": 15072.4712,
+        "max_ns_per_operation": 18258.9323
+      },
+      {
+        "selection": [
+          3,
+          2,
+          "init3",
+          2
+        ],
+        "median_ns_per_operation": 2972.60795,
+        "min_ns_per_operation": 2553.1619,
+        "max_ns_per_operation": 6396.4241
+      },
+      {
+        "selection": [
+          3,
+          2,
+          "init1",
+          4
+        ],
+        "median_ns_per_operation": 6001.0797999999995,
+        "min_ns_per_operation": 5704.1793,
+        "max_ns_per_operation": 66111.1539
+      },
+      {
+        "selection": [
+          3,
+          2,
+          "init1",
+          2
+        ],
+        "median_ns_per_operation": 1782.91165,
+        "min_ns_per_operation": 953.5654,
+        "max_ns_per_operation": 15166.7775
+      },
+      {
+        "selection": [
+          3,
+          1,
+          "flash",
+          4
+        ],
+        "median_ns_per_operation": 296036.275,
+        "min_ns_per_operation": 267447.0,
+        "max_ns_per_operation": 369779.65
+      },
+      {
+        "selection": [
+          3,
+          1,
+          "flash",
+          2
+        ],
+        "median_ns_per_operation": 94484.14499999999,
+        "min_ns_per_operation": 88075.67,
+        "max_ns_per_operation": 118143.28
+      },
+      {
+        "selection": [
+          3,
+          1,
+          "init3",
+          4
+        ],
+        "median_ns_per_operation": 16310.1945,
+        "min_ns_per_operation": 14417.3339,
+        "max_ns_per_operation": 21188.4333
+      },
+      {
+        "selection": [
+          3,
+          1,
+          "init3",
+          2
+        ],
+        "median_ns_per_operation": 2874.92715,
+        "min_ns_per_operation": 2626.0465,
+        "max_ns_per_operation": 6631.9175
+      },
+      {
+        "selection": [
+          3,
+          1,
+          "init1",
+          4
+        ],
+        "median_ns_per_operation": 6022.5949,
+        "min_ns_per_operation": 5861.4713,
+        "max_ns_per_operation": 60167.4476
+      },
+      {
+        "selection": [
+          3,
+          1,
+          "init1",
+          2
+        ],
+        "median_ns_per_operation": 930.13585,
+        "min_ns_per_operation": 887.4058,
+        "max_ns_per_operation": 12930.6027
+      },
+      {
+        "selection": [
+          3,
+          0,
+          "flash",
+          4
+        ],
+        "median_ns_per_operation": 147985.005,
+        "min_ns_per_operation": 130434.49,
+        "max_ns_per_operation": 249570.94
+      },
+      {
+        "selection": [
+          3,
+          0,
+          "flash",
+          2
+        ],
+        "median_ns_per_operation": 96306.105,
+        "min_ns_per_operation": 81307.75,
+        "max_ns_per_operation": 118392.81
+      },
+      {
+        "selection": [
+          3,
+          0,
+          "init3",
+          4
+        ],
+        "median_ns_per_operation": 3770.7593500000003,
+        "min_ns_per_operation": 3570.3823,
+        "max_ns_per_operation": 7130.5044
+      },
+      {
+        "selection": [
+          3,
+          0,
+          "init3",
+          2
+        ],
+        "median_ns_per_operation": 1141.09015,
+        "min_ns_per_operation": 1069.0531,
+        "max_ns_per_operation": 4445.0252
+      },
+      {
+        "selection": [
+          3,
+          0,
+          "init1",
+          4
+        ],
+        "median_ns_per_operation": 1830.0228000000002,
+        "min_ns_per_operation": 1784.2618,
+        "max_ns_per_operation": 49949.9716
+      },
+      {
+        "selection": [
+          3,
+          0,
+          "init1",
+          2
+        ],
+        "median_ns_per_operation": 870.6307999999999,
+        "min_ns_per_operation": 723.0262,
+        "max_ns_per_operation": 12458.8217
+      }
+    ],
+    "interpretation": "Same-binary model characterization only. Different equilibria/solver work; no isolated code-overhead, optimization, portable speedup or physical accuracy acceptance."
+  },
+  "held_candidate": {
+    "base": "9975919e7908fe4ef34bbfeca37055d8883116fa",
+    "jvms": 72,
+    "rounds": 720,
+    "measured_operations": 5418000,
+    "maximum_endpoint_residuals": {
+      "balance": 1.1102230246251565e-16,
+      "normalization": 0.0,
+      "log_fugacity": 2.9289626279904724e-12
+    },
+    "summary": [
+      {
+        "profile": 0,
+        "scenario": "init1",
+        "forks": 4,
+        "candidate_base": [
+          1.2326293898234024,
+          0.8705408684240743,
+          0.8695218689198618,
+          1.037791222611183
+        ],
+        "candidate_control": [
+          1.1187378815242837,
+          0.8714530447684702,
+          0.7937008730545303,
+          1.0140323355617826
+        ],
+        "identical_binary_control_base": [
+          1.1018035682710066,
+          0.9989532696570723,
+          1.0955284269419248,
+          1.0234301079129173
+        ],
+        "median_candidate_base": 0.9541660455176286,
+        "median_candidate_control": 0.9427426901651264,
+        "maximum_endpoint_differences": {
+          "beta0": 0.0,
+          "rich_water": 0.0,
+          "aqueous_CO2": 0.0
+        }
+      },
+      {
+        "profile": 0,
+        "scenario": "init3",
+        "forks": 2,
+        "candidate_base": [
+          1.081914310592933,
+          1.1038785288473139
+        ],
+        "candidate_control": [
+          1.0375378169020457,
+          1.1858137731844365
+        ],
+        "identical_binary_control_base": [
+          1.042770965036619,
+          0.9309037842282014
+        ],
+        "median_candidate_base": 1.0928964197201234,
+        "median_candidate_control": 1.111675795043241,
+        "maximum_endpoint_differences": {
+          "beta0": 0.0,
+          "rich_water": 0.0,
+          "aqueous_CO2": 0.0
+        }
+      },
+      {
+        "profile": 0,
+        "scenario": "flash",
+        "forks": 2,
+        "candidate_base": [
+          1.09727052894227,
+          1.0539824265670867
+        ],
+        "candidate_control": [
+          1.109489721912266,
+          1.1966606149073242
+        ],
+        "identical_binary_control_base": [
+          0.9889866551003867,
+          0.8807697131811368
+        ],
+        "median_candidate_base": 1.0756264777546782,
+        "median_candidate_control": 1.153075168409795,
+        "maximum_endpoint_differences": {
+          "beta0": 0.0,
+          "rich_water": 0.0,
+          "aqueous_CO2": 0.0
+        }
+      },
+      {
+        "profile": 1,
+        "scenario": "init1",
+        "forks": 4,
+        "candidate_base": [
+          0.6565667156626152,
+          0.5155503330133008,
+          0.536443418611318,
+          0.5781452336976485
+        ],
+        "candidate_control": [
+          0.6144271390175062,
+          0.5656670463809057,
+          0.5960540152935255,
+          0.5899277078930786
+        ],
+        "identical_binary_control_base": [
+          1.0685835210867995,
+          0.9114024518694384,
+          0.899991284090499,
+          0.9800272575134484
+        ],
+        "median_candidate_base": 0.5572943261544832,
+        "median_candidate_control": 0.592990861593302,
+        "maximum_endpoint_differences": {
+          "beta0": 0.0,
+          "rich_water": 0.0,
+          "aqueous_CO2": 0.0
+        }
+      },
+      {
+        "profile": 1,
+        "scenario": "init3",
+        "forks": 2,
+        "candidate_base": [
+          0.9518163921094299,
+          0.9539430987318553
+        ],
+        "candidate_control": [
+          1.0611235800599768,
+          0.9231779389771669
+        ],
+        "identical_binary_control_base": [
+          0.896989200876708,
+          1.0333252761529101
+        ],
+        "median_candidate_base": 0.9528797454206426,
+        "median_candidate_control": 0.9921507595185719,
+        "maximum_endpoint_differences": {
+          "beta0": 0.0,
+          "rich_water": 0.0,
+          "aqueous_CO2": 0.0
+        }
+      },
+      {
+        "profile": 1,
+        "scenario": "flash",
+        "forks": 2,
+        "candidate_base": [
+          0.7454438966517547,
+          0.6931182237825086
+        ],
+        "candidate_control": [
+          0.7387236360266777,
+          0.6100817829344296
+        ],
+        "identical_binary_control_base": [
+          1.0090971241440478,
+          1.1361070649391996
+        ],
+        "median_candidate_base": 0.7192810602171317,
+        "median_candidate_control": 0.6744027094805536,
+        "maximum_endpoint_differences": {
+          "beta0": 0.0,
+          "rich_water": 0.0,
+          "aqueous_CO2": 0.0
+        }
+      },
+      {
+        "profile": 2,
+        "scenario": "init1",
+        "forks": 4,
+        "candidate_base": [
+          0.5830073467841483,
+          0.5929925611034634,
+          0.47311436659100914,
+          0.6120063739252783
+        ],
+        "candidate_control": [
+          0.6112611850825878,
+          0.5244563392436663,
+          0.46389557108064516,
+          0.5588295504146629
+        ],
+        "identical_binary_control_base": [
+          0.9537777974653796,
+          1.130680509951763,
+          1.0198725663383437,
+          1.0951575010146783
+        ],
+        "median_candidate_base": 0.5879999539438059,
+        "median_candidate_control": 0.5416429448291646,
+        "maximum_endpoint_differences": {
+          "beta0": 0.0,
+          "rich_water": 0.0,
+          "aqueous_CO2": 0.0
+        }
+      },
+      {
+        "profile": 2,
+        "scenario": "init3",
+        "forks": 2,
+        "candidate_base": [
+          0.8709847555264779,
+          0.950703454305994
+        ],
+        "candidate_control": [
+          1.0188428992889962,
+          0.9838408020554034
+        ],
+        "identical_binary_control_base": [
+          0.8548764055128601,
+          0.9663183843563103
+        ],
+        "median_candidate_base": 0.9108441049162359,
+        "median_candidate_control": 1.0013418506721998,
+        "maximum_endpoint_differences": {
+          "beta0": 0.0,
+          "rich_water": 0.0,
+          "aqueous_CO2": 0.0
+        }
+      },
+      {
+        "profile": 2,
+        "scenario": "flash",
+        "forks": 2,
+        "candidate_base": [
+          0.6357523329461064,
+          0.7399748861000817
+        ],
+        "candidate_control": [
+          0.5564986773852846,
+          0.7170267601666619
+        ],
+        "identical_binary_control_base": [
+          1.1424148138737653,
+          1.032004559952666
+        ],
+        "median_candidate_base": 0.6878636095230941,
+        "median_candidate_control": 0.6367627187759732,
+        "maximum_endpoint_differences": {
+          "beta0": 0.0,
+          "rich_water": 0.0,
+          "aqueous_CO2": 0.0
+        }
+      }
+    ],
+    "scope": "Four init1 forks; two init3/flash forks. Binary synthetic source configurations. No general throughput/nonregression, large-mixture/allocation, physical accuracy or optimality acceptance."
+  },
+  "adverse_repeat": [
+    {
+      "profile": 0,
+      "scenario": "init3",
+      "forks": 4,
+      "candidate_base": [
+        1.081914310592933,
+        1.1038785288473139,
+        1.0458320332584847,
+        0.9327592031887194
+      ],
+      "candidate_control": [
+        1.0375378169020457,
+        1.1858137731844365,
+        1.0877381158631465,
+        1.0378410665897528
+      ],
+      "control_base": [
+        1.042770965036619,
+        0.9309037842282014,
+        0.9614741066866005,
+        0.8987495611959907
+      ],
+      "median_candidate_base": 1.0638731719257088,
+      "median_candidate_control": 1.0627895912264496
+    },
+    {
+      "profile": 0,
+      "scenario": "flash",
+      "forks": 4,
+      "candidate_base": [
+        1.09727052894227,
+        1.0539824265670867,
+        0.9975562541304208,
+        0.8888410819673618
+      ],
+      "candidate_control": [
+        1.109489721912266,
+        1.1966606149073242,
+        0.8674396691405799,
+        0.9253378365547376
+      ],
+      "control_base": [
+        0.9889866551003867,
+        0.8807697131811368,
+        1.1500007315998755,
+        0.960558454279507
+      ],
+      "median_candidate_base": 1.0257693403487538,
+      "median_candidate_control": 1.0174137792335016
+    }
+  ],
+  "profile": {
+    "profile": 1,
+    "rule": 4,
+    "scenario": "init3",
+    "separate_instrumented_jvm": true,
+    "all_execution_samples": 114,
+    "operation_stack_samples": 103,
+    "top_frames": {
+      "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.diffdiffaT": 45,
+      "neqsim.thermo.component.ComponentGENRTLmodifiedHV.getGamma": 19,
+      "neqsim.thermo.phase.PhaseEos.molarVolume": 12,
+      "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.diffdiffalphaT": 9,
+      "neqsim.thermo.component.ComponentEos.logfugcoefdN": 7,
+      "neqsim.thermo.mixingrule.EosMixingRuleHandler$SRKHuronVidal2.init": 4,
+      "java.lang.StringLatin1.regionMatchesCI": 2,
+      "neqsim.thermo.component.ComponentEos.Finit": 2,
+      "neqsim.thermo.phase.PhaseEos.init": 2,
+      "neqsim.thermo.phase.PhaseGENRTLmodifiedHV.getExcessGibbsEnergy": 1
+    },
+    "neqsim_inclusive_frames": {
+      "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark.operation": 103,
+      "neqsim.thermo.system.SystemThermo.init": 103,
+      "neqsim.thermo.system.SystemThermo.initAnalytic": 103,
+      "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark.main": 103,
+      "neqsim.thermo.phase.PhaseEos.init": 96,
+      "neqsim.thermo.phase.PhaseEos.calcA": 74,
+      "neqsim.thermo.mixingrule.EosMixingRuleHandler$SRKHuronVidal2.calcA": 74,
+      "neqsim.thermo.mixingrule.EosMixingRuleHandler$SRKHuronVidal2.init": 74,
+      "neqsim.thermo.phase.PhaseGENRTLmodifiedHV.getExcessGibbsEnergy": 70,
+      "neqsim.thermo.component.ComponentGENRTLmodifiedHV.getGamma": 69,
+      "neqsim.thermo.component.ComponentEos.diffdiffaT": 54,
+      "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.diffdiffaT": 54,
+      "neqsim.thermo.phase.PhaseEos.molarVolume": 12,
+      "neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam.diffdiffalphaT": 9,
+      "neqsim.thermo.component.ComponentEos.logfugcoefdN": 7,
+      "neqsim.thermo.phase.Phase.init": 4,
+      "neqsim.thermo.component.ComponentEos.init": 4,
+      "neqsim.thermo.component.Component.isHydrocarbon": 2,
+      "neqsim.thermo.component.ComponentEos.Finit": 2
+    },
+    "scope": "Sampling diagnostic includes warmup and measurement; one JVM/binary state, not isolated steady-state CPU percentages or portable cost. No JFR timings pooled with matrix."
+  },
+  "environment": {
+    "base": "9975919e7908fe4ef34bbfeca37055d8883116fa",
+    "start_utc": "2026-10-30T07:58:16.528015+00:00",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+    "logical_cpus": 9,
+    "runs": [
+      {
+        "fork": 0,
+        "profile": 0,
+        "scenario": "init1",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "2",
+          "init1",
+          "target/hv-co2-performance/matrix/fork0_profile0_init1_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.6271580239990726
+      },
+      {
+        "fork": 0,
+        "profile": 0,
+        "scenario": "init1",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init1",
+          "target/hv-co2-performance/matrix/fork0_profile0_init1_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.8901750889999676
+      },
+      {
+        "fork": 0,
+        "profile": 0,
+        "scenario": "init3",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "2",
+          "init3",
+          "target/hv-co2-performance/matrix/fork0_profile0_init3_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.3979847869995865
+      },
+      {
+        "fork": 0,
+        "profile": 0,
+        "scenario": "init3",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init3",
+          "target/hv-co2-performance/matrix/fork0_profile0_init3_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.8258658079994348
+      },
+      {
+        "fork": 0,
+        "profile": 0,
+        "scenario": "flash",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "2",
+          "flash",
+          "target/hv-co2-performance/matrix/fork0_profile0_flash_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 6.783988005998253
+      },
+      {
+        "fork": 0,
+        "profile": 0,
+        "scenario": "flash",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "flash",
+          "target/hv-co2-performance/matrix/fork0_profile0_flash_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 7.641005243000109
+      },
+      {
+        "fork": 0,
+        "profile": 1,
+        "scenario": "init1",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "2",
+          "init1",
+          "target/hv-co2-performance/matrix/fork0_profile1_init1_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.726223203999325
+      },
+      {
+        "fork": 0,
+        "profile": 1,
+        "scenario": "init1",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init1",
+          "target/hv-co2-performance/matrix/fork0_profile1_init1_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 5.130405201998656
+      },
+      {
+        "fork": 0,
+        "profile": 1,
+        "scenario": "init3",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "2",
+          "init3",
+          "target/hv-co2-performance/matrix/fork0_profile1_init3_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.6274727300005907
+      },
+      {
+        "fork": 0,
+        "profile": 1,
+        "scenario": "init3",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init3",
+          "target/hv-co2-performance/matrix/fork0_profile1_init3_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 6.485760567000398
+      },
+      {
+        "fork": 0,
+        "profile": 1,
+        "scenario": "flash",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "2",
+          "flash",
+          "target/hv-co2-performance/matrix/fork0_profile1_flash_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 7.136954518999119
+      },
+      {
+        "fork": 0,
+        "profile": 1,
+        "scenario": "flash",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "flash",
+          "target/hv-co2-performance/matrix/fork0_profile1_flash_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 8.592571158000283
+      },
+      {
+        "fork": 0,
+        "profile": 2,
+        "scenario": "init1",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "2",
+          "init1",
+          "target/hv-co2-performance/matrix/fork0_profile2_init1_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.4268895299992437
+      },
+      {
+        "fork": 0,
+        "profile": 2,
+        "scenario": "init1",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init1",
+          "target/hv-co2-performance/matrix/fork0_profile2_init1_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 4.792626934999134
+      },
+      {
+        "fork": 0,
+        "profile": 2,
+        "scenario": "init3",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "2",
+          "init3",
+          "target/hv-co2-performance/matrix/fork0_profile2_init3_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.6322962810008903
+      },
+      {
+        "fork": 0,
+        "profile": 2,
+        "scenario": "init3",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init3",
+          "target/hv-co2-performance/matrix/fork0_profile2_init3_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 6.635240368999803
+      },
+      {
+        "fork": 0,
+        "profile": 2,
+        "scenario": "flash",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "2",
+          "flash",
+          "target/hv-co2-performance/matrix/fork0_profile2_flash_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 7.3488909259995125
+      },
+      {
+        "fork": 0,
+        "profile": 2,
+        "scenario": "flash",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "flash",
+          "target/hv-co2-performance/matrix/fork0_profile2_flash_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 8.893138227998861
+      },
+      {
+        "fork": 1,
+        "profile": 2,
+        "scenario": "flash",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "flash",
+          "target/hv-co2-performance/matrix/fork1_profile2_flash_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 8.590838431999146
+      },
+      {
+        "fork": 1,
+        "profile": 2,
+        "scenario": "flash",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "2",
+          "flash",
+          "target/hv-co2-performance/matrix/fork1_profile2_flash_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 6.933961732000171
+      },
+      {
+        "fork": 1,
+        "profile": 2,
+        "scenario": "init3",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init3",
+          "target/hv-co2-performance/matrix/fork1_profile2_init3_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 6.134713777000798
+      },
+      {
+        "fork": 1,
+        "profile": 2,
+        "scenario": "init3",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "2",
+          "init3",
+          "target/hv-co2-performance/matrix/fork1_profile2_init3_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.4256148929998744
+      },
+      {
+        "fork": 1,
+        "profile": 2,
+        "scenario": "init1",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init1",
+          "target/hv-co2-performance/matrix/fork1_profile2_init1_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 4.781102401999306
+      },
+      {
+        "fork": 1,
+        "profile": 2,
+        "scenario": "init1",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "2",
+          "init1",
+          "target/hv-co2-performance/matrix/fork1_profile2_init1_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.1748929969999153
+      },
+      {
+        "fork": 1,
+        "profile": 1,
+        "scenario": "flash",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "flash",
+          "target/hv-co2-performance/matrix/fork1_profile1_flash_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 8.090505326999846
+      },
+      {
+        "fork": 1,
+        "profile": 1,
+        "scenario": "flash",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "2",
+          "flash",
+          "target/hv-co2-performance/matrix/fork1_profile1_flash_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 6.788546331999896
+      },
+      {
+        "fork": 1,
+        "profile": 1,
+        "scenario": "init3",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init3",
+          "target/hv-co2-performance/matrix/fork1_profile1_init3_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 6.333040378000078
+      },
+      {
+        "fork": 1,
+        "profile": 1,
+        "scenario": "init3",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "2",
+          "init3",
+          "target/hv-co2-performance/matrix/fork1_profile1_init3_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.525131942000371
+      },
+      {
+        "fork": 1,
+        "profile": 1,
+        "scenario": "init1",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init1",
+          "target/hv-co2-performance/matrix/fork1_profile1_init1_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 4.579029765000087
+      },
+      {
+        "fork": 1,
+        "profile": 1,
+        "scenario": "init1",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "2",
+          "init1",
+          "target/hv-co2-performance/matrix/fork1_profile1_init1_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.123945883999113
+      },
+      {
+        "fork": 1,
+        "profile": 0,
+        "scenario": "flash",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "flash",
+          "target/hv-co2-performance/matrix/fork1_profile0_flash_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 7.336654557999282
+      },
+      {
+        "fork": 1,
+        "profile": 0,
+        "scenario": "flash",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "2",
+          "flash",
+          "target/hv-co2-performance/matrix/fork1_profile0_flash_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 6.73409372199967
+      },
+      {
+        "fork": 1,
+        "profile": 0,
+        "scenario": "init3",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init3",
+          "target/hv-co2-performance/matrix/fork1_profile0_init3_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.8258321810008056
+      },
+      {
+        "fork": 1,
+        "profile": 0,
+        "scenario": "init3",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "2",
+          "init3",
+          "target/hv-co2-performance/matrix/fork1_profile0_init3_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.173172394001085
+      },
+      {
+        "fork": 1,
+        "profile": 0,
+        "scenario": "init1",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init1",
+          "target/hv-co2-performance/matrix/fork1_profile0_init1_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.5758170139997674
+      },
+      {
+        "fork": 1,
+        "profile": 0,
+        "scenario": "init1",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "2",
+          "init1",
+          "target/hv-co2-performance/matrix/fork1_profile0_init1_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.086872787000175
+      },
+      {
+        "fork": 2,
+        "profile": 0,
+        "scenario": "init1",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "2",
+          "init1",
+          "target/hv-co2-performance/matrix/fork2_profile0_init1_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.1854200570014655
+      },
+      {
+        "fork": 2,
+        "profile": 0,
+        "scenario": "init1",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init1",
+          "target/hv-co2-performance/matrix/fork2_profile0_init1_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 4.378865008999128
+      },
+      {
+        "fork": 2,
+        "profile": 0,
+        "scenario": "init3",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "2",
+          "init3",
+          "target/hv-co2-performance/matrix/fork2_profile0_init3_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.7310699059999024
+      },
+      {
+        "fork": 2,
+        "profile": 0,
+        "scenario": "init3",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init3",
+          "target/hv-co2-performance/matrix/fork2_profile0_init3_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 4.327691862999927
+      },
+      {
+        "fork": 2,
+        "profile": 0,
+        "scenario": "flash",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "2",
+          "flash",
+          "target/hv-co2-performance/matrix/fork2_profile0_flash_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 7.1035218730012275
+      },
+      {
+        "fork": 2,
+        "profile": 0,
+        "scenario": "flash",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "flash",
+          "target/hv-co2-performance/matrix/fork2_profile0_flash_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 6.840201883998816
+      },
+      {
+        "fork": 2,
+        "profile": 1,
+        "scenario": "init1",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "2",
+          "init1",
+          "target/hv-co2-performance/matrix/fork2_profile1_init1_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.1228874639982678
+      },
+      {
+        "fork": 2,
+        "profile": 1,
+        "scenario": "init1",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init1",
+          "target/hv-co2-performance/matrix/fork2_profile1_init1_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 4.5807294770002045
+      },
+      {
+        "fork": 2,
+        "profile": 1,
+        "scenario": "init3",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "2",
+          "init3",
+          "target/hv-co2-performance/matrix/fork2_profile1_init3_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.324649063000834
+      },
+      {
+        "fork": 2,
+        "profile": 1,
+        "scenario": "init3",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init3",
+          "target/hv-co2-performance/matrix/fork2_profile1_init3_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 6.032032264998634
+      },
+      {
+        "fork": 2,
+        "profile": 1,
+        "scenario": "flash",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "2",
+          "flash",
+          "target/hv-co2-performance/matrix/fork2_profile1_flash_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 6.997288155000206
+      },
+      {
+        "fork": 2,
+        "profile": 1,
+        "scenario": "flash",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "flash",
+          "target/hv-co2-performance/matrix/fork2_profile1_flash_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 7.988535591000982
+      },
+      {
+        "fork": 2,
+        "profile": 2,
+        "scenario": "init1",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "2",
+          "init1",
+          "target/hv-co2-performance/matrix/fork2_profile2_init1_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.224790390000635
+      },
+      {
+        "fork": 2,
+        "profile": 2,
+        "scenario": "init1",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init1",
+          "target/hv-co2-performance/matrix/fork2_profile2_init1_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 4.729449272999773
+      },
+      {
+        "fork": 2,
+        "profile": 2,
+        "scenario": "init3",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "2",
+          "init3",
+          "target/hv-co2-performance/matrix/fork2_profile2_init3_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.4245978250000917
+      },
+      {
+        "fork": 2,
+        "profile": 2,
+        "scenario": "init3",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init3",
+          "target/hv-co2-performance/matrix/fork2_profile2_init3_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 6.18317573099921
+      },
+      {
+        "fork": 2,
+        "profile": 2,
+        "scenario": "flash",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "2",
+          "flash",
+          "target/hv-co2-performance/matrix/fork2_profile2_flash_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 7.390651845998946
+      },
+      {
+        "fork": 2,
+        "profile": 2,
+        "scenario": "flash",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "flash",
+          "target/hv-co2-performance/matrix/fork2_profile2_flash_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 8.543010867000703
+      },
+      {
+        "fork": 3,
+        "profile": 2,
+        "scenario": "flash",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "flash",
+          "target/hv-co2-performance/matrix/fork3_profile2_flash_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 8.339039542999672
+      },
+      {
+        "fork": 3,
+        "profile": 2,
+        "scenario": "flash",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "2",
+          "flash",
+          "target/hv-co2-performance/matrix/fork3_profile2_flash_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 7.037563817000773
+      },
+      {
+        "fork": 3,
+        "profile": 2,
+        "scenario": "init3",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init3",
+          "target/hv-co2-performance/matrix/fork3_profile2_init3_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 6.033118548999482
+      },
+      {
+        "fork": 3,
+        "profile": 2,
+        "scenario": "init3",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "2",
+          "init3",
+          "target/hv-co2-performance/matrix/fork3_profile2_init3_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.52547616999982
+      },
+      {
+        "fork": 3,
+        "profile": 2,
+        "scenario": "init1",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init1",
+          "target/hv-co2-performance/matrix/fork3_profile2_init1_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 4.679793179000626
+      },
+      {
+        "fork": 3,
+        "profile": 2,
+        "scenario": "init1",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "2",
+          "init1",
+          "target/hv-co2-performance/matrix/fork3_profile2_init1_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.3247121459990012
+      },
+      {
+        "fork": 3,
+        "profile": 1,
+        "scenario": "flash",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "flash",
+          "target/hv-co2-performance/matrix/fork3_profile1_flash_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 7.888407362999715
+      },
+      {
+        "fork": 3,
+        "profile": 1,
+        "scenario": "flash",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "2",
+          "flash",
+          "target/hv-co2-performance/matrix/fork3_profile1_flash_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 6.938317952999569
+      },
+      {
+        "fork": 3,
+        "profile": 1,
+        "scenario": "init3",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init3",
+          "target/hv-co2-performance/matrix/fork3_profile1_init3_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 6.235276075998627
+      },
+      {
+        "fork": 3,
+        "profile": 1,
+        "scenario": "init3",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "2",
+          "init3",
+          "target/hv-co2-performance/matrix/fork3_profile1_init3_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.425424342000042
+      },
+      {
+        "fork": 3,
+        "profile": 1,
+        "scenario": "init1",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init1",
+          "target/hv-co2-performance/matrix/fork3_profile1_init1_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 4.579145979001623
+      },
+      {
+        "fork": 3,
+        "profile": 1,
+        "scenario": "init1",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "2",
+          "init1",
+          "target/hv-co2-performance/matrix/fork3_profile1_init1_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.4759080249987164
+      },
+      {
+        "fork": 3,
+        "profile": 0,
+        "scenario": "flash",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "flash",
+          "target/hv-co2-performance/matrix/fork3_profile0_flash_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 7.040352095000344
+      },
+      {
+        "fork": 3,
+        "profile": 0,
+        "scenario": "flash",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "2",
+          "flash",
+          "target/hv-co2-performance/matrix/fork3_profile0_flash_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 6.735448273999282
+      },
+      {
+        "fork": 3,
+        "profile": 0,
+        "scenario": "init3",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init3",
+          "target/hv-co2-performance/matrix/fork3_profile0_init3_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.825674474999687
+      },
+      {
+        "fork": 3,
+        "profile": 0,
+        "scenario": "init3",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "2",
+          "init3",
+          "target/hv-co2-performance/matrix/fork3_profile0_init3_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.0256429510009184
+      },
+      {
+        "fork": 3,
+        "profile": 0,
+        "scenario": "init1",
+        "rule": 4,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init1",
+          "target/hv-co2-performance/matrix/fork3_profile0_init1_rule4.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.4827095399996324
+      },
+      {
+        "fork": 3,
+        "profile": 0,
+        "scenario": "init1",
+        "rule": 2,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "2",
+          "init1",
+          "target/hv-co2-performance/matrix/fork3_profile0_init1_rule2.csv"
+        ],
+        "exit": 0,
+        "wall_seconds_including_startup": 3.22328976999961
+      }
+    ],
+    "source_sha256": {
+      "src/test/java/neqsim/thermo/mixingrule/HuronVidalCo2SourcePerformanceBenchmark.java": "45072d5ad0f14c9f3a2cfc8fb56f261b1f333589d22ace673cf0bc849212bd5b",
+      "src/test/java/neqsim/thermo/mixingrule/HuronVidalCo2SourceDiagnosticTest.java": "a6efab6717e52a5ba1c33911e974e44b7bce1179dc6600e437d20b213c4fd7ad"
+    },
+    "finish_utc": "2026-10-30T08:04:36.337746+00:00"
+  },
+  "held_candidate_manifest": {
+    "base": "9975919e7908fe4ef34bbfeca37055d8883116fa",
+    "start_utc": "2026-10-30T08:08:27.993496+00:00",
+    "runs": [
+      {
+        "fork": 0,
+        "profile": 0,
+        "scenario": "init1",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork0_profile0_init1_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 3.726186392001182
+      },
+      {
+        "fork": 0,
+        "profile": 0,
+        "scenario": "init1",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork0_profile0_init1_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 3.9783273819994065
+      },
+      {
+        "fork": 0,
+        "profile": 0,
+        "scenario": "init1",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork0_profile0_init1_control.csv"
+        ],
+        "wall_seconds_including_startup": 4.033315992999633
+      },
+      {
+        "fork": 0,
+        "profile": 0,
+        "scenario": "init3",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init3",
+          "target/hv-co2-performance/candidate/fork0_profile0_init3_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 4.1294359089988575
+      },
+      {
+        "fork": 0,
+        "profile": 0,
+        "scenario": "init3",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init3",
+          "target/hv-co2-performance/candidate/fork0_profile0_init3_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 4.3798005750013544
+      },
+      {
+        "fork": 0,
+        "profile": 0,
+        "scenario": "init3",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init3",
+          "target/hv-co2-performance/candidate/fork0_profile0_init3_control.csv"
+        ],
+        "wall_seconds_including_startup": 4.230050699001367
+      },
+      {
+        "fork": 0,
+        "profile": 0,
+        "scenario": "flash",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "flash",
+          "target/hv-co2-performance/candidate/fork0_profile0_flash_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 8.19275562400071
+      },
+      {
+        "fork": 0,
+        "profile": 0,
+        "scenario": "flash",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "flash",
+          "target/hv-co2-performance/candidate/fork0_profile0_flash_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 7.186196926999401
+      },
+      {
+        "fork": 0,
+        "profile": 0,
+        "scenario": "flash",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "flash",
+          "target/hv-co2-performance/candidate/fork0_profile0_flash_control.csv"
+        ],
+        "wall_seconds_including_startup": 7.093686477999654
+      },
+      {
+        "fork": 0,
+        "profile": 1,
+        "scenario": "init1",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork0_profile1_init1_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 4.6802274029996624
+      },
+      {
+        "fork": 0,
+        "profile": 1,
+        "scenario": "init1",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork0_profile1_init1_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 3.8254154009991908
+      },
+      {
+        "fork": 0,
+        "profile": 1,
+        "scenario": "init1",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork0_profile1_init1_control.csv"
+        ],
+        "wall_seconds_including_startup": 4.577378621999742
+      },
+      {
+        "fork": 0,
+        "profile": 1,
+        "scenario": "init3",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init3",
+          "target/hv-co2-performance/candidate/fork0_profile1_init3_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 6.433320504000221
+      },
+      {
+        "fork": 0,
+        "profile": 1,
+        "scenario": "init3",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init3",
+          "target/hv-co2-performance/candidate/fork0_profile1_init3_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 6.585049220999281
+      },
+      {
+        "fork": 0,
+        "profile": 1,
+        "scenario": "init3",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init3",
+          "target/hv-co2-performance/candidate/fork0_profile1_init3_control.csv"
+        ],
+        "wall_seconds_including_startup": 6.3389040820002265
+      },
+      {
+        "fork": 0,
+        "profile": 1,
+        "scenario": "flash",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "flash",
+          "target/hv-co2-performance/candidate/fork0_profile1_flash_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 8.263474772000336
+      },
+      {
+        "fork": 0,
+        "profile": 1,
+        "scenario": "flash",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "flash",
+          "target/hv-co2-performance/candidate/fork0_profile1_flash_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 8.038846782001201
+      },
+      {
+        "fork": 0,
+        "profile": 1,
+        "scenario": "flash",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "flash",
+          "target/hv-co2-performance/candidate/fork0_profile1_flash_control.csv"
+        ],
+        "wall_seconds_including_startup": 8.749416392000057
+      },
+      {
+        "fork": 0,
+        "profile": 2,
+        "scenario": "init1",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork0_profile2_init1_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 5.084018691999518
+      },
+      {
+        "fork": 0,
+        "profile": 2,
+        "scenario": "init1",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork0_profile2_init1_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 4.283261022999795
+      },
+      {
+        "fork": 0,
+        "profile": 2,
+        "scenario": "init1",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork0_profile2_init1_control.csv"
+        ],
+        "wall_seconds_including_startup": 5.03139833899877
+      },
+      {
+        "fork": 0,
+        "profile": 2,
+        "scenario": "init3",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init3",
+          "target/hv-co2-performance/candidate/fork0_profile2_init3_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 6.8903818120015785
+      },
+      {
+        "fork": 0,
+        "profile": 2,
+        "scenario": "init3",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init3",
+          "target/hv-co2-performance/candidate/fork0_profile2_init3_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 7.545416987999488
+      },
+      {
+        "fork": 0,
+        "profile": 2,
+        "scenario": "init3",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init3",
+          "target/hv-co2-performance/candidate/fork0_profile2_init3_control.csv"
+        ],
+        "wall_seconds_including_startup": 6.7351965809994
+      },
+      {
+        "fork": 0,
+        "profile": 2,
+        "scenario": "flash",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "flash",
+          "target/hv-co2-performance/candidate/fork0_profile2_flash_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 9.625607772000876
+      },
+      {
+        "fork": 0,
+        "profile": 2,
+        "scenario": "flash",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "flash",
+          "target/hv-co2-performance/candidate/fork0_profile2_flash_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 8.442251817999932
+      },
+      {
+        "fork": 0,
+        "profile": 2,
+        "scenario": "flash",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "flash",
+          "target/hv-co2-performance/candidate/fork0_profile2_flash_control.csv"
+        ],
+        "wall_seconds_including_startup": 8.694917628999974
+      },
+      {
+        "fork": 1,
+        "profile": 2,
+        "scenario": "flash",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "flash",
+          "target/hv-co2-performance/candidate/fork1_profile2_flash_control.csv"
+        ],
+        "wall_seconds_including_startup": 8.494775655000922
+      },
+      {
+        "fork": 1,
+        "profile": 2,
+        "scenario": "flash",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "flash",
+          "target/hv-co2-performance/candidate/fork1_profile2_flash_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 8.292839977999392
+      },
+      {
+        "fork": 1,
+        "profile": 2,
+        "scenario": "flash",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "flash",
+          "target/hv-co2-performance/candidate/fork1_profile2_flash_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 8.339023255999564
+      },
+      {
+        "fork": 1,
+        "profile": 2,
+        "scenario": "init3",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init3",
+          "target/hv-co2-performance/candidate/fork1_profile2_init3_control.csv"
+        ],
+        "wall_seconds_including_startup": 6.233623093999995
+      },
+      {
+        "fork": 1,
+        "profile": 2,
+        "scenario": "init3",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init3",
+          "target/hv-co2-performance/candidate/fork1_profile2_init3_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 6.137256087999049
+      },
+      {
+        "fork": 1,
+        "profile": 2,
+        "scenario": "init3",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init3",
+          "target/hv-co2-performance/candidate/fork1_profile2_init3_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 7.151196389999313
+      },
+      {
+        "fork": 1,
+        "profile": 2,
+        "scenario": "init1",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork1_profile2_init1_control.csv"
+        ],
+        "wall_seconds_including_startup": 5.029408107999188
+      },
+      {
+        "fork": 1,
+        "profile": 2,
+        "scenario": "init1",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork1_profile2_init1_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 4.1782516530001885
+      },
+      {
+        "fork": 1,
+        "profile": 2,
+        "scenario": "init1",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork1_profile2_init1_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 4.7811449370001355
+      },
+      {
+        "fork": 1,
+        "profile": 1,
+        "scenario": "flash",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "flash",
+          "target/hv-co2-performance/candidate/fork1_profile1_flash_control.csv"
+        ],
+        "wall_seconds_including_startup": 8.509897690000798
+      },
+      {
+        "fork": 1,
+        "profile": 1,
+        "scenario": "flash",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "flash",
+          "target/hv-co2-performance/candidate/fork1_profile1_flash_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 7.890280510999219
+      },
+      {
+        "fork": 1,
+        "profile": 1,
+        "scenario": "flash",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "flash",
+          "target/hv-co2-performance/candidate/fork1_profile1_flash_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 7.939099359999091
+      },
+      {
+        "fork": 1,
+        "profile": 1,
+        "scenario": "init3",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init3",
+          "target/hv-co2-performance/candidate/fork1_profile1_init3_control.csv"
+        ],
+        "wall_seconds_including_startup": 6.335183408999001
+      },
+      {
+        "fork": 1,
+        "profile": 1,
+        "scenario": "init3",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init3",
+          "target/hv-co2-performance/candidate/fork1_profile1_init3_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 6.1542366899993795
+      },
+      {
+        "fork": 1,
+        "profile": 1,
+        "scenario": "init3",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init3",
+          "target/hv-co2-performance/candidate/fork1_profile1_init3_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 6.185551843000212
+      },
+      {
+        "fork": 1,
+        "profile": 1,
+        "scenario": "init1",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork1_profile1_init1_control.csv"
+        ],
+        "wall_seconds_including_startup": 4.527113897000163
+      },
+      {
+        "fork": 1,
+        "profile": 1,
+        "scenario": "init1",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork1_profile1_init1_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 3.8251711540015094
+      },
+      {
+        "fork": 1,
+        "profile": 1,
+        "scenario": "init1",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork1_profile1_init1_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 4.677459043999988
+      },
+      {
+        "fork": 1,
+        "profile": 0,
+        "scenario": "flash",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "flash",
+          "target/hv-co2-performance/candidate/fork1_profile0_flash_control.csv"
+        ],
+        "wall_seconds_including_startup": 7.326086067001597
+      },
+      {
+        "fork": 1,
+        "profile": 0,
+        "scenario": "flash",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "flash",
+          "target/hv-co2-performance/candidate/fork1_profile0_flash_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 7.139538852999976
+      },
+      {
+        "fork": 1,
+        "profile": 0,
+        "scenario": "flash",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "flash",
+          "target/hv-co2-performance/candidate/fork1_profile0_flash_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 6.750085304000095
+      },
+      {
+        "fork": 1,
+        "profile": 0,
+        "scenario": "init3",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init3",
+          "target/hv-co2-performance/candidate/fork1_profile0_init3_control.csv"
+        ],
+        "wall_seconds_including_startup": 3.726056764000532
+      },
+      {
+        "fork": 1,
+        "profile": 0,
+        "scenario": "init3",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init3",
+          "target/hv-co2-performance/candidate/fork1_profile0_init3_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 3.825764514000184
+      },
+      {
+        "fork": 1,
+        "profile": 0,
+        "scenario": "init3",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init3",
+          "target/hv-co2-performance/candidate/fork1_profile0_init3_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 3.876345341999695
+      },
+      {
+        "fork": 1,
+        "profile": 0,
+        "scenario": "init1",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork1_profile0_init1_control.csv"
+        ],
+        "wall_seconds_including_startup": 3.9289772000011
+      },
+      {
+        "fork": 1,
+        "profile": 0,
+        "scenario": "init1",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork1_profile0_init1_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 3.8764670740001748
+      },
+      {
+        "fork": 1,
+        "profile": 0,
+        "scenario": "init1",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork1_profile0_init1_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 4.026439778001077
+      },
+      {
+        "fork": 2,
+        "profile": 0,
+        "scenario": "init1",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork2_profile0_init1_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 4.181553951999376
+      },
+      {
+        "fork": 2,
+        "profile": 0,
+        "scenario": "init1",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork2_profile0_init1_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 3.782957986000838
+      },
+      {
+        "fork": 2,
+        "profile": 0,
+        "scenario": "init1",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork2_profile0_init1_control.csv"
+        ],
+        "wall_seconds_including_startup": 4.32886992100066
+      },
+      {
+        "fork": 2,
+        "profile": 1,
+        "scenario": "init1",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork2_profile1_init1_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 5.232654515999457
+      },
+      {
+        "fork": 2,
+        "profile": 1,
+        "scenario": "init1",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork2_profile1_init1_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 4.289410737999788
+      },
+      {
+        "fork": 2,
+        "profile": 1,
+        "scenario": "init1",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork2_profile1_init1_control.csv"
+        ],
+        "wall_seconds_including_startup": 4.6352136400000745
+      },
+      {
+        "fork": 2,
+        "profile": 2,
+        "scenario": "init1",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork2_profile2_init1_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 4.780824924999251
+      },
+      {
+        "fork": 2,
+        "profile": 2,
+        "scenario": "init1",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork2_profile2_init1_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 3.875983604999419
+      },
+      {
+        "fork": 2,
+        "profile": 2,
+        "scenario": "init1",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork2_profile2_init1_control.csv"
+        ],
+        "wall_seconds_including_startup": 4.77932938000049
+      },
+      {
+        "fork": 3,
+        "profile": 2,
+        "scenario": "init1",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork3_profile2_init1_control.csv"
+        ],
+        "wall_seconds_including_startup": 4.734371495000232
+      },
+      {
+        "fork": 3,
+        "profile": 2,
+        "scenario": "init1",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork3_profile2_init1_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 3.9788376449996576
+      },
+      {
+        "fork": 3,
+        "profile": 2,
+        "scenario": "init1",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "2",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork3_profile2_init1_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 4.831086442000014
+      },
+      {
+        "fork": 3,
+        "profile": 1,
+        "scenario": "init1",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork3_profile1_init1_control.csv"
+        ],
+        "wall_seconds_including_startup": 4.534712603999651
+      },
+      {
+        "fork": 3,
+        "profile": 1,
+        "scenario": "init1",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork3_profile1_init1_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 4.129838142000153
+      },
+      {
+        "fork": 3,
+        "profile": 1,
+        "scenario": "init1",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "1",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork3_profile1_init1_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 4.631271593998463
+      },
+      {
+        "fork": 3,
+        "profile": 0,
+        "scenario": "init1",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork3_profile0_init1_control.csv"
+        ],
+        "wall_seconds_including_startup": 4.027076368000053
+      },
+      {
+        "fork": 3,
+        "profile": 0,
+        "scenario": "init1",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork3_profile0_init1_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 3.8303734549990622
+      },
+      {
+        "fork": 3,
+        "profile": 0,
+        "scenario": "init1",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init1",
+          "target/hv-co2-performance/candidate/fork3_profile0_init1_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 3.675363409000056
+      }
+    ],
+    "sha256": {
+      "src/main/java/neqsim/thermo/component/ComponentGENRTLmodifiedHV.java": "0b1fae629585c58cd5940cb1a0d2884cffa8d709707384b4d211f9dd35ad6393",
+      "target/hv-co2-performance/ComponentGENRTLmodifiedHV.baseline.java": "677082a61023013d455265bc248e63f462d000442053e5a0fbdd57d7b4d763e3",
+      "target/classes/neqsim/thermo/component/ComponentGENRTLmodifiedHV.class": "26a24cc43c849c3405f4443c8531a39e4aaa7828598d5a13fe6859621e9fa604",
+      "target/candidate-classes/neqsim/thermo/component/ComponentGENRTLmodifiedHV.class": "6ad6b58a698795079054b001ea3d22563f7eff6b6f6aa6c569d53c797f8bd3f7",
+      "src/test/java/neqsim/thermo/mixingrule/HuronVidalCo2SourcePerformanceBenchmark.java": "45072d5ad0f14c9f3a2cfc8fb56f261b1f333589d22ace673cf0bc849212bd5b",
+      "src/test/java/neqsim/thermo/mixingrule/HuronVidalCo2SourceDiagnosticTest.java": "a6efab6717e52a5ba1c33911e974e44b7bce1179dc6600e437d20b213c4fd7ad"
+    },
+    "finish_utc": "2026-10-30T08:15:12.260907+00:00"
+  },
+  "repeat_manifest": {
+    "base": "9975919e7908fe4ef34bbfeca37055d8883116fa",
+    "start_utc": "2026-10-30T08:16:47.266007+00:00",
+    "runs": [
+      {
+        "fork": 4,
+        "profile": 0,
+        "scenario": "init3",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init3",
+          "target/hv-co2-performance/pr0-repeat/fork4_profile0_init3_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 4.316229021998879
+      },
+      {
+        "fork": 4,
+        "profile": 0,
+        "scenario": "init3",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init3",
+          "target/hv-co2-performance/pr0-repeat/fork4_profile0_init3_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 4.706383093000113
+      },
+      {
+        "fork": 4,
+        "profile": 0,
+        "scenario": "init3",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init3",
+          "target/hv-co2-performance/pr0-repeat/fork4_profile0_init3_control.csv"
+        ],
+        "wall_seconds_including_startup": 4.260442127000715
+      },
+      {
+        "fork": 4,
+        "profile": 0,
+        "scenario": "flash",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "flash",
+          "target/hv-co2-performance/pr0-repeat/fork4_profile0_flash_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 8.852291089000573
+      },
+      {
+        "fork": 4,
+        "profile": 0,
+        "scenario": "flash",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "flash",
+          "target/hv-co2-performance/pr0-repeat/fork4_profile0_flash_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 8.01423103200068
+      },
+      {
+        "fork": 4,
+        "profile": 0,
+        "scenario": "flash",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "flash",
+          "target/hv-co2-performance/pr0-repeat/fork4_profile0_flash_control.csv"
+        ],
+        "wall_seconds_including_startup": 7.407057166999948
+      },
+      {
+        "fork": 5,
+        "profile": 0,
+        "scenario": "flash",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "flash",
+          "target/hv-co2-performance/pr0-repeat/fork5_profile0_flash_control.csv"
+        ],
+        "wall_seconds_including_startup": 7.76273099899845
+      },
+      {
+        "fork": 5,
+        "profile": 0,
+        "scenario": "flash",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "flash",
+          "target/hv-co2-performance/pr0-repeat/fork5_profile0_flash_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 7.69219755299855
+      },
+      {
+        "fork": 5,
+        "profile": 0,
+        "scenario": "flash",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "flash",
+          "target/hv-co2-performance/pr0-repeat/fork5_profile0_flash_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 8.018649351999557
+      },
+      {
+        "fork": 5,
+        "profile": 0,
+        "scenario": "init3",
+        "variant": "control",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init3",
+          "target/hv-co2-performance/pr0-repeat/fork5_profile0_init3_control.csv"
+        ],
+        "wall_seconds_including_startup": 4.1413108489996375
+      },
+      {
+        "fork": 5,
+        "profile": 0,
+        "scenario": "init3",
+        "variant": "candidate",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/candidate-classes:target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init3",
+          "target/hv-co2-performance/pr0-repeat/fork5_profile0_init3_candidate.csv"
+        ],
+        "wall_seconds_including_startup": 4.755521409000721
+      },
+      {
+        "fork": 5,
+        "profile": 0,
+        "scenario": "init3",
+        "variant": "baseline",
+        "exit": 0,
+        "command": [
+          "java",
+          "-Xms512m",
+          "-Xmx512m",
+          "-Xbatch",
+          "-XX:CICompilerCount=2",
+          "-cp",
+          "target/classes:target/test-classes:src/main/resources:../neqsim-3.26.0.jar:../junit-console.jar",
+          "neqsim.thermo.mixingrule.HuronVidalCo2SourcePerformanceBenchmark",
+          "0",
+          "4",
+          "init3",
+          "target/hv-co2-performance/pr0-repeat/fork5_profile0_init3_baseline.csv"
+        ],
+        "wall_seconds_including_startup": 4.10028135399989
+      }
+    ],
+    "sha256": {
+      "src/main/java/neqsim/thermo/component/ComponentGENRTLmodifiedHV.java": "0b1fae629585c58cd5940cb1a0d2884cffa8d709707384b4d211f9dd35ad6393",
+      "target/hv-co2-performance/ComponentGENRTLmodifiedHV.baseline.java": "677082a61023013d455265bc248e63f462d000442053e5a0fbdd57d7b4d763e3",
+      "target/classes/neqsim/thermo/component/ComponentGENRTLmodifiedHV.class": "26a24cc43c849c3405f4443c8531a39e4aaa7828598d5a13fe6859621e9fa604",
+      "target/candidate-classes/neqsim/thermo/component/ComponentGENRTLmodifiedHV.class": "6ad6b58a698795079054b001ea3d22563f7eff6b6f6aa6c569d53c797f8bd3f7",
+      "src/test/java/neqsim/thermo/mixingrule/HuronVidalCo2SourcePerformanceBenchmark.java": "45072d5ad0f14c9f3a2cfc8fb56f261b1f333589d22ace673cf0bc849212bd5b",
+      "src/test/java/neqsim/thermo/mixingrule/HuronVidalCo2SourceDiagnosticTest.java": "a6efab6717e52a5ba1c33911e974e44b7bce1179dc6600e437d20b213c4fd7ad"
+    },
+    "finish_utc": "2026-10-30T08:18:01.301389+00:00"
+  },
+  "artifact_receipt": "https://github.com/equinor/neqsim/issues/4576#issuecomment-6518470762",
+  "replay": "Reconstruct the retained source/class inputs and executed drivers from the lossless receipt. The candidate patch is deliberately not in this PR. These timings precede the selection-test refactor; no new-head timing or general throughput acceptance is claimed."
+}

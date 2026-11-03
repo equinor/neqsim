@@ -1,0 +1,92 @@
+[
+  {
+    "temperatureK": 323.15,
+    "methane": 0.7,
+    "pressureBara": 200,
+    "volumeM3": 0.00013277438666898036,
+    "gasMoleFraction": 0.32076302489427533,
+    "liquidComposition": [
+      0.560945800339462,
+      0.43905419966053805
+    ],
+    "gasComposition": [
+      0.9944564885067493,
+      0.005543511493250719
+    ]
+  },
+  {
+    "temperatureK": 323.15,
+    "methane": 0.7,
+    "pressureBara": 100,
+    "volumeM3": 0.00021414982910574599,
+    "gasMoleFraction": 0.5438460877528536,
+    "liquidComposition": [
+      0.3438370106137864,
+      0.6561629893862135
+    ],
+    "gasComposition": [
+      0.9987336760616565,
+      0.0012663239383434721
+    ]
+  },
+  {
+    "temperatureK": 323.15,
+    "methane": 0.7,
+    "pressureBara": 50,
+    "volumeM3": 0.00039593509127014203,
+    "gasMoleFraction": 0.6287554258133328,
+    "liquidComposition": [
+      0.19305572186578923,
+      0.8069442781342108
+    ],
+    "gasComposition": [
+      0.9993219699517568,
+      0.0006780300482431834
+    ]
+  },
+  {
+    "temperatureK": 373.15,
+    "methane": 0.95,
+    "pressureBara": 200,
+    "volumeM3": 0.00014988971109518835,
+    "gasMoleFraction": 0.9167393940124203,
+    "liquidComposition": [
+      0.534550605115834,
+      0.46544939488416603
+    ],
+    "gasComposition": [
+      0.9877321718703846,
+      0.012267828129615355
+    ]
+  },
+  {
+    "temperatureK": 373.15,
+    "methane": 0.95,
+    "pressureBara": 100,
+    "volumeM3": 0.0002905757341453892,
+    "gasMoleFraction": 0.9345930254669921,
+    "liquidComposition": [
+      0.31437534063173145,
+      0.6856246593682686
+    ],
+    "gasComposition": [
+      0.9944838392487239,
+      0.005516160751276145
+    ]
+  },
+  {
+    "temperatureK": 373.15,
+    "methane": 0.95,
+    "pressureBara": 50,
+    "volumeM3": 0.0005826465143837852,
+    "gasMoleFraction": 0.9449441741929302,
+    "liquidComposition": [
+      0.17217514415794208,
+      0.8278248558420579
+    ],
+    "gasComposition": [
+      0.9953188568607505,
+      0.0046811431392494995
+    ]
+  }
+]

@@ -292,34 +292,24 @@ class WaterHammerKernelTest {
     assertArrayEquals(a.getFlowProfile(), b.getFlowProfile(), 1.0e-12);
   }
 
-  /** Linear acoustic storage closes against trapezoidal boundary-volume exchange. */
+  /** Cell-mean linear acoustic storage closes against accepted physical boundary exchanges. */
   @Test
   void acousticVolumeBalance() {
     WaterHammerPipe pipe = pipe();
-    double[] initial = pipe.getPressureProfile();
+    double[] initial = pipe.getCellPressureProfile();
     double velocity = pipe.getVelocityProfile()[0];
     double density = pipe.calcJoukowskyPressureSurge(velocity) / (pipe.getWaveSpeed() * velocity);
-    double boundaryVolume = 0.0;
     pipe.setValveOpening(0.0);
     for (int step = 0; step < 120; step++) {
-      double[] before = pipe.getFlowProfile();
-      if (step == 0) {
-        // The imposed instantaneous closure occurs at t=0, before integration;
-        // the pre-event outlet flow must not be integrated as a half-step ramp.
-        before[100] = 0.0;
-      }
       pipe.runTransient(0.005, UUID.randomUUID());
-      double[] after = pipe.getFlowProfile();
-      boundaryVolume += 0.005 * 0.5 * (before[0] + after[0] - before[100] - after[100]);
     }
     double integral = 0.0;
-    double[] pressure = pipe.getPressureProfile();
+    double[] pressure = pipe.getCellPressureProfile();
     for (int i = 0; i < pressure.length; i++) {
-      double weight = i == 0 || i == 100 ? 0.5 : 1.0;
-      integral += weight * (pressure[i] - initial[i]) * 10.0;
+      integral += (pressure[i] - initial[i]) * 10.0;
     }
     double storedVolume = Math.PI * 0.01 * integral / (density * 1.0e6);
-    assertEquals(boundaryVolume, storedVolume, 1.0e-9);
+    assertEquals(pipe.getIntegratedInletVolume() - pipe.getIntegratedOutletVolume(), storedVolume, 1.0e-9);
   }
 
   /**

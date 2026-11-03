@@ -1111,6 +1111,64 @@ sampled interval width. The row is explicitly marked `interpolated: false` and
 route/line-up edge, and must not treat a continuous sampled edge as an approved set point without a
 separate qualified refinement and replay.
 
+For field-to-facility studies, a fixed separator-arrival pressure may be an explicit continuous action while the
+HP/LP route remains discrete. Consume their jointly sampled behavior only from the exact route × pressure slice and
+its sampled cells. Do not interpolate between route indexes, infer an unsampled pressure contour, or combine that
+surface with a choke axis into a generalized 3D envelope.
+
+The same rule applies when common shaft speed is an explicit bounded action. Use the existing
+`CompressorShaftCalculator` in fixed-speed mode and consume separator pressure × shaft speed only from the exact 2D
+slice. Every point remains subject to the export-pressure boundary, per-casing surge/stonewall map evidence,
+common-speed consistency, shaft/driver/gearbox limits and the shared plant-power budget. Missing, non-finite, stale or
+unrestored points are rejected rather than interpolated or repaired by weakening a physical constraint.
+
+To qualify a declared driver-power crossing, external consumers may additionally use a separate exact 1D speed slice.
+Refine only when exact low/high points straddle feasibility, and retain the feasible/infeasible endpoint driver margins,
+per-casing map rows and every converged/restored midpoint receipt. The bracket is local diagnostic evidence—not proof
+of monotonicity beyond the bracket, an approved set point, or permission to change the driver rating.
+
+For a casing-map-led crossing, preserve the exact installed `surgeMargin` or `stonewallMargin` identity, configured
+operating-limit provenance, physical unit and signed endpoint margins. A facility-specific clearance override may be
+more conservative than the preserved map default, but an external tool must not rewrite map curves, relax the default
+limit or reinterpret a non-finite row as available. Driver-versus-map migration requires two fresh evaluations of the
+same speed endpoints: restore the map override before tightening the driver rating, and reject the driver-led result if
+any casing map row is negative, stale or unavailable.
+
+For continuous-task hand-off, retain the exact Java receipt under `map_driver_migration_evidence` and require it in
+the production plan. Consumers must preserve its cycle ID, evaluator/action identity, rpm endpoint grid, configured
+map constraint/limit/provenance, driver constraint/rating, both full slice records, override-clearance flag,
+restoration flag and advisory classification. The #4187 guard independently reconstructs the sampled transitions and
+refined brackets from the persisted points; editing only the summary identities is therefore insufficient to make a
+receipt pass. Revalidation emits a new cycle-bound receipt and supersedes the earlier ledger item rather than treating
+historical map or driver evidence as current.
+
+The living report presents valid receipts as a cycle-ordered timeline and labels superseded evidence with the cycle
+that invalidated it. The canonical current-best/final report accepts only a promoted receipt whose cycle matches the
+reviewed baseline, then shows the exact configured map restriction and provenance, driver rating, and common-speed
+endpoint grid. If the production plan requires both lifecycle and migration evidence, the guard additionally joins the
+map and driver names to unique, independently `AVAILABLE` rows in the same current-period accepted-replay coverage.
+Installed-equipment names use the Java exporter's `area::equipment/constraint` form; the coverage model name remains
+part of the separate stable equipment ID. Declare both casing-map margin rows and the shaft-power row when either
+can lead a diagnostic boundary. Resolve them from accepted-replay evidence, without sampling the restored model.
+Keep this coverage scoped to explicitly declared constraint identities and retain each row's real provenance;
+generated test charts must identify their synthetic source rather than imply vendor qualification.
+The joined view keeps exact current value, limit, utilization, basis, and provenance, and rejects configured map
+provenance that survives despite an override-clearance claim. Invalid or ambiguous links are explicitly withheld.
+Reporting remains downstream of the production guard and must not recompute a boundary, substitute a different
+constraint identity, or imply permission to relax equipment limits.
+
+Current optimizer evidence also exports the relative simulator replay tolerance and its provenance. A persistent task
+may use that value only to bind a reviewed objective baseline to a fresh initial replay; the guard caps it at
+$10^{-6}$ and rejects invalid or unsourced tolerance metadata. Constraint feasibility, restoration, action read-back,
+and operating limits remain exact under their existing contracts.
+
+It also exports the exact terminal search classification. Schema-v17 field lifecycle evidence requires each period to
+retain either `CONVERGED_WITH_REPLAYED_FEASIBLE_CANDIDATE` or
+`BUDGET_EXHAUSTED_WITH_REPLAYED_FEASIBLE_CANDIDATE`; missing, unknown, unconverged, recovery-failed, or
+replay-failed values are withheld. Reports show this reason beside the validated objective, evaluation count, and
+runtime. A budget-limited feasible incumbent remains advisory sampled evidence and is never presented as converged or
+globally optimal.
+
 When opt-in refinement is enabled, `operating_region_boundary_refinements` retains the action bounds,
 relative and absolute tolerances with provenance, every exact midpoint candidate/outcome/recovery gate,
 the final independently evaluated feasible/infeasible bracket, and the exact leading or rejecting
@@ -1748,7 +1806,7 @@ on `ProcessSimulationEvaluator`.
 | `evaluateOneDimensional(actionId, values, search)` | Validate the accepted replay and sample one axis around its exact action vector |
 | `evaluateTwoDimensional(firstId, firstValues, secondId, secondValues, search)` | Validate the accepted replay and sample two axes around its exact action vector |
 | `getAcceptedPointBottleneck(search)` | Return the replayed point's unit-safe leading constraint without another model evaluation |
-| `SliceResult.toEvidenceMap()` | Return strict-JSON-friendly sampled points, exact leading/rejecting constraints, transitions, evaluation count, runtime, and recovery diagnostics |
+| `SliceResult.getSampledCells()` / `toEvidenceMap()` | Return strict-JSON-friendly sampled points and, for a 2D slice, exact four-corner cell classifications and sampled perimeter boundary families without inferring an interior or interpolating discrete routes |
 | `getAcceptedPointEnvelopeEvidence(cycleId, search, slices...)` | Combine the current accepted point and one or more exact-runtime complete slices into one immutable live-task evidence block without rerunning the model |
 
 ### ProcessModelDebottleneckStudy
@@ -1795,3 +1853,6 @@ on `ProcessSimulationEvaluator`.
 - [flow-rate-optimization.md](../process/optimization/flow-rate-optimization.md) - FlowRateOptimizer for lift curve generation
 - [pressure_boundary_optimization.md](../process/pressure_boundary_optimization.md) - Simplified pressure boundary optimizer
 - [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) - Complete production optimization examples
+
+
+

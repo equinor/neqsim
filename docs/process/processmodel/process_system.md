@@ -1029,3 +1029,13 @@ For complete format selection, Python behavior, compatibility limits, and recove
 - [Controllers](../controllers) - PID control and adjusters
 - [Dynamic Simulation Guide](../../simulation/dynamic_simulation_guide) - Transient simulation
 - [Extending Process Equipment](../../development/extending_process_equipment) - Custom equipment
+
+### Safety Shutdown acoustic lift handoff
+
+The experimental downstream `AcousticLiftCheckValve` is internal to the existing
+`WaterHammerPipe` acoustic substeps; it does not create a coordinator or a second
+physical clock. See the [equal-area lift/contact model and evidence](../../wiki/water_hammer_implementation.md#safety-shutdown-ideal-translating-check-valve).
+Its accepted local disc/cell histories and restart are not coordinator-wide
+rollback or exactly-once event certification. Keep detection, ESD logic, sampled
+controls and scenario transactions with the canonical ProcessSystem/ProcessModel
+workflow. Full coupled Safety Shutdown qualification remains NOT_EVALUATED.

@@ -50,6 +50,7 @@ This example configures pressure-protection devices and executes a fail-close/fa
 sequence. It demonstrates API behavior; it does not size a relief device or validate a safety
 function.
 
+<!-- process-safety-overview-example: esd-sequence -->
 ```java
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
@@ -135,9 +136,9 @@ public final class ProcessSafetyOverviewQuickStart {
 ```
 
 The regression test
-`src/test/java/neqsim/process/safety/ProcessSafetyOverviewDocumentationTest.java` executes this
-sequence and protects the documented constructors, units, state transitions, and completion
-criteria.
+`src/test/java/neqsim/process/safety/ProcessSafetyOverviewDocumentationTest.java` extracts,
+compiles, and executes this exact marked source. It protects the documented constructors, units,
+state transitions, and completion criteria without maintaining a separate copy.
 
 ## Transient execution contract
 

@@ -61,6 +61,13 @@ def default_equipment_data(data, case):
     return out
 
 
+def _with_equipment_notes(equipment_data, basis):
+    """Prepend the analyst status lines of ``basis['equipment_notes']`` ({tag: [text, ...]}, e.g. NEW FOR V3, MODIFIED) to the PFD data lines."""
+    for tag, notes in (basis.get("equipment_notes") or {}).items():
+        equipment_data[tag] = [str(n) for n in (notes if isinstance(notes, list) else [notes])] + list(equipment_data.get(tag, []))
+    return equipment_data
+
+
 def _title_block(basis, drawing_kind, case_note=None):
     d = basis["document"]
     return {"project": d["project"], "company": d["company"], "title": d["title"], "document_number": d["document_number"],
@@ -78,14 +85,14 @@ def build_diagrams(data, basis, out_dir, max_units_per_sheet=14, dpi=220):
     ddir = os.path.join(out_dir, "diagrams")
     fdir = os.path.join(out_dir, "figures")
     os.makedirs(fdir, exist_ok=True)
-    bfd = psr_diagrams.build_bfd(data, os.path.join(ddir, "bfd"), title_block=_title_block(basis, "BFD"), blocks=basis.get("bfd_blocks"))
     case = basis.get("diagram_equipment_case") or data["cases"][0]["id"]
+    bfd = psr_diagrams.build_bfd(data, os.path.join(ddir, "bfd"), title_block=_title_block(basis, "BFD"), blocks=basis.get("bfd_blocks"), case=case)
     label = [c["label"] for c in data["cases"] if c["id"] == case][0]
     pfd = psr_diagrams.build_pfd(data, os.path.join(ddir, "pfd"),
                                  title_block=_title_block(basis, "PFD", "Equipment data shown for operating case %s (%s)" % (case, label)),
                                  sheets=basis.get("pfd_sheets"), max_units_per_sheet=max_units_per_sheet,
                                  layout_overrides=basis.get("layout_overrides"),
-                                 equipment_data=default_equipment_data(data, case))
+                                 equipment_data=_with_equipment_notes(default_equipment_data(data, case), basis))
     pages = []
     bfd_pngs = psr_report.render_pdf_pages(bfd["pdf"], fdir, "bfd", dpi=dpi)
     pages.append((bfd_pngs[0], "Block flow diagram (drawing %s-BFD-01)" % basis["document"]["document_number"]))
@@ -93,10 +100,28 @@ def build_diagrams(data, basis, out_dir, max_units_per_sheet=14, dpi=220):
     pfd_pngs = psr_report.render_pdf_pages(pfd["pdf"], fdir, "pfd", dpi=dpi)
     for sheet, png in zip(pfd["sheets"], pfd_pngs):
         pages.append((png, "PFD sheet %s of %d: %s (drawing %s)" % (sheet["number"], n, sheet["title"], sheet["drawing_number"])))
-    return {"bfd": bfd, "pfd": pfd, "pages": pages}
+    return {"bfd": bfd, "pfd": pfd, "pages": pages, "layout_review": review_diagram_layout(bfd, pfd, os.path.join(ddir, "layout_review"))}
 
 
-def run_pipeline(data, basis, standards, out_dir, use_word=True, max_units_per_sheet=14, tolerances=None, allow_fail=True):
+def review_diagram_layout(bfd, pfd, review_dir):
+    """Mandatory layout review of every BFD/PFD sheet (``pfd_layout_check``); returns a summary, never raises.
+
+    Writes one review JSON per sheet plus ``summary.json`` and ``review.md`` to ``review_dir``. The agent
+    ``pfd-layout-review`` must see PASS (or justified waivers) for every sheet before the report is issued.
+    """
+    try:
+        import pfd_layout_check
+    except ImportError:  # toolkit without the checker: report instead of failing the report build
+        return {"status": "NOT_RUN", "reason": "pfd_layout_check not importable"}
+    paths = [p for p in [bfd.get("svg")] + [s.get("svg") for s in pfd.get("sheets", [])] if p]
+    reports = pfd_layout_check.review_many(paths, review_dir, kind="pfd")
+    counts = {"PASS": 0, "WARN": 0, "FAIL": 0}
+    for _, rep in reports:
+        counts[rep.status] += 1
+    return {"status": pfd_layout_check.worst_status(reports), "sheets": len(reports), "counts": counts, "dir": review_dir}
+
+
+def run_pipeline(data, basis, standards, out_dir, use_word=True, max_units_per_sheet=14, tolerances=None, allow_fail=True, options=None):
     """Run the whole pipeline and return a summary dict (paths, validation status).
 
     Args:
@@ -132,12 +157,12 @@ def run_pipeline(data, basis, standards, out_dir, use_word=True, max_units_per_s
     os.makedirs(report_dir, exist_ok=True)
     docx_path = os.path.join(report_dir, "%s_rev%s.docx" % (basis["document"]["document_number"], basis["document"]["revision"]))
     fig_dir = os.path.join(out_dir, "figures")
-    builder = psr_report.ReportBuilder(data, basis, standards, balances, diagrams, validation=None)
+    builder = psr_report.ReportBuilder(data, basis, standards, balances, diagrams, validation=None, options=options)
     builder.build(docx_path, fig_dir)
     lap("report")
     facts_path = os.path.join(report_dir, "report_facts.json")
     first = psr_validate.validate_all(data, basis, standards, balances, diagrams, docx_path, facts_path, data_dir)
-    builder = psr_report.ReportBuilder(data, basis, standards, balances, diagrams, validation=first)
+    builder = psr_report.ReportBuilder(data, basis, standards, balances, diagrams, validation=first, options=options)
     builder.build(docx_path, fig_dir)
     final = psr_validate.validate_all(data, basis, standards, balances, diagrams, docx_path, facts_path, data_dir)
     pdf_path = os.path.join(report_dir, os.path.splitext(os.path.basename(docx_path))[0] + ".pdf")
@@ -150,7 +175,8 @@ def run_pipeline(data, basis, standards, out_dir, use_word=True, max_units_per_s
                "validation_md": mp, "exports": exports, "diagrams": {"bfd": diagrams["bfd"]["svg"], "pfd_pdf": diagrams["pfd"]["pdf"],
                "pfd_sheets": [s["svg"] for s in diagrams["pfd"]["sheets"]], "pfd_spec": diagrams["pfd"]["spec"],
                             "crossings_total": diagrams["pfd"].get("crossings_total", 0),
-                            "sparse_sheets": diagrams["pfd"].get("sparse_sheets", [])},
+                            "sparse_sheets": diagrams["pfd"].get("sparse_sheets", []),
+                            "layout_review": diagrams.get("layout_review")},
                "balances_summary": balances["summary"], "word_updated": word_ok, "timings_s": timings,
                "validation_checks": {c["id"]: c["status"] for c in final["checks"]}}
     if not allow_fail and final["n_fail"]:

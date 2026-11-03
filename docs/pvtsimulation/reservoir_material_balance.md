@@ -18,6 +18,8 @@ laboratory simulations.
 - [Overview](#overview)
 - [Gas material balance](#gas-material-balance)
 - [Oil material balance](#oil-material-balance)
+- [Generalized balance, measured history and tuned PVT](#generalized-balance-measured-history-and-tuned-pvt)
+- [Compositional measured-history replay](#compositional-measured-history-replay)
 - [Aquifer influx (Van Everdingen-Hurst / Carter-Tracy)](#aquifer-influx)
 - [Decline-curve history matching (Arps + Duong)](#decline-curve-history-matching)
 - [Gray correlation for gas-condensate wells](#gray-correlation)
@@ -31,6 +33,11 @@ laboratory simulations.
 |-------|---------|---------|
 | `GasMaterialBalance` | Gas P/Z straight line (OGIP), Cole plot aquifer diagnostic, Havlena-Odeh gas balance | `pvtsimulation.reservoirproperties.materialbalance` |
 | `OilMaterialBalance` | Havlena-Odeh oil balance (OOIP, gas-cap ratio `m`, water drive, Pirson drive indices) | `pvtsimulation.reservoirproperties.materialbalance` |
+| `GeneralizedMaterialBalance` | Generalized oil/gas balance with both `Rs` and `Rv`, measured net withdrawals, known aquifer/rock support and identifiability checks | `pvtsimulation.reservoirproperties.materialbalance` |
+| `CalibratedPvtModel`, `MaterialBalancePvtHistory` | Immutable original/tuned model handoff, held-out laboratory residuals and explicitly attributed pressure-aligned PVT | `pvtsimulation.util` |
+| `CompositionalReservoirHistory` | Frozen-EOS component production/injection replay, bounded pore-volume matching, optional segregated aquifer and separate held-out pressure residuals | `pvtsimulation.util` |
+| `FetkovichAquifer`, `ReservoirHistoryEnsemble` | Physical finite-storage support, implicit EOS coupling and discrete joint Bayesian pressure-history hypotheses | `pvtsimulation.reservoirproperties.materialbalance`, `pvtsimulation.util` |
+| `DepletionPvtHistoryGenerator` | Dry native closed-mass CCE and depletion handoffs; bounded two-phase CVD/DLE generalized PVT with separator/component-closure evidence | `pvtsimulation.util` |
 | `VanEverdingenHurstAquifer` | Radial aquifer influence functions, Carter-Tracy cumulative water influx, ECLIPSE `AQUTAB` export | `pvtsimulation.reservoirproperties.materialbalance` |
 | `DeclineCurveAnalysis` | Arps + Duong (2011) decline: forward rate/EUR and least-squares history matching | `pvtsimulation.util` |
 
@@ -140,6 +147,291 @@ double[] di = OilMaterialBalance.driveIndices(n, m, eoTerm, egTerm, efwTerm, we,
 
 ---
 
+## Generalized balance, measured history and tuned PVT
+
+`GeneralizedMaterialBalance` adds Walsh's generalized material balance
+([1995, DOI 10.2118/95-01-07](https://doi.org/10.2118/95-01-07)). It retains
+oil vaporized in gas (`Rv`) as well as solution gas (`Rs`). Dropping `Rv` can
+bias gas-condensate and volatile-oil estimates. This is a two-surface-component
+tank model, not a full compositional reservoir simulator or MBAL file reader.
+
+### Original fluid, laboratory calibration and historical observations
+
+1. Preserve the original composition, characterization, sample/laboratory
+   revision, EOS, mixing rule, and separator/stock-tank basis.
+2. Follow the [PVT calibration workflow](pvt_workflow.md): tune only supported,
+   bounded parameters against the actual laboratory experiment protocols.
+   `PVTRegression` supports CCE, CVD, DLE, separator and viscosity observations;
+   saturation-pressure and swelling regression identifiers remain unsupported.
+   Validate on withheld observations and keep untuned-versus-tuned residuals.
+3. Freeze the accepted tuned fluid before estimating reservoir volumes. Evaluate
+   `Bo`, `Bg`, `Rs`, `Rv` and `Bw` along the applicable depletion/injection path.
+   [Black-oil conversion](../blackoil/README.md) can generate pressure tables
+   from EOS flashes; a pressure table is not automatically equivalent to a
+   CVD/DLE path or a changing-composition injection history. Validate that
+   approximation rather than silently substituting it for the tuned EOS.
+4. Construct `GeneralizedMaterialBalance` with an initial
+   `BlackOilPVTTable.Record`. Call `addObservation` for each aligned average
+   pressure/PVT/production observation. Pass cumulative **produced minus
+   injected** oil, gas and water, all referenced to the original state. Oil
+   and gas are total stock-tank/separator components, including oil recovered
+   from produced gas and gas released from produced oil.
+5. Supply known aquifer influx in **reservoir m3** and the dimensionless
+   rock/connate-water expansion fraction. They are inputs, not fitted parameters.
+   Use zero only when the assumed physical model justifies neglecting them.
+
+For the existing simplified-reservoir example,
+`reservoir.getSurveillance().generalizedMaterialBalance(pvtRecords,
+waterInflux, expansionFraction)` builds the same calculation from recorded
+`SimpleReservoir` history. Arrays include the original state, which must have
+zero cumulative production/support; every PVT pressure must match its recorded
+pressure. The tank's surface-production basis is **288.15 K, 1.01325 bara**.
+Use that same basis for its PVT records. The adapter rejects injection streams
+because cumulative injection is not recorded by `SimpleReservoir`. Measured
+net injection/production histories can instead use `addObservation` directly.
+Measured field data do not need to be inserted into a simulated tank's recorder.
+
+| Fit | Initial-phase assumption | Reported volumes |
+| --- | --- | --- |
+| `fitInitiallyOil()` | No initial free gas | Total OOIP and dissolved-gas-inclusive OGIP |
+| `fitInitiallyGas()` | No initial free oil | Total OGIP and vaporized-oil-inclusive OOIP |
+| `fitKnownGasCap(m)` | Known initial free-gas/free-oil reservoir-volume ratio | Both total inventories |
+| `fitOilAndGas()` | Both initial free phases; independent expansion signals required | Both total inventories and inferred gas-cap ratio |
+
+### Immutable calibration and pressure-path handoff
+
+For dry oil-only DLE or pre-dew gas-only CVD rows, use the
+[native compositional handoff](depletion_pvt_generation.md#native-compositional-handoff-through-phase-appearance).
+For actual closed-mass laboratory CCE, use `Path.CCE`: the complete sample remains
+in every native state, with zero protocol withdrawal and the original/tuned EOS
+and separator identities preserved. These absolute states do not infer saturation
+or populate a measured reservoir production history. Keep laboratory calibration
+and whole-experiment holdouts separate from reservoir matching and holdouts.
+It retains actual native EOS states and separator products without absent-phase
+formation-factor extrapolation; it does not create a generalized black-oil table.
+Native CVD refines and validates a scan-selected upper dew boundary; the declared independent binary reference now passes. Legacy/default and modified-black-oil paths retain the scan precision limitation. Closed-mass wet CCE preserves actual gas/oil/aqueous cells and separator products; wet CVD and critical-degenerate qualification remain open. After a sampled gas/oil stage, dry gas-only CVD tails retain the fixed cell volume through equilibrium gas withdrawal; an unbracketed single-phase schedule does not start tail withdrawal; no absent oil PVT is extrapolated.
+
+Before accepting laboratory tuples, use the opt-in
+[gas-density interval consistency gate](laboratory_gas_density_consistency.md)
+when same-state gas p/T/Z/molar-mass/density data are available. The
+`CalibratedPvtModel` overload accepts immutable same-sample evidence, rejects any
+incompatible row and freezes it in checkpoint/holdout provenance. The original
+constructor retains its behavior without making this consistency claim. Passing
+the identity check does not establish measured accuracy or independent provenance.
+
+`CalibratedPvtModel` freezes serialized original and tuned fluids, sample and model
+revision references, the laboratory calibration report reference and the identities
+of complete experiments used for calibration. Fluid getters restore independent
+copies, including nested EOS parameters. Neither laboratory replay nor reservoir
+matching changes those checkpoints. Store the NeqSim/software revision in the model
+references; native checkpoints require compatible software to deserialize.
+
+Use `compareHoldout` for a complete CCE, CVD or DLE pressure schedule. Select a
+normalized `PVTFluidStudy` property key, such as `relativeVolume` for CCE,
+`liquidRelativeVolume` for CVD, or `boM3PerSm3` for DLE. Supply one measured value
+and positive measurement standard deviation per pressure, in the property's units.
+Both models run the full experiment, preserving gas removal and the final DLE
+reference. The returned JSON retains original and tuned predictions, raw residuals
+and residuals divided by the supplied measurement standard deviations. Residuals
+are **measured minus predicted**. These are laboratory-property residuals, not
+reservoir-pressure likelihoods or parameter confidence intervals.
+Evidence JSON declares `schemaVersion` 1.0 and a `schemaUri` pointing to the
+[versioned schema](../../src/main/resources/neqsim/pvt/calibrated-pvt-evidence-v1.schema.json).
+Readers must reject unsupported major versions rather than interpreting them as v1.
+
+`compareSeparatorHoldout` replays an entire multi-stage separator/stock-tank train,
+including reservoir conditions and every stage's pressure and temperature. Available
+comparison properties are total GOR (`totalGORSm3PerSm3`), oil FVF (`boM3PerSm3`)
+and stock-tank oil density (`stockTankOilDensityKgPerM3`). The supported standard
+basis is 288.15 K and 1.01325 bara, also used by the existing solvers and recorder.
+The final stage must use that basis. Other standard conditions require a separately
+qualified conversion; relabeling the units is insufficient.
+
+An experiment used in calibration cannot be labeled as held out. Identify the
+**whole experiment**, not individual CVD/DLE rows, to avoid sharing depletion history
+between training and validation. Identity checks cannot verify an external laboratory
+record or establish independence when the same experiment is given different names.
+The caller must review that provenance and set acceptance tolerances; a finite
+residual report is not automatic model acceptance.
+
+`MaterialBalancePvtHistory` then retains the checkpoint bundle, isothermal reservoir
+temperature, ordered separator path, a path-validation evidence reference, and
+pressure-aligned `BlackOilPVTTable.Record` values including the original state.
+Declare `CVD`, `DLE`, `COMPOSITIONAL_HISTORY` or `CONSTANT_COMPOSITION` explicitly.
+Records must be evaluated from the accepted tuned model on that path, either
+externally or through the bounded `DepletionPvtHistoryGenerator` route below. The container checks numeric validity, sequence and basis; it does not generate
+generalized CVD PVT or independently verify caller-supplied records against the EOS.
+
+Its `materialBalance` method accepts measured average pressures and cumulative net
+oil/gas/water withdrawals, reservoir-volume influx and dimensionless expansion
+support. All arrays must include the original zero-withdrawal/support state and
+match the PVT pressures. CVD/DLE paths decrease strictly; externally evaluated
+compositional paths can include repressurization. Constant-composition tables are
+rejected for depletion matching. The result is the existing `GeneralizedMaterialBalance`
+builder; laboratory calibration and EOS parameters remain separate from volume fitting.
+Substantial injection composition changes still require compositional replay.
+
+The [handoff tests](../../src/test/java/neqsim/pvtsimulation/util/CalibratedPvtModelTest.java)
+compare full protocol replay with separately executed existing PVT solvers and
+recover an analytically specified synthetic gas inventory. These establish software
+consistency and analytical conservation, not independent laboratory/field accuracy.
+The bounded native-depletion generator, physical aquifer and discrete uncertainty
+extensions are described below. Independent laboratory/field qualification and
+broader compositional/phase-path coverage remain open under [issue #4740](https://github.com/equinor/neqsim/issues/4740).
+
+### Conservation equations and diagnostics
+
+Let $O$ and $H$ denote total surface oil and gas components. Their combined
+reservoir volume is $aO+bH$, where
+
+$$a=\frac{B_o-R_sB_g}{1-R_sR_v},\qquad b=\frac{B_g-R_vB_o}{1-R_sR_v}.$$
+
+Let $N_{foi}$ and $G_{fgi}$ denote the original free-oil and free-gas surface
+components. With net cumulative withdrawals $N_p,G_p,W_p$, aquifer influx
+$W_e$ in reservoir volume, and dimensionless rock/water support $\epsilon$:
+
+$$aN_p+bG_p+B_wW_p-W_e=N_{foi}E_o+G_{fgi}E_g,$$
+$$E_o=a+R_{si}b-B_{oi}+B_{oi}\epsilon,\qquad E_g=R_{vi}a+b-B_{gi}+B_{gi}\epsilon.$$
+
+For linear rock/water compressibilities and initial water saturation $S_{wi}$,
+$\epsilon=(c_f+S_{wi}c_w)(p_i-p)/(1-S_{wi})$. Compressibilities are in 1/bar.
+Thus $N=N_{foi}+R_{vi}G_{fgi}$ and $G=G_{fgi}+R_{si}N_{foi}$ are the **total**
+OOIP and OGIP. Do not equate the initially free-phase components to total volumes.
+Do not multiply the reservoir-volume aquifer influx by `Bw` a second time.
+
+The implementation solves the undivided equations using column-scaled EJML QR
+least squares and SVD conditioning. It rejects non-finite PVT, non-positive
+FVFs, $1-R_sR_v\leq10^{-10}$, negative fitted phase inventories and scaled
+condition numbers above $10^8$. Residuals and RMS are **reservoir m3**, not bar;
+the condition number is a numerical identifiability diagnostic, not a confidence
+interval. A small residual does not establish unique reservoir/aquifer parameters.
+These are in-place volumes, not recoverable reserves.
+
+The [generalized-balance tests](../../src/test/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/GeneralizedMaterialBalanceTest.java)
+check independent component inventories, condensate, gas caps, water injection,
+known influx/rock support, scale changes and the zero-`Rv` black-oil limit.
+The [tank/EOS integration test](../../src/test/java/neqsim/process/equipment/reservoir/GeneralizedReservoirSurveillanceTest.java)
+uses original PR-EOS PVT to recover the known gas inventory from a synthetic
+`SimpleReservoir` history. These synthetic checks establish conservation and
+software behavior; they are not a field or laboratory validation.
+
+### Literature-based development priorities
+
+| Method and reference | Current evidence and next implementation |
+| --- | --- |
+| Walsh generalized balance (1995), [10.2118/95-01-07](https://doi.org/10.2118/95-01-07) | Implemented above; retain `Rv`, consistent surface basis and phase-inventory distinctions. |
+| Whitson & Torp CVD analysis (1983), [10.2118/10067-PA](https://doi.org/10.2118/10067-PA) | CVD and EOS tuning exist; qualify depletion-path generation of generalized PVT against public measured data, rather than treating unrelated constant-composition flashes as a CVD experiment. |
+| Fetkovich finite aquifer (1971), [10.2118/2603-PA](https://doi.org/10.2118/2603-PA) | `FetkovichAquifer` now supplies physical reservoir-volume storage and aquifer depletion; optional compositional replay couples segregated water support to EOS volume closure. Analytical/RK4 and interval-refinement checks are synthetic qualification; independent field matching remains required. `AquiferDrive` remains a separate gas-equivalent surrogate. |
+| Walsh pressure uncertainty (1999), [10.2118/56691-MS](https://doi.org/10.2118/56691-MS) | Undivided volume residuals above avoid dividing by small expansion terms, but do not handle pressure error statistically. `CompositionalReservoirHistory` provides bounded fixed-volume replay of measured component amounts with independent pressure-sigma residuals and withheld pressures. Phase-selective replay now predicts produced composition and separator GOR; independent measured produced-phase and public field qualification and correlated errors remain open. |
+| Ogele et al. Bayesian integration (2006), [10.2118/100257-MS](https://doi.org/10.2118/100257-MS) | `ReservoirHistoryEnsemble` now combines explicit discrete joint geological volume/phase-fraction/aquifer/PVT/history prior masses with the pressure-history likelihood, correlations and prior shifts. Refine the supplied joint grid; this is not continuous posterior or field qualification. |
+| Emerick & Reynolds ES-MDA (2013), [10.1016/j.cageo.2012.03.011](https://doi.org/10.1016/j.cageo.2012.03.011) | Candidate uncertainty layer after forward matching is qualified; propagate PVT/volume/aquifer priors and report posterior correlations and forecast uncertainty. Reuse external ensemble tooling where appropriate. |
+| Tran et al. rescaled CVD/density-based analysis (2025), [10.1016/j.jgsce.2025.205551](https://doi.org/10.1016/j.jgsce.2025.205551) | Research candidate for near-critical gas condensate with variable BHP under boundary-dominated flow. Obtain the full method and reproduce its numerical cases before implementation; it is not a general substitute for average-pressure material balance. |
+
+## Compositional measured-history replay
+
+`CompositionalReservoirHistory` replays measured production and injection using
+`SimpleReservoir` component inventories and its isothermal, fixed-volume TV flash.
+Each trial restores the accepted `CalibratedPvtModel` tuned checkpoint at the supplied
+initial pressure and temperature. Initial gas/oil/aqueous **reservoir-volume fractions**
+are fixed geological inputs. `fitVolume` changes only their total initial pore volume;
+it cannot adjust the EOS to hide PVT error. Preserve the original and tuned checkpoints
+and independently review the laboratory hold-out evidence before reservoir fitting.
+
+Supply all EOS component names, in any order, with nonnegative produced and injected
+**mol per interval** in that order. These are amounts, not mol/s, Sm3 or accumulated
+surface volumes. Convert measured phase rates and compositions to component amounts
+using the accepted separator/stock-tank basis and record that conversion in the history
+reference. An injected species must already exist in the accepted EOS component basis.
+No oil/gas/water surface-volume conversion or generalized CVD table is invented here.
+
+For component $i$ and interval $k$, the ledger is
+
+$$n_{i,k+1}=n_{i,k}+n_{i,k}^{\mathrm{inj}}-n_{i,k}^{\mathrm{prod}}.$$
+
+Each accepted step must close this ledger and the supplied reservoir volume. Injection
+is mixed before withdrawal for the interval inventory check; this does not resolve
+within-interval transport or mixing. Negative inventories, absent requested initial
+phases, non-finite pressure and failed TV-flash volume closure reject the trial. The
+standalone `SimpleReservoir.advanceComponentAmounts` API requires a dedicated tank
+with no wells and `setRecordProductionHistory(false)`. A rejected interval changes
+neither fluid, time nor calculation identity. After successful molar replay, legacy
+surface-production recording and stream-transient accounting cannot be resumed on
+that tank because its separator-dependent surface counters are unavailable. Use a
+new tank for those workflows. The usual stream production pressure cutoff is not
+applied to measured component replay.
+
+Every interval may include measured average end pressure and a positive pressure
+standard deviation, both in **bara**. Use NaN for both to request prediction only.
+The standardized residual is measured minus predicted pressure divided by the supplied
+sigma. Calibration and held-out sums of squared standardized residuals are separate;
+held-out pressures never enter volume selection. A zero held-out sum with no held-out
+observations is not validation; inspect the interval observation flags. The initial pressure is fixed and is
+not a fitted observation. Amounts and their component compositions are prescribed,
+so produced GOR/composition in this measured-component mode is not an independent validation prediction.
+For independently predicted composition, use opt-in equilibrium phase withdrawals and
+[explicit separator-path outputs](reservoir_phase_production.md); prescribed phase molar
+amounts remain inputs, and independent measured validation is still required.
+
+The bounded search evaluates 17 logarithmically spaced volumes, then refines the best
+grid basin by golden-section search. At least two calibration pressures and informative
+feasible trials are required. Inspect `isAtBound()`, `getRejectedTrials()` and all
+residuals. The search bounds, objective and sensitivity are not confidence intervals;
+the search does not prove a global optimum. An infeasible trial is reported, never
+replaced by a plausible pressure. The basic no-aquifer, single-volume fit does not represent pressure covariance,
+rock support, thermal effects or spatial displacement. Optional segregated aquifer
+support and explicit joint PVT/history uncertainty scenarios are described below.
+
+The complete example below is executed by
+[`CompositionalReservoirHistoryTest.documentedWorkflow`](../../src/test/java/neqsim/pvtsimulation/util/CompositionalReservoirHistoryTest.java).
+Use the `CompositionalReservoirHistory.Step` and `.Fit` nested types. It generates a
+synthetic 1000 m3 history and recovers that known volume while withholding the third
+pressure. Identical original/tuned models are intentional in this software fixture;
+this is not evidence of laboratory calibration or independent field accuracy.
+
+```java
+SystemInterface original = new SystemPrEos(400.0, 200.0);
+original.addComponent("methane", 0.9);
+original.addComponent("ethane", 0.1);
+original.setMixingRule("classic");
+original.init(0);
+CalibratedPvtModel model = new CalibratedPvtModel(original, original.clone(), "synthetic sample v1",
+    "original PR/classic", "accepted PR/classic", "synthetic calibration fixture", new String[] {"CCE-1"});
+Step first = new Step(86400.0, new double[] {400000.0, 40000.0}, new double[] {10000.0, 100000.0},
+    Double.NaN, Double.NaN, false);
+CompositionalReservoirHistory forward = new CompositionalReservoirHistory(model, "synthetic molar history v1",
+    new String[] {"methane", "ethane"}, 400.0, 200.0, new double[] {1.0, 0.0, 0.0},
+    new Step[] {first, first, first});
+double[] pressure = forward.replay(1000.0).getPressuresBara();
+Step[] measured = new Step[3];
+for (int i = 0; i < measured.length; i++) {
+  measured[i] = new Step(86400.0, first.getProducedMoles(), first.getInjectedMoles(), pressure[i + 1],
+      0.5, i == 2);
+}
+CompositionalReservoirHistory inverse = new CompositionalReservoirHistory(model, "synthetic pressure history v1",
+    forward.getComponents(), 400.0, 200.0, new double[] {1.0, 0.0, 0.0}, measured);
+Fit fit = inverse.fitVolume(500.0, 2000.0);
+double poreVolumeM3 = fit.getResult().getInitialVolumeM3();
+double heldOutChiSquare = fit.getResult().getHoldoutChiSquare();
+```
+
+Results expose times, pressures, initial and remaining component moles, standardized
+pressure residuals, separate calibration/hold-out objectives and an independent final
+EOS state. Inventories are in-place quantities, not recoverable reserves. No unqualified
+separator basis is used to relabel pore volume as OOIP/OGIP. The existing generalized
+balance remains available when accepted path-dependent surface PVT is supplied.
+
+Synthetic tests cover off-grid volume recovery, held-out pressure exclusion, error
+weighting, bound and infeasibility reporting, named-basis mapping, changing injection
+composition, oil/gas appearance, aqueous injection, interval refinement, ownership and
+serialization. Independent checks use the low-density ideal-gas limit and direct EOS
+volume evaluation at predicted pressures. These establish analytical/software consistency,
+not independent laboratory or field validation. Remaining work under
+[#4740](https://github.com/equinor/neqsim/issues/4740) includes independent field/laboratory
+cases, broader depletion phase-path coverage, independently predicted produced-phase
+validation, multi-tank transmissibility and the separately gated rescaled-CVD research
+candidate. The bounded PVT generator, finite-aquifer and discrete posterior extensions
+follow below.
+
 ## Aquifer influx
 
 `VanEverdingenHurstAquifer` implements the constant-terminal-rate dimensionless
@@ -239,3 +531,25 @@ double dP = well.getTotalPressureDrop(); // bar
 - [Relative Permeability](relative_permeability.md)
 - [Gas Pseudopressure & Pseudocritical Properties](gas_pseudopressure_pseudocritical.md)
 - [Field Development](../fielddevelopment/index.md)
+
+## Finite aquifer, uncertainty and native depletion PVT
+
+The optional `FetkovichAquifer` overload of `CompositionalReservoirHistory` couples
+segregated immiscible reservoir-volume water support to the existing TV flash.
+`ReservoirHistoryEnsemble` integrates explicit joint geological, aquifer, PVT and
+component-history hypotheses with common pressure observations and independent
+Gaussian sigmas. See [physical assumptions and posterior evidence](reservoir_aquifer_uncertainty.md).
+
+`DepletionPvtHistoryGenerator` uses opt-in native CVD/DLE snapshots, one multistage
+separator basis and a separately accepted pure-water EOS to construct limited dry
+two-hydrocarbon-phase generalized PVT. It rejects absent phases and unacceptable
+approximate surface-component closure; see the [generation and acceptance contract](depletion_pvt_generation.md).
+These extensions do not complete independent laboratory/field qualification or the
+remaining multi-tank/research acceptance in issue #4740.
+
+
+Explicit initial occupied-volume experiments can use
+[the transactional native fixed-cell route](depletion_pvt_generation.md#explicit-initial-occupied-volume-reference).
+It preserves selected original/tuned EOS, sample/experiment and separator provenance,
+with an explicit reference convention. Its bounded synthetic qualification does not
+complete wet upper-dew laboratory or independently measured field acceptance.

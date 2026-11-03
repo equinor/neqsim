@@ -142,6 +142,14 @@ Build the capacity curve from repeated process-model throughput sweeps at severa
 
 ## Gotchas
 
+- For independently predicted produced composition from a frozen laboratory EOS, use the existing
+  `CompositionalReservoirHistory.Step.phaseWithdrawal` with prescribed reservoir-phase molar totals,
+  explicit substep refinement and `Result.getProducedComponentMoles/getProducedFluid`. Process the
+  produced mixture through `PvtSeparatorPath` on a declared final T/P basis; retain offgas condensate
+  and water. This is well-mixed equilibrium extraction, not a well/mobility model or surface-rate
+  inversion. The original measured-component mode prescribes composition and cannot independently
+  validate it. See `docs/pvtsimulation/reservoir_phase_production.md` and hand off through
+  `@field-development`; use independent measured GOR/composition holdouts before field claims.
 - `MaterialBalanceGasDrive` uses one constant Z, so pressure is linear in recovery; with a real p/z history (Z changes 5-10 % over depletion) use `RealGasMaterialBalanceDrive`.
 - `IntegratedProductionModel` is not the full `FieldLifecycleModel`; it couples a simple `ReservoirDrive`, well-curve surrogate and branch network. `MaterialBalanceGasDrive` and `OilTankDrive` are simplified depletion models, not a compositional reservoir simulator.
 - `WellDeliverabilityCurve.fromVogel` is an analytic Vogel-like shape. `fromWellSystem` samples a configured `WellSystem`; failed/nonphysical samples are clamped to zero and sampled rates are forced non-increasing with pressure. Check the source data and fit envelope.

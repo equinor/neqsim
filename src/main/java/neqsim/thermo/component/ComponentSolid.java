@@ -20,6 +20,16 @@ public class ComponentSolid extends ComponentSrk {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
+  /** Normal water triple-point temperature in kelvin, IAPWS R14-08(2011). */
+  private static final double WATER_TRIPLE_TEMPERATURE = 273.16;
+  /** Normal water triple-point pressure in pascals, IAPWS R14-08(2011). */
+  private static final double WATER_TRIPLE_PRESSURE = 611.657;
+  /**
+   * Ice-Ih melting-pressure slope in Pa/K at the triple point. Derived from IAPWS R14-08(2011), equation 1.
+   */
+  private static final double WATER_MELTING_PRESSURE_SLOPE = -WATER_TRIPLE_PRESSURE / WATER_TRIPLE_TEMPERATURE
+      * (1195393.37 * 3.0 + 80818.3159 * 25.75 + 3338.26860 * 103.75);
+
   double dpdt = 1.0;
   double SolidFug = 0.0;
   double PvapSolid = 0.0;
@@ -226,6 +236,13 @@ public class ComponentSolid extends ComponentSrk {
   /**
    * Calculate, set and return fugacity coefficient.
    *
+   * <p>
+   * For water the fusion-volume correction uses the triple-point Clapeyron slope from IAPWS R14-08(2011), equation 1,
+   * with pressure converted from bar to Pa. The existing fusion-enthalpy and constant heat-capacity approximation is
+   * retained; this is not the full IAPWS ice equation of state. The pure-liquid reference remains the configured fluid
+   * model, including CPA when selected by the caller.
+   * </p>
+   *
    * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient of.
    * @return Fugacity coefficient
    */
@@ -241,40 +258,35 @@ public class ComponentSolid extends ComponentSrk {
 
     double liquidPhaseFugacity = refPhase.getComponent(0).getFugacityCoefficient() * refPhase.getPressure();
 
-    // Calculates delta Cp solid-liquid
-    double deltaCpSL = -(getPureComponentCpSolid(getTriplePointTemperature())
-        - getPureComponentCpLiquid(getTriplePointTemperature()));
-    if (componentName.equals("water")) {
+    boolean water = componentName.equals("water");
+    double tripleTemperature = water ? WATER_TRIPLE_TEMPERATURE : getTriplePointTemperature();
+    // Calculates delta Cp solid-liquid.
+    double deltaCpSL = -(getPureComponentCpSolid(tripleTemperature) - getPureComponentCpLiquid(tripleTemperature));
+    if (water) {
       deltaCpSL = 37.12;
     }
 
-    // System.out.println("deltaCp Sol-liq " + deltaCpSL);
-    // Calculates solid-liquid volume change
-    double liqMolVol = 0.0;
-    double solMolVol = 0.0;
-    double temp = getPureComponentLiquidDensity(getTriplePointTemperature());
-    if (temp > 1e-20) {
-      liqMolVol = 1.0 / temp * getMolarMass();
+    double pressureCorrection;
+    if (water) {
+      // Clapeyron gives v_ice - v_liquid = -H_fusion / (T_triple * dp_melt/dT).
+      // Retain the constant-volume fusion approximation; do not use the missing water solid-density polynomial.
+      double fusionVolume = -getHeatOfFusion() / (WATER_TRIPLE_TEMPERATURE * WATER_MELTING_PRESSURE_SLOPE);
+      pressureCorrection = fusionVolume * (phase1.getPressure() * 1.0e5 - WATER_TRIPLE_PRESSURE)
+          / (R * phase1.getTemperature());
     } else {
-      liqMolVol = 1.0 / refPhase.getDensity() * getMolarMass();
+      // Preserve the existing non-water fusion-volume reference.
+      double temp = getPureComponentLiquidDensity(tripleTemperature);
+      double liqMolVol = temp > 1e-20 ? getMolarMass() / temp : getMolarMass() / refPhase.getDensity();
+      temp = getPureComponentSolidDensity(tripleTemperature);
+      double solMolVol = temp > 1e-20 ? getMolarMass() / temp : liqMolVol;
+      pressureCorrection = (solMolVol - liqMolVol) * (phase1.getPressure() - 1.0) / (R * phase1.getTemperature());
     }
-    temp = getPureComponentSolidDensity(getTriplePointTemperature());
-    if (temp > 1e-20) {
-      solMolVol = 1.0 / temp * getMolarMass();
-    } else {
-      solMolVol = liqMolVol;
-    }
-    double deltaSolVol = (solMolVol - liqMolVol);
-
-    // System.out.println("liquid density " + 1.0/liqMolVol*getMolarMass() + " solid
-    // density " + 1.0/solMolVol*getMolarMass());
 
     fugacityCoefficient = liquidPhaseFugacity / phase1.getPressure()
-        * Math.exp(-getHeatOfFusion() / (R * phase1.getTemperature())
-            * (1.0 - phase1.getTemperature() / getTriplePointTemperature())
-            + deltaCpSL / (R * phase1.getTemperature()) * (getTriplePointTemperature() - phase1.getTemperature())
-            - deltaCpSL / R * Math.log(getTriplePointTemperature() / phase1.getTemperature())
-            - deltaSolVol * (1.0 - phase1.getPressure()) / (R * phase1.getTemperature()));
+        * Math.exp(
+            -getHeatOfFusion() / (R * phase1.getTemperature()) * (1.0 - phase1.getTemperature() / tripleTemperature)
+                + deltaCpSL / (R * phase1.getTemperature()) * (tripleTemperature - phase1.getTemperature())
+                - deltaCpSL / R * Math.log(tripleTemperature / phase1.getTemperature()) + pressureCorrection);
 
     // System.out.println("solidfug " + SolidFug);
     SolidFug = getx() * phase1.getPressure() * fugacityCoefficient;

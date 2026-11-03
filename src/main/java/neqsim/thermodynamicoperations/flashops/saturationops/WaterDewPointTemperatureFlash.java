@@ -28,6 +28,8 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
   private static final double FUGACITY_TOLERANCE = 1.0e-9;
   /** Whether the incipient water-rich liquid includes dissolved feed components. */
   private final boolean allowDissolvedComponents;
+  /** Number of fugacity evaluations used to refine temperature brackets in the latest run. */
+  private int refinementEvaluations = 0;
 
   /**
    * Creates a water dew point calculation.
@@ -58,17 +60,22 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
    */
   @Override
   public void run() {
+    refinementEvaluations = 0;
     if (!Double.isFinite(system.getPressure()) || system.getPressure() <= 0.0) {
       throw new IllegalArgumentException("Water dew point requires positive finite absolute pressure");
+    }
+    boolean hasWater = hasPositiveOverallAmount("water");
+    if (allowDissolvedComponents) {
+      if (system.isChemicalSystem() || !hasWater) {
+        throw new IllegalArgumentException("Mixed-liquid water dew point requires water in a non-reacting gas");
+      }
+    } else if (!hasWater && !hasPositiveOverallAmount("MEG")) {
+      throw new IllegalArgumentException("Water dew point requires a positive water or MEG mole fraction");
     }
     system.init(0);
     system.setNumberOfPhases(2);
     system.setBeta(1, 1.0e-15);
     if (allowDissolvedComponents) {
-      if (system.isChemicalSystem() || !system.getPhase(0).hasComponent("water")
-          || !(system.getPhase(0).getComponent("water").getz() > 0.0)) {
-        throw new IllegalArgumentException("Mixed-liquid water dew point requires water in a non-reacting gas");
-      }
       int water = system.getPhase(0).getComponent("water").getComponentNumber();
       system.setBeta(0, 1.0 - 1.0e-10);
       system.setBeta(1, 1.0e-10);
@@ -116,6 +123,20 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
   }
 
   /**
+   * Checks the supplied inventory before initialization or phase-state mutation.
+   *
+   * @param name component name
+   * @return true when the component has a positive finite overall mole amount
+   */
+  private boolean hasPositiveOverallAmount(String name) {
+    if (!system.getPhase(0).hasComponent(name)) {
+      return false;
+    }
+    double moles = system.getPhase(0).getComponent(name).getNumberOfmoles();
+    return Double.isFinite(moles) && moles > 0.0;
+  }
+
+  /**
    * Sets the feed gas and pure incipient condensed-phase compositions.
    *
    * @param component index of the condensing component
@@ -128,7 +149,7 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
   }
 
   /**
-   * Brackets and bisects the fugacity equilibrium without a concentration-dependent iteration step.
+   * Brackets and interpolates the fugacity equilibrium without a concentration-dependent iteration step.
    *
    * @param component index of the condensing component
    * @return converged temperature in kelvin
@@ -154,18 +175,35 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
       throw new IllegalStateException("Could not bracket water/MEG dew point fugacity equilibrium");
     }
     for (int iteration = 0; iteration < 100; iteration++) {
-      double temperature = 0.5 * (lower + upper);
+      double temperature = lower - lowerResidual * (upper - lower) / (upperResidual - lowerResidual);
+      // A bisection at least every second trial retains global bracket progress.
+      // Reusing the completed residuals avoids extra phase initializations for the predictor.
+      if (iteration % 2 == 1 || !Double.isFinite(temperature) || temperature <= lower || temperature >= upper) {
+        temperature = 0.5 * (lower + upper);
+      }
+      refinementEvaluations++;
       double value = residual(temperature, component);
       if (Math.abs(value) <= FUGACITY_TOLERANCE) {
         return temperature;
       }
       if (value > 0.0) {
         lower = temperature;
+        lowerResidual = value;
       } else {
         upper = temperature;
+        upperResidual = value;
       }
     }
     throw new IllegalStateException("Water/MEG dew point did not converge to fugacity equilibrium");
+  }
+
+  /**
+   * Returns bracket-refinement work for package-level regression and performance qualification.
+   *
+   * @return total refinement evaluations over all condensing components in the latest run
+   */
+  int getLastRefinementEvaluations() {
+    return refinementEvaluations;
   }
 
   /**

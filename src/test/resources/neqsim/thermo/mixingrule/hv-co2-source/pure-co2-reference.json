@@ -1,0 +1,34 @@
+{
+  "T_r": 304.1282,
+  "Tmax": 304.1281999999994,
+  "Tmin": 216.592,
+  "description": "p' = pc*exp(Tc/T*sum(n_i*theta^t_i))",
+  "max_abserror_percentage": 0.0010595686337877552,
+  "n": [
+    -5.867399337600407,
+    -7.10969550015274,
+    11.022781986239263,
+    4.8260764050219995,
+    -6.240803382557819,
+    -6.7009642572439
+  ],
+  "reducing_value": 7377300,
+  "t": [
+    0.983,
+    1.322,
+    1.488,
+    2.807,
+    3.571,
+    1.941
+  ],
+  "type": "pL",
+  "using_tau_r": true,
+  "source": {
+    "repository": "CoolProp/CoolProp",
+    "commit": "626c95bc670b58ce64603907ed3fc192f946d4f2",
+    "path": "dev/fluids/CarbonDioxide.json",
+    "section": "ANCILLARIES.pS",
+    "EOS_reference_DOI": "10.1063/1.555991",
+    "interpretation": "Reference saturation correlation; not direct measurements, full Helmholtz EOS evaluation or experimental uncertainty. Declared maximum fit error is not an accuracy acceptance tolerance."
+  }
+}

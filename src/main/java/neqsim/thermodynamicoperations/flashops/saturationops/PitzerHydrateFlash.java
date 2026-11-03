@@ -22,6 +22,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  *
  * @author NeqSim
+ * @version 1.0
  */
 public class PitzerHydrateFlash extends ConstantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
@@ -35,6 +36,8 @@ public class PitzerHydrateFlash extends ConstantDutyTemperatureFlash {
   private double residual = Double.NaN;
   private double waterActivity = Double.NaN;
   private boolean converged;
+  /** Number of full fluid flashes used to refine the selected bracket in the latest run. */
+  private int refinementEvaluations = 0;
 
   /**
    * Creates a temperature or pressure search.
@@ -106,6 +109,7 @@ public class PitzerHydrateFlash extends ConstantDutyTemperatureFlash {
   /** {@inheritDoc} */
   @Override
   public void run() {
+    refinementEvaluations = 0;
     converged = false;
     residual = Double.NaN;
     waterActivity = Double.NaN;
@@ -135,7 +139,7 @@ public class PitzerHydrateFlash extends ConstantDutyTemperatureFlash {
           return;
         }
         if (Math.signum(fLower) != Math.signum(fUpper)) {
-          bisect(lower, upper, fLower);
+          refineBracket(lower, upper, fLower, fUpper);
           return;
         }
         lower = upper;
@@ -201,27 +205,44 @@ public class PitzerHydrateFlash extends ConstantDutyTemperatureFlash {
   }
 
   /**
-   * Bisects a bracket, accepting only the thermodynamic residual, never just a small variable step.
+   * Interpolates a bracket with periodic bisection, accepting only the thermodynamic residual.
    *
    * @param lower lower bound
    * @param upper upper bound
    * @param fLower residual at lower bound
+   * @param fUpper residual at upper bound
    */
-  private void bisect(double lower, double upper, double fLower) {
+  private void refineBracket(double lower, double upper, double fLower, double fUpper) {
     for (int iteration = 0; iteration < 70; iteration++) {
-      double middle = (lower + upper) / 2.0;
+      double middle = lower - fLower * (upper - lower) / (fUpper - fLower);
+      // Keep the first low-pressure crossing selected by the scan and guarantee
+      // progress even when interpolation repeatedly approaches one bracket endpoint.
+      if (iteration % 2 == 1 || !Double.isFinite(middle) || middle <= lower || middle >= upper) {
+        middle = (lower + upper) / 2.0;
+      }
+      refinementEvaluations++;
       double fMiddle = evaluate(middle);
       if (accept(fMiddle)) {
         return;
       }
       if (Math.signum(fLower) != Math.signum(fMiddle)) {
         upper = middle;
+        fUpper = fMiddle;
       } else {
         lower = middle;
         fLower = fMiddle;
       }
     }
     throw new IllegalStateException("Pitzer hydrate equilibrium did not converge; log fugacity residual=" + residual);
+  }
+
+  /**
+   * Returns bracket-refinement work for package-level regression and performance qualification.
+   *
+   * @return number of full fluid flashes used inside the selected bracket in the latest run
+   */
+  int getLastRefinementEvaluations() {
+    return refinementEvaluations;
   }
 
   /**

@@ -11,19 +11,25 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Water hammer transient pipe model using Method of Characteristics (MOC).
+ * Water hammer transient pipe model using conservative cell-integrated acoustic characteristics.
  *
  * <p>
  * This class simulates fast transient pressure waves (water hammer / hydraulic shock) in pipelines. Unlike the
  * advection-based transient model in {@link PipeBeggsAndBrills}, this model propagates pressure waves at the speed of
- * sound, enabling accurate simulation of:
+ * sound. Current analytical evidence is bounded to single-line, frozen-property acoustics:
  * </p>
  * <ul>
- * <li>Rapid valve closures (emergency shutdown)</li>
- * <li>Pump trips</li>
- * <li>Check valve slam</li>
- * <li>Pressure surge analysis for pipe stress design</li>
+ * <li>Rapid Safety Shutdown valve closures</li>
+ * <li>Prescribed actual valve travel and absolute liquid capacity</li>
+ * <li>Optional forward pump curve and actual-speed history through {@link AcousticPumpBoundary}</li>
+ * <li>Pressure-wave screening, subject to first-order numerical diffusion</li>
  * </ul>
+ * <p>
+ * Pump/disc dynamics, cavitation, structural support/stress loads and plant-wide coupling are not qualified by this
+ * model. The N configured nodes bound N-1 physical cells. Cell means carry inventory; nodal profiles are physical face
+ * traces, which must not be integrated as cell means. Boundary forcing uses a right-endpoint hold over each internal
+ * interval. Refine both space and time to assess waveform and continuous-boundary quadrature errors.
+ * </p>
  *
  * <p>
  * The Method of Characteristics transforms the hyperbolic partial differential equations for one-dimensional transient
@@ -35,7 +41,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  * <ul>
  * <li>Continuity: ∂H/∂t + (c²/gA) ∂Q/∂x = 0</li>
- * <li>Momentum: ∂Q/∂t + gA ∂H/∂x + f/(2DA) Q|Q| = 0</li>
+ * <li>Momentum: ∂Q/∂t + gA (∂H/∂x + ∂z/∂x) + f/(2DA) Q|Q| = 0, with H=p/(ρg)</li>
  * </ul>
  *
  * <p>
@@ -77,7 +83,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * }
  *
  * // Get maximum pressure surge
- * double maxP = pipe.getMaxPressureEnvelope();
+ * double maxP = pipe.getMaxPressure();
  * }
  * </pre>
  *
@@ -101,7 +107,9 @@ public class WaterHammerPipe extends Pipeline {
     /** Closed end (dead end). */
     CLOSED_END,
     /** Constant flow rate. */
-    CONSTANT_FLOW
+    CONSTANT_FLOW,
+    /** Declared forward single-liquid pump curve, upstream only. */
+    PUMP
   }
 
   // Pipe geometry
@@ -124,8 +132,36 @@ public class WaterHammerPipe extends Pipeline {
   // State arrays (head in meters, flow in m³/s)
   private double[] head; // Piezometric head at nodes
   private double[] flow; // Volumetric flow rate at nodes
-  private double[] headOld; // Previous time step
-  private double[] flowOld; // Previous time step
+  /** Mean pressure head in the physical cells between the configured nodes, metres. */
+  private double[] cellHead;
+  /** Mean actual volumetric flow in each physical cell, m3/s. */
+  private double[] cellFlow;
+  /** Initialized nodal pressure heads defining the exactly balanced linear reference state. */
+  private double[] referenceHead;
+  /** Initialized uniform actual volumetric flow, m3/s. */
+  private double referenceFlow;
+  /** Trial means, committed only after boundary and finite-state validation. */
+  private double[] trialHead;
+  /** Trial mean flows, m3/s. */
+  private double[] trialFlow;
+  /** Shared physical face pressure-head flux states, metres. */
+  private double[] faceHead;
+  /** Shared physical face flow flux states, m3/s. */
+  private double[] faceFlow;
+  /** Trial endpoint traces, distinct from interval-integrated flux states. */
+  private double[] traceHead;
+  /** Trial endpoint actual flow traces, m3/s. */
+  private double[] traceFlow;
+  /** Accumulated signed actual inlet exchange, m3, positive into the line. */
+  private double inletVolume;
+  /** Accumulated signed actual outlet exchange, m3, positive out of the line. */
+  private double outletVolume;
+  /** Accumulated net physical pressure impulse, kg m/s. */
+  private double pressureImpulse;
+  /** Accumulated terrain gravity impulse in the positive route direction, kg m/s. */
+  private double gravityImpulse;
+  /** Accumulated signed Darcy resistance impulse, kg m/s. */
+  private double frictionImpulse;
 
   // Pressure and velocity for output
   private double[] pressureProfile; // Pa
@@ -144,8 +180,29 @@ public class WaterHammerPipe extends Pipeline {
   private double downstreamHead; // m (for reservoir BC)
   private double valveOpening = 1.0; // 0-1 (for valve BC)
   private double valveBackPressureBara = 1.0;
-  private double stepFraction;
   private double valveCv = -1; // Valve coefficient (-1 = auto from steady state)
+  /** Optional absolute-capacity and prescribed-travel boundary; null preserves calibrated legacy mode. */
+  private AcousticValveBoundary valveBoundary;
+  /** Optional detached forward pump characteristic. */
+  private AcousticPumpBoundary pumpBoundary;
+  /** Optional ideal translating check-valve parameters. */
+  private AcousticLiftCheckValve liftCheckValve;
+  /** Accepted translating position, m. */
+  private double liftPosition;
+  /** Accepted translating velocity, m/s. */
+  private double liftVelocity;
+  /** Initial mechanical storage, J. */
+  private double initialLiftEnergy;
+  /** Accepted work, orifice, damping, numerical and impact integrals, J. */
+  private double[] liftEnergy = new double[5];
+  /** Accepted contact count. */
+  private long liftContactCount;
+  /** Last accepted contact time, s, or NaN before contact. */
+  private double lastLiftContactTime = Double.NaN;
+  /** Deep-owned internal histories: time, lift, velocity, work/losses, jet and swept flow. */
+  private List<double[]> liftHistory = new ArrayList<>();
+  /** Accepted hydraulic pump work, J; excludes shaft and thermal energy. */
+  private double pumpHydraulicWork;
 
   // Fluid properties (cached)
   private double fluidDensity; // kg/m³
@@ -561,6 +618,9 @@ public class WaterHammerPipe extends Pipeline {
    * @param opening Valve opening (0-1)
    */
   public void setValveOpening(double opening) {
+    if (valveBoundary != null || liftCheckValve != null) {
+      throw new IllegalStateException("Actual travel belongs to the configured acoustic valve boundary");
+    }
     if (!Double.isFinite(opening)) {
       throw new IllegalArgumentException("Valve opening must be finite");
     }
@@ -574,6 +634,303 @@ public class WaterHammerPipe extends Pipeline {
    */
   public double getValveOpening() {
     return valveOpening;
+  }
+
+  /**
+   * Install prescribed physical travel and absolute liquid capacity. Call run() to initialize or reinitialize.
+   *
+   * @param boundary immutable boundary, or null to restore calibrated linear legacy mode
+   */
+  public void setValveBoundary(AcousticValveBoundary boundary) {
+    if (boundary != null && liftCheckValve != null) {
+      throw new IllegalArgumentException("Prescribed travel and self-actuating lift are mutually exclusive");
+    }
+    if (valveBoundary != boundary) {
+      valveBoundary = boundary;
+      configurationVersion++;
+      if (boundary != null) {
+        valveOpening = boundary.getOpening(0.0);
+      }
+    }
+  }
+
+  /**
+   * Get the prescribed boundary without mutable actuator or clock state.
+   *
+   * @return immutable prescribed boundary, or null in legacy mode
+   */
+  public AcousticValveBoundary getValveBoundary() {
+    return valveBoundary;
+  }
+
+  /**
+   * Configure an optional forward pump inlet. Changing it requires explicit reinitialization with run().
+   *
+   * @param boundary detached pump curve and actual-speed history, or null to remove
+   */
+  public void setPumpBoundary(AcousticPumpBoundary boundary) {
+    if (pumpBoundary != boundary) {
+      pumpBoundary = boundary;
+      configurationVersion++;
+    }
+  }
+
+  /**
+   * Get the immutable configured pump boundary.
+   *
+   * @return pump boundary, or null for legacy inlet modes
+   */
+  public AcousticPumpBoundary getPumpBoundary() {
+    return pumpBoundary;
+  }
+
+  /**
+   * Get hydraulic work supplied by the pump using accepted interval fluxes and endpoint-held forcing.
+   *
+   * @return hydraulic work, J; not shaft work or full EOS energy closure
+   */
+  public double getPumpHydraulicWork() {
+    return pumpHydraulicWork;
+  }
+
+  /**
+   * Install an ideal translating/inelastic check valve; call run() to initialize static force/flow balance.
+   *
+   * @param boundary immutable declared parameters, or null to restore legacy downstream mode
+   */
+  public void setLiftCheckValve(AcousticLiftCheckValve boundary) {
+    if (boundary != null && valveBoundary != null) {
+      throw new IllegalArgumentException("Prescribed travel and self-actuating lift are mutually exclusive");
+    }
+    if (boundary != liftCheckValve) {
+      liftCheckValve = boundary;
+      configurationVersion++;
+      if (boundary != null) {
+        valveOpening = boundary.getInitialLift() / boundary.getMaximumLift();
+      }
+    }
+  }
+
+  /**
+   * Get the configured translating parameters.
+   *
+   * @return immutable parameters, or null in other modes
+   */
+  public AcousticLiftCheckValve getLiftCheckValve() {
+    return liftCheckValve;
+  }
+
+  /**
+   * Get accepted translating position.
+   *
+   * @return lift, m
+   */
+  public double getLiftPosition() {
+    return liftPosition;
+  }
+
+  /**
+   * Get accepted translating velocity after any inelastic contact.
+   *
+   * @return velocity, m/s
+   */
+  public double getLiftVelocity() {
+    return liftVelocity;
+  }
+
+  /**
+   * Get accepted mechanical storage, zero at the stationary seat.
+   *
+   * @return kinetic plus spring/preload energy, J
+   */
+  public double getLiftMechanicalEnergy() {
+    return liftCheckValve == null ? 0.0 : liftCheckValve.energy(liftPosition, liftVelocity);
+  }
+
+  /**
+   * Get pressure-difference work including jet and swept flow, not full EOS/shaft work.
+   *
+   * @return cumulative signed pressure work, J
+   */
+  public double getLiftPressureWork() {
+    return liftCheckValve == null ? 0.0 : liftEnergy[0];
+  }
+
+  /**
+   * Get passive signed-orifice dissipation.
+   *
+   * @return cumulative orifice loss, J
+   */
+  public double getLiftOrificeLoss() {
+    return liftCheckValve == null ? 0.0 : liftEnergy[1];
+  }
+
+  /**
+   * Get physical viscous damping loss.
+   *
+   * @return cumulative damping loss, J
+   */
+  public double getLiftDampingLoss() {
+    return liftCheckValve == null ? 0.0 : liftEnergy[2];
+  }
+
+  /**
+   * Get explicit backward-Euler algorithmic loss, separate from physical damping.
+   *
+   * @return cumulative numerical loss, J
+   */
+  public double getLiftNumericalLoss() {
+    return liftCheckValve == null ? 0.0 : liftEnergy[3];
+  }
+
+  /**
+   * Get perfectly inelastic kinetic-energy loss at seat and upper stop.
+   *
+   * @return cumulative impact loss, J
+   */
+  public double getLiftImpactLoss() {
+    return liftCheckValve == null ? 0.0 : liftEnergy[4];
+  }
+
+  /**
+   * Get pressure work less orifice loss, storage change and all declared losses.
+   *
+   * @return discrete boundary/mechanical energy residual, J, not full pipe EOS energy
+   */
+  public double getLiftEnergyResidual() {
+    if (liftCheckValve == null) {
+      return 0.0;
+    }
+    return liftEnergy[0] - liftEnergy[1] - (getLiftMechanicalEnergy() - initialLiftEnergy) - liftEnergy[2]
+        - liftEnergy[3] - liftEnergy[4];
+  }
+
+  /**
+   * Get the accepted perfectly inelastic contact count.
+   *
+   * @return seat and upper-stop contacts
+   */
+  public long getLiftContactCount() {
+    return liftContactCount;
+  }
+
+  /**
+   * Get the last accepted discrete contact time.
+   *
+   * @return time, s, or NaN before any contact
+   */
+  public double getLastLiftContactTime() {
+    return liftCheckValve == null ? Double.NaN : lastLiftContactTime;
+  }
+
+  /**
+   * Get defensive internal lift histories synchronized with accepted pipe intervals. Columns are time_s, lift_m,
+   * velocity_m_s, pressureWork_J, orificeLoss_J, dampingLoss_J, numericalLoss_J, impactLoss_J, jetFlow_m3_s,
+   * sweptFlow_m3_s, pressureDifference_Pa, contactEvent (one for contact, zero otherwise). Contact/restart can add
+   * samples between external requests.
+   *
+   * @return deep copy of accepted rows, excluding initialization
+   */
+  public List<double[]> getLiftHistory() {
+    List<double[]> copy = new ArrayList<>();
+    if (liftHistory != null) {
+      for (double[] row : liftHistory) {
+        copy.add(row.clone());
+      }
+    }
+    return copy;
+  }
+
+  /**
+   * Advance a complete request with Courant limits, existing pump knots and localized discrete lift contact.
+   *
+   * @param requestedEnd exact requested physical endpoint, s
+   */
+  private void advanceLiftRequest(double requestedEnd) {
+    int intervals = 0;
+    while (currentTime < requestedEnd) {
+      if (++intervals > 1000000) {
+        throw new IllegalStateException("Lift interval count exceeds bounded acoustic substepping");
+      }
+      double end = Math.min(requestedEnd, currentTime + getMaxStableTimeStep());
+      if (pumpBoundary != null) {
+        end = Math.min(end, pumpBoundary.nextKnotAfter(currentTime));
+      }
+      double drive = fluidDensity * GRAVITY
+          * cellCharacteristic(cellHead, cellFlow, cellHead.length - 1, numberOfNodes - 1, 1)
+          - valveBackPressureBara * 1e5;
+      try {
+        AcousticLiftCheckValve.Step tentative = liftCheckValve.step(drive,
+            fluidDensity * GRAVITY * characteristicImpedance, fluidDensity, liftPosition, liftVelocity,
+            end - currentTime);
+        if (tentative.duration < end - currentTime) {
+          end = currentTime + tentative.duration;
+        }
+        if (end <= currentTime) {
+          throw new IllegalStateException("Lift contact cannot advance representable physical time");
+        }
+        advanceAcoustics(tentative.duration, end, tentative);
+      } catch (IllegalArgumentException | IllegalStateException failure) {
+        throw new IllegalStateException(
+            "Acoustic lift interval [" + currentTime + ", " + end + "] s not accepted: " + failure.getMessage(),
+            failure);
+      }
+      currentTime = end;
+    }
+  }
+
+  /**
+   * Evaluate a compatible instantaneous lift trace without changing the disc state.
+   *
+   * @param cp incoming pressure-head characteristic, m
+   * @param position accepted position, m
+   * @param velocity accepted velocity, m/s
+   * @param heads destination face heads, m
+   * @param flows destination face flows, m3/s
+   */
+  private void applyLiftTrace(double cp, double position, double velocity, double[] heads, double[] flows) {
+    double receiver = valveBackPressureBara * 1e5;
+    double pressure = liftCheckValve.tracePressure(fluidDensity * GRAVITY * cp - receiver,
+        fluidDensity * GRAVITY * characteristicImpedance, fluidDensity, position, velocity);
+    int last = numberOfNodes - 1;
+    heads[last] = (receiver + pressure) / (fluidDensity * GRAVITY);
+    flows[last] = liftCheckValve.jetFlow(position, pressure, fluidDensity) + liftCheckValve.sweptFlow(velocity);
+  }
+
+  /**
+   * Validate candidate boundary energy/work before committing any hydraulic or disc state.
+   *
+   * @param step tentative physical interval
+   * @return candidate cumulative work/loss integrals, J
+   */
+  private double[] tentativeLiftEnergy(AcousticLiftCheckValve.Step step) {
+    double work = step.duration * step.pressure * (step.jetFlow + step.sweptFlow);
+    double orifice = step.duration * step.pressure * step.jetFlow;
+    double[] increments = {work, orifice, step.dampingLoss, step.numericalLoss, step.impactLoss};
+    double[] candidate = new double[5];
+    for (int i = 0; i < candidate.length; i++) {
+      candidate[i] = liftEnergy[i] + increments[i];
+      if (!Double.isFinite(candidate[i]) || (i > 0 && increments[i] < 0.0)) {
+        throw new IllegalStateException("Invalid lift work/loss; interval not accepted");
+      }
+    }
+    double change = liftCheckValve.energy(step.lift, step.velocity) - getLiftMechanicalEnergy();
+    double residual = work - orifice - change - step.dampingLoss - step.numericalLoss - step.impactLoss;
+    double scale = Math.abs(work) + Math.abs(orifice) + Math.abs(change) + step.dampingLoss + step.numericalLoss
+        + step.impactLoss;
+    if (!Double.isFinite(residual) || Math.abs(residual) > 1e-10 + 1e-12 * scale) {
+      throw new IllegalStateException("Lift discrete work identity unresolved; interval not accepted");
+    }
+    return candidate;
+  }
+
+  /**
+   * Get position-adjusted capacity in physical mode.
+   *
+   * @return metric Kv at current physical time, or NaN in calibrated legacy mode
+   */
+  public double getEffectiveValveKv() {
+    return valveBoundary == null ? Double.NaN : valveBoundary.getKv(currentTime);
   }
 
   /**
@@ -737,24 +1094,50 @@ public class WaterHammerPipe extends Pipeline {
     // Calculate area and segment length
     area = Math.PI * diameter * diameter / 4.0;
     segmentLength = length / (numberOfNodes - 1);
+    requirePositive(area, "pipe area");
+    requirePositive(segmentLength, "cell length");
 
     // Initialize arrays
     head = new double[numberOfNodes];
     flow = new double[numberOfNodes];
-    headOld = new double[numberOfNodes];
-    flowOld = new double[numberOfNodes];
+    cellHead = new double[numberOfNodes - 1];
+    cellFlow = new double[numberOfNodes - 1];
+    referenceHead = new double[numberOfNodes];
+    trialHead = new double[numberOfNodes - 1];
+    trialFlow = new double[numberOfNodes - 1];
+    faceHead = new double[numberOfNodes];
+    faceFlow = new double[numberOfNodes];
+    traceHead = new double[numberOfNodes];
+    traceFlow = new double[numberOfNodes];
+    inletVolume = 0.0;
+    pumpHydraulicWork = 0.0;
+    outletVolume = 0.0;
+    pressureImpulse = 0.0;
+    gravityImpulse = 0.0;
+    frictionImpulse = 0.0;
     pressureProfile = new double[numberOfNodes];
     velocityProfile = new double[numberOfNodes];
     maxPressureEnvelope = new double[numberOfNodes];
     minPressureEnvelope = new double[numberOfNodes];
     pressureHistory = new ArrayList<>();
     timeHistory = new ArrayList<>();
+    liftPosition = liftCheckValve == null ? 0.0 : liftCheckValve.getInitialLift();
+    liftVelocity = 0.0;
+    initialLiftEnergy = liftCheckValve == null ? 0.0 : liftCheckValve.energy(liftPosition, 0.0);
+    liftEnergy = new double[5];
+    liftHistory = new ArrayList<>();
+    liftContactCount = 0L;
+    lastLiftContactTime = Double.NaN;
 
     // Get fluid properties from inlet stream
     SystemInterface system = inStream.getThermoSystem().clone();
     system.initProperties();
     if (system.getNumberOfPhases() != 1) {
       throw new IllegalArgumentException("WaterHammerPipe requires a single-phase inlet");
+    }
+    if ((valveBoundary != null || pumpBoundary != null || liftCheckValve != null)
+        && !neqsim.thermo.phase.StateOfMatter.isLiquid(system.getPhase(0).getType())) {
+      throw new IllegalArgumentException("Physical acoustic boundary requires a single liquid phase");
     }
 
     fluidDensity = system.getDensity("kg/m3");
@@ -778,8 +1161,15 @@ public class WaterHammerPipe extends Pipeline {
     // Calculate initial steady-state conditions
     double inletPressure = inStream.getPressure() * 1e5; // Pa
     double massFlow = inStream.getFlowRate("kg/sec");
+    requirePositive(inletPressure, "absolute inlet pressure");
+    if (!Double.isFinite(massFlow)) {
+      throw new IllegalArgumentException("Initial acoustic mass flow must be finite");
+    }
     double volumeFlow = massFlow / fluidDensity; // m³/s
     double velocity = volumeFlow / area;
+    if (!Double.isFinite(volumeFlow) || !Double.isFinite(velocity)) {
+      throw new IllegalArgumentException("Initial acoustic actual flow and velocity must be finite");
+    }
 
     // Calculate Reynolds number and friction factor
     double reynoldsNumber = fluidDensity * Math.abs(velocity) * diameter / fluidViscosity;
@@ -787,6 +1177,15 @@ public class WaterHammerPipe extends Pipeline {
 
     // Calculate steady-state head and pressure profile
     upstreamHead = inletPressure / (fluidDensity * GRAVITY);
+    validatePumpMode();
+    if (pumpBoundary != null) {
+      double pumpHead = pumpBoundary.getHead(volumeFlow, 0.0);
+      double suppliedHead = pumpBoundary.getSuctionPressure() / (fluidDensity * GRAVITY) + pumpHead;
+      if (Math.abs(suppliedHead - upstreamHead) > 1.0e-8) {
+        throw new IllegalArgumentException(
+            "Initial feed pressure/flow is inconsistent with declared pump curve/suction");
+      }
+    }
 
     // Friction head loss per unit length
     double headLossPerMeter = frictionFactor * velocity * Math.abs(velocity) / (2 * GRAVITY * diameter);
@@ -797,14 +1196,22 @@ public class WaterHammerPipe extends Pipeline {
     for (int i = 0; i < numberOfNodes; i++) {
       double x = i * segmentLength;
       head[i] = upstreamHead - headLossPerMeter * x - elevationPerMeter * x;
+      if (!Double.isFinite(head[i]) || head[i] <= 0.0) {
+        throw new IllegalArgumentException(
+            "Initial absolute acoustic pressure must be positive and finite along the line");
+      }
       flow[i] = volumeFlow;
-      headOld[i] = head[i];
-      flowOld[i] = flow[i];
+      referenceHead[i] = head[i];
 
       pressureProfile[i] = head[i] * fluidDensity * GRAVITY;
       velocityProfile[i] = velocity;
       maxPressureEnvelope[i] = pressureProfile[i];
       minPressureEnvelope[i] = pressureProfile[i];
+    }
+    referenceFlow = volumeFlow;
+    for (int i = 0; i < numberOfNodes - 1; i++) {
+      cellHead[i] = 0.5 * (head[i] + head[i + 1]);
+      cellFlow[i] = volumeFlow;
     }
 
     pressureDrop = (pressureProfile[0] - pressureProfile[numberOfNodes - 1]) / 1e5;
@@ -813,12 +1220,32 @@ public class WaterHammerPipe extends Pipeline {
     downstreamHead = head[numberOfNodes - 1];
 
     // Calibrate the hydraulic coefficient against the actual external receiver.
+    if ((valveBoundary != null || liftCheckValve != null) && downstreamBoundary != BoundaryType.VALVE) {
+      throw new IllegalArgumentException("Configured physical acoustic valve requires downstream boundary VALVE");
+    }
     if (downstreamBoundary == BoundaryType.VALVE) {
+      if (valveBoundary != null) {
+        valveOpening = valveBoundary.getOpening(0.0);
+      }
       double deltaH = downstreamHead - valveBackPressureBara * 1.0e5 / (fluidDensity * GRAVITY);
-      if (volumeFlow <= 0.0 || deltaH <= 0.0 || valveOpening <= 0.0) {
+      if (volumeFlow <= 0.0 || deltaH <= 0.0) {
         throw new IllegalArgumentException("Initialize a forward-flow open valve above receiver pressure");
       }
-      valveCv = volumeFlow / (valveOpening * Math.sqrt(deltaH));
+      if (liftCheckValve != null) {
+        liftCheckValve.validateInitial(deltaH * fluidDensity * GRAVITY, volumeFlow, fluidDensity);
+        valveOpening = liftPosition / liftCheckValve.getMaximumLift();
+      } else if (valveBoundary == null) {
+        if (valveOpening <= 0.0) {
+          throw new IllegalArgumentException("Initialize an open legacy valve");
+        }
+        valveCv = volumeFlow / (valveOpening * Math.sqrt(deltaH));
+      } else {
+        double predicted = hydraulicCoefficient(valveBoundary.getKv(0.0)) * Math.sqrt(deltaH);
+        if (!Double.isFinite(predicted) || Math.abs(predicted - volumeFlow) > 1.0e-9 + 1.0e-6 * Math.abs(volumeFlow)) {
+          throw new IllegalArgumentException("Initial flow/pressure is inconsistent with declared valve capacity; "
+              + "provide a consistent feed, receiver pressure and actual initial position");
+        }
+      }
     }
 
     currentTime = 0.0;
@@ -845,20 +1272,50 @@ public class WaterHammerPipe extends Pipeline {
   @Override
   public void runTransient(double dt, UUID id) {
     requirePositive(dt, "timestep");
+    validatePumpMode();
+    if ((valveBoundary != null || liftCheckValve != null) && downstreamBoundary != BoundaryType.VALVE) {
+      throw new IllegalStateException("Configured physical acoustic valve requires downstream boundary VALVE");
+    }
     if (!initialized) {
       initialize();
     } else if (configurationVersion != initializedConfigurationVersion) {
       throw new IllegalStateException("Static acoustic configuration changed; call run() explicitly to reinitialize");
     }
+    if (cellHead == null) {
+      throw new IllegalStateException("Nodal acoustic checkpoint has no cell inventory; call run() to reinitialize");
+    }
     double requestedEnd = currentTime + dt;
     double count = Math.ceil(dt / getMaxStableTimeStep());
-    if (!Double.isFinite(requestedEnd) || count > 1000000.0) {
+    if (!Double.isFinite(requestedEnd) || requestedEnd <= currentTime || count > 1000000.0) {
       throw new IllegalArgumentException("Requested interval exceeds bounded acoustic substepping");
     }
-    int steps = Math.max(1, (int) count);
-    double internalDt = dt / steps;
-    for (int substep = 0; substep < steps; substep++) {
-      advanceAcoustics(internalDt);
+    if (liftCheckValve != null) {
+      advanceLiftRequest(requestedEnd);
+      updateOutletStream();
+      setCalculationIdentifier(id);
+      return;
+    }
+    while (currentTime < requestedEnd) {
+      boolean prescribed = valveBoundary != null || pumpBoundary != null;
+      double end = valveBoundary == null ? requestedEnd
+          : Math.min(requestedEnd, valveBoundary.nextKnotAfter(currentTime));
+      if (pumpBoundary != null) {
+        end = Math.min(end, pumpBoundary.nextKnotAfter(currentTime));
+      }
+      double interval = prescribed ? end - currentTime : dt;
+      int steps = Math.max(1, (int) (prescribed ? Math.ceil(interval / getMaxStableTimeStep()) : count));
+      double start = currentTime;
+      for (int substep = 1; substep <= steps; substep++) {
+        double endpoint = substep == steps ? end : start + interval * substep / steps;
+        try {
+          advanceAcoustics(prescribed ? endpoint - currentTime : interval / steps, endpoint);
+        } catch (IllegalStateException exception) {
+          throw new IllegalStateException(
+              "Acoustic interval [" + currentTime + ", " + endpoint + "] s not accepted: " + exception.getMessage(),
+              exception);
+        }
+        currentTime = endpoint;
+      }
     }
     currentTime = requestedEnd;
     updateOutletStream();
@@ -869,23 +1326,91 @@ public class WaterHammerPipe extends Pipeline {
    * Advance one Courant-limited characteristic interval, preserving its physical duration.
    *
    * @param dt internal timestep in seconds
+   * @param endpoint exact physical endpoint for prescribed boundary evaluation, seconds
    */
-  private void advanceAcoustics(double dt) {
-    stepFraction = waveSpeed * dt / segmentLength;
-    // Store old values
-    System.arraycopy(head, 0, headOld, 0, numberOfNodes);
-    System.arraycopy(flow, 0, flowOld, 0, numberOfNodes);
+  private void advanceAcoustics(double dt, double endpoint) {
+    advanceAcoustics(dt, endpoint, null);
+  }
 
-    for (int i = 1; i < numberOfNodes - 1; i++) {
-      double cp = characteristic(i, -1);
-      double cm = characteristic(i, 1);
-      head[i] = (cp + cm) / 2.0;
-      flow[i] = (cp - cm) / (2.0 * characteristicImpedance);
+  /**
+   * Advance cells and an optional tentative lift state as one locally accepted physical interval.
+   *
+   * @param dt accepted interval duration, s
+   * @param endpoint accepted endpoint, s
+   * @param lift tentative translating state, or null for legacy modes
+   */
+  private void advanceAcoustics(double dt, double endpoint, AcousticLiftCheckValve.Step lift) {
+    // Each shared Riemann trace is the flux for both adjoining physical cells.
+    acousticFaces(cellHead, cellFlow, endpoint, faceHead, faceFlow);
+    if (lift != null) {
+      int last = numberOfNodes - 1;
+      faceHead[last] = (valveBackPressureBara * 1e5 + lift.pressure) / (fluidDensity * GRAVITY);
+      faceFlow[last] = lift.jetFlow + lift.sweptFlow;
+      if (!Double.isFinite(faceHead[last]) || faceHead[last] <= 0.0) {
+        throw new IllegalStateException("Invalid lift interval pressure; interval not accepted");
+      }
     }
-
-    // Apply boundary conditions
-    applyUpstreamBC();
-    applyDownstreamBC();
+    double source = dt * frictionFactor / (2.0 * diameter * area);
+    double signedReference = referenceFlow * Math.abs(referenceFlow);
+    double frictionSum = 0.0;
+    for (int i = 0; i < numberOfNodes - 1; i++) {
+      trialHead[i] = cellHead[i]
+          - waveSpeed * waveSpeed * dt / (GRAVITY * area * segmentLength) * (faceFlow[i + 1] - faceFlow[i]);
+      // Subtract the initialized linear gradient analytically, including terrain.
+      double deltaHead = (faceHead[i + 1] - referenceHead[i + 1]) - (faceHead[i] - referenceHead[i]);
+      double forced = cellFlow[i] - GRAVITY * area * dt / segmentLength * deltaHead + source * signedReference;
+      double rootArgument = 1.0 + 4.0 * source * Math.abs(forced);
+      if (!Double.isFinite(forced) || !Double.isFinite(rootArgument)) {
+        throw new IllegalStateException("Nonfinite acoustic momentum forcing; interval not accepted");
+      }
+      // Signed backward Darcy solve q + source*q*abs(q) = forced; no clipping.
+      trialFlow[i] = forced / (0.5 + 0.5 * Math.sqrt(rootArgument));
+      if (!Double.isFinite(trialHead[i]) || trialHead[i] <= 0.0 || !Double.isFinite(trialFlow[i])) {
+        throw new IllegalStateException("Invalid acoustic cell state; interval not accepted");
+      }
+      frictionSum += trialFlow[i] * Math.abs(trialFlow[i]);
+    }
+    // Validate the new endpoint before committing any state, inventory or history.
+    acousticFaces(trialHead, trialFlow, endpoint, traceHead, traceFlow);
+    if (lift != null) {
+      applyLiftTrace(cellCharacteristic(trialHead, trialFlow, trialHead.length - 1, numberOfNodes - 1, 1), lift.lift,
+          lift.velocity, traceHead, traceFlow);
+    }
+    for (int i = 0; i < numberOfNodes; i++) {
+      if (!Double.isFinite(traceHead[i]) || traceHead[i] <= 0.0 || !Double.isFinite(traceFlow[i])) {
+        throw new IllegalStateException("Invalid acoustic endpoint trace; interval not accepted");
+      }
+    }
+    double pumpWork = pumpBoundary == null ? 0.0
+        : dt * fluidDensity * GRAVITY * faceFlow[0] * pumpBoundary.getHead(faceFlow[0], endpoint);
+    if (!Double.isFinite(pumpWork) || !Double.isFinite(pumpHydraulicWork + pumpWork)) {
+      throw new IllegalStateException("Nonfinite pump hydraulic work; interval not accepted");
+    }
+    double[] nextLiftEnergy = lift == null ? null : tentativeLiftEnergy(lift);
+    System.arraycopy(trialHead, 0, cellHead, 0, cellHead.length);
+    System.arraycopy(trialFlow, 0, cellFlow, 0, cellFlow.length);
+    System.arraycopy(traceHead, 0, head, 0, numberOfNodes);
+    System.arraycopy(traceFlow, 0, flow, 0, numberOfNodes);
+    inletVolume += dt * faceFlow[0];
+    pumpHydraulicWork += pumpWork;
+    outletVolume += dt * faceFlow[numberOfNodes - 1];
+    pressureImpulse += dt * fluidDensity * GRAVITY * area * (faceHead[0] - faceHead[numberOfNodes - 1]);
+    gravityImpulse -= dt * fluidDensity * GRAVITY * area * elevationChange;
+    frictionImpulse -= dt * fluidDensity * frictionFactor * segmentLength / (2.0 * diameter * area) * frictionSum;
+    if (lift != null) {
+      liftPosition = lift.lift;
+      liftVelocity = lift.velocity;
+      liftEnergy = nextLiftEnergy;
+      valveOpening = liftPosition / liftCheckValve.getMaximumLift();
+      if (lift.contact) {
+        liftContactCount++;
+        lastLiftContactTime = endpoint;
+      }
+      liftHistory.add(new double[] {endpoint, liftPosition, liftVelocity, liftEnergy[0], liftEnergy[1], liftEnergy[2],
+          liftEnergy[3], liftEnergy[4], lift.jetFlow, lift.sweptFlow, lift.pressure, lift.contact ? 1.0 : 0.0});
+    } else if (valveBoundary != null) {
+      valveOpening = valveBoundary.getOpening(endpoint);
+    }
 
     // Update pressure and velocity profiles
     for (int i = 0; i < numberOfNodes; i++) {
@@ -898,77 +1423,141 @@ public class WaterHammerPipe extends Pipeline {
     }
 
     // Store history
-    currentTime += dt;
     pressureHistory.add(pressureProfile[numberOfNodes - 1]);
-    timeHistory.add(currentTime);
+    timeHistory.add(endpoint);
 
     pressureDrop = (pressureProfile[0] - pressureProfile[numberOfNodes - 1]) / 1e5;
 
   }
 
   /**
-   * Interpolate the characteristic foot and integrate frozen friction and gravity.
+   * Solve shared face traces from the two cell-mean acoustic characteristics. Perturbations about the initialized
+   * linear steady state make the pressure-gradient, terrain and Darcy sources exactly balanced at equilibrium.
    *
-   * @param node destination node
-   * @param direction minus one for C-plus, plus one for C-minus
-   * @return incoming head characteristic in metres
+   * @param h cell mean pressure heads in metres
+   * @param q cell mean actual flows in m3/s
+   * @param endpoint boundary forcing time in seconds, held over the internal interval
+   * @param heads destination face pressure heads
+   * @param flows destination face actual flows
    */
-  private double characteristic(int node, int direction) {
-    double h = headOld[node] + stepFraction * (headOld[node + direction] - headOld[node]);
-    double q = flowOld[node] + stepFraction * (flowOld[node + direction] - flowOld[node]);
-    double distance = stepFraction * segmentLength;
-    double loss = frictionFactor * distance * q * Math.abs(q) / (2.0 * GRAVITY * diameter * area * area);
-    double slope = elevationChange / length;
-    return h - direction * characteristicImpedance * q + direction * (loss + slope * distance);
+  private void acousticFaces(double[] h, double[] q, double endpoint, double[] heads, double[] flows) {
+    for (int i = 1; i < numberOfNodes - 1; i++) {
+      double cp = cellCharacteristic(h, q, i - 1, i, 1);
+      double cm = cellCharacteristic(h, q, i, i, -1);
+      heads[i] = 0.5 * (cp + cm);
+      flows[i] = (cp - cm) / (2.0 * characteristicImpedance);
+    }
+    applyUpstreamBC(cellCharacteristic(h, q, 0, 0, -1), endpoint, heads, flows);
+    applyDownstreamBC(cellCharacteristic(h, q, h.length - 1, numberOfNodes - 1, 1), endpoint, heads, flows);
   }
 
-  /** Apply the upstream physical boundary. */
-  private void applyUpstreamBC() {
-    double cm = characteristic(0, 1);
-    if (upstreamBoundary == BoundaryType.RESERVOIR) {
-      head[0] = upstreamHead;
-      flow[0] = (head[0] - cm) / characteristicImpedance;
+  /**
+   * Evaluate an incoming characteristic perturbation at a physical face.
+   *
+   * @param h mean pressure heads
+   * @param q mean actual flows
+   * @param cell donating cell
+   * @param face destination spatial node
+   * @param sign plus one for C-plus, minus one for C-minus
+   * @return pressure-head characteristic in metres
+   */
+  private double cellCharacteristic(double[] h, double[] q, int cell, int face, int sign) {
+    double reference = 0.5 * (referenceHead[cell] + referenceHead[cell + 1]);
+    return referenceHead[face] + h[cell] - reference + sign * characteristicImpedance * q[cell];
+  }
+
+  /**
+   * Apply the upstream physical boundary.
+   *
+   * @param cm incoming C-minus pressure-head characteristic
+   * @param endpoint physical boundary evaluation time, seconds
+   * @param heads destination pressure-head traces
+   * @param flows destination actual flow traces
+   */
+  private void applyUpstreamBC(double cm, double endpoint, double[] heads, double[] flows) {
+    if (upstreamBoundary == BoundaryType.PUMP) {
+      flows[0] = pumpBoundary.solveFlow(cm, characteristicImpedance, fluidDensity, endpoint);
+      heads[0] = cm + characteristicImpedance * flows[0];
+    } else if (upstreamBoundary == BoundaryType.RESERVOIR) {
+      heads[0] = upstreamHead;
+      flows[0] = (heads[0] - cm) / characteristicImpedance;
     } else if (upstreamBoundary == BoundaryType.CLOSED_END || upstreamBoundary == BoundaryType.CONSTANT_FLOW) {
-      flow[0] = upstreamBoundary == BoundaryType.CLOSED_END ? 0.0 : flowOld[0];
-      head[0] = cm + characteristicImpedance * flow[0];
+      flows[0] = upstreamBoundary == BoundaryType.CLOSED_END ? 0.0 : flow[0];
+      heads[0] = cm + characteristicImpedance * flows[0];
     } else {
       throw new IllegalArgumentException("Upstream valve boundary is unsupported");
     }
   }
 
-  /** Apply the downstream physical boundary and forward-only valve equation. */
-  private void applyDownstreamBC() {
+  /**
+   * Reject inconsistent optional pump configuration before transient state changes.
+   */
+  private void validatePumpMode() {
+    if ((pumpBoundary != null) != (upstreamBoundary == BoundaryType.PUMP)) {
+      throw new IllegalStateException("Pump boundary data requires upstream PUMP, and PUMP requires boundary data");
+    }
+    if (downstreamBoundary == BoundaryType.PUMP) {
+      throw new IllegalArgumentException("Pump acoustic boundary is upstream only");
+    }
+  }
+
+  /**
+   * Apply the downstream physical boundary and forward-only valve equation.
+   *
+   * @param cp incoming C-plus pressure-head characteristic
+   * @param endpoint exact physical endpoint in seconds
+   * @param heads destination pressure-head traces
+   * @param flows destination actual flow traces
+   */
+  private void applyDownstreamBC(double cp, double endpoint, double[] heads, double[] flows) {
     int i = numberOfNodes - 1;
-    double cp = characteristic(i, -1);
     switch (downstreamBoundary) {
     case RESERVOIR:
-      head[i] = downstreamHead;
-      flow[i] = (cp - head[i]) / characteristicImpedance;
+      heads[i] = downstreamHead;
+      flows[i] = (cp - heads[i]) / characteristicImpedance;
       break;
     case CONSTANT_FLOW:
     case CLOSED_END:
-      flow[i] = downstreamBoundary == BoundaryType.CLOSED_END ? 0.0 : flowOld[i];
-      head[i] = cp - characteristicImpedance * flow[i];
+      flows[i] = downstreamBoundary == BoundaryType.CLOSED_END ? 0.0 : flow[i];
+      heads[i] = cp - characteristicImpedance * flows[i];
       break;
     case VALVE:
-      if (valveCv < 0.0) {
+      if (liftCheckValve != null) {
+        applyLiftTrace(cp, liftPosition, liftVelocity, heads, flows);
+        break;
+      }
+      if (valveBoundary == null && valveCv < 0.0) {
         throw new IllegalStateException("Initialize the valve boundary before transient execution");
       }
       double receiverHead = valveBackPressureBara * 1.0e5 / (fluidDensity * GRAVITY);
-      if (valveOpening > 0.0 && cp < receiverHead) {
+      double coefficient = valveBoundary == null ? valveCv * valveOpening
+          : hydraulicCoefficient(valveBoundary.getKv(endpoint));
+      if (coefficient > 0.0 && cp < receiverHead) {
         throw new IllegalStateException("Valve reverse flow requires a signed receiver model");
       }
-      double coefficient = valveCv * valveOpening;
       double c2 = coefficient * coefficient;
       // Q^2 + B*C^2*Q - C^2*(Cp-Hreceiver) = 0, rationalized positive root.
       double linear = characteristicImpedance * c2;
       double forcing = c2 * (cp - receiverHead);
-      flow[i] = forcing == 0.0 ? 0.0 : 2.0 * forcing / (linear + Math.sqrt(linear * linear + 4.0 * forcing));
-      head[i] = cp - characteristicImpedance * flow[i];
+      if (!Double.isFinite(linear) || !Double.isFinite(forcing)) {
+        throw new IllegalStateException("Nonfinite acoustic valve coefficient or characteristic");
+      }
+      flows[i] = forcing == 0.0 ? 0.0 : forcing / (0.5 * linear + 0.5 * Math.hypot(linear, 2.0 * Math.sqrt(forcing)));
+      heads[i] = cp - characteristicImpedance * flows[i];
       break;
     default:
       throw new IllegalArgumentException("Unsupported downstream boundary");
     }
+  }
+
+  /**
+   * Convert metric Kv to the square-root-pressure-head coefficient. Reference water density is 1000 kg/m3.
+   *
+   * @param kv metric capacity including actual position
+   * @return coefficient in m3/s per square root metre
+   */
+  private static double hydraulicCoefficient(double kv) {
+    return kv / 3600.0 * Math.sqrt(GRAVITY / 100.0);
   }
 
   /**
@@ -992,9 +1581,134 @@ public class WaterHammerPipe extends Pipeline {
   }
 
   /**
+   * Get the pressure means over the N-1 physical cells. These, rather than face traces, carry acoustic inventory.
+   *
+   * @return defensive cell mean absolute pressures in Pa
+   */
+  public double[] getCellPressureProfile() {
+    double[] values = cellHead.clone();
+    for (int i = 0; i < values.length; i++) {
+      values[i] *= fluidDensity * GRAVITY;
+    }
+    return values;
+  }
+
+  /**
+   * Get the actual flow means over physical cells.
+   *
+   * @return defensive cell mean flows in m3/s, positive along the route
+   */
+  public double[] getCellFlowProfile() {
+    return cellFlow.clone();
+  }
+
+  /**
+   * Get the physical cell centres associated with the mean pressure and flow arrays.
+   *
+   * @return distances from the inlet in metres
+   */
+  public double[] getCellPositions() {
+    double[] values = new double[numberOfNodes - 1];
+    for (int i = 0; i < values.length; i++) {
+      values[i] = (i + 0.5) * segmentLength;
+    }
+    return values;
+  }
+
+  /**
+   * Get linear acoustic storage relative to initialization by independent summation of cell mean heads. Pipe elasticity
+   * is included through the declared effective wave speed; this is not a full EOS mass ledger.
+   *
+   * @return actual equivalent stored volume change in m3
+   */
+  public double getAcousticStoredVolume() {
+    double sum = 0.0;
+    for (int i = 0; i < cellHead.length; i++) {
+      sum += cellHead[i] - 0.5 * (referenceHead[i] + referenceHead[i + 1]);
+    }
+    return area * GRAVITY * segmentLength / (waveSpeed * waveSpeed) * sum;
+  }
+
+  /**
+   * Get integrated inlet exchange from accepted physical boundary fluxes, including hidden substeps.
+   *
+   * @return signed actual volume in m3, positive into the line
+   */
+  public double getIntegratedInletVolume() {
+    return inletVolume;
+  }
+
+  /**
+   * Get integrated outlet exchange from accepted physical boundary fluxes, including hidden substeps.
+   *
+   * @return signed actual volume in m3, positive out of the line
+   */
+  public double getIntegratedOutletVolume() {
+    return outletVolume;
+  }
+
+  /**
+   * Get the independently summed acoustic storage less signed net boundary exchange.
+   *
+   * @return volume balance residual in m3
+   */
+  public double getAcousticVolumeResidual() {
+    return getAcousticStoredVolume() - (inletVolume - outletVolume);
+  }
+
+  /**
+   * Get signed line momentum change by summing cell flow means with frozen density.
+   *
+   * @return momentum inventory change in kg m/s
+   */
+  public double getMomentumChange() {
+    double sum = 0.0;
+    for (double q : cellFlow) {
+      sum += q - referenceFlow;
+    }
+    return fluidDensity * segmentLength * sum;
+  }
+
+  /**
+   * Get the physical pressure force impulse, using the actual flux pressure traces.
+   *
+   * @return pressure impulse in kg m/s, positive along the route
+   */
+  public double getIntegratedPressureImpulse() {
+    return pressureImpulse;
+  }
+
+  /**
+   * Get the terrain gravity impulse.
+   *
+   * @return gravity impulse in kg m/s, positive along the route
+   */
+  public double getIntegratedGravityImpulse() {
+    return gravityImpulse;
+  }
+
+  /**
+   * Get signed Darcy resistance impulse using the implicit accepted cell flows.
+   *
+   * @return friction impulse in kg m/s, positive along the route
+   */
+  public double getIntegratedFrictionImpulse() {
+    return frictionImpulse;
+  }
+
+  /**
+   * Get momentum change less accumulated pressure, terrain and friction impulses.
+   *
+   * @return momentum balance residual in kg m/s
+   */
+  public double getMomentumResidual() {
+    return getMomentumChange() - pressureImpulse - gravityImpulse - frictionImpulse;
+  }
+
+  /**
    * Get the pressure profile along the pipe.
    *
-   * @return Pressure profile in Pa
+   * @return absolute face pressure traces in Pa at x=i*length/(N-1), not cell averages
    */
   @Override
   public double[] getPressureProfile() {
@@ -1045,7 +1759,7 @@ public class WaterHammerPipe extends Pipeline {
   /**
    * Get the flow rate profile.
    *
-   * @return Flow profile in m³/s
+   * @return actual face flow traces in m3/s, distinct from the held interval fluxes and cell means
    */
   public double[] getFlowProfile() {
     return flow.clone();
@@ -1281,7 +1995,7 @@ public class WaterHammerPipe extends Pipeline {
   public void reset() {
     initialized = false;
     currentTime = 0.0;
-    valveOpening = 1.0;
+    valveOpening = valveBoundary == null ? 1.0 : valveBoundary.getOpening(0.0);
     if (pressureHistory != null) {
       pressureHistory.clear();
     }

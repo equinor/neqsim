@@ -145,19 +145,36 @@ public class TPHydrateFlash extends TPflash {
       }
     }
     double upper = 0.5 * extentEstimate;
-    Trial high = evaluate(feed, z, water, upper, initial);
-    for (int bracket = 0; high.residual < 0.0 && bracket < maximumIterations; bracket++) {
-      lower = upper;
-      low = high;
-      upper = Math.min(2.0 * upper, 0.5 * (upper + z[water]));
-      if (upper >= z[water]) {
+    double trialCeiling = z[water];
+    Trial high = null;
+    GuestInventoryConvergenceException lastGuestFailure = null;
+    for (int bracket = 0; bracket < maximumIterations; bracket++) {
+      if (!(upper > lower && upper < trialCeiling)) {
         break;
       }
-      high = evaluate(feed, z, water, upper, low);
+      try {
+        high = evaluate(feed, z, water, upper, low);
+      } catch (GuestInventoryConvergenceException ex) {
+        // Initial cage occupancies are not a fixed conversion bound: guest depletion changes them.
+        // Approach an unsuccessful trial from the last balanced state, without accepting its residual.
+        lastGuestFailure = ex;
+        trialCeiling = upper;
+        upper = 0.5 * (lower + upper);
+        high = null;
+        continue;
+      }
+      if (high.residual >= 0.0) {
+        break;
+      }
+      lower = upper;
+      low = high;
+      high = null;
+      upper = Math.min(2.0 * upper, 0.5 * (upper + trialCeiling));
     }
-    if (high.residual < 0.0) {
+    if (high == null) {
       throw new IllegalStateException(
-          "TPHydrateFlash could not bracket water-fugacity equality before water depletion");
+          "TPHydrateFlash could not bracket water-fugacity equality using balanced guest inventories",
+          lastGuestFailure);
     }
     Trial solution = Math.abs(high.residual) < HYDRATE_TOLERANCE ? high : null;
     for (int iteration = 0; solution == null && iteration < maximumIterations; iteration++) {
@@ -274,8 +291,8 @@ public class TPHydrateFlash extends TPflash {
       }
       trial = evaluateComposition(feed, z, water, extent, remaining);
     }
-    throw new IllegalStateException("TPHydrateFlash guest inventories did not converge; residual=" + trial.guestError
-        + ", extent=" + extent + ", remaining=" + Arrays.toString(remaining));
+    throw new GuestInventoryConvergenceException("TPHydrateFlash guest inventories did not converge; residual="
+        + trial.guestError + ", extent=" + extent + ", remaining=" + Arrays.toString(remaining));
   }
 
   /**
@@ -487,6 +504,21 @@ public class TPHydrateFlash extends TPflash {
       system.setPhaseIndex(p, result.getPhaseIndex(p));
       system.setPhaseType(p, result.getPhase(p).getType());
       system.setBeta(p, result.getBeta(p));
+    }
+  }
+
+  /** Distinguish a failed inner guest solve from invalid thermodynamics or a failed fluid flash. */
+  private static final class GuestInventoryConvergenceException extends IllegalStateException {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * Create a failed guest-inventory diagnostic.
+     *
+     * @param message residual and trial-inventory details
+     */
+    private GuestInventoryConvergenceException(String message) {
+      super(message);
     }
   }
 

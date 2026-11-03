@@ -210,6 +210,18 @@ forward.
 
 ## 9. Report and hand off
 
+For measured reservoir history, freeze independently accepted original/tuned models
+with `CalibratedPvtModel`, compare whole held-out laboratory experiments and supply
+an explicitly attributed `MaterialBalancePvtHistory` on the same separator basis.
+For measured component production/injection, `CompositionalReservoirHistory` instead
+replays the accepted EOS directly through `SimpleReservoir`, fitting only bounded
+initial pore volume with separate calibration and held-out pressure residuals.
+See [the material-balance guide](reservoir_material_balance.md#compositional-measured-history-replay)
+for units, interval assumptions, validation evidence and remaining limitations.
+See the [material-balance handoff](reservoir_material_balance.md#immutable-calibration-and-pressure-path-handoff).
+The container requires externally evaluated, path-consistent PVT records; it does
+not automatically convert a constant-composition table into depletion PVT.
+
 `PVTReportGenerator` accepts a fluid in its constructor. Its current metadata methods include
 `setProjectInfo`, `setLabInfo`, and `setReservoirConditions`; the latter takes reservoir
 pressure in bara and temperature in °C. Simulation results can be attached with `addCCE`,

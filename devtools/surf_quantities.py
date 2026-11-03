@@ -35,6 +35,7 @@ def line_register(spec, model, concept_id):
                      "grade": e.get("grade"), "insulation": "%s %.0f mm" % (ins["material"], ins["thickness_mm"]) if ins.get("material") else "none (explicit U-value)",
                      "design_pressure_bara": (e.get("design") or {}).get("pressure_bara"), "design_temperature_c": (e.get("design") or {}).get("temperature_c"),
                      "installation": (e.get("installation") or {}).get("method"), "burial": (e.get("installation") or {}).get("burial"),
+                     "existing": bool(e.get("existing", False)),
                      "hydraulic_model": e["hydraulic"]["model"], "segments": e["hydraulic"]["segments"]})
     return rows
 
@@ -46,7 +47,7 @@ def equipment_register(spec, model, concept_id):
     for nid in cdef["nodes"]:
         n = model["nodes"][nid]
         rows.append({"id": nid, "tag": n["tag"], "kind": n["kind"], "service": n["service"], "structure": n.get("structure"), "x_m": n["x_m"], "y_m": n["y_m"], "z_m": n["z_m"],
-                     "note": n.get("note"), "well": n.get("well")})
+                     "note": n.get("note"), "well": n.get("well"), "existing": bool(n.get("existing", False))})
     return rows
 
 
@@ -66,6 +67,10 @@ def mto(spec, model, concept_id):
     lines = []
     tot_steel = tot_ins = 0.0
     for r in line_register(spec, model, concept_id):
+        if r.get("existing"):
+            lines.append({"id": r["id"], "tag": r["tag"], "item": "EXISTING line reused (not procured): ID %.0f mm" % r["id_mm"], "length_m": r["installed_length_m"], "steel_mass_kg": None,
+                          "insulation_m3": None, "basis": "existing asset: excluded from MTO, cost and procurement"})
+            continue
         if r["construction"] == "flexible":
             lines.append({"id": r["id"], "tag": r["tag"], "item": "flexible pipe, ID %.0f mm" % r["id_mm"], "length_m": r["installed_length_m"], "steel_mass_kg": None, "insulation_m3": None,
                           "basis": "supplier-defined construction: mass not derived"})
@@ -99,6 +104,8 @@ def cost_topology(spec, model, concept_id, jp):
     for nid in cdef["nodes"]:
         n = model["nodes"][nid]
         role, svc = surf_model.NODE_ROLE[n["kind"]], n["service"].upper()
+        if n.get("existing") and n["kind"] in ("plet", "plem", "manifold", "tie_in"):
+            role = "JUNCTION"  # reused existing structure: priced as a plain junction (no new structure cost)
         if n["kind"] == "host":
             top.addFixedPressureSink(nid, n["tag"], Role(role), Svc(svc), 40.0, n["z_m"])
         elif n["kind"] == "injection_source":
@@ -113,6 +120,8 @@ def cost_topology(spec, model, concept_id, jp):
     region = spec["solver"].get("cost", {}).get("region", "NORWAY")
     sps.setCostRegion(C.enum("neqsim.process.mechanicaldesign.subsea.SubseaCostEstimator", "Region", region))
     for eid, e in edges.items():
+        if e.get("existing"):
+            continue  # reused existing asset: not part of the cost topology (no procurement/installation cost)
         if e["kind"] == "pump":
             top.addPump(eid, e["tag"], Svc(e["service"].upper()), direction, e["from"], e["from_port"], e["to"], e["to_port"], e["pump"]["discharge_pressure_bara"], e["pump"]["efficiency"])
             continue
@@ -120,7 +129,7 @@ def cost_topology(spec, model, concept_id, jp):
                     e["installed_length_m"], e["id_m"], C.enum("LoopedPipeNetwork", "PipeModelType", "DARCY_WEISBACH"))
     plan = surf_model.build_plan(spec, model, concept_id, next(iter(model["cases"])), "production") + surf_model.build_plan(spec, model, concept_id, next(iter(model["cases"])), "injection")
     for o in plan:
-        if o["op"] == "line_design":
+        if o["op"] == "line_design" and not edges[o["edge"]].get("existing"):
             sps.setLineDesign(o["edge"], surf_model.line_design(C, o))
     return top, sps
 
@@ -152,17 +161,20 @@ def reconcile(spec, model, concept_id, register_lines, equipment, cost_rec):
     out = []
     kinds = {}
     for n in equipment:
+        if n.get("existing") and n["kind"] in ("plet", "plem", "manifold", "tie_in"):
+            continue
         kinds[n["kind"]] = kinds.get(n["kind"], 0) + 1
     counts = cost_rec["design_basis_counts"]
+    new_lines = [r for r in register_lines if not r.get("existing")]
     pairs = [("production wells", kinds.get("production_well", 0), counts["production_wells"]), ("injection wells", kinds.get("injection_well", 0), counts["injection_wells"]),
              ("PLEMs", kinds.get("plem", 0), counts["plems"]), ("PLETs", kinds.get("plet", 0), counts["plets"]),
              ("distribution units (manifolds)", kinds.get("manifold", 0) + kinds.get("injection_manifold", 0), counts["manifolds"]),
-             ("jumpers", sum(1 for r in register_lines if r["kind"] == "jumper"), counts["jumpers"]),
-             ("risers", sum(1 for r in register_lines if r["kind"] == "riser"), counts["total_risers"])]
+             ("jumpers", sum(1 for r in new_lines if r["kind"] == "jumper"), counts["jumpers"]),
+             ("risers", sum(1 for r in new_lines if r["kind"] == "riser"), counts["total_risers"])]
     for label, a, b in pairs:
         out.append({"item": label, "register": a, "design_basis": b, "status": "PASS" if a == b else "FAIL"})
     segs = {s["id"]: s for s in cost_rec["design_basis_segments"]}
-    for r in register_lines:
+    for r in new_lines:
         s = segs.get(r["id"])
         ok = s is not None and abs(s["length_m"] - r["installed_length_m"]) <= 0.01 and abs(s["diameter_m"] * 1000.0 - r["id_mm"]) <= 0.01
         out.append({"item": "line %s length and ID" % r["id"], "register": "%.1f m / %.1f mm" % (r["installed_length_m"], r["id_mm"]),

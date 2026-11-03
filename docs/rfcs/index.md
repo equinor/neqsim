@@ -14,3 +14,4 @@ not engineering-method qualification.
 | [NRC-2998: Shared flow-rate unit registry](2998-flow-rate-unit-registry.md) | PROPOSED | Explicit physical bases and flow-rate conversion contracts |
 | [NRC-3144: Default Pitzer parameter catalog](3144-default-pitzer-parameter-catalog.md) | PROPOSED | Qualified catalog selection and migration boundary |
 | [NRC-3860: Source-term platform](3860-source-term-platform.md) | PROPOSED | Model-explicit release physics and safety-simulator exchange |
+| [NRC-4707: Safety Shutdown conservative acoustic inventory](4707-conservative-acoustic-inventory.md) | PROPOSED | Cell characteristics, physical balance diagnostics and checkpoint migration; no acceptance |

@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport.Phase;
+import neqsim.process.equipment.pipeline.TwoFluidComponentConservationReport;
+import neqsim.process.equipment.pipeline.TwoFluidConservativeEnergyReport;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pipeline.UpstreamCompressibleVolume;
 import neqsim.process.equipment.stream.Stream;
@@ -224,6 +226,56 @@ class TwoFluidPipeNetworkTest {
     }
     assertTrue(report.getRelativeEnergyResidual() < 1.0e-7);
     assertTrue(network.getLastBalanceReport().getRelativeResidual(Phase.TOTAL) < 1.0e-8);
+  }
+
+  @Test
+  void acceptedBranchLedgersShareOneMassAndTimeBasis() {
+    TwoFluidPipeNetwork merge = createConservativeMerge(false);
+    merge.runTransient(0.005, UUID.randomUUID());
+    assertBranchLedgerConsistency(merge, "gas inlet");
+    assertBranchLedgerConsistency(merge, "liquid inlet");
+    assertBranchLedgerConsistency(merge, "outlet");
+
+    TwoFluidPipeNetwork reverse = new TwoFluidPipeNetwork("reverse ledger basis");
+    reverse.addConservativeCompressibleNode("storage", createVolume(50.0e5, 1000.0), createFluid(0.80, 0.20));
+    reverse.addFixedPressureNode("reservoir", 65.0e5, createFluid(0.30, 0.70));
+    reverse.addPipe("reverse branch", "storage", "reservoir", createPipe("reverse branch", 0.80, 0.20));
+    reverse.setBranchOutletPhaseBackflowAllowed("reverse branch", true);
+    for (int step = 0; step < 20; step++) {
+      reverse.runTransient(0.05, UUID.randomUUID());
+      assertBranchLedgerConsistency(reverse, "reverse branch");
+    }
+  }
+
+  private static void assertBranchLedgerConsistency(TwoFluidPipeNetwork network, String branchName) {
+    TwoFluidPipe pipe = network.getPipe(branchName);
+    TwoFluidMassBalanceReport mass = pipe.getLastMassBalanceReport();
+    TwoFluidComponentConservationReport component = pipe.getLastComponentConservationReport();
+    TwoFluidConservativeEnergyReport energy = pipe.getLastConservativeEnergyReport();
+
+    assertEquals(mass.getElapsedTimeSeconds(), component.getElapsedTimeSeconds(), 0.0);
+    assertEquals(mass.getElapsedTimeSeconds(), energy.getElapsedTimeSeconds(), 0.0);
+    assertEquals(mass.getAcceptedSubsteps(), component.getAcceptedSubsteps());
+    assertSameMassBasis(branchName + " initial", mass.getInitialMassKg(Phase.TOTAL),
+        sum(component.getInitialInventoryKg()));
+    assertSameMassBasis(branchName + " final", mass.getFinalMassKg(Phase.TOTAL), sum(component.getFinalInventoryKg()));
+    assertSameMassBasis(branchName + " inlet", mass.getInletMassKg(Phase.TOTAL),
+        sum(component.getInletBoundaryMassKg()));
+    assertSameMassBasis(branchName + " outlet", mass.getOutletMassKg(Phase.TOTAL),
+        sum(component.getOutletBoundaryMassKg()));
+  }
+
+  private static void assertSameMassBasis(String label, double phaseMassKg, double componentMassKg) {
+    double scale = Math.max(Math.max(Math.abs(phaseMassKg), Math.abs(componentMassKg)), 1.0e-12);
+    assertEquals(phaseMassKg, componentMassKg, 1.0e-10 * scale, label);
+  }
+
+  private static double sum(double[] values) {
+    double total = 0.0;
+    for (double value : values) {
+      total += value;
+    }
+    return total;
   }
 
   private static TwoFluidPipeNetwork createConservativeMerge(boolean reverseBranchOrder) {

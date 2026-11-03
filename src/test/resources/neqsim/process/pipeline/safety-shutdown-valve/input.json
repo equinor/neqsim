@@ -1,0 +1,48 @@
+{
+  "studyName": "Safety Shutdown prescribed valve",
+  "components": {
+    "water": 1.0
+  },
+  "temperature_C": 25.0,
+  "pressure_bara": 20.0,
+  "flowRate": {
+    "value": 36000.0,
+    "unit": "kg/hr"
+  },
+  "pipe": {
+    "length_m": 1000.0,
+    "diameter_m": 0.2,
+    "numberOfNodes": 101,
+    "waveSpeed_m_s": 1000.0
+  },
+  "simulationTime_s": 0.151,
+  "timeStep_s": 0.01,
+  "valveBoundary": {
+    "openingFraction": [
+      0,
+      0.5,
+      1
+    ],
+    "capacity": [
+      0.0,
+      1.6522600622304868,
+      8.261300311152434
+    ],
+    "capacityUnit": "KV",
+    "travelTime_s": [
+      0,
+      0.04,
+      0.1
+    ],
+    "actualOpeningFraction": [
+      1,
+      0.5,
+      0
+    ],
+    "commandTime_s": 0.013,
+    "delay_s": 0.01
+  },
+  "sourceReferences": [
+    "Public synthetic SRK/classic water fixture; capacity selected from initial Q and pressure-drop liquid law; no asset/vendor data."
+  ]
+}

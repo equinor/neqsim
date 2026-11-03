@@ -41,6 +41,7 @@ SIBLING_REPOSITORY_NAMES = frozenset({
     "neqsim-community-skills",
     "neqsim-enterprise-agents",
     "neqsim-enterprise-skills",
+    "energy-project-agents",
 })
 
 

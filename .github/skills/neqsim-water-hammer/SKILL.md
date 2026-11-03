@@ -1,7 +1,7 @@
 ---
 name: neqsim-water-hammer
 description: "Water hammer and liquid hammer screening workflow for NeqSim. USE WHEN: evaluating fast valve closures, pump trips, check-valve slam, hydraulic surge, STID/P&ID route extraction, tagreader event windows, or MCP runWaterHammer studies. Covers WaterHammerPipe, WaterHammerStudy, STID route geometry, tagreader field-data overrides, pressure envelopes, Joukowsky checks, and screening limitations."
-last_verified: "2026-05-10"
+last_verified: "2026-10-29"
 ---
 
 # Water Hammer and Liquid Hammer Screening
@@ -24,6 +24,37 @@ The core model is `WaterHammerPipe`; the workflow facade is
 Do not use this as final pipe-stress approval. Treat it as a fast screening and
 evidence-pack workflow.
 
+For **Safety Shutdown**, read the current
+[kernel and prescribed-travel guide](../../../docs/wiki/water_hammer_implementation.md)
+and [campaign acceptance](https://github.com/equinor/neqsim/issues/4707) first.
+The single-line kernel integrates characteristic fluxes over physical cells.
+Use cell mean pressure and accepted-substep inlet/outlet exchanges for its linear
+acoustic volume ledger; nodal pressure/flow are face traces, not inventory means.
+Report first-order space/time refinement and boundary endpoint-hold quadrature.
+A PASS acoustic balance does not qualify full EOS conservation, pump coastdown,
+disc slam, network coupling, cavitation, support loads or integrated safety logic.
+Reuse the canonical coordinator and existing ESD APIs for future integration.
+
+## Forward acoustic pump coastdown
+
+`AcousticPumpBoundary` optionally couples one declared reference-speed curve
+through existing `PumpChart` affinity scaling and a prescribed actual-speed
+table to upstream `PUMP`. Supply explicit positive speed limits, original
+forward-flow data, head units and suction pressure with matching velocity and
+elevation bases. Configure before `run()` and reinitialize after replacing the
+boundary. Speed and valve knots share the existing conservative pipe clock.
+An explicit empty `eventSchedule` selects a pump-only study.
+
+Use the [complete API/JSON contract and executed evidence](../../../docs/wiki/water_hammer_implementation.md#safety-shutdown-forward-pump-coastdown).
+Read `pumpHydraulicWork_J` as accepted interval hydraulic work, not shaft/EOS
+energy. Study errors retain last accepted time/cells/work/internal outlet history;
+never report an unsupported transition as a completed trip. Do not extrapolate
+clamped forward curves or invent stopped/reverse/check-valve continuations.
+Actual-speed data must have declared provenance; the public example is synthetic.
+Full trips, shaft inertia, disc/slam, NPSH/cavitation and integrated Safety Shutdown
+remain NOT_EVALUATED. `neqsim-dynamic-simulation` owns the canonical coordinator
+and ESD handoff; this boundary adds no independent scheduler or solver.
+
 ## Workflow
 
 1. Extract line geometry from STID/P&ID/E3D/stress isometrics: length, internal
@@ -45,7 +76,7 @@ evidence-pack workflow.
 
 ```json
 {
-  "studyName": "ESD valve closure screening",
+  "studyName": "Safety Shutdown valve closure screening",
   "model": "SRK",
   "temperature_C": 20.0,
   "pressure_bara": 45.0,
@@ -123,3 +154,22 @@ classes. Escalate to detailed study if any of these apply:
 - `neqsim-plant-data` for tagreader snapshots and event windows.
 - `neqsim-process-safety` for risk framing and escalation into safety studies.
 - `neqsim-flow-assurance` for broader pipeline operating-envelope work.
+
+## Ideal translating acoustic check valve
+
+`AcousticLiftCheckValve` is experimental: equal pressure/swept area, signed
+orifice flow, declared translating mass/spring/preload/damping and perfectly
+inelastic numerical contact. Supply independent initial force/flow equilibrium;
+no automatic parameter calibration. `WaterHammerStudy` accepts `liftCheckValve`
+SI fields and an empty eventSchedule. Keep accepted interval jet plus swept
+flow; omitting swept flow violates pressure work. Separate physical damping,
+BE numerical loss and impact loss. Refine contact and pressure together; do not
+claim continuous grazing-event accuracy or vendor slam from numerical contact.
+
+Read the [API, equations, public executed case and limits](../../../docs/wiki/water_hammer_implementation.md#safety-shutdown-ideal-translating-check-valve).
+Use defensive `getLiftHistory()` and aligned named study diagnostics. Rejection
+retains last accepted local cells/disc/clock/work; serialization is local replay,
+not global rollback. Forward-pump domains remain unchanged. Full trips, swing
+discs, flow-force/added-mass, rebound, cavitation, structural loads and integrated
+Safety Shutdown remain NOT_EVALUATED. Hand off shared stepping/logic to
+`neqsim-dynamic-simulation`; add no parallel scheduler or generic solver.

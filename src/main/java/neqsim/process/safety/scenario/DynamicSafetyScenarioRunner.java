@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.dynamics.DynamicCapabilityReport;
 import neqsim.process.dynamics.TransientStepIdentifier;
 import neqsim.process.logic.ProcessLogic;
 import neqsim.process.processmodel.ProcessSystem;
@@ -19,6 +20,36 @@ public final class DynamicSafetyScenarioRunner {
   }
 
   public static DynamicSafetyScenarioResult run(ProcessSystem baseProcess, DynamicSafetyScenario scenario) {
+    return runConfigured(baseProcess, scenario, false);
+  }
+
+  /**
+   * Runs an isolated scenario with capability and convergence preflight before events or transient stepping.
+   *
+   * <p>
+   * The audit runs after scenario-specific configuration, steady-state initialization and logic-factory construction so
+   * it examines the final configured copy. Failures remain result errors; they do not start initiating events or
+   * execute protection logic.
+   * </p>
+   *
+   * @param baseProcess source process that must remain unchanged
+   * @param scenario controlled dynamic test definition
+   * @return response evidence with any initialization or capability failure
+   */
+  public static DynamicSafetyScenarioResult runStrict(ProcessSystem baseProcess, DynamicSafetyScenario scenario) {
+    return runConfigured(baseProcess, scenario, true);
+  }
+
+  /**
+   * Executes one configured copy under the selected compatibility or strict preflight policy.
+   *
+   * @param baseProcess source process
+   * @param scenario controlled test
+   * @param strict whether initialization and capability audit must pass before execution
+   * @return scenario evidence
+   */
+  private static DynamicSafetyScenarioResult runConfigured(ProcessSystem baseProcess, DynamicSafetyScenario scenario,
+      boolean strict) {
     if (baseProcess == null || scenario == null) {
       throw new IllegalArgumentException("baseProcess and scenario are required");
     }
@@ -34,33 +65,53 @@ public final class DynamicSafetyScenarioRunner {
     } catch (RuntimeException ex) {
       errors.add("Steady-state initialization failed: " + failureMessage(ex));
     }
+    if (strict) {
+      if (!converged && errors.isEmpty()) {
+        errors.add("Steady-state initialization did not converge");
+      }
+    }
 
     List<ProcessLogic> logic = new ArrayList<ProcessLogic>();
-    for (DynamicSafetyScenario.LogicFactory factory : scenario.getLogicFactories()) {
-      logic.add(factory.create(process));
+    if (!strict || errors.isEmpty()) {
+      for (DynamicSafetyScenario.LogicFactory factory : scenario.getLogicFactories()) {
+        logic.add(factory.create(process));
+      }
+    }
+    if (strict && errors.isEmpty()) {
+      errors.addAll(DynamicCapabilityReport.from(process).getStrictPreflightIssues());
     }
     Map<String, DynamicSafetyScenarioResult.CriterionResult> criteria = new LinkedHashMap<String, DynamicSafetyScenarioResult.CriterionResult>();
     for (DynamicScenarioCriterion criterion : scenario.getCriteria()) {
       criteria.put(criterion.getId(), new DynamicSafetyScenarioResult.CriterionResult(criterion));
     }
+    if (strict && !errors.isEmpty()) {
+      return finish(scenario, criteria, logic, errors, converged, "STRICT_PREFLIGHT_FAILED", 0.0,
+          new ArrayList<Double>());
+    }
 
+    DynamicSafetyScenarioResult result = scenario.isEventExactTimingEnabled()
+        ? runEventExact(process, scenario, logic, criteria, errors, converged)
+        : runLegacy(process, scenario, logic, criteria, errors, converged);
+    logger.info("Dynamic safety scenario '{}' completed with verdict {}", scenario.getId(),
+        result.isPassed() ? "PASS" : "FAIL");
+    return result;
+  }
+
+  private static DynamicSafetyScenarioResult runLegacy(ProcessSystem process, DynamicSafetyScenario scenario,
+      List<ProcessLogic> logic, Map<String, DynamicSafetyScenarioResult.CriterionResult> criteria, List<String> errors,
+      boolean converged) {
     double time = 0.0;
     boolean triggered = false;
     long physicalStepIndex = 0L;
+    List<Double> physicalStepSeconds = new ArrayList<Double>();
     while (errors.isEmpty() && time <= scenario.getDurationSeconds() + 1.0e-9) {
       if (!triggered && time + 1.0e-9 >= scenario.getTriggerTimeSeconds()) {
         scenario.getInitiatingEvent().apply(process);
-        for (ProcessLogic item : logic) {
-          item.activate();
-        }
+        activate(logic);
         triggered = true;
       }
       if (triggered) {
-        for (ProcessLogic item : logic) {
-          if (item.isActive()) {
-            item.execute(scenario.getTimeStepSeconds());
-          }
-        }
+        executeActive(logic, scenario.getTimeStepSeconds());
         sample(criteria, process, time - scenario.getTriggerTimeSeconds(), errors);
       }
       if (time + scenario.getTimeStepSeconds() > scenario.getDurationSeconds() + 1.0e-9) {
@@ -69,13 +120,95 @@ public final class DynamicSafetyScenarioRunner {
       try {
         UUID physicalStepId = TransientStepIdentifier.deterministicPhysicalStep(scenario.getId(), physicalStepIndex);
         process.runTransient(scenario.getTimeStepSeconds(), physicalStepId);
+        physicalStepSeconds.add(Double.valueOf(scenario.getTimeStepSeconds()));
       } catch (RuntimeException ex) {
         errors.add("Transient simulation failed at " + time + " s: " + failureMessage(ex));
       }
       physicalStepIndex++;
       time += scenario.getTimeStepSeconds();
     }
+    return finish(scenario, criteria, logic, errors, converged, "LEGACY_FIXED_SCAN", sum(physicalStepSeconds),
+        physicalStepSeconds);
+  }
 
+  private static DynamicSafetyScenarioResult runEventExact(ProcessSystem process, DynamicSafetyScenario scenario,
+      List<ProcessLogic> logic, Map<String, DynamicSafetyScenarioResult.CriterionResult> criteria, List<String> errors,
+      boolean converged) {
+    double time = 0.0;
+    boolean triggered = false;
+    long physicalStepIndex = 0L;
+    List<Double> physicalStepSeconds = new ArrayList<Double>();
+    if (scenario.getTriggerTimeSeconds() <= 1.0e-12) {
+      triggered = trigger(process, scenario, logic, criteria, errors);
+    }
+
+    while (errors.isEmpty() && time < scenario.getDurationSeconds() - 1.0e-12) {
+      if (!triggered && time + 1.0e-12 >= scenario.getTriggerTimeSeconds()) {
+        triggered = trigger(process, scenario, logic, criteria, errors);
+        continue;
+      }
+      double nextBoundary = scenario.getDurationSeconds();
+      if (!triggered) {
+        nextBoundary = Math.min(nextBoundary, scenario.getTriggerTimeSeconds());
+      }
+      double stepSeconds = Math.min(scenario.getTimeStepSeconds(), nextBoundary - time);
+      if (stepSeconds <= 1.0e-12) {
+        break;
+      }
+      try {
+        UUID physicalStepId = TransientStepIdentifier.deterministicPhysicalStep(scenario.getId(), physicalStepIndex);
+        process.runTransient(stepSeconds, physicalStepId);
+        physicalStepSeconds.add(Double.valueOf(stepSeconds));
+      } catch (RuntimeException ex) {
+        errors.add("Transient simulation failed at " + time + " s: " + failureMessage(ex));
+        break;
+      }
+      physicalStepIndex++;
+      time += stepSeconds;
+
+      if (!triggered && time + 1.0e-12 >= scenario.getTriggerTimeSeconds()) {
+        triggered = trigger(process, scenario, logic, criteria, errors);
+      } else if (triggered) {
+        executeActive(logic, stepSeconds);
+        sample(criteria, process, time - scenario.getTriggerTimeSeconds(), errors);
+      }
+    }
+    if (!triggered && errors.isEmpty() && time + 1.0e-12 >= scenario.getTriggerTimeSeconds()) {
+      trigger(process, scenario, logic, criteria, errors);
+    }
+    return finish(scenario, criteria, logic, errors, converged, "EVENT_EXACT", time, physicalStepSeconds);
+  }
+
+  private static boolean trigger(ProcessSystem process, DynamicSafetyScenario scenario, List<ProcessLogic> logic,
+      Map<String, DynamicSafetyScenarioResult.CriterionResult> criteria, List<String> errors) {
+    try {
+      scenario.getInitiatingEvent().apply(process);
+      activate(logic);
+      sample(criteria, process, 0.0, errors);
+      return errors.isEmpty();
+    } catch (RuntimeException ex) {
+      errors.add("Initiating event failed: " + failureMessage(ex));
+      return false;
+    }
+  }
+
+  private static void activate(List<ProcessLogic> logic) {
+    for (ProcessLogic item : logic) {
+      item.activate();
+    }
+  }
+
+  private static void executeActive(List<ProcessLogic> logic, double stepSeconds) {
+    for (ProcessLogic item : logic) {
+      if (item.isActive()) {
+        item.execute(stepSeconds);
+      }
+    }
+  }
+
+  private static DynamicSafetyScenarioResult finish(DynamicSafetyScenario scenario,
+      Map<String, DynamicSafetyScenarioResult.CriterionResult> criteria, List<ProcessLogic> logic, List<String> errors,
+      boolean converged, String timingPolicy, double completedDurationSeconds, List<Double> physicalStepSeconds) {
     Map<String, String> finalStates = new LinkedHashMap<String, String>();
     Map<String, Map<String, Object>> logicEvidence = new LinkedHashMap<String, Map<String, Object>>();
     for (ProcessLogic item : logic) {
@@ -85,11 +218,17 @@ public final class DynamicSafetyScenarioRunner {
             ((DynamicSafetyScenarioEvidenceProvider) item).getDynamicSafetyScenarioEvidence());
       }
     }
-    DynamicSafetyScenarioResult result = new DynamicSafetyScenarioResult(scenario.getId(), scenario.getName(), criteria,
-        finalStates, logicEvidence, errors, converged);
-    logger.info("Dynamic safety scenario '{}' completed with verdict {}", scenario.getId(),
-        result.isPassed() ? "PASS" : "FAIL");
-    return result;
+    return new DynamicSafetyScenarioResult(scenario.getId(), scenario.getName(), criteria, finalStates, logicEvidence,
+        errors, converged, timingPolicy, scenario.getTriggerTimeSeconds(), scenario.getDurationSeconds(),
+        completedDurationSeconds, physicalStepSeconds, scenario.getRequirementIds(), scenario.getEquipmentTags());
+  }
+
+  private static double sum(List<Double> values) {
+    double total = 0.0;
+    for (Double value : values) {
+      total += value.doubleValue();
+    }
+    return total;
   }
 
   private static void sample(Map<String, DynamicSafetyScenarioResult.CriterionResult> results, ProcessSystem process,

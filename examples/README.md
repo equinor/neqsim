@@ -68,6 +68,8 @@ Production systems and economics:
 
 **Start here**: [Field-development guide](../docs/fielddevelopment/README.md)
 and [well/SURF network integration](../docs/fielddevelopment/SURF_NETWORK_INTEGRATION.md).
+For the complete ten-well optimization-to-living-report source acceptance, use the
+[engineer-runnable JPype workflow](../docs/process/optimization/OPTIMIZATION_OVERVIEW.md#mixed-continuousdiscrete-operating-point-search).
 
 ### Standards & Gas Quality
 Industry standard calculations:

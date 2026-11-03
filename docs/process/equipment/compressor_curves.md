@@ -66,6 +66,20 @@ NeqSim supports comprehensive compressor performance modeling through compressor
 | `CompressorChartLibrary` | **Named bundle/database of several charts** for one compressor (select by name, JSON round-trip) |
 | `CompressorChartMetadata` | **Self-describing metadata** for a chart (casing/model, service, tag, document, curve type, reference conditions) |
 
+### Polytropic head basis
+
+With polytropic calculations enabled, both fixed-speed and pressure-target speed
+calculations honor `Compressor.setPolytropicMethod(...)` (default `schultz`). The
+chart's head and efficiency are matched to the same thermodynamic calculation
+used without a chart, including the selected GERG-2008, Leachman or Vega property
+model. Head in `meter` is converted using 9.81 m/s²; `kJ/kg` is specific work.
+Inlet guide vane corrections are applied before matching the thermodynamic head.
+
+This corrects the historical use of constant inlet properties regardless of the
+reported method. Existing chart models can produce different outlet pressures,
+speeds, temperatures and powers. Select `ideal_inlet_properties` explicitly when
+reproducing that historical relation. See [calculation methods and compatibility](compressors.md#polytropic-compression).
+
 ### Compressor Operating Envelope
 
 ```

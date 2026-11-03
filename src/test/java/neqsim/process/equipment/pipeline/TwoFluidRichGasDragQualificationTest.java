@@ -3,6 +3,8 @@ package neqsim.process.equipment.pipeline;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport.Phase;
@@ -23,6 +25,8 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 @Tag("slow")
 class TwoFluidRichGasDragQualificationTest {
+  private static final Logger logger = LogManager.getLogger(TwoFluidRichGasDragQualificationTest.class);
+
   /**
    * Conserved component targets must complete the entire requested pressure ramp on both historical meshes.
    */
@@ -98,6 +102,59 @@ class TwoFluidRichGasDragQualificationTest {
       assertTrue(pipe.getLastConservativeEnergyReport().isWithinTolerance(1.0e-3, 1.0e-7));
     }
     assertTrue(observedSignedFallback, "The fixture must exercise rather than merely configure reversed outlet flow");
+  }
+
+  /**
+   * A gas takeoff must depressurize through gas while retaining every appeared liquid component at the external face.
+   */
+  @Test
+  void gasOnlyTakeoffRetainsAppearedLiquidThroughPressureRamp() {
+    double[] coarse = qualifyGasOnlyTakeoff(0.25);
+    double[] refined = qualifyGasOnlyTakeoff(0.125);
+    double relativeGasDifference = Math.abs(coarse[1] - refined[1]) / refined[1];
+
+    assertTrue(relativeGasDifference < 0.01,
+        "Cumulative gas discharge must change by less than 1% when the interval is halved");
+    logger.info(
+        "Gas-only rich-gas ramp: elapsed=33 s, coarse/refined peakOil={}/{} kg, "
+            + "coarse/refined cumulativeGasOutlet={}/{} kg, gas difference={} %",
+        coarse[0], refined[0], coarse[1], refined[1], 100.0 * relativeGasDifference);
+  }
+
+  /**
+   * Run one gas-only boundary qualification interval.
+   *
+   * @param dt requested external interval in seconds
+   * @return peak oil inventory and cumulative gas outlet mass, both in kg
+   */
+  private static double[] qualifyGasOnlyTakeoff(double dt) {
+    TwoFluidPipe pipe = createRichGasPipe(12, true);
+    pipe.setGasOnlyOutletTakeoff(true);
+    double maximumOilKg = 0.0;
+    double cumulativeGasOutletKg = 0.0;
+    int steps = (int) Math.round(33.0 / dt);
+    for (int step = 1; step <= steps; step++) {
+      double elapsed = step * dt;
+      pipe.setOutletPressure(150.0 - 140.0 * elapsed / 120.0, "bara");
+      pipe.runTransient(dt, null);
+      TwoFluidMassBalanceReport mass = pipe.getLastMassBalanceReport();
+      TwoFluidComponentConservationReport components = pipe.getLastComponentConservationReport();
+      TwoFluidConservativeEnergyReport energy = pipe.getLastConservativeEnergyReport();
+
+      assertEquals(0.0, mass.getOutletMassKg(Phase.OIL), 0.0);
+      assertEquals(0.0, mass.getOutletMassKg(Phase.WATER), 0.0);
+      assertEquals(0.0, sum(components.getOutletBoundaryMassKg(TwoFluidComponentConservationReport.Phase.OIL)), 0.0);
+      assertEquals(0.0, sum(components.getOutletBoundaryMassKg(TwoFluidComponentConservationReport.Phase.WATER)), 0.0);
+      assertEquals(0.0, energy.getOutletAdvectedEnergyJ(TwoFluidConservativeEnergyReport.Phase.OIL), 0.0);
+      assertEquals(0.0, energy.getOutletAdvectedEnergyJ(TwoFluidConservativeEnergyReport.Phase.WATER), 0.0);
+      assertTrue(components.isConverged(), components.getMessage());
+      assertTrue(energy.isWithinTolerance(1.0e-3, 1.0e-7));
+      maximumOilKg = Math.max(maximumOilKg, mass.getFinalMassKg(Phase.OIL));
+      cumulativeGasOutletKg += mass.getOutletMassKg(Phase.GAS);
+    }
+    assertTrue(maximumOilKg > 0.0, "The retention test must cross actual oil appearance");
+    assertTrue(cumulativeGasOutletKg > 0.0, "The pressure ramp must discharge gas rather than seal the pipe");
+    return new double[] {maximumOilKg, cumulativeGasOutletKg};
   }
 
   /**

@@ -1,6 +1,7 @@
 package neqsim.pvtsimulation.simulation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Locale;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -12,6 +13,7 @@ import neqsim.statistics.parameterfitting.SampleValue;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyPressureFlash;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
@@ -26,6 +28,10 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
   private static final double CELL_VOLUME_RELATIVE_TOLERANCE = 1.0e-8;
   private static final int MAX_CELL_VOLUME_ITERATIONS = 100;
+
+  private boolean recordDepletionSnapshots;
+  private boolean refineSaturationConditions;
+  private DepletionSnapshot[] depletionSnapshots = new DepletionSnapshot[0];
 
   private double[] relativeVolume = null;
   double[] totalVolume = null;
@@ -66,20 +72,38 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * calcSaturationConditions.
+   * Computes the cell reference with the legacy scan or opt-in checked upper-dew refinement.
+   *
+   * @throws IllegalArgumentException if refinement is requested for a wet sample
+   * @throws IllegalStateException if a scan flash fails or refinement cannot establish an accepted boundary
    */
   public void calcSaturationConditions() {
+    if (refineSaturationConditions && Arrays.asList(getThermoSystem().getComponentNames()).contains("water")) {
+      throw new IllegalArgumentException("CVD upper dew refinement is not qualified for wet samples");
+    }
     getThermoSystem().setPressure(1.0);
     do {
       getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
       runSaturationTPflash();
     } while (getThermoSystem().getNumberOfPhases() == 1 && getThermoSystem().getPressure() < 1000.0);
+    SystemInterface twoPhase = refineSaturationConditions && getThermoSystem().getNumberOfPhases() == 2
+        ? getThermoSystem().clone()
+        : null;
     do {
+      if (refineSaturationConditions && getThermoSystem().getNumberOfPhases() == 2) {
+        twoPhase = getThermoSystem().clone();
+      }
       getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
       runSaturationTPflash();
     } while (getThermoSystem().getNumberOfPhases() > 1 && getThermoSystem().getPressure() < 1000.0);
     double minPres = getThermoSystem().getPressure() - 10.0;
     double maxPres = getThermoSystem().getPressure();
+    double branchMinimum = minPres;
+    double branchMaximum = maxPres;
+    if (refineSaturationConditions
+        && (getThermoSystem().getNumberOfPhases() != 1 || !getThermoSystem().hasPhaseType("gas"))) {
+      throw new IllegalStateException("CVD upper dew refinement requires gas above the upper scan bracket");
+    }
     do {
       getThermoSystem().setPressure((minPres + maxPres) / 2.0);
       runSaturationTPflash();
@@ -89,6 +113,10 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         maxPres = getThermoSystem().getPressure();
       }
     } while (Math.abs(maxPres - minPres) > 1e-5);
+    if (refineSaturationConditions) {
+      refineUpperDew(twoPhase, branchMinimum, branchMaximum);
+      runSaturationTPflash();
+    }
     /*
      * try { thermoOps.dewPointPressureFlash(); } catch (Exception ex) { logger.error(ex.getMessage(), ex); }
      */
@@ -97,6 +125,76 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     saturationPressure = getThermoSystem().getPressure();
     Zsaturation = getThermoSystem().getZvolcorr();
     saturationConditionFound = true;
+  }
+
+  /**
+   * Enables checked upper-dew refinement of the phase-count scan for the next run.
+   *
+   * <p>
+   * The default remains the legacy scan. Refinement requires a dry, nondegenerate gas/oil bracket below 1000 bara. It
+   * preserves the scan's upper branch, uses the existing constant-duty pressure solver, and rejects a wrong branch,
+   * trivial split or unclosed equilibrium instead of falling back to the scan. Pure fluids, oil bubble boundaries, wet
+   * samples and unbracketed domains are not supported by this mode.
+   * </p>
+   *
+   * @param refine true to refine and validate the upper dew boundary
+   */
+  public void setRefineSaturationConditions(boolean refine) {
+    refineSaturationConditions = refine;
+  }
+
+  /**
+   * Refines a warm gas/oil state while retaining the coarse scan's branch identity.
+   *
+   * @param twoPhase last gas/oil state within the coarse upper boundary bracket
+   * @param minimum lower coarse bracket pressure in bara
+   * @param maximum upper coarse bracket pressure in bara
+   * @throws IllegalStateException if the branch or phase-equilibrium checks fail
+   */
+  private void refineUpperDew(SystemInterface twoPhase, double minimum, double maximum) {
+    if (twoPhase == null || !twoPhase.hasPhaseType("gas") || !twoPhase.hasPhaseType("oil")
+        || twoPhase.getNumberOfPhases() != 2 || maximum >= 1000.0
+        || !"gas".equals(twoPhase.getPhase(0).getType().getDesc())
+        || !"oil".equals(twoPhase.getPhase(1).getType().getDesc())) {
+      throw new IllegalStateException("CVD upper dew refinement requires a dry gas/oil-to-gas bracket below 1000 bara");
+    }
+    twoPhase.setBeta(0, 1.0 - 1e-10);
+    twoPhase.setBeta(1, 1e-10);
+    new ConstantDutyPressureFlash(twoPhase).run();
+    twoPhase.init(1);
+    double pressure = twoPhase.getPressure();
+    if (!Double.isFinite(pressure) || pressure < minimum - 1e-5 || pressure > maximum + 1e-5) {
+      throw new IllegalStateException("CVD refined dew pressure left the upper scan bracket");
+    }
+    double distance = 0.0;
+    double residual = 0.0;
+    double gasSum = 0.0;
+    double oilSum = 0.0;
+    for (int i = 0; i < twoPhase.getNumberOfComponents(); i++) {
+      double gas = twoPhase.getPhase("gas").getComponent(i).getx();
+      double oil = twoPhase.getPhase("oil").getComponent(i).getx();
+      double gasFugacity = gas * twoPhase.getPhase("gas").getComponent(i).getFugacityCoefficient();
+      double oilFugacity = oil * twoPhase.getPhase("oil").getComponent(i).getFugacityCoefficient();
+      double z = twoPhase.getComponent(i).getz();
+      if (!Double.isFinite(gas) || !Double.isFinite(oil) || !Double.isFinite(z) || gas < 0.0 || oil < 0.0 || z < 0.0
+          || Math.abs((1.0 - 1e-10) * gas + 1e-10 * oil - z) > 1e-8) {
+        throw new IllegalStateException("CVD refined dew composition is invalid");
+      }
+      if (z > 0.0) {
+        double error = Math.abs(Math.log(gasFugacity) - Math.log(oilFugacity));
+        if (!Double.isFinite(error)) {
+          throw new IllegalStateException("CVD refined dew fugacity is invalid");
+        }
+        residual = Math.max(residual, error);
+      }
+      distance += Math.abs(gas - oil);
+      gasSum += gas;
+      oilSum += oil;
+    }
+    if (distance <= 1e-8 || residual > 1e-8 || Math.abs(gasSum - 1.0) > 1e-8 || Math.abs(oilSum - 1.0) > 1e-8) {
+      throw new IllegalStateException("CVD refined dew equilibrium is degenerate or not converged");
+    }
+    getThermoSystem().setPressure(pressure);
   }
 
   /**
@@ -168,10 +266,240 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * runCalc.
+   * Immutable explicit occupied-volume reference and completed native fixed-cell states.
+   *
+   * <p>
+   * The reference is the accepted EOS sample at the first pressure, not an inferred dew point or a measured saturation
+   * volume. No normalized PVT properties or absent-phase values are supplied.
+   * </p>
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  public static final class FixedCellResult implements java.io.Serializable {
+    private static final long serialVersionUID = 1L;
+    private final double temperatureK;
+    private final double referencePressureBara;
+    private final double referenceVolumeM3;
+    private final DepletionSnapshot[] snapshots;
+
+    /**
+     * Freezes a successfully completed experiment.
+     *
+     * @param temperatureK common experiment temperature, K
+     * @param referencePressureBara first experiment pressure, bara
+     * @param referenceVolumeM3 initial occupied EOS volume, reservoir m3
+     * @param snapshots complete native states and component withdrawals
+     */
+    private FixedCellResult(double temperatureK, double referencePressureBara, double referenceVolumeM3,
+        DepletionSnapshot[] snapshots) {
+      this.temperatureK = temperatureK;
+      this.referencePressureBara = referencePressureBara;
+      this.referenceVolumeM3 = referenceVolumeM3;
+      this.snapshots = snapshots.clone();
+    }
+
+    /**
+     * Returns the common experiment temperature.
+     *
+     * @return temperature in K
+     */
+    public double getTemperatureK() {
+      return temperatureK;
+    }
+
+    /**
+     * Returns the initial occupied-volume reference pressure, without a dew-point interpretation.
+     *
+     * @return absolute reference pressure in bara
+     */
+    public double getReferencePressureBara() {
+      return referencePressureBara;
+    }
+
+    /**
+     * Returns the sample's initial occupied EOS volume on the model's fixed volume-correction basis.
+     *
+     * @return actual reference cell volume in m3
+     */
+    public double getReferenceVolumeM3() {
+      return referenceVolumeM3;
+    }
+
+    /**
+     * Returns immutable completed states in a defensive array.
+     *
+     * @return native volume-restored cells and interval component withdrawals
+     */
+    public DepletionSnapshot[] getSnapshots() {
+      return snapshots.clone();
+    }
+  }
+
+  /**
+   * Replays an explicit constant-cell experiment transactionally on an independent copy of the current sample.
+   *
+   * <p>
+   * The first pressure defines the occupied-volume reference with zero withdrawal. At each subsequent pressure,
+   * equilibrium gas alone is withdrawn to restore that volume; all liquids remain. Gas-only, gas/oil, gas/aqueous and
+   * gas/oil/aqueous cells are permitted when the named phase family remains unchanged throughout the sampled path.
+   * Phase-family changes, absent gas, other phase types, unclosed equilibrium and critical-degenerate splits fail. This
+   * is not the saturation-referenced laboratory protocol used by {@link #runCalc()} and does not infer a wet upper dew
+   * point. The caller must independently accept its EOS, phase options and experiment provenance.
+   * </p>
+   *
+   * <p>
+   * Neither the supplied sample nor this simulation's legacy results are changed, including after a late failure.
+   * Repeated calls therefore restart from identical current input. No EOS parameter is fitted.
+   * </p>
+   *
+   * @param temperatureK finite positive common temperature, K
+   * @param pressuresBara complete strictly decreasing positive absolute pressure schedule, at least two points
+   * @return immutable reference and complete native results only after every pressure succeeds
+   * @throws IllegalArgumentException if temperature, pressure schedule or initial inventory is invalid
+   * @throws IllegalStateException if the declared fixed-cell domain or a numerical closure check fails
+   */
+  public FixedCellResult runFixedCellDepletion(double temperatureK, double[] pressuresBara) {
+    if (!Double.isFinite(temperatureK) || temperatureK <= 0 || pressuresBara == null || pressuresBara.length < 2) {
+      throw new IllegalArgumentException("Positive temperature and complete fixed-cell pressure schedule required");
+    }
+    double[] schedule = pressuresBara.clone();
+    for (int row = 0; row < schedule.length; row++) {
+      if (!Double.isFinite(schedule[row]) || schedule[row] <= 0 || row > 0 && schedule[row] >= schedule[row - 1]) {
+        throw new IllegalArgumentException("Fixed-cell pressures must be positive and strictly decreasing");
+      }
+    }
+    SystemInterface cell = org.apache.commons.lang3.SerializationUtils.clone(getThermoSystem());
+    if (!Double.isFinite(cell.getTotalNumberOfMoles()) || cell.getTotalNumberOfMoles() <= 0) {
+      throw new IllegalArgumentException("Finite positive sample inventory required");
+    }
+    double[] initial = DepletionSnapshot.inventory(cell);
+    for (double amount : initial) {
+      if (!Double.isFinite(amount) || amount < 0) {
+        throw new IllegalArgumentException("Finite nonnegative named component inventories required");
+      }
+    }
+    ConstantVolumeDepletion trial = new ConstantVolumeDepletion(cell);
+    neqsim.thermodynamicoperations.ThermodynamicOperations operations = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+        cell);
+    cell.setTemperature(temperatureK);
+    String[] family = null;
+    double[] previous = initial.clone();
+    double[] cumulative = new double[initial.length];
+    DepletionSnapshot[] completed = new DepletionSnapshot[schedule.length];
+    for (int row = 0; row < schedule.length; row++) {
+      cell.setPressure(schedule[row]);
+      try {
+        operations.TPflash();
+        cell.init(1);
+        cell.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+      } catch (Exception ex) {
+        throw new IllegalStateException("Fixed-cell flash failed at row " + row, ex);
+      }
+      String[] present = fixedCellFamily(cell);
+      if (row == 0) {
+        family = present;
+        trial.saturationVolume = cell.getCorrectedVolume();
+      } else if (!Arrays.equals(family, present)) {
+        throw new IllegalStateException("Fixed-cell phase-family change is not qualified at row " + row);
+      }
+      trial.restoreSaturationVolume();
+      if (!Arrays.equals(family, fixedCellFamily(cell))) {
+        throw new IllegalStateException("Fixed-cell withdrawal changed the phase family at row " + row);
+      }
+      if (Math.abs(cell.getCorrectedVolume() / trial.saturationVolume - 1) > CELL_VOLUME_RELATIVE_TOLERANCE) {
+        throw new IllegalStateException("Fixed-cell volume closure failed at row " + row);
+      }
+      completed[row] = new DepletionSnapshot(cell, cell, previous);
+      double[] removed = completed[row].getProducedComponentMoles();
+      double[] retained = DepletionSnapshot.inventory(cell);
+      for (int component = 0; component < initial.length; component++) {
+        cumulative[component] += removed[component];
+        if (Math.abs(initial[component] - retained[component] - cumulative[component]) > 1e-10
+            * Math.max(1.0, initial[component])) {
+          throw new IllegalStateException("Fixed-cell component closure failed at row " + row);
+        }
+      }
+      previous = retained;
+    }
+    return new FixedCellResult(temperatureK, schedule[0], trial.saturationVolume, completed);
+  }
+
+  /**
+   * Checks the bounded named-phase domain and returns its order-independent identity.
+   *
+   * @param cell already flashed and density-initialized native state
+   * @return sorted unique gas/oil/aqueous phase names
+   * @throws IllegalStateException if a phase, volume, composition or equilibrium is unsupported
+   */
+  private static String[] fixedCellFamily(SystemInterface cell) {
+    if (!cell.hasPhaseType("gas") || !Double.isFinite(cell.getCorrectedVolume()) || cell.getCorrectedVolume() <= 0) {
+      throw new IllegalStateException("Fixed-cell replay requires retained gas and positive finite occupied volume");
+    }
+    String[] family = new String[cell.getNumberOfPhases()];
+    for (int phase = 0; phase < family.length; phase++) {
+      family[phase] = cell.getPhase(phase).getType().getDesc();
+      if (!"gas".equals(family[phase]) && !"oil".equals(family[phase]) && !"aqueous".equals(family[phase])) {
+        throw new IllegalStateException("Unsupported fixed-cell phase " + family[phase]);
+      }
+      double amount = cell.getPhase(phase).getNumberOfMolesInPhase();
+      double volume = cell.getPhase(phase).getCorrectedVolume();
+      if (!Double.isFinite(amount) || amount <= 0 || !Double.isFinite(volume) || volume <= 0) {
+        throw new IllegalStateException("Empty or invalid fixed-cell phase");
+      }
+      double sum = 0;
+      for (int component = 0; component < cell.getNumberOfComponents(); component++) {
+        double x = cell.getPhase(phase).getComponent(component).getx();
+        if (!Double.isFinite(x) || x < 0) {
+          throw new IllegalStateException("Invalid fixed-cell composition");
+        }
+        sum += x;
+      }
+      if (Math.abs(sum - 1) > 1e-8) {
+        throw new IllegalStateException("Unnormalized fixed-cell phase");
+      }
+      for (int other = 0; other < phase; other++) {
+        if (family[phase].equals(family[other])) {
+          throw new IllegalStateException("Duplicate fixed-cell phase type is not qualified");
+        }
+        double distance = 0;
+        for (int component = 0; component < cell.getNumberOfComponents(); component++) {
+          double x = cell.getPhase(phase).getComponent(component).getx();
+          double y = cell.getPhase(other).getComponent(component).getx();
+          distance += Math.abs(x - y);
+          if (cell.getComponent(component).getNumberOfmoles() > 0) {
+            double f = x * cell.getPhase(phase).getComponent(component).getFugacityCoefficient();
+            double g = y * cell.getPhase(other).getComponent(component).getFugacityCoefficient();
+            if (!(f > 0) || !(g > 0) || !Double.isFinite(f) || !Double.isFinite(g)
+                || Math.abs(Math.log(f) - Math.log(g)) > 1e-8) {
+              throw new IllegalStateException("Unclosed fixed-cell phase equilibrium");
+            }
+          }
+        }
+        if (distance <= 1e-8) {
+          throw new IllegalStateException("Critical-degenerate fixed-cell split is not qualified");
+        }
+      }
+    }
+    Arrays.sort(family);
+    return family;
+  }
+
+  /**
+   * Runs the pressure-ordered depletion schedule using the selected cell reference.
+   *
+   * <p>
+   * Gas-only volume restoration continues below the reference pressure only after the schedule has sampled gas/oil
+   * coexistence. An entirely single-phase schedule retains its inventory; the legacy scan reference alone does not
+   * qualify an unbracketed or pure-fluid CVD experiment.
+   * </p>
+   *
+   * @throws IllegalStateException if a flash, boundary refinement or volume restoration fails
    */
   public void runCalc() {
     saturationConditionFound = false;
+    depletionSnapshots = recordDepletionSnapshots ? new DepletionSnapshot[pressures.length] : new DepletionSnapshot[0];
+    double[] previousInventory = recordDepletionSnapshots ? DepletionSnapshot.inventory(getThermoSystem()) : null;
     relativeVolume = new double[pressures.length];
     totalVolume = new double[pressures.length];
     liquidVolumeRelativeToVsat = new double[pressures.length];
@@ -188,6 +516,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       getThermoSystem().setTemperature(temperature, temperatureUnit);
     }
     calcSaturationConditions();
+    boolean sampledHydrocarbonSplit = false;
 
     for (int i = 0; i < pressures.length; i++) {
       getThermoSystem().setPressure(pressures[i]);
@@ -201,7 +530,10 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       }
       getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
-      if (getThermoSystem().getNumberOfPhases() > 1
+      sampledHydrocarbonSplit |= getThermoSystem().hasPhaseType("gas") && getThermoSystem().hasPhaseType("oil");
+      // Continue gas withdrawal after a sampled gas/oil stage, even when the last liquid evaporates.
+      // An unbracketed legacy scan reference alone must not start single-phase withdrawal.
+      if ((getThermoSystem().getNumberOfPhases() > 1 || sampledHydrocarbonSplit && pressures[i] < saturationPressure)
           && getThermoSystem().getCorrectedVolume() > saturationVolume * (1.0 + CELL_VOLUME_RELATIVE_TOLERANCE)) {
         restoreSaturationVolume();
       }
@@ -222,7 +554,29 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         liquidVolumeRelativeToVsat[i] = liquidVolume[i] / saturationVolume;
         liquidRelativeVolume[i] = liquidVolumeRelativeToVsat[i] * 100.0;
       }
+      if (recordDepletionSnapshots) {
+        depletionSnapshots[i] = new DepletionSnapshot(getThermoSystem(), getThermoSystem(), previousInventory);
+        previousInventory = DepletionSnapshot.inventory(getThermoSystem());
+      }
     }
+  }
+
+  /**
+   * Enables immutable per-pressure native phase and component-withdrawal evidence for the next run.
+   *
+   * @param record true to record; false preserves the default calculation and memory cost
+   */
+  public void setRecordDepletionSnapshots(boolean record) {
+    recordDepletionSnapshots = record;
+  }
+
+  /**
+   * Returns a copy of the recorded snapshot array, empty when recording was disabled.
+   *
+   * @return immutable completed-step evidence in supplied pressure order
+   */
+  public DepletionSnapshot[] getDepletionSnapshots() {
+    return depletionSnapshots.clone();
   }
 
   /**

@@ -261,8 +261,37 @@ public final class CoupledPressureMomentumSolver implements Serializable {
   public Result correct(double[][] provisionalState, double timeStep, double[] pressure, double[] areas,
       double[] lengths, double[] gasDensity, double[] oilDensity, double[] waterDensity, double[] gasSoundSpeed,
       double[] oilSoundSpeed, double[] waterSoundSpeed, double outletPressure, boolean outletPressureFixed) {
+    return correct(provisionalState, timeStep, pressure, areas, lengths, gasDensity, oilDensity, waterDensity,
+        gasSoundSpeed, oilSoundSpeed, waterSoundSpeed, outletPressure, outletPressureFixed,
+        new boolean[] {true, true, true});
+  }
+
+  /**
+   * Correct pressure and phase momentum with explicit ownership of pressure-outlet phase transfer.
+   *
+   * @param provisionalState conservative variables in kg/m and kg/s
+   * @param timeStep accepted substep in s
+   * @param pressure cell pressure in Pa
+   * @param areas cell cross-sectional area in m2
+   * @param lengths cell axial length in m
+   * @param gasDensity gas density in kg/m3
+   * @param oilDensity oil density in kg/m3
+   * @param waterDensity water density in kg/m3
+   * @param gasSoundSpeed gas sound speed in m/s
+   * @param oilSoundSpeed oil sound speed in m/s
+   * @param waterSoundSpeed water sound speed in m/s
+   * @param outletPressure fixed outlet pressure in Pa
+   * @param outletPressureFixed true for a Dirichlet outlet pressure
+   * @param outletPhaseOpen gas, oil and water flags for external pressure-face mass transfer
+   * @return corrected state, pressure, density, and convergence diagnostics
+   */
+  public Result correct(double[][] provisionalState, double timeStep, double[] pressure, double[] areas,
+      double[] lengths, double[] gasDensity, double[] oilDensity, double[] waterDensity, double[] gasSoundSpeed,
+      double[] oilSoundSpeed, double[] waterSoundSpeed, double outletPressure, boolean outletPressureFixed,
+      boolean[] outletPhaseOpen) {
     validateInputs(provisionalState, timeStep, pressure, areas, lengths, gasDensity, oilDensity, waterDensity,
         gasSoundSpeed, oilSoundSpeed, waterSoundSpeed);
+    validateOutletPhaseOpen(outletPhaseOpen, outletPressureFixed);
 
     int cellCount = provisionalState.length;
     double[][] correctedState = copyMatrixArray(provisionalState);
@@ -477,13 +506,14 @@ public final class CoupledPressureMomentumSolver implements Serializable {
       if (!checkerboardCorrectionEnabled) {
         MassFluxCorrectionResult massFluxCorrection = applyMassFluxCorrection(correctedState, timeStep,
             faceGradients(pressureCorrection, lengths), phaseAreas, areas, lengths, densities, outletPressureFixed,
-            phaseMassCorrectionsKg);
+            outletPhaseOpen, phaseMassCorrectionsKg);
         for (int phase = 0; phase < PHASE_COUNT; phase++) {
           outletBoundaryMassCorrectionKg[phase] += massFluxCorrection.outletBoundaryMassCorrectionKg[phase];
         }
         minimumMassFluxCorrectionScale = Math.min(minimumMassFluxCorrectionScale, massFluxCorrection.minimumScale);
         activeFaceScale = massFluxCorrection.faceScale;
-        applyMomentumCorrection(correctedState, timeStep, pressureCorrection, phaseAreas, lengths);
+        applyMomentumCorrection(correctedState, timeStep, pressureCorrection,
+            calculatePhaseAreas(correctedState, densities), lengths);
       }
 
       for (int cell = 0; cell < cellCount; cell++) {
@@ -518,11 +548,12 @@ public final class CoupledPressureMomentumSolver implements Serializable {
         phaseMassCorrectionsKg = new double[cellCount + 1][PHASE_COUNT];
         MassFluxCorrectionResult massFluxCorrection = applyMassFluxCorrection(correctedState, timeStep,
             combinedFaceGradients(totalPressureCorrection, lengths, interpolationDefect, interpolationFraction),
-            initialPhaseAreas, areas, lengths, densities, outletPressureFixed, phaseMassCorrectionsKg);
+            initialPhaseAreas, areas, lengths, densities, outletPressureFixed, outletPhaseOpen, phaseMassCorrectionsKg);
         outletBoundaryMassCorrectionKg = massFluxCorrection.outletBoundaryMassCorrectionKg;
         minimumMassFluxCorrectionScale = Math.min(minimumMassFluxCorrectionScale, massFluxCorrection.minimumScale);
         activeFaceScale = massFluxCorrection.faceScale;
-        applyMomentumCorrection(correctedState, timeStep, totalPressureCorrection, initialPhaseAreas, lengths);
+        applyMomentumCorrection(correctedState, timeStep, totalPressureCorrection,
+            calculatePhaseAreas(correctedState, densities), lengths);
       }
 
       maximumResidual = calculateMaximumRelativeVolumeResidual(correctedState, areas, densities);
@@ -531,10 +562,11 @@ public final class CoupledPressureMomentumSolver implements Serializable {
         double[][] completeTransfers = new double[cellCount + 1][PHASE_COUNT];
         MassFluxCorrectionResult completeCorrection = applyMassFluxCorrection(completeState, timeStep,
             combinedFaceGradients(totalPressureCorrection, lengths, interpolationDefect, 1.0), initialPhaseAreas, areas,
-            lengths, densities, outletPressureFixed, completeTransfers);
+            lengths, densities, outletPressureFixed, outletPhaseOpen, completeTransfers);
         double completeResidual = calculateMaximumRelativeVolumeResidual(completeState, areas, densities);
         if (completeResidual <= relativeVolumeTolerance) {
-          applyMomentumCorrection(completeState, timeStep, totalPressureCorrection, initialPhaseAreas, lengths);
+          applyMomentumCorrection(completeState, timeStep, totalPressureCorrection,
+              calculatePhaseAreas(completeState, densities), lengths);
           correctedState = completeState;
           phaseMassCorrectionsKg = completeTransfers;
           outletBoundaryMassCorrectionKg = completeCorrection.outletBoundaryMassCorrectionKg;
@@ -682,13 +714,22 @@ public final class CoupledPressureMomentumSolver implements Serializable {
   static double[] applyConservativeMassFluxCorrection(double[][] state, double timeStep, double[] pressureCorrection,
       double[][] phaseAreas, double[] areas, double[] lengths, double[][] densities, boolean outletPressureFixed) {
     return applyMassFluxCorrection(state, timeStep, faceGradients(pressureCorrection, lengths), phaseAreas, areas,
-        lengths, densities, outletPressureFixed, null).outletBoundaryMassCorrectionKg;
+        lengths, densities, outletPressureFixed, new boolean[] {true, true, true}, null).outletBoundaryMassCorrectionKg;
+  }
+
+  static double[] applyConservativeMassFluxCorrection(double[][] state, double timeStep, double[] pressureCorrection,
+      double[][] phaseAreas, double[] areas, double[] lengths, double[][] densities, boolean outletPressureFixed,
+      boolean[] outletPhaseOpen) {
+    validateOutletPhaseOpen(outletPhaseOpen, outletPressureFixed);
+    return applyMassFluxCorrection(state, timeStep, faceGradients(pressureCorrection, lengths), phaseAreas, areas,
+        lengths, densities, outletPressureFixed, outletPhaseOpen, null).outletBoundaryMassCorrectionKg;
   }
 
   private static MassFluxCorrectionResult applyMassFluxCorrection(double[][] state, double timeStep,
       double[] facePressureGradient, double[][] phaseAreas, double[] areas, double[] lengths, double[][] densities,
-      boolean outletPressureFixed, double[][] phaseMassCorrectionsKg) {
+      boolean outletPressureFixed, boolean[] outletPhaseOpen, double[][] phaseMassCorrectionsKg) {
     int cellCount = state.length;
+    double[][] previousState = copyMatrixArray(state);
     double[][] faceMassFlowCorrection = new double[PHASE_COUNT][cellCount + 1];
     double[][] faceScale = new double[PHASE_COUNT][cellCount + 1];
 
@@ -726,24 +767,38 @@ public final class CoupledPressureMomentumSolver implements Serializable {
       }
     }
 
+    advectCorrectionMomentum(state, previousState, timeStep, faceMassFlowCorrection, lengths);
+
     double[] outletBoundaryMassCorrectionKg = new double[PHASE_COUNT];
     if (outletPressureFixed) {
       int outlet = cellCount - 1;
-      double occupiedArea = 0.0;
+      double retainedArea = 0.0;
+      double openArea = 0.0;
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
-        occupiedArea += Math.max(state[outlet][phase], 0.0) / Math.max(densities[phase][outlet], MIN_DENSITY);
+        double phaseArea = Math.max(state[outlet][phase], 0.0) / Math.max(densities[phase][outlet], MIN_DENSITY);
+        if (outletPhaseOpen[phase]) {
+          openArea += phaseArea;
+        } else {
+          retainedArea += phaseArea;
+        }
       }
-      if (!(occupiedArea > 0.0) || !Double.isFinite(occupiedArea)) {
-        throw new IllegalStateException("Fixed-pressure outlet has no finite phase volume");
+      double targetOpenArea = areas[outlet] - retainedArea;
+      if (!(openArea > 0.0) || !Double.isFinite(openArea) || !(targetOpenArea >= 0.0)
+          || !Double.isFinite(targetOpenArea)) {
+        throw new IllegalStateException("Fixed-pressure outlet has no finite open phase volume");
       }
-      double volumeScale = areas[outlet] / occupiedArea;
+      double volumeScale = targetOpenArea / openArea;
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        if (!outletPhaseOpen[phase]) {
+          continue;
+        }
         double previousMass = state[outlet][phase];
         // Multiplicative projection preserves positivity even for a large volume
         // residual. A negative predictor is left for the caller's step rejection.
         double projectedMass = previousMass > 0.0 ? previousMass * volumeScale : previousMass;
         double massPerLengthCorrection = projectedMass - previousMass;
         state[outlet][phase] = projectedMass;
+        state[outlet][phase + GAS_MOMENTUM] *= volumeScale;
         outletBoundaryMassCorrectionKg[phase] -= massPerLengthCorrection * lengths[outlet];
         if (phaseMassCorrectionsKg != null) {
           phaseMassCorrectionsKg[cellCount][phase] -= massPerLengthCorrection * lengths[outlet];
@@ -751,6 +806,16 @@ public final class CoupledPressureMomentumSolver implements Serializable {
       }
     }
     return new MassFluxCorrectionResult(outletBoundaryMassCorrectionKg, minimumScale, faceScale);
+  }
+
+  private static void validateOutletPhaseOpen(boolean[] outletPhaseOpen, boolean outletPressureFixed) {
+    if (outletPhaseOpen == null || outletPhaseOpen.length != PHASE_COUNT) {
+      throw new IllegalArgumentException("Outlet phase-transfer ownership must provide gas, oil and water flags");
+    }
+    if (outletPressureFixed && !outletPhaseOpen[GAS_MASS] && !outletPhaseOpen[OIL_MASS]
+        && !outletPhaseOpen[WATER_MASS]) {
+      throw new IllegalArgumentException("A fixed-pressure outlet requires at least one open phase");
+    }
   }
 
   /**
@@ -818,6 +883,48 @@ public final class CoupledPressureMomentumSolver implements Serializable {
       }
     }
     return minimumScale;
+  }
+
+  /**
+   * Transport phase momentum with the accepted pressure-correction mass fluxes.
+   *
+   * <p>
+   * Implicit upwind velocities give a conservative convex mixing update even when a correction drains a cell or
+   * incoming mass funds simultaneous through-flow. Momentum is reconstructed from the corrected mass, so a vanishing
+   * donor cannot retain an unrelated finite momentum.
+   * </p>
+   *
+   * @param state corrected phase masses and momentum output
+   * @param previousState state before correction transfers
+   * @param timeStep correction interval in seconds
+   * @param faceFluxes accepted phase mass flux corrections in kg/s
+   * @param lengths physical cell lengths in meters
+   */
+  private static void advectCorrectionMomentum(double[][] state, double[][] previousState, double timeStep,
+      double[][] faceFluxes, double[] lengths) {
+    int cellCount = state.length;
+    for (int phase = 0; phase < PHASE_COUNT; phase++) {
+      double[] lower = new double[cellCount];
+      double[] diagonal = new double[cellCount];
+      double[] upper = new double[cellCount];
+      double[] right = new double[cellCount];
+      for (int cell = 0; cell < cellCount; cell++) {
+        double leftIncoming = timeStep * Math.max(0.0, faceFluxes[phase][cell]);
+        double rightIncoming = timeStep * Math.max(0.0, -faceFluxes[phase][cell + 1]);
+        double mass = previousState[cell][phase] * lengths[cell];
+        double scale = mass + leftIncoming + rightIncoming;
+        diagonal[cell] = 1.0;
+        if (scale > 0.0) {
+          lower[cell] = -leftIncoming / scale;
+          upper[cell] = -rightIncoming / scale;
+          right[cell] = previousState[cell][phase + GAS_MOMENTUM] * lengths[cell] / scale;
+        }
+      }
+      double[] velocity = solveTridiagonal(lower, diagonal, upper, right);
+      for (int cell = 0; cell < cellCount; cell++) {
+        state[cell][phase + GAS_MOMENTUM] = state[cell][phase] * velocity[cell];
+      }
+    }
   }
 
   private static void applyMomentumCorrection(double[][] state, double timeStep, double[] pressureCorrection,

@@ -16,8 +16,10 @@ import java.util.Arrays;
  * </ul>
  *
  * <p>
- * These gradients are computed using the implicit function theorem, which provides exact derivatives without
- * differentiating through the iterative flash solver.
+ * These gradients are computed using the implicit function theorem and the EOS fugacity derivatives without
+ * differentiating through the iterative flash solver. Composition column j follows (z + h e_j)/(1+h) at fixed total
+ * moles; it is not an unconstrained partial holding every other mole fraction fixed. Pressure columns are per bar.
+ * Validity requires a converged, nonsingular interior vapor-liquid equilibrium.
  * </p>
  *
  * <h2>Mathematical Background</h2>

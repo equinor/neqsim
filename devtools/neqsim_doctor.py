@@ -517,8 +517,9 @@ def check_mcp_launcher(java_major):
     else:
         _warn("Registered server entry",
               "no 'neqsim' server pointing at NeqsimMcpLauncher.java in the VS Code user mcp.json",
-              fix_hint="Expected when the plugin's own mcp.json is used (Copilot CLI); in VS Code run "
-                       "the plugin install script, which registers the launcher by absolute path")
+              fix_hint="Expected when the plugin's own mcp.json is used (Copilot CLI, VS Code 1.141+); on "
+                       "older VS Code run the plugin install script, which registers the launcher by "
+                       "absolute path")
     if jars:
         _check("Server jar cached", True, os.path.basename(sorted(jars)[-1]))
     else:

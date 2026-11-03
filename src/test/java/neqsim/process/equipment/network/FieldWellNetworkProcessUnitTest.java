@@ -146,6 +146,48 @@ class FieldWellNetworkProcessUnitTest {
     assertEquals(1.0, copy.getExclusiveRouteSelection("producer pressure level"), 0.0);
   }
 
+  /** Fixed host pressure must be a reversible action while solved junction pressure stays read-only. */
+  @Test
+  void changesFixedSinkPressureThroughAutomationAndRestoresExactly() {
+    FieldWellNetworkProcessUnit unit = createRoutedUnit();
+    unit.run(UUID.randomUUID());
+    assertTrue(unit.solved(), unit.getLastCouplingResult().getMessage());
+    Separator hpSeparator = new Separator("HP separator", unit.getOutletStream("HP host"));
+    Separator lpSeparator = new Separator("LP separator", unit.getOutletStream("LP host"));
+    ProcessSystem field = new ProcessSystem("pressure-action field and host");
+    field.add(unit);
+    field.add(hpSeparator);
+    field.add(lpSeparator);
+    ProcessModel model = new ProcessModel();
+    model.add("Field", field);
+    model.run();
+
+    assertTrue(model.isModelConverged());
+    double baselineRate = unit.getOutletStream("HP host").getFlowRate("kg/hr");
+    double baselineWellPressure = unit.getHydraulicNetwork().getNodePressure("producer");
+    ProcessAutomation automation = model.getAutomation();
+    String pressureAddress = "Field::routed field network.sink.HP host.pressure";
+    assertTrue(automation.isWritableAddress(pressureAddress));
+    assertEquals(45.0, automation.getVariableValue(pressureAddress, "bara"), 0.0);
+    assertFalse(automation.isWritableAddress("Field::routed field network.sink.header.pressure"));
+    assertThrows(IllegalArgumentException.class,
+        () -> automation.setVariableValue("Field::routed field network.sink.header.pressure", 40.0, "bara"));
+
+    automation.setVariableValue(pressureAddress, 40.0, "bara");
+    model.run();
+    assertTrue(model.isModelConverged());
+    assertEquals(40.0, automation.getVariableValue(pressureAddress, "bara"), 0.0);
+    assertEquals(40.0, unit.getOutletStream("HP host").getPressure("bara"), 1.0e-6);
+    assertTrue(unit.getOutletStream("HP host").getFlowRate("kg/hr") > baselineRate);
+    assertTrue(unit.getHydraulicNetwork().getNodePressure("producer") < baselineWellPressure);
+
+    automation.setVariableValue(pressureAddress, 45.0, "bara");
+    model.run();
+    assertTrue(model.isModelConverged());
+    assertEquals(baselineRate, unit.getOutletStream("HP host").getFlowRate("kg/hr"), baselineRate * 1.0e-5);
+    assertEquals(baselineWellPressure, unit.getHydraulicNetwork().getNodePressure("producer"), 1.0e-5);
+  }
+
   /** Multi-edge direct, brownfield and dual-path line-ups must use one canonical graph and restore exactly. */
   @Test
   void switchesCanonicalMultiEdgeRouteConfigurationsThroughAutomation() {

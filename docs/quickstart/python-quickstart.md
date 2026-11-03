@@ -3,17 +3,29 @@ title: Python Quickstart
 description: Get started with NeqSim in Python. Installation, first flash calculation, and first process simulation in under 5 minutes.
 ---
 
-# Python Quickstart
-
 Get NeqSim running in Python in under 5 minutes.
 
 ## Step 1: Install neqsim-python (1 minute)
+
+### pip (Java 17+)
 
 ```bash
 pip install neqsim
 ```
 
-This installs the Python package with bundled Java libraries. Requires Java 8+ installed.
+### conda (OpenJDK included)
+
+```bash
+conda install -c conda-forge neqsim
+```
+
+The current `neqsim-python` package requires Python 3.10+. A pip installation also
+requires Java 17 or newer; install a 64-bit JDK from
+[Adoptium](https://adoptium.net/) and keep the Python and Java architectures aligned.
+The Conda package installs OpenJDK automatically, so it does not need a separate Java
+setup. See the authoritative
+[NeqSim Python installation guide](https://github.com/equinor/neqsim-python#install)
+when selecting a runtime.
 
 ## Step 2: First Flash Calculation (2 minutes)
 
@@ -137,7 +149,7 @@ PipeBeggsAndBrills = jneqsim.process.equipment.pipeline.PipeBeggsAndBrills
 | `AttributeError: 'NoneType'` | JVM not started - use `from neqsim import jneqsim` |
 | Unexpected density | Selecting a density unit does not enable Peneloux volume correction; correction is a separate validated model choice |
 | Temperature seems wrong | NeqSim uses **Kelvin**. Convert: `T_K = T_C + 273.15` |
-| `JVMNotFoundException` | Install Java 8+ and set JAVA_HOME |
+| `JVMNotFoundException` | For pip, install Java 17+ and set `JAVA_HOME`; Conda installs OpenJDK automatically |
 
 ### Java String Conversion
 

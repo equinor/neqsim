@@ -165,7 +165,7 @@ def sibling_skill_roots(skills_root: Path) -> List[Root]:
     """
     workspace_root = skills_root.parent.parent.parent
     out: List[Root] = []
-    for sibling in ("neqsim-community-skills", "neqsim-enterprise-skills"):
+    for sibling in ("neqsim-community-skills", "neqsim-enterprise-skills", "energy-project-agents"):
         cand = workspace_root / sibling / "skills"
         if cand.is_dir():
             out.append((cand, sibling, "**/SKILL.md", False))

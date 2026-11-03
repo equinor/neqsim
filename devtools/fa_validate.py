@@ -150,8 +150,17 @@ def check_inputs(ds, input_findings, standards):
     fails = [b["id"] for b in ind if b["status"] == "FAIL"]
     sec = [b["id"] for b in ind if "secondary" in str(b["provenance"])]
     checks.append(_check("FA-VALIDATION", "Independent benchmark with provenance and predeclared tolerance", "FAIL" if fails else ("WARN" if (sec or not ind) else "PASS"),
-                         ("failed: %s" % fails) if fails else ("only secondary-source benchmarks (%s); no calibration and no field or laboratory validation (separate from verification)" % ", ".join(sec) if sec else "no independent benchmark")))
+                         ("failed: %s" % fails) if fails else ("only secondary-source benchmarks (%s); no laboratory validation of the hydrate model for the study fluid (field comparison: see FA-FIELD-VALIDATION when present)" % ", ".join(sec) if sec else "no independent benchmark")))
     ms = ds.get("mesh_sensitivity")
+    fv = [b for b in bm if b["kind"] in ("field_validation", "field_calibration")]
+    if fv:
+        out_tol = [b["id"] for b in fv if b["status"] == "FAIL"]
+        unav = [b["id"] for b in fv if b["status"] == "UNAVAILABLE"]
+        n_val = sum(1 for b in fv if b["kind"] == "field_validation")
+        st = "WARN" if (out_tol or unav) else "PASS"
+        checks.append(_check("FA-FIELD-VALIDATION", "Model versus measured field data (calibration and hold-out records with predeclared tolerances)", st,
+                             "%d records (%d hold-out); outside tolerance: %s; unavailable: %s. An excursion is a validation finding that limits fitness for purpose, not a software failure; "
+                             "the report states every excursion." % (len(fv), n_val, ", ".join(out_tol) or "none", ", ".join(unav) or "none")))
     checks.append(_check("FA-MESH", "Spatial sensitivity of the study mesh against a finer mesh", ("PASS" if ms and ms["status"] == "PASS" else "FAIL" if ms else "WARN"),
                          ("%s: study mesh vs finest within %s" % (ms["status"], json.dumps(ms["tolerance"]))) if ms else "not run"))
     errs, warns = [], []
@@ -168,6 +177,8 @@ def check_inputs(ds, input_findings, standards):
     # derived values and criteria recomputed independently
     errs = []
     for cid, r in ds["results"].items():
+        if r["status"] != "converged":
+            continue                      # reported by FA-SOLVER; no derived profiles exist for a case that did not converge
         for pid, prof in r["profiles"].items():
             der = r["profiles_derived"][pid]
             for i in range(len(prof["t_c"])):
@@ -177,7 +188,10 @@ def check_inputs(ds, input_findings, standards):
         ex = r["extrema"]["hyd_margin_min"]
         vals = [(v, pid, prof["chainage_m"][i]) for pid, prof in r["profiles"].items() for i, v in enumerate(r["profiles_derived"][pid]["margin_k"]) if v is not None]
         if vals:
-            mn = min(vals)
+            mn = vals[0]
+            for cand in vals[1:]:
+                if cand[0] < mn[0]:          # strict: on a tie (shared trunk points appear in every path) the first occurrence wins, as in fa_study
+                    mn = cand
             if abs(mn[0] - ex["value"]) > 1e-9 or abs(mn[2] - ex["chainage_m"]) > 1e-6:
                 errs.append("case %s: stored minimum hydrate margin or its chainage differs from the profile" % cid)
     for cr in ds["criteria"]:
@@ -382,14 +396,17 @@ def compute_readiness(ds, checks, basis_doc):
     """Readiness label from the checks, the declared review record and the evidence gaps (never assigned by software alone)."""
     fails = [c for c in checks if c["status"] == "FAIL"]
     open_t = [t["id"] for t in ds["threats"] if t["status"] in ("open", "unsupported")]
-    synthetic = ds["route"]["status"] in ("synthetic", "schematic") or any(s["input_class"] == "synthetic" for s in ds["sources"])
+    synthetic = ds["route"]["status"] == "synthetic" or any(s["input_class"] == "synthetic" for s in ds["sources"])
+    schematic = ds["route"]["status"] == "schematic"
     review = basis_doc.get("review") or {}
     if fails:
         return {"label": "NOT_READY", "note": "diagnostic package - %d validation check(s) failed; results must not be used" % len(fails), "publication_ready": False,
                 "explanation": "Validation failed (%s). The package shows the failed and open findings and is not a deliverable." % ", ".join(c["id"] for c in fails[:6]), "reasons": [c["id"] for c in fails]}
     reasons = []
     if synthetic:
-        reasons.append("synthetic or schematic inputs")
+        reasons.append("synthetic inputs")
+    if schematic:
+        reasons.append("schematic (not surveyed) route geometry")
     if open_t:
         reasons.append("%d open or unsupported threats" % len(open_t))
     if ds["data_gaps"]:

@@ -25,6 +25,8 @@ Rules: every number is bound to the dataset or a registered input; every sheet s
 
 ## Visual gate (mandatory)
 
+Flow/network schematics and arrangement sheets also pass `neqsim pfd-check` (skill `neqsim-pfd-layout-review`, agent `pfd-layout-review`).
+
 Render and look at **every** PNG at intended size: clipped text, overlaps, illegible labels, crossing lines, wrong arrows, blank views, misleading geometry. Automated QA
 (`layout_spec.json`: bounds, overlaps, minimum text 2.2 mm) is necessary, not sufficient. Fix the sheet code or the input and re-render; never hide a finding.
 

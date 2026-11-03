@@ -36,6 +36,8 @@ public class KrishnaStandartFilmModel extends
   static Logger logger = LogManager.getLogger(KrishnaStandartFilmModel.class);
   private static final ApacheCommonsMathLinearAlgebra ALGEBRA = new ApacheCommonsMathLinearAlgebra();
   private transient boolean complexSpectrumWarningLogged;
+  /** Opt-in numerical route; the historical segregated route remains the default. */
+  private boolean coupledMassHeatTransferEnabled;
   double[][] phiMatrix;
   double[] redPhiMatrix;
   double[] redCorrectionMatrix;
@@ -154,8 +156,12 @@ public class KrishnaStandartFilmModel extends
       double tempVar = 0;
       for (int j = 0; j < getBulkSystem().getPhase(phaseNum).getNumberOfComponents(); j++) {
         if (i != j) {
-          tempVar += getBulkSystem().getPhase(phaseNum).getComponent(j).getx()
-              / binaryMassTransferCoefficient[phaseNum][i][j];
+          double coefficient = binaryMassTransferCoefficient[phaseNum][i][j];
+          if (!(coefficient > 0.0) || !Double.isFinite(coefficient)) {
+            throw new IllegalStateException("Film requires positive finite binary transfer coefficients; phase="
+                + phaseNum + ", components=" + i + "/" + j);
+          }
+          tempVar += getBulkSystem().getPhase(phaseNum).getComponent(j).getx() / coefficient;
         }
         if (j < n) {
           resistanceMatrix.set(i, j,
@@ -182,15 +188,9 @@ public class KrishnaStandartFilmModel extends
       }
     }
     if (invalidInverse) {
-      int dim = getBulkSystem().getPhase(phaseNum).getNumberOfComponents() - 1;
-      double[][] identity = new double[dim][dim];
-      for (int index = 0; index < dim; index++) {
-        identity[index][index] = 1.0;
-      }
-      setMassTransferCoefficientArray(phaseNum, identity);
-    } else {
-      setMassTransferCoefficientArray(phaseNum, toArray(inverseMatrix));
+      throw new IllegalStateException("Nonfinite mass-transfer resistance inverse for phase " + phaseNum);
     }
+    setMassTransferCoefficientArray(phaseNum, toArray(inverseMatrix));
     return 1;
   }
 
@@ -437,8 +437,34 @@ public class KrishnaStandartFilmModel extends
 
   /** {@inheritDoc} */
   @Override
+  public void setCoupledMassHeatTransferEnabled(boolean enabled) {
+    coupledMassHeatTransferEnabled = enabled;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCoupledMassHeatTransferEnabled() {
+    return coupledMassHeatTransferEnabled;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void solve() {
-    super.solve();
+    if (coupledMassHeatTransferEnabled) {
+      if (!massTransferCalc || !heatTransferCalc || bulkSystem.isChemicalSystem() || enhancementFactor != null
+          || bulkSystem.getNumberOfPhases() != 2 || !bulkSystem.hasPhaseType("gas") || !bulkSystem.hasPhaseType("oil")
+          || bulkSystem.hasPhaseType("aqueous")) {
+        throw new IllegalStateException("Coupled film requires nonreactive gas/oil with mass and heat enabled");
+      }
+      for (int component = 0; component < bulkSystem.getNumberOfComponents(); component++) {
+        if (!bulkSystem.getPhase(0).getComponent(component).isHydrocarbon()) {
+          throw new IllegalStateException("Coupled film currently requires hydrocarbon components");
+        }
+      }
+      solveCoupledMassHeatTransfer();
+    } else {
+      super.solve();
+    }
   }
 
   /**

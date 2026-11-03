@@ -37,6 +37,24 @@ class TwoFluidConservativeEnergyReportTest {
     assertEquals(0.0, report.getResidualJ(), 0.0);
   }
 
+  /** Phase rows retain countercurrent energy transport while reproducing aggregate routing terms. */
+  @Test
+  void phaseResolvedAdvectionPreservesOppositeSignedTransfers() {
+    TwoFluidConservativeEnergyReport report = new TwoFluidConservativeEnergyReport(0.2, 100.0, 107.0, 25.0, 18.0,
+        new double[] {30.0, -5.0, 0.0}, new double[] {22.0, -4.0, 0.0}, 0.0, 0.0, 0.0, 0.0);
+    assertEquals(30.0, report.getInletAdvectedEnergyJ(TwoFluidConservativeEnergyReport.Phase.GAS), 0.0);
+    assertEquals(-5.0, report.getInletAdvectedEnergyJ(TwoFluidConservativeEnergyReport.Phase.OIL), 0.0);
+    assertEquals(22.0, report.getOutletAdvectedEnergyJ(TwoFluidConservativeEnergyReport.Phase.GAS), 0.0);
+    assertEquals(-4.0, report.getOutletAdvectedEnergyJ(TwoFluidConservativeEnergyReport.Phase.OIL), 0.0);
+    assertEquals(25.0, report.getInletPhaseAdvectedEnergyJ()[0] + report.getInletPhaseAdvectedEnergyJ()[1]
+        + report.getInletPhaseAdvectedEnergyJ()[2], 0.0);
+    assertEquals(18.0, report.getOutletPhaseAdvectedEnergyJ()[0] + report.getOutletPhaseAdvectedEnergyJ()[1]
+        + report.getOutletPhaseAdvectedEnergyJ()[2], 0.0);
+    double[] defensive = report.getOutletPhaseAdvectedEnergyJ();
+    defensive[0] = 0.0;
+    assertEquals(22.0, report.getOutletPhaseAdvectedEnergyJ()[0], 0.0);
+  }
+
   /** A large arbitrary caloric energy reference must not hide an incorrect heat input. */
   @Test
   void closedCellResidualDoesNotUseAbsoluteStoredEnergyAsItsScale() {
@@ -89,6 +107,8 @@ class TwoFluidConservativeEnergyReportTest {
         () -> new TwoFluidConservativeEnergyReport(1.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0e-9, 0.0));
     assertThrows(IllegalArgumentException.class,
         () -> new TwoFluidConservativeEnergyReport(1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.NaN));
+    assertThrows(IllegalArgumentException.class, () -> new TwoFluidConservativeEnergyReport(1.0, 0.0, 0.0, 2.0, 0.0,
+        new double[] {1.0, 0.0, 0.0}, new double[3], 0.0, 0.0, 0.0, 0.0));
     TwoFluidConservativeEnergyReport report = new TwoFluidConservativeEnergyReport(1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0);
     assertThrows(IllegalArgumentException.class, () -> report.isWithinTolerance(-1.0, 0.0));

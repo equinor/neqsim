@@ -1,0 +1,9 @@
+{
+  "base": "a01d663990a8f43de366a8c02f1ea6280b61c143",
+  "density_kg_m3": 1003.6747533856451,
+  "initialFlow_m3_s": 0.0022938861707980725,
+  "receiver_bara": 98.72334844532102,
+  "acceptedTime_s": 0.10100000000000187,
+  "message": "Acoustic interval [0.10100000000000187, 0.10110000000000187] s not accepted: Valve reverse flow requires a signed receiver model",
+  "volumeResidual_m3": 4.87890977618477E-19
+}

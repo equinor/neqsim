@@ -22,7 +22,7 @@ NeqSim provides two complementary approaches for computing derivatives of simula
 
 #### The Implicit Function Theorem
 
-Flash calculations solve a nonlinear system of equations iteratively. Rather than differentiating through the solver (which is complex and numerically unstable), NeqSim uses the **implicit function theorem** to obtain exact gradients at the converged solution.
+Flash calculations solve a nonlinear system of equations iteratively. Rather than differentiating through the solver (which is complex and numerically unstable), NeqSim uses the **implicit function theorem** to obtain flash sensitivities at the converged solution. The additive batch property API uses semi-analytical local tangent evaluations; the scalar API retains full-equilibrium finite differences.
 
 At vapor-liquid equilibrium, the residual equations $F(y; \theta) = 0$ are satisfied, where:
 - $y = (K_1, \ldots, K_n, \beta)$ are solution variables (K-values and vapor fraction)
@@ -32,13 +32,13 @@ By the implicit function theorem:
 
 $$\frac{dy}{d\theta} = -\left(\frac{\partial F}{\partial y}\right)^{-1} \frac{\partial F}{\partial \theta}$$
 
-This gives **exact gradients** at the converged solution without approximation.
+Flash sensitivities solve the implicit EOS derivative equations; batched property gradients use local tangent evaluations and scalar property gradients use full equilibrium finite differences. See [the current contract](differentiable_thermodynamics.md) for normalized composition directions, batch evaluation, units and unsupported states.
 
 #### Equilibrium Equations
 
 For each component $i$, the equilibrium condition is:
 
-$$F_i = \ln K_i + \ln \phi_i^L - \ln \phi_i^V = 0$$
+$$F_i = \ln K_i - \ln \phi_i^L + \ln \phi_i^V = 0$$
 
 The material balance (Rachford-Rice equation) closes the system:
 
@@ -128,7 +128,7 @@ double[] gradArray = grad.toArray();
 Low-level access to fugacity coefficient derivatives:
 
 ```java
-// Extract from phase (0=liquid, 1=vapor)
+// Extract from an inspected active phase index; ordering is not a phase-type convention
 FugacityJacobian jacV = diffFlash.extractFugacityJacobian(1);
 
 double[] lnPhi = jacV.getLnPhi();           // ln(φ_i)
@@ -378,8 +378,8 @@ public class ProcessDerivativeExample {
 | Criterion | Thermodynamic Derivatives | Process Derivatives |
 |-----------|---------------------------|---------------------|
 | **Scope** | Single flash calculation | Full process flowsheet |
-| **Accuracy** | Exact (analytical) | Approximate (numerical) |
-| **Speed** | Fast (one matrix inversion) | Slower (multiple process runs) |
+| **Accuracy** | Implicit flash / local semi-analytical properties | Approximate (numerical) |
+| **Speed** | One factorization plus shared local EOS evaluations | Slower (multiple process runs) |
 | **Properties** | T, P, z dependencies only | Any input/output relationship |
 | **Complexity** | Simple systems | Complex multi-unit processes |
 
@@ -441,7 +441,7 @@ def flash_density_fwd(T, P, z):
     
     value = system.getDensity("kg/m3")
     
-    # Get analytical gradients
+    # Get semi-analytical property gradients
     diff_flash = DifferentiableFlash(system)
     grads = diff_flash.computePropertyGradient("density")
     
@@ -514,9 +514,9 @@ print(f"∂ρ/∂P = {P.grad}")
 
 ### Thermodynamic Derivatives
 
-1. **Complexity**: O(n³) due to matrix inversion, where n = number of components
-2. **Caching**: `DifferentiableFlash` caches computed gradients—call `computeFlashGradients()` once and reuse
-3. **init(3)**: Automatically called to compute fugacity derivatives; adds ~10-20% overhead to flash
+1. **Complexity**: O(n³) for a shared LU factorization, where n = number of components; no inverse is formed
+2. **Batching**: use `computePropertyGradients(names)` to share one solve and local property states; results are not cached across mutable-fluid calls
+3. **init(3)**: Used on a detached VLE snapshot for fugacity derivatives; initialization cost depends on EOS and case
 
 ### Process Derivatives
 

@@ -29,6 +29,30 @@ below. See [the study guide](../../docs/pvtsimulation/pvt_fluid_study_report.md)
 
 ## Qualification and swelling calculations
 
+Use `DepletionPvtHistoryGenerator.replayNative` for closed-mass dry/wet CCE, oil-only DLE and pre-dew gas-only
+CVD handoffs. CCE uses `ConstantMassExpansion.runNativeExpansion` without a saturation
+scan; preserve the complete cell and zero protocol withdrawal. Do not infer a
+saturation-normalized volume from this absolute evidence. Check actual phase presence and `hasWithdrawal(row)` before reading
+phase or withdrawal outputs. Preserve complete experiment and separator-basis provenance.
+Native CVD uses opt-in checked upper-dew refinement: require a dry gas/oil-to-gas scan bracket below 1000 bara, then validate the existing pressure solver result. Do not fall back after a failed equilibrium or branch gate. The legacy CVD default and modified-black-oil `generate` route retain the scan; the latter still requires both phases. Read
+`docs/pvtsimulation/depletion_pvt_generation.md`; wet CVD, critical splits and measured field accuracy remain unqualified. Wet CCE retains the aqueous phase and all named components with zero protocol withdrawal; use the caller-accepted wet EOS/multiphase settings and preserve aqueous separator products. After a sampled gas/oil stage, dry CVD gas-only tails restore the reference cell volume by gas withdrawal below the saturation pressure; an unbracketed single-phase schedule must not trigger tail withdrawal from the legacy scan reference; above saturation retain the closed sample. Closed-mass CCE disappearance
+is a distinct protocol and preserves all components. DLE flash failures propagate.
+
+Before fitting same-state gas p/T/Z/molar-mass/density tuples, use the opt-in
+`PvtGasDensityConsistency` interval gate and preserve source identities and raw
+values. Attach passing same-sample evidence through the `CalibratedPvtModel`
+overload; never drop failing rows to pass. Bounds require a documented basis and
+are not automatically sigmas. Read
+`docs/pvtsimulation/laboratory_gas_density_consistency.md`; a compatible tuple does
+not establish measured accuracy, whole-protocol qualification or a field match.
+
+For reservoir-history delivery, use `neqsim-eos-regression` and the
+`CalibratedPvtModel` / `MaterialBalancePvtHistory` contract documented in
+`docs/pvtsimulation/reservoir_material_balance.md`. Preserve independently tuned
+EOS checkpoints and complete held-out laboratory protocols, then hand off volume
+estimation to `@field-development`. Do not use reservoir-volume misfit to change
+the laboratory model or substitute independent flashes for a depletion path.
+
 Read `docs/pvtsimulation/pedersen_method_qualification.md` before asserting reservoir-fluid
 method coverage or accuracy. Distinguish source availability, numerical verification and
 experimental validation. Compare fluids only after matching EOS/alpha/mixing rules, component
@@ -160,3 +184,19 @@ After creating or editing any `.java` file, run `./mvnw spotless:apply` (Windows
 `mvnw.cmd spotless:apply`) and `git add` the reformatted files before committing —
 CI runs `spotless:check` and fails the build on any unformatted file. Never bypass
 with `git commit --no-verify`.
+
+Native DLE handoff uses `DifferentialLiberation.runNativeLiberation`: equilibrate each
+pressure, remove only gas, retain oil/aqueous inventories and recompute retained
+phase fractions/composition. Two liquids without gas have zero withdrawal. Oil
+must remain present. See the native wet DLE guide and `WetDleHandoffTest`; this
+is synthetic qualification, not measured calibration, wet CVD or critical accuracy.
+
+
+For an independently declared initial occupied-volume experiment, use
+`DepletionPvtHistoryGenerator.replayNativeFixedCell` and preserve its explicit
+`FixedCellResult` reference metadata. It runs transactionally on checkpoint copies,
+retains liquids and removes equilibrium gas only. Initial gas must be present;
+phase-family changes, critical and other-phase states fail. Do not substitute this
+convention for a saturation-referenced laboratory CVD experiment. `replayNative`
+continues to reject wet upper-dew CVD. Read the explicit-reference guide and
+`FixedCellDepletionHandoffTest` for numerical scope and separator evidence.

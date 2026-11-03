@@ -186,6 +186,33 @@ For multi-edge continuation, `TwoFluidConservativeEnergyReport` retains the inte
 accepted inlet and outlet total-energy transfers separately, including pressure-correction mass
 transport, while preserving the existing net-advection and first-law residual API. These signed
 boundary terms are the routing contract consumed by `TwoFluidPipeNetwork` storage nodes.
+Both the component and conservative-energy reports also retain those accepted boundary transfers
+by hydrodynamic phase. `getOutletBoundaryMassKg(Phase)` returns the named-component vector for gas,
+oil or water, while `getOutletAdvectedEnergyJ(Phase)` returns that phase's total-enthalpy and kinetic
+energy transfer. The three phase rows reproduce the existing aggregate report values. Opposite row
+signs therefore expose gas/liquid countercurrent transport that a scalar mixture transfer would
+hide; no outlet state or equilibrium flash is used to reconstruct these ledgers.
+
+```java
+TwoFluidComponentConservationReport components =
+    branch.getLastComponentConservationReport();
+TwoFluidConservativeEnergyReport energy =
+    branch.getLastConservativeEnergyReport();
+
+double[] gasComponents = components.getOutletBoundaryMassKg(
+    TwoFluidComponentConservationReport.Phase.GAS);
+double[] oilComponents = components.getOutletBoundaryMassKg(
+    TwoFluidComponentConservationReport.Phase.OIL);
+double gasEnergy = energy.getOutletAdvectedEnergyJ(
+    TwoFluidConservativeEnergyReport.Phase.GAS);
+double oilEnergy = energy.getOutletAdvectedEnergyJ(
+    TwoFluidConservativeEnergyReport.Phase.OIL);
+```
+
+These are accepted finite-volume diagnostics and a prerequisite for a future phase-coupled
+algebraic junction boundary solve. They do not make the current single mixed-state algebraic
+junction approximation conservative under countercurrent phase transport and are not independent
+qualification of the two-fluid closures.
 `addConservativeCompressibleNode(...)` keeps `UpstreamCompressibleVolume` as the hydraulic
 pressure and phase-mass owner while adding named-component and internal-energy inventory to the
 same node. A pressure/internal-energy flash recovers its mixed temperature at the accepted
@@ -577,6 +604,15 @@ therefore feeds back through the same live well/network coupling instead of acti
 downstream flow split. Copies preserve selector definitions but keep independent edge
 state.
 
+The same canonical network exposes a fixed sink's delivery pressure through
+`sink.<node>.pressure` as a writable `ProcessAutomation` input in absolute-pressure
+units. This is intentionally narrower than the solved `node.<node>.pressure` output:
+only a node declared as both `SINK` and fixed-pressure can be changed. Junctions and
+free-pressure sinks are rejected, so a separator-pressure action cannot silently turn a
+calculated hydraulic state into a boundary condition. Candidate evaluation still has to
+rerun the coupled well/network/host model and restore the original pressure before it is
+accepted.
+
 For a line-up that changes several edges together, construct named
 `FieldWellNetworkProcessUnit.RouteConfiguration` objects and register them with
 `registerRouteConfigurationSelector(...)`. Automation exposes
@@ -717,7 +753,8 @@ well/per-route-line/separator/scrubber operating limits, compressor surge/stonew
 evidence, driver and gearbox power, a shared plant-power budget, transactional discrete
 route actions, qualified export-pressure evidence, exact action restoration and an
 operating-envelope slice. A second deterministic acceptance case instantiates ten live
-wells with twenty alternative route edges and verifies complete well, line, vessel,
+well chokes, twenty HP/LP route actions, and one reversible HP separator-pressure
+action. It verifies complete well, line, vessel,
 shaft, shared-power and export-boundary evidence without changing the two-well physical
 model or introducing a separate optimizer. The lower
 pressure route must reduce well backpressure and increase deliverability. A route
@@ -739,6 +776,20 @@ with explicit provenance. Source, name, applicable limit, unit, limit role, and 
 part of the grouping identity, so separator, compressor, shaft, driver, and shared-power evidence is
 not blended across incompatible engineering bases. The summary does not add or replace any SURF,
 compressor-map, or host-constraint physics.
+
+The ten-well lifecycle acceptance also repeats the exact accepted choke/routing slices, including a coupled choke ×
+HP/LP pressure-level route grid and a separate exact HP/LP route × HP separator-pressure grid. The latter contains
+six independently evaluated points and exact four-corner cell classifications; it is not a generalized 3D surface or
+an interpolation across route selection. The workflow retains the qualified HP-separator
+and LP-scrubber alternatives active together. It preserves the same field/network/host evaluator, axes, grids, anchors,
+common-shaft, driver and shared-power constraints, then restores both installed-capacity states in reverse order. The
+schema-v16 receipt reports sampled constraint-identity handoffs, exact four-corner cell classifications and sampled
+perimeter boundary families, and, where both scenarios contain one comparable
+continuous boundary, the signed movement of the terminal feasible and infeasible bracket endpoints. The synthetic
+early-life case exercises an actual refined bracket comparison; the current-life case retains the tighter shared-power
+bottleneck and exercises an installed-capacity-to-host constraint identity handoff. These are advisory sampled/refined
+diagnostics, not new compressor/network physics, additive relief predictions, interpolated routes, or permission to
+change an operating limit.
 
 ### Repeated production periods and moving host limits
 

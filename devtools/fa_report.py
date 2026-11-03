@@ -59,6 +59,8 @@ def make_figures(ds, fig_dir):
         for q, pth in enumerate(r["profiles"]):
             if q > 0 and c["id"] != first:
                 continue
+            if pth not in r.get("profiles_derived", {}):
+                continue     # case did not converge: no derived profile to plot
             pr, der = r["profiles"][pth], r["profiles_derived"][pth]
             ys = [None if v is None else v for v in der["margin_k"]]
             xs = [x / 1000.0 for x in pr["chainage_m"]]
@@ -158,8 +160,8 @@ class FaReportBuilder(psr_report.ReportBuilder):
         return None
 
     def synthetic(self):
-        """True when any input is synthetic or the route is only schematic."""
-        return self.ds["route"]["status"] in ("synthetic", "schematic") or any(s.get("input_class") == "synthetic" for s in self.ds["sources"])
+        """True when any input is synthetic (a schematic real route is not synthetic; the readiness reasons state the schematic geometry)."""
+        return self.ds["route"]["status"] == "synthetic" or any(s.get("input_class") == "synthetic" for s in self.ds["sources"])
 
     def seg_kind(self, sid):
         return next((s["kind"] for s in self.ds["route"]["segments"] if s["id"] == sid), "segment")
@@ -618,13 +620,24 @@ class FaReportBuilder(psr_report.ReportBuilder):
         for b in ds["benchmarks"]:
             by_kind.setdefault(b["kind"], []).append(b)
         for kind, label in (("analytic_verification", "Analytic verification (implementation checks)"), ("independent_validation", "Independent validation (not used for tuning)"),
+                            ("field_calibration", "Field calibration records (measured data the model inputs were tuned to)"),
+                            ("field_validation", "Field validation records (measured hold-out data, not used for tuning)"),
                             ("sensitivity", "Sensitivity"), ("crosscheck", "Cross-checks (information, no pass/fail)")):
             rows = [(b["id"], b["title"], b["status"], "n/a" if b["value"] is None else "%.4g" % b["value"], "n/a" if b["reference"] is None else "%.4g" % b["reference"],
                      "n/a" if b["deviation"] is None else "%+.3g" % b["deviation"], "n/a" if b["tolerance"] is None else "%g (%s)" % (b["tolerance"], b["tolerance_kind"]), b["provenance"]) for b in by_kind.get(kind, [])]
             if rows:
                 self.table(["Id", "Check", "Status", "Value", "Reference", "Deviation", "Tolerance", "Provenance"], rows, caption=label, font=6, widths=[24, 50, 12, 14, 14, 14, 20, 40], align=["left"] * 3 + ["right"] * 3 + ["left"] * 2)
-        self.P("Calibration versus validation: no calibration data and no independent measured field or laboratory data exist for this study. The only independent comparison is the secondary-source methane hydrate check; "
-               "the hydraulic model is verified against analytic limits only. Experimental or field validation of the hydraulic and hydrate results is OPEN.")
+        n_fc = sum(1 for b in ds["benchmarks"] if b["kind"] == "field_calibration")
+        n_fv = [b for b in ds["benchmarks"] if b["kind"] == "field_validation"]
+        if n_fc or n_fv:
+            n_out = sum(1 for b in n_fv if b["status"] == "FAIL")
+            self.P("Calibration versus validation: %d field calibration record(s) (measured data the model inputs were tuned to; agreement there demonstrates fit, not predictive skill) and "
+                   "%d hold-out record(s) (not used for tuning) are compared with the model; %d hold-out record(s) are outside the declared tolerance. Every excursion is a finding that limits "
+                   "the use of the hydraulic and thermal results and is not removed. Laboratory validation of the hydrate model for the study fluid remains OPEN; the only independent hydrate "
+                   "comparison is the secondary-source methane check." % (n_fc, len(n_fv), n_out))
+        else:
+            self.P("Calibration versus validation: no calibration data and no independent measured field or laboratory data exist for this study. The only independent comparison is the secondary-source methane hydrate check; "
+                   "the hydraulic model is verified against analytic limits only. Experimental or field validation of the hydraulic and hydrate results is OPEN.")
         scen = [c["id"] for c in ds["cases"] if c["role"] == "scenario"]
         mit = [c["id"] for c in ds["cases"] if c["role"] == "mitigation"]
         self.P("Uncertainty and robustness: no Monte Carlo propagation is performed in this study; the declared scenario cases (%s) and mitigation cases (%s) bound the main drivers that were defined. "

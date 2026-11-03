@@ -17,6 +17,7 @@ public final class DynamicScenarioCriterion implements Serializable {
   private final String id;
   private final String name;
   private final String unit;
+  private final String extractorDefinitionId;
   private final Extractor extractor;
   private final Double lowerLimit;
   private final Double upperLimit;
@@ -27,6 +28,7 @@ public final class DynamicScenarioCriterion implements Serializable {
     id = requireText(builder.id, "id");
     name = requireText(builder.name, "name");
     unit = requireText(builder.unit, "unit");
+    extractorDefinitionId = requireText(builder.extractorDefinitionId, "extractorDefinitionId");
     extractor = builder.extractor;
     lowerLimit = builder.lowerLimit;
     upperLimit = builder.upperLimit;
@@ -35,7 +37,22 @@ public final class DynamicScenarioCriterion implements Serializable {
   }
 
   public static Builder builder(String id, String name, String unit, Extractor extractor) {
-    return new Builder(id, name, unit, extractor);
+    return new Builder(id, name, unit, "UNSPECIFIED", extractor);
+  }
+
+  /**
+   * Creates a criterion builder with an explicit, revision-controlled observation definition.
+   *
+   * @param id criterion identifier
+   * @param name criterion name
+   * @param unit observation unit
+   * @param extractorDefinitionId stable identifier for the observation implementation and revision
+   * @param extractor scalar process observation
+   * @return criterion builder
+   */
+  public static Builder builder(String id, String name, String unit, String extractorDefinitionId,
+      Extractor extractor) {
+    return new Builder(id, name, unit, extractorDefinitionId, extractor);
   }
 
   double extract(ProcessSystem process) {
@@ -63,6 +80,11 @@ public final class DynamicScenarioCriterion implements Serializable {
     return unit;
   }
 
+  /** @return stable identifier for the observation implementation and revision */
+  public String getExtractorDefinitionId() {
+    return extractorDefinitionId;
+  }
+
   public double getDeadlineSeconds() {
     return deadlineSeconds;
   }
@@ -76,6 +98,7 @@ public final class DynamicScenarioCriterion implements Serializable {
     result.put("id", id);
     result.put("name", name);
     result.put("unit", unit);
+    result.put("extractorDefinitionId", extractorDefinitionId);
     result.put("lowerLimit", lowerLimit);
     result.put("upperLimit", upperLimit);
     result.put("deadlineSeconds", Double.valueOf(deadlineSeconds));
@@ -88,19 +111,21 @@ public final class DynamicScenarioCriterion implements Serializable {
     private final String id;
     private final String name;
     private final String unit;
+    private final String extractorDefinitionId;
     private final Extractor extractor;
     private Double lowerLimit;
     private Double upperLimit;
     private double deadlineSeconds;
     private boolean required = true;
 
-    private Builder(String id, String name, String unit, Extractor extractor) {
+    private Builder(String id, String name, String unit, String extractorDefinitionId, Extractor extractor) {
       if (extractor == null) {
         throw new IllegalArgumentException("extractor must not be null");
       }
       this.id = id;
       this.name = name;
       this.unit = unit;
+      this.extractorDefinitionId = requireText(extractorDefinitionId, "extractorDefinitionId");
       this.extractor = extractor;
     }
 
