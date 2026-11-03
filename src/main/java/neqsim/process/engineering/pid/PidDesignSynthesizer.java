@@ -16,7 +16,7 @@ public final class PidDesignSynthesizer {
     }
     PidDesignContext context = new PidDesignContext(project, basis);
     PidDesignModel model = new PidDesignModel(project.getProjectId(), basis.getProfileId());
-    for (ProcessEquipmentInterface equipment : project.getProcessSystem().getUnitOperations()) {
+    for (ProcessEquipmentInterface equipment : project.getEngineeringProcessSystem().getUnitOperations()) {
       if (equipment == null || equipment instanceof Stream) {
         continue;
       }

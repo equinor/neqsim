@@ -155,5 +155,6 @@ federation and commercial CAD authoring profiles require separate exchange quali
 claiming them solved by box placement or inventory arithmetic.
 
 Related workflows: [SURF design](SURF_DESIGN_STUDY.md), [process reports](PROCESS_STUDY_REPORT.md) and
+[physical-inventory safeguarding design](../process/physical-inventory-safeguarding-design.md), and
 [agent capability discovery](AGENT_CAPABILITY_DISCOVERY.md). This physical-layout increment supports the direction of
 [issue #1864](https://github.com/equinor/neqsim/issues/1864) without claiming its complete exporter roadmap is closed.

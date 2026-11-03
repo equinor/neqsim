@@ -48,6 +48,7 @@ public final class Dexpi20ConformanceAssessment {
   public static final class Report implements Serializable {
     private static final long serialVersionUID = 1000L;
     private final Profile profile;
+    private final boolean specification201;
     private final String fileSha256;
     private final String bundledSchemaSha256;
     private final boolean officialSchemaVerified;
@@ -59,10 +60,11 @@ public final class Dexpi20ConformanceAssessment {
     private final List<String> errors;
     private final List<String> warnings;
 
-    Report(Profile profile, String fileSha256, String bundledSchemaSha256, boolean officialSchemaVerified,
-        boolean schemaValid, boolean officialImportsValid, boolean semanticProfileValid, int objectCount,
-        int referenceCount, List<String> errors, List<String> warnings) {
+    Report(Profile profile, boolean specification201, String fileSha256, String bundledSchemaSha256,
+        boolean officialSchemaVerified, boolean schemaValid, boolean officialImportsValid, boolean semanticProfileValid,
+        int objectCount, int referenceCount, List<String> errors, List<String> warnings) {
       this.profile = profile;
+      this.specification201 = specification201;
       this.fileSha256 = fileSha256;
       this.bundledSchemaSha256 = bundledSchemaSha256;
       this.officialSchemaVerified = officialSchemaVerified;
@@ -90,8 +92,8 @@ public final class Dexpi20ConformanceAssessment {
     public Map<String, Object> toMap() {
       Map<String, Object> result = new LinkedHashMap<String, Object>();
       result.put("schemaVersion", "neqsim_dexpi_2_0_conformance.v1");
-      result.put("dexpiSpecificationVersion", SPECIFICATION_VERSION);
-      result.put("dexpiSpecificationReleaseDate", SPECIFICATION_RELEASE_DATE);
+      result.put("dexpiSpecificationVersion", specification201 ? "2.0.1" : SPECIFICATION_VERSION);
+      result.put("dexpiSpecificationReleaseDate", specification201 ? "2026-09-30" : SPECIFICATION_RELEASE_DATE);
       result.put("profile", profile.name());
       result.put("fileSha256", fileSha256);
       result.put("bundledOfficialSchemaSha256", bundledSchemaSha256);
@@ -104,8 +106,9 @@ public final class Dexpi20ConformanceAssessment {
       result.put("status", isSchemaAndProfileConformant() ? "CONFORMANT" : "NONCONFORMANT");
       result.put("errors", new ArrayList<String>(errors));
       result.put("warnings", new ArrayList<String>(warnings));
-      result.put("assessmentScope",
-          "Official DEXPI XML 2.0 schema, official model imports, reference integrity, and NeqSim supported semantic profile");
+      result.put("assessmentScope", specification201
+          ? "Official DEXPI XML 2.0.1 schema, pinned model type/property/multiplicity/relationship declarations, reference integrity, and NeqSim supported semantic profile; data-value constraints and named-tool qualification are separate"
+          : "Official DEXPI XML 2.0 schema, official model imports, reference integrity, and NeqSim supported semantic profile");
       result.put("dexpiEvCertificationStatus", "NOT_A_DEXPI_EV_CERTIFICATE");
       result.put("namedCaeRoundTripStatus", "QUALIFICATION_REQUIRED");
       return result;
@@ -121,16 +124,32 @@ public final class Dexpi20ConformanceAssessment {
     if (file == null || profile == null) {
       throw new IllegalArgumentException("file and profile must not be null");
     }
+    return assess(file, profile, false);
+  }
+
+  /**
+   * Assesses an explicitly selected official specification version.
+   *
+   * @param file native XML file
+   * @param profile required information model
+   * @param specification201 whether exact 2.0.1 imports and definitions are required
+   * @return file-bound schema, import and semantic assessment
+   * @throws IOException if input or bundled resources cannot be read
+   */
+  public static Report assess(Path file, Profile profile, boolean specification201) throws IOException {
+    if (file == null || profile == null) {
+      throw new IllegalArgumentException("file and profile must not be null");
+    }
     List<String> errors = new ArrayList<String>();
     List<String> warnings = new ArrayList<String>();
-    String schemaSha = resourceSha256();
+    String schemaSha = resourceSha256(specification201);
     boolean officialSchema = OFFICIAL_SCHEMA_SHA256.equals(schemaSha);
     if (!officialSchema) {
       errors.add("Bundled DEXPI XML schema fingerprint does not match the reviewed V2.0.0 resource");
     }
     boolean schemaValid = true;
     try {
-      Dexpi20XmlValidator.validate(file);
+      Dexpi20XmlValidator.validate(file, specification201);
     } catch (SAXException ex) {
       schemaValid = false;
       errors.add("Official DEXPI XML schema validation failed: " + ex.getMessage());
@@ -138,8 +157,10 @@ public final class Dexpi20ConformanceAssessment {
 
     Document document = parse(file);
     Map<String, String> imports = imports(document);
-    boolean importsValid = Dexpi20ProcessModelWriter.CORE_MODEL.equals(imports.get("Core"))
-        && profile.modelUri.equals(imports.get(profile.prefix));
+    boolean importsValid = (specification201 ? Dexpi201XmlWriter.CORE_MODEL : Dexpi20ProcessModelWriter.CORE_MODEL)
+        .equals(imports.get("Core"))
+        && (specification201 ? profile.modelUri.replace("2.0.0", "2.0.1") : profile.modelUri)
+            .equals(imports.get(profile.prefix));
     if (!importsValid) {
       errors.add("Required official Core and " + profile.prefix + " model imports are missing or version-mismatched");
     }
@@ -149,8 +170,8 @@ public final class Dexpi20ConformanceAssessment {
     warnings.addAll(semantic.getWarnings());
     NodeList objects = document.getElementsByTagName("Object");
     NodeList references = document.getElementsByTagName("References");
-    return new Report(profile, sha256(Files.newInputStream(file)), schemaSha, officialSchema, schemaValid, importsValid,
-        semantic.isValid(), objects.getLength(), references.getLength(), errors, warnings);
+    return new Report(profile, specification201, sha256(Files.newInputStream(file)), schemaSha, officialSchema,
+        schemaValid, importsValid, semantic.isValid(), objects.getLength(), references.getLength(), errors, warnings);
   }
 
   private static Document parse(Path file) throws IOException {
@@ -179,8 +200,9 @@ public final class Dexpi20ConformanceAssessment {
     return result;
   }
 
-  private static String resourceSha256() throws IOException {
-    InputStream stream = Dexpi20ConformanceAssessment.class.getResourceAsStream(SCHEMA_RESOURCE);
+  private static String resourceSha256(boolean specification201) throws IOException {
+    InputStream stream = Dexpi20ConformanceAssessment.class
+        .getResourceAsStream(specification201 ? "/dexpi/2.0.1/DEXPI_XML_Schema.xsd" : SCHEMA_RESOURCE);
     if (stream == null) {
       throw new IOException("Bundled DEXPI XML schema is unavailable: " + SCHEMA_RESOURCE);
     }

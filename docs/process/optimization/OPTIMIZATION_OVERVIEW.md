@@ -1063,18 +1063,28 @@ evidence dictionaries. The separate `report.prepare` hook refreshes report input
 not a proposal-ingestion path. The lower-level `proposal_from_lifecycle_json(...)` remains available for compatibility
 when callers already own separately qualified proposal metadata.
 
-The executable source acceptance is
-`devtools.test_field_to_facility_living_workflow.FieldToFacilityLivingWorkflowTest`. It calls the ten-well Java
-fixture from `target/test-classes`, assigns the generated living-task cycle ID to the current lifecycle period, and
-then exercises the adapter, production guard, append-only ledger, reviewed promotion, living report, and canonical
-HTML report. Run it after compiling tests and generating the Maven dependency classpath:
+The engineer-runnable source example is `devtools/field_to_facility_living_example.py`. It calls the exact ten-well
+Java fixture from `target/test-classes`, assigns generated living-task cycle IDs to the current lifecycle periods, and
+then exercises the adapter, production guard, append-only ledger, reviewed promotion, selective limit revalidation,
+living report, and canonical HTML report. Run it after compiling tests and generating the Maven dependency classpath:
 
 ```bash
 ./mvnw -B -ntp -DskipTests test-compile dependency:build-classpath \
   -Dmdep.outputFile=target/optimization-classpath.txt
 NEQSIM_TEST_CLASSPATH="target/classes:target/test-classes:$(cat target/optimization-classpath.txt)" \
-  python -m unittest devtools.test_field_to_facility_living_workflow -v
+  python devtools/field_to_facility_living_example.py \
+  --output-parent target/field-to-facility-example
 ```
+
+The command refuses an existing task directory, runs the initial 1.01 shared-power-limit case, promotes only its
+guard-approved exact replay, changes the declared multiplier to 1.02, selectively recomputes the affected evidence,
+promotes the replacement cycle, and prints a compact JSON summary. The retained task folder contains the append-only
+ledger, both cycle receipts, `continuous/LIVING_REPORT.md`, the canonical HTML report, and
+`field_to_facility_acceptance_summary.json`. Use
+`--initial-shared-power-multiplier` and `--revised-shared-power-multiplier` only for finite values greater than 1.0.
+The complete regression remains
+`devtools.test_field_to_facility_living_workflow.FieldToFacilityLivingWorkflowTest`; it exercises the same reusable
+Python orchestration helpers and adds tamper-rejection assertions.
 
 The workflow asserts finite evaluation counts and runtime, full convergence/feasibility/restoration receipts, exact
 selected-objective identity and reviewed-baseline binding, schema-v11 persistence and constraint-opportunity

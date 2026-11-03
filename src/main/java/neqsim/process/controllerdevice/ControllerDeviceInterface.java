@@ -79,6 +79,20 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
   public void setTransmitter(MeasurementDeviceInterface device);
 
   /**
+   * Returns the measurement providing this controller's input when exposed by the implementation.
+   *
+   * <p>
+   * A null result means that input wiring is unconfigured or not exposed; it must not be interpreted as verified
+   * sensor-to-controller connectivity. Existing controller implementations remain source compatible.
+   * </p>
+   *
+   * @return associated measurement, or null when unavailable
+   */
+  public default MeasurementDeviceInterface getTransmitter() {
+    return null;
+  }
+
+  /**
    * runTransient. Calculates controller output. Sets calc identifier UUID.
    *
    * @param initResponse Init value for response calculation

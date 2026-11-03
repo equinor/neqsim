@@ -30,3 +30,6 @@ mvnw text eol=lf
 *.gif binary
 *.ico binary
 *.pdf binary
+
+# Preserve byte-exact, SHA-256-pinned upstream specification annotations.
+src/main/resources/dexpi/2.0.1/*.xml whitespace=-blank-at-eol

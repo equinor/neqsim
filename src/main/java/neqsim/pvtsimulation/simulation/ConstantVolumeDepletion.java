@@ -266,6 +266,226 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
+   * Immutable explicit occupied-volume reference and completed native fixed-cell states.
+   *
+   * <p>
+   * The reference is the accepted EOS sample at the first pressure, not an inferred dew point or a measured saturation
+   * volume. No normalized PVT properties or absent-phase values are supplied.
+   * </p>
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  public static final class FixedCellResult implements java.io.Serializable {
+    private static final long serialVersionUID = 1L;
+    private final double temperatureK;
+    private final double referencePressureBara;
+    private final double referenceVolumeM3;
+    private final DepletionSnapshot[] snapshots;
+
+    /**
+     * Freezes a successfully completed experiment.
+     *
+     * @param temperatureK common experiment temperature, K
+     * @param referencePressureBara first experiment pressure, bara
+     * @param referenceVolumeM3 initial occupied EOS volume, reservoir m3
+     * @param snapshots complete native states and component withdrawals
+     */
+    private FixedCellResult(double temperatureK, double referencePressureBara, double referenceVolumeM3,
+        DepletionSnapshot[] snapshots) {
+      this.temperatureK = temperatureK;
+      this.referencePressureBara = referencePressureBara;
+      this.referenceVolumeM3 = referenceVolumeM3;
+      this.snapshots = snapshots.clone();
+    }
+
+    /**
+     * Returns the common experiment temperature.
+     *
+     * @return temperature in K
+     */
+    public double getTemperatureK() {
+      return temperatureK;
+    }
+
+    /**
+     * Returns the initial occupied-volume reference pressure, without a dew-point interpretation.
+     *
+     * @return absolute reference pressure in bara
+     */
+    public double getReferencePressureBara() {
+      return referencePressureBara;
+    }
+
+    /**
+     * Returns the sample's initial occupied EOS volume on the model's fixed volume-correction basis.
+     *
+     * @return actual reference cell volume in m3
+     */
+    public double getReferenceVolumeM3() {
+      return referenceVolumeM3;
+    }
+
+    /**
+     * Returns immutable completed states in a defensive array.
+     *
+     * @return native volume-restored cells and interval component withdrawals
+     */
+    public DepletionSnapshot[] getSnapshots() {
+      return snapshots.clone();
+    }
+  }
+
+  /**
+   * Replays an explicit constant-cell experiment transactionally on an independent copy of the current sample.
+   *
+   * <p>
+   * The first pressure defines the occupied-volume reference with zero withdrawal. At each subsequent pressure,
+   * equilibrium gas alone is withdrawn to restore that volume; all liquids remain. Gas-only, gas/oil, gas/aqueous and
+   * gas/oil/aqueous cells are permitted when the named phase family remains unchanged throughout the sampled path.
+   * Phase-family changes, absent gas, other phase types, unclosed equilibrium and critical-degenerate splits fail. This
+   * is not the saturation-referenced laboratory protocol used by {@link #runCalc()} and does not infer a wet upper dew
+   * point. The caller must independently accept its EOS, phase options and experiment provenance.
+   * </p>
+   *
+   * <p>
+   * Neither the supplied sample nor this simulation's legacy results are changed, including after a late failure.
+   * Repeated calls therefore restart from identical current input. No EOS parameter is fitted.
+   * </p>
+   *
+   * @param temperatureK finite positive common temperature, K
+   * @param pressuresBara complete strictly decreasing positive absolute pressure schedule, at least two points
+   * @return immutable reference and complete native results only after every pressure succeeds
+   * @throws IllegalArgumentException if temperature, pressure schedule or initial inventory is invalid
+   * @throws IllegalStateException if the declared fixed-cell domain or a numerical closure check fails
+   */
+  public FixedCellResult runFixedCellDepletion(double temperatureK, double[] pressuresBara) {
+    if (!Double.isFinite(temperatureK) || temperatureK <= 0 || pressuresBara == null || pressuresBara.length < 2) {
+      throw new IllegalArgumentException("Positive temperature and complete fixed-cell pressure schedule required");
+    }
+    double[] schedule = pressuresBara.clone();
+    for (int row = 0; row < schedule.length; row++) {
+      if (!Double.isFinite(schedule[row]) || schedule[row] <= 0 || row > 0 && schedule[row] >= schedule[row - 1]) {
+        throw new IllegalArgumentException("Fixed-cell pressures must be positive and strictly decreasing");
+      }
+    }
+    SystemInterface cell = org.apache.commons.lang3.SerializationUtils.clone(getThermoSystem());
+    if (!Double.isFinite(cell.getTotalNumberOfMoles()) || cell.getTotalNumberOfMoles() <= 0) {
+      throw new IllegalArgumentException("Finite positive sample inventory required");
+    }
+    double[] initial = DepletionSnapshot.inventory(cell);
+    for (double amount : initial) {
+      if (!Double.isFinite(amount) || amount < 0) {
+        throw new IllegalArgumentException("Finite nonnegative named component inventories required");
+      }
+    }
+    ConstantVolumeDepletion trial = new ConstantVolumeDepletion(cell);
+    neqsim.thermodynamicoperations.ThermodynamicOperations operations = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+        cell);
+    cell.setTemperature(temperatureK);
+    String[] family = null;
+    double[] previous = initial.clone();
+    double[] cumulative = new double[initial.length];
+    DepletionSnapshot[] completed = new DepletionSnapshot[schedule.length];
+    for (int row = 0; row < schedule.length; row++) {
+      cell.setPressure(schedule[row]);
+      try {
+        operations.TPflash();
+        cell.init(1);
+        cell.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+      } catch (Exception ex) {
+        throw new IllegalStateException("Fixed-cell flash failed at row " + row, ex);
+      }
+      String[] present = fixedCellFamily(cell);
+      if (row == 0) {
+        family = present;
+        trial.saturationVolume = cell.getCorrectedVolume();
+      } else if (!Arrays.equals(family, present)) {
+        throw new IllegalStateException("Fixed-cell phase-family change is not qualified at row " + row);
+      }
+      trial.restoreSaturationVolume();
+      if (!Arrays.equals(family, fixedCellFamily(cell))) {
+        throw new IllegalStateException("Fixed-cell withdrawal changed the phase family at row " + row);
+      }
+      if (Math.abs(cell.getCorrectedVolume() / trial.saturationVolume - 1) > CELL_VOLUME_RELATIVE_TOLERANCE) {
+        throw new IllegalStateException("Fixed-cell volume closure failed at row " + row);
+      }
+      completed[row] = new DepletionSnapshot(cell, cell, previous);
+      double[] removed = completed[row].getProducedComponentMoles();
+      double[] retained = DepletionSnapshot.inventory(cell);
+      for (int component = 0; component < initial.length; component++) {
+        cumulative[component] += removed[component];
+        if (Math.abs(initial[component] - retained[component] - cumulative[component]) > 1e-10
+            * Math.max(1.0, initial[component])) {
+          throw new IllegalStateException("Fixed-cell component closure failed at row " + row);
+        }
+      }
+      previous = retained;
+    }
+    return new FixedCellResult(temperatureK, schedule[0], trial.saturationVolume, completed);
+  }
+
+  /**
+   * Checks the bounded named-phase domain and returns its order-independent identity.
+   *
+   * @param cell already flashed and density-initialized native state
+   * @return sorted unique gas/oil/aqueous phase names
+   * @throws IllegalStateException if a phase, volume, composition or equilibrium is unsupported
+   */
+  private static String[] fixedCellFamily(SystemInterface cell) {
+    if (!cell.hasPhaseType("gas") || !Double.isFinite(cell.getCorrectedVolume()) || cell.getCorrectedVolume() <= 0) {
+      throw new IllegalStateException("Fixed-cell replay requires retained gas and positive finite occupied volume");
+    }
+    String[] family = new String[cell.getNumberOfPhases()];
+    for (int phase = 0; phase < family.length; phase++) {
+      family[phase] = cell.getPhase(phase).getType().getDesc();
+      if (!"gas".equals(family[phase]) && !"oil".equals(family[phase]) && !"aqueous".equals(family[phase])) {
+        throw new IllegalStateException("Unsupported fixed-cell phase " + family[phase]);
+      }
+      double amount = cell.getPhase(phase).getNumberOfMolesInPhase();
+      double volume = cell.getPhase(phase).getCorrectedVolume();
+      if (!Double.isFinite(amount) || amount <= 0 || !Double.isFinite(volume) || volume <= 0) {
+        throw new IllegalStateException("Empty or invalid fixed-cell phase");
+      }
+      double sum = 0;
+      for (int component = 0; component < cell.getNumberOfComponents(); component++) {
+        double x = cell.getPhase(phase).getComponent(component).getx();
+        if (!Double.isFinite(x) || x < 0) {
+          throw new IllegalStateException("Invalid fixed-cell composition");
+        }
+        sum += x;
+      }
+      if (Math.abs(sum - 1) > 1e-8) {
+        throw new IllegalStateException("Unnormalized fixed-cell phase");
+      }
+      for (int other = 0; other < phase; other++) {
+        if (family[phase].equals(family[other])) {
+          throw new IllegalStateException("Duplicate fixed-cell phase type is not qualified");
+        }
+        double distance = 0;
+        for (int component = 0; component < cell.getNumberOfComponents(); component++) {
+          double x = cell.getPhase(phase).getComponent(component).getx();
+          double y = cell.getPhase(other).getComponent(component).getx();
+          distance += Math.abs(x - y);
+          if (cell.getComponent(component).getNumberOfmoles() > 0) {
+            double f = x * cell.getPhase(phase).getComponent(component).getFugacityCoefficient();
+            double g = y * cell.getPhase(other).getComponent(component).getFugacityCoefficient();
+            if (!(f > 0) || !(g > 0) || !Double.isFinite(f) || !Double.isFinite(g)
+                || Math.abs(Math.log(f) - Math.log(g)) > 1e-8) {
+              throw new IllegalStateException("Unclosed fixed-cell phase equilibrium");
+            }
+          }
+        }
+        if (distance <= 1e-8) {
+          throw new IllegalStateException("Critical-degenerate fixed-cell split is not qualified");
+        }
+      }
+    }
+    Arrays.sort(family);
+    return family;
+  }
+
+  /**
    * Runs the pressure-ordered depletion schedule using the selected cell reference.
    *
    * <p>

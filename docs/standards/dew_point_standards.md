@@ -88,6 +88,12 @@ dew point. Positive water content and positive finite absolute pressure are
 required. The legacy direct pure-MEG calculation is also supported. The standard
 classes log a failed calculation and return `NaN`, so `isOnSpec()` is false.
 
+The bracket refinement reuses its endpoint residuals for secant steps and
+bisects at least every second trial. Invalid or out-of-bracket predictions
+also use bisection. Acceptance still requires a logarithmic fugacity residual
+no greater than `1e-9`; this acceleration does not change the condensed-phase
+reference, standards model, pressure or composition treatment.
+
 ### Ice, liquid water, and applicability
 
 [ISO 18453:2004](https://www.iso.org/standard/31799.html), clauses 3–5,

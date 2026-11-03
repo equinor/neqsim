@@ -1,8 +1,8 @@
 ---
 name: neqsim-pid-process-operations
-version: "1.8.0"
-description: "Bidirectional P&ID/NeqSim workflow. USE WHEN: understanding P&ID symbols, converting P&ID topology into NeqSim simulations, generating governed DEXPI engineering packages from ProcessSystem or ProcessModel, linking tags to historian data, evaluating valve/equipment changes, or preparing water-hammer and blowdown/flare handoffs."
-last_verified: "2026-07-17"
+version: "1.9.0"
+description: "Prepare professional P&ID drawing packages with native DEXPI 2.0.1 from a NeqSim process model, add traceable instrumentation and safeguards, and bind final P&ID tags to steady-state simulations and dynamic tests. Also interpret P&ID symbols, import process topology, link historian tags, evaluate valve/equipment changes and prepare water-hammer or blowdown/flare handoffs."
+last_verified: "2026-11-03"
 requires:
   python_packages: [pandas]
 ---
@@ -52,6 +52,15 @@ Use this skill with:
 - `neqsim-water-hammer` for hydraulic surge screening from fast liquid-line events,
 - `neqsim-depressurization-mdmt` for blowdown and minimum-temperature cases,
 - `neqsim-professional-reporting` for evidence traceability and report outputs.
+
+## Prepare a Professional P&ID
+
+Read [the professional P&ID workflow](references/professional-pid.md) when the
+user asks to generate a P&ID, a DEXPI 2.0.1 package, or steady-state/dynamic
+tests using the final drawing. Start from the runnable NeqSim model and
+governed project; produce actual vector drawings, native exchange data,
+registers, P&ID-to-simulation bindings and validation evidence. Keep proposed
+engineering additions and unresolved design decisions explicit.
 
 ## P&ID Symbol Interpretation Model
 

@@ -24,6 +24,76 @@ The official DEXPI XML V2.0.0 XSD is bundled under CC BY 4.0 for deterministic o
 `Dexpi20ConformanceAssessment` verifies its reviewed SHA-256 fingerprint before using the result as
 conformance evidence.
 
+## DEXPI 2.0.1 explicit export
+
+Use `Dexpi201XmlWriter.writeAndAssess(process, file, metadata)` for the corrected
+DEXPI 2.0.1 Plant/P&ID profile. Supply `Dexpi20PlantExportMetadata` with controlled
+originating-system identity, export date/time and a real plant identity. This path
+uses exact Core and Plant 2.0.1 imports, typed `ProcessNozzle` objects and explicit
+feed/product boundary connectors. Existing `Dexpi20XmlWriter` overloads remain
+2.0.0 to preserve older consumers and golden fixtures; selecting 2.0.1 is explicit.
+The same selection is available through
+`Dexpi20PlantExportOptions.Builder.specification201(true)`.
+
+For a governed project, use
+`DexpiEngineeringExporter.exportDexpi201(project, file, metadata)`. This adds
+project requirements as native instrumentation/safety functions, uses
+`ProcessSafetyFunction` for trip/fire-and-gas requirements, binds sensing to
+`InstrumentNozzle` objects, and binds piping endpoints to the actual node-owning
+nozzle/component. Inferred trip/control requirements do not create extra material
+routes. Relief branches require both a complete governed `ReliefScenarioBasis`
+and an explicitly resolved flare boundary; otherwise the physical proposal is
+withheld. A declared relief proposal still requires a live equipment/path binding
+before dynamic use. The adjacent `<native-file>.engineering-projection.json`
+retains unconfigured final elements, unresolved boundaries and review-required
+states. All inferred requirements remain review-required. The modern
+semantic export omits the legacy text-only diagram placeholders; the controlled
+SVG/PDF drawing set and native graphical projection must be separately checked
+for object coverage and project conventions. No drawing qualification is inferred.
+
+`Dexpi201ProcessModelWriter.writeAndAssess(process, file, metadata)` provides the
+optional 2.0.1 Process/PFD/BFD exchange for models without numerical helpers.
+It rejects `Recycle`, `Calculator` and `Adjuster` explicitly because their physical
+alias projection has not yet been implemented for the Process profile. It never
+labels a recycle solver as a physical transporting step. The supported Plant/P&ID
+projection described below is separate. The existing multi-area package APIs keep
+their declared 2.0.0 manifest contract; they must not be relabelled as 2.0.1 packages.
+
+The Plant physical projection supports generic `Mixer` equipment with distinct
+nozzles for every real inlet, including two-sided exchanger inlets. A two-outlet
+`Splitter` becomes an official `PipeTee` with three owned piping nodes. Larger
+fanout has no reviewed mapping and fails explicitly. `Recycle`, `Calculator` and
+`Adjuster` remain executable simulation utilities and are omitted as physical
+items. A single-input recycle closes the physical return path through exact
+inlet/outlet stream-identity aliases; ambiguous/multi-input or cyclic aliases
+fail rather than inventing a physical mixer. Registered stream wrappers retain
+their upstream identity through the same projection.
+
+The adjacent `<native-file>.process-projection.json` records every intentionally
+omitted numerical helper and its alias mapping. Calculator/adjuster logic remains
+in the executable simulation model; it is not automatically reinterpreted as
+instrumentation or shutdown logic. The fresh branched/recycle regression checks
+convergence, material balance, distinct inlet nozzles, both cycle directions,
+node ownership, correct boundaries and deterministic regeneration.
+
+The authentic schema and Core, Plant, Process and Builtin declarations are bundled
+under `src/main/resources/dexpi/2.0.1/` with official source URLs, attribution and
+reviewed SHA-256 fingerprints. The schema itself is unchanged from 2.0.0. The
+additional offline checks use the actual model declarations, including inheritance,
+property kinds, multiplicities, typed class relationships and enumeration identifiers.
+This catches semantic defects that XSD-only validation cannot detect. Data-value
+constraints beyond this supported scope and external-tool qualification remain
+separate requirements.
+
+Assess final enriched files with `Dexpi201XmlWriter.assess(path)`. The returned
+report records specification version 2.0.1, release date, actual XML digest and
+separate schema/import/semantic decisions. Legacy 2.0.0 assessment does not accept
+2.0.1 imports. Never change a URI or namespace alone to claim migration.
+
+`Dexpi201XmlWriterTest` exercises Plant and Process exports, controlled metadata,
+genuine safety/nozzle classes, deterministic output and negative model-property,
+required-field and typed-relationship cases alongside legacy compatibility.
+
 ## Process-model export
 
 ```java
