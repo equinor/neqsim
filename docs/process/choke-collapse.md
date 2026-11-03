@@ -3,7 +3,6 @@ title: "Choke Collapse Analysis"
 description: "Diagnose loss of critical (choked / sonic) flow across throttling valves and chokes in NeqSim. Computes critical pressure ratio, classifies the flow regime, and flags flashing/cavitation in liquid service."
 ---
 
-# Choke Collapse Analysis
 
 `ChokeCollapseAnalyzer` diagnoses whether a `ThrottlingValve` is operating in
 critical (sonic) flow, subcritical flow, or in the transition window between
@@ -129,12 +128,32 @@ Adjust the cavitation threshold (default $\sigma = 1.5$) via
 
 ## Python (Jupyter) usage
 
+The Python example is self-contained and uses the supported `jneqsim` gateway. The
+assertions make the expected critical-flow classification explicit without writing
+to the notebook output stream.
+
+<!-- choke-collapse-python: standalone-example -->
 ```python
-ChokeCollapseAnalyzer = ns.JClass(
-    "neqsim.process.equipment.valve.ChokeCollapseAnalyzer")
+from neqsim import jneqsim
+
+fluid = jneqsim.thermo.system.SystemSrkEos(298.15, 100.0)
+fluid.addComponent("methane", 1.0)
+fluid.setMixingRule("classic")
+
+feed = jneqsim.process.equipment.stream.Stream("feed", fluid)
+feed.setFlowRate(1000.0, "kg/hr")
+feed.setPressure(100.0, "bara")
+feed.setTemperature(25.0, "C")
+feed.run()
+
+valve = jneqsim.process.equipment.valve.ThrottlingValve("CV-100", feed)
+valve.setOutletPressure(10.0)
+valve.run()
 
 result = valve.analyseChokeCollapse()
-print(result.toJson())
+assert result.getFlowRegime().name() == "CRITICAL"
+assert result.getPressureRatio() < result.getCriticalPressureRatio()
+assert result.getMachNumber() == 1.0
 ```
 
 ## When to use it
