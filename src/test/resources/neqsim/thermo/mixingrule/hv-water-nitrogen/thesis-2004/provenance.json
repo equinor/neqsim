@@ -1,0 +1,77 @@
+{
+  "status": "source-version audit; physical qualification unresolved",
+  "parameter_activation": false,
+  "primary": {
+    "author": "Antonin Chapoy",
+    "year": 2004,
+    "title": "Phase behaviour in water/hydrocarbon mixtures involved in gas production systems",
+    "identifier": "pastel-00001202",
+    "record_url": "https://pastel.hal.science/pastel-00001202",
+    "author_copy_url": "https://www.researchgate.net/profile/Antonin-Chapoy/publication/278635020_Phase_behaviour_in_waterhydrocarbon_mixtures_involved_in_gas_production_systems/links/56278e8908ae22b1fb13be28/Phase-behaviour-in-water-hydrocarbon-mixtures-involved-in-gas-production-systems.pdf",
+    "pdf_bytes": 3845263,
+    "pdf_pages": 259,
+    "pdf_sha256": "0f9e770078beb574a3113c75c26f0b5ff0cfb7a4726da0f2d1e7771daae08b10",
+    "inspection_receipt": "https://github.com/equinor/neqsim/issues/4576#issuecomment-6597956920"
+  },
+  "tables": {
+    "water-in-nitrogen": {
+      "table": "6.6",
+      "pdf_page_1_based": 162,
+      "printed_page": 161,
+      "rows": 35,
+      "columns": [
+        "T_K",
+        "P_MPa",
+        "y_exp_times_1e4"
+      ],
+      "fraction_scale": "0.0001",
+      "sha256": "1bd37fa55ba6999e838017a75599a52d5fc0ec41ab05ab9db4d17e773158ad88",
+      "measured_component": "water",
+      "phase": "nitrogen-rich gas",
+      "journal_doi": "10.1021/je049676q"
+    },
+    "nitrogen-in-water": {
+      "table": "6.16",
+      "pdf_page_1_based": 190,
+      "printed_page": 189,
+      "rows": 52,
+      "columns": [
+        "T_K",
+        "P_MPa",
+        "x_exp_times_1e3",
+        "AD_exp_percent_as_printed"
+      ],
+      "fraction_scale": "0.001",
+      "sha256": "d1b60914f01b77b5cf6b0359de2e5652f82e1dfb971c79920f16e87a3de6948d",
+      "measured_component": "nitrogen",
+      "phase": "water-rich liquid",
+      "journal_doi": "10.1021/je049869d"
+    }
+  },
+  "units": {
+    "temperature": "K",
+    "pressure": "absolute MPa; multiply by 1000 for compiler kPa",
+    "composition": "mole fraction; retain printed scaled values"
+  },
+  "uncertainties": {
+    "thesis_liquid_calibration": {
+      "relative_percent": "2.5",
+      "quantity": "moles of nitrogen",
+      "confidence_level": null,
+      "pdf_page_1_based": 189,
+      "printed_page": 188
+    },
+    "thesis_liquid_AD_exp": "As printed; not assigned a confidence level or interpreted as point uncertainty",
+    "compiler": "Data file compiler expanded 95% absolute mole-fraction uncertainty; unchanged",
+    "gas_author_uncertainty": "Not established by this table audit"
+  },
+  "lineage": "Same-author experimental lineage, not independent holdout data; final-journal transcription history unresolved",
+  "model_boundary": "No VPT/NDD, Henry-law, CLASSICAL, CPA or ordinary NRTL coefficient is transferred into HV; no fit or measured overall feed inferred",
+  "distribution": "Factual numeric observations transcribed from visually inspected primary tables; no PDF, artwork or model-prediction columns redistributed",
+  "missing": [
+    "final-journal table/version reconciliation",
+    "complete original measurement uncertainty",
+    "source-compatible PR pure-component and alpha inputs",
+    "bidirectional physical and performance qualification"
+  ]
+}

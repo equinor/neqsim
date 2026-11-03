@@ -1090,6 +1090,14 @@ The other six cataloged PR pairs, inhibitors, brines, ice and hydrate dissociati
 remain outside this assessment. No source-fit error becomes a test tolerance.
 
 
+The [nitrogen/water source-version audit](../../src/test/resources/neqsim/thermo/mixingrule/hv-water-nitrogen/thesis-2004/README.md)
+preserves 87 image-transcribed primary-thesis observations alongside the unchanged
+compiler fixtures. Its executable Decimal comparison reports all 35 exact gas rows,
+41 liquid concentration differences at common states and two 0.02 K temperature
+version differences. It keeps nitrogen-mole calibration, printed AD_exp and compiler
+expanded 95% point uncertainties separate. Same-experiment versions are not independent
+validation datasets; no parameter, pure input, prediction or physical tolerance changes.
+
 ### Staged CO2/water source configurations
 
 The separate [CO2 fixture protocol](../../src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/README.md)
