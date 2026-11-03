@@ -28,7 +28,9 @@ Use the physical-property API in this order:
 5. Read properties from a named phase.
 
 The following complete example calculates gas density, dynamic viscosity, kinematic viscosity,
-and thermal conductivity. Temperature is in kelvin and pressure is absolute in bara.
+and thermal conductivity. Temperature is in kelvin and pressure is absolute in bara. The
+documentation regression suite compiles and executes all three exact marked Java programs on this
+page with Java 8 source/target compatibility.
 
 <!-- physical-properties-example: overview -->
 
