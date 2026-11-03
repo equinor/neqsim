@@ -523,9 +523,10 @@ total-energy owners. Require zero-drive/area, donor/heat-limit, unseeded appeara
 ledger gates. Label results parameterized screening until coefficients pass independent public
 calibration and validation. Do not call this elapsed pool-depletion, physical restart or pigging
 qualification.
-The unlimited-heat 780 s rich-gas cycle is numerical mesh evidence only. Finite-heat full-cycle and
-closed-outlet settling currently reject on forced-phase EOS branch consistency; preserve that
-fail-loud gate rather than clipping composition or relabeling a phase.
+The 100 W/m finite-heat 780 s rich-gas cycle is numerical mesh evidence only. It crosses the cubic
+EOS diagnostic $V/B=1.75$ label transition by explicitly retaining the requested root while the
+positive-compressibility, Jacobian and energy-admissibility guards remain active. Do not clip
+composition or change the configured root to manufacture a restart result.
 Condensation must use equilibrium hydrocarbon-liquid and aqueous-liquid **mass**
 contributions; never use the current cell water cut to identify a phase that is not yet present.
 For evaporation, withdraw from the actual oil and water conservative inventories and bound each
@@ -1016,3 +1017,4 @@ combined-liquid split, pressure interpolation, reconstructed slug faces and one-
 complementarity route reject this option. Apply a wave-speed Courant bound and inspect component,
 phase, total-energy and rollback reports.
 Do not use it as proof of dry/wet fronts, terrain pools, refill or physical evaporation.
+

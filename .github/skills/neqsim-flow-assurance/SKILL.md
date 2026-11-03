@@ -703,10 +703,11 @@ for (double qgMSm3d : gasRates) {
 > shutdown/restart, swept-slug, receiver-capacity or hydraulic-pigging evidence.
 > Calibration and validation need separate independent public multicomponent
 > rate data plus mesh/time and complete-cycle evidence.
-> The unlimited-heat 780 s rich-gas cycle is numerical mesh evidence. A finite
-> heat-supply cycle and closed-outlet settling currently fail loud when a
-> far-from-equilibrium forced phase changes its EOS branch; do not clip or
-> relabel that state to manufacture a restart result.
+> The 100 W/m finite-heat 780 s rich-gas cycle is numerical mesh evidence. It
+> retains the requested dense EOS root across the cubic model's diagnostic
+> $V/B=1.75$ label transition while positive-compressibility, Jacobian and
+> energy-admissibility guards remain active. Do not clip composition or change
+> the configured root to manufacture a restart result.
 >
 > **Coupled component/phase/thermal slug transport has a narrower envelope.**
 > For the conservative Lagrangian slug/film path, named-component phase sources
@@ -1706,3 +1707,4 @@ combined-liquid split, pressure interpolation, reconstructed slug faces and one-
 complementarity route reject this option. Apply a wave-speed Courant bound and inspect component,
 phase, total-energy and rollback reports.
 Do not use it as proof of dry/wet fronts, terrain pools, refill or physical evaporation.
+

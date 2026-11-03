@@ -1253,11 +1253,13 @@ These are analytical/conservation gates for an explicit parameter set. They do n
 coefficients, elapsed pool depletion, shutdown/restart or hydraulic pigging; independent public
 multicomponent rate data and full-cycle/refinement evidence remain required for those claims. See
 the [process-model contract](../process/TWOFLUIDPIPE_MODEL.md#opt-in-finite-rate-hydrocarbon-pool-transfer).
-The executed unlimited-heat 780 s rich-gas cycle uses gas-only blowdown, closed settling,
+The executed 100 W/m finite-heat 780 s rich-gas cycle uses gas-only blowdown, closed settling,
 same-composition inlet refill with the outlet closed, and a closed hold. It passes on 12/24 cells
-with 0.322% peak-oil and 8.998% final-oil mesh differences. Finite-heat full-cycle and finite-heat
-closed-outlet settling currently fail loud on forced-phase EOS branch consistency; they remain
-prerequisites for physical shutdown and restart claims.
+with 2.035% peak-oil and 2.067% final-oil mesh differences; minimum heat scales of 2.306e-4 and
+1.653e-4 prove the limit is active. Conservative recovery explicitly retains the requested EOS root
+across the cubic model's diagnostic $V/B=1.75$ phase-label transition while preserving positive
+compressibility and Jacobian/admissibility guards. This is numerical screening for the declared heat
+input, not physical shutdown/restart or predictive depletion qualification.
 
 With component transport enabled, the downstream outlet composition follows the positive outbound
 component ledger rather than the latest inlet composition or the final cell's instantaneous phase
@@ -2364,3 +2366,4 @@ A supporting 100 s run with the outer reporting/advance interval reduced from 0.
 0.05 s completes without rejected substeps, but changes peak-to-peak pressure from
 43.369 to 58.071 kPa. This sensitivity is further evidence that the optional model is
 not yet numerically or experimentally qualified for severe-slug predictions.
+

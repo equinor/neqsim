@@ -47,8 +47,8 @@ class TwoFluidRichGasDragQualificationTest {
         "The two full-cycle meshes must retain finite oil inventories of the same order");
     logger.info("Finite-rate 780 s cycle: 12/24-cell peak oil={}/{}, final oil={}/{}, difference={} %", coarse[0],
         refined[0], coarse[1], refined[1], 100.0 * relativeFinalOilDifference);
-    String csv = "cells,dt_s,peak_oil_kg,final_oil_kg\n12,0.5," + coarse[0] + "," + coarse[1] + "\n24,0.5," + refined[0]
-        + "," + refined[1] + "\n";
+    String csv = "cells,dt_s,heat_supply_w_per_m,peak_oil_kg,final_oil_kg,minimum_heat_scale\n12,0.5,100," + coarse[0]
+        + "," + coarse[1] + "," + coarse[2] + "\n24,0.5,100," + refined[0] + "," + refined[1] + "," + refined[2] + "\n";
     java.nio.file.Files.write(java.nio.file.Paths.get("target/hydrocarbon-pool-cycle-refinement.csv"),
         csv.getBytes(java.nio.charset.StandardCharsets.UTF_8));
   }
@@ -61,10 +61,11 @@ class TwoFluidRichGasDragQualificationTest {
     TwoFluidPipe pipe = createRichGasPipe(cells, true);
     pipe.setGasOnlyOutletTakeoff(true);
     pipe.setHydrocarbonPoolTransfer(
-        new HydrocarbonPoolTransfer(names, coefficients, evaporationEnthalpies, 0.5, Double.POSITIVE_INFINITY));
+        new HydrocarbonPoolTransfer(names, coefficients, evaporationEnthalpies, 0.5, 100.0));
     double initialMass = pipe.getTotalMassInventory();
     double cumulativeBoundaryMass = 0.0;
     double maximumOil = 0.0;
+    double minimumHeatScale = 1.0;
     boolean observedRefill = false;
 
     int rampSteps = (int) Math.round(120.0 / dt);
@@ -74,6 +75,7 @@ class TwoFluidRichGasDragQualificationTest {
       cumulativeBoundaryMass += acceptedBoundaryMass(pipe);
       maximumOil = Math.max(maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL));
       assertAcceptedPoolInterval(pipe);
+      minimumHeatScale = Math.min(minimumHeatScale, minimumHeatScale(pipe));
     }
 
     pipe.setGasOnlyOutletTakeoff(false);
@@ -84,6 +86,7 @@ class TwoFluidRichGasDragQualificationTest {
       maximumOil = Math.max(maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL));
       assertEquals(0.0, pipe.getLastMassBalanceReport().getOutletMassKg(Phase.TOTAL), 0.0);
       assertAcceptedPoolInterval(pipe);
+      minimumHeatScale = Math.min(minimumHeatScale, minimumHeatScale(pipe));
     }
 
     pipe.setInletBoundaryCondition(TwoFluidPipe.BoundaryCondition.CONSTANT_FLOW);
@@ -96,6 +99,7 @@ class TwoFluidRichGasDragQualificationTest {
       maximumOil = Math.max(maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL));
       assertEquals(0.0, pipe.getLastMassBalanceReport().getOutletMassKg(Phase.TOTAL), 0.0);
       assertAcceptedPoolInterval(pipe);
+      minimumHeatScale = Math.min(minimumHeatScale, minimumHeatScale(pipe));
     }
 
     pipe.closeInlet();
@@ -106,13 +110,24 @@ class TwoFluidRichGasDragQualificationTest {
       maximumOil = Math.max(maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL));
       assertEquals(0.0, pipe.getLastMassBalanceReport().getOutletMassKg(Phase.TOTAL), 0.0);
       assertAcceptedPoolInterval(pipe);
+      minimumHeatScale = Math.min(minimumHeatScale, minimumHeatScale(pipe));
     }
 
     assertEquals(780.0, pipe.getSimulationTime(), 1.0e-9);
     assertTrue(maximumOil > 0.0, "The full cycle must exercise a hydrocarbon-liquid pool");
+    assertTrue(minimumHeatScale < 1.0, "The declared finite heat supply must actively limit evaporation");
     assertTrue(observedRefill, "The original same-gas inlet donor must fund actual inlet refill");
     assertEquals(initialMass + cumulativeBoundaryMass, pipe.getTotalMassInventory(), 1.0e-5);
-    return new double[] {maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL)};
+    return new double[] {maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL), minimumHeatScale};
+  }
+
+  /** Return the smallest accepted cell heat-limit scale. */
+  private static double minimumHeatScale(TwoFluidPipe pipe) {
+    double minimum = 1.0;
+    for (double scale : pipe.getLastHydrocarbonPoolTransferResult().getHeatScale()) {
+      minimum = Math.min(minimum, scale);
+    }
+    return minimum;
   }
 
   /** Positive is inventory entering through either boundary; negative is inventory leaving. */

@@ -624,6 +624,11 @@ density in kg/m³, $e_k$ phase specific internal energy in J/kg, and $q_k$ phase
 kg·m/s. Exactly absent phases contribute zero and cannot carry momentum. Phase properties use
 the supported forced-phase EOS at that phase's own composition. A bulk equilibrium VU flash
 must not restore hidden phases or redistribute finite-rate phase inventories.
+The conservative slot explicitly reapplies its requested gas/liquid root at every nonlinear trial.
+The cubic EOS diagnostic type can change at its internal $V/B=1.75$ classification boundary even
+while the selected dense root is continuous; that label is not used as a branch guard. Positive
+isothermal compressibility, a nonsingular volume/energy Jacobian, finite properties and a decreasing
+Newton residual remain mandatory.
 
 The energy equation owns total-enthalpy and phase kinetic-energy face transport, including the
 accepted pressure-correction mass transfers, and gravitational work. Heat exchanged with the
@@ -683,13 +688,14 @@ calibrated and then validated against independent public multicomponent rate dat
 is a conservative parameterized screening model—not a predictive pool-depletion, physical restart,
 severe-slugging or hydraulic-pigging qualification.
 
-The declared unlimited-heat rich-gas cycle completes 780 s on 12 and 24 cells: 120 s gas-only
-blowdown, 120 s closed settling, 420 s same-composition inlet refill at 1000 kg/s with the outlet
-closed, then 120 s closed hold. Peak oil inventories are 64,036 and 64,243 kg; final oil is 10.171
-and 11.177 kg. The 0.322% peak and 8.998% final spatial differences are numerical evidence only.
-A finite 100 W/m full-cycle sensitivity rejects when a far-from-equilibrium forced phase changes its
-EOS branch; the finite-heat closed-outlet sensitivity reaches the same fail-loud prerequisite.
-Neither case is clipped or reclassified. See the
+The declared finite-heat rich-gas cycle completes 780 s on 12 and 24 cells with 100 W/m available
+evaporation heat: 120 s gas-only blowdown, 120 s closed settling, 420 s same-composition inlet
+refill at 1000 kg/s with the outlet closed, then 120 s closed hold. Peak oil inventories are
+68,360.504 and 69,780.185 kg; final oil is 68,002.640 and 69,437.627 kg. The 2.035% peak and 2.067%
+final spatial differences are numerical evidence only. Minimum heat scales of 2.306e-4 and
+1.653e-4 prove that the finite heat limit is active. The cycle crosses the dense-root $V/B=1.75$
+diagnostic-label transition with the configured liquid root, positive compressibility and recovery
+Jacobian retained; no phase relabeling, mass clipping or guard weakening is used. See the
 [qualification receipt](../../src/test/resources/neqsim/process/pipeline/hydrocarbon-pool-transfer/README.md).
 
 `getLastConservativeEnergyReport()` exposes the fluid first-law ledger and separate maximum
@@ -3274,3 +3280,4 @@ A supporting 100 s run with the outer reporting/advance interval reduced from 0.
 0.05 s completes without rejected substeps, but changes peak-to-peak pressure from
 43.369 to 58.071 kPa. This sensitivity is further evidence that the optional model is
 not yet numerically or experimentally qualified for severe-slug predictions.
+
