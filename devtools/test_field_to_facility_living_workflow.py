@@ -10,202 +10,30 @@ import copy
 import json
 import os
 from pathlib import Path
-import subprocess
 import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
 
 import jpype
-import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "devtools"))
 
-from neqsim_continuous.cycle import run_cycle  # noqa: E402
-from neqsim_continuous.evidence import accept, analyze, selected_stages  # noqa: E402
+from field_to_facility_living_example import (  # noqa: E402
+    create_task,
+    promote_cycle,
+    release_own_completed_cycle_lease,
+    render_report,
+    run_initial_cycle,
+    run_revised_cycle,
+    source_classpath,
+)
+from neqsim_continuous.evidence import analyze  # noqa: E402
 from neqsim_continuous.ledger import Ledger  # noqa: E402
-from neqsim_continuous.living import make_living, promote  # noqa: E402
 from neqsim_continuous.plan import load_plan  # noqa: E402
 from neqsim_continuous import production  # noqa: E402
-
-
-OPTIMIZE_STAGE = '''"""Source-backed ten-well field-to-facility lifecycle stage."""
-import json
-import os
-
-import jpype
-import yaml
-
-from neqsim_continuous.production import proposal_from_lifecycle_context
-
-
-def run(ctx):
-    acceptance = jpype.JClass(
-        "neqsim.process.util.optimizer.FieldToFacilityOptimizationAcceptanceTest")
-    with open(os.path.join(ctx.task_dir, "continuous", "user_input.yaml"),
-              encoding="utf-8") as input_file:
-        task_input = yaml.safe_load(input_file) or {}
-    multiplier = float(task_input["shared_power_limit_multiplier"])
-    snapshot_path = os.path.join(
-        ctx.task_dir,
-        "continuous",
-        "baseline",
-        "results_snapshot.json",
-    )
-    reviewed_incumbent = None
-    if os.path.exists(snapshot_path):
-        with open(snapshot_path, encoding="utf-8") as snapshot_file:
-            snapshot = json.load(snapshot_file)
-        previous = snapshot.get("lifecycle_envelope_evidence")
-        source_cycle = (ctx.baseline.get("meta") or {}).get("source_cycle")
-        if isinstance(previous, dict) and source_cycle:
-            previous_period = next(
-                period for period in previous["periods"]
-                if period["period_id"] == source_cycle)
-            reviewed_incumbent = previous_period["envelope_evidence"][
-                "accepted_candidate_values"]
-    if reviewed_incumbent is None:
-        encoded = str(acceptance.createTenWellLifecycleEvidenceJson(
-            ctx.cycle_id,
-            multiplier,
-        ))
-    else:
-        incumbent_array = jpype.JArray(jpype.JDouble)(reviewed_incumbent)
-        encoded = str(acceptance.createTenWellLifecycleEvidenceJson(
-            ctx.cycle_id,
-            multiplier,
-            incumbent_array,
-        ))
-    evidence = json.loads(encoded)
-    migration = json.loads(str(
-        acceptance.createMapToDriverMigrationEvidenceJson(ctx.cycle_id)))
-    current = next(period for period in evidence["periods"]
-                   if period["period_id"] == ctx.cycle_id)
-    envelope = current["envelope_evidence"]
-    proposal = proposal_from_lifecycle_context(
-        encoded,
-        ctx=ctx,
-        title="Review validated ten-well field operating point",
-        predicted={},
-    )
-    proposal["map_driver_migration_evidence"] = migration
-    return {
-        "proposals": [proposal],
-        "kpis": {
-            "lifecycle_period_count": evidence["period_count"],
-            "lifecycle_evaluation_count": evidence["total_evaluation_count"],
-            "lifecycle_runtime_seconds": evidence["envelope_runtime_seconds"],
-            "validated_gas_export_kg_hr": proposal["predicted"][
-                "validated_gas_export_kg_hr"],
-            "current_envelope_evaluation_count": envelope["total_evaluation_count"],
-            "shared_power_limit_multiplier": multiplier,
-        },
-    }
-'''
-
-
-UNCHANGED_STAGE = '''"""Independent scope used to prove selective lifecycle recomputation."""
-
-
-def run(ctx):
-    return {"kpis": {"unchanged_scope_marker": 1.0}}
-'''
-
-
-def source_classpath():
-    """Return current main/test classes before Maven dependencies."""
-    explicit = os.environ.get("NEQSIM_TEST_CLASSPATH")
-    if explicit:
-        return explicit.split(os.pathsep)
-    dependency_file = ROOT / "target" / "optimization-classpath.txt"
-    required = [ROOT / "target" / "classes", ROOT / "target" / "test-classes", dependency_file]
-    if not all(path.exists() for path in required):
-        raise RuntimeError(
-            "Compile test classes and generate target/optimization-classpath.txt first")
-    dependencies = dependency_file.read_text(encoding="utf-8").strip().split(os.pathsep)
-    return [str(ROOT / "target" / "classes"), str(ROOT / "target" / "test-classes")] + dependencies
-
-
-def create_task(parent):
-    """Create the minimal production living task used by this acceptance workflow."""
-    acceptance = jpype.JClass(
-        "neqsim.process.util.optimizer.FieldToFacilityOptimizationAcceptanceTest")
-    baseline_export = float(acceptance.createTenWellBaselineGasExportKgHr())
-    task = Path(parent) / "field_to_facility_living_acceptance"
-    task.mkdir()
-    (task / "study_config.yaml").write_text(
-        "study:\n  title: Field-to-facility living acceptance\n  task_type: B\n",
-        encoding="utf-8",
-    )
-    (task / "results.json").write_text(json.dumps({
-        "task_statement": (
-            "Validate a synthetic ten-well field-to-facility operating point without "
-            "weakening physical constraints."),
-        "key_results": {"validated_gas_export_kg_hr": baseline_export},
-        "recommendations": [
-            "Treat the synthetic result as workflow acceptance, not operating approval."],
-    }, indent=2), encoding="utf-8")
-    make_living(str(task), template="production")
-
-    continuous = task / "continuous"
-    (continuous / "stages" / "optimize.py").write_text(OPTIMIZE_STAGE, encoding="utf-8")
-    (continuous / "stages" / "unchanged.py").write_text(UNCHANGED_STAGE, encoding="utf-8")
-    (continuous / "user_input.yaml").write_text(
-        "shared_power_limit_multiplier: 1.01\n",
-        encoding="utf-8",
-    )
-    plan_path = continuous / "cycle_plan.yaml"
-    plan = yaml.safe_load(plan_path.read_text(encoding="utf-8"))
-    plan["scripts"] = {
-        "optimize": {"file": "continuous/stages/optimize.py", "function": "run"},
-        "unchanged": {"file": "continuous/stages/unchanged.py", "function": "run"},
-    }
-    plan["production"]["require_envelope_evidence"] = True
-    plan["production"]["require_lifecycle_envelope_evidence"] = True
-    plan["production"]["require_objective_evidence"] = True
-    plan["production"]["require_map_driver_migration_evidence"] = True
-    plan["production"]["evidence_sensitive_stages"] = ["script:optimize"]
-    plan["evidence"] = {
-        "rules": [{
-            "name": "shared-power-operating-limit",
-            "match": "continuous/user_input.yaml",
-            "stages": [
-                "script:optimize", "kpis", "gates", "constraints", "guard", "ledger",
-                "digest",
-            ],
-            "kpis": [
-                "lifecycle_evaluation_count", "lifecycle_runtime_seconds",
-                "validated_gas_export_kg_hr", "current_envelope_evaluation_count",
-                "shared_power_limit_multiplier",
-            ],
-            "conclusions": ["validated field operating point and active bottleneck"],
-        }],
-        "dependencies": {},
-    }
-    plan["stages"] = [
-        "script:unchanged", "script:optimize", "kpis", "gates", "constraints", "guard",
-        "ledger", "digest",
-    ]
-    plan_path.write_text(yaml.safe_dump(plan, sort_keys=False), encoding="utf-8")
-
-    goal_path = continuous / "goal.yaml"
-    goal = yaml.safe_load(goal_path.read_text(encoding="utf-8"))
-    goal["objective"] = {
-        "metric": "validated_gas_export_kg_hr",
-        "source_name": "validated gas export",
-        "unit": "kg/hr",
-        "direction": "maximize",
-        "target": None,
-        "confidence_required": "medium",
-        "source_section": "current ten-well Java objective evidence",
-    }
-    goal["constraints"] = []
-    goal_path.write_text(yaml.safe_dump(goal, sort_keys=False), encoding="utf-8")
-    setup_plan = load_plan(str(task))
-    accept(str(task), analyze(str(task), setup_plan), "task-setup")
-    return task
 
 
 class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
@@ -227,7 +55,7 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
         """Run the complete acceptance workflow without rebuilding Java evidence in Python."""
         with tempfile.TemporaryDirectory(prefix="neqsim-field-living-") as directory:
             task = create_task(directory)
-            manifest = run_cycle(str(task), no_agent=True)
+            manifest = run_initial_cycle(task)
             self.assertEqual("complete", manifest["status"])
             self.assertFalse(manifest["degraded"], manifest)
             statuses = {row["name"]: row["status"] for row in manifest["stages"]}
@@ -508,9 +336,7 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
                     "accepted_point_replayed", "actions_complete"):
                 self.assertIs(True, optimizer[field], field)
 
-            promoted = promote(
-                str(task), cycle_id, "Synthetic acceptance reviewer",
-                note="Automated source acceptance only; no operating approval.")
+            promoted = promote_cycle(task, cycle_id)
             self.assertEqual(cycle_id, promoted["source_cycle"])
             results = json.loads((task / "results.json").read_text(encoding="utf-8"))
             snapshot = json.loads((task / "continuous" / "baseline" /
@@ -530,13 +356,7 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertIn(link["driver_row"]["qualified_constraint_id"], living_report)
             self.assertIn(optimizer["termination_reason"], living_report)
 
-            generator = ROOT / "devtools" / "task_template" / "step3_report" / "generate_report.py"
-            completed = subprocess.run([
-                sys.executable, str(generator), "--task-dir", str(task), "--no-template",
-                "--title", "Field-to-facility living acceptance",
-            ], cwd=ROOT, capture_output=True, text=True, timeout=180, check=False)
-            self.assertEqual(0, completed.returncode, completed.stdout[-4000:] + completed.stderr[-4000:])
-            report = next((task / "step3_report").glob("*.html")).read_text(encoding="utf-8")
+            report = render_report(task).read_text(encoding="utf-8")
             self.assertIn("Lifecycle Operating Envelope", report)
             self.assertIn("Early life", report)
             self.assertIn("Current life", report)
@@ -558,13 +378,8 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             self.assertIn(optimizer["termination_reason"], report)
             self.assertIn("advisory", report)
 
-            input_path = task / "continuous" / "user_input.yaml"
-            input_path.write_text(
-                "shared_power_limit_multiplier: 1.02\n",
-                encoding="utf-8",
-            )
+            revised, impact, stages = run_revised_cycle(task, 1.02)
             plan = load_plan(str(task))
-            impact = analyze(str(task), plan)
             self.assertEqual("changed", impact["status"])
             self.assertFalse(impact["full_rerun"])
             self.assertEqual(1, impact["changed_files"])
@@ -576,18 +391,11 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
                 ["validated field operating point and active bottleneck"],
                 impact["affected_conclusions"],
             )
-            stages = selected_stages(plan, impact)
             self.assertIn("script:optimize", stages)
             self.assertIn("guard", stages)
             self.assertIn("ledger", stages)
             self.assertNotIn("script:unchanged", stages)
 
-            revised = run_cycle(
-                str(task),
-                stages=stages,
-                no_agent=True,
-                evidence_analysis=impact,
-            )
             self.assertEqual("complete", revised["status"])
             self.assertFalse(revised["degraded"], revised)
             self.assertTrue(revised["selective_rerun"]["enabled"])
@@ -669,6 +477,51 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
                 revised_item["predicted"]["validated_gas_export_kg_hr"],
             )
             self.assertEqual("unchanged", analyze(str(task), plan)["status"])
+
+
+class CompletedCycleLeaseTest(unittest.TestCase):
+    """Keep the example's lock recovery limited to its own completed cycle."""
+
+    def setUp(self):
+        """Create one minimal living-task state directory."""
+        self.temporary_directory = tempfile.TemporaryDirectory(
+            prefix="neqsim-field-living-lock-")
+        self.task = Path(self.temporary_directory.name)
+        (self.task / "continuous").mkdir()
+        self.lock_path = self.task / "continuous" / "LOCK"
+
+    def tearDown(self):
+        """Release the temporary task directory."""
+        self.temporary_directory.cleanup()
+
+    def write_lock(self, pid):
+        """Write the lease fields consumed by the production lock."""
+        self.lock_path.write_text(json.dumps({
+            "host": "acceptance-host",
+            "pid": pid,
+            "expires": "2099-01-01T00:00:00+00:00",
+        }), encoding="utf-8")
+
+    def test_releases_only_own_completed_cycle_lease(self):
+        """Remove an exact completed-process lease and report the cleanup."""
+        self.write_lock(os.getpid())
+
+        released = release_own_completed_cycle_lease(
+            self.task, {"status": "complete"})
+
+        self.assertIs(True, released)
+        self.assertFalse(self.lock_path.exists())
+
+    def test_rejects_foreign_or_incomplete_cycle_lease(self):
+        """Never weaken locking for another process or an incomplete run."""
+        for pid, status in ((os.getpid() + 1, "complete"),
+                            (os.getpid(), "running")):
+            with self.subTest(pid=pid, status=status):
+                self.write_lock(pid)
+                with self.assertRaisesRegex(RuntimeError, "Refusing to clear"):
+                    release_own_completed_cycle_lease(
+                        self.task, {"status": status})
+                self.assertTrue(self.lock_path.exists())
 
 
 if __name__ == "__main__":
