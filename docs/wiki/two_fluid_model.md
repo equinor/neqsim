@@ -1241,6 +1241,23 @@ independently validated evaporation rate. Positive aqueous inventory or equilibr
 retains the previous source path. The original 12/24-cell pressure ramps are regression evidence;
 the refined flat-outlet case and full pooling/restart qualification remain open.
 
+For an explicit finite-rate dry hydrocarbon sensitivity, configure
+`setHydrocarbonPoolTransfer(new HydrocarbonPoolTransfer(...))` on the conservative-energy Euler
+route. The closure multiplies each component's local equilibrium oil-inventory difference by
+$k_i f_wD/(\pi D^2/4)$, applies the actual donor-inventory limit, and gives gas the exact opposite
+source. Supplied component evaporation enthalpies and available W/m impose a separate net
+endothermic heat-rate limit; the conservative energy equation remains the only energy owner.
+Diagnostics report rate constants, donor limiting and heat scaling. A prescribed nonzero interface
+width permits phase appearance without a liquid-mass seed, while zero width is an exact control.
+These are analytical/conservation gates for an explicit parameter set. They do not validate the
+coefficients, elapsed pool depletion, shutdown/restart or hydraulic pigging; independent public
+multicomponent rate data and full-cycle/refinement evidence remain required for those claims. See
+the [process-model contract](../process/TWOFLUIDPIPE_MODEL.md#opt-in-finite-rate-hydrocarbon-pool-transfer).
+The executed unlimited-heat 780 s rich-gas cycle passes on 12/24 cells with 1.13% peak-oil and
+5.99% final-oil mesh differences. Finite-heat full-cycle and closed-outlet settling currently fail
+loud on forced-phase EOS branch consistency; they remain prerequisites for physical shutdown and
+restart claims.
+
 With component transport enabled, the downstream outlet composition follows the positive outbound
 component ledger rather than the latest inlet composition or the final cell's instantaneous phase
 split. The signed conservation ledger separately retains reversed material entering from an explicit

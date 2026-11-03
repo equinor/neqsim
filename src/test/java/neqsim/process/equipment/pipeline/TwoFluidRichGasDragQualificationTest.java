@@ -8,16 +8,18 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport.Phase;
+import neqsim.process.equipment.pipeline.twophasepipe.HydrocarbonPoolTransfer;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Conservative first-oil-appearance qualification for the public seabed rich-gas fixture.
+ * Conservative first-oil-appearance and declared-parameter cycle qualification for the public seabed rich-gas fixture.
  *
  * <p>
- * This regression does not certify full blowdown, low-point pools, restart or evaporation rates.
+ * The full-cycle regression qualifies conservation and mesh behaviour for its declared coefficients. It does not
+ * experimentally validate evaporation rates or certify physical shutdown/restart behaviour.
  * </p>
  *
  * @author Even Solbraa
@@ -26,6 +28,106 @@ import neqsim.thermo.system.SystemSrkEos;
 @Tag("slow")
 class TwoFluidRichGasDragQualificationTest {
   private static final Logger logger = LogManager.getLogger(TwoFluidRichGasDragQualificationTest.class);
+
+  /**
+   * Complete the public 780 s blowdown, low-pressure settling, same-gas refill and hold sequence with explicit pool
+   * kinetics.
+   *
+   * <p>
+   * This is a numerical conservation/full-cycle regression for declared coefficients. It is not an experimental
+   * evaporation-rate validation.
+   * </p>
+   */
+  @Test
+  void finiteRatePoolCompletesBlowdownSettleRefillAndHold() throws java.io.IOException {
+    double[] coarse = runFiniteRatePoolCycle(12, 0.5);
+    double[] refined = runFiniteRatePoolCycle(24, 0.5);
+    double relativeFinalOilDifference = Math.abs(coarse[1] - refined[1]) / Math.max(coarse[1], refined[1]);
+    assertTrue(relativeFinalOilDifference < 1.0,
+        "The two full-cycle meshes must retain finite oil inventories of the same order");
+    logger.info("Finite-rate 780 s cycle: 12/24-cell peak oil={}/{}, final oil={}/{}, difference={} %", coarse[0],
+        refined[0], coarse[1], refined[1], 100.0 * relativeFinalOilDifference);
+    String csv = "cells,dt_s,peak_oil_kg,final_oil_kg\n12,0.5," + coarse[0] + "," + coarse[1] + "\n24,0.5," + refined[0]
+        + "," + refined[1] + "\n";
+    java.nio.file.Files.write(java.nio.file.Paths.get("target/hydrocarbon-pool-cycle-refinement.csv"),
+        csv.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+  }
+
+  /** Run one complete declared-parameter cycle and return peak/final oil inventory. */
+  private static double[] runFiniteRatePoolCycle(int cells, double dt) {
+    String[] names = {"methane", "ethane", "propane", "n-butane", "n-pentane", "n-heptane"};
+    double[] coefficients = {0.05, 0.05, 0.05, 0.05, 0.05, 0.05};
+    double[] evaporationEnthalpies = {5.1e5, 4.9e5, 4.3e5, 3.8e5, 3.5e5, 3.2e5};
+    TwoFluidPipe pipe = createRichGasPipe(cells, true);
+    pipe.setGasOnlyOutletTakeoff(true);
+    pipe.setHydrocarbonPoolTransfer(
+        new HydrocarbonPoolTransfer(names, coefficients, evaporationEnthalpies, 0.5, Double.POSITIVE_INFINITY));
+    double initialMass = pipe.getTotalMassInventory();
+    double cumulativeBoundaryMass = 0.0;
+    double maximumOil = 0.0;
+    boolean observedRefill = false;
+
+    int rampSteps = (int) Math.round(120.0 / dt);
+    for (int step = 1; step <= rampSteps; step++) {
+      pipe.setOutletPressure(150.0 - 140.0 * step / rampSteps, "bara");
+      pipe.runTransient(dt, null);
+      cumulativeBoundaryMass += acceptedBoundaryMass(pipe);
+      maximumOil = Math.max(maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL));
+      assertAcceptedPoolInterval(pipe);
+    }
+
+    pipe.setOutletPressure(10.0, "bara");
+    for (int step = 0; step < (int) Math.round(300.0 / dt); step++) {
+      pipe.runTransient(dt, null);
+      cumulativeBoundaryMass += acceptedBoundaryMass(pipe);
+      maximumOil = Math.max(maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL));
+      assertAcceptedPoolInterval(pipe);
+    }
+
+    pipe.setOutletBoundaryFluid(pipe.getInletStream().getFluid());
+    pipe.setAllowOutletPhaseBackflow(true);
+    pipe.openOutlet(10.0, "bara");
+    for (int step = 1; step <= rampSteps; step++) {
+      pipe.setOutletPressure(10.0 + 140.0 * step / rampSteps, "bara");
+      pipe.runTransient(dt, null);
+      double boundaryMass = acceptedBoundaryMass(pipe);
+      cumulativeBoundaryMass += boundaryMass;
+      observedRefill |= boundaryMass > 0.0;
+      maximumOil = Math.max(maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL));
+      assertAcceptedPoolInterval(pipe);
+    }
+    for (int step = 0; step < (int) Math.round(240.0 / dt); step++) {
+      pipe.runTransient(dt, null);
+      double boundaryMass = acceptedBoundaryMass(pipe);
+      cumulativeBoundaryMass += boundaryMass;
+      observedRefill |= boundaryMass > 0.0;
+      maximumOil = Math.max(maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL));
+      assertAcceptedPoolInterval(pipe);
+    }
+
+    assertEquals(780.0, pipe.getSimulationTime(), 1.0e-9);
+    assertTrue(maximumOil > 0.0, "The full cycle must exercise a hydrocarbon-liquid pool");
+    assertTrue(observedRefill, "The explicit same-gas donor must fund actual reversed boundary flow");
+    assertEquals(initialMass + cumulativeBoundaryMass, pipe.getTotalMassInventory(), 1.0e-5);
+    return new double[] {maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL)};
+  }
+
+  /** Positive is inventory entering through either boundary; negative is inventory leaving. */
+  private static double acceptedBoundaryMass(TwoFluidPipe pipe) {
+    TwoFluidMassBalanceReport report = pipe.getLastMassBalanceReport();
+    return report.getInletMassKg(Phase.TOTAL) - report.getOutletMassKg(Phase.TOTAL);
+  }
+
+  /** Assert all conservative owners close for one accepted interval. */
+  private static void assertAcceptedPoolInterval(TwoFluidPipe pipe) {
+    assertTrue(pipe.getLastComponentConservationReport().isConverged(),
+        pipe.getLastComponentConservationReport().getMessage());
+    assertTrue(pipe.getLastConservativeEnergyReport().isWithinTolerance(1.0e-3, 1.0e-7));
+    assertTrue(pipe.getLastHydrocarbonPoolTransferResult() != null);
+    for (Phase phase : Phase.values()) {
+      assertTrue(pipe.getLastMassBalanceReport().isWithinTolerance(phase, 1.0e-6, 1.0e-8));
+    }
+  }
 
   /**
    * Conserved component targets must complete the entire requested pressure ramp on both historical meshes.

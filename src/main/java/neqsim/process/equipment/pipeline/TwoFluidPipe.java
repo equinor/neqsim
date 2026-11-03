@@ -20,6 +20,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.SlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidComponentTransport;
 import neqsim.process.equipment.pipeline.twophasepipe.NonEquilibriumFilmTransfer;
+import neqsim.process.equipment.pipeline.twophasepipe.HydrocarbonPoolTransfer;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.BubbleSizeClosure;
@@ -987,6 +988,12 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Opt-in isothermal component-specific gas/aqueous transfer closure. */
   private NonEquilibriumFilmTransfer nonEquilibriumFilmTransfer;
+
+  /** Opt-in conservative finite-rate gas/oil pool-transfer closure. */
+  private HydrocarbonPoolTransfer hydrocarbonPoolTransfer;
+
+  /** Diagnostics from the latest accepted pool-transfer stage. */
+  private HydrocarbonPoolTransfer.Result lastHydrocarbonPoolTransferResult;
 
   /** Independently specified residual liquid, cloned on configuration. */
   private SystemInterface initialAqueousFluid;
@@ -5217,6 +5224,7 @@ public class TwoFluidPipe extends Pipeline {
     lastMassBalanceReport = null;
     lastThermalEnergyBalanceReport = null;
     lastComponentConservationReport = null;
+    lastHydrocarbonPoolTransferResult = null;
     componentConservationReports.clear();
     componentConservationTimes.clear();
     transientOutletBackflowClamped = false;
@@ -6089,6 +6097,8 @@ public class TwoFluidPipe extends Pipeline {
     includeEnergyEquation = candidate.includeEnergyEquation;
     includeMassTransfer = candidate.includeMassTransfer;
     nonEquilibriumFilmTransfer = candidate.nonEquilibriumFilmTransfer;
+    hydrocarbonPoolTransfer = candidate.hydrocarbonPoolTransfer;
+    lastHydrocarbonPoolTransferResult = candidate.lastHydrocarbonPoolTransferResult;
     initialAqueousFluid = candidate.initialAqueousFluid;
     initialAqueousHoldup = candidate.initialAqueousHoldup;
     enableHeatTransfer = candidate.enableHeatTransfer;
@@ -6202,6 +6212,12 @@ public class TwoFluidPipe extends Pipeline {
         || enableHeatTransfer || directElectricalHeatingPowerPerMeter != 0.0 || enableSlugTracking)) {
       throw new IllegalStateException("Finite-rate film transfer requires component transport, mass transfer, "
           + "isothermal Euler, CFL <= 0.5, and disabled slug tracking and heating");
+    }
+    if (hydrocarbonPoolTransfer != null && (!componentTransportEnabled || !includeMassTransfer
+        || !useConservativeEnergyRecovery || timeIntegrator.getMethod() != TimeIntegrator.Method.EULER
+        || enableSlugTracking || nonEquilibriumFilmTransfer != null)) {
+      throw new IllegalStateException("Hydrocarbon pool transfer requires conservative-energy Euler with component "
+          + "and mass transfer, disabled slug tracking, and no aqueous-film transfer");
     }
     if (componentTransportEnabled && includeMassTransfer && slugTrackingMode == SlugTrackingMode.CONSERVATIVE_LAGRANGIAN
         && getTimeIntegrationStageWeights().length > 1) {
@@ -6419,7 +6435,14 @@ public class TwoFluidPipe extends Pipeline {
             localEquilibriumStates[cell] = componentTransport.createThermodynamicState(cell, referenceFluid,
                 sections[cell].getPressure(), sections[cell].getTemperature());
           }
-          if (useConservativeEnergyRecovery) {
+          if (hydrocarbonPoolTransfer != null) {
+            HydrocarbonPoolTransfer.Result poolResult = hydrocarbonPoolTransfer.calculate(componentTransport, sections,
+                localEquilibriumStates, dtFinal);
+            finiteRateSources = poolResult.getSourcesKgPerMetreSecond();
+            lastHydrocarbonPoolTransferResult = poolResult;
+            equilibriumRelaxation = true;
+            equations.setComponentMassTransferSources(finiteRateSources);
+          } else if (useConservativeEnergyRecovery) {
             finiteRateSources = componentTransport.createEquilibriumRelaxationSourceRates(localEquilibriumStates,
                 sections, equations.getMassTransferRelaxationTime());
             equilibriumRelaxation = true;
@@ -8380,7 +8403,37 @@ public class TwoFluidPipe extends Pipeline {
    * @param closure immutable closure, or null to retain the default equilibrium-relaxation path
    */
   public void setNonEquilibriumFilmTransfer(NonEquilibriumFilmTransfer closure) {
+    if (closure != null && hydrocarbonPoolTransfer != null) {
+      throw new IllegalStateException("Aqueous-film and hydrocarbon-pool transfer cannot own the same stage");
+    }
     nonEquilibriumFilmTransfer = closure;
+  }
+
+  /**
+   * Select conservative finite-rate gas/oil pool transfer for shutdown and restart studies.
+   *
+   * <p>
+   * The closure is opt-in and requires conservative-energy recovery, named-component transport, mass transfer and the
+   * Euler integrator. Its coefficients remain explicit model inputs rather than an embedded predictive correlation.
+   * </p>
+   *
+   * @param closure immutable closure, or null to retain equilibrium relaxation
+   */
+  public void setHydrocarbonPoolTransfer(HydrocarbonPoolTransfer closure) {
+    if (closure != null && nonEquilibriumFilmTransfer != null) {
+      throw new IllegalStateException("Hydrocarbon-pool and aqueous-film transfer cannot own the same stage");
+    }
+    hydrocarbonPoolTransfer = closure;
+    lastHydrocarbonPoolTransferResult = null;
+  }
+
+  /**
+   * Get diagnostics from the latest accepted hydrocarbon-pool source stage.
+   *
+   * @return immutable result, or null before a pool-transfer transient is accepted
+   */
+  public HydrocarbonPoolTransfer.Result getLastHydrocarbonPoolTransferResult() {
+    return lastHydrocarbonPoolTransferResult;
   }
 
   /**

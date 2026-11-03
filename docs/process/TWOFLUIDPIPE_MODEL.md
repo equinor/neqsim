@@ -637,6 +637,59 @@ linearized thermal coupling requiring time-step refinement for strongly varying 
 The prescribed outlet pressure acts at the external momentum face; it does not project
 the last physical cell onto a reservoir pressure or remove mass without its enthalpy.
 
+##### Opt-in finite-rate hydrocarbon-pool transfer
+
+`HydrocarbonPoolTransfer` replaces the arbitrary gas/oil relaxation time with an explicit,
+parameterized rate law while retaining the same component, momentum and total-energy owners.
+For configured component $i$,
+
+$$\Gamma_{i,o}=\frac{k_i w_i}{A}\left(m_{i,o}^{eq}-m_{i,o}\right),\qquad
+\Gamma_{i,g}=-\Gamma_{i,o}$$
+
+where $k_i$ is the supplied overall coefficient in m/s, $w_i/L=f_wD$ is the prescribed
+interface width per pipe length, $A=\pi D^2/4$ is volume per pipe length, and the parenthesized
+inventory difference is in kg/m. The local flash supplies the target but not the rate. Each
+component is limited by its actual donor inventory over the accepted Euler interval; exactly
+opposite gas/oil sources preserve component mass and donor momentum.
+
+The constructor also requires a nonnegative evaporation enthalpy for each configured component
+and a maximum heat supply in W/m. The signed model heat is
+$\dot q/L=\sum_i \Gamma_{i,o}\Delta h_{vap,i}$; net endothermic transfer is scaled when its
+demand exceeds the supplied limit. This is a kinetic limit only. The conservative total-energy
+equation still owns stored energy and temperature recovery, so no second latent source is added.
+Use positive infinity only for an explicitly isothermal/unlimited-heat sensitivity.
+
+```java
+String[] species = {"methane", "ethane", "propane", "n-butane", "n-pentane", "n-heptane"};
+double[] k = {2e-4, 2e-4, 1e-4, 8e-5, 5e-5, 2e-5}; // m/s
+double[] dhVap = {5.1e5, 4.9e5, 4.3e5, 3.8e5, 3.5e5, 3.2e5}; // J/kg
+pipe.setUseConservativeEnergyRecovery(true);
+pipe.setIncludeMassTransfer(true);
+pipe.setHydrocarbonPoolTransfer(
+    new HydrocarbonPoolTransfer(species, k, dhVap, 0.5, 100.0)); // 100 W/m available heat
+```
+
+Configure the closure before the first transient interval. It requires dry gas/oil component
+inventories, conservative-energy Euler, mass transfer, and disabled slug tracking; aqueous-film
+transfer remains a separate owner. `getLastHydrocarbonPoolTransferResult()` exposes cell-wise rate
+constants, pre-limit heat, heat scales and donor-limit activation. Explicit nonzero interface width
+allows EOS-predicted oil appearance without a numerical mass seed; zero width is the no-transfer
+control.
+
+The analytical gates cover zero drive/area, independent species conductance, donor and heat limits,
+unseeded oil appearance, exponential time-step refinement, component conservation and conservative
+pipeline integration. Coefficients and evaporation enthalpies are user inputs. Until they are
+calibrated and then validated against independent public multicomponent rate data, this capability
+is a conservative parameterized screening model—not a predictive pool-depletion, physical restart,
+severe-slugging or hydraulic-pigging qualification.
+
+The declared unlimited-heat rich-gas cycle completes 780 s on 12 and 24 cells. Peak oil inventories
+are 69,983 and 70,786 kg; final oil is 11.467 and 12.198 kg. The 1.13% peak and 5.99% final spatial
+differences are numerical evidence only. A finite 100 W/m full-cycle sensitivity rejects when a
+far-from-equilibrium forced phase changes its EOS branch; closed-outlet settling reaches the same
+fail-loud prerequisite. Neither case is clipped or reclassified. See the
+[qualification receipt](../../src/test/resources/neqsim/process/pipeline/hydrocarbon-pool-transfer/README.md).
+
 `getLastConservativeEnergyReport()` exposes the fluid first-law ledger and separate maximum
 relative occupied-volume and published-state energy residuals. Its signed residual is final
 minus initial fluid internal-plus-kinetic energy, minus net advected energy, gravitational work
