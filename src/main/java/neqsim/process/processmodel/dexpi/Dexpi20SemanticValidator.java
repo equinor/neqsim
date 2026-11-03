@@ -48,7 +48,7 @@ public final class Dexpi20SemanticValidator {
           "Process/Process.StoringFluids", "Process/Process.RegulatingFlow", "Process/Process.MixingSimple",
           "Process/Process.SplittingMaterial")));
 
-  /** Reviewed native 2.0.1 instrumentation relationships exercised by the connected P&ID projector. */
+  /** Reviewed native 2.0.1 instrumentation relationships exercised by the connected P&amp;ID projector. */
   private static final Set<String> SUPPORTED_201_TYPES = Collections
       .unmodifiableSet(new LinkedHashSet<String>(Arrays.asList("Plant/Instrumentation.SignalLineFunction",
           "Plant/ProcessEquipment.HeatExchanger", "Plant/Instrumentation.ActuatingFunction",
