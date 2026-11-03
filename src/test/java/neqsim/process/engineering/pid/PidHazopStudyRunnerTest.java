@@ -1,6 +1,7 @@
 package neqsim.process.engineering.pid;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.NeqSimTest;
@@ -8,6 +9,9 @@ import neqsim.process.engineering.EngineeringProject;
 import neqsim.process.engineering.NorsokOffshoreEngineeringBuilder;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.util.Adjuster;
+import neqsim.process.equipment.util.Calculator;
+import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
@@ -50,6 +54,44 @@ public class PidHazopStudyRunnerTest extends NeqSimTest {
     assertTrue(report.toJson().contains("20-PCV-001"));
     assertTrue(report.toJson().contains("20-FEED-002"));
     assertTrue(report.toJson().contains("processInletStreamTags"));
+  }
+
+  /** Verifies that numerical helpers neither require safeguards nor become physical HAZOP nodes. */
+  @Test
+  void numericalHelpersDoNotBlockPhysicalEquipmentHazopReadiness() {
+    EngineeringProject project = project();
+    ProcessSystem process = project.getProcessSystem();
+    process.add(new Recycle("LP oil recycle"));
+    process.add(new Calculator("Material balance calculator"));
+    process.add(new Adjuster("Pressure target adjuster"));
+    PidDesignModel model = PidDesignSynthesizer.synthesize(project,
+        new PidDesignBasis("NORSOK-COMPLETE-PID-PROPOSALS", "20"), NorsokPidRuleCatalog.completeProposals());
+
+    PidHazopStudyReport report = PidHazopStudyRunner.run(project, model);
+
+    assertTrue(report.isReadyForHazopWorkshop(), report.toJson());
+    assertEquals(1, report.getNodes().size());
+    assertEquals("20-VG-001", report.getNodes().get(0).get("equipmentTag"));
+    assertFalse(PidHazopStudyRunner.run(project, new PidDesignModel(project.getProjectId(), "EMPTY"))
+        .isReadyForHazopWorkshop());
+  }
+
+  /** Verifies that a solver-only model cannot qualify as a workshop-ready physical process. */
+  @Test
+  void numericalHelpersAloneDoNotEstablishHazopReadiness() {
+    ProcessSystem process = new ProcessSystem();
+    process.add(new Recycle("Recycle solver"));
+    process.add(new Calculator("Calculator"));
+    process.add(new Adjuster("Adjuster"));
+    EngineeringProject project = NorsokOffshoreEngineeringBuilder.from("Numerical helpers", process)
+        .projectId("PID-HELPERS-TEST").build();
+    PidDesignModel model = PidDesignSynthesizer.synthesize(project,
+        new PidDesignBasis("NORSOK-COMPLETE-PID-PROPOSALS", "20"), NorsokPidRuleCatalog.completeProposals());
+
+    PidHazopStudyReport report = PidHazopStudyRunner.run(project, model);
+
+    assertFalse(report.isReadyForHazopWorkshop());
+    assertTrue(report.getNodes().isEmpty());
   }
 
   private static EngineeringProject project() {

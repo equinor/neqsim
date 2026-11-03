@@ -10,11 +10,17 @@ import neqsim.process.engineering.EngineeringProject;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.util.Adjuster;
+import neqsim.process.equipment.util.Calculator;
+import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.safety.hazid.HAZOPTemplate;
 import neqsim.process.safety.hazid.HazopConsequenceAutoPopulator;
 
-/** Runs a traceable HAZOP preparation pass directly from a governed P&amp;ID proposal. */
+/**
+ * Runs a traceable HAZOP preparation pass for physical equipment directly from a governed P&amp;ID proposal. Numerical
+ * recycle, calculator and adjuster helpers are not physical HAZOP nodes.
+ */
 public final class PidHazopStudyRunner {
   private PidHazopStudyRunner() {
   }
@@ -33,7 +39,8 @@ public final class PidHazopStudyRunner {
       ids.add(element.getId());
     }
     for (ProcessEquipmentInterface equipment : project.getEngineeringProcessSystem().getUnitOperations()) {
-      if (equipment == null || equipment instanceof Stream) {
+      if (equipment == null || equipment instanceof Stream || equipment instanceof Recycle
+          || equipment instanceof Calculator || equipment instanceof Adjuster) {
         continue;
       }
       List<PidElement> safeguards = model.getElementsForEquipment(equipment.getName());

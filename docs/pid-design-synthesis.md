@@ -230,9 +230,13 @@ graph connections.
 ## Completeness and HAZOP preparation
 
 `PidCompletenessValidator` checks tag uniqueness, references, connections, and minimum functional categories.
-`PidHazopStudyRunner` then prepares one traceable HAZOP node per process item, generates parameter/guide-word
+`PidHazopStudyRunner` then prepares one traceable HAZOP node per physical process item, generates parameter/guide-word
 deviations, links matching proposed safeguards, reports unresolved connections, and leaves every workshop decision
 `OPEN`.
+
+Streams provide node boundaries. Numerical `Recycle`, `Calculator`, and `Adjuster` helpers are excluded from
+physical HAZOP nodes and do not require safeguard proposals. Real equipment still requires P&ID coverage;
+a model containing only numerical helpers is not ready for a HAZOP workshop.
 
 This is preparation for an IEC 61882 multidisciplinary workshop. It does not establish credible causes, consequences,
 IPL independence, residual risk, action closure, or approval. Reviewed outcomes can continue through the
