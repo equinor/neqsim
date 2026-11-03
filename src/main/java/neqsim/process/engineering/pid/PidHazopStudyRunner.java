@@ -9,10 +9,18 @@ import java.util.Set;
 import neqsim.process.engineering.EngineeringProject;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.util.Adjuster;
+import neqsim.process.equipment.util.Calculator;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.safety.hazid.HAZOPTemplate;
 import neqsim.process.safety.hazid.HazopConsequenceAutoPopulator;
 
-/** Runs a traceable HAZOP preparation pass directly from a governed P&amp;ID proposal. */
+/**
+ * Runs a traceable HAZOP preparation pass for physical equipment directly from a governed P&amp;ID proposal. Numerical
+ * recycle, calculator and adjuster helpers are not physical HAZOP nodes.
+ */
 public final class PidHazopStudyRunner {
   private PidHazopStudyRunner() {
   }
@@ -30,12 +38,15 @@ public final class PidHazopStudyRunner {
     for (PidElement element : model.getElements()) {
       ids.add(element.getId());
     }
-    for (ProcessEquipmentInterface equipment : project.getProcessSystem().getUnitOperations()) {
-      if (equipment == null || equipment instanceof Stream) {
+    for (ProcessEquipmentInterface equipment : project.getEngineeringProcessSystem().getUnitOperations()) {
+      if (equipment == null || equipment instanceof Stream || equipment instanceof Recycle
+          || equipment instanceof Calculator || equipment instanceof Adjuster) {
         continue;
       }
       List<PidElement> safeguards = model.getElementsForEquipment(equipment.getName());
-      if (safeguards.isEmpty()) {
+      // Passive piping nodes remain real HAZOP boundaries without fabricated vessel nozzles.
+      boolean passivePiping = equipment instanceof ThrottlingValve || equipment instanceof Splitter;
+      if (safeguards.isEmpty() && !passivePiping) {
         findings.add(error(equipment.getName(), "No P&ID elements protect or control this HAZOP node."));
         continue;
       }
@@ -81,6 +92,16 @@ public final class PidHazopStudyRunner {
     node.put("equipmentType", equipment.getClass().getSimpleName());
     node.put("designIntent", populated.getDesignIntent());
     node.put("pidElementTags", tags(safeguards));
+    List<String> inletTags = new ArrayList<String>();
+    for (neqsim.process.equipment.stream.StreamInterface stream : equipment.getInletStreams()) {
+      inletTags.add(stream.getName());
+    }
+    List<String> outletTags = new ArrayList<String>();
+    for (neqsim.process.equipment.stream.StreamInterface stream : equipment.getOutletStreams()) {
+      outletTags.add(stream.getName());
+    }
+    node.put("processInletStreamTags", inletTags);
+    node.put("processOutletStreamTags", outletTags);
     node.put("deviations", deviations);
     return node;
   }

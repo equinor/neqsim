@@ -159,6 +159,7 @@ public final class NativeEngineeringDiagramRenderer {
     private final Map<String, String> visualFingerprintsBySheetId;
     private final List<Diagnostic> diagnostics;
     private final boolean checksEndpointInteriors;
+    private List<String> explicitChecks;
 
     private Result(Map<String, String> svgBySheetId, byte[] pdf, Map<String, String> visualFingerprintsBySheetId,
         List<Diagnostic> diagnostics, boolean checksEndpointInteriors) {
@@ -201,6 +202,9 @@ public final class NativeEngineeringDiagramRenderer {
 
     /** @return actual geometric check scope; zero findings are not drawing or standards approval */
     public List<String> getPerformedChecks() {
+      if (explicitChecks != null) {
+        return explicitChecks;
+      }
       List<String> checks = new ArrayList<String>(Arrays.asList("OBJECT_AND_ROUTE_ENVELOPES", "SCENE_BORDER_BOUNDS",
           "ESTIMATED_TEXT_BOUNDS", "TEXT_TEXT_AND_TEXT_ROUTE_INTERSECTIONS", "PID_MARKER_AND_SIGNAL_INTERSECTIONS",
           "DUPLICATE_SEMANTIC_ROUTES"));
@@ -424,6 +428,39 @@ public final class NativeEngineeringDiagramRenderer {
     }
     return new Result(svg, toPdf(pages), visualFingerprints, diagnostics,
         routingMode == RoutingMode.FIXED_PORT_ORTHOGONAL);
+  }
+
+  /**
+   * Serializes the source-backed professional scene through the shared native vector writers.
+   *
+   * @param pages controlled paper scenes
+   * @param diagnostics actual scene assessment
+   * @param performedChecks checks performed by this scene builder
+   * @return deterministic SVG/PDF drawing set
+   */
+  Result renderScenes(List<Page> pages, List<Diagnostic> diagnostics, List<String> performedChecks) {
+    Map<String, String> svg = new LinkedHashMap<String, String>();
+    Map<String, String> fingerprints = new LinkedHashMap<String, String>();
+    for (Page page : pages) {
+      svg.put(page.sheetId, toSvg(page));
+      fingerprints.put(page.sheetId, visualFingerprint(page));
+    }
+    Result result = new Result(svg, toPdf(pages), fingerprints, diagnostics, true);
+    result.explicitChecks = Collections.unmodifiableList(new ArrayList<String>(performedChecks));
+    return result;
+  }
+
+  /**
+   * Creates a scene diagnostic without exposing mutable rendering state.
+   *
+   * @param severity finding severity
+   * @param code stable finding code
+   * @param message finding description
+   * @param subjectId controlled subject
+   * @return finding
+   */
+  static Diagnostic sceneDiagnostic(Severity severity, String code, String message, String subjectId) {
+    return diagnostic(severity, code, message, subjectId);
   }
 
   /**
@@ -1868,7 +1905,8 @@ public final class NativeEngineeringDiagramRenderer {
     for (Command command : page.commands) {
       String group = command.svgGroupAttribute.isEmpty() ? ""
           : command.svgGroupAttribute + "=\"" + xml(command.svgGroupValue) + "\""
-              + (command.svgProposed ? " data-proposed=\"true\"" : "");
+              + (command.svgProposed ? " data-proposed=\"true\"" : "") + (command.svgSymbolFamily.isEmpty() ? ""
+                  : " data-symbol-family=\"" + xml(command.svgSymbolFamily) + "\"");
       if (!currentGroup.equals(group)) {
         if (!currentGroup.isEmpty()) {
           svg.append("    </g>\n");
@@ -2166,8 +2204,7 @@ public final class NativeEngineeringDiagramRenderer {
     return polylineIntersectsRectangle(points, left, right, top, bottom);
   }
 
-  private static boolean polylineIntersectsRectangle(List<Point> points, double left, double right, double top,
-      double bottom) {
+  static boolean polylineIntersectsRectangle(List<Point> points, double left, double right, double top, double bottom) {
     for (int index = 1; index < points.size(); index++) {
       Point start = points.get(index - 1);
       Point end = points.get(index);
@@ -2186,7 +2223,7 @@ public final class NativeEngineeringDiagramRenderer {
     return point.x >= left && point.x <= right && point.y >= top && point.y <= bottom;
   }
 
-  private static boolean segmentsIntersect(Point firstStart, Point firstEnd, Point secondStart, Point secondEnd) {
+  static boolean segmentsIntersect(Point firstStart, Point firstEnd, Point secondStart, Point secondEnd) {
     double first = cross(firstStart, firstEnd, secondStart);
     double second = cross(firstStart, firstEnd, secondEnd);
     double third = cross(secondStart, secondEnd, firstStart);
@@ -2212,8 +2249,8 @@ public final class NativeEngineeringDiagramRenderer {
         secondPoint.y - 3.0, estimatedTextWidth(secondLabel, 2.3), 3.2);
   }
 
-  private static boolean rectanglesOverlap(double firstX, double firstY, double firstWidth, double firstHeight,
-      double secondX, double secondY, double secondWidth, double secondHeight) {
+  static boolean rectanglesOverlap(double firstX, double firstY, double firstWidth, double firstHeight, double secondX,
+      double secondY, double secondWidth, double secondHeight) {
     return Math.abs(firstX - secondX) * 2.0 < firstWidth + secondWidth
         && Math.abs(firstY - secondY) * 2.0 < firstHeight + secondHeight;
   }
@@ -2295,39 +2332,39 @@ public final class NativeEngineeringDiagramRenderer {
     output.write(value, 0, value.length);
   }
 
-  private static final class Point {
-    private final double x;
-    private final double y;
+  static final class Point {
+    final double x;
+    final double y;
 
-    private Point(double x, double y) {
+    Point(double x, double y) {
       this.x = x;
       this.y = y;
     }
   }
 
-  private static final class Page {
-    private final String sheetId;
-    private final double width;
-    private final double height;
-    private final List<Command> commands = new ArrayList<Command>();
-    private final List<RouteView> routes = new ArrayList<RouteView>();
+  static final class Page {
+    final String sheetId;
+    final double width;
+    final double height;
+    final List<Command> commands = new ArrayList<Command>();
+    final List<RouteView> routes = new ArrayList<RouteView>();
 
-    private Page(String sheetId, double width, double height) {
+    Page(String sheetId, double width, double height) {
       this.sheetId = sheetId;
       this.width = width;
       this.height = height;
     }
   }
 
-  private static final class RouteView {
-    private final String connectionId;
-    private final List<Point> points;
-    private final String label;
-    private final Point labelPoint;
-    private final String sourceOwnerId;
-    private final String targetOwnerId;
+  static final class RouteView {
+    final String connectionId;
+    final List<Point> points;
+    final String label;
+    final Point labelPoint;
+    final String sourceOwnerId;
+    final String targetOwnerId;
 
-    private RouteView(String connectionId, List<Point> points, String label, Point labelPoint, String sourceOwnerId,
+    RouteView(String connectionId, List<Point> points, String label, Point labelPoint, String sourceOwnerId,
         String targetOwnerId) {
       this.connectionId = connectionId;
       this.points = Collections.unmodifiableList(new ArrayList<Point>(points));
@@ -2338,29 +2375,30 @@ public final class NativeEngineeringDiagramRenderer {
     }
   }
 
-  private static final class Command {
-    private final String type;
-    private final List<Point> points;
-    private final double x;
-    private final double y;
-    private final double width;
-    private final double height;
-    private final double size;
-    private final String text;
-    private final String stroke;
-    private final String fill;
-    private final double strokeWidth;
-    private final String dash;
-    private final String id;
-    private final String anchor;
-    private final boolean protectedGeometry;
-    private String svgGroupAttribute = "";
-    private String svgGroupValue = "";
-    private boolean svgProposed;
-    private boolean bold;
+  static final class Command {
+    final String type;
+    final List<Point> points;
+    final double x;
+    final double y;
+    final double width;
+    final double height;
+    final double size;
+    final String text;
+    final String stroke;
+    final String fill;
+    final double strokeWidth;
+    final String dash;
+    final String id;
+    final String anchor;
+    final boolean protectedGeometry;
+    String svgGroupAttribute = "";
+    String svgGroupValue = "";
+    String svgSymbolFamily = "";
+    boolean svgProposed;
+    boolean bold;
 
-    private Command(String type, List<Point> points, double x, double y, double width, double height, double size,
-        String text, String stroke, String fill, double strokeWidth, String dash, String id, String anchor,
+    Command(String type, List<Point> points, double x, double y, double width, double height, double size, String text,
+        String stroke, String fill, double strokeWidth, String dash, String id, String anchor,
         boolean protectedGeometry) {
       this.type = type;
       this.points = points;
@@ -2379,29 +2417,29 @@ public final class NativeEngineeringDiagramRenderer {
       this.protectedGeometry = protectedGeometry;
     }
 
-    private static Command rect(double x, double y, double width, double height, String stroke, String fill,
-        double strokeWidth, String id, String dash) {
+    static Command rect(double x, double y, double width, double height, String stroke, String fill, double strokeWidth,
+        String id, String dash) {
       return new Command("rect", Collections.<Point>emptyList(), x, y, width, height, 0.0, "", stroke, fill,
           strokeWidth, dash, id, "", false);
     }
 
-    private static Command line(double x1, double y1, double x2, double y2, String stroke, double strokeWidth,
-        String id, String dash) {
+    static Command line(double x1, double y1, double x2, double y2, String stroke, double strokeWidth, String id,
+        String dash) {
       return polyline(Arrays.asList(new Point(x1, y1), new Point(x2, y2)), stroke, strokeWidth, dash, id, false);
     }
 
-    private static Command polyline(List<Point> points, String stroke, double strokeWidth, String dash, String id,
+    static Command polyline(List<Point> points, String stroke, double strokeWidth, String dash, String id,
         boolean protectedGeometry) {
       return new Command("polyline", new ArrayList<Point>(points), 0.0, 0.0, 0.0, 0.0, 0.0, "", stroke, "none",
           strokeWidth, dash, id, "", protectedGeometry);
     }
 
-    private static Command polygon(List<Point> points, String stroke, String fill, double strokeWidth, String id) {
+    static Command polygon(List<Point> points, String stroke, String fill, double strokeWidth, String id) {
       return new Command("polygon", new ArrayList<Point>(points), 0.0, 0.0, 0.0, 0.0, 0.0, "", stroke, fill,
           strokeWidth, "", id, "", false);
     }
 
-    private static Command text(double x, double y, double size, String text, String fill, String id, String anchor) {
+    static Command text(double x, double y, double size, String text, String fill, String id, String anchor) {
       return new Command("text", Collections.<Point>emptyList(), x, y, 0.0, 0.0, size, text, "none", fill, 0.0, "", id,
           anchor, false);
     }

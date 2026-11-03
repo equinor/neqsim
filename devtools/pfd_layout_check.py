@@ -647,6 +647,12 @@ def _collinear_overlap(p1, p2, p3, p4, tol):
 
 def _arrows(rep, s, edges, nodes, attach_tol):
     for e in edges:
+        # An impulse/sensing connection is not a bulk-flow stream. Require explicit
+        # P&ID semantics and a field-instrument target; do not waive ordinary pipes.
+        if (s.get("kind") in ("pid", "pid_sketch") and e.get("role") == "sensing"
+                and e.get("fluid") == "sensing"
+                and nodes.get(e.get("to"), {}).get("kind") == "instrument"):
+            continue
         if len(e["points"]) < 2:
             continue
         has_end = e.get("arrow_end") or e.get("arrow_start")

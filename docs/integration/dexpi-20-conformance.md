@@ -352,3 +352,53 @@ Record that separate evidence through `DexpiToolQualificationRunner` and
 
 Official references: [DEXPI Specification 2.0.0](https://dexpi.gitlab.io/-/Specification/-/jobs/11676485644/artifacts/src/.build/html/html/index.html)
 and the [DEXPI specification source](https://gitlab.com/dexpi/Specification), licensed CC BY 4.0.
+
+
+## Connected native P&ID proposal projection
+
+`Dexpi201PidMaterializer.materialize(project, pid, bindings, nativeFile)` enriches an
+existing assessed native 2.0.1 Plant file using the same `PidPhysicalProjection`
+attachment register as the professional drawing path. It preserves actual source
+identities: a bound sensor has a `ProcessSignalGeneratingFunction` at an actual
+piping segment or equipment `InstrumentNozzle`; an inserted inline valve splits
+the existing physical pipe, with owned inlet/outlet nodes. A controller's signal
+terminates at an `ActuatingFunction` whose `ActuatingSystem` contains an
+`OperatedValveReference` to the actual native valve. Declared signal direction is
+retained. Tag presence by itself is not treated as a successful projection.
+
+Auxiliary routes need explicit source and destination evidence. On a P&ID element,
+set `physicalSourceEquipmentTag` plus `physicalSourceStreamTag`, and either
+`physicalTargetEquipmentTag` plus `physicalTargetStreamTag`, or a controlled
+`destinationTag`. Both equipment/stream pairs must identify actual source ports.
+The materializer inserts native tee nodes on those existing physical lines and a
+connected auxiliary-device route. Unconfigured blowdown, relief, recycle, drain,
+vent and utility paths remain HOLD; no disposal destination or return tie-in is
+inferred from a generic tag. A source-backed route is still a design proposal,
+not an executed auxiliary model, a capacity check, or approval.
+
+The shared functional-link graph includes only measurement/control/safety signal
+sources; a PSV-to-flare connection remains a physical disposal path. Process
+nozzle synthesis skips streams, piping valves/tees and numerical helpers, whose
+actual ports are already retained by the process graph. It does not manufacture
+nozzle tags for native piping nodes that have no nozzle-tag property.
+
+The returned result and `<native-file>.pid-projection.json` list mapped native
+identities, every unresolved tag, and each native or unresolved signal link. Its
+assessment applies to the final serialized bytes. Keep it with the original
+engineering projection, exact XML and package manifest. Existing 2.0.0 and Proteus
+paths are not modified. `completeSupportedProjection` is separate from named-tool
+qualification, full semantic equivalence, engineering approval and fitness for
+construction.
+
+The explicit 2.0.1 Process writer also supplies the mandatory compression and heat
+exchange method literals. Generic `Compressor` source equipment uses the official
+`CompressionMethod.Unspecified` value: the isentropic calculation method does not
+establish a physical centrifugal or reciprocating machine type. Cooler and heat
+exchanger steps use `HeatExchangeMethod.Generic` unless a future reviewed subtype
+mapping supplies stronger source evidence. The compatibility Process writer
+retains its existing output.
+
+Regression evidence is in `PidPhysicalProjectionTest` and
+`Dexpi201PidMaterializerTest`; the tests independently inspect sensing locations,
+pipe-node ownership, directed signal targets, connected valve paths, explicit
+recycle tees, missing-route HOLDs and raw compression/cooling conformance.

@@ -207,17 +207,21 @@ class SimpleTEGAbsorberHydrocarbonLiquidTest extends NeqSimTest {
     assertEquals(2.0306706847, waterPpmv(lean), 2.0306706847 * 1.0e-6);
   }
 
-  /** Checks the original rich feed without requiring phase discovery when the stability search is disabled. */
   @Test
-  void disabledStabilityCheckPreservesOriginalRichFeedInventory() {
-    // A balanced, glycol-rich two-phase solution is allowed in this opt-out mode. Java 8 can retain that solution
-    // while newer runtimes trigger the recovery flash; discovery of every condensate split requires the check.
-    SimpleTEGAbsorber absorber = runCase(3.0, 29.75, 0.9992, SimpleTEGAbsorber.HydrocarbonLiquidRouting.GAS_OUTLET,
-        false);
-    assertTrue(absorber.isEquilibriumLiquidGlycolRich());
-    double ppmv = waterPpmv(absorber);
+  void disabledStabilityCheckPreservesInventoriesAndGlycolPhase() {
+    // Without stability checking, a balanced glycol-rich two-phase solution is allowed. Whether this mixture
+    // triggers the three-phase fallback depends on the flash path and JVM, so do not require a condensate split.
+    SimpleTEGAbsorber absorber = new SimpleTEGAbsorber("probe");
+    assertTrue(absorber.isHydrocarbonLiquidCheck());
+    SimpleTEGAbsorber fast = runCase(3.0, 29.75, 0.9992, SimpleTEGAbsorber.HydrocarbonLiquidRouting.GAS_OUTLET, false);
+    assertFalse(fast.isHydrocarbonLiquidCheck());
+    assertTrue(fast.isEquilibriumLiquidGlycolRich(), "the fast path must retain a glycol-rich K-value phase");
+    double ppmv = waterPpmv(fast);
     assertTrue(Double.isFinite(ppmv) && ppmv > 0.1 && ppmv < 100.0, "treated gas water content " + ppmv + " ppmv");
-    assertBalances(absorber);
+    assertBalances(fast);
+    SimpleTEGAbsorber lean = runCase(0.0, 29.25, 0.99968, SimpleTEGAbsorber.HydrocarbonLiquidRouting.GAS_OUTLET, false);
+    assertFalse(lean.hasHydrocarbonLiquid());
+    assertEquals(2.0306706847, waterPpmv(lean), 2.0306706847 * 1.0e-6);
   }
 
   @Test

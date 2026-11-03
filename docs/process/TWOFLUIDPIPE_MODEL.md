@@ -624,6 +624,11 @@ density in kg/m³, $e_k$ phase specific internal energy in J/kg, and $q_k$ phase
 kg·m/s. Exactly absent phases contribute zero and cannot carry momentum. Phase properties use
 the supported forced-phase EOS at that phase's own composition. A bulk equilibrium VU flash
 must not restore hidden phases or redistribute finite-rate phase inventories.
+The conservative slot explicitly reapplies its requested gas/liquid root at every nonlinear trial.
+The cubic EOS diagnostic type can change at its internal $V/B=1.75$ classification boundary even
+while the selected dense root is continuous; that label is not used as a branch guard. Positive
+isothermal compressibility, a nonsingular volume/energy Jacobian, finite properties and a decreasing
+Newton residual remain mandatory.
 
 The energy equation owns total-enthalpy and phase kinetic-energy face transport, including the
 accepted pressure-correction mass transfers, and gravitational work. Heat exchanged with the
@@ -636,6 +641,62 @@ the heat increment enters total energy before a fresh nonlinear EOS recovery. Th
 linearized thermal coupling requiring time-step refinement for strongly varying properties.
 The prescribed outlet pressure acts at the external momentum face; it does not project
 the last physical cell onto a reservoir pressure or remove mass without its enthalpy.
+
+##### Opt-in finite-rate hydrocarbon-pool transfer
+
+`HydrocarbonPoolTransfer` replaces the arbitrary gas/oil relaxation time with an explicit,
+parameterized rate law while retaining the same component, momentum and total-energy owners.
+For configured component $i$,
+
+$$\Gamma_{i,o}=\frac{k_i w_i}{A}\left(m_{i,o}^{eq}-m_{i,o}\right),\qquad
+\Gamma_{i,g}=-\Gamma_{i,o}$$
+
+where $k_i$ is the supplied overall coefficient in m/s, $w_i/L=f_wD$ is the prescribed
+interface width per pipe length, $A=\pi D^2/4$ is volume per pipe length, and the parenthesized
+inventory difference is in kg/m. The local flash supplies the target but not the rate. Each
+component is limited by its actual donor inventory over the accepted Euler interval; exactly
+opposite gas/oil sources preserve component mass and donor momentum.
+
+The constructor also requires a nonnegative evaporation enthalpy for each configured component
+and a maximum heat supply in W/m. The signed model heat is
+$\dot q/L=\sum_i \Gamma_{i,o}\Delta h_{vap,i}$; net endothermic transfer is scaled when its
+demand exceeds the supplied limit. This is a kinetic limit only. The conservative total-energy
+equation still owns stored energy and temperature recovery, so no second latent source is added.
+Use positive infinity only for an explicitly isothermal/unlimited-heat sensitivity.
+
+```java
+String[] species = {"methane", "ethane", "propane", "n-butane", "n-pentane", "n-heptane"};
+double[] k = {2e-4, 2e-4, 1e-4, 8e-5, 5e-5, 2e-5}; // m/s
+double[] dhVap = {5.1e5, 4.9e5, 4.3e5, 3.8e5, 3.5e5, 3.2e5}; // J/kg
+pipe.setUseConservativeEnergyRecovery(true);
+pipe.setIncludeMassTransfer(true);
+pipe.setHydrocarbonPoolTransfer(
+    new HydrocarbonPoolTransfer(species, k, dhVap, 0.5, 100.0)); // 100 W/m available heat
+```
+
+Configure the closure before the first transient interval. It requires dry gas/oil component
+inventories, conservative-energy Euler, mass transfer, and disabled slug tracking; aqueous-film
+transfer remains a separate owner. `getLastHydrocarbonPoolTransferResult()` exposes cell-wise rate
+constants, pre-limit heat, heat scales and donor-limit activation. Explicit nonzero interface width
+allows EOS-predicted oil appearance without a numerical mass seed; zero width is the no-transfer
+control.
+
+The analytical gates cover zero drive/area, independent species conductance, donor and heat limits,
+unseeded oil appearance, exponential time-step refinement, component conservation and conservative
+pipeline integration. Coefficients and evaporation enthalpies are user inputs. Until they are
+calibrated and then validated against independent public multicomponent rate data, this capability
+is a conservative parameterized screening model—not a predictive pool-depletion, physical restart,
+severe-slugging or hydraulic-pigging qualification.
+
+The declared finite-heat rich-gas cycle completes 780 s on 12 and 24 cells with 100 W/m available
+evaporation heat: 120 s gas-only blowdown, 120 s closed settling, 420 s same-composition inlet
+refill at 1000 kg/s with the outlet closed, then 120 s closed hold. Peak oil inventories are
+68,360.504 and 69,780.185 kg; final oil is 68,002.640 and 69,437.627 kg. The 2.035% peak and 2.067%
+final spatial differences are numerical evidence only. Minimum heat scales of 2.306e-4 and
+1.653e-4 prove that the finite heat limit is active. The cycle crosses the dense-root $V/B=1.75$
+diagnostic-label transition with the configured liquid root, positive compressibility and recovery
+Jacobian retained; no phase relabeling, mass clipping or guard weakening is used. See the
+[qualification receipt](../../src/test/resources/neqsim/process/pipeline/hydrocarbon-pool-transfer/README.md).
 
 `getLastConservativeEnergyReport()` exposes the fluid first-law ledger and separate maximum
 relative occupied-volume and published-state energy residuals. Its signed residual is final
@@ -3219,3 +3280,4 @@ A supporting 100 s run with the outer reporting/advance interval reduced from 0.
 0.05 s completes without rejected substeps, but changes peak-to-peak pressure from
 43.369 to 58.071 kPa. This sensitivity is further evidence that the optional model is
 not yet numerically or experimentally qualified for severe-slug predictions.
+
