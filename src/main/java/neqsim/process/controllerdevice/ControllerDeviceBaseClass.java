@@ -120,6 +120,12 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
 
   /** {@inheritDoc} */
   @Override
+  public MeasurementDeviceInterface getTransmitter() {
+    return transmitter;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getMeasuredValue() {
     return this.transmitter.getMeasuredValue();
   }

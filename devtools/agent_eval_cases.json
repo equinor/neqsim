@@ -241,6 +241,12 @@
       "expect_skills_top5": ["neqsim-rotating-equipment-design"]
     },
     {
+      "id": "professional-pid-dexpi201-simulation",
+      "prompt": "prepare a professional P&ID drawing package with native DEXPI 2.0.1 from my NeqSim process model, add instrumentation and safeguards and bind final P&ID tags for steady-state and dynamic simulation tests",
+      "expect_agent_top3": ["engineering-deliverables"],
+      "expect_skills_top5": ["neqsim-pid-process-operations"]
+    },
+    {
       "id": "engineering-design-loop",
       "prompt": "engineering design loop with P&ID synthesis, DEXPI export and CFIHOS handover and change impact analysis",
       "expect_agent_top3": ["engineering-deliverables", "process-model", "standards-review"],

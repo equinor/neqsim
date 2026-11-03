@@ -226,6 +226,7 @@ public final class NativeEngineeringDiagramRenderer {
   private final EngineeringDiagramConventionRegister conventionRegister;
   private final RoutingMode routingMode;
   private final EngineeringDiagramPidRegisters pidRegisters;
+  private final boolean professionalPidLayout;
 
   /**
    * Creates an A3-landscape native renderer using byte-compatible legacy rectangle defaults.
@@ -340,6 +341,27 @@ public final class NativeEngineeringDiagramRenderer {
   public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet, SheetFormat format,
       EngineeringDiagramConventionRegister conventionRegister, RoutingMode routingMode,
       EngineeringDiagramPidRegisters pidRegisters) {
+    this(documentSet, format, conventionRegister, routingMode, pidRegisters, false);
+  }
+
+  /**
+   * Creates a renderer with optional topology-ordered process symbols and separate proposal-function panels.
+   *
+   * <p>
+   * Proposal panels retain all source identities and functional links without inventing physical process branches for
+   * unimplemented devices. Existing constructors preserve the legacy overlay presentation.
+   * </p>
+   *
+   * @param documentSet controlled semantic documents
+   * @param format paper geometry
+   * @param conventionRegister project symbol conventions
+   * @param routingMode physical connection routing
+   * @param pidRegisters source-linked proposal registers
+   * @param professionalPidLayout whether to separate process topology from unimplemented proposal functions
+   */
+  public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet, SheetFormat format,
+      EngineeringDiagramConventionRegister conventionRegister, RoutingMode routingMode,
+      EngineeringDiagramPidRegisters pidRegisters, boolean professionalPidLayout) {
     if (documentSet == null) {
       throw new IllegalArgumentException("documentSet must not be null");
     }
@@ -361,6 +383,7 @@ public final class NativeEngineeringDiagramRenderer {
     this.conventionRegister = conventionRegister;
     this.routingMode = routingMode;
     this.pidRegisters = pidRegisters;
+    this.professionalPidLayout = professionalPidLayout;
   }
 
   /**
@@ -449,7 +472,9 @@ public final class NativeEngineeringDiagramRenderer {
     double contentBottom = page.height - TITLE_BLOCK_HEIGHT - 7.0;
     page.commands
         .add(Command.rect(8.0, 8.0, page.width - 16.0, page.height - 16.0, "#1f2937", "none", 0.5, "sheet-border", ""));
-    page.commands.add(Command.text(12.0, 17.0, 4.2, documentSet.getTitle(), "#111827", "document-title", ""));
+    Command title = Command.text(12.0, 17.0, 4.2, documentSet.getTitle(), "#111827", "document-title", "");
+    title.bold = professionalPidLayout;
+    page.commands.add(title);
     page.commands.add(Command.text(page.width - 12.0, 17.0, 2.7,
         drawing.getContentProfile().name() + " / " + format.name(), "#374151", "sheet-format", "end"));
 
@@ -772,19 +797,71 @@ public final class NativeEngineeringDiagramRenderer {
         automatic.add(id);
       }
     }
-    Collections.sort(automatic);
-    int columns = Math.max(1, (int) Math.floor((contentRight - CONTENT_LEFT) / 62.0));
+    if (professionalPidLayout) {
+      automatic = topologyOrderedObjects(automatic, sheet, objects);
+    } else {
+      Collections.sort(automatic);
+    }
+    double horizontalSpacing = professionalPidLayout ? 110.0 : 62.0;
+    int columns = Math.max(1, (int) Math.floor((contentRight - CONTENT_LEFT) / horizontalSpacing));
     for (int index = 0; index < automatic.size(); index++) {
       int column = index % columns;
       int row = index / columns;
-      double x = CONTENT_LEFT + 24.0 + column * 62.0;
-      double y = CONTENT_TOP + 18.0 + row * 34.0;
+      double x = CONTENT_LEFT + (professionalPidLayout ? 42.0 : 24.0) + column * horizontalSpacing;
+      double y = CONTENT_TOP + (professionalPidLayout ? 38.0 : 18.0) + row * 34.0;
       if (y > contentBottom - OBJECT_HEIGHT) {
         diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_AUTO_LAYOUT_OVERFLOW",
             "Automatic grid placement exceeds the drawable area; manual sheet assignment or pinned layout is needed",
             automatic.get(index)));
       }
       result.put(automatic.get(index), new Point(x, y));
+    }
+    return result;
+  }
+
+  /**
+   * Orders automatic drawable symbols by the actual directed source topology, retaining deterministic cycle handling.
+   *
+   * @param automatic unpinned drawable identities
+   * @param sheet controlled sheet
+   * @param objects semantic source objects
+   * @return deterministic topological order, with cyclic remainder retained
+   */
+  private static List<String> topologyOrderedObjects(List<String> automatic, Sheet sheet,
+      Map<String, SemanticObject> objects) {
+    java.util.Set<String> remaining = new java.util.TreeSet<String>(automatic);
+    Map<String, java.util.Set<String>> predecessors = new TreeMap<String, java.util.Set<String>>();
+    for (String id : automatic) {
+      predecessors.put(id, new java.util.TreeSet<String>());
+    }
+    for (String id : sheet.getObjectNodeIds()) {
+      SemanticObject connection = objects.get(id);
+      if (connection == null || connection.getKind() != EngineeringNode.Kind.PIPE_SEGMENT) {
+        continue;
+      }
+      String source = endpointOwnerId(connection, "sourceEndpointId", objects);
+      String target = endpointOwnerId(connection, "targetEndpointId", objects);
+      if (remaining.contains(source) && predecessors.containsKey(target) && !source.equals(target)) {
+        predecessors.get(target).add(source);
+      }
+    }
+    List<String> result = new ArrayList<String>();
+    while (!remaining.isEmpty()) {
+      String next = null;
+      for (String id : remaining) {
+        if (predecessors.get(id).isEmpty()) {
+          next = id;
+          break;
+        }
+      }
+      if (next == null) {
+        next = remaining.iterator().next();
+      }
+      remaining.remove(next);
+      result.add(next);
+      for (java.util.Set<String> values : predecessors.values()) {
+        values.remove(next);
+      }
     }
     return result;
   }
@@ -1101,9 +1178,10 @@ public final class NativeEngineeringDiagramRenderer {
       color = "#2563eb";
       dash = "2 2";
     }
+    int firstCommand = page.commands.size();
     page.commands.add(Command.polyline(points, color, 0.8, dash, connection.getId(), protectedGeometry));
     if (routingMode == RoutingMode.FIXED_PORT_ORTHOGONAL) {
-      addFlowArrow(page, points, color, connection.getId());
+      addFlowArrow(page, points, color, connection.getId(), professionalPidLayout);
     }
     String label = routeLabel;
     if (label == null || label.trim().isEmpty()) {
@@ -1121,6 +1199,7 @@ public final class NativeEngineeringDiagramRenderer {
     page.routes.add(new RouteView(connection.getId(), points, label, labelPoint,
         endpointOwnerId(connection, "sourceEndpointId", objects),
         endpointOwnerId(connection, "targetEndpointId", objects)));
+    annotateSvgGroup(page, firstCommand, "data-stream", connection.getId());
   }
 
   private void addRouteQualityDiagnostics(Page page, Map<String, Point> positions, List<Diagnostic> diagnostics) {
@@ -1193,6 +1272,7 @@ public final class NativeEngineeringDiagramRenderer {
   }
 
   private void addObject(Page page, SemanticObject object, Point position) {
+    int firstCommand = page.commands.size();
     SymbolConvention convention = conventionRegister.getSymbolConvention(object.getKind());
     SymbolShape shape = convention == null ? SymbolShape.RECTANGLE : convention.getShape();
     String stroke = convention == null ? "#1f2937" : convention.getStrokeColor();
@@ -1209,12 +1289,48 @@ public final class NativeEngineeringDiagramRenderer {
     if ("MATERIAL_BLOCK".equals(object.getProperties().get("projectionKind"))) {
       page.commands.add(
           Command.text(position.x, position.y, primaryTextSize(object), primary, "#111827", object.getId(), "middle"));
+      annotateSvgGroup(page, firstCommand, "data-tag", primary);
       return;
     }
     page.commands.add(Command.text(position.x, position.y - 0.8, primaryTextSize(object), primary, "#111827",
         object.getId(), "middle"));
     String secondary = shape == SymbolShape.PROCESS_EQUIPMENT ? equipmentFamily(object) : object.getKind().name();
     page.commands.add(Command.text(position.x, position.y + 4.0, 2.0, secondary, "#4b5563", object.getId(), "middle"));
+    annotateSvgGroup(page, firstCommand, "data-tag", primary);
+  }
+
+  /**
+   * Associates the exact contiguous source-symbol or route commands with their visible semantic identity.
+   *
+   * @param page current page
+   * @param firstCommand first command belonging to this source object
+   * @param attribute SVG node or stream identity attribute
+   * @param value actual source identity
+   */
+  private void annotateSvgGroup(Page page, int firstCommand, String attribute, String value) {
+    if (!professionalPidLayout) {
+      return;
+    }
+    for (int index = firstCommand; index < page.commands.size(); index++) {
+      Command command = page.commands.get(index);
+      command.svgGroupAttribute = attribute;
+      command.svgGroupValue = value;
+    }
+  }
+
+  /**
+   * Groups actual review-panel graphics while preserving their explicit proposed functional status.
+   *
+   * @param page current page
+   * @param firstCommand first graphics command in this functional instance
+   * @param attribute SVG node or edge identity attribute
+   * @param value proposal identity
+   */
+  private void annotateSvgProposalGroup(Page page, int firstCommand, String attribute, String value) {
+    annotateSvgGroup(page, firstCommand, attribute, value);
+    for (int index = firstCommand; index < page.commands.size(); index++) {
+      page.commands.get(index).svgProposed = true;
+    }
   }
 
   private static void addProcessEquipmentSymbol(Page page, SemanticObject object, Point position, String stroke,
@@ -1319,7 +1435,8 @@ public final class NativeEngineeringDiagramRenderer {
     return "EQUIPMENT";
   }
 
-  private static void addFlowArrow(Page page, List<Point> points, String color, String connectionId) {
+  private static void addFlowArrow(Page page, List<Point> points, String color, String connectionId,
+      boolean arrowAtEnd) {
     for (int index = points.size() - 1; index > 0; index--) {
       Point start = points.get(index - 1);
       Point end = points.get(index);
@@ -1329,7 +1446,7 @@ public final class NativeEngineeringDiagramRenderer {
       }
       double unitX = (end.x - start.x) / length;
       double unitY = (end.y - start.y) / length;
-      Point tip = new Point(start.x + (end.x - start.x) * 0.65, start.y + (end.y - start.y) * 0.65);
+      Point tip = arrowAtEnd ? end : new Point(start.x + (end.x - start.x) * 0.65, start.y + (end.y - start.y) * 0.65);
       Point base = new Point(tip.x - unitX * 3.0, tip.y - unitY * 3.0);
       double perpendicularX = -unitY * 1.4;
       double perpendicularY = unitX * 1.4;
@@ -1365,6 +1482,10 @@ public final class NativeEngineeringDiagramRenderer {
 
   private void addPidProposalOverlay(Page page, Map<String, SemanticObject> objects, Map<String, Point> positions) {
     if (pidRegisters == null) {
+      return;
+    }
+    if (professionalPidLayout) {
+      addProfessionalPidPanels(page, objects, positions);
       return;
     }
     page.commands.add(Command.text(page.width - 12.0, 22.0, 2.2, "P&ID PROPOSAL OVERLAY - REVIEW REQUIRED", "#1d4ed8",
@@ -1434,6 +1555,90 @@ public final class NativeEngineeringDiagramRenderer {
       }
       page.commands
           .add(Command.polyline(points, "#2563eb", 0.5, "2 2", "pid-signal:" + sourceId + ":" + targetId, false));
+    }
+  }
+
+  /**
+   * Draws readable source-linked proposal and functional-link panels below the actual process topology.
+   *
+   * <p>
+   * These are review panels, not invented physical tappings or installed safeguard branches. Their separate placement
+   * prevents unimplemented proposals from obscuring the source process or implying executable connections.
+   * </p>
+   *
+   * @param page current page
+   * @param objects canonical source objects
+   * @param positions actual process-symbol positions
+   */
+  private void addProfessionalPidPanels(Page page, Map<String, SemanticObject> objects, Map<String, Point> positions) {
+    Map<String, Object> data = pidRegisters.toMap();
+    Map<String, Map<String, Object>> rows = new TreeMap<String, Map<String, Object>>();
+    for (String register : new String[] {"nozzles", "valves", "instruments", "interfaces"}) {
+      for (Map<String, Object> row : proposalRows(data, register)) {
+        if (positions.containsKey(textValue(row.get("semanticEquipmentId")))) {
+          rows.put(textValue(row.get("id")), row);
+        }
+      }
+    }
+    double top = 108.0;
+    for (Point position : positions.values()) {
+      top = Math.max(top, position.y + 42.0);
+    }
+    page.commands.add(Command.text(16.0, top - 16.0, 2.5, "Legend", "#374151", "pid-detail:legend", ""));
+    page.commands.add(Command.text(16.0, top - 11.0, 2.5,
+        "Solid dark: source process piping. Dashed blue: proposed functional link; requires implementation.", "#374151",
+        "pid-detail:legend-lines", ""));
+    page.commands.add(Command.text(16.0, top, 3.0, "DESIGN PROPOSALS - IMPLEMENTATION / REVIEW REQUIRED", "#1d4ed8",
+        "pid-detail:heading", ""));
+    page.commands.add(Command.text(16.0, top + 7.0, 2.5, "Tag", "#374151", "pid-detail:tag-heading", ""));
+    page.commands
+        .add(Command.text(65.0, top + 7.0, 2.5, "Source equipment", "#374151", "pid-detail:owner-heading", ""));
+    page.commands
+        .add(Command.text(111.0, top + 7.0, 2.5, "Function / component", "#374151", "pid-detail:type-heading", ""));
+    int rowIndex = 0;
+    for (Map.Entry<String, Map<String, Object>> entry : rows.entrySet()) {
+      Map<String, Object> row = entry.getValue();
+      double y = top + 14.0 + rowIndex++ * 4.3;
+      String id = "pid-detail:" + entry.getKey();
+      page.commands.add(Command.text(16.0, y, 2.5, textValue(row.get("tag")), "#111827", id + ":tag", ""));
+      page.commands.add(Command.text(65.0, y, 2.5, textValue(row.get("equipmentTag")), "#374151", id + ":owner", ""));
+      page.commands.add(Command.text(111.0, y, 2.5, textValue(row.get("type")), "#374151", id + ":type", ""));
+    }
+    page.commands.add(Command.text(220.0, top + 7.0, 2.5, "Proposed functional links (not process piping)", "#374151",
+        "pid-detail:signal-heading", ""));
+    List<Map<String, Object>> signals = proposalRows(data, "controlSignals");
+    Collections.sort(signals, new Comparator<Map<String, Object>>() {
+      @Override
+      public int compare(Map<String, Object> left, Map<String, Object> right) {
+        return signalId(left).compareTo(signalId(right));
+      }
+    });
+    int signalIndex = 0;
+    for (Map<String, Object> signal : signals) {
+      String sourceId = textValue(signal.get("sourcePidElementId"));
+      String targetId = textValue(signal.get("targetPidElementId"));
+      if (!rows.containsKey(sourceId) || !rows.containsKey(targetId)) {
+        continue;
+      }
+      double y = top + 18.0 + signalIndex++ * 10.5;
+      String id = "pid-detail:" + signalId(signal);
+      int firstCommand = page.commands.size();
+      page.commands.add(
+          Command.text(181.0, y - 4.0, 2.5, textValue(signal.get("sourceTag")), "#111827", id + ":source", "middle"));
+      page.commands.add(Command.rect(179.0, y - 2.0, 4.0, 4.0, "#2563eb", "#ffffff", 0.5, id + ":source-symbol", ""));
+      annotateSvgProposalGroup(page, firstCommand, "data-block", signalId(signal) + ":source");
+      firstCommand = page.commands.size();
+      page.commands.add(
+          Command.text(337.0, y - 4.0, 2.5, textValue(signal.get("targetTag")), "#111827", id + ":target", "middle"));
+      page.commands.add(Command.rect(335.0, y - 2.0, 4.0, 4.0, "#2563eb", "#ffffff", 0.5, id + ":target-symbol", ""));
+      annotateSvgProposalGroup(page, firstCommand, "data-block", signalId(signal) + ":target");
+      firstCommand = page.commands.size();
+      page.commands.add(Command.polyline(Arrays.asList(new Point(183.0, y), new Point(335.0, y)), "#2563eb", 0.5, "2 2",
+          "pid-signal:" + sourceId + ":" + targetId, false));
+      page.commands
+          .add(Command.polygon(Arrays.asList(new Point(335.0, y), new Point(332.5, y - 1.2), new Point(332.5, y + 1.2)),
+              "#2563eb", "#2563eb", 0.4, id + ":arrow"));
+      annotateSvgProposalGroup(page, firstCommand, "data-edge", signalId(signal));
     }
   }
 
@@ -1659,8 +1864,24 @@ public final class NativeEngineeringDiagramRenderer {
     svg.append("  <title>").append(xml(documentSet.getTitle())).append(" - ").append(xml(page.sheetId))
         .append("</title>\n");
     svg.append("  <g font-family=\"Arial,Helvetica,sans-serif\" fill=\"none\">\n");
+    String currentGroup = "";
     for (Command command : page.commands) {
+      String group = command.svgGroupAttribute.isEmpty() ? ""
+          : command.svgGroupAttribute + "=\"" + xml(command.svgGroupValue) + "\""
+              + (command.svgProposed ? " data-proposed=\"true\"" : "");
+      if (!currentGroup.equals(group)) {
+        if (!currentGroup.isEmpty()) {
+          svg.append("    </g>\n");
+        }
+        if (!group.isEmpty()) {
+          svg.append("    <g ").append(group).append(">\n");
+        }
+        currentGroup = group;
+      }
       svg.append(command.toSvg());
+    }
+    if (!currentGroup.isEmpty()) {
+      svg.append("    </g>\n");
     }
     svg.append("  </g>\n</svg>\n");
     return svg.toString();
@@ -1694,12 +1915,14 @@ public final class NativeEngineeringDiagramRenderer {
     }
     objects.add(bytes("<< /Type /Pages /Kids [" + kids + "] /Count " + pages.size() + " >>"));
     objects.add(bytes("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"));
+    int boldFontObject = 4 + pages.size() * 2;
     for (int index = 0; index < pages.size(); index++) {
       Page page = pages.get(index);
       int contentObject = 5 + index * 2;
       String mediaBox = "0 0 " + number(page.width * MM_TO_POINT) + " " + number(page.height * MM_TO_POINT);
-      objects.add(bytes("<< /Type /Page /Parent 2 0 R /MediaBox [" + mediaBox
-          + "] /Resources << /Font << /F1 3 0 R >> >> /Contents " + contentObject + " 0 R >>"));
+      objects.add(bytes("<< /Type /Page /Parent 2 0 R /MediaBox [" + mediaBox + "] /Resources << /Font << /F1 3 0 R"
+          + (professionalPidLayout ? " /F2 " + boldFontObject + " 0 R" : "") + " >> >> /Contents " + contentObject
+          + " 0 R >>"));
       StringBuilder stream = new StringBuilder("q\n");
       for (Command command : page.commands) {
         stream.append(command.toPdf(page.height, routingMode == RoutingMode.FIXED_PORT_ORTHOGONAL));
@@ -1711,6 +1934,9 @@ public final class NativeEngineeringDiagramRenderer {
       write(content, streamBytes);
       write(content, bytes("endstream"));
       objects.add(content.toByteArray());
+    }
+    if (professionalPidLayout) {
+      objects.add(bytes("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>"));
     }
     ByteArrayOutputStream output = new ByteArrayOutputStream();
     write(output, bytes("%PDF-1.4\n%âãÏÓ\n"));
@@ -2128,6 +2354,10 @@ public final class NativeEngineeringDiagramRenderer {
     private final String id;
     private final String anchor;
     private final boolean protectedGeometry;
+    private String svgGroupAttribute = "";
+    private String svgGroupValue = "";
+    private boolean svgProposed;
+    private boolean bold;
 
     private Command(String type, List<Point> points, double x, double y, double width, double height, double size,
         String text, String stroke, String fill, double strokeWidth, String dash, String id, String anchor,
@@ -2187,6 +2417,9 @@ public final class NativeEngineeringDiagramRenderer {
         if (!anchor.isEmpty()) {
           result.append(" text-anchor=\"").append(anchor).append("\"");
         }
+        if (bold) {
+          result.append(" font-weight=\"bold\"");
+        }
       } else {
         result.append("polygon".equals(type) ? "polygon points=\"" : "polyline points=\"");
         for (int index = 0; index < points.size(); index++) {
@@ -2223,6 +2456,9 @@ public final class NativeEngineeringDiagramRenderer {
           .append('|').append(number(height)).append('|').append(number(size)).append('|').append(stroke).append('|')
           .append(fill).append('|').append(number(strokeWidth)).append('|').append(dash).append('|').append(anchor)
           .append('|').append(text.length()).append(':').append(text);
+      if (bold) {
+        result.append("|bold");
+      }
       for (Point point : points) {
         result.append('|').append(number(point.x)).append(',').append(number(point.y));
       }
@@ -2238,7 +2474,7 @@ public final class NativeEngineeringDiagramRenderer {
         } else if ("end".equals(anchor)) {
           adjustedX -= text.length() * size * (paperTextSize ? 0.52 : 0.48);
         }
-        result.append(rgb(fill, false)).append(" BT /F1 ")
+        result.append(rgb(fill, false)).append(bold ? " BT /F2 " : " BT /F1 ")
             .append(number(size * MM_TO_POINT * (paperTextSize ? 1.0 : 0.78))).append(" Tf ")
             .append(number(adjustedX * MM_TO_POINT)).append(' ').append(number((pageHeight - y) * MM_TO_POINT))
             .append(" Td (").append(pdf(text)).append(") Tj ET\n");

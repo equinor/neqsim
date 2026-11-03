@@ -2,6 +2,8 @@ package neqsim.process.engineering.dexpi;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Locale;
@@ -24,7 +26,9 @@ import org.xml.sax.SAXException;
 import neqsim.process.engineering.EngineeringBoundary;
 import neqsim.process.engineering.EngineeringProject;
 import neqsim.process.engineering.EngineeringRequirement;
+import neqsim.process.engineering.ReliefScenarioBasis;
 import neqsim.process.processmodel.dexpi.Dexpi20SemanticValidator;
+import neqsim.process.processmodel.dexpi.Dexpi201XmlWriter;
 import neqsim.process.processmodel.dexpi.Dexpi20XmlValidator;
 
 /** Adds governed instrumentation, safeguards and explicit boundaries to native DEXPI 2.0 XML. */
@@ -42,9 +46,12 @@ final class Dexpi20EngineeringMaterializer {
       factory.setExpandEntityReferences(false);
       Document document = factory.newDocumentBuilder().parse(file.toFile());
       addEngineeringModel(project, document);
+      if (Dexpi201XmlWriter.isSpecification201(document)) {
+        normalize201PipingOwners(document);
+      }
       removeWhitespaceNodes(document.getDocumentElement());
       write(document, file);
-      Dexpi20XmlValidator.validate(file);
+      Dexpi20XmlValidator.validate(file, Dexpi201XmlWriter.isSpecification201(document));
       Dexpi20SemanticValidator.validateOrThrow(file);
     } catch (ParserConfigurationException ex) {
       throw new IOException("Could not configure native DEXPI engineering materialization", ex);
@@ -64,10 +71,13 @@ final class Dexpi20EngineeringMaterializer {
     Set<String> usedIds = collectIds(document);
     Map<String, Element> equipment = collectEquipmentByTag(document);
     Element functions = directComponents(document, plant, "ProcessInstrumentationFunctions");
-    Element diagramGroups = createDiagram(document, engineeringModel, plant.getAttribute("id"), "NeqSim governed P&ID",
-        "PIPING_AND_INSTRUMENTATION_DIAGRAM");
-    Element pfdGroups = createDiagram(document, engineeringModel, plant.getAttribute("id"), "NeqSim governed PFD",
-        "PROCESS_FLOW_DIAGRAM");
+    boolean specification201 = Dexpi201XmlWriter.isSpecification201(document);
+    Element diagramGroups = specification201 ? null
+        : createDiagram(document, engineeringModel, plant.getAttribute("id"), "NeqSim governed P&ID",
+            "PIPING_AND_INSTRUMENTATION_DIAGRAM");
+    Element pfdGroups = specification201 ? null
+        : createDiagram(document, engineeringModel, plant.getAttribute("id"), "NeqSim governed PFD",
+            "PROCESS_FLOW_DIAGRAM");
     int pfdRepresentationNumber = 1;
     for (Map.Entry<String, Element> item : equipment.entrySet()) {
       appendRepresentation(document, pfdGroups, item.getValue().getAttribute("id"), item.getKey(),
@@ -88,14 +98,16 @@ final class Dexpi20EngineeringMaterializer {
       }
       appendInstrumentationFunction(document, functions, diagramGroups, usedIds, requirement, protectedEquipment,
           representationNumber++);
-      if (requiresFinalElement(requirement)) {
+      EngineeringBoundary reliefDestination = controlledReliefDestination(project, requirement);
+      if (requiresFinalElement(requirement) && (!specification201 || reliefDestination != null)) {
         appendSafeguardSegment(document, safeguardSegments, diagramGroups, usedIds, requirement, protectedEquipment,
-            segmentNumber++, representationNumber++);
+            segmentNumber++, representationNumber++, reliefDestination);
       }
     }
     for (EngineeringBoundary boundary : project.getBoundaries()) {
       Element protectedEquipment = equipment.get(boundary.getEquipmentTag());
-      if (protectedEquipment != null) {
+      if (protectedEquipment != null && (!specification201 || boundary.isResolved())
+          && (!specification201 || !isReliefDestination(project, boundary))) {
         appendBoundarySegment(document, safeguardSegments, diagramGroups, usedIds, boundary, protectedEquipment,
             segmentNumber++, representationNumber++);
       }
@@ -119,7 +131,8 @@ final class Dexpi20EngineeringMaterializer {
     data(document, segment, "SegmentNumber", "BOUNDARY-" + number);
     Element items = components(document, segment, "Items");
     Element connector = object(document, connectorId, "Plant/Piping." + connectorType);
-    data(document, connector, "PositionNumber", boundary.getId());
+    data(document, connector, Dexpi201XmlWriter.isSpecification201(document) ? "PipeConnectorNumber" : "PositionNumber",
+        boundary.getId());
     Element nodes = components(document, connector, "Nodes");
     nodes.appendChild(object(document, connectorNode, "Plant/Piping.PipingNode"));
     items.appendChild(connector);
@@ -150,7 +163,12 @@ final class Dexpi20EngineeringMaterializer {
       Set<String> usedIds, EngineeringRequirement requirement, Element protectedEquipment, int representationNumber) {
     String base = safe(requirement.getId());
     String functionId = uniqueId("ProcessInstrumentationFunction_" + base, usedIds);
-    Element function = object(document, functionId, "Plant/Instrumentation.ProcessInstrumentationFunction");
+    boolean safety = requirement.getType() == EngineeringRequirement.Type.TRIP
+        || requirement.getType() == EngineeringRequirement.Type.FIRE_AND_GAS;
+    boolean specification201 = Dexpi201XmlWriter.isSpecification201(document);
+    Element function = object(document, functionId,
+        specification201 && safety ? "Plant/Instrumentation.ProcessSafetyFunction"
+            : "Plant/Instrumentation.ProcessInstrumentationFunction");
     dataReference(document, function, "Location", "Plant/Enumerations.LocationClassification.CentralLocation");
     data(document, function, "ProcessInstrumentationFunctionCategory", category(requirement));
     data(document, function, "ProcessInstrumentationFunctionNumber", requirement.getId());
@@ -161,7 +179,15 @@ final class Dexpi20EngineeringMaterializer {
     String generatorId = uniqueId("ProcessSignalGeneratingFunction_" + base, usedIds);
     Element generator = object(document, generatorId, "Plant/Instrumentation.ProcessSignalGeneratingFunction");
     data(document, generator, "ProcessSignalGeneratingFunctionNumber", sensingTag(requirement));
-    references(document, generator, "SensingLocation", protectedEquipment.getAttribute("id"));
+    if (specification201) {
+      String nozzleId = uniqueId(protectedEquipment.getAttribute("id") + "_InstrumentNozzle_" + base, usedIds);
+      Element nozzle = object(document, nozzleId, "Plant/ProcessEquipment.InstrumentNozzle");
+      data(document, nozzle, "SubTagName", "INSTRUMENT_" + base);
+      directComponents(document, protectedEquipment, "Nozzles").appendChild(nozzle);
+      references(document, generator, "SensingLocation", nozzleId);
+    } else {
+      references(document, generator, "SensingLocation", protectedEquipment.getAttribute("id"));
+    }
     generators.appendChild(generator);
 
     Element signals = components(document, function, "SignalConveyingFunctions");
@@ -176,12 +202,14 @@ final class Dexpi20EngineeringMaterializer {
 
   private static void appendSafeguardSegment(Document document, Element segments, Element diagramGroups,
       Set<String> usedIds, EngineeringRequirement requirement, Element protectedEquipment, int number,
-      int representationNumber) {
+      int representationNumber, EngineeringBoundary controlledDestination) {
     String base = safe(requirement.getId());
     String valveId = uniqueId(finalElementPrefix(requirement) + "_" + base, usedIds);
     String valveInletNode = uniqueId(valveId + "_InletNode", usedIds);
     String valveOutletNode = uniqueId(valveId + "_OutletNode", usedIds);
-    String boundaryId = uniqueId(boundaryDirection(requirement) + "_" + base, usedIds);
+    String boundaryId = uniqueId(
+        controlledDestination == null ? boundaryDirection(requirement) + "_" + base : controlledDestination.getId(),
+        usedIds);
     String boundaryNode = uniqueId(boundaryId + "_Node", usedIds);
     String equipmentNode = appendDedicatedNozzle(document, protectedEquipment, usedIds, base);
 
@@ -191,8 +219,17 @@ final class Dexpi20EngineeringMaterializer {
     data(document, segment, "SegmentNumber", "SAFEGUARD-" + number);
     Element items = components(document, segment, "Items");
 
-    Element valve = object(document, valveId, finalElementType(requirement));
-    data(document, valve, "PositionNumber", finalElementTag(requirement));
+    String valveType = finalElementType(requirement);
+    if (Dexpi201XmlWriter.isSpecification201(document)) {
+      valveType = requirement.getType() == EngineeringRequirement.Type.RELIEF ? "Plant/Piping.SafetyValveOrFitting"
+          : "Plant/Piping.SwingCheckValve".equals(valveType) ? "Plant/Piping.CheckValve" : "Plant/Piping.OperatedValve";
+    }
+    Element valve = object(document, valveId, valveType);
+    data(document, valve,
+        Dexpi201XmlWriter.isSpecification201(document) && requirement.getType() != EngineeringRequirement.Type.RELIEF
+            ? "PipingComponentNumber"
+            : "PositionNumber",
+        finalElementTag(requirement));
     Element valveNodes = components(document, valve, "Nodes");
     valveNodes.appendChild(object(document, valveInletNode, "Plant/Piping.PipingNode"));
     valveNodes.appendChild(object(document, valveOutletNode, "Plant/Piping.PipingNode"));
@@ -200,7 +237,8 @@ final class Dexpi20EngineeringMaterializer {
     appendRepresentation(document, diagramGroups, valveId, finalElementTag(requirement), representationNumber);
 
     Element boundary = object(document, boundaryId, "Plant/Piping." + boundaryDirection(requirement));
-    data(document, boundary, "PositionNumber", boundaryService(requirement) + "_BOUNDARY");
+    data(document, boundary, Dexpi201XmlWriter.isSpecification201(document) ? "PipeConnectorNumber" : "PositionNumber",
+        controlledDestination == null ? boundaryService(requirement) + "_BOUNDARY" : controlledDestination.getId());
     Element boundaryNodes = components(document, boundary, "Nodes");
     boundaryNodes.appendChild(object(document, boundaryNode, "Plant/Piping.PipingNode"));
     items.appendChild(boundary);
@@ -236,6 +274,9 @@ final class Dexpi20EngineeringMaterializer {
 
   private static void appendRepresentation(Document document, Element groups, String representedId, String label,
       int number) {
+    if (groups == null) {
+      return;
+    }
     double x = 20.0 + (number % 8) * 45.0;
     double y = 30.0 + (number / 8) * 24.0;
     Element group = objectWithoutId(document, "Core/Diagram.RepresentationGroup");
@@ -265,12 +306,133 @@ final class Dexpi20EngineeringMaterializer {
     Element nozzles = directComponents(document, equipment, "Nozzles");
     String nozzleId = uniqueId(equipment.getAttribute("id") + "_SafeguardNozzle_" + base, usedIds);
     String nodeId = uniqueId(nozzleId + "_Node", usedIds);
-    Element nozzle = object(document, nozzleId, "Plant/ProcessEquipment.Nozzle");
+    Element nozzle = object(document, nozzleId,
+        Dexpi201XmlWriter.isSpecification201(document) ? "Plant/ProcessEquipment.ProcessNozzle"
+            : "Plant/ProcessEquipment.Nozzle");
     data(document, nozzle, "SubTagName", "SAFEGUARD_" + base);
     Element nodes = components(document, nozzle, "Nodes");
     nodes.appendChild(object(document, nodeId, "Plant/Piping.PipingNode"));
     nozzles.appendChild(nozzle);
     return nodeId;
+  }
+
+  /**
+   * Binds piping endpoints to the actual node-owning nozzle or component.
+   *
+   * @param document native DEXPI 2.0.1 instance document
+   */
+  private static void normalize201PipingOwners(Document document) {
+    Map<String, Element> byId = new LinkedHashMap<String, Element>();
+    NodeList objects = document.getElementsByTagName("Object");
+    for (int index = 0; index < objects.getLength(); index++) {
+      Element object = (Element) objects.item(index);
+      byId.put(object.getAttribute("id"), object);
+    }
+    for (int index = 0; index < objects.getLength(); index++) {
+      Element object = (Element) objects.item(index);
+      for (String direction : new String[] {"Source", "Target"}) {
+        Element item = null;
+        Element node = null;
+        for (Node child = object.getFirstChild(); child != null; child = child.getNextSibling()) {
+          if (child instanceof Element && "References".equals(((Element) child).getTagName())) {
+            Element reference = (Element) child;
+            if ((direction + "Item").equals(reference.getAttribute("property"))) {
+              item = reference;
+            } else if ((direction + "Node").equals(reference.getAttribute("property"))) {
+              node = byId.get(reference.getAttribute("objects").replace("#", ""));
+            }
+          }
+        }
+        if (item != null && node != null && node.getParentNode() != null
+            && node.getParentNode().getParentNode() instanceof Element) {
+          Element owner = (Element) node.getParentNode().getParentNode();
+          item.setAttribute("objects", "#" + owner.getAttribute("id"));
+        }
+      }
+    }
+  }
+
+  /**
+   * Finds a reviewed credible relief basis and explicitly resolved disposal boundary.
+   *
+   * @param project governed engineering project
+   * @param requirement proposed requirement
+   * @return controlled destination or null when the physical proposal is not supported
+   */
+  private static EngineeringBoundary controlledReliefDestination(EngineeringProject project,
+      EngineeringRequirement requirement) {
+    if (requirement.getType() != EngineeringRequirement.Type.RELIEF) {
+      return null;
+    }
+    boolean credible = false;
+    for (ReliefScenarioBasis basis : project.getReliefScenarioBases()) {
+      credible |= requirement.getEquipmentTag().equals(basis.getEquipmentTag()) && basis.getMissingFields().isEmpty();
+    }
+    if (credible) {
+      for (EngineeringBoundary boundary : project.getBoundaries()) {
+        if (requirement.getEquipmentTag().equals(boundary.getEquipmentTag()) && boundary.isResolved()
+            && boundary.getType() == EngineeringBoundary.Type.FLARE_HEADER) {
+          return boundary;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Identifies boundaries already represented through controlled relief proposals.
+   *
+   * @param project engineering project
+   * @param boundary candidate boundary
+   * @return whether a relief path owns this disposal boundary
+   */
+  private static boolean isReliefDestination(EngineeringProject project, EngineeringBoundary boundary) {
+    for (EngineeringRequirement requirement : project.getRequirements()) {
+      if (controlledReliefDestination(project, requirement) == boundary) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Reports unsupported inferred final-element routes instead of inventing material paths.
+   *
+   * @param project engineering project
+   * @return deterministic, review-required native-projection evidence
+   */
+  static Map<String, Object> projectionEvidence(EngineeringProject project) {
+    Map<String, Object> result = new LinkedHashMap<String, Object>();
+    List<Map<String, Object>> unresolved = new ArrayList<Map<String, Object>>();
+    for (EngineeringRequirement requirement : project.getRequirements()) {
+      if (requiresFinalElement(requirement)) {
+        Map<String, Object> item = new LinkedHashMap<String, Object>();
+        item.put("requirementId", requirement.getId());
+        item.put("equipmentTag", requirement.getEquipmentTag());
+        item.put("proposedFinalElementTag", finalElementTag(requirement));
+        item.put("status", "HOLD");
+        EngineeringBoundary destination = controlledReliefDestination(project, requirement);
+        item.put("physicalProposalExported", Boolean.valueOf(destination != null));
+        item.put("reason", destination == null ? "NO_CONTROLLED_FINAL_ELEMENT_ROUTE"
+            : "CONTROLLED_RELIEF_PROPOSAL_REQUIRES_EXECUTABLE_MODEL_BINDING");
+        item.put("simulationBindingStatus", "EXPLICIT_LIVE_DEVICE_AND_PATH_BINDING_REQUIRED");
+        unresolved.add(item);
+      }
+    }
+    List<String> boundaries = new ArrayList<String>();
+    for (EngineeringBoundary boundary : project.getBoundaries()) {
+      if (!boundary.isResolved()) {
+        boundaries.add(boundary.getId());
+      }
+    }
+    result.put("schemaVersion", "neqsim_dexpi_201_engineering_projection.v1");
+    result.put("dexpiSpecificationVersion", "2.0.1");
+    result.put("unconfiguredSafetyFinalElements", unresolved);
+    result.put("unresolvedBoundaries", boundaries);
+    result.put("nativeGraphicsStatus", "SEPARATE_DRAWING_PROJECTION_REQUIRED");
+    result.put("approvalStatus", "REVIEW_REQUIRED");
+    result.put("fitnessForConstruction", Boolean.FALSE);
+    return result;
   }
 
   private static boolean requiresFinalElement(EngineeringRequirement requirement) {

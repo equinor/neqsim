@@ -1,0 +1,10 @@
+<Model name="Builtin" uri="https://data.dexpi.org/meta/1.0.0/Builtin">
+  <StringType name="AnyURI"/>
+  <BooleanType name="Boolean"/>
+  <DateTimeType name="DateTime"/>
+  <DoubleType name="Double"/>
+  <IntegerType name="Integer"/>
+  <StringType name="String"/>
+  <UndefinedType name="Undefined"/>
+  <IntegerType name="UnsignedByte"/>
+</Model>

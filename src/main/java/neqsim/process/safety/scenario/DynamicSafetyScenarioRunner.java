@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.dynamics.DynamicCapabilityReport;
 import neqsim.process.dynamics.TransientStepIdentifier;
 import neqsim.process.logic.ProcessLogic;
 import neqsim.process.processmodel.ProcessSystem;
@@ -19,6 +20,36 @@ public final class DynamicSafetyScenarioRunner {
   }
 
   public static DynamicSafetyScenarioResult run(ProcessSystem baseProcess, DynamicSafetyScenario scenario) {
+    return runConfigured(baseProcess, scenario, false);
+  }
+
+  /**
+   * Runs an isolated scenario with capability and convergence preflight before events or transient stepping.
+   *
+   * <p>
+   * The audit runs after scenario-specific configuration, steady-state initialization and logic-factory construction so
+   * it examines the final configured copy. Failures remain result errors; they do not start initiating events or
+   * execute protection logic.
+   * </p>
+   *
+   * @param baseProcess source process that must remain unchanged
+   * @param scenario controlled dynamic test definition
+   * @return response evidence with any initialization or capability failure
+   */
+  public static DynamicSafetyScenarioResult runStrict(ProcessSystem baseProcess, DynamicSafetyScenario scenario) {
+    return runConfigured(baseProcess, scenario, true);
+  }
+
+  /**
+   * Executes one configured copy under the selected compatibility or strict preflight policy.
+   *
+   * @param baseProcess source process
+   * @param scenario controlled test
+   * @param strict whether initialization and capability audit must pass before execution
+   * @return scenario evidence
+   */
+  private static DynamicSafetyScenarioResult runConfigured(ProcessSystem baseProcess, DynamicSafetyScenario scenario,
+      boolean strict) {
     if (baseProcess == null || scenario == null) {
       throw new IllegalArgumentException("baseProcess and scenario are required");
     }
@@ -34,14 +65,28 @@ public final class DynamicSafetyScenarioRunner {
     } catch (RuntimeException ex) {
       errors.add("Steady-state initialization failed: " + failureMessage(ex));
     }
+    if (strict) {
+      if (!converged && errors.isEmpty()) {
+        errors.add("Steady-state initialization did not converge");
+      }
+    }
 
     List<ProcessLogic> logic = new ArrayList<ProcessLogic>();
-    for (DynamicSafetyScenario.LogicFactory factory : scenario.getLogicFactories()) {
-      logic.add(factory.create(process));
+    if (!strict || errors.isEmpty()) {
+      for (DynamicSafetyScenario.LogicFactory factory : scenario.getLogicFactories()) {
+        logic.add(factory.create(process));
+      }
+    }
+    if (strict && errors.isEmpty()) {
+      errors.addAll(DynamicCapabilityReport.from(process).getStrictPreflightIssues());
     }
     Map<String, DynamicSafetyScenarioResult.CriterionResult> criteria = new LinkedHashMap<String, DynamicSafetyScenarioResult.CriterionResult>();
     for (DynamicScenarioCriterion criterion : scenario.getCriteria()) {
       criteria.put(criterion.getId(), new DynamicSafetyScenarioResult.CriterionResult(criterion));
+    }
+    if (strict && !errors.isEmpty()) {
+      return finish(scenario, criteria, logic, errors, converged, "STRICT_PREFLIGHT_FAILED", 0.0,
+          new ArrayList<Double>());
     }
 
     DynamicSafetyScenarioResult result = scenario.isEventExactTimingEnabled()

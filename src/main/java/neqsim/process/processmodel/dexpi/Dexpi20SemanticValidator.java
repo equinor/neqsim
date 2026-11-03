@@ -23,18 +23,22 @@ public final class Dexpi20SemanticValidator {
   private static final String CORE_MODEL = "https://data.dexpi.org/models/2.0.0/Core.xml";
   private static final String PLANT_MODEL = "https://data.dexpi.org/models/2.0.0/Plant.xml";
   private static final String PROCESS_MODEL = "https://data.dexpi.org/models/2.0.0/Process.xml";
-  private static final Set<String> SUPPORTED_TYPES = Collections.unmodifiableSet(new LinkedHashSet<String>(
-      Arrays.asList("Core/EngineeringModel", "Core/QualifiedValue", "Core/PhysicalQuantities.PhysicalQuantity",
-          "Core/Diagram.Diagram", "Core/Diagram.RepresentationGroup", "Core/Diagram.Static", "Core/Diagram.PolyLine",
-          "Core/Diagram.Polygon", "Core/Diagram.Text", "Core/Diagram.Color", "Core/Diagram.Point",
-          "Core/Diagram.Stroke", "Plant/PlantModel", "Plant/Diagram.PlantMetaData",
-          "Plant/ProcessEquipment.ProcessEquipment", "Plant/ProcessEquipment.CentrifugalCompressor",
+  private static final Set<String> SUPPORTED_TYPES = Collections
+      .unmodifiableSet(new LinkedHashSet<String>(Arrays.asList("Core/EngineeringModel", "Core/QualifiedValue",
+          "Core/PhysicalQuantities.PhysicalQuantity", "Core/Diagram.Diagram", "Core/Diagram.RepresentationGroup",
+          "Core/Diagram.Static", "Core/Diagram.PolyLine", "Core/Diagram.Polygon", "Core/Diagram.Text",
+          "Core/Diagram.Color", "Core/Diagram.Point", "Core/Diagram.Stroke", "Plant/PlantModel",
+          "Plant/Diagram.PlantMetaData", "Plant/ProcessEquipment.ProcessEquipment", "Plant/ProcessEquipment.Mixer",
+          "Plant/Piping.PipeTee", "Plant/ProcessEquipment.CentrifugalCompressor",
           "Plant/ProcessEquipment.CentrifugalPump", "Plant/ProcessEquipment.Separator",
           "Plant/ProcessEquipment.AirCoolingSystem", "Plant/ProcessEquipment.TubularHeatExchanger",
           "Plant/ProcessEquipment.FiredHeater", "Plant/ProcessEquipment.Tank", "Plant/ProcessEquipment.Nozzle",
+          "Plant/ProcessEquipment.ProcessNozzle", "Plant/ProcessEquipment.InstrumentNozzle",
+          "Plant/ProcessEquipment.AccessNozzle", "Plant/Instrumentation.ProcessSafetyFunction",
           "Plant/Piping.PipingNetworkSystem", "Plant/Piping.PipingNetworkSegment", "Plant/Piping.PipingNode",
           "Plant/Piping.Pipe", "Plant/Piping.GlobeValve", "Plant/Piping.SpringLoadedGlobeSafetyValve",
-          "Plant/Piping.SwingCheckValve", "Plant/Piping.FlowInPipeOffPageConnector",
+          "Plant/Piping.SwingCheckValve", "Plant/Piping.CheckValve", "Plant/Piping.OperatedValve",
+          "Plant/Piping.SafetyValveOrFitting", "Plant/Piping.RuptureDisc", "Plant/Piping.FlowInPipeOffPageConnector",
           "Plant/Piping.FlowOutPipeOffPageConnector", "Plant/Instrumentation.ProcessInstrumentationFunction",
           "Plant/Instrumentation.ProcessSignalGeneratingFunction", "Plant/Instrumentation.MeasuringLineFunction",
           "Process/ProcessModel", "Process/Process.MaterialPort", "Process/Process.Stream", "Process/Process.Source",
@@ -113,15 +117,17 @@ public final class Dexpi20SemanticValidator {
     }
 
     Map<String, String> imports = collectImports(root, errors);
-    requireImport(imports, "Core", CORE_MODEL, errors);
+    boolean specification201 = Dexpi201XmlWriter.CORE_MODEL.equals(imports.get("Core"));
+    requireImport(imports, "Core", specification201 ? Dexpi201XmlWriter.CORE_MODEL : CORE_MODEL, errors);
     if (!imports.containsKey("Plant") && !imports.containsKey("Process")) {
       errors.add("A DEXPI 2.0 exchange must import the Plant or Process information model.");
     }
     if (imports.containsKey("Plant")) {
-      requireImport(imports, "Plant", PLANT_MODEL, errors);
+      requireImport(imports, "Plant", specification201 ? Dexpi201XmlWriter.PLANT_MODEL : PLANT_MODEL, errors);
     }
     if (imports.containsKey("Process")) {
-      requireImport(imports, "Process", PROCESS_MODEL, errors);
+      requireImport(imports, "Process",
+          specification201 ? "https://data.dexpi.org/models/2.0.1/Process.xml" : PROCESS_MODEL, errors);
     }
 
     Map<String, Element> objectsById = new LinkedHashMap<String, Element>();
@@ -131,6 +137,9 @@ public final class Dexpi20SemanticValidator {
       Element object = (Element) objects.item(i);
       String type = object.getAttribute("type");
       validateType(type, imports, true, errors);
+      if (!specification201 && "Plant/Instrumentation.ProcessSafetyFunction".equals(type)) {
+        errors.add("ProcessSafetyFunction requires DEXPI 2.0.1.");
+      }
       String id = object.getAttribute("id");
       if (!id.isEmpty() && objectsById.put(id, object) != null) {
         errors.add("Duplicate object id: " + id);
@@ -154,6 +163,9 @@ public final class Dexpi20SemanticValidator {
     validatePipingReferences(root, objectsById, errors);
     validateGraphicalRepresentations(objects, errors);
     validateProcessModel(objects, objectsById, errors, warnings);
+    if (specification201) {
+      errors.addAll(Dexpi201ModelValidator.validate(document));
+    }
     return new ValidationReport(errors, warnings);
   }
 
@@ -271,7 +283,7 @@ public final class Dexpi20SemanticValidator {
     for (int i = 0; i < objects.getLength(); i++) {
       Element object = (Element) objects.item(i);
       String type = object.getAttribute("type");
-      if (!type.startsWith("Plant/ProcessEquipment.") || type.endsWith(".Nozzle")) {
+      if (!type.startsWith("Plant/ProcessEquipment.") || type.endsWith("Nozzle")) {
         continue;
       }
       if (directStringData(object, "TagName") == null) {
