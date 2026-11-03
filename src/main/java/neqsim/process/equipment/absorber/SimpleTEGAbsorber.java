@@ -6,6 +6,7 @@ import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.swing.JDialog;
@@ -18,6 +19,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -28,6 +30,13 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <p>
  * The gas and solvent feeds may have different component slates. The absorber combines their complete component
  * inventories before flashing and preserves the transferred water in its phase-specific outlet streams.
+ * </p>
+ *
+ * <p>
+ * The contactor equilibrium flash allows three phases. When a hydrocarbon liquid separates from the glycol, the
+ * glycol-rich phase sets the water K-value and leaves as rich solvent, and the hydrocarbon liquid is routed to the
+ * outlet chosen with {@link #setHydrocarbonLiquidRouting(HydrocarbonLiquidRouting)} (gas outlet by default) so that the
+ * component balance closes.
  * </p>
  *
  * @author Even Solbraa
@@ -59,6 +68,26 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   private double absorptionFactor = 0.0;
   /** TEG weight fraction of the equilibrium liquid phase used for the water K-value in the last run. */
   private double equilibriumLiquidTEGWeightFraction = Double.NaN;
+  /** Logical phase number of the gas phase in the mixed contactor fluid of the last run. */
+  private int gasPhaseIndex = 0;
+  /** Logical phase number of the glycol-rich (solvent) liquid phase in the mixed contactor fluid of the last run. */
+  private int solventPhaseIndex = 1;
+  /** Mole fraction of the contactor feed that formed a separate hydrocarbon liquid in the last run. */
+  private double hydrocarbonLiquidMoleFraction = 0.0;
+  /** Informational copy of the separate hydrocarbon liquid of the last run, or null when none formed. */
+  private StreamInterface hydrocarbonLiquidOutStream = null;
+  /** Outlet that receives a separate hydrocarbon liquid phase. */
+  private HydrocarbonLiquidRouting hydrocarbonLiquidRouting = HydrocarbonLiquidRouting.GAS_OUTLET;
+  /** Whether the contactor TP flash runs a phase-stability check for a separate hydrocarbon liquid. */
+  private boolean hydrocarbonLiquidCheck = true;
+
+  /** Outlet receiving a hydrocarbon liquid phase that separates from the glycol in the contactor. */
+  public enum HydrocarbonLiquidRouting {
+    /** Hydrocarbon liquid leaves with the treated gas as entrained or condensed hydrocarbon (default). */
+    GAS_OUTLET,
+    /** Hydrocarbon liquid leaves with the rich glycol, as when condensate is carried down the column. */
+    RICH_SOLVENT_OUTLET
+  }
 
   /** Raised when an absorber operation changes the conserved component inventory. */
   private static final class ComponentInventoryException extends IllegalStateException {
@@ -126,6 +155,24 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
         }
         requireClose(entry.getValue(), actual, step, entry.getKey());
       }
+    }
+
+    /**
+     * Checks without throwing whether the active phases of a system sum to this inventory.
+     *
+     * @param system system to check
+     * @return true when every component's phase sum matches the inventory within the tolerance
+     */
+    private boolean isActivePhaseSumConsistent(SystemInterface system) {
+      for (Map.Entry<String, Double> entry : componentMoles.entrySet()) {
+        double expected = entry.getValue();
+        double actual = activePhaseMoles(system, entry.getKey());
+        double tolerance = COMPONENT_INVENTORY_RELATIVE_TOLERANCE * Math.max(1.0, Math.abs(expected));
+        if (Double.isNaN(actual) || Double.isInfinite(actual) || Math.abs(expected - actual) > tolerance) {
+          return false;
+        }
+      }
+      return true;
     }
 
     private void requireCombinedActivePhaseSum(SystemInterface firstSystem, SystemInterface secondSystem, String step) {
@@ -342,8 +389,8 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    * @return a double
    */
   public double calcEa() {
-    double A = mixedStream.getThermoSystem().getPhase(1).getNumberOfMolesInPhase()
-        / mixedStream.getThermoSystem().getPhase(0).getNumberOfMolesInPhase() / kwater;
+    double A = mixedStream.getThermoSystem().getPhase(solventPhaseIndex).getNumberOfMolesInPhase()
+        / mixedStream.getThermoSystem().getPhase(gasPhaseIndex).getNumberOfMolesInPhase() / kwater;
     absorptionFactor = A;
     absorptionEfficiency = (Math.pow(A, getNumberOfTheoreticalStages() + 1) - A)
         / (Math.pow(A, getNumberOfTheoreticalStages() + 1) - 1.0);
@@ -362,9 +409,10 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     // mixedStream.getFluid().getPhase(0).getComponent("water").getx()/solventInStream.getFluid().getPhase(0).getComponent("water").getx();
     // double y0 =
     // xrel*fugacityWaterLiquid/(mixedStream.getFluid().getPhase(0).getComponent("water").getFugacityCoefficient()*mixedStream.getFluid().getPressure());
-    double fugCoefRef = mixedStream.getThermoSystem().getPhase(1).getComponent("water").getFugacityCoefficient();
+    double fugCoefRef = mixedStream.getThermoSystem().getPhase(solventPhaseIndex).getComponent("water")
+        .getFugacityCoefficient();
     double y0 = solventInStream.getFluid().getPhase(0).getComponent("water").getx() * fugCoefRef
-        / (mixedStream.getThermoSystem().getPhase(0).getComponent("water").getFugacityCoefficient());
+        / (mixedStream.getThermoSystem().getPhase(gasPhaseIndex).getComponent("water").getFugacityCoefficient());
     return y0;
   }
 
@@ -397,27 +445,67 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     try {
       double y1 = 0.0;
       // double yN = gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx();
+      final boolean outletMultiPhaseCheck = streams.get(0).getThermoSystem().doMultiPhaseCheck();
+      final int outletMaxNumberOfPhases = streams.get(0).getThermoSystem().getMaxNumberOfPhases();
       mixedStream.setThermoSystem((streams.get(0).getThermoSystem().clone()));
+      // The gas + lean glycol mixture can split into gas, condensed hydrocarbon and glycol. A two-phase flash of that
+      // mixture converges to a metastable or non-material-balanced state, so the equilibrium flash allows three phases.
+      mixedStream.getThermoSystem().setMultiPhaseCheck(hydrocarbonLiquidCheck);
+      if (!hydrocarbonLiquidCheck) {
+        mixedStream.getThermoSystem().setMaxNumberOfPhases(Math.max(2, outletMaxNumberOfPhases));
+      }
       mixedStream.getThermoSystem().setNumberOfPhases(2);
       runInventoryCheckedInitialization(mixedStream.getThermoSystem(), () -> mixedStream.getThermoSystem().init(0),
           "run mixed-stream init(0)");
       mixStream();
       ComponentInventory feedInventory = ComponentInventory.capture(mixedStream.getThermoSystem());
-      // System.out.println("feed total number of water " +
-      // mixedStream.getFluid().getPhase(0).getComponent("water").getNumberOfmoles());
       double enthalpy = calcMixStreamEnthalpy();
-      // System.out.println("temp guess " + guessTemperature());
       mixedStream.getThermoSystem().setTemperature(guessTemperature());
       ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
       testOps.TPflash();
       feedInventory.requireUnchanged(mixedStream.getThermoSystem(), "TP flash");
       feedInventory.requireActivePhaseSum(mixedStream.getThermoSystem(), "TP flash phase recombination");
-      testOps.PHflash(enthalpy, 0);
+      if (mixedStream.getThermoSystem().getNumberOfPhases() <= 2) {
+        // No separate hydrocarbon liquid found (or the check is disabled): keep the faster two-phase PH flash, and
+        // fall back to a three-phase flash only if the two-phase solution loses the material balance or lumps
+        // hydrocarbon with the glycol (a third phase appears between the guess and the adiabatic mixing
+        // temperature).
+        SystemInterface threePhaseStart = mixedStream.getThermoSystem().clone();
+        mixedStream.getThermoSystem().setMultiPhaseCheck(false);
+        mixedStream.getThermoSystem().setMaxNumberOfPhases(Math.max(2, outletMaxNumberOfPhases));
+        testOps.PHflash(enthalpy, 0);
+        double twoPhaseLiquidTeg = mixedStream.getThermoSystem().getNumberOfPhases() > 1
+            ? tegWeightFraction(mixedStream.getThermoSystem().getPhase(1))
+            : Double.NaN;
+        if (!feedInventory.isActivePhaseSumConsistent(mixedStream.getThermoSystem())
+            || twoPhaseLiquidTeg < GLYCOL_RICH_TEG_WEIGHT_FRACTION) {
+          logger.warn("SimpleTEGAbsorber '{}': two-phase PH flash lost the material balance or lumped hydrocarbon "
+              + "with the glycol; repeating it with a three-phase flash.", getName());
+          mixedStream.setThermoSystem(threePhaseStart);
+          mixedStream.getThermoSystem().setMultiPhaseCheck(true);
+          testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
+          testOps.TPflash();
+          testOps.PHflash(enthalpy, 0);
+        }
+      } else {
+        testOps.PHflash(enthalpy, 0);
+      }
       feedInventory.requireUnchanged(mixedStream.getThermoSystem(), "PH flash");
       feedInventory.requireActivePhaseSum(mixedStream.getThermoSystem(), "PH flash phase recombination");
 
-      double xWaterLiquid = mixedStream.getThermoSystem().getPhase(1).getComponent("water").getx();
-      equilibriumLiquidTEGWeightFraction = tegWeightFraction(mixedStream.getThermoSystem().getPhase(1));
+      List<Integer> hydrocarbonLiquidPhases = classifyPhases(mixedStream.getThermoSystem());
+      if (!hydrocarbonLiquidPhases.isEmpty()) {
+        logger.warn(
+            "SimpleTEGAbsorber '{}': a separate hydrocarbon liquid phase ({} mol% of the contactor feed) forms at {} C. "
+                + "It is routed to the {} and excluded from the glycol phase used for the water K-value. "
+                + "Check the gas/TEG temperature difference or remove condensate upstream.",
+            getName(), String.format("%.4f", 100.0 * hydrocarbonLiquidMoleFraction),
+            String.format("%.2f", mixedStream.getThermoSystem().getTemperature() - 273.15),
+            hydrocarbonLiquidRouting == HydrocarbonLiquidRouting.GAS_OUTLET ? "gas outlet" : "rich solvent outlet");
+      }
+
+      double xWaterLiquid = mixedStream.getThermoSystem().getPhase(solventPhaseIndex).getComponent("water").getx();
+      equilibriumLiquidTEGWeightFraction = tegWeightFraction(mixedStream.getThermoSystem().getPhase(solventPhaseIndex));
       if (!Double.isNaN(equilibriumLiquidTEGWeightFraction)
           && equilibriumLiquidTEGWeightFraction < GLYCOL_RICH_TEG_WEIGHT_FRACTION) {
         logger.warn(
@@ -427,7 +515,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
             getName(), String.format("%.3f", equilibriumLiquidTEGWeightFraction));
       }
       if (xWaterLiquid > 1.0e-10) {
-        kwater = mixedStream.getThermoSystem().getPhase(0).getComponent("water").getx() / xWaterLiquid;
+        kwater = mixedStream.getThermoSystem().getPhase(gasPhaseIndex).getComponent("water").getx() / xWaterLiquid;
       } else {
         kwater = 1.0e-5;
       }
@@ -446,19 +534,12 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
             - absorptionEffiency * (gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx() - y0);
       }
 
-      double yMean = mixedStream.getThermoSystem().getPhase(0).getComponent("water").getx();
-      double molesWaterToMove = (yMean - y1) * mixedStream.getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
-      // System.out.println("Lean TEG to absorber "
-      // +solventInStream.getFlowRate("kg/hr"));
-
-      // System.out.println("mole water to move " + molesWaterToMove);
-      // System.out.println("total moles water in gas " +
-      // mixedStream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfMolesInPhase());
-      // System.out.println("total moles water " +
-      // mixedStream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles());
+      double yMean = mixedStream.getThermoSystem().getPhase(gasPhaseIndex).getComponent("water").getx();
+      double molesWaterToMove = (yMean - y1)
+          * mixedStream.getThermoSystem().getPhase(gasPhaseIndex).getNumberOfMolesInPhase();
       StreamInterface newMixedStream = mixedStream.clone();
-      newMixedStream.getThermoSystem().addComponent("water", -molesWaterToMove, 0);
-      newMixedStream.getThermoSystem().addComponent("water", molesWaterToMove, 1);
+      newMixedStream.getThermoSystem().addComponent("water", -molesWaterToMove, gasPhaseIndex);
+      newMixedStream.getThermoSystem().addComponent("water", molesWaterToMove, solventPhaseIndex);
       feedInventory.requireUnchanged(newMixedStream.getThermoSystem(), "phase-to-phase water transfer");
       feedInventory.requireActivePhaseSum(newMixedStream.getThermoSystem(), "phase-to-phase water transfer");
       runInventoryCheckedInitialization(newMixedStream.getThermoSystem(),
@@ -473,22 +554,51 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
 
       // stream.getThermoSystem().display();
 
-      ComponentInventory gasInventory = ComponentInventory.capturePhase(mixedStream.getThermoSystem(), 0);
-      SystemInterface gasTemp = extractLogicalPhase(mixedStream.getThermoSystem(), 0);
+      ComponentInventory gasInventory = ComponentInventory.capturePhase(mixedStream.getThermoSystem(), gasPhaseIndex);
+      final SystemInterface gasTemp = extractLogicalPhase(mixedStream.getThermoSystem(), gasPhaseIndex);
       gasInventory.requireUnchanged(gasTemp, "gas phase extraction");
-      runInventoryCheckedInitialization(gasTemp, () -> gasTemp.init(2), "gas outlet init(2)");
-      gasOutStream.setThermoSystem(gasTemp);
-      // System.out.println("gas total number of water " +
-      // gasOutStream.getFluid().getPhase(0).getComponent("water").getNumberOfmoles());
 
-      ComponentInventory liquidInventory = ComponentInventory.capturePhase(mixedStream.getThermoSystem(), 1);
-      SystemInterface liqTemp = extractLogicalPhase(mixedStream.getThermoSystem(), 1);
+      ComponentInventory liquidInventory = ComponentInventory.capturePhase(mixedStream.getThermoSystem(),
+          solventPhaseIndex);
+      final SystemInterface liqTemp = extractLogicalPhase(mixedStream.getThermoSystem(), solventPhaseIndex);
       liquidInventory.requireUnchanged(liqTemp, "liquid phase extraction");
+
+      SystemInterface hydrocarbonLiquid = null;
+      for (int phaseNumber : hydrocarbonLiquidPhases) {
+        ComponentInventory hcInventory = ComponentInventory.capturePhase(mixedStream.getThermoSystem(), phaseNumber);
+        SystemInterface hcPhase = extractLogicalPhase(mixedStream.getThermoSystem(), phaseNumber);
+        hcInventory.requireUnchanged(hcPhase, "hydrocarbon liquid phase extraction");
+        if (hydrocarbonLiquid == null) {
+          hydrocarbonLiquid = hcPhase;
+        } else {
+          hydrocarbonLiquid.addFluid(hcPhase);
+        }
+      }
+      if (hydrocarbonLiquid != null) {
+        final SystemInterface hcSystem = hydrocarbonLiquid;
+        runInventoryCheckedInitialization(hcSystem, () -> hcSystem.init(2), "hydrocarbon liquid init(2)");
+        hcSystem.setMultiPhaseCheck(outletMultiPhaseCheck);
+        if (hydrocarbonLiquidOutStream == null) {
+          hydrocarbonLiquidOutStream = gasOutStream.clone(getName() + " hydrocarbon liquid");
+        }
+        hydrocarbonLiquidOutStream.setThermoSystem(hcSystem.clone());
+        if (hydrocarbonLiquidRouting == HydrocarbonLiquidRouting.GAS_OUTLET) {
+          combineAndFlash(gasTemp, hcSystem, "gas outlet hydrocarbon recombination");
+        } else {
+          combineAndFlash(liqTemp, hcSystem, "rich solvent hydrocarbon recombination");
+        }
+      } else {
+        hydrocarbonLiquidOutStream = null;
+      }
+      gasTemp.setMultiPhaseCheck(outletMultiPhaseCheck);
+      liqTemp.setMultiPhaseCheck(outletMultiPhaseCheck);
+      gasTemp.setMaxNumberOfPhases(Math.max(outletMaxNumberOfPhases, gasTemp.getNumberOfPhases()));
+      liqTemp.setMaxNumberOfPhases(Math.max(outletMaxNumberOfPhases, liqTemp.getNumberOfPhases()));
+      runInventoryCheckedInitialization(gasTemp, () -> gasTemp.init(2), "gas outlet init(2)");
       runInventoryCheckedInitialization(liqTemp, () -> liqTemp.init(2), "liquid outlet init(2)");
       feedInventory.requireCombinedActivePhaseSum(gasTemp, liqTemp, "combined outlet phase extraction");
+      gasOutStream.setThermoSystem(gasTemp);
       solventOutStream.setThermoSystem(liqTemp);
-      // System.out.println("solvent total number of water " +
-      // solventOutStream.getFluid().getPhase(0).getComponent("water").getNumberOfmoles());
 
       setNTU(calcNTU(y0, y1, gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx(), yMean));
       // System.out.println("NTU " + getNTU());
@@ -909,10 +1019,10 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
    * Checks whether the liquid phase used for the water K-value in the last run was glycol-rich.
    *
    * <p>
-   * The absorber flashes the mixed gas and solvent as two phases. When hydrocarbon condensate forms (high gas to glycol
-   * ratio, cold contactor, rich gas), the liquid phase can become hydrocarbon-dominated. The water K-value then rises
-   * by several times and the calculated dew point jumps although the glycol itself is unchanged. Results with this
-   * method returning false should not be used for dew point predictions.
+   * The absorber flashes the mixed gas and solvent with up to three phases and uses the most glycol-rich liquid for the
+   * water K-value; a separate hydrocarbon liquid is reported by {@link #hasHydrocarbonLiquid()}. If the selected liquid
+   * is still not glycol-rich (for example almost no glycol circulation), the water K-value is overstated and results
+   * with this method returning false should not be used for dew point predictions.
    * </p>
    *
    * @return true when the TEG weight fraction is at least {@link #GLYCOL_RICH_TEG_WEIGHT_FRACTION} (or no TEG is
@@ -938,5 +1048,174 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
     } catch (Exception ex) {
       return Double.NaN;
     }
+  }
+
+  /**
+   * Weight fraction of the polar solvent components (water and glycols/methanol) in a phase.
+   *
+   * @param phase the phase to evaluate
+   * @return combined weight fraction of water, TEG, DEG, MEG and methanol (0-1)
+   */
+  private static double polarWeightFraction(PhaseInterface phase) {
+    String[] polarComponents = {"water", "TEG", "DEG", "MEG", "methanol"};
+    double fraction = 0.0;
+    for (String componentName : polarComponents) {
+      if (phase.hasComponent(componentName)) {
+        try {
+          fraction += phase.getWtFrac(componentName);
+        } catch (Exception ex) {
+          logger.debug("Could not evaluate weight fraction of {}: {}", componentName, ex.getMessage());
+        }
+      }
+    }
+    return fraction;
+  }
+
+  /**
+   * Identifies the gas phase, the glycol-rich solvent phase and any separate hydrocarbon liquid phases of the flashed
+   * contactor fluid, and stores the phase numbers for the Kremser calculation.
+   *
+   * <p>
+   * The gas phase is the first phase of gas type (phase 0 when none is typed as gas). The solvent phase is the other
+   * phase with the largest TEG weight fraction (largest polar weight fraction when the fluid has no TEG). All remaining
+   * phases are treated as hydrocarbon liquid.
+   * </p>
+   *
+   * @param system flashed contactor fluid
+   * @return logical phase numbers of the hydrocarbon liquid phases (empty when none formed)
+   */
+  private List<Integer> classifyPhases(SystemInterface system) {
+    List<Integer> hydrocarbonPhases = new ArrayList<Integer>();
+    int numberOfPhases = system.getNumberOfPhases();
+    gasPhaseIndex = 0;
+    solventPhaseIndex = 1;
+    hydrocarbonLiquidMoleFraction = 0.0;
+    if (numberOfPhases < 2) {
+      return hydrocarbonPhases;
+    }
+    for (int phaseNumber = 0; phaseNumber < numberOfPhases; phaseNumber++) {
+      if (system.getPhase(phaseNumber).getType() == PhaseType.GAS) {
+        gasPhaseIndex = phaseNumber;
+        break;
+      }
+    }
+    double bestScore = Double.NEGATIVE_INFINITY;
+    for (int phaseNumber = 0; phaseNumber < numberOfPhases; phaseNumber++) {
+      if (phaseNumber == gasPhaseIndex) {
+        continue;
+      }
+      PhaseInterface phase = system.getPhase(phaseNumber);
+      double score = tegWeightFraction(phase);
+      if (Double.isNaN(score)) {
+        score = polarWeightFraction(phase);
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        solventPhaseIndex = phaseNumber;
+      }
+    }
+    for (int phaseNumber = 0; phaseNumber < numberOfPhases; phaseNumber++) {
+      if (phaseNumber != gasPhaseIndex && phaseNumber != solventPhaseIndex) {
+        hydrocarbonPhases.add(phaseNumber);
+        hydrocarbonLiquidMoleFraction += system.getBeta(phaseNumber);
+      }
+    }
+    return hydrocarbonPhases;
+  }
+
+  /**
+   * Adds the components of one outlet system to another and re-flashes the result at its temperature and pressure,
+   * verifying that the combined component inventory is conserved.
+   *
+   * @param target system receiving the added fluid; modified in place
+   * @param addition system whose components are added to the target
+   * @param step description used in inventory error messages
+   */
+  private static void combineAndFlash(SystemInterface target, SystemInterface addition, String step) {
+    target.addFluid(addition);
+    ComponentInventory combinedInventory = ComponentInventory.capture(target);
+    target.setMultiPhaseCheck(true);
+    new ThermodynamicOperations(target).TPflash();
+    combinedInventory.requireUnchanged(target, step);
+    combinedInventory.requireActivePhaseSum(target, step);
+  }
+
+  /**
+   * Checks whether a separate hydrocarbon liquid phase formed in the contactor in the last run.
+   *
+   * @return true when the equilibrium flash found a hydrocarbon liquid besides the gas and the glycol phase
+   */
+  public boolean hasHydrocarbonLiquid() {
+    return hydrocarbonLiquidOutStream != null;
+  }
+
+  /**
+   * Returns the mole fraction of the contactor feed (gas plus lean solvent) that formed a separate hydrocarbon liquid
+   * in the last run.
+   *
+   * @return hydrocarbon liquid mole fraction (0-1), 0 when no hydrocarbon liquid formed
+   */
+  public double getHydrocarbonLiquidMoleFraction() {
+    return hydrocarbonLiquidMoleFraction;
+  }
+
+  /**
+   * Returns an informational copy of the separate hydrocarbon liquid of the last run.
+   *
+   * <p>
+   * The hydrocarbon liquid is already included in the outlet selected by
+   * {@link #setHydrocarbonLiquidRouting(HydrocarbonLiquidRouting)}; do not connect this stream to downstream equipment
+   * in addition to that outlet, or the hydrocarbon would be counted twice.
+   * </p>
+   *
+   * @return hydrocarbon liquid stream (composition before water transfer), or null when none formed
+   */
+  public StreamInterface getHydrocarbonLiquidOutStream() {
+    return hydrocarbonLiquidOutStream;
+  }
+
+  /**
+   * Returns the outlet that receives a separate hydrocarbon liquid phase.
+   *
+   * @return hydrocarbon liquid routing
+   */
+  public HydrocarbonLiquidRouting getHydrocarbonLiquidRouting() {
+    return hydrocarbonLiquidRouting;
+  }
+
+  /**
+   * Sets the outlet that receives a separate hydrocarbon liquid phase. The default is
+   * {@link HydrocarbonLiquidRouting#GAS_OUTLET}.
+   *
+   * @param routing hydrocarbon liquid routing; null restores the default
+   */
+  public void setHydrocarbonLiquidRouting(HydrocarbonLiquidRouting routing) {
+    this.hydrocarbonLiquidRouting = routing == null ? HydrocarbonLiquidRouting.GAS_OUTLET : routing;
+  }
+
+  /**
+   * Checks whether the contactor flash tests for a separate hydrocarbon liquid phase.
+   *
+   * @return true when the phase-stability check is enabled (default)
+   */
+  public boolean isHydrocarbonLiquidCheck() {
+    return hydrocarbonLiquidCheck;
+  }
+
+  /**
+   * Enables or disables the phase-stability check for a separate hydrocarbon liquid in the contactor flash.
+   *
+   * <p>
+   * The check (a multiphase TP flash) costs roughly 0.1 to 0.5 s per run for a CPA fluid when no hydrocarbon liquid
+   * forms. Disabling it restores the faster two-phase flash for lean gases. A hydrocarbon liquid is then only detected
+   * when the two-phase solution loses the material balance or the liquid is no longer glycol-rich, in which case the
+   * absorber still repeats the flash with three phases; a small condensate split that the two-phase flash ignores is
+   * not detected.
+   * </p>
+   *
+   * @param check true to run the stability check (default), false for the faster two-phase flash
+   */
+  public void setHydrocarbonLiquidCheck(boolean check) {
+    this.hydrocarbonLiquidCheck = check;
   }
 }
