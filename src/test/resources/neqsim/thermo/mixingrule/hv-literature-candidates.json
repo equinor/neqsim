@@ -776,5 +776,18 @@
     "status": "Source-version audit only; no HV activation or independent new holdout",
     "primary": "Chapoy2004, pastel-00001202, Table6.6 PDF162/printed161; nitrogen Table6.16 PDF190/printed189",
     "qualification": "35 gas rows agree exactly; 52 liquid rows retain 41 concentration differences at common T/P and two temperature versions. Author nitrogen-mole calibration, printed AD_exp and compiler U95 remain distinct. Final-journal/version history, complete measurement uncertainty and source-compatible PR pure inputs remain unresolved."
+  },
+  "MEG_natural_gas_measurement_receipt": {
+    "doi": "10.1021/acs.jced.8b00495",
+    "resource": "hv-meg-natural-gas/",
+    "auditor": "devtools/audit_huron_vidal_natural_gas.py",
+    "states": 11,
+    "observations": 218,
+    "missing_vapor_MEG_experiments": [
+      6,
+      9
+    ],
+    "status": "Quarantined primary source data; no HV parameters or measured overall molar feed",
+    "qualification": "Accepted-manuscript Tables2/3/4/5/9/10 and supplement S1/S2 visually checked. Original ppm/directed y/x, loading volumes, nominal-versus-loading T/P, one-sigma repeatability and separate apparatus uncertainties retained. Purity/species/density-unit conflicts, final-publication reconciliation and complete source-compatible HV/pure inputs remain unresolved. CPA coefficients not transferred; no new selected pairs or heavy-fraction activation."
   }
 }
