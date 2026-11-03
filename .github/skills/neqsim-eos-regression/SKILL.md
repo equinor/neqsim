@@ -52,6 +52,20 @@ same-sample evidence can be frozen in `CalibratedPvtModel` via its overload.
 See `docs/pvtsimulation/laboratory_gas_density_consistency.md` and its executable
 regression; the check is arithmetic compatibility, not independent accuracy.
 
+For saturated-vapor-reference gas-condensate CVD, screen the complete observed
+experiment with `CvdMaterialBalance` before fitting. Use absolute Pa, constant K,
+liquid volume per initial saturated cell volume and cumulative moles per initial
+mole. Each withdrawal uses that endpoint vapor composition. Preserve source row
+IDs, smoothed/adjusted versus raw analyses, and separately attributed final liquid
+analysis bounds. Absent/unresolved/inconsistent liquid has no available composition;
+never normalize or clip failed inventories. Optional checkpoint attachment uses
+`CalibratedPvtModel(..., gasDensityEvidence, cvdEvidence)` and rejects a failed or
+wrong-sample report. Arithmetic consistency is not independent measured accuracy.
+See `docs/pvtsimulation/laboratory_cvd_material_balance.md`; the primary NS-1
+calculated liquid is a numerical reference, while experimental CH4/C7+ remain
+incompatible with printed-rounding-only bounds. Wet, critical and other reference
+protocols are outside this gate, not silently extrapolated.
+
 Required data types by priority:
 1. **Saturation pressure** (bubble/dew point) at reservoir temperature — most critical
 2. **Liquid density** at reservoir conditions — validates volume translation

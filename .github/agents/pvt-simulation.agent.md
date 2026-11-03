@@ -207,3 +207,17 @@ multiphase beta solver to 1e-12 equilibrium and relative volume targets. Preserv
 phase-family, Gibbs and component gates; failed refinement rejects the transaction.
 Do not weaken absolute inventory bounds or claim arbitrary-scale/measured accuracy.
 The original 216-state and intermediate 480-state matrices use identical frozen bounds.
+
+### Laboratory CVD accounting handoff
+
+Use `CvdMaterialBalance` for complete isothermal saturated-vapor-reference CVD
+observations before EOS calibration. Read
+`docs/pvtsimulation/laboratory_cvd_material_balance.md` and the EOS regression skill.
+Keep cumulative molar withdrawal, fixed saturated-cell volume and endpoint vapor
+composition bases explicit. Preserve negative inventories and absent/unresolved
+liquid status; no fabricated phase composition. The optional
+`CalibratedPvtModel(..., gasDensityEvidence, cvdEvidence)` attachment requires a
+passing same-sample report and freezes full provenance. Published calculated
+liquid is arithmetic evidence; experimental analysis is separate and may fail.
+Do not route this gate as wet/critical CVD, separator conversion, EOS calibration,
+field history accuracy or the Tran2025 method.

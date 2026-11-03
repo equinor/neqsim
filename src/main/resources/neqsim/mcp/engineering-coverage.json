@@ -1205,6 +1205,33 @@
       }
     },
     {
+      "id": "laboratory-cvd-material-balance",
+      "title": "Source-identified laboratory CVD component accounting",
+      "domain": "pvt",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.util.CvdMaterialBalance",
+        "neqsim.pvtsimulation.util.CalibratedPvtModel"
+      ],
+      "skills": [
+        "neqsim-eos-regression"
+      ],
+      "agents": [
+        "pvt-simulation",
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/pvtsimulation/util/CvdMaterialBalanceTest.java"
+      ],
+      "limitations": "Discovery and inspectApi only; instance-based Java/JPype evidence, no stateless MCP execution route. Opt-in saturated-vapor-reference isothermal CVD accounting with endpoint-composition gas withdrawals, immutable named observations and optional final liquid analysis bounds. Absent, unresolved and inconsistent liquid states remain explicit. Public Whitson-Torp NS-1 Table1 reproduces calculated final liquid within half its printed digit; experimental methane/C7+ remain incompatible with conservative rounding-only bounds. No EOS tuning, automatic uncertainty model, critical/wet-cell support, independent measured accuracy, separator conversion, field history matching or Tran rescaled-CVD qualification.",
+      "evidence": {
+        "route": "declared",
+        "testSources": "present",
+        "execution": "not_recorded",
+        "engineeringQualification": "not_assessed"
+      }
+    },
+    {
       "id": "laboratory-gas-density-consistency",
       "title": "Source-identified laboratory gas density interval consistency",
       "domain": "pvt",
@@ -4830,8 +4857,9 @@
     {"id":"neqsim.pvtsimulation.util.BlackOilCorrelations","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/BlackOilCorrelations.java","sourceDigest":"831712aaab0fee69003b87a6323e3a43103773ffc5420802b1b55e103dc6d27b","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.BlackOilTableValidator","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/BlackOilTableValidator.java","sourceDigest":"116bbfa3cc9d0d7f88ab08f3c4ffca6f257cca484e0440287230e7fdf7c3e61a","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.BlackOilUnits","kind":"enum","source":"src/main/java/neqsim/pvtsimulation/util/BlackOilUnits.java","sourceDigest":"86bb80de016bf3410b85758de684bf09b1355e56c8188a4dd95bc8cf5aa1a457","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.pvtsimulation.util.CalibratedPvtModel","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/CalibratedPvtModel.java","sourceDigest":"77641e60e774377dd2fff746ac2c530c2aef6114ae111c80517e408a33759811","domain":"pvtsimulation","skills":["neqsim-eos-regression"],"agents":["pvt-fluid-study-report","pvt-simulation","thermo-fluid"],"capabilities":["generalized-reservoir-material-balance","compositional-reservoir-history","laboratory-gas-density-consistency"],"disposition":"registered_anchor"},
+    {"id":"neqsim.pvtsimulation.util.CalibratedPvtModel","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/CalibratedPvtModel.java","sourceDigest":"cb9cd03d35ec672939107b641041802738f06dbc6a21710a3d8078fb244ed628","domain":"pvtsimulation","skills":["neqsim-eos-regression"],"agents":["pvt-fluid-study-report","pvt-simulation","thermo-fluid"],"capabilities":["generalized-reservoir-material-balance","compositional-reservoir-history","laboratory-gas-density-consistency","laboratory-cvd-material-balance"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.CompositionalReservoirHistory","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/CompositionalReservoirHistory.java","sourceDigest":"083c444449cdde377895b083d63e204bf693be3e5d21dd19cfe1fdc38b4caeb2","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":["compositional-reservoir-history","finite-aquifer-reservoir-history","reservoir-history-discrete-posterior"],"disposition":"registered_anchor"},
+    {"id":"neqsim.pvtsimulation.util.CvdMaterialBalance","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/CvdMaterialBalance.java","sourceDigest":"6ead4fea89be9f101ba6408842178dfcd1dea2ac80db7521cedb6cdb836ac195","domain":"pvtsimulation","skills":["neqsim-eos-regression"],"agents":["pvt-fluid-study-report","pvt-simulation","thermo-fluid"],"capabilities":["laboratory-cvd-material-balance"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.DeclineCurveAnalysis","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/DeclineCurveAnalysis.java","sourceDigest":"326d8c437e8aa77db684a558b235d9deb638b7b0a1dde6f3af9e091cc06ae908","domain":"pvtsimulation","skills":["neqsim-capability-map","neqsim-field-development","neqsim-production-optimization"],"agents":["capability-scout","engineering-deliverables","field-development","mechanical-design","solve-task","surf-design-study"],"capabilities":["exponential-decline-screening"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.DepletionPvtHistoryGenerator","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator.java","sourceDigest":"8135fffef13268bf6a5e32b2145a76c8f8a48e61e8f64e522161748fb34415bf","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":["depletion-path-generalized-pvt"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.GasPseudoCriticalProperties","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/GasPseudoCriticalProperties.java","sourceDigest":"64a5f0daa74fd1424e5b0ed10d71882a797fd622627532882171f1a69d9a8af6","domain":"pvtsimulation","skills":["neqsim-capability-map"],"agents":["capability-scout","engineering-deliverables","mechanical-design","solve-task"],"capabilities":["sweet-gas-pseudocritical-screening"],"disposition":"registered_anchor"},

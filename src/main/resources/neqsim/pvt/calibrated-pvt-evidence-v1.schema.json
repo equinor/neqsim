@@ -24,7 +24,8 @@
         "tunedRevision": {"$ref": "#/$defs/reference"},
         "calibrationReference": {"$ref": "#/$defs/reference"},
         "calibrationExperiments": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/reference"}},
-        "gasDensityConsistency": {"$ref": "#/$defs/gasDensityConsistency"}
+        "gasDensityConsistency": {"$ref": "#/$defs/gasDensityConsistency"},
+        "cvdMaterialBalance": {"$ref": "#/$defs/cvdMaterialBalance"}
       },
       "unevaluatedProperties": false
     },
@@ -112,6 +113,229 @@
       "then": {"required": ["reservoirTemperatureK", "reservoirPressureBara", "separatorStages"]},
       "else": {"required": ["temperatureK", "pressuresBara"]},
       "unevaluatedProperties": false
+    },
+    "cvdAccountingRow": {
+      "type": "object",
+      "required": [
+        "rowId",
+        "pressurePa",
+        "gasZ",
+        "liquidVolumeFraction",
+        "cumulativeProducedMoleFraction",
+        "totalRemainingMoles",
+        "vaporMoles",
+        "liquidMoles",
+        "stageWithdrawnMoles",
+        "componentSumMinusLiquidMoles",
+        "vaporMoleFractions",
+        "producedComponentMoles",
+        "remainingComponentMoles",
+        "liquidComponentMoles",
+        "liquidMoleFractions",
+        "liquidState",
+        "compatible",
+        "remainingComponentSumMinusTotalMoles",
+        "producedComponentSumMinusWithdrawnMoles",
+        "vaporComponentSumMinusVaporMoles"
+      ],
+      "properties": {
+        "rowId": {
+          "$ref": "#/$defs/reference"
+        },
+        "pressurePa": {
+          "type": "number"
+        },
+        "gasZ": {
+          "type": "number"
+        },
+        "liquidVolumeFraction": {
+          "type": "number"
+        },
+        "cumulativeProducedMoleFraction": {
+          "type": "number"
+        },
+        "totalRemainingMoles": {
+          "type": "number"
+        },
+        "vaporMoles": {
+          "type": "number"
+        },
+        "liquidMoles": {
+          "type": "number"
+        },
+        "stageWithdrawnMoles": {
+          "type": "number"
+        },
+        "componentSumMinusLiquidMoles": {
+          "type": "number"
+        },
+        "vaporMoleFractions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "number"
+          }
+        },
+        "producedComponentMoles": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "number"
+          }
+        },
+        "remainingComponentMoles": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "number"
+          }
+        },
+        "liquidComponentMoles": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "number"
+          }
+        },
+        "liquidMoleFractions": {
+          "oneOf": [
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "number"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "liquidState": {
+          "enum": [
+            "ABSENT",
+            "RESOLVED"
+          ]
+        },
+        "compatible": {
+          "const": true
+        },
+        "remainingComponentSumMinusTotalMoles": {
+          "type": "number"
+        },
+        "producedComponentSumMinusWithdrawnMoles": {
+          "type": "number"
+        },
+        "vaporComponentSumMinusVaporMoles": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "cvdMaterialBalance": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "sampleReference",
+        "experimentReference",
+        "dataUseReference",
+        "protocol",
+        "amountBasis",
+        "temperatureK",
+        "balanceTolerance",
+        "minimumLiquidMoles",
+        "allCompatible",
+        "componentNames",
+        "rows"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "cvd-material-balance/1"
+        },
+        "sampleReference": {
+          "$ref": "#/$defs/reference"
+        },
+        "experimentReference": {
+          "$ref": "#/$defs/reference"
+        },
+        "dataUseReference": {
+          "$ref": "#/$defs/reference"
+        },
+        "protocol": {
+          "$ref": "#/$defs/reference"
+        },
+        "amountBasis": {
+          "$ref": "#/$defs/reference"
+        },
+        "temperatureK": {
+          "type": "number"
+        },
+        "balanceTolerance": {
+          "type": "number"
+        },
+        "minimumLiquidMoles": {
+          "type": "number"
+        },
+        "allCompatible": {
+          "const": true
+        },
+        "componentNames": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/reference"
+          }
+        },
+        "rows": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "$ref": "#/$defs/cvdAccountingRow"
+          }
+        },
+        "finalLiquidAnalysis": {
+          "type": "object",
+          "required": [
+            "sourceReference",
+            "boundsReference",
+            "measuredMoleFractions",
+            "absoluteMoleFractionBounds",
+            "measuredMinusReconstructed"
+          ],
+          "properties": {
+            "sourceReference": {
+              "$ref": "#/$defs/reference"
+            },
+            "boundsReference": {
+              "$ref": "#/$defs/reference"
+            },
+            "measuredMoleFractions": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "number"
+              }
+            },
+            "absoluteMoleFractionBounds": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "number"
+              }
+            },
+            "measuredMinusReconstructed": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   }
 }
