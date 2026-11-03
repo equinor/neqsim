@@ -3,6 +3,10 @@
 This directory records the predeclared analytical and public synthetic full-cycle evidence for
 `HydrocarbonPoolTransfer`.
 
+Executed implementation source: `2e0baa86b93ab912f414a6aea7d185e6fe08c59c` with OpenJDK
+17.0.20. Its generated-coverage child `13c3a191cec6341a0f65726c93e4b00f1fd1a338` changes only the
+source digest in `engineering-coverage.json`.
+
 ## Declared model inputs
 
 - Public six-component rich-gas fixture: methane/ethane/propane/n-butane/n-pentane/n-heptane =
@@ -24,9 +28,9 @@ This directory records the predeclared analytical and public synthetic full-cycl
 2. Every accepted interval closes phase/total mass, named components and conservative total energy
    under the existing tolerances.
 3. The cycle exercises positive oil inventory and actual same-gas inlet refill.
-4. The finite heat limit activates on both meshes. Final oil inventories remain finite, positive and within one order of
-   magnitude (relative difference less than 100%). This broad numerical gate is not a predictive
-   depletion band.
+4. The finite heat limit activates on both meshes. Final oil inventories remain finite, positive
+   and within one order of magnitude (relative difference less than 100%). This broad numerical
+   gate is not a predictive depletion band.
 5. The separate frozen-target test converges under 0.2/0.1/0.05 s refinement to the independent
    exponential solution.
 
