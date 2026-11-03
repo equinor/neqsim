@@ -97,6 +97,23 @@ public class TransientWellModelTest {
   }
 
   @Test
+  @DisplayName("Horner analysis recovers the model's own permeability, skin and P*")
+  void testBuildupRecoversInputParameters() {
+    // Long production so the 1-hour and 10-hour shut-in points are on the semi-log line
+    model.addRateChange(0.0, 100.0);
+    model.addRateChange(1000.0, 0.0);
+
+    TransientWellModel.BuildupResult result = model.calculateBuildup(10.0);
+
+    assertEquals(100.0, result.permeabilityFromSlope, 1.0,
+        "Permeability from the Horner slope should match the input 100 mD");
+    assertEquals(2.0, result.skinFromIntercept, 0.1, "Skin from the 1-hour intercept should match the input skin of 2");
+    assertEquals(300.0, result.extrapolatedPressure, 0.05,
+        "P* should equal the initial pressure for an infinite-acting reservoir");
+    assertTrue(result.extrapolatedPressure > result.shutInPressure, "P* must lie above the measured shut-in pressure");
+  }
+
+  @Test
   @DisplayName("Test buildup pressure increases with shut-in time")
   void testBuildupPressureIncreases() {
     model.addRateChange(0.0, 100.0);
