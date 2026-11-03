@@ -59,6 +59,60 @@ class TwoFluidPipeClosedThermalTest {
   }
 
   @Test
+  void configuredWallInventoryInitializesEveryMultilayerNodeAndSurvivesReplay() {
+    SystemInterface fluid = new SystemSrkEos(300.0, 60.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.10);
+    fluid.setMixingRule("classic");
+    Stream inlet = new Stream("multilayer-wall-inventory-inlet", fluid);
+    inlet.setFlowRate(6.0, "kg/sec");
+    inlet.setTemperature(300.0, "K");
+    inlet.setPressure(60.0, "bara");
+    inlet.run();
+
+    TwoFluidPipe pipe = new TwoFluidPipe("multilayer-wall-inventory-pipe", inlet);
+    pipe.setLength(40.0);
+    pipe.setDiameter(0.20);
+    pipe.setNumberOfSections(4);
+    pipe.setEnableJouleThomson(false);
+    pipe.setSteadyStateMaxWallClockTime(Double.POSITIVE_INFINITY);
+    pipe.configureSubseaThermalModel(0.02, 0.0, RadialThermalLayer.MaterialType.PU_FOAM);
+    double[] configured = {295.0, 294.0, 293.0, 292.0};
+    pipe.setInitialWallTemperatureProfile(configured, "K");
+
+    pipe.run();
+
+    double[][] radialState = pipe.getMultilayerLayerTemperatureProfileSnapshot();
+    assertNotNull(radialState);
+    for (int cell = 0; cell < radialState.length; cell++) {
+      for (double layerTemperature : radialState[cell]) {
+        assertEquals(configured[cell], layerTemperature, 0.0,
+            "Every radial node must start at the configured cell temperature");
+      }
+    }
+    radialState[0][0] = 100.0;
+    assertEquals(configured[0], pipe.getMultilayerLayerTemperatureProfileSnapshot()[0][0], 0.0);
+
+    TwoFluidPipe replay = (TwoFluidPipe) pipe.copy();
+    pipe.closeInlet();
+    pipe.closeOutlet();
+    replay.closeInlet();
+    replay.closeOutlet();
+    pipe.setSurfaceTemperature(280.0, "K");
+    replay.setSurfaceTemperature(280.0, "K");
+    pipe.runTransient(1.0e-3, TRANSIENT_ID);
+    replay.runTransient(1.0e-3, TRANSIENT_ID);
+    assertArrayEquals(pipe.getWallTemperatureProfile(), replay.getWallTemperatureProfile(), 0.0);
+    assertMultilayerStatesEqual(pipe.getMultilayerLayerTemperatureProfileSnapshot(),
+        replay.getMultilayerLayerTemperatureProfileSnapshot());
+
+    pipe.setInitialWallTemperatureProfile(null, "K");
+    pipe.run();
+    assertNull(pipe.getMultilayerLayerTemperatureProfileSnapshot(),
+        "A new steady run must discard the previously evolved radial inventory");
+  }
+
+  @Test
   void closedTemperatureHistoryIgnoresDisconnectedInletNominalFlow() {
     PipeFixture reference = createInitializedPipe("closed-thermal-reference");
     PipeFixture changed = createInitializedPipe("closed-thermal-changed");
@@ -420,6 +474,13 @@ class TwoFluidPipeClosedThermalTest {
       sum += value;
     }
     return sum / values.length;
+  }
+
+  private void assertMultilayerStatesEqual(double[][] expected, double[][] actual) {
+    assertEquals(expected.length, actual.length);
+    for (int cell = 0; cell < expected.length; cell++) {
+      assertArrayEquals(expected[cell], actual[cell], 0.0);
+    }
   }
 
   private double[] initialLayerTemperatures(MultilayerThermalCalculator calculator) {

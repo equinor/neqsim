@@ -3192,6 +3192,46 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Initialize every radial layer from a configured cell-wise wall temperature.
+   *
+   * <p>
+   * A one-temperature wall profile has no radial gradient information. For the multilayer model its exact contract is
+   * therefore a uniform radial temperature in every layer of each cell. The layers evolve independently after the first
+   * transient interval.
+   * </p>
+   *
+   * @param cellTemperatures one temperature in kelvin per physical cell
+   */
+  private void initializeMultilayerLayerTemperaturesFromWallProfile(double[] cellTemperatures) {
+    if (!useMultilayerThermalModel || thermalCalculator == null) {
+      return;
+    }
+    int layerCount = thermalCalculator.getNumberOfLayers();
+    multilayerLayerTemperatureProfiles = new double[numberOfSections][layerCount];
+    for (int cell = 0; cell < numberOfSections; cell++) {
+      for (int layer = 0; layer < layerCount; layer++) {
+        multilayerLayerTemperatureProfiles[cell][layer] = cellTemperatures[cell];
+      }
+    }
+  }
+
+  /**
+   * Return a defensive snapshot of the per-cell radial-layer temperature inventory.
+   *
+   * @return cell-by-layer temperatures in kelvin, or null before multilayer state is initialized
+   */
+  double[][] getMultilayerLayerTemperatureProfileSnapshot() {
+    if (multilayerLayerTemperatureProfiles == null) {
+      return null;
+    }
+    double[][] snapshot = new double[multilayerLayerTemperatureProfiles.length][];
+    for (int cell = 0; cell < multilayerLayerTemperatureProfiles.length; cell++) {
+      snapshot[cell] = multilayerLayerTemperatureProfiles[cell].clone();
+    }
+    return snapshot;
+  }
+
+  /**
    * Calculate inner (fluid-side) heat transfer coefficient based on flow conditions.
    *
    * <p>
@@ -5237,8 +5277,9 @@ public class TwoFluidPipe extends Pipeline {
     minimumTransientPressureDamping = 1.0;
     transientCoupledPressureMomentumRejectedSubsteps = 0;
     transientCoupledPressureMomentumFailureDiagnostic = "";
-    // A new steady state owns a new wall-temperature field.
+    // A new steady state owns a new wall-temperature field, including every radial layer.
     wallTemperatureProfile = null;
+    multilayerLayerTemperatureProfiles = null;
     transientJouleThomson = Double.NaN;
     transientHeatCapacity = Double.NaN;
     steadyConsistencyCalibrated = false;
@@ -5260,6 +5301,7 @@ public class TwoFluidPipe extends Pipeline {
         throw new IllegalStateException("Initial wall-temperature profile must match the initialized section count");
       }
       wallTemperatureProfile = initialWallTemperatureProfile.clone();
+      initializeMultilayerLayerTemperaturesFromWallProfile(initialWallTemperatureProfile);
     }
 
     if (componentTransportEnabled) {
@@ -12105,8 +12147,9 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * The profile is copied, validated against the configured cell count and applied after {@link #run(UUID)}. It is
-   * retained through accepted transient event intervals, copy/serialization and transactional rollback. Passing
-   * {@code null} restores the default steady-conduction initialization.
+   * retained through accepted transient event intervals, copy/serialization and transactional rollback. With the
+   * multilayer model, each cell value initializes every radial layer uniformly; the layers then evolve independently.
+   * Passing {@code null} restores the default steady-conduction initialization on the next {@code run()}.
    * </p>
    *
    * @param profile one wall-node temperature per physical cell, or null for the default initialization

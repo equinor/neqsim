@@ -1268,7 +1268,9 @@ target geometry for an unseeded appearance step. A sub-resolution retained trace
 local-stratified chord fallback without changing mass. This is not an annular, slug-front or pig
 interface closure. Initialize a deliberate wall inventory with
 `setInitialWallTemperatureProfile(profile, "K")` before `run()`; both configured and accepted wall
-profiles are defensive and survive copy/rollback/replay. The wall-coupled 12/24-cell 780 s screening
+profiles are defensive and survive copy/rollback/replay. Under the multilayer model, each cell value
+initializes all of that cell's radial layers uniformly; the layers then evolve independently and a
+new steady run clears the prior evolved radial state. The wall-coupled 12/24-cell 780 s screening
 run produces 22.82%/24.29% peak/final oil mesh differences and 43.223/45.037 K maximum wall changes.
 Those broad differences keep physical restart, public validation and hydraulic pigging open.
 

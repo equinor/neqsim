@@ -701,7 +701,9 @@ The wall state can be initialized before `run()` with
 cell count, is defensively copied, and is retained through accepted event intervals, serialization
 and transactional rollback. `getWallTemperatureProfile()` now returns a defensive copy. A new
 steady `run()` deliberately reapplies the configured initial wall state; clearing the configuration
-restores the steady-conduction default.
+restores the steady-conduction default. When the multilayer model is active, the single configured
+temperature for each cell initializes every radial layer in that cell uniformly. The radial layers
+then evolve independently, and a new steady `run()` clears the prior evolved layer inventory.
 
 The declared finite-heat rich-gas cycle completes 780 s on 12 and 24 cells with 100 W/m available
 evaporation heat: 120 s gas-only blowdown, 120 s closed settling, 420 s same-composition inlet
