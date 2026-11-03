@@ -160,6 +160,15 @@ hydrocarbon liquids or glycol-rich condensates. See the
 [dew-point guide](../standards/dew_point_standards#trace-water-process-analyser)
 for the distinction from GERG-water's ISO ice reference and validity range.
 
+The direct water/MEG dew-point and Pitzer hydrate temperature/pressure searches
+reuse bracket-endpoint fugacity residuals for secant interpolation, with
+bisection at least every second refinement trial. Non-finite, rounded or
+out-of-bracket predictions use bisection. The logarithmic fugacity tolerances
+remain `1e-9` for water/MEG dew points and `1e-8` for Pitzer hydrate onset.
+Pitzer pressure searches retain the first crossing located by the low-pressure
+scan. `BracketedSaturationPerformanceTest` checks the previous equilibrium
+roots, strict residuals, physical state and bounded refinement work.
+
 Solid selection preserves the fluid multiphase-check setting. Request additional
 liquid phases explicitly with `setMultiPhaseCheck(true)`. The empirical solid model
 excludes methane and is not a methane-freezing model; see the
