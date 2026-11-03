@@ -44,6 +44,78 @@ Create and calibrate the fluid first, then pass a clone to each inlet `Stream`. 
 
 ---
 
+## Horner Pressure-Buildup Screening
+
+Merged correction [#4829](https://github.com/equinor/neqsim/pull/4829) makes
+`TransientWellModel.calculateBuildup(double)` consistent with the same
+line-source solution used for drawdown. For an infinite-acting reservoir, the
+Horner slope in bar per log cycle is
+
+$m=rac{2.303q_rmu}{4pi kh},$
+
+where `q_r` is the reservoir-condition rate in m³/s, `mu` is viscosity in
+Pa·s, `k` is permeability in m², and `h` is formation thickness in metres.
+The extrapolated pressure is
+
+$P^*=p_{ws}(Delta t)+mlog_{10}left(rac{t_p+Delta t}{Delta t}ight).$
+
+The result reports `permeabilityFromSlope` in mD,
+`skinFromIntercept` from the one-hour intercept, `extrapolatedPressure` in
+bara, and `hornerSlope` in bar/log cycle. The input rate remains Sm³/day;
+`formationVolumeFactor` converts it to reservoir volume.
+
+The following Java 8 program reproduces the corrected synthetic control. The
+documentation regression suite compiles and executes this exact marked source.
+
+<!-- field-development-horner-example: buildup-screening -->
+```java
+import neqsim.process.fielddevelopment.reservoir.TransientWellModel;
+import neqsim.process.fielddevelopment.reservoir.TransientWellModel.BuildupResult;
+
+public final class TransientWellHornerExample {
+  private TransientWellHornerExample() {}
+
+  public static void main(String[] args) {
+    TransientWellModel well = new TransientWellModel();
+    well.setReservoirPressure(300.0, "bara");
+    well.setPermeability(100.0, "mD");
+    well.setFormationThickness(20.0, "m");
+    well.setPorosity(0.20);
+    well.setTotalCompressibility(1.5e-4, "1/bar");
+    well.setFluidViscosity(2.0, "cP");
+    well.setWellboreRadius(0.1, "m");
+    well.setSkinFactor(2.0);
+    well.setFormationVolumeFactor(1.2);
+    well.setDrainageRadius(500.0, "m");
+
+    well.addRateChange(0.0, 100.0);
+    well.addRateChange(1000.0, 0.0);
+
+    BuildupResult result = well.calculateBuildup(10.0);
+    requireNear("permeability", 100.0, result.permeabilityFromSlope, 1.0);
+    requireNear("skin", 2.0, result.skinFromIntercept, 0.1);
+    requireNear("P*", 300.0, result.extrapolatedPressure, 0.05);
+    if (!(result.hornerSlope > 0.0
+        && result.extrapolatedPressure > result.shutInPressure)) {
+      throw new IllegalStateException("Invalid Horner pressure ordering");
+    }
+  }
+
+  private static void requireNear(
+      String name, double expected, double actual, double tolerance) {
+    if (!Double.isFinite(actual) || Math.abs(actual - expected) > tolerance) {
+      throw new IllegalStateException(
+          name + " expected " + expected + " +/- " + tolerance + " but was " + actual);
+    }
+  }
+}
+```
+
+This is a deterministic line-source screening check, not a replacement for
+well-test data conditioning, diagnostic-plot selection, boundary-model
+selection, pressure-gauge quality control, uncertainty analysis, or independent
+reservoir-engineering interpretation.
+
 ## Package Structure
 
 ```

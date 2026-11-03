@@ -55,6 +55,7 @@ import neqsim.thermo.system.SystemSrkEos;
 class FieldDevelopmentOverviewDocumentationTest extends neqsim.NeqSimTest {
   private static final Path GUIDE = Paths.get("docs", "fielddevelopment", "README.md");
   private static final String MARKER = "<!-- field-development-overview-example: screening-workflow -->";
+  private static final String HORNER_MARKER = "<!-- field-development-horner-example: buildup-screening -->";
   private static final Pattern JAVA_FENCE = Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
 
   @TempDir
@@ -80,6 +81,31 @@ class FieldDevelopmentOverviewDocumentationTest extends neqsim.NeqSimTest {
 
     try (URLClassLoader loader = compile("FieldDevelopmentOverviewExample", source)) {
       Class<?> example = loader.loadClass("FieldDevelopmentOverviewExample");
+      example.getMethod("main", String[].class).invoke(null, (Object) new String[0]);
+    }
+  }
+
+  /**
+   * Verifies that the corrected Horner buildup workflow is literal executable source.
+   *
+   * @throws Exception if the guide source cannot be compiled or executed
+   */
+  @Test
+  void hornerBuildupWorkflowCompilesAndRunsFromGuide() throws Exception {
+    String source = hornerExampleSource();
+
+    assertFalse(source.contains("System.out"));
+    assertFalse(source.contains("System.err"));
+    assertTrue(source.contains("public final class TransientWellHornerExample"));
+    assertTrue(source.contains("well.setFormationVolumeFactor(1.2)"));
+    assertTrue(source.contains("well.addRateChange(1000.0, 0.0)"));
+    assertTrue(source.contains("well.calculateBuildup(10.0)"));
+    assertTrue(source.contains("result.permeabilityFromSlope"));
+    assertTrue(source.contains("result.skinFromIntercept"));
+    assertTrue(source.contains("result.extrapolatedPressure"));
+
+    try (URLClassLoader loader = compile("TransientWellHornerExample", source)) {
+      Class<?> example = loader.loadClass("TransientWellHornerExample");
       example.getMethod("main", String[].class).invoke(null, (Object) new String[0]);
     }
   }
@@ -202,6 +228,24 @@ class FieldDevelopmentOverviewDocumentationTest extends neqsim.NeqSimTest {
     Matcher fence = JAVA_FENCE.matcher(markdown.substring(markerPosition));
     assertTrue(fence.find(), "Missing Java fence after marker: " + MARKER);
     assertTrue(fence.group(1).contains("public final class FieldDevelopmentOverviewExample"));
+    return fence.group(1);
+  }
+
+  /**
+   * Extracts the uniquely marked Horner buildup Java fence.
+   *
+   * @return exact published Java source
+   * @throws Exception if the guide cannot be read
+   */
+  private static String hornerExampleSource() throws Exception {
+    String markdown = new String(Files.readAllBytes(GUIDE), StandardCharsets.UTF_8);
+    int markerPosition = markdown.indexOf(HORNER_MARKER);
+    assertTrue(markerPosition >= 0, "Missing marker: " + HORNER_MARKER);
+    assertEquals(markerPosition, markdown.lastIndexOf(HORNER_MARKER), "Marker must be unique: " + HORNER_MARKER);
+
+    Matcher fence = JAVA_FENCE.matcher(markdown.substring(markerPosition));
+    assertTrue(fence.find(), "Missing Java fence after marker: " + HORNER_MARKER);
+    assertTrue(fence.group(1).contains("public final class TransientWellHornerExample"));
     return fence.group(1);
   }
 
