@@ -31,7 +31,7 @@ gas alias and lumped gas totals. There is no independently measured molar feed
 or basis for assigning all MEG impurity to water. Final-publication and full
 uncertainty reconciliation remain unresolved.
 
-## Executed local checks
+## Executed local checks for initial publication
 
 * `uv sync --project devtools --locked --group test`: passed; Python 3.12.14.
 * `python -m unittest discover -s devtools -p 'test_audit_huron_vidal*.py' -v`
@@ -82,3 +82,28 @@ and extrapolation remain outside this qualification.
 Documentation impact: the mixing-rule guide and source catalog now distinguish
 these receipts and blockers from calibrated/validated HV profiles. No public API,
 default or Javadoc behavior changes; the new CLI example is test-executed.
+
+## Interpretation-guard repair
+
+Parent head: `018cd374f7a45fd50b3aeb620ecdcd5287390bf3`; master remains the exact
+base above. A new regression reproduced eight accepted metadata contradictions
+on that head, without changing any numeric file or the no-activation flag:
+zero repeatability claimed exact measurements; footnote b discarded water data;
+loading volumes claimed measured moles; prerequisites claimed complete; apparatus
+uncertainty claimed 95% coverage; the printed density unit was silently corrected;
+and both five-entry limitation/prerequisite lists were replaced with empty strings.
+
+The audit now compares complete uncertainty, feed-limit, prerequisite and apparatus
+statements against the frozen primary-source interpretation. List length and a few
+numeric fields are insufficient. This repairs source-evidence validation; it does
+not change or repair the experimental record, its uncertainty, a thermodynamic
+test harness, a physical model or an EOS parameter.
+
+The regression fails eight subcases on the parent. After repair the complete
+source-audit suite passes 33 tests in both normal and optimized Python, including
+14 natural-gas tests and all eight new contradiction cases. The documented CLI
+still runs read-only. Raw CSVs, provenance, catalog, workflow, production Java and
+all native-model fixtures are byte-identical to the parent. The 137-test native
+result above remains parent evidence, not a new native execution or physical
+qualification for these measurements. Publication formatting/hooks/docs/coverage
+are rerun on the final repaired files; exact-head remote CI remains required.

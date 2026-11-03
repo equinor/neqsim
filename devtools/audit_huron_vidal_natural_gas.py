@@ -35,6 +35,48 @@ SOURCE_CONFLICTS = {
 }
 
 
+QUALIFICATION_BOUNDARIES = {
+    "uncertainty": {
+        "composition": "author relative standard deviation percent; one sigma repeatability; not full combined uncertainty",
+        "temperature_standard_K": "0.05",
+        "pressure_standard_relative": "0.002",
+        "missing_vapor_MEG_experiments": [
+            6,
+            9
+        ],
+        "printed_zero_RSD": "rounded source values, not exact measurements or zero full uncertainty",
+        "footnote_b": "water experiments10/11 excluded only from author average error, not from retained observations"
+    },
+    "feed_limits": [
+        "Molar feed requires declared EOS compressibility and liquid density to convert loading volumes; not measured overall moles",
+        "MEG feed experiments10/11 is >0.998 mass fraction, not an equality or exact pure MEG",
+        "Table4 source subscript 22DMC4 duplicated for component15; CAS79-29-8 and name identify 2,3-dimethylbutane; no silent correction",
+        "Heptanes/octanes are source totals without CAS; no pure-component mapping or new heavy HV pairs",
+        "Rounded measured x and K values are not a normalized complete phase composition"
+    ],
+    "missing": [
+        "Final-publication versus accepted-manuscript reconciliation",
+        "Reconcile apparatus Table2 uncertainty with one-sigma TablesS1/S2 repeatability, full calibration covariance and inconsistent printed density unit",
+        "Complete source-compatible EOS-specific HV/pure inputs for selected light-gas/polar pairs",
+        "Reconcile Table3 purity/low water, Table5 mass-fraction inequality and printed23 H2O99.8mol% before explicit feed conversion and uncertainty propagation",
+        "Independent native thermodynamic, both-direction inhibitor partition and performance qualification before parameter activation"
+    ],
+    "apparatus_table2": {
+        "location": "printed8/PDF9; coverage factors unspecified in table",
+        "relative_percent": {
+            "vapor_water": "3",
+            "vapor_MEG": "12",
+            "liquid_water": "2"
+        },
+        "flow_calibration_deviation_percent": "0.09",
+        "mass_uncertainty_g": "0.001",
+        "density_uncertainty_value_as_printed": "0.00007",
+        "density_uncertainty_unit_as_printed": "g mol^-1",
+        "density_unit_status": "Dimensionally inconsistent for density; not corrected or used in conversion"
+    }
+}
+
+
 def require(condition, message):
     """Enforce a source boundary under normal and optimized interpreters."""
     if not condition:
@@ -148,22 +190,11 @@ def audit(directory=ROOT):
             and metadata["correlation"] ==
             "Concentrations and partition coefficients from the same experiments are not independent samples; covariance not supplied",
             "Source receipts promoted to HV parameters or measured molar feed")
-    require(metadata["uncertainty"]["composition"] ==
-            "author relative standard deviation percent; one sigma repeatability; not full combined uncertainty"
-            and metadata["uncertainty"]["temperature_standard_K"] == "0.05"
-            and metadata["uncertainty"]["pressure_standard_relative"] == "0.002"
-            and metadata["uncertainty"]["missing_vapor_MEG_experiments"] == [6, 9]
-            and len(metadata["feed_limits"]) == 5 and len(metadata["missing"]) == 5,
-            "Changed uncertainty semantics or erased evidence blockers")
+    for name, expected in QUALIFICATION_BOUNDARIES.items():
+        require(metadata.get(name) == expected, "Changed qualification boundary: " + name)
     apparatus = metadata["apparatus_table2"]
-    require(metadata["source_conflicts"] == SOURCE_CONFLICTS
-            and apparatus["relative_percent"] ==
-            {"vapor_water": "3", "vapor_MEG": "12", "liquid_water": "2"}
-            and apparatus["flow_calibration_deviation_percent"] == "0.09"
-            and apparatus["mass_uncertainty_g"] == "0.001"
-            and apparatus["density_uncertainty_value_as_printed"] == "0.00007"
-            and apparatus["density_uncertainty_unit_as_printed"] == "g mol^-1",
-            "Silently resolved purity conflict or erased apparatus uncertainty")
+    require(metadata["source_conflicts"] == SOURCE_CONFLICTS,
+            "Silently resolved source purity conflict")
     source = metadata["source_documents"]
     require(source["manuscript"]["sha256"] ==
             "06fb84d7b24cfc92ce79b2bf74b336c4f465c8932bcdf5370510bcf94f9eb0f6"

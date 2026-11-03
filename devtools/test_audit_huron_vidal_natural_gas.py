@@ -162,6 +162,32 @@ class NaturalGasReceiptTest(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     audit(directory)
 
+    def test_contradictory_qualification_text_is_rejected(self):
+        """Retaining numeric cells must not permit false interpretation claims."""
+        mutations = (
+            ("uncertainty", "printed_zero_RSD", "Zero repeatability proves exact measurements"),
+            ("uncertainty", "footnote_b", "Discard water experiments10/11 as invalid"),
+            ("feed_limits", 0, "Loading volumes are independently measured overall moles"),
+            ("missing", 0, "All source profile prerequisites are qualified"),
+            ("apparatus_table2", "location", "All uncertainties have 95 percent coverage"),
+            ("apparatus_table2", "density_unit_status", "Corrected density used in feed conversion"),
+            ("feed_limits", None, [""] * 5),
+            ("missing", None, [""] * 5),
+        )
+        for parent, key, value in mutations:
+            with self.subTest(parent=parent, key=key), tempfile.TemporaryDirectory() as temp:
+                directory = Path(temp)
+                for name in HASHES:
+                    shutil.copyfile(ROOT / name, directory / name)
+                metadata = json.loads((ROOT / "provenance.json").read_text())
+                if key is None:
+                    metadata[parent] = value
+                else:
+                    metadata[parent][key] = value
+                (directory / "provenance.json").write_text(json.dumps(metadata))
+                with self.assertRaises(ValueError):
+                    audit(directory)
+
     def test_documented_cli_is_read_only_and_optimized(self):
         """Execute the documented example and preserve input bytes with -O."""
         paths = [ROOT / n for n in (*HASHES, "provenance.json")]

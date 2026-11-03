@@ -76,6 +76,10 @@ complete ordering, directions, units, missing cells, inequalities and conflicts.
 The CLI example is executed by the test suite, including with Python `-O`.
 Mutation tests prevent reciprocal K, mass-ppm substitution, self-rehashed data,
 invented missing values, lost footnotes and uncertainty/qualification promotion.
+Complete uncertainty, feed-limit, prerequisite and apparatus statements are checked,
+including their interpretation text. Preserving list lengths and numeric files
+cannot authorize contradictory claims about exact measurements, discarded water
+results, measured molar feeds or cleared source prerequisites.
 
 A subsequent physical batch needs complete EOS-specific directed HV tuples and
 paired alpha/critical inputs, source/version and full uncertainty reconciliation,
