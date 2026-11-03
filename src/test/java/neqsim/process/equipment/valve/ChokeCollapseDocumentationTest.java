@@ -25,8 +25,7 @@ import neqsim.thermo.system.SystemSrkEos;
 class ChokeCollapseDocumentationTest {
   private static final Path GUIDE = Paths.get("docs", "process", "choke-collapse.md");
   private static final String MARKER = "<!-- choke-collapse-python: standalone-example -->";
-  private static final Pattern PYTHON_FENCE =
-      Pattern.compile("```python\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
+  private static final Pattern PYTHON_FENCE = Pattern.compile("```python\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
 
   /**
    * Freezes the supported gateway and API sequence in the published Python source.
