@@ -694,6 +694,21 @@ for (double qgMSm3d : gasRates) {
 > analytical `SevereSluggingBenchmarkHarnessTest` screen and the public Tengesdal
 > evidence until the dynamic qualification gates below pass.
 >
+> **Finite-rate hydrocarbon pool transfer is parameterized screening.** On the
+> conservative-energy Euler route, `HydrocarbonPoolTransfer` accepts explicit
+> component transfer coefficients, evaporation enthalpies, interface width and
+> available W/m. It preserves component/momentum/energy ownership and exposes
+> donor/heat-limit diagnostics. Do not use an arbitrary relaxation time as a
+> fitted evaporation rate, and do not promote analytical conservation tests to
+> shutdown/restart, swept-slug, receiver-capacity or hydraulic-pigging evidence.
+> Calibration and validation need separate independent public multicomponent
+> rate data plus mesh/time and complete-cycle evidence.
+> The 100 W/m finite-heat 780 s rich-gas cycle is numerical mesh evidence. It
+> retains the requested dense EOS root across the cubic model's diagnostic
+> $V/B=1.75$ label transition while positive-compressibility, Jacobian and
+> energy-admissibility guards remain active. Do not clip composition or change
+> the configured root to manufacture a restart result.
+>
 > **Coupled component/phase/thermal slug transport has a narrower envelope.**
 > For the conservative Lagrangian slug/film path, named-component phase sources
 > and their partial-enthalpy latent source must be frozen from the same
@@ -1692,3 +1707,4 @@ combined-liquid split, pressure interpolation, reconstructed slug faces and one-
 complementarity route reject this option. Apply a wave-speed Courant bound and inspect component,
 phase, total-energy and rollback reports.
 Do not use it as proof of dry/wet fronts, terrain pools, refill or physical evaporation.
+

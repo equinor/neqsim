@@ -222,6 +222,37 @@ class ConservativeThermodynamicRecoveryTest {
     Assertions.assertEquals(velocities[2], section.getWaterVelocity(), 1.0e-12);
   }
 
+  /** A dense forced liquid root remains continuous when its diagnostic V/B label changes to gas. */
+  @Test
+  void recoversDenseLiquidRootAcrossDiagnosticPhaseLabelThreshold() {
+    SystemInterface oil = new SystemSrkEos(280.68567477177237, 122.34918190055178);
+    String[] names = {"ethane", "methane", "n-butane", "n-heptane", "n-pentane", "propane"};
+    double[] masses = {672.3325722515265, 1054.0116218166766, 453.6737999732843, 568.7758257191477, 272.3509453771906,
+        756.6837526417859};
+    double[] moles = new double[names.length];
+    for (int component = 0; component < names.length; component++) {
+      oil.addComponent(names[component], 1.0);
+      moles[component] = masses[component] / oil.getPhase(0).getComponent(names[component]).getMolarMass();
+    }
+    oil.setMolarComposition(moles);
+    homogeneous(oil, PhaseType.OIL);
+    Assertions.assertEquals(PhaseType.GAS, oil.getPhase(0).getType());
+    Assertions.assertTrue(oil.getPhase(0).getDensity("kg/m3") > 300.0);
+
+    SystemInterface[] phases = {null, oil, null};
+    TwoFluidSection section = cell(phases, new double[] {0.0, 1.0, 0.0}, new double[] {0.0, 2.35, 0.0});
+    double[] state = section.getStateVector();
+    section.setPressure(122.36169374792278e5);
+    section.setTemperature(280.65202711299895);
+    ConservativeThermodynamicRecovery.Result result = ConservativeThermodynamicRecovery.recover(section, phases);
+
+    Assertions.assertEquals(122.34918190055178e5, result.getPressurePa(), 1.0);
+    Assertions.assertEquals(280.68567477177237, result.getTemperatureK(), 1.0e-4);
+    Assertions.assertTrue(result.getPhaseState(1).getPhase(0).getDensity("kg/m3") > 300.0);
+    result.applyTo(section);
+    Assertions.assertArrayEquals(state, section.getStateVector(), 0.0);
+  }
+
   /** Inadmissible energy recovery leaves both the section and caller-owned phase state untouched. */
   @Test
   void failedRecoveryAndChangedStateApplicationAreTransactional() {

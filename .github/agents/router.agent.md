@@ -26,6 +26,7 @@ Analyze the request and match it to one or more agents:
 | "Realistic", "feasible", "can this be built", "what will it cost", equipment selection | `@mechanical-design` | `@process-model` for operating conditions |
 | CME, CVD, differential liberation, swelling test, saturation pressure | `@pvt-simulation` | `@thermo-fluid` for fluid setup |
 | Hydrate, wax, asphaltene, corrosion, pipeline pressure drop, slug flow | `@flow-assurance` | `@thermo-fluid` if CPA needed |
+| Flowline shutdown/cooldown/restart, terrain pools, hydrocarbon evaporation, pigging, OLGA comparison | `@flow-assurance` | `@dynamic-equipment` for `TwoFluidPipe` implementation; external OLGA evidence remains a separate validation source, never an inferred NeqSim capability |
 | Chemical selection and dosing, inhibitor dose, MIC, chemical compatibility, H2S/O2 scavenger, demulsifier, oil-in-water, chemical deposit RCA | `@production-chemistry` | `@flow-assurance` for the threat magnitude; `@thermo-fluid` for the brine |
 | Water hammer, liquid hammer, hydraulic surge, fast valve closure, pump trip, check-valve slam | `@flow-assurance` | `@plant-data` for tagreader event windows; `@safety-depressuring` if risk register or safety case needed |
 | ISO 6976, Wobbe index, calorific value, gas spec, AGA, H2 blending gas quality | `@gas-quality` | `@process-model` for upstream conditions |

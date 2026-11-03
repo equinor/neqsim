@@ -515,6 +515,18 @@ inventory differences from the local flashed targets, rather than assigning all 
 equilibrium composition. Carry opposing species transfers with their actual donor momentum and
 keep one total-energy owner. This remains an approximate relaxation, not predictive evaporation.
 Positive aqueous inventory/equilibrium retains the preceding source contract below.
+For a dry hydrocarbon finite-rate sensitivity, use `HydrocarbonPoolTransfer` only with
+conservative-energy Euler. Supply component $k_i$ values (m/s), evaporation enthalpies (J/kg),
+interface-width fraction and available heat (W/m); never infer them from the relaxation time.
+The closure uses the same equilibrium component target, component inventory, donor momentum and
+total-energy owners. Require zero-drive/area, donor/heat-limit, unseeded appearance, refinement and
+ledger gates. Label results parameterized screening until coefficients pass independent public
+calibration and validation. Do not call this elapsed pool-depletion, physical restart or pigging
+qualification.
+The 100 W/m finite-heat 780 s rich-gas cycle is numerical mesh evidence only. It crosses the cubic
+EOS diagnostic $V/B=1.75$ label transition by explicitly retaining the requested root while the
+positive-compressibility, Jacobian and energy-admissibility guards remain active. Do not clip
+composition or change the configured root to manufacture a restart result.
 Condensation must use equilibrium hydrocarbon-liquid and aqueous-liquid **mass**
 contributions; never use the current cell water cut to identify a phase that is not yet present.
 For evaporation, withdraw from the actual oil and water conservative inventories and bound each
@@ -1005,3 +1017,4 @@ combined-liquid split, pressure interpolation, reconstructed slug faces and one-
 complementarity route reject this option. Apply a wave-speed Courant bound and inspect component,
 phase, total-energy and rollback reports.
 Do not use it as proof of dry/wet fronts, terrain pools, refill or physical evaporation.
+

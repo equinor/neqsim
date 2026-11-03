@@ -11,6 +11,7 @@ import org.apache.commons.lang3.SerializationUtils;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.TwoFluidComponentConservationReport.Phase;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidComponentTransport;
+import neqsim.process.equipment.pipeline.twophasepipe.HydrocarbonPoolTransfer;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
 import neqsim.process.equipment.stream.Stream;
@@ -28,6 +29,38 @@ import neqsim.thermo.system.SystemSrkEos;
 class TwoFluidPipeConservativeQualificationTest {
   /** Identifier shared by completed physical intervals. */
   private static final UUID CALCULATION_ID = UUID.randomUUID();
+
+  /** Finite-rate pool transfer must reuse the accepted component and total-energy owners. */
+  @Test
+  void hydrocarbonPoolTransferClosesComponentMassAndEnergyOnThePipelinePath() {
+    SystemInterface fluid = new SystemSrkEos(277.15, 50.0);
+    String[] names = {"methane", "ethane", "propane", "n-butane", "n-pentane", "n-heptane"};
+    double[] amounts = {0.916, 0.050, 0.020, 0.007, 0.003, 0.004};
+    for (int component = 0; component < names.length; component++) {
+      fluid.addComponent(names[component], amounts[component]);
+    }
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+    TwoFluidPipe pipe = pipe("finite-rate-hydrocarbon-pool", fluid, 2, 0.001);
+    pipe.closeInlet();
+    pipe.closeOutlet();
+    pipe.setIncludeMassTransfer(true);
+    double[] coefficients = new double[names.length];
+    double[] evaporationEnthalpies = new double[names.length];
+    java.util.Arrays.fill(coefficients, 1.0e-4);
+    java.util.Arrays.fill(evaporationEnthalpies, 3.0e5);
+    pipe.setHydrocarbonPoolTransfer(
+        new HydrocarbonPoolTransfer(names, coefficients, evaporationEnthalpies, 0.5, Double.POSITIVE_INFINITY));
+
+    double initialMass = pipe.getTotalMassInventory();
+    pipe.runTransient(1.0e-4, CALCULATION_ID);
+
+    assertNotNull(pipe.getLastHydrocarbonPoolTransferResult());
+    assertEquals(initialMass, pipe.getTotalMassInventory(), 1.0e-11);
+    assertTrue(pipe.getLastComponentConservationReport().isConverged());
+    assertEquals(0.0, pipe.getLastComponentConservationReport().getMaximumInterphaseTransferResidualKg(), 1.0e-14);
+    assertAuditCloses(pipe);
+  }
 
   /**
    * Compare the same rigid ideal-gas filling event on refined space/time grids against its independent first law.

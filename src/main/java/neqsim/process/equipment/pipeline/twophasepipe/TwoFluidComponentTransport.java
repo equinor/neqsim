@@ -642,6 +642,40 @@ public final class TwoFluidComponentTransport implements Serializable {
         || sections.length != cellCount || !(relaxationTimeSeconds > 0.0) || !Double.isFinite(relaxationTimeSeconds)) {
       throw new IllegalArgumentException("Hydrocarbon relaxation requires matching cells, flashes and positive time");
     }
+    double[][][] result = createHydrocarbonEquilibriumInventoryChanges(equilibriumStates, sections);
+    if (result == null) {
+      return null;
+    }
+    for (int cell = 0; cell < cellCount; cell++) {
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        for (int component = 0; component < componentNames.length; component++) {
+          result[cell][phase][component] /= relaxationTimeSeconds;
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Calculate the dry-hydrocarbon component inventory changes required to reach local phase equilibrium.
+   *
+   * <p>
+   * The returned gas and oil changes are equal and opposite for every component. Values have units kg/m and are
+   * changes, not rates. Separating the target from its kinetics lets finite-rate closures use the same conservative
+   * phase target without assigning an arbitrary relaxation time.
+   * </p>
+   *
+   * @param equilibriumStates source-stage flashes of the conserved local composition
+   * @param sections physical cells supplying lengths
+   * @return cell/phase/component equilibrium inventory changes in kg/m, or null when aqueous inventory or equilibrium
+   * is present
+   */
+  public double[][][] createHydrocarbonEquilibriumInventoryChanges(SystemInterface[] equilibriumStates,
+      TwoFluidSection[] sections) {
+    if (equilibriumStates == null || equilibriumStates.length != cellCount || sections == null
+        || sections.length != cellCount) {
+      throw new IllegalArgumentException("Hydrocarbon targets require matching cells and flashes");
+    }
     double[][][] result = new double[cellCount][PHASE_COUNT][componentNames.length];
     for (int cell = 0; cell < cellCount; cell++) {
       SystemInterface equilibrium = equilibriumStates[cell];
@@ -680,10 +714,10 @@ public final class TwoFluidComponentTransport implements Serializable {
       double targetOilMass = mass * equilibriumOilMass / equilibriumMass;
       double[][] fractions = phaseMassFractions(equilibrium);
       for (int component = 0; component < componentNames.length; component++) {
-        double oilRate = (targetOilMass * fractions[OIL][component] - componentInventoryKg[cell][OIL][component])
-            / sections[cell].getLength() / relaxationTimeSeconds;
-        result[cell][OIL][component] = oilRate;
-        result[cell][GAS][component] = -oilRate;
+        double oilChangePerMetre = (targetOilMass * fractions[OIL][component]
+            - componentInventoryKg[cell][OIL][component]) / sections[cell].getLength();
+        result[cell][OIL][component] = oilChangePerMetre;
+        result[cell][GAS][component] = -oilChangePerMetre;
       }
     }
     return result;

@@ -187,16 +187,19 @@ public final class ConservativeThermodynamicRecovery {
         continue;
       }
       SystemInterface fluid = fluids[phase];
+      PhaseType forcedType = forcedPhaseType(phase);
+      fluid.setForcePhaseTypes(true);
+      fluid.setNumberOfPhases(1);
+      fluid.setMaxNumberOfPhases(1);
+      fluid.setPhaseType(0, forcedType);
       fluid.setPressure(pressure / 1.0e5);
       fluid.setTemperature(temperature);
       fluid.init(3);
       fluid.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       PhaseInterface eosPhase = fluid.getPhase(0);
-      PhaseType type = eosPhase.getType();
-      if (phase == 0 && type != PhaseType.GAS || phase == 1 && type != PhaseType.OIL && type != PhaseType.LIQUID
-          || phase == 2 && type != PhaseType.AQUEOUS) {
-        throw new IllegalStateException("Conservative recovery EOS state changed its forced phase branch");
-      }
+      // PhaseEos labels a root GAS when V/B exceeds 1.75, including a continuous dense root
+      // selected with the forced liquid branch near a supercritical transition. The conservative
+      // slot owns the requested root; the diagnostic label must not redefine that ownership.
       if (!(eosPhase instanceof PhaseIdealGas)) {
         double compressibility = eosPhase.getIsothermalCompressibility();
         if (!(compressibility > 0.0) || !Double.isFinite(compressibility)) {
@@ -220,6 +223,22 @@ public final class ConservativeThermodynamicRecovery {
       throw new IllegalStateException("Invalid occupied volume or energy in conservative recovery");
     }
     return new Evaluation(occupiedArea, internalEnergy, heatCapacityPerLength);
+  }
+
+  /**
+   * Return the EOS root required by one conservative phase slot.
+   *
+   * @param phase gas=0, oil=1, aqueous=2
+   * @return forced EOS phase type
+   */
+  private static PhaseType forcedPhaseType(int phase) {
+    if (phase == 0) {
+      return PhaseType.GAS;
+    }
+    if (phase == 1) {
+      return PhaseType.OIL;
+    }
+    return PhaseType.AQUEOUS;
   }
 
   /**

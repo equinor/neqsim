@@ -1241,6 +1241,26 @@ independently validated evaporation rate. Positive aqueous inventory or equilibr
 retains the previous source path. The original 12/24-cell pressure ramps are regression evidence;
 the refined flat-outlet case and full pooling/restart qualification remain open.
 
+For an explicit finite-rate dry hydrocarbon sensitivity, configure
+`setHydrocarbonPoolTransfer(new HydrocarbonPoolTransfer(...))` on the conservative-energy Euler
+route. The closure multiplies each component's local equilibrium oil-inventory difference by
+$k_i f_wD/(\pi D^2/4)$, applies the actual donor-inventory limit, and gives gas the exact opposite
+source. Supplied component evaporation enthalpies and available W/m impose a separate net
+endothermic heat-rate limit; the conservative energy equation remains the only energy owner.
+Diagnostics report rate constants, donor limiting and heat scaling. A prescribed nonzero interface
+width permits phase appearance without a liquid-mass seed, while zero width is an exact control.
+These are analytical/conservation gates for an explicit parameter set. They do not validate the
+coefficients, elapsed pool depletion, shutdown/restart or hydraulic pigging; independent public
+multicomponent rate data and full-cycle/refinement evidence remain required for those claims. See
+the [process-model contract](../process/TWOFLUIDPIPE_MODEL.md#opt-in-finite-rate-hydrocarbon-pool-transfer).
+The executed 100 W/m finite-heat 780 s rich-gas cycle uses gas-only blowdown, closed settling,
+same-composition inlet refill with the outlet closed, and a closed hold. It passes on 12/24 cells
+with 2.035% peak-oil and 2.067% final-oil mesh differences; minimum heat scales of 2.306e-4 and
+1.653e-4 prove the limit is active. Conservative recovery explicitly retains the requested EOS root
+across the cubic model's diagnostic $V/B=1.75$ phase-label transition while preserving positive
+compressibility and Jacobian/admissibility guards. This is numerical screening for the declared heat
+input, not physical shutdown/restart or predictive depletion qualification.
+
 With component transport enabled, the downstream outlet composition follows the positive outbound
 component ledger rather than the latest inlet composition or the final cell's instantaneous phase
 split. The signed conservation ledger separately retains reversed material entering from an explicit
@@ -2346,3 +2366,4 @@ A supporting 100 s run with the outer reporting/advance interval reduced from 0.
 0.05 s completes without rejected substeps, but changes peak-to-peak pressure from
 43.369 to 58.071 kPa. This sensitivity is further evidence that the optional model is
 not yet numerically or experimentally qualified for severe-slug predictions.
+
