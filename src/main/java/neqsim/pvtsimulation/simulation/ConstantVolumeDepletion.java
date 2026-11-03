@@ -28,6 +28,10 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
   private static final double CELL_VOLUME_RELATIVE_TOLERANCE = 1.0e-8;
   private static final int MAX_CELL_VOLUME_ITERATIONS = 100;
+  /** Internal precision targets for explicit-reference replay, separate from benchmark acceptance bounds. */
+  private static final double FIXED_CELL_PRECISION_TOLERANCE = 1e-12;
+  /** Maximum calls to the existing beta solver at one already accepted endpoint. */
+  private static final int MAX_FIXED_CELL_REFINEMENTS = 12;
 
   private boolean recordDepletionSnapshots;
   private boolean refineSaturationConditions;
@@ -215,6 +219,15 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
    * Restore the constant CVD cell volume by withdrawing equilibrium gas.
    */
   private void restoreSaturationVolume() {
+    restoreSaturationVolume(false);
+  }
+
+  /**
+   * Restores the occupied cell with optional precision for the explicit-reference experiment only.
+   *
+   * @param precise true to refine equilibrium and use a tighter volume stopping criterion
+   */
+  private void restoreSaturationVolume(boolean precise) {
     for (int iteration = 0; iteration < MAX_CELL_VOLUME_ITERATIONS; iteration++) {
       try {
         thermoOps.TPflash();
@@ -227,9 +240,12 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       }
       getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
+      if (precise) {
+        refineFixedCellEquilibrium(getThermoSystem());
+      }
       double currentVolume = getThermoSystem().getCorrectedVolume();
       double relativeResidual = (currentVolume - saturationVolume) / saturationVolume;
-      if (Math.abs(relativeResidual) <= CELL_VOLUME_RELATIVE_TOLERANCE) {
+      if (Math.abs(relativeResidual) <= (precise ? FIXED_CELL_PRECISION_TOLERANCE : CELL_VOLUME_RELATIVE_TOLERANCE)) {
         return;
       }
       if (relativeResidual < 0.0) {
@@ -342,7 +358,9 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
    * <p>
    * The first pressure defines the occupied-volume reference with zero withdrawal. At each subsequent pressure,
    * equilibrium gas alone is withdrawn to restore that volume; all liquids remain. Gas-only, gas/oil, gas/aqueous and
-   * gas/oil/aqueous cells are permitted when the named phase family remains unchanged throughout the sampled path.
+   * gas/oil/aqueous cells are permitted when the named phase family remains unchanged throughout the sampled path. The
+   * opt-in route refines accepted endpoints to 1e-12 log-fugacity residual and relative cell-volume closure using the
+   * existing multiphase beta solver. Refinement must preserve phase family, Gibbs energy and component balance.
    * Phase-family changes, absent gas, other phase types, unclosed equilibrium and critical-degenerate splits fail. This
    * is not the saturation-referenced laboratory protocol used by {@link #runCalc()} and does not infer a wet upper dew
    * point. The caller must independently accept its EOS, phase options and experiment provenance.
@@ -396,6 +414,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       } catch (Exception ex) {
         throw new IllegalStateException("Fixed-cell flash failed at row " + row, ex);
       }
+      refineFixedCellEquilibrium(cell);
       String[] present = fixedCellFamily(cell);
       if (row == 0) {
         family = present;
@@ -403,7 +422,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       } else if (!Arrays.equals(family, present)) {
         throw new IllegalStateException("Fixed-cell phase-family change is not qualified at row " + row);
       }
-      trial.restoreSaturationVolume();
+      trial.restoreSaturationVolume(true);
       if (!Arrays.equals(family, fixedCellFamily(cell))) {
         throw new IllegalStateException("Fixed-cell withdrawal changed the phase family at row " + row);
       }
@@ -423,6 +442,78 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       previous = retained;
     }
     return new FixedCellResult(temperatureK, schedule[0], trial.saturationVolume, completed);
+  }
+
+  /**
+   * Refines an already accepted fixed-topology endpoint using the existing multiphase beta solver.
+   *
+   * <p>
+   * Only the opt-in explicit-reference experiment pays this cost. A tighter log-fugacity residual prevents small
+   * phase-fraction errors from scaling into large absolute inventory differences. Any failed precision, phase-family,
+   * energy or balance gate rejects the whole transactional path rather than returning the less precise endpoint.
+   * </p>
+   *
+   * @param cell local trial state, never the caller's fluid
+   * @throws IllegalStateException if refinement cannot preserve a balanced supported endpoint
+   */
+  private static void refineFixedCellEquilibrium(SystemInterface cell) {
+    String[] family = fixedCellFamily(cell);
+    double residual = fixedCellFugacityResidual(cell);
+    if (residual <= FIXED_CELL_PRECISION_TOLERANCE) {
+      return;
+    }
+    double initialGibbs = cell.getGibbsEnergy();
+    if (!Double.isFinite(initialGibbs)) {
+      throw new IllegalStateException("Invalid fixed-cell Gibbs energy before refinement");
+    }
+    double[] inventory = DepletionSnapshot.inventory(cell);
+    neqsim.thermodynamicoperations.flashops.TPmultiflash solver = new neqsim.thermodynamicoperations.flashops.TPmultiflash(
+        cell, false);
+    solver.setDoubleArrays();
+    for (int refinement = 0; refinement < MAX_FIXED_CELL_REFINEMENTS
+        && residual > FIXED_CELL_PRECISION_TOLERANCE; refinement++) {
+      solver.solveBeta();
+      cell.init(1);
+      residual = fixedCellFugacityResidual(cell);
+    }
+    cell.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+    if (!Double.isFinite(residual) || residual > FIXED_CELL_PRECISION_TOLERANCE
+        || !Arrays.equals(family, fixedCellFamily(cell)) || !Double.isFinite(cell.getGibbsEnergy())
+        || cell.getGibbsEnergy() > initialGibbs + 1e-10 * Math.max(1.0, Math.abs(initialGibbs))) {
+      throw new IllegalStateException("Fixed-cell precision refinement failed");
+    }
+    for (int component = 0; component < inventory.length; component++) {
+      double total = 0;
+      for (int phase = 0; phase < cell.getNumberOfPhases(); phase++) {
+        total += cell.getPhase(phase).getNumberOfMolesInPhase() * cell.getPhase(phase).getComponent(component).getx();
+      }
+      if (Math.abs(total - inventory[component]) > 1e-12 * Math.max(1.0, inventory[component])) {
+        throw new IllegalStateException("Fixed-cell precision refinement lost component balance");
+      }
+    }
+  }
+
+  /**
+   * Measures the largest log-fugacity residual against phase zero over present components.
+   *
+   * @param cell initialized local endpoint
+   * @return maximum dimensionless residual, zero for a single phase
+   */
+  private static double fixedCellFugacityResidual(SystemInterface cell) {
+    double maximum = 0;
+    for (int phase = 1; phase < cell.getNumberOfPhases(); phase++) {
+      for (int component = 0; component < cell.getNumberOfComponents(); component++) {
+        if (cell.getComponent(component).getNumberOfmoles() <= 0) {
+          continue;
+        }
+        double first = cell.getPhase(0).getComponent(component).getx()
+            * cell.getPhase(0).getComponent(component).getFugacityCoefficient();
+        double other = cell.getPhase(phase).getComponent(component).getx()
+            * cell.getPhase(phase).getComponent(component).getFugacityCoefficient();
+        maximum = Math.max(maximum, Math.abs(Math.log(first) - Math.log(other)));
+      }
+    }
+    return maximum;
   }
 
   /**

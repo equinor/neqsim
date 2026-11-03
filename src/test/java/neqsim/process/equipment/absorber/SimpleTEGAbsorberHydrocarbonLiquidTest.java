@@ -191,6 +191,22 @@ class SimpleTEGAbsorberHydrocarbonLiquidTest extends NeqSimTest {
     assertBalances(absorber);
   }
 
+  /** Checks recovery with the phase-stability search disabled and a strongly condensate-rich feed. */
+  @Test
+  void disabledStabilityCheckStillRecoversInvalidTwoPhaseFlash() {
+    // Force an invalid two-phase solution instead of relying on a roundoff-dependent inventory defect at factor 3.
+    // The fallback must recover the separate hydrocarbon liquid while preserving the glycol phase and inventory.
+    SimpleTEGAbsorber absorber = new SimpleTEGAbsorber("probe");
+    assertTrue(absorber.isHydrocarbonLiquidCheck());
+    SimpleTEGAbsorber fast = runCase(20.0, 29.75, 0.9992, SimpleTEGAbsorber.HydrocarbonLiquidRouting.GAS_OUTLET, false);
+    assertTrue(fast.hasHydrocarbonLiquid());
+    assertTrue(fast.isEquilibriumLiquidGlycolRich());
+    assertBalances(fast);
+    SimpleTEGAbsorber lean = runCase(0.0, 29.25, 0.99968, SimpleTEGAbsorber.HydrocarbonLiquidRouting.GAS_OUTLET, false);
+    assertFalse(lean.hasHydrocarbonLiquid());
+    assertEquals(2.0306706847, waterPpmv(lean), 2.0306706847 * 1.0e-6);
+  }
+
   @Test
   void disabledStabilityCheckPreservesInventoriesAndGlycolPhase() {
     // Without stability checking, a balanced glycol-rich two-phase solution is allowed. Whether this mixture

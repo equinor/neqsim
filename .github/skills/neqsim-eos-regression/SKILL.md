@@ -309,3 +309,10 @@ remain unchanged; critical and other-phase states fail. Keep the ordinary
 `docs/pvtsimulation/depletion_pvt_generation.md` and
 `FixedCellDepletionHandoffTest`; synthetic EOS consistency does not establish
 measured calibration, held-out experiment accuracy or recoverable reserves.
+
+
+Explicit-reference fixed-cell replay refines accepted endpoints through the existing
+multiphase beta solver to 1e-12 equilibrium and relative volume targets. Preserve all
+phase-family, Gibbs and component gates; failed refinement rejects the transaction.
+Do not weaken absolute inventory bounds or claim arbitrary-scale/measured accuracy.
+The original 216-state and intermediate 480-state matrices use identical frozen bounds.
