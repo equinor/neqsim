@@ -2286,7 +2286,44 @@ public class ProcessAutomation {
     default:
       break;
     }
+    if (property.startsWith(MOLE_FRACTION_PREFIX) && property.length() > MOLE_FRACTION_PREFIX.length()) {
+      return getStreamMoleFraction(stream, property.substring(MOLE_FRACTION_PREFIX.length()), uom);
+    }
     throw new IllegalArgumentException("Unknown stream property: " + property);
+  }
+
+  /** Prefix of the read-only stream property giving the overall mole fraction of one component. */
+  private static final String MOLE_FRACTION_PREFIX = "moleFraction_";
+
+  /**
+   * Returns the overall mole fraction of one component of a stream, for example the water content of a dried gas
+   * ({@code "contactor.gasOutStream.moleFraction_water"} with unit {@code "ppm"}).
+   *
+   * @param stream the stream
+   * @param componentName component name as used in the fluid, for example "water"
+   * @param uom "" or "fraction" for a mole fraction, "mol%" for percent, "ppm" or "ppmv" for parts per million
+   * @return the mole fraction in the requested unit
+   * @throws IllegalArgumentException if the stream has no fluid, the component is missing or the unit is unknown
+   */
+  private double getStreamMoleFraction(StreamInterface stream, String componentName, String uom) {
+    if (stream.getFluid() == null) {
+      throw new IllegalArgumentException("Stream has no fluid: " + stream.getName());
+    }
+    if (!stream.getFluid().hasComponent(componentName)) {
+      throw new IllegalArgumentException("Component not in stream " + stream.getName() + ": " + componentName);
+    }
+    double fraction = stream.getFluid().getComponent(componentName).getz();
+    String unit = uom == null ? "" : uom.trim();
+    if (unit.isEmpty() || "fraction".equalsIgnoreCase(unit) || "-".equals(unit)) {
+      return fraction;
+    }
+    if ("mol%".equalsIgnoreCase(unit) || "%".equals(unit)) {
+      return fraction * 100.0;
+    }
+    if ("ppm".equalsIgnoreCase(unit) || "ppmv".equalsIgnoreCase(unit) || "ppmmol".equalsIgnoreCase(unit)) {
+      return fraction * 1.0e6;
+    }
+    throw new IllegalArgumentException("Unknown unit for a mole fraction: " + uom + " (use fraction, mol% or ppm)");
   }
 
   /**
