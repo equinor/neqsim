@@ -529,6 +529,16 @@ address) during model build; the plant-data agent fills in the historian tags.
   when OK) so a bad tag is a warning, not a crash. `SimulationVariable` exposes
   `getAddress()`, `getType()`, `getDescription()` (no `getUnit()`).
 
+**Replaying a whole time series:** use
+`neqsim.process.operations.replay.ProcessReplay` instead of an ad-hoc loop. Build it with
+`ProcessReplay.fromTagMap(process, tagMap)` (INPUT bindings drive, BENCHMARK bindings are
+compared) or `ReplayBinding.input/output(...)`, run it on a `ReplayTimeSeries` (columns =
+historian tags; `ReplayTimeSeries.fromCsv(path)` reads a tagreader export with time in the first
+column) and read per-step status, residual bias/RMS per window, baseline-standardised residuals,
+CUSUM change points and CSV/JSON export from the `ReplayResult`. Bad rows are recorded, never
+thrown; warm start (default) carries state between rows, `setWarmStart(false)` copies the model
+per row. Guide: `docs/process/process_replay.md`.
+
 A runnable generator + round-trip verifier for a real plant (auto-discovers the
 addresses, writes `tag_map.json`, proves `applyFieldData` drives the model) is in the
 Kristin task: `generate_tag_map.py` + `verify_tag_map.py`.

@@ -976,6 +976,7 @@ capability routes, numerical evidence, measured-data gaps and gas-injection limi
 | Digital Twin | [docs/process/digital-twin-integration.md](process/digital-twin-integration.md) | Digital twin integration |
 | Plant Data & Tagreader | [docs/process/plant-data-tagreader.md](process/plant-data-tagreader.md) | Connecting NeqSim to plant historians (PI/IP.21) via tagreader |
 | Operational Evidence Package | [docs/process/operational_evidence_package.md](process/operational_evidence_package.md) | Combine P&ID/STID references, tagreader values, NeqSim scenario actions, and bottleneck detection into one operational study |
+| Process Replay | [docs/process/process_replay.md](process/process_replay.md) | Replay plant time series through a ProcessSystem/ProcessModel: tag-bound inputs and outputs, convergence-gated steps, residual bias/RMS, baseline standardisation, CUSUM change points, CSV/JSON export |
 | Lifecycle    | [docs/process/lifecycle/README.md](process/lifecycle/README.md)                       | Lifecycle management     |
 
 ### Chapter 42: AI/ML Integration

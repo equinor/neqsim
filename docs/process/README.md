@@ -61,6 +61,7 @@ This documentation is organized into the following sections:
 | [piping_route_builder.md](piping_route_builder) | **STID/E3D line-list piping route builder** — convert route tables into serial Beggs-and-Brill hydraulic models and water-hammer screening handoffs |
 | [water_hammer_implementation.md](../wiki/water_hammer_implementation) | **Water hammer/liquid hammer screening** — fast valve closure, pump trip, STID route, tagreader event, and MCP runWaterHammer workflow |
 | [operational_evidence_package.md](operational_evidence_package) | **Operational evidence package** — combine P&ID/STID references, tagreader values, scenario actions, and bottleneck detection |
+| [process_replay.md](process_replay) | **Process replay of plant time series** — tag-bound inputs/outputs, convergence-gated steps, residual bias/RMS, baseline standardisation, CUSUM change points, CSV/JSON export |
 | [exergy-analysis.md](exergy-analysis) | **Exergy analysis** — plant-wide destruction hotspots for ProcessSystem and ProcessModel |
 | [production-allocation.md](production-allocation) | **Production allocation** — back-allocate metered production to wells/sources via a linear recovery-factor proxy network (handles recycle/reflux) |
 | [k-value-fast-simulation.md](k-value-fast-simulation) | **Cached K-value fast simulation** — run one rigorous base-case process, freeze separator K-values and fallback splits, then execute fast source-rate scenarios without repeated EOS flashes |
