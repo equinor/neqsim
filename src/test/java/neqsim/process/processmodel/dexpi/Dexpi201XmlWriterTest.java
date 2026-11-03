@@ -37,6 +37,27 @@ public class Dexpi201XmlWriterTest extends NeqSimTest {
   Path temporaryDirectory;
 
   /**
+   * Does not invent air cooling or fired construction from a generic energy-duty object.
+   *
+   * @throws Exception if export fails
+   */
+  @Test
+  void genericThermalDutyRetainsGeneric201EquipmentType() throws Exception {
+    ProcessSystem process = process();
+    neqsim.process.equipment.heatexchanger.Cooler cooler = new neqsim.process.equipment.heatexchanger.Cooler(
+        "E-GENERIC", process.getUnit("PV-101").getOutletStreams().get(0));
+    cooler.setOutTemperature(295.15);
+    process.add(cooler);
+    process.run();
+    Path file = temporaryDirectory.resolve("generic-thermal.xml");
+    Dexpi20ConformanceAssessment.Report report = Dexpi201XmlWriter.writeAndAssess(process, file.toFile(), metadata());
+    assertTrue(report.isSchemaAndProfileConformant(), report.getErrors().toString());
+    String xml = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+    assertTrue(xml.contains("Plant/ProcessEquipment.HeatExchanger"));
+    assertFalse(xml.contains("Plant/ProcessEquipment.AirCoolingSystem"));
+  }
+
+  /**
    * Checks exact imports, typed nozzles, deterministic output and version-bound evidence.
    *
    * @throws Exception if export fails

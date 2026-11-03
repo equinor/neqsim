@@ -34,7 +34,8 @@ the source process before export and inspect these outputs:
 | Output | Purpose |
 | --- | --- |
 | `plant.dexpi.xml`, `dexpi-2.0.1-conformance.json` | Exact native 2.0.1 exchange and its assessment |
-| `drawings/pid-drawing-set.pdf`, `drawings/pid-sheet-NNN.svg` | A3 review drawings and per-sheet vector views |
+| `drawings/pid-drawing-set.pdf`, `drawings/pid-sheet-NNN.svg` | Native A1 review drawings and per-sheet vector views; explicit legacy layouts retain their selected representation |
+| `drawings/pfd-overview.pdf`, `drawings/pfd-overview.svg` | Native A1 process overview for one to four primary units, with actual streams, valves and normal operating data |
 | `engineering-graph.json`, `pid-document-set.json` | Controlled semantic and document identities |
 | `pid-engineering-registers.json` | Detailed proposals, connections and missing engineering input |
 | `simulation-model.neqsim`, `pid-simulation-bindings.json` | Saved executable process and explicit P&ID tag handoff |
@@ -90,7 +91,7 @@ binding does not establish a globally coupled multi-area dynamic solver.
 Use `@engineering-deliverables` and `neqsim-pid-process-operations` for requests
 such as:
 
-- "Prepare a professional A3 P&ID with DEXPI 2.0.1 from this NeqSim model."
+- "Prepare a professional P&ID with DEXPI 2.0.1 from this NeqSim model."
 - "Add instrumentation and safeguarding proposals with their design assumptions."
 - "Run the base steady-state case, then test the bound outlet valve and shutdown response."
 
@@ -100,6 +101,92 @@ Keep visual acceptance, receiving-tool qualification, standards review and
 accountable engineering approval as separate checks. Generated files alone do
 not establish that every proposed component is physically connected, drawn,
 simulated or approved.
+
+## Native ISO-basis drawing and connectivity checks
+
+The professional exporter now uses `ProfessionalPidDiagramRenderer` and
+`ProfessionalPidSymbolLibrary` for default native A1 landscape scenes. It
+preserves the actual separator orientation, uses distinct control, isolation,
+check and relief-valve families, adds pneumatic actuator decoration only for
+an explicitly supplied `actuatorType=PNEUMATIC_DIAPHRAGM_PROPOSAL`,
+separates field measurement from shared control/safety functions, and retains
+named signal continuations. Existing explicitly controlled manual layouts
+retain their previous representation and are labelled separately in readiness;
+they are never silently replaced by the automatic professional layout.
+
+The drawing basis is ISO 10628-1:2014 for diagram content/drafting,
+ISO 10628-2:2012 and ISO 14617 for process symbols, ISO 5457/7200 for
+paper/document fields, and IEC 62424 with ANSI/ISA-5.1 for PCE notation. The
+new authored vector catalogue is **not an independently qualified ISO symbol
+catalogue**. The exporter records standards review, design-input and discipline
+HOLDs instead of claiming certification or assigning an approver.
+
+Inspect these additional artifacts:
+
+| Artifact | What it proves |
+| --- | --- |
+| `pid-physical-projection.json` | Shared, source-backed equipment/line/nozzle attachments and directed functional links used by both drawing and native exchange |
+| `pid-drawing-content-report.json` | Actual rendered sheet index, symbol/content coverage, line-design and valve-data gaps, controlled issue date and explicit ISO-review status |
+| `drawings/pid-sheet-NNN.layout.json` | Source geometry for the mandatory deterministic layout check, separate from standards/content review |
+| `plant.dexpi.xml.pid-projection.json` | Native IDs, connected proposal projection, real signal/actuator endpoints, unresolved elements and assessment of the final exact XML bytes |
+
+A valid DEXPI file does not establish a complete P&ID. A geometrically valid
+sheet does not establish ISO content/symbol conformance. Require all source
+and proposal identities, physical/signal endpoints, sizing/class information
+and controlled review evidence before claiming the relevant qualification.
+Source-area document identities remain in `pid-document-set.json`; the derived
+representation sheet index is in `pid-drawing-content-report.json` and shares
+the same source-graph fingerprint. Neither sheet pagination nor an extra
+representation changes the physical simulation model.
+
+Supply controlled `LineDesignInput` rows keyed by the actual stream/line tag.
+The drawings show their nominal size and piping class. Missing data remain
+`DN:HOLD` and `CLASS:HOLD`; operating pressure is never substituted for design
+pressure. A missing fail action remains `FA:HOLD` even if the proposal catalog
+suggests a failure direction. Drive selection, valve sizing, proof testing,
+relief sizing, trip values and safety approval remain engineering inputs.
+
+Auxiliary routes require explicit source and destination identities. For an
+existing process line, supply both `physicalSourceEquipmentTag` and
+`physicalSourceStreamTag`, with corresponding target fields for a recycle.
+For a new design nozzle, supply `physicalSourceEquipmentTag`,
+`physicalSourceNozzleTag`, `physicalSourcePortRole` (`UTILITY` or `PROCESS`) and
+`designEvidenceReference`; target-nozzle fields are symmetric. A new utility
+nozzle is a distinct owned plant object and is never connected to the process
+gas line by inference. `destinationTag` identifies a controlled external
+interface. A relief destination can name its generated off-page proposal tag.
+
+A series circuit such as a utility SDV and TCV requires one shared
+`physicalRouteId`, identical endpoint/evidence inputs, and unique explicit
+nonnegative `physicalRouteOrder` integers. It generates one ordered physical
+path. Missing, duplicate or conflicting order remains HOLD; the exporter does
+not create a parallel bypass or invent a series order. Cooler/exchanger
+utility-loss flow measurement similarly requires its utility sensing point;
+it does not measure the hot process inlet. A simple fired-heater process
+low-flow proposal still uses its actual process inlet.
+
+Process-nozzle synthesis excludes streams, valve piping nodes, tee helpers
+and numerical helpers. Their existing physical source ports remain in the
+engineering graph. Generic thermal duty models use the generic 2.0.1
+HeatExchanger type; air-cooling or fired construction is selected only for an
+explicit source equipment type. Compatibility 2.0.0 mappings remain unchanged.
+
+Native Process/PFD 2.0.1 export also supplies required compression/heat-exchange
+method values from the supported generic semantics. It no longer needs a
+notebook-side XML repair. An unspecified compression method is not silently
+labelled centrifugal from an isentropic-efficiency calculation.
+
+The source-only native PFD overview uses the same authored equipment symbols,
+shows actual valves and stream pressure, temperature and mass flow, and omits
+proposed instrumentation. It currently supports small forward-flow trains with
+one to four primary units. Inspect `pfdOverview` in the readiness report and
+`drawings/pfd-overview.layout.json`; unsupported sizes are reported explicitly,
+and geometry errors are retained as incomplete drawings. This bounded overview
+does not establish arbitrary full-plant routing support.
+
+Passive valves and splitters remain HAZOP nodes using their actual source
+stream boundaries. They do not receive invented vessel-nozzle proposals or
+automatically credited safeguards.
 
 ## Compatibility proposal example
 

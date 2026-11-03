@@ -46,8 +46,10 @@ public class PidHazopStudyRunnerTest extends NeqSimTest {
     PidHazopStudyReport report = PidHazopStudyRunner.run(project, model);
 
     assertTrue(report.isReadyForHazopWorkshop());
-    assertFalse(model.getElementsForEquipment("20-PCV-001").isEmpty());
+    assertTrue(model.getElementsForEquipment("20-PCV-001").isEmpty());
     assertTrue(report.toJson().contains("20-PCV-001"));
+    assertTrue(report.toJson().contains("20-FEED-002"));
+    assertTrue(report.toJson().contains("processInletStreamTags"));
   }
 
   private static EngineeringProject project() {

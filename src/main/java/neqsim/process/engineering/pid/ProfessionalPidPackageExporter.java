@@ -23,6 +23,7 @@ import neqsim.process.dynamics.DynamicCapabilityReport;
 import neqsim.process.engineering.EngineeringProject;
 import neqsim.process.engineering.EngineeringStandard;
 import neqsim.process.engineering.dexpi.DexpiEngineeringExporter;
+import neqsim.process.engineering.dexpi.Dexpi201PidMaterializer;
 import neqsim.process.engineering.model.EngineeringDiagramConventionRegister;
 import neqsim.process.engineering.model.EngineeringDiagramConventionRegister.EvidenceState;
 import neqsim.process.engineering.model.EngineeringDiagramConventionRegister.SymbolConvention;
@@ -40,6 +41,7 @@ import neqsim.process.processmodel.dexpi.Dexpi20PlantExportMetadata;
 import neqsim.process.processmodel.diagram.EngineeringDiagramPidRegisters;
 import neqsim.process.processmodel.diagram.NativeEngineeringDiagramRenderer;
 import neqsim.process.processmodel.diagram.ProcessDiagramDocumentSetAdapter;
+import neqsim.process.processmodel.diagram.ProfessionalPidDiagramRenderer;
 
 /**
  * Coordinates a DEXPI 2.0.1 P&amp;ID proposal, native drawings and its executable simulation handoff.
@@ -59,7 +61,7 @@ public final class ProfessionalPidPackageExporter {
   }
 
   /**
-   * Generates a coordinated A3 package with proposed process-equipment symbols.
+   * Generates source-connected native ISO-basis A1 review drawings and an assessed DEXPI 2.0.1 package.
    *
    * @param project controlled engineering project with a converged process
    * @param model P&amp;ID proposal for that project
@@ -124,6 +126,9 @@ public final class ProfessionalPidPackageExporter {
       PidEngineeringPackageExporter.export(project, model, staging);
       Dexpi20ConformanceAssessment.Report conformance = DexpiEngineeringExporter.exportDexpi201(project,
           staging.resolve("plant.dexpi.xml"), metadata);
+      Dexpi201PidMaterializer.Result projected = Dexpi201PidMaterializer.materialize(project, model, bindings,
+          staging.resolve("plant.dexpi.xml"));
+      conformance = projected.getAssessment();
       writeJson(staging.resolve("dexpi-2.0.1-conformance.json"), conformance.toJson());
 
       EngineeringGraph graph = EngineeringGraphBuilder.fromProject(project);
@@ -134,7 +139,20 @@ public final class ProfessionalPidPackageExporter {
       NativeEngineeringDiagramRenderer renderer = new NativeEngineeringDiagramRenderer(documents,
           NativeEngineeringDiagramRenderer.SheetFormat.A3_LANDSCAPE, conventions,
           NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL, registers, true);
-      NativeEngineeringDiagramRenderer.Result rendering = renderer.render();
+      ProfessionalPidDiagramRenderer professional = null;
+      NativeEngineeringDiagramRenderer.Result rendering;
+      if (layouts.getPinnedPositions().isEmpty() && layouts.getProtectedRoutes().isEmpty()
+          && layouts.getAssignments().isEmpty() && layouts.getOverviewRegions().isEmpty()
+          && layouts.getSheets().isEmpty()) {
+        professional = new ProfessionalPidDiagramRenderer(project, model, bindings, documents, conventions,
+            metadata.getExportDateTime());
+        rendering = professional.render();
+        writeJson(staging.resolve("pid-drawing-content-report.json"), professional.getContentReportJson());
+        writeJson(staging.resolve("pid-physical-projection.json"), professional.getPhysicalProjection().toJson());
+      } else {
+        // Existing controlled layouts retain their legacy representation; they are not silently overridden.
+        rendering = renderer.render();
+      }
       Path drawings = staging.resolve("drawings");
       Files.createDirectories(drawings);
       Files.write(drawings.resolve("pid-drawing-set.pdf"), rendering.getPdf());
@@ -143,6 +161,11 @@ public final class ProfessionalPidPackageExporter {
       for (Map.Entry<String, String> svg : rendering.getSvgBySheetId().entrySet()) {
         String name = String.format(java.util.Locale.ROOT, "pid-sheet-%03d.svg", Integer.valueOf(sheet++));
         writeJson(drawings.resolve(name), svg.getValue());
+        if (professional != null) {
+          Map<String, Object> specification = professional.getLayoutSpecifications().get(svg.getKey());
+          writeJson(drawings.resolve(name.replace(".svg", ".layout.json")),
+              new GsonBuilder().setPrettyPrinting().create().toJson(specification));
+        }
         sheetFiles.put(svg.getKey(), "drawings/" + name);
       }
       writeJson(staging.resolve("engineering-graph.json"), graph.toJson());
@@ -161,7 +184,14 @@ public final class ProfessionalPidPackageExporter {
       Map<String, Object> readiness = readiness(project, model, documents, registers, rendering, conformance,
           staging.resolve("plant.dexpi.xml"));
       readiness.put("sheetFiles", sheetFiles);
+      readiness.put("drawingProfile",
+          professional == null ? "CONTROLLED_LEGACY_LAYOUT_REVIEW" : "ISO_10628_BASIS_NATIVE");
+      readiness.put("drawingContentReport", professional == null ? "NOT_ASSESSED" : "pid-drawing-content-report.json");
+      readiness.put("isoConformanceStatus", "CONTROLLED_STANDARD_AND_DISCIPLINE_REVIEW_REQUIRED");
+      readiness.put("nativePidProjection", projected.toMap());
       readiness.put("visualFingerprints", rendering.getVisualFingerprintsBySheetId());
+      readiness.put("pfdOverview",
+          exportPfdOverview(project, model, bindings, documents, conventions, metadata, drawings));
       writeJson(staging.resolve("professional-pid-readiness.json"),
           new GsonBuilder().setPrettyPrinting().create().toJson(readiness));
       // Replaces the old profile-specific report after replacing the native exchange file.
@@ -178,6 +208,56 @@ public final class ProfessionalPidPackageExporter {
     } finally {
       removeStaging(staging);
     }
+  }
+
+  /**
+   * Writes a small source-only native PFD overview and its independent diagnostics.
+   *
+   * @param project source project
+   * @param model proposal identities
+   * @param bindings explicit executable bindings
+   * @param documents source document graph
+   * @param conventions review records
+   * @param metadata controlled issue date
+   * @param drawings output drawing directory
+   * @return supported scope and actual generation evidence
+   * @throws IOException if a drawing cannot be written
+   */
+  private static Map<String, Object> exportPfdOverview(EngineeringProject project, PidDesignModel model,
+      PidSimulationBindings bindings, EngineeringDiagramDocumentSet documents,
+      EngineeringDiagramConventionRegister conventions, Dexpi20PlantExportMetadata metadata, Path drawings)
+      throws IOException {
+    Map<String, Object> report = new LinkedHashMap<String, Object>();
+    int primaryCount = 0;
+    for (neqsim.process.equipment.ProcessEquipmentInterface unit : project.getEngineeringProcessSystem()
+        .getUnitOperations()) {
+      if (!(unit instanceof neqsim.process.equipment.stream.StreamInterface)
+          && !(unit instanceof neqsim.process.equipment.valve.ThrottlingValve)) {
+        primaryCount++;
+      }
+    }
+    report.put("supportedPrimaryUnitCount", "1_TO_4_FORWARD_FLOW_TRAIN");
+    report.put("sourceGraphFingerprint", documents.getSourceGraphFingerprint());
+    report.put("isoConformanceStatus", "CONTROLLED_STANDARD_AND_DISCIPLINE_REVIEW_REQUIRED");
+    if (primaryCount < 1 || primaryCount > 4) {
+      report.put("generationStatus", "OUTSIDE_NATIVE_OVERVIEW_SCOPE");
+      return report;
+    }
+    ProfessionalPidDiagramRenderer renderer = new ProfessionalPidDiagramRenderer(project, model, bindings, documents,
+        conventions, metadata.getExportDateTime());
+    NativeEngineeringDiagramRenderer.Result result = renderer.renderProcessFlowOverview();
+    Files.write(drawings.resolve("pfd-overview.pdf"), result.getPdf());
+    for (Map.Entry<String, String> entry : result.getSvgBySheetId().entrySet()) {
+      writeJson(drawings.resolve("pfd-overview.svg"), entry.getValue());
+      writeJson(drawings.resolve("pfd-overview.layout.json"), new GsonBuilder().setPrettyPrinting().create()
+          .toJson(renderer.getLayoutSpecifications().get(entry.getKey())));
+    }
+    report.put("generationStatus", result.isComplete() ? "GENERATED_FOR_REVIEW" : "INCOMPLETE_DRAWING");
+    report.put("pdf", "drawings/pfd-overview.pdf");
+    report.put("performedChecks", result.getPerformedChecks());
+    report.put("diagnostics", result.getDiagnostics());
+    report.put("visualFingerprints", result.getVisualFingerprintsBySheetId());
+    return report;
   }
 
   /**
@@ -256,9 +336,10 @@ public final class ProfessionalPidPackageExporter {
     result.put("nativeUnmappedProposalTags", missing);
     result.put("nativeProposalConnectivityQualification", "REQUIRED");
     result.put("generationStatus",
-        !documents.isValid() ? "INCOMPLETE_DOCUMENT_MODEL"
-            : !rendering.isComplete() || drawingWarnings ? "INCOMPLETE_DRAWING"
-                : missing.isEmpty() ? "GENERATED_FOR_REVIEW" : "INCOMPLETE_NATIVE_PROPOSAL_PROJECTION");
+        !conformance.isSchemaAndProfileConformant() ? "INCOMPLETE_NATIVE_EXCHANGE"
+            : !documents.isValid() ? "INCOMPLETE_DOCUMENT_MODEL"
+                : !missing.isEmpty() ? "INCOMPLETE_NATIVE_PROPOSAL_PROJECTION"
+                    : !rendering.isComplete() || drawingWarnings ? "INCOMPLETE_DRAWING" : "GENERATED_FOR_REVIEW");
     result.put("dynamicExecution", "USE_PID_SIMULATION_SESSION_WITH_EXPLICIT_BINDINGS_AND_STRICT_PREFLIGHT");
     return result;
   }

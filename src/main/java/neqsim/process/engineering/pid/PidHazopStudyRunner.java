@@ -9,6 +9,8 @@ import java.util.Set;
 import neqsim.process.engineering.EngineeringProject;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.safety.hazid.HAZOPTemplate;
 import neqsim.process.safety.hazid.HazopConsequenceAutoPopulator;
 
@@ -30,12 +32,14 @@ public final class PidHazopStudyRunner {
     for (PidElement element : model.getElements()) {
       ids.add(element.getId());
     }
-    for (ProcessEquipmentInterface equipment : project.getProcessSystem().getUnitOperations()) {
+    for (ProcessEquipmentInterface equipment : project.getEngineeringProcessSystem().getUnitOperations()) {
       if (equipment == null || equipment instanceof Stream) {
         continue;
       }
       List<PidElement> safeguards = model.getElementsForEquipment(equipment.getName());
-      if (safeguards.isEmpty()) {
+      // Passive piping nodes remain real HAZOP boundaries without fabricated vessel nozzles.
+      boolean passivePiping = equipment instanceof ThrottlingValve || equipment instanceof Splitter;
+      if (safeguards.isEmpty() && !passivePiping) {
         findings.add(error(equipment.getName(), "No P&ID elements protect or control this HAZOP node."));
         continue;
       }
@@ -81,6 +85,16 @@ public final class PidHazopStudyRunner {
     node.put("equipmentType", equipment.getClass().getSimpleName());
     node.put("designIntent", populated.getDesignIntent());
     node.put("pidElementTags", tags(safeguards));
+    List<String> inletTags = new ArrayList<String>();
+    for (neqsim.process.equipment.stream.StreamInterface stream : equipment.getInletStreams()) {
+      inletTags.add(stream.getName());
+    }
+    List<String> outletTags = new ArrayList<String>();
+    for (neqsim.process.equipment.stream.StreamInterface stream : equipment.getOutletStreams()) {
+      outletTags.add(stream.getName());
+    }
+    node.put("processInletStreamTags", inletTags);
+    node.put("processOutletStreamTags", outletTags);
     node.put("deviations", deviations);
     return node;
   }
