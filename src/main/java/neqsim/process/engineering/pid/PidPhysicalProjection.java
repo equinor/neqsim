@@ -289,6 +289,12 @@ public final class PidPhysicalProjection {
           hold(row, "BOUND_DEVICE_NOT_ON_DECLARED_LINE");
           return;
         }
+        // Keep the declared primary owner's port context as well as the exact
+        // runtime valve identity. The renderer needs the relative inlet side
+        // to place a bound upstream valve instead of treating it as an orphan.
+        if (owner != null && owner != actual && !element.getLineTag().isEmpty()) {
+          locate(owner, element.getLineTag(), "", row);
+        }
         row.put("equipmentTag", actual.getName());
         resolved(row, Kind.EXISTING_EQUIPMENT);
         return;

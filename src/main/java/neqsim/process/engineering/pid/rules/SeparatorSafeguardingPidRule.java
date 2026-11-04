@@ -9,25 +9,34 @@ import neqsim.process.engineering.pid.PidElementType;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.separator.Separator;
 
-/** Proposes independent separator trips, isolation and depressurisation functions. */
+/**
+ * Proposes independent separator trips, isolation and depressurisation functions.
+ *
+ * @author NeqSim development team
+ * @version 1.0
+ */
 public final class SeparatorSafeguardingPidRule implements PidDesignRule {
   public static final String RULE_ID = "PID-SAFEGUARD-SEPARATOR";
 
+  /** {@inheritDoc} */
   @Override
   public String getId() {
     return RULE_ID;
   }
 
+  /** {@inheritDoc} */
   @Override
   public int getOrder() {
     return 500;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean supports(ProcessEquipmentInterface equipment) {
     return equipment instanceof Separator;
   }
 
+  /** {@inheritDoc} */
   @Override
   public List<PidElement> propose(PidDesignContext context, ProcessEquipmentInterface equipment) {
     List<PidElement> result = new ArrayList<PidElement>();
@@ -46,7 +55,10 @@ public final class SeparatorSafeguardingPidRule implements PidDesignRule {
     PidElement levelLowSensor = independentSensor(context, equipment, "LT", "LEVEL-LL-SENSOR",
         "Independent low-level transmitter", "LEVEL", "LEVEL-LL");
     PidElement levelLowTrip = trip(context, equipment, "LSLL", "LEVEL-LL-TRIP", "Low-low level shutdown",
-        "Prevent gas blow-by to a lower-pressure liquid system", "LEVEL-LL");
+        "Prevent gas blow-by to a lower-pressure liquid system", "LEVEL-LL")
+        .attribute("requiredFinalElementRoute", "LIQUID_OUTLET_ISOLATION_OR_CONTROL")
+        .attribute("finalElementStatus", "PROJECT_INPUT_REQUIRED").attribute("finalElementRouteReview", "HOLD")
+        .attribute("finalElementSafetyCredit", "NOT_ESTABLISHED");
     levelLowSensor.connect(levelLowTrip.getId());
 
     PidElement inletEsdv = PidRuleSupport
@@ -68,8 +80,10 @@ public final class SeparatorSafeguardingPidRule implements PidDesignRule {
         .attribute("flareTieIn", "PROJECT_INPUT_REQUIRED");
     pressureTrip.connect(inletEsdv.getId()).connect(gasEsdv.getId()).connect(bdv.getId());
     levelHighTrip.connect(inletEsdv.getId());
-    levelLowTrip.connect(inletEsdv.getId());
-    PidRuleSupport.trace(inletEsdv, context, equipment, "TRIP", "PRESSURE-HH", "LEVEL-HH", "LEVEL-LL");
+    // Low liquid level requires action on the liquid withdrawal path. No
+    // controlled liquid final-element route is available in this rule, so do
+    // not substitute inlet isolation or assume a shared BPCS valve is a SIF.
+    PidRuleSupport.trace(inletEsdv, context, equipment, "PRESSURE-HH", "LEVEL-HH");
     PidRuleSupport.trace(gasEsdv, context, equipment, "TRIP", "PRESSURE-HH");
     PidRuleSupport.trace(bdv, context, equipment, "RELIEF", "DEPRESSUR");
 
@@ -85,6 +99,18 @@ public final class SeparatorSafeguardingPidRule implements PidDesignRule {
     return result;
   }
 
+  /**
+   * Proposes a separate protective measurement without claiming verified hardware independence.
+   *
+   * @param context proposal context
+   * @param equipment protected equipment
+   * @param function ISA-style function code
+   * @param purpose stable proposal purpose
+   * @param description proposed instrument description
+   * @param measuredVariable physical measured quantity
+   * @param requirementToken requirement trace token
+   * @return proposed protective measurement
+   */
   private static PidElement independentSensor(PidDesignContext context, ProcessEquipmentInterface equipment,
       String function, String purpose, String description, String measuredVariable, String requirementToken) {
     PidElement sensor = PidRuleSupport
@@ -96,6 +122,18 @@ public final class SeparatorSafeguardingPidRule implements PidDesignRule {
     return sensor;
   }
 
+  /**
+   * Proposes a protective function whose settings and safety credit require project review.
+   *
+   * @param context proposal context
+   * @param equipment protected equipment
+   * @param function ISA-style function code
+   * @param purpose stable proposal purpose
+   * @param description proposed function description
+   * @param rationale protective action rationale
+   * @param requirementToken requirement trace token
+   * @return proposed protective function
+   */
   private static PidElement trip(PidDesignContext context, ProcessEquipmentInterface equipment, String function,
       String purpose, String description, String rationale, String requirementToken) {
     PidElement trip = PidRuleSupport

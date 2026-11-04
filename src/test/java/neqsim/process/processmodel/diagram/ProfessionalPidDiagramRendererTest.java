@@ -83,6 +83,7 @@ public class ProfessionalPidDiagramRendererTest extends NeqSimTest {
     String svg = result.getSvgBySheetId().values().iterator().next();
     assertTrue(svg.contains("width=\"841mm\""));
     assertTrue(svg.contains("data-symbol-family=\"HORIZONTAL_VESSEL\""));
+    assertTrue(svg.contains("ISO 15519 / ISO 10628 basis"));
     assertTrue(svg.contains("DN:HOLD"));
     assertTrue(svg.contains("FA:HOLD"));
     assertTrue(svg.contains("20-K-101 / PID-002"));
@@ -90,6 +91,11 @@ public class ProfessionalPidDiagramRendererTest extends NeqSimTest {
     assertTrue(new String(result.getPdf(), java.nio.charset.StandardCharsets.ISO_8859_1).startsWith("%PDF"));
     JsonObject report = JsonParser.parseString(renderer.getContentReportJson()).getAsJsonObject();
     assertFalse(report.get("fitnessForConstruction").getAsBoolean());
+    for (String standard : new String[] {"ISO 15519-1:2010", "ISO 15519-2:2015"}) {
+      assertTrue(report.getAsJsonArray("standardsBasis").contains(new com.google.gson.JsonPrimitive(standard)));
+      assertEquals("CONTROLLED_REQUIREMENTS_REVIEW_REQUIRED",
+          report.getAsJsonObject("standardsAssessment").get(standard).getAsString());
+    }
     assertEquals("REQUIRES_CONTROLLED_STANDARD_AND_DISCIPLINE_REVIEW",
         report.get("isoConformanceStatus").getAsString());
     assertEquals(pid.getElements().size(), report.getAsJsonArray("representedProposalTags").size());

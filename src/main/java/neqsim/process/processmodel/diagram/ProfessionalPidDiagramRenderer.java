@@ -277,7 +277,7 @@ public final class ProfessionalPidDiagramRenderer {
     for (int index = 0; index < primary.size(); index++) {
       ProcessEquipmentInterface unit = primary.get(index);
       Family family = ProfessionalPidSymbolLibrary.family(unit);
-      Node node = scene.node(unit.getName(), family, 145 + index * 175, 250,
+      Node node = scene.node(unit.getName(), family, 145 + (4 - primary.size()) * 87.5 + index * 175, 250,
           family == Family.HORIZONTAL_VESSEL ? 70 : 42,
           family == Family.VERTICAL_VESSEL ? 80 : family == Family.HORIZONTAL_VESSEL ? 50 : 42, unit.getName());
       actualNodes.put(unit.getName(), node);
@@ -291,6 +291,18 @@ public final class ProfessionalPidDiagramRenderer {
         Node valveNode = scene.node(valve.getName(), ProfessionalPidSymbolLibrary.family(valve),
             liquid ? node.x + 55 : node.x + 85, liquid ? 400 : 250, 16, 10, valve.getName());
         actualNodes.put(valve.getName(), valveNode);
+      }
+    }
+    // Direct upstream valves are real source equipment too. A valve already
+    // represented as the previous primary unit's outlet must not be duplicated.
+    for (ProcessEquipmentInterface unit : primary) {
+      for (StreamInterface stream : unit.getInletStreams()) {
+        ProcessEquipmentInterface producer = producers.get(stream);
+        if (producer instanceof ThrottlingValve && !actualNodes.containsKey(producer.getName())) {
+          Node owner = actualNodes.get(unit.getName());
+          actualNodes.put(producer.getName(), scene.node(producer.getName(),
+              ProfessionalPidSymbolLibrary.family(producer), owner.x - 85, owner.y, 16, 10, producer.getName()));
+        }
       }
     }
     Set<StreamInterface> streams = Collections.newSetFromMap(new IdentityHashMap<StreamInterface, Boolean>());
@@ -308,6 +320,15 @@ public final class ProfessionalPidDiagramRenderer {
       }
       for (ProcessEquipmentInterface valve : downstreamValves(unit)) {
         for (StreamInterface stream : valve.getOutletStreams()) {
+          if (streams.add(stream)) {
+            streamTable.add(stream);
+          }
+        }
+      }
+    }
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (unit instanceof ThrottlingValve && actualNodes.containsKey(unit.getName())) {
+        for (StreamInterface stream : unit.getInletStreams()) {
           if (streams.add(stream)) {
             streamTable.add(stream);
           }
@@ -418,8 +439,12 @@ public final class ProfessionalPidDiagramRenderer {
     report.put("revision", project.getRevision());
     report.put("issuedAt", issuedAt);
     report.put("sourceGraphFingerprint", documents.getSourceGraphFingerprint());
-    report.put("standardsBasis", Arrays.asList("ISO 10628-1:2014", "ISO 10628-2:2012", "ISO 5457", "ISO 7200",
-        "IEC 62424:2016", "ANSI/ISA-5.1:2024"));
+    report.put("standardsBasis", Arrays.asList("ISO 15519-1:2010", "ISO 15519-2:2015", "ISO 10628-1:2014",
+        "ISO 10628-2:2012", "ISO 5457", "ISO 7200", "IEC 62424:2016", "ANSI/ISA-5.1:2024"));
+    Map<String, String> standardsAssessment = new LinkedHashMap<String, String>();
+    standardsAssessment.put("ISO 15519-1:2010", "CONTROLLED_REQUIREMENTS_REVIEW_REQUIRED");
+    standardsAssessment.put("ISO 15519-2:2015", "CONTROLLED_REQUIREMENTS_REVIEW_REQUIRED");
+    report.put("standardsAssessment", standardsAssessment);
     report.put("paper", "A1_LANDSCAPE_841_X_594_MM");
     report.put("processLineWidthMm", Double.valueOf(.5));
     report.put("instrumentLineWidthMm", Double.valueOf(.25));
@@ -452,15 +477,31 @@ public final class ProfessionalPidDiagramRenderer {
     int inlet = 0;
     for (StreamInterface stream : unit.getInletStreams()) {
       double y = 280 + inlet * 45;
-      Node source = scene.terminal("in:" + stream.getName(), 60, y, upstreamLabel(stream), false);
       List<PidElement> inline = inline(unit.getName(), stream.getName(), "INLET");
+      StreamInterface sourceStream = stream;
+      if (!inline.isEmpty()) {
+        Attachment first = projection.getAttachments().get(inline.get(0).getTag());
+        ProcessEquipmentInterface actual = equipment.get(first.getEquipmentTag());
+        if (first.getKind() == PidPhysicalProjection.Kind.EXISTING_EQUIPMENT && actual != null
+            && !actual.getInletStreams().isEmpty()) {
+          sourceStream = actual.getInletStreams().get(0);
+        }
+      }
+      Node source = scene.terminal("in:" + stream.getName(), 60, y, upstreamLabel(sourceStream), false);
       Node last = source;
       int index = 0;
+      String physicalStream = sourceStream.getName();
       for (PidElement proposal : inline) {
         Node node = proposalValve(scene, proposal, 130 + index++ * 65, y);
         valveNodes.put(proposal.getTag(), node);
-        scene.route(last, "r", node, "l", stream.getName(), false, null);
+        scene.route(last, "r", node, "l", physicalStream, false, null);
         last = node;
+        Attachment attachment = projection.getAttachments().get(proposal.getTag());
+        ProcessEquipmentInterface actual = equipment.get(attachment.getEquipmentTag());
+        if (attachment.getKind() == PidPhysicalProjection.Kind.EXISTING_EQUIPMENT && actual != null
+            && !actual.getOutletStreams().isEmpty()) {
+          physicalStream = actual.getOutletStreams().get(0).getName();
+        }
       }
       scene.route(last, "r", body, "l", stream.getName(), false,
           inlet == 0 ? null : points(last.right(), new Point(260, y), new Point(260, 280), body.left()));
@@ -547,6 +588,7 @@ public final class ProfessionalPidDiagramRenderer {
         }
       }
     }
+    int outletSensorCount = sensors.size();
     sensors.addAll(vesselSensors);
     Set<String> placed = new LinkedHashSet<String>();
     int row = 0;
@@ -561,7 +603,7 @@ public final class ProfessionalPidDiagramRenderer {
       boolean vessel = "VESSEL".equals(attachment.getDirection());
       if (vessel) {
         double py = body.y - body.height / 2 + body.height * (vesselIndex + 1) / (vesselSensors.size() + 1);
-        double channel = 415 - vesselIndex * 11;
+        double channel = Math.min(415, 425 - Math.max(0, outletSensorCount - 1) * 9 - 12) - vesselIndex * 11;
         Point tap = ProfessionalPidSymbolLibrary.vesselSensingTap(body.x, body.y, body.width, body.height, py);
         scene.sensing(body, tap, measurement, "l",
             points(tap, new Point(channel, py), new Point(channel, y), measurement.left()), sensor.getTag());
@@ -964,8 +1006,8 @@ public final class ProfessionalPidDiagramRenderer {
     for (PidElement element : model.getElementsForEquipment(equipmentTag)) {
       Attachment a = projection.getAttachments().get(element.getTag());
       if ((a.getKind() == PidPhysicalProjection.Kind.INLINE_VALVE
-          || a.getKind() == PidPhysicalProjection.Kind.EXISTING_EQUIPMENT) && streamTag.equals(element.getLineTag())
-          && direction.equals(a.getDirection())) {
+          || ("INLET".equals(direction) && a.getKind() == PidPhysicalProjection.Kind.EXISTING_EQUIPMENT))
+          && streamTag.equals(element.getLineTag()) && direction.equals(a.getDirection())) {
         result.add(element);
       }
     }
@@ -1425,8 +1467,7 @@ public final class ProfessionalPidDiagramRenderer {
       page.commands.add(Command.rect(20, 10, WIDTH - 30, HEIGHT - 20, "#111111", "none", .5, "border", ""));
       text(25, 25, project.getName(), 5, null);
       text(25, 38, title, 4, null);
-      text(25, 55,
-          "ISO 10628 drawing basis | ISO A1 | solid: material / sensing | dashed: control signal | NOT TO SCALE", 3,
+      text(25, 55, "ISO 15519 / ISO 10628 basis | A1 | solid: material / sensing | dashed: control | NOT TO SCALE", 3,
           null);
       page.commands.add(Command.rect(20, 535, WIDTH - 30, 49, "#111111", "none", .5, "title-block", ""));
       text(25, 546, "DRAWING: " + project.getProjectId() + "-" + kind.toUpperCase(Locale.ROOT) + "  /  SHEET: " + number

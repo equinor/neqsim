@@ -24,7 +24,7 @@ VISUAL_CHECKS = (
     "utility_segregation", "continuations", "readability",
 )
 STANDARD_FAMILIES = (
-    "ISO 10628-1", "ISO 10628-2", "ISO 14617", "ISO 5457", "ISO 7200",
+    "ISO 15519-1", "ISO 15519-2", "ISO 10628-1", "ISO 10628-2", "ISO 14617", "ISO 5457", "ISO 7200",
     "IEC 62424", "ANSI/ISA-5.1",
 )
 REQUIRED_FILES = (
@@ -102,6 +102,19 @@ def check_material_line_identity(report, xml, mapping, attachments, layouts, reg
                 adjacency.setdefault(a, set()).add(b)
                 adjacency.setdefault(b, set()).add(a)
     registered = {row.get("lineTag"): row for row in registers.get("lines", [])}
+    # The native process writer names source-model terminal connectors separately
+    # from PidDestination receiving-system references. Only the former declare
+    # actual terminal line identities that must exist in the line register.
+    for item in objects.values():
+        if not item.get("id", "").startswith("BoundaryConnector") or item.get("type") not in (
+                "Plant/Piping.FlowInPipeOffPageConnector", "Plant/Piping.FlowOutPipeOffPageConnector"):
+            continue
+        terminal_lines = ["".join(child.itertext()).strip() for child in item
+                          if child.get("property") == "PipeConnectorNumber"]
+        line = terminal_lines[0] if len(terminal_lines) == 1 else ""
+        require(report, bool(line) and line in registered, "automatic", "BOUNDARY_LINE_REGISTER",
+                "Every source-model terminal line has a coordinated identity row; missing design values remain HOLD",
+                line or item.get("id", ""))
     edges = [edge for layout in layouts for edge in layout.get("edges", [])]
     for attachment in attachments:
         if attachment.get("kind") != "AUXILIARY_ROUTE":

@@ -20,7 +20,10 @@ and dynamic tests based on the final drawing."
    The professional exporter requires this edition in the standards register;
    legacy two-argument builder calls retain their existing 2.0 basis.
 3. Establish battery limits, sheet format, project tag conventions, jurisdiction
-   and applicable standard editions. Use ISO 10628 drawing conventions,
+   and applicable standard editions. Include ISO 15519-1:2010 general diagram
+   rules and ISO 15519-2:2015 measurement/control in the project review basis
+   when applicable; verify controlled text rather than treating the renderer
+   declaration as compliance. Use ISO 10628 drawing conventions,
    ANSI/ISA-5.1 instrumentation and applicable IEC, relief and NORSOK requirements
    according to the project basis. Record licensed-text review gaps; never
    invent clauses, trip settings, SIL, voting, valve fail actions or approvals.
@@ -156,3 +159,23 @@ SIL, completes HAZOP/LOPA/SRS, grants safety credit or authorizes field operatio
 - `src/main/java/neqsim/process/safety/scenario/DynamicSafetyScenarioRunner.java`
 - `docs/pid-design-synthesis.md`
 - `docs/engineering/dexpi-guide.md`
+
+
+## Evidence from dynamic feedback
+
+- Check that a bound actual inlet valve retains its inlet attachment, both
+  real streams and its visible PFD/P&ID representation. Check separate outlet
+  transmitter routes against vessel level taps.
+- Keep numerical pressure-coupling helpers in an explicit versioned scenario
+  configuration. Do not export them as physical hardware; retain both source
+  and configured fingerprints.
+- Reapply every canonical candidate parameter to actual native objects, read
+  back the applied values, rebind and rerun after an edit. Preserve result
+  checksums and rejected candidates. Declare unsupported combinations.
+- Distinguish first-reach-by-deadline criteria from whole-window constraints;
+  the latter need an accumulated predicate gated at the scenario horizon.
+- Audit external mass/component/energy balances at exact closure and reopen;
+  a strict capability audit is not quantitative validation. Keep failed
+  numerical qualification separate from passing response criteria.
+- Verify parameter sidecars and native IDs together. Do not claim XML-only
+  controller transfer, CAEX interchange, approved SIS design or deployment.

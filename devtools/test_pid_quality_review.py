@@ -33,7 +33,7 @@ def package(tmp_path):
     package.mkdir()
     xml = b'<fixture><object id="n1"/></fixture>'
     (package / "plant.dexpi.xml").write_bytes(xml)
-    basis = ["ISO 10628-1:2014", "ISO 10628-2:2012", "ISO 14617-1:2025", "ISO 5457:1999",
+    basis = ["ISO 15519-1:2010", "ISO 15519-2:2015", "ISO 10628-1:2014", "ISO 10628-2:2012", "ISO 14617-1:2025", "ISO 5457:1999",
              "ISO 7200:2004", "IEC 62424:2016", "ANSI/ISA-5.1:2024"]
     save(package / "professional-pid-readiness.json", {
         "projectId": "QC", "revision": "A", "dexpiVersion": "2.0.1", "generationStatus": "GENERATED_FOR_REVIEW",
@@ -206,3 +206,63 @@ def test_sensing_stroke_must_touch_actual_drawn_hull(package):
     manifest(package)
     report = run(package)
     assert any(f["code"] == "VESSEL_SENSING_TOUCHES_HULL" and f["status"] == "FAIL" for f in report["findings"])
+
+
+
+@pytest.mark.parametrize("standard", ["ISO 15519-1:2010", "ISO 15519-2:2015"])
+def test_missing_iso15519_basis_remains_hold(package, standard):
+    path = package / "pid-drawing-content-report.json"
+    content = qc.load_json(path)
+    content["standardsBasis"].remove(standard)
+    save(path, content)
+    manifest(package)
+    visual, standards = evidence(package)
+    report = run(package, visual=visual, standards=standards)
+    assert report["status"] == "HOLD"
+    assert any(f["code"] == "STANDARD_BASIS_PRESENT" and f["status"] == "HOLD"
+               and f["subject"] == standard.split(":")[0] for f in report["findings"])
+
+
+@pytest.mark.parametrize("standard", ["ISO 15519-1:2010", "ISO 15519-2:2015"])
+def test_iso15519_name_does_not_replace_controlled_review(package, standard):
+    visual, standards = evidence(package)
+    row = next(row for row in standards["standards"] if row["standard"] == standard)
+    row["status"] = "HOLD"
+    row["evidence"] = "Public scope only; controlled requirements review unavailable"
+    report = run(package, visual=visual, standards=standards)
+    assert report["status"] == "HOLD"
+    assert report["standardsConformance"] == "NOT_ESTABLISHED_BY_AUTOMATION"
+
+
+@pytest.mark.parametrize("kind", ["FlowInPipeOffPageConnector", "FlowOutPipeOffPageConnector"])
+def test_missing_source_terminal_identity_is_a_register_failure(kind):
+    xml = qc.ET.fromstring(
+        '<fixture><Object id="BoundaryConnector1" type="Plant/Piping.' + kind + '">'
+        '<String property="PipeConnectorNumber">S-TERMINAL</String></Object></fixture>'
+    )
+    report = {"findings": []}
+    qc.check_material_line_identity(report, xml, {}, [], [], {"lines": []})
+    assert any(row["code"] == "BOUNDARY_LINE_REGISTER" and row["status"] == "FAIL"
+               for row in report["findings"])
+
+
+def test_identity_only_terminal_row_preserves_design_value_hold():
+    xml = qc.ET.fromstring(
+        '<fixture><Object id="BoundaryConnector1" type="Plant/Piping.FlowOutPipeOffPageConnector">'
+        '<String property="PipeConnectorNumber">S-TERMINAL</String></Object></fixture>'
+    )
+    report = {"findings": []}
+    registers = {"lines": [{"lineTag": "S-TERMINAL", "lineDesignInputStatus": "HOLD"}]}
+    qc.check_material_line_identity(report, xml, {}, [], [], registers)
+    assert [row["status"] for row in report["findings"]] == ["PASS"]
+    assert registers["lines"][0]["lineDesignInputStatus"] == "HOLD"
+
+
+def test_receiving_system_name_is_not_a_source_terminal_line():
+    xml = qc.ET.fromstring(
+        '<fixture><Object id="PidDestination_trip" type="Plant/Piping.FlowOutPipeOffPageConnector">'
+        '<String property="PipeConnectorNumber">FLARE-SYSTEM</String></Object></fixture>'
+    )
+    report = {"findings": []}
+    qc.check_material_line_identity(report, xml, {}, [], [], {"lines": []})
+    assert not report["findings"]

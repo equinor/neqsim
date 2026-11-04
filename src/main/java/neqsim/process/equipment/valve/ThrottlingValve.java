@@ -42,6 +42,8 @@ public class ThrottlingValve extends TwoPortEquipment
   private UUID lastActuatorStepId = null;
   /** Whether repeated calls with one physical-step identity advance actuator state only once. */
   private boolean physicalStepIdempotencyEnabled = false;
+  /** Whether this hydraulic valve published its inlet demand as zero in the prior step. */
+  private boolean transientInletZeroFlowPublished = false;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ThrottlingValve.class);
   SystemInterface thermoSystem;
@@ -529,90 +531,141 @@ public class ThrottlingValve extends TwoPortEquipment
 
     runController(dt, id);
 
-    inStream.getFluid().initProperties();
-    thermoSystem = inStream.getThermoSystem().clone();
-
     double inletMolarFlow = inStream.getThermoSystem().getFlowRate("mole/sec");
+    boolean recoveringOwnZero = !isCalcPressure && transientInletZeroFlowPublished && inletMolarFlow == 0.0
+        && hasUsableInletComposition();
     if (isBelowLowFlowThreshold()) {
+      thermoSystem = inStream.getThermoSystem().clone();
       isActive(false);
-      applyZeroFlowState(id);
+      applyZeroTransientFlowState(id);
       return;
     }
-    if (isNegligibleFlow(inletMolarFlow)) {
+    if (isNegligibleFlow(inletMolarFlow) && !recoveringOwnZero) {
+      thermoSystem = inStream.getThermoSystem().clone();
+      transientInletZeroFlowPublished = false;
       applyZeroFlowState(id);
       return;
     }
     isActive(true);
 
-    thermoSystem.init(2);
-    double enthalpy = thermoSystem.getEnthalpy();
+    try {
+      if (recoveringOwnZero) {
+        // Positive normalization is intensive-property workspace only. It is replaced
+        // by actual hydraulic flow below, or restored to exact zero in finally.
+        inStream.getThermoSystem().setTotalNumberOfMoles(1.0);
+      }
+      inStream.getFluid().initProperties();
+      thermoSystem = inStream.getThermoSystem().clone();
 
-    double outPres = getOutletStream().getPressure("bara");
-    pressure = getOutletStream().getPressure(pressureUnit);
-    double deltaP = Math.max(inStream.getPressure() - outPres, 0.0);
+      thermoSystem.init(2);
+      double enthalpy = thermoSystem.getEnthalpy();
 
-    if ((thermoSystem.getPressure("bara") - outPres) < 0) {
-      if (isAcceptNegativeDP()) {
+      double outPres = getOutletStream().getPressure("bara");
+      pressure = getOutletStream().getPressure(pressureUnit);
+      double deltaP = Math.max(inStream.getPressure() - outPres, 0.0);
+
+      if ((thermoSystem.getPressure("bara") - outPres) < 0) {
+        if (isAcceptNegativeDP()) {
+          thermoSystem.setPressure(outPres, "bara");
+        }
+      } else {
         thermoSystem.setPressure(outPres, "bara");
       }
-    } else {
-      thermoSystem.setPressure(outPres, "bara");
-    }
 
-    if (getSpecification().equals("out stream")) {
-      thermoSystem.setPressure(outStream.getPressure("bara"), "bara");
-    }
-    double adjustKv = adjustKv(Kv, percentValveOpening);
-    if (deltaP > 0.0 && !isCalcPressure) {
-      molarFlow = ensureValidMolarFlow(calculateMolarFlow());
-
-      if (molarFlow > 0.0) {
-        inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-        inStream.getThermoSystem().initProperties();
+      if (getSpecification().equals("out stream")) {
+        thermoSystem.setPressure(outStream.getPressure("bara"), "bara");
       }
-    }
-    // update outlet pressure if required
-    if (valveKvSet && isCalcPressure) {
-      inStream.getFluid().initProperties();
-      outPres = calculateOutletPressure(adjustKv);
-      thermoSystem.setPressure(outPres, "bara");
-      setCalculatedOutletPressure(outPres);
-      deltaP = Math.max(inStream.getPressure("bara") - outPres, 0.0);
-    }
+      double adjustKv = adjustKv(Kv, percentValveOpening);
+      if (deltaP > 0.0 && !isCalcPressure) {
+        molarFlow = ensureValidMolarFlow(calculateMolarFlow());
 
-    ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-    if (isIsoThermal()) {
-      thermoOps.TPflash();
-    } else {
-      runPHflashWithNaNRetry(thermoOps, enthalpy);
-    }
-    thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-    outStream.setThermoSystem(thermoSystem);
+        if (molarFlow > 0.0) {
+          inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+          inStream.getThermoSystem().initProperties();
+        }
+      }
+      // update outlet pressure if required
+      if (valveKvSet && isCalcPressure) {
+        inStream.getFluid().initProperties();
+        outPres = calculateOutletPressure(adjustKv);
+        thermoSystem.setPressure(outPres, "bara");
+        setCalculatedOutletPressure(outPres);
+        deltaP = Math.max(inStream.getPressure("bara") - outPres, 0.0);
+      }
 
-    if (deltaP > 0.0) {
-      molarFlow = ensureValidMolarFlow(calculateMolarFlow());
-      if (molarFlow <= 0.0) {
-        applyZeroFlowState(id);
+      ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+      if (isIsoThermal()) {
+        thermoOps.TPflash();
+      } else {
+        runPHflashWithNaNRetry(thermoOps, enthalpy);
+      }
+      thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+      outStream.setThermoSystem(thermoSystem);
+
+      if (deltaP > 0.0) {
+        molarFlow = ensureValidMolarFlow(calculateMolarFlow());
+        if (molarFlow <= 0.0) {
+          applyZeroTransientFlowState(id);
+          return;
+        }
+      } else {
+        applyZeroTransientFlowState(id);
         return;
       }
-    } else {
-      applyZeroFlowState(id);
-      return;
-    }
 
-    try {
-      inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-      inStream.getThermoSystem().initProperties();
-    } catch (Exception ex) {
-      logger.error(ex.getMessage());
+      try {
+        inStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+        inStream.getThermoSystem().initProperties();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
+      }
+      try {
+        outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
+        outStream.getThermoSystem().initProperties();
+      } catch (Exception ex) {
+        logger.error(ex.getMessage());
+      }
+      transientInletZeroFlowPublished = false;
+      finishRun(id);
+    } finally {
+      if (recoveringOwnZero && transientInletZeroFlowPublished) {
+        inStream.getThermoSystem().setTotalNumberOfMoles(0.0);
+      }
     }
-    try {
-      outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-      outStream.getThermoSystem().initProperties();
-    } catch (Exception ex) {
-      logger.error(ex.getMessage());
+  }
+
+  /**
+   * Reports whether a previously blocked inlet retains a finite composition seed.
+   *
+   * @return true when all stored fractions are finite and their sum is positive
+   */
+  private boolean hasUsableInletComposition() {
+    if (inStream.getFluid().getNumberOfComponents() == 0) {
+      return false;
     }
-    finishRun(id);
+    double sum = 0.0;
+    for (double fraction : inStream.getFluid().getMolarComposition()) {
+      if (!Double.isFinite(fraction) || fraction < 0.0) {
+        return false;
+      }
+      sum += fraction;
+    }
+    return Double.isFinite(sum) && sum > 0.0;
+  }
+
+  /**
+   * Publishes no hydraulic withdrawal at both ports without changing steady-state semantics.
+   *
+   * @param id current physical-step identifier
+   */
+  private void applyZeroTransientFlowState(UUID id) {
+    if (!isCalcPressure) {
+      double previousFlow = inStream.getThermoSystem().getTotalNumberOfMoles();
+      transientInletZeroFlowPublished = transientInletZeroFlowPublished
+          || (Double.isFinite(previousFlow) && previousFlow > minimumMolarFlow);
+      inStream.getThermoSystem().setTotalNumberOfMoles(0.0);
+    }
+    applyZeroFlowState(id);
   }
 
   private static final double minimumMolarFlow = 1e-12;
@@ -885,6 +938,7 @@ public class ThrottlingValve extends TwoPortEquipment
     maxDesignAIV = snapshot.maxDesignAiv;
     lastActuatorStepId = snapshot.lastActuatorStepId;
     physicalStepIdempotencyEnabled = snapshot.physicalStepIdempotencyEnabled;
+    transientInletZeroFlowPublished = snapshot.transientInletZeroFlowPublished;
   }
 
   /**
@@ -962,6 +1016,7 @@ public class ThrottlingValve extends TwoPortEquipment
     private final double maxDesignAiv;
     private final UUID lastActuatorStepId;
     private final boolean physicalStepIdempotencyEnabled;
+    private final boolean transientInletZeroFlowPublished;
 
     /**
      * Creates a complete checkpoint of mutable state owned by a throttling valve.
@@ -1032,6 +1087,7 @@ public class ThrottlingValve extends TwoPortEquipment
       maxDesignAiv = source.maxDesignAIV;
       lastActuatorStepId = source.lastActuatorStepId;
       physicalStepIdempotencyEnabled = source.physicalStepIdempotencyEnabled;
+      transientInletZeroFlowPublished = source.transientInletZeroFlowPublished;
     }
   }
 
