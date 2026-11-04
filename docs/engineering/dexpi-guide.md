@@ -132,6 +132,7 @@ Save the following complete Java 8 program as `Dexpi20ExportExample.java`. It bu
 exports the Plant and Process profiles separately, checks both reports, and writes each report beside the exact XML
 it assessed:
 
+<!-- dexpi-example: native-2.0-export -->
 ```java
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -171,7 +172,8 @@ public final class Dexpi20ExportExample {
     process.add(compressor);
     process.run();
 
-    Path outputDirectory = new File("dexpi-output").toPath();
+    Path outputDirectory =
+        new File(args.length == 0 ? "dexpi-output" : args[0]).toPath();
     Files.createDirectories(outputDirectory);
     Path plantXml = outputDirectory.resolve("plant.dexpi.xml");
     Path processXml = outputDirectory.resolve("process.dexpi.xml");
@@ -196,6 +198,9 @@ public final class Dexpi20ExportExample {
   }
 }
 ```
+
+Pass an optional output-directory path as the first command-line argument; without one, the program writes to
+`dexpi-output` in the current directory.
 
 The explicit `Files.write(...)` calls create the JSON sidecars; `writeAndAssess(...)` returns a report but does not
 write that report to disk. Each report pins the official schema fingerprint, imported model versions, supported
