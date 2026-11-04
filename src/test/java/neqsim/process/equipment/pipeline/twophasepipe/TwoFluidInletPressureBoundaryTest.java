@@ -9,6 +9,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class TwoFluidInletPressureBoundaryTest {
   @Test
@@ -38,8 +40,14 @@ class TwoFluidInletPressureBoundaryTest {
     assertRest(rhs);
   }
 
-  @Test
-  void prescribedPhaseAdvectionUsesSignedDonorsAndTrialPressureTraction() {
+  /**
+   * Verify donor geometry and signed advection while pressure traction and its source retain interior geometry.
+   *
+   * @param consistentPhasePressure whether phase pressure is assembled separately from advection
+   */
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void prescribedPhaseAdvectionUsesSignedDonorsAndTrialPressureTraction(boolean consistentPhasePressure) {
     TwoFluidSection cell = section(0.1, 0.4, 0.4);
     TwoFluidSection feed = section(0.12, 0.6, 0.1);
     feed.setPressure(1.4e5);
@@ -47,12 +55,11 @@ class TwoFluidInletPressureBoundaryTest {
     feed.setOilVelocity(0.55);
     feed.setWaterVelocity(-0.45);
     feed.updateConservativeVariables();
-    double faceArea = cell.getArea();
-    double[] expectedMass = {feed.getGasHoldup() * feed.getGasDensity() * feed.getGasVelocity() * faceArea,
-        feed.getOilHoldup() * feed.getOilDensity() * feed.getOilVelocity() * faceArea,
-        cell.getWaterHoldup() * cell.getWaterDensity() * feed.getWaterVelocity() * faceArea};
+    double[] expectedMass = {feed.getGasMassPerLength() * feed.getGasVelocity(),
+        feed.getOilMassPerLength() * feed.getOilVelocity(), cell.getWaterMassPerLength() * feed.getWaterVelocity()};
     double[] velocity = {feed.getGasVelocity(), feed.getOilVelocity(), feed.getWaterVelocity()};
     TwoFluidConservationEquations equations = equations();
+    equations.setConsistentPhasePressureEnabled(consistentPhasePressure);
     equations.setClosedBoundaries(false, true);
     equations.setInletPhaseFlowBoundaryState(feed);
     // Mutating the caller's feed cannot alter the prescribed advection.

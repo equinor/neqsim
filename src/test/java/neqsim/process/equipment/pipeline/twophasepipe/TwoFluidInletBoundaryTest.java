@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * Signed inlet transport must select one physical donor per phase.
@@ -15,33 +17,41 @@ class TwoFluidInletBoundaryTest {
   /**
    * Verifies external donors for inflow, cell donors for outflow, and interior pressure traction.
    *
+   * @param phaseFlowPrescribed whether only phase flow, rather than pressure too, is prescribed
    * @throws Exception when reflective access to the private flux evaluator fails
    */
-  @Test
-  void countercurrentPhasesUseUpwindDonorsAndInteriorPressureTraction() throws Exception {
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void countercurrentPhasesUseUpwindDonorsAndInteriorPressureTraction(boolean phaseFlowPrescribed) throws Exception {
     TwoFluidSection interior = section(0.5, 0.3, 0.2, 5.0, 800.0, 1000.0, 2.0e5, 3.0e5, 4.0e5);
     TwoFluidSection boundary = section(0.2, 0.3, 0.5, 7.0, 720.0, 980.0, 8.0e5, 9.0e5, 1.0e6);
+    boundary.setDiameter(1.2);
     boundary.setGasVelocity(0.8);
     boundary.setOilVelocity(-0.1);
     boundary.setWaterVelocity(0.03);
 
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
     equations.setIncludeEnergyEquation(true);
-    equations.setInletPhaseFlowBoundaryState(boundary);
+    if (phaseFlowPrescribed) {
+      equations.setInletPhaseFlowBoundaryState(boundary);
+    } else {
+      equations.setInletBoundaryState(boundary);
+    }
     double facePressure = 2.4e5;
     double[] flux = inletFlux(equations, interior, facePressure);
     double area = interior.getArea();
+    double inletArea = boundary.getArea();
 
-    double gasMass = 0.2 * 7.0 * 0.8 * area;
+    double gasMass = 0.2 * 7.0 * 0.8 * inletArea;
     double oilMass = 0.3 * 800.0 * -0.1 * area;
-    double waterMass = 0.5 * 980.0 * 0.03 * area;
+    double waterMass = 0.5 * 980.0 * 0.03 * inletArea;
     assertEquals(gasMass, flux[0], 1.0e-12);
     assertEquals(oilMass, flux[1], 1.0e-12);
     assertEquals(waterMass, flux[2], 1.0e-12);
 
-    assertEquals(0.2 * 7.0 * 0.8 * 0.8 * area + 0.5 * facePressure * area, flux[3], 1.0e-9);
+    assertEquals(gasMass * 0.8 + 0.5 * facePressure * area, flux[3], 1.0e-9);
     assertEquals(0.3 * 800.0 * 0.1 * 0.1 * area + 0.3 * facePressure * area, flux[4], 1.0e-9);
-    assertEquals(0.5 * 980.0 * 0.03 * 0.03 * area + 0.2 * facePressure * area, flux[5], 1.0e-9);
+    assertEquals(waterMass * 0.03 + 0.2 * facePressure * area, flux[5], 1.0e-9);
 
     double[][] phaseEnergy = equations.getLastBoundaryPhaseEnergyFluxes();
     double expectedGasEnergy = gasMass * (8.0e5 + 0.5 * 0.8 * 0.8);

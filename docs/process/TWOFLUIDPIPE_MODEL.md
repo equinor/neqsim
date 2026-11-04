@@ -241,7 +241,11 @@ $$
 
 where $\dot m_{f,k}$ is the integration-weighted phase mass flux already used by the phase
 continuity equation. The upwind state follows the sign of every face flux. The inlet stream supplies
-positive-flow inlet composition and enthalpy. A negative prescribed inlet rate is physical outflow:
+positive-flow inlet composition and enthalpy. At the low-level prescribed-state inlet, each positive
+phase velocity also retains the supplied face area for mass, advective momentum and energy transport;
+each negative phase velocity uses the first physical cell's area and donor properties. Pressure
+traction always uses the interior cell area and phase holdups, independently of donor geometry.
+A negative prescribed inlet rate is physical outflow:
 the first finite-volume cell supplies phase holdup, density, composition and enthalpy. A common signed
 face velocity preserves that cell phase split and reproduces the requested total mass rate exactly;
 the external feed is not reflashed to manufacture an outflow mixture. Inlet pressure traction remains

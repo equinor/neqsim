@@ -1322,7 +1322,10 @@ physical restart, or predictive evaporation time.
 
 A negative prescribed inlet mass rate is physical outflow and therefore uses the first finite-volume
 cell as phase, composition, density and enthalpy donor; the external feed is not reflashed into an
-unrelated outflow mixture. `getLastBoundaryPhaseMomentumFluxes()` reports total gas/oil/water momentum
+unrelated outflow mixture. For a low-level prescribed inlet state with a different face area, positive
+phases retain that supplied area for mass, advective momentum and energy; negative phases use the
+first cell's area. Pressure traction uses the interior cell area and holdups in either direction.
+`getLastBoundaryPhaseMomentumFluxes()` reports total gas/oil/water momentum
 flow at inlet and outlet, while `getLastBoundaryPhasePressureForces()` isolates interior pressure
 traction from donor advection. These are signed boundary-contract diagnostics, not a whole-domain
 momentum residual or physical restart qualification.

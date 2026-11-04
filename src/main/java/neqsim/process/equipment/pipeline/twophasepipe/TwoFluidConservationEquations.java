@@ -218,11 +218,12 @@ public class TwoFluidConservationEquations implements Serializable {
    * Prescribe phase advection while extrapolating inlet pressure from the current finite-volume cell.
    *
    * <p>
-   * The supplied face geometry, phase holdups, densities, velocities and enthalpies determine the phase mass, advective
-   * momentum and energy fluxes. Its pressure is ignored: both the pressure traction and the matching holdup-gradient
-   * source use the current trial-cell pressure on every residual evaluation. This supplies a phase-flow inlet without
-   * simultaneously imposing an independent inlet pressure. The state is defensively copied. A closed inlet still
-   * carries no advected mass or energy. Pass null to restore the cell-based boundary.
+   * Positive phase velocities use the supplied face area, holdups, densities and enthalpies for mass, advective
+   * momentum and energy fluxes. Negative phase velocities instead use the first cell's area and donor properties. The
+   * supplied pressure is ignored: pressure traction and its matching source use the current trial-cell pressure, area
+   * and holdups on every residual evaluation. This supplies a phase-flow inlet without simultaneously imposing an
+   * independent inlet pressure. The state is defensively copied. A closed inlet still carries no advected mass or
+   * energy. Pass null to restore the cell-based boundary.
    * </p>
    *
    * @param state prescribed advective face state, or null for the cell-based boundary
@@ -1991,19 +1992,22 @@ public class TwoFluidConservationEquations implements Serializable {
     // The external state owns inflow; the first physical cell owns outflow.
     double vG = boundary.getGasVelocity();
     TwoFluidSection gasDonor = inletDonor(interior, boundary, vG);
+    double gasArea = gasDonor.getArea();
     double rhoG = gasDonor.getGasDensity();
     if (!Double.isFinite(rhoG) || rhoG <= 0.0)
       rhoG = 1.0; // Default gas density
     double alphaG = gasDonor.getGasHoldup();
     alphaG = Math.max(0.0, Math.min(1.0, alphaG));
-    flux[IDX_GAS_MASS] = alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * A;
+    flux[IDX_GAS_MASS] = alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * gasArea;
     double pressureAlphaG = Math.max(0.0, Math.min(1.0, interior.getGasHoldup()));
-    flux[IDX_GAS_MOMENTUM] = (alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * vG * A) + pressureAlphaG * facePressure * A;
+    flux[IDX_GAS_MOMENTUM] = (alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * vG * gasArea)
+        + pressureAlphaG * facePressure * A;
     flux[IDX_GAS_MOMENTUM] += stratified.force[0];
 
     // Oil flux - use holdup directly for inlet BC stability
     double vO = boundary.getOilVelocity();
     TwoFluidSection oilDonor = inletDonor(interior, boundary, vO);
+    double oilArea = oilDonor.getArea();
     double rhoO = oilDonor.getOilDensity();
     if (!Double.isFinite(rhoO) || rhoO <= 0.0)
       rhoO = 700.0; // Default oil density
@@ -2011,23 +2015,26 @@ public class TwoFluidConservationEquations implements Serializable {
     // Phase-resolved boundary holdup is authoritative, including positive traces
     // smaller than the rounding error in gas holdup.
     alphaO = Math.max(0, Math.min(1.0, alphaO));
-    flux[IDX_OIL_MASS] = alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * A;
+    flux[IDX_OIL_MASS] = alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * oilArea;
     double pressureAlphaO = Math.max(0.0, Math.min(1.0, interior.getOilHoldup()));
-    flux[IDX_OIL_MOMENTUM] = (alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * vO * A) + pressureAlphaO * facePressure * A;
+    flux[IDX_OIL_MOMENTUM] = (alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * vO * oilArea)
+        + pressureAlphaO * facePressure * A;
     flux[IDX_OIL_MOMENTUM] += stratified.force[1];
 
     // Water flux - use holdup directly for inlet BC stability
     double vW = boundary.getWaterVelocity();
     TwoFluidSection waterDonor = inletDonor(interior, boundary, vW);
+    double waterArea = waterDonor.getArea();
     double rhoW = waterDonor.getWaterDensity();
     if (!Double.isFinite(rhoW) || rhoW <= 0.0)
       rhoW = 1000.0; // Default water density
     double alphaW = waterDonor.getWaterHoldup();
     // Do not subtract other phase holdups to recover this phase's availability.
     alphaW = Math.max(0, Math.min(1.0, alphaW));
-    flux[IDX_WATER_MASS] = alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * A;
+    flux[IDX_WATER_MASS] = alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * waterArea;
     double pressureAlphaW = Math.max(0.0, Math.min(1.0, interior.getWaterHoldup()));
-    flux[IDX_WATER_MOMENTUM] = (alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * vW * A) + pressureAlphaW * facePressure * A;
+    flux[IDX_WATER_MOMENTUM] = (alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * vW * waterArea)
+        + pressureAlphaW * facePressure * A;
     flux[IDX_WATER_MOMENTUM] += stratified.force[2];
 
     // Energy flux
@@ -2036,9 +2043,9 @@ public class TwoFluidConservationEquations implements Serializable {
       double HO = oilDonor.getOilEnthalpy();
       double HW = waterDonor.getWaterEnthalpy();
       // Exactly absent phases have no enthalpy flux even when their unused properties are non-finite.
-      lastBoundaryPhaseEnergyFluxes[0][0] = (alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * (HG + 0.5 * vG * vG)) * A;
-      lastBoundaryPhaseEnergyFluxes[0][1] = (alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * (HO + 0.5 * vO * vO)) * A;
-      lastBoundaryPhaseEnergyFluxes[0][2] = (alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * (HW + 0.5 * vW * vW)) * A;
+      lastBoundaryPhaseEnergyFluxes[0][0] = alphaG == 0.0 ? 0.0 : flux[IDX_GAS_MASS] * (HG + 0.5 * vG * vG);
+      lastBoundaryPhaseEnergyFluxes[0][1] = alphaO == 0.0 ? 0.0 : flux[IDX_OIL_MASS] * (HO + 0.5 * vO * vO);
+      lastBoundaryPhaseEnergyFluxes[0][2] = alphaW == 0.0 ? 0.0 : flux[IDX_WATER_MASS] * (HW + 0.5 * vW * vW);
       lastBoundaryPhaseEnergyFluxes[0][0] += stratifiedPressureWork(flux[IDX_GAS_MASS], rhoG, stratified.force[0],
           stratified.area[0]);
       lastBoundaryPhaseEnergyFluxes[0][1] += stratifiedPressureWork(flux[IDX_OIL_MASS], rhoO, stratified.force[1],
@@ -3444,7 +3451,8 @@ public class TwoFluidConservationEquations implements Serializable {
       return;
     }
 
-    TwoFluidSection inletFace = inletFaceState(sections[0]);
+    // Boundary pressure traction uses interior geometry even when advection has an independent external donor.
+    TwoFluidSection inletFace = sections[0];
     double inletPressure = inletFacePressure(sections);
     for (int i = 0; i < nCells; i++) {
       TwoFluidSection sec = sections[i];
