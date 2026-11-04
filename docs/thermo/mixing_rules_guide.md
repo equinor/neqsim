@@ -1063,6 +1063,15 @@ missing observations, raw rounded feeds, source uncertainty scales and the disti
 between liquid mass fractions and mole fractions. The fixture does not qualify oil
 partition, hydrate dissociation, brine, ice, clone concurrency or flash throughput.
 
+The separate [MEG/water/natural-gas primary receipts](../../src/test/resources/neqsim/thermo/mixingrule/hv-meg-natural-gas/README.md)
+retain 11 multicomponent experiments from Kruger et al., DOI10.1021/acs.jced.8b00495:
+218 observed concentrations/partition coefficients, two missing vapor-MEG cells,
+loading-gas composition and volumes, and original one-sigma repeatability. Apparatus
+uncertainties, conflicting purity/species statements and the printed density-unit
+problem remain explicit. The offline audit does not construct a measured molar
+feed or import the source's CPA parameters. These source receipts add no HV pair,
+physical acceptance tolerance or runtime/performance claim.
+
 ### Staged PR water/gas literature and bidirectional nitrogen assessment
 
 The research catalog now records seven complete water-first PR-HV tuples from

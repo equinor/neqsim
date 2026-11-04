@@ -1,0 +1,19 @@
+component_number,name,CAS,subscript_as_printed,mole_percent
+3,nitrogen,7727-37-9,N2,0.899
+4,carbon dioxide,124-38-9,CO2,2.517
+5,methane,74-82-8,C1,91.74
+6,ethane,74-84-0,C2,4.265
+7,propane,74-98-6,C3,0.5025
+8,i-butane,75-28-5,iC4,0.0474
+9,n-butane,106-97-8,nC4,0.0192
+10,i-pentane,78-78-4,iC5,3.50e-3
+11,n-pentane,109-66-0,nC5,2.80e-3
+12,"2,2-dimethylpropane",463-82-1,22DMC3,8.00e-5
+13,"2,2-dimethylbutane",75-83-2,22DMC4,5.00e-5
+14,cyclopentane,287-92-3,cC5,1.50e-4
+15,"2,3-dimethylbutane",79-29-8,22DMC4,8.00e-5
+16,2-methylpentane,107-83-5,2MC5,4.10e-4
+17,3-methylpentane,96-14-0,3MC5,2.30e-4
+18,n-hexane,110-54-3,nC6,5.70e-4
+19,heptanes total,-,nC7,1.60e-3
+20,octanes total,-,nC8,6.50e-4

@@ -128,6 +128,11 @@ jobs:
           uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_nitrogen_sources.py -v
           uv run --project devtools --locked --group test python -O -m unittest discover -s devtools -p test_audit_huron_vidal_nitrogen_sources.py -v
 
+      - name: Verify multicomponent MEG source data and uncertainty boundaries
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_natural_gas.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s devtools -p test_audit_huron_vidal_natural_gas.py -v
+
       - name: Verify quarantined HV measurement provenance
         run: |
           uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_meg_receipts.py -v
@@ -214,6 +219,11 @@ jobs:
         run: |
           uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_nitrogen_sources.py -v
           uv run --project devtools --locked --group test python -O -m unittest discover -s devtools -p test_audit_huron_vidal_nitrogen_sources.py -v
+
+      - name: Verify multicomponent MEG source data and uncertainty boundaries
+        run: |
+          uv run --project devtools --locked --group test python -m unittest discover -s devtools -p test_audit_huron_vidal_natural_gas.py -v
+          uv run --project devtools --locked --group test python -O -m unittest discover -s devtools -p test_audit_huron_vidal_natural_gas.py -v
 
       - name: Verify quarantined HV measurement provenance
         run: |
