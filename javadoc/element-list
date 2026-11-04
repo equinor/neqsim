@@ -266,6 +266,7 @@ neqsim.process.fielddevelopment.screening
 neqsim.process.fielddevelopment.subsea
 neqsim.process.fielddevelopment.tieback
 neqsim.process.fielddevelopment.tieback.capacity
+neqsim.process.fielddevelopment.wellplanning
 neqsim.process.fielddevelopment.workflow
 neqsim.process.hydrogen
 neqsim.process.instrumentdesign
@@ -337,6 +338,7 @@ neqsim.process.mpc
 neqsim.process.operations
 neqsim.process.operations.continuous
 neqsim.process.operations.envelope
+neqsim.process.operations.replay
 neqsim.process.optimization.valuechain
 neqsim.process.processmodel
 neqsim.process.processmodel.biorefinery
