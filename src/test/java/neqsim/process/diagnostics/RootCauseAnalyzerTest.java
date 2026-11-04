@@ -132,6 +132,51 @@ class RootCauseAnalyzerTest {
   }
 
   /**
+   * Tests that recorded incident history raises only the matching prior, is capped, and stays out of the likelihood.
+   */
+  @Test
+  void testIncidentHistoryPriorRaisesMatchingHypothesisOnly() {
+    RootCauseAnalyzer base = new RootCauseAnalyzer(process, compressorName);
+    base.setSymptom(Symptom.HIGH_VIBRATION);
+    base.setSimulationEnabled(false);
+    RootCauseReport baseReport = base.analyze();
+
+    RootCauseAnalyzer withHistory = new RootCauseAnalyzer(process, compressorName);
+    withHistory.setSymptom(Symptom.HIGH_VIBRATION);
+    withHistory.setSimulationEnabled(false);
+    withHistory.addIncidentHistoryPrior("bearing", 20, "cases 101, 102");
+    withHistory.addIncidentHistoryPrior("no such failure mode", 3, "case 103");
+    withHistory.addIncidentHistoryPrior("bearing", 0, "ignored");
+    RootCauseReport historyReport = withHistory.analyze();
+
+    Hypothesis baseBearing = findByName(baseReport, "bearing");
+    Hypothesis historyBearing = findByName(historyReport, "bearing");
+    assertTrue(historyBearing.getPriorProbability() > baseBearing.getPriorProbability());
+    assertEquals(baseBearing.getPriorProbability() * 1.75, historyBearing.getPriorProbability(), 1e-9);
+    assertEquals(baseBearing.getLikelihoodScore(), historyBearing.getLikelihoodScore(), 1e-12);
+    assertTrue(historyBearing.getConfidenceScore() > baseBearing.getConfidenceScore());
+
+    boolean audited = false;
+    for (Hypothesis.Evidence e : historyBearing.getEvidenceList()) {
+      audited |= "incident_history".equals(e.getParameter()) && "cases 101, 102".equals(e.getSourceReference());
+    }
+    assertTrue(audited);
+
+    Hypothesis other = findByName(historyReport, "rotor");
+    assertEquals(findByName(baseReport, "rotor").getPriorProbability(), other.getPriorProbability(), 1e-12);
+    assertTrue(historyReport.getDiagnosisCase().getDataSources().containsKey("incidentHistory"));
+  }
+
+  private static Hypothesis findByName(RootCauseReport report, String fragment) {
+    for (Hypothesis h : report.getRankedHypotheses()) {
+      if (h.getName().toLowerCase().contains(fragment)) {
+        return h;
+      }
+    }
+    throw new AssertionError("No hypothesis containing '" + fragment + "'");
+  }
+
+  /**
    * Tests symptom enum has expected attributes.
    */
   @Test

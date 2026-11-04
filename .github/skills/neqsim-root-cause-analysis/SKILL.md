@@ -337,6 +337,44 @@ for an air cooler, etc.):
   separator/heat-exchanger/valve libraries above; add one as a custom
   hypothesis (see Extending the Framework) when weather is a candidate driver.
 
+### Incident and Recurrence History (prior layer, not likelihood)
+
+Records of earlier incidents on the same equipment, its sister equipment or the same
+unit (company incident database, maintenance failure history, earlier RCA reports) say
+how often a failure mode has occurred here. That is a **reliability prior**, so it
+enters the prior stage of `Prior × Likelihood × Verification`, never the likelihood
+(the current event's own signals) and never as a confirmed cause.
+
+1. Retrieve the history for the equipment tag, then the unit, over a stated window.
+   Use the installed incident-history evidence agent when the plugin provides one;
+   otherwise ask the user for the case list. Record `no_access` or `not_applicable`
+   in `agent_workflow_plan.evidence_sources` rather than silently skipping.
+2. Map each record to a hypothesis by failure mode (seal leak, bearing, fouling,
+   valve sticking, instrument fault, utility loss ...). Count only records that match
+   the failure mode, not every record on the unit. Keep the case numbers.
+3. Pass the counts to the analyzer before `analyze()`:
+
+```java
+rca.addIncidentHistoryPrior("Seal degradation", 3, "cases 1001, 1007, 1012");
+rca.addIncidentHistoryPrior("Bearing", 1, "case 1020");
+```
+
+   Each matching hypothesis prior is multiplied by `1 + 0.15 × count`, capped at 1.75,
+   and a weak supporting evidence item with the case references is attached for the
+   audit trail. The likelihood score is not touched. Confidence is renormalised, so the
+   effect is relative. Unmatched names are logged, not applied.
+4. Rules that keep it honest:
+   - Recurrence is a screening signal, not a demonstrated common cause. Same tag, same
+     failure mode and a comparable operating regime strengthen it; same unit alone does not.
+   - No recorded incidents never lowers a prior (under-reporting is common).
+   - Closed cases with a recorded cause are stronger than open ones; quote the recorded
+     cause as a hypothesis to test against the historian, not as the answer.
+   - A hypothesis raised only by history and contradicted by the historian stays low:
+     the likelihood term dominates once there is measured evidence.
+   - Report the history window, record count, matching count and the data gap
+     (system coverage, reporting culture) in `assumptions` / `data_gaps`.
+   - Remove personal data from case text before it enters a task folder.
+
 ## Simulation Verification
 
 The verifier clones the process system, applies a perturbation matching each

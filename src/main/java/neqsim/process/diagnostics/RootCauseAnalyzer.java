@@ -91,6 +91,38 @@ public class RootCauseAnalyzer implements Serializable {
   /** Whether the current analysis should consume the most recent autonomous findings. */
   private transient boolean autonomousEvidenceActive;
 
+  /** Maximum prior multiplier that recorded incident history may apply to one hypothesis. */
+  private static final double MAX_INCIDENT_PRIOR_MULTIPLIER = 1.75;
+
+  /** Prior increase per recorded matching incident before the cap is reached. */
+  private static final double INCIDENT_PRIOR_STEP = 0.15;
+
+  /** Incident-history observations keyed by hypothesis name. */
+  private final List<IncidentHistoryEntry> incidentHistory = new ArrayList<>();
+
+  /**
+   * Recorded incidents of one failure mode on the investigated equipment or its sister equipment.
+   */
+  private static final class IncidentHistoryEntry implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final String hypothesisName;
+    private final int caseCount;
+    private final String sourceReference;
+
+    /**
+     * Creates an entry.
+     *
+     * @param hypothesisName hypothesis name or fragment of it
+     * @param caseCount number of matching recorded incidents
+     * @param sourceReference reference to the incident records
+     */
+    IncidentHistoryEntry(String hypothesisName, int caseCount, String sourceReference) {
+      this.hypothesisName = hypothesisName;
+      this.caseCount = caseCount;
+      this.sourceReference = sourceReference;
+    }
+  }
+
   /**
    * Creates a root cause analyzer.
    *
@@ -174,6 +206,55 @@ public class RootCauseAnalyzer implements Serializable {
    */
   public void setHypothesisGenerator(HypothesisGenerator generator) {
     this.generator = generator;
+  }
+
+  /**
+   * Records incident history (company incident or maintenance records) for one failure mode as a prior.
+   *
+   * <p>
+   * Recurrence of a failure mode on the same equipment or its sister equipment is a reliability prior, not likelihood
+   * evidence from the current event. The prior of every hypothesis whose name equals or contains {@code hypothesisName}
+   * (case-insensitive) is multiplied by {@code 1 + 0.15 * caseCount}, capped at 1.75, and a weak supporting
+   * {@link Hypothesis.Evidence} item that carries the source reference is attached for the audit trail. The attached
+   * item does not enter the likelihood score. Absence of recorded incidents never lowers a prior. Confidence is
+   * renormalised across all hypotheses, so the effect is relative.
+   * </p>
+   *
+   * @param hypothesisName hypothesis name, or a fragment of it, for example "Seal degradation" or "seal"
+   * @param caseCount number of recorded matching incidents; values below 1 are ignored
+   * @param sourceReference reference to the incident records, for example a case-number list
+   */
+  public void addIncidentHistoryPrior(String hypothesisName, int caseCount, String sourceReference) {
+    if (hypothesisName == null || hypothesisName.trim().isEmpty() || caseCount < 1) {
+      return;
+    }
+    incidentHistory.add(new IncidentHistoryEntry(hypothesisName.trim(), caseCount, sourceReference));
+  }
+
+  /**
+   * Applies recorded incident history to the generated hypotheses.
+   *
+   * @param hypotheses generated hypotheses
+   */
+  private void applyIncidentHistory(List<Hypothesis> hypotheses) {
+    for (IncidentHistoryEntry entry : incidentHistory) {
+      String key = entry.hypothesisName.toLowerCase();
+      boolean matched = false;
+      for (Hypothesis h : hypotheses) {
+        if (!h.getName().toLowerCase().contains(key)) {
+          continue;
+        }
+        matched = true;
+        double multiplier = Math.min(MAX_INCIDENT_PRIOR_MULTIPLIER, 1.0 + INCIDENT_PRIOR_STEP * entry.caseCount);
+        h.setPriorProbability(h.getPriorProbability() * multiplier);
+        h.addEvidence(new Hypothesis.Evidence("incident_history",
+            entry.caseCount + " recorded incident(s) of this failure mode; prior x" + String.format("%.2f", multiplier),
+            Hypothesis.EvidenceStrength.WEAK, "incident history", true, 1.0, entry.sourceReference));
+      }
+      if (!matched) {
+        logger.warn("Incident history for '{}' matched no hypothesis for '{}'", entry.hypothesisName, equipmentName);
+      }
+    }
   }
 
   /**
@@ -387,6 +468,7 @@ public class RootCauseAnalyzer implements Serializable {
     // Step 2: Generate candidate hypotheses
     List<Hypothesis> hypotheses = generator.generate(equipment, symptom);
     logger.info("Generated {} candidate hypotheses", hypotheses.size());
+    applyIncidentHistory(hypotheses);
 
     // Step 4 & 5: Collect evidence and update likelihood
     EvidenceCollector collector = new EvidenceCollector();
@@ -446,6 +528,9 @@ public class RootCauseAnalyzer implements Serializable {
       if (!designLimits.isEmpty()) {
         diagnosisCase.addDataSource("designLimits", "configured analysis limits");
       }
+    }
+    if (!incidentHistory.isEmpty()) {
+      diagnosisCase.addDataSource("incidentHistory", incidentHistory.size() + " failure-mode prior(s), prior only");
     }
     report.setDiagnosisCase(diagnosisCase);
     report.setHypotheses(hypotheses);

@@ -39,10 +39,17 @@ the equipment's location and the event window from the community `neqsim-weather
 skill (or the `installation-weather-agent`) before scoring weather as evidence; see the
 root-cause-analysis skill's "Weather as Evidence" section for the confidence bands.
 
+When the equipment has an incident or maintenance history ("has this happened before?", a
+recurring trip or leak, a named incident case), retrieve it before ranking and pass the
+matching failure-mode counts with `RootCauseAnalyzer.addIncidentHistoryPrior(...)`; see the
+skill's "Incident and Recurrence History" section. History is a capped prior, not a cause.
+An installed plugin may supply an incident-history evidence agent; record it in
+`agent_workflow_plan.evidence_sources` (`used`, `not_applicable` or `no_access` with a reason).
+
 ## Operating Principles
 
 1. **Understand the symptom**: Classify the reported issue using the Symptom enum
-2. **Gather data**: Collect historian time-series, STID design docs, OREDA data
+2. **Gather data**: Collect historian time-series, STID design docs, OREDA data, and incident/maintenance history for the tag
 3. **Build or load process model**: Need a running ProcessSystem for simulation verification
 4. **Run RCA**: Use RootCauseAnalyzer orchestrator
 5. **Interpret results**: Separate evaluated evidence from unknown, unsupported, and failed stages; report simulation coverage
