@@ -17,6 +17,7 @@ exclusion requires a scope rationale and accountable project decision.
 
 | Standards family | Review topics against the selected controlled edition | Required package evidence |
 | --- | --- | --- |
+| ISO 15519-1 and ISO 15519-2 | General process-diagram documentation, sheets, line conventions and reference designations; measurement, control and actuation representation | Exact adopted parts/editions, document and loop identities, sensing/control/final-element paths, line legend, linked control narrative and controlled requirement mapping |
 | ISO 10628, applicable parts | Diagram scope/content and representation conventions, relationship between diagram type and detail, stream/connection identification and selected graphical symbols | Declared drawing type/profile, source-to-sheet coverage, line identity/direction, symbol library provenance and clause mapping |
 | ISO 14617, applicable parts | Selected graphical-symbol meaning, combination, connection and orientation where adopted | Symbol-to-device/function mapping, legend, orientation/ports and adopted symbol-source references |
 | ISO 5457 | Adopted drawing-sheet size/layout conventions, frame, zones and sheet references | Actual PDF/SVG page dimensions and viewBox/scale, frame/zone details and final-size visual observations |
@@ -47,3 +48,17 @@ Before closing the review, verify these interfaces explicitly:
 Receiving-CAE import/round-trip results are separate evidence with a named tool,
 version and tested scope. Neither this checklist nor the integrated P&ID review
 provides construction, safety-lifecycle or final engineering approval.
+
+ISO 15519-1:2010 and ISO 15519-2:2015 are the currently declared native
+professional drawing review basis. The checker requires both parts in the
+basis and keeps missing editions or controlled review as HOLD. Public ISO
+scope or table-of-contents material can guide an observed-artifact checklist,
+but cannot support a clause-by-clause PASS. Label observational checks and
+controlled conformance separately. Retain proposed settings, tested settings
+and approved design settings as distinct evidence.
+
+Reconcile actual source terminal `PipeConnectorNumber` identities against line
+register rows, including segments downstream of source valves. An absent row
+is a coordination defect, while an identity-only row with unspecified
+DN/class/design pressure/temperature retains design-input HOLD. Receiving
+system names on auxiliary destinations are not automatically line identifiers.

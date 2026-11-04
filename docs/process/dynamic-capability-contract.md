@@ -825,3 +825,27 @@ Rejected internal intervals preserve accepted pipe state; a full request is not
 an atomic global transaction. Full EOS/shaft energy, stopped/reverse operation,
 cavity formation and integrated Safety Shutdown remain `NOT_EVALUATED`.
 
+
+
+## Exact closed-valve boundaries
+
+For native flow-driven `ThrottlingValve` transient operation, a closed or
+non-driving valve publishes exactly zero flow at both its inlet and outlet.
+This matters when the inlet is the same stream that a dynamic `Separator`
+uses as its withdrawal boundary: zeroing only the downstream stream would
+leave a fictitious vessel withdrawal. Positive-flow recovery preserves the
+valve-owned intensive composition without adding an epsilon leak. An initially
+dry source remains dry; arbitrary phase disappearance and a later external
+dry-source change require separate qualification. Steady-state flow-given and
+fixed-pressure behavior retain their existing contract.
+
+A separator excludes exactly zero inlet and outlet fluxes from extensive
+enthalpy transport. Intensive property calculations on zero-mole streams are
+not an energy source. Check external mass, component and energy balances,
+timestep refinement and reopen behavior in addition to strict activation.
+Passing the capability audit alone does not establish these numerical checks.
+
+Engineering dynamic-scenario tags admit actual registered or
+equipment-attached controllers and their exposed input transmitters, matching
+the executable P&ID binding namespace. Unknown controller-like tags remain
+validation errors.

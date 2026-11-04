@@ -13,6 +13,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.engineering.EngineeringValidationReport.Severity;
 import neqsim.process.engineering.automation.EngineeringAutomationStudy;
 import neqsim.process.engineering.design.EngineeringDesignModule;
@@ -538,6 +539,30 @@ public final class EngineeringProject implements Serializable {
   }
 
   /**
+   * Adds only an actual executable controller and its exposed input to the scenario namespace.
+   *
+   * @param tags declared executable tag set
+   * @param controller registered or equipment-attached controller
+   */
+  private static void addScenarioControllerTags(Set<String> tags, ControllerDeviceInterface controller) {
+    if (controller == null) {
+      return;
+    }
+    if (controller.getName() != null && !controller.getName().trim().isEmpty()) {
+      tags.add(controller.getName());
+    }
+    MeasurementDeviceInterface transmitter = controller.getTransmitter();
+    if (transmitter != null) {
+      if (transmitter.getName() != null && !transmitter.getName().trim().isEmpty()) {
+        tags.add(transmitter.getName());
+      }
+      if (transmitter.getTag() != null && !transmitter.getTag().trim().isEmpty()) {
+        tags.add(transmitter.getTag());
+      }
+    }
+  }
+
+  /**
    * Validates topology identifiers, minimum design data, compressor protection data, and approval governance.
    *
    * @return validation report
@@ -556,6 +581,17 @@ public final class EngineeringProject implements Serializable {
       }
       if (device.getTag() != null && !device.getTag().trim().isEmpty()) {
         scenarioTags.add(device.getTag());
+      }
+    }
+    // Match the executable P&ID binding namespace: controllers may be
+    // registered directly or attached to actual process equipment. Their real
+    // input transmitters are admissible even when not separately registered.
+    for (ControllerDeviceInterface controller : processSystem.getControllerDevices()) {
+      addScenarioControllerTags(scenarioTags, controller);
+    }
+    for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
+      for (ControllerDeviceInterface controller : unit.getControllers()) {
+        addScenarioControllerTags(scenarioTags, controller);
       }
     }
     Set<String> tags = new HashSet<String>();

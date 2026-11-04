@@ -1227,8 +1227,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         }
         thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
         try {
-          gasOutStream.getThermoSystem().init(2);
-          if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+          if (gasOutStream.getThermoSystem().getTotalNumberOfMoles() != 0.0) {
+            gasOutStream.getThermoSystem().init(2);
+          }
+          if ((thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous"))
+              && liquidOutStream.getThermoSystem().getTotalNumberOfMoles() != 0.0) {
             liquidOutStream.getThermoSystem().init(2);
           }
         } catch (Exception e) {
@@ -1238,10 +1241,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         double deliq = 0.0;
         if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
           hasliq = true;
-          deliq = -liquidOutStream.getThermoSystem().getEnthalpy();
+          deliq = -transientBoundaryEnthalpy(liquidOutStream);
         }
-        double deltaEnergy = inletStreamMixer.getOutletStream().getThermoSystem().getEnthalpy()
-            - gasOutStream.getThermoSystem().getEnthalpy() + deliq;
+        double deltaEnergy = transientBoundaryEnthalpy(inletStreamMixer.getOutletStream())
+            - transientBoundaryEnthalpy(gasOutStream) + deliq;
 
         // Add external heat input (e.g., from flare radiation)
         if (setHeatInput && heatInput != 0.0) {
@@ -1318,20 +1321,20 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
               entrainedSystem.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas", "aqueous");
             }
             if (entrainedSystem.hasPhaseType("gas")) {
-              gasOutStream.getFluid().setMolarComposition(entrainedSystem.getPhase("gas").getMolarComposition());
+              setTransientOutletComposition(gasOutStream, entrainedSystem.getPhase("gas").getMolarComposition());
             }
             if (entrainedSystem.hasPhaseType("oil") || entrainedSystem.hasPhaseType("aqueous")) {
               if (entrainedSystem.getNumberOfPhases() > 1) {
-                liquidOutStream.getFluid().setMolarComposition(entrainedSystem.getPhase(1).getMolarComposition());
+                setTransientOutletComposition(liquidOutStream, entrainedSystem.getPhase(1).getMolarComposition());
               }
             }
           } else {
             if (thermoSystem.hasPhaseType("gas")) {
-              gasOutStream.getFluid().setMolarComposition(thermoSystem.getPhase("gas").getMolarComposition());
+              setTransientOutletComposition(gasOutStream, thermoSystem.getPhase("gas").getMolarComposition());
             }
             if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
               if (thermoSystem.getNumberOfPhases() > 1) {
-                liquidOutStream.getFluid().setMolarComposition(thermoSystem.getPhase(1).getMolarComposition());
+                setTransientOutletComposition(liquidOutStream, thermoSystem.getPhase(1).getMolarComposition());
               }
             }
           }
@@ -1398,6 +1401,65 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   }
 
   /**
+   * Returns an extensive boundary energy flux without evaluating undefined zero-mole properties.
+   *
+   * @param stream inventory-boundary stream
+   * @return enthalpy flux in watts, exactly zero for zero molar flux
+   */
+  private double transientBoundaryEnthalpy(StreamInterface stream) {
+    return stream.getThermoSystem().getTotalNumberOfMoles() == 0.0 ? 0.0 : stream.getThermoSystem().getEnthalpy();
+  }
+
+  /**
+   * Refreshes the intensive composition of a stopped outlet without publishing material flow.
+   *
+   * @param stream outlet stream
+   * @param composition current vessel-phase mole fractions
+   */
+  private void setTransientOutletComposition(StreamInterface stream, double[] composition) {
+    SystemInterface fluid = stream.getFluid();
+    double flow = fluid.getTotalNumberOfMoles();
+    if (flow >= 1e-100) {
+      fluid.setMolarComposition(composition);
+      return;
+    }
+    try {
+      fluid.setTotalNumberOfMoles(1.0);
+      fluid.setMolarComposition(composition);
+      fluid.init(0);
+    } finally {
+      fluid.setTotalNumberOfMoles(flow);
+    }
+  }
+
+  /**
+   * Refreshes outlet pressure and temperature while preserving exact zero material flow.
+   *
+   * @param stream outlet stream
+   * @param id calculation identifier
+   * @param runFlash true to use the regular stream flash
+   */
+  private void refreshTransientOutlet(StreamInterface stream, UUID id, boolean runFlash) {
+    double flow = stream.getFluid().getTotalNumberOfMoles();
+    boolean normalize = flow == 0.0;
+    try {
+      if (normalize) {
+        stream.getFluid().setTotalNumberOfMoles(1.0);
+      }
+      if (runFlash) {
+        stream.run(id);
+      } else {
+        stream.getFluid().init(2);
+        stream.getFluid().initPhysicalProperties("density");
+      }
+    } finally {
+      if (normalize) {
+        stream.getFluid().setTotalNumberOfMoles(0.0);
+      }
+    }
+  }
+
+  /**
    * setTempPres.
    *
    * @param temp a double
@@ -1418,16 +1480,14 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
     inletStreamMixer.run(id);
     if (getThermoSystem().getNumberOfComponents() > 1) {
-      gasOutStream.run(id);
+      refreshTransientOutlet(gasOutStream, id, true);
       if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-        liquidOutStream.run(id);
+        refreshTransientOutlet(liquidOutStream, id, true);
       }
     } else {
-      gasOutStream.getFluid().init(2);
-      gasOutStream.getFluid().initPhysicalProperties("density");
+      refreshTransientOutlet(gasOutStream, id, false);
       if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-        liquidOutStream.getFluid().init(2);
-        liquidOutStream.getFluid().initPhysicalProperties("density");
+        refreshTransientOutlet(liquidOutStream, id, false);
       }
     }
   }

@@ -289,3 +289,44 @@ The CI contract also runs Spotless and the focused P&ID test suite before render
 See the
 [`complete_pid_design_synthesis.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/complete_pid_design_synthesis.ipynb)
 notebook for the executable workflow.
+
+## Dynamic feedback and ISO 15519 review
+
+The professional drawing profile declares ISO 15519-1:2010 (general process
+diagram rules) and ISO 15519-2:2015 (measurement and control) in its content
+report and identifies ISO 15519 in the sheet heading. These are review-basis
+references. `standardsAssessment` explicitly retains controlled-requirements
+review for both parts; `isoConformanceStatus` and construction fitness remain
+unchanged until the required engineering review is complete. A DEXPI 2.0.1
+profile assessment does not establish ISO drawing conformance.
+
+Bind an existing inlet shutdown valve to the actual valve and retain its
+owner-relative inlet attachment and stream identity. The professional PFD
+also shows that directly connected upstream valve. Additional actual outlet
+transmitters receive distinct sensing routes so they do not cross the vessel
+level-tap route. Check both process and sensing paths after binding changes.
+
+A dynamic study can read candidate settings from `PidDesignModel`, construct
+a versioned scenario configuration, run strict `PidSimulationSession` tests,
+and attach result identities and checksums to a revised design. Numerical
+pressure-equality helpers belong to that declared scenario configuration;
+they are not physical P&ID equipment. Preserve base and configured source
+fingerprints, actual native bindings, rejected candidates and negative tests.
+
+Retain settings, units, assumptions and tested effects in the canonical design
+and simulation-result sidecars with an explicit native-ID crosswalk. Native
+XML connectivity alone is not proof that controller parameters or safety
+logic round-trip into another CAE or control system. Native dynamic criteria
+that test first entry into a range by a deadline do not prove a whole-window
+envelope; use a horizon-gated accumulated predicate for that requirement.
+Proposed relief, blowdown and additional trips receive no test credit unless
+their actual executable effects were exercised.
+
+A separator low-low-level proposal declares a liquid-outlet isolation/control
+route and leaves its final element as `PROJECT_INPUT_REQUIRED` until an
+applicable project target is supplied. It must not silently connect to the
+inlet shutdown valve, whose retained high-high-level action addresses a
+different hazard. A conventional liquid level control valve is not
+automatically an independent safety final element. Generic cause-and-effect
+requirement templates also need an explicit alias-to-canonical-tag crosswalk
+before they can be treated as executable device identities.
