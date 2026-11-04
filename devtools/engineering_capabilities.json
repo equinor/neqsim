@@ -253,6 +253,26 @@
       "limitations": "Not all equipment provides a qualified transient model; preserve initial conditions and event assumptions."
     },
     {
+      "id": "separator-energy-diagnostics",
+      "title": "Opt-in separator cumulative energy accounting",
+      "domain": "dynamics",
+      "tool": "inspectApi",
+      "apis": [
+        "neqsim.process.equipment.separator.Separator",
+        "neqsim.process.equipment.separator.SeparatorTransientEnergyBalanceReport"
+      ],
+      "skills": [
+        "neqsim-dynamic-simulation"
+      ],
+      "agents": [
+        "control-system"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/equipment/separator/SeparatorTransientEnergyBalanceTest.java"
+      ],
+      "limitations": "Instance-based Java/JPype diagnostic API only; no new curated MCP execution or runDynamic JSON option. Default off and limited to the exact concrete Separator transient algorithm. Consumed ordered enthalpy/heat, local accepted VU defects and cumulative published-inventory debt have separate units, scales and coverage. Explicit caller policy does not change solver tolerances or establish process/safety qualification. Reset epochs and snapshot rollback are tracked; skipped, steady, nonfinite and excluded-flow coverage cannot pass. ThreePhaseSeparator and unknown subclasses are unsupported. The public V101 fixture retains refined-control energy FAIL at the unchanged1e-5 limit, and distinguishes corrected pre-vessel shutdown accounting from superseded endpoint sampling."
+    },
+    {
       "id": "equipment-sizing",
       "title": "Separator and compressor sizing",
       "domain": "engineering-design",

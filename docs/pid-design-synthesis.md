@@ -206,6 +206,55 @@ Passive valves and splitters remain HAZOP nodes using their actual source
 stream boundaries. They do not receive invented vessel-nozzle proposals or
 automatically credited safeguards.
 
+## External symbol libraries, including PCA
+
+The professional renderer currently uses NeqSim-authored vector families. The
+`EngineeringDiagramConventionRegister` records generic node-kind shapes and
+provenance; its `sourceReference` does not import SVG geometry, connection points
+or a PCA symbol. The professional scene calls `ProfessionalPidSymbolLibrary`
+directly. Keep that authored-symbol provenance unless an actual external asset
+has been acquired and its mapping verified.
+
+The requested [PCA symbol-library Members view](https://posccaesar.org/ontology/digengsym/rdl/core?tab=Members)
+identifies a library view, not a verified individual glyph. PCA documents
+Reader/Creator retrieval through `GET /esl/engineeringSymbols` as JSON, JSON-LD or
+Turtle. The API base depends on the deployment; use its returned access links and
+deployed Swagger schema rather than guessing a host, per-symbol IRI, payload
+fields or integer direction meanings. Preserve a resource's canonical IRI
+separately from the environment-specific URL used to retrieve it. See the
+[official API reference](https://docs.posccaesar.org/platform-and-services/pca-consume/api-reference/)
+and [retrieval guidance](https://docs.posccaesar.org/platform-and-services/pca-consume/get-content-through-the-api/).
+
+Before a future adapter is implemented, require this candidate acquisition
+record. It is an application-side evidence contract, not a claimed PCA payload
+schema:
+
+| Evidence | Required content |
+| --- | --- |
+| Identity and status | Exact resource/library IRIs, version and content status, replacement/deprecation information, acquisition date and access environment |
+| Reproducible source | Original representation, media type, SHA-256 and deployed schema version; server version/date metadata where supplied |
+| Rights and provenance | Resource-specific rights and attribution, applicable permission/agreement and review reference; no rights inferred from public visibility |
+| Geometry | Original shape/path data, dimensions/viewBox, coordinate units/axes, rotation centre and fill rule |
+| Connections | Original point IDs, coordinates and raw direction values, verified direction schema, and explicit mappings to canonical material/signal ports |
+| Project mapping | Source equipment class, symbol family, orientation/actuator/location semantics, supported transforms, mapping revision and review evidence |
+
+Apply one documented coordinate transform to the geometry, rotation centre and
+connection points, including the required unit and direction conversions. Keep
+the physical process and P&ID as the authority for material/signal connections;
+do not infer them from a picture. Validate actual hull/sensing attachments and
+both SVG and PDF output, then perform the applicable project and controlled
+symbol/standards review. Retain immutable source bytes for reproducible offline
+generation. See PCA's [geometry guidance](https://docs.posccaesar.org/platform-and-services/pca-evolve/digital-symbol-editor-best-practices/).
+
+No PCA glyph payload or resource-specific glyph licence has been verified here.
+Check the [PCA terms](https://posccaesar.org/terms/) and applicable resource rights
+before embedding or redistributing assets; this guide makes no licence decision.
+Until those prerequisites are met, retain the supported authored families and
+state that PCA glyphs have not been imported. Unknown families still fail closed.
+A library reference, reviewed project convention, PCA content status and ISO
+qualification are separate evidence; none establishes a safe control/safety
+design or a qualified receiving-tool round trip.
+
 ## Compatibility proposal example
 
 ```java
