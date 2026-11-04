@@ -23,16 +23,28 @@ import neqsim.thermo.system.SystemInterface;
  * @version 1.0
  */
 public final class CalibratedPvtModel implements Serializable {
+  /** Serialization compatibility identifier. */
   private static final long serialVersionUID = 1L;
+  /** Versioned public evidence schema location. */
   private static final String SCHEMA_URI = "https://raw.githubusercontent.com/equinor/neqsim/master/src/main/resources/neqsim/pvt/calibrated-pvt-evidence-v1.schema.json";
+  /** Independently serialized original EOS object graph. */
   private final byte[] original;
+  /** Independently serialized laboratory-tuned EOS object graph. */
   private final byte[] tuned;
+  /** Immutable sample/composition/characterization revision identity. */
   private final String sampleReference;
+  /** Original model and software revision identity. */
   private final String originalRevision;
+  /** Accepted tuned model and software revision identity. */
   private final String tunedRevision;
+  /** Laboratory protocol, separator and fitting report reference. */
   private final String calibrationReference;
+  /** Unique complete experiment identities used in laboratory tuning. */
   private final String[] calibrationExperiments;
+  /** Optional complete passing gas-density evidence JSON. */
   private final String gasDensityConsistency;
+  /** Optional complete passing CVD accounting and final-analysis evidence JSON. */
+  private final String cvdMaterialBalance;
 
   /**
    * Freezes independently calibrated fluid versions and their evidence references.
@@ -73,6 +85,33 @@ public final class CalibratedPvtModel implements Serializable {
   public CalibratedPvtModel(SystemInterface original, SystemInterface tuned, String sampleReference,
       String originalRevision, String tunedRevision, String calibrationReference, String[] calibrationExperiments,
       PvtGasDensityConsistency gasDensityConsistency) {
+    this(original, tuned, sampleReference, originalRevision, tunedRevision, calibrationReference,
+        calibrationExperiments, gasDensityConsistency, null);
+  }
+
+  /**
+   * Freezes model checkpoints after optional same-sample gas-density and complete CVD accounting gates.
+   *
+   * <p>
+   * The complete source-identified CVD report, including any separately supplied final liquid analysis, must pass
+   * before attachment. Its JSON is frozen in provenance. A passing report is arithmetic consistency, not independent
+   * EOS accuracy or a replacement for complete laboratory holdouts. Null gates preserve existing behavior. Screening
+   * evidence does not automatically become a calibration or holdout experiment; those identities remain explicit.
+   * </p>
+   *
+   * @param original original characterized sample model
+   * @param tuned model calibrated against laboratory data only
+   * @param sampleReference sample/composition/characterization revision reference
+   * @param originalRevision original model/software revision
+   * @param tunedRevision accepted tuned model/software revision
+   * @param calibrationReference laboratory protocols, separator basis and fitting report reference
+   * @param calibrationExperiments complete experiment identities used in tuning
+   * @param gasDensityConsistency optional same-sample gas-density evidence
+   * @param cvdMaterialBalance optional same-sample complete CVD accounting evidence
+   */
+  public CalibratedPvtModel(SystemInterface original, SystemInterface tuned, String sampleReference,
+      String originalRevision, String tunedRevision, String calibrationReference, String[] calibrationExperiments,
+      PvtGasDensityConsistency gasDensityConsistency, CvdMaterialBalance cvdMaterialBalance) {
     this.sampleReference = reference(sampleReference);
     if (gasDensityConsistency != null) {
       if (!this.sampleReference.equals(gasDensityConsistency.getSampleReference())) {
@@ -81,6 +120,13 @@ public final class CalibratedPvtModel implements Serializable {
       gasDensityConsistency.requireCompatible();
     }
     this.gasDensityConsistency = gasDensityConsistency == null ? null : gasDensityConsistency.toJson();
+    if (cvdMaterialBalance != null) {
+      if (!this.sampleReference.equals(cvdMaterialBalance.getSampleReference())) {
+        throw new IllegalArgumentException("CVD evidence belongs to a different sample");
+      }
+      cvdMaterialBalance.requireCompatible();
+    }
+    this.cvdMaterialBalance = cvdMaterialBalance == null ? null : cvdMaterialBalance.toJson();
     this.originalRevision = reference(originalRevision);
     this.tunedRevision = reference(tunedRevision);
     this.calibrationReference = reference(calibrationReference);
@@ -141,6 +187,9 @@ public final class CalibratedPvtModel implements Serializable {
     result.add("calibrationExperiments", identities);
     if (gasDensityConsistency != null) {
       result.add("gasDensityConsistency", JsonParser.parseString(gasDensityConsistency));
+    }
+    if (cvdMaterialBalance != null) {
+      result.add("cvdMaterialBalance", JsonParser.parseString(cvdMaterialBalance));
     }
     return result.toString();
   }

@@ -1860,6 +1860,27 @@
         "src/test/java/neqsim/pvtsimulation/util/CalibratedPvtModelTest.java"
       ],
       "limitations": "Discovery and inspectApi only; instance-based Java/JPype evidence, no stateless MCP execution route. Opt-in same-state gas p/T/Z/molar-mass/density interval identity check using explicit SI inputs and caller-justified absolute bounds; preserves source/raw data and rejects incompatible same-sample checkpoint attachments. Conservative box bounds are not sigmas, correlated inference, EOS calibration, protocol replay or independent accuracy. Public primary Duvernay table18 is a consistency fixture: 8 of 9 tuples compatible under printed-resolution bounds, saturation row retained and incompatible; final pressure is 1300 psia. Does not qualify measured laboratory-to-field matching, absent phases or the Tran rescaled-CVD method."
+    },
+    {
+      "id": "laboratory-cvd-material-balance",
+      "title": "Source-identified laboratory CVD component accounting",
+      "domain": "pvt",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.util.CvdMaterialBalance",
+        "neqsim.pvtsimulation.util.CalibratedPvtModel"
+      ],
+      "skills": [
+        "neqsim-eos-regression"
+      ],
+      "agents": [
+        "pvt-simulation",
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/pvtsimulation/util/CvdMaterialBalanceTest.java"
+      ],
+      "limitations": "Discovery and inspectApi only; instance-based Java/JPype evidence, no stateless MCP execution route. Opt-in saturated-vapor-reference isothermal CVD accounting with endpoint-composition gas withdrawals, immutable named observations and optional final liquid analysis bounds. Absent, unresolved and inconsistent liquid states remain explicit. Public Whitson-Torp NS-1 Table1 reproduces calculated final liquid within half its printed digit; experimental methane/C7+ remain incompatible with conservative rounding-only bounds. No EOS tuning, automatic uncertainty model, critical/wet-cell support, independent measured accuracy, separator conversion, field history matching or Tran rescaled-CVD qualification."
     }
   ]
 }
