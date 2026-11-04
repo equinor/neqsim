@@ -30,10 +30,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class HeatExchangerDocumentationTest extends neqsim.NeqSimTest {
-  private static final Path GUIDE =
-      Paths.get("docs", "process", "equipment", "heat_exchangers.md");
-  private static final String QUICK_START_MARKER =
-      "<!-- heat-exchanger-example: two-stream-quick-start -->";
+  private static final Path GUIDE = Paths.get("docs", "process", "equipment", "heat_exchangers.md");
+  private static final String QUICK_START_MARKER = "<!-- heat-exchanger-example: two-stream-quick-start -->";
   private static final Pattern JAVA_FENCE = Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
 
   @TempDir
