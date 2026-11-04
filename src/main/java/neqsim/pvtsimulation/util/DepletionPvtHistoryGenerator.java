@@ -89,7 +89,7 @@ public final class DepletionPvtHistoryGenerator {
     /**
      * Tests whether this is an explicitly initial-occupied-volume-referenced experiment.
      *
-     * @return true only for replayNativeFixedCell, never for an inferred upper-dew reference
+     * @return true only for an explicit fixed-cell replay, never for an inferred upper-dew reference
      */
     public boolean hasFixedCellReference() {
       return fixedCell != null;
@@ -224,7 +224,7 @@ public final class DepletionPvtHistoryGenerator {
    */
   public static NativeResult replayNative(CalibratedPvtModel model, boolean tuned, Path path, String pathReference,
       double temperatureK, double[] pressuresBara, PvtSeparatorPath separator) {
-    return replayNative(model, tuned, path, pathReference, temperatureK, pressuresBara, separator, false);
+    return replayNative(model, tuned, path, pathReference, temperatureK, pressuresBara, separator, false, false);
   }
 
   /**
@@ -249,7 +249,33 @@ public final class DepletionPvtHistoryGenerator {
    */
   public static NativeResult replayNativeFixedCell(CalibratedPvtModel model, boolean tuned, String pathReference,
       double temperatureK, double[] pressuresBara, PvtSeparatorPath separator) {
-    return replayNative(model, tuned, Path.CVD, pathReference, temperatureK, pressuresBara, separator, true);
+    return replayNative(model, tuned, Path.CVD, pathReference, temperatureK, pressuresBara, separator, true, false);
+  }
+
+  /**
+   * Replays an explicitly declared dry fixed-cell experiment across gas/oil phase changes.
+   *
+   * <p>
+   * Uses {@link ConstantVolumeDepletion#runDryPhaseChangingFixedCellDepletion(double, double[])} with the initial
+   * occupied-volume convention. Original/tuned checkpoints and immutable sample, experiment and separator provenance
+   * remain distinct. Native results contain only physically present phases and actual retained/withdrawn separator
+   * products. No absent-phase black-oil properties or reservoir production predictions are supplied. Wet, absent-gas,
+   * critical-degenerate and unclosed paths fail transactionally. Existing replay methods keep their own contracts.
+   * </p>
+   *
+   * @param model independently calibrated original/tuned checkpoints
+   * @param tuned true for tuned EOS, false for original EOS
+   * @param pathReference immutable sample, whole-experiment, volume-convention and data-use identity
+   * @param temperatureK common experiment temperature, K
+   * @param pressuresBara strictly decreasing positive pressures above the separator, first defines the cell
+   * @param separator immutable surface process and final actual product-volume basis
+   * @return completed native states, selected fixed-cell protocol and surface products
+   * @throws IllegalArgumentException if inputs are invalid or the sample contains water
+   * @throws IllegalStateException if a phase, numerical, conservation or separator check fails
+   */
+  public static NativeResult replayNativeDryPhaseChangingFixedCell(CalibratedPvtModel model, boolean tuned,
+      String pathReference, double temperatureK, double[] pressuresBara, PvtSeparatorPath separator) {
+    return replayNative(model, tuned, Path.CVD, pathReference, temperatureK, pressuresBara, separator, true, true);
   }
 
   /**
@@ -263,10 +289,12 @@ public final class DepletionPvtHistoryGenerator {
    * @param pressuresBara complete decreasing pressure schedule, bara
    * @param separator fixed separator process
    * @param explicitCell true for the initial occupied-volume convention
+   * @param dryPhaseChangesAllowed true only for dry gas/oil appearance and disappearance
    * @return completed immutable evidence
    */
   private static NativeResult replayNative(CalibratedPvtModel model, boolean tuned, Path path, String pathReference,
-      double temperatureK, double[] pressuresBara, PvtSeparatorPath separator, boolean explicitCell) {
+      double temperatureK, double[] pressuresBara, PvtSeparatorPath separator, boolean explicitCell,
+      boolean dryPhaseChangesAllowed) {
     if (model == null || separator == null || (path != Path.CCE && path != Path.CVD && path != Path.DLE)
         || !positive(temperatureK) || pressuresBara == null || pressuresBara.length < 2) {
       throw new IllegalArgumentException(
@@ -281,8 +309,11 @@ public final class DepletionPvtHistoryGenerator {
       }
     }
     SystemInterface feed = tuned ? model.getTunedFluid() : model.getOriginalFluid();
-    if (path == Path.CVD && !explicitCell && Arrays.asList(feed.getComponentNames()).contains("water")) {
-      throw new IllegalArgumentException("Wet CVD requires separate protocol qualification");
+    if (path == Path.CVD && (!explicitCell || dryPhaseChangesAllowed)
+        && Arrays.asList(feed.getComponentNames()).contains("water")) {
+      throw new IllegalArgumentException(
+          dryPhaseChangesAllowed ? "Dry phase-changing fixed-cell depletion does not support water"
+              : "Wet CVD requires separate protocol qualification");
     }
     String[] names = feed.getComponentNames();
     double[] initial = inventory(feed);
@@ -293,9 +324,12 @@ public final class DepletionPvtHistoryGenerator {
     if (path == Path.DLE && !probe.hasPhaseType("oil")) {
       throw new IllegalArgumentException("DLE requires an initially present oil phase");
     }
-    ConstantVolumeDepletion.FixedCellResult fixedCell = explicitCell
-        ? new ConstantVolumeDepletion(feed).runFixedCellDepletion(temperatureK, pressures)
-        : null;
+    ConstantVolumeDepletion.FixedCellResult fixedCell = null;
+    if (explicitCell) {
+      ConstantVolumeDepletion simulation = new ConstantVolumeDepletion(feed);
+      fixedCell = dryPhaseChangesAllowed ? simulation.runDryPhaseChangingFixedCellDepletion(temperatureK, pressures)
+          : simulation.runFixedCellDepletion(temperatureK, pressures);
+    }
     DepletionSnapshot[] snapshots = explicitCell ? fixedCell.getSnapshots()
         : replay(feed, path, temperatureK, pressures, true);
     PvtSeparatorPath.Result[] retained = new PvtSeparatorPath.Result[snapshots.length];

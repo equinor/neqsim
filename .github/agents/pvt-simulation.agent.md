@@ -221,3 +221,18 @@ passing same-sample report and freezes full provenance. Published calculated
 liquid is arithmetic evidence; experimental analysis is separate and may fail.
 Do not route this gate as wet/critical CVD, separator conversion, EOS calibration,
 field history accuracy or the Tran2025 method.
+
+
+For independently declared dry initial-volume experiments with oil appearance or
+loss, use `DepletionPvtHistoryGenerator.replayNativeDryPhaseChangingFixedCell`
+(core `ConstantVolumeDepletion.runDryPhaseChangingFixedCellDepletion`). Preserve
+`FixedCellResult.allowsDryPhaseChanges()` with the immutable experiment reference.
+The existing fixed-cell method retains its unchanged-family contract. Gas must
+remain; water/aqueous/other phases, critical-degenerate splits and unclosed paths
+fail transactionally. Every local refinement retains its phase-family/Gibbs/
+component gates; between-endpoint dry oil appearance/disappearance is permitted.
+`DryFixedCellPhaseTransitionTest` and the fixed-cell-transitions reference qualify
+27dry binary SRK paths at three scales/both checkpoint selections, including the
+gas-only pressure-grid limit and every separator inventory. This is independent
+numerical consistency, not measured calibration, reservoir prediction or Tran RCVD.
+Read `docs/pvtsimulation/depletion_pvt_generation.md#dry-phase-changing-fixed-cell-experiment`.

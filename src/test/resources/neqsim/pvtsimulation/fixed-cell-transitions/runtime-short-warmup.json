@@ -1,0 +1,251 @@
+{
+  "baseRevision": "eb672b7a3d2836393f54326a50d19426d2b7659e",
+  "operatingSystem": "Linux",
+  "architecture": "x86_64",
+  "jvmOptions": [
+    "-Xms128m",
+    "-Xmx512m"
+  ],
+  "pairs": [
+    {
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baseline": {
+        "warmupTrials": 10,
+        "trialsPerSample": 10,
+        "seconds": [
+          0.5750353,
+          0.462073454,
+          0.467653252,
+          1.273537449,
+          0.382176154,
+          0.313494054,
+          0.259455849,
+          0.217451721
+        ],
+        "checksumVolumeM3": 0.039214746692876966,
+        "javaVersion": "17.0.20"
+      },
+      "candidate": {
+        "warmupTrials": 10,
+        "trialsPerSample": 10,
+        "seconds": [
+          0.37262304,
+          0.392960228,
+          0.378208545,
+          0.371897152,
+          0.340309634,
+          0.327739257,
+          0.304339552,
+          0.276813684
+        ],
+        "checksumVolumeM3": 0.039214746692876966,
+        "javaVersion": "17.0.20"
+      },
+      "candidateToBaselineMedianRatio": 0.8435974139060544
+    },
+    {
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "candidate": {
+        "warmupTrials": 10,
+        "trialsPerSample": 10,
+        "seconds": [
+          0.465546226,
+          0.674961621,
+          1.030752363,
+          2.161557069,
+          0.684824022,
+          0.455803563,
+          0.473595669,
+          0.419747217
+        ],
+        "checksumVolumeM3": 0.039214746692876966,
+        "javaVersion": "17.0.20"
+      },
+      "baseline": {
+        "warmupTrials": 10,
+        "trialsPerSample": 10,
+        "seconds": [
+          0.399487187,
+          0.392593665,
+          0.277819329,
+          0.24101085,
+          0.25948453,
+          0.19387032,
+          0.294602806,
+          0.237776349
+        ],
+        "checksumVolumeM3": 0.039214746692876966,
+        "javaVersion": "17.0.20"
+      },
+      "candidateToBaselineMedianRatio": 2.137630822413282
+    },
+    {
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baseline": {
+        "warmupTrials": 10,
+        "trialsPerSample": 10,
+        "seconds": [
+          0.541833317,
+          0.401724735,
+          0.325095543,
+          0.251118743,
+          0.335338486,
+          0.265937889,
+          1.315210596,
+          1.021357112
+        ],
+        "checksumVolumeM3": 0.039214746692876966,
+        "javaVersion": "17.0.20"
+      },
+      "candidate": {
+        "warmupTrials": 10,
+        "trialsPerSample": 10,
+        "seconds": [
+          0.340537962,
+          0.398567594,
+          0.360104238,
+          0.381632623,
+          0.287748374,
+          0.291933573,
+          0.199085461,
+          0.252988365
+        ],
+        "checksumVolumeM3": 0.039214746692876966,
+        "javaVersion": "17.0.20"
+      },
+      "candidateToBaselineMedianRatio": 0.8580967235645043
+    },
+    {
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "candidate": {
+        "warmupTrials": 10,
+        "trialsPerSample": 10,
+        "seconds": [
+          0.541929737,
+          0.246642774,
+          0.248310798,
+          0.323474379,
+          0.346194265,
+          0.204802041,
+          0.258581677,
+          0.387500603
+        ],
+        "checksumVolumeM3": 0.039214746692876966,
+        "javaVersion": "17.0.20"
+      },
+      "baseline": {
+        "warmupTrials": 10,
+        "trialsPerSample": 10,
+        "seconds": [
+          0.329296895,
+          0.281128567,
+          0.471590207,
+          0.293321918,
+          0.657269433,
+          0.329083724,
+          0.228551578,
+          0.273791062
+        ],
+        "checksumVolumeM3": 0.039214746692876966,
+        "javaVersion": "17.0.20"
+      },
+      "candidateToBaselineMedianRatio": 0.9351715613143493
+    },
+    {
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "baseline": {
+        "warmupTrials": 10,
+        "trialsPerSample": 10,
+        "seconds": [
+          1.348518403,
+          1.073915179,
+          0.400073077,
+          0.453003927,
+          0.245841311,
+          0.261512061,
+          0.568733779,
+          0.281371511
+        ],
+        "checksumVolumeM3": 0.039214746692876966,
+        "javaVersion": "17.0.20"
+      },
+      "candidate": {
+        "warmupTrials": 10,
+        "trialsPerSample": 10,
+        "seconds": [
+          0.581941901,
+          0.215393664,
+          0.285531057,
+          0.281848604,
+          0.187195389,
+          0.288551217,
+          0.186475588,
+          0.171977547
+        ],
+        "checksumVolumeM3": 0.039214746692876966,
+        "javaVersion": "17.0.20"
+      },
+      "candidateToBaselineMedianRatio": 0.5828808720296955
+    },
+    {
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "candidate": {
+        "warmupTrials": 10,
+        "trialsPerSample": 10,
+        "seconds": [
+          0.464313323,
+          0.509353527,
+          0.295801665,
+          0.381919644,
+          0.226220365,
+          0.280300694,
+          0.181283634,
+          0.174331153
+        ],
+        "checksumVolumeM3": 0.039214746692876966,
+        "javaVersion": "17.0.20"
+      },
+      "baseline": {
+        "warmupTrials": 10,
+        "trialsPerSample": 10,
+        "seconds": [
+          0.391310503,
+          0.356903655,
+          0.213491867,
+          0.199134622,
+          0.353792049,
+          0.161621189,
+          0.178061277,
+          0.151859608
+        ],
+        "checksumVolumeM3": 0.039214746692876966,
+        "javaVersion": "17.0.20"
+      },
+      "candidateToBaselineMedianRatio": 1.396183653638388
+    }
+  ],
+  "pairMedianRatioRange": [
+    0.5828808720296955,
+    2.137630822413282
+  ],
+  "geometricMeanMedianRatio": 1.0276288896928423,
+  "interpretation": "Narrow warmed unchanged-family control; no general speedup claim"
+}

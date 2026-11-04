@@ -404,3 +404,96 @@ additional states across96five-pressure paths, including wet gas without
 oil, nearby temperatures and three sample sizes. Both checkpoint selections and
 all separator products are tested. This is bounded numerical consistency, not
 measured laboratory/field accuracy, critical or global phase-stability acceptance.
+
+## Dry phase-changing fixed-cell experiment
+
+For an independently declared **dry** initial-volume experiment, select
+`DepletionPvtHistoryGenerator.replayNativeDryPhaseChangingFixedCell`. Its core API is
+`ConstantVolumeDepletion.runDryPhaseChangingFixedCellDepletion`. Both preserve the
+explicit first occupied volume and permit oil to appear or disappear while gas
+remains present. `FixedCellResult.allowsDryPhaseChanges()` records this opt-in in
+the immutable, serializable result. The existing `replayNativeFixedCell` and
+`runFixedCellDepletion` retain their unchanged-family contracts.
+
+At each pressure, flash the retained sample and remove equilibrium vapor to
+restore the first occupied volume. The remaining liquids stay in the cell; the
+next endpoint starts from those retained component amounts. A phase may appear
+or disappear during this withdrawal. Every accepted local equilibrium still
+passes the same bounded refinement, component, Gibbs and volume checks. There
+is no invented liquid composition when oil is absent. Water-containing samples,
+aqueous/other phase types, absent gas, critical-degenerate splits and unreachable
+volume restoration fail without mutating the input or publishing a partial path.
+This does not infer a wet upper dew or qualify near-critical gas condensates.
+
+The following one-mole synthetic example is compiled and executed directly from
+this guide by `DryFixedCellPhaseTransitionTest`. The two checkpoints are separately
+labeled numerical controls, not an experimental EOS tune. The whole-experiment
+identity includes the initial-volume convention; separator volumes remain actual
+volumes at the final stated pressure and temperature.
+
+<!-- dry-fixed-cell-example -->
+```java
+import neqsim.pvtsimulation.util.CalibratedPvtModel;
+import neqsim.pvtsimulation.util.DepletionPvtHistoryGenerator;
+import neqsim.pvtsimulation.util.PvtSeparatorPath;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+
+/**
+ * Executable synthetic fixed-cell laboratory example.
+ *
+ * @author Even Solbraa
+ * @version 1.0
+ */
+public class DryFixedCellGuideExample {
+  /**
+   * Runs one declared experiment from immutable original/tuned checkpoints.
+   *
+   * @return native retained states and separately attributed separator products
+   */
+  public static DepletionPvtHistoryGenerator.NativeResult run() {
+    SystemInterface sample = new SystemSrkEos(275, 100);
+    sample.addComponent("methane", .95);
+    sample.addComponent("n-butane", .05);
+    sample.setMixingRule("classic");
+    sample.setMultiPhaseCheck(true);
+    sample.useVolumeCorrection(false);
+    sample.init(0);
+    CalibratedPvtModel model = new CalibratedPvtModel(sample, sample.clone(),
+        "synthetic dry sample", "original SRK", "separate identical consistency control",
+        "synthetic laboratory protocol; no field fit", new String[] {"whole-experiment-control"});
+    PvtSeparatorPath separator = new PvtSeparatorPath(new double[] {1.5, 1.01325},
+        new double[] {303.15, 298.15}, "final actual product volumes at1.01325bara298.15K");
+    return DepletionPvtHistoryGenerator.replayNativeDryPhaseChangingFixedCell(model, false,
+        "synthetic dry CVD; initial100bara occupied volume; public numerical control",
+        275, new double[] {100, 60, 50, 30, 20, 5, 2}, separator);
+  }
+}
+```
+
+For this example, the independently predicted endpoint phase sequence is gas at
+100 bara, gas/oil at 60 and 50 bara, then gas at 30/20/5/2 bara. Every endpoint has
+the same cell volume and named initial = cumulative withdrawn + retained amounts.
+Retained and withdrawn separator products are available separately, with no
+withdrawn product at the initial state. These are laboratory protocol predictions,
+not independently predicted field production or recoverable reserves.
+
+The [complete independent reference](../../src/test/resources/neqsim/pvtsimulation/fixed-cell-transitions/README.md)
+covers 27 experiments / 243 states, 272.5/275/277.5 K, methane mole fractions
+0.94/0.95/0.96, coarse/refined schedules and initially gas/oil cells. Tests use
+0.001/1/1000 mol and both frozen checkpoint selections. Cubic roots, binary
+common tangents, lever rules and endpoint vapor removal are solved without
+NeqSim. A bounded binary tangent-plane search checks the predicted endpoints.
+This is independent numerical agreement using declared common EOS inputs; it
+is neither independent measured accuracy nor a general stability proof.
+Changing two-phase pressure steps changes the experiment and its component
+withdrawals; each schedule has its own independent prediction. Refining only an
+already gas-only tail preserves the final inventory and composition. Laboratory
+calibration/whole-experiment holdouts and reservoir calibration/held-out pressures,
+GOR and compositions remain separate acceptance requirements in #4740.
+
+In the qualified binary experiments, liquid amount is unchanged during withdrawal
+at a fixed pressure because the coexistence compositions form a fixed tie line.
+The tested topology changes occur between pressure endpoints. Accuracy for a
+multicomponent topology change during withdrawal requires separate qualification;
+the endpoint checks alone do not establish it.
