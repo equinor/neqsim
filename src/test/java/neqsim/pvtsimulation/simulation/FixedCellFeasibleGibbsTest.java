@@ -6,9 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.Method;
 import org.apache.commons.lang3.SerializationUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -19,6 +22,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 class FixedCellFeasibleGibbsTest {
+  /** Aggregate numerical qualification evidence retained in the test report. */
+  private static final Logger logger = LogManager.getLogger(FixedCellFeasibleGibbsTest.class);
+
   /** Frozen component inventories from the unmodified-master negative histories, mol. */
   private static final double[][] INVENTORIES = {{.1065743133509231, .02008830385442146, .04684103007088043},
       {.1077394874686004, .02016485446850729, .04684930533912084},
@@ -140,6 +146,156 @@ class FixedCellFeasibleGibbsTest {
       refine.invoke(null, fluid);
       assertTrue(fluid.getGibbsEnergy() <= actual + 1e-10 * Math.max(1, Math.abs(actual)));
     }
+  }
+
+  /**
+   * Qualifies copying across declared EOS controls using analytic extensivity and fresh homogeneous systems.
+   *
+   * @throws Exception if diagnostic reflection fails
+   */
+  @Test
+  void eosControlsPreserveExtensivityBranchesAndCallerState() throws Exception {
+    Method reference = ConstantVolumeDepletion.class.getDeclaredMethod("fixedCellFeasibleGibbsReference",
+        SystemInterface.class, double[].class);
+    reference.setAccessible(true);
+    int controls = 0;
+    double maxExtensiveErrorPerScale = 0;
+    double maxFreshErrorPerScale = 0;
+    for (boolean pengRobinson : new boolean[] {false, true}) {
+      for (boolean corrected : new boolean[] {false, true}) {
+        for (int index = 0; index < INVENTORIES.length; index++) {
+          for (double scale : new double[] {.001, 1, 1000}) {
+            for (int nearby = -1; nearby <= 1; nearby++) {
+              double temperature = (index == 2 ? 325 : 300) + 2 * nearby;
+              double pressure = 10 + .2 * nearby;
+              String context = "PR=" + pengRobinson + ", corrected=" + corrected + ", case=" + index + ", scale="
+                  + scale + ", T=" + temperature + ", P=" + pressure;
+              double[] amounts = INVENTORIES[index].clone();
+              for (int i = 0; i < amounts.length; i++) {
+                amounts[i] *= scale;
+              }
+              SystemInterface fluid = controlSample(pengRobinson, corrected, temperature, pressure, amounts);
+              new ThermodynamicOperations(fluid).TPflash();
+              fluid.init(3);
+              fluid.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+              assertEquals(2, fluid.getNumberOfPhases(), context);
+              assertTrue(fluid.hasPhaseType("gas"), context);
+              assertTrue(fluid.hasPhaseType("oil"), context);
+              byte[] before = SerializationUtils.serialize(fluid);
+              double[] phaseTotals = new double[amounts.length];
+              for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
+                for (int i = 0; i < amounts.length; i++) {
+                  phaseTotals[i] += fluid.getPhase(p).getNumberOfMolesInPhase()
+                      * fluid.getPhase(p).getComponent(i).getx();
+                }
+              }
+              double energy = fluid.getGibbsEnergy();
+              assertEquals(energy, (Double) reference.invoke(null, fluid, phaseTotals), 0, context);
+              assertArrayEquals(before, SerializationUtils.serialize(fluid), context);
+              double[] scaled = phaseTotals.clone();
+              double[] redistributed = phaseTotals.clone();
+              double[] factors = {1.000002, .999997, 1.000001};
+              for (int i = 0; i < amounts.length; i++) {
+                scaled[i] *= 1.125;
+                redistributed[i] *= factors[i];
+              }
+              double extensive = (Double) reference.invoke(null, fluid, scaled);
+              maxExtensiveErrorPerScale = Math.max(maxExtensiveErrorPerScale,
+                  Math.abs(extensive - 1.125 * energy) / scale);
+              assertEquals(1.125 * energy, extensive, 1e-9 * scale, context);
+              assertArrayEquals(before, SerializationUtils.serialize(fluid), context);
+              double expected = freshHomogeneousEnergy(fluid, pengRobinson, corrected, redistributed);
+              double actual = (Double) reference.invoke(null, fluid, redistributed);
+              maxFreshErrorPerScale = Math.max(maxFreshErrorPerScale, Math.abs(expected - actual) / scale);
+              assertEquals(expected, actual, 1e-9 * scale, context);
+              assertArrayEquals(before, SerializationUtils.serialize(fluid), context);
+              assertEquals(actual, (Double) reference.invoke(null, fluid, redistributed), 0, context);
+              assertArrayEquals(before, SerializationUtils.serialize(fluid), context);
+              controls++;
+            }
+          }
+        }
+      }
+    }
+    assertEquals(108, controls);
+    logger.info("Feasible Gibbs controls={}; max extensive error/scale={} J; max fresh-phase error/scale={} J",
+        controls, maxExtensiveErrorPerScale, maxFreshErrorPerScale);
+  }
+
+  /**
+   * Constructs the explicitly declared control EOS from names and amounts, without copying any system.
+   *
+   * @param pengRobinson selects PR instead of SRK
+   * @param corrected whether volume correction is enabled
+   * @param temperature temperature, K
+   * @param pressure absolute pressure, bara
+   * @param amounts methane/n-butane/n-heptane amounts, mol
+   * @return new configured system
+   */
+  private SystemInterface controlSample(boolean pengRobinson, boolean corrected, double temperature, double pressure,
+      double[] amounts) {
+    SystemInterface result = pengRobinson ? new SystemPrEos(temperature, pressure)
+        : new SystemSrkEos(temperature, pressure);
+    String[] names = {"methane", "n-butane", "n-heptane"};
+    for (int i = 0; i < names.length; i++) {
+      result.addComponent(names[i], amounts[i]);
+    }
+    result.setMixingRule("classic");
+    result.useVolumeCorrection(corrected);
+    result.setMultiPhaseCheck(true);
+    result.init(0);
+    return result;
+  }
+
+  /**
+   * Independently constructs each homogeneous phase from its normalized allocation at the target totals.
+   *
+   * @param source equilibrium phase fractions and compositions, never modified
+   * @param pengRobinson selects the declared control EOS
+   * @param corrected whether volume correction is enabled
+   * @param target target named component amounts, mol
+   * @return sum of fresh homogeneous phase Gibbs energies, J
+   */
+  private double freshHomogeneousEnergy(SystemInterface source, boolean pengRobinson, boolean corrected,
+      double[] target) {
+    double[][] fractions = new double[source.getNumberOfPhases()][target.length];
+    for (int i = 0; i < target.length; i++) {
+      double sum = 0;
+      for (int p = 0; p < fractions.length; p++) {
+        fractions[p][i] = source.getPhase(p).getNumberOfMolesInPhase() * source.getPhase(p).getComponent(i).getx();
+        sum += fractions[p][i];
+      }
+      for (int p = 0; p < fractions.length; p++) {
+        fractions[p][i] /= sum;
+      }
+    }
+    double energy = 0;
+    double[] reconstructed = new double[target.length];
+    for (int p = 0; p < fractions.length; p++) {
+      double[] amounts = new double[target.length];
+      for (int i = 0; i < amounts.length; i++) {
+        amounts[i] = target[i] * fractions[p][i];
+        assertTrue(amounts[i] >= 0);
+      }
+      SystemInterface phase = controlSample(pengRobinson, corrected, source.getTemperature(), source.getPressure(),
+          amounts);
+      phase.setForceSinglePhase(source.getPhase(p).getType());
+      phase.init(3);
+      phase.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+      assertEquals(source.getPhase(p).getType(), phase.getPhase(0).getType());
+      assertEquals(source.getTemperature(), phase.getTemperature(), 0);
+      assertEquals(source.getPressure(), phase.getPressure(), 0);
+      assertTrue(Double.isFinite(phase.getCorrectedVolume()) && phase.getCorrectedVolume() > 0);
+      assertTrue(Double.isFinite(phase.getGibbsEnergy()));
+      energy += phase.getGibbsEnergy();
+      for (int i = 0; i < target.length; i++) {
+        reconstructed[i] += phase.getPhase(0).getNumberOfMolesInPhase() * phase.getPhase(0).getComponent(i).getx();
+      }
+    }
+    for (int i = 0; i < target.length; i++) {
+      assertEquals(target[i], reconstructed[i], 64 * Math.ulp(Math.max(1, Math.abs(target[i]))));
+    }
+    return energy;
   }
 
 }

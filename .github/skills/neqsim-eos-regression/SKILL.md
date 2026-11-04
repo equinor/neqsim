@@ -332,6 +332,9 @@ The Gibbs trial must use the same stored component inventory: the caller reconst
 a feasible homogeneous-phase allocation on copies before comparing energies. Keep
 `FixedCellFeasibleGibbsTest` alongside the independent fixed-cell references; this
 fix does not relax energy/fugacity/balance bounds or qualify global stability.
+Its108 SRK/PR/volume-correction controls check analytic extensivity and fresh
+homogeneous construction only; do not treat them as new depletion-path admission
+or independent EOS/measurement accuracy. Preserve the frozen EOS_CONTROL_SCOPE.md.
 Do not weaken absolute inventory bounds or claim arbitrary-scale/measured accuracy.
 The original 216-state and intermediate 480-state matrices use identical frozen bounds.
 

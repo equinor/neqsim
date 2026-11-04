@@ -400,6 +400,11 @@ energy allowance, final component/fugacity checks and phase-family restriction.
 It does not fit the EOS, change the laboratory protocol or prove global stability.
 `FixedCellFeasibleGibbsTest` retains the three public ternary regressions at
 300/325 K and 10 bara, with three extensive scales and immutable caller inputs.
+Its108 additional reference-only controls cover classic SRK/PR, volume correction
+off/on and nearby T/P. Analytic extensivity and fresh homogeneous constructions
+verify this energy calculation; they do not qualify a new depletion path or an
+independently calibrated or measured fluid. See the frozen EOS-control scope in
+`src/test/resources/neqsim/pvtsimulation/fixed-cell-feasible-gibbs/`.
 
 This explicit initial-volume convention does **not** infer a wet upper dew point,
 normalize measured PVT to saturation, replace `replayNative`'s upper-dew protocol,

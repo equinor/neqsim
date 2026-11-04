@@ -50,6 +50,32 @@ upper-bound check is not a global phase-stability proof or measured accuracy.
 - Runtime and validation JSON/receipt retain actual executed results. No absent
   phase properties, recoverable-reserves claim or field prediction is supplied.
 
+### EOS-control qualification
+
+The same test also retains108 energy-reference controls frozen in
+`EOS_CONTROL_SCOPE.md`: classic SRK/PR, volume correction off/on, the three
+published inventories, scales0.001/1/1000, and paired nearby T/P points. It checks
+the exact identity shortcut, analytic extensive scaling by1.125 and nonuniform
+component redistribution against newly constructed homogeneous systems. These
+systems use component names/amounts and declared EOS settings, without cloning,
+`phaseToSystem` or calling the production energy-reference helper. Every copied
+operation must preserve caller serialization, and repeat energies are bit-identical.
+
+The energy bound is frozen at1e-9*sampleScale J. This is an analytic extensivity
+control plus independent construction sharing NeqSim's EOS, not an independent
+thermodynamic simulator. It does not admit a new depletion pressure path, wet or
+critical fluid, customized EOS/BIP or measured laboratory/field case. Aggregate
+maximum errors are logged by the test when its logger is enabled; the validation
+receipt and qualification JSON retain the executed values.
+
+For the aggregate error log, run the EOS-control test method with Surefire's
+`test` selector set to
+`FixedCellFeasibleGibbsTest#eosControlsPreserveExtensivityBranchesAndCallerState`
+and `log4j.configurationFile` set to the absolute file URI of the adjacent
+`eos-controls-log4j2.properties`. The normal test logger remains unchanged.
+The full surrounding Surefire selector is retained verbatim in
+`surrounding-test-selection.txt`; configured slow/benchmark tag exclusions remain.
+
 The initial 1e-8 mol absolute independent-reference bounds remain frozen. A
 registered zero-component 275 K native withdrawal path still reaches the original
 1e-12 volume overshoot boundary on unmodified master; that inherited path is
