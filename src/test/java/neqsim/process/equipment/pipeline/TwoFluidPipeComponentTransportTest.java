@@ -280,7 +280,7 @@ class TwoFluidPipeComponentTransportTest {
   }
 
   @Test
-  void reverseFlowThroughInletFailsBeforeComponentAdvection() {
+  void reverseFlowThroughInletUsesCellCompositionAndSignedBoundaryLedger() {
     SystemInterface fluid = createGas(0.95, 0.05);
     TwoFluidSection section = new TwoFluidSection(0.0, 1.0, 0.20, 0.0);
     section.setPressure(70.0e5);
@@ -289,11 +289,20 @@ class TwoFluidPipeComponentTransportTest {
     TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, new TwoFluidSection[] {section});
 
     double[][] faceFluxesKgS = new double[2][3];
-    faceFluxesKgS[0][0] = -1.0;
+    faceFluxesKgS[0][0] = -0.1;
     double[][] phaseSourcesKgPerMetreSecond = new double[1][3];
-    IllegalStateException exception = assertThrows(IllegalStateException.class, () -> transport.advance(1.0,
-        faceFluxesKgS, phaseSourcesKgPerMetreSecond, new TwoFluidSection[] {section}, fluid, fluid, 1.0e-8));
-    assertTrue(exception.getMessage().contains("inlet boundary"));
+    TwoFluidSection updated = section.clone();
+    updated.setGasMassPerLength(0.9);
+    transport.advance(1.0, faceFluxesKgS, phaseSourcesKgPerMetreSecond, new TwoFluidSection[] {updated}, fluid, fluid,
+        1.0e-8);
+
+    TwoFluidComponentConservationReport report = transport.createReport(1.0, 1, 1.0e-8);
+    assertTrue(report.isConverged(), report.getMessage());
+    double[] signedInlet = report.getInletBoundaryMassKg(Phase.GAS);
+    assertEquals(-0.1, signedInlet[0] + signedInlet[1], 1.0e-12);
+    assertTrue(signedInlet[0] < 0.0);
+    assertTrue(signedInlet[1] < 0.0);
+    assertEquals(0.0, report.getOutletBoundaryMassKg()[0] + report.getOutletBoundaryMassKg()[1], 0.0);
   }
 
   @Test

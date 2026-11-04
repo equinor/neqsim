@@ -1320,6 +1320,13 @@ The rich-gas pressure-ramp regression exercises actual same-gas fallback with co
 component, and full-energy reports, but does not qualify complete blowdown, low-point pooling,
 physical restart, or predictive evaporation time.
 
+A negative prescribed inlet mass rate is physical outflow and therefore uses the first finite-volume
+cell as phase, composition, density and enthalpy donor; the external feed is not reflashed into an
+unrelated outflow mixture. `getLastBoundaryPhaseMomentumFluxes()` reports total gas/oil/water momentum
+flow at inlet and outlet, while `getLastBoundaryPhasePressureForces()` isolates interior pressure
+traction from donor advection. These are signed boundary-contract diagnostics, not a whole-domain
+momentum residual or physical restart qualification.
+
 `setGasOnlyOutletTakeoff(true)` defines a narrower constant-pressure boundary for a gas takeoff above
 retained liquid. Gas remains open; oil and water keep pressure/hydrostatic traction but have exactly
 zero external mass, component and advected-energy flux. The coupled pressure projection uses gas

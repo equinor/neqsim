@@ -240,13 +240,24 @@ F_{f,k,c} = \dot m_{f,k}Y_{upwind(f,k),k,c},
 $$
 
 where $\dot m_{f,k}$ is the integration-weighted phase mass flux already used by the phase
-continuity equation. The upwind state follows the sign of the internal face flux. The inlet stream
-supplies positive-flow inlet composition. For a pressure outlet that physically permits fallback,
+continuity equation. The upwind state follows the sign of every face flux. The inlet stream supplies
+positive-flow inlet composition and enthalpy. A negative prescribed inlet rate is physical outflow:
+the first finite-volume cell supplies phase holdup, density, composition and enthalpy. A common signed
+face velocity preserves that cell phase split and reproduces the requested total mass rate exactly;
+the external feed is not reflashed to manufacture an outflow mixture. Inlet pressure traction remains
+owned by the interior phase fractions and the independently evaluated face pressure. For a pressure
+outlet that physically permits fallback,
 `setOutletBoundaryFluid(fluid)` supplies an independent flashed external donor and
 `setAllowOutletPhaseBackflow(true)` enables signed phase transport. Reversed phases use that donor's
 phase composition, density, and enthalpy while retaining the signed face speed and independent outlet
 pressure traction. Integrated boundary component masses use the same Euler, Runge-Kutta, or IMEX
 stage weights as the accepted phase update.
+
+`TwoFluidConservationEquations.getLastBoundaryPhaseMomentumFluxes()` reports total phase momentum
+flow at inlet and outlet, while `getLastBoundaryPhasePressureForces()` isolates pressure traction
+from donor advection. Both use gas/oil/water columns and the inlet-to-outlet finite-volume sign
+convention. The diagnostics include optional stratified pressure moments when enabled; they are
+boundary-flux evidence, not a complete external-force momentum residual.
 
 For a top-side blowdown connection that physically discharges gas while retaining liquid, call
 `setGasOnlyOutletTakeoff(true)` with a constant-pressure outlet. Gas keeps the ordinary signed
@@ -415,9 +426,10 @@ provides outer-call rollback within its documented snapshot contract.
   Component order may differ because identity is canonicalized by name.
 - Gas, hydrocarbon liquid, and aqueous phases are supported. A non-negligible unsupported flash
   phase or a phase transfer whose receiving equilibrium phase is absent throws.
-- Positive inlet flow, positive outlet outflow, closed boundaries, and signed internal-face
-  reversals are supported. Reverse inflow through the outlet is rejected because no validated
-  outlet-boundary composition has been supplied.
+- Positive inlet flow, negative inlet outflow, positive outlet outflow, closed boundaries, and signed
+  internal-face reversals are supported. Each signed inlet component and phase transfer is recorded in
+  the inlet ledger. Reverse inflow through the outlet is rejected unless an explicit validated
+  outlet-boundary donor has been supplied.
 - Direct oil-water component transfer is not inferred. Oil/water transfer must be represented
   through the validated gas-mediated flash closure.
 - First-order upwind component advection is bounded under the hydrodynamic CFL step. Any negative
