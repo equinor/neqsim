@@ -1,6 +1,7 @@
 package neqsim.process.equipment.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.Field;
@@ -31,8 +32,10 @@ class TwoFluidPipeWallFilmStateTest {
     for (boolean enabled : new boolean[] {true, false, false, true}) {
       pipe.setPhysicalWallFilmSplit(enabled);
       assertEquals(enabled, pipe.isPhysicalWallFilmSplit());
-      assertSame(temperatures, pipe.getWallTemperatureProfile(),
+      assertSame(temperatures, wall.get(pipe),
           "Changing resistance allocation must preserve the existing wall thermal inventory");
+      assertArrayEquals(temperatures, pipe.getWallTemperatureProfile(),
+          "The diagnostic getter must preserve the wall temperatures");
     }
   }
 

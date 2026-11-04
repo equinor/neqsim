@@ -47,8 +47,17 @@ class TwoFluidRichGasDragQualificationTest {
         "The two full-cycle meshes must retain finite oil inventories of the same order");
     logger.info("Finite-rate 780 s cycle: 12/24-cell peak oil={}/{}, final oil={}/{}, difference={} %", coarse[0],
         refined[0], coarse[1], refined[1], 100.0 * relativeFinalOilDifference);
-    String csv = "cells,dt_s,heat_supply_w_per_m,peak_oil_kg,final_oil_kg,minimum_heat_scale\n12,0.5,100," + coarse[0]
-        + "," + coarse[1] + "," + coarse[2] + "\n24,0.5,100," + refined[0] + "," + refined[1] + "," + refined[2] + "\n";
+    assertTrue(coarse[3] > 0.0 && refined[3] > 0.0,
+        "The resolved hydrostatic pool must expose a finite gas/oil interface");
+    assertTrue(coarse[4] > 0.0 && refined[4] > 0.0,
+        "The wall thermal inventory must respond during the accepted event cycle");
+    assertEquals(1.0, coarse[5], 0.0, "The coarse cycle must cross the explicit trace-area fallback");
+    assertEquals(1.0, refined[5], 0.0, "The refined cycle must cross the explicit trace-area fallback");
+    String csv = "cells,dt_s,heat_supply_w_per_m,peak_oil_kg,final_oil_kg,minimum_heat_scale,"
+        + "maximum_interface_area_m2,maximum_wall_temperature_change_k,trace_area_fallback\n12,0.5,100," + coarse[0]
+        + "," + coarse[1] + "," + coarse[2] + "," + coarse[3] + "," + coarse[4] + "," + coarse[5] + "\n24,0.5,100,"
+        + refined[0] + "," + refined[1] + "," + refined[2] + "," + refined[3] + "," + refined[4] + "," + refined[5]
+        + "\n";
     java.nio.file.Files.write(java.nio.file.Paths.get("target/hydrocarbon-pool-cycle-refinement.csv"),
         csv.getBytes(java.nio.charset.StandardCharsets.UTF_8));
   }
@@ -60,13 +69,20 @@ class TwoFluidRichGasDragQualificationTest {
     double[] evaporationEnthalpies = {5.1e5, 4.9e5, 4.3e5, 3.8e5, 3.5e5, 3.2e5};
     TwoFluidPipe pipe = createRichGasPipe(cells, true);
     pipe.setGasOnlyOutletTakeoff(true);
+    pipe.setWallProperties(0.026, 7850.0, 500.0);
+    pipe.setHeatTransferCoefficient(4.0);
+    pipe.setSurfaceTemperature(277.15, "K");
     pipe.setHydrocarbonPoolTransfer(
-        new HydrocarbonPoolTransfer(names, coefficients, evaporationEnthalpies, 0.5, 100.0));
+        HydrocarbonPoolTransfer.forHydrostaticPool(names, coefficients, evaporationEnthalpies, 100.0));
+    double[] initialWallTemperature = pipe.getWallTemperatureProfile();
     double initialMass = pipe.getTotalMassInventory();
     double cumulativeBoundaryMass = 0.0;
     double maximumOil = 0.0;
     double minimumHeatScale = 1.0;
     boolean observedRefill = false;
+    double maximumInterfaceArea = 0.0;
+    double maximumWallTemperatureChange = 0.0;
+    boolean observedTraceAreaFallback = false;
 
     int rampSteps = (int) Math.round(120.0 / dt);
     for (int step = 1; step <= rampSteps; step++) {
@@ -76,6 +92,10 @@ class TwoFluidRichGasDragQualificationTest {
       maximumOil = Math.max(maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL));
       assertAcceptedPoolInterval(pipe);
       minimumHeatScale = Math.min(minimumHeatScale, minimumHeatScale(pipe));
+      maximumInterfaceArea = Math.max(maximumInterfaceArea, maximumInterfaceArea(pipe));
+      maximumWallTemperatureChange = Math.max(maximumWallTemperatureChange,
+          maximumAbsoluteDifference(initialWallTemperature, pipe.getWallTemperatureProfile()));
+      observedTraceAreaFallback |= observedTraceAreaFallback(pipe);
     }
 
     pipe.setGasOnlyOutletTakeoff(false);
@@ -87,6 +107,10 @@ class TwoFluidRichGasDragQualificationTest {
       assertEquals(0.0, pipe.getLastMassBalanceReport().getOutletMassKg(Phase.TOTAL), 0.0);
       assertAcceptedPoolInterval(pipe);
       minimumHeatScale = Math.min(minimumHeatScale, minimumHeatScale(pipe));
+      maximumInterfaceArea = Math.max(maximumInterfaceArea, maximumInterfaceArea(pipe));
+      maximumWallTemperatureChange = Math.max(maximumWallTemperatureChange,
+          maximumAbsoluteDifference(initialWallTemperature, pipe.getWallTemperatureProfile()));
+      observedTraceAreaFallback |= observedTraceAreaFallback(pipe);
     }
 
     pipe.setInletBoundaryCondition(TwoFluidPipe.BoundaryCondition.CONSTANT_FLOW);
@@ -100,6 +124,10 @@ class TwoFluidRichGasDragQualificationTest {
       assertEquals(0.0, pipe.getLastMassBalanceReport().getOutletMassKg(Phase.TOTAL), 0.0);
       assertAcceptedPoolInterval(pipe);
       minimumHeatScale = Math.min(minimumHeatScale, minimumHeatScale(pipe));
+      maximumInterfaceArea = Math.max(maximumInterfaceArea, maximumInterfaceArea(pipe));
+      maximumWallTemperatureChange = Math.max(maximumWallTemperatureChange,
+          maximumAbsoluteDifference(initialWallTemperature, pipe.getWallTemperatureProfile()));
+      observedTraceAreaFallback |= observedTraceAreaFallback(pipe);
     }
 
     pipe.closeInlet();
@@ -111,6 +139,10 @@ class TwoFluidRichGasDragQualificationTest {
       assertEquals(0.0, pipe.getLastMassBalanceReport().getOutletMassKg(Phase.TOTAL), 0.0);
       assertAcceptedPoolInterval(pipe);
       minimumHeatScale = Math.min(minimumHeatScale, minimumHeatScale(pipe));
+      maximumInterfaceArea = Math.max(maximumInterfaceArea, maximumInterfaceArea(pipe));
+      maximumWallTemperatureChange = Math.max(maximumWallTemperatureChange,
+          maximumAbsoluteDifference(initialWallTemperature, pipe.getWallTemperatureProfile()));
+      observedTraceAreaFallback |= observedTraceAreaFallback(pipe);
     }
 
     assertEquals(780.0, pipe.getSimulationTime(), 1.0e-9);
@@ -118,7 +150,36 @@ class TwoFluidRichGasDragQualificationTest {
     assertTrue(minimumHeatScale < 1.0, "The declared finite heat supply must actively limit evaporation");
     assertTrue(observedRefill, "The original same-gas inlet donor must fund actual inlet refill");
     assertEquals(initialMass + cumulativeBoundaryMass, pipe.getTotalMassInventory(), 1.0e-5);
-    return new double[] {maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL), minimumHeatScale};
+    return new double[] {maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL), minimumHeatScale,
+        maximumInterfaceArea, maximumWallTemperatureChange, observedTraceAreaFallback ? 1.0 : 0.0};
+  }
+
+  /** Return whether the latest stage used the explicit sub-resolution trace-area fallback. */
+  private static boolean observedTraceAreaFallback(TwoFluidPipe pipe) {
+    for (boolean fallback : pipe.getLastHydrocarbonPoolTransferResult().getUnresolvedTraceAreaFallback()) {
+      if (fallback) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** Return the largest resolved gas/oil interface area in the latest accepted stage. */
+  private static double maximumInterfaceArea(TwoFluidPipe pipe) {
+    double maximum = 0.0;
+    for (double area : pipe.getLastHydrocarbonPoolTransferResult().getInterfaceAreasSquareMetres()) {
+      maximum = Math.max(maximum, area);
+    }
+    return maximum;
+  }
+
+  /** Return the largest absolute cell difference between two equally sized profiles. */
+  private static double maximumAbsoluteDifference(double[] first, double[] second) {
+    double maximum = 0.0;
+    for (int cell = 0; cell < first.length; cell++) {
+      maximum = Math.max(maximum, Math.abs(first[cell] - second[cell]));
+    }
+    return maximum;
   }
 
   /** Return the smallest accepted cell heat-limit scale. */
@@ -379,6 +440,9 @@ class TwoFluidRichGasDragQualificationTest {
     pipe.setSurfaceTemperature(277.15, "K");
     pipe.setOutletPressure(150.0, "bara");
     pipe.setSteadyStateMaxWallClockTime(Double.POSITIVE_INFINITY);
+    double[] initialWallTemperature = new double[cells];
+    java.util.Arrays.fill(initialWallTemperature, 277.15);
+    pipe.setInitialWallTemperatureProfile(initialWallTemperature, "K");
     pipe.run();
     pipe.prepareConservativeEnergyTransientFromSteadyState();
     pipe.closeInlet();

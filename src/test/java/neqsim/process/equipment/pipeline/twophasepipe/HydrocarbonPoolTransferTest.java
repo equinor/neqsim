@@ -39,6 +39,66 @@ class HydrocarbonPoolTransferTest {
   }
 
   @Test
+  void hydrostaticPoolUsesVolumePreservingCellArea() throws Exception {
+    Fixture fixture = nonequilibriumFixture();
+    fixture.cells[0].setGasHoldup(0.5);
+    fixture.cells[0].setLiquidHoldup(0.5);
+    HydrocarbonPoolTransfer closure = HydrocarbonPoolTransfer.forHydrostaticPool(new String[] {"methane", "n-heptane"},
+        new double[] {0.01, 0.002}, new double[] {5.0e5, 3.0e5}, Double.POSITIVE_INFINITY);
+
+    HydrocarbonPoolTransfer.Result result = closure.calculate(fixture.transport, fixture.cells,
+        new SystemInterface[] {fixture.equilibrium}, 0.01);
+    double expectedArea = fixture.cells[0].getHydrostaticCellGeometry().getInterfaceArea();
+    double cellVolume = fixture.cells[0].getArea() * fixture.cells[0].getLength();
+
+    assertEquals(expectedArea, result.getInterfaceAreasSquareMetres()[0], 0.0);
+    assertEquals(0.01 * expectedArea / cellVolume, result.getRateConstantsPerSecond()[0][0], 1.0e-15);
+    double[] escaped = result.getInterfaceAreasSquareMetres();
+    escaped[0] = -1.0;
+    assertEquals(expectedArea, result.getInterfaceAreasSquareMetres()[0], 0.0,
+        "Published geometry diagnostics must be defensive");
+  }
+
+  @Test
+  void hydrostaticPoolUsesEquilibriumAreaForUnseededAppearance() throws Exception {
+    Fixture fixture = nonequilibriumFixture();
+    Field field = TwoFluidComponentTransport.class.getDeclaredField("componentInventoryKg");
+    field.setAccessible(true);
+    double[][][] inventory = (double[][][]) field.get(fixture.transport);
+    for (int component = 0; component < inventory[0][0].length; component++) {
+      inventory[0][0][component] += inventory[0][1][component];
+      inventory[0][1][component] = 0.0;
+    }
+    fixture.cells[0].setGasHoldup(1.0);
+    fixture.cells[0].setLiquidHoldup(0.0);
+    fixture.cells[0].setGasMassPerLength(2.0);
+    fixture.cells[0].setOilMassPerLength(0.0);
+    HydrocarbonPoolTransfer.Result result = HydrocarbonPoolTransfer
+        .forHydrostaticPool(new String[] {"methane", "n-heptane"}, new double[] {0.01, 0.002},
+            new double[] {5.0e5, 3.0e5}, Double.POSITIVE_INFINITY)
+        .calculate(fixture.transport, fixture.cells, new SystemInterface[] {fixture.equilibrium}, 0.01);
+
+    assertTrue(result.getEquilibriumAppearanceArea()[0]);
+    assertTrue(result.getInterfaceAreasSquareMetres()[0] > 0.0);
+    assertTrue(result.getSourcesKgPerMetreSecond()[0][1][1] > 0.0);
+  }
+
+  @Test
+  void unresolvedInclinedTraceUsesReportedStratifiedAreaWithoutInventoryClipping() throws Exception {
+    Fixture fixture = nonequilibriumFixture();
+    fixture.cells[0].setInclination(0.1);
+    fixture.cells[0].setGasHoldup(1.0 - 1.0e-30);
+    fixture.cells[0].setLiquidHoldup(1.0e-30);
+    HydrocarbonPoolTransfer.Result result = HydrocarbonPoolTransfer
+        .forHydrostaticPool(new String[] {"methane", "n-heptane"}, new double[] {0.01, 0.002},
+            new double[] {5.0e5, 3.0e5}, Double.POSITIVE_INFINITY)
+        .calculate(fixture.transport, fixture.cells, new SystemInterface[] {fixture.equilibrium}, 0.01);
+
+    assertTrue(result.getUnresolvedTraceAreaFallback()[0]);
+    assertTrue(result.getInterfaceAreasSquareMetres()[0] >= 0.0);
+  }
+
+  @Test
   void zeroAreaAndZeroDriveProduceNoTransfer() {
     SystemInterface fluid = fluid(277.15);
     TwoFluidSection[] cells = cells();
@@ -120,12 +180,14 @@ class HydrocarbonPoolTransferTest {
     cells[0].setOilMassPerLength(0.0);
     SystemInterface equilibrium = transport.createThermodynamicState(0, fluid, 50e5, 277.15);
     assertTrue(equilibrium.hasPhaseType("oil"));
-    HydrocarbonPoolTransfer closure = new HydrocarbonPoolTransfer(new String[] {"methane", "n-heptane"},
-        new double[] {0.01, 0.01}, new double[] {5.0e5, 3.0e5}, 0.5, Double.POSITIVE_INFINITY);
-    double[][][] source = closure.calculate(transport, cells, new SystemInterface[] {equilibrium}, 0.1)
-        .getSourcesKgPerMetreSecond();
+    HydrocarbonPoolTransfer closure = HydrocarbonPoolTransfer.forHydrostaticPool(new String[] {"methane", "n-heptane"},
+        new double[] {0.01, 0.01}, new double[] {5.0e5, 3.0e5}, Double.POSITIVE_INFINITY);
+    HydrocarbonPoolTransfer.Result result = closure.calculate(transport, cells, new SystemInterface[] {equilibrium},
+        0.1);
+    double[][][] source = result.getSourcesKgPerMetreSecond();
     assertTrue(source[0][1][1] > 0.0, "The flash target can form oil without a numerical liquid seed");
     assertEquals(-source[0][1][1], source[0][0][1], 0.0);
+    assertTrue(result.getEquilibriumAppearanceArea()[0]);
   }
 
   @Test
