@@ -100,6 +100,7 @@ to bounded searching to obtain the reduced flash count.
 This complete Java example uses SI molar masses for every characterized fraction. The
 pressure schedule and returned arrays share the same index.
 
+<!-- pvt-lab-example: constant-mass-expansion -->
 ```java
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -158,6 +159,19 @@ public final class ConstantMassExpansionExample {
     double[] gasZ = cce.getZgas();
     double[] yFunction = cce.getYfactor();
 
+    if (relativeVolume.length != pressuresBara.length
+        || liquidRelativeVolume.length != pressuresBara.length
+        || gasZ.length != pressuresBara.length
+        || yFunction.length != pressuresBara.length
+        || !Double.isFinite(relativeVolume[0])
+        || !Double.isFinite(liquidRelativeVolume[12])
+        || !Double.isFinite(gasZ[12])
+        || !Double.isFinite(yFunction[12])
+        || !Double.isFinite(cce.getSaturationPressure())
+        || cce.getSaturationPressure() <= 0.0) {
+      throw new IllegalStateException("Constant-mass-expansion result is invalid");
+    }
+
     for (int i = 0; i < pressuresBara.length; i++) {
       logger.info("{} bara: Vrel={}, Vliq={} %, Zgas={}, Y={}", pressuresBara[i],
           relativeVolume[i], liquidRelativeVolume[i], gasZ[i], yFunction[i]);
@@ -167,9 +181,9 @@ public final class ConstantMassExpansionExample {
 }
 ```
 
-The focused documentation regression executes this example and checks representative
-finite values and array lengths. Treat calculated values as model results, not laboratory
-measurements.
+The focused documentation regression compiles and executes this exact marked Java 8
+fence, while its retained numerical regression checks representative values and array
+lengths. Treat calculated values as model results, not laboratory measurements.
 
 ## Current API map
 
