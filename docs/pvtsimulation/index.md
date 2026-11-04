@@ -20,3 +20,6 @@ qualification are described in the [depletion PVT guide](depletion_pvt_generatio
 
 Native [wet differential liberation](depletion_pvt_generation.md#native-wet-differential-liberation)
 removes gas while retaining oil/aqueous inventories, with independent synthetic references.
+
+Dry [phase-changing explicit-cell experiments](depletion_pvt_generation.md#dry-phase-changing-fixed-cell-experiment)
+preserve absent oil, selected protocol metadata and independently qualified binary paths.

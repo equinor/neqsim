@@ -330,3 +330,18 @@ multiphase beta solver to 1e-12 equilibrium and relative volume targets. Preserv
 phase-family, Gibbs and component gates; failed refinement rejects the transaction.
 Do not weaken absolute inventory bounds or claim arbitrary-scale/measured accuracy.
 The original 216-state and intermediate 480-state matrices use identical frozen bounds.
+
+
+For independently declared dry initial-volume experiments with oil appearance or
+loss, use `DepletionPvtHistoryGenerator.replayNativeDryPhaseChangingFixedCell`
+(core `ConstantVolumeDepletion.runDryPhaseChangingFixedCellDepletion`). Preserve
+`FixedCellResult.allowsDryPhaseChanges()` with the immutable experiment reference.
+The existing fixed-cell method retains its unchanged-family contract. Gas must
+remain; water/aqueous/other phases, critical-degenerate splits and unclosed paths
+fail transactionally. Every local refinement retains its phase-family/Gibbs/
+component gates; between-endpoint dry oil appearance/disappearance is permitted.
+`DryFixedCellPhaseTransitionTest` and the fixed-cell-transitions reference qualify
+27dry binary SRK paths at three scales/both checkpoint selections, including the
+gas-only pressure-grid limit and every separator inventory. This is independent
+numerical consistency, not measured calibration, reservoir prediction or Tran RCVD.
+Read `docs/pvtsimulation/depletion_pvt_generation.md#dry-phase-changing-fixed-cell-experiment`.

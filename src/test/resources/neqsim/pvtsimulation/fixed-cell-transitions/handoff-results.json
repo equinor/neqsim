@@ -1,0 +1,62 @@
+[
+  {
+    "tuned": false,
+    "referenceVolumeM3": 0.0001680035459741009,
+    "phases": [
+      [
+        "gas"
+      ],
+      [
+        "gas",
+        "oil"
+      ],
+      [
+        "gas",
+        "oil"
+      ],
+      [
+        "gas"
+      ],
+      [
+        "gas"
+      ],
+      [
+        "gas"
+      ],
+      [
+        "gas"
+      ]
+    ],
+    "separatorReference": "final actual volumes at 1.01325 bara / 298.15 K"
+  },
+  {
+    "tuned": true,
+    "referenceVolumeM3": 0.00016694868786045681,
+    "phases": [
+      [
+        "gas"
+      ],
+      [
+        "gas",
+        "oil"
+      ],
+      [
+        "gas",
+        "oil"
+      ],
+      [
+        "gas"
+      ],
+      [
+        "gas"
+      ],
+      [
+        "gas"
+      ],
+      [
+        "gas"
+      ]
+    ],
+    "separatorReference": "final actual volumes at 1.01325 bara / 298.15 K"
+  }
+]
