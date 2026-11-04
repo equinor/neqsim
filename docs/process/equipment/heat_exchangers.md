@@ -27,10 +27,13 @@ guides under [water cooler and reboiler](water_cooler_reboiler),
 ## Runnable two-stream quick start
 
 The following complete Java program creates independent hot and cold inlet streams, sets a UA in
-W/K, solves the exchanger, and checks the energy-transfer direction. `getDuty()` is reported in W;
-use `Math.abs(...)` when the engineering question is the transferred-duty magnitude because the
-sign follows the internally selected calculation side.
+W/K, solves the exchanger, and checks the energy-transfer direction, effectiveness, and minimum
+approach without writing to standard output. `getDuty()` is reported in W; use `Math.abs(...)`
+when the engineering question is the transferred-duty magnitude because the sign follows the
+internally selected calculation side. The documentation regression compiles and executes this
+exact marked program with Java 8 source and target compatibility.
 
+<!-- heat-exchanger-example: two-stream-quick-start -->
 ```java
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.stream.Stream;
@@ -67,13 +70,16 @@ public final class HeatExchangerGuideExample {
     double effectiveness = exchanger.getThermalEffectiveness();
     double minimumApproachK = exchanger.getApproachTemperature();
 
-    if (!(hotOutletC < 100.0 && coldOutletC > 20.0 && dutyKW > 0.0)) {
+    if (!(hotOutletC < 100.0
+        && coldOutletC > 20.0
+        && dutyKW > 0.0
+        && Double.isFinite(effectiveness)
+        && effectiveness > 0.0
+        && effectiveness <= 1.0
+        && Double.isFinite(minimumApproachK)
+        && minimumApproachK > 0.0)) {
       throw new IllegalStateException("Unexpected heat-exchanger result");
     }
-
-    System.out.printf(
-        "hot out %.2f C, cold out %.2f C, duty %.2f kW, effectiveness %.3f, approach %.2f K%n",
-        hotOutletC, coldOutletC, dutyKW, effectiveness, minimumApproachK);
   }
 }
 ```
