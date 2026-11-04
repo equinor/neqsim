@@ -827,6 +827,71 @@ cavity formation and integrated Safety Shutdown remain `NOT_EVALUATED`.
 
 
 
+## Opt-in separator cumulative-energy diagnostics
+
+The exact concrete `Separator` provides observational, constant-storage energy
+accounting. Enable it with `setTransientEnergyBalanceTrackingEnabled(true)`
+after steady initialization and explicit inventory configuration. It defaults
+to off; the disabled hot path allocates no diagnostic tracker/report and makes
+no diagnostic thermodynamic-property calls. Other runtime subclasses, including
+`ThreePhaseSeparator`, report `UNSUPPORTED` and reject enabling: their separate
+integration algorithms have not been instrumented by this contract.
+This diagnostic does not change dynamic capability classification, complete
+transaction coverage, or any strict preflight/qualification requirement.
+
+Read `getTransientEnergyBalanceTrackingStatus()` and
+`getTransientEnergyBalanceCoverageIssue()` even before a report exists.
+`getLastTransientEnergyBalanceReport()` returns null while disabled or before
+the first measured accepted update. The immutable report retains only bounded
+scalar sums/extrema and the latest accepted numerical values. A later skipped
+attempt refreshes its current coverage to `INCOMPLETE`; a previously returned
+report remains immutable. No unbounded history is stored.
+
+The report captures the actual ordered inlet, gas-outlet and phase-conditional
+liquid-outlet enthalpies consumed before outlet updates, plus applied external
+heat in W. It integrates their already-grouped native net rate once with dt.
+Exactly zero molar flux contributes exactly zero extensive enthalpy. Supplied
+nonzero liquid flow excluded by the native phase condition, component-removal
+limiting, empty/depleted inventory, caught initialization failure and unavailable
+observations make coverage incomplete. This energy diagnostic does not replace
+independent external mass/component and valve-port consistency checks.
+
+`getAcceptedVuEnergyJ()` and `getLocalVuDefectJ()` describe the returned VU state
+and its signed difference from the target. `getPublishedEnergyJ()` describes
+the actual final inventory after all successful physical postprocessing.
+`getCumulativeDebtJ()` compares that published inventory with initial U plus
+the integrated consumed boundary/heat energy. Read its maximum absolute value,
+the sum of absolute local defects and `getNonVuEnergyDifferenceJ()` to detect
+drift, cancellation and changes outside the local VU solve. Volume residuals
+are separate. The diagnostic does not change the solver or its tolerances.
+
+Call `assessTransientEnergyBalance(relativeLimit)` with an explicit finite,
+nonnegative numerical policy. It gates the maximum absolute cumulative debt,
+not merely the final value, against `max(abs(initial U), 1 J)`. The report also
+exposes raw absolute initial U and the normalization scale; this EOS-reference
+scale is not universally meaningful near zero U. `DISABLED`, `NOT_STARTED`,
+`INCOMPLETE` and `UNSUPPORTED` are distinct from measured `PASS`/`FAIL`.
+Keep process-response verdict, numerical-energy verdict and engineering/safety
+qualification separate. A study's frozen limit, such as `1e-5`, must not be relaxed
+to match the solver's per-step tolerance or make a response pass.
+
+Accepted elapsed time is the sum of accepted dt, independent of the legacy
+equipment clock. `resetTransientEnergyBalanceTracking()` and explicit inventory
+initialization begin a new visible epoch with a lazy initialized-U baseline.
+Disabling discards the ledger; reenabling starts a new epoch. A steady-state
+reevaluation retains prior accepted numerical evidence but marks the current
+window incomplete until explicit reset/reinitialization. Rejected VU solves
+and later physical exceptions restore the whole ledger, last report and epoch
+with the native separator checkpoint. Serialization and copies retain independent
+continuation state. Tracking-enabled calls reject invalid dt before mutation.
+
+`SeparatorTransientEnergyBalanceTest` covers analytic zero/heat/outflow balance,
+on/off trajectory equality, horizon cancellation, published-versus-VU energy,
+snapshot/restart, skips, reinitialization and rollback. Require an independent
+ordered-boundary audit and timestep refinement for each actual study. Post-step
+inlet enthalpy is not a valid substitute for consumed inlet enthalpy when
+`setTempPres` has rerun the mixer after the integration.
+
 ## Exact closed-valve boundaries
 
 For native flow-driven `ThrottlingValve` transient operation, a closed or

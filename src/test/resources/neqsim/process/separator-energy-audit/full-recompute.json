@@ -1,0 +1,20 @@
+{
+  "baselineReference": "3d20d6086654ed71347627f59b164b2aca46e1b7",
+  "model": "Public synthetic V101; parameters and composition in v101_model.py",
+  "tracking": "both",
+  "energyPolicy": {
+    "maximumRelativeCumulativeResidual": 0.00001,
+    "normalization": "max(abs(epoch initial internal energy J),1 J)",
+    "independentAudit": "current inlet and previous outlets captured immediately before native vessel update"
+  },
+  "responseCriteria": {
+    "control": {"maximumPressureBara": 40.5, "finalPressureAbsoluteErrorBar": 0.1, "finalLevelAbsoluteErrorFraction": 0.01},
+    "shutdown": {"eventSeconds": 1.0, "pressureLowerExclusiveBara": 0.0, "pressureUpperInclusiveBara": 43.0, "levelLowerInclusive": 0.05, "levelUpperInclusive": 0.95, "inletClosedMaximumPercent": 0.1, "closureDeadlineAfterEventSeconds": 3.0}
+  },
+  "cases": [
+    {"case": "control", "duration": 300.0, "dt": 0.5},
+    {"case": "control", "duration": 300.0, "dt": 0.25},
+    {"case": "shutdown", "duration": 12.0, "dt": 0.1},
+    {"case": "shutdown", "duration": 12.0, "dt": 0.05}
+  ]
+}

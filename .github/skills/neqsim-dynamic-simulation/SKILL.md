@@ -339,6 +339,32 @@ case uses a 2.2 m by 7.0 m separator, 55 bara initial pressure, 45 bara downstre
 refinement. These values qualify only the synthetic numerical chain. Do not reuse the tuning or
 limits as a plant design basis.
 
+### Audit separator cumulative energy independently of response
+
+Enable `setTransientEnergyBalanceTrackingEnabled(true)` on an exact concrete
+`Separator` after steady/inventory initialization. Read availability and coverage
+with `getTransientEnergyBalanceTrackingStatus()` and
+`getTransientEnergyBalanceCoverageIssue()`; null last report means no measured
+accepted update, not zero energy error. Reject uninstrumented subclasses,
+including `ThreePhaseSeparator`, as unsupported.
+
+Read `getLastTransientEnergyBalanceReport()` for consumed ordered enthalpy/heat
+terms, accepted-dt elapsed time, epoch, local VU defect and final published
+inventory energy. Compare `getAcceptedVuEnergyJ()` with `getPublishedEnergyJ()`;
+do not confuse a locally accepted flash with complete-window energy closure.
+Apply an explicit frozen criterion through `assessTransientEnergyBalance(limit)`;
+it gates maximum absolute cumulative debt using the reported initial-U scale.
+Keep response PASS, energy FAIL/INCOMPLETE and qualification HOLD separate.
+Retain the original criterion during timestep refinement and report raw J
+residuals, scale, extrema and sums of absolute local VU defects.
+
+Require exact ordered external balance, on/off trajectory parity, reset/epoch,
+snapshot/restart and rejected-step evidence. Treat skipped steps, excluded
+nonzero liquid withdrawal and steady reevaluation as incomplete coverage.
+Never reconstruct consumed inlet enthalpy from post-step ports after the mixer
+has been refreshed. Read the [native diagnostic contract](../../../docs/process/dynamic-capability-contract.md#opt-in-separator-cumulative-energy-diagnostics)
+for the bounded default-off API, scale and unsupported-mode limits.
+
 ### Loop-tuning KPIs (ControllerPerformanceMetrics)
 
 `ControllerPerformanceMetrics`

@@ -83,6 +83,27 @@ and dynamic tests based on the final drawing."
    projection loss and named receiving-tool qualification visible. Legacy
    DEXPI 2.0.0 and Proteus compatibility outputs retain their own profile labels.
 
+## External symbol libraries
+
+When PCA or another symbol library is requested, follow the
+[external-symbol acquisition contract](../../../../docs/pid-design-synthesis.md#external-symbol-libraries-including-pca).
+Distinguish the library URL, exact canonical glyph IRI and environment-specific
+retrieval URL. PCA documents authenticated Reader/Creator retrieval through
+`GET /esl/engineeringSymbols` as JSON, JSON-LD or Turtle; use the deployed Swagger
+schema for exact payloads and direction values. Do not probe credentials or
+invent per-symbol IRIs.
+
+Record whether a real payload and its resource-specific rights were verified.
+Preserve original bytes/hash, version/content status, attribution and review
+evidence, geometry units/axes, rotation centre and connection-point identities,
+coordinates and directions. The existing convention register records generic
+shape/provenance inputs; a `sourceReference` does not import SVG or ports.
+Require an explicit geometry/port transform, actual material/signal attachment
+checks, SVG/PDF parity and applicable project/standards review. If prerequisites
+are missing, deliver the sourced acquisition/import contract, keep the supported
+authored-symbol fallback explicit, and retain unresolved review HOLDs. Do not
+claim PCA glyph use or qualification from a library link or public visibility.
+
 ## Run steady-state and dynamic tests
 10. Resolve bindings against each isolated process copy. Use
     `PidSimulationSession` for the executed handoff; keep the original process

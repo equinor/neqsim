@@ -27,6 +27,9 @@ import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.StandardConstraintType;
 import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.separator.SeparatorTransientEnergyBalanceReport.CoverageIssue;
+import neqsim.process.equipment.separator.SeparatorTransientEnergyBalanceReport.EnergyVerdict;
+import neqsim.process.equipment.separator.SeparatorTransientEnergyBalanceReport.TrackingStatus;
 import neqsim.process.equipment.separator.entrainment.EntrainmentProviderRegistry;
 import neqsim.process.equipment.separator.entrainment.EntrainmentResult;
 import neqsim.process.equipment.separator.entrainment.InletDeviceModel;
@@ -153,6 +156,18 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * Initializes separator for transient calculations.
    */
   public void initializeTransientCalculation() {
+    initializeTransientCalculation(true);
+  }
+
+  /**
+   * Initializes inventory while optionally starting a caller-visible diagnostic epoch.
+   *
+   * @param newTrackingEpoch true for explicit initialization, false for an already flagged steady reevaluation
+   */
+  private void initializeTransientCalculation(boolean newTrackingEpoch) {
+    if (newTrackingEpoch && transientEnergyBalanceTracker != null) {
+      resetTransientEnergyBalanceTracking();
+    }
     try {
       liquidVolume = calcLiquidVolume();
       enforceHeadspace();
@@ -190,6 +205,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       }
       enforceHeadspace();
     } catch (Exception ex) {
+      if (transientEnergyBalanceTracker != null) {
+        transientEnergyBalanceTracker.noteIssue(CoverageIssue.INITIALIZATION_FAILED);
+      }
       logger.error(ex.getMessage(), ex);
     }
     isInitTransient = true;
@@ -264,6 +282,83 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
   /** Stable identity for transient transaction diagnostics. */
   private String transientStateIdentity = UUID.randomUUID().toString();
+
+  /** Opt-in constant-storage diagnostic; null is the allocation-free disabled state. */
+  private SeparatorTransientEnergyBalanceTracker transientEnergyBalanceTracker;
+  /** Separator-local epoch counter retained by serialization and transient snapshots. */
+  private long transientEnergyBalanceEpoch;
+
+  /**
+   * Enables observational energy accounting for the exact concrete two-outlet separator algorithm.
+   *
+   * @param enabled true to begin a new epoch, false to discard tracking state
+   * @throws UnsupportedOperationException if enabling an uninstrumented runtime subclass
+   */
+  public void setTransientEnergyBalanceTrackingEnabled(boolean enabled) {
+    if (enabled && getClass() != Separator.class) {
+      throw new UnsupportedOperationException("Transient energy tracking supports exact Separator only; "
+          + getClass().getName() + " has no independently instrumented energy contract");
+    }
+    if (!enabled) {
+      transientEnergyBalanceTracker = null;
+    } else if (transientEnergyBalanceTracker == null) {
+      transientEnergyBalanceTracker = new SeparatorTransientEnergyBalanceTracker(++transientEnergyBalanceEpoch);
+    }
+  }
+
+  /** @return true when the opt-in tracker is enabled */
+  public boolean isTransientEnergyBalanceTrackingEnabled() {
+    return transientEnergyBalanceTracker != null;
+  }
+
+  /** Clears the enabled tracker and begins a new epoch, lazily baselined at its first accepted update. */
+  public void resetTransientEnergyBalanceTracking() {
+    if (transientEnergyBalanceTracker != null) {
+      transientEnergyBalanceTracker = new SeparatorTransientEnergyBalanceTracker(++transientEnergyBalanceEpoch);
+    }
+  }
+
+  /** @return immutable current-coverage report, or null when disabled or no measured update has been accepted */
+  public SeparatorTransientEnergyBalanceReport getLastTransientEnergyBalanceReport() {
+    return transientEnergyBalanceTracker == null ? null : transientEnergyBalanceTracker.report();
+  }
+
+  /** @return explicit availability and complete-window coverage of this diagnostic */
+  public TrackingStatus getTransientEnergyBalanceTrackingStatus() {
+    if (getClass() != Separator.class) {
+      return TrackingStatus.UNSUPPORTED;
+    }
+    return transientEnergyBalanceTracker == null ? TrackingStatus.DISABLED : transientEnergyBalanceTracker.status();
+  }
+
+  /** @return first bounded coverage issue, including gaps before a first report exists */
+  public CoverageIssue getTransientEnergyBalanceCoverageIssue() {
+    return transientEnergyBalanceTracker == null ? CoverageIssue.NONE : transientEnergyBalanceTracker.coverageIssue;
+  }
+
+  /**
+   * Applies an explicit maximum-relative-cumulative-energy policy without assigning process or safety qualification.
+   *
+   * @param maximumRelativeResidual finite nonnegative caller limit
+   * @return disabled, unsupported, not started, incomplete, pass, or fail
+   */
+  public EnergyVerdict assessTransientEnergyBalance(double maximumRelativeResidual) {
+    SeparatorTransientEnergyBalanceReport.requireValidPolicy(maximumRelativeResidual);
+    TrackingStatus status = getTransientEnergyBalanceTrackingStatus();
+    if (status == TrackingStatus.UNSUPPORTED) {
+      return EnergyVerdict.UNSUPPORTED;
+    }
+    if (status == TrackingStatus.DISABLED) {
+      return EnergyVerdict.DISABLED;
+    }
+    if (status == TrackingStatus.INCOMPLETE) {
+      return EnergyVerdict.INCOMPLETE;
+    }
+    if (status == TrackingStatus.NOT_STARTED) {
+      return EnergyVerdict.NOT_STARTED;
+    }
+    return transientEnergyBalanceTracker.report().assess(maximumRelativeResidual);
+  }
 
   /** Relative volume residual accepted for a transient VU state. */
   protected static final double TRANSIENT_VU_VOLUME_TOLERANCE = 1.0e-3;
@@ -738,6 +833,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
           getName(), operation == null ? "unknown" : operation.getClass().getSimpleName(), operationConverged,
           volumeResidual, energyResidual, TRANSIENT_VU_VOLUME_TOLERANCE, TRANSIENT_VU_ENERGY_TOLERANCE));
     }
+    if (transientEnergyBalanceTracker != null) {
+      transientEnergyBalanceTracker.recordAcceptedVu(specifiedVolumeM3, actualEnergyJ, actualVolumeM3);
+    }
   }
 
   /**
@@ -793,6 +891,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     waterInGasSpec = snapshot.waterInGasSpec;
     gasInLiquid = snapshot.gasInLiquid;
     gasInLiquidSpec = snapshot.gasInLiquidSpec;
+    transientEnergyBalanceEpoch = snapshot.energyBalanceEpoch;
+    transientEnergyBalanceTracker = snapshot.energyBalanceTracker == null ? null : snapshot.energyBalanceTracker.copy();
   }
 
   /**
@@ -919,6 +1019,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     private final String waterInGasSpec;
     private final double gasInLiquid;
     private final String gasInLiquidSpec;
+    private final long energyBalanceEpoch;
+    private final SeparatorTransientEnergyBalanceTracker energyBalanceTracker;
 
     /**
      * Creates a checkpoint.
@@ -951,12 +1053,18 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       waterInGasSpec = source.waterInGasSpec;
       gasInLiquid = source.gasInLiquid;
       gasInLiquidSpec = source.gasInLiquidSpec;
+      energyBalanceEpoch = source.transientEnergyBalanceEpoch;
+      energyBalanceTracker = source.transientEnergyBalanceTracker == null ? null
+          : source.transientEnergyBalanceTracker.copy();
     }
   }
 
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (transientEnergyBalanceTracker != null) {
+      transientEnergyBalanceTracker.invalidate(CoverageIssue.STEADY_STATE_REEVALUATION, getTime());
+    }
     inletStreamMixer.run(id);
     if (checkAndHandleLowFlow(inletStreamMixer.getOutletStream(), id)) {
       // Propagate zero flow to both outlet products so downstream equipment also auto-bypasses.
@@ -1061,7 +1169,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     if (getCalculateSteadyState()) {
       thermoSystem = thermoSystem2;
     } else {
-      initializeTransientCalculation();
+      if (transientEnergyBalanceTracker == null) {
+        initializeTransientCalculation();
+      } else {
+        initializeTransientCalculation(false);
+      }
     }
     setCalculationIdentifier(id);
   }
@@ -1192,10 +1304,19 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
+    if (transientEnergyBalanceTracker != null && (!Double.isFinite(dt) || dt <= 0.0)) {
+      throw new IllegalArgumentException("Tracked separator timestep must be finite and positive");
+    }
     if (getCalculateSteadyState()) {
+      if (transientEnergyBalanceTracker != null) {
+        transientEnergyBalanceTracker.beginAttempt(dt, id, getTime());
+      }
       run(id);
       increaseTime(dt);
       setCalculationIdentifier(id);
+      if (transientEnergyBalanceTracker != null) {
+        recordSkippedEnergyUpdate(CoverageIssue.STEADY_STATE_REEVALUATION);
+      }
     } else {
       // Defensive: outlet streams must exist before any dynamic step uses them. They are normally
       // created by setInletStream(); ensureOutputStreamsInitialized() handles construction paths
@@ -1206,6 +1327,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         if (!isInitTransient) {
           initializeTransientCalculation();
         }
+        if (transientEnergyBalanceTracker != null) {
+          transientEnergyBalanceTracker.beginAttempt(dt, id, getTime());
+        }
         inletStreamMixer.run(id);
 
         // Check if separator has enough moles for calculation
@@ -1213,6 +1337,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
           // Separator is essentially empty - just update time and return
           increaseTime(dt);
           setCalculationIdentifier(id);
+          if (transientEnergyBalanceTracker != null) {
+            recordSkippedEnergyUpdate(CoverageIssue.SKIPPED_EMPTY_INVENTORY);
+          }
           return;
         }
 
@@ -1223,6 +1350,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
           logger.debug("Separator init(2) failed, likely due to low moles: " + e.getMessage());
           increaseTime(dt);
           setCalculationIdentifier(id);
+          if (transientEnergyBalanceTracker != null) {
+            recordSkippedEnergyUpdate(CoverageIssue.SKIPPED_PROPERTY_INITIALIZATION);
+          }
           return;
         }
         thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
@@ -1243,15 +1373,21 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
           hasliq = true;
           deliq = -transientBoundaryEnthalpy(liquidOutStream);
         }
-        double deltaEnergy = transientBoundaryEnthalpy(inletStreamMixer.getOutletStream())
-            - transientBoundaryEnthalpy(gasOutStream) + deliq;
+        double inletEnthalpyRate = transientBoundaryEnthalpy(inletStreamMixer.getOutletStream());
+        double gasEnthalpyRate = transientBoundaryEnthalpy(gasOutStream);
+        double deltaEnergy = inletEnthalpyRate - gasEnthalpyRate + deliq;
 
         // Add external heat input (e.g., from flare radiation)
         if (setHeatInput && heatInput != 0.0) {
           deltaEnergy += heatInput; // Heat input in watts (J/s)
         }
 
-        double newEnergy = thermoSystem.getInternalEnergy() + dt * deltaEnergy;
+        double beforeEnergy = thermoSystem.getInternalEnergy();
+        double newEnergy = beforeEnergy + dt * deltaEnergy;
+        if (transientEnergyBalanceTracker != null) {
+          recordConsumedEnergyEquation(beforeEnergy, newEnergy, deltaEnergy, inletEnthalpyRate, gasEnthalpyRate,
+              hasliq ? -deliq : 0.0, setHeatInput && heatInput != 0.0 ? heatInput : 0.0, hasliq);
+        }
         thermoSystem.init(0);
         for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
           double dncomp = 0.0;
@@ -1267,6 +1403,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
           // Prevent negative moles - limit removal to what's available
           if (currentMoles + molesChange < 1e-20) {
             molesChange = -currentMoles + 1e-20;
+            if (transientEnergyBalanceTracker != null) {
+              transientEnergyBalanceTracker.recordRemovalLimited();
+            }
           }
           thermoSystem.addComponent(i, molesChange);
         }
@@ -1274,6 +1413,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         // Skip VU flash if system has too few moles (essentially empty separator)
         if (thermoSystem.getTotalNumberOfMoles() < 1e-10) {
           setCalculationIdentifier(id);
+          if (transientEnergyBalanceTracker != null) {
+            recordSkippedEnergyUpdate(CoverageIssue.SKIPPED_DEPLETED_INVENTORY);
+          }
           return;
         }
 
@@ -1389,6 +1531,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
         // System.out.printf("vol original: %.2f mine %f \n", liquidVolume, liqVol);
         setCalculationIdentifier(id);
+        if (transientEnergyBalanceTracker != null) {
+          publishAcceptedEnergyUpdate();
+        }
       } catch (RuntimeException ex) {
         try {
           restoreTransientStepState(checkpoint);
@@ -1397,6 +1542,50 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         }
         throw ex;
       }
+    }
+  }
+
+  /**
+   * Records a skipped update without querying an invalid or empty thermodynamic inventory.
+   *
+   * @param issue missing-coverage reason
+   */
+  private void recordSkippedEnergyUpdate(CoverageIssue issue) {
+    if (transientEnergyBalanceTracker != null) {
+      transientEnergyBalanceTracker.skip(issue, getTime());
+    }
+  }
+
+  /**
+   * Observes supplied material rates at the exact existing integration point without changing their state.
+   *
+   * @param before pre-update inventory energy, J
+   * @param target target energy, J
+   * @param netRate exact native grouped net energy rate, W
+   * @param inletRate consumed inlet enthalpy flux, W
+   * @param gasRate consumed gas outlet enthalpy flux, W
+   * @param liquidRate applied liquid outlet enthalpy flux, W
+   * @param heatRate applied external heat, W
+   * @param liquidApplied whether the vessel phase condition included the liquid outlet
+   */
+  private void recordConsumedEnergyEquation(double before, double target, double netRate, double inletRate,
+      double gasRate, double liquidRate, double heatRate, boolean liquidApplied) {
+    try {
+      transientEnergyBalanceTracker.recordEquation(before, target, netRate, inletRate, gasRate, liquidRate, heatRate,
+          inletStreamMixer.getOutletStream().getThermoSystem().getTotalNumberOfMoles(),
+          gasOutStream.getThermoSystem().getTotalNumberOfMoles(),
+          liquidOutStream.getThermoSystem().getTotalNumberOfMoles(), liquidApplied);
+    } catch (RuntimeException ex) {
+      transientEnergyBalanceTracker.noteIssue(CoverageIssue.NONFINITE_DIAGNOSTIC);
+    }
+  }
+
+  /** Publishes final inventory energy only after all legacy physical postprocessing has succeeded. */
+  private void publishAcceptedEnergyUpdate() {
+    try {
+      transientEnergyBalanceTracker.accept(thermoSystem.getInternalEnergy(), thermoSystem.getVolume("m3"), getTime());
+    } catch (RuntimeException ex) {
+      transientEnergyBalanceTracker.skip(CoverageIssue.NONFINITE_DIAGNOSTIC, getTime());
     }
   }
 

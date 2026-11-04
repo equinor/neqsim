@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "neqsim_public_separator_energy_reference.v1",
+  "baselineReference": "3d20d6086654ed71347627f59b164b2aca46e1b7",
+  "referenceType": "Actual independently executed candidate observations; not tolerance overrides or design approval",
+  "independentBoundaryConvention": "Pre-vessel current inlet and previous outlet fluxes; shutdown epoch1..12s",
+  "energyLimit": 1e-05,
+  "candidateSourceSha256": {
+    "src/main/java/neqsim/process/equipment/separator/Separator.java": "2ca8bd3344beb441405114e3b0321694036310ea8215d5c3c54f216a25555b1b",
+    "src/main/java/neqsim/process/equipment/separator/SeparatorTransientEnergyBalanceReport.java": "4fa2e270db3153d357ca8a9848e6c1a8d64f1764417946e1434b07fe11a6d65a",
+    "src/main/java/neqsim/process/equipment/separator/SeparatorTransientEnergyBalanceTracker.java": "f4f9b3581a3495dfc73b3335b3fb02552c2d8dda54a3d5ff14ad23236bd63b64"
+  },
+  "cases": [
+    {
+      "case": "control",
+      "duration_s": 300.0,
+      "dt_s": 0.5,
+      "maximumPressureBara": 40.27408784515475,
+      "maximumAbsoluteEnergyResidualJ": 1829.9468549857847,
+      "maximumRelativeEnergyResidual": 9.721491520778211e-06,
+      "energyVerdict": "PASS",
+      "responseVerdict": "PASS",
+      "trackingOffOnPhysicalEquality": true,
+      "independentAuditNativeLedgerMaximumDifferenceJ": 0.0,
+      "acceptedSteps": 600,
+      "referenceResultSha256": "6a1f7574c5e16d04e78498533ffcd61c7e5b876d0e336f1d9ecf114fb7fe48e6"
+    },
+    {
+      "case": "control",
+      "duration_s": 300.0,
+      "dt_s": 0.25,
+      "maximumPressureBara": 40.27267347782199,
+      "maximumAbsoluteEnergyResidualJ": 3218.962804980576,
+      "maximumRelativeEnergyResidual": 1.710056198028888e-05,
+      "energyVerdict": "FAIL",
+      "responseVerdict": "PASS",
+      "trackingOffOnPhysicalEquality": true,
+      "independentAuditNativeLedgerMaximumDifferenceJ": 0.0,
+      "acceptedSteps": 1200,
+      "referenceResultSha256": "a16c8a79ea59b3c646f784b35b0e15f4eca3b42302d332635a7edfefd1bd93a1"
+    },
+    {
+      "case": "shutdown",
+      "duration_s": 12.0,
+      "dt_s": 0.1,
+      "maximumPressureBara": 42.40929021642996,
+      "maximumAbsoluteEnergyResidualJ": 496.43697251577396,
+      "maximumRelativeEnergyResidual": 2.6372939770160777e-06,
+      "energyVerdict": "PASS",
+      "responseVerdict": "PASS",
+      "trackingOffOnPhysicalEquality": true,
+      "independentAuditNativeLedgerMaximumDifferenceJ": 0.0,
+      "acceptedSteps": 110,
+      "referenceResultSha256": "9b2828c5400f0ecab514a9c81e93b4d962d4e0f576546686dcb6cb68ef95394e",
+      "closureAfterEventSeconds": 1.9000000000000012,
+      "strictNativePhysicalTraceExactlyEqual": true,
+      "strictNativeTraceFieldCount": 21
+    },
+    {
+      "case": "shutdown",
+      "duration_s": 12.0,
+      "dt_s": 0.05,
+      "maximumPressureBara": 42.35985659388285,
+      "maximumAbsoluteEnergyResidualJ": 1095.2720735259354,
+      "maximumRelativeEnergyResidual": 5.818572351825492e-06,
+      "energyVerdict": "PASS",
+      "responseVerdict": "PASS",
+      "trackingOffOnPhysicalEquality": true,
+      "independentAuditNativeLedgerMaximumDifferenceJ": 0.0,
+      "acceptedSteps": 220,
+      "referenceResultSha256": "f8f907c82a8f302d67530fada8bc82061b2fe56bb146b72682752f27afefde5e",
+      "closureAfterEventSeconds": 1.799999999999998,
+      "strictNativePhysicalTraceExactlyEqual": true,
+      "strictNativeTraceFieldCount": 21
+    }
+  ],
+  "interpretation": "Control dt0.25 retains cumulative-energy FAIL despite response PASS. Tracking is observational. Endpoint-only shutdown energy estimates are superseded."
+}
