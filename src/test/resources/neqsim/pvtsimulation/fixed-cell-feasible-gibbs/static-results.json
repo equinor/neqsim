@@ -1,0 +1,15 @@
+{
+  "spotbugsBase": 19,
+  "spotbugsCandidate": 19,
+  "sameSignatures": true,
+  "new": [],
+  "analysisErrors": [
+    0,
+    0
+  ],
+  "checkstyleAnalyzedFiles": 5,
+  "checkstyleCvdWarnings": 6,
+  "checkstyleBaseWarnings": 8,
+  "checkstyleSameWarnings": false,
+  "checkstyleNewWarnings": []
+}

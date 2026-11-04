@@ -205,6 +205,10 @@ continues to reject wet upper-dew CVD. Read the explicit-reference guide and
 Explicit-reference fixed-cell replay refines accepted endpoints through the existing
 multiphase beta solver to 1e-12 equilibrium and relative volume targets. Preserve all
 phase-family, Gibbs and component gates; failed refinement rejects the transaction.
+The Gibbs trial must use the same stored component inventory: the caller reconstructs
+a feasible homogeneous-phase allocation on copies before comparing energies. Keep
+`FixedCellFeasibleGibbsTest` alongside the independent fixed-cell references; this
+fix does not relax energy/fugacity/balance bounds or qualify global stability.
 Do not weaken absolute inventory bounds or claim arbitrary-scale/measured accuracy.
 The original 216-state and intermediate 480-state matrices use identical frozen bounds.
 
