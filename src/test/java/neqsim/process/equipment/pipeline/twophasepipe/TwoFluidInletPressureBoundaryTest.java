@@ -39,7 +39,7 @@ class TwoFluidInletPressureBoundaryTest {
   }
 
   @Test
-  void prescribedPhaseAdvectionUsesTrialPressureInBothTractionAndHoldupSource() {
+  void prescribedPhaseAdvectionUsesSignedDonorsAndTrialPressureTraction() {
     TwoFluidSection cell = section(0.1, 0.4, 0.4);
     TwoFluidSection feed = section(0.12, 0.6, 0.1);
     feed.setPressure(1.4e5);
@@ -47,8 +47,10 @@ class TwoFluidInletPressureBoundaryTest {
     feed.setOilVelocity(0.55);
     feed.setWaterVelocity(-0.45);
     feed.updateConservativeVariables();
-    double[] expectedMass = {feed.getGasMassPerLength() * feed.getGasVelocity(),
-        feed.getOilMassPerLength() * feed.getOilVelocity(), feed.getWaterMassPerLength() * feed.getWaterVelocity()};
+    double faceArea = cell.getArea();
+    double[] expectedMass = {feed.getGasHoldup() * feed.getGasDensity() * feed.getGasVelocity() * faceArea,
+        feed.getOilHoldup() * feed.getOilDensity() * feed.getOilVelocity() * faceArea,
+        cell.getWaterHoldup() * cell.getWaterDensity() * feed.getWaterVelocity() * faceArea};
     double[] velocity = {feed.getGasVelocity(), feed.getOilVelocity(), feed.getWaterVelocity()};
     TwoFluidConservationEquations equations = equations();
     equations.setClosedBoundaries(false, true);
@@ -61,7 +63,7 @@ class TwoFluidInletPressureBoundaryTest {
       assertArrayEquals(expectedMass, equations.getLastMassBalanceRate().getInletMassFlowKgPerSecond(), 1.0e-12);
       for (int phase = 0; phase < 3; phase++) {
         assertEquals(expectedMass[phase] / cell.getLength(), rhs[0][phase], 1.0e-12);
-        // At rest the pressure source must exactly cancel pressure traction, even across boundary area/holdup jumps.
+        // The pressure source cancels pressure traction, including across boundary area/holdup jumps.
         assertEquals(expectedMass[phase] * velocity[phase] / cell.getLength(), rhs[0][phase + 3], 1.0e-9);
       }
     }
