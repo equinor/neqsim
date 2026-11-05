@@ -1,5 +1,6 @@
 """Exercise fixed-matrix corruption and optimized-Python numerical rejection."""
 import csv
+import json
 from pathlib import Path
 import subprocess
 import sys
@@ -12,6 +13,23 @@ ROOT = Path(__file__).resolve().parent
 
 class AuditTest(unittest.TestCase):
     """Prevent reduced or malformed output from qualifying a pressure-moment matrix."""
+
+    def test_exact_head_end_to_end(self):
+        """Accept the current pinned source before testing independently failing mutations."""
+        source = (ROOT / 'audit.py').read_text()
+        repo = next(path for path in ROOT.parents if (path / 'pom.xml').exists())
+        (repo / 'target').mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=repo / 'target') as temporary:
+            folder = Path(temporary)
+            (folder / 'audit.py').write_text(source)
+            (folder / 'validate_native.py').write_text((ROOT / 'validate_native.py').read_text())
+            result = subprocess.run(
+                [sys.executable, '-O', str(folder / 'audit.py')], capture_output=True, text=True,
+            )
+            self.assertEqual(0, result.returncode, result.stderr)
+            receipt = json.loads((folder / 'summary.json').read_text())
+            self.assertEqual(222, receipt['rows'])
+            self.assertEqual('04e6c337b848c66f1a5dd39bdfadbcdd60440900', receipt['source_blob'])
 
     def test_matrix_corruption(self):
         """Keep valid data and reject omission, repetition, alteration and every nonfinite field."""
@@ -61,7 +79,7 @@ class AuditTest(unittest.TestCase):
         mutations = [
             ('while ((line = input.readLine()) != null)', 'if ((line = input.readLine()) != null)'),
             ('value.getLiquidMoment() +', '(value.getLiquidMoment() + (depth > 0.0 && depth < diameter ? 1.0 : 0.0)) +'),
-            ('6eea54142e2668717a7b756e1b252da6810a7e21', '0000000000000000000000000000000000000000'),
+            ('04e6c337b848c66f1a5dd39bdfadbcdd60440900', '0000000000000000000000000000000000000000'),
         ]
         for old, new in mutations:
             self.assertIn(old, source)

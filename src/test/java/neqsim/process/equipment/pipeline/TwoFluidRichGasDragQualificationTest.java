@@ -30,6 +30,24 @@ import neqsim.thermo.system.SystemSrkEos;
 class TwoFluidRichGasDragQualificationTest {
   private static final Logger logger = LogManager.getLogger(TwoFluidRichGasDragQualificationTest.class);
 
+  /** Refinement must preserve the terrain and the physical length of the level outlet. */
+  @Test
+  void levelOutletUsesTheSamePhysicalGeometryOnEveryMesh() {
+    double[] coarse = createRichGasFaceElevations(12, true);
+    double[] refined = createRichGasFaceElevations(24, true);
+    double[] finer = createRichGasFaceElevations(48, true);
+    for (int face = 0; face < coarse.length; face++) {
+      assertEquals(coarse[face], refined[2 * face], 0.0);
+      assertEquals(coarse[face], finer[4 * face], 0.0);
+      if (face < coarse.length - 1) {
+        assertEquals(0.5 * (coarse[face] + coarse[face + 1]), refined[2 * face + 1], 1.0e-12);
+      }
+    }
+    for (int face = 9; face <= 12; face++) {
+      assertEquals(-333.5, coarse[face], 1.0e-12);
+    }
+  }
+
   /**
    * Complete the public 780 s blowdown, low-pressure settling, same-gas refill and hold sequence with explicit pool
    * kinetics.
@@ -420,7 +438,7 @@ class TwoFluidRichGasDragQualificationTest {
    * Construct and prepare the accepted synthetic steady state without adding seed liquid.
    *
    * @param cells physical cell count
-   * @param levelOutlet whether to level the final three face elevations
+   * @param levelOutlet whether to level the final 1250 m of the line
    * @return converged closed-inlet conservative-energy pipe
    */
   private static TwoFluidPipe createRichGasPipe(int cells, boolean levelOutlet) {
@@ -442,18 +460,7 @@ class TwoFluidRichGasDragQualificationTest {
     pipe.setDiameter(42.0 * 0.0254 - 2.0 * 0.026);
     pipe.setRoughness(1e-5);
     pipe.setNumberOfSections(cells);
-    double[] faceElevationsMetres = new double[cells + 1];
-    for (int face = 0; face < faceElevationsMetres.length; face++) {
-      double firstWave = Math.sin(Math.PI * face / cells);
-      double thirdWave = Math.sin(3.0 * Math.PI * face / cells);
-      faceElevationsMetres[face] = -300.0 - 55.0 * firstWave * firstWave - 12.0 * thirdWave * thirdWave;
-    }
-    if (levelOutlet) {
-      for (int face = cells - 2; face <= cells; face++) {
-        faceElevationsMetres[face] = faceElevationsMetres[cells - 3];
-      }
-    }
-    pipe.setCellFaceElevationProfile(faceElevationsMetres);
+    pipe.setCellFaceElevationProfile(createRichGasFaceElevations(cells, levelOutlet));
     pipe.setTimeIntegrationMethod(TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION);
     pipe.setEnableSlugTracking(false);
     pipe.setEnableAdaptiveTimestepping(true);
@@ -481,6 +488,35 @@ class TwoFluidRichGasDragQualificationTest {
     pipe.closeInlet();
     pipe.setMassTransferRelaxationTime(30.0);
     return pipe;
+  }
+
+  /**
+   * Refine the original twelve straight route segments without changing physical geometry.
+   *
+   * @param cells physical cell count
+   * @param levelOutlet whether to level the final 1250 m of the 5000 m line
+   * @return face elevations in metres
+   */
+  private static double[] createRichGasFaceElevations(int cells, boolean levelOutlet) {
+    int routeSegments = 12;
+    double[] routeElevations = new double[routeSegments + 1];
+    for (int vertex = 0; vertex < routeElevations.length; vertex++) {
+      double position = vertex / (double) routeSegments;
+      if (levelOutlet) {
+        position = Math.min(position, 0.75);
+      }
+      double firstWave = Math.sin(Math.PI * position);
+      double thirdWave = Math.sin(3.0 * Math.PI * position);
+      routeElevations[vertex] = -300.0 - 55.0 * firstWave * firstWave - 12.0 * thirdWave * thirdWave;
+    }
+    double[] elevations = new double[cells + 1];
+    for (int face = 0; face < elevations.length; face++) {
+      double position = routeSegments * face / (double) cells;
+      int segment = Math.min(routeSegments - 1, (int) position);
+      double fraction = position - segment;
+      elevations[face] = (1.0 - fraction) * routeElevations[segment] + fraction * routeElevations[segment + 1];
+    }
+    return elevations;
   }
 
   /** Sum a component boundary vector. */

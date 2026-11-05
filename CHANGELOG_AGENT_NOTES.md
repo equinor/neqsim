@@ -21,10 +21,14 @@
 - Agents/skills: dynamic-simulation and flow-assurance guidance now route physical restart studies through the explicit
   trace/fallback and pressure-ringing diagnostics while retaining the separate mesh/time, public-validation and
   moving-pig conservation gates.
-- Qualification status: the repaired 12/24-cell 780 s matrix has zero trace-area fallback, but still fails the frozen
-  10% spatial gate at 22.82% peak-oil and 24.29% final-oil difference. Pressure range differs by 0.45%, while adjacent
-  rate and unfiltered ringing measures differ by roughly 45-48%; this is a numerical blocker, not physical restart or
-  hydraulic-pigging qualification.
+- Qualification fixture: retain the same physical terrain under refinement. The final 1250 m is level at -333.5 m
+  on every mesh; the previous "last three cells" rule changed the pipe being compared. The earlier 22.82%/24.29%
+  inventory differences cannot isolate spatial error. The 10% inventory gates remain unchanged; see the executed
+  hydrocarbon-pool-transfer receipt. Maximum single-cell interface area is extensive, not a convergence target.
+  The common-polyline rerun still fails at 11.21% peak and 10.86% final oil; no tolerance is relaxed or test disabled.
+  This remains numerical screening, not physical restart or hydraulic-pigging qualification.
+- Revalidated the exact trace-geometry source against all 222 independent 80-digit pressure-moment controls. The
+  source-identity guard remains strict, including wrong-hash, incomplete-output and numerical-corruption controls.
 
 ---
 

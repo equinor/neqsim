@@ -1,0 +1,174 @@
+{
+  "date": "2026-11-05",
+  "source_parent_head": "90f97fd929e3d2f75351db7ae6447fd5d2b6ed31",
+  "source_blobs": {
+    "src/test/java/neqsim/process/equipment/pipeline/TwoFluidRichGasDragQualificationTest.java": "e9273fb91fdc991a35a85a81fffb39f3a380b308",
+    "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/closure/GeometryCalculator.java": "04e6c337b848c66f1a5dd39bdfadbcdd60440900"
+  },
+  "runtime": "OpenJDK 17.0.20 / Python 3.12",
+  "geometry": {
+    "length_m": 5000.0,
+    "physical_route": "original twelve straight segments, linearly subdivided",
+    "level_outlet_start_m": 3750.0,
+    "level_outlet_elevation_m": -333.5,
+    "coarse_cells": 12,
+    "refined_cells": 24,
+    "external_dt_s": 0.5,
+    "cycle_duration_s": 780.0
+  },
+  "inventory_gates": {
+    "peak_oil_kg": {
+      "coarse_kg": 8329.99236798058,
+      "refined_kg": 9381.382801852436,
+      "relative_difference": 0.11207201071298896,
+      "strict_upper_bound": 0.1,
+      "passed": false
+    },
+    "final_oil_kg": {
+      "coarse_kg": 8115.39230378012,
+      "refined_kg": 9104.581990311284,
+      "relative_difference": 0.10864745768491282,
+      "strict_upper_bound": 0.1,
+      "passed": false
+    }
+  },
+  "inventory_qualified": false,
+  "conservation": "Both complete cycles passed every accepted-interval mass/component/energy assertion and used zero trace-area fallback.",
+  "test_suites": [
+    {
+      "name": "neqsim.process.equipment.pipeline.TwoFluidPipeConservativeEnergyTest",
+      "tests": "11",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "3.06"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.TwoFluidPipeConservativeTransitionTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "19.694"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.TwoFluidRichGasDragQualificationTest",
+      "tests": "8",
+      "failures": "1",
+      "errors": "0",
+      "skipped": "0",
+      "time": "421.599"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.HydrocarbonPoolTransferTest",
+      "tests": "10",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.111"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidTransactionalEvaluationTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.013"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculatorTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.007"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.closure.HydrostaticCellGeometryTest",
+      "tests": "11",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.06"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.reporting.TwoFluidPipeReportTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "1.562"
+    }
+  ],
+  "commands": [
+    {
+      "command": "./mvnw -B -ntp -o -Djacoco.skip=true -DexcludedTestGroups= -Dtest=TwoFluidRichGasDragQualificationTest,GeometryCalculatorTest,HydrostaticCellGeometryTest,HydrocarbonPoolTransferTest,TwoFluidPipeReportTest,TwoFluidPipeConservativeTransitionTest,TwoFluidPipeConservativeEnergyTest,TwoFluidTransactionalEvaluationTest test",
+      "exit_code": 1,
+      "tests": 64,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "command": "python3 -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series -p test_audit.py -v",
+      "exit_code": 0,
+      "tests": 3
+    },
+    {
+      "command": "python3 -O -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series -p test_audit.py -v",
+      "exit_code": 0,
+      "tests": 3
+    },
+    {
+      "command": "java --module jdk.compiler/com.sun.tools.javac.Main --release 8 -cp <tested-classpath> -d <temporary-classes> src/test/java/neqsim/process/equipment/pipeline/TwoFluidRichGasDragQualificationTest.java",
+      "exit_code": 0,
+      "scope": "Compilation only, on Java 17; not a Java 8 runtime run."
+    }
+  ],
+  "historical_comparisons": [
+    {
+      "receipt": "legacy-varying-outlet-refinement.csv",
+      "limitation": "Outlet physical extent and elevation changed with mesh."
+    },
+    {
+      "receipt": "fixed-outlet-curved-route-refinement.csv",
+      "limitation": "Fixed outlet, but curved-route resampling changes the physical straight segments."
+    }
+  ],
+  "documentation_impact": "Corrected route definition, source provenance, numerical receipts and interpretation; no passing physical restart or pigging claim.",
+  "remaining_blocker": "The unchanged 10% peak/final inventory gates still fail on the common polyline. Pressure-rate/ringing refinement and independent physical validation remain open.",
+  "publication_checks": [
+    {
+      "command": "python3 devtools/run_spotless.py apply",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 devtools/run_spotless.py check",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 devtools/check_documentation_search.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 devtools/build_engineering_coverage.py --check",
+      "exit_code": 0
+    },
+    {
+      "command": "pre-commit run --all-files --hook-stage pre-commit",
+      "exit_code": 0
+    },
+    {
+      "command": "pre-commit run --all-files --hook-stage pre-push",
+      "exit_code": 0
+    },
+    {
+      "command": "./mvnw -B -ntp -o checkstyle:check",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  ]
+}

@@ -1254,9 +1254,9 @@ coefficients, elapsed pool depletion, shutdown/restart or hydraulic pigging; ind
 multicomponent rate data and full-cycle/refinement evidence remain required for those claims. See
 the [process-model contract](../process/TWOFLUIDPIPE_MODEL.md#opt-in-finite-rate-hydrocarbon-pool-transfer).
 The executed 100 W/m finite-heat 780 s rich-gas cycle uses gas-only blowdown, closed settling,
-same-composition inlet refill with the outlet closed, and a closed hold. It passes on 12/24 cells
-with 2.035% peak-oil and 2.067% final-oil mesh differences; minimum heat scales of 2.306e-4 and
-1.653e-4 prove the limit is active. Conservative recovery explicitly retains the requested EOS root
+same-composition inlet refill with the outlet closed, and a closed hold. Its prescribed-area
+screen exercises the finite heat limit. Historical 12/24-cell differences used a level outlet
+defined by cell count and cannot isolate spatial error. Conservative recovery explicitly retains the requested EOS root
 across the cubic model's diagnostic $V/B=1.75$ phase-label transition while preserving positive
 compressibility and Jacobian/admissibility guards. This is numerical screening for the declared heat
 input, not physical shutdown/restart or predictive depletion qualification.
@@ -1272,10 +1272,12 @@ interface closure. Initialize a deliberate wall inventory with
 profiles are defensive and survive copy/rollback/replay. Under the multilayer model, each cell value
 initializes all of that cell's radial layers uniformly; the layers then evolve independently and a
 new steady run clears the prior evolved radial state. The wall-coupled 12/24-cell 780 s screening
-run produces 22.82%/24.29% peak/final oil mesh differences and 43.222/45.037 K maximum wall changes,
-despite zero trace-area fallback. Refill pressure range differs by 0.45%, while rate and unfiltered
-ringing measures differ by roughly 45-48%. Those failed gates keep physical restart, public
-validation and hydraulic pigging open.
+comparison now uses the same final 1250 m level outlet at -333.5 m elevation on both meshes.
+The previous "last three cells" rule compared different terrains. See the
+[executed receipt](../../src/test/resources/neqsim/process/pipeline/hydrocarbon-pool-transfer/README.md)
+for the corrected inventory, wall and unfiltered pressure diagnostics. Maximum single-cell area
+is an extensive diagnostic, not a mesh-convergence target. Physical restart, independent public
+validation and hydraulic pigging remain unqualified.
 
 With component transport enabled, the downstream outlet composition follows the positive outbound
 component ledger rather than the latest inlet composition or the final cell's instantaneous phase

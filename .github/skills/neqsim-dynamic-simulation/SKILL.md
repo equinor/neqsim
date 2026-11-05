@@ -560,11 +560,13 @@ floor; any reported fallback remains a numerical-resolution warning. Configure d
 inventory with `setInitialWallTemperatureProfile(...)`
 before `run()` and retain the wall profile through every event/replay. In multilayer mode, its one
 temperature per cell initializes every radial layer uniformly; the layers evolve independently and
-a new steady run clears the old radial inventory. The current wall-coupled
-12/24-cell cycle has 22.82%/24.29% peak/final oil mesh differences despite zero trace-area fallback;
-its pressure-rate and unfiltered ringing metrics also differ by roughly 45-48%. It fails the 10%
-restart screening gate. A moving pig needs separate moving-volume, face-flux and pressure-work
-conservation and must not inherit that unconverged inlet state.
+a new steady run clears the old radial inventory. Mesh refinement must preserve physical terrain
+breakpoints and outlet length; a "last three cells" level-outlet rule compares different pipes.
+The wall-coupled 12/24-cell cycle fixes the final 1250 m at -333.5 m on both meshes and retains
+the 10% peak/final inventory gates. Consult its hydrocarbon-pool-transfer receipt for the executed
+result. Maximum single-cell interface area is extensive and is not a convergence target.
+A moving pig needs separate moving-volume, face-flux and pressure-work conservation and qualified
+inlet states.
 For a declared restart-opening window, use `TwoFluidPipeReport.analyzePressureTrace(...)` to report
 unfiltered extrema, peak-to-peak pressure, maximum sample rate, total/excess variation and reversal
 count with an explicit Pa gate. Preserve the sample interval and do not promote this diagnostic to a

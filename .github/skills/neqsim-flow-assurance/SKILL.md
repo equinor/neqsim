@@ -712,10 +712,12 @@ for (double qgMSm3d : gasRates) {
 > retains representable trace-wedge leading depth without a liquid floor, reports equilibrium
 > appearance and any still-sub-resolution stratified trace fallback,
 > and can retain an explicitly initialized wall profile across event intervals.
-> Its wall-coupled 12/24-cell cycle changes wall temperature by 43.222/45.037 K
-> but retains 22.82%/24.29% peak/final oil mesh differences despite zero trace-area fallback;
-> rate and unfiltered ringing metrics differ by roughly 45-48%. This fails the 10% restart
-> screening gate and cannot be used as an inlet condition for coupled pigging.
+> Mesh refinement must retain physical terrain and outlet breakpoints. The wall-coupled
+> 12/24-cell cycle fixes its final 1250 m at -333.5 m on both meshes; the earlier
+> "last three cells" rule compared different pipes. Retain the 10% peak/final inventory
+> gates and inspect the executed hydrocarbon-pool-transfer receipt. Maximum single-cell
+> interface area is extensive, not a convergence target. Independent mesh/time, rate/thermal
+> and moving-boundary conservation evidence is still required for coupled pigging.
 > Record refill/valve-opening pressure windows with
 > `TwoFluidPipeReport.analyzePressureTrace(...)`; its unfiltered ringing metrics are numerical
 > diagnostics, not an independently validated surge limit.

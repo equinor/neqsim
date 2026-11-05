@@ -1389,7 +1389,7 @@
         "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/reporting/TwoFluidPipeReportTest.java",
         "src/test/java/neqsim/process/equipment/pipeline/TwoFluidRichGasDragQualificationTest.java"
       ],
-      "limitations": "Experimental Java/JPype discovery route. Static per-cell hydrostatic geometry and read-only pressure-trace metrics support conservative restart screening, but the current 12/24-cell 780 s matrix fails the 10% oil-inventory gate and has unconverged pressure-rate/ringing metrics. It does not prove stable terrain drainage, predictive evaporation, a physical surge band, severe slugging or hydraulic pigging.",
+      "limitations": "Experimental Java/JPype discovery route. Static per-cell hydrostatic geometry and read-only pressure-trace metrics support conservative restart screening. The 12/24-cell 780 s comparison must preserve the same physical terrain and level-outlet extent, retain the 10% oil-inventory gates and use the executed hydrocarbon-pool-transfer receipt. Maximum single-cell interface area is extensive, not a convergence target. It does not prove stable terrain drainage, predictive evaporation, a physical surge band, severe slugging or hydraulic pigging.",
       "evidence": {
         "route": "declared",
         "testSources": "present",

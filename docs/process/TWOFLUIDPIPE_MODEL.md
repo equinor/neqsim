@@ -730,21 +730,23 @@ The declared finite-heat rich-gas cycle completes 780 s on 12 and 24 cells with 
 evaporation heat: 120 s gas-only blowdown, 120 s closed settling, 420 s same-composition inlet
 refill at 1000 kg/s with the outlet closed, then 120 s closed hold. The new run uses hydrostatic
 pool area, a 26 mm steel wall (7850 kg/m3, 500 J/(kg K)), 4 W/(m2 K) wall/seabed exchange and a
-277.15 K environment. Peak oil inventories are 8,329.992 and 6,429.013 kg; final oil is 8,115.392
-and 6,143.782 kg. The 22.82% peak and 24.29% final spatial differences fail the predeclared 10%
-gate. Maximum resolved areas are 187.874/101.227 m2 and maximum wall-temperature changes are
-43.222/45.037 K. Minimum heat scales of 1.089e-3/8.093e-4 prove that the 100 W/m kinetic limit is
-active; both meshes now resolve every trace wedge without fallback. Refill pressure peak-to-peak
-differs by 0.45%, but rate, excess-variation and ringing metrics differ by about 45-48%. The cycle crosses the dense-root $V/B=1.75$
+277.15 K environment. Both meshes sample the same terrain, with the final 1250 m level at
+-333.5 m elevation. The earlier "last three cells" outlet definition changed its physical length
+and elevation with mesh size; its 22.82%/24.29% peak/final inventory differences cannot isolate
+spatial error. The corrected comparison retains the predeclared 10% inventory gates, all
+conservation tolerances and unfiltered pressure diagnostics. The area receipt records the maximum
+**single-cell** interface area, which is an extensive quantity and need not be mesh invariant.
+The common-polyline rerun still fails the 10% inventory gates at 11.21% peak and 10.86% final oil.
+The cycle crosses the dense-root $V/B=1.75$
 diagnostic-label transition with the configured liquid root, positive compressibility and recovery
 Jacobian retained; no phase relabeling, mass clipping or guard weakening is used. See the
 [qualification receipt](../../src/test/resources/neqsim/process/pipeline/hydrocarbon-pool-transfer/README.md).
 
 These changes advance a wall-inventory shutdown/cooldown/restart screening path, but they do not
-complete physical restart qualification. Mesh-insensitive pool-area/source coupling, independent
-public rate/thermal data, time convergence, a restart-opening surge band, repeated-cycle evidence
-and the unchanged five-second riser matrix remain open. Moving-pig volume/flux/work coupling is a
-separate moving-boundary conservation algorithm and is withheld while this restart gate fails.
+complete physical restart qualification. Further mesh/time convergence, independent public
+rate/thermal data, a restart-opening surge band, repeated-cycle evidence and the unchanged
+five-second riser matrix remain open. Moving-pig volume/flux/work coupling requires a separate
+moving-boundary conservation algorithm and qualified inlet states.
 
 `getLastConservativeEnergyReport()` exposes the fluid first-law ledger and separate maximum
 relative occupied-volume and published-state energy residuals. Its signed residual is final

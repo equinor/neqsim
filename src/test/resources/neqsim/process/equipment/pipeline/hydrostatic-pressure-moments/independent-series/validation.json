@@ -69,5 +69,31 @@
   ],
   "selected_diff_whitespace": 0,
   "documentation_impact": "Existing public numerical record extended; no API/default/runtime/physical qualification change.",
-  "limits": "Static geometry only; no dynamic pooling, physical boundary cycle or predictive depletion-rate result."
+  "limits": "Static geometry only; no dynamic pooling, physical boundary cycle or predictive depletion-rate result.",
+  "trace_geometry_revalidation": {
+    "date": "2026-11-05",
+    "source_head": "90f97fd929e3d2f75351db7ae6447fd5d2b6ed31",
+    "source_blob": "04e6c337b848c66f1a5dd39bdfadbcdd60440900",
+    "runtime": "OpenJDK 17.0.20 / Python 3.12",
+    "rows": 222,
+    "numerical_csv_changes": false,
+    "source_identity_guard": "strict; wrong hash must reject",
+    "commands": [
+      {
+        "command": "python3 src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series/audit.py",
+        "exit_code": 0
+      },
+      {
+        "command": "python3 -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series -p test_audit.py -v",
+        "exit_code": 0,
+        "tests": 3
+      },
+      {
+        "command": "python3 -O -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series -p test_audit.py -v",
+        "exit_code": 0,
+        "tests": 3
+      }
+    ],
+    "limits": "Static pressure-moment geometry only; no transient or experimental qualification."
+  }
 }
