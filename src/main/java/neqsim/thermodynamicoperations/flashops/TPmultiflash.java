@@ -3692,6 +3692,32 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
+   * Identifies water independently of field-origin labels added to its component name.
+   *
+   * @param component component to identify
+   * @return true for water, including renamed copies retaining its database identity
+   */
+  static boolean isWaterComponent(neqsim.thermo.component.ComponentInterface component) {
+    return "water".equalsIgnoreCase(component.getComponentName()) || "7732-18-5".equals(component.getCASnumber());
+  }
+
+  /**
+   * Sums all water origins rather than looking up a single unlabelled component.
+   *
+   * @param fluid fluid whose feed composition is inspected
+   * @return overall mole fraction of water
+   */
+  static double waterFeedFraction(SystemInterface fluid) {
+    double fraction = 0.0;
+    for (int index = 0; index < fluid.getNumberOfComponents(); index++) {
+      if (isWaterComponent(fluid.getComponent(index))) {
+        fraction += fluid.getComponent(index).getz();
+      }
+    }
+    return fraction;
+  }
+
+  /**
    * Tests a wet OIL or GAS/OIL endpoint against a seeded aqueous active set at the same T and P.
    *
    * <p>
@@ -3710,10 +3736,10 @@ public class TPmultiflash extends TPflash {
     if (gasOil && rescueSupersaturatedGasOilMissingAqueous()) {
       return;
     }
+    double waterFraction = waterFeedFraction(system);
     if (!system.doMultiPhaseCheck() || (!singleOil && !gasOil) || system.getMaxNumberOfPhases() < 3
         || !system.allowPhaseShift() || system.isChemicalSystem() || system.hasIons() || system.doSolidPhaseCheck()
-        || system.isMultiphaseWaxCheck() || !system.hasComponent("water")
-        || system.getComponent("water").getz() <= 0.0) {
+        || system.isMultiphaseWaxCheck() || waterFraction <= 0.0) {
       return;
     }
     boolean validReference = isFeasiblePhaseEquilibrium(system);
@@ -3738,11 +3764,11 @@ public class TPmultiflash extends TPflash {
       int aqueous = singleOil ? candidate.getNumberOfPhases() - 1 : candidate.getPhaseNumberOfPhase("gas");
       candidate.setPhaseType(aqueous, PhaseType.AQUEOUS);
       for (int component = 0; component < candidate.getNumberOfComponents(); component++) {
-        candidate.getPhase(aqueous).getComponent(component).setx(
-            "water".equals(candidate.getPhase(aqueous).getComponent(component).getComponentName()) ? 1.0 : 1.0e-16);
+        neqsim.thermo.component.ComponentInterface entry = candidate.getPhase(aqueous).getComponent(component);
+        entry.setx(isWaterComponent(entry) ? entry.getz() / waterFraction : 1.0e-16);
       }
       candidate.getPhase(aqueous).normalize();
-      double aqueousSeed = Math.min(0.05, 0.5 * candidate.getComponent("water").getz());
+      double aqueousSeed = Math.min(0.05, 0.5 * waterFraction);
       candidate.setBeta(aqueous, aqueousSeed);
       candidate.setBeta(oil, 1.0 - aqueousSeed);
       for (int component = 0; component < candidate.getNumberOfComponents(); component++) {
@@ -4022,11 +4048,18 @@ public class TPmultiflash extends TPflash {
     int numberOfComponents = candidate.getPhase(0).getNumberOfComponents();
     for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
       double feedComposition = candidate.getPhase(0).getComponent(componentIndex).getz();
+      if (!Double.isFinite(feedComposition) || feedComposition < 0.0) {
+        return false;
+      }
       double recoveredComposition = 0.0;
       double referenceLogFugacity = Double.NaN;
       for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
         double composition = candidate.getPhase(phaseIndex).getComponent(componentIndex).getx();
         recoveredComposition += candidate.getBeta(phaseIndex) * composition;
+        // Absent origins have no chemical-potential equality constraint, but must still conserve zero inventory.
+        if (feedComposition == 0.0) {
+          continue;
+        }
         double fugacityCoefficient = candidate.getPhase(phaseIndex).getComponent(componentIndex)
             .getFugacityCoefficient();
         double logFugacity = Math.log(Math.max(composition, Double.MIN_NORMAL)) + Math.log(fugacityCoefficient);

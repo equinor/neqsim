@@ -93,6 +93,61 @@ class TPflashMissingAqueousNearBubblePointTest extends neqsim.NeqSimTest {
   }
 
   /**
+   * Origin labels must not disable the missing-aqueous recovery used by pressure/entropy flashes.
+   *
+   * @param waterFraction total feed water fraction
+   */
+  @ParameterizedTest
+  @ValueSource(doubles = {0.01, 0.025, 0.049})
+  void labelledWaterPreservesAqueousRecovery(double waterFraction) {
+    SystemInterface original = liquidWithWaterFraction(waterFraction);
+    SystemInterface labelled = original.clone();
+    for (int component = 0; component < labelled.getNumberOfComponents(); component++) {
+      String name = labelled.getComponent(component).getComponentName();
+      labelled.changeComponentName(name, name + "_morvin");
+    }
+    assertEquals(waterFraction, TPmultiflash.waterFeedFraction(labelled), 1.0e-12);
+    for (SystemInterface fluid : new SystemInterface[] {original, labelled}) {
+      homogeneousOil(fluid);
+      new TPmultiflash(fluid, false).rescueMetastableOilMissingAqueous();
+      assertAqueousEquilibrium(fluid);
+      fluid.init(3);
+    }
+    assertEquals(original.getEnthalpy(), labelled.getEnthalpy(), 1.0e-6);
+    assertEquals(original.getEntropy(), labelled.getEntropy(), 1.0e-6);
+    assertEquals(original.getBeta(original.getPhaseNumberOfPhase("aqueous")),
+        labelled.getBeta(labelled.getPhaseNumberOfPhase("aqueous")), 1.0e-9);
+    double target = original.getEntropy();
+    for (SystemInterface fluid : new SystemInterface[] {original, labelled}) {
+      fluid.setPressure(4.890360945);
+      new ThermodynamicOperations(fluid).PSflash(target);
+      fluid.init(3);
+      assertEquals(target, fluid.getEntropy(), PSFlash.entropyTolerance(fluid, target));
+    }
+    assertEquals(original.getTemperature(), labelled.getTemperature(), 1.0e-7);
+  }
+
+  /** A zero-inventory component has no fugacity-equality constraint between the material phases. */
+  @Test
+  void absentComponentDoesNotInvalidateAqueousRecovery() {
+    SystemInterface original = liquidWithWaterFraction(0.025);
+    SystemInterface withAbsent = original.clone();
+    withAbsent.addComponent("helium", 0.0);
+    withAbsent.setMixingRule("classic");
+    for (SystemInterface fluid : new SystemInterface[] {original, withAbsent}) {
+      homogeneousOil(fluid);
+      new TPmultiflash(fluid, false).rescueMetastableOilMissingAqueous();
+      assertTrue(fluid.hasPhaseType(PhaseType.AQUEOUS));
+      fluid.init(3);
+    }
+    assertEquals(original.getEnthalpy(), withAbsent.getEnthalpy(), 1.0e-5);
+    assertEquals(original.getEntropy(), withAbsent.getEntropy(), 1.0e-5);
+    for (int phase = 0; phase < withAbsent.getNumberOfPhases(); phase++) {
+      assertEquals(0.0, withAbsent.getPhase(phase).getComponent("helium").getx(), 1.0e-15);
+    }
+  }
+
+  /**
    * Does not create free water when the oil is dry or contains only dissolved water.
    *
    * @param waterFraction overall water mole fraction
