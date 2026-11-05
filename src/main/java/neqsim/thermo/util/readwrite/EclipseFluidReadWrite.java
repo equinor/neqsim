@@ -1462,10 +1462,13 @@ public class EclipseFluidReadWrite {
       // Apply per-component OmegaA overrides when OMEGAA section was present.
       if (!OMEGAA_list.isEmpty()) {
         for (int phaseNum = 0; phaseNum < fluid.getMaxNumberOfPhases(); phaseNum++) {
-          for (int k = 0; k < names.size() && k < OMEGAA_list.size(); k++) {
-            neqsim.thermo.component.ComponentEos comp = (neqsim.thermo.component.ComponentEos) fluid.getPhase(phaseNum)
-                .getComponent(k);
-            comp.setOmegaA(OMEGAA_list.get(k));
+          for (int componentIndex = 0; componentIndex < fluid.getNumberOfComponents(); componentIndex++) {
+            int baseIndex = componentIndex % names.size();
+            if (baseIndex < OMEGAA_list.size()) {
+              neqsim.thermo.component.ComponentEos comp = (neqsim.thermo.component.ComponentEos) fluid
+                  .getPhase(phaseNum).getComponent(componentIndex);
+              comp.setOmegaA(OMEGAA_list.get(baseIndex));
+            }
           }
         }
         fluid.init(0);
@@ -1530,6 +1533,12 @@ public class EclipseFluidReadWrite {
           throw new IllegalArgumentException("VCRITVIS currently requires METRIC input units");
         }
         applyLbcCriticalVolumes(fluid, VCRITVIS, names.size());
+      }
+      for (String componentName : names) {
+        if ("water".equals(mapE300ComponentName(componentName))) {
+          fluid.setMultiPhaseCheck(true);
+          break;
+        }
       }
     } catch (IOException ex) {
       throw new IllegalArgumentException("Failed to read Eclipse fluid file: " + inputFile + ". " + ex.getMessage(),

@@ -729,6 +729,11 @@ SystemInterface fluid = EclipseFluidReadWrite.read("fluid.e300", true);
 SystemInterface fluid = EclipseFluidReadWrite.read("fluid.e300", true, 0.45);
 ```
 
+When an imported E300 slate already contains `H2O` or `water`, both the ordinary
+and repeated named-fluid readers enable the multiphase check automatically. This
+allows subsequent TP flashes to search for a separate aqueous phase. Importing a
+dry slate does not add water or enable this option implicitly.
+
 ### Multi-Fluid Models
 
 When modeling multiple reservoir zones or wells with different compositions but the same EOS characterization, use the `fluidNames` array variant. Each component set gets a unique suffix so they can coexist in one `SystemInterface`:
@@ -738,6 +743,12 @@ String[] zones = {"zone1", "zone2"};
 SystemInterface multiFluid = EclipseFluidReadWrite.read("fluid.e300", zones);
 // Components named: methane_zone1, methane_zone2, C7_zone1, C7_zone2, etc.
 ```
+
+Every labelled component block retains the original per-component EOS parameters,
+including distinct `OMEGAA` overrides and binary interaction coefficients. Origin
+labels do not represent different chemical species. The replicated import tests
+compare each override explicitly and compare phase splits and recycled product
+recoveries against the unlabelled fluid.
 
 ### Pseudo-Name Suffixes
 
@@ -787,7 +798,7 @@ for (int i = 0; i < original.getNumberOfComponents(); i++) {
 | Wrong EOS used                                                | Missing `PRCORR` after `EOS PR` | Add `PRCORR` keyword on the line after `PR /`                |
 | Negative densities or unrealistic properties                  | Missing `SSHIFT` or `PARACHOR`  | Ensure the E300 file includes volume shift and parachor data |
 | Composition does not sum to 1.0                               | E300 file has unnormalized `ZI` | NeqSim normalizes internally, but check for typos            |
-| Water phase not appearing                                     | Water not added                 | Use `read(file, true)` or add water manually                 |
+| Water phase not appearing | Water is absent, or multiphase checking was disabled after import | Add water when required and retain the imported multiphase-check setting |
 | Name collision with multiple wells                            | Same pseudo-names               | Use `wellName` suffix or `fluidNames` array                  |
 | Viscosity not matching PVTsim                                 | Missing `LBCCOEF` or `PEDERSEN` | Ensure viscosity keywords are in the E300 file               |
 
