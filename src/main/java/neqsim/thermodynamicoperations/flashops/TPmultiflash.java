@@ -3713,7 +3713,7 @@ public class TPmultiflash extends TPflash {
     if (!system.doMultiPhaseCheck() || (!singleOil && !gasOil) || system.getMaxNumberOfPhases() < 3
         || !system.allowPhaseShift() || system.isChemicalSystem() || system.hasIons() || system.doSolidPhaseCheck()
         || system.isMultiphaseWaxCheck() || !system.hasComponent("water")
-        || system.getComponent("water").getz() < 0.05) {
+        || system.getComponent("water").getz() <= 0.0) {
       return;
     }
     boolean validReference = isFeasiblePhaseEquilibrium(system);

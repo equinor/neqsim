@@ -132,6 +132,55 @@ class PSFlashEntropyClosureTest {
     }
   }
 
+  /**
+   * Supersaturated cubic-EOS oil finds its aqueous phase before pressure-entropy and enthalpy calculations.
+   *
+   * @param usePr whether to use PR rather than SRK
+   */
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void supersaturatedOilRetainsAqueousEquilibriumThroughPsAndPh(boolean usePr) {
+    SystemInterface homogeneous = usePr ? new SystemPrEos(308.0, 4.0)
+        : new neqsim.thermo.system.SystemSrkEos(308.0, 4.0);
+    homogeneous.addComponent("nC10", 0.993);
+    homogeneous.addComponent("water", 0.007);
+    homogeneous.setMixingRule(2);
+    for (neqsim.thermo.phase.PhaseInterface phase : homogeneous.getPhases()) {
+      if (phase != null && phase.getMixingRule() instanceof neqsim.thermo.mixingrule.EosMixingRulesInterface) {
+        ((neqsim.thermo.mixingrule.EosMixingRulesInterface) phase.getMixingRule()).setBinaryInteractionParameter(0, 1,
+            0.5);
+      }
+    }
+    homogeneous.setMultiPhaseCheck(false);
+    new ThermodynamicOperations(homogeneous).TPflash();
+    homogeneous.init(3);
+    assertEquals(1, homogeneous.getNumberOfPhases());
+
+    SystemInterface inlet = homogeneous.clone();
+    inlet.setMultiPhaseCheck(true);
+    new ThermodynamicOperations(inlet).TPflash();
+    inlet.init(3);
+    assertEquals(2, inlet.getNumberOfPhases());
+    assertTrue(inlet.hasPhaseType("oil"));
+    assertTrue(inlet.hasPhaseType("aqueous"));
+    assertTrue(inlet.getGibbsEnergy() < homogeneous.getGibbsEnergy());
+    assertTrue(inlet.doMultiPhaseCheck());
+    assertEquals(1, homogeneous.getNumberOfPhases());
+
+    SystemInterface outlet = inlet.clone();
+    outlet.setPressure(4.5);
+    new ThermodynamicOperations(outlet).PSflash(inlet.getEntropy());
+    assertState(inlet, outlet, 4.5, inlet.getEntropy("J/kgK"));
+    assertTrue(outlet.getEnthalpy() > inlet.getEnthalpy());
+    double temperature = outlet.getTemperature();
+    double enthalpy = outlet.getEnthalpy();
+    new ThermodynamicOperations(outlet).PHflash(enthalpy);
+    outlet.init(3);
+    assertEquals(temperature, outlet.getTemperature(), 1.0e-5);
+    assertEquals(enthalpy, outlet.getEnthalpy(), 1.0e-5);
+    assertState(inlet, outlet, 4.5, inlet.getEntropy("J/kgK"));
+  }
+
   @Test
   void pureComponentPostconditionRetainsStrictEntropyTolerance() {
     SystemInterface state = fluid("", 298.15);
