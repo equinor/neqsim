@@ -193,6 +193,39 @@ inclined_section_gas_carryover_number,inclined_section_liquid_fallback_potential
 severe_slugging_number,severe_slug_potential
 ```
 
+### Terrain low-point pool time series
+
+`TwoFluidPipeReport.captureLowPointPools(pipe)` groups physical cells by strict internal terrain
+minima. An exactly flat-bottom minimum uses its midpoint cell. Adjacent minima are divided at the
+highest intervening ridge (the first cell wins an exact ridge tie), and the end basins extend to the
+pipe boundaries. A horizontal or monotonic profile returns zero pools; the reporter does not impose
+a pool location.
+
+```java
+List<TwoFluidPipeReport.LowPointPoolSnapshot> pools =
+    TwoFluidPipeReport.newLowPointPoolSnapshotList();
+
+pipe.runTransient(dt, UUID.randomUUID());
+pools.add(TwoFluidPipeReport.captureLowPointPools(pipe));
+TwoFluidPipeReport.writeLowPointPoolCsv(pools, Paths.get("low-point-pools.csv"));
+```
+
+Each row records the one-based pool identifier, zero-based low-point and inclusive basin cell
+indices, terrain position/elevation, oil mass and volume, total liquid volume, static depth at the
+low-point cell, maximum static depth in the basin, maximum absolute gas/oil speeds, and the latest
+accepted hydrocarbon-transfer diagnostics.
+The signed oil interphase rate is positive for condensation into oil and negative for evaporation.
+Interface area, rate, heat scale and trace-fallback fields are `NaN`/`false` until an accepted
+`HydrocarbonPoolTransfer` result exists. The depth is the opt-in volume-preserving horizontal-surface
+diagnostic; inadmissible cell geometry fails explicitly rather than substituting an invented level.
+
+Capture is read-only and allocates defensive section/diagnostic snapshots only when called. Basin
+membership is geometric, while inventory may be zero. Consequently this export can demonstrate
+where computed inventory resides and distinguish drainage from interphase transfer, but it does not
+by itself prove gravity retention, spatial convergence, physical interface area, or a predictive
+evaporation/depletion time. Those claims still require full-cycle balances, mesh/time refinement,
+nearby conditions and independent heat/area/transport qualification.
+
 ### Steady-to-transient handoff and empirical holdup tuning
 
 With an explicit cell-face elevation profile, steady and legacy transient pressure marching
@@ -676,3 +709,4 @@ boundaries and physical evaporation remain separate gates under #3298, #4674 and
 stationary. See the [public analytical record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-interior-pressure/README.md).
 
 The [closed-wall reproduction record](../../src/test/resources/neqsim/process/equipment/pipeline/closed-wall-pressure/README.md) includes exact source provenance, analytical acceptance, all 12–192-cell operator data, and measured RHS cost with shared-runner limitations.
+

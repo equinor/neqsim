@@ -1,5 +1,6 @@
 package neqsim.process.equipment.pipeline.twophasepipe.reporting;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,6 +14,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
+import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.pipeline.twophasepipe.validation.TwoFluidBenchmarkHarness;
 import neqsim.process.equipment.pipeline.twophasepipe.validation.TwoFluidBenchmarkHarness.BenchmarkPoint;
 import neqsim.process.equipment.stream.Stream;
@@ -24,6 +26,73 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 class TwoFluidPipeReportTest {
+
+  @Test
+  void lowPointPoolReportPartitionsTerrainAndAggregatesDiagnostics() {
+    double[] elevations = {2.0, 0.0, 2.0, 1.0, 3.0, 0.5, 2.0};
+    TwoFluidSection[] sections = reportingSections(elevations);
+    double[][][] sources = new double[sections.length][2][2];
+    double[] interfaceArea = new double[sections.length];
+    double[] heatScale = new double[sections.length];
+    boolean[] traceFallback = new boolean[sections.length];
+    for (int cell = 0; cell < sections.length; cell++) {
+      sources[cell][1][0] = 0.01 * (cell + 1);
+      sources[cell][1][1] = -0.002 * (cell + 1);
+      interfaceArea[cell] = cell + 1;
+      heatScale[cell] = 0.9 - 0.1 * cell;
+    }
+    traceFallback[4] = true;
+
+    TwoFluidPipeReport.LowPointPoolSnapshot snapshot = TwoFluidPipeReport.captureLowPointPools(12.5, sections,
+        sources, interfaceArea, heatScale, traceFallback);
+
+    assertEquals(12.5, snapshot.getTimeSeconds(), 0.0);
+    assertArrayEquals(new int[] {1, 2, 3}, snapshot.getPoolId());
+    assertArrayEquals(new int[] {1, 3, 5}, snapshot.getLowPointCell());
+    assertArrayEquals(new int[] {0, 3, 5}, snapshot.getBasinStartCell());
+    assertArrayEquals(new int[] {2, 4, 6}, snapshot.getBasinEndCell());
+    assertArrayEquals(new double[] {60.0, 90.0, 130.0}, snapshot.getOilInventoryKilograms(), 1.0e-12);
+    double area = Math.PI / 4.0;
+    double[] expectedVolume = {area * 1.2, area * 1.8, area * 2.6};
+    assertArrayEquals(expectedVolume, snapshot.getOilInventoryCubicMeters(), 1.0e-12);
+    assertArrayEquals(expectedVolume, snapshot.getLiquidInventoryCubicMeters(), 1.0e-12);
+    assertArrayEquals(new double[] {6.0, 9.0, 13.0}, snapshot.getInterfaceAreaSquareMeters(), 1.0e-12);
+    assertArrayEquals(new double[] {0.48, 0.72, 1.04}, snapshot.getInterphaseOilMassRateKilogramsPerSecond(),
+        1.0e-12);
+    assertArrayEquals(new double[] {0.7, 0.5, 0.3}, snapshot.getMinimumHeatScale(), 1.0e-12);
+    assertArrayEquals(new boolean[] {false, true, false}, snapshot.getTraceAreaFallback());
+    assertTrue(Arrays.stream(snapshot.getLowPointLiquidDepthMeters()).allMatch(value -> value > 0.0));
+    assertTrue(Arrays.stream(snapshot.getMaximumLocalLiquidDepthMeters()).allMatch(value -> value > 0.0));
+    assertArrayEquals(new double[] {2.0, 4.0, 6.0}, snapshot.getMaximumAbsoluteGasVelocityMetersPerSecond(),
+        1.0e-12);
+    assertArrayEquals(new double[] {0.2, 0.4, 0.6}, snapshot.getMaximumAbsoluteOilVelocityMetersPerSecond(),
+        1.0e-12);
+
+    int[] defensiveCopy = snapshot.getLowPointCell();
+    defensiveCopy[0] = 99;
+    assertArrayEquals(new int[] {1, 3, 5}, snapshot.getLowPointCell());
+
+    String csv = TwoFluidPipeReport.toLowPointPoolCsv(Arrays.asList(snapshot));
+    assertTrue(csv.startsWith("time_s,pool_id,low_point_cell,low_point_position_m"));
+    assertEquals(4, csv.split("\\R").length);
+    assertTrue(csv.contains("12.50000000,2,3,"));
+  }
+
+  @Test
+  void horizontalProfileDoesNotManufactureLowPointPools() {
+    TwoFluidSection[] sections = reportingSections(new double[] {0.0, 0.0, 0.0, 0.0});
+
+    TwoFluidPipeReport.LowPointPoolSnapshot snapshot =
+        TwoFluidPipeReport.captureLowPointPools(0.0, sections, null);
+
+    assertEquals(0, snapshot.getPoolId().length);
+    String csv = TwoFluidPipeReport.toLowPointPoolCsv(Arrays.asList(snapshot));
+    assertEquals(1, csv.split("\\R").length);
+
+    TwoFluidPipeReport.LowPointPoolSnapshot flatMinimum = TwoFluidPipeReport.captureLowPointPools(0.0,
+        reportingSections(new double[] {2.0, 0.0, 0.0, 2.0}), null);
+    assertArrayEquals(new int[] {1}, flatMinimum.getLowPointCell());
+  }
 
   @Test
   void testReportExportsProfilesSummariesAndComparisonTable() throws Exception {
@@ -175,6 +244,19 @@ class TwoFluidPipeReportTest {
     return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
   }
 
+  private TwoFluidSection[] reportingSections(double[] elevations) {
+    TwoFluidSection[] sections = new TwoFluidSection[elevations.length];
+    for (int cell = 0; cell < sections.length; cell++) {
+      sections[cell] = new TwoFluidSection(5.0 + 10.0 * cell, 10.0, 1.0, 0.0);
+      sections[cell].setElevation(elevations[cell]);
+      sections[cell].setOilHoldup(0.02 * (cell + 1));
+      sections[cell].setOilMassPerLength(cell + 1);
+      sections[cell].setGasVelocity(-cell);
+      sections[cell].setOilVelocity(0.1 * cell);
+    }
+    return sections;
+  }
+
   private TwoFluidPipe runTwoFluidPipe(String name, SystemInterface fluid, double flowKgHr, double length,
       double diameter, int sections) {
     Stream inlet = new Stream(name + "-feed", fluid.clone());
@@ -243,3 +325,4 @@ class TwoFluidPipeReportTest {
     return fluid;
   }
 }
+
