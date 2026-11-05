@@ -133,23 +133,20 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
         loc_ATT = calcATT(this, temperature, pressure, numberOfComponents);
       }
 
-      double sumHydrocarbons = 0.0;
-      double sumAqueous = 0.0;
-      for (int i = 0; i < numberOfComponents; i++) {
-        if ((getComponent(i).isHydrocarbon() || getComponent(i).isInert() || getComponent(i).isIsTBPfraction())
-            && !getComponent(i).getName().equals("water") && !getComponent(i).getName().equals("water_PC")) {
-          sumHydrocarbons += getComponent(i).getx();
-        } else {
-          sumAqueous += getComponent(i).getx();
-        }
-      }
-
       if (getVolume() / getB() > 1.75) {
         setType(PhaseType.GAS);
-      } else if (sumHydrocarbons > sumAqueous) {
-        setType(PhaseType.OIL);
       } else {
-        setType(PhaseType.AQUEOUS);
+        double sumHydrocarbons = 0.0;
+        double sumAqueous = 0.0;
+        for (int i = 0; i < numberOfComponents; i++) {
+          if ((getComponent(i).isHydrocarbon() || getComponent(i).isInert() || getComponent(i).isIsTBPfraction())
+              && !getComponent(i).getName().equals("water") && !getComponent(i).getName().equals("water_PC")) {
+            sumHydrocarbons += getComponent(i).getx();
+          } else {
+            sumAqueous += getComponent(i).getx();
+          }
+        }
+        setType(sumHydrocarbons > sumAqueous ? PhaseType.OIL : PhaseType.AQUEOUS);
       }
 
       // if ((hasComponent("water") && getVolume() / getB() < 1.75 &&
@@ -417,8 +414,11 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
-    double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
+    // Composition is fixed during this volume solve; calculate the liquid seed only when needed.
+    double liquidBonV = pt == PhaseType.GAS ? Double.NaN
         : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+    double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
+        : liquidBonV;
     BonV = Math.max(1.0e-4, Math.min(1.0 - 1.0e-4, BonV));
 
     double BonVold = BonV;
@@ -460,7 +460,10 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
         BonV += d2;
         double hnew = h + d2 * dh;
         if (Math.abs(hnew) > Math.abs(h)) {
-          BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+          if (pt == PhaseType.GAS && Double.isNaN(liquidBonV)) {
+            liquidBonV = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+          }
+          BonV = pt == PhaseType.GAS ? liquidBonV
               : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         }
       } else {
@@ -482,7 +485,10 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       if (iterations > 150 && error > errorOld && !changeFase) {
         changeFase = true;
         BonVold = 10.0;
-        BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+        if (pt == PhaseType.GAS && Double.isNaN(liquidBonV)) {
+          liquidBonV = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+        }
+        BonV = pt == PhaseType.GAS ? liquidBonV
             : pressure * getB() / (numberOfMolesInPhase * temperature * R);
       }
 
