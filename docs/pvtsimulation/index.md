@@ -23,3 +23,6 @@ removes gas while retaining oil/aqueous inventories, with independent synthetic 
 
 Dry [phase-changing explicit-cell experiments](depletion_pvt_generation.md#dry-phase-changing-fixed-cell-experiment)
 preserve absent oil, selected protocol metadata and independently qualified binary paths.
+
+Wet-gas [gas/aqueous fixed-cell transitions](depletion_pvt_generation.md#wet-gas-fixed-cell-aqueous-transitions)
+retain explicit reference provenance, gas-carried water and actual separator inventories without an oil phase.

@@ -304,6 +304,8 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     private final double referenceVolumeM3;
     /** Explicitly selected dry gas/oil transition protocol; false for the unchanged-family route. */
     private final boolean dryPhaseChangesAllowed;
+    /** Explicit gas/aqueous protocol; absent aqueous properties are never assigned. */
+    private final boolean wetGasPhaseChangesAllowed;
     private final DepletionSnapshot[] snapshots;
 
     /**
@@ -314,10 +316,12 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
      * @param referenceVolumeM3 initial occupied EOS volume, reservoir m3
      * @param snapshots complete native states and component withdrawals
      * @param dryPhaseChangesAllowed true only for the explicit dry phase-changing protocol
+     * @param wetGasPhaseChangesAllowed true only for the explicit gas/aqueous protocol
      */
     private FixedCellResult(double temperatureK, double referencePressureBara, double referenceVolumeM3,
-        DepletionSnapshot[] snapshots, boolean dryPhaseChangesAllowed) {
+        DepletionSnapshot[] snapshots, boolean dryPhaseChangesAllowed, boolean wetGasPhaseChangesAllowed) {
       this.dryPhaseChangesAllowed = dryPhaseChangesAllowed;
+      this.wetGasPhaseChangesAllowed = wetGasPhaseChangesAllowed;
       this.temperatureK = temperatureK;
       this.referencePressureBara = referencePressureBara;
       this.referenceVolumeM3 = referenceVolumeM3;
@@ -358,6 +362,15 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
      */
     public boolean allowsDryPhaseChanges() {
       return dryPhaseChangesAllowed;
+    }
+
+    /**
+     * Identifies the explicitly selected gas/aqueous phase-changing protocol.
+     *
+     * @return true only for the wet-gas initial-occupied-volume convention
+     */
+    public boolean allowsWetGasPhaseChanges() {
+      return wetGasPhaseChangesAllowed;
     }
 
     /**
@@ -429,6 +442,30 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
+   * Replays a declared gas/aqueous fixed-cell experiment allowing aqueous disappearance.
+   *
+   * <p>
+   * The initial occupied EOS volume defines the cell with zero initial withdrawal. At later pressures only equilibrium
+   * gas is removed; water present in that gas leaves with it. Aqueous liquid may disappear, but gas must remain;
+   * aqueous appearance or reappearance, oil and other phases are rejected. Absent aqueous compositions and properties
+   * are never assigned. All existing equilibrium, volume, component and critical-degeneracy gates remain mandatory. The
+   * whole path runs on a serialized copy, including on failure. No EOS parameter or shared flash default changes. This
+   * is an explicit laboratory convention, not a wet upper-dew estimate, saturation-normalized CVD, black-oil conversion
+   * or reservoir-production prediction. Numerical qualification is synthetic binary SRK methane/water; the caller must
+   * independently accept its EOS and full experiment protocol.
+   * </p>
+   *
+   * @param temperatureK finite positive experiment temperature, K
+   * @param pressuresBara strictly decreasing positive absolute pressures, at least two points
+   * @return immutable reference, protocol identity and completed native states
+   * @throws IllegalArgumentException if inputs or inventories are invalid
+   * @throws IllegalStateException if gas is absent, oil is present or any numerical/domain check fails
+   */
+  public FixedCellResult runWetGasFixedCellDepletion(double temperatureK, double[] pressuresBara) {
+    return runFixedCellProtocol(temperatureK, pressuresBara, false, true);
+  }
+
+  /**
    * Runs one explicit occupied-volume protocol transactionally without changing legacy results.
    *
    * @param temperatureK experiment temperature, K
@@ -438,6 +475,20 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
    */
   private FixedCellResult runFixedCellProtocol(double temperatureK, double[] pressuresBara,
       boolean dryPhaseChangesAllowed) {
+    return runFixedCellProtocol(temperatureK, pressuresBara, dryPhaseChangesAllowed, false);
+  }
+
+  /**
+   * Evaluates one bounded occupied-volume domain without altering legacy results.
+   *
+   * @param temperatureK experiment temperature, K
+   * @param pressuresBara decreasing absolute pressures, bara
+   * @param dryPhaseChangesAllowed dry gas/oil protocol
+   * @param wetGasPhaseChangesAllowed gas/aqueous protocol without oil
+   * @return complete immutable native evidence
+   */
+  private FixedCellResult runFixedCellProtocol(double temperatureK, double[] pressuresBara,
+      boolean dryPhaseChangesAllowed, boolean wetGasPhaseChangesAllowed) {
     if (!Double.isFinite(temperatureK) || temperatureK <= 0 || pressuresBara == null || pressuresBara.length < 2) {
       throw new IllegalArgumentException("Positive temperature and complete fixed-cell pressure schedule required");
     }
@@ -482,10 +533,17 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       if (dryPhaseChangesAllowed && Arrays.asList(present).contains("aqueous")) {
         throw new IllegalStateException("Dry phase-changing fixed-cell depletion does not support aqueous phases");
       }
+      if (wetGasPhaseChangesAllowed && Arrays.asList(present).contains("oil")) {
+        throw new IllegalStateException("Wet-gas fixed-cell depletion does not support oil phases");
+      }
+      boolean aqueousPresent = wetGasPhaseChangesAllowed && Arrays.asList(present).contains("aqueous");
+      if (wetGasPhaseChangesAllowed && row > 0 && aqueousPresent && !Arrays.asList(family).contains("aqueous")) {
+        throw new IllegalStateException("Aqueous appearance is not qualified in the wet-gas fixed-cell protocol");
+      }
       if (row == 0) {
         family = present;
         trial.saturationVolume = cell.getCorrectedVolume();
-      } else if (!dryPhaseChangesAllowed && !Arrays.equals(family, present)) {
+      } else if (!dryPhaseChangesAllowed && !wetGasPhaseChangesAllowed && !Arrays.equals(family, present)) {
         throw new IllegalStateException("Fixed-cell phase-family change is not qualified at row " + row);
       }
       trial.restoreSaturationVolume(true);
@@ -493,8 +551,14 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       if (dryPhaseChangesAllowed && Arrays.asList(retainedFamily).contains("aqueous")) {
         throw new IllegalStateException("Dry phase-changing fixed-cell depletion does not support aqueous phases");
       }
-      if (!dryPhaseChangesAllowed && !Arrays.equals(family, retainedFamily)) {
+      if (!dryPhaseChangesAllowed && !wetGasPhaseChangesAllowed && !Arrays.equals(family, retainedFamily)) {
         throw new IllegalStateException("Fixed-cell withdrawal changed the phase family at row " + row);
+      }
+      if (wetGasPhaseChangesAllowed && !aqueousPresent && Arrays.asList(retainedFamily).contains("aqueous")) {
+        throw new IllegalStateException("Aqueous appearance during withdrawal is not qualified");
+      }
+      if (wetGasPhaseChangesAllowed && Arrays.asList(retainedFamily).contains("oil")) {
+        throw new IllegalStateException("Wet-gas withdrawal produced an unsupported oil phase");
       }
       if (Math.abs(cell.getCorrectedVolume() / trial.saturationVolume - 1) > CELL_VOLUME_RELATIVE_TOLERANCE) {
         throw new IllegalStateException("Fixed-cell volume closure failed at row " + row);
@@ -510,8 +574,12 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         }
       }
       previous = retained;
+      if (wetGasPhaseChangesAllowed) {
+        family = retainedFamily;
+      }
     }
-    return new FixedCellResult(temperatureK, schedule[0], trial.saturationVolume, completed, dryPhaseChangesAllowed);
+    return new FixedCellResult(temperatureK, schedule[0], trial.saturationVolume, completed, dryPhaseChangesAllowed,
+        wetGasPhaseChangesAllowed);
   }
 
   /**
