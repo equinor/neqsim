@@ -28,15 +28,11 @@ import neqsim.NeqSimTest;
  * @version 1.0
  */
 class EclipseE300ImportQuickStartDocumentationTest extends NeqSimTest {
-  private static final Path GUIDE =
-      Paths.get("docs", "pvtsimulation", "eclipse_e300_fluid_import.md");
-  private static final Path WATER_FIXTURE =
-      Paths.get("src", "test", "java", "neqsim", "thermo", "util", "readwrite",
-          "fluid_water.E300");
-  private static final String QUICK_START_MARKER =
-      "<!-- e300-import-example: java-quickstart -->";
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
+  private static final Path GUIDE = Paths.get("docs", "pvtsimulation", "eclipse_e300_fluid_import.md");
+  private static final Path WATER_FIXTURE = Paths.get("src", "test", "java", "neqsim", "thermo", "util", "readwrite",
+      "fluid_water.E300");
+  private static final String QUICK_START_MARKER = "<!-- e300-import-example: java-quickstart -->";
+  private static final Pattern JAVA_FENCE = Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
 
   @TempDir
   Path temporaryDirectory;
@@ -56,8 +52,7 @@ class EclipseE300ImportQuickStartDocumentationTest extends NeqSimTest {
     }
     assertEquals(1, fenceCount, "The guide must publish one executable Java fence");
 
-    String source =
-        markedExampleSource(markdown, QUICK_START_MARKER, "EclipseE300ImportQuickStart");
+    String source = markedExampleSource(markdown, QUICK_START_MARKER, "EclipseE300ImportQuickStart");
     assertFalse(source.contains("System.out"));
     assertFalse(source.contains("System.err"));
     assertTrue(source.contains("EclipseFluidReadWrite.read(input.toString(), \"\")"));
@@ -105,16 +100,12 @@ class EclipseE300ImportQuickStartDocumentationTest extends NeqSimTest {
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "A JDK is required to validate documentation examples");
-    String classpath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    String classpath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
     StringWriter diagnostics = new StringWriter();
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
       Boolean successful = compiler
-          .getTask(diagnostics, manager, null,
-              Arrays.asList("-source", "8", "-target", "8", "-proc:none", "-classpath", classpath,
-                  "-d", classes.toString()),
-              null, manager.getJavaFileObjects(javaFile.toFile()))
+          .getTask(diagnostics, manager, null, Arrays.asList("-source", "8", "-target", "8", "-proc:none", "-classpath",
+              classpath, "-d", classes.toString()), null, manager.getJavaFileObjects(javaFile.toFile()))
           .call();
       assertTrue(successful, diagnostics.toString());
     }
