@@ -1,6 +1,7 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
@@ -128,6 +129,64 @@ class PSFlashEntropyClosureTest {
       for (double entropy : new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}) {
         SystemInterface state = fluid(impurity, 298.15);
         assertThrows(IllegalArgumentException.class, () -> new ThermodynamicOperations(state).PSflash(entropy));
+      }
+    }
+  }
+
+  /**
+   * A qualified minor-liquid seed recovers only a lower-Gibbs split for the same conserved fluid.
+   *
+   * @throws Exception if the bounded internal recovery cannot be inspected
+   */
+  @Test
+  void minorLiquidContinuationRequiresOptInAndConservedInventory() throws Exception {
+    SystemInterface seed = new neqsim.thermo.system.SystemSrkEos(320.0, 11.0);
+    seed.addComponent("methane", 0.90);
+    seed.addComponent("ethane", 0.09);
+    seed.addComponent("nC10", 0.01);
+    seed.setMixingRule(2);
+    new ThermodynamicOperations(seed).TPflash();
+    seed.init(2);
+    assertEquals(2, seed.getNumberOfPhases());
+    assertTrue(Math.min(seed.getBeta(0), seed.getBeta(1)) < 0.01);
+    double originalSeedEntropy = seed.getEntropy();
+    java.lang.reflect.Method capture = TPflash.class.getDeclaredMethod("captureMinorLiquidContinuationSeed");
+    java.lang.reflect.Method recover = TPflash.class.getDeclaredMethod("recoverMinorLiquidContinuation",
+        SystemInterface.class);
+    capture.setAccessible(true);
+    recover.setAccessible(true);
+    TPflash seedFlash = new TPflash(seed);
+    assertNull(capture.invoke(seedFlash));
+    seedFlash.setConservativeHomogeneousRecoveryAllowed(true);
+    SystemInterface captured = (SystemInterface) capture.invoke(seedFlash);
+    assertEquals(originalSeedEntropy, captured.getEntropy(), 1.0e-10);
+
+    for (boolean enabled : new boolean[] {false, true}) {
+      for (boolean changedAmount : new boolean[] {false, true}) {
+        SystemInterface state = seed.clone();
+        state.setNumberOfPhases(1);
+        state.setBeta(0, 1.0);
+        for (int component = 0; component < state.getNumberOfComponents(); component++) {
+          state.getPhase(0).getComponent(component).setx(state.getComponent(component).getz());
+        }
+        if (changedAmount) {
+          state.setTotalNumberOfMoles(2.0 * seed.getTotalNumberOfMoles());
+        }
+        state.init(2);
+        double gasGibbs = state.getGibbsEnergy();
+        TPflash flash = new TPflash(state);
+        flash.setConservativeHomogeneousRecoveryAllowed(enabled);
+        recover.invoke(flash, captured);
+        state.init(2);
+        if (enabled && !changedAmount) {
+          assertState(seed, state, 11.0, seed.getEntropy("J/kgK"));
+          assertEquals(2, state.getNumberOfPhases());
+          assertTrue(state.getGibbsEnergy() < gasGibbs);
+          assertEquals(seed.getGibbsEnergy(), state.getGibbsEnergy(), 1.0e-7);
+        } else {
+          assertEquals(1, state.getNumberOfPhases());
+        }
+        assertEquals(originalSeedEntropy, captured.getEntropy(), 1.0e-10);
       }
     }
   }
