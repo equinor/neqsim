@@ -290,8 +290,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   private long transientEnergyBalanceEpoch;
 
   /**
-   * Opt-in conservative discrete energy integration. Disabled preserves the legacy
-   * step-from-published-state equation exactly.
+   * Opt-in conservative discrete energy integration. Disabled preserves the legacy step-from-published-state equation
+   * exactly.
    */
   private boolean conservativeTransientEnergyIntegrationEnabled;
 
@@ -304,9 +304,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * <p>
    * When enabled, the first accepted equation is baselined from the current vessel internal energy. Each subsequent
    * target is the prior exact target plus the consumed boundary-energy rate multiplied by the physical timestep. The
-   * existing single VU flash is retained; its accepted local numerical defect is therefore corrected in the next
-   * target instead of being accumulated. No tolerance is hidden or changed. Disabling this policy preserves the
-   * legacy equation based directly on the published post-flash energy.
+   * existing single VU flash is retained; its accepted local numerical defect is therefore corrected in the next target
+   * instead of being accumulated. No tolerance is hidden or changed. Disabling this policy preserves the legacy
+   * equation based directly on the published post-flash energy.
    * </p>
    *
    * @param enabled true to enable; changing the selection begins a new unbaselined integration epoch
@@ -314,8 +314,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    */
   public void setConservativeTransientEnergyIntegrationEnabled(boolean enabled) {
     if (enabled && getClass() != Separator.class) {
-      throw new UnsupportedOperationException("Conservative transient energy integration supports exact Separator only; "
-          + getClass().getName() + " has no independently qualified energy contract");
+      throw new UnsupportedOperationException(
+          "Conservative transient energy integration supports exact Separator only; " + getClass().getName()
+              + " has no independently qualified energy contract");
     }
     if (conservativeTransientEnergyIntegrationEnabled != enabled) {
       conservativeTransientEnergyIntegrationEnabled = enabled;
@@ -5171,4 +5172,3 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
   }
 }
-
