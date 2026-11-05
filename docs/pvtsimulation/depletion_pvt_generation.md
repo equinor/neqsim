@@ -406,6 +406,15 @@ verify this energy calculation; they do not qualify a new depletion path or an
 independently calibrated or measured fluid. See the frozen EOS-control scope in
 `src/test/resources/neqsim/pvtsimulation/fixed-cell-feasible-gibbs/`.
 
+Precise occupied-volume restoration reuses the already flashed, density-initialized
+and refined endpoint for its first volume check. It flashes again after any gas
+withdrawal. This avoids perturbing a qualified state before production, including
+the bounded zero-inventory registration controls in `FixedCellInitialStateTest`.
+Zero registered components retain exactly zero moles; the existing equilibrium,
+volume and component bounds remain unchanged. The legacy saturation-scan route
+keeps its existing flash sequence. See the reproducible initial-state evidence in
+`src/test/resources/neqsim/pvtsimulation/fixed-cell-initial-state/`.
+
 This explicit initial-volume convention does **not** infer a wet upper dew point,
 normalize measured PVT to saturation, replace `replayNative`'s upper-dew protocol,
 or extend modified-black-oil conversion. Existing `replayNative(..., Path.CVD, ...)`

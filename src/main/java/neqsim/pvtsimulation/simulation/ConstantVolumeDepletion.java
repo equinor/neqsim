@@ -225,23 +225,28 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   /**
    * Restores the occupied cell with optional precision for the explicit-reference experiment only.
    *
-   * @param precise true to refine equilibrium and use a tighter volume stopping criterion
+   * @param precise true for an already flashed, density-initialized and refined endpoint
+   * @see #runFixedCellProtocol(double, double[], boolean)
    */
   private void restoreSaturationVolume(boolean precise) {
     for (int iteration = 0; iteration < MAX_CELL_VOLUME_ITERATIONS; iteration++) {
-      try {
-        thermoOps.TPflash();
-      } catch (Exception ex) {
-        String message = String.format(Locale.ROOT,
-            "CVD cell-volume restoration TP flash failed at pressure %.6f bara, iteration %d.",
-            getThermoSystem().getPressure("bara"), iteration);
-        logger.error(message, ex);
-        throw new IllegalStateException(message, ex);
-      }
-      getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+      // Precise entry is already flashed, density-initialized and refined by runFixedCellProtocol.
+      // Reflashing that unchanged state can perturb zero/trace inventories before any withdrawal.
+      if (!precise || iteration > 0) {
+        try {
+          thermoOps.TPflash();
+        } catch (Exception ex) {
+          String message = String.format(Locale.ROOT,
+              "CVD cell-volume restoration TP flash failed at pressure %.6f bara, iteration %d.",
+              getThermoSystem().getPressure("bara"), iteration);
+          logger.error(message, ex);
+          throw new IllegalStateException(message, ex);
+        }
+        getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
-      if (precise) {
-        refineFixedCellEquilibrium(getThermoSystem());
+        if (precise) {
+          refineFixedCellEquilibrium(getThermoSystem());
+        }
       }
       double currentVolume = getThermoSystem().getCorrectedVolume();
       double relativeResidual = (currentVolume - saturationVolume) / saturationVolume;
