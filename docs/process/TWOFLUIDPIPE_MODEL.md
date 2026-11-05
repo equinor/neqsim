@@ -66,7 +66,10 @@ finite-rate evaporation. It does not alter holdup, conservative inventories,
 friction or transfer area used by the transient solver. Neighboring cell planes
 need not share one global level. The straight-cell arclength abstraction excludes
 capillarity and curved-pipe volume corrections. Invalid/near-vertical or
-unresolvable cases fail explicitly. See the
+unresolvable cases fail explicitly. Long inclined trace pools are solved from their small positive
+leading-edge depth, rather than reconstructing that depth by subtracting nearly equal centre and
+slope-range values. This preserves representable wedge volume and area without an inventory floor;
+traces below floating-point resolution still fail explicitly. See the
 [reporting guide](../wiki/two_fluid_reporting_and_validation#static-subcell-depth-and-area-diagnostic)
 for units, supported limits and executable regression evidence.
 
@@ -700,10 +703,12 @@ transfer remains a separate owner. `getLastHydrocarbonPoolTransferResult()` expo
 constants, interface areas, pre-limit heat, heat scales and donor-limit activation. The hydrostatic
 option uses the existing volume-preserving horizontal-surface reconstruction for each inclined cell.
 A zero-area gas cell with a positive equilibrium oil target uses that target geometry only for the
-appearance step. If an accepted inclined trace is below the reconstruction's relative-volume
-resolution, the result reports `getUnresolvedTraceAreaFallback()` and uses the local stratified chord
-area; it does not delete, seed or clip component inventory. This is an explicit subgrid area
-regularization, not evidence for an annular film, slug front or moving-pig interface.
+appearance step. The reconstruction retains the leading-edge depth of representable inclined trace
+wedges, including the qualified `1e-30` holdup case in a 416.67 m cell. If a still smaller accepted
+trace is below floating-point relative-volume resolution, the result reports
+`getUnresolvedTraceAreaFallback()` and uses the local stratified chord area; it does not delete, seed
+or clip component inventory. This last-resort subgrid regularization is not evidence for an annular
+film, slug front or moving-pig interface.
 
 The analytical gates cover zero drive/area, independent species conductance, donor and heat limits,
 unseeded oil appearance, exponential time-step refinement, component conservation and conservative
@@ -725,20 +730,21 @@ The declared finite-heat rich-gas cycle completes 780 s on 12 and 24 cells with 
 evaporation heat: 120 s gas-only blowdown, 120 s closed settling, 420 s same-composition inlet
 refill at 1000 kg/s with the outlet closed, then 120 s closed hold. The new run uses hydrostatic
 pool area, a 26 mm steel wall (7850 kg/m3, 500 J/(kg K)), 4 W/(m2 K) wall/seabed exchange and a
-277.15 K environment. Peak oil inventories are 8,330.683 and 6,429.568 kg; final oil is 8,116.001
-and 6,144.303 kg. The 22.82% peak and 24.29% final spatial differences are numerical screening,
-not a converged predictive band. Maximum resolved areas are 187.876/101.227 m2 and maximum wall
-temperature changes are 43.223/45.037 K. Minimum heat scales of 1.089e-3/8.093e-4 prove that the
-100 W/m kinetic limit is active; both meshes report the trace-area fallback. The cycle crosses the dense-root $V/B=1.75$
+277.15 K environment. Peak oil inventories are 8,329.992 and 6,429.013 kg; final oil is 8,115.392
+and 6,143.782 kg. The 22.82% peak and 24.29% final spatial differences fail the predeclared 10%
+gate. Maximum resolved areas are 187.874/101.227 m2 and maximum wall-temperature changes are
+43.222/45.037 K. Minimum heat scales of 1.089e-3/8.093e-4 prove that the 100 W/m kinetic limit is
+active; both meshes now resolve every trace wedge without fallback. Refill pressure peak-to-peak
+differs by 0.45%, but rate, excess-variation and ringing metrics differ by about 45-48%. The cycle crosses the dense-root $V/B=1.75$
 diagnostic-label transition with the configured liquid root, positive compressibility and recovery
 Jacobian retained; no phase relabeling, mass clipping or guard weakening is used. See the
 [qualification receipt](../../src/test/resources/neqsim/process/pipeline/hydrocarbon-pool-transfer/README.md).
 
 These changes advance a wall-inventory shutdown/cooldown/restart screening path, but they do not
-complete physical restart qualification. Independent public rate/thermal data, tighter mesh/time
-convergence, a restart-opening surge band, repeated-cycle evidence and the unchanged five-second
-riser matrix remain open. Moving-pig volume/flux/work coupling is a separate moving-boundary
-conservation algorithm and is not implemented here.
+complete physical restart qualification. Mesh-insensitive pool-area/source coupling, independent
+public rate/thermal data, time convergence, a restart-opening surge band, repeated-cycle evidence
+and the unchanged five-second riser matrix remain open. Moving-pig volume/flux/work coupling is a
+separate moving-boundary conservation algorithm and is withheld while this restart gate fails.
 
 `getLastConservativeEnergyReport()` exposes the fluid first-law ledger and separate maximum
 relative occupied-volume and published-state energy residuals. Its signed residual is final

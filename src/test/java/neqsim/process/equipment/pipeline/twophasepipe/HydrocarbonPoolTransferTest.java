@@ -84,7 +84,7 @@ class HydrocarbonPoolTransferTest {
   }
 
   @Test
-  void unresolvedInclinedTraceUsesReportedStratifiedAreaWithoutInventoryClipping() throws Exception {
+  void inclinedTraceUsesResolvedHydrostaticWedgeWithoutInventoryClipping() throws Exception {
     Fixture fixture = nonequilibriumFixture();
     fixture.cells[0].setInclination(0.1);
     fixture.cells[0].setGasHoldup(1.0 - 1.0e-30);
@@ -94,8 +94,8 @@ class HydrocarbonPoolTransferTest {
             new double[] {5.0e5, 3.0e5}, Double.POSITIVE_INFINITY)
         .calculate(fixture.transport, fixture.cells, new SystemInterface[] {fixture.equilibrium}, 0.01);
 
-    assertTrue(result.getUnresolvedTraceAreaFallback()[0]);
-    assertTrue(result.getInterfaceAreasSquareMetres()[0] >= 0.0);
+    assertFalse(result.getUnresolvedTraceAreaFallback()[0]);
+    assertTrue(result.getInterfaceAreasSquareMetres()[0] > 0.0);
   }
 
   @Test

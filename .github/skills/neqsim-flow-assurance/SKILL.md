@@ -709,11 +709,16 @@ for (double qgMSm3d : gasRates) {
 > energy-admissibility guards remain active. Do not clip composition or change
 > the configured root to manufacture a restart result.
 > The opt-in hydrostatic-pool mode uses volume-preserving inclined-cell area,
-> reports equilibrium appearance and a sub-resolution stratified trace fallback,
+> retains representable trace-wedge leading depth without a liquid floor, reports equilibrium
+> appearance and any still-sub-resolution stratified trace fallback,
 > and can retain an explicitly initialized wall profile across event intervals.
-> Its wall-coupled 12/24-cell cycle changes wall temperature by 43.223/45.037 K
-> but retains 22.82%/24.29% peak/final oil mesh differences. Treat that as a
-> screening prerequisite, not physical restart, public validation or pigging.
+> Its wall-coupled 12/24-cell cycle changes wall temperature by 43.222/45.037 K
+> but retains 22.82%/24.29% peak/final oil mesh differences despite zero trace-area fallback;
+> rate and unfiltered ringing metrics differ by roughly 45-48%. This fails the 10% restart
+> screening gate and cannot be used as an inlet condition for coupled pigging.
+> Record refill/valve-opening pressure windows with
+> `TwoFluidPipeReport.analyzePressureTrace(...)`; its unfiltered ringing metrics are numerical
+> diagnostics, not an independently validated surge limit.
 >
 > **Coupled component/phase/thermal slug transport has a narrower envelope.**
 > For the conservative Lagrangian slug/film path, named-component phase sources

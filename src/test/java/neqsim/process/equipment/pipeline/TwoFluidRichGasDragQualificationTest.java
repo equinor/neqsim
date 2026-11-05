@@ -11,6 +11,7 @@ import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport.Phase;
 import neqsim.process.equipment.pipeline.twophasepipe.HydrocarbonPoolTransfer;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
+import neqsim.process.equipment.pipeline.twophasepipe.reporting.TwoFluidPipeReport;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -42,24 +43,32 @@ class TwoFluidRichGasDragQualificationTest {
   void finiteRatePoolCompletesBlowdownSettleRefillAndHold() throws java.io.IOException {
     double[] coarse = runFiniteRatePoolCycle(12, 0.5);
     double[] refined = runFiniteRatePoolCycle(24, 0.5);
+    double relativePeakOilDifference = Math.abs(coarse[0] - refined[0]) / Math.max(coarse[0], refined[0]);
     double relativeFinalOilDifference = Math.abs(coarse[1] - refined[1]) / Math.max(coarse[1], refined[1]);
-    assertTrue(relativeFinalOilDifference < 1.0,
-        "The two full-cycle meshes must retain finite oil inventories of the same order");
+    String csv = "cells,dt_s,heat_supply_w_per_m,peak_oil_kg,final_oil_kg,minimum_heat_scale,"
+        + "maximum_interface_area_m2,maximum_wall_temperature_change_k,trace_area_fallback,"
+        + "refill_pressure_peak_to_peak_pa,refill_max_pressure_rate_pa_s,refill_excess_variation_pa,"
+        + "refill_ringing_ratio,refill_direction_reversals\n12,0.5,100," + csvValues(coarse) + "\n24,0.5,100,"
+        + csvValues(refined) + "\n";
+    java.nio.file.Files.write(java.nio.file.Paths.get("target/hydrocarbon-pool-cycle-refinement.csv"),
+        csv.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    assertTrue(relativePeakOilDifference < 0.1,
+        "The two full-cycle meshes must agree within the predeclared 10% peak-oil spatial gate; observed="
+            + relativePeakOilDifference);
+    assertTrue(relativeFinalOilDifference < 0.1,
+        "The two full-cycle meshes must agree within the predeclared 10% final-oil spatial gate; observed="
+            + relativeFinalOilDifference);
     logger.info("Finite-rate 780 s cycle: 12/24-cell peak oil={}/{}, final oil={}/{}, difference={} %", coarse[0],
         refined[0], coarse[1], refined[1], 100.0 * relativeFinalOilDifference);
     assertTrue(coarse[3] > 0.0 && refined[3] > 0.0,
         "The resolved hydrostatic pool must expose a finite gas/oil interface");
     assertTrue(coarse[4] > 0.0 && refined[4] > 0.0,
         "The wall thermal inventory must respond during the accepted event cycle");
-    assertEquals(1.0, coarse[5], 0.0, "The coarse cycle must cross the explicit trace-area fallback");
-    assertEquals(1.0, refined[5], 0.0, "The refined cycle must cross the explicit trace-area fallback");
-    String csv = "cells,dt_s,heat_supply_w_per_m,peak_oil_kg,final_oil_kg,minimum_heat_scale,"
-        + "maximum_interface_area_m2,maximum_wall_temperature_change_k,trace_area_fallback\n12,0.5,100," + coarse[0]
-        + "," + coarse[1] + "," + coarse[2] + "," + coarse[3] + "," + coarse[4] + "," + coarse[5] + "\n24,0.5,100,"
-        + refined[0] + "," + refined[1] + "," + refined[2] + "," + refined[3] + "," + refined[4] + "," + refined[5]
-        + "\n";
-    java.nio.file.Files.write(java.nio.file.Paths.get("target/hydrocarbon-pool-cycle-refinement.csv"),
-        csv.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    assertEquals(0.0, coarse[5], 0.0, "The coarse cycle must resolve every accepted trace wedge");
+    assertEquals(0.0, refined[5], 0.0, "The refined cycle must resolve every accepted trace wedge");
+    for (int metric = 6; metric < coarse.length; metric++) {
+      assertTrue(Double.isFinite(coarse[metric]) && Double.isFinite(refined[metric]));
+    }
   }
 
   /** Run one complete declared-parameter cycle and return peak/final oil inventory. */
@@ -115,7 +124,11 @@ class TwoFluidRichGasDragQualificationTest {
 
     pipe.setInletBoundaryCondition(TwoFluidPipe.BoundaryCondition.CONSTANT_FLOW);
     pipe.setInletMassFlow(1000.0, "kg/sec");
-    for (int step = 0; step < (int) Math.round(420.0 / dt); step++) {
+    int refillSteps = (int) Math.round(420.0 / dt);
+    double[] refillTimes = new double[refillSteps + 1];
+    double[] refillInletPressures = new double[refillSteps + 1];
+    refillInletPressures[0] = pipe.getPressureProfile()[0];
+    for (int step = 0; step < refillSteps; step++) {
       pipe.runTransient(dt, null);
       double boundaryMass = acceptedBoundaryMass(pipe);
       cumulativeBoundaryMass += boundaryMass;
@@ -128,7 +141,12 @@ class TwoFluidRichGasDragQualificationTest {
       maximumWallTemperatureChange = Math.max(maximumWallTemperatureChange,
           maximumAbsoluteDifference(initialWallTemperature, pipe.getWallTemperatureProfile()));
       observedTraceAreaFallback |= observedTraceAreaFallback(pipe);
+      refillTimes[step + 1] = (step + 1) * dt;
+      refillInletPressures[step + 1] = pipe.getPressureProfile()[0];
     }
+
+    TwoFluidPipeReport.PressureTraceMetrics refillPressure = TwoFluidPipeReport.analyzePressureTrace(refillTimes,
+        refillInletPressures, 100.0);
 
     pipe.closeInlet();
     for (int step = 0; step < (int) Math.round(120.0 / dt); step++) {
@@ -151,7 +169,22 @@ class TwoFluidRichGasDragQualificationTest {
     assertTrue(observedRefill, "The original same-gas inlet donor must fund actual inlet refill");
     assertEquals(initialMass + cumulativeBoundaryMass, pipe.getTotalMassInventory(), 1.0e-5);
     return new double[] {maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL), minimumHeatScale,
-        maximumInterfaceArea, maximumWallTemperatureChange, observedTraceAreaFallback ? 1.0 : 0.0};
+        maximumInterfaceArea, maximumWallTemperatureChange, observedTraceAreaFallback ? 1.0 : 0.0,
+        refillPressure.getPeakToPeakPressurePa(), refillPressure.getMaximumAbsolutePressureRatePaPerSecond(),
+        refillPressure.getExcessVariationPa(), refillPressure.getRingingRatio(),
+        refillPressure.getDirectionReversals()};
+  }
+
+  /** Return comma-separated values for the full-cycle receipt. */
+  private static String csvValues(double[] values) {
+    StringBuilder row = new StringBuilder();
+    for (int value = 0; value < values.length; value++) {
+      if (value > 0) {
+        row.append(',');
+      }
+      row.append(values[value]);
+    }
+    return row.toString();
   }
 
   /** Return whether the latest stage used the explicit sub-resolution trace-area fallback. */

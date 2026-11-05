@@ -1446,6 +1446,32 @@
       "limitations": "Java/Python object API discovered through inspectApi; not a runProcess JSON equipment type. Fixed minimum, same-composition return at suction state; no dynamic anti-surge qualification."
     },
     {
+      "id": "pipeline-restart-diagnostics-discovery",
+      "title": "Experimental terrain-pool restart geometry and pressure diagnostics",
+      "domain": "flow-assurance",
+      "tool": "inspectApi",
+      "apis": [
+        "neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator",
+        "neqsim.process.equipment.pipeline.twophasepipe.HydrocarbonPoolTransfer",
+        "neqsim.process.equipment.pipeline.twophasepipe.reporting.TwoFluidPipeReport"
+      ],
+      "skills": [
+        "neqsim-dynamic-simulation",
+        "neqsim-flow-assurance"
+      ],
+      "agents": [
+        "dynamic-equipment",
+        "flow-assurance"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/closure/HydrostaticCellGeometryTest.java",
+        "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/HydrocarbonPoolTransferTest.java",
+        "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/reporting/TwoFluidPipeReportTest.java",
+        "src/test/java/neqsim/process/equipment/pipeline/TwoFluidRichGasDragQualificationTest.java"
+      ],
+      "limitations": "Experimental Java/JPype discovery route. Static per-cell hydrostatic geometry and read-only pressure-trace metrics support conservative restart screening, but the current 12/24-cell 780 s matrix fails the 10% oil-inventory gate and has unconverged pressure-rate/ringing metrics. It does not prove stable terrain drainage, predictive evaporation, a physical surge band, severe slugging or hydraulic pigging."
+    },
+    {
       "id": "pipeline-pig-mechanics-discovery",
       "title": "Experimental prescribed-pressure pig mechanics (API discovery only)",
       "domain": "flow-assurance",

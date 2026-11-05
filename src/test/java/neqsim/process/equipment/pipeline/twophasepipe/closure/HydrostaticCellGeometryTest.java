@@ -145,6 +145,27 @@ class HydrostaticCellGeometryTest {
     assertEquals(0.0, up.getEndDepth());
   }
 
+  /** Long inclined cells retain a finite trace wedge without subtracting its leading depth. */
+  @Test
+  void inclinedTraceLeadingEdgeIsResolved() {
+    double diameter = 1.0148;
+    double length = 416.6666666666667;
+    double angle = 0.12;
+    double trace = 1.0e-30;
+    HydrostaticCellGeometry up = calculator.calculateHydrostaticCell(trace, diameter, length, angle);
+    HydrostaticCellGeometry down = calculator.calculateHydrostaticCell(trace, diameter, length, -angle);
+
+    double expectedVolume = trace * Math.PI * diameter * diameter * length / 4.0;
+    assertEquals(expectedVolume, up.getLiquidVolume(), expectedVolume * 1.0e-8);
+    assertTrue(up.getMaximumDepth() > 0.0);
+    assertEquals(0.0, up.getMinimumDepth());
+    assertTrue(up.getInterfaceArea() > 0.0);
+    assertEquals(up.getMaximumDepth(), down.getMaximumDepth());
+    assertEquals(up.getInterfaceArea(), down.getInterfaceArea());
+    assertEquals(up.getStartDepth(), down.getEndDepth());
+    assertEquals(up.getEndDepth(), down.getStartDepth());
+  }
+
   /** Splitting the same plane preserves volume and physical areas. */
   @Test
   void partition() {

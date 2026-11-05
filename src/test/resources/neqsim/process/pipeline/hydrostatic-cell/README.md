@@ -34,7 +34,10 @@ Run the script with the selected Python interpreter, then run
 and checks all reported geometry against the production implementation.
 Other methods cover horizontal/trace/reversed-slope/partition/empty/full limits,
 serialization, invalid inputs, and unchanged section inventories and ordinary
-geometry. The CSV column units are: diameter/length/start_depth/end_depth in m;
+geometry. A separate analytical control uses a 416.67 m inclined cell at `1e-30`
+holdup to verify that the small positive leading-edge depth, volume and interface
+area survive without reconstructing the edge by subtracting nearly equal numbers.
+The CSV column units are: diameter/length/start_depth/end_depth in m;
 angle in radians; interface_area/wall_area/minimum_gas_area in m2; holdup
 dimensionless. Cell index is zero based. The rows determine cell volume as
 `holdup*pi*diameter^2*length/4`.
@@ -46,6 +49,8 @@ area absolute 1e-9 m2 or relative 1e-7; volume absolute 1e-9 m3 or relative 1e-9
 exact empty/full endpoints; explicit invalid-input rejection; no section-state
 mutation. All **3060** cells pass. `mesh_results.csv` records the earlier executed
 production outputs; the regression also replays regenerated independent inputs.
+The additional extreme-trace control passes without changing any frozen CSV value
+or tolerance.
 
 | Cells | Maximum depth (m) | Interface area (m2) | Minimum gas area (m2) |
 | ---: | ---: | ---: | ---: |

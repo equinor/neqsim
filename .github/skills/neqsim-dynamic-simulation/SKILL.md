@@ -555,13 +555,20 @@ positive-compressibility, Jacobian and energy-admissibility guards remain active
 composition or change the configured root to manufacture a restart result.
 Use `HydrocarbonPoolTransfer.forHydrostaticPool(...)` only for stationary or slowly draining
 stratified terrain pools. Inspect interface-area, equilibrium-appearance and unresolved-trace-area
-diagnostics. Configure deliberate wall inventory with `setInitialWallTemperatureProfile(...)`
+diagnostics. Representable long-cell trace wedges retain their leading-edge depth without a liquid
+floor; any reported fallback remains a numerical-resolution warning. Configure deliberate wall
+inventory with `setInitialWallTemperatureProfile(...)`
 before `run()` and retain the wall profile through every event/replay. In multilayer mode, its one
 temperature per cell initializes every radial layer uniformly; the layers evolve independently and
 a new steady run clears the old radial inventory. The current wall-coupled
-12/24-cell cycle has 22.82%/24.29% peak/final oil mesh differences; it is screening, not physical
-restart qualification. A moving pig needs separate moving-volume, face-flux and pressure-work
-conservation.
+12/24-cell cycle has 22.82%/24.29% peak/final oil mesh differences despite zero trace-area fallback;
+its pressure-rate and unfiltered ringing metrics also differ by roughly 45-48%. It fails the 10%
+restart screening gate. A moving pig needs separate moving-volume, face-flux and pressure-work
+conservation and must not inherit that unconverged inlet state.
+For a declared restart-opening window, use `TwoFluidPipeReport.analyzePressureTrace(...)` to report
+unfiltered extrema, peak-to-peak pressure, maximum sample rate, total/excess variation and reversal
+count with an explicit Pa gate. Preserve the sample interval and do not promote this diagnostic to a
+surge qualification without mesh/time and independent evidence.
 Condensation must use equilibrium hydrocarbon-liquid and aqueous-liquid **mass**
 contributions; never use the current cell water cut to identify a phase that is not yet present.
 For evaporation, withdraw from the actual oil and water conservative inventories and bound each

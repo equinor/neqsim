@@ -1264,15 +1264,18 @@ input, not physical shutdown/restart or predictive depletion qualification.
 For a stationary or slowly draining stratified pool, opt into
 `HydrocarbonPoolTransfer.forHydrostaticPool(...)`. It uses the volume-preserving inclined-cell
 horizontal-surface diagnostic, reports the actual cell interface area, and uses the equilibrium
-target geometry for an unseeded appearance step. A sub-resolution retained trace uses a reported
+target geometry for an unseeded appearance step. Representable long-cell trace wedges retain their
+positive leading-edge depth without an inventory floor; a still-sub-resolution trace uses a reported
 local-stratified chord fallback without changing mass. This is not an annular, slug-front or pig
 interface closure. Initialize a deliberate wall inventory with
 `setInitialWallTemperatureProfile(profile, "K")` before `run()`; both configured and accepted wall
 profiles are defensive and survive copy/rollback/replay. Under the multilayer model, each cell value
 initializes all of that cell's radial layers uniformly; the layers then evolve independently and a
 new steady run clears the prior evolved radial state. The wall-coupled 12/24-cell 780 s screening
-run produces 22.82%/24.29% peak/final oil mesh differences and 43.223/45.037 K maximum wall changes.
-Those broad differences keep physical restart, public validation and hydraulic pigging open.
+run produces 22.82%/24.29% peak/final oil mesh differences and 43.222/45.037 K maximum wall changes,
+despite zero trace-area fallback. Refill pressure range differs by 0.45%, while rate and unfiltered
+ringing measures differ by roughly 45-48%. Those failed gates keep physical restart, public
+validation and hydraulic pigging open.
 
 With component transport enabled, the downstream outlet composition follows the positive outbound
 component ledger rather than the latest inlet composition or the final cell's instantaneous phase
