@@ -335,6 +335,10 @@ fix does not relax energy/fugacity/balance bounds or qualify global stability.
 Its108 SRK/PR/volume-correction controls check analytic extensivity and fresh
 homogeneous construction only; do not treat them as new depletion-path admission
 or independent EOS/measurement accuracy. Preserve the frozen EOS_CONTROL_SCOPE.md.
+Precise restoration reuses its caller-qualified endpoint before the first volume
+check and reflashes after withdrawal; preserve FixedCellInitialStateTest's named
+zero-inventory and independent binary controls. Do not widen volume tolerances
+to conceal a repeated-flash inventory perturbation. Legacy CVD keeps its sequence.
 Do not weaken absolute inventory bounds or claim arbitrary-scale/measured accuracy.
 The original 216-state and intermediate 480-state matrices use identical frozen bounds.
 
