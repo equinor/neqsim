@@ -356,3 +356,19 @@ component gates; between-endpoint dry oil appearance/disappearance is permitted.
 gas-only pressure-grid limit and every separator inventory. This is independent
 numerical consistency, not measured calibration, reservoir prediction or Tran RCVD.
 Read `docs/pvtsimulation/depletion_pvt_generation.md#dry-phase-changing-fixed-cell-experiment`.
+
+### Explicit wet-gas/aqueous fixed-cell path
+
+Use `DepletionPvtHistoryGenerator.replayNativeWetGasFixedCell` (core
+`ConstantVolumeDepletion.runWetGasFixedCellDepletion`) only for a separately
+accepted initial-occupied-volume gas/aqueous experiment. Aqueous liquid may
+disappear; aqueous appearance/reappearance is rejected; gas must remain and
+oil/other phases fail transactionally.
+Water carried in produced gas is conserved through the unchanged separator.
+Preserve checkpoint selection, whole-experiment identity and actual final-product
+basis. `allowsWetGasPhaseChanges()` is distinct from the dry protocol flag.
+No wet-dew inference, saturation-normalized CVD, black-oil extrapolation,
+reservoir-volume fitting or measured-accuracy claim follows from this route.
+Read `WetGasFixedCellHandoffTest` and the frozen independent reference at
+`src/test/resources/neqsim/pvtsimulation/wet-gas-fixed-cell/`.
+Guide: `docs/pvtsimulation/depletion_pvt_generation.md#wet-gas-fixed-cell-aqueous-transitions`.

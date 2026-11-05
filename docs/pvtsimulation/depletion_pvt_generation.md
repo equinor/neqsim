@@ -522,3 +522,47 @@ at a fixed pressure because the coexistence compositions form a fixed tie line.
 The tested topology changes occur between pressure endpoints. Accuracy for a
 multicomponent topology change during withdrawal requires separate qualification;
 the endpoint checks alone do not establish it.
+
+## Wet-gas fixed-cell aqueous transitions
+
+For a separately declared gas/aqueous experiment, use
+`DepletionPvtHistoryGenerator.replayNativeWetGasFixedCell` and
+`ConstantVolumeDepletion.runWetGasFixedCellDepletion`. The first occupied EOS
+volume defines the cell and has exactly zero withdrawal. At each lower pressure,
+only equilibrium gas is withdrawn; vaporized water leaves with that gas while
+any aqueous liquid remains. Aqueous liquid may disappear; appearance or
+reappearance rejects the path. Gas must remain present and any oil or other phase
+rejects the whole path. No property of an absent aqueous phase is assigned.
+
+`getFixedCellReference().allowsWetGasPhaseChanges()` records this explicit
+protocol. It is distinct from `allowsDryPhaseChanges()` and from the unchanged
+family contract of `replayNativeFixedCell`. The original/tuned checkpoint choice,
+whole-experiment reference and fixed separator/product-volume basis are retained.
+Every trial starts from an independent serialized copy; completed evidence is
+published only after all pressure steps and separator balances succeed. Existing
+1e-12 log-fugacity/volume and component/Gibbs/critical-degeneracy gates remain.
+Neither shared flash defaults nor EOS parameters change.
+
+The [complete executable qualification](../../src/test/java/neqsim/pvtsimulation/util/WetGasFixedCellHandoffTest.java)
+is an output-bearing laboratory-to-separator example: it builds both labeled
+synthetic checkpoints, replays each full path, checks every retained/withdrawn
+component and all separator products, and writes every case outcome to
+`target/wet-gas-fixed-cell-metrics.json`. The separator is 1.01325 bara and
+298.15 K; reported product volumes are actual volumes at that stated basis.
+Original/tuned labels in this numerical control do not claim measured calibration.
+
+The [independent reference and frozen scope](../../src/test/resources/neqsim/pvtsimulation/wet-gas-fixed-cell/README.md)
+cover classic unshifted binary SRK methane/water at 440/450/460 K, water mole
+fractions 0.05/0.08/0.10, three sample scales and ten pressures from 200 to 2 bara.
+They solve cubic branches, a binary common tangent and the phase lever rule
+without NeqSim calls. A finite composition-grid lower-support check is a bounded
+stability screen, not a proof of global stability or arbitrary near-critical
+accuracy. Separate tests retain the registered-zero-water pure-gas limit,
+serialized protocol identity, translated checkpoint selection and explicit oil/
+missing-gas/invalid-input rejection.
+
+This initial-volume convention does not infer a wet upper dew or reproduce a
+saturation-normalized CVD protocol. It does not generate absent-phase black-oil
+properties, model reservoir production, qualify an oil-containing wet transition,
+retune an EOS against reservoir volume or establish measured laboratory/field
+accuracy. Those remain separate acceptance tasks.

@@ -29,7 +29,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <p>
  * For supported dry depletion paths and closed-mass wet CCE and gas-only withdrawal wet DLE, {@link #replayNative}
  * preserves actual native states and separator products instead of assigning modified-black-oil properties to an absent
- * phase.
+ * phase. A separately selected wet-gas fixed cell permits gas/aqueous transitions without oil, using the initial
+ * occupied-volume convention rather than a wet upper-dew reference.
  * </p>
  *
  * @author Even Solbraa
@@ -279,6 +280,33 @@ public final class DepletionPvtHistoryGenerator {
   }
 
   /**
+   * Replays an explicitly declared gas/aqueous fixed cell through aqueous disappearance.
+   *
+   * <p>
+   * Uses the first occupied EOS volume, not an inferred wet dew point. Gas-only withdrawal includes vaporized water; no
+   * oil phase is permitted and no absent aqueous properties are assigned. Both checkpoint versions, the
+   * whole-experiment reference and fixed separator/product basis remain immutable. All retained and interval withdrawn
+   * component amounts pass through the existing separator accounting. The caller must independently accept the wet EOS
+   * and protocol; this does not generate modified-black-oil properties or field predictions.
+   * </p>
+   *
+   * @param model independently calibrated original/tuned checkpoints
+   * @param tuned true for tuned EOS, false for original EOS
+   * @param pathReference immutable sample, whole-experiment, cell-volume and data-use identity
+   * @param temperatureK experiment temperature, K
+   * @param pressuresBara decreasing absolute pressures above the first separator stage
+   * @param separator immutable surface process and final actual product-volume basis
+   * @return complete native states, wet-gas protocol identity and actual separator products
+   * @throws IllegalArgumentException if declared inputs are invalid
+   * @throws IllegalStateException if gas is absent, oil appears or a numerical/domain check fails
+   */
+  public static NativeResult replayNativeWetGasFixedCell(CalibratedPvtModel model, boolean tuned, String pathReference,
+      double temperatureK, double[] pressuresBara, PvtSeparatorPath separator) {
+    return replayNative(model, tuned, Path.CVD, pathReference, temperatureK, pressuresBara, separator, true, false,
+        true);
+  }
+
+  /**
    * Evaluates one selected native reference convention without changing the caller's checkpoints.
    *
    * @param model original/tuned immutable checkpoints
@@ -295,6 +323,28 @@ public final class DepletionPvtHistoryGenerator {
   private static NativeResult replayNative(CalibratedPvtModel model, boolean tuned, Path path, String pathReference,
       double temperatureK, double[] pressuresBara, PvtSeparatorPath separator, boolean explicitCell,
       boolean dryPhaseChangesAllowed) {
+    return replayNative(model, tuned, path, pathReference, temperatureK, pressuresBara, separator, explicitCell,
+        dryPhaseChangesAllowed, false);
+  }
+
+  /**
+   * Evaluates a selected reference and phase domain on independent checkpoint copies.
+   *
+   * @param model immutable checkpoints
+   * @param tuned selected checkpoint
+   * @param path experiment protocol
+   * @param pathReference whole-experiment identity
+   * @param temperatureK common temperature, K
+   * @param pressuresBara complete absolute pressure path
+   * @param separator fixed surface process
+   * @param explicitCell initial occupied-volume convention
+   * @param dryPhaseChangesAllowed dry gas/oil domain
+   * @param wetGasPhaseChangesAllowed gas/aqueous domain without oil
+   * @return completed native states and separator products
+   */
+  private static NativeResult replayNative(CalibratedPvtModel model, boolean tuned, Path path, String pathReference,
+      double temperatureK, double[] pressuresBara, PvtSeparatorPath separator, boolean explicitCell,
+      boolean dryPhaseChangesAllowed, boolean wetGasPhaseChangesAllowed) {
     if (model == null || separator == null || (path != Path.CCE && path != Path.CVD && path != Path.DLE)
         || !positive(temperatureK) || pressuresBara == null || pressuresBara.length < 2) {
       throw new IllegalArgumentException(
@@ -327,8 +377,9 @@ public final class DepletionPvtHistoryGenerator {
     ConstantVolumeDepletion.FixedCellResult fixedCell = null;
     if (explicitCell) {
       ConstantVolumeDepletion simulation = new ConstantVolumeDepletion(feed);
-      fixedCell = dryPhaseChangesAllowed ? simulation.runDryPhaseChangingFixedCellDepletion(temperatureK, pressures)
-          : simulation.runFixedCellDepletion(temperatureK, pressures);
+      fixedCell = wetGasPhaseChangesAllowed ? simulation.runWetGasFixedCellDepletion(temperatureK, pressures)
+          : dryPhaseChangesAllowed ? simulation.runDryPhaseChangingFixedCellDepletion(temperatureK, pressures)
+              : simulation.runFixedCellDepletion(temperatureK, pressures);
     }
     DepletionSnapshot[] snapshots = explicitCell ? fixedCell.getSnapshots()
         : replay(feed, path, temperatureK, pressures, true);
