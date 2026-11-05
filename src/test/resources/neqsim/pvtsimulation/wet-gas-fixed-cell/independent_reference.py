@@ -79,57 +79,65 @@ def model(temperature):
     return branch, branches, pair
 
 
-records = []
-for temperature in [440, 450, 460]:
-    branch, branches, pair = model(temperature)
-    pairs = {p: pair(p*1e5) for p in PRESSURES}
-    for water in [.05, .08, .1]:
-        for amount in [.001, 1., 1000.]:
-            initial = amount*np.array([1-water, water])
-            inventory = initial.copy()
-            cumulative = np.zeros(2)
-            target = None
-            rows = []
-            for p in PRESSURES:
-                pressure = p*1e5
-                z = inventory[0]/sum(inventory)
-                endpoints = pairs[p]
-                if endpoints is not None and endpoints[0] < z < endpoints[1]:
-                    x, y = endpoints
-                    gas = (inventory[0]-sum(inventory)*x)/(y-x)
-                    amounts = np.array([gas, sum(inventory)-gas])
-                    xs = np.array([[y, 1-y], [x, 1-x]])
-                    volumes = np.array([branch(y, pressure, True)[2], branch(x, pressure, False)[2]])
-                    phases = ['gas', 'aqueous']
-                else:
-                    if endpoints is not None and z <= endpoints[0]:
-                        raise RuntimeError('Reference retained gas absent')
-                    homogeneous_roots = branches(z, pressure)
-                    homogeneous = min(homogeneous_roots, key=lambda v: v[0])
-                    if homogeneous is not homogeneous_roots[-1]:
-                        raise RuntimeError('Homogeneous liquid, not gas, is stable')
-                    amounts = np.array([sum(inventory)])
-                    xs = np.array([[z, 1-z]])
-                    volumes = np.array([homogeneous[2]])
-                    phases = ['gas']
-                before = amounts @ volumes
-                if target is None:
-                    target = before
-                removed_gas = (before-target)/volumes[0]
-                if removed_gas < 0 or removed_gas >= amounts[0]:
-                    raise RuntimeError('Reference gas-only restoration infeasible')
-                amounts[0] -= removed_gas
-                removed = removed_gas*xs[0]
-                retained = xs.T @ amounts
-                cumulative += removed
-                if max(abs(retained+cumulative-initial)) > 1e-10*max(1, amount):
-                    raise RuntimeError('Reference inventory closure')
-                if abs(amounts @ volumes/target-1) > 1e-12:
-                    raise RuntimeError('Reference volume closure')
-                rows.append(dict(pressureBara=p, phaseNames=phases, phaseMoles=amounts.tolist(),
-                                 phaseCompositions=xs.tolist(), retainedMoles=retained.tolist(),
-                                 withdrawnMoles=removed.tolist()))
-                inventory = retained
-            records.append(dict(temperatureK=temperature, waterMoleFraction=water, sampleMoles=amount,
-                                targetVolumeM3=target, rows=rows))
-print(json.dumps(records, indent=2, allow_nan=False))
+
+def generate(temperatures, water_fractions, sample_amounts, pressures):
+    """Generate all declared complete paths; reject any unsupported reference state."""
+    records = []
+    for temperature in temperatures:
+        branch, branches, pair = model(temperature)
+        pairs = {p: pair(p*1e5) for p in pressures}
+        for water in water_fractions:
+            for amount in sample_amounts:
+                initial = amount*np.array([1-water, water])
+                inventory = initial.copy()
+                cumulative = np.zeros(2)
+                target = None
+                rows = []
+                for p in pressures:
+                    pressure = p*1e5
+                    z = inventory[0]/sum(inventory)
+                    endpoints = pairs[p]
+                    if endpoints is not None and endpoints[0] < z < endpoints[1]:
+                        x, y = endpoints
+                        gas = (inventory[0]-sum(inventory)*x)/(y-x)
+                        amounts = np.array([gas, sum(inventory)-gas])
+                        xs = np.array([[y, 1-y], [x, 1-x]])
+                        volumes = np.array([branch(y, pressure, True)[2], branch(x, pressure, False)[2]])
+                        phases = ['gas', 'aqueous']
+                    else:
+                        if endpoints is not None and z <= endpoints[0]:
+                            raise RuntimeError('Reference retained gas absent')
+                        homogeneous_roots = branches(z, pressure)
+                        homogeneous = min(homogeneous_roots, key=lambda v: v[0])
+                        if homogeneous is not homogeneous_roots[-1]:
+                            raise RuntimeError('Homogeneous liquid, not gas, is stable')
+                        amounts = np.array([sum(inventory)])
+                        xs = np.array([[z, 1-z]])
+                        volumes = np.array([homogeneous[2]])
+                        phases = ['gas']
+                    before = amounts @ volumes
+                    if target is None:
+                        target = before
+                    removed_gas = (before-target)/volumes[0]
+                    if removed_gas < 0 or removed_gas >= amounts[0]:
+                        raise RuntimeError('Reference gas-only restoration infeasible')
+                    amounts[0] -= removed_gas
+                    removed = removed_gas*xs[0]
+                    retained = xs.T @ amounts
+                    cumulative += removed
+                    if max(abs(retained+cumulative-initial)) > 1e-10*max(1, amount):
+                        raise RuntimeError('Reference inventory closure')
+                    if abs(amounts @ volumes/target-1) > 1e-12:
+                        raise RuntimeError('Reference volume closure')
+                    rows.append(dict(pressureBara=p, phaseNames=phases, phaseMoles=amounts.tolist(),
+                                     phaseCompositions=xs.tolist(), retainedMoles=retained.tolist(),
+                                     withdrawnMoles=removed.tolist()))
+                    inventory = retained
+                records.append(dict(temperatureK=temperature, waterMoleFraction=water, sampleMoles=amount,
+                                    targetVolumeM3=target, rows=rows))
+    return records
+
+
+if __name__ == "__main__":
+    records = generate([440, 450, 460], [.05, .08, .1], [.001, 1., 1000.], PRESSURES)
+    print(json.dumps(records, indent=2, allow_nan=False))

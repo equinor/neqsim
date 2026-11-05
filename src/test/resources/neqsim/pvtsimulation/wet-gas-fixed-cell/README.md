@@ -35,3 +35,28 @@ oil/missing-gas rejection and invalid input. Raw case outcomes are written to
 The pre-comparison SCOPE.md and original-master scalar probe are retained with the
 validation receipt. An explicit fixed-cell laboratory convention must not be
 silently relabeled as saturation-referenced CVD or a measured production history.
+
+
+## Off-grid longer-path qualification
+
+`offgrid_reference.py` calls the same independent generator with unchanged declared inputs at
+442.5/452.5/457.5 K, water mole fractions 0.06/0.085/0.095 and
+0.01/10/100 initial mol. The 20 pressures are
+200/180/160/140/120/100/90/80/70/60/50/40/30/20/15/10/7.5/5/3.5/2 bara.
+All 27 paths and 540 reference states are retained. Twenty-one paths have aqueous
+disappearance and six stay homogeneous gas; none predicts aqueous appearance.
+The JUnit fixture checks both checkpoint selections (1080 endpoint comparisons),
+with the same amount/composition/volume bounds as the original matrix.
+
+The callable-generator refactor regenerates the original reference.json byte for
+byte. `OFFGRID_SCOPE.md` was frozen before new-row generation/comparison;
+`OFFGRID_VALIDATION.md` records original-master controls, actual outcomes, commands,
+coverage, current-master compatibility and limits. The standalone
+`OffGridMasterProbe.java` uses only the old fixed-family API and preserves all
+27 baseline outcomes in offgrid-master-results.json. These controls are synthetic
+numerical qualification; they do not add measured laboratory/field holdouts or
+infer wet upper-dew, critical or oil-containing transition support.
+
+Different pressure sequences remain separate experiment protocols. No equality of
+final composition across different withdrawal schedules or continuous-depletion
+convergence is asserted by these longer-path comparisons.

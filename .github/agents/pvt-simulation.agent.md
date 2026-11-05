@@ -262,4 +262,8 @@ No wet-dew inference, saturation-normalized CVD, black-oil extrapolation,
 reservoir-volume fitting or measured-accuracy claim follows from this route.
 Read `WetGasFixedCellHandoffTest` and the frozen independent reference at
 `src/test/resources/neqsim/pvtsimulation/wet-gas-fixed-cell/`.
+Read `OFFGRID_SCOPE.md` and `OFFGRID_VALIDATION.md` in that reference folder for
+27 additional 20-pressure paths, unchanged bounds and separately labeled
+current-master compatibility. Numerical case counts are not independent
+experimental measurements or laboratory/reservoir holdout evidence.
 Guide: `docs/pvtsimulation/depletion_pvt_generation.md#wet-gas-fixed-cell-aqueous-transitions`.

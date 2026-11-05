@@ -1,5 +1,9 @@
 # Wet-gas fixed-cell validation receipt
 
+This is the initial delivery record for parent c84b3d81c2312455074670ebd3f3e4a8160068af.
+See [OFFGRID_VALIDATION.md](OFFGRID_VALIDATION.md) for the subsequent off-grid
+qualification; the original raw outputs and receipts below are retained.
+
 Base: **69de066ea61b559b7df727117e4a5a83352633fa**, 2026-11-05.
 #4868 was merged as **24ef4a6f5ef5769c0f10462585df1cba365acfbb**,
 with preserved delivery head **45bc4ca169d69dd15a67f4e331937b64cc35ad26**.

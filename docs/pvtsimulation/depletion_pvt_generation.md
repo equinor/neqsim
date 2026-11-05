@@ -557,7 +557,15 @@ fractions 0.05/0.08/0.10, three sample scales and ten pressures from 200 to 2 ba
 They solve cubic branches, a binary common tangent and the phase lever rule
 without NeqSim calls. A finite composition-grid lower-support check is a bounded
 stability screen, not a proof of global stability or arbitrary near-critical
-accuracy. Separate tests retain the registered-zero-water pure-gas limit,
+accuracy. Additional off-grid qualification uses 27 complete paths at
+442.5/452.5/457.5 K, water fractions 0.06/0.085/0.095 and three intermediate
+sample scales, with 20 pressures from 200 to 2 bara. Its 540 independent reference
+states give 1080 comparisons across both checkpoint selections, at the original
+unchanged bounds. The [complete off-grid receipt](../../src/test/resources/neqsim/pvtsimulation/wet-gas-fixed-cell/OFFGRID_VALIDATION.md)
+retains every declared case and the current-master compatibility evidence.
+Each pressure schedule is its own explicit experiment protocol; the longer paths
+do not establish equality across different withdrawal schedules or timestep convergence.
+Separate tests retain the registered-zero-water pure-gas limit,
 serialized protocol identity, translated checkpoint selection and explicit oil/
 missing-gas/invalid-input rejection.
 

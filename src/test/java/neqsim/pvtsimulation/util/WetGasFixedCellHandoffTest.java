@@ -70,13 +70,37 @@ class WetGasFixedCellHandoffTest {
    */
   @Test
   void independentWetGasMatrixPreservesEveryDeclaredPath() throws Exception {
+    compareFixture("reference.json", 27, 10, "wet-gas-fixed-cell-metrics.json");
+  }
+
+  /**
+   * Checks off-grid temperature/composition/scales and longer complete pressure paths at unchanged bounds.
+   *
+   * @throws Exception if reference or diagnostic files cannot be accessed
+   */
+  @Test
+  void independentOffGridLongerPathsRetainTheDeclaredDomain() throws Exception {
+    compareFixture("offgrid-reference.json", 27, 20, "wet-gas-fixed-cell-offgrid-metrics.json");
+  }
+
+  /**
+   * Retains every declared original/tuned outcome, including any failed comparison.
+   *
+   * @param resourceName complete independent fixture filename
+   * @param expectedCases declared number of complete reference paths
+   * @param expectedRows declared pressure points per path
+   * @param diagnosticName generated complete-outcome JSON filename
+   * @throws Exception if complete source or diagnostic files cannot be accessed
+   */
+  private void compareFixture(String resourceName, int expectedCases, int expectedRows, String diagnosticName)
+      throws Exception {
     JsonArray cases;
     try (InputStreamReader reader = new InputStreamReader(
-        getClass().getResourceAsStream("/neqsim/pvtsimulation/wet-gas-fixed-cell/reference.json"),
+        getClass().getResourceAsStream("/neqsim/pvtsimulation/wet-gas-fixed-cell/" + resourceName),
         StandardCharsets.UTF_8)) {
       cases = new Gson().fromJson(reader, JsonArray.class);
     }
-    assertEquals(27, cases.size());
+    assertEquals(expectedCases, cases.size());
     List<Map<String, Object>> diagnostics = new ArrayList<Map<String, Object>>();
     List<String> failures = new ArrayList<String>();
     for (int index = 0; index < cases.size(); index++) {
@@ -87,7 +111,7 @@ class WetGasFixedCellHandoffTest {
         diagnostic.put("tuned", selected);
         diagnostics.add(diagnostic);
         try {
-          compare(expected, selected, diagnostic);
+          compare(expected, selected, diagnostic, expectedRows);
           diagnostic.put("status", "pass");
         } catch (AssertionError | RuntimeException ex) {
           String error = index + "/" + selected + ": " + ex.toString();
@@ -97,8 +121,7 @@ class WetGasFixedCellHandoffTest {
         }
       }
     }
-    Files.write(Paths.get("target", "wet-gas-fixed-cell-metrics.json"),
-        new Gson().toJson(diagnostics).getBytes(StandardCharsets.UTF_8));
+    Files.write(Paths.get("target", diagnosticName), new Gson().toJson(diagnostics).getBytes(StandardCharsets.UTF_8));
     assertTrue(failures.isEmpty(), failures.toString());
   }
 
@@ -108,8 +131,9 @@ class WetGasFixedCellHandoffTest {
    * @param expected complete independent reference path
    * @param selected tuned checkpoint selection
    * @param metrics diagnostic metrics retained even when a comparison fails
+   * @param expectedRows pressure points in the declared complete path
    */
-  private void compare(JsonObject expected, boolean selected, Map<String, Object> metrics) {
+  private void compare(JsonObject expected, boolean selected, Map<String, Object> metrics, int expectedRows) {
     double temperature = expected.get("temperatureK").getAsDouble();
     double water = expected.get("waterMoleFraction").getAsDouble();
     double scale = expected.get("sampleMoles").getAsDouble();
@@ -120,7 +144,7 @@ class WetGasFixedCellHandoffTest {
     byte[] original = SerializationUtils.serialize(model.getOriginalFluid());
     byte[] tuned = SerializationUtils.serialize(model.getTunedFluid());
     JsonArray rows = expected.getAsJsonArray("rows");
-    assertEquals(10, rows.size());
+    assertEquals(expectedRows, rows.size());
     metrics.put("temperatureK", temperature);
     metrics.put("waterMoleFraction", water);
     metrics.put("sampleMoles", scale);
