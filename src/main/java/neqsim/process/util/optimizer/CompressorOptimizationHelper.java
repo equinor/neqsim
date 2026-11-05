@@ -74,7 +74,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
  * </p>
  *
  * <pre>{@code
- * from neqsim.neqsimpython import jneqsim
+ * from neqsim import jneqsim
  *
  * Helper = jneqsim.process.util.optimizer.CompressorOptimizationHelper
  *
