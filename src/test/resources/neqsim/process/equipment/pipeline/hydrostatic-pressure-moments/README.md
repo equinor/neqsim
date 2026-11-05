@@ -133,7 +133,7 @@ contains no pool positions, imposed pool volumes or predictive evaporation time.
 ## Independent analytical-series follow-up
 
 An additional [stdlib-only executable auditor](independent-series/audit.py) evaluates the exact
-published Java geometry blob `04e6c337b848c66f1a5dd39bdfadbcdd60440900` against an independent
+published Java geometry blob `5aaaf3c0c411d3ac29024393b32b0b360613924c` against an independent
 80-digit Decimal binomial expansion of the circular chord. Each power integrates analytically;
 pi is calculated with Machin's arctangent formula. This differs from both production Gauss
 quadrature and the original angular Simpson reference. Run the script with Python 3 from any
@@ -169,7 +169,9 @@ mutations (truncation, ordinary-section moment error and source-hash mismatch). 
 control first requires the pinned source to complete all 222 sections, so an obsolete source hash
 cannot mask the intended rejection branch. The 2026-11-05 rerun after the inclined trace-wedge
 repair retains the numerical CSV values and unchanged error limits; the summary records the new
-source identity. The strict source guard remains enabled. These controls do not qualify transient
+source identity. The subsequent horizontal trace-bracket repair was revalidated against the same
+222 controls in normal and optimized Python, again retaining every numerical CSV value. The
+strict source guard remains enabled. These controls do not qualify transient
 pooling, restart or pigging.
 
 The existing AI Devtools Python workflow runs the guard suite in normal and optimized modes

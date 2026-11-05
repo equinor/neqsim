@@ -1267,7 +1267,14 @@ horizontal-surface diagnostic, reports the actual cell interface area, and uses 
 target geometry for an unseeded appearance step. Representable long-cell trace wedges retain their
 positive leading-edge depth without an inventory floor; a still-sub-resolution trace uses a reported
 local-stratified chord fallback without changing mass. This is not an annular, slug-front or pig
-interface closure. Initialize a deliberate wall inventory with
+interface closure. For moving stratified states, select
+`HydrocarbonPoolTransfer.forStratifiedFlow(...)` instead: it uses the circular chord at the local
+cell-average liquid holdup, extended along the pipe arclength. Uniform and nonuniform subdivision
+preserve integrated area and conservative component sources, including finite heat limits and
+unseeded first appearance. This is an explicit change in area model; it does not validate the
+historical hydrostatic-cycle convergence failure. Full-liquid cells have zero gas/oil area.
+
+Initialize a deliberate wall inventory with
 `setInitialWallTemperatureProfile(profile, "K")` before `run()`; both configured and accepted wall
 profiles are defensive and survive copy/rollback/replay. Under the multilayer model, each cell value
 initializes all of that cell's radial layers uniformly; the layers then evolve independently and a
@@ -1275,7 +1282,10 @@ new steady run clears the prior evolved radial state. The wall-coupled 12/24-cel
 comparison now uses the same final 1250 m level outlet at -333.5 m elevation on both meshes.
 The previous "last three cells" rule compared different terrains. See the
 [executed receipt](../../src/test/resources/neqsim/process/pipeline/hydrocarbon-pool-transfer/README.md)
-for the corrected inventory, wall and unfiltered pressure diagnostics. Maximum single-cell area
+for the corrected inventory, wall and unfiltered pressure diagnostics. The current flowing-area
+run passes the original 10% peak/final inventory gates at 2.478%/2.576%. The historical per-cell
+stationary-puddle model still fails at 11.21%/10.86%; the new area assumption predicts different
+inventories and does not validate that historical trajectory. Maximum single-cell area
 is an extensive diagnostic, not a mesh-convergence target. Physical restart, independent public
 validation and hydraulic pigging remain unqualified.
 

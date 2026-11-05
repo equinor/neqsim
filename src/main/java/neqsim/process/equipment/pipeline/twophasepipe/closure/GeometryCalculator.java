@@ -314,6 +314,14 @@ public class GeometryCalculator implements Serializable {
     // equal numbers. The leading edge remains a small positive number and is directly resolvable.
     double lower = 0.0;
     double upper = halfRange + 0.5;
+    if (halfRange == 0.0) {
+      // A circular trace segment has depth proportional to holdup^(2/3). A fixed
+      // half-diameter bracket cannot resolve that depth in 120 bisections when
+      // the retained holdup is extremely small. Scale the bracket, not inventory
+      // or the relative-volume acceptance tolerance. Cbrt avoids underflow in h^2.
+      double traceScale = Math.cbrt(fraction);
+      upper = Math.min(upper, 2.0 * traceScale * traceScale);
+    }
     double leadingDepth = 0.0;
     for (int iteration = 0; iteration < 120; iteration++) {
       leadingDepth = lower + (upper - lower) / 2.0;

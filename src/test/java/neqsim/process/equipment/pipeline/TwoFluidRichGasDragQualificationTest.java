@@ -100,7 +100,7 @@ class TwoFluidRichGasDragQualificationTest {
     pipe.setHeatTransferCoefficient(4.0);
     pipe.setSurfaceTemperature(277.15, "K");
     pipe.setHydrocarbonPoolTransfer(
-        HydrocarbonPoolTransfer.forHydrostaticPool(names, coefficients, evaporationEnthalpies, 100.0));
+        HydrocarbonPoolTransfer.forStratifiedFlow(names, coefficients, evaporationEnthalpies, 100.0));
     double[] initialWallTemperature = pipe.getWallTemperatureProfile();
     double initialMass = pipe.getTotalMassInventory();
     double cumulativeBoundaryMass = 0.0;

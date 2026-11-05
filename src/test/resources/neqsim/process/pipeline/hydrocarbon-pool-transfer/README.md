@@ -16,11 +16,10 @@ sequence with the hydrostatic-area and wall-inventory path from exact base
 - 5 km, 12- and 24-cell three-sag terrain; 1.0148 m internal diameter.
 - Component transfer coefficient: 0.05 m/s for every component.
 - Component evaporation enthalpies: 510/490/430/380/350/320 kJ/kg.
-- Interface area: volume-preserving horizontal-surface reconstruction in each inclined cell. A
-  positive equilibrium oil target supplies the unseeded appearance area; a reported local
-  stratified chord is used only when retained trace volume is below the inclined reconstruction's
-  relative-volume resolution. Representable trace wedges retain their leading-edge depth directly,
-  without a liquid-inventory floor or subtractive centre/range cancellation.
+- Interface area: `forStratifiedFlow(...)` extends the local circular holdup chord along cell
+  arclength. A positive equilibrium oil target supplies unseeded appearance area. The horizontal
+  search bracket retains positive trace geometry down to `1e-300` holdup without an inventory
+  floor. The historical `forHydrostaticPool(...)` records remain separate stationary models.
 - Available evaporation heat: 100 W/m. This remains an explicit kinetic screening limit.
 - Wall/seabed screen: 26 mm steel, 7850 kg/m3, 500 J/(kg K), 4 W/(m2 K), 277.15 K environment and
   an explicit 277.15 K initial wall profile. These inputs are not calibrated field data.
@@ -64,43 +63,57 @@ cycle. It is an extensive local diagnostic and is not a mesh-convergence target.
    rate, total/excess variation and direction reversals with an explicit Pa gate. These are numerical
    ringing diagnostics, not an experimental surge band.
 
-## Executed result
+## Executed flowing-model result
 
-`refinement.csv` is the latest 2026-11-05 execution receipt on the common physical polyline.
-The [validation record](fix-validation.json) retains exact source identities and test outcomes.
-Both meshes complete every accepted interval with zero trace-area fallback, but the unchanged
-10% spatial gate still fails: peak oil differs by 11.21% and final oil by 10.86%, using the
-larger-value denominator.
+`refinement.csv` is the 2026-11-05 flowing-area execution receipt on the common physical
+polyline. The [validation record](fix-validation.json) identifies the exact source blobs,
+area assumption, tests and limits. Both meshes complete every accepted interval with zero
+trace-area fallback. The original 10% peak/final inventory gates and conservation tolerances
+remain unchanged.
+
+Peak oil differs by **2.478%** and final oil by **2.576%**, using the larger-value denominator.
 
 | Metric | 12 cells | 24 cells |
 | --- | ---: | ---: |
-| Peak oil, kg | 8,329.992 | 9,381.383 |
-| Final oil, kg | 8,115.392 | 9,104.582 |
-| Maximum single-cell interface area, m2 | 187.874 | 101.951 |
-| Maximum wall-temperature change, K | 43.222 | 44.444 |
-| Minimum heat-limit scale | 1.089e-3 | 7.855e-4 |
-| Refill pressure peak-to-peak, Pa | 9,973,068.9 | 10,030,852.2 |
-| Maximum adjacent-sample pressure rate, Pa/s | 278,344.1 | 536,217.5 |
-| Ringing ratio | 0.03746 | 0.05752 |
-| Reversals at 100 Pa | 8 | 12 |
+| Peak oil, kg | 24452.2551 | 25073.6019 |
+| Final oil, kg | 24121.5545 | 24759.3861 |
+| Maximum single-cell interface area, m2 | 188.131134 | 97.5983368 |
+| Maximum wall-temperature change, K | 42.8647005 | 44.2354846 |
+| Minimum heat-limit scale | 0.00105912011 | 0.000906119962 |
+| Refill pressure peak-to-peak, Pa | 10063252.9 | 10132457.7 |
+| Maximum adjacent-sample pressure rate, Pa/s | 271534.482 | 525257.438 |
+| Ringing ratio | 0.023274119 | 0.0379533502 |
+| Reversals at 100 Pa | 6 | 10 |
 
-The heat-limit scales prove that the declared 100 W/m limit is active. Refill pressure range
-differs by 0.58%, while maximum adjacent rate differs by 48.09% and ringing ratio by 34.87%.
-These unfiltered metrics remain numerical diagnostics, not an experimental surge band.
-The source-kernel benchmark remains diagnostic rather than a platform-independent CI threshold.
+The finite heat-limit scales prove that the declared 100 W/m limit activates. Pressure-rate
+and ringing metrics are unfiltered numerical diagnostics; they are not a qualified surge band.
 
-This is analytical and numerical-conservation qualification for an explicit parameter set. It is
-not independent experimental rate/thermal validation, a converged restart surge prediction, a
-calibrated field depletion forecast, gelled-oil restart, severe-slugging validation or hydraulic
-pigging. The full finite-heat cycle crosses the dense-root diagnostic-label transition without
-clipping mass, changing the configured phase root or weakening the positive-compressibility/Jacobian
-guards. Its retained inventory is a result of explicit heat/area assumptions, not a predictive
-depletion forecast.
+## Area-model correction and retained failed evidence
 
-The remaining 11.21%/10.86% oil-inventory differences and unconverged pressure-rate/ringing
-metrics keep the physical restart gate open. Required follow-up is conservative
-mesh-insensitive pool-area/source coupling before timestep refinement, repeated cycles,
-restart-opening pressure/outlet-surge bands, independent public data and the unchanged five-second
-riser matrix. Moving-pig volume/flux/work coupling is withheld because it is a separate high-risk
-moving-boundary algorithm whose inlet state would otherwise inherit this failed restart gate.
+The [common-route stationary-puddle receipt](common-route-hydrostatic-refinement.csv) reproduces
+the original 11.21% peak and 10.86% final oil differences. That model remains unqualified for
+the flowing cycle. The new factory is an explicit change of area assumption, not evidence that
+the original stationary-puddle trajectory has converged. Coefficients, heat supply, physical
+terrain, event schedule, 12/24-cell pair, external interval and acceptance limits are retained.
 
+A uniform 400 m, unit-diameter state at 0.01 holdup and 0.03 rad has 13.990 m2 static-puddle
+area as one cell and 34.626 m2 as eight cells: each numerical cell creates a separate horizontal
+puddle. `StratifiedPoolTransferTest` instead checks the flowing chord against an independent
+circular-segment identity, uniform/nonuniform subdivision of nonzero component sources, finite
+heat limits, unseeded appearance and serialization. Replacing the flowing factory with the static
+factory fails the new partition control. Neither area assumption is calibrated field data.
+
+The first flowing-cycle replay exposed a second defect: a fixed horizontal bisection bracket
+could not resolve very small positive trace depths. Only that bracket is scaled with the
+circular-segment depth power. Independent `1e-30` through `1e-300` controls preserve positive
+volume, depth and chord area under the unchanged `1e-9` relative-volume gate. All 222 independent
+pressure-moment controls retain their numerical values; source identity remains strictly pinned.
+
+## Remaining qualification
+
+This is analytical and declared-parameter numerical conservation/inventory evidence. It does
+not establish independent experimental rate/thermal accuracy, pressure-rate/ringing convergence,
+a restart-opening surge band, repeated-cycle behavior, severe slugging, field depletion or
+hydraulic pigging. The dense-root, positive-compressibility and Jacobian guards remain active.
+Moving-pig fluid-volume, face-flux and pressure-work coupling is still withheld. The separate
+five-second riser matrix and physical restart acceptance remain open.

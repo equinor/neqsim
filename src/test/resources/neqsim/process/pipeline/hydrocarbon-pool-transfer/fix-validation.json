@@ -1,11 +1,16 @@
 {
   "date": "2026-11-05",
-  "source_parent_head": "90f97fd929e3d2f75351db7ae6447fd5d2b6ed31",
+  "source_parent_head": "55a6dae3759835e83915f07d316d21e1524d0d28",
   "source_blobs": {
-    "src/test/java/neqsim/process/equipment/pipeline/TwoFluidRichGasDragQualificationTest.java": "e9273fb91fdc991a35a85a81fffb39f3a380b308",
-    "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/closure/GeometryCalculator.java": "04e6c337b848c66f1a5dd39bdfadbcdd60440900"
+    "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/HydrocarbonPoolTransfer.java": "27c0e26de9672377a154fb6fb4aafd0711be6b66",
+    "src/main/java/neqsim/process/equipment/pipeline/twophasepipe/closure/GeometryCalculator.java": "5aaaf3c0c411d3ac29024393b32b0b360613924c",
+    "src/test/java/neqsim/process/equipment/pipeline/TwoFluidRichGasDragQualificationTest.java": "4361becc1d24c424c68ab871c63952ea902a405c",
+    "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/StratifiedPoolTransferTest.java": "1bb2b65afdbc50271121bf9e6a077c506238c92e",
+    "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/closure/HydrostaticCellGeometryTest.java": "2b424170441c7885f02458f5ca2f0e3a3c5a0155"
   },
-  "runtime": "OpenJDK 17.0.20 / Python 3.12",
+  "runtime": "OpenJDK 17.0.20 / Python 3.12.14",
+  "area_model": "HydrocarbonPoolTransfer.forStratifiedFlow: local circular holdup chord along arclength",
+  "scope": "Declared-parameter flowing numerical screen; distinct from the historical per-cell stationary-puddle model",
   "geometry": {
     "length_m": 5000.0,
     "physical_route": "original twelve straight segments, linearly subdivided",
@@ -18,22 +23,122 @@
   },
   "inventory_gates": {
     "peak_oil_kg": {
-      "coarse_kg": 8329.99236798058,
-      "refined_kg": 9381.382801852436,
-      "relative_difference": 0.11207201071298896,
+      "coarse_kg": 24452.25510100577,
+      "refined_kg": 25073.601921181646,
+      "relative_difference": 0.02478091588632012,
       "strict_upper_bound": 0.1,
-      "passed": false
+      "passed": true
     },
     "final_oil_kg": {
-      "coarse_kg": 8115.39230378012,
-      "refined_kg": 9104.581990311284,
-      "relative_difference": 0.10864745768491282,
+      "coarse_kg": 24121.55446682092,
+      "refined_kg": 24759.38610862213,
+      "relative_difference": 0.025761205831314794,
       "strict_upper_bound": 0.1,
-      "passed": false
+      "passed": true
     }
   },
-  "inventory_qualified": false,
-  "conservation": "Both complete cycles passed every accepted-interval mass/component/energy assertion and used zero trace-area fallback.",
+  "inventory_qualified": true,
+  "physical_restart_qualified": false,
+  "pressure_diagnostics": {
+    "refill_pressure_peak_to_peak_pa": {
+      "coarse": 10063252.858482528,
+      "refined": 10132457.68787967
+    },
+    "refill_max_pressure_rate_pa_s": {
+      "coarse": 271534.4823451657,
+      "refined": 525257.4381292462
+    },
+    "refill_excess_variation_pa": {
+      "coarse": 234213.34418550692,
+      "refined": 384560.7146793641
+    },
+    "refill_ringing_ratio": {
+      "coarse": 0.023274118963241944,
+      "refined": 0.037953350166896944
+    },
+    "refill_direction_reversals": {
+      "coarse": 6.0,
+      "refined": 10.0
+    }
+  },
+  "conservation": "Both complete 780 s cycles pass every accepted-interval phase/total mass, named-component and conservative-energy assertion with zero trace-area fallback.",
+  "historical_hydrostatic_baseline": {
+    "source_head": "55a6dae3759835e83915f07d316d21e1524d0d28",
+    "area_model": "HydrocarbonPoolTransfer.forHydrostaticPool",
+    "receipt": "common-route-hydrostatic-refinement.csv",
+    "inventory_gates": {
+      "peak_oil_kg": {
+        "coarse_kg": 8329.99236798058,
+        "refined_kg": 9381.382801852436,
+        "relative_difference": 0.11207201071298896,
+        "strict_upper_bound": 0.1,
+        "passed": false
+      },
+      "final_oil_kg": {
+        "coarse_kg": 8115.39230378012,
+        "refined_kg": 9104.581990311284,
+        "relative_difference": 0.10864745768491282,
+        "strict_upper_bound": 0.1,
+        "passed": false
+      }
+    },
+    "reproduced_peak_difference": 0.11207201071298896,
+    "test_exit_code": 1,
+    "qualification": "Still failed; the flowing alternative does not qualify this stationary-puddle model."
+  },
+  "horizontal_trace_repair": {
+    "initial_flowing_attempt": {
+      "tests": 70,
+      "failures": 0,
+      "errors": 1,
+      "exit_code": 1,
+      "error": "Static liquid volume is not resolvable at this cell scale"
+    },
+    "repair": "Scale only the horizontal bisection bracket by holdup^(2/3); no floor, seed or tolerance change.",
+    "independent_holdups": [
+      1e-30,
+      1e-60,
+      1e-120,
+      1e-240,
+      1e-300
+    ],
+    "relative_volume_tolerance": 1e-09
+  },
+  "partition_controls": {
+    "cell_lengths_m": [
+      [
+        400.0
+      ],
+      [
+        200.0,
+        200.0
+      ],
+      [
+        100.0,
+        100.0,
+        100.0,
+        100.0
+      ],
+      [
+        10.0,
+        30.0,
+        60.0,
+        120.0,
+        180.0
+      ]
+    ],
+    "inclinations_rad": [
+      -0.03,
+      0.0,
+      0.03
+    ],
+    "heat_supply_w_per_m": [
+      "unlimited",
+      10.0
+    ],
+    "source": "Nonzero evaporation into a frozen 1 bara / 330 K gas target, retaining actual donor inventories.",
+    "negative_control": "Substituting the static factory fails the independent chord-area assertion: expected 346.41016151377545 m2, observed 52.36773236621022 m2."
+  },
   "test_suites": [
     {
       "name": "neqsim.process.equipment.pipeline.TwoFluidPipeConservativeEnergyTest",
@@ -41,7 +146,7 @@
       "failures": "0",
       "errors": "0",
       "skipped": "0",
-      "time": "3.06"
+      "time": "2.693"
     },
     {
       "name": "neqsim.process.equipment.pipeline.TwoFluidPipeConservativeTransitionTest",
@@ -49,15 +154,15 @@
       "failures": "0",
       "errors": "0",
       "skipped": "0",
-      "time": "19.694"
+      "time": "18.146"
     },
     {
       "name": "neqsim.process.equipment.pipeline.TwoFluidRichGasDragQualificationTest",
       "tests": "8",
-      "failures": "1",
+      "failures": "0",
       "errors": "0",
       "skipped": "0",
-      "time": "421.599"
+      "time": "412.622"
     },
     {
       "name": "neqsim.process.equipment.pipeline.twophasepipe.HydrocarbonPoolTransferTest",
@@ -65,7 +170,23 @@
       "failures": "0",
       "errors": "0",
       "skipped": "0",
-      "time": "0.111"
+      "time": "0.09"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.StratifiedPoolTransferTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.108"
+    },
+    {
+      "name": "neqsim.process.equipment.pipeline.twophasepipe.RichGasEquilibriumSourceQualificationTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.141"
     },
     {
       "name": "neqsim.process.equipment.pipeline.twophasepipe.TwoFluidTransactionalEvaluationTest",
@@ -73,7 +194,7 @@
       "failures": "0",
       "errors": "0",
       "skipped": "0",
-      "time": "0.013"
+      "time": "0.012"
     },
     {
       "name": "neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculatorTest",
@@ -81,15 +202,15 @@
       "failures": "0",
       "errors": "0",
       "skipped": "0",
-      "time": "0.007"
+      "time": "0.008"
     },
     {
       "name": "neqsim.process.equipment.pipeline.twophasepipe.closure.HydrostaticCellGeometryTest",
-      "tests": "11",
+      "tests": "12",
       "failures": "0",
       "errors": "0",
       "skipped": "0",
-      "time": "0.06"
+      "time": "0.067"
     },
     {
       "name": "neqsim.process.equipment.pipeline.twophasepipe.reporting.TwoFluidPipeReportTest",
@@ -97,17 +218,30 @@
       "failures": "0",
       "errors": "0",
       "skipped": "0",
-      "time": "1.562"
+      "time": "1.598"
     }
   ],
   "commands": [
     {
-      "command": "./mvnw -B -ntp -o -Djacoco.skip=true -DexcludedTestGroups= -Dtest=TwoFluidRichGasDragQualificationTest,GeometryCalculatorTest,HydrostaticCellGeometryTest,HydrocarbonPoolTransferTest,TwoFluidPipeReportTest,TwoFluidPipeConservativeTransitionTest,TwoFluidPipeConservativeEnergyTest,TwoFluidTransactionalEvaluationTest test",
-      "exit_code": 1,
-      "tests": 64,
-      "failures": 1,
+      "command": "./mvnw -B -ntp -o -Djacoco.skip=true -DexcludedTestGroups= -Dtest=TwoFluidRichGasDragQualificationTest,StratifiedPoolTransferTest,GeometryCalculatorTest,HydrostaticCellGeometryTest,HydrocarbonPoolTransferTest,TwoFluidPipeReportTest,TwoFluidPipeConservativeTransitionTest,TwoFluidPipeConservativeEnergyTest,TwoFluidTransactionalEvaluationTest,RichGasEquilibriumSourceQualificationTest test",
+      "exit_code": 0,
+      "tests": 71,
+      "failures": 0,
       "errors": 0,
       "skipped": 0
+    },
+    {
+      "command": "./mvnw -B -ntp -o -Djacoco.skip=true -DexcludedTestGroups= -Dtest=TwoFluidRichGasDragQualificationTest#finiteRatePoolCompletesBlowdownSettleRefillAndHold test",
+      "stage": "Original 55a6dae baseline reproduction",
+      "exit_code": 1,
+      "tests": 1,
+      "failures": 1,
+      "errors": 0
+    },
+    {
+      "command": "python3 src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series/audit.py",
+      "exit_code": 0,
+      "analytical_controls": 222
     },
     {
       "command": "python3 -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series -p test_audit.py -v",
@@ -115,16 +249,39 @@
       "tests": 3
     },
     {
+      "command": "python3 -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy -p test_energy_receipts.py -v",
+      "exit_code": 0,
+      "tests": 3
+    },
+    {
+      "command": "python3 -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy -p test_srk_receipts.py -v",
+      "exit_code": 0,
+      "tests": 2
+    },
+    {
       "command": "python3 -O -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series -p test_audit.py -v",
       "exit_code": 0,
       "tests": 3
     },
     {
-      "command": "java --module jdk.compiler/com.sun.tools.javac.Main --release 8 -cp <tested-classpath> -d <temporary-classes> src/test/java/neqsim/process/equipment/pipeline/TwoFluidRichGasDragQualificationTest.java",
+      "command": "python3 -O -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/gravity-energy -p test_energy_receipts.py -v",
       "exit_code": 0,
-      "scope": "Compilation only, on Java 17; not a Java 8 runtime run."
+      "tests": 3
+    },
+    {
+      "command": "python3 -O -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/rusanov-total-energy -p test_srk_receipts.py -v",
+      "exit_code": 0,
+      "tests": 2
     }
   ],
+  "additional_validation": {
+    "pressure_moment_controls": 222,
+    "pressure_moment_precision_digits": 80,
+    "pressure_moment_numerical_csv_changes": false,
+    "normal_and_optimized_python_guard_tests": 16,
+    "java8_compilation": "All five changed Java files compile with java --module jdk.compiler/com.sun.tools.javac.Main --release 8 -cp <Surefire classpath> -d <temporary classes>. This is compilation on JDK 17, not a Java 8 runtime test.",
+    "focused_javadoc": "java --module jdk.javadoc/jdk.javadoc.internal.tool.Main -quiet -Xdoclint:all -source 8 -classpath <Surefire classpath> -d <temporary docs> <both changed production Java files>; exit 0"
+  },
   "historical_comparisons": [
     {
       "receipt": "legacy-varying-outlet-refinement.csv",
@@ -135,8 +292,8 @@
       "limitation": "Fixed outlet, but curved-route resampling changes the physical straight segments."
     }
   ],
-  "documentation_impact": "Corrected route definition, source provenance, numerical receipts and interpretation; no passing physical restart or pigging claim.",
-  "remaining_blocker": "The unchanged 10% peak/final inventory gates still fail on the common polyline. Pressure-rate/ringing refinement and independent physical validation remain open.",
+  "documentation_impact": "Documented explicit flowing versus stationary area assumptions, trace resolution, current and historical numerical evidence, diagnostics, capability discovery and agent guidance.",
+  "remaining_blocker": "No independent rate/thermal validation, pressure-rate/ringing convergence, restart-opening surge band, repeated-cycle evidence, separate five-second riser qualification or moving-pig volume/flux/work coupling.",
   "publication_checks": [
     {
       "command": "python3 devtools/run_spotless.py apply",
@@ -155,11 +312,11 @@
       "exit_code": 0
     },
     {
-      "command": "pre-commit run --all-files --hook-stage pre-commit",
+      "command": "uvx --offline pre-commit run --all-files --hook-stage pre-commit",
       "exit_code": 0
     },
     {
-      "command": "pre-commit run --all-files --hook-stage pre-push",
+      "command": "uvx --offline pre-commit run --all-files --hook-stage pre-push",
       "exit_code": 0
     },
     {
@@ -167,7 +324,7 @@
       "exit_code": 0
     },
     {
-      "command": "git diff --check",
+      "command": "git diff --cached --check",
       "exit_code": 0
     }
   ]

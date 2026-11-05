@@ -29,7 +29,7 @@ class AuditTest(unittest.TestCase):
             self.assertEqual(0, result.returncode, result.stderr)
             receipt = json.loads((folder / 'summary.json').read_text())
             self.assertEqual(222, receipt['rows'])
-            self.assertEqual('04e6c337b848c66f1a5dd39bdfadbcdd60440900', receipt['source_blob'])
+            self.assertEqual('5aaaf3c0c411d3ac29024393b32b0b360613924c', receipt['source_blob'])
 
     def test_matrix_corruption(self):
         """Keep valid data and reject omission, repetition, alteration and every nonfinite field."""
@@ -79,7 +79,7 @@ class AuditTest(unittest.TestCase):
         mutations = [
             ('while ((line = input.readLine()) != null)', 'if ((line = input.readLine()) != null)'),
             ('value.getLiquidMoment() +', '(value.getLiquidMoment() + (depth > 0.0 && depth < diameter ? 1.0 : 0.0)) +'),
-            ('04e6c337b848c66f1a5dd39bdfadbcdd60440900', '0000000000000000000000000000000000000000'),
+            ('5aaaf3c0c411d3ac29024393b32b0b360613924c', '0000000000000000000000000000000000000000'),
         ]
         for old, new in mutations:
             self.assertIn(old, source)

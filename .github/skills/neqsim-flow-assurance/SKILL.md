@@ -712,6 +712,11 @@ for (double qgMSm3d : gasRates) {
 > retains representable trace-wedge leading depth without a liquid floor, reports equilibrium
 > appearance and any still-sub-resolution stratified trace fallback,
 > and can retain an explicitly initialized wall profile across event intervals.
+> Use `HydrocarbonPoolTransfer.forStratifiedFlow(...)` for moving circular-stratified states.
+> Its local holdup chord preserves total area and component sources under subdivision of a
+> uniform physical state. Independent stationary puddles in every numerical cell are a
+> different area model and introduce a cell-length kinetic dependence during flow. Preserve
+> the historical hydrostatic-cycle failure; the flowing alternative does not validate it.
 > Mesh refinement must retain physical terrain and outlet breakpoints. The wall-coupled
 > 12/24-cell cycle fixes its final 1250 m at -333.5 m on both meshes; the earlier
 > "last three cells" rule compared different pipes. Retain the 10% peak/final inventory

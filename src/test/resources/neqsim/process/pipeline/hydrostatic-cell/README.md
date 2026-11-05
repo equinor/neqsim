@@ -51,6 +51,11 @@ mutation. All **3060** cells pass. `mesh_results.csv` records the earlier execut
 production outputs; the regression also replays regenerated independent inputs.
 The additional extreme-trace control passes without changing any frozen CSV value
 or tolerance.
+Horizontal trace controls also span `1e-30` through `1e-300` holdup. A fixed half-diameter
+bisection bracket cannot resolve their positive circular-segment depths in 120 iterations.
+Scaling only the horizontal search bracket by the expected holdup-to-depth power preserves
+positive volume and interface, the independent small-depth chord limit, and the existing
+`1e-9` relative-volume tolerance. No inventory floor or trace fallback is introduced.
 
 | Cells | Maximum depth (m) | Interface area (m2) | Minimum gas area (m2) |
 | ---: | ---: | ---: | ---: |

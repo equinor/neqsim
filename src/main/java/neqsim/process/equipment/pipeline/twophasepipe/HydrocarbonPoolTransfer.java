@@ -10,7 +10,8 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <p>
  * The local equilibrium flash supplies only the component inventory target. User-supplied overall transfer coefficients
- * and an explicit interface width supply the kinetics. For component {@code i}, the unconstrained oil source is
+ * and an explicitly selected interface-area model supply the kinetics. For component {@code i}, the unconstrained oil
+ * source is
  * </p>
  *
  * <pre>
@@ -18,10 +19,10 @@ import neqsim.thermo.system.SystemInterface;
  * </pre>
  *
  * <p>
- * where {@code A_i/L = interfaceWidthFraction * diameter} and {@code V/L = pi diameter^2 / 4}. Sources are donor
- * limited for the accepted Euler interval and gas receives the exact opposite of every oil source. An optional
- * externally supplied heat rate limits net endothermic transfer. The existing component and total-energy transports
- * remain the inventory and energy owners.
+ * where {@code A_i/L} is a prescribed width, a local flowing stratified chord or a static hydrostatic-cell interface,
+ * and {@code V/L = pi diameter^2 / 4}. Sources are donor limited for the accepted Euler interval and gas receives the
+ * exact opposite of every oil source. An optional externally supplied heat rate limits net endothermic transfer. The
+ * existing component and total-energy transports remain the inventory and energy owners.
  * </p>
  *
  * <p>
@@ -41,6 +42,8 @@ public final class HydrocarbonPoolTransfer implements Serializable {
   private final double interfaceWidthFraction;
   private final double maximumHeatSupplyWPerMetre;
   private final boolean hydrostaticInterfaceArea;
+  /** Use a local flowing chord rather than a stationary puddle in each cell. */
+  private final boolean stratifiedInterfaceArea;
 
   /**
    * Immutable diagnostics and component sources for one stage.
@@ -140,7 +143,32 @@ public final class HydrocarbonPoolTransfer implements Serializable {
   public HydrocarbonPoolTransfer(String[] components, double[] coefficients, double[] evaporationEnthalpiesJPerKg,
       double interfaceWidthFraction, double maximumHeatSupplyWPerMetre) {
     this(components, coefficients, evaporationEnthalpiesJPerKg, interfaceWidthFraction, maximumHeatSupplyWPerMetre,
-        false);
+        false, false);
+  }
+
+  /**
+   * Construct a transfer closure using the local circular-stratified interface of the flowing state.
+   *
+   * <p>
+   * The cell-average holdup determines one cross-sectional chord, extended over the cell arclength. Subdividing a
+   * uniform state therefore preserves total interface area and integrated component sources. This does not impose a
+   * separate stationary horizontal puddle in every numerical cell. A gas-only cell can use its equilibrium oil target
+   * for first appearance without adding seed inventory. Empty and full target cross-sections have zero interface. This
+   * assumption excludes annular, dispersed, slug-front and moving-pig interfaces; coefficients still require
+   * independent physical validation.
+   * </p>
+   *
+   * @param components unique NeqSim component names
+   * @param coefficients overall transfer coefficients in m/s, one per component
+   * @param evaporationEnthalpiesJPerKg positive evaporation heat requirements in J/kg, one per component
+   * @param maximumHeatSupplyWPerMetre maximum external heat available to net evaporation in W/m; positive infinity
+   * disables this limit
+   * @return immutable local stratified-flow transfer closure
+   */
+  public static HydrocarbonPoolTransfer forStratifiedFlow(String[] components, double[] coefficients,
+      double[] evaporationEnthalpiesJPerKg, double maximumHeatSupplyWPerMetre) {
+    return new HydrocarbonPoolTransfer(components, coefficients, evaporationEnthalpiesJPerKg, 0.0,
+        maximumHeatSupplyWPerMetre, false, true);
   }
 
   /**
@@ -155,6 +183,12 @@ public final class HydrocarbonPoolTransfer implements Serializable {
    * clipping the trace inventory. A full liquid cell without a gas interface remains blocked.
    * </p>
    *
+   * <p>
+   * Independent per-cell stationary reconstructions are not invariant when a flowing uniform state is subdivided. Use
+   * {@link #forStratifiedFlow(String[], double[], double[], double)} for that local flowing-interface assumption.
+   * Static subdivision comparisons require cell volumes consistent with the same physical free surface.
+   * </p>
+   *
    * @param components unique NeqSim component names
    * @param coefficients overall transfer coefficients in m/s, one per component
    * @param evaporationEnthalpiesJPerKg positive evaporation heat requirements in J/kg, one per component
@@ -165,7 +199,7 @@ public final class HydrocarbonPoolTransfer implements Serializable {
   public static HydrocarbonPoolTransfer forHydrostaticPool(String[] components, double[] coefficients,
       double[] evaporationEnthalpiesJPerKg, double maximumHeatSupplyWPerMetre) {
     return new HydrocarbonPoolTransfer(components, coefficients, evaporationEnthalpiesJPerKg, 0.0,
-        maximumHeatSupplyWPerMetre, true);
+        maximumHeatSupplyWPerMetre, true, false);
   }
 
   /**
@@ -177,9 +211,11 @@ public final class HydrocarbonPoolTransfer implements Serializable {
    * @param interfaceWidthFraction fixed interface width divided by diameter
    * @param maximumHeatSupplyWPerMetre maximum evaporation heat supply in W/m
    * @param hydrostaticInterfaceArea whether to reconstruct the stationary pool area
+   * @param stratifiedInterfaceArea whether to use the flowing local cross-sectional interface
    */
   private HydrocarbonPoolTransfer(String[] components, double[] coefficients, double[] evaporationEnthalpiesJPerKg,
-      double interfaceWidthFraction, double maximumHeatSupplyWPerMetre, boolean hydrostaticInterfaceArea) {
+      double interfaceWidthFraction, double maximumHeatSupplyWPerMetre, boolean hydrostaticInterfaceArea,
+      boolean stratifiedInterfaceArea) {
     if (components == null || coefficients == null || evaporationEnthalpiesJPerKg == null || components.length == 0
         || components.length != coefficients.length || components.length != evaporationEnthalpiesJPerKg.length
         || !Double.isFinite(interfaceWidthFraction) || interfaceWidthFraction < 0.0 || interfaceWidthFraction > 1.0
@@ -206,6 +242,7 @@ public final class HydrocarbonPoolTransfer implements Serializable {
     this.interfaceWidthFraction = interfaceWidthFraction;
     this.maximumHeatSupplyWPerMetre = maximumHeatSupplyWPerMetre;
     this.hydrostaticInterfaceArea = hydrostaticInterfaceArea;
+    this.stratifiedInterfaceArea = stratifiedInterfaceArea;
   }
 
   /**
@@ -251,7 +288,10 @@ public final class HydrocarbonPoolTransfer implements Serializable {
         throw new IllegalStateException("Pool-transfer cells require finite positive diameter and length");
       }
       double interfaceArea;
-      if (hydrostaticInterfaceArea) {
+      if (stratifiedInterfaceArea) {
+        interfaceArea = new GeometryCalculator()
+            .calculateHydrostaticCell(section.getLiquidHoldup(), diameter, section.getLength(), 0.0).getInterfaceArea();
+      } else if (hydrostaticInterfaceArea) {
         try {
           interfaceArea = section.getHydrostaticCellGeometry().getInterfaceArea();
         } catch (IllegalArgumentException exception) {
@@ -265,7 +305,8 @@ public final class HydrocarbonPoolTransfer implements Serializable {
       } else {
         interfaceArea = interfaceWidthFraction * diameter * section.getLength();
       }
-      if (hydrostaticInterfaceArea && interfaceArea == 0.0) {
+      if ((hydrostaticInterfaceArea || stratifiedInterfaceArea) && interfaceArea == 0.0
+          && section.getLiquidHoldup() == 0.0) {
         double targetOilMassPerMetre = 0.0;
         for (double oilChange : targetChanges[cell][1]) {
           targetOilMassPerMetre += oilChange;
@@ -280,9 +321,8 @@ public final class HydrocarbonPoolTransfer implements Serializable {
             throw new IllegalStateException("Equilibrium oil target must have finite positive volume");
           }
           targetHoldup = Math.min(1.0, targetHoldup);
-          interfaceArea = new GeometryCalculator()
-              .calculateHydrostaticCell(targetHoldup, diameter, section.getLength(), section.getInclination())
-              .getInterfaceArea();
+          interfaceArea = new GeometryCalculator().calculateHydrostaticCell(targetHoldup, diameter, section.getLength(),
+              stratifiedInterfaceArea ? 0.0 : section.getInclination()).getInterfaceArea();
           equilibriumAppearanceArea[cell] = interfaceArea > 0.0;
         }
       }

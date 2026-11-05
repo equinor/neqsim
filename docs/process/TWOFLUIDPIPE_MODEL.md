@@ -695,6 +695,10 @@ pipe.setHydrocarbonPoolTransfer(
 // Stationary/slowly draining terrain-pool screening:
 pipe.setHydrocarbonPoolTransfer(
     HydrocarbonPoolTransfer.forHydrostaticPool(species, k, dhVap, 100.0));
+
+// Flowing stratified shutdown/refill screening:
+pipe.setHydrocarbonPoolTransfer(
+    HydrocarbonPoolTransfer.forStratifiedFlow(species, k, dhVap, 100.0));
 ```
 
 Configure the closure before the first transient interval. It requires dry gas/oil component
@@ -709,6 +713,21 @@ trace is below floating-point relative-volume resolution, the result reports
 `getUnresolvedTraceAreaFallback()` and uses the local stratified chord area; it does not delete, seed
 or clip component inventory. This last-resort subgrid regularization is not evidence for an annular
 film, slug front or moving-pig interface.
+
+For a flowing stratified state, `forStratifiedFlow(...)` uses the circular cross-sectional chord
+at the accepted cell-average holdup, extended along the cell arclength. It preserves integrated
+area and paired component rates when a uniform physical state is subdivided, including nonuniform
+cell lengths and active heat limits. The equilibrium oil target supplies the chord for first
+appearance without seed inventory; full liquid has zero gas/oil interface. This is a different,
+explicit area assumption from `forHydrostaticPool(...)`. Reconstructing an independent horizontal
+puddle in every flowing cell makes numerical cell length a physical kinetic parameter: a 400 m,
+unit-diameter section at 0.01 holdup and 0.03 rad has 13.990 m2 static area as one cell, but
+34.626 m2 as eight equal cells. Neither value is a flowing-interface prediction. Keep the static
+factory for stationary reconstructions and validate its cell volumes against a common physical
+free surface before comparing subdivisions.
+Horizontal reconstruction scales its search bracket with circular-segment trace depth rather
+than imposing a liquid floor. Independent controls retain positive volume and chord area down
+to `1e-300` holdup under the unchanged relative-volume tolerance.
 
 The analytical gates cover zero drive/area, independent species conductance, donor and heat limits,
 unseeded oil appearance, exponential time-step refinement, component conservation and conservative
@@ -728,15 +747,20 @@ then evolve independently, and a new steady `run()` clears the prior evolved lay
 
 The declared finite-heat rich-gas cycle completes 780 s on 12 and 24 cells with 100 W/m available
 evaporation heat: 120 s gas-only blowdown, 120 s closed settling, 420 s same-composition inlet
-refill at 1000 kg/s with the outlet closed, then 120 s closed hold. The new run uses hydrostatic
-pool area, a 26 mm steel wall (7850 kg/m3, 500 J/(kg K)), 4 W/(m2 K) wall/seabed exchange and a
+refill at 1000 kg/s with the outlet closed, then 120 s closed hold. The current run explicitly uses
+`forStratifiedFlow(...)`, a 26 mm steel wall (7850 kg/m3, 500 J/(kg K)), 4 W/(m2 K) wall/seabed exchange and a
 277.15 K environment. Both meshes sample the same terrain, with the final 1250 m level at
 -333.5 m elevation. The earlier "last three cells" outlet definition changed its physical length
 and elevation with mesh size; its 22.82%/24.29% peak/final inventory differences cannot isolate
 spatial error. The corrected comparison retains the predeclared 10% inventory gates, all
 conservation tolerances and unfiltered pressure diagnostics. The area receipt records the maximum
 **single-cell** interface area, which is an extensive quantity and need not be mesh invariant.
-The common-polyline rerun still fails the 10% inventory gates at 11.21% peak and 10.86% final oil.
+The retained common-polyline stationary-puddle rerun fails at 11.21% peak and 10.86% final oil.
+The distinct flowing-area model passes those unchanged gates at 2.478% peak and 2.576% final oil:
+24,452.255/25,073.602 kg peak and 24,121.554/24,759.386 kg final on 12/24 cells. These are different
+area assumptions and predict different inventories; the flowing result does not qualify the
+historical stationary-puddle trajectory. Independent source partition controls and trace-volume
+limits accompany the explicit area-model change.
 The cycle crosses the dense-root $V/B=1.75$
 diagnostic-label transition with the configured liquid root, positive compressibility and recovery
 Jacobian retained; no phase relabeling, mass clipping or guard weakening is used. See the

@@ -554,7 +554,12 @@ EOS diagnostic $V/B=1.75$ label transition by explicitly retaining the requested
 positive-compressibility, Jacobian and energy-admissibility guards remain active. Do not clip
 composition or change the configured root to manufacture a restart result.
 Use `HydrocarbonPoolTransfer.forHydrostaticPool(...)` only for stationary or slowly draining
-stratified terrain pools. Inspect interface-area, equilibrium-appearance and unresolved-trace-area
+stratified terrain pools. Use `forStratifiedFlow(...)` for a flowing circular-stratified interface:
+its local holdup chord preserves integrated area and component sources under subdivision of a
+uniform state, including nonuniform cells and finite heat limits. Independent per-cell horizontal
+puddles introduce cell-length dependence during a flowing restart. The two area assumptions are
+distinct models; retain the historical hydrostatic-cycle failure as evidence rather than claiming
+the flowing closure validates static-pool convergence. Inspect interface-area, equilibrium-appearance and unresolved-trace-area
 diagnostics. Representable long-cell trace wedges retain their leading-edge depth without a liquid
 floor; any reported fallback remains a numerical-resolution warning. Configure deliberate wall
 inventory with `setInitialWallTemperatureProfile(...)`

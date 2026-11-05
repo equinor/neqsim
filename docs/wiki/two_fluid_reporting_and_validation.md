@@ -222,6 +222,14 @@ Interface area, rate, heat scale and trace-fallback fields are `NaN`/`false` unt
 `HydrocarbonPoolTransfer` result exists. The depth is the opt-in volume-preserving horizontal-surface
 diagnostic; inadmissible cell geometry fails explicitly rather than substituting an invented level.
 
+Record the selected transfer-area assumption alongside these diagnostics. `forHydrostaticPool(...)`
+uses a stationary horizontal surface in each cell; `forStratifiedFlow(...)` uses the flowing state's
+local circular-stratified chord. The exported static depth remains a static diagnostic in both
+cases. Its implied interface is therefore not the flowing transfer area. Subdivision of a uniform
+state preserves the flowing closure's total area and integrated component rates; independent
+stationary puddles are different physical states when cell length changes. Keep their numerical
+receipts separate and do not infer static-pool convergence from a flowing-model result.
+
 Capture is read-only and allocates defensive section/diagnostic snapshots only when called. Basin
 membership is geometric, while inventory may be zero. Consequently this export can demonstrate
 where computed inventory resides and distinguish drainage from interphase transfer, but it does not

@@ -95,5 +95,30 @@
       }
     ],
     "limits": "Static pressure-moment geometry only; no transient or experimental qualification."
+  },
+  "horizontal_trace_revalidation": {
+    "date": "2026-11-05",
+    "source_parent_head": "55a6dae3759835e83915f07d316d21e1524d0d28",
+    "source_blob": "5aaaf3c0c411d3ac29024393b32b0b360613924c",
+    "rows": 222,
+    "precision_digits": 80,
+    "numerical_csv_changes": false,
+    "source_identity_guard": "strict; positive exact-source control and wrong-source rejection retained",
+    "commands": [
+      {
+        "command": "python3 src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series/audit.py",
+        "exit_code": 0
+      },
+      {
+        "command": "python3 -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series -p test_audit.py -v",
+        "exit_code": 0,
+        "tests": 3
+      },
+      {
+        "command": "python3 -O -m unittest discover -s src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-pressure-moments/independent-series -p test_audit.py -v",
+        "exit_code": 0,
+        "tests": 3
+      }
+    ]
   }
 }

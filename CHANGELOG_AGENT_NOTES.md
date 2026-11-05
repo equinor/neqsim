@@ -9,6 +9,22 @@
 
 ---
 
+## 2026-11-05 — Flowing transfer area and horizontal trace-volume resolution
+
+- `HydrocarbonPoolTransfer.forStratifiedFlow(...)` uses the local circular-stratified holdup chord along cell arclength.
+  Uniform/nonuniform subdivision preserves total area and integrated species sources, including finite heat limits
+  and unseeded oil appearance. Coefficients, donor bounds and conservative inventory/energy owners are retained.
+- `forHydrostaticPool(...)` remains the distinct per-cell stationary-puddle model. Applying it throughout a flowing
+  restart made numerical cell length a kinetic input. The restart screen now explicitly selects the flowing model;
+  retained historical static-model failures are not claimed as passing convergence evidence.
+- Horizontal `calculateHydrostaticCell(...)` reconstruction now scales its bisection bracket with the circular-segment
+  trace depth. Independent controls retain positive volume and interface down to `1e-300` holdup, with the same
+  `1e-9` relative-volume gate and no liquid seed, clipping or inventory floor.
+- Agents/skills: dynamic-simulation and flow-assurance guidance distinguish static pool depth diagnostics from the
+  selected flowing transfer area. See the hydrocarbon-pool-transfer receipt for complete-cycle results and limits.
+
+---
+
 ## 2026-11-05 — Restart pressure diagnostics and inclined trace-pool geometry
 
 - `GeometryCalculator.calculateHydrostaticCell(...)` now retains an inclined trace pool's positive leading-edge depth
