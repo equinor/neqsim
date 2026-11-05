@@ -43,8 +43,8 @@ class TwoFluidPipeReportTest {
     }
     traceFallback[4] = true;
 
-    TwoFluidPipeReport.LowPointPoolSnapshot snapshot = TwoFluidPipeReport.captureLowPointPools(12.5, sections,
-        sources, interfaceArea, heatScale, traceFallback);
+    TwoFluidPipeReport.LowPointPoolSnapshot snapshot = TwoFluidPipeReport.captureLowPointPools(12.5, sections, sources,
+        interfaceArea, heatScale, traceFallback);
 
     assertEquals(12.5, snapshot.getTimeSeconds(), 0.0);
     assertArrayEquals(new int[] {1, 2, 3}, snapshot.getPoolId());
@@ -57,16 +57,13 @@ class TwoFluidPipeReportTest {
     assertArrayEquals(expectedVolume, snapshot.getOilInventoryCubicMeters(), 1.0e-12);
     assertArrayEquals(expectedVolume, snapshot.getLiquidInventoryCubicMeters(), 1.0e-12);
     assertArrayEquals(new double[] {6.0, 9.0, 13.0}, snapshot.getInterfaceAreaSquareMeters(), 1.0e-12);
-    assertArrayEquals(new double[] {0.48, 0.72, 1.04}, snapshot.getInterphaseOilMassRateKilogramsPerSecond(),
-        1.0e-12);
+    assertArrayEquals(new double[] {0.48, 0.72, 1.04}, snapshot.getInterphaseOilMassRateKilogramsPerSecond(), 1.0e-12);
     assertArrayEquals(new double[] {0.7, 0.5, 0.3}, snapshot.getMinimumHeatScale(), 1.0e-12);
     assertArrayEquals(new boolean[] {false, true, false}, snapshot.getTraceAreaFallback());
     assertTrue(Arrays.stream(snapshot.getLowPointLiquidDepthMeters()).allMatch(value -> value > 0.0));
     assertTrue(Arrays.stream(snapshot.getMaximumLocalLiquidDepthMeters()).allMatch(value -> value > 0.0));
-    assertArrayEquals(new double[] {2.0, 4.0, 6.0}, snapshot.getMaximumAbsoluteGasVelocityMetersPerSecond(),
-        1.0e-12);
-    assertArrayEquals(new double[] {0.2, 0.4, 0.6}, snapshot.getMaximumAbsoluteOilVelocityMetersPerSecond(),
-        1.0e-12);
+    assertArrayEquals(new double[] {2.0, 4.0, 6.0}, snapshot.getMaximumAbsoluteGasVelocityMetersPerSecond(), 1.0e-12);
+    assertArrayEquals(new double[] {0.2, 0.4, 0.6}, snapshot.getMaximumAbsoluteOilVelocityMetersPerSecond(), 1.0e-12);
 
     int[] defensiveCopy = snapshot.getLowPointCell();
     defensiveCopy[0] = 99;
@@ -82,8 +79,7 @@ class TwoFluidPipeReportTest {
   void horizontalProfileDoesNotManufactureLowPointPools() {
     TwoFluidSection[] sections = reportingSections(new double[] {0.0, 0.0, 0.0, 0.0});
 
-    TwoFluidPipeReport.LowPointPoolSnapshot snapshot =
-        TwoFluidPipeReport.captureLowPointPools(0.0, sections, null);
+    TwoFluidPipeReport.LowPointPoolSnapshot snapshot = TwoFluidPipeReport.captureLowPointPools(0.0, sections, null);
 
     assertEquals(0, snapshot.getPoolId().length);
     String csv = TwoFluidPipeReport.toLowPointPoolCsv(Arrays.asList(snapshot));
@@ -325,4 +321,3 @@ class TwoFluidPipeReportTest {
     return fluid;
   }
 }
-

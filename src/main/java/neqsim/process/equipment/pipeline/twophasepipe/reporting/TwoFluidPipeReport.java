@@ -85,8 +85,8 @@ public final class TwoFluidPipeReport {
    * <p>
    * Pool identifiers are one-based for reporting. Cell and basin indices are zero-based and refer to the physical
    * {@link TwoFluidSection} array. A basin is reported only for a strict internal terrain minimum; an exactly flat
-   * minimum is represented by its midpoint cell. Horizontal and monotonic profiles therefore produce an empty
-   * snapshot instead of manufacturing a pool location.
+   * minimum is represented by its midpoint cell. Horizontal and monotonic profiles therefore produce an empty snapshot
+   * instead of manufacturing a pool location.
    * </p>
    */
   public static final class LowPointPoolSnapshot {
@@ -153,10 +153,10 @@ public final class TwoFluidPipeReport {
           this.liquidInventoryCubicMeters[pool] += section.getLiquidHoldup() * volume;
           this.maximumLocalLiquidDepthMeters[pool] = Math.max(this.maximumLocalLiquidDepthMeters[pool],
               section.getHydrostaticCellGeometry().getMaximumDepth());
-          this.maximumAbsoluteGasVelocityMetersPerSecond[pool] = Math.max(
-              this.maximumAbsoluteGasVelocityMetersPerSecond[pool], Math.abs(section.getGasVelocity()));
-          this.maximumAbsoluteOilVelocityMetersPerSecond[pool] = Math.max(
-              this.maximumAbsoluteOilVelocityMetersPerSecond[pool], Math.abs(section.getOilVelocity()));
+          this.maximumAbsoluteGasVelocityMetersPerSecond[pool] = Math
+              .max(this.maximumAbsoluteGasVelocityMetersPerSecond[pool], Math.abs(section.getGasVelocity()));
+          this.maximumAbsoluteOilVelocityMetersPerSecond[pool] = Math
+              .max(this.maximumAbsoluteOilVelocityMetersPerSecond[pool], Math.abs(section.getOilVelocity()));
           if (sources != null) {
             for (int component = 0; component < sources[cell][1].length; component++) {
               transferRate += sources[cell][1][component] * length;
@@ -301,8 +301,8 @@ public final class TwoFluidPipeReport {
         result.getInterfaceAreasSquareMetres(), result.getHeatScale(), result.getUnresolvedTraceAreaFallback());
   }
 
-  static LowPointPoolSnapshot captureLowPointPools(double timeSeconds, TwoFluidSection[] sections,
-      double[][][] sources, double[] interfaceAreas, double[] heatScale, boolean[] traceAreaFallback) {
+  static LowPointPoolSnapshot captureLowPointPools(double timeSeconds, TwoFluidSection[] sections, double[][][] sources,
+      double[] interfaceAreas, double[] heatScale, boolean[] traceAreaFallback) {
     if (!Double.isFinite(timeSeconds) || sections == null) {
       throw new IllegalArgumentException("Pool reporting requires finite time and physical sections");
     }
@@ -335,8 +335,7 @@ public final class TwoFluidPipeReport {
     while (start + 1 < sections.length) {
       double elevation = sections[start].getElevation();
       int end = start;
-      while (end + 1 < sections.length
-          && Double.compare(sections[end + 1].getElevation(), elevation) == 0) {
+      while (end + 1 < sections.length && Double.compare(sections[end + 1].getElevation(), elevation) == 0) {
         end++;
       }
       if (end + 1 < sections.length && elevation < sections[start - 1].getElevation()
@@ -440,8 +439,8 @@ public final class TwoFluidPipeReport {
             .append(format(snapshot.maximumAbsoluteOilVelocityMetersPerSecond[pool])).append(',')
             .append(format(snapshot.interfaceAreaSquareMeters[pool])).append(',')
             .append(format(snapshot.interphaseOilMassRateKilogramsPerSecond[pool])).append(',')
-            .append(format(snapshot.minimumHeatScale[pool])).append(',')
-            .append(snapshot.traceAreaFallback[pool]).append('\n');
+            .append(format(snapshot.minimumHeatScale[pool])).append(',').append(snapshot.traceAreaFallback[pool])
+            .append('\n');
       }
     }
     return csv.toString();
@@ -666,4 +665,3 @@ public final class TwoFluidPipeReport {
     return new ArrayList<>();
   }
 }
-
