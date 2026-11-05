@@ -18,6 +18,7 @@ other tools.
 
 ## Step-by-step Java example
 
+<!-- process-comparison-example: java-quickstart -->
 ```java
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -79,11 +80,22 @@ public final class ProcessComparisonQuickStart {
         firstStageSeparator.getGasOutStream().getFlowRate("MSm3/day");
     double outletTemperature =
         compressor1.getOutletStream().getTemperature("C");
-    logger.info("Gas flow after separator: {} MSm3/day", gasFlow);
-    logger.info("Compressor outlet temperature: {} C", outletTemperature);
-
     Report reporter = new Report(combinedProcess);
     String jsonReport = reporter.generateJsonReport();
+
+    if (!Double.isFinite(gasFlow)
+        || gasFlow <= 0.0
+        || gasFlow > 10.0
+        || !Double.isFinite(outletTemperature)
+        || outletTemperature <= 36.85
+        || outletTemperature >= 300.0
+        || jsonReport.isEmpty()
+        || !jsonReport.equals(combinedProcess.getReport_json())) {
+      throw new IllegalStateException("Process-comparison result is invalid");
+    }
+
+    logger.info("Gas flow after separator: {} MSm3/day", gasFlow);
+    logger.info("Compressor outlet temperature: {} C", outletTemperature);
     logger.info("{}", jsonReport);
   }
 }
@@ -99,4 +111,4 @@ Tips when translating the notebook to Java:
   `ProcessModel` (`getReport_json()`), which you can compare directly against the
   notebook outputs.
 
-Both calls are exercised by [CombinedModelsTest](https://github.com/equinor/neqsim/blob/master/src/test/java/neqsim/process/processmodel/CombinedModelsTest.java).
+The focused documentation regression compiles and executes this exact marked Java 8 fence. The retained [CombinedModelsTest](https://github.com/equinor/neqsim/blob/master/src/test/java/neqsim/process/processmodel/CombinedModelsTest.java) independently checks representative flow, temperature, and report values.
