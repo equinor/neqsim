@@ -420,44 +420,72 @@ coverage is in [LbcFluidRoundTripTest](../../src/test/java/neqsim/thermo/util/re
 
 ### Java API
 
+The following quick start is a complete Java 8 program. Pass one E300 file path as
+its command-line argument. It reads the file, checks the automatic multiphase
+setting for water-containing slates, performs a TP flash at 100 bara and 90 °C,
+initializes physical properties, and fails if the first-phase density is not
+finite and positive.
+
+<!-- e300-import-example: java-quickstart -->
 ```java
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.util.readwrite.EclipseFluidReadWrite;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-// Basic read
-SystemInterface fluid = EclipseFluidReadWrite.read("path/to/fluid.e300");
+/** Executable Eclipse E300 import example. */
+public final class EclipseE300ImportQuickStart {
+  /** Utility class. */
+  private EclipseE300ImportQuickStart() {}
 
-// Read with water addition (kij = 0.5 for water vs all components)
-SystemInterface fluid = EclipseFluidReadWrite.read("path/to/fluid.e300", true);
+  /**
+   * Imports and flashes one E300 fluid.
+   *
+   * @param args one input E300 file path
+   * @throws Exception if the input is invalid or the calculation fails
+   */
+  public static void main(String[] args) throws Exception {
+    if (args.length != 1) {
+      throw new IllegalArgumentException("Expected one E300 file path");
+    }
 
-// Read with water and custom kij
-SystemInterface fluid = EclipseFluidReadWrite.read("path/to/fluid.e300", true, 0.45);
+    Path input = Paths.get(args[0]);
+    if (!Files.isRegularFile(input)) {
+      throw new IllegalArgumentException("E300 file does not exist: " + input);
+    }
 
-// Read with pseudo-name suffix (for multi-fluid models)
-SystemInterface fluid = EclipseFluidReadWrite.read("path/to/fluid.e300", "_well1");
+    SystemInterface fluid = EclipseFluidReadWrite.read(input.toString(), "");
+    if (fluid.hasComponent("water") && !fluid.doMultiPhaseCheck()) {
+      throw new IllegalStateException("Water-containing imports must enable multiphase checking");
+    }
 
-// Read multiple fluids from same file (each component set gets a suffix)
-String[] fluidNames = {"well1", "well2"};
-SystemInterface fluid = EclipseFluidReadWrite.read("path/to/fluid.e300", fluidNames);
+    fluid.setPressure(100.0, "bara");
+    fluid.setTemperature(90.0, "C");
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.initProperties();
+
+    if (fluid.getNumberOfPhases() < 1) {
+      throw new IllegalStateException("The TP flash returned no phases");
+    }
+    double density = fluid.getPhase(0).getDensity("kg/m3");
+    if (!Double.isFinite(density) || density <= 0.0) {
+      throw new IllegalStateException("First-phase density is not finite and positive");
+    }
+  }
+}
 ```
 
-After reading, the fluid is ready for thermodynamic calculations:
+The reader overloads select additional import behavior:
 
-```java
-// Set reservoir conditions
-fluid.setPressure(100.0, "bara");
-fluid.setTemperature(90.0, "C");
-
-// Run flash calculation
-neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-    new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid);
-ops.TPflash();
-fluid.initProperties();
-
-// Get results
-System.out.println("Number of phases: " + fluid.getNumberOfPhases());
-System.out.println("Gas density: " + fluid.getPhase("gas").getDensity("kg/m3"));
-```
+| Purpose | Java call |
+| --- | --- |
+| Basic import | `EclipseFluidReadWrite.read(path)` |
+| Add water with default interactions | `EclipseFluidReadWrite.read(path, true)` |
+| Add water with a custom interaction value | `EclipseFluidReadWrite.read(path, true, 0.45)` |
+| Add a pseudo-component suffix | `EclipseFluidReadWrite.read(path, "_well1")` |
+| Replicate the slate for named fluids | `EclipseFluidReadWrite.read(path, fluidNames)` |
 
 ### Python API (neqsim-python)
 
@@ -527,19 +555,13 @@ NeqSim can export any fluid to E300 format, enabling workflows where you build a
 
 ### Java API
 
-```java
-import neqsim.thermo.util.readwrite.EclipseFluidReadWrite;
+Use the writer overload that matches the required output:
 
-// Write to file
-EclipseFluidReadWrite.write(fluid, "output.e300");
-
-// Write with reservoir temperature
-EclipseFluidReadWrite.write(fluid, "output.e300", 120.0);  // 120 °C
-
-// Get E300 content as string (for logging or embedding)
-String e300Content = EclipseFluidReadWrite.toE300String(fluid);
-System.out.println(e300Content);
-```
+| Purpose | Java call |
+| --- | --- |
+| Write with the default reservoir temperature | `EclipseFluidReadWrite.write(fluid, "output.e300")` |
+| Write with a 120 °C reservoir temperature | `EclipseFluidReadWrite.write(fluid, "output.e300", 120.0)` |
+| Serialize without creating a file | `EclipseFluidReadWrite.toE300String(fluid)` |
 
 ### Python API
 
@@ -722,12 +744,7 @@ E300 fluid files from PVTsim may or may not include water. NeqSim provides the `
 - Parachor parameter of 10.0
 - Multi-phase check enabled for aqueous phase detection
 
-```java
-// Java
-SystemInterface fluid = EclipseFluidReadWrite.read("fluid.e300", true);
-// or with custom water kij
-SystemInterface fluid = EclipseFluidReadWrite.read("fluid.e300", true, 0.45);
-```
+Use `EclipseFluidReadWrite.read("fluid.e300", true)` for the default water interactions, or `EclipseFluidReadWrite.read("fluid.e300", true, 0.45)` to supply a custom water interaction value.
 
 When an imported E300 slate already contains `H2O` or `water`, both the ordinary
 and repeated named-fluid readers enable the multiphase check automatically. This
@@ -738,11 +755,7 @@ dry slate does not add water or enable this option implicitly.
 
 When modeling multiple reservoir zones or wells with different compositions but the same EOS characterization, use the `fluidNames` array variant. Each component set gets a unique suffix so they can coexist in one `SystemInterface`:
 
-```java
-String[] zones = {"zone1", "zone2"};
-SystemInterface multiFluid = EclipseFluidReadWrite.read("fluid.e300", zones);
-// Components named: methane_zone1, methane_zone2, C7_zone1, C7_zone2, etc.
-```
+For example, pass `new String[] {"zone1", "zone2"}` to `EclipseFluidReadWrite.read("fluid.e300", zones)`. The resulting names include `methane_zone1`, `methane_zone2`, `C7_zone1`, and `C7_zone2`.
 
 Every labelled component block retains the original per-component EOS parameters,
 including distinct `OMEGAA` overrides and binary interaction coefficients. Origin
@@ -769,26 +782,12 @@ documentation, full parameter capture and fresh-process replay, use the guarded
 need the preserving reader route; never reapply missing source parameters after
 reading and then claim export fidelity.
 
-The following basic example compares only selected component properties:
-
-```java
-// Read original
-SystemInterface original = EclipseFluidReadWrite.read("input.e300");
-
-// Write it out
-EclipseFluidReadWrite.write(original, "roundtrip.e300", 90.0);
-
-// Read back and compare
-SystemInterface roundtripped = EclipseFluidReadWrite.read("roundtrip.e300");
-
-// Compare properties
-for (int i = 0; i < original.getNumberOfComponents(); i++) {
-    System.out.printf("%-12s  Tc_orig=%.3f  Tc_rt=%.3f%n",
-        original.getComponent(i).getComponentName(),
-        original.getComponent(i).getTC(),
-        roundtripped.getComponent(i).getTC());
-}
-```
+A basic software check reads the source, writes a temporary E300 file, reads that
+file again, and compares the selected component properties that matter to the
+workflow. The executable import quick start above validates the read and flash
+path; use the dedicated round-trip tests linked in this guide for serializer
+coverage. Do not treat a matching component count or a successful file read as
+prediction-fidelity evidence.
 
 ## Troubleshooting
 
