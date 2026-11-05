@@ -5,9 +5,27 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import neqsim.process.processmodel.ProcessSystem;
 
-/** Measurable safe-state or response-time criterion for a dynamic process scenario. */
+/**
+ * Measurable safe-state, sampled-bound or response-time criterion for a dynamic scenario.
+ *
+ * @author ESOL
+ * @version 1.0
+ */
 public final class DynamicScenarioCriterion implements Serializable {
   private static final long serialVersionUID = 1000L;
+
+  /**
+   * Defines whether a limit must be reached once or maintained over a sampled window.
+   *
+   * @author ESOL
+   * @version 1.0
+   */
+  public enum EvaluationMode {
+    /** At least one observation must satisfy the limits by the deadline. */
+    REACH_BY_DEADLINE,
+    /** Every observation in the closed event-relative window must satisfy the limits. */
+    MAINTAIN_BOUNDS
+  }
 
   /** Extracts a scalar observation from the isolated process model. */
   public interface Extractor extends Serializable {
@@ -23,7 +41,13 @@ public final class DynamicScenarioCriterion implements Serializable {
   private final Double upperLimit;
   private final double deadlineSeconds;
   private final boolean required;
+  private final EvaluationMode evaluationMode;
 
+  /**
+   * Creates a criterion from the validated builder state.
+   *
+   * @param builder validated definition
+   */
   private DynamicScenarioCriterion(Builder builder) {
     id = requireText(builder.id, "id");
     name = requireText(builder.name, "name");
@@ -34,6 +58,7 @@ public final class DynamicScenarioCriterion implements Serializable {
     upperLimit = builder.upperLimit;
     deadlineSeconds = builder.deadlineSeconds;
     required = builder.required;
+    evaluationMode = builder.evaluationMode;
   }
 
   public static Builder builder(String id, String name, String unit, Extractor extractor) {
@@ -93,6 +118,15 @@ public final class DynamicScenarioCriterion implements Serializable {
     return required;
   }
 
+  /**
+   * Returns the evaluation policy, retaining reach semantics for older serialized definitions.
+   *
+   * @return configured evaluation mode
+   */
+  public EvaluationMode getEvaluationMode() {
+    return evaluationMode == null ? EvaluationMode.REACH_BY_DEADLINE : evaluationMode;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("id", id);
@@ -103,10 +137,16 @@ public final class DynamicScenarioCriterion implements Serializable {
     result.put("upperLimit", upperLimit);
     result.put("deadlineSeconds", Double.valueOf(deadlineSeconds));
     result.put("required", Boolean.valueOf(required));
+    result.put("evaluationMode", getEvaluationMode().name());
     return result;
   }
 
-  /** Builder for a dynamic response criterion. */
+  /**
+   * Builder for a dynamic response criterion.
+   *
+   * @author ESOL
+   * @version 1.0
+   */
   public static final class Builder {
     private final String id;
     private final String name;
@@ -117,6 +157,7 @@ public final class DynamicScenarioCriterion implements Serializable {
     private Double upperLimit;
     private double deadlineSeconds;
     private boolean required = true;
+    private EvaluationMode evaluationMode = EvaluationMode.REACH_BY_DEADLINE;
 
     private Builder(String id, String name, String unit, String extractorDefinitionId, Extractor extractor) {
       if (extractor == null) {
@@ -157,7 +198,37 @@ public final class DynamicScenarioCriterion implements Serializable {
       return this;
     }
 
+    /**
+     * Selects reach-by-deadline or sampled bounds over the closed interval from zero to the deadline.
+     *
+     * <p>
+     * MAINTAIN_BOUNDS requires a positive deadline and observations at both boundaries. It does not interpolate missing
+     * boundaries or certify behaviour between physical samples. Use the duration after the initiating event as the
+     * deadline to assess the full response horizon.
+     * </p>
+     *
+     * @param value explicit observation policy
+     * @return this builder
+     * @throws IllegalArgumentException if the mode is null
+     */
+    public Builder evaluationMode(EvaluationMode value) {
+      if (value == null) {
+        throw new IllegalArgumentException("evaluationMode must not be null");
+      }
+      evaluationMode = value;
+      return this;
+    }
+
+    /**
+     * Builds a bounded criterion with an explicit observation policy.
+     *
+     * @return validated criterion
+     * @throws IllegalStateException if bounds are absent or a maintained window is not positive
+     */
     public DynamicScenarioCriterion build() {
+      if (evaluationMode == EvaluationMode.MAINTAIN_BOUNDS && deadlineSeconds <= 0.0) {
+        throw new IllegalStateException("MAINTAIN_BOUNDS requires a positive observation-window deadline");
+      }
       if (lowerLimit == null && upperLimit == null) {
         throw new IllegalStateException("at least one acceptance limit is required");
       }

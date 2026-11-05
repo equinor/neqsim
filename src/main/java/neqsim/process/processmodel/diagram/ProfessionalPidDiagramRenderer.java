@@ -98,6 +98,12 @@ public final class ProfessionalPidDiagramRenderer {
   private final Map<String, String> mainSheetNumbers = new LinkedHashMap<String, String>();
   /** Controlled auxiliary sheet per explicit route. */
   private final Map<String, String> auxiliarySheetNumbers = new LinkedHashMap<String, String>();
+  /** Actual valve-port instrument details assigned to their existing primary sheet. */
+  private final Map<String, List<PidElement>> instrumentDetails = new LinkedHashMap<String, List<PidElement>>();
+  /** Planned reciprocal detail sheet for each actual instrument. */
+  private final Map<String, String> instrumentDetailSheetNumbers = new LinkedHashMap<String, String>();
+  /** Actual instruments deliberately placed in reciprocal details rather than crowded primary rows. */
+  private final Set<String> instrumentDetailTags = new LinkedHashSet<String>();
 
   /**
    * Creates the source-backed professional renderer.
@@ -181,6 +187,7 @@ public final class ProfessionalPidDiagramRenderer {
         }
       }
     }
+    planInstrumentDetails(primary);
     int nextSheet = 1;
     for (ProcessEquipmentInterface unit : primary) {
       mainSheetNumbers.put(unit.getName(), String.format(Locale.ROOT, "%03d", Integer.valueOf(nextSheet++)));
@@ -199,6 +206,14 @@ public final class ProfessionalPidDiagramRenderer {
             String.format(Locale.ROOT, "%03d", Integer.valueOf(nextSheet + auxiliaryIndex++ / 4)));
       }
       nextSheet += (auxiliaryGroups.size() + 3) / 4;
+      List<PidElement> details = instrumentDetails.get(unit.getName());
+      if (details != null) {
+        for (int detailIndex = 0; detailIndex < details.size(); detailIndex++) {
+          instrumentDetailSheetNumbers.put(details.get(detailIndex).getTag(),
+              String.format(Locale.ROOT, "%03d", Integer.valueOf(nextSheet + detailIndex / 4)));
+        }
+        nextSheet += (details.size() + 3) / 4;
+      }
     }
     for (ProcessEquipmentInterface unit : primary) {
       if (ProfessionalPidSymbolLibrary.family(unit) == Family.UNMAPPED) {
@@ -210,6 +225,7 @@ public final class ProfessionalPidDiagramRenderer {
       }
       renderUnit(unit);
       renderAuxiliary(unit);
+      renderInstrumentDetails(unit);
     }
     List<PidElement> remaining = new ArrayList<PidElement>();
     for (PidElement element : model.getElements()) {
@@ -571,6 +587,9 @@ public final class ProfessionalPidDiagramRenderer {
     List<PidElement> suctionSensors = new ArrayList<PidElement>();
     for (PidElement element : model.getElementsForEquipment(unit.getName())) {
       Attachment attachment = projection.getAttachments().get(element.getTag());
+      if (instrumentDetailTags.contains(element.getTag())) {
+        continue;
+      }
       if (attachment.getKind() == PidPhysicalProjection.Kind.SENSING
           && !"DESIGNED_NOZZLE".equals(attachment.getDirection())) {
         if (unit instanceof Separator && "OUTLET".equals(attachment.getDirection())
@@ -630,6 +649,18 @@ public final class ProfessionalPidDiagramRenderer {
       placeChildFunction(scene, sensor, measurement, 250, y, placed);
       suctionRow++;
     }
+    int manualRow = 0;
+    for (PidElement element : model.getElementsForEquipment(unit.getName())) {
+      Attachment attachment = projection.getAttachments().get(element.getTag());
+      if (attachment.getKind() == PidPhysicalProjection.Kind.MANUAL_INPUT) {
+        double y = 95 + manualRow++ * 36;
+        Node input = scene.instrument(element, 175, y);
+        scene.text(155, y + 17, "MANUAL INPUT", 2.7, null);
+        placed.add(element.getTag());
+        placeChildFunction(scene, element, input, 250, y, placed);
+      }
+    }
+    placeSharedFunctions(scene, placed);
     for (PidElement element : model.getElementsForEquipment(unit.getName())) {
       Attachment attachment = projection.getAttachments().get(element.getTag());
       if (attachment.getKind() == PidPhysicalProjection.Kind.FUNCTION && !placed.contains(element.getTag())) {
@@ -661,7 +692,135 @@ public final class ProfessionalPidDiagramRenderer {
     scene.text(25, 499,
         "Auxiliary lines, signal IDs and source tags are coordinated with the physical projection and the detailed registers.",
         3, null);
+    List<PidElement> details = instrumentDetails.get(unit.getName());
+    if (details != null && !details.isEmpty()) {
+      List<String> references = new ArrayList<String>();
+      for (PidElement detail : details) {
+        references.add(detail.getTag() + " / PID-" + instrumentDetailSheetNumbers.get(detail.getTag()));
+      }
+      scene.text(25, 518, "Actual valve-port instrumentation details: " + join(references), 3, null);
+    }
     scene.finish();
+  }
+
+  /**
+   * Assigns actual valve-port measurements to the primary sheet that represents that exact valve.
+   *
+   * @param primary actual primary equipment in drawing order
+   */
+  private void planInstrumentDetails(List<ProcessEquipmentInterface> primary) {
+    for (ProcessEquipmentInterface unit : primary) {
+      List<PidElement> rows = new ArrayList<PidElement>();
+      for (PidElement element : model.getElementsForEquipment(unit.getName())) {
+        Attachment attachment = projection.getAttachments().get(element.getTag());
+        if (attachment.getKind() == PidPhysicalProjection.Kind.SENSING
+            && ("VESSEL".equals(attachment.getDirection()) || "OUTLET".equals(attachment.getDirection()))) {
+          rows.add(element);
+        }
+      }
+      int overflow = rows.size() - 6;
+      for (int index = rows.size() - 1; index >= 0 && overflow > 0; index--) {
+        PidElement element = rows.get(index);
+        Attachment attachment = projection.getAttachments().get(element.getTag());
+        if (element.getConnectedElementIds().isEmpty() && "OUTLET".equals(attachment.getDirection())
+            && !attachment.getBoundSimulationName().isEmpty()) {
+          addInstrumentDetail(unit.getName(), element);
+          overflow--;
+        }
+      }
+    }
+    for (PidElement element : model.getElements()) {
+      Attachment attachment = projection.getAttachments().get(element.getTag());
+      ProcessEquipmentInterface actual = equipment.get(attachment.getEquipmentTag());
+      if (attachment.getKind() != PidPhysicalProjection.Kind.SENSING || !(actual instanceof ThrottlingValve)
+          || attachment.getBoundSimulationName().isEmpty()
+          || !("INLET".equals(attachment.getDirection()) || "OUTLET".equals(attachment.getDirection()))) {
+        continue;
+      }
+      ProcessEquipmentInterface found = null;
+      for (ProcessEquipmentInterface unit : primary) {
+        boolean owns = downstreamValves(unit).contains(actual);
+        for (PidElement inlet : model.getElementsForEquipment(unit.getName())) {
+          Attachment location = projection.getAttachments().get(inlet.getTag());
+          owns |= location.getKind() == PidPhysicalProjection.Kind.EXISTING_EQUIPMENT
+              && actual.getName().equals(location.getBoundSimulationName()) && "INLET".equals(location.getDirection());
+        }
+        if (owns) {
+          if (found != null) {
+            found = null;
+            break;
+          }
+          found = unit;
+        }
+      }
+      if (found != null) {
+        addInstrumentDetail(found.getName(), element);
+      }
+    }
+  }
+
+  /**
+   * Assigns one actual instrument to a reciprocal detail sheet exactly once.
+   *
+   * @param owner primary drawing owner
+   * @param element actual bound instrument proposal
+   */
+  private void addInstrumentDetail(String owner, PidElement element) {
+    if (instrumentDetailTags.add(element.getTag())) {
+      if (!instrumentDetails.containsKey(owner)) {
+        instrumentDetails.put(owner, new ArrayList<PidElement>());
+      }
+      instrumentDetails.get(owner).add(element);
+    }
+  }
+
+  /**
+   * Draws actual existing stream-segment instrument contexts with reciprocal main-sheet references.
+   *
+   * @param primary actual primary equipment whose valve ports supply the measured segments
+   */
+  private void renderInstrumentDetails(ProcessEquipmentInterface primary) {
+    List<PidElement> details = instrumentDetails.get(primary.getName());
+    if (details == null) {
+      return;
+    }
+    for (int offset = 0; offset < details.size(); offset += 4) {
+      Scene scene = scene(primary.getName() + "-INSTRUMENT-DETAILS", "Actual instrumentation details");
+      for (int index = offset; index < Math.min(details.size(), offset + 4); index++) {
+        PidElement element = details.get(index);
+        Attachment attachment = projection.getAttachments().get(element.getTag());
+        ProcessEquipmentInterface valve = equipment.get(attachment.getEquipmentTag());
+        List<StreamInterface> ports = "INLET".equals(attachment.getDirection()) ? valve.getInletStreams()
+            : valve.getOutletStreams();
+        StreamInterface stream = ports.get(attachment.getStreamIndex());
+        double y = 145 + (index - offset) * 90;
+        scene.text(25, y - 60, "DETAIL " + element.getTag() + " | actual " + valve.getName() + " "
+            + attachment.getDirection() + " port | main " + sheetLabel(primary.getName()), 3, null);
+        Node from = scene.terminal("detail-source:" + element.getTag(), 110, y,
+            valve.getName() + " " + attachment.getDirection() + " / PID-" + mainSheetNumbers.get(primary.getName()),
+            false);
+        String destination = "BL " + stream.getName();
+        for (ProcessEquipmentInterface consumer : process.getUnitOperations()) {
+          if (consumer != valve && !(consumer instanceof StreamInterface)
+              && consumer.getInletStreams().contains(stream)) {
+            destination = consumer.getName() + " INLET / PID-" + mainSheetNumbers.get(primary.getName());
+            break;
+          }
+        }
+        Node to = scene.terminal("detail-target:" + element.getTag(), 700, y, destination, false);
+        scene.route(from, "r", to, "l", stream.getName(), false, null);
+        Node measurement = scene.instrument(element, 400, y - 35);
+        Point tap = new Point(300, y);
+        scene.sensing(null, tap, measurement, "b",
+            points(tap, new Point(300, y - 18), new Point(400, y - 18), measurement.bottom()), element.getTag());
+        scene.lineLabel(stream.getName(), 420, y + 15, valve.getName());
+        signalEnds(scene, element.getTag(), measurement);
+      }
+      scene.text(25, 505,
+          "Detail views repeat the identified existing segment only; no additional valve or pipeline is implied.", 3,
+          null);
+      scene.finish();
+    }
   }
 
   /**
@@ -884,7 +1043,7 @@ public final class ProfessionalPidDiagramRenderer {
       PidElement child = byId(id);
       if (child != null
           && projection.getAttachments().get(child.getTag()).getKind() == PidPhysicalProjection.Kind.FUNCTION
-          && !placed.contains(child.getTag())) {
+          && incomingInstruments(child).size() <= 1 && !placed.contains(child.getTag())) {
         Node function = scene.instrument(child, x, y);
         scene.route(measurement, "r", function, "l", "signal:" + sensor.getTag() + ":" + child.getTag(), true, null);
         placed.add(child.getTag());
@@ -892,6 +1051,79 @@ public final class ProfessionalPidDiagramRenderer {
         signalSources.add(signal);
         signalTargets.add(signal);
       }
+    }
+  }
+
+  /**
+   * Finds separately identified instrument inputs to a shared function.
+   *
+   * @param function proposed function
+   * @return incoming instrument proposals in canonical order
+   */
+  private List<PidElement> incomingInstruments(PidElement function) {
+    List<PidElement> inputs = new ArrayList<PidElement>();
+    for (PidElement candidate : model.getElements()) {
+      if ((candidate.getType() == PidElementType.MEASUREMENT || candidate.getType() == PidElementType.INDICATOR)
+          && candidate.getConnectedElementIds().contains(function.getId())) {
+        inputs.add(candidate);
+      }
+    }
+    return inputs;
+  }
+
+  /**
+   * Draws all locally represented inputs to one voting function without overlapping continuation symbols.
+   *
+   * <p>
+   * Each input ends at a distinct point on the existing safety-function envelope. A function spanning sheets keeps
+   * explicit signal continuations instead; no missing source is silently implied by the local fan-in.
+   * </p>
+   *
+   * @param scene current source-backed sheet
+   * @param placed already represented proposals
+   */
+  private void placeSharedFunctions(Scene scene, Set<String> placed) {
+    for (PidElement function : model.getElements()) {
+      if (placed.contains(function.getTag())
+          || projection.getAttachments().get(function.getTag()).getKind() != PidPhysicalProjection.Kind.FUNCTION) {
+        continue;
+      }
+      List<PidElement> inputs = incomingInstruments(function);
+      if (inputs.size() < 2 || inputs.size() > 3) {
+        continue;
+      }
+      double y = 0.0;
+      boolean local = true;
+      for (PidElement input : inputs) {
+        Node source = scene.proposalNodes.get(input.getTag());
+        local &= source != null;
+        if (source != null) {
+          y += source.y;
+        }
+      }
+      if (!local) {
+        continue;
+      }
+      y /= inputs.size();
+      Node target = scene.instrument(function, 700, y, 24);
+      String voting = textValue(function.getAttributes().get("simulationVoting"));
+      String role = textValue(function.getAttributes().get("safetyFunctionRole"));
+      if (!voting.isEmpty() || !role.isEmpty()) {
+        scene.text(676, y - 18, (role + " " + voting).trim(), 3, null);
+      }
+      for (int index = 0; index < inputs.size(); index++) {
+        PidElement input = inputs.get(index);
+        Node source = scene.proposalNodes.get(input.getTag());
+        double offset = inputs.size() == 2 ? (index == 0 ? -6 : 6) : -10.5 + 21.0 * index / (inputs.size() - 1);
+        double lane = 590 + 12 * index;
+        Point endpoint = new Point(target.left().x, target.y + offset);
+        scene.stroke(points(source.right(), new Point(lane, source.y), new Point(lane, endpoint.y), endpoint),
+            source.tag, target.tag, "signal:" + input.getTag() + ":" + function.getTag(), true, false);
+        String signal = signalId(input.getTag(), function.getTag());
+        signalSources.add(signal);
+        signalTargets.add(signal);
+      }
+      placed.add(function.getTag());
     }
   }
 
@@ -1031,11 +1263,31 @@ public final class ProfessionalPidDiagramRenderer {
     List<ProcessEquipmentInterface> result = new ArrayList<ProcessEquipmentInterface>();
     for (ProcessEquipmentInterface candidate : process.getUnitOperations()) {
       if (candidate instanceof ThrottlingValve && !candidate.getInletStreams().isEmpty()
-          && unit.getOutletStreams().contains(candidate.getInletStreams().get(0))) {
+          && unit.getOutletStreams().contains(candidate.getInletStreams().get(0))
+          && !assignedToOtherInletSheet(candidate.getName(), unit.getName())) {
         result.add(candidate);
       }
     }
     return result;
+  }
+
+  /**
+   * Keeps a bound inter-unit valve on its explicitly declared receiving-equipment sheet.
+   *
+   * @param actualName actual valve identity
+   * @param sourceOwner current upstream source unit
+   * @return whether another inlet sheet owns this exact bound valve symbol
+   */
+  private boolean assignedToOtherInletSheet(String actualName, String sourceOwner) {
+    for (PidElement element : model.getElements()) {
+      Attachment attachment = projection.getAttachments().get(element.getTag());
+      if (attachment.getKind() == PidPhysicalProjection.Kind.EXISTING_EQUIPMENT
+          && actualName.equals(attachment.getBoundSimulationName()) && "INLET".equals(attachment.getDirection())
+          && !sourceOwner.equals(element.getEquipmentTag())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -1571,10 +1823,23 @@ public final class ProfessionalPidDiagramRenderer {
      * @return node
      */
     Node instrument(PidElement element, double x, double y) {
+      return instrument(element, x, y, 18);
+    }
+
+    /**
+     * Adds a function using the required source-backed input-port envelope size.
+     *
+     * @param element canonical instrument/function
+     * @param x centre x
+     * @param y centre y
+     * @param diameter instrument circle diameter
+     * @return actual drawing node
+     */
+    Node instrument(PidElement element, double x, double y, double diameter) {
       Family family = element.getType() == PidElementType.MEASUREMENT || element.getType() == PidElementType.INDICATOR
           ? Family.FIELD_INSTRUMENT
           : element.getType() == PidElementType.CONTROLLER ? Family.CONTROL_FUNCTION : Family.SAFETY_FUNCTION;
-      Node node = node(element.getTag(), family, x, y, 18, 18, element.getTag());
+      Node node = node(element.getTag(), family, x, y, diameter, diameter, element.getTag());
       proposalNodes.put(element.getTag(), node);
       return node;
     }

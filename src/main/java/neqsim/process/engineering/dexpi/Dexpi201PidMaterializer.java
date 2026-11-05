@@ -301,6 +301,10 @@ public final class Dexpi201PidMaterializer {
         function(element, true, location);
         return;
       }
+      if (attachment.getKind() == Kind.MANUAL_INPUT) {
+        function(element, false, "", true);
+        return;
+      }
       if (attachment.getKind() == Kind.PROCESS_NOZZLE) {
         Element port = port(attachment.getEquipmentTag(), attachment.getDirection(), attachment.getStreamIndex());
         if (!port.getAttribute("type").contains("Nozzle")) {
@@ -357,17 +361,31 @@ public final class Dexpi201PidMaterializer {
      * @param location native sensing-location ID
      */
     private void function(PidElement element, boolean measurement, String location) {
+      function(element, measurement, location, false);
+    }
+
+    /**
+     * Creates a typed function, including a local manual input without a fabricated process sensor.
+     *
+     * @param element source proposal
+     * @param measurement whether a process signal generator is required
+     * @param location actual process sensing location
+     * @param manual whether an actual native local push button supplies the signal
+     */
+    private void function(PidElement element, boolean measurement, String location, boolean manual) {
       String type = element.getType() == PidElementType.TRIP || element.getType() == PidElementType.SAFETY_FUNCTION
           ? "Plant/Instrumentation.ProcessSafetyFunction"
           : "Plant/Instrumentation.ProcessInstrumentationFunction";
       Element function = object("PidFunction_" + safe(element.getId()), type);
       setData(function, "ProcessInstrumentationFunctionNumber", element.getTag());
-      setData(function, "DeviceInformation", "NeqSim design proposal; " + element.getType().name() + "; "
-          + element.getStatus().name() + "; source rule " + element.getRuleId());
+      setData(function, "DeviceInformation",
+          "NeqSim design proposal; " + element.getType().name() + "; " + element.getStatus().name() + "; source rule "
+              + element.getRuleId()
+              + (manual ? "; actual local discrete manual push button; no process sensing location" : ""));
       Element locationData = data(function, "Location");
       Element locationValue = document.createElement("DataReference");
       locationValue.setAttribute("data",
-          "Plant/Enumerations.LocationClassification." + (measurement ? "Field" : "CentralLocation"));
+          "Plant/Enumerations.LocationClassification." + (measurement || manual ? "Field" : "CentralLocation"));
       locationData.appendChild(locationValue);
       components(plant, "ProcessInstrumentationFunctions").appendChild(function);
       functionOwners.put(element.getTag(), function);
