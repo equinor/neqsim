@@ -6,14 +6,20 @@ import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-EXAMPLES = {
-    REPO_ROOT
-    / "src/main/java/neqsim/process/util/optimizer/ProductionOptimizationSpecLoader.java":
-        ("Python Usage Example", "ProductionOptimizationSpecLoader"),
-    REPO_ROOT
-    / "src/main/java/neqsim/process/util/optimizer/CompressorOptimizationHelper.java":
-        ("Usage Example (Python via JPype)", "CompressorOptimizationHelper"),
-}
+EXAMPLES = (
+    (
+        REPO_ROOT
+        / "src/main/java/neqsim/process/util/optimizer/ProductionOptimizationSpecLoader.java",
+        "Python Usage Example",
+        "ProductionOptimizationSpecLoader",
+    ),
+    (
+        REPO_ROOT
+        / "src/main/java/neqsim/process/util/optimizer/CompressorOptimizationHelper.java",
+        "Usage Example (Python via JPype)",
+        "CompressorOptimizationHelper",
+    ),
+)
 
 
 def _extract_python_example(source, heading):
@@ -25,7 +31,7 @@ def _extract_python_example(source, heading):
     wrapped_as_code = "{@code" in source[pre_start:code_start]
 
     lines = [
-        re.sub(r"^\\s*\\* ?", "", line)
+        re.sub(r"^\s*\* ?", "", line)
         for line in source[code_start:code_end].splitlines()
     ]
     if wrapped_as_code and lines and lines[-1].strip() == "}":
@@ -35,7 +41,7 @@ def _extract_python_example(source, heading):
 
 def test_optimizer_python_javadocs_use_supported_gateway_and_parse():
     """Compile both exact Python fragments and protect their public class paths."""
-    for path, (heading, expected_class) in EXAMPLES.items():
+    for path, heading, expected_class in EXAMPLES:
         source = path.read_text(encoding="utf-8")
         example = _extract_python_example(source, heading)
 
