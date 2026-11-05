@@ -165,6 +165,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * @param newTrackingEpoch true for explicit initialization, false for an already flagged steady reevaluation
    */
   private void initializeTransientCalculation(boolean newTrackingEpoch) {
+    resetConservativeTransientEnergyIntegration();
     if (newTrackingEpoch && transientEnergyBalanceTracker != null) {
       resetTransientEnergyBalanceTracking();
     }
@@ -287,6 +288,59 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   private SeparatorTransientEnergyBalanceTracker transientEnergyBalanceTracker;
   /** Separator-local epoch counter retained by serialization and transient snapshots. */
   private long transientEnergyBalanceEpoch;
+
+  /**
+   * Opt-in conservative discrete energy integration. Disabled preserves the legacy
+   * step-from-published-state equation exactly.
+   */
+  private boolean conservativeTransientEnergyIntegrationEnabled;
+
+  /** Exact accumulated target energy for the enabled integration epoch, J. */
+  private double conservativeTransientEnergyTargetJ = Double.NaN;
+
+  /**
+   * Selects conservative accumulated-target energy integration for transient steps.
+   *
+   * <p>
+   * When enabled, the first accepted equation is baselined from the current vessel internal energy. Each subsequent
+   * target is the prior exact target plus the consumed boundary-energy rate multiplied by the physical timestep. The
+   * existing single VU flash is retained; its accepted local numerical defect is therefore corrected in the next
+   * target instead of being accumulated. No tolerance is hidden or changed. Disabling this policy preserves the
+   * legacy equation based directly on the published post-flash energy.
+   * </p>
+   *
+   * @param enabled true to enable; changing the selection begins a new unbaselined integration epoch
+   * @throws UnsupportedOperationException if enabling an unqualified runtime subclass
+   */
+  public void setConservativeTransientEnergyIntegrationEnabled(boolean enabled) {
+    if (enabled && getClass() != Separator.class) {
+      throw new UnsupportedOperationException("Conservative transient energy integration supports exact Separator only; "
+          + getClass().getName() + " has no independently qualified energy contract");
+    }
+    if (conservativeTransientEnergyIntegrationEnabled != enabled) {
+      conservativeTransientEnergyIntegrationEnabled = enabled;
+      resetConservativeTransientEnergyIntegration();
+    }
+  }
+
+  /** @return true when conservative accumulated-target energy integration is enabled */
+  public boolean isConservativeTransientEnergyIntegrationEnabled() {
+    return conservativeTransientEnergyIntegrationEnabled;
+  }
+
+  /** Starts a new unbaselined conservative integration epoch without changing the selected policy. */
+  public void resetConservativeTransientEnergyIntegration() {
+    conservativeTransientEnergyTargetJ = Double.NaN;
+  }
+
+  /**
+   * Returns the exact accumulated target used by the most recently accepted conservative step.
+   *
+   * @return target internal energy in J, or {@link Double#NaN} when disabled or not yet baselined
+   */
+  public double getConservativeTransientEnergyTargetJ() {
+    return conservativeTransientEnergyIntegrationEnabled ? conservativeTransientEnergyTargetJ : Double.NaN;
+  }
 
   /**
    * Enables observational energy accounting for the exact concrete two-outlet separator algorithm.
@@ -893,6 +947,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     gasInLiquidSpec = snapshot.gasInLiquidSpec;
     transientEnergyBalanceEpoch = snapshot.energyBalanceEpoch;
     transientEnergyBalanceTracker = snapshot.energyBalanceTracker == null ? null : snapshot.energyBalanceTracker.copy();
+    conservativeTransientEnergyIntegrationEnabled = snapshot.conservativeEnergyIntegrationEnabled;
+    conservativeTransientEnergyTargetJ = snapshot.conservativeEnergyTargetJ;
   }
 
   /**
@@ -1021,6 +1077,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     private final String gasInLiquidSpec;
     private final long energyBalanceEpoch;
     private final SeparatorTransientEnergyBalanceTracker energyBalanceTracker;
+    private final boolean conservativeEnergyIntegrationEnabled;
+    private final double conservativeEnergyTargetJ;
 
     /**
      * Creates a checkpoint.
@@ -1056,12 +1114,15 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       energyBalanceEpoch = source.transientEnergyBalanceEpoch;
       energyBalanceTracker = source.transientEnergyBalanceTracker == null ? null
           : source.transientEnergyBalanceTracker.copy();
+      conservativeEnergyIntegrationEnabled = source.conservativeTransientEnergyIntegrationEnabled;
+      conservativeEnergyTargetJ = source.conservativeTransientEnergyTargetJ;
     }
   }
 
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    resetConservativeTransientEnergyIntegration();
     if (transientEnergyBalanceTracker != null) {
       transientEnergyBalanceTracker.invalidate(CoverageIssue.STEADY_STATE_REEVALUATION, getTime());
     }
@@ -1304,8 +1365,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
-    if (transientEnergyBalanceTracker != null && (!Double.isFinite(dt) || dt <= 0.0)) {
-      throw new IllegalArgumentException("Tracked separator timestep must be finite and positive");
+    if ((transientEnergyBalanceTracker != null || conservativeTransientEnergyIntegrationEnabled)
+        && (!Double.isFinite(dt) || dt <= 0.0)) {
+      throw new IllegalArgumentException("Audited separator timestep must be finite and positive");
     }
     if (getCalculateSteadyState()) {
       if (transientEnergyBalanceTracker != null) {
@@ -1340,6 +1402,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
           if (transientEnergyBalanceTracker != null) {
             recordSkippedEnergyUpdate(CoverageIssue.SKIPPED_EMPTY_INVENTORY);
           }
+          resetConservativeTransientEnergyIntegration();
           return;
         }
 
@@ -1353,6 +1416,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
           if (transientEnergyBalanceTracker != null) {
             recordSkippedEnergyUpdate(CoverageIssue.SKIPPED_PROPERTY_INITIALIZATION);
           }
+          resetConservativeTransientEnergyIntegration();
           return;
         }
         thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
@@ -1383,7 +1447,14 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         }
 
         double beforeEnergy = thermoSystem.getInternalEnergy();
-        double newEnergy = beforeEnergy + dt * deltaEnergy;
+        double integrationBaseEnergy = beforeEnergy;
+        if (conservativeTransientEnergyIntegrationEnabled) {
+          if (!Double.isFinite(conservativeTransientEnergyTargetJ)) {
+            conservativeTransientEnergyTargetJ = beforeEnergy;
+          }
+          integrationBaseEnergy = conservativeTransientEnergyTargetJ;
+        }
+        double newEnergy = integrationBaseEnergy + dt * deltaEnergy;
         if (transientEnergyBalanceTracker != null) {
           recordConsumedEnergyEquation(beforeEnergy, newEnergy, deltaEnergy, inletEnthalpyRate, gasEnthalpyRate,
               hasliq ? -deliq : 0.0, setHeatInput && heatInput != 0.0 ? heatInput : 0.0, hasliq);
@@ -1416,6 +1487,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
           if (transientEnergyBalanceTracker != null) {
             recordSkippedEnergyUpdate(CoverageIssue.SKIPPED_DEPLETED_INVENTORY);
           }
+          resetConservativeTransientEnergyIntegration();
           return;
         }
 
@@ -1531,6 +1603,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
         // System.out.printf("vol original: %.2f mine %f \n", liquidVolume, liqVol);
         setCalculationIdentifier(id);
+        if (conservativeTransientEnergyIntegrationEnabled) {
+          conservativeTransientEnergyTargetJ = newEnergy;
+        }
         if (transientEnergyBalanceTracker != null) {
           publishAcceptedEnergyUpdate();
         }
@@ -5096,3 +5171,4 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
   }
 }
+
