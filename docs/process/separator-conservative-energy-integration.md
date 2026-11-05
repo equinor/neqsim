@@ -1,3 +1,8 @@
+---
+title: Conservative separator transient-energy integration
+description: Opt-in accumulated-target energy integration, lifecycle contract, and V101 validation procedure for dynamic Separator calculations.
+---
+
 # Conservative separator transient-energy integration
 
 `Separator` provides an explicit, opt-in accumulated-target policy for dynamic
