@@ -171,6 +171,16 @@ class PSFlashEntropyClosureTest {
     outlet.setPressure(4.5);
     new ThermodynamicOperations(outlet).PSflash(inlet.getEntropy());
     assertState(inlet, outlet, 4.5, inlet.getEntropy("J/kgK"));
+    assertEquals(2, outlet.getNumberOfPhases());
+    assertTrue(outlet.hasPhaseType("oil"));
+    assertTrue(outlet.hasPhaseType("aqueous"));
+    for (int component = 0; component < outlet.getNumberOfComponents(); component++) {
+      double oilFugacity = outlet.getPhase("oil").getComponent(component).getx()
+          * outlet.getPhase("oil").getComponent(component).getFugacityCoefficient();
+      double aqueousFugacity = outlet.getPhase("aqueous").getComponent(component).getx()
+          * outlet.getPhase("aqueous").getComponent(component).getFugacityCoefficient();
+      assertEquals(Math.log(oilFugacity), Math.log(aqueousFugacity), 1.0e-8);
+    }
     assertTrue(outlet.getEnthalpy() > inlet.getEnthalpy());
     double temperature = outlet.getTemperature();
     double enthalpy = outlet.getEnthalpy();
@@ -179,6 +189,16 @@ class PSFlashEntropyClosureTest {
     assertEquals(temperature, outlet.getTemperature(), 1.0e-5);
     assertEquals(enthalpy, outlet.getEnthalpy(), 1.0e-5);
     assertState(inlet, outlet, 4.5, inlet.getEntropy("J/kgK"));
+    assertEquals(2, outlet.getNumberOfPhases());
+    assertTrue(outlet.hasPhaseType("oil"));
+    assertTrue(outlet.hasPhaseType("aqueous"));
+    for (int component = 0; component < outlet.getNumberOfComponents(); component++) {
+      double oilFugacity = outlet.getPhase("oil").getComponent(component).getx()
+          * outlet.getPhase("oil").getComponent(component).getFugacityCoefficient();
+      double aqueousFugacity = outlet.getPhase("aqueous").getComponent(component).getx()
+          * outlet.getPhase("aqueous").getComponent(component).getFugacityCoefficient();
+      assertEquals(Math.log(oilFugacity), Math.log(aqueousFugacity), 1.0e-8);
+    }
   }
 
   @Test
