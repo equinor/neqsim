@@ -471,3 +471,21 @@ different hazard. A conventional liquid level control valve is not
 automatically an independent safety final element. Generic cause-and-effect
 requirement templates also need an explicit alias-to-canonical-tag crosswalk
 before they can be treated as executable device identities.
+
+## Actual passive PSV response
+
+Use the [passive PSV simulation and P&ID verification workflow](process/safety/psv-pid-verification.md)
+when adding actual pressure relief. `PidPressureReliefImporter` extends the existing canonical
+model without a fictitious sensor, PLC signal or safety function. `PidPressureReliefValidator`
+requires exact actual valve/tee/stream identities, native mechanical readback and a registered
+capacity basis, then links strict executed cases to the frozen configuration fingerprint.
+Keep no-demand, incomplete, failed, relief-flow and reseat evidence distinct; preserve numerical
+balance verdicts independently from response verdicts. The initial supported capacity model is
+an explicitly synthetic US Cv assumption, not certified installed relief capacity.
+
+Native DEXPI 2.0.1 `SafetyValveOrFitting.SetPressureHigh` uses a gauge-pressure unit. An absolute
+simulation setting is mapped only when the canonical proposal explicitly declares a positive
+`simulationAtmosphericReferenceBara`; the conversion and native unit are recorded in the
+projection crosswalk. No atmospheric default is inferred. Without that reference, leave the
+native gauge setting unassigned/HOLD and retain all absolute canonical parameters in the
+sidecar. `SetPressureLow` is a low-pressure activation property, not a PSV reseating setting.

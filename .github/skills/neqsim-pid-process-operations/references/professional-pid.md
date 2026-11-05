@@ -257,3 +257,22 @@ SIL, completes HAZOP/LOPA/SRS, grants safety credit or authorizes field operatio
   numerical qualification separate from passing response criteria.
 - Verify parameter sidecars and native IDs together. Do not claim XML-only
   controller transfer, CAEX interchange, approved SIS design or deployment.
+
+## Passive pressure-relief branch
+
+For an actual PSV, follow `docs/process/safety/psv-pid-verification.md`.
+`PidPressureReliefImporter` preserves the current canonical graph and adds/reuses only the
+actual native passive valve. Require an actual splitter/branch/discharge route and registered
+capacity-basis evidence; do not add a PLC trip or fabricated pressure instrument to represent
+self-action. Apply canonical values on a pristine isolated copy and use
+`PidPressureReliefValidator` to reject stale bindings, ignored settings and undeclared faults
+before strict execution. Distinguish no demand, no lift, no positive flow, relief, reseat,
+incomplete and observed FAIL. Capacity certification and disposal/flare adequacy remain HOLD.
+
+For native DEXPI 2.0.1, the official `SetPressureHigh` field is gauge pressure. Map canonical
+bara only with an explicit positive `simulationAtmosphericReferenceBara`, retain the
+conversion in the native-ID crosswalk, and never treat `SetPressureLow` as reseat pressure.
+Without a reference, retain the absolute sidecar and mark the gauge field unassigned/HOLD.
+Review the actual tee, spring-relief symbol, both real branch line IDs and discharge battery
+limit in every native P&ID/PFD and graph inventory; no additional control signal belongs on
+this passive valve.

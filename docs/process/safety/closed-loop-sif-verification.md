@@ -5,6 +5,39 @@ description: Execute process detection, voting, logic delay, and final-element r
 
 # Closed-loop SIF verification
 
+## Connected PSV response alongside shutdown
+
+The opt-in `AdvancedV101PsvStudy` extends the two-inventory example with an actual native
+`SafetyReliefValve` branch, leaving the original 23 cases unchanged. See its
+[tested public model contract](../../../src/test/resources/neqsim/process/advanced-safety-psv-study/README.md)
+for the native tee/valve/disposal topology, ten profiles, four timestep refinements, fault overrides
+and numerical gates. The PSV is passive self-action, not an invented SIF or a software pressure transmitter.
+
+The opt-in gas-service study explicitly enables native choking on inlet ESD, HIPPS, PCV and PSV,
+including gas-valve design-point calibration. A frozen synthetic Cv 40/80/120 comparison retains
+the capped Cv 40 pressure failure and selects Cv 80 as the smallest passing tested alternative;
+its half-timestep verification uses the same pressure and energy criteria. Uncapped checkpoints
+are preserved as superseded evidence, not credited pressure protection. This is not vendor relief sizing.
+
+Use the corrected UUID runtime: both steady and transient entry points execute the PSV law and
+parent native Cv capacity applies lift once. SNAP commands opening at set pressure, with reseat
+hysteresis; the modulating alternatives are explicitly unlatched/latched synthetic curves. A
+stable-command floor must not override physical rate limits or prevent exact seating. A pressure
+boundary with zero specified demand uses temporary intensive-property normalization; actual computed
+flow replaces it, and closure/no-forward-pressure/failure leaves exact zero ports. Ordinary cold
+`ThrottlingValve` behavior is unchanged. Complete response snapshots and explicit legacy serialized
+model migration are required; stored closure parameters alone are not execution evidence.
+
+The connected branch must refresh current intensive state, solve each real valve and aggregate
+the actual demands before the vessel consumes withdrawal. Record pressure, actual lift and
+discharge, backpressure, pop/reseat chronology and per-vessel conservation separately. Functioning
+shutdown can keep the PSV on standby; a stuck-open PSV can fail unwanted-relief requirements while
+pressure remains below its upper limit. Retain these distinct scopes and expected native FAILs.
+
+These are synthetic Cv response studies and traceable P&ID inputs. They do not certify vendor
+capacity, API/ISO relief sizing, SIL or construction. Fixed backpressure is not a simulated flare
+header. Numerical energy FAIL/INCOMPLETE and whole-train transaction limitations retain qualification HOLD.
+
 `ClosedLoopSafetyFunction` connects process signals to redundant channels, a voting pattern,
 a logic-solver delay, and existing `ProcessLogic` final elements. Run it through
 `DynamicSafetyScenarioRunner` to verify the complete detection-to-safe-state path against an

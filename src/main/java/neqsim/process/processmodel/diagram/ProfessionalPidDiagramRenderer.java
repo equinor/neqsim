@@ -24,6 +24,8 @@ import neqsim.process.engineering.pid.PidPhysicalProjection.Attachment;
 import neqsim.process.engineering.pid.PidSimulationBindings;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.valve.SafetyReliefValve;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
@@ -176,7 +178,7 @@ public final class ProfessionalPidDiagramRenderer {
     }
     List<ProcessEquipmentInterface> primary = new ArrayList<ProcessEquipmentInterface>();
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-      if (!(unit instanceof StreamInterface) && !(unit instanceof ThrottlingValve)) {
+      if (!(unit instanceof StreamInterface) && !(unit instanceof ThrottlingValve) && !supportedReliefTee(unit)) {
         primary.add(unit);
       }
     }
@@ -216,7 +218,8 @@ public final class ProfessionalPidDiagramRenderer {
       }
     }
     for (ProcessEquipmentInterface unit : primary) {
-      if (ProfessionalPidSymbolLibrary.family(unit) == Family.UNMAPPED) {
+      if (ProfessionalPidSymbolLibrary.family(unit) == Family.UNMAPPED
+          || ProfessionalPidSymbolLibrary.family(unit) == Family.PIPE_TEE) {
         hold("SYMBOL_FAMILY_UNMAPPED", unit.getName(), "ISO 10628-2:2012",
             "Provide an explicit supported equipment family; generic substitution is prohibited");
         diagnostics.add(NativeEngineeringDiagramRenderer.sceneDiagnostic(Severity.ERROR, "PID_SYMBOL_UNMAPPED",
@@ -281,7 +284,7 @@ public final class ProfessionalPidDiagramRenderer {
     }
     List<ProcessEquipmentInterface> primary = new ArrayList<ProcessEquipmentInterface>();
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-      if (!(unit instanceof StreamInterface) && !(unit instanceof ThrottlingValve)) {
+      if (!(unit instanceof StreamInterface) && !(unit instanceof ThrottlingValve) && !supportedReliefTee(unit)) {
         primary.add(unit);
       }
     }
@@ -301,7 +304,20 @@ public final class ProfessionalPidDiagramRenderer {
       if (family == Family.UNMAPPED) {
         geometryError("PFD_SYMBOL_UNMAPPED", "Unsupported source equipment family", unit.getName());
       }
+      ProcessEquipmentInterface reliefTee = reliefTee(
+          unit instanceof Separator ? ((Separator) unit).getGasOutStream() : null);
+      if (reliefTee != null) {
+        Node teeNode = scene.node(reliefTee.getName(), Family.PIPE_TEE, node.x + 53, 250, 6, 6, "");
+        actualNodes.put(reliefTee.getName(), teeNode);
+        scene.centered(teeNode.x, 280, reliefTee.getName(), 3, null);
+      }
       for (ProcessEquipmentInterface valve : downstreamValves(unit)) {
+        if (reliefTee != null && valve.getClass() == SafetyReliefValve.class
+            && reliefTee.getOutletStreams().contains(valve.getInletStreams().get(0))) {
+          actualNodes.put(valve.getName(),
+              scene.node(valve.getName(), Family.RELIEF_VALVE, node.x + 155, 175, 16, 10, valve.getName()));
+          continue;
+        }
         boolean liquid = unit instanceof Separator
             && unit.getOutletStreams().indexOf(valve.getInletStreams().get(0)) > 0;
         Node valveNode = scene.node(valve.getName(), ProfessionalPidSymbolLibrary.family(valve),
@@ -343,6 +359,13 @@ public final class ProfessionalPidDiagramRenderer {
       }
     }
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (supportedReliefTee(unit) && actualNodes.containsKey(unit.getName())) {
+        for (StreamInterface stream : unit.getOutletStreams()) {
+          if (streams.add(stream)) {
+            streamTable.add(stream);
+          }
+        }
+      }
       if (unit instanceof ThrottlingValve && actualNodes.containsKey(unit.getName())) {
         for (StreamInterface stream : unit.getInletStreams()) {
           if (streams.add(stream)) {
@@ -387,12 +410,16 @@ public final class ProfessionalPidDiagramRenderer {
         geometryError("PFD_STREAM_UNRESOLVED", "Source stream has no represented physical endpoints", stream.getName());
         continue;
       }
+      boolean upwardRelief = producer != null && supportedReliefTee(producer) && consumer != null
+          && consumer.getClass() == SafetyReliefValve.class;
       boolean downward = to.y > from.y;
       boolean vertical = downward && Math.abs(from.x - to.x) < .01;
-      scene.route(from, downward ? "b" : "r", to, vertical ? "t" : "l", stream.getName(), false,
-          downward && !vertical ? points(from.bottom(), new Point(from.x, to.y), to.left()) : null);
-      scene.centered(downward ? from.x + 38 : (from.right().x + to.left().x) / 2,
-          downward ? (from.bottom().y + to.top().y) / 2 : from.y - (to.left().x - from.right().x < 40 ? 40 : 14),
+      scene.route(from, upwardRelief ? "t" : downward ? "b" : "r", to, vertical ? "t" : "l", stream.getName(), false,
+          upwardRelief ? points(from.top(), new Point(from.x, to.y), to.left())
+              : downward && !vertical ? points(from.bottom(), new Point(from.x, to.y), to.left()) : null);
+      scene.centered(upwardRelief ? (from.x + to.x) / 2 : downward ? from.x + 38 : (from.right().x + to.left().x) / 2,
+          upwardRelief ? to.y - 28
+              : downward ? (from.bottom().y + to.top().y) / 2 : from.y - (to.left().x - from.right().x < 40 ? 40 : 14),
           stream.getName(), 3, null);
     }
     scene.text(25, 92,
@@ -531,6 +558,12 @@ public final class ProfessionalPidDiagramRenderer {
       if (y > 510) {
         hold("ADDITIONAL_OUTLET_SHEET_REQUIRED", stream.getName(), "ISO 10628-1:2014",
             "Additional product outlets exceed the supported per-unit sheet template");
+        continue;
+      }
+      ProcessEquipmentInterface tee = reliefTee(stream);
+      if (tee != null) {
+        renderPassiveReliefBranch(scene, unit, body, stream, tee, valveNodes);
+        outlet++;
         continue;
       }
       Node last = body;
@@ -1216,8 +1249,16 @@ public final class ProfessionalPidDiagramRenderer {
     }
     Node node = scene.node(element.getTag(), family, x, y, 16, 10, element.getTag());
     scene.proposalNodes.put(element.getTag(), node);
-    scene.text(x, y + 21,
-        family == Family.CHECK_VALVE ? "FLOW >" : family == Family.RELIEF_VALVE ? "SET:HOLD" : "FA:HOLD", 2.5, null);
+    String valveNote = family == Family.CHECK_VALVE ? "FLOW >" : family == Family.RELIEF_VALVE ? "SET:HOLD" : "FA:HOLD";
+    Object reliefSettings = element.getAttributes().get("simulationPressureReliefConfiguration");
+    if (family == Family.RELIEF_VALVE && reliefSettings instanceof Map) {
+      Map<?, ?> settings = (Map<?, ?>) reliefSettings;
+      if (settings.get("setPressureBar") instanceof Number && "bara".equals(settings.get("pressureUnit"))) {
+        valveNote = String.format(Locale.ROOT, "SIM SET:%.2f bara",
+            ((Number) settings.get("setPressureBar")).doubleValue());
+      }
+    }
+    scene.text(x, y + 21, valveNote, 2.5, null);
     if (family != Family.CHECK_VALVE && family != Family.RELIEF_VALVE) {
       hold("VALVE_FAILURE_ACTION", element.getTag(), "ISO 10628-1:2014 / IEC 62424:2016",
           "Fail action and actuator detail require controlled project evidence");
@@ -1254,6 +1295,136 @@ public final class ProfessionalPidDiagramRenderer {
   }
 
   /**
+   * Draws one actual passive relief tee and its normal/relief branches without adding hardware or signals.
+   * 
+   * @param scene native controlled scene
+   * @param owner actual protected unit
+   * @param body actual protected symbol
+   * @param stream actual gas stream to tee
+   * @param tee actual supported two-outlet tee
+   * @param valveNodes actual valve symbols used by later nozzle and signal placement
+   */
+  private void renderPassiveReliefBranch(Scene scene, ProcessEquipmentInterface owner, Node body,
+      StreamInterface stream, ProcessEquipmentInterface tee, Map<String, Node> valveNodes) {
+    Node junction = scene.node(tee.getName(), Family.PIPE_TEE, 470, 140, 6, 6, "");
+    scene.centered(450, 157, tee.getName(), 3, null);
+    scene.route(body, "t", junction, "l", stream.getName(), false, sourceRoute(body, "t", junction.left(), 140));
+    scene.lineLabel(stream.getName(), 420, 116, owner.getName());
+    for (StreamInterface branch : tee.getOutletStreams()) {
+      ProcessEquipmentInterface valve = soleValveConsumer(branch);
+      boolean relief = valve.getClass() == SafetyReliefValve.class;
+      Node symbol = proposals.containsKey(valve.getName())
+          ? proposalValve(scene, proposals.get(valve.getName()), relief ? 620 : 500, relief ? 100 : 140)
+          : scene.node(valve.getName(), ProfessionalPidSymbolLibrary.family(valve), relief ? 620 : 500,
+              relief ? 100 : 140, 16, 10, valve.getName());
+      valveNodes.put(valve.getName(), symbol);
+      scene.route(junction, relief ? "t" : "r", symbol, "l", branch.getName(), false,
+          relief ? points(junction.top(), new Point(470, 75), new Point(580, 75), new Point(580, 100), symbol.left())
+              : null);
+      scene.lineLabel(branch.getName(), relief ? 565 : 465, relief ? 112 : 172, owner.getName());
+      StreamInterface discharge = valve.getOutletStreams().get(0);
+      Node terminal = scene.terminal("out:" + discharge.getName(), relief ? 750 : 790, relief ? 100 : 140,
+          "BL " + discharge.getName(), false);
+      scene.route(symbol, "r", terminal, "l", discharge.getName(), false, null);
+      scene.lineLabel(discharge.getName(), relief ? 680 : 660, relief ? 130 : 170, owner.getName());
+      if (relief && proposals.containsKey(valve.getName())) {
+        Object values = proposals.get(valve.getName()).getAttributes().get("simulationPressureReliefConfiguration");
+        if (values instanceof Map) {
+          Map<?, ?> settings = (Map<?, ?>) values;
+          scene.text(25, 508,
+              "Passive PSV simulation basis | set " + settings.get("setPressureBar") + " bara | law "
+                  + settings.get("openingLaw") + " | MODULATING ramp ref (unused by SNAP) "
+                  + settings.get("fullLiftPressureBar") + " bara | reseat " + settings.get("reseatPressureBar")
+                  + " bara | rated US Cv " + settings.get("ratedCv") + " (synthetic); certified capacity: HOLD",
+              2.7, null);
+        }
+      }
+    }
+  }
+
+  /**
+   * Resolves one exact actual two-way tee on a separator gas outlet.
+   * 
+   * @param stream actual source stream, or null
+   * @return supported tee, or null
+   */
+  private ProcessEquipmentInterface reliefTee(StreamInterface stream) {
+    if (stream == null) {
+      return null;
+    }
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (supportedReliefTee(unit) && unit.getInletStreams().get(0) == stream) {
+        return unit;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Recognizes a bounded actual tee with one passive relief valve and one other native valve.
+   * 
+   * @param unit actual candidate
+   * @return true only for source-backed supported topology
+   */
+  private boolean supportedReliefTee(ProcessEquipmentInterface unit) {
+    if (unit.getClass() != Splitter.class || unit.getInletStreams().size() != 1
+        || unit.getOutletStreams().size() != 2) {
+      return false;
+    }
+    ProcessEquipmentInterface producer = producers.get(unit.getInletStreams().get(0));
+    if (!(producer instanceof Separator) || ((Separator) producer).getGasOutStream() != unit.getInletStreams().get(0)) {
+      return false;
+    }
+    int relief = 0;
+    for (StreamInterface outlet : unit.getOutletStreams()) {
+      ProcessEquipmentInterface valve = soleValveConsumer(outlet);
+      if (!(valve instanceof ThrottlingValve)) {
+        return false;
+      }
+      if (valve.getClass() == SafetyReliefValve.class) {
+        relief++;
+      }
+    }
+    return relief == 1;
+  }
+
+  /**
+   * Resolves unique actual downstream valve ownership by stream object identity.
+   * 
+   * @param stream actual tee outlet
+   * @return exact valve or null for missing/ambiguous consumers
+   */
+  private ProcessEquipmentInterface soleValveConsumer(StreamInterface stream) {
+    ProcessEquipmentInterface found = null;
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (!(unit instanceof StreamInterface) && unit.getInletStreams().contains(stream)) {
+        if (found != null || !(unit instanceof ThrottlingValve)) {
+          return null;
+        }
+        found = unit;
+      }
+    }
+    return found;
+  }
+
+  /**
+   * Resolves a real branch valve through a supported tee, without inferring tag-based hardware.
+   * 
+   * @param owner actual protected unit
+   * @param candidate actual valve
+   * @return true for an exact outlet branch
+   */
+  private boolean isReliefTeeChild(ProcessEquipmentInterface owner, ProcessEquipmentInterface candidate) {
+    for (StreamInterface stream : owner.getOutletStreams()) {
+      ProcessEquipmentInterface tee = reliefTee(stream);
+      if (tee != null && tee.getOutletStreams().contains(candidate.getInletStreams().get(0))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Finds real valve descendants by actual stream identity.
    *
    * @param unit source unit
@@ -1263,7 +1434,7 @@ public final class ProfessionalPidDiagramRenderer {
     List<ProcessEquipmentInterface> result = new ArrayList<ProcessEquipmentInterface>();
     for (ProcessEquipmentInterface candidate : process.getUnitOperations()) {
       if (candidate instanceof ThrottlingValve && !candidate.getInletStreams().isEmpty()
-          && unit.getOutletStreams().contains(candidate.getInletStreams().get(0))
+          && (unit.getOutletStreams().contains(candidate.getInletStreams().get(0)) || isReliefTeeChild(unit, candidate))
           && !assignedToOtherInletSheet(candidate.getName(), unit.getName())) {
         result.add(candidate);
       }
