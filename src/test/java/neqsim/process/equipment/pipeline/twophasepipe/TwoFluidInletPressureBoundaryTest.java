@@ -9,6 +9,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class TwoFluidInletPressureBoundaryTest {
   @Test
@@ -38,8 +40,14 @@ class TwoFluidInletPressureBoundaryTest {
     assertRest(rhs);
   }
 
-  @Test
-  void prescribedPhaseAdvectionUsesTrialPressureInBothTractionAndHoldupSource() {
+  /**
+   * Verify donor geometry and signed advection while pressure traction and its source retain interior geometry.
+   *
+   * @param consistentPhasePressure whether phase pressure is assembled separately from advection
+   */
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void prescribedPhaseAdvectionUsesSignedDonorsAndTrialPressureTraction(boolean consistentPhasePressure) {
     TwoFluidSection cell = section(0.1, 0.4, 0.4);
     TwoFluidSection feed = section(0.12, 0.6, 0.1);
     feed.setPressure(1.4e5);
@@ -48,9 +56,10 @@ class TwoFluidInletPressureBoundaryTest {
     feed.setWaterVelocity(-0.45);
     feed.updateConservativeVariables();
     double[] expectedMass = {feed.getGasMassPerLength() * feed.getGasVelocity(),
-        feed.getOilMassPerLength() * feed.getOilVelocity(), feed.getWaterMassPerLength() * feed.getWaterVelocity()};
+        feed.getOilMassPerLength() * feed.getOilVelocity(), cell.getWaterMassPerLength() * feed.getWaterVelocity()};
     double[] velocity = {feed.getGasVelocity(), feed.getOilVelocity(), feed.getWaterVelocity()};
     TwoFluidConservationEquations equations = equations();
+    equations.setConsistentPhasePressureEnabled(consistentPhasePressure);
     equations.setClosedBoundaries(false, true);
     equations.setInletPhaseFlowBoundaryState(feed);
     // Mutating the caller's feed cannot alter the prescribed advection.
@@ -61,7 +70,7 @@ class TwoFluidInletPressureBoundaryTest {
       assertArrayEquals(expectedMass, equations.getLastMassBalanceRate().getInletMassFlowKgPerSecond(), 1.0e-12);
       for (int phase = 0; phase < 3; phase++) {
         assertEquals(expectedMass[phase] / cell.getLength(), rhs[0][phase], 1.0e-12);
-        // At rest the pressure source must exactly cancel pressure traction, even across boundary area/holdup jumps.
+        // The pressure source cancels pressure traction, including across boundary area/holdup jumps.
         assertEquals(expectedMass[phase] * velocity[phase] / cell.getLength(), rhs[0][phase + 3], 1.0e-9);
       }
     }

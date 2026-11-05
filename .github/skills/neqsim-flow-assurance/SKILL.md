@@ -734,6 +734,13 @@ for (double qgMSm3d : gasRates) {
 > do not replace this contract with inventory clipping or a manufactured boundary
 > mixture.
 >
+> A negative prescribed inlet rate uses the first pipe cell as the outflow donor;
+> it must not inherit the external feed phase split. Review total phase momentum
+> and pressure traction separately through
+> `getLastBoundaryPhaseMomentumFluxes()` and
+> `getLastBoundaryPhasePressureForces()`. Those arrays qualify the external
+> boundary contract only, not a complete momentum residual or physical restart.
+>
 > **The coupled route is an opt-in four-part configuration.** For a pressure
 > outlet that physically permits phase fallback, use
 > `setEnableInterfacialPressure(true)`,

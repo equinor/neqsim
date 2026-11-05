@@ -997,8 +997,15 @@ public final class TwoFluidComponentTransport implements Serializable {
   private void advectNegativeFace(double timeStepSeconds, int face, int phase, double phaseFlowKgS,
       double[][] outletPhaseFractions, double[][][] oldFractions, double[][][] updated) {
     if (face == 0) {
-      throw new IllegalStateException("Unsupported component outflow through the inlet boundary in " + phaseName(phase)
-          + ": positive inlet flow is required when component transport is enabled");
+      double[] donorFractions = oldFractions[0][phase];
+      validateDonorComposition(donorFractions, timeStepSeconds * phaseFlowKgS, face, phase);
+      for (int component = 0; component < componentNames.length; component++) {
+        double transportedMassKg = timeStepSeconds * phaseFlowKgS * donorFractions[component];
+        updated[0][phase][component] -= transportedMassKg;
+        intervalInletMassKg[component] -= transportedMassKg;
+        intervalInletPhaseMassKg[phase][component] -= transportedMassKg;
+      }
+      return;
     }
     if (face == cellCount) {
       if (outletPhaseFractions == null) {

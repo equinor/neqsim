@@ -218,11 +218,12 @@ public class TwoFluidConservationEquations implements Serializable {
    * Prescribe phase advection while extrapolating inlet pressure from the current finite-volume cell.
    *
    * <p>
-   * The supplied face geometry, phase holdups, densities, velocities and enthalpies determine the phase mass, advective
-   * momentum and energy fluxes. Its pressure is ignored: both the pressure traction and the matching holdup-gradient
-   * source use the current trial-cell pressure on every residual evaluation. This supplies a phase-flow inlet without
-   * simultaneously imposing an independent inlet pressure. The state is defensively copied. A closed inlet still
-   * carries no advected mass or energy. Pass null to restore the cell-based boundary.
+   * Positive phase velocities use the supplied face area, holdups, densities and enthalpies for mass, advective
+   * momentum and energy fluxes. Negative phase velocities instead use the first cell's area and donor properties. The
+   * supplied pressure is ignored: pressure traction and its matching source use the current trial-cell pressure, area
+   * and holdups on every residual evaluation. This supplies a phase-flow inlet without simultaneously imposing an
+   * independent inlet pressure. The state is defensively copied. A closed inlet still carries no advected mass or
+   * energy. Pass null to restore the cell-based boundary.
    * </p>
    *
    * @param state prescribed advective face state, or null for the cell-based boundary
@@ -586,6 +587,12 @@ public class TwoFluidConservationEquations implements Serializable {
 
   /** Gas/oil/water energy flow at the inlet and outlet faces from the most recent evaluation. */
   private double[][] lastBoundaryPhaseEnergyFluxes = new double[0][3];
+
+  /** Gas/oil/water total momentum flow at the inlet and outlet faces from the most recent evaluation. */
+  private double[][] lastBoundaryPhaseMomentumFluxes = new double[0][3];
+
+  /** Gas/oil/water pressure traction at the inlet and outlet faces from the most recent evaluation. */
+  private double[][] lastBoundaryPhasePressureForces = new double[0][3];
 
   /** Transactional directional mass/momentum decomposition at internal faces. */
   private DirectionalPhaseFaceFlux[][] lastDirectionalPhaseFaceFluxes = new DirectionalPhaseFaceFlux[0][3];
@@ -1283,6 +1290,8 @@ public class TwoFluidConservationEquations implements Serializable {
     // Calculate the two external boundary fluxes once. These exact values are also
     // retained for a stage-consistent domain mass-balance diagnostic.
     lastBoundaryPhaseEnergyFluxes = new double[2][3];
+    lastBoundaryPhaseMomentumFluxes = new double[2][3];
+    lastBoundaryPhasePressureForces = new double[2][3];
     double[] inletFlux = calcInletFlux(sections[0], inletFacePressure(sections));
     TwoFluidSection outletBoundary = reconstructedOutlet == null ? sections[nCells - 1] : reconstructedOutlet;
     double[] outletFlux = calcOutletFlux(outletBoundary, outletFacePressure(sections, outletBoundary));
@@ -1406,7 +1415,8 @@ public class TwoFluidConservationEquations implements Serializable {
       outletBackflowClamped = false;
       double[][] rates = calcRHS(sections, dx);
       return new TransactionalEvaluation(rates, lastMassBalanceRate, lastPhaseMassFaceFluxes, lastEnergyFaceFluxes,
-          lastDirectionalPhaseFaceFluxes, lastPhaseMassSourcesPerLength, lastMomentumSourceForcesPerLength,
+          lastBoundaryPhaseMomentumFluxes, lastBoundaryPhasePressureForces, lastDirectionalPhaseFaceFluxes,
+          lastPhaseMassSourcesPerLength, lastMomentumSourceForcesPerLength,
           getLastStratifiedHydrostaticPressureForces(), outletBackflowClamped);
     } finally {
       saved.restore();
@@ -1420,6 +1430,8 @@ public class TwoFluidConservationEquations implements Serializable {
     private final MassBalanceRate massBalanceRate;
     private final double[][] phaseMassFaceFluxes;
     private final double[] energyFaceFluxes;
+    private final double[][] boundaryPhaseMomentumFluxes;
+    private final double[][] boundaryPhasePressureForces;
     private final DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes;
     private final double[][] phaseMassSourcesPerLength;
     private final double[][] momentumSourceForcesPerLength;
@@ -1427,13 +1439,16 @@ public class TwoFluidConservationEquations implements Serializable {
     private final boolean outletBackflowClamped;
 
     private TransactionalEvaluation(double[][] rates, MassBalanceRate massBalanceRate, double[][] phaseMassFaceFluxes,
-        double[] energyFaceFluxes, DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes,
-        double[][] phaseMassSourcesPerLength, double[][] momentumSourceForcesPerLength,
-        double[][] stratifiedHydrostaticPressureForces, boolean outletBackflowClamped) {
+        double[] energyFaceFluxes, double[][] boundaryPhaseMomentumFluxes, double[][] boundaryPhasePressureForces,
+        DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes, double[][] phaseMassSourcesPerLength,
+        double[][] momentumSourceForcesPerLength, double[][] stratifiedHydrostaticPressureForces,
+        boolean outletBackflowClamped) {
       this.rates = copyMatrixArray(rates);
       this.massBalanceRate = massBalanceRate;
       this.phaseMassFaceFluxes = copyMatrixArray(phaseMassFaceFluxes);
       this.energyFaceFluxes = energyFaceFluxes.clone();
+      this.boundaryPhaseMomentumFluxes = copyMatrixArray(boundaryPhaseMomentumFluxes);
+      this.boundaryPhasePressureForces = copyMatrixArray(boundaryPhasePressureForces);
       this.directionalPhaseFaceFluxes = copyMatrixArray(directionalPhaseFaceFluxes);
       this.phaseMassSourcesPerLength = copyMatrixArray(phaseMassSourcesPerLength);
       this.momentumSourceForcesPerLength = copyMatrixArray(momentumSourceForcesPerLength);
@@ -1459,6 +1474,20 @@ public class TwoFluidConservationEquations implements Serializable {
     /** @return defensive face total-energy fluxes in W, shape [cellCount + 1] */
     public double[] getEnergyFaceFluxes() {
       return energyFaceFluxes.clone();
+    }
+
+    /**
+     * @return total momentum flow at inlet/outlet in N, shape [2][3] in gas/oil/water order
+     */
+    public double[][] getBoundaryPhaseMomentumFluxes() {
+      return copyMatrixArray(boundaryPhaseMomentumFluxes);
+    }
+
+    /**
+     * @return pressure traction at inlet/outlet in N, shape [2][3] in gas/oil/water order
+     */
+    public double[][] getBoundaryPhasePressureForces() {
+      return copyMatrixArray(boundaryPhasePressureForces);
     }
 
     /**
@@ -1519,6 +1548,8 @@ public class TwoFluidConservationEquations implements Serializable {
     private final double[][] savedFaces = copyMatrixArray(lastPhaseMassFaceFluxes);
     private final double[] savedEnergyFaces = lastEnergyFaceFluxes.clone();
     private final double[][] savedBoundaryPhaseEnergy = copyMatrixArray(lastBoundaryPhaseEnergyFluxes);
+    private final double[][] savedBoundaryPhaseMomentum = copyMatrixArray(lastBoundaryPhaseMomentumFluxes);
+    private final double[][] savedBoundaryPhasePressure = copyMatrixArray(lastBoundaryPhasePressureForces);
     private final DirectionalPhaseFaceFlux[][] savedDirectionalFaces = copyMatrixArray(lastDirectionalPhaseFaceFluxes);
     private final double[][] savedSources = copyMatrixArray(lastPhaseMassSourcesPerLength);
     private final double[][] savedForces = copyMatrixArray(lastMomentumSourceForcesPerLength);
@@ -1538,6 +1569,8 @@ public class TwoFluidConservationEquations implements Serializable {
       lastPhaseMassFaceFluxes = savedFaces;
       lastEnergyFaceFluxes = savedEnergyFaces;
       lastBoundaryPhaseEnergyFluxes = savedBoundaryPhaseEnergy;
+      lastBoundaryPhaseMomentumFluxes = savedBoundaryPhaseMomentum;
+      lastBoundaryPhasePressureForces = savedBoundaryPhasePressure;
       lastDirectionalPhaseFaceFluxes = savedDirectionalFaces;
       lastPhaseMassSourcesPerLength = savedSources;
       lastMomentumSourceForcesPerLength = savedForces;
@@ -1719,6 +1752,34 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   /**
+   * Get phase-resolved total momentum flow at the external inlet and outlet faces.
+   *
+   * <p>
+   * Rows are inlet and outlet; columns are gas, oil and water. Values contain advective momentum plus pressure traction
+   * and use the finite-volume positive inlet-to-outlet orientation.
+   * </p>
+   *
+   * @return defensive momentum-flow array in N with shape {@code [2][3]}, or empty before the first evaluation
+   */
+  public double[][] getLastBoundaryPhaseMomentumFluxes() {
+    return copyMatrixArray(lastBoundaryPhaseMomentumFluxes);
+  }
+
+  /**
+   * Get the pressure-traction part of the phase-resolved external momentum flows.
+   *
+   * <p>
+   * The reported force includes the optional stratified hydrostatic pressure moment and excludes donor advection. This
+   * makes the pressure term auditable independently when a boundary phase reverses.
+   * </p>
+   *
+   * @return defensive pressure-force array in N with shape {@code [2][3]}, or empty before the first evaluation
+   */
+  public double[][] getLastBoundaryPhasePressureForces() {
+    return copyMatrixArray(lastBoundaryPhasePressureForces);
+  }
+
+  /**
    * Add the most recently evaluated phase-resolved boundary energy flows to an accumulator.
    *
    * @param accumulator destination with inlet/outlet rows and gas/oil/water columns
@@ -1738,6 +1799,39 @@ public class TwoFluidConservationEquations implements Serializable {
       }
       for (int phase = 0; phase < 3; phase++) {
         accumulator[boundary][phase] += weight * lastBoundaryPhaseEnergyFluxes[boundary][phase];
+      }
+    }
+  }
+
+  /**
+   * Add the most recently evaluated boundary momentum flows to caller-owned accumulators.
+   *
+   * @param momentumAccumulator total momentum-flow destination with inlet/outlet rows and three phase columns
+   * @param pressureAccumulator pressure-traction destination with inlet/outlet rows and three phase columns
+   * @param weight integration-stage weight
+   * @throws IllegalArgumentException if either shape is incompatible or the weight is not finite
+   */
+  public void accumulateLastBoundaryPhaseMomentumFluxes(double[][] momentumAccumulator, double[][] pressureAccumulator,
+      double weight) {
+    validateBoundaryPhaseAccumulator(momentumAccumulator, weight);
+    validateBoundaryPhaseAccumulator(pressureAccumulator, weight);
+    for (int boundary = 0; boundary < lastBoundaryPhaseMomentumFluxes.length; boundary++) {
+      for (int phase = 0; phase < 3; phase++) {
+        momentumAccumulator[boundary][phase] += weight * lastBoundaryPhaseMomentumFluxes[boundary][phase];
+        pressureAccumulator[boundary][phase] += weight * lastBoundaryPhasePressureForces[boundary][phase];
+      }
+    }
+  }
+
+  /** Validate a two-boundary, three-phase accumulator. */
+  private void validateBoundaryPhaseAccumulator(double[][] accumulator, double weight) {
+    if (accumulator == null || accumulator.length != lastBoundaryPhaseMomentumFluxes.length
+        || !Double.isFinite(weight)) {
+      throw new IllegalArgumentException("Accumulator must match the boundary momentum shape and finite weight");
+    }
+    for (int boundary = 0; boundary < accumulator.length; boundary++) {
+      if (accumulator[boundary] == null || accumulator[boundary].length != 3) {
+        throw new IllegalArgumentException("Accumulator must contain three phase columns at each boundary");
       }
     }
   }
@@ -1864,70 +1958,94 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   private double[] calcInletFlux(TwoFluidSection sec, double facePressure) {
     ensureBoundaryPhaseEnergyBuffer();
+    ensureBoundaryPhaseMomentumBuffer();
     for (int phase = 0; phase < 3; phase++) {
       lastBoundaryPhaseEnergyFluxes[0][phase] = 0.0;
+      lastBoundaryPhaseMomentumFluxes[0][phase] = 0.0;
+      lastBoundaryPhasePressureForces[0][phase] = 0.0;
     }
-    sec = inletFaceState(sec);
-    StratifiedPressureFace stratified = stratifiedHydrostaticPressureMomentsEnabled ? calculateStratifiedPressureFace(
-        sec, sec,
-        new PhaseState[] {createGasState(sec), createLiquidPhaseState(sec, false), createLiquidPhaseState(sec, true)},
-        new PhaseState[] {createGasState(sec), createLiquidPhaseState(sec, false), createLiquidPhaseState(sec, true)},
-        new double[] {sec.getGasHoldup(), sec.getOilHoldup(), sec.getWaterHoldup()}) : NO_STRATIFIED_PRESSURE;
+    TwoFluidSection interior = sec;
+    TwoFluidSection boundary = inletFaceState(sec);
+    StratifiedPressureFace stratified = stratifiedHydrostaticPressureMomentsEnabled
+        ? calculateStratifiedPressureFace(interior, interior,
+            new PhaseState[] {createGasState(interior), createLiquidPhaseState(interior, false),
+                createLiquidPhaseState(interior, true)},
+            new PhaseState[] {createGasState(interior), createLiquidPhaseState(interior, false),
+                createLiquidPhaseState(interior, true)},
+            new double[] {interior.getGasHoldup(), interior.getOilHoldup(), interior.getWaterHoldup()})
+        : NO_STRATIFIED_PRESSURE;
     if (stratifiedHydrostaticPressureMomentsEnabled) {
       boundaryStratifiedPressureForce[0] = stratified.force.clone();
     }
     if (inletClosed) {
-      return closedFaceFlux(sec, stratified.force);
+      double[] closedFlux = closedFaceFlux(interior, stratified.force);
+      recordBoundaryMomentum(0, closedFlux,
+          new double[] {interior.getGasHoldup() * facePressure * interior.getArea() + stratified.force[0],
+              interior.getOilHoldup() * facePressure * interior.getArea() + stratified.force[1],
+              interior.getWaterHoldup() * facePressure * interior.getArea() + stratified.force[2]});
+      return closedFlux;
     }
     double[] flux = new double[NUM_EQUATIONS];
-    double A = sec.getArea();
+    double A = interior.getArea();
 
     // Gas flux (positive velocity means flow INTO domain)
-    // Use the stored gas holdup directly, not derived from mass
-    double rhoG = sec.getGasDensity();
+    // The external state owns inflow; the first physical cell owns outflow.
+    double vG = boundary.getGasVelocity();
+    TwoFluidSection gasDonor = inletDonor(interior, boundary, vG);
+    double gasArea = gasDonor.getArea();
+    double rhoG = gasDonor.getGasDensity();
     if (!Double.isFinite(rhoG) || rhoG <= 0.0)
       rhoG = 1.0; // Default gas density
-    double vG = sec.getGasVelocity();
-    double alphaG = sec.getGasHoldup();
+    double alphaG = gasDonor.getGasHoldup();
     alphaG = Math.max(0.0, Math.min(1.0, alphaG));
-    flux[IDX_GAS_MASS] = alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * A;
-    flux[IDX_GAS_MOMENTUM] = alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * vG * A + alphaG * facePressure * A;
+    flux[IDX_GAS_MASS] = alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * gasArea;
+    double pressureAlphaG = Math.max(0.0, Math.min(1.0, interior.getGasHoldup()));
+    flux[IDX_GAS_MOMENTUM] = (alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * vG * gasArea)
+        + pressureAlphaG * facePressure * A;
     flux[IDX_GAS_MOMENTUM] += stratified.force[0];
 
     // Oil flux - use holdup directly for inlet BC stability
-    double rhoO = sec.getOilDensity();
+    double vO = boundary.getOilVelocity();
+    TwoFluidSection oilDonor = inletDonor(interior, boundary, vO);
+    double oilArea = oilDonor.getArea();
+    double rhoO = oilDonor.getOilDensity();
     if (!Double.isFinite(rhoO) || rhoO <= 0.0)
       rhoO = 700.0; // Default oil density
-    double vO = sec.getOilVelocity();
-    double alphaO = sec.getOilHoldup();
+    double alphaO = oilDonor.getOilHoldup();
     // Phase-resolved boundary holdup is authoritative, including positive traces
     // smaller than the rounding error in gas holdup.
     alphaO = Math.max(0, Math.min(1.0, alphaO));
-    flux[IDX_OIL_MASS] = alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * A;
-    flux[IDX_OIL_MOMENTUM] = alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * vO * A + alphaO * facePressure * A;
+    flux[IDX_OIL_MASS] = alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * oilArea;
+    double pressureAlphaO = Math.max(0.0, Math.min(1.0, interior.getOilHoldup()));
+    flux[IDX_OIL_MOMENTUM] = (alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * vO * oilArea)
+        + pressureAlphaO * facePressure * A;
     flux[IDX_OIL_MOMENTUM] += stratified.force[1];
 
     // Water flux - use holdup directly for inlet BC stability
-    double rhoW = sec.getWaterDensity();
+    double vW = boundary.getWaterVelocity();
+    TwoFluidSection waterDonor = inletDonor(interior, boundary, vW);
+    double waterArea = waterDonor.getArea();
+    double rhoW = waterDonor.getWaterDensity();
     if (!Double.isFinite(rhoW) || rhoW <= 0.0)
       rhoW = 1000.0; // Default water density
-    double vW = sec.getWaterVelocity();
-    double alphaW = sec.getWaterHoldup();
+    double alphaW = waterDonor.getWaterHoldup();
     // Do not subtract other phase holdups to recover this phase's availability.
     alphaW = Math.max(0, Math.min(1.0, alphaW));
-    flux[IDX_WATER_MASS] = alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * A;
-    flux[IDX_WATER_MOMENTUM] = alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * vW * A + alphaW * facePressure * A;
+    flux[IDX_WATER_MASS] = alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * waterArea;
+    double pressureAlphaW = Math.max(0.0, Math.min(1.0, interior.getWaterHoldup()));
+    flux[IDX_WATER_MOMENTUM] = (alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * vW * waterArea)
+        + pressureAlphaW * facePressure * A;
     flux[IDX_WATER_MOMENTUM] += stratified.force[2];
 
     // Energy flux
     if (includeEnergyEquation) {
-      double HG = sec.getGasEnthalpy();
-      double HO = sec.getOilEnthalpy();
-      double HW = sec.getWaterEnthalpy();
+      double HG = gasDonor.getGasEnthalpy();
+      double HO = oilDonor.getOilEnthalpy();
+      double HW = waterDonor.getWaterEnthalpy();
       // Exactly absent phases have no enthalpy flux even when their unused properties are non-finite.
-      lastBoundaryPhaseEnergyFluxes[0][0] = (alphaG == 0.0 ? 0.0 : alphaG * rhoG * vG * (HG + 0.5 * vG * vG)) * A;
-      lastBoundaryPhaseEnergyFluxes[0][1] = (alphaO == 0.0 ? 0.0 : alphaO * rhoO * vO * (HO + 0.5 * vO * vO)) * A;
-      lastBoundaryPhaseEnergyFluxes[0][2] = (alphaW == 0.0 ? 0.0 : alphaW * rhoW * vW * (HW + 0.5 * vW * vW)) * A;
+      lastBoundaryPhaseEnergyFluxes[0][0] = alphaG == 0.0 ? 0.0 : flux[IDX_GAS_MASS] * (HG + 0.5 * vG * vG);
+      lastBoundaryPhaseEnergyFluxes[0][1] = alphaO == 0.0 ? 0.0 : flux[IDX_OIL_MASS] * (HO + 0.5 * vO * vO);
+      lastBoundaryPhaseEnergyFluxes[0][2] = alphaW == 0.0 ? 0.0 : flux[IDX_WATER_MASS] * (HW + 0.5 * vW * vW);
       lastBoundaryPhaseEnergyFluxes[0][0] += stratifiedPressureWork(flux[IDX_GAS_MASS], rhoG, stratified.force[0],
           stratified.area[0]);
       lastBoundaryPhaseEnergyFluxes[0][1] += stratifiedPressureWork(flux[IDX_OIL_MASS], rhoO, stratified.force[1],
@@ -1938,7 +2056,23 @@ public class TwoFluidConservationEquations implements Serializable {
           + lastBoundaryPhaseEnergyFluxes[0][2];
     }
 
+    recordBoundaryMomentum(0, flux,
+        new double[] {pressureAlphaG * facePressure * A + stratified.force[0],
+            pressureAlphaO * facePressure * A + stratified.force[1],
+            pressureAlphaW * facePressure * A + stratified.force[2]});
     return flux;
+  }
+
+  /**
+   * Select the physical upwind donor at the inlet without changing the signed face velocity.
+   *
+   * @param interior first finite-volume cell
+   * @param boundary prescribed external face state
+   * @param velocity signed phase velocity, positive into the pipe
+   * @return external state for inflow, or the first cell for outflow
+   */
+  private static TwoFluidSection inletDonor(TwoFluidSection interior, TwoFluidSection boundary, double velocity) {
+    return velocity >= 0.0 ? boundary : interior;
   }
 
   /**
@@ -1966,8 +2100,11 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   private double[] calcOutletFlux(TwoFluidSection sec, double facePressure) {
     ensureBoundaryPhaseEnergyBuffer();
+    ensureBoundaryPhaseMomentumBuffer();
     for (int phase = 0; phase < 3; phase++) {
       lastBoundaryPhaseEnergyFluxes[1][phase] = 0.0;
+      lastBoundaryPhaseMomentumFluxes[1][phase] = 0.0;
+      lastBoundaryPhasePressureForces[1][phase] = 0.0;
     }
     StratifiedPressureFace stratified = stratifiedHydrostaticPressureMomentsEnabled ? calculateStratifiedPressureFace(
         sec, sec,
@@ -1978,7 +2115,12 @@ public class TwoFluidConservationEquations implements Serializable {
       boundaryStratifiedPressureForce[1] = stratified.force.clone();
     }
     if (outletClosed) {
-      return closedFaceFlux(sec, stratified.force);
+      double[] closedFlux = closedFaceFlux(sec, stratified.force);
+      recordBoundaryMomentum(1, closedFlux,
+          new double[] {sec.getGasHoldup() * facePressure * sec.getArea() + stratified.force[0],
+              sec.getOilHoldup() * facePressure * sec.getArea() + stratified.force[1],
+              sec.getWaterHoldup() * facePressure * sec.getArea() + stratified.force[2]});
+      return closedFlux;
     }
     double[] flux = new double[NUM_EQUATIONS];
     double A = sec.getArea();
@@ -2049,12 +2191,35 @@ public class TwoFluidConservationEquations implements Serializable {
           + lastBoundaryPhaseEnergyFluxes[1][2];
     }
 
+    recordBoundaryMomentum(1, flux,
+        new double[] {sec.getGasHoldup() * facePressure * A + stratified.force[0],
+            sec.getOilHoldup() * facePressure * A + stratified.force[1],
+            sec.getWaterHoldup() * facePressure * A + stratified.force[2]});
     return flux;
   }
 
   private void ensureBoundaryPhaseEnergyBuffer() {
     if (lastBoundaryPhaseEnergyFluxes.length != 2) {
       lastBoundaryPhaseEnergyFluxes = new double[2][3];
+    }
+  }
+
+  /** Ensure external phase-momentum diagnostic buffers have their fixed shape. */
+  private void ensureBoundaryPhaseMomentumBuffer() {
+    if (lastBoundaryPhaseMomentumFluxes.length != 2) {
+      lastBoundaryPhaseMomentumFluxes = new double[2][3];
+    }
+    if (lastBoundaryPhasePressureForces.length != 2) {
+      lastBoundaryPhasePressureForces = new double[2][3];
+    }
+  }
+
+  /** Record total and pressure-only phase momentum flows for one external face. */
+  private void recordBoundaryMomentum(int boundary, double[] flux, double[] pressureForces) {
+    int[] momentumIndices = {IDX_GAS_MOMENTUM, IDX_OIL_MOMENTUM, IDX_WATER_MOMENTUM};
+    for (int phase = 0; phase < 3; phase++) {
+      lastBoundaryPhaseMomentumFluxes[boundary][phase] = flux[momentumIndices[phase]];
+      lastBoundaryPhasePressureForces[boundary][phase] = pressureForces[phase];
     }
   }
 
@@ -3286,7 +3451,8 @@ public class TwoFluidConservationEquations implements Serializable {
       return;
     }
 
-    TwoFluidSection inletFace = inletFaceState(sections[0]);
+    // Boundary pressure traction uses interior geometry even when advection has an independent external donor.
+    TwoFluidSection inletFace = sections[0];
     double inletPressure = inletFacePressure(sections);
     for (int i = 0; i < nCells; i++) {
       TwoFluidSection sec = sections[i];

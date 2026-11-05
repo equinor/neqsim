@@ -601,6 +601,12 @@ or manufacture a separator mixture. The mode closes external oil/water mass, com
 advected-energy flux while preserving their traction and internal drainage. None of these numerical contracts establishes equivalence with a
 commercial transient multiphase simulator.
 
+A negative prescribed inlet mass rate is pipe outflow: phase split, composition and enthalpy come
+from the first finite-volume cell, not the external feed. Audit countercurrent boundary cases with
+`getLastBoundaryPhaseMomentumFluxes()` and `getLastBoundaryPhasePressureForces()` so donor advection
+and interior pressure traction remain distinct. These are boundary diagnostics, not a whole-domain
+momentum-conservation claim or physical restart qualification.
+
 ## TwoFluidPipe Regime-Transition Continuation
 
 Transient wall-friction, interfacial-friction, interfacial-area, and entrainment sources must

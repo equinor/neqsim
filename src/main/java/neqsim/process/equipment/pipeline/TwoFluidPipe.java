@@ -7889,7 +7889,40 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Build a feed face without modifying any physical cell inventory or equation-of-state state. */
   private TwoFluidSection createPrescribedInletFace(TwoFluidSection cell, double massFlow) {
+    if (massFlow < 0.0) {
+      return createPrescribedInletOutflowFace(cell, massFlow);
+    }
     return createPrescribedInletFace(cell, massFlow, getInletStream().getFluid());
+  }
+
+  /**
+   * Build a signed inlet outflow face from the first physical cell.
+   *
+   * <p>
+   * A negative prescribed inlet rate removes the phases actually present in the pipe. It must not flash the external
+   * feed and manufacture a boundary mixture. One common face velocity preserves the cell phase split and reproduces the
+   * configured total mass rate exactly.
+   * </p>
+   *
+   * @param cell first physical pipe cell
+   * @param massFlow signed total inlet mass flow in kg/s
+   * @return prescribed face using the cell as donor
+   */
+  private TwoFluidSection createPrescribedInletOutflowFace(TwoFluidSection cell, double massFlow) {
+    TwoFluidSection face = cell.clone();
+    double mixtureMassPerVolume = cell.getGasHoldup() * cell.getGasDensity()
+        + cell.getOilHoldup() * cell.getOilDensity() + cell.getWaterHoldup() * cell.getWaterDensity();
+    if (!Double.isFinite(massFlow) || !(mixtureMassPerVolume > 0.0) || !Double.isFinite(mixtureMassPerVolume)) {
+      throw new IllegalStateException("Prescribed inlet outflow requires finite flow and positive cell phase inertia");
+    }
+    double velocity = massFlow / (face.getArea() * mixtureMassPerVolume);
+    face.setGasVelocity(cell.getGasHoldup() > 0.0 ? velocity : 0.0);
+    face.setLiquidVelocity(cell.getLiquidHoldup() > 0.0 ? velocity : 0.0);
+    face.setOilVelocity(cell.getOilHoldup() > 0.0 ? velocity : 0.0);
+    face.setWaterVelocity(cell.getWaterHoldup() > 0.0 ? velocity : 0.0);
+    face.setPressure(inletFacePressureFromCells(cell));
+    face.updateConservativeVariables();
+    return face;
   }
 
   /** Build a feed face using the supplied fluid; physical-property caches may be initialized on that fluid. */
@@ -10013,6 +10046,11 @@ public class TwoFluidPipe extends Pipeline {
 
   /**
    * Set inlet mass flow for CONSTANT_FLOW boundary condition.
+   *
+   * <p>
+   * Positive flow uses the external inlet stream as donor. Negative flow is physical outflow and uses the first pipe
+   * cell as donor, retaining its phase split, composition and enthalpy.
+   * </p>
    *
    * @param massFlow Mass flow rate (kg/s)
    */

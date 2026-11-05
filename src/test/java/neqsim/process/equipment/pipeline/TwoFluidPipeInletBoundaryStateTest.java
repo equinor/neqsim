@@ -73,6 +73,30 @@ class TwoFluidPipeInletBoundaryStateTest {
     }
   }
 
+  @Test
+  void prescribedNegativeInletFlowUsesCellPhasesAndRetainsExactTotalRate() throws Exception {
+    TwoFluidPipe pipe = createPipe(BoundaryCondition.CONSTANT_FLOW, -1);
+    pipe.setInletMassFlow(-0.17);
+    TwoFluidSection[] sections = (TwoFluidSection[]) read(pipe, "sections");
+    TwoFluidSection first = sections[0];
+    double[] original = first.getStateVector();
+
+    applyBoundaryConditions(pipe);
+
+    assertArrayEquals(original, first.getStateVector(), 0.0,
+        "A prescribed outflow must not replace the first physical cell");
+    TwoFluidConservationEquations equations = (TwoFluidConservationEquations) read(pipe, "equations");
+    double[] actual = equations.calcPhaseMassFaceFluxes(sections, first.getLength())[0];
+    double[] phaseInertia = {first.getGasHoldup() * first.getGasDensity(), first.getOilHoldup() * first.getOilDensity(),
+        first.getWaterHoldup() * first.getWaterDensity()};
+    double totalInertia = phaseInertia[0] + phaseInertia[1] + phaseInertia[2];
+    for (int phase = 0; phase < 3; phase++) {
+      assertEquals(-0.17 * phaseInertia[phase] / totalInertia, actual[phase], 1.0e-12);
+      assertTrue(actual[phase] < 0.0);
+    }
+    assertEquals(-0.17, actual[0] + actual[1] + actual[2], 1.0e-12);
+  }
+
   private static TwoFluidPipe createPipe(BoundaryCondition boundary, int absentPhase) throws Exception {
     SystemInterface fluid = new SystemSrkEos(298.15, 60.0);
     fluid.addComponent("methane", 1.0);
