@@ -1,0 +1,157 @@
+{
+  "baseRevision": "e316ffb6d7eb42a176156dd278731a010d9a5196",
+  "publicRegressionCases": 3,
+  "publicScales": [
+    0.001,
+    1,
+    1000
+  ],
+  "publicEndpoints": 18,
+  "baselineMeshComplete": 13,
+  "candidateMeshComplete": 16,
+  "candidateMeshEndpoints": 80,
+  "nativeInventoryMaxChangeMol": 0.0,
+  "tests": {
+    "tests": 671,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "classes": 78
+  },
+  "coverage": {
+    "refineFixedCellEquilibrium": {
+      "INSTRUCTION": {
+        "covered": 131,
+        "missed": 15
+      },
+      "BRANCH": {
+        "covered": 16,
+        "missed": 8
+      },
+      "LINE": {
+        "covered": 25,
+        "missed": 3
+      },
+      "COMPLEXITY": {
+        "covered": 5,
+        "missed": 8
+      },
+      "METHOD": {
+        "covered": 1,
+        "missed": 0
+      }
+    },
+    "fixedCellFeasibleGibbsReference": {
+      "INSTRUCTION": {
+        "covered": 262,
+        "missed": 25
+      },
+      "BRANCH": {
+        "covered": 32,
+        "missed": 10
+      },
+      "LINE": {
+        "covered": 42,
+        "missed": 5
+      },
+      "COMPLEXITY": {
+        "covered": 12,
+        "missed": 10
+      },
+      "METHOD": {
+        "covered": 1,
+        "missed": 0
+      }
+    }
+  },
+  "static": {
+    "spotbugsBase": 19,
+    "spotbugsCandidate": 19,
+    "sameSignatures": true,
+    "new": [],
+    "analysisErrors": [
+      0,
+      0
+    ],
+    "checkstyleAnalyzedFiles": 5,
+    "checkstyleCvdWarnings": 6,
+    "checkstyleBaseWarnings": 8,
+    "checkstyleSameWarnings": false,
+    "checkstyleNewWarnings": []
+  },
+  "runtimeGeometricMeanRatio": 1.169387545423993,
+  "runtimeRatioRange": [
+    0.6984164105213111,
+    2.2731621062213527
+  ],
+  "runtimeInterpretation": "Shared-runner explicit fixed-cell control is inconclusive; no general speedup/no-regression claim. All output checksums identical.",
+  "bytecodeMajor": {
+    "ConstantVolumeDepletion.class": 52,
+    "FixedCellFeasibleGibbsTest.class": 52
+  },
+  "unmodifiedMasterTests": 12,
+  "focusedTests": 16,
+  "toolingTests": 50,
+  "zeroComponentNativePath": "Inherited volume overshoot is retained as unsupported; energy-reference construction alone is tested and passes.",
+  "eosReferenceControls": {
+    "parentRevision": "d24962df86f5417836978a24bb0d5e9edde0f46e",
+    "productionBlobUnchanged": "15dd76fd6242796a1bf981ecc9bfc10bacc78901",
+    "controls": 108,
+    "referenceEvaluations": 432,
+    "freshHomogeneousSystems": 216,
+    "eos": [
+      "classic SRK",
+      "classic PR"
+    ],
+    "volumeCorrection": [
+      false,
+      true
+    ],
+    "inventories": "The three retained INVENTORIES in FixedCellFeasibleGibbsTest",
+    "sampleScales": [
+      0.001,
+      1,
+      1000
+    ],
+    "nearbyTemperatureOffsetsK": [
+      -2,
+      0,
+      2
+    ],
+    "pairedPressuresBara": [
+      9.8,
+      10,
+      10.2
+    ],
+    "uniformTargetMultiplier": 1.125,
+    "componentTargetMultipliers": [
+      1.000002,
+      0.999997,
+      1.000001
+    ],
+    "frozenEnergyToleranceJPerSampleScale": 1e-09,
+    "maxExtensiveErrorJPerSampleScale": 1.2212453270876722e-12,
+    "maxFreshPhaseErrorJPerSampleScale": 1.2212453270876722e-12,
+    "identityAndRepeatEnergyMaxChangeJ": 0,
+    "inputSerializationChanged": false,
+    "focusedTests": 16,
+    "focusedFailures": 0,
+    "focusedErrors": 0,
+    "focusedSkips": 0,
+    "focusedClassTimesSeconds": [
+      12.017,
+      87.965,
+      42.257
+    ],
+    "toolingTests": 50,
+    "javadocExit": 0,
+    "javadocWarnings": 0,
+    "evidenceClass": "Analytic extensivity plus independent homogeneous construction sharing NeqSim EOS; not independent EOS or measured accuracy.",
+    "newDepletionPathAdmission": false,
+    "surroundingTests": 671,
+    "surroundingClasses": 78,
+    "selectedTestClasses": 80,
+    "surroundingOldReports": [],
+    "jacocoReportExit": 0
+  }
+}

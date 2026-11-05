@@ -522,7 +522,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
    * @throws IllegalStateException if refinement cannot preserve a balanced supported endpoint
    */
   private static void refineFixedCellEquilibrium(SystemInterface cell) {
-    String[] family = fixedCellFamily(cell);
+    final String[] family = fixedCellFamily(cell);
     double residual = fixedCellFugacityResidual(cell);
     if (residual <= FIXED_CELL_PRECISION_TOLERANCE) {
       return;
@@ -532,6 +532,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       throw new IllegalStateException("Invalid fixed-cell Gibbs energy before refinement");
     }
     double[] inventory = DepletionSnapshot.inventory(cell);
+    initialGibbs = fixedCellFeasibleGibbsReference(cell, inventory);
     neqsim.thermodynamicoperations.flashops.TPmultiflash solver = new neqsim.thermodynamicoperations.flashops.TPmultiflash(
         cell, false);
     solver.setDoubleArrays();
@@ -579,6 +580,85 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       }
     }
     return maximum;
+  }
+
+  /**
+   * Reconstructs a Gibbs reference at exactly the stored component inventory.
+   *
+   * <p>
+   * An approximate flash can have slightly inconsistent phase-summed and stored component amounts. Its Gibbs energy is
+   * not a valid constrained upper bound at the stored amounts. For each component, scale its nonnegative phase
+   * allocation by the ratio of stored to phase-summed amount. The resulting homogeneous phases are a feasible trial
+   * state, not another equilibrium solution. Copies retain the same EOS, temperature, pressure and phase branches. This
+   * work is confined to explicit fixed-cell endpoints that require precision refinement.
+   * </p>
+   *
+   * @param cell initial approximate equilibrium, never modified
+   * @param inventory stored named component amounts, mol
+   * @return finite Gibbs energy of the same-inventory trial state, J
+   * @throws IllegalStateException if the allocation cannot be reconstructed and conserved to floating-point precision
+   */
+  private static double fixedCellFeasibleGibbsReference(SystemInterface cell, double[] inventory) {
+    int phases = cell.getNumberOfPhases();
+    boolean reconstructionNeeded = false;
+    double[][] allocation = new double[phases][inventory.length];
+    for (int component = 0; component < inventory.length; component++) {
+      double sum = 0;
+      for (int phase = 0; phase < phases; phase++) {
+        double amount = cell.getPhase(phase).getNumberOfMolesInPhase()
+            * cell.getPhase(phase).getComponent(component).getx();
+        if (!Double.isFinite(amount) || amount < 0) {
+          throw new IllegalStateException("Invalid fixed-cell phase allocation for Gibbs reference");
+        }
+        allocation[phase][component] = amount;
+        sum += amount;
+      }
+      if (!Double.isFinite(sum) || inventory[component] > 0 && sum <= 0) {
+        throw new IllegalStateException("Missing fixed-cell component in Gibbs reference");
+      }
+      reconstructionNeeded |= Math.abs(sum - inventory[component]) > 64
+          * Math.ulp(Math.max(1.0, Math.abs(inventory[component])));
+      double ratio = inventory[component] == 0 ? 0 : inventory[component] / sum;
+      for (int phase = 0; phase < phases; phase++) {
+        allocation[phase][component] *= ratio;
+      }
+    }
+    if (!reconstructionNeeded) {
+      return cell.getGibbsEnergy();
+    }
+    SystemInterface source = org.apache.commons.lang3.SerializationUtils.clone(cell);
+    double energy = 0;
+    double[] reconstructed = new double[inventory.length];
+    for (int phase = 0; phase < phases; phase++) {
+      SystemInterface reference = source.phaseToSystem(phase);
+      for (int component = 0; component < inventory.length; component++) {
+        reference.addComponent(component,
+            allocation[phase][component] - reference.getComponent(component).getNumberOfmoles());
+      }
+      reference.setForceSinglePhase(source.getPhase(phase).getType());
+      reference.init(3);
+      reference.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+      double phaseEnergy = reference.getGibbsEnergy();
+      if (!Double.isFinite(phaseEnergy) || !Double.isFinite(reference.getCorrectedVolume())
+          || reference.getCorrectedVolume() <= 0) {
+        throw new IllegalStateException("Invalid homogeneous phase in fixed-cell Gibbs reference");
+      }
+      energy += phaseEnergy;
+      for (int component = 0; component < inventory.length; component++) {
+        reconstructed[component] += reference.getPhase(0).getNumberOfMolesInPhase()
+            * reference.getPhase(0).getComponent(component).getx();
+      }
+    }
+    for (int component = 0; component < inventory.length; component++) {
+      if (!Double.isFinite(reconstructed[component]) || Math.abs(reconstructed[component] - inventory[component]) > 64
+          * Math.ulp(Math.max(1.0, Math.abs(inventory[component])))) {
+        throw new IllegalStateException("Fixed-cell Gibbs reference changed component inventory");
+      }
+    }
+    if (!Double.isFinite(energy)) {
+      throw new IllegalStateException("Invalid feasible fixed-cell Gibbs energy");
+    }
+    return energy;
   }
 
   /**
