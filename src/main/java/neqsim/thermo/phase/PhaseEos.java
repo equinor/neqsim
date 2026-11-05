@@ -415,10 +415,8 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
     // Composition is fixed during this volume solve; calculate the liquid seed only when needed.
-    double liquidBonV = pt == PhaseType.GAS ? Double.NaN
-        : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
-    double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
-        : liquidBonV;
+    double liquidBonV = pt == PhaseType.GAS ? Double.NaN : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+    double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R) : liquidBonV;
     BonV = Math.max(1.0e-4, Math.min(1.0 - 1.0e-4, BonV));
 
     double BonVold = BonV;
@@ -463,8 +461,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
           if (pt == PhaseType.GAS && Double.isNaN(liquidBonV)) {
             liquidBonV = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
           }
-          BonV = pt == PhaseType.GAS ? liquidBonV
-              : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          BonV = pt == PhaseType.GAS ? liquidBonV : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         }
       } else {
         BonV += d1 * (0.1);
@@ -488,8 +485,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
         if (pt == PhaseType.GAS && Double.isNaN(liquidBonV)) {
           liquidBonV = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
         }
-        BonV = pt == PhaseType.GAS ? liquidBonV
-            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+        BonV = pt == PhaseType.GAS ? liquidBonV : pressure * getB() / (numberOfMolesInPhase * temperature * R);
       }
 
       setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
