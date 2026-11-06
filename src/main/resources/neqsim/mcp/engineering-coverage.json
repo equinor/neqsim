@@ -1367,6 +1367,39 @@
       }
     },
     {
+      "id": "pipeline-restart-diagnostics-discovery",
+      "title": "Experimental terrain-pool restart geometry and pressure diagnostics",
+      "domain": "flow-assurance",
+      "tool": "inspectApi",
+      "apis": [
+        "neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator",
+        "neqsim.process.equipment.pipeline.twophasepipe.HydrocarbonPoolTransfer",
+        "neqsim.process.equipment.pipeline.twophasepipe.reporting.TwoFluidPipeReport"
+      ],
+      "skills": [
+        "neqsim-dynamic-simulation",
+        "neqsim-flow-assurance"
+      ],
+      "agents": [
+        "dynamic-equipment",
+        "flow-assurance"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/closure/HydrostaticCellGeometryTest.java",
+        "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/HydrocarbonPoolTransferTest.java",
+        "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/StratifiedPoolTransferTest.java",
+        "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/reporting/TwoFluidPipeReportTest.java",
+        "src/test/java/neqsim/process/equipment/pipeline/TwoFluidRichGasDragQualificationTest.java"
+      ],
+      "limitations": "Experimental Java/JPype discovery route. Select forStratifiedFlow for a local flowing holdup chord with uniform/nonuniform integrated-source partition controls; forHydrostaticPool remains a distinct per-cell stationary reconstruction. The historical hydrostatic-cycle failure is not validated by the flowing alternative. The 12/24-cell 780 s comparison must preserve the same physical terrain and level-outlet extent, retain the 10% oil-inventory gates and identify its area assumption in the executed receipt. Maximum single-cell interface area is extensive, not a convergence target. It does not prove stable terrain drainage, predictive evaporation, a physical surge band, severe slugging or hydraulic pigging.",
+      "evidence": {
+        "route": "declared",
+        "testSources": "present",
+        "execution": "not_recorded",
+        "engineeringQualification": "not_assessed"
+      }
+    },
+    {
       "id": "process-compression",
       "title": "Compressor in a process model",
       "domain": "rotating-equipment",
@@ -3356,7 +3389,7 @@
     {"id":"neqsim.process.equipment.pipeline.twophasepipe.EntrainmentDeposition","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/EntrainmentDeposition.java","sourceDigest":"053245c7e6f07dc9af69c78e26f2f346c3660dcdfc5a2a51ab5dfe62fcda68dd","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.pipeline.twophasepipe.FlashTable","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/FlashTable.java","sourceDigest":"cfc2cfa426937b90048b7d6b558b92d5e86b13de5f96f99c0ad4dc1f953fbfee","domain":"process","skills":["neqsim-dynamic-simulation"],"agents":["control-system","dynamic-equipment","process-model","rotating-equipment"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.pipeline.twophasepipe.FlowRegimeDetector","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/FlowRegimeDetector.java","sourceDigest":"4cfb1241be7ba7e9b9a9edb5aadc67cecf1a5da86de592cbf04737bdf1440742","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.process.equipment.pipeline.twophasepipe.HydrocarbonPoolTransfer","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/HydrocarbonPoolTransfer.java","sourceDigest":"1a2e30647cd3cb983e2244eadf4f74be540ada65c792393396b43d8b5b3d031b","domain":"process","skills":["neqsim-dynamic-simulation","neqsim-flow-assurance"],"agents":["ccs-hydrogen","control-system","dynamic-equipment","field-development","flow-assurance","flow-assurance-study-report","lng-value-chain","process-model","production-chemistry","rotating-equipment","surf-design-study"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.equipment.pipeline.twophasepipe.HydrocarbonPoolTransfer","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/HydrocarbonPoolTransfer.java","sourceDigest":"3f3aceb3d649b35879400d9a4b5f61f93d79d4c782ca5e8582bcfed441e5b936","domain":"process","skills":["neqsim-dynamic-simulation","neqsim-flow-assurance"],"agents":["ccs-hydrogen","control-system","dynamic-equipment","field-development","flow-assurance","flow-assurance-study-report","lng-value-chain","process-model","production-chemistry","rotating-equipment","surf-design-study"],"capabilities":["pipeline-restart-diagnostics-discovery"],"disposition":"registered_anchor"},
     {"id":"neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/LagrangianSlugTracker.java","sourceDigest":"c698f2f129cf28230870aa6740c5fd051aa722e36867c4a575865162f09cce16","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.pipeline.twophasepipe.LiquidAccumulationTracker","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/LiquidAccumulationTracker.java","sourceDigest":"3f66a9b5bec7bc8ad5bda30b3bd56193690178954c9a7f3c8ab50d3fdbc54b6b","domain":"process","skills":["neqsim-flow-assurance"],"agents":["ccs-hydrogen","field-development","flow-assurance","flow-assurance-study-report","lng-value-chain","production-chemistry","surf-design-study"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.pipeline.twophasepipe.NonEquilibriumFilmTransfer","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/NonEquilibriumFilmTransfer.java","sourceDigest":"fb6d08028628038b7e8fcc50bea6c10a6a64edfede0b0a6047bf8a6b6db93769","domain":"process","skills":["neqsim-flow-assurance"],"agents":["ccs-hydrogen","field-development","flow-assurance","flow-assurance-study-report","lng-value-chain","production-chemistry","surf-design-study"],"capabilities":["pipeline-film-transfer"],"disposition":"registered_anchor"},
@@ -3374,7 +3407,7 @@
     {"id":"neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/TwoFluidConservationEquations.java","sourceDigest":"73b7a73cad10765834230a79197cd4d5d7515fe2c71813cfe275afb2c808f0e6","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/TwoFluidSection.java","sourceDigest":"204ddd4f58820cf1f9577c534ece50bf6ed5fdc665ee9f00cd563ee0e02c01f4","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.pipeline.twophasepipe.closure.BubbleSizeClosure","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/closure/BubbleSizeClosure.java","sourceDigest":"78ff6d4977d81b1a516226422827754f4cb571206b3c81e6ea8d4b02de4ab43e","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/closure/GeometryCalculator.java","sourceDigest":"7e684ff9af290d8f5c4e603da58e116cd317d9e43bafe50f1e3b879db0f3ca76","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/closure/GeometryCalculator.java","sourceDigest":"604e705ff1a1d42ed094a199caabbbb99eb5b1372cdba5c89664e6a2f796f8fd","domain":"process","skills":[],"agents":[],"capabilities":["pipeline-restart-diagnostics-discovery"],"disposition":"registered_anchor"},
     {"id":"neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/closure/InterfacialFriction.java","sourceDigest":"18caeefdf806db2290394f47321ee38f0bb32999562227d3ad7a6039bf71d6d7","domain":"process","skills":["neqsim-capability-map"],"agents":["capability-scout","engineering-deliverables","mechanical-design","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/closure/OilWaterFlowRegimeDetector.java","sourceDigest":"d5953686397c99e3c96e5d66d85a99118c78d84eb5779dc56ff76a55514aa782","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.pipeline.twophasepipe.closure.SlugForceBalance","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/closure/SlugForceBalance.java","sourceDigest":"664d8207a4621b91ef7ba8efaa51046111c366d699c7a7b85037bcc3e738ad66","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
@@ -3393,7 +3426,7 @@
     {"id":"neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitModelAdapter","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/numerics/TwoFluidUnsplitModelAdapter.java","sourceDigest":"e96a3866d353b09bfa3fa8f2754c43792d7103bba1460469359a96a0832d078e","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitPublication","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/numerics/TwoFluidUnsplitPublication.java","sourceDigest":"40e41ea59bfe96c147bcf32cf0958259a9d382e9993a057226ec1d85722950c0","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.pipeline.twophasepipe.numerics.UnsplitTransientSolver","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/numerics/UnsplitTransientSolver.java","sourceDigest":"2c161b09ce78a05a74764dc89f9c83d14a60a8ff9233215452ff378f7c31817e","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.process.equipment.pipeline.twophasepipe.reporting.TwoFluidPipeReport","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/reporting/TwoFluidPipeReport.java","sourceDigest":"8054778564902068e6be755bfa76690e37bfa90ba92e9b495357c9f0fcb70987","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.equipment.pipeline.twophasepipe.reporting.TwoFluidPipeReport","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/reporting/TwoFluidPipeReport.java","sourceDigest":"bd822c0113f43c8f086e1adb79aff00536a765b0d9bee686e6dd2137514fcf4e","domain":"process","skills":[],"agents":[],"capabilities":["pipeline-restart-diagnostics-discovery"],"disposition":"registered_anchor"},
     {"id":"neqsim.process.equipment.pipeline.twophasepipe.validation.MohmmedSlugFlowBenchmark","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/validation/MohmmedSlugFlowBenchmark.java","sourceDigest":"de05ee2540f8644fd57dfeb1f1621b38638f6f5f2f5cf7c1defa582e8bf2e00e","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.pipeline.twophasepipe.validation.SevereSluggingBenchmarkHarness","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/validation/SevereSluggingBenchmarkHarness.java","sourceDigest":"a147ae477b5c7f07bd8cad80015754c074ba2fa57091e38d0af0a68d8749522d","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.pipeline.twophasepipe.validation.TwoFluidBenchmarkHarness","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/twophasepipe/validation/TwoFluidBenchmarkHarness.java","sourceDigest":"21f0eec83bb07e9fe7fe75434cde94f4c98ad80a53bf1671ace2b7dc60ee1077","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},

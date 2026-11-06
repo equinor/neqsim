@@ -11,6 +11,7 @@ import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport.Phase;
 import neqsim.process.equipment.pipeline.twophasepipe.HydrocarbonPoolTransfer;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
+import neqsim.process.equipment.pipeline.twophasepipe.reporting.TwoFluidPipeReport;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -29,6 +30,24 @@ import neqsim.thermo.system.SystemSrkEos;
 class TwoFluidRichGasDragQualificationTest {
   private static final Logger logger = LogManager.getLogger(TwoFluidRichGasDragQualificationTest.class);
 
+  /** Refinement must preserve the terrain and the physical length of the level outlet. */
+  @Test
+  void levelOutletUsesTheSamePhysicalGeometryOnEveryMesh() {
+    double[] coarse = createRichGasFaceElevations(12, true);
+    double[] refined = createRichGasFaceElevations(24, true);
+    double[] finer = createRichGasFaceElevations(48, true);
+    for (int face = 0; face < coarse.length; face++) {
+      assertEquals(coarse[face], refined[2 * face], 0.0);
+      assertEquals(coarse[face], finer[4 * face], 0.0);
+      if (face < coarse.length - 1) {
+        assertEquals(0.5 * (coarse[face] + coarse[face + 1]), refined[2 * face + 1], 1.0e-12);
+      }
+    }
+    for (int face = 9; face <= 12; face++) {
+      assertEquals(-333.5, coarse[face], 1.0e-12);
+    }
+  }
+
   /**
    * Complete the public 780 s blowdown, low-pressure settling, same-gas refill and hold sequence with explicit pool
    * kinetics.
@@ -42,24 +61,32 @@ class TwoFluidRichGasDragQualificationTest {
   void finiteRatePoolCompletesBlowdownSettleRefillAndHold() throws java.io.IOException {
     double[] coarse = runFiniteRatePoolCycle(12, 0.5);
     double[] refined = runFiniteRatePoolCycle(24, 0.5);
+    double relativePeakOilDifference = Math.abs(coarse[0] - refined[0]) / Math.max(coarse[0], refined[0]);
     double relativeFinalOilDifference = Math.abs(coarse[1] - refined[1]) / Math.max(coarse[1], refined[1]);
-    assertTrue(relativeFinalOilDifference < 1.0,
-        "The two full-cycle meshes must retain finite oil inventories of the same order");
+    String csv = "cells,dt_s,heat_supply_w_per_m,peak_oil_kg,final_oil_kg,minimum_heat_scale,"
+        + "maximum_interface_area_m2,maximum_wall_temperature_change_k,trace_area_fallback,"
+        + "refill_pressure_peak_to_peak_pa,refill_max_pressure_rate_pa_s,refill_excess_variation_pa,"
+        + "refill_ringing_ratio,refill_direction_reversals\n12,0.5,100," + csvValues(coarse) + "\n24,0.5,100,"
+        + csvValues(refined) + "\n";
+    java.nio.file.Files.write(java.nio.file.Paths.get("target/hydrocarbon-pool-cycle-refinement.csv"),
+        csv.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    assertTrue(relativePeakOilDifference < 0.1,
+        "The two full-cycle meshes must agree within the predeclared 10% peak-oil spatial gate; observed="
+            + relativePeakOilDifference);
+    assertTrue(relativeFinalOilDifference < 0.1,
+        "The two full-cycle meshes must agree within the predeclared 10% final-oil spatial gate; observed="
+            + relativeFinalOilDifference);
     logger.info("Finite-rate 780 s cycle: 12/24-cell peak oil={}/{}, final oil={}/{}, difference={} %", coarse[0],
         refined[0], coarse[1], refined[1], 100.0 * relativeFinalOilDifference);
     assertTrue(coarse[3] > 0.0 && refined[3] > 0.0,
         "The resolved hydrostatic pool must expose a finite gas/oil interface");
     assertTrue(coarse[4] > 0.0 && refined[4] > 0.0,
         "The wall thermal inventory must respond during the accepted event cycle");
-    assertEquals(1.0, coarse[5], 0.0, "The coarse cycle must cross the explicit trace-area fallback");
-    assertEquals(1.0, refined[5], 0.0, "The refined cycle must cross the explicit trace-area fallback");
-    String csv = "cells,dt_s,heat_supply_w_per_m,peak_oil_kg,final_oil_kg,minimum_heat_scale,"
-        + "maximum_interface_area_m2,maximum_wall_temperature_change_k,trace_area_fallback\n12,0.5,100," + coarse[0]
-        + "," + coarse[1] + "," + coarse[2] + "," + coarse[3] + "," + coarse[4] + "," + coarse[5] + "\n24,0.5,100,"
-        + refined[0] + "," + refined[1] + "," + refined[2] + "," + refined[3] + "," + refined[4] + "," + refined[5]
-        + "\n";
-    java.nio.file.Files.write(java.nio.file.Paths.get("target/hydrocarbon-pool-cycle-refinement.csv"),
-        csv.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    assertEquals(0.0, coarse[5], 0.0, "The coarse cycle must resolve every accepted trace wedge");
+    assertEquals(0.0, refined[5], 0.0, "The refined cycle must resolve every accepted trace wedge");
+    for (int metric = 6; metric < coarse.length; metric++) {
+      assertTrue(Double.isFinite(coarse[metric]) && Double.isFinite(refined[metric]));
+    }
   }
 
   /** Run one complete declared-parameter cycle and return peak/final oil inventory. */
@@ -73,7 +100,7 @@ class TwoFluidRichGasDragQualificationTest {
     pipe.setHeatTransferCoefficient(4.0);
     pipe.setSurfaceTemperature(277.15, "K");
     pipe.setHydrocarbonPoolTransfer(
-        HydrocarbonPoolTransfer.forHydrostaticPool(names, coefficients, evaporationEnthalpies, 100.0));
+        HydrocarbonPoolTransfer.forStratifiedFlow(names, coefficients, evaporationEnthalpies, 100.0));
     double[] initialWallTemperature = pipe.getWallTemperatureProfile();
     double initialMass = pipe.getTotalMassInventory();
     double cumulativeBoundaryMass = 0.0;
@@ -115,7 +142,11 @@ class TwoFluidRichGasDragQualificationTest {
 
     pipe.setInletBoundaryCondition(TwoFluidPipe.BoundaryCondition.CONSTANT_FLOW);
     pipe.setInletMassFlow(1000.0, "kg/sec");
-    for (int step = 0; step < (int) Math.round(420.0 / dt); step++) {
+    int refillSteps = (int) Math.round(420.0 / dt);
+    double[] refillTimes = new double[refillSteps + 1];
+    double[] refillInletPressures = new double[refillSteps + 1];
+    refillInletPressures[0] = pipe.getPressureProfile()[0];
+    for (int step = 0; step < refillSteps; step++) {
       pipe.runTransient(dt, null);
       double boundaryMass = acceptedBoundaryMass(pipe);
       cumulativeBoundaryMass += boundaryMass;
@@ -128,7 +159,12 @@ class TwoFluidRichGasDragQualificationTest {
       maximumWallTemperatureChange = Math.max(maximumWallTemperatureChange,
           maximumAbsoluteDifference(initialWallTemperature, pipe.getWallTemperatureProfile()));
       observedTraceAreaFallback |= observedTraceAreaFallback(pipe);
+      refillTimes[step + 1] = (step + 1) * dt;
+      refillInletPressures[step + 1] = pipe.getPressureProfile()[0];
     }
+
+    TwoFluidPipeReport.PressureTraceMetrics refillPressure = TwoFluidPipeReport.analyzePressureTrace(refillTimes,
+        refillInletPressures, 100.0);
 
     pipe.closeInlet();
     for (int step = 0; step < (int) Math.round(120.0 / dt); step++) {
@@ -151,7 +187,22 @@ class TwoFluidRichGasDragQualificationTest {
     assertTrue(observedRefill, "The original same-gas inlet donor must fund actual inlet refill");
     assertEquals(initialMass + cumulativeBoundaryMass, pipe.getTotalMassInventory(), 1.0e-5);
     return new double[] {maximumOil, pipe.getLastMassBalanceReport().getFinalMassKg(Phase.OIL), minimumHeatScale,
-        maximumInterfaceArea, maximumWallTemperatureChange, observedTraceAreaFallback ? 1.0 : 0.0};
+        maximumInterfaceArea, maximumWallTemperatureChange, observedTraceAreaFallback ? 1.0 : 0.0,
+        refillPressure.getPeakToPeakPressurePa(), refillPressure.getMaximumAbsolutePressureRatePaPerSecond(),
+        refillPressure.getExcessVariationPa(), refillPressure.getRingingRatio(),
+        refillPressure.getDirectionReversals()};
+  }
+
+  /** Return comma-separated values for the full-cycle receipt. */
+  private static String csvValues(double[] values) {
+    StringBuilder row = new StringBuilder();
+    for (int value = 0; value < values.length; value++) {
+      if (value > 0) {
+        row.append(',');
+      }
+      row.append(values[value]);
+    }
+    return row.toString();
   }
 
   /** Return whether the latest stage used the explicit sub-resolution trace-area fallback. */
@@ -387,7 +438,7 @@ class TwoFluidRichGasDragQualificationTest {
    * Construct and prepare the accepted synthetic steady state without adding seed liquid.
    *
    * @param cells physical cell count
-   * @param levelOutlet whether to level the final three face elevations
+   * @param levelOutlet whether to level the final 1250 m of the line
    * @return converged closed-inlet conservative-energy pipe
    */
   private static TwoFluidPipe createRichGasPipe(int cells, boolean levelOutlet) {
@@ -409,18 +460,7 @@ class TwoFluidRichGasDragQualificationTest {
     pipe.setDiameter(42.0 * 0.0254 - 2.0 * 0.026);
     pipe.setRoughness(1e-5);
     pipe.setNumberOfSections(cells);
-    double[] faceElevationsMetres = new double[cells + 1];
-    for (int face = 0; face < faceElevationsMetres.length; face++) {
-      double firstWave = Math.sin(Math.PI * face / cells);
-      double thirdWave = Math.sin(3.0 * Math.PI * face / cells);
-      faceElevationsMetres[face] = -300.0 - 55.0 * firstWave * firstWave - 12.0 * thirdWave * thirdWave;
-    }
-    if (levelOutlet) {
-      for (int face = cells - 2; face <= cells; face++) {
-        faceElevationsMetres[face] = faceElevationsMetres[cells - 3];
-      }
-    }
-    pipe.setCellFaceElevationProfile(faceElevationsMetres);
+    pipe.setCellFaceElevationProfile(createRichGasFaceElevations(cells, levelOutlet));
     pipe.setTimeIntegrationMethod(TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION);
     pipe.setEnableSlugTracking(false);
     pipe.setEnableAdaptiveTimestepping(true);
@@ -448,6 +488,35 @@ class TwoFluidRichGasDragQualificationTest {
     pipe.closeInlet();
     pipe.setMassTransferRelaxationTime(30.0);
     return pipe;
+  }
+
+  /**
+   * Refine the original twelve straight route segments without changing physical geometry.
+   *
+   * @param cells physical cell count
+   * @param levelOutlet whether to level the final 1250 m of the 5000 m line
+   * @return face elevations in metres
+   */
+  private static double[] createRichGasFaceElevations(int cells, boolean levelOutlet) {
+    int routeSegments = 12;
+    double[] routeElevations = new double[routeSegments + 1];
+    for (int vertex = 0; vertex < routeElevations.length; vertex++) {
+      double position = vertex / (double) routeSegments;
+      if (levelOutlet) {
+        position = Math.min(position, 0.75);
+      }
+      double firstWave = Math.sin(Math.PI * position);
+      double thirdWave = Math.sin(3.0 * Math.PI * position);
+      routeElevations[vertex] = -300.0 - 55.0 * firstWave * firstWave - 12.0 * thirdWave * thirdWave;
+    }
+    double[] elevations = new double[cells + 1];
+    for (int face = 0; face < elevations.length; face++) {
+      double position = routeSegments * face / (double) cells;
+      int segment = Math.min(routeSegments - 1, (int) position);
+      double fraction = position - segment;
+      elevations[face] = (1.0 - fraction) * routeElevations[segment] + fraction * routeElevations[segment + 1];
+    }
+    return elevations;
   }
 
   /** Sum a component boundary vector. */

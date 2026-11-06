@@ -554,14 +554,28 @@ EOS diagnostic $V/B=1.75$ label transition by explicitly retaining the requested
 positive-compressibility, Jacobian and energy-admissibility guards remain active. Do not clip
 composition or change the configured root to manufacture a restart result.
 Use `HydrocarbonPoolTransfer.forHydrostaticPool(...)` only for stationary or slowly draining
-stratified terrain pools. Inspect interface-area, equilibrium-appearance and unresolved-trace-area
-diagnostics. Configure deliberate wall inventory with `setInitialWallTemperatureProfile(...)`
+stratified terrain pools. Use `forStratifiedFlow(...)` for a flowing circular-stratified interface:
+its local holdup chord preserves integrated area and component sources under subdivision of a
+uniform state, including nonuniform cells and finite heat limits. Independent per-cell horizontal
+puddles introduce cell-length dependence during a flowing restart. The two area assumptions are
+distinct models; retain the historical hydrostatic-cycle failure as evidence rather than claiming
+the flowing closure validates static-pool convergence. Inspect interface-area, equilibrium-appearance and unresolved-trace-area
+diagnostics. Representable long-cell trace wedges retain their leading-edge depth without a liquid
+floor; any reported fallback remains a numerical-resolution warning. Configure deliberate wall
+inventory with `setInitialWallTemperatureProfile(...)`
 before `run()` and retain the wall profile through every event/replay. In multilayer mode, its one
 temperature per cell initializes every radial layer uniformly; the layers evolve independently and
-a new steady run clears the old radial inventory. The current wall-coupled
-12/24-cell cycle has 22.82%/24.29% peak/final oil mesh differences; it is screening, not physical
-restart qualification. A moving pig needs separate moving-volume, face-flux and pressure-work
-conservation.
+a new steady run clears the old radial inventory. Mesh refinement must preserve physical terrain
+breakpoints and outlet length; a "last three cells" level-outlet rule compares different pipes.
+The wall-coupled 12/24-cell cycle fixes the final 1250 m at -333.5 m on both meshes and retains
+the 10% peak/final inventory gates. Consult its hydrocarbon-pool-transfer receipt for the executed
+result. Maximum single-cell interface area is extensive and is not a convergence target.
+A moving pig needs separate moving-volume, face-flux and pressure-work conservation and qualified
+inlet states.
+For a declared restart-opening window, use `TwoFluidPipeReport.analyzePressureTrace(...)` to report
+unfiltered extrema, peak-to-peak pressure, maximum sample rate, total/excess variation and reversal
+count with an explicit Pa gate. Preserve the sample interval and do not promote this diagnostic to a
+surge qualification without mesh/time and independent evidence.
 Condensation must use equilibrium hydrocarbon-liquid and aqueous-liquid **mass**
 contributions; never use the current cell water cut to identify a phase that is not yet present.
 For evaporation, withdraw from the actual oil and water conservative inventories and bound each

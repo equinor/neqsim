@@ -80,6 +80,91 @@ public final class TwoFluidPipeReport {
   }
 
   /**
+   * Immutable event-window pressure metrics without filtering or fitted oscillations.
+   *
+   * <p>
+   * The reversal threshold is supplied by the caller in pascals. Total variation includes every finite sample
+   * increment, while reversal counting ignores increments below that explicit threshold. This keeps measurement
+   * resolution and numerical-noise policy outside the reporting helper.
+   * </p>
+   */
+  public static final class PressureTraceMetrics {
+    private final double minimumPressurePa;
+    private final double maximumPressurePa;
+    private final double timeOfMinimumSeconds;
+    private final double timeOfMaximumSeconds;
+    private final double peakToPeakPressurePa;
+    private final double maximumAbsolutePressureRatePaPerSecond;
+    private final double totalVariationPa;
+    private final double excessVariationPa;
+    private final int directionReversals;
+
+    private PressureTraceMetrics(double minimumPressurePa, double maximumPressurePa, double timeOfMinimumSeconds,
+        double timeOfMaximumSeconds, double maximumAbsolutePressureRatePaPerSecond, double totalVariationPa,
+        double excessVariationPa, int directionReversals) {
+      this.minimumPressurePa = minimumPressurePa;
+      this.maximumPressurePa = maximumPressurePa;
+      this.timeOfMinimumSeconds = timeOfMinimumSeconds;
+      this.timeOfMaximumSeconds = timeOfMaximumSeconds;
+      this.peakToPeakPressurePa = maximumPressurePa - minimumPressurePa;
+      this.maximumAbsolutePressureRatePaPerSecond = maximumAbsolutePressureRatePaPerSecond;
+      this.totalVariationPa = totalVariationPa;
+      this.excessVariationPa = excessVariationPa;
+      this.directionReversals = directionReversals;
+    }
+
+    /** @return minimum sampled pressure in Pa */
+    public double getMinimumPressurePa() {
+      return minimumPressurePa;
+    }
+
+    /** @return maximum sampled pressure in Pa */
+    public double getMaximumPressurePa() {
+      return maximumPressurePa;
+    }
+
+    /** @return time of the first minimum-pressure sample in s */
+    public double getTimeOfMinimumSeconds() {
+      return timeOfMinimumSeconds;
+    }
+
+    /** @return time of the first maximum-pressure sample in s */
+    public double getTimeOfMaximumSeconds() {
+      return timeOfMaximumSeconds;
+    }
+
+    /** @return sampled maximum minus minimum pressure in Pa */
+    public double getPeakToPeakPressurePa() {
+      return peakToPeakPressurePa;
+    }
+
+    /** @return maximum absolute adjacent-sample pressure rate in Pa/s */
+    public double getMaximumAbsolutePressureRatePaPerSecond() {
+      return maximumAbsolutePressureRatePaPerSecond;
+    }
+
+    /** @return sum of absolute adjacent pressure increments in Pa */
+    public double getTotalVariationPa() {
+      return totalVariationPa;
+    }
+
+    /** @return total variation minus absolute end-to-end pressure change in Pa */
+    public double getExcessVariationPa() {
+      return excessVariationPa;
+    }
+
+    /** @return signed increment reversals above the caller-supplied pressure threshold */
+    public int getDirectionReversals() {
+      return directionReversals;
+    }
+
+    /** @return excess variation divided by peak-to-peak pressure, or zero for a constant trace */
+    public double getRingingRatio() {
+      return peakToPeakPressurePa == 0.0 ? 0.0 : excessVariationPa / peakToPeakPressurePa;
+    }
+  }
+
+  /**
    * Immutable per-terrain-basin liquid-pool snapshot at one simulation time.
    *
    * <p>
@@ -273,6 +358,69 @@ public final class TwoFluidPipeReport {
    */
   public static ProfileSnapshot capture(TwoFluidPipe pipe) {
     return new ProfileSnapshot(pipe);
+  }
+
+  /**
+   * Analyze a sampled pressure trace over one declared event window.
+   *
+   * <p>
+   * Samples are not interpolated, filtered, detrended or assigned a dominant period. Use a sufficiently resolved
+   * sampling interval and report it with the result. A monotonic trace has zero excess variation and zero direction
+   * reversals. An oscillatory or ringing trace has positive excess variation; reversal counting additionally requires
+   * adjacent changes at least as large as {@code minimumReversalExcursionPa}.
+   * </p>
+   *
+   * @param timesSeconds strictly increasing sample times in seconds
+   * @param pressuresPa finite pressure samples in pascals
+   * @param minimumReversalExcursionPa nonnegative absolute adjacent change required to count a direction
+   * @return immutable pressure metrics
+   */
+  public static PressureTraceMetrics analyzePressureTrace(double[] timesSeconds, double[] pressuresPa,
+      double minimumReversalExcursionPa) {
+    if (timesSeconds == null || pressuresPa == null || timesSeconds.length < 2
+        || timesSeconds.length != pressuresPa.length || !Double.isFinite(minimumReversalExcursionPa)
+        || minimumReversalExcursionPa < 0.0) {
+      throw new IllegalArgumentException("Pressure analysis requires matching finite samples and a nonnegative gate");
+    }
+    double minimum = pressuresPa[0];
+    double maximum = pressuresPa[0];
+    double timeOfMinimum = timesSeconds[0];
+    double timeOfMaximum = timesSeconds[0];
+    double totalVariation = 0.0;
+    double maximumRate = 0.0;
+    int previousDirection = 0;
+    int reversals = 0;
+    if (!Double.isFinite(timesSeconds[0]) || !Double.isFinite(pressuresPa[0])) {
+      throw new IllegalArgumentException("Pressure analysis requires finite samples");
+    }
+    for (int sample = 1; sample < timesSeconds.length; sample++) {
+      double interval = timesSeconds[sample] - timesSeconds[sample - 1];
+      double pressure = pressuresPa[sample];
+      if (!Double.isFinite(timesSeconds[sample]) || !Double.isFinite(pressure) || !(interval > 0.0)) {
+        throw new IllegalArgumentException("Pressure analysis requires finite samples at increasing times");
+      }
+      if (pressure < minimum) {
+        minimum = pressure;
+        timeOfMinimum = timesSeconds[sample];
+      }
+      if (pressure > maximum) {
+        maximum = pressure;
+        timeOfMaximum = timesSeconds[sample];
+      }
+      double change = pressure - pressuresPa[sample - 1];
+      totalVariation += Math.abs(change);
+      maximumRate = Math.max(maximumRate, Math.abs(change / interval));
+      int direction = Math.abs(change) >= minimumReversalExcursionPa && change != 0.0 ? (change > 0.0 ? 1 : -1) : 0;
+      if (direction != 0) {
+        if (previousDirection != 0 && direction != previousDirection) {
+          reversals++;
+        }
+        previousDirection = direction;
+      }
+    }
+    double netChange = Math.abs(pressuresPa[pressuresPa.length - 1] - pressuresPa[0]);
+    return new PressureTraceMetrics(minimum, maximum, timeOfMinimum, timeOfMaximum, maximumRate, totalVariation,
+        Math.max(0.0, totalVariation - netChange), reversals);
   }
 
   /**

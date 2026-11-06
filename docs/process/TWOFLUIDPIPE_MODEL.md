@@ -66,7 +66,10 @@ finite-rate evaporation. It does not alter holdup, conservative inventories,
 friction or transfer area used by the transient solver. Neighboring cell planes
 need not share one global level. The straight-cell arclength abstraction excludes
 capillarity and curved-pipe volume corrections. Invalid/near-vertical or
-unresolvable cases fail explicitly. See the
+unresolvable cases fail explicitly. Long inclined trace pools are solved from their small positive
+leading-edge depth, rather than reconstructing that depth by subtracting nearly equal centre and
+slope-range values. This preserves representable wedge volume and area without an inventory floor;
+traces below floating-point resolution still fail explicitly. See the
 [reporting guide](../wiki/two_fluid_reporting_and_validation#static-subcell-depth-and-area-diagnostic)
 for units, supported limits and executable regression evidence.
 
@@ -692,6 +695,10 @@ pipe.setHydrocarbonPoolTransfer(
 // Stationary/slowly draining terrain-pool screening:
 pipe.setHydrocarbonPoolTransfer(
     HydrocarbonPoolTransfer.forHydrostaticPool(species, k, dhVap, 100.0));
+
+// Flowing stratified shutdown/refill screening:
+pipe.setHydrocarbonPoolTransfer(
+    HydrocarbonPoolTransfer.forStratifiedFlow(species, k, dhVap, 100.0));
 ```
 
 Configure the closure before the first transient interval. It requires dry gas/oil component
@@ -700,10 +707,27 @@ transfer remains a separate owner. `getLastHydrocarbonPoolTransferResult()` expo
 constants, interface areas, pre-limit heat, heat scales and donor-limit activation. The hydrostatic
 option uses the existing volume-preserving horizontal-surface reconstruction for each inclined cell.
 A zero-area gas cell with a positive equilibrium oil target uses that target geometry only for the
-appearance step. If an accepted inclined trace is below the reconstruction's relative-volume
-resolution, the result reports `getUnresolvedTraceAreaFallback()` and uses the local stratified chord
-area; it does not delete, seed or clip component inventory. This is an explicit subgrid area
-regularization, not evidence for an annular film, slug front or moving-pig interface.
+appearance step. The reconstruction retains the leading-edge depth of representable inclined trace
+wedges, including the qualified `1e-30` holdup case in a 416.67 m cell. If a still smaller accepted
+trace is below floating-point relative-volume resolution, the result reports
+`getUnresolvedTraceAreaFallback()` and uses the local stratified chord area; it does not delete, seed
+or clip component inventory. This last-resort subgrid regularization is not evidence for an annular
+film, slug front or moving-pig interface.
+
+For a flowing stratified state, `forStratifiedFlow(...)` uses the circular cross-sectional chord
+at the accepted cell-average holdup, extended along the cell arclength. It preserves integrated
+area and paired component rates when a uniform physical state is subdivided, including nonuniform
+cell lengths and active heat limits. The equilibrium oil target supplies the chord for first
+appearance without seed inventory; full liquid has zero gas/oil interface. This is a different,
+explicit area assumption from `forHydrostaticPool(...)`. Reconstructing an independent horizontal
+puddle in every flowing cell makes numerical cell length a physical kinetic parameter: a 400 m,
+unit-diameter section at 0.01 holdup and 0.03 rad has 13.990 m2 static area as one cell, but
+34.626 m2 as eight equal cells. Neither value is a flowing-interface prediction. Keep the static
+factory for stationary reconstructions and validate its cell volumes against a common physical
+free surface before comparing subdivisions.
+Horizontal reconstruction scales its search bracket with circular-segment trace depth rather
+than imposing a liquid floor. Independent controls retain positive volume and chord area down
+to `1e-300` holdup under the unchanged relative-volume tolerance.
 
 The analytical gates cover zero drive/area, independent species conductance, donor and heat limits,
 unseeded oil appearance, exponential time-step refinement, component conservation and conservative
@@ -723,22 +747,30 @@ then evolve independently, and a new steady `run()` clears the prior evolved lay
 
 The declared finite-heat rich-gas cycle completes 780 s on 12 and 24 cells with 100 W/m available
 evaporation heat: 120 s gas-only blowdown, 120 s closed settling, 420 s same-composition inlet
-refill at 1000 kg/s with the outlet closed, then 120 s closed hold. The new run uses hydrostatic
-pool area, a 26 mm steel wall (7850 kg/m3, 500 J/(kg K)), 4 W/(m2 K) wall/seabed exchange and a
-277.15 K environment. Peak oil inventories are 8,330.683 and 6,429.568 kg; final oil is 8,116.001
-and 6,144.303 kg. The 22.82% peak and 24.29% final spatial differences are numerical screening,
-not a converged predictive band. Maximum resolved areas are 187.876/101.227 m2 and maximum wall
-temperature changes are 43.223/45.037 K. Minimum heat scales of 1.089e-3/8.093e-4 prove that the
-100 W/m kinetic limit is active; both meshes report the trace-area fallback. The cycle crosses the dense-root $V/B=1.75$
+refill at 1000 kg/s with the outlet closed, then 120 s closed hold. The current run explicitly uses
+`forStratifiedFlow(...)`, a 26 mm steel wall (7850 kg/m3, 500 J/(kg K)), 4 W/(m2 K) wall/seabed exchange and a
+277.15 K environment. Both meshes sample the same terrain, with the final 1250 m level at
+-333.5 m elevation. The earlier "last three cells" outlet definition changed its physical length
+and elevation with mesh size; its 22.82%/24.29% peak/final inventory differences cannot isolate
+spatial error. The corrected comparison retains the predeclared 10% inventory gates, all
+conservation tolerances and unfiltered pressure diagnostics. The area receipt records the maximum
+**single-cell** interface area, which is an extensive quantity and need not be mesh invariant.
+The retained common-polyline stationary-puddle rerun fails at 11.21% peak and 10.86% final oil.
+The distinct flowing-area model passes those unchanged gates at 2.478% peak and 2.576% final oil:
+24,452.255/25,073.602 kg peak and 24,121.554/24,759.386 kg final on 12/24 cells. These are different
+area assumptions and predict different inventories; the flowing result does not qualify the
+historical stationary-puddle trajectory. Independent source partition controls and trace-volume
+limits accompany the explicit area-model change.
+The cycle crosses the dense-root $V/B=1.75$
 diagnostic-label transition with the configured liquid root, positive compressibility and recovery
 Jacobian retained; no phase relabeling, mass clipping or guard weakening is used. See the
 [qualification receipt](../../src/test/resources/neqsim/process/pipeline/hydrocarbon-pool-transfer/README.md).
 
 These changes advance a wall-inventory shutdown/cooldown/restart screening path, but they do not
-complete physical restart qualification. Independent public rate/thermal data, tighter mesh/time
-convergence, a restart-opening surge band, repeated-cycle evidence and the unchanged five-second
-riser matrix remain open. Moving-pig volume/flux/work coupling is a separate moving-boundary
-conservation algorithm and is not implemented here.
+complete physical restart qualification. Further mesh/time convergence, independent public
+rate/thermal data, a restart-opening surge band, repeated-cycle evidence and the unchanged
+five-second riser matrix remain open. Moving-pig volume/flux/work coupling requires a separate
+moving-boundary conservation algorithm and qualified inlet states.
 
 `getLastConservativeEnergyReport()` exposes the fluid first-law ledger and separate maximum
 relative occupied-volume and published-state energy residuals. Its signed residual is final

@@ -3,6 +3,7 @@ package neqsim.process.equipment.pipeline.twophasepipe.reporting;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -26,6 +27,42 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 class TwoFluidPipeReportTest {
+
+  @Test
+  void pressureTraceMetricsSeparateMonotonicRestartRampFromRinging() {
+    TwoFluidPipeReport.PressureTraceMetrics monotonic = TwoFluidPipeReport
+        .analyzePressureTrace(new double[] {0.0, 1.0, 3.0}, new double[] {100.0, 120.0, 130.0}, 5.0);
+    assertEquals(100.0, monotonic.getMinimumPressurePa());
+    assertEquals(130.0, monotonic.getMaximumPressurePa());
+    assertEquals(30.0, monotonic.getPeakToPeakPressurePa());
+    assertEquals(20.0, monotonic.getMaximumAbsolutePressureRatePaPerSecond());
+    assertEquals(30.0, monotonic.getTotalVariationPa());
+    assertEquals(0.0, monotonic.getExcessVariationPa());
+    assertEquals(0.0, monotonic.getRingingRatio());
+    assertEquals(0, monotonic.getDirectionReversals());
+
+    TwoFluidPipeReport.PressureTraceMetrics ringing = TwoFluidPipeReport.analyzePressureTrace(
+        new double[] {0.0, 1.0, 2.0, 3.0, 5.0}, new double[] {100.0, 130.0, 110.0, 140.0, 120.0}, 5.0);
+    assertEquals(0.0, ringing.getTimeOfMinimumSeconds());
+    assertEquals(3.0, ringing.getTimeOfMaximumSeconds());
+    assertEquals(40.0, ringing.getPeakToPeakPressurePa());
+    assertEquals(100.0, ringing.getTotalVariationPa());
+    assertEquals(80.0, ringing.getExcessVariationPa());
+    assertEquals(2.0, ringing.getRingingRatio());
+    assertEquals(3, ringing.getDirectionReversals());
+  }
+
+  @Test
+  void pressureTraceMetricsRejectAmbiguousSamples() {
+    assertThrows(IllegalArgumentException.class,
+        () -> TwoFluidPipeReport.analyzePressureTrace(new double[] {0.0}, new double[] {1.0}, 0.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> TwoFluidPipeReport.analyzePressureTrace(new double[] {0.0, 0.0}, new double[] {1.0, 2.0}, 0.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> TwoFluidPipeReport.analyzePressureTrace(new double[] {0.0, 1.0}, new double[] {1.0, Double.NaN}, 0.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> TwoFluidPipeReport.analyzePressureTrace(new double[] {0.0, 1.0}, new double[] {1.0, 2.0}, -1.0));
+  }
 
   @Test
   void lowPointPoolReportPartitionsTerrainAndAggregatesDiagnostics() {

@@ -709,11 +709,23 @@ for (double qgMSm3d : gasRates) {
 > energy-admissibility guards remain active. Do not clip composition or change
 > the configured root to manufacture a restart result.
 > The opt-in hydrostatic-pool mode uses volume-preserving inclined-cell area,
-> reports equilibrium appearance and a sub-resolution stratified trace fallback,
+> retains representable trace-wedge leading depth without a liquid floor, reports equilibrium
+> appearance and any still-sub-resolution stratified trace fallback,
 > and can retain an explicitly initialized wall profile across event intervals.
-> Its wall-coupled 12/24-cell cycle changes wall temperature by 43.223/45.037 K
-> but retains 22.82%/24.29% peak/final oil mesh differences. Treat that as a
-> screening prerequisite, not physical restart, public validation or pigging.
+> Use `HydrocarbonPoolTransfer.forStratifiedFlow(...)` for moving circular-stratified states.
+> Its local holdup chord preserves total area and component sources under subdivision of a
+> uniform physical state. Independent stationary puddles in every numerical cell are a
+> different area model and introduce a cell-length kinetic dependence during flow. Preserve
+> the historical hydrostatic-cycle failure; the flowing alternative does not validate it.
+> Mesh refinement must retain physical terrain and outlet breakpoints. The wall-coupled
+> 12/24-cell cycle fixes its final 1250 m at -333.5 m on both meshes; the earlier
+> "last three cells" rule compared different pipes. Retain the 10% peak/final inventory
+> gates and inspect the executed hydrocarbon-pool-transfer receipt. Maximum single-cell
+> interface area is extensive, not a convergence target. Independent mesh/time, rate/thermal
+> and moving-boundary conservation evidence is still required for coupled pigging.
+> Record refill/valve-opening pressure windows with
+> `TwoFluidPipeReport.analyzePressureTrace(...)`; its unfiltered ringing metrics are numerical
+> diagnostics, not an independently validated surge limit.
 >
 > **Coupled component/phase/thermal slug transport has a narrower envelope.**
 > For the conservative Lagrangian slug/film path, named-component phase sources

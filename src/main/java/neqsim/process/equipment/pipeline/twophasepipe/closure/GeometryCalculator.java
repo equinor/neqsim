@@ -308,33 +308,48 @@ public class GeometryCalculator implements Serializable {
     // Solve the minority volume to avoid subtracting a trace inventory from a full pipe.
     double fraction = Math.min(liquidHoldup, 1.0 - liquidHoldup);
     double target = fraction * Math.PI / 4.0;
-    double lower = -halfRange;
-    double upper = 0.5;
-    double centre = 0.0;
+    // Solve for the high (leading) edge depth rather than the centre depth. For a long inclined
+    // cell containing a trace pool, centre is almost exactly -halfRange. Storing the centre then
+    // reconstructing centre + halfRange deletes the physical wedge through subtraction of nearly
+    // equal numbers. The leading edge remains a small positive number and is directly resolvable.
+    double lower = 0.0;
+    double upper = halfRange + 0.5;
+    if (halfRange == 0.0) {
+      // A circular trace segment has depth proportional to holdup^(2/3). A fixed
+      // half-diameter bracket cannot resolve that depth in 120 bisections when
+      // the retained holdup is extremely small. Scale the bracket, not inventory
+      // or the relative-volume acceptance tolerance. Cbrt avoids underflow in h^2.
+      double traceScale = Math.cbrt(fraction);
+      upper = Math.min(upper, 2.0 * traceScale * traceScale);
+    }
+    double leadingDepth = 0.0;
     for (int iteration = 0; iteration < 120; iteration++) {
-      centre = lower + (upper - lower) / 2.0;
-      double occupied = cellAverage(centre, halfRange, 0);
+      leadingDepth = lower + (upper - lower) / 2.0;
+      double occupied = cellAverageFromHighDepth(leadingDepth, halfRange, 0);
       if (occupied < target) {
-        lower = centre;
+        lower = leadingDepth;
       } else {
-        upper = centre;
+        upper = leadingDepth;
       }
     }
-    double occupied = cellAverage(centre, halfRange, 0);
+    double occupied = cellAverageFromHighDepth(leadingDepth, halfRange, 0);
     double residual = (occupied - target) / target;
     if (!Double.isFinite(residual) || Math.abs(residual) > 1.0e-9) {
       throw new IllegalArgumentException("Static liquid volume is not resolvable at this cell scale");
     }
-    double wetWall = cellAverage(centre, halfRange, 2) * diameter * length;
-    double interfaceArea = cellAverage(centre, halfRange, 1) * diameter * length / Math.cos(inclination);
+    double wetWall = cellAverageFromHighDepth(leadingDepth, halfRange, 2) * diameter * length;
+    double interfaceArea = cellAverageFromHighDepth(leadingDepth, halfRange, 1) * diameter * length
+        / Math.cos(inclination);
+    double lowDepth = leadingDepth - 2.0 * halfRange;
+    double highDepth = leadingDepth;
     if (liquidHoldup > 0.5) {
-      centre = 1.0 - centre;
       wetWall = wallArea - wetWall;
       residual = -residual * fraction / liquidHoldup;
+      lowDepth = 1.0 - leadingDepth;
+      highDepth = lowDepth + 2.0 * halfRange;
     }
-    double signedRange = Math.copySign(halfRange, inclination);
-    double start = boundedDepth(centre + signedRange) * diameter;
-    double end = boundedDepth(centre - signedRange) * diameter;
+    double start = boundedDepth(inclination >= 0.0 ? highDepth : lowDepth) * diameter;
+    double end = boundedDepth(inclination >= 0.0 ? lowDepth : highDepth) * diameter;
     // Evaluate the complementary segment directly, rather than subtracting nearly equal areas.
     double minimumGasArea = segmentMetric(1.0 - Math.max(start, end) / diameter, 0) * diameter * diameter;
     double reconstructedVolume = liquidHoldup * volume * (1.0 + residual);
@@ -348,27 +363,30 @@ public class GeometryCalculator implements Serializable {
   /**
    * Integrate a unit-diameter segment metric over normalized axial depth.
    *
-   * @param centre normal depth at cell centre divided by diameter
+   * @param highDepth larger normal depth at either axial cell end, divided by diameter
    * @param halfRange positive axial half-range of normalized depth
    * @param metric area=0, interface width=1, wall perimeter=2
    * @return cell-average metric for a unit-diameter pipe
    */
-  private static double cellAverage(double centre, double halfRange, int metric) {
+  private static double cellAverageFromHighDepth(double highDepth, double halfRange, int metric) {
     if (halfRange == 0.0) {
-      return segmentMetric(centre, metric);
+      return segmentMetric(highDepth, metric);
     }
+    double low = highDepth - 2.0 * halfRange;
     // For a nearly horizontal, entirely partial cell, integrate directly in arclength.
     // This avoids subtracting almost equal angular endpoints, including sub-ulp slopes.
-    if (centre > halfRange && centre + halfRange < 1.0 && halfRange < 1.0e-3 * Math.min(centre, 1.0 - centre)) {
-      double average = 0.0;
-      for (int node = 0; node < CELL_NODES.length; node++) {
-        average += 0.5 * CELL_WEIGHTS[node] * (segmentMetric(centre - halfRange * CELL_NODES[node], metric)
-            + segmentMetric(centre + halfRange * CELL_NODES[node], metric));
+    if (low > 0.0 && highDepth < 1.0) {
+      double centre = highDepth - halfRange;
+      if (halfRange < 1.0e-3 * Math.min(centre, 1.0 - centre)) {
+        double average = 0.0;
+        for (int node = 0; node < CELL_NODES.length; node++) {
+          average += 0.5 * CELL_WEIGHTS[node] * (segmentMetric(centre - halfRange * CELL_NODES[node], metric)
+              + segmentMetric(centre + halfRange * CELL_NODES[node], metric));
+        }
+        return average;
       }
-      return average;
     }
-    double low = centre - halfRange;
-    double high = centre + halfRange;
+    double high = highDepth;
     double full = metric == 0 ? Math.PI / 4.0 : metric == 2 ? Math.PI : 0.0;
     double integral = Math.max(0.0, high - Math.max(1.0, low)) * full;
     double a = boundedDepth(low);

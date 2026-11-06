@@ -1446,6 +1446,33 @@
       "limitations": "Java/Python object API discovered through inspectApi; not a runProcess JSON equipment type. Fixed minimum, same-composition return at suction state; no dynamic anti-surge qualification."
     },
     {
+      "id": "pipeline-restart-diagnostics-discovery",
+      "title": "Experimental terrain-pool restart geometry and pressure diagnostics",
+      "domain": "flow-assurance",
+      "tool": "inspectApi",
+      "apis": [
+        "neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator",
+        "neqsim.process.equipment.pipeline.twophasepipe.HydrocarbonPoolTransfer",
+        "neqsim.process.equipment.pipeline.twophasepipe.reporting.TwoFluidPipeReport"
+      ],
+      "skills": [
+        "neqsim-dynamic-simulation",
+        "neqsim-flow-assurance"
+      ],
+      "agents": [
+        "dynamic-equipment",
+        "flow-assurance"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/closure/HydrostaticCellGeometryTest.java",
+        "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/HydrocarbonPoolTransferTest.java",
+        "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/StratifiedPoolTransferTest.java",
+        "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/reporting/TwoFluidPipeReportTest.java",
+        "src/test/java/neqsim/process/equipment/pipeline/TwoFluidRichGasDragQualificationTest.java"
+      ],
+      "limitations": "Experimental Java/JPype discovery route. Select forStratifiedFlow for a local flowing holdup chord with uniform/nonuniform integrated-source partition controls; forHydrostaticPool remains a distinct per-cell stationary reconstruction. The historical hydrostatic-cycle failure is not validated by the flowing alternative. The 12/24-cell 780 s comparison must preserve the same physical terrain and level-outlet extent, retain the 10% oil-inventory gates and identify its area assumption in the executed receipt. Maximum single-cell interface area is extensive, not a convergence target. It does not prove stable terrain drainage, predictive evaporation, a physical surge band, severe slugging or hydraulic pigging."
+    },
+    {
       "id": "pipeline-pig-mechanics-discovery",
       "title": "Experimental prescribed-pressure pig mechanics (API discovery only)",
       "domain": "flow-assurance",
