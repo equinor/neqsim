@@ -127,6 +127,30 @@ class LandingPageDocumentationContractTest(unittest.TestCase):
                             heading_slugs(target_path.read_text(encoding="utf-8")),
                         )
 
+    def test_package_index_support_destinations_are_actionable(self):
+        content = self.documents[PACKAGE_INDEX]
+        required_links = (
+            "[GitHub Issues](https://github.com/equinor/neqsim/issues)",
+            "[Discussions](https://github.com/equinor/neqsim/discussions)",
+            (
+                "[API JavaDoc]"
+                "(https://equinor.github.io/neqsim/javadoc/index.html)"
+            ),
+            "[Examples](examples/index.md)",
+        )
+        for link in required_links:
+            with self.subTest(link=link):
+                self.assertIn(link, content)
+
+        for stale_label in (
+            "- **GitHub Issues:**",
+            "- **Discussions:**",
+            "- **API JavaDoc:**",
+            "- **Examples:**",
+        ):
+            with self.subTest(stale_label=stale_label):
+                self.assertNotIn(stale_label, content)
+
     def test_pipeline_hub_routes_current_capabilities(self):
         content = self.documents[PIPELINE_INDEX]
         required_destinations = (
