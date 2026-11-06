@@ -62,6 +62,7 @@ Exit codes: 0 ok, 1 strict validation failure, 2 input or usage error (nothing i
 - **Hydrate/FA**: equilibrium onset is not plugging time; aqueous inhibitor mass fraction is not an overall mole fraction; cooldown is time to a temperature.
 - **Structural**: DNV-ST-F101, on-bottom stability, free span, global buckling and pipe-soil are distinct checks with their own evidence. A U-value is not a soil resistance model. Riser shapes are `CONCEPT SCHEMATIC - GEOMETRY NOT ANALYZED` unless an external solver result is imported.
 - **Standards**: public metadata only; cite a clause only after reading licensed text; project/company rules precede public standards; company templates, licensed tables and project data live in the enterprise/task layer.
+- **Protection scope**: trenching, burial and rock dump (route and crossing rock, free-span supports, trench days) come from `neqsim-seabed-protection-screening` driven by map layers; the quantities feed `SURFCostEstimator` inputs and the schedule, and the burial state per section feeds the cooldown and hydrate cases (protected and unprotected). Trawl interference, upheaval buckling and span adequacy stay specialist hand-offs.
 - **Qualification gaps stay visible**: severe slugging, pigging dynamics, dynamic riser response, fatigue, seabed structural response, manufacturer umbilical and flexible-pipe construction are hand-offs, never numbers.
 
 ## Interview (ask only what cannot be found)
@@ -81,5 +82,5 @@ adopted standards and editions, cost basis, and the document number and author.
 ## Hand-offs
 
 `@flow-assurance` (threats), `@mechanical-design` (F101 and structural inputs), `@field-development` (host and economics), `@standards-review`,
-community `olga-simulation-agent` (transients), `enterprise-stid-agent`/`enterprise-subsea-infrastructure-agent` (enterprise overlays).
+community `seabed-protection-agent` (trenching, burial, rock dump from map layers), community `olga-simulation-agent` (transients), `enterprise-stid-agent`/`enterprise-subsea-infrastructure-agent` (enterprise overlays).
 Independent review: `@review`.
