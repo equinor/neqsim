@@ -2,7 +2,7 @@
 name: neqsim-seabed-protection-screening
 calculation_basis: "hybrid"
 version: "0.1.0"
-description: "Educational subsea pipeline trenching, burial and rock-dump screening driven by route and map-layer data: samples seabed substrate, fishing intensity, ice scour and no-rock zones along a route, finds crossings of existing pipelines, selects a trenching method or rock dump per segment, sizes trench depth, rock volume and tonnage, crossing and free-span supports, indicative durations and a burial hand-off for NeqSim cooldown and thermal models. USE WHEN: a flow-assurance, SURF or tie-back study needs burial, trenching or rock-dump scope, cover for hazards, thermal effect of burial, or rock quantities before DNV-RP-F111, F110, F105, F109 or F114 assessments and a contractor estimate."
+description: "Trenching, burial and rock-dump screening from route and map-layer data. Samples substrate, fishing intensity, ice scour and no-rock zones; finds crossings; selects protection by segment; estimates cover, rock quantities, supports, durations and a burial hand-off to NeqSim cooldown models. USE WHEN: early flow-assurance, SURF or tie-back studies need protection scope, burial thermal effects or rock quantities before detailed DNV assessments and contractor estimates."
 last_verified: "2026-11-06"
 requires:
   python_packages: []
