@@ -41,6 +41,25 @@ interior pressure-ramp extremum, is rejected. This lumped storage law is distinc
 from radial transient diffusion in `VanEverdingenHurstAquifer`; only common storage
 limits are compared, not claimed transient equivalence.
 
+## Small-exposure numerical qualification
+
+`FetkovichAquiferPrecisionTest` compares 1,444 synthetic prescribed-pressure cases
+against an independent 60-digit Decimal ODE solution, repeated at 75 digits.
+The matrices include both arithmetic boundaries, signed exchange and interior
+extrema, zero productivity/storage and explicit infinite storage. Whole intervals
+and 16 subintervals provide 11,552 comparisons. Frozen tolerances are 1e-9 bara
+for pressure and 1e-8 m3 + 2e-12 times the larger of one m3 and the absolute
+reference exchange for water volumes. Both reference files reproduce byte-for-byte
+at the two precisions.
+
+The existing fourth-order coefficient series is used below dimensionless exposure
+1e-3 to avoid cancellation at 1e-4; its first omitted coefficient terms are below
+1.4e-18. This arithmetic change preserves physical storage/exhaustion checks.
+The [complete reference, native outputs and timing diagnostic](https://github.com/equinor/neqsim/tree/master/src/test/resources/neqsim/pvtsimulation/aquifer-precision)
+record the failing baseline and passing correction. This qualification concerns a
+prescribed linear pressure path. Coupled nonlinear history replay still requires
+interval refinement and independent engineering validation.
+
 ## Coupling to the existing EOS tank
 
 `CompositionalReservoirHistory.replay(initialVolumeM3, aquifer)` solves the reservoir
