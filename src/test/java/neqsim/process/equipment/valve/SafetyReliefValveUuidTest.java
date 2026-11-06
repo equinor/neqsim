@@ -2,6 +2,7 @@ package neqsim.process.equipment.valve;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -16,6 +17,7 @@ import java.util.UUID;
 import java.util.zip.GZIPInputStream;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.splitter.Splitter;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -38,10 +40,94 @@ class SafetyReliefValveUuidTest {
   @Test
   void nativeUuidSteadyClosesBelowSetPressure() {
     SafetyReliefValve valve = valve(5.0);
+    double inletFlow = valve.getInletStream().getFlowRate("kg/sec");
     valve.run(UUID.randomUUID());
     assertEquals(0.0, valve.getPercentValveOpening());
-    assertEquals(0.0, valve.getInletStream().getFlowRate("kg/sec"));
+    assertEquals(inletFlow, valve.getInletStream().getFlowRate("kg/sec"));
     assertEquals(0.0, valve.getOutletStream().getFlowRate("kg/sec"));
+  }
+
+  /** Algebraic relief capacity must not change a shared process source or its normal-flow branch. */
+  @Test
+  void algebraicReliefPreservesSharedSourceAtStandbyAndReliefPressures() {
+    for (double pressure : new double[] {5.0, 12.0}) {
+      SafetyReliefValve valve = valve(pressure);
+      Stream inlet = (Stream) valve.getInletStream();
+      SystemInterface originalFluid = inlet.getFluid();
+      double originalFlow = inlet.getFlowRate("mole/sec");
+      double originalEnthalpy = originalFluid.getEnthalpy();
+      Splitter normalBranch = new Splitter("NORMAL-BRANCH", inlet, 2);
+      normalBranch.setSplitFactors(new double[] {0.95, 0.05});
+      for (int iteration = 0; iteration < 3; iteration++) {
+        valve.run(UUID.randomUUID());
+        assertFalse(valve.needRecalculation());
+        normalBranch.run(UUID.randomUUID());
+        assertSame(inlet, valve.getInletStream());
+        assertSame(originalFluid, inlet.getFluid());
+        assertEquals(originalFlow, inlet.getFlowRate("mole/sec"));
+        assertEquals(originalEnthalpy, originalFluid.getEnthalpy());
+        assertEquals(pressure, inlet.getPressure("bara"));
+        assertEquals(originalFlow, normalBranch.getSplitStream(0).getFlowRate("mole/sec")
+            + normalBranch.getSplitStream(1).getFlowRate("mole/sec"), 1.0e-10);
+        if (pressure < valve.getSetPressureBar()) {
+          assertEquals(0.0, valve.getOutletStream().getFlowRate("mole/sec"));
+        } else {
+          assertTrue(valve.getOutletStream().getFlowRate("mole/sec") > 0.0);
+        }
+      }
+      inlet.setPressure(pressure + 0.1, "bara");
+      assertTrue(valve.needRecalculation());
+    }
+  }
+
+  /** Steady-mode transient dispatch, including repeated UUID and zero dt, keeps its source unchanged. */
+  @Test
+  void steadyDispatchPreservesZeroAndPositiveSourceFlows() {
+    for (double pressure : new double[] {5.0, 12.0}) {
+      double referenceDischarge = Double.NaN;
+      for (double sourceFlow : new double[] {0.0, 100.0}) {
+        SafetyReliefValve valve = valve(pressure);
+        valve.getInletStream().getFluid().setTotalNumberOfMoles(sourceFlow);
+        valve.setCalculateSteadyState(true);
+        SystemInterface originalFluid = valve.getInletStream().getFluid();
+        UUID id = UUID.randomUUID();
+        valve.runTransient(0.1, id);
+        valve.runTransient(9.0, id);
+        valve.runTransient(0.0, UUID.randomUUID());
+        assertSame(originalFluid, valve.getInletStream().getFluid());
+        assertEquals(sourceFlow, valve.getInletStream().getFlowRate("mole/sec"));
+        assertEquals(0.1, valve.getTime(), 1.0e-15);
+        assertEquals(0.1, valve.getResponseElapsedSeconds(), 1.0e-15);
+        double discharge = valve.getOutletStream().getFlowRate("mole/sec");
+        if (!Double.isNaN(referenceDischarge)) {
+          assertEquals(referenceDischarge, discharge, 1.0e-10);
+        }
+        referenceDischarge = discharge;
+        if (pressure < valve.getSetPressureBar()) {
+          assertEquals(0.0, discharge);
+        } else {
+          assertTrue(discharge > 0.0);
+        }
+      }
+    }
+  }
+
+  /** A failed algebraic solve restores the original inlet object and dispatch mode as well as its flow. */
+  @Test
+  void algebraicHydraulicFailurePreservesSourceAndDispatchMode() {
+    SafetyReliefValve donor = valve(12.0);
+    Stream inlet = (Stream) donor.getInletStream();
+    SystemInterface originalFluid = inlet.getFluid();
+    double originalFlow = inlet.getFlowRate("mole/sec");
+    SafetyReliefValve failed = new FailingReliefValve(inlet);
+    failed.configureConventionalSnap(10.0, 0.1, 0.03, 10.0);
+    failed.setOutletPressure(1.1, "bara");
+    failed.setCalculateSteadyState(true);
+    assertThrows(IllegalStateException.class, () -> failed.run(UUID.randomUUID()));
+    assertSame(inlet, failed.getInletStream());
+    assertSame(originalFluid, inlet.getFluid());
+    assertEquals(originalFlow, inlet.getFlowRate("mole/sec"));
+    assertTrue(failed.getCalculateSteadyState());
   }
 
   /** At identical pressures, a linear half-lift valve passes half full-lift flow, not one quarter. */

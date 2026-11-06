@@ -46,6 +46,13 @@ Record `getPressureReliefConfiguration()` and the actual
 lift, flow and ordered pop/reseat observations. A cycle count is not an acoustic or
 mechanical chatter model.
 
+Algebraic `run()`/`run(UUID)` and steady-mode transient dispatch preserve the
+connected source flow and fluid identity while evaluating outlet capacity on a
+private inlet workspace. Finite transient mode publishes withdrawal at both
+ports; give it a dedicated tee branch and aggregate downstream demands before
+upstream inventory integration. Do not use algebraic capacity as a balanced
+parallel withdrawal or dynamic-response result.
+
 For a process/P&ID feedback study:
 
 1. Connect the actual valve to a protected-vessel gas branch and an explicit

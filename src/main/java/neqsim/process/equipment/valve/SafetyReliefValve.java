@@ -673,7 +673,8 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * Uses native pressure/Cv flow even for a steady PSV; specified upstream throughput is not relief capacity.
+   * Evaluates algebraic pressure/Cv capacity on an isolated inlet, preserving the connected source's flow and fluid.
+   * Finite transient execution instead publishes withdrawal directly through the parent hydraulic path.
    *
    *
    * @param dt hydraulic reevaluation interval, seconds
@@ -681,13 +682,17 @@ public class SafetyReliefValve extends ThrottlingValve {
    * @param id actual calculation identity
    */
   private void runNativeHydraulics(double dt, UUID id) {
+    StreamInterface connectedInlet = inStream;
     boolean steady = getCalculateSteadyState();
     try {
+      inStream = connectedInlet.clone();
       setCalculateSteadyState(false);
       super.runTransient(dt, id);
     } finally {
+      inStream = connectedInlet;
       setCalculateSteadyState(steady);
     }
+    updateRecalculationState();
   }
 
   /**

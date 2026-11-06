@@ -294,7 +294,11 @@ public class ThrottlingValve extends TwoPortEquipment
     return false;
   }
 
-  private void updateRecalculationState() {
+  /**
+   * Captures the connected inlet and valve configuration for subsequent recalculation checks. Subclasses using a
+   * temporary hydraulic inlet must refresh this state after restoring their connected inlet.
+   */
+  protected void updateRecalculationState() {
     if (getInletStream() == null || getInletStream().getThermoSystem() == null) {
       lastInletComposition = null;
       return;

@@ -13,6 +13,21 @@ This workflow adds an actual `SafetyReliefValve` branch to the bounded synthetic
 
 The initial supported backend is an exact native `SafetyReliefValve` with `ValveType.CONVENTIONAL`, with linear native trim, native gas choking enabled, no external controller or second parent actuator, imposed positive backpressure and UUID physical-step idempotency enabled. The physical path is an actual separator gas outlet, an actual one-inlet/two-outlet `Splitter`, the normal outlet valve and the PSV discharge to an explicit stream battery limit. Pilot/balanced valve types, unknown trim curves, ambiguous consumers, disconnected ports and an undeclared discharge network are rejected. This is a bounded contract, not a generic flare-network solver.
 
+Algebraic `run()` and `run(UUID)` evaluate lift and native pressure/Cv discharge on
+an isolated inlet workspace. They preserve the connected source stream, its fluid
+object and its specified throughput, including when the PSV closes. This allows
+a shared source to retain its normal process flow during steady engineering-case
+execution. The resulting PSV outlet is a capacity evaluation; it does not allocate
+a mass-balanced relief split from that shared source. `runTransient` with
+`calculateSteadyState=true` uses the same source-preserving hydraulics, with the
+documented physical-clock handling.
+
+With `calculateSteadyState=false`, finite transient execution publishes the actual
+pressure-driven withdrawal at both valve ports, including exact zero on closure.
+Use the dedicated tee branch above and aggregate its demand with the normal
+branch before the protected vessel consumes its outlet boundary. Algebraic
+capacity evaluation does not establish a dynamic relief response.
+
 ## Governed values and observed state
 
 The canonical `simulationPressureReliefConfiguration` attribute retains explicit bara and US Cv units, set/reseat pressures and the modulating ramp reference, overpressure and blowdown fractions, rated Cv, Kd/backpressure multipliers, valve type and opening law, opening/closing time constants, minimum dwell periods, lift-rate and seating tolerances. It also retains the supported native trim/hydraulic policy readback. The `fullLiftPressureBar` field is the MODULATING law's ramp reference; it is unused by SNAP, which commands full opening at set pressure subject to actual lag/rate/dwell. Derived ramp-reference and reseat values must agree with the configured native law. The pressure fractions use the declared absolute set-pressure basis; this synthetic convention is not a claim of equivalence to a certified gauge-pressure vendor setting.
