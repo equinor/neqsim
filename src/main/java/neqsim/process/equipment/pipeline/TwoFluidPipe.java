@@ -1,6 +1,7 @@
 package neqsim.process.equipment.pipeline;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -128,6 +129,54 @@ public class TwoFluidPipe extends Pipeline {
 
   private static final long serialVersionUID = 1001;
   private static final Logger logger = LogManager.getLogger(TwoFluidPipe.class);
+
+  /**
+   * Owner-bound result of advancing one complete transient interval on a detached pipe graph.
+   *
+   * <p>
+   * A candidate can be inspected without changing the live pipe. It can be accepted once by its creating pipe, or
+   * rolled back once after acceptance by a higher-level transaction coordinator. The owner rejects foreign, stale,
+   * reused, and externally modified candidates.
+   * </p>
+   */
+  public static final class TransientCandidate {
+    private enum State {
+      PREPARED, ACCEPTED, ROLLED_BACK
+    }
+
+    private final TwoFluidPipe owner;
+    private final TwoFluidPipe candidate;
+    private final byte[] baseState;
+    private byte[] acceptedState;
+    private State state = State.PREPARED;
+
+    /** Create one private owner-bound candidate token. */
+    private TransientCandidate(TwoFluidPipe owner, TwoFluidPipe candidate, byte[] baseState) {
+      this.owner = owner;
+      this.candidate = candidate;
+      this.baseState = baseState;
+    }
+
+    /** @return candidate phase and total mass balance */
+    public TwoFluidMassBalanceReport getMassBalanceReport() {
+      return candidate.getLastMassBalanceReport();
+    }
+
+    /** @return candidate named-component balance, or {@code null} when component transport is disabled */
+    public TwoFluidComponentConservationReport getComponentConservationReport() {
+      return candidate.getLastComponentConservationReport();
+    }
+
+    /** @return candidate conservative-energy balance, or {@code null} when recovery is disabled */
+    public TwoFluidConservativeEnergyReport getConservativeEnergyReport() {
+      return candidate.getLastConservativeEnergyReport();
+    }
+
+    /** @return candidate pipe simulation time in seconds */
+    public double getSimulationTimeSeconds() {
+      return candidate.getSimulationTime();
+    }
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -5974,8 +6023,25 @@ public class TwoFluidPipe extends Pipeline {
     return unsplitMaximumTimeStep;
   }
 
-  /** Evaluate on a detached graph, then publish only a completely accepted interval. */
-  private void runTransactionalTransient(double dt, UUID id) {
+  /**
+   * Advance one complete transient interval on a detached graph without changing this pipe.
+   *
+   * <p>
+   * This is the prepare phase used by network coordinators. The returned token is bound to this exact pipe state and
+   * becomes stale if any live pipe configuration or state changes before acceptance.
+   * </p>
+   *
+   * @param dt requested interval in seconds
+   * @param id calculation identifier
+   * @return owner-bound candidate that exposes only immutable balance reports and candidate time
+   * @throws IllegalArgumentException if the interval cannot advance both finite clocks
+   * @throws IllegalStateException if initialization or transactional serialization support is missing
+   */
+  public synchronized TransientCandidate prepareTransientCandidate(double dt, UUID id) {
+    validateOutletTakeoffCompatibility();
+    if (useConservativeEnergyRecovery) {
+      validateConservativeEnergyConfiguration();
+    }
     if (getClass() != TwoFluidPipe.class) {
       throw new IllegalStateException("Transactional transient simulation requires a concrete TwoFluidPipe; "
           + "subclasses need an explicit snapshot and commit contract");
@@ -5992,7 +6058,8 @@ public class TwoFluidPipe extends Pipeline {
     }
     validateTransactionalFluid(referenceFluid);
     validateTransactionalFluid(inStream.getFluid());
-    TwoFluidPipe candidate = SerializationUtils.clone(this);
+    byte[] baseState = SerializationUtils.serialize(this);
+    TwoFluidPipe candidate = SerializationUtils.deserialize(baseState);
     // Section cloning preserves the configured transient oil/water detector and accepted closure result.
     candidate.sections = getSectionSnapshots();
     // Java serialization omits this adaptive history; a candidate must retain it.
@@ -6008,6 +6075,47 @@ public class TwoFluidPipe extends Pipeline {
     if (thermalCalculator != null) {
       thermalCalculator.validateCandidateConfiguration(candidate.thermalCalculator);
     }
+    return new TransientCandidate(this, candidate, baseState);
+  }
+
+  /**
+   * Validate that a prepared candidate can still be accepted without changing either state.
+   *
+   * @param token candidate returned by {@link #prepareTransientCandidate(double, UUID)}
+   * @throws IllegalArgumentException if the token belongs to another pipe
+   * @throws IllegalStateException if it was reused or the live pipe changed after preparation
+   */
+  public synchronized void validateTransientCandidate(TransientCandidate token) {
+    if (token == null) {
+      throw new IllegalArgumentException("Transient candidate cannot be null");
+    }
+    if (token.owner != this) {
+      throw new IllegalArgumentException("Transient candidate belongs to another pipe");
+    }
+    if (token.state != TransientCandidate.State.PREPARED) {
+      throw new IllegalStateException("Transient candidate has already been consumed");
+    }
+    if (!Arrays.equals(token.baseState, SerializationUtils.serialize(this))) {
+      throw new IllegalStateException("Transient candidate is stale because the live pipe changed after preparation");
+    }
+    if (upstreamCompressibleVolume != null) {
+      upstreamCompressibleVolume.validateCandidateConfiguration(token.candidate.upstreamCompressibleVolume);
+    }
+    if (thermalCalculator != null) {
+      thermalCalculator.validateCandidateConfiguration(token.candidate.thermalCalculator);
+    }
+  }
+
+  /**
+   * Atomically publish one validated detached candidate while retaining connected stream and storage identities.
+   *
+   * @param token candidate returned by {@link #prepareTransientCandidate(double, UUID)}
+   * @throws IllegalArgumentException if the token belongs to another pipe
+   * @throws IllegalStateException if the candidate is stale or already consumed
+   */
+  public synchronized void acceptTransientCandidate(TransientCandidate token) {
+    validateTransientCandidate(token);
+    TwoFluidPipe candidate = token.candidate;
     SystemInterface acceptedOutletFluid = outStream.getFluid();
     try {
       outStream.setFluid(candidate.outStream.getFluid());
@@ -6027,7 +6135,66 @@ public class TwoFluidPipe extends Pipeline {
       thermalCalculator.acceptCandidateState(candidate.thermalCalculator);
       candidate.thermalCalculator = thermalCalculator;
     }
-    acceptTransientCandidate(candidate);
+    installTransientCandidate(candidate);
+    token.state = TransientCandidate.State.ACCEPTED;
+    token.acceptedState = SerializationUtils.serialize(this);
+  }
+
+  /**
+   * Restore the accepted pipe-owned state recorded before an immediately preceding candidate acceptance.
+   *
+   * <p>
+   * This compensation hook exists for higher-level coordinators that accept several prevalidated pipes. Rollback is
+   * refused if the pipe changed after acceptance, preventing an old token from overwriting newer work.
+   * </p>
+   *
+   * @param token candidate previously accepted by this pipe
+   * @throws IllegalArgumentException if the token belongs to another pipe
+   * @throws IllegalStateException if the token is not accepted or the accepted pipe state changed
+   */
+  public synchronized void rollbackTransientCandidate(TransientCandidate token) {
+    if (token == null || token.owner != this) {
+      throw new IllegalArgumentException("Transient candidate belongs to another pipe");
+    }
+    if (token.state != TransientCandidate.State.ACCEPTED) {
+      throw new IllegalStateException("Only an accepted transient candidate can be rolled back");
+    }
+    if (!Arrays.equals(token.acceptedState, SerializationUtils.serialize(this))) {
+      throw new IllegalStateException("Accepted pipe changed before transient candidate rollback");
+    }
+    TwoFluidPipe base = SerializationUtils.deserialize(token.baseState);
+    if (upstreamCompressibleVolume != null) {
+      upstreamCompressibleVolume.validateCandidateConfiguration(base.upstreamCompressibleVolume);
+    }
+    if (thermalCalculator != null) {
+      thermalCalculator.validateCandidateConfiguration(base.thermalCalculator);
+    }
+    SystemInterface acceptedOutletFluid = outStream.getFluid();
+    try {
+      outStream.setFluid(base.outStream.getFluid());
+    } catch (RuntimeException publicationFailure) {
+      try {
+        outStream.setFluid(acceptedOutletFluid);
+      } catch (RuntimeException rollbackFailure) {
+        publicationFailure.addSuppressed(rollbackFailure);
+      }
+      throw publicationFailure;
+    }
+    if (upstreamCompressibleVolume != null) {
+      upstreamCompressibleVolume.acceptCandidateState(base.upstreamCompressibleVolume);
+      base.upstreamCompressibleVolume = upstreamCompressibleVolume;
+    }
+    if (thermalCalculator != null) {
+      thermalCalculator.acceptCandidateState(base.thermalCalculator);
+      base.thermalCalculator = thermalCalculator;
+    }
+    installTransientCandidate(base);
+    token.state = TransientCandidate.State.ROLLED_BACK;
+  }
+
+  /** Evaluate on a detached graph, then publish only a completely accepted interval. */
+  private void runTransactionalTransient(double dt, UUID id) {
+    acceptTransientCandidate(prepareTransientCandidate(dt, id));
   }
 
   /** Restrict serialized thermodynamic evaluation to phases with supported cache reconstruction. */
@@ -6091,7 +6258,7 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /** Install only pipe-owned fields; external equipment connections retain their identity. */
-  private void acceptTransientCandidate(TwoFluidPipe candidate) {
+  private void installTransientCandidate(TwoFluidPipe candidate) {
     transientOutletBackflowClamped = candidate.transientOutletBackflowClamped;
     implicitInterfacialPressureCoupling = candidate.implicitInterfacialPressureCoupling;
     coupledPressureMomentumEnabled = candidate.coupledPressureMomentumEnabled;

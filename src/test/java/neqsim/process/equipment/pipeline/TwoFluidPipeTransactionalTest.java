@@ -98,6 +98,43 @@ class TwoFluidPipeTransactionalTest {
   }
 
   @Test
+  void preparedCandidateIsInspectableOwnerBoundSingleUseAndCompensatable() {
+    TwoFluidPipe pipe = createPipe(true);
+    pipe.setTransactionalTransientEnabled(true);
+    byte[] before = SerializationUtils.serialize(pipe);
+    TwoFluidSection[] baseSections = pipe.getSectionSnapshots();
+    StreamInterface outlet = pipe.getOutletStream();
+
+    TwoFluidPipe.TransientCandidate candidate = pipe.prepareTransientCandidate(1.0e-4, UUID.randomUUID());
+
+    assertArrayEquals(before, SerializationUtils.serialize(pipe));
+    assertEquals(1.0e-4, candidate.getMassBalanceReport().getElapsedTimeSeconds(), 0.0);
+    assertTrue(candidate.getComponentConservationReport().isConverged());
+    pipe.validateTransientCandidate(candidate);
+    pipe.acceptTransientCandidate(candidate);
+    assertEquals(1.0e-4, pipe.getSimulationTime(), 0.0);
+    assertThrows(IllegalStateException.class, () -> pipe.acceptTransientCandidate(candidate));
+
+    pipe.rollbackTransientCandidate(candidate);
+    assertEquals(0.0, pipe.getSimulationTime(), 0.0);
+    TwoFluidSection[] restoredSections = pipe.getSectionSnapshots();
+    for (int index = 0; index < baseSections.length; index++) {
+      assertArrayEquals(baseSections[index].getStateVector(), restoredSections[index].getStateVector(), 0.0);
+    }
+    assertSame(outlet, pipe.getOutletStream());
+    assertEquals(null, pipe.getLastMassBalanceReport());
+    assertThrows(IllegalStateException.class, () -> pipe.rollbackTransientCandidate(candidate));
+
+    TwoFluidPipe foreign = createPipe(true);
+    TwoFluidPipe.TransientCandidate foreignCandidate = foreign.prepareTransientCandidate(1.0e-4, UUID.randomUUID());
+    assertThrows(IllegalArgumentException.class, () -> pipe.validateTransientCandidate(foreignCandidate));
+
+    TwoFluidPipe.TransientCandidate stale = pipe.prepareTransientCandidate(1.0e-4, UUID.randomUUID());
+    pipe.setMaximumTransientSubsteps(9999);
+    assertThrows(IllegalStateException.class, () -> pipe.acceptTransientCandidate(stale));
+  }
+
+  @Test
   void downstreamPublicationFailureRestoresFluidAndKeepsAcceptedPipe() {
     TwoFluidPipe pipe = createPipe(true);
     pipe.setTransactionalTransientEnabled(true);
