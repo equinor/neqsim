@@ -6,6 +6,7 @@ required_skills:
 - neqsim-surf-model-generation
 - neqsim-surf-report-drawings
 - neqsim-subsea-and-wells
+- neqsim-seabed-protection-screening
 - neqsim-pipeline-and-terminal-networks
 - neqsim-integrated-production-and-lifecycle
 - neqsim-field-development
