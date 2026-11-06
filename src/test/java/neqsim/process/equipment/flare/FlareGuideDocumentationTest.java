@@ -27,12 +27,11 @@ import neqsim.NeqSimTest;
 @Tag("slow")
 class FlareGuideDocumentationTest extends NeqSimTest {
   private static final Path GUIDE = Paths.get("docs", "process", "equipment", "flares.md");
-  private static final String QUICK_START_MARKER =
-      "<!-- flare-guide-example: java-quickstart -->";
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
+  private static final String QUICK_START_MARKER = "<!-- flare-guide-example: java-quickstart -->";
+  private static final Pattern JAVA_FENCE = Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
 
-  @TempDir Path temporaryDirectory;
+  @TempDir
+  Path temporaryDirectory;
 
   /**
    * Compiles and runs the exact marked Java source with assertions enabled.
@@ -62,9 +61,7 @@ class FlareGuideDocumentationTest extends NeqSimTest {
   private static String markedExampleSource(String markdown) {
     int markerPosition = markdown.indexOf(QUICK_START_MARKER);
     assertTrue(markerPosition >= 0, "Missing flare quick-start marker");
-    assertTrue(
-        markerPosition == markdown.lastIndexOf(QUICK_START_MARKER),
-        "Flare quick-start marker must be unique");
+    assertTrue(markerPosition == markdown.lastIndexOf(QUICK_START_MARKER), "Flare quick-start marker must be unique");
 
     Matcher fence = JAVA_FENCE.matcher(markdown.substring(markerPosition));
     assertTrue(fence.find(), "Missing Java fence after flare quick-start marker");
@@ -78,36 +75,18 @@ class FlareGuideDocumentationTest extends NeqSimTest {
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
     StringWriter diagnostics = new StringWriter();
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
-      Boolean successful =
-          compiler
-              .getTask(
-                  diagnostics,
-                  manager,
-                  null,
-                  Arrays.asList(
-                      "-source",
-                      "8",
-                      "-target",
-                      "8",
-                      "-proc:none",
-                      "-classpath",
-                      classPath,
-                      "-d",
-                      outputDirectory.toString()),
-                  null,
-                  manager.getJavaFileObjects(javaSource.toFile()))
-              .call();
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(diagnostics, manager, null, Arrays.asList("-source", "8", "-target", "8", "-proc:none", "-classpath",
+              classPath, "-d", outputDirectory.toString()), null, manager.getJavaFileObjects(javaSource.toFile()))
+          .call();
       assertTrue(Boolean.TRUE.equals(successful), diagnostics.toString());
     }
 
-    try (URLClassLoader loader =
-        new URLClassLoader(
-            new URL[] {outputDirectory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {outputDirectory.toUri().toURL()},
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName("FlareQuickStart", true, loader);
       assertTrue(example.desiredAssertionStatus());
