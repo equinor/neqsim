@@ -81,6 +81,26 @@ retaining its dry two-hydrocarbon-phase requirement and fixed 1.01325 bara /
 
 ## Executable synthetic qualification
 
+### Independent gas-only laboratory-to-tank chain
+
+[`IndependentGasLabTankTest`](../../src/test/java/neqsim/pvtsimulation/util/IndependentGasLabTankTest.java)
+and its [complete reference protocol and data](../../src/test/resources/neqsim/pvtsimulation/gas-lab-tank/README.md)
+provide a separate, independently calculated binary-SRK benchmark. One synthetic
+closed-cell laboratory point identifies the sole interaction parameter; a whole
+420 K CCE is held out before the calibrated checkpoint enters the reservoir.
+Independent component balances and the pressure equation generate four
+production/injection intervals. Only volume is matched to three pressure points;
+the fourth pressure, produced composition and actual surface gas volume are
+withheld. A held-out pressure perturbation checks fit exclusion. Original and
+calibrated checkpoints remain separate and immutable.
+
+This is gas-only synthetic numerical qualification. No oil is present and GOR
+remains undefined, so it does not complete two-phase GOR or measured laboratory
+and field acceptance under #4740. No EOS parameter is fitted against reservoir
+volume, and no recoverable-reserves interpretation is introduced.
+
+### Existing two-phase consistency and refinement checks
+
 The full reproducible example is
 [`PhaseWithdrawalReservoirHistoryTest`](../../src/test/java/neqsim/pvtsimulation/util/PhaseWithdrawalReservoirHistoryTest.java).
 It defines untuned PR/classic methane/n-heptane, a 100 m3 tank at 323.15 K and
