@@ -1759,9 +1759,13 @@ double closure = network.getLastBalanceReport()
     .getRelativeResidual(TwoFluidMassBalanceReport.Phase.TOTAL);
 ```
 
-Every branch sees the node pressures at the beginning of the network step. After all branches
-advance, their accepted gas, oil, and water boundary transfers update every compressible node
-simultaneously. Branch iteration order therefore does not become an implicit pressure solve.
+Every branch sees the node pressures at the beginning of the network step. All branches first
+advance on detached candidates; their gas, oil, and water boundary transfers then advance private
+hydraulic and thermodynamic node candidates. Phase, named-component and first-law closure plus every
+candidate configuration are validated before publication. Only then are all pipes and storage nodes
+accepted. A later pipe-publication failure compensates earlier pipe commits in reverse order, while
+node state, network reports and clocks remain unchanged. Branch iteration order therefore does not
+become an implicit pressure solve or partial-commit order.
 The whole-network report includes pipe and node inventories, fixed-boundary transfers, phase
 sources, and gas/oil/water/liquid/total residuals. Conservative storage nodes additionally retain
 named-component and internal-energy inventories. When an `UpstreamCompressibleVolume` has positive
@@ -2518,6 +2522,16 @@ preserves connected stream, upstream-volume, multilayer-calculator and thermal-l
 Other owned submodels are new accepted snapshots: reacquire them through their getters after a
 successful call. Section cloning preserves configured transient oil/water detectors. Adaptive
 step history is copied explicitly because Java serialization omits it.
+
+The same mechanism is available explicitly through
+`prepareTransientCandidate(dt, id)`, `validateTransientCandidate(candidate)` and
+`acceptTransientCandidate(candidate)`. Preparation does not mutate the live pipe. The owner-bound
+token exposes the candidate balance reports and simulation time but not a mutable pipe graph.
+Acceptance is exactly once and rejects foreign or stale tokens. `rollbackTransientCandidate(...)`
+is the compensating operation for a coordinator that has already accepted one pipe before a later
+publication fails; it refuses rollback if the accepted pipe changed in the meantime. These methods
+preserve the existing connected-stream and external-storage identities rather than replacing the
+equipment graph.
 
 This transaction currently supports concrete `TwoFluidPipe` instances with SRK, PR, SRK-CPA or
 SRK-CPAs fluid phases. Other EOS helper caches and pipe-subclass commit hooks are not audited;

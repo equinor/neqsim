@@ -99,14 +99,14 @@ public final class UpstreamCompressibleVolume implements Serializable {
    * <p>
    * The candidate must describe the same fixed volume, acoustic compressibilities and configured source rates. It must
    * also have a finite, nonnegative phase inventory satisfying the existing pressure/volume closure. Validation does
-   * not change either object. The pipe performs this check before publishing its outlet and then installs only the
-   * candidate's dynamic values through {@link #acceptCandidateState(UpstreamCompressibleVolume)}.
+   * not change either object. A pipe or network transaction coordinator performs this check before publication and then
+   * installs only the candidate's dynamic values through {@link #acceptCandidateState(UpstreamCompressibleVolume)}.
    * </p>
    *
    * @param candidate completed private volume state
    * @throws IllegalStateException if the storage configuration or candidate pressure closure is incompatible
    */
-  void validateCandidateConfiguration(UpstreamCompressibleVolume candidate) {
+  public void validateCandidateConfiguration(UpstreamCompressibleVolume candidate) {
     if (candidate == null || volumeM3 != candidate.volumeM3
         || !Arrays.equals(phaseSoundSpeedMS, candidate.phaseSoundSpeedMS)
         || !Arrays.equals(sourceMassFlowKgS, candidate.sourceMassFlowKgS)) {
@@ -134,14 +134,15 @@ public final class UpstreamCompressibleVolume implements Serializable {
    * Install a validated candidate's dynamic state while preserving the connected volume object and its configuration.
    *
    * <p>
-   * The owning pipe must first call {@link #validateCandidateConfiguration(UpstreamCompressibleVolume)} and keep both
-   * states unchanged between validation and this assignment. This method only copies values into existing arrays; no
-   * pressure solve, user callback or allocation occurs during acceptance.
+   * The owning pipe or network coordinator must first call
+   * {@link #validateCandidateConfiguration(UpstreamCompressibleVolume)} and keep both states unchanged between
+   * validation and this assignment. This method only copies values into existing arrays; no pressure solve, user
+   * callback or allocation occurs during acceptance.
    * </p>
    *
    * @param candidate previously validated private state
    */
-  void acceptCandidateState(UpstreamCompressibleVolume candidate) {
+  public void acceptCandidateState(UpstreamCompressibleVolume candidate) {
     System.arraycopy(candidate.phaseMassKg, 0, phaseMassKg, 0, PHASE_COUNT);
     System.arraycopy(candidate.phaseDensityKgM3, 0, phaseDensityKgM3, 0, PHASE_COUNT);
     pressurePa = candidate.pressurePa;
