@@ -248,6 +248,27 @@ gas-only pressure-grid limit and every separator inventory. This is independent
 numerical consistency, not measured calibration, reservoir prediction or Tran RCVD.
 Read `docs/pvtsimulation/depletion_pvt_generation.md#dry-phase-changing-fixed-cell-experiment`.
 
+### Independent gas-only laboratory-to-tank benchmark
+
+For a gas-only laboratory-to-tank benchmark, route to `IndependentGasLabTankTest`
+and `docs/pvtsimulation/reservoir_phase_production.md`. Its independent Decimal SRK
+reference identifies a synthetic laboratory interaction before a whole CCE holdout,
+then matches only tank volume against separate pressure observations. Component
+withdrawals and actual surface gas volume are predictions. Preserve the no-oil
+boundary: GOR is undefined, not validated. This is synthetic independent-code
+qualification, not measured calibration/field accuracy or two-phase GOR acceptance.
+Use weighted_reference.py and WEIGHTED_SCOPE.md for the independent unequal-sigma
+pressure inversion, sigma-scale/held-out controls and explicit active/inactive
+bound diagnostics. Those synthetic sigmas are not measured error estimates;
+volume movement under changed weights is not an EOS retuning or uncertainty interval.
+
+Its continuous-reference generator and frozen REFINEMENT_SCOPE.md qualify the
+well-mixed gas ODE separately from the finite withdrawal-before-injection protocol.
+Keep the failed64-substep1mol target visible; finer meshes retain the same bound.
+Zero-flow has no produced fluid, and equal injection/production keeps inventory
+constant while composition changes. Do not infer inflow or spatial-flow physics.
+
+
 ### Explicit wet-gas/aqueous fixed-cell path
 
 Use `DepletionPvtHistoryGenerator.replayNativeWetGasFixedCell` (core
