@@ -597,10 +597,20 @@ total-energy owners. Require zero-drive/area, donor/heat-limit, unseeded appeara
 ledger gates. Label results parameterized screening until coefficients pass independent public
 calibration and validation. Do not call this elapsed pool-depletion, physical restart or pigging
 qualification.
-The 100 W/m finite-heat 780 s rich-gas cycle is numerical mesh evidence only. It crosses the cubic
+The 100 W/m finite-heat 780 s rich-gas cycle is numerical mesh/time evidence only. It crosses the cubic
 EOS diagnostic $V/B=1.75$ label transition by explicitly retaining the requested root while the
 positive-compressibility, Jacobian and energy-admissibility guards remain active. Do not clip
 composition or change the configured root to manufacture a restart result.
+For a conservative pressure-driven restart, select `CONSTANT_PRESSURE`, optionally set an explicit
+reservoir with `setInletBoundaryFluid(...)`, and ramp from `getInletFacePressure("Pa")`. The solver
+reflashes the reservoir at the prescribed pressure and resolves signed phase speed from acoustic
+impedance; it no longer treats pressure traction as zero-advection refill. The isolated-reservoir
+route reuses one flash across internal stages at the same pressure; verify the
+performance safeguard with `getPressureInletFlashCount()`. A live connected stream remains uncached.
+The complete declared cycle closes mass, named-component and energy ledgers on 12/24 cells and
+0.5/0.25 s intervals, but
+the time-refined trace retains one small unfiltered opening reversal. Treat this as numerical
+boundary/restart evidence, not independent surge, field, gelled-oil or repeated-cycle validation.
 Use `HydrocarbonPoolTransfer.forHydrostaticPool(...)` only for stationary or slowly draining
 stratified terrain pools. Use `forStratifiedFlow(...)` for a flowing circular-stratified interface:
 its local holdup chord preserves integrated area and component sources under subdivision of a
@@ -618,8 +628,8 @@ breakpoints and outlet length; a "last three cells" level-outlet rule compares d
 The wall-coupled 12/24-cell cycle fixes the final 1250 m at -333.5 m on both meshes and retains
 the 10% peak/final inventory gates. Consult its hydrocarbon-pool-transfer receipt for the executed
 result. Maximum single-cell interface area is extensive and is not a convergence target.
-A moving pig needs separate moving-volume, face-flux and pressure-work conservation and qualified
-inlet states.
+A moving pig still needs separate distributed moving-volume, face-flux and pressure-work
+conservation and qualified inlet states.
 For a declared restart-opening window, use `TwoFluidPipeReport.analyzePressureTrace(...)` to report
 unfiltered extrema, peak-to-peak pressure, maximum sample rate, total/excess variation and reversal
 count with an explicit Pa gate. Preserve the sample interval and do not promote this diagnostic to a

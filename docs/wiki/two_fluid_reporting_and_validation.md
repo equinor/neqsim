@@ -260,6 +260,14 @@ reversals; positive values identify a non-monotonic trace but do not by themselv
 physical restart surge band. That claim still requires conservation, mesh/time refinement, nearby
 operating points and independent evidence.
 
+When a closed inlet becomes a pressure-driven restart boundary, start the external ramp from
+`pipe.getInletFacePressure("Pa")`. This is the accepted mechanical face traction, including any
+hydrostatic half-cell head, rather than the adjacent cell-centre sample. Configure a distinct
+restart reservoir with `setInletBoundaryFluid(...)` when its composition or temperature differs
+from the connected inlet stream. Continue to record the cell-pressure trace unfiltered: matching
+the face traction removes an artificial boundary-force step but does not guarantee a monotonic
+interior response.
+
 ### Steady-to-transient handoff and empirical holdup tuning
 
 With an explicit cell-face elevation profile, steady and legacy transient pressure marching

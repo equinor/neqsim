@@ -154,6 +154,8 @@ public class TwoFluidConservationEquations implements Serializable {
   private TwoFluidSection outletBoundaryState;
   /** Prescribed phase advection with pressure extrapolated from the current inlet cell. */
   private boolean inletPhaseFlowPrescribed;
+  /** External pressure reservoir whose signed face speeds follow one-sided acoustic compatibility. */
+  private boolean inletPressureDriven;
   private boolean inletClosed;
   private boolean outletClosed;
 
@@ -212,6 +214,7 @@ public class TwoFluidConservationEquations implements Serializable {
   public void setInletBoundaryState(TwoFluidSection state) {
     inletBoundaryState = state == null ? null : state.clone();
     inletPhaseFlowPrescribed = false;
+    inletPressureDriven = false;
   }
 
   /**
@@ -231,6 +234,27 @@ public class TwoFluidConservationEquations implements Serializable {
   public void setInletPhaseFlowBoundaryState(TwoFluidSection state) {
     inletBoundaryState = state == null ? null : state.clone();
     inletPhaseFlowPrescribed = state != null;
+    inletPressureDriven = false;
+  }
+
+  /**
+   * Supply a pressure reservoir whose phase velocities are resolved from acoustic compatibility.
+   *
+   * <p>
+   * The external state owns pressure, composition, density and enthalpy for inflow, while the first finite-volume cell
+   * owns outflow donor properties. At every residual evaluation, each phase face velocity is calculated from the
+   * two-sided linear acoustic relation {@code u* = (Zext uext + Zcell ucell + Pext - Pcell) / (Zext + Zcell)}, with a
+   * stationary external reservoir. This admits material when reservoir pressure exceeds cell pressure and permits
+   * signed blowdown when the gradient reverses. The result is limited to the smaller finite acoustic speed because this
+   * subsonic characteristic boundary is not an orifice or release model.
+   * </p>
+   *
+   * @param state flashed external reservoir state, or {@code null}
+   */
+  public void setInletPressureBoundaryState(TwoFluidSection state) {
+    inletBoundaryState = state == null ? null : state.clone();
+    inletPhaseFlowPrescribed = false;
+    inletPressureDriven = state != null;
   }
 
   /**
@@ -255,11 +279,57 @@ public class TwoFluidConservationEquations implements Serializable {
       return inletCell;
     }
     if (!inletPhaseFlowPrescribed) {
-      return inletBoundaryState;
+      return inletPressureDriven ? pressureDrivenInletFace(inletCell) : inletBoundaryState;
     }
     TwoFluidSection face = inletBoundaryState.clone();
     face.setPressure(inletCell.getPressure());
     return face;
+  }
+
+  /** Resolve signed pressure-reservoir face speeds without changing either donor state. */
+  private TwoFluidSection pressureDrivenInletFace(TwoFluidSection inletCell) {
+    TwoFluidSection face = inletBoundaryState.clone();
+    face.setGasVelocity(acousticBoundaryVelocity(inletBoundaryState.getGasDensity(),
+        inletBoundaryState.getGasSoundSpeed(), 0.0, inletCell.getGasDensity(), inletCell.getGasSoundSpeed(),
+        inletCell.getGasVelocity(), inletBoundaryState.getPressure() - inletCell.getPressure()));
+    double oilVelocity = acousticBoundaryVelocity(inletBoundaryState.getOilDensity(),
+        inletBoundaryState.getLiquidSoundSpeed(), 0.0, inletCell.getOilDensity(), inletCell.getLiquidSoundSpeed(),
+        inletCell.getOilVelocity(), inletBoundaryState.getPressure() - inletCell.getPressure());
+    double waterVelocity = acousticBoundaryVelocity(inletBoundaryState.getWaterDensity(),
+        inletBoundaryState.getLiquidSoundSpeed(), 0.0, inletCell.getWaterDensity(), inletCell.getLiquidSoundSpeed(),
+        inletCell.getWaterVelocity(), inletBoundaryState.getPressure() - inletCell.getPressure());
+    face.setOilVelocity(oilVelocity);
+    face.setWaterVelocity(waterVelocity);
+    double liquidHoldup = inletBoundaryState.getOilHoldup() + inletBoundaryState.getWaterHoldup();
+    face.setLiquidVelocity(
+        liquidHoldup > 0.0
+            ? (inletBoundaryState.getOilHoldup() * oilVelocity + inletBoundaryState.getWaterHoldup() * waterVelocity)
+                / liquidHoldup
+            : 0.0);
+    return face;
+  }
+
+  /** Return the subsonic acoustic face speed for one phase. */
+  private static double acousticBoundaryVelocity(double externalDensity, double externalSoundSpeed,
+      double externalVelocity, double cellDensity, double cellSoundSpeed, double cellVelocity, double pressureJump) {
+    double externalImpedance = acousticImpedance(externalDensity, externalSoundSpeed);
+    double cellImpedance = acousticImpedance(cellDensity, cellSoundSpeed);
+    double speed = (externalImpedance * externalVelocity + cellImpedance * cellVelocity + pressureJump)
+        / (externalImpedance + cellImpedance);
+    double acousticLimit = Math.min(externalSoundSpeed, cellSoundSpeed);
+    if (!Double.isFinite(speed) || !(acousticLimit > 0.0) || !Double.isFinite(acousticLimit)) {
+      throw new IllegalStateException("Pressure-driven inlet requires finite positive phase acoustic impedance");
+    }
+    return Math.max(-acousticLimit, Math.min(acousticLimit, speed));
+  }
+
+  /** Return positive finite acoustic impedance or fail before a nonphysical boundary flux is evaluated. */
+  private static double acousticImpedance(double density, double soundSpeed) {
+    double impedance = density * soundSpeed;
+    if (!(impedance > 0.0) || !Double.isFinite(impedance)) {
+      throw new IllegalStateException("Pressure-driven inlet requires finite positive phase acoustic impedance");
+    }
+    return impedance;
   }
 
   /**
@@ -286,6 +356,25 @@ public class TwoFluidConservationEquations implements Serializable {
       return inletPhaseFlowPrescribed ? sections[0].getPressure() : inletBoundaryState.getPressure();
     }
     return extrapolatedFacePressure(sections[0], sections.length > 1 ? sections[1] : null);
+  }
+
+  /**
+   * Evaluate the currently configured inlet-face pressure without changing state or diagnostics.
+   *
+   * <p>
+   * Event schedulers use this value to start a pressure ramp continuously from the accepted face traction. In
+   * particular, a closed inclined boundary generally differs from the adjacent cell-centre pressure by a hydrostatic
+   * half-cell head.
+   * </p>
+   *
+   * @param sections accepted physical pipe cells
+   * @return inlet-face pressure in Pa
+   */
+  public double getInletFacePressure(TwoFluidSection[] sections) {
+    if (sections == null || sections.length == 0 || sections[0] == null) {
+      throw new IllegalArgumentException("Inlet-face pressure requires at least one physical pipe cell");
+    }
+    return inletFacePressure(sections);
   }
 
   /**

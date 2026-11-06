@@ -49,8 +49,8 @@ class TwoFluidRichGasDragQualificationTest {
   }
 
   /**
-   * Complete the public 780 s blowdown, low-pressure settling, same-gas refill and hold sequence with explicit pool
-   * kinetics.
+   * Complete the public 780 s blowdown, low-pressure settling, finite pressure-ramp restart and hold sequence with
+   * explicit pool kinetics.
    *
    * <p>
    * This is a numerical conservation/full-cycle regression for declared coefficients. It is not an experimental
@@ -61,13 +61,19 @@ class TwoFluidRichGasDragQualificationTest {
   void finiteRatePoolCompletesBlowdownSettleRefillAndHold() throws java.io.IOException {
     double[] coarse = runFiniteRatePoolCycle(12, 0.5);
     double[] refined = runFiniteRatePoolCycle(24, 0.5);
+    double[] timeRefined = runFiniteRatePoolCycle(12, 0.25);
     double relativePeakOilDifference = Math.abs(coarse[0] - refined[0]) / Math.max(coarse[0], refined[0]);
     double relativeFinalOilDifference = Math.abs(coarse[1] - refined[1]) / Math.max(coarse[1], refined[1]);
+    double relativeTimePeakOilDifference = Math.abs(coarse[0] - timeRefined[0]) / Math.max(coarse[0], timeRefined[0]);
+    double relativeTimeFinalOilDifference = Math.abs(coarse[1] - timeRefined[1]) / Math.max(coarse[1], timeRefined[1]);
+    double relativeRestartPressureDifference = Math.abs(coarse[6] - timeRefined[6])
+        / Math.max(coarse[6], timeRefined[6]);
+    double relativeRestartRateDifference = Math.abs(coarse[7] - timeRefined[7]) / Math.max(coarse[7], timeRefined[7]);
     String csv = "cells,dt_s,heat_supply_w_per_m,peak_oil_kg,final_oil_kg,minimum_heat_scale,"
         + "maximum_interface_area_m2,maximum_wall_temperature_change_k,trace_area_fallback,"
         + "refill_pressure_peak_to_peak_pa,refill_max_pressure_rate_pa_s,refill_excess_variation_pa,"
         + "refill_ringing_ratio,refill_direction_reversals\n12,0.5,100," + csvValues(coarse) + "\n24,0.5,100,"
-        + csvValues(refined) + "\n";
+        + csvValues(refined) + "\n12,0.25,100," + csvValues(timeRefined) + "\n";
     java.nio.file.Files.write(java.nio.file.Paths.get("target/hydrocarbon-pool-cycle-refinement.csv"),
         csv.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     assertTrue(relativePeakOilDifference < 0.1,
@@ -76,6 +82,18 @@ class TwoFluidRichGasDragQualificationTest {
     assertTrue(relativeFinalOilDifference < 0.1,
         "The two full-cycle meshes must agree within the predeclared 10% final-oil spatial gate; observed="
             + relativeFinalOilDifference);
+    assertTrue(relativeTimePeakOilDifference < 0.1,
+        "The full cycle must agree within the predeclared 10% peak-oil timestep gate; observed="
+            + relativeTimePeakOilDifference);
+    assertTrue(relativeTimeFinalOilDifference < 0.1,
+        "The full cycle must agree within the predeclared 10% final-oil timestep gate; observed="
+            + relativeTimeFinalOilDifference);
+    assertTrue(relativeRestartPressureDifference < 0.1,
+        "Restart peak-to-peak pressure must agree within the predeclared 10% timestep gate; observed="
+            + relativeRestartPressureDifference);
+    assertTrue(relativeRestartRateDifference < 0.2,
+        "Restart maximum sampled pressure rate must agree within the predeclared 20% timestep gate; observed="
+            + relativeRestartRateDifference);
     logger.info("Finite-rate 780 s cycle: 12/24-cell peak oil={}/{}, final oil={}/{}, difference={} %", coarse[0],
         refined[0], coarse[1], refined[1], 100.0 * relativeFinalOilDifference);
     assertTrue(coarse[3] > 0.0 && refined[3] > 0.0,
@@ -85,7 +103,8 @@ class TwoFluidRichGasDragQualificationTest {
     assertEquals(0.0, coarse[5], 0.0, "The coarse cycle must resolve every accepted trace wedge");
     assertEquals(0.0, refined[5], 0.0, "The refined cycle must resolve every accepted trace wedge");
     for (int metric = 6; metric < coarse.length; metric++) {
-      assertTrue(Double.isFinite(coarse[metric]) && Double.isFinite(refined[metric]));
+      assertTrue(
+          Double.isFinite(coarse[metric]) && Double.isFinite(refined[metric]) && Double.isFinite(timeRefined[metric]));
     }
   }
 
@@ -140,13 +159,15 @@ class TwoFluidRichGasDragQualificationTest {
       observedTraceAreaFallback |= observedTraceAreaFallback(pipe);
     }
 
-    pipe.setInletBoundaryCondition(TwoFluidPipe.BoundaryCondition.CONSTANT_FLOW);
-    pipe.setInletMassFlow(1000.0, "kg/sec");
+    double restartInitialPressure = pipe.getInletFacePressure("Pa");
+    pipe.setInletBoundaryCondition(TwoFluidPipe.BoundaryCondition.CONSTANT_PRESSURE);
+    pipe.setInletBoundaryFluid(pipe.getInletStream().getFluid());
     int refillSteps = (int) Math.round(420.0 / dt);
     double[] refillTimes = new double[refillSteps + 1];
     double[] refillInletPressures = new double[refillSteps + 1];
     refillInletPressures[0] = pipe.getPressureProfile()[0];
     for (int step = 0; step < refillSteps; step++) {
+      pipe.setInletPressure(restartInitialPressure + (150.0e5 - restartInitialPressure) * (step + 1) / refillSteps);
       pipe.runTransient(dt, null);
       double boundaryMass = acceptedBoundaryMass(pipe);
       cumulativeBoundaryMass += boundaryMass;
@@ -165,6 +186,7 @@ class TwoFluidRichGasDragQualificationTest {
 
     TwoFluidPipeReport.PressureTraceMetrics refillPressure = TwoFluidPipeReport.analyzePressureTrace(refillTimes,
         refillInletPressures, 100.0);
+    writeRestartTrace(cells, dt, refillTimes, refillInletPressures);
 
     pipe.closeInlet();
     for (int step = 0; step < (int) Math.round(120.0 / dt); step++) {
@@ -203,6 +225,20 @@ class TwoFluidRichGasDragQualificationTest {
       row.append(values[value]);
     }
     return row.toString();
+  }
+
+  /** Write the unfiltered restart pressure samples used by the acceptance diagnostics. */
+  private static void writeRestartTrace(int cells, double dt, double[] times, double[] pressures) {
+    StringBuilder csv = new StringBuilder("time_s,inlet_cell_pressure_pa\n");
+    for (int sample = 0; sample < times.length; sample++) {
+      csv.append(times[sample]).append(',').append(pressures[sample]).append('\n');
+    }
+    try {
+      java.nio.file.Files.write(java.nio.file.Paths.get("target/restart-pressure-trace-" + cells + "-" + dt + ".csv"),
+          csv.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    } catch (java.io.IOException exception) {
+      throw new IllegalStateException("Unable to write restart pressure trace", exception);
+    }
   }
 
   /** Return whether the latest stage used the explicit sub-resolution trace-area fallback. */

@@ -262,8 +262,11 @@ outlet thermodynamic donors are deep-copied onto that candidate only. Preparing 
 not change the live pipe, connected inlet stream or its fluid. Accepting one trial publishes its
 pipe-owned pressure-boundary configuration; every other trial from the former state becomes stale.
 The transactional regression exercises two distinct pressure vectors, donor isolation, acceptance,
-stale-token rejection and compensating rollback. This is solver infrastructure, not an algebraic
-junction solve or evidence that the current conservative pressure face can close a zero-volume node.
+stale-token rejection and compensating rollback. With conservative energy recovery enabled, the
+pressure face resolves signed phase velocity from acoustic impedance and reports the matching
+mass/component/energy transfer: a reservoir above the accepted inlet pressure admits material and
+a lower-pressure reservoir releases the pipe-cell donor. This is still solver infrastructure, not
+an algebraic junction solve or evidence that a zero-volume node closes across multiple branches.
 
 The network still does
 not implement algebraic zero-volume junctions, branch subcycling or a general conservative
@@ -1048,8 +1051,8 @@ second transition detector or interpret a heuristic `OPTIMAL` status as operatin
    qualify it. Explicit source-fluid/enthalpy terms close the source ledger, signed boundary donors
    are integrated, and a shared branch/node transaction now rejects incomplete intervals before
    publication. Detached pressure/donor candidates now let a nonlinear coordinator evaluate every
-   branch from one accepted state. Next make the conservative pressure face report the actual
-   pressure-driven inlet transfer and solve pressure plus the phase/component donor state at an
+   branch from one accepted state, and the conservative pressure face now reports its actual signed
+   phase/component/energy transfer. Next solve pressure plus the phase/component donor state at an
    algebraic zero-volume junction; a pressure-only scalar iteration is insufficient. Then add branch
    subcycling. Enable dynamics only within the quantitatively tested scope.
 4. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export

@@ -137,6 +137,7 @@ class TwoFluidPipeTransactionalTest {
   @Test
   void detachedPressureBoundaryTrialsLeaveOwnerAndConnectedInletUntouched() throws Exception {
     TwoFluidPipe pipe = createPipe(false);
+    pipe.prepareConservativeEnergyTransientFromSteadyState();
     pipe.setTransactionalTransientEnabled(true);
     StreamInterface inlet = pipe.getInletStream();
     SystemInterface acceptedInletFluid = inlet.getFluid();
@@ -158,8 +159,10 @@ class TwoFluidPipeTransactionalTest {
     assertArrayEquals(donorBefore, SerializationUtils.serialize(trialDonor));
     assertSame(inlet, pipe.getInletStream());
     assertSame(acceptedInletFluid, inlet.getFluid());
-    assertNotEquals(first.getMassBalanceReport().getInletMassKg(TwoFluidMassBalanceReport.Phase.TOTAL),
-        second.getMassBalanceReport().getInletMassKg(TwoFluidMassBalanceReport.Phase.TOTAL));
+    double firstInletMass = first.getMassBalanceReport().getInletMassKg(TwoFluidMassBalanceReport.Phase.TOTAL);
+    double secondInletMass = second.getMassBalanceReport().getInletMassKg(TwoFluidMassBalanceReport.Phase.TOTAL);
+    assertTrue(firstInletMass > 0.0, "A reservoir above the accepted inlet pressure must admit mass");
+    assertTrue(secondInletMass < 0.0, "A reservoir below the accepted inlet pressure must release pipe inventory");
 
     pipe.acceptTransientCandidate(first);
     assertEquals(TwoFluidPipe.BoundaryCondition.CONSTANT_PRESSURE, pipe.getInletBoundaryCondition());
