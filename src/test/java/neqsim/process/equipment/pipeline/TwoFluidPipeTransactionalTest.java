@@ -135,6 +135,52 @@ class TwoFluidPipeTransactionalTest {
   }
 
   @Test
+  void detachedPressureBoundaryTrialsLeaveOwnerAndConnectedInletUntouched() throws Exception {
+    TwoFluidPipe pipe = createPipe(false);
+    pipe.setTransactionalTransientEnabled(true);
+    StreamInterface inlet = pipe.getInletStream();
+    SystemInterface acceptedInletFluid = inlet.getFluid();
+    TwoFluidPipe.BoundaryCondition acceptedInletBoundary = pipe.getInletBoundaryCondition();
+    TwoFluidPipe.BoundaryCondition acceptedOutletBoundary = pipe.getOutletBoundaryCondition();
+    SystemInterface trialDonor = SerializationUtils.clone(acceptedInletFluid);
+    trialDonor.setTemperature(290.0, "K");
+    trialDonor.setTotalFlowRate(0.1, "kg/sec");
+    byte[] donorBefore = SerializationUtils.serialize(trialDonor);
+    byte[] before = SerializationUtils.serialize(pipe);
+
+    TwoFluidPipe.TransientCandidate first = pipe.prepareTransientCandidate(1.0e-4, UUID.randomUUID(), 62.0e5, 50.0e5,
+        trialDonor, trialDonor);
+    assertArrayEquals(before, SerializationUtils.serialize(pipe), "First detached trial changed its owner");
+    TwoFluidPipe.TransientCandidate second = pipe.prepareTransientCandidate(1.0e-4, UUID.randomUUID(), 58.0e5, 54.0e5,
+        trialDonor, trialDonor);
+
+    assertArrayEquals(before, SerializationUtils.serialize(pipe), "Second detached trial changed its owner");
+    assertArrayEquals(donorBefore, SerializationUtils.serialize(trialDonor));
+    assertSame(inlet, pipe.getInletStream());
+    assertSame(acceptedInletFluid, inlet.getFluid());
+    assertNotEquals(first.getMassBalanceReport().getInletMassKg(TwoFluidMassBalanceReport.Phase.TOTAL),
+        second.getMassBalanceReport().getInletMassKg(TwoFluidMassBalanceReport.Phase.TOTAL));
+
+    pipe.acceptTransientCandidate(first);
+    assertEquals(TwoFluidPipe.BoundaryCondition.CONSTANT_PRESSURE, pipe.getInletBoundaryCondition());
+    assertEquals(TwoFluidPipe.BoundaryCondition.CONSTANT_PRESSURE, pipe.getOutletBoundaryCondition());
+    assertEquals(62.0e5, (Double) field(pipe, "inletPressure"), 0.0);
+    assertEquals(50.0e5, (Double) field(pipe, "outletPressure"), 0.0);
+    assertSame(inlet, pipe.getInletStream());
+    assertSame(acceptedInletFluid, inlet.getFluid());
+    assertThrows(IllegalStateException.class, () -> pipe.acceptTransientCandidate(second));
+
+    pipe.rollbackTransientCandidate(first);
+    assertEquals(0.0, pipe.getSimulationTime(), 0.0);
+    assertEquals(acceptedInletBoundary, pipe.getInletBoundaryCondition());
+    assertEquals(acceptedOutletBoundary, pipe.getOutletBoundaryCondition());
+    assertSame(inlet, pipe.getInletStream());
+    assertSame(acceptedInletFluid, inlet.getFluid());
+    assertThrows(IllegalArgumentException.class,
+        () -> pipe.prepareTransientCandidate(1.0e-4, UUID.randomUUID(), Double.NaN, 50.0e5, null, null));
+  }
+
+  @Test
   void downstreamPublicationFailureRestoresFluidAndKeepsAcceptedPipe() {
     TwoFluidPipe pipe = createPipe(true);
     pipe.setTransactionalTransientEnabled(true);

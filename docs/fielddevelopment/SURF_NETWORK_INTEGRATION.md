@@ -255,6 +255,16 @@ pipe parity, non-mutating preparation, stale/foreign/reused tokens, compensating
 second-branch publication failure with unchanged pipe sections, node pressure, reports and clocks.
 This is software atomicity and synthetic conservation evidence, not physical network qualification.
 
+The overload `prepareTransientCandidate(dt, id, inletPressurePa, outletPressurePa,
+inletBoundaryFluid, outletBoundaryFluid)` supplies the missing nonlinear-coordinator primitive:
+each pressure-boundary trial starts from the same accepted pipe, while optional inlet and signed-
+outlet thermodynamic donors are deep-copied onto that candidate only. Preparing several trials does
+not change the live pipe, connected inlet stream or its fluid. Accepting one trial publishes its
+pipe-owned pressure-boundary configuration; every other trial from the former state becomes stale.
+The transactional regression exercises two distinct pressure vectors, donor isolation, acceptance,
+stale-token rejection and compensating rollback. This is solver infrastructure, not an algebraic
+junction solve or evidence that the current conservative pressure face can close a zero-volume node.
+
 The network still does
 not implement algebraic zero-volume junctions, branch subcycling or a general conservative
 multi-edge Newton junction solve.
@@ -1037,7 +1047,10 @@ second transition detector or interpret a heuristic `OPTIMAL` status as operatin
 3. Coordinate the storage-node conservative transient route with #2911 and independently
    qualify it. Explicit source-fluid/enthalpy terms close the source ledger, signed boundary donors
    are integrated, and a shared branch/node transaction now rejects incomplete intervals before
-   publication. Next implement the phase-coupled algebraic zero-volume junction, then branch
+   publication. Detached pressure/donor candidates now let a nonlinear coordinator evaluate every
+   branch from one accepted state. Next make the conservative pressure face report the actual
+   pressure-driven inlet transfer and solve pressure plus the phase/component donor state at an
+   algebraic zero-volume junction; a pressure-only scalar iteration is insufficient. Then add branch
    subcycling. Enable dynamics only within the quantitatively tested scope.
 4. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export
    (#2899/#1332). Use synthetic/public acceptance cases and retain reproducible results.

@@ -6038,6 +6038,56 @@ public class TwoFluidPipe extends Pipeline {
    * @throws IllegalStateException if initialization or transactional serialization support is missing
    */
   public synchronized TransientCandidate prepareTransientCandidate(double dt, UUID id) {
+    return prepareTransientCandidateInternal(dt, id, Double.NaN, Double.NaN, null, null, false);
+  }
+
+  /**
+   * Advance one detached candidate with trial pressure boundaries without changing the live pipe.
+   *
+   * <p>
+   * This overload exists for algebraic network coordinators that evaluate several junction-pressure trials from one
+   * accepted pipe state. Boundary pressures and optional thermodynamic donor fluids are applied only to the detached
+   * candidate. The owner remains byte-identical until the returned token is accepted. A non-null inlet fluid replaces
+   * only the candidate inlet-stream state; the connected live inlet-stream object and its fluid are not replaced.
+   * </p>
+   *
+   * @param dt requested interval in seconds
+   * @param id calculation identifier
+   * @param inletPressurePa trial inlet pressure in Pa
+   * @param outletPressurePa trial outlet pressure in Pa
+   * @param inletBoundaryFluid optional inlet thermodynamic donor, or {@code null} to retain the configured inlet fluid
+   * @param outletBoundaryFluid optional reversed-outlet donor, or {@code null} to retain the configured donor
+   * @return owner-bound candidate evaluated with the supplied detached boundaries
+   * @throws IllegalArgumentException if either pressure is non-positive or non-finite
+   * @throws IllegalStateException if initialization or transactional serialization support is missing
+   */
+  public synchronized TransientCandidate prepareTransientCandidate(double dt, UUID id, double inletPressurePa,
+      double outletPressurePa, SystemInterface inletBoundaryFluid, SystemInterface outletBoundaryFluid) {
+    if (!Double.isFinite(inletPressurePa) || inletPressurePa <= 0.0 || !Double.isFinite(outletPressurePa)
+        || outletPressurePa <= 0.0) {
+      throw new IllegalArgumentException("Detached candidate pressures must be positive and finite");
+    }
+    validateOptionalTransactionalFluid(inletBoundaryFluid);
+    validateOptionalTransactionalFluid(outletBoundaryFluid);
+    return prepareTransientCandidateInternal(dt, id, inletPressurePa, outletPressurePa, inletBoundaryFluid,
+        outletBoundaryFluid, true);
+  }
+
+  /**
+   * Prepare a candidate with either the accepted live boundaries or detached trial boundaries.
+   *
+   * @param dt requested interval in seconds
+   * @param id calculation identifier
+   * @param inletPressurePa detached inlet pressure in Pa
+   * @param outletPressurePa detached outlet pressure in Pa
+   * @param inletBoundaryFluid optional detached inlet fluid
+   * @param outletBoundaryFluid optional detached outlet donor
+   * @param useDetachedBoundaries true to apply the detached boundary configuration
+   * @return owner-bound transient candidate
+   */
+  private TransientCandidate prepareTransientCandidateInternal(double dt, UUID id, double inletPressurePa,
+      double outletPressurePa, SystemInterface inletBoundaryFluid, SystemInterface outletBoundaryFluid,
+      boolean useDetachedBoundaries) {
     validateOutletTakeoffCompatibility();
     if (useConservativeEnergyRecovery) {
       validateConservativeEnergyConfiguration();
@@ -6060,6 +6110,24 @@ public class TwoFluidPipe extends Pipeline {
     validateTransactionalFluid(inStream.getFluid());
     byte[] baseState = SerializationUtils.serialize(this);
     TwoFluidPipe candidate = SerializationUtils.deserialize(baseState);
+    if (useDetachedBoundaries) {
+      candidate.inletBCType = BoundaryCondition.CONSTANT_PRESSURE;
+      candidate.outletBCType = BoundaryCondition.CONSTANT_PRESSURE;
+      candidate.setInletPressure(inletPressurePa);
+      candidate.setOutletPressure(outletPressurePa);
+      if (inletBoundaryFluid != null) {
+        SystemInterface detachedInletFluid = SerializationUtils.clone(inletBoundaryFluid);
+        detachedInletFluid.setPressure(inletPressurePa, "Pa");
+        new ThermodynamicOperations(detachedInletFluid).TPflash();
+        candidate.inStream.setFluid(detachedInletFluid);
+      }
+      if (outletBoundaryFluid != null) {
+        SystemInterface detachedOutletFluid = SerializationUtils.clone(outletBoundaryFluid);
+        detachedOutletFluid.setPressure(outletPressurePa, "Pa");
+        new ThermodynamicOperations(detachedOutletFluid).TPflash();
+        candidate.setOutletBoundaryFluid(detachedOutletFluid);
+      }
+    }
     // Section cloning preserves the configured transient oil/water detector and accepted closure result.
     candidate.sections = getSectionSnapshots();
     // Java serialization omits this adaptive history; a candidate must retain it.
@@ -6076,6 +6144,13 @@ public class TwoFluidPipe extends Pipeline {
       thermalCalculator.validateCandidateConfiguration(candidate.thermalCalculator);
     }
     return new TransientCandidate(this, candidate, baseState);
+  }
+
+  /** Validate one optional detached-boundary thermodynamic fluid. */
+  private static void validateOptionalTransactionalFluid(SystemInterface fluid) {
+    if (fluid != null) {
+      validateTransactionalFluid(fluid);
+    }
   }
 
   /**

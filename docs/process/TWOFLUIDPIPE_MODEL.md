@@ -2541,6 +2541,17 @@ publication fails; it refuses rollback if the accepted pipe changed in the meant
 preserve the existing connected-stream and external-storage identities rather than replacing the
 equipment graph.
 
+Network and nonlinear coordinators may instead call
+`prepareTransientCandidate(dt, id, inletPressurePa, outletPressurePa, inletBoundaryFluid,
+outletBoundaryFluid)`. The pressure boundary types, pressures and optional thermodynamic donors are
+installed on the detached candidate after the accepted owner has been serialized. Donors are deep-
+copied before pressure flashing, so a thermodynamic system clone with shared internal helpers cannot
+mutate the live connected inlet. Multiple trial tokens may be inspected from one accepted state;
+accepting one makes the rest stale under the existing owner-state check. A null donor retains the
+configured candidate fluid. This overload deliberately supplies no Newton iteration or junction
+mixing rule: the coordinator still owns residual construction, convergence and conservative
+phase/component/energy closure.
+
 This transaction currently supports concrete `TwoFluidPipe` instances with SRK, PR, SRK-CPA or
 SRK-CPAs fluid phases. Other EOS helper caches and pipe-subclass commit hooks are not audited;
 they reject before evaluation. Complete copying adds memory and runtime cost. Concurrent access
