@@ -39,20 +39,83 @@ Flares are safety devices that combust hydrocarbon gases that cannot be recovere
 
 ### Basic Usage
 
+The following complete Java 8 program creates a methane-rich flare-gas stream,
+runs the maintained `Flare` implementation through a `ProcessSystem`, and
+checks finite, positive heat release and carbon-dioxide emissions. Pressure is
+absolute, and the configured flow is mass flow.
+
+<!-- flare-guide-example: java-quickstart -->
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.flare.Flare;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
-// Create flare with inlet stream
-Flare flare = new Flare("HP Flare", inletStream);
-flare.run();
+/**
+ * Runs a bounded flare heat-release and carbon-emission calculation.
+ *
+ * @author NeqSim Development Team
+ * @version 1.0
+ */
+public final class FlareQuickStart {
+  private static final Logger logger = LogManager.getLogger(FlareQuickStart.class);
 
-// Get results
-double heatRelease = flare.getHeatDuty();  // W
-double co2Emission = flare.getCO2Emission();  // kg/s
+  /** Prevents instantiation of this example utility. */
+  private FlareQuickStart() {}
 
-System.out.println("Heat release: " + heatRelease/1e6 + " MW");
-System.out.println("CO2 emission: " + co2Emission * 3600 + " kg/hr");
+  /**
+   * Builds and validates one methane-rich flare case.
+   *
+   * @param args command-line arguments (unused)
+   */
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemSrkEos(298.15, 1.2);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.10);
+    fluid.setMixingRule("classic");
+
+    Stream flareGas = new Stream("flare gas", fluid);
+    flareGas.setFlowRate(1000.0, "kg/hr");
+    flareGas.setTemperature(25.0, "C");
+    flareGas.setPressure(1.2, "bara");
+
+    Flare flare = new Flare("HP flare", flareGas);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(flareGas);
+    process.add(flare);
+    process.run();
+
+    double heatReleaseMW = flare.getHeatDuty("MW");
+    double carbonDioxideKgPerHr = flare.getCO2Emission("kg/hr");
+
+    if (!Double.isFinite(heatReleaseMW)
+        || heatReleaseMW <= 0.0
+        || heatReleaseMW >= 100.0) {
+      throw new IllegalStateException("Unexpected flare heat release: " + heatReleaseMW + " MW");
+    }
+    if (!Double.isFinite(carbonDioxideKgPerHr)
+        || carbonDioxideKgPerHr <= 0.0
+        || carbonDioxideKgPerHr >= 5000.0) {
+      throw new IllegalStateException(
+          "Unexpected flare CO2 rate: " + carbonDioxideKgPerHr + " kg/hr");
+    }
+
+    logger.info(
+        "Flare heat release: {} MW; CO2 emission: {} kg/hr",
+        heatReleaseMW,
+        carbonDioxideKgPerHr);
+  }
+}
 ```
+
+The program deliberately treats the result as a screening calculation. Verify
+the composition basis, flow units, combustion reference, operating scenario,
+and applicable flare-design and process-safety requirements before engineering
+use.
 
 ### Constructor Options
 
