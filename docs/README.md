@@ -334,10 +334,10 @@ Specialized guides for advanced features and use cases:
 
 ## Getting Help
 
-- **GitHub Issues:** Report bugs and request features
-- **Discussions:** Ask questions and share knowledge
-- **API JavaDoc:** Generated from source code
-- **Examples:** See `examples/` and `notebooks/` directories
+- **[GitHub Issues](https://github.com/equinor/neqsim/issues):** Report bugs and request features
+- **[Discussions](https://github.com/equinor/neqsim/discussions):** Ask questions and share knowledge
+- **[API JavaDoc](https://equinor.github.io/neqsim/javadoc/index.html):** Browse the generated Java API reference
+- **[Examples](examples/index.md):** Find curated, runnable examples by topic
 
 ---
 
