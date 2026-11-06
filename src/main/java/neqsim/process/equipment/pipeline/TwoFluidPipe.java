@@ -6063,8 +6063,9 @@ public class TwoFluidPipe extends Pipeline {
    * <p>
    * This overload exists for algebraic network coordinators that evaluate several junction-pressure trials from one
    * accepted pipe state. Boundary pressures and optional thermodynamic donor fluids are applied only to the detached
-   * candidate. The owner remains byte-identical until the returned token is accepted. A non-null inlet fluid replaces
-   * only the candidate inlet-stream state; the connected live inlet-stream object and its fluid are not replaced.
+   * candidate. The owner remains byte-identical until the returned token is accepted. A non-null inlet fluid overrides
+   * the candidate's isolated pressure reservoir and is retained on acceptance; the connected live inlet-stream object
+   * and its fluid are not replaced. A null inlet fluid retains the previously configured reservoir or connected feed.
    * </p>
    *
    * @param dt requested interval in seconds
@@ -6134,8 +6135,11 @@ public class TwoFluidPipe extends Pipeline {
       if (inletBoundaryFluid != null) {
         SystemInterface detachedInletFluid = SerializationUtils.clone(inletBoundaryFluid);
         detachedInletFluid.setPressure(inletPressurePa, "Pa");
-        new ThermodynamicOperations(detachedInletFluid).TPflash();
+        if (!candidate.useConservativeEnergyRecovery) {
+          new ThermodynamicOperations(detachedInletFluid).TPflash();
+        }
         candidate.inStream.setFluid(detachedInletFluid);
+        candidate.inletBoundaryFluid = detachedInletFluid;
       }
       if (outletBoundaryFluid != null) {
         SystemInterface detachedOutletFluid = SerializationUtils.clone(outletBoundaryFluid);

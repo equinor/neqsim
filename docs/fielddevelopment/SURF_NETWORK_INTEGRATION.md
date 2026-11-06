@@ -261,6 +261,10 @@ each pressure-boundary trial starts from the same accepted pipe, while optional 
 outlet thermodynamic donors are deep-copied onto that candidate only. Preparing several trials does
 not change the live pipe, connected inlet stream or its fluid. Accepting one trial publishes its
 pipe-owned pressure-boundary configuration; every other trial from the former state becomes stale.
+The trial inlet donor overrides any earlier isolated inlet reservoir and is retained after acceptance
+for continuation with a null donor. Rollback restores the former reservoir without replacing the
+connected feed or its fluid. The conservative pressure route caches one reservoir flash per trial
+pressure across internal solver stages.
 The transactional regression exercises two distinct pressure vectors, donor isolation, acceptance,
 stale-token rejection and compensating rollback. With conservative energy recovery enabled, the
 pressure face resolves signed phase velocity from acoustic impedance and reports the matching

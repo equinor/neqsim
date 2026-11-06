@@ -1805,6 +1805,14 @@ specific enthalpy in J/kg. The network then applies the same accepted source mas
 component and open-system energy ledgers. Missing source thermodynamics, a mismatched component
 slate or non-finite enthalpy fails before the interval advances.
 
+The network accepts energy closure with the existing absolute-or-relative limits of 1e-4 J or
+1e-7. Inspect the signed joule residual alongside the relative residual: in a closed, adiabatic
+network, both net boundary transfer and physical storage change are zero, so storage-summation
+roundoff alone can produce a relative residual of one. The two-storage reverse-flow regression
+checks every interval against four floating-point ulps of the stored-energy sum, as well as
+component and total-mass closure; it does not rescale the residual by the caloric reference or
+relax the solver's acceptance limits.
+
 Signed fallback from a branch outlet keeps the same directed topology and signed conservation
 ledger. Create a fixed-pressure downstream node with the overload accepting a `SystemInterface`,
 or use a conservative storage node whose frozen inventory owns the downstream thermodynamic state.
@@ -2571,7 +2579,12 @@ installed on the detached candidate after the accepted owner has been serialized
 copied before pressure flashing, so a thermodynamic system clone with shared internal helpers cannot
 mutate the live connected inlet. Multiple trial tokens may be inspected from one accepted state;
 accepting one makes the rest stale under the existing owner-state check. A null donor retains the
-configured candidate fluid. This overload deliberately supplies no Newton iteration or junction
+configured candidate fluid. A non-null inlet donor overrides any previously isolated inlet reservoir
+and becomes the pipe-owned reservoir on acceptance, so a subsequent interval with a null donor
+continues from that accepted composition. The live connected feed retains its identity and fluid;
+compensating rollback restores the former isolated reservoir. Conservative pressure trials flash
+the isolated donor once per trial pressure and reuse it across internal stages.
+This overload deliberately supplies no Newton iteration or junction
 mixing rule: the coordinator still owns residual construction, convergence and conservative
 phase/component/energy closure.
 

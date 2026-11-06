@@ -303,6 +303,8 @@ For transient gas, follow `TransientGasNetworkTest`: define nodes and pipe cells
 - `NetworkValidationBenchmarks.runAllBenchmarks()` includes analytical flow cases, solver cross-checks, pressure behavior, and sparse/dense linear-solver comparisons. Benchmark cases are validation examples, not a universal uncertainty bound.
 - Regression tests include `LoopedPipeNetworkTest`, `NetworkOptimizerTest`, `NetworkQualitySpecificationTest`, `TransientGasNetworkTest`, `TransientCompositionalPipeNetworkTest`, `OilNetworkScheduleTest`, and `NetworkValidationBenchmarkTest`.
 - Transient results should be checked for per-step convergence and mass/component closure. Refine both pipe cells and timestep and compare common-time histories before relying on a pulse peak or arrival time.
+- For `TwoFluidPipeNetwork` energy closure, inspect both the joule and relative residuals. A closed, adiabatic network has zero net transfer, so storage-summation roundoff can give a relative residual of one; use the existing absolute-or-relative acceptance contract and retain a tight absolute rounding bound in closed-network regressions. Do not normalize by the absolute caloric-reference energy to conceal transport errors.
+- Detached `TwoFluidPipe.prepareTransientCandidate` pressure trials retain an accepted inlet donor as the pipe-owned isolated reservoir. A non-null donor overrides the former reservoir; null retains it. Test donor composition in accepted boundary ledgers, continuation and compensating rollback while preserving the connected feed identity.
 - These models do not establish pipeline code compliance, site-specific operating limits, or acceptance of a cargo specification. Supply controlled limits and independent review.
 
 ## Related skills
