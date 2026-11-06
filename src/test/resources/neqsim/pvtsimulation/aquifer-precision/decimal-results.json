@@ -1,0 +1,127 @@
+{
+  "baseline": {
+    "comparisons": 11552,
+    "failedComparisons": 16,
+    "maximumToleranceFraction": "1.08099877684627109992351863428109389829152792121285129172715",
+    "failures": [
+      {
+        "matrix": "grid",
+        "id": "682",
+        "column": 1,
+        "absoluteError": "1.621516180564483990577188E-8",
+        "tolerance": "1.500016665416708332361128967981154376E-8"
+      },
+      {
+        "matrix": "grid",
+        "id": "682",
+        "column": 2,
+        "absoluteError": "1.621516180564483990577188E-8",
+        "tolerance": "1.500016665416708332361128967981154376E-8"
+      },
+      {
+        "matrix": "grid",
+        "id": "683",
+        "column": 1,
+        "absoluteError": "1.621516180564483990577188E-8",
+        "tolerance": "1.500016665416708332361128967981154376E-8"
+      },
+      {
+        "matrix": "grid",
+        "id": "683",
+        "column": 3,
+        "absoluteError": "1.621516180564483990577188E-8",
+        "tolerance": "1.500016665416708332361128967981154376E-8"
+      },
+      {
+        "matrix": "grid",
+        "id": "710",
+        "column": 1,
+        "absoluteError": "1.621516180564483990577188E-8",
+        "tolerance": "1.500016665416708332361128967981154376E-8"
+      },
+      {
+        "matrix": "grid",
+        "id": "710",
+        "column": 2,
+        "absoluteError": "1.621516180564483990577188E-8",
+        "tolerance": "1.500016665416708332361128967981154376E-8"
+      },
+      {
+        "matrix": "grid",
+        "id": "711",
+        "column": 1,
+        "absoluteError": "1.621516180564483990577188E-8",
+        "tolerance": "1.500016665416708332361128967981154376E-8"
+      },
+      {
+        "matrix": "grid",
+        "id": "711",
+        "column": 3,
+        "absoluteError": "1.621516180564483990577188E-8",
+        "tolerance": "1.500016665416708332361128967981154376E-8"
+      },
+      {
+        "matrix": "boundaries",
+        "id": "582",
+        "column": 1,
+        "absoluteError": "1.621516180564483990577188E-8",
+        "tolerance": "1.500016665416708332361128967981154376E-8"
+      },
+      {
+        "matrix": "boundaries",
+        "id": "582",
+        "column": 2,
+        "absoluteError": "1.621516180564483990577188E-8",
+        "tolerance": "1.500016665416708332361128967981154376E-8"
+      },
+      {
+        "matrix": "boundaries",
+        "id": "583",
+        "column": 1,
+        "absoluteError": "1.621516180564483990577188E-8",
+        "tolerance": "1.500016665416708332361128967981154376E-8"
+      },
+      {
+        "matrix": "boundaries",
+        "id": "583",
+        "column": 3,
+        "absoluteError": "1.621516180564483990577188E-8",
+        "tolerance": "1.500016665416708332361128967981154376E-8"
+      },
+      {
+        "matrix": "boundaries",
+        "id": "606",
+        "column": 1,
+        "absoluteError": "1.621516180564483990577188E-8",
+        "tolerance": "1.500016665416708332361128967981154376E-8"
+      },
+      {
+        "matrix": "boundaries",
+        "id": "606",
+        "column": 2,
+        "absoluteError": "1.621516180564483990577188E-8",
+        "tolerance": "1.500016665416708332361128967981154376E-8"
+      },
+      {
+        "matrix": "boundaries",
+        "id": "607",
+        "column": 1,
+        "absoluteError": "1.621516180564483990577188E-8",
+        "tolerance": "1.500016665416708332361128967981154376E-8"
+      },
+      {
+        "matrix": "boundaries",
+        "id": "607",
+        "column": 3,
+        "absoluteError": "1.621516180564483990577188E-8",
+        "tolerance": "1.500016665416708332361128967981154376E-8"
+      }
+    ]
+  },
+  "candidate": {
+    "comparisons": 11552,
+    "failedComparisons": 0,
+    "maximumToleranceFraction": "0.472510862557669037859036561179509803268151818181967228361667",
+    "failures": []
+  }
+}

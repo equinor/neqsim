@@ -53,6 +53,14 @@ EOS checkpoints and complete held-out laboratory protocols, then hand off volume
 estimation to `@field-development`. Do not use reservoir-volume misfit to change
 the laboratory model or substitute independent flashes for a depletion path.
 
+For constant-property finite aquifer support, read
+`docs/pvtsimulation/reservoir_aquifer_uncertainty.md`. The independent
+`FetkovichAquiferPrecisionTest` fixtures qualify prescribed linear-pressure
+endpoint/extrema arithmetic and subdivision consistency on a reservoir-m3 water
+basis. Keep the separate coupled-tank refinement gate: arithmetic precision does
+not establish radial diffusion, water mixing, measured field accuracy or Bayesian
+uncertainty acceptance.
+
 Read `docs/pvtsimulation/pedersen_method_qualification.md` before asserting reservoir-fluid
 method coverage or accuracy. Distinguish source availability, numerical verification and
 experimental validation. Compare fluids only after matching EOS/alpha/mixing rules, component
