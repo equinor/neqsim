@@ -27,6 +27,7 @@ SCHEMA = "neqsim.process_study_report.data/1"
 R_KJ_KMOL_K = 8.314462618
 DEFAULT_STD_T_C = 15.0
 DEFAULT_STD_P_BARA = 1.01325
+NUMERICALLY_EMPTY_KG_H = 1.0e-9
 
 # (keyword in class chain, category) - first match wins, order matters.
 _CATEGORY_KEYWORDS = [
@@ -493,8 +494,8 @@ def stream_results(stream, components, std_t_c=DEFAULT_STD_T_C, std_p_bara=DEFAU
     total_kg = sum(v for v in flow_kg.values() if v is not None)
     for name in z:
         w[name] = (flow_kg[name] / total_kg) if (total_kg and flow_kg[name] is not None) else None
-    if abs(sum(z.values()) - 1.0) > 1.0e-3:
-        # Degenerate fluid object (no moles): composition and phases are undefined, not zero.
+    if abs(sum(z.values()) - 1.0) > 1.0e-3 or abs(mass_kg_h) < NUMERICALLY_EMPTY_KG_H:
+        # Degenerate fluid object (no moles, or a flow of numerical noise below 1 ug/h): composition and phases are undefined, not zero.
         res.update({"zero_flow": True, "z": None, "w": None, "flow_kmol_h": None, "flow_kg_h": None, "phases": [],
                     "state": "no flow (composition undefined)", "phase_beta_sum_raw": None})
         if std_flash:

@@ -1467,6 +1467,19 @@ compressors and to recommend a wash fluid.
 // Cp = fluid heat capacity (J/kgK)
 ```
 
+### Burial, trenching and rock dump change the thermal basis
+
+A buried or rock-covered flowline cools down much more slowly than an exposed one, so one burial depth
+for the whole line is wrong wherever the route changes between trenched, rock-covered and exposed
+stretches. Scope the protection first with the `neqsim-seabed-protection-screening` skill (map layers,
+trenchability, rock volume and tonnes; community `seabed-protection-agent`), then use its
+`to_neqsim_burial_segments` hand-off: one pipe section per burial state with `setBuried`,
+`setBurialDepth` (depth to the pipe centre) and `setSoilConductivity`, exposed sections on the
+seawater film coefficient. Report cooldown and hydrate margin for the protected and the unprotected
+state so the margin that burial buys is explicit. Burial depth and soil conductivity are thermal
+inputs only - never derive pipe-soil resistance or upheaval-buckling cover from them (see the DNV-RP-F114
+and F110 routing above).
+
 ### Arrival Temperature Check
 
 ```java

@@ -11,11 +11,12 @@ required_skills:
 - neqsim-subsea-and-wells
 - neqsim-standards-lookup
 - neqsim-pipeline-and-terminal-networks
+- neqsim-seabed-protection-screening
 argument-hint: Describe the flow assurance study — e.g., "hydrate formation temperature for wet gas at 100 bara", "screen on-bottom stability for a 20-inch subsea line", "pipeline pressure drop and temperature profile for 50 km subsea line", or "asphaltene stability screening for reservoir fluid under gas injection".
 ---
 You are a flow assurance engineer for NeqSim.
 
-Loaded skills: neqsim-phase-envelope, neqsim-flow-assurance, neqsim-electrolyte-systems, neqsim-flow-accelerated-corrosion, neqsim-wax-calculations, neqsim-water-hammer, neqsim-subsea-and-wells, neqsim-standards-lookup, neqsim-pipeline-and-terminal-networks
+Loaded skills: neqsim-phase-envelope, neqsim-flow-assurance, neqsim-electrolyte-systems, neqsim-flow-accelerated-corrosion, neqsim-wax-calculations, neqsim-water-hammer, neqsim-subsea-and-wells, neqsim-standards-lookup, neqsim-pipeline-and-terminal-networks, neqsim-seabed-protection-screening
 
 ## Primary Objective
 Perform flow assurance analyses — hydrate, wax, asphaltene, corrosion, hydraulics — and produce actionable results with working code.
@@ -233,7 +234,11 @@ For pipelines with heat transfer to surroundings:
 - Account for seawater temperature profile
 - Calculate arrival temperature
 - Determine insulation requirements
-
+- Burial changes the thermal basis: a trenched or rock-covered line cools far more slowly than an
+  exposed one. Scope trenching and rock dump with the `neqsim-seabed-protection-screening` skill
+  (community `seabed-protection-agent`), split the line into pipe sections by burial state
+  (`setBuried`, `setBurialDepth`, `setSoilConductivity`), and report cooldown and hydrate margin for
+  both the protected and the unprotected state. Burial depth is never geotechnical resistance.
 ## CO2 Injection Well Analysis
 
 Full-stack safety analysis for CO2 injection wells, covering steady-state flow,
