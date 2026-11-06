@@ -54,6 +54,12 @@ and dynamic tests based on the final drawing."
    professional path explicitly selects native DEXPI 2.0.1. For native-only
    export use `DexpiEngineeringExporter.exportDexpi201(...)`; for a bare process
    export use `Dexpi201XmlWriter.writeAndAssess(...)`.
+   Keep the explicit canonical P&ID as the sole native instrumentation authority:
+   this professional path disables generic requirement-to-PCE/safeguard/nozzle
+   synthesis before applying that model. All requirements stay in the manifest
+   and review registers, with the selected policy/retained IDs in projection
+   evidence. Engineering-only export keeps generic typed proposals by default;
+   `ENGINEERING_ASSESSMENT` never creates a process instrument or sensing nozzle.
 7. Read the emitted manifest and readiness/coverage reports. Require the actual
    assessed XML, engineering model/registers, vector PDF/SVG drawings, binding
    evidence and unresolved-design report. Do not describe a register-only or
@@ -103,6 +109,57 @@ checks, SVG/PDF parity and applicable project/standards review. If prerequisites
 are missing, deliver the sourced acquisition/import contract, keep the supported
 authored-symbol fallback explicit, and retain unresolved review HOLDs. Do not
 claim PCA glyph use or qualification from a library link or public visibility.
+
+## Automatic proposals from actual native safety functions
+
+For an executable candidate, use `PidSafetyFunctionImporter.fromNativeFunction(...)`
+to extend a copied canonical `PidDesignModel` with actual healthy native sources,
+voting and final elements. Reuse exact existing bindings and rebuild the binding
+register after each import/change. Keep trip/voting/timing choices as explicit
+study-policy inputs; native import does not perform HAZOP/LOPA or assign SIL.
+
+Use actual measurement-backed `SafetyFunctionChannel` factories and the local
+`manualTripFromPushButton(...)` factory where applicable. Held-sample factories
+derive the source tag and reject a source captured from another executing copy.
+Manual binary input is distinct from a pressure held sample and must not carry
+hidden linked automatic actions. Legacy arbitrary extractors cannot establish
+verified native measurement identity. Native qualified channel demands latch
+until reset, with fixed configured voting; separate objects do not establish
+installed hardware independence or simultaneous raw-signal coincidence.
+
+The scenario factory must consume the governed canonical values. Validate its
+actual configured copy through `PidSafetyFunctionValidator.validateConfigured(...)`,
+retain the returned configuration fingerprint/evidence reference in the scenario,
+and repeat validation with `assertSameConfiguration(...)` before execution.
+Check exact source/target references, voting/count, unit/trip/delay, stroke and
+actual fail-closed position. Only the bounded native trip/parallel-trip action
+policy is supported for this isolation contract; changing a command to opening,
+its order or delay cannot retain the same qualified configuration. Keep physical
+source identity separate from configured numerical helper/execution-order data.
+
+Use event-exact timing for held-sample cases and native strict execution. For
+project-configured studies, `EngineeringSimulationRunner.runStrict(...)` records
+the actual newly executed results on the project. Attach evidence through
+`PidSafetyFunctionValidator.attachResult(...)` with declared required full-window
+`MAINTAIN_BOUNDS` criteria. Default first-reach criteria do not establish an
+always-within-bounds result. Report unexecuted/incomplete, observed FAIL, no-demand,
+vote-without-actuation and incomplete versus completed demand response separately.
+Expected-fault assertions must preserve native process FAIL. Keep component and
+cumulative-energy verdicts separate; response success cannot clear numerical HOLD.
+
+The tested `AdvancedSafetyPidExample` uses the actual two-inventory
+`AdvancedV101SafetyStudy`, imports native ESD/HIPPS/manual functions, reads their
+canonical values back into factories, executes the final project strictly and
+regenerates native DEXPI 2.0.1, four P&ID sheets and a PFD. Its three HIPPS channels
+meet one shared voting function. The actual manual button has no fake process
+sensing location. Reciprocal detail sheets show actual existing stream/valve-port
+monitoring contexts, and an inter-unit valve appears once on its declared inlet
+sheet. Shared final-element targets receive no inferred independent-barrier credit.
+
+Retain exact native-ID crosswalks plus canonical settings/receipts/result hashes
+beside the package. XML-only parameter/PLC transfer, installed independence,
+relief adequacy, SIL and controlled standards compliance remain unqualified.
+The authored vector families remain in use; no PCA payload/glyph import is implied.
 
 ## Run steady-state and dynamic tests
 10. Resolve bindings against each isolated process copy. Use
@@ -200,3 +257,22 @@ SIL, completes HAZOP/LOPA/SRS, grants safety credit or authorizes field operatio
   numerical qualification separate from passing response criteria.
 - Verify parameter sidecars and native IDs together. Do not claim XML-only
   controller transfer, CAEX interchange, approved SIS design or deployment.
+
+## Passive pressure-relief branch
+
+For an actual PSV, follow `docs/process/safety/psv-pid-verification.md`.
+`PidPressureReliefImporter` preserves the current canonical graph and adds/reuses only the
+actual native passive valve. Require an actual splitter/branch/discharge route and registered
+capacity-basis evidence; do not add a PLC trip or fabricated pressure instrument to represent
+self-action. Apply canonical values on a pristine isolated copy and use
+`PidPressureReliefValidator` to reject stale bindings, ignored settings and undeclared faults
+before strict execution. Distinguish no demand, no lift, no positive flow, relief, reseat,
+incomplete and observed FAIL. Capacity certification and disposal/flare adequacy remain HOLD.
+
+For native DEXPI 2.0.1, the official `SetPressureHigh` field is gauge pressure. Map canonical
+bara only with an explicit positive `simulationAtmosphericReferenceBara`, retain the
+conversion in the native-ID crosswalk, and never treat `SetPressureLow` as reseat pressure.
+Without a reference, retain the absolute sidecar and mark the gauge field unassigned/HOLD.
+Review the actual tee, spring-relief symbol, both real branch line IDs and discharge battery
+limit in every native P&ID/PFD and graph inventory; no additional control signal belongs on
+this passive valve.

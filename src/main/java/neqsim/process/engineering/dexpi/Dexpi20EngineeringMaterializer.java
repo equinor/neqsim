@@ -37,6 +37,19 @@ final class Dexpi20EngineeringMaterializer {
   }
 
   static void materialize(EngineeringProject project, Path file) throws IOException {
+    materialize(project, file, true);
+  }
+
+  /**
+   * Adds engineering proposals only when the caller has not selected an explicit canonical P&amp;ID authority.
+   *
+   * @param project governed engineering project
+   * @param file native source model
+   * @param includeRequirementProposals whether typed requirements may synthesize instrumentation and safeguards
+   * @throws IOException if native parsing, serialization or validation fails
+   */
+  static void materialize(EngineeringProject project, Path file, boolean includeRequirementProposals)
+      throws IOException {
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
@@ -45,7 +58,7 @@ final class Dexpi20EngineeringMaterializer {
       factory.setXIncludeAware(false);
       factory.setExpandEntityReferences(false);
       Document document = factory.newDocumentBuilder().parse(file.toFile());
-      addEngineeringModel(project, document);
+      addEngineeringModel(project, document, includeRequirementProposals);
       if (Dexpi201XmlWriter.isSpecification201(document)) {
         normalize201PipingOwners(document);
       }
@@ -62,7 +75,15 @@ final class Dexpi20EngineeringMaterializer {
     }
   }
 
-  private static void addEngineeringModel(EngineeringProject project, Document document) {
+  /**
+   * Materializes selected proposals without treating documentary assessments as measured process variables.
+   *
+   * @param project governed source
+   * @param document native instance
+   * @param includeRequirementProposals whether requirements supply the P&amp;ID proposal definition
+   */
+  private static void addEngineeringModel(EngineeringProject project, Document document,
+      boolean includeRequirementProposals) {
     Element plant = findObjectByType(document, "Plant/PlantModel");
     Element engineeringModel = findObjectByType(document, "Core/EngineeringModel");
     if (plant == null || engineeringModel == null) {
@@ -70,7 +91,7 @@ final class Dexpi20EngineeringMaterializer {
     }
     Set<String> usedIds = collectIds(document);
     Map<String, Element> equipment = collectEquipmentByTag(document);
-    Element functions = directComponents(document, plant, "ProcessInstrumentationFunctions");
+    Element functions = null;
     boolean specification201 = Dexpi201XmlWriter.isSpecification201(document);
     Element diagramGroups = specification201 ? null
         : createDiagram(document, engineeringModel, plant.getAttribute("id"), "NeqSim governed P&ID",
@@ -83,7 +104,6 @@ final class Dexpi20EngineeringMaterializer {
       appendRepresentation(document, pfdGroups, item.getValue().getAttribute("id"), item.getKey(),
           pfdRepresentationNumber++);
     }
-    Element systems = directComponents(document, plant, "PipingNetworkSystems");
     Element safeguardSystem = object(document, uniqueId("EngineeringSafeguards", usedIds),
         "Plant/Piping.PipingNetworkSystem");
     data(document, safeguardSystem, "LineNumber", "ENGINEERING_SAFEGUARDS");
@@ -92,9 +112,17 @@ final class Dexpi20EngineeringMaterializer {
 
     int representationNumber = 1;
     for (EngineeringRequirement requirement : project.getRequirements()) {
+      if (!includeRequirementProposals || requirement.getType() == EngineeringRequirement.Type.ENGINEERING_ASSESSMENT) {
+        // An assessment remains in the engineering manifest; it has no process
+        // measurement, instrument, signal line or sensing nozzle to materialize.
+        continue;
+      }
       Element protectedEquipment = equipment.get(requirement.getEquipmentTag());
       if (protectedEquipment == null) {
         continue;
+      }
+      if (functions == null) {
+        functions = directComponents(document, plant, "ProcessInstrumentationFunctions");
       }
       appendInstrumentationFunction(document, functions, diagramGroups, usedIds, requirement, protectedEquipment,
           representationNumber++);
@@ -113,7 +141,7 @@ final class Dexpi20EngineeringMaterializer {
       }
     }
     if (segmentNumber > 1) {
-      systems.appendChild(safeguardSystem);
+      directComponents(document, plant, "PipingNetworkSystems").appendChild(safeguardSystem);
     }
   }
 
@@ -402,6 +430,17 @@ final class Dexpi20EngineeringMaterializer {
    * @return deterministic, review-required native-projection evidence
    */
   static Map<String, Object> projectionEvidence(EngineeringProject project) {
+    return projectionEvidence(project, true);
+  }
+
+  /**
+   * Reports generic proposal coverage separately from a caller's canonical P&amp;ID overlay.
+   *
+   * @param project governed source project
+   * @param includeRequirementProposals whether the generic proposal producer was enabled
+   * @return unapproved projection evidence
+   */
+  static Map<String, Object> projectionEvidence(EngineeringProject project, boolean includeRequirementProposals) {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     List<Map<String, Object>> unresolved = new ArrayList<Map<String, Object>>();
     for (EngineeringRequirement requirement : project.getRequirements()) {
@@ -412,9 +451,11 @@ final class Dexpi20EngineeringMaterializer {
         item.put("proposedFinalElementTag", finalElementTag(requirement));
         item.put("status", "HOLD");
         EngineeringBoundary destination = controlledReliefDestination(project, requirement);
-        item.put("physicalProposalExported", Boolean.valueOf(destination != null));
-        item.put("reason", destination == null ? "NO_CONTROLLED_FINAL_ELEMENT_ROUTE"
-            : "CONTROLLED_RELIEF_PROPOSAL_REQUIRES_EXECUTABLE_MODEL_BINDING");
+        item.put("physicalProposalExported", Boolean.valueOf(includeRequirementProposals && destination != null));
+        item.put("reason",
+            !includeRequirementProposals ? "CANONICAL_PID_MODEL_GOVERNS_PHYSICAL_PROPOSALS"
+                : destination == null ? "NO_CONTROLLED_FINAL_ELEMENT_ROUTE"
+                    : "CONTROLLED_RELIEF_PROPOSAL_REQUIRES_EXECUTABLE_MODEL_BINDING");
         item.put("simulationBindingStatus", "EXPLICIT_LIVE_DEVICE_AND_PATH_BINDING_REQUIRED");
         unresolved.add(item);
       }

@@ -1,10 +1,25 @@
 package neqsim.process.logic.esd;
 
+import java.io.ObjectOutputStream;
+
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.Set;
 import java.util.List;
+import java.util.Map;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.logic.LogicAction;
 import neqsim.process.logic.LogicState;
+import neqsim.process.logic.action.ParallelActionGroup;
+import neqsim.process.logic.action.ConditionalAction;
+import neqsim.process.logic.action.TripValveAction;
+import neqsim.process.equipment.valve.ESDValve;
 import neqsim.process.logic.ProcessLogic;
 
 /**
@@ -38,7 +53,7 @@ public class ESDLogic implements ProcessLogic {
   private static final long serialVersionUID = 1L;
   private final String name;
   private LogicState state = LogicState.IDLE;
-  private final transient List<ActionWithDelay> actions = new ArrayList<>();
+  private final List<ActionWithDelay> actions = new ArrayList<>();
   private int currentActionIndex = 0;
   private double elapsedTime = 0.0;
   private double currentDelay = 0.0;
@@ -57,8 +72,12 @@ public class ESDLogic implements ProcessLogic {
    *
    * @param action action to execute
    * @param delay delay in seconds before executing this action (relative to previous action)
+   * @throws IllegalArgumentException if the action is null or the delay is negative or nonfinite
    */
   public void addAction(LogicAction action, double delay) {
+    if (action == null || !Double.isFinite(delay) || delay < 0.0) {
+      throw new IllegalArgumentException("ESD action requires a non-null operation and finite nonnegative delay");
+    }
     actions.add(new ActionWithDelay(action, delay));
   }
 
@@ -74,18 +93,25 @@ public class ESDLogic implements ProcessLogic {
 
   @Override
   public void activate() {
+    if (state == LogicState.PAUSED) {
+      state = LogicState.RUNNING;
+      return;
+    }
     if (state == LogicState.IDLE || state == LogicState.COMPLETED || state == LogicState.FAILED) {
+      resetActions();
       state = LogicState.RUNNING;
       currentActionIndex = 0;
       elapsedTime = 0.0;
       currentDelay = 0.0;
+    }
+  }
 
-      // Reset all actions
-      for (ActionWithDelay actionWithDelay : actions) {
-        if (actionWithDelay.action instanceof ResettableAction) {
-          ((ResettableAction) actionWithDelay.action).reset();
-        }
-      }
+  /**
+   * Clears action bookkeeping for a new demand without resetting physical equipment.
+   */
+  private void resetActions() {
+    for (ActionWithDelay actionWithDelay : actions) {
+      actionWithDelay.action.reset();
     }
   }
 
@@ -98,6 +124,7 @@ public class ESDLogic implements ProcessLogic {
 
   @Override
   public boolean reset() {
+    resetActions();
     state = LogicState.IDLE;
     currentActionIndex = 0;
     elapsedTime = 0.0;
@@ -105,8 +132,17 @@ public class ESDLogic implements ProcessLogic {
     return true;
   }
 
+  /**
+   * Advances the active sequence by a finite nonnegative interval.
+   *
+   * @param timeStep physical interval in seconds; zero permits an instantaneous demand evaluation
+   * @throws IllegalArgumentException if the interval is negative or nonfinite
+   */
   @Override
   public void execute(double timeStep) {
+    if (!Double.isFinite(timeStep) || timeStep < 0.0) {
+      throw new IllegalArgumentException("ESD time step must be finite and nonnegative");
+    }
     if (state != LogicState.RUNNING) {
       return;
     }
@@ -153,8 +189,161 @@ public class ESDLogic implements ProcessLogic {
 
   @Override
   public List<ProcessEquipmentInterface> getTargetEquipment() {
-    // Not implemented in simplified version
-    return new ArrayList<>();
+    if (hasNestedActionCycle()) {
+      return Collections.emptyList();
+    }
+    List<ProcessEquipmentInterface> targets = new ArrayList<ProcessEquipmentInterface>();
+    Set<ProcessEquipmentInterface> seen = Collections
+        .newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
+    for (ActionWithDelay step : actions) {
+      for (ProcessEquipmentInterface target : step.action.getTargetEquipment()) {
+        if (target != null && seen.add(target)) {
+          targets.add(target);
+        }
+      }
+    }
+    return Collections.unmodifiableList(targets);
+  }
+
+  /**
+   * Reports incomplete action-target identity separately from any partial target list.
+   *
+   * @return null for complete native action coverage, otherwise an actionable finding
+   */
+  public String getTargetEquipmentCoverageIssue() {
+    if (hasNestedActionCycle()) {
+      return "Cyclic native action graph has no complete physical target identity";
+    }
+    for (int index = 0; index < actions.size(); index++) {
+      LogicAction action = actions.get(index).action;
+      if (!action.isTargetEquipmentIdentityComplete()) {
+        return "ESD action " + index + " (" + action.getClass().getName()
+            + ") does not expose complete physical target identity";
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Checks known composite action structure before invoking recursive target getters.
+   *
+   * @return true when a native conditional/parallel branch contains an ancestor action
+   */
+  private boolean hasNestedActionCycle() {
+    for (ActionWithDelay step : actions) {
+      if (hasNestedActionCycle(step.action, new IdentityHashMap<LogicAction, Boolean>())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Detects cycles without executing actions or inspecting user callback state.
+   *
+   * @param action action being inspected
+   * @param ancestors identities on the current branch
+   * @return true if the native composite structure repeats an ancestor
+   */
+  private static boolean hasNestedActionCycle(LogicAction action, IdentityHashMap<LogicAction, Boolean> ancestors) {
+    if (action == null) {
+      return false;
+    }
+    if (ancestors.put(action, Boolean.TRUE) != null) {
+      return true;
+    }
+    boolean cyclic = false;
+    if (action.getClass() == ParallelActionGroup.class) {
+      for (LogicAction child : ((ParallelActionGroup) action).getActions()) {
+        cyclic |= hasNestedActionCycle(child, ancestors);
+      }
+    } else if (action.getClass() == ConditionalAction.class) {
+      cyclic = hasNestedActionCycle(((ConditionalAction) action).getPrimaryAction(), ancestors)
+          || hasNestedActionCycle(((ConditionalAction) action).getAlternativeAction(), ancestors);
+    }
+    ancestors.remove(action);
+    return cyclic;
+  }
+
+  /**
+   * Reads the ordered native trip-action definition without issuing any equipment commands.
+   *
+   * <p>
+   * The bounded supported policy contains exact native trip actions and exact parallel groups. Other actions,
+   * overriding subclasses, empty groups and cycles are explicitly unsupported. This does not prevent their legacy
+   * execution, but they cannot acquire qualified closure semantics from a matching name/class/target list. Actual
+   * reference membership and actuator settings must also be validated separately against the configured process.
+   * </p>
+   *
+   * @return deterministic action tree, delays, physical target identifiers and policy coverage
+   */
+  public Map<String, Object> getTripActionConfiguration() {
+    Map<String, Object> configuration = new LinkedHashMap<String, Object>();
+    configuration.put("schemaVersion", "neqsim.esd_trip_action_configuration.v1");
+    configuration.put("logicClass", getClass().getName());
+    configuration.put("logicName", name);
+    List<Map<String, Object>> steps = new ArrayList<Map<String, Object>>();
+    boolean supported = getClass() == ESDLogic.class && !actions.isEmpty();
+    for (ActionWithDelay step : actions) {
+      Map<String, Object> definition = new LinkedHashMap<String, Object>();
+      definition.put("delaySeconds", Double.valueOf(step.delay));
+      Map<String, Object> action = describeTripAction(step.action, new IdentityHashMap<LogicAction, Boolean>());
+      definition.put("action", action);
+      supported &= Double.isFinite(step.delay) && step.delay >= 0.0
+          && Boolean.TRUE.equals(action.get("supportedTripPolicy"));
+      steps.add(definition);
+    }
+    configuration.put("steps", steps);
+    configuration.put("supportedTripPolicy", Boolean.valueOf(supported));
+    return configuration;
+  }
+
+  /**
+   * Describes the supported native closure subset, preserving parallel structure and avoiding cycles.
+   *
+   * @param action configured action
+   * @param ancestors action identities on the current recursion path
+   * @return action definition with explicit support status
+   */
+  private static Map<String, Object> describeTripAction(LogicAction action,
+      IdentityHashMap<LogicAction, Boolean> ancestors) {
+    Map<String, Object> result = new LinkedHashMap<String, Object>();
+    result.put("actionClass", action == null ? "MISSING" : action.getClass().getName());
+    boolean supported = false;
+    if (action != null && ancestors.put(action, Boolean.TRUE) == null) {
+      if (action.getClass() == TripValveAction.class) {
+        List<ProcessEquipmentInterface> targets = action.getTargetEquipment();
+        List<Map<String, Object>> identities = new ArrayList<Map<String, Object>>();
+        for (ProcessEquipmentInterface target : targets) {
+          Map<String, Object> identity = new LinkedHashMap<String, Object>();
+          identity.put("tag", target.getName());
+          identity.put("equipmentClass", target.getClass().getName());
+          if (target.getClass() == ESDValve.class) {
+            identity.put("strokeTimeSeconds", Double.valueOf(((ESDValve) target).getStrokeTime()));
+            identity.put("failSafePositionPercent", Double.valueOf(((ESDValve) target).getFailSafePosition()));
+            identity.put("tripEffect", "DEENERGIZE_TO_CONFIGURED_FAIL_SAFE_POSITION");
+          }
+          identities.add(identity);
+        }
+        result.put("targets", identities);
+        supported = targets.size() == 1 && targets.get(0).getClass() == ESDValve.class
+            && action.isTargetEquipmentIdentityComplete();
+      } else if (action.getClass() == ParallelActionGroup.class) {
+        List<Map<String, Object>> children = new ArrayList<Map<String, Object>>();
+        supported = !((ParallelActionGroup) action).getActions().isEmpty();
+        for (LogicAction child : ((ParallelActionGroup) action).getActions()) {
+          Map<String, Object> definition = describeTripAction(child, ancestors);
+          children.add(definition);
+          supported &= Boolean.TRUE.equals(definition.get("supportedTripPolicy"));
+        }
+        result.put("children", children);
+      }
+      ancestors.remove(action);
+    } else if (action != null) {
+      result.put("cycleDetected", Boolean.TRUE);
+    }
+    result.put("supportedTripPolicy", Boolean.valueOf(supported));
+    return result;
   }
 
   @Override
@@ -205,21 +394,73 @@ public class ESDLogic implements ProcessLogic {
 
   /**
    * Internal class to store an action with its delay.
+   *
+   * @author ESOL
+   * @version 1.0
    */
-  private static class ActionWithDelay {
-    final LogicAction action;
+  private static class ActionWithDelay implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private transient LogicAction action;
     final double delay;
 
+    /**
+     * Creates one serializable sequence step.
+     *
+     * @param action operation to execute
+     * @param delay delay relative to the previous completed action, in seconds
+     */
     ActionWithDelay(LogicAction action, double delay) {
       this.action = action;
       this.delay = delay;
     }
+
+    /**
+     * Writes the complete callback graph explicitly; unsupported payloads fail at write time.
+     *
+     * @param output destination stream
+     * @throws IOException if a callback or payload cannot be serialized
+     */
+    private void writeObject(ObjectOutputStream output) throws IOException {
+      output.defaultWriteObject();
+      output.writeObject(action);
+    }
+
+    /**
+     * Restores the actual action reference with graph aliases preserved.
+     *
+     * @param input source stream
+     * @throws IOException if the action cannot be read or is missing
+     * @throws ClassNotFoundException if an action class is unavailable
+     */
+    private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+      input.defaultReadObject();
+      Object restored = input.readObject();
+      if (!(restored instanceof LogicAction)) {
+        throw new InvalidObjectException("ESD action payload is missing or invalid");
+      }
+      action = (LogicAction) restored;
+    }
+
   }
 
   /**
-   * Marker interface for actions that can be reset.
+   * Restores the complete action graph or rejects legacy streams that discarded that graph.
+   *
+   * <p>
+   * Earlier serialized versions used a transient action list. Such a stream cannot reconstruct the safety sequence and
+   * must not be accepted as an empty successful sequence. Custom action graphs must themselves be serializable;
+   * ordinary Java serialization rejects unsupported payloads at write time.
+   * </p>
+   *
+   * @param input serialized logic state
+   * @throws IOException if the stream cannot be read or has no action definition
+   * @throws ClassNotFoundException if an action type is unavailable
    */
-  private interface ResettableAction {
-    void reset();
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    if (actions == null) {
+      throw new InvalidObjectException(
+          "ESD action definitions are absent; reconstruct legacy logic from its governed configuration");
+    }
   }
 }

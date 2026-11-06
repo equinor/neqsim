@@ -5,6 +5,39 @@ description: Execute process detection, voting, logic delay, and final-element r
 
 # Closed-loop SIF verification
 
+## Connected PSV response alongside shutdown
+
+The opt-in `AdvancedV101PsvStudy` extends the two-inventory example with an actual native
+`SafetyReliefValve` branch, leaving the original 23 cases unchanged. See its
+[tested public model contract](../../../src/test/resources/neqsim/process/advanced-safety-psv-study/README.md)
+for the native tee/valve/disposal topology, ten profiles, four timestep refinements, fault overrides
+and numerical gates. The PSV is passive self-action, not an invented SIF or a software pressure transmitter.
+
+The opt-in gas-service study explicitly enables native choking on inlet ESD, HIPPS, PCV and PSV,
+including gas-valve design-point calibration. A frozen synthetic Cv 40/80/120 comparison retains
+the capped Cv 40 pressure failure and selects Cv 80 as the smallest passing tested alternative;
+its half-timestep verification uses the same pressure and energy criteria. Uncapped checkpoints
+are preserved as superseded evidence, not credited pressure protection. This is not vendor relief sizing.
+
+Use the corrected UUID runtime: both steady and transient entry points execute the PSV law and
+parent native Cv capacity applies lift once. SNAP commands opening at set pressure, with reseat
+hysteresis; the modulating alternatives are explicitly unlatched/latched synthetic curves. A
+stable-command floor must not override physical rate limits or prevent exact seating. A pressure
+boundary with zero specified demand uses temporary intensive-property normalization; actual computed
+flow replaces it, and closure/no-forward-pressure/failure leaves exact zero ports. Ordinary cold
+`ThrottlingValve` behavior is unchanged. Complete response snapshots and explicit legacy serialized
+model migration are required; stored closure parameters alone are not execution evidence.
+
+The connected branch must refresh current intensive state, solve each real valve and aggregate
+the actual demands before the vessel consumes withdrawal. Record pressure, actual lift and
+discharge, backpressure, pop/reseat chronology and per-vessel conservation separately. Functioning
+shutdown can keep the PSV on standby; a stuck-open PSV can fail unwanted-relief requirements while
+pressure remains below its upper limit. Retain these distinct scopes and expected native FAILs.
+
+These are synthetic Cv response studies and traceable P&ID inputs. They do not certify vendor
+capacity, API/ISO relief sizing, SIL or construction. Fixed backpressure is not a simulated flare
+header. Numerical energy FAIL/INCOMPLETE and whole-train transaction limitations retain qualification HOLD.
+
 `ClosedLoopSafetyFunction` connects process signals to redundant channels, a voting pattern,
 a logic-solver delay, and existing `ProcessLogic` final elements. Run it through
 `DynamicSafetyScenarioRunner` to verify the complete detection-to-safe-state path against an
@@ -18,8 +51,9 @@ assessment. Those lifecycle activities remain controlled engineering decisions u
 
 1. The runner copies and initializes the design process.
 2. The initiating event is applied only to the copy.
-3. Each channel reads a live process signal and applies its trip direction, response delay, and
-   explicit fault mode.
+3. Each channel reads its configured input and applies its trip direction, response qualification,
+   and explicit fault mode. Measurement-backed channels read the native held sample without
+   advancing the instrument signal chain again.
 4. The configured `VotingPattern` evaluates the latched channel trips.
 5. After the logic-solver delay, the supplied ESD, HIPPS, or other `ProcessLogic` executes.
 6. Dynamic criteria observe the physical process and final elements until their deadlines.
@@ -32,8 +66,8 @@ verification, opt in with `.eventExactTiming(true)`. The event-exact policy:
 
 - splits accepted process steps at a non-grid initiating-event time and at the requested scenario duration;
 - applies the initiating event at that exact boundary and records a zero-second criterion sample;
-- advances the physical process first, then samples sensor/voting/logic and criteria at the accepted
-  end-of-step state;
+- performs the process's physical measurement scan and equipment update, then executes voting/logic
+  and samples criteria; a held input belongs to that physical scan and need not equal the updated endpoint pressure;
 - uses deterministic physical-step identities and exports every accepted step duration;
 - reports `triggerTimeSeconds`, requested and completed duration, and `timingPolicy` in the result.
 
@@ -43,6 +77,70 @@ resolves the shortest declared response time and repeat at a smaller interval. I
 ESD-valve stroke reaches the closed criterion at 3.5 s. Replacing one healthy channel by
 `STUCK_NORMAL` while another is bypassed leaves the scenario FAIL with no vote or actuation timestamp.
 These are executable software-timing checks, not vendor response data or safety credit.
+
+## Actual inputs, fixed voting and lifecycle
+
+Use `SafetyFunctionChannel.highTripFromMeasurement(...)` or `lowTripFromMeasurement(...)`
+for a registered instrument with enabled native transient sampling. The factory derives the channel
+tag from the actual measurement object and rejects a reference captured from another process copy.
+`manualTripFromPushButton(...)` reads an actual local, unlinked native `PushButton`. Legacy custom
+extractors remain supported but their configuration identity is explicitly unverified. Create fresh
+logic from the executing isolated process in each scenario's factory.
+
+`ClosedLoopSafetyFunction` rejects duplicate channel objects and duplicate normalized channel tags
+before evaluation. `getChannels()` returns an unmodifiable list containing the actual input objects;
+`getFinalElementLogic()` returns the actual configured native logic. These identity checks prevent
+counting one configured input twice; they do not prove independent field sensing or common-cause coverage.
+
+Response delay qualifies continuous demand on held scalar samples. Once qualified, each native
+channel latches until reset. Nonoverlapping qualified pulses can therefore accumulate a 2oo3 vote.
+Bypass retains the configured m-out-of-n requirement and does not silently select a degraded pattern.
+Specify and test whether these semantics meet the intended SRS.
+
+Pausing and reactivating resumes the same qualification, vote and final-element progress. A pre-vote
+pause does not command a final element; a failed child is not restarted by parent resume. Reset clears
+bookkeeping and invokes the child reset once. It is not an operating permissive and does not reopen
+physical isolation. The public reset/retrip study separately checks current indicated conditions,
+preserves the first native trace epoch, and requires an explicit operator rearm and reopening.
+
+## Full sampled windows and strict project evidence
+
+The default criterion remains `REACH_BY_DEADLINE`. It proves a target was reached and cannot prove
+that a pressure upper limit or no-trip requirement held throughout a scenario. Use
+`MAINTAIN_BOUNDS` with a positive deadline equal to the complete intended event window. Its native
+result requires start/end sample coverage, checks every sample, and reports the first violation and
+observed extrema. It does not establish behavior between scans.
+
+For a governed engineering project, `EngineeringSimulationRunner.runStrict(project)` records the
+results of direct strict execution on that project's frozen scenarios. Preserve definition IDs,
+canonical PID revision, actual-input/action readback and evidence references before this execution.
+Do not attach unrelated same-name results as proof of the configured project.
+
+## Two-inventory advanced study
+
+The executable `AdvancedV101SafetyStudy` and its tests use real V100/V101 separator inventories,
+three BPCS PI loops, two distinct finite-stroke isolation valves, 1oo2 ESD, a 2oo3 HIPPS candidate
+and a manual parallel trip. There are 17 registered measurement devices: 16 held instruments and
+one discrete push button. The [public study contract](../../../src/test/resources/neqsim/process/advanced-safety-study/README.md)
+documents the feed, geometry, boundaries, tags, actual scan order and all 18 profiles. The executed
+study matrix contains those 18 cases at 0.1 s plus five 0.05 s refinement cases. Actual physical
+step UUIDs and durations are read from `ProcessSystem`, including tiny final alignment steps;
+they must not be reconstructed by rounding wall time divided by nominal dt.
+
+The matrix retains healthy and no-demand cases, one/two false-high or stuck inputs, bypass,
+failed/slow actuators, inhibited protection, manual trip, pause, asynchronous latched pulses and
+reset/retrip. A JUnit PASS can assert an expected native simulation FAIL. Command times and each
+valve's actual closure are separate evidence; backup ESD action does not satisfy a required HIPPS closure.
+
+The nominal stroke and trip settings are synthetic model inputs. The HIPPS candidate uses actual
+native `ESDValve` travel; legacy HIPPS immediate commands and closure-time metadata are not travel
+evidence. No sensor-independence, SIL or independent-layer credit follows from distinct model tags.
+
+Keep response, numerical conservation and engineering qualification separate. The frozen per-vessel
+cumulative energy limit is 1e-5 of absolute initialized internal energy. The upstream inventory's
+energy FAIL remains a FAIL even where pressure response passes or whole-slice debts partly cancel.
+Require complete native coverage and an independent audit of the ordered consumed mass/component/
+enthalpy boundaries. The advanced study remains qualification HOLD; the numerical criterion is not relaxed.
 
 ## Final-element availability and traceability
 

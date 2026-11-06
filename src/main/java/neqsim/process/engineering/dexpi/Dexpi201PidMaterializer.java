@@ -61,6 +61,8 @@ public final class Dexpi201PidMaterializer {
     private final Map<String, String> unresolved;
     private final List<Map<String, String>> signalLinks;
     private final List<Map<String, String>> proposedOwnedNozzles;
+    /** Explicit absolute-to-gauge pressure conversion or retained missing-reference HOLD. */
+    private final List<Map<String, Object>> pressureReliefMappings;
     private final Dexpi20ConformanceAssessment.Report assessment;
 
     /**
@@ -75,6 +77,8 @@ public final class Dexpi201PidMaterializer {
       signalLinks = Collections.unmodifiableList(new ArrayList<Map<String, String>>(context.signalLinks));
       proposedOwnedNozzles = Collections
           .unmodifiableList(new ArrayList<Map<String, String>>(context.proposedOwnedNozzles));
+      pressureReliefMappings = Collections
+          .unmodifiableList(new ArrayList<Map<String, Object>>(context.pressureReliefMappings));
       assessment = report;
     }
 
@@ -119,6 +123,7 @@ public final class Dexpi201PidMaterializer {
       result.put("unresolvedTags", unresolved);
       result.put("signalLinks", signalLinks);
       result.put("proposedOwnedNozzles", proposedOwnedNozzles);
+      result.put("pressureReliefMappings", pressureReliefMappings);
       result.put("completeSupportedProjection", Boolean.valueOf(isComplete()));
       result.put("nativeSchemaAndProfileConformant", Boolean.valueOf(assessment.isSchemaAndProfileConformant()));
       result.put("approvalStatus", "REVIEW_REQUIRED");
@@ -198,6 +203,8 @@ public final class Dexpi201PidMaterializer {
     private final Map<String, String> designedNozzleInputs = new LinkedHashMap<String, String>();
     private final List<Map<String, String>> proposedOwnedNozzles = new ArrayList<Map<String, String>>();
     private final List<Map<String, String>> signalLinks = new ArrayList<Map<String, String>>();
+    /** Passive PSV gauge properties require a caller-declared absolute atmospheric reference. */
+    private final List<Map<String, Object>> pressureReliefMappings = new ArrayList<Map<String, Object>>();
     private final Element plant;
 
     /**
@@ -301,6 +308,10 @@ public final class Dexpi201PidMaterializer {
         function(element, true, location);
         return;
       }
+      if (attachment.getKind() == Kind.MANUAL_INPUT) {
+        function(element, false, "", true);
+        return;
+      }
       if (attachment.getKind() == Kind.PROCESS_NOZZLE) {
         Element port = port(attachment.getEquipmentTag(), attachment.getDirection(), attachment.getStreamIndex());
         if (!port.getAttribute("type").contains("Nozzle")) {
@@ -316,6 +327,10 @@ public final class Dexpi201PidMaterializer {
           throw new IllegalArgumentException("BOUND_EQUIPMENT_NOT_IN_NATIVE_EXPORT");
         }
         nativeIds.put(element.getTag(), existing.getAttribute("id"));
+        if (element.getType() == PidElementType.SAFETY_RELIEF_VALVE
+            && "Plant/Piping.SafetyValveOrFitting".equals(existing.getAttribute("type"))) {
+          passivePressure(element, existing);
+        }
         if ("Plant/Piping.OperatedValve".equals(existing.getAttribute("type"))) {
           actuator(element, existing, ancestor(existing, "Plant/Piping.PipingNetworkSegment"));
         }
@@ -357,17 +372,31 @@ public final class Dexpi201PidMaterializer {
      * @param location native sensing-location ID
      */
     private void function(PidElement element, boolean measurement, String location) {
+      function(element, measurement, location, false);
+    }
+
+    /**
+     * Creates a typed function, including a local manual input without a fabricated process sensor.
+     *
+     * @param element source proposal
+     * @param measurement whether a process signal generator is required
+     * @param location actual process sensing location
+     * @param manual whether an actual native local push button supplies the signal
+     */
+    private void function(PidElement element, boolean measurement, String location, boolean manual) {
       String type = element.getType() == PidElementType.TRIP || element.getType() == PidElementType.SAFETY_FUNCTION
           ? "Plant/Instrumentation.ProcessSafetyFunction"
           : "Plant/Instrumentation.ProcessInstrumentationFunction";
       Element function = object("PidFunction_" + safe(element.getId()), type);
       setData(function, "ProcessInstrumentationFunctionNumber", element.getTag());
-      setData(function, "DeviceInformation", "NeqSim design proposal; " + element.getType().name() + "; "
-          + element.getStatus().name() + "; source rule " + element.getRuleId());
+      setData(function, "DeviceInformation",
+          "NeqSim design proposal; " + element.getType().name() + "; " + element.getStatus().name() + "; source rule "
+              + element.getRuleId()
+              + (manual ? "; actual local discrete manual push button; no process sensing location" : ""));
       Element locationData = data(function, "Location");
       Element locationValue = document.createElement("DataReference");
       locationValue.setAttribute("data",
-          "Plant/Enumerations.LocationClassification." + (measurement ? "Field" : "CentralLocation"));
+          "Plant/Enumerations.LocationClassification." + (measurement || manual ? "Field" : "CentralLocation"));
       locationData.appendChild(locationValue);
       components(plant, "ProcessInstrumentationFunctions").appendChild(function);
       functionOwners.put(element.getTag(), function);
@@ -920,6 +949,76 @@ public final class Dexpi201PidMaterializer {
       result.setAttribute("type", type);
       byId.put(id, result);
       return result;
+    }
+
+    /**
+     * Maps a canonical absolute activation pressure to the official gauge-only native property.
+     *
+     * <p>
+     * No atmospheric default is assumed. Full-lift, reseat and response parameters retain their absolute canonical
+     * sidecar basis; SetPressureLow is not a reseating property.
+     * </p>
+     *
+     * @param proposal actual passive canonical relief proposal
+     * @param valve existing native safety-valve object
+     */
+    private void passivePressure(PidElement proposal, Element valve) {
+      Object raw = proposal.getAttributes().get("simulationPressureReliefConfiguration");
+      if (!(raw instanceof Map)) {
+        return;
+      }
+      Map<?, ?> settings = (Map<?, ?>) raw;
+      Object pressure = settings.get("setPressureBar");
+      if (!"bara".equals(settings.get("pressureUnit")) || !(pressure instanceof Number)
+          || !Double.isFinite(((Number) pressure).doubleValue()) || ((Number) pressure).doubleValue() <= 0.0) {
+        throw new IllegalArgumentException("PASSIVE_RELIEF_ABSOLUTE_SET_PRESSURE_REQUIRED");
+      }
+      Element old = direct(valve, "Data", "SetPressureHigh");
+      if (old != null) {
+        valve.removeChild(old);
+      }
+      Map<String, Object> mapping = new LinkedHashMap<String, Object>();
+      mapping.put("pidTag", proposal.getTag());
+      mapping.put("nativeId", valve.getAttribute("id"));
+      mapping.put("absoluteSetPressureBara", pressure);
+      Object atmosphere = proposal.getAttributes().get("simulationAtmosphericReferenceBara");
+      if (atmosphere == null) {
+        mapping.put("status", "HOLD_ATMOSPHERIC_REFERENCE_REQUIRED");
+        mapping.put("nativePropertyAssigned", Boolean.FALSE);
+        pressureReliefMappings.add(mapping);
+        return;
+      }
+      if (!(atmosphere instanceof Number) || !Double.isFinite(((Number) atmosphere).doubleValue())
+          || ((Number) atmosphere).doubleValue() <= 0.0) {
+        throw new IllegalArgumentException("PASSIVE_RELIEF_POSITIVE_ATMOSPHERIC_REFERENCE_BARA_REQUIRED");
+      }
+      double gauge = ((Number) pressure).doubleValue() - ((Number) atmosphere).doubleValue();
+      if (gauge < 0.0) {
+        throw new IllegalArgumentException("PASSIVE_RELIEF_NONNEGATIVE_GAUGE_SETTING_REQUIRED");
+      }
+      Element quantity = document.createElement("AggregatedDataValue");
+      quantity.setAttribute("type", "Core/PhysicalQuantities.PhysicalQuantity");
+      Element unit = document.createElement("Data");
+      unit.setAttribute("property", "Unit");
+      Element reference = document.createElement("DataReference");
+      reference.setAttribute("data", "Core/PhysicalQuantities.PressureGaugeUnit.Bar");
+      unit.appendChild(reference);
+      quantity.appendChild(unit);
+      Element value = document.createElement("Data");
+      value.setAttribute("property", "Value");
+      Element number = document.createElement("Double");
+      number.setTextContent(Double.toString(gauge));
+      value.appendChild(number);
+      quantity.appendChild(value);
+      data(valve, "SetPressureHigh").appendChild(quantity);
+      mapping.put("status", "EXPLICIT_REFERENCE_CONVERSION");
+      mapping.put("nativePropertyAssigned", Boolean.TRUE);
+      mapping.put("nativeProperty", "SetPressureHigh");
+      mapping.put("nativeUnit", "Core/PhysicalQuantities.PressureGaugeUnit.Bar");
+      mapping.put("atmosphericReferenceBara", atmosphere);
+      mapping.put("setPressureGaugeBar", Double.valueOf(gauge));
+      mapping.put("basis", "CALLER_DECLARED_REFERENCE_NOT_MEASURED_ATMOSPHERE");
+      pressureReliefMappings.add(mapping);
     }
 
     /**

@@ -740,6 +740,7 @@ See the [property method alignment audit](physical_properties/method_alignment_a
 
 | Document                    | Path                                                                                 | Description                                                                           |
 | --------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Passive PSV Response and P&ID | [docs/process/safety/psv-pid-verification.md](process/safety/psv-pid-verification.md) | Native opening/reseat/flow tests, canonical configuration readback and DEXPI pressure basis |
 | PSV Dynamic Sizing Wiki     | [docs/wiki/psv_dynamic_sizing_example.md](wiki/psv_dynamic_sizing_example.md)           | PSV dynamic sizing                                                                    |
 | PSV Dynamic Sizing          | [docs/safety/psv_dynamic_sizing_example.md](safety/psv_dynamic_sizing_example.md)       | PSV sizing example                                                                    |
 | Trapped Inventory Calculator | [docs/safety/trapped_inventory_calculator.md](safety/trapped_inventory_calculator.md) | Evidence-linked trapped inventory for isolation, blowdown, flare-load, and MDMT screening |

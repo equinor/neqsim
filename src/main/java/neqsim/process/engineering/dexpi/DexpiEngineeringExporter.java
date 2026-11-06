@@ -156,6 +156,29 @@ public final class DexpiEngineeringExporter {
   public static neqsim.process.processmodel.dexpi.Dexpi20ConformanceAssessment.Report exportDexpi201(
       EngineeringProject project, Path file, neqsim.process.processmodel.dexpi.Dexpi20PlantExportMetadata metadata)
       throws IOException {
+    return exportDexpi201(project, file, metadata, true);
+  }
+
+  /**
+   * Writes native DEXPI 2.0.1 with an explicit authority for requirement-derived P&amp;ID proposals.
+   *
+   * <p>
+   * Set {@code includeRequirementProposals} to false when the caller subsequently materializes its canonical
+   * {@code PidDesignModel}. This prevents a second, unbound requirement-derived instrumentation/nozzle model from being
+   * added beside that P&amp;ID. All requirements remain in the engineering manifest and review register. Documentary
+   * engineering assessments never synthesize process instruments in either mode.
+   * </p>
+   *
+   * @param project governed source project
+   * @param file native exchange output
+   * @param metadata explicit native export provenance
+   * @param includeRequirementProposals whether typed engineering requirements supply generic instrumentation/safeguards
+   * @return exact native schema and supported-profile assessment
+   * @throws IOException if writing or native assessment fails
+   */
+  public static neqsim.process.processmodel.dexpi.Dexpi20ConformanceAssessment.Report exportDexpi201(
+      EngineeringProject project, Path file, neqsim.process.processmodel.dexpi.Dexpi20PlantExportMetadata metadata,
+      boolean includeRequirementProposals) throws IOException {
     if (project == null || file == null || metadata == null) {
       throw new IllegalArgumentException("project, file and metadata must not be null");
     }
@@ -164,10 +187,22 @@ public final class DexpiEngineeringExporter {
     }
     neqsim.process.processmodel.dexpi.Dexpi201XmlWriter.writeAndAssess(project.getEngineeringProcessSystem(),
         file.toFile(), metadata);
-    Dexpi20EngineeringMaterializer.materialize(project, file);
+    Dexpi20EngineeringMaterializer.materialize(project, file, includeRequirementProposals);
     Path evidence = file.resolveSibling(file.getFileName().toString() + ".engineering-projection.json");
-    Files.write(evidence, new GsonBuilder().setPrettyPrinting().create()
-        .toJson(Dexpi20EngineeringMaterializer.projectionEvidence(project)).getBytes(StandardCharsets.UTF_8));
+    Map<String, Object> projection = Dexpi20EngineeringMaterializer.projectionEvidence(project,
+        includeRequirementProposals);
+    projection.put("requirementProposalProjectionPolicy",
+        includeRequirementProposals ? "GENERIC_ENGINEERING_PROPOSALS_EXCLUDING_ASSESSMENTS"
+            : "CANONICAL_PID_MODEL_IS_SOLE_REQUIREMENT_PCE_AUTHORITY");
+    List<String> suppressed = new ArrayList<String>();
+    for (EngineeringRequirement requirement : project.getRequirements()) {
+      if (!includeRequirementProposals || requirement.getType() == EngineeringRequirement.Type.ENGINEERING_ASSESSMENT) {
+        suppressed.add(requirement.getId());
+      }
+    }
+    projection.put("requirementsRetainedWithoutGenericPce", suppressed);
+    Files.write(evidence,
+        new GsonBuilder().setPrettyPrinting().create().toJson(projection).getBytes(StandardCharsets.UTF_8));
     return neqsim.process.processmodel.dexpi.Dexpi201XmlWriter.assess(file);
   }
 

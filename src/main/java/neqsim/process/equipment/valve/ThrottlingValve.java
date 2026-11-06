@@ -294,7 +294,11 @@ public class ThrottlingValve extends TwoPortEquipment
     return false;
   }
 
-  private void updateRecalculationState() {
+  /**
+   * Captures the connected inlet and valve configuration for subsequent recalculation checks. Subclasses using a
+   * temporary hydraulic inlet must refresh this state after restoring their connected inlet.
+   */
+  protected void updateRecalculationState() {
     if (getInletStream() == null || getInletStream().getThermoSystem() == null) {
       lastInletComposition = null;
       return;
@@ -532,7 +536,10 @@ public class ThrottlingValve extends TwoPortEquipment
     runController(dt, id);
 
     double inletMolarFlow = inStream.getThermoSystem().getFlowRate("mole/sec");
-    boolean recoveringOwnZero = !isCalcPressure && transientInletZeroFlowPublished && inletMolarFlow == 0.0
+    boolean pressureBoundaryZero = isZeroFlowPressureBoundaryEnabled() && Double.isFinite(inletMolarFlow)
+        && inletMolarFlow >= 0.0 && isNegligibleFlow(inletMolarFlow);
+    boolean recoveringOwnZero = !isCalcPressure
+        && ((transientInletZeroFlowPublished && inletMolarFlow == 0.0) || pressureBoundaryZero)
         && hasUsableInletComposition();
     if (isBelowLowFlowThreshold()) {
       thermoSystem = inStream.getThermoSystem().clone();
@@ -548,6 +555,7 @@ public class ThrottlingValve extends TwoPortEquipment
     }
     isActive(true);
 
+    boolean positiveFlowPublished = false;
     try {
       if (recoveringOwnZero) {
         // Positive normalization is intensive-property workspace only. It is replaced
@@ -627,11 +635,31 @@ public class ThrottlingValve extends TwoPortEquipment
       }
       transientInletZeroFlowPublished = false;
       finishRun(id);
+      positiveFlowPublished = true;
     } finally {
-      if (recoveringOwnZero && transientInletZeroFlowPublished) {
+      if (recoveringOwnZero && (!positiveFlowPublished || transientInletZeroFlowPublished)) {
         inStream.getThermoSystem().setTotalNumberOfMoles(0.0);
+        if (outStream != null && outStream.getThermoSystem() != null) {
+          outStream.getThermoSystem().setTotalNumberOfMoles(0.0);
+        }
       }
     }
+  }
+
+  /**
+   * Allows a reviewed pressure-boundary subclass to calculate native Cv flow from zero specified throughput.
+   *
+   * <p>
+   * The default is false: an ordinary initially dry valve remains dry. An opt-in model treats finite nonnegative
+   * negligible throughput with usable composition as an intensive-property workspace only; actual computed flow
+   * replaces it, or both ports return to exact zero on closure, absent forward pressure difference or failure. This
+   * does not supply an inventory.
+   * </p>
+   *
+   * @return true only for an explicitly pressure-driven boundary model
+   */
+  protected boolean isZeroFlowPressureBoundaryEnabled() {
+    return false;
   }
 
   /**

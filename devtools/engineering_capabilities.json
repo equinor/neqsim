@@ -273,6 +273,72 @@
       "limitations": "Instance-based Java/JPype diagnostic API only; no new curated MCP execution or runDynamic JSON option. Default off and limited to the exact concrete Separator transient algorithm. Consumed ordered enthalpy/heat, local accepted VU defects and cumulative published-inventory debt have separate units, scales and coverage. Explicit caller policy does not change solver tolerances or establish process/safety qualification. Reset epochs and snapshot rollback are tracked; skipped, steady, nonfinite and excluded-flow coverage cannot pass. ThreePhaseSeparator and unknown subclasses are unsupported. The public V101 fixture retains refined-control energy FAIL at the unchanged1e-5 limit, and distinguishes corrected pre-vessel shutdown accounting from superseded endpoint sampling."
     },
     {
+      "id": "native-safety-pid-feedback",
+      "title": "Native ESD/HIPPS scenario and P&ID feedback",
+      "domain": "engineering-design",
+      "tool": "inspectApi",
+      "apis": [
+        "neqsim.process.engineering.pid.PidSafetyFunctionImporter",
+        "neqsim.process.engineering.pid.PidSafetyFunctionValidator",
+        "neqsim.process.engineering.EngineeringSimulationRunner",
+        "neqsim.process.safety.sif.ClosedLoopSafetyFunction",
+        "neqsim.process.safety.sif.SafetyFunctionChannel",
+        "neqsim.process.safety.scenario.DynamicScenarioCriterion",
+        "neqsim.process.logic.esd.ESDLogic"
+      ],
+      "skills": [
+        "neqsim-dynamic-simulation",
+        "neqsim-pid-process-operations",
+        "neqsim-pid-quality-review"
+      ],
+      "agents": [
+        "control-system",
+        "pid-quality-review"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/engineering/pid/PidNativeSafetyFunctionTest.java",
+        "src/test/java/neqsim/process/engineering/EngineeringSimulationRunnerStrictTest.java",
+        "src/test/java/neqsim/process/safety/scenario/AdvancedV101SafetyStudyTest.java",
+        "src/test/java/neqsim/process/safety/scenario/DynamicScenarioCriterionEvaluationTest.java",
+        "src/test/java/neqsim/process/safety/sif/SafetyFunctionChannelIdentityTest.java",
+        "src/test/java/neqsim/process/logic/esd/ESDLogicTripConfigurationTest.java"
+      ],
+      "limitations": "Instance-based Java/JPype APIs and a synthetic ProcessSystem study; inspectApi discovery only, not a curated runDynamic JSON execution feature. Native source/target identities, held measurements or explicit manual input, ordered trip policy/actuator readback, canonical edits, configured-copy receipts and complete-window results remain distinct checks. Defaults retain reach-by-deadline semantics; MAINTAIN_BOUNDS assesses sampled windows, not unobserved continuous peaks. Latched qualified channels and fixed voting are explicit; distinct objects do not prove field independence. Expected faulted response FAILs, per-vessel energy FAIL/HOLD and incomplete/no-actuation outcomes cannot become approval. No PLC code, SIL allocation, controlled-standard conformity or construction credit. Native authored symbol geometry remains; PCA payload/rights/port mapping unverified."
+    },
+    {
+      "id": "native-pressure-relief-pid-feedback",
+      "title": "Native passive PSV response and canonical P&ID feedback",
+      "domain": "engineering-design",
+      "tool": "inspectApi",
+      "apis": [
+        "neqsim.process.equipment.valve.SafetyReliefValve",
+        "neqsim.process.equipment.splitter.Splitter",
+        "neqsim.process.engineering.pid.PidPressureReliefImporter",
+        "neqsim.process.engineering.pid.PidPressureReliefValidator",
+        "neqsim.process.engineering.EngineeringSimulationRunner"
+      ],
+      "skills": [
+        "neqsim-relief-flare-network",
+        "neqsim-dynamic-simulation",
+        "neqsim-pid-process-operations",
+        "neqsim-pid-quality-review"
+      ],
+      "agents": [
+        "safety-depressuring",
+        "control-system",
+        "pid-quality-review"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/equipment/valve/SafetyReliefValveUuidTest.java",
+        "src/test/java/neqsim/process/engineering/pid/PidNativePressureReliefTest.java",
+        "src/test/java/neqsim/process/safety/scenario/AdvancedV101PsvStudyTest.java",
+        "src/test/java/neqsim/process/util/fire/ReliefValveSizingDocumentationTest.java",
+        "src/test/java/neqsim/process/equipment/splitter/SplitterPressureNetworkStateTest.java",
+        "src/test/java/neqsim/process/engineering/pid/PidPressureReliefScenarioTest.java"
+      ],
+      "limitations": "Java/JPype object APIs and synthetic ProcessSystem verification; discovery/inspectApi only, no new curated runDynamic JSON execution option. Initial canonical support is an exact native CONVENTIONAL SafetyReliefValve, LINEAR trim and actual two-outlet Splitter relief branch with explicit protected-vessel and downstream-boundary identity. Low-order pressure/hysteresis, lag, dwell and lift-rate response uses native Cv hydraulics, not vendor-certified orifice capacity or mechanical/acoustic chatter dynamics. Configuration, current fault overrides, ordered pop/reseat/flow observations, sampled pressure envelopes and per-vessel consumed-boundary closure remain separate checks. Existing energy FAIL/HOLD cannot be erased by response PASS. Absolute bara native configuration and Pa absolute sizing helpers have distinct unit contracts. No automatic accumulation allowance, SIF/SIL/IPL credit, receiving-tool qualification, ISO/API conformity or construction approval. Native DEXPI gauge set pressure requires an explicit governed atmospheric reference; absolute settings remain in the sidecar if it is absent. Snapshot evidence is limited to covered branch subgraphs while the study's original SetPoint helpers leave whole-train adaptive rollback unsupported. Credited dynamic PSV execution requires finite native transient mode and gas choked-flow capacity limiting enabled; a source proposal or no-demand trace alone cannot prove relief response."
+    },
+    {
       "id": "equipment-sizing",
       "title": "Separator and compressor sizing",
       "domain": "engineering-design",

@@ -125,7 +125,7 @@ public final class ProfessionalPidPackageExporter {
     try {
       PidEngineeringPackageExporter.export(project, model, staging);
       Dexpi20ConformanceAssessment.Report conformance = DexpiEngineeringExporter.exportDexpi201(project,
-          staging.resolve("plant.dexpi.xml"), metadata);
+          staging.resolve("plant.dexpi.xml"), metadata, false);
       Dexpi201PidMaterializer.Result projected = Dexpi201PidMaterializer.materialize(project, model, bindings,
           staging.resolve("plant.dexpi.xml"));
       conformance = projected.getAssessment();

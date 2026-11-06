@@ -365,6 +365,54 @@ Never reconstruct consumed inlet enthalpy from post-step ports after the mixer
 has been refreshed. Read the [native diagnostic contract](../../../docs/process/dynamic-capability-contract.md#opt-in-separator-cumulative-energy-diagnostics)
 for the bounded default-off API, scale and unsupported-mode limits.
 
+### Advanced ESD, voting and manual trip with actual inputs
+
+Use registered native held instruments with enabled transient sampling and
+`SafetyFunctionChannel.highTripFromMeasurement(...)` or
+`lowTripFromMeasurement(...)`. Derive channels from the actual executing process
+copy; references captured from the source graph are rejected. For an unlinked
+native `PushButton`, use `manualTripFromPushButton(...)`. Legacy custom extractors
+have unverified input identity and are not a substitute for actual configured
+instrument readback. Duplicate channel objects and duplicate normalized channel
+tags are rejected. Distinct software tags do not establish hardware independence.
+
+Preserve native semantics explicitly: response delay is continuous-demand
+qualification on held samples; qualified channels latch until reset; bypass keeps
+fixed m-out-of-n voting. Test nonoverlapping qualified pulses, pre-vote pause with
+no actuation, post-actuation resume, failed-child preservation and reset/retrip.
+Reset clears bookkeeping and does not reopen equipment or authorize operation.
+Use current held conditions and a separate explicit operator reopening, retaining
+each native trace epoch before reset.
+
+For quantitative cases use event-exact timing and whole-window
+`DynamicScenarioCriterion.EvaluationMode.MAINTAIN_BOUNDS` for pressure envelopes
+and no-trip invariants. Set its positive deadline to the full intended event
+window and require start/end coverage. Default reach-by-deadline can pass an
+initial normal sample despite a later violation. Neither mode proves behavior
+between samples. Read actual accepted physical UUID and dt from
+`ProcessSystem.getCalculationIdentifier()` and `getTimeStep()`; rounding
+wall-time/nominal-dt fails on real short final alignment steps.
+
+Use actual finite-stroke `ESDValve`, native `ESDLogic`/`TripValveAction`, and
+`ParallelActionGroup` where simultaneous valve commands are required. Legacy
+HIPPS immediate commands or stored closure-time metadata do not prove physical
+travel. Retain exact native target identities and supported trip-action readback;
+an energizing/opening/opaque action with the same target is not equivalent trip
+configuration. Command issuance, each actual valve closure, pressure response and
+failed/slow/inhibited negative controls need separate assertions.
+
+After canonical PID inputs/action configuration, definition IDs and evidence
+references are frozen, use `EngineeringSimulationRunner.runStrict(project)` for
+direct typed project evidence. Do not attach unrelated same-name results. The
+public `AdvancedV101SafetyStudy` fixture uses actual V100/V101 inventories, three
+PI loops and 17 devices (16 held plus 1 discrete manual input); its 18 profiles plus
+five half-dt cases retain expected native FAIL results. Keep per-vessel energy
+coverage/debt and independent raw consumed-boundary audits separate from response.
+The frozen 1e-5 energy limit and qualification HOLD remain even if whole-slice
+residuals partly cancel. This is a proposed design study, not SIL, ISO/IEC or
+construction approval. See the [closed-loop verification contract](../../../docs/process/safety/closed-loop-sif-verification.md)
+and public study resource README for the tested model and commands.
+
 ### Loop-tuning KPIs (ControllerPerformanceMetrics)
 
 `ControllerPerformanceMetrics`
