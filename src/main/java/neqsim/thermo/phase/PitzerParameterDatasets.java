@@ -24,15 +24,14 @@ public final class PitzerParameterDatasets {
   public static final String PHREEQC_CO2_CHLORIDE_USER_THETA_ZETA_ID = "usgs-phreeqc-pitzer-co2-chlorides-user-theta-zeta-v1";
 
   /** Exact-source PHREEQC semantics for the reactive NaCl-CO2-carbonate topology. */
-  public static final String PHREEQC_REACTIVE_NACL_CARBONATE_ID =
-      "usgs-phreeqc-pitzer-b0b3be767158ccc3322d2c816625cf470045e67e-reactive-nacl-carbonate-exact-source-v1";
+  public static final String PHREEQC_REACTIVE_NACL_CARBONATE_ID = "usgs-phreeqc-pitzer-b0b3be767158ccc3322d2c816625cf470045e67e-reactive-nacl-carbonate-exact-source-v1";
 
   /**
    * Applies exact PHREEQC source semantics to the reactive NaCl-CO2-carbonate topology.
    *
    * <p>
-   * This opt-in mapping is deliberately narrower than the automatic catalog selector. It accepts only water, CO2,
-   * Na+, Cl-, H3O+, OH-, HCO3-, and CO3--, maps NeqSim H3O+ to the PHREEQC H+ catalog identity, and installs an explicit
+   * This opt-in mapping is deliberately narrower than the automatic catalog selector. It accepts only water, CO2, Na+,
+   * Cl-, H3O+, OH-, HCO3-, and CO3--, maps NeqSim H3O+ to the PHREEQC H+ catalog identity, and installs an explicit
    * six-term zero for a row omitted by the pinned PHREEQC source. PHREEQC executable source treats such absent tuples
    * as zero. The ordinary catalog-first default remains fail-closed and never infers this alias or omission rule.
    * </p>
@@ -40,10 +39,9 @@ public final class PitzerParameterDatasets {
    * <p>
    * Call after adding all components and after {@code chemicalReactionInit()} when reactions are used, but before the
    * first flash or property evaluation. The mapping uses public-domain PHREEQC commit
-   * {@code b0b3be767158ccc3322d2c816625cf470045e67e}, database blob
-   * {@code 324f852784be84650b77bd7f07f8316aafd8188b}, its molality standard state, and its common-ion terms. It introduces
-   * no fitted coefficient. Independent IPhreeqc implementation parity for ten frozen states is a regression contract,
-   * not universal experimental qualification.
+   * {@code b0b3be767158ccc3322d2c816625cf470045e67e}, database blob {@code 324f852784be84650b77bd7f07f8316aafd8188b},
+   * its molality standard state, and its common-ion terms. It introduces no fitted coefficient. Independent IPhreeqc
+   * implementation parity for ten frozen states is a regression contract, not universal experimental qualification.
    * </p>
    *
    * @param phase Pitzer aqueous role containing exactly the supported topology
@@ -970,8 +968,8 @@ public final class PitzerParameterDatasets {
   private static void requireComponentCharge(PhasePitzer phase, int component, double expectedCharge) {
     double charge = phase.getComponent(component).getIonicCharge();
     if (Math.abs(charge - expectedCharge) > 1.0e-12) {
-      throw new IllegalArgumentException("Unexpected charge for "
-          + phase.getComponent(component).getComponentName() + ": " + charge);
+      throw new IllegalArgumentException(
+          "Unexpected charge for " + phase.getComponent(component).getComponentName() + ": " + charge);
     }
   }
 
@@ -1031,8 +1029,7 @@ public final class PitzerParameterDatasets {
             sameFirst = first;
             sameSecond = second;
             opposite = third;
-          } else if (phase.getComponent(first).getIonicCharge()
-              * phase.getComponent(third).getIonicCharge() > 0.0) {
+          } else if (phase.getComponent(first).getIonicCharge() * phase.getComponent(third).getIonicCharge() > 0.0) {
             sameFirst = first;
             sameSecond = third;
             opposite = second;

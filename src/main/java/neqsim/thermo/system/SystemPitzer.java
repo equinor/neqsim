@@ -260,10 +260,10 @@ public class SystemPitzer extends SystemEosGE {
    * Applies exact-source PHREEQC semantics for reactive aqueous NaCl, CO2, and carbonate species.
    *
    * <p>
-   * Call after all components have been added and, for reactive calculations, after
-   * {@code chemicalReactionInit()}, but before the first flash. This explicit mode maps NeqSim H3O+ to PHREEQC H+ and
-   * represents rows omitted by the pinned PHREEQC source as explicit zeros. It accepts only the documented
-   * NaCl-CO2-carbonate topology; automatic catalog selection remains fail-closed and unchanged.
+   * Call after all components have been added and, for reactive calculations, after {@code chemicalReactionInit()}, but
+   * before the first flash. This explicit mode maps NeqSim H3O+ to PHREEQC H+ and represents rows omitted by the pinned
+   * PHREEQC source as explicit zeros. It accepts only the documented NaCl-CO2-carbonate topology; automatic catalog
+   * selection remains fail-closed and unchanged.
    * </p>
    *
    * @see PitzerParameterDatasets#applyPhreeqcReactiveSodiumChlorideCarbonate(PhasePitzer)
