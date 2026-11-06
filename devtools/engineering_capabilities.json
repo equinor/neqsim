@@ -275,6 +275,29 @@
       "limitations": "Instance-based Java/JPype diagnostic API only; no new curated MCP execution or runDynamic JSON option. Default off and limited to the exact concrete Separator transient algorithm. Consumed ordered enthalpy/heat, local accepted VU defects and cumulative published-inventory debt have separate units, scales and coverage. Explicit caller policy does not change solver tolerances or establish process/safety qualification. Reset epochs and snapshot rollback are tracked; skipped, steady, nonfinite and excluded-flow coverage cannot pass. ThreePhaseSeparator and unknown subclasses are unsupported. The public V101 fixture retains refined-control energy FAIL at the unchanged1e-5 limit, and distinguishes corrected pre-vessel shutdown accounting from superseded endpoint sampling."
     },
     {
+      "id": "instrumented-separator-control-acceptance",
+      "title": "Revision-bound separator control acceptance study",
+      "domain": "engineering-design",
+      "tool": "inspectApi",
+      "apis": [
+        "neqsim.process.engineering.pid.PidSeparatorControlStudy",
+        "neqsim.process.processmodel.dexpi.DexpiXmlReader"
+      ],
+      "skills": [
+        "neqsim-dynamic-simulation",
+        "neqsim-pid-process-operations"
+      ],
+      "agents": [
+        "control-system",
+        "pid-quality-review"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/engineering/pid/PidSeparatorControlStudyTest.java",
+        "src/test/java/neqsim/process/processmodel/dexpi/DexpiInstrumentTest.java"
+      ],
+      "limitations": "Instance-based Java/JPype API and synthetic two-phase Separator qualification; inspectApi discovery only, not a new curated runDynamic JSON operation. Requires exact current PT/PIC/PCV and LT/LIC/LCV bindings, explicit transient sampling and physical-step-idempotent valves. The caller supplies every case, US-Cv candidate and acceptance limit. Evidence is sampled at accepted physical steps and does not prove unobserved continuous peaks. Conservative separator energy/component/volume diagnostics and timestep sensitivity are bounded numerical evidence, not vendor valve sizing or field accuracy. Native DEXPI 2.0.1 intake is instrument metadata only; runnable equipment/topology import remains the Proteus-compatible supported subset. No ProcessModel coupling, restart-file equivalence, SIL/IPL/SRS credit, hazard completeness, standards conformity, named-tool qualification or construction approval."
+    },
+    {
       "id": "native-safety-pid-feedback",
       "title": "Native ESD/HIPPS scenario and P&ID feedback",
       "domain": "engineering-design",

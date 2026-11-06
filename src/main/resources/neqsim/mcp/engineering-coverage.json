@@ -1211,6 +1211,35 @@
       }
     },
     {
+      "id": "instrumented-separator-control-acceptance",
+      "title": "Revision-bound separator control acceptance study",
+      "domain": "engineering-design",
+      "tool": "inspectApi",
+      "apis": [
+        "neqsim.process.engineering.pid.PidSeparatorControlStudy",
+        "neqsim.process.processmodel.dexpi.DexpiXmlReader"
+      ],
+      "skills": [
+        "neqsim-dynamic-simulation",
+        "neqsim-pid-process-operations"
+      ],
+      "agents": [
+        "control-system",
+        "pid-quality-review"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/engineering/pid/PidSeparatorControlStudyTest.java",
+        "src/test/java/neqsim/process/processmodel/dexpi/DexpiInstrumentTest.java"
+      ],
+      "limitations": "Instance-based Java/JPype API and synthetic two-phase Separator qualification; inspectApi discovery only, not a new curated runDynamic JSON operation. Requires exact current PT/PIC/PCV and LT/LIC/LCV bindings, explicit transient sampling and physical-step-idempotent valves. The caller supplies every case, US-Cv candidate and acceptance limit. Evidence is sampled at accepted physical steps and does not prove unobserved continuous peaks. Conservative separator energy/component/volume diagnostics and timestep sensitivity are bounded numerical evidence, not vendor valve sizing or field accuracy. Native DEXPI 2.0.1 intake is instrument metadata only; runnable equipment/topology import remains the Proteus-compatible supported subset. No ProcessModel coupling, restart-file equivalence, SIL/IPL/SRS credit, hazard completeness, standards conformity, named-tool qualification or construction approval.",
+      "evidence": {
+        "route": "declared",
+        "testSources": "present",
+        "execution": "not_recorded",
+        "engineeringQualification": "not_assessed"
+      }
+    },
+    {
       "id": "laboratory-cvd-material-balance",
       "title": "Source-identified laboratory CVD component accounting",
       "domain": "pvt",
@@ -3028,6 +3057,7 @@
     {"id":"neqsim.process.engineering.pid.PidRuleCatalog","kind":"class","source":"src/main/java/neqsim/process/engineering/pid/PidRuleCatalog.java","sourceDigest":"7d6d46c3280cd24069bec990044a878735ab2511b94a2c52fb1a7737769b003c","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.engineering.pid.PidSafetyFunctionImporter","kind":"class","source":"src/main/java/neqsim/process/engineering/pid/PidSafetyFunctionImporter.java","sourceDigest":"93b911d208a1c1af1e0a5b4567acf838c98d6a9eb73029c5828022111a826f42","domain":"process","skills":[],"agents":[],"capabilities":["native-safety-pid-feedback"],"disposition":"registered_anchor"},
     {"id":"neqsim.process.engineering.pid.PidSafetyFunctionValidator","kind":"class","source":"src/main/java/neqsim/process/engineering/pid/PidSafetyFunctionValidator.java","sourceDigest":"11d3adf3f57b6b15f92aee415007a7f89b039fb4e92847ad1344a6249c43bf66","domain":"process","skills":[],"agents":[],"capabilities":["native-safety-pid-feedback"],"disposition":"registered_anchor"},
+    {"id":"neqsim.process.engineering.pid.PidSeparatorControlStudy","kind":"class","source":"src/main/java/neqsim/process/engineering/pid/PidSeparatorControlStudy.java","sourceDigest":"a6808a27340df56ff6c69d7d81d9ea766581da74c1c6fc0f6ac398d63c51b1e8","domain":"process","skills":[],"agents":[],"capabilities":["instrumented-separator-control-acceptance"],"disposition":"registered_anchor"},
     {"id":"neqsim.process.engineering.pid.PidSimulationBindings","kind":"class","source":"src/main/java/neqsim/process/engineering/pid/PidSimulationBindings.java","sourceDigest":"da272d7f9579084d327ed7ca2f88aed1b39d622e08054079b7039a7e3a2445f4","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.engineering.pid.PidSimulationSession","kind":"class","source":"src/main/java/neqsim/process/engineering/pid/PidSimulationSession.java","sourceDigest":"5deb17bac97e99cfc0bbb1e17abaad0d0f9e7ac5687d7df89e0ba7173f43426b","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.engineering.pid.PidTagAllocator","kind":"class","source":"src/main/java/neqsim/process/engineering/pid/PidTagAllocator.java","sourceDigest":"5b5ecc340576209dde2f4648c30dcdfcc3072fe361210960b960130d6d46e39d","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
@@ -4473,7 +4503,7 @@
     {"id":"neqsim.process.processmodel.dexpi.DexpiStreamUtils","kind":"class","source":"src/main/java/neqsim/process/processmodel/dexpi/DexpiStreamUtils.java","sourceDigest":"30ce8392fb7414b0a14d9d31f1e46e1efa425769be7bd9727aeade2ad228ca3e","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.processmodel.dexpi.DexpiTopologyResolver","kind":"class","source":"src/main/java/neqsim/process/processmodel/dexpi/DexpiTopologyResolver.java","sourceDigest":"05e31de5f657517cd254c371e97e6aeb3c4c89e0fdb007a201b91819697fe128","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.processmodel.dexpi.DexpiVisualQualityAssessment","kind":"class","source":"src/main/java/neqsim/process/processmodel/dexpi/DexpiVisualQualityAssessment.java","sourceDigest":"565046a25a5377a87dd519d43cefaa16b9716b6ab4b45ed9272f40b081201002","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.process.processmodel.dexpi.DexpiXmlReader","kind":"class","source":"src/main/java/neqsim/process/processmodel/dexpi/DexpiXmlReader.java","sourceDigest":"3f194b9b7ba5feb100d6046829a1a65ade3fbd9df64211517c8fbe1d3d05b3f9","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.processmodel.dexpi.DexpiXmlReader","kind":"class","source":"src/main/java/neqsim/process/processmodel/dexpi/DexpiXmlReader.java","sourceDigest":"3bdd1a9aa0e56678a03dc44bd25bc32c80630c39ec85cc3f441bb04d46b17019","domain":"process","skills":[],"agents":[],"capabilities":["instrumented-separator-control-acceptance"],"disposition":"registered_anchor"},
     {"id":"neqsim.process.processmodel.dexpi.DexpiXmlReaderException","kind":"class","source":"src/main/java/neqsim/process/processmodel/dexpi/DexpiXmlReaderException.java","sourceDigest":"dc88fbf9c8446c615d058dd9493b5d5037fba586d52764cfe89271eccc620930","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.processmodel.dexpi.DexpiXmlSvgRenderer","kind":"class","source":"src/main/java/neqsim/process/processmodel/dexpi/DexpiXmlSvgRenderer.java","sourceDigest":"144e520c78a94023009330b0367543aa363e5e068ca715236af6032b97458c00","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.processmodel.dexpi.DexpiXmlWriter","kind":"class","source":"src/main/java/neqsim/process/processmodel/dexpi/DexpiXmlWriter.java","sourceDigest":"4e199f584f41ed466cb13311c518b4dfe9c28f75b02b9e71482027b4be406b87","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},

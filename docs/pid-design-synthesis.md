@@ -88,6 +88,38 @@ For multi-area `ProcessModel` work, retain area identities and prepare governed
 area projects through the existing multi-area builder. A single-area simulation
 binding does not establish a globally coupled multi-area dynamic solver.
 
+### Coupled separator control acceptance
+
+`PidSeparatorControlStudy` executes a bounded pressure/level-control acceptance
+case against the actual six bound identities: PT/PIC/PCV and LT/LIC/LCV. The
+caller supplies the inlet-ramp definition, physical timestep, both valve
+candidates in US-Cv, and every response and numerical limit. The runner copies
+the governed process, rejects stale revisions or incomplete live wiring, enables
+conservative separator energy integration and tracking, and records one sample
+for every accepted physical step with a deterministic step ID.
+
+The result contains pressure and level extrema, controller IAE/peak error/output
+travel/settling time, valve travel, component-inventory residual, separator
+volume residual, cumulative-energy residual, an independent energy oracle, and
+ordered pass/fail checks. `compareRefinement(...)` compares a declared coarse
+case with a smaller-timestep execution. `evidence(...)` returns revision-bound
+report content with explicit non-credit statements for SIL/IPL/SRS, hazard
+completeness and construction approval.
+
+The public synthetic regression ramps a two-phase separator feed from 20 to
+28 kg/s over 10 s and continues to 40 s. With both candidate valves at US-Cv 80
+and a 1 s physical step, it observed 55.000--59.409 bara, level
+0.473450--0.500061, pressure IAE 113.194 bar s, level IAE 0.436951 fraction s,
+and 45.0% / 2.3653% PCV / LCV output travel. Maximum component, relative volume,
+and relative cumulative-energy residuals were respectively
+1.46e-11 mol, 5.34e-7 and 9.05e-8; the independent tracker/oracle energy
+difference was 0 J. Halving the step changed final pressure by 0.0444 bar, final
+level by 4.89e-4 and final LCV opening by 0.0925 percentage point. Under the same
+independently declared 60.0 bara acceptance limit, US-Cv 80 passed while US-Cv 20
+retained an observed 67.498 bara failure. These numbers qualify only
+this synthetic fluid, geometry, controller settings, ramp and numerical policy;
+they are not valve sizing, vendor-performance or facility safety approval.
+
 Use `@engineering-deliverables` and `neqsim-pid-process-operations` for requests
 such as:
 
