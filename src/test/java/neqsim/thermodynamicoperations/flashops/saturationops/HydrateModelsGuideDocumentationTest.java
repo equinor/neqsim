@@ -31,10 +31,8 @@ import neqsim.NeqSimTest;
 @Tag("slow")
 class HydrateModelsGuideDocumentationTest extends NeqSimTest {
   private static final Path GUIDE = Paths.get("docs", "thermo", "hydrate_models.md");
-  private static final String QUICK_START_MARKER =
-      "<!-- hydrate-models-example: java-quickstart -->";
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
+  private static final String QUICK_START_MARKER = "<!-- hydrate-models-example: java-quickstart -->";
+  private static final Pattern JAVA_FENCE = Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
 
   @TempDir
   Path temporaryDirectory;
@@ -47,8 +45,7 @@ class HydrateModelsGuideDocumentationTest extends NeqSimTest {
   @Test
   void literalHydrateFormationExampleCompilesAndRuns() throws Exception {
     String markdown = new String(Files.readAllBytes(GUIDE), StandardCharsets.UTF_8);
-    String source =
-        markedExampleSource(markdown, QUICK_START_MARKER, "HydrateFormationQuickStart");
+    String source = markedExampleSource(markdown, QUICK_START_MARKER, "HydrateFormationQuickStart");
 
     assertFalse(source.contains("System.out"));
     assertFalse(source.contains("System.err"));
@@ -72,12 +69,10 @@ class HydrateModelsGuideDocumentationTest extends NeqSimTest {
    * @param className expected public class name
    * @return exact published Java source
    */
-  private static String markedExampleSource(
-      String markdown, String marker, String className) {
+  private static String markedExampleSource(String markdown, String marker, String className) {
     int markerPosition = markdown.indexOf(marker);
     assertTrue(markerPosition >= 0, "Missing marker: " + marker);
-    assertEquals(
-        markerPosition, markdown.lastIndexOf(marker), "Marker must be unique: " + marker);
+    assertEquals(markerPosition, markdown.lastIndexOf(marker), "Marker must be unique: " + marker);
 
     Matcher fence = JAVA_FENCE.matcher(markdown.substring(markerPosition));
     assertTrue(fence.find(), "Missing Java fence after marker: " + marker);
@@ -100,33 +95,15 @@ class HydrateModelsGuideDocumentationTest extends NeqSimTest {
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "A JDK is required to validate documentation examples");
-    String classpath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    String classpath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
     StringWriter diagnostics = new StringWriter();
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
-      Boolean successful =
-          compiler
-              .getTask(
-                  diagnostics,
-                  manager,
-                  null,
-                  Arrays.asList(
-                      "-source",
-                      "8",
-                      "-target",
-                      "8",
-                      "-proc:none",
-                      "-classpath",
-                      classpath,
-                      "-d",
-                      classes.toString()),
-                  null,
-                  manager.getJavaFileObjects(javaFile.toFile()))
-              .call();
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(diagnostics, manager, null, Arrays.asList("-source", "8", "-target", "8", "-proc:none", "-classpath",
+              classpath, "-d", classes.toString()), null, manager.getJavaFileObjects(javaFile.toFile()))
+          .call();
       assertTrue(successful, diagnostics.toString());
     }
-    return new URLClassLoader(
-        new URL[] {classes.toUri().toURL()}, getClass().getClassLoader());
+    return new URLClassLoader(new URL[] {classes.toUri().toURL()}, getClass().getClassLoader());
   }
 }
