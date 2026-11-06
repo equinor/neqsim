@@ -746,7 +746,8 @@ public final class DexpiXmlReader {
   }
 
   /**
-   * Parses all ProcessInstrumentationFunction elements from the document, resolving loop and actuator associations.
+   * Parses legacy ProcessInstrumentationFunction elements and native DEXPI 2.0.1 instrumentation objects, resolving
+   * explicit loop and actuator associations without constructing live control topology.
    *
    * @param document the parsed XML document
    * @return list of instrument info records
@@ -837,8 +838,98 @@ public final class DexpiXmlReader {
           .add(new DexpiInstrumentInfo(id, tagName.trim(), category, functions, number, loopNum, unit, actuator));
     }
 
+    parseNative201Instruments(document, instruments);
+
     logger.info("Parsed {} instruments from DEXPI XML", instruments.size());
     return instruments;
+  }
+
+  /**
+   * Adds native DEXPI 2.0.1 ProcessInstrumentationFunction and ProcessSafetyFunction objects.
+   *
+   * <p>
+   * The native Plant schema stores scalar values in typed {@code Data} children rather than legacy generic attributes.
+   * The function number is retained as the exact tag. ISA category/function letters and the numeric suffix are split
+   * only when the leading tag segment consists of letters; this is metadata convenience, not an inference of loop
+   * membership, safeguard credit, or executable control intent.
+   * </p>
+   *
+   * @param document parsed DEXPI document
+   * @param instruments ordered result list
+   */
+  private static void parseNative201Instruments(Document document, List<DexpiInstrumentInfo> instruments) {
+    NodeList objects = document.getElementsByTagName("Object");
+    for (int i = 0; i < objects.getLength(); i++) {
+      Node node = objects.item(i);
+      if (node.getNodeType() != Node.ELEMENT_NODE) {
+        continue;
+      }
+      Element object = (Element) node;
+      String type = object.getAttribute("type");
+      if (!"Plant/Instrumentation.ProcessInstrumentationFunction".equals(type)
+          && !"Plant/Instrumentation.ProcessSafetyFunction".equals(type)) {
+        continue;
+      }
+      String id = firstNonEmpty(object.getAttribute("id"), object.getAttribute("ID"));
+      String tagName = firstNonEmpty(native201StringData(object, "ProcessInstrumentationFunctionNumber"),
+          native201StringData(object, "TagName"), id);
+      String[] identity = native201InstrumentIdentity(tagName);
+      String actuator = native201DescendantData(object, "Plant/Instrumentation.ActuatingFunction",
+          "ActuatingFunctionNumber");
+      instruments.add(new DexpiInstrumentInfo(id, tagName, identity[0], identity[1], identity[2], null,
+          native201StringData(object, "MeasurementUnit"), actuator));
+    }
+  }
+
+  /** Returns category, function letters, and suffix for a native instrument tag. */
+  private static String[] native201InstrumentIdentity(String tagName) {
+    String tag = tagName == null ? "" : tagName.trim();
+    int separator = tag.indexOf('-');
+    if (separator < 0) {
+      separator = tag.indexOf(' ');
+    }
+    String symbol = separator < 0 ? tag : tag.substring(0, separator);
+    String number = separator < 0 ? "" : tag.substring(separator + 1).trim();
+    for (int i = 0; i < symbol.length(); i++) {
+      if (!Character.isLetter(symbol.charAt(i))) {
+        return new String[] {null, null, number.isEmpty() ? null : number};
+      }
+    }
+    if (symbol.isEmpty()) {
+      return new String[] {null, null, number.isEmpty() ? null : number};
+    }
+    return new String[] {symbol.substring(0, 1), symbol.length() == 1 ? "" : symbol.substring(1),
+        number.isEmpty() ? null : number};
+  }
+
+  /** Reads one direct scalar string property from a native DEXPI 2.0.1 object. */
+  private static String native201StringData(Element object, String property) {
+    for (Element data : directChildElements(object, "Data")) {
+      if (!property.equals(data.getAttribute("property"))) {
+        continue;
+      }
+      for (Element value : directChildElements(data, "String")) {
+        if (!isBlank(value.getTextContent())) {
+          return value.getTextContent().trim();
+        }
+      }
+    }
+    return null;
+  }
+
+  /** Reads one scalar property from the first matching native descendant object. */
+  private static String native201DescendantData(Element owner, String type, String property) {
+    NodeList objects = owner.getElementsByTagName("Object");
+    for (int i = 0; i < objects.getLength(); i++) {
+      Node node = objects.item(i);
+      if (node.getNodeType() == Node.ELEMENT_NODE && type.equals(((Element) node).getAttribute("type"))) {
+        String value = native201StringData((Element) node, property);
+        if (!isBlank(value)) {
+          return value;
+        }
+      }
+    }
+    return null;
   }
 
   private static List<DexpiInstrumentationLoopInfo> parseInstrumentationLoops(Document document) {

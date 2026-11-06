@@ -143,6 +143,16 @@ evidence. Valid source references resolve against the complete non-catalogue doc
 including equipment nozzles and actuating functions. The reader never promotes measurement-only or
 incomplete source content into closed-loop control intent.
 
+`DexpiXmlReader.readInstruments(...)` also reads native DEXPI 2.0.1 Plant
+`Object` records typed as `ProcessInstrumentationFunction` or
+`ProcessSafetyFunction`. It retains the exact native function number as the tag,
+splits an alphabetic ISA-style prefix only for convenient category/function
+metadata, and reads a nested native actuating-function number when present. It
+does not infer loop membership, safety credit or executable control intent. This
+is a bounded instrument-inventory intake path: the existing runnable equipment,
+piping and topology reconstruction remains the documented Proteus-compatible
+supported subset, not a claim of full native DEXPI 2.0.1 process-model import.
+
 `ImportResult.getActuatingFunctions()` exposes source-ordered `ActuatingFunction` and
 `ActuatingElectricalFunction` occurrences as immutable `DexpiActuatingFunctionInfo` records. Each
 record retains the explicit source kind, ID, component class, function number, enclosing
