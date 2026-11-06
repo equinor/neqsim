@@ -375,24 +375,40 @@ double requiredMEGwt = fluid.getPhase("aqueous").getComponent("MEG").getwtfrac()
 
 ### Basic Hydrate Check
 
+The program below is complete Java 8 source. It calculates the hydrate formation temperature at
+100 bara and fails closed if the operation returns a non-finite or physically implausible result.
+
+<!-- hydrate-models-example: java-quickstart -->
 ```java
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-// Create fluid at potential hydrate conditions
-SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 5.0, 100.0);
-fluid.addComponent("methane", 0.85);
-fluid.addComponent("ethane", 0.08);
-fluid.addComponent("propane", 0.04);
-fluid.addComponent("water", 0.03);
-fluid.setMixingRule(10);
-fluid.setHydrateCheck(true);  // Enable hydrate phase
+public final class HydrateFormationQuickStart {
+  private HydrateFormationQuickStart() {}
 
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 5.0, 100.0);
+    fluid.addComponent("methane", 0.85);
+    fluid.addComponent("ethane", 0.08);
+    fluid.addComponent("propane", 0.04);
+    fluid.addComponent("water", 0.03);
+    fluid.setMixingRule(10);
+    fluid.setMultiPhaseCheck(true);
+    fluid.setHydrateCheck(true);
 
-// Calculate hydrate formation temperature
-ops.hydrateFormationTemperature();
-System.out.println("Hydrate formation T: " + fluid.getTemperature("C") + " °C");
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.hydrateFormationTemperature();
+
+    double hydrateTemperatureC = fluid.getTemperature("C");
+    if (!Double.isFinite(hydrateTemperatureC)
+        || hydrateTemperatureC <= -30.0
+        || hydrateTemperatureC >= 25.0) {
+      throw new IllegalStateException(
+          "Unexpected hydrate formation temperature: " + hydrateTemperatureC + " C");
+    }
+  }
+}
 ```
 
 ### Hydrate Equilibrium Curve
