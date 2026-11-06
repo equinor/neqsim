@@ -257,6 +257,12 @@ then matches only tank volume against separate pressure observations. Component
 withdrawals and actual surface gas volume are predictions. Preserve the no-oil
 boundary: GOR is undefined, not validated. This is synthetic independent-code
 qualification, not measured calibration/field accuracy or two-phase GOR acceptance.
+Its continuous-reference generator and frozen REFINEMENT_SCOPE.md qualify the
+well-mixed gas ODE separately from the finite withdrawal-before-injection protocol.
+Keep the failed64-substep1mol target visible; finer meshes retain the same bound.
+Zero-flow has no produced fluid, and equal injection/production keeps inventory
+constant while composition changes. Do not infer inflow or spatial-flow physics.
+
 
 ### Explicit wet-gas/aqueous fixed-cell path
 

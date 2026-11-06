@@ -255,4 +255,140 @@ class IndependentGasLabTankTest {
     Files.write(Paths.get("target", "independent-gas-tank.json"),
         new Gson().toJson(report).getBytes(StandardCharsets.UTF_8));
   }
+
+  /**
+   * Qualifies explicit gas-flow refinement against an independent continuous well-mixed balance, including
+   * constant-inventory, injection-only, withdrawal-only and zero-flow limits.
+   *
+   * @throws Exception if the independent reference or complete diagnostics cannot be read or written
+   */
+  @Test
+  void convergesToContinuousGasBalanceAndPreservesZeroFlowLimits() throws Exception {
+    JsonObject input;
+    try (InputStreamReader reader = new InputStreamReader(
+        getClass().getResourceAsStream("/neqsim/pvtsimulation/gas-lab-tank/continuous-reference.json"),
+        StandardCharsets.UTF_8)) {
+      input = new Gson().fromJson(reader, JsonObject.class);
+    }
+    CalibratedPvtModel model = model(reference());
+    byte[] before = SerializationUtils.serialize(model);
+    List<Map<String, Object>> diagnostics = new ArrayList<Map<String, Object>>();
+    for (int scenario = 0; scenario < input.getAsJsonArray("cases").size(); scenario++) {
+      JsonObject testCase = input.getAsJsonArray("cases").get(scenario).getAsJsonObject();
+      String name = testCase.get("name").getAsString();
+      boolean mixing = scenario < 2;
+      double previousError = Double.NaN;
+      JsonArray schedule = testCase.getAsJsonArray("schedule");
+      JsonArray refinements = testCase.getAsJsonArray("refinements");
+      for (int refinement = 0; refinement < refinements.size(); refinement++) {
+        JsonObject expected = refinements.get(refinement).getAsJsonObject();
+        int subdivisions = expected.get("substeps").getAsInt();
+        Step[] steps = new Step[schedule.size()];
+        for (int row = 0; row < steps.length; row++) {
+          JsonObject interval = schedule.get(row).getAsJsonObject();
+          JsonArray injection = interval.getAsJsonArray("injectedMoles");
+          steps[row] = Step.phaseWithdrawal(86400, new double[] {interval.get("producedMoles").getAsDouble(), 0, 0},
+              new double[] {injection.get(1).getAsDouble(), injection.get(0).getAsDouble()}, Double.NaN, Double.NaN,
+              false, subdivisions);
+        }
+        CompositionalReservoirHistory history = new CompositionalReservoirHistory(model,
+            "independent continuous gas balance: " + name, new String[] {"ethane", "methane"}, 400, 200,
+            new double[] {1, 0, 0}, steps);
+        long start = System.nanoTime();
+        Result result = history.replay(input.get("initialVolumeM3").getAsDouble());
+        double seconds = (System.nanoTime() - start) / 1e9;
+        double[][] inventory = result.getComponentMoles();
+        double[][] production = result.getProducedComponentMoles();
+        double componentError = 0;
+        double finiteComponentError = 0;
+        double finitePressureError = 0;
+        double continuousPressureError = 0;
+        double surfaceRelativeError = 0;
+        double closure = 0;
+        List<Map<String, Object>> rowDiagnostics = new ArrayList<Map<String, Object>>();
+        for (int row = 0; row < steps.length; row++) {
+          JsonObject finite = expected.getAsJsonArray("rows").get(row).getAsJsonObject();
+          JsonObject exact = testCase.getAsJsonArray("continuous").get(row).getAsJsonObject();
+          JsonObject interval = schedule.get(row).getAsJsonObject();
+          for (int component = 0; component < 2; component++) {
+            int reversed = 1 - component;
+            double actual = inventory[row + 1][reversed];
+            double finiteAmount = finite.getAsJsonArray("retainedMoles").get(component).getAsDouble();
+            double exactAmount = exact.getAsJsonArray("retainedMoles").get(component).getAsDouble();
+            assertEquals(finiteAmount, actual, 1e-4);
+            assertEquals(finite.getAsJsonArray("producedMoles").get(component).getAsDouble(), production[row][reversed],
+                1e-4);
+            finiteComponentError = Math.max(finiteComponentError, Math.abs(actual - finiteAmount));
+            componentError = Math.max(componentError, Math.abs(actual - exactAmount));
+            double balance = inventory[row][reversed]
+                + interval.getAsJsonArray("injectedMoles").get(component).getAsDouble() - production[row][reversed];
+            assertEquals(balance, actual, 1e-9 * inventory[row][reversed]);
+            closure = Math.max(closure, Math.abs(balance - actual));
+          }
+          double actualPressure = result.getPressuresBara()[row + 1];
+          assertEquals(finite.get("pressureBara").getAsDouble(), actualPressure, 1e-6);
+          finitePressureError = Math.max(finitePressureError,
+              Math.abs(actualPressure - finite.get("pressureBara").getAsDouble()));
+          continuousPressureError = Math.max(continuousPressureError,
+              Math.abs(actualPressure - exact.get("pressureBara").getAsDouble()));
+          Map<String, Object> rowReport = new LinkedHashMap<String, Object>();
+          rowReport.put("pressureBara", actualPressure);
+          rowReport.put("retainedMolesEthaneMethane", inventory[row + 1]);
+          rowReport.put("producedMolesEthaneMethane", production[row]);
+          if (interval.get("producedMoles").getAsDouble() > 0) {
+            PvtSeparatorPath.Result surface = separator().separate(result.getProducedFluid(row));
+            double relative = Math.abs(surface.getVolumesM3()[0] / finite.get("surfaceGasVolumeM3").getAsDouble() - 1);
+            assertTrue(relative <= 1e-7);
+            assertEquals(0, surface.getVolumesM3()[1], 0);
+            assertTrue(Double.isNaN(surface.getGasOilRatio()));
+            surfaceRelativeError = Math.max(surfaceRelativeError, relative);
+            rowReport.put("surfaceGasVolumeM3", surface.getVolumesM3()[0]);
+            rowReport.put("gasOilRatioStatus", "undefined: no stock-tank oil");
+          } else {
+            final int zeroProductionRow = row;
+            assertThrows(IllegalStateException.class, () -> result.getProducedFluid(zeroProductionRow));
+            rowReport.put("producedFluidStatus", "absent: zero production");
+          }
+          if (scenario == 1) {
+            assertEquals(inventory[0][0] + inventory[0][1], inventory[row + 1][0] + inventory[row + 1][1], 1e-4);
+          }
+          rowDiagnostics.add(rowReport);
+        }
+        if (mixing) {
+          if (refinement > 0) {
+            assertTrue(componentError / previousError >= .45 && componentError / previousError <= .55,
+                name + " first-order refinement at " + subdivisions);
+          }
+          if (subdivisions == 64) {
+            assertTrue(componentError > 1, "64 substeps do not meet the frozen one-mole target");
+          }
+          if (subdivisions == 1024) {
+            assertTrue(componentError <= 1, name + " one-mole continuous-limit target");
+          }
+        } else {
+          assertTrue(componentError <= 1e-4);
+          assertTrue(continuousPressureError <= 1e-6);
+        }
+        Map<String, Object> report = new LinkedHashMap<String, Object>();
+        report.put("case", name);
+        report.put("substeps", subdivisions);
+        report.put("seconds", seconds);
+        report.put("maxContinuousComponentErrorMoles", componentError);
+        report.put("maxContinuousPressureErrorBara", continuousPressureError);
+        report.put("maxFiniteComponentErrorMoles", finiteComponentError);
+        report.put("maxFinitePressureErrorBara", finitePressureError);
+        report.put("maxFiniteSurfaceRelativeError", surfaceRelativeError);
+        report.put("maxComponentClosureMoles", closure);
+        if (mixing && refinement > 0) {
+          report.put("refinementErrorRatio", componentError / previousError);
+        }
+        report.put("rows", rowDiagnostics);
+        diagnostics.add(report);
+        previousError = componentError;
+      }
+    }
+    assertArrayEquals(before, SerializationUtils.serialize(model));
+    Files.write(Paths.get("target", "independent-gas-continuous.json"),
+        new Gson().toJson(diagnostics).getBytes(StandardCharsets.UTF_8));
+  }
 }

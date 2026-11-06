@@ -1,4 +1,4 @@
-# Gas-only independent-chain validation
+# Run48 gas-only independent-chain validation (historical)
 
 Base: b20e324a60a94778b11425257bb3d8e9636389b7. All10,071base files matched
 fresh connector blob hashes before editing. Unmodified-master phase-withdrawal
@@ -75,3 +75,7 @@ paths, aquifer/Bayesian uncertainty, multi-tank or full Tran2025 reproduction.
 Pressure sigma0.5bara is a declared synthetic scale, not converted experimental
 uncertainty. The precise volume recovery is not a confidence interval, and in-place
 volume is not recoverable reserves. #4740 must remain open after this draft.
+
+The compatible Run49 continuous-flow refinement is recorded separately in
+[REFINEMENT_VALIDATION.md](REFINEMENT_VALIDATION.md); the original inputs and
+finite4-substep reference data above remain unchanged.

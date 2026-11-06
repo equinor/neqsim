@@ -94,6 +94,18 @@ the fourth pressure, produced composition and actual surface gas volume are
 withheld. A held-out pressure perturbation checks fit exclusion. Original and
 calibrated checkpoints remain separate and immutable.
 
+The same benchmark also checks the continuous well-mixed gas balance against an
+independent analytical solution, with 1 through 1,024 explicit substeps for
+alternating injection and equal injection/production. Withdrawal-only,
+injection-only and no-flow endpoints are invariant under refinement. A constant
+total inventory still changes composition according to the exponential mixing
+limit. The [frozen refinement scope](../../src/test/resources/neqsim/pvtsimulation/gas-lab-tank/REFINEMENT_SCOPE.md)
+retains the failed 1 mol target at 64 substeps and tests finer meshes against the
+same target. The four-substep finite-protocol benchmark above must not be treated
+as a converged continuous-flow answer. These limits assume uniform gas mixing
+and prescribed molar rates; they do not qualify well inflow, relative permeability
+or spatial displacement.
+
 This is gas-only synthetic numerical qualification. No oil is present and GOR
 remains undefined, so it does not complete two-phase GOR or measured laboratory
 and field acceptance under #4740. No EOS parameter is fitted against reservoir

@@ -1,0 +1,1365 @@
+{
+  "components": [
+    "methane",
+    "ethane"
+  ],
+  "initialVolumeM3": 1017.3,
+  "initialMoles": [
+    5591696.009967578,
+    621299.5566630642
+  ],
+  "temperatureK": 400.0,
+  "cases": [
+    {
+      "name": "alternating",
+      "schedule": [
+        {
+          "producedMoles": 100000.0,
+          "injectedMoles": [
+            0.0,
+            20000.0
+          ]
+        },
+        {
+          "producedMoles": 100000.0,
+          "injectedMoles": [
+            10000.0,
+            0.0
+          ]
+        },
+        {
+          "producedMoles": 100000.0,
+          "injectedMoles": [
+            0.0,
+            15000.0
+          ]
+        },
+        {
+          "producedMoles": 100000.0,
+          "injectedMoles": [
+            5000.0,
+            5000.0
+          ]
+        }
+      ],
+      "continuous": [
+        {
+          "retainedMoles": [
+            5501841.336578667,
+            631154.230051975
+          ],
+          "producedMoles": [
+            89854.67338891086,
+            10145.326611089149
+          ],
+          "pressureBara": 197.0958333066624,
+          "surfaceGasVolumeM3": 2358.763559822536
+        },
+        {
+          "retainedMoles": [
+            5422124.034715289,
+            620871.5319153527
+          ],
+          "producedMoles": [
+            89717.30186337768,
+            10282.698136622315
+          ],
+          "pressureBara": 193.9898854627158,
+          "surfaceGasVolumeM3": 2358.7483141011353
+        },
+        {
+          "retainedMoles": [
+            5332510.061135171,
+            625485.5054954713
+          ],
+          "producedMoles": [
+            89613.9735801186,
+            10386.026419881397
+          ],
+          "pressureBara": 190.97300403614486,
+          "surfaceGasVolumeM3": 2358.7368331971174
+        },
+        {
+          "retainedMoles": [
+            5248041.614733142,
+            619953.9518974999
+          ],
+          "producedMoles": [
+            89468.44640202848,
+            10531.55359797152
+          ],
+          "pressureBara": 187.86415537707168,
+          "surfaceGasVolumeM3": 2358.720644081455
+        }
+      ],
+      "refinements": [
+        {
+          "substeps": 1,
+          "rows": [
+            {
+              "retainedMoles": [
+                5501696.009967578,
+                631299.5566630642
+              ],
+              "producedMoles": [
+                90000.0,
+                10000.0
+              ],
+              "pressureBara": 197.0948379848459,
+              "surfaceGasVolumeM3": 2358.7796663469717
+            },
+            {
+              "retainedMoles": [
+                5421989.504391379,
+                621006.0622392636
+              ],
+              "producedMoles": [
+                89706.50557619939,
+                10293.494423800617
+              ],
+              "pressureBara": 193.98896903121658,
+              "surfaceGasVolumeM3": 2358.7471150519596
+            },
+            {
+              "retainedMoles": [
+                5332265.965053842,
+                625729.6015767992
+              ],
+              "producedMoles": [
+                89723.53933753564,
+                10276.460662464367
+              ],
+              "pressureBara": 190.9713457259106,
+              "surfaceGasVolumeM3": 2358.7490067857602
+            },
+            {
+              "retainedMoles": [
+                5247768.315963289,
+                620227.2506673529
+              ],
+              "producedMoles": [
+                89497.64909055376,
+                10502.350909446228
+              ],
+              "pressureBara": 187.8623081152464,
+              "surfaceGasVolumeM3": 2358.7238945481035
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 273.2987698531684
+        },
+        {
+          "substeps": 2,
+          "rows": [
+            {
+              "retainedMoles": [
+                5501768.908124582,
+                631226.6585060604
+              ],
+              "producedMoles": [
+                89927.1018429962,
+                10072.8981570038
+              ],
+              "pressureBara": 197.09533725751135,
+              "surfaceGasVolumeM3": 2358.7715898919455
+            },
+            {
+              "retainedMoles": [
+                5422056.987450451,
+                620938.5791801909
+              ],
+              "producedMoles": [
+                89711.9206741305,
+                10288.079325869501
+              ],
+              "pressureBara": 193.989428734145,
+              "surfaceGasVolumeM3": 2358.747716475169
+            },
+            {
+              "retainedMoles": [
+                5332388.404676258,
+                625607.1619543841
+              ],
+              "producedMoles": [
+                89668.58277419322,
+                10331.417225806781
+              ],
+              "pressureBara": 190.97217755074786,
+              "surfaceGasVolumeM3": 2358.7429023057202
+            },
+            {
+              "retainedMoles": [
+                5247905.4009163575,
+                620090.165714284
+              ],
+              "producedMoles": [
+                89483.00375989993,
+                10516.996240100061
+              ],
+              "pressureBara": 187.86323470215342,
+              "surfaceGasVolumeM3": 2358.722264533299
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 136.21381678423793
+        },
+        {
+          "substeps": 4,
+          "rows": [
+            {
+              "retainedMoles": [
+                5501805.180888189,
+                631190.3857424528
+              ],
+              "producedMoles": [
+                89890.82907938867,
+                10109.170920611337
+              ],
+              "pressureBara": 197.09558568381075,
+              "surfaceGasVolumeM3": 2358.767569071723
+            },
+            {
+              "retainedMoles": [
+                5422090.565390006,
+                620905.0012406359
+              ],
+              "producedMoles": [
+                89714.61549818297,
+                10285.384501817021
+              ],
+              "pressureBara": 193.98965746907962,
+              "surfaceGasVolumeM3": 2358.748015761754
+            },
+            {
+              "retainedMoles": [
+                5332449.33053156,
+                625546.236099082
+              ],
+              "producedMoles": [
+                89641.23485844622,
+                10358.765141553788
+              ],
+              "pressureBara": 190.9725914590222,
+              "surfaceGasVolumeM3": 2358.739863337548
+            },
+            {
+              "retainedMoles": [
+                5247973.616432198,
+                620021.9501984434
+              ],
+              "producedMoles": [
+                89475.71409936127,
+                10524.285900638724
+              ],
+              "pressureBara": 187.8636957766591,
+              "surfaceGasVolumeM3": 2358.7214531134177
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 67.99830094351039
+        },
+        {
+          "substeps": 8,
+          "rows": [
+            {
+              "retainedMoles": [
+                5501823.27334552,
+                631172.293285122
+              ],
+              "producedMoles": [
+                89872.73662205778,
+                10127.263377942223
+              ],
+              "pressureBara": 197.09570959551556,
+              "surfaceGasVolumeM3": 2358.7655630023423
+            },
+            {
+              "retainedMoles": [
+                5422107.313608534,
+                620888.2530221083
+              ],
+              "producedMoles": [
+                89715.95973698636,
+                10284.040263013636
+              ],
+              "pressureBara": 193.9897715584168,
+              "surfaceGasVolumeM3": 2358.7481650497125
+            },
+            {
+              "retainedMoles": [
+                5332479.720206065,
+                625515.846424577
+              ],
+              "producedMoles": [
+                89627.59340246866,
+                10372.406597531339
+              ],
+              "pressureBara": 190.9727979137453,
+              "surfaceGasVolumeM3": 2358.7383471648186
+            },
+            {
+              "retainedMoles": [
+                5248007.642698865,
+                619987.9239317769
+              ],
+              "producedMoles": [
+                89472.07750719985,
+                10527.922492800155
+              ],
+              "pressureBara": 187.8639257608824,
+              "surfaceGasVolumeM3": 2358.7210482991263
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 33.9720342770258
+        },
+        {
+          "substeps": 16,
+          "rows": [
+            {
+              "retainedMoles": [
+                5501832.30861236,
+                631163.2580182824
+              ],
+              "producedMoles": [
+                89863.70135521819,
+                10136.298644781817
+              ],
+              "pressureBara": 197.0957714761397,
+              "surfaceGasVolumeM3": 2358.764561051442
+            },
+            {
+              "retainedMoles": [
+                5422115.677548271,
+                620879.8890823716
+              ],
+              "producedMoles": [
+                89716.63106408922,
+                10283.368935910778
+              ],
+              "pressureBara": 193.98982853367815,
+              "surfaceGasVolumeM3": 2358.748239604974
+            },
+            {
+              "retainedMoles": [
+                5332494.896759569,
+                625500.6698710733
+              ],
+              "producedMoles": [
+                89620.78078870173,
+                10379.219211298272
+              ],
+              "pressureBara": 190.97290101645646,
+              "surfaceGasVolumeM3": 2358.7375899054596
+            },
+            {
+              "retainedMoles": [
+                5248024.635490588,
+                619970.9311400539
+              ],
+              "producedMoles": [
+                89470.26126898057,
+                10529.738731019432
+              ],
+              "pressureBara": 187.86404061495068,
+              "surfaceGasVolumeM3": 2358.7208461157356
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 16.97924255408267
+        },
+        {
+          "substeps": 32,
+          "rows": [
+            {
+              "retainedMoles": [
+                5501836.8235077355,
+                631158.7431229068
+              ],
+              "producedMoles": [
+                89859.18645984263,
+                10140.813540157364
+              ],
+              "pressureBara": 197.09580239766137,
+              "surfaceGasVolumeM3": 2358.764060346765
+            },
+            {
+              "retainedMoles": [
+                5422119.856978043,
+                620875.7096525991
+              ],
+              "producedMoles": [
+                89716.96652969219,
+                10283.033470307812
+              ],
+              "pressureBara": 193.9898570039727,
+              "surfaceGasVolumeM3": 2358.7482768604405
+            },
+            {
+              "retainedMoles": [
+                5332502.480469079,
+                625493.0861615628
+              ],
+              "producedMoles": [
+                89617.37650896385,
+                10382.623491036147
+              ],
+              "pressureBara": 190.97295253667488,
+              "surfaceGasVolumeM3": 2358.737211482426
+            },
+            {
+              "retainedMoles": [
+                5248033.1268049525,
+                619962.4398256892
+              ],
+              "producedMoles": [
+                89469.35366412626,
+                10530.646335873733
+              ],
+              "pressureBara": 187.86409800750076,
+              "surfaceGasVolumeM3": 2358.720745079959
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 8.487928189327588
+        },
+        {
+          "substeps": 64,
+          "rows": [
+            {
+              "retainedMoles": [
+                5501839.080271213,
+                631156.4863594285
+              ],
+              "producedMoles": [
+                89856.92969636436,
+                10143.070303635643
+              ],
+              "pressureBara": 197.09581785372666,
+              "surfaceGasVolumeM3": 2358.7638100620975
+            },
+            {
+              "retainedMoles": [
+                5422121.946058191,
+                620873.6205724509
+              ],
+              "producedMoles": [
+                89717.13421302236,
+                10282.86578697764
+              ],
+              "pressureBara": 193.9898712347879,
+              "surfaceGasVolumeM3": 2358.7482954826337
+            },
+            {
+              "retainedMoles": [
+                5332506.271182486,
+                625489.2954481558
+              ],
+              "producedMoles": [
+                89615.67487570488,
+                10384.325124295128
+              ],
+              "pressureBara": 190.97297828900295,
+              "surfaceGasVolumeM3": 2358.737022322558
+            },
+            {
+              "retainedMoles": [
+                5248037.3711922495,
+                619958.1954383923
+              ],
+              "producedMoles": [
+                89468.89999023659,
+                10531.100009763415
+              ],
+              "pressureBara": 187.86412669515815,
+              "surfaceGasVolumeM3": 2358.7206945760486
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 4.243540892557173
+        },
+        {
+          "substeps": 128,
+          "rows": [
+            {
+              "retainedMoles": [
+                5501840.208481938,
+                631155.358148704
+              ],
+              "producedMoles": [
+                89855.8014856399,
+                10144.198514360107
+              ],
+              "pressureBara": 197.0958255805857,
+              "surfaceGasVolumeM3": 2358.763684936679
+            },
+            {
+              "retainedMoles": [
+                5422122.990439616,
+                620872.5761910257
+              ],
+              "producedMoles": [
+                89717.21804232159,
+                10282.781957678404
+              ],
+              "pressureBara": 193.98987834911273,
+              "surfaceGasVolumeM3": 2358.748304792346
+            },
+            {
+              "retainedMoles": [
+                5332508.16625391,
+                625487.4003767315
+              ],
+              "producedMoles": [
+                89614.8241857058,
+                10385.175814294198
+              ],
+              "pressureBara": 190.97299116322213,
+              "surfaceGasVolumeM3": 2358.7369277555345
+            },
+            {
+              "retainedMoles": [
+                5248039.493068487,
+                619956.0735621543
+              ],
+              "producedMoles": [
+                89468.67318542281,
+                10531.326814577193
+              ],
+              "pressureBara": 187.86414103683282,
+              "surfaceGasVolumeM3": 2358.720669327587
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 2.121664654481068
+        },
+        {
+          "substeps": 256,
+          "rows": [
+            {
+              "retainedMoles": [
+                5501840.772544551,
+                631154.7940860908
+              ],
+              "producedMoles": [
+                89855.23742302661,
+                10144.762576973382
+              ],
+              "pressureBara": 197.09582944372184,
+              "surfaceGasVolumeM3": 2358.763622378198
+            },
+            {
+              "retainedMoles": [
+                5422123.512590671,
+                620872.0540399709
+              ],
+              "producedMoles": [
+                89717.25995388,
+                10282.740046120001
+              ],
+              "pressureBara": 193.98988190600448,
+              "surfaceGasVolumeM3": 2358.748309446856
+            },
+            {
+              "retainedMoles": [
+                5332509.11371831,
+                625486.4529123319
+              ],
+              "producedMoles": [
+                89614.39887236111,
+                10385.601127638887
+              ],
+              "pressureBara": 190.97299759984554,
+              "surfaceGasVolumeM3": 2358.73688047525
+            },
+            {
+              "retainedMoles": [
+                5248040.553927261,
+                619955.0127033802
+              ],
+              "producedMoles": [
+                89468.55979104828,
+                10531.440208951728
+              ],
+              "pressureBara": 187.86414820713173,
+              "surfaceGasVolumeM3": 2358.7206567042294
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 1.0608058803823848
+        },
+        {
+          "substeps": 512,
+          "rows": [
+            {
+              "retainedMoles": [
+                5501841.054565171,
+                631154.5120654708
+              ],
+              "producedMoles": [
+                89854.95540240663,
+                10145.04459759337
+              ],
+              "pressureBara": 197.09583137521656,
+              "surfaceGasVolumeM3": 2358.7635911000148
+            },
+            {
+              "retainedMoles": [
+                5422123.773656284,
+                620871.7929743573
+              ],
+              "producedMoles": [
+                89717.28090888643,
+                10282.719091113573
+              ],
+              "pressureBara": 193.98988368438268,
+              "surfaceGasVolumeM3": 2358.7483117740244
+            },
+            {
+              "retainedMoles": [
+                5332509.5874326825,
+                625485.9791979594
+              ],
+              "producedMoles": [
+                89614.18622360214,
+                10385.813776397865
+              ],
+              "pressureBara": 190.9730008180357,
+              "surfaceGasVolumeM3": 2358.7368568359148
+            },
+            {
+              "retainedMoles": [
+                5248041.084336814,
+                619954.4822938284
+              ],
+              "producedMoles": [
+                89468.50309586903,
+                10531.49690413096
+              ],
+              "pressureBara": 187.86415179214657,
+              "surfaceGasVolumeM3": 2358.720650392769
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 0.5303963286130643
+        },
+        {
+          "substeps": 1024,
+          "rows": [
+            {
+              "retainedMoles": [
+                5501841.195572809,
+                631154.3710578324
+              ],
+              "producedMoles": [
+                89854.81439476823,
+                10145.185605231774
+              ],
+              "pressureBara": 197.0958323409456,
+              "surfaceGasVolumeM3": 2358.7635754611874
+            },
+            {
+              "retainedMoles": [
+                5422123.904186613,
+                620871.6624440289
+              ],
+              "producedMoles": [
+                89717.29138619645,
+                10282.708613803548
+              ],
+              "pressureBara": 193.9898845735549,
+              "surfaceGasVolumeM3": 2358.748312937587
+            },
+            {
+              "retainedMoles": [
+                5332509.824285412,
+                625485.7423452298
+              ],
+              "producedMoles": [
+                89614.07990120094,
+                10385.920098799055
+              ],
+              "pressureBara": 190.9730024271004,
+              "surfaceGasVolumeM3": 2358.736845016449
+            },
+            {
+              "retainedMoles": [
+                5248041.34953663,
+                619954.2170940113
+              ],
+              "producedMoles": [
+                89468.47474878143,
+                10531.525251218573
+              ],
+              "pressureBara": 187.86415358462034,
+              "surfaceGasVolumeM3": 2358.720647237094
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 0.26519651142905165
+        }
+      ]
+    },
+    {
+      "name": "constant inventory",
+      "schedule": [
+        {
+          "producedMoles": 100000.0,
+          "injectedMoles": [
+            0.0,
+            100000.0
+          ]
+        }
+      ],
+      "continuous": [
+        {
+          "retainedMoles": [
+            5502416.427975883,
+            710579.1386547596
+          ],
+          "producedMoles": [
+            89279.5819916954,
+            10720.418008304589
+          ],
+          "pressureBara": 199.38295352879695,
+          "surfaceGasVolumeM3": 2358.699600008381
+        }
+      ],
+      "refinements": [
+        {
+          "substeps": 1,
+          "rows": [
+            {
+              "retainedMoles": [
+                5501696.009967578,
+                711299.5566630642
+              ],
+              "producedMoles": [
+                90000.0,
+                10000.0
+              ],
+              "pressureBara": 199.3779344085735,
+              "surfaceGasVolumeM3": 2358.7796663469717
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 720.4180083045886
+        },
+        {
+          "substeps": 2,
+          "rows": [
+            {
+              "retainedMoles": [
+                5502058.15411783,
+                710937.4125128117
+              ],
+              "producedMoles": [
+                89637.8558497475,
+                10362.1441502525
+              ],
+              "pressureBara": 199.3804575307374,
+              "surfaceGasVolumeM3": 2358.73948779796
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 358.2738580520892
+        },
+        {
+          "substeps": 4,
+          "rows": [
+            {
+              "retainedMoles": [
+                5502237.770454556,
+                710757.7961760861
+              ],
+              "producedMoles": [
+                89458.23951302192,
+                10541.760486978079
+              ],
+              "pressureBara": 199.38170888945248,
+              "surfaceGasVolumeM3": 2358.719507766146
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 178.6575213265096
+        },
+        {
+          "substeps": 8,
+          "rows": [
+            {
+              "retainedMoles": [
+                5502327.21852595,
+                710668.3481046916
+              ],
+              "producedMoles": [
+                89368.79144162741,
+                10631.208558372582
+              ],
+              "pressureBara": 199.3823320452361,
+              "surfaceGasVolumeM3": 2358.7095448788396
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 89.20944993200594
+        },
+        {
+          "substeps": 16,
+          "rows": [
+            {
+              "retainedMoles": [
+                5502371.85301133,
+                710623.7136193118
+              ],
+              "producedMoles": [
+                89324.15695624767,
+                10675.843043752333
+              ],
+              "pressureBara": 199.38264299557082,
+              "surfaceGasVolumeM3": 2358.7045701947236
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 44.574964552256056
+        },
+        {
+          "substeps": 32,
+          "rows": [
+            {
+              "retainedMoles": [
+                5502394.147925325,
+                710601.4187053173
+              ],
+              "producedMoles": [
+                89301.86204225312,
+                10698.137957746874
+              ],
+              "pressureBara": 199.38279831426343,
+              "surfaceGasVolumeM3": 2358.7020845397324
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 22.280050557714787
+        },
+        {
+          "substeps": 64,
+          "rows": [
+            {
+              "retainedMoles": [
+                5502405.289807486,
+                710590.2768231555
+              ],
+              "producedMoles": [
+                89290.72016009132,
+                10709.279839908677
+              ],
+              "pressureBara": 199.3828759345427,
+              "surfaceGasVolumeM3": 2358.700842133652
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 11.138168395911041
+        },
+        {
+          "substeps": 128,
+          "rows": [
+            {
+              "retainedMoles": [
+                5502410.859355775,
+                710584.7072748676
+              ],
+              "producedMoles": [
+                89285.15061180337,
+                10714.84938819663
+              ],
+              "pressureBara": 199.38291473492205,
+              "surfaceGasVolumeM3": 2358.7002210359215
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 5.56862010795926
+        },
+        {
+          "substeps": 256,
+          "rows": [
+            {
+              "retainedMoles": [
+                5502413.643781834,
+                710581.9228488074
+              ],
+              "producedMoles": [
+                89282.36618574323,
+                10717.633814256771
+              ],
+              "pressureBara": 199.38293413267243,
+              "surfaceGasVolumeM3": 2358.699910513378
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 2.7841940478173735
+        },
+        {
+          "substeps": 512,
+          "rows": [
+            {
+              "retainedMoles": [
+                5502415.035907858,
+                710580.530722784
+              ],
+              "producedMoles": [
+                89280.97405971983,
+                10719.025940280178
+              ],
+              "pressureBara": 199.3829438309379,
+              "surfaceGasVolumeM3": 2358.6997552586868
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 1.3920680244098653
+        },
+        {
+          "substeps": 1024,
+          "rows": [
+            {
+              "retainedMoles": [
+                5502415.73194912,
+                710579.8346815222
+              ],
+              "producedMoles": [
+                89280.27801845799,
+                10719.721981542003
+              ],
+              "pressureBara": 199.38294867991823,
+              "surfaceGasVolumeM3": 2358.6996776329856
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 0.6960267625854228
+        }
+      ]
+    },
+    {
+      "name": "withdrawal only",
+      "schedule": [
+        {
+          "producedMoles": 100000.0,
+          "injectedMoles": [
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "continuous": [
+        {
+          "retainedMoles": [
+            5501696.009967578,
+            611299.5566630642
+          ],
+          "producedMoles": [
+            90000.0,
+            10000.0
+          ],
+          "pressureBara": 196.52430876571657,
+          "surfaceGasVolumeM3": 2358.7796663469717
+        }
+      ],
+      "refinements": [
+        {
+          "substeps": 1,
+          "rows": [
+            {
+              "retainedMoles": [
+                5501696.009967578,
+                611299.5566630642
+              ],
+              "producedMoles": [
+                90000.0,
+                10000.0
+              ],
+              "pressureBara": 196.52430876571657,
+              "surfaceGasVolumeM3": 2358.7796663469717
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 1e-53
+        },
+        {
+          "substeps": 2,
+          "rows": [
+            {
+              "retainedMoles": [
+                5501696.009967578,
+                611299.5566630642
+              ],
+              "producedMoles": [
+                90000.0,
+                10000.0
+              ],
+              "pressureBara": 196.52430876571657,
+              "surfaceGasVolumeM3": 2358.7796663469717
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 1e-53
+        },
+        {
+          "substeps": 4,
+          "rows": [
+            {
+              "retainedMoles": [
+                5501696.009967578,
+                611299.5566630642
+              ],
+              "producedMoles": [
+                90000.0,
+                10000.0
+              ],
+              "pressureBara": 196.52430876571657,
+              "surfaceGasVolumeM3": 2358.7796663469717
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 1e-53
+        },
+        {
+          "substeps": 8,
+          "rows": [
+            {
+              "retainedMoles": [
+                5501696.009967578,
+                611299.5566630642
+              ],
+              "producedMoles": [
+                90000.0,
+                10000.0
+              ],
+              "pressureBara": 196.52430876571657,
+              "surfaceGasVolumeM3": 2358.7796663469717
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 1e-53
+        },
+        {
+          "substeps": 16,
+          "rows": [
+            {
+              "retainedMoles": [
+                5501696.009967578,
+                611299.5566630642
+              ],
+              "producedMoles": [
+                90000.0,
+                10000.0
+              ],
+              "pressureBara": 196.52430876571657,
+              "surfaceGasVolumeM3": 2358.7796663469717
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 1e-53
+        },
+        {
+          "substeps": 32,
+          "rows": [
+            {
+              "retainedMoles": [
+                5501696.009967578,
+                611299.5566630642
+              ],
+              "producedMoles": [
+                90000.0,
+                10000.0
+              ],
+              "pressureBara": 196.52430876571657,
+              "surfaceGasVolumeM3": 2358.7796663469717
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 1e-53
+        },
+        {
+          "substeps": 64,
+          "rows": [
+            {
+              "retainedMoles": [
+                5501696.009967578,
+                611299.5566630642
+              ],
+              "producedMoles": [
+                90000.0,
+                10000.0
+              ],
+              "pressureBara": 196.52430876571657,
+              "surfaceGasVolumeM3": 2358.7796663469717
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 1e-53
+        }
+      ]
+    },
+    {
+      "name": "injection only",
+      "schedule": [
+        {
+          "producedMoles": 0.0,
+          "injectedMoles": [
+            0.0,
+            100000.0
+          ]
+        }
+      ],
+      "continuous": [
+        {
+          "retainedMoles": [
+            5591696.009967578,
+            721299.5566630642
+          ],
+          "producedMoles": [
+            0.0,
+            0.0
+          ],
+          "pressureBara": 202.87001401845848
+        }
+      ],
+      "refinements": [
+        {
+          "substeps": 1,
+          "rows": [
+            {
+              "retainedMoles": [
+                5591696.009967578,
+                721299.5566630642
+              ],
+              "producedMoles": [
+                0.0,
+                0.0
+              ],
+              "pressureBara": 202.87001401845848
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 0.0
+        },
+        {
+          "substeps": 2,
+          "rows": [
+            {
+              "retainedMoles": [
+                5591696.009967578,
+                721299.5566630642
+              ],
+              "producedMoles": [
+                0.0,
+                0.0
+              ],
+              "pressureBara": 202.87001401845848
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 0.0
+        },
+        {
+          "substeps": 4,
+          "rows": [
+            {
+              "retainedMoles": [
+                5591696.009967578,
+                721299.5566630642
+              ],
+              "producedMoles": [
+                0.0,
+                0.0
+              ],
+              "pressureBara": 202.87001401845848
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 0.0
+        },
+        {
+          "substeps": 8,
+          "rows": [
+            {
+              "retainedMoles": [
+                5591696.009967578,
+                721299.5566630642
+              ],
+              "producedMoles": [
+                0.0,
+                0.0
+              ],
+              "pressureBara": 202.87001401845848
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 0.0
+        },
+        {
+          "substeps": 16,
+          "rows": [
+            {
+              "retainedMoles": [
+                5591696.009967578,
+                721299.5566630642
+              ],
+              "producedMoles": [
+                0.0,
+                0.0
+              ],
+              "pressureBara": 202.87001401845848
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 0.0
+        },
+        {
+          "substeps": 32,
+          "rows": [
+            {
+              "retainedMoles": [
+                5591696.009967578,
+                721299.5566630642
+              ],
+              "producedMoles": [
+                0.0,
+                0.0
+              ],
+              "pressureBara": 202.87001401845848
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 0.0
+        },
+        {
+          "substeps": 64,
+          "rows": [
+            {
+              "retainedMoles": [
+                5591696.009967578,
+                721299.5566630642
+              ],
+              "producedMoles": [
+                0.0,
+                0.0
+              ],
+              "pressureBara": 202.87001401845848
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 0.0
+        }
+      ]
+    },
+    {
+      "name": "no flow",
+      "schedule": [
+        {
+          "producedMoles": 0.0,
+          "injectedMoles": [
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "continuous": [
+        {
+          "retainedMoles": [
+            5591696.009967578,
+            621299.5566630642
+          ],
+          "producedMoles": [
+            0.0,
+            0.0
+          ],
+          "pressureBara": 200.0
+        }
+      ],
+      "refinements": [
+        {
+          "substeps": 1,
+          "rows": [
+            {
+              "retainedMoles": [
+                5591696.009967578,
+                621299.5566630642
+              ],
+              "producedMoles": [
+                0.0,
+                0.0
+              ],
+              "pressureBara": 200.0
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 0.0
+        },
+        {
+          "substeps": 2,
+          "rows": [
+            {
+              "retainedMoles": [
+                5591696.009967578,
+                621299.5566630642
+              ],
+              "producedMoles": [
+                0.0,
+                0.0
+              ],
+              "pressureBara": 200.0
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 0.0
+        },
+        {
+          "substeps": 4,
+          "rows": [
+            {
+              "retainedMoles": [
+                5591696.009967578,
+                621299.5566630642
+              ],
+              "producedMoles": [
+                0.0,
+                0.0
+              ],
+              "pressureBara": 200.0
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 0.0
+        },
+        {
+          "substeps": 8,
+          "rows": [
+            {
+              "retainedMoles": [
+                5591696.009967578,
+                621299.5566630642
+              ],
+              "producedMoles": [
+                0.0,
+                0.0
+              ],
+              "pressureBara": 200.0
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 0.0
+        },
+        {
+          "substeps": 16,
+          "rows": [
+            {
+              "retainedMoles": [
+                5591696.009967578,
+                621299.5566630642
+              ],
+              "producedMoles": [
+                0.0,
+                0.0
+              ],
+              "pressureBara": 200.0
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 0.0
+        },
+        {
+          "substeps": 32,
+          "rows": [
+            {
+              "retainedMoles": [
+                5591696.009967578,
+                621299.5566630642
+              ],
+              "producedMoles": [
+                0.0,
+                0.0
+              ],
+              "pressureBara": 200.0
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 0.0
+        },
+        {
+          "substeps": 64,
+          "rows": [
+            {
+              "retainedMoles": [
+                5591696.009967578,
+                621299.5566630642
+              ],
+              "producedMoles": [
+                0.0,
+                0.0
+              ],
+              "pressureBara": 200.0
+            }
+          ],
+          "maxContinuousComponentErrorMoles": 0.0
+        }
+      ]
+    }
+  ]
+}

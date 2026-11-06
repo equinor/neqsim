@@ -28,3 +28,7 @@ This completes one gas-only synthetic benchmark concept, not measured accuracy,
 two-phase GOR/critical acceptance, aquifer/Bayesian/multi-tank or the full issue.
 No ordinary-simulation production runtime cost is introduced. Public synthetic
 facts and our reference code; no external experimental data or redistribution.
+
+Run49 adds a separately frozen continuous-flow refinement/limit qualification
+in [REFINEMENT_SCOPE.md](REFINEMENT_SCOPE.md), with no change to the finite
+four-substep inputs or acceptance bounds above.

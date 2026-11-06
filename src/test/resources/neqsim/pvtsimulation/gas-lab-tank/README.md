@@ -61,3 +61,35 @@ protocol; this benchmark does not establish a continuous-flow timestep limit.
 All tolerances were frozen in SCOPE.md before native comparison. Full independent
 inputs/outputs are in reference.json; complete native results and actually executed
 validation commands are retained alongside this receipt when published.
+
+## Continuous well-mixed flow refinement
+
+Run `continuous_reference.py` with the selected Python interpreter, optionally
+passing decimal precision75, to regenerate `continuous-reference.json`.
+`reference.py` now exposes its unchanged original generator behind a main guard;
+the original `reference.json` is byte-identical. Both scripts use only the Python
+standard library. See [REFINEMENT_SCOPE.md](REFINEMENT_SCOPE.md) for the freeze,
+pre-native failed64-substep1mol target, and finer meshes chosen without native data.
+
+For constant production rate and injection composition over one interval, write
+$I_i$ and $P$ for injected component moles and produced total moles over that
+interval, $I=\sum_i I_i$, and $N_1=N_0+I-P$. The exact uniformly mixed gas balance
+$d n_i/dt=q_i-q_p n_i/N$ gives
+
+$$x_{i,1}=x_{i,inj}+(x_{i,0}-x_{i,inj})(N_1/N_0)^{-I/(I-P)}$$
+
+when $I>0$ and $I\ne P$. When $I=P>0$, the power is replaced by
+$\exp(-I/N_0)$; when $I=0$, composition is unchanged. The produced component
+amount is $n_{i,0}+I_i-n_{i,1}$. Here $x_{i,inj}=I_i/I$, inventories and interval
+amounts are in mol, rates in mol/s, and time in s. Injection-only balances reduce
+to exact mixing; no-flow produces no mixture. Pressures use the same independently
+implemented SRK equation at fixed400K and1017.3m3, not a pressure-target solve.
+
+The native test compares every finite-substep endpoint, produced components,
+pressure and actual surface gas product against the independent finite reference,
+then compares the component-inventory errors against the analytical limit. The
+ratio must remain0.45..0.55 when halving the timestep. No reservoir-volume fit or
+EOS retuning participates in this refinement experiment. The1mol target is a
+synthetic numerical bound; it is not measurement uncertainty or a statistical
+confidence limit. Raw native outcomes and timing are in `continuous-results.json`;
+[REFINEMENT_VALIDATION.md](REFINEMENT_VALIDATION.md) records commands and results.
