@@ -93,3 +93,27 @@ EOS retuning participates in this refinement experiment. The1mol target is a
 synthetic numerical bound; it is not measurement uncertainty or a statistical
 confidence limit. Raw native outcomes and timing are in `continuous-results.json`;
 [REFINEMENT_VALIDATION.md](REFINEMENT_VALIDATION.md) records commands and results.
+
+## Unequal-sigma deterministic inversion
+
+`weighted_reference.py` supplies an independent direct-volume golden-section
+minimization for the existing finite4-substep gas protocol. Run it with the
+selected Python interpreter, optionally passing precision75; the JSON must match
+`weighted-reference.json`. The native fitter retains its existing log-volume
+strategy. All inputs, the original incorrectly anticipated1000m3 bound and the
+additional980m3 bound control are preserved in [WEIGHTED_SCOPE.md](WEIGHTED_SCOPE.md).
+The independent reference established that1000is inactive before native testing;
+that control is retained, not silently changed to return a bound.
+
+The same noisy pressures fit different volumes under unequal/equal sigmas.
+Scaling all three calibration sigmas by3 must retain volume while dividing the
+calibration chi-square by9. The fourth pressure is excluded from matching;
+its shifted residual is independently evaluated and need not give chi-square100
+when the noisy calibration has already biased volume. Predicted produced
+components and actual surface gas volume are compared at the independently
+fitted volume; no comparison is mislabeled as measured accuracy. The actual
+native fit has finite numerical volume precision, so the frozen product/pressure
+bounds remain explicit. No oil exists and GOR remains undefined.
+
+Complete native outputs, commands and validation are recorded in
+[WEIGHTED_VALIDATION.md](WEIGHTED_VALIDATION.md) and `weighted-results.json`.

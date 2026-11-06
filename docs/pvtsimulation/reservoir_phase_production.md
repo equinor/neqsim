@@ -106,6 +106,14 @@ as a converged continuous-flow answer. These limits assume uniform gas mixing
 and prescribed molar rates; they do not qualify well inflow, relative permeability
 or spatial displacement.
 
+The [unequal-sigma inversion reference](../../src/test/resources/neqsim/pvtsimulation/gas-lab-tank/WEIGHTED_SCOPE.md)
+adds declared synthetic pressure perturbations and independently minimizes the
+calibration-only weighted objective. It compares unequal and equal sigmas,
+common sigma scaling, held-out exclusion, an inactive upper bound and an active
+upper bound. A bound flag describes the supplied search constraint; it does not
+establish geological accuracy, uniqueness or a posterior interval. The synthetic
+sigmas are numerical test inputs, not measured uncertainty estimates.
+
 This is gas-only synthetic numerical qualification. No oil is present and GOR
 remains undefined, so it does not complete two-phase GOR or measured laboratory
 and field acceptance under #4740. No EOS parameter is fitted against reservoir

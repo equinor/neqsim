@@ -391,4 +391,97 @@ class IndependentGasLabTankTest {
     Files.write(Paths.get("target", "independent-gas-continuous.json"),
         new Gson().toJson(diagnostics).getBytes(StandardCharsets.UTF_8));
   }
+
+  /**
+   * Checks noisy pressure-sigma weighting, scale invariance, held-out exclusion and bound diagnostics against
+   * independent physical-volume minimization, without EOS retuning.
+   *
+   * @throws Exception if the independent reference or complete diagnostics cannot be read or written
+   */
+  @Test
+  void matchesIndependentUnequalSigmaAndBoundedInversion() throws Exception {
+    JsonObject input;
+    try (InputStreamReader reader = new InputStreamReader(
+        getClass().getResourceAsStream("/neqsim/pvtsimulation/gas-lab-tank/weighted-reference.json"),
+        StandardCharsets.UTF_8)) {
+      input = new Gson().fromJson(reader, JsonObject.class);
+    }
+    CalibratedPvtModel model = model(reference());
+    byte[] before = SerializationUtils.serialize(model);
+    List<Map<String, Object>> diagnostics = new ArrayList<Map<String, Object>>();
+    List<Result> results = new ArrayList<Result>();
+    for (int scenario = 0; scenario < input.getAsJsonArray("cases").size(); scenario++) {
+      JsonObject testCase = input.getAsJsonArray("cases").get(scenario).getAsJsonObject();
+      JsonArray rows = testCase.getAsJsonArray("rows");
+      Step[] steps = new Step[rows.size()];
+      for (int row = 0; row < rows.size(); row++) {
+        JsonArray injection = rows.get(row).getAsJsonObject().getAsJsonArray("injectedMoles");
+        steps[row] = Step.phaseWithdrawal(86400, new double[] {100000, 0, 0},
+            new double[] {injection.get(1).getAsDouble(), injection.get(0).getAsDouble()},
+            testCase.getAsJsonArray("observedPressuresBara").get(row).getAsDouble(),
+            testCase.getAsJsonArray("sigmasBara").get(row).getAsDouble(), row == rows.size() - 1, 4);
+      }
+      CompositionalReservoirHistory history = new CompositionalReservoirHistory(model,
+          "independent noisy-pressure inversion: " + testCase.get("name").getAsString(),
+          new String[] {"ethane", "methane"}, 400, 200, new double[] {1, 0, 0}, steps);
+      long start = System.nanoTime();
+      CompositionalReservoirHistory.Fit fit = history.fitVolume(testCase.get("lowerVolumeM3").getAsDouble(),
+          testCase.get("upperVolumeM3").getAsDouble());
+      double seconds = (System.nanoTime() - start) / 1e9;
+      Result result = fit.getResult();
+      results.add(result);
+      assertEquals(testCase.get("fittedVolumeM3").getAsDouble(), result.getInitialVolumeM3(), .001);
+      assertEquals(testCase.get("calibrationChiSquare").getAsDouble(), result.getCalibrationChiSquare(), 1e-6);
+      assertEquals(testCase.get("boundLimited").getAsBoolean(), fit.isAtBound());
+      if (fit.isAtBound()) {
+        assertEquals(testCase.get("upperVolumeM3").getAsDouble(), result.getInitialVolumeM3(), 0);
+      }
+      assertArrayEquals(result.getPressuresBara(), history.replay(result.getInitialVolumeM3()).getPressuresBara(), 0);
+      double[] residuals = result.getStandardizedResiduals();
+      double chiSquare = 0;
+      List<Map<String, Object>> rowReports = new ArrayList<Map<String, Object>>();
+      for (int row = 0; row < rows.size(); row++) {
+        JsonObject expected = rows.get(row).getAsJsonObject();
+        assertEquals(expected.get("pressureBara").getAsDouble(), result.getPressuresBara()[row + 1], 1e-6);
+        assertEquals(testCase.getAsJsonArray("standardizedResiduals").get(row).getAsDouble(), residuals[row], 1e-5);
+        if (row < rows.size() - 1) {
+          chiSquare += residuals[row] * residuals[row];
+        }
+        double[] produced = result.getProducedComponentMoles()[row];
+        for (int component = 0; component < 2; component++) {
+          assertEquals(expected.getAsJsonArray("producedMoles").get(component).getAsDouble(), produced[1 - component],
+              1e-4);
+        }
+        PvtSeparatorPath.Result surface = separator().separate(result.getProducedFluid(row));
+        assertEquals(1, surface.getVolumesM3()[0] / expected.get("surfaceGasVolumeM3").getAsDouble(), 1e-7);
+        assertEquals(0, surface.getVolumesM3()[1], 0);
+        assertTrue(Double.isNaN(surface.getGasOilRatio()));
+        Map<String, Object> report = new LinkedHashMap<String, Object>();
+        report.put("pressureBara", result.getPressuresBara()[row + 1]);
+        report.put("standardizedResidual", residuals[row]);
+        report.put("producedMolesEthaneMethane", produced);
+        report.put("surfaceGasVolumeM3", surface.getVolumesM3()[0]);
+        rowReports.add(report);
+      }
+      assertEquals(chiSquare, result.getCalibrationChiSquare(), 1e-10);
+      assertEquals(residuals[3] * residuals[3], result.getHoldoutChiSquare(), 1e-10);
+      Map<String, Object> report = new LinkedHashMap<String, Object>();
+      report.put("case", testCase.get("name").getAsString());
+      report.put("seconds", seconds);
+      report.put("fittedVolumeM3", result.getInitialVolumeM3());
+      report.put("calibrationChiSquare", result.getCalibrationChiSquare());
+      report.put("holdoutChiSquare", result.getHoldoutChiSquare());
+      report.put("boundLimited", fit.isAtBound());
+      report.put("rows", rowReports);
+      diagnostics.add(report);
+    }
+    assertTrue(Math.abs(results.get(0).getInitialVolumeM3() - results.get(1).getInitialVolumeM3()) > 1);
+    assertEquals(results.get(0).getInitialVolumeM3(), results.get(2).getInitialVolumeM3(), .001);
+    assertEquals(results.get(0).getCalibrationChiSquare() / 9, results.get(2).getCalibrationChiSquare(), 1e-6);
+    assertEquals(results.get(0).getInitialVolumeM3(), results.get(3).getInitialVolumeM3(), 0);
+    assertEquals(results.get(0).getCalibrationChiSquare(), results.get(3).getCalibrationChiSquare(), 0);
+    assertArrayEquals(before, SerializationUtils.serialize(model));
+    Files.write(Paths.get("target", "independent-gas-weighted.json"),
+        new Gson().toJson(diagnostics).getBytes(StandardCharsets.UTF_8));
+  }
 }
