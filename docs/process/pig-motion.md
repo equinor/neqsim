@@ -156,3 +156,54 @@ Public sources for subsequent coupled-model qualification include Hendrix et al.
 and [Transient pigging dynamics in gas pipelines: Models, experiments, and simulations](https://www.sciencedirect.com/science/article/pii/S0029801821005618).
 No experimental dataset from these publications is included or claimed passed
 by the current mechanics tests.
+
+## Coupled ideal-gas control-volume model
+
+`IdealGasPiggingModel` couples the event-resolved mechanics to two well-mixed,
+calorically perfect gas inventories. The pig pressure area is also the swept
+pipe area. A positive displacement expands the upstream control volume and
+contracts the downstream volume by the same amount. Beginning-of-substep
+pressures drive both the mechanical force and the equal-and-opposite gas
+boundary work. `IdealGasReleaseModel` supplies bidirectional, compressible
+short-orifice bypass and the critical-pressure transition. No one-way flow
+clip or fitted pressure trace is used.
+
+The accepted ledger exposes total mass and combined gas/pig/potential-energy
+residuals, pressure and boundary work, gravity work, friction heat, contact
+impact, signed and absolute bypass mass, choked time, internal-step count and
+the largest accepted donor-mass and pig-travel fractions. State is immutable;
+callers publish `getFinalState()` only after accepting the complete step.
+
+The 62 m length and 52 mm bore in the executable example are public geometry
+reported by Hendrix et al. All pressures, friction, pig mass, bypass diameter,
+dead volumes and discharge coefficient below are explicitly synthetic. The
+example is therefore conservation and refinement evidence, not experimental
+validation of that campaign.
+
+<!-- COUPLED_EXAMPLE -->
+```java
+SystemInterface gas = new SystemSrkEos(293.15, 5.0);
+gas.addComponent("methane", 1.0);
+gas.setMixingRule(2);
+PigMotion pig = new PigMotion(10.0, Math.PI * 0.052 * 0.052 / 4.0, 25.0, 15.0);
+IdealGasPiggingModel model = new IdealGasPiggingModel(pig, gas, 62.0, 0.05, 0.05, 0.003, 0.7, 0.0,
+    0.01, 0.01, 0.05);
+IdealGasPiggingModel.State state = model.initialise(0.0, 0.0, 3.0e5, 1.5e5, 293.15);
+IdealGasPiggingModel.Step result = model.advance(state, 2.0);
+```
+
+The model resolves launcher retention/release and receiver contact, transfers
+contact kinetic energy into an explicit impact-dissipation ledger, and stops
+the trajectory after receipt. It adaptively subdivides a requested interval to
+respect user-declared maximum time, donor-mass fraction and pig-travel fraction.
+These are numerical safeguards; they do not represent leakage, seal wear or a
+vendor pig specification.
+
+The scope remains narrow. Two uniform gas chambers do not represent distributed
+pressure waves, pipe-wall heat transfer, line friction, bends, liquid bypass,
+swept-liquid slugs, residual film, receiver liquid capacity, multiphase
+`TwoFluidPipe` moving boundaries, gelled-oil restart or pig trains. The Hendrix
+pressure/trajectory trace is not redistributed here, so the public dimensions
+must not be reported as experimental trajectory qualification. Those missing
+physics and an independently reusable validation trace are the concrete split
+boundary for the next qualification stage.

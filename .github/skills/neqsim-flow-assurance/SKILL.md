@@ -727,6 +727,18 @@ for (double qgMSm3d : gasRates) {
 > `TwoFluidPipeReport.analyzePressureTrace(...)`; its unfiltered ringing metrics are numerical
 > diagnostics, not an independently validated surge limit.
 >
+> **Ideal-gas pig hydraulics is a separate reduced-order route.**
+> `IdealGasPiggingModel` couples `PigMotion` to conservative upstream/downstream
+> calorically perfect gas inventories and reuses `IdealGasReleaseModel` for
+> bidirectional choked/subcritical bypass. Use it only when two well-mixed gas
+> control volumes are an explicit approximation. Inspect total-mass and
+> combined-energy residuals, timestep refinement, numerical safeguards and the
+> launcher/receiver ledger. The public 62 m/52 mm Hendrix geometry is
+> provenance, not experimental trajectory validation; other example inputs are
+> synthetic. Do not route it as distributed `TwoFluidPipe` coupling,
+> pressure-wave, swept-liquid, receiver-capacity, residual-film,
+> physical-restart, severe-slugging, pig-train or field/commercial evidence.
+>
 > **Coupled component/phase/thermal slug transport has a narrower envelope.**
 > For the conservative Lagrangian slug/film path, named-component phase sources
 > and their partial-enthalpy latent source must be frozen from the same

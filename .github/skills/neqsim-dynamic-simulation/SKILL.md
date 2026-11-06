@@ -928,6 +928,18 @@ The enabled historical 12/24-cell ramp currently stops at 0.25 s on the unchange
 closure guard. Keep the executable coupling rejection record attached; instantaneous operator
 identities do not qualify full elapsed transient operation.
 
+For an explicitly reduced-order dry-gas pig calculation, inspect
+`IdealGasPiggingModel`. It advances immutable conservative upstream/downstream
+gas inventories with `PigMotion`, moving-volume work and the existing
+`IdealGasReleaseModel` bypass. Preserve the user-declared maximum time,
+donor-mass fraction and pig-travel fraction controls, and inspect total mass,
+combined energy, contact impact and timestep-refinement evidence. This is two
+well-mixed calorically perfect gas chambers, not distributed pipe dynamics.
+The Hendrix 62 m/52 mm dimensions do not qualify synthetic pressures, friction
+or bypass parameters. Do not infer `TwoFluidPipe` moving boundaries, liquid
+sweeping, receiver surge capacity, physical restart, severe slugging, pig
+trains or experimental/field validation.
+
 1. **Always run steady state first**: Call `process.run()` before `runTransient()`
 2. **Timestep size**: Start with 1.0 s, reduce if oscillating (0.1-0.5 s)
 3. **Liquid-outlet level-controller direction**: use `setReverseActing(false)` so level up drives the outlet valve further open. Reverse acting on this configuration drives the loop the wrong way.
