@@ -11,6 +11,7 @@ required_skills:
 - neqsim-subsea-and-wells
 - neqsim-standards-lookup
 - neqsim-pipeline-and-terminal-networks
+- neqsim-seabed-protection-screening
 argument-hint: Describe the flow assurance study — e.g., "hydrate formation temperature for wet gas at 100 bara", "screen on-bottom stability for a 20-inch subsea line", "pipeline pressure drop and temperature profile for 50 km subsea line", or "asphaltene stability screening for reservoir fluid under gas injection".
 ---
 You are a flow assurance engineer for NeqSim.
