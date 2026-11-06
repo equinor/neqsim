@@ -1492,6 +1492,31 @@
       "limitations": "Experimental Java/JPype mechanical submodel only. inspectApi discovers constructors and methods; no curated execution operation, TwoFluidPipe coupling, bypass, receiver, experimental pigging qualification or physical flowline-restart claim. See docs/process/pig-motion.md."
     },
     {
+      "id": "pipeline-ideal-gas-pigging-discovery",
+      "title": "Experimental coupled ideal-gas pig hydraulics (API discovery only)",
+      "domain": "flow-assurance",
+      "tool": "inspectApi",
+      "apis": [
+        "neqsim.process.equipment.pipeline.IdealGasPiggingModel",
+        "neqsim.process.equipment.pipeline.PigMotion",
+        "neqsim.process.safety.release.IdealGasReleaseModel"
+      ],
+      "skills": [
+        "neqsim-flow-assurance",
+        "neqsim-dynamic-simulation"
+      ],
+      "agents": [
+        "flow-assurance",
+        "dynamic-equipment"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/equipment/pipeline/IdealGasPiggingModelTest.java",
+        "src/test/java/neqsim/process/equipment/pipeline/PigMotionTest.java",
+        "src/test/java/neqsim/process/safety/release/ReleaseFlowBenchmarkTest.java"
+      ],
+      "limitations": "Experimental Java/JPype discovery route for two well-mixed calorically perfect gas chambers. It couples moving volumes, pressure work, bidirectional choked/subcritical bypass, breakaway/stall and launcher/receiver events with mass/energy/refinement evidence. Public Hendrix length/bore are geometry provenance only; all other example inputs are synthetic and no redistributed experimental trace is claimed. No distributed TwoFluidPipe pressure waves, wall heat, pipe friction, swept liquid, residual film, receiver liquid capacity, gelled-oil restart, pig trains, experimental trajectory validation or field/commercial qualification. See docs/process/pig-motion.md."
+    },
+    {
       "id": "pipeline-film-transfer",
       "title": "Experimental post-pigging gas/aqueous film transfer",
       "domain": "flow-assurance",

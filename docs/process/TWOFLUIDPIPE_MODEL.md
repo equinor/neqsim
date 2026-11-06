@@ -107,6 +107,14 @@ algorithmic ownership boundaries, not automatic fallbacks. This does not repair 
 dry/wet pressure-moment front or qualify pools, inlet refill, physical evaporation, shutdown/restart
 or hydraulic pigging.
 
+The separate experimental `IdealGasPiggingModel` is not a `TwoFluidPipe`
+closure. It couples a rigid pig to two well-mixed calorically perfect gas
+control volumes with conservative moving-volume work and ideal-gas orifice
+bypass. Its analytical, conservation and refinement evidence cannot qualify
+distributed pressure waves, multiphase moving boundaries, swept liquid,
+receiver liquid capacity, residual film, shutdown/restart or severe slugging.
+See [pig motion and reduced-order gas coupling](pig-motion.md).
+
 ### Stratified hydrostatic pressure moments
 
 The immutable pressure-moment result also exposes signed phase first area moments about the pipe
