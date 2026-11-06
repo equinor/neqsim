@@ -115,6 +115,16 @@ does not qualify elapsed pool retention, shutdown/cooldown/restart, severe slugg
 entrainment or hydrocarbon evaporation. See the
 [evidence matrix](../process/twofluidpipe-evidence-matrix#stratified-hydrostatic-pressure-moments).
 
+`IdealGasPiggingModel` is a separate reduced-order API, not a `TwoFluidPipe`
+closure. It couples `PigMotion` to two conservative, well-mixed calorically
+perfect gas chambers and reuses the strict ideal-gas orifice model for signed
+choked/subcritical bypass. Its mass/energy/event/refinement evidence supports
+only that declared approximation. The public Hendrix 62 m/52 mm geometry is
+provenance; synthetic pressure, friction and bypass inputs are not experimental
+trajectory validation. Distributed waves, multiphase moving boundaries,
+swept-liquid slugs, receiver liquid capacity, residual film, physical restart,
+severe slugging and field parity remain unqualified.
+
 The force/work adapter uses `GeometryCalculator.calculateStratifiedPressureMomentsFromHoldups`
 with both independently retained phase fractions. It resolves the smaller area with relative
 accuracy and reflects the moments algebraically, preserving positive traces even when subtracting

@@ -1,0 +1,11 @@
+{
+  "spotbugsFindings": 0,
+  "spotbugsErrors": {
+    "missingClasses": "0",
+    "errors": "0"
+  },
+  "changedClassListed": true,
+  "checkstyleIssues": 0,
+  "java8ClassMajor": 52,
+  "doclintLogBytes": 0
+}

@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0",
+  "evidenceClass": "numerical-conservation-and-refinement",
+  "source": {
+    "citation": "Hendrix et al., Experiments and modeling of by-pass pigging under low-pressure conditions",
+    "url": "https://www.sciencedirect.com/science/article/pii/S0959152418302774",
+    "publicGeometry": {
+      "pipeLengthM": 62.0,
+      "internalDiameterM": 0.052
+    },
+    "provenanceBoundary": "Geometry only. No redistributed experimental pressure or trajectory trace is included."
+  },
+  "declaredSyntheticInputs": {
+    "initialUpstreamPressurePa": 300000.0,
+    "initialDownstreamPressurePa": 150000.0,
+    "initialTemperatureK": 293.15,
+    "pigMassKg": 10.0,
+    "staticFrictionN": 25.0,
+    "kineticFrictionN": 15.0,
+    "bypassDiameterM": 0.003,
+    "bypassDischargeCoefficient": 0.7,
+    "launcherVolumeM3": 0.05,
+    "receiverVolumeM3": 0.05,
+    "durationSeconds": 2.0
+  },
+  "predeclaredAcceptance": {
+    "successiveStepHalvingReducesPositionDifference": true,
+    "successiveStepHalvingReducesBothPressureDifferences": true,
+    "largerNearbyBypassDiameterTransfersMoreMass": true,
+    "totalMassResidualKg": 0.0,
+    "combinedEnergyResidualAbsoluteToleranceJ": 1.0e-8
+  },
+  "refinement": [
+    {
+      "maximumSubstepSeconds": 0.02,
+      "positionM": 21.57666112605904,
+      "upstreamPressurePa": 127143.73671280194,
+      "downstreamPressurePa": 220540.75902137722
+    },
+    {
+      "maximumSubstepSeconds": 0.01,
+      "positionM": 21.440219714195617,
+      "upstreamPressurePa": 127725.32088823999,
+      "downstreamPressurePa": 219938.57211245858
+    },
+    {
+      "maximumSubstepSeconds": 0.005,
+      "positionM": 21.37248531521686,
+      "upstreamPressurePa": 128014.347356318,
+      "downstreamPressurePa": 219641.25823585078
+    }
+  ],
+  "nearbyBypass": [
+    {
+      "diameterM": 0.0025,
+      "absoluteTransferredMassKgAt0p2s": 3.5041748176222e-4
+    },
+    {
+      "diameterM": 0.0035,
+      "absoluteTransferredMassKgAt0p2s": 6.855556903683199e-4
+    }
+  ],
+  "claimBoundary": "Analytical mechanics plus numerical ideal-gas mass/energy/event/refinement evidence only. Not experimental trajectory validation, distributed TwoFluidPipe coupling, swept-liquid or field/commercial qualification."
+}

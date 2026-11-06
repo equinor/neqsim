@@ -375,24 +375,55 @@ double requiredMEGwt = fluid.getPhase("aqueous").getComponent("MEG").getwtfrac()
 
 ### Basic Hydrate Check
 
+The program below is complete Java 8 source. It calculates the hydrate formation temperature at
+100 bara and fails closed if the operation returns a non-finite or physically implausible result.
+The `main` method propagates `IsNaNException` if the hydrate calculation cannot return a result.
+
+<!-- hydrate-models-example: java-quickstart -->
 ```java
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.exception.IsNaNException;
 
-// Create fluid at potential hydrate conditions
-SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 5.0, 100.0);
-fluid.addComponent("methane", 0.85);
-fluid.addComponent("ethane", 0.08);
-fluid.addComponent("propane", 0.04);
-fluid.addComponent("water", 0.03);
-fluid.setMixingRule(10);
-fluid.setHydrateCheck(true);  // Enable hydrate phase
+/**
+ * Calculates the hydrate formation temperature for a wet gas at 100 bara.
+ *
+ * @author NeqSim Development Team
+ * @version 1.0
+ */
+public final class HydrateFormationQuickStart {
+  /** Prevents instantiation of this example utility. */
+  private HydrateFormationQuickStart() {}
 
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+  /**
+   * Runs the hydrate calculation and rejects an invalid result.
+   *
+   * @param args command-line arguments (unused)
+   * @throws IsNaNException if the hydrate calculation cannot return a result
+   */
+  public static void main(String[] args) throws IsNaNException {
+    SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 5.0, 100.0);
+    fluid.addComponent("methane", 0.85);
+    fluid.addComponent("ethane", 0.08);
+    fluid.addComponent("propane", 0.04);
+    fluid.addComponent("water", 0.03);
+    fluid.setMixingRule(10);
+    fluid.setMultiPhaseCheck(true);
+    fluid.setHydrateCheck(true);
 
-// Calculate hydrate formation temperature
-ops.hydrateFormationTemperature();
-System.out.println("Hydrate formation T: " + fluid.getTemperature("C") + " °C");
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.hydrateFormationTemperature();
+
+    double hydrateTemperatureC = fluid.getTemperature("C");
+    if (!Double.isFinite(hydrateTemperatureC)
+        || hydrateTemperatureC <= -30.0
+        || hydrateTemperatureC >= 25.0) {
+      throw new IllegalStateException(
+          "Unexpected hydrate formation temperature: " + hydrateTemperatureC + " C");
+    }
+  }
+}
 ```
 
 ### Hydrate Equilibrium Curve

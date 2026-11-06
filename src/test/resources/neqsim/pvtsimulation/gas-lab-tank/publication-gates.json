@@ -1,0 +1,121 @@
+{
+  "scope": "Initial publication gates; final frozen-tree repeat is recorded in the campaign ledger",
+  "stages": [
+    {
+      "name": "apply",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit": 0,
+      "seconds": 2.145205608001561,
+      "changedJava": []
+    },
+    {
+      "name": "stable-apply",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit": 0,
+      "seconds": 2.2252580900021712,
+      "changedJava": []
+    },
+    {
+      "name": "inventory",
+      "command": [
+        "uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "devtools/build_engineering_coverage.py"
+      ],
+      "exit": 0,
+      "seconds": 1.5322994090020075
+    },
+    {
+      "name": "stage",
+      "command": [
+        "git",
+        "add",
+        "."
+      ],
+      "exit": 0,
+      "seconds": 0.062389965998590924
+    },
+    {
+      "name": "precommit",
+      "command": [
+        "uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "--with",
+        "pre-commit",
+        "pre-commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-commit"
+      ],
+      "exit": 0,
+      "seconds": 10.403787445997295
+    },
+    {
+      "name": "spotless-check",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/run_spotless.py",
+        "check"
+      ],
+      "exit": 0,
+      "seconds": 2.1444854760047747
+    },
+    {
+      "name": "documentation-search",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/check_documentation_search.py"
+      ],
+      "exit": 0,
+      "seconds": 1.8452604249978322
+    },
+    {
+      "name": "inventory-fresh",
+      "command": [
+        "uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "devtools/build_engineering_coverage.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 1.3339214019943029
+    },
+    {
+      "name": "prepush",
+      "command": [
+        "uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "--with",
+        "pre-commit",
+        "pre-commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-push"
+      ],
+      "exit": 0,
+      "seconds": 4.2998677540017525
+    }
+  ]
+}

@@ -81,6 +81,46 @@ retaining its dry two-hydrocarbon-phase requirement and fixed 1.01325 bara /
 
 ## Executable synthetic qualification
 
+### Independent gas-only laboratory-to-tank chain
+
+[`IndependentGasLabTankTest`](../../src/test/java/neqsim/pvtsimulation/util/IndependentGasLabTankTest.java)
+and its [complete reference protocol and data](../../src/test/resources/neqsim/pvtsimulation/gas-lab-tank/README.md)
+provide a separate, independently calculated binary-SRK benchmark. One synthetic
+closed-cell laboratory point identifies the sole interaction parameter; a whole
+420 K CCE is held out before the calibrated checkpoint enters the reservoir.
+Independent component balances and the pressure equation generate four
+production/injection intervals. Only volume is matched to three pressure points;
+the fourth pressure, produced composition and actual surface gas volume are
+withheld. A held-out pressure perturbation checks fit exclusion. Original and
+calibrated checkpoints remain separate and immutable.
+
+The same benchmark also checks the continuous well-mixed gas balance against an
+independent analytical solution, with 1 through 1,024 explicit substeps for
+alternating injection and equal injection/production. Withdrawal-only,
+injection-only and no-flow endpoints are invariant under refinement. A constant
+total inventory still changes composition according to the exponential mixing
+limit. The [frozen refinement scope](../../src/test/resources/neqsim/pvtsimulation/gas-lab-tank/REFINEMENT_SCOPE.md)
+retains the failed 1 mol target at 64 substeps and tests finer meshes against the
+same target. The four-substep finite-protocol benchmark above must not be treated
+as a converged continuous-flow answer. These limits assume uniform gas mixing
+and prescribed molar rates; they do not qualify well inflow, relative permeability
+or spatial displacement.
+
+The [unequal-sigma inversion reference](../../src/test/resources/neqsim/pvtsimulation/gas-lab-tank/WEIGHTED_SCOPE.md)
+adds declared synthetic pressure perturbations and independently minimizes the
+calibration-only weighted objective. It compares unequal and equal sigmas,
+common sigma scaling, held-out exclusion, an inactive upper bound and an active
+upper bound. A bound flag describes the supplied search constraint; it does not
+establish geological accuracy, uniqueness or a posterior interval. The synthetic
+sigmas are numerical test inputs, not measured uncertainty estimates.
+
+This is gas-only synthetic numerical qualification. No oil is present and GOR
+remains undefined, so it does not complete two-phase GOR or measured laboratory
+and field acceptance under #4740. No EOS parameter is fitted against reservoir
+volume, and no recoverable-reserves interpretation is introduced.
+
+### Existing two-phase consistency and refinement checks
+
 The full reproducible example is
 [`PhaseWithdrawalReservoirHistoryTest`](../../src/test/java/neqsim/pvtsimulation/util/PhaseWithdrawalReservoirHistoryTest.java).
 It defines untuned PR/classic methane/n-heptane, a 100 m3 tank at 323.15 K and

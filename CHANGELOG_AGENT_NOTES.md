@@ -9,6 +9,17 @@
 
 ---
 
+## 2026-11-06 — Conservative ideal-gas pig hydraulic coupling
+
+- Added transaction-safe `IdealGasPiggingModel` coupling `PigMotion` to conservative upstream/downstream calorically
+  perfect gas inventories. It reuses the strict ideal-gas release model for signed choked/subcritical bypass, resolves
+  launcher/receiver contact, and publishes mass, work, energy, impact and adaptive-step diagnostics.
+- Evidence covers conservation, direction, choking, breakaway, receipt, serialization, timestep convergence and a
+  nearby bypass-diameter trend. The 62 m/52 mm Hendrix dimensions are provenance only; all other fixture inputs are
+  synthetic. Distributed/multiphase/experimental pigging remains unqualified.
+- Agents/skills: flow-assurance and dynamic-simulation guidance now route this reduced-order gas model separately from
+  `TwoFluidPipe`, restart, severe-slugging, receiver-liquid and residual-film claims.
+
 ## 2026-11-05 — Flowing transfer area and horizontal trace-volume resolution
 
 - `HydrocarbonPoolTransfer.forStratifiedFlow(...)` uses the local circular-stratified holdup chord along cell arclength.
