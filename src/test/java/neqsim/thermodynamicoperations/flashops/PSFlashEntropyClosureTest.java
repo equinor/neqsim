@@ -141,8 +141,7 @@ class PSFlashEntropyClosureTest {
   @ParameterizedTest
   @ValueSource(booleans = {false, true})
   void minorLiquidContinuationRequiresOptInAndConservedInventory(boolean usePr) throws Exception {
-    SystemInterface seed = usePr ? new SystemPrEos(320.0, 11.0)
-        : new neqsim.thermo.system.SystemSrkEos(320.0, 11.0);
+    SystemInterface seed = usePr ? new SystemPrEos(320.0, 11.0) : new neqsim.thermo.system.SystemSrkEos(320.0, 11.0);
     seed.addComponent("methane", 0.90);
     seed.addComponent("ethane", 0.09);
     seed.addComponent("nC10", 0.01);
