@@ -12,18 +12,18 @@ derived and reviewed equation mapping.
 
 ## Current dataset and coverage contract
 
-New `SystemPitzer` phases use a catalog-first default: on the first Pitzer activity/property
-evaluation, NeqSim selects the complete bundled PHREEQC topology when every required active aqueous
-interaction exists. EOS-role pure hydrocarbons are identified by molecular formula as well as
-component-type metadata and do not create aqueous neutral-interaction requirements; this includes
-normal database components such as methane whose GE-phase type is not reliably `HC`. Other
-non-hydrocarbon aqueous neutrals still require explicit complete
-`lambda` and `zeta` families. If the catalog is incomplete, loading falls back to the historical
-binary table; mixed primary-salt coverage then still fails closed on missing binary, `theta`, or
-`psi` rows. No missing interaction is silently converted to zero. Call
-`SystemPitzer.useLegacyPitzerParameters()` before the first property evaluation only to reproduce
-a historical result.
+New `SystemPitzer` phases use a catalog-first default. Nonreactive calculations select the
+complete bundled PHREEQC topology when every required active aqueous interaction exists.
+After `chemicalReactionInit()`, the default additionally recognizes the bounded
+water/CO2/Na/K/Cl/carbonate topology. It selects the reviewed reactive definition set described
+below without a Python parameter loader or an explicit dataset method. EOS-role hydrocarbons
+remain outside the aqueous neutral-interaction topology; other neutral solutes and salts are
+not silently added to this family.
 
+The strict generic catalog still requires explicit source rows. Unsupported topologies retain
+the existing legacy fallback and coverage errors. `useLegacyPitzerParameters()` and named manual
+datasets retain their selection. Call the legacy method before the first property evaluation
+only when reproducing a historical result.
 The compatibility table is identified as `neqsim-legacy-pitzer-parameters-v1`. It stores
 molality-scale binary coefficients at 298.15 K and a NeqSim three-term temperature expression:
 
@@ -51,24 +51,78 @@ input topology. After a reactive calculation converges, call
 `getPitzerReactionParameterCoverage()` to audit every active ion, or
 `requireCompletePitzerReactionParameterCoverage()` to fail closed. The complete reactive diagnostic
 is calculated on demand, so it adds no work to ordinary Pitzer properties or non-electrolyte models.
-On the carbonate reproducer, the legacy dataset reports the active `H3O+|HCO3-` binary as
-missing; the bundled PHREEQC 3.9.0 catalog also has no explicit `H+|HCO3-` binary row. The
-automatic selector still infers neither a zero nor a proton alias. The explicit
-`applyPhreeqcReactiveSodiumChlorideCarbonateParameters()` mode instead reproduces the source
-executable semantics for one fixed topology: H3O+ is mapped to the PHREEQC H+ catalog identity and a
-source-omitted tuple becomes an explicit six-term zero. It rejects every species outside water, CO2,
-Na+, Cl-, H3O+, OH-, HCO3-, and CO3--. Ten frozen IPhreeqc states give pH MAE 0.000434 (maximum
-0.000922) and water-activity MAE 0.0000131 (maximum 0.0000261); a coupled gas-aqueous case also
-closes reaction, element, and charge residuals. The dataset identity is
-`usgs-phreeqc-pitzer-b0b3be767158ccc3322d2c816625cf470045e67e-reactive-nacl-carbonate-exact-source-v1`.
-These results establish source-implementation parity only. They do not qualify other salts, hydrate
-equilibrium, mineral saturation, experimental extrapolation, or the broad catalog. The primary
+For the carbonate reproducer, the legacy dataset lacks important reaction-ion interactions.
+Automatic reactive selection maps NeqSim H3O+ to the source H+ identity and uses the finite
+reviewed definitions in
+`src/main/resources/neqsim/thermo/phase/phreeqc/reactive-carbonate-source-zeros.csv`.
+A source-omitted row is usable only if that exact family/species tuple appears in this
+version-pinned list; a general missing row is still an error. These source-defined zeros
+reproduce PHREEQC executable semantics, rather than experimental measurements of zero.
+`PhasePitzer.getReactiveCarbonateSourceZeroDefinitions()` returns the immutable, sorted list
+actually used. No user coefficient, empirical offset, or global missing-as-zero rule is needed.
+
+The automatic dataset identity is
+`usgs-phreeqc-pitzer-b0b3be767158ccc3322d2c816625cf470045e67e-reactive-nakcl-carbonate-auto-v1`.
+It accepts NaCl, KCl and their mixtures with the four water/carbonate reaction ions and
+EOS-role hydrocarbons. Other declared salts or aqueous neutral solutes do not enter this family,
+even at zero amount. Reinitializing a previously selected automatic family after adding an
+unsupported component fails instead of reusing stale coefficients.
+
+The existing explicit `applyPhreeqcReactiveSodiumChlorideCarbonateParameters()` method remains
+available for compatibility. Its narrower NaCl-only topology and dataset identity are unchanged.
+Its ten frozen IPhreeqc comparisons retain pH MAE 0.000434 (maximum 0.000922) and water-activity
+MAE 0.0000131 (maximum 0.0000261). The primary
 diagnostic is
 cached by active primary-salt topology and parameter revision, and the automatic gate runs once
 after each standard
 level-zero state initialization. Call `init(0)` after changing composition, as required by the
 general NeqSim state contract. This work is confined to `PhasePitzer` and `ComponentGePitzer`;
 neutral PR, SRK, CPA, Electrolyte-CPA, and Fürst electrolyte-EOS paths do no new work.
+
+## Automatic carbonate parameter evidence and qualification boundary
+
+The new automatic path is checked against 54 independently generated IPhreeqc 3.7.3 aqueous
+states: 298.15, 313.15 and 323.15 K; 0.1, 1 and 3 mol/kg total chloride; NaCl, KCl and a
+50/50 mixture; and 0.001 or 0.1 mol/kg total dissolved inorganic carbon. MacInnes scaling is
+explicitly disabled. Frozen species molalities, unscaled pH, water activity and individual
+activity coefficients are stored with their reproducible generator under
+`src/test/resources/neqsim/thermo/phase/reactive-carbonate/`. The exact full database input is
+Git blob `324f852784be84650b77bd7f07f8316aafd8188b`; the older reference executable omits only
+unused gas-EOS and mean-gamma reporting blocks, leaving all aqueous reactions and interactions
+unchanged. The frozen regression limits are 0.001 pH unit, 0.00005 water activity and
+0.01 in log10 activity coefficient. The previously established ten-state regression keeps its
+original, tighter limits. These comparisons establish implementation agreement.
+
+Experimental evidence is assessed separately against the NaCl conditional carbonate-dissociation
+correlation of Millero, Huang, Graham and Pierrot (2007), DOI
+[10.1016/j.gca.2006.08.041](https://doi.org/10.1016/j.gca.2006.08.041).
+The comparison covers both dissociation steps at 298.15, 313.15 and 323.15 K and
+0.1, 1, 3 and 5 mol/kg NaCl at atmospheric pressure. The model is not refitted to this
+correlation. Using native molality-scale coefficients, maximum discrepancies are approximately 0.174 pK
+for the first dissociation and 0.218 pK for the second. The latter occurs at 323.15 K and
+5 mol/kg. These discrepancies exceed the published fit standard deviations of 0.013 and
+0.020 pK; those fit deviations are not individual-measurement uncertainty estimates. These retained failures are
+not an accepted range extension or a basis for fitting a compensating coefficient.
+
+Accordingly the automatic dataset is `PARTIALLY_EXPERIMENTALLY_VALIDATED`.
+`requirePitzerDatasetValidationFor(REACTIVE_SPECIATION)` and the complete-dataset qualification
+gate still reject it. Complete parameter definitions do not qualify coupled gas/oil VLE,
+pressure extrapolation, buffered/high-pH brines, KCl/mixed-brine experimental pH, minerals,
+hydrates or a broad operating envelope. Published NaCl/NaHCO3 measurements by Li et al. (2018),
+DOI [10.1016/j.fluid.2017.11.023](https://doi.org/10.1016/j.fluid.2017.11.023), and KCl measurements
+by Mutailipu et al. (2021), DOI [10.1016/j.ces.2020.116434](https://doi.org/10.1016/j.ces.2020.116434),
+use a MacInnes pH convention. A comparison with their measured numbers must implement the same
+single-ion convention and account for gas fugacity, CO2 solubility and reaction constants.
+Those abstract-level results are not silently substituted for a numerical experimental benchmark.
+
+The synthetic 313.15 K, 50 bara methane/heptane/CO2/NaCl-KCl case retains GAS+OIL+AQUEOUS,
+complete reaction/neutral interaction coverage and pH near 3.66555 on the **unscaled molality**
+convention. `PhasePitzer.getPitzerActivity(int)` returns native dimensionless activities and
+`getPitzerPH()` reads hydronium activity without an acid-gas estimate or neutral-pH fallback.
+Use these explicit readouts for the coefficient audit; the established fugacity-reference
+accessors and reaction solver retain their compatibility behavior. Reaction, whole-fluid elemental and charge closure are numerical checks, not a
+claim of experimental accuracy for that three-phase state. Use the executable example
+`examples/neqsim/pitzer_reactive_carbonate.py` for the ordinary setup without external loading.
 
 ## Candidate catalog preflight for unsupported mixtures
 

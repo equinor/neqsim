@@ -66,6 +66,22 @@ public class SystemPitzer extends SystemEosGE {
   }
 
   /**
+   * Initializes chemical reactions and enables the bounded automatic carbonate parameter selector.
+   *
+   * <p>
+   * Supported Na/K chloride-carbonate topologies load their pinned source definitions lazily. Other topologies,
+   * explicit legacy policy, and named manual datasets retain their existing selection.
+   * </p>
+   */
+  @Override
+  public void chemicalReactionInit() {
+    super.chemicalReactionInit();
+    if (isChemicalSystem()) {
+      ((PhasePitzer) phaseArray[1]).prepareAutomaticReactiveCarbonateSelection();
+    }
+  }
+
+  /**
    * Selects legacy Pitzer parameter loading for compatibility with historical calculations.
    *
    * <p>

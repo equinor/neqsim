@@ -198,11 +198,33 @@ Reaction data selection is explicit and inspectable. `SystemKentEisenberg` selec
 molality-standard-state source. This mapping records the implemented database choice—it is not
 evidence that a parameter set has been independently validated for every model or salinity range.
 
+For water/CO2 with NaCl, KCl or their mixture, ordinary `SystemPitzer` reaction initialization
+now enables the reviewed automatic carbonate definition set. Add every feed component first,
+call `chemicalReactionInit()`, set the mixing rule and multiphase option, and run the flash.
+Methane and hydrocarbon oil components retain their EOS roles. A Python parameter loader or an
+explicit dataset call is unnecessary for this bounded family. The executable example is
+`examples/neqsim/pitzer_reactive_carbonate.py`; its Java setup and pH calculation are covered by
+`PitzerAutomaticReactiveCarbonateTest.ordinaryReactiveMixedBrineSetupSelectsCompleteParameters`.
+
+`PhasePitzer.getPitzerPH()` reports pH from native hydrogen-ion activity and
+`getPitzerActivity(int)` reports native dimensionless activity for ions and neutral solutes.
+Pitzer pH uses hydrogen-ion molality times its activity coefficient, divided by the 1 mol/kg
+standard state. Water activity uses water mole fraction times its activity coefficient. Do not
+apply a mole-fraction hydrogen-ion formula to these molality-scale Pitzer coefficients.
+
+The automatic selector uses a finite audited list of source-defined zero interactions and exposes
+that list through `PhasePitzer.getReactiveCarbonateSourceZeroDefinitions()`. It does not assume
+that an arbitrary missing interaction is zero. Its independent aqueous-reference and experimental
+comparison limits, including retained high-concentration failures, are documented in
+[Pitzer parameter provenance](pitzer_parameter_provenance.md#automatic-carbonate-parameter-evidence-and-qualification-boundary).
+Full reactive-speciation qualification remains closed; automatic loading alone does not qualify
+an engineering operating range.
+
 For reactive sodium-chloride/carbonate calculations, `SystemPitzer` also exposes the narrow,
 opt-in `applyPhreeqcReactiveSodiumChlorideCarbonateParameters()` mode. Add water, CO2, Na+, and
 Cl-, call `chemicalReactionInit()` so the carbonate species exist, set the mixing rule, then apply
 the mode before the first flash. It accepts exactly water, CO2, Na+, Cl-, H3O+, OH-, HCO3-, and
-CO3--; an extra or missing species is rejected. The ordinary catalog-first default is unchanged.
+CO3--; an extra or missing species is rejected. This explicit compatibility mode remains unchanged.
 
 The mode uses the pinned public-domain PHREEQC source, maps NeqSim H3O+ to the source H+ identity,
 and installs explicit six-term zeros only where PHREEQC executable source treats an omitted tuple as

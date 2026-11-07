@@ -395,6 +395,12 @@ new ThermodynamicOperations(fluid).TPflash();
 boolean hasAqueousPhase = fluid.hasPhaseType(PhaseType.AQUEOUS);
 ```
 
+For reactive CO2/NaCl/KCl brines, add CO2 to the feed and call `chemicalReactionInit()` before
+setting the mixing rule. The bounded reactive carbonate parameter family then loads automatically.
+Its source-defined zeros and partial qualification are explained in
+[Pitzer parameter provenance](pitzer_parameter_provenance.md#automatic-carbonate-parameter-evidence-and-qualification-boundary).
+The automatic setup does not establish full reactive pH, VLE or mineral qualification.
+
 The creation-order role objects are stable even when active phases are density-ordered or disappear. A later flash
 reconsiders inactive roles from the current feed and conditions. Neutral non-water species in the Pitzer phase use an
 aqueous Henry reference; water alone uses the Pitzer osmotic/Raoult solvent convention. Calling
