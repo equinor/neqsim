@@ -197,6 +197,34 @@ Reaction data selection is explicit and inspectable. `SystemKentEisenberg` selec
 `STANDARD` mole-fraction source, and `SystemPitzer` selects the dedicated `PITZER`
 molality-standard-state source. This mapping records the implemented database choice—it is not
 evidence that a parameter set has been independently validated for every model or salinity range.
+
+For reactive sodium-chloride/carbonate calculations, `SystemPitzer` also exposes the narrow,
+opt-in `applyPhreeqcReactiveSodiumChlorideCarbonateParameters()` mode. Add water, CO2, Na+, and
+Cl-, call `chemicalReactionInit()` so the carbonate species exist, set the mixing rule, then apply
+the mode before the first flash. It accepts exactly water, CO2, Na+, Cl-, H3O+, OH-, HCO3-, and
+CO3--; an extra or missing species is rejected. The ordinary catalog-first default is unchanged.
+
+The mode uses the pinned public-domain PHREEQC source, maps NeqSim H3O+ to the source H+ identity,
+and installs explicit six-term zeros only where PHREEQC executable source treats an omitted tuple as
+zero. It does not fit a coefficient or apply a temperature offset. Ten frozen IPhreeqc states at
+293.15 and 323.15 K bound the implementation regression to 0.001 pH unit and 0.00003 water-activity
+unit. A coupled 293.15 K, 0.7 MPa gas-aqueous check gives pH 3.41090 versus 3.40870 and dissolved CO2
+0.22016 versus 0.22198 mol/kg, with reaction-log residual below 0.000002. These are implementation
+parity checks, not universal experimental, mixed-brine, hydrate, mineral, or extrapolation
+qualification.
+
+```java
+SystemPitzer system = new SystemPitzer(293.15, 7.0);
+system.addComponent("water", 55.5084350618);
+system.addComponent("CO2", 1.0);
+system.addComponent("Na+", 1.0);
+system.addComponent("Cl-", 1.0);
+system.chemicalReactionInit();
+system.setMixingRule("classic");
+system.setMultiPhaseCheck(true);
+system.applyPhreeqcReactiveSodiumChlorideCarbonateParameters();
+new ThermodynamicOperations(system).TPflash();
+```
 Use `system.getChemicalReactionDataSource()` before initialization and
 `system.getChemicalReactionOperations().getReactionDataSource()` after initialization to record the
 selection in calculation provenance. Use

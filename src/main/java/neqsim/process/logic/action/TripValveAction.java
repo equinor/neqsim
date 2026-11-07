@@ -1,5 +1,13 @@
 package neqsim.process.logic.action;
 
+import neqsim.process.equipment.ProcessEquipmentInterface;
+
+import java.util.List;
+
+import java.util.Collections;
+
+import java.io.Serializable;
+
 import neqsim.process.equipment.valve.ESDValve;
 import neqsim.process.logic.LogicAction;
 
@@ -9,7 +17,8 @@ import neqsim.process.logic.LogicAction;
  * @author ESOL
  * @version 1.0
  */
-public class TripValveAction implements LogicAction {
+public class TripValveAction implements LogicAction, Serializable {
+  private static final long serialVersionUID = 1L;
   private final ESDValve valve;
   private boolean executed = false;
 
@@ -20,6 +29,35 @@ public class TripValveAction implements LogicAction {
    */
   public TripValveAction(ESDValve valve) {
     this.valve = valve;
+  }
+
+  /**
+   * Re-arms execution bookkeeping without changing the target equipment.
+   */
+  @Override
+  public void reset() {
+    executed = false;
+  }
+
+  /**
+   * Returns actual references for every configured target, without issuing equipment commands.
+   *
+   * @return configured physical targets
+   */
+  @Override
+  public List<ProcessEquipmentInterface> getTargetEquipment() {
+    return valve == null ? Collections.<ProcessEquipmentInterface>emptyList()
+        : Collections.<ProcessEquipmentInterface>singletonList(valve);
+  }
+
+  /**
+   * Reports whether all configured physical target identities are available.
+   *
+   * @return true when no target is opaque or missing
+   */
+  @Override
+  public boolean isTargetEquipmentIdentityComplete() {
+    return valve != null;
   }
 
   @Override

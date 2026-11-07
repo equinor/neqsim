@@ -76,6 +76,7 @@ and campaign #3153 completion gates.
 | `SystemSpanWagnerEos` | Pure CO2 | CO2 reference EOS |
 | `SystemLeachmanEos` | Pure hydrogen | H2 reference EOS |
 | `SystemWaterIF97` | Pure water / steam | IAPWS-IF97 |
+| `SystemSeawater` | Fixed-salinity seawater cooling utility | IF97 + IAPWS-08; g/kg solution; see `neqsim-cooling-water` |
 | `SystemVegaEos` | LNG / cryogenic | Specialized for LNG |
 
 ### SAFT Family

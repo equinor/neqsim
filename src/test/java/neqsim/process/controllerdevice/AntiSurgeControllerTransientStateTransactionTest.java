@@ -60,12 +60,15 @@ class AntiSurgeControllerTransientStateTransactionTest extends neqsim.NeqSimTest
     assertEquals(trialTarget, fixture.controller.getTargetValveOpening(), TOLERANCE);
     assertEquals(trialRate, fixture.controller.getFilteredMarginRate(), TOLERANCE);
     assertEquals(trialPrediction, fixture.controller.getPredictedMargin(), TOLERANCE);
-    assertEquals(trialOpening, fixture.valve.getPercentValveOpening(), TOLERANCE);
+    assertEquals(trialOpening, fixture.valve.getTargetPercentValveOpening(), TOLERANCE);
+    assertEquals(initialValveOpening, fixture.valve.getPercentValveOpening(), 0.0,
+        "controller-only replay must not bypass native valve travel (#4899)");
 
     fixture.controller.runTransient(initialOpening, 1.0, stepId);
     assertEquals(trialOpening, fixture.controller.getValveOpening(), 0.0,
         "one physical-step identifier must not integrate the controller twice");
-    assertEquals(trialOpening, fixture.valve.getPercentValveOpening(), 0.0);
+    assertEquals(trialOpening, fixture.valve.getTargetPercentValveOpening(), 0.0);
+    assertEquals(initialValveOpening, fixture.valve.getPercentValveOpening(), 0.0);
   }
 
   @Test
@@ -132,17 +135,23 @@ class AntiSurgeControllerTransientStateTransactionTest extends neqsim.NeqSimTest
     assertTrue(model.getTransientTransactionCoverage().isComplete());
     double firstOpening = first.valve.getPercentValveOpening();
     double secondOpening = second.valve.getPercentValveOpening();
+    double firstCommand = first.valve.getTargetPercentValveOpening();
+    double secondCommand = second.valve.getTargetPercentValveOpening();
     TransientStepTransaction transaction = model.beginTransientStepTransaction();
     first.compressor.setMargin(0.02);
     second.compressor.setMargin(-0.01);
     first.controller.runTransient(0.0, 1.0, UUID.randomUUID());
     second.controller.runTransient(0.0, 1.0, UUID.randomUUID());
-    assertTrue(first.valve.getPercentValveOpening() > firstOpening);
-    assertTrue(second.valve.getPercentValveOpening() > secondOpening);
+    assertTrue(first.valve.getTargetPercentValveOpening() > firstCommand);
+    assertTrue(second.valve.getTargetPercentValveOpening() > secondCommand);
+    assertEquals(firstOpening, first.valve.getPercentValveOpening(), 0.0);
+    assertEquals(secondOpening, second.valve.getPercentValveOpening(), 0.0);
     transaction.rollback();
 
     assertEquals(firstOpening, first.valve.getPercentValveOpening(), 0.0);
     assertEquals(secondOpening, second.valve.getPercentValveOpening(), 0.0);
+    assertEquals(firstCommand, first.valve.getTargetPercentValveOpening(), 0.0);
+    assertEquals(secondCommand, second.valve.getTargetPercentValveOpening(), 0.0);
     assertEquals(0.0, first.controller.getValveOpening(), 0.0);
     assertEquals(0.0, second.controller.getValveOpening(), 0.0);
   }

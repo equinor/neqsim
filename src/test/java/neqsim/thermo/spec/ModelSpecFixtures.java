@@ -43,6 +43,7 @@ import neqsim.thermo.system.SystemLeachmanEos;
 import neqsim.thermo.system.SystemSpanWagnerEos;
 import neqsim.thermo.system.SystemVegaEos;
 import neqsim.thermo.system.SystemWaterIF97;
+import neqsim.thermo.system.SystemSeawater;
 import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPCSAFT;
 import neqsim.thermo.system.SystemPCSAFTa;
@@ -126,6 +127,8 @@ final class ModelSpecFixtures {
       return PhaseSpanWagnerEos.class;
     case WATER_IF97:
       return SystemWaterIF97.class;
+    case SEAWATER_35:
+      return SystemSeawater.class;
     case WATER_IF97_PHASE:
       return PhaseWaterIAPWS.class;
     case PCSAFT:
@@ -243,6 +246,15 @@ final class ModelSpecFixtures {
           && ("gas".equals(s.phase) || "liquid".equals(s.phase)) && "none".equals(s.mixingRule)
           && "iapws-if97-region1-region2".equals(s.operation) && s.outcome == ModelSpec.Outcome.VALUE
           && s.componentIndex == 0, "invalid water IF97 reference fixture");
+      break;
+    case SEAWATER_35:
+      ModelSpec.require(
+          (s.property == ModelSpec.Property.MASS_DENSITY || s.property == ModelSpec.Property.ENTHALPY
+              || s.property == ModelSpec.Property.CP) && s.components.size() == 1 && s.components.containsKey("water")
+              && "liquid".equals(s.phase) && "none".equals(s.mixingRule) && "iapws-if97-r13-08-s35".equals(s.operation)
+              && s.outcome == ModelSpec.Outcome.VALUE && s.componentIndex == 0 && s.temperature >= 273.15
+              && s.temperature <= 353.0 && s.pressure >= 1.0 && s.pressure <= 120.0,
+          "invalid fixed-35-g/kg seawater reference fixture");
       break;
     case PCSAFT:
     case PCSAFT_PHASE:
@@ -605,7 +617,8 @@ final class ModelSpecFixtures {
       assertEquals(result, readSpanWagner(s.property, phase), 0.0, s + " repeat initialization");
       return result;
     }
-    if (s.fixture == ModelSpec.Fixture.WATER_IF97 || s.fixture == ModelSpec.Fixture.WATER_IF97_PHASE) {
+    if (s.fixture == ModelSpec.Fixture.WATER_IF97 || s.fixture == ModelSpec.Fixture.WATER_IF97_PHASE
+        || s.fixture == ModelSpec.Fixture.SEAWATER_35) {
       system.setNumberOfPhases(1);
       system.setMaxNumberOfPhases(1);
       system.init(2);
@@ -1064,6 +1077,9 @@ final class ModelSpecFixtures {
     case WATER_IF97_PHASE:
       system = new SystemWaterIF97(s.temperature, s.pressure);
       break;
+    case SEAWATER_35:
+      system = new SystemSeawater(s.temperature, s.pressure, 35.0);
+      break;
     case PCSAFT:
     case PCSAFT_PHASE:
       system = new SystemPCSAFT(s.temperature, s.pressure);
@@ -1079,7 +1095,8 @@ final class ModelSpecFixtures {
         && s.fixture != ModelSpec.Fixture.LEACHMAN && s.fixture != ModelSpec.Fixture.LEACHMAN_PHASE
         && s.fixture != ModelSpec.Fixture.VEGA && s.fixture != ModelSpec.Fixture.VEGA_PHASE
         && s.fixture != ModelSpec.Fixture.SPAN_WAGNER && s.fixture != ModelSpec.Fixture.SPAN_WAGNER_PHASE
-        && s.fixture != ModelSpec.Fixture.WATER_IF97 && s.fixture != ModelSpec.Fixture.WATER_IF97_PHASE) {
+        && s.fixture != ModelSpec.Fixture.WATER_IF97 && s.fixture != ModelSpec.Fixture.WATER_IF97_PHASE
+        && s.fixture != ModelSpec.Fixture.SEAWATER_35) {
       for (Map.Entry<String, Double> entry : s.components.entrySet()) {
         system.addComponent(entry.getKey(), entry.getValue());
       }
@@ -1094,7 +1111,8 @@ final class ModelSpecFixtures {
         && s.fixture != ModelSpec.Fixture.LEACHMAN && s.fixture != ModelSpec.Fixture.LEACHMAN_PHASE
         && s.fixture != ModelSpec.Fixture.VEGA && s.fixture != ModelSpec.Fixture.VEGA_PHASE
         && s.fixture != ModelSpec.Fixture.SPAN_WAGNER && s.fixture != ModelSpec.Fixture.SPAN_WAGNER_PHASE
-        && s.fixture != ModelSpec.Fixture.WATER_IF97 && s.fixture != ModelSpec.Fixture.WATER_IF97_PHASE) {
+        && s.fixture != ModelSpec.Fixture.WATER_IF97 && s.fixture != ModelSpec.Fixture.WATER_IF97_PHASE
+        && s.fixture != ModelSpec.Fixture.SEAWATER_35) {
       system.setMixingRule("classic");
     }
     return system;

@@ -25,7 +25,7 @@ none of this completes field, vendor, independent-verification or AFC qualificat
 | `NetworkNewtonSolver`, `WellBranch`, `FlowlineBranch`, `IntegratedProductionModel` | Separate fast lifecycle/optimization graph in surface volumetric units; reduced deliverability curves and fitted quadratic flowline resistance. | Preserve the fast reduced-order workflow. Supply validated surrogates from detailed results later; do not confuse Sm3/day with the detailed graph's kg/s or treat one-point fits as full hydraulics. |
 | `SubseaProductionSystem`, `TiebackRouteNetwork` | Direct/cluster/daisy-chain/template builders and cost/geometry metadata; forward equipment execution with configured rates/choke pressures. Route network is explicitly screening metadata. | Reuse architecture/design equipment and route provenance. Add a mapping to detailed network identities rather than assuming architecture labels already provide coupled pressure/flow solution. |
 | `SubseaTree`, `SubseaManifold`, `SubseaJumper`, `PLET`, `PLEM`, risers, mechanical-design classes and SURF cost estimators | Existing process/design objects and design/cost screening workflows. | Keep real equipment as owners of geometry, mechanical design and cost. Template/manifold/PLEM labels alone add no junction physics; junction conservation belongs to the network. |
-| `TwoFluidPipe`, `TwoFluidPipeNetwork` | Mechanistic pipe steady/transient states; a storage-node transient network with phase mass balance and opt-in named-component/total-energy inventory. Conservative nodes route exact accepted signed branch transfers synchronously and publish one frozen mixed state to every connected branch. Fixed-pressure reverse-flow boundaries require an explicit thermodynamic fluid owner. Algebraic zero-volume junctions and branch subcycling remain excluded. | Use `TwoFluidPipe` for steady resistance evaluation here. Reuse the existing transient network in #2911; do not build a second transient engine or claim general mixed-fidelity dynamics. |
+| `TwoFluidPipe`, `TwoFluidPipeNetwork` | Mechanistic pipe steady/transient states; a storage-node transient network with phase mass balance and opt-in named-component/total-energy inventory. Conservative nodes route exact signed branch transfers from one frozen state. A bounded single algebraic zero-volume junction can now solve common pressure and an equilibrium donor from detached branch candidates, with explicit interphase transfer and exact named-component/energy receipts. Branches and nodes are published only after whole-network closure passes. Fixed-pressure reverse-flow boundaries require an explicit thermodynamic fluid owner. Multi-junction Newton coupling and branch subcycling remain excluded. | Use `TwoFluidPipe` for steady resistance evaluation here. Reuse the existing transient network in #2911; do not build a second transient engine or claim general mixed-fidelity dynamics. |
 | `TransientGasNetwork`, `TransientCompositionalPipeNetwork` | Dedicated gas linepack and bounded prescribed-flow species transport. | Retain their documented applicability. Neither qualifies general oil/gas/water dynamic SURF networks. |
 | `FieldLifecycleModel`, `FieldLifecycleSimulator` | Existing SURF + facility `ProcessSystem`/`ProcessModel` composition, reservoir and injection streams, lifecycle economics and constraints. | Connect solved network outlets to these existing streams and areas. Preserve existing detailed user-built equipment instead of regenerating it. |
 | Agent/MCP inventory | Pipe tools, API discovery and capability evidence distinguish source presence from executable operations. | Register discovery and regression evidence without claiming the instance-based network builder is already an MCP invocation contract; coordinate exposure with #3153. |
@@ -209,9 +209,8 @@ double oilEnergy = energy.getOutletAdvectedEnergyJ(
     TwoFluidConservativeEnergyReport.Phase.OIL);
 ```
 
-These are accepted finite-volume diagnostics and a prerequisite for a future phase-coupled
-algebraic junction boundary solve. They do not make the current single mixed-state algebraic
-junction approximation conservative under countercurrent phase transport and are not independent
+These accepted finite-volume diagnostics are also the boundary contract for the bounded
+phase-coupled algebraic junction solve. They are implementation evidence, not independent
 qualification of the two-fluid closures.
 `addConservativeCompressibleNode(...)` keeps `UpstreamCompressibleVolume` as the hydraulic
 pressure and phase-mass owner while adding named-component and internal-energy inventory to the
@@ -242,12 +241,54 @@ Signed component, phase-mass and enthalpy transfers then use the same simultaneo
 forward flow. A synthetic pressure-reversal regression exercises actual negative outlet component
 transport with compositionally different storage and reservoir fluids and closes the network mass,
 component and first-law reports. This is implementation/conservation evidence only; refill,
-terrain pooling, restart and predictive reversal rates remain unqualified. The network still does
-not implement algebraic zero-volume junctions, branch subcycling or a general conservative
-multi-edge Newton junction solve.
+terrain pooling, restart and predictive reversal rates remain unqualified.
 
-Transient multi-edge junction conservation, energy/component closure, representative
-large-field runtime and independent field data remain open qualification work.
+`TwoFluidPipe.prepareTransientCandidate(...)` now exposes the pipe's existing detached complete-interval
+evaluation as an owner-bound, single-use token. Reports and candidate time can be inspected before
+`acceptTransientCandidate(...)`. Foreign, stale and reused tokens fail closed. The storage network
+prepares every branch, hydraulic volume and thermodynamic inventory from the same accepted state,
+checks phase/component/first-law closure, validates every candidate, and only then commits. If a
+later branch outlet publication fails, earlier branch commits are compensated in reverse order;
+connected streams and storage volumes retain their object identities. The tests cover successful
+pipe parity, non-mutating preparation, stale/foreign/reused tokens, compensating rollback and a
+second-branch publication failure with unchanged pipe sections, node pressure, reports and clocks.
+This is software atomicity and synthetic conservation evidence, not physical network qualification.
+
+The overload `prepareTransientCandidate(dt, id, inletPressurePa, outletPressurePa,
+inletBoundaryFluid, outletBoundaryFluid)` supplies the missing nonlinear-coordinator primitive:
+each pressure-boundary trial starts from the same accepted pipe, while optional inlet and signed-
+outlet thermodynamic donors are deep-copied onto that candidate only. Preparing several trials does
+not change the live pipe, connected inlet stream or its fluid. Accepting one trial publishes its
+pipe-owned pressure-boundary configuration; every other trial from the former state becomes stale.
+The trial inlet donor overrides any earlier isolated inlet reservoir and is retained after acceptance
+for continuation with a null donor. Rollback restores the former reservoir without replacing the
+connected feed or its fluid. The conservative pressure route caches one reservoir flash per trial
+pressure across internal solver stages.
+The transactional regression exercises two distinct pressure vectors, donor isolation, acceptance,
+stale-token rejection and compensating rollback. With conservative energy recovery enabled, the
+pressure face resolves signed phase velocity from acoustic impedance and reports the matching
+mass/component/energy transfer: a reservoir above the accepted inlet pressure admits material and
+a lower-pressure reservoir releases the pipe-cell donor. This is still solver infrastructure, not
+physical qualification of a field junction.
+
+`addAlgebraicJunction(name, initialPressurePa, initialFluid)` adds one zero-volume equilibrium
+junction to the existing `TwoFluidPipeNetwork`. For every reporting interval the coordinator
+replays all incident branches from the same accepted state, brackets and solves one common pressure,
+and iterates the mixed donor composition and specific enthalpy until total mass, every named
+component and advected energy close. No candidate is published before the final network checks.
+The accepted `AlgebraicJunctionReport` records pressure and iteration counts, component and energy
+residuals, and the equilibrium gas/oil/water conversion required by the mixer. That conversion is
+also an explicit internal term in `BalanceReport`; it sums to zero in total mass and is not presented
+as an external source.
+
+`TwoFluidPipeNetworkTest.algebraicJunctionSolvesCommonPressureAndMixedDonorConservatively` exercises
+a two-inlet/one-outlet merge with different branch compositions and verifies pressure bracketing,
+total/component/energy closure and non-zero but total-zero equilibrium phase conversion. The
+branch-order/restart regression verifies deterministic insertion-order behavior, serialization and
+a second accepted interval. This is synthetic software conservation evidence only. The bounded
+contract deliberately rejects a second algebraic junction and a branch between algebraic junctions;
+network-wide multi-junction Newton coupling, branch subcycling, representative large-field runtime
+and independent field data remain open work.
 
 ## Typed field and equipment identity
 
@@ -1021,12 +1062,13 @@ second transition detector or interpret a heuristic `OPTIMAL` status as operatin
    fail-closed acceptance evidence; independent qualification is still required before design use.
    Then couple qualified alternatives to multi-period lifecycle economics and reduced-order
    surrogates.
-3. Coordinate the storage-node conservative transient route with #2911 and independently
-   qualify it. Explicit source-fluid/enthalpy terms now close the conservative storage-node source
-   ledger. Next address reverse-flow boundary thermodynamics, algebraic zero-volume junctions and
-   branch subcycling in that order. Consume the explicit reversed outlet-boundary donor owned by
-   #4687/#3298 after that contract is merged and qualified; do not duplicate it in the network.
-   Enable dynamics only within the quantitatively tested scope.
+3. Coordinate the conservative transient route with #2911 and independently qualify it. Explicit
+   source-fluid/enthalpy terms, signed boundary donors and the shared branch/node transaction now
+   close storage-node intervals before publication. The bounded one-junction coordinator solves
+   common pressure plus the component/enthalpy donor and reports equilibrium interphase transfer.
+   Next extend the same transaction to multiple coupled algebraic junctions with a global nonlinear
+   solve, then add branch subcycling and representative runtime/field comparisons. Enable dynamics
+   only within the quantitatively tested scope.
 4. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export
    (#2899/#1332). Use synthetic/public acceptance cases and retain reproducible results.
 

@@ -66,7 +66,10 @@ finite-rate evaporation. It does not alter holdup, conservative inventories,
 friction or transfer area used by the transient solver. Neighboring cell planes
 need not share one global level. The straight-cell arclength abstraction excludes
 capillarity and curved-pipe volume corrections. Invalid/near-vertical or
-unresolvable cases fail explicitly. See the
+unresolvable cases fail explicitly. Long inclined trace pools are solved from their small positive
+leading-edge depth, rather than reconstructing that depth by subtracting nearly equal centre and
+slope-range values. This preserves representable wedge volume and area without an inventory floor;
+traces below floating-point resolution still fail explicitly. See the
 [reporting guide](../wiki/two_fluid_reporting_and_validation#static-subcell-depth-and-area-diagnostic)
 for units, supported limits and executable regression evidence.
 
@@ -103,6 +106,14 @@ the current one-direction unsplit complementarity block reject this option expli
 algorithmic ownership boundaries, not automatic fallbacks. This does not repair the remaining
 dry/wet pressure-moment front or qualify pools, inlet refill, physical evaporation, shutdown/restart
 or hydraulic pigging.
+
+The separate experimental `IdealGasPiggingModel` is not a `TwoFluidPipe`
+closure. It couples a rigid pig to two well-mixed calorically perfect gas
+control volumes with conservative moving-volume work and ideal-gas orifice
+bypass. Its analytical, conservation and refinement evidence cannot qualify
+distributed pressure waves, multiphase moving boundaries, swept liquid,
+receiver liquid capacity, residual film, shutdown/restart or severe slugging.
+See [pig motion and reduced-order gas coupling](pig-motion.md).
 
 ### Stratified hydrostatic pressure moments
 
@@ -256,6 +267,27 @@ outlet that physically permits fallback,
 phase composition, density, and enthalpy while retaining the signed face speed and independent outlet
 pressure traction. Integrated boundary component masses use the same Euler, Runge-Kutta, or IMEX
 stage weights as the accepted phase update.
+
+For a conservative transient `CONSTANT_PRESSURE` inlet, pressure traction and advective transport now
+have separate explicit owners. The flashed external reservoir supplies composition, density,
+enthalpy and acoustic impedance for inflow; the first pipe cell supplies those properties for
+outflow. Each phase uses the signed one-sided compatibility relation
+
+$$
+u_k^*=\frac{Z_{k,e}u_{k,e}+Z_{k,1}u_{k,1}+p_e-p_1}{Z_{k,e}+Z_{k,1}},
+\qquad Z_k=\rho_k c_k,
+$$
+
+with a stationary external reservoir and a subsonic acoustic cap. This is a pressure-reservoir
+boundary, not an orifice model. `setInletBoundaryFluid(...)` optionally supplies a defensive
+reservoir copy. That isolated copy is flashed once per new prescribed pressure and reused across
+the internal solver stages; `getPressureInletFlashCount()` exposes the cumulative count. A live
+connected inlet stream remains uncached and is reflashed at every boundary application so an
+external stream mutation cannot leave stale thermodynamics.
+`getInletFacePressure(unit)` exposes the accepted mechanical face pressure, including closed-wall
+hydrostatic half-cell head, so a restart ramp can begin without an artificial traction step. No
+physical cell inventory is replaced. The same flashed donor is used by phase, named-component and
+energy ledgers.
 
 `TwoFluidConservationEquations.getLastBoundaryPhaseMomentumFluxes()` reports total phase momentum
 flow at inlet and outlet, while `getLastBoundaryPhasePressureForces()` isolates pressure traction
@@ -692,6 +724,10 @@ pipe.setHydrocarbonPoolTransfer(
 // Stationary/slowly draining terrain-pool screening:
 pipe.setHydrocarbonPoolTransfer(
     HydrocarbonPoolTransfer.forHydrostaticPool(species, k, dhVap, 100.0));
+
+// Flowing stratified shutdown/refill screening:
+pipe.setHydrocarbonPoolTransfer(
+    HydrocarbonPoolTransfer.forStratifiedFlow(species, k, dhVap, 100.0));
 ```
 
 Configure the closure before the first transient interval. It requires dry gas/oil component
@@ -700,10 +736,27 @@ transfer remains a separate owner. `getLastHydrocarbonPoolTransferResult()` expo
 constants, interface areas, pre-limit heat, heat scales and donor-limit activation. The hydrostatic
 option uses the existing volume-preserving horizontal-surface reconstruction for each inclined cell.
 A zero-area gas cell with a positive equilibrium oil target uses that target geometry only for the
-appearance step. If an accepted inclined trace is below the reconstruction's relative-volume
-resolution, the result reports `getUnresolvedTraceAreaFallback()` and uses the local stratified chord
-area; it does not delete, seed or clip component inventory. This is an explicit subgrid area
-regularization, not evidence for an annular film, slug front or moving-pig interface.
+appearance step. The reconstruction retains the leading-edge depth of representable inclined trace
+wedges, including the qualified `1e-30` holdup case in a 416.67 m cell. If a still smaller accepted
+trace is below floating-point relative-volume resolution, the result reports
+`getUnresolvedTraceAreaFallback()` and uses the local stratified chord area; it does not delete, seed
+or clip component inventory. This last-resort subgrid regularization is not evidence for an annular
+film, slug front or moving-pig interface.
+
+For a flowing stratified state, `forStratifiedFlow(...)` uses the circular cross-sectional chord
+at the accepted cell-average holdup, extended along the cell arclength. It preserves integrated
+area and paired component rates when a uniform physical state is subdivided, including nonuniform
+cell lengths and active heat limits. The equilibrium oil target supplies the chord for first
+appearance without seed inventory; full liquid has zero gas/oil interface. This is a different,
+explicit area assumption from `forHydrostaticPool(...)`. Reconstructing an independent horizontal
+puddle in every flowing cell makes numerical cell length a physical kinetic parameter: a 400 m,
+unit-diameter section at 0.01 holdup and 0.03 rad has 13.990 m2 static area as one cell, but
+34.626 m2 as eight equal cells. Neither value is a flowing-interface prediction. Keep the static
+factory for stationary reconstructions and validate its cell volumes against a common physical
+free surface before comparing subdivisions.
+Horizontal reconstruction scales its search bracket with circular-segment trace depth rather
+than imposing a liquid floor. Independent controls retain positive volume and chord area down
+to `1e-300` holdup under the unchanged relative-volume tolerance.
 
 The analytical gates cover zero drive/area, independent species conductance, donor and heat limits,
 unseeded oil appearance, exponential time-step refinement, component conservation and conservative
@@ -722,23 +775,33 @@ temperature for each cell initializes every radial layer in that cell uniformly.
 then evolve independently, and a new steady `run()` clears the prior evolved layer inventory.
 
 The declared finite-heat rich-gas cycle completes 780 s on 12 and 24 cells with 100 W/m available
-evaporation heat: 120 s gas-only blowdown, 120 s closed settling, 420 s same-composition inlet
-refill at 1000 kg/s with the outlet closed, then 120 s closed hold. The new run uses hydrostatic
-pool area, a 26 mm steel wall (7850 kg/m3, 500 J/(kg K)), 4 W/(m2 K) wall/seabed exchange and a
-277.15 K environment. Peak oil inventories are 8,330.683 and 6,429.568 kg; final oil is 8,116.001
-and 6,144.303 kg. The 22.82% peak and 24.29% final spatial differences are numerical screening,
-not a converged predictive band. Maximum resolved areas are 187.876/101.227 m2 and maximum wall
-temperature changes are 43.223/45.037 K. Minimum heat scales of 1.089e-3/8.093e-4 prove that the
-100 W/m kinetic limit is active; both meshes report the trace-area fallback. The cycle crosses the dense-root $V/B=1.75$
+evaporation heat: 120 s gas-only blowdown, 120 s closed settling, a 420 s same-composition
+pressure-reservoir ramp to 150 bara with the outlet closed, then 120 s closed hold. The current run explicitly uses
+`forStratifiedFlow(...)`, a 26 mm steel wall (7850 kg/m3, 500 J/(kg K)), 4 W/(m2 K) wall/seabed exchange and a
+277.15 K environment. Both meshes sample the same terrain, with the final 1250 m level at
+-333.5 m elevation. The earlier "last three cells" outlet definition changed its physical length
+and elevation with mesh size; its 22.82%/24.29% peak/final inventory differences cannot isolate
+spatial error. The corrected comparison retains the predeclared 10% inventory gates, all
+conservation tolerances and unfiltered pressure diagnostics. The area receipt records the maximum
+**single-cell** interface area, which is an extensive quantity and need not be mesh invariant.
+The retained common-polyline stationary-puddle rerun fails at 11.21% peak and 10.86% final oil.
+The distinct flowing-area model with pressure-driven refill passes those unchanged gates at 0.791%
+peak and 0.791% final oil: 19,300.471/19,454.363 kg peak and 18,907.735/19,058.493 kg final on
+12/24 cells. Halving the 12-cell interval changes peak/final oil by 0.0912%/0.0949%, restart
+pressure amplitude by 0.0985% and maximum sampled pressure rate by 0.122%. These are different
+area assumptions and predict different inventories; the flowing result does not qualify the
+historical stationary-puddle trajectory. Independent source partition controls and trace-volume
+limits accompany the explicit area-model change.
+The cycle crosses the dense-root $V/B=1.75$
 diagnostic-label transition with the configured liquid root, positive compressibility and recovery
 Jacobian retained; no phase relabeling, mass clipping or guard weakening is used. See the
 [qualification receipt](../../src/test/resources/neqsim/process/pipeline/hydrocarbon-pool-transfer/README.md).
 
 These changes advance a wall-inventory shutdown/cooldown/restart screening path, but they do not
-complete physical restart qualification. Independent public rate/thermal data, tighter mesh/time
-convergence, a restart-opening surge band, repeated-cycle evidence and the unchanged five-second
-riser matrix remain open. Moving-pig volume/flux/work coupling is a separate moving-boundary
-conservation algorithm and is not implemented here.
+complete physical restart qualification. The 0.25 s trace retains one sub-2 kPa opening reversal.
+Independent public rate/thermal and restart/surge data, repeated-cycle evidence and the unchanged
+five-second riser matrix remain open. Moving-pig volume/flux/work coupling requires a separate
+moving-boundary conservation algorithm and qualified inlet states.
 
 `getLastConservativeEnergyReport()` exposes the fluid first-law ledger and separate maximum
 relative occupied-volume and published-state energy residuals. Its signed residual is final
@@ -1727,9 +1790,13 @@ double closure = network.getLastBalanceReport()
     .getRelativeResidual(TwoFluidMassBalanceReport.Phase.TOTAL);
 ```
 
-Every branch sees the node pressures at the beginning of the network step. After all branches
-advance, their accepted gas, oil, and water boundary transfers update every compressible node
-simultaneously. Branch iteration order therefore does not become an implicit pressure solve.
+Every branch sees the node pressures at the beginning of the network step. All branches first
+advance on detached candidates; their gas, oil, and water boundary transfers then advance private
+hydraulic and thermodynamic node candidates. Phase, named-component and first-law closure plus every
+candidate configuration are validated before publication. Only then are all pipes and storage nodes
+accepted. A later pipe-publication failure compensates earlier pipe commits in reverse order, while
+node state, network reports and clocks remain unchanged. Branch iteration order therefore does not
+become an implicit pressure solve or partial-commit order.
 The whole-network report includes pipe and node inventories, fixed-boundary transfers, phase
 sources, and gas/oil/water/liquid/total residuals. Conservative storage nodes additionally retain
 named-component and internal-energy inventories. When an `UpstreamCompressibleVolume` has positive
@@ -1737,6 +1804,14 @@ phase source rates, call `setConservativeNodeSourceThermodynamics` with the sour
 specific enthalpy in J/kg. The network then applies the same accepted source mass to the hydraulic,
 component and open-system energy ledgers. Missing source thermodynamics, a mismatched component
 slate or non-finite enthalpy fails before the interval advances.
+
+The network accepts energy closure with the existing absolute-or-relative limits of 1e-4 J or
+1e-7. Inspect the signed joule residual alongside the relative residual: in a closed, adiabatic
+network, both net boundary transfer and physical storage change are zero, so storage-summation
+roundoff alone can produce a relative residual of one. The two-storage reverse-flow regression
+checks every interval against four floating-point ulps of the stored-energy sum, as well as
+component and total-mass closure; it does not rescale the residual by the caloric reference or
+relax the solver's acceptance limits.
 
 Signed fallback from a branch outlet keeps the same directed topology and signed conservation
 ledger. Create a fixed-pressure downstream node with the overload accepting a `SystemInterface`,
@@ -1748,12 +1823,38 @@ Negative outlet component and enthalpy transfers enter the branch from the downs
 applied with the existing simultaneous node update; the last interior pipe cell is never inferred to
 be an external reservoir.
 
-This first network implementation requires finite compressible storage at internal junctions.
-Fixed-pressure nodes are external reservoirs or sinks. Algebraic zero-volume junctions, a global
-Newton pressure-flow solve, and branch subcycling remain outside the validated scope. Conservative
-component/energy mixing, node sources and the compositionally different pressure-reversal fixture
-have synthetic closure evidence; they are not independently qualified transient junction models or
-predictive restart/refill qualification.
+For a bounded zero-volume merge, use one algebraic junction in place of the storage volume:
+
+```java
+TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("algebraic merge");
+network.addFixedPressureNode("well A", 120.0e5, wellAFluid);
+network.addFixedPressureNode("well B", 110.0e5, wellBFluid);
+network.addAlgebraicJunction("manifold", 90.0e5, initialManifoldFluid);
+network.addFixedPressureNode("host", 55.0e5, hostFluid);
+network.addPipe("branch A", "well A", "manifold", branchA);
+network.addPipe("branch B", "well B", "manifold", branchB);
+network.addPipe("riser", "manifold", "host", riser);
+network.runTransient(0.005, UUID.randomUUID());
+
+TwoFluidPipeNetwork.AlgebraicJunctionReport junction =
+    network.getLastAlgebraicJunctionReport();
+double commonPressurePa = junction.getPressurePa();
+double phaseConversionKg = junction.getInterphaseTransferKg(
+    TwoFluidMassBalanceReport.Phase.GAS);
+```
+
+The coordinator evaluates every incident pipe through detached pressure/donor candidates, solves
+one common pressure, and iterates the equilibrium donor composition and enthalpy. It requires total
+mass, every named component and advected energy to close before publishing any branch. Equilibrium
+phase conversion is reported explicitly by gas/oil/water and as an internal `BalanceReport` term;
+its total is zero. `TwoFluidPipeNetworkTest` exercises the same three-branch shape, different inlet
+compositions, branch-order independence, serialization and a second interval.
+
+This contract supports one algebraic junction per network. A second junction, a branch between two
+algebraic junctions, global multi-junction Newton pressure-flow coupling and branch subcycling remain
+outside the validated scope. Conservative storage and algebraic fixtures have synthetic closure
+evidence; they are not independently qualified transient junction models or predictive restart/refill
+qualification.
 
 ### Choosing Time Step, Sections, and Pipeline Length
 
@@ -2486,6 +2587,32 @@ preserves connected stream, upstream-volume, multilayer-calculator and thermal-l
 Other owned submodels are new accepted snapshots: reacquire them through their getters after a
 successful call. Section cloning preserves configured transient oil/water detectors. Adaptive
 step history is copied explicitly because Java serialization omits it.
+
+The same mechanism is available explicitly through
+`prepareTransientCandidate(dt, id)`, `validateTransientCandidate(candidate)` and
+`acceptTransientCandidate(candidate)`. Preparation does not mutate the live pipe. The owner-bound
+token exposes the candidate balance reports and simulation time but not a mutable pipe graph.
+Acceptance is exactly once and rejects foreign or stale tokens. `rollbackTransientCandidate(...)`
+is the compensating operation for a coordinator that has already accepted one pipe before a later
+publication fails; it refuses rollback if the accepted pipe changed in the meantime. These methods
+preserve the existing connected-stream and external-storage identities rather than replacing the
+equipment graph.
+
+Network and nonlinear coordinators may instead call
+`prepareTransientCandidate(dt, id, inletPressurePa, outletPressurePa, inletBoundaryFluid,
+outletBoundaryFluid)`. The pressure boundary types, pressures and optional thermodynamic donors are
+installed on the detached candidate after the accepted owner has been serialized. Donors are deep-
+copied before pressure flashing, so a thermodynamic system clone with shared internal helpers cannot
+mutate the live connected inlet. Multiple trial tokens may be inspected from one accepted state;
+accepting one makes the rest stale under the existing owner-state check. A null donor retains the
+configured candidate fluid. A non-null inlet donor overrides any previously isolated inlet reservoir
+and becomes the pipe-owned reservoir on acceptance, so a subsequent interval with a null donor
+continues from that accepted composition. The live connected feed retains its identity and fluid;
+compensating rollback restores the former isolated reservoir. Conservative pressure trials flash
+the isolated donor once per trial pressure and reuse it across internal stages.
+This overload deliberately supplies no Newton iteration or junction
+mixing rule: the coordinator still owns residual construction, convergence and conservative
+phase/component/energy closure.
 
 This transaction currently supports concrete `TwoFluidPipe` instances with SRK, PR, SRK-CPA or
 SRK-CPAs fluid phases. Other EOS helper caches and pipe-subclass commit hooks are not audited;

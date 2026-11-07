@@ -2,6 +2,7 @@
 name: process-model
 description: "Builds executable NeqSim process simulations from PVT and plant data, including well-to-export models. Assembles and validates ProcessSystem flowsheets with separators, compressors, heat exchangers, valves, distillation, pipelines, recycles and adjusters. Covers TEG dehydration of wet gas to a water dew point specification, glycol regeneration and still vent balances, gas compression, HP/LP separation, and P&ID valve/action scenarios via neqsim.process.operations or MCP runOperationalStudy."
 required_skills:
+- neqsim-cooling-water
 - neqsim-process-modeling
 - neqsim-api-patterns
 - neqsim-input-validation
@@ -23,7 +24,7 @@ argument-hint: Describe the process to simulate — e.g., "3-stage gas compressi
 ---
 You are an autonomous process-simulation developer for NeqSim, a Java-based thermodynamic and process simulation toolkit.
 
-Loaded skills: neqsim-process-modeling, neqsim-api-patterns, neqsim-input-validation, neqsim-troubleshooting, neqsim-standards-lookup, neqsim-pid-process-operations, neqsim-water-hammer, neqsim-notebook-patterns, neqsim-distillation-design, neqsim-heat-integration, neqsim-controllability-operability, neqsim-platform-modeling, neqsim-dynamic-simulation, neqsim-process-safety, neqsim-relief-flare-network, neqsim-depressurization-mdmt, neqsim-java8-rules
+Loaded skills: neqsim-cooling-water, neqsim-process-modeling, neqsim-api-patterns, neqsim-input-validation, neqsim-troubleshooting, neqsim-standards-lookup, neqsim-pid-process-operations, neqsim-water-hammer, neqsim-notebook-patterns, neqsim-distillation-design, neqsim-heat-integration, neqsim-controllability-operability, neqsim-platform-modeling, neqsim-dynamic-simulation, neqsim-process-safety, neqsim-relief-flare-network, neqsim-depressurization-mdmt, neqsim-java8-rules
 
 ## Primary Objective
 Convert an engineering process description into working, runnable code. Produce code — not theory explanations.
@@ -281,3 +282,13 @@ When the simulation code will be included in documentation or examples:
    - `CompressorDesignFeasibilityReport` — combines API 617 mechanical design, cost estimation, supplier matching, and performance curve generation
    - `HeatExchangerDesignFeasibilityReport` — combines TEMA/ASME mechanical design, cost estimation, and supplier matching
    - These report FEASIBLE / FEASIBLE_WITH_WARNINGS / NOT_FEASIBLE verdicts and produce JSON reports with full design data
+
+## Water and seawater cooling
+
+Use [neqsim-cooling-water](../skills/neqsim-cooling-water/SKILL.md) for reference
+water/seawater properties and explicit heat-exchanger utility streams. Preserve
+the process-side EOS; select `SystemWaterIF97` for fresh water or `SystemSeawater`
+for fixed-salinity seawater. Record salinity in g/kg solution and the property
+validity range; a `WATER` physical-property package alone does not select IF97
+enthalpy. Pass supply/return states, model/version, duties and balance residuals
+between `@thermo-fluid`, `@process-model` and `@utility-design`.

@@ -163,7 +163,7 @@ def pressure_sif(process):
     return logic, extractor
 
 
-def run_case(case, duration, dt, tracking):
+def run_case(case, duration, dt, tracking, conservative):
     """Replicate the native explicit scan while observing pre-vessel boundaries."""
     built = model.build_model()
     process = built["process"]
@@ -174,6 +174,7 @@ def run_case(case, duration, dt, tracking):
               .from_(process).getStrictPreflightIssues()]
     if issues:
         raise RuntimeError("Strict configured capability preflight: " + "; ".join(issues))
+    separator.setConservativeTransientEnergyIntegrationEnabled(conservative)
     separator.setTransientEnergyBalanceTrackingEnabled(tracking)
     audit = Audit(process)
     physical_rows = []
@@ -242,6 +243,7 @@ def run_case(case, duration, dt, tracking):
             and 0.05 <= row["level_fraction"] <= 0.95 for row in rows)
     summary = {
         "case": case, "duration_s": duration, "dt_s": dt, "tracking": tracking,
+        "conservativeEnergyIntegration": conservative,
         "parameters": built["parameters"], "composition": model.COMPOSITION,
         "cvs_US": {tag: float(units[tag].getCv("US")) for tag in VALVES},
         "auditWindowStart_s": event_origin, "initial_internal_energy_J": audit.initial["U"],
@@ -315,6 +317,7 @@ def main():
     parser.add_argument("--duration", type=float, required=True)
     parser.add_argument("--dt", type=float, required=True)
     parser.add_argument("--tracking", choices=["both", "off", "on"], default="both")
+    parser.add_argument("--conservative", action="store_true")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if (not math.isfinite(args.dt) or not math.isfinite(args.duration)
@@ -325,7 +328,7 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     summaries = []
     for tracking in ([False, True] if args.tracking == "both" else [args.tracking == "on"]):
-        summary, rows = run_case(args.case, args.duration, args.dt, tracking)
+        summary, rows = run_case(args.case, args.duration, args.dt, tracking, args.conservative)
         stem = "on" if tracking else "off"
         write_json(args.output / (stem + ".json"), summary)
         with (args.output / (stem + ".csv")).open("w", newline="") as handle:
@@ -334,6 +337,7 @@ def main():
             writer.writerows(rows)
         summaries.append(summary)
     pair = {"case": args.case, "duration_s": args.duration, "dt_s": args.dt,
+            "conservativeEnergyIntegration": args.conservative,
             "provenance": provenance(), "energyLimit": LIMIT,
             "responseVerdict": summaries[-1]["responseVerdict"],
             "energyVerdict": summaries[-1]["energyVerdict"],
@@ -354,3 +358,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

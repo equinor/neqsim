@@ -82,6 +82,11 @@ registered zero-component 275 K native withdrawal path still reaches the origina
 outside this repair, not a newly accepted depletion path. The zero-component
 unit test concerns energy-reference construction only.
 
+That negative native-path receipt describes the original baseline. The subsequent
+initial-state reuse repair and its bounded zero-registration qualification are
+recorded separately in `../fixed-cell-initial-state/`; the baseline failures here
+are retained unchanged for provenance.
+
 ## Reproduction
 
 Use the exact base and candidate revisions recorded in the PR/#4740 ledger.

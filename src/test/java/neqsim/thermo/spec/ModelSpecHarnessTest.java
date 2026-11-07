@@ -135,6 +135,13 @@ class ModelSpecHarnessTest {
         }
       }
     }
+    for (String temperature : new String[] {"27815", "29815", "30815"}) {
+      for (String pressure : new String[] {"101325", "5", "50"}) {
+        for (String property : new String[] {"mass-density", "enthalpy", "cp"}) {
+          ids.add("seawater-35-" + temperature + "-" + pressure + "-" + property);
+        }
+      }
+    }
     for (String fixture : new String[] {"pcsaft-system", "pcsaft-phase", "pcsafta-system", "pcsafta-phase"}) {
       for (String state : new String[] {"propane-gas-300-10", "propane-liquid-250-20", "n-hexane-gas-450-5",
           "n-hexane-liquid-300-10"}) {

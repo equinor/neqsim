@@ -53,6 +53,14 @@ EOS checkpoints and complete held-out laboratory protocols, then hand off volume
 estimation to `@field-development`. Do not use reservoir-volume misfit to change
 the laboratory model or substitute independent flashes for a depletion path.
 
+For constant-property finite aquifer support, read
+`docs/pvtsimulation/reservoir_aquifer_uncertainty.md`. The independent
+`FetkovichAquiferPrecisionTest` fixtures qualify prescribed linear-pressure
+endpoint/extrema arithmetic and subdivision consistency on a reservoir-m3 water
+basis. Keep the separate coupled-tank refinement gate: arithmetic precision does
+not establish radial diffusion, water mixing, measured field accuracy or Bayesian
+uncertainty acceptance.
+
 Read `docs/pvtsimulation/pedersen_method_qualification.md` before asserting reservoir-fluid
 method coverage or accuracy. Distinguish source availability, numerical verification and
 experimental validation. Compare fluids only after matching EOS/alpha/mixing rules, component
@@ -212,6 +220,10 @@ fix does not relax energy/fugacity/balance bounds or qualify global stability.
 Its108 SRK/PR/volume-correction controls check analytic extensivity and fresh
 homogeneous construction only; do not treat them as new depletion-path admission
 or independent EOS/measurement accuracy. Preserve the frozen EOS_CONTROL_SCOPE.md.
+Precise restoration reuses its caller-qualified endpoint before the first volume
+check and reflashes after withdrawal; preserve FixedCellInitialStateTest's named
+zero-inventory and independent binary controls. Do not widen volume tolerances
+to conceal a repeated-flash inventory perturbation. Legacy CVD keeps its sequence.
 Do not weaken absolute inventory bounds or claim arbitrary-scale/measured accuracy.
 The original 216-state and intermediate 480-state matrices use identical frozen bounds.
 
@@ -243,3 +255,44 @@ component gates; between-endpoint dry oil appearance/disappearance is permitted.
 gas-only pressure-grid limit and every separator inventory. This is independent
 numerical consistency, not measured calibration, reservoir prediction or Tran RCVD.
 Read `docs/pvtsimulation/depletion_pvt_generation.md#dry-phase-changing-fixed-cell-experiment`.
+
+### Independent gas-only laboratory-to-tank benchmark
+
+For a gas-only laboratory-to-tank benchmark, route to `IndependentGasLabTankTest`
+and `docs/pvtsimulation/reservoir_phase_production.md`. Its independent Decimal SRK
+reference identifies a synthetic laboratory interaction before a whole CCE holdout,
+then matches only tank volume against separate pressure observations. Component
+withdrawals and actual surface gas volume are predictions. Preserve the no-oil
+boundary: GOR is undefined, not validated. This is synthetic independent-code
+qualification, not measured calibration/field accuracy or two-phase GOR acceptance.
+Use weighted_reference.py and WEIGHTED_SCOPE.md for the independent unequal-sigma
+pressure inversion, sigma-scale/held-out controls and explicit active/inactive
+bound diagnostics. Those synthetic sigmas are not measured error estimates;
+volume movement under changed weights is not an EOS retuning or uncertainty interval.
+
+Its continuous-reference generator and frozen REFINEMENT_SCOPE.md qualify the
+well-mixed gas ODE separately from the finite withdrawal-before-injection protocol.
+Keep the failed64-substep1mol target visible; finer meshes retain the same bound.
+Zero-flow has no produced fluid, and equal injection/production keeps inventory
+constant while composition changes. Do not infer inflow or spatial-flow physics.
+
+
+### Explicit wet-gas/aqueous fixed-cell path
+
+Use `DepletionPvtHistoryGenerator.replayNativeWetGasFixedCell` (core
+`ConstantVolumeDepletion.runWetGasFixedCellDepletion`) only for a separately
+accepted initial-occupied-volume gas/aqueous experiment. Aqueous liquid may
+disappear; aqueous appearance/reappearance is rejected; gas must remain and
+oil/other phases fail transactionally.
+Water carried in produced gas is conserved through the unchanged separator.
+Preserve checkpoint selection, whole-experiment identity and actual final-product
+basis. `allowsWetGasPhaseChanges()` is distinct from the dry protocol flag.
+No wet-dew inference, saturation-normalized CVD, black-oil extrapolation,
+reservoir-volume fitting or measured-accuracy claim follows from this route.
+Read `WetGasFixedCellHandoffTest` and the frozen independent reference at
+`src/test/resources/neqsim/pvtsimulation/wet-gas-fixed-cell/`.
+Read `OFFGRID_SCOPE.md` and `OFFGRID_VALIDATION.md` in that reference folder for
+27 additional 20-pressure paths, unchanged bounds and separately labeled
+current-master compatibility. Numerical case counts are not independent
+experimental measurements or laboratory/reservoir holdout evidence.
+Guide: `docs/pvtsimulation/depletion_pvt_generation.md#wet-gas-fixed-cell-aqueous-transitions`.

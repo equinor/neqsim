@@ -1,0 +1,14 @@
+{
+  "classes": 80,
+  "tests": 678,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "metrics": {
+    "maxAmountErrorMol": 5.3429261015480733e-11,
+    "maxRelativeVolumeError": 9.43689570931383e-15,
+    "maxInternalVolumeResidual": 1.1324274851176597e-14,
+    "maxCompositionError": 7.271960811294775e-14,
+    "maxComponentClosureMol": 1.1368683772161603e-13
+  }
+}

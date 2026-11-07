@@ -1,0 +1,110 @@
+{
+  "scope": "production counters from Run49 full PVT run; test class execution in refinement-tests.json",
+  "classes": [
+    {
+      "class": "neqsim/pvtsimulation/util/CalibratedPvtModel",
+      "counters": [
+        {
+          "type": "INSTRUCTION",
+          "missed": "26",
+          "covered": "750"
+        },
+        {
+          "type": "BRANCH",
+          "missed": "24",
+          "covered": "74"
+        },
+        {
+          "type": "LINE",
+          "missed": "5",
+          "covered": "137"
+        },
+        {
+          "type": "COMPLEXITY",
+          "missed": "24",
+          "covered": "37"
+        },
+        {
+          "type": "METHOD",
+          "missed": "0",
+          "covered": "12"
+        },
+        {
+          "type": "CLASS",
+          "missed": "0",
+          "covered": "1"
+        }
+      ]
+    },
+    {
+      "class": "neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator",
+      "counters": [
+        {
+          "type": "INSTRUCTION",
+          "missed": "103",
+          "covered": "1394"
+        },
+        {
+          "type": "BRANCH",
+          "missed": "50",
+          "covered": "174"
+        },
+        {
+          "type": "LINE",
+          "missed": "18",
+          "covered": "226"
+        },
+        {
+          "type": "COMPLEXITY",
+          "missed": "50",
+          "covered": "81"
+        },
+        {
+          "type": "METHOD",
+          "missed": "0",
+          "covered": "19"
+        },
+        {
+          "type": "CLASS",
+          "missed": "0",
+          "covered": "1"
+        }
+      ]
+    },
+    {
+      "class": "neqsim/pvtsimulation/util/CompositionalReservoirHistory",
+      "counters": [
+        {
+          "type": "INSTRUCTION",
+          "missed": "80",
+          "covered": "1353"
+        },
+        {
+          "type": "BRANCH",
+          "missed": "34",
+          "covered": "142"
+        },
+        {
+          "type": "LINE",
+          "missed": "14",
+          "covered": "230"
+        },
+        {
+          "type": "COMPLEXITY",
+          "missed": "34",
+          "covered": "74"
+        },
+        {
+          "type": "METHOD",
+          "missed": "1",
+          "covered": "19"
+        },
+        {
+          "type": "CLASS",
+          "missed": "0",
+          "covered": "1"
+        }
+      ]
+    }
+  ]
+}

@@ -83,6 +83,12 @@ graphs during repeated role changes and can overflow column candidate serializat
 `PhysicalPropertiesCloneOwnershipTest` checks ownership before initialization and
 bounded serialized state. This does not qualify concurrent HV mixing-rule state.
 
+For an initialized zero-throughput boundary, preserve the existing intensive state
+when clearing material. `init(0)` resets the phase map and root roles and must not
+be used merely to repeat a zero-flow request. Restart from stored overall fractions,
+then flash at the requested conditions. `SystemThermoZeroFlowStateTest` covers
+repeated zero requests and SRK/PR/CPA gas, liquid and aqueous restart behavior.
+
 After phase removal, verify component inventory as well as normalized compositions:
 `sum(beta[p] * x[p][i])` must reconstruct the feed. Do not repair a failed endpoint
 only by assigning `x = z`; that can conceal a genuine phase instability. Compare

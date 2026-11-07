@@ -56,6 +56,8 @@ import neqsim.process.equipment.valve.PSDValve;
 import neqsim.process.equipment.valve.PressureControlValve;
 import neqsim.process.equipment.valve.RuptureDisk;
 import neqsim.process.equipment.valve.SafetyValve;
+import neqsim.process.equipment.valve.SafetyReliefValve;
+import neqsim.process.equipment.valve.CheckValve;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.processmodel.ModuleInterface;
@@ -160,9 +162,10 @@ public final class DynamicCapabilityResolver {
 
     if (isOneOf(type, Separator.class, ThreePhaseSeparator.class, Tank.class, MountainCavern.class,
         VesselDepressurization.class, HeatExchanger.class, Cooler.class, Compressor.class, Expander.class, Pump.class,
-        ThrottlingValve.class, LevelControlValve.class, PressureControlValve.class, BlowdownValve.class, ESDValve.class,
-        HIPPSValve.class, PSDValve.class, RuptureDisk.class, SafetyValve.class, EnergyConverter.class, Inverter.class,
-        BatteryStorage.class, Filter.class, CommittedEnergyGenerator.class, Electrolyzer.class, ReleaseInventory.class,
+        ThrottlingValve.class, CheckValve.class, LevelControlValve.class, PressureControlValve.class,
+        BlowdownValve.class, ESDValve.class, HIPPSValve.class, PSDValve.class, RuptureDisk.class, SafetyValve.class,
+        SafetyReliefValve.class, EnergyConverter.class, Inverter.class, BatteryStorage.class, Filter.class,
+        CommittedEnergyGenerator.class, Electrolyzer.class, ReleaseInventory.class,
         NonEquilibriumReleaseInventory.class)) {
       return DynamicCapability.DYNAMIC_LUMPED;
     }

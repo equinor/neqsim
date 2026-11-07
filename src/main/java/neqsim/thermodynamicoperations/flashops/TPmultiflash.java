@@ -3713,7 +3713,7 @@ public class TPmultiflash extends TPflash {
     if (!system.doMultiPhaseCheck() || (!singleOil && !gasOil) || system.getMaxNumberOfPhases() < 3
         || !system.allowPhaseShift() || system.isChemicalSystem() || system.hasIons() || system.doSolidPhaseCheck()
         || system.isMultiphaseWaxCheck() || !system.hasComponent("water")
-        || system.getComponent("water").getz() < 0.05) {
+        || system.getComponent("water").getz() <= 0.0) {
       return;
     }
     boolean validReference = isFeasiblePhaseEquilibrium(system);
@@ -3794,7 +3794,7 @@ public class TPmultiflash extends TPflash {
    * dependence on total flow.
    * </p>
    *
-   * @return true when a qualified aqueous equilibrium was adopted
+   * @return true when a qualified aqueous equilibrium was adopted or the EOS water-fugacity screen rejects the trial
    */
   private boolean rescueSupersaturatedGasOilMissingAqueous() {
     if (!system.doMultiPhaseCheck() || system.getNumberOfPhases() != 2 || !system.hasPhaseType(PhaseType.GAS)
@@ -3832,8 +3832,12 @@ public class TPmultiflash extends TPflash {
       // Phase.init prepares all component derivatives; the screen consumes only water's coefficient.
       liquidWaterTrial.getComponent(water).fugcoef(liquidWaterTrial);
       double liquidWaterLogFugacity = liquidWaterTrial.getComponent(water).getLogFugacityCoefficient();
-      if (!Double.isFinite(liquidWaterLogFugacity) || gasWaterLogFugacity <= liquidWaterLogFugacity + 1.0e-8) {
+      if (!Double.isFinite(liquidWaterLogFugacity)) {
         return false;
+      }
+      if (gasWaterLogFugacity <= liquidWaterLogFugacity + 1.0e-8) {
+        // The negative screen has handled this endpoint. Do not fall through to a full oil/aqueous trial.
+        return true;
       }
 
       double waterInventory = 0.0;

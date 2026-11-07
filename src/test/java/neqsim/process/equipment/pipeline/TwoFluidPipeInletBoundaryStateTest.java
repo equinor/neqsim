@@ -97,6 +97,113 @@ class TwoFluidPipeInletBoundaryStateTest {
     assertEquals(-0.17, actual[0] + actual[1] + actual[2], 1.0e-12);
   }
 
+  /** A pressure reservoir must admit and release mass according to the signed acoustic face solution. */
+  @Test
+  void pressureDrivenInletMatchesAnalyticalAcousticCompatibilityInBothDirections() {
+    TwoFluidSection cell = analyticalBoundarySection(1.0e5, 8.0, 800.0, 1000.0, 300.0, 1200.0);
+    TwoFluidSection reservoir = analyticalBoundarySection(1.2e5, 10.0, 750.0, 980.0, 320.0, 1250.0);
+    cell.setGasVelocity(2.0);
+    cell.setOilVelocity(-0.2);
+    cell.setWaterVelocity(0.1);
+    cell.updateConservativeVariables();
+
+    TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+    equations.setInletPressureBoundaryState(reservoir);
+    double[] inflow = equations.calcPhaseMassFaceFluxes(new TwoFluidSection[] {cell}, cell.getLength())[0];
+    double expectedGasVelocity = (cell.getGasDensity() * cell.getGasSoundSpeed() * cell.getGasVelocity()
+        + reservoir.getPressure() - cell.getPressure())
+        / (reservoir.getGasDensity() * reservoir.getGasSoundSpeed() + cell.getGasDensity() * cell.getGasSoundSpeed());
+    assertEquals(reservoir.getGasHoldup() * reservoir.getGasDensity() * expectedGasVelocity * reservoir.getArea(),
+        inflow[0], 1.0e-12);
+    assertTrue(inflow[0] > 0.0);
+
+    reservoir.setPressure(0.8e5);
+    reservoir.setGasVelocity(99.0);
+    equations.setInletPressureBoundaryState(reservoir);
+    double[] outflow = equations.calcPhaseMassFaceFluxes(new TwoFluidSection[] {cell}, cell.getLength())[0];
+    double expectedOutflowVelocity = (cell.getGasDensity() * cell.getGasSoundSpeed() * cell.getGasVelocity()
+        + reservoir.getPressure() - cell.getPressure())
+        / (reservoir.getGasDensity() * reservoir.getGasSoundSpeed() + cell.getGasDensity() * cell.getGasSoundSpeed());
+    assertEquals(cell.getGasHoldup() * cell.getGasDensity() * expectedOutflowVelocity * cell.getArea(), outflow[0],
+        1.0e-12);
+    assertTrue(outflow[0] < 0.0, "Reversed pressure gradient must use the pipe cell as signed donor");
+  }
+
+  /** The pipe-level pressure boundary must preserve the cell and flash a defensive reservoir at ramp pressure. */
+  @Test
+  void constantPressureBoundaryCreatesSignedFluxWithoutReplacingCellInventory() throws Exception {
+    TwoFluidPipe pipe = createPipe(BoundaryCondition.CONSTANT_PRESSURE, -1);
+    write(pipe, "useConservativeEnergyRecovery", true);
+    TwoFluidSection[] sections = (TwoFluidSection[]) read(pipe, "sections");
+    for (TwoFluidSection section : sections) {
+      section.setGasVelocity(0.0);
+      section.setOilVelocity(0.0);
+      section.setWaterVelocity(0.0);
+      section.setLiquidVelocity(0.0);
+      section.updateConservativeVariables();
+    }
+    double[] original = sections[0].getStateVector();
+    pipe.setInletBoundaryFluid(pipe.getInletStream().getFluid());
+    pipe.setInletPressure(1.2e5);
+    applyBoundaryConditions(pipe);
+    TwoFluidConservationEquations equations = (TwoFluidConservationEquations) read(pipe, "equations");
+    double[] inflow = equations.calcPhaseMassFaceFluxes(sections, sections[0].getLength())[0];
+    assertArrayEquals(original, sections[0].getStateVector(), 0.0);
+    assertTrue(inflow[0] + inflow[1] + inflow[2] > 0.0);
+
+    applyBoundaryConditions(pipe);
+    assertEquals(1L, pipe.getPressureInletFlashCount(),
+        "Repeated stages at one pressure must reuse an explicitly isolated reservoir flash");
+
+    pipe.setInletPressure(0.5e5);
+    applyBoundaryConditions(pipe);
+    double[] outflow = equations.calcPhaseMassFaceFluxes(sections, sections[0].getLength())[0];
+    assertArrayEquals(original, sections[0].getStateVector(), 0.0);
+    assertTrue(outflow[0] + outflow[1] + outflow[2] < 0.0);
+    assertEquals(2L, pipe.getPressureInletFlashCount(), "A new prescribed pressure requires one new reservoir flash");
+  }
+
+  /** A boundary event can query the accepted mechanical face pressure without a half-cell traction jump. */
+  @Test
+  void inletFacePressureReportsClosedWallHydrostaticCompatibility() throws Exception {
+    TwoFluidPipe pipe = createPipe(BoundaryCondition.CONSTANT_FLOW, -1);
+    TwoFluidSection[] sections = (TwoFluidSection[]) read(pipe, "sections");
+    TwoFluidSection inlet = sections[0];
+    inlet.setInclination(0.1);
+    inlet.updateConservativeVariables();
+    pipe.closeInlet();
+    applyBoundaryConditions(pipe);
+
+    double massPerLength = inlet.getGasMassPerLength() + inlet.getOilMassPerLength() + inlet.getWaterMassPerLength();
+    double expectedPa = inlet.getPressure()
+        + 0.5 * inlet.getLength() * 9.81 * Math.sin(inlet.getInclination()) * massPerLength / inlet.getArea();
+    assertEquals(expectedPa, pipe.getInletFacePressure("Pa"), 1.0e-10);
+    assertEquals(expectedPa / 1.0e5, pipe.getInletFacePressure("bara"), 1.0e-12);
+  }
+
+  /** Build a fully specified three-phase section for the pressure-boundary analytical check. */
+  private static TwoFluidSection analyticalBoundarySection(double pressure, double gasDensity, double oilDensity,
+      double waterDensity, double gasSoundSpeed, double liquidSoundSpeed) {
+    TwoFluidSection section = new TwoFluidSection(0.0, 10.0, 0.2, 0.0);
+    section.setPressure(pressure);
+    section.setGasDensity(gasDensity);
+    section.setOilDensity(oilDensity);
+    section.setWaterDensity(waterDensity);
+    section.setLiquidDensity(850.0);
+    section.setGasSoundSpeed(gasSoundSpeed);
+    section.setLiquidSoundSpeed(liquidSoundSpeed);
+    section.setGasHoldup(0.5);
+    section.setOilHoldup(0.3);
+    section.setWaterHoldup(0.2);
+    section.setLiquidHoldup(0.5);
+    section.setGasVelocity(0.0);
+    section.setOilVelocity(0.0);
+    section.setWaterVelocity(0.0);
+    section.setLiquidVelocity(0.0);
+    section.updateConservativeVariables();
+    return section;
+  }
+
   private static TwoFluidPipe createPipe(BoundaryCondition boundary, int absentPhase) throws Exception {
     SystemInterface fluid = new SystemSrkEos(298.15, 60.0);
     fluid.addComponent("methane", 1.0);

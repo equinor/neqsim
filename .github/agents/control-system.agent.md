@@ -3,6 +3,7 @@ name: control-system
 description: "Designs process control systems using NeqSim's dynamic simulation infrastructure — PID controller tuning, ControllerTuningStudy metrics, control loop architecture, measurement device selection, alarm/trip configuration, cascade/feedforward strategies, P&ID valve scenarios, and control narrative generation."
 required_skills:
 - neqsim-dynamic-simulation
+- neqsim-compressor-antisurge-recycle
 - neqsim-controllability-operability
 - neqsim-api-patterns
 - neqsim-standards-lookup
@@ -12,10 +13,11 @@ argument-hint: "Describe the control requirement — e.g., 'design level control
 ---
 ## Skills to Load
 
-Loaded skills: neqsim-dynamic-simulation, neqsim-controllability-operability, neqsim-api-patterns, neqsim-standards-lookup, neqsim-pid-process-operations, neqsim-advanced-control-mpc-and-virtual-sensing
+Loaded skills: neqsim-dynamic-simulation, neqsim-compressor-antisurge-recycle, neqsim-controllability-operability, neqsim-api-patterns, neqsim-standards-lookup, neqsim-pid-process-operations, neqsim-advanced-control-mpc-and-virtual-sensing
 
 ALWAYS read these skills before proceeding:
 - `.github/skills/neqsim-dynamic-simulation/SKILL.md` — Dynamic sim, controllers, transmitters
+- `.github/skills/neqsim-compressor-antisurge-recycle/SKILL.md` — Actual anti-surge recycle and compressor automation handoffs
 - `.github/skills/neqsim-controllability-operability/SKILL.md` — Control valve sizing (ISA-75), turndown, operability
 - `.github/skills/neqsim-api-patterns/SKILL.md` — Process equipment patterns
 - `.github/skills/neqsim-standards-lookup/SKILL.md` — IEC 61511, ISA standards
@@ -36,6 +38,20 @@ NeqSim's controller and measurement-device classes already cover the loop.
 6. **Validate performance**: Step response, disturbance rejection, stability analysis
 7. **Generate documentation**: Control narrative, cause-and-effect diagrams
 
+## Source-bound compressor automation
+
+For complete compressor/scrubber/cooler studies, follow the
+[compressor automation workflow](../skills/neqsim-compressor-antisurge-recycle/references/agentic-compressor-workflow.md).
+Own the actual sensor/controller/actuator chain, anti-surge/capacity priorities,
+canonical apply/readback, cause/effect and permissive/reset/bypass records. Test
+actual recycle flow and compressor operating margin along with valve commands.
+Direct reads of compressor-derived map quantities are computed model inputs;
+do not credit a proposed FT/PT/TT installation as an executed signal path.
+Keep no-demand, expected fault failures, numerical closure and protection
+qualification separate. Hand vendor maps/driver limits to `@rotating-equipment`,
+process/scrubber inventories to `@process-model`, protection requirements to
+`@safety-depressuring`, and final native drawings to `@pid-quality-review`.
+
 ## Control Loop Design Workflow
 
 ### Step 1: Identify Control Variables
@@ -51,78 +67,64 @@ For each equipment unit, identify:
 |-----------|----|----|----------------|
 | Separator | Liquid level | Liquid outlet valve | PI (averaging) |
 | Separator | Pressure | Gas outlet valve | PI (tight) |
-| Compressor | Suction pressure | Recycle valve | PI |
-| Compressor | Discharge pressure | Speed/guide vanes | PI |
+| Compressor capacity | Selected suction/discharge pressure | Speed/guide vanes within supported limits | Coordinated pressure/capacity loop |
+| Compressor anti-surge | Defined surge-control distance/map coordinate | Actual recycle valve with protection priority | Native anti-surge controller/application |
 | Heat exchanger | Outlet temperature | Utility flow valve | PID |
 | Distillation | Reflux drum level | Distillate valve | PI |
 | Distillation | Column pressure | Condenser duty | PI |
 | Pipeline | Inlet pressure | Choke valve | PI |
 
-### Step 2: Select Measurement Devices
+### Step 2: Select and bind actual measurement devices
 
-```java
-import neqsim.process.measurementdevice.*;
+Verify constructors and units in the current source before building the loop.
+`PressureTransmitter` and `TemperatureTransmitter` take the actual measured
+`StreamInterface`, not a separator/heater object. Bind vessel pressure to the
+selected gas/nozzle stream and temperature to the intended inlet/outlet stream.
+`VolumeFlowTransmitter` also takes a stream; specify whether the input is mass,
+actual volume or standard volume and use its supported unit contract.
 
-// Pressure
-PressureTransmitter PT = new PressureTransmitter("PT-100", separator);
-PT.setUnit("bara");
-PT.setMaximumValue(100.0);
-PT.setMinimumValue(0.0);
+`LevelTransmitter` takes a supported vessel and currently reads a unitless total
+liquid fraction with unit `""`. Do not configure it as a metre reading. Convert a
+height requirement through the actual vessel geometry with a documented basis,
+or retain the requirement as unresolved. Configure consistent engineering ranges
+and enable held transient sampling when the native test requires that contract.
 
-// Level
-LevelTransmitter LT = new LevelTransmitter("LT-100", separator);
-LT.setUnit("m");
+Retain each device's actual source attachment in the binding report. A matching
+tag, controller parent or proposed instrument bubble is insufficient. Use the
+native examples/tests linked by the P&ID and dynamic skills, including
+`PidNativeControlSystem` when available in the current source.
 
-// Temperature
-TemperatureTransmitter TT = new TemperatureTransmitter("TT-100", heater);
-TT.setUnit("C");
+### Step 3: Configure the executed control path
 
-// Flow
-VolumeFlowTransmitter FT = new VolumeFlowTransmitter("FT-100", stream);
-FT.setUnit("kg/hr");
-```
+Use existing native controllers and actual manipulated equipment. Declare the
+controlled variable and units, setpoint, scaling/range, control direction, tuning,
+limits, rate/travel, mode, priority and anti-windup policy. Apply the canonical
+configuration to an isolated process copy and read it back before execution.
 
-### Step 3: Configure Controllers
+Check the sign with a physical perturbation: the intended rise/fall in the
+measured variable must move the actual final element in the corrective direction.
+Do not infer `setReverseActing` from a generic label such as "level" or "pressure".
+Test setpoint tracking, disturbance rejection, saturation and recovery using the
+actual sensor/controller/actuator chain. For compressor packages, keep capacity
+control and anti-surge priority separate and demonstrate real recycle authority.
 
-```java
-import neqsim.process.controllerdevice.*;
+### Step 4: Separate alarms from protection
 
-// Level controller
-ControllerDeviceInterface LC = new ControllerDeviceBaseClass();
-LC.setControllerSetPoint(1.5);    // Target level in meters
-LC.setTransmitter(LT);
-LC.setReverseActing(true);        // Level up -> open valve
-LC.setControllerParameters(1.0, 120.0, 0.0);  // Kp, Ti, Td
+Native measurement alarms use immutable `AlarmConfig` values created through
+`AlarmConfig.builder()` with applicable `highLimit`, `highHighLimit`, `lowLimit`,
+`lowLowLimit`, `deadband`, `delay` and `unit`, then `setAlarmConfig` on the actual
+measurement. Limits/ranges and time settings need project provenance. Read
+`AlarmState`/`AlarmEvent` results after execution; configuring an alarm does not
+prove that it was evaluated, annunciated or acknowledged in the intended sequence.
 
-liquidValve.addController("LC-100", LC);
-
-// Pressure controller
-ControllerDeviceInterface PC = new ControllerDeviceBaseClass();
-PC.setControllerSetPoint(50.0);   // Target pressure bara
-PC.setTransmitter(PT);
-PC.setReverseActing(false);       // Pressure up -> open valve
-PC.setControllerParameters(0.8, 60.0, 5.0);
-
-gasValve.addController("PC-100", PC);
-```
-
-### Step 4: Alarm Configuration
-
-```java
-// High-level alarm
-AlarmConfig HLA = new AlarmConfig();
-HLA.setAlarmType(AlarmConfig.AlarmType.HIGH);
-HLA.setAlarmSetPoint(1.8);    // m
-HLA.setDeadband(0.05);
-LT.addAlarm("LAH-100", HLA);
-
-// High-high level trip (ESD)
-AlarmConfig HHLA = new AlarmConfig();
-HHLA.setAlarmType(AlarmConfig.AlarmType.HIGH_HIGH);
-HHLA.setAlarmSetPoint(2.0);
-HHLA.setSafetyFunction(true);  // SIF
-LT.addAlarm("LAHH-100", HHLA);
-```
+An alarm configuration is not a safety function. Use the existing native
+`ClosedLoopSafetyFunction`, actual input/channel identity, voting/qualification
+and supported action/final-element contracts for a trip. Do not invent
+`AlarmConfig.setSafetyFunction`, mutable alarm setters or `addAlarm` APIs.
+Keep alarm, trip, manual command, permissive, bypass, latching and reset behavior
+as separate documented functions and acceptance criteria. Use
+`PidSafetyFunctionImporter`/`PidSafetyFunctionValidator` only for their supported
+native action scope; distinct object identities do not prove installed independence.
 
 ### Step 5: Dynamic Tuning
 
@@ -169,29 +171,23 @@ Where $\lambda$ = desired closed-loop time constant (typically 3-5× open-loop).
 
 ## Control Narrative Template
 
-For each control loop, document:
+For each loop/function, retain the following controlled fields and their current
+source/test references. Missing design settings remain unresolved; do not turn
+example numbers into project requirements.
 
-```markdown
-### LC-100: HP Separator Level Control
+| Field | Required content |
+| --- | --- |
+| Identity/purpose | Source equipment, loop/function tag, objective and operating mode |
+| Measurement | Actual sensor/stream/vessel attachment, variable, unit, range, sampling and quality/fault behavior |
+| Manipulation | Actual valve/driver/cooling target, direction, limits, travel/rate, fail action and authority |
+| Control policy | Setpoint/tuning, scaling, priority/override, saturation/anti-windup and mode transitions |
+| Alarm/protection | Governed limits, qualification/delay, voting/action sequence, latching, confirmations and accepted process envelope |
+| Permissive/reset/bypass | Allowed and rejected start/reset states, rearm/retrip, inhibits/bypass visibility and restoration |
+| Verification | Initiating cases, source/configuration/result fingerprints, observed demand/travel/response, timing/refinement and unresolved gaps |
 
-**Objective**: Maintain liquid level in HP Separator at 1.5 m ± 0.2 m
-
-**Controlled Variable**: Liquid level (LT-100)
-**Manipulated Variable**: Liquid outlet valve (LV-100)
-**Controller Type**: PI, reverse-acting
-**Parameters**: Kp = 1.0, Ti = 120 s
-
-**Normal Operation**:
-- Setpoint: 1.5 m
-- Operating range: 1.0 - 2.0 m
-
-**Alarms**:
-- LAL-100: Low level alarm at 0.8 m
-- LAH-100: High level alarm at 1.8 m
-- LAHH-100: High-high level trip at 2.0 m (closes inlet SDV)
-
-**Failsafe**: Valve fails open on air failure (FO)
-```
+See the compressor automation workflow for coordinated I/O, loop, cause/effect,
+permissive/reset/bypass and acceptance-case outputs. A narrative describes the
+implemented and proposed scope; it does not grant SRS/SIL or PLC deployment approval.
 
 ## Applicable Standards
 
@@ -208,9 +204,9 @@ For each control loop, document:
 
 ## Common Pitfalls
 
-1. **Direct vs reverse acting**: Level controllers are typically reverse-acting; pressure controllers are typically direct-acting
+1. **Control direction**: Verify the native sign using the actual process perturbation and manipulated element; generic direct/reverse labels are insufficient
 2. **Integral windup**: Large sustained errors cause integral term to accumulate — use anti-windup
-3. **Timestep too large**: Dynamic sim may oscillate — reduce to 0.1-0.5 s
+3. **Timestep selection**: Freeze the sampling/step basis and demonstrate representative refinement; a smaller arbitrary step is not convergence evidence
 4. **Missing steady state**: Always run `process.run()` before `runTransient()`
 5. **Transmitter range**: Set min/max to cover expected operating range
 6. **Split range**: Multiple valves on one controller need coordinated ranges

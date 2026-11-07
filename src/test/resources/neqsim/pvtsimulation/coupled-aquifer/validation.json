@@ -1,0 +1,190 @@
+{
+  "base": "6de7d5b720269fa1aa20da63f532338c6db2f250",
+  "date": "2026-11-07",
+  "scope": "independent coupled finite-EOS aquifer qualification; no production API or algorithm change",
+  "evidence": "synthetic independent explicit SRK plus continuous RK4 ODE, not measured accuracy",
+  "matrix": {
+    "physicalCases": 16,
+    "replays": 64,
+    "endpoints": 1920,
+    "meshes": [
+      8,
+      16,
+      32,
+      64
+    ]
+  },
+  "frozenBounds": {
+    "pressureBara": 0.01,
+    "waterM3": 0.05,
+    "componentClosureMol": 1e-06,
+    "storageClosureBara": 1e-09,
+    "supportedRefinementRatio": 0.4,
+    "refinementAbsoluteFloor": 1e-07,
+    "referenceMeshAgreementBaraAndM3": 1e-08,
+    "finalPoreClosureM3": 0.0001
+  },
+  "maximumFinestErrors": {
+    "maxPressureErrorBara": 0.0004929375249389523,
+    "maxWaterErrorM3": 0.0029026866382224625,
+    "componentBalanceErrorMol": 4.190951585769653e-09,
+    "storagePressureErrorBara": 7.105427357601002e-13,
+    "finalPoreClosureM3": 3.637978807091713e-12
+  },
+  "repeatability": "two current-source POM-classpath runs byte-equivalent after excluding timing fields",
+  "originalTunedCheckpoint": "serialized bytes equal before/after every replay",
+  "referenceReproduction": "readability rewrite reproduces pinned reference.json byte-for-byte",
+  "referenceCorrection": "initial tiny molar-volume subtraction left 6.815574e-8 bara initial residual; corrected direct molar-pressure bisection enforces <1e-10 bara with unchanged physical inputs and all frozen comparison bounds; initial trial retained",
+  "productionSource": "fresh GitHub tree; all current main sources materialized and Maven compile exit0, 3666 source files; POM unchanged and POM-derived runtime classpath rebuilt",
+  "commands": [
+    {
+      "command": "mvnw -B -ntp -DskipTests compile",
+      "exit": 0
+    },
+    {
+      "command": "mvnw -B -ntp dependency:build-classpath -Dmdep.outputFile=/tmp/mbal56/pom-classpath",
+      "exit": 0
+    },
+    {
+      "command": "selected Python coupled-aquifer/run.py",
+      "exit": 0
+    },
+    {
+      "command": "mvnw -B -ntp jacoco:prepare-agent test jacoco:report -Dtest=CompositionalReservoirAquifer*Test,FetkovichAquifer*Test,ReservoirHistoryEnsembleTest",
+      "exit": 0,
+      "tests": 28
+    },
+    {
+      "command": "java -m jdk.javadoc/jdk.javadoc.internal.tool.Main -classpath [current POM classpath] -private -Xdoclint:all -Werror -quiet -d /tmp/mbal56/javadoc CoupledAquiferQualification.java",
+      "exit": 0
+    },
+    {
+      "name": "spotless-apply",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit": 0,
+      "seconds": 1.8426921580030466
+    },
+    {
+      "name": "spotless-check",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/run_spotless.py",
+        "check"
+      ],
+      "exit": 0,
+      "seconds": 1.900252735002141
+    },
+    {
+      "name": "docs",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/check_documentation_search.py"
+      ],
+      "exit": 0,
+      "seconds": 1.785712696997507
+    },
+    {
+      "name": "inventory",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "devtools/build_engineering_coverage.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 1.3640054460047395
+    },
+    {
+      "name": "precommit",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-m",
+        "pre_commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-commit"
+      ],
+      "exit": 0,
+      "seconds": 3.268942328002595
+    },
+    {
+      "name": "prepush",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-m",
+        "pre_commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-push"
+      ],
+      "exit": 0,
+      "seconds": 3.9319335030013463
+    }
+  ],
+  "compatibility": "driver compiled --release 8, major52, actual execution OpenJDK17.0.20; no actual Java8 JVM claim for this new benchmark",
+  "runtime": "per-replay measured seconds in native.json and total in summary.json; validation-only workload, no end-to-end speedup claim",
+  "coverage": {
+    "INSTRUCTION": {
+      "type": "INSTRUCTION",
+      "missed": "47",
+      "covered": "640"
+    },
+    "BRANCH": {
+      "type": "BRANCH",
+      "missed": "24",
+      "covered": "78"
+    },
+    "LINE": {
+      "type": "LINE",
+      "missed": "9",
+      "covered": "100"
+    },
+    "COMPLEXITY": {
+      "type": "COMPLEXITY",
+      "missed": "27",
+      "covered": "39"
+    },
+    "METHOD": {
+      "type": "METHOD",
+      "missed": "3",
+      "covered": "12"
+    },
+    "CLASS": {
+      "type": "CLASS",
+      "missed": "0",
+      "covered": "1"
+    }
+  },
+  "documentationImpact": "existing indexed aquifer guide links full optional benchmark; SCOPE/README declare units/protocol/frozen bounds and remaining acceptance; no new public API/static MCP operation; inventory regenerated exactly matches current master blob87f0ab49abb7c3dd7851cb7512cd5232c70af30d",
+  "limitations": [
+    "fixed pure methane SRK gas only,400K/200bara/1000m3",
+    "prescribed component withdrawals; no independent produced-phase/GOR acceptance",
+    "no measured lab/field calibration or holdout accuracy",
+    "no radial diffusion or Carter-Tracy/VEH comparison beyond prior shared limits",
+    "no joint volume/support identifiability, Bayesian or multi-tank acceptance",
+    "Tran2025 full equations and complete independent benchmark not retrieved"
+  ],
+  "retrievalBlocker": "2026-11-07 primary DOI10.1016/j.jgsce.2025.205551 still yields publisher preview in search; full-PDF tool retrieval returns DisabledError, not a publisher-access conclusion; missing full method equations, fluid/EOS/relperm/BHP/boundary inputs and numerical benchmark remain explicit",
+  "sha256": {
+    "initial-native.json": "7ef59dbd088c855a2deb56c4534bff951d07266841c3ed0d5c659c7013a73cec",
+    "reference.json": "498e727b58c16665fa7f6c9c7ffdbdbca4464b7efd161396ac16bf07d6c0201e",
+    "run.py": "43e77e4ed2ec2b9d398a8d3f6913896e4a33a210bdee60ba1c069baaa0bb5904",
+    "README.md": "d5b49409f692babe7988b97999a81fc020c0ca23e06deb6142d84816ef20b529",
+    "SCOPE.md": "470ae5f2959074d48a4ae3ce77f54f6d85901138f3b43333d07dfc66ced6bd7c",
+    "audit.py": "9b9981a4966c3ef097fc83226fe080462f04434dae4ddd230702329795a8cd97",
+    "CoupledAquiferQualification.java": "49b4e0503c6469867bc1c2172ecf71ee7233d2acaad3869c31f589c5c515b070",
+    "summary.json": "a369429182cf65b894e6771ad4c8781e3a24709c3a373cca65c97e453c8a4707",
+    "native.json": "1c42ca3a7a8553306f08b44bc994a6b7c617b777e83401db6fca4d5025e177bc",
+    "initial-reference.json": "9cb753bea0f20f28073aea09e931e356a62a8c047205fe912425f553ec61efb0",
+    "reference.py": "d145be66d4af83026d504021d3be17b35c11f8bb9cc35292f4988815b6df6de4"
+  }
+}

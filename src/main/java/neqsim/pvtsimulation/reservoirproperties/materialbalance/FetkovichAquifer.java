@@ -31,11 +31,22 @@ import java.io.Serializable;
  * @version 1.0
  */
 public final class FetkovichAquifer implements Serializable {
+  /** Stable serialized form identifier. */
   private static final long serialVersionUID = 1L;
+  /**
+   * Existing fourth-order coefficient series has omitted terms below 1.4e-18 in this range. This arithmetic boundary is
+   * independent of physical storage and interval-acceptance tolerances.
+   */
+  private static final double SMALL_EXPOSURE_SERIES_LIMIT = 1.0e-3;
+  /** Initial water inventory in reservoir m3. */
   private final double initialWaterVolumeM3;
+  /** Constant total water and rock compressibility in 1/bar. */
   private final double totalCompressibilityPerBar;
+  /** Signed-exchange productivity in reservoir m3/(s bar). */
   private final double productivityM3PerSecondPerBar;
+  /** Initial average aquifer pressure in bara. */
   private final double initialPressureBara;
+  /** Constant storage capacity in reservoir m3/bar. */
   private final double capacityM3PerBar;
 
   /**
@@ -50,6 +61,7 @@ public final class FetkovichAquifer implements Serializable {
    * @version 1.0
    */
   public static final class InventoryExhaustedException extends IllegalStateException {
+    /** Stable serialized form identifier. */
     private static final long serialVersionUID = 1L;
 
     /** Creates the physical inventory-bound diagnostic for an internally rejected interval. */
@@ -65,13 +77,21 @@ public final class FetkovichAquifer implements Serializable {
    * @version 1.0
    */
   public static final class State implements Serializable {
+    /** Stable serialized form identifier. */
     private static final long serialVersionUID = 1L;
+    /** Immutable originating aquifer model. */
     private final FetkovichAquifer aquifer;
+    /** Elapsed interval-end time in seconds. */
     private final double timeSeconds;
+    /** Signed cumulative exchange into the reservoir in m3. */
     private final double cumulativeInfluxM3;
+    /** Interval-end average aquifer pressure in bara. */
     private final double pressureBara;
+    /** Signed exchange during the last interval in m3. */
     private final double intervalInfluxM3;
+    /** Minimum cumulative exchange throughout the last interval in m3. */
     private final double intervalMinimumCumulativeInfluxM3;
+    /** Maximum cumulative exchange throughout the last interval in m3. */
     private final double intervalMaximumCumulativeInfluxM3;
 
     /**
@@ -154,8 +174,7 @@ public final class FetkovichAquifer implements Serializable {
   /**
    * Defines a fixed-volume, fixed-productivity aquifer on a reservoir-volume water basis.
    *
-   * @param initialWaterVolumeM3 nonnegative aquifer water volume in reservoir m3; positive infinity selects infinite
-   * storage when compressibility is positive
+   * @param initialWaterVolumeM3 nonnegative reservoir water inventory in m3 (infinity allowed)
    * @param totalCompressibilityPerBar finite nonnegative total water/rock compressibility in 1/bar
    * @param productivityM3PerSecondPerBar finite nonnegative aquifer productivity in reservoir m3/(s bar)
    * @param initialPressureBara finite positive initial aquifer pressure in bara
@@ -214,7 +233,7 @@ public final class FetkovichAquifer implements Serializable {
     requirePositive(durationSeconds, "Interval duration");
     requirePositive(reservoirPressureStartBara, "Start reservoir pressure");
     requirePositive(reservoirPressureEndBara, "End reservoir pressure");
-    double time = state.timeSeconds + durationSeconds;
+    final double time = state.timeSeconds + durationSeconds;
     double influx = 0.0;
     double pressure = state.pressureBara;
     double minimumInflux = state.cumulativeInfluxM3;
@@ -244,7 +263,7 @@ public final class FetkovichAquifer implements Serializable {
         double pressureChange = reservoirPressureEndBara - reservoirPressureStartBara;
         double loss = -Math.expm1(-exposure);
         double rampWeight;
-        if (exposure < 1.0e-4) {
+        if (exposure < SMALL_EXPOSURE_SERIES_LIMIT) {
           // (1 - (1 - exp(-x))/x)/x avoids cancellation at small x.
           double rampPerExposure = 0.5
               + exposure * (-1.0 / 6.0 + exposure * (1.0 / 24.0 + exposure * (-1.0 / 120.0 + exposure / 720.0)));
@@ -335,7 +354,7 @@ public final class FetkovichAquifer implements Serializable {
       return capacityM3PerBar * (initialDifference - pressureChange * fraction);
     }
     double fractionalExposure = exposure * fraction;
-    if (fractionalExposure < 1.0e-4) {
+    if (fractionalExposure < SMALL_EXPOSURE_SERIES_LIMIT) {
       double ramp = 0.5 + fractionalExposure * (-1.0 / 6.0
           + fractionalExposure * (1.0 / 24.0 + fractionalExposure * (-1.0 / 120.0 + fractionalExposure / 720.0)));
       double decay = 1.0 - fractionalExposure

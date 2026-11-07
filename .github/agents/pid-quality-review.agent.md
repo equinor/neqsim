@@ -51,6 +51,19 @@ first. Its evidence gates apply even if a package's own readiness report is gree
    checker and actual review. A reviewer may downgrade an automatic verdict for
    an observed defect; never upgrade it by editing reports or waiving a blocker.
 
+## Compressor package checks
+
+For compressor/scrubber/cooler packages, use the
+[compressor automation workflow](../skills/neqsim-compressor-antisurge-recycle/references/agentic-compressor-workflow.md)
+to reconcile the anti-surge take-off, actual return, scrubber phase outlets,
+cooler process/utility paths, isolation/check-valve direction and battery limits.
+Trace sensing and controller signals independently of material connectivity.
+A compressor-derived calculation is not an executed FT/PT/TT signal chain, and a
+fixed cooler setpoint is not a simulated utility-valve loop. Reconcile proposed
+and actual instrumentation, I/O/loop/cause-effect records, and accepted fault
+results against the current native model. Return a wrong route or invented
+connection as FAIL; retain missing vendor/controlled requirements as HOLD.
+
 ## Boundaries and handoffs
 
 - The generating owner fixes model, design inputs or generator and regenerates.

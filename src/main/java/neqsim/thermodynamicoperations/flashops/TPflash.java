@@ -688,6 +688,20 @@ public class TPflash extends Flash {
    */
   @Override
   public void run() {
+    if (system instanceof neqsim.thermo.system.SystemWaterIF97) {
+      if (system.getNumberOfComponents() != 1
+          || !"water".equals(system.getPhase(0).getComponent(0).getComponentName())) {
+        throw new IllegalArgumentException("Reference-water systems require a single nominal water component");
+      }
+      if (system instanceof neqsim.thermo.system.SystemSeawater) {
+        neqsim.thermo.util.steam.SeawaterProperties.validate(system.getTemperature(), system.getPressure(),
+            ((neqsim.thermo.system.SystemSeawater) system).getSalinity());
+      }
+      system.setNumberOfPhases(1);
+      system.setBeta(0, 1.0);
+      system.init(2);
+      return;
+    }
     traceWaterAqueousRepairAttempted = false;
     validateCharacterizedFluidParameters();
     if (system.isForcePhaseTypes() && system.getMaxNumberOfPhases() == 1) {
@@ -2318,7 +2332,7 @@ public class TPflash extends Flash {
    * @param waterFeedFraction overall water mole fraction
    * @return true when an unconstrained existing aqueous split is non-conservative, a gas/oil endpoint is invalid, its
    * CPA water fugacity is near pure-water saturation, or its phase fraction and water enrichment justify an aqueous
-   * stability trial
+   * stability trial. Multiphase-enabled cubic-EOS oil also qualifies when its water fugacity indicates supersaturation.
    */
   private boolean shouldRefineTraceWaterAqueousEndpoint(double waterFeedFraction) {
     if (system.hasPhaseType(PhaseType.AQUEOUS)) {
@@ -2329,6 +2343,11 @@ public class TPflash extends Flash {
       return !Double.isFinite(materialResidual) || materialResidual > WATER_RICH_MATERIAL_BALANCE_TOLERANCE;
     }
     if (isInvalidTraceWaterGasOilEndpoint()) {
+      return true;
+    }
+    if (system.doMultiPhaseCheck() && system.getNumberOfPhases() == 1 && system.hasPhaseType(PhaseType.OIL)
+        && ("SRK-EOS".equals(system.getModelName()) || "PR-EOS".equals(system.getModelName()))
+        && isCpaWaterNearSaturation(CPA_WATER_SUPERSATURATION_SCREEN_LIMIT)) {
       return true;
     }
     if (!system.doMultiPhaseCheck() && system.getNumberOfPhases() == 1) {
@@ -2362,7 +2381,7 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Compares water fugacity in the current CPA phase with pure-water vapor pressure.
+   * Compares water fugacity in the current phase with pure-water vapor pressure.
    *
    * <p>
    * This is a performance screen, not a stability criterion. The subsequent tangent-plane-distance calculation and

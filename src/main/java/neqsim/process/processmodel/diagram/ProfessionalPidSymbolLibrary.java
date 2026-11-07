@@ -36,7 +36,7 @@ public final class ProfessionalPidSymbolLibrary {
   public enum Family {
     VERTICAL_VESSEL, HORIZONTAL_VESSEL, COMPRESSOR, PUMP, HEAT_EXCHANGER, CONTROL_VALVE, ISOLATION_VALVE, CHECK_VALVE,
     RELIEF_VALVE, FIELD_INSTRUMENT, CONTROL_FUNCTION, SAFETY_FUNCTION, NOZZLE, TERMINAL, TERMINAL_NORTH,
-    PNEUMATIC_OPERATED_VALVE, UNMAPPED
+    PNEUMATIC_OPERATED_VALVE, PIPE_TEE, UNMAPPED
   }
 
   /** Prevents utility construction. */
@@ -50,6 +50,14 @@ public final class ProfessionalPidSymbolLibrary {
    * @return supported family or UNMAPPED
    */
   public static Family family(ProcessEquipmentInterface equipment) {
+    if (equipment.getClass() == neqsim.process.equipment.splitter.Splitter.class
+        && equipment.getInletStreams().size() == 1 && equipment.getOutletStreams().size() == 2) {
+      return Family.PIPE_TEE;
+    }
+    if (equipment.getClass() == neqsim.process.equipment.mixer.Mixer.class && equipment.getInletStreams().size() == 2
+        && equipment.getOutletStreams().size() == 1) {
+      return Family.PIPE_TEE;
+    }
     if (equipment instanceof Separator) {
       return "horizontal".equalsIgnoreCase(((Separator) equipment).getOrientation()) ? Family.HORIZONTAL_VESSEL
           : Family.VERTICAL_VESSEL;
@@ -141,6 +149,16 @@ public final class ProfessionalPidSymbolLibrary {
         page.commands.add(Command.rect(x - width / 2.0 - 2.0, y - height / 2.0 - 2.0, width + 4.0, height + 4.0,
             "#111111", "none", .25, tag, ""));
       }
+      break;
+    case PIPE_TEE:
+      page.commands.add(Command.line(x - width / 2, y, x + width / 2, y, "#111111", .5, tag, ""));
+      page.commands.add(Command.line(x, y, x, y - height / 2, "#111111", .5, tag, ""));
+      List<Point> dot = new ArrayList<Point>();
+      for (int vertex = 0; vertex <= 16; vertex++) {
+        double angle = vertex * Math.PI / 8;
+        dot.add(new Point(x + .8 * Math.cos(angle), y + .8 * Math.sin(angle)));
+      }
+      page.commands.add(Command.polygon(dot, "#111111", "#111111", .25, tag));
       break;
     case NOZZLE:
       page.commands.add(Command.rect(x - 1.5, y - 2.0, 3.0, 4.0, "#111111", "#ffffff", .35, tag, ""));

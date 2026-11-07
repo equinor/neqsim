@@ -1,6 +1,8 @@
 package neqsim.process.equipment.splitter;
 
+import java.io.Serializable;
 import java.util.Arrays;
+import neqsim.process.dynamics.TransientStateParticipant;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -27,7 +29,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Splitter extends ProcessEquipmentBaseClass implements SplitterInterface, CapacityConstrainedEquipment {
+public class Splitter extends ProcessEquipmentBaseClass
+    implements SplitterInterface, CapacityConstrainedEquipment, TransientStateParticipant<Splitter.TransientState> {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -46,6 +49,12 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
      * demand onto the inlet stream.
      */
     DOWNSTREAM_DEMAND,
+    /**
+     * Explicit algebraic pressure-network mode. Aggregates downstream demand even when calculateSteadyState is true; no
+     * inventory or difference equation is introduced. The original DOWNSTREAM_DEMAND/steady-flag dispatch remains
+     * unchanged.
+     */
+    DOWNSTREAM_DEMAND_ALWAYS,
     /** Prescribed split: the configured split factors or flow rates distribute the current inlet flow. */
     PRESCRIBED_SPLIT
   }
@@ -67,6 +76,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
 
   /** Direction of information flow in transient evaluations. */
   private TransientSplitMode transientSplitMode = TransientSplitMode.DOWNSTREAM_DEMAND;
+  private String transientStateIdentity = UUID.randomUUID().toString();
 
   SystemInterface thermoSystem;
   SystemInterface gasSystem;
@@ -98,7 +108,9 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   /**
    * Constructor for Splitter.
    *
+   *
    * @param name name of splitter
+   *
    * @param inStream input stream
    */
   public Splitter(String name, StreamInterface inStream) {
@@ -130,8 +142,11 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   /**
    * Constructor for Splitter.
    *
+   *
    * @param name a {@link java.lang.String} object
+   *
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   *
    * @param number_of_splits an int
    */
   public Splitter(String name, StreamInterface inletStream, int number_of_splits) {
@@ -176,7 +191,9 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   /**
    * setFlowRates.
    *
+   *
    * @param flowRates an array of type double
+   *
    * @param flowUnit a {@link java.lang.String} object
    */
   public void setFlowRates(double[] flowRates, String flowUnit) {
@@ -213,7 +230,9 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   /**
    * Checks whether a configured outlet flow rate is the {@link #REMAINDER} sentinel.
    *
+   *
    * @param flowRate the configured outlet flow rate to test
+   *
    * @return {@code true} if the value marks a remainder outlet, {@code false} otherwise
    */
   private static boolean isRemainderMarker(double flowRate) {
@@ -444,7 +463,8 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   public void runTransient(double dt, UUID id) {
     boolean alreadyEvaluatedForStep = id != null && id.equals(getCalculationIdentifier());
 
-    if (getCalculateSteadyState() || transientSplitMode == TransientSplitMode.PRESCRIBED_SPLIT) {
+    if ((getCalculateSteadyState() && transientSplitMode != TransientSplitMode.DOWNSTREAM_DEMAND_ALWAYS)
+        || transientSplitMode == TransientSplitMode.PRESCRIBED_SPLIT) {
       // A splitter has no material or energy inventory of its own, so a prescribed split is an
       // algebraic evaluation: each accepted step recalculates the outlet streams from the current
       // inlet and the configured split.
@@ -497,6 +517,196 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   }
 
   /**
+   * Refreshes branch pressure, temperature and composition before downstream hydraulic solves.
+   *
+   * <p>
+   * Each branch retains its prior total molar demand (mol/s), including exact zero. Individual component amounts and
+   * mass flow can change when composition changes; this is an initial demand guess, not an independently conserved
+   * withdrawal. Downstream valves must next solve actual flow, then this splitter aggregates that demand before the
+   * upstream inventory consumes it. This method neither advances clocks nor commits a calculation UUID.
+   * </p>
+   */
+  public void refreshTransientBranchIntensiveState() {
+    if (inletStream == null || splitStream == null || inletStream.getFluid() == null) {
+      throw new IllegalStateException("Splitter inlet and branches must be initialized");
+    }
+    for (StreamInterface branch : splitStream) {
+      double demand = branch.getFluid().getTotalNumberOfMoles();
+      if (!Double.isFinite(demand) || demand < 0.0) {
+        throw new IllegalStateException("Branch molar demand must be finite and nonnegative");
+      }
+      SystemInterface refreshed = inletStream.getFluid().clone();
+      refreshed.setTotalNumberOfMoles(demand);
+      if (demand > 0.0) {
+        refreshed.initProperties();
+      }
+      branch.setThermoSystem(refreshed);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateIdentity() {
+    if (transientStateIdentity == null) {
+      transientStateIdentity = UUID.randomUUID().toString();
+    }
+    return "equipment:splitter:" + transientStateIdentity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTransientStateCoverageIssue() {
+    if (getClass() != Splitter.class) {
+      return "splitter subclass must extend its owned snapshot";
+    }
+    String issue = getBaseTransientStateCoverageIssue();
+    if (issue != null) {
+      return issue;
+    }
+    if (splitterCapacityAnalysisEnabled || !splitterCapacityConstraints.isEmpty()) {
+      return "splitter capacity constraints are not covered by the hydraulic snapshot";
+    }
+    if (!(inletStream instanceof Stream) || splitStream == null) {
+      return "concrete initialized splitter streams required";
+    }
+    for (StreamInterface branch : splitStream) {
+      if (branch == null || branch.getClass() != Stream.class) {
+        return "concrete initialized splitter branches required";
+      }
+      if (branch.getFluid() == inletStream.getFluid()) {
+        return "branch fluid must not alias the independently owned inlet fluid";
+      }
+      issue = ((Stream) branch).getTransientStateCoverageIssue();
+      if (issue != null) {
+        return "splitter branch: " + issue;
+      }
+    }
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public TransientState captureTransientState() {
+    String issue = getTransientStateCoverageIssue();
+    if (issue != null) {
+      throw new IllegalStateException("Cannot capture splitter '" + getName() + "': " + issue);
+    }
+    return new TransientState(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void restoreTransientState(TransientState state) {
+    if (state == null || !getTransientStateIdentity().equals(state.identity)) {
+      throw new IllegalArgumentException("Snapshot belongs to another splitter");
+    }
+    if (splitStream.length != state.branches.length
+        || !((Stream) inletStream).getTransientStateIdentity().equals(state.inletIdentity)) {
+      throw new IllegalStateException("Splitter graph membership changed since checkpoint");
+    }
+    restoreBaseTransientState(state.base);
+    splitterCapacityConstraints.clear();
+    for (int i = 0; i < splitStream.length; i++) {
+      ((Stream) splitStream[i]).restoreTransientState(state.branches[i]);
+    }
+    SystemInterface[] systems = new SystemInterface[5];
+    for (int i = 0; i < systems.length; i++) {
+      int alias = state.aliases[i];
+      systems[i] = alias == -2 ? inletStream.getFluid()
+          : alias >= 0 ? splitStream[alias].getFluid() : state.systems[i] == null ? null : state.systems[i].clone();
+    }
+    thermoSystem = systems[0];
+    gasSystem = systems[1];
+    waterSystem = systems[2];
+    liquidSystem = systems[3];
+    thermoSystemCloned = systems[4];
+    splitNumber = state.branches.length;
+    splitFactor = copy(state.splitFactor);
+    flowRates = copy(state.flowRates);
+    oldSplitFactor = copy(state.oldSplitFactor);
+    lastComposition = copy(state.lastComposition);
+    flowUnit = state.flowUnit;
+    transientSplitMode = state.mode;
+    lastTemperature = state.values[0];
+    lastPressure = state.values[1];
+    lastFlowRate = state.values[2];
+    designPressureDrop = state.values[3];
+    maxDesignVelocity = state.values[4];
+    splitterCapacityAnalysisEnabled = state.capacityEnabled;
+  }
+
+  /**
+   * @param values optional scalar vector
+   * @return independent optional vector
+   */
+  private static double[] copy(double[] values) {
+    return values == null ? null : values.clone();
+  }
+
+  /**
+   * Bounded hydraulic checkpoint retaining stream identities and all transient caches/configuration. The inlet is an
+   * independent graph participant, as for native hydraulic valves.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  public static final class TransientState implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final String identity;
+    private final String inletIdentity;
+    private final ProcessEquipmentTransientState base;
+    private final Stream.TransientState[] branches;
+    private final SystemInterface[] systems;
+    private final int[] aliases;
+    private final double[] splitFactor;
+    private final double[] flowRates;
+    private final double[] oldSplitFactor;
+    private final double[] lastComposition;
+    private final double[] values;
+    private final String flowUnit;
+    private final TransientSplitMode mode;
+    private final boolean capacityEnabled;
+
+    /** @param source actual splitter whose owned state is captured */
+    private TransientState(Splitter source) {
+      identity = source.getTransientStateIdentity();
+      inletIdentity = ((Stream) source.inletStream).getTransientStateIdentity();
+      base = source.captureBaseTransientState();
+      branches = new Stream.TransientState[source.splitStream.length];
+      for (int i = 0; i < branches.length; i++) {
+        branches[i] = ((Stream) source.splitStream[i]).captureTransientState();
+      }
+      SystemInterface[] current = {source.thermoSystem, source.gasSystem, source.waterSystem, source.liquidSystem,
+          source.thermoSystemCloned};
+      systems = new SystemInterface[current.length];
+      aliases = new int[current.length];
+      Arrays.fill(aliases, -1);
+      for (int i = 0; i < current.length; i++) {
+        if (current[i] != null && current[i] == source.inletStream.getFluid()) {
+          aliases[i] = -2;
+        } else {
+          for (int j = 0; j < branches.length; j++) {
+            if (current[i] != null && current[i] == source.splitStream[j].getFluid()) {
+              aliases[i] = j;
+              break;
+            }
+          }
+        }
+        systems[i] = aliases[i] == -1 && current[i] != null ? current[i].clone() : null;
+      }
+      splitFactor = copy(source.splitFactor);
+      flowRates = copy(source.flowRates);
+      oldSplitFactor = copy(source.oldSplitFactor);
+      lastComposition = copy(source.lastComposition);
+      flowUnit = source.flowUnit;
+      mode = source.transientSplitMode;
+      values = new double[] {source.lastTemperature, source.lastPressure, source.lastFlowRate,
+          source.designPressureDrop, source.maxDesignVelocity};
+      capacityEnabled = source.splitterCapacityAnalysisEnabled;
+    }
+  }
+
+  /**
    * Get the direction of information flow used in transient evaluations.
    *
    * @return configured transient split mode
@@ -526,7 +736,9 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   /**
    * Getter for the field <code>splitFactor</code>.
    *
+   *
    * @param i a int
+   *
    * @return a double
    */
   public double getSplitFactor(int i) {

@@ -365,6 +365,54 @@ Never reconstruct consumed inlet enthalpy from post-step ports after the mixer
 has been refreshed. Read the [native diagnostic contract](../../../docs/process/dynamic-capability-contract.md#opt-in-separator-cumulative-energy-diagnostics)
 for the bounded default-off API, scale and unsupported-mode limits.
 
+### Advanced ESD, voting and manual trip with actual inputs
+
+Use registered native held instruments with enabled transient sampling and
+`SafetyFunctionChannel.highTripFromMeasurement(...)` or
+`lowTripFromMeasurement(...)`. Derive channels from the actual executing process
+copy; references captured from the source graph are rejected. For an unlinked
+native `PushButton`, use `manualTripFromPushButton(...)`. Legacy custom extractors
+have unverified input identity and are not a substitute for actual configured
+instrument readback. Duplicate channel objects and duplicate normalized channel
+tags are rejected. Distinct software tags do not establish hardware independence.
+
+Preserve native semantics explicitly: response delay is continuous-demand
+qualification on held samples; qualified channels latch until reset; bypass keeps
+fixed m-out-of-n voting. Test nonoverlapping qualified pulses, pre-vote pause with
+no actuation, post-actuation resume, failed-child preservation and reset/retrip.
+Reset clears bookkeeping and does not reopen equipment or authorize operation.
+Use current held conditions and a separate explicit operator reopening, retaining
+each native trace epoch before reset.
+
+For quantitative cases use event-exact timing and whole-window
+`DynamicScenarioCriterion.EvaluationMode.MAINTAIN_BOUNDS` for pressure envelopes
+and no-trip invariants. Set its positive deadline to the full intended event
+window and require start/end coverage. Default reach-by-deadline can pass an
+initial normal sample despite a later violation. Neither mode proves behavior
+between samples. Read actual accepted physical UUID and dt from
+`ProcessSystem.getCalculationIdentifier()` and `getTimeStep()`; rounding
+wall-time/nominal-dt fails on real short final alignment steps.
+
+Use actual finite-stroke `ESDValve`, native `ESDLogic`/`TripValveAction`, and
+`ParallelActionGroup` where simultaneous valve commands are required. Legacy
+HIPPS immediate commands or stored closure-time metadata do not prove physical
+travel. Retain exact native target identities and supported trip-action readback;
+an energizing/opening/opaque action with the same target is not equivalent trip
+configuration. Command issuance, each actual valve closure, pressure response and
+failed/slow/inhibited negative controls need separate assertions.
+
+After canonical PID inputs/action configuration, definition IDs and evidence
+references are frozen, use `EngineeringSimulationRunner.runStrict(project)` for
+direct typed project evidence. Do not attach unrelated same-name results. The
+public `AdvancedV101SafetyStudy` fixture uses actual V100/V101 inventories, three
+PI loops and 17 devices (16 held plus 1 discrete manual input); its 18 profiles plus
+five half-dt cases retain expected native FAIL results. Keep per-vessel energy
+coverage/debt and independent raw consumed-boundary audits separate from response.
+The frozen 1e-5 energy limit and qualification HOLD remain even if whole-slice
+residuals partly cancel. This is a proposed design study, not SIL, ISO/IEC or
+construction approval. See the [closed-loop verification contract](../../../docs/process/safety/closed-loop-sif-verification.md)
+and public study resource README for the tested model and commands.
+
 ### Loop-tuning KPIs (ControllerPerformanceMetrics)
 
 `ControllerPerformanceMetrics`
@@ -549,19 +597,43 @@ total-energy owners. Require zero-drive/area, donor/heat-limit, unseeded appeara
 ledger gates. Label results parameterized screening until coefficients pass independent public
 calibration and validation. Do not call this elapsed pool-depletion, physical restart or pigging
 qualification.
-The 100 W/m finite-heat 780 s rich-gas cycle is numerical mesh evidence only. It crosses the cubic
+The 100 W/m finite-heat 780 s rich-gas cycle is numerical mesh/time evidence only. It crosses the cubic
 EOS diagnostic $V/B=1.75$ label transition by explicitly retaining the requested root while the
 positive-compressibility, Jacobian and energy-admissibility guards remain active. Do not clip
 composition or change the configured root to manufacture a restart result.
+For a conservative pressure-driven restart, select `CONSTANT_PRESSURE`, optionally set an explicit
+reservoir with `setInletBoundaryFluid(...)`, and ramp from `getInletFacePressure("Pa")`. The solver
+reflashes the reservoir at the prescribed pressure and resolves signed phase speed from acoustic
+impedance; it no longer treats pressure traction as zero-advection refill. The isolated-reservoir
+route reuses one flash across internal stages at the same pressure; verify the
+performance safeguard with `getPressureInletFlashCount()`. A live connected stream remains uncached.
+The complete declared cycle closes mass, named-component and energy ledgers on 12/24 cells and
+0.5/0.25 s intervals, but
+the time-refined trace retains one small unfiltered opening reversal. Treat this as numerical
+boundary/restart evidence, not independent surge, field, gelled-oil or repeated-cycle validation.
 Use `HydrocarbonPoolTransfer.forHydrostaticPool(...)` only for stationary or slowly draining
-stratified terrain pools. Inspect interface-area, equilibrium-appearance and unresolved-trace-area
-diagnostics. Configure deliberate wall inventory with `setInitialWallTemperatureProfile(...)`
+stratified terrain pools. Use `forStratifiedFlow(...)` for a flowing circular-stratified interface:
+its local holdup chord preserves integrated area and component sources under subdivision of a
+uniform state, including nonuniform cells and finite heat limits. Independent per-cell horizontal
+puddles introduce cell-length dependence during a flowing restart. The two area assumptions are
+distinct models; retain the historical hydrostatic-cycle failure as evidence rather than claiming
+the flowing closure validates static-pool convergence. Inspect interface-area, equilibrium-appearance and unresolved-trace-area
+diagnostics. Representable long-cell trace wedges retain their leading-edge depth without a liquid
+floor; any reported fallback remains a numerical-resolution warning. Configure deliberate wall
+inventory with `setInitialWallTemperatureProfile(...)`
 before `run()` and retain the wall profile through every event/replay. In multilayer mode, its one
 temperature per cell initializes every radial layer uniformly; the layers evolve independently and
-a new steady run clears the old radial inventory. The current wall-coupled
-12/24-cell cycle has 22.82%/24.29% peak/final oil mesh differences; it is screening, not physical
-restart qualification. A moving pig needs separate moving-volume, face-flux and pressure-work
-conservation.
+a new steady run clears the old radial inventory. Mesh refinement must preserve physical terrain
+breakpoints and outlet length; a "last three cells" level-outlet rule compares different pipes.
+The wall-coupled 12/24-cell cycle fixes the final 1250 m at -333.5 m on both meshes and retains
+the 10% peak/final inventory gates. Consult its hydrocarbon-pool-transfer receipt for the executed
+result. Maximum single-cell interface area is extensive and is not a convergence target.
+A moving pig still needs separate distributed moving-volume, face-flux and pressure-work
+conservation and qualified inlet states.
+For a declared restart-opening window, use `TwoFluidPipeReport.analyzePressureTrace(...)` to report
+unfiltered extrema, peak-to-peak pressure, maximum sample rate, total/excess variation and reversal
+count with an explicit Pa gate. Preserve the sample interval and do not promote this diagnostic to a
+surge qualification without mesh/time and independent evidence.
 Condensation must use equilibrium hydrocarbon-liquid and aqueous-liquid **mass**
 contributions; never use the current cell water cut to identify a phase that is not yet present.
 For evaporation, withdraw from the actual oil and water conservative inventories and bound each
@@ -865,6 +937,18 @@ general holdup-to-depth approximation into pressure work, where its absolute are
 The enabled historical 12/24-cell ramp currently stops at 0.25 s on the unchanged face-volume
 closure guard. Keep the executable coupling rejection record attached; instantaneous operator
 identities do not qualify full elapsed transient operation.
+
+For an explicitly reduced-order dry-gas pig calculation, inspect
+`IdealGasPiggingModel`. It advances immutable conservative upstream/downstream
+gas inventories with `PigMotion`, moving-volume work and the existing
+`IdealGasReleaseModel` bypass. Preserve the user-declared maximum time,
+donor-mass fraction and pig-travel fraction controls, and inspect total mass,
+combined energy, contact impact and timestep-refinement evidence. This is two
+well-mixed calorically perfect gas chambers, not distributed pipe dynamics.
+The Hendrix 62 m/52 mm dimensions do not qualify synthetic pressures, friction
+or bypass parameters. Do not infer `TwoFluidPipe` moving boundaries, liquid
+sweeping, receiver surge capacity, physical restart, severe slugging, pig
+trains or experimental/field validation.
 
 1. **Always run steady state first**: Call `process.run()` before `runTransient()`
 2. **Timestep size**: Start with 1.0 s, reduce if oscillating (0.1-0.5 s)

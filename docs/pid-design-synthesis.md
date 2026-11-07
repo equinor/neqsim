@@ -88,6 +88,38 @@ For multi-area `ProcessModel` work, retain area identities and prepare governed
 area projects through the existing multi-area builder. A single-area simulation
 binding does not establish a globally coupled multi-area dynamic solver.
 
+### Coupled separator control acceptance
+
+`PidSeparatorControlStudy` executes a bounded pressure/level-control acceptance
+case against the actual six bound identities: PT/PIC/PCV and LT/LIC/LCV. The
+caller supplies the inlet-ramp definition, physical timestep, both valve
+candidates in US-Cv, and every response and numerical limit. The runner copies
+the governed process, rejects stale revisions or incomplete live wiring, enables
+conservative separator energy integration and tracking, and records one sample
+for every accepted physical step with a deterministic step ID.
+
+The result contains pressure and level extrema, controller IAE/peak error/output
+travel/settling time, valve travel, component-inventory residual, separator
+volume residual, cumulative-energy residual, an independent energy oracle, and
+ordered pass/fail checks. `compareRefinement(...)` compares a declared coarse
+case with a smaller-timestep execution. `evidence(...)` returns revision-bound
+report content with explicit non-credit statements for SIL/IPL/SRS, hazard
+completeness and construction approval.
+
+The public synthetic regression ramps a two-phase separator feed from 20 to
+28 kg/s over 10 s and continues to 40 s. With both candidate valves at US-Cv 80
+and a 1 s physical step, it observed 55.000--59.409 bara, level
+0.473450--0.500061, pressure IAE 113.194 bar s, level IAE 0.436951 fraction s,
+and 45.0% / 2.3653% PCV / LCV output travel. Maximum component, relative volume,
+and relative cumulative-energy residuals were respectively
+1.46e-11 mol, 5.34e-7 and 9.05e-8; the independent tracker/oracle energy
+difference was 0 J. Halving the step changed final pressure by 0.0444 bar, final
+level by 4.89e-4 and final LCV opening by 0.0925 percentage point. Under the same
+independently declared 60.0 bara acceptance limit, US-Cv 80 passed while US-Cv 20
+retained an observed 67.498 bara failure. These numbers qualify only
+this synthetic fluid, geometry, controller settings, ramp and numerical policy;
+they are not valve sizing, vendor-performance or facility safety approval.
+
 Use `@engineering-deliverables` and `neqsim-pid-process-operations` for requests
 such as:
 
@@ -102,6 +134,78 @@ accountable engineering approval as separate checks. Generated files alone do
 not establish that every proposed component is physically connected, drawn,
 simulated or approved.
 
+## Actual native safety functions, automatic proposals and executed feedback
+
+When an executable candidate already exists, `PidSafetyFunctionImporter.fromNativeFunction(...)`
+proposes its actual measurement channels, voting function, final elements and
+native settings in a copied `PidDesignModel`. It reuses exact existing bindings,
+preserves canonical IDs and leaves the input model unchanged. Rebuild
+`PidSimulationBindings` after each import or governed proposal change. The
+importer does not derive a hazard assessment, choose a trip threshold or assign
+SIL: those remain explicit engineering-policy inputs.
+
+`SafetyFunctionChannel.highTripFromMeasurement(...)` and its low-trip counterpart
+derive the channel tag from the actual measurement and read its enabled held
+physical-step sample. Capturing a source from another process copy fails.
+`manualTripFromPushButton(...)` reads the actual local binary button and rejects
+hidden linked automatic actions. Legacy arbitrary extractors remain available
+but do not establish verified measurement identity. The native channel latches
+a qualified demand until reset; fixed configured voting is not a simultaneous
+raw-signal coincidence test. Distinct simulated channel objects do not prove
+independent installed taps, power, logic or common-cause resistance.
+
+The bounded configured-copy workflow is:
+
+1. Import the actual healthy native candidate, then bind its instruments,
+   controllers and physical valves through their exact canonical identities.
+2. Read governed proposal attributes into the scenario factory. Use
+   `PidSafetyFunctionValidator.validateConfigured(...)` to compare actual source
+   references, units, thresholds, qualification/logic delays, voting, actuator
+   stroke/fail position and ordered command policy with the canonical graph.
+   The supported isolation policy is native fail-closed ESD valves commanded by
+   exact native trip actions, optionally grouped in parallel. Opening commands,
+   opaque actions, missing targets and incompatible graph/settings fail closed.
+3. Retain the returned `ConfiguredFunction` fingerprint and evidence reference
+   in the scenario definition. Repeat validation on the actual configured copy
+   inside its factory and use `assertSameConfiguration(...)` before execution.
+   Enable event-exact timing for held-sample scenarios. Preserve the physical
+   source fingerprint separately from the configured topology and numerical
+   execution order; numerical pressure-coupling helpers are not drawn hardware.
+4. Run scoped studies through `PidSimulationSession`, or declared project
+   scenarios through `EngineeringSimulationRunner.runStrict(...)`. The latter
+   executes strict configured-copy preflight and retains the actual native
+   results on that project; it does not adopt a caller-supplied result list.
+5. Attach results with `PidSafetyFunctionValidator.attachResult(...)`, declaring
+   required full-window `MAINTAIN_BOUNDS` criteria. Preserve the resulting
+   canonical IDs, configuration/scenario/result hashes and actual native
+   readback beside the DEXPI package. Regenerate into a new directory and run
+   the deterministic and independent drawing/standards reviews.
+
+`MAINTAIN_BOUNDS` checks every sampled value over its declared post-event window
+and requires both window endpoints. Default `REACH_BY_DEADLINE` instead measures
+first attainment; an initially satisfied sample cannot establish an invariant.
+Neither mode proves continuous-time behavior between samples. Feedback retains
+`NOT_EXECUTED`, `INCOMPLETE`, `OBSERVED_FAIL`, `MONITORED_NO_DEMAND`,
+`DEMAND_WITHOUT_ACTUATION`, `ACTUATED_RESPONSE_INCOMPLETE` and
+`DEMAND_RESPONSE_OBSERVED` separately. Deadline credit covers only explicitly
+declared criteria. Expected-fault assertions never relabel an observed process
+FAIL as PASS. Keep component and cumulative-energy assessments separate; a
+response PASS cannot clear a numerical energy HOLD/FAIL.
+
+The public `AdvancedSafetyPidExample` and `AdvancedV101SafetyStudy` test fixtures
+exercise this path on two actual separator inventories, an upstream ESD valve,
+a separate interstage finite-stroke HIPPS candidate, three actual pressure
+channels, three BPCS loops and a local manual trip. The native export includes
+four P&ID sheets and a PFD for that example. Shared manual/automatic final-element
+targets receive no inferred independent-barrier credit. Manual trip does not
+imply a turbine or compressor ETS model.
+
+The same function/instrument/actuator IDs map to native DEXPI 2.0.1 objects and
+signal links. Governed executable settings, evidence and implementation remain a
+coordinated package: XML alone does not configure a PLC, reconstruct scenario
+code or qualify a named receiving-tool round trip. Controlled standards review,
+relief/safety lifecycle evidence and accountable approval remain HOLD.
+
 ## Native ISO-basis drawing and connectivity checks
 
 After generation, apply the separate
@@ -110,6 +214,16 @@ After generation, apply the separate
 and controlled standards receipts. Native/geometry success alone cannot produce
 a completed standards review. The generating owner fixes defects and regenerates;
 the independent reviewer retains findings and engineering HOLDs.
+
+For a professional package, the explicit canonical `PidDesignModel` is the sole
+native instrumentation proposal authority. The exporter disables generic
+requirement-to-PCE/safeguard/nozzle synthesis before applying that model; all
+requirements remain in the engineering manifest and review registers. The
+engineering-projection sidecar records the policy and retained requirement IDs.
+Engineering-only native export keeps its default generic typed proposals, but
+an `ENGINEERING_ASSESSMENT` never invents a process instrument or sensing nozzle.
+Callers applying their own canonical overlay can select the explicit
+`exportDexpi201(..., includeRequirementProposals)` overload accordingly.
 
 Auxiliary material lines use the same line identity in the physical projection,
 native XML, drawing routes and engineering registers. Project line-design inputs
@@ -131,6 +245,16 @@ separates field measurement from shared control/safety functions, and retains
 named signal continuations. Existing explicitly controlled manual layouts
 retain their previous representation and are labelled separately in readiness;
 they are never silently replaced by the automatic professional layout.
+
+Locally represented two- or three-input functions have distinct signal anchors
+and a single shared voting symbol. An actual bound manual push button is a
+field function without a fabricated process sensing tap in either the drawing
+or native DEXPI. Actual valve-port monitors and eligible unconnected overflow
+monitors use reciprocal instrumentation-detail sheets with the existing stream,
+port and primary-sheet identities. Detail views repeat a labelled existing
+segment; they do not create additional valves or piping. A bound inter-unit
+valve is shown on its declared receiving-equipment sheet rather than as two
+physical valves on adjacent sheets. Unsupported locations still remain HOLD.
 
 The drawing basis is ISO 10628-1:2014 for diagram content/drafting,
 ISO 10628-2:2012 and ISO 14617 for process symbols, ISO 5457/7200 for
@@ -379,3 +503,21 @@ different hazard. A conventional liquid level control valve is not
 automatically an independent safety final element. Generic cause-and-effect
 requirement templates also need an explicit alias-to-canonical-tag crosswalk
 before they can be treated as executable device identities.
+
+## Actual passive PSV response
+
+Use the [passive PSV simulation and P&ID verification workflow](process/safety/psv-pid-verification.md)
+when adding actual pressure relief. `PidPressureReliefImporter` extends the existing canonical
+model without a fictitious sensor, PLC signal or safety function. `PidPressureReliefValidator`
+requires exact actual valve/tee/stream identities, native mechanical readback and a registered
+capacity basis, then links strict executed cases to the frozen configuration fingerprint.
+Keep no-demand, incomplete, failed, relief-flow and reseat evidence distinct; preserve numerical
+balance verdicts independently from response verdicts. The initial supported capacity model is
+an explicitly synthetic US Cv assumption, not certified installed relief capacity.
+
+Native DEXPI 2.0.1 `SafetyValveOrFitting.SetPressureHigh` uses a gauge-pressure unit. An absolute
+simulation setting is mapped only when the canonical proposal explicitly declares a positive
+`simulationAtmosphericReferenceBara`; the conversion and native unit are recorded in the
+projection crosswalk. No atmospheric default is inferred. Without that reference, leave the
+native gauge setting unassigned/HOLD and retain all absolute canonical parameters in the
+sidecar. `SetPressureLow` is a low-pressure activation property, not a PSV reseating setting.

@@ -1,5 +1,21 @@
 package neqsim.process.logic.action;
 
+import java.io.ObjectOutputStream;
+
+import java.io.ObjectInputStream;
+
+import java.io.IOException;
+
+import neqsim.process.equipment.ProcessEquipmentInterface;
+
+import java.util.List;
+
+import java.util.Collections;
+
+import java.util.ArrayList;
+
+import java.io.Serializable;
+
 import neqsim.process.logic.LogicAction;
 import neqsim.process.logic.LogicCondition;
 
@@ -35,14 +51,15 @@ import neqsim.process.logic.LogicCondition;
  * @author ESOL
  * @version 1.0
  */
-public class ConditionalAction implements LogicAction {
-  private final LogicCondition condition;
-  private final LogicAction primaryAction; // If condition true
-  private final LogicAction alternativeAction; // If condition false (optional)
+public class ConditionalAction implements LogicAction, Serializable {
+  private static final long serialVersionUID = 1L;
+  private transient LogicCondition condition;
+  private transient LogicAction primaryAction; // If condition true
+  private transient LogicAction alternativeAction; // If condition false (optional)
   private final String description;
 
   private boolean evaluated = false;
-  private LogicAction selectedAction = null;
+  private transient LogicAction selectedAction = null;
 
   /**
    * Creates a conditional action with primary action only (no alternative).
@@ -69,6 +86,34 @@ public class ConditionalAction implements LogicAction {
     this.primaryAction = primaryAction;
     this.alternativeAction = alternativeAction;
     this.description = description;
+  }
+
+  /**
+   * Returns actual references for every configured target, without issuing equipment commands.
+   *
+   * @return configured physical targets
+   */
+  @Override
+  public List<ProcessEquipmentInterface> getTargetEquipment() {
+    List<ProcessEquipmentInterface> targets = new ArrayList<ProcessEquipmentInterface>();
+    if (primaryAction != null) {
+      targets.addAll(primaryAction.getTargetEquipment());
+    }
+    if (alternativeAction != null) {
+      targets.addAll(alternativeAction.getTargetEquipment());
+    }
+    return Collections.unmodifiableList(targets);
+  }
+
+  /**
+   * Reports whether all configured physical target identities are available.
+   *
+   * @return true when no target is opaque or missing
+   */
+  @Override
+  public boolean isTargetEquipmentIdentityComplete() {
+    return primaryAction != null && primaryAction.isTargetEquipmentIdentityComplete()
+        && (alternativeAction == null || alternativeAction.isTargetEquipmentIdentityComplete());
   }
 
   @Override
@@ -171,8 +216,42 @@ public class ConditionalAction implements LogicAction {
   /**
    * Resets the conditional for re-evaluation.
    */
+  @Override
   public void reset() {
     evaluated = false;
     selectedAction = null;
+    primaryAction.reset();
+    if (alternativeAction != null) {
+      alternativeAction.reset();
+    }
+  }
+
+  /**
+   * Persists callback references explicitly, retaining shared child-action identity.
+   *
+   * @param output destination stream
+   * @throws IOException if a callback or captured payload is not serializable
+   */
+  private void writeObject(ObjectOutputStream output) throws IOException {
+    output.defaultWriteObject();
+    output.writeObject(condition);
+    output.writeObject(primaryAction);
+    output.writeObject(alternativeAction);
+    output.writeObject(selectedAction);
+  }
+
+  /**
+   * Restores callbacks without evaluating the condition or commanding equipment.
+   *
+   * @param input source stream
+   * @throws IOException if the graph cannot be read
+   * @throws ClassNotFoundException if a callback class is unavailable
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    condition = (LogicCondition) input.readObject();
+    primaryAction = (LogicAction) input.readObject();
+    alternativeAction = (LogicAction) input.readObject();
+    selectedAction = (LogicAction) input.readObject();
   }
 }

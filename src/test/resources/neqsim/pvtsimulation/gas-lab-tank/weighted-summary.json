@@ -1,0 +1,106 @@
+{
+  "parent": "c2c87ef2413f701a9221699dd0dd7df63c1c0aa1",
+  "precision60and75JSONIdentical": true,
+  "cases": [
+    {
+      "case": "unequal",
+      "referenceVolumeM3": 987.0081656396466,
+      "nativeVolumeM3": 987.0082052228532,
+      "volumeErrorM3": 3.958320667152293e-05,
+      "chiSquareError": 1.0697220886868308e-11,
+      "boundLimited": false,
+      "seconds": 7.407436462,
+      "maxpressureBaraError": 4.963490027876105e-07,
+      "maxsurfaceGasVolumeM3Error": 2.4597284209448844e-09,
+      "maxResidualError": 1.4806889939711354e-06,
+      "maxProducedComponentErrorMoles": 2.209036574640777e-05
+    },
+    {
+      "case": "equal",
+      "referenceVolumeM3": 1024.8478786687303,
+      "nativeVolumeM3": 1024.847910564406,
+      "volumeErrorM3": 3.1895675647319877e-05,
+      "chiSquareError": 4.338751580235112e-13,
+      "boundLimited": false,
+      "seconds": 6.668043064,
+      "maxpressureBaraError": 3.71239536889334e-07,
+      "maxsurfaceGasVolumeM3Error": 1.8344508134759963e-09,
+      "maxResidualError": 7.424790667009962e-07,
+      "maxProducedComponentErrorMoles": 1.6486817912664264e-05
+    },
+    {
+      "case": "scaled",
+      "referenceVolumeM3": 987.0081656396466,
+      "nativeVolumeM3": 987.0082052228532,
+      "volumeErrorM3": 3.958320667152293e-05,
+      "chiSquareError": 1.1885492590124613e-12,
+      "boundLimited": false,
+      "seconds": 6.540462578,
+      "maxpressureBaraError": 4.963490027876105e-07,
+      "maxsurfaceGasVolumeM3Error": 2.4597284209448844e-09,
+      "maxResidualError": 9.926979765984e-07,
+      "maxProducedComponentErrorMoles": 2.209036574640777e-05
+    },
+    {
+      "case": "holdout shifted",
+      "referenceVolumeM3": 987.0081656396466,
+      "nativeVolumeM3": 987.0082052228532,
+      "volumeErrorM3": 3.958320667152293e-05,
+      "chiSquareError": 1.0697220886868308e-11,
+      "boundLimited": false,
+      "seconds": 7.834854005,
+      "maxpressureBaraError": 4.963490027876105e-07,
+      "maxsurfaceGasVolumeM3Error": 2.4597284209448844e-09,
+      "maxResidualError": 1.4806889939711354e-06,
+      "maxProducedComponentErrorMoles": 2.209036574640777e-05
+    },
+    {
+      "case": "upper1000 interior",
+      "referenceVolumeM3": 987.0081656396466,
+      "nativeVolumeM3": 987.0081928644795,
+      "volumeErrorM3": 2.7224832933825382e-05,
+      "chiSquareError": 5.914380096783134e-12,
+      "boundLimited": false,
+      "seconds": 7.148100128,
+      "maxpressureBaraError": 3.41382957458336e-07,
+      "maxsurfaceGasVolumeM3Error": 1.6916601452976465e-09,
+      "maxResidualError": 1.0184004540780833e-06,
+      "maxProducedComponentErrorMoles": 1.5193481885944493e-05
+    },
+    {
+      "case": "upper980 bound",
+      "referenceVolumeM3": 980.0,
+      "nativeVolumeM3": 980.0,
+      "volumeErrorM3": 0.0,
+      "chiSquareError": 6.235012506294879e-13,
+      "boundLimited": true,
+      "seconds": 6.86634381,
+      "maxpressureBaraError": 5.968558980384842e-13,
+      "maxsurfaceGasVolumeM3Error": 4.547473508864641e-13,
+      "maxResidualError": 3.6046721163529583e-12,
+      "maxProducedComponentErrorMoles": 1.4551915228366852e-11
+    }
+  ],
+  "static": {
+    "spotbugsFindings": 0,
+    "spotbugsErrors": {
+      "missingClasses": "0",
+      "errors": "0"
+    },
+    "changedClassListed": true,
+    "checkstyleIssues": 0,
+    "java8ClassMajor": 52,
+    "doclintLogBytes": 0
+  },
+  "focusedClass": {
+    "{http://www.w3.org/2001/XMLSchema-instance}noNamespaceSchemaLocation": "https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd",
+    "version": "3.0.2",
+    "name": "neqsim.pvtsimulation.util.IndependentGasLabTankTest",
+    "time": "45.195",
+    "tests": "1",
+    "errors": "0",
+    "skipped": "0",
+    "failures": "0",
+    "flakes": "0"
+  }
+}

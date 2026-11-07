@@ -1,6 +1,7 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.thermo.Fluid;
 import neqsim.thermo.phase.PhaseType;
@@ -66,6 +68,65 @@ class TPflashMissingAqueousNearBubblePointTest extends neqsim.NeqSimTest {
     assertEquals(2, fluid.getNumberOfPhases());
     assertAqueousEquilibrium(fluid);
     assertEquals(0.05575417, fluid.getBeta(fluid.getPhaseNumberOfPhase("aqueous")), 1.0e-7);
+  }
+
+  /**
+   * Keeps free water in a liquid feed when its total water content crosses the former five-percent screen.
+   *
+   * @param waterFraction overall water mole fraction
+   */
+  @ParameterizedTest
+  @ValueSource(doubles = {0.01, 0.025, 0.032, 0.049, 0.051})
+  void aqueousPhaseBelowFivePercentWater(double waterFraction) {
+    SystemInterface fluid = liquidWithWaterFraction(waterFraction);
+    SystemInterface homogeneous = homogeneousOil(fluid.clone());
+    double homogeneousGibbs = homogeneous.getGibbsEnergy();
+    new TPmultiflash(homogeneous, false).rescueMetastableOilMissingAqueous();
+    assertAqueousEquilibrium(homogeneous);
+    assertTrue(homogeneous.getGibbsEnergy() < homogeneousGibbs);
+    new ThermodynamicOperations(fluid).TPflash();
+    assertAqueousEquilibrium(fluid);
+    double gibbs = fluid.getGibbsEnergy();
+    new ThermodynamicOperations(fluid).TPflash();
+    assertAqueousEquilibrium(fluid);
+    assertEquals(gibbs, fluid.getGibbsEnergy(), 1.0e-5);
+  }
+
+  /**
+   * Does not create free water when the oil is dry or contains only dissolved water.
+   *
+   * @param waterFraction overall water mole fraction
+   */
+  @ParameterizedTest
+  @ValueSource(doubles = {0.0, 1.0e-8, 1.0e-6})
+  void stableOilDoesNotAcquireAnAqueousPhase(double waterFraction) {
+    SystemInterface fluid = homogeneousOil(liquidWithWaterFraction(waterFraction));
+    double gibbs = fluid.getGibbsEnergy();
+    new TPmultiflash(fluid, false).rescueMetastableOilMissingAqueous();
+    assertFalse(fluid.hasPhaseType(PhaseType.AQUEOUS));
+    assertEquals(gibbs, fluid.getGibbsEnergy(), 1.0e-5);
+    new ThermodynamicOperations(fluid).TPflash();
+    assertFalse(fluid.hasPhaseType(PhaseType.AQUEOUS));
+  }
+
+  /**
+   * Varies only the total water content of the existing public regression fluid.
+   *
+   * @param waterFraction overall water mole fraction
+   * @return low-pressure liquid feed with unchanged non-water component ratios
+   */
+  private SystemInterface liquidWithWaterFraction(double waterFraction) {
+    SystemInterface fluid = inlet();
+    double previousWater = fluid.getComponent("water").getz();
+    double[] composition = fluid.getzvector();
+    for (int component = 0; component < composition.length; component++) {
+      composition[component] = "water".equals(fluid.getComponent(component).getComponentName()) ? waterFraction
+          : composition[component] * (1.0 - waterFraction) / (1.0 - previousWater);
+    }
+    fluid.setMolarComposition(composition);
+    fluid.setTemperature(34.0, "C");
+    fluid.setPressure(4.3);
+    return fluid;
   }
 
   private static Stream<Arguments> bubblePointGrid() {
@@ -159,8 +220,22 @@ class TPflashMissingAqueousNearBubblePointTest extends neqsim.NeqSimTest {
     assertEquals(referenceGibbs, fluid.getGibbsEnergy(), 0.0);
   }
 
+  /**
+   * Creates the original homogeneous oil endpoint.
+   *
+   * @return the inlet fluid initialized as oil
+   */
   private SystemInterface homogeneousOil() {
-    SystemInterface fluid = inlet();
+    return homogeneousOil(inlet());
+  }
+
+  /**
+   * Initializes a homogeneous oil endpoint, including aliased inactive phase slots.
+   *
+   * @param fluid fluid to initialize
+   * @return the supplied fluid initialized as oil
+   */
+  private SystemInterface homogeneousOil(SystemInterface fluid) {
     fluid.setNumberOfPhases(1);
     fluid.setPhaseIndex(0, 1);
     fluid.setPhaseType(0, PhaseType.OIL);

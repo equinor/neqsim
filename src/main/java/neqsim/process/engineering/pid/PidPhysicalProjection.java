@@ -11,6 +11,7 @@ import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.measurementdevice.PushButton;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -30,7 +31,7 @@ import neqsim.process.processmodel.ProcessSystem;
 public final class PidPhysicalProjection {
   /** Supported attachment families. */
   public enum Kind {
-    EXISTING_EQUIPMENT, INLINE_VALVE, SENSING, FUNCTION, PROCESS_NOZZLE, AUXILIARY_ROUTE, UNRESOLVED
+    EXISTING_EQUIPMENT, INLINE_VALVE, SENSING, MANUAL_INPUT, FUNCTION, PROCESS_NOZZLE, AUXILIARY_ROUTE, UNRESOLVED
   }
 
   /** Immutable source-backed location of one P&amp;ID element. */
@@ -313,6 +314,34 @@ public final class PidPhysicalProjection {
       return;
     }
     if (element.getType() == PidElementType.MEASUREMENT || element.getType() == PidElementType.INDICATOR) {
+      boolean calculated = "CALCULATED_COMPRESSOR_MAP_MARGIN".equals(element.getAttributes().get("inputKind"));
+      if (calculated) {
+        if (bound != null && "MEASUREMENT".equals(role)
+            && neqsim.process.measurementdevice.CompressorSurgeMarginMeasurement.class.getName()
+                .equals(text(bound.get("simulationClass")))
+            && bound.get("calculatedInputEquipment") instanceof Map && element.getEquipmentTag()
+                .equals(text(((Map<?, ?>) bound.get("calculatedInputEquipment")).get("name")))) {
+          row.put("direction", "CALCULATED");
+          row.put("streamTag", "");
+          resolved(row, Kind.FUNCTION);
+        } else {
+          hold(row, "CALCULATED_MARGIN_REQUIRES_EXACT_NATIVE_SOURCE_BINDING");
+        }
+        return;
+      }
+      boolean manual = "MANUAL_PUSH_BUTTON".equals(element.getAttributes().get("inputKind"));
+      boolean actualButton = bound != null && "MEASUREMENT".equals(role)
+          && PushButton.class.getName().equals(text(bound.get("simulationClass")));
+      if (manual || actualButton) {
+        if (manual && actualButton && element.getLineTag().isEmpty()) {
+          row.put("streamTag", "");
+          row.put("direction", "MANUAL");
+          resolved(row, Kind.MANUAL_INPUT);
+        } else {
+          hold(row, "MANUAL_INPUT_REQUIRES_BOUND_NATIVE_PUSH_BUTTON_WITHOUT_PROCESS_LINE");
+        }
+        return;
+      }
       boolean designedNozzle = !text(row.get("physicalSourceNozzleTag")).isEmpty();
       if (designedNozzle) {
         if (bound != null) {

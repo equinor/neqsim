@@ -13,6 +13,7 @@ simulation, an approved P&ID, or a construction release.
 | Need | NeqSim entry point | Detailed documentation |
 | --- | --- | --- |
 | Import an existing Proteus-compatible P&ID and build a process scaffold | `DexpiXmlReader`, `DexpiSimulationBuilder` | [DEXPI import, export, and visualization](../integration/dexpi-reader.md) |
+| Read native DEXPI 2.0.1 instrument identities as metadata | `DexpiXmlReader.readInstruments(...)` | [DEXPI instrument intake limits](../integration/dexpi-reader.md#structured-supported-subset-diagnostics) |
 | Export a quick Proteus-compatible P&ID | `DexpiXmlWriter.write(...)` | [DEXPI import, export, and visualization](../integration/dexpi-reader.md#exporting-to-dexpi-xml) |
 | Render through pyDEXPI | `DexpiXmlWriter.writeForPyDexpi(...)` or `DexpiDiagramBridge.exportForPyDexpi(...)` | [pyDEXPI-friendly export](../integration/dexpi-reader.md#pydexpi-friendly-export-namespace-omitted) |
 | Export a native DEXPI 2.0.1 P&ID Plant model | `Dexpi201XmlWriter.writeAndAssess(...)` with controlled metadata | [Native DEXPI conformance](../integration/dexpi-20-conformance.md) |

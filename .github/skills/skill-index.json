@@ -1,4 +1,7 @@
 {
+ "code health maintainability": ["neqsim-code-health"],
+ "safe refactoring duplicate helpers": ["neqsim-safe-refactoring"],
+ "independent source code review": ["neqsim-code-review"],
  "vannduggpunkt med CPA": [
   "neqsim-cpa-water-boundaries"
  ],
@@ -569,7 +572,7 @@
  "identifying facility bottlenecks": [
   "neqsim-production-optimization"
  ],
- "images \u2014 equipment data sheets": [
+ "images — equipment data sheets": [
   "neqsim-technical-document-reading"
  ],
  "impurity effects on phase behavior": [
@@ -999,7 +1002,7 @@
  "pfr)": [
   "neqsim-reaction-engineering"
  ],
- "phase envelopes \u2014": [
+ "phase envelopes —": [
   "neqsim-technical-document-reading"
  ],
  "pipeline hydraulics": [
@@ -1520,7 +1523,9 @@
   "neqsim-utilities-specification"
  ],
  "cooling water": [
-  "neqsim-utilities-specification"
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
  ],
  "instrument air": [
   "neqsim-utilities-specification"
@@ -1973,6 +1978,21 @@
   "neqsim-pipeline-survey-processing",
   "neqsim-subsea-and-wells",
   "neqsim-flow-assurance"
+ ],
+ "trenching and rock dump scope for a subsea pipeline from map data": [
+  "neqsim-seabed-protection-screening",
+  "neqsim-pipeline-survey-processing",
+  "neqsim-flow-assurance"
+ ],
+ "burial depth effect on cooldown and hydrate margin": [
+  "neqsim-seabed-protection-screening",
+  "neqsim-flow-assurance",
+  "neqsim-surf-design-study"
+ ],
+ "rock volume at pipeline crossings and free span supports": [
+  "neqsim-seabed-protection-screening",
+  "neqsim-pipeline-survey-processing",
+  "neqsim-surf-design-study"
  ],
  "pipeline elevation profile from KP and depth soundings": [
   "neqsim-pipeline-survey-processing",
@@ -2667,7 +2687,7 @@
  "tetningsgass": [
   "neqsim-rotating-equipment-design"
  ],
- "t\u00f8rre gasstetninger": [
+ "tørre gasstetninger": [
   "neqsim-rotating-equipment-design"
  ],
  "p&id quality control": [
@@ -2681,5 +2701,25 @@
  ],
  "p&id source drawing consistency": [
   "neqsim-pid-quality-review"
+ ],
+ "seawater heat exchanger": [
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
+ ],
+ "IAPWS reference water": [
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
+ ],
+ "water cooled gas cooler": [
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
+ ],
+ "kjolevann sjovann varmeveksler": [
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
  ]
 }
