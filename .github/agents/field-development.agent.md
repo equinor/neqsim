@@ -89,7 +89,7 @@ You are an expert in these field development disciplines:
 ### 6. Economic Evaluation
 - CAPEX estimation (wells, SURF, topsides, pipeline, FPSO)
 - OPEX modeling (fixed, variable, intervention, IMR)
-- Cash flow modeling with country-specific tax regimes
+- Cash flow modeling with country-specific tax regimes (resolve the country and its regulator, tax and local-content basis first with `neqsim-jurisdiction-regulatory-basis`)
 - NPV, IRR, payback, profitability index, unit technical cost
 - Breakeven oil/gas price
 - Monte Carlo uncertainty analysis (P10/P50/P90 NPV)

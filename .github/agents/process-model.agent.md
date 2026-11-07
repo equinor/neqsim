@@ -126,6 +126,10 @@ export-specification result.
 
 ## Applicable Standards (MANDATORY)
 
+Resolve the asset country first (`neqsim-jurisdiction-regulatory-basis`) so local law is
+applied before standards, and round line, relief, driver and vessel sizes to standard sizes
+(`neqsim-standard-equipment-sizes`; company or project datasheet sizes take precedence).
+
 After building any process simulation, identify and check applicable design standards.
 NeqSim's standards database (`src/main/resources/designdata/standards/`) provides design
 limits for common equipment. Load the `neqsim-standards-lookup` skill for lookup patterns.

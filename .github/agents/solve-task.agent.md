@@ -185,6 +185,14 @@ this cycle — not the other way around.
 
 ## 0 ── OPERATING PRINCIPLES (read before execution)
 
+### Jurisdiction and standard sizes
+
+Never assume the country. Identify it (ask once, or record an assumption and a `data_gaps`
+entry), load `neqsim-jurisdiction-regulatory-basis`, and apply local law before industry
+and company standards. Report sizes as standard sizes with a `size_basis` via
+`neqsim-standard-equipment-sizes`, taking company or project datasheet values first
+(enterprise: `enterprise-jurisdiction-and-company-sizing`).
+
 ### Automatic Evidence Retrieval (use the chat-equivalent paths)
 
 Plant P&IDs, data sheets and drawings come from the retrieval backend, not the

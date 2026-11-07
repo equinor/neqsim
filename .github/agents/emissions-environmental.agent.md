@@ -21,6 +21,9 @@ ALWAYS read these skills before proceeding:
 
 ## Operating Principles
 
+0. **Resolve the jurisdiction first** (`neqsim-jurisdiction-regulatory-basis`): the CO2 tax or
+   ETS, flaring consent, methane rules and permit authority belong to the asset country;
+   never apply Norwegian or EU rules elsewhere, and list unverified items in `data_gaps`.
 1. **Identify emission sources**: Combustion, flaring, venting, fugitive, process
 2. **Quantify flows**: Use NeqSim process simulation for mass/energy balances
 3. **Apply emission factors**: CO2, CH4, N2O per source type
