@@ -40,6 +40,14 @@ directory and never replace previous evidence. The main class runs every public 
 0.1 s using the model's declared 20 s duration and event at 2 s. Programmatic callers can supply an
 explicit list of `CaseDefinition` objects; `allPublicProfilesSelected` discloses subsets.
 
+The public matrix includes healthy and load-rejection control, slow/stuck recycle, held flow-signal
+faults, cooling loss, high pressure/temperature/level signals, manual ESD, unavailable driver or
+isolation/recycle final elements, a physically closing blocked export, and loss of control air to
+the three spring-return gas valves. The blocked-export case exercises actual anti-surge recycle and
+pressure control before any native pressure SIF demand; a trip is neither assumed nor injected. The control-air-loss case deliberately removes valve motive supply
+without inventing a simultaneous driver trip; its shaft-stop and sustained-safe-state failures
+remain visible as a design action.
+
 A design file is a strict JSON object of scalar and composition `CompressorAutomationStudy.Design` field names.
 For example, `{"feedFlowKgPerSecond":6.0,"antiSurgeOpeningSeconds":0.3}` retains all other typed
 defaults. Pressure fields end in `Bara`, temperature fields in `K`, motion fields in `Seconds`,
@@ -49,6 +57,11 @@ checks physical design relationships before execution. `design-input.json` retai
 values. Optional `composition` maps component names to finite numeric mole fractions; duplicate
 component names and numeric strings are rejected. The native factory validates and normalizes the
 positive composition sum. `steady-state.json` and configuration receipts separately retain actual native readback.
+
+The design also declares the quantitative reporting policy: pressure, temperature and level
+setpoints; absolute settling bands of 0.5 bar, 1 K and 0.01 level fraction by default; and a minimum
+two-second sustained evidence window. These values are normal strict design-file fields and may be
+changed explicitly. They are reporting criteria, not hidden solver tolerances.
 
 The default mixture and map are public synthetic assumptions. Changing a design scalar can rebuild
 that synthetic reference template; it is not a vendor-map similarity assessment or proof that an
@@ -88,7 +101,7 @@ on the same process graph. Coordinate configuration and execution with one owner
 | `canonical-pid.json` | The proposal selected for this run; corresponding current bindings are in the native package |
 | `automation-registers.json` | Source-backed I/O, control loops, cause/effect and unresolved requirements |
 | `case-*/scenario.json`, `configuration.json` | Exact declared case and frozen actual control/safety settings |
-| `case-*/result.json`, `full-trace.json` | Native case output and actual ordered configured-copy physical samples |
+| `case-*/result.json`, `full-trace.json` | Native case output, quantitative metrics and actual ordered configured-copy physical samples |
 | `case-*/native-result.raw.txt` | Exact native result text, preserved independently from strict JSON normalization |
 | `native-evidence-crosswalk.json` | Native-result fingerprint and separate strict output-file SHA-256 values |
 | `dynamic-pid-feedback.json` | Current per-function demand/no-demand/failed/incomplete evidence without SIL credit |
@@ -100,6 +113,26 @@ Agent-facing JSON is strict: undefined native floating-point values become `null
 and native kind retained in `nonFiniteValues`, never a substituted zero. Authoritative map-margin
 validity/reason flags remain in the native samples. Exact native text/fingerprints and normalized
 file hashes are separate quantities and must not be described as byte-identical representations.
+
+Each result computes peak/minimum, overshoot, undershoot, integral absolute error and sustained
+settling time from accepted-step samples using the declared policy. It also reports sampled
+constraint violations, first native SIF vote, final-element actuation delay, sustained complete
+safe-state time, and integrated export/recycle routing after the event. The template has no
+connected PSV, blowdown or flare model: relief mass and disposal load are therefore explicitly
+`NOT_EVALUATED`, never substituted with zero. Continuous-time peaks between samples remain outside
+this fixed-step evidence.
+
+For the default synthetic design, accepted-step runs at 0.1 s gave the following new-profile
+evidence. The event was at 1.0 s; blocked export ran to 12.0 s and control-air loss to 6.2 s.
+
+| Profile | Native verdict | Peak discharge | Pressure IAE | Temperature overshoot | Recycled mass after event | Complete safe state |
+|---|---|---:|---:|---:|---:|---|
+| Blocked outlet | PASS | 62.4539 bara | 20.8914 bar·s | 0.00150 K | 32.7311 kg | Not demanded; control case |
+| Control-air loss | FAIL (`SHAFT_STOP`) | 59.9984 bara | 7.22064 bar·s | 4.29857 K | 48.7147 kg | Not achieved |
+
+Neither run sampled a declared pressure/temperature/level/surge constraint violation. That does not
+qualify the missing connected relief/disposal model, continuous peaks, control-air architecture,
+driver shutdown wiring or vendor machinery response.
 
 The wrapper does not grant layout approval. Run the repository's strict external PFD/layout checks,
 native P&ID QC and independent visual inspection on every generated sheet. Check actual port/line/

@@ -95,7 +95,7 @@ public final class CompressorAutomationStudy {
   public enum Profile {
     NORMAL, LOAD_REJECTION, SLOW_RECYCLE, STUCK_RECYCLE, FT_BIASED_HIGH, FT_FROZEN, COOLING_LOSS, MANUAL_ESD,
     DRIVER_TRIP_FAILED, ISOLATION_FAILED, ASV_TRIP_FAILED, LEVEL_SIGNAL_HIGH, DISCHARGE_LEVEL_SIGNAL_HIGH,
-    PRESSURE_SIGNAL_HIGH
+    PRESSURE_SIGNAL_HIGH, BLOCKED_OUTLET, CONTROL_AIR_LOSS
   }
 
   /**
@@ -200,6 +200,12 @@ public final class CompressorAutomationStudy {
       }
       if (profile == Profile.DRIVER_TRIP_FAILED) {
         result.put("driverCommandAvailable", Boolean.FALSE);
+      }
+      if (profile == Profile.BLOCKED_OUTLET) {
+        result.put("exportOutletBlocked", Boolean.TRUE);
+      }
+      if (profile == Profile.CONTROL_AIR_LOSS) {
+        result.put("controlAirAvailable", Boolean.FALSE);
       }
       return Collections.unmodifiableMap(result);
     }
@@ -434,6 +440,7 @@ public final class CompressorAutomationStudy {
       result.put("faultOverrides", bundle.definition.getFaultOverrides());
       result.put("nativeResult", bundle.nativeResult.toMap());
       result.put("samples", getSamples());
+      result.put("quantitativeMetrics", performanceMetrics(getSamples(), bundle.configured, bundle.definition));
       result.put("qualification", "SYNTHETIC_MAP_AND_DRIVER_PROFILE; CONTROLLED_STANDARDS_VENDOR_SIL_APPROVAL_HOLD");
       return jsonSafe(result);
     }
@@ -495,7 +502,8 @@ public final class CompressorAutomationStudy {
    */
   private static boolean controlCase(Profile profile) {
     return profile == Profile.NORMAL || profile == Profile.LOAD_REJECTION || profile == Profile.SLOW_RECYCLE
-        || profile == Profile.STUCK_RECYCLE || profile == Profile.FT_BIASED_HIGH || profile == Profile.FT_FROZEN;
+        || profile == Profile.STUCK_RECYCLE || profile == Profile.FT_BIASED_HIGH || profile == Profile.FT_FROZEN
+        || profile == Profile.BLOCKED_OUTLET;
   }
 
   /**
@@ -635,6 +643,11 @@ public final class CompressorAutomationStudy {
     private double pressureTripBara = 65.0;
     private double temperatureTripK = 350.0;
     private double levelTripFraction = 0.80;
+    private double levelSetPointFraction = 0.25;
+    private double metricPressureToleranceBar = 0.50;
+    private double metricTemperatureToleranceK = 1.0;
+    private double metricLevelToleranceFraction = 0.01;
+    private double metricSettlingHoldSeconds = 2.0;
 
     /** Creates the declared standard synthetic design. */
     public Design() {
@@ -671,7 +684,9 @@ public final class CompressorAutomationStudy {
           feedFlowKgPerSecond, feedPressureBara, suctionPressureBara, dischargePressureBara, exportPressureBara,
           feedTemperatureK, coolerTemperatureK, coolingMediumTemperatureK, coolerActuatorTimeConstantSeconds,
           coolerThermalTimeConstantSeconds, antiSurgeCv, antiSurgeOpeningSeconds, antiSurgeClosingSeconds,
-          isolationStrokeSeconds, driverRampRpmPerSecond, pressureTripBara, temperatureTripK, surgeMarginSetPoint}) {
+          isolationStrokeSeconds, driverRampRpmPerSecond, pressureTripBara, temperatureTripK, surgeMarginSetPoint,
+          levelSetPointFraction, metricPressureToleranceBar, metricTemperatureToleranceK, metricLevelToleranceFraction,
+          metricSettlingHoldSeconds}) {
         if (!Double.isFinite(value) || value <= 0.0) {
           throw new IllegalArgumentException("Design values must be finite and positive");
         }
@@ -687,6 +702,11 @@ public final class CompressorAutomationStudy {
       }
       if (!Double.isFinite(levelTripFraction) || levelTripFraction <= 0.0 || levelTripFraction >= 1.0) {
         throw new IllegalArgumentException("Level trip fraction must lie strictly between zero and one");
+      }
+      if (dischargePressureBara + metricPressureToleranceBar >= pressureTripBara
+          || coolerTemperatureK + metricTemperatureToleranceK >= temperatureTripK
+          || levelSetPointFraction + metricLevelToleranceFraction >= levelTripFraction) {
+        throw new IllegalArgumentException("Metric settling bands must remain inside the declared trip envelopes");
       }
     }
 
@@ -1032,6 +1052,56 @@ public final class CompressorAutomationStudy {
     /** @param value suction high-high level setting as a fraction */
     public void setLevelTripFraction(double value) {
       levelTripFraction = value;
+    }
+
+    /** @return liquid-level control set point as a fraction */
+    public double getLevelSetPointFraction() {
+      return levelSetPointFraction;
+    }
+
+    /** @param value liquid-level control set point as a fraction */
+    public void setLevelSetPointFraction(double value) {
+      levelSetPointFraction = value;
+    }
+
+    /** @return declared pressure settling band in bar */
+    public double getMetricPressureToleranceBar() {
+      return metricPressureToleranceBar;
+    }
+
+    /** @param value declared pressure settling band in bar */
+    public void setMetricPressureToleranceBar(double value) {
+      metricPressureToleranceBar = value;
+    }
+
+    /** @return declared temperature settling band in K */
+    public double getMetricTemperatureToleranceK() {
+      return metricTemperatureToleranceK;
+    }
+
+    /** @param value declared temperature settling band in K */
+    public void setMetricTemperatureToleranceK(double value) {
+      metricTemperatureToleranceK = value;
+    }
+
+    /** @return declared level settling band as a fraction */
+    public double getMetricLevelToleranceFraction() {
+      return metricLevelToleranceFraction;
+    }
+
+    /** @param value declared level settling band as a fraction */
+    public void setMetricLevelToleranceFraction(double value) {
+      metricLevelToleranceFraction = value;
+    }
+
+    /** @return minimum sustained settling evidence window in seconds */
+    public double getMetricSettlingHoldSeconds() {
+      return metricSettlingHoldSeconds;
+    }
+
+    /** @param value minimum sustained settling evidence window in seconds */
+    public void setMetricSettlingHoldSeconds(double value) {
+      metricSettlingHoldSeconds = value;
     }
   }
 
@@ -1397,7 +1467,7 @@ public final class CompressorAutomationStudy {
     private void levelController(String name, ThrottlingValve valve, LevelTransmitter measurement) {
       ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass(name);
       controller.setTransmitter(measurement);
-      controller.setControllerSetPoint(0.25, "fraction");
+      controller.setControllerSetPoint(design.levelSetPointFraction, "fraction");
       controller.setControllerParameters(1.0, 10.0, 0.0);
       controller.setReverseActing(false);
       controller.setOutputLimits(0.0, 100.0);
@@ -1492,6 +1562,12 @@ public final class CompressorAutomationStudy {
       } else if (definition.profile == Profile.LEVEL_SIGNAL_HIGH) {
         ((MeasurementDeviceBaseClass) process.getMeasurementDevice("30-LT-102"))
             .setFault(SensorFaultType.STUCK_AT_VALUE, 0.9);
+      } else if (definition.profile == Profile.BLOCKED_OUTLET) {
+        exportValve.deEnergize();
+      } else if (definition.profile == Profile.CONTROL_AIR_LOSS) {
+        inletValve.deEnergize();
+        exportValve.deEnergize();
+        antiSurgeValve.deEnergize();
       } else if (!controlCase(definition.profile)) {
         ((PushButton) process.getMeasurementDevice("30-HS-100")).push();
       }
@@ -2120,7 +2196,319 @@ public final class CompressorAutomationStudy {
     result.pressureTripBara = source.pressureTripBara;
     result.temperatureTripK = source.temperatureTripK;
     result.levelTripFraction = source.levelTripFraction;
+    result.levelSetPointFraction = source.levelSetPointFraction;
+    result.metricPressureToleranceBar = source.metricPressureToleranceBar;
+    result.metricTemperatureToleranceK = source.metricTemperatureToleranceK;
+    result.metricLevelToleranceFraction = source.metricLevelToleranceFraction;
+    result.metricSettlingHoldSeconds = source.metricSettlingHoldSeconds;
     return result;
+  }
+
+  /**
+   * Calculates declared control and safeguarding metrics from the actual accepted-step samples.
+   *
+   * <p>
+   * The result deliberately distinguishes routed export and recycle mass from relief or disposal load. The synthetic
+   * train has no connected PSV, blowdown valve or flare model, so those quantities remain not evaluated rather than
+   * being reported as zero.
+   * </p>
+   *
+   * @param samples actual accepted-step samples
+   * @param train actual configured train retaining governed policy and native SIF timings
+   * @param definition initiating-event timing
+   * @return strict structured metric evidence
+   */
+  private static Map<String, Object> performanceMetrics(List<Map<String, Object>> samples, Train train,
+      CaseDefinition definition) {
+    Design design = train.design;
+    Map<String, Object> result = new LinkedHashMap<String, Object>();
+    Map<String, Object> policy = new LinkedHashMap<String, Object>();
+    policy.put("pressureSetPointBara", design.dischargePressureBara);
+    policy.put("pressureToleranceBar", design.metricPressureToleranceBar);
+    policy.put("temperatureSetPointK", design.coolerTemperatureK);
+    policy.put("temperatureToleranceK", design.metricTemperatureToleranceK);
+    policy.put("levelSetPointFraction", design.levelSetPointFraction);
+    policy.put("levelToleranceFraction", design.metricLevelToleranceFraction);
+    policy.put("minimumSettlingHoldSeconds", design.metricSettlingHoldSeconds);
+    policy.put("eventSeconds", definition.eventSeconds);
+    result.put("policy", policy);
+    result.put("dischargePressure", controlMetric(samples, "dischargePressureBara", design.dischargePressureBara,
+        design.metricPressureToleranceBar, definition.eventSeconds, design.metricSettlingHoldSeconds, "bar", "bar_s"));
+    result.put("coolerOutletTemperature", controlMetric(samples, "coolerOutletTemperatureK", design.coolerTemperatureK,
+        design.metricTemperatureToleranceK, definition.eventSeconds, design.metricSettlingHoldSeconds, "K", "K_s"));
+    result.put("suctionLevel",
+        controlMetric(samples, "suctionLevelFraction", design.levelSetPointFraction,
+            design.metricLevelToleranceFraction, definition.eventSeconds, design.metricSettlingHoldSeconds, "fraction",
+            "fraction_s"));
+    result.put("dischargeLevel",
+        controlMetric(samples, "dischargeLevelFraction", design.levelSetPointFraction,
+            design.metricLevelToleranceFraction, definition.eventSeconds, design.metricSettlingHoldSeconds, "fraction",
+            "fraction_s"));
+
+    double peakPressure = Double.NEGATIVE_INFINITY;
+    double minimumTemperature = Double.POSITIVE_INFINITY;
+    double peakSuctionLevel = Double.NEGATIVE_INFINITY;
+    double peakDischargeLevel = Double.NEGATIVE_INFINITY;
+    int sampledConstraintViolations = 0;
+    for (Map<String, Object> sample : samples) {
+      double time = number(sample, "timeSeconds");
+      if (time + 1.0e-12 < definition.eventSeconds) {
+        continue;
+      }
+      double pressure = number(sample, "dischargePressureBara");
+      double temperature = number(sample, "coolerOutletTemperatureK");
+      double suctionLevel = number(sample, "suctionLevelFraction");
+      double dischargeLevel = number(sample, "dischargeLevelFraction");
+      peakPressure = Math.max(peakPressure, pressure);
+      minimumTemperature = Math.min(minimumTemperature, temperature);
+      peakSuctionLevel = Math.max(peakSuctionLevel, suctionLevel);
+      peakDischargeLevel = Math.max(peakDischargeLevel, dischargeLevel);
+      boolean violated = pressure > 68.0 || temperature > design.temperatureTripK
+          || suctionLevel > design.levelTripFraction || dischargeLevel > design.levelTripFraction;
+      Object applicable = sample.get("marginApplicable");
+      Object margin = sample.get("validatedMargin");
+      if (Boolean.TRUE.equals(applicable) && margin instanceof Number && ((Number) margin).doubleValue() < 0.0) {
+        violated = true;
+      }
+      if (violated) {
+        sampledConstraintViolations++;
+      }
+    }
+    Map<String, Object> safeguarding = new LinkedHashMap<String, Object>();
+    safeguarding.put("peakDischargePressureBara", finiteOrNull(peakPressure));
+    safeguarding.put("minimumCoolerOutletTemperatureK", finiteOrNull(minimumTemperature));
+    safeguarding.put("peakSuctionLevelFraction", finiteOrNull(peakSuctionLevel));
+    safeguarding.put("peakDischargeLevelFraction", finiteOrNull(peakDischargeLevel));
+    safeguarding.put("sampledConstraintViolationCount", Integer.valueOf(sampledConstraintViolations));
+    Double firstVote = null;
+    Double firstActuation = null;
+    for (ClosedLoopSafetyFunction function : train.safetyFunctions) {
+      Map<String, Object> evidence = function.getDynamicSafetyScenarioEvidence();
+      Object vote = evidence.get("firstVoteSeconds");
+      Object actuation = evidence.get("finalElementActuationSeconds");
+      if (vote instanceof Number) {
+        double value = ((Number) vote).doubleValue();
+        if (Double.isFinite(value) && (firstVote == null || value < firstVote.doubleValue())) {
+          firstVote = Double.valueOf(value);
+        }
+      }
+      if (actuation instanceof Number) {
+        double value = ((Number) actuation).doubleValue();
+        if (Double.isFinite(value) && (firstActuation == null || value < firstActuation.doubleValue())) {
+          firstActuation = Double.valueOf(value);
+        }
+      }
+    }
+    safeguarding.put("firstVoteSeconds", firstVote);
+    safeguarding.put("firstFinalElementActuationSeconds", firstActuation);
+    safeguarding.put("detectionAfterEventSeconds", firstVote == null ? null
+        : Double.valueOf(nonnegativeTiming(firstVote.doubleValue() - definition.eventSeconds)));
+    safeguarding.put("detectionToActionSeconds", firstVote == null || firstActuation == null ? null
+        : Double.valueOf(firstActuation.doubleValue() - firstVote.doubleValue()));
+    safeguarding.put("sustainedSafeStateAfterEventSeconds",
+        sustainedSafeState(samples, definition.eventSeconds, design.metricSettlingHoldSeconds));
+    result.put("safeguarding", safeguarding);
+
+    Map<String, Object> routing = new LinkedHashMap<String, Object>();
+    routing.put("exportedMassAfterEventKg", integrate(samples, "exportMassFlowKgS", definition.eventSeconds));
+    routing.put("recycledMassAfterEventKg", integrate(samples, "recycleMassFlowKgS", definition.eventSeconds));
+    Map<String, Object> relief = new LinkedHashMap<String, Object>();
+    relief.put("status", "NOT_EVALUATED");
+    relief.put("connectedModel", Boolean.FALSE);
+    relief.put("releasedMassKg", null);
+    relief.put("disposalLoadKgPerSecond", null);
+    relief.put("notEvaluatedQuantities", Arrays.asList("releasedMassKg", "disposalLoadKgPerSecond"));
+    relief.put("reason", "NO_CONNECTED_PSV_BLOWDOWN_OR_FLARE_MODEL_IN_SYNTHETIC_TRAIN");
+    routing.put("reliefAndDisposal", relief);
+    result.put("routing", routing);
+    return result;
+  }
+
+  /**
+   * Calculates one scalar response metric without selecting undeclared tolerances.
+   *
+   * @param samples accepted-step samples
+   * @param key scalar sample key
+   * @param setPoint declared target
+   * @param tolerance declared absolute settling band
+   * @param eventSeconds initiating-event time
+   * @param holdSeconds minimum evidence remaining after a settling candidate
+   * @param valueUnit value and error unit
+   * @param integralUnit absolute-error integral unit
+   * @return metric map
+   */
+  private static Map<String, Object> controlMetric(List<Map<String, Object>> samples, String key, double setPoint,
+      double tolerance, double eventSeconds, double holdSeconds, String valueUnit, String integralUnit) {
+    Map<String, Object> result = new LinkedHashMap<String, Object>();
+    double peak = Double.NEGATIVE_INFINITY;
+    double minimum = Double.POSITIVE_INFINITY;
+    double overshoot = 0.0;
+    double undershoot = 0.0;
+    double iae = 0.0;
+    Double previousTime = null;
+    Double previousError = null;
+    for (Map<String, Object> sample : samples) {
+      double time = number(sample, "timeSeconds");
+      if (time + 1.0e-12 < eventSeconds) {
+        continue;
+      }
+      double value = number(sample, key);
+      double error = value - setPoint;
+      peak = Math.max(peak, value);
+      minimum = Math.min(minimum, value);
+      overshoot = Math.max(overshoot, error);
+      undershoot = Math.max(undershoot, -error);
+      if (previousTime != null) {
+        iae += (time - previousTime.doubleValue()) * (Math.abs(error) + Math.abs(previousError.doubleValue())) * 0.5;
+      }
+      previousTime = Double.valueOf(time);
+      previousError = Double.valueOf(error);
+    }
+    result.put("setPoint", Double.valueOf(setPoint));
+    result.put("tolerance", Double.valueOf(tolerance));
+    result.put("valueUnit", valueUnit);
+    result.put("integralAbsoluteErrorUnit", integralUnit);
+    result.put("peak", finiteOrNull(peak));
+    result.put("minimum", finiteOrNull(minimum));
+    result.put("overshoot", Double.valueOf(overshoot));
+    result.put("undershoot", Double.valueOf(undershoot));
+    result.put("integralAbsoluteError", Double.valueOf(iae));
+    Double settling = settlingTime(samples, key, setPoint, tolerance, eventSeconds, holdSeconds);
+    result.put("settled", Boolean.valueOf(settling != null));
+    result.put("settlingTimeAfterEventSeconds", settling);
+    return result;
+  }
+
+  /**
+   * Finds the first sampled point after which the response remains inside the declared band.
+   *
+   * @param samples accepted-step samples
+   * @param key scalar sample key
+   * @param setPoint declared target
+   * @param tolerance declared absolute settling band
+   * @param eventSeconds initiating-event time
+   * @param holdSeconds minimum remaining evidence window
+   * @return seconds after the event, or null when the response does not settle
+   */
+  private static Double settlingTime(List<Map<String, Object>> samples, String key, double setPoint, double tolerance,
+      double eventSeconds, double holdSeconds) {
+    if (samples.isEmpty()) {
+      return null;
+    }
+    double finalTime = number(samples.get(samples.size() - 1), "timeSeconds");
+    for (int i = 0; i < samples.size(); i++) {
+      double candidateTime = number(samples.get(i), "timeSeconds");
+      if (candidateTime + 1.0e-12 < eventSeconds || finalTime - candidateTime + 1.0e-12 < holdSeconds) {
+        continue;
+      }
+      boolean settled = true;
+      for (int j = i; j < samples.size(); j++) {
+        if (Math.abs(number(samples.get(j), key) - setPoint) > tolerance) {
+          settled = false;
+          break;
+        }
+      }
+      if (settled) {
+        return Double.valueOf(nonnegativeTiming(candidateTime - eventSeconds));
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Finds the first sustained sampled native shutdown state.
+   *
+   * @param samples accepted-step samples
+   * @param eventSeconds initiating-event time
+   * @param holdSeconds minimum remaining evidence window
+   * @return seconds after the event, or null when the state is not achieved and held
+   */
+  private static Double sustainedSafeState(List<Map<String, Object>> samples, double eventSeconds, double holdSeconds) {
+    if (samples.isEmpty()) {
+      return null;
+    }
+    double finalTime = number(samples.get(samples.size() - 1), "timeSeconds");
+    for (int i = 0; i < samples.size(); i++) {
+      double candidateTime = number(samples.get(i), "timeSeconds");
+      if (candidateTime + 1.0e-12 < eventSeconds || finalTime - candidateTime + 1.0e-12 < holdSeconds) {
+        continue;
+      }
+      boolean held = true;
+      for (int j = i; j < samples.size(); j++) {
+        Map<String, Object> sample = samples.get(j);
+        if (number(sample, "speedRpm") > 1.0 || number(sample, "inletValveOpeningPercent") > 0.1
+            || number(sample, "exportValveOpeningPercent") > 0.1 || number(sample, "asvOpeningPercent") < 99.9) {
+          held = false;
+          break;
+        }
+      }
+      if (held) {
+        return Double.valueOf(nonnegativeTiming(candidateTime - eventSeconds));
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Integrates one nonnegative routed mass-flow signal with the trapezoidal rule after the initiating event.
+   *
+   * @param samples accepted-step samples
+   * @param key mass-flow sample key in kg/s
+   * @param eventSeconds initiating-event time
+   * @return routed mass in kg
+   */
+  private static double integrate(List<Map<String, Object>> samples, String key, double eventSeconds) {
+    double total = 0.0;
+    Double previousTime = null;
+    Double previousValue = null;
+    for (Map<String, Object> sample : samples) {
+      double time = number(sample, "timeSeconds");
+      if (time + 1.0e-12 < eventSeconds) {
+        continue;
+      }
+      double value = number(sample, key);
+      if (previousTime != null) {
+        total += (time - previousTime.doubleValue()) * (value + previousValue.doubleValue()) * 0.5;
+      }
+      previousTime = Double.valueOf(time);
+      previousValue = Double.valueOf(value);
+    }
+    return total;
+  }
+
+  /**
+   * Reads a required finite scalar sample.
+   *
+   * @param sample source sample
+   * @param key required key
+   * @return finite numeric value
+   */
+  private static double number(Map<String, Object> sample, String key) {
+    Object value = sample.get(key);
+    if (!(value instanceof Number) || !Double.isFinite(((Number) value).doubleValue())) {
+      throw new IllegalStateException("Finite quantitative sample '" + key + "' is required");
+    }
+    return ((Number) value).doubleValue();
+  }
+
+  /**
+   * Retains a finite result or an explicit null when no applicable sample exists.
+   *
+   * @param value candidate value
+   * @return boxed finite value or null
+   */
+  private static Double finiteOrNull(double value) {
+    return Double.isFinite(value) ? Double.valueOf(value) : null;
+  }
+
+  /**
+   * Removes only floating-point roundoff around an exact scheduled event boundary.
+   *
+   * @param value measured timing difference in seconds
+   * @return zero within one picosecond of the exact boundary, otherwise the original value
+   */
+  private static double nonnegativeTiming(double value) {
+    return value < 0.0 && value > -1.0e-12 ? 0.0 : value;
   }
 
   /**

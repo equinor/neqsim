@@ -3,6 +3,7 @@ package neqsim.process.util.scenario;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -145,5 +146,50 @@ class CompressorAutomationStudyTest {
     assertFalse(result.getNativeResult().getCriterionResults().get("RECYCLE_FAIL_OPEN").isPassed());
     assertTrue(new Gson().toJson(result.toMap()).contains("RECYCLE_FAIL_OPEN"));
     assertFalse(train.getAntiSurgeValve().getPercentValveOpening() > 0.0);
+  }
+
+  /** Blocked export and control-air loss retain distinct physical initiators and quantitative outcomes. */
+  @Test
+  @SuppressWarnings("unchecked")
+  void blockedOutletAndControlAirLossProduceTraceableMetrics() {
+    CompressorAutomationStudy.Design design = new CompressorAutomationStudy.Design();
+    design.setMetricPressureToleranceBar(0.5);
+    design.setMetricTemperatureToleranceK(1.0);
+    design.setMetricLevelToleranceFraction(0.01);
+    design.setMetricSettlingHoldSeconds(2.0);
+    CompressorAutomationStudy.Result blocked = CompressorAutomationStudy.run(CompressorAutomationStudy.create(design),
+        new CompressorAutomationStudy.CaseDefinition(CompressorAutomationStudy.Profile.BLOCKED_OUTLET, 0.1, 12.0, 1.0));
+    assertEquals(0.0, blocked.getConfiguredTrain().getExportValve().getPercentValveOpening(), 0.1);
+    Map<String, Object> blockedMap = blocked.toMap();
+    Map<String, Object> metrics = (Map<String, Object>) blockedMap.get("quantitativeMetrics");
+    Map<String, Object> pressure = (Map<String, Object>) metrics.get("dischargePressure");
+    Map<String, Object> safeguarding = (Map<String, Object>) metrics.get("safeguarding");
+    Map<String, Object> routing = (Map<String, Object>) metrics.get("routing");
+    Map<String, Object> relief = (Map<String, Object>) routing.get("reliefAndDisposal");
+    assertEquals(20.8914, ((Number) pressure.get("integralAbsoluteError")).doubleValue(), 1.0e-4);
+    assertEquals(62.4539, ((Number) pressure.get("peak")).doubleValue(), 1.0e-4);
+    assertEquals(32.7311, ((Number) routing.get("recycledMassAfterEventKg")).doubleValue(), 1.0e-4);
+    assertNull(safeguarding.get("firstVoteSeconds"));
+    assertNull(safeguarding.get("detectionToActionSeconds"));
+    assertEquals("NOT_EVALUATED", relief.get("status"));
+    assertEquals("NO_CONNECTED_PSV_BLOWDOWN_OR_FLARE_MODEL_IN_SYNTHETIC_TRAIN", relief.get("reason"));
+
+    CompressorAutomationStudy.Result airLoss = CompressorAutomationStudy.run(CompressorAutomationStudy.create(design),
+        new CompressorAutomationStudy.CaseDefinition(CompressorAutomationStudy.Profile.CONTROL_AIR_LOSS, 0.1, 6.2,
+            1.0));
+    assertEquals(0.0, airLoss.getConfiguredTrain().getInletValve().getPercentValveOpening(), 0.1);
+    assertEquals(0.0, airLoss.getConfiguredTrain().getExportValve().getPercentValveOpening(), 0.1);
+    assertEquals(100.0, airLoss.getConfiguredTrain().getAntiSurgeValve().getPercentValveOpening(), 0.1);
+    assertFalse(airLoss.getNativeResult().getCriterionResults().get("SHAFT_STOP").isPassed());
+    Map<String, Object> airMetrics = (Map<String, Object>) airLoss.toMap().get("quantitativeMetrics");
+    Map<String, Object> airSafeguarding = (Map<String, Object>) airMetrics.get("safeguarding");
+    Map<String, Object> airPressure = (Map<String, Object>) airMetrics.get("dischargePressure");
+    Map<String, Object> airTemperature = (Map<String, Object>) airMetrics.get("coolerOutletTemperature");
+    Map<String, Object> airRouting = (Map<String, Object>) airMetrics.get("routing");
+    assertEquals(59.9984, ((Number) airPressure.get("peak")).doubleValue(), 1.0e-4);
+    assertEquals(7.22064, ((Number) airPressure.get("integralAbsoluteError")).doubleValue(), 1.0e-5);
+    assertEquals(4.29857, ((Number) airTemperature.get("overshoot")).doubleValue(), 1.0e-5);
+    assertEquals(48.7147, ((Number) airRouting.get("recycledMassAfterEventKg")).doubleValue(), 1.0e-4);
+    assertNull(airSafeguarding.get("sustainedSafeStateAfterEventSeconds"));
   }
 }
