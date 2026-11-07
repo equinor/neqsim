@@ -207,6 +207,12 @@ multiple trains, electrical dispatch and heat recovery. Use each equipment objec
 in one owned supply train; sharing one mutable turbine between independent trains
 would overwrite its demand.
 
+Connections retain live object references. `setPowerTrain` attaches the supplied
+train, and `getTurbine` returns its connected turbine. Later blackout, trip and
+derating changes affect subsequent shaft calculations. Serialize the complete
+connected graph together to preserve those identities. Coordinate configuration
+and calculation on one thread; the mutable train and equipment are not thread-safe.
+
 Follow [roadmap #4909](https://github.com/equinor/neqsim/issues/4909) for OEM maps,
 independent package benchmarks, dynamic/control qualification and multi-train
 integration. The engineering basis includes:

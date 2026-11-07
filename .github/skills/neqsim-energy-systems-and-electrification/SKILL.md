@@ -23,6 +23,9 @@ For a dedicated common-shaft compressor supply, select `CompressorPowerTrain`
 (`directDrive`, `electricDrive`, `gasElectricDrive`) and attach it through
 `CompressorShaft.setPowerTrain`. Follow the
 [matching and evidence guide](../../../docs/process/equipment/integrated_compression_power.md).
+Power-train and turbine connections are live references. Preserve their identities
+for blackout, trip and derating updates; serialize the connected graph together and
+do not evaluate shared mutable equipment concurrently.
 Include gearbox loss once, motor/VFD and generator losses, and electrical auxiliary
 demand. Zero `setElectricalSupplyLimitW` means blackout. Inspect `getPowerTrainResult`
 for required versus delivered power, shortfall, fuel, CO2 and feasibility. The

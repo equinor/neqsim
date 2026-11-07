@@ -3,11 +3,17 @@ package neqsim.process.equipment.compressor;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.driver.ElectricMotorDriver;
 import neqsim.process.equipment.energy.CompressorPowerTrain;
 import neqsim.process.equipment.energy.ElectricMotor;
+import neqsim.process.equipment.energy.Generator;
 import neqsim.process.equipment.powergeneration.gasturbine.GasTurbineCatalog;
 import neqsim.process.equipment.powergeneration.gasturbine.GasTurbineUnit;
 import neqsim.process.equipment.stream.Stream;
@@ -142,6 +148,46 @@ class CompressorShaftPowerTrainTest {
     shaft.updateDriverOperatingPoint();
     assertEquals(shaft.getMaxShaftPower("W"), shaft.getPowerTrainResult().getDeliveredPowerW(), 1.0e-6);
     assertFalse(shaft.getOperatingReport().getPowerTrain().isFeasible());
+  }
+
+  /**
+   * Serialized connections retain turbine identity and observe subsequent changes through the same live graph.
+   *
+   * @throws Exception if serialization fails
+   */
+  @Test
+  void serializationPreservesLiveTurbineAndSupplyConnections() throws Exception {
+    Compressor compressor = body("compressor", gas(), 20.0);
+    CompressorShaft shaft = new CompressorShaft("train");
+    shaft.addCompressor(compressor);
+    GasTurbineUnit turbine = new GasTurbineUnit("GT", gas(), GasTurbineCatalog.get("LM2500"));
+    Generator generator = new Generator("generator", 0.97);
+    ElectricMotor motor = new ElectricMotor("motor", 0.95);
+    CompressorPowerTrain train = CompressorPowerTrain.gasElectricDrive(turbine, generator, motor);
+    shaft.setPowerTrain(train);
+    assertSame(turbine, train.getTurbine());
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+      output.writeObject(new Object[] {shaft, train, turbine, motor});
+    }
+    Object[] restored;
+    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+      restored = (Object[]) input.readObject();
+    }
+    CompressorShaft restoredShaft = (CompressorShaft) restored[0];
+    CompressorPowerTrain restoredTrain = (CompressorPowerTrain) restored[1];
+    GasTurbineUnit restoredTurbine = (GasTurbineUnit) restored[2];
+    ElectricMotor restoredMotor = (ElectricMotor) restored[3];
+    assertSame(restoredTurbine, restoredTrain.getTurbine());
+    double originalPower = restoredShaft.getAvailableShaftPower("W");
+    restoredTurbine.setAmbientPressureBara(0.8);
+    assertTrue(restoredShaft.getAvailableShaftPower("W") < originalPower);
+    restoredMotor.setTripped(true);
+    assertEquals(0.0, restoredShaft.getAvailableShaftPower("W"));
+    restoredMotor.setTripped(false);
+    restoredTrain.setElectricalSupplyLimitW(0.0);
+    assertEquals(0.0, restoredShaft.getAvailableShaftPower("W"));
+    assertTrue(shaft.getAvailableShaftPower("W") > 0.0);
   }
 
   /** Selecting an integrated electric supply does not report fuel from a previously selected legacy turbine. */

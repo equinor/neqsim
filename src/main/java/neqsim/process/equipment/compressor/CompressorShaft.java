@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.function.DoubleUnaryOperator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import neqsim.process.controllerdevice.AntiSurgeController;
 import neqsim.process.equipment.compressor.driver.DriverCurve;
 import neqsim.process.equipment.energy.CompressorPowerTrain;
@@ -826,11 +827,14 @@ public class CompressorShaft implements Serializable {
    *
    * <p>
    * This model takes precedence over the legacy driver selectors. An explicit shaft power cap remains an additional
-   * limit. Configure compressor charts and shaft speed bounds independently; this adapter does not create OEM maps.
+   * limit. Configure compressor charts and shaft speed bounds independently; this adapter does not create OEM maps. The
+   * supplied train remains live: later supply-limit, trip and equipment-configuration changes affect this shaft. The
+   * caller must coordinate updates and evaluation; neither the train nor its equipment is copied or thread-safe.
    * </p>
    *
-   * @param train supply model, or null to restore legacy driver selection
+   * @param train live supply model, or null to restore legacy driver selection
    */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The shaft must observe later blackout, trip and derating changes in its connected supply train")
   public void setPowerTrain(CompressorPowerTrain train) {
     this.powerTrain = train;
     this.powerTrainResult = null;

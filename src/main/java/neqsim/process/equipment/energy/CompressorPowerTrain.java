@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import com.google.gson.GsonBuilder;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import neqsim.process.equipment.compressor.CompressorShaft;
 import neqsim.process.equipment.powergeneration.gasturbine.GasTurbineUnit;
 
@@ -136,8 +137,14 @@ public final class CompressorPowerTrain implements Serializable {
   /**
    * Gets the turbine used for fuel and exhaust accounting.
    *
-   * @return turbine, or null for an externally supplied motor
+   * <p>
+   * Returns the connected equipment itself. Configuration changes through this reference affect subsequent matching,
+   * and matching updates its fuel accounting. The train and its equipment must not be evaluated concurrently.
+   * </p>
+   *
+   * @return live turbine, or null for an externally supplied motor
    */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The turbine is connected process equipment; copying would detach configuration and accounting")
   public GasTurbineUnit getTurbine() {
     return turbine;
   }
