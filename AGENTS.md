@@ -65,6 +65,12 @@
   `pip install -e FluidMagic/fluidmagic`). Never `pip install fluidmagic`; if `import fluidmagic`
   fails, tell the user how to get it and fall back to the offline hand-off.
 
+## Maintaining source code
+
+Use `@code-health` for measured debt triage, `@refactor` for bounded source changes,
+and `@code-review` for independent code review. Commands and baseline policy live in
+[docs/development/CODE_HEALTH.md](docs/development/CODE_HEALTH.md).
+
 ## Running calculations
 
 - **MCP first:** for a single flash/PVT/process/standards/sizing calculation use a curated
