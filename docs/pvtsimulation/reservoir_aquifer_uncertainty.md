@@ -156,6 +156,7 @@ measurement uncertainty twice.
 | Effective scenario count | Inverse sum of squared weights; concentration of this ensemble, not MCMC sample size |
 | Log evidence without Gaussian constant | Relative normalizer only; not absolute data-density evidence |
 | `pressureQuantiles(q)` | Lower-tail model-pressure quantiles over all history/forecast times |
+| `parameterQuantiles(q)` | Marginal lower-tail initial-volume, phase-fraction, aquifer-capacity and productivity quantiles, in `getParameterNames()` order |
 
 Held-out pressures never enter the posterior likelihood. Prediction-only intervals
 use NaN pressure/sigma pairs and remain available for forecast quantiles. Quantile
@@ -164,6 +165,40 @@ Quantiles exclude future measurement noise. Only the product $C=c_tW_i$ enters p
 cannot distinguish $c_t$ from $W_i$ separately. Include observations around the
 response timescale $C/J$ and independent geological bounds. Refine the joint hypothesis grid and
 check sensitivity to prior/support assumptions before interpreting intervals.
+
+Parameter quantiles use the generalized inverse of the discrete posterior CDF:
+the first positive-mass support value whose cumulative mass is at least `q`.
+Values `q=0` and `q=1` return its minimum and maximum support. Zero posterior
+mass, including rejected or numerically underflowed scenarios, contributes no
+support. Explicit infinite aquifer capacity can therefore produce an infinite
+capacity quantile while its mean/correlation remains undefined. These are
+**marginal** quantiles: combining separately returned parameter quantiles does
+not construct a joint scenario or credible region. Initial pore-volume quantiles
+are in-place assumptions, not recoverable reserves. `q=0.1` is a lower-tail
+tenth percentile, not a petroleum exceedance P10.
+
+### Independent finite-scenario benchmark
+
+The optional [discrete-posterior benchmark](https://github.com/equinor/neqsim/tree/master/src/test/resources/neqsim/pvtsimulation/discrete-posterior)
+retains complete synthetic methane SRK/PR trajectories and posterior outputs.
+Its independent Decimal cubic-EOS/linear-pressure aquifer solver supplies the
+specified discrete forward model; separate probability sums check joint masses,
+means, volume/support correlations, prior shifts, effective counts and all
+parameter/pressure quantiles. It compares 3x3, 5x5 and 9x9 volume/productivity
+grids, changed priors and capacities, joint capacity scenarios, explicitly supplied
+EOS/withdrawal realizations, infeasible inventory and changed holdout pressure.
+Run its `run.py` from a source checkout with the selected Python interpreter.
+
+Each EOS hypothesis has immutable identical original/tuned checkpoints; these
+alternatives were explicitly supplied, not laboratory calibrated or reservoir
+retuned. Methane component withdrawals are prescribed inputs. The benchmark
+checks the finite-scenario and discrete forward-model contract; continuous-time
+accuracy is covered separately by the coupled ODE matrix above. Prior density
+cell integration is an explicit fixture choice, not an inferred distribution.
+Grid refinement diagnostics do not demonstrate convergence to a continuous
+posterior, and scenario sensitivities do not establish measured coverage or
+held-out field GOR/composition accuracy. Read the retained scope, bounds and
+complete outputs before interpreting its uncertainty diagnostics.
 
 The tests check independent Bayes odds, heldout exclusion, sigma weighting,
 underflow-resistant normalization, rejected prior mass, volume/aquifer confounding,

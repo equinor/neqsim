@@ -232,6 +232,11 @@ Model parameters and correction factors are retained. Configure fluids and
 mixing parameters before launching parallel calculations; do not mutate a
 stream that another calculation is using.
 
+Saved PFCT models that predate CSP tuning recover four unity correction factors
+when loaded through native Java serialization or the legacy `.neqsim` loader.
+Existing tuned factors are preserved. Loaded models can be cloned and evaluated
+with the same independent parameter and methane-reference ownership.
+
 ---
 
 ### Polynomial Correlation

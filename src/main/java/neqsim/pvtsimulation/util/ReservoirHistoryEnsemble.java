@@ -305,21 +305,59 @@ public final class ReservoirHistoryEnsemble {
     }
 
     /**
+     * Returns marginal lower-tail quantiles of the physical parameter vector in {@link #getParameterNames()} order.
+     *
+     * <p>
+     * Each quantile is the smallest positive-mass support value whose cumulative posterior mass is at least the
+     * requested probability. Zero and one return the minimum and maximum positive-mass support. Zero-weight scenarios
+     * do not contribute, including rejected hypotheses and weights that numerically underflowed to zero. Explicit
+     * infinite aquifer capacity can yield an infinite capacity quantile even when its numerical mean is undefined.
+     * Separately returned marginal quantiles need not belong to one joint scenario or define a joint credible region.
+     * Pore volume is an in-place assumption, not recoverable reserves; lower-tail 0.1 is not petroleum exceedance P10.
+     * </p>
+     *
+     * @param probability lower-tail cumulative probability between zero and one inclusive
+     * @return defensive vector of pore volume in m3, gas/aqueous fractions, capacity in m3/bar and productivity in
+     * m3/(s bar)
+     * @throws IllegalArgumentException if probability is non-finite or outside zero to one
+     */
+    public double[] parameterQuantiles(double probability) {
+      requireProbability(probability);
+      double[][] parameters = new double[candidates.length][];
+      for (int i = 0; i < candidates.length; i++) {
+        if (weights[i] > 0.0) {
+          parameters[i] = candidates[i].parameters();
+        }
+      }
+      double[] quantiles = new double[PARAMETERS.length];
+      for (int j = 0; j < quantiles.length; j++) {
+        List<double[]> pairs = new ArrayList<double[]>();
+        for (int i = 0; i < candidates.length; i++) {
+          if (parameters[i] != null) {
+            pairs.add(new double[] {parameters[i][j], weights[i]});
+          }
+        }
+        quantiles[j] = quantile(pairs, probability);
+      }
+      return quantiles;
+    }
+
+    /**
      * Returns posterior lower-tail pressure quantiles at each common time, including the initial state.
      *
      * <p>
      * Probability 0.1 means the lower tenth percentile, not the petroleum exceedance convention. These are uncertainty
      * in the deterministic model predictions from the supplied scenarios, excluding future measurement noise. Held-out
-     * measurements were not used to construct them.
+     * measurements were not used to construct them. Zero and one return the minimum and maximum positive-mass support,
+     * even when a tiny positive tail is lost in floating-point cumulative summation.
      * </p>
      *
      * @param probability lower-tail cumulative probability between zero and one inclusive
      * @return pressure quantiles in bara at every common history/forecast time
+     * @throws IllegalArgumentException if probability is non-finite or outside zero to one
      */
     public double[] pressureQuantiles(double probability) {
-      if (!Double.isFinite(probability) || probability < 0.0 || probability > 1.0) {
-        throw new IllegalArgumentException("Quantile probability must be between zero and one");
-      }
+      requireProbability(probability);
       int count = results[bestLikelihood].getPressuresBara().length;
       double[] quantiles = new double[count];
       for (int t = 0; t < count; t++) {
@@ -329,24 +367,52 @@ public final class ReservoirHistoryEnsemble {
             pairs.add(new double[] {results[i].getPressuresBara()[t], weights[i]});
           }
         }
-        pairs.sort(new Comparator<double[]>() {
-          /** {@inheritDoc} */
-          @Override
-          public int compare(double[] first, double[] second) {
-            return Double.compare(first[0], second[0]);
-          }
-        });
-        double cumulative = 0.0;
-        quantiles[t] = pairs.get(pairs.size() - 1)[0];
-        for (double[] pair : pairs) {
-          cumulative += pair[1];
-          if (cumulative >= probability) {
-            quantiles[t] = pair[0];
-            break;
-          }
-        }
+        quantiles[t] = quantile(pairs, probability);
       }
       return quantiles;
+    }
+
+    /**
+     * Checks the common lower-tail probability contract before reading support values.
+     *
+     * @param probability requested cumulative probability
+     * @throws IllegalArgumentException if probability is non-finite or outside zero to one
+     */
+    private static void requireProbability(double probability) {
+      if (!Double.isFinite(probability) || probability < 0.0 || probability > 1.0) {
+        throw new IllegalArgumentException("Quantile probability must be between zero and one");
+      }
+    }
+
+    /**
+     * Selects a discrete inverse CDF value while retaining all strictly positive support at its endpoints.
+     *
+     * @param pairs scalar values and strictly positive posterior masses
+     * @param probability validated lower-tail probability
+     * @return selected positive-mass support value, including explicit positive infinity
+     */
+    private static double quantile(List<double[]> pairs, double probability) {
+      pairs.sort(new Comparator<double[]>() {
+        /** {@inheritDoc} */
+        @Override
+        public int compare(double[] first, double[] second) {
+          return Double.compare(first[0], second[0]);
+        }
+      });
+      if (probability == 0.0) {
+        return pairs.get(0)[0];
+      }
+      if (probability == 1.0) {
+        return pairs.get(pairs.size() - 1)[0];
+      }
+      double cumulative = 0.0;
+      for (double[] pair : pairs) {
+        cumulative += pair[1];
+        if (cumulative >= probability) {
+          return pair[0];
+        }
+      }
+      return pairs.get(pairs.size() - 1)[0];
     }
 
     /**

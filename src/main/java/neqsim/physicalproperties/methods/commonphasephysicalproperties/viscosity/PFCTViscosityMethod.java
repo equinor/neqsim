@@ -6,6 +6,8 @@
 
 package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseType;
@@ -261,6 +263,20 @@ public class PFCTViscosityMethod extends Viscosity {
     double refVisc = (viscRefO + viscRef1 + viscRef2) / 1.0e7;
     // System.out.println("ref visc " + refVisc);
     return refVisc;
+  }
+
+  /**
+   * Restores historical unity factors when reading a saved model predating CSP tuning.
+   *
+   * @param input serialized model state
+   * @throws IOException if the state cannot be read
+   * @throws ClassNotFoundException if a serialized class is unavailable
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    if (cspViscosityCorrectionFactors == null) {
+      cspViscosityCorrectionFactors = new double[] {1.0, 1.0, 1.0, 1.0};
+    }
   }
 
   /** {@inheritDoc} */
