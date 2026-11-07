@@ -25,6 +25,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.processmodel.FieldTaggedProcess;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.phase.PhaseEos;

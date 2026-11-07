@@ -763,6 +763,27 @@ labels do not represent different chemical species. The replicated import tests
 compare each override explicitly and compare phase splits and recycled product
 recoveries against the unlabelled fluid.
 
+### Field-labelled process copies
+
+Use `neqsim.process.processmodel.FieldTaggedProcess` when a process must use the
+same replicated, field-labelled Eclipse component slate. This process-level
+helper depends on equipment and flowsheet APIs; the Eclipse fluid reader remains
+in the thermodynamics package.
+
+`copy` creates a serializable, isolated process copy with its internal fluids
+mapped into block zero. `tagFluid` maps a compatible source fluid into a selected
+field block while preserving its temperature, pressure, flow and solved phase
+inventory. The source and reference must have matching Eclipse EOS parameters
+and binary interactions. The helper also expands `ComponentSplitter` factors to
+the replicated component order; other component-selective equipment settings
+need separate qualification.
+
+`runPass` performs one normal process run step on the isolated copy after
+invalidating bulk-flow caches that cannot observe origin changes. It does not
+establish recycle convergence or qualify arbitrary equipment graphs. The
+`EclipseFluidReadWriteTest` process-copy and phase-inventory tests exercise the
+documented mapping, source isolation, splitter factors and calculation identity.
+
 ### Pseudo-Name Suffixes
 
 When reading multiple E300 files into the same simulation (e.g., commingled production from different reservoirs), use pseudo-name suffixes to prevent name collisions:

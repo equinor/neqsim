@@ -1,4 +1,4 @@
-package neqsim.thermo.util.readwrite;
+package neqsim.process.processmodel;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -17,7 +17,6 @@ import java.util.Set;
 import java.util.UUID;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.splitter.ComponentSplitter;
-import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermo.system.SystemInterface;
