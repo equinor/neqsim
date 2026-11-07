@@ -115,6 +115,16 @@ does not qualify elapsed pool retention, shutdown/cooldown/restart, severe slugg
 entrainment or hydrocarbon evaporation. See the
 [evidence matrix](../process/twofluidpipe-evidence-matrix#stratified-hydrostatic-pressure-moments).
 
+`IdealGasPiggingModel` is a separate reduced-order API, not a `TwoFluidPipe`
+closure. It couples `PigMotion` to two conservative, well-mixed calorically
+perfect gas chambers and reuses the strict ideal-gas orifice model for signed
+choked/subcritical bypass. Its mass/energy/event/refinement evidence supports
+only that declared approximation. The public Hendrix 62 m/52 mm geometry is
+provenance; synthetic pressure, friction and bypass inputs are not experimental
+trajectory validation. Distributed waves, multiphase moving boundaries,
+swept-liquid slugs, receiver liquid capacity, residual film, physical restart,
+severe slugging and field parity remain unqualified.
+
 The force/work adapter uses `GeometryCalculator.calculateStratifiedPressureMomentsFromHoldups`
 with both independently retained phase fractions. It resolves the smaller area with relative
 accuracy and reflects the moments algebraically, preserving positive traces even when subtracting
@@ -1254,9 +1264,11 @@ coefficients, elapsed pool depletion, shutdown/restart or hydraulic pigging; ind
 multicomponent rate data and full-cycle/refinement evidence remain required for those claims. See
 the [process-model contract](../process/TWOFLUIDPIPE_MODEL.md#opt-in-finite-rate-hydrocarbon-pool-transfer).
 The executed 100 W/m finite-heat 780 s rich-gas cycle uses gas-only blowdown, closed settling,
-same-composition inlet refill with the outlet closed, and a closed hold. It passes on 12/24 cells
-with 2.035% peak-oil and 2.067% final-oil mesh differences; minimum heat scales of 2.306e-4 and
-1.653e-4 prove the limit is active. Conservative recovery explicitly retains the requested EOS root
+a same-composition pressure-reservoir ramp with the outlet closed, and a closed hold. The inlet
+reservoir is reflashed at each pressure and acoustic compatibility supplies signed phase flow;
+pressure traction alone is not treated as refill. Its prescribed-area
+screen exercises the finite heat limit. Historical 12/24-cell differences used a level outlet
+defined by cell count and cannot isolate spatial error. Conservative recovery explicitly retains the requested EOS root
 across the cubic model's diagnostic $V/B=1.75$ phase-label transition while preserving positive
 compressibility and Jacobian/admissibility guards. This is numerical screening for the declared heat
 input, not physical shutdown/restart or predictive depletion qualification.
@@ -1264,15 +1276,33 @@ input, not physical shutdown/restart or predictive depletion qualification.
 For a stationary or slowly draining stratified pool, opt into
 `HydrocarbonPoolTransfer.forHydrostaticPool(...)`. It uses the volume-preserving inclined-cell
 horizontal-surface diagnostic, reports the actual cell interface area, and uses the equilibrium
-target geometry for an unseeded appearance step. A sub-resolution retained trace uses a reported
+target geometry for an unseeded appearance step. Representable long-cell trace wedges retain their
+positive leading-edge depth without an inventory floor; a still-sub-resolution trace uses a reported
 local-stratified chord fallback without changing mass. This is not an annular, slug-front or pig
-interface closure. Initialize a deliberate wall inventory with
+interface closure. For moving stratified states, select
+`HydrocarbonPoolTransfer.forStratifiedFlow(...)` instead: it uses the circular chord at the local
+cell-average liquid holdup, extended along the pipe arclength. Uniform and nonuniform subdivision
+preserve integrated area and conservative component sources, including finite heat limits and
+unseeded first appearance. This is an explicit change in area model; it does not validate the
+historical hydrostatic-cycle convergence failure. Full-liquid cells have zero gas/oil area.
+
+Initialize a deliberate wall inventory with
 `setInitialWallTemperatureProfile(profile, "K")` before `run()`; both configured and accepted wall
 profiles are defensive and survive copy/rollback/replay. Under the multilayer model, each cell value
 initializes all of that cell's radial layers uniformly; the layers then evolve independently and a
 new steady run clears the prior evolved radial state. The wall-coupled 12/24-cell 780 s screening
-run produces 22.82%/24.29% peak/final oil mesh differences and 43.223/45.037 K maximum wall changes.
-Those broad differences keep physical restart, public validation and hydraulic pigging open.
+comparison now uses the same final 1250 m level outlet at -333.5 m elevation on both meshes.
+The previous "last three cells" rule compared different terrains. See the
+[executed receipt](../../src/test/resources/neqsim/process/pipeline/hydrocarbon-pool-transfer/README.md)
+for the corrected inventory, wall and unfiltered pressure diagnostics. The current flowing-area
+run passes the original 10% peak/final inventory gates at 0.791%/0.791%. The historical per-cell
+stationary-puddle model still fails at 11.21%/10.86%; the new area assumption predicts different
+inventories and does not validate that historical trajectory. Maximum single-cell area
+is an extensive diagnostic, not a mesh-convergence target. The pressure-driven boundary and the
+complete declared cycle are numerical restart evidence, including a 0.5/0.25 s time refinement.
+The unfiltered time-refined trace retains one sub-2 kPa opening reversal before rising by about
+10.58 MPa; no filter or threshold adjustment removes it. Independent public restart/surge
+validation, repeated cycles and hydraulic pigging remain unqualified.
 
 With component transport enabled, the downstream outlet composition follows the positive outbound
 component ledger rather than the latest inlet composition or the final cell's instantaneous phase

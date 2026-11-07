@@ -37,6 +37,13 @@ import neqsim.thermo.system.SystemSrkEos;
  * surge).
  * </p>
  *
+ * <p>
+ * The previous actual valve position supplies the recycle contribution for each gas-path interval. The valve then
+ * invokes its attached controller and advances its own actuator once for that sample. This preserves physical travel
+ * limits without treating a controller target as reached position. The gas path remains a surrogate, not a valve-Cv
+ * hydraulic calculation.
+ * </p>
+ *
  * @author NeqSim
  * @version 1.0
  */
@@ -136,16 +143,16 @@ public class AntiSurgeDynamicBenchmark {
 
     double margin = initialMargin;
     for (int k = 1; k <= numberOfSteps; k++) {
-      double opening = controllerActive ? controller.getValveOpening() : 0.0;
+      double opening = recycleValve.getPercentValveOpening();
       // first-order gas-path surrogate: disturbance erodes the margin, recycle restores it
       margin = margin - disturbanceRate * timeStep + recycleAuthority * (opening / 100.0) * timeStep;
       compressor.setDistanceToSurge(margin);
 
       if (controllerActive) {
-        controller.runTransient(controller.getValveOpening(), timeStep, UUID.randomUUID());
+        recycleValve.runController(timeStep, UUID.randomUUID());
       }
 
-      double appliedOpening = controllerActive ? recycleValve.getPercentValveOpening() : 0.0;
+      double appliedOpening = recycleValve.getPercentValveOpening();
       surgeMarginTrace[k] = margin;
       valveOpeningTrace[k] = appliedOpening;
       targetValveOpeningTrace[k] = controllerActive ? controller.getTargetValveOpening() : 0.0;

@@ -703,17 +703,50 @@ for (double qgMSm3d : gasRates) {
 > shutdown/restart, swept-slug, receiver-capacity or hydraulic-pigging evidence.
 > Calibration and validation need separate independent public multicomponent
 > rate data plus mesh/time and complete-cycle evidence.
-> The 100 W/m finite-heat 780 s rich-gas cycle is numerical mesh evidence. It
+> The 100 W/m finite-heat 780 s rich-gas cycle is numerical mesh/time evidence. It
 > retains the requested dense EOS root across the cubic model's diagnostic
 > $V/B=1.75$ label transition while positive-compressibility, Jacobian and
 > energy-admissibility guards remain active. Do not clip composition or change
 > the configured root to manufacture a restart result.
 > The opt-in hydrostatic-pool mode uses volume-preserving inclined-cell area,
-> reports equilibrium appearance and a sub-resolution stratified trace fallback,
+> retains representable trace-wedge leading depth without a liquid floor, reports equilibrium
+> appearance and any still-sub-resolution stratified trace fallback,
 > and can retain an explicitly initialized wall profile across event intervals.
-> Its wall-coupled 12/24-cell cycle changes wall temperature by 43.223/45.037 K
-> but retains 22.82%/24.29% peak/final oil mesh differences. Treat that as a
-> screening prerequisite, not physical restart, public validation or pigging.
+> Use `HydrocarbonPoolTransfer.forStratifiedFlow(...)` for moving circular-stratified states.
+> Its local holdup chord preserves total area and component sources under subdivision of a
+> uniform physical state. Independent stationary puddles in every numerical cell are a
+> different area model and introduce a cell-length kinetic dependence during flow. Preserve
+> the historical hydrostatic-cycle failure; the flowing alternative does not validate it.
+> Mesh refinement must retain physical terrain and outlet breakpoints. The wall-coupled
+> 12/24-cell cycle fixes its final 1250 m at -333.5 m on both meshes; the earlier
+> "last three cells" rule compared different pipes. Retain the 10% peak/final inventory
+> gates and inspect the executed hydrocarbon-pool-transfer receipt. Maximum single-cell
+> interface area is extensive, not a convergence target. Independent mesh/time, rate/thermal
+> and moving-boundary conservation evidence is still required for coupled pigging.
+> A conservative `CONSTANT_PRESSURE` inlet now reflashes its explicit or connected external
+> reservoir and resolves signed phase flow with acoustic impedance, carrying the same donor through
+> mass, named-component and enthalpy ledgers. Start a restart ramp from
+> `getInletFacePressure("Pa")`, not the first cell-centre pressure.
+> An explicitly isolated reservoir reuses one flash across internal stages at each pressure;
+> `getPressureInletFlashCount()` verifies that safeguard. A live connected stream remains uncached.
+> The declared full cycle closes on 12/24 cells and 0.5/0.25 s intervals, but one small unfiltered
+> opening reversal and the absence
+> of independent public surge data keep physical restart and distributed hydraulic pigging open.
+> Record refill/valve-opening pressure windows with
+> `TwoFluidPipeReport.analyzePressureTrace(...)`; its unfiltered ringing metrics are numerical
+> diagnostics, not an independently validated surge limit.
+>
+> **Ideal-gas pig hydraulics is a separate reduced-order route.**
+> `IdealGasPiggingModel` couples `PigMotion` to conservative upstream/downstream
+> calorically perfect gas inventories and reuses `IdealGasReleaseModel` for
+> bidirectional choked/subcritical bypass. Use it only when two well-mixed gas
+> control volumes are an explicit approximation. Inspect total-mass and
+> combined-energy residuals, timestep refinement, numerical safeguards and the
+> launcher/receiver ledger. The public 62 m/52 mm Hendrix geometry is
+> provenance, not experimental trajectory validation; other example inputs are
+> synthetic. Do not route it as distributed `TwoFluidPipe` coupling,
+> pressure-wave, swept-liquid, receiver-capacity, residual-film,
+> physical-restart, severe-slugging, pig-train or field/commercial evidence.
 >
 > **Coupled component/phase/thermal slug transport has a narrower envelope.**
 > For the conservative Lagrangian slug/film path, named-component phase sources
@@ -1442,6 +1475,19 @@ compressors and to recommend a wash fluid.
 // m = fluid mass per unit length (kg/m)
 // Cp = fluid heat capacity (J/kgK)
 ```
+
+### Burial, trenching and rock dump change the thermal basis
+
+A buried or rock-covered flowline cools down much more slowly than an exposed one, so one burial depth
+for the whole line is wrong wherever the route changes between trenched, rock-covered and exposed
+stretches. Scope the protection first with the `neqsim-seabed-protection-screening` skill (map layers,
+trenchability, rock volume and tonnes; community `seabed-protection-agent`), then use its
+`to_neqsim_burial_segments` hand-off: one pipe section per burial state with `setBuried`,
+`setBurialDepth` (depth to the pipe centre) and `setSoilConductivity`, exposed sections on the
+seawater film coefficient. Report cooldown and hydrate margin for the protected and the unprotected
+state so the margin that burial buys is explicit. Burial depth and soil conductivity are thermal
+inputs only - never derive pipe-soil resistance or upheaval-buckling cover from them (see the DNV-RP-F114
+and F110 routing above).
 
 ### Arrival Temperature Check
 

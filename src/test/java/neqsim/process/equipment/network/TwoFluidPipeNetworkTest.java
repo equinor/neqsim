@@ -1,6 +1,8 @@
 package neqsim.process.equipment.network;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -14,6 +16,7 @@ import neqsim.process.equipment.pipeline.TwoFluidComponentConservationReport;
 import neqsim.process.equipment.pipeline.TwoFluidConservativeEnergyReport;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pipeline.UpstreamCompressibleVolume;
+import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -56,6 +59,72 @@ class TwoFluidPipeNetworkTest {
     TwoFluidMassBalanceReport second = network.getPipe("branch B").getLastMassBalanceReport();
     assertEquals(first.getOutletMassKg(Phase.TOTAL), second.getOutletMassKg(Phase.TOTAL), 1.0e-12);
     assertTrue(network.getLastBalanceReport().getRelativeResidual(Phase.TOTAL) < 1.0e-8);
+  }
+
+  @Test
+  void laterBranchPublicationFailureRollsBackEarlierBranchAndAllNodeState() {
+    TwoFluidPipe upstream = createPipe("transaction upstream");
+    TwoFluidPipe downstream = createPipe("transaction downstream");
+    RejectingPublicationStream rejectingOutlet = new RejectingPublicationStream(
+        downstream.getOutletStream().getFluid());
+    downstream.setOutletStream(rejectingOutlet);
+    TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("transaction rollback");
+    network.addFixedPressureNode("source", 60.0e5);
+    network.addCompressibleNode("manifold", createVolume(55.0e5, 1000.0));
+    network.addFixedPressureNode("sink", 50.0e5);
+    network.addPipe("upstream", "source", "manifold", upstream);
+    network.addPipe("downstream", "manifold", "sink", downstream);
+    network.initialize(UUID.randomUUID());
+    TwoFluidSection[] upstreamBefore = upstream.getSectionSnapshots();
+    TwoFluidSection[] downstreamBefore = downstream.getSectionSnapshots();
+    double pressureBefore = network.getNodePressurePa("manifold");
+    rejectingOutlet.rejectNextPublication = true;
+
+    IllegalStateException failure = assertThrows(IllegalStateException.class,
+        () -> network.runTransient(0.01, UUID.randomUUID()));
+
+    assertEquals("injected network publication failure", failure.getMessage());
+    assertTrue(rejectingOutlet.rejected);
+    assertPipeSectionsEqual(upstreamBefore, upstream.getSectionSnapshots());
+    assertPipeSectionsEqual(downstreamBefore, downstream.getSectionSnapshots());
+    assertEquals(pressureBefore, network.getNodePressurePa("manifold"), 0.0);
+    assertEquals(0.0, upstream.getSimulationTime(), 0.0);
+    assertEquals(0.0, downstream.getSimulationTime(), 0.0);
+    assertNull(upstream.getLastMassBalanceReport());
+    assertNull(downstream.getLastMassBalanceReport());
+    assertNull(network.getLastBalanceReport());
+    assertEquals(0.0, network.getSimulationTimeSeconds(), 0.0);
+  }
+
+  @Test
+  void nodeRecoveryFailureRejectsEveryPreparedBranchBeforePublication() {
+    TwoFluidPipe branch = createPipe("depleting branch");
+    TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("node recovery rollback");
+    network.addCompressibleNode("tiny storage", createVolume(55.0e5, 1.0e-6));
+    network.addFixedPressureNode("sink", 50.0e5);
+    network.addPipe("branch", "tiny storage", "sink", branch);
+    network.initialize(UUID.randomUUID());
+    TwoFluidSection[] sectionsBefore = branch.getSectionSnapshots();
+    double pressureBefore = network.getNodePressurePa("tiny storage");
+
+    IllegalStateException failure = assertThrows(IllegalStateException.class,
+        () -> network.runTransient(0.01, UUID.randomUUID()));
+
+    assertTrue(failure.getMessage().contains("depleted by pipe withdrawal"));
+    assertPipeSectionsEqual(sectionsBefore, branch.getSectionSnapshots());
+    assertEquals(pressureBefore, network.getNodePressurePa("tiny storage"), 0.0);
+    assertEquals(0.0, branch.getSimulationTime(), 0.0);
+    assertNull(branch.getLastMassBalanceReport());
+    assertNull(network.getLastBalanceReport());
+    assertEquals(0.0, network.getSimulationTimeSeconds(), 0.0);
+  }
+
+  private static void assertPipeSectionsEqual(TwoFluidSection[] expected, TwoFluidSection[] actual) {
+    assertEquals(expected.length, actual.length);
+    for (int index = 0; index < expected.length; index++) {
+      org.junit.jupiter.api.Assertions.assertArrayEquals(expected[index].getStateVector(),
+          actual[index].getStateVector(), 0.0);
+    }
   }
 
   @Test
@@ -217,15 +286,24 @@ class TwoFluidPipeNetworkTest {
       for (double componentKg : pipe.getLastComponentConservationReport().getOutletBoundaryMassKg()) {
         observedSignedFallback |= componentKg < 0.0;
       }
+      TwoFluidPipeNetwork.ThermodynamicBalanceReport report = network.getLastThermodynamicBalanceReport();
+      assertEquals(0.0, report.getExternalInletEnergyJ(), 0.0);
+      assertEquals(0.0, report.getExternalOutletEnergyJ(), 0.0);
+      assertEquals(0.0, report.getSourceEnergyJ(), 0.0);
+      assertEquals(0.0, report.getGravitationalWorkJ(), 0.0);
+      assertEquals(0.0, report.getWallHeatJ(), 0.0);
+      // This closed, adiabatic network has zero net transfer. A relative residual alone divides storage
+      // subtraction roundoff by itself. Bound every interval by four ulps of the three-inventory sum instead.
+      double storedEnergyScale = Math.max(Math.abs(report.getInitialEnergyJ()), Math.abs(report.getFinalEnergyJ()));
+      assertEquals(0.0, report.getEnergyResidualJ(), 4.0 * Math.ulp(storedEnergyScale),
+          "Closed-network energy must be conserved to storage-summation roundoff at step " + step);
+      for (String componentName : report.getComponentNames()) {
+        assertTrue(report.getRelativeComponentResidual(componentName) < 1.0e-8);
+      }
+      assertTrue(network.getLastBalanceReport().getRelativeResidual(Phase.TOTAL) < 1.0e-8);
     }
 
     assertTrue(observedSignedFallback);
-    TwoFluidPipeNetwork.ThermodynamicBalanceReport report = network.getLastThermodynamicBalanceReport();
-    for (String componentName : report.getComponentNames()) {
-      assertTrue(report.getRelativeComponentResidual(componentName) < 1.0e-8);
-    }
-    assertTrue(report.getRelativeEnergyResidual() < 1.0e-7);
-    assertTrue(network.getLastBalanceReport().getRelativeResidual(Phase.TOTAL) < 1.0e-8);
   }
 
   @Test
@@ -245,6 +323,70 @@ class TwoFluidPipeNetworkTest {
       reverse.runTransient(0.05, UUID.randomUUID());
       assertBranchLedgerConsistency(reverse, "reverse branch");
     }
+  }
+
+  @Test
+  void algebraicJunctionSolvesCommonPressureAndMixedDonorConservatively() {
+    TwoFluidPipeNetwork network = createAlgebraicMerge(false);
+
+    network.runTransient(0.005, UUID.randomUUID());
+
+    TwoFluidPipeNetwork.AlgebraicJunctionReport report = network.getLastAlgebraicJunctionReport();
+    assertNotNull(report);
+    assertEquals("zero-volume manifold", report.getNodeName());
+    assertTrue(report.getPressurePa() > 50.0e5);
+    assertTrue(report.getPressurePa() < 65.0e5);
+    assertTrue(report.getMaximumRelativePhaseResidual() < 1.0e-8);
+    assertTrue(report.getMaximumRelativeComponentResidual() < 1.0e-8);
+    assertTrue(report.getRelativeEnergyResidual() < 1.0e-8);
+    assertTrue(Math.abs(report.getPhaseResidualKg(Phase.TOTAL)) < 1.0e-9);
+    assertTrue(Math.abs(report.getInterphaseTransferKg(Phase.GAS)) > 1.0e-9);
+    assertTrue(Math.abs(report.getInterphaseTransferKg(Phase.TOTAL)) < 1.0e-9);
+    for (String componentName : report.getComponentNames()) {
+      assertTrue(Math.abs(report.getComponentResidualKg(componentName)) < 1.0e-9);
+    }
+    assertTrue(Math.abs(report.getEnergyResidualJ()) < 1.0e-3);
+    double methaneFraction = network.getAlgebraicNodeComponentMassFraction("zero-volume manifold", "methane");
+    assertTrue(Double.isFinite(methaneFraction));
+    assertTrue(methaneFraction > 0.0 && methaneFraction < 1.0);
+    assertEquals(report.getPressurePa(), network.getNodePressurePa("zero-volume manifold"), 0.0);
+    assertEquals(report.getInterphaseTransferKg(Phase.GAS),
+        network.getLastBalanceReport().getInternalPhaseTransferKg(Phase.GAS), 0.0);
+    assertTrue(network.getLastBalanceReport().getRelativeResidual(Phase.TOTAL) < 1.0e-8);
+    assertTrue(network.getLastThermodynamicBalanceReport().getRelativeEnergyResidual() < 1.0e-7);
+  }
+
+  @Test
+  void algebraicJunctionIsBranchOrderIndependentAndSerializable() {
+    TwoFluidPipeNetwork ordered = createAlgebraicMerge(false);
+    TwoFluidPipeNetwork reversed = createAlgebraicMerge(true);
+
+    ordered.runTransient(0.005, UUID.randomUUID());
+    reversed.runTransient(0.005, UUID.randomUUID());
+
+    assertEquals(ordered.getNodePressurePa("zero-volume manifold"), reversed.getNodePressurePa("zero-volume manifold"),
+        1.0e-2);
+    assertEquals(ordered.getNodeTemperatureK("zero-volume manifold"),
+        reversed.getNodeTemperatureK("zero-volume manifold"), 1.0e-8);
+    assertEquals(ordered.getAlgebraicNodeComponentMassFraction("zero-volume manifold", "methane"),
+        reversed.getAlgebraicNodeComponentMassFraction("zero-volume manifold", "methane"), 1.0e-10);
+
+    TwoFluidPipeNetwork restored = SerializationUtils.clone(ordered);
+    restored.runTransient(0.005, UUID.randomUUID());
+    assertNotNull(restored.getLastAlgebraicJunctionReport());
+    assertTrue(restored.getLastAlgebraicJunctionReport().getMaximumRelativePhaseResidual() < 1.0e-8);
+    assertTrue(restored.getLastAlgebraicJunctionReport().getMaximumRelativeComponentResidual() < 1.0e-8);
+  }
+
+  @Test
+  void boundedAlgebraicSolverRejectsSecondJunction() {
+    TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("bounded algebraic topology");
+    network.addAlgebraicJunction("first", 55.0e5, createFluid(0.95, 0.05));
+
+    IllegalStateException error = assertThrows(IllegalStateException.class,
+        () -> network.addAlgebraicJunction("second", 54.0e5, createFluid(0.95, 0.05)));
+
+    assertTrue(error.getMessage().contains("one algebraic junction"));
   }
 
   private static void assertBranchLedgerConsistency(TwoFluidPipeNetwork network, String branchName) {
@@ -296,6 +438,24 @@ class TwoFluidPipeNetworkTest {
     return network;
   }
 
+  private static TwoFluidPipeNetwork createAlgebraicMerge(boolean reverseBranchOrder) {
+    TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("algebraic merge");
+    network.addFixedPressureNode("rich source", 65.0e5, createFluid(0.99, 0.01));
+    network.addFixedPressureNode("lean source", 60.0e5, createFluid(0.90, 0.10));
+    network.addAlgebraicJunction("zero-volume manifold", 55.0e5, createFluid(0.95, 0.05));
+    network.addFixedPressureNode("sink", 50.0e5, createFluid(0.95, 0.05));
+    if (reverseBranchOrder) {
+      network.addPipe("outlet", "zero-volume manifold", "sink", createPipe("outlet", 0.95, 0.05));
+      network.addPipe("lean inlet", "lean source", "zero-volume manifold", createPipe("lean inlet", 0.90, 0.10));
+      network.addPipe("rich inlet", "rich source", "zero-volume manifold", createPipe("rich inlet", 0.99, 0.01));
+    } else {
+      network.addPipe("rich inlet", "rich source", "zero-volume manifold", createPipe("rich inlet", 0.99, 0.01));
+      network.addPipe("lean inlet", "lean source", "zero-volume manifold", createPipe("lean inlet", 0.90, 0.10));
+      network.addPipe("outlet", "zero-volume manifold", "sink", createPipe("outlet", 0.95, 0.05));
+    }
+    return network;
+  }
+
   private static TwoFluidPipe createPipe(String name) {
     return createPipe(name, 0.95, 0.05);
   }
@@ -343,5 +503,26 @@ class TwoFluidPipeNetworkTest {
     double[] soundSpeed = {350.0, 1200.0, 1450.0};
     double[] mass = {0.90 * volumeM3 * density[0], 0.10 * volumeM3 * density[1], 0.0};
     return new UpstreamCompressibleVolume(volumeM3, pressurePa, mass, density, soundSpeed);
+  }
+
+  /** Fail one live outlet publication after the detached branch calculation has completed. */
+  private static final class RejectingPublicationStream extends Stream {
+    private static final long serialVersionUID = 1L;
+    private transient boolean rejectNextPublication;
+    private transient boolean rejected;
+
+    private RejectingPublicationStream(SystemInterface fluid) {
+      super("rejecting network outlet", fluid);
+    }
+
+    @Override
+    public void setFluid(SystemInterface fluid) {
+      super.setFluid(fluid);
+      if (rejectNextPublication) {
+        rejectNextPublication = false;
+        rejected = true;
+        throw new IllegalStateException("injected network publication failure");
+      }
+    }
   }
 }

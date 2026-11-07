@@ -9,6 +9,56 @@
 
 ---
 
+## 2026-11-06 — Conservative ideal-gas pig hydraulic coupling
+
+- Added transaction-safe `IdealGasPiggingModel` coupling `PigMotion` to conservative upstream/downstream calorically
+  perfect gas inventories. It reuses the strict ideal-gas release model for signed choked/subcritical bypass, resolves
+  launcher/receiver contact, and publishes mass, work, energy, impact and adaptive-step diagnostics.
+- Evidence covers conservation, direction, choking, breakaway, receipt, serialization, timestep convergence and a
+  nearby bypass-diameter trend. The 62 m/52 mm Hendrix dimensions are provenance only; all other fixture inputs are
+  synthetic. Distributed/multiphase/experimental pigging remains unqualified.
+- Agents/skills: flow-assurance and dynamic-simulation guidance now route this reduced-order gas model separately from
+  `TwoFluidPipe`, restart, severe-slugging, receiver-liquid and residual-film claims.
+
+## 2026-11-05 — Flowing transfer area and horizontal trace-volume resolution
+
+- `HydrocarbonPoolTransfer.forStratifiedFlow(...)` uses the local circular-stratified holdup chord along cell arclength.
+  Uniform/nonuniform subdivision preserves total area and integrated species sources, including finite heat limits
+  and unseeded oil appearance. Coefficients, donor bounds and conservative inventory/energy owners are retained.
+- `forHydrostaticPool(...)` remains the distinct per-cell stationary-puddle model. Applying it throughout a flowing
+  restart made numerical cell length a kinetic input. The restart screen now explicitly selects the flowing model;
+  retained historical static-model failures are not claimed as passing convergence evidence.
+- Horizontal `calculateHydrostaticCell(...)` reconstruction now scales its bisection bracket with the circular-segment
+  trace depth. Independent controls retain positive volume and interface down to `1e-300` holdup, with the same
+  `1e-9` relative-volume gate and no liquid seed, clipping or inventory floor.
+- Agents/skills: dynamic-simulation and flow-assurance guidance distinguish static pool depth diagnostics from the
+  selected flowing transfer area. See the hydrocarbon-pool-transfer receipt for complete-cycle results and limits.
+
+---
+
+## 2026-11-05 — Restart pressure diagnostics and inclined trace-pool geometry
+
+- `GeometryCalculator.calculateHydrostaticCell(...)` now retains an inclined trace pool's positive leading-edge depth
+  directly. This removes centre/range subtractive cancellation for representable long-cell wedges without adding a
+  liquid floor, seed or inventory clipping. Truly unresolvable volumes still fail explicitly; the hydrocarbon-pool
+  transfer fallback remains reported when that limit is crossed.
+- `TwoFluidPipeReport.analyzePressureTrace(...)` provides unfiltered event-window extrema/times, peak-to-peak pressure,
+  maximum adjacent-sample rate, total/excess variation, ringing ratio and direction reversals above a caller-supplied
+  Pa gate. Preserve the sampling interval and do not treat these metrics as an experimental restart-surge band.
+- Agents/skills: dynamic-simulation and flow-assurance guidance now route physical restart studies through the explicit
+  trace/fallback and pressure-ringing diagnostics while retaining the separate mesh/time, public-validation and
+  moving-pig conservation gates.
+- Qualification fixture: retain the same physical terrain under refinement. The final 1250 m is level at -333.5 m
+  on every mesh; the previous "last three cells" rule changed the pipe being compared. The earlier 22.82%/24.29%
+  inventory differences cannot isolate spatial error. The 10% inventory gates remain unchanged; see the executed
+  hydrocarbon-pool-transfer receipt. Maximum single-cell interface area is extensive, not a convergence target.
+  The common-polyline rerun still fails at 11.21% peak and 10.86% final oil; no tolerance is relaxed or test disabled.
+  This remains numerical screening, not physical restart or hydraulic-pigging qualification.
+- Revalidated the exact trace-geometry source against all 222 independent 80-digit pressure-moment controls. The
+  source-identity guard remains strict, including wrong-hash, incomplete-output and numerical-corruption controls.
+
+---
+
 ## 2026-10-26 — Cross-version `.neqsim` loading: legacy mode, load report, atomic save, OmegaA guard
 
 - **Problem found:** a `.neqsim` file written by NeqSim before 3.10 could not be opened (renamed `tagName`, removed

@@ -1,4 +1,7 @@
 {
+ "code health maintainability": ["neqsim-code-health"],
+ "safe refactoring duplicate helpers": ["neqsim-safe-refactoring"],
+ "independent source code review": ["neqsim-code-review"],
  "vannduggpunkt med CPA": [
   "neqsim-cpa-water-boundaries"
  ],
@@ -1973,6 +1976,21 @@
   "neqsim-pipeline-survey-processing",
   "neqsim-subsea-and-wells",
   "neqsim-flow-assurance"
+ ],
+ "trenching and rock dump scope for a subsea pipeline from map data": [
+  "neqsim-seabed-protection-screening",
+  "neqsim-pipeline-survey-processing",
+  "neqsim-flow-assurance"
+ ],
+ "burial depth effect on cooldown and hydrate margin": [
+  "neqsim-seabed-protection-screening",
+  "neqsim-flow-assurance",
+  "neqsim-surf-design-study"
+ ],
+ "rock volume at pipeline crossings and free span supports": [
+  "neqsim-seabed-protection-screening",
+  "neqsim-pipeline-survey-processing",
+  "neqsim-surf-design-study"
  ],
  "pipeline elevation profile from KP and depth soundings": [
   "neqsim-pipeline-survey-processing",

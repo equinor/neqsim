@@ -179,8 +179,10 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     try {
       SystemInterface original = EclipseFluidReadWrite.read(fluid_water, "");
       int componentCount = original.getNumberOfComponents();
-      StringBuilder content = new StringBuilder(
-          new String(Files.readAllBytes(new File(fluid_water).toPath()), StandardCharsets.UTF_8));
+      String fixture = new String(Files.readAllBytes(new File(fluid_water).toPath()), StandardCharsets.UTF_8);
+      String withoutOmegaA = fixture.replaceFirst("(?s)OMEGAA\\s+.*?/", "");
+      Assertions.assertNotEquals(fixture, withoutOmegaA, "replace the fixture's existing OMEGAA section");
+      StringBuilder content = new StringBuilder(withoutOmegaA);
       content.append("\nOMEGAA\n");
       for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
         content.append(0.44 + 0.001 * componentIndex).append('\n');
@@ -192,6 +194,8 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
       String[] fieldNames = {"rest", "mikkel", "morvin"};
       SystemInterface tagged = EclipseFluidReadWrite.read(taggedFile.toString(), fieldNames);
       assertEquals(componentCount * fieldNames.length, tagged.getNumberOfComponents());
+      Assertions.assertTrue(original.doMultiPhaseCheck(), "water-containing reference enables aqueous search");
+      Assertions.assertTrue(tagged.doMultiPhaseCheck(), "water-containing named slate enables aqueous search");
       for (int phaseIndex = 0; phaseIndex < original.getMaxNumberOfPhases(); phaseIndex++) {
         if (original.getPhases()[phaseIndex] == null) {
           assertEquals(null, tagged.getPhases()[phaseIndex]);
@@ -206,6 +210,9 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
           assertEquals(expected.getPC(), actual.getPC(), 1e-12, label);
           assertEquals(expected.getMolarMass(), actual.getMolarMass(), 1e-12, label);
           assertEquals(expected.getAcentricFactor(), actual.getAcentricFactor(), 1e-12, label);
+          double expectedOmegaA = 0.44 + 0.001 * (componentIndex % componentCount);
+          assertEquals(expectedOmegaA, expected.getOmegaAOverride(), 1e-12, label + " reference OmegaA");
+          assertEquals(expectedOmegaA, actual.getOmegaAOverride(), 1e-12, label + " replicated OmegaA");
           assertEquals(expected.calca(), actual.calca(), 1e-9, label + " attraction");
           assertEquals(expected.calcb(), actual.calcb(), 1e-12, label + " covolume");
           assertEquals(expected.getVolumeCorrectionConst(), actual.getVolumeCorrectionConst(), 1e-12, label);

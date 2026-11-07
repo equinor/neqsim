@@ -817,6 +817,123 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     return actualCount > 0 ? sum / actualCount : 0.0;
   }
 
+  /**
+   * Returns detached complete static PID policy without historical errors, samples or integrator state.
+   *
+   * @return supported native policy; the UNBOUNDED limit policy denotes an unlimited output
+   */
+  public Map<String, Object> getControlConfiguration() {
+    Map<String, Object> values = new java.util.LinkedHashMap<String, Object>();
+    values.put("schemaVersion", "neqsim.pid_control_configuration.v1");
+    values.put("nativeClass", getClass().getName());
+    values.put("unit", unit);
+    values.put("setpoint", Double.valueOf(controllerSetPoint));
+    values.put("Kp", Double.valueOf(Kp));
+    values.put("TiSeconds", Double.valueOf(Ti));
+    values.put("TdSeconds", Double.valueOf(Td));
+    values.put("reverseActing", Boolean.valueOf(reverseActing));
+    values.put("active", Boolean.valueOf(isActive));
+    values.put("mode", mode.name());
+    values.put("manualOutput", Double.valueOf(manualOutput));
+    values.put("derivativeFilterSeconds", Double.valueOf(derivativeFilterTime));
+    values.put("minimumOutput", Double.isInfinite(minResponse) ? "UNBOUNDED" : Double.valueOf(minResponse));
+    values.put("maximumOutput", Double.isInfinite(maxResponse) ? "UNBOUNDED" : Double.valueOf(maxResponse));
+    values.put("setpointWeight", Double.valueOf(setpointWeight));
+    values.put("deadBand", Double.valueOf(deadBand));
+    java.util.List<Map<String, Object>> schedule = new ArrayList<Map<String, Object>>();
+    for (Map.Entry<Double, double[]> entry : gainSchedule.entrySet()) {
+      Map<String, Object> row = new java.util.LinkedHashMap<String, Object>();
+      row.put("processValue", entry.getKey());
+      row.put("Kp", Double.valueOf(entry.getValue()[0]));
+      row.put("TiSeconds", Double.valueOf(entry.getValue()[1]));
+      row.put("TdSeconds", Double.valueOf(entry.getValue()[2]));
+      schedule.add(row);
+    }
+    values.put("gainSchedule", schedule);
+    return values;
+  }
+
+  /**
+   * Applies a complete governed static policy while retaining actual measurement and historical dynamic state.
+   *
+   * @param values supported complete PID policy
+   * @throws IllegalArgumentException if fields, class, bounds or values are invalid
+   */
+  public void applyControlConfiguration(Map<String, Object> values) {
+    if (values == null || !values.keySet().equals(getControlConfiguration().keySet())
+        || !"neqsim.pid_control_configuration.v1".equals(values.get("schemaVersion"))
+        || !getClass().getName().equals(values.get("nativeClass")) || !(values.get("unit") instanceof String)
+        || ((String) values.get("unit")).trim().isEmpty() || !(values.get("gainSchedule") instanceof java.util.List)) {
+      throw new IllegalArgumentException("Complete supported native PID configuration is required");
+    }
+    double setpoint = configurationNumber(values, "setpoint");
+    double gain = configurationNumber(values, "Kp");
+    double integral = configurationNumber(values, "TiSeconds");
+    double derivative = configurationNumber(values, "TdSeconds");
+    double filter = configurationNumber(values, "derivativeFilterSeconds");
+    double minimum = "UNBOUNDED".equals(values.get("minimumOutput")) ? Double.NEGATIVE_INFINITY
+        : configurationNumber(values, "minimumOutput");
+    double maximum = "UNBOUNDED".equals(values.get("maximumOutput")) ? Double.POSITIVE_INFINITY
+        : configurationNumber(values, "maximumOutput");
+    double weight = configurationNumber(values, "setpointWeight");
+    double band = configurationNumber(values, "deadBand");
+    double manual = configurationNumber(values, "manualOutput");
+    if (gain < 0 || integral < 0 || derivative < 0 || filter < 0 || minimum > maximum || weight < 0 || weight > 1
+        || band < 0 || !(values.get("active") instanceof Boolean)
+        || !(values.get("reverseActing") instanceof Boolean)) {
+      throw new IllegalArgumentException("Invalid bounded native PID policy");
+    }
+    ControllerMode declaredMode = ControllerMode.valueOf(String.valueOf(values.get("mode")));
+    NavigableMap<Double, double[]> declaredSchedule = new TreeMap<Double, double[]>();
+    for (Object item : (java.util.List<?>) values.get("gainSchedule")) {
+      if (!(item instanceof Map)) {
+        throw new IllegalArgumentException("PID gain-schedule entries must be maps");
+      }
+      @SuppressWarnings("unchecked")
+      Map<String, Object> row = (Map<String, Object>) item;
+      if (row.size() != 4
+          || !row.keySet().containsAll(java.util.Arrays.asList("processValue", "Kp", "TiSeconds", "TdSeconds"))) {
+        throw new IllegalArgumentException("Unsupported PID gain-schedule entry");
+      }
+      double threshold = configurationNumber(row, "processValue");
+      double scheduledGain = configurationNumber(row, "Kp");
+      double scheduledIntegral = configurationNumber(row, "TiSeconds");
+      double scheduledDerivative = configurationNumber(row, "TdSeconds");
+      if (scheduledGain < 0 || scheduledIntegral < 0 || scheduledDerivative < 0
+          || declaredSchedule.put(Double.valueOf(threshold),
+              new double[] {scheduledGain, scheduledIntegral, scheduledDerivative}) != null) {
+        throw new IllegalArgumentException("Invalid or duplicate PID gain-schedule entry");
+      }
+    }
+    setControllerSetPoint(setpoint, (String) values.get("unit"));
+    setControllerParameters(gain, integral, derivative);
+    setDerivativeFilterTime(filter);
+    setOutputLimits(minimum, maximum);
+    setSetpointWeight(weight);
+    setDeadBand(band);
+    setReverseActing(((Boolean) values.get("reverseActing")).booleanValue());
+    setActive(((Boolean) values.get("active")).booleanValue());
+    setMode(declaredMode);
+    setManualOutput(manual);
+    gainSchedule = declaredSchedule;
+  }
+
+  /**
+   * Reads a required finite scalar without permissive numerical defaults.
+   *
+   * @param values static policy
+   * @param key required scalar name
+   * @return finite scalar
+   * @throws IllegalArgumentException if absent, non-numeric or non-finite
+   */
+  private static double configurationNumber(Map<String, Object> values, String key) {
+    Object value = values.get(key);
+    if (!(value instanceof Number) || !Double.isFinite(((Number) value).doubleValue())) {
+      throw new IllegalArgumentException("A finite native PID setting is required: " + key);
+    }
+    return ((Number) value).doubleValue();
+  }
+
   /** {@inheritDoc} */
   @Override
   public String getTransientStateIdentity() {

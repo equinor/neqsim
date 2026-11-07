@@ -1,0 +1,56 @@
+[
+  {
+    "temperatureK": 440.0,
+    "waterMoleFraction": 0.05,
+    "status": "completed",
+    "finalMoles": 0.010179954282560976
+  },
+  {
+    "temperatureK": 440.0,
+    "waterMoleFraction": 0.08,
+    "status": "rejected",
+    "error": "java.lang.IllegalStateException: Fixed-cell phase-family change is not qualified at row 2"
+  },
+  {
+    "temperatureK": 440.0,
+    "waterMoleFraction": 0.1,
+    "status": "rejected",
+    "error": "java.lang.IllegalStateException: Fixed-cell phase-family change is not qualified at row 4"
+  },
+  {
+    "temperatureK": 450.0,
+    "waterMoleFraction": 0.05,
+    "status": "completed",
+    "finalMoles": 0.010231986707857823
+  },
+  {
+    "temperatureK": 450.0,
+    "waterMoleFraction": 0.08,
+    "status": "rejected",
+    "error": "java.lang.IllegalStateException: Fixed-cell phase-family change is not qualified at row 1"
+  },
+  {
+    "temperatureK": 450.0,
+    "waterMoleFraction": 0.1,
+    "status": "rejected",
+    "error": "java.lang.IllegalStateException: Fixed-cell phase-family change is not qualified at row 2"
+  },
+  {
+    "temperatureK": 460.0,
+    "waterMoleFraction": 0.05,
+    "status": "completed",
+    "finalMoles": 0.010278964325111687
+  },
+  {
+    "temperatureK": 460.0,
+    "waterMoleFraction": 0.08,
+    "status": "completed",
+    "finalMoles": 0.01020931760173191
+  },
+  {
+    "temperatureK": 460.0,
+    "waterMoleFraction": 0.1,
+    "status": "rejected",
+    "error": "java.lang.IllegalStateException: Fixed-cell phase-family change is not qualified at row 1"
+  }
+]

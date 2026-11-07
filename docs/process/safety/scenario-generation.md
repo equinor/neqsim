@@ -190,6 +190,35 @@ The `AutomaticScenarioGenerator` complements the existing safety framework:
 4. **Documentation**: Record all scenario results for safety case
 5. **Regular Updates**: Regenerate scenarios after process modifications
 
+## Time-domain acceptance policy
+
+The transient `DynamicSafetyScenarioRunner` is distinct from the steady-state
+failure enumeration above. Its `DynamicScenarioCriterion` defaults to
+`REACH_BY_DEADLINE`: one satisfactory observation by the deadline is enough. Use
+that policy for reaching a declared valve position within an allowed response time.
+A pressure reading within limits at the initiating event does not establish that
+pressure stayed within limits afterward.
+
+Select `evaluationMode(DynamicScenarioCriterion.EvaluationMode.MAINTAIN_BOUNDS)`
+for a sampled invariant. Its positive `deadlineSeconds` defines the closed
+event-relative observation window from zero to that deadline. Every observation
+in the window must satisfy the inclusive limits, and both boundaries must be
+observed within a timestamp tolerance capped at both one nanosecond and one part
+per million of the window length, keeping the two boundaries distinct. Missing boundaries are not
+interpolated. Set the deadline to the duration after the initiating event to assess
+the full response horizon, and use event-exact stepping when boundaries require it.
+Values outside the declared window are retained in the history but do not enter
+that window's verdict. This checks sampled behaviour, not unobserved peaks between
+scans or a continuous-time safety guarantee.
+
+The result records the evaluation mode, first violation, monitored sample count,
+minimum/maximum and boundary coverage. An excursion followed by recovery still
+fails `MAINTAIN_BOUNDS`. Early termination cannot clear its missing end boundary.
+`DynamicScenarioCriterionEvaluationTest` distinguishes these cases from the
+unchanged reach policy. Use independent full-history extrema and scan refinement
+for decision-critical pressure, level and no-unintended-trip checks, and retain
+mass, component and energy verdicts separately from response criteria.
+
 ## Related Documentation
 
 - [Safety Systems Package](index.md) - Safety equipment modeling

@@ -202,6 +202,56 @@ def test_explicit_sheets(tmp_path):
     assert man["sheets"][0]["units"] == ["MIX-100", "SEP-100"]
 
 
+def test_explicit_sheets_by_unit_tag(tmp_path):
+    data = _demo()
+    man = pd.build_pfd(data, str(tmp_path), title_block=TB,
+                       sheets=[{"title": "Front", "tags": ["MIX-100", "SEP-100", "SPL-100"]},
+                               {"title": "Back", "areas": ["gas"]}])
+    assert [s["title"] for s in man["sheets"]] == ["Front", "Back"]
+    assert man["sheets"][0]["units"] == ["MIX-100", "SEP-100", "SPL-100"]
+    assert man["sheets"][1]["units"] == ["K-100", "E-100", "V-100", "RCY-100"]
+
+
+def test_feeds_left_puts_incoming_connectors_on_first_layer(tmp_path):
+    data = _demo()
+    kw = dict(title_block=TB, sheets=[{"title": "Front", "tags": ["MIX-100", "SEP-100"]},
+                                      {"title": "Back", "areas": ["gas"]}])
+    man = pd.build_pfd(data, str(tmp_path / "a"), feeds_left=True, **kw)
+    spec = json.load(open(man["spec"], encoding="utf-8"))
+    for sh in spec["sheets"]:
+        xs = [u["x"] for u in sh["units"]]
+        for b in sh["boundary"] + sh["connectors"]:
+            if b.get("kind") == "feed" or b.get("direction") == "in":
+                assert b["x"] < min(xs)
+
+
+def test_stretch_components_spreads_short_train(tmp_path):
+    data = _demo()
+    kw = dict(title_block=TB, sheets=[{"title": "All", "areas": ["inlet", "gas"]}])
+    plain = pd.build_pfd(data, str(tmp_path / "a"), **kw)
+    spread = pd.build_pfd(data, str(tmp_path / "b"), stretch_components=True, **kw)
+    assert plain["unplaced_units"] == [] and spread["unplaced_units"] == []
+    assert spread["unplaced_streams"] == []
+
+
+def test_bfd_blocks_keep_clear_gap(tmp_path):
+    data = _demo()
+    data["areas"] = [{"name": "inlet", "units": ["MIX-100"]}, {"name": "sep", "units": ["SEP-100"]},
+                     {"name": "gas", "units": ["SPL-100", "K-100", "E-100", "V-100", "RCY-100"]}]
+    man = pd.build_bfd(data, str(tmp_path), title_block=TB)
+    spec = json.load(open(man["spec"], encoding="utf-8"))
+    assert len(man["blocks"]) == 3 and spec["edges"]
+
+
+def test_boundary_label_chars(tmp_path):
+    data = _demo()
+    data["streams"][8]["label"] = "export gas of a very long descriptive stream name that exceeds the default"
+    short = pd.build_pfd(data, str(tmp_path / "a"), title_block=TB)
+    wide = pd.build_pfd(data, str(tmp_path / "b"), title_block=TB, boundary_label_chars=80)
+    assert "..." in "".join(open(s["svg"], encoding="utf-8").read() for s in short["sheets"])
+    assert "..." not in "".join(open(s["svg"], encoding="utf-8").read() for s in wide["sheets"])
+
+
 def test_layout_override_moves_symbol(tmp_path):
     data = _demo()
     base = pd.build_pfd(data, str(tmp_path / "a"), title_block=TB)

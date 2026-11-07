@@ -25,6 +25,46 @@ public final class EngineeringSimulationRunner {
   }
 
   public static EngineeringSimulationResult run(EngineeringProject project, EngineeringCaseRunOptions options) {
+    return run(project, options, false);
+  }
+
+  /**
+   * Runs project studies with strict capability preflight on every configured dynamic scenario copy.
+   *
+   * <p>
+   * This executes and records native results from the project's current source and declared scenarios. It does not
+   * adopt externally supplied results or turn response tests into safety approval. The existing compatibility entry
+   * point remains unchanged.
+   * </p>
+   *
+   * @param project governed project containing current source and study definitions
+   * @return coordinated native engineering results, including failed strict preflight
+   */
+  public static EngineeringSimulationResult runStrict(EngineeringProject project) {
+    return runStrict(project, null);
+  }
+
+  /**
+   * Runs declared project studies with caller-selected steady-case options and strict dynamic preflight.
+   *
+   * @param project governed current project
+   * @param options steady-case runner options, or null for sequential execution
+   * @return coordinated native results retained on this project revision
+   */
+  public static EngineeringSimulationResult runStrict(EngineeringProject project, EngineeringCaseRunOptions options) {
+    return run(project, options, true);
+  }
+
+  /**
+   * Executes the common project workflow under the selected dynamic preflight policy.
+   *
+   * @param project governed source and scenario definitions
+   * @param options steady-case runner options
+   * @param strict whether every dynamic scenario requires strict configured-copy preflight
+   * @return executed results
+   */
+  private static EngineeringSimulationResult run(EngineeringProject project, EngineeringCaseRunOptions options,
+      boolean strict) {
     if (project == null) {
       throw new IllegalArgumentException("project must not be null");
     }
@@ -42,7 +82,8 @@ public final class EngineeringSimulationRunner {
     }
     List<DynamicSafetyScenarioResult> dynamicResults = new ArrayList<DynamicSafetyScenarioResult>();
     for (DynamicSafetyScenario scenario : project.getDynamicSafetyScenarios()) {
-      dynamicResults.add(DynamicSafetyScenarioRunner.run(designedProcess, scenario));
+      dynamicResults.add(strict ? DynamicSafetyScenarioRunner.runStrict(designedProcess, scenario)
+          : DynamicSafetyScenarioRunner.run(designedProcess, scenario));
     }
     EngineeringSimulationResult result = new EngineeringSimulationResult(project.getProjectId(), project.getRevision(),
         caseReport, designLoopResult, coupledResults, dynamicResults);

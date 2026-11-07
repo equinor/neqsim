@@ -1,0 +1,7 @@
+{
+  "python": "3.12.14",
+  "numpy": "2.3.5",
+  "scipy": "1.17.0",
+  "normalOptimizedByteIdentical": true,
+  "referenceSha256": "b81a1910cf8f37c9805d5c8a747e8a3e6681c8b34b7e32b770606c2732bf7376"
+}

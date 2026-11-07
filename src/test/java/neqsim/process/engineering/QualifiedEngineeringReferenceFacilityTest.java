@@ -8,6 +8,7 @@ import neqsim.process.engineering.design.EngineeringConstraintResult;
 import neqsim.process.engineering.design.EngineeringDesignIteration;
 import neqsim.process.engineering.design.EngineeringDesignLoopResult;
 import neqsim.process.engineering.design.EngineeringDesignVariable;
+import neqsim.process.engineering.designcase.DesignCaseResult;
 import neqsim.process.engineering.production.EngineeringAutoConfigurator;
 import neqsim.process.engineering.validation.EngineeringPackageValidationException;
 import neqsim.process.engineering.verticalslice.InletCompressionExportReferenceFacility;
@@ -67,12 +68,29 @@ class QualifiedEngineeringReferenceFacilityTest {
     assertTrue(result.toMap().containsKey("fitnessForConstruction"));
   }
 
+  /**
+   * Includes individual case failures so a stable but unsuccessful design loop remains diagnosable.
+   *
+   * @param result completed design-loop evidence
+   * @return convergence and unsuccessful case details
+   */
   private static String convergenceDiagnostics(EngineeringDesignLoopResult result) {
     StringBuilder diagnostic = new StringBuilder(result.getTerminationReason());
     for (EngineeringDesignIteration iteration : result.getIterations()) {
       diagnostic.append("\niteration=").append(iteration.getNumber()).append(" applied=")
           .append(iteration.getAppliedUpdateCount()).append(" convergence=")
           .append(iteration.getConvergenceReport().toMap());
+      for (DesignCaseResult caseResult : iteration.getCaseReport().getEnvelope().getCaseResults()) {
+        if (!"CALCULATED".equals(caseResult.getStatus())) {
+          diagnostic.append("\n  case=").append(caseResult.getDesignCase().getId()).append(" status=")
+              .append(caseResult.getStatus()).append(" message=").append(caseResult.getMessage());
+          for (DesignCaseResult.MetricResult metric : caseResult.getMetricResults().values()) {
+            if (!"CALCULATED".equals(metric.getStatus())) {
+              diagnostic.append("\n    metric=").append(metric.toMap());
+            }
+          }
+        }
+      }
       for (EngineeringDesignVariable variable : iteration.getDesignVariables()) {
         if (variable.isApplied()) {
           diagnostic.append("\n  variable=").append(variable.toMap());

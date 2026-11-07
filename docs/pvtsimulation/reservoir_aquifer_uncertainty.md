@@ -41,6 +41,25 @@ interior pressure-ramp extremum, is rejected. This lumped storage law is distinc
 from radial transient diffusion in `VanEverdingenHurstAquifer`; only common storage
 limits are compared, not claimed transient equivalence.
 
+## Small-exposure numerical qualification
+
+`FetkovichAquiferPrecisionTest` compares 1,444 synthetic prescribed-pressure cases
+against an independent 60-digit Decimal ODE solution, repeated at 75 digits.
+The matrices include both arithmetic boundaries, signed exchange and interior
+extrema, zero productivity/storage and explicit infinite storage. Whole intervals
+and 16 subintervals provide 11,552 comparisons. Frozen tolerances are 1e-9 bara
+for pressure and 1e-8 m3 + 2e-12 times the larger of one m3 and the absolute
+reference exchange for water volumes. Both reference files reproduce byte-for-byte
+at the two precisions.
+
+The existing fourth-order coefficient series is used below dimensionless exposure
+1e-3 to avoid cancellation at 1e-4; its first omitted coefficient terms are below
+1.4e-18. This arithmetic change preserves physical storage/exhaustion checks.
+The [complete reference, native outputs and timing diagnostic](https://github.com/equinor/neqsim/tree/master/src/test/resources/neqsim/pvtsimulation/aquifer-precision)
+record the failing baseline and passing correction. This qualification concerns a
+prescribed linear pressure path. Coupled nonlinear history replay still requires
+interval refinement and independent engineering validation.
+
 ## Coupling to the existing EOS tank
 
 `CompositionalReservoirHistory.replay(initialVolumeM3, aquifer)` solves the reservoir
@@ -78,6 +97,32 @@ while estimating initial pore volume against the supplied pressure sigmas. Repor
 bound-limited solutions and rejected trials. Refine the measurement/flow intervals:
 exact integration of a prescribed linear pressure path does not make the unknown
 coupled nonlinear pressure trajectory exact.
+
+## Independent coupled finite-EOS benchmark
+
+The optional [coupled SRK/aquifer matrix](https://github.com/equinor/neqsim/tree/master/src/test/resources/neqsim/pvtsimulation/coupled-aquifer)
+compares native replay against an independently coded SRK pressure equation and
+continuous water-support ODE. Sixteen synthetic cases at four interval meshes
+cover finite/infinite storage and zero-storage/productivity limits. It retains
+all 1,920 endpoints, named methane inventory, aquifer storage, final pore closure,
+checkpoint immutability, runtime and fixed convergence bounds. Run the benchmark's
+`run.py` with the selected Python interpreter in a source checkout; its `audit.py`
+checks the full outputs. This optional matrix adds no ordinary simulation overhead.
+
+The acceptance audit independently inspects every endpoint and reconstructs its
+pressure/water errors from the pinned reference. It rejects non-finite values,
+missing rows, wrong matrix identities and inconsistent reported diagnostics,
+including when Python assertions are disabled. Component, storage and explicit
+SRK pressure closure are checked from the retained row fields. Final native phase
+volume is not present in those fields, so the final pore-volume residual remains
+a separately bounded native diagnostic. This integrity repair leaves the original
+model, reference data and numerical acceptance tolerances unchanged.
+
+The reference uses fixed synthetic EOS inputs with identical original/tuned
+checkpoints and prescribed methane withdrawals. It does not establish measured
+laboratory calibration, produced-phase/GOR accuracy, radial aquifer equivalence,
+parameter identifiability or Bayesian acceptance. The benchmark scope and all
+remaining issue criteria remain explicit in its README and #4740 ledger.
 
 ## Joint Bayesian scenarios
 

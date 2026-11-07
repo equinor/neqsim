@@ -145,6 +145,47 @@ class HydrostaticCellGeometryTest {
     assertEquals(0.0, up.getEndDepth());
   }
 
+  /** Horizontal trace segments need a volume-scaled bracket rather than a liquid floor. */
+  @Test
+  void horizontalExtremeTracePreservesVolumeAndCircularSegmentLimit() {
+    GeometryCalculator calculator = new GeometryCalculator();
+    double diameter = 1.0148;
+    double length = 5000.0 / 12.0;
+    for (double trace : new double[] {1.0e-30, 1.0e-60, 1.0e-120, 1.0e-240, 1.0e-300}) {
+      HydrostaticCellGeometry geometry = calculator.calculateHydrostaticCell(trace, diameter, length, 0.0);
+      double expectedVolume = trace * Math.PI * diameter * diameter * length / 4.0;
+      double scaledDepth = Math.pow(3.0 * Math.PI * trace / 16.0, 2.0 / 3.0);
+      double expectedWidth = 2.0 * diameter * Math.sqrt(scaledDepth);
+      assertTrue(geometry.getLiquidVolume() > 0.0);
+      assertEquals(expectedVolume, geometry.getLiquidVolume(), expectedVolume * 1.0e-9);
+      assertEquals(expectedWidth * length, geometry.getInterfaceArea(), expectedWidth * length * 1.0e-12);
+      assertEquals(scaledDepth * diameter, geometry.getStartDepth(), scaledDepth * diameter * 1.0e-12);
+      assertEquals(geometry.getStartDepth(), geometry.getEndDepth(), 0.0);
+      assertTrue(Math.abs(geometry.getRelativeVolumeResidual()) < 1.0e-9);
+    }
+  }
+
+  /** Long inclined cells retain a finite trace wedge without subtracting its leading depth. */
+  @Test
+  void inclinedTraceLeadingEdgeIsResolved() {
+    double diameter = 1.0148;
+    double length = 416.6666666666667;
+    double angle = 0.12;
+    double trace = 1.0e-30;
+    HydrostaticCellGeometry up = calculator.calculateHydrostaticCell(trace, diameter, length, angle);
+    HydrostaticCellGeometry down = calculator.calculateHydrostaticCell(trace, diameter, length, -angle);
+
+    double expectedVolume = trace * Math.PI * diameter * diameter * length / 4.0;
+    assertEquals(expectedVolume, up.getLiquidVolume(), expectedVolume * 1.0e-8);
+    assertTrue(up.getMaximumDepth() > 0.0);
+    assertEquals(0.0, up.getMinimumDepth());
+    assertTrue(up.getInterfaceArea() > 0.0);
+    assertEquals(up.getMaximumDepth(), down.getMaximumDepth());
+    assertEquals(up.getInterfaceArea(), down.getInterfaceArea());
+    assertEquals(up.getStartDepth(), down.getEndDepth());
+    assertEquals(up.getEndDepth(), down.getStartDepth());
+  }
+
   /** Splitting the same plane preserves volume and physical areas. */
   @Test
   void partition() {

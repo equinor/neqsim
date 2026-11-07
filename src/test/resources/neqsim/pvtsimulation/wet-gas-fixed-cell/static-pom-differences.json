@@ -1,0 +1,41 @@
+{
+  "pom-base-strict.xml": [
+    {
+      "path": "project/build[1]/directory[1]",
+      "before": null,
+      "after": "/tmp/mbal44/base-strict-target"
+    },
+    {
+      "path": "project/build[1]/outputDirectory[1]",
+      "before": null,
+      "after": "/tmp/mbal44/base-classes"
+    },
+    {
+      "path": "project/build[1]/plugins[1]/plugin[11]/configuration[1]/failOnError[1]",
+      "before": "false",
+      "after": "true"
+    },
+    {
+      "path": "project/build[1]/sourceDirectory[1]",
+      "before": null,
+      "after": "/tmp/mbal44/base-src"
+    }
+  ],
+  "pom-candidate-strict.xml": [
+    {
+      "path": "project/build[1]/directory[1]",
+      "before": null,
+      "after": "/tmp/mbal44/candidate-strict-target"
+    },
+    {
+      "path": "project/build[1]/outputDirectory[1]",
+      "before": null,
+      "after": "/tmp/mbal44-repo/target/classes"
+    },
+    {
+      "path": "project/build[1]/plugins[1]/plugin[11]/configuration[1]/failOnError[1]",
+      "before": "false",
+      "after": "true"
+    }
+  ]
+}

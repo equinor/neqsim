@@ -220,8 +220,8 @@ public final class FieldTaggedProcess {
       for (int index = 0; index < mapping.length; index++) {
         if (mapping[index] >= 0) {
           int target = block * count + mapping[index];
-          result.getPhase(phase).getComponent(target)
-              .setx(result.getPhase(phase).getComponent(target).getx() + source.getPhase(phase).getComponent(index).getx());
+          result.getPhase(phase).getComponent(target).setx(
+              result.getPhase(phase).getComponent(target).getx() + source.getPhase(phase).getComponent(index).getx());
         }
       }
     }

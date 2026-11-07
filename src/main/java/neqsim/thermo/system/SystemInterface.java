@@ -3058,6 +3058,12 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /**
    * setTotalFlowRate.
    *
+   * <p>
+   * Setting an initialized fluid to zero throughput preserves its intensive phase state, including phase fractions and
+   * compositions, while clearing all material amounts. Repeated zero requests do not perform a flash. Restoring
+   * positive flow uses the stored overall composition; flash again after changing flow or thermodynamic conditions.
+   * </p>
+   *
    * @param flowRate a double
    * @param flowunit a {@link java.lang.String} object. flow units are: kg/sec, kg/min, kg/hr, kg/day, m3/sec, m3/min,
    * m3/hr, mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr,
