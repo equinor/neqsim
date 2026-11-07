@@ -204,9 +204,18 @@ DEXPI/document-set export but not used for the report drawings. `psr_diagrams` i
 (Sugiyama-style) layout with orthogonal channel routing, lane-routed recycles, stream-number diamonds,
 off-page connectors (other sheet **and** drawing number), per-equipment data lines
 (`equipment_data`), utility stubs (generic, medium not named), legend, notes, title block and a
-"not modelled" note. Parameters: `max_units_per_sheet`, `sheets=[{title, areas}]`,
-`layout_overrides={tag: {x, y}}`, `title_block` (`case_note`, `utility_note`, `omitted_systems`,
-`revision_history`, `readiness_note`). The SVG sheets are the editable source (Inkscape etc.);
+"not modelled" note. Parameters: `max_units_per_sheet`, `sheets=[{title, areas, tags}]` (a sheet lists areas, unit
+tags or both; use tags to keep a train on one sheet), `layout_overrides={tag-or-node-id: {x, y}}` (unit tags, or the
+node ids `F:<stream>`, `P:<stream>`, `CI:<stream>`, `CO:<stream>:<other sheet index>` of feeds, products and
+off-page connectors), `feeds_left` (feeds and incoming connectors on the left edge), `stretch_components` (spread a
+short disconnected train over the full sheet width), `boundary_label_chars` (longest feed/product label before an
+ellipsis), `title_block` (`case_note`, `utility_note`, `omitted_systems`,
+`revision_history`, `readiness_note`); in a basis file the same options are the keys `pfd_sheets`, `layout_overrides`,
+`pfd_feeds_left`, `pfd_stretch_components`, `pfd_boundary_label_chars`, `pfd_ordering` read by `process_study_report`.
+BFD blocks stacked in one layer keep a clear gap of `BLOCK_MARGIN`. Typical WARN fixes: `FEED_POSITION` and
+`TEXT_TOO_SMALL` (diamond text shrunk on a crowded sheet) with `feeds_left` and fewer units per sheet;
+`WHITESPACE_POCKET` with `stretch_components`, regrouping units by tag so no sheet has a lone short train, or an
+override that moves one symbol or connector into the pocket. The SVG sheets are the editable source (Inkscape etc.);
 `pfd_layout_spec.json` allows regeneration. Symbols follow ISO 10628-2 / ISO 14617 conventions in
 spirit; **never** claim conformance. Always render and look (see Step 7); check text at A3 print size
 with a 200 dpi crop.

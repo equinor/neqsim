@@ -1051,8 +1051,30 @@ def check_raster(path, name=None, options=None):
 
 
 # --------------------------------------------------------------------------------------------- review driver
+def _sidecar_spec(path):
+    """Layout spec written by the generator beside a rendering (``<stem>.layout.json``), or None.
+
+    The generator writes the PNG, the SVG and the spec in one run; a spec that is clearly older than the
+    rendering (more than 120 s) is not used, because it may describe a previous version of the drawing.
+    """
+    stem = os.path.splitext(path)[0]
+    side = stem + ".layout.json"
+    if not os.path.exists(side):
+        return None
+    try:
+        if os.path.getmtime(path) - os.path.getmtime(side) > 120.0:
+            return None
+    except OSError:
+        return None
+    return side
+
+
 def review(path_or_spec, options=None, kind=None, name=None):
-    """Check a spec dict, a ``.json`` spec file, an ``.svg`` drawing or a raster image."""
+    """Check a spec dict, a ``.json`` spec file, an ``.svg`` drawing or a raster image.
+
+    A rendering (SVG or raster) that has a fresh ``<stem>.layout.json`` beside it is reviewed through that
+    spec, so a generator figure is checked on its geometry and not as an opaque image.
+    """
     if isinstance(path_or_spec, dict):
         return check_spec(path_or_spec, options, name)
     p = str(path_or_spec)
@@ -1060,6 +1082,13 @@ def review(path_or_spec, options=None, kind=None, name=None):
     if ext == ".json":
         with open(p, "r", encoding="utf-8") as fh:
             return check_spec(json.load(fh), options, name or os.path.splitext(os.path.basename(p))[0])
+    if ext in (".svg", ".png", ".jpg", ".jpeg", ".bmp", ".gif"):
+        side = _sidecar_spec(p)
+        if side:
+            with open(side, "r", encoding="utf-8") as fh:
+                rep = check_spec(json.load(fh), options, name or os.path.splitext(os.path.basename(p))[0])
+            rep.metrics["checked_from_sidecar_spec"] = os.path.basename(side)
+            return rep
     if ext == ".svg":
         return check_spec(load_svg(p, kind=kind, name=name), options, name)
     if ext in (".png", ".jpg", ".jpeg", ".bmp", ".gif"):

@@ -92,6 +92,10 @@ def build_diagrams(data, basis, out_dir, max_units_per_sheet=14, dpi=220):
                                  title_block=_title_block(basis, "PFD", "Equipment data shown for operating case %s (%s)" % (case, label)),
                                  sheets=basis.get("pfd_sheets"), max_units_per_sheet=max_units_per_sheet,
                                  layout_overrides=basis.get("layout_overrides"),
+                                 stretch_components=bool(basis.get("pfd_stretch_components")),
+                                 feeds_left=bool(basis.get("pfd_feeds_left")),
+                                 ordering=basis.get("pfd_ordering") or "refined",
+                                 boundary_label_chars=int(basis.get("pfd_boundary_label_chars") or 36),
                                  equipment_data=_with_equipment_notes(default_equipment_data(data, case), basis))
     pages = []
     bfd_pngs = psr_report.render_pdf_pages(bfd["pdf"], fdir, "bfd", dpi=dpi)
