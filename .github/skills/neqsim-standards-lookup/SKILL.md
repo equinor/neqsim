@@ -20,6 +20,16 @@ Before any simulation or analysis, identify applicable standards:
 | **Standard** | Table of applicable standards with scope and status |
 | **Comprehensive** | Full table with clause numbers, design values, and compliance evidence |
 
+## Jurisdiction and Standard Sizes (MANDATORY with the identification above)
+
+Standards are not law. Before listing standards, resolve the country of the evaluated asset
+with `neqsim-jurisdiction-regulatory-basis` (ask once, or record the assumption and a
+`data_gaps` entry) and label every requirement as regulation, recognised standard or
+company requirement; company requirements may be stricter than regulation, never weaker.
+Report equipment sizes as buildable standard sizes with a `size_basis`
+(`neqsim-standard-equipment-sizes`); company or project sizes come first (enterprise:
+`enterprise-jurisdiction-and-company-sizing`), then vendor, then public standard tables.
+
 ## Search the Local Standards Library First (MANDATORY)
 
 Before paraphrasing a standard from memory, citing it second-hand, or declaring

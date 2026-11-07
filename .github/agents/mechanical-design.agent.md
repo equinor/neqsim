@@ -168,9 +168,15 @@ String json = hxReport.toJson();
 - Overall verdict
 
 ## Design Standards Hierarchy (Priority)
+0. Local law of the asset country (`neqsim-jurisdiction-regulatory-basis`) — never relaxed by 1-3
 1. Industry Standards (ASME, API, DNV, ISO, NORSOK) — base values
 2. Company Standards — company defaults
 3. TR Documents — specific technical requirements (highest priority)
+
+Calculated diameters, thicknesses, areas and powers must be rounded up to standard sizes
+(`neqsim-standard-equipment-sizes`) and labelled with a `size_basis`; company or project
+datasheet and piping-class values override public tables (enterprise:
+`enterprise-jurisdiction-and-company-sizing`). Re-run the model with the rounded size.
 
 ### DNV-RP-C203 fatigue work
 

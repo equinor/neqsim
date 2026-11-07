@@ -498,8 +498,13 @@ notebooks:
       resource volume (GIP/STOIIP) and its uncertainty range?
    2. **Operating envelope**: What are the design pressure, temperature, and flow
       rate ranges? Any constraints (backpressure limit, arrival temperature)?
-   3. **Standards & jurisdiction**: Which design codes apply (NORSOK, DNV, API,
-      ASME)? Which fiscal/tax regime (Norwegian NCS, UK, generic)?
+   3. **Standards & jurisdiction**: In which country is the asset (never assume
+      one)? Which design codes apply (NORSOK, DNV, API, ASME)? Which fiscal/tax
+      regime (Norwegian NCS, UK, US, Brazil, generic)? Load
+      `neqsim-jurisdiction-regulatory-basis` for the local laws and authorities and
+      `neqsim-standard-equipment-sizes` so sizes are reported as standard sizes with
+      a source (company/project datasheet first). If the country is unknown, record
+      "local regulations not considered" in `data_gaps`.
    4. **Economics**: What gas/oil price range and currency? What discount rate?
       Are cost estimates needed (CAPEX breakdown, OPEX)? Is a formal Equinor STEA
       evaluation required (tax, uplift, owner shares, approved price deck)? If yes and

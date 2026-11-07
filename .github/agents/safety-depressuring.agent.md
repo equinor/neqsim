@@ -80,6 +80,12 @@ OEM protection adequacy or a commissioned PLC application.
 
 ## Applicable Standards (MANDATORY)
 
+Safety acceptance is set by the regulator of the asset country: resolve it first with
+`neqsim-jurisdiction-regulatory-basis` (for example Norwegian Facilities/Activities
+Regulations, UK SCR/PFEER, US BSEE 30 CFR 250, Brazil ANP SGSO and NR-13/NR-20), never
+state compliance, and report relief valve orifices and line sizes as standard sizes
+(`neqsim-standard-equipment-sizes`).
+
 Safety analyses are inherently standards-driven. Always identify and apply:
 
 | Domain | Standards | NeqSim Classes |
