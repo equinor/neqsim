@@ -22,7 +22,11 @@ public class PhasePureComponentSolid extends PhaseSolid {
   public PhasePureComponentSolid() {
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhasePureComponentSolid clone() {
     PhasePureComponentSolid clonedPhase = null;
@@ -30,6 +34,7 @@ public class PhasePureComponentSolid extends PhaseSolid {
       clonedPhase = (PhasePureComponentSolid) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhasePureComponentSolid", ex);
     }
 
     return clonedPhase;

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.UUID;
 import java.util.Map;
 import java.util.LinkedHashMap;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import neqsim.process.dynamics.TransientStateParticipant;
 import neqsim.process.equipment.compressor.Compressor;
 
@@ -39,21 +40,37 @@ public class CompressorSurgeMarginMeasurement extends MeasurementDeviceBaseClass
    * @param flowTransmitter actual held inlet volumetric-flow transmitter
    * @throws IllegalArgumentException if the source is null
    */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The calculated signal must retain its actual native compressor and held inlet-flow measurement identities")
   public CompressorSurgeMarginMeasurement(String name, Compressor compressor, VolumeFlowTransmitter flowTransmitter) {
-    super(name, "fraction");
-    if (compressor == null || flowTransmitter == null || compressor.getInletStream() != flowTransmitter.getStream()) {
-      throw new IllegalArgumentException("Calculated margin requires the actual compressor inlet-flow source");
-    }
+    super(requireSource(name, compressor, flowTransmitter), "fraction");
     this.compressor = compressor;
     this.flowTransmitter = flowTransmitter;
   }
 
+  /**
+   * Validates source identities before any superclass can initialize a partially constructed measurement.
+   *
+   * @param name calculated signal tag
+   * @param compressor actual source compressor
+   * @param flowTransmitter actual held inlet volumetric-flow transmitter
+   * @return unchanged calculated signal tag
+   * @throws IllegalArgumentException if a source is absent or the transmitter is not on the actual inlet
+   */
+  private static String requireSource(String name, Compressor compressor, VolumeFlowTransmitter flowTransmitter) {
+    if (compressor == null || flowTransmitter == null || compressor.getInletStream() != flowTransmitter.getStream()) {
+      throw new IllegalArgumentException("Calculated margin requires the actual compressor inlet-flow source");
+    }
+    return name;
+  }
+
   /** @return actual native compressor used by the calculation */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The calculated signal and canonical bindings must refer to the same live native compressor")
   public Compressor getCompressor() {
     return compressor;
   }
 
   /** @return actual causal inlet-flow measurement */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Returning the actual held inlet-flow device preserves causal sample and fault identity")
   public VolumeFlowTransmitter getFlowTransmitter() {
     return flowTransmitter;
   }

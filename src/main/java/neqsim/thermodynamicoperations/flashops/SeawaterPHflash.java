@@ -1,5 +1,6 @@
 package neqsim.thermodynamicoperations.flashops;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSeawater;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -19,9 +20,10 @@ public class SeawaterPHflash extends Flash {
   /**
    * Creates a PH calculation on the bulk-solution mass basis.
    *
-   * @param system fixed-salinity seawater system
+   * @param system live fixed-salinity seawater system updated with the converged state
    * @param specifiedEnthalpy total enthalpy [J]
    */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "A flash must update the caller's connected thermodynamic system with the converged state")
   public SeawaterPHflash(SystemSeawater system, double specifiedEnthalpy) {
     this.system = system;
     this.specifiedEnthalpy = specifiedEnthalpy;

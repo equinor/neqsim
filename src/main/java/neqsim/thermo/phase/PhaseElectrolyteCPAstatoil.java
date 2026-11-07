@@ -31,7 +31,11 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
     componentArray[compNumber] = new ComponentElectrolyteCPAstatoil(name, moles, molesInPhase, compNumber);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseElectrolyteCPAstatoil clone() {
     PhaseElectrolyteCPAstatoil clonedPhase = null;
@@ -39,6 +43,7 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
       clonedPhase = (PhaseElectrolyteCPAstatoil) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseElectrolyteCPAstatoil", ex);
     }
     return clonedPhase;
   }

@@ -8,6 +8,7 @@ import neqsim.process.measurementdevice.TransientMeasurementDevice;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.valve.ThrottlingValve;
 
@@ -262,11 +263,13 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
   }
 
   /**
-   * Binds an explicitly sampled calculated margin input without changing the legacy default.
+   * Binds an explicitly sampled calculated margin input without changing the legacy default. The supplied device
+   * remains the live physical-step source; copying it would detach its held samples and faults.
    *
    * @param measurement actual sample-and-hold device, or null to use the compressor map directly
    * @throws IllegalArgumentException if the supplied device cannot provide held physical-step samples
    */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The controller must consume held samples and faults from the connected native measurement")
   public void setSurgeMarginMeasurement(MeasurementDeviceInterface measurement) {
     if (measurement != null && !(measurement instanceof TransientMeasurementDevice)) {
       throw new IllegalArgumentException("Anti-surge margin input requires physical-step sample-and-hold");
@@ -274,7 +277,8 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
     surgeMarginMeasurement = measurement;
   }
 
-  /** @return actual held calculated-margin input, or null for the direct compressor-map policy */
+  /** @return live held calculated-margin input, or null for the direct compressor-map policy */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The native measurement identity is required for causal binding and physical-step sample validation")
   public MeasurementDeviceInterface getSurgeMarginMeasurement() {
     return surgeMarginMeasurement;
   }

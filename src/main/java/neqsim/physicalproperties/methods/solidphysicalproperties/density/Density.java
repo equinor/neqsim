@@ -34,7 +34,11 @@ public class Density extends SolidPhysicalPropertyMethod implements DensityInter
     super(liquidPhase);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public Density clone() {
     Density properties = null;
@@ -43,6 +47,7 @@ public class Density extends SolidPhysicalPropertyMethod implements DensityInter
       properties = (Density) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of Density", ex);
     }
 
     return properties;

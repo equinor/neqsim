@@ -48,7 +48,11 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
   public PhaseElectrolyteCPAOld() {
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseElectrolyteCPAOld clone() {
     PhaseElectrolyteCPAOld clonedPhase = null;
@@ -56,6 +60,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
       clonedPhase = (PhaseElectrolyteCPAOld) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseElectrolyteCPAOld", ex);
     }
     // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
 

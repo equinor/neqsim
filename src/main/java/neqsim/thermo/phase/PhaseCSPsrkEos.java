@@ -36,7 +36,11 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
         * refBWRSPhase.getComponent(0).getTC() / refBWRSPhase.getComponent(0).getPC();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseCSPsrkEos clone() {
     PhaseCSPsrkEos clonedPhase = null;
@@ -44,6 +48,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
       clonedPhase = (PhaseCSPsrkEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseCSPsrkEos", ex);
     }
 
     return clonedPhase;

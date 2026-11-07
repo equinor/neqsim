@@ -16,6 +16,9 @@ local checks unrun instead of assuming that a checkout or build tool is availabl
 2. Generate and supply PMD and SpotBugs reports for a static-analysis assessment.
    Missing reports or analysis errors are failures. Distinguish unmeasured coverage
    and unavailable history from measured zero values.
+   Use the exact reviewed analysis JDK; a runtime precondition failure is not a
+   zero-findings pass. For clone warnings, inspect parent and owned-state copies,
+   preserve normal copy behavior and propagate failures with their cause.
 3. Rank candidates using branch counts, size, import dependencies, duplicate-window
    candidates, bounded history and relevant regression evidence. Size/branch counts
    are proxies; overlapping duplicate windows are not a percentage of duplicated code.

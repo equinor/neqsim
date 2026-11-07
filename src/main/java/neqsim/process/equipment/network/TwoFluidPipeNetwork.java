@@ -523,7 +523,10 @@ public final class TwoFluidPipeNetwork implements Serializable {
         break;
       }
     }
-    if (trial == null || thermodynamicIterations >= ALGEBRAIC_MAXIMUM_THERMODYNAMIC_ITERATIONS) {
+    if (trial == null) {
+      throw new IllegalStateException("Algebraic junction '" + junction.name + "' produced no donor-state trial");
+    }
+    if (thermodynamicIterations >= ALGEBRAIC_MAXIMUM_THERMODYNAMIC_ITERATIONS) {
       throw new IllegalStateException("Algebraic junction '" + junction.name
           + "' did not converge its donor state; phase=" + Arrays.toString(trial.phaseResidualKg) + " kg, component="
           + Arrays.toString(trial.componentResidualKg) + " kg, energy=" + trial.energyResidualJ + " J");

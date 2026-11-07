@@ -3,6 +3,8 @@ package neqsim.process.engineering;
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
 import java.io.StringReader;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -108,6 +110,10 @@ public final class CompressorAutomationWorkflow {
       throw new IllegalArgumentException("A design, nonempty case selection and new output directory are required");
     }
     Path output = directory.toAbsolutePath().normalize();
+    Path parent = output.getParent();
+    if (parent == null) {
+      throw new IllegalArgumentException("Output directory must have a parent: " + output);
+    }
     if (Files.exists(output)) {
       throw new IllegalArgumentException("Output directory must not already exist: " + output);
     }
@@ -136,7 +142,7 @@ public final class CompressorAutomationWorkflow {
         PidNativeControlSystem.bind(seedProject, canonical), governed.getProcess());
     EngineeringProject project = project(governed);
     PidSimulationBindings bindings = PidNativeControlSystem.bind(project, canonical);
-    Files.createDirectories(output.getParent());
+    Files.createDirectories(parent);
     Files.createDirectory(output);
     Map<String, Object> status = new LinkedHashMap<String, Object>();
     status.put("schemaVersion", "neqsim.compressor_automation_workflow.v1");
@@ -810,6 +816,16 @@ public final class CompressorAutomationWorkflow {
       this.functions = functions;
     }
 
+    /**
+     * Rejects deserialization of runtime-only verification authority whose live references cannot be restored.
+     *
+     * @param input serialized observer stream, deliberately not consumed
+     * @throws IOException always, because governed inputs must construct a fresh runtime verifier
+     */
+    private void readObject(ObjectInputStream input) throws IOException {
+      throw new InvalidObjectException("A runtime-only verifier must be rebuilt from governed inputs");
+    }
+
     /** {@inheritDoc} */
     @Override
     public void inspect(Train train, CaseDefinition definition) {
@@ -823,8 +839,8 @@ public final class CompressorAutomationWorkflow {
       if (!actual.keySet().equals(functions.keySet())) {
         throw new IllegalStateException("The runtime copy has different native safety functions");
       }
-      for (String tag : functions.keySet()) {
-        functions.get(tag).assertSameConfiguration(actual.get(tag));
+      for (Map.Entry<String, PidSafetyFunctionValidator.ConfiguredFunction> entry : functions.entrySet()) {
+        entry.getValue().assertSameConfiguration(actual.get(entry.getKey()));
       }
     }
   }

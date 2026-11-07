@@ -53,11 +53,11 @@ public class CheckValve extends ThrottlingValve {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
-  /** Minimum forward differential pressure required to open the ideal valve, in bar. */
-  private double crackingPressure = 0.1; // Default 0.1 bar
+  /** Atomically published opening threshold in bar; configuration and solves still require one coordinated owner. */
+  private volatile double crackingPressure = 0.1; // Default 0.1 bar
 
   /** Indicates if valve is currently open. */
-  private boolean isOpen = false;
+  private volatile boolean isOpen = false;
 
   /**
    * Constructor for CheckValve.

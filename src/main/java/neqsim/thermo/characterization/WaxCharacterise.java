@@ -29,7 +29,11 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
     thermoSystem = system;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public WaxCharacterise clone() {
     WaxCharacterise clonedSystem = null;
@@ -38,6 +42,7 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
       clonedSystem.model = model.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of WaxCharacterise", ex);
     }
     return clonedSystem;
   }
@@ -50,7 +55,11 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
     double[] parameterWaxHeatOfFusion = new double[1];
     double[] parameterWaxTriplePointTemperature = new double[1];
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     *
+     * @throws IllegalStateException if a required part of the clone cannot be copied
+     */
     @Override
     public WaxBaseModel clone() {
       WaxBaseModel clonedSystem = null;
@@ -58,6 +67,7 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
         clonedSystem = (WaxBaseModel) super.clone();
       } catch (Exception ex) {
         logger.error("Cloning failed.", ex);
+        throw new IllegalStateException("Unable to complete clone of WaxBaseModel", ex);
       }
       return clonedSystem;
     }

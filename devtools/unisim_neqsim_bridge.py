@@ -16,7 +16,7 @@ Usage:
     from devtools.unisim_neqsim_bridge import UniSimNeqSimBridge
 
     bridge = UniSimNeqSimBridge()
-    report = bridge.compare(r"C:\Models\GasPlant.usc")
+    report = bridge.compare(r"C:\\Models\\GasPlant.usc")
     bridge.close()
 
     # Or as context manager:

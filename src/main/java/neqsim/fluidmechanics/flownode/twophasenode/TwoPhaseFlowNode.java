@@ -59,7 +59,11 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     getBulkSystem().init_x_y();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public TwoPhaseFlowNode clone() {
     TwoPhaseFlowNode clonedSystem = null;
@@ -67,6 +71,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
       clonedSystem = (TwoPhaseFlowNode) super.clone();
     } catch (Exception ex) {
       logger.error(ex.getMessage());
+      throw new IllegalStateException("Unable to complete clone of TwoPhaseFlowNode", ex);
     }
 
     // clonedSystem.molarMassTransferFlux = (double[])

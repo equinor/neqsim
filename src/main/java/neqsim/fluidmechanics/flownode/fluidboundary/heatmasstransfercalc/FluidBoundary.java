@@ -136,7 +136,11 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     this.flowNode = flowNode;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public FluidBoundary clone() {
     FluidBoundary clonedSystem = null;
@@ -145,6 +149,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
       clonedSystem = (FluidBoundary) super.clone();
     } catch (Exception ex) {
       logger.error(ex.getMessage());
+      throw new IllegalStateException("Unable to complete clone of FluidBoundary", ex);
     }
 
     clonedSystem.interphaseSystem = interphaseSystem.clone();

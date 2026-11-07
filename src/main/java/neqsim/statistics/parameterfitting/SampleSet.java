@@ -50,7 +50,11 @@ public class SampleSet implements Cloneable {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SampleSet clone() {
     SampleSet clonedSet = null;
@@ -58,6 +62,7 @@ public class SampleSet implements Cloneable {
       clonedSet = (SampleSet) super.clone();
     } catch (Exception ex) {
       logger.error(ex.getMessage());
+      throw new IllegalStateException("Unable to complete clone of SampleSet", ex);
     }
 
     clonedSet.samples = new ArrayList<SampleValue>(samples);

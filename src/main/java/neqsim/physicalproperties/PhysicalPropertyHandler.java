@@ -148,7 +148,11 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhysicalPropertyHandler clone() {
     PhysicalPropertyHandler clonedHandler = null;
@@ -176,6 +180,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
+      throw new IllegalStateException("Unable to complete clone of PhysicalPropertyHandler", ex);
     }
     return clonedHandler;
   }

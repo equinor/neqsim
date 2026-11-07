@@ -88,7 +88,11 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public ComponentElectrolyteCPAOld clone() {
     ComponentElectrolyteCPAOld clonedComponent = null;
@@ -96,6 +100,7 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
       clonedComponent = (ComponentElectrolyteCPAOld) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of ComponentElectrolyteCPAOld", ex);
     }
     clonedComponent.xsite = xsite.clone();
     System.arraycopy(this.xsite, 0, clonedComponent.xsite, 0, xsite.length);

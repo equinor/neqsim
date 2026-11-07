@@ -47,7 +47,11 @@ public class ComponentTST extends ComponentEos {
     super(number, TC, PC, M, a, moles);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public ComponentTST clone() {
     ComponentTST clonedComponent = null;
@@ -55,6 +59,7 @@ public class ComponentTST extends ComponentEos {
       clonedComponent = (ComponentTST) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of ComponentTST", ex);
     }
 
     return clonedComponent;

@@ -64,7 +64,11 @@ public class GasPhysicalProperties extends PhysicalProperties {
     densityCalc = new neqsim.physicalproperties.methods.gasphysicalproperties.density.Density(this);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public GasPhysicalProperties clone() {
     GasPhysicalProperties properties = null;
@@ -73,6 +77,7 @@ public class GasPhysicalProperties extends PhysicalProperties {
       properties = (GasPhysicalProperties) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of GasPhysicalProperties", ex);
     }
     return properties;
   }

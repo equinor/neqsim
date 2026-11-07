@@ -178,7 +178,11 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public Diffusivity clone() {
     Diffusivity properties = null;
@@ -187,6 +191,7 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
       properties = (Diffusivity) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of Diffusivity", ex);
     }
     properties.binaryDiffusionCoefficients = copyMatrix(binaryDiffusionCoefficients);
     properties.binaryLennardJonesOmega = copyMatrix(binaryLennardJonesOmega);

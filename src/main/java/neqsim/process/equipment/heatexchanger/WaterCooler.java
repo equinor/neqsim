@@ -14,18 +14,23 @@ import neqsim.thermo.util.steam.SeawaterProperties;
  * with an explicit SystemWaterIF97 or SystemSeawater stream for a coupled two-stream model.
  * </p>
  *
+ * <p>
+ * Utility settings and demand are published as atomic scalar values for monitoring. Coordinate configuration and
+ * calculation through one owner; a collection of scalar reads is not an atomic process-state snapshot.
+ * </p>
+ *
  * @author esol
  * @version 1.1
  */
 public class WaterCooler extends Cooler {
   private static final long serialVersionUID = 1000;
 
-  private double waterInletTemperature = 298.15; // K
-  private double waterOutletTemperature = 308.15; // K
-  private double waterPressure = 1.0; // bara
-  private double coolingWaterFlowRate = 0.0; // kg/s
+  private volatile double waterInletTemperature = 298.15; // K
+  private volatile double waterOutletTemperature = 308.15; // K
+  private volatile double waterPressure = 1.0; // bara
+  private volatile double coolingWaterFlowRate = 0.0; // kg/s
   /** Reference-composition salinity [g/kg solution], zero for fresh water. */
-  private double coolingWaterSalinity = 0.0;
+  private volatile double coolingWaterSalinity = 0.0;
 
   /**
    * Constructor for WaterCooler.

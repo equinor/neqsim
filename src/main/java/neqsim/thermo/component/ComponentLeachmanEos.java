@@ -38,7 +38,11 @@ public class ComponentLeachmanEos extends ComponentEos {
     super(number, TC, PC, M, a, moles);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public ComponentLeachmanEos clone() {
     ComponentLeachmanEos clonedComponent = null;
@@ -46,6 +50,7 @@ public class ComponentLeachmanEos extends ComponentEos {
       clonedComponent = (ComponentLeachmanEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of ComponentLeachmanEos", ex);
     }
 
     return clonedComponent;
