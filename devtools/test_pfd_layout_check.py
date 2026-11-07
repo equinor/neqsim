@@ -316,6 +316,12 @@ def test_diagram_builder_produces_passing_png_svg_and_spec(tmp_path):
     assert out.exists() and (tmp_path / "fig.svg").exists() and (tmp_path / "fig.layout.json").exists()
     again = chk.review(str(tmp_path / "fig.layout.json"))
     assert again.status == "PASS"
+    for ext in (".png", ".svg"):
+        side = chk.review(str(tmp_path / ("fig" + ext)))
+        assert side.status == "PASS" and side.metrics.get("checked_from_sidecar_spec") == "fig.layout.json"
+    old = os.path.getmtime(str(tmp_path / "fig.png")) - 600.0
+    os.utime(str(tmp_path / "fig.layout.json"), (old, old))
+    assert "RASTER_ONLY" in codes(chk.review(str(tmp_path / "fig.png")))
     d2 = pfd_diagram.PfdDiagram("PFD 2 - Overlap", width_in=7.0, height_in=3.4, footer="x")
     d2.node("a", "20V0001\nseparator", 30, 22, kind="vessel", tag="20V0001")
     d2.node("b", "20V0002\nseparator", 36, 22, kind="vessel", tag="20V0002")

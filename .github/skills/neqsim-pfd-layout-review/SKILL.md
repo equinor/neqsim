@@ -34,7 +34,10 @@ review; use only for a physical reason (for example a long recycle that cannot a
    (`*.layout.json`), else the SVG:
    `neqsim pfd-check fig.layout.json other.svg --out-dir <task>/step3_report/pfd_layout_review`
    (without `neqsim` on PATH: `<python> -m pfd_layout_check ...`; source checkout: `devtools/pfd_layout_check.py`).
-   A PNG alone can only be capped at WARN (`RASTER_ONLY`): regenerate from source instead. An SVG with no readable
+   A PNG alone can only be capped at WARN (`RASTER_ONLY`): regenerate from source instead. A PNG or SVG written by
+   `PfdDiagram` (or any generator that writes `<stem>.layout.json` beside it) is reviewed through that sidecar spec when the
+   spec is not older than the image by more than 120 s, so `neqsim pfd-check fig.png` is then a real check
+   (`checked_from_sidecar_spec` in the metrics). An SVG with no readable
    boxes or streams (maps, plots, profile sheets) gives `NO_STRUCTURE` WARN: nothing was verified, so view it and review by eye.
    Exit code 0 PASS, 1 WARN, 2 FAIL (`--strict` makes WARN fail too).
 2. **Fix in the generator, not in the picture.** Apply each fix-up, regenerate, re-run. Typical moves:
