@@ -37,7 +37,11 @@ public class SystemFurstElectrolyteEos extends SystemSrkEos {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemFurstElectrolyteEos clone() {
     SystemFurstElectrolyteEos clonedSystem = null;
@@ -45,6 +49,7 @@ public class SystemFurstElectrolyteEos extends SystemSrkEos {
       clonedSystem = (SystemFurstElectrolyteEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemFurstElectrolyteEos", ex);
     }
 
     return clonedSystem;

@@ -58,7 +58,11 @@ public class ComponentPCSAFT extends ComponentSrk {
     super(number, TC, PC, M, a, moles);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public ComponentPCSAFT clone() {
     ComponentPCSAFT clonedComponent = null;
@@ -66,6 +70,7 @@ public class ComponentPCSAFT extends ComponentSrk {
       clonedComponent = (ComponentPCSAFT) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of ComponentPCSAFT", ex);
     }
 
     return clonedComponent;

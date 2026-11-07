@@ -100,7 +100,11 @@ public class SystemUMRPRUEos extends SystemPrEos {
         "heatCapacityCv", "density", "volume"};
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemUMRPRUEos clone() {
     SystemUMRPRUEos clonedSystem = null;
@@ -108,6 +112,7 @@ public class SystemUMRPRUEos extends SystemPrEos {
       clonedSystem = (SystemUMRPRUEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemUMRPRUEos", ex);
     }
 
     return clonedSystem;

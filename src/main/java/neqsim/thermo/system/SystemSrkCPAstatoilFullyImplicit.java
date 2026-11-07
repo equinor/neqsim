@@ -69,7 +69,11 @@ public class SystemSrkCPAstatoilFullyImplicit extends SystemSrkCPAstatoil {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemSrkCPAstatoilFullyImplicit clone() {
     SystemSrkCPAstatoilFullyImplicit clonedSystem = null;
@@ -77,6 +81,7 @@ public class SystemSrkCPAstatoilFullyImplicit extends SystemSrkCPAstatoil {
       clonedSystem = (SystemSrkCPAstatoilFullyImplicit) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemSrkCPAstatoilFullyImplicit", ex);
     }
     return clonedSystem;
   }

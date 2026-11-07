@@ -37,7 +37,9 @@ different versions.
    explained nearby. Keep dependency scopes and plugin configuration intentional.
 4. Compare the resulting declarations by Maven coordinates. Check that an add,
    removal, or scope change is reflected in both POMs unless the difference is
-   deliberate and explained. Do not modify unrelated plugin, dependency, or
+   deliberate and explained. This includes provided annotation libraries imported
+   by production Java; test both POMs after adding an annotation dependency.
+   Do not modify unrelated plugin, dependency, or
    project versions as part of a narrow update.
 5. Resolve and validate each configuration separately:
 

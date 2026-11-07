@@ -109,7 +109,11 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
     // this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public ComponentSrkCPA clone() {
     ComponentSrkCPA clonedComponent = null;
@@ -117,6 +121,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
       clonedComponent = (ComponentSrkCPA) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of ComponentSrkCPA", ex);
     }
 
     clonedComponent.xsite = xsite.clone();

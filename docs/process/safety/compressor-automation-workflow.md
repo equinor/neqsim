@@ -74,6 +74,12 @@ steps. The observer never reapplies healthy settings after a fault, and the evid
 executes native SIFs a second time. Event-injected measurement faults remain event declarations and
 actual sampled evidence; they are not relabeled as a healthy physical process disturbance.
 
+Runtime verification observers retain live governed model identities. They are
+not reusable serialized authority: deserialization fails explicitly, and a new
+run must construct its verifier from the governed inputs. Equipment getters
+return the connected instances so controller, measurement and trip changes act
+on the same process graph. Coordinate configuration and execution with one owner.
+
 ## Actual outputs and review gates
 
 | Artifact | Meaning |

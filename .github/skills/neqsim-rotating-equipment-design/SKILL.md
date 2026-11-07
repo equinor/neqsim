@@ -31,6 +31,14 @@ Use this skill when an agent needs to create, correct, apply or interpret compre
 
 ### Map workflow
 
+Couple the common compressor shaft to `CompressorPowerTrain` for direct turbine,
+external motor/VFD or turbine-generator-motor supply. Use the
+[integrated compression-power guide](../../../docs/process/equipment/integrated_compression_power.md)
+and `neqsim-power-generation` for the exact matching API and evidence boundaries.
+Power feasibility is separate from compressor chart validity, surge/stonewall and
+the turbine minimum-load limit. A configured driver with zero capability cannot
+be treated as unlimited. Use supplied OEM maps for actual machine qualification.
+
 1. Fix a reference gas, speed, inlet basis, flow unit and head unit from the vendor source. Keep the raw points and their source alongside derived points.
 2. Choose the chart class by interpolation/extrapolation behavior. Load measured curves through `CompressorChartReader`/`CompressorChartJsonReader` or use `CompressorChart.addCurve(...)`/`setCurves(...)` for explicit points.
 3. Attach via `Compressor.setCompressorChart(...)`; evaluate head and efficiency at representative vendor points before using a full process train.

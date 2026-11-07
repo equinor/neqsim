@@ -14,6 +14,11 @@ import neqsim.util.unit.TemperatureUnit;
 /**
  * Cooler class.
  *
+ * <p>
+ * Configuration and calculation require a single coordinated owner. Published scalar settings use volatile fields for
+ * atomic readback and visibility; a multi-setting update or process calculation is not a thread-safe transaction.
+ * </p>
+ *
  * @author Even Solbraa
  * @version $Id: $Id
  */
@@ -22,31 +27,31 @@ public class Cooler extends Heater {
   private static final long serialVersionUID = 1000;
 
   /** Whether the bounded utility-valve transient temperature model is enabled. */
-  private boolean dynamicTemperatureControlEnabled = false;
+  private volatile boolean dynamicTemperatureControlEnabled = false;
 
   /** Cooling-medium temperature used by the dynamic effectiveness model, in Kelvin. */
-  private double dynamicCoolingMediumTemperature = 293.15;
+  private volatile double dynamicCoolingMediumTemperature = 293.15;
 
   /** Design process mass flow used to scale NTU away from the design point, in kg/hr. */
-  private double dynamicDesignMassFlow = 0.0;
+  private volatile double dynamicDesignMassFlow = 0.0;
 
   /** Design number of transfer units at the configured design valve opening. */
-  private double dynamicDesignNtu = 0.0;
+  private volatile double dynamicDesignNtu = 0.0;
 
   /** Cooling utility valve opening in percent. */
   private double coolingValveOpening = 50.0;
 
   /** Utility valve opening at the thermal design point, in percent. */
-  private double dynamicDesignValveOpening = 50.0;
+  private volatile double dynamicDesignValveOpening = 50.0;
 
   /** First-order cooling-valve actuator time constant, in seconds. */
-  private double dynamicActuatorTimeConstant = 10.0;
+  private volatile double dynamicActuatorTimeConstant = 10.0;
 
   /** First-order process-side thermal time constant, in seconds. */
-  private double dynamicThermalTimeConstant = 20.0;
+  private volatile double dynamicThermalTimeConstant = 20.0;
 
   /** Unavailable utility fraction; an absent legacy serialized field therefore retains full availability. */
-  private double dynamicUtilityUnavailabilityFraction = 0.0;
+  private volatile double dynamicUtilityUnavailabilityFraction = 0.0;
 
   /** Identifier of the physical timestep whose initial dynamic state is cached. */
   private UUID dynamicStepIdentifier;

@@ -69,7 +69,11 @@ public class SystemElectrolyteCPAAdvanced extends SystemFurstElectrolyteEos {
     this.useVolumeCorrection(true);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemElectrolyteCPAAdvanced clone() {
     SystemElectrolyteCPAAdvanced clonedSystem = null;
@@ -77,6 +81,7 @@ public class SystemElectrolyteCPAAdvanced extends SystemFurstElectrolyteEos {
       clonedSystem = (SystemElectrolyteCPAAdvanced) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemElectrolyteCPAAdvanced", ex);
     }
     return clonedSystem;
   }

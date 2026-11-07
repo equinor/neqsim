@@ -44,7 +44,11 @@ public class AttractiveTermPr1978 extends AttractiveTermPr {
     getComponent().setAcentricFactor(solve.solve(0.2));
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public AttractiveTermPr1978 clone() {
     AttractiveTermPr1978 attractiveTerm = null;
@@ -52,6 +56,7 @@ public class AttractiveTermPr1978 extends AttractiveTermPr {
       attractiveTerm = (AttractiveTermPr1978) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of AttractiveTermPr1978", ex);
     }
 
     return attractiveTerm;

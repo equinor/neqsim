@@ -46,7 +46,11 @@ public class AttractiveTermCPAstatoil extends AttractiveTermSrk {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public AttractiveTermCPAstatoil clone() {
     AttractiveTermCPAstatoil attractiveTerm = null;
@@ -54,6 +58,7 @@ public class AttractiveTermCPAstatoil extends AttractiveTermSrk {
       attractiveTerm = (AttractiveTermCPAstatoil) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of AttractiveTermCPAstatoil", ex);
     }
     // attractiveTerm.parameters = (double[]) parameters.clone();
     // System.arraycopy(parameters,0, attractiveTerm.parameters, 0,

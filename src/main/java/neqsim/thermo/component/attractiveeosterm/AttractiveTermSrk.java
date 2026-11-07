@@ -23,7 +23,11 @@ public class AttractiveTermSrk extends AttractiveTermBaseClass {
         - 0.176 * component.getAcentricFactor() * component.getAcentricFactor());
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public AttractiveTermSrk clone() {
     AttractiveTermSrk attractiveTerm = null;
@@ -31,6 +35,7 @@ public class AttractiveTermSrk extends AttractiveTermBaseClass {
       attractiveTerm = (AttractiveTermSrk) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of AttractiveTermSrk", ex);
     }
     return attractiveTerm;
   }

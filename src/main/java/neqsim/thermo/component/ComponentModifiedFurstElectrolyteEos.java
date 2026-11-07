@@ -115,7 +115,11 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
         : lennardJonesMolecularDiameter;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public ComponentModifiedFurstElectrolyteEos clone() {
     ComponentModifiedFurstElectrolyteEos clonedComponent = null;
@@ -123,6 +127,7 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
       clonedComponent = (ComponentModifiedFurstElectrolyteEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of ComponentModifiedFurstElectrolyteEos", ex);
     }
 
     return clonedComponent;

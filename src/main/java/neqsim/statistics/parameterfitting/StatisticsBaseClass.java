@@ -70,7 +70,11 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   public StatisticsBaseClass() {
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public StatisticsBaseClass clone() {
     StatisticsBaseClass clonedClass = null;
@@ -78,6 +82,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
       clonedClass = (StatisticsBaseClass) super.clone();
     } catch (Exception ex) {
       logger.error(ex.getMessage());
+      throw new IllegalStateException("Unable to complete clone of StatisticsBaseClass", ex);
     }
 
     clonedClass.sampleSet = sampleSet.clone();

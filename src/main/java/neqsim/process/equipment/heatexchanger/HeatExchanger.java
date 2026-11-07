@@ -70,10 +70,10 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   int outStreamSpecificationNumber = 0;
   public double thermalEffectiveness = 0.0;
   private String flowArrangement = "concentric tube counterflow";
-  /** Last bulk utility compositions, which are not encoded in nominal mole fractions. */
-  private double lastSalinity0 = Double.NaN;
+  /** Last side-0 utility composition, atomically published for recalculation checks [g/kg solution]. */
+  private volatile double lastSalinity0 = Double.NaN;
   /** Last bulk utility composition on side 1 [g/kg solution]. */
-  private double lastSalinity1 = Double.NaN;
+  private volatile double lastSalinity1 = Double.NaN;
   private boolean useDeltaT = false;
   private double deltaT = 1.0;
 

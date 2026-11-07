@@ -14,6 +14,11 @@ use the locked repository runner.
 
 ## Run the checks
 
+Run source, PMD and SpotBugs validation by default before publishing Java source,
+Java test or Maven changes, including PR repairs. Use fresh reports, the exact
+workflow-pinned analysis runtime and the reviewed base-branch baseline. A missing
+report, runtime mismatch or new selected finding leaves the gate unresolved.
+
 ```bash
 uv run --project devtools --locked devtools/code_health.py --output target/code-health-source.json
 ./mvnw -B -ntp -Pcode-health -DskipTests clean compile pmd:pmd
@@ -54,6 +59,17 @@ archives still produced different clone-inference findings under OpenJDK 17.0.20
 and Temurin 17.0.21+9. Keep both the canonical input and the exact runtime pin in
 the pipeline, and qualify the initial baseline from the hosted report.
 Line numbers are display metadata; normal line shifts do not create new debt.
+
+Clone-failure findings require source inspection across the inheritance chain. A
+catch-and-log wrapper must not return null or a partially copied object when a
+parent clone or an owned-state copy fails. Preserve successful deep-copy and cache
+reset behavior, and propagate failure with its cause. Test both injected copy
+failures and normal clone independence. Do not hide inherited clone diagnostics
+with nullable annotations or broaden the reviewed baseline to obtain a pass.
+
+Keep provided annotation dependencies synchronized between `pom.xml` and
+`pomJava8.xml`. A `--release 8` compile against the modern POM does not verify the
+Java 8 dependency graph; also build and test the Java 8 POM on a Java 8 runtime.
 
 ## Interpret the evidence
 

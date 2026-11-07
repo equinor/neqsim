@@ -42,7 +42,11 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
   public PhasePCSAFTa() {
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhasePCSAFTa clone() {
     PhasePCSAFTa clonedPhase = null;
@@ -50,6 +54,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
       clonedPhase = (PhasePCSAFTa) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhasePCSAFTa", ex);
     }
     // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
 

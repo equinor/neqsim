@@ -289,8 +289,7 @@ public final class PidNativeControlSystem {
         MeasurementDeviceInterface source = input(controller);
         List<PidElement> incoming = incoming(model, element);
         if (source == null ? !incoming.isEmpty()
-            : incoming.size() != 1
-                || source != null && bindings.resolveMeasurement(incoming.get(0).getTag(), configured) != source) {
+            : incoming.size() != 1 || bindings.resolveMeasurement(incoming.get(0).getTag(), configured) != source) {
           throw new IllegalArgumentException("Canonical controller input is not its actual native measurement");
         }
         if (controller instanceof AntiSurgeController) {
