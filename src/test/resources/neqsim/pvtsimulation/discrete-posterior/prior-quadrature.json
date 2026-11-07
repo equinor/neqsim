@@ -1,0 +1,34 @@
+{
+  "case": "conflicting-prior-9",
+  "control": "five-point tensor Gauss versus frozen three-point cell masses; unchanged predictions",
+  "maxNormalizedPriorAbsDifference": 2.2180166843466242e-07,
+  "maxNormalizedPriorRelativeDifference": 0.0013350959904829204,
+  "maxPosteriorMassAbsDifference": 1.5191829086380615e-07,
+  "volumeMeanM3": [
+    1045.3792631863246,
+    1045.3792651605847
+  ],
+  "productivityMeanM3PerSecondPerBar": [
+    0.0006300563701074567,
+    0.0006300563697489507
+  ],
+  "volumeProductivityCorrelation": [
+    0.22833767533323054,
+    0.22833789466627696
+  ],
+  "priorStandardizedVolumeShift": [
+    -0.9942564389881782,
+    -0.9942562169768401
+  ],
+  "effectiveCount": [
+    17.965892827340358,
+    17.96588162795152
+  ],
+  "logEvidence": [
+    -1.6321708579210137,
+    -1.6321707382982455
+  ],
+  "sameParameterQuantiles": true,
+  "samePressureQuantiles": true,
+  "claim": "prior quadrature sensitivity; not continuous posterior convergence"
+}
