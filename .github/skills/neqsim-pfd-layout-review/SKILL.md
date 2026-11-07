@@ -114,6 +114,23 @@ External utility/driver text uses `data-layout-kind="outside"` on its SVG text e
 intentional outside-symbol placement; it does not waive label collisions, line-through-text, font-size
 or arrowhead checks. Keep this metadata in generated SVG rather than suppressing overflow codes globally.
 
+## Reconciling the layout spec with the rendering (drawing sheets)
+
+A drawing sheet exists as a source spec (`*.layout.json`), a vector file and a raster or PDF page. The verdicts can
+disagree: the spec review says FAIL, while a check of the exported page says PASS or only `RASTER_ONLY`/`NO_STRUCTURE`
+WARN. Rules:
+
+1. The verdict of the spec of the **same revision** governs. A PASS from a raster or a stale file never overrides a FAIL
+   of the spec. Compare file times or hashes: the spec must not be older than the rendering by more than the sidecar
+   tolerance (120 s), otherwise regenerate before judging.
+2. A spec FAIL is cleared only by regenerating from the generator and re-running `neqsim pfd-check` on the new spec.
+   Do not edit the spec by hand to turn it green and do not waive a defect that has a layout fix.
+3. A spec PASS with a visibly defective page is a checker gap: fix the page (generator), list the gap in the review
+   and, when it is generic, add a rule or test to the checker.
+4. Record the reconciliation in `<figure>.review.json`: spec path and hash, rendering path and hash, both verdicts,
+   which governs, and what was changed. Sheets that are maps or charts (`NO_STRUCTURE`) are reviewed by eye and listed
+   as such, never counted as PASS.
+
 ## Where the gate is mandatory
 
 `process-study-report` (BFD/PFD sheets: `process_study_report.build_diagrams` writes
@@ -129,4 +146,5 @@ checker does not judge process correctness, symbol conformance to ISO 10628 or w
 line. Raster images cannot be verified structurally.
 
 See also: `neqsim-report-design-and-visual-qa` (page-level QA), `neqsim-plant-layout-geometry` (plot plans),
-`neqsim-professional-reporting` (report hygiene), agent `pfd-layout-review`.
+`neqsim-professional-reporting` (report hygiene), agent `pfd-layout-review`; reconcile a spec FAIL with a rendering PASS as
+described above.

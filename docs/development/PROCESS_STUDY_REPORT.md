@@ -433,6 +433,8 @@ All paths are relative to `--out`.
 | `inputs/basis.yaml` | The draft basis that was used (edit and pass with `--basis`) |
 | `inputs/cases.yaml` | The cases that were run |
 | `run_summary.json` | Paths, validation status, readiness label, timings, crossings |
+| `handoff/process_basis.json` | Generic machine-readable hand-off (`process_basis.v1`): design cases, stream and equipment tables per case, diagram list with layout-review status, balances, assumptions, data gaps. Downstream document builders read this instead of the Word file |
+| `handoff/stream_table.csv` | Flat stream table (one row per stream and case) from the same hand-off |
 
 ## 6. The agent and the skill
 

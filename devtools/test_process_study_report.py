@@ -167,6 +167,12 @@ def test_pipeline_outputs_and_validation(pipeline):
     with open(os.path.join(out, "report", "report_facts.json"), encoding="utf-8") as fh:
         facts = json.load(fh)
     assert facts["unresolved_references"] == [] and facts["resolved_references"]
+    with open(summary["handoff"]["json"], encoding="utf-8") as fh:
+        handoff = json.load(fh)
+    assert handoff["schema"] == "process_basis.v1"
+    assert handoff["streams"] and handoff["equipment"] and handoff["diagrams"]["pfd_sheets"]
+    assert handoff["report"]["validation_status"] == summary["validation"]
+    assert os.path.exists(summary["handoff"]["stream_table"])
 
 
 def test_component_export_is_complete(demo_data, pipeline):

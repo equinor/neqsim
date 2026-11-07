@@ -73,6 +73,22 @@ template fonts and existing column proportions, except that two-column evidence
 tables allocate more width to the text-heavy column. Short tables stay together;
 long tables can continue with repeated headers. It does not impose a new brand.
 
+## Automated render checks (run on every finished document)
+
+Check the rendered PDF, not the DOCX XML, because layout differs between engines:
+
+| Check | Fail when |
+|---|---|
+| Small table text | any table text below the template minimum at print size (about 8 pt); many small cells hide an oversized table |
+| Overprinting | text boxes overlap other text, drawing frames, stamps or logos; table or figure crosses the margin or the title block |
+| First page | no verdict (status, readiness, headline numbers, decisions) after the cover |
+| Contents | missing or not updated table of contents in a document of more than about ten pages |
+| Reader wording | schema names, field keys, file names, `snake_case` identifiers or tool names appear in the body text |
+| Depth | fewer chapters, tables or figures than the structural minimum of the document type |
+
+Then view a first page, a table page and a figure page of every document. A PASS from a text extraction without
+that view is not visual QA. See `neqsim-professional-reporting` (document-package structural rules).
+
 ## Editorial problems formatting must expose
 
 Serialized dictionaries, machine-generated headings, empty workflow columns,

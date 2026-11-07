@@ -138,13 +138,17 @@ Reply briefly with: the output folder and report path, validation status (counts
 label, the list of open gaps (unconfirmed basis items, unverified standards, NOTE residuals, zero-flow streams), the
 image-based drawing assessment, how to re-run (exact command), and the `results.json` block that was written. Mention
 limitations that matter for the audience (utilities, drivers, vessel sizes, control loops and unmodelled systems).
+Name the machine-readable hand-off (`handoff/process_basis.json`, `handoff/stream_table.csv`) for downstream builders,
+put the verdict (status, readiness, headline numbers, open gaps) on the first page of the document, and keep tool or
+schema wording out of the report body (`neqsim-professional-reporting`, document-package rules).
 
 ## Flow-diagram gate (mandatory)
 
 Every BFD/PFD sheet must pass `@pfd-layout-review` before the report is issued: `neqsim process-report` writes
 `diagrams/layout_review/` (deterministic `neqsim pfd-check` of every sheet). Fix ERRORs (overlaps, label on line, line
 through box, missing arrowheads, tiny text) in the diagram inputs (`layout_overrides`, `pfd_sheets`, unit packing) and
-re-run; explain or fix every WARN; then view each sheet. Do not issue with a FAIL sheet.
+re-run; explain or fix every WARN; then view each sheet. Do not issue with a FAIL sheet. Skills: `neqsim-pfd-layout-review`
+(gate, spec-vs-rendering reconciliation) and `neqsim-report-design-and-visual-qa` (small table text, overprinting).
 
 ## Rules
 
