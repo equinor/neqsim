@@ -41,7 +41,7 @@ INDEX_PATH = SKILLS_DIR / "skill-index.json"
 CANONICAL_MCP = REPO_ROOT / ".github" / "mcp" / "mcp.json"
 VSCODE_MCP = REPO_ROOT / ".vscode" / "mcp.json"
 
-FRONT_MATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
+FRONT_MATTER_RE = af.FRONT_MATTER_RE
 # Agent Skills / Agent Plugins name rule; plugin loaders silently skip violators.
 KEBAB_NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 # Agent plugin ids: lowercase, digits, hyphens; dots are rejected by marketplaces.
@@ -70,36 +70,13 @@ NEGATED_RUNTIME_DIRECTIVE_RE = re.compile(
 
 
 def parse_front_matter(text: str) -> Dict[str, str]:
-    """Return a flat dict of YAML front-matter scalars (no nested support)."""
-    match = FRONT_MATTER_RE.match(text)
-    if not match:
-        return {}
-    out: Dict[str, str] = {}
-    lines = match.group(1).splitlines()
-    index = 0
-    while index < len(lines):
-        line = lines[index]
-        if ":" not in line or line.lstrip().startswith("#"):
-            index += 1
-            continue
-        key, _, value = line.partition(":")
-        key = key.strip()
-        value = value.strip().strip('"').strip("'")
-        if value in {"|", ">"}:
-            block_lines: List[str] = []
-            index += 1
-            while index < len(lines):
-                block_line = lines[index]
-                if block_line and not block_line.startswith((" ", "\t")):
-                    index -= 1
-                    break
-                block_lines.append(block_line.strip())
-                index += 1
-            value = " ".join(part for part in block_lines if part)
-        if key and value:
-            out[key] = value
-        index += 1
-    return out
+    """Return nonempty scalar metadata through the shared frontmatter parser.
+
+    Keep this compatibility wrapper for verifier callers. Skill dependency lists
+    belong to ``extract_required_skills`` and are not scalar metadata.
+    """
+    return {key: value for key, value in af.parse_frontmatter(text).items()
+            if key and isinstance(value, str) and value}
 
 
 def check_skills() -> Tuple[List[str], List[str]]:

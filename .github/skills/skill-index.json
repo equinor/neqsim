@@ -1,4 +1,7 @@
 {
+ "code health maintainability": ["neqsim-code-health"],
+ "safe refactoring duplicate helpers": ["neqsim-safe-refactoring"],
+ "independent source code review": ["neqsim-code-review"],
  "vannduggpunkt med CPA": [
   "neqsim-cpa-water-boundaries"
  ],
@@ -610,6 +613,26 @@
  ],
  "modeling co2 pipelines": [
   "neqsim-ccs-hydrogen"
+ ],
+ "integrated compression power": [
+  "neqsim-power-generation",
+  "neqsim-energy-systems-and-electrification",
+  "neqsim-rotating-equipment-design"
+ ],
+ "gas turbine compressor electric driver": [
+  "neqsim-power-generation",
+  "neqsim-energy-systems-and-electrification",
+  "neqsim-rotating-equipment-design"
+ ],
+ "turbine generator motor": [
+  "neqsim-power-generation",
+  "neqsim-energy-systems-and-electrification",
+  "neqsim-rotating-equipment-design"
+ ],
+ "CompressorPowerTrain": [
+  "neqsim-power-generation",
+  "neqsim-energy-systems-and-electrification",
+  "neqsim-rotating-equipment-design"
  ],
  "modeling gas turbines": [
   "neqsim-power-generation"
@@ -1520,7 +1543,9 @@
   "neqsim-utilities-specification"
  ],
  "cooling water": [
-  "neqsim-utilities-specification"
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
  ],
  "instrument air": [
   "neqsim-utilities-specification"
@@ -2697,24 +2722,24 @@
  "p&id source drawing consistency": [
   "neqsim-pid-quality-review"
  ],
- "integrated compression power": [
-  "neqsim-power-generation",
-  "neqsim-energy-systems-and-electrification",
-  "neqsim-rotating-equipment-design"
+ "seawater heat exchanger": [
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
  ],
- "gas turbine compressor electric driver": [
-  "neqsim-power-generation",
-  "neqsim-energy-systems-and-electrification",
-  "neqsim-rotating-equipment-design"
+ "IAPWS reference water": [
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
  ],
- "turbine generator motor": [
-  "neqsim-power-generation",
-  "neqsim-energy-systems-and-electrification",
-  "neqsim-rotating-equipment-design"
+ "water cooled gas cooler": [
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
  ],
- "CompressorPowerTrain": [
-  "neqsim-power-generation",
-  "neqsim-energy-systems-and-electrification",
-  "neqsim-rotating-equipment-design"
+ "kjolevann sjovann varmeveksler": [
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
  ]
 }

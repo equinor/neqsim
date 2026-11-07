@@ -276,3 +276,15 @@ Without a reference, retain the absolute sidecar and mark the gauge field unassi
 Review the actual tee, spring-relief symbol, both real branch line IDs and discharge battery
 limit in every native P&ID/PFD and graph inventory; no additional control signal belongs on
 this passive valve.
+
+## Compressor automation packages
+
+When the source model contains a compressor, scrubber, cooling and anti-surge
+recycle, follow the [agentic compressor workflow](../../neqsim-compressor-antisurge-recycle/references/agentic-compressor-workflow.md)
+for the coordinated model, rotating, control, safety and independent review
+handoffs. Require the actual physical return and measurement/action graph,
+converged steady results, governed configuration readback and fresh fault/refinement
+runs before attaching dynamic evidence. Preserve the distinction between proposed
+instrument installation, direct model-derived controller inputs and executed
+measurement paths. Coordinate I/O, loops, cause/effect, permissive/reset/bypass
+records and test coverage with the same source revision and native P&ID package.

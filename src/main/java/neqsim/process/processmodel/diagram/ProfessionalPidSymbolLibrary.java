@@ -54,6 +54,10 @@ public final class ProfessionalPidSymbolLibrary {
         && equipment.getInletStreams().size() == 1 && equipment.getOutletStreams().size() == 2) {
       return Family.PIPE_TEE;
     }
+    if (equipment.getClass() == neqsim.process.equipment.mixer.Mixer.class && equipment.getInletStreams().size() == 2
+        && equipment.getOutletStreams().size() == 1) {
+      return Family.PIPE_TEE;
+    }
     if (equipment instanceof Separator) {
       return "horizontal".equalsIgnoreCase(((Separator) equipment).getOrientation()) ? Family.HORIZONTAL_VESSEL
           : Family.VERTICAL_VESSEL;

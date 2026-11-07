@@ -1,0 +1,286 @@
+{
+  "base": "c7deef24d25ac8904fcaabf7bc8992c44ecb00ae",
+  "date": "2026-11-07",
+  "scope": "fail-closed integrity of the existing coupled-aquifer benchmark; no physical or production API change",
+  "baselineFaults": [
+    {
+      "fault": "nan_metric",
+      "accepted": true
+    },
+    {
+      "fault": "corrupt_endpoint",
+      "accepted": true
+    },
+    {
+      "fault": "missing_endpoints",
+      "accepted": true
+    },
+    {
+      "fault": "wrong_identity",
+      "accepted": true
+    }
+  ],
+  "corrected": {
+    "retainedReplays": 64,
+    "verifiedEndpoints": 1920,
+    "testMethods": 8,
+    "faultControls": 71,
+    "surroundingPythonTests": 58,
+    "pytestSubtests": 53,
+    "originalCaseSummariesPreserved": true,
+    "freshCurrentMasterNativeOutputs": "all non-timing fields identical to pinned native.json",
+    "maxIndependentEosClosureBara": 1.0516032489249483e-12,
+    "maxIndependentComponentClosureMol": 3.725290298461914e-09
+  },
+  "coverage": {
+    "tool": "Python standard-library trace --count --missing --summary",
+    "executedAuditLines": 106,
+    "executableAuditLines": 115,
+    "percent": 92,
+    "limit": "line coverage only; subprocess CLI tested but not included in parent trace; no branch/full-coverage claim"
+  },
+  "performance": {
+    "workload": "retained 1920 endpoint JSON; five ABBA blocks; validation overhead only; no simulation speedup claim",
+    "samples": [
+      {
+        "kind": "baseline",
+        "seconds": 0.004343913999036886
+      },
+      {
+        "kind": "candidate",
+        "seconds": 0.009838219004450366
+      },
+      {
+        "kind": "candidate",
+        "seconds": 0.006836396001745015
+      },
+      {
+        "kind": "baseline",
+        "seconds": 0.002107729989802465
+      },
+      {
+        "kind": "baseline",
+        "seconds": 0.0020558719988912344
+      },
+      {
+        "kind": "candidate",
+        "seconds": 0.0066289520036662
+      },
+      {
+        "kind": "candidate",
+        "seconds": 0.007129640012863092
+      },
+      {
+        "kind": "baseline",
+        "seconds": 0.002122360994690098
+      },
+      {
+        "kind": "baseline",
+        "seconds": 0.002315163001185283
+      },
+      {
+        "kind": "candidate",
+        "seconds": 0.006673069001408294
+      },
+      {
+        "kind": "candidate",
+        "seconds": 0.006858530003228225
+      },
+      {
+        "kind": "baseline",
+        "seconds": 0.0021721779921790585
+      },
+      {
+        "kind": "baseline",
+        "seconds": 0.00206894199072849
+      },
+      {
+        "kind": "candidate",
+        "seconds": 0.008056642007431947
+      },
+      {
+        "kind": "candidate",
+        "seconds": 0.007014324990450405
+      },
+      {
+        "kind": "baseline",
+        "seconds": 0.002074849995551631
+      },
+      {
+        "kind": "baseline",
+        "seconds": 0.0019747890037251636
+      },
+      {
+        "kind": "candidate",
+        "seconds": 0.007202801003586501
+      },
+      {
+        "kind": "candidate",
+        "seconds": 0.007043620003969409
+      },
+      {
+        "kind": "baseline",
+        "seconds": 0.002175943009206094
+      }
+    ],
+    "medianSeconds": {
+      "baseline": 0.0021150454922462814,
+      "candidate": 0.007028972497209907
+    }
+  },
+  "originalNumericalBounds": "unchanged .01bara/.05m3 finest errors, .4 refinement with 1e-7 floor, original native component/storage/pore bounds",
+  "integrityBounds": {
+    "diagnosticConsistency": 1e-10,
+    "eosClosureBara": 1e-06,
+    "componentClosureMol": 1e-06,
+    "timeSeconds": 1e-08,
+    "storageClosureBara": 1e-09
+  },
+  "dataProvenance": "retained synthetic SRK matrix and pinned independent reference unchanged; fault fixtures are controlled copies; no measured data admission",
+  "commands": [
+    {
+      "command": "selected Python baseline fault reproducer against unmodified master audit",
+      "exit": 0,
+      "result": "4/4 invalid fixtures accepted before repair"
+    },
+    {
+      "command": "selected Python -m unittest devtools.test_coupled_aquifer_audit -v",
+      "exit": 0,
+      "tests": 8
+    },
+    {
+      "command": "uv run --project devtools --locked --group test devtools/.venv/bin/python -m pytest devtools/test_coupled_aquifer_audit.py devtools/test_engineering_coverage.py devtools/test_engineering_coverage_workflow.py devtools/test_capability_search.py devtools/test_check_documentation_search.py -q",
+      "exit": 0,
+      "tests": 58
+    },
+    {
+      "command": "selected Python -m trace --count --missing --summary --file=/tmp/mbal57/trace-complete.dat --coverdir=/tmp/mbal57/coverage-complete --module unittest devtools.test_coupled_aquifer_audit",
+      "exit": 0
+    },
+    {
+      "command": "selected Python src/test/resources/neqsim/pvtsimulation/coupled-aquifer/run.py",
+      "exit": 0
+    },
+    {
+      "command": "selected Python devtools/run_spotless.py apply",
+      "exit": 0
+    },
+    {
+      "command": "selected Python devtools/run_spotless.py check",
+      "exit": 0
+    },
+    {
+      "command": "selected Python devtools/check_documentation_search.py",
+      "exit": 0,
+      "result": "836 Markdown pages +1HTML"
+    },
+    {
+      "command": "selected Python -m pre_commit run --all-files --hook-stage pre-commit",
+      "exit": 0
+    },
+    {
+      "command": "selected Python -m pre_commit run --all-files --hook-stage pre-push",
+      "exit": 0
+    },
+    {
+      "command": "uv run --project devtools --locked devtools/build_engineering_coverage.py",
+      "exit": 0,
+      "result": "exact current-master inventory blob b2438229a79cca919a1974ad2cb0ed8d71980691"
+    },
+    {
+      "command": "uv run --project devtools --locked devtools/capability_search.py 'coupled aquifer uncertainty' --json",
+      "exit": 0
+    }
+  ],
+  "documentationImpact": "existing indexed guide and benchmark README explain independent row checks and finite native pore diagnostic; no new notebook/API/Javadoc operation",
+  "remainingAcceptance": [
+    "independent measured lab-to-field admission",
+    "wet/critical phase coverage",
+    "joint Bayesian sensitivity/uncertainty",
+    "multi-tank matching after qualified single tank",
+    "full Tran2025 equations and independent benchmark",
+    "merged default-branch final audit"
+  ],
+  "sha256": {
+    "src/test/resources/neqsim/pvtsimulation/coupled-aquifer/audit.py": "0887f954b5b2361a20c2229bb6db71c8b8851b9c470223fc02f454c7595d3a72",
+    "devtools/test_coupled_aquifer_audit.py": "b652001c907441d3cbdf239e162938844fd4a7e772f1a50149f8088347c768ce",
+    "src/test/resources/neqsim/pvtsimulation/coupled-aquifer/reference.json": "498e727b58c16665fa7f6c9c7ffdbdbca4464b7efd161396ac16bf07d6c0201e",
+    "src/test/resources/neqsim/pvtsimulation/coupled-aquifer/native.json": "1c42ca3a7a8553306f08b44bc994a6b7c617b777e83401db6fca4d5025e177bc",
+    "src/test/resources/neqsim/pvtsimulation/coupled-aquifer/audit-integrity-scope.md": "a138610cd68cc73d844b6a46f9e1cdbe009d6779ce8917c9d574861efb837733",
+    "src/test/resources/neqsim/pvtsimulation/coupled-aquifer/audit-integrity-coverage.txt": "906625a6fdf920f902e97b95d6c75dc21f17aec6ad9d684eb896b436ee395ed8"
+  },
+  "publicationGates": [
+    {
+      "name": "spotless-apply",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit": 0,
+      "seconds": 1.8833937830058858
+    },
+    {
+      "name": "spotless-check",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/run_spotless.py",
+        "check"
+      ],
+      "exit": 0,
+      "seconds": 1.8147886539954925
+    },
+    {
+      "name": "docs",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/check_documentation_search.py"
+      ],
+      "exit": 0,
+      "seconds": 1.6462852920085425
+    },
+    {
+      "name": "inventory",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "devtools/build_engineering_coverage.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 1.2877187470003264
+    },
+    {
+      "name": "precommit",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-m",
+        "pre_commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-commit"
+      ],
+      "exit": 0,
+      "seconds": 3.4721809110051254
+    },
+    {
+      "name": "prepush",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "-m",
+        "pre_commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-push"
+      ],
+      "exit": 0,
+      "seconds": 3.9178113039961318
+    }
+  ],
+  "currentMasterReplaySeconds": 97.791497283
+}

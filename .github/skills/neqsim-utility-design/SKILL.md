@@ -183,3 +183,10 @@ wiring any utility flowsheet into a closed optimization loop.
 - [`neqsim-power-generation`](../neqsim-power-generation/SKILL.md) — HRSG / steam-turbine network
 
 - [Utilities design report](../neqsim-utilities-design-report/SKILL.md) — reconcile consumers, simultaneous case loads, supply/distribution, utility-loss scenarios and report acceptance using the main process-report workflow.
+
+## Reference cooling water and seawater
+
+Load [neqsim-cooling-water](../neqsim-cooling-water/SKILL.md) for water-cooled
+process equipment, seawater utilities, reference IAPWS properties, coolant flow
+and pumping. Keep each exchanger side on its own fluid model and distinguish
+fixed-salinity bulk utilities from electrolyte chemistry and salt mixing.

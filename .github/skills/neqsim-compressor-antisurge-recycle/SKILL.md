@@ -1,9 +1,9 @@
 ---
 name: neqsim-compressor-antisurge-recycle
 calculation_basis: "neqsim-java"
-version: 0.4.0
+version: 0.5.0
 description: "Anti-surge recycle for centrifugal compressors in NeqSim: chart generation, AntiSurgeRecycleCalculator, dynamic AntiSurgeController, CompressorAntiSurgeApplication binding, MinimumSpeedRecycleControllerStructure split-range control, speed-solve convergence and recycle power/CO2 savings. USE WHEN: a task must protect a compressor from surge with a recycle loop, coordinate speed and recycle at minimum speed, or value avoided recycle."
-last_verified: "2026-10-18"
+last_verified: "2026-11-07"
 requires:
   python_packages: []
   java_packages:
@@ -30,6 +30,19 @@ that mirrors NeqSim's proportional anti-surge step so an agent can pre-estimate
 the recycle flow and decide whether a chart must be generated first. Real
 control design must use the validated NeqSim equipment classes below and a
 qualified rotating-equipment review (API 617 / API 692).
+
+## Complete compressor automation and P&ID studies
+
+For a request to build a natural-gas compressor train with scrubbers, cooling,
+anti-surge, instrumentation, shutdown tests and professional P&IDs, use the
+[agentic compressor workflow](references/agentic-compressor-workflow.md).
+It coordinates the existing process, rotating-equipment, control, safety and
+independent P&ID review agents. It requires an actual material graph, converged
+steady state, canonical settings applied/read back on native copies, fault and
+refinement tests, source-bound DEXPI 2.0.1/P&ID exports, and automation-engineering
+registers/narratives. Proposed devices and direct compressor-derived inputs are
+separate from executed measurement paths. A controller command alone is not
+recycle-flow or surge-protection evidence.
 
 ## When to Use
 

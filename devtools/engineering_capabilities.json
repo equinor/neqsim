@@ -158,6 +158,32 @@
       "limitations": "Vendor maps, operating envelope and driver limits need separate qualification."
     },
     {
+      "id": "integrated-compression-power",
+      "title": "Integrated gas-turbine and electric compressor power matching",
+      "domain": "process",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.process.equipment.energy.CompressorPowerTrain",
+        "neqsim.process.equipment.compressor.CompressorShaft",
+        "neqsim.process.equipment.powergeneration.gasturbine.GasTurbinePerformanceMap"
+      ],
+      "skills": [
+        "neqsim-power-generation",
+        "neqsim-energy-systems-and-electrification"
+      ],
+      "agents": [
+        "network-energy-systems",
+        "rotating-equipment"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/equipment/energy/CompressorPowerTrainTest.java",
+        "src/test/java/neqsim/process/equipment/compressor/CompressorShaftPowerTrainTest.java",
+        "src/test/java/neqsim/process/equipment/powergeneration/gasturbine/GasTurbineLoadMatchingTest.java",
+        "src/test/java/neqsim/documentation/IntegratedCompressionPowerDocumentationTest.java"
+      ],
+      "limitations": "Stateful Java/Python workflow discovered through runCapability search/inspectApi, not a curated turbine runner. Dedicated steady-state supply matching using existing turbine/motor/generator models; analytical balances and synthetic real-fluid compressor checks do not establish OEM package accuracy. No gas-generator component matching, turbine speed maps, dynamics, shared electrical dispatch or material exhaust stream. See roadmap #4909."
+    },
+    {
       "id": "multi-area-process",
       "title": "Compose a multi-area process",
       "domain": "process",
@@ -362,6 +388,40 @@
         "src/test/java/neqsim/process/engineering/pid/PidPressureReliefScenarioTest.java"
       ],
       "limitations": "Java/JPype object APIs and synthetic ProcessSystem verification; discovery/inspectApi only, no new curated runDynamic JSON execution option. Initial canonical support is an exact native CONVENTIONAL SafetyReliefValve, LINEAR trim and actual two-outlet Splitter relief branch with explicit protected-vessel and downstream-boundary identity. Low-order pressure/hysteresis, lag, dwell and lift-rate response uses native Cv hydraulics, not vendor-certified orifice capacity or mechanical/acoustic chatter dynamics. Configuration, current fault overrides, ordered pop/reseat/flow observations, sampled pressure envelopes and per-vessel consumed-boundary closure remain separate checks. Existing energy FAIL/HOLD cannot be erased by response PASS. Absolute bara native configuration and Pa absolute sizing helpers have distinct unit contracts. No automatic accumulation allowance, SIF/SIL/IPL credit, receiving-tool qualification, ISO/API conformity or construction approval. Native DEXPI gauge set pressure requires an explicit governed atmospheric reference; absolute settings remain in the sidecar if it is absent. Snapshot evidence is limited to covered branch subgraphs while the study's original SetPoint helpers leave whole-train adaptive rollback unsupported. Credited dynamic PSV execution requires finite native transient mode and gas choked-flow capacity limiting enabled; a source proposal or no-demand trace alone cannot prove relief response."
+    },
+    {
+      "id": "instrumented-compressor-automation-study",
+      "title": "Compressor anti-surge, control and shutdown workflow with native P&ID feedback",
+      "domain": "engineering-design",
+      "tool": "inspectApi",
+      "apis": [
+        "neqsim.process.engineering.CompressorAutomationWorkflow",
+        "neqsim.process.util.scenario.CompressorAutomationStudy",
+        "neqsim.process.engineering.pid.PidNativeControlSystem",
+        "neqsim.process.equipment.compressor.CompressorAntiSurgeApplication",
+        "neqsim.process.engineering.pid.PidSafetyFunctionImporter",
+        "neqsim.process.engineering.pid.PidSafetyFunctionValidator"
+      ],
+      "skills": [
+        "neqsim-compressor-antisurge-recycle",
+        "neqsim-dynamic-simulation",
+        "neqsim-pid-process-operations",
+        "neqsim-pid-quality-review",
+        "neqsim-process-safety"
+      ],
+      "agents": [
+        "process-model",
+        "rotating-equipment",
+        "control-system",
+        "safety-depressuring",
+        "pid-quality-review"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/util/scenario/CompressorAutomationStudyTest.java",
+        "src/test/java/neqsim/process/engineering/pid/PidNativeControlSystemTest.java",
+        "src/test/java/neqsim/process/engineering/CompressorAutomationWorkflowTest.java"
+      ],
+      "limitations": "Public packaged Java CLI plus Java/JPype object workflow, with inspectApi discovery only; no new curated MCP runDynamic execution option or PLC application generator. CompressorAutomationWorkflow accepts strict design JSON or public defaults, a new output directory and an optional canonical proposal; supported controls are freshly applied/read back, unsupported SIF-policy edits fail closed, subsets are disclosed, and raw native fingerprints remain distinct from strict normalized-file hashes. The compressor train uses a declared thermodynamic/map/capacity basis, actual recycle gas-Cv hydraulics and finite suction and discharge inventories within its supported execution contract. Quasi-steady compressor maps and explicit driver profile/rate do not establish rotor-inertia, reverse-flow, mechanical/acoustic surge or a complete utility network. Generated maps, assumed valves and study limits remain synthetic until supplied and qualified. Canonical control settings must be applied/read back on an isolated native copy and fresh scenario evidence must match current source/configuration fingerprints. Proposed instrumentation and direct model-derived anti-surge inputs are not executed measurement chains. Expected physical FAILs, no-demand outcomes and numerical/conservation/timestep limits remain separate from software-test success. Agent/skill routing and source/test references are discovery evidence, not standards, vendor, SRS/SIL/IPL, installed independence, receiving-tool or construction qualification."
     },
     {
       "id": "equipment-sizing",
@@ -2051,30 +2111,34 @@
       "limitations": "Discovery and inspectApi only; instance-based Java/JPype evidence, no stateless MCP execution route. Opt-in saturated-vapor-reference isothermal CVD accounting with endpoint-composition gas withdrawals, immutable named observations and optional final liquid analysis bounds. Absent, unresolved and inconsistent liquid states remain explicit. Public Whitson-Torp NS-1 Table1 reproduces calculated final liquid within half its printed digit; experimental methane/C7+ remain incompatible with conservative rounding-only bounds. No EOS tuning, automatic uncertainty model, critical/wet-cell support, independent measured accuracy, separator conversion, field history matching or Tran rescaled-CVD qualification."
     },
     {
-      "id": "integrated-compression-power",
-      "title": "Integrated gas-turbine and electric compressor power matching",
+      "id": "reference-cooling-water",
+      "title": "Reference fresh-water and fixed-salinity seawater cooling",
       "domain": "process",
       "tool": "runCapability",
       "apis": [
-        "neqsim.process.equipment.energy.CompressorPowerTrain",
-        "neqsim.process.equipment.compressor.CompressorShaft",
-        "neqsim.process.equipment.powergeneration.gasturbine.GasTurbinePerformanceMap"
+        "neqsim.thermo.system.SystemWaterIF97",
+        "neqsim.thermo.system.SystemSeawater",
+        "neqsim.thermo.util.steam.SeawaterProperties",
+        "neqsim.thermo.util.steam.CoolingWaterTransport",
+        "neqsim.process.equipment.heatexchanger.WaterCooler",
+        "neqsim.process.equipment.heatexchanger.CoolingWaterSystem",
+        "neqsim.process.equipment.heatexchanger.HeatExchanger"
       ],
       "skills": [
-        "neqsim-power-generation",
-        "neqsim-energy-systems-and-electrification"
+        "neqsim-cooling-water"
       ],
       "agents": [
-        "network-energy-systems",
-        "rotating-equipment"
+        "process-model",
+        "utility-design",
+        "thermo-fluid"
       ],
       "testSources": [
-        "src/test/java/neqsim/process/equipment/energy/CompressorPowerTrainTest.java",
-        "src/test/java/neqsim/process/equipment/compressor/CompressorShaftPowerTrainTest.java",
-        "src/test/java/neqsim/process/equipment/powergeneration/gasturbine/GasTurbineLoadMatchingTest.java",
-        "src/test/java/neqsim/documentation/IntegratedCompressionPowerDocumentationTest.java"
+        "src/test/java/neqsim/thermo/util/steam/CoolingWaterReferenceTest.java",
+        "src/test/java/neqsim/thermo/system/ReferenceCoolingWaterTest.java",
+        "src/test/java/neqsim/process/equipment/heatexchanger/ReferenceWaterHeatExchangerTest.java",
+        "src/test/java/neqsim/documentation/ReferenceCoolingWaterDocumentationTest.java"
       ],
-      "limitations": "Stateful Java/Python workflow discovered through runCapability search/inspectApi, not a curated turbine runner. Dedicated steady-state supply matching using existing turbine/motor/generator models; analytical balances and synthetic real-fluid compressor checks do not establish OEM package accuracy. No gas-generator component matching, turbine speed maps, dynamics, shared electrical dispatch or material exhaust stream. See roadmap #4909."
+      "limitations": "Instance-based Java/JPype process APIs; no new curated MCP executor. Saline utility envelope 273.15-353 K, 1-120 bara, 0-120 g/kg solution. Fixed-salinity bulk mass surrogate, not species-resolved salt mixing, dilution, evaporation, chemistry or scale. Pressure derivatives outside T<=313 K and S<=42 g/kg are extrapolations; high-pressure seawater viscosity multiplier is an engineering extension. Existing secant-Cp NTU, rating and fouling approximations remain; synthetic balance tests and published property checks do not establish field or safety qualification."
     }
   ]
 }
