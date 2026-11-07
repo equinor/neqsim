@@ -70,6 +70,10 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   int outStreamSpecificationNumber = 0;
   public double thermalEffectiveness = 0.0;
   private String flowArrangement = "concentric tube counterflow";
+  /** Last bulk utility compositions, which are not encoded in nominal mole fractions. */
+  private double lastSalinity0 = Double.NaN;
+  /** Last bulk utility composition on side 1 [g/kg solution]. */
+  private double lastSalinity1 = Double.NaN;
   private boolean useDeltaT = false;
   private double deltaT = 1.0;
 
@@ -502,6 +506,10 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     if (firstTime || inStream[0] == null || inStream[1] == null) {
       return true;
     }
+    if (utilitySalinity(inStream[0].getThermoSystem()) != lastSalinity0
+        || utilitySalinity(inStream[1].getThermoSystem()) != lastSalinity1) {
+      return true;
+    }
     if (super.needRecalculation()) {
       return true;
     }
@@ -539,6 +547,10 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
    * stream-1 state so that super.needRecalculation() returns false when inputs are unchanged.
    */
   private void updateLastState() {
+    if (inStream[0] != null && inStream[1] != null) {
+      lastSalinity0 = utilitySalinity(inStream[0].getThermoSystem());
+      lastSalinity1 = utilitySalinity(inStream[1].getThermoSystem());
+    }
     // Save stream 2 state (HeatExchanger-specific)
     if (inStream[1] != null && inStream[1].getThermoSystem() != null) {
       lastInStream2Temperature = inStream[1].getThermoSystem().getTemperature();
@@ -612,7 +624,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       // systemOut1.setTemperature(inTemp1);
       outStream[streamToSet].setThermoSystem(systemOut0);
       outStream[streamToCalculate].setThermoSystem(systemOut1);
-      outStream[streamToSet].setTemperature(inStream[streamToCalculate].getTemperature(), "K");
+      outStream[streamToSet]
+          .setTemperature(capacityEvaluationTemperature(systemOut0, inStream[streamToCalculate].getTemperature()), "K");
       if (!outStream[streamToSet].getSpecification().equals("TP")) {
         outStream[streamToSet].runTPflash();
       }
@@ -622,7 +635,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       double C1 = Math.abs(dEntalphy1) / Math.abs((outStream[streamToSet].getThermoSystem().getTemperature()
           - inStream[streamToSet].getThermoSystem().getTemperature()));
 
-      outStream[streamToCalculate].setTemperature(inStream[streamToSet].getThermoSystem().getTemperature(), "K");
+      outStream[streamToCalculate].setTemperature(
+          capacityEvaluationTemperature(systemOut1, inStream[streamToSet].getThermoSystem().getTemperature()), "K");
       if (!outStream[streamToCalculate].getSpecification().equals("TP")) {
         outStream[streamToCalculate].runTPflash();
       }
@@ -638,7 +652,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
         Cmax = C1;
       }
       double Cr = Cmin / Cmax;
-      if (Math.abs(dEntalphy1) > Math.abs(dEntalphy2)) {
+      boolean referenceUtility = systemOut0 instanceof neqsim.thermo.system.SystemSeawater
+          || systemOut1 instanceof neqsim.thermo.system.SystemSeawater;
+      if (referenceUtility ? C1 > C2 : Math.abs(dEntalphy1) > Math.abs(dEntalphy2)) {
         int streamCHange = streamToCalculate;
         streamToCalculate = streamToSet;
         streamToSet = streamCHange;
@@ -646,6 +662,13 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
 
       double dEntalphy = outStream[streamToSet].getThermoSystem().getEnthalpy()
           - inStream[streamToSet].getThermoSystem().getEnthalpy();
+
+      // A saline stream must not be evaluated at a fictitious hot-feed temperature
+      // outside its range. Its secant Cp uses a bounded liquid interval; Qmax still
+      // uses the actual inlet temperature difference, as required by the NTU model.
+      if (referenceUtility) {
+        dEntalphy = Cmin * (inStream[streamToCalculate].getTemperature() - inStream[streamToSet].getTemperature());
+      }
 
       // Rating mode: compute UA from correlations instead of using user-supplied value
       if (designMode == DesignMode.RATING && ratingCalculator != null && ratingArea > 0) {
@@ -701,6 +724,38 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     publishHeatDuty();
     updateLastState();
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Returns the bulk utility composition parameter, or zero for ordinary mixtures.
+   *
+   * @param fluid stream fluid, which may be null during equipment setup
+   * @return salinity [g/kg solution]
+   */
+  private static double utilitySalinity(SystemInterface fluid) {
+    return fluid instanceof neqsim.thermo.system.SystemSeawater
+        ? ((neqsim.thermo.system.SystemSeawater) fluid).getSalinity()
+        : 0.0;
+  }
+
+  /**
+   * Keeps the capacity-rate probe of a saline utility inside its liquid property envelope.
+   *
+   * @param fluid fluid whose heat-capacity rate is being estimated
+   * @param oppositeTemperature opposite inlet temperature [K]
+   * @return temperature for the existing secant heat-capacity approximation [K]
+   * @throws IllegalStateException if the utility has no remaining temperature interval inside the model envelope
+   */
+  private static double capacityEvaluationTemperature(SystemInterface fluid, double oppositeTemperature) {
+    if (!(fluid instanceof neqsim.thermo.system.SystemSeawater)) {
+      return oppositeTemperature;
+    }
+    double limit = Math.max(273.15, Math.min(353.0, oppositeTemperature));
+    if (Math.abs(limit - fluid.getTemperature()) < 1e-10
+        && Math.abs(oppositeTemperature - fluid.getTemperature()) > 1e-10) {
+      throw new IllegalStateException("Seawater capacity evaluation has no interval inside 273.15-353 K");
+    }
+    return limit;
   }
 
   /**
@@ -1074,14 +1129,16 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       double[] capacities = new double[2];
       for (int side = 0; side < 2; side++) {
         SystemInterface limit = inlet[side].clone();
-        limit.setTemperature(inlet[1 - side].getTemperature());
+        double evaluationTemperature = capacityEvaluationTemperature(limit, inlet[1 - side].getTemperature());
+        limit.setTemperature(evaluationTemperature);
         new ThermodynamicOperations(limit).TPflash();
         limit.initProperties();
         requireSinglePhaseRatingState(limit);
         if (limit.getPhase(0).getType() != inlet[side].getPhase(0).getType()) {
           throw new IllegalStateException("Rating temperature interval crosses a phase transition on side " + side);
         }
-        capacities[side] = Math.abs((limit.getEnthalpy() - inletEnthalpy[side]) / temperatureDifference);
+        capacities[side] = Math
+            .abs((limit.getEnthalpy() - inletEnthalpy[side]) / (evaluationTemperature - inlet[side].getTemperature()));
         if (!Double.isFinite(capacities[side]) || capacities[side] <= 0.0) {
           throw new IllegalStateException("Thermal-hydraulic rating requires positive finite heat capacity rates");
         }
@@ -1279,17 +1336,19 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     // latent heat (e.g. condensation of a cooled hydrocarbon) is captured. The heat-capacity rate
     // is the secant |dH|/dTspan, matching the definition used in HeatExchanger.run().
     SystemInterface hotAtColdIn = hotSys.clone();
-    hotAtColdIn.setTemperature(tColdInK);
+    double hotProbeTemperature = capacityEvaluationTemperature(hotAtColdIn, tColdInK);
+    hotAtColdIn.setTemperature(hotProbeTemperature);
     new ThermodynamicOperations(hotAtColdIn).TPflash();
     double dHhotFull = hotAtColdIn.getEnthalpy() - hHotIn;
 
     SystemInterface coldAtHotIn = coldSys.clone();
-    coldAtHotIn.setTemperature(tHotInK);
+    double coldProbeTemperature = capacityEvaluationTemperature(coldAtHotIn, tHotInK);
+    coldAtHotIn.setTemperature(coldProbeTemperature);
     new ThermodynamicOperations(coldAtHotIn).TPflash();
     double dHcoldFull = coldAtHotIn.getEnthalpy() - hColdIn;
 
-    double cHot = (dTspan > 0.0) ? Math.abs(dHhotFull) / dTspan : 0.0;
-    double cCold = (dTspan > 0.0) ? Math.abs(dHcoldFull) / dTspan : 0.0;
+    double cHot = (dTspan > 0.0) ? Math.abs(dHhotFull / (hotProbeTemperature - tHotInK)) : 0.0;
+    double cCold = (dTspan > 0.0) ? Math.abs(dHcoldFull / (coldProbeTemperature - tColdInK)) : 0.0;
     double cMin = Math.min(cHot, cCold);
     double cMax = Math.max(cHot, cCold);
     double cr = (cMax > 0.0) ? cMin / cMax : 0.0;
@@ -1298,6 +1357,10 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     // effectiveness-NTU balance; the other is solved by PHflash, mirroring HeatExchanger.run().
     boolean setIsHot = cHot <= cCold;
     double dHset = setIsHot ? dHhotFull : dHcoldFull;
+    if (hotSys instanceof neqsim.thermo.system.SystemSeawater
+        || coldSys instanceof neqsim.thermo.system.SystemSeawater) {
+      dHset = (setIsHot ? -1.0 : 1.0) * cMin * dTspan;
+    }
     SystemInterface sysSet = setIsHot ? hotSys : coldSys;
     SystemInterface sysCalc = setIsHot ? coldSys : hotSys;
     double hSetIn = setIsHot ? hHotIn : hColdIn;

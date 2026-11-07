@@ -8,6 +8,7 @@ phase-specific transport model and interfacial model as separate choices.
 
 | Need | Guide | Executable source evidence |
 | --- | --- | --- |
+| Fresh-water and seawater cooling | `docs/process/equipment/reference_cooling_water.md` | `CoolingWaterReferenceTest`, `ReferenceWaterHeatExchangerTest` |
 | Model sets and initialization | `docs/physical_properties/README.md` | `src/test/java/neqsim/physicalproperties/PhysicalPropertiesPackageDocumentationTest.java` |
 | Viscosity and tuning | `docs/physical_properties/viscosity_models.md` | Search tests for the selected model, including the package documentation test |
 | Conductivity | `docs/physical_properties/thermal_conductivity_models.md` | Inspect the selected model's tests and applicable fluid range |

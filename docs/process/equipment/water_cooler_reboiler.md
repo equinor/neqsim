@@ -14,90 +14,22 @@ Documentation for specialized heat exchangers: WaterCooler for seawater/cooling 
 
 ## Water Cooler
 
-**Location:** `neqsim.process.equipment.heatexchanger.WaterCooler`
+`neqsim.process.equipment.heatexchanger.WaterCooler` calculates cooling utility
+flow from the process duty and reference-water enthalpy rise. Fresh water is the
+default; `setCoolingWaterSalinity(35.0)` selects 35 g/kg solution seawater using
+IF97 water plus the IAPWS-08 saline Gibbs contribution. The process-side fluid
+retains its own thermodynamic and physical-property models.
 
-The `WaterCooler` class models process coolers using seawater or cooling water, with automatic calculation of cooling water flow rate using IAPWS IF97 steam tables.
+Use `setOutletTemperature(value, unit)` for the process target and configure
+`setWaterInletTemperature`, `setWaterOutletTemperature` and `setWaterPressure`.
+The return temperature must exceed the supply temperature. Unsupported states,
+non-finite inputs and a heating duty are rejected. Mass-flow units and actual
+inlet-volume units are supported; standard gas-volume units are rejected.
 
-### Features
-
-- Uses IAPWS IF97 for accurate water properties
-- Automatic cooling water flow calculation
-- Configurable water inlet/outlet temperatures
-- Forces water property model on streams
-
-### Java Example
-
-```java
-import neqsim.process.equipment.heatexchanger.WaterCooler;
-
-// Create process stream to be cooled
-Stream hotStream = new Stream("Hot Process Gas", processFluid);
-hotStream.setTemperature(120.0, "C");
-hotStream.setFlowRate(5000.0, "kg/hr");
-hotStream.run();
-
-// Create water cooler
-WaterCooler cooler = new WaterCooler("E-201", hotStream);
-
-// Set process side outlet temperature
-cooler.setOutTemperature(40.0, "C");
-
-// Configure cooling water conditions
-cooler.setWaterInletTemperature(15.0, "C");    // Seawater inlet
-cooler.setWaterOutletTemperature(25.0, "C");   // Seawater outlet
-cooler.setWaterPressure(3.0, "bara");          // Cooling water pressure
-
-cooler.run();
-
-// Get results
-double duty = -cooler.getDuty() / 1000.0;  // kW (negative for cooling)
-double cwFlow = cooler.getCoolingWaterFlowRate("kg/hr");
-
-System.out.println("Cooling duty: " + duty + " kW");
-System.out.println("Cooling water flow: " + cwFlow + " kg/hr");
-```
-
-### Python Example
-
-```python
-from neqsim import jneqsim
-
-WaterCooler = jneqsim.process.equipment.heatexchanger.WaterCooler
-
-# Create water cooler
-cooler = WaterCooler("E-201", hot_stream)
-cooler.setOutTemperature(40.0, "C")
-
-# Configure cooling water
-cooler.setWaterInletTemperature(15.0, "C")
-cooler.setWaterOutletTemperature(25.0, "C")
-cooler.setWaterPressure(3.0, "bara")
-
-cooler.run()
-
-print(f"Duty: {-cooler.getDuty()/1000:.1f} kW")
-print(f"CW flow: {cooler.getCoolingWaterFlowRate('kg/hr'):.0f} kg/hr")
-```
-
-### Calculation Basis
-
-The cooling water flow rate is calculated using IAPWS IF97:
-
-$$\dot{m}_{cw} = \frac{Q}{h_{out} - h_{in}}$$
-
-Where:
-- $Q$ = Heat duty from process side (W)
-- $h_{out}$ = Enthalpy of cooling water at outlet (kJ/kg)
-- $h_{in}$ = Enthalpy of cooling water at inlet (kJ/kg)
-
-### Typical Applications
-
-| Application | CW Inlet (°C) | CW Outlet (°C) | Notes |
-|-------------|---------------|----------------|-------|
-| Seawater (North Sea) | 4-12 | 20-30 | Seasonal variation |
-| Seawater (Gulf) | 25-32 | 35-45 | Higher temperatures |
-| Cooling tower | 25-30 | 35-40 | Closed loop |
-| River water | 10-20 | 25-35 | Environmental limits |
+See [Reference water and seawater cooling](reference_cooling_water) for the
+complete compiled/executed Java example, two-stream `HeatExchanger` setup,
+plant-level `CoolingWaterSystem` sizing, equations, units and validity limits.
+A `WATER` physical-property enum does not by itself replace EOS heat capacity.
 
 ---
 
