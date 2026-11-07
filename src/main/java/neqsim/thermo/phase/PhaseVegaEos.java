@@ -107,7 +107,11 @@ public class PhaseVegaEos extends PhaseEos {
     propertiesCalculated = false;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseVegaEos clone() {
     PhaseVegaEos clonedPhase = null;
@@ -115,11 +119,10 @@ public class PhaseVegaEos extends PhaseEos {
       clonedPhase = (PhaseVegaEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseVegaEos", ex);
     }
     // Invalidate cached state in clone to force fresh calculations
-    if (clonedPhase != null) {
-      clonedPhase.invalidateCache();
-    }
+    clonedPhase.invalidateCache();
 
     return clonedPhase;
   }

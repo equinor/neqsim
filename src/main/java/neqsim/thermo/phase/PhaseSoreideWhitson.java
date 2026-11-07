@@ -21,7 +21,11 @@ public class PhaseSoreideWhitson extends PhasePrEos {
     thermoPropertyModelName = "Soreide-Whitson-PR-EoS";
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseSoreideWhitson clone() {
     PhaseSoreideWhitson clonedPhase = null;
@@ -29,6 +33,7 @@ public class PhaseSoreideWhitson extends PhasePrEos {
       clonedPhase = (PhaseSoreideWhitson) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseSoreideWhitson", ex);
     }
     return clonedPhase;
   }

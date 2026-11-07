@@ -42,7 +42,11 @@ public class AttractiveTermPrLeeKesler extends AttractiveTermPr {
         - 0.176 * component.getAcentricFactor() * component.getAcentricFactor();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public AttractiveTermPrLeeKesler clone() {
     AttractiveTermPrLeeKesler attractiveTerm = null;
@@ -50,6 +54,7 @@ public class AttractiveTermPrLeeKesler extends AttractiveTermPr {
       attractiveTerm = (AttractiveTermPrLeeKesler) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of AttractiveTermPrLeeKesler", ex);
     }
     return attractiveTerm;
   }

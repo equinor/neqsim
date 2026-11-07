@@ -75,6 +75,7 @@ files; do not rewrite tags or use a publishing dispatch as a migration smoke tes
 
 | Workflow | Actions Display Name | Events | Responsibility and Side Effects |
 |---|---|---|---|
+| [ai-code-health.yml](workflows/ai-code-health.yml) | [AI] Code Health | PR, push, manual | Source dependency contracts, reviewed debt baseline, PMD/SpotBugs findings, protected coding-grader smoke tests and evidence artifacts; never commits or pushes. |
 | [ai-devtools-python-tests.yml](workflows/ai-devtools-python-tests.yml) | [AI] Devtools Python Tests | PR, push | Python toolkit, hermetic agent installation/discovery, production guard, and ledger tests. |
 | [ai-skills-and-agents-lint.yml](workflows/ai-skills-and-agents-lint.yml) | [AI] Skills and Agents Lint | PR, push | Agent/skill structure, API references, and mapping consistency. |
 | [ai-engineering-capability-coverage.yml](workflows/ai-engineering-capability-coverage.yml) | [AI] Engineering Capability Coverage | PR, push | Rebuilds, validates and retains the engineering capability inventory as an artifact. A conditional step updates eligible same-repository PR branches; default-branch, fork and Dependabot runs never push. |

@@ -33,6 +33,12 @@
   load only the relevant skill sections. In plugin/MCP-only sessions use runtime discovery.
   Read [the discovery guide](docs/development/AGENT_CAPABILITY_DISCOVERY.md) before declaring
   functionality absent. Routing coverage and test references do not establish qualification.
+- **Code health is a default Java coding gate:** before publishing Java source/test or Maven changes,
+  run the current source, PMD and SpotBugs checks in `docs/development/CODE_HEALTH.md` with the
+  workflow-pinned analysis JDK and reviewed base-branch baseline. Generate fresh reports;
+  missing input, runtime mismatch or new findings are not a pass. Keep `pom.xml` and
+  `pomJava8.xml` coordinated and test dependency changes on actual Java 8. Never refresh the
+  baseline merely to make a PR green. Record commands and exact-head results.
 - **Agent/MCP coverage:** `src/main/resources/neqsim/mcp/engineering-coverage.json` is a generated snapshot,
   not a source of truth. After Java formatting or agent/skill mapping changes, regenerate it with
   `uv run --project devtools --locked devtools/build_engineering_coverage.py` and stage the output.
@@ -64,6 +70,12 @@
   private repo `equinor/FluidMagic` (own GitHub SSO; `gh repo clone equinor/FluidMagic`,
   `pip install -e FluidMagic/fluidmagic`). Never `pip install fluidmagic`; if `import fluidmagic`
   fails, tell the user how to get it and fall back to the offline hand-off.
+
+## Maintaining source code
+
+Use `@code-health` for measured debt triage, `@refactor` for bounded source changes,
+and `@code-review` for independent code review. Commands and baseline policy live in
+[docs/development/CODE_HEALTH.md](docs/development/CODE_HEALTH.md).
 
 ## Running calculations
 

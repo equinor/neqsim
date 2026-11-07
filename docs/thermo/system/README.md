@@ -362,6 +362,11 @@ SystemInterface copy = fluid.clone();
 copy.setTemperature(400.0);
 ```
 
+The repaired system, phase and component clone wrappers propagate required-state
+copy failures with `IllegalStateException` context and retain the original cause
+instead of returning null or a partially copied fluid. Successful deep copies
+retain their normal independent phase, component and physical-property state.
+
 EOS component clones retain independent attraction and covolume derivative work
 arrays. Initializing a clone at a different temperature therefore cannot overwrite
 the source component's cached composition curvature. Ordinary SRK-CPA component

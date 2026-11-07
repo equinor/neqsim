@@ -24,6 +24,8 @@ import neqsim.process.engineering.pid.PidPhysicalProjection.Attachment;
 import neqsim.process.engineering.pid.PidSimulationBindings;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.controllerdevice.AntiSurgeController;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.valve.SafetyReliefValve;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -178,7 +180,8 @@ public final class ProfessionalPidDiagramRenderer {
     }
     List<ProcessEquipmentInterface> primary = new ArrayList<ProcessEquipmentInterface>();
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-      if (!(unit instanceof StreamInterface) && !(unit instanceof ThrottlingValve) && !supportedReliefTee(unit)) {
+      if (!(unit instanceof StreamInterface) && !(unit instanceof ThrottlingValve) && !supportedReliefTee(unit)
+          && !supportedSuctionMixer(unit)) {
         primary.add(unit);
       }
     }
@@ -215,6 +218,15 @@ public final class ProfessionalPidDiagramRenderer {
               String.format(Locale.ROOT, "%03d", Integer.valueOf(nextSheet + detailIndex / 4)));
         }
         nextSheet += (details.size() + 3) / 4;
+      }
+    }
+    for (ProcessEquipmentInterface junction : process.getUnitOperations()) {
+      if (supportedSuctionMixer(junction)) {
+        ProcessEquipmentInterface receiver = soleConsumer(junction.getOutletStreams().get(0));
+        mainSheetNumbers.put(junction.getName(), mainSheetNumbers.get(receiver.getName()));
+      } else if (supportedReliefTee(junction)) {
+        ProcessEquipmentInterface source = producers.get(junction.getInletStreams().get(0));
+        mainSheetNumbers.put(junction.getName(), mainSheetNumbers.get(source.getName()));
       }
     }
     for (ProcessEquipmentInterface unit : primary) {
@@ -266,6 +278,22 @@ public final class ProfessionalPidDiagramRenderer {
   }
 
   /**
+   * Counts actual primary units, excluding only explicitly supported source-backed piping junctions.
+   *
+   * @return number of primary equipment symbols required by the overview
+   */
+  public int getPrimaryEquipmentCount() {
+    int count = 0;
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (!(unit instanceof StreamInterface) && !(unit instanceof ThrottlingValve) && !supportedReliefTee(unit)
+          && !supportedSuctionMixer(unit)) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  /**
    * Renders a source-only A1 PFD overview for a small, forward-flow train.
    *
    * <p>
@@ -284,7 +312,8 @@ public final class ProfessionalPidDiagramRenderer {
     }
     List<ProcessEquipmentInterface> primary = new ArrayList<ProcessEquipmentInterface>();
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-      if (!(unit instanceof StreamInterface) && !(unit instanceof ThrottlingValve) && !supportedReliefTee(unit)) {
+      if (!(unit instanceof StreamInterface) && !(unit instanceof ThrottlingValve) && !supportedReliefTee(unit)
+          && !supportedSuctionMixer(unit)) {
         primary.add(unit);
       }
     }
@@ -293,11 +322,17 @@ public final class ProfessionalPidDiagramRenderer {
     }
     Scene scene = new Scene(project.getProjectId() + "-PFD-001", "Process flow diagram", "001", "pfd");
     Map<String, Node> actualNodes = new LinkedHashMap<String, Node>();
+    boolean recycleTrain = false;
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      recycleTrain |= supportedSuctionMixer(unit);
+    }
     for (int index = 0; index < primary.size(); index++) {
       ProcessEquipmentInterface unit = primary.get(index);
       Family family = ProfessionalPidSymbolLibrary.family(unit);
-      Node node = scene.node(unit.getName(), family, 145 + (4 - primary.size()) * 87.5 + index * 175, 250,
-          family == Family.HORIZONTAL_VESSEL ? 70 : 42,
+      Node node = scene.node(unit.getName(), family,
+          recycleTrain && primary.size() == 4 ? new double[] {175, 350, 500, 650}[index]
+              : 145 + (4 - primary.size()) * 87.5 + index * 175,
+          250, family == Family.HORIZONTAL_VESSEL ? 70 : 42,
           family == Family.VERTICAL_VESSEL ? 80 : family == Family.HORIZONTAL_VESSEL ? 50 : 42, unit.getName());
       actualNodes.put(unit.getName(), node);
       scene.centered(node.x, 195, unit.getClass().getSimpleName(), 3, null);
@@ -307,7 +342,8 @@ public final class ProfessionalPidDiagramRenderer {
       ProcessEquipmentInterface reliefTee = reliefTee(
           unit instanceof Separator ? ((Separator) unit).getGasOutStream() : null);
       if (reliefTee != null) {
-        Node teeNode = scene.node(reliefTee.getName(), Family.PIPE_TEE, node.x + 53, 250, 6, 6, "");
+        Node teeNode = scene.node(reliefTee.getName(), Family.PIPE_TEE, recycleTrain ? node.x + 60 : node.x + 53, 250,
+            6, 6, "");
         actualNodes.put(reliefTee.getName(), teeNode);
         scene.centered(teeNode.x, 280, reliefTee.getName(), 3, null);
       }
@@ -318,11 +354,31 @@ public final class ProfessionalPidDiagramRenderer {
               scene.node(valve.getName(), Family.RELIEF_VALVE, node.x + 155, 175, 16, 10, valve.getName()));
           continue;
         }
+        if (reliefTee != null && isActualAntiSurgeValve(valve)) {
+          actualNodes.put(valve.getName(), scene.node(valve.getName(), ProfessionalPidSymbolLibrary.family(valve),
+              node.x, 150, 16, 10, valve.getName()));
+          continue;
+        }
         boolean liquid = unit instanceof Separator
             && unit.getOutletStreams().indexOf(valve.getInletStreams().get(0)) > 0;
         Node valveNode = scene.node(valve.getName(), ProfessionalPidSymbolLibrary.family(valve),
             liquid ? node.x + 55 : node.x + 85, liquid ? 400 : 250, 16, 10, valve.getName());
         actualNodes.put(valve.getName(), valveNode);
+      }
+    }
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (supportedSuctionMixer(unit)) {
+        Node receiver = actualNodes.get(soleConsumer(unit.getOutletStreams().get(0)).getName());
+        Node merge = scene.node(unit.getName(), Family.PIPE_TEE, receiver.x - 60, receiver.y, 6, 6, "");
+        actualNodes.put(unit.getName(), merge);
+        scene.centered(merge.x, merge.y + 30, unit.getName(), 3, null);
+        for (StreamInterface inlet : unit.getInletStreams()) {
+          ProcessEquipmentInterface upstream = producers.get(inlet);
+          if (upstream instanceof ThrottlingValve && !isActualAntiSurgeValve(upstream)) {
+            actualNodes.put(upstream.getName(), scene.node(upstream.getName(),
+                ProfessionalPidSymbolLibrary.family(upstream), merge.x - 35, merge.y, 16, 10, upstream.getName()));
+          }
+        }
       }
     }
     // Direct upstream valves are real source equipment too. A valve already
@@ -400,10 +456,10 @@ public final class ProfessionalPidDiagramRenderer {
         continue;
       }
       if (from == null && to != null) {
-        from = scene.node("pfd-in:" + stream.getName(), Family.TERMINAL, to.x - 85, to.y, 50, 15, "FEED");
+        from = scene.node("pfd-in:" + stream.getName(), Family.TERMINAL, Math.max(45, to.x - 85), to.y, 36, 15, "FEED");
       } else if (to == null && from != null) {
         boolean liquidOutlet = producer instanceof Separator && producer.getOutletStreams().indexOf(stream) > 0;
-        to = scene.node("pfd-out:" + stream.getName(), Family.TERMINAL, Math.min(805, from.x + 85),
+        to = scene.node("pfd-out:" + stream.getName(), Family.TERMINAL, Math.min(790, from.x + 85),
             liquidOutlet ? 400 : from.y, 50, 15, "PRODUCT");
       }
       if (from == null || to == null) {
@@ -411,16 +467,31 @@ public final class ProfessionalPidDiagramRenderer {
         continue;
       }
       boolean upwardRelief = producer != null && supportedReliefTee(producer) && consumer != null
-          && consumer.getClass() == SafetyReliefValve.class;
+          && (consumer.getClass() == SafetyReliefValve.class || isActualAntiSurgeValve(consumer));
+      boolean returningRecycle = isActualAntiSurgeValve(producer) && supportedSuctionMixer(consumer);
       boolean downward = to.y > from.y;
       boolean vertical = downward && Math.abs(from.x - to.x) < .01;
-      scene.route(from, upwardRelief ? "t" : downward ? "b" : "r", to, vertical ? "t" : "l", stream.getName(), false,
-          upwardRelief ? points(from.top(), new Point(from.x, to.y), to.left())
-              : downward && !vertical ? points(from.bottom(), new Point(from.x, to.y), to.left()) : null);
-      scene.centered(upwardRelief ? (from.x + to.x) / 2 : downward ? from.x + 38 : (from.right().x + to.left().x) / 2,
-          upwardRelief ? to.y - 28
-              : downward ? (from.bottom().y + to.top().y) / 2 : from.y - (to.left().x - from.right().x < 40 ? 40 : 14),
-          stream.getName(), 3, null);
+      if (returningRecycle) {
+        scene.route(from, "l", to, "t", stream.getName(), false,
+            points(from.left(), new Point(to.x, from.y), to.top()));
+        scene.centered((from.x + to.x) / 2, from.y - 14, stream.getName(), 3, null);
+      } else if (upwardRelief && to.x < from.x) {
+        scene.route(from, "t", to, "r", stream.getName(), false,
+            points(from.top(), new Point(from.x, to.y), to.right()));
+        scene.centered(from.x + 25, (from.y + to.y) / 2, stream.getName(), 3, null);
+      } else {
+        scene.route(from, upwardRelief ? "t" : downward ? "b" : "r", to, vertical ? "t" : "l", stream.getName(), false,
+            upwardRelief ? points(from.top(), new Point(from.x, to.y), to.left())
+                : downward && !vertical ? points(from.bottom(), new Point(from.x, to.y), to.left()) : null);
+        scene.centered(
+            producer != null && supportedReliefTee(producer) && !upwardRelief ? (from.x + to.x) / 2 + 15
+                : upwardRelief ? (from.x + to.x) / 2 : downward ? from.x + 38 : (from.right().x + to.left().x) / 2,
+            producer != null && supportedReliefTee(producer) && !upwardRelief ? from.y + 42
+                : upwardRelief ? to.y - 28
+                    : downward ? (from.bottom().y + to.top().y) / 2
+                        : from.y - (to.left().x - from.right().x < 40 ? 40 : 14),
+            stream.getName(), 3, null);
+      }
     }
     scene.text(25, 92,
         "NORMAL OPERATING DATA - source simulation; design conditions and safeguards require separate review", 3.5,
@@ -439,8 +510,6 @@ public final class ProfessionalPidDiagramRenderer {
     for (int index = 0; index < streamTable.size(); index++) {
       StreamInterface stream = streamTable.get(index);
       if (index >= 18) {
-        geometryError("PFD_STREAM_TABLE_OVERFLOW", "Stream data require an additional controlled sheet",
-            stream.getName());
         break;
       }
       scene.text(
@@ -449,7 +518,22 @@ public final class ProfessionalPidDiagramRenderer {
           3, null);
     }
     scene.finish();
-    assessLayout(scene.spec);
+    for (int offset = 18; offset < streamTable.size(); offset += 30) {
+      String number = String.format(Locale.ROOT, "%03d", Integer.valueOf(2 + (offset - 18) / 30));
+      Scene data = new Scene(project.getProjectId() + "-PFD-" + number, "Process flow stream data", number, "pfd");
+      data.text(25, 90, "CONTINUED FROM PFD-001 | normal operating values; independent design basis: HOLD", 3.5, null);
+      data.text(25, 110, "STREAM | pressure bara | temperature C | mass flow kg/h", 3.5, null);
+      for (int row = offset; row < Math.min(offset + 30, streamTable.size()); row++) {
+        StreamInterface stream = streamTable.get(row);
+        data.text(25, 130 + (row - offset) * 12, String.format(Locale.ROOT, "%s  |  %.4f  |  %.3f  |  %.4f",
+            stream.getName(), stream.getPressure("bara"), stream.getTemperature("C"), stream.getFlowRate("kg/hr")), 3,
+            null);
+      }
+      data.finish();
+    }
+    for (Map<String, Object> layout : layouts.values()) {
+      assessLayout(layout);
+    }
     verifySourceCoverage();
     return nativeRenderer.renderScenes(pages, diagnostics, Arrays.asList("DRAWING_SHEET_BOUNDS", "MATERIAL_ENDPOINTS",
         "TEXT_TEXT_AND_TEXT_ROUTE_INTERSECTIONS", "ORTHOGONAL_ROUTE_INTERSECTIONS"));
@@ -520,6 +604,12 @@ public final class ProfessionalPidDiagramRenderer {
     int inlet = 0;
     for (StreamInterface stream : unit.getInletStreams()) {
       double y = 280 + inlet * 45;
+      ProcessEquipmentInterface inletProducer = producers.get(stream);
+      if (supportedSuctionMixer(inletProducer)) {
+        renderSuctionMixer(scene, body, inletProducer, stream, valveNodes);
+        inlet++;
+        continue;
+      }
       List<PidElement> inline = inline(unit.getName(), stream.getName(), "INLET");
       StreamInterface sourceStream = stream;
       if (!inline.isEmpty()) {
@@ -696,11 +786,13 @@ public final class ProfessionalPidDiagramRenderer {
     placeSharedFunctions(scene, placed);
     for (PidElement element : model.getElementsForEquipment(unit.getName())) {
       Attachment attachment = projection.getAttachments().get(element.getTag());
-      if (attachment.getKind() == PidPhysicalProjection.Kind.FUNCTION && !placed.contains(element.getTag())) {
+      if (attachment.getKind() == PidPhysicalProjection.Kind.FUNCTION && !placed.contains(element.getTag())
+          && !localCommandOutput(element)) {
         double y = 200 + row++ * 36;
         if (y <= 425) {
-          scene.instrument(element, 640, y);
+          Node function = scene.instrument(element, 640, y);
           placed.add(element.getTag());
+          placeLocalCommand(scene, element, function, placed);
         }
       }
     }
@@ -773,6 +865,8 @@ public final class ProfessionalPidDiagramRenderer {
       ProcessEquipmentInterface found = null;
       for (ProcessEquipmentInterface unit : primary) {
         boolean owns = downstreamValves(unit).contains(actual);
+        PidElement canonicalValve = proposals.get(actual.getName());
+        owns |= canonicalValve != null && unit.getName().equals(canonicalValve.getEquipmentTag());
         for (PidElement inlet : model.getElementsForEquipment(unit.getName())) {
           Attachment location = projection.getAttachments().get(inlet.getTag());
           owns |= location.getKind() == PidPhysicalProjection.Kind.EXISTING_EQUIPMENT
@@ -1076,13 +1170,60 @@ public final class ProfessionalPidDiagramRenderer {
       PidElement child = byId(id);
       if (child != null
           && projection.getAttachments().get(child.getTag()).getKind() == PidPhysicalProjection.Kind.FUNCTION
-          && incomingInstruments(child).size() <= 1 && !placed.contains(child.getTag())) {
+          && child.getEquipmentTag().equals(scene.spec.get("subjectTag")) && incomingInstruments(child).size() <= 1
+          && !placed.contains(child.getTag())) {
         Node function = scene.instrument(child, x, y);
         scene.route(measurement, "r", function, "l", "signal:" + sensor.getTag() + ":" + child.getTag(), true, null);
         placed.add(child.getTag());
+        placeLocalCommand(scene, child, function, placed);
         String signal = signalId(sensor.getTag(), child.getTag());
         signalSources.add(signal);
         signalTargets.add(signal);
+      }
+    }
+  }
+
+  /**
+   * Tests an actual native actuator-command function that is drawn beside its owning local controller.
+   *
+   * @param function canonical command
+   * @return true only for the bounded source-backed controller-to-command relation
+   */
+  private boolean localCommandOutput(PidElement function) {
+    if (!function.getAttributes().containsKey("nativeActuatorRole")) {
+      return false;
+    }
+    for (PidElement candidate : model.getElementsForEquipment(function.getEquipmentTag())) {
+      if (candidate.getType() == PidElementType.CONTROLLER
+          && candidate.getConnectedElementIds().contains(function.getId())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Draws a real local PIC/TIC-to-native-command link directly, preserving remote signal continuations elsewhere.
+   *
+   * @param scene current equipment sheet
+   * @param controller canonical actual controller
+   * @param node controller function symbol
+   * @param placed functions already drawn on this sheet
+   */
+  private void placeLocalCommand(Scene scene, PidElement controller, Node node, Set<String> placed) {
+    if (controller.getType() != PidElementType.CONTROLLER) {
+      return;
+    }
+    for (String id : controller.getConnectedElementIds()) {
+      PidElement command = byId(id);
+      if (command != null && localCommandOutput(command)
+          && command.getEquipmentTag().equals(controller.getEquipmentTag()) && !placed.contains(command.getTag())) {
+        Node target = scene.instrument(command, node.x + 105, node.y);
+        scene.route(node, "r", target, "l", "signal:" + controller.getTag() + ":" + command.getTag(), true, null);
+        String signal = signalId(controller.getTag(), command.getTag());
+        signalSources.add(signal);
+        signalTargets.add(signal);
+        placed.add(command.getTag());
       }
     }
   }
@@ -1117,7 +1258,7 @@ public final class ProfessionalPidDiagramRenderer {
    */
   private void placeSharedFunctions(Scene scene, Set<String> placed) {
     for (PidElement function : model.getElements()) {
-      if (placed.contains(function.getTag())
+      if (placed.contains(function.getTag()) || !function.getEquipmentTag().equals(scene.spec.get("subjectTag"))
           || projection.getAttachments().get(function.getTag()).getKind() != PidPhysicalProjection.Kind.FUNCTION) {
         continue;
       }
@@ -1173,17 +1314,18 @@ public final class ProfessionalPidDiagramRenderer {
     for (Map<String, String> signal : projection.getSignals()) {
       String id = signalIds.get(signalKey(signal));
       if (tag.equals(signal.get("sourceTag")) && !signalSources.contains(id)) {
-        outgoing.add(id);
+        outgoing.add(signalReference(id, signal.get("targetTag")));
         signalSources.add(id);
       }
       if (tag.equals(signal.get("targetTag")) && !signalTargets.contains(id)) {
-        incoming.add(id);
+        incoming.add(signalReference(id, signal.get("sourceTag")));
         signalTargets.add(id);
       }
     }
     if (!outgoing.isEmpty()) {
       String label = join(outgoing);
-      double x = node.x + 55;
+      double continuationWidth = Math.min(115, Math.max(30, label.length() * 1.6 + 10));
+      double x = node.x + node.width / 2 + 12 + continuationWidth / 2;
       double y = node.y;
       Node terminal = scene.terminal("signal-from:" + tag, x, y, label, true);
       scene.route(node, "r", terminal, "l", "signal-from:" + tag, true, null);
@@ -1195,6 +1337,22 @@ public final class ProfessionalPidDiagramRenderer {
           join(incoming), true);
       scene.route(terminal, valve ? "b" : "r", node, valve ? "t" : "l", "signal-to:" + tag, true, null);
     }
+  }
+
+  /**
+   * Adds the exact peer sheet to a named signal continuation without replacing its stable signal identity.
+   *
+   * @param id stable native signal identity
+   * @param peerTag exact canonical peer function/device
+   * @return readable reciprocal sheet reference
+   */
+  private String signalReference(String id, String peerTag) {
+    String sheet = instrumentDetailSheetNumbers.get(peerTag);
+    PidElement peer = proposals.get(peerTag);
+    if (sheet == null && peer != null) {
+      sheet = mainSheetNumbers.get(peer.getEquipmentTag());
+    }
+    return sheet == null ? id : id + "/PID-" + sheet;
   }
 
   /**
@@ -1231,7 +1389,7 @@ public final class ProfessionalPidDiagramRenderer {
   }
 
   /**
-   * Draws the proposal's actual valve family and unassigned fail action explicitly.
+   * Draws the actual valve family and source-backed simulation fail position or an explicit unresolved action.
    *
    * @param scene scene
    * @param element proposal
@@ -1250,6 +1408,25 @@ public final class ProfessionalPidDiagramRenderer {
     Node node = scene.node(element.getTag(), family, x, y, 16, 10, element.getTag());
     scene.proposalNodes.put(element.getTag(), node);
     String valveNote = family == Family.CHECK_VALVE ? "FLOW >" : family == Family.RELIEF_VALVE ? "SET:HOLD" : "FA:HOLD";
+    Attachment actualAttachment = projection.getAttachments().get(element.getTag());
+    ProcessEquipmentInterface boundValve = actualAttachment == null ? null
+        : equipment.get(actualAttachment.getBoundSimulationName());
+    if (actualAttachment != null && actualAttachment.getKind() == PidPhysicalProjection.Kind.EXISTING_EQUIPMENT
+        && boundValve != null && boundValve.getClass() == neqsim.process.equipment.valve.ESDValve.class) {
+      double actualFail = ((neqsim.process.equipment.valve.ESDValve) boundValve).getFailSafePosition();
+      Object canonicalFail = element.getAttributes().get("simulationFailSafePosition");
+      Object controlFail = element.getAttributes().get("nativeControlConfiguration") instanceof Map
+          ? ((Map<?, ?>) element.getAttributes().get("nativeControlConfiguration")).get("failSafePositionPercent")
+          : null;
+      if (canonicalFail instanceof Number && Double.compare(((Number) canonicalFail).doubleValue(), actualFail) != 0
+          || controlFail instanceof Number && Double.compare(((Number) controlFail).doubleValue(), actualFail) != 0) {
+        geometryError("PID_ACTUATOR_FAIL_ACTION_STALE", "Canonical fail action differs from the actual bound ESD valve",
+            element.getTag());
+      } else {
+        valveNote = actualFail == 0.0 ? "SIM FC"
+            : actualFail == 100.0 ? "SIM FO" : String.format(Locale.ROOT, "SIM FAIL:%.1f%%", actualFail);
+      }
+    }
     Object reliefSettings = element.getAttributes().get("simulationPressureReliefConfiguration");
     if (family == Family.RELIEF_VALVE && reliefSettings instanceof Map) {
       Map<?, ?> settings = (Map<?, ?>) reliefSettings;
@@ -1312,7 +1489,7 @@ public final class ProfessionalPidDiagramRenderer {
     scene.lineLabel(stream.getName(), 420, 116, owner.getName());
     for (StreamInterface branch : tee.getOutletStreams()) {
       ProcessEquipmentInterface valve = soleValveConsumer(branch);
-      boolean relief = valve.getClass() == SafetyReliefValve.class;
+      boolean relief = valve.getClass() == SafetyReliefValve.class || isActualAntiSurgeValve(valve);
       Node symbol = proposals.containsKey(valve.getName())
           ? proposalValve(scene, proposals.get(valve.getName()), relief ? 620 : 500, relief ? 100 : 140)
           : scene.node(valve.getName(), ProfessionalPidSymbolLibrary.family(valve), relief ? 620 : 500,
@@ -1324,9 +1501,9 @@ public final class ProfessionalPidDiagramRenderer {
       scene.lineLabel(branch.getName(), relief ? 565 : 465, relief ? 112 : 172, owner.getName());
       StreamInterface discharge = valve.getOutletStreams().get(0);
       Node terminal = scene.terminal("out:" + discharge.getName(), relief ? 750 : 790, relief ? 100 : 140,
-          "BL " + discharge.getName(), false);
+          downstreamLabel(discharge), false);
       scene.route(symbol, "r", terminal, "l", discharge.getName(), false, null);
-      scene.lineLabel(discharge.getName(), relief ? 680 : 660, relief ? 130 : 170, owner.getName());
+      scene.lineLabel(discharge.getName(), relief ? 680 : 660, relief ? 90 : 170, owner.getName());
       if (relief && proposals.containsKey(valve.getName())) {
         Object values = proposals.get(valve.getName()).getAttributes().get("simulationPressureReliefConfiguration");
         if (values instanceof Map) {
@@ -1338,6 +1515,102 @@ public final class ProfessionalPidDiagramRenderer {
                   + " bara | rated US Cv " + settings.get("ratedCv") + " (synthetic); certified capacity: HOLD",
               2.7, null);
         }
+      }
+    }
+  }
+
+  /**
+   * Tests a real anti-surge target by its executing controller and actual return junction.
+   *
+   * @param valve actual candidate
+   * @return whether this is an actual controller-bound recycle final element
+   */
+  private boolean isActualAntiSurgeValve(ProcessEquipmentInterface valve) {
+    if (!(valve instanceof ThrottlingValve)
+        || !(((ThrottlingValve) valve).getController() instanceof AntiSurgeController)) {
+      return false;
+    }
+    AntiSurgeController controller = (AntiSurgeController) ((ThrottlingValve) valve).getController();
+    return controller.getRecycleValve() == valve && controller.getCompressor() != null
+        && equipment.get(controller.getCompressor().getName()) == controller.getCompressor()
+        && valve.getOutletStreams().size() == 1 && soleConsumer(valve.getOutletStreams().get(0)) instanceof Mixer;
+  }
+
+  /**
+   * Resolves one unique non-stream consumer by actual stream identity.
+   *
+   * @param stream actual line
+   * @return unique actual consumer, or null
+   */
+  private ProcessEquipmentInterface soleConsumer(StreamInterface stream) {
+    ProcessEquipmentInterface result = null;
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (!(unit instanceof StreamInterface) && unit.getInletStreams().contains(stream)) {
+        if (result != null) {
+          return null;
+        }
+        result = unit;
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Recognizes a native two-inlet suction merge with one actual anti-surge recycle input.
+   *
+   * @param unit actual candidate
+   * @return true only for the bounded supported source topology
+   */
+  private boolean supportedSuctionMixer(ProcessEquipmentInterface unit) {
+    if (unit == null || unit.getClass() != Mixer.class || unit.getInletStreams().size() != 2
+        || unit.getOutletStreams().size() != 1
+        || !(soleConsumer(unit.getOutletStreams().get(0)) instanceof Separator)) {
+      return false;
+    }
+    int recycle = 0;
+    for (StreamInterface inlet : unit.getInletStreams()) {
+      if (isActualAntiSurgeValve(producers.get(inlet))) {
+        recycle++;
+      }
+    }
+    return recycle == 1;
+  }
+
+  /**
+   * Draws the actual suction tee, inlet shutdown device and reciprocal recycle continuation.
+   *
+   * @param scene native scene
+   * @param body receiving vessel
+   * @param mixer actual merge junction
+   * @param outlet actual junction outlet
+   * @param valveNodes physical valve symbol registry
+   */
+  private void renderSuctionMixer(Scene scene, Node body, ProcessEquipmentInterface mixer, StreamInterface outlet,
+      Map<String, Node> valveNodes) {
+    Node junction = scene.node(mixer.getName(), Family.PIPE_TEE, 245, 280, 6, 6, "");
+    scene.centered(190, 315, mixer.getName(), 3, null);
+    scene.route(junction, "r", body, "l", outlet.getName(), false, null);
+    for (StreamInterface inlet : mixer.getInletStreams()) {
+      ProcessEquipmentInterface producer = producers.get(inlet);
+      if (isActualAntiSurgeValve(producer)) {
+        Node continuation = scene.terminal("in:" + inlet.getName(), 60, 350,
+            sheetLabel(proposals.get(producer.getName()).getEquipmentTag()) + " / " + producer.getName(), false);
+        scene.route(continuation, "r", junction, "b", inlet.getName(), false,
+            points(continuation.right(), new Point(junction.x, 350), junction.bottom()));
+        scene.lineLabel(inlet.getName(), 160, 366, body.tag);
+      } else if (producer instanceof ThrottlingValve && producer.getInletStreams().size() == 1) {
+        Node source = scene.terminal("in:" + producer.getInletStreams().get(0).getName(), 60, 280,
+            upstreamLabel(producer.getInletStreams().get(0)), false);
+        Node valve = proposals.containsKey(producer.getName())
+            ? proposalValve(scene, proposals.get(producer.getName()), 160, 280)
+            : scene.node(producer.getName(), ProfessionalPidSymbolLibrary.family(producer), 160, 280, 16, 10,
+                producer.getName());
+        valveNodes.put(producer.getName(), valve);
+        scene.route(source, "r", valve, "l", producer.getInletStreams().get(0).getName(), false, null);
+        scene.route(valve, "r", junction, "l", inlet.getName(), false, null);
+      } else {
+        hold("SUCTION_MERGE_UPSTREAM_DEVICE", mixer.getName(), "ISO 10628-1:2014",
+            "Actual suction merge feed requires a supported explicit inlet device");
       }
     }
   }
@@ -1385,7 +1658,16 @@ public final class ProfessionalPidDiagramRenderer {
         relief++;
       }
     }
-    return relief == 1;
+    if (relief == 1) {
+      return true;
+    }
+    int recycle = 0;
+    for (StreamInterface outlet : unit.getOutletStreams()) {
+      if (isActualAntiSurgeValve(soleValveConsumer(outlet))) {
+        recycle++;
+      }
+    }
+    return relief == 0 && recycle == 1;
   }
 
   /**
@@ -1578,6 +1860,7 @@ public final class ProfessionalPidDiagramRenderer {
     String number = String.format(Locale.ROOT, "%03d", Integer.valueOf(pages.size() + 1));
     String id = project.getProjectId() + "-PID-" + number;
     Scene scene = new Scene(id, subject + " - " + title, number);
+    scene.spec.put("subjectTag", subject);
     Map<String, Object> index = new LinkedHashMap<String, Object>();
     index.put("sheetId", id);
     index.put("sheetNumber", number);
@@ -1970,8 +2253,14 @@ public final class ProfessionalPidDiagramRenderer {
         if (family == Family.FIELD_INSTRUMENT || family == Family.CONTROL_FUNCTION
             || family == Family.SAFETY_FUNCTION) {
           String[] parts = label.split("-");
-          centered(x, y - 3, parts.length > 1 ? parts[parts.length - 2] : label, 3, tag);
-          centered(x, y + 3.5, parts.length > 1 ? parts[parts.length - 1] : "", 3, tag);
+          String upper = parts.length > 1 ? parts[parts.length - 2] : label;
+          String lower = parts.length > 1 ? parts[parts.length - 1] : "";
+          boolean compact = upper.length() > 8 || lower.length() > 8;
+          centered(x, y - 3, upper.length() > 8 ? upper.substring(0, 7) + "." : upper, 3, tag);
+          centered(x, y + 3.5, lower.length() > 8 ? lower.substring(0, 7) + "." : lower, 3, tag);
+          if (compact) {
+            centered(x, y + height / 2 + 6, label, 2.5, null);
+          }
         } else if (family == Family.TERMINAL || family == Family.TERMINAL_NORTH) {
           centered(x, y, shorten(label, 36), 2.7, tag);
         } else {
@@ -2007,9 +2296,13 @@ public final class ProfessionalPidDiagramRenderer {
      * @return actual drawing node
      */
     Node instrument(PidElement element, double x, double y, double diameter) {
-      Family family = element.getType() == PidElementType.MEASUREMENT || element.getType() == PidElementType.INDICATOR
-          ? Family.FIELD_INSTRUMENT
-          : element.getType() == PidElementType.CONTROLLER ? Family.CONTROL_FUNCTION : Family.SAFETY_FUNCTION;
+      Family family = "CALCULATED_COMPRESSOR_MAP_MARGIN".equals(element.getAttributes().get("inputKind"))
+          || "COMPRESSOR_SPEED".equals(element.getAttributes().get("nativeActuatorRole"))
+          || "COOLER_UTILITY_OPENING".equals(element.getAttributes().get("nativeActuatorRole"))
+              ? Family.CONTROL_FUNCTION
+              : element.getType() == PidElementType.MEASUREMENT || element.getType() == PidElementType.INDICATOR
+                  ? Family.FIELD_INSTRUMENT
+                  : element.getType() == PidElementType.CONTROLLER ? Family.CONTROL_FUNCTION : Family.SAFETY_FUNCTION;
       Node node = node(element.getTag(), family, x, y, diameter, diameter, element.getTag());
       proposalNodes.put(element.getTag(), node);
       return node;

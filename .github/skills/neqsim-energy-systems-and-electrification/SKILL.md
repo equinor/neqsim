@@ -19,6 +19,19 @@ Use `neqsim-power-generation` for thermodynamic turbine/HRSG/combined-cycle cons
 
 ## Class map
 
+For a dedicated common-shaft compressor supply, select `CompressorPowerTrain`
+(`directDrive`, `electricDrive`, `gasElectricDrive`) and attach it through
+`CompressorShaft.setPowerTrain`. Follow the
+[matching and evidence guide](../../../docs/process/equipment/integrated_compression_power.md).
+Power-train and turbine connections are live references. Preserve their identities
+for blackout, trip and derating updates; serialize the connected graph together and
+do not evaluate shared mutable equipment concurrently.
+Include gearbox loss once, motor/VFD and generator losses, and electrical auxiliary
+demand. Zero `setElectricalSupplyLimitW` means blackout. Inspect `getPowerTrainResult`
+for required versus delivered power, shortfall, fuel, CO2 and feasibility. The
+adapter does not allocate energy ports; retain `CoupledProcessEnergySolver` for
+shared generation/dispatch and a real splitter/recycle for process fuel extraction.
+
 | Class family | Package | What it does | Verified entry points / result methods |
 |---|---|---|---|
 | Typed energy buses and ports: `EnergyBus`, `EnergyPort`, `EnergyNetworkReport` | `neqsim.process.equipment.stream` | Routes signed electrical, shaft, heat, and other energy contributions with dispatch and allocation reports. | `new EnergyBus(name, EnergyType)`, `setContribution`, `solveBalance`, `getLastReport`, `getServedDemand`, `getUnmetDemand` |

@@ -59,7 +59,11 @@ public class PhaseGERG2008Eos extends PhaseEos {
     thermoPropertyModelName = "GERG2008 Eos";
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseGERG2008Eos clone() {
     PhaseGERG2008Eos clonedPhase = null;
@@ -67,6 +71,7 @@ public class PhaseGERG2008Eos extends PhaseEos {
       clonedPhase = (PhaseGERG2008Eos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseGERG2008Eos", ex);
     }
 
     return clonedPhase;

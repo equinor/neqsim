@@ -290,7 +290,11 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   public PhaseSAFTVRMie() {
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseSAFTVRMie clone() {
     PhaseSAFTVRMie clonedPhase = null;
@@ -298,6 +302,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       clonedPhase = (PhaseSAFTVRMie) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseSAFTVRMie", ex);
     }
     return clonedPhase;
   }

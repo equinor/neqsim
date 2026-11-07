@@ -8,6 +8,7 @@ import neqsim.process.engineering.EngineeringProject;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ESDValve;
+import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.measurementdevice.LevelTransmitter;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.measurementdevice.PushButton;
@@ -43,13 +44,13 @@ public final class PidSafetyFunctionImporter {
    * @param bindings current bindings before this import
    * @param process configured isolated copy containing all actual source and target objects
    * @param function native function whose actual settings are proposed
-   * @param role explicit ESD, HIPPS or MANUAL_ESD engineering role
+   * @param role explicit ESD, HIPPS, MANUAL_ESD, COMPRESSOR_ESD or COMPRESSOR_MANUAL_ESD engineering role
    * @return copied canonical model containing the proposed native function and connections
    */
   public static PidDesignModel fromNativeFunction(EngineeringProject project, PidDesignModel sourceModel,
       PidSimulationBindings bindings, ProcessSystem process, ClosedLoopSafetyFunction function, String role) {
-    if (function == null || process == null || bindings == null
-        || !("ESD".equals(role) || "HIPPS".equals(role) || "MANUAL_ESD".equals(role))) {
+    if (function == null || process == null || bindings == null || !("ESD".equals(role) || "HIPPS".equals(role)
+        || "MANUAL_ESD".equals(role) || "COMPRESSOR_ESD".equals(role) || "COMPRESSOR_MANUAL_ESD".equals(role))) {
       throw new IllegalArgumentException(
           "Actual configured function/process/bindings and an explicit role are required");
     }
@@ -74,15 +75,40 @@ public final class PidSafetyFunctionImporter {
     List<PidElement> additions = new ArrayList<PidElement>();
     String defaultOwner = "";
     for (ProcessEquipmentInterface target : function.getTargetEquipment()) {
+      if (target instanceof Compressor && role.startsWith("COMPRESSOR_")) {
+        if (process.getUnit(target.getName()) != target) {
+          throw new IllegalArgumentException("Actual compressor stop target is outside the configured copy");
+        }
+        String tag = target.getName() + "-DRIVER-TRIP";
+        PidElement driver = findTag(model, tag);
+        if (driver == null) {
+          driver = proposed(tag, PidElementType.TRIP).equipment(target.getName())
+              .attribute("simulationTargetEquipmentTag", target.getName())
+              .attribute("simulationFinalElementRole", "NATIVE_COMPRESSOR_STOP_COMMAND")
+              .attribute("physicalHardwareAdded", Boolean.FALSE);
+          additions.add(driver);
+        }
+        governed(driver, "simulationDriverTripConfiguration", driverPolicy(actionPolicy, target.getName()));
+        targets.add(driver);
+        if (defaultOwner.isEmpty()) {
+          defaultOwner = target.getName();
+        }
+        continue;
+      }
       if (!(target instanceof ESDValve)) {
         throw new IllegalArgumentException("Only actual native ESD-valve actuator targets are supported");
       }
-      if (Math.abs(((ESDValve) target).getFailSafePosition()) > 1.0e-12) {
+      if (Math.abs(((ESDValve) target).getFailSafePosition()) > 1.0e-12 && !(role.startsWith("COMPRESSOR_")
+          && Math.abs(((ESDValve) target).getFailSafePosition() - 100.0) <= 1.0e-12)) {
         throw new IllegalArgumentException(
             "The supported isolation proposal requires an actual fail-closed native valve");
       }
       PidElement element = boundElement(model, bindings, process, target.getName(), "EQUIPMENT", target);
-      ProcessEquipmentInterface owner = downstreamOwner(process, target);
+      ProcessEquipmentInterface owner = element == null ? downstreamOwner(process, target)
+          : process.getUnit(element.getEquipmentTag());
+      if (owner == null) {
+        throw new IllegalArgumentException("Actual bound final element has no registered drawing owner");
+      }
       if (defaultOwner.isEmpty()) {
         defaultOwner = owner.getName();
       }
@@ -91,6 +117,11 @@ public final class PidSafetyFunctionImporter {
             .line(target.getOutletStreams().get(0).getName());
         additions.add(element);
       }
+      if (role.startsWith("COMPRESSOR_")) {
+        governed(element, "simulationFinalElementRole",
+            ((ESDValve) target).getFailSafePosition() == 100.0 ? "FAIL_OPEN_NATIVE_ESD" : "FAIL_CLOSED_ISOLATION");
+      }
+      governed(element, "simulationActuatorAvailable", Boolean.valueOf(((ESDValve) target).isActuatorAvailable()));
       governed(element, "simulationStrokeSeconds", Double.valueOf(((ESDValve) target).getStrokeTime()));
       governed(element, "simulationFailSafePosition", Double.valueOf(((ESDValve) target).getFailSafePosition()));
       targets.add(element);
@@ -109,7 +140,8 @@ public final class PidSafetyFunctionImporter {
       PidElement element = boundElement(model, bindings, process, source.getName(), "MEASUREMENT", source);
       if (element == null) {
         element = proposed(source.getName(), PidElementType.MEASUREMENT);
-        if (source.getClass() == PushButton.class && "MANUAL_ESD".equals(role)) {
+        if (source.getClass() == PushButton.class
+            && ("MANUAL_ESD".equals(role) || "COMPRESSOR_MANUAL_ESD".equals(role))) {
           element.equipment(defaultOwner).attribute("inputKind", "MANUAL_PUSH_BUTTON");
         } else if (source instanceof StreamMeasurementDeviceBaseClass) {
           StreamInterface stream = ((StreamMeasurementDeviceBaseClass) source).getStream();
@@ -148,6 +180,49 @@ public final class PidSafetyFunctionImporter {
       input.connect(imported.getId());
     }
     return model;
+  }
+
+  /**
+   * Finds one complete exact native compressor-stop target policy in a supported action tree.
+   *
+   * @param node action configuration tree
+   * @param compressorTag actual target tag
+   * @return detached target policy
+   * @throws IllegalArgumentException if no unambiguous supported compressor stop is present
+   */
+  @SuppressWarnings("unchecked")
+  static Map<String, Object> driverPolicy(Object node, String compressorTag) {
+    List<Map<String, Object>> found = new ArrayList<Map<String, Object>>();
+    collectDriverPolicies(node, compressorTag, found);
+    if (found.size() != 1) {
+      throw new IllegalArgumentException("A unique actual native compressor-stop policy is required");
+    }
+    return new Gson().fromJson(new Gson().toJson(found.get(0)), Map.class);
+  }
+
+  /**
+   * Walks detached action data without resolving a declared name to an unrelated object.
+   *
+   * @param node action data
+   * @param tag exact compressor tag
+   * @param found matching actual target policies
+   */
+  @SuppressWarnings("unchecked")
+  private static void collectDriverPolicies(Object node, String tag, List<Map<String, Object>> found) {
+    if (node instanceof Map) {
+      Map<String, Object> values = (Map<String, Object>) node;
+      if (tag.equals(values.get("tag")) && "NATIVE_COMPRESSOR_STOP_PROFILE".equals(values.get("tripEffect"))) {
+        found.add(values);
+      } else {
+        for (Object value : values.values()) {
+          collectDriverPolicies(value, tag, found);
+        }
+      }
+    } else if (node instanceof List) {
+      for (Object value : (List<?>) node) {
+        collectDriverPolicies(value, tag, found);
+      }
+    }
   }
 
   /**
@@ -256,7 +331,7 @@ public final class PidSafetyFunctionImporter {
    */
   private static void governed(PidElement element, String key, Object value) {
     Object previous = element.getAttributes().get(key);
-    if (previous != null && !previous.equals(value)) {
+    if (previous != null && !new Gson().toJsonTree(previous).equals(new Gson().toJsonTree(value))) {
       if (!(previous instanceof Number && value instanceof Number
           && Math.abs(((Number) previous).doubleValue() - ((Number) value).doubleValue()) <= 1.0e-12)) {
         throw new IllegalArgumentException("Conflicting governed safety setting " + key + " on " + element.getTag());

@@ -66,6 +66,23 @@ public class SystemPitzer extends SystemEosGE {
   }
 
   /**
+   * Initializes chemical reactions and enables the bounded automatic acid-base parameter selector.
+   *
+   * <p>
+   * Supported Na/K/Ca chloride-sulfate topologies with carbonate, bisulfate and first H2S dissociation load their
+   * pinned source definitions lazily. Sulfur oxidation states remain separate. Other topologies, explicit legacy
+   * policy, and named manual datasets retain their existing selection.
+   * </p>
+   */
+  @Override
+  public void chemicalReactionInit() {
+    super.chemicalReactionInit();
+    if (isChemicalSystem()) {
+      ((PhasePitzer) phaseArray[1]).prepareAutomaticReactiveCarbonateSelection();
+    }
+  }
+
+  /**
    * Selects legacy Pitzer parameter loading for compatibility with historical calculations.
    *
    * <p>

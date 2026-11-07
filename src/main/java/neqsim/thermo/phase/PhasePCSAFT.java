@@ -95,7 +95,11 @@ public class PhasePCSAFT extends PhaseSrkEos {
   public PhasePCSAFT() {
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhasePCSAFT clone() {
     PhasePCSAFT clonedPhase = null;
@@ -103,6 +107,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
       clonedPhase = (PhasePCSAFT) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhasePCSAFT", ex);
     }
 
     return clonedPhase;

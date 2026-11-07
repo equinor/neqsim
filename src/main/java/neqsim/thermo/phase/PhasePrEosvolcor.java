@@ -636,7 +636,11 @@ public class PhasePrEosvolcor extends PhasePrEos {
         + FC() * getCTT() + 2 * FCD() * getCT() * getAT();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhasePrEosvolcor clone() {
     PhasePrEosvolcor clonedPhase = null;
@@ -644,6 +648,7 @@ public class PhasePrEosvolcor extends PhasePrEos {
       clonedPhase = (PhasePrEosvolcor) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhasePrEosvolcor", ex);
     }
 
     return clonedPhase;

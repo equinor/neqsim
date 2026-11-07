@@ -315,7 +315,8 @@ public class GasTurbineUnit extends TwoPortEquipment {
     }
 
     // 4) Heat rate with part-load + ambient + degradation
-    double loadForMap = Math.max(performanceMap.getMinLoadFraction() * 0.5, Math.min(1.10, this.loadFraction));
+    double deliveredLoad = Math.min(1.0, this.loadFraction);
+    double loadForMap = Math.max(performanceMap.getMinLoadFraction() * 0.5, deliveredLoad);
     double baseHeatRate = performanceMap.getHeatRate(spec.getHeatRateKJPerKWh(), loadForMap, ambientTemperatureK);
     this.effectiveHeatRateKJPerKWh = baseHeatRate * (1.0 + degradation.getTotalHeatRatePenalty());
 
@@ -328,9 +329,9 @@ public class GasTurbineUnit extends TwoPortEquipment {
     this.shaftPowerW = shaftPowerKW * 1.0e3;
     // fuel mass flow = fuelEnergyKW * 1000 [W] / LHV [J/kg]
     double lhvJPerKg = getFuelLHVJPerKg();
-    if (lhvJPerKg <= 0.0) {
-      logger.warn("GasTurbineUnit {} has zero fuel LHV — falling back to 50 MJ/kg", getName());
-      lhvJPerKg = 50.0e6;
+    if (!Double.isFinite(lhvJPerKg) || lhvJPerKg <= 0.0) {
+      throw new IllegalStateException("GasTurbineUnit " + getName()
+          + " requires a fuel stream with a positive finite ISO 6976 lower heating value");
     }
     this.fuelMassFlowKgPerS = fuelEnergyKW * 1.0e3 / lhvJPerKg;
 

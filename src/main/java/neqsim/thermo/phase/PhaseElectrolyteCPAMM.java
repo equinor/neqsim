@@ -158,7 +158,11 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseElectrolyteCPAMM clone() {
     PhaseElectrolyteCPAMM clonedPhase = null;
@@ -167,6 +171,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
       clonedPhase.debyeHuckelDerivativeState = null;
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseElectrolyteCPAMM", ex);
     }
     return clonedPhase;
   }

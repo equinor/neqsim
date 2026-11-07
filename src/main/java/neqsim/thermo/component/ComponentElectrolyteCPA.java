@@ -110,7 +110,11 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
     // this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public ComponentElectrolyteCPA clone() {
     ComponentElectrolyteCPA clonedComponent = null;
@@ -118,6 +122,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
       clonedComponent = (ComponentElectrolyteCPA) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of ComponentElectrolyteCPA", ex);
     }
 
     clonedComponent.xsite = xsite.clone();

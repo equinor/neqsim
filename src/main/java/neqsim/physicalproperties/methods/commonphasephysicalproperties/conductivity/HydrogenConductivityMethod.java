@@ -65,7 +65,11 @@ public class HydrogenConductivityMethod extends Conductivity {
     super(phase);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public HydrogenConductivityMethod clone() {
     HydrogenConductivityMethod properties = null;
@@ -73,6 +77,7 @@ public class HydrogenConductivityMethod extends Conductivity {
       properties = (HydrogenConductivityMethod) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of HydrogenConductivityMethod", ex);
     }
     return properties;
   }

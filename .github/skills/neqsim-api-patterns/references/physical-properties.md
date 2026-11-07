@@ -8,6 +8,7 @@ phase-specific transport model and interfacial model as separate choices.
 
 | Need | Guide | Executable source evidence |
 | --- | --- | --- |
+| Fresh-water and seawater cooling | `docs/process/equipment/reference_cooling_water.md` | `CoolingWaterReferenceTest`, `ReferenceWaterHeatExchangerTest` |
 | Model sets and initialization | `docs/physical_properties/README.md` | `src/test/java/neqsim/physicalproperties/PhysicalPropertiesPackageDocumentationTest.java` |
 | Viscosity and tuning | `docs/physical_properties/viscosity_models.md` | Search tests for the selected model, including the package documentation test |
 | Conductivity | `docs/physical_properties/thermal_conductivity_models.md` | Inspect the selected model's tests and applicable fluid range |
@@ -54,6 +55,11 @@ independent data for the required fluid, property and range; a positive value
 or a successful flash is only a sanity check. Check repeat runs, changed state,
 nearby conditions, phase appearance/disappearance and two-/three-phase cases
 when applicable. Do not mask invalid values, silent fallbacks or missing phases.
+
+For PFCT compatibility changes, run `PFCTLegacySerializationTest` and
+`NeqSimXtreamLegacyCompatibilityTest`: saved models predating CSP tuning must
+recover unity factors in all three variants, preserve existing tuning, and remain
+independent after cloning. Keep deserialization repair outside calculation loops.
 
 For performance changes, benchmark the complete caller workflow after warm-up
 against an unchanged baseline. Preserve initialization dependencies, derivative

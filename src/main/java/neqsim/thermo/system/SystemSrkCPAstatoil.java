@@ -101,7 +101,11 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
     return attractiveTermNumber == 23;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemSrkCPAstatoil clone() {
     SystemSrkCPAstatoil clonedSystem = null;
@@ -109,6 +113,7 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
       clonedSystem = (SystemSrkCPAstatoil) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemSrkCPAstatoil", ex);
     }
 
     return clonedSystem;

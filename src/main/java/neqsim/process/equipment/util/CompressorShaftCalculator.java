@@ -428,6 +428,9 @@ public class CompressorShaftCalculator extends Calculator
           compressor.run(id);
         }
       }
+      if (shaft != null) {
+        shaft.updateDriverOperatingPoint();
+      }
       updateFixedSpeedFeasibility();
       setCalculationIdentifier(id);
       return;
@@ -463,6 +466,9 @@ public class CompressorShaftCalculator extends Calculator
     prevError = error;
     speed = newSpeed;
     applySpeed();
+    if (shaft != null) {
+      shaft.updateDriverOperatingPoint();
+    }
     updateFeasibility();
     setCalculationIdentifier(id);
   }
@@ -482,6 +488,12 @@ public class CompressorShaftCalculator extends Calculator
       lastResult = new CompressorShaft.SolveResult(false, CompressorShaft.SolveStatus.OVER_POWER, targetPressure, pout,
           Double.NaN, Double.NaN, speed, pressureUnit, String.format("shaft draws %.0f kW of %.0f kW installed",
               shaft.getRequiredDriverPower("kW"), shaft.getAvailableShaftPower("kW")));
+      return;
+    }
+    if (isBelowDriverMinimumLoad()) {
+      lastResult = new CompressorShaft.SolveResult(false, CompressorShaft.SolveStatus.DRIVER_BELOW_MINIMUM_LOAD,
+          targetPressure, pout, Double.NaN, Double.NaN, speed, pressureUnit,
+          "turbine load below the configured minimum stable load");
       return;
     }
     lastResult = new CompressorShaft.SolveResult(true, CompressorShaft.SolveStatus.FEASIBLE, targetPressure, pout,
@@ -527,7 +539,20 @@ public class CompressorShaftCalculator extends Calculator
       lastResult = new CompressorShaft.SolveResult(false, CompressorShaft.SolveStatus.OVER_POWER, targetPressure, pout,
           Double.NaN, Double.NaN, speed, pressureUnit, String.format("shaft draws %.0f kW of %.0f kW installed",
               shaft.getRequiredDriverPower("kW"), shaft.getAvailableShaftPower("kW")));
+    } else if (isBelowDriverMinimumLoad()) {
+      lastResult = new CompressorShaft.SolveResult(false, CompressorShaft.SolveStatus.DRIVER_BELOW_MINIMUM_LOAD,
+          targetPressure, pout, Double.NaN, Double.NaN, speed, pressureUnit,
+          "turbine load below the configured minimum stable load");
     }
+  }
+
+  /**
+   * Checks the integrated supply's minimum-load flag after updating its operating point.
+   *
+   * @return true when the attached turbine is below its configured minimum stable load
+   */
+  private boolean isBelowDriverMinimumLoad() {
+    return shaft != null && shaft.getPowerTrainResult() != null && shaft.getPowerTrainResult().isBelowMinimumLoad();
   }
 
   /** {@inheritDoc} */

@@ -51,7 +51,11 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
     super(liquidPhase);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public Water clone() {
     Water properties = null;
@@ -59,6 +63,7 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
       properties = (Water) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of Water", ex);
     }
     return properties;
   }

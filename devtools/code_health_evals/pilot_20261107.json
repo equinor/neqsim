@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-07",
+  "source_revision": "d8c9354ab490564c3c2220b8f735c645cd575c79",
+  "scope": "Code-health foundation and bounded Python metadata refactoring",
+  "coding_task": {
+    "original": {
+      "case": "frontmatter-scalar-refactor",
+      "kind": "original-baseline",
+      "base_revision": "d8c9354ab490564c3c2220b8f735c645cd575c79",
+      "acceptance_sha256": "098af0676609de50d69d90a4490b30aac2f08ad87982b70417f54cef192cfe43",
+      "exit_code": 1,
+      "output": "FF.F\n======================================================================\nFAIL: test_preserves_quoted_content (__main__.FrontmatterContract.test_preserves_quoted_content)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"<evaluator>/devtools/code_health_evals/frontmatter_contract.py\", line 26, in test_preserves_quoted_content\n    self.assertEqual(\"Keep the ending 'quote'\", self.module.parse_front_matter(text)[\"description\"])\nAssertionError: \"Keep the ending 'quote'\" != \"Keep the ending 'quote\"\n- Keep the ending 'quote'\n?                       -\n+ Keep the ending 'quote\n\n\n======================================================================\nFAIL: test_preserves_the_verifier_and_its_existing_checks (__main__.FrontmatterContract.test_preserves_the_verifier_and_its_existing_checks)\nA parser-only stub must not pass by deleting the surrounding program.\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"<evaluator>/devtools/code_health_evals/frontmatter_contract.py\", line 56, in test_preserves_the_verifier_and_its_existing_checks\n    self.assertEqual(self.module.af.FRONT_MATTER_RE.pattern, self.module.FRONT_MATTER_RE.pattern)\nAssertionError: '^---\\\\s*\\\\r?\\\\n(.*?)\\\\r?\\\\n---\\\\s*(?:\\\\r?\\\\n|$)' != '^---\\\\s*\\\\n(.*?)\\\\n---\\\\s*\\\\n'\n- ^---\\s*\\r?\\n(.*?)\\r?\\n---\\s*(?:\\r?\\n|$)\n?         ---      ---        ------  ---\n+ ^---\\s*\\n(.*?)\\n---\\s*\\n\n\n\n======================================================================\nFAIL: test_uses_shared_parser (__main__.FrontmatterContract.test_uses_shared_parser)\nObserve delegation without prescribing an import or call spelling.\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"<evaluator>/devtools/code_health_evals/frontmatter_contract.py\", line 42, in test_uses_shared_parser\n    self.assertEqual({\"name\": \"delegated\"}, module.parse_front_matter(\"metadata probe\"))\nAssertionError: {'name': 'delegated'} != {}\n- {'name': 'delegated'}\n+ {}\n\n----------------------------------------------------------------------\nRan 4 tests in 0.014s\n\nFAILED (failures=3)\n"
+    },
+    "fresh_agent_candidate": {
+      "schema_version": 1,
+      "case": "frontmatter-scalar-refactor",
+      "base_revision": "d8c9354ab490564c3c2220b8f735c645cd575c79",
+      "status": "passed",
+      "errors": [],
+      "candidate_files": {
+        "devtools/test_verify_skills_agents.py": "160c9f66eb6df1e1cc5fa21c6ab544a9ab4500a664e85406c8fdc19d979500ed",
+        "devtools/verify_skills_agents.py": "b4e6b3f94b2df4dfe63afaa26b66106e6d08b5d5b54c20910a7a18cdc658eec3"
+      },
+      "base_files_sha256": {
+        "devtools/verify_skills_agents.py": "6c9e8c14d6a4e5c33c715b405ceef5199b33af12c269d3e1ed3a6f234a9d1bff",
+        "devtools/agent_frontmatter.py": "0ad9fee7c48ad0d1f699bb0fb989f56f7590f315f5846a90d1c68ba2a049bd1a"
+      },
+      "acceptance_sha256": "098af0676609de50d69d90a4490b30aac2f08ad87982b70417f54cef192cfe43",
+      "acceptance_result": {
+        "tests_run": 4,
+        "successful": true,
+        "skipped": 0
+      },
+      "command": [
+        "selected-python",
+        "-I",
+        "frontmatter_contract.py"
+      ],
+      "exit_code": 0,
+      "output": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.013s\n\nOK\n",
+      "elapsed_seconds": 0.098,
+      "catalog_sha256": "1ea8499124bfebc04450d5d3f3c1b59f01006feb1b67d0a13fc3ed65809dde43"
+    },
+    "agent_cost": "not_measured"
+  },
+  "independent_review": {
+    "status": "no_open_findings",
+    "read_only": true,
+    "focus": "Source rules, baseline integrity, grader completion, preserved verifier checks and required-check contexts"
+  },
+  "validation": {
+    "combined_python_tests": {
+      "exit_code": 0,
+      "passed": 352,
+      "subtests_passed": 26
+    },
+    "spotless_check": {
+      "command": "selected-python devtools/run_spotless.py check",
+      "exit_code": 0
+    },
+    "documentation_search": {
+      "command": "selected-python devtools/check_documentation_search.py",
+      "exit_code": 0
+    },
+    "agent_skill_lint": {
+      "command": "selected-python devtools/verify_skills_agents.py",
+      "exit_code": 0
+    },
+    "agent_skill_references": {
+      "command": "selected-python devtools/verify_agent_skill_refs.py",
+      "exit_code": 0
+    },
+    "required_skills_sync": {
+      "command": "selected-python devtools/sync_agent_required_skills.py --check",
+      "exit_code": 0
+    },
+    "plugin_package": {
+      "command": "selected-python devtools/build_agent_plugin.py --only neqsim; selected-python devtools/validate_agent_plugin.py <output>",
+      "exit_code": 0,
+      "problems": 0
+    },
+    "pre_commit_hooks": {
+      "status": "not_run",
+      "reason": "Executable unavailable; direct formatter and documentation gates ran"
+    },
+    "analyzers": {
+      "command": "./mvnw -B -ntp -Pcode-health -DskipTests compile pmd:pmd spotbugs:spotbugs",
+      "first_complete_run_exit_code": 0,
+      "final_resource_profile": {
+        "exit_code": 0,
+        "spotbugs_heap_mb": 2048,
+        "spotbugs_processors": 2,
+        "maven_heap_mb": 1024,
+        "elapsed": "3m57s"
+      },
+      "observed_resource_failures": "Larger heaps hit the shared environment memory limit (exit 137); the final bounded profile completed successfully."
+    },
+    "debt_gate": {
+      "tools": [
+        "source",
+        "pmd",
+        "spotbugs"
+      ],
+      "source": 1028,
+      "pmd": 9,
+      "spotbugs": 11143,
+      "new_groups": 0,
+      "status": "passed_against_final_bounded_run",
+      "command": "selected-python devtools/code_health.py --tools source,pmd,spotbugs --pmd target/pmd.xml --spotbugs target/spotbugsXml.xml",
+      "exit_code": 0
+    },
+    "hosted_ci": {
+      "status": "pending"
+    },
+    "post_review_guards": {
+      "passed": 23,
+      "exit_code": 0
+    }
+  },
+  "limits": [
+    "One Python coding case is a pilot, not a project-wide agent-success estimate.",
+    "Source import checks do not establish bytecode architecture or full public-API compatibility.",
+    "No numerical or performance qualification is claimed by maintenance metrics.",
+    "Required merge-check administration is separate from defining the workflow."
+  ]
+}

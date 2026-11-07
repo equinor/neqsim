@@ -395,6 +395,19 @@ new ThermodynamicOperations(fluid).TPflash();
 boolean hasAqueousPhase = fluid.hasPhaseType(PhaseType.AQUEOUS);
 ```
 
+For reactive CO2/H2S brines with Na+, K+, Ca++, Cl- and/or SO4--, add the feed components and
+call `chemicalReactionInit()` before setting the mixing rule. The bounded reactive acid-base
+parameter family loads automatically, including HSO4- formation and first H2S dissociation.
+Sulfate-only feeds also work. Elemental sulfur and sulfate/sulfide redox conversion are outside
+this setup; the two sulfur oxidation-state inventories stay separate.
+Its source-defined zeros and partial qualification are explained in
+[Pitzer parameter provenance](pitzer_parameter_provenance.md#automatic-carbonate-parameter-evidence-and-qualification-boundary).
+TBP and characterized plus-fraction pseudo components are supported in this setup. Complete
+`getCharacterization().characterisePlusFraction()` before `chemicalReactionInit()`; the
+[characterized-oil Python example](../../examples/neqsim/pitzer_characterized_oil_brine.py)
+shows the seven-pseudo-component sour gas/brine case tested by `PitzerCharacterizedOilBrineTest`.
+The automatic setup does not establish full reactive pH, VLE or mineral qualification.
+
 The creation-order role objects are stable even when active phases are density-ordered or disappear. A later flash
 reconsiders inactive roles from the current feed and conditions. Neutral non-water species in the Pitzer phase use an
 aqueous Henry reference; water alone uses the Pitzer osmotic/Raoult solvent convention. Calling
@@ -576,6 +589,12 @@ NeqSim uses a database-backed component catalog. Verify exact names in the
 ## 10. Heavy Fraction Characterization
 
 For petroleum fluids, NeqSim supports TBP (True Boiling Point) and plus-fraction characterization.
+
+Fraction setup assigns molecular weight, density, volume correction and other fraction properties
+to every configured phase, including candidates that are initially inactive. This preserves the
+characterized oil properties when a later flash activates another phase, including the oil role
+in a hybrid Pitzer gas–oil–water calculation. Both TBP overloads and plus-fraction setup use this
+same rule; `PitzerCharacterizedOilBrineTest` covers inactive Pitzer and ordinary SRK roles.
 
 ### 10.1 TBP Fractions
 

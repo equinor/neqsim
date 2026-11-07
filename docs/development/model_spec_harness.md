@@ -72,9 +72,9 @@ regression tests; the catalog supplements them.
 
 ## Initial evidence and boundaries
 
-The catalog has 860 cases across curated System and exact-Phase drivers: RK, SRK, PR,
+The catalog has 887 cases across curated System and exact-Phase drivers: RK, SRK, PR,
 Wilson, NRTL, classic UNIFAC, PSRK, UMR-PRU, standard GERG-2008, ideal gas, ammonia,
-Leachman, Vega, Span-Wagner, IAPWS-IF97, PC-SAFT and PC-SAFTa. It also includes a
+Leachman, Vega, Span-Wagner, IAPWS-IF97, seawater, PC-SAFT and PC-SAFTa. It also includes a
 component saturation adapter and an unsupported phase adapter. This is **not coverage of every NeqSim model or every property**. Campaign
 milestone B owns sourced family qualification and remaining per-property coverage debt.
 The inventory gate below now reconciles every concrete System and Phase type against
@@ -96,6 +96,7 @@ an explicit classification; discovery does not qualify their numerical behavior.
 | Helium | CoolProp 7.2.0's Ortiz Vega 2019 helium EOS at four gas/supercritical states: molar mass, molar/mass density, Z, U/H/S/G, Cv/Cp, sound speed, Joule-Thomson coefficient and isentropic exponent through `SystemVegaEos` and exact `PhaseVegaEos` entry points |
 | Carbon dioxide | CoolProp 7.2.0's Span-Wagner 1996 CO2 EOS at one gas, one liquid and two supercritical states: molar mass, molar/mass density, Z, fugacity coefficient, U/H/S/G, Cv/Cp, sound speed and Joule-Thomson coefficient through `SystemSpanWagnerEos` and exact `PhaseSpanWagnerEos` entry points |
 | Water/steam | Official IAPWS-IF97 Region 1 Table 5 and Region 2 Table 15 verification points: molar/mass density, Z, U/H/S/G, Cp and sound speed through `SystemWaterIF97` and exact `PhaseWaterIAPWS`; density, Z and G are independently derived from the published specific volume and caloric values |
+| Seawater cooling | `SystemSeawater` at fixed Reference-Composition Salinity 35 g/kg solution: density, enthalpy and Cp at nine states spanning 278.15–308.15 K and 1.01325–50 bara; independent `iapws` 1.5.5 `SeaWater(IF97=True)` references using the industrial IF97 water basis |
 | PC-SAFT | CoolProp 7.2.0 HEOS anchors for pure propane and n-hexane at two forced-gas and two forced-liquid states: Z, molar density and mass density through `SystemPCSAFT`, `PhasePCSAFTRahmat`, `SystemPCSAFTa` and `PhasePCSAFTa`; 0.1% relative tolerance |
 | Missing/unsupported | Hydrogen/nC20 correlation absence, Na+ inapplicability, supercritical methane and bare UNIQUAC rejection |
 
@@ -187,12 +188,23 @@ and Region 2 verification points before returning to its initial state. It requi
 the exact `PhaseWaterIAPWS` path, deterministic repeated initialization, refreshed
 density and caloric state, the published liquid/steam region, `H = U + PV`, and
 `G = H - TS`. The official IAPWS values are implementation-verification anchors,
-not experimental fits. [Issue #4055](https://github.com/equinor/neqsim/issues/4055)
-records the discovered factor-100,000 public-density defect, and
+not experimental fits. The state control converts the raw NeqSim molar volume
+from m³ × 100,000 to m³ before checking pressure–volume work and density closure;
+the explicit `m3/mol` getter must agree. This covers the density-unit defect
+reported in [issue #4055](https://github.com/equinor/neqsim/issues/4055), and
 [issue #4056](https://github.com/equinor/neqsim/issues/4056) records the dense Region 2
 phase-label defect. Qualification is limited to the six declared single-phase points
 from the compact Region 1/2 implementation. Cv, fugacity, saturation, Region 3/5,
 flashes, transport, mixtures and arbitrary states remain explicit debt.
+
+The `SEAWATER_35` adapter uses one nominal water component for the entire solution,
+with fixed Reference-Composition Salinity 35 g/kg. Its 27 catalog cases compare
+mass density and nominal molar enthalpy/Cp against independently calculated
+`iapws` 1.5.5 values; the molar conversion uses 0.018015 kg/mol. The catalog
+qualifies only these nine states and three properties. Other salinities, flashes,
+transport, phase equilibrium, salt mixing and experimental accuracy require
+separate evidence. See the [reference cooling-water guide](../process/equipment/reference_cooling_water.md)
+for the wider cooling envelope, integration tests and property limitations.
 
 The NRTL fixtures independently reconstruct both activity coefficients from the
 Renon-Prausnitz local-composition equation and verify `G^E = RT sum(x_i ln(gamma_i))`.
@@ -248,7 +260,7 @@ consistency evidence; they do not expand this catalog's physical scope.
 
 ## Inventory-to-catalog gate
 
-`inventory.tsv` classifies 131 concrete types at the initial snapshot: 68 implementations
+`inventory.tsv` classifies 132 concrete types: 69 implementations
 of `SystemInterface`, 62 implementations of `PhaseInterface`, and the explicitly selected
 `ComponentSrk` saturation-correlation entry point. All concrete subclasses in the two
 system/phase packages are discovered from compiled project classes, including nested
@@ -264,7 +276,7 @@ fails instead of reporting an empty inventory.
 
 | Classification | Meaning |
 | --- | --- |
-| `PARTIAL` (35 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
+| `PARTIAL` (36 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
 | `UNSUPPORTED` (1 type) | Bare UNIQUAC's declared constructor-rejection contract is tested; this does not label subclasses unsupported |
 | `DEBT` (95 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
 

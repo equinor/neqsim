@@ -1,4 +1,7 @@
 {
+ "code health maintainability": ["neqsim-code-health"],
+ "safe refactoring duplicate helpers": ["neqsim-safe-refactoring"],
+ "independent source code review": ["neqsim-code-review"],
  "vannduggpunkt med CPA": [
   "neqsim-cpa-water-boundaries"
  ],
@@ -569,7 +572,7 @@
  "identifying facility bottlenecks": [
   "neqsim-production-optimization"
  ],
- "images \u2014 equipment data sheets": [
+ "images — equipment data sheets": [
   "neqsim-technical-document-reading"
  ],
  "impurity effects on phase behavior": [
@@ -610,6 +613,26 @@
  ],
  "modeling co2 pipelines": [
   "neqsim-ccs-hydrogen"
+ ],
+ "integrated compression power": [
+  "neqsim-power-generation",
+  "neqsim-energy-systems-and-electrification",
+  "neqsim-rotating-equipment-design"
+ ],
+ "gas turbine compressor electric driver": [
+  "neqsim-power-generation",
+  "neqsim-energy-systems-and-electrification",
+  "neqsim-rotating-equipment-design"
+ ],
+ "turbine generator motor": [
+  "neqsim-power-generation",
+  "neqsim-energy-systems-and-electrification",
+  "neqsim-rotating-equipment-design"
+ ],
+ "CompressorPowerTrain": [
+  "neqsim-power-generation",
+  "neqsim-energy-systems-and-electrification",
+  "neqsim-rotating-equipment-design"
  ],
  "modeling gas turbines": [
   "neqsim-power-generation"
@@ -999,7 +1022,7 @@
  "pfr)": [
   "neqsim-reaction-engineering"
  ],
- "phase envelopes \u2014": [
+ "phase envelopes —": [
   "neqsim-technical-document-reading"
  ],
  "pipeline hydraulics": [
@@ -1520,7 +1543,9 @@
   "neqsim-utilities-specification"
  ],
  "cooling water": [
-  "neqsim-utilities-specification"
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
  ],
  "instrument air": [
   "neqsim-utilities-specification"
@@ -2682,7 +2707,7 @@
  "tetningsgass": [
   "neqsim-rotating-equipment-design"
  ],
- "t\u00f8rre gasstetninger": [
+ "tørre gasstetninger": [
   "neqsim-rotating-equipment-design"
  ],
  "p&id quality control": [
@@ -2696,5 +2721,25 @@
  ],
  "p&id source drawing consistency": [
   "neqsim-pid-quality-review"
+ ],
+ "seawater heat exchanger": [
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
+ ],
+ "IAPWS reference water": [
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
+ ],
+ "water cooled gas cooler": [
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
+ ],
+ "kjolevann sjovann varmeveksler": [
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
  ]
 }

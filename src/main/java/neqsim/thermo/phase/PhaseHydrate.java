@@ -49,7 +49,11 @@ public class PhaseHydrate extends Phase {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseHydrate clone() {
     PhaseHydrate clonedPhase = null;
@@ -57,6 +61,7 @@ public class PhaseHydrate extends Phase {
       clonedPhase = (PhaseHydrate) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseHydrate", ex);
     }
 
     return clonedPhase;

@@ -64,6 +64,20 @@ with `MultiVesselBlowdownStudy`, size PSV orifices where set-pressure evidence i
 available, and generate `dynamic_blowdown_flare_load_handoff.v1` for flare-network,
 consequence, and report consumers.
 
+## Compressor protection handoff
+
+For an instrumented compressor package, use the
+[compressor automation workflow](../skills/neqsim-compressor-antisurge-recycle/references/agentic-compressor-workflow.md)
+with `@rotating-equipment` and `@control-system`. Trace each actual pressure,
+temperature, scrubber-level or manual cause through held/qualified inputs,
+actions and physical final elements. Record alarm, permissive, trip, bypass,
+latching and reset behavior with its native acceptance test. Separate recycle
+opening, driver trip, isolation and protected-process response; one successful
+command does not prove all actions or relief adequacy. Carry unimplemented
+vibration, seal/lube/cooling and reverse-flow requirements as gaps. Simulation
+and distinct object identities do not establish SIL, installed independence,
+OEM protection adequacy or a commissioned PLC application.
+
 ## Applicable Standards (MANDATORY)
 
 Safety acceptance is set by the regulator of the asset country: resolve it first with

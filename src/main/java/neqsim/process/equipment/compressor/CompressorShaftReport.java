@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import neqsim.process.equipment.energy.CompressorPowerTrain;
 
 /**
  * Operating-point report of a {@link CompressorShaft}: the common speed, the driver power balance and, for every
@@ -38,6 +39,7 @@ public class CompressorShaftReport implements Serializable {
   private final double driverFuelMassFlowKgPerHr;
   private final double driverExhaustTemperatureK;
   private final List<MemberReport> members;
+  private final CompressorPowerTrain.Result powerTrain;
 
   /**
    * Constructor.
@@ -48,19 +50,20 @@ public class CompressorShaftReport implements Serializable {
    * @param ambientTemperatureK ambient temperature used for the driver rating [K]
    * @param totalPowerW sum of the active member powers [W]
    * @param requiredDriverPowerW driver power including gearbox losses [W]
-   * @param availablePowerW driver power available at the ambient temperature [W], 0 if unlimited
+   * @param availablePowerW available driver power in W (zero or infinity when unbounded)
    * @param powerUtilisation required over available driver power, 0 if unlimited
    * @param overPower true when the required power exceeds the available power
    * @param solveStatus status of the last solve, or "NONE"
    * @param feasible feasibility of the last solve
-   * @param driverFuelMassFlowKgPerHr driver fuel flow [kg/h], NaN without a gas turbine unit driver
+   * @param driverFuelMassFlowKgPerHr driver fuel flow [kg/h], zero for a matched electric train, NaN if unavailable
    * @param driverExhaustTemperatureK driver exhaust temperature [K], NaN without a gas turbine unit driver
    * @param members member reports in flow order
+   * @param powerTrain integrated supply result, or null when not configured
    */
   CompressorShaftReport(String shaftName, boolean turning, double speedRpm, double ambientTemperatureK,
       double totalPowerW, double requiredDriverPowerW, double availablePowerW, double powerUtilisation,
       boolean overPower, String solveStatus, boolean feasible, double driverFuelMassFlowKgPerHr,
-      double driverExhaustTemperatureK, List<MemberReport> members) {
+      double driverExhaustTemperatureK, List<MemberReport> members, CompressorPowerTrain.Result powerTrain) {
     this.shaftName = shaftName;
     this.turning = turning;
     this.speedRpm = speedRpm;
@@ -75,6 +78,16 @@ public class CompressorShaftReport implements Serializable {
     this.driverFuelMassFlowKgPerHr = driverFuelMassFlowKgPerHr;
     this.driverExhaustTemperatureK = driverExhaustTemperatureK;
     this.members = new ArrayList<MemberReport>(members);
+    this.powerTrain = powerTrain;
+  }
+
+  /**
+   * Gets the integrated driver supply result.
+   *
+   * @return fuel/electricity and conversion result, or null without a power-train calculation
+   */
+  public CompressorPowerTrain.Result getPowerTrain() {
+    return powerTrain;
   }
 
   /**
@@ -134,7 +147,7 @@ public class CompressorShaftReport implements Serializable {
   /**
    * Get the power the driver can deliver at the ambient temperature.
    *
-   * @return available power [W], 0 when no limit is configured
+   * @return available power [W], zero for legacy unlimited selection, infinity for an unbounded integrated train
    */
   public double getAvailablePowerW() {
     return availablePowerW;
@@ -179,7 +192,7 @@ public class CompressorShaftReport implements Serializable {
   /**
    * Get the fuel flow of a gas turbine unit driver.
    *
-   * @return fuel flow [kg/h], NaN without such a driver
+   * @return fuel flow [kg/h], zero for a matched electric drive, NaN if unavailable
    */
   public double getDriverFuelMassFlowKgPerHr() {
     return driverFuelMassFlowKgPerHr;
@@ -250,6 +263,7 @@ public class CompressorShaftReport implements Serializable {
     sb.append(",\"solveStatus\":\"").append(solveStatus).append("\",\"feasible\":").append(feasible);
     sb.append(",\"driverFuelMassFlowKgPerHr\":").append(num(driverFuelMassFlowKgPerHr));
     sb.append(",\"driverExhaustTemperatureK\":").append(num(driverExhaustTemperatureK));
+    sb.append(",\"powerTrain\":").append(powerTrain == null ? "null" : powerTrain.toJson());
     sb.append(",\"recycleRequired\":").append(isRecycleRequired()).append(",\"members\":[");
     for (int i = 0; i < members.size(); i++) {
       if (i > 0) {

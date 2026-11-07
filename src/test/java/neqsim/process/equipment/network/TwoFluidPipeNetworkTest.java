@@ -1,6 +1,7 @@
 package neqsim.process.equipment.network;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -324,6 +325,70 @@ class TwoFluidPipeNetworkTest {
     }
   }
 
+  @Test
+  void algebraicJunctionSolvesCommonPressureAndMixedDonorConservatively() {
+    TwoFluidPipeNetwork network = createAlgebraicMerge(false);
+
+    network.runTransient(0.005, UUID.randomUUID());
+
+    TwoFluidPipeNetwork.AlgebraicJunctionReport report = network.getLastAlgebraicJunctionReport();
+    assertNotNull(report);
+    assertEquals("zero-volume manifold", report.getNodeName());
+    assertTrue(report.getPressurePa() > 50.0e5);
+    assertTrue(report.getPressurePa() < 65.0e5);
+    assertTrue(report.getMaximumRelativePhaseResidual() < 1.0e-8);
+    assertTrue(report.getMaximumRelativeComponentResidual() < 1.0e-8);
+    assertTrue(report.getRelativeEnergyResidual() < 1.0e-8);
+    assertTrue(Math.abs(report.getPhaseResidualKg(Phase.TOTAL)) < 1.0e-9);
+    assertTrue(Math.abs(report.getInterphaseTransferKg(Phase.GAS)) > 1.0e-9);
+    assertTrue(Math.abs(report.getInterphaseTransferKg(Phase.TOTAL)) < 1.0e-9);
+    for (String componentName : report.getComponentNames()) {
+      assertTrue(Math.abs(report.getComponentResidualKg(componentName)) < 1.0e-9);
+    }
+    assertTrue(Math.abs(report.getEnergyResidualJ()) < 1.0e-3);
+    double methaneFraction = network.getAlgebraicNodeComponentMassFraction("zero-volume manifold", "methane");
+    assertTrue(Double.isFinite(methaneFraction));
+    assertTrue(methaneFraction > 0.0 && methaneFraction < 1.0);
+    assertEquals(report.getPressurePa(), network.getNodePressurePa("zero-volume manifold"), 0.0);
+    assertEquals(report.getInterphaseTransferKg(Phase.GAS),
+        network.getLastBalanceReport().getInternalPhaseTransferKg(Phase.GAS), 0.0);
+    assertTrue(network.getLastBalanceReport().getRelativeResidual(Phase.TOTAL) < 1.0e-8);
+    assertTrue(network.getLastThermodynamicBalanceReport().getRelativeEnergyResidual() < 1.0e-7);
+  }
+
+  @Test
+  void algebraicJunctionIsBranchOrderIndependentAndSerializable() {
+    TwoFluidPipeNetwork ordered = createAlgebraicMerge(false);
+    TwoFluidPipeNetwork reversed = createAlgebraicMerge(true);
+
+    ordered.runTransient(0.005, UUID.randomUUID());
+    reversed.runTransient(0.005, UUID.randomUUID());
+
+    assertEquals(ordered.getNodePressurePa("zero-volume manifold"), reversed.getNodePressurePa("zero-volume manifold"),
+        1.0e-2);
+    assertEquals(ordered.getNodeTemperatureK("zero-volume manifold"),
+        reversed.getNodeTemperatureK("zero-volume manifold"), 1.0e-8);
+    assertEquals(ordered.getAlgebraicNodeComponentMassFraction("zero-volume manifold", "methane"),
+        reversed.getAlgebraicNodeComponentMassFraction("zero-volume manifold", "methane"), 1.0e-10);
+
+    TwoFluidPipeNetwork restored = SerializationUtils.clone(ordered);
+    restored.runTransient(0.005, UUID.randomUUID());
+    assertNotNull(restored.getLastAlgebraicJunctionReport());
+    assertTrue(restored.getLastAlgebraicJunctionReport().getMaximumRelativePhaseResidual() < 1.0e-8);
+    assertTrue(restored.getLastAlgebraicJunctionReport().getMaximumRelativeComponentResidual() < 1.0e-8);
+  }
+
+  @Test
+  void boundedAlgebraicSolverRejectsSecondJunction() {
+    TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("bounded algebraic topology");
+    network.addAlgebraicJunction("first", 55.0e5, createFluid(0.95, 0.05));
+
+    IllegalStateException error = assertThrows(IllegalStateException.class,
+        () -> network.addAlgebraicJunction("second", 54.0e5, createFluid(0.95, 0.05)));
+
+    assertTrue(error.getMessage().contains("one algebraic junction"));
+  }
+
   private static void assertBranchLedgerConsistency(TwoFluidPipeNetwork network, String branchName) {
     TwoFluidPipe pipe = network.getPipe(branchName);
     TwoFluidMassBalanceReport mass = pipe.getLastMassBalanceReport();
@@ -369,6 +434,24 @@ class TwoFluidPipeNetworkTest {
       network.addPipe("gas inlet", "gas source", "manifold", createPipe("gas inlet", 0.98, 0.02));
       network.addPipe("liquid inlet", "liquid source", "manifold", createPipe("liquid inlet", 0.30, 0.70));
       network.addPipe("outlet", "manifold", "sink", createPipe("outlet", 0.80, 0.20));
+    }
+    return network;
+  }
+
+  private static TwoFluidPipeNetwork createAlgebraicMerge(boolean reverseBranchOrder) {
+    TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("algebraic merge");
+    network.addFixedPressureNode("rich source", 65.0e5, createFluid(0.99, 0.01));
+    network.addFixedPressureNode("lean source", 60.0e5, createFluid(0.90, 0.10));
+    network.addAlgebraicJunction("zero-volume manifold", 55.0e5, createFluid(0.95, 0.05));
+    network.addFixedPressureNode("sink", 50.0e5, createFluid(0.95, 0.05));
+    if (reverseBranchOrder) {
+      network.addPipe("outlet", "zero-volume manifold", "sink", createPipe("outlet", 0.95, 0.05));
+      network.addPipe("lean inlet", "lean source", "zero-volume manifold", createPipe("lean inlet", 0.90, 0.10));
+      network.addPipe("rich inlet", "rich source", "zero-volume manifold", createPipe("rich inlet", 0.99, 0.01));
+    } else {
+      network.addPipe("rich inlet", "rich source", "zero-volume manifold", createPipe("rich inlet", 0.99, 0.01));
+      network.addPipe("lean inlet", "lean source", "zero-volume manifold", createPipe("lean inlet", 0.90, 0.10));
+      network.addPipe("outlet", "zero-volume manifold", "sink", createPipe("outlet", 0.95, 0.05));
     }
     return network;
   }

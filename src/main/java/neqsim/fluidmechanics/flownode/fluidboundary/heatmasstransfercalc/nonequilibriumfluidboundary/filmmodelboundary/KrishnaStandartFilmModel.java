@@ -83,7 +83,11 @@ public class KrishnaStandartFilmModel extends
     redCorrectionMatrix = new double[independentComponents];
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public KrishnaStandartFilmModel clone() {
     KrishnaStandartFilmModel clonedSystem = null;
@@ -92,6 +96,7 @@ public class KrishnaStandartFilmModel extends
       clonedSystem = (KrishnaStandartFilmModel) super.clone();
     } catch (Exception ex) {
       logger.error(ex.getMessage());
+      throw new IllegalStateException("Unable to complete clone of KrishnaStandartFilmModel", ex);
     }
 
     return clonedSystem;

@@ -66,7 +66,11 @@ public class SystemPrGassemEos extends SystemPrEos {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemPrGassemEos clone() {
     SystemPrGassemEos clonedSystem = null;
@@ -74,6 +78,7 @@ public class SystemPrGassemEos extends SystemPrEos {
       clonedSystem = (SystemPrGassemEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemPrGassemEos", ex);
     }
 
     return clonedSystem;

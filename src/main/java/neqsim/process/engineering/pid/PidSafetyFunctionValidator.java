@@ -15,6 +15,7 @@ import com.google.gson.Gson;
 import neqsim.process.engineering.EngineeringProject;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.valve.ESDValve;
+import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.logic.esd.ESDLogic;
 import neqsim.process.processmodel.ProcessSystem;
@@ -128,7 +129,31 @@ public final class PidSafetyFunctionValidator {
   public static ConfiguredFunction validateConfigured(EngineeringProject project, PidDesignModel model,
       PidSimulationBindings bindings, ProcessSystem process, String functionTag, ClosedLoopSafetyFunction function,
       Map<String, SafetyFunctionChannel.FaultMode> faultOverrides) {
-    if (bindings == null || process == null || function == null || faultOverrides == null) {
+    return validateConfigured(project, model, bindings, process, functionTag, function, faultOverrides,
+        Collections.<String, Map<String, Object>>emptyMap());
+  }
+
+  /**
+   * Validates separately declared instrument-channel and native final-element fault modes.
+   *
+   * @param project governed source
+   * @param model canonical healthy graph
+   * @param bindings current identities
+   * @param process isolated configured process
+   * @param functionTag canonical safety function
+   * @param function actual native implementation
+   * @param faultOverrides explicit channel fault modes
+   * @param targetFaultOverrides exact native target tags with actuatorAvailable/strokeSeconds or commandAvailable
+   * fields
+   * @return immutable healthy-design plus declared-fault configuration evidence
+   * @throws IllegalArgumentException if a declared fault is unknown, unreported or differs from actual readback
+   */
+  public static ConfiguredFunction validateConfigured(EngineeringProject project, PidDesignModel model,
+      PidSimulationBindings bindings, ProcessSystem process, String functionTag, ClosedLoopSafetyFunction function,
+      Map<String, SafetyFunctionChannel.FaultMode> faultOverrides,
+      Map<String, Map<String, Object>> targetFaultOverrides) {
+    if (bindings == null || process == null || function == null || faultOverrides == null
+        || targetFaultOverrides == null) {
       throw new IllegalArgumentException("bindings, configured process, function and fault overrides are required");
     }
     bindings.assertCurrent(project, model);
@@ -147,16 +172,19 @@ public final class PidSafetyFunctionValidator {
       throw new IllegalArgumentException("Safety function requires a canonical TRIP or SAFETY_FUNCTION element");
     }
     Map<String, Object> configuration = nativeConfiguration(function.getDynamicSafetyScenarioEvidence());
-    if (!new Gson().toJsonTree(attribute(proposal, "simulationFinalElementActionConfiguration"))
-        .equals(new Gson().toJsonTree(actionPolicy))
-        || !new Gson().toJsonTree(actionPolicy)
-            .equals(new Gson().toJsonTree(configuration.get("finalElementActionConfiguration")))) {
+    @SuppressWarnings("unchecked")
+    Map<String, Object> declaredActionPolicy = new Gson()
+        .fromJson(new Gson().toJson(attribute(proposal, "simulationFinalElementActionConfiguration")), Map.class);
+    applyTargetFaultsToActionPolicy(declaredActionPolicy, targetFaultOverrides);
+    if (!new Gson().toJsonTree(declaredActionPolicy).equals(new Gson().toJsonTree(actionPolicy)) || !new Gson()
+        .toJsonTree(actionPolicy).equals(new Gson().toJsonTree(configuration.get("finalElementActionConfiguration")))) {
       throw new IllegalArgumentException("Canonical/native final-element command policy differs or is unreported");
     }
     same(proposal.getTag(), function.getName(), "function tag/name");
     same(attribute(proposal, "simulationSifId"), function.getSifId(), "SIF identity");
     String role = String.valueOf(attribute(proposal, "safetyFunctionRole"));
-    if (!"ESD".equals(role) && !"HIPPS".equals(role) && !"MANUAL_ESD".equals(role)) {
+    if (!"ESD".equals(role) && !"HIPPS".equals(role) && !"MANUAL_ESD".equals(role) && !"COMPRESSOR_ESD".equals(role)
+        && !"COMPRESSOR_MANUAL_ESD".equals(role)) {
       throw new IllegalArgumentException("Unsupported explicit safety-function role: " + role);
     }
     same(attribute(proposal, "simulationVoting"), configuration.get("votingPattern"), "voting pattern");
@@ -217,7 +245,8 @@ public final class PidSafetyFunctionValidator {
       if (!("NATIVE_HELD_MEASUREMENT".equals(status) || "NATIVE_DISCRETE_PUSH_BUTTON".equals(status))) {
         throw new IllegalArgumentException("Arbitrary extractor does not establish native measurement identity");
       }
-      if ("MANUAL_ESD".equals(role) != "NATIVE_DISCRETE_PUSH_BUTTON".equals(status)) {
+      if (("MANUAL_ESD".equals(role) || "COMPRESSOR_MANUAL_ESD".equals(role)) != "NATIVE_DISCRETE_PUSH_BUTTON"
+          .equals(status)) {
         throw new IllegalArgumentException("Manual and measured pressure roles must remain distinct");
       }
       Map<String, Object> row = new LinkedHashMap<String, Object>();
@@ -230,7 +259,8 @@ public final class PidSafetyFunctionValidator {
     if (!matchedFaultOverrides.equals(faultOverrides.keySet())) {
       throw new IllegalArgumentException("Fault overrides must identify only actual inputs to this function");
     }
-    List<Map<String, Object>> targetBindings = targets(model, bindings, process, proposal, function);
+    List<Map<String, Object>> targetBindings = targets(model, bindings, process, proposal, function,
+        targetFaultOverrides);
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("schemaVersion", "neqsim_pid_safety_function_binding.v1");
     result.put("projectId", project.getProjectId());
@@ -258,6 +288,7 @@ public final class PidSafetyFunctionValidator {
       overrides.put(entry.getKey(), entry.getValue().name());
     }
     result.put("scenarioFaultOverrides", overrides);
+    result.put("declaredTargetFaultOverrides", targetFaultOverrides);
     result.put("hardwareIndependence", "NOT_ESTABLISHED_BY_OBJECT_IDENTITY");
     result.put("approvalStatus", "ENGINEERING_REVIEW_REQUIRED");
     result.put("silTargetInferred", Boolean.FALSE);
@@ -273,26 +304,89 @@ public final class PidSafetyFunctionValidator {
    * @param process configured process
    * @param proposal canonical safety function
    * @param function native implementation
+   * @param targetFaultOverrides explicitly declared supported native target faults
    * @return target identity and actual settings
    */
   private static List<Map<String, Object>> targets(PidDesignModel model, PidSimulationBindings bindings,
-      ProcessSystem process, PidElement proposal, ClosedLoopSafetyFunction function) {
+      ProcessSystem process, PidElement proposal, ClosedLoopSafetyFunction function,
+      Map<String, Map<String, Object>> targetFaultOverrides) {
     Set<ProcessEquipmentInterface> expected = Collections
         .newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
     List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>();
     for (String id : proposal.getConnectedElementIds()) {
       PidElement target = byId(model, id);
+      boolean compressorRole = String.valueOf(attribute(proposal, "safetyFunctionRole")).startsWith("COMPRESSOR_");
+      if (compressorRole && target.getType() == PidElementType.TRIP
+          && "NATIVE_COMPRESSOR_STOP_COMMAND".equals(target.getAttributes().get("simulationFinalElementRole"))) {
+        ProcessEquipmentInterface compressor = process
+            .getUnit(String.valueOf(attribute(target, "simulationTargetEquipmentTag")));
+        if (!(compressor instanceof Compressor) || !expected.add(compressor)
+            || !target.getEquipmentTag().equals(compressor.getName())) {
+          throw new IllegalArgumentException("Distinct actual bound compressor stop target is required");
+        }
+        Map<String, Object> driver = PidSafetyFunctionImporter.driverPolicy(
+            ((ESDLogic) function.getFinalElementLogic()).getTripActionConfiguration(), compressor.getName());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> expectedDriver = new Gson()
+            .fromJson(new Gson().toJson(attribute(target, "simulationDriverTripConfiguration")), Map.class);
+        Map<String, Object> declaredFault = targetFaultOverrides.get(compressor.getName());
+        if (declaredFault != null) {
+          if (declaredFault.isEmpty() || !Collections.singleton("commandAvailable").containsAll(declaredFault.keySet())
+              || !(declaredFault.get("commandAvailable") instanceof Boolean)) {
+            throw new IllegalArgumentException("Driver fault override supports only actual command availability");
+          }
+          expectedDriver.putAll(declaredFault);
+        }
+        if (!new Gson().toJsonTree(expectedDriver).equals(new Gson().toJsonTree(driver))) {
+          throw new IllegalArgumentException("Canonical/native compressor shutdown profile differs");
+        }
+        Map<String, Object> row = new LinkedHashMap<String, Object>();
+        row.put("pidElementId", target.getId());
+        row.put("pidTag", target.getTag());
+        row.put("simulationName", compressor.getName());
+        row.put("simulationClass", compressor.getClass().getName());
+        row.put("nativeDriverTripPolicy", driver);
+        row.put("physicalHardwareAdded", Boolean.FALSE);
+        rows.add(row);
+        continue;
+      }
       ProcessEquipmentInterface actual = bindings.resolveEquipment(target.getTag(), process);
       if (!expected.add(actual) || !(actual instanceof ESDValve)) {
         throw new IllegalArgumentException("Distinct bound native ESD-valve targets are required");
       }
       ESDValve valve = (ESDValve) actual;
-      if (Math.abs(valve.getFailSafePosition()) > 1.0e-12) {
+      if (Math.abs(valve.getFailSafePosition()) > 1.0e-12
+          && !(compressorRole && Math.abs(valve.getFailSafePosition() - 100.0) <= 1.0e-12)) {
         throw new IllegalArgumentException(
             "This isolation-function contract requires actual fail-safe closure at zero percent");
       }
-      equalNumber(attribute(target, "simulationStrokeSeconds"), Double.valueOf(valve.getStrokeTime()),
-          "final-element stroke time");
+      if (compressorRole) {
+        same(attribute(target, "simulationFinalElementRole"),
+            valve.getFailSafePosition() == 100.0 ? "FAIL_OPEN_NATIVE_ESD" : "FAIL_CLOSED_ISOLATION",
+            "compressor final-element role");
+      }
+      Map<String, Object> declaredFault = targetFaultOverrides.get(actual.getName());
+      Object expectedStroke = attribute(target, "simulationStrokeSeconds");
+      Object expectedAvailability = target.getAttributes().containsKey("simulationActuatorAvailable")
+          ? target.getAttributes().get("simulationActuatorAvailable")
+          : Boolean.TRUE;
+      if (declaredFault != null) {
+        if (declaredFault.isEmpty()
+            || !java.util.Arrays.asList("actuatorAvailable", "strokeSeconds").containsAll(declaredFault.keySet())) {
+          throw new IllegalArgumentException("ESD actuator faults support only availability and stroke time");
+        }
+        if (declaredFault.containsKey("strokeSeconds")) {
+          expectedStroke = declaredFault.get("strokeSeconds");
+        }
+        if (declaredFault.containsKey("actuatorAvailable")) {
+          expectedAvailability = declaredFault.get("actuatorAvailable");
+        }
+      }
+      if (!(expectedAvailability instanceof Boolean)
+          || ((Boolean) expectedAvailability).booleanValue() != valve.isActuatorAvailable()) {
+        throw new IllegalArgumentException("Unreported or mismatched actual ESD actuator availability");
+      }
+      equalNumber(expectedStroke, Double.valueOf(valve.getStrokeTime()), "final-element stroke time");
       equalNumber(attribute(target, "simulationFailSafePosition"), Double.valueOf(valve.getFailSafePosition()),
           "final-element fail-safe position");
       Map<String, Object> row = new LinkedHashMap<String, Object>();
@@ -317,10 +411,46 @@ public final class PidSafetyFunctionValidator {
     Set<ProcessEquipmentInterface> actual = Collections
         .newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
     actual.addAll(function.getTargetEquipment());
+    Set<String> actualTags = new LinkedHashSet<String>();
+    for (ProcessEquipmentInterface target : actual) {
+      actualTags.add(target.getName());
+    }
+    if (!actualTags.containsAll(targetFaultOverrides.keySet())) {
+      throw new IllegalArgumentException("Target fault overrides must identify actual targets of this function");
+    }
     if (expected.isEmpty() || !expected.equals(actual)) {
       throw new IllegalArgumentException("Native final-element targets differ from the canonical function graph");
     }
     return rows;
+  }
+
+  /**
+   * Applies only explicit supported command/actuator fault settings to a detached healthy action-policy tree.
+   *
+   * @param node detached action data
+   * @param faults exact native target-tag fault settings
+   */
+  @SuppressWarnings("unchecked")
+  private static void applyTargetFaultsToActionPolicy(Object node, Map<String, Map<String, Object>> faults) {
+    if (node instanceof Map) {
+      Map<String, Object> values = (Map<String, Object>) node;
+      Map<String, Object> fault = faults.get(String.valueOf(values.get("tag")));
+      if (fault != null) {
+        if (fault.containsKey("strokeSeconds") && values.containsKey("strokeTimeSeconds")) {
+          values.put("strokeTimeSeconds", fault.get("strokeSeconds"));
+        }
+        if (fault.containsKey("commandAvailable") && values.containsKey("commandAvailable")) {
+          values.put("commandAvailable", fault.get("commandAvailable"));
+        }
+      }
+      for (Object value : new ArrayList<Object>(values.values())) {
+        applyTargetFaultsToActionPolicy(value, faults);
+      }
+    } else if (node instanceof List) {
+      for (Object value : (List<?>) node) {
+        applyTargetFaultsToActionPolicy(value, faults);
+      }
+    }
   }
 
   /**
@@ -406,6 +536,11 @@ public final class PidSafetyFunctionValidator {
     output.put("faultModeQualification",
         ((Map<?, ?>) receipt.get("scenarioFaultOverrides")).isEmpty() ? "NORMAL_DESIGN_CHANNEL_MODES"
             : "DECLARED_FAULT_MODES_ONLY");
+    output.put("targetFaultQualification",
+        receipt.get("declaredTargetFaultOverrides") instanceof Map
+            && !((Map<?, ?>) receipt.get("declaredTargetFaultOverrides")).isEmpty()
+                ? "DECLARED_NATIVE_FINAL_ELEMENT_FAULTS_ONLY"
+                : "NORMAL_DESIGN_FINAL_ELEMENT_POLICY");
     output.put("engineeringApprovalRequired", Boolean.TRUE);
     output.put("silTargetInferred", Boolean.FALSE);
     output.put("fitnessForConstruction", Boolean.FALSE);

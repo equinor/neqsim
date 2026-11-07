@@ -1,0 +1,1552 @@
+All commands ran from /workspace/scratch/ec5d078361de/neqsim
+Before Maven/Spotless/hook final invocations: eval "$(/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 /root/.codex/skills/remote-skills/skill-6a5cc98990448191b8f0d925335381ee/scripts/prepare_maven.py)"
+Java main/API compile classpaths are retained below; Java 8 compilation is not an actual Java 8 runtime claim.
+
+
+=== baseline-compile; exit 0 ===
+$ ./mvnw -B -ntp -DskipTests compile
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.28.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.7.0:enforce (enforce-maven) @ neqsim ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] 
+[INFO] --- jacoco:0.8.16:prepare-agent (prepare-agent) @ neqsim ---
+[INFO] argLine set to -javaagent:/tmp/neqsim-maven-0/repository/org/jacoco/org.jacoco.agent/0.8.16/org.jacoco.agent-0.8.16-runtime.jar=destfile=/workspace/scratch/ec5d078361de/neqsim/target/jacoco.exec,excludes=neqsim/physicalproperties/util/parameterfitting/**/*:neqsim/statistics/util/parameterfitting/**/*:neqsim/pvtsimulation/util/parameterfitting/**/*
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ neqsim ---
+[INFO] Copying 132 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- flatten:1.8.0:flatten (flatten) @ neqsim ---
+[INFO] Generating flattened POM of project com.equinor.neqsim:neqsim:jar:3.28.0...
+[INFO] 
+[INFO] --- compiler:3.16.0:compile (default-compile) @ neqsim ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 3676 source files with javac [debug release 17] to target/classes
+[INFO] /workspace/scratch/ec5d078361de/neqsim/src/main/java/neqsim/thermo/phase/PhaseGE.java: Some input files use or override a deprecated API.
+[INFO] /workspace/scratch/ec5d078361de/neqsim/src/main/java/neqsim/thermo/phase/PhaseGE.java: Recompile with -Xlint:deprecation for details.
+[INFO] /workspace/scratch/ec5d078361de/neqsim/src/main/java/neqsim/process/processmodel/ProcessSystem.java: Some input files use unchecked or unsafe operations.
+[INFO] /workspace/scratch/ec5d078361de/neqsim/src/main/java/neqsim/process/processmodel/ProcessSystem.java: Recompile with -Xlint:unchecked for details.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  33.185 s
+[INFO] Finished at: 2026-11-07T15:18:53+01:00
+[INFO] ------------------------------------------------------------------------
+
+
+=== baseline-support; exit 1 ===
+$ java -cp target/run59-evidence:target/classes:$(cat target/run59-evidence/classpath.txt) QuantileEndpointQualification target/run59-evidence/baseline-endpoints.json target/run59-evidence/baseline-query-timing.json
+Exception in thread "main" java.lang.IllegalStateException: 8 support endpoint checks failed
+	at QuantileEndpointQualification.main(QuantileEndpointQualification.java:102)
+
+
+=== spotless-apply-1; exit 0 ===
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 devtools/run_spotless.py apply
+
+
+=== spotless-apply-2; exit 0 ===
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 devtools/run_spotless.py apply
+
+
+=== spotless-apply-stable; exit 0 ===
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 devtools/run_spotless.py apply
+
+
+=== focused; exit 0 ===
+$ ./mvnw -B -ntp test -Dtest=ReservoirHistoryParameterQuantilesTest,ReservoirHistoryEnsembleTest
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.28.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.7.0:enforce (enforce-maven) @ neqsim ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] 
+[INFO] --- jacoco:0.8.16:prepare-agent (prepare-agent) @ neqsim ---
+[INFO] argLine set to -javaagent:/tmp/neqsim-maven-0/repository/org/jacoco/org.jacoco.agent/0.8.16/org.jacoco.agent-0.8.16-runtime.jar=destfile=/workspace/scratch/ec5d078361de/neqsim/target/jacoco.exec,excludes=neqsim/physicalproperties/util/parameterfitting/**/*:neqsim/statistics/util/parameterfitting/**/*:neqsim/pvtsimulation/util/parameterfitting/**/*
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ neqsim ---
+[INFO] Copying 132 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- flatten:1.8.0:flatten (flatten) @ neqsim ---
+[INFO] Generating flattened POM of project com.equinor.neqsim:neqsim:jar:3.28.0...
+[INFO] 
+[INFO] --- compiler:3.16.0:compile (default-compile) @ neqsim ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.4.0:testResources (default-testResources) @ neqsim ---
+[INFO] Copying 186 resources from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.16.0:testCompile (default-testCompile) @ neqsim ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 89 source files with javac [debug release 17] to target/test-classes
+[INFO] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java: /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java uses or overrides a deprecated API.
+[INFO] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java: Recompile with -Xlint:deprecation for details.
+[INFO] 
+[INFO] --- surefire:3.6.1:test (default-test) @ neqsim ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running neqsim.pvtsimulation.util.ReservoirHistoryEnsembleTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.043 s -- in neqsim.pvtsimulation.util.ReservoirHistoryEnsembleTest
+[INFO] Running neqsim.pvtsimulation.util.ReservoirHistoryParameterQuantilesTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.152 s -- in neqsim.pvtsimulation.util.ReservoirHistoryParameterQuantilesTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jacoco:0.8.16:report (report) @ neqsim ---
+[INFO] Loading execution data file /workspace/scratch/ec5d078361de/neqsim/target/jacoco.exec
+[INFO] Analyzed bundle 'NeqSim' with 6512 classes
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  20.605 s
+[INFO] Finished at: 2026-11-07T15:22:17+01:00
+[INFO] ------------------------------------------------------------------------
+
+
+=== PVT; exit 0 ===
+$ ./mvnw -B -ntp test -Dtest=neqsim.pvtsimulation.**
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.28.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.7.0:enforce (enforce-maven) @ neqsim ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] 
+[INFO] --- jacoco:0.8.16:prepare-agent (prepare-agent) @ neqsim ---
+[INFO] argLine set to -javaagent:/tmp/neqsim-maven-0/repository/org/jacoco/org.jacoco.agent/0.8.16/org.jacoco.agent-0.8.16-runtime.jar=destfile=/workspace/scratch/ec5d078361de/neqsim/target/jacoco.exec,excludes=neqsim/physicalproperties/util/parameterfitting/**/*:neqsim/statistics/util/parameterfitting/**/*:neqsim/pvtsimulation/util/parameterfitting/**/*
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ neqsim ---
+[INFO] Copying 132 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- flatten:1.8.0:flatten (flatten) @ neqsim ---
+[INFO] Generating flattened POM of project com.equinor.neqsim:neqsim:jar:3.28.0...
+[INFO] 
+[INFO] --- compiler:3.16.0:compile (default-compile) @ neqsim ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.4.0:testResources (default-testResources) @ neqsim ---
+[INFO] Copying 186 resources from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.16.0:testCompile (default-testCompile) @ neqsim ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.6.1:test (default-test) @ neqsim ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running neqsim.pvtsimulation.PvtLabTestsDocumentationTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.839 s -- in neqsim.pvtsimulation.PvtLabTestsDocumentationTest
+[INFO] Running neqsim.pvtsimulation.PvtSimulationDocumentationTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.364 s -- in neqsim.pvtsimulation.PvtSimulationDocumentationTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.AsphalteneMethodComparisonTest
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.547 s -- in neqsim.pvtsimulation.flowassurance.AsphalteneMethodComparisonTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.AsphalteneMultiMethodBenchmarkTest
+[INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.447 s -- in neqsim.pvtsimulation.flowassurance.AsphalteneMultiMethodBenchmarkTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.AsphalteneStabilityAnalyzerTest
+[INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.934 s -- in neqsim.pvtsimulation.flowassurance.AsphalteneStabilityAnalyzerTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.AsphalteneValidationTest
+[INFO] Tests run: 18, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.363 s -- in neqsim.pvtsimulation.flowassurance.AsphalteneValidationTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.DeBoerAsphalteneScreeningTest
+[INFO] Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.030 s -- in neqsim.pvtsimulation.flowassurance.DeBoerAsphalteneScreeningTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.DeBoerScreeningDocumentationTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.117 s -- in neqsim.pvtsimulation.flowassurance.DeBoerScreeningDocumentationTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.EmulsionViscosityCalculatorTest
+[INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.011 s -- in neqsim.pvtsimulation.flowassurance.EmulsionViscosityCalculatorTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.ErosionPredictionCalculatorTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in neqsim.pvtsimulation.flowassurance.ErosionPredictionCalculatorTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.ErosionSandLoadDefaultsTest
+[INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.011 s -- in neqsim.pvtsimulation.flowassurance.ErosionSandLoadDefaultsTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.FlowAssuranceDocumentationTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.248 s -- in neqsim.pvtsimulation.flowassurance.FlowAssuranceDocumentationTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.HydrateRiskMapperTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.214 s -- in neqsim.pvtsimulation.flowassurance.HydrateRiskMapperTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.MultiMineralScaleEquilibriumTest
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.021 s -- in neqsim.pvtsimulation.flowassurance.MultiMineralScaleEquilibriumTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.PitzerScaleActivityModelTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s -- in neqsim.pvtsimulation.flowassurance.PitzerScaleActivityModelTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.ScaleKspLiteratureBenchmarkTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in neqsim.pvtsimulation.flowassurance.ScaleKspLiteratureBenchmarkTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.ScalePredictionTest
+[INFO] Tests run: 24, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s -- in neqsim.pvtsimulation.flowassurance.ScalePredictionTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.SurfCooldownAnalyzerTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.086 s -- in neqsim.pvtsimulation.flowassurance.SurfCooldownAnalyzerTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.SurfCooldownAnalyzerWaterGuardTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.074 s -- in neqsim.pvtsimulation.flowassurance.SurfCooldownAnalyzerWaterGuardTest
+[INFO] Running neqsim.pvtsimulation.flowassurance.WaxCurveCalculatorTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.139 s -- in neqsim.pvtsimulation.flowassurance.WaxCurveCalculatorTest
+[INFO] Running neqsim.pvtsimulation.regression.PVTRegressionDepletionHistoryTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.815 s -- in neqsim.pvtsimulation.regression.PVTRegressionDepletionHistoryTest
+[INFO] Running neqsim.pvtsimulation.regression.PVTRegressionDispatchTest
+[INFO] Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.201 s -- in neqsim.pvtsimulation.regression.PVTRegressionDispatchTest
+[INFO] Running neqsim.pvtsimulation.regression.PVTRegressionTest
+[INFO] Tests run: 23, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.123 s -- in neqsim.pvtsimulation.regression.PVTRegressionTest
+[INFO] Running neqsim.pvtsimulation.regression.PVTRegressionWeightingTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.039 s -- in neqsim.pvtsimulation.regression.PVTRegressionWeightingTest
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferPrecisionTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.056 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferPrecisionTest
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferTest
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.044 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferTest
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.GasMaterialBalanceTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.GasMaterialBalanceTest
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalanceTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.018 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalanceTest
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.OilMaterialBalanceTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.OilMaterialBalanceTest
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.materialbalance.VanEverdingenHurstAquiferTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in neqsim.pvtsimulation.reservoirproperties.materialbalance.VanEverdingenHurstAquiferTest
+[INFO] Running neqsim.pvtsimulation.reservoirproperties.relpermeability.RelativePermeabilityGeneratorTest
+[INFO] Tests run: 18, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.013 s -- in neqsim.pvtsimulation.reservoirproperties.relpermeability.RelativePermeabilityGeneratorTest
+[INFO] Running neqsim.pvtsimulation.simulation.ConstantMassExpansionOilPropertiesTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.143 s -- in neqsim.pvtsimulation.simulation.ConstantMassExpansionOilPropertiesTest
+[INFO] Running neqsim.pvtsimulation.simulation.ConstantMassExpansionTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.343 s -- in neqsim.pvtsimulation.simulation.ConstantMassExpansionTest
+[INFO] Running neqsim.pvtsimulation.simulation.ConstantVolumeDepletionTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.065 s -- in neqsim.pvtsimulation.simulation.ConstantVolumeDepletionTest
+[INFO] Running neqsim.pvtsimulation.simulation.DensitySimTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in neqsim.pvtsimulation.simulation.DensitySimTest
+[INFO] Running neqsim.pvtsimulation.simulation.DifferentialLiberationTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.617 s -- in neqsim.pvtsimulation.simulation.DifferentialLiberationTest
+[INFO] Running neqsim.pvtsimulation.simulation.FixedCellFeasibleGibbsTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.136 s -- in neqsim.pvtsimulation.simulation.FixedCellFeasibleGibbsTest
+[INFO] Running neqsim.pvtsimulation.simulation.FixedCellInitialStateTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.649 s -- in neqsim.pvtsimulation.simulation.FixedCellInitialStateTest
+[INFO] Running neqsim.pvtsimulation.simulation.MultiStageSeparatorTestTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.318 s -- in neqsim.pvtsimulation.simulation.MultiStageSeparatorTestTest
+[INFO] Running neqsim.pvtsimulation.simulation.SaturationPressureTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.794 s -- in neqsim.pvtsimulation.simulation.SaturationPressureTest
+[INFO] Running neqsim.pvtsimulation.simulation.SaturationTemperatureSearchTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.038 s -- in neqsim.pvtsimulation.simulation.SaturationTemperatureSearchTest
+[INFO] Running neqsim.pvtsimulation.simulation.SaturationTemperatureTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 13.71 s -- in neqsim.pvtsimulation.simulation.SaturationTemperatureTest
+[INFO] Running neqsim.pvtsimulation.simulation.SaturationTemperatureTuningTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 16.61 s -- in neqsim.pvtsimulation.simulation.SaturationTemperatureTuningTest
+[INFO] Running neqsim.pvtsimulation.simulation.SeparatorTestTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.077 s -- in neqsim.pvtsimulation.simulation.SeparatorTestTest
+[INFO] Running neqsim.pvtsimulation.simulation.SlimTubeSimTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 13.34 s -- in neqsim.pvtsimulation.simulation.SlimTubeSimTest
+[INFO] Running neqsim.pvtsimulation.simulation.SolutionGasWaterRatioTest
+[INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.322 s -- in neqsim.pvtsimulation.simulation.SolutionGasWaterRatioTest
+[INFO] Running neqsim.pvtsimulation.simulation.SolutionGasWaterRatioVerificationTest
+- Formation water (5+ wt% NaCl) can reduce Rsw by 30-50% compared to pure water
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.524 s -- in neqsim.pvtsimulation.simulation.SolutionGasWaterRatioVerificationTest
+[INFO] Running neqsim.pvtsimulation.simulation.SwellingTestTemperatureTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.073 s -- in neqsim.pvtsimulation.simulation.SwellingTestTemperatureTest
+[INFO] Running neqsim.pvtsimulation.simulation.SwellingTestTest
+[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.152 s -- in neqsim.pvtsimulation.simulation.SwellingTestTest
+[INFO] Running neqsim.pvtsimulation.simulation.ViscositySimTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.045 s -- in neqsim.pvtsimulation.simulation.ViscositySimTest
+[INFO] Running neqsim.pvtsimulation.simulation.WaxFractionSimTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.176 s -- in neqsim.pvtsimulation.simulation.WaxFractionSimTest
+[INFO] Running neqsim.pvtsimulation.util.BlackOilCorrelationsTest
+[INFO] Tests run: 22, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.012 s -- in neqsim.pvtsimulation.util.BlackOilCorrelationsTest
+[INFO] Running neqsim.pvtsimulation.util.BlackOilTableValidatorTest
+[INFO] Tests run: 20, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.013 s -- in neqsim.pvtsimulation.util.BlackOilTableValidatorTest
+[INFO] Running neqsim.pvtsimulation.util.CalibratedPvtModelTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.728 s -- in neqsim.pvtsimulation.util.CalibratedPvtModelTest
+[INFO] Running neqsim.pvtsimulation.util.CompositionalReservoirAquiferRefinementTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.071 s -- in neqsim.pvtsimulation.util.CompositionalReservoirAquiferRefinementTest
+[INFO] Running neqsim.pvtsimulation.util.CompositionalReservoirAquiferTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 8.875 s -- in neqsim.pvtsimulation.util.CompositionalReservoirAquiferTest
+[INFO] Running neqsim.pvtsimulation.util.CompositionalReservoirHistoryTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 9.681 s -- in neqsim.pvtsimulation.util.CompositionalReservoirHistoryTest
+[INFO] Running neqsim.pvtsimulation.util.CvdGasOnlyTailTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.125 s -- in neqsim.pvtsimulation.util.CvdGasOnlyTailTest
+[INFO] Running neqsim.pvtsimulation.util.CvdMaterialBalanceTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.126 s -- in neqsim.pvtsimulation.util.CvdMaterialBalanceTest
+[INFO] Running neqsim.pvtsimulation.util.DeclineCurveAnalysisFitTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in neqsim.pvtsimulation.util.DeclineCurveAnalysisFitTest
+[INFO] Running neqsim.pvtsimulation.util.DeclineCurveAnalysisTest
+[INFO] Tests run: 28, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.010 s -- in neqsim.pvtsimulation.util.DeclineCurveAnalysisTest
+[INFO] Running neqsim.pvtsimulation.util.DepletionPvtHistoryGeneratorTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.031 s -- in neqsim.pvtsimulation.util.DepletionPvtHistoryGeneratorTest
+[INFO] Running neqsim.pvtsimulation.util.DryFixedCellPhaseTransitionTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 14.05 s -- in neqsim.pvtsimulation.util.DryFixedCellPhaseTransitionTest
+[INFO] Running neqsim.pvtsimulation.util.FixedCellDepletionHandoffTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 20.46 s -- in neqsim.pvtsimulation.util.FixedCellDepletionHandoffTest
+[INFO] Running neqsim.pvtsimulation.util.GasPseudoCriticalPropertiesTest
+[INFO] Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.012 s -- in neqsim.pvtsimulation.util.GasPseudoCriticalPropertiesTest
+[INFO] Running neqsim.pvtsimulation.util.GasPseudoPressureTest
+[INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.072 s -- in neqsim.pvtsimulation.util.GasPseudoPressureTest
+[INFO] Running neqsim.pvtsimulation.util.IndependentGasLabTankTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 149.0 s -- in neqsim.pvtsimulation.util.IndependentGasLabTankTest
+[INFO] Running neqsim.pvtsimulation.util.NativeCceHandoffTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.419 s -- in neqsim.pvtsimulation.util.NativeCceHandoffTest
+[INFO] Running neqsim.pvtsimulation.util.NativeDepletionHandoffTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.451 s -- in neqsim.pvtsimulation.util.NativeDepletionHandoffTest
+[INFO] Running neqsim.pvtsimulation.util.PVTFluidStudyTest
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.484 s -- in neqsim.pvtsimulation.util.PVTFluidStudyTest
+[INFO] Running neqsim.pvtsimulation.util.PhaseWithdrawalReservoirHistoryTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.859 s -- in neqsim.pvtsimulation.util.PhaseWithdrawalReservoirHistoryTest
+[INFO] Running neqsim.pvtsimulation.util.PvtGasDensityConsistencyTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.033 s -- in neqsim.pvtsimulation.util.PvtGasDensityConsistencyTest
+[INFO] Running neqsim.pvtsimulation.util.PvtSeparatorPathTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.071 s -- in neqsim.pvtsimulation.util.PvtSeparatorPathTest
+[INFO] Running neqsim.pvtsimulation.util.RefinedCvdHandoffTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.101 s -- in neqsim.pvtsimulation.util.RefinedCvdHandoffTest
+[INFO] Running neqsim.pvtsimulation.util.ReservoirHistoryEnsembleTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.663 s -- in neqsim.pvtsimulation.util.ReservoirHistoryEnsembleTest
+[INFO] Running neqsim.pvtsimulation.util.ReservoirHistoryParameterQuantilesTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.072 s -- in neqsim.pvtsimulation.util.ReservoirHistoryParameterQuantilesTest
+[INFO] Running neqsim.pvtsimulation.util.SaturationPressureCorrelationTest
+[INFO] Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s -- in neqsim.pvtsimulation.util.SaturationPressureCorrelationTest
+[INFO] Running neqsim.pvtsimulation.util.WaterPropertyCorrelationsTest
+[INFO] Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in neqsim.pvtsimulation.util.WaterPropertyCorrelationsTest
+[INFO] Running neqsim.pvtsimulation.util.WetCceHandoffTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.674 s -- in neqsim.pvtsimulation.util.WetCceHandoffTest
+[INFO] Running neqsim.pvtsimulation.util.WetDleHandoffTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.551 s -- in neqsim.pvtsimulation.util.WetDleHandoffTest
+[INFO] Running neqsim.pvtsimulation.util.WetGasFixedCellHandoffTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 12.32 s -- in neqsim.pvtsimulation.util.WetGasFixedCellHandoffTest
+[INFO] Running neqsim.pvtsimulation.util.ZFactorCorrelationsTest
+[INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in neqsim.pvtsimulation.util.ZFactorCorrelationsTest
+[INFO] Running neqsim.pvtsimulation.util.parameterfitting.AsphalteneOnsetFittingTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.158 s -- in neqsim.pvtsimulation.util.parameterfitting.AsphalteneOnsetFittingTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 690, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jacoco:0.8.16:report (report) @ neqsim ---
+[INFO] Loading execution data file /workspace/scratch/ec5d078361de/neqsim/target/jacoco.exec
+[INFO] Analyzed bundle 'NeqSim' with 6512 classes
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  05:18 min
+[INFO] Finished at: 2026-11-07T15:27:53+01:00
+[INFO] ------------------------------------------------------------------------
+
+
+=== native; exit 0 ===
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 src/test/resources/neqsim/pvtsimulation/discrete-posterior/run.py
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.28.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.7.0:enforce (enforce-maven) @ neqsim ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] 
+[INFO] --- jacoco:0.8.16:prepare-agent (prepare-agent) @ neqsim ---
+[INFO] argLine set to -javaagent:/tmp/neqsim-maven-0/repository/org/jacoco/org.jacoco.agent/0.8.16/org.jacoco.agent-0.8.16-runtime.jar=destfile=/workspace/scratch/ec5d078361de/neqsim/target/jacoco.exec,excludes=neqsim/physicalproperties/util/parameterfitting/**/*:neqsim/statistics/util/parameterfitting/**/*:neqsim/pvtsimulation/util/parameterfitting/**/*
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ neqsim ---
+[INFO] Copying 132 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- flatten:1.8.0:flatten (flatten) @ neqsim ---
+[INFO] Generating flattened POM of project com.equinor.neqsim:neqsim:jar:3.28.0...
+[INFO] 
+[INFO] --- compiler:3.16.0:compile (default-compile) @ neqsim ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- dependency:3.7.0:build-classpath (default-cli) @ neqsim ---
+[INFO] Wrote classpath file '/workspace/scratch/ec5d078361de/neqsim/target/discrete-posterior-qualification/classpath.txt'.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.796 s
+[INFO] Finished at: 2026-11-07T15:21:48+01:00
+[INFO] ------------------------------------------------------------------------
+{
+  "failures": [],
+  "endpoints": 1635,
+  "cases": 10,
+  "maxima": {
+    "timeSeconds": 0.0,
+    "pressureBara": 3.362967504472181e-08,
+    "waterM3": 1.7604922675218404e-07,
+    "aquiferPressureBara": 5.0112987537431763e-08,
+    "inventoryMol": 2.7939677238464355e-09,
+    "eosClosure": 1.0516032489249483e-12,
+    "storageClosure": 1.1368683772161603e-13,
+    "prior": 5.551115123125783e-17,
+    "weights": 4.5638761381194826e-09,
+    "chiSquare": 1.774004463328538e-07,
+    "means": 4.586669319905923e-07,
+    "shifts": 4.213124765728438e-09,
+    "effectiveCount": 3.233967760252199e-08,
+    "logEvidence": 6.766799787172317e-09,
+    "rejectedMass": 2.0816681711721685e-17,
+    "correlations": 3.5035958578788495e-09,
+    "parameterQuantiles": 0.0,
+    "pressureQuantiles": 3.276161919529841e-08,
+    "holdoutChiSquare": 4.0845898183761165e-06,
+    "recomputedWeights": 8.326672684688674e-17
+  }
+}
+
+
+=== public-reproduction; exit 0 ===
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 src/test/resources/neqsim/pvtsimulation/discrete-posterior/run.py
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.28.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.7.0:enforce (enforce-maven) @ neqsim ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] 
+[INFO] --- jacoco:0.8.16:prepare-agent (prepare-agent) @ neqsim ---
+[INFO] argLine set to -javaagent:/tmp/neqsim-maven-0/repository/org/jacoco/org.jacoco.agent/0.8.16/org.jacoco.agent-0.8.16-runtime.jar=destfile=/workspace/scratch/ec5d078361de/neqsim/target/jacoco.exec,excludes=neqsim/physicalproperties/util/parameterfitting/**/*:neqsim/statistics/util/parameterfitting/**/*:neqsim/pvtsimulation/util/parameterfitting/**/*
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ neqsim ---
+[INFO] Copying 133 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- flatten:1.8.0:flatten (flatten) @ neqsim ---
+[INFO] Generating flattened POM of project com.equinor.neqsim:neqsim:jar:3.28.0...
+[INFO] 
+[INFO] --- compiler:3.16.0:compile (default-compile) @ neqsim ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- dependency:3.7.0:build-classpath (default-cli) @ neqsim ---
+[INFO] Skipped writing classpath file '/workspace/scratch/ec5d078361de/neqsim/target/discrete-posterior-qualification/classpath.txt'.  No changes found.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.759 s
+[INFO] Finished at: 2026-11-07T15:35:06+01:00
+[INFO] ------------------------------------------------------------------------
+{
+  "failures": [],
+  "endpoints": 1635,
+  "cases": 10,
+  "maxima": {
+    "timeSeconds": 0.0,
+    "pressureBara": 3.362967504472181e-08,
+    "waterM3": 1.7604922675218404e-07,
+    "aquiferPressureBara": 5.0112987537431763e-08,
+    "inventoryMol": 2.7939677238464355e-09,
+    "eosClosure": 1.0516032489249483e-12,
+    "storageClosure": 1.1368683772161603e-13,
+    "prior": 5.551115123125783e-17,
+    "weights": 4.5638761381194826e-09,
+    "chiSquare": 1.774004463328538e-07,
+    "means": 4.586669319905923e-07,
+    "shifts": 4.213124765728438e-09,
+    "effectiveCount": 3.233967760252199e-08,
+    "logEvidence": 6.766799787172317e-09,
+    "rejectedMass": 2.0816681711721685e-17,
+    "correlations": 3.5035958578788495e-09,
+    "parameterQuantiles": 0.0,
+    "pressureQuantiles": 3.276161919529841e-08,
+    "holdoutChiSquare": 4.0845898183761165e-06,
+    "recomputedWeights": 8.326672684688674e-17
+  }
+}
+
+
+=== java8-classpath; exit 0 ===
+$ ./mvnw -B -ntp --file pomJava8.xml dependency:build-classpath -Dmdep.outputFile=target/run59-evidence/java8-classpath.txt
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.28.0-Java8
+[INFO]   from pomJava8.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- dependency:3.7.0:build-classpath (default-cli) @ neqsim ---
+[INFO] Wrote classpath file '/workspace/scratch/ec5d078361de/neqsim/target/run59-evidence/java8-classpath.txt'.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  0.799 s
+[INFO] Finished at: 2026-11-07T15:25:05+01:00
+[INFO] ------------------------------------------------------------------------
+
+
+=== java8-compile; exit 0 ===
+$ java com.sun.tools.javac.Main --release 8 -cp target/classes:$(cat target/run59-evidence/java8-classpath.txt) -d target/run59-evidence/java8-api src/main/java/neqsim/pvtsimulation/util/ReservoirHistoryEnsemble.java src/test/java/neqsim/pvtsimulation/util/ReservoirHistoryParameterQuantilesTest.java src/test/resources/neqsim/pvtsimulation/discrete-posterior/DiscretePosteriorQualification.java src/test/resources/neqsim/pvtsimulation/discrete-posterior/QuantileEndpointQualification.java
+
+
+=== javadoc; exit 0 ===
+$ java -m jdk.javadoc/jdk.javadoc.internal.tool.Main -source 8 -private -Xdoclint:all,-missing -Werror -quiet -classpath target/classes:$(cat target/run59-evidence/classpath.txt) -d target/run59-evidence/javadoc src/main/java/neqsim/pvtsimulation/util/ReservoirHistoryEnsemble.java src/test/java/neqsim/pvtsimulation/util/ReservoirHistoryParameterQuantilesTest.java src/test/resources/neqsim/pvtsimulation/discrete-posterior/DiscretePosteriorQualification.java src/test/resources/neqsim/pvtsimulation/discrete-posterior/QuantileEndpointQualification.java
+
+
+=== audit-tests; exit 0 ===
+$ uv run --project devtools --locked --group test devtools/.venv/bin/python -m pytest devtools/test_discrete_posterior_audit.py devtools/test_coupled_aquifer_audit.py
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.7.0
+rootdir: /workspace/scratch/ec5d078361de/neqsim/devtools
+configfile: pyproject.toml
+collected 15 items
+
+devtools/test_discrete_posterior_audit.py .......                        [ 46%]
+devtools/test_coupled_aquifer_audit.py ........                          [100%]
+
+============================= 15 passed in 15.76s ==============================
+
+
+=== tooling-tests; exit 0 ===
+$ uv run --project devtools --locked --group test devtools/.venv/bin/python -m pytest devtools/test_engineering_coverage.py devtools/test_capability_search.py devtools/test_verify_agent_skill_refs.py devtools/test_pvt_report.py devtools/test_pvt_study.py devtools/test_pvt_tuning_quality.py
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.7.0
+rootdir: /workspace/scratch/ec5d078361de/neqsim/devtools
+configfile: pyproject.toml
+collected 133 items
+
+devtools/test_engineering_coverage.py .................                  [ 12%]
+devtools/test_capability_search.py ....................                  [ 27%]
+devtools/test_verify_agent_skill_refs.py ............                    [ 36%]
+devtools/test_pvt_report.py ............................                 [ 57%]
+devtools/test_pvt_study.py ............................................. [ 91%]
+...sss                                                                   [ 96%]
+devtools/test_pvt_tuning_quality.py .....                                [100%]
+
+======================= 130 passed, 3 skipped in 22.75s ========================
+
+
+=== surrounding-with-slow; exit 0 ===
+$ ./mvnw -B -ntp test -Dtest=SimpleReservoirTest,GeneralizedReservoirSurveillanceTest -DexcludedTestGroups=
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.28.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.7.0:enforce (enforce-maven) @ neqsim ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] 
+[INFO] --- jacoco:0.8.16:prepare-agent (prepare-agent) @ neqsim ---
+[INFO] argLine set to -javaagent:/tmp/neqsim-maven-0/repository/org/jacoco/org.jacoco.agent/0.8.16/org.jacoco.agent-0.8.16-runtime.jar=destfile=/workspace/scratch/ec5d078361de/neqsim/target/jacoco.exec,excludes=neqsim/physicalproperties/util/parameterfitting/**/*:neqsim/statistics/util/parameterfitting/**/*:neqsim/pvtsimulation/util/parameterfitting/**/*
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ neqsim ---
+[INFO] Copying 133 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- flatten:1.8.0:flatten (flatten) @ neqsim ---
+[INFO] Generating flattened POM of project com.equinor.neqsim:neqsim:jar:3.28.0...
+[INFO] 
+[INFO] --- compiler:3.16.0:compile (default-compile) @ neqsim ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.4.0:testResources (default-testResources) @ neqsim ---
+[INFO] Copying 191 resources from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.16.0:testCompile (default-testCompile) @ neqsim ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.6.1:test (default-test) @ neqsim ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running neqsim.process.equipment.reservoir.GeneralizedReservoirSurveillanceTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.657 s -- in neqsim.process.equipment.reservoir.GeneralizedReservoirSurveillanceTest
+[INFO] Running neqsim.process.equipment.reservoir.SimpleReservoirTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 22.95 s -- in neqsim.process.equipment.reservoir.SimpleReservoirTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jacoco:0.8.16:report (report) @ neqsim ---
+[INFO] Loading execution data file /workspace/scratch/ec5d078361de/neqsim/target/jacoco.exec
+[INFO] Analyzed bundle 'NeqSim' with 6512 classes
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  35.979 s
+[INFO] Finished at: 2026-11-07T15:33:34+01:00
+[INFO] ------------------------------------------------------------------------
+
+
+=== PMD; exit 0 ===
+$ ./mvnw -B -ntp -Pcode-health -DskipTests pmd:pmd
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.28.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- pmd:3.28.0:pmd (default-cli) @ neqsim ---
+[WARNING] Unable to locate Source XRef to link to -- DISABLED
+[INFO] PMD version: 7.17.0
+[INFO] Rendering content with org.apache.maven.skins:maven-fluido-skin:jar:2.0.0-M9 skin
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  17.992 s
+[INFO] Finished at: 2026-11-07T15:27:21+01:00
+[INFO] ------------------------------------------------------------------------
+
+
+=== source-PMD-baseline; exit 0 ===
+$ uv run --project devtools --locked devtools/code_health.py --tools source,pmd --pmd target/pmd.xml --output target/run59-evidence/code-health-source-pmd.json
+devtools/unisim_neqsim_bridge.py:19: SyntaxWarning: invalid escape sequence '\M'
+  report = bridge.compare(r"C:\Models\GasPlant.usc")
+Code health: passed; 0 new finding groups
+Selected findings: {"pmd": 9, "source": 1028}
+Triage: src/main/java/neqsim/process/equipment/distillation/DistillationColumn.java (15953 lines, 1938 branch tokens)
+Triage: devtools/unisim_reader.py (8117 lines, 1709 branch tokens)
+Triage: src/main/java/neqsim/process/equipment/pipeline/TwoFluidPipe.java (13714 lines, 1652 branch tokens)
+Triage: src/main/java/neqsim/process/processmodel/ProcessSystem.java (10861 lines, 1341 branch tokens)
+Triage: src/main/java/neqsim/thermodynamicoperations/flashops/TPflash.java (5243 lines, 1281 branch tokens)
+
+
+=== documentation-search; exit 0 ===
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 devtools/check_documentation_search.py
+Documentation search source audit passed: 839 Markdown pages and 1 standalone HTML page(s).
+
+
+=== pre-commit; exit 0 ===
+$ PYTHONPATH=/workspace/scratch/ec5d078361de/precommit /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pre_commit run --all-files --hook-stage pre-commit
+Spotless Format (Java)...................................................Passed
+Build Engineering Capability Coverage....................................Passed
+- hook id: engineering-capability-coverage
+- duration: 1.71s
+
+{
+  "publicTypes": 3508,
+  "registeredCapabilities": 41,
+  "classifiedOperations": 30,
+  "supportedOperations": 30,
+  "internalOperations": 0,
+  "experimentalOperations": 0,
+  "deprecatedOperations": 0,
+  "registeredAnchors": 91,
+  "withSkillMention": 1370,
+  "withAgentMention": 1367,
+  "reviewRequired": 3336,
+  "domains": {
+    "api": {
+      "publicTypes": 1,
+      "registeredAnchors": 0,
+      "withSkillMention": 1,
+      "reviewRequired": 1
+    },
+    "blackoil": {
+      "publicTypes": 8,
+      "registeredAnchors": 0,
+      "withSkillMention": 0,
+      "reviewRequired": 8
+    },
+    "chemicalreactions": {
+      "publicTypes": 13,
+      "registeredAnchors": 0,
+      "withSkillMention": 2,
+      "reviewRequired": 13
+    },
+    "datapresentation": {
+      "publicTypes": 4,
+      "registeredAnchors": 0,
+      "withSkillMention": 0,
+      "reviewRequired": 4
+    },
+    "fluidmechanics": {
+      "publicTypes": 132,
+      "registeredAnchors": 0,
+      "withSkillMention": 10,
+      "reviewRequired": 132
+    },
+    "integration": {
+      "publicTypes": 5,
+      "registeredAnchors": 0,
+      "withSkillMention": 1,
+      "reviewRequired": 5
+    },
+    "mathlib": {
+      "publicTypes": 14,
+      "registeredAnchors": 0,
+      "withSkillMention": 0,
+      "reviewRequired": 14
+    },
+    "mcp": {
+      "publicTypes": 81,
+      "registeredAnchors": 0,
+      "withSkillMention": 7,
+      "reviewRequired": 0
+    },
+    "physicalproperties": {
+      "publicTypes": 109,
+      "registeredAnchors": 3,
+      "withSkillMention": 1,
+      "reviewRequired": 106
+    },
+    "process": {
+      "publicTypes": 2351,
+      "registeredAnchors": 54,
+      "withSkillMention": 1143,
+      "reviewRequired": 2297
+    },
+    "pvtsimulation": {
+      "publicTypes": 95,
+      "registeredAnchors": 18,
+      "withSkillMention": 46,
+      "reviewRequired": 77
+    },
+    "standards": {
+      "publicTypes": 48,
+      "registeredAnchors": 0,
+      "withSkillMention": 36,
+      "reviewRequired": 48
+    },
+    "statistics": {
+      "publicTypes": 37,
+      "registeredAnchors": 0,
+      "withSkillMention": 1,
+      "reviewRequired": 37
+    },
+    "thermo": {
+      "publicTypes": 419,
+      "registeredAnchors": 9,
+      "withSkillMention": 96,
+      "reviewRequired": 410
+    },
+    "thermodynamicoperations": {
+      "publicTypes": 129,
+      "registeredAnchors": 1,
+      "withSkillMention": 17,
+      "reviewRequired": 128
+    },
+    "util": {
+      "publicTypes": 62,
+      "registeredAnchors": 6,
+      "withSkillMention": 9,
+      "reviewRequired": 56
+    }
+  }
+}
+
+
+
+=== pre-push; exit 0 ===
+$ PYTHONPATH=/workspace/scratch/ec5d078361de/precommit /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pre_commit run --all-files --hook-stage pre-push
+Spotless Check (Java)....................................................Passed
+Documentation Search Coverage............................................Passed
+- hook id: documentation-search-check
+- duration: 1.77s
+
+Documentation search source audit passed: 839 Markdown pages and 1 standalone HTML page(s).
+
+
+
+=== spotless-check; exit 0 ===
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 devtools/run_spotless.py check
+
+
+=== python-coverage; exit 0 ===
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m trace --count --missing --summary --file=target/run59-evidence/audit-trace.dat --coverdir=target/run59-evidence/python-coverage --module unittest devtools.test_discrete_posterior_audit
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 30.269s
+
+OK
+Skipping counts file 'target/run59-evidence/audit-trace.dat': [Errno 2] No such file or directory: 'target/run59-evidence/audit-trace.dat'
+lines   cov%   module   (path)
+  119     4%   _distutils_hack.__init__   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/site-packages/_distutils_hack/__init__.py)
+ 1558    23%   argparse   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/argparse.py)
+   51    17%   bisect   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/bisect.py)
+  902     7%   collections.__init__   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/collections/__init__.py)
+  382    10%   contextlib   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py)
+  173    16%   copy   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/copy.py)
+    9    55%   decimal   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/decimal.py)
+  104    99%   devtools.test_discrete_posterior_audit   (/workspace/scratch/ec5d078361de/neqsim/devtools/test_discrete_posterior_audit.py)
+ 1286     6%   enum   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/enum.py)
+  116    19%   fnmatch   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/fnmatch.py)
+  587     6%   functools   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/functools.py)
+  397    16%   gettext   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/gettext.py)
+ 1122    40%   ipaddress   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/ipaddress.py)
+   99    38%   json.__init__   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/json/__init__.py)
+  221    25%   json.decoder   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/json/decoder.py)
+  266    28%   json.encoder   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/json/encoder.py)
+   60    16%   json.scanner   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/json/scanner.py)
+ 1301     1%   locale   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/locale.py)
+  183    69%   numbers   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/numbers.py)
+  809    36%   pathlib   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py)
+  431    25%   random   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/random.py)
+  145    15%   re.__init__   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/re/__init__.py)
+  609    37%   re._compiler   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/re/_compiler.py)
+  896    33%   re._parser   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/re/_parser.py)
+  373    39%   selectors   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/selectors.py)
+  879     6%   shutil   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/shutil.py)
+  115    85%   src.test.resources.neqsim.pvtsimulation.discrete-posterior.audit   (/workspace/scratch/ec5d078361de/neqsim/src/test/resources/neqsim/pvtsimulation/discrete-posterior/audit.py)
+  171    46%   src.test.resources.neqsim.pvtsimulation.discrete-posterior.reference   (/workspace/scratch/ec5d078361de/neqsim/src/test/resources/neqsim/pvtsimulation/discrete-posterior/reference.py)
+ 1261    31%   subprocess   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py)
+  539    40%   tempfile   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/tempfile.py)
+   10   100%   unittest.__main__   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/__main__.py)
+  837    15%   unittest.case   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/case.py)
+  323    14%   unittest.loader   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py)
+  205    53%   unittest.main   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/main.py)
+  161    19%   unittest.result   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/result.py)
+  230    38%   unittest.runner   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/runner.py)
+   48     2%   unittest.signals   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/signals.py)
+  277    40%   unittest.suite   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/suite.py)
+  130     1%   unittest.util   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/util.py)
+  665    26%   urllib.parse   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/urllib/parse.py)
+  386     7%   warnings   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/warnings.py)
+  447     4%   weakref   (/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/weakref.py)
+
+
+=== paired-query-diagnostic; exit 0 ===
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 src/test/resources/neqsim/pvtsimulation/discrete-posterior/paired_queries.py --baseline-classes target/run59-evidence/baseline-classes --driver-classes target/run59-evidence --classpath-file target/run59-evidence/classpath.txt --output target/run59-evidence/paired-queries
+{"baseline": 1.853435e-07, "candidate": 1.9120557500000002e-07, "claim": "five ABBA blocks; interior pressure query only; no simulation-speed or CI timing claim"}
+
+
+=== Initial snapshot/environment failure, subsequently resolved: focused-tests.log ===
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.28.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.7.0:enforce (enforce-maven) @ neqsim ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] 
+[INFO] --- jacoco:0.8.16:prepare-agent (prepare-agent) @ neqsim ---
+[INFO] argLine set to -javaagent:/tmp/neqsim-maven-0/repository/org/jacoco/org.jacoco.agent/0.8.16/org.jacoco.agent-0.8.16-runtime.jar=destfile=/workspace/scratch/ec5d078361de/neqsim/target/jacoco.exec,excludes=neqsim/physicalproperties/util/parameterfitting/**/*:neqsim/statistics/util/parameterfitting/**/*:neqsim/pvtsimulation/util/parameterfitting/**/*
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ neqsim ---
+[INFO] Copying 132 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- flatten:1.8.0:flatten (flatten) @ neqsim ---
+[INFO] Generating flattened POM of project com.equinor.neqsim:neqsim:jar:3.28.0...
+[INFO] 
+[INFO] --- compiler:3.16.0:compile (default-compile) @ neqsim ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 3676 source files with javac [debug release 17] to target/classes
+[INFO] /workspace/scratch/ec5d078361de/neqsim/src/main/java/neqsim/thermo/phase/PhaseGE.java: Some input files use or override a deprecated API.
+[INFO] /workspace/scratch/ec5d078361de/neqsim/src/main/java/neqsim/thermo/phase/PhaseGE.java: Recompile with -Xlint:deprecation for details.
+[INFO] /workspace/scratch/ec5d078361de/neqsim/src/main/java/neqsim/process/processmodel/ProcessSystem.java: Some input files use unchecked or unsafe operations.
+[INFO] /workspace/scratch/ec5d078361de/neqsim/src/main/java/neqsim/process/processmodel/ProcessSystem.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- resources:3.4.0:testResources (default-testResources) @ neqsim ---
+[INFO] Copying 186 resources from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.16.0:testCompile (default-testCompile) @ neqsim ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 88 source files with javac [debug release 17] to target/test-classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/PvtLabTestsDocumentationTest.java:[22,14] cannot find symbol
+  symbol:   class NeqSimTest
+  location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/PvtLabTestsDocumentationTest.java:[33,44] cannot find symbol
+  symbol: class NeqSimTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/flowassurance/DeBoerScreeningDocumentationTest.java:[24,14] cannot find symbol
+  symbol:   class NeqSimTest
+  location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/flowassurance/DeBoerScreeningDocumentationTest.java:[27,55] cannot find symbol
+  symbol: class NeqSimTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/flowassurance/HydrateRiskMapperTest.java:[17,50] cannot find symbol
+  symbol:   class NeqSimTest
+  location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/flowassurance/SurfCooldownAnalyzerTest.java:[16,53] cannot find symbol
+  symbol:   class NeqSimTest
+  location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java:[23,72] cannot find symbol
+  symbol:   class NeqSimTest
+  location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/simulation/SaturationPressureTest.java:[11,44] cannot find symbol
+  symbol:   class NeqSimTest
+  location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/simulation/SaturationTemperatureSearchTest.java:[14,53] cannot find symbol
+  symbol:   class NeqSimTest
+  location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/simulation/SaturationTemperatureTest.java:[15,47] cannot find symbol
+  symbol:   class NeqSimTest
+  location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/simulation/SaturationTemperatureTuningTest.java:[14,53] cannot find symbol
+  symbol:   class NeqSimTest
+  location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/util/PVTFluidStudyTest.java:[37,39] cannot find symbol
+  symbol:   class NeqSimTest
+  location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/util/parameterfitting/AsphalteneOnsetFittingTest.java:[20,55] cannot find symbol
+  symbol:   class NeqSimTest
+  location: package neqsim
+[INFO] 13 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  24.716 s
+[INFO] Finished at: 2026-11-07T15:21:39+01:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.16.0:testCompile (default-testCompile) on project neqsim: Compilation failure: Compilation failure: 
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/PvtLabTestsDocumentationTest.java:[22,14] cannot find symbol
+[ERROR]   symbol:   class NeqSimTest
+[ERROR]   location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/PvtLabTestsDocumentationTest.java:[33,44] cannot find symbol
+[ERROR]   symbol: class NeqSimTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/flowassurance/DeBoerScreeningDocumentationTest.java:[24,14] cannot find symbol
+[ERROR]   symbol:   class NeqSimTest
+[ERROR]   location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/flowassurance/DeBoerScreeningDocumentationTest.java:[27,55] cannot find symbol
+[ERROR]   symbol: class NeqSimTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/flowassurance/HydrateRiskMapperTest.java:[17,50] cannot find symbol
+[ERROR]   symbol:   class NeqSimTest
+[ERROR]   location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/flowassurance/SurfCooldownAnalyzerTest.java:[16,53] cannot find symbol
+[ERROR]   symbol:   class NeqSimTest
+[ERROR]   location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/simulation/HydrocarbonScrubberSaturationPressureStabilityTest.java:[23,72] cannot find symbol
+[ERROR]   symbol:   class NeqSimTest
+[ERROR]   location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/simulation/SaturationPressureTest.java:[11,44] cannot find symbol
+[ERROR]   symbol:   class NeqSimTest
+[ERROR]   location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/simulation/SaturationTemperatureSearchTest.java:[14,53] cannot find symbol
+[ERROR]   symbol:   class NeqSimTest
+[ERROR]   location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/simulation/SaturationTemperatureTest.java:[15,47] cannot find symbol
+[ERROR]   symbol:   class NeqSimTest
+[ERROR]   location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/simulation/SaturationTemperatureTuningTest.java:[14,53] cannot find symbol
+[ERROR]   symbol:   class NeqSimTest
+[ERROR]   location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/util/PVTFluidStudyTest.java:[37,39] cannot find symbol
+[ERROR]   symbol:   class NeqSimTest
+[ERROR]   location: package neqsim
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/pvtsimulation/util/parameterfitting/AsphalteneOnsetFittingTest.java:[20,55] cannot find symbol
+[ERROR]   symbol:   class NeqSimTest
+[ERROR]   location: package neqsim
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+
+
+=== Initial snapshot/environment failure, subsequently resolved: surrounding-tests.log ===
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.28.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.7.0:enforce (enforce-maven) @ neqsim ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] 
+[INFO] --- jacoco:0.8.16:prepare-agent (prepare-agent) @ neqsim ---
+[INFO] argLine set to -javaagent:/tmp/neqsim-maven-0/repository/org/jacoco/org.jacoco.agent/0.8.16/org.jacoco.agent-0.8.16-runtime.jar=destfile=/workspace/scratch/ec5d078361de/neqsim/target/jacoco.exec,excludes=neqsim/physicalproperties/util/parameterfitting/**/*:neqsim/statistics/util/parameterfitting/**/*:neqsim/pvtsimulation/util/parameterfitting/**/*
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ neqsim ---
+[INFO] Copying 133 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- flatten:1.8.0:flatten (flatten) @ neqsim ---
+[INFO] Generating flattened POM of project com.equinor.neqsim:neqsim:jar:3.28.0...
+[INFO] 
+[INFO] --- compiler:3.16.0:compile (default-compile) @ neqsim ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.4.0:testResources (default-testResources) @ neqsim ---
+[INFO] Copying 190 resources from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.16.0:testCompile (default-testCompile) @ neqsim ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 158 source files with javac [debug release 17] to target/test-classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/engineering/pid/PidPressureReliefScenarioTest.java:[15,38] cannot find symbol
+  symbol:   class AdvancedV101PsvStudy
+  location: package neqsim.process.safety.scenario
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/engineering/pid/PidPressureReliefScenarioTest.java:[140,98] package AdvancedPressureReliefPidExample does not exist
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/engineering/pid/PidPressureReliefScenarioTest.java:[140,50] package AdvancedPressureReliefPidExample does not exist
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101PsvStudyTest.java:[19,59] package neqsim.process.safety.scenario.AdvancedV101PsvStudy does not exist
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101PsvStudyTest.java:[193,18] cannot find symbol
+  symbol:   class CaseBundle
+  location: class neqsim.process.safety.scenario.AdvancedV101PsvStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101PsvStudyTest.java:[224,33] cannot find symbol
+  symbol:   class CaseBundle
+  location: class neqsim.process.safety.scenario.AdvancedV101PsvStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101PsvStudyTest.java:[242,29] cannot find symbol
+  symbol:   class CaseBundle
+  location: class neqsim.process.safety.scenario.AdvancedV101PsvStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101SafetyStudyTest.java:[19,62] package neqsim.process.safety.scenario.AdvancedV101SafetyStudy does not exist
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101SafetyStudyTest.java:[279,18] cannot find symbol
+  symbol:   class CaseBundle
+  location: class neqsim.process.safety.scenario.AdvancedV101SafetyStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101SafetyStudyTest.java:[298,39] cannot find symbol
+  symbol:   class CaseBundle
+  location: class neqsim.process.safety.scenario.AdvancedV101SafetyStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101SafetyStudyTest.java:[309,47] cannot find symbol
+  symbol:   class CaseBundle
+  location: class neqsim.process.safety.scenario.AdvancedV101SafetyStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101SafetyStudyTest.java:[325,38] cannot find symbol
+  symbol:   class CaseBundle
+  location: class neqsim.process.safety.scenario.AdvancedV101SafetyStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101SafetyStudyTest.java:[348,30] cannot find symbol
+  symbol:   class CaseBundle
+  location: class neqsim.process.safety.scenario.AdvancedV101SafetyStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101SafetyStudyTest.java:[359,33] cannot find symbol
+  symbol:   class CaseBundle
+  location: class neqsim.process.safety.scenario.AdvancedV101SafetyStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101SafetyStudyTest.java:[374,37] cannot find symbol
+  symbol:   class CaseBundle
+  location: class neqsim.process.safety.scenario.AdvancedV101SafetyStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101SafetyStudyTest.java:[389,52] cannot find symbol
+  symbol:   class CaseBundle
+  location: class neqsim.process.safety.scenario.AdvancedV101SafetyStudyTest
+[INFO] 16 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  3.525 s
+[INFO] Finished at: 2026-11-07T15:28:31+01:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.16.0:testCompile (default-testCompile) on project neqsim: Compilation failure: Compilation failure: 
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/engineering/pid/PidPressureReliefScenarioTest.java:[15,38] cannot find symbol
+[ERROR]   symbol:   class AdvancedV101PsvStudy
+[ERROR]   location: package neqsim.process.safety.scenario
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/engineering/pid/PidPressureReliefScenarioTest.java:[140,98] package AdvancedPressureReliefPidExample does not exist
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/engineering/pid/PidPressureReliefScenarioTest.java:[140,50] package AdvancedPressureReliefPidExample does not exist
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101PsvStudyTest.java:[19,59] package neqsim.process.safety.scenario.AdvancedV101PsvStudy does not exist
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101PsvStudyTest.java:[193,18] cannot find symbol
+[ERROR]   symbol:   class CaseBundle
+[ERROR]   location: class neqsim.process.safety.scenario.AdvancedV101PsvStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101PsvStudyTest.java:[224,33] cannot find symbol
+[ERROR]   symbol:   class CaseBundle
+[ERROR]   location: class neqsim.process.safety.scenario.AdvancedV101PsvStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101PsvStudyTest.java:[242,29] cannot find symbol
+[ERROR]   symbol:   class CaseBundle
+[ERROR]   location: class neqsim.process.safety.scenario.AdvancedV101PsvStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101SafetyStudyTest.java:[19,62] package neqsim.process.safety.scenario.AdvancedV101SafetyStudy does not exist
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101SafetyStudyTest.java:[279,18] cannot find symbol
+[ERROR]   symbol:   class CaseBundle
+[ERROR]   location: class neqsim.process.safety.scenario.AdvancedV101SafetyStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101SafetyStudyTest.java:[298,39] cannot find symbol
+[ERROR]   symbol:   class CaseBundle
+[ERROR]   location: class neqsim.process.safety.scenario.AdvancedV101SafetyStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101SafetyStudyTest.java:[309,47] cannot find symbol
+[ERROR]   symbol:   class CaseBundle
+[ERROR]   location: class neqsim.process.safety.scenario.AdvancedV101SafetyStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101SafetyStudyTest.java:[325,38] cannot find symbol
+[ERROR]   symbol:   class CaseBundle
+[ERROR]   location: class neqsim.process.safety.scenario.AdvancedV101SafetyStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101SafetyStudyTest.java:[348,30] cannot find symbol
+[ERROR]   symbol:   class CaseBundle
+[ERROR]   location: class neqsim.process.safety.scenario.AdvancedV101SafetyStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101SafetyStudyTest.java:[359,33] cannot find symbol
+[ERROR]   symbol:   class CaseBundle
+[ERROR]   location: class neqsim.process.safety.scenario.AdvancedV101SafetyStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101SafetyStudyTest.java:[374,37] cannot find symbol
+[ERROR]   symbol:   class CaseBundle
+[ERROR]   location: class neqsim.process.safety.scenario.AdvancedV101SafetyStudyTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/safety/scenario/AdvancedV101SafetyStudyTest.java:[389,52] cannot find symbol
+[ERROR]   symbol:   class CaseBundle
+[ERROR]   location: class neqsim.process.safety.scenario.AdvancedV101SafetyStudyTest
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+
+
+=== Initial snapshot/environment failure, subsequently resolved: surrounding-tests-restored.log ===
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.28.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.7.0:enforce (enforce-maven) @ neqsim ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] 
+[INFO] --- jacoco:0.8.16:prepare-agent (prepare-agent) @ neqsim ---
+[INFO] argLine set to -javaagent:/tmp/neqsim-maven-0/repository/org/jacoco/org.jacoco.agent/0.8.16/org.jacoco.agent-0.8.16-runtime.jar=destfile=/workspace/scratch/ec5d078361de/neqsim/target/jacoco.exec,excludes=neqsim/physicalproperties/util/parameterfitting/**/*:neqsim/statistics/util/parameterfitting/**/*:neqsim/pvtsimulation/util/parameterfitting/**/*
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ neqsim ---
+[INFO] Copying 133 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- flatten:1.8.0:flatten (flatten) @ neqsim ---
+[INFO] Generating flattened POM of project com.equinor.neqsim:neqsim:jar:3.28.0...
+[INFO] 
+[INFO] --- compiler:3.16.0:compile (default-compile) @ neqsim ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.4.0:testResources (default-testResources) @ neqsim ---
+[INFO] Copying 190 resources from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.16.0:testCompile (default-testCompile) @ neqsim ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 161 source files with javac [debug release 17] to target/test-classes
+[INFO] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/engineering/CompressorAutomationWorkflowTest.java: Some input files use or override a deprecated API.
+[INFO] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/engineering/CompressorAutomationWorkflowTest.java: Recompile with -Xlint:deprecation for details.
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/engineering/pid/AdvancedPressureReliefPidExample.java:[251,7] cannot find symbol
+  symbol:   variable AdvancedSafetyPidExample
+  location: class neqsim.process.engineering.pid.AdvancedPressureReliefPidExample
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/engineering/pid/PidNativeSafetyFunctionTest.java:[183,5] cannot find symbol
+  symbol:   variable AdvancedSafetyPidExample
+  location: class neqsim.process.engineering.pid.PidNativeSafetyFunctionTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/engineering/pid/PidNativeSafetyFunctionTest.java:[188,15] cannot find symbol
+  symbol:   variable AdvancedSafetyPidExample
+  location: class neqsim.process.engineering.pid.PidNativeSafetyFunctionTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/engineering/pid/PidNativeSafetyFunctionTest.java:[194,15] cannot find symbol
+  symbol:   variable AdvancedSafetyPidExample
+  location: class neqsim.process.engineering.pid.PidNativeSafetyFunctionTest
+[INFO] 4 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  4.944 s
+[INFO] Finished at: 2026-11-07T15:30:49+01:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.16.0:testCompile (default-testCompile) on project neqsim: Compilation failure: Compilation failure: 
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/engineering/pid/AdvancedPressureReliefPidExample.java:[251,7] cannot find symbol
+[ERROR]   symbol:   variable AdvancedSafetyPidExample
+[ERROR]   location: class neqsim.process.engineering.pid.AdvancedPressureReliefPidExample
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/engineering/pid/PidNativeSafetyFunctionTest.java:[183,5] cannot find symbol
+[ERROR]   symbol:   variable AdvancedSafetyPidExample
+[ERROR]   location: class neqsim.process.engineering.pid.PidNativeSafetyFunctionTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/engineering/pid/PidNativeSafetyFunctionTest.java:[188,15] cannot find symbol
+[ERROR]   symbol:   variable AdvancedSafetyPidExample
+[ERROR]   location: class neqsim.process.engineering.pid.PidNativeSafetyFunctionTest
+[ERROR] /workspace/scratch/ec5d078361de/neqsim/src/test/java/neqsim/process/engineering/pid/PidNativeSafetyFunctionTest.java:[194,15] cannot find symbol
+[ERROR]   symbol:   variable AdvancedSafetyPidExample
+[ERROR]   location: class neqsim.process.engineering.pid.PidNativeSafetyFunctionTest
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+
+
+=== Initial snapshot/environment failure, subsequently resolved: tooling-tests.log ===
+ERROR: file or directory not found: devtools/test_build_engineering_coverage.py
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.7.0
+rootdir: /workspace/scratch/ec5d078361de/neqsim/devtools
+configfile: pyproject.toml
+collected 0 items
+
+============================ no tests ran in 0.00s =============================
+
+
+=== Initial snapshot/environment failure, subsequently resolved: tooling-tests-restored.log ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.7.0
+rootdir: /workspace/scratch/ec5d078361de/neqsim/devtools
+configfile: pyproject.toml
+collected 133 items
+
+devtools/test_engineering_coverage.py .................                  [ 12%]
+devtools/test_capability_search.py ....................                  [ 27%]
+devtools/test_verify_agent_skill_refs.py ............                    [ 36%]
+devtools/test_pvt_report.py ............................                 [ 57%]
+devtools/test_pvt_study.py .........................................F..F [ 91%]
+...sss                                                                   [ 96%]
+devtools/test_pvt_tuning_quality.py .....                                [100%]
+
+=================================== FAILURES ===================================
+___ test_import_resume_checks_artifact_integrity_and_retains_previous_input ____
+
+study = {'schema': 'pvt_study.v1', 'study': {'id': 'PVT-SYNTHETIC-OIL-001', 'title': 'Synthetic oil PVT fluid study', 'intende...raction', 'source': 'Synthetic mixture specified in this version-controlled YAML, not a measured analysis', ...}], ...}
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-2/test_import_resume_checks_arti0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fe125065e20>
+
+    def test_import_resume_checks_artifact_integrity_and_retains_previous_input(study, tmp_path, monkeypatch):
+>       summary = pvt_study.run_pipeline(study, tmp_path, stop_after="import")
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+devtools/test_pvt_study.py:198: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+devtools/pvt_study.py:514: in run_pipeline
+    input_id, code_id = identity(study), code_identity()
+                                         ^^^^^^^^^^^^^^^
+devtools/pvt_study.py:103: in code_identity
+    revision = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+input = None, capture_output = True, timeout = None, check = True
+popenargs = (['git', '-C', '/workspace/scratch/ec5d078361de/neqsim', 'rev-parse', 'HEAD'],)
+kwargs = {'text': True, 'stdout': -1, 'stderr': -1}
+
+    def run(*popenargs,
+            input=None, capture_output=False, timeout=None, check=False, **kwargs):
+        """Run command with arguments and return a CompletedProcess instance.
+    
+        The returned instance will have attributes args, returncode, stdout and
+        stderr. By default, stdout and stderr are not captured, and those attributes
+        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,
+        or pass capture_output=True to capture both.
+    
+        If check is True and the exit code was non-zero, it raises a
+        CalledProcessError. The CalledProcessError object will have the return code
+        in the returncode attribute, and output & stderr attributes if those streams
+        were captured.
+    
+        If timeout (seconds) is given and the process takes too long,
+         a TimeoutExpired exception will be raised.
+    
+        There is an optional argument "input", allowing you to
+        pass bytes or a string to the subprocess's stdin.  If you use this argument
+        you may not also use the Popen constructor's "stdin" argument, as
+        it will be used internally.
+    
+        By default, all communication is in bytes, and therefore any "input" should
+        be bytes, and the stdout and stderr will be bytes. If in text mode, any
+        "input" should be a string, and stdout and stderr will be strings decoded
+        according to locale encoding, or by "encoding" if set. Text mode is
+        triggered by setting any of text, encoding, errors or universal_newlines.
+    
+        The other arguments are the same as for the Popen constructor.
+        """
+        if input is not None:
+            if kwargs.get('stdin') is not None:
+                raise ValueError('stdin and input arguments may not both be used.')
+            kwargs['stdin'] = PIPE
+    
+        if capture_output:
+            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+                raise ValueError('stdout and stderr arguments may not be used '
+                                 'with capture_output.')
+            kwargs['stdout'] = PIPE
+            kwargs['stderr'] = PIPE
+    
+        with Popen(*popenargs, **kwargs) as process:
+            try:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except TimeoutExpired as exc:
+                process.kill()
+                if _mswindows:
+                    # Windows accumulates the output in a single blocking
+                    # read() call run on child threads, with the timeout
+                    # being done in a join() on those threads.  communicate()
+                    # _after_ kill() is required to collect that and add it
+                    # to the exception.
+                    exc.stdout, exc.stderr = process.communicate()
+                else:
+                    # POSIX _communicate already populated the output so
+                    # far into the TimeoutExpired exception.
+                    process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+            retcode = process.poll()
+            if check and retcode:
+>               raise CalledProcessError(retcode, process.args,
+                                         output=stdout, stderr=stderr)
+E               subprocess.CalledProcessError: Command '['git', '-C', '/workspace/scratch/ec5d078361de/neqsim', 'rev-parse', 'HEAD']' returned non-zero exit status 128.
+
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py:571: CalledProcessError
+____ test_default_characterization_requires_input_tables_before_model_build ____
+
+study = {'schema': 'pvt_study.v1', 'study': {'id': 'PVT-SYNTHETIC-OIL-001', 'title': 'Synthetic oil PVT fluid study', 'intende...raction', 'source': 'Synthetic mixture specified in this version-controlled YAML, not a measured analysis', ...}], ...}
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-2/test_default_characterization_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fe11dd14f80>
+
+    def test_default_characterization_requires_input_tables_before_model_build(study, tmp_path, monkeypatch):
+        study["observations"] = []
+        study["calibration"] = {"parameters": []}
+        for experiment in study["experiments"]:
+            experiment["role"] = "simulation"
+        monkeypatch.setattr(pvt_study, "_runtime", lambda: pytest.fail("missing data must be rejected before model construction"))
+        with pytest.raises(PVTStudyError, match="starts with calibration"):
+            pvt_study.run_pipeline(study, tmp_path)
+        study["study"]["mode"] = "simulation_only"
+        with pytest.raises(pvt_data.PVTQualityError, match="failed acceptance gates"):
+>           pvt_study.run_pipeline(study, tmp_path, stop_after="import", strict=True)
+
+devtools/test_pvt_study.py:241: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+devtools/pvt_study.py:514: in run_pipeline
+    input_id, code_id = identity(study), code_identity()
+                                         ^^^^^^^^^^^^^^^
+devtools/pvt_study.py:103: in code_identity
+    revision = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+input = None, capture_output = True, timeout = None, check = True
+popenargs = (['git', '-C', '/workspace/scratch/ec5d078361de/neqsim', 'rev-parse', 'HEAD'],)
+kwargs = {'text': True, 'stdout': -1, 'stderr': -1}
+
+    def run(*popenargs,
+            input=None, capture_output=False, timeout=None, check=False, **kwargs):
+        """Run command with arguments and return a CompletedProcess instance.
+    
+        The returned instance will have attributes args, returncode, stdout and
+        stderr. By default, stdout and stderr are not captured, and those attributes
+        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,
+        or pass capture_output=True to capture both.
+    
+        If check is True and the exit code was non-zero, it raises a
+        CalledProcessError. The CalledProcessError object will have the return code
+        in the returncode attribute, and output & stderr attributes if those streams
+        were captured.
+    
+        If timeout (seconds) is given and the process takes too long,
+         a TimeoutExpired exception will be raised.
+    
+        There is an optional argument "input", allowing you to
+        pass bytes or a string to the subprocess's stdin.  If you use this argument
+        you may not also use the Popen constructor's "stdin" argument, as
+        it will be used internally.
+    
+        By default, all communication is in bytes, and therefore any "input" should
+        be bytes, and the stdout and stderr will be bytes. If in text mode, any
+        "input" should be a string, and stdout and stderr will be strings decoded
+        according to locale encoding, or by "encoding" if set. Text mode is
+        triggered by setting any of text, encoding, errors or universal_newlines.
+    
+        The other arguments are the same as for the Popen constructor.
+        """
+        if input is not None:
+            if kwargs.get('stdin') is not None:
+                raise ValueError('stdin and input arguments may not both be used.')
+            kwargs['stdin'] = PIPE
+    
+        if capture_output:
+            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+                raise ValueError('stdout and stderr arguments may not be used '
+                                 'with capture_output.')
+            kwargs['stdout'] = PIPE
+            kwargs['stderr'] = PIPE
+    
+        with Popen(*popenargs, **kwargs) as process:
+            try:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except TimeoutExpired as exc:
+                process.kill()
+                if _mswindows:
+                    # Windows accumulates the output in a single blocking
+                    # read() call run on child threads, with the timeout
+                    # being done in a join() on those threads.  communicate()
+                    # _after_ kill() is required to collect that and add it
+                    # to the exception.
+                    exc.stdout, exc.stderr = process.communicate()
+                else:
+                    # POSIX _communicate already populated the output so
+                    # far into the TimeoutExpired exception.
+                    process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+            retcode = process.poll()
+            if check and retcode:
+>               raise CalledProcessError(retcode, process.args,
+                                         output=stdout, stderr=stderr)
+E               subprocess.CalledProcessError: Command '['git', '-C', '/workspace/scratch/ec5d078361de/neqsim', 'rev-parse', 'HEAD']' returned non-zero exit status 128.
+
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py:571: CalledProcessError
+=========================== short test summary info ============================
+FAILED devtools/test_pvt_study.py::test_import_resume_checks_artifact_integrity_and_retains_previous_input
+FAILED devtools/test_pvt_study.py::test_default_characterization_requires_input_tables_before_model_build
+================== 2 failed, 128 passed, 3 skipped in 24.25s ===================
+
+
+=== Initial snapshot/environment failure, subsequently resolved: pre-commit.log ===
+Spotless Format (Java)...................................................Failed
+- hook id: spotless-apply
+- exit code: 1
+
+[ERROR] No plugin found for prefix 'spotless' in the current project and in the plugin groups [com.github.spotbugs, org.jacoco, com.diffplug.spotless, org.apache.maven.plugins, org.codehaus.mojo] available from the repositories [local (/root/.m2/repository), central (https://repo.maven.apache.org/maven2/)] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/NoPluginFoundForPrefixException
+
+Build Engineering Capability Coverage....................................Passed
+- hook id: engineering-capability-coverage
+- duration: 1.54s
+
+{
+  "publicTypes": 3508,
+  "registeredCapabilities": 41,
+  "classifiedOperations": 30,
+  "supportedOperations": 30,
+  "internalOperations": 0,
+  "experimentalOperations": 0,
+  "deprecatedOperations": 0,
+  "registeredAnchors": 91,
+  "withSkillMention": 1370,
+  "withAgentMention": 1367,
+  "reviewRequired": 3336,
+  "domains": {
+    "api": {
+      "publicTypes": 1,
+      "registeredAnchors": 0,
+      "withSkillMention": 1,
+      "reviewRequired": 1
+    },
+    "blackoil": {
+      "publicTypes": 8,
+      "registeredAnchors": 0,
+      "withSkillMention": 0,
+      "reviewRequired": 8
+    },
+    "chemicalreactions": {
+      "publicTypes": 13,
+      "registeredAnchors": 0,
+      "withSkillMention": 2,
+      "reviewRequired": 13
+    },
+    "datapresentation": {
+      "publicTypes": 4,
+      "registeredAnchors": 0,
+      "withSkillMention": 0,
+      "reviewRequired": 4
+    },
+    "fluidmechanics": {
+      "publicTypes": 132,
+      "registeredAnchors": 0,
+      "withSkillMention": 10,
+      "reviewRequired": 132
+    },
+    "integration": {
+      "publicTypes": 5,
+      "registeredAnchors": 0,
+      "withSkillMention": 1,
+      "reviewRequired": 5
+    },
+    "mathlib": {
+      "publicTypes": 14,
+      "registeredAnchors": 0,
+      "withSkillMention": 0,
+      "reviewRequired": 14
+    },
+    "mcp": {
+      "publicTypes": 81,
+      "registeredAnchors": 0,
+      "withSkillMention": 7,
+      "reviewRequired": 0
+    },
+    "physicalproperties": {
+      "publicTypes": 109,
+      "registeredAnchors": 3,
+      "withSkillMention": 1,
+      "reviewRequired": 106
+    },
+    "process": {
+      "publicTypes": 2351,
+      "registeredAnchors": 54,
+      "withSkillMention": 1143,
+      "reviewRequired": 2297
+    },
+    "pvtsimulation": {
+      "publicTypes": 95,
+      "registeredAnchors": 18,
+      "withSkillMention": 46,
+      "reviewRequired": 77
+    },
+    "standards": {
+      "publicTypes": 48,
+      "registeredAnchors": 0,
+      "withSkillMention": 36,
+      "reviewRequired": 48
+    },
+    "statistics": {
+      "publicTypes": 37,
+      "registeredAnchors": 0,
+      "withSkillMention": 1,
+      "reviewRequired": 37
+    },
+    "thermo": {
+      "publicTypes": 419,
+      "registeredAnchors": 9,
+      "withSkillMention": 96,
+      "reviewRequired": 410
+    },
+    "thermodynamicoperations": {
+      "publicTypes": 129,
+      "registeredAnchors": 1,
+      "withSkillMention": 17,
+      "reviewRequired": 128
+    },
+    "util": {
+      "publicTypes": 62,
+      "registeredAnchors": 6,
+      "withSkillMention": 9,
+      "reviewRequired": 56
+    }
+  }
+}
+
+
+
+=== Initial snapshot/environment failure, subsequently resolved: documentation-search-final.log ===
+Documentation search audit failed:
+- docs/REFERENCE_MANUAL_INDEX.md: internal documentation link target does not exist: manual/neqsim_reference_manual.html
+- docs/chemicalreactions/README.md: internal documentation link target does not exist: ../examples/ChemicalReactionEquilibriumExample.java
+- docs/development/FLOW_ASSURANCE_STUDY_REPORT.md: internal documentation link target does not exist: ../test_flow_assurance_study_report_documentation.py
+- docs/development/PROCESS_STUDY_REPORT.md: internal documentation link target does not exist: ../test_process_study_report_documentation.py
+- docs/examples/flow_assurance_study_report/README.md: internal documentation link target does not exist: FA-DEMO-001_drawings.pdf
+- docs/examples/index.md: internal documentation link target does not exist: AcousticCompressibilityConversionExample.java
+- docs/examples/index.md: internal documentation link target does not exist: ChemicalReactionEquilibriumExample.java
+- docs/examples/index.md: internal documentation link target does not exist: EclipseE300ExportImportExample.java
+- docs/examples/index.md: internal documentation link target does not exist: FlowRegimeDebug.java
+- docs/examples/index.md: internal documentation link target does not exist: FlowRegimeDetectionExample.java
+- docs/examples/index.md: internal documentation link target does not exist: MultiScenarioVFPExample.java
+- docs/examples/index.md: internal documentation link target does not exist: MultiphaseModelPressureDropComparison.java
+- docs/examples/index.md: internal documentation link target does not exist: OffshoreEmissionReportingExample.java
+- docs/examples/index.md: internal documentation link target does not exist: RealTimeIntegrationExample.java
+- docs/examples/index.md: internal documentation link target does not exist: SlugTrackingComparisonExample.java
+- docs/examples/index.md: internal documentation link target does not exist: TransientPipelineLiquidAccumulationExample.java
+- docs/examples/index.md: internal documentation link target does not exist: TwoFluidPipeExample.java
+- docs/examples/index.md: internal documentation link target does not exist: TwoFluidPipeSlugTrackingExample.java
+- docs/examples/index.md: internal documentation link target does not exist: TwoFluidPipelineLiquidAccumulationExample.java
+- docs/examples/index.md: internal documentation link target does not exist: TwoFluidVsDriftFluxComparisonExample.java
+- docs/examples/index.md: internal documentation link target does not exist: WellToOilStabilizationExample.java
+- docs/examples/surf_study/EXAMPLE.md: internal documentation link target does not exist: SURF-SYN-001_drawings.pdf
+- docs/process/optimization/industrial-sm-benchmark.md: internal documentation link target does not exist: benchmarks/industrial-sm-baseline-f3a2cf5f.json
+- docs/process/optimization/industrial-sm-benchmark.md: internal documentation link target does not exist: benchmarks/industrial-sm-baseline-5a851750.json
+- docs/process/optimization/industrial-sm-benchmark.md: internal documentation link target does not exist: benchmarks/plant-capacity-validation-3847d75f.json
+- docs/process/optimization/industrial-sm-benchmark.md: internal documentation link target does not exist: benchmarks/industrial-sm-baseline-e8895a9f.json.gz
+- docs/process/optimization/industrial-sm-benchmark.md: internal documentation link target does not exist: benchmarks/industrial-sm-candidate-3847d75f.json.gz
+- docs/process/optimization/industrial-sm-benchmark.md: internal documentation link target does not exist: benchmarks/compiled-plan-large-71835e21.json
+- docs/simulation/well_simulation_guide.md: internal documentation link target does not exist: ../examples/WellToOilStabilizationExample.java
+- docs/statistics/parameter_fitting.md: internal documentation link target does not exist: examples/parameter_fitting_data.csv
+- docs/statistics/parameter_fitting.md: internal documentation link target does not exist: examples/parameter_fitting_data.yaml
+- docs/statistics/parameter_fitting.md: internal documentation link target does not exist: examples/parameter_fitting_spec.yaml
+- docs/statistics/parameter_fitting.md: internal documentation link target does not exist: examples/parameter_fitting_data.csv
+- docs/statistics/parameter_fitting.md: internal documentation link target does not exist: examples/parameter_fitting_data.yaml
+- docs/statistics/parameter_fitting.md: internal documentation link target does not exist: examples/parameter_fitting_spec.yaml
+- docs/thermo/component_database_guide.md: internal documentation link target does not exist: data/water_cp_replacements.csv
+
+
+=== Exact current POM classpath ===
+/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar
+
+=== Exact Java8 POM classpath ===
+/tmp/neqsim-maven-0/repository/com/h2database/h2/2.2.224/h2-2.2.224.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.0/log4j-api-2.26.0.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.0/log4j-core-2.26.0.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/5.14.4/junit-jupiter-5.14.4.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/5.14.4/junit-jupiter-api-5.14.4.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/1.14.4/junit-platform-commons-1.14.4.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/5.14.4/junit-jupiter-params-5.14.4.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/5.14.4/junit-jupiter-engine-5.14.4.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/1.14.4/junit-platform-engine-1.14.4.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.20.0/commons-lang3-3.20.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.41/ejml-all-0.41.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.41/ejml-core-0.41.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.41/ejml-fdense-0.41.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.41/ejml-ddense-0.41.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.41/ejml-cdense-0.41.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.41/ejml-zdense-0.41.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.41/ejml-dsparse-0.41.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.41/ejml-simple-0.41.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.41/ejml-fsparse-0.41.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.14.0/gson-2.14.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.48.0/error_prone_annotations-2.48.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.0/jackson-databind-2.22.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.0/jackson-core-2.22.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.0/jackson-dataformat-yaml-2.22.0.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar

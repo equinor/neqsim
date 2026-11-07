@@ -158,7 +158,11 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public ComponentUMRCPA clone() {
     ComponentUMRCPA clonedComponent = null;
@@ -166,6 +170,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
       clonedComponent = (ComponentUMRCPA) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of ComponentUMRCPA", ex);
     }
 
     clonedComponent.xsite = xsite.clone();

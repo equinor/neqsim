@@ -1,6 +1,7 @@
 package neqsim.thermo.phase;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -84,6 +85,10 @@ public class PhasePitzer extends PhaseGE {
   private boolean parametersLoaded = false;
   /** Prefer the complete bundled PHREEQC catalog when it covers the active topology. */
   private boolean usePhreeqcCatalogByDefault = true;
+  /** Enables the reviewed carbonate/sulfate/sulfide acid-base selector after reaction initialization. */
+  private boolean automaticReactiveCarbonateSelection;
+  /** Source-defined zero rows actually used by the automatically selected reactive brine dataset. */
+  private List<String> reactiveCarbonateSourceZeros = Collections.emptyList();
   /** Keep EOS-role hydrocarbons outside only the automatically selected aqueous-neutral topology. */
   private boolean excludeHydrocarbonsFromNeutralPitzerTopology;
   /** Whether immutable parameter arrays are shared with a clone until the next setter call. */
@@ -628,6 +633,15 @@ public class PhasePitzer extends PhaseGE {
    * </p>
    */
   public void loadParametersFromDatabase() {
+    if (usePhreeqcCatalogByDefault && automaticReactiveCarbonateSelection) {
+      if (PitzerParameterDatasets.tryApplyAutomaticReactiveCarbonate(this)) {
+        return;
+      }
+      if (PitzerParameterDatasets.PHREEQC_AUTOMATIC_REACTIVE_CARBONATE_ID.equals(parameterDatasetId)) {
+        throw new IllegalStateException("The automatically selected carbonate dataset no longer covers the component "
+            + "topology; select a complete supported parameter dataset before evaluating properties");
+      }
+    }
     if (usePhreeqcCatalogByDefault && PitzerParameterDatasets.tryApplyCompletePhreeqcPitzerCatalog(this)) {
       return;
     }
@@ -772,6 +786,50 @@ public class PhasePitzer extends PhaseGE {
   }
 
   /**
+   * Refreshes automatic carbonate selection after the system has initialized its reaction species.
+   *
+   * <p>
+   * Explicit legacy policy and named manual datasets retain their parameter selection. This setup-only method does not
+   * run a flash or change thermodynamic state.
+   * </p>
+   */
+  public void prepareAutomaticReactiveCarbonateSelection() {
+    if (!usePhreeqcCatalogByDefault) {
+      return;
+    }
+    boolean automaticIdentity = DEFAULT_PARAMETER_DATASET_ID.equals(parameterDatasetId)
+        || PitzerParameterDatasets.PHREEQC_PITZER_CATALOG_ID.equals(parameterDatasetId)
+        || PitzerParameterDatasets.PHREEQC_AUTOMATIC_REACTIVE_CARBONATE_ID.equals(parameterDatasetId);
+    if (!automaticIdentity || (!parametersLoaded && definedBinaryPairs != null && !definedBinaryPairs.isEmpty())) {
+      return;
+    }
+    automaticReactiveCarbonateSelection = true;
+    parametersLoaded = false;
+    reactiveCarbonateSourceZeros = Collections.emptyList();
+    invalidateCoverageCache();
+  }
+
+  /**
+   * Reports the reviewed source-defined zero rows used by automatic carbonate selection.
+   *
+   * @return immutable sorted family/species keys; empty for other dataset selections
+   */
+  public List<String> getReactiveCarbonateSourceZeroDefinitions() {
+    return reactiveCarbonateSourceZeros == null ? Collections.<String>emptyList() : reactiveCarbonateSourceZeros;
+  }
+
+  /**
+   * Records source-defined zeros without exposing mutable parameter provenance.
+   *
+   * @param definitions family/species keys used by the selected dataset
+   */
+  void setReactiveCarbonateSourceZeroDefinitions(List<String> definitions) {
+    List<String> sorted = new ArrayList<String>(definitions);
+    Collections.sort(sorted);
+    reactiveCarbonateSourceZeros = Collections.unmodifiableList(sorted);
+  }
+
+  /**
    * Configures automatic use of the bundled PHREEQC catalog.
    *
    * <p>
@@ -823,6 +881,9 @@ public class PhasePitzer extends PhaseGE {
       throw new IllegalArgumentException("Pitzer parameter dataset identity must not be empty");
     }
     parameterDatasetId = datasetId.trim();
+    if (!PitzerParameterDatasets.PHREEQC_AUTOMATIC_REACTIVE_CARBONATE_ID.equals(parameterDatasetId)) {
+      reactiveCarbonateSourceZeros = Collections.emptyList();
+    }
     invalidateCoverageCache();
   }
 
@@ -1172,6 +1233,42 @@ public class PhasePitzer extends PhaseGE {
   @Override
   public double getActivityCoefficient(int k) {
     return ((ComponentGEInterface) getComponent(k)).getGamma();
+  }
+
+  /**
+   * Returns dimensionless activity on the native Pitzer standard state.
+   *
+   * <p>
+   * Water activity is gamma times water mole fraction. Every solute uses gamma times molality divided by the standard
+   * molality of 1 mol/kg water. This coefficient-based readout does not convert the mixture's fugacity ratio to an
+   * infinite-dilution mole-fraction reference.
+   * </p>
+   *
+   * @param component target component index
+   * @return dimensionless native Pitzer activity
+   */
+  public double getPitzerActivity(int component) {
+    double concentration = "water".equalsIgnoreCase(getComponent(component).getComponentName())
+        ? getComponent(component).getx()
+        : getComponent(component).getMolality(this);
+    return getActivityCoefficient(component) * concentration;
+  }
+
+  /**
+   * Returns unscaled molality-standard-state pH from an explicitly present hydronium species.
+   *
+   * @return negative base-ten logarithm of hydronium activity
+   * @throws IllegalStateException when hydronium is absent or its activity is invalid
+   */
+  public double getPitzerPH() {
+    if (!hasComponent("H3O+")) {
+      throw new IllegalStateException("Pitzer pH requires H3O+; initialize and solve the aqueous reactions first");
+    }
+    double activity = getPitzerActivity(getComponent("H3O+").getComponentNumber());
+    if (!(activity > 0.0) || !Double.isFinite(activity)) {
+      throw new IllegalStateException("Pitzer hydronium activity is not finite and positive");
+    }
+    return -Math.log10(activity);
   }
 
   /** {@inheritDoc} */

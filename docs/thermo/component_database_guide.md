@@ -616,6 +616,15 @@ fluid.init(0);
 
 Add a new row to `COMP.csv` with all required parameters.
 
+Register the canonical name in `ComponentNameResolver` so case-insensitive input remains
+consistent with the catalog. Verify both standard and extended loading routes and run
+`ComponentNameResolverTest`, `ComponentDatabaseIntegrityTest` and
+`FormationEnthalpyDatabaseTest` alongside the model-specific regressions. The extended
+loader already appends missing standard names; duplicating a new row in `COMP_EXT.csv`
+is unnecessary. `FORMATIONENTHALPYSOURCE` certifies a reviewed **gas-phase** formation
+enthalpy. Leave it blank for aqueous-ion reference values and document their source
+separately, as in [Pitzer parameter provenance](pitzer_parameter_provenance.md).
+
 ### Method 2: Runtime Addition
 
 ```java

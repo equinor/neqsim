@@ -490,6 +490,7 @@ public final class ComponentNameResolver {
     put(m, "hno2-", "HNO2-");
     put(m, "hno3", "HNO3");
     put(m, "hs-", "HS-");
+    put(m, "hso4-", "HSO4-");
     put(m, "hydrochloricacid", "hydrochloric acid");
     put(m, "hydrogen", "hydrogen");
     put(m, "i-", "I-");

@@ -45,7 +45,11 @@ public class SystemUNIFAC extends SystemEosGE {
     configureEosGePhases(T, P, new PhaseSrkEos(), new PhaseGEUnifac());
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemUNIFAC clone() {
     SystemUNIFAC clonedSystem = null;
@@ -53,6 +57,7 @@ public class SystemUNIFAC extends SystemEosGE {
       clonedSystem = (SystemUNIFAC) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemUNIFAC", ex);
     }
 
     return clonedSystem;

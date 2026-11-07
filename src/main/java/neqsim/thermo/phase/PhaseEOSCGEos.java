@@ -21,16 +21,18 @@ public class PhaseEOSCGEos extends PhaseGERG2008Eos {
     thermoPropertyModelName = "EOS-CG";
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseEOSCGEos clone() {
     PhaseEOSCGEos clonedPhase = (PhaseEOSCGEos) super.clone();
-    if (clonedPhase != null) {
-      clonedPhase.invalidateCache();
-      clonedPhase.initializationInProgress = false;
-      clonedPhase.resolvedRootType = null;
-      clonedPhase.propertyRootType = null;
-    }
+    clonedPhase.invalidateCache();
+    clonedPhase.initializationInProgress = false;
+    clonedPhase.resolvedRootType = null;
+    clonedPhase.propertyRootType = null;
     return clonedPhase;
   }
 

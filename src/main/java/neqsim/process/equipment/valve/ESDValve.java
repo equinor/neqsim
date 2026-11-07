@@ -100,6 +100,9 @@ public class ESDValve extends ThrottlingValve {
   /** Indicates if partial stroke test is in progress. */
   private boolean partialStrokeTestActive = false;
 
+  /** Physical interval retained by safety/PST, including completion before repeated dispatch. */
+  private UUID lastSafetyOwnedStepId;
+
   /** Target position for partial stroke test (typically 80-90%). */
   private double partialStrokeTestPosition = 80.0;
 
@@ -230,7 +233,8 @@ public class ESDValve extends ThrottlingValve {
       timeElapsedSinceTrip = 0.0;
       openingAtTripStart = getPercentValveOpening(); // Store current opening
       hasTripCompleted = false;
-      // Spring-return actuator starts closing the valve
+      setTargetPercentValveOpening(failSafePosition);
+      // Spring-return actuator starts moving to the configured fail position
     }
   }
 
@@ -332,6 +336,33 @@ public class ESDValve extends ThrottlingValve {
   }
 
   /**
+   * Gives native de-energized safety motion precedence over an attached regulating controller.
+   *
+   * @param dt physical interval in seconds
+   * @param id physical-step identifier
+   */
+  @Override
+  public void runController(double dt, UUID id) {
+    if (!isEnergized || partialStrokeTestActive || id != null && id.equals(lastSafetyOwnedStepId)) {
+      setCalculationIdentifier(id);
+      return;
+    }
+    if (!actuatorAvailable) {
+      double heldPosition = getPercentValveOpening();
+      double request = getTargetPercentValveOpening();
+      if (getController() != null && getController().isActive()) {
+        getController().runTransient(heldPosition, dt, id);
+        request = getController().getResponse();
+      }
+      setPercentValveOpening(heldPosition);
+      setTargetPercentValveOpening(request);
+      setCalculationIdentifier(id);
+      return;
+    }
+    super.runController(dt, id);
+  }
+
+  /**
    * Performs dynamic simulation step with automatic closure logic.
    *
    * <p>
@@ -344,7 +375,14 @@ public class ESDValve extends ThrottlingValve {
    */
   @Override
   public void runTransient(double dt, UUID id) {
-    boolean advanceSafetyState = !isPhysicalStepIdempotencyEnabled() || id == null || !id.equals(lastSafetyStepId);
+    if (!Double.isFinite(dt) || dt < 0.0) {
+      throw new IllegalArgumentException("ESD valve physical interval must be finite and nonnegative");
+    }
+    boolean advanceSafetyState = dt > 0.0
+        && (!isPhysicalStepIdempotencyEnabled() || id == null || !id.equals(lastSafetyStepId));
+    if (dt > 0.0 && (!isEnergized || partialStrokeTestActive)) {
+      lastSafetyOwnedStepId = id;
+    }
     if (advanceSafetyState && !isEnergized && isClosing && actuatorAvailable) {
       // Valve is de-energized and closing
       timeElapsedSinceTrip += dt;
@@ -356,6 +394,7 @@ public class ESDValve extends ThrottlingValve {
       double newOpening = openingAtTripStart - (openingAtTripStart - failSafePosition) * closureFraction;
 
       setPercentValveOpening(newOpening);
+      setTargetPercentValveOpening(failSafePosition);
 
       // Check if closure is complete
       if (closureFraction >= 1.0) {
@@ -371,6 +410,7 @@ public class ESDValve extends ThrottlingValve {
         double closureRate = 100.0 / strokeTime; // Same rate as full closure
         double newOpening = Math.max(partialStrokeTestPosition, currentOpening - closureRate * dt);
         setPercentValveOpening(newOpening);
+        setTargetPercentValveOpening(partialStrokeTestPosition);
       }
       // Note: Test completion must be triggered externally via completePartialStrokeTest()
     }
@@ -410,6 +450,7 @@ public class ESDValve extends ThrottlingValve {
     super.restoreTransientStepState(snapshot);
     EsdTransientState esdState = (EsdTransientState) snapshot;
     lastSafetyStepId = esdState.lastSafetyStepId;
+    lastSafetyOwnedStepId = esdState.lastSafetyOwnedStepId;
     actuatorAvailable = esdState.actuatorAvailable;
     isEnergized = esdState.energized;
     strokeTime = esdState.strokeTime;
@@ -426,6 +467,7 @@ public class ESDValve extends ThrottlingValve {
   public static final class EsdTransientState extends TransientState {
     private static final long serialVersionUID = 1000L;
     private final UUID lastSafetyStepId;
+    private final UUID lastSafetyOwnedStepId;
     private final boolean actuatorAvailable;
     private final boolean energized;
     private final double strokeTime;
@@ -445,6 +487,7 @@ public class ESDValve extends ThrottlingValve {
     private EsdTransientState(ESDValve source) {
       super(source);
       lastSafetyStepId = source.lastSafetyStepId;
+      lastSafetyOwnedStepId = source.lastSafetyOwnedStepId;
       actuatorAvailable = source.actuatorAvailable;
       energized = source.isEnergized;
       strokeTime = source.strokeTime;

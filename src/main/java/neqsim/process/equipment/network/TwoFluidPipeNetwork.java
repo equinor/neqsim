@@ -29,10 +29,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  *
  * <p>
- * This first network layer is intentionally storage based. Algebraic zero-volume junctions, global Newton pressure-flow
- * iteration, and branch subcycling are outside its current scope. Component and total-energy mixing are available as an
- * explicit opt-in on compressible nodes. Signed outlet fallback is supported only when the downstream node or pipe owns
- * an explicit thermodynamic donor.
+ * Storage nodes provide explicit pressure inventory. One conservative algebraic zero-volume junction may instead solve
+ * a common pressure and mixed thermodynamic donor from the exact signed branch ledgers. A network-wide multi-junction
+ * Newton solve and branch subcycling remain outside the current scope. Component and total-energy mixing are available
+ * as an explicit opt-in on compressible nodes. Signed outlet fallback is supported only when the downstream node or
+ * pipe owns an explicit thermodynamic donor.
  * </p>
  */
 public final class TwoFluidPipeNetwork implements Serializable {
@@ -44,6 +45,10 @@ public final class TwoFluidPipeNetwork implements Serializable {
   private static final double COMPONENT_CLOSURE_ABSOLUTE_KG = 1.0e-10;
   private static final double ENERGY_CLOSURE_TOLERANCE = 1.0e-7;
   private static final double ENERGY_CLOSURE_ABSOLUTE_J = 1.0e-4;
+  private static final int ALGEBRAIC_MAXIMUM_PRESSURE_ITERATIONS = 16;
+  private static final int ALGEBRAIC_MAXIMUM_THERMODYNAMIC_ITERATIONS = 32;
+  private static final double ALGEBRAIC_PRESSURE_TOLERANCE_PA = 1.0e-2;
+  private static final double ALGEBRAIC_TRANSFER_TOLERANCE = 1.0e-8;
 
   private final String name;
   private final Map<String, NetworkNode> nodes = new LinkedHashMap<String, NetworkNode>();
@@ -52,6 +57,7 @@ public final class TwoFluidPipeNetwork implements Serializable {
   private double simulationTimeSeconds;
   private BalanceReport lastBalanceReport;
   private ThermodynamicBalanceReport lastThermodynamicBalanceReport;
+  private AlgebraicJunctionReport lastAlgebraicJunctionReport;
 
   /** Create an empty network. */
   public TwoFluidPipeNetwork(String name) {
@@ -149,6 +155,34 @@ public final class TwoFluidPipeNetwork implements Serializable {
     nodes.put(nodeName, NetworkNode.fixed(nodeName, pressurePa, boundaryFluid));
   }
 
+  /**
+   * Add a conservative algebraic zero-volume junction.
+   *
+   * <p>
+   * The junction has no stored mass or energy. During each network interval, all incident pipes are evaluated from the
+   * same accepted state while the coordinator solves a common pressure and an equilibrium mixed donor state. The
+   * accepted phase, named-component, and total-energy boundary ledgers must close before any pipe is published. This
+   * initial contract supports one algebraic junction per network and rejects a branch between two algebraic junctions.
+   * </p>
+   *
+   * @param nodeName unique junction name
+   * @param initialPressurePa positive initial common pressure in Pa
+   * @param initialFluid initial component slate and thermodynamic iterate
+   */
+  public void addAlgebraicJunction(String nodeName, double initialPressurePa, SystemInterface initialFluid) {
+    requireUniqueNodeName(nodeName);
+    requirePositiveFinite(initialPressurePa, "Algebraic-junction pressure");
+    if (initialFluid == null || initialFluid.getNumberOfComponents() == 0) {
+      throw new IllegalArgumentException("Algebraic-junction fluid must contain at least one component");
+    }
+    for (NetworkNode node : nodes.values()) {
+      if (node.algebraic) {
+        throw new IllegalStateException("This bounded solver supports one algebraic junction per network");
+      }
+    }
+    nodes.put(nodeName, NetworkNode.algebraic(nodeName, initialPressurePa, initialFluid));
+  }
+
   /** Add a directed two-fluid pipe branch between existing nodes. */
   public void addPipe(String branchName, String fromNodeName, String toNodeName, TwoFluidPipe pipe) {
     requireName(branchName, "Branch");
@@ -159,6 +193,9 @@ public final class TwoFluidPipeNetwork implements Serializable {
     NetworkNode toNode = requireNode(toNodeName);
     if (fromNode == toNode) {
       throw new IllegalArgumentException("Branch '" + branchName + "' cannot connect a node to itself");
+    }
+    if (fromNode.algebraic && toNode.algebraic) {
+      throw new IllegalArgumentException("A branch cannot connect two algebraic junctions in the bounded solver");
     }
     if (pipe == null) {
       throw new IllegalArgumentException("Network pipe cannot be null");
@@ -206,7 +243,11 @@ public final class TwoFluidPipeNetwork implements Serializable {
     validateRunnableNetwork();
     for (NetworkBranch branch : branches.values()) {
       branch.pipe.setOutletPressure(branch.toNode.getPressurePa());
+      publishInletBoundaryState(branch);
       publishOutletBoundaryState(branch, false);
+      if (branch.toNode.algebraic) {
+        branch.pipe.setAllowOutletPhaseBackflow(true);
+      }
       branch.pipe.run(id);
       if (hasConservativeNodes() && !branch.pipe.isUseConservativeEnergyRecovery()) {
         branch.pipe.prepareConservativeEnergyTransientFromSteadyState();
@@ -232,6 +273,7 @@ public final class TwoFluidPipeNetwork implements Serializable {
     double[] externalInletMassKg = new double[PHASE_COUNT];
     double[] externalOutletMassKg = new double[PHASE_COUNT];
     double[] sourceMassKg = new double[PHASE_COUNT];
+    double[] internalPhaseTransferKg = new double[PHASE_COUNT];
     Map<String, double[]> nodeTransferKg = new LinkedHashMap<String, double[]>();
 
     boolean conservative = hasConservativeNodes();
@@ -260,11 +302,21 @@ public final class TwoFluidPipeNetwork implements Serializable {
       publishFrozenNodeStates();
     }
 
+    AlgebraicSolution algebraicSolution = solveAlgebraicJunction(timeStepSeconds, id);
+    if (algebraicSolution != null) {
+      branchCandidates.putAll(algebraicSolution.branchCandidates);
+      for (int phaseIndex = 0; phaseIndex < PHASE_COUNT; phaseIndex++) {
+        internalPhaseTransferKg[phaseIndex] = -algebraicSolution.report.rawPhaseResidualKg[phaseIndex];
+      }
+    }
+
     for (NetworkNode node : nodes.values()) {
       nodeTransferKg.put(node.name, new double[PHASE_COUNT]);
       if (conservative && !node.fixedPressure) {
         nodeComponentTransferKg.put(node.name, new double[componentCount]);
         nodeEnergyTransferJ.put(node.name, 0.0);
+      }
+      if (conservative && node.hasStorage()) {
         add(initialComponentKg, node.thermodynamicInventory.componentMassKg, 1.0);
         initialEnergyJ += node.thermodynamicInventory.internalEnergyJ;
         double nodeSourceMassKg = node.getTotalSourceMassFlowRateKgS() * timeStepSeconds;
@@ -277,7 +329,7 @@ public final class TwoFluidPipeNetwork implements Serializable {
           sourceEnergyJ += nodeSourceEnergyJ;
         }
       }
-      if (!node.fixedPressure) {
+      if (node.hasStorage()) {
         for (int phase = 0; phase < PHASE_COUNT; phase++) {
           initialMassKg[phase] += node.volume.getPhaseMassKg(phase);
           sourceMassKg[phase] += node.volume.getSourceMassFlowRateKgS(phase) * timeStepSeconds;
@@ -286,9 +338,12 @@ public final class TwoFluidPipeNetwork implements Serializable {
     }
 
     for (NetworkBranch branch : branches.values()) {
-      configureTransientPressures(branch);
-      TwoFluidPipe.TransientCandidate candidate = branch.pipe.prepareTransientCandidate(timeStepSeconds, id);
-      branchCandidates.put(branch, candidate);
+      TwoFluidPipe.TransientCandidate candidate = branchCandidates.get(branch);
+      if (candidate == null) {
+        configureTransientPressures(branch);
+        candidate = branch.pipe.prepareTransientCandidate(timeStepSeconds, id);
+        branchCandidates.put(branch, candidate);
+      }
       TwoFluidMassBalanceReport report = candidate.getMassBalanceReport();
       if (report == null) {
         throw new IllegalStateException("Branch '" + branch.name + "' returned no mass-balance report");
@@ -344,7 +399,7 @@ public final class TwoFluidPipeNetwork implements Serializable {
     }
 
     for (NetworkNode node : nodes.values()) {
-      if (!node.fixedPressure) {
+      if (node.hasStorage()) {
         UpstreamCompressibleVolume volumeCandidate = SerializationUtils.clone(node.volume);
         volumeCandidate.advance(timeStepSeconds, nodeTransferKg.get(node.name));
         volumeCandidates.put(node, volumeCandidate);
@@ -363,7 +418,7 @@ public final class TwoFluidPipeNetwork implements Serializable {
     }
 
     BalanceReport candidateBalanceReport = new BalanceReport(timeStepSeconds, initialMassKg, finalMassKg,
-        externalInletMassKg, externalOutletMassKg, sourceMassKg);
+        externalInletMassKg, externalOutletMassKg, sourceMassKg, internalPhaseTransferKg);
     ThermodynamicBalanceReport candidateThermodynamicBalanceReport = conservative
         ? new ThermodynamicBalanceReport(timeStepSeconds, componentNames, initialComponentKg, finalComponentKg,
             externalInletComponentKg, externalOutletComponentKg, sourceComponentKg, initialEnergyJ, finalEnergyJ,
@@ -406,6 +461,309 @@ public final class TwoFluidPipeNetwork implements Serializable {
     simulationTimeSeconds += timeStepSeconds;
     lastBalanceReport = candidateBalanceReport;
     lastThermodynamicBalanceReport = candidateThermodynamicBalanceReport;
+    if (algebraicSolution != null) {
+      algebraicSolution.node.acceptAlgebraicState(algebraicSolution.pressurePa, algebraicSolution.fluid);
+      lastAlgebraicJunctionReport = algebraicSolution.report;
+    } else {
+      lastAlgebraicJunctionReport = null;
+    }
+  }
+
+  /**
+   * Solve the bounded algebraic-junction contract without changing any accepted pipe.
+   *
+   * @param timeStepSeconds reporting interval in seconds
+   * @param id calculation identifier
+   * @return converged detached solution, or {@code null} when no algebraic junction is configured
+   */
+  private AlgebraicSolution solveAlgebraicJunction(double timeStepSeconds, UUID id) {
+    NetworkNode junction = null;
+    for (NetworkNode node : nodes.values()) {
+      if (node.algebraic) {
+        if (junction != null) {
+          throw new IllegalStateException("The bounded solver supports one algebraic junction per network");
+        }
+        junction = node;
+      }
+    }
+    if (junction == null) {
+      return null;
+    }
+
+    List<NetworkBranch> incident = new ArrayList<NetworkBranch>();
+    double minimumAdjacentPressurePa = Double.POSITIVE_INFINITY;
+    double maximumAdjacentPressurePa = 0.0;
+    for (NetworkBranch branch : branches.values()) {
+      NetworkNode adjacent = null;
+      if (branch.fromNode == junction) {
+        adjacent = branch.toNode;
+      } else if (branch.toNode == junction) {
+        adjacent = branch.fromNode;
+      }
+      if (adjacent != null) {
+        incident.add(branch);
+        minimumAdjacentPressurePa = Math.min(minimumAdjacentPressurePa, adjacent.getPressurePa());
+        maximumAdjacentPressurePa = Math.max(maximumAdjacentPressurePa, adjacent.getPressurePa());
+      }
+    }
+    if (incident.size() < 2) {
+      throw new IllegalStateException("Algebraic junction '" + junction.name + "' requires at least two branches");
+    }
+
+    SystemInterface donor = SerializationUtils.clone(junction.algebraicFluid);
+    AlgebraicTrial trial = null;
+    int thermodynamicIterations = 0;
+    for (; thermodynamicIterations < ALGEBRAIC_MAXIMUM_THERMODYNAMIC_ITERATIONS; thermodynamicIterations++) {
+      trial = solveAlgebraicPressure(junction, incident, donor, minimumAdjacentPressurePa, maximumAdjacentPressurePa,
+          timeStepSeconds, id);
+      SystemInterface mixed = mixAlgebraicDonor(junction, donor, trial);
+      boolean donorConverged = algebraicDonorConverged(donor, mixed);
+      donor = mixed;
+      if (donorConverged && trial.closes()) {
+        break;
+      }
+    }
+    if (trial == null) {
+      throw new IllegalStateException("Algebraic junction '" + junction.name + "' produced no donor-state trial");
+    }
+    if (thermodynamicIterations >= ALGEBRAIC_MAXIMUM_THERMODYNAMIC_ITERATIONS) {
+      throw new IllegalStateException("Algebraic junction '" + junction.name
+          + "' did not converge its donor state; phase=" + Arrays.toString(trial.phaseResidualKg) + " kg, component="
+          + Arrays.toString(trial.componentResidualKg) + " kg, energy=" + trial.energyResidualJ + " J");
+    }
+
+    trial = solveAlgebraicPressure(junction, incident, donor, minimumAdjacentPressurePa, maximumAdjacentPressurePa,
+        timeStepSeconds, id);
+    trial.requireClosure(junction.name);
+    SystemInterface acceptedFluid = SerializationUtils.clone(donor);
+    acceptedFluid.setPressure(trial.pressurePa, "Pa");
+    new ThermodynamicOperations(acceptedFluid).TPflash();
+    acceptedFluid.initProperties();
+    AlgebraicJunctionReport report = new AlgebraicJunctionReport(junction.name, trial.pressurePa,
+        thermodynamicIterations + 1, trial.pressureIterations, trial.phaseResidualKg, trial.componentNames,
+        trial.componentResidualKg, trial.energyResidualJ, trial.transferScaleKg, trial.energyScaleJ);
+    return new AlgebraicSolution(junction, trial.pressurePa, acceptedFluid, trial.branchCandidates, report);
+  }
+
+  /** Solve the scalar common pressure for one frozen donor iterate. */
+  private AlgebraicTrial solveAlgebraicPressure(NetworkNode junction, List<NetworkBranch> incident,
+      SystemInterface donor, double minimumAdjacentPressurePa, double maximumAdjacentPressurePa, double timeStepSeconds,
+      UUID id) {
+    double lowerPa = Math.min(minimumAdjacentPressurePa, junction.getPressurePa());
+    double upperPa = Math.max(maximumAdjacentPressurePa, junction.getPressurePa());
+    if (!(upperPa > lowerPa)) {
+      lowerPa = Math.max(1.0, lowerPa * 0.95);
+      upperPa = upperPa * 1.05;
+    }
+    AlgebraicTrial lower = evaluateAlgebraicTrial(junction, incident, donor, lowerPa, timeStepSeconds, id, 0);
+    AlgebraicTrial upper = evaluateAlgebraicTrial(junction, incident, donor, upperPa, timeStepSeconds, id, 0);
+    for (int expansion = 0; lower.totalMassResidualKg * upper.totalMassResidualKg > 0.0 && expansion < 8; expansion++) {
+      lowerPa = Math.max(1.0, lowerPa * 0.7);
+      upperPa *= 1.3;
+      lower = evaluateAlgebraicTrial(junction, incident, donor, lowerPa, timeStepSeconds, id, 0);
+      upper = evaluateAlgebraicTrial(junction, incident, donor, upperPa, timeStepSeconds, id, 0);
+    }
+    if (lower.totalMassResidualKg * upper.totalMassResidualKg > 0.0) {
+      throw new IllegalStateException("Algebraic junction '" + junction.name
+          + "' could not bracket a common-pressure mass root; endpoint residuals are " + lower.totalMassResidualKg
+          + " and " + upper.totalMassResidualKg + " kg");
+    }
+    if (lower.pressureCloses()) {
+      return lower;
+    }
+    if (upper.pressureCloses()) {
+      return upper;
+    }
+
+    AlgebraicTrial midpoint = null;
+    for (int iteration = 1; iteration <= ALGEBRAIC_MAXIMUM_PRESSURE_ITERATIONS; iteration++) {
+      double denominator = upper.totalMassResidualKg - lower.totalMassResidualKg;
+      double midpointPa = denominator == 0.0 ? 0.5 * (lowerPa + upperPa)
+          : (lowerPa * upper.totalMassResidualKg - upperPa * lower.totalMassResidualKg) / denominator;
+      if (!Double.isFinite(midpointPa) || midpointPa <= lowerPa || midpointPa >= upperPa) {
+        midpointPa = 0.5 * (lowerPa + upperPa);
+      }
+      midpoint = evaluateAlgebraicTrial(junction, incident, donor, midpointPa, timeStepSeconds, id, iteration);
+      if (midpoint.pressureCloses() || upperPa - lowerPa <= ALGEBRAIC_PRESSURE_TOLERANCE_PA) {
+        return midpoint;
+      }
+      if (lower.totalMassResidualKg * midpoint.totalMassResidualKg <= 0.0) {
+        upperPa = midpointPa;
+        upper = midpoint;
+      } else {
+        lowerPa = midpointPa;
+        lower = midpoint;
+      }
+    }
+    throw new IllegalStateException(
+        "Algebraic junction '" + junction.name + "' exceeded the bounded common-pressure iteration limit");
+  }
+
+  /** Evaluate every incident branch at one detached pressure and donor state. */
+  private AlgebraicTrial evaluateAlgebraicTrial(NetworkNode junction, List<NetworkBranch> incident,
+      SystemInterface donor, double pressurePa, double timeStepSeconds, UUID id, int pressureIterations) {
+    Map<NetworkBranch, TwoFluidPipe.TransientCandidate> candidates = new LinkedHashMap<NetworkBranch, TwoFluidPipe.TransientCandidate>();
+    String[] componentNames = conservativeComponentNames();
+    double[] phaseResidualKg = new double[PHASE_COUNT];
+    double[] componentResidualKg = new double[componentNames.length];
+    double incomingEnergyJ = 0.0;
+    double incomingMassKg = 0.0;
+    double energyResidualJ = 0.0;
+    double transferScaleKg = 0.0;
+    double energyScaleJ = 0.0;
+
+    for (NetworkBranch branch : incident) {
+      double inletPressurePa = branch.fromNode == junction ? pressurePa : branch.fromNode.getPressurePa();
+      double outletPressurePa = branch.toNode == junction ? pressurePa : branch.toNode.getPressurePa();
+      SystemInterface inletDonor = branch.fromNode == junction ? donor : null;
+      SystemInterface outletDonor = branch.toNode == junction ? donor : null;
+      TwoFluidPipe.TransientCandidate candidate = branch.pipe.prepareTransientCandidate(timeStepSeconds, id,
+          inletPressurePa, outletPressurePa, inletDonor, outletDonor);
+      candidates.put(branch, candidate);
+      TwoFluidMassBalanceReport mass = candidate.getMassBalanceReport();
+      TwoFluidComponentConservationReport components = candidate.getComponentConservationReport();
+      TwoFluidConservativeEnergyReport energy = candidate.getConservativeEnergyReport();
+      validateBranchThermodynamicReports(branch, componentNames, components, energy);
+
+      for (int phaseIndex = 0; phaseIndex < PHASE_COUNT; phaseIndex++) {
+        Phase aggregation = phase(phaseIndex);
+        double branchMassKg = branch.fromNode == junction ? -mass.getInletMassKg(aggregation)
+            : mass.getOutletMassKg(aggregation);
+        phaseResidualKg[phaseIndex] += branchMassKg;
+        transferScaleKg += Math.abs(branchMassKg);
+        double[] branchComponentKg = algebraicBoundaryComponents(branch, junction, components, phaseIndex);
+        double branchEnergyJ = algebraicBoundaryEnergy(branch, junction, energy, phaseIndex);
+        add(componentResidualKg, branchComponentKg, 1.0);
+        energyResidualJ += branchEnergyJ;
+        energyScaleJ += Math.abs(branchEnergyJ);
+        if (branchMassKg > 0.0) {
+          incomingMassKg += branchMassKg;
+          incomingEnergyJ += branchEnergyJ;
+        }
+      }
+    }
+    double totalMassResidualKg = phaseResidualKg[0] + phaseResidualKg[1] + phaseResidualKg[2];
+    return new AlgebraicTrial(pressurePa, pressureIterations, candidates, componentNames, phaseResidualKg,
+        componentResidualKg, energyResidualJ, totalMassResidualKg, incomingMassKg, incomingEnergyJ, transferScaleKg,
+        energyScaleJ);
+  }
+
+  /** Return the signed component transfer entering the algebraic node for one phase. */
+  private static double[] algebraicBoundaryComponents(NetworkBranch branch, NetworkNode junction,
+      TwoFluidComponentConservationReport report, int phaseIndex) {
+    TwoFluidComponentConservationReport.Phase phase = componentPhase(phaseIndex);
+    double[] values = branch.fromNode == junction ? report.getInletBoundaryMassKg(phase)
+        : report.getOutletBoundaryMassKg(phase);
+    if (branch.fromNode == junction) {
+      for (int index = 0; index < values.length; index++) {
+        values[index] = -values[index];
+      }
+    }
+    return values;
+  }
+
+  /** Return the signed advected-energy transfer entering the algebraic node for one phase. */
+  private static double algebraicBoundaryEnergy(NetworkBranch branch, NetworkNode junction,
+      TwoFluidConservativeEnergyReport report, int phaseIndex) {
+    TwoFluidConservativeEnergyReport.Phase phase = energyPhase(phaseIndex);
+    return branch.fromNode == junction ? -report.getInletAdvectedEnergyJ(phase)
+        : report.getOutletAdvectedEnergyJ(phase);
+  }
+
+  /** Recover the next equilibrium donor iterate from the exact incoming component and energy ledgers. */
+  private static SystemInterface mixAlgebraicDonor(NetworkNode junction, SystemInterface previous,
+      AlgebraicTrial trial) {
+    if (!(trial.incomingMassKg > 0.0) || !Double.isFinite(trial.incomingEnergyJ)) {
+      throw new IllegalStateException("Algebraic junction '" + junction.name
+          + "' requires positive incoming mass and finite energy in every donor iteration");
+    }
+    SystemInterface mixed = SerializationUtils.clone(previous);
+    double[] molarFlow = new double[trial.componentNames.length];
+    double previousTotalMass = 0.0;
+    double[] previousMassFraction = new double[trial.componentNames.length];
+    for (int index = 0; index < previousMassFraction.length; index++) {
+      previousMassFraction[index] = previous.getComponent(index).getNumberOfmoles()
+          * previous.getComponent(index).getMolarMass();
+      previousTotalMass += previousMassFraction[index];
+    }
+    double correctedTotalMass = 0.0;
+    for (int index = 0; index < molarFlow.length; index++) {
+      double molarMass = mixed.getComponent(index).getMolarMass();
+      double correctedMassKg = previousMassFraction[index] / previousTotalMass * trial.incomingMassKg
+          + trial.componentResidualKg[index];
+      correctedMassKg = Math.max(correctedMassKg, 1.0e-16 * trial.incomingMassKg);
+      molarFlow[index] = correctedMassKg / molarMass;
+      correctedTotalMass += correctedMassKg;
+    }
+    if (!(correctedTotalMass > 0.0)) {
+      throw new IllegalStateException("Algebraic-junction donor correction removed every component");
+    }
+    mixed.setMolarFlowRates(molarFlow);
+    mixed.setPressure(trial.pressurePa, "Pa");
+    try {
+      ThermodynamicOperations operations = new ThermodynamicOperations(mixed);
+      operations.TPflash();
+      double correctedSpecificEnthalpyJPerKg = previous.getEnthalpy("J/kg")
+          + trial.energyResidualJ / trial.incomingMassKg;
+      operations.PHflash(correctedSpecificEnthalpyJPerKg, "J/kg");
+      mixed.initProperties();
+    } catch (RuntimeException exception) {
+      throw new IllegalStateException("Unable to recover algebraic-junction donor state", exception);
+    }
+    return mixed;
+  }
+
+  /** Test whether two donor iterates have the same composition and caloric state. */
+  private static boolean algebraicDonorConverged(SystemInterface previous, SystemInterface next) {
+    double maximumCompositionDifference = 0.0;
+    double previousMass = 0.0;
+    double nextMass = 0.0;
+    double[] previousComponentMass = new double[previous.getNumberOfComponents()];
+    double[] nextComponentMass = new double[next.getNumberOfComponents()];
+    for (int index = 0; index < previousComponentMass.length; index++) {
+      previousComponentMass[index] = previous.getComponent(index).getNumberOfmoles()
+          * previous.getComponent(index).getMolarMass();
+      nextComponentMass[index] = next.getComponent(index).getNumberOfmoles() * next.getComponent(index).getMolarMass();
+      previousMass += previousComponentMass[index];
+      nextMass += nextComponentMass[index];
+    }
+    for (int index = 0; index < previousComponentMass.length; index++) {
+      maximumCompositionDifference = Math.max(maximumCompositionDifference,
+          Math.abs(previousComponentMass[index] / previousMass - nextComponentMass[index] / nextMass));
+    }
+    double enthalpyScale = Math.max(Math.abs(next.getEnthalpy("J/kg")), 1.0);
+    double relativeEnthalpyDifference = Math.abs(previous.getEnthalpy("J/kg") - next.getEnthalpy("J/kg"))
+        / enthalpyScale;
+    return maximumCompositionDifference <= ALGEBRAIC_TRANSFER_TOLERANCE
+        && relativeEnthalpyDifference <= ALGEBRAIC_TRANSFER_TOLERANCE;
+  }
+
+  /** Map the network phase index to the component-ledger phase identity. */
+  private static TwoFluidComponentConservationReport.Phase componentPhase(int index) {
+    switch (index) {
+    case 0:
+      return TwoFluidComponentConservationReport.Phase.GAS;
+    case 1:
+      return TwoFluidComponentConservationReport.Phase.OIL;
+    case 2:
+      return TwoFluidComponentConservationReport.Phase.WATER;
+    default:
+      throw new IllegalArgumentException("Unsupported phase index " + index);
+    }
+  }
+
+  /** Map the network phase index to the energy-ledger phase identity. */
+  private static TwoFluidConservativeEnergyReport.Phase energyPhase(int index) {
+    switch (index) {
+    case 0:
+      return TwoFluidConservativeEnergyReport.Phase.GAS;
+    case 1:
+      return TwoFluidConservativeEnergyReport.Phase.OIL;
+    case 2:
+      return TwoFluidConservativeEnergyReport.Phase.WATER;
+    default:
+      throw new IllegalArgumentException("Unsupported phase index " + index);
+    }
   }
 
   /** Reject a staged interval before publication when its whole-network ledgers do not close. */
@@ -440,7 +798,7 @@ public final class TwoFluidPipeNetwork implements Serializable {
 
   private boolean hasConservativeNodes() {
     for (NetworkNode node : nodes.values()) {
-      if (node.thermodynamicInventory != null) {
+      if (node.thermodynamicInventory != null || node.algebraic) {
         return true;
       }
     }
@@ -452,6 +810,9 @@ public final class TwoFluidPipeNetwork implements Serializable {
       if (node.thermodynamicInventory != null) {
         return node.thermodynamicInventory.componentNames.clone();
       }
+      if (node.algebraic) {
+        return node.algebraicFluid.getComponentNames();
+      }
     }
     return new String[0];
   }
@@ -459,7 +820,11 @@ public final class TwoFluidPipeNetwork implements Serializable {
   private void validateConservativeNetwork() {
     String[] names = conservativeComponentNames();
     for (NetworkNode node : nodes.values()) {
-      if (!node.fixedPressure) {
+      if (node.algebraic) {
+        if (!Arrays.equals(names, node.algebraicFluid.getComponentNames())) {
+          throw new IllegalStateException("Algebraic junction '" + node.name + "' has a different component slate");
+        }
+      } else if (!node.fixedPressure) {
         if (node.thermodynamicInventory == null) {
           throw new IllegalStateException(
               "Conservative routing requires thermodynamic inventory on node '" + node.name + "'");
@@ -504,11 +869,21 @@ public final class TwoFluidPipeNetwork implements Serializable {
   private void publishFrozenNodeStates() {
     for (NetworkBranch branch : branches.values()) {
       if (!branch.fromNode.fixedPressure) {
-        SystemInterface boundaryFluid = branch.fromNode.thermodynamicInventory.fluid.clone();
+        SystemInterface boundaryFluid = branch.fromNode.getBoundaryFluid();
         boundaryFluid.setPressure(branch.fromNode.getPressurePa(), "Pa");
         branch.pipe.getInletStream().setFluid(boundaryFluid);
       }
       publishOutletBoundaryState(branch, branch.pipe.isOutletPhaseBackflowAllowed());
+    }
+  }
+
+  /** Publish the accepted upstream thermodynamic state before steady initialization. */
+  private void publishInletBoundaryState(NetworkBranch branch) {
+    if (branch.fromNode.algebraic) {
+      SystemInterface boundaryFluid = branch.fromNode.getBoundaryFluid();
+      boundaryFluid.setPressure(branch.fromNode.getPressurePa(), "Pa");
+      branch.pipe.getInletStream().setFluid(boundaryFluid);
+      branch.pipe.setInletBoundaryFluid(boundaryFluid);
     }
   }
 
@@ -642,6 +1017,15 @@ public final class TwoFluidPipeNetwork implements Serializable {
     return lastThermodynamicBalanceReport;
   }
 
+  /**
+   * Get the latest algebraic-junction solve report.
+   *
+   * @return latest accepted report, or {@code null} when the network has no algebraic junction
+   */
+  public AlgebraicJunctionReport getLastAlgebraicJunctionReport() {
+    return lastAlgebraicJunctionReport;
+  }
+
   public TwoFluidPipe getPipe(String branchName) {
     NetworkBranch branch = branches.get(branchName);
     if (branch == null)
@@ -656,6 +1040,9 @@ public final class TwoFluidPipeNetwork implements Serializable {
   /** Get the recovered temperature of a conservative storage node. */
   public double getNodeTemperatureK(String nodeName) {
     NetworkNode node = requireNode(nodeName);
+    if (node.algebraic) {
+      return node.algebraicFluid.getTemperature("K");
+    }
     if (node.thermodynamicInventory == null) {
       throw new IllegalStateException("Node '" + nodeName + "' has no thermodynamic inventory");
     }
@@ -671,48 +1058,311 @@ public final class TwoFluidPipeNetwork implements Serializable {
     return node.thermodynamicInventory.getComponentMassKg(componentName);
   }
 
+  /**
+   * Get one component mass fraction in the accepted algebraic-junction donor state.
+   *
+   * @param nodeName algebraic node name
+   * @param componentName component name
+   * @return accepted overall component mass fraction
+   */
+  public double getAlgebraicNodeComponentMassFraction(String nodeName, String componentName) {
+    NetworkNode node = requireNode(nodeName);
+    if (!node.algebraic) {
+      throw new IllegalStateException("Node '" + nodeName + "' is not algebraic");
+    }
+    double totalMass = 0.0;
+    double componentMass = 0.0;
+    for (int index = 0; index < node.algebraicFluid.getNumberOfComponents(); index++) {
+      double mass = node.algebraicFluid.getComponent(index).getNumberOfmoles()
+          * node.algebraicFluid.getComponent(index).getMolarMass();
+      totalMass += mass;
+      if (node.algebraicFluid.getComponent(index).getComponentName().equals(componentName)) {
+        componentMass = mass;
+      }
+    }
+    if (!(totalMass > 0.0)) {
+      throw new IllegalStateException("Algebraic junction has no positive component mass");
+    }
+    return componentMass / totalMass;
+  }
+
+  /** Private accepted result of one algebraic solve. */
+  private static final class AlgebraicSolution {
+    private final NetworkNode node;
+    private final double pressurePa;
+    private final SystemInterface fluid;
+    private final Map<NetworkBranch, TwoFluidPipe.TransientCandidate> branchCandidates;
+    private final AlgebraicJunctionReport report;
+
+    private AlgebraicSolution(NetworkNode node, double pressurePa, SystemInterface fluid,
+        Map<NetworkBranch, TwoFluidPipe.TransientCandidate> branchCandidates, AlgebraicJunctionReport report) {
+      this.node = node;
+      this.pressurePa = pressurePa;
+      this.fluid = fluid;
+      this.branchCandidates = branchCandidates;
+      this.report = report;
+    }
+  }
+
+  /** Private residual bundle for one detached algebraic trial. */
+  private static final class AlgebraicTrial {
+    private final double pressurePa;
+    private final int pressureIterations;
+    private final Map<NetworkBranch, TwoFluidPipe.TransientCandidate> branchCandidates;
+    private final String[] componentNames;
+    private final double[] phaseResidualKg;
+    private final double[] componentResidualKg;
+    private final double energyResidualJ;
+    private final double totalMassResidualKg;
+    private final double incomingMassKg;
+    private final double incomingEnergyJ;
+    private final double transferScaleKg;
+    private final double energyScaleJ;
+
+    private AlgebraicTrial(double pressurePa, int pressureIterations,
+        Map<NetworkBranch, TwoFluidPipe.TransientCandidate> branchCandidates, String[] componentNames,
+        double[] phaseResidualKg, double[] componentResidualKg, double energyResidualJ, double totalMassResidualKg,
+        double incomingMassKg, double incomingEnergyJ, double transferScaleKg, double energyScaleJ) {
+      this.pressurePa = pressurePa;
+      this.pressureIterations = pressureIterations;
+      this.branchCandidates = branchCandidates;
+      this.componentNames = componentNames;
+      this.phaseResidualKg = phaseResidualKg;
+      this.componentResidualKg = componentResidualKg;
+      this.energyResidualJ = energyResidualJ;
+      this.totalMassResidualKg = totalMassResidualKg;
+      this.incomingMassKg = incomingMassKg;
+      this.incomingEnergyJ = incomingEnergyJ;
+      this.transferScaleKg = transferScaleKg;
+      this.energyScaleJ = energyScaleJ;
+    }
+
+    private boolean pressureCloses() {
+      return Math.abs(totalMassResidualKg) <= MASS_CLOSURE_ABSOLUTE_KG + ALGEBRAIC_TRANSFER_TOLERANCE * transferScaleKg;
+    }
+
+    private boolean closes() {
+      if (!pressureCloses()) {
+        return false;
+      }
+      for (double residualKg : componentResidualKg) {
+        if (Math.abs(residualKg) > COMPONENT_CLOSURE_ABSOLUTE_KG + ALGEBRAIC_TRANSFER_TOLERANCE * transferScaleKg) {
+          return false;
+        }
+      }
+      return Math.abs(energyResidualJ) <= ENERGY_CLOSURE_ABSOLUTE_J + ALGEBRAIC_TRANSFER_TOLERANCE * energyScaleJ;
+    }
+
+    private void requireClosure(String junctionName) {
+      if (!closes()) {
+        throw new IllegalStateException("Algebraic junction '" + junctionName
+            + "' did not close total/component/energy ledgers: raw phase=" + Arrays.toString(phaseResidualKg)
+            + " kg, component=" + Arrays.toString(componentResidualKg) + " kg, energy=" + energyResidualJ + " J");
+      }
+    }
+  }
+
+  /**
+   * Immutable convergence and conservation receipt for the latest accepted algebraic-junction interval.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  public static final class AlgebraicJunctionReport implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String nodeName;
+    private final double pressurePa;
+    private final int thermodynamicIterations;
+    private final int pressureIterations;
+    private final double[] rawPhaseResidualKg;
+    private final double[] interphaseTransferKg;
+    private final String[] componentNames;
+    private final double[] componentResidualKg;
+    private final double energyResidualJ;
+    private final double transferScaleKg;
+    private final double energyScaleJ;
+
+    private AlgebraicJunctionReport(String nodeName, double pressurePa, int thermodynamicIterations,
+        int pressureIterations, double[] phaseResidualKg, String[] componentNames, double[] componentResidualKg,
+        double energyResidualJ, double transferScaleKg, double energyScaleJ) {
+      this.nodeName = nodeName;
+      this.pressurePa = pressurePa;
+      this.thermodynamicIterations = thermodynamicIterations;
+      this.pressureIterations = pressureIterations;
+      this.rawPhaseResidualKg = phaseResidualKg.clone();
+      this.interphaseTransferKg = new double[phaseResidualKg.length];
+      for (int index = 0; index < phaseResidualKg.length; index++) {
+        interphaseTransferKg[index] = -phaseResidualKg[index];
+      }
+      this.componentNames = componentNames.clone();
+      this.componentResidualKg = componentResidualKg.clone();
+      this.energyResidualJ = energyResidualJ;
+      this.transferScaleKg = transferScaleKg;
+      this.energyScaleJ = energyScaleJ;
+    }
+
+    /** @return algebraic node name */
+    public String getNodeName() {
+      return nodeName;
+    }
+
+    /** @return accepted common pressure in Pa */
+    public double getPressurePa() {
+      return pressurePa;
+    }
+
+    /** @return number of mixed-donor iterations */
+    public int getThermodynamicIterations() {
+      return thermodynamicIterations;
+    }
+
+    /** @return number of safeguarded scalar-pressure iterations in the accepted donor iteration */
+    public int getPressureIterations() {
+      return pressureIterations;
+    }
+
+    /**
+     * Get the phase closure residual after the explicitly reported equilibrium interphase transfer.
+     *
+     * @param aggregation gas, oil, water, or total
+     * @return mass entering minus mass leaving in kg
+     */
+    public double getPhaseResidualKg(Phase aggregation) {
+      double[] closureResidualKg = new double[PHASE_COUNT];
+      for (int index = 0; index < closureResidualKg.length; index++) {
+        closureResidualKg[index] = rawPhaseResidualKg[index] + interphaseTransferKg[index];
+      }
+      return BalanceReport.aggregate(closureResidualKg, aggregation);
+    }
+
+    /**
+     * Get the equilibrium phase conversion required by the zero-volume mixer.
+     *
+     * <p>
+     * Positive values add mass to the requested hydrodynamic phase and negative values remove it. The total across gas,
+     * oil, and water is zero within the common-pressure mass tolerance; named components and energy remain
+     * independently conserved.
+     * </p>
+     *
+     * @param aggregation gas, oil, water, liquid, or total
+     * @return interval-integrated interphase transfer in kg
+     */
+    public double getInterphaseTransferKg(Phase aggregation) {
+      return BalanceReport.aggregate(interphaseTransferKg, aggregation);
+    }
+
+    /** @return deterministic component order */
+    public String[] getComponentNames() {
+      return componentNames.clone();
+    }
+
+    /**
+     * Get one zero-volume named-component residual.
+     *
+     * @param componentName component name
+     * @return mass entering minus mass leaving in kg
+     */
+    public double getComponentResidualKg(String componentName) {
+      for (int index = 0; index < componentNames.length; index++) {
+        if (componentNames[index].equals(componentName)) {
+          return componentResidualKg[index];
+        }
+      }
+      throw new IllegalArgumentException("Component '" + componentName + "' is not in the junction slate");
+    }
+
+    /** @return energy entering minus energy leaving in J */
+    public double getEnergyResidualJ() {
+      return energyResidualJ;
+    }
+
+    /** @return maximum relative phase residual on the accepted transfer scale */
+    public double getMaximumRelativePhaseResidual() {
+      double maximum = 0.0;
+      for (int index = 0; index < rawPhaseResidualKg.length; index++) {
+        double closureResidualKg = rawPhaseResidualKg[index] + interphaseTransferKg[index];
+        maximum = Math.max(maximum, Math.abs(closureResidualKg) / Math.max(transferScaleKg, 1.0e-30));
+      }
+      return maximum;
+    }
+
+    /** @return maximum relative component residual on the accepted transfer scale */
+    public double getMaximumRelativeComponentResidual() {
+      double maximum = 0.0;
+      for (double value : componentResidualKg) {
+        maximum = Math.max(maximum, Math.abs(value) / Math.max(transferScaleKg, 1.0e-30));
+      }
+      return maximum;
+    }
+
+    /** @return absolute relative energy residual on the accepted advected-energy scale */
+    public double getRelativeEnergyResidual() {
+      return Math.abs(energyResidualJ) / Math.max(energyScaleJ, 1.0e-30);
+    }
+  }
+
   private static final class NetworkNode implements Serializable {
     private static final long serialVersionUID = 1000L;
     private final String name;
     private final boolean fixedPressure;
     private final double fixedPressurePa;
+    private final boolean algebraic;
     private final UpstreamCompressibleVolume volume;
     private final ThermodynamicInventory thermodynamicInventory;
     private final SystemInterface fixedBoundaryFluid;
+    private double algebraicPressurePa;
+    private SystemInterface algebraicFluid;
     private NodeSourceThermodynamics sourceThermodynamics;
     private int incomingCount;
     private int outgoingCount;
 
-    private NetworkNode(String name, boolean fixedPressure, double fixedPressurePa, UpstreamCompressibleVolume volume,
-        ThermodynamicInventory thermodynamicInventory, SystemInterface fixedBoundaryFluid) {
+    private NetworkNode(String name, boolean fixedPressure, double fixedPressurePa, boolean algebraic,
+        UpstreamCompressibleVolume volume, ThermodynamicInventory thermodynamicInventory,
+        SystemInterface fixedBoundaryFluid, double algebraicPressurePa, SystemInterface algebraicFluid) {
       this.name = name;
       this.fixedPressure = fixedPressure;
       this.fixedPressurePa = fixedPressurePa;
+      this.algebraic = algebraic;
       this.volume = volume;
       this.thermodynamicInventory = thermodynamicInventory;
       this.fixedBoundaryFluid = fixedBoundaryFluid;
+      this.algebraicPressurePa = algebraicPressurePa;
+      this.algebraicFluid = algebraicFluid;
     }
 
     private static NetworkNode fixed(String name, double pressurePa) {
-      return new NetworkNode(name, true, pressurePa, null, null, null);
+      return new NetworkNode(name, true, pressurePa, false, null, null, null, Double.NaN, null);
     }
 
     private static NetworkNode fixed(String name, double pressurePa, SystemInterface boundaryFluid) {
-      return new NetworkNode(name, true, pressurePa, null, null, boundaryFluid.clone());
+      return new NetworkNode(name, true, pressurePa, false, null, null, boundaryFluid.clone(), Double.NaN, null);
     }
 
     private static NetworkNode compressible(String name, UpstreamCompressibleVolume volume) {
-      return new NetworkNode(name, false, Double.NaN, volume, null, null);
+      return new NetworkNode(name, false, Double.NaN, false, volume, null, null, Double.NaN, null);
     }
 
     private static NetworkNode conservative(String name, UpstreamCompressibleVolume volume,
         SystemInterface initialFluid) {
-      return new NetworkNode(name, false, Double.NaN, volume,
-          new ThermodynamicInventory(initialFluid, volume.getTotalMassKg(), volume.getPressurePa()), null);
+      return new NetworkNode(name, false, Double.NaN, false, volume,
+          new ThermodynamicInventory(initialFluid, volume.getTotalMassKg(), volume.getPressurePa()), null, Double.NaN,
+          null);
+    }
+
+    private static NetworkNode algebraic(String name, double pressurePa, SystemInterface initialFluid) {
+      SystemInterface fluid = SerializationUtils.clone(initialFluid);
+      fluid.setPressure(pressurePa, "Pa");
+      new ThermodynamicOperations(fluid).TPflash();
+      fluid.initProperties();
+      return new NetworkNode(name, false, Double.NaN, true, null, null, null, pressurePa, fluid);
     }
 
     private double getPressurePa() {
-      return fixedPressure ? fixedPressurePa : volume.getPressurePa();
+      return fixedPressure ? fixedPressurePa : algebraic ? algebraicPressurePa : volume.getPressurePa();
+    }
+
+    private boolean hasStorage() {
+      return !fixedPressure && !algebraic;
     }
 
     private double getTotalSourceMassFlowRateKgS() {
@@ -724,10 +1374,18 @@ public final class TwoFluidPipeNetwork implements Serializable {
     }
 
     private SystemInterface getBoundaryFluid() {
+      if (algebraic) {
+        return algebraicFluid.clone();
+      }
       if (thermodynamicInventory != null) {
         return thermodynamicInventory.fluid.clone();
       }
       return fixedBoundaryFluid == null ? null : fixedBoundaryFluid.clone();
+    }
+
+    private void acceptAlgebraicState(double pressurePa, SystemInterface fluid) {
+      algebraicPressurePa = pressurePa;
+      algebraicFluid = fluid;
     }
   }
 
@@ -892,15 +1550,18 @@ public final class TwoFluidPipeNetwork implements Serializable {
     private final double[] externalInletMassKg;
     private final double[] externalOutletMassKg;
     private final double[] sourceMassKg;
+    private final double[] internalPhaseTransferKg;
 
     private BalanceReport(double elapsedTimeSeconds, double[] initialMassKg, double[] finalMassKg,
-        double[] externalInletMassKg, double[] externalOutletMassKg, double[] sourceMassKg) {
+        double[] externalInletMassKg, double[] externalOutletMassKg, double[] sourceMassKg,
+        double[] internalPhaseTransferKg) {
       this.elapsedTimeSeconds = elapsedTimeSeconds;
       this.initialMassKg = initialMassKg.clone();
       this.finalMassKg = finalMassKg.clone();
       this.externalInletMassKg = externalInletMassKg.clone();
       this.externalOutletMassKg = externalOutletMassKg.clone();
       this.sourceMassKg = sourceMassKg.clone();
+      this.internalPhaseTransferKg = internalPhaseTransferKg.clone();
     }
 
     public double getElapsedTimeSeconds() {
@@ -927,15 +1588,27 @@ public final class TwoFluidPipeNetwork implements Serializable {
       return aggregate(sourceMassKg, aggregation);
     }
 
+    /**
+     * Get phase conversion at algebraic equilibrium junctions.
+     *
+     * @param aggregation requested phase aggregation
+     * @return signed internal interphase transfer in kg
+     */
+    public double getInternalPhaseTransferKg(Phase aggregation) {
+      return aggregate(internalPhaseTransferKg, aggregation);
+    }
+
     public double getResidualKg(Phase aggregation) {
       return getFinalMassKg(aggregation) - getInitialMassKg(aggregation)
-          - (getExternalInletMassKg(aggregation) - getExternalOutletMassKg(aggregation) + getSourceMassKg(aggregation));
+          - (getExternalInletMassKg(aggregation) - getExternalOutletMassKg(aggregation) + getSourceMassKg(aggregation)
+              + getInternalPhaseTransferKg(aggregation));
     }
 
     public double getRelativeResidual(Phase aggregation) {
       double scale = Math.max(Math.abs(getInitialMassKg(aggregation)), Math.abs(getFinalMassKg(aggregation)));
-      scale = Math.max(scale, Math.abs(getExternalInletMassKg(aggregation))
-          + Math.abs(getExternalOutletMassKg(aggregation)) + Math.abs(getSourceMassKg(aggregation)));
+      scale = Math.max(scale,
+          Math.abs(getExternalInletMassKg(aggregation)) + Math.abs(getExternalOutletMassKg(aggregation))
+              + Math.abs(getSourceMassKg(aggregation)) + Math.abs(getInternalPhaseTransferKg(aggregation)));
       return Math.abs(getResidualKg(aggregation)) / Math.max(scale, 1.0e-12);
     }
 

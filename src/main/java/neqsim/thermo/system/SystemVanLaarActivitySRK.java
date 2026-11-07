@@ -1036,7 +1036,11 @@ public class SystemVanLaarActivitySRK extends SystemEosGE {
     return SULFURIC_ACID_MOLAR_MASS_G_PER_MOL;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemVanLaarActivitySRK clone() {
     SystemVanLaarActivitySRK clonedSystem = null;
@@ -1044,14 +1048,12 @@ public class SystemVanLaarActivitySRK extends SystemEosGE {
       clonedSystem = (SystemVanLaarActivitySRK) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemVanLaarActivitySRK", ex);
     }
-
-    if (clonedSystem != null) {
-      clonedSystem.carrierFugacityCoefficientCache = new HashMap<String, Double>();
-      clonedSystem.carrierFugacityCacheTemperature = Double.NaN;
-      clonedSystem.carrierFugacityCachePressure = Double.NaN;
-      clonedSystem.carrierFugacityCacheAcid = null;
-    }
+    clonedSystem.carrierFugacityCoefficientCache = new HashMap<String, Double>();
+    clonedSystem.carrierFugacityCacheTemperature = Double.NaN;
+    clonedSystem.carrierFugacityCachePressure = Double.NaN;
+    clonedSystem.carrierFugacityCacheAcid = null;
 
     return clonedSystem;
   }
