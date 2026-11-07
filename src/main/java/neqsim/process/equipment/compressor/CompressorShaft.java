@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.controllerdevice.AntiSurgeController;
 import neqsim.process.equipment.compressor.driver.DriverCurve;
+import neqsim.process.equipment.energy.CompressorPowerTrain;
 import neqsim.process.equipment.energy.ElectricMotor;
 import neqsim.process.equipment.powergeneration.GasTurbine;
 import neqsim.process.equipment.powergeneration.gasturbine.GasTurbineUnit;
@@ -137,6 +138,12 @@ public class CompressorShaft implements Serializable {
   /** Electric motor process unit whose performance model is the driver curve. */
   private ElectricMotor motorDriverUnit = null;
 
+  /** Optional integrated supply model, including turbine-generator-motor conversion. */
+  private CompressorPowerTrain powerTrain = null;
+
+  /** Supply-side result from the most recent driver update. */
+  private CompressorPowerTrain.Result powerTrainResult = null;
+
   /** True while the speed bounds follow the driver curve; an explicit {@link #setSpeedBounds} switches it off. */
   private boolean speedBandFromDriver = false;
 
@@ -179,6 +186,8 @@ public class CompressorShaft implements Serializable {
     PRESSURE_BELOW_MIN_SPEED,
     /** A body exceeded its installed driver power at the solved speed. */
     OVER_POWER,
+    /** The running turbine is below its configured minimum stable load. */
+    DRIVER_BELOW_MINIMUM_LOAD,
     /** A body ran past its stonewall (maximum-flow) limit at the solved speed. */
     STONEWALL,
     /** A body ran below its surge (minimum-flow) limit at the solved speed. */
@@ -389,10 +398,11 @@ public class CompressorShaft implements Serializable {
   /**
    * Whether the most recent {@link #solveSpeed} call reached a feasible operating point.
    *
-   * @return {@code true} if no solve has run yet or the last solve was feasible; {@code false} otherwise
+   * @return true when the last solve and the current supply power/minimum-load checks are feasible
    */
   public boolean isFeasible() {
-    return lastResult == null || lastResult.isFeasible();
+    return (lastResult == null || lastResult.isFeasible()) && !isOverPower()
+        && (powerTrainResult == null || powerTrainResult.isFeasible());
   }
 
   /**
@@ -580,7 +590,7 @@ public class CompressorShaft implements Serializable {
    * @param efficiency the mechanical efficiency in the range (0, 1]
    */
   public void setMechanicalEfficiency(double efficiency) {
-    if (efficiency <= 0.0 || efficiency > 1.0) {
+    if (!Double.isFinite(efficiency) || efficiency <= 0.0 || efficiency > 1.0) {
       throw new IllegalArgumentException("mechanical efficiency must be in the range (0, 1]");
     }
     this.mechanicalEfficiency = efficiency;
@@ -669,19 +679,26 @@ public class CompressorShaft implements Serializable {
    * <p>
    * Resolution order: an explicit {@link #setMaxShaftPower(double, String)} limit wins, then a {@link CompressorDriver}
    * curve evaluated at the current speed (ambient-derated for a gas-turbine driver), then a driver curve or electric
-   * motor ({@link #setDriverCurve(DriverCurve)}), then the rated power of an attached {@link GasTurbine}.
+   * motor ({@link #setDriverCurve(DriverCurve)}), then the rated power of an attached {@link GasTurbine}. An integrated
+   * {@link #setPowerTrain(CompressorPowerTrain)} takes precedence, with the explicit installed cap applied as an
+   * additional limit.
    * </p>
    *
    * @param unit power unit: "W", "kW" or "MW"
-   * @return the available shaft power in the requested unit, or 0 if no limit is defined
+   * @return available power; legacy unlimited selection returns zero, an unbounded integrated train returns infinity
    */
   public double getAvailableShaftPower(String unit) {
     double availableW = 0.0;
-    if (maxShaftPowerW > 0.0) {
+    if (powerTrain != null) {
+      availableW = powerTrain.getAvailablePowerW(speed, ambientTemperatureK);
+      if (maxShaftPowerW > 0.0) {
+        availableW = Math.min(availableW, maxShaftPowerW);
+      }
+    } else if (maxShaftPowerW > 0.0) {
       availableW = maxShaftPowerW;
-    } else if (driver != null && driver.getMaxAvailablePowerAtSpeed(speed) > 0.0) {
+    } else if (driver != null) {
       availableW = driver.getMaxAvailablePowerAtSpeed(speed) * 1.0e3;
-    } else if (driverCurvePowerW() > 0.0) {
+    } else if (driverCurve != null) {
       availableW = driverCurvePowerW();
     } else if (turbineDriver != null && turbineDriver.getRatedPower() > 0.0) {
       availableW = turbineDriver.getRatedPower();
@@ -689,7 +706,7 @@ public class CompressorShaft implements Serializable {
       availableW = gasTurbineUnitDriver.getAvailablePowerAtAmbient(ambientTemperatureK);
     }
     if (supplyShaftPowerLimitW > 0.0) {
-      availableW = availableW > 0.0 ? Math.min(availableW, supplyShaftPowerLimitW) : supplyShaftPowerLimitW;
+      availableW = hasDriverPowerLimit() ? Math.min(availableW, supplyShaftPowerLimitW) : supplyShaftPowerLimitW;
     }
     return availableW / powerFactor(unit);
   }
@@ -789,11 +806,15 @@ public class CompressorShaft implements Serializable {
   }
 
   /**
-   * Run the attached {@link GasTurbineUnit} at the present shaft power demand so that its fuel flow, exhaust flow and
-   * temperature, waste-heat duty and emissions describe the solved operating point. No-op without such a driver.
+   * Update the integrated power train, or the legacy attached {@link GasTurbineUnit}, at the present shaft power
+   * demand. Fuel, electrical input, losses and shortfall then describe the current compressor duty. No-op without
+   * either supply model.
    */
   public void updateDriverOperatingPoint() {
-    if (gasTurbineUnitDriver != null) {
+    if (powerTrain != null) {
+      powerTrainResult = powerTrain.evaluate(getRequiredDriverPower("W"), speed, ambientTemperatureK,
+          getAvailableShaftPower("W"));
+    } else if (gasTurbineUnitDriver != null) {
       gasTurbineUnitDriver.setAmbientTemperatureK(ambientTemperatureK);
       gasTurbineUnitDriver.setDemandedPower(getRequiredDriverPower("W"));
       gasTurbineUnitDriver.run();
@@ -801,16 +822,50 @@ public class CompressorShaft implements Serializable {
   }
 
   /**
+   * Attaches a supply model for direct turbine, external electric or turbine-generator-motor drive.
+   *
+   * <p>
+   * This model takes precedence over the legacy driver selectors. An explicit shaft power cap remains an additional
+   * limit. Configure compressor charts and shaft speed bounds independently; this adapter does not create OEM maps.
+   * </p>
+   *
+   * @param train supply model, or null to restore legacy driver selection
+   */
+  public void setPowerTrain(CompressorPowerTrain train) {
+    this.powerTrain = train;
+    this.powerTrainResult = null;
+  }
+
+  /**
+   * Gets the latest integrated fuel, electricity, loss and shortfall result.
+   *
+   * @return result, or null before an integrated driver update
+   */
+  public CompressorPowerTrain.Result getPowerTrainResult() {
+    return powerTrainResult;
+  }
+
+  /**
+   * Determines whether zero available driver power means unavailable rather than unbounded.
+   *
+   * @return true when a driver or installed power limit is configured
+   */
+  private boolean hasDriverPowerLimit() {
+    return powerTrain != null || maxShaftPowerW > 0.0 || driver != null || driverCurve != null
+        || turbineDriver != null && turbineDriver.getRatedPower() > 0.0 || gasTurbineUnitDriver != null;
+  }
+
+  /**
    * Get the shaft power utilization: required driver power divided by available driver power.
    *
-   * @return the utilization as a fraction (1.0 = at the limit), or 0 when no power limit is configured
+   * @return utilization as a fraction; zero when unbounded, infinity for positive duty with zero configured capacity
    */
   public double getPowerUtilization() {
     double available = getAvailableShaftPower("W");
-    if (available <= 0.0) {
-      return 0.0;
-    }
     double required = getRequiredDriverPower("W");
+    if (available <= 0.0) {
+      return required > 0.0 && hasDriverPowerLimit() ? Double.POSITIVE_INFINITY : 0.0;
+    }
     if (Double.isNaN(required) || required <= 0.0) {
       return 0.0;
     }
@@ -1149,6 +1204,15 @@ public class CompressorShaft implements Serializable {
    */
   private double record(SolveStatus status, boolean feasible, double target, double achieved, double minAch,
       double maxAch, double solvedSpeed, String unit, String message) {
+    if (feasible && isOverPower()) {
+      status = SolveStatus.OVER_POWER;
+      feasible = false;
+      message = "target reached but the driver cannot supply the required power";
+    } else if (feasible && powerTrainResult != null && powerTrainResult.isBelowMinimumLoad()) {
+      status = SolveStatus.DRIVER_BELOW_MINIMUM_LOAD;
+      feasible = false;
+      message = "target reached but turbine load is below the configured minimum";
+    }
     this.lastResult = new SolveResult(feasible, status, target, achieved, minAch, maxAch, solvedSpeed, unit, message);
     return solvedSpeed;
   }
@@ -1181,6 +1245,9 @@ public class CompressorShaft implements Serializable {
   private SolveStatus checkBodyLimits() {
     if (isOverPower()) {
       return SolveStatus.OVER_POWER;
+    }
+    if (powerTrainResult != null && powerTrainResult.isBelowMinimumLoad()) {
+      return SolveStatus.DRIVER_BELOW_MINIMUM_LOAD;
     }
     for (Compressor compressor : compressors) {
       if (!isMemberActive(compressor) || compressor.getCompressorChart() == null) {
@@ -1261,6 +1328,8 @@ public class CompressorShaft implements Serializable {
     this.speed = fixedShaftSpeed;
     applySpeed();
     runOnce(processRun);
+    lastResult = null;
+    updateDriverOperatingPoint();
     logger.info("CompressorShaft {} running at fixed speed {} rpm", name, fixedShaftSpeed);
   }
 
@@ -1359,6 +1428,7 @@ public class CompressorShaft implements Serializable {
     this.speed = 0.0;
     this.lastResult = new SolveResult(true, SolveStatus.SHAFT_IDLE, Double.NaN, Double.NaN, Double.NaN, Double.NaN, 0.0,
         "bara", what + ": no active member, shaft not turning");
+    updateDriverOperatingPoint();
     return 0.0;
   }
 
@@ -1729,13 +1799,22 @@ public class CompressorShaft implements Serializable {
     double available = getAvailableShaftPower("W");
     double fuel = Double.NaN;
     double exhaustT = Double.NaN;
-    if (gasTurbineUnitDriver != null) {
+    if (powerTrain != null) {
+      if (powerTrainResult != null) {
+        fuel = powerTrainResult.getFuelMassKgPerS() * 3600.0;
+        if (powerTrain.getTurbine() != null) {
+          exhaustT = powerTrain.getTurbine().getExhaustTemperatureK();
+        }
+      }
+    } else if (gasTurbineUnitDriver != null) {
       fuel = gasTurbineUnitDriver.getFuelMassFlowKgPerHr();
       exhaustT = gasTurbineUnitDriver.getExhaustTemperatureK();
     }
     return new CompressorShaftReport(name, isTurning(), speed, ambientTemperatureK, getTotalPower(),
         getRequiredDriverPower("W"), available, getPowerUtilization(), isOverPower(),
-        lastResult == null ? "NONE" : lastResult.getStatus().name(), isFeasible(), fuel, exhaustT, reports);
+        lastResult == null ? "NONE" : lastResult.getStatus().name(),
+        isFeasible() && !isOverPower() && (powerTrainResult == null || powerTrainResult.isFeasible()), fuel, exhaustT,
+        reports, powerTrainResult);
   }
 
   /**

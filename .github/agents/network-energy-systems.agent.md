@@ -53,6 +53,14 @@ replace a requested rigorous stage with a screening surrogate without stating th
 
 ## Operating Principles
 
+For integrated compression and power, use `CompressorPowerTrain` on the existing
+`CompressorShaft`; follow `neqsim-power-generation` and the
+[matching guide](../../docs/process/equipment/integrated_compression_power.md).
+Compare direct turbine, external motor/VFD and turbine-generator-motor cases at
+the same actual process duty. Report electrical conversion/auxiliary losses,
+fuel/CO2, shortfalls and minimum-load violations. Retain the energy-bus solver
+for shared sources and do not infer OEM/dynamic qualification from synthetic tests.
+
 1. **State units at every boundary.** Network flows are kg/s in some getters and kg/hr in optimizer outputs; energy-bus contributions are signed watts (generation positive, load negative); utilization is a fraction in snapshots and a percent in the capacity summary.
 2. **Check feasibility, not just convergence.** Gate every optimizer trial on solver status and constraint results; `NOT_CALCULABLE` quality results mean measured attributes were not supplied.
 3. **Screening honesty.** The energy bus does no AC load flow or stability analysis; integrated reservoir drives and Vogel curves are surrogates; lifecycle modification plans do not size or cost equipment.

@@ -569,7 +569,7 @@
  "identifying facility bottlenecks": [
   "neqsim-production-optimization"
  ],
- "images \u2014 equipment data sheets": [
+ "images — equipment data sheets": [
   "neqsim-technical-document-reading"
  ],
  "impurity effects on phase behavior": [
@@ -999,7 +999,7 @@
  "pfr)": [
   "neqsim-reaction-engineering"
  ],
- "phase envelopes \u2014": [
+ "phase envelopes —": [
   "neqsim-technical-document-reading"
  ],
  "pipeline hydraulics": [
@@ -2682,7 +2682,7 @@
  "tetningsgass": [
   "neqsim-rotating-equipment-design"
  ],
- "t\u00f8rre gasstetninger": [
+ "tørre gasstetninger": [
   "neqsim-rotating-equipment-design"
  ],
  "p&id quality control": [
@@ -2696,5 +2696,25 @@
  ],
  "p&id source drawing consistency": [
   "neqsim-pid-quality-review"
+ ],
+ "integrated compression power": [
+  "neqsim-power-generation",
+  "neqsim-energy-systems-and-electrification",
+  "neqsim-rotating-equipment-design"
+ ],
+ "gas turbine compressor electric driver": [
+  "neqsim-power-generation",
+  "neqsim-energy-systems-and-electrification",
+  "neqsim-rotating-equipment-design"
+ ],
+ "turbine generator motor": [
+  "neqsim-power-generation",
+  "neqsim-energy-systems-and-electrification",
+  "neqsim-rotating-equipment-design"
+ ],
+ "CompressorPowerTrain": [
+  "neqsim-power-generation",
+  "neqsim-energy-systems-and-electrification",
+  "neqsim-rotating-equipment-design"
  ]
 }

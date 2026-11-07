@@ -3,6 +3,11 @@ title: Power Generation Equipment
 description: "Documentation for power generation equipment in NeqSim: gas turbines, steam turbines, HRSG, combined-cycle systems, fuel cells, wind turbines, and solar panels."
 ---
 
+See [Integrated compression and power supply](integrated_compression_power.md)
+for `CompressorPowerTrain`: common-shaft demand matched to direct turbine,
+external motor/VFD or turbine-generator-motor supply, with conversion losses,
+explicit shortfalls and supplied part-load heat-rate tables.
+
 Documentation for power generation equipment in NeqSim, including gas turbines, steam turbines, HRSG, combined-cycle systems, fuel cells, wind turbines, and solar panels.
 
 ## Table of Contents
