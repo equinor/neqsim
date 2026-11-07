@@ -32,12 +32,9 @@ import neqsim.NeqSimTest;
  */
 @Tag("slow")
 class LayeredSafetyArchitectureDocumentationTest extends NeqSimTest {
-  private static final Path GUIDE =
-      Paths.get("docs", "safety", "layered_safety_architecture.md");
-  private static final String QUICK_START_MARKER =
-      "<!-- layered-safety-example: hipps-esd-quickstart -->";
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
+  private static final Path GUIDE = Paths.get("docs", "safety", "layered_safety_architecture.md");
+  private static final String QUICK_START_MARKER = "<!-- layered-safety-example: hipps-esd-quickstart -->";
+  private static final Pattern JAVA_FENCE = Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
 
   @TempDir
   Path temporaryDirectory;
@@ -86,9 +83,7 @@ class LayeredSafetyArchitectureDocumentationTest extends NeqSimTest {
   private static String markedExampleSource(String markdown) {
     int markerPosition = markdown.indexOf(QUICK_START_MARKER);
     assertTrue(markerPosition >= 0, "Missing layered-safety quick-start marker");
-    assertEquals(
-        markerPosition,
-        markdown.lastIndexOf(QUICK_START_MARKER),
+    assertEquals(markerPosition, markdown.lastIndexOf(QUICK_START_MARKER),
         "Layered-safety quick-start marker must be unique");
 
     Matcher fence = JAVA_FENCE.matcher(markdown.substring(markerPosition));
@@ -110,33 +105,15 @@ class LayeredSafetyArchitectureDocumentationTest extends NeqSimTest {
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
     StringWriter diagnostics = new StringWriter();
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
-      Boolean successful =
-          compiler
-              .getTask(
-                  diagnostics,
-                  manager,
-                  null,
-                  Arrays.asList(
-                      "-source",
-                      "8",
-                      "-target",
-                      "8",
-                      "-proc:none",
-                      "-classpath",
-                      classPath,
-                      "-d",
-                      classes.toString()),
-                  null,
-                  manager.getJavaFileObjects(javaFile.toFile()))
-              .call();
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(diagnostics, manager, null, Arrays.asList("-source", "8", "-target", "8", "-proc:none", "-classpath",
+              classPath, "-d", classes.toString()), null, manager.getJavaFileObjects(javaFile.toFile()))
+          .call();
       assertTrue(Boolean.TRUE.equals(successful), diagnostics.toString());
     }
-    return new URLClassLoader(
-        new URL[] {classes.toUri().toURL()}, getClass().getClassLoader());
+    return new URLClassLoader(new URL[] {classes.toUri().toURL()}, getClass().getClassLoader());
   }
 }
