@@ -126,6 +126,9 @@ class CodeHealthTests(unittest.TestCase):
         self.assertEqual("2048", profile.findtext(".//m:maxHeap", namespaces=ns))
         self.assertEqual("-XX:ActiveProcessorCount=2", profile.findtext(".//m:jvmArgs", namespaces=ns))
         self.assertEqual("false", profile.findtext(".//m:xmlOutput", namespaces=ns))
+        self.assertEqual("${project.build.directory}/code-health-input",
+                         profile.findtext(".//m:classFilesDirectory", namespaces=ns))
+        self.assertEqual("true", profile.findtext(".//m:nested", namespaces=ns))
 
     def test_required_check_contexts_exist_on_every_pr(self):
         import yaml
@@ -135,6 +138,24 @@ class CodeHealthTests(unittest.TestCase):
         self.assertEqual({"Code health source contracts", "Code health static analysis"},
                          {job["name"] for job in workflow["jobs"].values()})
         self.assertTrue(all("if" not in job for job in workflow["jobs"].values()))
+
+    def test_static_workflow_prepares_archive_after_clean_compile(self):
+        import yaml
+        workflow = yaml.load((health.ROOT / ".github/workflows/ai-code-health.yml").read_text(), Loader=yaml.BaseLoader)
+        steps = workflow["jobs"]["static"]["steps"]
+        commands = [step.get("run", "") for step in steps]
+        compile_index = next(i for i, command in enumerate(commands) if "clean compile pmd:pmd" in command)
+        prepare_index = next(i for i, command in enumerate(commands)
+                             if command.startswith("uv run ") and "prepare_code_health_input.py" in command)
+        analyze_index = next(i for i, command in enumerate(commands) if "spotbugs:spotbugs" in command)
+        self.assertLess(compile_index, prepare_index)
+        self.assertLess(prepare_index, analyze_index)
+        java = next(step for step in steps if step.get("uses", "").startswith("actions/setup-java@"))
+        self.assertEqual("17.0.21+9", java["with"]["java-version"])
+        artifact = next(step for step in steps if step.get("uses", "").startswith("actions/upload-artifact@"))
+        self.assertIn("target/code-health-input/manifest.json", artifact["with"]["path"])
+        impact = next(step for step in steps if step.get("id") == "impact")
+        self.assertIn("devtools/prepare_code_health_input.py", impact["run"])
 
 
 if __name__ == "__main__":

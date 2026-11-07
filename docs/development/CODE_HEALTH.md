@@ -16,7 +16,9 @@ use the locked repository runner.
 
 ```bash
 uv run --project devtools --locked devtools/code_health.py --output target/code-health-source.json
-./mvnw -B -ntp -Pcode-health -DskipTests compile pmd:pmd spotbugs:spotbugs
+./mvnw -B -ntp -Pcode-health -DskipTests clean compile pmd:pmd
+uv run --project devtools --locked devtools/prepare_code_health_input.py
+./mvnw -B -ntp -Pcode-health spotbugs:spotbugs
 uv run --project devtools --locked devtools/code_health.py --tools source,pmd,spotbugs --pmd target/pmd.xml --spotbugs target/spotbugsXml.xml --output target/code-health.json
 ```
 
@@ -24,6 +26,11 @@ The opt-in `code-health` Maven profile gives SpotBugs a 2 GiB heap, bounds its
 JVM processor count to two, and makes
 analyzer execution errors fail Maven; ordinary build defaults are retained.
 CI separately caps Maven at 1 GiB so the parent and fork fit a normal hosted runner.
+The static job pins Temurin 17.0.21+9. Compile, prepare input, then analyze in that
+order. Preparation archives every compiled class in sorted entry order with fixed
+ZIP metadata; SpotBugs scans this single nested archive instead of filesystem order.
+The manifest records class count and content/archive fingerprints and is retained
+with the CI reports. No detector or finding priority is disabled by canonicalization.
 The source check requires no Java build or third-party Python package. The full
 check requires completed PMD and SpotBugs XML reports. Missing, malformed or failed
 analysis is a failed check, including reported missing classes. A successful check
@@ -36,6 +43,11 @@ dependencies from `thermo`/`thermodynamicoperations` into `process`, `mcp` or
 analysis: reflection, fully qualified uses and transitive cycles need separate review.
 PMD priorities 1–2 and SpotBugs priorities 1–2 are compared as counted findings.
 Analyzer versions are recorded and must match the reviewed baseline.
+JDK updates and analysis-input format changes also require an explicit baseline
+comparison. SpotBugs 4.10.5 enumerates class directories in filesystem order
+([upstream implementation](https://github.com/spotbugs/spotbugs/blob/4.10.5/spotbugs/src/main/java/edu/umd/cs/findbugs/RecursiveFileSearch.java));
+its inferred clone-nullness diagnostics can otherwise differ between unchanged
+local and hosted builds. Keep the canonical archive preparation in the CI pipeline.
 Line numbers are display metadata; normal line shifts do not create new debt.
 
 ## Interpret the evidence
@@ -132,6 +144,9 @@ The [recorded pilot evidence](../../devtools/code_health_evals/pilot_20261107.js
 contains the failing original, the fresh-agent candidate, source review and validation
 results. Hosted CI remains a separate result from local validation.
 
+The [static-input qualification record](../../devtools/code_health_evals/static_input_20261107.json)
+records the initial hosted failure, unchanged class coverage, the canonical-input
+baseline migration and the separate local/hosted runtime qualification boundary.
 
 The verifier now delegates scalar parsing to `agent_frontmatter.parse_frontmatter`
 through its existing compatibility wrapper. It no longer implements a second

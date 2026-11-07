@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_revision": "d8c9354ab490564c3c2220b8f735c645cd575c79",
+  "source_revision": "8e8ec1a9f5f93338ae6d8bae5d1acef2eb61b30f",
   "tools": [
     "pmd",
     "source",
@@ -67413,13 +67413,6 @@
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/heatmasstransfercalc/nonequilibriumfluidboundary/filmmodelboundary/reactivefilmmodel/ReactiveFluidBoundary.java",
-      "evidence": "P2:Class:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveFluidBoundary:::|Method:neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveFluidBoundary:clone:()Lneqsim/fluidmechanics/flownode/fluidboundary/heatmasstransfercalc/nonequilibriumfluidboundary/filmmodelboundary/reactivefilmmodel/ReactiveFluidBoundary;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
       "path": "src/main/java/neqsim/fluidmechanics/flownode/multiphasenode/MultiPhaseFlowNode.java",
       "evidence": "P2:Class:neqsim.fluidmechanics.flownode.multiphasenode.MultiPhaseFlowNode:::|Method:neqsim.fluidmechanics.flownode.multiphasenode.MultiPhaseFlowNode:clone:()Lneqsim/fluidmechanics/flownode/twophasenode/TwoPhaseFlowNode;:",
       "count": 1
@@ -67574,6 +67567,41 @@
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
+      "path": "src/main/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/conductivity/HydrogenConductivityMethod.java",
+      "evidence": "P2:Class:neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.HydrogenConductivityMethod:::|Method:neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.HydrogenConductivityMethod:clone:()Lneqsim/physicalproperties/methods/commonphasephysicalproperties/conductivity/HydrogenConductivityMethod;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NP_NONNULL_RETURN_VIOLATION",
+      "path": "src/main/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/diffusivity/Diffusivity.java",
+      "evidence": "P2:Class:neqsim.physicalproperties.methods.commonphasephysicalproperties.diffusivity.Diffusivity:::|Method:neqsim.physicalproperties.methods.commonphasephysicalproperties.diffusivity.Diffusivity:clone:()Lneqsim/physicalproperties/methods/commonphasephysicalproperties/diffusivity/Diffusivity;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NP_NONNULL_RETURN_VIOLATION",
+      "path": "src/main/java/neqsim/physicalproperties/methods/gasphysicalproperties/density/Density.java",
+      "evidence": "P2:Class:neqsim.physicalproperties.methods.gasphysicalproperties.density.Density:::|Method:neqsim.physicalproperties.methods.gasphysicalproperties.density.Density:clone:()Lneqsim/physicalproperties/methods/gasphysicalproperties/density/Density;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NP_NONNULL_RETURN_VIOLATION",
+      "path": "src/main/java/neqsim/physicalproperties/methods/gasphysicalproperties/viscosity/Viscosity.java",
+      "evidence": "P2:Class:neqsim.physicalproperties.methods.gasphysicalproperties.viscosity.Viscosity:::|Method:neqsim.physicalproperties.methods.gasphysicalproperties.viscosity.Viscosity:clone:()Lneqsim/physicalproperties/methods/gasphysicalproperties/viscosity/Viscosity;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NP_NONNULL_RETURN_VIOLATION",
+      "path": "src/main/java/neqsim/physicalproperties/methods/liquidphysicalproperties/density/Density.java",
+      "evidence": "P2:Class:neqsim.physicalproperties.methods.liquidphysicalproperties.density.Density:::|Method:neqsim.physicalproperties.methods.liquidphysicalproperties.density.Density:clone:()Lneqsim/physicalproperties/methods/liquidphysicalproperties/density/Density;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NP_NONNULL_RETURN_VIOLATION",
       "path": "src/main/java/neqsim/physicalproperties/methods/liquidphysicalproperties/density/Rackett.java",
       "evidence": "P2:Class:neqsim.physicalproperties.methods.liquidphysicalproperties.density.Rackett:::|Method:neqsim.physicalproperties.methods.liquidphysicalproperties.density.Rackett:clone:()Lneqsim/physicalproperties/methods/liquidphysicalproperties/density/Rackett;:",
       "count": 1
@@ -67590,6 +67618,13 @@
       "rule": "NP_NONNULL_RETURN_VIOLATION",
       "path": "src/main/java/neqsim/physicalproperties/methods/solidphysicalproperties/density/Density.java",
       "evidence": "P2:Class:neqsim.physicalproperties.methods.solidphysicalproperties.density.Density:::|Method:neqsim.physicalproperties.methods.solidphysicalproperties.density.Density:clone:()Lneqsim/physicalproperties/methods/solidphysicalproperties/density/Density;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NP_NONNULL_RETURN_VIOLATION",
+      "path": "src/main/java/neqsim/physicalproperties/methods/solidphysicalproperties/diffusivity/Diffusivity.java",
+      "evidence": "P2:Class:neqsim.physicalproperties.methods.solidphysicalproperties.diffusivity.Diffusivity:::|Method:neqsim.physicalproperties.methods.solidphysicalproperties.diffusivity.Diffusivity:clone:()Lneqsim/physicalproperties/methods/solidphysicalproperties/diffusivity/Diffusivity;:",
       "count": 1
     },
     {
@@ -67618,13 +67653,6 @@
       "rule": "NP_NONNULL_RETURN_VIOLATION",
       "path": "src/main/java/neqsim/process/equipment/stream/EnergyStream.java",
       "evidence": "P2:Class:neqsim.process.equipment.stream.EnergyStream:::|Method:neqsim.process.equipment.stream.EnergyStream:clone:()Lneqsim/process/equipment/stream/EnergyStream;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/process/equipment/stream/ScalePotentialCheckStream.java",
-      "evidence": "P2:Class:neqsim.process.equipment.stream.ScalePotentialCheckStream:::|Method:neqsim.process.equipment.stream.ScalePotentialCheckStream:clone:()Lneqsim/process/equipment/stream/ScalePotentialCheckStream;:",
       "count": 1
     },
     {
@@ -67693,36 +67721,8 @@
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/component/ComponentElectrolyteCPAAdvanced.java",
-      "evidence": "P2:Class:neqsim.thermo.component.ComponentElectrolyteCPAAdvanced:::|Method:neqsim.thermo.component.ComponentElectrolyteCPAAdvanced:clone:()Lneqsim/thermo/component/ComponentElectrolyteCPAAdvanced;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/component/ComponentElectrolyteCPAstatoil.java",
-      "evidence": "P2:Class:neqsim.thermo.component.ComponentElectrolyteCPAstatoil:::|Method:neqsim.thermo.component.ComponentElectrolyteCPAstatoil:clone:()Lneqsim/thermo/component/ComponentElectrolyteCPAstatoil;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
       "path": "src/main/java/neqsim/thermo/component/ComponentGERG2004.java",
       "evidence": "P2:Class:neqsim.thermo.component.ComponentGERG2004:::|Method:neqsim.thermo.component.ComponentGERG2004:clone:()Lneqsim/thermo/component/ComponentGERG2004;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/component/ComponentGERG2008Eos.java",
-      "evidence": "P2:Class:neqsim.thermo.component.ComponentGERG2008Eos:::|Method:neqsim.thermo.component.ComponentGERG2008Eos:clone:()Lneqsim/thermo/component/ComponentGERG2008Eos;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/component/ComponentLeachmanEos.java",
-      "evidence": "P2:Class:neqsim.thermo.component.ComponentLeachmanEos:::|Method:neqsim.thermo.component.ComponentLeachmanEos:clone:()Lneqsim/thermo/component/ComponentLeachmanEos;:",
       "count": 1
     },
     {
@@ -67735,15 +67735,15 @@
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/component/ComponentPR.java",
-      "evidence": "P2:Class:neqsim.thermo.component.ComponentPR:::|Method:neqsim.thermo.component.ComponentPR:clone:()Lneqsim/thermo/component/ComponentPR;:",
+      "path": "src/main/java/neqsim/thermo/component/ComponentPCSAFT.java",
+      "evidence": "P2:Class:neqsim.thermo.component.ComponentPCSAFT:::|Method:neqsim.thermo.component.ComponentPCSAFT:clone:()Lneqsim/thermo/component/ComponentPCSAFT;:",
       "count": 1
     },
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/component/ComponentRK.java",
-      "evidence": "P2:Class:neqsim.thermo.component.ComponentRK:::|Method:neqsim.thermo.component.ComponentRK:clone:()Lneqsim/thermo/component/ComponentRK;:",
+      "path": "src/main/java/neqsim/thermo/component/ComponentPR.java",
+      "evidence": "P2:Class:neqsim.thermo.component.ComponentPR:::|Method:neqsim.thermo.component.ComponentPR:clone:()Lneqsim/thermo/component/ComponentPR;:",
       "count": 1
     },
     {
@@ -67756,27 +67756,6 @@
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/component/ComponentSoreideWhitson.java",
-      "evidence": "P2:Class:neqsim.thermo.component.ComponentSoreideWhitson:::|Method:neqsim.thermo.component.ComponentSoreideWhitson:clone:()Lneqsim/thermo/component/ComponentSoreideWhitson;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/component/ComponentSrk.java",
-      "evidence": "P2:Class:neqsim.thermo.component.ComponentSrk:::|Method:neqsim.thermo.component.ComponentSrk:clone:()Lneqsim/thermo/component/ComponentSrk;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/component/ComponentSrkCPAs.java",
-      "evidence": "P2:Class:neqsim.thermo.component.ComponentSrkCPAs:::|Method:neqsim.thermo.component.ComponentSrkCPAs:clone:()Lneqsim/thermo/component/ComponentSrkCPAs;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
       "path": "src/main/java/neqsim/thermo/component/ComponentSrkPeneloux.java",
       "evidence": "P2:Class:neqsim.thermo.component.ComponentSrkPeneloux:::|Method:neqsim.thermo.component.ComponentSrkPeneloux:clone:()Lneqsim/thermo/component/ComponentSrkPeneloux;:",
       "count": 1
@@ -67784,15 +67763,8 @@
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/component/ComponentTST.java",
-      "evidence": "P2:Class:neqsim.thermo.component.ComponentTST:::|Method:neqsim.thermo.component.ComponentTST:clone:()Lneqsim/thermo/component/ComponentTST;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/component/ComponentVegaEos.java",
-      "evidence": "P2:Class:neqsim.thermo.component.ComponentVegaEos:::|Method:neqsim.thermo.component.ComponentVegaEos:clone:()Lneqsim/thermo/component/ComponentVegaEos;:",
+      "path": "src/main/java/neqsim/thermo/component/ComponentWater.java",
+      "evidence": "P2:Class:neqsim.thermo.component.ComponentWater:::|Method:neqsim.thermo.component.ComponentWater:clone:()Lneqsim/thermo/component/ComponentWater;:",
       "count": 1
     },
     {
@@ -67805,6 +67777,13 @@
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
+      "path": "src/main/java/neqsim/thermo/component/attractiveeosterm/AttractiveTermCPAstatoil.java",
+      "evidence": "P2:Class:neqsim.thermo.component.attractiveeosterm.AttractiveTermCPAstatoil:::|Method:neqsim.thermo.component.attractiveeosterm.AttractiveTermCPAstatoil:clone:()Lneqsim/thermo/component/attractiveeosterm/AttractiveTermCPAstatoil;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NP_NONNULL_RETURN_VIOLATION",
       "path": "src/main/java/neqsim/thermo/component/attractiveeosterm/AttractiveTermMatCopPR.java",
       "evidence": "P2:Class:neqsim.thermo.component.attractiveeosterm.AttractiveTermMatCopPR:::|Method:neqsim.thermo.component.attractiveeosterm.AttractiveTermMatCopPR:clone:()Lneqsim/thermo/component/attractiveeosterm/AttractiveTermMatCopPR;:",
       "count": 1
@@ -67812,8 +67791,22 @@
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/component/attractiveeosterm/AttractiveTermPrDanesh.java",
-      "evidence": "P2:Class:neqsim.thermo.component.attractiveeosterm.AttractiveTermPrDanesh:::|Method:neqsim.thermo.component.attractiveeosterm.AttractiveTermPrDanesh:clone:()Lneqsim/thermo/component/attractiveeosterm/AttractiveTermPrDanesh;:",
+      "path": "src/main/java/neqsim/thermo/component/attractiveeosterm/AttractiveTermPrGassem2001.java",
+      "evidence": "P2:Class:neqsim.thermo.component.attractiveeosterm.AttractiveTermPrGassem2001:::|Method:neqsim.thermo.component.attractiveeosterm.AttractiveTermPrGassem2001:clone:()Lneqsim/thermo/component/attractiveeosterm/AttractiveTermPrGassem2001;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NP_NONNULL_RETURN_VIOLATION",
+      "path": "src/main/java/neqsim/thermo/component/attractiveeosterm/AttractiveTermSchwartzentruber.java",
+      "evidence": "P2:Class:neqsim.thermo.component.attractiveeosterm.AttractiveTermSchwartzentruber:::|Method:neqsim.thermo.component.attractiveeosterm.AttractiveTermSchwartzentruber:clone:()Lneqsim/thermo/component/attractiveeosterm/AttractiveTermSchwartzentruber;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NP_NONNULL_RETURN_VIOLATION",
+      "path": "src/main/java/neqsim/thermo/component/attractiveeosterm/AttractiveTermTwu.java",
+      "evidence": "P2:Class:neqsim.thermo.component.attractiveeosterm.AttractiveTermTwu:::|Method:neqsim.thermo.component.attractiveeosterm.AttractiveTermTwu:clone:()Lneqsim/thermo/component/attractiveeosterm/AttractiveTermTwu;:",
       "count": 1
     },
     {
@@ -67868,15 +67861,8 @@
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseBWRSEos.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseBWRSEos:::|Method:neqsim.thermo.phase.PhaseBWRSEos:clone:()Lneqsim/thermo/phase/PhaseBWRSEos;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseElectrolyteCPAAdvanced.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseElectrolyteCPAAdvanced:::|Method:neqsim.thermo.phase.PhaseElectrolyteCPAAdvanced:clone:()Lneqsim/thermo/phase/PhaseElectrolyteCPAAdvanced;:",
+      "path": "src/main/java/neqsim/thermo/phase/PhaseEOSCGEos.java",
+      "evidence": "P2:Class:neqsim.thermo.phase.PhaseEOSCGEos:::|Method:neqsim.thermo.phase.PhaseEOSCGEos:clone:()Lneqsim/thermo/phase/PhaseEOSCGEos;:",
       "count": 1
     },
     {
@@ -67903,99 +67889,15 @@
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseEos.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseEos:::|Method:neqsim.thermo.phase.PhaseEos:clone:()Lneqsim/thermo/phase/PhaseEos;:",
-      "count": 2
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseGERG2004Eos.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseGERG2004Eos:::|Method:neqsim.thermo.phase.PhaseGERG2004Eos:clone:()Lneqsim/thermo/phase/PhaseGERG2004Eos;:",
+      "path": "src/main/java/neqsim/thermo/phase/PhasePCSAFTRahmat.java",
+      "evidence": "P2:Class:neqsim.thermo.phase.PhasePCSAFTRahmat:::|Method:neqsim.thermo.phase.PhasePCSAFTRahmat:clone:()Lneqsim/thermo/phase/PhasePCSAFTRahmat;:",
       "count": 1
     },
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseGERG2008Eos.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseGERG2008Eos:::|Method:neqsim.thermo.phase.PhaseGERG2008Eos:clone:()Lneqsim/thermo/phase/PhaseGERG2008Eos;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseHydrate.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseHydrate:::|Method:neqsim.thermo.phase.PhaseHydrate:clone:()Lneqsim/thermo/phase/PhaseHydrate;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseIdealGas.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseIdealGas:::|Method:neqsim.thermo.phase.PhaseIdealGas:clone:()Lneqsim/thermo/phase/PhaseIdealGas;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseLeachmanEos.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseLeachmanEos:::|Method:neqsim.thermo.phase.PhaseLeachmanEos:clone:()Lneqsim/thermo/phase/PhaseLeachmanEos;:",
-      "count": 2
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseModifiedFurstElectrolyteEos.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos:::|Method:neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos:clone:()Lneqsim/thermo/phase/PhaseModifiedFurstElectrolyteEos;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseModifiedFurstElectrolyteEosMod2004.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEosMod2004:::|Method:neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEosMod2004:clone:()Lneqsim/thermo/phase/PhaseModifiedFurstElectrolyteEosMod2004;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhasePCSAFT.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhasePCSAFT:::|Method:neqsim.thermo.phase.PhasePCSAFT:clone:()Lneqsim/thermo/phase/PhasePCSAFT;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhasePureComponentSolid.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhasePureComponentSolid:::|Method:neqsim.thermo.phase.PhasePureComponentSolid:clone:()Lneqsim/thermo/phase/PhasePureComponentSolid;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseRK.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseRK:::|Method:neqsim.thermo.phase.PhaseRK:clone:()Lneqsim/thermo/phase/PhaseRK;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseSAFTVRMie.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseSAFTVRMie:::|Method:neqsim.thermo.phase.PhaseSAFTVRMie:clone:()Lneqsim/thermo/phase/PhaseSAFTVRMie;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseSolid.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseSolid:::|Method:neqsim.thermo.phase.PhaseSolid:clone:()Lneqsim/thermo/phase/PhaseSolid;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseSolidComplex.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseSolidComplex:::|Method:neqsim.thermo.phase.PhaseSolidComplex:clone:()Lneqsim/thermo/phase/PhaseSolidComplex;:",
+      "path": "src/main/java/neqsim/thermo/phase/PhaseSoreideWhitson.java",
+      "evidence": "P2:Class:neqsim.thermo.phase.PhaseSoreideWhitson:::|Method:neqsim.thermo.phase.PhaseSoreideWhitson:clone:()Lneqsim/thermo/phase/PhaseSoreideWhitson;:",
       "count": 1
     },
     {
@@ -68008,15 +67910,8 @@
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseSrkCPAandersonReduced.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseSrkCPAandersonReduced:::|Method:neqsim.thermo.phase.PhaseSrkCPAandersonReduced:clone:()Lneqsim/thermo/phase/PhaseSrkCPAandersonReduced;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseSrkCPAfullyImplicit.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseSrkCPAfullyImplicit:::|Method:neqsim.thermo.phase.PhaseSrkCPAfullyImplicit:clone:()Lneqsim/thermo/phase/PhaseSrkCPAfullyImplicit;:",
+      "path": "src/main/java/neqsim/thermo/phase/PhaseSrkCPAandersonMixing.java",
+      "evidence": "P2:Class:neqsim.thermo.phase.PhaseSrkCPAandersonMixing:::|Method:neqsim.thermo.phase.PhaseSrkCPAandersonMixing:clone:()Lneqsim/thermo/phase/PhaseSrkCPAandersonMixing;:",
       "count": 1
     },
     {
@@ -68031,13 +67926,6 @@
       "rule": "NP_NONNULL_RETURN_VIOLATION",
       "path": "src/main/java/neqsim/thermo/phase/PhaseSrkCPAreduced.java",
       "evidence": "P2:Class:neqsim.thermo.phase.PhaseSrkCPAreduced:::|Method:neqsim.thermo.phase.PhaseSrkCPAreduced:clone:()Lneqsim/thermo/phase/PhaseSrkCPAreduced;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseSrkCPAs.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseSrkCPAs:::|Method:neqsim.thermo.phase.PhaseSrkCPAs:clone:()Lneqsim/thermo/phase/PhaseSrkCPAs;:",
       "count": 1
     },
     {
@@ -68064,29 +67952,15 @@
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseUMRCPAvolcor.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseUMRCPAvolcor:::|Method:neqsim.thermo.phase.PhaseUMRCPAvolcor:clone:()Lneqsim/thermo/phase/PhaseUMRCPAvolcor;:",
+      "path": "src/main/java/neqsim/thermo/system/SystemAmmoniaEos.java",
+      "evidence": "P2:Class:neqsim.thermo.system.SystemAmmoniaEos:::|Method:neqsim.thermo.system.SystemAmmoniaEos:clone:()Lneqsim/thermo/system/SystemAmmoniaEos;:",
       "count": 1
     },
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseVegaEos.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseVegaEos:::|Method:neqsim.thermo.phase.PhaseVegaEos:clone:()Lneqsim/thermo/phase/PhaseVegaEos;:",
-      "count": 2
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/phase/PhaseWax.java",
-      "evidence": "P2:Class:neqsim.thermo.phase.PhaseWax:::|Method:neqsim.thermo.phase.PhaseWax:clone:()Lneqsim/thermo/phase/PhaseWax;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/system/SystemCSPsrkEos.java",
-      "evidence": "P2:Class:neqsim.thermo.system.SystemCSPsrkEos:::|Method:neqsim.thermo.system.SystemCSPsrkEos:clone:()Lneqsim/thermo/system/SystemCSPsrkEos;:",
+      "path": "src/main/java/neqsim/thermo/system/SystemDuanSun.java",
+      "evidence": "P2:Class:neqsim.thermo.system.SystemDuanSun:::|Method:neqsim.thermo.system.SystemDuanSun:clone:()Lneqsim/thermo/system/SystemDuanSun;:",
       "count": 1
     },
     {
@@ -68099,27 +67973,6 @@
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/system/SystemElectrolyteCPAstatoil.java",
-      "evidence": "P2:Class:neqsim.thermo.system.SystemElectrolyteCPAstatoil:::|Method:neqsim.thermo.system.SystemElectrolyteCPAstatoil:clone:()Lneqsim/thermo/system/SystemElectrolyteCPAstatoil;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/system/SystemFurstElectrolyteEos.java",
-      "evidence": "P2:Class:neqsim.thermo.system.SystemFurstElectrolyteEos:::|Method:neqsim.thermo.system.SystemFurstElectrolyteEos:clone:()Lneqsim/thermo/system/SystemFurstElectrolyteEos;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/system/SystemGERG2008Eos.java",
-      "evidence": "P2:Class:neqsim.thermo.system.SystemGERG2008Eos:::|Method:neqsim.thermo.system.SystemGERG2008Eos:clone:()Lneqsim/thermo/system/SystemGERG2008Eos;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
       "path": "src/main/java/neqsim/thermo/system/SystemGERGwaterEos.java",
       "evidence": "P2:Class:neqsim.thermo.system.SystemGERGwaterEos:::|Method:neqsim.thermo.system.SystemGERGwaterEos:clone:()Lneqsim/thermo/system/SystemGERGwaterEos;:",
       "count": 1
@@ -68127,64 +67980,50 @@
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/system/SystemGEWilson.java",
-      "evidence": "P2:Class:neqsim.thermo.system.SystemGEWilson:::|Method:neqsim.thermo.system.SystemGEWilson:clone:()Lneqsim/thermo/system/SystemGEWilson;:",
+      "path": "src/main/java/neqsim/thermo/system/SystemKentEisenberg.java",
+      "evidence": "P2:Class:neqsim.thermo.system.SystemKentEisenberg:::|Method:neqsim.thermo.system.SystemKentEisenberg:clone:()Lneqsim/thermo/system/SystemKentEisenberg;:",
       "count": 1
     },
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/system/SystemIdealGas.java",
-      "evidence": "P2:Class:neqsim.thermo.system.SystemIdealGas:::|Method:neqsim.thermo.system.SystemIdealGas:clone:()Lneqsim/thermo/system/SystemIdealGas;:",
+      "path": "src/main/java/neqsim/thermo/system/SystemNRTL.java",
+      "evidence": "P2:Class:neqsim.thermo.system.SystemNRTL:::|Method:neqsim.thermo.system.SystemNRTL:clone:()Lneqsim/thermo/system/SystemNRTL;:",
       "count": 1
     },
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/system/SystemLeachmanEos.java",
-      "evidence": "P2:Class:neqsim.thermo.system.SystemLeachmanEos:::|Method:neqsim.thermo.system.SystemLeachmanEos:clone:()Lneqsim/thermo/system/SystemLeachmanEos;:",
+      "path": "src/main/java/neqsim/thermo/system/SystemPCSAFT.java",
+      "evidence": "P2:Class:neqsim.thermo.system.SystemPCSAFT:::|Method:neqsim.thermo.system.SystemPCSAFT:clone:()Lneqsim/thermo/system/SystemPCSAFT;:",
       "count": 1
     },
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/system/SystemPrCPA.java",
-      "evidence": "P2:Class:neqsim.thermo.system.SystemPrCPA:::|Method:neqsim.thermo.system.SystemPrCPA:clone:()Lneqsim/thermo/system/SystemPrCPA;:",
+      "path": "src/main/java/neqsim/thermo/system/SystemPCSAFTa.java",
+      "evidence": "P2:Class:neqsim.thermo.system.SystemPCSAFTa:::|Method:neqsim.thermo.system.SystemPCSAFTa:clone:()Lneqsim/thermo/system/SystemPCSAFTa;:",
       "count": 1
     },
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/system/SystemPrEosDelft1998.java",
-      "evidence": "P2:Class:neqsim.thermo.system.SystemPrEosDelft1998:::|Method:neqsim.thermo.system.SystemPrEosDelft1998:clone:()Lneqsim/thermo/system/SystemPrEosDelft1998;:",
+      "path": "src/main/java/neqsim/thermo/system/SystemPitzer.java",
+      "evidence": "P2:Class:neqsim.thermo.system.SystemPitzer:::|Method:neqsim.thermo.system.SystemPitzer:clone:()Lneqsim/thermo/system/SystemPitzer;:",
       "count": 1
     },
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/system/SystemPrGassemEos.java",
-      "evidence": "P2:Class:neqsim.thermo.system.SystemPrGassemEos:::|Method:neqsim.thermo.system.SystemPrGassemEos:clone:()Lneqsim/thermo/system/SystemPrGassemEos;:",
+      "path": "src/main/java/neqsim/thermo/system/SystemPrMathiasCopeman.java",
+      "evidence": "P2:Class:neqsim.thermo.system.SystemPrMathiasCopeman:::|Method:neqsim.thermo.system.SystemPrMathiasCopeman:clone:()Lneqsim/thermo/system/SystemPrMathiasCopeman;:",
       "count": 1
     },
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/system/SystemPrLeeKeslerEos.java",
-      "evidence": "P2:Class:neqsim.thermo.system.SystemPrLeeKeslerEos:::|Method:neqsim.thermo.system.SystemPrLeeKeslerEos:clone:()Lneqsim/thermo/system/SystemPrLeeKeslerEos;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/system/SystemRKEos.java",
-      "evidence": "P2:Class:neqsim.thermo.system.SystemRKEos:::|Method:neqsim.thermo.system.SystemRKEos:clone:()Lneqsim/thermo/system/SystemRKEos;:",
-      "count": 1
-    },
-    {
-      "tool": "spotbugs",
-      "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/system/SystemSoreideWhitson.java",
-      "evidence": "P2:Class:neqsim.thermo.system.SystemSoreideWhitson:::|Method:neqsim.thermo.system.SystemSoreideWhitson:clone:()Lneqsim/thermo/system/SystemSoreideWhitson;:",
+      "path": "src/main/java/neqsim/thermo/system/SystemPsrkEos.java",
+      "evidence": "P2:Class:neqsim.thermo.system.SystemPsrkEos:::|Method:neqsim.thermo.system.SystemPsrkEos:clone:()Lneqsim/thermo/system/SystemPsrkEos;:",
       "count": 1
     },
     {
@@ -68197,15 +68036,22 @@
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/system/SystemSrkPenelouxEos.java",
-      "evidence": "P2:Class:neqsim.thermo.system.SystemSrkPenelouxEos:::|Method:neqsim.thermo.system.SystemSrkPenelouxEos:clone:()Lneqsim/thermo/system/SystemSrkPenelouxEos;:",
+      "path": "src/main/java/neqsim/thermo/system/SystemSrkCPAstatoilFullyImplicit.java",
+      "evidence": "P2:Class:neqsim.thermo.system.SystemSrkCPAstatoilFullyImplicit:::|Method:neqsim.thermo.system.SystemSrkCPAstatoilFullyImplicit:clone:()Lneqsim/thermo/system/SystemSrkCPAstatoilFullyImplicit;:",
       "count": 1
     },
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/system/SystemSrkTwuCoonStatoilEos.java",
-      "evidence": "P2:Class:neqsim.thermo.system.SystemSrkTwuCoonStatoilEos:::|Method:neqsim.thermo.system.SystemSrkTwuCoonStatoilEos:clone:()Lneqsim/thermo/system/SystemSrkTwuCoonStatoilEos;:",
+      "path": "src/main/java/neqsim/thermo/system/SystemSrkCPAstatoilFullyImplicitReduced.java",
+      "evidence": "P2:Class:neqsim.thermo.system.SystemSrkCPAstatoilFullyImplicitReduced:::|Method:neqsim.thermo.system.SystemSrkCPAstatoilFullyImplicitReduced:clone:()Lneqsim/thermo/system/SystemSrkCPAstatoilFullyImplicitReduced;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NP_NONNULL_RETURN_VIOLATION",
+      "path": "src/main/java/neqsim/thermo/system/SystemSrkPenelouxEos.java",
+      "evidence": "P2:Class:neqsim.thermo.system.SystemSrkPenelouxEos:::|Method:neqsim.thermo.system.SystemSrkPenelouxEos:clone:()Lneqsim/thermo/system/SystemSrkPenelouxEos;:",
       "count": 1
     },
     {
@@ -68218,8 +68064,29 @@
     {
       "tool": "spotbugs",
       "rule": "NP_NONNULL_RETURN_VIOLATION",
-      "path": "src/main/java/neqsim/thermo/system/SystemWaterIF97.java",
-      "evidence": "P2:Class:neqsim.thermo.system.SystemWaterIF97:::|Method:neqsim.thermo.system.SystemWaterIF97:clone:()Lneqsim/thermo/system/SystemWaterIF97;:",
+      "path": "src/main/java/neqsim/thermo/system/SystemUMRPRUEos.java",
+      "evidence": "P2:Class:neqsim.thermo.system.SystemUMRPRUEos:::|Method:neqsim.thermo.system.SystemUMRPRUEos:clone:()Lneqsim/thermo/system/SystemUMRPRUEos;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NP_NONNULL_RETURN_VIOLATION",
+      "path": "src/main/java/neqsim/thermo/system/SystemUMRPRUMCEos.java",
+      "evidence": "P2:Class:neqsim.thermo.system.SystemUMRPRUMCEos:::|Method:neqsim.thermo.system.SystemUMRPRUMCEos:clone:()Lneqsim/thermo/system/SystemUMRPRUMCEos;:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NP_NONNULL_RETURN_VIOLATION",
+      "path": "src/main/java/neqsim/thermo/system/SystemVanLaarActivitySRK.java",
+      "evidence": "P2:Class:neqsim.thermo.system.SystemVanLaarActivitySRK:::|Method:neqsim.thermo.system.SystemVanLaarActivitySRK:clone:()Lneqsim/thermo/system/SystemVanLaarActivitySRK;:",
+      "count": 2
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "NP_NONNULL_RETURN_VIOLATION",
+      "path": "src/main/java/neqsim/thermo/system/SystemVegaEos.java",
+      "evidence": "P2:Class:neqsim.thermo.system.SystemVegaEos:::|Method:neqsim.thermo.system.SystemVegaEos:clone:()Lneqsim/thermo/system/SystemVegaEos;:",
       "count": 1
     },
     {
@@ -77200,5 +77067,13 @@
   "analyzers": {
     "pmd": "7.17.0",
     "spotbugs": "4.10.5"
+  },
+  "analysis_input": {
+    "schema_version": 1,
+    "format": "sorted-class-archive-v1",
+    "archive": "neqsim-classes.jar",
+    "classes": 7057,
+    "class_content_sha256": "0fb6155ffbc5b3da34b47447e16ed2454824cb4864dd99e1ba14782c89665cc8",
+    "archive_sha256": "b0541cbb37fc173c6da481c048641f2eedba54ebdbafae9d931a13716a941972"
   }
 }

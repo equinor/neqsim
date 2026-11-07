@@ -145,6 +145,9 @@
 							<failOnError>true</failOnError>
 							<maxHeap>2048</maxHeap>
 							<jvmArgs>-XX:ActiveProcessorCount=2</jvmArgs>
+							<!-- Sorted archive entries avoid filesystem-dependent inference order. -->
+							<classFilesDirectory>${project.build.directory}/code-health-input</classFilesDirectory>
+							<nested>true</nested>
 							<!-- Native spotbugsXml.xml is always retained; omit the duplicate XDoc report. -->
 							<xmlOutput>false</xmlOutput>
 						</configuration>
