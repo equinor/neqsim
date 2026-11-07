@@ -18,12 +18,14 @@ import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.splitter.ComponentSplitter;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.processmodel.FieldTaggedProcess;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.phase.PhaseEos;
@@ -347,6 +349,85 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
       Assertions.assertArrayEquals(composition, original.getMolarComposition(), 1e-15, "source unchanged");
     } finally {
       EclipseFluidReadWrite.pseudoName = previousName;
+    }
+  }
+
+  /**
+   * Tagged copies preserve source identity and duplicate component-selective equipment settings.
+   *
+   * @throws IOException if the fixture or process cannot be serialized
+   * @throws ClassNotFoundException if a copied class cannot be restored
+   */
+  @Test
+  void testFieldTaggedProcessCopy() throws IOException, ClassNotFoundException {
+    String previousName = EclipseFluidReadWrite.pseudoName;
+    try {
+      SystemInterface base = EclipseFluidReadWrite.read(fluid_water, "");
+      SystemInterface tagged = EclipseFluidReadWrite.read(fluid_water, new String[] {"rest", "mikkel"});
+      Stream feed = new Stream("field feed", base.clone());
+      feed.setTemperature(303.15, "K");
+      feed.setPressure(30.0, "bara");
+      feed.setFlowRate(1000.0, "kg/hr");
+      ComponentSplitter split = new ComponentSplitter("component split", feed);
+      double[] fractions = new double[base.getNumberOfComponents()];
+      java.util.Arrays.fill(fractions, 0.7);
+      split.setSplitFactors(fractions);
+      ProcessSystem original = new ProcessSystem();
+      original.add(feed);
+      original.add(split);
+      original.run();
+      double[] before = feed.getFluid().getMolarComposition();
+      ProcessSystem copy = FieldTaggedProcess.copy(original, base, tagged);
+      Stream copiedFeed = (Stream) copy.getUnit("field feed");
+      copiedFeed.setFluid(FieldTaggedProcess.tagFluid(feed.getFluid(), base, tagged, 1));
+      java.util.UUID previousCalculation = copy.getCalculationIdentifier();
+      FieldTaggedProcess.runPass(copy);
+      Assertions.assertNotEquals(previousCalculation, copy.getCalculationIdentifier(),
+          "normal run_step must advance the process calculation identifier");
+      assertEquals(copy.getCalculationIdentifier(), copiedFeed.getCalculationIdentifier());
+      ComponentSplitter copiedSplit = (ComponentSplitter) copy.getUnit("component split");
+      assertEquals(2 * fractions.length, copiedSplit.getSplitFactors().length);
+      assertEquals(700.0, copiedSplit.getSplitStream(0).getFlowRate("kg/hr"), 1e-6);
+      assertEquals(0.0, copiedSplit.getSplitStream(0).getFluid().getComponent("methane_rest").getz(), 1e-12);
+      Assertions.assertTrue(copiedSplit.getSplitStream(0).getFluid().getComponent("methane_mikkel").getz() > 0.0);
+      Assertions.assertArrayEquals(before, feed.getFluid().getMolarComposition(), 0.0);
+      assertEquals(base.getNumberOfComponents(), feed.getFluid().getNumberOfComponents());
+      SystemInterface incompatible = feed.getFluid().clone();
+      incompatible.getComponent("methane").setTC(999.0);
+      Assertions.assertThrows(IllegalArgumentException.class,
+          () -> FieldTaggedProcess.tagFluid(incompatible, base, tagged, 1));
+    } finally {
+      EclipseFluidReadWrite.pseudoName = previousName;
+    }
+  }
+
+  /**
+   * Copying a solved fluid must retain its phase inventory before any equipment is rerun.
+   *
+   * @throws IOException if the EOS fixture cannot be read
+   */
+  @Test
+  void testTaggedFluidPreservesSolvedPhases() throws IOException {
+    SystemInterface base = EclipseFluidReadWrite.read(fluid_water, "");
+    SystemInterface tagged = EclipseFluidReadWrite.read(fluid_water, new String[] {"rest", "morvin"});
+    base.setTemperature(303.15);
+    base.setPressure(30.0);
+    base.setTotalFlowRate(1000.0, "kg/hr");
+    new ThermodynamicOperations(base).TPflash();
+    base.init(3);
+    for (int block = 0; block < 2; block++) {
+      SystemInterface copied = FieldTaggedProcess.tagFluid(base, base, tagged, block);
+      assertEquals(base.getNumberOfPhases(), copied.getNumberOfPhases());
+      assertEquals(base.getEnthalpy(), copied.getEnthalpy(), 1.0e-5);
+      assertEquals(base.getEntropy(), copied.getEntropy(), 1.0e-5);
+      for (int phase = 0; phase < base.getNumberOfPhases(); phase++) {
+        assertEquals(base.getPhase(phase).getType(), copied.getPhase(phase).getType());
+        assertEquals(base.getBeta(phase), copied.getBeta(phase), 1.0e-12);
+        for (int component = 0; component < base.getNumberOfComponents(); component++) {
+          assertEquals(base.getPhase(phase).getComponent(component).getx(),
+              copied.getPhase(phase).getComponent(block * base.getNumberOfComponents() + component).getx(), 1.0e-12);
+        }
+      }
     }
   }
 
