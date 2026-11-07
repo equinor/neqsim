@@ -46,6 +46,14 @@ sweep, custom logic, or MCP cannot do the job. See `neqsim-api-patterns` skill Â
 4. Optionally: `setMultiPhaseCheck(true)` for systems that may split into 3+ phases
 5. Optionally: `createDatabase(true)` for custom or unusual components
 
+When adding a database component, register its canonical name in `ComponentNameResolver`
+and run the component-name, database-integrity and formation-enthalpy tests alongside the
+model tests. Verify standard and extended loading routes. Aqueous-ion formation references
+must not be labeled as reviewed ideal-gas enthalpies through `FORMATIONENTHALPYSOURCE`;
+retain their source in model documentation. See the
+[component database guide](../../docs/thermo/component_database_guide.md#adding-custom-components)
+and `BisulfateDatabaseTest` for the identity and reference-boundary regression.
+
 ## CPA water-related onset requests
 
 For **water dew point with CPA** or **vannduggpunkt med CPA**, load the

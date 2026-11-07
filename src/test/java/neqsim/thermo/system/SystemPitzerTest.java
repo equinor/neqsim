@@ -345,13 +345,20 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     system.setMixingRule("classic");
 
     ThermodynamicOperations operations = new ThermodynamicOperations(system);
-    IllegalStateException exception = assertThrows(IllegalStateException.class,
-        () -> operations.calcSaltSaturation("CaCO3"));
+    SaltSaturationResult result = operations.calcSaltSaturationWithDiagnostics("CaCO3");
 
     assertTrue(system.isChemicalSystem());
-    assertTrue(exception.getMessage().contains("Failed running TPflash"));
-    assertTrue(exception.getCause().getMessage().contains("Pitzer parameter coverage incomplete"));
-    assertFalse(exception.getCause().getMessage().contains("reaction state is stale"));
+    assertTrue(result.isConverged());
+    assertTrue(result.getAddedSaltMoles() > 0.0);
+    assertEquals(1.0, result.getFinalSaturationRatio(), 1.0e-3);
+    PhasePitzer aqueous = (PhasePitzer) system.getPhase("aqueous");
+    assertTrue(aqueous.hasComponent("Ca++"));
+    assertEquals(PitzerParameterDatasets.PHREEQC_AUTOMATIC_REACTIVE_CARBONATE_ID, aqueous.getParameterDatasetId());
+    aqueous.requireCompletePitzerParameterCoverage();
+    aqueous.requireCompletePitzerReactionParameterCoverage();
+    assertFalse(system.getChemicalReactionOperations().getReactionLogResiduals().isEmpty());
+    // This existing dissolved-salt saturation operation does not qualify mineral precipitation.
+    assertThrows(IllegalStateException.class, system::requireCompletePitzerDatasetQualification);
   }
 
   /** Pitzer reaction quotients use solute molality with solvent mole-fraction activity. */
