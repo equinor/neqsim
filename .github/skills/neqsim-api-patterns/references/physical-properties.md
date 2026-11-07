@@ -56,6 +56,11 @@ or a successful flash is only a sanity check. Check repeat runs, changed state,
 nearby conditions, phase appearance/disappearance and two-/three-phase cases
 when applicable. Do not mask invalid values, silent fallbacks or missing phases.
 
+For PFCT compatibility changes, run `PFCTLegacySerializationTest` and
+`NeqSimXtreamLegacyCompatibilityTest`: saved models predating CSP tuning must
+recover unity factors in all three variants, preserve existing tuning, and remain
+independent after cloning. Keep deserialization repair outside calculation loops.
+
 For performance changes, benchmark the complete caller workflow after warm-up
 against an unchanged baseline. Preserve initialization dependencies, derivative
 consistency and phase-pair dispatch. Avoid evaluating every transport model in

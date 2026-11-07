@@ -29,6 +29,17 @@ truth or experimental accuracy. See `docs/pvtsimulation/reservoir_material_balan
 and hand off measured-history volume estimation to `@field-development`, keeping
 laboratory EOS calibration separate from reservoir/aquifer fitting.
 
+For explicit finite uncertainty scenarios, hand the frozen laboratory model to
+`ReservoirHistoryEnsemble` rather than fitting EOS parameters against field volume.
+Its posterior `parameterQuantiles(q)` reports marginal lower-tail in-place volume
+and support assumptions in `getParameterNames()` order; `pressureQuantiles(q)`
+reports model-pressure uncertainty. Zero/one select the positive-mass support
+endpoints, including a tiny positive tail or explicit infinite capacity. Marginal
+quantiles are not one joint scenario, continuous posterior coverage, petroleum
+exceedance P10 or recoverable reserves. Retain grid/prior/EOS/history sensitivity
+and the independent evidence boundary in
+`docs/pvtsimulation/reservoir_aquifer_uncertainty.md`.
+
 ### Step 1: Select Base EOS
 
 | Fluid System | Recommended EOS | Reason |
