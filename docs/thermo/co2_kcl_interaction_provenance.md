@@ -439,6 +439,25 @@ solubility remains 11.4-31.5% below the source values, and the 4.998/5.000 molal
 endpoints at 323.15, 348.15 and 363.15 K still show local salting-in. Those model
 deviations remain explicit evidence for the independent scientific review.
 
+### Burgass-Tohidi low-temperature observable diagnostic
+
+Tohidi's 1995 Heriot-Watt thesis, Table 6.4, preserves four experimental
+CO2-KCl states attributed to Burgass (1995): 7 and 14 mass percent KCl at 266.5
+and 273.2 K, with total pressures from 0.855 to 1.882 MPa. These points extend
+the dissolved-CO2 diagnostic below the He-Morse 273.15 K boundary but do not
+cover the exact Dholabhai K10/K15 recipes or their high-pressure endpoints.
+
+The accessible table labels the dissolved quantity only as “mole %”; it does
+not state whether the denominator includes dissociated ions, one KCl formula
+unit, or excludes electrolyte. The new assessment therefore retains the source
+value and reports three non-equivalent model mappings plus CO2 molality. It does
+not choose a preferred mapping, fit a parameter, or impose an accuracy
+tolerance. The calculation uses reported total pressure, one final aqueous
+kilogram of water, a verified finite gas reservoir, mixing rule 10, and records
+water activity, CO2 partial pressure, inventory and fugacity residuals. See the
+[benchmark notes](../../src/test/resources/data/chemistry_benchmarks/co2_kcl_solubility_burgass_tohidi1995.md)
+for the exact source and observable boundary.
+
 This corrects the assessment boundary conditions and failure reporting. It does
 not change production flash equations, interaction parameters, source values or
 experimental-accuracy criteria, and it does not establish model qualification.
@@ -448,7 +467,7 @@ experimental-accuracy criteria, and it does not establish model qualification.
 The Core Build, Test, and Javadoc workflow retains an
 `electrolyte-assessment-evidence-<shard>` artifact from every Java 21 slow-test
 shard, including after failed test runs. Download the artifacts from the same
-workflow run; the eight assessments may be distributed over different shards.
+workflow run; the nine assessments may be distributed over different shards.
 Surefire reports remain in their existing, separate artifacts.
 
 Each bundle includes a `manifest.json` and only the allowlisted assessment CSVs
@@ -459,6 +478,7 @@ produced by tests selected for that shard:
 | Dholabhai K10/K15 plus pure-water and cross-salt controls | 28 |
 | Archer salt-only, pressure-only and CO2-addition sequence | 10 |
 | He–Morse dissolved CO2, complete five-temperature series | 26 |
+| Burgass-Tohidi low-temperature CO2 observable mappings | 4 |
 | Yasunishi–Yoshida Ostwald coefficients | 7 |
 | Burgass saturated and finite-inventory NaCl controls | 12 |
 | Carroll evaluated salt-free CO2, three setup constructions | 57 |
@@ -508,6 +528,10 @@ compensated here.
 - Onda et al. (1970), [DOI 10.1252/jcej.3.18](https://doi.org/10.1252/jcej.3.18), Table 3.
 - He and Morse (1993), [DOI 10.1016/0016-7037(93)90137-L](https://doi.org/10.1016/0016-7037(93)90137-L),
   [NIST data reproduction](https://srdata.nist.gov/solubility/sol_detail.aspx?sysID=62_229).
+- Tohidi Kalorazi (1995), *Gas Hydrate Equilibria in the Presence of Electrolyte
+  Solutions*, Heriot-Watt University, Table 6.4; experimental values attributed
+  there to Burgass (1995), *Hydrate Phase Equilibria in the Presence of
+  Electrolyte Solutions*, MSc thesis, Heriot-Watt University.
 - Yasunishi and Yoshida (1979), *J. Chem. Eng. Data* 24, 11–14,
   [NIST data reproduction](https://srdata.nist.gov/solubility/sol_detail.aspx?sysID=62_227).
 - Dholabhai et al. (1993), [DOI 10.1021/je00012a045](https://doi.org/10.1021/je00012a045).
