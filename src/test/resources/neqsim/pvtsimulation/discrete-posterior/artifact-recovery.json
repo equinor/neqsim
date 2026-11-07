@@ -1,0 +1,19 @@
+{
+  "artifactId": 13575182219,
+  "head": "863f12f4bfb58026e523748aefab14ecaf2288aa",
+  "archiveSha256": "1608dd80447f7912d5bdada8cc8579ab426a5446e3c30aa820c6d393aa896b10",
+  "files": [
+    {
+      "path": "docs/manual/neqsim_reference_manual.html",
+      "expectedBlob": "50b1911bf103e4cba813b8b83e47b6e77514f639",
+      "actualBlob": "50b1911bf103e4cba813b8b83e47b6e77514f639",
+      "bytes": 15322974
+    },
+    {
+      "path": "docs/examples/surf_study/SURF-SYN-001_drawings.pdf",
+      "expectedBlob": "7dc78741b7e2d19cb9d8108f2ead4c96aa374a75",
+      "actualBlob": "7dc78741b7e2d19cb9d8108f2ead4c96aa374a75",
+      "bytes": 1069507
+    }
+  ]
+}
