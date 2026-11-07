@@ -192,6 +192,13 @@ checks process-side model preservation, utility-flow units, both capacity
 orderings, changed salinity and exchanger balances. These are published property
 and synthetic integration checks, not a field-performance qualification.
 
+The model-specification gate also runs the `SEAWATER_35` fixture: 27 density,
+enthalpy and heat-capacity cases at nine independent `iapws` 1.5.5
+`SeaWater(IF97=True)` reference states from 278.15 to 308.15 K and 1.01325 to
+50 bara. This catalog coverage is restricted to 35 g/kg solution. The IF97 state
+control verifies `H = U + PV` and density/volume closure with SI volume conversion
+in both the liquid and steam regions.
+
 1. [IAPWS R7-97(2012), Industrial Formulation 1997](https://iapws.org/technical-guidance/release/IF97).
 2. [IAPWS R13-08, Thermodynamic Properties of Seawater](https://iapws.org/technical-guidance/release/Seawater).
 3. [IAPWS AN5-13(2016), Industrial Calculation of Seawater Properties](https://iapws.org/technical-guidance/release/Advise5).
