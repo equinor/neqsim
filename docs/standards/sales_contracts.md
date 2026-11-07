@@ -41,36 +41,86 @@ This fixture uses the exact case-sensitive `central` / `Brazil` keys present in
 the bundled data. It keeps calculated values and limits separate so the caller,
 rather than `isOnSpec()`, owns the explicit row-by-row decision.
 
+<!-- sales-contract-example: brazil-screen -->
 ```java
 import neqsim.standards.salescontract.BaseContract;
 import neqsim.thermo.system.SystemGERGwaterEos;
 import neqsim.thermo.system.SystemInterface;
 
-SystemInterface gas = new SystemGERGwaterEos(268.15, 20.0);
-gas.addComponent("methane", 0.90);
-gas.addComponent("ethane", 0.04);
-gas.addComponent("propane", 0.02);
-gas.addComponent("n-heptane", 0.00012);
-gas.addComponent("H2S", 0.000012);
-gas.addComponent("water", 0.000071);
-gas.addComponent("oxygen", 0.0012);
-gas.addComponent("CO2", 0.022);
-gas.addComponent("nitrogen", 0.022);
-gas.setMixingRule(8);
-gas.init(0);
+/**
+ * Runs the bundled central/Brazil gas-quality screening fixture.
+ *
+ * @author NeqSim
+ * @version 1.0
+ */
+public final class GasSalesContractQuickStart {
+  private GasSalesContractQuickStart() {}
 
-BaseContract contract = new BaseContract(gas, "central", "Brazil");
-contract.runCheck();
+  /**
+   * Execute the database-backed checks and validate the structured result table.
+   *
+   * @param args command-line arguments; unused
+   */
+  public static void main(String[] args) {
+    SystemInterface gas = createGas();
+    BaseContract contract = new BaseContract(gas, "central", "Brazil");
+    contract.runCheck();
 
-String[][] rows = contract.getResultTable();
-int specificationCount = contract.getSpecificationsNumber();
-int rowsWithinLimits = 0;
-for (int rowIndex = 0; rowIndex < specificationCount; rowIndex++) {
-  double value = Double.parseDouble(rows[rowIndex][1]);
-  double minimum = Double.parseDouble(rows[rowIndex][4]);
-  double maximum = Double.parseDouble(rows[rowIndex][5]);
-  if (Double.isFinite(value) && value >= minimum && value <= maximum) {
-    rowsWithinLimits++;
+    String[][] rows = contract.getResultTable();
+    int specificationCount = contract.getSpecificationsNumber();
+    require(specificationCount == 8, "Expected eight bundled contract rows");
+    require(rows.length == specificationCount, "Result-table row count changed");
+
+    int finiteRowsWithinLimits = 0;
+    for (int rowIndex = 0; rowIndex < specificationCount; rowIndex++) {
+      double value = Double.parseDouble(rows[rowIndex][1]);
+      double minimum = Double.parseDouble(rows[rowIndex][4]);
+      double maximum = Double.parseDouble(rows[rowIndex][5]);
+      if (Double.isFinite(value) && Double.isFinite(minimum) && Double.isFinite(maximum)
+          && value >= minimum && value <= maximum) {
+        finiteRowsWithinLimits++;
+      }
+    }
+    require(finiteRowsWithinLimits > 0, "No finite result rows were within stored limits");
+
+    require("CO2".equals(rows[1][0]), "Expected CO2 in the second result row");
+    double co2MolPercent = Double.parseDouble(rows[1][1]);
+    require(Double.isFinite(co2MolPercent), "CO2 result must be finite");
+    require(Math.abs(co2MolPercent - 2.18817727816606) < 1.0e-6,
+        "Unexpected bundled CO2 regression value");
+  }
+
+  /**
+   * Build the deterministic gas mixture used by the bundled contract fixture.
+   *
+   * @return initialized GERG-water-EOS gas
+   */
+  private static SystemInterface createGas() {
+    SystemInterface gas = new SystemGERGwaterEos(268.15, 20.0);
+    gas.addComponent("methane", 0.90);
+    gas.addComponent("ethane", 0.04);
+    gas.addComponent("propane", 0.02);
+    gas.addComponent("n-heptane", 0.00012);
+    gas.addComponent("H2S", 0.000012);
+    gas.addComponent("water", 0.000071);
+    gas.addComponent("oxygen", 0.0012);
+    gas.addComponent("CO2", 0.022);
+    gas.addComponent("nitrogen", 0.022);
+    gas.setMixingRule(8);
+    gas.init(0);
+    return gas;
+  }
+
+  /**
+   * Fail closed when a fixture or result-table invariant is not satisfied.
+   *
+   * @param condition invariant result
+   * @param message failure description
+   */
+  private static void require(boolean condition, String message) {
+    if (!condition) {
+      throw new IllegalStateException(message);
+    }
   }
 }
 ```
