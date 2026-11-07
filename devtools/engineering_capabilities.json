@@ -364,6 +364,40 @@
       "limitations": "Java/JPype object APIs and synthetic ProcessSystem verification; discovery/inspectApi only, no new curated runDynamic JSON execution option. Initial canonical support is an exact native CONVENTIONAL SafetyReliefValve, LINEAR trim and actual two-outlet Splitter relief branch with explicit protected-vessel and downstream-boundary identity. Low-order pressure/hysteresis, lag, dwell and lift-rate response uses native Cv hydraulics, not vendor-certified orifice capacity or mechanical/acoustic chatter dynamics. Configuration, current fault overrides, ordered pop/reseat/flow observations, sampled pressure envelopes and per-vessel consumed-boundary closure remain separate checks. Existing energy FAIL/HOLD cannot be erased by response PASS. Absolute bara native configuration and Pa absolute sizing helpers have distinct unit contracts. No automatic accumulation allowance, SIF/SIL/IPL credit, receiving-tool qualification, ISO/API conformity or construction approval. Native DEXPI gauge set pressure requires an explicit governed atmospheric reference; absolute settings remain in the sidecar if it is absent. Snapshot evidence is limited to covered branch subgraphs while the study's original SetPoint helpers leave whole-train adaptive rollback unsupported. Credited dynamic PSV execution requires finite native transient mode and gas choked-flow capacity limiting enabled; a source proposal or no-demand trace alone cannot prove relief response."
     },
     {
+      "id": "instrumented-compressor-automation-study",
+      "title": "Compressor anti-surge, control and shutdown workflow with native P&ID feedback",
+      "domain": "engineering-design",
+      "tool": "inspectApi",
+      "apis": [
+        "neqsim.process.engineering.CompressorAutomationWorkflow",
+        "neqsim.process.util.scenario.CompressorAutomationStudy",
+        "neqsim.process.engineering.pid.PidNativeControlSystem",
+        "neqsim.process.equipment.compressor.CompressorAntiSurgeApplication",
+        "neqsim.process.engineering.pid.PidSafetyFunctionImporter",
+        "neqsim.process.engineering.pid.PidSafetyFunctionValidator"
+      ],
+      "skills": [
+        "neqsim-compressor-antisurge-recycle",
+        "neqsim-dynamic-simulation",
+        "neqsim-pid-process-operations",
+        "neqsim-pid-quality-review",
+        "neqsim-process-safety"
+      ],
+      "agents": [
+        "process-model",
+        "rotating-equipment",
+        "control-system",
+        "safety-depressuring",
+        "pid-quality-review"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/util/scenario/CompressorAutomationStudyTest.java",
+        "src/test/java/neqsim/process/engineering/pid/PidNativeControlSystemTest.java",
+        "src/test/java/neqsim/process/engineering/CompressorAutomationWorkflowTest.java"
+      ],
+      "limitations": "Public packaged Java CLI plus Java/JPype object workflow, with inspectApi discovery only; no new curated MCP runDynamic execution option or PLC application generator. CompressorAutomationWorkflow accepts strict design JSON or public defaults, a new output directory and an optional canonical proposal; supported controls are freshly applied/read back, unsupported SIF-policy edits fail closed, subsets are disclosed, and raw native fingerprints remain distinct from strict normalized-file hashes. The compressor train uses a declared thermodynamic/map/capacity basis, actual recycle gas-Cv hydraulics and finite suction and discharge inventories within its supported execution contract. Quasi-steady compressor maps and explicit driver profile/rate do not establish rotor-inertia, reverse-flow, mechanical/acoustic surge or a complete utility network. Generated maps, assumed valves and study limits remain synthetic until supplied and qualified. Canonical control settings must be applied/read back on an isolated native copy and fresh scenario evidence must match current source/configuration fingerprints. Proposed instrumentation and direct model-derived anti-surge inputs are not executed measurement chains. Expected physical FAILs, no-demand outcomes and numerical/conservation/timestep limits remain separate from software-test success. Agent/skill routing and source/test references are discovery evidence, not standards, vendor, SRS/SIL/IPL, installed independence, receiving-tool or construction qualification."
+    },
+    {
       "id": "equipment-sizing",
       "title": "Separator and compressor sizing",
       "domain": "engineering-design",

@@ -19,6 +19,9 @@ import neqsim.process.logic.LogicState;
 import neqsim.process.logic.action.ParallelActionGroup;
 import neqsim.process.logic.action.ConditionalAction;
 import neqsim.process.logic.action.TripValveAction;
+import neqsim.process.logic.action.TripCompressorAction;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.compressor.ShutdownProfile;
 import neqsim.process.equipment.valve.ESDValve;
 import neqsim.process.logic.ProcessLogic;
 
@@ -328,6 +331,38 @@ public class ESDLogic implements ProcessLogic {
         result.put("targets", identities);
         supported = targets.size() == 1 && targets.get(0).getClass() == ESDValve.class
             && action.isTargetEquipmentIdentityComplete();
+      } else if (action.getClass() == TripCompressorAction.class) {
+        TripCompressorAction stop = (TripCompressorAction) action;
+        Compressor compressor = stop.getCompressor();
+        List<Map<String, Object>> identities = new ArrayList<Map<String, Object>>();
+        Map<String, Object> identity = new LinkedHashMap<String, Object>();
+        identity.put("tag", compressor.getName());
+        identity.put("equipmentClass", compressor.getClass().getName());
+        identity.put("tripEffect", "NATIVE_COMPRESSOR_STOP_PROFILE");
+        identity.put("shutdownType", stop.getShutdownType().name());
+        identity.put("stoppedSpeedRpm", Double.valueOf(stop.getStoppedSpeedRpm()));
+        identity.put("commandAvailable", Boolean.valueOf(stop.isCommandAvailable()));
+        identity.put("transientCalculationMode", compressor.getTransientCalculationMode().name());
+        identity.put("maxDecelerationRpmPerSecond", Double.valueOf(compressor.getMaxDecelerationRate()));
+        identity.put("rotationalInertiaKgM2", Double.valueOf(compressor.getRotationalInertia()));
+        identity.put("driverModel",
+            compressor.getDriver() == null ? "NONE_PROFILE_RATE_ONLY" : compressor.getDriver().getClass().getName());
+        ShutdownProfile profile = compressor.getShutdownProfile();
+        if (profile == null) {
+          profile = new ShutdownProfile(stop.getShutdownType(), compressor.getSpeed());
+        }
+        Map<String, Object> profileValues = new LinkedHashMap<String, Object>();
+        profileValues.put("normalRampRpmPerSecond", Double.valueOf(profile.getNormalRampRate()));
+        profileValues.put("rapidRampRpmPerSecond", Double.valueOf(profile.getRapidRampRate()));
+        profileValues.put("emergencyRampRpmPerSecond", Double.valueOf(profile.getEmergencyRampRate()));
+        profileValues.put("coastdownSeconds", Double.valueOf(profile.getCoastdownTime()));
+        profileValues.put("idleSpeedRpm", Double.valueOf(profile.getMinimumIdleSpeed()));
+        profileValues.put("idleRundownSeconds", Double.valueOf(profile.getIdleRundownTime()));
+        identity.put("nativeShutdownProfile", profileValues);
+        identities.add(identity);
+        result.put("targets", identities);
+        supported = compressor.getClass() == Compressor.class && stop.isTargetEquipmentIdentityComplete()
+            && Double.isFinite(stop.getStoppedSpeedRpm()) && stop.getStoppedSpeedRpm() >= 0.0;
       } else if (action.getClass() == ParallelActionGroup.class) {
         List<Map<String, Object>> children = new ArrayList<Map<String, Object>>();
         supported = !((ParallelActionGroup) action).getActions().isEmpty();

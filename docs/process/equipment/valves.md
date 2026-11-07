@@ -212,7 +212,10 @@ The available multiphase methods and their input assumptions are documented in
 ## Dynamic valve travel
 
 `ThrottlingValve` supports linear travel or a first-order lag. The current and
-requested openings are separate during a transient.
+requested openings are separate during a transient. With physical-step UUID
+idempotency enabled, a zero-duration hydraulic evaluation does not consume the
+one actuator advance of a later positive interval. Repeating the same UUID after
+that positive interval does not move the actuator again.
 
 ```java
 import java.util.UUID;
@@ -232,6 +235,41 @@ double targetOpening = valve.getTargetPercentValveOpening();
 
 For an on/off emergency function with a prescribed stroke time, use `ESDValve`.
 For blowdown activation logic, use `BlowdownValve`.
+
+## Passive check-valve dispatch
+
+`CheckValve` uses the same ideal non-return gate for `run()`, `run(UUID)` and
+`runTransient(dt, UUID)`. Declare the actual downstream pressure boundary before
+execution. The valve opens only for a positive forward differential pressure at
+or above `getCrackingPressure()`. That threshold is a pressure **difference in
+bar**; port pressures are absolute and are read in bara, independently of setter
+units. A previous zero-flow outlet does not replace the downstream pressure with
+an estimated default.
+
+An ideally seated valve publishes exact zero outlet flow and retains its native
+Cv. In pressure-driven transient mode it also publishes zero upstream withdrawal;
+a later forward pressure difference can recover from a valid zero-demand stream
+using retained intensive state and the native Cv/choking calculation. Steady
+prescribed inlet flow is not an invented valve inventory: if a valve closes, the
+surrounding steady network must reconcile that boundary or report no steady
+solution. The check valve is kept active so that it can reopen.
+
+This is an instantaneous passive threshold model. It rejects external controllers
+and configured actuator-travel models rather than silently overriding them.
+Disc dynamics, slam, leakage and reverse rotation are outside its scope. The
+cracking threshold does not add a manufacturer pressure-loss curve. The owned
+snapshot restores passive state and native valve state while retaining stream
+identities; upstream inventory remains owned by its source unit.
+
+For algebraic network root trials, `calculateMolarFlow()` applies the same passive
+gate and delegates to the shared native Cv calculation without a TP or PH flash.
+A detached normalized intensive workspace supports valid zero/tiny/positive seed
+throughputs while leaving connected port state untouched. The query does not publish actual withdrawal,
+advance time or provide physical-step execution credit. Run the valve normally
+after convergence to obtain actual flow and enthalpy evidence.
+
+`CheckValveDispatchTest` covers actual ProcessSystem/UUID dispatch, pressure units,
+zero-flow recovery, snapshot restoration and finite/nonnegative input validation.
 
 ## Physical and numerical checks
 

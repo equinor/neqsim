@@ -740,6 +740,7 @@ See the [property method alignment audit](physical_properties/method_alignment_a
 
 | Document                    | Path                                                                                 | Description                                                                           |
 | --------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Compressor Controls, Shutdown and P&ID | [docs/process/safety/compressor-automation-workflow.md](process/safety/compressor-automation-workflow.md) | Public native compressor workflow, configured-copy fault tests and DEXPI 2.0.1 feedback |
 | Passive PSV Response and P&ID | [docs/process/safety/psv-pid-verification.md](process/safety/psv-pid-verification.md) | Native opening/reseat/flow tests, canonical configuration readback and DEXPI pressure basis |
 | PSV Dynamic Sizing Wiki     | [docs/wiki/psv_dynamic_sizing_example.md](wiki/psv_dynamic_sizing_example.md)           | PSV dynamic sizing                                                                    |
 | PSV Dynamic Sizing          | [docs/safety/psv_dynamic_sizing_example.md](safety/psv_dynamic_sizing_example.md)       | PSV sizing example                                                                    |
