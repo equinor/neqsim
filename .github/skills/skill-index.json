@@ -569,7 +569,7 @@
  "identifying facility bottlenecks": [
   "neqsim-production-optimization"
  ],
- "images \u2014 equipment data sheets": [
+ "images — equipment data sheets": [
   "neqsim-technical-document-reading"
  ],
  "impurity effects on phase behavior": [
@@ -999,7 +999,7 @@
  "pfr)": [
   "neqsim-reaction-engineering"
  ],
- "phase envelopes \u2014": [
+ "phase envelopes —": [
   "neqsim-technical-document-reading"
  ],
  "pipeline hydraulics": [
@@ -1520,7 +1520,9 @@
   "neqsim-utilities-specification"
  ],
  "cooling water": [
-  "neqsim-utilities-specification"
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
  ],
  "instrument air": [
   "neqsim-utilities-specification"
@@ -2682,7 +2684,7 @@
  "tetningsgass": [
   "neqsim-rotating-equipment-design"
  ],
- "t\u00f8rre gasstetninger": [
+ "tørre gasstetninger": [
   "neqsim-rotating-equipment-design"
  ],
  "p&id quality control": [
@@ -2696,5 +2698,25 @@
  ],
  "p&id source drawing consistency": [
   "neqsim-pid-quality-review"
+ ],
+ "seawater heat exchanger": [
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
+ ],
+ "IAPWS reference water": [
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
+ ],
+ "water cooled gas cooler": [
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
+ ],
+ "kjolevann sjovann varmeveksler": [
+  "neqsim-cooling-water",
+  "neqsim-process-modeling",
+  "neqsim-utility-design"
  ]
 }

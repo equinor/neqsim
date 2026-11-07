@@ -369,3 +369,10 @@ See `docs/process/equipment/ejectors.md`. Practical rules learned on an ejector 
 
 For a fixed minimum-flow compressor return at suction state, see
 `neqsim-compressor-antisurge-recycle` and `MinimumFlowSpill` in the compressor guide.
+
+## Reference cooling water and seawater
+
+Load [neqsim-cooling-water](../neqsim-cooling-water/SKILL.md) for water-cooled
+process equipment, seawater utilities, reference IAPWS properties, coolant flow
+and pumping. Keep each exchanger side on its own fluid model and distinguish
+fixed-salinity bulk utilities from electrolyte chemistry and salt mixing.

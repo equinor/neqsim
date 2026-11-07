@@ -2,6 +2,7 @@
 name: utility-design
 description: "Coordinates screening-level utility-system design with NeqSim - fired boilers, deaerators, refrigeration, nitrogen generation and multi-pressure steam networks - aggregating plant utility demands from a run flowsheet and optimizing a two-stage compression utility. Backed by neqsim.process.util.utilitydesign and MCP designUtilities; distinct from utility-level selection (neqsim-utilities-specification)."
 required_skills:
+- neqsim-cooling-water
 - neqsim-utility-design
 - neqsim-utilities-specification
 - neqsim-heat-integration
@@ -11,7 +12,7 @@ required_skills:
 - neqsim-energy-systems-and-electrification
 argument-hint: "Describe the utility task — e.g., 'size a fired boiler for an 8 MW reboiler duty', 'design a propane chiller for 3 MW of gas chilling at -35 C', 'membrane N2 generator for 500 Nm3/h at 99.5%', 'HP/LP steam header balance', or 'optimize the interstage pressure of a two-stage instrument-air compressor'."
 ---
-Loaded skills: neqsim-utility-design, neqsim-utilities-specification, neqsim-heat-integration, neqsim-api-patterns, neqsim-java8-rules, neqsim-professional-reporting, neqsim-energy-systems-and-electrification
+Loaded skills: neqsim-cooling-water, neqsim-utility-design, neqsim-utilities-specification, neqsim-heat-integration, neqsim-api-patterns, neqsim-java8-rules, neqsim-professional-reporting, neqsim-energy-systems-and-electrification
 
 ## Skills to Load
 
@@ -90,3 +91,13 @@ For a controlled report based on the main process report, delegate to
 Pass the raw sizing results, model/version, case IDs and screening limitations;
 consumer simultaneity, delivery conditions and utility availability need separate
 checks beyond the aggregate duty.
+
+## Water and seawater cooling
+
+Use [neqsim-cooling-water](../skills/neqsim-cooling-water/SKILL.md) for reference
+water/seawater properties and explicit heat-exchanger utility streams. Preserve
+the process-side EOS; select `SystemWaterIF97` for fresh water or `SystemSeawater`
+for fixed-salinity seawater. Record salinity in g/kg solution and the property
+validity range; a `WATER` physical-property package alone does not select IF97
+enthalpy. Pass supply/return states, model/version, duties and balance residuals
+between `@thermo-fluid`, `@process-model` and `@utility-design`.

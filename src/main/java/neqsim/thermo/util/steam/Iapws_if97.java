@@ -307,6 +307,60 @@ public final class Iapws_if97 {
   }
 
   /**
+   * Evaluates the isochoric heat capacity in the implemented liquid and vapor regions.
+   *
+   * @param p absolute pressure [MPa]
+   * @param T temperature [K]
+   * @return specific isochoric heat capacity [kJ/(kg K)]
+   */
+  public static double cv_pt(double p, double T) {
+    if (T <= T4_p(p)) {
+      double pi = p / 16.53;
+      double tau = 1386.0 / T;
+      double term = gamma1_pi(pi, tau) - tau * gamma1_pitau(pi, tau);
+      return cp_pt(p, T) + R * term * term / gamma1_pipi(pi, tau);
+    }
+    double pi = p;
+    double tau = 540.0 / T;
+    double term = 1.0 + pi * gammar_pi(pi, tau) - tau * pi * gammar_pitau(pi, tau);
+    return cp_pt(p, T) - R * term * term / (1.0 - pi * pi * gammar_pipi(pi, tau));
+  }
+
+  /**
+   * Evaluates a Region 1 Gibbs derivative for industrial liquid-water and seawater calculations.
+   *
+   * @param p absolute pressure [MPa]
+   * @param T temperature [K]
+   * @param temperatureOrder temperature derivative order
+   * @param pressureOrder pressure derivative order
+   * @return specific Gibbs energy [J/kg] or its derivatives per K and per Pa
+   * @throws IllegalArgumentException for unsupported derivative orders
+   */
+  public static double liquidGibbsDerivative(double p, double T, int temperatureOrder, int pressureOrder) {
+    double pi = p / 16.53;
+    double tau = 1386.0 / T;
+    if (temperatureOrder == 0 && pressureOrder == 0) {
+      return R * T * gamma1(pi, tau) * 1000.0;
+    }
+    if (temperatureOrder == 1 && pressureOrder == 0) {
+      return R * (gamma1(pi, tau) - tau * gamma1_tau(pi, tau)) * 1000.0;
+    }
+    if (temperatureOrder == 2 && pressureOrder == 0) {
+      return R * tau * tau / T * gamma1_tautau(pi, tau) * 1000.0;
+    }
+    if (temperatureOrder == 0 && pressureOrder == 1) {
+      return R * T / 16530.0 * gamma1_pi(pi, tau);
+    }
+    if (temperatureOrder == 1 && pressureOrder == 1) {
+      return R / 16530.0 * (gamma1_pi(pi, tau) - tau * gamma1_pitau(pi, tau));
+    }
+    if (temperatureOrder == 0 && pressureOrder == 2) {
+      return R * T / (16.53 * 16.53 * 1e9) * gamma1_pipi(pi, tau);
+    }
+    throw new IllegalArgumentException("Supported Gibbs derivative orders have a sum of at most two");
+  }
+
+  /**
    * Speed of sound in m/s.
    */
   /**

@@ -2049,6 +2049,36 @@
         "src/test/java/neqsim/pvtsimulation/util/CvdMaterialBalanceTest.java"
       ],
       "limitations": "Discovery and inspectApi only; instance-based Java/JPype evidence, no stateless MCP execution route. Opt-in saturated-vapor-reference isothermal CVD accounting with endpoint-composition gas withdrawals, immutable named observations and optional final liquid analysis bounds. Absent, unresolved and inconsistent liquid states remain explicit. Public Whitson-Torp NS-1 Table1 reproduces calculated final liquid within half its printed digit; experimental methane/C7+ remain incompatible with conservative rounding-only bounds. No EOS tuning, automatic uncertainty model, critical/wet-cell support, independent measured accuracy, separator conversion, field history matching or Tran rescaled-CVD qualification."
+    },
+    {
+      "id": "reference-cooling-water",
+      "title": "Reference fresh-water and fixed-salinity seawater cooling",
+      "domain": "process",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.thermo.system.SystemWaterIF97",
+        "neqsim.thermo.system.SystemSeawater",
+        "neqsim.thermo.util.steam.SeawaterProperties",
+        "neqsim.thermo.util.steam.CoolingWaterTransport",
+        "neqsim.process.equipment.heatexchanger.WaterCooler",
+        "neqsim.process.equipment.heatexchanger.CoolingWaterSystem",
+        "neqsim.process.equipment.heatexchanger.HeatExchanger"
+      ],
+      "skills": [
+        "neqsim-cooling-water"
+      ],
+      "agents": [
+        "process-model",
+        "utility-design",
+        "thermo-fluid"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/thermo/util/steam/CoolingWaterReferenceTest.java",
+        "src/test/java/neqsim/thermo/system/ReferenceCoolingWaterTest.java",
+        "src/test/java/neqsim/process/equipment/heatexchanger/ReferenceWaterHeatExchangerTest.java",
+        "src/test/java/neqsim/documentation/ReferenceCoolingWaterDocumentationTest.java"
+      ],
+      "limitations": "Instance-based Java/JPype process APIs; no new curated MCP executor. Saline utility envelope 273.15-353 K, 1-120 bara, 0-120 g/kg solution. Fixed-salinity bulk mass surrogate, not species-resolved salt mixing, dilution, evaporation, chemistry or scale. Pressure derivatives outside T<=313 K and S<=42 g/kg are extrapolations; high-pressure seawater viscosity multiplier is an engineering extension. Existing secant-Cp NTU, rating and fouling approximations remain; synthetic balance tests and published property checks do not establish field or safety qualification."
     }
   ]
 }
