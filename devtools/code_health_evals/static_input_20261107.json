@@ -14,7 +14,7 @@
     ],
     "production_java_changed": false
   },
-  "cause": "SpotBugs directory enumeration uses filesystem order; clone-nullness inference drifted between unchanged local and hosted class sets.",
+  "cause": "Byte-identical canonical archives still expose runtime-dependent clone-nullness inference. Freeze class order and qualify the baseline under the exact pinned analysis JDK.",
   "analysis_input": {
     "schema_version": 1,
     "format": "sorted-class-archive-v1",
@@ -633,6 +633,15 @@
           "count": 1
         }
       ]
+    },
+    "local_canonical_to_pinned_hosted": {
+      "introduced_groups": 52,
+      "resolved_groups": 36,
+      "introduced_occurrences": 54,
+      "resolved_occurrences": 37,
+      "changed_rules": [
+        "NP_NONNULL_RETURN_VIOLATION"
+      ]
     }
   },
   "independent_review": {
@@ -645,9 +654,49 @@
     "remaining_findings": 0
   },
   "hosted_validation": {
-    "status": "pending_at_publication",
+    "status": "pending_pinned_runtime_repeat",
     "jdk": "Temurin 17.0.21+9",
-    "local_jdk": "OpenJDK 17.0.20",
-    "claim": "Cross-runtime reproducibility requires the hosted check result."
+    "baseline_producer": "Hosted native report, not the local 17.0.20 report"
+  },
+  "hosted_producer": {
+    "workflow_run": 42350943949,
+    "job_id": 128338738143,
+    "head": "6097a307abc3caab060f8e6d1b0246aecc272bf4",
+    "analysis_runtime": {
+      "java_version": "17.0.21",
+      "vm_version": "17.0.21+9"
+    },
+    "classes": 7057,
+    "spotbugs_occurrences": 11139,
+    "analyzer_exit_code": 0,
+    "comparison_to_local_baseline": "52 introduced groups; inferred clone-nullness only",
+    "same_archive_bytes_as_local": true
+  },
+  "runtime_validation": {
+    "python_tests": {
+      "passed": 72,
+      "subtests_passed": 19,
+      "exit_code": 0
+    },
+    "report_replay": {
+      "source_occurrences": 1028,
+      "pmd_occurrences": 9,
+      "spotbugs_occurrences": 11139,
+      "new_groups": 0,
+      "resolved_groups": 0,
+      "exit_code": 0
+    },
+    "all_devtools_tests": {
+      "status": "blocked_during_collection",
+      "exit_code": 2,
+      "missing_dependencies": [
+        "jpype",
+        "trimesh"
+      ]
+    },
+    "independent_review": [
+      "Missing runtime metadata must fail rather than bypass comparison"
+    ],
+    "hosted_repeat": "pending"
   }
 }

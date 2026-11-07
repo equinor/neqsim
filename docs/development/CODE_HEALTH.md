@@ -42,12 +42,17 @@ dependencies from `thermo`/`thermodynamicoperations` into `process`, `mcp` or
 `util.agentic`. These are lexical import rules, not a complete bytecode architecture
 analysis: reflection, fully qualified uses and transitive cycles need separate review.
 PMD priorities 1–2 and SpotBugs priorities 1–2 are compared as counted findings.
-Analyzer versions are recorded and must match the reviewed baseline.
+Analyzer versions and the SpotBugs analysis JDK/runtime versions are recorded and
+must match the reviewed baseline. Generate the baseline with the pinned CI runtime;
+a different JDK is a failed analysis precondition, not evidence of new source bugs.
 JDK updates and analysis-input format changes also require an explicit baseline
 comparison. SpotBugs 4.10.5 enumerates class directories in filesystem order
 ([upstream implementation](https://github.com/spotbugs/spotbugs/blob/4.10.5/spotbugs/src/main/java/edu/umd/cs/findbugs/RecursiveFileSearch.java));
-its inferred clone-nullness diagnostics can otherwise differ between unchanged
-local and hosted builds. Keep the canonical archive preparation in the CI pipeline.
+its inferred clone-nullness diagnostics can differ between unchanged local and
+hosted builds. Canonical input alone is insufficient: measured byte-identical
+archives still produced different clone-inference findings under OpenJDK 17.0.20
+and Temurin 17.0.21+9. Keep both the canonical input and the exact runtime pin in
+the pipeline, and qualify the initial baseline from the hosted report.
 Line numbers are display metadata; normal line shifts do not create new debt.
 
 ## Interpret the evidence

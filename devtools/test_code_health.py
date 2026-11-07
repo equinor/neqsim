@@ -157,6 +157,60 @@ class CodeHealthTests(unittest.TestCase):
         impact = next(step for step in steps if step.get("id") == "impact")
         self.assertIn("devtools/prepare_code_health_input.py", impact["run"])
 
+    def spotbugs_runtime_fixture(self, java_version="17.0.21", vm_version="17.0.21+9"):
+        path = self.root / "runtime.xml"
+        path.write_text('<BugCollection version="4.10.5"><FindBugsSummary total_classes="1" total_bugs="0" '
+                        f'java_version="{java_version}" vm_version="{vm_version}"/>'
+                        '<Errors errors="0" missingClasses="0"/></BugCollection>')
+        return path
+
+    def runtime_baseline(self):
+        data = health.make_baseline([], {"spotbugs"}, "base")
+        data["analyzers"] = {"spotbugs": "4.10.5"}
+        data["analysis_runtime"] = {"java_version": "17.0.21", "vm_version": "17.0.21+9"}
+        path = self.root / "baseline.json"
+        path.write_text(json.dumps(data))
+        return path
+
+    def test_runtime_drift_is_a_precondition_error_not_a_new_bug(self):
+        report = self.spotbugs_runtime_fixture("17.0.20", "17.0.20+8")
+        baseline, output = self.runtime_baseline(), self.root / "result.json"
+        self.assertEqual(1, health.main(["--root", str(self.root), "--tools", "spotbugs",
+                                        "--spotbugs", str(report), "--baseline", str(baseline),
+                                        "--output", str(output)]))
+        result = json.loads(output.read_text())
+        self.assertIn("analysis runtime differs", result["errors"][0])
+        self.assertEqual([], result["new_findings"])
+
+    def test_pinned_runtime_report_passes_without_changing_baseline(self):
+        report, baseline = self.spotbugs_runtime_fixture(), self.runtime_baseline()
+        previous = baseline.read_bytes()
+        self.assertEqual(0, health.main(["--root", str(self.root), "--tools", "spotbugs",
+                                        "--spotbugs", str(report), "--baseline", str(baseline)]))
+        self.assertEqual(previous, baseline.read_bytes())
+
+    def test_baseline_creation_records_runtime(self):
+        report, baseline = self.spotbugs_runtime_fixture(), self.root / "baseline.json"
+        self.assertEqual(0, health.main(["--root", str(self.root), "--tools", "spotbugs",
+                                        "--spotbugs", str(report), "--baseline", str(baseline),
+                                        "--write-baseline", "--revision", "base"]))
+        self.assertEqual({"java_version": "17.0.21", "vm_version": "17.0.21+9"},
+                         json.loads(baseline.read_text())["analysis_runtime"])
+
+    def test_empty_runtime_baseline_metadata_is_rejected(self):
+        report, baseline = self.spotbugs_runtime_fixture(), self.runtime_baseline()
+        data = json.loads(baseline.read_text()); data["analysis_runtime"] = {}
+        baseline.write_text(json.dumps(data))
+        self.assertEqual(1, health.main(["--root", str(self.root), "--tools", "spotbugs",
+                                        "--spotbugs", str(report), "--baseline", str(baseline)]))
+
+    def test_missing_runtime_baseline_metadata_is_rejected(self):
+        report, baseline = self.spotbugs_runtime_fixture(), self.runtime_baseline()
+        data = json.loads(baseline.read_text()); del data["analysis_runtime"]
+        baseline.write_text(json.dumps(data))
+        self.assertEqual(1, health.main(["--root", str(self.root), "--tools", "spotbugs",
+                                       "--spotbugs", str(report), "--baseline", str(baseline)]))
+
 
 if __name__ == "__main__":
     unittest.main()

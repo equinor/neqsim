@@ -233,12 +233,21 @@ def main(argv=None) -> int:
             findings.extend(read_analyzer(path, tool, args.root))
         analyzers = {tool: ET.parse(getattr(args, tool)).getroot().get("version", "unspecified")
                      for tool in sorted(tools - {"source"})}
+        analysis_runtime = None
+        if "spotbugs" in tools:
+            summary = next(n for n in ET.parse(args.spotbugs).getroot()
+                           if n.tag.rsplit("}", 1)[-1] == "FindBugsSummary")
+            analysis_runtime = {key: summary.get(key) for key in ("java_version", "vm_version")}
+            if not all(analysis_runtime.values()):
+                raise ValueError("SpotBugs report lacks analysis-runtime metadata")
         baseline = args.baseline if args.baseline.is_absolute() else args.root / args.baseline
         report.update(tools=sorted(tools), analyzers=analyzers, source_files=len(metrics), findings=len(findings),
                       findings_by_tool=dict(sorted(Counter(f["tool"] for f in findings).items())),
                       hotspots=sorted(metrics, key=lambda m: (-m["branch_tokens"], m["path"]))[:10],
                       duplication=duplicates, metrics=metrics,
                       coverage={"status": "not_measured"}, churn={"status": "not_requested"})
+        if analysis_runtime:
+            report["analysis_runtime"] = analysis_runtime
         if args.jacoco:
             coverage = ET.parse(args.jacoco).getroot()
             if coverage.tag != "report":
@@ -252,6 +261,8 @@ def main(argv=None) -> int:
             baseline.parent.mkdir(parents=True, exist_ok=True)
             data = make_baseline(findings, tools, args.revision)
             data["analyzers"] = analyzers
+            if analysis_runtime:
+                data["analysis_runtime"] = analysis_runtime
             baseline.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
             report.update(status="baseline_written")
         else:
@@ -259,6 +270,16 @@ def main(argv=None) -> int:
             for tool, version in analyzers.items():
                 if data.get("analyzers", {}).get(tool, version) != version:
                     raise ValueError("Analyzer version differs from reviewed baseline: " + tool)
+            if analysis_runtime:
+                expected_runtime = data.get("analysis_runtime")
+                if (not isinstance(expected_runtime, dict)
+                        or set(expected_runtime) != {"java_version", "vm_version"}
+                        or not all(isinstance(v, str) and v.strip() for v in expected_runtime.values())):
+                    raise ValueError("Invalid SpotBugs analysis-runtime baseline metadata")
+                if analysis_runtime != expected_runtime:
+                    raise ValueError("SpotBugs analysis runtime differs from reviewed baseline: expected "
+                                     + json.dumps(expected_runtime, sort_keys=True)
+                                     + "; use the pinned CI JDK before comparing findings")
             introduced, resolved = check_baseline(findings, data, tools)
             report.update(new_findings=introduced, resolved_findings=resolved,
                           status="passed" if not introduced else "failed")
