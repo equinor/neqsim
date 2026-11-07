@@ -109,6 +109,15 @@ checkpoint immutability, runtime and fixed convergence bounds. Run the benchmark
 `run.py` with the selected Python interpreter in a source checkout; its `audit.py`
 checks the full outputs. This optional matrix adds no ordinary simulation overhead.
 
+The acceptance audit independently inspects every endpoint and reconstructs its
+pressure/water errors from the pinned reference. It rejects non-finite values,
+missing rows, wrong matrix identities and inconsistent reported diagnostics,
+including when Python assertions are disabled. Component, storage and explicit
+SRK pressure closure are checked from the retained row fields. Final native phase
+volume is not present in those fields, so the final pore-volume residual remains
+a separately bounded native diagnostic. This integrity repair leaves the original
+model, reference data and numerical acceptance tolerances unchanged.
+
 The reference uses fixed synthetic EOS inputs with identical original/tuned
 checkpoints and prescribed methane withdrawals. It does not establish measured
 laboratory calibration, produced-phase/GOR accuracy, radial aquifer equivalence,

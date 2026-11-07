@@ -1,4 +1,7 @@
 {
+ "code health maintainability": ["neqsim-code-health"],
+ "safe refactoring duplicate helpers": ["neqsim-safe-refactoring"],
+ "independent source code review": ["neqsim-code-review"],
  "vannduggpunkt med CPA": [
   "neqsim-cpa-water-boundaries"
  ],

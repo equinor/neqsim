@@ -1,6 +1,9 @@
 {
   "$comment": "Golden cases for devtools/agent_eval.py. routing: a user prompt must surface the expected agent handle / skill names within top-k via the same retrievers agents use. contracts: a results.json shape must pass, or fail on the named rule. Deterministic; no LLM.",
   "routing": [
+    {"id": "code-health-maintenance", "prompt": "Assess NeqSim code health and maintainability, rank technical debt and dependency complexity hotspots, and plan a bounded maintenance backlog.", "expect_agent_top3": ["code-health"], "expect_skills_top5": ["neqsim-code-health"]},
+    {"id": "safe-source-refactoring", "prompt": "Refactor duplicate NeqSim source helpers behind stable APIs while preserving state ownership, physical results and calculation speed.", "expect_agent_top3": ["refactor"], "expect_skills_top5": ["neqsim-safe-refactoring"]},
+    {"id": "independent-source-code-review", "prompt": "Independently review a NeqSim source-code diff for API compatibility, state ownership and numerical performance regressions.", "expect_agent_top3": ["code-review"], "expect_skills_top5": ["neqsim-code-review"]},
     {
       "id": "separator-rag-layer-troubleshooting",
       "prompt": "Troubleshoot a growing oil-water emulsion rag layer in a separator after a production increase; compare droplet coalescence and dispersed-water load using a dynamic study.",

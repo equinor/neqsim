@@ -41,3 +41,22 @@ published primary reference enforces initial pressure closure below 1e-10 bara.
 This is independent finite-EOS numerical qualification, not measured field accuracy,
 parameter identification, Bayesian sensitivity, radial-transient/Carter–Tracy/VEH
 comparison, water mixing, broader phase behavior or complete issue #4740 acceptance.
+
+## Acceptance-gate integrity
+
+The audit validates all 64 replay identities and all 1,920 endpoint arrays before
+using the original finest-mesh and convergence criteria. Non-finite values, missing
+rows, wrong identities and negative absolute diagnostics fail explicitly, including
+under Python optimization. Pressure/water maxima are recomputed against the pinned
+reference instead of trusted from the native report. Every endpoint is checked for
+time, named methane balance, aquifer storage and independent explicit-SRK pressure
+closure. Integrity bounds are documented in `audit-integrity-scope.md`. The original
+reference, native outputs and numerical acceptance bounds are unchanged.
+
+The final pore-volume residual remains a finite, bounded **native diagnostic**;
+these row fields do not independently expose the final native phase volume. The
+audit does not relabel that diagnostic as an independent volume measurement.
+`devtools/test_coupled_aquifer_audit.py` checks the valid retained matrix and 71
+corruption controls. `audit-integrity-validation.json` records the reproduced
+baseline false acceptances, corrected audit, commands, runtime and documentation
+impact. No production API, EOS parameter or simulation-path behavior changes.
