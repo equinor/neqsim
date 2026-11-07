@@ -5,6 +5,8 @@ description: "Guides for contributing to and extending NeqSim, including adding 
 
 {% include_relative README.md %}
 
+- [Code health and agentic maintenance](CODE_HEALTH.md)
+
 - [Agent and MCP engineering capability coverage](ENGINEERING_CAPABILITY_COVERAGE.md)
 - [Discover functionality for agentic work](AGENT_CAPABILITY_DISCOVERY.md)
 - [Physical plant layout studies and CAD delivery](PLANT_LAYOUT_STUDY.md)

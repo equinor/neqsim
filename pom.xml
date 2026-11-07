@@ -134,6 +134,25 @@
 	</dependencies>
 	<profiles>
 		<profile>
+			<id>code-health</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>com.github.spotbugs</groupId>
+						<artifactId>spotbugs-maven-plugin</artifactId>
+						<configuration>
+							<!-- Fail on analyzer failure; findings are gated by the reviewed baseline. -->
+							<failOnError>true</failOnError>
+							<maxHeap>2048</maxHeap>
+							<jvmArgs>-XX:ActiveProcessorCount=2</jvmArgs>
+							<!-- Native spotbugsXml.xml is always retained; omit the duplicate XDoc report. -->
+							<xmlOutput>false</xmlOutput>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
 			<id>release</id>
 			<properties>
 				<skipFlattening>true</skipFlattening>

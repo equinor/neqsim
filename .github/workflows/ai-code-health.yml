@@ -1,0 +1,120 @@
+name: "[AI] Code Health"
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  source:
+    name: Code health source contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: devtools/uv.lock
+      - name: Select reviewed base-branch policy
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.sha }}
+        run: |
+          if git cat-file -e "$BASE_SHA:.config/code-health-baseline.json" 2>/dev/null; then
+            git show "$BASE_SHA:.config/code-health-baseline.json" > "$RUNNER_TEMP/code-health-baseline.json"
+          else
+            echo "::notice::Initial baseline bootstrap; review its findings before merge."
+            cp .config/code-health-baseline.json "$RUNNER_TEMP/code-health-baseline.json"
+          fi
+      - name: Test debt checks, coding grader and scalar parser
+        run: >-
+          uv run --project devtools --locked --group test python -m pytest -q
+          devtools/test_code_health.py devtools/test_coding_eval.py
+          devtools/test_verify_skills_agents.py devtools/test_agent_frontmatter.py
+      - name: Reject new source and dependency findings
+        run: >-
+          uv run --project devtools --locked devtools/code_health.py
+          --baseline "$RUNNER_TEMP/code-health-baseline.json"
+          --output target/code-health-source.json
+      - name: Retain source-health evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: code-health-source
+          path: target/code-health-source.json
+          if-no-files-found: warn
+
+  static:
+    name: Code health static analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      MAVEN_OPTS: -Xmx1024m
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Determine analyzer impact
+        id: impact
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.sha }}
+        run: |
+          if [ "$EVENT_NAME" = pull_request ] && git diff --quiet "$BASE_SHA" HEAD -- src/main/java pom.xml devtools/code_health.py .config/code-health-baseline.json .github/workflows/ai-code-health.yml; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Set up Java for static analysis
+        if: steps.impact.outputs.run == 'true'
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - uses: astral-sh/setup-uv@v10.3.3
+        if: steps.impact.outputs.run == 'true'
+        with:
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: devtools/uv.lock
+      - name: Select reviewed base-branch policy
+        if: steps.impact.outputs.run == 'true'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.sha }}
+        run: |
+          if git cat-file -e "$BASE_SHA:.config/code-health-baseline.json" 2>/dev/null; then
+            git show "$BASE_SHA:.config/code-health-baseline.json" > "$RUNNER_TEMP/code-health-baseline.json"
+          else
+            echo "::notice::Initial baseline bootstrap; review its findings before merge."
+            cp .config/code-health-baseline.json "$RUNNER_TEMP/code-health-baseline.json"
+          fi
+      - name: Generate complete analyzer reports
+        if: steps.impact.outputs.run == 'true'
+        run: ./mvnw -B -ntp -Pcode-health -DskipTests compile pmd:pmd spotbugs:spotbugs
+      - name: Reject new high-priority analyzer findings
+        if: steps.impact.outputs.run == 'true'
+        run: >-
+          uv run --project devtools --locked devtools/code_health.py
+          --tools pmd,spotbugs --pmd target/pmd.xml --spotbugs target/spotbugsXml.xml
+          --baseline "$RUNNER_TEMP/code-health-baseline.json"
+          --output target/code-health-static.json
+      - name: Retain analyzer and health evidence
+        if: always() && steps.impact.outputs.run == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: code-health-static
+          path: |
+            target/code-health-static.json
+            target/pmd.xml
+            target/spotbugsXml.xml
+          if-no-files-found: warn
