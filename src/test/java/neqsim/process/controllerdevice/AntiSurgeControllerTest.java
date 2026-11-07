@@ -58,7 +58,9 @@ public class AntiSurgeControllerTest {
     }
     double openLow = controller.getValveOpening();
     Assertions.assertTrue(openLow > 5.0, "Recycle valve should open when surge margin is low");
-    Assertions.assertEquals(openLow, recycle.getPercentValveOpening(), 1e-9);
+    // Controller output is a request; actual motion belongs to the valve physical step (issue #4899).
+    Assertions.assertEquals(openLow, recycle.getTargetPercentValveOpening(), 1e-9);
+    Assertions.assertEquals(0.0, recycle.getPercentValveOpening(), 1e-9);
 
     // restore a healthy margin: controller should close the valve back down
     controller.reset();

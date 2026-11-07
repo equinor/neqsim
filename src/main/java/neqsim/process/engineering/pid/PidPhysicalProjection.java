@@ -314,6 +314,21 @@ public final class PidPhysicalProjection {
       return;
     }
     if (element.getType() == PidElementType.MEASUREMENT || element.getType() == PidElementType.INDICATOR) {
+      boolean calculated = "CALCULATED_COMPRESSOR_MAP_MARGIN".equals(element.getAttributes().get("inputKind"));
+      if (calculated) {
+        if (bound != null && "MEASUREMENT".equals(role)
+            && neqsim.process.measurementdevice.CompressorSurgeMarginMeasurement.class.getName()
+                .equals(text(bound.get("simulationClass")))
+            && bound.get("calculatedInputEquipment") instanceof Map && element.getEquipmentTag()
+                .equals(text(((Map<?, ?>) bound.get("calculatedInputEquipment")).get("name")))) {
+          row.put("direction", "CALCULATED");
+          row.put("streamTag", "");
+          resolved(row, Kind.FUNCTION);
+        } else {
+          hold(row, "CALCULATED_MARGIN_REQUIRES_EXACT_NATIVE_SOURCE_BINDING");
+        }
+        return;
+      }
       boolean manual = "MANUAL_PUSH_BUTTON".equals(element.getAttributes().get("inputKind"));
       boolean actualButton = bound != null && "MEASUREMENT".equals(role)
           && PushButton.class.getName().equals(text(bound.get("simulationClass")));

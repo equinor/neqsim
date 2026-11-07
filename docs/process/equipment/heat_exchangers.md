@@ -91,8 +91,9 @@ side 0, so use `getOutStream(int)` or `getOutletStreams()` when both sides matte
 ## Single-stream heater and cooler specifications
 
 Use `setOutletTemperature(value, unit)` for a unit-bearing heater or cooler temperature
-specification. The legacy `setOutTemperature(double)` accepts kelvin only and is deprecated;
-there is no `setOutTemperature(double, String)` overload on `Heater` or `Cooler`.
+specification. The legacy `setOutTemperature(double)` accepts kelvin only and is deprecated.
+The inherited deprecated `setOutTemperature(double, String)` delegates to the preferred
+unit-bearing method.
 
 Other supported modes are:
 
@@ -103,6 +104,27 @@ Other supported modes are:
 
 The most recently selected temperature, duty, or energy-stream mode controls the calculation.
 After `run()`, read `getDuty()` in W or `getDuty(unit)` in a supported power unit such as `"kW"`.
+
+### Cooler control policy and utility loss
+
+`Cooler.configureDynamicTemperatureControl(...)` configures the native dynamic NTU model,
+actuator lag and thermal lag. Enable transient dispatch with `setCalculateSteadyState(false)`.
+An attached controller requests the embedded cooling-utility opening; it does not create a
+utility stream or an external valve in the material topology.
+
+`getDynamicTemperatureControlConfiguration()` returns the complete versioned policy;
+`applyDynamicTemperatureControlConfiguration(Map)` validates it atomically before applying it.
+The policy carries design flow, NTU, cooling-medium temperature, design opening, both time
+constants and utility availability. Applying it preserves actual opening, outlet temperature,
+flow and calculation identifiers. Dispatch mode remains a separate equipment setting and must
+be checked when crediting dynamic control.
+
+`setCoolingUtilityAvailabilityFraction(value)` accepts a finite fraction from zero to one.
+It scales the native heat-transfer NTU while the controller and actuator continue responding.
+At zero availability the dynamic model removes no heat; it does not impose an outlet
+temperature. `setDynamicCoolingUtilityAvailable(boolean)` provides the corresponding binary
+fault input. Existing serialized coolers retain full utility availability. These inputs model
+available heat-transfer capacity; they do not qualify a cooling-water hydraulic network.
 
 ### Repeated steady-state execution
 

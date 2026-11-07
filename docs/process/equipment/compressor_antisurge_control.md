@@ -154,7 +154,37 @@ contains a `Recycle` or `RecycleFlowCoordinator`, even if parallel transient
 execution was requested. This protects the insertion-order dependency rather
 than silently running the recycle loop concurrently.
 
-This distinction is important because steady-state anti-surge and dynamic anti-surge are different problems. `AntiSurgeRecycleCalculator` is the preferred steady-state helper for a charted compressor when you want a cooled recycle stream mixed back into suction and solved to a configured surge-control margin. The older `AntiSurgeCalculator` is an algebraic splitter-based helper that adjusts recycle split flow during `process.run()`. `AntiSurgeController` is a transient controller that changes the recycle valve opening during `runTransient()` based on the compressor surge margin, optional prediction, and actuator dynamics.
+This distinction is important because steady-state anti-surge and dynamic anti-surge are different problems. `AntiSurgeRecycleCalculator` is the preferred steady-state helper for a charted compressor when you want a cooled recycle stream mixed back into suction and solved to a configured surge-control margin. The older `AntiSurgeCalculator` is an algebraic splitter-based helper that adjusts recycle split flow during `process.run()`. `AntiSurgeController` is a transient controller that requests recycle valve opening during `runTransient()` based on the compressor surge margin, optional prediction, and actuator dynamics.
+
+## Source-backed instrumentation and actuator handoff
+
+`AntiSurgeController` publishes a **target opening**, while the native valve physical step owns actual position and travel. A standalone controller call no longer moves the valve immediately. This fixes the actuator bypass reported in [#4899](https://github.com/equinor/neqsim/issues/4899). Read `getTargetPercentValveOpening()` for demand and `getPercentValveOpening()` for simulated physical position, then advance the valve through its actual `ProcessSystem` scan. A slow or unavailable actuator must remain slow or unavailable even during an emergency anti-surge demand.
+
+A latched native `ESDValve` trip and an active partial-stroke test own their physical interval ahead of normal regulation. An unavailable actuator can retain the controller's requested target but cannot move. Repeated positive-time UUID dispatch advances the safety trajectory once; a zero-time solve does not consume the later positive interval. These are simulation actuator semantics, not proof of installed final-element performance or a completed proof-test procedure. See [#4901](https://github.com/equinor/neqsim/issues/4901).
+
+The optional `CompressorSurgeMarginMeasurement` consumes a real, registered, held compressor-inlet `VolumeFlowTransmitter` sample. Its dimensionless calculation is:
+
+$$m = Q_{\mathrm{FT,held}} / Q_{\mathrm{surge,native}}(H_{\mathrm{native}}, N_{\mathrm{native}}) - 1$$
+
+The native map head, speed, composition and IGV references remain explicit simulation inputs. Pressure and temperature transmitters shown as monitoring channels do not become causal inputs to this equation. The FT's actual bias or freeze changes the computed margin and the executed anti-surge command. Both main-map flow/speed and surge-curve head domains must be checked before assigning any surge-protection response credit. An out-of-domain map does not become qualified merely because a fallback valve command exists.
+
+```java
+VolumeFlowTransmitter ft = new VolumeFlowTransmitter("30-FT-100", compressor.getInletStream());
+ft.setUnit("m^3/hr");
+ft.setTransientSamplingEnabled(true);
+CompressorSurgeMarginMeasurement margin =
+    new CompressorSurgeMarginMeasurement("30-XY-100", compressor, ft);
+margin.setTransientSamplingEnabled(true);
+process.add(ft);       // sample the actual FT before the calculated function
+process.add(margin);
+antiSurgeController.setSurgeMarginMeasurement(margin);
+```
+
+One physical UUID must cover the held FT, calculated function, controller and valve scan. The calculation retains the exact FT value, native surge reference, head, speed, map-domain result and UUID consumed at that sample; later live state changes do not rewrite that evidence. A configured held input that has no current sample fails closed instead of reverting to a live compressor value. Leaving the optional binding unset retains the legacy direct `getDistanceToSurge()` source, which has no implied field-transmitter fault coverage.
+
+`PidNativeControlSystem.fromProcess(project)` imports registered native instruments, actual controllers and actual final-element identities into the existing canonical P&ID graph. `applyCanonicalConfiguration(...)` applies supported settings to an isolated process copy; `validateConfigured(...)` checks actual configuration and causal wiring and returns a fingerprinted receipt. These receipts establish consumed configuration only. Dynamic response remains a separate native scenario result, and energy/component closure remains separate from the response verdict.
+
+Actual native compressor speed control uses an explicit RPM command function and RPM bounds/rates, rather than treating the compressor as a percent-opening valve. Native driver stop is an actual stop-profile command function. Neither function adds a physical motor, VFD, utility valve, PLC or installed independence claim. DEXPI 2.0.1 and P&ID export retain the actual process topology and true functional signal chain. See [the runnable compressor automation workflow](../safety/compressor-automation-workflow).
 
 ## Advanced Screening and Fault-Tolerant Logic
 

@@ -19,6 +19,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.ProcessElementInterface;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
+import neqsim.process.controllerdevice.AntiSurgeController;
+import neqsim.process.measurementdevice.CompressorSurgeMarginMeasurement;
 import neqsim.process.engineering.EngineeringProject;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.valve.BlowdownValve;
@@ -396,6 +398,17 @@ public final class PidSimulationBindings implements Serializable {
           MeasurementDeviceInterface transmitter = ((ControllerDeviceInterface) element).getTransmitter();
           row.put("transmitter", identity(transmitter));
           row.put("transmitterIdentityStatus", transmitter == null ? "NOT_EXPOSED_OR_UNCONFIGURED" : "AVAILABLE");
+          if (element instanceof AntiSurgeController) {
+            AntiSurgeController antiSurge = (AntiSurgeController) element;
+            row.put("calculatedMarginInput", identity(antiSurge.getSurgeMarginMeasurement()));
+            row.put("protectedCompressor", identity(antiSurge.getCompressor()));
+            row.put("recycleValve", identity(antiSurge.getRecycleValve()));
+          }
+        }
+        if (element instanceof CompressorSurgeMarginMeasurement) {
+          row.put("calculatedInputEquipment", identity(((CompressorSurgeMarginMeasurement) element).getCompressor()));
+          row.put("inputKind", "CALCULATED_COMPRESSOR_MAP_MARGIN");
+          row.put("causalFlowInput", identity(((CompressorSurgeMarginMeasurement) element).getFlowTransmitter()));
         }
         if (element instanceof StreamMeasurementDeviceBaseClass) {
           row.put("measurementLocation", identity(((StreamMeasurementDeviceBaseClass) element).getStream()));
