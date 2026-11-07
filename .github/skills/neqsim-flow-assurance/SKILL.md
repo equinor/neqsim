@@ -703,7 +703,7 @@ for (double qgMSm3d : gasRates) {
 > shutdown/restart, swept-slug, receiver-capacity or hydraulic-pigging evidence.
 > Calibration and validation need separate independent public multicomponent
 > rate data plus mesh/time and complete-cycle evidence.
-> The 100 W/m finite-heat 780 s rich-gas cycle is numerical mesh evidence. It
+> The 100 W/m finite-heat 780 s rich-gas cycle is numerical mesh/time evidence. It
 > retains the requested dense EOS root across the cubic model's diagnostic
 > $V/B=1.75$ label transition while positive-compressibility, Jacobian and
 > energy-admissibility guards remain active. Do not clip composition or change
@@ -723,6 +723,15 @@ for (double qgMSm3d : gasRates) {
 > gates and inspect the executed hydrocarbon-pool-transfer receipt. Maximum single-cell
 > interface area is extensive, not a convergence target. Independent mesh/time, rate/thermal
 > and moving-boundary conservation evidence is still required for coupled pigging.
+> A conservative `CONSTANT_PRESSURE` inlet now reflashes its explicit or connected external
+> reservoir and resolves signed phase flow with acoustic impedance, carrying the same donor through
+> mass, named-component and enthalpy ledgers. Start a restart ramp from
+> `getInletFacePressure("Pa")`, not the first cell-centre pressure.
+> An explicitly isolated reservoir reuses one flash across internal stages at each pressure;
+> `getPressureInletFlashCount()` verifies that safeguard. A live connected stream remains uncached.
+> The declared full cycle closes on 12/24 cells and 0.5/0.25 s intervals, but one small unfiltered
+> opening reversal and the absence
+> of independent public surge data keep physical restart and distributed hydraulic pigging open.
 > Record refill/valve-opening pressure windows with
 > `TwoFluidPipeReport.analyzePressureTrace(...)`; its unfiltered ringing metrics are numerical
 > diagnostics, not an independently validated surge limit.

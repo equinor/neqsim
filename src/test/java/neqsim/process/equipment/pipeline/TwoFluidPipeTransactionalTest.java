@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.UUID;
 import org.apache.commons.lang3.SerializationUtils;
 import org.junit.jupiter.api.Test;
@@ -132,6 +133,101 @@ class TwoFluidPipeTransactionalTest {
     TwoFluidPipe.TransientCandidate stale = pipe.prepareTransientCandidate(1.0e-4, UUID.randomUUID());
     pipe.setMaximumTransientSubsteps(9999);
     assertThrows(IllegalStateException.class, () -> pipe.acceptTransientCandidate(stale));
+  }
+
+  @Test
+  void detachedPressureBoundaryTrialsLeaveOwnerAndConnectedInletUntouched() throws Exception {
+    TwoFluidPipe pipe = createPipe(false);
+    pipe.prepareConservativeEnergyTransientFromSteadyState();
+    pipe.setTransactionalTransientEnabled(true);
+    StreamInterface inlet = pipe.getInletStream();
+    SystemInterface acceptedInletFluid = inlet.getFluid();
+    TwoFluidPipe.BoundaryCondition acceptedInletBoundary = pipe.getInletBoundaryCondition();
+    TwoFluidPipe.BoundaryCondition acceptedOutletBoundary = pipe.getOutletBoundaryCondition();
+    SystemInterface trialDonor = SerializationUtils.clone(acceptedInletFluid);
+    trialDonor.setTemperature(290.0, "K");
+    trialDonor.setTotalFlowRate(0.1, "kg/sec");
+    byte[] donorBefore = SerializationUtils.serialize(trialDonor);
+    byte[] before = SerializationUtils.serialize(pipe);
+
+    TwoFluidPipe.TransientCandidate first = pipe.prepareTransientCandidate(1.0e-4, UUID.randomUUID(), 62.0e5, 50.0e5,
+        trialDonor, trialDonor);
+    assertArrayEquals(before, SerializationUtils.serialize(pipe), "First detached trial changed its owner");
+    TwoFluidPipe.TransientCandidate second = pipe.prepareTransientCandidate(1.0e-4, UUID.randomUUID(), 58.0e5, 54.0e5,
+        trialDonor, trialDonor);
+
+    assertArrayEquals(before, SerializationUtils.serialize(pipe), "Second detached trial changed its owner");
+    assertArrayEquals(donorBefore, SerializationUtils.serialize(trialDonor));
+    assertSame(inlet, pipe.getInletStream());
+    assertSame(acceptedInletFluid, inlet.getFluid());
+    double firstInletMass = first.getMassBalanceReport().getInletMassKg(TwoFluidMassBalanceReport.Phase.TOTAL);
+    double secondInletMass = second.getMassBalanceReport().getInletMassKg(TwoFluidMassBalanceReport.Phase.TOTAL);
+    assertTrue(firstInletMass > 0.0, "A reservoir above the accepted inlet pressure must admit mass");
+    assertTrue(secondInletMass < 0.0, "A reservoir below the accepted inlet pressure must release pipe inventory");
+
+    pipe.acceptTransientCandidate(first);
+    assertEquals(TwoFluidPipe.BoundaryCondition.CONSTANT_PRESSURE, pipe.getInletBoundaryCondition());
+    assertEquals(TwoFluidPipe.BoundaryCondition.CONSTANT_PRESSURE, pipe.getOutletBoundaryCondition());
+    assertEquals(62.0e5, (Double) field(pipe, "inletPressure"), 0.0);
+    assertEquals(50.0e5, (Double) field(pipe, "outletPressure"), 0.0);
+    assertSame(inlet, pipe.getInletStream());
+    assertSame(acceptedInletFluid, inlet.getFluid());
+    assertThrows(IllegalStateException.class, () -> pipe.acceptTransientCandidate(second));
+
+    pipe.rollbackTransientCandidate(first);
+    assertEquals(0.0, pipe.getSimulationTime(), 0.0);
+    assertEquals(acceptedInletBoundary, pipe.getInletBoundaryCondition());
+    assertEquals(acceptedOutletBoundary, pipe.getOutletBoundaryCondition());
+    assertSame(inlet, pipe.getInletStream());
+    assertSame(acceptedInletFluid, inlet.getFluid());
+    assertThrows(IllegalArgumentException.class,
+        () -> pipe.prepareTransientCandidate(1.0e-4, UUID.randomUUID(), Double.NaN, 50.0e5, null, null));
+  }
+
+  /** Trial reservoir ownership must survive acceptance without replacing the connected live inlet. */
+  @Test
+  void detachedInletDonorOverridesIsolatedReservoirAndSurvivesAcceptance() {
+    TwoFluidPipe pipe = createPipe(false);
+    pipe.prepareConservativeEnergyTransientFromSteadyState();
+    pipe.setInletBoundaryFluid(pipe.getInletStream().getFluid());
+    SystemInterface acceptedReservoir = pipe.getInletBoundaryFluid();
+    SystemInterface connectedFluid = pipe.getInletStream().getFluid();
+    SystemInterface trialDonor = connectedFluid.clone();
+    trialDonor.setMolarComposition(new double[] {0.98, 0.02});
+    trialDonor.setTemperature(290.0, "K");
+    byte[] donorBefore = SerializationUtils.serialize(trialDonor);
+    byte[] ownerBefore = SerializationUtils.serialize(pipe);
+    double expectedMethaneMassFraction = 0.98 * trialDonor.getComponent("methane").getMolarMass()
+        / (0.98 * trialDonor.getComponent("methane").getMolarMass()
+            + 0.02 * trialDonor.getComponent("ethane").getMolarMass());
+
+    TwoFluidPipe.TransientCandidate candidate = pipe.prepareTransientCandidate(1.0e-4, UUID.randomUUID(), 62.0e5,
+        50.0e5, trialDonor, null);
+
+    assertArrayEquals(ownerBefore, SerializationUtils.serialize(pipe));
+    assertArrayEquals(donorBefore, SerializationUtils.serialize(trialDonor));
+    int methaneIndex = Arrays.asList(candidate.getComponentConservationReport().getComponentNames()).indexOf("methane");
+    assertTrue(methaneIndex >= 0);
+    double[] inletMassKg = candidate.getComponentConservationReport().getInletBoundaryMassKg();
+    assertTrue(inletMassKg[0] > 0.0 && inletMassKg[1] > 0.0);
+    assertEquals(expectedMethaneMassFraction, inletMassKg[methaneIndex] / (inletMassKg[0] + inletMassKg[1]), 1.0e-12,
+        "The detached donor must override a previously configured isolated reservoir");
+
+    pipe.acceptTransientCandidate(candidate);
+    assertSame(connectedFluid, pipe.getInletStream().getFluid());
+    assertArrayEquals(trialDonor.getMolarComposition(), pipe.getInletBoundaryFluid().getMolarComposition(), 1.0e-12);
+    assertEquals(1L, pipe.getPressureInletFlashCount(), "One isolated trial pressure requires only one donor flash");
+    TwoFluidPipe.TransientCandidate continuation = pipe.prepareTransientCandidate(1.0e-4, UUID.randomUUID(), 62.0e5,
+        50.0e5, null, null);
+    double[] continuedInletMassKg = continuation.getComponentConservationReport().getInletBoundaryMassKg();
+    assertEquals(expectedMethaneMassFraction,
+        continuedInletMassKg[methaneIndex] / (continuedInletMassKg[0] + continuedInletMassKg[1]), 1.0e-12,
+        "A null donor must retain the accepted isolated reservoir on the next interval");
+
+    pipe.rollbackTransientCandidate(candidate);
+    assertArrayEquals(acceptedReservoir.getMolarComposition(), pipe.getInletBoundaryFluid().getMolarComposition(), 0.0);
+    assertSame(connectedFluid, pipe.getInletStream().getFluid());
+    assertArrayEquals(donorBefore, SerializationUtils.serialize(trialDonor));
   }
 
   @Test

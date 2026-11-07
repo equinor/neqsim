@@ -23,9 +23,11 @@ sequence with the hydrostatic-area and wall-inventory path from exact base
 - Available evaporation heat: 100 W/m. This remains an explicit kinetic screening limit.
 - Wall/seabed screen: 26 mm steel, 7850 kg/m3, 500 J/(kg K), 4 W/(m2 K), 277.15 K environment and
   an explicit 277.15 K initial wall profile. These inputs are not calibrated field data.
-- External interval: 0.5 s.
+- External intervals: 0.5 s for the 12/24-cell spatial pair and 0.25 s for the 12-cell time refinement.
 - Sequence: 120 s 150-to-10 bara gas-only blowdown; 120 s closed-outlet settling; 420 s
-  same-composition inlet refill at 1000 kg/s with the outlet closed; 120 s closed hold.
+  same-composition inlet-reservoir pressure ramp from the accepted closed-face pressure to 150 bara
+  with the outlet closed; 120 s closed hold. Signed acoustic compatibility, not an imposed mass
+  rate, determines refill.
 
 ### Common physical route under refinement
 
@@ -62,31 +64,39 @@ cycle. It is an extensive local diagnostic and is not a mesh-convergence target.
 6. The refill event records unfiltered inlet-pressure extrema, peak-to-peak pressure, adjacent-sample
    rate, total/excess variation and direction reversals with an explicit Pa gate. These are numerical
    ringing diagnostics, not an experimental surge band.
+7. Halving the 12-cell interval must keep peak/final oil and pressure peak-to-peak within 10% and
+   maximum sampled pressure rate within 20%. The exploratory zero-excess/zero-reversal observation
+   is retained as evidence, not relaxed into a passing gate after execution.
 
 ## Executed flowing-model result
 
-`refinement.csv` is the 2026-11-05 flowing-area execution receipt on the common physical
+`refinement.csv` is the 2026-11-06 flowing-area and pressure-restart execution receipt on the common physical
 polyline. The [validation record](fix-validation.json) identifies the exact source blobs,
 area assumption, tests and limits. Both meshes complete every accepted interval with zero
 trace-area fallback. The original 10% peak/final inventory gates and conservation tolerances
 remain unchanged.
 
-Peak oil differs by **2.478%** and final oil by **2.576%**, using the larger-value denominator.
+Peak and final oil each differ by **0.791%** across the 12/24-cell pair. Halving the 12-cell interval
+changes peak/final oil by **0.0912%/0.0949%**, restart pressure amplitude by **0.0985%**, and maximum
+sampled pressure rate by **0.122%**, all using the larger-value denominator.
 
-| Metric | 12 cells | 24 cells |
-| --- | ---: | ---: |
-| Peak oil, kg | 24452.2551 | 25073.6019 |
-| Final oil, kg | 24121.5545 | 24759.3861 |
-| Maximum single-cell interface area, m2 | 188.131134 | 97.5983368 |
-| Maximum wall-temperature change, K | 42.8647005 | 44.2354846 |
-| Minimum heat-limit scale | 0.00105912011 | 0.000906119962 |
-| Refill pressure peak-to-peak, Pa | 10063252.9 | 10132457.7 |
-| Maximum adjacent-sample pressure rate, Pa/s | 271534.482 | 525257.438 |
-| Ringing ratio | 0.023274119 | 0.0379533502 |
-| Reversals at 100 Pa | 6 | 10 |
+| Metric | 12 cells / 0.5 s | 24 cells / 0.5 s | 12 cells / 0.25 s |
+| --- | ---: | ---: | ---: |
+| Peak oil, kg | 19300.4713 | 19454.3631 | 19318.0946 |
+| Final oil, kg | 18907.7349 | 19058.4930 | 18925.6900 |
+| Maximum single-cell interface area, m2 | 184.564447 | 97.3387884 | 184.399851 |
+| Maximum wall-temperature change, K | 42.8647005 | 44.2354846 | 42.8203107 |
+| Minimum heat-limit scale | 0.00115244119 | 0.000970415058 | 0.00115497086 |
+| Refill pressure peak-to-peak, Pa | 10587177.1 | 10546103.8 | 10576749.9 |
+| Maximum adjacent-sample pressure rate, Pa/s | 30337.6141 | 34228.6979 | 30374.7793 |
+| Excess variation, Pa | 125.713 | 0 | 1761.765 |
+| Ringing ratio | 0.0000118740 | 0 | 0.000166570 |
+| Reversals at 100 Pa | 0 | 0 | 1 |
 
-The finite heat-limit scales prove that the declared 100 W/m limit activates. Pressure-rate
-and ringing metrics are unfiltered numerical diagnostics; they are not a qualified surge band.
+The finite heat-limit scales prove that the declared 100 W/m limit activates. The time-refined trace
+falls 0.88 kPa in its first 0.25 s sample before rising smoothly; its one reversal and 1.76 kPa
+excess variation remain unfiltered. Pressure-rate and ringing metrics are numerical diagnostics,
+not a qualified surge band.
 
 ## Area-model correction and retained failed evidence
 
@@ -111,9 +121,10 @@ pressure-moment controls retain their numerical values; source identity remains 
 
 ## Remaining qualification
 
-This is analytical and declared-parameter numerical conservation/inventory evidence. It does
-not establish independent experimental rate/thermal accuracy, pressure-rate/ringing convergence,
-a restart-opening surge band, repeated-cycle behavior, severe slugging, field depletion or
-hydraulic pigging. The dense-root, positive-compressibility and Jacobian guards remain active.
-Moving-pig fluid-volume, face-flux and pressure-work coupling is still withheld. The separate
-five-second riser matrix and physical restart acceptance remain open.
+This is analytical and declared-parameter numerical conservation/inventory/restart-boundary
+evidence. It does not establish independent experimental rate/thermal accuracy, a validated
+restart-opening surge band, repeated-cycle behavior, gelled-oil restart, severe slugging, field
+depletion or hydraulic pigging. The dense-root, positive-compressibility and Jacobian guards remain
+active. Distributed moving-pig fluid-volume, face-flux and pressure-work coupling remains split as
+an independently high-risk moving-boundary algorithm until this restart boundary has independent
+validation and the separate five-second riser matrix passes.

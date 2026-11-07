@@ -1264,7 +1264,9 @@ coefficients, elapsed pool depletion, shutdown/restart or hydraulic pigging; ind
 multicomponent rate data and full-cycle/refinement evidence remain required for those claims. See
 the [process-model contract](../process/TWOFLUIDPIPE_MODEL.md#opt-in-finite-rate-hydrocarbon-pool-transfer).
 The executed 100 W/m finite-heat 780 s rich-gas cycle uses gas-only blowdown, closed settling,
-same-composition inlet refill with the outlet closed, and a closed hold. Its prescribed-area
+a same-composition pressure-reservoir ramp with the outlet closed, and a closed hold. The inlet
+reservoir is reflashed at each pressure and acoustic compatibility supplies signed phase flow;
+pressure traction alone is not treated as refill. Its prescribed-area
 screen exercises the finite heat limit. Historical 12/24-cell differences used a level outlet
 defined by cell count and cannot isolate spatial error. Conservative recovery explicitly retains the requested EOS root
 across the cubic model's diagnostic $V/B=1.75$ phase-label transition while preserving positive
@@ -1293,11 +1295,14 @@ comparison now uses the same final 1250 m level outlet at -333.5 m elevation on 
 The previous "last three cells" rule compared different terrains. See the
 [executed receipt](../../src/test/resources/neqsim/process/pipeline/hydrocarbon-pool-transfer/README.md)
 for the corrected inventory, wall and unfiltered pressure diagnostics. The current flowing-area
-run passes the original 10% peak/final inventory gates at 2.478%/2.576%. The historical per-cell
+run passes the original 10% peak/final inventory gates at 0.791%/0.791%. The historical per-cell
 stationary-puddle model still fails at 11.21%/10.86%; the new area assumption predicts different
 inventories and does not validate that historical trajectory. Maximum single-cell area
-is an extensive diagnostic, not a mesh-convergence target. Physical restart, independent public
-validation and hydraulic pigging remain unqualified.
+is an extensive diagnostic, not a mesh-convergence target. The pressure-driven boundary and the
+complete declared cycle are numerical restart evidence, including a 0.5/0.25 s time refinement.
+The unfiltered time-refined trace retains one sub-2 kPa opening reversal before rising by about
+10.58 MPa; no filter or threshold adjustment removes it. Independent public restart/surge
+validation, repeated cycles and hydraulic pigging remain unqualified.
 
 With component transport enabled, the downstream outlet composition follows the positive outbound
 component ledger rather than the latest inlet composition or the final cell's instantaneous phase

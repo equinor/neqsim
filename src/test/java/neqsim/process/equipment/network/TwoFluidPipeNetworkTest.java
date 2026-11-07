@@ -285,15 +285,24 @@ class TwoFluidPipeNetworkTest {
       for (double componentKg : pipe.getLastComponentConservationReport().getOutletBoundaryMassKg()) {
         observedSignedFallback |= componentKg < 0.0;
       }
+      TwoFluidPipeNetwork.ThermodynamicBalanceReport report = network.getLastThermodynamicBalanceReport();
+      assertEquals(0.0, report.getExternalInletEnergyJ(), 0.0);
+      assertEquals(0.0, report.getExternalOutletEnergyJ(), 0.0);
+      assertEquals(0.0, report.getSourceEnergyJ(), 0.0);
+      assertEquals(0.0, report.getGravitationalWorkJ(), 0.0);
+      assertEquals(0.0, report.getWallHeatJ(), 0.0);
+      // This closed, adiabatic network has zero net transfer. A relative residual alone divides storage
+      // subtraction roundoff by itself. Bound every interval by four ulps of the three-inventory sum instead.
+      double storedEnergyScale = Math.max(Math.abs(report.getInitialEnergyJ()), Math.abs(report.getFinalEnergyJ()));
+      assertEquals(0.0, report.getEnergyResidualJ(), 4.0 * Math.ulp(storedEnergyScale),
+          "Closed-network energy must be conserved to storage-summation roundoff at step " + step);
+      for (String componentName : report.getComponentNames()) {
+        assertTrue(report.getRelativeComponentResidual(componentName) < 1.0e-8);
+      }
+      assertTrue(network.getLastBalanceReport().getRelativeResidual(Phase.TOTAL) < 1.0e-8);
     }
 
     assertTrue(observedSignedFallback);
-    TwoFluidPipeNetwork.ThermodynamicBalanceReport report = network.getLastThermodynamicBalanceReport();
-    for (String componentName : report.getComponentNames()) {
-      assertTrue(report.getRelativeComponentResidual(componentName) < 1.0e-8);
-    }
-    assertTrue(report.getRelativeEnergyResidual() < 1.0e-7);
-    assertTrue(network.getLastBalanceReport().getRelativeResidual(Phase.TOTAL) < 1.0e-8);
   }
 
   @Test

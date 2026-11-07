@@ -45,6 +45,7 @@ import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.unit.PressureUnit;
 
 /**
  * Two-fluid transient multiphase pipe model.
@@ -440,6 +441,21 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Independently specified thermodynamic donor for reversed outlet flow. */
   private SystemInterface outletBoundaryFluid;
+
+  /** Optional thermodynamic reservoir for a pressure-driven inlet; null uses the connected inlet stream. */
+  private SystemInterface inletBoundaryFluid;
+
+  /** Flashed pressure-inlet donor used by the accepted component-transport interval. */
+  private SystemInterface activeInletBoundaryFluid;
+
+  /** Cached flash for an explicitly isolated pressure reservoir at the current prescribed pressure. */
+  private transient SystemInterface pressureInletReservoirCache;
+
+  /** Pressure represented by {@link #pressureInletReservoirCache}. */
+  private transient double pressureInletReservoirCachePressure = Double.NaN;
+
+  /** Number of pressure-reservoir flashes, exposed as a performance diagnostic. */
+  private long pressureInletFlashCount;
 
   /** Flag indicating if outlet pressure was explicitly set. */
   private boolean outletPressureSet = false;
@@ -6038,6 +6054,57 @@ public class TwoFluidPipe extends Pipeline {
    * @throws IllegalStateException if initialization or transactional serialization support is missing
    */
   public synchronized TransientCandidate prepareTransientCandidate(double dt, UUID id) {
+    return prepareTransientCandidateInternal(dt, id, Double.NaN, Double.NaN, null, null, false);
+  }
+
+  /**
+   * Advance one detached candidate with trial pressure boundaries without changing the live pipe.
+   *
+   * <p>
+   * This overload exists for algebraic network coordinators that evaluate several junction-pressure trials from one
+   * accepted pipe state. Boundary pressures and optional thermodynamic donor fluids are applied only to the detached
+   * candidate. The owner remains byte-identical until the returned token is accepted. A non-null inlet fluid overrides
+   * the candidate's isolated pressure reservoir and is retained on acceptance; the connected live inlet-stream object
+   * and its fluid are not replaced. A null inlet fluid retains the previously configured reservoir or connected feed.
+   * </p>
+   *
+   * @param dt requested interval in seconds
+   * @param id calculation identifier
+   * @param inletPressurePa trial inlet pressure in Pa
+   * @param outletPressurePa trial outlet pressure in Pa
+   * @param inletBoundaryFluid optional inlet thermodynamic donor, or {@code null} to retain the configured inlet fluid
+   * @param outletBoundaryFluid optional reversed-outlet donor, or {@code null} to retain the configured donor
+   * @return owner-bound candidate evaluated with the supplied detached boundaries
+   * @throws IllegalArgumentException if either pressure is non-positive or non-finite
+   * @throws IllegalStateException if initialization or transactional serialization support is missing
+   */
+  public synchronized TransientCandidate prepareTransientCandidate(double dt, UUID id, double inletPressurePa,
+      double outletPressurePa, SystemInterface inletBoundaryFluid, SystemInterface outletBoundaryFluid) {
+    if (!Double.isFinite(inletPressurePa) || inletPressurePa <= 0.0 || !Double.isFinite(outletPressurePa)
+        || outletPressurePa <= 0.0) {
+      throw new IllegalArgumentException("Detached candidate pressures must be positive and finite");
+    }
+    validateOptionalTransactionalFluid(inletBoundaryFluid);
+    validateOptionalTransactionalFluid(outletBoundaryFluid);
+    return prepareTransientCandidateInternal(dt, id, inletPressurePa, outletPressurePa, inletBoundaryFluid,
+        outletBoundaryFluid, true);
+  }
+
+  /**
+   * Prepare a candidate with either the accepted live boundaries or detached trial boundaries.
+   *
+   * @param dt requested interval in seconds
+   * @param id calculation identifier
+   * @param inletPressurePa detached inlet pressure in Pa
+   * @param outletPressurePa detached outlet pressure in Pa
+   * @param inletBoundaryFluid optional detached inlet fluid
+   * @param outletBoundaryFluid optional detached outlet donor
+   * @param useDetachedBoundaries true to apply the detached boundary configuration
+   * @return owner-bound transient candidate
+   */
+  private TransientCandidate prepareTransientCandidateInternal(double dt, UUID id, double inletPressurePa,
+      double outletPressurePa, SystemInterface inletBoundaryFluid, SystemInterface outletBoundaryFluid,
+      boolean useDetachedBoundaries) {
     validateOutletTakeoffCompatibility();
     if (useConservativeEnergyRecovery) {
       validateConservativeEnergyConfiguration();
@@ -6060,6 +6127,27 @@ public class TwoFluidPipe extends Pipeline {
     validateTransactionalFluid(inStream.getFluid());
     byte[] baseState = SerializationUtils.serialize(this);
     TwoFluidPipe candidate = SerializationUtils.deserialize(baseState);
+    if (useDetachedBoundaries) {
+      candidate.inletBCType = BoundaryCondition.CONSTANT_PRESSURE;
+      candidate.outletBCType = BoundaryCondition.CONSTANT_PRESSURE;
+      candidate.setInletPressure(inletPressurePa);
+      candidate.setOutletPressure(outletPressurePa);
+      if (inletBoundaryFluid != null) {
+        SystemInterface detachedInletFluid = SerializationUtils.clone(inletBoundaryFluid);
+        detachedInletFluid.setPressure(inletPressurePa, "Pa");
+        if (!candidate.useConservativeEnergyRecovery) {
+          new ThermodynamicOperations(detachedInletFluid).TPflash();
+        }
+        candidate.inStream.setFluid(detachedInletFluid);
+        candidate.inletBoundaryFluid = detachedInletFluid;
+      }
+      if (outletBoundaryFluid != null) {
+        SystemInterface detachedOutletFluid = SerializationUtils.clone(outletBoundaryFluid);
+        detachedOutletFluid.setPressure(outletPressurePa, "Pa");
+        new ThermodynamicOperations(detachedOutletFluid).TPflash();
+        candidate.setOutletBoundaryFluid(detachedOutletFluid);
+      }
+    }
     // Section cloning preserves the configured transient oil/water detector and accepted closure result.
     candidate.sections = getSectionSnapshots();
     // Java serialization omits this adaptive history; a candidate must retain it.
@@ -6076,6 +6164,13 @@ public class TwoFluidPipe extends Pipeline {
       thermalCalculator.validateCandidateConfiguration(candidate.thermalCalculator);
     }
     return new TransientCandidate(this, candidate, baseState);
+  }
+
+  /** Validate one optional detached-boundary thermodynamic fluid. */
+  private static void validateOptionalTransactionalFluid(SystemInterface fluid) {
+    if (fluid != null) {
+      validateTransactionalFluid(fluid);
+    }
   }
 
   /**
@@ -6307,6 +6402,11 @@ public class TwoFluidPipe extends Pipeline {
     outletBCType = candidate.outletBCType;
     outletPressure = candidate.outletPressure;
     outletBoundaryFluid = candidate.outletBoundaryFluid;
+    inletBoundaryFluid = candidate.inletBoundaryFluid;
+    activeInletBoundaryFluid = candidate.activeInletBoundaryFluid;
+    pressureInletReservoirCache = null;
+    pressureInletReservoirCachePressure = Double.NaN;
+    pressureInletFlashCount = candidate.pressureInletFlashCount;
     outletPressureSet = candidate.outletPressureSet;
     inletPressure = candidate.inletPressure;
     inletPressureSet = candidate.inletPressureSet;
@@ -6988,8 +7088,9 @@ public class TwoFluidPipe extends Pipeline {
       if (captureComponentStageFluxes) {
         latentHeatEnergyByCellJ = componentTransport.advance(dtActual, weightedPhaseMassFaceFluxes,
             weightedDirectionalPhaseMassFaceFluxes, weightedPhaseMassSources, weightedComponentSources,
-            weightedLatentHeatSources, sections, getInletStream().getFluid(), outletBoundaryFluid, referenceFluid,
-            componentConservationTolerance);
+            weightedLatentHeatSources, sections,
+            activeInletBoundaryFluid == null ? getInletStream().getFluid() : activeInletBoundaryFluid,
+            outletBoundaryFluid, referenceFluid, componentConservationTolerance);
       }
       if (useConservativeEnergyRecovery) {
         recoverConservativeThermodynamics();
@@ -7810,6 +7911,7 @@ public class TwoFluidPipe extends Pipeline {
   private void applyBoundaryConditions() {
     // Inlet boundary
     TwoFluidSection inlet = sections[0];
+    activeInletBoundaryFluid = null;
     equations.setClosedBoundaries(inletBCType == BoundaryCondition.CLOSED, outletBCType == BoundaryCondition.CLOSED);
     // Calibration and every integration stage must use the same external traction.
     equations.setOutletBoundaryPressure(
@@ -7975,13 +8077,10 @@ public class TwoFluidPipe extends Pipeline {
       inlet.setGasMomentumPerLength(inlet.getGasMassPerLength() * vG);
       inlet.setLiquidMomentumPerLength(inlet.getLiquidMassPerLength() * vL);
     } else if (inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet) {
-      // Conservative thermodynamic transport requires a distinct external donor state.
-      // Its zero prescribed velocity does not impose flow: AUSM and the pressure correction
-      // calculate the signed pressure-driven face flux from this reservoir state and the cell.
+      // Conservative thermodynamic transport requires a distinct external donor state. A one-sided acoustic
+      // compatibility relation supplies signed face velocity; pressure traction alone cannot advect reservoir mass.
       if (isTransientMode && useConservativeEnergyRecovery) {
-        TwoFluidSection pressureFace = createPrescribedInletFace(inlet, 0.0);
-        pressureFace.setPressure(inletPressure);
-        equations.setInletBoundaryState(pressureFace);
+        equations.setInletPressureBoundaryState(createPressureDrivenInletFace(inlet));
       } else {
         // Legacy route fixes the inlet cell pressure directly.
         inlet.setPressure(inletPressure);
@@ -8151,6 +8250,53 @@ public class TwoFluidPipe extends Pipeline {
     face.setTemperature(fluid.getTemperature("K"));
     face.setPressure(inletFacePressureFromCells(cell));
     face.updateConservativeVariables();
+    return face;
+  }
+
+  /**
+   * Build a flashed pressure-reservoir face without mutating the connected stream or a physical pipe cell.
+   *
+   * @param cell first physical pipe cell
+   * @return external donor at the currently prescribed pressure
+   */
+  private TwoFluidSection createPressureDrivenInletFace(TwoFluidSection cell) {
+    SystemInterface reservoir;
+    if (inletBoundaryFluid != null && pressureInletReservoirCache != null
+        && Double.compare(pressureInletReservoirCachePressure, inletPressure) == 0) {
+      reservoir = pressureInletReservoirCache;
+    } else {
+      reservoir = (inletBoundaryFluid == null ? getInletStream().getFluid() : inletBoundaryFluid).clone();
+      try {
+        reservoir.setPressure(inletPressure, "Pa");
+        new ThermodynamicOperations(reservoir).TPflash();
+        reservoir.initProperties();
+      } catch (Exception exception) {
+        throw new IllegalStateException("Unable to flash the pressure-driven inlet reservoir", exception);
+      }
+      pressureInletFlashCount++;
+      if (inletBoundaryFluid != null) {
+        pressureInletReservoirCache = reservoir;
+        pressureInletReservoirCachePressure = inletPressure;
+      }
+    }
+    TwoFluidSection face = createPrescribedInletFace(cell, 0.0, reservoir);
+    face.setPressure(inletPressure);
+    if (reservoir.hasPhaseType("gas")) {
+      face.setGasSoundSpeed(reservoir.getPhase("gas").getSoundSpeed());
+    }
+    double liquidSoundSpeedMassSum = 0.0;
+    double liquidMass = 0.0;
+    for (String phaseName : new String[] {"oil", "aqueous"}) {
+      if (reservoir.hasPhaseType(phaseName)) {
+        double phaseMass = reservoir.getPhase(phaseName).getMass();
+        liquidSoundSpeedMassSum += phaseMass * reservoir.getPhase(phaseName).getSoundSpeed();
+        liquidMass += phaseMass;
+      }
+    }
+    if (liquidMass > 0.0) {
+      face.setLiquidSoundSpeed(liquidSoundSpeedMassSum / liquidMass);
+    }
+    activeInletBoundaryFluid = reservoir;
     return face;
   }
 
@@ -10110,6 +10256,47 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Specify the external thermodynamic reservoir used by a constant-pressure inlet.
+   *
+   * <p>
+   * The fluid is defensively copied and flashed at each newly prescribed inlet pressure. Its composition, temperature,
+   * density, acoustic speed and enthalpy supply signed inflow; reversed flow continues to use the first pipe cell as
+   * donor. Pass {@code null} to use the connected inlet stream as the reservoir.
+   * </p>
+   *
+   * @param fluid external inlet reservoir, or {@code null} for the connected inlet stream
+   */
+  public void setInletBoundaryFluid(SystemInterface fluid) {
+    inletBoundaryFluid = fluid == null ? null : fluid.clone();
+    pressureInletReservoirCache = null;
+    pressureInletReservoirCachePressure = Double.NaN;
+  }
+
+  /**
+   * Get a defensive copy of the pressure-driven inlet reservoir.
+   *
+   * @return configured reservoir, or {@code null} when the connected inlet stream is used
+   */
+  public SystemInterface getInletBoundaryFluid() {
+    return inletBoundaryFluid == null ? null : inletBoundaryFluid.clone();
+  }
+
+  /**
+   * Get the number of thermodynamic flashes performed for pressure-driven inlet states.
+   *
+   * <p>
+   * An explicitly configured inlet reservoir is isolated from external mutation, so repeated solver stages at one
+   * prescribed pressure reuse one flash. A connected stream is not isolated and is therefore flashed on every boundary
+   * application. This counter allows callers and qualification tests to verify that distinction.
+   * </p>
+   *
+   * @return cumulative pressure-inlet flash count
+   */
+  public long getPressureInletFlashCount() {
+    return pressureInletFlashCount;
+  }
+
+  /**
    * Specify the external thermodynamic donor used only for reversed phase flow at a pressure outlet.
    *
    * <p>
@@ -10254,6 +10441,10 @@ public class TwoFluidPipe extends Pipeline {
    */
   @Override
   public void setInletPressure(double pressure) {
+    if (Double.compare(this.inletPressure, pressure) != 0) {
+      pressureInletReservoirCache = null;
+      pressureInletReservoirCachePressure = Double.NaN;
+    }
     this.inletPressure = pressure;
     this.inletPressureSet = true;
   }
@@ -12961,6 +13152,24 @@ public class TwoFluidPipe extends Pipeline {
       return getInletStream().getPressure("bara");
     }
     return sections[0].getPressure() / 1e5; // Pa to bara
+  }
+
+  /**
+   * Get the mechanical pressure at the physical inlet face.
+   *
+   * <p>
+   * Unlike {@link #getInletPressure()}, this includes the closed-wall hydrostatic half-cell head or the configured
+   * external pressure traction. Use it as the starting value when changing a closed inlet to a pressure ramp so the
+   * event does not introduce an artificial pressure-force step.
+   * </p>
+   *
+   * @param unit requested pressure unit
+   * @return inlet-face pressure in the requested unit
+   */
+  public double getInletFacePressure(String unit) {
+    double pressurePa = sections == null || sections.length == 0 ? getInletStream().getPressure("Pa")
+        : equations.getInletFacePressure(sections);
+    return new PressureUnit(pressurePa, "Pa").getValue(unit);
   }
 
   /**
