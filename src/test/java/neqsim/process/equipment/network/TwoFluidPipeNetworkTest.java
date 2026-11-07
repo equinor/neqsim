@@ -379,14 +379,42 @@ class TwoFluidPipeNetworkTest {
   }
 
   @Test
-  void boundedAlgebraicSolverRejectsSecondJunction() {
-    TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("bounded algebraic topology");
-    network.addAlgebraicJunction("first", 55.0e5, createFluid(0.95, 0.05));
+  void coupledAlgebraicJunctionsSolveGloballyIndependentOfBranchOrderAndSerialize() {
+    TwoFluidPipeNetwork ordered = createCoupledAlgebraicDaisy(false);
+    TwoFluidPipeNetwork reversed = createCoupledAlgebraicDaisy(true);
 
-    IllegalStateException error = assertThrows(IllegalStateException.class,
-        () -> network.addAlgebraicJunction("second", 54.0e5, createFluid(0.95, 0.05)));
+    ordered.runTransient(0.001, UUID.randomUUID());
+    reversed.runTransient(0.001, UUID.randomUUID());
 
-    assertTrue(error.getMessage().contains("one algebraic junction"));
+    assertEquals(2, ordered.getLastAlgebraicJunctionNames().length);
+    assertEquals("upstream manifold", ordered.getLastAlgebraicJunctionNames()[0]);
+    assertEquals("downstream PLEM", ordered.getLastAlgebraicJunctionNames()[1]);
+    double upstreamPressurePa = ordered.getNodePressurePa("upstream manifold");
+    double downstreamPressurePa = ordered.getNodePressurePa("downstream PLEM");
+    assertTrue(upstreamPressurePa > downstreamPressurePa);
+    assertTrue(upstreamPressurePa < 70.0e5);
+    assertTrue(downstreamPressurePa > 50.0e5);
+    for (String nodeName : ordered.getLastAlgebraicJunctionNames()) {
+      TwoFluidPipeNetwork.AlgebraicJunctionReport report = ordered.getLastAlgebraicJunctionReport(nodeName);
+      assertTrue(report.getMaximumRelativePhaseResidual() < 1.0e-8);
+      for (String componentName : report.getComponentNames()) {
+        assertTrue(Math.abs(report.getComponentResidualKg(componentName)) < 1.0e-9);
+      }
+      assertTrue(report.getRelativeEnergyResidual() < 1.0e-8 || Math.abs(report.getEnergyResidualJ()) < 1.0e-4);
+      assertEquals(ordered.getNodePressurePa(nodeName), reversed.getNodePressurePa(nodeName), 1.0e-2);
+      assertEquals(ordered.getNodeTemperatureK(nodeName), reversed.getNodeTemperatureK(nodeName), 1.0e-8);
+    }
+    assertTrue(ordered.getLastBalanceReport().getRelativeResidual(Phase.TOTAL) < 1.0e-8);
+    assertTrue(ordered.getLastThermodynamicBalanceReport().getRelativeEnergyResidual() < 1.0e-7);
+
+    TwoFluidPipeNetwork restored = SerializationUtils.clone(ordered);
+    restored.runTransient(0.001, UUID.randomUUID());
+    assertEquals(2, restored.getLastAlgebraicJunctionNames().length);
+    TwoFluidPipeNetwork.AlgebraicJunctionReport restoredReport = restored
+        .getLastAlgebraicJunctionReport("upstream manifold");
+    for (String componentName : restoredReport.getComponentNames()) {
+      assertTrue(Math.abs(restoredReport.getComponentResidualKg(componentName)) < 1.0e-9);
+    }
   }
 
   private static void assertBranchLedgerConsistency(TwoFluidPipeNetwork network, String branchName) {
@@ -452,6 +480,26 @@ class TwoFluidPipeNetworkTest {
       network.addPipe("rich inlet", "rich source", "zero-volume manifold", createPipe("rich inlet", 0.99, 0.01));
       network.addPipe("lean inlet", "lean source", "zero-volume manifold", createPipe("lean inlet", 0.90, 0.10));
       network.addPipe("outlet", "zero-volume manifold", "sink", createPipe("outlet", 0.95, 0.05));
+    }
+    return network;
+  }
+
+  private static TwoFluidPipeNetwork createCoupledAlgebraicDaisy(boolean reverseBranchOrder) {
+    TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("coupled algebraic daisy");
+    network.addFixedPressureNode("source", 70.0e5, createFluid(0.99, 0.01));
+    network.addAlgebraicJunction("upstream manifold", 62.0e5, createFluid(0.97, 0.03));
+    network.addAlgebraicJunction("downstream PLEM", 58.0e5, createFluid(0.95, 0.05));
+    network.addFixedPressureNode("sink", 50.0e5, createFluid(0.95, 0.05));
+    if (reverseBranchOrder) {
+      network.addPipe("export", "downstream PLEM", "sink", createPipe("export", 0.95, 0.05));
+      network.addPipe("daisy jumper", "upstream manifold", "downstream PLEM", createPipe("daisy jumper", 0.96, 0.04));
+      network.addPipe("production flowline", "source", "upstream manifold",
+          createPipe("production flowline", 0.99, 0.01));
+    } else {
+      network.addPipe("production flowline", "source", "upstream manifold",
+          createPipe("production flowline", 0.99, 0.01));
+      network.addPipe("daisy jumper", "upstream manifold", "downstream PLEM", createPipe("daisy jumper", 0.96, 0.04));
+      network.addPipe("export", "downstream PLEM", "sink", createPipe("export", 0.95, 0.05));
     }
     return network;
   }

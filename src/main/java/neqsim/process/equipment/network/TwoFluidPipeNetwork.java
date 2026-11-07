@@ -4,10 +4,13 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.lang3.SerializationUtils;
+import org.ejml.simple.SimpleMatrix;
 import neqsim.process.equipment.pipeline.TwoFluidComponentConservationReport;
 import neqsim.process.equipment.pipeline.TwoFluidConservativeEnergyReport;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport;
@@ -29,11 +32,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  *
  * <p>
- * Storage nodes provide explicit pressure inventory. One conservative algebraic zero-volume junction may instead solve
- * a common pressure and mixed thermodynamic donor from the exact signed branch ledgers. A network-wide multi-junction
- * Newton solve and branch subcycling remain outside the current scope. Component and total-energy mixing are available
- * as an explicit opt-in on compressible nodes. Signed outlet fallback is supported only when the downstream node or
- * pipe owns an explicit thermodynamic donor.
+ * Storage nodes provide explicit pressure inventory. Conservative algebraic zero-volume junctions may instead solve
+ * common pressures and mixed thermodynamic donors from the exact signed branch ledgers. Multiple junctions use a global
+ * finite-difference Newton pressure solve inside the same atomic branch transaction. Branch subcycling remains outside
+ * the current scope. Component and total-energy mixing are available as an explicit opt-in on compressible nodes.
+ * Signed outlet fallback is supported only when the downstream node or pipe owns an explicit thermodynamic donor.
  * </p>
  */
 public final class TwoFluidPipeNetwork implements Serializable {
@@ -46,9 +49,13 @@ public final class TwoFluidPipeNetwork implements Serializable {
   private static final double ENERGY_CLOSURE_TOLERANCE = 1.0e-7;
   private static final double ENERGY_CLOSURE_ABSOLUTE_J = 1.0e-4;
   private static final int ALGEBRAIC_MAXIMUM_PRESSURE_ITERATIONS = 16;
-  private static final int ALGEBRAIC_MAXIMUM_THERMODYNAMIC_ITERATIONS = 32;
+  private static final int ALGEBRAIC_MAXIMUM_GLOBAL_PRESSURE_ITERATIONS = 24;
+  private static final int ALGEBRAIC_MAXIMUM_THERMODYNAMIC_ITERATIONS = 128;
   private static final double ALGEBRAIC_PRESSURE_TOLERANCE_PA = 1.0e-2;
   private static final double ALGEBRAIC_TRANSFER_TOLERANCE = 1.0e-8;
+  private static final double ALGEBRAIC_JACOBIAN_RELATIVE_STEP = 1.0e-6;
+  private static final int ALGEBRAIC_MAXIMUM_LINE_SEARCH_ITERATIONS = 10;
+  private static final double ALGEBRAIC_DONOR_RELAXATION = 1.0;
 
   private final String name;
   private final Map<String, NetworkNode> nodes = new LinkedHashMap<String, NetworkNode>();
@@ -58,6 +65,7 @@ public final class TwoFluidPipeNetwork implements Serializable {
   private BalanceReport lastBalanceReport;
   private ThermodynamicBalanceReport lastThermodynamicBalanceReport;
   private AlgebraicJunctionReport lastAlgebraicJunctionReport;
+  private Map<String, AlgebraicJunctionReport> lastAlgebraicJunctionReports = new LinkedHashMap<String, AlgebraicJunctionReport>();
 
   /** Create an empty network. */
   public TwoFluidPipeNetwork(String name) {
@@ -162,7 +170,7 @@ public final class TwoFluidPipeNetwork implements Serializable {
    * The junction has no stored mass or energy. During each network interval, all incident pipes are evaluated from the
    * same accepted state while the coordinator solves a common pressure and an equilibrium mixed donor state. The
    * accepted phase, named-component, and total-energy boundary ledgers must close before any pipe is published. This
-   * initial contract supports one algebraic junction per network and rejects a branch between two algebraic junctions.
+   * Multiple junctions, including branches between junctions, are solved in one coupled global pressure transaction.
    * </p>
    *
    * @param nodeName unique junction name
@@ -174,11 +182,6 @@ public final class TwoFluidPipeNetwork implements Serializable {
     requirePositiveFinite(initialPressurePa, "Algebraic-junction pressure");
     if (initialFluid == null || initialFluid.getNumberOfComponents() == 0) {
       throw new IllegalArgumentException("Algebraic-junction fluid must contain at least one component");
-    }
-    for (NetworkNode node : nodes.values()) {
-      if (node.algebraic) {
-        throw new IllegalStateException("This bounded solver supports one algebraic junction per network");
-      }
     }
     nodes.put(nodeName, NetworkNode.algebraic(nodeName, initialPressurePa, initialFluid));
   }
@@ -193,9 +196,6 @@ public final class TwoFluidPipeNetwork implements Serializable {
     NetworkNode toNode = requireNode(toNodeName);
     if (fromNode == toNode) {
       throw new IllegalArgumentException("Branch '" + branchName + "' cannot connect a node to itself");
-    }
-    if (fromNode.algebraic && toNode.algebraic) {
-      throw new IllegalArgumentException("A branch cannot connect two algebraic junctions in the bounded solver");
     }
     if (pipe == null) {
       throw new IllegalArgumentException("Network pipe cannot be null");
@@ -302,11 +302,13 @@ public final class TwoFluidPipeNetwork implements Serializable {
       publishFrozenNodeStates();
     }
 
-    AlgebraicSolution algebraicSolution = solveAlgebraicJunction(timeStepSeconds, id);
+    AlgebraicNetworkSolution algebraicSolution = solveAlgebraicNetwork(timeStepSeconds, id);
     if (algebraicSolution != null) {
       branchCandidates.putAll(algebraicSolution.branchCandidates);
-      for (int phaseIndex = 0; phaseIndex < PHASE_COUNT; phaseIndex++) {
-        internalPhaseTransferKg[phaseIndex] = -algebraicSolution.report.rawPhaseResidualKg[phaseIndex];
+      for (AlgebraicJunctionReport report : algebraicSolution.reports.values()) {
+        for (int phaseIndex = 0; phaseIndex < PHASE_COUNT; phaseIndex++) {
+          internalPhaseTransferKg[phaseIndex] -= report.rawPhaseResidualKg[phaseIndex];
+        }
       }
     }
 
@@ -462,11 +464,208 @@ public final class TwoFluidPipeNetwork implements Serializable {
     lastBalanceReport = candidateBalanceReport;
     lastThermodynamicBalanceReport = candidateThermodynamicBalanceReport;
     if (algebraicSolution != null) {
-      algebraicSolution.node.acceptAlgebraicState(algebraicSolution.pressurePa, algebraicSolution.fluid);
-      lastAlgebraicJunctionReport = algebraicSolution.report;
+      for (Map.Entry<NetworkNode, AlgebraicAcceptedState> entry : algebraicSolution.states.entrySet()) {
+        entry.getKey().acceptAlgebraicState(entry.getValue().pressurePa, entry.getValue().fluid);
+      }
+      lastAlgebraicJunctionReports = new LinkedHashMap<String, AlgebraicJunctionReport>(algebraicSolution.reports);
+      lastAlgebraicJunctionReport = lastAlgebraicJunctionReports.values().iterator().next();
     } else {
       lastAlgebraicJunctionReport = null;
+      lastAlgebraicJunctionReports = new LinkedHashMap<String, AlgebraicJunctionReport>();
     }
+  }
+
+  /** Solve every configured algebraic junction from one frozen network state. */
+  private AlgebraicNetworkSolution solveAlgebraicNetwork(double timeStepSeconds, UUID id) {
+    List<NetworkNode> junctions = new ArrayList<NetworkNode>();
+    for (NetworkNode node : nodes.values()) {
+      if (node.algebraic) {
+        junctions.add(node);
+      }
+    }
+    if (junctions.isEmpty()) {
+      return null;
+    }
+    if (junctions.size() == 1) {
+      AlgebraicSolution solution = solveAlgebraicJunction(timeStepSeconds, id);
+      return AlgebraicNetworkSolution.single(solution);
+    }
+    return solveCoupledAlgebraicJunctions(junctions, timeStepSeconds, id);
+  }
+
+  /** Solve coupled zero-volume junction pressures and equilibrium donors without publication. */
+  private AlgebraicNetworkSolution solveCoupledAlgebraicJunctions(List<NetworkNode> junctions, double timeStepSeconds,
+      UUID id) {
+    Map<NetworkNode, SystemInterface> donors = new LinkedHashMap<NetworkNode, SystemInterface>();
+    double[] pressuresPa = new double[junctions.size()];
+    for (int index = 0; index < junctions.size(); index++) {
+      NetworkNode junction = junctions.get(index);
+      donors.put(junction, SerializationUtils.clone(junction.algebraicFluid));
+      pressuresPa[index] = junction.getPressurePa();
+    }
+
+    AlgebraicNetworkTrial trial = null;
+    int thermodynamicIterations = 0;
+    boolean finalDonorConverged = false;
+    boolean finalLedgersClose = false;
+    for (; thermodynamicIterations < ALGEBRAIC_MAXIMUM_THERMODYNAMIC_ITERATIONS; thermodynamicIterations++) {
+      trial = solveCoupledAlgebraicPressures(junctions, donors, pressuresPa, timeStepSeconds, id);
+      Map<NetworkNode, SystemInterface> mixedDonors = new LinkedHashMap<NetworkNode, SystemInterface>();
+      boolean donorConverged = true;
+      boolean ledgersClose = true;
+      for (NetworkNode junction : junctions) {
+        SystemInterface recovered = mixAlgebraicDonor(junction, donors.get(junction), trial.nodeTrials.get(junction));
+        SystemInterface mixed = relaxAlgebraicDonor(donors.get(junction), recovered);
+        donorConverged &= algebraicDonorConverged(donors.get(junction), mixed);
+        ledgersClose &= trial.nodeTrials.get(junction).closes();
+        mixedDonors.put(junction, mixed);
+      }
+      donors = mixedDonors;
+      pressuresPa = trial.pressuresPa.clone();
+      finalDonorConverged = donorConverged;
+      finalLedgersClose = ledgersClose;
+      if (ledgersClose) {
+        break;
+      }
+    }
+    if (trial == null || thermodynamicIterations >= ALGEBRAIC_MAXIMUM_THERMODYNAMIC_ITERATIONS) {
+      StringBuilder message = new StringBuilder("Coupled algebraic junctions did not converge their donor states")
+          .append("; donorConverged=").append(finalDonorConverged).append(", ledgersClose=").append(finalLedgersClose);
+      if (trial != null) {
+        for (NetworkNode junction : junctions) {
+          AlgebraicTrial nodeTrial = trial.nodeTrials.get(junction);
+          message.append("; ").append(junction.name).append(" phase=")
+              .append(Arrays.toString(nodeTrial.phaseResidualKg)).append(", component=")
+              .append(Arrays.toString(nodeTrial.componentResidualKg)).append(", energy=")
+              .append(nodeTrial.energyResidualJ);
+        }
+      }
+      throw new IllegalStateException(message.toString());
+    }
+
+    trial = solveCoupledAlgebraicPressures(junctions, donors, pressuresPa, timeStepSeconds, id);
+    Map<NetworkNode, AlgebraicAcceptedState> states = new LinkedHashMap<NetworkNode, AlgebraicAcceptedState>();
+    Map<String, AlgebraicJunctionReport> reports = new LinkedHashMap<String, AlgebraicJunctionReport>();
+    for (int index = 0; index < junctions.size(); index++) {
+      NetworkNode junction = junctions.get(index);
+      AlgebraicTrial nodeTrial = trial.nodeTrials.get(junction);
+      nodeTrial.requireClosure(junction.name);
+      SystemInterface acceptedFluid = SerializationUtils.clone(donors.get(junction));
+      acceptedFluid.setPressure(trial.pressuresPa[index], "Pa");
+      new ThermodynamicOperations(acceptedFluid).TPflash();
+      acceptedFluid.initProperties();
+      AlgebraicJunctionReport report = new AlgebraicJunctionReport(junction.name, trial.pressuresPa[index],
+          thermodynamicIterations + 1, trial.pressureIterations, nodeTrial.phaseResidualKg, nodeTrial.componentNames,
+          nodeTrial.componentResidualKg, nodeTrial.energyResidualJ, nodeTrial.transferScaleKg, nodeTrial.energyScaleJ);
+      states.put(junction, new AlgebraicAcceptedState(trial.pressuresPa[index], acceptedFluid));
+      reports.put(junction.name, report);
+    }
+    return new AlgebraicNetworkSolution(states, trial.branchCandidates, reports);
+  }
+
+  /** Solve the global pressure residual vector for one frozen donor iterate. */
+  private AlgebraicNetworkTrial solveCoupledAlgebraicPressures(List<NetworkNode> junctions,
+      Map<NetworkNode, SystemInterface> donors, double[] initialPressuresPa, double timeStepSeconds, UUID id) {
+    double[] pressuresPa = initialPressuresPa.clone();
+    AlgebraicNetworkTrial trial = evaluateCoupledAlgebraicTrial(junctions, donors, pressuresPa, timeStepSeconds, id, 0);
+    for (int iteration = 1; iteration <= ALGEBRAIC_MAXIMUM_GLOBAL_PRESSURE_ITERATIONS; iteration++) {
+      if (trial.pressureCloses()) {
+        return trial;
+      }
+      double[][] jacobian = new double[junctions.size()][junctions.size()];
+      double[] residual = trial.massResidualVector();
+      for (int column = 0; column < junctions.size(); column++) {
+        double stepPa = Math.max(ALGEBRAIC_PRESSURE_TOLERANCE_PA,
+            ALGEBRAIC_JACOBIAN_RELATIVE_STEP * pressuresPa[column]);
+        double[] perturbedPressurePa = pressuresPa.clone();
+        perturbedPressurePa[column] += stepPa;
+        AlgebraicNetworkTrial perturbed = evaluateCoupledAlgebraicTrial(junctions, donors, perturbedPressurePa,
+            timeStepSeconds, id, iteration);
+        double[] perturbedResidual = perturbed.massResidualVector();
+        for (int row = 0; row < junctions.size(); row++) {
+          jacobian[row][column] = (perturbedResidual[row] - residual[row]) / stepPa;
+        }
+      }
+      SimpleMatrix rightHandSide = new SimpleMatrix(residual.length, 1, true, residual).scale(-1.0);
+      SimpleMatrix pressureUpdate;
+      try {
+        pressureUpdate = new SimpleMatrix(jacobian).solve(rightHandSide);
+      } catch (RuntimeException exception) {
+        throw new IllegalStateException("Coupled algebraic pressure Jacobian is singular", exception);
+      }
+      double initialNorm = trial.pressureResidualNorm();
+      boolean accepted = false;
+      for (int search = 0; search < ALGEBRAIC_MAXIMUM_LINE_SEARCH_ITERATIONS; search++) {
+        double scale = Math.pow(0.5, search);
+        double[] candidatePressurePa = pressuresPa.clone();
+        boolean positiveFinite = true;
+        for (int index = 0; index < candidatePressurePa.length; index++) {
+          candidatePressurePa[index] += scale * pressureUpdate.get(index, 0);
+          positiveFinite &= Double.isFinite(candidatePressurePa[index]) && candidatePressurePa[index] > 0.0;
+        }
+        if (!positiveFinite) {
+          continue;
+        }
+        AlgebraicNetworkTrial candidate = evaluateCoupledAlgebraicTrial(junctions, donors, candidatePressurePa,
+            timeStepSeconds, id, iteration);
+        if (candidate.pressureResidualNorm() < initialNorm) {
+          pressuresPa = candidatePressurePa;
+          trial = candidate;
+          accepted = true;
+          break;
+        }
+      }
+      if (!accepted) {
+        throw new IllegalStateException("Coupled algebraic pressure line search did not reduce the mass residual");
+      }
+    }
+    throw new IllegalStateException("Coupled algebraic junctions exceeded the global pressure iteration limit");
+  }
+
+  /** Evaluate every branch incident to any algebraic junction exactly once. */
+  private AlgebraicNetworkTrial evaluateCoupledAlgebraicTrial(List<NetworkNode> junctions,
+      Map<NetworkNode, SystemInterface> donors, double[] pressuresPa, double timeStepSeconds, UUID id,
+      int pressureIterations) {
+    Map<NetworkNode, Integer> junctionIndex = new LinkedHashMap<NetworkNode, Integer>();
+    Map<NetworkNode, AlgebraicTrialAccumulator> accumulators = new LinkedHashMap<NetworkNode, AlgebraicTrialAccumulator>();
+    String[] componentNames = conservativeComponentNames();
+    for (int index = 0; index < junctions.size(); index++) {
+      junctionIndex.put(junctions.get(index), index);
+      accumulators.put(junctions.get(index), new AlgebraicTrialAccumulator(componentNames));
+    }
+    Map<NetworkBranch, TwoFluidPipe.TransientCandidate> candidates = new LinkedHashMap<NetworkBranch, TwoFluidPipe.TransientCandidate>();
+    Set<NetworkBranch> incident = new LinkedHashSet<NetworkBranch>();
+    for (NetworkBranch branch : branches.values()) {
+      if (branch.fromNode.algebraic || branch.toNode.algebraic) {
+        incident.add(branch);
+      }
+    }
+    for (NetworkBranch branch : incident) {
+      double inletPressurePa = branch.fromNode.algebraic ? pressuresPa[junctionIndex.get(branch.fromNode)]
+          : branch.fromNode.getPressurePa();
+      double outletPressurePa = branch.toNode.algebraic ? pressuresPa[junctionIndex.get(branch.toNode)]
+          : branch.toNode.getPressurePa();
+      SystemInterface inletDonor = branch.fromNode.algebraic ? donors.get(branch.fromNode) : null;
+      SystemInterface outletDonor = branch.toNode.algebraic ? donors.get(branch.toNode) : null;
+      TwoFluidPipe.TransientCandidate candidate = branch.pipe.prepareTransientCandidate(timeStepSeconds, id,
+          inletPressurePa, outletPressurePa, inletDonor, outletDonor);
+      candidates.put(branch, candidate);
+      TwoFluidComponentConservationReport components = candidate.getComponentConservationReport();
+      TwoFluidConservativeEnergyReport energy = candidate.getConservativeEnergyReport();
+      validateBranchThermodynamicReports(branch, componentNames, components, energy);
+      if (branch.fromNode.algebraic) {
+        accumulators.get(branch.fromNode).addBoundary(branch, branch.fromNode, candidate);
+      }
+      if (branch.toNode.algebraic) {
+        accumulators.get(branch.toNode).addBoundary(branch, branch.toNode, candidate);
+      }
+    }
+    Map<NetworkNode, AlgebraicTrial> nodeTrials = new LinkedHashMap<NetworkNode, AlgebraicTrial>();
+    for (int index = 0; index < junctions.size(); index++) {
+      NetworkNode junction = junctions.get(index);
+      nodeTrials.put(junction, accumulators.get(junction).toTrial(pressuresPa[index], pressureIterations, candidates));
+    }
+    return new AlgebraicNetworkTrial(pressuresPa, pressureIterations, candidates, nodeTrials, junctions);
   }
 
   /**
@@ -481,7 +680,7 @@ public final class TwoFluidPipeNetwork implements Serializable {
     for (NetworkNode node : nodes.values()) {
       if (node.algebraic) {
         if (junction != null) {
-          throw new IllegalStateException("The bounded solver supports one algebraic junction per network");
+          throw new IllegalStateException("The scalar algebraic solver received more than one junction");
         }
         junction = node;
       }
@@ -736,6 +935,38 @@ public final class TwoFluidPipeNetwork implements Serializable {
         / enthalpyScale;
     return maximumCompositionDifference <= ALGEBRAIC_TRANSFER_TOLERANCE
         && relativeEnthalpyDifference <= ALGEBRAIC_TRANSFER_TOLERANCE;
+  }
+
+  /** Under-relax one coupled donor update to avoid composition/enthalpy exchange oscillation. */
+  private static SystemInterface relaxAlgebraicDonor(SystemInterface previous, SystemInterface recovered) {
+    SystemInterface relaxed = SerializationUtils.clone(previous);
+    double previousTotalMass = 0.0;
+    double recoveredTotalMass = 0.0;
+    double[] previousMass = new double[previous.getNumberOfComponents()];
+    double[] recoveredMass = new double[recovered.getNumberOfComponents()];
+    for (int index = 0; index < previousMass.length; index++) {
+      previousMass[index] = previous.getComponent(index).getNumberOfmoles()
+          * previous.getComponent(index).getMolarMass();
+      recoveredMass[index] = recovered.getComponent(index).getNumberOfmoles()
+          * recovered.getComponent(index).getMolarMass();
+      previousTotalMass += previousMass[index];
+      recoveredTotalMass += recoveredMass[index];
+    }
+    double[] molarFlow = new double[previousMass.length];
+    for (int index = 0; index < molarFlow.length; index++) {
+      double massFraction = (1.0 - ALGEBRAIC_DONOR_RELAXATION) * previousMass[index] / previousTotalMass
+          + ALGEBRAIC_DONOR_RELAXATION * recoveredMass[index] / recoveredTotalMass;
+      molarFlow[index] = massFraction / relaxed.getComponent(index).getMolarMass();
+    }
+    relaxed.setMolarFlowRates(molarFlow);
+    relaxed.setPressure(recovered.getPressure("Pa"), "Pa");
+    ThermodynamicOperations operations = new ThermodynamicOperations(relaxed);
+    operations.TPflash();
+    double enthalpyJPerKg = (1.0 - ALGEBRAIC_DONOR_RELAXATION) * previous.getEnthalpy("J/kg")
+        + ALGEBRAIC_DONOR_RELAXATION * recovered.getEnthalpy("J/kg");
+    operations.PHflash(enthalpyJPerKg, "J/kg");
+    relaxed.initProperties();
+    return relaxed;
   }
 
   /** Map the network phase index to the component-ledger phase identity. */
@@ -1026,6 +1257,30 @@ public final class TwoFluidPipeNetwork implements Serializable {
     return lastAlgebraicJunctionReport;
   }
 
+  /**
+   * Get the latest accepted report for one named algebraic junction.
+   *
+   * @param nodeName algebraic-junction node name
+   * @return latest accepted report
+   * @throws IllegalStateException if no accepted report exists for the node
+   */
+  public AlgebraicJunctionReport getLastAlgebraicJunctionReport(String nodeName) {
+    AlgebraicJunctionReport report = lastAlgebraicJunctionReports.get(nodeName);
+    if (report == null) {
+      throw new IllegalStateException("No accepted algebraic-junction report exists for node '" + nodeName + "'");
+    }
+    return report;
+  }
+
+  /**
+   * Get the deterministic junction order represented by the latest accepted interval.
+   *
+   * @return algebraic-junction names in registration order
+   */
+  public String[] getLastAlgebraicJunctionNames() {
+    return lastAlgebraicJunctionReports.keySet().toArray(new String[lastAlgebraicJunctionReports.size()]);
+  }
+
   public TwoFluidPipe getPipe(String branchName) {
     NetworkBranch branch = branches.get(branchName);
     if (branch == null)
@@ -1101,6 +1356,133 @@ public final class TwoFluidPipeNetwork implements Serializable {
       this.fluid = fluid;
       this.branchCandidates = branchCandidates;
       this.report = report;
+    }
+  }
+
+  /** Private accepted pressure and donor state for one algebraic junction. */
+  private static final class AlgebraicAcceptedState {
+    private final double pressurePa;
+    private final SystemInterface fluid;
+
+    private AlgebraicAcceptedState(double pressurePa, SystemInterface fluid) {
+      this.pressurePa = pressurePa;
+      this.fluid = fluid;
+    }
+  }
+
+  /** Private accepted result of one coupled algebraic-network solve. */
+  private static final class AlgebraicNetworkSolution {
+    private final Map<NetworkNode, AlgebraicAcceptedState> states;
+    private final Map<NetworkBranch, TwoFluidPipe.TransientCandidate> branchCandidates;
+    private final Map<String, AlgebraicJunctionReport> reports;
+
+    private AlgebraicNetworkSolution(Map<NetworkNode, AlgebraicAcceptedState> states,
+        Map<NetworkBranch, TwoFluidPipe.TransientCandidate> branchCandidates,
+        Map<String, AlgebraicJunctionReport> reports) {
+      this.states = states;
+      this.branchCandidates = branchCandidates;
+      this.reports = reports;
+    }
+
+    private static AlgebraicNetworkSolution single(AlgebraicSolution solution) {
+      Map<NetworkNode, AlgebraicAcceptedState> states = new LinkedHashMap<NetworkNode, AlgebraicAcceptedState>();
+      states.put(solution.node, new AlgebraicAcceptedState(solution.pressurePa, solution.fluid));
+      Map<String, AlgebraicJunctionReport> reports = new LinkedHashMap<String, AlgebraicJunctionReport>();
+      reports.put(solution.node.name, solution.report);
+      return new AlgebraicNetworkSolution(states, solution.branchCandidates, reports);
+    }
+  }
+
+  /** Mutable accumulator used only while evaluating one detached coupled pressure vector. */
+  private static final class AlgebraicTrialAccumulator {
+    private final String[] componentNames;
+    private final double[] phaseResidualKg = new double[PHASE_COUNT];
+    private final double[] componentResidualKg;
+    private double energyResidualJ;
+    private double incomingMassKg;
+    private double incomingEnergyJ;
+    private double transferScaleKg;
+    private double energyScaleJ;
+
+    private AlgebraicTrialAccumulator(String[] componentNames) {
+      this.componentNames = componentNames.clone();
+      this.componentResidualKg = new double[componentNames.length];
+    }
+
+    private void addBoundary(NetworkBranch branch, NetworkNode junction, TwoFluidPipe.TransientCandidate candidate) {
+      TwoFluidMassBalanceReport mass = candidate.getMassBalanceReport();
+      TwoFluidComponentConservationReport components = candidate.getComponentConservationReport();
+      TwoFluidConservativeEnergyReport energy = candidate.getConservativeEnergyReport();
+      for (int phaseIndex = 0; phaseIndex < PHASE_COUNT; phaseIndex++) {
+        Phase aggregation = phase(phaseIndex);
+        double branchMassKg = branch.fromNode == junction ? -mass.getInletMassKg(aggregation)
+            : mass.getOutletMassKg(aggregation);
+        double[] branchComponentKg = algebraicBoundaryComponents(branch, junction, components, phaseIndex);
+        double branchEnergyJ = algebraicBoundaryEnergy(branch, junction, energy, phaseIndex);
+        phaseResidualKg[phaseIndex] += branchMassKg;
+        add(componentResidualKg, branchComponentKg, 1.0);
+        energyResidualJ += branchEnergyJ;
+        transferScaleKg += Math.abs(branchMassKg);
+        energyScaleJ += Math.abs(branchEnergyJ);
+        if (branchMassKg > 0.0) {
+          incomingMassKg += branchMassKg;
+          incomingEnergyJ += branchEnergyJ;
+        }
+      }
+    }
+
+    private AlgebraicTrial toTrial(double pressurePa, int pressureIterations,
+        Map<NetworkBranch, TwoFluidPipe.TransientCandidate> candidates) {
+      double totalMassResidualKg = phaseResidualKg[0] + phaseResidualKg[1] + phaseResidualKg[2];
+      return new AlgebraicTrial(pressurePa, pressureIterations, candidates, componentNames, phaseResidualKg,
+          componentResidualKg, energyResidualJ, totalMassResidualKg, incomingMassKg, incomingEnergyJ, transferScaleKg,
+          energyScaleJ);
+    }
+  }
+
+  /** Private residual bundle for one global coupled pressure vector. */
+  private static final class AlgebraicNetworkTrial {
+    private final double[] pressuresPa;
+    private final int pressureIterations;
+    private final Map<NetworkBranch, TwoFluidPipe.TransientCandidate> branchCandidates;
+    private final Map<NetworkNode, AlgebraicTrial> nodeTrials;
+    private final List<NetworkNode> junctions;
+
+    private AlgebraicNetworkTrial(double[] pressuresPa, int pressureIterations,
+        Map<NetworkBranch, TwoFluidPipe.TransientCandidate> branchCandidates,
+        Map<NetworkNode, AlgebraicTrial> nodeTrials, List<NetworkNode> junctions) {
+      this.pressuresPa = pressuresPa.clone();
+      this.pressureIterations = pressureIterations;
+      this.branchCandidates = branchCandidates;
+      this.nodeTrials = nodeTrials;
+      this.junctions = new ArrayList<NetworkNode>(junctions);
+    }
+
+    private double[] massResidualVector() {
+      double[] residual = new double[junctions.size()];
+      for (int index = 0; index < junctions.size(); index++) {
+        residual[index] = nodeTrials.get(junctions.get(index)).totalMassResidualKg;
+      }
+      return residual;
+    }
+
+    private boolean pressureCloses() {
+      for (NetworkNode junction : junctions) {
+        if (!nodeTrials.get(junction).pressureCloses()) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    private double pressureResidualNorm() {
+      double maximum = 0.0;
+      for (NetworkNode junction : junctions) {
+        AlgebraicTrial trial = nodeTrials.get(junction);
+        double scale = MASS_CLOSURE_ABSOLUTE_KG + ALGEBRAIC_TRANSFER_TOLERANCE * trial.transferScaleKg;
+        maximum = Math.max(maximum, Math.abs(trial.totalMassResidualKg) / scale);
+      }
+      return maximum;
     }
   }
 

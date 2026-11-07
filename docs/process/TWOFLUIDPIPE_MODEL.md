@@ -1823,7 +1823,7 @@ Negative outlet component and enthalpy transfers enter the branch from the downs
 applied with the existing simultaneous node update; the last interior pipe cell is never inferred to
 be an external reservoir.
 
-For a bounded zero-volume merge, use one algebraic junction in place of the storage volume:
+For zero-volume merges, add algebraic junctions in place of storage volumes:
 
 ```java
 TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("algebraic merge");
@@ -1848,13 +1848,20 @@ one common pressure, and iterates the equilibrium donor composition and enthalpy
 mass, every named component and advected energy to close before publishing any branch. Equilibrium
 phase conversion is reported explicitly by gas/oil/water and as an internal `BalanceReport` term;
 its total is zero. `TwoFluidPipeNetworkTest` exercises the same three-branch shape, different inlet
-compositions, branch-order independence, serialization and a second interval.
+compositions, branch-order independence, serialization and a second interval. Multiple algebraic
+junctions may be linked by ordinary `TwoFluidPipe` branches. Their common pressures are solved as
+one finite-difference Newton residual vector with a safeguarded line search, while each junction's
+equilibrium composition and enthalpy donor is iterated from the exact incoming ledger. Use
+`getLastAlgebraicJunctionNames()` and `getLastAlgebraicJunctionReport(nodeName)` to inspect every
+accepted junction in deterministic registration order. Every inter-junction pipe candidate is
+prepared exactly once for each global trial and no branch or junction state is published before all
+junction and whole-network closure checks pass.
 
-This contract supports one algebraic junction per network. A second junction, a branch between two
-algebraic junctions, global multi-junction Newton pressure-flow coupling and branch subcycling remain
-outside the validated scope. Conservative storage and algebraic fixtures have synthetic closure
-evidence; they are not independently qualified transient junction models or predictive restart/refill
-qualification.
+The multi-junction contract does not yet provide branch-local subcycling or an independently
+qualified predictive restart/refill model. Conservative storage and algebraic fixtures provide
+synthetic closure, reversal-order and serialization evidence only. Refine the common reporting
+interval and every branch mesh for the intended field case, and retain external physical/commercial
+comparison evidence before design use.
 
 ### Choosing Time Step, Sections, and Pipeline Length
 
