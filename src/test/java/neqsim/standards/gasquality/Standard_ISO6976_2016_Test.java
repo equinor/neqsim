@@ -204,6 +204,24 @@ class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
     Assertions.assertEquals(17.477288925, standard.getValue("MolarMass"), 1e-5);
   }
 
+  /**
+   * Regression test: n-decane molar mass in ISO6976constants2016.csv must be 142.28168 g/mol
+   * (ISO 6976:2016 Table A.2), not 42.28168.
+   */
+  @Test
+  void testMolarMassWithDecane() {
+    SystemInterface gas = new SystemSrkEos(273.15 + 20.0, 1.0);
+    gas.addComponent("methane", 0.999);
+    gas.addComponent("nC10", 0.001);
+    gas.setMixingRule("classic");
+    gas.init(0);
+    Standard_ISO6976_2016 standard = new Standard_ISO6976_2016(gas, 0, 15.55, "volume");
+    standard.setReferenceState("real");
+    standard.calculate();
+    double expected = 0.999 * 16.04246 + 0.001 * 142.28168;
+    assertEquals(expected, standard.getValue("MolarMass"), 1e-6);
+  }
+
   @Test
   @Disabled
   void testDisplay() {
