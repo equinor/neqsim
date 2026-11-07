@@ -275,3 +275,21 @@ def test_pfd_carries_equipment_data_and_connector_drawing_numbers(demo_data, pip
     with open(os.path.join(out, "diagrams", "pfd", "pfd_layout_spec.json"), encoding="utf-8") as fh:
         spec = json.load(fh)
     assert "export compressor" in json.dumps(spec["equipment_data"]) if "equipment_data" in spec else "export compressor" in json.dumps(spec)
+
+
+def test_report_text_is_free_of_file_and_tool_names_and_has_no_empty_result_sections(pipeline):
+    import re
+
+    from docx import Document
+
+    _, summary = pipeline
+    doc = Document(summary["docx"])
+    texts = [p.text for p in doc.paragraphs] + [c.text for t in doc.tables for r in t.rows for c in r.cells]
+    banned = re.compile(r"\b[\w.-]+\.(?:py|jsonl|json|csv|xlsx|ipynb|ps1)\b|\bpython\b|\bpytest\b|\bjupyter\b|\bcopilot\b|\bmass_rel\b|\['[^']*'\]", re.I)
+    hits = [t[:80] for t in texts if banned.search(t) and "psr_demo" not in t]
+    assert not hits, hits[:3]
+    paras = doc.paragraphs
+    for title in ("8.6 Sensitivities", "8.7 Constraints and utilisation", "8.8 Engineering interpretation"):
+        index = next(i for i, p in enumerate(paras) if p.text.strip() == title and p.style.name.startswith("Heading"))
+        following = [p for p in paras[index + 1:index + 4] if p.text.strip() and not p.style.name.startswith("Heading")]
+        assert sum(len(p.text.split()) for p in following) >= 8, title

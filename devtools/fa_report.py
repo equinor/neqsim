@@ -744,7 +744,7 @@ class FaReportBuilder(psr_report.ReportBuilder):
         if not v:
             self.P("Validation report not yet available at this build stage.", italic=True)
             return
-        self.P("Overall result: %s. Checks run: %d; passed: %d; failed: %d; warnings: %d. Full machine-readable report: validation_report.json." % (v["status"], v["n_checks"], v["n_pass"], v["n_fail"], v["n_warn"]), bold=True)
+        self.P("Overall result: %s. Checks run: %d; passed: %d; failed: %d; warnings: %d. The full validation record is delivered with the data package." % (v["status"], v["n_checks"], v["n_pass"], v["n_fail"], v["n_warn"]), bold=True)
         rows = [[r["id"], r["description"], r["status"], r["detail"][:260]] for r in v["checks"]]
         self.table(["Check", "Description", "Result", "Detail"], rows, caption="Validation checks", font=6, widths=[26, 70, 14, 100], align=["left"] * 4)
 

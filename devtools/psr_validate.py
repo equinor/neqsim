@@ -26,8 +26,16 @@ BAD_TOKENS = re.compile(r"\b(nan|NaN|inf|None)\b")
 SECTION_REF_RE = re.compile(r"\b(Sections?|Appendix|Appendices|Tables?|Figures?)\s+[A-Z]?\d+(?:\.\d+)*")
 
 
+def _readable(text):
+    """Reader-facing form of a check detail: python list and tuple reprs become plain separated text (no brackets or quotes)."""
+    if not isinstance(text, str) or "'" not in text:
+        return text
+    text = re.sub(r"\('([^()']*)', '([^()']*)'\)", r"\1 / \2", text)
+    return re.sub(r"\[((?:'[^'\[\]]*'(?:, )?)+)\]", lambda m: "; ".join(re.findall(r"'([^']*)'", m.group(1))), text)
+
+
 def _check(cid, description, status, detail=""):
-    return {"id": cid, "description": description, "status": status, "detail": detail}
+    return {"id": cid, "description": description, "status": status, "detail": _readable(detail)}
 
 
 def _docx_inventory(path):
@@ -156,7 +164,7 @@ def validate_all(data, basis, standards, balances, diagrams, docx_path=None, fac
     names = [("%s (%s)" % (f["name"], f["code"])) for f in audit["findings"] if f["severity"] == psr_connectivity.SEVERITY_ERROR][:6]
     checks.append(_check("TOPO-CONNECTIVITY", "Every unit is connected with streams (recycles have a tear stream, columns a feed, no isolated "
                          "streams); drawings and stream tables match the wiring of the solved model", audit["status"],
-                         ("%d error(s), %d warning(s) %s; first: %s; repair candidates in data/connectivity_audit.csv%s" % (
+                         ("%d error(s), %d warning(s) %s; first: %s; repair candidates in the connectivity audit table%s" % (
                              audit["summary"]["n_error"], audit["summary"]["n_warning"], audit["summary"]["by_code"], names,
                              "; %d wiring repair(s) applied" % len(wired) if wired else ""))
                          if audit["status"] != "PASS" else
@@ -266,9 +274,9 @@ def validate_all(data, basis, standards, balances, diagrams, docx_path=None, fac
                 n_rows = sum(1 for _ in csv.reader(fh)) - 1
             expected = len(stream_ids) * len(data["components"]) * len(cases)
             if n_rows != expected:
-                status, detail = "FAIL", "stream_components.csv has %d rows, expected %d" % (n_rows, expected)
+                status, detail = "FAIL", "the stream component table has %d rows, expected %d" % (n_rows, expected)
             else:
-                detail = "stream_components.csv has %d rows = %d streams x %d components x %d cases" % (n_rows, len(stream_ids), len(data["components"]), len(cases))
+                detail = "the stream component table has %d rows = %d streams x %d components x %d cases" % (n_rows, len(stream_ids), len(data["components"]), len(cases))
         else:
             detail = "missing %s" % absent
         checks.append(_check("EXPORTS", "Machine-readable exports complete (component flow rates for every stream, component and case)", status, detail))
