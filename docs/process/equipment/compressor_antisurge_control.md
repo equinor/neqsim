@@ -160,6 +160,12 @@ This distinction is important because steady-state anti-surge and dynamic anti-s
 
 `AntiSurgeController` publishes a **target opening**, while the native valve physical step owns actual position and travel. A standalone controller call no longer moves the valve immediately. This fixes the actuator bypass reported in [#4899](https://github.com/equinor/neqsim/issues/4899). Read `getTargetPercentValveOpening()` for demand and `getPercentValveOpening()` for simulated physical position, then advance the valve through its actual `ProcessSystem` scan. A slow or unavailable actuator must remain slow or unavailable even during an emergency anti-surge demand.
 
+The standalone `AntiSurgeDynamicBenchmark` follows the same ownership rule by
+calling the valve's `runController(dt, id)` once per sample. Its first-order gas
+path uses the previous actual valve opening, rather than the controller command.
+This exercises the controller and actuator without a hydraulic valve calculation;
+use `CompressorAutomationStudy` for the finite-volume native recycle circuit.
+
 A latched native `ESDValve` trip and an active partial-stroke test own their physical interval ahead of normal regulation. An unavailable actuator can retain the controller's requested target but cannot move. Repeated positive-time UUID dispatch advances the safety trajectory once; a zero-time solve does not consume the later positive interval. These are simulation actuator semantics, not proof of installed final-element performance or a completed proof-test procedure. See [#4901](https://github.com/equinor/neqsim/issues/4901).
 
 The optional `CompressorSurgeMarginMeasurement` consumes a real, registered, held compressor-inlet `VolumeFlowTransmitter` sample. Its dimensionless calculation is:

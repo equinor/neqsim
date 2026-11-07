@@ -82,6 +82,11 @@ configuration after changing the P&ID.
 
 After the normal repository Maven bootstrap, the focused software gate is
 `./mvnw -Dtest=CompressorAutomationStudyTest,PidNativeControlSystemTest,CompressorAutomationWorkflowTest test`.
+When changing controller/actuator ownership, also run
+`./mvnw -Dtest=ControlsBenchmarkSuiteTest,AntiSurgeDynamicBenchmarkTest,DynamicCompressorNotebookRegressionTest test`.
+Standalone surrogates must advance the real valve and feed its actual position
+back into the plant update. Preserve the published reference tolerances and
+exercise a finite-travel valve so target-only feedback cannot pass unnoticed.
 Those tests are executable source/API examples and guard regressions; their
 passing status does not replace the task-specific design, fault, balance,
 refinement, native-exchange or independent drawing evidence below.

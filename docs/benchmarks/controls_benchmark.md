@@ -59,6 +59,13 @@ controller-disabled reference. All generic loops use proportional-only tuning so
 their steady offsets, output limits, and challenge response remain easy to
 audit.
 
+The recycle valve invokes its attached controller and advances its actuator once
+per sample. The surrogate gas path uses the previous **actual** valve position,
+and the output trace records the new actual position. Finite valve travel must
+therefore limit both the observed opening and the recycle contribution; a larger
+controller demand does not create extra recycle authority. The default valve has
+instantaneous travel, so the published reference values below are unchanged.
+
 | Stable ID | Case | Duration | Process-value/set-point view | Controller and challenge |
 |-----------|------|----------|------------------------------|--------------------------|
 | `control_level_setpoint` | Integrating level | 240 s | Normalized level [%] | Direct-acting Kp = 10; SP 50 -> 55% at 30 s; inflow 50 -> 55 at 130 s |
