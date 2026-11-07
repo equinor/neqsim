@@ -204,6 +204,8 @@ public class TPflash extends Flash {
   private boolean preserveFeedInventoryOnPhaseRemoval = false;
   /** Cold initial state retained only for a screened asymmetric endpoint retry. */
   private transient SystemInterface multiphaseEndpointRescueSeed;
+  /** Last qualified minor-liquid seed within an explicitly enabled outer flash. */
+  private transient SystemInterface minorLiquidContinuationSeed;
   /** Prevents a bounded water-rich cross-algorithm fallback from recursively starting another fallback. */
   private boolean waterRichCrossAlgorithmFallbackAllowed = true;
   /** Reusable rollback state for GDEM acceleration; transient because it contains no thermodynamic state. */
@@ -720,12 +722,17 @@ public class TPflash extends Flash {
     if (disableWarmStart) {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
     }
+    SystemInterface continuationSeed = captureMinorLiquidContinuationSeed();
+    if (continuationSeed != null) {
+      minorLiquidContinuationSeed = continuationSeed;
+    }
     try {
       if (!flashStableWaterIonBrine()) {
         runInternal();
         if (phaseRemovedDuringFlash) {
           recoverNonconservativeHydrocarbonCollapse();
         }
+        recoverMinorLiquidContinuation(minorLiquidContinuationSeed);
       }
       repairInvalidMultiphaseHydrocarbonEndpoint();
       synchronizeEquilibratedAqueousPhaseAmounts();
@@ -736,6 +743,65 @@ public class TPflash extends Flash {
       if (disableWarmStart) {
         neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarmStart);
       }
+    }
+  }
+
+  /**
+   * Retains an equilibrated minor gas/oil split for an explicitly enabled outer flash.
+   *
+   * @return a detached phase-continuation seed, or null outside the bounded neutral cubic-EOS path
+   */
+  private SystemInterface captureMinorLiquidContinuationSeed() {
+    if (!conservativeHomogeneousRecoveryAllowed || system.doMultiPhaseCheck() || system.isForcePhaseTypes()
+        || system.isChemicalSystem() || system.hasIons() || solidCheck || system.doSolidPhaseCheck()
+        || system.isMultiphaseWaxCheck() || system.getNumberOfPhases() != 2 || !system.hasPhaseType(PhaseType.GAS)
+        || !system.hasPhaseType(PhaseType.OIL)
+        || Math.min(system.getBeta(0), system.getBeta(1)) > TRACE_WATER_AQUEOUS_STABILITY_BETA_LIMIT
+        || !("SRK-EOS".equals(system.getModelName()) || "PR-EOS".equals(system.getModelName()))
+        || !isBalancedEquilibriumCandidate(system)) {
+      return null;
+    }
+    return system.clone();
+  }
+
+  /**
+   * Recovers a lower-Gibbs minor liquid missed by cold single-phase selection during an outer flash.
+   *
+   * <p>
+   * The candidate retains the prior phase compositions, but recalculates at the current temperature and pressure. Only
+   * the existing strict material-balance, normalization, fugacity and distinct-phase checks may qualify it. A vanishing
+   * or metastable split leaves the cold endpoint unchanged; no entropy tolerance is relaxed.
+   *
+   * @param seed retained two-phase seed, or null when continuation is not eligible
+   */
+  private void recoverMinorLiquidContinuation(SystemInterface seed) {
+    if (seed == null || !conservativeHomogeneousRecoveryAllowed || system.getNumberOfPhases() != 1
+        || seed.getTotalNumberOfMoles() != system.getTotalNumberOfMoles()
+        || !java.util.Arrays.equals(seed.getzvector(), system.getzvector())) {
+      return;
+    }
+    SystemInterface candidate = seed.clone();
+    try {
+      system.init(1);
+      double referenceGibbs = system.getGibbsEnergy();
+      candidate.setTemperature(system.getTemperature());
+      candidate.setPressure(system.getPressure());
+      candidate.init(1);
+      TPmultiflash refinement = new TPmultiflash(candidate, false);
+      refinement.setDoubleArrays();
+      for (int iteration = 0; iteration < 20; iteration++) {
+        refinement.solveBeta();
+        candidate.init(1);
+        if (isBalancedEquilibriumCandidate(candidate)) {
+          if (isLowerGibbsMultiphaseCandidate(candidate, referenceGibbs)) {
+            copyConvergedNeutralFlashState(candidate);
+            recordStabilityOutcome("recovered lower-Gibbs minor-liquid continuation");
+          }
+          return;
+        }
+      }
+    } catch (RuntimeException ex) {
+      logger.debug("Minor-liquid continuation rejected: {}", ex.getMessage());
     }
   }
 
