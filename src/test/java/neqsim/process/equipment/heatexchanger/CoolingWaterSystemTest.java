@@ -2,6 +2,7 @@ package neqsim.process.equipment.heatexchanger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +10,30 @@ import org.junit.jupiter.api.Test;
  * Tests for CoolingWaterSystem.
  */
 public class CoolingWaterSystemTest {
+
+  /** Checks seawater heat demand, actual supply volume, pump power and absence of a tower. */
+  @Test
+  void referenceSeawaterSizingAndInputInvalidation() {
+    CoolingWaterSystem system = new CoolingWaterSystem();
+    system.addCoolingRequirement("E-100", 8000.0, 40.0, 10.0);
+    system.setCoolingWaterSupplyTemperature(15.0);
+    system.setCoolingWaterReturnTemperature(25.0);
+    system.setCoolingWaterPressure(3.0);
+    system.setCoolingWaterSalinity(35.0);
+    system.setTowerFanPowerFraction(0.0);
+    system.calculate();
+    // 8 MW / (approximately 4.0 kJ/(kg K) * 10 K) is about 200 kg/s.
+    assertEquals(200.0, system.getTotalCWMassFlowRate(), 2.0);
+    assertEquals(1025.0, system.getTotalCWMassFlowRate() / (system.getTotalCWFlowRate() / 3600.0), 2.0);
+    assertEquals(system.getTotalCWFlowRate() / 3600.0 * 3e5 / 0.75 / 1000.0, system.getPumpPower(), 1e-10);
+    assertEquals(0.0, system.getTowerFanPower(), 0.0);
+    assertEquals(system.getPumpPower(), system.getTotalElectricalPower(), 1e-10);
+    double seawaterMassFlow = system.getTotalCWMassFlowRate();
+    system.setCoolingWaterSalinity(0.0);
+    assertTrue(system.getTotalCWMassFlowRate() < seawaterMassFlow / 1.04);
+    system.setCoolingWaterReturnTemperature(15.0);
+    assertThrows(IllegalArgumentException.class, system::calculate);
+  }
 
   @Test
   public void testBasicSizing() {

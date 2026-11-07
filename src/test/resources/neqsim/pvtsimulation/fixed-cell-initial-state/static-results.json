@@ -1,0 +1,9 @@
+{
+  "baseFindings": 19,
+  "candidateFindings": 19,
+  "sameSignatures": true,
+  "new": [],
+  "checkstyleBaseWarnings": 6,
+  "checkstyleCandidateWarnings": 6,
+  "sameCheckstyleSignatures": true
+}

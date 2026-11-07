@@ -1,0 +1,197 @@
+{
+  "scope": "Standard JaCoCo report: production classes; test-method execution is in JUnit XML receipts.",
+  "methods": [
+    {
+      "class": "neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator",
+      "method": "replayNative",
+      "descriptor": "(Lneqsim/pvtsimulation/util/CalibratedPvtModel;ZLneqsim/pvtsimulation/util/MaterialBalancePvtHistory$Path;Ljava/lang/String;D[DLneqsim/pvtsimulation/util/PvtSeparatorPath;)Lneqsim/pvtsimulation/util/DepletionPvtHistoryGenerator$NativeResult;",
+      "counters": {
+        "INSTRUCTION": {
+          "missed": 0,
+          "covered": 11
+        },
+        "LINE": {
+          "missed": 0,
+          "covered": 1
+        },
+        "COMPLEXITY": {
+          "missed": 0,
+          "covered": 1
+        },
+        "METHOD": {
+          "missed": 0,
+          "covered": 1
+        }
+      }
+    },
+    {
+      "class": "neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator",
+      "method": "replayNativeWetGasFixedCell",
+      "descriptor": "(Lneqsim/pvtsimulation/util/CalibratedPvtModel;ZLjava/lang/String;D[DLneqsim/pvtsimulation/util/PvtSeparatorPath;)Lneqsim/pvtsimulation/util/DepletionPvtHistoryGenerator$NativeResult;",
+      "counters": {
+        "INSTRUCTION": {
+          "missed": 0,
+          "covered": 12
+        },
+        "LINE": {
+          "missed": 0,
+          "covered": 1
+        },
+        "COMPLEXITY": {
+          "missed": 0,
+          "covered": 1
+        },
+        "METHOD": {
+          "missed": 0,
+          "covered": 1
+        }
+      }
+    },
+    {
+      "class": "neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator",
+      "method": "replayNative",
+      "descriptor": "(Lneqsim/pvtsimulation/util/CalibratedPvtModel;ZLneqsim/pvtsimulation/util/MaterialBalancePvtHistory$Path;Ljava/lang/String;D[DLneqsim/pvtsimulation/util/PvtSeparatorPath;ZZ)Lneqsim/pvtsimulation/util/DepletionPvtHistoryGenerator$NativeResult;",
+      "counters": {
+        "INSTRUCTION": {
+          "missed": 0,
+          "covered": 12
+        },
+        "LINE": {
+          "missed": 0,
+          "covered": 1
+        },
+        "COMPLEXITY": {
+          "missed": 0,
+          "covered": 1
+        },
+        "METHOD": {
+          "missed": 0,
+          "covered": 1
+        }
+      }
+    },
+    {
+      "class": "neqsim/pvtsimulation/util/DepletionPvtHistoryGenerator",
+      "method": "replayNative",
+      "descriptor": "(Lneqsim/pvtsimulation/util/CalibratedPvtModel;ZLneqsim/pvtsimulation/util/MaterialBalancePvtHistory$Path;Ljava/lang/String;D[DLneqsim/pvtsimulation/util/PvtSeparatorPath;ZZZ)Lneqsim/pvtsimulation/util/DepletionPvtHistoryGenerator$NativeResult;",
+      "counters": {
+        "INSTRUCTION": {
+          "missed": 42,
+          "covered": 450
+        },
+        "BRANCH": {
+          "missed": 16,
+          "covered": 92
+        },
+        "LINE": {
+          "missed": 7,
+          "covered": 73
+        },
+        "COMPLEXITY": {
+          "missed": 16,
+          "covered": 39
+        },
+        "METHOD": {
+          "missed": 0,
+          "covered": 1
+        }
+      }
+    },
+    {
+      "class": "neqsim/pvtsimulation/simulation/ConstantVolumeDepletion",
+      "method": "runWetGasFixedCellDepletion",
+      "descriptor": "(D[D)Lneqsim/pvtsimulation/simulation/ConstantVolumeDepletion$FixedCellResult;",
+      "counters": {
+        "INSTRUCTION": {
+          "missed": 0,
+          "covered": 7
+        },
+        "LINE": {
+          "missed": 0,
+          "covered": 1
+        },
+        "COMPLEXITY": {
+          "missed": 0,
+          "covered": 1
+        },
+        "METHOD": {
+          "missed": 0,
+          "covered": 1
+        }
+      }
+    },
+    {
+      "class": "neqsim/pvtsimulation/simulation/ConstantVolumeDepletion",
+      "method": "runFixedCellProtocol",
+      "descriptor": "(D[DZ)Lneqsim/pvtsimulation/simulation/ConstantVolumeDepletion$FixedCellResult;",
+      "counters": {
+        "INSTRUCTION": {
+          "missed": 0,
+          "covered": 7
+        },
+        "LINE": {
+          "missed": 0,
+          "covered": 1
+        },
+        "COMPLEXITY": {
+          "missed": 0,
+          "covered": 1
+        },
+        "METHOD": {
+          "missed": 0,
+          "covered": 1
+        }
+      }
+    },
+    {
+      "class": "neqsim/pvtsimulation/simulation/ConstantVolumeDepletion",
+      "method": "runFixedCellProtocol",
+      "descriptor": "(D[DZZ)Lneqsim/pvtsimulation/simulation/ConstantVolumeDepletion$FixedCellResult;",
+      "counters": {
+        "INSTRUCTION": {
+          "missed": 58,
+          "covered": 354
+        },
+        "BRANCH": {
+          "missed": 17,
+          "covered": 73
+        },
+        "LINE": {
+          "missed": 11,
+          "covered": 57
+        },
+        "COMPLEXITY": {
+          "missed": 17,
+          "covered": 29
+        },
+        "METHOD": {
+          "missed": 0,
+          "covered": 1
+        }
+      }
+    },
+    {
+      "class": "neqsim/pvtsimulation/simulation/ConstantVolumeDepletion$FixedCellResult",
+      "method": "allowsWetGasPhaseChanges",
+      "descriptor": "()Z",
+      "counters": {
+        "INSTRUCTION": {
+          "missed": 0,
+          "covered": 3
+        },
+        "LINE": {
+          "missed": 0,
+          "covered": 1
+        },
+        "COMPLEXITY": {
+          "missed": 0,
+          "covered": 1
+        },
+        "METHOD": {
+          "missed": 0,
+          "covered": 1
+        }
+      }
+    }
+  ]
+}

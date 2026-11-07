@@ -1,0 +1,664 @@
+{
+  "classes": 81,
+  "counts": {
+    "tests": 682,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "outcomes": [
+    {
+      "name": "neqsim.pvtsimulation.PvtLabTestsDocumentationTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "4.244"
+    },
+    {
+      "name": "neqsim.pvtsimulation.PvtSimulationDocumentationTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.406"
+    },
+    {
+      "name": "neqsim.pvtsimulation.flowassurance.AsphalteneMethodComparisonTest",
+      "tests": "11",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.727"
+    },
+    {
+      "name": "neqsim.pvtsimulation.flowassurance.AsphalteneMultiMethodBenchmarkTest",
+      "tests": "16",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "5.423"
+    },
+    {
+      "name": "neqsim.pvtsimulation.flowassurance.AsphalteneStabilityAnalyzerTest",
+      "tests": "14",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "1.154"
+    },
+    {
+      "name": "neqsim.pvtsimulation.flowassurance.AsphalteneValidationTest",
+      "tests": "18",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.578"
+    },
+    {
+      "name": "neqsim.pvtsimulation.flowassurance.DeBoerAsphalteneScreeningTest",
+      "tests": "15",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.055"
+    },
+    {
+      "name": "neqsim.pvtsimulation.flowassurance.DeBoerScreeningDocumentationTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.165"
+    },
+    {
+      "name": "neqsim.pvtsimulation.flowassurance.EmulsionViscosityCalculatorTest",
+      "tests": "14",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.016"
+    },
+    {
+      "name": "neqsim.pvtsimulation.flowassurance.ErosionPredictionCalculatorTest",
+      "tests": "10",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.017"
+    },
+    {
+      "name": "neqsim.pvtsimulation.flowassurance.ErosionSandLoadDefaultsTest",
+      "tests": "14",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.012"
+    },
+    {
+      "name": "neqsim.pvtsimulation.flowassurance.FlowAssuranceDocumentationTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "4.247"
+    },
+    {
+      "name": "neqsim.pvtsimulation.flowassurance.HydrateRiskMapperTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.302"
+    },
+    {
+      "name": "neqsim.pvtsimulation.flowassurance.MultiMineralScaleEquilibriumTest",
+      "tests": "11",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.025"
+    },
+    {
+      "name": "neqsim.pvtsimulation.flowassurance.PitzerScaleActivityModelTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.006"
+    },
+    {
+      "name": "neqsim.pvtsimulation.flowassurance.ScaleKspLiteratureBenchmarkTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.008"
+    },
+    {
+      "name": "neqsim.pvtsimulation.flowassurance.ScalePredictionTest",
+      "tests": "24",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.024"
+    },
+    {
+      "name": "neqsim.pvtsimulation.flowassurance.SurfCooldownAnalyzerTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.146"
+    },
+    {
+      "name": "neqsim.pvtsimulation.flowassurance.SurfCooldownAnalyzerWaterGuardTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.142"
+    },
+    {
+      "name": "neqsim.pvtsimulation.flowassurance.WaxCurveCalculatorTest",
+      "tests": "10",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "1.971"
+    },
+    {
+      "name": "neqsim.pvtsimulation.regression.PVTRegressionDepletionHistoryTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "2.428"
+    },
+    {
+      "name": "neqsim.pvtsimulation.regression.PVTRegressionDispatchTest",
+      "tests": "15",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.23"
+    },
+    {
+      "name": "neqsim.pvtsimulation.regression.PVTRegressionTest",
+      "tests": "23",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "1.313"
+    },
+    {
+      "name": "neqsim.pvtsimulation.regression.PVTRegressionWeightingTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.046"
+    },
+    {
+      "name": "neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquiferTest",
+      "tests": "11",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.049"
+    },
+    {
+      "name": "neqsim.pvtsimulation.reservoirproperties.materialbalance.GasMaterialBalanceTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.006"
+    },
+    {
+      "name": "neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalanceTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.042"
+    },
+    {
+      "name": "neqsim.pvtsimulation.reservoirproperties.materialbalance.OilMaterialBalanceTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.005"
+    },
+    {
+      "name": "neqsim.pvtsimulation.reservoirproperties.materialbalance.VanEverdingenHurstAquiferTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.004"
+    },
+    {
+      "name": "neqsim.pvtsimulation.reservoirproperties.relpermeability.RelativePermeabilityGeneratorTest",
+      "tests": "18",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.016"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.ConstantMassExpansionOilPropertiesTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.274"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.ConstantMassExpansionTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.417"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.ConstantVolumeDepletionTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "1.285"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.DensitySimTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.013"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.DifferentialLiberationTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.908"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.FixedCellFeasibleGibbsTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "3.444"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.FixedCellInitialStateTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "4.171"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.MultiStageSeparatorTestTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.36"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.SaturationPressureTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "3.066"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.SaturationTemperatureSearchTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.055"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.SaturationTemperatureTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "14.706"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.SaturationTemperatureTuningTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "15.83"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.SeparatorTestTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.072"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.SlimTubeSimTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "13.664"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.SolutionGasWaterRatioTest",
+      "tests": "14",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.353"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.SolutionGasWaterRatioVerificationTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "1.094"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.SwellingTestTemperatureTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.052"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.SwellingTestTest",
+      "tests": "13",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.137"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.ViscositySimTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.043"
+    },
+    {
+      "name": "neqsim.pvtsimulation.simulation.WaxFractionSimTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.174"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.BlackOilCorrelationsTest",
+      "tests": "22",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.015"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.BlackOilTableValidatorTest",
+      "tests": "20",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.011"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.CalibratedPvtModelTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.694"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.CompositionalReservoirAquiferRefinementTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "2.021"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.CompositionalReservoirAquiferTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "9.046"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.CompositionalReservoirHistoryTest",
+      "tests": "10",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "10.066"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.CvdGasOnlyTailTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.113"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.CvdMaterialBalanceTest",
+      "tests": "10",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.099"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.DeclineCurveAnalysisFitTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.008"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.DeclineCurveAnalysisTest",
+      "tests": "28",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.019"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.DepletionPvtHistoryGeneratorTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.95"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.DryFixedCellPhaseTransitionTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "12.751"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.FixedCellDepletionHandoffTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "19.988"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.GasPseudoCriticalPropertiesTest",
+      "tests": "21",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.012"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.GasPseudoPressureTest",
+      "tests": "14",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.075"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.IndependentGasLabTankTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "109.974"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.NativeCceHandoffTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.573"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.NativeDepletionHandoffTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.609"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.PVTFluidStudyTest",
+      "tests": "11",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.561"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.PhaseWithdrawalReservoirHistoryTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "5.702"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.PvtGasDensityConsistencyTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.059"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.PvtSeparatorPathTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.078"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.RefinedCvdHandoffTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.15"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.ReservoirHistoryEnsembleTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "2.862"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.SaturationPressureCorrelationTest",
+      "tests": "21",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.009"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.WaterPropertyCorrelationsTest",
+      "tests": "15",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.007"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.WetCceHandoffTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.676"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.WetDleHandoffTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.592"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.WetGasFixedCellHandoffTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "12.263"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.ZFactorCorrelationsTest",
+      "tests": "16",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.006"
+    },
+    {
+      "name": "neqsim.pvtsimulation.util.parameterfitting.AsphalteneOnsetFittingTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.117"
+    }
+  ],
+  "sourceClassesSelected": 83,
+  "defaultSlowClassesExcluded": [
+    "CO2CorrosionAnalyzerTest",
+    "HydrocarbonScrubberSaturationPressureStabilityTest"
+  ]
+}

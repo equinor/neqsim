@@ -546,9 +546,11 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     assertTrue(
         values[0] > 0.0 && values[5] > 0.0 && values[6] > 0.0 && values[7] > 0.0 && values[8] > 0.0 && values[9] > 0.0,
         "invalid IF97 state");
-    assertEquals(values[1], values[2] + pressure * 1.0e5 * values[9], Math.max(1e-9, Math.abs(values[1]) * 1e-12));
+    double molarVolumeSi = values[9] / 1.0e5;
+    assertEquals(molarVolumeSi, phase.getMolarVolume("m3/mol"), molarVolumeSi * 1e-12);
+    assertEquals(values[1], values[2] + pressure * 1.0e5 * molarVolumeSi, Math.max(1e-9, Math.abs(values[1]) * 1e-12));
     assertEquals(values[4], values[1] - temperature * values[3], Math.max(1e-9, Math.abs(values[4]) * 1e-12));
-    assertEquals(1.0, values[0] * values[9] / phase.getMolarMass(), 1e-12);
+    assertEquals(1.0, values[0] * molarVolumeSi / phase.getMolarMass(), 1e-12);
 
     system.init(2);
     PhaseWaterIAPWS repeated = (PhaseWaterIAPWS) system.getPhase(0);

@@ -3,12 +3,15 @@ package neqsim.thermo.util.readwrite;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorChart;
 import neqsim.process.equipment.heatexchanger.Cooler;
@@ -22,6 +25,7 @@ import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -160,6 +164,190 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters();
 
     // logger.info(Arrays.deepToString(interactionParams));
+  }
+
+  /**
+   * Named field copies must preserve each component's Eclipse EOS parameters in every block and phase.
+   *
+   * @param directory temporary directory for the EOS fixture
+   * @throws IOException if the fixture cannot be read or written
+   */
+  @Test
+  void testNamedFluidsPreserveEosParameters(@TempDir Path directory) throws IOException {
+    String previousName = EclipseFluidReadWrite.pseudoName;
+    try {
+      SystemInterface original = EclipseFluidReadWrite.read(fluid_water, "");
+      int componentCount = original.getNumberOfComponents();
+      String fixture = new String(Files.readAllBytes(new File(fluid_water).toPath()), StandardCharsets.UTF_8);
+      String withoutOmegaA = fixture.replaceFirst("(?s)OMEGAA\\s+.*?/", "");
+      Assertions.assertNotEquals(fixture, withoutOmegaA, "replace the fixture's existing OMEGAA section");
+      StringBuilder content = new StringBuilder(withoutOmegaA);
+      content.append("\nOMEGAA\n");
+      for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+        content.append(0.44 + 0.001 * componentIndex).append('\n');
+      }
+      content.append("/\n");
+      Path taggedFile = directory.resolve("tagged.e300");
+      Files.write(taggedFile, content.toString().getBytes(StandardCharsets.UTF_8));
+      original = EclipseFluidReadWrite.read(taggedFile.toString(), "");
+      String[] fieldNames = {"rest", "mikkel", "morvin"};
+      SystemInterface tagged = EclipseFluidReadWrite.read(taggedFile.toString(), fieldNames);
+      assertEquals(componentCount * fieldNames.length, tagged.getNumberOfComponents());
+      Assertions.assertTrue(original.doMultiPhaseCheck(), "water-containing reference enables aqueous search");
+      Assertions.assertTrue(tagged.doMultiPhaseCheck(), "water-containing named slate enables aqueous search");
+      for (int phaseIndex = 0; phaseIndex < original.getMaxNumberOfPhases(); phaseIndex++) {
+        if (original.getPhases()[phaseIndex] == null) {
+          assertEquals(null, tagged.getPhases()[phaseIndex]);
+          continue;
+        }
+        for (int componentIndex = 0; componentIndex < tagged.getNumberOfComponents(); componentIndex++) {
+          ComponentEos expected = (ComponentEos) original.getPhases()[phaseIndex]
+              .getComponent(componentIndex % componentCount);
+          ComponentEos actual = (ComponentEos) tagged.getPhases()[phaseIndex].getComponent(componentIndex);
+          String label = actual.getComponentName() + " phase " + phaseIndex;
+          assertEquals(expected.getTC(), actual.getTC(), 1e-12, label);
+          assertEquals(expected.getPC(), actual.getPC(), 1e-12, label);
+          assertEquals(expected.getMolarMass(), actual.getMolarMass(), 1e-12, label);
+          assertEquals(expected.getAcentricFactor(), actual.getAcentricFactor(), 1e-12, label);
+          double expectedOmegaA = 0.44 + 0.001 * (componentIndex % componentCount);
+          assertEquals(expectedOmegaA, expected.getOmegaAOverride(), 1e-12, label + " reference OmegaA");
+          assertEquals(expectedOmegaA, actual.getOmegaAOverride(), 1e-12, label + " replicated OmegaA");
+          assertEquals(expected.calca(), actual.calca(), 1e-9, label + " attraction");
+          assertEquals(expected.calcb(), actual.calcb(), 1e-12, label + " covolume");
+          assertEquals(expected.getVolumeCorrectionConst(), actual.getVolumeCorrectionConst(), 1e-12, label);
+          for (int otherIndex = 0; otherIndex < tagged.getNumberOfComponents(); otherIndex++) {
+            assertEquals(
+                ((PhaseEos) original.getPhases()[phaseIndex]).getMixingRule()
+                    .getBinaryInteractionParameter(componentIndex % componentCount, otherIndex % componentCount),
+                ((PhaseEos) tagged.getPhases()[phaseIndex]).getMixingRule()
+                    .getBinaryInteractionParameter(componentIndex, otherIndex),
+                1e-12, label + " interaction");
+          }
+        }
+      }
+      double[] composition = original.getMolarComposition();
+      double[] taggedComposition = new double[tagged.getNumberOfComponents()];
+      for (int componentIndex = 0; componentIndex < taggedComposition.length; componentIndex++) {
+        taggedComposition[componentIndex] = composition[componentIndex % componentCount] / fieldNames.length;
+      }
+      original.setMolarComposition(composition);
+      tagged.setMolarComposition(taggedComposition);
+      for (double[] conditions : new double[][] {{303.15, 30.0}, {338.15, 60.0}, {288.15, 1.01325}}) {
+        for (SystemInterface fluid : new SystemInterface[] {original, tagged}) {
+          fluid.setTemperature(conditions[0]);
+          fluid.setPressure(conditions[1]);
+          fluid.setTotalFlowRate(1000.0, "kg/hr");
+          new ThermodynamicOperations(fluid).TPflash();
+          fluid.initProperties();
+        }
+        assertEquals(original.getNumberOfPhases(), tagged.getNumberOfPhases(), "phase count");
+        for (int phaseIndex = 0; phaseIndex < original.getNumberOfPhases(); phaseIndex++) {
+          String label = original.getPhase(phaseIndex).getPhaseTypeName();
+          assertEquals(label, tagged.getPhase(phaseIndex).getPhaseTypeName());
+          assertEquals(original.getBeta(phaseIndex), tagged.getBeta(phaseIndex), 1e-7, label + " fraction");
+          assertEquals(original.getPhase(phaseIndex).getDensity("kg/m3"),
+              tagged.getPhase(phaseIndex).getDensity("kg/m3"), 1e-4, label + " density");
+          for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+            double totalFraction = 0.0;
+            for (int block = 0; block < fieldNames.length; block++) {
+              totalFraction += tagged.getPhase(phaseIndex).getComponent(block * componentCount + componentIndex).getx();
+            }
+            assertEquals(original.getPhase(phaseIndex).getComponent(componentIndex).getx(), totalFraction, 1e-7,
+                label + " component " + componentIndex);
+          }
+        }
+      }
+    } finally {
+      EclipseFluidReadWrite.pseudoName = previousName;
+    }
+  }
+
+  /**
+   * Field labels must survive mixing, separation, and recirculation without changing product recovery.
+   *
+   * @throws IOException if the EOS fixture cannot be read
+   */
+  @Test
+  void testNamedFluidsPreserveRecycledComponentRecovery() throws IOException {
+    String previousName = EclipseFluidReadWrite.pseudoName;
+    try {
+      String[] fieldNames = {"rest", "mikkel", "morvin"};
+      double[] fieldShares = {0.2, 0.3, 0.5};
+      SystemInterface original = EclipseFluidReadWrite.read(fluid_water, "");
+      SystemInterface tagged = EclipseFluidReadWrite.read(fluid_water, fieldNames);
+      double[] composition = original.getMolarComposition();
+      int componentCount = composition.length;
+      double[][] expectedOutlets = new double[3][componentCount];
+      for (boolean useTags : new boolean[] {false, true}) {
+        SystemInterface template = useTags ? tagged : original;
+        ProcessSystem process = new ProcessSystem();
+        Mixer mixer = new Mixer("field mixer");
+        double[] inletMoles = new double[template.getNumberOfComponents()];
+        for (int fieldIndex = 0; fieldIndex < fieldNames.length; fieldIndex++) {
+          SystemInterface fluid = template.clone();
+          double[] fractions = new double[fluid.getNumberOfComponents()];
+          System.arraycopy(composition, 0, fractions, useTags ? fieldIndex * componentCount : 0, componentCount);
+          fluid.setMolarComposition(fractions);
+          Stream feed = new Stream(fieldNames[fieldIndex], fluid);
+          feed.setTemperature(303.15, "K");
+          feed.setPressure(30.0, "bara");
+          feed.setFlowRate(1000.0 * fieldShares[fieldIndex], "kg/hr");
+          for (int componentIndex = 0; componentIndex < inletMoles.length; componentIndex++) {
+            inletMoles[componentIndex] += fluid.getTotalNumberOfMoles() * fluid.getComponent(componentIndex).getz();
+          }
+          process.add(feed);
+          mixer.addStream(feed);
+        }
+        Stream returnGas = new Stream("return gas", template.clone());
+        returnGas.setTemperature(303.15, "K");
+        returnGas.setPressure(30.0, "bara");
+        returnGas.setFlowRate(1e-10, "kg/hr");
+        mixer.addStream(returnGas);
+        process.add(mixer);
+        ThreePhaseSeparator separator = new ThreePhaseSeparator("separator", mixer.getOutletStream());
+        process.add(separator);
+        Splitter gasSplitter = new Splitter("gas split", separator.getGasOutStream(), 2);
+        gasSplitter.setSplitFactors(new double[] {0.5, 0.5});
+        process.add(gasSplitter);
+        Recycle recycle = new Recycle("gas recycle");
+        recycle.addStream(gasSplitter.getSplitStream(1));
+        recycle.setOutletStream(returnGas);
+        recycle.setTolerance(1e-9);
+        process.add(recycle);
+        process.run();
+        Assertions.assertTrue(recycle.solved(), "gas recycle must converge");
+        StreamInterface[] outlets = {gasSplitter.getSplitStream(0), separator.getOilOutStream(),
+            separator.getWaterOutStream()};
+        double[] outletMoles = new double[inletMoles.length];
+        for (int outletIndex = 0; outletIndex < outlets.length; outletIndex++) {
+          SystemInterface fluid = outlets[outletIndex].getFluid();
+          for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+            double totalMoles = 0.0;
+            for (int block = 0; block < (useTags ? fieldNames.length : 1); block++) {
+              int taggedIndex = block * componentCount + componentIndex;
+              double moles = fluid.getTotalNumberOfMoles() * fluid.getComponent(taggedIndex).getz();
+              outletMoles[taggedIndex] += moles;
+              totalMoles += moles;
+              if (useTags) {
+                double expected = expectedOutlets[outletIndex][componentIndex] * fieldShares[block];
+                assertEquals(expected, moles, Math.max(1e-7, expected * 1e-5),
+                    fieldNames[block] + " outlet " + outletIndex + " component " + componentIndex);
+              }
+            }
+            if (!useTags) {
+              expectedOutlets[outletIndex][componentIndex] = totalMoles;
+            }
+          }
+        }
+        for (int componentIndex = 0; componentIndex < inletMoles.length; componentIndex++) {
+          assertEquals(inletMoles[componentIndex], outletMoles[componentIndex],
+              Math.max(1e-7, inletMoles[componentIndex] * 1e-5), "external component balance " + componentIndex);
+        }
+      }
+      Assertions.assertArrayEquals(composition, original.getMolarComposition(), 1e-15, "source unchanged");
+    } finally {
+      EclipseFluidReadWrite.pseudoName = previousName;
+    }
   }
 
   @Test

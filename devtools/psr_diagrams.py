@@ -682,6 +682,52 @@ def _cycle_removal(units, edges):
     return list(reversed(post)), back
 
 
+def _components(layout):
+    """Weakly connected components of the real nodes (lists of nodes)."""
+    parent = {n.id: n.id for n in layout.real}
+
+    def find(a):
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+
+    for e in layout.edges:
+        if e.src in parent and e.dst in parent:
+            parent[find(e.src)] = find(e.dst)
+    groups = {}
+    for n in layout.real:
+        groups.setdefault(find(n.id), []).append(n)
+    return list(groups.values())
+
+
+def _stretch_and_anchor(layout):
+    """Optional sheet layout rules (``stretch_components``, ``feeds_left`` in the layout configuration).
+
+    ``stretch_components`` spreads every connected component that spans fewer layers than the widest one over
+    the full layer range, so a short train does not leave a large empty pocket beside a long one.
+    ``feeds_left`` puts boundary feeds and incoming off-page connectors on the first layer (left edge).
+    The stretch factor is at least 1, so the layer order along every edge is kept.
+    """
+    cfg = layout.cfg
+    if not layout.real or not (cfg.get("stretch_components") or cfg.get("feeds_left")):
+        return
+    glo = min(n.layer for n in layout.real)
+    ghi = max(n.layer for n in layout.real)
+    if cfg.get("stretch_components") and ghi > glo:
+        for comp in _components(layout):
+            lo = min(n.layer for n in comp)
+            span = max(n.layer for n in comp) - lo
+            if 0 < span < ghi - glo:
+                f = (ghi - glo) / float(span)
+                for n in comp:
+                    n.layer = glo + int(round((n.layer - lo) * f))
+    if cfg.get("feeds_left"):
+        for n in layout.real:
+            if n.kind in ("feed", "conn_in"):
+                n.layer = glo
+
+
 def _assign_layers(layout, units, topo, back):
     """Longest-path layering with promotion of source-like units."""
     nodes = layout.nodes
@@ -709,6 +755,7 @@ def _assign_layers(layout, units, topo, back):
         if n.kind in ("product", "conn_out"):
             ss = [nodes[e.src].layer for e in layout.edges if e.dst == n.id]
             n.layer = (max(ss) + 1) if ss else 1
+    _stretch_and_anchor(layout)
     lo = min(n.layer for n in layout.real) if layout.real else 0
     for n in layout.real:
         n.layer -= lo
@@ -1017,6 +1064,9 @@ def _assign_ports(layout, final=False):
                 n.port_dy[(side, k)] = o
 
 
+BLOCK_MARGIN = 7.0  # minimum clear gap between stacked BFD blocks (layout check: box spacing)
+
+
 def _stack_layer(layer, margin=1.5):
     ys = []
     y = 0.0
@@ -1036,6 +1086,8 @@ def _sep(a, b, margin=1.5):
         return max(a.below + b.above, PORT_PITCH)
     if a.kind == "dummy" or b.kind == "dummy":
         return a.below + b.above + 0.6
+    if a.kind == "block" and b.kind == "block":
+        margin = max(margin, BLOCK_MARGIN)
     return a.below + b.above + margin
 
 
@@ -1883,7 +1935,7 @@ def _build_graph(model, tags, k, plan, scale, sheet_labels):
         nmap[t] = n
 
     def boundary(kind, sid, label):
-        lab = _short(label, 36)
+        lab = _short(label, getattr(model, "label_chars", 36))
         w = max(14.0, text_w(lab, LABEL_FS) + 2.0)
         nd = _Node(("F:" if kind == "feed" else "P:") + sid, kind, w, 0.0, 3.3, 1.2,
                    payload={"stream": sid, "label": lab})
@@ -1938,7 +1990,9 @@ def _build_graph(model, tags, k, plan, scale, sheet_labels):
 
 def _layout_sheet(model, tags, k, plan, scale, sheet_labels):
     mode = getattr(model, "ordering", "refined")
-    cfg = {"stack_pitch": DIAMOND + 0.6, "gap_base": 10.0, "ordering": mode}
+    cfg = {"stack_pitch": DIAMOND + 0.6, "gap_base": 10.0, "ordering": mode,
+           "stretch_components": getattr(model, "stretch_components", False),
+           "feeds_left": getattr(model, "feeds_left", False)}
     nodes, edges = _build_graph(model, tags, k, plan, scale, sheet_labels)
     layout = compute_layout(nodes, edges, cfg, target_w=AREA[2])
     if mode == "refined" and layout.crossings > 0:
@@ -2007,11 +2061,11 @@ def _plan_sheets(model, sheets, max_units):
     if sheets:
         used = set()
         for sh in sheets:
-            tags = []
+            tags = [t for t in sh.get("tags", []) if t in model.unit and t not in used]
             for an in sh.get("areas", []):
                 for a in model.areas:
                     if a[0] == an:
-                        tags.extend(t for t in a[1] if t not in used)
+                        tags.extend(t for t in a[1] if t not in used and t not in tags)
             used.update(tags)
             if tags:
                 parts.append({"tags": tags, "title": sh.get("title") or ", ".join(sh.get("areas", [])),
@@ -2484,7 +2538,7 @@ def _finalize_sheet(layout, overrides, warnings, number):
     _shift(layout, dx, dy)
     applied = {}
     for tag, pos in (overrides or {}).items():
-        node = layout.nodes.get("U:" + str(tag))
+        node = layout.nodes.get("U:" + str(tag)) or layout.nodes.get(str(tag))
         if node is None:
             continue
         if "x" in pos:
@@ -2597,7 +2651,8 @@ def _write(path, text):
 
 
 def build_pfd(data, out_dir, title_block=None, sheets=None, max_units_per_sheet=14, layout_overrides=None,
-              equipment_data=None, ordering="refined"):
+              equipment_data=None, ordering="refined", stretch_components=False, feeds_left=False,
+              boundary_label_chars=36):
     """Build the PFD drawing set (A3 landscape SVG sheets, PDF, PNG previews, layout spec).
 
     Args:
@@ -2605,18 +2660,26 @@ def build_pfd(data, out_dir, title_block=None, sheets=None, max_units_per_sheet=
         out_dir: output directory (created if missing).
         title_block: optional dict of title-block fields (see module docs); ``case_note`` is printed as
             the first general note and ``utility_note`` is appended to the general notes.
-        sheets: optional explicit sheets ``[{'title': str, 'areas': [names]}]``.
+        sheets: optional explicit sheets ``[{'title': str, 'areas': [names], 'tags': [unit tags]}]``; a sheet
+            lists areas, unit tags or both.
         max_units_per_sheet: greedy packing limit for the default partition.
         layout_overrides: optional ``{tag: {'x': mm, 'y': mm}}`` symbol positions.
         equipment_data: optional ``{tag: [str, ...]}``; at most 3 short lines (34 characters, truncated
             with ``...``) printed in grey under the equipment description.
         ordering: ``"refined"`` (default; median, transposition and multi-start crossing reduction) or
             ``"barycentre"`` (the plain heuristic, kept for before/after measurements).
+        stretch_components: spread short disconnected trains over the full sheet width so that no large
+            empty pocket remains beside a long train.
+        feeds_left: draw boundary feeds and incoming off-page connectors on the left edge of the sheet.
+        boundary_label_chars: longest boundary feed/product stream label before it is cut with an ellipsis.
 
     Returns:
         Manifest dict with sheets, pdf, spec, unplaced_units, unplaced_streams, warnings.
     """
     model = _Model(data)
+    model.stretch_components = bool(stretch_components)
+    model.feeds_left = bool(feeds_left)
+    model.label_chars = int(boundary_label_chars)
     warnings = list(model.warnings)
     tb = _resolve_tb(title_block, data, "PFD")
     eq_data = {t: v for t, v in _clean_equipment_data(equipment_data).items() if t in model.unit}

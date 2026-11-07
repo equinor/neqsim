@@ -9,9 +9,17 @@ requires:
 
 # NeqSim Relief & Flare Network Skill
 
-End-to-end relief design — from individual PSV sizing through plant-wide load
-summation, flare-tip selection, and radiation/dispersion checks per **API 520**,
-**API 521**, **API 537**.
+Relief-system screening and simulation: individual PSV sizing, native valve response,
+plant load summation, flare-tip selection and consequence estimates. References include
+**API 520**, **API 521**, **API 537**, **ISO 4126** and **ISO 23251**; using these
+APIs does not establish compliance, certified capacity or installation approval.
+
+**PSV unit/API correction, 2026-11-05:** `ReliefValveSizing` pressures are **Pa absolute**,
+not barg or bara. Native `SafetyValve` and `SafetyReliefValve` pressure settings use
+**bara**. Convert explicitly at that boundary. Do not infer a capacity, orifice-area or
+certified-coefficient basis from a dynamic model's Cv. Select accumulation, blowdown,
+back-pressure and radiation limits from the applicable project/code/vendor basis;
+the example fractions below are study inputs, not universal acceptance limits.
 
 ## When to Use
 
@@ -27,70 +35,131 @@ summation, flare-tip selection, and radiation/dispersion checks per **API 520**,
 Standards: **API 520 Part I/II**, **API 521** (relief contingencies + radiation),
 **API 537** (flare equipment), **NFPA 30**, **EN ISO 23251**.
 
-## Pattern 1 — Gas-phase PSV (API 520)
+## Native PSV response and canonical P&ID feedback
+
+Use `SafetyReliefValve` for a self-acting native pressure/hysteresis response with
+declared lift lag, dwell and rate limits. Execute the UUID overload used by
+`ProcessSystem`; a direct method-only ramp is not evidence that the process runner
+exercises the same response. Keep opening at set pressure, full-open pressure and
+reseat pressure distinct. Enable the native gas choked-flow capacity limit for credited gas relief response.
+Record `getPressureReliefConfiguration()` and the actual
+lift, flow and ordered pop/reseat observations. A cycle count is not an acoustic or
+mechanical chatter model.
+
+Algebraic `run()`/`run(UUID)` and steady-mode transient dispatch preserve the
+connected source flow and fluid identity while evaluating outlet capacity on a
+private inlet workspace. Finite transient mode publishes withdrawal at both
+ports; give it a dedicated tee branch and aggregate downstream demands before
+upstream inventory integration. Do not use algebraic capacity as a balanced
+parallel withdrawal or dynamic-response result.
+
+For a process/P&ID feedback study:
+
+1. Connect the actual valve to a protected-vessel gas branch and an explicit
+   downstream pressure boundary through a source-backed tee. Refresh branch
+   intensive state before valve hydraulics; aggregate both actual demands before
+   the vessel consumes its outlet boundary. Do not prescribe an arbitrary relief
+   split or reconcile inventory afterwards.
+2. Import it with `PidPressureReliefImporter` into the existing `PidDesignModel`.
+   The initial supported route is an exact CONVENTIONAL `SafetyReliefValve`, LINEAR trim and a
+   real two-outlet `Splitter`. Record a capacity-basis evidence reference; a
+   self-acting PSV receives no fabricated controller or SIF signal.
+3. Use `PidPressureReliefValidator` to apply canonical settings to an isolated
+   process copy, read them back, fingerprint the actual configuration and attach
+   strict native scenario evidence. Reject stale bindings, wrong endpoints,
+   unsupported trim, secondary valve controllers/travel and ignored settings.
+4. Check no-demand standby, actual relief demand, failed/limited relief,
+   back-pressure sensitivity, slow response and recovery/refinement as applicable.
+   Reseating requires an earlier observed opening and subsequent physical seating;
+   an initially closed sample cannot satisfy recovery. No-demand PASS is not
+   successful protection on a demand.
+5. Retain full-window sampled pressure checks, actual positive discharge and
+   unwanted-relief checks separately from per-vessel component, mass and energy
+   closure. A successful response cannot clear numerical FAIL/HOLD or establish
+   unobserved continuous peaks, certified sizing, SRS/SIL/IPL credit or construction
+   approval. Check actual snapshot coverage before claiming transactional rollback
+   of the entire process.
+
+The synthetic `AdvancedV101PsvStudyTest`, `PidNativePressureReliefTest` and
+`SafetyReliefValveUuidTest` provide executable examples and regression evidence.
+See the [PSV workflow guide](../../../docs/process/safety/psv-pid-verification.md)
+and [P&ID synthesis](../../../docs/pid-design-synthesis.md) for canonical authority,
+source identities, explicit absolute-to-gauge references and separate engineering
+review gates.
+
+## Pattern 1 — Gas-phase area screening
 
 ```java
 import neqsim.process.util.fire.ReliefValveSizing;
 import neqsim.process.util.fire.ReliefValveSizing.PSVSizingResult;
 
 PSVSizingResult psv = ReliefValveSizing.calculateRequiredArea(
-    massFlowRate_kgs,
-    setPressure_barg,
-    backPressure_barg,
-    T_K,
-    MW,
-    k_cpcv,            // ratio of specific heats
-    Z_compressibility,
-    overpressure_frac, // 0.10 process, 0.21 fire
-    Kd                 // discharge coeff (0.975 typical)
+    5000.0 / 3600.0, // kg/s
+    110.0e5,         // set pressure, Pa absolute
+    0.10,            // explicit example overpressure fraction
+    1.013e5,         // back pressure, Pa absolute
+    333.15,          // K
+    0.018,           // kg/mol
+    0.95,            // compressibility factor
+    1.30,            // Cp/Cv
+    false,           // balanced bellows
+    false            // rupture disc upstream
 );
 
-double area_m2  = psv.getRequiredArea();
-String orifice  = psv.getRecommendedOrifice();        // API 526 letter
-String issues   = ReliefValveSizing.validateSizing(psv, /*fire*/ false);
+double area_m2 = psv.getRequiredArea();
+String orifice = psv.getRecommendedOrifice();
 ```
 
-## Pattern 2 — Fire Case (API 521)
+This exact gas call and the following liquid, two-phase and fire calls are exercised
+by `ReliefValveSizingDocumentationTest`. See the complete tested unit contract in
+[`relief_valve_sizing_api.md`](../../../docs/safety/relief_valve_sizing_api.md).
+The selected standard area is a screening result, not a vendor capacity certificate.
+
+## Pattern 2 — Wetted-area fire heat-input screening
 
 ```java
 double Q_fire_W = ReliefValveSizing.calculateAPI521FireHeatInput(
-    wettedAreaM2,
-    /*hasDrainage*/ true,
-    /*hasFireProofInsulation*/ false
-);
-
-// Mass flow = Q_fire / latent heat at relieving conditions
-double mdot = Q_fire_W / latentHeat_J_per_kg;
-
-PSVSizingResult psv = ReliefValveSizing.calculateRequiredArea(
-    mdot, setP, backP, T_relief, MW, k, Z,
-    /*overpressure_frac*/ 0.21,   // fire allows 21%
-    Kd
+    80.0, // wetted area, m2
+    true, // adequate drainage
+    true  // firefighting flag; current helper applies no firefighting credit
 );
 ```
 
-API 521 fire equation: **Q = C × F × A_wet^0.82** with credit factors for drainage / insulation.
+This helper is not a vessel energy-inventory simulation. Use an actual dynamic
+vessel, declared heat input and a connected relief device to study pressure response.
+Do not substitute an assumed latent heat for a phase/enthalpy calculation or invent
+an insulation/firefighting credit not implemented and supported by project evidence.
 
-## Pattern 3 — Liquid PSV (API 520 Part I §5.8)
+## Pattern 3 — Liquid area screening
 
 ```java
 import neqsim.process.util.fire.ReliefValveSizing.LiquidPSVSizingResult;
 
 LiquidPSVSizingResult lpsv = ReliefValveSizing.calculateLiquidReliefArea(
-    volumeFlowRate_m3s,
-    setPressure_barg,
-    backPressure_barg,
-    rho_kg_m3,
-    viscosity_cP,
-    Kd
+    50.0 / 3600.0, // m3/s at relieving conditions
+    850.0,         // kg/m3
+    25.0e5,        // set pressure, Pa absolute
+    0.10,          // explicit example overpressure fraction
+    1.013e5,       // back pressure, Pa absolute
+    0.004,         // dynamic viscosity, Pa s
+    false          // balanced bellows
 );
 ```
 
-## Pattern 4 — Two-Phase (Omega Method)
+## Pattern 4 — Two-phase area screening
 
 ```java
 double area = ReliefValveSizing.calculateTwoPhaseReliefArea(
-    massFlow_kgs, setP_barg, backP_barg, omega, rho_relief, Kd
+    30000.0 / 3600.0, // kg/s
+    80.0e5,          // set pressure, Pa absolute
+    0.10,            // explicit example overpressure fraction
+    5.0e5,           // back pressure, Pa absolute
+    373.15,          // K
+    0.30,            // gas mass fraction
+    50.0,            // gas density, kg/m3
+    700.0,           // liquid density, kg/m3
+    250000.0,        // latent heat, J/kg
+    2500.0           // liquid heat capacity, J/(kg K)
 );
 ```
 
@@ -146,7 +215,9 @@ disposal.getGoverningContributor();
   or `TWO_PHASE` (with `gasMassFraction`, `gasDensityKgPerM3`,
   `liquidDensityKgPerM3`, `latentHeatJPerKg`, `liquidHeatCapacityJPerKgK`) to
   trigger the matching sizing path; missing two-phase inputs are reported as warnings.
-- Accumulation limits: 1.10 single non-fire, 1.16 multiple, 1.21 fire (ASME VIII Div 1).
+- The engine's screening factors are not universal code limits. Record the protected
+  item's MAWP, gauge/absolute basis, contingency, number of installed devices,
+  governing edition and project-approved accumulation criterion separately.
 - Verified by `OverpressureProtectionStudyTest` + `OverpressureExtensionsTest`.
 
 > **Adequacy is judged by AREA**, not by re-plugging the selected area into the
@@ -167,10 +238,11 @@ flare.run(UUID.randomUUID());
 
 // Radiation at ground distance
 double q_Wm2 = flare.estimateRadiationHeatFlux(75.0);   // 75 m
-double dSafe = flare.radiationDistanceForFlux(4730.0);  // K = 1.5 kW/m² × 4 hr exposure
+double dSafe = flare.radiationDistanceForFlux(4730.0);  // example 4.73 kW/m2 threshold
 ```
 
-API 521 §6.4 radiation criteria:
+Illustrative radiation screening levels; verify the applicable exposure duration,
+receptor location and governing project/standard basis before acceptance:
 
 | Receiver                           | Allowable flux (kW/m²)      |
 | ---------------------------------- | --------------------------- |
@@ -231,18 +303,20 @@ that actually sizes the header.
 
 ## Pattern 7 — Header Back-Pressure & Mach
 
-For balanced-bellows / pilot-operated PSVs, verify:
-- Built-up back-pressure ≤ 50% set (conventional 10%)
-- Header Mach < 0.7 at any location (avoid critical flow choking design)
+Use the actual downstream stream/header pressure in the connected hydraulic model.
+Distinguish superimposed from built-up back pressure and evaluate the selected valve's
+certified operating envelope. A conventional/balanced/pilot label does not by itself
+justify a fixed allowable percentage or correction factor.
 
-```java
-import neqsim.process.equipment.valve.SafetyValve;
-SafetyValve sv = new SafetyValve("PSV-101", inletStream);
-sv.setSetPressure(120.0, "barg");
-sv.setBackPressure(15.0, "barg");
-sv.run();
-double KbCorrection = sv.getBackPressureCorrectionFactor();  // > 0.6 for balanced PSV
-```
+`SafetyReliefValve` exposes `setValveType`, `setBackpressureSensitivity` and `setKbMax`
+for its empirical response model. These parameters do not replace certified vendor
+curves. Legacy `SafetyValve` uses `setPressureSpec` in bara; it has no
+`setSetPressure`, `setBackPressure` or `getBackPressureCorrectionFactor` APIs.
+Do not call those nonexistent overloads or pass barg to a bara setter.
+
+Check header hydraulics and project Mach/velocity criteria separately. Include the
+actual relief line and disposal destination in the canonical P&ID; a drawn off-page
+connector alone is not a simulated flare network or validated back-pressure model.
 
 ## Pattern 8 — Dispersion of Unignited Release
 
@@ -264,24 +338,24 @@ modeling.
 
 | Mistake                                                   | Fix                                                                  |
 | --------------------------------------------------------- | -------------------------------------------------------------------- |
-| Sizing fire PSV at 10% overpressure                       | Fire case uses 21%; non-fire is 10% (API 520)                        |
-| Wetted area = total surface                               | API 521 wetted area is liquid-touching surface up to 7.6 m elevation |
-| Ignoring drainage credit                                  | F factor reduces Q_fire by 0.5 with adequate drainage (slope ≥ 1°)  |
+| Treating a sample accumulation fraction as code approval   | Establish the contingency, applicable code/edition and pressure basis; declare the approved criterion |
+| Wetted area = total surface                               | Establish actual wetted geometry, fire exposure and applicable standard limits |
+| Inventing drainage, insulation or firefighting credit      | Verify project evidence and the exact helper implementation; the static fire helper applies no firefighting credit |
 | Adding all PSV capacities for header                      | Use the governing **contingency**, not sum of nameplate capacities   |
-| K_d = 1.0                                                 | Typical: gas/vapor 0.975, liquid 0.65, certified two-phase ≤ 0.85    |
-| Ignoring Mach in header                                   | Mach > 0.7 → choking, can dramatically raise back-pressure on PSVs   |
-| Using inlet line ΔP > 3% set                              | API 520 §7.3: > 3% inlet ΔP causes valve chatter, fix the piping     |
-| Picking smallest API 526 letter that meets area           | Always pick the **next** letter for spare margin & spare-parts pool  |
+| Assuming a discharge coefficient from a service label     | Obtain the applicable certified/vendor coefficient and correction-factor basis |
+| Ignoring Mach and built-up pressure in the header          | Evaluate actual compressible hydraulics; a project Mach margin is not the sonic choking condition |
+| Ignoring inlet-line loss and valve/system interaction      | Check applicable installation criteria and engineering-analysis requirements; a pressure-loss percentage alone does not prove chatter |
+| Treating an API 526 letter as certified relief adequacy    | Check selected area, service, certified coefficients and vendor capacity; apply project margin explicitly |
 
 ## Validation Checklist
 
 - [ ] Each contingency has a documented worst-case mass flow
-- [ ] Wetted-area calculation shows boundary up to 7.6 m
+- [ ] Wetted-area calculation records geometry, exposure and applicable limits
 - [ ] Drainage / insulation credits supported by P&ID review
-- [ ] Header sized so Mach < 0.7 at peak load
-- [ ] Built-up back-pressure ≤ 10% (conventional) or ≤ 50% (balanced) of set
-- [ ] Inlet line ΔP < 3% of set pressure
-- [ ] Flare radiation ≤ 4.73 kW/m² at property line (incl. solar)
+- [ ] Header hydraulics meet the declared project Mach/velocity criteria at peak load
+- [ ] Superimposed/built-up back pressure meets the selected device's approved envelope
+- [ ] Inlet-line losses and stability meet applicable installation/vendor requirements
+- [ ] Radiation meets the declared location, exposure-time and background criteria
 - [ ] Dispersion check at flame-out (toxic species)
 - [ ] Results saved to `results.json` under `relief_system` with PSV table + flare load summary
 

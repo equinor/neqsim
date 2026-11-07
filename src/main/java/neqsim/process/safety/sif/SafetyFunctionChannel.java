@@ -3,14 +3,30 @@ package neqsim.process.safety.sif;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import neqsim.process.controllerdevice.ControllerDeviceInterface;
+import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.measurementdevice.MeasurementDeviceInterface;
+import neqsim.process.measurementdevice.PushButton;
+import neqsim.process.measurementdevice.TransientMeasurementDevice;
 import neqsim.process.processmodel.ProcessSystem;
 
-/** Process-bound sensor or switch channel used by a closed-loop safety function. */
+/**
+ * Process-bound sensor or switch channel used by a closed-loop safety function.
+ *
+ * @author Even Solbraa
+ * @version 1.0
+ */
 public final class SafetyFunctionChannel implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   /** Reads a scalar process value from the isolated process model. */
   public interface SignalExtractor extends Serializable {
+    /**
+     * Reads one signal without changing the physical process.
+     *
+     * @param process isolated executing process
+     * @return finite scalar signal
+     */
     double extract(ProcessSystem process);
   }
 
@@ -34,6 +50,7 @@ public final class SafetyFunctionChannel implements Serializable {
     private final boolean available;
     private final FaultMode faultMode;
 
+    /** Creates one immutable sampled state. */
     Sample(String tag, double rawValue, double indicatedValue, boolean demand, boolean tripped, boolean available,
         FaultMode faultMode) {
       this.tag = tag;
@@ -45,14 +62,17 @@ public final class SafetyFunctionChannel implements Serializable {
       this.faultMode = faultMode;
     }
 
+    /** @return whether this channel has latched a trip */
     boolean isTripped() {
       return tripped;
     }
 
+    /** @return whether this channel participates in the fixed configured vote */
     boolean isAvailable() {
       return available;
     }
 
+    /** @return scalar sampled evidence */
     Map<String, Object> toMap() {
       Map<String, Object> result = new LinkedHashMap<String, Object>();
       result.put("tag", tag);
@@ -74,9 +94,16 @@ public final class SafetyFunctionChannel implements Serializable {
   private final FaultMode faultMode;
   private final double bias;
   private final SignalExtractor extractor;
+  private final MeasurementDeviceInterface measurementSource;
+  private final String inputIdentityStatus;
   private double continuousDemandSeconds;
   private boolean latchedTrip;
 
+  /**
+   * Creates a validated channel.
+   *
+   * @param builder requested definition
+   */
   private SafetyFunctionChannel(Builder builder) {
     tag = requireText(builder.tag, "tag");
     unit = requireText(builder.unit, "unit");
@@ -86,6 +113,8 @@ public final class SafetyFunctionChannel implements Serializable {
     faultMode = builder.faultMode;
     bias = finite(builder.bias, "bias");
     extractor = builder.extractor;
+    measurementSource = builder.measurementSource;
+    inputIdentityStatus = builder.inputIdentityStatus;
   }
 
   /**
@@ -114,6 +143,153 @@ public final class SafetyFunctionChannel implements Serializable {
     return new Builder(tag, unit, setpoint, TripDirection.LOW, extractor);
   }
 
+  /**
+   * Starts a high-trip definition from an actual held-sample measurement.
+   *
+   * @param source actual measurement in the configured isolated process
+   * @param unit engineering unit requested from the held sample
+   * @param setpoint high-trip setpoint
+   * @return measurement-backed channel builder
+   * @throws IllegalArgumentException if the source lacks enabled transient sampling
+   */
+  public static Builder highTripFromMeasurement(MeasurementDeviceInterface source, String unit, double setpoint) {
+    return fromMeasurement(source, unit, setpoint, TripDirection.HIGH);
+  }
+
+  /**
+   * Starts a low-trip definition from an actual held-sample measurement.
+   *
+   * @param source actual measurement in the configured isolated process
+   * @param unit engineering unit requested from the held sample
+   * @param setpoint low-trip setpoint
+   * @return measurement-backed channel builder
+   * @throws IllegalArgumentException if the source lacks enabled transient sampling
+   */
+  public static Builder lowTripFromMeasurement(MeasurementDeviceInterface source, String unit, double setpoint) {
+    return fromMeasurement(source, unit, setpoint, TripDirection.LOW);
+  }
+
+  /**
+   * Creates a measurement-backed builder without accepting a separately invented channel tag.
+   *
+   * @param source actual configured measurement
+   * @param unit held-sample engineering unit
+   * @param setpoint trip setpoint
+   * @param direction high or low demand direction
+   * @return measurement-backed builder
+   * @throws IllegalArgumentException if transient held sampling is unavailable
+   */
+  private static Builder fromMeasurement(final MeasurementDeviceInterface source, final String unit, double setpoint,
+      TripDirection direction) {
+    if (!(source instanceof TransientMeasurementDevice)
+        || !((TransientMeasurementDevice) source).isTransientSamplingEnabled()) {
+      throw new IllegalArgumentException("Measurement-backed channels require enabled transient held sampling");
+    }
+    Builder builder = new Builder(source.getName(), unit, setpoint, direction, new SignalExtractor() {
+      private static final long serialVersionUID = 1L;
+
+      /** {@inheritDoc} */
+      @Override
+      public double extract(ProcessSystem process) {
+        requireLocalMeasurement(process, source);
+        if (!((TransientMeasurementDevice) source).isTransientSamplingEnabled()) {
+          throw new IllegalStateException("Measurement-backed channel lost enabled transient sampling");
+        }
+        return ((TransientMeasurementDevice) source).getTransientSample(unit);
+      }
+    });
+    builder.measurementSource = source;
+    builder.inputIdentityStatus = "NATIVE_HELD_MEASUREMENT";
+    return builder;
+  }
+
+  /**
+   * Starts a discrete manual-trip channel from an actual local push button.
+   *
+   * <p>
+   * This reads the button's binary latch, not a pressure held sample. Linked automatic actions are prohibited so the
+   * safety function, rather than a hidden button side effect, owns final-element actuation.
+   * </p>
+   *
+   * @param source local native push button in the configured process
+   * @return binary high-trip builder with a one-half threshold
+   * @throws IllegalArgumentException if the button is absent, subclassed or owns linked automatic actions
+   */
+  public static Builder manualTripFromPushButton(final PushButton source) {
+    if (source == null || source.getClass() != PushButton.class || !source.getLinkedLogics().isEmpty()
+        || source.getLinkedBlowdownValve() != null && source.isAutoActivateValve()) {
+      throw new IllegalArgumentException("Manual channels require a local native button without linked actions");
+    }
+    Builder builder = new Builder(source.getName(), "binary", 0.5, TripDirection.HIGH, new SignalExtractor() {
+      private static final long serialVersionUID = 1L;
+
+      /** {@inheritDoc} */
+      @Override
+      public double extract(ProcessSystem process) {
+        requireLocalMeasurement(process, source);
+        if (!source.getLinkedLogics().isEmpty()
+            || source.getLinkedBlowdownValve() != null && source.isAutoActivateValve()) {
+          throw new IllegalStateException("Manual channel acquired linked automatic actions");
+        }
+        return source.getMeasuredValue("binary");
+      }
+    });
+    builder.measurementSource = source;
+    builder.inputIdentityStatus = "NATIVE_DISCRETE_PUSH_BUTTON";
+    return builder;
+  }
+
+  /**
+   * Rejects a channel that captured a measurement from another process copy.
+   *
+   * @param process process actually executing the safety function
+   * @param source captured native measurement
+   * @throws IllegalStateException if the source is not registered or attached to this exact process
+   */
+  private static void requireLocalMeasurement(ProcessSystem process, MeasurementDeviceInterface source) {
+    if (process != null) {
+      for (MeasurementDeviceInterface candidate : process.getMeasurementDevices()) {
+        if (candidate == source) {
+          return;
+        }
+      }
+      for (ControllerDeviceInterface controller : process.getControllerDevices()) {
+        if (controller != null && controller.getTransmitter() == source) {
+          return;
+        }
+      }
+      for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+        for (ControllerDeviceInterface controller : unit.getControllers()) {
+          if (controller != null && controller.getTransmitter() == source) {
+            return;
+          }
+        }
+      }
+    }
+    throw new IllegalStateException("Measurement-backed channel source is not in the executing process copy");
+  }
+
+  /** @return validated actual channel tag */
+  public String getTag() {
+    return tag;
+  }
+
+  /**
+   * Exposes the actual measurement for configured-copy identity validation.
+   *
+   * @return actual measurement, or null for a legacy arbitrary extractor
+   */
+  public MeasurementDeviceInterface getMeasurementSource() {
+    return measurementSource;
+  }
+
+  /**
+   * Evaluates one held signal and advances its demand qualification timer.
+   *
+   * @param process isolated executing process
+   * @param timeStepSeconds positive native logic scan interval
+   * @return immutable sampled state
+   */
   Sample sample(ProcessSystem process, double timeStepSeconds) {
     double rawValue = extractor.extract(process);
     if (!Double.isFinite(rawValue)) {
@@ -140,11 +316,13 @@ public final class SafetyFunctionChannel implements Serializable {
     return new Sample(tag, rawValue, indicatedValue, demand, latchedTrip, available, faultMode);
   }
 
+  /** Clears channel demand history and the trip latch. */
   void reset() {
     continuousDemandSeconds = 0.0;
     latchedTrip = false;
   }
 
+  /** @return configured values and source identity, without engineering approval */
   Map<String, Object> configurationMap() {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("tag", tag);
@@ -154,6 +332,18 @@ public final class SafetyFunctionChannel implements Serializable {
     result.put("responseDelaySeconds", Double.valueOf(responseDelaySeconds));
     result.put("faultMode", faultMode.name());
     result.put("bias", Double.valueOf(bias));
+    result.put("inputIdentityStatus",
+        inputIdentityStatus == null ? "CUSTOM_EXTRACTOR_UNVERIFIED" : inputIdentityStatus);
+    if (measurementSource != null) {
+      Map<String, Object> source = new LinkedHashMap<String, Object>();
+      source.put("name", measurementSource.getName());
+      source.put("class", measurementSource.getClass().getName());
+      if (measurementSource instanceof TransientMeasurementDevice) {
+        source.put("transientSamplingEnabled",
+            Boolean.valueOf(((TransientMeasurementDevice) measurementSource).isTransientSamplingEnabled()));
+      }
+      result.put("measurementSource", source);
+    }
     return result;
   }
 
@@ -164,10 +354,21 @@ public final class SafetyFunctionChannel implements Serializable {
     private final double setpoint;
     private final TripDirection tripDirection;
     private final SignalExtractor extractor;
+    private MeasurementDeviceInterface measurementSource;
+    private String inputIdentityStatus = "CUSTOM_EXTRACTOR_UNVERIFIED";
     private double responseDelaySeconds;
     private FaultMode faultMode = FaultMode.HEALTHY;
     private double bias;
 
+    /**
+     * Creates an unevaluated channel definition.
+     *
+     * @param tag actual or declared instrument tag
+     * @param unit signal unit
+     * @param setpoint trip threshold
+     * @param tripDirection high or low demand
+     * @param extractor scalar signal source
+     */
     private Builder(String tag, String unit, double setpoint, TripDirection tripDirection, SignalExtractor extractor) {
       if (extractor == null) {
         throw new IllegalArgumentException("extractor must not be null");
@@ -209,6 +410,13 @@ public final class SafetyFunctionChannel implements Serializable {
     }
   }
 
+  /**
+   * Validates a nonblank identifier.
+   *
+   * @param value requested text
+   * @param field diagnostic field name
+   * @return trimmed text
+   */
   private static String requireText(String value, String field) {
     if (value == null || value.trim().isEmpty()) {
       throw new IllegalArgumentException(field + " must not be blank");
@@ -216,6 +424,13 @@ public final class SafetyFunctionChannel implements Serializable {
     return value.trim();
   }
 
+  /**
+   * Validates a finite scalar.
+   *
+   * @param value requested scalar
+   * @param field diagnostic field name
+   * @return validated value
+   */
   private static double finite(double value, String field) {
     if (!Double.isFinite(value)) {
       throw new IllegalArgumentException(field + " must be finite");
@@ -223,6 +438,13 @@ public final class SafetyFunctionChannel implements Serializable {
     return value;
   }
 
+  /**
+   * Validates a nonnegative timer.
+   *
+   * @param value requested seconds
+   * @param field diagnostic field name
+   * @return validated value
+   */
   private static double nonNegative(double value, String field) {
     if (!Double.isFinite(value) || value < 0.0) {
       throw new IllegalArgumentException(field + " must be finite and non-negative");

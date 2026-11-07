@@ -51,10 +51,19 @@ input topology. After a reactive calculation converges, call
 `getPitzerReactionParameterCoverage()` to audit every active ion, or
 `requireCompletePitzerReactionParameterCoverage()` to fail closed. The complete reactive diagnostic
 is calculated on demand, so it adds no work to ordinary Pitzer properties or non-electrolyte models.
-On the current carbonate reproducer, the legacy dataset reports the active `H3O+|HCO3-` binary as
-missing; the bundled PHREEQC 3.9.0 catalog also has no explicit `H+|HCO3-` binary row. No zero or
-name-based proton convention is inferred. A qualified source row and an independently reviewed
-`H3O+`/PHREEQC-`H+` standard-state mapping remain adoption dependencies. The primary diagnostic is
+On the carbonate reproducer, the legacy dataset reports the active `H3O+|HCO3-` binary as
+missing; the bundled PHREEQC 3.9.0 catalog also has no explicit `H+|HCO3-` binary row. The
+automatic selector still infers neither a zero nor a proton alias. The explicit
+`applyPhreeqcReactiveSodiumChlorideCarbonateParameters()` mode instead reproduces the source
+executable semantics for one fixed topology: H3O+ is mapped to the PHREEQC H+ catalog identity and a
+source-omitted tuple becomes an explicit six-term zero. It rejects every species outside water, CO2,
+Na+, Cl-, H3O+, OH-, HCO3-, and CO3--. Ten frozen IPhreeqc states give pH MAE 0.000434 (maximum
+0.000922) and water-activity MAE 0.0000131 (maximum 0.0000261); a coupled gas-aqueous case also
+closes reaction, element, and charge residuals. The dataset identity is
+`usgs-phreeqc-pitzer-b0b3be767158ccc3322d2c816625cf470045e67e-reactive-nacl-carbonate-exact-source-v1`.
+These results establish source-implementation parity only. They do not qualify other salts, hydrate
+equilibrium, mineral saturation, experimental extrapolation, or the broad catalog. The primary
+diagnostic is
 cached by active primary-salt topology and parameter revision, and the automatic gate runs once
 after each standard
 level-zero state initialization. Call `init(0)` after changing composition, as required by the

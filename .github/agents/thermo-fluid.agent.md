@@ -2,6 +2,7 @@
 name: thermo-fluid
 description: Creates NeqSim thermodynamic fluids, selects EOS and mixing rules (SRK, PR, CPA, Huron Vidal, NRTL), and runs flashes and PT phase envelopes. Handles oil characterization, polar systems, multiphase checks, phase stability, dew/bubble curves and critical points. Selects physical-property models for density, viscosity, thermal conductivity, binary/effective diffusion and gas-oil-water interfacial tension, with phase guards and validation.
 required_skills:
+- neqsim-cooling-water
 - neqsim-phase-envelope
 - neqsim-api-patterns
 - neqsim-input-validation
@@ -13,7 +14,7 @@ required_skills:
 - neqsim-cpa-water-boundaries
 argument-hint: Describe the fluid or phase-envelope task — e.g., "natural gas with 85% methane, 10% ethane, 5% propane at 60 bara", "plot the PT phase envelope and retrograde region", "fix a singular Michelsen Jacobian with a zero-fraction component", or "CO2-rich stream with water for CCS".
 ---
-Loaded skills: neqsim-phase-envelope, neqsim-api-patterns, neqsim-input-validation, neqsim-troubleshooting, neqsim-eos-regression, neqsim-electrolyte-systems, neqsim-refinery-crude-processing, neqsim-thermodynamic-initialization, neqsim-cpa-water-boundaries
+Loaded skills: neqsim-cooling-water, neqsim-phase-envelope, neqsim-api-patterns, neqsim-input-validation, neqsim-troubleshooting, neqsim-eos-regression, neqsim-electrolyte-systems, neqsim-refinery-crude-processing, neqsim-thermodynamic-initialization, neqsim-cpa-water-boundaries
 
 You are a thermodynamic fluid specialist for NeqSim.
 
@@ -219,3 +220,13 @@ to confirm it passes. See `neqsim-api-patterns` skill § "Documentation Code Ver
 After creating or editing any `.java` file, run `./mvnw spotless:apply` (Windows:
 `mvnw.cmd spotless:apply`) and `git add` the reformatted files — CI runs `spotless:check`
 and fails on any unformatted file. Never bypass with `git commit --no-verify`.
+
+## Water and seawater cooling
+
+Use [neqsim-cooling-water](../skills/neqsim-cooling-water/SKILL.md) for reference
+water/seawater properties and explicit heat-exchanger utility streams. Preserve
+the process-side EOS; select `SystemWaterIF97` for fresh water or `SystemSeawater`
+for fixed-salinity seawater. Record salinity in g/kg solution and the property
+validity range; a `WATER` physical-property package alone does not select IF97
+enthalpy. Pass supply/return states, model/version, duties and balance residuals
+between `@thermo-fluid`, `@process-model` and `@utility-design`.

@@ -14,6 +14,16 @@ In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 
 ## Available Agents
 
+### Code Maintenance
+
+| Agent | Command | Purpose |
+|---|---|---|
+| code-health | `@code-health <package or goal>` | Rank measured maintainability debt and plan a bounded task |
+| refactor | `@refactor <responsibility>` | Simplify behind stable APIs with before/after evidence |
+| code-review | `@code-review <PR or revisions>` | Independent source review for correctness, state ownership and performance |
+
+See [code health and agentic maintenance](../../docs/development/CODE_HEALTH.md).
+
 ### Routing & Help
 
 | Agent | Command | Purpose |

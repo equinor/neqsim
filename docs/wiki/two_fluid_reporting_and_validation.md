@@ -42,7 +42,10 @@ rather than interpreting midpoint depth as a cell volume.
 This query preserves the supplied total liquid volume and changes no solver state
 or ordinary flow-closure geometry. Exactly empty/full cells have zero interfacial
 area. Invalid inputs, near-vertical cells (cosine below 1e-8), overflow and
-unresolvable trace volumes throw `IllegalArgumentException`; no inventory is repaired.
+unresolvable trace volumes throw `IllegalArgumentException`; no inventory is repaired. The inclined
+solver retains the positive leading-edge depth directly, avoiding cancellation between a long
+cell's centre depth and slope range. The regression matrix resolves a `1e-30` holdup in a 416.67 m
+cell while retaining the existing 3,060 public geometry references.
 
 The horizontal-plane assumption is a **static geometric reference**. It is not a
 reconstruction of an arbitrary moving, annular or dispersed interface, a gas-flow
@@ -192,6 +195,78 @@ entrainment_fraction,entrained_droplet_diameter_m,
 inclined_section_gas_carryover_number,inclined_section_liquid_fallback_potential,
 severe_slugging_number,severe_slug_potential
 ```
+
+### Terrain low-point pool time series
+
+`TwoFluidPipeReport.captureLowPointPools(pipe)` groups physical cells by strict internal terrain
+minima. An exactly flat-bottom minimum uses its midpoint cell. Adjacent minima are divided at the
+highest intervening ridge (the first cell wins an exact ridge tie), and the end basins extend to the
+pipe boundaries. A horizontal or monotonic profile returns zero pools; the reporter does not impose
+a pool location.
+
+```java
+List<TwoFluidPipeReport.LowPointPoolSnapshot> pools =
+    TwoFluidPipeReport.newLowPointPoolSnapshotList();
+
+pipe.runTransient(dt, UUID.randomUUID());
+pools.add(TwoFluidPipeReport.captureLowPointPools(pipe));
+TwoFluidPipeReport.writeLowPointPoolCsv(pools, Paths.get("low-point-pools.csv"));
+```
+
+Each row records the one-based pool identifier, zero-based low-point and inclusive basin cell
+indices, terrain position/elevation, oil mass and volume, total liquid volume, static depth at the
+low-point cell, maximum static depth in the basin, maximum absolute gas/oil speeds, and the latest
+accepted hydrocarbon-transfer diagnostics.
+The signed oil interphase rate is positive for condensation into oil and negative for evaporation.
+Interface area, rate, heat scale and trace-fallback fields are `NaN`/`false` until an accepted
+`HydrocarbonPoolTransfer` result exists. The depth is the opt-in volume-preserving horizontal-surface
+diagnostic; inadmissible cell geometry fails explicitly rather than substituting an invented level.
+
+Record the selected transfer-area assumption alongside these diagnostics. `forHydrostaticPool(...)`
+uses a stationary horizontal surface in each cell; `forStratifiedFlow(...)` uses the flowing state's
+local circular-stratified chord. The exported static depth remains a static diagnostic in both
+cases. Its implied interface is therefore not the flowing transfer area. Subdivision of a uniform
+state preserves the flowing closure's total area and integrated component rates; independent
+stationary puddles are different physical states when cell length changes. Keep their numerical
+receipts separate and do not infer static-pool convergence from a flowing-model result.
+
+Capture is read-only and allocates defensive section/diagnostic snapshots only when called. Basin
+membership is geometric, while inventory may be zero. Consequently this export can demonstrate
+where computed inventory resides and distinguish drainage from interphase transfer, but it does not
+by itself prove gravity retention, spatial convergence, physical interface area, or a predictive
+evaporation/depletion time. Those claims still require full-cycle balances, mesh/time refinement,
+nearby conditions and independent heat/area/transport qualification.
+
+### Restart pressure-trace metrics
+
+Use `TwoFluidPipeReport.analyzePressureTrace(timesSeconds, pressuresPa,
+minimumReversalExcursionPa)` on a declared shutdown, valve-opening or refill event window. The
+immutable result reports sampled pressure extrema and their times, peak-to-peak pressure, maximum
+adjacent-sample pressure rate, total variation, excess variation above the absolute end-to-end
+change, a dimensionless ringing ratio, and signed-increment reversal count. The caller supplies the
+reversal gate in Pa so sensor resolution or numerical-noise policy is explicit.
+
+```java
+TwoFluidPipeReport.PressureTraceMetrics restart =
+    TwoFluidPipeReport.analyzePressureTrace(sampleTimesSeconds, inletPressuresPa, 100.0);
+System.out.printf(Locale.ROOT, "restart p2p=%.1f Pa, ringing=%.4f, reversals=%d%n",
+    restart.getPeakToPeakPressurePa(), restart.getRingingRatio(),
+    restart.getDirectionReversals());
+```
+
+The helper does not filter, interpolate, detrend or fit a dominant period. Report the sample
+interval and event window with every result. A monotonic ramp has zero excess variation and zero
+reversals; positive values identify a non-monotonic trace but do not by themselves establish a
+physical restart surge band. That claim still requires conservation, mesh/time refinement, nearby
+operating points and independent evidence.
+
+When a closed inlet becomes a pressure-driven restart boundary, start the external ramp from
+`pipe.getInletFacePressure("Pa")`. This is the accepted mechanical face traction, including any
+hydrostatic half-cell head, rather than the adjacent cell-centre sample. Configure a distinct
+restart reservoir with `setInletBoundaryFluid(...)` when its composition or temperature differs
+from the connected inlet stream. Continue to record the cell-pressure trace unfiltered: matching
+the face traction removes an artificial boundary-force step but does not guarantee a monotonic
+interior response.
 
 ### Steady-to-transient handoff and empirical holdup tuning
 
@@ -676,3 +751,4 @@ boundaries and physical evaporation remain separate gates under #3298, #4674 and
 stationary. See the [public analytical record](../../src/test/resources/neqsim/process/equipment/pipeline/hydrostatic-interior-pressure/README.md).
 
 The [closed-wall reproduction record](../../src/test/resources/neqsim/process/equipment/pipeline/closed-wall-pressure/README.md) includes exact source provenance, analytical acceptance, all 12–192-cell operator data, and measured RHS cost with shared-runner limitations.
+

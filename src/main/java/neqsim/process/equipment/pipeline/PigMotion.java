@@ -53,6 +53,26 @@ public final class PigMotion implements Serializable {
     this.kineticFrictionN = kineticFrictionN;
   }
 
+  /** @return pig mass in kg */
+  public double getMassKg() {
+    return massKg;
+  }
+
+  /** @return effective pressure and displacement area in square metres */
+  public double getPressureAreaM2() {
+    return pressureAreaM2;
+  }
+
+  /** @return static breakaway resistance in N */
+  public double getStaticFrictionN() {
+    return staticFrictionN;
+  }
+
+  /** @return kinetic sliding resistance in N */
+  public double getKineticFrictionN() {
+    return kineticFrictionN;
+  }
+
   /**
    * Advances the mechanical state analytically through one constant-input interval.
    *

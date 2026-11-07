@@ -1,7 +1,9 @@
 package neqsim.process.equipment.heatexchanger;
 
-import java.util.UUID;
 import com.google.gson.GsonBuilder;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerMechanicalDesign;
 import neqsim.process.util.monitor.HeaterResponse;
@@ -42,6 +44,9 @@ public class Cooler extends Heater {
 
   /** First-order process-side thermal time constant, in seconds. */
   private double dynamicThermalTimeConstant = 20.0;
+
+  /** Unavailable utility fraction; an absent legacy serialized field therefore retains full availability. */
+  private double dynamicUtilityUnavailabilityFraction = 0.0;
 
   /** Identifier of the physical timestep whose initial dynamic state is cached. */
   private UUID dynamicStepIdentifier;
@@ -163,6 +168,133 @@ public class Cooler extends Heater {
     return dynamicTemperatureControlEnabled;
   }
 
+  /**
+   * Returns the complete finite static policy of the bounded dynamic utility model.
+   *
+   * <p>
+   * Actual valve opening, outlet temperature, clocks and cached physical-step state are deliberately separate. The
+   * base-unit steady/transient dispatch mode must also be checked before granting dynamic control evidence.
+   * </p>
+   *
+   * @return detached policy map with explicit physical units and utility availability
+   */
+  public Map<String, Object> getDynamicTemperatureControlConfiguration() {
+    Map<String, Object> values = new LinkedHashMap<String, Object>();
+    values.put("schemaVersion", "neqsim.cooler.dynamic-temperature-control.v1");
+    values.put("enabled", Boolean.valueOf(dynamicTemperatureControlEnabled));
+    values.put("designMassFlowKgPerHour", Double.valueOf(dynamicDesignMassFlow));
+    values.put("designNtu", Double.valueOf(dynamicDesignNtu));
+    values.put("coolingMediumTemperatureK", Double.valueOf(dynamicCoolingMediumTemperature));
+    values.put("designValveOpeningPercent", Double.valueOf(dynamicDesignValveOpening));
+    values.put("actuatorTimeConstantSeconds", Double.valueOf(dynamicActuatorTimeConstant));
+    values.put("thermalTimeConstantSeconds", Double.valueOf(dynamicThermalTimeConstant));
+    values.put("utilityAvailabilityFraction", Double.valueOf(getCoolingUtilityAvailabilityFraction()));
+    return values;
+  }
+
+  /**
+   * Applies a complete validated dynamic policy without moving physical state.
+   *
+   * <p>
+   * Validation is atomic and rejects missing/unknown keys, wrong types and non-finite or out-of-range settings. The
+   * actual valve position, connected streams and temperatures remain unchanged. Resetting the scan cache starts a new
+   * configuration epoch; callers must obtain fresh configuration and execution receipts.
+   * </p>
+   *
+   * @param configuration complete policy returned by the configuration getter, possibly after a JSON round trip
+   * @throws IllegalArgumentException if the complete policy is unsupported or invalid
+   */
+  public void applyDynamicTemperatureControlConfiguration(Map<String, Object> configuration) {
+    if (configuration == null || !configuration.keySet().equals(getDynamicTemperatureControlConfiguration().keySet())
+        || !"neqsim.cooler.dynamic-temperature-control.v1".equals(configuration.get("schemaVersion"))
+        || !(configuration.get("enabled") instanceof Boolean)) {
+      throw new IllegalArgumentException("A complete supported dynamic cooler policy is required");
+    }
+    boolean enabled = ((Boolean) configuration.get("enabled")).booleanValue();
+    double massFlow = dynamicPolicyNumber(configuration, "designMassFlowKgPerHour");
+    double ntu = dynamicPolicyNumber(configuration, "designNtu");
+    double mediumTemperature = dynamicPolicyNumber(configuration, "coolingMediumTemperatureK");
+    double designOpening = dynamicPolicyNumber(configuration, "designValveOpeningPercent");
+    double actuatorConstant = dynamicPolicyNumber(configuration, "actuatorTimeConstantSeconds");
+    double thermalConstant = dynamicPolicyNumber(configuration, "thermalTimeConstantSeconds");
+    double availability = dynamicPolicyNumber(configuration, "utilityAvailabilityFraction");
+    if (massFlow < 0.0 || ntu < 0.0 || (enabled && (massFlow <= 0.0 || ntu <= 0.0)) || mediumTemperature <= 0.0
+        || designOpening <= 0.0 || designOpening > 100.0 || actuatorConstant < 0.0 || thermalConstant < 0.0
+        || availability < 0.0 || availability > 1.0) {
+      throw new IllegalArgumentException("Dynamic cooler policy contains an out-of-range physical setting");
+    }
+    dynamicTemperatureControlEnabled = enabled;
+    dynamicDesignMassFlow = massFlow;
+    dynamicDesignNtu = ntu;
+    dynamicCoolingMediumTemperature = mediumTemperature;
+    dynamicDesignValveOpening = designOpening;
+    dynamicActuatorTimeConstant = actuatorConstant;
+    dynamicThermalTimeConstant = thermalConstant;
+    dynamicUtilityUnavailabilityFraction = 1.0 - availability;
+    dynamicStepIdentifier = null;
+  }
+
+  /**
+   * Reads one finite numeric setting without accepting string or null substitutions.
+   *
+   * @param values complete policy map
+   * @param key setting being read
+   * @return finite numeric setting
+   * @throws IllegalArgumentException if the value is absent, not numeric or non-finite
+   */
+  private static double dynamicPolicyNumber(Map<String, Object> values, String key) {
+    Object value = values.get(key);
+    if (!(value instanceof Number) || !Double.isFinite(((Number) value).doubleValue())) {
+      throw new IllegalArgumentException("Dynamic cooler setting must be a finite number: " + key);
+    }
+    return ((Number) value).doubleValue();
+  }
+
+  /**
+   * Gets effective heat-transfer utility availability in the configured dynamic model.
+   *
+   * @return fraction from zero (lost utility) to one (fully available)
+   */
+  public double getCoolingUtilityAvailabilityFraction() {
+    return 1.0 - dynamicUtilityUnavailabilityFraction;
+  }
+
+  /**
+   * Sets utility availability independently of actuator position and controller demand.
+   *
+   * <p>
+   * The fraction scales the native dynamic model's effective NTU. It does not change the steady fixed-temperature
+   * model, fabricate a utility-side material stream, freeze a valve or impose a hot outlet temperature.
+   * </p>
+   *
+   * @param fraction finite availability from zero to one
+   * @throws IllegalArgumentException if the fraction is non-finite or outside zero to one
+   */
+  public void setCoolingUtilityAvailabilityFraction(double fraction) {
+    if (!Double.isFinite(fraction) || fraction < 0.0 || fraction > 1.0) {
+      throw new IllegalArgumentException("Cooling utility availability must be finite and within [0, 1]");
+    }
+    dynamicUtilityUnavailabilityFraction = 1.0 - fraction;
+  }
+
+  /**
+   * Selects complete utility availability or complete loss for a dynamic fault study.
+   *
+   * @param available true for full availability, false for complete loss
+   */
+  public void setDynamicCoolingUtilityAvailable(boolean available) {
+    setCoolingUtilityAvailabilityFraction(available ? 1.0 : 0.0);
+  }
+
+  /**
+   * Checks whether any cooling utility is available to the configured dynamic model.
+   *
+   * @return true for a positive availability fraction
+   */
+  public boolean isDynamicCoolingUtilityAvailable() {
+    return getCoolingUtilityAvailabilityFraction() > 0.0;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
@@ -192,7 +324,7 @@ public class Cooler extends Heater {
     double equilibriumOutletTemperature = inletTemperature;
     if (inletTemperature > dynamicCoolingMediumTemperature) {
       double currentNtu = dynamicDesignNtu * coolingValveOpening / dynamicDesignValveOpening * dynamicDesignMassFlow
-          / currentMassFlow;
+          / currentMassFlow * getCoolingUtilityAvailabilityFraction();
       currentNtu = Math.max(0.0, Math.min(20.0, currentNtu));
       equilibriumOutletTemperature = dynamicCoolingMediumTemperature
           + (inletTemperature - dynamicCoolingMediumTemperature) * Math.exp(-currentNtu);

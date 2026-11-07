@@ -23,6 +23,72 @@ public final class PitzerParameterDatasets {
   /** Chloride rows supplemented by explicit CO2 zeta and K-Mg theta coefficients. */
   public static final String PHREEQC_CO2_CHLORIDE_USER_THETA_ZETA_ID = "usgs-phreeqc-pitzer-co2-chlorides-user-theta-zeta-v1";
 
+  /** Exact-source PHREEQC semantics for the reactive NaCl-CO2-carbonate topology. */
+  public static final String PHREEQC_REACTIVE_NACL_CARBONATE_ID = "usgs-phreeqc-pitzer-b0b3be767158ccc3322d2c816625cf470045e67e-reactive-nacl-carbonate-exact-source-v1";
+
+  /**
+   * Applies exact PHREEQC source semantics to the reactive NaCl-CO2-carbonate topology.
+   *
+   * <p>
+   * This opt-in mapping is deliberately narrower than the automatic catalog selector. It accepts only water, CO2, Na+,
+   * Cl-, H3O+, OH-, HCO3-, and CO3--, maps NeqSim H3O+ to the PHREEQC H+ catalog identity, and installs an explicit
+   * six-term zero for a row omitted by the pinned PHREEQC source. PHREEQC executable source treats such absent tuples
+   * as zero. The ordinary catalog-first default remains fail-closed and never infers this alias or omission rule.
+   * </p>
+   *
+   * <p>
+   * Call after adding all components and after {@code chemicalReactionInit()} when reactions are used, but before the
+   * first flash or property evaluation. The mapping uses public-domain PHREEQC commit
+   * {@code b0b3be767158ccc3322d2c816625cf470045e67e}, database blob {@code 324f852784be84650b77bd7f07f8316aafd8188b},
+   * its molality standard state, and its common-ion terms. It introduces no fitted coefficient. Independent IPhreeqc
+   * implementation parity for ten frozen states is a regression contract, not universal experimental qualification.
+   * </p>
+   *
+   * @param phase Pitzer aqueous role containing exactly the supported topology
+   * @throws IllegalArgumentException when the phase is null, incomplete, or contains another species
+   */
+  public static void applyPhreeqcReactiveSodiumChlorideCarbonate(PhasePitzer phase) {
+    if (phase == null) {
+      throw new IllegalArgumentException("Pitzer phase is required");
+    }
+    List<String> supported = Arrays.asList("water", "CO2", "Na+", "Cl-", "H3O+", "OH-", "HCO3-", "CO3--");
+    for (int component = 0; component < phase.getNumberOfComponents(); component++) {
+      String name = phase.getComponent(component).getComponentName();
+      if (!supported.contains(name)) {
+        throw new IllegalArgumentException("Reactive PHREEQC NaCl-carbonate dataset does not cover " + name);
+      }
+    }
+
+    requiredComponentIndex(phase, "water");
+    int co2 = requiredComponentIndex(phase, "CO2");
+    int sodium = requiredComponentIndex(phase, "Na+");
+    int chloride = requiredComponentIndex(phase, "Cl-");
+    int hydronium = requiredComponentIndex(phase, "H3O+");
+    int hydroxide = requiredComponentIndex(phase, "OH-");
+    int bicarbonate = requiredComponentIndex(phase, "HCO3-");
+    int carbonate = requiredComponentIndex(phase, "CO3--");
+    requireComponentCharge(phase, sodium, 1.0);
+    requireComponentCharge(phase, chloride, -1.0);
+    requireComponentCharge(phase, hydronium, 1.0);
+    requireComponentCharge(phase, hydroxide, -1.0);
+    requireComponentCharge(phase, bicarbonate, -1.0);
+    requireComponentCharge(phase, carbonate, -2.0);
+
+    List<Integer> ions = Arrays.asList(sodium, chloride, hydronium, hydroxide, bicarbonate, carbonate);
+    List<Integer> neutrals = Collections.singletonList(co2);
+    PhreeqcPitzerParameterCatalog catalog = PhreeqcPitzerParameterCatalog.getInstance();
+
+    phase.setParameterDatasetId(PHREEQC_REACTIVE_NACL_CARBONATE_ID);
+    phase.setExcludeHydrocarbonsFromNeutralPitzerTopology(false);
+    applyExactSourceIonRows(phase, catalog, ions);
+    applyExactSourceNeutralRows(phase, catalog, ions, neutrals);
+    phase.enablePhreeqcCommonIonTerms();
+    phase.markManualParameterDatasetLoaded();
+    phase.requireCompletePitzerParameterCoverage();
+    phase.requireCompletePitzerReactionParameterCoverage();
+    phase.requireCompleteNeutralPitzerParameterCoverage();
+  }
+
   /**
    * Applies PHREEQC Na/K/Ca/Mg chloride and CO2 lambda rows with caller-supplied constant zeta values.
    *
@@ -767,6 +833,13 @@ public final class PitzerParameterDatasets {
           Arrays.asList(PitzerParameterQualification.ValidationTarget.AQUEOUS_ACTIVITY_COEFFICIENTS,
               PitzerParameterQualification.ValidationTarget.WATER_ACTIVITY_AND_OSMOTIC_COEFFICIENT));
     }
+    if (PHREEQC_REACTIVE_NACL_CARBONATE_ID.equals(datasetId)) {
+      return new PitzerParameterQualification(datasetId, PitzerParameterQualification.Level.UNQUALIFIED,
+          Arrays.asList("Exact-source IPhreeqc implementation comparison for reactive NaCl-CO2-carbonate states"),
+          Arrays.asList("Ten frozen 293.15/323.15 K states compare pH and water activity only",
+              "One 293.15 K gas-aqueous flash checks coupled speciation and dissolved CO2",
+              "No universal experimental, hydrate, mixed-salt, mineral, or extrapolation qualification"));
+    }
     if (PHREEQC_PITZER_CATALOG_ID.equals(datasetId)) {
       return new PitzerParameterQualification(datasetId,
           PitzerParameterQualification.Level.PARTIALLY_EXPERIMENTALLY_VALIDATED,
@@ -890,6 +963,120 @@ public final class PitzerParameterDatasets {
         && totalMolality >= 0.95 - MG_CL_SO4_MOLALITY_BOUNDARY_TOLERANCE
         && totalMolality <= MG_CL_SO4_WATER_ACTIVITY_VALIDATION_MAX_TOTAL_MOLALITY
             + MG_CL_SO4_MOLALITY_BOUNDARY_TOLERANCE;
+  }
+
+  private static void requireComponentCharge(PhasePitzer phase, int component, double expectedCharge) {
+    double charge = phase.getComponent(component).getIonicCharge();
+    if (Math.abs(charge - expectedCharge) > 1.0e-12) {
+      throw new IllegalArgumentException(
+          "Unexpected charge for " + phase.getComponent(component).getComponentName() + ": " + charge);
+    }
+  }
+
+  private static String phreeqcReactiveSourceName(String componentName) {
+    return "H3O+".equals(componentName) ? "H+" : componentName;
+  }
+
+  private static double[] exactSourceRowOrZero(PhreeqcPitzerParameterCatalog catalog,
+      PhreeqcPitzerParameterCatalog.Family family, String... componentNames) {
+    String[] sourceNames = new String[componentNames.length];
+    for (int i = 0; i < componentNames.length; i++) {
+      sourceNames[i] = phreeqcReactiveSourceName(componentNames[i]);
+    }
+    double[] values = catalog.find(family, sourceNames);
+    return values == null ? new double[6] : values;
+  }
+
+  private static void applyExactSourceIonRows(PhasePitzer phase, PhreeqcPitzerParameterCatalog catalog,
+      List<Integer> ions) {
+    for (int firstPosition = 0; firstPosition < ions.size(); firstPosition++) {
+      int first = ions.get(firstPosition);
+      for (int secondPosition = firstPosition + 1; secondPosition < ions.size(); secondPosition++) {
+        int second = ions.get(secondPosition);
+        String firstName = phase.getComponent(first).getComponentName();
+        String secondName = phase.getComponent(second).getComponentName();
+        if (phase.getComponent(first).getIonicCharge() * phase.getComponent(second).getIonicCharge() < 0.0) {
+          phase.setPhreeqcBinaryTemperatureCoefficients(first, second, PHREEQC_REFERENCE_TEMPERATURE_K,
+              exactSourceRowOrZero(catalog, PhreeqcPitzerParameterCatalog.Family.B0, firstName, secondName),
+              exactSourceRowOrZero(catalog, PhreeqcPitzerParameterCatalog.Family.B1, firstName, secondName),
+              exactSourceRowOrZero(catalog, PhreeqcPitzerParameterCatalog.Family.C0, firstName, secondName));
+          phase.setBeta2TemperatureCoefficients(first, second, PHREEQC_REFERENCE_TEMPERATURE_K,
+              exactSourceRowOrZero(catalog, PhreeqcPitzerParameterCatalog.Family.B2, firstName, secondName));
+        } else {
+          phase.setThetaTemperatureCoefficients(first, second, PHREEQC_REFERENCE_TEMPERATURE_K,
+              exactSourceRowOrZero(catalog, PhreeqcPitzerParameterCatalog.Family.THETA, firstName, secondName));
+        }
+      }
+    }
+
+    for (int firstPosition = 0; firstPosition < ions.size(); firstPosition++) {
+      int first = ions.get(firstPosition);
+      for (int secondPosition = firstPosition + 1; secondPosition < ions.size(); secondPosition++) {
+        int second = ions.get(secondPosition);
+        for (int thirdPosition = secondPosition + 1; thirdPosition < ions.size(); thirdPosition++) {
+          int third = ions.get(thirdPosition);
+          int positiveCount = 0;
+          positiveCount += phase.getComponent(first).getIonicCharge() > 0.0 ? 1 : 0;
+          positiveCount += phase.getComponent(second).getIonicCharge() > 0.0 ? 1 : 0;
+          positiveCount += phase.getComponent(third).getIonicCharge() > 0.0 ? 1 : 0;
+          if (positiveCount != 1 && positiveCount != 2) {
+            continue;
+          }
+          int sameFirst;
+          int sameSecond;
+          int opposite;
+          if (phase.getComponent(first).getIonicCharge() * phase.getComponent(second).getIonicCharge() > 0.0) {
+            sameFirst = first;
+            sameSecond = second;
+            opposite = third;
+          } else if (phase.getComponent(first).getIonicCharge() * phase.getComponent(third).getIonicCharge() > 0.0) {
+            sameFirst = first;
+            sameSecond = third;
+            opposite = second;
+          } else {
+            sameFirst = second;
+            sameSecond = third;
+            opposite = first;
+          }
+          phase.setPsiTemperatureCoefficients(sameFirst, sameSecond, opposite, PHREEQC_REFERENCE_TEMPERATURE_K,
+              exactSourceRowOrZero(catalog, PhreeqcPitzerParameterCatalog.Family.PSI,
+                  phase.getComponent(first).getComponentName(), phase.getComponent(second).getComponentName(),
+                  phase.getComponent(third).getComponentName()));
+        }
+      }
+    }
+  }
+
+  private static void applyExactSourceNeutralRows(PhasePitzer phase, PhreeqcPitzerParameterCatalog catalog,
+      List<Integer> ions, List<Integer> neutrals) {
+    for (int neutralPosition = 0; neutralPosition < neutrals.size(); neutralPosition++) {
+      int neutral = neutrals.get(neutralPosition);
+      String neutralName = phase.getComponent(neutral).getComponentName();
+      for (int secondPosition = neutralPosition; secondPosition < neutrals.size(); secondPosition++) {
+        int secondNeutral = neutrals.get(secondPosition);
+        phase.setLambdaTemperatureCoefficients(neutral, secondNeutral, PHREEQC_REFERENCE_TEMPERATURE_K,
+            exactSourceRowOrZero(catalog, PhreeqcPitzerParameterCatalog.Family.LAMBDA, neutralName,
+                phase.getComponent(secondNeutral).getComponentName()));
+      }
+      for (int ion : ions) {
+        phase.setLambdaTemperatureCoefficients(neutral, ion, PHREEQC_REFERENCE_TEMPERATURE_K,
+            exactSourceRowOrZero(catalog, PhreeqcPitzerParameterCatalog.Family.LAMBDA, neutralName,
+                phase.getComponent(ion).getComponentName()));
+      }
+      for (int cation : ions) {
+        if (phase.getComponent(cation).getIonicCharge() <= 0.0) {
+          continue;
+        }
+        for (int anion : ions) {
+          if (phase.getComponent(anion).getIonicCharge() >= 0.0) {
+            continue;
+          }
+          phase.setZetaTemperatureCoefficients(neutral, cation, anion, PHREEQC_REFERENCE_TEMPERATURE_K,
+              exactSourceRowOrZero(catalog, PhreeqcPitzerParameterCatalog.Family.ZETA, neutralName,
+                  phase.getComponent(cation).getComponentName(), phase.getComponent(anion).getComponentName()));
+        }
+      }
+    }
   }
 
   private static int requiredComponentIndex(PhasePitzer phase, String componentName) {

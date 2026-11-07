@@ -873,6 +873,33 @@ outlet = pipe.getOutletStream()
 print(f"Computed outlet mass flow: {outlet.getFlowRate('kg/sec'):.2f} kg/s")
 ```
 
+For a conservative transient restart, start the ramp from the accepted inlet-face traction rather
+than the first cell-centre pressure. The latter can differ by a hydrostatic half-cell head on an
+inclined line. The connected inlet fluid supplies the default reservoir; use
+`setInletBoundaryFluid(fluid)` to isolate the restart source even when it has the same composition
+and temperature. The isolated reservoir is flashed once per new ramp pressure and reused across
+internal solver stages; a live connected stream is deliberately not cached.
+
+```python
+pipe.closeInlet()
+pipe.closeOutlet()
+for _ in range(settle_steps):
+    pipe.runTransient(dt, run_id)
+
+p0_pa = pipe.getInletFacePressure("Pa")
+pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE)
+pipe.setInletBoundaryFluid(inlet.getFluid())
+for step in range(1, ramp_steps + 1):
+    pipe.setInletPressure(p0_pa + (target_pa - p0_pa) * step / ramp_steps)
+    pipe.runTransient(dt, run_id)
+```
+
+This boundary resolves signed mass, component and enthalpy transport from acoustic compatibility.
+It is not a valve-area, choke or independently validated surge model; retain unfiltered pressure
+traces and mesh/time refinement for every declared restart window.
+`getPressureInletFlashCount()` can be logged to verify the one-flash-per-ramp-pressure performance
+safeguard when an isolated reservoir is configured.
+
 ### Boundary Condition Summary Table
 
 | Configuration | Inlet BC | Outlet BC | Flow | Inlet P | Outlet P |

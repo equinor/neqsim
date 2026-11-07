@@ -1,0 +1,136 @@
+{
+  "base": "b20e324a60a94778b11425257bb3d8e9636389b7",
+  "parentHead": "65e1c25fdf06cba0f953c3f5ed92dd6605f1bf80",
+  "provenance": "synthetic independent SRK/analytical well-mixed ODE; no experimental accuracy claim",
+  "replays": 43,
+  "focusedReplaySeconds": 82.531029562,
+  "focusedClassSeconds": 100.487,
+  "focusedContinuousMethodSeconds": 84.478,
+  "cases": [
+    {
+      "name": "alternating",
+      "finalSubsteps": 1024,
+      "maxFinalContinuousComponentErrorMoles": 0.2651965217664838,
+      "max64ContinuousComponentErrorMoles": 4.243540896102786,
+      "ratios": [
+        0.4984062564846128,
+        0.49920266937473656,
+        0.49960122245817756,
+        0.49980058354433377,
+        0.49990028479349724,
+        0.4999501411300616,
+        0.4999750710382684,
+        0.4999875351171293,
+        0.49999376553756764,
+        0.4999969032519886
+      ]
+    },
+    {
+      "name": "constant inventory",
+      "finalSubsteps": 1024,
+      "maxFinalContinuousComponentErrorMoles": 0.6960267622489482,
+      "max64ContinuousComponentErrorMoles": 11.138168402016163,
+      "ratios": [
+        0.4973138565706148,
+        0.4986618959545309,
+        0.4993321818741164,
+        0.49966639842124483,
+        0.4998332759443654,
+        0.4999166574230416,
+        0.49995833310079885,
+        0.4999791691624882,
+        0.4999895860706972,
+        0.49999478882914355
+      ]
+    },
+    {
+      "name": "withdrawal only",
+      "finalSubsteps": 64,
+      "maxFinalContinuousComponentErrorMoles": 9.313225746154785e-10,
+      "max64ContinuousComponentErrorMoles": 9.313225746154785e-10,
+      "ratios": []
+    },
+    {
+      "name": "injection only",
+      "finalSubsteps": 64,
+      "maxFinalContinuousComponentErrorMoles": 9.313225746154785e-10,
+      "max64ContinuousComponentErrorMoles": 9.313225746154785e-10,
+      "ratios": []
+    },
+    {
+      "name": "no flow",
+      "finalSubsteps": 64,
+      "maxFinalContinuousComponentErrorMoles": 9.313225746154785e-10,
+      "max64ContinuousComponentErrorMoles": 9.313225746154785e-10,
+      "ratios": []
+    }
+  ],
+  "unchangedBounds": {
+    "finiteComponentMoles": 0.0001,
+    "finitePressureBara": 1e-06,
+    "finiteSurfaceRelative": 1e-07,
+    "componentConservationRelative": 1e-09,
+    "continuousComponentMoles": 1,
+    "refinementRatio": [
+      0.45,
+      0.55
+    ]
+  },
+  "maxFiniteComponentErrorMoles": 1.30385160446167e-08,
+  "maxFinitePressureErrorBara": 9.094947017729282e-13,
+  "maxFiniteSurfaceRelativeError": 1.887379141862766e-15,
+  "maxComponentClosureMoles": 1.210719347000122e-08,
+  "precision": {
+    "primaryOutputsIdentical": true,
+    "diagnosticDifferences": [
+      {
+        "case": "withdrawal only",
+        "substeps": 1,
+        "precision60": 1e-53,
+        "precision75": 1e-69
+      },
+      {
+        "case": "withdrawal only",
+        "substeps": 2,
+        "precision60": 1e-53,
+        "precision75": 1e-69
+      },
+      {
+        "case": "withdrawal only",
+        "substeps": 4,
+        "precision60": 1e-53,
+        "precision75": 1e-69
+      },
+      {
+        "case": "withdrawal only",
+        "substeps": 8,
+        "precision60": 1e-53,
+        "precision75": 1e-69
+      },
+      {
+        "case": "withdrawal only",
+        "substeps": 16,
+        "precision60": 1e-53,
+        "precision75": 1e-69
+      },
+      {
+        "case": "withdrawal only",
+        "substeps": 32,
+        "precision60": 1e-53,
+        "precision75": 1e-69
+      },
+      {
+        "case": "withdrawal only",
+        "substeps": 64,
+        "precision60": 1e-53,
+        "precision75": 1e-69
+      }
+    ]
+  },
+  "source-proof": {
+    "verifiedFiles": 10085,
+    "base": "b20e324a60a94778b11425257bb3d8e9636389b7",
+    "head": "65e1c25fdf06cba0f953c3f5ed92dd6605f1bf80",
+    "mismatches": []
+  }
+}

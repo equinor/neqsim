@@ -125,7 +125,7 @@ public final class ProfessionalPidPackageExporter {
     try {
       PidEngineeringPackageExporter.export(project, model, staging);
       Dexpi20ConformanceAssessment.Report conformance = DexpiEngineeringExporter.exportDexpi201(project,
-          staging.resolve("plant.dexpi.xml"), metadata);
+          staging.resolve("plant.dexpi.xml"), metadata, false);
       Dexpi201PidMaterializer.Result projected = Dexpi201PidMaterializer.materialize(project, model, bindings,
           staging.resolve("plant.dexpi.xml"));
       conformance = projected.getAssessment();
@@ -230,30 +230,29 @@ public final class ProfessionalPidPackageExporter {
       EngineeringDiagramConventionRegister conventions, Dexpi20PlantExportMetadata metadata, Path drawings)
       throws IOException {
     Map<String, Object> report = new LinkedHashMap<String, Object>();
-    int primaryCount = 0;
-    for (neqsim.process.equipment.ProcessEquipmentInterface unit : project.getEngineeringProcessSystem()
-        .getUnitOperations()) {
-      if (!(unit instanceof neqsim.process.equipment.stream.StreamInterface)
-          && !(unit instanceof neqsim.process.equipment.valve.ThrottlingValve)) {
-        primaryCount++;
-      }
-    }
-    report.put("supportedPrimaryUnitCount", "1_TO_4_FORWARD_FLOW_TRAIN");
+    ProfessionalPidDiagramRenderer renderer = new ProfessionalPidDiagramRenderer(project, model, bindings, documents,
+        conventions, metadata.getExportDateTime());
+    int primaryCount = renderer.getPrimaryEquipmentCount();
+    report.put("supportedPrimaryUnitCount", "1_TO_4_PRIMARY_UNITS_WITH_EXPLICIT_NATIVE_JUNCTIONS");
     report.put("sourceGraphFingerprint", documents.getSourceGraphFingerprint());
     report.put("isoConformanceStatus", "CONTROLLED_STANDARD_AND_DISCIPLINE_REVIEW_REQUIRED");
     if (primaryCount < 1 || primaryCount > 4) {
       report.put("generationStatus", "OUTSIDE_NATIVE_OVERVIEW_SCOPE");
       return report;
     }
-    ProfessionalPidDiagramRenderer renderer = new ProfessionalPidDiagramRenderer(project, model, bindings, documents,
-        conventions, metadata.getExportDateTime());
     NativeEngineeringDiagramRenderer.Result result = renderer.renderProcessFlowOverview();
     Files.write(drawings.resolve("pfd-overview.pdf"), result.getPdf());
+    int pageIndex = 0;
+    List<String> svgPages = new ArrayList<String>();
     for (Map.Entry<String, String> entry : result.getSvgBySheetId().entrySet()) {
-      writeJson(drawings.resolve("pfd-overview.svg"), entry.getValue());
-      writeJson(drawings.resolve("pfd-overview.layout.json"), new GsonBuilder().setPrettyPrinting().create()
+      String stem = pageIndex++ == 0 ? "pfd-overview"
+          : "pfd-overview-" + String.format(java.util.Locale.ROOT, "%03d", pageIndex);
+      svgPages.add("drawings/" + stem + ".svg");
+      writeJson(drawings.resolve(stem + ".svg"), entry.getValue());
+      writeJson(drawings.resolve(stem + ".layout.json"), new GsonBuilder().setPrettyPrinting().create()
           .toJson(renderer.getLayoutSpecifications().get(entry.getKey())));
     }
+    report.put("svgPages", svgPages);
     report.put("generationStatus", result.isComplete() ? "GENERATED_FOR_REVIEW" : "INCOMPLETE_DRAWING");
     report.put("pdf", "drawings/pfd-overview.pdf");
     report.put("performedChecks", result.getPerformedChecks());

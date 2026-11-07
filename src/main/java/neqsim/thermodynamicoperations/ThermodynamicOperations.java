@@ -464,7 +464,10 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws IllegalArgumentException if a nonzero enthalpy is specified for an empty system
    */
   public void PHflash(double Hspec, int type) {
-    if (isPureComponentWithinEnthalpyRange(Hspec)) {
+    if (system instanceof neqsim.thermo.system.SystemSeawater) {
+      operation = new neqsim.thermodynamicoperations.flashops.SeawaterPHflash(
+          (neqsim.thermo.system.SystemSeawater) system, Hspec);
+    } else if (isPureComponentWithinEnthalpyRange(Hspec)) {
       operation = new PHflashSingleComp(system, Hspec, type);
     } else {
       operation = new PHflash(system, Hspec, type);
@@ -480,6 +483,11 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @return true if the system is a pure component and the enthalpy is within the valid range, false otherwise
    */
   private boolean isPureComponentWithinEnthalpyRange(double Hspec) {
+    // The compact reference phase selects IF97 regions directly; an EOS saturation
+    // flash with its nominal unity fugacity coefficients cannot determine coexistence.
+    if (system instanceof neqsim.thermo.system.SystemWaterIF97) {
+      return false;
+    }
     if (system.getTotalNumberOfMoles() == 0.0 || system.getPhase(0).getNumberOfComponents() != 1) {
       return false;
     }
@@ -635,6 +643,10 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param type a int
    */
   public void PHflash2(double Hspec, int type) {
+    if (system instanceof neqsim.thermo.system.SystemSeawater) {
+      PHflash(Hspec, type);
+      return;
+    }
     operation = new PHflash(system, Hspec, type);
     getOperation().run();
   }

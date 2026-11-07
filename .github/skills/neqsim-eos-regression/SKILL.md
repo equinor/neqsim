@@ -335,6 +335,10 @@ fix does not relax energy/fugacity/balance bounds or qualify global stability.
 Its108 SRK/PR/volume-correction controls check analytic extensivity and fresh
 homogeneous construction only; do not treat them as new depletion-path admission
 or independent EOS/measurement accuracy. Preserve the frozen EOS_CONTROL_SCOPE.md.
+Precise restoration reuses its caller-qualified endpoint before the first volume
+check and reflashes after withdrawal; preserve FixedCellInitialStateTest's named
+zero-inventory and independent binary controls. Do not widen volume tolerances
+to conceal a repeated-flash inventory perturbation. Legacy CVD keeps its sequence.
 Do not weaken absolute inventory bounds or claim arbitrary-scale/measured accuracy.
 The original 216-state and intermediate 480-state matrices use identical frozen bounds.
 
@@ -352,3 +356,23 @@ component gates; between-endpoint dry oil appearance/disappearance is permitted.
 gas-only pressure-grid limit and every separator inventory. This is independent
 numerical consistency, not measured calibration, reservoir prediction or Tran RCVD.
 Read `docs/pvtsimulation/depletion_pvt_generation.md#dry-phase-changing-fixed-cell-experiment`.
+
+### Explicit wet-gas/aqueous fixed-cell path
+
+Use `DepletionPvtHistoryGenerator.replayNativeWetGasFixedCell` (core
+`ConstantVolumeDepletion.runWetGasFixedCellDepletion`) only for a separately
+accepted initial-occupied-volume gas/aqueous experiment. Aqueous liquid may
+disappear; aqueous appearance/reappearance is rejected; gas must remain and
+oil/other phases fail transactionally.
+Water carried in produced gas is conserved through the unchanged separator.
+Preserve checkpoint selection, whole-experiment identity and actual final-product
+basis. `allowsWetGasPhaseChanges()` is distinct from the dry protocol flag.
+No wet-dew inference, saturation-normalized CVD, black-oil extrapolation,
+reservoir-volume fitting or measured-accuracy claim follows from this route.
+Read `WetGasFixedCellHandoffTest` and the frozen independent reference at
+`src/test/resources/neqsim/pvtsimulation/wet-gas-fixed-cell/`.
+Read `OFFGRID_SCOPE.md` and `OFFGRID_VALIDATION.md` in that reference folder for
+27 additional 20-pressure paths, unchanged bounds and separately labeled
+current-master compatibility. Numerical case counts are not independent
+experimental measurements or laboratory/reservoir holdout evidence.
+Guide: `docs/pvtsimulation/depletion_pvt_generation.md#wet-gas-fixed-cell-aqueous-transitions`.

@@ -6035,11 +6035,19 @@ public abstract class SystemThermo implements SystemInterface {
    * Downward flow changes retain the established difference update when its component and total inventories are
    * accurate to 1e-12 relative. Otherwise, positive component amounts are rebuilt from normalized overall fractions.
    * Upward and same-rate changes retain the established update. This limits cancellation repair to subtractive rate
-   * changes while avoiding unnecessary changes to ordinary process endpoints and empty-stream initialization.
+   * changes while avoiding unnecessary changes to ordinary process endpoints and empty-stream initialization. An
+   * initialized zero-flow request clears material amounts while retaining the existing intensive phase state.
+   * Restarting an empty fluid uses its stored normalized overall composition.
    * </p>
    */
   @Override
   public void setTotalFlowRate(double flowRate, String flowunit) {
+    if (flowRate < 1e-100 && isInitialized()) {
+      // Validate the unit without resetting the phase map or evaluating an unnecessary EOS state.
+      new neqsim.util.unit.RateUnit(flowRate, flowunit, getMolarMass(), 0.0, 0.0).getSIvalue();
+      setEmptyFluid();
+      return;
+    }
     init(0);
     try {
       init(1);
@@ -6089,8 +6097,15 @@ public abstract class SystemThermo implements SystemInterface {
         addComponent(i, SIval * (getPhase(0).getComponent(i).getz() / sumz));
       }
     } else {
+      double sumz = 0.0;
       for (int i = 0; i < numberOfComponents; i++) {
-        addComponent(i, SIval);
+        sumz += getPhase(0).getComponent(i).getz();
+      }
+      if (!(sumz > 0.0) || !Double.isFinite(sumz)) {
+        throw new IllegalStateException("Cannot restore flow without a defined overall composition");
+      }
+      for (int i = 0; i < numberOfComponents; i++) {
+        addComponent(i, SIval * (getPhase(0).getComponent(i).getz() / sumz));
       }
     }
   }

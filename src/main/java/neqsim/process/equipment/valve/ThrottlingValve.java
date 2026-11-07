@@ -294,7 +294,11 @@ public class ThrottlingValve extends TwoPortEquipment
     return false;
   }
 
-  private void updateRecalculationState() {
+  /**
+   * Captures the connected inlet and valve configuration for subsequent recalculation checks. Subclasses using a
+   * temporary hydraulic inlet must refresh this state after restoring their connected inlet.
+   */
+  protected void updateRecalculationState() {
     if (getInletStream() == null || getInletStream().getThermoSystem() == null) {
       lastInletComposition = null;
       return;
@@ -342,10 +346,27 @@ public class ThrottlingValve extends TwoPortEquipment
    * @return Molar flow in mole/sec.
    */
   public double calculateMolarFlow() {
-    double flow_m3_sec = getMechanicalDesign().getValveSizingMethod()
-        .calculateFlowRateFromValveOpening(adjustKv(Kv, percentValveOpening), inStream, outStream);
+    return calculateMolarFlowForStreams(inStream, outStream);
+  }
 
-    return flow_m3_sec * inStream.getFluid().getDensity("kg/m3") / inStream.getFluid().getMolarMass("kg/mol");
+  /**
+   * Evaluates the same native capacity on explicit, initialized intensive stream states.
+   *
+   * <p>
+   * Reviewed pressure-boundary subclasses may supply a detached normalized inlet for an algebraic capacity query. This
+   * helper does not flash, mutate a stream, move an actuator or stamp calculation identifiers. Ordinary valve execution
+   * continues to supply its actual connected streams.
+   * </p>
+   *
+   * @param capacityInlet initialized inlet state for the capacity evaluation
+   * @param capacityOutlet downstream pressure boundary for the capacity evaluation
+   * @return native capacity in mole/sec
+   */
+  protected final double calculateMolarFlowForStreams(StreamInterface capacityInlet, StreamInterface capacityOutlet) {
+    double flow_m3_sec = getMechanicalDesign().getValveSizingMethod()
+        .calculateFlowRateFromValveOpening(adjustKv(Kv, percentValveOpening), capacityInlet, capacityOutlet);
+
+    return flow_m3_sec * capacityInlet.getFluid().getDensity("kg/m3") / capacityInlet.getFluid().getMolarMass("kg/mol");
   }
 
   /**
@@ -532,7 +553,10 @@ public class ThrottlingValve extends TwoPortEquipment
     runController(dt, id);
 
     double inletMolarFlow = inStream.getThermoSystem().getFlowRate("mole/sec");
-    boolean recoveringOwnZero = !isCalcPressure && transientInletZeroFlowPublished && inletMolarFlow == 0.0
+    boolean pressureBoundaryZero = isZeroFlowPressureBoundaryEnabled() && Double.isFinite(inletMolarFlow)
+        && inletMolarFlow >= 0.0 && isNegligibleFlow(inletMolarFlow);
+    boolean recoveringOwnZero = !isCalcPressure
+        && ((transientInletZeroFlowPublished && inletMolarFlow == 0.0) || pressureBoundaryZero)
         && hasUsableInletComposition();
     if (isBelowLowFlowThreshold()) {
       thermoSystem = inStream.getThermoSystem().clone();
@@ -548,6 +572,7 @@ public class ThrottlingValve extends TwoPortEquipment
     }
     isActive(true);
 
+    boolean positiveFlowPublished = false;
     try {
       if (recoveringOwnZero) {
         // Positive normalization is intensive-property workspace only. It is replaced
@@ -627,11 +652,31 @@ public class ThrottlingValve extends TwoPortEquipment
       }
       transientInletZeroFlowPublished = false;
       finishRun(id);
+      positiveFlowPublished = true;
     } finally {
-      if (recoveringOwnZero && transientInletZeroFlowPublished) {
+      if (recoveringOwnZero && (!positiveFlowPublished || transientInletZeroFlowPublished)) {
         inStream.getThermoSystem().setTotalNumberOfMoles(0.0);
+        if (outStream != null && outStream.getThermoSystem() != null) {
+          outStream.getThermoSystem().setTotalNumberOfMoles(0.0);
+        }
       }
     }
+  }
+
+  /**
+   * Allows a reviewed pressure-boundary subclass to calculate native Cv flow from zero specified throughput.
+   *
+   * <p>
+   * The default is false: an ordinary initially dry valve remains dry. An opt-in model treats finite nonnegative
+   * negligible throughput with usable composition as an intensive-property workspace only; actual computed flow
+   * replaces it, or both ports return to exact zero on closure, absent forward pressure difference or failure. This
+   * does not supply an inventory.
+   * </p>
+   *
+   * @return true only for an explicitly pressure-driven boundary model
+   */
+  protected boolean isZeroFlowPressureBoundaryEnabled() {
+    return false;
   }
 
   /**
@@ -765,6 +810,10 @@ public class ThrottlingValve extends TwoPortEquipment
    * @param id Calculation identifier
    */
   public void runController(double dt, UUID id) {
+    if (physicalStepIdempotencyEnabled && dt == 0.0) {
+      setCalculationIdentifier(id);
+      return;
+    }
     if (physicalStepIdempotencyEnabled && id != null && id.equals(lastActuatorStepId)) {
       setCalculationIdentifier(id);
       return;
@@ -777,7 +826,7 @@ public class ThrottlingValve extends TwoPortEquipment
     controllerRequest = clampValveOpening(controllerRequest);
     setTargetPercentValveOpening(controllerRequest);
     percentValveOpening = clampValveOpening(applyTravelDynamics(percentValveOpening, requestedValveOpening, dt));
-    if (physicalStepIdempotencyEnabled) {
+    if (physicalStepIdempotencyEnabled && dt > 0.0) {
       lastActuatorStepId = id;
     }
     setCalculationIdentifier(id);
@@ -789,7 +838,8 @@ public class ThrottlingValve extends TwoPortEquipment
    * <p>
    * The policy is disabled by default so legacy loops that reuse one calculation identifier across multiple physical
    * timesteps retain their historical behavior. Transactional adaptive studies should enable it and supply a distinct
-   * UUID for every physical interval.
+   * UUID for every physical interval. Zero-duration algebraic evaluations do not consume actuator advancement for a
+   * later positive interval with that identifier.
    * </p>
    *
    * @param enabled true to make actuator advancement idempotent for one physical-step UUID

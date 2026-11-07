@@ -151,9 +151,9 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass
   /** {@inheritDoc} */
   @Override
   public double getMeasuredValue(String unit) {
-    if (!unit.equalsIgnoreCase("")) {
+    if (!unit.equalsIgnoreCase("") && !unit.equalsIgnoreCase("fraction")) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getMeasuredValue", "unit",
-          "currently only supports \"\""));
+          "supports \"\" or \"fraction\""));
     }
     return applySignalModifiers(measuredLevel());
   }
@@ -203,9 +203,9 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass
   /** {@inheritDoc} */
   @Override
   public double getTransientSample(String unit) {
-    if (!unit.equalsIgnoreCase("")) {
+    if (!unit.equalsIgnoreCase("") && !unit.equalsIgnoreCase("fraction")) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getTransientSample", "unit",
-          "currently only supports \"\""));
+          "supports \"\" or \"fraction\""));
     }
     if (lastTransientSampleIdentifier == null || !Double.isFinite(transientSampleValue)) {
       throw new IllegalStateException("Level transmitter has no held physical-step sample");

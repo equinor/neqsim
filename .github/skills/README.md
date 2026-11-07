@@ -10,6 +10,12 @@ prompts skills folder; use `--vscode-scope workspace` only when a maintainer int
 generated workspace copy. PaperLab keeps its full canonical library under `neqsim-paperlab/skills/`;
 only the `@paperlab` gateway's public skills are exported for VS Code by default.
 
+## Code Maintenance
+
+Use `neqsim-code-health` to assess debt, `neqsim-safe-refactoring` to implement
+a bounded change, and `neqsim-code-review` for independent source review.
+See [the maintenance guide](../../docs/development/CODE_HEALTH.md).
+
 ## OpenAI Codex discovery without duplicate skills
 
 The repository tracks `.agents/skills` as a symbolic link to this directory. OpenAI Codex scans
