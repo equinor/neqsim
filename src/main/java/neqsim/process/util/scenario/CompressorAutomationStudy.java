@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import neqsim.process.controllerdevice.AntiSurgeController;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
@@ -1037,6 +1038,12 @@ public final class CompressorAutomationStudy {
   /**
    * Actual coupled objects and explicit physical-step execution contract for one train.
    *
+   * <p>
+   * Equipment accessors return the live native identity graph so configuration, faults, control bindings and execution
+   * observe the same objects. Use {@link #copy()} for an isolated train; coordinate updates and execution on one
+   * thread.
+   * </p>
+   *
    * @author NeqSim
    * @version 1.0
    */
@@ -1620,7 +1627,7 @@ public final class CompressorAutomationStudy {
         }
         double increment = Math.max(1.0e-7, Math.abs(trial) * 1.0e-5);
         double nearby = Math.min(high, trial + increment);
-        if (nearby == trial) {
+        if (Double.compare(nearby, trial) == 0) {
           nearby = Math.max(low, trial - increment);
         }
         double slope = (compressorDemandResidual(nearby, id) - residual) / (nearby - trial);
@@ -1779,76 +1786,91 @@ public final class CompressorAutomationStudy {
     }
 
     /** @return actual native process, preserving the equipment and instrumentation identity graph */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Native train accessors preserve live equipment, instrument and control identities for configuration and execution")
     public ProcessSystem getProcess() {
       return process;
     }
 
     /** @return actual source stream */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Native train accessors preserve live equipment, instrument and control identities for configuration and execution")
     public Stream getFeed() {
       return feed;
     }
 
     /** @return actual feed isolation valve */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Native train accessors preserve live equipment, instrument and control identities for configuration and execution")
     public ESDValve getInletValve() {
       return inletValve;
     }
 
     /** @return actual suction mixer with actual cold-recycle inlet */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Native train accessors preserve live equipment, instrument and control identities for configuration and execution")
     public Mixer getSuctionMixer() {
       return suctionMixer;
     }
 
     /** @return finite suction scrubber */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Native train accessors preserve live equipment, instrument and control identities for configuration and execution")
     public Separator getSuctionScrubber() {
       return suctionScrubber;
     }
 
     /** @return actual chart compressor */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Native train accessors preserve live equipment, instrument and control identities for configuration and execution")
     public Compressor getCompressor() {
       return compressor;
     }
 
     /** @return actual algebraic aftercooler */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Native train accessors preserve live equipment, instrument and control identities for configuration and execution")
     public Cooler getAftercooler() {
       return aftercooler;
     }
 
     /** @return actual native non-return valve */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Native train accessors preserve live equipment, instrument and control identities for configuration and execution")
     public CheckValve getDischargeCheckValve() {
       return dischargeCheckValve;
     }
 
     /** @return finite discharge separator and gas receiver */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Native train accessors preserve live equipment, instrument and control identities for configuration and execution")
     public Separator getDischargeScrubber() {
       return dischargeScrubber;
     }
 
     /** @return actual native two-outlet tee */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Native train accessors preserve live equipment, instrument and control identities for configuration and execution")
     public Splitter getDischargeTee() {
       return dischargeTee;
     }
 
     /** @return actual export valve */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Native train accessors preserve live equipment, instrument and control identities for configuration and execution")
     public ESDValve getExportValve() {
       return exportValve;
     }
 
     /** @return actual fail-open recycle valve */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Native train accessors preserve live equipment, instrument and control identities for configuration and execution")
     public ESDValve getAntiSurgeValve() {
       return antiSurgeValve;
     }
 
     /** @return actual suction drain valve */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Native train accessors preserve live equipment, instrument and control identities for configuration and execution")
     public ThrottlingValve getSuctionDrain() {
       return suctionDrain;
     }
 
     /** @return actual discharge drain valve */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Native train accessors preserve live equipment, instrument and control identities for configuration and execution")
     public ThrottlingValve getDischargeDrain() {
       return dischargeDrain;
     }
 
     /** @return actual anti-surge controller */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Native train accessors preserve live equipment, instrument and control identities for configuration and execution")
     public AntiSurgeController getAntiSurgeController() {
       return antiSurgeController;
     }
@@ -1858,6 +1880,7 @@ public final class CompressorAutomationStudy {
      *
      * @return actual native controller
      */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Native train accessors preserve live equipment, instrument and control identities for configuration and execution")
     public ControllerDeviceBaseClass getCoolerTemperatureController() {
       return coolerTemperatureController;
     }
@@ -1867,11 +1890,13 @@ public final class CompressorAutomationStudy {
      *
      * @return actual native controller
      */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Native train accessors preserve live equipment, instrument and control identities for configuration and execution")
     public ControllerDeviceBaseClass getCapacityPressureController() {
       return capacityPressureController;
     }
 
     /** @return actual held calculated-margin channel consuming the actual inlet FT */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Native train accessors preserve live equipment, instrument and control identities for configuration and execution")
     public CompressorSurgeMarginMeasurement getSurgeMeasurement() {
       return surgeMeasurement;
     }

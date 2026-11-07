@@ -64,7 +64,11 @@ public class AttractiveTermMatCopPRUMR extends AttractiveTermPr {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public AttractiveTermMatCopPRUMR clone() {
     AttractiveTermMatCopPRUMR attractiveTerm = null;
@@ -72,6 +76,7 @@ public class AttractiveTermMatCopPRUMR extends AttractiveTermPr {
       attractiveTerm = (AttractiveTermMatCopPRUMR) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of AttractiveTermMatCopPRUMR", ex);
     }
 
     return attractiveTerm;

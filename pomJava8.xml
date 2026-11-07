@@ -62,6 +62,14 @@
 	</pluginRepositories>
 
 	<dependencies>
+		<!-- Compile-time annotations used by production sources; version 4.10.5 targets Java 8. -->
+		<dependency>
+			<groupId>com.github.spotbugs</groupId>
+			<artifactId>spotbugs-annotations</artifactId>
+			<version>4.10.5</version>
+			<scope>provided</scope>
+			<optional>true</optional>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.h2database/h2 -->
 		<dependency>
 			<groupId>com.h2database</groupId>

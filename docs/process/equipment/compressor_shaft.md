@@ -442,6 +442,7 @@ and [Compressor Performance Curves](compressor_curves.md).
 
 ## Related Documentation
 
+- [Integrated compression and power supply](integrated_compression_power.md): direct turbine, external motor and turbine-generator-motor matching, losses and shortfall reporting.
 - [Compressors](compressors.md)
 - [Compressor Performance Curves](compressor_curves.md)
 - [Compressor Anti-Surge and Coordinated Control](compressor_antisurge_control.md)

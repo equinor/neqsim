@@ -40,6 +40,10 @@ public class GasTurbinePerformanceMap implements Serializable {
   private double heatRatePolyA1;
   private double heatRatePolyA2;
 
+  /** Optional vendor load fractions and relative heat rates, with full load normalized to one. */
+  private double[] partLoadFractions;
+  private double[] partLoadHeatRateFactors;
+
   // Ambient correction
   private double powerLossPerKelvin;
   private double heatRateRisePerKelvin;
@@ -130,15 +134,19 @@ public class GasTurbinePerformanceMap implements Serializable {
    * @param loadFraction fraction of site-corrected available power (0–1.1)
    * @param ambientTemperatureK ambient temperature [K]
    * @return effective heat rate [kJ/kWh]
-   * @throws IllegalArgumentException if {@code loadFraction} is non-positive
+   * @throws IllegalArgumentException if an input is non-positive or non-finite
    */
   public double getHeatRate(double isoHeatRateKJPerKWh, double loadFraction, double ambientTemperatureK) {
-    if (loadFraction <= 0.0) {
-      throw new IllegalArgumentException("loadFraction must be positive, got " + loadFraction);
+    if (!Double.isFinite(loadFraction) || loadFraction <= 0.0 || !Double.isFinite(isoHeatRateKJPerKWh)
+        || isoHeatRateKJPerKWh <= 0.0 || !Double.isFinite(ambientTemperatureK) || ambientTemperatureK <= 0.0) {
+      throw new IllegalArgumentException(
+          "Load, ISO heat rate and absolute ambient temperature must be positive and finite");
     }
     double x = Math.min(1.10, loadFraction);
     double partLoadMultiplier = heatRatePolyA0 + heatRatePolyA1 * x + heatRatePolyA2 * x * x;
-    if (partLoadMultiplier < 1.0) {
+    if (partLoadHeatRateFactors != null) {
+      partLoadMultiplier = interpolate(partLoadFractions, partLoadHeatRateFactors, x, false);
+    } else if (partLoadMultiplier < 1.0) {
       // never better than ISO at full load
       partLoadMultiplier = 1.0 - 0.02 * (x - 1.0); // small bonus near rated
       if (partLoadMultiplier < 0.98) {
@@ -155,6 +163,36 @@ public class GasTurbinePerformanceMap implements Serializable {
       tCorr = 0.95;
     }
     return isoHeatRateKJPerKWh * partLoadMultiplier * tCorr;
+  }
+
+  /**
+   * Installs vendor part-load heat-rate factors, replacing the generic polynomial.
+   *
+   * <p>
+   * Load is relative to site-available shaft power; factors are relative to the full-load heat rate at that ambient
+   * temperature. Ambient corrections still apply separately. Linear interpolation is used, with endpoint clamping. The
+   * table must end at load 1 with factor 1, and cover the configured minimum stable load. Input arrays are copied.
+   * </p>
+   *
+   * @param loadFractions ascending fractions in (0, 1], ending at 1
+   * @param heatRateFactors positive finite heat-rate factors, ending at 1
+   * @throws IllegalArgumentException if the table is invalid or does not cover the stable operating range
+   */
+  public void setPartLoadHeatRateTable(double[] loadFractions, double[] heatRateFactors) {
+    validateTable(loadFractions, heatRateFactors);
+    int last = loadFractions.length - 1;
+    if (loadFractions[0] <= 0.0 || loadFractions[0] > minLoadFraction || loadFractions[last] != 1.0
+        || Math.abs(heatRateFactors[last] - 1.0) > 1.0e-10) {
+      throw new IllegalArgumentException("Part-load table must cover minimum stable load and end at load 1, factor 1");
+    }
+    this.partLoadFractions = loadFractions.clone();
+    this.partLoadHeatRateFactors = heatRateFactors.clone();
+  }
+
+  /** Removes the vendor part-load table and restores the configured polynomial. */
+  public void clearPartLoadHeatRateTable() {
+    this.partLoadFractions = null;
+    this.partLoadHeatRateFactors = null;
   }
 
   /**
@@ -301,6 +339,11 @@ public class GasTurbinePerformanceMap implements Serializable {
     if (x == null || y == null || x.length != y.length || x.length < 2) {
       throw new IllegalArgumentException("table needs two arrays of equal length with at least two points");
     }
+    for (int i = 0; i < x.length; i++) {
+      if (!Double.isFinite(x[i]) || !Double.isFinite(y[i]) || y[i] <= 0.0) {
+        throw new IllegalArgumentException("Table coordinates must be finite and ordinates positive");
+      }
+    }
     for (int i = 1; i < x.length; i++) {
       if (!(x[i] > x[i - 1])) {
         throw new IllegalArgumentException("table abscissa must be strictly ascending");
@@ -396,9 +439,16 @@ public class GasTurbinePerformanceMap implements Serializable {
   /**
    * Set minimum stable load fraction (engineering judgement / OEM limit).
    *
-   * @param minLoadFraction minimum load fraction (0–1)
+   * @param minLoadFraction minimum load fraction in (0, 1]
+   * @throws IllegalArgumentException if the fraction is invalid or below the vendor table's coverage
    */
   public void setMinLoadFraction(double minLoadFraction) {
+    if (!Double.isFinite(minLoadFraction) || minLoadFraction <= 0.0 || minLoadFraction > 1.0) {
+      throw new IllegalArgumentException("Minimum stable load must be in (0, 1]");
+    }
+    if (partLoadFractions != null && minLoadFraction < partLoadFractions[0]) {
+      throw new IllegalArgumentException("Vendor part-load table does not cover the requested minimum load");
+    }
     this.minLoadFraction = minLoadFraction;
   }
 

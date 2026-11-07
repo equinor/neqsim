@@ -68,7 +68,11 @@ public class SystemWaterIF97 extends SystemEos {
     commonInitialization();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemWaterIF97 clone() {
     SystemWaterIF97 cloned = null;
@@ -76,6 +80,7 @@ public class SystemWaterIF97 extends SystemEos {
       cloned = (SystemWaterIF97) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning of SystemWaterIF97 failed", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemWaterIF97", ex);
     }
     return cloned;
   }

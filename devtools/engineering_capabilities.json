@@ -158,6 +158,32 @@
       "limitations": "Vendor maps, operating envelope and driver limits need separate qualification."
     },
     {
+      "id": "integrated-compression-power",
+      "title": "Integrated gas-turbine and electric compressor power matching",
+      "domain": "process",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.process.equipment.energy.CompressorPowerTrain",
+        "neqsim.process.equipment.compressor.CompressorShaft",
+        "neqsim.process.equipment.powergeneration.gasturbine.GasTurbinePerformanceMap"
+      ],
+      "skills": [
+        "neqsim-power-generation",
+        "neqsim-energy-systems-and-electrification"
+      ],
+      "agents": [
+        "network-energy-systems",
+        "rotating-equipment"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/equipment/energy/CompressorPowerTrainTest.java",
+        "src/test/java/neqsim/process/equipment/compressor/CompressorShaftPowerTrainTest.java",
+        "src/test/java/neqsim/process/equipment/powergeneration/gasturbine/GasTurbineLoadMatchingTest.java",
+        "src/test/java/neqsim/documentation/IntegratedCompressionPowerDocumentationTest.java"
+      ],
+      "limitations": "Stateful Java/Python workflow discovered through runCapability search/inspectApi, not a curated turbine runner. Dedicated steady-state supply matching using existing turbine/motor/generator models; analytical balances and synthetic real-fluid compressor checks do not establish OEM package accuracy. No gas-generator component matching, turbine speed maps, dynamics, shared electrical dispatch or material exhaust stream. See roadmap #4909."
+    },
+    {
       "id": "multi-area-process",
       "title": "Compose a multi-area process",
       "domain": "process",

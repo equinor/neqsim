@@ -30,7 +30,11 @@ public class PhaseSrkEos extends PhaseEos {
     delta2 = 0;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseSrkEos clone() {
     PhaseSrkEos clonedPhase = null;
@@ -38,6 +42,7 @@ public class PhaseSrkEos extends PhaseEos {
       clonedPhase = (PhaseSrkEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseSrkEos", ex);
     }
 
     return clonedPhase;

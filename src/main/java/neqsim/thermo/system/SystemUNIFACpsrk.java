@@ -45,7 +45,11 @@ public class SystemUNIFACpsrk extends SystemEosGE {
     configureEosGePhases(T, P, new PhaseSrkEos(), new PhaseGEUnifacPSRK());
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemUNIFACpsrk clone() {
     SystemUNIFACpsrk clonedSystem = null;
@@ -53,6 +57,7 @@ public class SystemUNIFACpsrk extends SystemEosGE {
       clonedSystem = (SystemUNIFACpsrk) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemUNIFACpsrk", ex);
     }
 
     return clonedSystem;

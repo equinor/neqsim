@@ -47,7 +47,11 @@ public class NeqStream extends Stream {
     super(name, thermoSystem);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public NeqStream clone() {
     NeqStream clonedStream = null;
@@ -56,9 +60,10 @@ public class NeqStream extends Stream {
       clonedStream = (NeqStream) super.clone();
     } catch (Exception ex) {
       logger.error(ex.getMessage());
+      throw new IllegalStateException("Unable to complete clone of NeqStream", ex);
     }
 
-    if (clonedStream != null && thermoSystem != null) {
+    if (thermoSystem != null) {
       clonedStream.thermoSystem = thermoSystem.clone();
     }
 

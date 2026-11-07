@@ -614,6 +614,26 @@
  "modeling co2 pipelines": [
   "neqsim-ccs-hydrogen"
  ],
+ "integrated compression power": [
+  "neqsim-power-generation",
+  "neqsim-energy-systems-and-electrification",
+  "neqsim-rotating-equipment-design"
+ ],
+ "gas turbine compressor electric driver": [
+  "neqsim-power-generation",
+  "neqsim-energy-systems-and-electrification",
+  "neqsim-rotating-equipment-design"
+ ],
+ "turbine generator motor": [
+  "neqsim-power-generation",
+  "neqsim-energy-systems-and-electrification",
+  "neqsim-rotating-equipment-design"
+ ],
+ "CompressorPowerTrain": [
+  "neqsim-power-generation",
+  "neqsim-energy-systems-and-electrification",
+  "neqsim-rotating-equipment-design"
+ ],
  "modeling gas turbines": [
   "neqsim-power-generation"
  ],

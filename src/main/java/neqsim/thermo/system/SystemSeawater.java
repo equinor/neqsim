@@ -66,6 +66,22 @@ public class SystemSeawater extends SystemWaterIF97 {
     return ((PhaseWaterIAPWS) getPhase(0)).getSalinity();
   }
 
+  /**
+   * Returns a value hash consistent with the inherited system equality contract.
+   *
+   * <p>
+   * Every equal system shares these compared fields. Phase identity hashes are excluded so equal deep copies remain
+   * interchangeable in hashed collections. Equality continues to compare the full inherited phase state.
+   * </p>
+   *
+   * @return hash of the compared component count, phase count and fluid name
+   */
+  @Override
+  public int hashCode() {
+    int result = 31 * numberOfComponents + numberOfPhases;
+    return 31 * result + (fluidName == null ? 0 : fluidName.hashCode());
+  }
+
   /** {@inheritDoc} */
   @Override
   public SystemSeawater clone() {

@@ -287,7 +287,11 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
     return updatedSalinity;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public SystemSoreideWhitson clone() {
     SystemSoreideWhitson clonedSystem = null;
@@ -295,6 +299,7 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
       clonedSystem = (SystemSoreideWhitson) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of SystemSoreideWhitson", ex);
     }
     return clonedSystem;
   }

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.ShutdownProfile;
@@ -105,6 +106,7 @@ public final class TripCompressorAction implements LogicAction, Serializable {
   }
 
   /** @return actual native target, never a tag-resolved replacement */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Shutdown and completion must act on the same connected native compressor; a copy would detach the action")
   public Compressor getCompressor() {
     return compressor;
   }

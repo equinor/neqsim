@@ -42,7 +42,11 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   double wEOS = 0;
   // Class methods
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public PhaseEos clone() {
     PhaseEos clonedPhase = null;
@@ -50,11 +54,12 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       clonedPhase = (PhaseEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to complete clone of PhaseEos", ex);
     }
 
     // Detach standard HV parameters and retained calculation state together. Other
     // rules retain their existing sharing contract; no general concurrency promise is made.
-    if (clonedPhase != null && mixSelect.canCopyHuronVidalRule(mixRule)) {
+    if (mixSelect.canCopyHuronVidalRule(mixRule)) {
       clonedPhase.mixSelect = mixSelect.clone();
       clonedPhase.mixRule = clonedPhase.mixSelect.copyHuronVidalRule(mixRule, clonedPhase);
     }

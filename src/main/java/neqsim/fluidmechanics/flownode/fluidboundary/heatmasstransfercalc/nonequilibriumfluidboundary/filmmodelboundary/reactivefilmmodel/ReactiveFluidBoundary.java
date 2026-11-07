@@ -87,7 +87,11 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
     // double[2][getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1];
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a required part of the clone cannot be copied
+   */
   @Override
   public ReactiveFluidBoundary clone() {
     ReactiveFluidBoundary clonedSystem = null;
@@ -96,6 +100,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
       clonedSystem = (ReactiveFluidBoundary) super.clone();
     } catch (Exception ex) {
       logger.error(ex.getMessage());
+      throw new IllegalStateException("Unable to complete clone of ReactiveFluidBoundary", ex);
     }
 
     return clonedSystem;

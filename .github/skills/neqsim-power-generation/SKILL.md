@@ -6,6 +6,28 @@ last_verified: "2026-07-04"
 
 # Power Generation with NeqSim
 
+## Integrated compression supplies
+
+For a common compressor shaft, use `CompressorPowerTrain` with
+`directDrive(GasTurbineUnit)`, `electricDrive(ElectricMotor)` or
+`gasElectricDrive(GasTurbineUnit, Generator, ElectricMotor)` and attach it with
+`shaft.setPowerTrain(...)`. Read the
+[executable matching guide](../../../docs/process/equipment/integrated_compression_power.md).
+Use actual compressor duty, gearbox efficiency, motor/VFD and generator inverse
+maps, supply caps and auxiliaries. Keep turbine-generator rpm separate from motor
+rpm. Check the shaft report AND the supply result: `isPowerFeasible()` tests power;
+`isFeasible()` also rejects a below-minimum-load turbine. A shortfall never makes
+the compressor's requested discharge physically achievable.
+
+Use `GasTurbinePerformanceMap.setPartLoadHeatRateTable(loadFractions, factors)`
+for supplied part-load data; load is relative to site-available shaft power and
+the last point must be (1, 1). Keep ambient corrections separate and record
+data provenance. Catalogue/generic maps and passing synthetic balance tests do
+not qualify a turbine package. Follow issue #4909 for component maps, output-speed
+surfaces, dynamic controls and independent validation. For shared electricity
+use the existing energy-bus solver; this dedicated-train adapter does not dispatch
+motor/generator energy ports or create a material exhaust stream.
+
 Guide for modeling power generation equipment — gas turbines, steam turbines,
 heat recovery steam generators (HRSG), and combined cycle systems.
 
