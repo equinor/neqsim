@@ -1952,7 +1952,7 @@ public class EclipseFluidReadWrite {
     for (int i = 1; i < nComps; i++) {
       StringBuilder line = new StringBuilder();
       for (int j = 0; j < i; j++) {
-        line.append(String.format(java.util.Locale.US, "  %.6f", kij[i][j]));
+        line.append("  ").append(formatRoundTrip(kij[i][j]));
       }
       writer.write(line.toString() + "\n");
     }
@@ -1964,7 +1964,7 @@ public class EclipseFluidReadWrite {
     for (int i = 1; i < nComps; i++) {
       StringBuilder line = new StringBuilder();
       for (int j = 0; j < i; j++) {
-        line.append(String.format(java.util.Locale.US, "  %.6f", kij[i][j]));
+        line.append("  ").append(formatRoundTrip(kij[i][j]));
       }
       writer.write(line.toString() + "\n");
     }
@@ -2124,6 +2124,19 @@ public class EclipseFluidReadWrite {
       // For pseudo-components, remove "_PC" suffix if present
       return name.replace("_PC", "");
     }
+  }
+
+  /**
+   * Formats a double so that parsing the text returns exactly the same value.
+   *
+   * @param value number to format
+   * @return plain decimal text with the shortest round-trip digits, 0.0 for non-finite input
+   */
+  private static String formatRoundTrip(double value) {
+    if (Double.isNaN(value) || Double.isInfinite(value)) {
+      return "0.0";
+    }
+    return java.math.BigDecimal.valueOf(value).toPlainString();
   }
 
   /**
