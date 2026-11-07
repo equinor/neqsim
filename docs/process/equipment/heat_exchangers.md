@@ -272,3 +272,10 @@ to its inlet during `run()`; it does not perform a full column-equilibrium reboi
 - [Two-phase heat transfer](../mechanical_design/two_phase_heat_transfer)
 - [Heat-exchanger mechanical design](../../wiki/heat_exchanger_mechanical_design)
 - [Process package](../)
+
+## Reference water and seawater utilities
+
+Use the [reference cooling-water guide](reference_cooling_water) for IAPWS-IF97
+fresh-water and fixed-salinity seawater streams, `WaterCooler` utility demand,
+`CoolingWaterSystem` supply flow and property-validity limits. The utility-side
+model does not replace the process-side EOS or transport package.

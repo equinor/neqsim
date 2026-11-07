@@ -119,3 +119,10 @@ compliance.
 - [Power generation](../neqsim-power-generation/SKILL.md)
 - [Standards lookup](../neqsim-standards-lookup/SKILL.md)
 - [Utilities design report](../neqsim-utilities-design-report/SKILL.md)
+
+## Reference cooling water and seawater
+
+Load [neqsim-cooling-water](../neqsim-cooling-water/SKILL.md) for water-cooled
+process equipment, seawater utilities, reference IAPWS properties, coolant flow
+and pumping. Keep each exchanger side on its own fluid model and distinguish
+fixed-salinity bulk utilities from electrolyte chemistry and salt mixing.

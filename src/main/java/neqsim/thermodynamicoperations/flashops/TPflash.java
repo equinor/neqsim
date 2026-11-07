@@ -686,6 +686,20 @@ public class TPflash extends Flash {
    */
   @Override
   public void run() {
+    if (system instanceof neqsim.thermo.system.SystemWaterIF97) {
+      if (system.getNumberOfComponents() != 1
+          || !"water".equals(system.getPhase(0).getComponent(0).getComponentName())) {
+        throw new IllegalArgumentException("Reference-water systems require a single nominal water component");
+      }
+      if (system instanceof neqsim.thermo.system.SystemSeawater) {
+        neqsim.thermo.util.steam.SeawaterProperties.validate(system.getTemperature(), system.getPressure(),
+            ((neqsim.thermo.system.SystemSeawater) system).getSalinity());
+      }
+      system.setNumberOfPhases(1);
+      system.setBeta(0, 1.0);
+      system.init(2);
+      return;
+    }
     traceWaterAqueousRepairAttempted = false;
     validateCharacterizedFluidParameters();
     if (system.isForcePhaseTypes() && system.getMaxNumberOfPhases() == 1) {
