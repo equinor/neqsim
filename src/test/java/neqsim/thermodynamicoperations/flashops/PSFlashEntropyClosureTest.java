@@ -138,9 +138,11 @@ class PSFlashEntropyClosureTest {
    *
    * @throws Exception if the bounded internal recovery cannot be inspected
    */
-  @Test
-  void minorLiquidContinuationRequiresOptInAndConservedInventory() throws Exception {
-    SystemInterface seed = new neqsim.thermo.system.SystemSrkEos(320.0, 11.0);
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void minorLiquidContinuationRequiresOptInAndConservedInventory(boolean usePr) throws Exception {
+    SystemInterface seed = usePr ? new SystemPrEos(320.0, 11.0)
+        : new neqsim.thermo.system.SystemSrkEos(320.0, 11.0);
     seed.addComponent("methane", 0.90);
     seed.addComponent("ethane", 0.09);
     seed.addComponent("nC10", 0.01);
@@ -164,6 +166,8 @@ class PSFlashEntropyClosureTest {
     for (boolean enabled : new boolean[] {false, true}) {
       for (boolean changedAmount : new boolean[] {false, true}) {
         SystemInterface state = seed.clone();
+        state.setTemperature(319.0);
+        state.setPressure(10.8);
         state.setNumberOfPhases(1);
         state.setBeta(0, 1.0);
         for (int component = 0; component < state.getNumberOfComponents(); component++) {
@@ -179,16 +183,34 @@ class PSFlashEntropyClosureTest {
         recover.invoke(flash, captured);
         state.init(2);
         if (enabled && !changedAmount) {
-          assertState(seed, state, 11.0, seed.getEntropy("J/kgK"));
           assertEquals(2, state.getNumberOfPhases());
           assertTrue(state.getGibbsEnergy() < gasGibbs);
-          assertEquals(seed.getGibbsEnergy(), state.getGibbsEnergy(), 1.0e-7);
+          assertEquals(319.0, state.getTemperature(), 1.0e-12);
+          assertEquals(10.8, state.getPressure(), 1.0e-12);
+          assertEquals(seed.getTotalNumberOfMoles(), state.getTotalNumberOfMoles(), 1.0e-12);
         } else {
           assertEquals(1, state.getNumberOfPhases());
         }
         assertEquals(originalSeedEntropy, captured.getEntropy(), 1.0e-10);
       }
     }
+
+    SystemInterface stable = seed.clone();
+    stable.setTemperature(500.0);
+    stable.setPressure(1.0);
+    stable.setNumberOfPhases(1);
+    stable.setBeta(0, 1.0);
+    for (int component = 0; component < stable.getNumberOfComponents(); component++) {
+      stable.getPhase(0).getComponent(component).setx(stable.getComponent(component).getz());
+    }
+    stable.init(2);
+    double stableGibbs = stable.getGibbsEnergy();
+    TPflash stableFlash = new TPflash(stable);
+    stableFlash.setConservativeHomogeneousRecoveryAllowed(true);
+    recover.invoke(stableFlash, captured);
+    stable.init(2);
+    assertEquals(1, stable.getNumberOfPhases());
+    assertEquals(stableGibbs, stable.getGibbsEnergy(), 1.0e-7);
   }
 
   /**

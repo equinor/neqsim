@@ -811,6 +811,24 @@ public class TPflash extends Flash {
    * @throws IllegalStateException if a present TBP or plus fraction has a non-finite acentric factor or one at or below
    * minus one
    */
+  /**
+   * Supplies a qualified minor-liquid seed retained by an outer flash.
+   *
+   * @param seed detached continuation seed, or null when none is available
+   */
+  void setMinorLiquidContinuationSeed(SystemInterface seed) {
+    minorLiquidContinuationSeed = seed == null ? null : seed.clone();
+  }
+
+  /**
+   * Returns the latest qualified minor-liquid seed for the next outer-flash trial.
+   *
+   * @return a detached continuation seed, or null when none is available
+   */
+  SystemInterface getMinorLiquidContinuationSeed() {
+    return minorLiquidContinuationSeed == null ? null : minorLiquidContinuationSeed.clone();
+  }
+
   private void validateCharacterizedFluidParameters() {
     for (int componentIndex = 0; componentIndex < system.getNumberOfComponents(); componentIndex++) {
       neqsim.thermo.component.ComponentInterface component = system.getComponent(componentIndex);

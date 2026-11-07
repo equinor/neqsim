@@ -45,6 +45,8 @@ public class PSFlash extends QfuncFlash {
 
   /** Number of independent cold residual evaluations in the current solve. */
   private int coldBracketEvaluations = 0;
+  /** Qualified minor-liquid seed shared by otherwise independent cold TP trials. */
+  private transient SystemInterface minorLiquidContinuationSeed;
 
   double Sspec = 0;
   Flash tpFlash;
@@ -253,8 +255,13 @@ public class PSFlash extends QfuncFlash {
     // A fresh operation is required so that bracket signs use independent cold roots.
     TPflash coldFlash = new TPflash(system);
     coldFlash.setConservativeHomogeneousRecoveryAllowed(true);
+    if (minorLiquidContinuationSeed == null && tpFlash instanceof TPflash) {
+      minorLiquidContinuationSeed = ((TPflash) tpFlash).getMinorLiquidContinuationSeed();
+    }
+    coldFlash.setMinorLiquidContinuationSeed(minorLiquidContinuationSeed);
     tpFlash = coldFlash;
     tpFlash.run();
+    minorLiquidContinuationSeed = coldFlash.getMinorLiquidContinuationSeed();
     system.init(2);
     double residual = system.getEntropy() - Sspec;
     if (!Double.isFinite(residual)) {
