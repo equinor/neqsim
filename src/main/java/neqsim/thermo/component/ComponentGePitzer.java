@@ -333,6 +333,24 @@ public class ComponentGePitzer extends ComponentGE {
       }
     }
 
+    // The target can also be the opposite-sign member of a ternary interaction.
+    // Its derivative contains each same-sign pair once: m_j * m_k * psi_jkM.
+    // The loop above covers only targets belonging to that same-sign pair.
+    for (int j = 0; j < numberOfComponents; j++) {
+      double chargej = phase.getComponent(j).getIonicCharge();
+      if (chargej * charge >= 0.0 || Math.abs(chargej) < 0.5) {
+        continue;
+      }
+      for (int k = j + 1; k < numberOfComponents; k++) {
+        double chargek = phase.getComponent(k).getIonicCharge();
+        if (chargek * charge >= 0.0 || Math.abs(chargek) < 0.5) {
+          continue;
+        }
+        sum += phase.getComponent(j).getMolality(phase) * phase.getComponent(k).getMolality(phase)
+            * pitz.getPsiijk(j, k, componentNumber, temperature);
+      }
+    }
+
     // ln(gamma_M) = z_M^2 * F + binary/mixing terms
     double F = fDH + fBprime + fEthetaPrime;
     lngamma = charge * charge * F + sum + phreeqcCommonIonContribution;

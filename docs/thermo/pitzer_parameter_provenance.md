@@ -15,7 +15,7 @@ derived and reviewed equation mapping.
 New `SystemPitzer` phases use a catalog-first default. Nonreactive calculations select the
 complete bundled PHREEQC topology when every required active aqueous interaction exists.
 After `chemicalReactionInit()`, the default additionally recognizes the bounded
-water/CO2/Na/K/Cl/carbonate topology. It selects the reviewed reactive definition set described
+water/CO2/H2S/Na/K/Ca/Cl/sulfate/bisulfate/carbonate/HS topology. It selects the reviewed reactive definition set described
 below without a Python parameter loader or an explicit dataset method. EOS-role hydrocarbons
 remain outside the aqueous neutral-interaction topology; other neutral solutes and salts are
 not silently added to this family.
@@ -62,11 +62,41 @@ reproduce PHREEQC executable semantics, rather than experimental measurements of
 actually used. No user coefficient, empirical offset, or global missing-as-zero rule is needed.
 
 The automatic dataset identity is
-`usgs-phreeqc-pitzer-b0b3be767158ccc3322d2c816625cf470045e67e-reactive-nakcl-carbonate-auto-v1`.
-It accepts NaCl, KCl and their mixtures with the four water/carbonate reaction ions and
-EOS-role hydrocarbons. Other declared salts or aqueous neutral solutes do not enter this family,
+`usgs-phreeqc-pitzer-b0b3be767158ccc3322d2c816625cf470045e67e-reactive-nakca-clso4-carbonate-sulfide-auto-v2`.
+It accepts Na+, K+, Ca++, Cl-, SO4--, HSO4-, CO2, H2S, HS-, the water/carbonate reaction
+ions and EOS-role hydrocarbons. At least one supported salt cation and one carbonate, sulfate
+or H2S acid-base system are needed; CO2 and chloride are optional. Other declared salts or aqueous
+neutral solutes do not enter this family,
 even at zero amount. Reinitializing a previously selected automatic family after adding an
 unsupported component fails instead of reusing stale coefficients.
+
+The expanded finite list contains **225** source-omitted definitions for the complete bounded
+family; only the definitions used by the declared species are loaded and audited. The original
+Na/K/Cl/carbonate topology still uses 54. The H2S and HS- aliases are the source's redox-uncoupled
+`H2Sg` and `HSg-` identities. Calcium/sulfate beta2, temperature functions and unequal-charge
+common-ion terms use the existing Pitzer kernel; no coefficients are refitted.
+
+The dedicated `PITZER` reaction table adds `bisulfate`:
+$\mathrm{HSO_4^- + H_2O \rightleftharpoons SO_4^{2-} + H_3O^+}$.
+The pinned source association expression is
+$\log_{10}K_{\mathrm{assoc}}=-56.889+0.006473T+2307.9/T+19.8858\log_{10}T$,
+with $T$ in kelvin. Its negative maps **exactly** into NeqSim's four-term natural-log dissociation
+constant. The reaction-row `VALIDATED` label identifies this checked constant mapping; it does
+not grant whole-dataset reactive-speciation qualification. The standard reaction table is unchanged.
+`HSO4-` is registered with charge -1 and explicit H/S/O elemental counts; its identity and reference
+formation values follow sulfate plus the source association Gibbs energy and temperature derivative
+at 298.15 K. Other ion property scaffold fields follow the existing sulfate record and are not
+independent HSO4 transport, density or caloric-property qualification.
+
+Sulfate/bisulfate S(VI) and H2S/HS- S(-II) inventories are conserved separately. This path adds no
+sulfate reduction, sulfide oxidation, elemental sulfur/polysulfides, second sulfide dissociation,
+H2S dimer, explicit calcium ion pairs or mineral precipitation. In particular, source-defined
+omissions are not permission to use `S--`, a species absent from the pinned source topology.
+Calcite/gypsum/anhydrite saturation and precipitation need their own existing mineral workflows
+and appropriate qualification; this selector does not automatically invoke them. The existing
+dissolved-salt `calcSaltSaturationWithDiagnostics("CaCO3")` operation can now resolve the
+previously missing calcium/carbonate interactions while preserving the reactive topology.
+Its convergence is not evidence for qualified mineral precipitation.
 
 The existing explicit `applyPhreeqcReactiveSodiumChlorideCarbonateParameters()` method remains
 available for compatibility. Its narrower NaCl-only topology and dataset identity are unchanged.
@@ -92,6 +122,25 @@ unused gas-EOS and mean-gamma reporting blocks, leaving all aqueous reactions an
 unchanged. The frozen regression limits are 0.001 pH unit, 0.00005 water activity and
 0.01 in log10 activity coefficient. The previously established ten-state regression keeps its
 original, tighter limits. These comparisons establish implementation agreement.
+
+A further **135 independently generated IPhreeqc states** check CaCl2, Na/Ca and K/Ca
+chlorides, mixed chloride/sulfate brines, Na/K/Ca sulfate-only feeds and acidic sulfate brines.
+They span 298.15–323.15 K and up to 3 mol/kg cation charge equivalents, including dilute H2S.
+The frozen table retains free species, native pH, water activity and individual log10 gammas;
+NeqSim replays those free species rather than equating different speciation sets. The source-only
+H2S dimer is retained in PHREEQC and recorded (maximum $1.56\times10^{-7}$ mol/kg).
+`PitzerAutomaticCalciumSulfurTest` checks native pH to 0.001, water activity to 0.00006 and log10 gamma to 0.01 and
+separately checks exact bisulfate constants, a three-phase reactive feed, elemental closure,
+ion confinement, and separate sulfate/sulfide inventories. The 0.00006 water-activity bound
+retains a maximum reference discrepancy of approximately 0.0000565 at concentrated CaCl2;
+it is a regression bound, not an experimental accuracy claim. These comparisons are implementation
+evidence; calcium/sulfur experimental pH and high-pressure speciation remain unqualified.
+
+The expanded reference matrix exposed a missing Pitzer ternary derivative: the activity of an
+ion opposite in sign to the two other members must include their molality product times the
+source psi coefficient. `ComponentGePitzer` now includes that contribution once per pair.
+This corrects calcium/chloride/sulfate activities and applies consistently to existing Pitzer
+datasets; it changes no coefficient, water-activity kernel or non-Pitzer model.
 
 Experimental evidence is assessed separately against the NaCl conditional carbonate-dissociation
 correlation of Millero, Huang, Graham and Pierrot (2007), DOI

@@ -395,8 +395,11 @@ new ThermodynamicOperations(fluid).TPflash();
 boolean hasAqueousPhase = fluid.hasPhaseType(PhaseType.AQUEOUS);
 ```
 
-For reactive CO2/NaCl/KCl brines, add CO2 to the feed and call `chemicalReactionInit()` before
-setting the mixing rule. The bounded reactive carbonate parameter family then loads automatically.
+For reactive CO2/H2S brines with Na+, K+, Ca++, Cl- and/or SO4--, add the feed components and
+call `chemicalReactionInit()` before setting the mixing rule. The bounded reactive acid-base
+parameter family loads automatically, including HSO4- formation and first H2S dissociation.
+Sulfate-only feeds also work. Elemental sulfur and sulfate/sulfide redox conversion are outside
+this setup; the two sulfur oxidation-state inventories stay separate.
 Its source-defined zeros and partial qualification are explained in
 [Pitzer parameter provenance](pitzer_parameter_provenance.md#automatic-carbonate-parameter-evidence-and-qualification-boundary).
 The automatic setup does not establish full reactive pH, VLE or mineral qualification.

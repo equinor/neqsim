@@ -26,55 +26,64 @@ public final class PitzerParameterDatasets {
   /** Exact-source PHREEQC semantics for the reactive NaCl-CO2-carbonate topology. */
   public static final String PHREEQC_REACTIVE_NACL_CARBONATE_ID = "usgs-phreeqc-pitzer-b0b3be767158ccc3322d2c816625cf470045e67e-reactive-nacl-carbonate-exact-source-v1";
 
-  /** Automatically selected, reviewed PHREEQC Na/K chloride-carbonate parameter definition set. */
+  /** Automatically selected, reviewed PHREEQC Na/K/Ca chloride-sulfate acid-base parameter definition set. */
   public static final String PHREEQC_AUTOMATIC_REACTIVE_CARBONATE_ID = "usgs-phreeqc-pitzer-"
-      + PhreeqcPitzerParameterCatalog.SOURCE_COMMIT + "-reactive-nakcl-carbonate-auto-v1";
+      + PhreeqcPitzerParameterCatalog.SOURCE_COMMIT + "-reactive-nakca-clso4-carbonate-sulfide-auto-v2";
 
   /**
    * Tries the reviewed automatic carbonate dataset after chemical reaction initialization.
    *
    * <p>
-   * Only water, CO2, Na/K chloride, the four carbonate/water reaction ions, and EOS-role hydrocarbons are accepted.
-   * Source-omitted zeros must have an explicit entry in the bundled, version-pinned definition list; omissions in every
-   * other topology remain unsupported.
+   * Only water, CO2/H2S, Na/K/Ca, chloride/sulfate/bisulfate, carbonate/water/HS reaction ions, and EOS-role
+   * hydrocarbons are accepted. Sulfate and sulfide are separate oxidation-state inventories; no redox, elemental
+   * sulfur, sulfide second dissociation, aqueous ion pairs, H2S dimer or mineral reaction is introduced. Source-omitted
+   * zeros must have an explicit entry in the bundled, version-pinned definition list; omissions in every other topology
+   * remain unsupported.
    * </p>
    *
    * @param phase aqueous role to configure
    * @return true when the complete supported definition set was applied
    */
   static boolean tryApplyAutomaticReactiveCarbonate(PhasePitzer phase) {
-    List<String> required = Arrays.asList("water", "CO2", "Cl-", "H3O+", "OH-", "HCO3-", "CO3--");
+    List<String> required = Arrays.asList("water", "H3O+", "OH-");
+    List<String> supported = Arrays.asList("water", "CO2", "Na+", "K+", "Ca++", "Cl-", "H3O+", "OH-", "HCO3-", "CO3--",
+        "SO4--", "HSO4-", "H2S", "HS-");
     for (String name : required) {
       if (!phase.hasComponent(name)) {
         return false;
       }
     }
-    if (!phase.hasComponent("Na+") && !phase.hasComponent("K+")) {
+    if ((!phase.hasComponent("Na+") && !phase.hasComponent("K+") && !phase.hasComponent("Ca++"))
+        || (!phase.hasComponent("CO2") && !phase.hasComponent("H2S") && !phase.hasComponent("SO4--")
+            && !phase.hasComponent("HSO4-"))) {
       return false;
     }
     List<Integer> ions = new ArrayList<Integer>();
+    List<Integer> neutrals = new ArrayList<Integer>();
     for (int index = 0; index < phase.getNumberOfComponents(); index++) {
       String name = phase.getComponent(index).getComponentName();
-      if (!required.contains(name) && !"Na+".equals(name) && !"K+".equals(name)
-          && !isHydrocarbonForAutomaticCatalog(phase.getComponent(index))) {
+      if (!supported.contains(name) && !isHydrocarbonForAutomaticCatalog(phase.getComponent(index))) {
         return false;
       }
-      if (required.contains(name) || "Na+".equals(name) || "K+".equals(name)) {
+      if (supported.contains(name)) {
         double expectedCharge = "Na+".equals(name) || "K+".equals(name) || "H3O+".equals(name) ? 1.0
-            : "CO3--".equals(name) ? -2.0
-                : "Cl-".equals(name) || "OH-".equals(name) || "HCO3-".equals(name) ? -1.0 : 0.0;
+            : "Ca++".equals(name) ? 2.0
+                : "CO3--".equals(name) || "SO4--".equals(name) ? -2.0
+                    : "Cl-".equals(name) || "OH-".equals(name) || "HCO3-".equals(name) || "HSO4-".equals(name)
+                        || "HS-".equals(name) ? -1.0 : 0.0;
         requireComponentCharge(phase, index, expectedCharge);
       }
       if (Math.abs(phase.getComponent(index).getIonicCharge()) > 0.5) {
         ions.add(index);
+      } else if ("CO2".equals(name) || "H2S".equals(name)) {
+        neutrals.add(index);
       }
     }
     List<String> sourceZeros = new ArrayList<String>();
     PhreeqcPitzerParameterCatalog catalog = PhreeqcPitzerParameterCatalog.getInstance();
     phase.setExcludeHydrocarbonsFromNeutralPitzerTopology(true);
     applyExactSourceIonRows(phase, catalog, ions, sourceZeros);
-    applyExactSourceNeutralRows(phase, catalog, ions,
-        Collections.singletonList(phase.getComponent("CO2").getComponentNumber()), sourceZeros);
+    applyExactSourceNeutralRows(phase, catalog, ions, neutrals, sourceZeros);
     phase.setParameterDatasetId(PHREEQC_AUTOMATIC_REACTIVE_CARBONATE_ID);
     phase.setReactiveCarbonateSourceZeroDefinitions(sourceZeros);
     phase.enablePhreeqcCommonIonTerms();
@@ -93,7 +102,7 @@ public final class PitzerParameterDatasets {
    * Cl-, H3O+, OH-, HCO3-, and CO3--, maps NeqSim H3O+ to the PHREEQC H+ catalog identity, and installs an explicit
    * six-term zero for a row omitted by the pinned PHREEQC source. PHREEQC executable source treats such absent tuples
    * as zero. The strict generic catalog remains unchanged. Automatic reactive selection instead uses a finite, reviewed
-   * source-zero definition list for the supported Na/K chloride-carbonate family.
+   * source-zero definition list for the supported Na/K/Ca chloride-sulfate acid-base family.
    * </p>
    *
    * <p>
@@ -897,9 +906,12 @@ public final class PitzerParameterDatasets {
       return new PitzerParameterQualification(datasetId,
           PitzerParameterQualification.Level.PARTIALLY_EXPERIMENTALLY_VALIDATED,
           Arrays.asList("Independent IPhreeqc comparison for acidic NaCl/KCl/carbonate aqueous states",
+              "Independent IPhreeqc free-species activity comparison for calcium/sulfate/bisulfate/H2S/HS states",
               "NaCl conditional carbonate dissociation comparison with Millero et al. (2007)"),
           Arrays.asList(
               "Automatic coverage uses a finite reviewed source-zero definition list, not inferred missing data",
+              "Calcium/sulfur activity comparison is implementation evidence, not experimental reactive-speciation qualification",
+              "No sulfate-sulfide redox, elemental sulfur, S--, H2S dimer, ion-pair or mineral reactions are added",
               "The full mixed-brine reactive-speciation, gas/oil VLE, pressure, mineral and hydrate ranges are not qualified",
               "NaCl dissociation discrepancies grow to approximately 0.22 pK at 323.15 K and 5 mol/kg; full qualification remains closed"));
     }
@@ -1043,8 +1055,20 @@ public final class PitzerParameterDatasets {
     }
   }
 
+  /**
+   * Maps NeqSim proton and redox-uncoupled sulfide identities to the pinned source names.
+   *
+   * @param componentName NeqSim component identity
+   * @return equivalent PHREEQC aqueous identity
+   */
   private static String phreeqcReactiveSourceName(String componentName) {
-    return "H3O+".equals(componentName) ? "H+" : componentName;
+    if ("H3O+".equals(componentName)) {
+      return "H+";
+    }
+    if ("H2S".equals(componentName)) {
+      return "H2Sg";
+    }
+    return "HS-".equals(componentName) ? "HSg-" : componentName;
   }
 
   /**

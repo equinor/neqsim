@@ -1,4 +1,4 @@
-"""Reactive gas/oil/NaCl-KCl brine with native automatic carbonate parameters.
+"""Sour gas/oil/Na-K-Ca chloride-sulfate brine with automatic Pitzer parameters.
 
 Run with a NeqSim build containing the automatic reactive-carbonate selection.
 The dataset reports partial experimental validation; this example does not
@@ -12,10 +12,13 @@ for name, moles in {
     "methane": 5.0,
     "n-heptane": 2.0,
     "CO2": 0.5,
+    "H2S": 0.02,
     "water": 55.5,
     "Na+": 0.5,
     "K+": 0.5,
-    "Cl-": 1.0,
+    "Ca++": 0.05,
+    "Cl-": 1.08,
+    "SO4--": 0.01,
 }.items():
     fluid.addComponent(name, moles)
 
@@ -39,3 +42,13 @@ print("Reviewed source-zero definitions:", len(aqueous.getReactiveCarbonateSourc
 print("Qualification:", fluid.getPitzerParameterQualification().getLevel())
 print("Phases:", [str(fluid.getPhase(i).getType()) for i in range(fluid.getNumberOfPhases())])
 print(f"pH (unscaled molality convention): {pH:.6f}")
+
+print("Aqueous activities (1 mol/kg standard state):")
+for name in ("Ca++", "SO4--", "HSO4-", "H2S", "HS-", "HCO3-", "CO3--"):
+    component = aqueous.getComponent(name)
+    index = component.getComponentNumber()
+    print(
+        f"  {name:6s}: m={component.getMolality(aqueous):.8g} mol/kg, "
+        f"gamma={aqueous.getActivityCoefficient(index):.8g}, "
+        f"a={aqueous.getPitzerActivity(index):.8g}"
+    )

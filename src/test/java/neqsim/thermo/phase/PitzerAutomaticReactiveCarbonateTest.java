@@ -46,7 +46,7 @@ class PitzerAutomaticReactiveCarbonateTest {
     assertTrue(aqueous.getPitzerParameterCoverage().isComplete());
     assertTrue(aqueous.getPitzerReactionParameterCoverage().isComplete());
     assertTrue(aqueous.auditNeutralPitzerParameterCoverage().isComplete());
-    assertTrue(aqueous.getParameterDatasetId().contains("reactive-nakcl-carbonate"));
+    assertTrue(aqueous.getParameterDatasetId().contains("reactive-nakca-clso4-carbonate-sulfide"));
     assertWholeFluidElements(fluid);
     double betaSum = 0.0;
     for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
@@ -255,7 +255,7 @@ class PitzerAutomaticReactiveCarbonateTest {
   void unsupportedExtensionDoesNotReuseAnAutomaticDataset() {
     SystemPitzer fluid = reactiveSodiumChloride();
     new ThermodynamicOperations(fluid).TPflash();
-    fluid.addComponent("Ca++", 0.01);
+    fluid.addComponent("Mg++", 0.01);
     fluid.addComponent("Cl-", 0.02);
     fluid.chemicalReactionInit();
     fluid.setMixingRule("classic");

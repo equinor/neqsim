@@ -198,13 +198,19 @@ Reaction data selection is explicit and inspectable. `SystemKentEisenberg` selec
 molality-standard-state source. This mapping records the implemented database choice—it is not
 evidence that a parameter set has been independently validated for every model or salinity range.
 
-For water/CO2 with NaCl, KCl or their mixture, ordinary `SystemPitzer` reaction initialization
-now enables the reviewed automatic carbonate definition set. Add every feed component first,
+For water with CO2 and/or H2S, Na/K/Ca cations, chloride and/or sulfate, ordinary
+`SystemPitzer` reaction initialization enables the reviewed automatic acid-base definition set.
+Sulfate also works without either acid gas; the initialization adds HSO4- automatically. Add every feed component first,
 call `chemicalReactionInit()`, set the mixing rule and multiphase option, and run the flash.
 Methane and hydrocarbon oil components retain their EOS roles. A Python parameter loader or an
 explicit dataset call is unnecessary for this bounded family. The executable example is
 `examples/neqsim/pitzer_reactive_carbonate.py`; its Java setup and pH calculation are covered by
-`PitzerAutomaticReactiveCarbonateTest.ordinaryReactiveMixedBrineSetupSelectsCompleteParameters`.
+`PitzerAutomaticCalciumSulfurTest.sourGasOilCalciumSulfateBrineClosesWithoutRedoxOrMinerals`.
+Use the exact ion names `Ca++`, `SO4--`, `HSO4-`, and `HS-`. Charge-balance the feed: each calcium
+ion contributes +2 equivalents and sulfate contributes -2. The example uses 0.05 mol Ca++,
+0.01 mol SO4--, 0.5 mol each Na+/K+, and 1.08 mol Cl-. Sulfate/bisulfate and H2S/HS-
+undergo acid-base reactions while their sulfur oxidation-state inventories remain separate;
+elemental sulfur, redox conversion, S--, ion pairs and mineral precipitation are outside this setup.
 
 `PhasePitzer.getPitzerPH()` reports pH from native hydrogen-ion activity and
 `getPitzerActivity(int)` reports native dimensionless activity for ions and neutral solutes.

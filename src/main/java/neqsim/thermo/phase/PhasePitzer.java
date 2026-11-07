@@ -85,9 +85,9 @@ public class PhasePitzer extends PhaseGE {
   private boolean parametersLoaded = false;
   /** Prefer the complete bundled PHREEQC catalog when it covers the active topology. */
   private boolean usePhreeqcCatalogByDefault = true;
-  /** Enables the reviewed reactive-carbonate selector after reaction initialization. */
+  /** Enables the reviewed carbonate/sulfate/sulfide acid-base selector after reaction initialization. */
   private boolean automaticReactiveCarbonateSelection;
-  /** Source-defined zero rows actually used by the automatically selected carbonate dataset. */
+  /** Source-defined zero rows actually used by the automatically selected reactive brine dataset. */
   private List<String> reactiveCarbonateSourceZeros = Collections.emptyList();
   /** Keep EOS-role hydrocarbons outside only the automatically selected aqueous-neutral topology. */
   private boolean excludeHydrocarbonsFromNeutralPitzerTopology;
