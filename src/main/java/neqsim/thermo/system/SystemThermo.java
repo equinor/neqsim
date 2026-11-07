@@ -828,12 +828,20 @@ public abstract class SystemThermo implements SystemInterface {
     init_x_y();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Fraction properties are assigned to every configured phase, including currently inactive phase candidates that may
+   * be activated by a later flash.
+   * </p>
+   */
   @Override
   public void addPlusFraction(String componentName, double numberOfMoles, double molarMass, double density) {
     addTBPfraction(componentName, numberOfMoles, molarMass, density);
     componentName = (componentName + "_" + "PC"); // getFluidName());
-    for (int i = 0; i < numberOfPhases; i++) {
+    // A later flash may activate an oil or other configured role that is currently inactive.
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       // System.out.println("comp " + componentName);
       getPhase(i).getComponent(componentName).setIsPlusFraction(true);
       getPhase(i).getComponent(componentName)
@@ -928,7 +936,14 @@ public abstract class SystemThermo implements SystemInterface {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Fraction properties are assigned to every configured phase, including currently inactive phase candidates that may
+   * be activated by a later flash.
+   * </p>
+   */
   @Override
   public void addTBPfraction(String componentName, double numberOfMoles, double molarMass, double density) {
     if (density < 0.0) {
@@ -1048,7 +1063,7 @@ public abstract class SystemThermo implements SystemInterface {
     double cpc = (-1.6658e-7 + CF * (0.536 - 0.6828 * acsKeslerLee) * 1.0e-7) * 4.18682 * molarMass * 1.8 * 1.8 * 1.0e3;
     double cpd = 0.0;
 
-    for (int i = 0; i < numberOfPhases; i++) {
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       getPhase(i).setAttractiveTerm(attractiveTermNumber);
       getPhase(i).getComponent(componentName).setMolarMass(molarMass);
       getPhase(i).getComponent(componentName).setComponentType("TBPfraction");
@@ -1092,7 +1107,7 @@ public abstract class SystemThermo implements SystemInterface {
       double pcAtm = PC / 1.01325;
       double ljSigma = (2.3551 - 0.087 * acs) * Math.pow(TC / pcAtm, 1.0 / 3.0);
       double ljEpsOverK = TC * (0.7915 + 0.1693 * acs * acs);
-      for (int i = 0; i < numberOfPhases; i++) {
+      for (int i = 0; i < getMaxNumberOfPhases(); i++) {
         getPhase(i).getComponent(componentName).setLennardJonesMolecularDiameter(ljSigma);
         getPhase(i).getComponent(componentName).setLennardJonesEnergyParameter(ljEpsOverK);
       }
@@ -1101,13 +1116,20 @@ public abstract class SystemThermo implements SystemInterface {
     // (0.076) from the temp DB insert. Hydrocarbons are non-polar (dipole ~ 0)
     // and have no association correction. These affect Chung and FrictionTheory
     // viscosity models through the Fc correction factor.
-    for (int i = 0; i < numberOfPhases; i++) {
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       getPhase(i).getComponent(componentName).setDebyeDipoleMoment(0.0);
       getPhase(i).getComponent(componentName).setViscosityAssociationFactor(0.0);
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Fraction properties are assigned to every configured phase, including currently inactive phase candidates that may
+   * be activated by a later flash.
+   * </p>
+   */
   @Override
   public void addTBPfraction(String componentName, double numberOfMoles, double molarMass, double density,
       double criticalTemperature, double criticalPressure, double acentricFactor) {
@@ -1220,7 +1242,7 @@ public abstract class SystemThermo implements SystemInterface {
     double cpc = (-1.6658e-7 + CF * (0.536 - 0.6828 * acsKeslerLee) * 1.0e-7) * 4.18682 * molarMass * 1.8 * 1.8 * 1.0e3;
     double cpd = 0.0;
 
-    for (int i = 0; i < numberOfPhases; i++) {
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       getPhase(i).setAttractiveTerm(attractiveTermNumber);
       getPhase(i).getComponent(componentName).setMolarMass(molarMass);
       getPhase(i).getComponent(componentName).setComponentType("TBPfraction");
@@ -1259,12 +1281,12 @@ public abstract class SystemThermo implements SystemInterface {
       double pcAtm = PC / 1.01325;
       double ljSigma = (2.3551 - 0.087 * acs) * Math.pow(TC / pcAtm, 1.0 / 3.0);
       double ljEpsOverK = TC * (0.7915 + 0.1693 * acs * acs);
-      for (int i = 0; i < numberOfPhases; i++) {
+      for (int i = 0; i < getMaxNumberOfPhases(); i++) {
         getPhase(i).getComponent(componentName).setLennardJonesMolecularDiameter(ljSigma);
         getPhase(i).getComponent(componentName).setLennardJonesEnergyParameter(ljEpsOverK);
       }
     }
-    for (int i = 0; i < numberOfPhases; i++) {
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       getPhase(i).getComponent(componentName).setDebyeDipoleMoment(0.0);
       getPhase(i).getComponent(componentName).setViscosityAssociationFactor(0.0);
     }

@@ -212,6 +212,15 @@ ion contributes +2 equivalents and sulfate contributes -2. The example uses 0.05
 undergo acid-base reactions while their sulfur oxidation-state inventories remain separate;
 elemental sulfur, redox conversion, S--, ion pairs and mineral precipitation are outside this setup.
 
+For characterized oil, add TBP cuts with `addTBPfraction(...)` and the heavy end with
+`addPlusFraction(...)`, then finish `getCharacterization().characterisePlusFraction()` before
+calling `chemicalReactionInit()`. Molecular weights are kg/mol and fraction densities are g/cm3.
+The pseudo components retain their EOS roles and require no extra Pitzer parameter setter.
+The executable [characterized-oil example](../../examples/neqsim/pitzer_characterized_oil_brine.py)
+is exercised by `PitzerCharacterizedOilBrineTest`, including default/PVT lumping, brine addition
+on either side of characterization, repeated flashes and cloning. The existing insoluble-Henry
+approximation for pseudo hydrocarbons remains in use; see the provenance guide for limits.
+
 `PhasePitzer.getPitzerPH()` reports pH from native hydrogen-ion activity and
 `getPitzerActivity(int)` reports native dimensionless activity for ions and neutral solutes.
 Pitzer pH uses hydrogen-ion molality times its activity coefficient, divided by the 1 mol/kg

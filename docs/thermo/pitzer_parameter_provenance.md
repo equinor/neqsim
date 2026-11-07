@@ -142,6 +142,38 @@ source psi coefficient. `ComponentGePitzer` now includes that contribution once 
 This corrects calcium/chloride/sulfate activities and applies consistently to existing Pitzer
 datasets; it changes no coefficient, water-activity kernel or non-Pitzer model.
 
+Characterized petroleum fractions are checked separately by `PitzerCharacterizedOilBrineTest`
+and the executable [characterized-oil Python example](../../examples/neqsim/pitzer_characterized_oil_brine.py).
+The synthetic feed uses C7/C8/C9 TBP cuts and a C10+ fraction (0.281 kg/mol, 0.882888 g/cm3),
+with sour gas and the Na/K/Ca chloride-sulfate brine above. Both the default characterization
+and explicit PVT lumping are exercised. The latter keeps the three TBP cuts and splits C10+
+into four additional pseudo components. Characterize before `chemicalReactionInit()` so the
+reaction topology captures the final component identities; adding brine before or after
+characterization gives matching results.
+
+Fraction setup now assigns complete pseudo-component properties to every configured phase role,
+including the initially inactive hybrid oil phase. Previously that role could retain zero molecular
+weight/density and missing TBP metadata even though the flash returned three phases. Both TBP
+overloads and plus-fraction assignment now follow the same configured-phase coverage as component
+creation. This also covers ordinary EOS systems starting with a single active phase.
+
+The pseudo-component properties match standard SRK characterization. The selector recognizes
+the TBP flags without requiring molecular formulas or additional neutral Pitzer interactions.
+Tests check every pseudo-component molar inventory, the **0.332530 kg** heavy-fraction mass,
+gas/oil fugacity equality, reactive elemental closure, charge balance, ion confinement, positive aqueous activities,
+repeated flashes and cloning. Petroleum pseudo components do not have exact elemental formulas;
+these tests do not invent whole-oil carbon/hydrogen atom counts.
+
+| Temperature (K) | Pressure (bara) | Phases | Native pH |
+| --- | --- | --- | --- |
+| 298.15 | 10 | gas, oil, aqueous | 3.949947 |
+| 313.15 | 50 | gas, oil, aqueous | 3.719220 |
+| 333.15 | 100 | gas, oil, aqueous | 3.710758 |
+
+These are synthetic regression results, not measured-oil qualification. Pseudo hydrocarbons
+retain the existing insoluble-Henry aqueous treatment; their negligible calculated water-phase
+amounts do not qualify hydrocarbon solubility, polar petroleum chemistry, or experimental pH.
+
 Experimental evidence is assessed separately against the NaCl conditional carbonate-dissociation
 correlation of Millero, Huang, Graham and Pierrot (2007), DOI
 [10.1016/j.gca.2006.08.041](https://doi.org/10.1016/j.gca.2006.08.041).
