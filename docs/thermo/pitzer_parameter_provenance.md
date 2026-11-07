@@ -87,6 +87,19 @@ not grant whole-dataset reactive-speciation qualification. The standard reaction
 formation values follow sulfate plus the source association Gibbs energy and temperature derivative
 at 298.15 K. Other ion property scaffold fields follow the existing sulfate record and are not
 independent HSO4 transport, density or caloric-property qualification.
+The aqueous formation values are not reviewed ideal-gas formation enthalpies, so
+`FORMATIONENTHALPYSOURCE` stays blank, consistently with the other aqueous ions. Their
+provenance is the pinned sulfate-plus-bisulfate association mapping above; the numeric
+formation fields remain available to the existing reaction model. `BisulfateDatabaseTest`
+checks the identity, elemental counts and formation-reference boundary in both standard
+and extended database modes, including lower-case `hso4-` input.
+
+The inherited sulfate `NORMBOIL=62.0` value is an ion-property scaffold, not a measured
+bisulfate boiling point. Adding HSO4- makes four ion records share that value (ClO4-, NO3-,
+SO4-- and HSO4-), crossing the database screener's three-record threshold. The exact
+`over_shared_normboil 62.0` finding is recorded in `data/comp_known_issues.tsv` for this
+intentional shared scaffold; no property is perturbed to evade the check. This does not
+qualify ionic boiling, transport or caloric properties.
 
 Sulfate/bisulfate S(VI) and H2S/HS- S(-II) inventories are conserved separately. This path adds no
 sulfate reduction, sulfide oxidation, elemental sulfur/polysulfides, second sulfide dissociation,
