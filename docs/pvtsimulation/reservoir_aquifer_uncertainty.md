@@ -98,6 +98,23 @@ bound-limited solutions and rejected trials. Refine the measurement/flow interva
 exact integration of a prescribed linear pressure path does not make the unknown
 coupled nonlinear pressure trajectory exact.
 
+## Independent coupled finite-EOS benchmark
+
+The optional [coupled SRK/aquifer matrix](https://github.com/equinor/neqsim/tree/master/src/test/resources/neqsim/pvtsimulation/coupled-aquifer)
+compares native replay against an independently coded SRK pressure equation and
+continuous water-support ODE. Sixteen synthetic cases at four interval meshes
+cover finite/infinite storage and zero-storage/productivity limits. It retains
+all 1,920 endpoints, named methane inventory, aquifer storage, final pore closure,
+checkpoint immutability, runtime and fixed convergence bounds. Run the benchmark's
+`run.py` with the selected Python interpreter in a source checkout; its `audit.py`
+checks the full outputs. This optional matrix adds no ordinary simulation overhead.
+
+The reference uses fixed synthetic EOS inputs with identical original/tuned
+checkpoints and prescribed methane withdrawals. It does not establish measured
+laboratory calibration, produced-phase/GOR accuracy, radial aquifer equivalence,
+parameter identifiability or Bayesian acceptance. The benchmark scope and all
+remaining issue criteria remain explicit in its README and #4740 ledger.
+
 ## Joint Bayesian scenarios
 
 `ReservoirHistoryEnsemble.Candidate` combines one frozen history, pore volume,
