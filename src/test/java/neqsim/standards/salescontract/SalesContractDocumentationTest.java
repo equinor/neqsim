@@ -27,16 +27,14 @@ import org.junit.jupiter.api.io.TempDir;
 
 /** Executes and protects the database-backed example in the gas sales-contract guide. */
 class SalesContractDocumentationTest extends NeqSimTest {
-  private static final String EXAMPLE_MARKER =
-      "<!-- sales-contract-example: brazil-screen -->";
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile(
-          "(?s)<!-- sales-contract-example: brazil-screen -->\\s*"
-              + "```java\\s*\\r?\\n([\\s\\S]*?)\\r?\\n```");
-  private static final Pattern PUBLIC_CLASS =
-      Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+  private static final String EXAMPLE_MARKER = "<!-- sales-contract-example: brazil-screen -->";
+  private static final Pattern JAVA_FENCE = Pattern
+      .compile("(?s)<!-- sales-contract-example: brazil-screen -->\\s*" + "```java\\s*\\r?\\n([\\s\\S]*?)\\r?\\n```");
+  private static final Pattern PUBLIC_CLASS = Pattern
+      .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
-  @TempDir Path temporaryDirectory;
+  @TempDir
+  Path temporaryDirectory;
 
   /** Validate the current bundled fixture and its 12-column result-table contract. */
   @Test
@@ -109,9 +107,8 @@ class SalesContractDocumentationTest extends NeqSimTest {
     Files.write(javaSource, exampleSource.getBytes(StandardCharsets.UTF_8));
     compile(compiler, javaSource);
 
-    try (URLClassLoader loader =
-        new URLClassLoader(
-            new URL[] {temporaryDirectory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {temporaryDirectory.toUri().toURL()},
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName("GasSalesContractQuickStart", true, loader);
       assertTrue(example.desiredAssertionStatus());
@@ -131,36 +128,14 @@ class SalesContractDocumentationTest extends NeqSimTest {
    * @throws Exception if source preparation or compilation fails
    */
   private void compile(JavaCompiler compiler, Path source) throws Exception {
-    DiagnosticCollector<JavaFileObject> diagnostics =
-        new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options =
-        Arrays.asList(
-            "-source",
-            "8",
-            "-target",
-            "8",
-            "-proc:none",
-            "-classpath",
-            classPath,
-            "-d",
-            temporaryDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
-      Boolean successful =
-          compiler
-              .getTask(
-                  null,
-                  manager,
-                  diagnostics,
-                  options,
-                  null,
-                  manager.getJavaFileObjects(source.toFile()))
-              .call();
-      assertTrue(
-          Boolean.TRUE.equals(successful),
-          "docs/standards/sales_contracts.md: " + diagnostics.getDiagnostics());
+    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-proc:none", "-classpath", classPath,
+        "-d", temporaryDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(source.toFile())).call();
+      assertTrue(Boolean.TRUE.equals(successful), "docs/standards/sales_contracts.md: " + diagnostics.getDiagnostics());
     }
   }
 
@@ -176,11 +151,7 @@ class SalesContractDocumentationTest extends NeqSimTest {
     try {
       return Double.parseDouble(value);
     } catch (NumberFormatException | NullPointerException exception) {
-      throw new AssertionError(
-          "Expected a numeric contract result at row "
-              + rowIndex
-              + ", column "
-              + columnIndex,
+      throw new AssertionError("Expected a numeric contract result at row " + rowIndex + ", column " + columnIndex,
           exception);
     }
   }
