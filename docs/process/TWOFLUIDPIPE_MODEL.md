@@ -1823,12 +1823,38 @@ Negative outlet component and enthalpy transfers enter the branch from the downs
 applied with the existing simultaneous node update; the last interior pipe cell is never inferred to
 be an external reservoir.
 
-This first network implementation requires finite compressible storage at internal junctions.
-Fixed-pressure nodes are external reservoirs or sinks. Algebraic zero-volume junctions, a global
-Newton pressure-flow solve, and branch subcycling remain outside the validated scope. Conservative
-component/energy mixing, node sources and the compositionally different pressure-reversal fixture
-have synthetic closure evidence; they are not independently qualified transient junction models or
-predictive restart/refill qualification.
+For a bounded zero-volume merge, use one algebraic junction in place of the storage volume:
+
+```java
+TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("algebraic merge");
+network.addFixedPressureNode("well A", 120.0e5, wellAFluid);
+network.addFixedPressureNode("well B", 110.0e5, wellBFluid);
+network.addAlgebraicJunction("manifold", 90.0e5, initialManifoldFluid);
+network.addFixedPressureNode("host", 55.0e5, hostFluid);
+network.addPipe("branch A", "well A", "manifold", branchA);
+network.addPipe("branch B", "well B", "manifold", branchB);
+network.addPipe("riser", "manifold", "host", riser);
+network.runTransient(0.005, UUID.randomUUID());
+
+TwoFluidPipeNetwork.AlgebraicJunctionReport junction =
+    network.getLastAlgebraicJunctionReport();
+double commonPressurePa = junction.getPressurePa();
+double phaseConversionKg = junction.getInterphaseTransferKg(
+    TwoFluidMassBalanceReport.Phase.GAS);
+```
+
+The coordinator evaluates every incident pipe through detached pressure/donor candidates, solves
+one common pressure, and iterates the equilibrium donor composition and enthalpy. It requires total
+mass, every named component and advected energy to close before publishing any branch. Equilibrium
+phase conversion is reported explicitly by gas/oil/water and as an internal `BalanceReport` term;
+its total is zero. `TwoFluidPipeNetworkTest` exercises the same three-branch shape, different inlet
+compositions, branch-order independence, serialization and a second interval.
+
+This contract supports one algebraic junction per network. A second junction, a branch between two
+algebraic junctions, global multi-junction Newton pressure-flow coupling and branch subcycling remain
+outside the validated scope. Conservative storage and algebraic fixtures have synthetic closure
+evidence; they are not independently qualified transient junction models or predictive restart/refill
+qualification.
 
 ### Choosing Time Step, Sections, and Pipeline Length
 
