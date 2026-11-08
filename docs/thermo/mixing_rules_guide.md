@@ -1107,6 +1107,27 @@ version differences. It keeps nitrogen-mole calibration, printed AD_exp and comp
 expanded 95% point uncertainties separate. Same-experiment versions are not independent
 validation datasets; no parameter, pure input, prediction or physical tolerance changes.
 
+### Staged SRK MEG/methane declared-input diagnostic
+
+The [MEG/methane protocol](../../src/test/resources/neqsim/thermo/mixingrule/hv-meg-methane/README.md)
+advances six retained liquid-methane observations into native NeqSim checks and
+independent-equation parity. Its test-local Folas6.2 tuple uses declared Derawi
+MEG Mathias-Copeman inputs and declared library methane inputs; original-author
+methane inputs and original journal table images/uncertainty remain unresolved.
+Only MEG/methane is selected HV. Water, methanol and other pairs retain CLASSICAL
+kij in the forced-root selection controls. No production parameter/profile is
+activated, and the tuple is not transferred to PR.
+
+The executable fixture asserts all five `ThermodynamicModelTest` identities and
+`checkNumerically()` on a detached unit-amount basis with amount-homogeneity,
+independent temperature stencils, order/history and equilibrium closure controls.
+The protocol records raw micro-mole checker limitations rather than relaxing
+checker tolerances. The six-point liquid AARD is about4.90%; the first point is
+outside the compiler uncertainty band, and two points are below the MEG alpha fit
+range. Gas-MEG predictions have no measured reverse comparator. These results do
+not qualify inhibitor partition, hydrates, ice/brine or extrapolation. The manual
+matched rule2/rule4 benchmark keeps model/solver cost distinct from code overhead.
+
 ### Staged CO2/water source configurations
 
 The separate [CO2 fixture protocol](../../src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/README.md)

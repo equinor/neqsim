@@ -1,0 +1,753 @@
+{
+  "mixture": "meg-methane",
+  "declared_source_head": "bb5c7d45071d5537adce23e2217da28c49776d85",
+  "source_and_class_sha256": {
+    "src/test/java/neqsim/thermo/mixingrule/HuronVidalMegMethaneDiagnosticTest.java": "ce9d6284e21d9ac8aa6581666a5337f27f906100f14c86b0faa24a584bd6b099",
+    "target/test-classes/neqsim/thermo/mixingrule/HuronVidalMegMethaneDiagnosticTest.class": "f5348b626419f3406c65e24f6c67c3c4c877bf37c4ed44fe6de374f531c6aac8",
+    "src/test/java/neqsim/thermo/mixingrule/HuronVidalMegMethanePerformanceBenchmark.java": "5baa805b633bc2744b9b89be8117e7b61be79deb7ffc10f6b240230de96d3a24",
+    "target/test-classes/neqsim/thermo/mixingrule/HuronVidalMegMethanePerformanceBenchmark.class": "19849edb54b65aa06af7ab4fc177d87e123d9039c8b40a7bc0987c9665ed7a31"
+  },
+  "start_utc": "2026-11-08T16:49:49.791551+00:00",
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.39",
+  "logical_cpus": 9,
+  "planned_jvms": 48,
+  "runs": [
+    {
+      "fork": 0,
+      "profile": 0,
+      "scenario": "init1",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "992282839ca9e52e06de84f7d113991eac5a135e7c1f99a938beeccb2c93fd3e",
+      "wall_seconds_including_startup": 2.9293728480006394,
+      "benchmark_arguments": [
+        "0",
+        "2",
+        "init1",
+        "/workspace/scratch/ae2567895454/r54-cost/fork0_profile0_init1_rule2.csv"
+      ]
+    },
+    {
+      "fork": 0,
+      "profile": 0,
+      "scenario": "init1",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "1035faf8dc0a546caebef9bd2636ac90c55fb3ac12d02f5ba3385e2f3b39e1fa",
+      "wall_seconds_including_startup": 4.025455967999733,
+      "benchmark_arguments": [
+        "0",
+        "4",
+        "init1",
+        "/workspace/scratch/ae2567895454/r54-cost/fork0_profile0_init1_rule4.csv"
+      ]
+    },
+    {
+      "fork": 0,
+      "profile": 0,
+      "scenario": "init3",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "aaafac6c3100c03efad74b27de7c828371167c067b9308146d5095324e9d2db1",
+      "wall_seconds_including_startup": 2.9210689530009404,
+      "benchmark_arguments": [
+        "0",
+        "2",
+        "init3",
+        "/workspace/scratch/ae2567895454/r54-cost/fork0_profile0_init3_rule2.csv"
+      ]
+    },
+    {
+      "fork": 0,
+      "profile": 0,
+      "scenario": "init3",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "675f573147fccddd842e44debe5af23bd059b0a3f7f893677db14c1f862ec8a2",
+      "wall_seconds_including_startup": 4.3307675889991515,
+      "benchmark_arguments": [
+        "0",
+        "4",
+        "init3",
+        "/workspace/scratch/ae2567895454/r54-cost/fork0_profile0_init3_rule4.csv"
+      ]
+    },
+    {
+      "fork": 0,
+      "profile": 0,
+      "scenario": "flash",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "5bde42de8b5e7221e31dc64c40fa230247b0d9b250c76853ab0ef6af96a1544a",
+      "wall_seconds_including_startup": 6.6906775690004,
+      "benchmark_arguments": [
+        "0",
+        "2",
+        "flash",
+        "/workspace/scratch/ae2567895454/r54-cost/fork0_profile0_flash_rule2.csv"
+      ]
+    },
+    {
+      "fork": 0,
+      "profile": 0,
+      "scenario": "flash",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "ef98d4f0b35fd3500e998d602f7c9c1c5c82f61df266a2bc8166e085dcfaf09a",
+      "wall_seconds_including_startup": 7.587287922997348,
+      "benchmark_arguments": [
+        "0",
+        "4",
+        "flash",
+        "/workspace/scratch/ae2567895454/r54-cost/fork0_profile0_flash_rule4.csv"
+      ]
+    },
+    {
+      "fork": 0,
+      "profile": 1,
+      "scenario": "init1",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "27d97fbe6b609a0d8c1e1ea46455eb7ea2dd4774e4b916bdcf3c8787a77f0a8a",
+      "wall_seconds_including_startup": 3.0213611270010006,
+      "benchmark_arguments": [
+        "1",
+        "2",
+        "init1",
+        "/workspace/scratch/ae2567895454/r54-cost/fork0_profile1_init1_rule2.csv"
+      ]
+    },
+    {
+      "fork": 0,
+      "profile": 1,
+      "scenario": "init1",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "5828fed3cff59434c74e1566acb688f1e61e044fc27c5ac0cd08dd6c02d00127",
+      "wall_seconds_including_startup": 3.5227730490005342,
+      "benchmark_arguments": [
+        "1",
+        "4",
+        "init1",
+        "/workspace/scratch/ae2567895454/r54-cost/fork0_profile1_init1_rule4.csv"
+      ]
+    },
+    {
+      "fork": 0,
+      "profile": 1,
+      "scenario": "init3",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "d0f65a7203347adcf11a6ee736a350a1187ee0845540da300863a66e83fe89fb",
+      "wall_seconds_including_startup": 2.9742008139983227,
+      "benchmark_arguments": [
+        "1",
+        "2",
+        "init3",
+        "/workspace/scratch/ae2567895454/r54-cost/fork0_profile1_init3_rule2.csv"
+      ]
+    },
+    {
+      "fork": 0,
+      "profile": 1,
+      "scenario": "init3",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "8b176309e10e0d4044ba761f91c199960a273c328bc3e511e91b3259d94eb5a5",
+      "wall_seconds_including_startup": 3.500222036997002,
+      "benchmark_arguments": [
+        "1",
+        "4",
+        "init3",
+        "/workspace/scratch/ae2567895454/r54-cost/fork0_profile1_init3_rule4.csv"
+      ]
+    },
+    {
+      "fork": 0,
+      "profile": 1,
+      "scenario": "flash",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "c7672af18cbc6cfc1b4f3aa6ae40e5899cdee996a99e8a54bcd7ec57e51f03d4",
+      "wall_seconds_including_startup": 6.331386433001171,
+      "benchmark_arguments": [
+        "1",
+        "2",
+        "flash",
+        "/workspace/scratch/ae2567895454/r54-cost/fork0_profile1_flash_rule2.csv"
+      ]
+    },
+    {
+      "fork": 0,
+      "profile": 1,
+      "scenario": "flash",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "20e5d031afab8f6f7965bcb86939043d6425caafdeffab56f5df00d515ddc059",
+      "wall_seconds_including_startup": 7.1338972309968085,
+      "benchmark_arguments": [
+        "1",
+        "4",
+        "flash",
+        "/workspace/scratch/ae2567895454/r54-cost/fork0_profile1_flash_rule4.csv"
+      ]
+    },
+    {
+      "fork": 1,
+      "profile": 1,
+      "scenario": "flash",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "35b6d8b2a5427c48a2ec863c646e825c909d5792142f503b52e477b767fb4c96",
+      "wall_seconds_including_startup": 7.135604541999783,
+      "benchmark_arguments": [
+        "1",
+        "4",
+        "flash",
+        "/workspace/scratch/ae2567895454/r54-cost/fork1_profile1_flash_rule4.csv"
+      ]
+    },
+    {
+      "fork": 1,
+      "profile": 1,
+      "scenario": "flash",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "3c08e3524237da3bf4a2c3f067e48e90f82156bf6aa1da366d2c353707db428c",
+      "wall_seconds_including_startup": 6.331075926998892,
+      "benchmark_arguments": [
+        "1",
+        "2",
+        "flash",
+        "/workspace/scratch/ae2567895454/r54-cost/fork1_profile1_flash_rule2.csv"
+      ]
+    },
+    {
+      "fork": 1,
+      "profile": 1,
+      "scenario": "init3",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "bb78abe0eb55f45e72ea16c55d5629298ea39fb065b1c39db9a7f8d0ebd58404",
+      "wall_seconds_including_startup": 3.4246381979974103,
+      "benchmark_arguments": [
+        "1",
+        "4",
+        "init3",
+        "/workspace/scratch/ae2567895454/r54-cost/fork1_profile1_init3_rule4.csv"
+      ]
+    },
+    {
+      "fork": 1,
+      "profile": 1,
+      "scenario": "init3",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "e7cac27f0c27f20d19b7532dd4e5b3b67c22cec24148474f279d58bda9dcdd64",
+      "wall_seconds_including_startup": 2.871489200002543,
+      "benchmark_arguments": [
+        "1",
+        "2",
+        "init3",
+        "/workspace/scratch/ae2567895454/r54-cost/fork1_profile1_init3_rule2.csv"
+      ]
+    },
+    {
+      "fork": 1,
+      "profile": 1,
+      "scenario": "init1",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "3f55a3c673d1fce063e0d9fd832fe10be9f3f8f2c4bc47eea2b69600b5077b4f",
+      "wall_seconds_including_startup": 3.472098227997776,
+      "benchmark_arguments": [
+        "1",
+        "4",
+        "init1",
+        "/workspace/scratch/ae2567895454/r54-cost/fork1_profile1_init1_rule4.csv"
+      ]
+    },
+    {
+      "fork": 1,
+      "profile": 1,
+      "scenario": "init1",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "de20bd6440558bbf2987656ca63d821ea39c9c3ddae1b5050d46557b0cd968cf",
+      "wall_seconds_including_startup": 2.876339733997156,
+      "benchmark_arguments": [
+        "1",
+        "2",
+        "init1",
+        "/workspace/scratch/ae2567895454/r54-cost/fork1_profile1_init1_rule2.csv"
+      ]
+    },
+    {
+      "fork": 1,
+      "profile": 0,
+      "scenario": "flash",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "fa7fa5632d69256ef8cdbe0e86f8faf4369d5bdc5dc0d9d5dd91b28ffc2d85f7",
+      "wall_seconds_including_startup": 7.486283925001771,
+      "benchmark_arguments": [
+        "0",
+        "4",
+        "flash",
+        "/workspace/scratch/ae2567895454/r54-cost/fork1_profile0_flash_rule4.csv"
+      ]
+    },
+    {
+      "fork": 1,
+      "profile": 0,
+      "scenario": "flash",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "6117b84e66b855c5ede0ce01179bb8b92306d86ae02ccb609869353be3cbbd21",
+      "wall_seconds_including_startup": 6.330405188000441,
+      "benchmark_arguments": [
+        "0",
+        "2",
+        "flash",
+        "/workspace/scratch/ae2567895454/r54-cost/fork1_profile0_flash_rule2.csv"
+      ]
+    },
+    {
+      "fork": 1,
+      "profile": 0,
+      "scenario": "init3",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "8f32c3242ba23bf05bd52b167b65df642039ae49412386963fbeacc7a4a02ce6",
+      "wall_seconds_including_startup": 4.225342827001441,
+      "benchmark_arguments": [
+        "0",
+        "4",
+        "init3",
+        "/workspace/scratch/ae2567895454/r54-cost/fork1_profile0_init3_rule4.csv"
+      ]
+    },
+    {
+      "fork": 1,
+      "profile": 0,
+      "scenario": "init3",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "4994fab41abb7c9022b35f0a7569c7d735a8342e5c1c5c7848cfe22b1ed49b4f",
+      "wall_seconds_including_startup": 2.824477214999206,
+      "benchmark_arguments": [
+        "0",
+        "2",
+        "init3",
+        "/workspace/scratch/ae2567895454/r54-cost/fork1_profile0_init3_rule2.csv"
+      ]
+    },
+    {
+      "fork": 1,
+      "profile": 0,
+      "scenario": "init1",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "97074340af3e5cb9b38cc04f25fce6e4dc66b75978242a698fb7b6d6516bfcc9",
+      "wall_seconds_including_startup": 3.9838223539991304,
+      "benchmark_arguments": [
+        "0",
+        "4",
+        "init1",
+        "/workspace/scratch/ae2567895454/r54-cost/fork1_profile0_init1_rule4.csv"
+      ]
+    },
+    {
+      "fork": 1,
+      "profile": 0,
+      "scenario": "init1",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "bd534a1b66d939f58db3971eacbdb75438545184094ae1d588292bfeca24d901",
+      "wall_seconds_including_startup": 2.8726334700004372,
+      "benchmark_arguments": [
+        "0",
+        "2",
+        "init1",
+        "/workspace/scratch/ae2567895454/r54-cost/fork1_profile0_init1_rule2.csv"
+      ]
+    },
+    {
+      "fork": 2,
+      "profile": 0,
+      "scenario": "init1",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "31ae90cdfe65a7267c39d6f9d9044898d9c21c437673090a4eaf783c6a74cbcc",
+      "wall_seconds_including_startup": 2.8709548549995816,
+      "benchmark_arguments": [
+        "0",
+        "2",
+        "init1",
+        "/workspace/scratch/ae2567895454/r54-cost/fork2_profile0_init1_rule2.csv"
+      ]
+    },
+    {
+      "fork": 2,
+      "profile": 0,
+      "scenario": "init1",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "490600b3ed24880e09e3bcb89b59ba5af283097a768140d32ba1bbb42a78113b",
+      "wall_seconds_including_startup": 3.9741624149974086,
+      "benchmark_arguments": [
+        "0",
+        "4",
+        "init1",
+        "/workspace/scratch/ae2567895454/r54-cost/fork2_profile0_init1_rule4.csv"
+      ]
+    },
+    {
+      "fork": 2,
+      "profile": 0,
+      "scenario": "init3",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "1199d96719f3040149f2414d216150b524435f833a47b927257af39ab375ab90",
+      "wall_seconds_including_startup": 2.975131685001543,
+      "benchmark_arguments": [
+        "0",
+        "2",
+        "init3",
+        "/workspace/scratch/ae2567895454/r54-cost/fork2_profile0_init3_rule2.csv"
+      ]
+    },
+    {
+      "fork": 2,
+      "profile": 0,
+      "scenario": "init3",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "f32b44c8bd9595a728dfdb94fdcc2247d8267043317ddeb31dbfad93f7469564",
+      "wall_seconds_including_startup": 4.227884515999904,
+      "benchmark_arguments": [
+        "0",
+        "4",
+        "init3",
+        "/workspace/scratch/ae2567895454/r54-cost/fork2_profile0_init3_rule4.csv"
+      ]
+    },
+    {
+      "fork": 2,
+      "profile": 0,
+      "scenario": "flash",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "d897fac3e78b56083aa7629efddf9952fc7359418aaa22ec718b54ca40eb4edd",
+      "wall_seconds_including_startup": 6.580939845000103,
+      "benchmark_arguments": [
+        "0",
+        "2",
+        "flash",
+        "/workspace/scratch/ae2567895454/r54-cost/fork2_profile0_flash_rule2.csv"
+      ]
+    },
+    {
+      "fork": 2,
+      "profile": 0,
+      "scenario": "flash",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "59a7118ff2f5e54a0b53e21f098fe6970c5fdea9651e32502de8898394db303f",
+      "wall_seconds_including_startup": 7.483623063999403,
+      "benchmark_arguments": [
+        "0",
+        "4",
+        "flash",
+        "/workspace/scratch/ae2567895454/r54-cost/fork2_profile0_flash_rule4.csv"
+      ]
+    },
+    {
+      "fork": 2,
+      "profile": 1,
+      "scenario": "init1",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "2bb63856a9844e750e3e7c475c217c2a7c70ab8dab51f24d0f0849d9e20c2d86",
+      "wall_seconds_including_startup": 2.872739159000048,
+      "benchmark_arguments": [
+        "1",
+        "2",
+        "init1",
+        "/workspace/scratch/ae2567895454/r54-cost/fork2_profile1_init1_rule2.csv"
+      ]
+    },
+    {
+      "fork": 2,
+      "profile": 1,
+      "scenario": "init1",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "6d34d0ce9d3dd4aa89d993d1ea486b45fc48fc9c3cfffb6501a7e0a2792fb728",
+      "wall_seconds_including_startup": 3.3721072410007764,
+      "benchmark_arguments": [
+        "1",
+        "4",
+        "init1",
+        "/workspace/scratch/ae2567895454/r54-cost/fork2_profile1_init1_rule4.csv"
+      ]
+    },
+    {
+      "fork": 2,
+      "profile": 1,
+      "scenario": "init3",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "fc13916bce20fcb906874fc8f0a0c28f4d2809f1ae174de6adf9c41e0500b21f",
+      "wall_seconds_including_startup": 2.771166007998545,
+      "benchmark_arguments": [
+        "1",
+        "2",
+        "init3",
+        "/workspace/scratch/ae2567895454/r54-cost/fork2_profile1_init3_rule2.csv"
+      ]
+    },
+    {
+      "fork": 2,
+      "profile": 1,
+      "scenario": "init3",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "a6956ff64c0a1fae471357df806e90ec936c14bf82c705999d9659001bcfa1da",
+      "wall_seconds_including_startup": 3.4745178799967107,
+      "benchmark_arguments": [
+        "1",
+        "4",
+        "init3",
+        "/workspace/scratch/ae2567895454/r54-cost/fork2_profile1_init3_rule4.csv"
+      ]
+    },
+    {
+      "fork": 2,
+      "profile": 1,
+      "scenario": "flash",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "cc336829f8d21747485854db6682f982cf0cf8628383b310ed72963d5715b73a",
+      "wall_seconds_including_startup": 6.330966147001163,
+      "benchmark_arguments": [
+        "1",
+        "2",
+        "flash",
+        "/workspace/scratch/ae2567895454/r54-cost/fork2_profile1_flash_rule2.csv"
+      ]
+    },
+    {
+      "fork": 2,
+      "profile": 1,
+      "scenario": "flash",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "6331d9a9ed03062d9a76611c6f449e402b7a612335f125f945018b0a515b73bc",
+      "wall_seconds_including_startup": 7.284064681000018,
+      "benchmark_arguments": [
+        "1",
+        "4",
+        "flash",
+        "/workspace/scratch/ae2567895454/r54-cost/fork2_profile1_flash_rule4.csv"
+      ]
+    },
+    {
+      "fork": 3,
+      "profile": 1,
+      "scenario": "flash",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "0ab25940e17cc279b64d2c43c80b385fbfef6610c1fbcf0b771811eb960f57f3",
+      "wall_seconds_including_startup": 7.235064088999934,
+      "benchmark_arguments": [
+        "1",
+        "4",
+        "flash",
+        "/workspace/scratch/ae2567895454/r54-cost/fork3_profile1_flash_rule4.csv"
+      ]
+    },
+    {
+      "fork": 3,
+      "profile": 1,
+      "scenario": "flash",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "182772fe113d2e87ba898159f2247e8643f71f9224f23127a7b6d2ab9f5a3179",
+      "wall_seconds_including_startup": 6.5817444610001985,
+      "benchmark_arguments": [
+        "1",
+        "2",
+        "flash",
+        "/workspace/scratch/ae2567895454/r54-cost/fork3_profile1_flash_rule2.csv"
+      ]
+    },
+    {
+      "fork": 3,
+      "profile": 1,
+      "scenario": "init3",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "716b971bbd96f267701ffe6d4731aaf2badfe86174bdc5ba6a51733b78cb56ac",
+      "wall_seconds_including_startup": 3.4727692150008806,
+      "benchmark_arguments": [
+        "1",
+        "4",
+        "init3",
+        "/workspace/scratch/ae2567895454/r54-cost/fork3_profile1_init3_rule4.csv"
+      ]
+    },
+    {
+      "fork": 3,
+      "profile": 1,
+      "scenario": "init3",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "5b53e85fe501c303167251026d76c958795f6d33e30e3d39a79aa2eed6baaab2",
+      "wall_seconds_including_startup": 2.8727225340007863,
+      "benchmark_arguments": [
+        "1",
+        "2",
+        "init3",
+        "/workspace/scratch/ae2567895454/r54-cost/fork3_profile1_init3_rule2.csv"
+      ]
+    },
+    {
+      "fork": 3,
+      "profile": 1,
+      "scenario": "init1",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "f7b60a62692ec3819540cc579218124d4a3013a0e4aa72a83e5da54c61d7c00b",
+      "wall_seconds_including_startup": 3.4726513490022626,
+      "benchmark_arguments": [
+        "1",
+        "4",
+        "init1",
+        "/workspace/scratch/ae2567895454/r54-cost/fork3_profile1_init1_rule4.csv"
+      ]
+    },
+    {
+      "fork": 3,
+      "profile": 1,
+      "scenario": "init1",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "e75c98d578926a01e0a59de8345431a62a7d61edbf57fceb13ca9a80fbecffd0",
+      "wall_seconds_including_startup": 2.82075685199743,
+      "benchmark_arguments": [
+        "1",
+        "2",
+        "init1",
+        "/workspace/scratch/ae2567895454/r54-cost/fork3_profile1_init1_rule2.csv"
+      ]
+    },
+    {
+      "fork": 3,
+      "profile": 0,
+      "scenario": "flash",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "56bf64597e888a7c408b1d83f033ea1a93ce197b66b67a2b243b0e6b68608d93",
+      "wall_seconds_including_startup": 7.537198691999947,
+      "benchmark_arguments": [
+        "0",
+        "4",
+        "flash",
+        "/workspace/scratch/ae2567895454/r54-cost/fork3_profile0_flash_rule4.csv"
+      ]
+    },
+    {
+      "fork": 3,
+      "profile": 0,
+      "scenario": "flash",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "1a8ef4847bc7948a7693a0c60f907170162eb1df05fd3e4aae1e4b0a83cae870",
+      "wall_seconds_including_startup": 6.332894033002958,
+      "benchmark_arguments": [
+        "0",
+        "2",
+        "flash",
+        "/workspace/scratch/ae2567895454/r54-cost/fork3_profile0_flash_rule2.csv"
+      ]
+    },
+    {
+      "fork": 3,
+      "profile": 0,
+      "scenario": "init3",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "1117bd17e69506d87ebcd169411f937e5b4bd8222773138f7af91ab424f4934c",
+      "wall_seconds_including_startup": 4.230237368999951,
+      "benchmark_arguments": [
+        "0",
+        "4",
+        "init3",
+        "/workspace/scratch/ae2567895454/r54-cost/fork3_profile0_init3_rule4.csv"
+      ]
+    },
+    {
+      "fork": 3,
+      "profile": 0,
+      "scenario": "init3",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "81ef3e53e6fd7ab5fd99d34205aeaf664dc092a7fb06be52838c3831820e1ba3",
+      "wall_seconds_including_startup": 2.87126045200057,
+      "benchmark_arguments": [
+        "0",
+        "2",
+        "init3",
+        "/workspace/scratch/ae2567895454/r54-cost/fork3_profile0_init3_rule2.csv"
+      ]
+    },
+    {
+      "fork": 3,
+      "profile": 0,
+      "scenario": "init1",
+      "rule": 4,
+      "exit": 0,
+      "csv_sha256": "d231d8bb374f0e203b50648981e69f21cd67bc1118df6ff4207f671f6c3b476f",
+      "wall_seconds_including_startup": 3.979285544999584,
+      "benchmark_arguments": [
+        "0",
+        "4",
+        "init1",
+        "/workspace/scratch/ae2567895454/r54-cost/fork3_profile0_init1_rule4.csv"
+      ]
+    },
+    {
+      "fork": 3,
+      "profile": 0,
+      "scenario": "init1",
+      "rule": 2,
+      "exit": 0,
+      "csv_sha256": "3bbc0be7ead7661ab953ea2e22efed916b96c3f863a21ff961fdc1f24df82c19",
+      "wall_seconds_including_startup": 2.9214193309999246,
+      "benchmark_arguments": [
+        "0",
+        "2",
+        "init1",
+        "/workspace/scratch/ae2567895454/r54-cost/fork3_profile0_init1_rule2.csv"
+      ]
+    }
+  ],
+  "java_version": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment (build 17.0.20+8-1-24.04-Ubuntu)\nOpenJDK 64-Bit Server VM (build 17.0.20+8-1-24.04-Ubuntu, mixed mode, sharing)",
+  "interpretation": "Different model endpoints imply different solver work; no speedup acceptance",
+  "finish_utc": "2026-11-08T16:53:27.249819+00:00",
+  "common_jvm_command": [
+    "java",
+    "-Xms512m",
+    "-Xmx512m",
+    "-Xbatch",
+    "-XX:CICompilerCount=2",
+    "-cp",
+    "/workspace/scratch/ae2567895454/hv-native-r54/target/classes:/workspace/scratch/ae2567895454/hv-native-r54/target/test-classes:/tmp/neqsim-maven-0/repository/com/github/spotbugs/spotbugs-annotations/4.10.5/spotbugs-annotations-4.10.5.jar:/tmp/neqsim-maven-0/repository/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar:/tmp/neqsim-maven-0/repository/com/h2database/h2/2.5.252/h2-2.5.252.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar:/tmp/neqsim-maven-0/repository/org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar:/tmp/neqsim-maven-0/repository/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar:/tmp/neqsim-maven-0/repository/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar:/tmp/neqsim-maven-0/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter/6.1.3/junit-jupiter-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-api/6.1.3/junit-jupiter-api-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-commons/6.1.3/junit-platform-commons-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/tmp/neqsim-maven-0/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-params/6.1.3/junit-jupiter-params-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/jupiter/junit-jupiter-engine/6.1.3/junit-jupiter-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/junit/platform/junit-platform-engine/6.1.3/junit-platform-engine-6.1.3.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar:/tmp/neqsim-maven-0/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-all/0.46.1/ejml-all-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-core/0.46.1/ejml-core-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fdense/0.46.1/ejml-fdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-ddense/0.46.1/ejml-ddense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-cdense/0.46.1/ejml-cdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-zdense/0.46.1/ejml-zdense-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-dsparse/0.46.1/ejml-dsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-simple/0.46.1/ejml-simple-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/ejml/ejml-fsparse/0.46.1/ejml-fsparse-0.46.1.jar:/tmp/neqsim-maven-0/repository/org/jfree/jcommon/1.0.24/jcommon-1.0.24.jar:/tmp/neqsim-maven-0/repository/org/jfree/jfreechart/1.5.6/jfreechart-1.5.6.jar:/tmp/neqsim-maven-0/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.4/mtj-1.0.4.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/all/1.1.2/all-1.1.2.pom:/tmp/neqsim-maven-0/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar:/tmp/neqsim-maven-0/repository/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar:/tmp/neqsim-maven-0/repository/com/google/errorprone/error_prone_annotations/2.50.0/error_prone_annotations-2.50.0.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-databind/2.22.4/jackson-databind-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/core/jackson-core/2.22.4/jackson-core-2.22.4.jar:/tmp/neqsim-maven-0/repository/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.22.4/jackson-dataformat-yaml-2.22.4.jar:/tmp/neqsim-maven-0/repository/org/yaml/snakeyaml/2.5/snakeyaml-2.5.jar",
+    "neqsim.thermo.mixingrule.HuronVidalMegMethanePerformanceBenchmark"
+  ],
+  "source_revision_scope": "Declared source head is the verified production/build base. New diagnostic and benchmark working-tree source/classes are identified by the recorded SHA256 hashes. Production Java, POMs and database inputs are unchanged.",
+  "original_execution_json_sha256": "d083f880397a6a26dde0036edacf30b9461efba9c276fb472813682be2923b60",
+  "final_source_import_order_only_sha256": "ce86f7593bd42a238a1a428a3c8a87c2652cf8ecdade99a07d8ccca4fbdee5ec",
+  "final_binary_identity": "Final import-order-only formatting change verified: both final benchmark/diagnostic class SHA256 values equal the measured inputs."
+}
