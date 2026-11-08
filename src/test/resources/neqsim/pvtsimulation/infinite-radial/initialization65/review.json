@@ -1,0 +1,36 @@
+{
+  "reviewType": "independent read-only automated source, numerical and evidence review; not accountable human/domain approval",
+  "parent": "1b5a419b7fc67f3285829e1a7b464d00b4928eaa",
+  "productionVerdict": "No remaining material source/JMM/numerical finding",
+  "reviewedProof": [
+    "Original global width and node arithmetic, unchanged accumulation order",
+    "Conservative suffix bound can only delay old early termination",
+    "Fallback resumes at index768 without repeated accumulation",
+    "JVM holder initialization safely publishes immutable full arrays"
+  ],
+  "reproducedInitialAdmissionFindings": [
+    "Startup firstValues could contain negative values without rejection",
+    "Unexpected startup mode skipped concurrent checks",
+    "Infinite prefix bound was admitted",
+    "A negative or NaN raw timing sample was hidden by its median",
+    "Python numeric equality did not distinguish signed zero in complete histories",
+    "A conflicting raw JSON could shadow a hash-validated gzip payload"
+  ],
+  "resolution": "Explicit mode/shape/finite/positive/identity checks, recursive packed-double payload comparison, raw-sample validation, manifest identities and dual-container equality; frozen physical/runtime bounds unchanged",
+  "independentFinalEvidence": {
+    "matrixRows": 51216,
+    "matrixPayloadSha256": "706acbcd236c496ce00b93379e4271b22796dc9a9b5ab4f4a514ed107a925b41",
+    "changedOutputBits": 0,
+    "fullGridNodes": 6656,
+    "prefixNodes": 768,
+    "minimumBoundMargin": 21.25402705655075,
+    "auditorSourceSha256": "92c55ac42d2f1a956543973208e89cef6c1fa3613c6f8f86dbc12e1c34301784",
+    "pythonOptimizedAudit": "Full payload including file hashes independently reproduced",
+    "pythonOptimizedControlMethods": 6,
+    "deliberateCorruptionsRejected": 21,
+    "allFourCompressedPayloadHashes": "Match actual execution records"
+  },
+  "portableGuarantee": "Lazy class initialization; observed no-fallback class loading is specific to tested JVMs",
+  "performanceCaveats": "Public cold speedup2.565x; warm pair/CT ratios1.0776/1.1082; deferred MIN first use costs3.58-3.60ms. No general performance acceptance.",
+  "remainingApproval": "Accountable subsystem owner, independent domain review and residual runtime acceptance"
+}

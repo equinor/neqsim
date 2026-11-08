@@ -1,7 +1,8 @@
 # Infinite radial influence qualification (issue #4740, Run63)
 
-Current numerical source includes the **Run64 controlled-evaluation and positive-tail
-correction**. Its complete current evidence is in [optimization64/README.md](optimization64/README.md).
+Current numerical source includes **Run65 deferred initialization** with output-bit
+identity to Run64. Current evidence is in [initialization65/README.md](initialization65/README.md);
+[optimization64/README.md](optimization64/README.md) retains the positive-tail correction.
 The remainder of this file and `validation.json` retain the historical Run63
 receipt at exact head `04e78817a608b59aa5bd0bbe846b406ff18729c9`; its runtime and
 analytic high-frequency-tail description are superseded by Run64. Original

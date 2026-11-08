@@ -489,13 +489,21 @@ constant-property and segregated-water assumptions.
 The complete synthetic reference, generator, numerical controls and measured
 runtime are retained in
 `src/test/resources/neqsim/pvtsimulation/infinite-radial/`.
-The current `optimization64/` receipt includes all 51,216 numerical boundary
+The retained `optimization64/` receipt includes all 51,216 numerical boundary
 states, controlled Taylor/exponential remainder bounds and before/after Java 8
 runtime samples. The positive tail removes roundoff-sized pressure decreases
 found in the first draft's analytic tail expression. Frozen independent
 pressure/derivative and Carter–Tracy criteria are unchanged. A substantially
 higher cost than the original approximate formulas remains; see the explicit
 radial-workload timings rather than assuming general process performance.
+The current `initialization65/` receipt preserves those exact output bits while
+initializing 768 tail nodes first and deferring the complete 6,656-node grid
+until needed. Actual Java 8 ABBA runs reduce cold public-query cost from
+21.24–21.76 ms to 7.59–8.28 ms; warm medians increase by up to 7.8% for scalar
+pairs and 10.9% for Carter–Tracy. The first deferred tiny-time query after an
+ordinary query costs 3.58–3.60 ms versus a 1.18–1.38 ms parent warm query.
+The full grid remains available, thread-safe and unchanged. These are measured
+workload tradeoffs requiring owner review, not general performance acceptance.
 
 ---
 

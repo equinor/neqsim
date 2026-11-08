@@ -1,0 +1,128 @@
+{
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "mavenBootstrap": "evaluated prepare_maven.py before this runner",
+  "results": [
+    {
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit": 0,
+      "seconds": 1.648319221996644,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/run_spotless.py",
+        "apply"
+      ],
+      "exit": 0,
+      "seconds": 1.7039282439945964,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "uv",
+        "run",
+        "--project",
+        "devtools",
+        "--locked",
+        "devtools/build_engineering_coverage.py"
+      ],
+      "exit": 0,
+      "seconds": 1.2402768059982918,
+      "stdout": "{\n  \"publicTypes\": 3509,\n  \"registeredCapabilities\": 42,\n  \"classifiedOperations\": 30,\n  \"supportedOperations\": 30,\n  \"internalOperations\": 0,\n  \"experimentalOperations\": 0,\n  \"deprecatedOperations\": 0,\n  \"registeredAnchors\": 94,\n  \"withSkillMention\": 1373,\n  \"withAgentMention\": 1368,\n  \"reviewRequired\": 3334,\n  \"domains\": {\n    \"api\": {\n      \"publicTypes\": 1,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 1,\n      \"reviewRequired\": 1\n    },\n    \"blackoil\": {\n      \"publicTypes\": 8,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 0,\n      \"reviewRequired\": 8\n    },\n    \"chemicalreactions\": {\n      \"publicTypes\": 13,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 2,\n      \"reviewRequired\": 13\n    },\n    \"datapresentation\": {\n      \"publicTypes\": 4,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 0,\n      \"reviewRequired\": 4\n    },\n    \"fluidmechanics\": {\n      \"publicTypes\": 132,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 10,\n      \"reviewRequired\": 132\n    },\n    \"integration\": {\n      \"publicTypes\": 5,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 1,\n      \"reviewRequired\": 5\n    },\n    \"mathlib\": {\n      \"publicTypes\": 14,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 0,\n      \"reviewRequired\": 14\n    },\n    \"mcp\": {\n      \"publicTypes\": 81,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 7,\n      \"reviewRequired\": 0\n    },\n    \"physicalproperties\": {\n      \"publicTypes\": 109,\n      \"registeredAnchors\": 3,\n      \"withSkillMention\": 1,\n      \"reviewRequired\": 106\n    },\n    \"process\": {\n      \"publicTypes\": 2352,\n      \"registeredAnchors\": 57,\n      \"withSkillMention\": 1146,\n      \"reviewRequired\": 2295\n    },\n    \"pvtsimulation\": {\n      \"publicTypes\": 95,\n      \"registeredAnchors\": 18,\n      \"withSkillMention\": 46,\n      \"reviewRequired\": 77\n    },\n    \"standards\": {\n      \"publicTypes\": 48,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 36,\n      \"reviewRequired\": 48\n    },\n    \"statistics\": {\n      \"publicTypes\": 37,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 1,\n      \"reviewRequired\": 37\n    },\n    \"thermo\": {\n      \"publicTypes\": 419,\n      \"registeredAnchors\": 9,\n      \"withSkillMention\": 96,\n      \"reviewRequired\": 410\n    },\n    \"thermodynamicoperations\": {\n      \"publicTypes\": 129,\n      \"registeredAnchors\": 1,\n      \"withSkillMention\": 17,\n      \"reviewRequired\": 128\n    },\n    \"util\": {\n      \"publicTypes\": 62,\n      \"registeredAnchors\": 6,\n      \"withSkillMention\": 9,\n      \"reviewRequired\": 56\n    }\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "add",
+        "-A",
+        ".github/skills/neqsim-field-development/SKILL.md",
+        "docs/pvtsimulation/reservoir_material_balance.md",
+        "src/main/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/RadialInfiniteInfluence.java",
+        "src/test/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/RadialInfiniteInitializationTest.java",
+        "src/main/resources/neqsim/mcp/engineering-coverage.json",
+        "src/test/resources/neqsim/pvtsimulation/infinite-radial"
+      ],
+      "exit": 0,
+      "seconds": 0.020512946997769177,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/run_spotless.py",
+        "check"
+      ],
+      "exit": 0,
+      "seconds": 1.685880635996,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "devtools/check_documentation_search.py"
+      ],
+      "exit": 0,
+      "seconds": 1.7698769029957475,
+      "stdout": "Documentation search source audit passed: 840 Markdown pages and 1 standalone HTML page(s).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "uv",
+        "tool",
+        "run",
+        "--from",
+        "pre-commit==4.7.0",
+        "pre-commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-commit"
+      ],
+      "exit": 0,
+      "seconds": 3.1748854300021776,
+      "stdout": "Spotless Format (Java)...................................................Passed\nBuild Engineering Capability Coverage....................................Passed\n- hook id: engineering-capability-coverage\n- duration: 1.28s\n\n{\n  \"publicTypes\": 3509,\n  \"registeredCapabilities\": 42,\n  \"classifiedOperations\": 30,\n  \"supportedOperations\": 30,\n  \"internalOperations\": 0,\n  \"experimentalOperations\": 0,\n  \"deprecatedOperations\": 0,\n  \"registeredAnchors\": 94,\n  \"withSkillMention\": 1373,\n  \"withAgentMention\": 1368,\n  \"reviewRequired\": 3334,\n  \"domains\": {\n    \"api\": {\n      \"publicTypes\": 1,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 1,\n      \"reviewRequired\": 1\n    },\n    \"blackoil\": {\n      \"publicTypes\": 8,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 0,\n      \"reviewRequired\": 8\n    },\n    \"chemicalreactions\": {\n      \"publicTypes\": 13,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 2,\n      \"reviewRequired\": 13\n    },\n    \"datapresentation\": {\n      \"publicTypes\": 4,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 0,\n      \"reviewRequired\": 4\n    },\n    \"fluidmechanics\": {\n      \"publicTypes\": 132,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 10,\n      \"reviewRequired\": 132\n    },\n    \"integration\": {\n      \"publicTypes\": 5,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 1,\n      \"reviewRequired\": 5\n    },\n    \"mathlib\": {\n      \"publicTypes\": 14,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 0,\n      \"reviewRequired\": 14\n    },\n    \"mcp\": {\n      \"publicTypes\": 81,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 7,\n      \"reviewRequired\": 0\n    },\n    \"physicalproperties\": {\n      \"publicTypes\": 109,\n      \"registeredAnchors\": 3,\n      \"withSkillMention\": 1,\n      \"reviewRequired\": 106\n    },\n    \"process\": {\n      \"publicTypes\": 2352,\n      \"registeredAnchors\": 57,\n      \"withSkillMention\": 1146,\n      \"reviewRequired\": 2295\n    },\n    \"pvtsimulation\": {\n      \"publicTypes\": 95,\n      \"registeredAnchors\": 18,\n      \"withSkillMention\": 46,\n      \"reviewRequired\": 77\n    },\n    \"standards\": {\n      \"publicTypes\": 48,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 36,\n      \"reviewRequired\": 48\n    },\n    \"statistics\": {\n      \"publicTypes\": 37,\n      \"registeredAnchors\": 0,\n      \"withSkillMention\": 1,\n      \"reviewRequired\": 37\n    },\n    \"thermo\": {\n      \"publicTypes\": 419,\n      \"registeredAnchors\": 9,\n      \"withSkillMention\": 96,\n      \"reviewRequired\": 410\n    },\n    \"thermodynamicoperations\": {\n      \"publicTypes\": 129,\n      \"registeredAnchors\": 1,\n      \"withSkillMention\": 17,\n      \"reviewRequired\": 128\n    },\n    \"util\": {\n      \"publicTypes\": 62,\n      \"registeredAnchors\": 6,\n      \"withSkillMention\": 9,\n      \"reviewRequired\": 56\n    }\n  }\n}\n\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "uv",
+        "tool",
+        "run",
+        "--from",
+        "pre-commit==4.7.0",
+        "pre-commit",
+        "run",
+        "--all-files",
+        "--hook-stage",
+        "pre-push"
+      ],
+      "exit": 0,
+      "seconds": 3.6644871720054653,
+      "stdout": "Spotless Check (Java)....................................................Passed\nDocumentation Search Coverage............................................Passed\n- hook id: documentation-search-check\n- duration: 1.67s\n\nDocumentation search source audit passed: 840 Markdown pages and 1 standalone HTML page(s).\n\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--cached",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.013805349000904243,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}

@@ -6,8 +6,9 @@ package neqsim.pvtsimulation.reservoirproperties.materialbalance;
  * <p>
  * Integrates the unit-rate response over frequency using the modulus of the order-one Bessel functions. A low-frequency
  * remainder and positive resolved high-frequency tail preserve both representable time limits. Controlled Taylor and
- * exponential bounds avoid unnecessary transcendental evaluations. This internal scalar kernel is independent of fluid
- * models and reservoir histories.
+ * exponential bounds avoid unnecessary transcendental evaluations. A short initial tail defers the complete immutable
+ * grid until a query needs it, preserving the global nodes and accumulation order. This internal scalar kernel is
+ * independent of fluid models and reservoir histories.
  * </p>
  *
  * @author Even Solbraa
@@ -36,8 +37,27 @@ final class RadialInfiniteInfluence {
   private static final double EIN_AT_FIFTY = smallFrequencyIntegral(50.0)[0];
   /** Positive squared frequencies and pressure weights; initialized once and never exposed. */
   private static final double[][] QUADRATURE = quadrature();
-  /** Tail frequencies, positive weights and exact suffix maxima; none are exposed. */
-  private static final double[][] TAIL_QUADRATURE = tailQuadrature();
+  /** Panel count fixes the original full-tail grid independently of initialization order. */
+  private static final int TAIL_PANELS = (int) Math.ceil((TAIL_UPPER_LOG - Math.log(UPPER)) / 0.5);
+  /** Prefix size changes initialization cost only; fallback retains every original node. */
+  private static final int PREFIX_PANELS = 96;
+  /** Initial tail frequencies, positive weights and conservative suffix bounds; none are exposed. */
+  private static final double[][] TAIL_PREFIX = tailQuadrature(PREFIX_PANELS);
+
+  /**
+   * JVM initialization-on-demand holder for very small times requiring the complete tail.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  private static final class FullTail {
+    /** Original full grid, initialized atomically once and never exposed. */
+    private static final double[][] QUADRATURE = tailQuadrature(TAIL_PANELS);
+
+    /** Prevents construction of the initialization holder. */
+    private FullTail() {
+    }
+  }
 
   /** Prevents construction of the stateless internal kernel. */
   private RadialInfiniteInfluence() {
@@ -84,14 +104,19 @@ final class RadialInfiniteInfluence {
       derivative += QUADRATURE[1][i] * frequencySquared * slope;
     }
     double rootTime = Math.sqrt(time);
-    for (int i = 0; i < TAIL_QUADRATURE[0].length; i++) {
-      double scaledFrequency = rootTime * TAIL_QUADRATURE[0][i];
+    double[][] tail = TAIL_PREFIX;
+    for (int i = 0; i < TAIL_PANELS * 8; i++) {
+      if (i == tail[0].length) {
+        // Continue at the first omitted node; never add the already accumulated prefix twice.
+        tail = FullTail.QUADRATURE;
+      }
+      double scaledFrequency = rootTime * tail[0][i];
       double argument = scaledFrequency * scaledFrequency;
-      if (argument >= NEGLIGIBLE_ARGUMENT && TAIL_QUADRATURE[2][i] < 0.25 * Math.ulp(pressure)) {
+      if (argument >= NEGLIGIBLE_ARGUMENT && tail[2][i] < 0.25 * Math.ulp(pressure)) {
         // Every remaining positive addition rounds away individually; clipped derivatives are already zero.
         break;
       }
-      double weight = TAIL_QUADRATURE[1][i];
+      double weight = tail[1][i];
       if (argument >= NEGLIGIBLE_ARGUMENT) {
         pressure += weight;
       } else {
@@ -154,11 +179,11 @@ final class RadialInfiniteInfluence {
   /**
    * Resolves the same reciprocal-modulus tail with positive fixed nodes, avoiding cancellation in its analytic form.
    *
-   * @return private frequency, pressure-weight and remaining-maximum-weight arrays
+   * @param panelsToBuild initial panels to construct on the unchanged global grid
+   * @return private frequency, pressure-weight and conservative remaining-maximum-weight arrays
    */
-  private static double[][] tailQuadrature() {
-    int panels = (int) Math.ceil((TAIL_UPPER_LOG - Math.log(UPPER)) / 0.5);
-    double[][] nodes = gaussPanels(Math.log(UPPER), TAIL_UPPER_LOG, panels);
+  private static double[][] tailQuadrature(int panelsToBuild) {
+    double[][] nodes = gaussPanels(Math.log(UPPER), TAIL_UPPER_LOG, TAIL_PANELS, panelsToBuild);
     double[][] result = new double[3][nodes[0].length];
     for (int i = 0; i < nodes[0].length; i++) {
       double u = Math.exp(nodes[0][i]);
@@ -170,7 +195,10 @@ final class RadialInfiniteInfluence {
       result[0][i] = u;
       result[1][i] = (2.0 / Math.PI) * nodes[1][i] / u * polynomial;
     }
-    double maximum = 0.0;
+    // For omitted u >= exp(boundary), R(u) <= 1 and (2/pi)*ordinary Gauss weight < 0.058.
+    // The looser exp(-boundary) bound safely dominates each omitted weight, including roundoff.
+    double boundary = Math.log(UPPER) + (TAIL_UPPER_LOG - Math.log(UPPER)) / TAIL_PANELS * panelsToBuild;
+    double maximum = panelsToBuild == TAIL_PANELS ? 0.0 : Math.exp(-boundary);
     for (int i = result[0].length - 1; i >= 0; i--) {
       maximum = Math.max(maximum, result[1][i]);
       result[2][i] = maximum;
@@ -187,13 +215,26 @@ final class RadialInfiniteInfluence {
    * @return private node and ordinary integration-weight arrays
    */
   private static double[][] gaussPanels(double lower, double upper, int panels) {
+    return gaussPanels(lower, upper, panels, panels);
+  }
+
+  /**
+   * Creates an initial segment without changing the original global width or node arithmetic.
+   *
+   * @param lower global interval start
+   * @param upper global interval end
+   * @param panels total positive panel count defining the grid
+   * @param panelsToBuild number of initial panels to construct
+   * @return private node and ordinary integration-weight arrays
+   */
+  private static double[][] gaussPanels(double lower, double upper, int panels, int panelsToBuild) {
     double[] nodes = {-0.9602898564975363, -0.7966664774136267, -0.5255324099163290, -0.1834346424956498,
         0.1834346424956498, 0.5255324099163290, 0.7966664774136267, 0.9602898564975363};
     double[] weights = {0.1012285362903763, 0.2223810344533745, 0.3137066458778873, 0.3626837833783620,
         0.3626837833783620, 0.3137066458778873, 0.2223810344533745, 0.1012285362903763};
     double width = (upper - lower) / panels;
-    double[][] result = new double[2][panels * nodes.length];
-    for (int k = 0; k < panels; k++) {
+    double[][] result = new double[2][panelsToBuild * nodes.length];
+    for (int k = 0; k < panelsToBuild; k++) {
       for (int j = 0; j < nodes.length; j++) {
         int index = k * nodes.length + j;
         result[0][index] = lower + width * (k + 0.5 * (nodes[j] + 1.0));

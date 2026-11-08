@@ -1,0 +1,27 @@
+{
+  "checkedDateUtc": "2026-11-08",
+  "source": "Tran et al., Variable BHP reserve estimation methodology for near-critical gas-condensate reservoirs under boundary-dominated flow",
+  "doi": "10.1016/j.jgsce.2025.205551",
+  "requests": [
+    {
+      "url": "https://www.sciencedirect.com/science/article/pii/S2949908925000159",
+      "method": "research-service full-page fetch",
+      "result": "403 Forbidden; search-index preview is not full paper or numerical benchmark"
+    },
+    {
+      "url": "https://papers.ssrn.com/sol3/Delivery.cfm/a3fff389-ff06-49ec-acf6-03808f3d25a6-MECA.pdf?abstractid=4932591&mirid=1",
+      "method": "research-service full-PDF fetch",
+      "result": "403 Forbidden; index advertises46pages but complete delivery not acquired"
+    }
+  ],
+  "missingMaterial": [
+    "Complete RCVD, density/rescaling and FPM equations and conventions",
+    "Table1 numerical fluid/PVT/EOS parameters and protocol/standard bases",
+    "Relative-permeability and reservoir inputs",
+    "Variable BHP and boundary schedules for independent cases",
+    "Independent full numerical benchmark outputs"
+  ],
+  "decision": "Research acceptance remains unresolved; no abstract-only implementation and no claim that no legal version exists",
+  "otherDataAdmission": "No new measured laboratory-to-field dataset admitted in Run65; previous leads/duplicates and holdout distinctions remain unresolved",
+  "dataUse": "Only independently generated mathematical/synthetic outputs redistributed; no third-party paper or table copied"
+}

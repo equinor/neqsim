@@ -237,9 +237,10 @@ infinite branch. Preserve its explicit zero-time/finite-radius limitations in
 as independently validated bounded radial support or equate it with segregated
 Fetkovich coupling. Carter–Tracy timestep convergence does not remove its intrinsic
 approximation error. Mathematical references are not measured field acceptance. The current
-`infinite-radial/optimization64/` fixture records the controlled evaluation,
-positive-tail numerical correction and remaining radial-runtime cost; older
-Run63 receipts are historical rather than current implementation descriptions.
+`infinite-radial/initialization65/` fixture records initialization-only identity,
+concurrent first fallback and cold/warm/deferred runtime tradeoffs. Its parent
+`optimization64/` retains the positive-tail correction and complete numerical
+boundary controls. Preserve both; older receipts describe their exact revisions.
 
 ### Injection Strategy (Voidage Replacement)
 

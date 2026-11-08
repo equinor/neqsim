@@ -1,5 +1,9 @@
 # Controlled radial evaluation and positive-tail qualification — Run64
 
+This is the retained Run64 receipt. Current deferred-initialization source and
+cost/identity evidence are described in [../initialization65/README.md](../initialization65/README.md).
+The complete global spectrum, original numerical outputs and acceptance below remain unchanged.
+
 This continues draft #4924 from exact parent
 `04e78817a608b59aa5bd0bbe846b406ff18729c9`, based on master
 `97c03ecf50d16a6dab7bd812364f49d5f4c5c444`. It changes the numerical evaluation
