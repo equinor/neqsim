@@ -205,8 +205,8 @@ class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
   }
 
   /**
-   * Regression test: n-decane molar mass in ISO6976constants2016.csv must be 142.28168 g/mol
-   * (ISO 6976:2016 Table A.2), not 42.28168.
+   * Regression test: n-decane molar mass in ISO6976constants2016.csv must be 142.28168 g/mol (ISO 6976:2016 Table A.2),
+   * not 42.28168.
    */
   @Test
   void testMolarMassWithDecane() {
