@@ -41,14 +41,11 @@ import org.junit.jupiter.api.io.TempDir;
  */
 class TEGDehydrationTutorialTest extends NeqSimTest {
   private static final Logger logger = LogManager.getLogger(TEGDehydrationTutorialTest.class);
-  private static final String EXAMPLE_MARKER =
-      "<!-- teg-equilibrium-example: conservative-contact -->";
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile(
-          "(?s)<!-- teg-equilibrium-example: conservative-contact -->\\s*"
-              + "```java\\s*\\r?\\n([\\s\\S]*?)\\r?\\n```");
-  private static final Pattern PUBLIC_CLASS =
-      Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+  private static final String EXAMPLE_MARKER = "<!-- teg-equilibrium-example: conservative-contact -->";
+  private static final Pattern JAVA_FENCE = Pattern.compile(
+      "(?s)<!-- teg-equilibrium-example: conservative-contact -->\\s*" + "```java\\s*\\r?\\n([\\s\\S]*?)\\r?\\n```");
+  private static final Pattern PUBLIC_CLASS = Pattern
+      .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
   @TempDir
   Path temporaryDirectory;
@@ -63,8 +60,7 @@ class TEGDehydrationTutorialTest extends NeqSimTest {
   private static double componentFlow(StreamInterface stream, String componentName) {
     double flow = 0.0;
     for (int phaseNumber = 0; phaseNumber < stream.getFluid().getNumberOfPhases(); phaseNumber++) {
-      ComponentInterface component =
-          stream.getFluid().getPhase(phaseNumber).getComponent(componentName);
+      ComponentInterface component = stream.getFluid().getPhase(phaseNumber).getComponent(componentName);
       if (component != null) {
         flow += component.getFlowRate("kg/hr");
       }
@@ -104,8 +100,7 @@ class TEGDehydrationTutorialTest extends NeqSimTest {
     equilibriumContact.addStream(saturator.getOutletStream());
     equilibriumContact.addStream(leanTeg);
 
-    Separator phaseSplitter =
-        new Separator("gas and rich TEG separator", equilibriumContact.getOutletStream());
+    Separator phaseSplitter = new Separator("gas and rich TEG separator", equilibriumContact.getOutletStream());
 
     ProcessSystem process = new ProcessSystem();
     process.add(gasFeed);
@@ -130,11 +125,8 @@ class TEGDehydrationTutorialTest extends NeqSimTest {
     double waterTransferred = wetWaterFlow - productWaterFlow;
     double richTegFlow = richTeg.getFlowRate("kg/hr");
     double waterResidual = wetWaterFlow + leanWaterFlow - productWaterFlow - richWaterFlow;
-    double totalMassResidual =
-        wetGas.getFlowRate("kg/hr")
-            + leanTeg.getFlowRate("kg/hr")
-            - productGas.getFlowRate("kg/hr")
-            - richTeg.getFlowRate("kg/hr");
+    double totalMassResidual = wetGas.getFlowRate("kg/hr") + leanTeg.getFlowRate("kg/hr")
+        - productGas.getFlowRate("kg/hr") - richTeg.getFlowRate("kg/hr");
 
     logger.info("Wet gas water {} mol-ppm", wetWater * 1.0e6);
     logger.info("Product gas water {} mol-ppm", productWater * 1.0e6);
@@ -142,20 +134,15 @@ class TEGDehydrationTutorialTest extends NeqSimTest {
     double wetWaterPpm = wetWater * 1.0e6;
     double productWaterPpm = productWater * 1.0e6;
 
-    assertTrue(
-        wetWaterPpm > 700.0 && wetWaterPpm < 900.0,
+    assertTrue(wetWaterPpm > 700.0 && wetWaterPpm < 900.0,
         "Saturated-gas water must remain in the validated screening range: " + wetWaterPpm);
-    assertTrue(
-        productWaterPpm > 40.0 && productWaterPpm < 55.0,
+    assertTrue(productWaterPpm > 40.0 && productWaterPpm < 55.0,
         "Product-gas water must remain in the validated screening range: " + productWaterPpm);
-    assertTrue(
-        productWater < 0.1 * wetWater,
+    assertTrue(productWater < 0.1 * wetWater,
         "The equilibrium contact must remove at least 90% of the gas-phase water");
-    assertTrue(
-        waterTransferred > 22.0 && waterTransferred < 25.0,
+    assertTrue(waterTransferred > 22.0 && waterTransferred < 25.0,
         "Water transfer must remain in the validated screening range: " + waterTransferred);
-    assertTrue(
-        richTegFlow > 3040.0 && richTegFlow < 3050.0,
+    assertTrue(richTegFlow > 3040.0 && richTegFlow < 3050.0,
         "Rich-liquid flow must remain in the validated screening range: " + richTegFlow);
     assertTrue(richTegFlow > leanTeg.getFlowRate("kg/hr"));
     assertTrue(mixedContact.getFluid().getNumberOfPhases() > 1);
@@ -189,9 +176,8 @@ class TEGDehydrationTutorialTest extends NeqSimTest {
     Files.write(javaSource, exampleSource.getBytes(StandardCharsets.UTF_8));
     compile(compiler, javaSource);
 
-    try (URLClassLoader loader =
-        new URLClassLoader(
-            new URL[] {temporaryDirectory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {temporaryDirectory.toUri().toURL()},
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName("TegEquilibriumScreening", true, loader);
       assertTrue(example.desiredAssertionStatus());
@@ -211,35 +197,14 @@ class TEGDehydrationTutorialTest extends NeqSimTest {
    * @throws Exception if source preparation or compilation fails
    */
   private void compile(JavaCompiler compiler, Path source) throws Exception {
-    DiagnosticCollector<JavaFileObject> diagnostics =
-        new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options =
-        Arrays.asList(
-            "-source",
-            "8",
-            "-target",
-            "8",
-            "-proc:none",
-            "-classpath",
-            classPath,
-            "-d",
-            temporaryDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
-      Boolean successful =
-          compiler
-              .getTask(
-                  null,
-                  manager,
-                  diagnostics,
-                  options,
-                  null,
-                  manager.getJavaFileObjects(source.toFile()))
-              .call();
-      assertTrue(
-          Boolean.TRUE.equals(successful),
+    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-proc:none", "-classpath", classPath,
+        "-d", temporaryDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(source.toFile())).call();
+      assertTrue(Boolean.TRUE.equals(successful),
           "docs/tutorials/teg_dehydration_tutorial.md: " + diagnostics.getDiagnostics());
     }
   }
