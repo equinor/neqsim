@@ -40,6 +40,18 @@ NeqSim's controller and measurement-device classes already cover the loop.
 
 ## Source-bound compressor automation
 
+For System Control Diagram drawing delivery, use the existing shared P&ID model
+and bindings with `ScdDesignModel` / `ScdPackageExporter`; follow
+[the SCD guide](../../docs/engineering/system-control-diagrams.md).
+Declare the exact project-selected legacy NORSOK I-005 or IEC PAS 63131 edition.
+Check publication status: IEC PAS 63131:2017 is withdrawn; replacement drafts
+are not published drawing profiles. Supply explicit project template references,
+terminal and system assignments, and per-peer signal types where a block mixes
+analogue values with binary alarms. Keep missing inputs visible as HOLD.
+Retain actual P&ID/DEXPI IDs and native runtime bindings, run layout review and
+visually inspect the sheets. A template code does not implement its complete
+behaviour; continue to qualify actual controls/protection through native tests.
+
 For complete compressor/scrubber/cooler studies, follow the
 [compressor automation workflow](../skills/neqsim-compressor-antisurge-recycle/references/agentic-compressor-workflow.md).
 Own the actual sensor/controller/actuator chain, anti-surge/capacity priorities,

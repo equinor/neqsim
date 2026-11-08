@@ -2140,6 +2140,27 @@
         "src/test/java/neqsim/documentation/ReferenceCoolingWaterDocumentationTest.java"
       ],
       "limitations": "Instance-based Java/JPype process APIs; no new curated MCP executor. Saline utility envelope 273.15-353 K, 1-120 bara, 0-120 g/kg solution. Fixed-salinity bulk mass surrogate, not species-resolved salt mixing, dilution, evaporation, chemistry or scale. Pressure derivatives outside T<=313 K and S<=42 g/kg are extrapolations; high-pressure seawater viscosity multiplier is an engineering extension. Existing secant-Cp NTU, rating and fouling approximations remain; synthetic balance tests and published property checks do not establish field or safety qualification."
+    },
+    {
+      "id": "scd-pid-dexpi-drawing-package",
+      "title": "Source-bound System Control Diagram companion package",
+      "domain": "engineering",
+      "tool": "inspectApi",
+      "apis": [
+        "neqsim.process.engineering.scd.ScdDesignModel",
+        "neqsim.process.engineering.scd.ScdPackageExporter",
+        "neqsim.process.processmodel.diagram.ScdDiagramRenderer"
+      ],
+      "skills": [
+        "neqsim-pid-process-operations"
+      ],
+      "agents": [
+        "control-system"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/engineering/scd/ScdPackageExporterTest.java"
+      ],
+      "limitations": "Java/source workflow with explicit legacy drawing basis and project template/terminal/type inputs. SCD semantics use an identified sidecar; no native DEXPI SCD schema, full normative template behaviour, SCD import, PLC code generation or safety approval."
     }
   ]
 }
