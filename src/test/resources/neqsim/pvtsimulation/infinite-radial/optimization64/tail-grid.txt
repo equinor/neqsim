@@ -1,0 +1,13 @@
+rows=51216
+tailNodes=6656
+combinedWeight=40.115931515658495
+minOrdinaryWeight=0.02529746850650645
+maxLogNodeGap=0.09168229160655983
+minReciprocalModulusPolynomial=0.9999102746134026
+maxReciprocalModulusPolynomial=1.0
+underflowedBoundaryInputs=1538
+belowPositiveMINTransitions=12
+extraAdjacentSteps=9801
+maxExtraSteps=4
+verifiedPositiveBrackets=13186
+suffixMaximumVerified=true

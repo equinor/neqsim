@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -22,6 +23,38 @@ import org.junit.jupiter.api.Test;
 class RadialInfiniteInfluenceTest {
   /** Infinite outer-radius convention. */
   private static final double INFINITE = Double.POSITIVE_INFINITY;
+
+  /**
+   * Screens every representable shortcut boundary without allowing roundoff-sized pressure decreases.
+   *
+   * @throws Exception if the frozen common input vector cannot be read
+   */
+  @Test
+  void resolvedTailIsMonotoneAtAllShortcutBoundaries() throws Exception {
+    String path = "/neqsim/pvtsimulation/infinite-radial/optimization64/common-times.txt";
+    try (InputStream stream = getClass().getResourceAsStream(path)) {
+      assertNotNull(stream);
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+        double previousTime = 0.0;
+        double previousPressure = 0.0;
+        int count = 0;
+        String line;
+        while ((line = reader.readLine()) != null) {
+          double time = Double.parseDouble(line);
+          double pressure = VanEverdingenHurstAquifer.dimensionlessPressure(time, INFINITE);
+          double derivative = VanEverdingenHurstAquifer.dimensionlessPressureDerivative(time, INFINITE);
+          assertTrue(Double.isFinite(time) && time > previousTime);
+          assertTrue(Double.isFinite(pressure) && pressure >= previousPressure,
+              "Positive-tail pressure must not decrease at " + time);
+          assertTrue(Double.isFinite(derivative) && derivative > 0.0);
+          previousTime = time;
+          previousPressure = pressure;
+          count++;
+        }
+        assertEquals(51216, count);
+      }
+    }
+  }
 
   /**
    * Checks every separately inverted pressure and derivative, including off-grid times.

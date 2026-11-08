@@ -16,9 +16,9 @@ import java.io.Serializable;
  *
  * <p>
  * For an infinite-acting radial aquifer the constant-terminal-rate dimensionless pressure and its time derivative are
- * integrated from the positive radial diffusion spectrum. Log-frequency quadrature and analytic endpoint remainders
- * avoid pressure jumps and finite-difference artifacts at small times. No EOS or history parameters are fitted by this
- * numerical kernel.
+ * integrated from the positive radial diffusion spectrum. Positive log-frequency quadrature with bounded endpoint
+ * truncation avoids pressure jumps and finite-difference artifacts at small times. No EOS or history parameters are
+ * fitted by this numerical kernel.
  * </p>
  *
  * <p>

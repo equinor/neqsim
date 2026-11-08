@@ -1,0 +1,5 @@
+source=04e78817a608b59aa5bd0bbe846b406ff18729c9
+java=1.8.0_512-b09
+rows=6278
+weightSum=40.10598463522091
+nodes=712

@@ -1,14 +1,13 @@
 package neqsim.pvtsimulation.reservoirproperties.materialbalance;
 
-import org.apache.commons.math3.special.Erf;
-
 /**
  * Positive spectral quadrature of the infinite radial diffusion influence function.
  *
  * <p>
- * Integrates the unit-rate response over frequency using the modulus of the order-one Bessel functions. Analytic low-
- * and high-frequency remainders preserve both time limits. This is an internal scalar numerical kernel, independent of
- * fluid models and reservoir histories.
+ * Integrates the unit-rate response over frequency using the modulus of the order-one Bessel functions. A low-frequency
+ * remainder and positive resolved high-frequency tail preserve both representable time limits. Controlled Taylor and
+ * exponential bounds avoid unnecessary transcendental evaluations. This internal scalar kernel is independent of fluid
+ * models and reservoir histories.
  * </p>
  *
  * @author Even Solbraa
@@ -23,6 +22,12 @@ final class RadialInfiniteInfluence {
   private static final double UPPER = 64.0;
   /** Squared lower frequency, used by the analytic remainder. */
   private static final double LOWER_SQUARED = Math.exp(2.0 * LOWER_LOG);
+  /** Taylor boundary chosen from a relative remainder below 4.18e-14, not fitted to reference values. */
+  private static final double SMALL_ARGUMENT = 1.0e-3;
+  /** Exponential boundary with pressure omission below 1.16e-33 for the checked spectral-weight sum. */
+  private static final double NEGLIGIBLE_ARGUMENT = 80.0;
+  /** Tail endpoint makes omitted pressure below 2.6e-183, including at the smallest positive time. */
+  private static final double TAIL_UPPER_LOG = 420.0;
   /** Reciprocal Bessel-modulus asymptotic coefficients, in increasing even powers. */
   private static final double[] TAIL = {1.0, -3.0 / 8.0, 63.0 / 128.0, -1899.0 / 1024.0, 543483.0 / 32768.0};
   /** Positive quadrature nodes and ordinary integration weights on zero to one. */
@@ -31,6 +36,8 @@ final class RadialInfiniteInfluence {
   private static final double EIN_AT_FIFTY = smallFrequencyIntegral(50.0)[0];
   /** Positive squared frequencies and pressure weights; initialized once and never exposed. */
   private static final double[][] QUADRATURE = quadrature();
+  /** Tail frequencies, positive weights and exact suffix maxima; none are exposed. */
+  private static final double[][] TAIL_QUADRATURE = tailQuadrature();
 
   /** Prevents construction of the stateless internal kernel. */
   private RadialInfiniteInfluence() {
@@ -61,41 +68,62 @@ final class RadialInfiniteInfluence {
     for (int i = 0; i < QUADRATURE[0].length; i++) {
       double frequencySquared = QUADRATURE[0][i];
       double argument = time * frequencySquared;
-      pressure += QUADRATURE[1][i] * -Math.expm1(-argument);
-      derivative += QUADRATURE[1][i] * frequencySquared * Math.exp(-argument);
+      double loss;
+      double slope;
+      if (argument <= SMALL_ARGUMENT) {
+        loss = argument * (1.0 - argument * (0.5 - argument * (1.0 / 6.0 - argument / 24.0)));
+        slope = 1.0 - argument * (1.0 - argument * (0.5 - argument / 6.0));
+      } else if (argument >= NEGLIGIBLE_ARGUMENT) {
+        loss = 1.0;
+        slope = 0.0;
+      } else {
+        loss = -Math.expm1(-argument);
+        slope = Math.exp(-argument);
+      }
+      pressure += QUADRATURE[1][i] * loss;
+      derivative += QUADRATURE[1][i] * frequencySquared * slope;
     }
     double rootTime = Math.sqrt(time);
-    double z = UPPER * rootTime;
-    double tailPressure = 0.0;
-    double tailDerivative = 0.0;
-    if (z > 26.0) {
-      // Exponential remainders are below exp(-676); avoid overflow times zero at large times.
-      for (int i = 0; i < TAIL.length; i++) {
-        tailPressure += TAIL[i] / ((2 * i + 1) * Math.pow(UPPER, 2 * i + 1));
+    for (int i = 0; i < TAIL_QUADRATURE[0].length; i++) {
+      double scaledFrequency = rootTime * TAIL_QUADRATURE[0][i];
+      double argument = scaledFrequency * scaledFrequency;
+      if (argument >= NEGLIGIBLE_ARGUMENT && TAIL_QUADRATURE[2][i] < 0.25 * Math.ulp(pressure)) {
+        // Every remaining positive addition rounds away individually; clipped derivatives are already zero.
+        break;
       }
-    } else {
-      double argument = z * z;
-      double exponential = Math.exp(-argument);
-      double loss = -Math.expm1(-argument);
-      double integral = 0.5 * Math.sqrt(Math.PI) / rootTime * Erf.erfc(z);
-      for (int i = 0; i < TAIL.length; i++) {
-        int power = 2 * i + 1;
-        double inversePower = 1.0 / Math.pow(UPPER, power);
-        tailPressure += TAIL[i] * (loss * inversePower + 2.0 * time * integral) / power;
-        tailDerivative += TAIL[i] * integral;
-        integral = (exponential * inversePower - 2.0 * time * integral) / power;
+      double weight = TAIL_QUADRATURE[1][i];
+      if (argument >= NEGLIGIBLE_ARGUMENT) {
+        pressure += weight;
+      } else {
+        double loss;
+        double slope;
+        if (argument <= SMALL_ARGUMENT) {
+          loss = argument * (1.0 - argument * (0.5 - argument * (1.0 / 6.0 - argument / 24.0)));
+          slope = 1.0 - argument * (1.0 - argument * (0.5 - argument / 6.0));
+        } else {
+          loss = -Math.expm1(-argument);
+          slope = Math.exp(-argument);
+        }
+        pressure += weight * loss;
+        // This ordering avoids squaring very large frequencies before exponential damping.
+        derivative += weight * argument * slope / time;
       }
     }
-    return new double[] {pressure + 2.0 / Math.PI * tailPressure, derivative + 2.0 / Math.PI * tailDerivative};
+    return new double[] {pressure, derivative};
   }
 
   /**
-   * Evaluates Ein(x) and its derivative using a positive fixed quadrature, without an origin singularity.
+   * Evaluates Ein(x) and its derivative using bounded Taylor remainders or positive fixed quadrature.
    *
    * @param x finite nonnegative argument
    * @return entire exponential integral and its derivative with respect to x
    */
   private static double[] smallFrequencyIntegral(double x) {
+    if (x <= SMALL_ARGUMENT) {
+      double value = x * (1.0 - x * (0.25 - x * (1.0 / 18.0 - x / 96.0)));
+      double derivative = 1.0 - x * (0.5 - x * (1.0 / 6.0 - x / 24.0));
+      return new double[] {value, derivative};
+    }
     double value = 0.0;
     double derivative = 0.0;
     for (int i = 0; i < LOW_QUADRATURE[0].length; i++) {
@@ -119,6 +147,33 @@ final class RadialInfiniteInfluence {
       double u = Math.exp(result[0][i]);
       result[0][i] = u * u;
       result[1][i] *= 4.0 / (Math.PI * Math.PI * u * u * modulusSquared(u));
+    }
+    return result;
+  }
+
+  /**
+   * Resolves the same reciprocal-modulus tail with positive fixed nodes, avoiding cancellation in its analytic form.
+   *
+   * @return private frequency, pressure-weight and remaining-maximum-weight arrays
+   */
+  private static double[][] tailQuadrature() {
+    int panels = (int) Math.ceil((TAIL_UPPER_LOG - Math.log(UPPER)) / 0.5);
+    double[][] nodes = gaussPanels(Math.log(UPPER), TAIL_UPPER_LOG, panels);
+    double[][] result = new double[3][nodes[0].length];
+    for (int i = 0; i < nodes[0].length; i++) {
+      double u = Math.exp(nodes[0][i]);
+      double inverseSquared = (1.0 / u) / u;
+      double polynomial = TAIL[TAIL.length - 1];
+      for (int k = TAIL.length - 2; k >= 0; k--) {
+        polynomial = TAIL[k] + inverseSquared * polynomial;
+      }
+      result[0][i] = u;
+      result[1][i] = (2.0 / Math.PI) * nodes[1][i] / u * polynomial;
+    }
+    double maximum = 0.0;
+    for (int i = result[0].length - 1; i >= 0; i--) {
+      maximum = Math.max(maximum, result[1][i]);
+      result[2][i] = maximum;
     }
     return result;
   }

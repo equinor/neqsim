@@ -1,0 +1,56 @@
+Run64 frozen before Java edits and candidate comparison.
+Parent PR4924 head04e78817a608b59aa5bd0bbe846b406ff18729c9, master97c03ecf50d16a6dab7bd812364f49d5f4c5c444.
+Scope: reduce transcendental evaluation cost of the SAME infinite radial spectrum.
+No physical-model/units/inputs/public API/finite-radius/EOS/history/prior change.
+Small spectral argument a<=1e-3: fourth-order1-exp(-a), its third-order derivative.
+Alternating-series pressure relative remainder<=a^4/[120*(1-a/2)]<8.34e-15;
+derivative relative remainder<=exp(a)*a^4/24<4.18e-14.
+Low Ein(x), x<=1e-3: quartic and cubic derivative; relative errors<1.67e-15/8.34e-15.
+For a>=80 use pressureloss1, derivative0; positive weight sum<=64 checked on baseline grid.
+Pressure omission<=64exp(-80)<1.16e-33; derivative absolute<=64*4096exp(-80)<4.74e-30.
+For t*exp(-80)>=1, low-frequency derivative>=.5*(1-exp(-1))/t,
+so scaled tail-relative omission<=64*80exp(-80)/(.5*(1-exp(-1)))<2.93e-31.
+Retain original MP tolerances, strict monotonicity and CT mesh/ODE bounds unchanged.
+Additional before/after algorithm agreement P,D<=1e-12abs+1e-12rel, endpoints scaled as before.
+Complete matrix:2001log-times[-740,660], Double.MIN/MAX, every existing quadrature cutoff
+at1e-3/frequencySquared and80/frequencySquared with adjacent doubles, plus low Ein join.
+Retain every native output. No deleting a failed trial or loosening bounds.
+Performance target: at least2x lower median1000-interval CT and separate-pair query time
+against parent04e78817, same actualJava8 runtime, ABBA,3warmups/7retained samples.
+Record residual cost against unmodifiedmaster; no blanket process speedup claim.
+Stop boundary: no interpolation table, new model/framework, finite-annulus or lab-data claim.
+
+Tail-representation correction frozen after exposing12one-to-three-ulp pressure decreases in
+both unmodifiedparent and firstcandidate6278-row matrices; all failures/sourcepatch retained.
+Candidate strictnondecrease is unchanged. Parent decreases remain an explicit expected
+negative-control diagnostic (never a passing baseline); before-vs-before audit must fail.
+Keep before/after inputidentity, finite positivity and tighteragreement gates forboth.
+Replace onlyhighfrequencytail evaluation by fixedpositiveGauss8 log-frequency quadrature,
+u64..exp420, same5reciprocal-moduluscoefficients. Fullfixed order preserves monotoneP
+because eachterm is positive/nondecreasing. Beyondexp420 P omission<2.6e-183,
+scaledDouble.MIN omission<1.2e-21; exponentialD omission is unrepresentablysmall.
+Storefrequency, computea=(sqrt(t)*u)^2, derivativeweight*a*exp(-a)/t to avoidu^2overflow.
+A saturatedtail maystop onlywhen weight<.25ulp(P) andalllaterweightsdecrease;
+then everyomitted additionwouldroundaway individually andDshortcuts arealreadyzero.
+No datafit/row-specificswitch oracceptedcriterionchange. Recheckall6278points+MP+CT.
+
+Positive-tail derivative-bound addendum, before expanded common-vector comparison:
+For t<=1/4096, u*=1/sqrt(t) lies inside newtail. Maxlog-nodegap<.1 and
+ordinaryGaussweight>=.025 plus polynomialR>=.999 provide one retainednode
+withD>.001/sqrt(t). Clippedhigh-tail D<4.3e-32/sqrt(t), relative<4.3e-29.
+For t>=1/4096, combinedpositiveweight<=64 gives Dclip<3.79e-28absolute.
+Forx>=1, lateDlowerfactor is1-exp(-1)-1e-12, including Gauss/roundoffmargin.
+Gaussweights themselves are NOTmonotone: use exactsuffixmaximum certificate.
+Breaking preserves the sequentialfloating sum; exp420 bound describes domain
+truncation only, not accumulatedfloating summation error. MP/limits/matrix gate the latter.
+Expanded vector includes EVERY representable newtail cutoff and its adjacent
+doubles, generatedonce before both binaries. Underflowed/nonpositive cutoffs
+are counted explicitly as outside positiveDoubletime. No candidatecriterion relaxed.
+
+Literal floating-branch coverage correction before final common comparison:
+The initial41415vector is retained in common-*-first files. Initialcenterplus/minus
+oneULP did not guarantee crossing sqrt/multiply rounded branches. Nativeprobe
+now expands atmost4additional adjacenttimes pertransition, retainingallinitialpoints.
+Final51216inputs strictlysuperset old41415;13186positive brackets verified,1538
+underflowed centerinputs and12transitions belowpositiveMIN explicit; full14736
+coverage records retained. Onlysamplecoverage/count expands; strictP/noerrorboundschange.

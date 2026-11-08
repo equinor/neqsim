@@ -458,7 +458,8 @@ The returned `We` array is the aquifer term consumed by
 bounded (no-flow outer boundary) aquifer.
 
 The infinite-acting pressure and derivative now use one positive spectral
-diffusion kernel with analytic frequency-endpoint remainders. This removes the
+diffusion kernel with a low-frequency remainder and positive high-frequency
+quadrature with bounded extreme-frequency omission. This removes the
 old pressure jumps at dimensionless times 0.01 and 200 and the small-time
 finite-difference derivative error. Pressure and derivative are qualified against
 separately inverted mathematical references, including off-grid times; this is
@@ -488,6 +489,13 @@ constant-property and segregated-water assumptions.
 The complete synthetic reference, generator, numerical controls and measured
 runtime are retained in
 `src/test/resources/neqsim/pvtsimulation/infinite-radial/`.
+The current `optimization64/` receipt includes all 51,216 numerical boundary
+states, controlled Taylor/exponential remainder bounds and before/after Java 8
+runtime samples. The positive tail removes roundoff-sized pressure decreases
+found in the first draft's analytic tail expression. Frozen independent
+pressure/derivative and Carter–Tracy criteria are unchanged. A substantially
+higher cost than the original approximate formulas remains; see the explicit
+radial-workload timings rather than assuming general process performance.
 
 ---
 

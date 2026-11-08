@@ -1,0 +1,116 @@
+{
+  "parent": "04e78817a608b59aa5bd0bbe846b406ff18729c9",
+  "order": "ABBA, separate actualJava8 JVMs,3warmups+7retained samples each; same inputs/driver; numerical outputs retained separately",
+  "runs": [
+    {
+      "java": "1.8.0_512-b09",
+      "coldFirstQueryNs": 2226427,
+      "separatePressureDerivative20000QueriesNs": [
+        1064279417,
+        1101281483,
+        1082353145,
+        1060486055,
+        1081578801,
+        1062729534,
+        1156288448
+      ],
+      "carterTracy1000IntervalsNs": [
+        27128363,
+        27011784,
+        26750686,
+        26218354,
+        25897387,
+        26564732,
+        27538170
+      ],
+      "checksum": 2211.5637508467403,
+      "variant": "before",
+      "executionIndex": 1,
+      "startedUTC": "2026-11-08T03:04:21.934588+00:00"
+    },
+    {
+      "java": "1.8.0_512-b09",
+      "coldFirstQueryNs": 21342250,
+      "separatePressureDerivative20000QueriesNs": [
+        283232691,
+        281897628,
+        282301658,
+        288290114,
+        282309290,
+        286232017,
+        288011520
+      ],
+      "carterTracy1000IntervalsNs": [
+        7457308,
+        7461334,
+        7838184,
+        7622244,
+        7633910,
+        7669854,
+        7593891
+      ],
+      "checksum": 2211.5637508467416,
+      "variant": "after",
+      "executionIndex": 2,
+      "startedUTC": "2026-11-08T03:04:33.731082+00:00"
+    },
+    {
+      "java": "1.8.0_512-b09",
+      "coldFirstQueryNs": 23316248,
+      "separatePressureDerivative20000QueriesNs": [
+        314973560,
+        326059663,
+        297953089,
+        313303073,
+        331813067,
+        301804692,
+        300978855
+      ],
+      "carterTracy1000IntervalsNs": [
+        8728126,
+        8360360,
+        8026544,
+        8077320,
+        8284064,
+        8308470,
+        8007542
+      ],
+      "checksum": 2211.5637508467416,
+      "variant": "after",
+      "executionIndex": 3,
+      "startedUTC": "2026-11-08T03:04:37.044362+00:00"
+    },
+    {
+      "java": "1.8.0_512-b09",
+      "coldFirstQueryNs": 2207491,
+      "separatePressureDerivative20000QueriesNs": [
+        1074298614,
+        1083380914,
+        1064262490,
+        1085890188,
+        1095262196,
+        1066223191,
+        1099477280
+      ],
+      "carterTracy1000IntervalsNs": [
+        26814729,
+        25581256,
+        26115622,
+        26519842,
+        25851880,
+        26378974,
+        26452032
+      ],
+      "checksum": 2211.5637508467403,
+      "variant": "before",
+      "executionIndex": 4,
+      "startedUTC": "2026-11-08T03:04:40.654032+00:00"
+    }
+  ],
+  "conservativeMedianSpeedups": {
+    "separatePressureDerivative20000QueriesNs": 3.4521806334149807,
+    "carterTracy1000IntervalsNs": 3.184303501276668
+  },
+  "frozenAtLeast2xPassed": true,
+  "claim": "radial API workload only; residual cost vs unmodified master and accountable engineering acceptance remain separate"
+}

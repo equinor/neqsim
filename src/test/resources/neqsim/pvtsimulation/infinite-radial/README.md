@@ -1,5 +1,12 @@
 # Infinite radial influence qualification (issue #4740, Run63)
 
+Current numerical source includes the **Run64 controlled-evaluation and positive-tail
+correction**. Its complete current evidence is in [optimization64/README.md](optimization64/README.md).
+The remainder of this file and `validation.json` retain the historical Run63
+receipt at exact head `04e78817a608b59aa5bd0bbe846b406ff18729c9`; its runtime and
+analytic high-frequency-tail description are superseded by Run64. Original
+outputs and failures are preserved for comparison.
+
 Base: `97c03ecf50d16a6dab7bd812364f49d5f4c5c444`.
 This batch repairs the infinite-acting constant-terminal-rate influence function
 and its derivative. It is independent mathematical qualification, not measured
