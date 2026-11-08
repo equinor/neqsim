@@ -1,0 +1,11 @@
+Frozen before candidate comparison: repair infinite-acting radial P_D and its derivative only.
+Finite-radius annulus replacement is a separate physical-domain/high-risk algorithm boundary;
+retain its unqualified status explicitly. No EOS/history/prior/volume tuning or new public API.
+Positive spectral representation with analytic low/high-frequency remainders; existing units.
+Pressure acceptance1e-7absolute+1e-6relative against independent Laplace references;
+derivative acceptance1e-6absolute+1e-5relative against independently inverted s*Pbar.
+Use existing Run62 six infinite times and separately generated logarithmic/off-grid holdouts.
+Check early/late limits, positive/monotone pressure and positive derivative, adjacent doubles
+at old .01/200 branch junctions, normal/subnormal positive-time endpoints, invalid inputs,
+central-difference consistency, Carter-Tracy mesh controls and paired-query runtime.
+Preserve actual calibrated fluids and reservoir-matching semantics. Do not loosen bounds.

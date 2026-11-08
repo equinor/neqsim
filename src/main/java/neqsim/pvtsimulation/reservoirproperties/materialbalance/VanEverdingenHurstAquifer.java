@@ -15,20 +15,19 @@ import java.io.Serializable;
  * <h2>Dimensionless pressure</h2>
  *
  * <p>
- * For an infinite-acting radial aquifer the constant-terminal-rate dimensionless pressure is evaluated with the
- * rational polynomial approximations of Edwardson et al. (1962):
+ * For an infinite-acting radial aquifer the constant-terminal-rate dimensionless pressure and its time derivative are
+ * integrated from the positive radial diffusion spectrum. Positive log-frequency quadrature with bounded endpoint
+ * truncation avoids pressure jumps and finite-difference artifacts at small times. No EOS or history parameters are
+ * fitted by this numerical kernel.
  * </p>
- *
- * <ul>
- * <li>$t_D &lt; 0.01$: $P_D = 2\sqrt{t_D/\pi}$</li>
- * <li>$0.01 \le t_D \le 200$: eight-coefficient rational polynomial in $\sqrt{t_D}$</li>
- * <li>$t_D &gt; 200$: semilog line $P_D = \tfrac{1}{2}(\ln t_D + 0.80907)$</li>
- * </ul>
  *
  * <p>
  * For a bounded (no-flow outer boundary) aquifer of dimensionless outer radius $r_{eD}$ the solution transitions to
  * pseudo-steady state; this is approximated as the maximum of the infinite-acting value and the pseudo-steady value
- * $P_D = 2 t_D/(r_{eD}^2 - 1) + \ln r_{eD} - 3/4$.
+ * $P_D = 2 t_D/(r_{eD}^2 - 1) + \ln r_{eD} - 3/4$. This legacy bounded policy is not a qualified finite-annulus
+ * transient solution: it can have a nonzero right limit at time zero and an inaccurate finite-radius intercept. Its
+ * derivative selects the active branch; it does not establish bounded radial accuracy. The infinite-acting correction
+ * does not resolve that separate physical-domain limitation.
  * </p>
  *
  * <h2>Units</h2>
@@ -46,6 +45,7 @@ public final class VanEverdingenHurstAquifer implements Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1L;
 
+  /** Prevents construction of the static aquifer utility. */
   private VanEverdingenHurstAquifer() {
     // Utility class
   }
@@ -53,71 +53,69 @@ public final class VanEverdingenHurstAquifer implements Serializable {
   /**
    * Constant-terminal-rate dimensionless pressure for a radial aquifer.
    *
-   * @param tD dimensionless time (must be positive)
+   * @param tD finite nonnegative dimensionless time; zero is the bookkeeping origin
    * @param reD dimensionless outer radius; use {@code Double.POSITIVE_INFINITY} or a non-positive value for an
    * infinite-acting aquifer
    * @return dimensionless pressure $P_D$
+   * @throws IllegalArgumentException if time is negative or non-finite, or the radius argument is NaN
    */
   public static double dimensionlessPressure(double tD, double reD) {
-    if (tD <= 0.0) {
-      return 0.0;
-    }
-    double pdInfinite = infiniteActingPd(tD);
-    if (reD <= 0.0 || Double.isInfinite(reD)) {
-      return pdInfinite;
-    }
-    // Bounded aquifer: pseudo-steady-state dimensionless pressure.
-    double denom = reD * reD - 1.0;
-    if (denom <= 1.0e-30) {
-      return pdInfinite;
-    }
-    double pdPss = 2.0 * tD / denom + Math.log(reD) - 0.75;
-    // Infinite-acting until the boundary is felt, then pseudo-steady state dominates.
-    return Math.max(pdInfinite, pdPss);
+    return influence(tD, reD)[0];
   }
 
   /**
-   * Infinite-acting constant-terminal-rate dimensionless pressure (Edwardson et al., 1962).
+   * Infinite-acting constant-terminal-rate dimensionless pressure from the radial diffusion spectrum.
    *
-   * @param tD dimensionless time (must be positive)
+   * @param tD finite nonnegative dimensionless time; zero is the bookkeeping origin
    * @return dimensionless pressure $P_D$
    */
   static double infiniteActingPd(double tD) {
-    if (tD <= 0.0) {
-      return 0.0;
-    }
-    if (tD < 0.01) {
-      return 2.0 * Math.sqrt(tD / Math.PI);
-    }
-    if (tD <= 200.0) {
-      double sqrtT = Math.sqrt(tD);
-      double numerator = 370.529 * sqrtT + 137.582 * tD + 5.69549 * tD * sqrtT;
-      double denominator = 328.834 + 265.488 * sqrtT + 45.2157 * tD + tD * sqrtT;
-      return numerator / denominator;
-    }
-    // Late-time infinite-acting semilog approximation.
-    return 0.5 * (Math.log(tD) + 0.80907);
+    return RadialInfiniteInfluence.evaluate(tD)[0];
   }
 
   /**
-   * Time derivative of the infinite-acting dimensionless pressure, $dP_D/dt_D$.
+   * Time derivative of the selected dimensionless pressure branch, $dP_D/dt_D$.
    *
    * <p>
-   * Evaluated numerically with a central difference; used by the Carter-Tracy influx method.
+   * Uses the analytic derivative of the same infinite spectral approximation, or the active legacy bounded branch. At a
+   * bounded-policy crossing the derivative of the selected branch is returned; that approximate maximum is not
+   * differentiable at a genuine kink. Time zero returns zero as a bookkeeping convention, not as its physical
+   * right-derivative limit. Used by the Carter-Tracy influx method.
    * </p>
    *
-   * @param tD dimensionless time (must be positive)
+   * @param tD finite nonnegative dimensionless time; zero is the bookkeeping origin
    * @param reD dimensionless outer radius (infinite if non-positive or infinite)
    * @return derivative $dP_D/dt_D$
+   * @throws IllegalArgumentException if time is negative or non-finite, or the radius argument is NaN
    */
   public static double dimensionlessPressureDerivative(double tD, double reD) {
-    if (tD <= 0.0) {
-      return 0.0;
+    return influence(tD, reD)[1];
+  }
+
+  /**
+   * Evaluates pressure and derivative together, preserving the explicitly unqualified bounded maximum policy.
+   *
+   * @param time finite nonnegative dimensionless time
+   * @param radius legacy dimensionless outer-radius argument
+   * @return private pressure/derivative pair
+   */
+  private static double[] influence(double time, double radius) {
+    if (Double.isNaN(radius)) {
+      throw new IllegalArgumentException("Aquifer outer-radius argument must not be NaN");
     }
-    double h = Math.max(1.0e-4, tD * 1.0e-4);
-    double forward = dimensionlessPressure(tD + h, reD);
-    double backward = dimensionlessPressure(Math.max(1.0e-12, tD - h), reD);
-    return (forward - backward) / (2.0 * h);
+    double[] result = RadialInfiniteInfluence.evaluate(time);
+    if (time == 0.0 || radius <= 0.0 || Double.isInfinite(radius)) {
+      return result;
+    }
+    double denominator = radius * radius - 1.0;
+    if (denominator > 1.0e-30) {
+      double bounded = 2.0 * time / denominator + Math.log(radius) - 0.75;
+      if (bounded > result[0]) {
+        result[0] = bounded;
+        result[1] = 2.0 / denominator;
+      }
+    }
+    return result;
   }
 
   /**
@@ -182,37 +180,90 @@ public final class VanEverdingenHurstAquifer implements Serializable {
    * </p>
    *
    * <p>
-   * where $\Delta p_n = p_i - p_n$ is the total pressure drop at the reservoir-aquifer boundary.
+   * where $\Delta p_n = p_i - p_n$ is the total pressure drop at the reservoir-aquifer boundary. Evaluation is
+   * normalized by positive pressure and uses exponent-scaled products, without an absolute small-denominator freeze.
+   * The existing projection to nonnegative cumulative influx is retained: negative total drops may decrease influx to
+   * zero, but do not create a negative cumulative water credit. This is not a water-mixing or recharge model. The
+   * bounded-radius influence remains the explicitly unqualified legacy policy described above.
    * </p>
    *
-   * @param tD array of dimensionless times (monotonically increasing, first entry may be 0)
-   * @param deltaP array of total pressure drops $p_i - p$ at each time (bar)
-   * @param aquiferConstant Van Everdingen-Hurst aquifer constant $U$ (reservoir m^3 per bar)
+   * @param tD nonempty finite nonnegative dimensionless times, strictly increasing; first entry may be zero
+   * @param deltaP finite signed total pressure drops $p_i - p$ at each time (bar), same length as times
+   * @param aquiferConstant finite nonnegative aquifer constant $U$ (reservoir m^3 per bar); zero gives zero influx
    * @param reD dimensionless outer radius (infinite if non-positive or infinite)
-   * @return array of cumulative water influx at each time (reservoir m^3)
+   * @return array of cumulative water influx at each time (reservoir m^3), initially zero
+   * @throws IllegalArgumentException if history shape, ordering, finiteness, support or radius arguments are invalid
+   * @throws ArithmeticException if the selected influence or a transition cannot be represented finitely
    */
   public static double[] cumulativeInfluxCarterTracy(double[] tD, double[] deltaP, double aquiferConstant, double reD) {
-    if (tD == null || deltaP == null || tD.length != deltaP.length) {
-      throw new IllegalArgumentException("tD and deltaP must be non-null and of equal length");
+    if (tD == null || deltaP == null || tD.length != deltaP.length || tD.length == 0) {
+      throw new IllegalArgumentException("tD and deltaP must be nonempty and of equal length");
     }
-    int n = tD.length;
-    double[] we = new double[n];
-    we[0] = 0.0;
-    for (int i = 1; i < n; i++) {
-      double pd = dimensionlessPressure(tD[i], reD);
-      double pdPrime = dimensionlessPressureDerivative(tD[i], reD);
-      double denom = pd - tD[i - 1] * pdPrime;
-      if (Math.abs(denom) < 1.0e-30) {
-        we[i] = we[i - 1];
-        continue;
+    if (!Double.isFinite(aquiferConstant) || aquiferConstant < 0.0 || Double.isNaN(reD)) {
+      throw new IllegalArgumentException("Aquifer constant must be finite and nonnegative; radius must not be NaN");
+    }
+    for (int i = 0; i < tD.length; i++) {
+      if (!Double.isFinite(tD[i]) || tD[i] < 0.0 || (i > 0 && tD[i] <= tD[i - 1]) || !Double.isFinite(deltaP[i])) {
+        throw new IllegalArgumentException("Times must be finite, nonnegative and strictly increasing; drops finite");
       }
-      double increment = (tD[i] - tD[i - 1]) * (aquiferConstant * deltaP[i] - we[i - 1] * pdPrime) / denom;
-      we[i] = we[i - 1] + increment;
-      if (we[i] < 0.0) {
-        we[i] = 0.0;
+    }
+    double[] we = new double[tD.length];
+    if (aquiferConstant == 0.0) {
+      return we;
+    }
+    for (int i = 1; i < tD.length; i++) {
+      double[] response = influence(tD[i], reD);
+      double pd = response[0];
+      double pdPrime = response[1];
+      if (!Double.isFinite(pd) || pd <= 0.0 || !Double.isFinite(pdPrime)) {
+        throw new ArithmeticException("Carter-Tracy influence is not finite and positive at index " + i);
       }
+      // Normalize the SAME recurrence by P. Multiplying time by its derivative first avoids tiny-time overflow.
+      double elasticity = (tD[i] * pdPrime) / pd;
+      double denominator = 1.0 - (tD[i - 1] / tD[i]) * elasticity;
+      double retained = (1.0 - elasticity) / denominator;
+      if (denominator == 0.0 || !Double.isFinite(retained)) {
+        throw new ArithmeticException("Carter-Tracy transition is singular or unrepresentable at index " + i);
+      }
+      double next = retained * we[i - 1]
+          + scaledProductRatio(tD[i] - tD[i - 1], aquiferConstant, deltaP[i], pd, denominator);
+      // Preserve the existing nonnegative cumulative-influx projection, including pressure recovery.
+      if (next < 0.0) {
+        next = 0.0;
+      }
+      if (!Double.isFinite(next)) {
+        throw new ArithmeticException("Carter-Tracy cumulative influx is unrepresentable at index " + i);
+      }
+      we[i] = next;
     }
     return we;
+  }
+
+  /**
+   * Evaluates three numerator and two denominator factors without avoidable intermediate exponent loss.
+   *
+   * @param first finite first factor
+   * @param second finite second factor
+   * @param third finite third factor
+   * @param pressure finite positive pressure denominator
+   * @param normalizedDenominator finite nonzero normalized transition denominator
+   * @return scaled quotient; underflow/overflow occurs only at final rescaling
+   */
+  private static double scaledProductRatio(double first, double second, double third, double pressure,
+      double normalizedDenominator) {
+    if (first == 0.0 || second == 0.0 || third == 0.0) {
+      return 0.0;
+    }
+    int firstExponent = Math.getExponent(first);
+    int secondExponent = Math.getExponent(second);
+    int thirdExponent = Math.getExponent(third);
+    int pressureExponent = Math.getExponent(pressure);
+    int denominatorExponent = Math.getExponent(normalizedDenominator);
+    double mantissa = Math.scalb(first, -firstExponent) * Math.scalb(second, -secondExponent)
+        * Math.scalb(third, -thirdExponent) / Math.scalb(pressure, -pressureExponent)
+        / Math.scalb(normalizedDenominator, -denominatorExponent);
+    return Math.scalb(mantissa,
+        firstExponent + secondExponent + thirdExponent - pressureExponent - denominatorExponent);
   }
 
   /**

@@ -28,6 +28,14 @@ Deck formatting and unit conversion are delegated to `EclipseVFPExporter`
 It is not thread safe; use one provider per concurrent calculation. Implement `VlpProvider` for a
 custom injection model instead of subclassing this implementation.
 
+For injection, the pressure march follows the fluid downward: bottom-hole pressure equals
+wellhead pressure plus hydrostatic head **minus** friction loss. A horizontal interval therefore
+delivers less pressure than its wellhead, and increasing the injection rate reduces bottom-hole
+pressure at fixed wellhead pressure. Profiles leaving the positive absolute-pressure domain return
+`NaN`. This is a hydrostatic/Darcy-Weisbach model; acceleration is neglected.
+The pressure-gradient basis is described in
+[Whitson's well pressure calculations](https://wiki.whitson.com/pipeflow/well_pressure_calculations/).
+
 ## Gas well example
 
 ```java
@@ -52,13 +60,19 @@ rate cap, failure policy and monotonicity behaviour are covered by the other tes
 
 The builder applies these rules in order and reports every repair in `Result.getWarnings()`:
 
-1. The flowing pressure is not below the outlet pressure: $p_{wf} \ge p_{thp}$.
+1. For production tables, the flowing pressure is not below the outlet pressure: $p_{wf} \ge p_{thp}$.
 2. The flowing pressure increases with the outlet pressure with slope at least $m_{min}$ (default 0.5 bar/bar).
-3. Rate dependence: `ABOVE_MINIMUM` (default) keeps the liquid-loading side of a J-shaped gas curve and makes the rest
+3. Production rate dependence: `ABOVE_MINIMUM` (default) keeps the liquid-loading side of a J-shaped gas curve and makes the rest
    non-decreasing; `FULL` makes the whole curve non-decreasing, which OPM Flow needs to avoid flipping between rate
    and THP control.
 
-A rate cap $Q_c$ replaces the pressure above the cap by a penalty slope:
+Injection tables preserve the provider's rate dependence and sub-wellhead pressures; the
+production pressure floor and rate conditioning do not apply, including when `FULL` is selected.
+Nonpositive or nonfinite injection pressures are rejected, including values produced by rate
+extrapolation. The production rate-cap penalty is rejected for injection; trim the injection
+rate axis to the supported envelope.
+
+A production rate cap $Q_c$ replaces the pressure above the cap by a penalty slope:
 
 $$p_{wf}(Q) = p_{wf}(Q_c) + \lambda \left(\frac{Q}{Q_c} - 1\right), \quad Q > Q_c$$
 

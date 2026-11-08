@@ -1,0 +1,29 @@
+Run65 frozen before source edits and candidate comparison, 8 November 2026.
+PR4924 parent1b5a419b7fc67f3285829e1a7b464d00b4928eaa;
+master97c03ecf50d16a6dab7bd812364f49d5f4c5c444, parent tree
+dfbf50332e1c89abe81dd162d56f181af386b343 verified from plugin manifest.
+Question: can positive-tail cold cost be reduced without changing any response?
+Same global832-panel/6656-node grid, weights, arithmetic, summation order,
+spectral coefficients, physical model, public APIs, CT recurrence and units.
+Initialize the first96panels (768nodes); conservative suffix bound includes
+all omitted nodes. Initialize the complete original tail via JVM holder only
+if that prefix cannot certify all remaining additions round away individually.
+Do not omit derivatives until the current monotone frequency argument>=80.
+Continue the full array at prefix.length, never add its prefix again.
+Omitted weight bound: exp(-logPanelBoundary), since R<=1 and each
+ordinary Gauss weight<=0.091, so (2/pi)*ordinaryWeight*R<0.058<1.
+Large safety margin covers elementary floating arithmetic; verify domination
+over every omitted actual weight and original full-array suffix maximum.
+Qualification: require BIT-IDENTICAL P/D against parent for all51216 frozen
+common inputs, all20independent MP times and complete42CT histories.
+Keep original MP/CT/scaled-limit/strict-nondecrease criteria unchanged.
+Add exact prefix/full grid identity and concurrency/order controls; full-tail
+first-use and post-init query results must match. Record every failure.
+Actual Java8 compile/replay, fresh current-pinned static analysis, focused then
+proportionate surrounding tests and all current publication/documentation gates.
+Performance: same actualJava8 ABBA,3warmups/7samples, require at least2x
+lower cold tD1 cost versus parent, warm medians no more than1.20x parent.
+Also measure rare full-tail first use and ordinary warm cost. No blanket
+performance acceptance or general simulation speedup; owner/domain review pending.
+Stop boundary: no finite annulus, interpolated response, EOS/history/volume/prior
+fitting, new public operation, dependency/POM change or measured-data claim.

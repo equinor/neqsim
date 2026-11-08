@@ -4,14 +4,15 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Lift performance of an injection well (water or gas) for VFPINJ tables: the bottom-hole pressure needed to inject a
- * surface rate against a given wellhead pressure.
+ * Lift performance of an injection well (water or gas) for VFPINJ tables: the bottom-hole pressure delivered at a
+ * surface injection rate and a given wellhead pressure.
  *
  * <p>
  * The tubing survey is marched from the wellhead to the datum. Each sub-segment is flashed at its mean temperature and
  * a predicted mean pressure, so density and viscosity follow the real fluid (a compressible gas or water with a
  * salinity correction). Friction uses the Darcy-Weisbach equation with the Haaland friction factor and the hydrostatic
- * term uses the true vertical depth difference, so deviated and extended-reach wells are handled. The temperature is
+ * term uses the true vertical depth difference. Positive depth is downward, so pressure gains hydrostatic head and
+ * loses Darcy-Weisbach friction along the injection direction. Acceleration is neglected. The temperature is
  * interpolated linearly with true vertical depth between the wellhead and bottom-hole values.
  * </p>
  *
@@ -145,7 +146,7 @@ public final class InjectionVlpProvider implements VlpProvider {
   @Override
   public double bottomHolePressure(double rate, double outletPressure, double waterRatio, double gasRatio, double alq) {
     evaluations++;
-    if (!(rate > 0.0) || !(outletPressure > 0.0)) {
+    if (!(rate > 0.0) || !Double.isFinite(rate) || !(outletPressure > 0.0) || !Double.isFinite(outletPressure)) {
       return Double.NaN;
     }
     double massRate = rate * standardDensity * densityFactor / 86400.0;
@@ -164,6 +165,9 @@ public final class InjectionVlpProvider implements VlpProvider {
         double dp = 0.0;
         double pMid = p;
         for (int pass = 0; pass < 2; pass++) {
+          if (!(pMid > 0.0) || !Double.isFinite(pMid)) {
+            return Double.NaN;
+          }
           double[] props = flashProperties(273.15 + tempC, pMid);
           double rho = props[0] * densityFactor;
           double mu = props[1];
@@ -171,10 +175,13 @@ public final class InjectionVlpProvider implements VlpProvider {
           double re = rho * velocity * d / mu;
           double friction = haaland(re, d);
           double dpFriction = friction * (length / n) / d * rho * velocity * velocity / 2.0;
-          dp = (rho * GRAVITY * dz / n + dpFriction) / 1.0e5;
+          dp = (rho * GRAVITY * dz / n - dpFriction) / 1.0e5;
           pMid = p + 0.5 * dp;
         }
         p += dp;
+        if (!(p > 0.0) || !Double.isFinite(p)) {
+          return Double.NaN;
+        }
       }
     }
     return p;

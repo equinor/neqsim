@@ -41,6 +41,14 @@ interior pressure-ramp extremum, is rejected. This lumped storage law is distinc
 from radial transient diffusion in `VanEverdingenHurstAquifer`; only common storage
 limits are compared, not claimed transient equivalence.
 
+The radial class's infinite-acting pressure and derivative are independently
+qualified mathematical diffusion responses. Its finite-radius maximum-policy
+option remains an unqualified transient approximation, including an incorrect
+initial limit for some radii. Do not use that bounded option as the independent
+radial reference for this lumped tank. See the
+[radial influence-function limitations](reservoir_material_balance.md#aquifer-influx)
+and preserve the separate Carter–Tracy approximation and timestep evidence.
+
 ## Small-exposure numerical qualification
 
 `FetkovichAquiferPrecisionTest` compares 1,444 synthetic prescribed-pressure cases

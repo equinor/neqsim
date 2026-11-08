@@ -87,10 +87,12 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
     assertTrue(firstSpecies.isConverged(), firstSpecies.getMessage());
     assertTrue(firstSpecies.getMaximumRelativeInventoryResidual() < 1.0e-8, firstSpecies.getMessage());
     assertTrue(firstSpecies.getMaximumThermodynamicMassFractionError() <= 1.0e-10, firstSpecies.getMessage());
-    assertArrayEquals(firstSpecies.getFinalInventoryKg(), repeated.getSpeciesConservationReport().getFinalInventoryKg(),
-        0.0);
-    assertArrayEquals(firstSpecies.getMassFractionProfile()[1],
-        repeated.getSpeciesConservationReport().getMassFractionProfile()[1], 0.0);
+    // Independent Java 8 CI runs differed by two ulps in the final inventory.
+    // Keep this comparison at roundoff scale, independently of the conservation gates above.
+    assertRepeatabilityWithinRoundoff(firstSpecies.getFinalInventoryKg(),
+        repeated.getSpeciesConservationReport().getFinalInventoryKg());
+    assertRepeatabilityWithinRoundoff(firstSpecies.getMassFractionProfile()[1],
+        repeated.getSpeciesConservationReport().getMassFractionProfile()[1]);
 
     OnePhaseFlowConvergenceReport nearbyFlow = nearby.getConvergenceReport();
     assertTrue(nearbyFlow.isConverged(), nearbyFlow.getMessage());
@@ -585,6 +587,21 @@ class OnePhaseConservativeSpeciesTest extends neqsim.NeqSimTest {
       result += value;
     }
     return result;
+  }
+
+  /**
+   * Compares independent low-flow runs within a small floating-point rounding budget.
+   *
+   * @param expected values from the first converged run
+   * @param actual values from the repeated run
+   */
+  private static void assertRepeatabilityWithinRoundoff(double[] expected, double[] actual) {
+    assertEquals(expected.length, actual.length);
+    for (int index = 0; index < expected.length; index++) {
+      assertTrue(Double.isFinite(expected[index]) && Double.isFinite(actual[index]));
+      assertEquals(expected[index], actual[index], 8.0 * Math.ulp(expected[index]),
+          "Low-flow repeatability must remain within eight ulps at index " + index);
+    }
   }
 
   private static void assertRelativeEquals(double expected, double actual, String message) {

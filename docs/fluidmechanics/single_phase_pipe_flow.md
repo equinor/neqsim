@@ -243,6 +243,10 @@ throws with its residual and iteration diagnostics before that state can initial
 the compatibility setting that permits a failed report to return applies only to legacy,
 non-conservative operation.
 
+The low-flow repeatability regression allows eight floating-point units in the last place
+(ULPs) per inventory or mass-fraction value, covering the last-bit variation observed in Java 8 Linux CI.
+Its equation-residual, conservation and thermodynamic-consistency gates remain unchanged.
+
 The pressure and velocity unknowns are interleaved so each equation couples only to its two
 nearest unknowns on either side. The Newton matrix is therefore stored and solved as a compact
 pentadiagonal system rather than expanded to a dense matrix. Continuity pressure derivatives use

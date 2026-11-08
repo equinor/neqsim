@@ -149,8 +149,11 @@ exporter uses a placeholder correlation and logs a warning. The JSON face is `ne
    increasing.
 3. Off-grid spot points (3 or more, one per axis and one combined): `result.interpolate(...)` against a direct
    provider solve within 0.3 bar; `isInsideAxes` for the study's operating envelope including late life.
-4. BHP increases with THP (slope 0.9-1.3 bar/bar for gas wells) and with rate above the loading minimum; no
-   negative or sub-THP values.
+4. BHP increases with THP (slope 0.9-1.3 bar/bar for gas wells). For production, BHP increases with rate above
+   the loading minimum and is not sub-THP. For injection, friction reduces BHP at fixed THP as rate increases;
+   horizontal intervals can have BHP below THP. Require positive absolute pressures in both cases.
+   Reject nonpositive extrapolated injection BHP and trim injection axes at their supported rate limit;
+   the builder's production rate-cap penalty is not available for VFPINJ.
 5. IPR x VFP: solve the intersection the way the simulator does with the field's IPR; compare with the full live
    model at 3-5 operating states (within 1 % of rate).
 6. Live bracket for a full-system curve: the topside runs at the curve's inlet pressure and fails or saturates at
@@ -186,7 +189,7 @@ exporter uses a placeholder correlation and logs a warning. The JSON face is `ne
 - **Coarse GOR/WCT axes near a capacity cliff**: a 5 x 5 x 4 x 5 oil-well table interpolated 11-12 bar from a direct solve at mid-range points and more than 100 bar next to the no-flow
   region. A 7 x 5 x 6 x 6 table (about 1 300 evaluations, 22-25 min for Beggs-Brill/Gray on a 5 km survey with three jobs in parallel) cut this to 2-4 bar, with 22 bar left next to the no-flow
   region; the flowline table (6 x 3 x 4 x 6) was within 1-6 bar. Always run check 3 above before delivery and report the deviation; the 0.3 bar criterion is only realistic for gas wells.
-- **Injector tubing VFPINJ**: use `InjectionVlpProvider(template, md[], tvd[], id[])` (or `(template, tvd, id)` for a vertical well) with `VfpTableBuilder.injector(n, "WAT"/"GAS")`: it flashes the fluid per sub-segment and applies Darcy-Weisbach with Haaland friction on TVD head; rates are Sm3/d. Use `setDensityFactor` for salinity (about 1.026 for seawater). With the injector BHP below the hydrostatic head (late life) the wellhead is on vacuum: report it as choked operation, do not size the pump to a negative WHP.
+- **Injector tubing VFPINJ**: use `InjectionVlpProvider(template, md[], tvd[], id[])` (or `(template, tvd, id)` for a vertical well) with `VfpTableBuilder.injector(n, "WAT"/"GAS")`: it flashes the fluid per sub-segment; rates are Sm3/d. Along downward flow, BHP = THP + hydrostatic head - Darcy-Weisbach friction loss (Haaland factor, acceleration neglected). Require a horizontal Darcy-Weisbach reference and water/gas rate-trend checks. Preserve sub-THP pressures and decreasing rate curves in the exported injection table. Use `setDensityFactor` for salinity (about 1.026 for seawater). Assess wellhead-pressure feasibility with the full signed balance, including friction, and do not size a pump to a negative absolute WHP.
 - **Erosional ratio definition**: `PipeBeggsAndBrills.getErosionalVelocity(c)` uses the no-slip mixture density and `getMaxErosionalVelocityRatio(c)` returns the maximum v/ve along the pipe, `v_e = C / sqrt(rho)` with C on an SI basis (122 for API 14E C = 100, 183 for C = 150). Earlier versions used the slip-holdup density and gave a 2x ratio mismatch.
 
 ## Related

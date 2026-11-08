@@ -96,6 +96,10 @@ and `@code-review` for independent code review. Commands and baseline policy liv
 
 ## Physics and API gotchas
 
+- Extend the existing equipment class for transient behavior; execution mode alone must never
+  introduce a separate `Dynamic*` unit operation. Preserve stream/tag/DEXPI identity and steady defaults.
+  See `.github/skills/neqsim-dynamic-simulation/SKILL.md` for mode-transition and rollback checks.
+
 - **EJML-only numerical code:** Use primitive arrays at public numerical boundaries and EJML or
   `LinearAlgebraOperations` for calculations. Do not restore a JAMA dependency or reference backend.
   Former matrix-specific hooks and accessors now use EJML `SimpleMatrix`; downstream callers must migrate.
