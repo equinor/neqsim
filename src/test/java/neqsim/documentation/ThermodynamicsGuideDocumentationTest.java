@@ -29,10 +29,8 @@ import org.junit.jupiter.api.io.TempDir;
  */
 class ThermodynamicsGuideDocumentationTest {
   private static final Path GUIDE = Paths.get("docs", "wiki", "thermodynamics_guide.md");
-  private static final String MARKER =
-      "<!-- thermodynamics-guide-example: independent-dew-points -->";
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
+  private static final String MARKER = "<!-- thermodynamics-guide-example: independent-dew-points -->";
+  private static final Pattern JAVA_FENCE = Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
 
   @TempDir
   Path temporaryDirectory;
@@ -72,8 +70,7 @@ class ThermodynamicsGuideDocumentationTest {
    */
   private String exampleSource() throws IOException {
     String markdown = new String(Files.readAllBytes(GUIDE), StandardCharsets.UTF_8);
-    assertEquals(markdown.indexOf(MARKER), markdown.lastIndexOf(MARKER),
-        "Dew-point example marker must be unique");
+    assertEquals(markdown.indexOf(MARKER), markdown.lastIndexOf(MARKER), "Dew-point example marker must be unique");
     assertFalse(markdown.contains("\n# NeqSim Thermodynamics Guide\n"),
         "Jekyll front matter already owns the page title");
     assertTrue(markdown.contains("[Viscosity Models](viscosity_models.md)"));
