@@ -46,6 +46,16 @@ Divide the schedule at every imposed input change. Inclination in `simulate`
 is a prescribed time history; spatial terrain/diameter crossings and receiver
 contact are not applied automatically by `simulate`.
 
+For a known axial coordinate, `advanceToPosition` returns the first crossing
+within a constant-input interval and the same immutable mechanical work ledger
+truncated at that event. The search treats the pre-stop and post-reversal legs
+separately, so a receiver, launcher, sensor or terrain coordinate crossed before
+a later reversal is not hidden by the final position. `isReached()` distinguishes
+contact from expiry of the requested search horizon; `getEventTimeSeconds()` and
+`getStep()` expose the event time and analytical ledger. The method locates a
+position only. It does not impose impact, receipt, a diameter change or new
+terrain forces; the caller owns that event response.
+
 ## Executable start, stop and restart example
 
 The following method-body fragment uses `PigMotion` from the package above.
@@ -95,7 +105,8 @@ not deposited into a fluid or pipe wall.
 
 Tests cover analytical acceleration and stopping distance, threshold equality,
 reverse motion, vertical gravity balance, frictionless motion, zero-duration
-identity, invalid/overflow inputs, serialization and deterministic replay.
+identity, first position contact on both legs of a reversal, absent events,
+invalid/overflow inputs, serialization and deterministic replay.
 A fixed 200-case force/velocity/inclination matrix compares one 7 s interval
 with 70 intervals of 0.1 s and checks sign symmetry and the work balance.
 This is analytical and numerical verification, not validation against pigging
@@ -110,7 +121,8 @@ figures are available under CC BY 4.0. The reported pressure-sensor spacing is
 5.90 m and the pressure-event separation is 272 samples at 50 ms, or 13.6 s.
 The executable test advances 272 prescribed 50 ms intervals, verifies that the
 sensor position is first reached at sample 272, and compares the endpoint with
-one 13.6 s interval to retain the existing partition-invariance contract. Its
+one 13.6 s interval and the first-position-event API to retain the existing
+partition-invariance contract. Its
 sample detector permits only `1e-12` m of accumulated floating-point roundoff,
 more than ten orders of magnitude below one sample's travel.
 
@@ -132,6 +144,9 @@ receiver surge, or coupled two-fluid pigging.
 - Preserve this stateless calculation during rejected hydraulic stages; publish
   state only after the coupled step is accepted through the existing transaction
   mechanism. Returned model and trajectory objects are serializable.
+- Use `advanceToPosition` to split a constant-input stage at a known axial
+  boundary. Apply launcher/receiver contact, terrain, diameter or fitting physics
+  explicitly after the returned event; the mechanics API does not invent them.
 - A future moving-boundary model must use the same pig displacement on the
   upstream and downstream fluid control volumes, and balance pressure work,
   mass, species, momentum, friction heat and bypass consistently. Effective
@@ -194,7 +209,9 @@ IdealGasPiggingModel.Step result = model.advance(state, 2.0);
 
 The model resolves launcher retention/release and receiver contact, transfers
 contact kinetic energy into an explicit impact-dissipation ledger, and stops
-the trajectory after receipt. It adaptively subdivides a requested interval to
+the trajectory after receipt. Its boundary locator now reuses the public
+first-position-event API, retaining the same reversal-safe analytical mechanics
+path used by standalone callers. It adaptively subdivides a requested interval to
 respect user-declared maximum time, donor-mass fraction and pig-travel fraction.
 These are numerical safeguards; they do not represent leakage, seal wear or a
 vendor pig specification.
