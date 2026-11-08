@@ -357,6 +357,19 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   }
 
   /**
+   * Removes a constructor-declared port when a derived closed unit has no external energy boundary.
+   *
+   * @param portName constructor-declared port name
+   * @throws IllegalStateException if an external energy connection has already been assigned
+   */
+  protected final void removeUnconnectedEnergyPort(String portName) {
+    if (isSetEnergyStream || !externallyConnectedEnergyPorts.isEmpty()) {
+      throw new IllegalStateException("Cannot remove ports from externally energy-connected equipment");
+    }
+    energyPorts.remove(portName);
+  }
+
+  /**
    * Re-registers the energy ports that the constructor of this class creates, after a legacy .neqsim load left this
    * equipment without them. Ports are registered on this equipment, so the first one is connected to its own energy
    * stream exactly as the constructor would have done.

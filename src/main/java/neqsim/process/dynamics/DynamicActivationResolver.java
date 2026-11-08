@@ -5,6 +5,7 @@ import neqsim.process.SimulationInterface;
 import neqsim.process.equipment.battery.BatteryStorage;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
+import neqsim.process.equipment.heatexchanger.DynamicHeatExchanger;
 
 /**
  * Conservative resolver for the runtime activation of audited dynamic implementations.
@@ -97,6 +98,19 @@ public final class DynamicActivationResolver {
     if (exchanger.getWallMass() <= 0.0 || exchanger.getHeatTransferArea() <= 0.0) {
       return DynamicActivationStatus.INCOMPLETE_CONFIGURATION;
     }
+    if (exchanger instanceof DynamicHeatExchanger) {
+      double[] parameters = {exchanger.getWallMass(), exchanger.getWallCp(), exchanger.getHeatTransferArea(),
+          exchanger.getShellSideHtc(), exchanger.getTubeSideHtc()};
+      for (double parameter : parameters) {
+        if (!Double.isFinite(parameter) || parameter <= 0.0) {
+          return DynamicActivationStatus.INCOMPLETE_CONFIGURATION;
+        }
+      }
+      if (!Double.isFinite(exchanger.getShellHoldupVolume()) || exchanger.getShellHoldupVolume() < 0.0
+          || !Double.isFinite(exchanger.getTubeHoldupVolume()) || exchanger.getTubeHoldupVolume() < 0.0) {
+        return DynamicActivationStatus.INCOMPLETE_CONFIGURATION;
+      }
+    }
     return DynamicActivationStatus.ACTIVE;
   }
 
@@ -115,7 +129,9 @@ public final class DynamicActivationResolver {
     if (exchanger.getHeatTransferArea() <= 0.0) {
       return "dynamicModelEnabled is true but heatTransferArea is not positive";
     }
-    return "dynamic heat-exchanger wall-energy path is active";
+    return exchanger instanceof DynamicHeatExchanger
+        ? "conservative mixed-fluid and wall enthalpy integration is configured; single-phase fixed-pressure scope"
+        : "dynamic heat-exchanger wall-energy path is active";
   }
 
   private static DynamicActivationStatus resolveBatteryStorage(BatteryStorage battery) {

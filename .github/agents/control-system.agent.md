@@ -54,6 +54,22 @@ process/scrubber inventories to `@process-model`, protection requirements to
 
 ## Control Loop Design Workflow
 
+For two-circuit gas/water coolers, use the public
+`HeatExchangerAutomationWorkflow` and `HeatExchangerControllerTuning` APIs with
+`DynamicHeatExchanger`. Follow the [tested automation guide](../../docs/process/equipment/heat_exchanger_automation.md).
+The helper creates actual TT/PT/FT devices and one native TIC acting on an
+existing utility inlet valve; native drawings and DEXPI use the same source
+ports and signal identities. Supply wall/holdup/film inputs and preserve the
+fixed-pressure, fixed-composition, single-phase, positive-throughflow contract.
+Do not substitute repeated steady flashes for thermal inventory dynamics.
+Retain all candidate failures, raw traces, final-window criteria and energy
+residuals; a tested gain selection needs an explicit applied project revision
+and fresh canonical bindings. A changed source or controller/sensor history
+invalidates prior tuning evidence. Use raw `NeqSimXtream.openNeqsim` for saved
+dynamic continuation; the convenience process loader reinitializes steady state.
+Hand native drawing review to `@pid-quality-review` and missing protection or
+fail-action requirements to `@safety-depressuring`.
+
 ### Step 1: Identify Control Variables
 
 For each equipment unit, identify:
