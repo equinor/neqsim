@@ -3823,10 +3823,11 @@ public class TPmultiflash extends TPflash {
    * @return true when a qualified aqueous equilibrium was adopted or the EOS water-fugacity screen rejects the trial
    */
   private boolean rescueSupersaturatedGasOilMissingAqueous() {
+    double waterFraction = waterFeedFraction(system);
     if (!system.doMultiPhaseCheck() || system.getNumberOfPhases() != 2 || !system.hasPhaseType(PhaseType.GAS)
         || !system.hasPhaseType(PhaseType.OIL) || system.getMaxNumberOfPhases() < 3 || !system.allowPhaseShift()
         || system.isChemicalSystem() || system.hasIons() || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck()
-        || !system.hasComponent("water") || system.getComponent("water").getz() <= 1.0e-6) {
+        || waterFraction <= 1.0e-6) {
       return false;
     }
     double totalMoles = system.getTotalNumberOfMoles();
@@ -3834,32 +3835,64 @@ public class TPmultiflash extends TPflash {
       return false;
     }
     try {
-      int water = system.getComponent("water").getComponentNumber();
-      ComponentInterface gasWater = system.getPhase("gas").getComponent(water);
-      double gasWaterLogFugacity = Math.log(gasWater.getx()) + gasWater.getLogFugacityCoefficient();
-      if (!Double.isFinite(gasWaterLogFugacity)) {
+      int representativeWater = -1;
+      int positiveWaterOrigins = 0;
+      double gasWaterFugacity = 0.0;
+      for (int component = 0; component < system.getNumberOfComponents(); component++) {
+        ComponentInterface gasOrigin = system.getPhase("gas").getComponent(component);
+        if (isWaterComponent(gasOrigin) && gasOrigin.getx() > 0.0) {
+          representativeWater = representativeWater < 0 ? component : representativeWater;
+          positiveWaterOrigins++;
+          gasWaterFugacity += gasOrigin.getx() * Math.exp(gasOrigin.getLogFugacityCoefficient());
+        }
+      }
+      if (representativeWater < 0 || !(gasWaterFugacity > 0.0) || !Double.isFinite(gasWaterFugacity)) {
         return false;
       }
+      boolean multipleWaterOrigins = positiveWaterOrigins > 1;
+      ComponentInterface gasWater = system.getPhase("gas").getComponent(representativeWater);
+      double gasWaterLogFugacity = multipleWaterOrigins ? Math.log(gasWaterFugacity)
+          : Math.log(gasWater.getx()) + gasWater.getLogFugacityCoefficient();
       int freeSlot = 0;
       while (freeSlot == system.getPhaseIndex(0) || freeSlot == system.getPhaseIndex(1)) {
         freeSlot++;
       }
       // Prefer the eventual full clone when condensation is likely; otherwise screen on one phase.
       // This selects allocation strategy only. The exact EOS fugacity screen below always decides.
-      SystemInterface candidate = preferFullSystemAqueousTrial(gasWater) ? system.clone() : null;
+      double predictorFugacity = multipleWaterOrigins ? gasWaterFugacity
+          : gasWater.getx() * gasWater.getFugacityCoefficient();
+      SystemInterface candidate = preferFullSystemAqueousTrial(gasWater, predictorFugacity) ? system.clone() : null;
       PhaseInterface liquidWaterTrial = candidate == null ? system.getPhases()[freeSlot].clone()
           : candidate.getPhases()[freeSlot];
       liquidWaterTrial.setTemperature(system.getTemperature());
       liquidWaterTrial.setPressure(system.getPressure());
       for (int component = 0; component < system.getNumberOfComponents(); component++) {
-        liquidWaterTrial.getComponent(component).setx(component == water ? 1.0 : 0.0);
+        ComponentInterface entry = liquidWaterTrial.getComponent(component);
+        entry.setx(
+            multipleWaterOrigins && isWaterComponent(entry) ? system.getComponent(component).getz() / waterFraction
+                : component == representativeWater ? 1.0 : 0.0);
       }
       liquidWaterTrial.init(totalMoles, system.getNumberOfComponents(), 1, PhaseType.AQUEOUS, 1.0e-3);
-      // Phase.init prepares all component derivatives; the screen consumes only water's coefficient.
-      liquidWaterTrial.getComponent(water).fugcoef(liquidWaterTrial);
-      double liquidWaterLogFugacity = liquidWaterTrial.getComponent(water).getLogFugacityCoefficient();
-      if (!Double.isFinite(liquidWaterLogFugacity)) {
-        return false;
+      double liquidWaterLogFugacity;
+      if (multipleWaterOrigins) {
+        double liquidWaterFugacity = 0.0;
+        for (int component = 0; component < system.getNumberOfComponents(); component++) {
+          ComponentInterface liquidOrigin = liquidWaterTrial.getComponent(component);
+          if (isWaterComponent(liquidOrigin) && liquidOrigin.getx() > 0.0) {
+            liquidOrigin.fugcoef(liquidWaterTrial);
+            liquidWaterFugacity += liquidOrigin.getx() * Math.exp(liquidOrigin.getLogFugacityCoefficient());
+          }
+        }
+        if (!(liquidWaterFugacity > 0.0) || !Double.isFinite(liquidWaterFugacity)) {
+          return false;
+        }
+        liquidWaterLogFugacity = Math.log(liquidWaterFugacity);
+      } else {
+        liquidWaterTrial.getComponent(representativeWater).fugcoef(liquidWaterTrial);
+        liquidWaterLogFugacity = liquidWaterTrial.getComponent(representativeWater).getLogFugacityCoefficient();
+        if (!Double.isFinite(liquidWaterLogFugacity)) {
+          return false;
+        }
       }
       if (gasWaterLogFugacity <= liquidWaterLogFugacity + 1.0e-8) {
         // The negative screen has handled this endpoint. Do not fall through to a full oil/aqueous trial.
@@ -3868,7 +3901,15 @@ public class TPmultiflash extends TPflash {
 
       double waterInventory = 0.0;
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-        waterInventory += system.getBeta(phase) * system.getPhase(phase).getComponent(water).getx();
+        if (multipleWaterOrigins) {
+          for (int component = 0; component < system.getNumberOfComponents(); component++) {
+            if (isWaterComponent(system.getPhase(phase).getComponent(component))) {
+              waterInventory += system.getBeta(phase) * system.getPhase(phase).getComponent(component).getx();
+            }
+          }
+        } else {
+          waterInventory += system.getBeta(phase) * system.getPhase(phase).getComponent(representativeWater).getx();
+        }
       }
       if (!(waterInventory > 0.0) || !Double.isFinite(waterInventory)) {
         return false;
@@ -3884,17 +3925,32 @@ public class TPmultiflash extends TPflash {
       candidate.addPhase();
       candidate.setPhaseType(aqueous, PhaseType.AQUEOUS);
       candidate.getPhases()[freeSlot] = liquidWaterTrial;
-      double aqueousSeed = Math.min(0.05, 0.5 * Math.min(waterInventory, system.getComponent(water).getz()));
+      double seedableWater = multipleWaterOrigins ? waterFraction : system.getComponent(representativeWater).getz();
+      double aqueousSeed = Math.min(0.05, 0.5 * Math.min(waterInventory, seedableWater));
       for (int phase = 0; phase < aqueous; phase++) {
         double oldBeta = system.getBeta(phase);
-        double removedWater = aqueousSeed * oldBeta * system.getPhase(phase).getComponent(water).getx()
-            / waterInventory;
+        double removedWater;
+        if (multipleWaterOrigins) {
+          removedWater = 0.0;
+          for (int component = 0; component < candidate.getNumberOfComponents(); component++) {
+            if (isWaterComponent(system.getPhase(phase).getComponent(component))) {
+              removedWater += aqueousSeed * oldBeta * system.getPhase(phase).getComponent(component).getx()
+                  / waterInventory;
+            }
+          }
+        } else {
+          removedWater = aqueousSeed * oldBeta * system.getPhase(phase).getComponent(representativeWater).getx()
+              / waterInventory;
+        }
         double newBeta = oldBeta - removedWater;
         candidate.setBeta(phase, newBeta);
         for (int component = 0; component < candidate.getNumberOfComponents(); component++) {
           double inventory = oldBeta * system.getPhase(phase).getComponent(component).getx();
-          candidate.getPhase(phase).getComponent(component)
-              .setx((inventory - (component == water ? removedWater : 0.0)) / newBeta);
+          double removedOrigin = multipleWaterOrigins
+              && isWaterComponent(system.getPhase(phase).getComponent(component))
+                  ? aqueousSeed * inventory / waterInventory
+                  : component == representativeWater ? removedWater : 0.0;
+          candidate.getPhase(phase).getComponent(component).setx((inventory - removedOrigin) / newBeta);
         }
       }
       candidate.setBeta(aqueous, aqueousSeed);
@@ -3941,13 +3997,14 @@ public class TPmultiflash extends TPflash {
    * unavailable vapour pressures retain the detached-phase route; the predictor never rejects or accepts a phase split.
    * </p>
    *
-   * @param gasWater water component in the incumbent gas phase
+   * @param gasWater representative water component in the incumbent gas phase
+   * @param aggregateWaterFugacity sum of water-origin mole fractions times fugacity coefficients
    * @return true when a full candidate clone is likely to be needed
    */
-  private boolean preferFullSystemAqueousTrial(ComponentInterface gasWater) {
+  private boolean preferFullSystemAqueousTrial(ComponentInterface gasWater, double aggregateWaterFugacity) {
     try {
       double saturationPressure = gasWater.getAntoineVaporPressure(system.getTemperature());
-      double waterFugacity = gasWater.getx() * gasWater.getFugacityCoefficient() * system.getPressure();
+      double waterFugacity = aggregateWaterFugacity * system.getPressure();
       return Double.isFinite(saturationPressure) && saturationPressure > 0.0
           && waterFugacity >= 0.8 * saturationPressure;
     } catch (Exception ex) {

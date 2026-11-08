@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
@@ -70,6 +71,33 @@ class TPflashWetCondensateAqueousRecoveryTest {
     assertEquals(originalMoles, actual.getTotalNumberOfMoles(), originalMoles * 1.0e-12);
     assertTrue(actual.getGibbsEnergy() / originalMoles < originalMolarGibbs - 1.0e-6);
     assertEquivalentSplit(reference, actual);
+  }
+
+  /** Recover a gas/oil endpoint containing unequal labelled water origins and one absent origin. */
+  @Test
+  void recoversLabelledWaterOriginsWithoutReplacingGas() {
+    try {
+      double waterRatio = 50.6 / 237.0;
+      SystemInterface reference = fluid(237.0, waterRatio, true);
+      new ThermodynamicOperations(reference).TPflash();
+      assertEquilibrium(reference);
+
+      SystemInterface actual = fluid(237.0, waterRatio, false);
+      splitWaterOrigins(actual);
+      new ThermodynamicOperations(actual).TPflash();
+      assertEquals(2, actual.getNumberOfPhases());
+      assertTrue(actual.hasPhaseType(PhaseType.GAS));
+      assertTrue(actual.hasPhaseType(PhaseType.OIL));
+      assertFalse(actual.hasPhaseType(PhaseType.AQUEOUS));
+      actual.setMultiPhaseCheck(true);
+
+      new TPmultiflash(actual, false).rescueMetastableOilMissingAqueous();
+
+      assertEquilibrium(actual);
+      assertEquivalentAggregateSplit(reference, actual);
+    } finally {
+      EclipseFluidReadWrite.clearCache();
+    }
   }
 
   /**
@@ -220,6 +248,51 @@ class TPflashWetCondensateAqueousRecoveryTest {
   }
 
   /**
+   * Split the existing water inventory into two unequal labelled origins plus one absent origin.
+   *
+   * @param fluid fluid to relabel
+   */
+  private void splitWaterOrigins(SystemInterface fluid) {
+    double waterFraction = TPmultiflash.waterFeedFraction(fluid);
+    int originalComponents = fluid.getNumberOfComponents();
+    int originalWater = fluid.getComponent("water").getComponentNumber();
+    double[] waterInteractionParameters = new double[originalComponents];
+    PhaseEosInterface sourcePhase = (PhaseEosInterface) fluid.getPhase(0);
+    for (int component = 0; component < originalComponents; component++) {
+      waterInteractionParameters[component] = sourcePhase.getEosMixingRule()
+          .getBinaryInteractionParameter(originalWater, component);
+    }
+    fluid.changeComponentName("water", "water_origin_a");
+    fluid.addComponent("water", 0.0);
+    double[] composition = fluid.getMolarComposition();
+    composition[fluid.getComponent("water_origin_a").getComponentNumber()] = 0.7 * waterFraction;
+    composition[fluid.getComponent("water").getComponentNumber()] = 0.3 * waterFraction;
+    fluid.setMolarComposition(composition);
+    fluid.changeComponentName("water", "water_origin_b");
+    fluid.addComponent("water", 0.0);
+    fluid.changeComponentName("water", "water_origin_absent");
+    fluid.setMixingRule(fluid.getMixingRule());
+    int[] waterOrigins = new int[] {fluid.getComponent("water_origin_a").getComponentNumber(),
+        fluid.getComponent("water_origin_b").getComponentNumber(),
+        fluid.getComponent("water_origin_absent").getComponentNumber()};
+    for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+      PhaseEosInterface eosPhase = (PhaseEosInterface) fluid.getPhase(phase);
+      for (int waterOrigin : waterOrigins) {
+        for (int component = 0; component < originalComponents; component++) {
+          eosPhase.getEosMixingRule().setBinaryInteractionParameter(waterOrigin, component,
+              waterInteractionParameters[component]);
+        }
+        for (int otherWaterOrigin : waterOrigins) {
+          eosPhase.getEosMixingRule().setBinaryInteractionParameter(waterOrigin, otherWaterOrigin,
+              waterInteractionParameters[originalWater]);
+        }
+      }
+    }
+    fluid.init(0);
+    assertEquals(waterFraction, TPmultiflash.waterFeedFraction(fluid), 1.0e-12);
+  }
+
+  /**
    * Check phase presence, normalization, inventory closure and interphase chemical potentials.
    *
    * @param fluid converged wet-condensate equilibrium
@@ -230,7 +303,15 @@ class TPflashWetCondensateAqueousRecoveryTest {
     assertTrue(fluid.hasPhaseType(PhaseType.GAS));
     assertTrue(fluid.hasPhaseType(PhaseType.OIL));
     assertTrue(fluid.hasPhaseType(PhaseType.AQUEOUS));
-    assertEquals(0.01394347495, fluid.getPhase("gas").getComponent("water").getx(), 1.0e-8);
+    double gasWaterFraction = 0.0;
+    for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
+      if (TPmultiflash.isWaterComponent(fluid.getPhase("gas").getComponent(component))) {
+        gasWaterFraction += fluid.getPhase("gas").getComponent(component).getx();
+      }
+    }
+    if (waterOriginCount(fluid) == 1) {
+      assertEquals(0.01394347495, gasWaterFraction, 1.0e-8);
+    }
     double betaSum = 0.0;
     for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
       double beta = fluid.getBeta(phase);
@@ -247,16 +328,70 @@ class TPflashWetCondensateAqueousRecoveryTest {
     assertEquals(1.0, betaSum, 1.0e-12);
     for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
       double recovered = 0.0;
-      double reference = Math.log(fluid.getPhase(0).getComponent(component).getx())
-          + fluid.getPhase(0).getComponent(component).getLogFugacityCoefficient();
-      assertTrue(Double.isFinite(reference));
+      double feed = fluid.getComponent(component).getz();
+      double reference = Double.NaN;
+      if (feed > 0.0) {
+        reference = Math.log(fluid.getPhase(0).getComponent(component).getx())
+            + fluid.getPhase(0).getComponent(component).getLogFugacityCoefficient();
+        assertTrue(Double.isFinite(reference));
+      }
       for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
         double fraction = fluid.getPhase(phase).getComponent(component).getx();
         recovered += fluid.getBeta(phase) * fraction;
-        assertEquals(reference,
-            Math.log(fraction) + fluid.getPhase(phase).getComponent(component).getLogFugacityCoefficient(), 1.0e-8);
+        if (feed > 0.0) {
+          assertEquals(reference,
+              Math.log(fraction) + fluid.getPhase(phase).getComponent(component).getLogFugacityCoefficient(), 1.0e-8);
+        }
       }
-      assertEquals(fluid.getComponent(component).getz(), recovered, 1.0e-10);
+      assertEquals(feed, recovered, 1.0e-10);
+    }
+  }
+
+  /**
+   * Count water components independently of their origin labels.
+   *
+   * @param fluid fluid to inspect
+   * @return number of water-origin components
+   */
+  private int waterOriginCount(SystemInterface fluid) {
+    int count = 0;
+    for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
+      if (TPmultiflash.isWaterComponent(fluid.getComponent(component))) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  /**
+   * Compare phase splits after aggregating chemically identical labelled water origins.
+   *
+   * @param expected equilibrium with one unlabelled water component
+   * @param actual equilibrium with multiple labelled water components
+   */
+  private void assertEquivalentAggregateSplit(SystemInterface expected, SystemInterface actual) {
+    assertEquals(expected.getNumberOfPhases(), actual.getNumberOfPhases());
+    assertEquals(expected.getEnthalpy() / expected.getTotalNumberOfMoles(),
+        actual.getEnthalpy() / actual.getTotalNumberOfMoles(), 0.1);
+    for (int phase = 0; phase < expected.getNumberOfPhases(); phase++) {
+      String role = expected.getPhase(phase).getType().getDesc();
+      assertTrue(actual.hasPhaseType(role));
+      int actualPhase = actual.getPhaseNumberOfPhase(role);
+      assertEquals(expected.getBeta(phase), actual.getBeta(actualPhase), 1.0e-5);
+      double actualWater = 0.0;
+      for (int component = 0; component < actual.getNumberOfComponents(); component++) {
+        if (TPmultiflash.isWaterComponent(actual.getPhase(actualPhase).getComponent(component))) {
+          actualWater += actual.getPhase(actualPhase).getComponent(component).getx();
+        }
+      }
+      assertEquals(expected.getPhase(phase).getComponent("water").getx(), actualWater, 1.0e-5);
+      for (int component = 0; component < expected.getNumberOfComponents(); component++) {
+        String name = expected.getComponent(component).getComponentName();
+        if (!"water".equals(name)) {
+          assertEquals(expected.getPhase(phase).getComponent(component).getx(),
+              actual.getPhase(actualPhase).getComponent(name).getx(), 1.0e-5);
+        }
+      }
     }
   }
 
