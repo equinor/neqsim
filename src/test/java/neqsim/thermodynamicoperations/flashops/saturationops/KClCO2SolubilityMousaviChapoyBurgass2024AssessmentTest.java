@@ -31,8 +31,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
-  private static final Logger logger =
-      LogManager.getLogger(KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.class);
+  private static final Logger logger = LogManager
+      .getLogger(KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest.class);
   private static final String RESOURCE = "/data/chemistry_benchmarks/co2_kcl_solubility_mousavi_chapoy_burgass2024.csv";
   private static final String OUTPUT = "target/co2-kcl-solubility-mousavi-chapoy-burgass2024-assessment.csv";
   private static final double WATER_MOLAR_MASS_KG_PER_MOL = 0.01801528;
