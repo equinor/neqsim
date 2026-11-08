@@ -1785,6 +1785,33 @@
       }
     },
     {
+      "id": "scd-pid-dexpi-drawing-package",
+      "title": "Source-bound System Control Diagram companion package",
+      "domain": "engineering",
+      "tool": "inspectApi",
+      "apis": [
+        "neqsim.process.engineering.scd.ScdDesignModel",
+        "neqsim.process.engineering.scd.ScdPackageExporter",
+        "neqsim.process.processmodel.diagram.ScdDiagramRenderer"
+      ],
+      "skills": [
+        "neqsim-pid-process-operations"
+      ],
+      "agents": [
+        "control-system"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/engineering/scd/ScdPackageExporterTest.java"
+      ],
+      "limitations": "Java/source workflow with explicit legacy drawing basis and project template/terminal/type inputs. SCD semantics use an identified sidecar; no native DEXPI SCD schema, full normative template behaviour, SCD import, PLC code generation or safety approval.",
+      "evidence": {
+        "route": "declared",
+        "testSources": "present",
+        "execution": "not_recorded",
+        "engineeringQualification": "not_assessed"
+      }
+    },
+    {
       "id": "separator-energy-diagnostics",
       "title": "Opt-in separator cumulative energy accounting",
       "domain": "dynamics",
@@ -3235,6 +3262,8 @@
     {"id":"neqsim.process.engineering.safety.lifecycle.ProtectionLayerDefinition","kind":"class","source":"src/main/java/neqsim/process/engineering/safety/lifecycle/ProtectionLayerDefinition.java","sourceDigest":"abc9cb372c3649cbd7f369da51641b00efef322e1458034c6628bff0ad961cf1","domain":"process","skills":["neqsim-process-safety"],"agents":["consequence-analysis","process-model","root-cause","safety-depressuring","standards-review"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.engineering.safety.lifecycle.SafetyRequirementSpecificationDraft","kind":"class","source":"src/main/java/neqsim/process/engineering/safety/lifecycle/SafetyRequirementSpecificationDraft.java","sourceDigest":"618e8015f4e46466fe03a7d8f011ac9a684ff35d95b0ee158fd2e87bc1e2d8b6","domain":"process","skills":["neqsim-process-safety"],"agents":["consequence-analysis","process-model","root-cause","safety-depressuring","standards-review"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.engineering.safety.lifecycle.SafetyStudyRevalidationPlanner","kind":"class","source":"src/main/java/neqsim/process/engineering/safety/lifecycle/SafetyStudyRevalidationPlanner.java","sourceDigest":"83e901b04b120abef3a0470c97b9e793890f7f61c787337074b9026133146d0e","domain":"process","skills":["neqsim-engineering-design-package","neqsim-process-safety"],"agents":["consequence-analysis","engineering-deliverables","process-model","root-cause","safety-depressuring","standards-review"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.engineering.scd.ScdDesignModel","kind":"class","source":"src/main/java/neqsim/process/engineering/scd/ScdDesignModel.java","sourceDigest":"ce2cbee797231d16b32695d9ddb0bb9ea4b8fa61508cf71888b504753d4f6e06","domain":"process","skills":[],"agents":[],"capabilities":["scd-pid-dexpi-drawing-package"],"disposition":"registered_anchor"},
+    {"id":"neqsim.process.engineering.scd.ScdPackageExporter","kind":"class","source":"src/main/java/neqsim/process/engineering/scd/ScdPackageExporter.java","sourceDigest":"a24aebf836ad2d8dd33f67207945e0e9e18919c759d4215d3d514d61570bec16","domain":"process","skills":[],"agents":[],"capabilities":["scd-pid-dexpi-drawing-package"],"disposition":"registered_anchor"},
     {"id":"neqsim.process.engineering.validation.EngineeringPackageValidationException","kind":"class","source":"src/main/java/neqsim/process/engineering/validation/EngineeringPackageValidationException.java","sourceDigest":"460399f2bb4ffe50ae5b915c18c4d2150568f998ef3f7c5150944395b8d613d3","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.engineering.validation.EngineeringPackageValidationReport","kind":"class","source":"src/main/java/neqsim/process/engineering/validation/EngineeringPackageValidationReport.java","sourceDigest":"c3caea3c1ab1bd56b06872a2257648e729c7998f26e3d59c721ef6f942be9ab6","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.engineering.validation.EngineeringPackageValidator","kind":"class","source":"src/main/java/neqsim/process/engineering/validation/EngineeringPackageValidator.java","sourceDigest":"8523bdf51395f3b151c02127ac4715e1d1d7195baa83a6ef3f5974affc0e268e","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
@@ -4641,6 +4670,7 @@
     {"id":"neqsim.process.processmodel.diagram.ProcessDiagramGraphAdapter","kind":"class","source":"src/main/java/neqsim/process/processmodel/diagram/ProcessDiagramGraphAdapter.java","sourceDigest":"672e02da7179a6a1152acf3095b382c1b57dc2be45aa73ab3a2cda235d17eb1d","domain":"process","skills":["neqsim-plant-layout-study"],"agents":["plant-layout-study"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.processmodel.diagram.ProfessionalPidDiagramRenderer","kind":"class","source":"src/main/java/neqsim/process/processmodel/diagram/ProfessionalPidDiagramRenderer.java","sourceDigest":"7b14bdb33aadce132b5d9dcd7057372fc316f2778488204f7bd359da4cecabb9","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.processmodel.diagram.ProfessionalPidSymbolLibrary","kind":"class","source":"src/main/java/neqsim/process/processmodel/diagram/ProfessionalPidSymbolLibrary.java","sourceDigest":"1c7db672c059fbc9333f37562cc15496fc06be045635cb71664dc02bf072c651","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.processmodel.diagram.ScdDiagramRenderer","kind":"class","source":"src/main/java/neqsim/process/processmodel/diagram/ScdDiagramRenderer.java","sourceDigest":"629a2b7d38f4648328f008d662bf3074962e61537d5282ee5f628bfed67c9a45","domain":"process","skills":[],"agents":[],"capabilities":["scd-pid-dexpi-drawing-package"],"disposition":"registered_anchor"},
     {"id":"neqsim.process.processmodel.graph.ProcessEdge","kind":"class","source":"src/main/java/neqsim/process/processmodel/graph/ProcessEdge.java","sourceDigest":"b00e46357b1b4db3a828807723736d8efe8020e41426859f50486521cd71bfd2","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.processmodel.graph.ProcessGraph","kind":"class","source":"src/main/java/neqsim/process/processmodel/graph/ProcessGraph.java","sourceDigest":"419b87864e97845e91d2e791f15f51ddc8a4a4ec74852cb119f74a9bfcb067c4","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.processmodel.graph.ProcessGraphBuilder","kind":"class","source":"src/main/java/neqsim/process/processmodel/graph/ProcessGraphBuilder.java","sourceDigest":"67a1a26701d1945d76e7c44de28b5886bdcbd1b11f3a01be94daa0db9e4d80c4","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
