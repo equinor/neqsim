@@ -1783,6 +1783,8 @@ network.addCompressibleNode("manifold", manifoldVolume);
 network.addFixedPressureNode("separator", 55.0e5);
 network.addPipe("flowline A", "well", "manifold", flowlineA);
 network.addPipe("riser", "manifold", "separator", riser);
+network.setBranchSubcycles("flowline A", 4);
+network.setBranchSubcycles("riser", 2);
 
 network.runTransient(0.1, UUID.randomUUID());
 double nodePressure = network.getNodePressurePa("manifold");
@@ -1797,6 +1799,16 @@ candidate configuration are validated before publication. Only then are all pipe
 accepted. A later pipe-publication failure compensates earlier pipe commits in reverse order, while
 node state, network reports and clocks remain unchanged. Branch iteration order therefore does not
 become an implicit pressure solve or partial-commit order.
+
+`setBranchSubcycles(branchName, count)` refines selected branches through equal detached intervals
+without changing the graph or outer reporting step. Each subcycle uses the node pressure and
+thermodynamic donor frozen for the current outer trial. The pipe aggregates phase mass, named
+components, thermal energy and conservative energy across the subcycles; the network then consumes
+one outer-interval ledger and publishes all branches and nodes once. Different branches may use
+different positive integer counts, and a count of one follows the original candidate path exactly.
+This is synchronous branch-local numerical refinement. It is not asynchronous multirate boundary
+coupling, and it does not qualify the selected time step or hydraulic closures.
+
 The whole-network report includes pipe and node inventories, fixed-boundary transfers, phase
 sources, and gas/oil/water/liquid/total residuals. Conservative storage nodes additionally retain
 named-component and internal-energy inventories. When an `UpstreamCompressibleVolume` has positive
@@ -1857,11 +1869,12 @@ accepted junction in deterministic registration order. Every inter-junction pipe
 prepared exactly once for each global trial and no branch or junction state is published before all
 junction and whole-network closure checks pass.
 
-The multi-junction contract does not yet provide branch-local subcycling or an independently
-qualified predictive restart/refill model. Conservative storage and algebraic fixtures provide
-synthetic closure, reversal-order and serialization evidence only. Refine the common reporting
-interval and every branch mesh for the intended field case, and retain external physical/commercial
-comparison evidence before design use.
+The multi-junction contract supports the same frozen-boundary branch subcycling, but it does not yet
+provide asynchronous multirate coupling or an independently qualified predictive restart/refill
+model. Conservative storage and algebraic fixtures provide synthetic closure, reversal-order,
+subcycle-aggregation and serialization evidence only. Refine the common reporting interval, each
+branch subcycle factor and every branch mesh for the intended field case, and retain external
+physical/commercial comparison evidence before design use.
 
 ### Choosing Time Step, Sections, and Pipeline Length
 

@@ -6054,7 +6054,27 @@ public class TwoFluidPipe extends Pipeline {
    * @throws IllegalStateException if initialization or transactional serialization support is missing
    */
   public synchronized TransientCandidate prepareTransientCandidate(double dt, UUID id) {
-    return prepareTransientCandidateInternal(dt, id, Double.NaN, Double.NaN, null, null, false);
+    return prepareTransientCandidate(dt, id, 1);
+  }
+
+  /**
+   * Advance one detached candidate through an integer number of equal subcycles.
+   *
+   * <p>
+   * The candidate remains one outer-interval transaction: no subcycle is published to the live pipe. Boundary states
+   * remain frozen for the outer interval, while mass, component, thermal-energy, and conservative-energy reports are
+   * accumulated across all completed subcycles. A value of one follows the original single-interval path exactly.
+   * </p>
+   *
+   * @param dt requested outer interval in seconds
+   * @param id calculation identifier
+   * @param subcycles positive number of equal detached subcycles
+   * @return owner-bound candidate covering the complete outer interval
+   * @throws IllegalArgumentException if subcycles is not positive or the subcycle interval cannot advance finite clocks
+   * @throws IllegalStateException if initialization or transactional serialization support is missing
+   */
+  public synchronized TransientCandidate prepareTransientCandidate(double dt, UUID id, int subcycles) {
+    return prepareTransientCandidateInternal(dt, id, Double.NaN, Double.NaN, null, null, false, subcycles);
   }
 
   /**
@@ -6080,6 +6100,31 @@ public class TwoFluidPipe extends Pipeline {
    */
   public synchronized TransientCandidate prepareTransientCandidate(double dt, UUID id, double inletPressurePa,
       double outletPressurePa, SystemInterface inletBoundaryFluid, SystemInterface outletBoundaryFluid) {
+    return prepareTransientCandidate(dt, id, inletPressurePa, outletPressurePa, inletBoundaryFluid, outletBoundaryFluid,
+        1);
+  }
+
+  /**
+   * Advance one detached, fixed-boundary candidate through equal subcycles.
+   *
+   * <p>
+   * Trial pressures and donor fluids are frozen over the complete outer interval. The returned token contains one
+   * aggregate conservative ledger and can be accepted or rejected only as a whole.
+   * </p>
+   *
+   * @param dt requested outer interval in seconds
+   * @param id calculation identifier
+   * @param inletPressurePa trial inlet pressure in Pa
+   * @param outletPressurePa trial outlet pressure in Pa
+   * @param inletBoundaryFluid optional inlet thermodynamic donor, or {@code null}
+   * @param outletBoundaryFluid optional reversed-outlet donor, or {@code null}
+   * @param subcycles positive number of equal detached subcycles
+   * @return owner-bound candidate covering the complete outer interval
+   * @throws IllegalArgumentException if pressures or subcycles are invalid
+   * @throws IllegalStateException if initialization or transactional serialization support is missing
+   */
+  public synchronized TransientCandidate prepareTransientCandidate(double dt, UUID id, double inletPressurePa,
+      double outletPressurePa, SystemInterface inletBoundaryFluid, SystemInterface outletBoundaryFluid, int subcycles) {
     if (!Double.isFinite(inletPressurePa) || inletPressurePa <= 0.0 || !Double.isFinite(outletPressurePa)
         || outletPressurePa <= 0.0) {
       throw new IllegalArgumentException("Detached candidate pressures must be positive and finite");
@@ -6087,7 +6132,7 @@ public class TwoFluidPipe extends Pipeline {
     validateOptionalTransactionalFluid(inletBoundaryFluid);
     validateOptionalTransactionalFluid(outletBoundaryFluid);
     return prepareTransientCandidateInternal(dt, id, inletPressurePa, outletPressurePa, inletBoundaryFluid,
-        outletBoundaryFluid, true);
+        outletBoundaryFluid, true, subcycles);
   }
 
   /**
@@ -6100,11 +6145,12 @@ public class TwoFluidPipe extends Pipeline {
    * @param inletBoundaryFluid optional detached inlet fluid
    * @param outletBoundaryFluid optional detached outlet donor
    * @param useDetachedBoundaries true to apply the detached boundary configuration
+   * @param subcycles positive number of equal detached subcycles
    * @return owner-bound transient candidate
    */
   private TransientCandidate prepareTransientCandidateInternal(double dt, UUID id, double inletPressurePa,
       double outletPressurePa, SystemInterface inletBoundaryFluid, SystemInterface outletBoundaryFluid,
-      boolean useDetachedBoundaries) {
+      boolean useDetachedBoundaries, int subcycles) {
     validateOutletTakeoffCompatibility();
     if (useConservativeEnergyRecovery) {
       validateConservativeEnergyConfiguration();
@@ -6113,8 +6159,13 @@ public class TwoFluidPipe extends Pipeline {
       throw new IllegalStateException("Transactional transient simulation requires a concrete TwoFluidPipe; "
           + "subclasses need an explicit snapshot and commit contract");
     }
-    if (!Double.isFinite(dt) || dt <= 0.0 || !Double.isFinite(simulationTime + dt)
-        || simulationTime + dt <= simulationTime || !Double.isFinite(time + dt) || time + dt <= time) {
+    if (subcycles < 1) {
+      throw new IllegalArgumentException("Transient candidate subcycles must be positive");
+    }
+    double subcycleInterval = dt / subcycles;
+    if (!Double.isFinite(dt) || dt <= 0.0 || !Double.isFinite(subcycleInterval) || subcycleInterval <= 0.0
+        || !Double.isFinite(simulationTime + dt) || simulationTime + dt <= simulationTime || !Double.isFinite(time + dt)
+        || time + dt <= time) {
       throw new IllegalArgumentException("Transient time step must advance both finite clocks");
     }
     if (sections == null || sections.length == 0 || inStream == null || outStream == null) {
@@ -6152,11 +6203,7 @@ public class TwoFluidPipe extends Pipeline {
     candidate.sections = getSectionSnapshots();
     // Java serialization omits this adaptive history; a candidate must retain it.
     candidate.adaptiveDtFactor = adaptiveDtFactor;
-    if (unsplitTransientSolver == null) {
-      candidate.runTransientCandidate(dt, id);
-    } else {
-      candidate.runUnsplitTransientCandidate(dt, id);
-    }
+    candidate.runDetachedSubcycles(subcycleInterval, subcycles, id);
     if (upstreamCompressibleVolume != null) {
       upstreamCompressibleVolume.validateCandidateConfiguration(candidate.upstreamCompressibleVolume);
     }
@@ -6164,6 +6211,318 @@ public class TwoFluidPipe extends Pipeline {
       thermalCalculator.validateCandidateConfiguration(candidate.thermalCalculator);
     }
     return new TransientCandidate(this, candidate, baseState);
+  }
+
+  /** Run detached subcycles and replace per-subcycle diagnostics with one outer-interval ledger. */
+  private void runDetachedSubcycles(double subcycleInterval, int subcycles, UUID id) {
+    if (subcycles == 1) {
+      if (unsplitTransientSolver == null) {
+        runTransientCandidate(subcycleInterval, id);
+      } else {
+        runUnsplitTransientCandidate(subcycleInterval, id);
+      }
+      return;
+    }
+    int componentHistorySize = componentConservationReports.size();
+    List<TwoFluidMassBalanceReport> massReports = new ArrayList<TwoFluidMassBalanceReport>(subcycles);
+    List<TwoFluidComponentConservationReport> componentReports = new ArrayList<TwoFluidComponentConservationReport>(
+        subcycles);
+    List<TwoFluidConservativeEnergyReport> conservativeEnergyReports = new ArrayList<TwoFluidConservativeEnergyReport>(
+        subcycles);
+    List<TwoFluidThermalEnergyBalanceReport> thermalEnergyReports = new ArrayList<TwoFluidThermalEnergyBalanceReport>(
+        subcycles);
+    for (int subcycle = 0; subcycle < subcycles; subcycle++) {
+      if (unsplitTransientSolver == null) {
+        runTransientCandidate(subcycleInterval, id);
+      } else {
+        runUnsplitTransientCandidate(subcycleInterval, id);
+      }
+      massReports.add(lastMassBalanceReport);
+      componentReports.add(lastComponentConservationReport);
+      conservativeEnergyReports.add(lastConservativeEnergyReport);
+      thermalEnergyReports.add(lastThermalEnergyBalanceReport);
+    }
+    lastMassBalanceReport = aggregateMassReports(massReports);
+    lastComponentConservationReport = aggregateComponentReports(componentReports);
+    lastConservativeEnergyReport = aggregateConservativeEnergyReports(conservativeEnergyReports);
+    lastThermalEnergyBalanceReport = aggregateThermalEnergyReports(thermalEnergyReports);
+    if (storeComponentConservationHistory && lastComponentConservationReport != null) {
+      while (componentConservationReports.size() > componentHistorySize) {
+        componentConservationReports.remove(componentConservationReports.size() - 1);
+        componentConservationTimes.remove(componentConservationTimes.size() - 1);
+      }
+      componentConservationReports.add(lastComponentConservationReport);
+      componentConservationTimes.add(simulationTime);
+    }
+  }
+
+  /** Combine phase-mass reports from contiguous detached subcycles. */
+  private static TwoFluidMassBalanceReport aggregateMassReports(List<TwoFluidMassBalanceReport> reports) {
+    TwoFluidMassBalanceReport first = reports.get(0);
+    TwoFluidMassBalanceReport last = reports.get(reports.size() - 1);
+    double elapsed = 0.0;
+    int acceptedSubsteps = 0;
+    double[] initial = massPhaseValues(first, true);
+    double[] finalMass = massPhaseValues(last, false);
+    double[] inlet = new double[3];
+    double[] outlet = new double[3];
+    double[] source = new double[3];
+    for (TwoFluidMassBalanceReport report : reports) {
+      if (report == null) {
+        throw new IllegalStateException("A detached subcycle returned no mass-balance report");
+      }
+      elapsed += report.getElapsedTimeSeconds();
+      acceptedSubsteps = Math.addExact(acceptedSubsteps, report.getAcceptedSubsteps());
+      for (int phase = 0; phase < 3; phase++) {
+        TwoFluidMassBalanceReport.Phase identity = massPhase(phase);
+        inlet[phase] += report.getInletMassKg(identity);
+        outlet[phase] += report.getOutletMassKg(identity);
+        source[phase] += report.getSourceMassKg(identity);
+      }
+    }
+    return new TwoFluidMassBalanceReport(elapsed, acceptedSubsteps, initial, finalMass, inlet, outlet, source);
+  }
+
+  /** Extract gas, oil, and water inventory from one mass report. */
+  private static double[] massPhaseValues(TwoFluidMassBalanceReport report, boolean initial) {
+    if (report == null) {
+      throw new IllegalStateException("A detached subcycle returned no mass-balance report");
+    }
+    double[] values = new double[3];
+    for (int phase = 0; phase < values.length; phase++) {
+      TwoFluidMassBalanceReport.Phase identity = massPhase(phase);
+      values[phase] = initial ? report.getInitialMassKg(identity) : report.getFinalMassKg(identity);
+    }
+    return values;
+  }
+
+  /** Map a hydrodynamic phase index to the mass-report identity. */
+  private static TwoFluidMassBalanceReport.Phase massPhase(int phase) {
+    switch (phase) {
+    case 0:
+      return TwoFluidMassBalanceReport.Phase.GAS;
+    case 1:
+      return TwoFluidMassBalanceReport.Phase.OIL;
+    case 2:
+      return TwoFluidMassBalanceReport.Phase.WATER;
+    default:
+      throw new IllegalArgumentException("Hydrodynamic phase index must be 0, 1, or 2");
+    }
+  }
+
+  /** Combine component ledgers while retaining the final profiles and phase inventories. */
+  private TwoFluidComponentConservationReport aggregateComponentReports(
+      List<TwoFluidComponentConservationReport> reports) {
+    TwoFluidComponentConservationReport first = reports.get(0);
+    if (first == null) {
+      requireConsistentNullReports(reports, "component-conservation");
+      return null;
+    }
+    TwoFluidComponentConservationReport last = reports.get(reports.size() - 1);
+    String[] names = first.getComponentNames();
+    int count = names.length;
+    double elapsed = 0.0;
+    int acceptedSubsteps = 0;
+    double[][] inletPhase = new double[3][count];
+    double[][] outletPhase = new double[3][count];
+    double[][] transfer = new double[3][count];
+    double maximumTransferResidual = 0.0;
+    double minimumFraction = Double.POSITIVE_INFINITY;
+    double maximumFraction = Double.NEGATIVE_INFINITY;
+    double maximumFractionSumError = 0.0;
+    double maximumSynchronizationError = 0.0;
+    double latentHeat = 0.0;
+    boolean converged = true;
+    for (TwoFluidComponentConservationReport report : reports) {
+      if (report == null || !Arrays.equals(names, report.getComponentNames())) {
+        throw new IllegalStateException("Detached subcycles returned inconsistent component ledgers");
+      }
+      elapsed += report.getElapsedTimeSeconds();
+      acceptedSubsteps = Math.addExact(acceptedSubsteps, report.getAcceptedSubsteps());
+      converged &= report.isConverged();
+      minimumFraction = Math.min(minimumFraction, report.getMinimumMassFraction());
+      maximumFraction = Math.max(maximumFraction, report.getMaximumMassFraction());
+      maximumFractionSumError = Math.max(maximumFractionSumError, report.getMaximumMassFractionSumError());
+      maximumSynchronizationError = Math.max(maximumSynchronizationError,
+          report.getMaximumPhaseMassSynchronizationErrorKg());
+      maximumTransferResidual = Math.max(maximumTransferResidual, report.getMaximumInterphaseTransferResidualKg());
+      latentHeat += report.getInterphaseLatentHeatEnergyJ();
+      for (int phase = 0; phase < 3; phase++) {
+        TwoFluidComponentConservationReport.Phase identity = componentPhase(phase);
+        addValues(inletPhase[phase], report.getInletBoundaryMassKg(identity));
+        addValues(outletPhase[phase], report.getOutletBoundaryMassKg(identity));
+        for (int component = 0; component < count; component++) {
+          transfer[phase][component] += report.getInterphaseTransferKg(identity, names[component]);
+        }
+      }
+    }
+    double[] initial = first.getInitialInventoryKg();
+    double[] finalMass = last.getFinalInventoryKg();
+    double[] inlet = sumPhaseValues(inletPhase);
+    double[] outlet = sumPhaseValues(outletPhase);
+    double[] residual = new double[count];
+    double[] relative = new double[count];
+    double maximumRelative = 0.0;
+    double synchronizationScale = 0.0;
+    double transferScale = 1.0e-12;
+    for (int component = 0; component < count; component++) {
+      residual[component] = finalMass[component] - initial[component] - inlet[component] + outlet[component];
+      double scale = Math.max(Math.abs(initial[component]), Math.abs(finalMass[component]));
+      scale = Math.max(scale, Math.abs(inlet[component]));
+      scale = Math.max(scale, Math.abs(outlet[component]));
+      scale = Math.max(scale, 1.0e-12);
+      relative[component] = residual[component] / scale;
+      maximumRelative = Math.max(maximumRelative, Math.abs(relative[component]));
+      synchronizationScale += finalMass[component];
+      double transferResidual = transfer[0][component] + transfer[1][component] + transfer[2][component];
+      maximumTransferResidual = Math.max(maximumTransferResidual, Math.abs(transferResidual));
+      for (int phase = 0; phase < 3; phase++) {
+        transferScale = Math.max(transferScale, Math.abs(transfer[phase][component]));
+      }
+    }
+    double[][] finalPhase = new double[3][count];
+    double[][][] profiles = new double[3][][];
+    for (int phase = 0; phase < 3; phase++) {
+      TwoFluidComponentConservationReport.Phase identity = componentPhase(phase);
+      profiles[phase] = last.getPhaseMassFractionProfile(identity);
+      for (int component = 0; component < count; component++) {
+        finalPhase[phase][component] = last.getFinalPhaseInventoryKg(identity, names[component]);
+      }
+    }
+    converged &= maximumRelative <= componentConservationTolerance;
+    converged &= maximumTransferResidual <= componentConservationTolerance * transferScale;
+    converged &= minimumFraction >= -componentConservationTolerance;
+    converged &= maximumFraction <= 1.0 + componentConservationTolerance;
+    converged &= maximumFractionSumError <= componentConservationTolerance;
+    synchronizationScale = Math.max(1.0e-12, synchronizationScale);
+    converged &= maximumSynchronizationError <= componentConservationTolerance * synchronizationScale;
+    String message = converged ? "Detached component subcycles converged over the outer interval"
+        : "Detached component subcycle aggregate failed conservation or boundedness checks";
+    return new TwoFluidComponentConservationReport(elapsed, acceptedSubsteps, names, initial, finalMass, inlet, outlet,
+        residual, relative, maximumRelative, finalPhase, transfer, maximumTransferResidual, profiles, minimumFraction,
+        maximumFraction, maximumFractionSumError, maximumSynchronizationError, latentHeat, inletPhase, outletPhase,
+        converged, message);
+  }
+
+  /** Map a hydrodynamic phase index to the component-report identity. */
+  private static TwoFluidComponentConservationReport.Phase componentPhase(int phase) {
+    switch (phase) {
+    case 0:
+      return TwoFluidComponentConservationReport.Phase.GAS;
+    case 1:
+      return TwoFluidComponentConservationReport.Phase.OIL;
+    case 2:
+      return TwoFluidComponentConservationReport.Phase.WATER;
+    default:
+      throw new IllegalArgumentException("Hydrodynamic phase index must be 0, 1, or 2");
+    }
+  }
+
+  /** Combine conservative-energy ledgers from contiguous detached subcycles. */
+  private static TwoFluidConservativeEnergyReport aggregateConservativeEnergyReports(
+      List<TwoFluidConservativeEnergyReport> reports) {
+    TwoFluidConservativeEnergyReport first = reports.get(0);
+    if (first == null) {
+      requireConsistentNullReports(reports, "conservative-energy");
+      return null;
+    }
+    TwoFluidConservativeEnergyReport last = reports.get(reports.size() - 1);
+    double elapsed = 0.0;
+    double[] inletPhase = new double[3];
+    double[] outletPhase = new double[3];
+    double gravity = 0.0;
+    double wallHeat = 0.0;
+    double maximumVolumeResidual = 0.0;
+    double maximumThermodynamicResidual = 0.0;
+    for (TwoFluidConservativeEnergyReport report : reports) {
+      if (report == null) {
+        throw new IllegalStateException("Detached subcycles returned inconsistent conservative-energy ledgers");
+      }
+      elapsed += report.getElapsedTimeSeconds();
+      addValues(inletPhase, report.getInletPhaseAdvectedEnergyJ());
+      addValues(outletPhase, report.getOutletPhaseAdvectedEnergyJ());
+      gravity += report.getGravitationalWorkJ();
+      wallHeat += report.getWallHeatToFluidJ();
+      maximumVolumeResidual = Math.max(maximumVolumeResidual, report.getMaxRelativeVolumeResidual());
+      maximumThermodynamicResidual = Math.max(maximumThermodynamicResidual,
+          report.getMaxRelativeThermodynamicEnergyResidual());
+    }
+    double inlet = sumValues(inletPhase);
+    double outlet = sumValues(outletPhase);
+    return new TwoFluidConservativeEnergyReport(elapsed, first.getInitialEnergyJ(), last.getFinalEnergyJ(), inlet,
+        outlet, inletPhase, outletPhase, gravity, wallHeat, maximumVolumeResidual, maximumThermodynamicResidual);
+  }
+
+  /** Combine thermal-energy ledgers from contiguous detached subcycles. */
+  private static TwoFluidThermalEnergyBalanceReport aggregateThermalEnergyReports(
+      List<TwoFluidThermalEnergyBalanceReport> reports) {
+    TwoFluidThermalEnergyBalanceReport first = reports.get(0);
+    if (first == null) {
+      requireConsistentNullReports(reports, "thermal-energy");
+      return null;
+    }
+    double elapsed = 0.0;
+    int acceptedSubsteps = 0;
+    double fluid = 0.0;
+    double wall = 0.0;
+    double advection = 0.0;
+    double jouleThomson = 0.0;
+    double latent = 0.0;
+    double ambient = 0.0;
+    double electrical = 0.0;
+    for (TwoFluidThermalEnergyBalanceReport report : reports) {
+      if (report == null) {
+        throw new IllegalStateException("Detached subcycles returned inconsistent thermal-energy ledgers");
+      }
+      elapsed += report.getElapsedTimeSeconds();
+      acceptedSubsteps = Math.addExact(acceptedSubsteps, report.getAcceptedSubsteps());
+      fluid += report.getFluidEnergyChangeJ();
+      wall += report.getWallEnergyChangeJ();
+      advection += report.getSensibleAdvectionEnergyJ();
+      jouleThomson += report.getJouleThomsonEnergyJ();
+      latent += report.getLatentHeatEnergyJ();
+      ambient += report.getAmbientHeatLossJ();
+      electrical += report.getDirectElectricalHeatingEnergyJ();
+    }
+    return new TwoFluidThermalEnergyBalanceReport(elapsed, acceptedSubsteps, fluid, wall, advection, jouleThomson,
+        latent, ambient, electrical);
+  }
+
+  /** Require every optional subcycle report to be absent when the first report is absent. */
+  private static void requireConsistentNullReports(List<?> reports, String reportName) {
+    for (Object report : reports) {
+      if (report != null) {
+        throw new IllegalStateException("Detached subcycles returned inconsistent " + reportName + " ledgers");
+      }
+    }
+  }
+
+  /** Add one same-length vector into another. */
+  private static void addValues(double[] target, double[] values) {
+    if (target.length != values.length) {
+      throw new IllegalStateException("Detached subcycle ledger dimensions changed");
+    }
+    for (int index = 0; index < target.length; index++) {
+      target[index] += values[index];
+    }
+  }
+
+  /** Sum phase-by-component values into a component vector. */
+  private static double[] sumPhaseValues(double[][] values) {
+    double[] totals = new double[values[0].length];
+    for (double[] phaseValues : values) {
+      addValues(totals, phaseValues);
+    }
+    return totals;
+  }
+
+  /** Sum one vector. */
+  private static double sumValues(double[] values) {
+    double total = 0.0;
+    for (double value : values) {
+      total += value;
+    }
+    return total;
   }
 
   /** Validate one optional detached-boundary thermodynamic fluid. */
