@@ -3,6 +3,7 @@ package neqsim.process.safety.scenario;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
@@ -32,11 +33,18 @@ public final class DynamicScenarioCriterion implements Serializable {
     double extract(ProcessSystem process);
   }
 
+  /** Extracts a scalar observation from an isolated multi-area process model. */
+  public interface ProcessModelExtractor extends Serializable {
+    double extract(ProcessModel model);
+  }
+
   private final String id;
   private final String name;
   private final String unit;
   private final String extractorDefinitionId;
   private final Extractor extractor;
+  private final ProcessModelExtractor processModelExtractor;
+  private final DynamicSafetyScenario.ExecutionTarget executionTarget;
   private final Double lowerLimit;
   private final Double upperLimit;
   private final double deadlineSeconds;
@@ -54,6 +62,8 @@ public final class DynamicScenarioCriterion implements Serializable {
     unit = requireText(builder.unit, "unit");
     extractorDefinitionId = requireText(builder.extractorDefinitionId, "extractorDefinitionId");
     extractor = builder.extractor;
+    processModelExtractor = builder.processModelExtractor;
+    executionTarget = builder.executionTarget;
     lowerLimit = builder.lowerLimit;
     upperLimit = builder.upperLimit;
     deadlineSeconds = builder.deadlineSeconds;
@@ -80,8 +90,50 @@ public final class DynamicScenarioCriterion implements Serializable {
     return new Builder(id, name, unit, extractorDefinitionId, extractor);
   }
 
+  /**
+   * Creates a multi-area criterion builder.
+   *
+   * @param id criterion identifier
+   * @param name criterion name
+   * @param unit observation unit
+   * @param extractor scalar model observation
+   * @return criterion builder
+   */
+  public static Builder processModelBuilder(String id, String name, String unit, ProcessModelExtractor extractor) {
+    return new Builder(id, name, unit, "UNSPECIFIED", extractor);
+  }
+
+  /**
+   * Creates a multi-area criterion builder with an explicit observation definition identity.
+   *
+   * @param id criterion identifier
+   * @param name criterion name
+   * @param unit observation unit
+   * @param extractorDefinitionId stable identifier for the observation implementation and revision
+   * @param extractor scalar model observation
+   * @return criterion builder
+   */
+  public static Builder processModelBuilder(String id, String name, String unit, String extractorDefinitionId,
+      ProcessModelExtractor extractor) {
+    return new Builder(id, name, unit, extractorDefinitionId, extractor);
+  }
+
   double extract(ProcessSystem process) {
+    if (getExecutionTarget() != DynamicSafetyScenario.ExecutionTarget.PROCESS_SYSTEM) {
+      throw new IllegalStateException("Criterion " + id + " requires a ProcessModel");
+    }
     double value = extractor.extract(process);
+    if (!Double.isFinite(value)) {
+      throw new IllegalStateException("Criterion " + id + " returned a non-finite value");
+    }
+    return value;
+  }
+
+  double extract(ProcessModel model) {
+    if (getExecutionTarget() != DynamicSafetyScenario.ExecutionTarget.PROCESS_MODEL) {
+      throw new IllegalStateException("Criterion " + id + " requires a ProcessSystem");
+    }
+    double value = processModelExtractor.extract(model);
     if (!Double.isFinite(value)) {
       throw new IllegalStateException("Criterion " + id + " returned a non-finite value");
     }
@@ -110,6 +162,11 @@ public final class DynamicScenarioCriterion implements Serializable {
     return extractorDefinitionId;
   }
 
+  /** @return process container required by this observation */
+  public DynamicSafetyScenario.ExecutionTarget getExecutionTarget() {
+    return executionTarget == null ? DynamicSafetyScenario.ExecutionTarget.PROCESS_SYSTEM : executionTarget;
+  }
+
   public double getDeadlineSeconds() {
     return deadlineSeconds;
   }
@@ -133,6 +190,7 @@ public final class DynamicScenarioCriterion implements Serializable {
     result.put("name", name);
     result.put("unit", unit);
     result.put("extractorDefinitionId", extractorDefinitionId);
+    result.put("executionTarget", getExecutionTarget().name());
     result.put("lowerLimit", lowerLimit);
     result.put("upperLimit", upperLimit);
     result.put("deadlineSeconds", Double.valueOf(deadlineSeconds));
@@ -153,6 +211,8 @@ public final class DynamicScenarioCriterion implements Serializable {
     private final String unit;
     private final String extractorDefinitionId;
     private final Extractor extractor;
+    private final ProcessModelExtractor processModelExtractor;
+    private final DynamicSafetyScenario.ExecutionTarget executionTarget;
     private Double lowerLimit;
     private Double upperLimit;
     private double deadlineSeconds;
@@ -168,6 +228,22 @@ public final class DynamicScenarioCriterion implements Serializable {
       this.unit = unit;
       this.extractorDefinitionId = requireText(extractorDefinitionId, "extractorDefinitionId");
       this.extractor = extractor;
+      this.processModelExtractor = null;
+      this.executionTarget = DynamicSafetyScenario.ExecutionTarget.PROCESS_SYSTEM;
+    }
+
+    private Builder(String id, String name, String unit, String extractorDefinitionId,
+        ProcessModelExtractor extractor) {
+      if (extractor == null) {
+        throw new IllegalArgumentException("extractor must not be null");
+      }
+      this.id = id;
+      this.name = name;
+      this.unit = unit;
+      this.extractorDefinitionId = requireText(extractorDefinitionId, "extractorDefinitionId");
+      this.extractor = null;
+      this.processModelExtractor = extractor;
+      this.executionTarget = DynamicSafetyScenario.ExecutionTarget.PROCESS_MODEL;
     }
 
     public Builder acceptanceRange(Double lower, Double upper) {
