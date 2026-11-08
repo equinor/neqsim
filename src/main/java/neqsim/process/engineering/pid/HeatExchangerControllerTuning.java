@@ -17,7 +17,7 @@ import com.google.gson.JsonParser;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.engineering.EngineeringProject;
 import neqsim.process.equipment.ProcessEquipmentInterface;
-import neqsim.process.equipment.heatexchanger.DynamicHeatExchanger;
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.TemperatureTransmitter;
@@ -234,7 +234,7 @@ public final class HeatExchangerControllerTuning {
     ControllerDeviceBaseClass controller = (ControllerDeviceBaseClass) bindings.resolveController(controllerTag,
         process);
     ThrottlingValve valve = null;
-    DynamicHeatExchanger exchanger = null;
+    HeatExchanger exchanger = null;
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (unit instanceof ThrottlingValve && unit.getController() == controller) {
         if (valve != null) {
@@ -245,12 +245,12 @@ public final class HeatExchangerControllerTuning {
     }
     if (valve != null) {
       for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-        if (unit instanceof DynamicHeatExchanger
-            && ((DynamicHeatExchanger) unit).getInStream(1) == valve.getOutletStream()) {
+        if (unit.getClass() == HeatExchanger.class && ((HeatExchanger) unit).isDynamicModelEnabled()
+            && ((HeatExchanger) unit).getInStream(1) == valve.getOutletStream()) {
           if (exchanger != null) {
             throw new IllegalArgumentException("Utility valve must have one actual exchanger consumer");
           }
-          exchanger = (DynamicHeatExchanger) unit;
+          exchanger = (HeatExchanger) unit;
         }
       }
     }
@@ -387,7 +387,7 @@ public final class HeatExchangerControllerTuning {
   private static final class Runtime {
     private final ControllerDeviceBaseClass controller;
     private final ThrottlingValve valve;
-    private final DynamicHeatExchanger exchanger;
+    private final HeatExchanger exchanger;
     private final TemperatureTransmitter measurement;
 
     /**
@@ -398,7 +398,7 @@ public final class HeatExchangerControllerTuning {
      * @param exchanger actual conservative thermal equipment
      * @param measurement actual controlled outlet TT
      */
-    private Runtime(ControllerDeviceBaseClass controller, ThrottlingValve valve, DynamicHeatExchanger exchanger,
+    private Runtime(ControllerDeviceBaseClass controller, ThrottlingValve valve, HeatExchanger exchanger,
         TemperatureTransmitter measurement) {
       this.controller = controller;
       this.valve = valve;

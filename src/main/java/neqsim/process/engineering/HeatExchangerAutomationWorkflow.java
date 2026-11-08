@@ -20,7 +20,7 @@ import neqsim.process.engineering.pid.PidDesignModel;
 import neqsim.process.engineering.pid.PidNativeControlSystem;
 import neqsim.process.engineering.pid.PidSimulationBindings;
 import neqsim.process.engineering.pid.ProfessionalPidPackageExporter;
-import neqsim.process.equipment.heatexchanger.DynamicHeatExchanger;
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
@@ -53,7 +53,7 @@ public final class HeatExchangerAutomationWorkflow {
    * Instruments an existing, configured thermal model without changing its material connections.
    *
    * @param process composable source process, ordered feed/valve/exchanger for transient execution
-   * @param exchangerTag actual {@link DynamicHeatExchanger} name
+   * @param exchangerTag actual {@link HeatExchanger} name
    * @param valveTag existing standard throttling valve directly feeding exchanger side 1
    * @param projectId controlled project identity
    * @param settings explicit tag allocation, setpoint and initial PID policy
@@ -63,12 +63,12 @@ public final class HeatExchangerAutomationWorkflow {
   public static EngineeringProject instrument(ProcessSystem process, String exchangerTag, String valveTag,
       String projectId, Settings settings) {
     if (process == null || settings == null || projectId == null || projectId.trim().isEmpty()
-        || !(process.getUnit(exchangerTag) instanceof DynamicHeatExchanger) || process.getUnit(valveTag) == null
+        || process.getUnit(exchangerTag) == null || process.getUnit(exchangerTag).getClass() != HeatExchanger.class
+        || !((HeatExchanger) process.getUnit(exchangerTag)).isDynamicModelEnabled() || process.getUnit(valveTag) == null
         || process.getUnit(valveTag).getClass() != ThrottlingValve.class) {
-      throw new IllegalArgumentException(
-          "An explicit project, configured DynamicHeatExchanger and native valve are required");
+      throw new IllegalArgumentException("An explicit project, configured HeatExchanger and native valve are required");
     }
-    DynamicHeatExchanger exchanger = (DynamicHeatExchanger) process.getUnit(exchangerTag);
+    HeatExchanger exchanger = (HeatExchanger) process.getUnit(exchangerTag);
     ThrottlingValve valve = (ThrottlingValve) process.getUnit(valveTag);
     if (exchanger.getInStream(1) != valve.getOutletStream() || valve.getController() != null
         || process.getUnitOperations().indexOf(valve) >= process.getUnitOperations().indexOf(exchanger)) {
@@ -168,8 +168,8 @@ public final class HeatExchangerAutomationWorkflow {
       Map<String, Object> thermal = new LinkedHashMap<String, Object>();
       for (neqsim.process.equipment.ProcessEquipmentInterface unit : project.getEngineeringProcessSystem()
           .getUnitOperations()) {
-        if (unit instanceof DynamicHeatExchanger) {
-          thermal.put(unit.getName(), ((DynamicHeatExchanger) unit).getThermalConfiguration());
+        if (unit.getClass() == HeatExchanger.class && ((HeatExchanger) unit).isDynamicModelEnabled()) {
+          thermal.put(unit.getName(), ((HeatExchanger) unit).getThermalConfiguration());
         }
       }
       writeJson(prepared.resolve("heat-exchanger-thermal-models.json"), thermal);

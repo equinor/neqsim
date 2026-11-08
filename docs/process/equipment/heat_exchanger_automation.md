@@ -21,8 +21,9 @@ the test data are illustrative study inputs.
 1. Build the two feeds and an actual `ThrottlingValve` on the utility inlet.
    Give every material stream and equipment item a unique tag. Put the feeds,
    valve and exchanger in that execution order in a `ProcessSystem`.
-2. Use `DynamicHeatExchanger` for the two-circuit thermal model. Supply wall
+2. Use `HeatExchanger` for the two-circuit thermal model. Supply wall
    mass and heat capacity, nominal fluid volumes, area and both film coefficients.
+   Enable `setDynamicModelEnabled(true)` before instrumentation and the initial run.
    Use reference water or seawater for the utility as described in
    [reference cooling water](reference_cooling_water).
 3. Call `HeatExchangerAutomationWorkflow.instrument` with the actual exchanger
@@ -50,7 +51,7 @@ actuator needs its own explicit design rather than this cooling-loop helper.
 
 ## Thermal model and units
 
-`DynamicHeatExchanger` extends `HeatExchanger` but uses the same three-node
+With thermal dynamics enabled, the existing `HeatExchanger` uses the same three-node
 model for both `run` and `runTransient`: two completely mixed, single-phase
 fluid inventories exchanging heat with a metal wall. For each fluid $i$,
 
@@ -84,9 +85,9 @@ after changing the inventory basis. The audited fluid classes are `SystemSrkEos`
 mixing for the EOS fluids. Other classes and mixing rules fail closed.
 Composition comparison ignores normalization roundoff below 1e-12 mole fraction.
 
-The inherited steady NTU/UA specification is not used by this subclass. This is
-not a distributed counterflow, pressure-drop, two-phase, phase-change or
-hydraulic-hammer model. Legacy `HeatExchanger` behavior remains available.
+The configured steady NTU/UA specification is retained but inactive in thermal mode.
+The lumped model excludes distributed counterflow, pressure drop, phase change and
+hydraulic hammer. Disable thermal dynamics to use the default steady specification.
 
 ## Evidence, repeatability and restart
 
@@ -133,3 +134,44 @@ Missing line design, relief sizing, valve fail action and safety functions remai
 explicit HOLD items. Automatic basic instrumentation does not infer those design
 requirements or construction approval. See the existing
 [heat exchanger models](heat_exchangers) for other thermal formulations.
+
+
+## One exchanger in both execution modes
+
+Use the existing `HeatExchanger` with `setDynamicModelEnabled(true)`; the default remains the
+existing steady specification, including NTU/UA, rating, approach-temperature and specified-outlet
+paths. Enabling thermal dynamics selects the two mixed fluid inventories and metal wall on the
+same object. `run()` then establishes that model's steady equilibrium, and `runTransient(dt, id)`
+advances its coupled backward-Euler enthalpy balances. Film coefficients and area govern this
+thermal model. The configured steady UA is retained for returning to the default mode and is
+reported separately as `steadyOnlyUaWPerK` in its thermal configuration.
+
+Changing mode clears thermal inventory, repeated-interval history and steady caches. It preserves
+stream objects, instrumentation references, the internal calculated `heatDuty` port and all tags.
+The first transient interval initializes inventory from the currently published outlet temperatures
+on the live inlet pressure/composition basis. To start instead from the thermal model's equilibrium,
+call `run()` after enabling. Disabling returns to the established steady calculation; a subsequent
+enable starts a new inventory. Thermal mode requires positive wall capacity, film coefficients and
+area, nonnegative nominal fluid volumes, positive flows, and fixed pressure/composition single-phase
+fluids. External or specified heat boundaries are rejected before changing the mode.
+
+Snapshots cover the concrete enabled exchanger, both outlets, inherited heater specifications,
+utility specification and internal port result. Unsupported subclasses, mutable rating calculators,
+runtime capacity constraints and external energy connections fail closed. A deep `copy()` creates
+an independent participant identity; saved process state retains its identity for continuation.
+Legacy Java-serialized exchangers acquire a unique identity when first accessed.
+
+Dynamic monitoring reports `thermalModel`, `configuredSteadyUAvalue` and the accepted
+`thermalBalance` receipt. Steady-only effectiveness, duty ratio and active UA are omitted while
+thermal mode is enabled. This avoids stale NTU values and keeps the JSON valid. Nonlinear solves
+target a maximum equation residual of 1e-5 W, relaxed at sub-second steps only to retain a 1e-5 J
+per-equation energy budget when temperature updates reach floating-point resolution.
+
+
+Initialize the selected mode before observing the ML state vector or capturing its feature names.
+Thermal mode reports `wall_temperature` in K instead of the steady UA/effectiveness features; its
+feature order stays stable across subsequent timesteps. A mode change requires `run()` (or the
+first thermal `runTransient`) before observation, so arrays never expose stale undefined effectiveness.
+
+
+Steady observation vectors omit an undefined effectiveness for specified-outlet or approach-temperature calculations.

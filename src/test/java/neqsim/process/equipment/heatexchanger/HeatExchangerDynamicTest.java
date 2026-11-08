@@ -26,7 +26,7 @@ import neqsim.thermo.system.SystemSeawater;
  * @author Even Solbraa
  * @version 1.0
  */
-class DynamicHeatExchangerTest {
+class HeatExchangerDynamicTest {
   @TempDir
   Path temporaryDirectory;
 
@@ -35,7 +35,7 @@ class DynamicHeatExchangerTest {
    *
    * @return initialized conservative exchanger
    */
-  private DynamicHeatExchanger exchanger() {
+  private HeatExchanger exchanger() {
     SystemWaterIF97 first = new SystemWaterIF97(353.15, 5.0);
     first.setTotalFlowRate(1.0, "kg/sec");
     SystemWaterIF97 second = new SystemWaterIF97(293.15, 3.0);
@@ -44,7 +44,8 @@ class DynamicHeatExchangerTest {
     Stream cold = new Stream("COLD", second);
     hot.run();
     cold.run();
-    DynamicHeatExchanger exchanger = new DynamicHeatExchanger("E-101", hot, cold);
+    HeatExchanger exchanger = new HeatExchanger("E-101", hot, cold);
+    exchanger.setDynamicModelEnabled(true);
     exchanger.setWallMass(250.0);
     exchanger.setWallCp(500.0);
     exchanger.setShellHoldupVolume(0.20);
@@ -59,7 +60,7 @@ class DynamicHeatExchangerTest {
   /** Verifies the actual enthalpy ledger at every interval, including both nonzero fluid inventories. */
   @Test
   void closesFluidAndMetalAccumulationAgainstActualBoundaryEnthalpy() {
-    DynamicHeatExchanger exchanger = exchanger();
+    HeatExchanger exchanger = exchanger();
     exchanger.getInStream(0).setTemperature(90.0, "C");
     exchanger.getInStream(0).run();
     for (int step = 0; step < 40; step++) {
@@ -86,7 +87,7 @@ class DynamicHeatExchangerTest {
   /** Checks a locally independent constant-Cp backward-Euler solution using scalar Schur elimination. */
   @Test
   void agreesWithIndependentLinearizedThreeNodeBalance() {
-    DynamicHeatExchanger exchanger = exchanger();
+    HeatExchanger exchanger = exchanger();
     double dt = 8.0;
     double[] previous = {exchanger.getOutStream(0).getTemperature(), exchanger.getOutStream(1).getTemperature(),
         exchanger.getWallTemperature()};
@@ -124,7 +125,7 @@ class DynamicHeatExchangerTest {
   /** Tests passive temperature bounds over a stiff interval and rejects invalid requests before publication. */
   @Test
   void remainsBoundedForStiffStepsAndRejectsInvalidInputsAtomically() {
-    DynamicHeatExchanger exchanger = exchanger();
+    HeatExchanger exchanger = exchanger();
     StreamInterface outlet = exchanger.getOutStream(0);
     double before = outlet.getTemperature();
     for (double dt : new double[] {-1.0, 0.0, Double.NaN, Double.POSITIVE_INFINITY}) {
@@ -150,8 +151,8 @@ class DynamicHeatExchangerTest {
   /** Verifies semi-implicit re-evaluation recomputes from the step start while advancing time once. */
   @Test
   void repeatedPhysicalIdRefinesInsteadOfDoubleIntegrating() {
-    DynamicHeatExchanger exchanger = exchanger();
-    DynamicHeatExchanger reference = exchanger.clone();
+    HeatExchanger exchanger = exchanger();
+    HeatExchanger reference = exchanger.copy();
     UUID id = UUID.randomUUID();
     exchanger.runTransient(3.0, id);
     exchanger.getInStream(0).setTemperature(90.0, "C");
@@ -175,9 +176,9 @@ class DynamicHeatExchangerTest {
    */
   @Test
   void snapshotAndRestartPreserveStateAndLiveReferences() throws Exception {
-    DynamicHeatExchanger exchanger = exchanger();
+    HeatExchanger exchanger = exchanger();
     StreamInterface outlet = exchanger.getOutStream(0);
-    DynamicHeatExchanger.Snapshot checkpoint = exchanger.captureTransientState();
+    HeatExchanger.Snapshot checkpoint = exchanger.captureTransientState();
     exchanger.getInStream(0).setTemperature(90.0, "C");
     exchanger.getInStream(0).run();
     exchanger.runTransient(4.0, UUID.randomUUID());
@@ -194,12 +195,12 @@ class DynamicHeatExchangerTest {
     Path file = temporaryDirectory.resolve("dynamic-exchanger.neqsim");
     assertTrue(process.saveToNeqsim(file.toString()));
     ProcessSystem loaded = (ProcessSystem) neqsim.util.serialization.NeqSimXtream.openNeqsim(file.toString());
-    DynamicHeatExchanger restored = (DynamicHeatExchanger) loaded.getUnit("E-101");
+    HeatExchanger restored = (HeatExchanger) loaded.getUnit("E-101");
     assertNotSame(restored.getOutStream(0), outlet);
     exchanger.runTransient(4.0, UUID.randomUUID());
     restored.runTransient(4.0, UUID.randomUUID());
     assertEquals(exchanger.getThermalInventoryEnergyJ(), restored.getThermalInventoryEnergyJ(), 1e-7);
-    assertNotEquals(exchanger.getTransientStateIdentity(), exchanger.clone().getTransientStateIdentity());
+    assertNotEquals(exchanger.getTransientStateIdentity(), exchanger.copy().getTransientStateIdentity());
   }
 
   /** Checks first-order timestep refinement and the zero-volume algebraic-fluid limit. */
@@ -207,7 +208,7 @@ class DynamicHeatExchangerTest {
   void refinesThermalTrajectoryAndSupportsAlgebraicFluidNodes() {
     double[] outlet = new double[3];
     for (int level = 0; level < 3; level++) {
-      DynamicHeatExchanger exchanger = exchanger();
+      HeatExchanger exchanger = exchanger();
       exchanger.getInStream(0).setTemperature(100.0, "C");
       exchanger.getInStream(0).run();
       double dt = 4.0 / (1 << level);
@@ -217,7 +218,7 @@ class DynamicHeatExchangerTest {
       outlet[level] = exchanger.getOutStream(0).getTemperature();
     }
     assertTrue(Math.abs(outlet[2] - outlet[1]) < 0.65 * Math.abs(outlet[1] - outlet[0]));
-    DynamicHeatExchanger algebraic = exchanger();
+    HeatExchanger algebraic = exchanger();
     algebraic.setShellHoldupVolume(0.0);
     algebraic.setTubeHoldupVolume(0.0);
     algebraic.run();
@@ -230,7 +231,7 @@ class DynamicHeatExchangerTest {
   /** Rejects changed thermodynamic inventory policy and multi-phase inputs before publishing either outlet. */
   @Test
   void rejectsCompositionMixingParametersSalinityAndTwoPhaseChanges() {
-    DynamicHeatExchanger exchanger = exchanger();
+    HeatExchanger exchanger = exchanger();
     SystemSrkEos gas = new SystemSrkEos(353.15, 5.0);
     gas.addComponent("methane", 0.9);
     gas.addComponent("ethane", 0.1);
@@ -287,4 +288,241 @@ class DynamicHeatExchangerTest {
     assertThrows(IllegalArgumentException.class, () -> exchanger.runTransient(1.0, UUID.randomUUID()));
     assertEquals(energy, exchanger.getThermalInventoryEnergyJ(), 0.0);
   }
+
+  /** Verifies default NTU execution, stable identities and inventory initialization at a mode boundary. */
+  @Test
+  void preservesDefaultSteadyBehaviorAndInitializesFromPublishedOutlets() {
+    HeatExchanger exchanger = exchanger();
+    exchanger.setDynamicModelEnabled(false);
+    exchanger.setUAvalue(3000.0);
+    exchanger.run();
+    assertTrue(Double.isNaN(exchanger.getThermalInventoryEnergyJ()));
+    assertTrue(Double.isFinite(exchanger.getThermalEffectiveness()));
+    StreamInterface first = exchanger.getOutStream(0);
+    StreamInterface second = exchanger.getOutStream(1);
+    Object heatPort = exchanger.getEnergyPort("heatDuty");
+    double firstTemperature = first.getTemperature();
+    double secondTemperature = second.getTemperature();
+    double steadyDuty = exchanger.getDuty();
+    exchanger.runTransient(1.0, UUID.randomUUID());
+    assertEquals(firstTemperature, first.getTemperature(), 1e-8);
+    assertEquals(steadyDuty, exchanger.getDuty(), 1e-6);
+    exchanger.setDynamicModelEnabled(true);
+    assertSame(first, exchanger.getOutStream(0));
+    assertSame(second, exchanger.getOutStream(1));
+    assertSame(heatPort, exchanger.getEnergyPort("heatDuty"));
+    assertTrue(exchanger.needRecalculation());
+    exchanger.runTransient(0.001, UUID.randomUUID());
+    assertEquals(firstTemperature, first.getTemperature(), 0.001);
+    assertEquals(secondTemperature, second.getTemperature(), 0.001);
+    assertEquals(0.0, exchanger.getLastThermalBalance().getResidualJ(), 1e-4);
+    assertTrue(Double.isNaN(exchanger.getThermalEffectiveness()));
+  }
+
+  /** Verifies complete rollback after a steady-mode trial and clears repeated-step history across mode changes. */
+  @Test
+  void rollsBackModeChangesAndReinitializesAfterReturningToSteadyOperation() {
+    HeatExchanger exchanger = exchanger();
+    HeatExchanger reference = exchanger.copy();
+    HeatExchanger.Snapshot snapshot = exchanger.captureTransientState();
+    double energy = exchanger.getThermalInventoryEnergyJ();
+    double ua = exchanger.getUAvalue();
+    double portDuty = exchanger.getEnergyPort("heatDuty").getDuty();
+    StreamInterface outlet = exchanger.getOutStream(0);
+    exchanger.setDynamicModelEnabled(false);
+    exchanger.setUAvalue(2500.0);
+    exchanger.run();
+    exchanger.restoreTransientState(snapshot);
+    assertTrue(exchanger.isDynamicModelEnabled());
+    assertEquals(energy, exchanger.getThermalInventoryEnergyJ(), 0.0);
+    assertEquals(ua, exchanger.getUAvalue(), 0.0);
+    assertEquals(portDuty, exchanger.getEnergyPort("heatDuty").getDuty(), 0.0);
+    assertSame(outlet, exchanger.getOutStream(0));
+    UUID interval = UUID.randomUUID();
+    exchanger.runTransient(1.0, interval);
+    reference.runTransient(1.0, interval);
+    assertEquals(reference.getThermalInventoryEnergyJ(), exchanger.getThermalInventoryEnergyJ(), 1e-7);
+    exchanger.setDynamicModelEnabled(false);
+    exchanger.run();
+    assertTrue(Double.isNaN(exchanger.getThermalInventoryEnergyJ()));
+    exchanger.setDynamicModelEnabled(true);
+    exchanger.runTransient(2.0, interval);
+    assertEquals(3.0, exchanger.getTime(), 0.0);
+    assertEquals(0.0, exchanger.getLastThermalBalance().getResidualJ(), 1e-4);
+  }
+
+  /** Rejects external heat boundaries atomically, even when another audit would first report a controller. */
+  @Test
+  void rejectsExternalHeatBoundariesAtomicallyAndFailsClosedOnIncompleteThermalConfiguration() {
+    HeatExchanger exchanger = exchanger();
+    exchanger.setDynamicModelEnabled(false);
+    neqsim.process.equipment.stream.EnergyStream external = new neqsim.process.equipment.stream.EnergyStream(
+        "EXTERNAL");
+    exchanger.setEnergyStream(external);
+    assertThrows(IllegalArgumentException.class, () -> exchanger.setDynamicModelEnabled(true));
+    assertTrue(!exchanger.isDynamicModelEnabled());
+    assertSame(external, exchanger.getEnergyStream());
+    HeatExchanger specified = exchanger();
+    specified.setDynamicModelEnabled(false);
+    specified.getEnergyPort("heatDuty").setMode(neqsim.process.equipment.stream.EnergyPortMode.SPECIFICATION);
+    assertThrows(IllegalArgumentException.class, () -> specified.setDynamicModelEnabled(true));
+    HeatExchanger controlled = exchanger();
+    controlled.setDynamicModelEnabled(false);
+    controlled.setController(new neqsim.process.controllerdevice.ControllerDeviceBaseClass("ATTACHED"));
+    controlled.connectEnergyStream("heatDuty", external, neqsim.process.equipment.stream.EnergyPortMode.CALCULATED);
+    assertThrows(IllegalArgumentException.class, () -> controlled.setDynamicModelEnabled(true));
+    assertTrue(!controlled.isDynamicModelEnabled());
+    HeatExchanger incomplete = exchanger();
+    incomplete.setWallMass(0.0);
+    double before = incomplete.getOutStream(0).getTemperature();
+    assertThrows(IllegalArgumentException.class, () -> incomplete.runTransient(1.0, UUID.randomUUID()));
+    assertEquals(before, incomplete.getOutStream(0).getTemperature(), 0.0);
+    assertEquals(0.0, incomplete.getTime(), 0.0);
+  }
+
+  /** Restores inherited heater settings, utility-data identity and port mode before resuming thermal integration. */
+  @Test
+  void restoresInheritedSpecificationsAndInternalPortAfterRejectedTrial() {
+    HeatExchanger exchanger = exchanger();
+    HeatExchanger.Snapshot snapshot = exchanger.captureTransientState();
+    UtilityStreamSpecification utility = exchanger.getUtilitySpecification();
+    exchanger.setPressureDrop(1.0);
+    exchanger.setOutPressure(2.0);
+    exchanger.setEnergyInput(8000.0);
+    utility.setSupplyTemperature(313.15);
+    exchanger.setDynamicModelEnabled(false);
+    exchanger.getEnergyPort("heatDuty").setMode(neqsim.process.equipment.stream.EnergyPortMode.SPECIFICATION);
+    exchanger.restoreTransientState(snapshot);
+    assertTrue(exchanger.isDynamicModelEnabled());
+    assertEquals(0.0, exchanger.getPressureDrop(), 0.0);
+    assertTrue(!exchanger.hasOutletPressureSpecification());
+    assertSame(utility, exchanger.getUtilitySpecification());
+    assertTrue(Double.isNaN(utility.getSupplyTemperature()));
+    assertEquals(neqsim.process.equipment.stream.EnergyPortMode.CALCULATED,
+        exchanger.getEnergyPort("heatDuty").getMode());
+    exchanger.runTransient(1.0, UUID.randomUUID());
+    assertEquals(0.0, exchanger.getLastThermalBalance().getResidualJ(), 1e-4);
+  }
+
+  /**
+   * Repairs identity fields absent from legacy Java serialization and emits strict JSON for active thermal monitoring.
+   *
+   * @throws Exception if reflection or JSON decoding fails
+   */
+  @Test
+  void repairsLegacyParticipantIdentityAndReportsStrictDynamicJson() throws Exception {
+    HeatExchanger first = exchanger();
+    HeatExchanger second = exchanger();
+    java.lang.reflect.Field identity = HeatExchanger.class.getDeclaredField("transientIdentity");
+    identity.setAccessible(true);
+    identity.set(first, null);
+    identity.set(second, null);
+    HeatExchanger restored = org.apache.commons.lang3.SerializationUtils.clone(first);
+    HeatExchanger other = org.apache.commons.lang3.SerializationUtils.clone(second);
+    String stable = restored.getTransientStateIdentity();
+    assertEquals(stable, restored.getTransientStateIdentity());
+    assertTrue(!stable.endsWith(":null"));
+    assertNotEquals(stable, other.getTransientStateIdentity());
+    restored.runTransient(1.0, UUID.randomUUID());
+    com.fasterxml.jackson.databind.JsonNode response = new com.fasterxml.jackson.databind.ObjectMapper()
+        .readTree(restored.toJson());
+    assertEquals("SINGLE_PHASE_FIXED_PRESSURE_TWO_MIXED_FLUIDS_AND_WALL", response.get("thermalModel").asText());
+    assertTrue(!response.has("HXthermalEfectiveness"));
+    assertTrue(response.has("thermalBalance"));
+    neqsim.process.util.monitor.HXResponse thermalResponse = new neqsim.process.util.monitor.HXResponse(restored);
+    assertEquals(response.get("thermalModel").asText(), thermalResponse.getThermalModel());
+    assertEquals(restored.getUAvalue(), thermalResponse.getConfiguredSteadyUAvalue(), 0.0);
+    assertEquals(restored.getLastThermalBalance().toMap(), thermalResponse.getThermalBalance());
+    thermalResponse.getThermalBalance().clear();
+    assertTrue(!thermalResponse.getThermalBalance().isEmpty());
+    String[] names = restored.getStateNames();
+    for (double value : restored.getStateVector().toArray()) {
+      assertTrue(Double.isFinite(value));
+    }
+    for (double value : restored.getStateVector().toNormalizedArray()) {
+      assertTrue(Double.isFinite(value));
+    }
+    assertEquals(restored.getWallTemperature(), restored.getStateVector().getValue("wall_temperature"), 0.0);
+    restored.runTransient(1.0, UUID.randomUUID());
+    org.junit.jupiter.api.Assertions.assertArrayEquals(names, restored.getStateNames());
+    restored.setDynamicModelEnabled(false);
+    assertThrows(IllegalStateException.class, () -> restored.getStateVector());
+    restored.run();
+    for (double value : restored.getStateVector().toNormalizedArray()) {
+      assertTrue(Double.isFinite(value));
+    }
+    restored.setDynamicModelEnabled(true);
+    assertThrows(IllegalStateException.class, () -> restored.getStateVector());
+  }
+
+  /** Requires a concrete audited implementation before transactional coverage can be claimed. */
+  @Test
+  void rejectsUnauditedSubclassSnapshotCoverage() {
+    HeatExchanger source = exchanger();
+    HeatExchanger unaudited = new HeatExchanger("SPECIAL", source.getInStream(0), source.getInStream(1)) {
+      private static final long serialVersionUID = 1000L;
+    };
+    unaudited.setDynamicModelEnabled(true);
+    assertTrue(unaudited.getTransientStateCoverageIssue().contains("concrete HeatExchanger"));
+    assertThrows(IllegalStateException.class, () -> unaudited.captureTransientState());
+  }
+
+  /** Restores the original closed energy connection before publishing snapshot duty after rejected rewiring. */
+  @Test
+  void restoresInternalEnergyConnectionAndBookkeepingAfterRejectedRewiring() {
+    for (int variant = 0; variant < 4; variant++) {
+      HeatExchanger exchanger = exchanger();
+      HeatExchanger reference = exchanger.copy();
+      HeatExchanger.Snapshot snapshot = exchanger.captureTransientState();
+      neqsim.process.equipment.stream.EnergyStream original = exchanger.getEnergyStream();
+      Object port = exchanger.getEnergyPort("heatDuty");
+      neqsim.process.equipment.stream.EnergyStream external = new neqsim.process.equipment.stream.EnergyStream(
+          "EXTERNAL");
+      external.setDuty(1234.0);
+      if (variant == 0) {
+        exchanger.setEnergyStream(external);
+      } else if (variant == 1) {
+        exchanger.setDynamicModelEnabled(false);
+        exchanger.connectEnergyStream("heatDuty", external, neqsim.process.equipment.stream.EnergyPortMode.CALCULATED);
+      } else if (variant == 2) {
+        exchanger.disconnectEnergyStream("heatDuty");
+      } else {
+        exchanger.getEnergyPort("heatDuty").connect(external);
+      }
+      exchanger.restoreTransientState(snapshot);
+      assertSame(original, exchanger.getEnergyStream());
+      assertSame(original, exchanger.getEnergyPort("heatDuty").getEnergyStream());
+      assertSame(port, exchanger.getEnergyPort("heatDuty"));
+      assertEquals(1234.0, external.getDuty(), 0.0);
+      assertTrue(!exchanger.isSetEnergyStream());
+      assertEquals(null, exchanger.getTransientStateCoverageIssue());
+      exchanger.runTransient(1.0, UUID.randomUUID());
+      reference.runTransient(1.0, UUID.randomUUID());
+      assertEquals(reference.getThermalInventoryEnergyJ(), exchanger.getThermalInventoryEnergyJ(), 1e-7);
+      assertEquals(0.0, exchanger.getLastThermalBalance().getResidualJ(), 1e-4);
+    }
+  }
+
+  /** Allows finite observations after successful specified-outlet and approach-temperature steady transitions. */
+  @Test
+  void observesSpecifiedAndApproachSteadyModesAfterThermalOperation() {
+    for (int specification = 0; specification < 2; specification++) {
+      HeatExchanger exchanger = exchanger();
+      exchanger.setDynamicModelEnabled(false);
+      assertThrows(IllegalStateException.class, () -> exchanger.getStateVector());
+      if (specification == 0) {
+        exchanger.setOutTemperature(45.0, "C");
+      } else {
+        exchanger.setDeltaT(5.0);
+      }
+      exchanger.run();
+      for (double value : exchanger.getStateVector().toArray()) {
+        assertTrue(Double.isFinite(value));
+      }
+      for (double value : exchanger.getStateVector().toNormalizedArray()) {
+        assertTrue(Double.isFinite(value));
+      }
+    }
+  }
+
 }

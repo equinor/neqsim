@@ -8,6 +8,18 @@ last_verified: "2026-10-27"
 
 Guide for transient/dynamic process simulation in NeqSim.
 
+## Extend the existing unit operation
+
+Add transient behavior to the existing equipment class through its mode/configuration APIs.
+Do not create a separate `DynamicHeatExchanger`, `DynamicCompressor` or other unit operation
+solely for a different execution mode. Internal solver/state helpers are appropriate; a distinct
+physical/model abstraction requires a written rationale. Keep the same streams, ports, tags,
+design data, controllers and DEXPI/P&ID bindings. Preserve default steady behavior and test
+initialization, both mode transitions, cache invalidation, conservation, repeated-step identity,
+rollback and serialized continuation. For the heat exchanger automation workflow, configure the
+existing `HeatExchanger` and call `setDynamicModelEnabled(true)` before its initial run. See
+[the coordinated workflow](../../../docs/process/equipment/heat_exchanger_automation.md).
+
 ## When to Use Dynamic Simulation
 
 - Startup and shutdown sequences

@@ -22,7 +22,7 @@ import neqsim.process.engineering.pid.HeatExchangerControllerTuning.Result;
 import neqsim.process.engineering.pid.PidDesignModel;
 import neqsim.process.engineering.pid.PidNativeControlSystem;
 import neqsim.process.engineering.pid.PidSimulationBindings;
-import neqsim.process.equipment.heatexchanger.DynamicHeatExchanger;
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
@@ -87,7 +87,8 @@ class HeatExchangerAutomationWorkflowTest {
     valve.setKv(12.0);
     valve.setPercentValveOpening(50.0);
     valve.getOutletStream().setName("CW-TO-E101");
-    DynamicHeatExchanger exchanger = new DynamicHeatExchanger("E-101", feed, valve.getOutletStream());
+    HeatExchanger exchanger = new HeatExchanger("E-101", feed, valve.getOutletStream());
+    exchanger.setDynamicModelEnabled(true);
     exchanger.setWallMass(500.0);
     exchanger.setWallCp(500.0);
     exchanger.setShellHoldupVolume(0.10);
@@ -166,8 +167,7 @@ class HeatExchangerAutomationWorkflowTest {
     ProcessSystem restored = ProcessSystem.loadFromNeqsim(directory.resolve("simulation-model.neqsim").toString());
     assertNotNull(restored);
     restored.runTransient(0.5, UUID.randomUUID());
-    assertTrue(
-        Math.abs(((DynamicHeatExchanger) restored.getUnit("E-101")).getLastThermalBalance().getResidualJ()) < 0.01);
+    assertTrue(Math.abs(((HeatExchanger) restored.getUnit("E-101")).getLastThermalBalance().getResidualJ()) < 0.01);
     assertThrows(IllegalArgumentException.class,
         () -> HeatExchangerAutomationWorkflow.export(project, metadata(), directory, null));
     String requestedOutput = System.getProperty("neqsim.heatExchangerAutomationOutputDirectory", "");
@@ -186,7 +186,7 @@ class HeatExchangerAutomationWorkflowTest {
     EngineeringProject project = example();
     PidDesignModel pid = PidNativeControlSystem.fromProcess(project);
     PidSimulationBindings bindings = PidNativeControlSystem.bind(project, pid);
-    DynamicHeatExchanger exchanger = (DynamicHeatExchanger) project.getEngineeringProcessSystem().getUnit("E-101");
+    HeatExchanger exchanger = (HeatExchanger) project.getEngineeringProcessSystem().getUnit("E-101");
     ThrottlingValve valve = (ThrottlingValve) project.getEngineeringProcessSystem().getUnit("TCV-201");
     double energy = exchanger.getThermalInventoryEnergyJ();
     double opening = valve.getPercentValveOpening();
@@ -289,7 +289,7 @@ class HeatExchangerAutomationWorkflowTest {
     assertTrue(process.getTransientTransactionCoverage().isComplete(),
         process.getTransientTransactionCoverage().getBlockingIssues().toString());
     ProcessSystem reference = process.copy();
-    DynamicHeatExchanger exchanger = (DynamicHeatExchanger) process.getUnit("E-101");
+    HeatExchanger exchanger = (HeatExchanger) process.getUnit("E-101");
     Stream outlet = (Stream) exchanger.getOutStream(0);
     double before = exchanger.getThermalInventoryEnergyJ();
     assertThrows(IllegalStateException.class, () -> {
@@ -303,7 +303,7 @@ class HeatExchangerAutomationWorkflowTest {
     UUID id = UUID.randomUUID();
     process.runTransient(1.0, id);
     reference.runTransient(1.0, id);
-    assertEquals(((DynamicHeatExchanger) reference.getUnit("E-101")).getThermalInventoryEnergyJ(),
+    assertEquals(((HeatExchanger) reference.getUnit("E-101")).getThermalInventoryEnergyJ(),
         exchanger.getThermalInventoryEnergyJ(), 0.0);
     assertEquals(((ThrottlingValve) reference.getUnit("TCV-201")).getPercentValveOpening(),
         ((ThrottlingValve) process.getUnit("TCV-201")).getPercentValveOpening(), 0.0);

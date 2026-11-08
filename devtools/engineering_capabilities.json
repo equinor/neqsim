@@ -431,7 +431,7 @@
       "apis": [
         "neqsim.process.engineering.HeatExchangerAutomationWorkflow",
         "neqsim.process.engineering.pid.HeatExchangerControllerTuning",
-        "neqsim.process.equipment.heatexchanger.DynamicHeatExchanger",
+        "neqsim.process.equipment.heatexchanger.HeatExchanger",
         "neqsim.process.engineering.pid.PidNativeControlSystem"
       ],
       "skills": [
@@ -446,10 +446,10 @@
         "pid-quality-review"
       ],
       "testSources": [
-        "src/test/java/neqsim/process/equipment/heatexchanger/DynamicHeatExchangerTest.java",
+        "src/test/java/neqsim/process/equipment/heatexchanger/HeatExchangerDynamicTest.java",
         "src/test/java/neqsim/process/engineering/HeatExchangerAutomationWorkflowTest.java"
       ],
-      "limitations": "Public Java/JPype object workflow, discoverable through inspectApi; no new curated MCP execution schema or PLC application generator. Automatic cooling-loop helper requires an actual native utility valve directly feeding side 1 in process order, explicit thermal inputs and unique tags. Nine actual TT/PT/FT devices and one native TIC share canonical bindings with native four-port drawings and DEXPI 2.0.1. DynamicHeatExchanger is a constant-pressure, fixed-composition, positive-throughflow single-phase model with two mixed fluid enthalpy inventories and a wall; nominal volumes initialize fixed masses, with no thermal expansion, hydraulic pressure/hammer, phase change or distributed counterflow. Classical EOS mixing and reference water/seawater are the supported property basis. Film coefficients and area govern this model; inherited NTU/UA is unused. Native snapshot rollback and raw NeqSimXtream restart retain dynamic state; the convenience ProcessSystem loader reinitializes steady state. Candidate PID studies run isolated native copies, retain failures and traces, and accept only the declared final-window and thermal-residual criteria. Same-build full serialized runtime fingerprints normalize only selected PID gains/setpoint; changed properties, policy, history or source state invalidate evidence. Applying a recommendation requires a new revision and fresh canonical bindings. Executable policy stays in the native model/canonical sidecar, not XML-only PLC transfer. Routing, schema/profile conformance and test presence do not establish plant/vendor, receiving-tool, SRS/SIL/IPL, standards or construction qualification. Missing fail action, relief and line design remain HOLD."
+      "limitations": "Public Java/JPype object workflow, discoverable through inspectApi; no new curated MCP execution schema or PLC application generator. Automatic cooling-loop helper requires an actual native utility valve directly feeding side 1 in process order, explicit thermal inputs and unique tags. Nine actual TT/PT/FT devices and one native TIC share canonical bindings with native four-port drawings and DEXPI 2.0.1. HeatExchanger with thermal dynamics enabled is a constant-pressure, fixed-composition, positive-throughflow single-phase model with two mixed fluid enthalpy inventories and a wall; nominal volumes initialize fixed masses, with no thermal expansion, hydraulic pressure/hammer, phase change or distributed counterflow. Classical EOS mixing and reference water/seawater are the supported property basis. Film coefficients and area govern thermal mode; configured steady NTU/UA is retained for the default steady mode. Native snapshot rollback and raw NeqSimXtream restart retain dynamic state; the convenience ProcessSystem loader reinitializes steady state. Candidate PID studies run isolated native copies, retain failures and traces, and accept only the declared final-window and thermal-residual criteria. Same-build full serialized runtime fingerprints normalize only selected PID gains/setpoint; changed properties, policy, history or source state invalidate evidence. Applying a recommendation requires a new revision and fresh canonical bindings. Executable policy stays in the native model/canonical sidecar, not XML-only PLC transfer. Routing, schema/profile conformance and test presence do not establish plant/vendor, receiving-tool, SRS/SIL/IPL, standards or construction qualification. Missing fail action, relief and line design remain HOLD."
     },
     {
       "id": "equipment-sizing",
@@ -2168,6 +2168,27 @@
         "src/test/java/neqsim/documentation/ReferenceCoolingWaterDocumentationTest.java"
       ],
       "limitations": "Instance-based Java/JPype process APIs; no new curated MCP executor. Saline utility envelope 273.15-353 K, 1-120 bara, 0-120 g/kg solution. Fixed-salinity bulk mass surrogate, not species-resolved salt mixing, dilution, evaporation, chemistry or scale. Pressure derivatives outside T<=313 K and S<=42 g/kg are extrapolations; high-pressure seawater viscosity multiplier is an engineering extension. Existing secant-Cp NTU, rating and fouling approximations remain; synthetic balance tests and published property checks do not establish field or safety qualification."
+    },
+    {
+      "id": "scd-pid-dexpi-drawing-package",
+      "title": "Source-bound System Control Diagram companion package",
+      "domain": "engineering",
+      "tool": "inspectApi",
+      "apis": [
+        "neqsim.process.engineering.scd.ScdDesignModel",
+        "neqsim.process.engineering.scd.ScdPackageExporter",
+        "neqsim.process.processmodel.diagram.ScdDiagramRenderer"
+      ],
+      "skills": [
+        "neqsim-pid-process-operations"
+      ],
+      "agents": [
+        "control-system"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/engineering/scd/ScdPackageExporterTest.java"
+      ],
+      "limitations": "Java/source workflow with explicit legacy drawing basis and project template/terminal/type inputs. SCD semantics use an identified sidecar; no native DEXPI SCD schema, full normative template behaviour, SCD import, PLC code generation or safety approval."
     }
   ]
 }

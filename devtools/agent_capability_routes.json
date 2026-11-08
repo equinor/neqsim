@@ -525,6 +525,16 @@
       "docs": [
         "docs/process/index.md"
       ]
+    },
+    {
+      "package": "neqsim.process.engineering.scd",
+      "title": "System Control Diagrams linked to P&ID and DEXPI",
+      "keywords": "SCD System Control Diagram NORSOK I-005 IEC PAS 63131 instrumentation automation function template terminal drawing",
+      "agent": "control-system",
+      "skill": "neqsim-pid-process-operations",
+      "docs": [
+        "docs/engineering/system-control-diagrams.md"
+      ]
     }
   ]
 }

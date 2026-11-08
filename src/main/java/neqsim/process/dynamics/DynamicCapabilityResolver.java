@@ -22,7 +22,6 @@ import neqsim.process.equipment.energy.Inverter;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.filter.Filter;
 import neqsim.process.equipment.heatexchanger.Cooler;
-import neqsim.process.equipment.heatexchanger.DynamicHeatExchanger;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.membrane.MembraneSeparator;
@@ -162,11 +161,11 @@ public final class DynamicCapabilityResolver {
     }
 
     if (isOneOf(type, Separator.class, ThreePhaseSeparator.class, Tank.class, MountainCavern.class,
-        VesselDepressurization.class, HeatExchanger.class, DynamicHeatExchanger.class, Cooler.class, Compressor.class,
-        Expander.class, Pump.class, ThrottlingValve.class, CheckValve.class, LevelControlValve.class,
-        PressureControlValve.class, BlowdownValve.class, ESDValve.class, HIPPSValve.class, PSDValve.class,
-        RuptureDisk.class, SafetyValve.class, SafetyReliefValve.class, EnergyConverter.class, Inverter.class,
-        BatteryStorage.class, Filter.class, CommittedEnergyGenerator.class, Electrolyzer.class, ReleaseInventory.class,
+        VesselDepressurization.class, HeatExchanger.class, Cooler.class, Compressor.class, Expander.class, Pump.class,
+        ThrottlingValve.class, CheckValve.class, LevelControlValve.class, PressureControlValve.class,
+        BlowdownValve.class, ESDValve.class, HIPPSValve.class, PSDValve.class, RuptureDisk.class, SafetyValve.class,
+        SafetyReliefValve.class, EnergyConverter.class, Inverter.class, BatteryStorage.class, Filter.class,
+        CommittedEnergyGenerator.class, Electrolyzer.class, ReleaseInventory.class,
         NonEquilibriumReleaseInventory.class)) {
       return DynamicCapability.DYNAMIC_LUMPED;
     }
