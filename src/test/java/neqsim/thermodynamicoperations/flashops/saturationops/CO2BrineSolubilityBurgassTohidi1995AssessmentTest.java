@@ -25,20 +25,22 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * No-fit low-temperature CO2-in-KCl diagnostic from Tohidi's Burgass comparison.
+ * No-fit CO2-in-brine diagnostic from Tohidi's Burgass single- and mixed-salt comparisons.
  *
  * @author OpenAI
  * @version 1.0
  */
-class KClCO2LowTemperatureSolubilityAssessmentTest {
-  private static final Logger logger = LogManager.getLogger(KClCO2LowTemperatureSolubilityAssessmentTest.class);
-  private static final String RESOURCE = "/data/chemistry_benchmarks/co2_kcl_solubility_burgass_tohidi1995.csv";
-  private static final String OUTPUT = "target/kcl-co2-solubility-burgass-tohidi1995-assessment.csv";
+class CO2BrineSolubilityBurgassTohidi1995AssessmentTest {
+  private static final Logger logger = LogManager.getLogger(CO2BrineSolubilityBurgassTohidi1995AssessmentTest.class);
+  private static final String RESOURCE = "/data/chemistry_benchmarks/co2_brine_solubility_burgass_tohidi1995.csv";
+  private static final String OUTPUT = "target/co2-brine-solubility-burgass-tohidi1995-assessment.csv";
   private static final double WATER_MOLAR_MASS_KG_PER_MOL = 0.01801528;
+  private static final double NACL_MOLAR_MASS_KG_PER_MOL = 0.05844277;
   private static final double KCL_MOLAR_MASS_KG_PER_MOL = 0.0745513;
+  private static final double CACL2_MOLAR_MASS_KG_PER_MOL = 0.11098;
   private static final double CO2_FEED_MOLES = 10.0;
   private static final double AQUEOUS_WATER_MASS_TOLERANCE_KG = 1.0e-10;
-  private static final double KCL_MASS_PERCENT_CLOSURE_TOLERANCE = 2.0e-9;
+  private static final double SALT_MASS_PERCENT_CLOSURE_TOLERANCE = 2.0e-9;
 
   /**
    * Reports all non-equivalent mole-percent mappings without selecting an unsupported source basis.
@@ -47,16 +49,18 @@ class KClCO2LowTemperatureSolubilityAssessmentTest {
    */
   @Tag("slow")
   @Test
-  void burgassTohidiSeriesReportsObservableMappingsWithoutFitting() throws Exception {
+  void burgassTohidiTablesReportObservableMappingsWithoutFitting() throws Exception {
     List<Reference> references = loadReferences();
     List<String> report = new ArrayList<String>();
-    report.add("point_id,kcl_mass_fraction_percent,temperature_K,total_pressure_MPa,"
+    report.add("point_id,source_table,nacl_mass_fraction_percent,kcl_mass_fraction_percent,"
+        + "cacl2_mass_fraction_percent,temperature_K,total_pressure_MPa,"
         + "source_co2_mole_percent,actual_total_pressure_bara,actual_co2_partial_pressure_bara,"
         + "model_co2_mole_percent_including_ions,residual_including_ions_percentage_points,"
         + "model_co2_mole_percent_molecular_only,residual_molecular_only_percentage_points,"
-        + "model_co2_mole_percent_pseudo_kcl,residual_pseudo_kcl_percentage_points,"
-        + "model_co2_molality_mol_per_kg_water,water_activity_proxy,actual_kcl_mass_fraction_percent,"
-        + "aqueous_water_mass_kg,aqueous_co2_moles,kcl_formula_moles,co2_feed_moles,fluid_phases,"
+        + "model_co2_mole_percent_pseudo_salt,residual_pseudo_salt_percentage_points,"
+        + "model_co2_molality_mol_per_kg_water,water_activity_proxy,actual_nacl_mass_fraction_percent,"
+        + "actual_kcl_mass_fraction_percent,actual_cacl2_mass_fraction_percent,aqueous_water_mass_kg,"
+        + "aqueous_co2_moles,nacl_formula_moles,kcl_formula_moles,cacl2_formula_moles,co2_feed_moles,fluid_phases,"
         + "component_balance_residual_mol,molecular_log_fugacity_residual");
     Files.createDirectories(Paths.get("target"));
     Files.write(Paths.get(OUTPUT), report, StandardCharsets.UTF_8);
@@ -68,10 +72,10 @@ class KClCO2LowTemperatureSolubilityAssessmentTest {
       Files.write(Paths.get(OUTPUT), Collections.singletonList(row), StandardCharsets.UTF_8, StandardOpenOption.APPEND);
     }
 
-    assertEquals(4, references.size());
-    assertEquals(5, report.size());
+    assertEquals(20, references.size());
+    assertEquals(21, report.size());
     for (String row : report) {
-      logger.info("KCL_CO2_LOW_TEMPERATURE_DIAGNOSTIC,{}", row);
+      logger.info("CO2_BRINE_BURGASS_TOHIDI_DIAGNOSTIC,{}", row);
     }
   }
 
@@ -81,7 +85,7 @@ class KClCO2LowTemperatureSolubilityAssessmentTest {
   @Tag("slow")
   @Test
   void coldConcentratedStateIsIndependentOfGasInventory() {
-    Reference reference = new Reference("BT-KCL14-266", 14.0, 266.5, 1.172, 1.26);
+    Reference reference = new Reference("BT-KCL14-266", "6.4", 0.0, 14.0, 0.0, 266.5, 1.172, 1.26);
     Result ordinary = calculate(reference, CO2_FEED_MOLES);
     Result smallerReservoir = calculate(reference, 0.5 * CO2_FEED_MOLES);
     assertEquals(ordinary.co2Molality, smallerReservoir.co2Molality, 1.0e-10);
@@ -96,40 +100,59 @@ class KClCO2LowTemperatureSolubilityAssessmentTest {
    * @return calculated diagnostics
    */
   private static Result calculate(Reference reference, double co2FeedMoles) {
-    double kclMassKg = reference.kclMassFractionPercent / (100.0 - reference.kclMassFractionPercent);
+    double saltFreeMassPercent = 100.0 - reference.totalSaltMassFractionPercent();
+    double naclMassKg = reference.naclMassFractionPercent / saltFreeMassPercent;
+    double kclMassKg = reference.kclMassFractionPercent / saltFreeMassPercent;
+    double cacl2MassKg = reference.cacl2MassFractionPercent / saltFreeMassPercent;
+    double naclMoles = naclMassKg / NACL_MOLAR_MASS_KG_PER_MOL;
     double kclMoles = kclMassKg / KCL_MOLAR_MASS_KG_PER_MOL;
+    double cacl2Moles = cacl2MassKg / CACL2_MOLAR_MASS_KG_PER_MOL;
     double totalPressureBara = 10.0 * reference.totalPressureMpa;
-    Trial trial = flashWithAqueousWaterBasis(reference, totalPressureBara, co2FeedMoles, kclMoles);
+    Trial trial = flashWithAqueousWaterBasis(reference, totalPressureBara, co2FeedMoles, naclMoles, kclMoles,
+        cacl2Moles);
     PhaseInterface aqueous = trial.aqueous;
 
     double waterMoles = aqueous.getComponent("water").getNumberOfMolesInPhase();
     double waterMassKg = waterMoles * WATER_MOLAR_MASS_KG_PER_MOL;
     double co2Moles = aqueous.getComponent("CO2").getNumberOfMolesInPhase();
-    double actualKclMoles = aqueous.getComponent("K+").getNumberOfMolesInPhase();
-    double actualKclMassPercent = 100.0 * actualKclMoles * KCL_MOLAR_MASS_KG_PER_MOL
-        / (waterMassKg + actualKclMoles * KCL_MOLAR_MASS_KG_PER_MOL);
+    double actualNaclMoles = componentMoles(aqueous, "Na+");
+    double actualKclMoles = componentMoles(aqueous, "K+");
+    double actualCacl2Moles = componentMoles(aqueous, "Ca++");
+    double solutionMassKg = waterMassKg + actualNaclMoles * NACL_MOLAR_MASS_KG_PER_MOL
+        + actualKclMoles * KCL_MOLAR_MASS_KG_PER_MOL + actualCacl2Moles * CACL2_MOLAR_MASS_KG_PER_MOL;
+    double actualNaclMassPercent = 100.0 * actualNaclMoles * NACL_MOLAR_MASS_KG_PER_MOL / solutionMassKg;
+    double actualKclMassPercent = 100.0 * actualKclMoles * KCL_MOLAR_MASS_KG_PER_MOL / solutionMassKg;
+    double actualCacl2MassPercent = 100.0 * actualCacl2Moles * CACL2_MOLAR_MASS_KG_PER_MOL / solutionMassKg;
     double nativeMolePercent = 100.0 * aqueous.getComponent("CO2").getx();
     double molecularMolePercent = 100.0 * co2Moles / (co2Moles + waterMoles);
-    double pseudoKclMolePercent = 100.0 * co2Moles / (co2Moles + waterMoles + actualKclMoles);
+    double pseudoSaltMolePercent = 100.0 * co2Moles
+        / (co2Moles + waterMoles + actualNaclMoles + actualKclMoles + actualCacl2Moles);
     double co2Molality = co2Moles / waterMassKg;
     int waterIndex = aqueous.getComponent("water").getComponentNumber();
     double waterActivity = aqueous.getComponent("water").getx() * aqueous.getActivityCoefficient(waterIndex);
 
     assertEquals(1.0, waterMassKg, AQUEOUS_WATER_MASS_TOLERANCE_KG, reference.pointId + " aqueous-water basis");
+    assertEquals(naclMoles, actualNaclMoles, 1.0e-12, reference.pointId + " sodium inventory");
     assertEquals(kclMoles, actualKclMoles, 1.0e-12, reference.pointId + " potassium inventory");
-    assertEquals(kclMoles, aqueous.getComponent("Cl-").getNumberOfMolesInPhase(), 1.0e-12,
-        reference.pointId + " chloride inventory");
-    assertEquals(reference.kclMassFractionPercent, actualKclMassPercent, KCL_MASS_PERCENT_CLOSURE_TOLERANCE,
+    assertEquals(cacl2Moles, actualCacl2Moles, 1.0e-12, reference.pointId + " calcium inventory");
+    assertEquals(naclMoles + kclMoles + 2.0 * cacl2Moles, aqueous.getComponent("Cl-").getNumberOfMolesInPhase(),
+        1.0e-12, reference.pointId + " chloride inventory");
+    assertEquals(reference.naclMassFractionPercent, actualNaclMassPercent, SALT_MASS_PERCENT_CLOSURE_TOLERANCE,
+        reference.pointId + " NaCl mass fraction");
+    assertEquals(reference.kclMassFractionPercent, actualKclMassPercent, SALT_MASS_PERCENT_CLOSURE_TOLERANCE,
         reference.pointId + " KCl mass fraction");
+    assertEquals(reference.cacl2MassFractionPercent, actualCacl2MassPercent, SALT_MASS_PERCENT_CLOSURE_TOLERANCE,
+        reference.pointId + " CaCl2 mass fraction");
     for (double value : new double[] {trial.co2PartialPressureBara, nativeMolePercent, molecularMolePercent,
-        pseudoKclMolePercent, co2Molality, waterActivity}) {
+        pseudoSaltMolePercent, co2Molality, waterActivity}) {
       assertTrue(Double.isFinite(value) && value > 0.0, reference.pointId + " finite diagnostic");
     }
     assertTrue(waterActivity <= 1.0, reference.pointId + " water activity range");
 
-    return new Result(trial.co2PartialPressureBara, nativeMolePercent, molecularMolePercent, pseudoKclMolePercent,
-        co2Molality, waterActivity, actualKclMassPercent, waterMassKg, co2Moles, actualKclMoles, co2FeedMoles,
-        trial.phaseTypes, trial.componentBalanceResidualMol, trial.molecularLogFugacityResidual);
+    return new Result(trial.co2PartialPressureBara, nativeMolePercent, molecularMolePercent, pseudoSaltMolePercent,
+        co2Molality, waterActivity, actualNaclMassPercent, actualKclMassPercent, actualCacl2MassPercent, waterMassKg,
+        co2Moles, actualNaclMoles, actualKclMoles, actualCacl2Moles, co2FeedMoles, trial.phaseTypes,
+        trial.componentBalanceResidualMol, trial.molecularLogFugacityResidual);
   }
 
   /**
@@ -138,18 +161,28 @@ class KClCO2LowTemperatureSolubilityAssessmentTest {
    * @param reference source state
    * @param totalPressureBara source total pressure in bara
    * @param co2FeedMoles finite CO2 reservoir in mol
+   * @param naclMoles NaCl formula-unit inventory in mol
    * @param kclMoles KCl formula-unit inventory in mol
+   * @param cacl2Moles CaCl2 formula-unit inventory in mol
    * @return converged and validated state
    */
   private static Trial flashWithAqueousWaterBasis(Reference reference, double totalPressureBara, double co2FeedMoles,
-      double kclMoles) {
+      double naclMoles, double kclMoles, double cacl2Moles) {
     double waterFeedMoles = 1.0 / WATER_MOLAR_MASS_KG_PER_MOL;
     for (int iteration = 0; iteration < 20; iteration++) {
       SystemInterface fluid = new SystemElectrolyteCPAstatoil(reference.temperatureK, totalPressureBara);
       fluid.addComponent("CO2", co2FeedMoles);
       fluid.addComponent("water", waterFeedMoles);
-      fluid.addComponent("K+", kclMoles);
-      fluid.addComponent("Cl-", kclMoles);
+      if (naclMoles > 0.0) {
+        fluid.addComponent("Na+", naclMoles);
+      }
+      if (kclMoles > 0.0) {
+        fluid.addComponent("K+", kclMoles);
+      }
+      if (cacl2Moles > 0.0) {
+        fluid.addComponent("Ca++", cacl2Moles);
+      }
+      fluid.addComponent("Cl-", naclMoles + kclMoles + 2.0 * cacl2Moles);
       fluid.setMixingRule(10);
       fluid.setMultiPhaseCheck(true);
       new ThermodynamicOperations(fluid).TPflash();
@@ -159,14 +192,15 @@ class KClCO2LowTemperatureSolubilityAssessmentTest {
           reference.pointId + " requires gas and aqueous phases");
       PhaseInterface gas = fluid.getPhase("gas");
       PhaseInterface aqueous = findIonRichPhase(fluid);
-      double[] feedMoles = {co2FeedMoles, waterFeedMoles, kclMoles, kclMoles};
       double componentBalanceResidualMol = 0.0;
       double molecularLogFugacityResidual = 0.0;
-      for (int component = 0; component < feedMoles.length; component++) {
+      for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
+        String componentName = gas.getComponent(component).getComponentName();
+        double feedMoles = feedMoles(componentName, co2FeedMoles, waterFeedMoles, naclMoles, kclMoles, cacl2Moles);
         double gasMoles = gas.getComponent(component).getNumberOfMolesInPhase();
         double aqueousMoles = aqueous.getComponent(component).getNumberOfMolesInPhase();
         componentBalanceResidualMol = Math.max(componentBalanceResidualMol,
-            Math.abs(gasMoles + aqueousMoles - feedMoles[component]));
+            Math.abs(gasMoles + aqueousMoles - feedMoles));
         if (gas.getComponent(component).getIonicCharge() == 0) {
           double fugacityRatio = gas.getFugacity(component) / aqueous.getFugacity(component);
           molecularLogFugacityResidual = Math.max(molecularLogFugacityResidual, Math.abs(Math.log(fugacityRatio)));
@@ -194,19 +228,70 @@ class KClCO2LowTemperatureSolubilityAssessmentTest {
   }
 
   /**
-   * Selects the phase containing the greatest potassium mole fraction.
+   * Maps a component name to the corresponding feed inventory.
+   *
+   * @param componentName NeqSim component name
+   * @param co2FeedMoles CO2 inventory in mol
+   * @param waterFeedMoles water inventory in mol
+   * @param naclMoles NaCl formula-unit inventory in mol
+   * @param kclMoles KCl formula-unit inventory in mol
+   * @param cacl2Moles CaCl2 formula-unit inventory in mol
+   * @return component feed inventory in mol
+   */
+  private static double feedMoles(String componentName, double co2FeedMoles, double waterFeedMoles, double naclMoles,
+      double kclMoles, double cacl2Moles) {
+    if ("CO2".equals(componentName)) {
+      return co2FeedMoles;
+    }
+    if ("water".equals(componentName)) {
+      return waterFeedMoles;
+    }
+    if ("Na+".equals(componentName)) {
+      return naclMoles;
+    }
+    if ("K+".equals(componentName)) {
+      return kclMoles;
+    }
+    if ("Ca++".equals(componentName)) {
+      return cacl2Moles;
+    }
+    if ("Cl-".equals(componentName)) {
+      return naclMoles + kclMoles + 2.0 * cacl2Moles;
+    }
+    throw new IllegalArgumentException("Unexpected benchmark component " + componentName);
+  }
+
+  /**
+   * Returns component moles when present, otherwise zero.
+   *
+   * @param phase phase to inspect
+   * @param componentName component name
+   * @return component inventory in mol
+   */
+  private static double componentMoles(PhaseInterface phase, String componentName) {
+    return phase.hasComponent(componentName) ? phase.getComponent(componentName).getNumberOfMolesInPhase() : 0.0;
+  }
+
+  /**
+   * Selects the phase containing the greatest total ionic mole fraction.
    *
    * @param fluid flashed system
    * @return ion-rich aqueous phase
    */
   private static PhaseInterface findIonRichPhase(SystemInterface fluid) {
     PhaseInterface selected = null;
-    double largestPotassiumFraction = -1.0;
+    double largestIonicFraction = -1.0;
     for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
       PhaseInterface candidate = fluid.getPhase(phaseIndex);
-      if (candidate.hasComponent("K+") && candidate.getComponent("K+").getx() > largestPotassiumFraction) {
+      double ionicFraction = 0.0;
+      for (int component = 0; component < candidate.getNumberOfComponents(); component++) {
+        if (candidate.getComponent(component).getIonicCharge() != 0) {
+          ionicFraction += candidate.getComponent(component).getx();
+        }
+      }
+      if (ionicFraction > largestIonicFraction) {
         selected = candidate;
-        largestPotassiumFraction = candidate.getComponent("K+").getx();
+        largestIonicFraction = ionicFraction;
       }
     }
     assertNotNull(selected);
@@ -214,13 +299,13 @@ class KClCO2LowTemperatureSolubilityAssessmentTest {
   }
 
   /**
-   * Loads the four source-pinned states.
+   * Loads the twenty source-pinned states.
    *
    * @return source states
    * @throws Exception if the fixture cannot be read or parsed
    */
   private static List<Reference> loadReferences() throws Exception {
-    InputStream stream = KClCO2LowTemperatureSolubilityAssessmentTest.class.getResourceAsStream(RESOURCE);
+    InputStream stream = CO2BrineSolubilityBurgassTohidi1995AssessmentTest.class.getResourceAsStream(RESOURCE);
     assertNotNull(stream, RESOURCE);
     List<Reference> references = new ArrayList<Reference>();
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
@@ -230,11 +315,12 @@ class KClCO2LowTemperatureSolubilityAssessmentTest {
           continue;
         }
         String[] fields = line.split(",");
-        references.add(new Reference(fields[0], Double.parseDouble(fields[1]), Double.parseDouble(fields[2]),
-            Double.parseDouble(fields[3]), Double.parseDouble(fields[4])));
+        references.add(new Reference(fields[0], fields[1], Double.parseDouble(fields[2]), Double.parseDouble(fields[3]),
+            Double.parseDouble(fields[4]), Double.parseDouble(fields[5]), Double.parseDouble(fields[6]),
+            Double.parseDouble(fields[7])));
       }
     }
-    assertEquals(4, references.size());
+    assertEquals(20, references.size());
     return references;
   }
 
@@ -246,7 +332,10 @@ class KClCO2LowTemperatureSolubilityAssessmentTest {
    */
   private static final class Reference {
     private final String pointId;
+    private final String sourceTable;
+    private final double naclMassFractionPercent;
     private final double kclMassFractionPercent;
+    private final double cacl2MassFractionPercent;
     private final double temperatureK;
     private final double totalPressureMpa;
     private final double sourceCo2MolePercent;
@@ -255,18 +344,33 @@ class KClCO2LowTemperatureSolubilityAssessmentTest {
      * Creates one source state.
      *
      * @param pointId stable point identifier
+     * @param sourceTable source table number
+     * @param naclMassFractionPercent NaCl mass fraction in percent
      * @param kclMassFractionPercent KCl mass fraction in percent
+     * @param cacl2MassFractionPercent CaCl2 mass fraction in percent
      * @param temperatureK temperature in K
      * @param totalPressureMpa total pressure in MPa
      * @param sourceCo2MolePercent source-reported CO2 mole percent
      */
-    private Reference(String pointId, double kclMassFractionPercent, double temperatureK, double totalPressureMpa,
-        double sourceCo2MolePercent) {
+    private Reference(String pointId, String sourceTable, double naclMassFractionPercent, double kclMassFractionPercent,
+        double cacl2MassFractionPercent, double temperatureK, double totalPressureMpa, double sourceCo2MolePercent) {
       this.pointId = pointId;
+      this.sourceTable = sourceTable;
+      this.naclMassFractionPercent = naclMassFractionPercent;
       this.kclMassFractionPercent = kclMassFractionPercent;
+      this.cacl2MassFractionPercent = cacl2MassFractionPercent;
       this.temperatureK = temperatureK;
       this.totalPressureMpa = totalPressureMpa;
       this.sourceCo2MolePercent = sourceCo2MolePercent;
+    }
+
+    /**
+     * Returns the total dissolved-salt mass fraction in percent.
+     *
+     * @return total salt mass fraction in percent
+     */
+    private double totalSaltMassFractionPercent() {
+      return naclMassFractionPercent + kclMassFractionPercent + cacl2MassFractionPercent;
     }
   }
 
@@ -312,13 +416,17 @@ class KClCO2LowTemperatureSolubilityAssessmentTest {
     private final double co2PartialPressureBara;
     private final double nativeMolePercent;
     private final double molecularMolePercent;
-    private final double pseudoKclMolePercent;
+    private final double pseudoSaltMolePercent;
     private final double co2Molality;
     private final double waterActivity;
+    private final double actualNaclMassPercent;
     private final double actualKclMassPercent;
+    private final double actualCacl2MassPercent;
     private final double waterMassKg;
     private final double co2Moles;
+    private final double naclMoles;
     private final double kclMoles;
+    private final double cacl2Moles;
     private final double co2FeedMoles;
     private final String phaseTypes;
     private final double componentBalanceResidualMol;
@@ -330,32 +438,41 @@ class KClCO2LowTemperatureSolubilityAssessmentTest {
      * @param co2PartialPressureBara calculated gas CO2 partial pressure in bara
      * @param nativeMolePercent aqueous CO2 mole percent including ions
      * @param molecularMolePercent CO2 mole percent over CO2 plus water
-     * @param pseudoKclMolePercent CO2 mole percent over CO2, water and one KCl formula unit
+     * @param pseudoSaltMolePercent CO2 mole percent over CO2, water and salt formula units
      * @param co2Molality CO2 molality per kg aqueous water
      * @param waterActivity water activity proxy
+     * @param actualNaclMassPercent final solvent-brine NaCl mass fraction in percent
      * @param actualKclMassPercent final solvent-brine KCl mass fraction in percent
+     * @param actualCacl2MassPercent final solvent-brine CaCl2 mass fraction in percent
      * @param waterMassKg final aqueous water mass in kg
      * @param co2Moles final aqueous CO2 inventory in mol
+     * @param naclMoles NaCl formula-unit inventory in mol
      * @param kclMoles KCl formula-unit inventory in mol
+     * @param cacl2Moles CaCl2 formula-unit inventory in mol
      * @param co2FeedMoles finite CO2 feed inventory in mol
      * @param phaseTypes joined phase labels
      * @param componentBalanceResidualMol maximum component balance residual in mol
      * @param molecularLogFugacityResidual maximum molecular log fugacity ratio
      */
     private Result(double co2PartialPressureBara, double nativeMolePercent, double molecularMolePercent,
-        double pseudoKclMolePercent, double co2Molality, double waterActivity, double actualKclMassPercent,
-        double waterMassKg, double co2Moles, double kclMoles, double co2FeedMoles, String phaseTypes,
+        double pseudoSaltMolePercent, double co2Molality, double waterActivity, double actualNaclMassPercent,
+        double actualKclMassPercent, double actualCacl2MassPercent, double waterMassKg, double co2Moles,
+        double naclMoles, double kclMoles, double cacl2Moles, double co2FeedMoles, String phaseTypes,
         double componentBalanceResidualMol, double molecularLogFugacityResidual) {
       this.co2PartialPressureBara = co2PartialPressureBara;
       this.nativeMolePercent = nativeMolePercent;
       this.molecularMolePercent = molecularMolePercent;
-      this.pseudoKclMolePercent = pseudoKclMolePercent;
+      this.pseudoSaltMolePercent = pseudoSaltMolePercent;
       this.co2Molality = co2Molality;
       this.waterActivity = waterActivity;
+      this.actualNaclMassPercent = actualNaclMassPercent;
       this.actualKclMassPercent = actualKclMassPercent;
+      this.actualCacl2MassPercent = actualCacl2MassPercent;
       this.waterMassKg = waterMassKg;
       this.co2Moles = co2Moles;
+      this.naclMoles = naclMoles;
       this.kclMoles = kclMoles;
+      this.cacl2Moles = cacl2Moles;
       this.co2FeedMoles = co2FeedMoles;
       this.phaseTypes = phaseTypes;
       this.componentBalanceResidualMol = componentBalanceResidualMol;
@@ -369,14 +486,16 @@ class KClCO2LowTemperatureSolubilityAssessmentTest {
      * @return one CSV row
      */
     private String toCsv(Reference reference) {
-      return reference.pointId + "," + reference.kclMassFractionPercent + "," + reference.temperatureK + ","
-          + reference.totalPressureMpa + "," + reference.sourceCo2MolePercent + ","
+      return reference.pointId + "," + reference.sourceTable + "," + reference.naclMassFractionPercent + ","
+          + reference.kclMassFractionPercent + "," + reference.cacl2MassFractionPercent + "," + reference.temperatureK
+          + "," + reference.totalPressureMpa + "," + reference.sourceCo2MolePercent + ","
           + (10.0 * reference.totalPressureMpa) + "," + co2PartialPressureBara + "," + nativeMolePercent + ","
           + (nativeMolePercent - reference.sourceCo2MolePercent) + "," + molecularMolePercent + ","
-          + (molecularMolePercent - reference.sourceCo2MolePercent) + "," + pseudoKclMolePercent + ","
-          + (pseudoKclMolePercent - reference.sourceCo2MolePercent) + "," + co2Molality + "," + waterActivity + ","
-          + actualKclMassPercent + "," + waterMassKg + "," + co2Moles + "," + kclMoles + "," + co2FeedMoles + ","
-          + phaseTypes + "," + componentBalanceResidualMol + "," + molecularLogFugacityResidual;
+          + (molecularMolePercent - reference.sourceCo2MolePercent) + "," + pseudoSaltMolePercent + ","
+          + (pseudoSaltMolePercent - reference.sourceCo2MolePercent) + "," + co2Molality + "," + waterActivity + ","
+          + actualNaclMassPercent + "," + actualKclMassPercent + "," + actualCacl2MassPercent + "," + waterMassKg + ","
+          + co2Moles + "," + naclMoles + "," + kclMoles + "," + cacl2Moles + "," + co2FeedMoles + "," + phaseTypes + ","
+          + componentBalanceResidualMol + "," + molecularLogFugacityResidual;
     }
   }
 }
