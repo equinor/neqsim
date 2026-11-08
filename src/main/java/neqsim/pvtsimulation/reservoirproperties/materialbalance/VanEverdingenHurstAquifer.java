@@ -157,7 +157,7 @@ public final class VanEverdingenHurstAquifer implements Serializable {
     double denominator = third * reservoirRadius;
     double result = numerator / denominator;
     if (normalPositive(numerator) && normalPositive(first) && normalPositive(second) && normalPositive(third)
-        && normalPositive(denominator) && normalPositive(result) && result < 0.5 * Double.MAX_VALUE) {
+        && normalPositive(denominator) && result > 2.0 * Double.MIN_NORMAL && result < 0.5 * Double.MAX_VALUE) {
       return result;
     }
     return scaledPhysicalRatio(new double[] {permeability, time},
@@ -206,7 +206,7 @@ public final class VanEverdingenHurstAquifer implements Serializable {
     double fifth = fourth * reservoirRadius;
     double result = fifth * reservoirRadius;
     if (normalPositive(fraction) && normalPositive(first) && normalPositive(second) && normalPositive(third)
-        && normalPositive(fourth) && normalPositive(fifth) && normalPositive(result)
+        && normalPositive(fourth) && normalPositive(fifth) && result > 2.0 * Double.MIN_NORMAL
         && result < 0.5 * Double.MAX_VALUE) {
       return result;
     }
@@ -252,7 +252,7 @@ public final class VanEverdingenHurstAquifer implements Serializable {
       exponent -= power;
     }
     double result = Math.scalb(mantissa, exponent);
-    if (result <= Double.MIN_NORMAL || result >= 0.5 * Double.MAX_VALUE || !Double.isFinite(result)) {
+    if (result <= 2.0 * Double.MIN_NORMAL || result >= 0.5 * Double.MAX_VALUE || !Double.isFinite(result)) {
       result = roundedPhysicalRatio(numerator, denominator);
     }
     if (!Double.isFinite(result) || result == 0) {
@@ -268,7 +268,8 @@ public final class VanEverdingenHurstAquifer implements Serializable {
    * Floating scaled mantissas alone can round a value across the half-minimum or overflow threshold. Exact products and
    * integer division in units of the local binary ULP resolve remainder and tie parity without an approximate decimal
    * quotient. Rounded counts are at most 2^53, exactly representable as doubles. This rare path is not used for
-   * ordinary conversions or Carter-Tracy steps.
+   * ordinary conversions or Carter-Tracy steps. The low-end handoff includes the adjacent normal binade so rounded
+   * intermediate products cannot hide a subnormal exact ratio. The exact comparisons then select its local ULP.
    * </p>
    *
    * @param numerator strictly positive finite numerator factors
@@ -289,8 +290,8 @@ public final class VanEverdingenHurstAquifer implements Serializable {
       return Double.POSITIVE_INFINITY;
     }
     int shift;
-    if (top.compareTo(bottom.multiply(new BigDecimal(2.0 * Double.MIN_NORMAL))) < 0) {
-      shift = -1074;
+    if (top.compareTo(bottom.multiply(new BigDecimal(4.0 * Double.MIN_NORMAL))) < 0) {
+      shift = top.compareTo(bottom.multiply(new BigDecimal(2.0 * Double.MIN_NORMAL))) < 0 ? -1074 : -1073;
     } else if (top.compareTo(bottom.multiply(new BigDecimal(Math.scalb(1.0, 1023)))) >= 0) {
       shift = 971;
     } else {

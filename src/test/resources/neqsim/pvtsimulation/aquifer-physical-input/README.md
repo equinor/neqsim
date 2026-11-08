@@ -24,10 +24,11 @@ in binary-ULP units. No approximate decimal quotient decides midpoint parity.
 
 ## Evidence and acceptance
 
-`PhysicalInputs.java` declares **340 rows**, including repeated physical states
-under separate axis/identity controls; these are not 340 unique experiments.
-There are 216 positive finite, 6 zero, 73 invalid and 45 unrepresentable outcomes.
-The initial 333-row matrix was extended with four explicit IEEE midpoint cases and three finite upper-bound controls
+`PhysicalInputs.java` declares **351 rows**, including repeated physical states
+under separate axis/identity controls; these are not 351 unique experiments.
+There are 227 positive finite, 6 zero, 73 invalid and 45 unrepresentable outcomes.
+The initial 333-row matrix was extended with four explicit IEEE midpoint cases, three finite upper-bound controls
+and eleven normal/subnormal-junction controls
 after independent review. Targets and tolerances were not loosened.
 
 `qualify.py` uses Python `Fraction.from_float` to evaluate exact binary inputs
@@ -40,11 +41,18 @@ or nonfinite baseline output is retained. No result is dropped as an outlier.
 away from exact classification ties, explicit boundary parity and the joint
 physical-units identity at 54 nearby physical states.
 
-All 340 final native rows pass. Unmodified master fails 130 rows under the same
+All 351 final native rows pass. Unmodified master fails 134 rows under the same
 contract. The first scaled implementation misclassified representability; a
 superseded 256-digit decimal variant also rounded an exact 1.5-MIN midpoint to
 MIN instead of 2*MIN. Failed sources, logs and native results remain archived.
-The final algorithm compares the exact overflow midpoint and rounds the ratio
+Post-publication nearby controls also found a one-ULP subnormal-junction gap in
+both converters: all ordinary intermediates can be normal while their exact
+ratio rounds just below MIN_NORMAL. The 351-row extension detects four such
+failures on the first draft head. Independent seeded nearby qualification covers
+16,000 original controls and finds 417 strict-subnormal failures there, versus
+zero on the repaired source. Complete failed head/source/rows are retained. The
+low-end handoff now includes the adjacent normal binade; exact comparisons select
+the local binary ULP. The final algorithm compares the exact overflow midpoint and rounds the ratio
 to an integer number of binary ULPs. Five integrity-test methods reject lost or
 changed identities, false exception/output forms, altered boundary outcomes
 and damaged runtime samples. These are mathematical consistency and software
@@ -54,11 +62,11 @@ Four fresh Zulu Java8.0.512-b09 JVMs ran parent/current/current/parent with thre
 warmups and seven measured samples each, fixed 256MiB heap. Each complete radial
 workload converts physical inputs for 20 histories of 1,000 intervals and then
 runs the unchanged Carter-Tracy calculation. Complete checksums are identical;
-the conservative worst current/best-parent median ratio is 1.073, below the
+the conservative worst current/best-parent median ratio is 1.119, below the
 pre-comparison 1.20 ceiling. The standalone 500,000-pair conversion loop costs
-10.75–10.80ms versus 0.849–1.161ms: validation adds about 20ns per pair. This
+10.60–12.24ms versus 0.836–0.867ms: validation adds about 20–23ns per pair. This
 isolated slowdown is explicit; no speedup is claimed. Cold first conversion
-pairs measured 0.665–0.704ms current and 0.664–0.746ms parent, with shared-host
+pairs measured 0.601–0.809ms current and 0.568–0.716ms parent, with shared-host
 variance. No wall-clock assertion is added to ordinary tests. Ordinary EOS,
 flash, PVT, Fetkovich and CT-step paths acquire no conversion calls or arrays.
 

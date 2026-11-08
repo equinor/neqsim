@@ -13,7 +13,7 @@ def read(path):
     """Read the complete declared native input matrix, including rejected rows."""
     with Path(path).open() as stream:
         rows = list(csv.DictReader(stream))
-    if len(rows) != 340 or [int(r['id']) for r in rows] != list(range(340)):
+    if len(rows) != 351 or [int(r['id']) for r in rows] != list(range(351)):
         raise ValueError('Missing, duplicated or reordered native cases')
     identity = '\n'.join(','.join(r[k] for k in ('id', 'method', 'inputs')) for r in rows) + '\n'
     if hashlib.sha256(identity.encode()).hexdigest() != INPUT_SHA256:
@@ -128,7 +128,7 @@ def main():
     raise SystemExit(bool(result['after']['failures']) or not result.get('runtime', {'accepted': True})['accepted'])
 
 
-INPUT_SHA256 = '5a0241d1476d5902fd57b0e4ab313acbbb0b1ff076b8be4e3398bb67cc1a0a33'
+INPUT_SHA256 = '073de0c6e2af2844ca9f1fff92b0203ae2d44693b195be1fc4e676d091178718'
 
 if __name__ == '__main__':
     main()

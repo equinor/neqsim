@@ -88,10 +88,21 @@ public final class PhysicalInputs {
       for (double multiplier : new double[] {3, 5, 7}) {
         result.add(new double[] {Double.MIN_VALUE, multiplier, 1, 2, 1, 1});
       }
+      result.add(new double[] {2 * Double.MIN_NORMAL, 1, 0.31184396778701384, 2.843142082588499, 2.2557661974067873, 1});
+      result.add(new double[] {2 * Double.MIN_NORMAL, 1, 0.6867411088819615, 2.1038374912477855, 1.3842826004350555, 1});
+      result.add(new double[] {2 * Double.MIN_NORMAL, 1, 0.5690509798598384, 3.737308541878286, 0.9404156907597032, 1});
+      for (double value : new double[] {Double.MIN_NORMAL, Math.nextUp(Double.MIN_NORMAL),
+          2 * Double.MIN_NORMAL, Math.nextUp(2 * Double.MIN_NORMAL)}) {
+        result.add(new double[] {value, 1, 1, 1, 1, 1});
+      }
       result.add(new double[] {Double.MAX_VALUE, 1, 1, 1, 1, 1});
       result.add(new double[] {Double.MAX_VALUE, 1, 1, 2, 1, 1});
       result.add(new double[] {Math.nextDown(Double.MAX_VALUE), 1, 1, 1, 1, 1});
     } else {
+      result.add(new double[] {0x1.0077c11494102p-2, 0x1p-1021, 0x1.455ad44051584p-2, 1, 360});
+      for (double height : new double[] {Math.nextDown(1 / Math.PI), 1 / Math.PI, Math.nextUp(1 / Math.PI)}) {
+        result.add(new double[] {0.5, 2 * Double.MIN_NORMAL, height, 1, 360});
+      }
       for (double[] input : new double[][] {{1e-200, 1e-200, 1e200, 1e100, 360},
           {1, 1e200, 1e200, 1e-200, 360}, {1, 1, 1e200, 1e50, Double.MIN_VALUE},
           {1, 1e-160, 1e-160, 1e80, 360}, {1, Double.MIN_VALUE, 1, 1, 360},

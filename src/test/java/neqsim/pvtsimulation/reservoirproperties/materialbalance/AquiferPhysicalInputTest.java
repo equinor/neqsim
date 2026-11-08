@@ -67,6 +67,23 @@ class AquiferPhysicalInputTest {
     }
   }
 
+  /** Checks the normal/subnormal junction using exact binary factors rather than chained normal products. */
+  @Test
+  void nearNormalBoundaryUsesExactSubnormalRounding() {
+    for (double[] row : new double[][] {
+        {2 * Double.MIN_NORMAL, 1, 0.31184396778701384, 2.843142082588499, 2.2557661974067873, 1},
+        {2 * Double.MIN_NORMAL, 1, 0.6867411088819615, 2.1038374912477855, 1.3842826004350555, 1},
+        {2 * Double.MIN_NORMAL, 1, 0.5690509798598384, 3.737308541878286, 0.9404156907597032, 1}}) {
+      assertEquals(Double.doubleToLongBits(Math.nextDown(Double.MIN_NORMAL)), Double.doubleToLongBits(time(row)));
+    }
+    assertEquals(Double.doubleToLongBits(Math.nextDown(Double.MIN_NORMAL)),
+        Double.doubleToLongBits(storage(new double[] {0x1.0077c11494102p-2, 0x1p-1021, 0x1.455ad44051584p-2, 1, 360})));
+    for (double value : new double[] {Double.MIN_NORMAL, Math.nextUp(Double.MIN_NORMAL), 2 * Double.MIN_NORMAL,
+        Math.nextUp(2 * Double.MIN_NORMAL)}) {
+      assertEquals(Double.doubleToLongBits(value), Double.doubleToLongBits(time(new double[] {value, 1, 1, 1, 1, 1})));
+    }
+  }
+
   /** Verifies the independent joint identity and explicit Pa/bar compressibility bases at nearby physical states. */
   @Test
   void jointStorageTimeIdentityPreservesPressureBasisAndRadiusScaling() {

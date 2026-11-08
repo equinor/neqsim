@@ -1,5 +1,6 @@
 """Deliberate evidence-corruption controls for the optional native qualification."""
 import csv
+import math
 import os
 from pathlib import Path
 import tempfile
@@ -62,6 +63,10 @@ class QualificationControls(unittest.TestCase):
                 rows = [dict(r) for r in self.rows]
                 rows[i]['result'] = '4.9e-324'
                 rows[i]['error'] = ''
+                self.assertTrue(qualify.audit(rows)['failures'])
+            elif expected_value is not None and 0 < expected_value < float.fromhex('0x1p-1022'):
+                rows = [dict(r) for r in self.rows]
+                rows[i]['result'] = repr(math.nextafter(expected_value, math.inf))
                 self.assertTrue(qualify.audit(rows)['failures'])
 
     def test_runtime_identity_and_checksums_are_mandatory(self):
