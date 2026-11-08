@@ -66,6 +66,22 @@ process/scrubber inventories to `@process-model`, protection requirements to
 
 ## Control Loop Design Workflow
 
+For two-circuit gas/water coolers, use the public
+`HeatExchangerAutomationWorkflow` and `HeatExchangerControllerTuning` APIs with
+`HeatExchanger`. Follow the [tested automation guide](../../docs/process/equipment/heat_exchanger_automation.md).
+The helper creates actual TT/PT/FT devices and one native TIC acting on an
+existing utility inlet valve; native drawings and DEXPI use the same source
+ports and signal identities. Supply wall/holdup/film inputs and preserve the
+fixed-pressure, fixed-composition, single-phase, positive-throughflow contract.
+Do not substitute repeated steady flashes for thermal inventory dynamics.
+Retain all candidate failures, raw traces, final-window criteria and energy
+residuals; a tested gain selection needs an explicit applied project revision
+and fresh canonical bindings. A changed source or controller/sensor history
+invalidates prior tuning evidence. Use raw `NeqSimXtream.openNeqsim` for saved
+dynamic continuation; the convenience process loader reinitializes steady state.
+Hand native drawing review to `@pid-quality-review` and missing protection or
+fail-action requirements to `@safety-depressuring`.
+
 ### Step 1: Identify Control Variables
 
 For each equipment unit, identify:
@@ -222,3 +238,9 @@ implemented and proposed scope; it does not grant SRS/SIL or PLC deployment appr
 4. **Missing steady state**: Always run `process.run()` before `runTransient()`
 5. **Transmitter range**: Set min/max to cover expected operating range
 6. **Split range**: Multiple valves on one controller need coordinated ranges
+
+
+Use the existing equipment class for steady and transient execution. For heat exchanger automation,
+configure `HeatExchanger`, enable `setDynamicModelEnabled(true)` and retain its actual stream and tag
+bindings through instrumentation, DEXPI export and tuning. Execution mode alone must not create a
+new unit-operation type. See `neqsim-dynamic-simulation` for initialization and mode-change checks.

@@ -35,7 +35,7 @@ public final class ProfessionalPidSymbolLibrary {
   /** Function-specific symbols; actuator and function-location decorations remain explicit. */
   public enum Family {
     VERTICAL_VESSEL, HORIZONTAL_VESSEL, COMPRESSOR, PUMP, HEAT_EXCHANGER, CONTROL_VALVE, ISOLATION_VALVE, CHECK_VALVE,
-    RELIEF_VALVE, FIELD_INSTRUMENT, CONTROL_FUNCTION, SAFETY_FUNCTION, NOZZLE, TERMINAL, TERMINAL_NORTH,
+    RELIEF_VALVE, FIELD_INSTRUMENT, CONTROL_FUNCTION, SAFETY_FUNCTION, NOZZLE, TERMINAL, TERMINAL_NORTH, TERMINAL_WEST,
     PNEUMATIC_OPERATED_VALVE, PIPE_TEE, UNMAPPED
   }
 
@@ -172,6 +172,11 @@ public final class ProfessionalPidSymbolLibrary {
       poly(page, tag,
           new double[][] {{x - width / 2, y - height / 2}, {x + width / 2 - 4, y - height / 2}, {x + width / 2, y},
               {x + width / 2 - 4, y + height / 2}, {x - width / 2, y + height / 2}, {x - width / 2, y - height / 2}});
+      break;
+    case TERMINAL_WEST:
+      poly(page, tag,
+          new double[][] {{x + width / 2, y - height / 2}, {x - width / 2 + 4, y - height / 2}, {x - width / 2, y},
+              {x - width / 2 + 4, y + height / 2}, {x + width / 2, y + height / 2}, {x + width / 2, y - height / 2}});
       break;
     default:
       throw new IllegalArgumentException("No reviewed symbol family mapping for " + tag);

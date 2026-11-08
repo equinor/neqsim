@@ -24,6 +24,7 @@ import neqsim.process.engineering.pid.PidPhysicalProjection.Attachment;
 import neqsim.process.engineering.pid.PidSimulationBindings;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.controllerdevice.AntiSurgeController;
 import neqsim.process.equipment.splitter.Splitter;
@@ -320,6 +321,15 @@ public final class ProfessionalPidDiagramRenderer {
     if (primary.isEmpty() || primary.size() > 4) {
       throw new IllegalArgumentException("Native A1 PFD overview supports one to four primary units");
     }
+    if (primary.size() == 1 && primary.get(0) instanceof HeatExchanger) {
+      renderTwoCircuitExchanger((HeatExchanger) primary.get(0), true);
+      for (Map<String, Object> layout : layouts.values()) {
+        assessLayout(layout);
+      }
+      verifySourceCoverage();
+      return nativeRenderer.renderScenes(pages, diagnostics, Arrays.asList("DRAWING_SHEET_BOUNDS", "MATERIAL_ENDPOINTS",
+          "TEXT_TEXT_AND_TEXT_ROUTE_INTERSECTIONS", "ORTHOGONAL_ROUTE_INTERSECTIONS"));
+    }
     Scene scene = new Scene(project.getProjectId() + "-PFD-001", "Process flow diagram", "001", "pfd");
     Map<String, Node> actualNodes = new LinkedHashMap<String, Node>();
     boolean recycleTrain = false;
@@ -593,6 +603,10 @@ public final class ProfessionalPidDiagramRenderer {
    * @param unit primary physical unit
    */
   private void renderUnit(ProcessEquipmentInterface unit) {
+    if (unit instanceof HeatExchanger && unit.getInletStreams().size() == 2 && unit.getOutletStreams().size() == 2) {
+      renderTwoCircuitExchanger((HeatExchanger) unit, false);
+      return;
+    }
     Scene scene = scene(unit.getName(), "Process and instrumentation");
     Family family = ProfessionalPidSymbolLibrary.family(unit);
     double width = family == Family.HORIZONTAL_VESSEL ? 100 : 46;
@@ -835,6 +849,9 @@ public final class ProfessionalPidDiagramRenderer {
    */
   private void planInstrumentDetails(List<ProcessEquipmentInterface> primary) {
     for (ProcessEquipmentInterface unit : primary) {
+      if (unit instanceof HeatExchanger) {
+        continue; // The four-port template owns each exact exchanger and adjacent valve sensing segment.
+      }
       List<PidElement> rows = new ArrayList<PidElement>();
       for (PidElement element : model.getElementsForEquipment(unit.getName())) {
         Attachment attachment = projection.getAttachments().get(element.getTag());
@@ -880,9 +897,179 @@ public final class ProfessionalPidDiagramRenderer {
           found = unit;
         }
       }
-      if (found != null) {
+      if (found != null && !(found instanceof HeatExchanger)) {
         addInstrumentDetail(found.getName(), element);
       }
+    }
+  }
+
+  /**
+   * Renders four distinct material ports and source-bound instrumentation for an actual two-stream exchanger.
+   *
+   * @param unit actual exchanger, independent of tag naming or fluid property packages
+   * @param overview true for the source-only PFD profile
+   */
+  private void renderTwoCircuitExchanger(HeatExchanger unit, boolean overview) {
+    Scene scene = overview
+        ? new Scene(project.getProjectId() + "-PFD-001", "Two-circuit heat exchanger process flow", "001", "pfd")
+        : scene(unit.getName(), "Two-circuit process and instrumentation");
+    Node body = scene.node(unit.getName(), Family.HEAT_EXCHANGER, 400, 285, 90, 90, null);
+    scene.centered(400, 320, unit.getName(), 3.5, unit.getName());
+    Map<String, Node> local = new LinkedHashMap<String, Node>();
+    Map<String, List<Point>> material = new LinkedHashMap<String, List<Point>>();
+    for (int side = 0; side < 2; side++) {
+      StreamInterface inlet = unit.getInStream(side);
+      ProcessEquipmentInterface producer = producers.get(inlet);
+      ThrottlingValve upstream = producer instanceof ThrottlingValve ? (ThrottlingValve) producer : null;
+      StreamInterface sourceStream = upstream == null ? inlet : upstream.getInletStream();
+      double y = side == 0 ? 285 : 440;
+      Node source = side == 0 ? scene.terminal("in:" + inlet.getName(), 70, y, upstreamLabel(sourceStream), false)
+          : scene.node("in:" + inlet.getName(), Family.TERMINAL_WEST, 760, y, 70, 15, upstreamLabel(sourceStream));
+      Node last = source;
+      if (upstream != null) {
+        PidElement proposal = proposals.get(upstream.getName());
+        Node valve = proposal == null
+            ? scene.node(upstream.getName(), Family.CONTROL_VALVE, side == 0 ? 180 : 600, y, 16, 10, upstream.getName())
+            : proposalValve(scene, proposal, side == 0 ? 180 : 600, y);
+        local.put(upstream.getName(), valve);
+        List<Point> supply = side == 0 ? points(source.right(), valve.left()) : points(source.left(), valve.right());
+        scene.stroke(supply, source.tag, valve.tag, sourceStream.getName(), false, false);
+        material.put(sourceStream.getName(), supply);
+        last = valve;
+      }
+      List<Point> feed = side == 0 ? points(last.right(), body.left())
+          : points(last.left(), new Point(400, y), body.bottom());
+      scene.stroke(feed, last.tag, body.tag, inlet.getName(), false, false);
+      material.put(inlet.getName(), feed);
+      exchangerLineLabel(scene, sourceStream, side == 0 ? 200 : 690, y + 32, overview, unit.getName());
+      if (upstream != null) {
+        exchangerLineLabel(scene, inlet, side == 0 ? 275 : 470, side == 0 ? y + 54 : y - 20, overview, unit.getName());
+      }
+    }
+    for (int side = 0; side < 2; side++) {
+      StreamInterface outlet = unit.getOutStream(side);
+      Node target = side == 0 ? scene.terminal("out:" + outlet.getName(), 760, 285, downstreamLabel(outlet), false)
+          : scene.node("out:" + outlet.getName(), Family.TERMINAL_WEST, 70, 140, 70, 15, downstreamLabel(outlet));
+      List<Point> route = side == 0 ? points(body.right(), target.left())
+          : points(body.top(), new Point(400, 140), target.right());
+      scene.stroke(route, body.tag, target.tag, outlet.getName(), false, false);
+      material.put(outlet.getName(), route);
+      exchangerLineLabel(scene, outlet, side == 0 ? 600 : 225, side == 0 ? 325 : 177, overview, unit.getName());
+    }
+    if (!overview) {
+      for (int side = 0; side < 2; side++) {
+        double inletTap = side == 0 ? (producers.get(unit.getInStream(0)) instanceof ThrottlingValve ? 215 : 140) : 430;
+        exchangerMeasurements(scene, unit.getInStream(side), inletTap, side == 0 ? 220 : 490, side == 0 ? 285 : 440,
+            local);
+        exchangerMeasurements(scene, unit.getOutStream(side), side == 0 ? 520 : 160, side == 0 ? 220 : 95,
+            side == 0 ? 285 : 140, local);
+      }
+      int controllerIndex = 0;
+      for (PidElement element : model.getElements()) {
+        if (element.getType() == PidElementType.CONTROLLER && unit.getName().equals(element.getEquipmentTag())
+            && controllerIndex < 2) {
+          local.put(element.getTag(), scene.instrument(element, 620 + controllerIndex++ * 100, 160));
+        }
+      }
+      for (Map<String, String> signal : projection.getSignals()) {
+        Node source = local.get(signal.get("sourceTag"));
+        Node target = local.get(signal.get("targetTag"));
+        if (source == null || target == null) {
+          continue;
+        }
+        List<Point> route = target.family == Family.CONTROL_VALVE || target.family == Family.PNEUMATIC_OPERATED_VALVE
+            ? points(source.right(), new Point(815, source.y), new Point(815, 385), new Point(target.x, 385),
+                target.top())
+            : points(source.right(), new Point(source.right().x + 22, source.y),
+                new Point(source.right().x + 22, target.y), target.left());
+        String id = signalIds.get(signalKey(signal));
+        scene.route(source, "r", target, target.family == Family.CONTROL_FUNCTION ? "l" : "t", id, true, route);
+        signalSources.add(id);
+        signalTargets.add(id);
+      }
+      for (Map.Entry<String, Node> entry : local.entrySet()) {
+        signalEnds(scene, entry.getKey(), entry.getValue());
+      }
+      for (PidElement element : model.getElementsForEquipment(unit.getName())) {
+        Attachment attachment = projection.getAttachments().get(element.getTag());
+        if (attachment.getKind() == PidPhysicalProjection.Kind.PROCESS_NOZZLE) {
+          boolean inlet = "INLET".equals(attachment.getDirection());
+          Point port = attachment.getStreamIndex() == 0 ? (inlet ? body.left() : body.right())
+              : (inlet ? body.bottom() : body.top());
+          scene.node(element.getTag(), Family.NOZZLE, port.x, port.y, 4, 4, null);
+        }
+      }
+    }
+    scene.spec.put("exchangerMaterialSegments", material);
+    scene.text(130, 385, "Two independent material circuits; separate property models and actual source ports.", 3,
+        null);
+    scene.text(130, 398, "Normal operating values remain distinct from line design inputs and construction approval.",
+        3, null);
+    scene.finish();
+  }
+
+  /**
+   * Places up to three actual measurements on their exact physical material segment.
+   *
+   * @param scene controlled native scene
+   * @param stream actual measured stream
+   * @param firstX first tapping position
+   * @param instrumentY instrument row
+   * @param pipeY physical horizontal segment ordinate
+   * @param local local source-bound function nodes
+   */
+  private void exchangerMeasurements(Scene scene, StreamInterface stream, double firstX, double instrumentY,
+      double pipeY, Map<String, Node> local) {
+    List<PidElement> sensors = new ArrayList<PidElement>();
+    for (PidElement element : model.getElements()) {
+      Attachment attachment = projection.getAttachments().get(element.getTag());
+      if (attachment.getKind() == PidPhysicalProjection.Kind.SENSING
+          && stream.getName().equals(attachment.getStreamTag())) {
+        sensors.add(element);
+      }
+    }
+    Collections.sort(sensors, new Comparator<PidElement>() {
+      @Override
+      public int compare(PidElement left, PidElement right) {
+        int control = Boolean.compare(left.getConnectedElementIds().isEmpty(),
+            right.getConnectedElementIds().isEmpty());
+        return control == 0 ? left.getTag().compareTo(right.getTag()) : control;
+      }
+    });
+    for (int index = 0; index < sensors.size(); index++) {
+      if (index >= 3) {
+        hold("EXCHANGER_INSTRUMENT_DENSITY", sensors.get(index).getTag(), "ISO 10628-1:2014",
+            "Provide a controlled detail sheet for more than three measurements on one material segment");
+        continue;
+      }
+      PidElement sensor = sensors.get(index);
+      double x = firstX + index * 65;
+      Node node = scene.instrument(sensor, x, instrumentY);
+      local.put(sensor.getTag(), node);
+      Point tap = new Point(x, pipeY);
+      scene.sensing(null, tap, node, instrumentY < pipeY ? "b" : "t",
+          points(tap, instrumentY < pipeY ? node.bottom() : node.top()), sensor.getTag());
+    }
+  }
+
+  /**
+   * Keeps PFD operating values separate from P&amp;ID line-design declarations.
+   *
+   * @param scene native scene
+   * @param stream actual material stream
+   * @param x label centre
+   * @param y label row
+   * @param overview true for the PFD operating-data profile
+   * @param owner actual exchanger tag
+   */
+  private void exchangerLineLabel(Scene scene, StreamInterface stream, double x, double y, boolean overview,
+      String owner) {
+    if (overview) {
+      scene.centered(x, y, stream.getName(), 3, null);
+      scene.centered(x, y + 10, String.format(Locale.ROOT, "%.2f C / %.2f bara / %.3f kg/s", stream.getTemperature("C"),
+          stream.getPressure("bara"), stream.getFlowRate("kg/sec")), 3, null);
+    } else {
+      scene.lineLabel(stream.getName(), x, y, owner);
     }
   }
 
@@ -2228,7 +2415,7 @@ public final class ProfessionalPidDiagramRenderer {
       record.put("id", tag);
       record.put("tag", tag);
       record.put("kind", family == Family.HORIZONTAL_VESSEL || family == Family.VERTICAL_VESSEL ? "vessel"
-          : family == Family.TERMINAL || family == Family.TERMINAL_NORTH ? "boundary"
+          : family == Family.TERMINAL || family == Family.TERMINAL_NORTH || family == Family.TERMINAL_WEST ? "boundary"
               : family == Family.FIELD_INSTRUMENT ? "instrument"
                   : family == Family.CONTROL_FUNCTION || family == Family.SAFETY_FUNCTION ? "controller" : "equipment");
       double top = y - height / 2;
@@ -2261,7 +2448,7 @@ public final class ProfessionalPidDiagramRenderer {
           if (compact) {
             centered(x, y + height / 2 + 6, label, 2.5, null);
           }
-        } else if (family == Family.TERMINAL || family == Family.TERMINAL_NORTH) {
+        } else if (family == Family.TERMINAL || family == Family.TERMINAL_NORTH || family == Family.TERMINAL_WEST) {
           centered(x, y, shorten(label, 36), 2.7, tag);
         } else {
           centered(x, family == Family.VERTICAL_VESSEL || family == Family.HORIZONTAL_VESSEL ? y : y + height / 2 + 8,
