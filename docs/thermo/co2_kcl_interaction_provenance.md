@@ -552,3 +552,25 @@ compensated here.
 - Dholabhai et al. (1993), [DOI 10.1021/je00012a045](https://doi.org/10.1021/je00012a045).
 - Coelho, Franco and Firoozabadi (2025), *Industrial & Engineering Chemistry Research* 64, 8492–8505,
   [DOI 10.1021/acs.iecr.5c00134](https://doi.org/10.1021/acs.iecr.5c00134), equation 22.
+
+## Explicit salt-free KCl solubility holdout (Mousavi-Chapoy-Burgass 2024)
+
+The later Heriot-Watt static-analytical study by Mousavi, Chapoy and Burgass
+provides an independent observable boundary that the 1995 source does not. It
+defines CO2 solubility as mole fraction in the salt-free aqueous phase and
+reports displayed uncertainties. Tables A11-A13 contain 26 KCl measurements at
+10, 15 and 22 mass percent, 323.15-423.15 K and 82.07-548.28 bar.
+
+`KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest` retains those
+source values under the article's CC BY license and compares the explicit
+salt-free observable with NeqSim's molecular water-plus-CO2 mole fraction. It
+also records water activity, CO2 molality, ion-inclusive and pseudo-salt
+representation controls, component closure, fugacity closure and
+finite-reservoir independence. No source point is used to fit a parameter or
+select a tolerance.
+
+This high-temperature holdout isolates the dissolved-CO2/water-activity path
+from hydrate guest occupancy. It does not replace the Dholabhai K10/K15 hydrate
+matrix or establish how the 1995 Burgass MSc converted its measurements. See
+the [source and reproduction notes](../../src/test/resources/data/chemistry_benchmarks/co2_kcl_solubility_mousavi_chapoy_burgass2024.md).
+
