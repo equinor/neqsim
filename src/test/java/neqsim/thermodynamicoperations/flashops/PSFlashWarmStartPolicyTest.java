@@ -126,7 +126,7 @@ public class PSFlashWarmStartPolicyTest {
       super(system, system.getEntropy(), 0);
     }
 
-    void setInnerFlash(Flash innerFlash) {
+    void setInnerFlash(TPflash innerFlash) {
       tpFlash = innerFlash;
     }
 
