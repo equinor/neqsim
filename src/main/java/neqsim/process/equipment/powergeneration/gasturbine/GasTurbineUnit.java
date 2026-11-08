@@ -72,6 +72,22 @@ public class GasTurbineUnit extends TwoPortEquipment {
   private double maxExhaustTemperatureK = 0.0;
   /** Fraction of site power lost per kelvin that the full-load exhaust temperature exceeds the limit. */
   private double exhaustLimitPowerLossPerKelvin = 0.01;
+  /** Installed inlet duct/filter pressure loss [kPa]. */
+  private double inletPressureLossKPa = 0.0;
+  /** Installed exhaust duct/stack pressure loss [kPa]. */
+  private double exhaustPressureLossKPa = 0.0;
+  /** Inlet loss the rating is based on [kPa] (ISO rating: 0). */
+  private double referenceInletPressureLossKPa = 0.0;
+  /** Exhaust loss the rating is based on [kPa] (ISO rating: 0). */
+  private double referenceExhaustPressureLossKPa = 0.0;
+  /** Fractional power loss per kPa of inlet loss (screening default 1 % per kPa). */
+  private double inletLossPowerSensitivityPerKPa = 0.010;
+  /** Fractional heat-rate rise per kPa of inlet loss (screening default 0.4 % per kPa). */
+  private double inletLossHeatRateSensitivityPerKPa = 0.004;
+  /** Fractional power loss per kPa of exhaust loss (screening default 0.5 % per kPa). */
+  private double exhaustLossPowerSensitivityPerKPa = 0.005;
+  /** Fractional heat-rate rise per kPa of exhaust loss (screening default 0.5 % per kPa). */
+  private double exhaustLossHeatRateSensitivityPerKPa = 0.005;
   /** Mean exhaust gas specific heat used for waste-heat duty [kJ/kg/K]. */
   private double exhaustCpKJPerKgK = 1.10;
   private boolean exhaustTemperatureLimited = false;
@@ -318,7 +334,8 @@ public class GasTurbineUnit extends TwoPortEquipment {
     double deliveredLoad = Math.min(1.0, this.loadFraction);
     double loadForMap = Math.max(performanceMap.getMinLoadFraction() * 0.5, deliveredLoad);
     double baseHeatRate = performanceMap.getHeatRate(spec.getHeatRateKJPerKWh(), loadForMap, ambientTemperatureK);
-    this.effectiveHeatRateKJPerKWh = baseHeatRate * (1.0 + degradation.getTotalHeatRatePenalty());
+    this.effectiveHeatRateKJPerKWh = baseHeatRate * (1.0 + degradation.getTotalHeatRatePenalty())
+        * getInstallationHeatRateFactor();
 
     // 5) Fuel mass flow from heat-rate definition (LHV basis)
     // heatRate [kJ/kWh] = fuel energy / shaft energy
@@ -415,7 +432,8 @@ public class GasTurbineUnit extends TwoPortEquipment {
     }
     GasTurbinePerformanceMap map = performanceMap != null ? performanceMap : GasTurbinePerformanceMap.fromSpec(spec);
     double derate = degradation != null ? degradation.getPowerDerateFactor() : 1.0;
-    double power = map.getAvailablePower(spec.getRatedPowerW(), ambientTemperatureK, ambientPressureBara) * derate;
+    double power = map.getAvailablePower(spec.getRatedPowerW(), ambientTemperatureK, ambientPressureBara) * derate
+        * getInstallationPowerFactor();
     if (maxExhaustTemperatureK > 0.0) {
       double excess = map.getFullLoadExhaustTemperature(spec.getExhaustTemperatureK(), ambientTemperatureK)
           - maxExhaustTemperatureK;
@@ -424,6 +442,82 @@ public class GasTurbineUnit extends TwoPortEquipment {
       }
     }
     return power;
+  }
+
+  /**
+   * Set installed inlet and exhaust duct pressure losses. The rating is corrected for the difference between these
+   * and the reference losses the OEM rating is based on (default 0, i.e. ISO rating without installation losses).
+   *
+   * @param inletLossKPa inlet filter/duct pressure loss [kPa], must be finite and non-negative
+   * @param exhaustLossKPa exhaust duct/stack pressure loss [kPa], must be finite and non-negative
+   */
+  public void setInstallationPressureLosses(double inletLossKPa, double exhaustLossKPa) {
+    requireNonNegative(inletLossKPa, "inletLossKPa");
+    requireNonNegative(exhaustLossKPa, "exhaustLossKPa");
+    this.inletPressureLossKPa = inletLossKPa;
+    this.exhaustPressureLossKPa = exhaustLossKPa;
+  }
+
+  /**
+   * Set the pressure losses the supplied rating already includes.
+   *
+   * @param inletLossKPa reference inlet loss [kPa], finite and non-negative
+   * @param exhaustLossKPa reference exhaust loss [kPa], finite and non-negative
+   */
+  public void setReferencePressureLosses(double inletLossKPa, double exhaustLossKPa) {
+    requireNonNegative(inletLossKPa, "inletLossKPa");
+    requireNonNegative(exhaustLossKPa, "exhaustLossKPa");
+    this.referenceInletPressureLossKPa = inletLossKPa;
+    this.referenceExhaustPressureLossKPa = exhaustLossKPa;
+  }
+
+  /**
+   * Set pressure-loss sensitivities (OEM correction curves linearised about the reference losses). Defaults are generic
+   * screening values, not OEM data.
+   *
+   * @param inletPowerPerKPa fractional power loss per kPa of inlet loss
+   * @param inletHeatRatePerKPa fractional heat-rate rise per kPa of inlet loss
+   * @param exhaustPowerPerKPa fractional power loss per kPa of exhaust loss
+   * @param exhaustHeatRatePerKPa fractional heat-rate rise per kPa of exhaust loss
+   */
+  public void setPressureLossSensitivities(double inletPowerPerKPa, double inletHeatRatePerKPa,
+      double exhaustPowerPerKPa, double exhaustHeatRatePerKPa) {
+    requireNonNegative(inletPowerPerKPa, "inletPowerPerKPa");
+    requireNonNegative(inletHeatRatePerKPa, "inletHeatRatePerKPa");
+    requireNonNegative(exhaustPowerPerKPa, "exhaustPowerPerKPa");
+    requireNonNegative(exhaustHeatRatePerKPa, "exhaustHeatRatePerKPa");
+    this.inletLossPowerSensitivityPerKPa = inletPowerPerKPa;
+    this.inletLossHeatRateSensitivityPerKPa = inletHeatRatePerKPa;
+    this.exhaustLossPowerSensitivityPerKPa = exhaustPowerPerKPa;
+    this.exhaustLossHeatRateSensitivityPerKPa = exhaustHeatRatePerKPa;
+  }
+
+  /**
+   * Power multiplier for installed pressure losses relative to the rating basis.
+   *
+   * @return multiplier, floored at 0.5
+   */
+  public double getInstallationPowerFactor() {
+    double f = 1.0 - inletLossPowerSensitivityPerKPa * (inletPressureLossKPa - referenceInletPressureLossKPa)
+        - exhaustLossPowerSensitivityPerKPa * (exhaustPressureLossKPa - referenceExhaustPressureLossKPa);
+    return Math.max(0.5, f);
+  }
+
+  /**
+   * Heat-rate multiplier for installed pressure losses relative to the rating basis.
+   *
+   * @return multiplier, floored at 0.5
+   */
+  public double getInstallationHeatRateFactor() {
+    double f = 1.0 + inletLossHeatRateSensitivityPerKPa * (inletPressureLossKPa - referenceInletPressureLossKPa)
+        + exhaustLossHeatRateSensitivityPerKPa * (exhaustPressureLossKPa - referenceExhaustPressureLossKPa);
+    return Math.max(0.5, f);
+  }
+
+  private static void requireNonNegative(double v, String name) {
+    if (!Double.isFinite(v) || v < 0.0) {
+      throw new IllegalArgumentException(name + " must be finite and non-negative");
+    }
   }
 
   /**
