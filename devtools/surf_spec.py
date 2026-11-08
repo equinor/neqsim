@@ -6,13 +6,17 @@ The specification is one YAML/JSON document. Every physical quantity carries its
 model with derived geometry (route length from the 3D polyline, hydraulic inside diameter from OD and wall, elevation
 profile), concept edge sets and resolved cases. Nothing here starts the JVM.
 """
+import hashlib
 import math
+import os
 import re
 
 import fa_units
 from fa_units import FlowAssuranceError
 
 SCHEMA = "surf_study.v1"
+SPEC_BASE_DIR = None        # folder of the loaded study file; relative fluid files (``e300_file``) resolve against it
+VLP_MODES = ("SIMPLIFIED", "BEGGS_BRILL", "HAGEDORN_BROWN", "GRAY", "HASAN_KABIR", "DUNS_ROS")
 ID_RE = re.compile(r"^[A-Za-z0-9_\-]+$")
 INPUT_CLASSES = ("specified", "measured", "calculated", "estimated", "synthetic", "unavailable")
 READINESS = ("NOT_READY", "SCREENING", "REVIEWED")
@@ -82,6 +86,80 @@ def hydraulic_id_m(edge):
     return (edge["od_mm"] - 2.0 * edge["wall_mm"]) / 1000.0
 
 
+def resolve_path(path):
+    """Absolute path of a file named in the study; a relative name resolves against the study file's folder."""
+    if os.path.isabs(path) or not SPEC_BASE_DIR:
+        return os.path.abspath(path)
+    return os.path.abspath(os.path.join(SPEC_BASE_DIR, path))
+
+
+def fluid_components(fd):
+    """Mole-fraction mapping of a fluid for reports and design checks: library components, pseudo-components (marked) or the E300 file."""
+    if fd.get("e300_file"):
+        return {"E300 file %s" % os.path.basename(str(fd["e300_file"])): 1.0}
+    out = dict(fd.get("components") or {})
+    for p in fd.get("pseudo_components") or []:
+        out["%s (pseudo)" % p.get("name")] = float(p.get("mole_fraction", 0.0))
+    return out
+
+
+def _check_fluid(fid, fd, src_ids):
+    """Findings for one fluid: library components, optional TBP pseudo-components, or an E300 file carrying the composition."""
+    f = []
+    comps = fd.get("components") or {}
+    pseudo = fd.get("pseudo_components") or []
+    e300 = fd.get("e300_file")
+    where = "fluids." + fid
+    if e300:
+        if comps or pseudo:
+            f.append(finding("error", "FLUID-E300-MIX", "fluid %s names an e300_file and also components; the E300 file carries the whole composition" % fid, where))
+        if not os.path.isfile(resolve_path(str(e300))):
+            f.append(finding("error", "FLUID-E300-FILE", "fluid %s e300_file %r not found (relative names resolve against the study file)" % (fid, e300), where))
+        if fd.get("eos") not in (None, "E300"):
+            f.append(finding("error", "FLUID-E300-EOS", "fluid %s with an e300_file takes its EOS from the file; leave eos out or use E300" % fid, where))
+    else:
+        total = sum(float(v) for v in comps.values()) if comps else 0.0
+        names = set(comps)
+        for i, p in enumerate(pseudo):
+            pw = "%s.pseudo_components[%d]" % (where, i)
+            if not p.get("name") or p.get("name") in names:
+                f.append(finding("error", "PSEUDO-NAME", "pseudo-component %d needs a unique name that is not a library component" % i, pw))
+            names.add(p.get("name"))
+            if not (_num(p.get("mole_fraction")) and p["mole_fraction"] > 0.0):
+                f.append(finding("error", "PSEUDO-FRACTION", "pseudo-component %s needs a positive mole_fraction" % p.get("name"), pw))
+            else:
+                total += float(p["mole_fraction"])
+            if not (_num(p.get("molar_mass_g_mol")) and 30.0 <= p["molar_mass_g_mol"] <= 1500.0):
+                f.append(finding("error", "PSEUDO-MOLAR-MASS", "pseudo-component %s needs molar_mass_g_mol between 30 and 1500" % p.get("name"), pw))
+            if not (_num(p.get("density_g_cm3")) and 0.4 <= p["density_g_cm3"] <= 1.5):
+                f.append(finding("error", "PSEUDO-DENSITY", "pseudo-component %s needs density_g_cm3 (specific gravity) between 0.4 and 1.5" % p.get("name"), pw))
+        if not (comps or pseudo) or abs(total - 1.0) > 1.0e-6:
+            f.append(finding("error", "FLUID-SUM", "fluid %s mole fractions sum to %.8f, expected 1" % (fid, total), where))
+    if fd.get("source") not in src_ids:
+        f.append(finding("error", "FLUID-SOURCE", "fluid %s cites unknown source %r" % (fid, fd.get("source")), where))
+    return f
+
+
+def _check_well_tubing(nid, n):
+    """Findings for the optional tubing of a production well (``well.tubing``)."""
+    f = []
+    t = (n.get("well") or {}).get("tubing")
+    if t is None:
+        return f
+    where = "%s.well.tubing" % nid
+    if n.get("kind") != "production_well":
+        f.append(finding("error", "TUBING-KIND", "node %s: tubing is only supported on production wells" % nid, where))
+    for key in ("length_m", "id_mm", "bottomhole_temperature_c"):
+        if not _num(t.get(key)) or (key != "bottomhole_temperature_c" and t[key] <= 0.0):
+            f.append(finding("error", "TUBING-FIELD", "node %s: tubing.%s must be a positive number" % (nid, key), where))
+    if t.get("vlp_mode", "BEGGS_BRILL") not in VLP_MODES:
+        f.append(finding("error", "TUBING-VLP", "node %s: tubing.vlp_mode must be one of %s" % (nid, VLP_MODES), where))
+    inc = t.get("inclination_deg", 90.0)
+    if not (_num(inc) and 0.0 < inc <= 90.0):
+        f.append(finding("error", "TUBING-INCLINATION", "node %s: tubing.inclination_deg must be in (0, 90] (90 = vertical)" % nid, where))
+    return f
+
+
 def check_spec(spec):
     """Validate ``spec`` and return ``(findings, model)``; ``model`` is None when a structural error prevents normalisation."""
     f = []
@@ -110,12 +188,7 @@ def check_spec(spec):
         src_ids.add(s.get("id"))
     fluids = spec["fluids"]
     for fid, fd in fluids.items():
-        comps = fd.get("components") or {}
-        total = sum(float(v) for v in comps.values()) if comps else 0.0
-        if not comps or abs(total - 1.0) > 1.0e-6:
-            f.append(finding("error", "FLUID-SUM", "fluid %s mole fractions sum to %.8f, expected 1" % (fid, total), "fluids." + fid))
-        if fd.get("source") not in src_ids:
-            f.append(finding("error", "FLUID-SOURCE", "fluid %s cites unknown source %r" % (fid, fd.get("source")), "fluids." + fid))
+        f.extend(_check_fluid(fid, fd, src_ids))
     nodes, edges = {}, {}
     for n in spec["nodes"]:
         nid = str(n.get("id"))
@@ -133,6 +206,7 @@ def check_spec(spec):
         if n.get("source") not in src_ids:
             f.append(finding("error", "NODE-SOURCE", "node %s cites unknown source %r" % (nid, n.get("source")), nid))
         nodes[nid] = n
+        f.extend(_check_well_tubing(nid, n))
     for e in spec["edges"]:
         eid = str(e.get("id"))
         if not ID_RE.match(eid):
@@ -349,8 +423,23 @@ def load_spec(path):
         spec = psr_basis.load_structured(path)
     except Exception as exc:  # noqa: BLE001
         raise SpecError("cannot read %s: %s" % (path, exc))
+    global SPEC_BASE_DIR
+    SPEC_BASE_DIR = os.path.dirname(os.path.abspath(path))
     findings, model = check_spec(spec)
     return spec, findings, model
+
+
+def spec_hash(spec, n=16):
+    """Stable short hash of the specification content, including the content of any E300 fluid file."""
+    import json
+
+    digest = hashlib.sha256(json.dumps(spec, sort_keys=True, default=str).encode("utf-8"))
+    for fid in sorted(spec.get("fluids") or {}):
+        e300 = spec["fluids"][fid].get("e300_file")
+        if e300 and os.path.isfile(resolve_path(str(e300))):
+            with open(resolve_path(str(e300)), "rb") as handle:
+                digest.update(handle.read())
+    return digest.hexdigest()[:n]
 
 
 def case_for_concept(model, spec, concept_id):
@@ -369,11 +458,3 @@ def case_for_concept(model, spec, concept_id):
             e["od_m"] = e["od_mm"] / 1000.0 if e.get("od_mm") else None
         out[eid] = e
     return out
-
-
-def spec_hash(spec, n=16):
-    """Stable short hash of the specification content."""
-    import hashlib
-    import json
-
-    return hashlib.sha256(json.dumps(spec, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:n]

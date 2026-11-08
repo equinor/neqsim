@@ -3732,23 +3732,79 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * </pre>
    *
    * <p>
-   * where C is typically 100-150 for continuous service.
+   * where rho_mix is the no-slip (homogeneous) mixture density of the same increment that {@link #getMixtureVelocity()}
+   * refers to. Using the same no-slip basis for the velocity and the density keeps the ratio
+   * {@link #getMixtureVelocity()} / {@link #getErosionalVelocity()} consistent with a single-flash calculation of the
+   * stream.
+   * </p>
    *
-   * @param cFactor erosional C-factor (typically 100-150)
+   * <p>
+   * The C-factor is used with SI units (rho in kg/m3, velocity in m/s). An API RP 14E C-factor of 100 in US customary
+   * units (ft/s, lb/ft3) corresponds to about 122 here, and 150 to about 183.
+   * </p>
+   *
+   * @param cFactor erosional C-factor on the SI basis (default 100 is 18 percent more conservative than API RP 14E C =
+   * 100)
    * @return erosional velocity in m/s
    */
   public double getErosionalVelocity(double cFactor) {
-    if (mixtureDensity <= 0 || Double.isNaN(mixtureDensity)) {
-      // Use inlet stream density if mixture density not yet calculated
-      if (getInletStream() != null && getInletStream().getFluid() != null) {
-        double density = getInletStream().getFluid().getDensity("kg/m3");
-        return density > 0 ? cFactor / Math.sqrt(density) : 0.0;
+    double density = getNoSlipMixtureDensity();
+    return density > 0 ? cFactor / Math.sqrt(density) : 0.0;
+  }
+
+  /**
+   * Get the no-slip (homogeneous) mixture density of the last calculated increment.
+   *
+   * <p>
+   * The density is taken from the mixture density profile, which stores the no-slip density used for the friction
+   * calculation. Before the pipe has been run the inlet fluid density is used.
+   * </p>
+   *
+   * @return no-slip mixture density in kg/m3, or 0 when it is not available
+   */
+  public double getNoSlipMixtureDensity() {
+    if (mixtureDensityProfile != null && !mixtureDensityProfile.isEmpty()) {
+      double density = mixtureDensityProfile.get(mixtureDensityProfile.size() - 1);
+      if (density > 0 && !Double.isNaN(density)) {
+        return density;
       }
-      return 0.0;
     }
-    // mixtureDensity is stored in lb/ft³ internally, convert to kg/m³
-    double densityKgM3 = mixtureDensity * 16.0185; // lb/ft³ to kg/m³
-    return densityKgM3 > 0 ? cFactor / Math.sqrt(densityKgM3) : 0.0;
+    if (getInletStream() != null && getInletStream().getFluid() != null) {
+      double density = getInletStream().getFluid().getDensity("kg/m3");
+      return density > 0 && !Double.isNaN(density) ? density : 0.0;
+    }
+    return 0.0;
+  }
+
+  /**
+   * Maximum ratio of mixture velocity to API RP 14E erosional velocity along the pipe.
+   *
+   * <p>
+   * For every increment the superficial mixture velocity is divided by C / sqrt(rho) with the no-slip mixture density
+   * of the same increment. The maximum is returned, so a value above 1 means that the erosional limit is exceeded
+   * somewhere along the line.
+   * </p>
+   *
+   * @param cFactor erosional C-factor (same unit basis as {@link #getErosionalVelocity(double)})
+   * @return maximum velocity ratio along the pipe, or NaN when no profile is available
+   */
+  public double getMaxErosionalVelocityRatio(double cFactor) {
+    if (mixtureDensityProfile == null || mixtureSuperficialVelocityProfile == null) {
+      return Double.NaN;
+    }
+    int n = Math.min(mixtureDensityProfile.size(), mixtureSuperficialVelocityProfile.size());
+    double max = Double.NaN;
+    for (int i = 0; i < n; i++) {
+      double rho = mixtureDensityProfile.get(i);
+      double velocity = mixtureSuperficialVelocityProfile.get(i);
+      if (rho > 0 && cFactor > 0 && !Double.isNaN(velocity)) {
+        double ratio = velocity * Math.sqrt(rho) / cFactor;
+        if (Double.isNaN(max) || ratio > max) {
+          max = ratio;
+        }
+      }
+    }
+    return max;
   }
 
   /**

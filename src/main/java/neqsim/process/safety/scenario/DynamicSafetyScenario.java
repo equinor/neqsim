@@ -7,11 +7,20 @@ import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import neqsim.process.logic.ProcessLogic;
+import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 
 /** Isolated transient initiating event, protection logic, and measurable safe-state criteria. */
 public final class DynamicSafetyScenario implements Serializable {
   private static final long serialVersionUID = 1000L;
+
+  /** Process container against which scenario actions and observations are bound. */
+  public enum ExecutionTarget {
+    /** One process area. */
+    PROCESS_SYSTEM,
+    /** A coordinated collection of process areas. */
+    PROCESS_MODEL
+  }
 
   /** Applies controlled case configuration or an initiating event to an isolated process. */
   public interface ProcessManipulator extends Serializable {
@@ -21,6 +30,16 @@ public final class DynamicSafetyScenario implements Serializable {
   /** Builds logic bound to equipment in the isolated process copy. */
   public interface LogicFactory extends Serializable {
     ProcessLogic create(ProcessSystem process);
+  }
+
+  /** Applies controlled case configuration or an initiating event to an isolated process model. */
+  public interface ProcessModelManipulator extends Serializable {
+    void apply(ProcessModel model);
+  }
+
+  /** Builds logic bound to equipment across the isolated process-model copy. */
+  public interface ProcessModelLogicFactory extends Serializable {
+    ProcessLogic create(ProcessModel model);
   }
 
   private final String id;
@@ -35,6 +54,10 @@ public final class DynamicSafetyScenario implements Serializable {
   private final ProcessManipulator initiatingEvent;
   private final List<String> logicDefinitionIds;
   private final List<LogicFactory> logicFactories;
+  private final ProcessModelManipulator processModelCaseConfiguration;
+  private final ProcessModelManipulator processModelInitiatingEvent;
+  private final List<ProcessModelLogicFactory> processModelLogicFactories;
+  private final ExecutionTarget executionTarget;
   private final List<DynamicScenarioCriterion> criteria;
   private final List<String> evidenceReferences;
   private final List<String> requirementIds;
@@ -47,12 +70,19 @@ public final class DynamicSafetyScenario implements Serializable {
     timeStepSeconds = builder.timeStepSeconds;
     triggerTimeSeconds = builder.triggerTimeSeconds;
     eventExactTimingEnabled = builder.eventExactTimingEnabled;
-    caseConfigurationDefinitionId = builder.caseConfiguration == null ? "NONE" : builder.caseConfigurationDefinitionId;
+    caseConfigurationDefinitionId = builder.caseConfiguration == null && builder.processModelCaseConfiguration == null
+        ? "NONE"
+        : builder.caseConfigurationDefinitionId;
     caseConfiguration = builder.caseConfiguration;
     initiatingEventDefinitionId = builder.initiatingEventDefinitionId;
     initiatingEvent = builder.initiatingEvent;
     logicDefinitionIds = Collections.unmodifiableList(new ArrayList<String>(builder.logicDefinitionIds));
     logicFactories = Collections.unmodifiableList(new ArrayList<LogicFactory>(builder.logicFactories));
+    processModelCaseConfiguration = builder.processModelCaseConfiguration;
+    processModelInitiatingEvent = builder.processModelInitiatingEvent;
+    processModelLogicFactories = Collections
+        .unmodifiableList(new ArrayList<ProcessModelLogicFactory>(builder.processModelLogicFactories));
+    executionTarget = builder.executionTarget;
     criteria = Collections.unmodifiableList(new ArrayList<DynamicScenarioCriterion>(builder.criteria));
     evidenceReferences = Collections.unmodifiableList(new ArrayList<String>(builder.evidenceReferences));
     requirementIds = Collections.unmodifiableList(new ArrayList<String>(builder.requirementIds));
@@ -119,6 +149,28 @@ public final class DynamicSafetyScenario implements Serializable {
     return logicFactories;
   }
 
+  ProcessModelManipulator getProcessModelCaseConfiguration() {
+    return processModelCaseConfiguration;
+  }
+
+  ProcessModelManipulator getProcessModelInitiatingEvent() {
+    return processModelInitiatingEvent;
+  }
+
+  /** @return ordered protection-logic factories bound to a process model */
+  public List<ProcessModelLogicFactory> getProcessModelLogicFactories() {
+    return processModelLogicFactories;
+  }
+
+  /**
+   * Returns the process container required by this scenario.
+   *
+   * @return configured execution target; older serialized definitions default to one process system
+   */
+  public ExecutionTarget getExecutionTarget() {
+    return executionTarget == null ? ExecutionTarget.PROCESS_SYSTEM : executionTarget;
+  }
+
   public List<DynamicScenarioCriterion> getCriteria() {
     return criteria;
   }
@@ -145,10 +197,14 @@ public final class DynamicSafetyScenario implements Serializable {
     result.put("timeStepSeconds", Double.valueOf(timeStepSeconds));
     result.put("triggerTimeSeconds", Double.valueOf(triggerTimeSeconds));
     result.put("timingPolicy", eventExactTimingEnabled ? "EVENT_EXACT" : "LEGACY_FIXED_SCAN");
+    result.put("executionTarget", getExecutionTarget().name());
     result.put("caseConfigurationDefinitionId", caseConfigurationDefinitionId);
     result.put("initiatingEventDefinitionId", initiatingEventDefinitionId);
     result.put("logicDefinitionIds", new ArrayList<String>(logicDefinitionIds));
     result.put("logicCount", Integer.valueOf(logicFactories.size()));
+    if (getExecutionTarget() == ExecutionTarget.PROCESS_MODEL) {
+      result.put("logicCount", Integer.valueOf(processModelLogicFactories.size()));
+    }
     List<Map<String, Object>> criterionMaps = new ArrayList<Map<String, Object>>();
     for (DynamicScenarioCriterion criterion : criteria) {
       criterionMaps.add(criterion.toMap());
@@ -175,6 +231,10 @@ public final class DynamicSafetyScenario implements Serializable {
     private ProcessManipulator initiatingEvent;
     private final List<String> logicDefinitionIds = new ArrayList<String>();
     private final List<LogicFactory> logicFactories = new ArrayList<LogicFactory>();
+    private ProcessModelManipulator processModelCaseConfiguration;
+    private ProcessModelManipulator processModelInitiatingEvent;
+    private final List<ProcessModelLogicFactory> processModelLogicFactories = new ArrayList<ProcessModelLogicFactory>();
+    private ExecutionTarget executionTarget;
     private final List<DynamicScenarioCriterion> criteria = new ArrayList<DynamicScenarioCriterion>();
     private final List<String> evidenceReferences = new ArrayList<String>();
     private final List<String> requirementIds = new ArrayList<String>();
@@ -233,8 +293,30 @@ public final class DynamicSafetyScenario implements Serializable {
       if (value == null) {
         throw new IllegalArgumentException("case configuration must not be null");
       }
+      bindTarget(ExecutionTarget.PROCESS_SYSTEM);
       caseConfigurationDefinitionId = requireText(definitionId, "caseConfigurationDefinitionId");
       caseConfiguration = value;
+      return this;
+    }
+
+    public Builder configureModelCase(ProcessModelManipulator value) {
+      return configureModelCase("UNSPECIFIED", value);
+    }
+
+    /**
+     * Sets optional multi-area case configuration with an explicit controlled identity.
+     *
+     * @param definitionId stable implementation and revision identifier
+     * @param value case configuration
+     * @return this builder
+     */
+    public Builder configureModelCase(String definitionId, ProcessModelManipulator value) {
+      if (value == null) {
+        throw new IllegalArgumentException("case configuration must not be null");
+      }
+      bindTarget(ExecutionTarget.PROCESS_MODEL);
+      caseConfigurationDefinitionId = requireText(definitionId, "caseConfigurationDefinitionId");
+      processModelCaseConfiguration = value;
       return this;
     }
 
@@ -253,8 +335,30 @@ public final class DynamicSafetyScenario implements Serializable {
       if (value == null) {
         throw new IllegalArgumentException("initiating event must not be null");
       }
+      bindTarget(ExecutionTarget.PROCESS_SYSTEM);
       initiatingEventDefinitionId = requireText(definitionId, "initiatingEventDefinitionId");
       initiatingEvent = value;
+      return this;
+    }
+
+    public Builder modelInitiatingEvent(ProcessModelManipulator value) {
+      return modelInitiatingEvent("UNSPECIFIED", value);
+    }
+
+    /**
+     * Sets a multi-area initiating event with an explicit controlled identity.
+     *
+     * @param definitionId stable implementation and revision identifier
+     * @param value initiating event
+     * @return this builder
+     */
+    public Builder modelInitiatingEvent(String definitionId, ProcessModelManipulator value) {
+      if (value == null) {
+        throw new IllegalArgumentException("initiating event must not be null");
+      }
+      bindTarget(ExecutionTarget.PROCESS_MODEL);
+      initiatingEventDefinitionId = requireText(definitionId, "initiatingEventDefinitionId");
+      processModelInitiatingEvent = value;
       return this;
     }
 
@@ -273,8 +377,30 @@ public final class DynamicSafetyScenario implements Serializable {
       if (value == null) {
         throw new IllegalArgumentException("logic factory must not be null");
       }
+      bindTarget(ExecutionTarget.PROCESS_SYSTEM);
       logicDefinitionIds.add(requireText(definitionId, "logicDefinitionId"));
       logicFactories.add(value);
+      return this;
+    }
+
+    public Builder addModelLogic(ProcessModelLogicFactory value) {
+      return addModelLogic("UNSPECIFIED", value);
+    }
+
+    /**
+     * Adds multi-area protection logic with an explicit controlled identity.
+     *
+     * @param definitionId stable implementation and revision identifier
+     * @param value protection-logic factory
+     * @return this builder
+     */
+    public Builder addModelLogic(String definitionId, ProcessModelLogicFactory value) {
+      if (value == null) {
+        throw new IllegalArgumentException("logic factory must not be null");
+      }
+      bindTarget(ExecutionTarget.PROCESS_MODEL);
+      logicDefinitionIds.add(requireText(definitionId, "logicDefinitionId"));
+      processModelLogicFactories.add(value);
       return this;
     }
 
@@ -282,6 +408,7 @@ public final class DynamicSafetyScenario implements Serializable {
       if (value == null) {
         throw new IllegalArgumentException("criterion must not be null");
       }
+      bindTarget(value.getExecutionTarget());
       for (DynamicScenarioCriterion existing : criteria) {
         if (existing.getId().equals(value.getId())) {
           throw new IllegalArgumentException("Duplicate scenario criterion " + value.getId());
@@ -331,16 +458,30 @@ public final class DynamicSafetyScenario implements Serializable {
       if (triggerTimeSeconds > durationSeconds) {
         throw new IllegalStateException("trigger time must not exceed scenario duration");
       }
-      if (initiatingEvent == null) {
+      ExecutionTarget target = executionTarget == null ? ExecutionTarget.PROCESS_SYSTEM : executionTarget;
+      if (target == ExecutionTarget.PROCESS_SYSTEM && initiatingEvent == null) {
         throw new IllegalStateException("initiating event is required");
       }
-      if (logicFactories.isEmpty()) {
+      if (target == ExecutionTarget.PROCESS_MODEL && processModelInitiatingEvent == null) {
+        throw new IllegalStateException("process-model initiating event is required");
+      }
+      if (target == ExecutionTarget.PROCESS_SYSTEM && logicFactories.isEmpty()) {
         throw new IllegalStateException("at least one protection logic factory is required");
+      }
+      if (target == ExecutionTarget.PROCESS_MODEL && processModelLogicFactories.isEmpty()) {
+        throw new IllegalStateException("at least one process-model protection logic factory is required");
       }
       if (criteria.isEmpty()) {
         throw new IllegalStateException("at least one response criterion is required");
       }
       return new DynamicSafetyScenario(this);
+    }
+
+    private void bindTarget(ExecutionTarget value) {
+      if (executionTarget != null && executionTarget != value) {
+        throw new IllegalStateException("Cannot mix PROCESS_SYSTEM and PROCESS_MODEL scenario definitions");
+      }
+      executionTarget = value;
     }
   }
 

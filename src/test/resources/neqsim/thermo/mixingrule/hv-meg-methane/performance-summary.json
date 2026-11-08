@@ -1,0 +1,149 @@
+{
+  "base": "bb5c7d45071d5537adce23e2217da28c49776d85",
+  "JVMs": 48,
+  "rounds": 480,
+  "cells": [
+    {
+      "profile": 0,
+      "scenario": "init1",
+      "rule4_over_rule2_fork_median_ratios": [
+        2.3861987837628202,
+        2.52971360629135,
+        2.56117390747817,
+        2.458487990073877
+      ],
+      "ratio_center": 2.4941007981826138,
+      "rule2_ns_per_op": [
+        1304.0713,
+        1271.62535,
+        1265.21385,
+        1253.05725
+      ],
+      "rule4_ns_per_op": [
+        3111.77335,
+        3216.8479500000003,
+        3240.4327,
+        3080.6261999999997
+      ]
+    },
+    {
+      "profile": 0,
+      "scenario": "init3",
+      "rule4_over_rule2_fork_median_ratios": [
+        3.489261436398626,
+        3.501817899311266,
+        3.5401064211756674,
+        3.5988297817644845
+      ],
+      "ratio_center": 3.5209621602434664,
+      "rule2_ns_per_op": [
+        1774.3807000000002,
+        1682.34015,
+        1701.4283,
+        1690.2060999999999
+      ],
+      "rule4_ns_per_op": [
+        6191.27815,
+        5891.24885,
+        6023.23725,
+        6082.76405
+      ]
+    },
+    {
+      "profile": 0,
+      "scenario": "flash",
+      "rule4_over_rule2_fork_median_ratios": [
+        1.5139100495245,
+        1.6737475818015852,
+        1.5572624323355502,
+        1.7529567686808563
+      ],
+      "ratio_center": 1.6155050070685677,
+      "rule2_ns_per_op": [
+        117563.025,
+        109490.08499999999,
+        108839.465,
+        107214.17
+      ],
+      "rule4_ns_per_op": [
+        177979.845,
+        183258.765,
+        169491.61,
+        187941.805
+      ]
+    },
+    {
+      "profile": 1,
+      "scenario": "init1",
+      "rule4_over_rule2_fork_median_ratios": [
+        1.7184876939930933,
+        1.6974695134348194,
+        1.901692629177525,
+        1.8361786362513026
+      ],
+      "ratio_center": 1.777333165122198,
+      "rule2_ns_per_op": [
+        1287.7552500000002,
+        1325.5593,
+        1209.45865,
+        1252.56435
+      ],
+      "rule4_ns_per_op": [
+        2212.9915499999997,
+        2250.0964999999997,
+        2300.0186,
+        2299.9318999999996
+      ]
+    },
+    {
+      "profile": 1,
+      "scenario": "init3",
+      "rule4_over_rule2_fork_median_ratios": [
+        2.6327670708265134,
+        2.605893282197764,
+        2.5921285312862414,
+        2.740459726285122
+      ],
+      "ratio_center": 2.619330176512139,
+      "rule2_ns_per_op": [
+        1501.33255,
+        1511.4854,
+        1562.13795,
+        1523.1324
+      ],
+      "rule4_ns_per_op": [
+        3952.6589,
+        3938.76965,
+        4049.26235,
+        4174.0830000000005
+      ]
+    },
+    {
+      "profile": 1,
+      "scenario": "flash",
+      "rule4_over_rule2_fork_median_ratios": [
+        1.43589315409177,
+        1.4673957656760344,
+        1.0762789638240007,
+        1.5732059626426798
+      ],
+      "ratio_center": 1.4516444598839022,
+      "rule2_ns_per_op": [
+        109437.41500000001,
+        106287.805,
+        136755.725,
+        104346.35
+      ],
+      "rule4_ns_per_op": [
+        157140.435,
+        155966.27500000002,
+        147187.31,
+        164158.3
+      ]
+    }
+  ],
+  "max_balance": 2.220446049250313e-16,
+  "max_normalization": 1.1102230246251565e-16,
+  "max_log_fugacity": 6.467326674197693e-13,
+  "interpretation": "Matched inputs and same production binaries, different model endpoints and solver work. No baseline/candidate production-code overhead delta exists in this test-only increment. Wide timing variation is retained; no established speedup, regression or optimality claim. Larger-mixture/allocation conclusions are outside this binary protocol."
+}

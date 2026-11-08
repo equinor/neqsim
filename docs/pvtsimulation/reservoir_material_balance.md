@@ -457,6 +457,32 @@ The returned `We` array is the aquifer term consumed by
 `Double.POSITIVE_INFINITY` for an infinite-acting aquifer or a finite `reD` for a
 bounded (no-flow outer boundary) aquifer.
 
+Physical input conversion uses the **inner reservoir/aquifer radius** in metres;
+the outer/inner radius ratio is a separate influence-function argument.
+`dimensionlessTime` takes permeability in m2, elapsed time in seconds, viscosity
+in Pa s and compressibility in **1/Pa**. `aquiferConstant` takes compressibility
+in **1/bar** and returns reservoir m3/bar. Thus the same compressibility is
+converted as `ctBar = 1e5 * ctPa`; passing one numerical value to both methods
+introduces a pressure-basis error. For consistent inputs the independent identity is
+$$Ut_D=2\pi(\theta/360)kth\,10^5/\mu$$
+where $k,t,h,\mu,\theta$ have the units and meanings stated above. Porosity,
+compressibility and inner radius cancel; this is a units check, not an aquifer
+flow-model equivalence.
+
+Both converters reject nonfinite or physically invalid inputs. Porosity is in
+(0,1] for time and [0,1] for storage; viscosity and inner radius are positive.
+Time compressibility is positive, while storage compressibility and thickness
+may be zero. Permeability and elapsed time are nonnegative; encroachment angle
+is in [0,360] degrees. Zero permeability or elapsed time gives zero dimensionless
+time. Zero porosity, storage compressibility, thickness or angle gives zero
+storage support. All other inputs are validated before these zero shortcuts.
+Ordinary arithmetic preserves its original operator order; exponent scaling
+recovers results lost by unsafe intermediate products. Representable subnormal
+positive results are retained. A strictly positive conversion that genuinely
+overflows or rounds to zero throws `ArithmeticException`, rather than silently
+creating zero support or a bookkeeping time origin. These contracts do not
+qualify finite-radius physics or change the Carter–Tracy recurrence.
+
 The infinite-acting pressure and derivative now use one positive spectral
 diffusion kernel with a low-frequency remainder and positive high-frequency
 quadrature with bounded extreme-frequency omission. This removes the

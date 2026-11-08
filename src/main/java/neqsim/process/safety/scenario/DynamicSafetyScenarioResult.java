@@ -124,6 +124,7 @@ public final class DynamicSafetyScenarioResult implements Serializable {
 
   private final String scenarioId;
   private final String scenarioName;
+  private final DynamicSafetyScenario.ExecutionTarget executionTarget;
   private final Map<String, CriterionResult> criterionResults;
   private final Map<String, String> finalLogicStates;
   private final Map<String, Map<String, Object>> logicEvidence;
@@ -137,13 +138,15 @@ public final class DynamicSafetyScenarioResult implements Serializable {
   private final List<String> requirementIds;
   private final List<String> equipmentTags;
 
-  DynamicSafetyScenarioResult(String scenarioId, String scenarioName, Map<String, CriterionResult> criterionResults,
+  DynamicSafetyScenarioResult(String scenarioId, String scenarioName,
+      DynamicSafetyScenario.ExecutionTarget executionTarget, Map<String, CriterionResult> criterionResults,
       Map<String, String> finalLogicStates, Map<String, Map<String, Object>> logicEvidence, List<String> errors,
       boolean steadyStateConverged, String timingPolicy, double triggerTimeSeconds, double requestedDurationSeconds,
       double completedDurationSeconds, List<Double> physicalStepSeconds, List<String> requirementIds,
       List<String> equipmentTags) {
     this.scenarioId = scenarioId;
     this.scenarioName = scenarioName;
+    this.executionTarget = executionTarget;
     this.criterionResults = Collections.unmodifiableMap(new LinkedHashMap<String, CriterionResult>(criterionResults));
     this.finalLogicStates = Collections.unmodifiableMap(new LinkedHashMap<String, String>(finalLogicStates));
     this.logicEvidence = Collections.unmodifiableMap(new LinkedHashMap<String, Map<String, Object>>(logicEvidence));
@@ -177,6 +180,11 @@ public final class DynamicSafetyScenarioResult implements Serializable {
 
   public Map<String, CriterionResult> getCriterionResults() {
     return criterionResults;
+  }
+
+  /** @return process container used to execute the scenario */
+  public DynamicSafetyScenario.ExecutionTarget getExecutionTarget() {
+    return executionTarget == null ? DynamicSafetyScenario.ExecutionTarget.PROCESS_SYSTEM : executionTarget;
   }
 
   /** @return structured evidence keyed by protection-logic name */
@@ -224,6 +232,7 @@ public final class DynamicSafetyScenarioResult implements Serializable {
     result.put("schemaVersion", "dynamic_safety_scenario_result.v2");
     result.put("scenarioId", scenarioId);
     result.put("scenarioName", scenarioName);
+    result.put("executionTarget", getExecutionTarget().name());
     result.put("steadyStateConverged", Boolean.valueOf(steadyStateConverged));
     result.put("timingPolicy", timingPolicy);
     result.put("triggerTimeSeconds", Double.valueOf(triggerTimeSeconds));

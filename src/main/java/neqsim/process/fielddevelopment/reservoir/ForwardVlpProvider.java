@@ -40,6 +40,8 @@ public class ForwardVlpProvider implements VlpProvider {
   private double minInletBar = 1.0;
   private double maxInletBar = 2000.0;
   private int evaluations = 0;
+  private double collapsedDropBar = Double.NaN;
+  private int collapsedEvaluations = 0;
 
   /**
    * Creates a provider.
@@ -83,6 +85,36 @@ public class ForwardVlpProvider implements VlpProvider {
     return evaluations;
   }
 
+  /**
+   * Treats a failed forward evaluation as a collapsed pressure profile instead of aborting the solve.
+   *
+   * <p>
+   * A pipe model that cannot deliver the requested rate at a low inlet pressure usually fails (NaN or a hydraulic
+   * domain exception) rather than returning a small outlet pressure. A constant or NaN answer there breaks the monotone
+   * response the root finder needs and sends the search to the upper bound. With a collapse drop set, a NaN outlet
+   * pressure is replaced by {@code min(inletPressure - dropBar, targetOutlet - 1 bar)}: always below the target, so the
+   * search moves to a higher inlet pressure and can never accept a collapsed point as a root. A real no-flow region
+   * therefore ends at the upper inlet bound (reported as NaN). The default (NaN) keeps the previous behaviour of
+   * returning NaN on the first failure.
+   * </p>
+   *
+   * @param dropBar pressure drop in bar assigned to a failed evaluation (positive), or NaN to disable
+   * @return this provider
+   */
+  public ForwardVlpProvider setCollapsedProfileDrop(double dropBar) {
+    this.collapsedDropBar = dropBar;
+    return this;
+  }
+
+  /**
+   * Number of forward-model evaluations that were treated as collapsed profiles.
+   *
+   * @return collapsed evaluation count
+   */
+  public int getCollapsedEvaluations() {
+    return collapsedEvaluations;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double bottomHolePressure(double rate, double outletPressure, double waterRatio, double gasRatio, double alq) {
@@ -95,7 +127,11 @@ public class ForwardVlpProvider implements VlpProvider {
       double out = model.outletPressure(rate, p, waterRatio, gasRatio, alq);
       evaluations++;
       if (Double.isNaN(out)) {
-        return Double.NaN;
+        if (Double.isNaN(collapsedDropBar) || collapsedDropBar <= 0.0) {
+          return Double.NaN;
+        }
+        collapsedEvaluations++;
+        out = Math.min(p - collapsedDropBar, outletPressure - 1.0);
       }
       double f = out - outletPressure;
       if (Math.abs(f) < toleranceBar) {

@@ -11,6 +11,8 @@
  * <li><b>Combination Generation:</b> Multi-failure scenarios</li>
  * <li><b>Prioritization:</b> Rank by severity and likelihood</li>
  * <li><b>Release Dispersion:</b> Generate leak source terms and gas cloud endpoints from process streams</li>
+ * <li><b>Dynamic execution:</b> Run isolated, deterministic protection scenarios against one process area or a
+ * coordinated multi-area process model</li>
  * </ul>
  *
  * <h2>Supported Failure Modes:</h2>
