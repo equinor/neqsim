@@ -3,8 +3,6 @@ title: "NeqSim Thermodynamics Guide"
 description: "NeqSim (Non-Equilibrium Simulator) is a comprehensive library for thermodynamic calculations, specializing in oil and gas fluids, CO2 systems, and aqueous electrolytes. This guide provides an overview..."
 ---
 
-# NeqSim Thermodynamics Guide
-
 NeqSim (Non-Equilibrium Simulator) is a comprehensive library for thermodynamic calculations, specializing in oil and gas fluids, CO2 systems, and aqueous electrolytes. This guide provides an overview of the available models, methods, and how to use them.
 
 ## 1. Thermodynamic Models (Equations of State)
@@ -75,50 +73,100 @@ NeqSim performs various types of equilibrium calculations (flashes) via the `The
 Once a flash is performed, physical properties are available from the `Phase` objects.
 
 *   **Density**: `phase.getDensity("kg/m3")`
-*   **Viscosity**: `phase.getViscosity("kg/msec")`. See [Viscosity Models](viscosity_models).
+*   **Viscosity**: `phase.getViscosity("kg/msec")`. See [Viscosity Models](viscosity_models.md).
 *   **Thermal Conductivity**: `phase.getThermalConductivity("W/mK")`
 *   **Surface Tension**: `system.getInterfacialTension(phase1, phase2)`
 *   **Heat Capacity (Cp/Cv)**: `phase.getCp()`, `phase.getCv()`
 
 ## 5. Code Examples
 
-### Java Example: Natural Gas Dew Point
+### Java example: independent hydrocarbon and water dew points
 
+The two calculations below deliberately use independent fluid systems. The hydrocarbon
+dew point is calculated at 10 bara, while the trace-water dew point is calculated at
+70 bara. They are screening cases with different feeds and pressures—not two points on
+one phase envelope. The broad result bands fail closed on stale or unconverged output;
+they are regression guards, not design-acceptance limits. For model and standards
+selection, see the [dew-point standards guide](../standards/dew_point_standards.md).
+
+<!-- thermodynamics-guide-example: independent-dew-points -->
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.exception.IsNaNException;
 
-public class DewPointExample {
-    public static void main(String[] args) {
-        // 1. Create System
-        SystemSrkEos gas = new SystemSrkEos(298.15, 50.0);
-        gas.addComponent("methane", 90.0);
-        gas.addComponent("ethane", 5.0);
-        gas.addComponent("propane", 3.0);
-        gas.addComponent("water", 0.1); // Saturated water
-        
-        // 2. Set Mixing Rule
-        gas.setMixingRule("classic");
-        
-        // 3. Initialize Operations
-        ThermodynamicOperations ops = new ThermodynamicOperations(gas);
-        
-        // 4. Calculate Hydrocarbon Dew Point
-        try {
-            ops.dewPointTemperatureFlash();
-            System.out.println("HC Dew Point: " + gas.getTemperature("C") + " C");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        
-        // 5. Calculate Water Dew Point
-        try {
-            ops.waterDewPointTemperatureFlash();
-            System.out.println("Water Dew Point: " + gas.getTemperature("C") + " C");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+/**
+ * Calculates independent hydrocarbon and water dew-point screening examples.
+ *
+ * @author NeqSim
+ * @version 1.0
+ */
+public final class DewPointExample {
+  private static final Logger logger = LogManager.getLogger(DewPointExample.class);
+
+  /** Utility class. */
+  private DewPointExample() {}
+
+  /**
+   * Run independent hydrocarbon and trace-water dew-point calculations.
+   *
+   * @param args command-line arguments; unused
+   * @throws IsNaNException if either saturation calculation has no finite solution
+   */
+  public static void main(String[] args) throws IsNaNException {
+    SystemSrkEos hydrocarbonGas = new SystemSrkEos(273.15, 10.0);
+    hydrocarbonGas.addComponent("methane", 0.70);
+    hydrocarbonGas.addComponent("ethane", 0.10);
+    hydrocarbonGas.addComponent("propane", 0.10);
+    hydrocarbonGas.addComponent("n-butane", 0.10);
+    hydrocarbonGas.setMixingRule("classic");
+
+    ThermodynamicOperations hydrocarbonOperations =
+        new ThermodynamicOperations(hydrocarbonGas);
+    hydrocarbonOperations.dewPointTemperatureFlash();
+    double hydrocarbonDewPointC = hydrocarbonGas.getTemperature("C");
+    require(
+        Double.isFinite(hydrocarbonDewPointC)
+            && hydrocarbonDewPointC > 1.0
+            && hydrocarbonDewPointC < 2.5,
+        "Hydrocarbon dew point left the validated 1.0-2.5 C screening range");
+
+    double waterMoleFraction = 35.0e-6;
+    SystemSrkEos wetGas = new SystemSrkEos(270.15, 70.0);
+    wetGas.addComponent("CO2", 0.02);
+    wetGas.addComponent("nitrogen", 0.01);
+    wetGas.addComponent("methane", 0.90 - waterMoleFraction);
+    wetGas.addComponent("ethane", 0.05);
+    wetGas.addComponent("propane", 0.01);
+    wetGas.addComponent("i-butane", 0.005);
+    wetGas.addComponent("n-butane", 0.005);
+    wetGas.addComponent("water", waterMoleFraction);
+    wetGas.setMixingRule(2);
+
+    ThermodynamicOperations waterOperations = new ThermodynamicOperations(wetGas);
+    waterOperations.waterDewPointTemperatureFlash();
+    double waterDewPointC = wetGas.getTemperature("C");
+    require(
+        Double.isFinite(waterDewPointC) && waterDewPointC > -14.0 && waterDewPointC < -11.0,
+        "Water dew point left the validated -14.0 to -11.0 C screening range");
+
+    logger.info("Hydrocarbon dew point at 10 bara: {} C", hydrocarbonDewPointC);
+    logger.info("Water dew point at 70 bara: {} C", waterDewPointC);
+  }
+
+  /**
+   * Fail closed when a documentation screening contract is not satisfied.
+   *
+   * @param condition contract result
+   * @param message failure description
+   */
+  private static void require(boolean condition, String message) {
+    if (!condition) {
+      throw new IllegalStateException(message);
     }
+  }
 }
 ```
 
@@ -153,4 +201,4 @@ For real reservoir fluids containing heavy fractions (C7+), NeqSim provides tool
 *   **Whitson Gamma**: Use `setPlusFractionModel("Whitson Gamma")` if you have specific gamma distribution parameters.
 *   **No Lumping**: To keep all individual carbon number components (C6, C7... C80), use `setLumpingModel("no lumping")`.
 
-See [Fluid Characterization](fluid_characterization) for details.
+See [Fluid Characterization](fluid_characterization.md) for details.

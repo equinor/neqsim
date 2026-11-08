@@ -240,7 +240,8 @@ class SurfReportBuilder(psr_report.ReportBuilder):
         self.H("2 Scope, objectives, maturity, battery limits and exclusions", 1)
         self.P("Objective: %s Maturity: %s; design life %s years; region: %s." % (ds["study"]["objective"], ds["study"]["maturity"], ds["study"]["design_life_years"], ds["study"]["region"]))
         self.P("Battery limits: (1) the host water-supply and chemical-supply boundaries, where pressure is specified; (2) the host inlet, where the inlet pressure of each case is specified. "
-               "Wells are modelled as live NeqSim WellFlow inflow at the tree (productivity index for producers, explicit mass injectivity for injectors); the tubing performance is not modelled.")
+               "Wells are modelled as live NeqSim WellFlow inflow at the tree (productivity index for producers, explicit mass injectivity for injectors); the tubing performance is not "
+               "modelled unless a producer carries a well.tubing block, in which case a WellSystem (squared-pressure IPR plus tubing VLP) is bound and the node is the wellhead.")
         rows = [("Process, hydraulics and flow assurance", "Applicable", "Solved: pressure/rate balance, thermal profile, hydrate margin, erosion ratio, lumped cooldown. Open: transient events, slugging, wax, asphaltene, scale, corrosion rate."),
                 ("Flowlines, pipelines, jumpers", "Applicable", "Screened: DNV-ST-F101 kernel on one line with synthetic inputs. Open: stability, free span, buckling, pipe-soil, installation."),
                 ("Risers", "Applicable", "Concept polylines and fluid states only. Open: static and dynamic analysis (DNV-ST-F201), fatigue, interference."),
@@ -264,7 +265,9 @@ class SurfReportBuilder(psr_report.ReportBuilder):
         rows = []
         for cid, f in ds["fluids"].items():
             rows.append((cid, f["role"], f["eos"], ", ".join("%s %.3f" % (k, v) for k, v in f["components"].items()), f["input_class"]))
-        self.table(["Fluid", "Role", "EOS", "Mole fractions", "Class"], rows, caption="Fluid definitions (mole fractions; SRK equation of state with classic mixing rule)", font=7, widths=[24, 20, 14, 100, 18], align=["left"] * 5)
+        self.table(["Fluid", "Role", "EOS", "Mole fractions", "Class"], rows,
+                   caption="Fluid definitions (mole fractions; SRK with classic mixing rule for library components and TBP pseudo-components, E300 file for tuned fluids)", font=7,
+                   widths=[24, 20, 14, 100, 18], align=["left"] * 5)
         crit_rows = [(c["id"], c["description"], "%s %s %g %s" % (c["quantity"], c["operator"], c["value"], c["unit"]), c["source"]) for c in ds["criteria_spec"]]
         self.table(["Criterion", "Description", "Requirement", "Source"], crit_rows, caption="Acceptance criteria (project-specified, synthetic)", font=7, widths=[18, 72, 62, 16], align=["left"] * 4)
         self.P("Discipline and requirement matrix", bold=True)

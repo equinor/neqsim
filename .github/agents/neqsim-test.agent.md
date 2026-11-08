@@ -32,6 +32,10 @@ load `neqsim-maven-version-maintenance` and `neqsim-version-bump-decision` on de
 - **Location**: Mirror production code under `src/test/java/neqsim/<package>/`
 - **Assertions**: Assert on physical outputs (temperature, pressure, flow, density, composition) — NOT on internal arrays or implementation details
 - **Tolerances**: Use `assertEquals(expected, actual, tolerance)` with engineering-appropriate tolerances (e.g., 0.01 for pressures, 0.1 for temperatures, 1e-4 for mole fractions)
+- **Independent numerical repeats**: Investigate exact-equality failures on the failing JDK.
+  If evidence shows only a few rounding units of variation, use a documented, bounded ULP
+  comparison with finite-value checks. Retain independent conservation, convergence and
+  accuracy assertions; never loosen those gates to conceal a numerical regression.
 
 ## Test Structure Pattern
 ```java

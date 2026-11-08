@@ -229,6 +229,11 @@ double[] we = VanEverdingenHurstAquifer.cumulativeInfluxCarterTracy(tD, deltaP, 
 
 See the `neqsim-production-optimization` skill for the full surveillance workflow.
 
+For radial input conversion, use inner reservoir radius in metres. Compressibility
+is 1/Pa for `dimensionlessTime` and 1/bar for `aquiferConstant`: ctBar=1e5*ctPa.
+Physical zeros are distinct from invalid inputs or an unrepresentable positive
+conversion; do not turn a conversion exception into a zero-support scenario.
+
 For radial support, the infinite-acting pressure/analytic derivative use a
 qualified mathematical spectral kernel. The finite-radius maximum-policy option
 remains an unqualified transient approximation, despite sharing the improved

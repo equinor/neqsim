@@ -222,6 +222,31 @@ class VfpTableBuilderTest {
         () -> VfpTableBuilder.gasWell(1).setRates(new double[] {1.0e6}).build(analytic()));
   }
 
+  /**
+   * Injection pressure must remain positive even when the provider or extrapolation produces an invalid value.
+   */
+  @Test
+  void injectionRejectsNonpositiveAbsolutePressures() {
+    for (final double pressure : new double[] {0.0, -1.0}) {
+      assertThrows(IllegalStateException.class, () -> VfpTableBuilder.injector(3, "WAT").setRates(new double[] {1.0})
+          .setOutletPressures(new double[] {100.0}).build((rate, thp, wr, gr, alq) -> pressure));
+    }
+    for (final double failedRate : new double[] {2.5, 5.0}) {
+      assertThrows(IllegalStateException.class,
+          () -> VfpTableBuilder.injector(3, "WAT").setRates(new double[] {1.0, 2.0, failedRate})
+              .setOutletPressures(new double[] {100.0}).setFailurePolicy(VfpTableBuilder.FailurePolicy.EXTRAPOLATE_RATE)
+              .build((rate, thp, wr, gr, alq) -> rate <= 2.0 ? 50.0 - 20.0 * rate : Double.NaN));
+    }
+  }
+
+  /**
+   * The positive penalty slope models a production capacity limit, not an injection pressure loss.
+   */
+  @Test
+  void injectionRejectsProductionRateCapPenalties() {
+    assertThrows(IllegalArgumentException.class, () -> VfpTableBuilder.injector(3, "WAT").setRateCap(2.0, 100.0));
+  }
+
   @Test
   void deckCanBeWrittenToFile() throws IOException {
     Path file = tempDir.resolve("vfp7.inc");

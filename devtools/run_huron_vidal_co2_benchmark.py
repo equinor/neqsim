@@ -1,6 +1,6 @@
 """Run alternating CLASSICAL/HV controls in fresh, serial JVMs.
 
-Compile the two CO2 diagnostic test sources and resolve the Maven test classpath
+Compile the selected diagnostic and benchmark test sources and resolve the Maven test classpath
 first. This runner preserves every round and process log; it makes no speedup or
 physical-accuracy acceptance decision. Do not run it alongside another workload.
 """
@@ -36,6 +36,7 @@ def selections(forks, profiles, scenarios):
 def main():
     """Save an execution manifest after every JVM, including failed processes."""
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--mixture", choices=["co2-water", "meg-methane"], default="co2-water")
     parser.add_argument("--classpath-file", type=Path, required=True)
     parser.add_argument("--source-head", required=True, help="Verified source commit SHA; not inferred")
     parser.add_argument("--output", type=Path, required=True, help="New evidence directory")
@@ -49,6 +50,10 @@ def main():
         parser.error("Use a verified 40-character source SHA and positive fork count")
     if len(set(args.profiles)) != len(args.profiles) or len(set(args.scenarios)) != len(args.scenarios):
         parser.error("Duplicate profiles or scenarios are not independent replications")
+    if args.mixture == "meg-methane" and 2 in args.profiles:
+        parser.error("MEG/methane profiles are 0 (MC) and 1 (Soave); select explicitly")
+    diagnostic = "HuronVidalCo2SourceDiagnosticTest" if args.mixture == "co2-water" else "HuronVidalMegMethaneDiagnosticTest"
+    benchmark = BENCHMARK if args.mixture == "co2-water" else "neqsim.thermo.mixingrule.HuronVidalMegMethanePerformanceBenchmark"
     plan = list(selections(args.forks, args.profiles, args.scenarios))
     if args.plan_only:
         print(json.dumps({"jvms": len(plan), "plan": plan}, indent=2))
@@ -56,20 +61,20 @@ def main():
     classpath = os.pathsep.join([str(ROOT / "target/classes"), str(ROOT / "target/test-classes"),
                                  args.classpath_file.resolve().read_text().strip()])
     hashes = {}
-    for name in ("HuronVidalCo2SourceDiagnosticTest", "HuronVidalCo2SourcePerformanceBenchmark"):
+    for name in (diagnostic, benchmark.rsplit(".", 1)[1]):
         for parent, suffix in (("src/test/java", ".java"), ("target/test-classes", ".class")):
             path = ROOT / parent / "neqsim/thermo/mixingrule" / (name + suffix)
             hashes[str(path.relative_to(ROOT))] = hashlib.sha256(path.read_bytes()).hexdigest()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
-    manifest = {"declared_source_head": args.source_head, "source_and_class_sha256": hashes,
+    manifest = {"mixture": args.mixture, "declared_source_head": args.source_head, "source_and_class_sha256": hashes,
                 "start_utc": datetime.now(timezone.utc).isoformat(), "platform": platform.platform(),
                 "logical_cpus": os.cpu_count(), "planned_jvms": len(plan), "runs": [],
                 "java_version": subprocess.run(["java", "-version"], capture_output=True,
                                                text=True, check=True).stderr.strip(),
                 "interpretation": "Different model endpoints imply different solver work; no speedup acceptance"}
     java = ["java", "-Xms512m", "-Xmx512m", "-Xbatch", "-XX:CICompilerCount=2",
-            "-cp", classpath, BENCHMARK]
+            "-cp", classpath, benchmark]
     for fork, profile, scenario, rule in plan:
         stem = "fork%d_profile%d_%s_rule%d" % (fork, profile, scenario, rule)
         path = output / (stem + ".csv")

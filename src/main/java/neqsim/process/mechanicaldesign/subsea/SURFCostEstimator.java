@@ -38,6 +38,16 @@ import neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator;
  * other regions using the {@link SubseaCostEstimator.Region} parameter. All costs are in USD unless converted.
  * </p>
  *
+ * <p>
+ * <b>Defaults that change the total.</b> The aggregate (scalar) path, used when no route segment has been added, always
+ * includes an infield flowline (default 10 km, 14 in) and an export pipeline (default 80 km, 24 in). A study with its
+ * own routes must either add them with {@link #addLineSegment(String, LineCategory, double, double)} (the aggregate
+ * lines are then ignored) or set {@link #setInfieldFlowlineLengthKm(double)} and
+ * {@link #setExportPipelineLengthKm(double)} explicitly, using 0 for a line that does not exist. Library unit rates
+ * (for example about 15 MUSD base equipment cost for a 10 000 psi tree) are not calibrated to project data; replace
+ * them with {@link #setTreeUnitCostUSD(double)} and read {@link #getBasisWarnings()} before quoting a total.
+ * </p>
+ *
  * @author ESOL
  * @version 1.0
  * @see SubseaCostEstimator
@@ -655,6 +665,9 @@ public class SURFCostEstimator {
   /** Whether trees are dual bore. */
   private boolean dualBoreTrees = false;
 
+  /** Project unit cost of one installed tree in USD; NaN uses the library rate. */
+  private double treeUnitCostUSD = Double.NaN;
+
   /** Number of manifold slots. */
   private int manifoldSlots = 4;
 
@@ -911,7 +924,7 @@ public class SURFCostEstimator {
 
     // Christmas trees
     est.calculateTreeCost(treePressureRatingPsi, treeBoreSizeInches, waterDepthM, horizontalTrees, dualBoreTrees);
-    double treeCost = est.getTotalCost();
+    double treeCost = Double.isNaN(treeUnitCostUSD) ? est.getTotalCost() : treeUnitCostUSD;
     double totalTreeCost = treeCost * numberOfWells;
     subseaCostUSD += totalTreeCost;
     addLineItem("S", "Christmas Trees", numberOfWells, "ea", treeCost, totalTreeCost,
@@ -1419,8 +1432,54 @@ public class SURFCostEstimator {
 
     // Total vessel days
     result.put("totalVesselDays", getTotalVesselDays());
+    result.put("basisWarnings", getBasisWarnings());
 
     return result;
+  }
+
+  /**
+   * Lists the basis limitations that a reader must know before quoting the total.
+   *
+   * <p>
+   * The list always states that library unit rates are not calibrated to project data (so the result is a Class 5
+   * screening value whatever the estimate class label says), reports a default export pipeline or infield flowline that
+   * is included by the aggregate path, and states whether the tree cost is a library rate or a project value.
+   * </p>
+   *
+   * @return list of warning texts, never empty
+   */
+  public List<String> getBasisWarnings() {
+    List<String> warnings = new ArrayList<String>();
+    warnings.add("Library unit rates are not calibrated to project data: treat the total as a Class 5 screening value "
+        + "whatever the estimate class label says");
+    if (routeSegments.isEmpty()) {
+      if (exportPipelineLengthKm > 0.0) {
+        warnings
+            .add("The aggregate path includes an export pipeline of " + String.format("%.1f", exportPipelineLengthKm)
+                + " km, " + String.format("%.0f", exportPipelineDiameterInches)
+                + " in; set the export pipeline length to 0 or add route segments if there is none");
+      }
+      if (infieldFlowlineLengthKm > 0.0) {
+        warnings
+            .add("The aggregate path includes an infield flowline of " + String.format("%.1f", infieldFlowlineLengthKm)
+                + " km, " + String.format("%.0f", infieldFlowlineDiameterInches)
+                + " in; replace it with route segments when the routes are known");
+      }
+    }
+    if (Double.isNaN(treeUnitCostUSD)) {
+      warnings.add("Christmas tree cost is the library rate (" + String.format("%.0f", treePressureRatingPsi) + " psi, "
+          + String.format("%.1f", treeBoreSizeInches) + " in bore); set a project unit cost with setTreeUnitCostUSD");
+    }
+    return warnings;
+  }
+
+  /**
+   * Sets a project unit cost for one installed Christmas tree, replacing the library rate.
+   *
+   * @param unitCostUSD installed cost of one tree in USD (positive), or NaN to use the library rate
+   */
+  public void setTreeUnitCostUSD(double unitCostUSD) {
+    this.treeUnitCostUSD = unitCostUSD;
   }
 
   /**
@@ -1974,9 +2033,14 @@ public class SURFCostEstimator {
   }
 
   /**
-   * Set infield flowline length.
+   * Set infield flowline length for the aggregate path (ignored when route segments have been added).
    *
-   * @param infieldFlowlineLengthKm length in km
+   * <p>
+   * The aggregate path also includes an export pipeline (default 80 km, 24 in); set
+   * {@link #setExportPipelineLengthKm(double)} to 0 when there is none.
+   * </p>
+   *
+   * @param infieldFlowlineLengthKm length in km (0 removes the infield flowline)
    */
   public void setInfieldFlowlineLengthKm(double infieldFlowlineLengthKm) {
     this.infieldFlowlineLengthKm = infieldFlowlineLengthKm;
@@ -2001,9 +2065,9 @@ public class SURFCostEstimator {
   }
 
   /**
-   * Set export pipeline length.
+   * Set export pipeline length for the aggregate path (ignored when route segments have been added).
    *
-   * @param exportPipelineLengthKm length in km
+   * @param exportPipelineLengthKm length in km; the default is 80 km, and 0 removes the export pipeline
    */
   public void setExportPipelineLengthKm(double exportPipelineLengthKm) {
     this.exportPipelineLengthKm = exportPipelineLengthKm;

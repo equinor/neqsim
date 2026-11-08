@@ -789,5 +789,14 @@
     ],
     "status": "Quarantined primary source data; no HV parameters or measured overall molar feed",
     "qualification": "Accepted-manuscript Tables2/3/4/5/9/10 and supplement S1/S2 visually checked. Original ppm/directed y/x, loading volumes, nominal-versus-loading T/P, one-sigma repeatability and separate apparatus uncertainties retained. Purity/species/density-unit conflicts, final-publication reconciliation and complete source-compatible HV/pure inputs remain unresolved. CPA coefficients not transferred; no new selected pairs or heavy-fraction activation."
+  },
+  "meg_methane_declared_input_diagnostic": {
+    "status": "Staged native numerical diagnostic only; no activated profile or accepted original-author reconstruction",
+    "protocol": "hv-meg-methane/README.md",
+    "provenance": "hv-meg-methane/provenance.json",
+    "observations": "Six liquid-methane rows; gas dataset2 identity quarantined; vaporMEG unmeasured",
+    "inputs": "SRK Folas6.2 tuple plus Derawi MEG MC and declared library methane; source-author methane inputs unresolved",
+    "qualification": "Native unit-basis all-five/checkNumerically, independent fixed-root T stencils, amount/order/history, CLASSICAL remainder and independent binary prediction parity; physical acceptance pending",
+    "limits": "First liquid point outside compiler U95; two points below MEG alpha fit range; no PR transfer/reverse partition/hydrate/ice/brine qualification"
   }
 }

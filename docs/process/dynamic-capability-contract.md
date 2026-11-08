@@ -310,6 +310,44 @@ contract: refinements share A for state idempotency while their diagnostic evalu
 `DynamicSafetyScenarioRunner` uses deterministic physical-step identifiers derived from scenario ID and step index so a
 replayed scenario is reproducible without freezing controllers after its first timestep.
 
+### Multi-area safety-scenario execution
+
+`DynamicSafetyScenario` definitions are bound explicitly to either one `ProcessSystem` or one multi-area
+`ProcessModel`. Model-scoped definitions use `modelInitiatingEvent(...)`, `addModelLogic(...)`, optional
+`configureModelCase(...)`, and criteria created with `DynamicScenarioCriterion.processModelBuilder(...)`. The builder
+rejects mixed system/model actions or observations, and the runner overload rejects a scenario bound to the other
+container type. This prevents an area-local observation from being applied silently as plant-wide evidence.
+
+```java
+DynamicSafetyScenario scenario = DynamicSafetyScenario
+    .builder("PLANT-HP-001", "Cross-area high-pressure isolation")
+    .durationSeconds(30.0)
+    .timeStepSeconds(1.0)
+    .triggerTimeSeconds(0.4)
+    .eventExactTiming(true)
+    .modelInitiatingEvent("HP-EVENT-v1", model -> applyHighPressure(model))
+    .addModelLogic("ESD-LOGIC-v1", model -> buildPlantEsdLogic(model))
+    .addCriterion(DynamicScenarioCriterion
+        .processModelBuilder("export-pressure", "Export pressure", "bara", "PT-301-v1",
+            model -> readExportPressure(model))
+        .acceptanceRange(null, 80.0)
+        .deadlineSeconds(5.0)
+        .build())
+    .build();
+
+DynamicSafetyScenarioResult result = DynamicSafetyScenarioRunner.runStrict(processModel, scenario);
+```
+
+The runner serializes an isolated `ProcessModel` copy, applies configuration only to that copy, initializes steady
+state, binds cross-area protection logic, and optionally performs strict dynamic-capability preflight. Every model
+physical step uses `ProcessModel.runTransientTransactional(...)`; failure in a later area therefore restores earlier
+areas before final logic evidence is collected. Event-exact execution splits at the trigger and final-duration
+boundaries and reports every accepted physical-step duration. Repeated runs with the same scenario ID and inputs use the
+same deterministic physical-step identities and must produce identical structured evidence.
+
+This execution contract establishes isolation, timing, rollback, and replay mechanics. It does not establish hazard
+completeness, independence, SIL, detector coverage, equipment physics validity, or engineering approval.
+
 ## Inspect a ProcessModel
 
 ```java
