@@ -457,6 +457,79 @@ The returned `We` array is the aquifer term consumed by
 `Double.POSITIVE_INFINITY` for an infinite-acting aquifer or a finite `reD` for a
 bounded (no-flow outer boundary) aquifer.
 
+The infinite-acting pressure and derivative now use one positive spectral
+diffusion kernel with a low-frequency remainder and positive high-frequency
+quadrature with bounded extreme-frequency omission. This removes the
+old pressure jumps at dimensionless times 0.01 and 200 and the small-time
+finite-difference derivative error. Pressure and derivative are qualified against
+separately inverted mathematical references, including off-grid times; this is
+not measured aquifer or field-history accuracy. Evaluated times must be finite
+and nonnegative. Zero-time pressure/derivative values are bookkeeping conventions;
+the physical derivative diverges toward zero time. Negative/non-finite times and
+a NaN radius argument are rejected.
+
+**Finite-radius limitation:** the finite `reD` option retains the legacy maximum
+of infinite-acting pressure and a pseudo-steady expression. Its shared infinite
+branch changes with this correction, and its derivative selects the active
+branch, but it remains an unqualified finite-annulus transient approximation.
+It can have an incorrect nonzero initial right limit and an inaccurate
+finite-radius late intercept. Do not use the bounded option as independently
+validated radial support for volume matching. Its replacement is separate work
+under #4740.
+
+Carter–Tracy is an approximate recurrence. Separate its timestep error and its
+intrinsic approximation error from pressure-kernel error; refining a history
+does not force exact agreement with a pressure-step diffusion solution. Retain
+the specified pressure-history protocol, reservoir-volume water basis and
+independent reference comparisons. The resulting OGIP/OOIP estimates are
+in-place volumes, not recoverable reserves. The distinct
+[lumped Fetkovich workflow](reservoir_aquifer_uncertainty.md) retains its own
+constant-property and segregated-water assumptions.
+
+The independent references, required regression inputs, generators and compact
+runtime records are retained in
+`src/test/resources/neqsim/pvtsimulation/infinite-radial/`. Bulky historical
+outputs are archived with file hashes and a public pinned revision; see the
+[restoration and checkout-size instructions](../../src/test/resources/neqsim/pvtsimulation/infinite-radial/README.md#historical-outputs-and-checkout-size).
+The Java implementation and complete JUnit inputs are unchanged by that cleanup.
+The retained `optimization64/` receipt includes all 51,216 numerical boundary
+states, controlled Taylor/exponential remainder bounds and before/after Java 8
+runtime samples. The positive tail removes roundoff-sized pressure decreases
+found in the first draft's analytic tail expression. Frozen independent
+pressure/derivative and Carter–Tracy criteria are unchanged. A substantially
+higher cost than the original approximate formulas remains; see the explicit
+radial-workload timings rather than assuming general process performance.
+The current `initialization65/` receipt preserves those exact output bits while
+initializing 768 tail nodes first and deferring the complete 6,656-node grid
+until needed. Actual Java 8 ABBA runs reduce cold public-query cost from
+21.24–21.76 ms to 7.59–8.28 ms; warm medians increase by up to 7.8% for scalar
+pairs and 10.9% for Carter–Tracy. The first deferred tiny-time query after an
+ordinary query costs 3.58–3.60 ms versus a 1.18–1.38 ms parent warm query.
+The full grid remains available, thread-safe and unchanged. These are measured
+workload tradeoffs requiring owner review, not general performance acceptance.
+
+The Carter–Tracy consumer evaluates the same recurrence using a dimensionless
+normalization and exponent-scaled numerator/denominator factors. It no longer
+freezes a valid positive influx when a dimensionless pressure denominator falls below an
+absolute cutoff, or loses a representable volume through an intermediate
+pressure/support product. Histories must be nonempty, finite and strictly
+increasing in nonnegative dimensionless time; total pressure drops are finite
+signed values and the aquifer constant is finite and nonnegative. Zero support
+returns zero influx. Invalid inputs raise `IllegalArgumentException`; a singular
+or unrepresentable transition raises `ArithmeticException` rather than returning
+a plausible frozen or nonfinite history. Input arrays are not modified.
+
+The existing nonnegative cumulative-influx projection is retained. A negative
+total boundary pressure drop can reduce cumulative influx to zero; this is not a
+water-mixing, recharge or negative-water-credit model. The current `scaling66/`
+receipt separates 100-digit evaluation of the original discrete recurrence on
+native influence values from analytic early-time step/ramp convergence and the
+original independent CT ODE references. Its bounded arithmetic controls cover
+radius ratios 3, 10 and 100 only, and do not qualify finite-radius physics or
+near-singular negative-intercept branches. Ordinary CT runtime remains within
+the frozen 20% parent ceiling; all cold and warm samples are retained without a
+general speedup claim.
+
 ---
 
 ## Decline-curve history matching

@@ -229,6 +229,24 @@ double[] we = VanEverdingenHurstAquifer.cumulativeInfluxCarterTracy(tD, deltaP, 
 
 See the `neqsim-production-optimization` skill for the full surveillance workflow.
 
+For radial support, the infinite-acting pressure/analytic derivative use a
+qualified mathematical spectral kernel. The finite-radius maximum-policy option
+remains an unqualified transient approximation, despite sharing the improved
+infinite branch. Preserve its explicit zero-time/finite-radius limitations in
+`docs/pvtsimulation/reservoir_material_balance.md#aquifer-influx`; do not use it
+as independently validated bounded radial support or equate it with segregated
+Fetkovich coupling. Carter–Tracy timestep convergence does not remove its intrinsic
+approximation error. Mathematical references are not measured field acceptance. The current
+`infinite-radial/initialization65/` fixture records initialization-only identity,
+concurrent first fallback and cold/warm/deferred runtime tradeoffs. Its parent
+`optimization64/` retains the positive-tail correction and complete numerical
+boundary controls. The current `scaling66/` receipt qualifies normalized CT
+arithmetic across scales, analytic step/ramp limits, signed cumulative projection
+and explicit invalid/unrepresentable histories. Its bounded numerical controls
+do not admit finite-annulus physics. Preserve all historical receipts at their
+exact revisions; current CT values are checked against original independent
+criteria rather than claimed bit-identical to the earlier recurrence evaluation.
+
 ### Injection Strategy (Voidage Replacement)
 
 ```java
@@ -514,3 +532,11 @@ class, search the source to confirm:
 - Cluster upside: report the share of nearby discovered gas that must be tied in for NPV > 0, not a single NPV.
 - Report break-even gas price from the model by bisection, never a rounded literal; keep literals out of narrative strings (derive them from the results dict).
 - HPHT dew point: do not trust `dewPointPressureFlash` (wrong root at 168 C); use a TP-flash bisection and CCE dropout. `TiebackAnalyzer` rejects shallow hosts through its water-depth gate; screen those hosts with the explicit pipe model.
+
+### Qualification output retention
+
+Keep required regression inputs, compact independent references and reproduction
+scripts in Git. Store bulky generated qualification histories and repeated
+before/after matrices outside the checkout, preserving full outputs, hashes and
+public provenance. The radial fixture README documents restoration for PR #4924.
+Do not re-add its archived run outputs during campaign continuation.
