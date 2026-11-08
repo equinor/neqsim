@@ -1,0 +1,214 @@
+{
+  "base": "97c03ecf50d16a6dab7bd812364f49d5f4c5c444",
+  "analysisRuntime": "Temurin17.0.21+9, exact current workflow JDK; baseline extracted unchanged from reviewed base; no baseline refresh",
+  "nativeRuntime": "1.8.0_512-b09",
+  "python": "3.12.14",
+  "bootstrap": "Every Maven/Spotless shell evaluated work-with-neqsim scripts/prepare_maven.py first; no POM/dependency changes",
+  "commands": [
+    {
+      "command": "mvnw -B -ntp -DskipTests compile (unmodified master)",
+      "exit": 0,
+      "seconds": 22.67
+    },
+    {
+      "command": "mvnw -B -ntp -Dtest=RadialInfiniteInfluenceTest test (new regressions, original production source)",
+      "exit": 1,
+      "tests": 5,
+      "failures": 5
+    },
+    {
+      "command": "mvnw -B -ntp -Dtest=RadialInfiniteInfluenceTest,VanEverdingenHurstAquiferTest test (final candidate)",
+      "exit": 0,
+      "tests": 11,
+      "failures": 0,
+      "seconds": 49.615
+    },
+    {
+      "command": "mvnw -B -ntp -Dtest=neqsim.pvtsimulation.**,ReservoirSurveillanceTest,GeneralizedReservoirSurveillanceTest,DocExamplesCompilationTest test",
+      "exit": 0,
+      "tests": 767,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 300
+    },
+    {
+      "command": "generate_reference.py --dependency-dir <private mpmath1.3.0> --output reference.json",
+      "exit": 0,
+      "times": 20,
+      "outputs": 40,
+      "inversions": 80,
+      "seconds": 109.07277816800342
+    },
+    {
+      "command": "Zulu8.0.512 javac -source 8 -target 8 affected production classes and Qualification.java; Zulu8 java Qualification reference.json native-java8.json",
+      "exit": 0,
+      "claim": "actual Java8 source compile and native execution; all non-timing results exactly repeat earlier release8-compiled run"
+    },
+    {
+      "command": "qualify_carter_tracy.py --native native-java8.json --reference reference.json --output carter-tracy-reference.json",
+      "exit": 0,
+      "cases": 7,
+      "meshes": 42,
+      "failures": 0
+    },
+    {
+      "command": "test_qualification.py",
+      "exit": 0,
+      "tests": 2,
+      "positiveControls": 1,
+      "rejectedCorruptions": 12
+    },
+    {
+      "command": "uv run --project devtools --locked devtools/code_health.py --baseline ../reviewed_baseline63.json --output ../evidence63/code-health-source.json",
+      "exit": 0,
+      "newFindingGroups": 0,
+      "selectedExistingSourceFindings": 1028
+    },
+    {
+      "command": "mvnw -B -ntp -Pcode-health -DskipTests clean compile pmd:pmd",
+      "exit": 0,
+      "seconds": 42.787,
+      "pmd": "7.17.0"
+    },
+    {
+      "command": "uv run --project devtools --locked devtools/prepare_code_health_input.py",
+      "exit": 0
+    },
+    {
+      "command": "mvnw -B -ntp -Pcode-health spotbugs:spotbugs",
+      "exit": 0,
+      "seconds": 202,
+      "spotbugs": "4.10.5"
+    },
+    {
+      "command": "uv run --project devtools --locked devtools/code_health.py --tools pmd,spotbugs --pmd target/pmd.xml --spotbugs target/spotbugsXml.xml --baseline ../reviewed_baseline63.json --output ../evidence63/code-health-static.json",
+      "exit": 0,
+      "newFindingGroups": 0,
+      "selectedExistingFindings": {
+        "pmd": 9,
+        "spotbugs": 11062
+      }
+    },
+    {
+      "command": "mvnw -B -ntp -DskipTests javadoc:javadoc checkstyle:check",
+      "exit": 0,
+      "seconds": 206,
+      "checkstyleViolations": 0,
+      "javadocWarnings": 100,
+      "claim": "inherited warnings retained; none in the affected classes"
+    },
+    {
+      "command": "selected Python devtools/run_spotless.py apply (repeat until stable), then check",
+      "exit": 0
+    },
+    {
+      "command": "selected Python devtools/check_documentation_search.py",
+      "exit": 0,
+      "markdownPages": 840,
+      "standaloneHtmlPages": 1
+    },
+    {
+      "command": "uv run --project devtools --locked devtools/build_engineering_coverage.py",
+      "exit": 0,
+      "claim": "only existing aquifer type sourceDigest changes; private helper adds no public operation"
+    },
+    {
+      "command": "uv tool run --from pre-commit==4.7.0 pre-commit run --all-files --hook-stage pre-commit",
+      "exit": 0
+    },
+    {
+      "command": "uv tool run --from pre-commit==4.7.0 pre-commit run --all-files --hook-stage pre-push",
+      "exit": 0
+    }
+  ],
+  "coverage": {
+    "neqsim/pvtsimulation/reservoirproperties/materialbalance/RadialInfiniteInfluence": {
+      "INSTRUCTION": {
+        "missed": 5,
+        "covered": 764
+      },
+      "BRANCH": {
+        "missed": 1,
+        "covered": 39
+      },
+      "LINE": {
+        "missed": 1,
+        "covered": 92
+      },
+      "COMPLEXITY": {
+        "missed": 1,
+        "covered": 25
+      },
+      "METHOD": {
+        "missed": 0,
+        "covered": 6
+      },
+      "CLASS": {
+        "missed": 0,
+        "covered": 1
+      }
+    },
+    "neqsim/pvtsimulation/reservoirproperties/materialbalance/VanEverdingenHurstAquifer": {
+      "INSTRUCTION": {
+        "missed": 57,
+        "covered": 279
+      },
+      "BRANCH": {
+        "missed": 14,
+        "covered": 22
+      },
+      "LINE": {
+        "missed": 12,
+        "covered": 44
+      },
+      "COMPLEXITY": {
+        "missed": 13,
+        "covered": 14
+      },
+      "METHOD": {
+        "missed": 1,
+        "covered": 8
+      },
+      "CLASS": {
+        "missed": 0,
+        "covered": 1
+      }
+    }
+  },
+  "retainedCorrectedAttempts": [
+    "First candidate failed one strict adjacent-double monotonicity check at the low-frequency integral join; retained frozen tolerance, replaced alternating arithmetic by positive quadrature and anchored logarithmic continuation.",
+    "Initial optional Java8 launch used ordinary Maven release17 classes and failed UnsupportedClassVersionError; affected classes were separately compiled at release8, then final source compiled by actual JDK8 and executed successfully.",
+    "Initial CT report serialization failed on NumPy boolean; converted to built-in bool and reran.",
+    "Review found nonfinite interior timestamps could evade a monotonicity-only admission guard; added finite and complete mesh-identity checks and NaN/perturbation negative controls before publication."
+  ],
+  "scope": "infinite-acting radial influence and selected-branch derivative; bounded finite annulus remains unqualified; no EOS/field/volume tuning or complete issue acceptance",
+  "documentationImpact": "Updated influence Javadocs, existing indexed material-balance/aquifer guides, field agent and skill, generated inventory, full fixture/readme; no notebook or new public/MCP operation",
+  "sha256": {
+    "src/test/resources/neqsim/pvtsimulation/infinite-radial/Qualification.java": "7ad5aebd2bb9be34a3dee8d90004f1743cb770c198abb306683f923d9c0efdee",
+    "src/test/resources/neqsim/pvtsimulation/infinite-radial/README.md": "37b1e2b6156f1571fbf8c89a0762736ad45ff075f0fd5ed2e21e2695a0682b86",
+    "src/test/resources/neqsim/pvtsimulation/infinite-radial/SCOPE.txt": "8c9b40aa0c40d7233c2bf2e2b91de82ed2e0aa25bd8b5e87c816b3a7cdef786b",
+    "src/test/resources/neqsim/pvtsimulation/infinite-radial/carter-tracy-reference.json": "c36358ed8795195b89160d5bb03b93e8059db590b1bf56d13e2f0f66ca08c922",
+    "src/test/resources/neqsim/pvtsimulation/infinite-radial/generate_reference.py": "c04cdc76ef376ffe69b5c232e6e941a5c18b103ab8677f7b2eba2adc1942fe78",
+    "src/test/resources/neqsim/pvtsimulation/infinite-radial/native-java8.json": "ae01fdf55c0049c072048c550171b02312271dbe70633ae7082d80765d663acf",
+    "src/test/resources/neqsim/pvtsimulation/infinite-radial/qualify_carter_tracy.py": "4a67b5beafdb835fd62ec8a7452c2183c0cfcc6c7d371720189670244ad462ee",
+    "src/test/resources/neqsim/pvtsimulation/infinite-radial/reference.json": "eeeccd603a3b0b84b7e0a0fddcdcea58e5a69acda8ea82ef66a9053773ddfb5e",
+    "src/test/resources/neqsim/pvtsimulation/infinite-radial/runtime-java8.json": "c9a84b8d8080a211182136ab160423f95533a79045b8415a408f9dd5766470df",
+    "src/test/resources/neqsim/pvtsimulation/infinite-radial/test_qualification.py": "246cfd68793837ddc6f0cec4bfe82408d11792058bcede9f02554be30e2d6ef0"
+  },
+  "independentReview": {
+    "scope": "read-only source and independent python -O CT qualification; not GitHub/domain approval",
+    "kernelBlob": "11dcfcfa082c0241f6ed792e037ae365b82ec76d",
+    "qualifierSHA256": "4a67b5beafdb835fd62ec8a7452c2183c0cfcc6c7d371720189670244ad462ee",
+    "ctCases": 7,
+    "ctMeshes": 42,
+    "exit": 0,
+    "allNonTimingResultsRepeated": true,
+    "remainingEngineeringReview": "material radial-query cost; no performance acceptance inferred from correctness"
+  },
+  "sourceBlobs": {
+    "src/main/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/RadialInfiniteInfluence.java": "11dcfcfa082c0241f6ed792e037ae365b82ec76d",
+    "src/main/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/VanEverdingenHurstAquifer.java": "f89ef56f29c009550802257e54966a39cf543cd0",
+    "src/test/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/RadialInfiniteInfluenceTest.java": "2cff9057e45d33c41a81a0c267730b0953ccd397"
+  }
+}

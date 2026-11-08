@@ -229,6 +229,15 @@ double[] we = VanEverdingenHurstAquifer.cumulativeInfluxCarterTracy(tD, deltaP, 
 
 See the `neqsim-production-optimization` skill for the full surveillance workflow.
 
+For radial support, the infinite-acting pressure/analytic derivative use a
+qualified mathematical spectral kernel. The finite-radius maximum-policy option
+remains an unqualified transient approximation, despite sharing the improved
+infinite branch. Preserve its explicit zero-time/finite-radius limitations in
+`docs/pvtsimulation/reservoir_material_balance.md#aquifer-influx`; do not use it
+as independently validated bounded radial support or equate it with segregated
+Fetkovich coupling. Carter–Tracy timestep convergence does not remove its intrinsic
+approximation error. Mathematical references are not measured field acceptance.
+
 ### Injection Strategy (Voidage Replacement)
 
 ```java

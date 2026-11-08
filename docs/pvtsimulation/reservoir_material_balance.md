@@ -457,6 +457,38 @@ The returned `We` array is the aquifer term consumed by
 `Double.POSITIVE_INFINITY` for an infinite-acting aquifer or a finite `reD` for a
 bounded (no-flow outer boundary) aquifer.
 
+The infinite-acting pressure and derivative now use one positive spectral
+diffusion kernel with analytic frequency-endpoint remainders. This removes the
+old pressure jumps at dimensionless times 0.01 and 200 and the small-time
+finite-difference derivative error. Pressure and derivative are qualified against
+separately inverted mathematical references, including off-grid times; this is
+not measured aquifer or field-history accuracy. Evaluated times must be finite
+and nonnegative. Zero-time pressure/derivative values are bookkeeping conventions;
+the physical derivative diverges toward zero time. Negative/non-finite times and
+a NaN radius argument are rejected.
+
+**Finite-radius limitation:** the finite `reD` option retains the legacy maximum
+of infinite-acting pressure and a pseudo-steady expression. Its shared infinite
+branch changes with this correction, and its derivative selects the active
+branch, but it remains an unqualified finite-annulus transient approximation.
+It can have an incorrect nonzero initial right limit and an inaccurate
+finite-radius late intercept. Do not use the bounded option as independently
+validated radial support for volume matching. Its replacement is separate work
+under #4740.
+
+Carter–Tracy is an approximate recurrence. Separate its timestep error and its
+intrinsic approximation error from pressure-kernel error; refining a history
+does not force exact agreement with a pressure-step diffusion solution. Retain
+the specified pressure-history protocol, reservoir-volume water basis and
+independent reference comparisons. The resulting OGIP/OOIP estimates are
+in-place volumes, not recoverable reserves. The distinct
+[lumped Fetkovich workflow](reservoir_aquifer_uncertainty.md) retains its own
+constant-property and segregated-water assumptions.
+
+The complete synthetic reference, generator, numerical controls and measured
+runtime are retained in
+`src/test/resources/neqsim/pvtsimulation/infinite-radial/`.
+
 ---
 
 ## Decline-curve history matching
