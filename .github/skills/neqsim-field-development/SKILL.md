@@ -532,3 +532,11 @@ class, search the source to confirm:
 - Cluster upside: report the share of nearby discovered gas that must be tied in for NPV > 0, not a single NPV.
 - Report break-even gas price from the model by bisection, never a rounded literal; keep literals out of narrative strings (derive them from the results dict).
 - HPHT dew point: do not trust `dewPointPressureFlash` (wrong root at 168 C); use a TP-flash bisection and CCE dropout. `TiebackAnalyzer` rejects shallow hosts through its water-depth gate; screen those hosts with the explicit pipe model.
+
+### Qualification output retention
+
+Keep required regression inputs, compact independent references and reproduction
+scripts in Git. Store bulky generated qualification histories and repeated
+before/after matrices outside the checkout, preserving full outputs, hashes and
+public provenance. The radial fixture README documents restoration for PR #4924.
+Do not re-add its archived run outputs during campaign continuation.

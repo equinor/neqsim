@@ -1,5 +1,0 @@
-source=candidate64-positive-tail
-java=1.8.0_512-b09
-rows=6278
-weightSum=40.10598463522091
-nodes=712

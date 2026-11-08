@@ -1,5 +1,11 @@
 # Controlled radial evaluation and positive-tail qualification — Run64
 
+> Large run outputs and receipts described below are archived. Follow the
+> [restore instructions](../README.md#historical-outputs-and-checkout-size) before
+> replaying these optional audits. The historical record remains at the
+> [pinned original revision](https://github.com/equinor/neqsim/tree/bbb1429b23d8b6210a1e3bb5c7e55a92f8b0b88e/src/test/resources/neqsim/pvtsimulation/infinite-radial/optimization64).
+
+
 This is the retained Run64 receipt. Current deferred-initialization source and
 cost/identity evidence are described in [../initialization65/README.md](../initialization65/README.md).
 The complete global spectrum, original numerical outputs and acceptance below remain unchanged.

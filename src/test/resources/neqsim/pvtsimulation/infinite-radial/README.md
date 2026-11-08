@@ -1,5 +1,32 @@
 # Infinite radial influence qualification (issue #4740, Run63)
 
+## Historical outputs and checkout size
+
+Large generated outputs and historical receipts have been removed from the
+checkout. The production Java and the full 51,216-point JUnit input are unchanged.
+The original files remain publicly accessible at the [pinned pre-cleanup
+revision](https://github.com/equinor/neqsim/tree/bbb1429b23d8b6210a1e3bb5c7e55a92f8b0b88e/src/test/resources/neqsim/pvtsimulation/infinite-radial). `archive-manifest.json` records every original file's size,
+Git blob identity and SHA256, and the complete downloadable ZIP's SHA256.
+
+Before running optional historical Python audits, restore the complete original
+121-file evidence tree **outside this repository**:
+
+```sh
+python3 src/test/resources/neqsim/pvtsimulation/infinite-radial/restore_evidence.py --archive /path/to/NeqSim_PR4924_validation_archive.zip --destination /tmp/neqsim-4924-evidence
+```
+
+Omit `--archive` to retrieve and verify the same bytes from the pinned public
+revision. Run the original audit commands in the restored directory; the
+historical receipts below describe that original tree. Normal JUnit tests require
+no download or restoration. Do not recommit generated histories or repeated
+before/after matrices. Keep compact independent references and required test
+inputs in Git; archive full run outputs separately with hashes.
+
+Use **squash merge** for this PR after cleanup. The cleanup commit preserves its
+parents for review; a rebase merge would import the earlier large blobs into
+master history. This does not claim to erase the existing PR's Git objects.
+
+
 Current source includes **Run66 scale-safe Carter–Tracy evaluation**:
 [scaling66/README.md](scaling66/README.md). The unchanged pressure/derivative kernel retains
 Run65 deferred initialization and its exact Run64 output bits. Historical evidence is in
@@ -93,6 +120,33 @@ and 12 deliberate corruption controls pass. Source review found and repaired a
 NaN-interior-time admission hole before publication; the negative control is
 retained. Reported derived errors/acceptance flags are not trusted in place of
 recomputing from raw outputs.
+
+## Runtime cost review after checkout cleanup
+
+This cleanup changes no production Java, JUnit source, numerical input vector,
+reference value or tolerance. It does not claim a runtime improvement.
+
+The retained actual-Java-8 runs show 7.627–8.644 ms per 1,000 Carter–Tracy
+intervals on the current implementation. The earlier same-driver unmodified-master
+control records 0.129–0.149 ms. Comparing these dated measurements gives about
+51–67 times the cost of the inaccurate legacy approximation. This is a bounded
+radial-workload comparison, not a contemporaneous new-head performance test.
+The current-versus-immediate-parent ABBA ratio is 1.0516 and passes its frozen
+1.20 ceiling; that gate does not accept the total regression versus master.
+
+For scale, 10,000 serial evaluations of that 1,000-interval workload imply about
+76–86 seconds in this subroutine alone, versus 1.3–1.5 seconds at the legacy
+control timings. This is arithmetic extrapolation, not a measured history-matching
+study. EOS, flash and ordinary process paths gain no radial calls. Preserve the
+accurate response; do not switch silently back to the inaccurate formula.
+
+The code computes a pressure/derivative pair once per Carter–Tracy interval.
+Separate scalar getter calls still repeat that paired work. A future optimization
+should profile a representative complete MBAL/history-matching workload, retain
+these independent accuracy and monotonicity controls, and compare cold, warm,
+small-time fallback and end-to-end costs. Interpolation or a cheaper approximation
+needs separate error qualification. Accountable subsystem/domain approval and
+end-to-end cost acceptance remain pending; keep this PR draft.
 
 ## Runtime and compatibility
 

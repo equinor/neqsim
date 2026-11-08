@@ -1,5 +1,11 @@
 # Carter–Tracy arithmetic across scales — Run66
 
+> Large run outputs and receipts described below are archived. Follow the
+> [restore instructions](../README.md#historical-outputs-and-checkout-size) before
+> replaying these optional audits. The historical record remains at the
+> [pinned original revision](https://github.com/equinor/neqsim/tree/bbb1429b23d8b6210a1e3bb5c7e55a92f8b0b88e/src/test/resources/neqsim/pvtsimulation/infinite-radial/scaling66).
+
+
 Continues sole draft #4924 from head
 `1263495ad5715f52588981dc71cd60e76b75c2fa`, master
 `97c03ecf50d16a6dab7bd812364f49d5f4c5c444`; fresh remote/local parent tree

@@ -486,9 +486,12 @@ in-place volumes, not recoverable reserves. The distinct
 [lumped Fetkovich workflow](reservoir_aquifer_uncertainty.md) retains its own
 constant-property and segregated-water assumptions.
 
-The complete synthetic reference, generator, numerical controls and measured
-runtime are retained in
-`src/test/resources/neqsim/pvtsimulation/infinite-radial/`.
+The independent references, required regression inputs, generators and compact
+runtime records are retained in
+`src/test/resources/neqsim/pvtsimulation/infinite-radial/`. Bulky historical
+outputs are archived with file hashes and a public pinned revision; see the
+[restoration and checkout-size instructions](../../src/test/resources/neqsim/pvtsimulation/infinite-radial/README.md#historical-outputs-and-checkout-size).
+The Java implementation and complete JUnit inputs are unchanged by that cleanup.
 The retained `optimization64/` receipt includes all 51,216 numerical boundary
 states, controlled Taylor/exponential remainder bounds and before/after Java 8
 runtime samples. The positive tail removes roundoff-sized pressure decreases

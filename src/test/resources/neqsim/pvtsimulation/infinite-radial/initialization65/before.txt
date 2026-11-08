@@ -1,5 +1,0 @@
-source=1b5a419b
-java=1.8.0_512-b09
-rows=51216
-weightSum=40.10598463522091
-nodes=712

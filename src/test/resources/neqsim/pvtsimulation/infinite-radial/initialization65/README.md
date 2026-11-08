@@ -1,5 +1,11 @@
 # Deferred radial-tail initialization — Run65
 
+> Large run outputs and receipts described below are archived. Follow the
+> [restore instructions](../README.md#historical-outputs-and-checkout-size) before
+> replaying these optional audits. The historical record remains at the
+> [pinned original revision](https://github.com/equinor/neqsim/tree/bbb1429b23d8b6210a1e3bb5c7e55a92f8b0b88e/src/test/resources/neqsim/pvtsimulation/infinite-radial/initialization65).
+
+
 This is the historical Run65 receipt. The current kernel retains its exact
 pressure/derivative bits, while [../scaling66/README.md](../scaling66/README.md)
 qualifies a scale-safe evaluation of the same CT recurrence. Historical CT
