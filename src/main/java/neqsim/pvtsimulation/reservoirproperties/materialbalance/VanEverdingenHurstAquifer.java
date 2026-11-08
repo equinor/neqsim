@@ -1,6 +1,8 @@
 package neqsim.pvtsimulation.reservoirproperties.materialbalance;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * Van Everdingen-Hurst radial aquifer influence functions and water-influx calculation.
@@ -122,31 +124,51 @@ public final class VanEverdingenHurstAquifer implements Serializable {
    * Dimensionless time for a radial aquifer.
    *
    * <p>
-   * $$ t_D = \frac{k\,t}{\phi\,\mu\,c_t\,r_e^2} $$
+   * $$ t_D = \frac{k\,t}{\phi\,\mu\,c_t\,r_i^2} $$
    * </p>
    *
-   * @param permeability aquifer permeability (m^2)
-   * @param time time (s)
-   * @param porosity porosity (fraction)
-   * @param viscosity water viscosity (Pa*s)
-   * @param totalCompressibility total aquifer compressibility (1/Pa)
-   * @param reservoirRadius equivalent reservoir/aquifer inner radius (m)
+   * @param permeability finite nonnegative aquifer permeability (m^2); zero gives zero time
+   * @param time finite nonnegative elapsed time (s); zero gives zero dimensionless time
+   * @param porosity finite porosity in (0, 1]
+   * @param viscosity finite positive water viscosity (Pa*s)
+   * @param totalCompressibility finite positive total aquifer compressibility (1/Pa), not 1/bar
+   * @param reservoirRadius finite positive reservoir/aquifer inner radius (m), not outer radius
    * @return dimensionless time $t_D$
+   * @throws IllegalArgumentException if a physical input is outside its stated domain
+   * @throws ArithmeticException if a strictly positive result overflows or underflows to zero
    */
   public static double dimensionlessTime(double permeability, double time, double porosity, double viscosity,
       double totalCompressibility, double reservoirRadius) {
-    double denom = porosity * viscosity * totalCompressibility * reservoirRadius * reservoirRadius;
-    if (denom <= 0.0) {
-      throw new IllegalArgumentException("porosity, viscosity, compressibility and radius must be positive");
+    if (!Double.isFinite(permeability) || permeability < 0 || !Double.isFinite(time) || time < 0
+        || !Double.isFinite(porosity) || porosity <= 0 || porosity > 1 || !Double.isFinite(viscosity) || viscosity <= 0
+        || !Double.isFinite(totalCompressibility) || totalCompressibility <= 0 || !Double.isFinite(reservoirRadius)
+        || reservoirRadius <= 0) {
+      throw new IllegalArgumentException(
+          "Aquifer time requires finite nonnegative permeability/time, porosity in (0,1],"
+              + " and positive viscosity, compressibility (1/Pa) and inner radius");
     }
-    return permeability * time / denom;
+    if (permeability == 0 || time == 0) {
+      return 0;
+    }
+    double numerator = permeability * time;
+    double first = porosity * viscosity;
+    double second = first * totalCompressibility;
+    double third = second * reservoirRadius;
+    double denominator = third * reservoirRadius;
+    double result = numerator / denominator;
+    if (normalPositive(numerator) && normalPositive(first) && normalPositive(second) && normalPositive(third)
+        && normalPositive(denominator) && normalPositive(result) && result < 0.5 * Double.MAX_VALUE) {
+      return result;
+    }
+    return scaledPhysicalRatio(new double[] {permeability, time},
+        new double[] {porosity, viscosity, totalCompressibility, reservoirRadius, reservoirRadius});
   }
 
   /**
    * Van Everdingen-Hurst aquifer constant.
    *
    * <p>
-   * $$ U = 2\pi\,f\,\phi\,c_t\,h\,r_e^2 $$
+   * $$ U = 2\pi\,f\,\phi\,c_t\,h\,r_i^2 $$
    * </p>
    *
    * <p>
@@ -154,17 +176,129 @@ public final class VanEverdingenHurstAquifer implements Serializable {
    * reservoir m$^3$ per bar.
    * </p>
    *
-   * @param porosity porosity (fraction)
-   * @param totalCompressibility total aquifer compressibility (1/bar)
-   * @param thickness aquifer thickness (m)
-   * @param reservoirRadius equivalent reservoir/aquifer inner radius (m)
-   * @param encroachmentAngleDeg encroachment angle (degrees, 0-360)
+   * @param porosity finite porosity in [0, 1]; zero gives zero support
+   * @param totalCompressibility finite nonnegative total aquifer compressibility (1/bar), not 1/Pa
+   * @param thickness finite nonnegative aquifer thickness (m)
+   * @param reservoirRadius finite positive reservoir/aquifer inner radius (m), not outer radius
+   * @param encroachmentAngleDeg finite encroachment angle in [0, 360] degrees
    * @return aquifer constant $U$ (reservoir m^3 per bar)
+   * @throws IllegalArgumentException if a physical input is outside its stated domain
+   * @throws ArithmeticException if a strictly positive result overflows or underflows to zero
    */
   public static double aquiferConstant(double porosity, double totalCompressibility, double thickness,
       double reservoirRadius, double encroachmentAngleDeg) {
-    double f = encroachmentAngleDeg / 360.0;
-    return 2.0 * Math.PI * f * porosity * totalCompressibility * thickness * reservoirRadius * reservoirRadius;
+    if (!Double.isFinite(porosity) || porosity < 0 || porosity > 1 || !Double.isFinite(totalCompressibility)
+        || totalCompressibility < 0 || !Double.isFinite(thickness) || thickness < 0 || !Double.isFinite(reservoirRadius)
+        || reservoirRadius <= 0 || !Double.isFinite(encroachmentAngleDeg) || encroachmentAngleDeg < 0
+        || encroachmentAngleDeg > 360) {
+      throw new IllegalArgumentException(
+          "Aquifer storage requires finite porosity in [0,1], nonnegative compressibility"
+              + " (1/bar)/thickness, positive inner radius and angle in [0,360]");
+    }
+    if (porosity == 0 || totalCompressibility == 0 || thickness == 0 || encroachmentAngleDeg == 0) {
+      return 0;
+    }
+    double fraction = encroachmentAngleDeg / 360.0;
+    double first = 2.0 * Math.PI * fraction;
+    double second = first * porosity;
+    double third = second * totalCompressibility;
+    double fourth = third * thickness;
+    double fifth = fourth * reservoirRadius;
+    double result = fifth * reservoirRadius;
+    if (normalPositive(fraction) && normalPositive(first) && normalPositive(second) && normalPositive(third)
+        && normalPositive(fourth) && normalPositive(fifth) && normalPositive(result)
+        && result < 0.5 * Double.MAX_VALUE) {
+      return result;
+    }
+    return scaledPhysicalRatio(new double[] {2.0 * Math.PI, encroachmentAngleDeg, porosity, totalCompressibility,
+        thickness, reservoirRadius, reservoirRadius}, new double[] {360.0});
+  }
+
+  /**
+   * Identifies safe ordinary intermediate products without changing their evaluation order.
+   *
+   * @param value computed positive intermediate
+   * @return whether the value is finite and normal
+   */
+  private static boolean normalPositive(double value) {
+    return Double.isFinite(value) && value >= Double.MIN_NORMAL;
+  }
+
+  /**
+   * Scales a physical conversion only when its ordinary evaluation risks intermediate exponent loss.
+   *
+   * <p>
+   * Callers validate positive finite factors and handle physical zeros first. At most seven numerator or five
+   * denominator factors keep the normalized mantissa representable even for subnormal inputs. The Carter-Tracy
+   * recurrence does not call this helper or allocate these factor arrays.
+   * </p>
+   *
+   * @param numerator strictly positive finite numerator factors
+   * @param denominator strictly positive finite denominator factors
+   * @return positive finite rounded conversion, including representable subnormal results
+   * @throws ArithmeticException if the final positive conversion is unrepresentable
+   */
+  private static double scaledPhysicalRatio(double[] numerator, double[] denominator) {
+    double mantissa = 1;
+    int exponent = 0;
+    for (double factor : numerator) {
+      int power = Math.getExponent(factor);
+      mantissa *= Math.scalb(factor, -power);
+      exponent += power;
+    }
+    for (double factor : denominator) {
+      int power = Math.getExponent(factor);
+      mantissa /= Math.scalb(factor, -power);
+      exponent -= power;
+    }
+    double result = Math.scalb(mantissa, exponent);
+    if (result <= Double.MIN_NORMAL || result >= 0.5 * Double.MAX_VALUE || !Double.isFinite(result)) {
+      result = roundedPhysicalRatio(numerator, denominator);
+    }
+    if (!Double.isFinite(result) || result == 0) {
+      throw new ArithmeticException("Positive aquifer physical conversion is unrepresentable");
+    }
+    return result;
+  }
+
+  /**
+   * Resolves final representability near the subnormal and overflow boundaries from exact binary factors.
+   *
+   * <p>
+   * Floating scaled mantissas alone can round a value across the half-minimum or overflow threshold. Exact products and
+   * integer division in units of the local binary ULP resolve remainder and tie parity without an approximate decimal
+   * quotient. Rounded counts are at most 2^53, exactly representable as doubles. This rare path is not used for
+   * ordinary conversions or Carter-Tracy steps.
+   * </p>
+   *
+   * @param numerator strictly positive finite numerator factors
+   * @param denominator strictly positive finite denominator factors
+   * @return correctly classified final double conversion
+   */
+  private static double roundedPhysicalRatio(double[] numerator, double[] denominator) {
+    BigDecimal top = BigDecimal.ONE;
+    BigDecimal bottom = BigDecimal.ONE;
+    for (double factor : numerator) {
+      top = top.multiply(new BigDecimal(factor));
+    }
+    for (double factor : denominator) {
+      bottom = bottom.multiply(new BigDecimal(factor));
+    }
+    BigDecimal overflow = new BigDecimal(Double.MAX_VALUE).add(new BigDecimal(Math.scalb(1.0, 970)));
+    if (top.compareTo(bottom.multiply(overflow)) >= 0) {
+      return Double.POSITIVE_INFINITY;
+    }
+    int shift;
+    if (top.compareTo(bottom.multiply(new BigDecimal(2.0 * Double.MIN_NORMAL))) < 0) {
+      shift = -1074;
+    } else if (top.compareTo(bottom.multiply(new BigDecimal(Math.scalb(1.0, 1023)))) >= 0) {
+      shift = 971;
+    } else {
+      shift = 970;
+    }
+    BigDecimal quantum = new BigDecimal(Math.scalb(1.0, shift));
+    BigDecimal units = top.divide(bottom.multiply(quantum), 0, RoundingMode.HALF_EVEN);
+    return Math.scalb(units.doubleValue(), shift);
   }
 
   /**

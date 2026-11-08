@@ -48,6 +48,11 @@ initial limit for some radii. Do not use that bounded option as the independent
 radial reference for this lumped tank. See the
 [radial influence-function limitations](reservoir_material_balance.md#aquifer-influx)
 and preserve the separate Carter–Tracy approximation and timestep evidence.
+For physical radial inputs, use the inner reservoir radius, compressibility in
+1/Pa for `dimensionlessTime` and in 1/bar for `aquiferConstant` (multiply the
+former by 1e5). The converters validate physical domains and distinguish zero
+support/time from an unrepresentable positive result; neither a failed
+conversion nor invalid input may be used as a zero-support uncertainty scenario.
 
 ## Small-exposure numerical qualification
 
