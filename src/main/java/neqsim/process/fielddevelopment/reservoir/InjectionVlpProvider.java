@@ -21,10 +21,15 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * one working fluid and is not thread safe.
  * </p>
  *
+ * <p>
+ * This implementation is final so a subclass cannot expose a partially constructed provider through finalization after
+ * input validation or fluid initialization fails. Implement {@link VlpProvider} for a custom injection model.
+ * </p>
+ *
  * @author ESOL
  * @version 1.0
  */
-public class InjectionVlpProvider implements VlpProvider {
+public final class InjectionVlpProvider implements VlpProvider {
   private static final double GRAVITY = 9.80665;
   private static final double STANDARD_TEMPERATURE_K = 288.15;
   private static final double STANDARD_PRESSURE_BARA = 1.01325;
@@ -74,6 +79,7 @@ public class InjectionVlpProvider implements VlpProvider {
    * @param template injected fluid (see the survey constructor)
    * @param tvd true vertical depth in m
    * @param innerDiameter tubing inner diameter in m
+   * @throws IllegalArgumentException if depth or diameter is not positive
    */
   public InjectionVlpProvider(SystemInterface template, double tvd, double innerDiameter) {
     this(template, new double[] {0.0, tvd}, new double[] {0.0, tvd}, new double[] {innerDiameter});

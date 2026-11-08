@@ -19,6 +19,10 @@ local checks unrun instead of assuming that a checkout or build tool is availabl
    Use the exact reviewed analysis JDK; a runtime precondition failure is not a
    zero-findings pass. For clone warnings, inspect parent and owned-state copies,
    preserve normal copy behavior and propagate failures with their cause.
+   For `CT_CONSTRUCTOR_THROW`, preserve constructor validation and prevent finalizer access to
+   partially initialized objects. New implementations without an inheritance contract can be
+   final; retain the interface as the extension point and document that choice. Do not suppress
+   the detector or remove validation to pass the gate.
 3. Rank candidates using branch counts, size, import dependencies, duplicate-window
    candidates, bounded history and relevant regression evidence. Size/branch counts
    are proxies; overlapping duplicate windows are not a percentage of duplicated code.

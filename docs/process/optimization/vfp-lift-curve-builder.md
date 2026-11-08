@@ -18,10 +18,15 @@ Deck formatting and unit conversion are delegated to `EclipseVFPExporter`
 |---|---|
 | `VlpProvider` | Single-method interface: flowing pressure at datum for rate, outlet pressure, water ratio, gas ratio and ALQ |
 | `TubingVlpProvider` | Deviated tubing survey (`TubingPerformance.setSurvey`) with an inlet-pressure solve for the wellhead pressure |
+| `InjectionVlpProvider` | Final water/gas injection implementation with surveyed tubing, flashed fluid properties, hydrostatic head and Darcy-Weisbach friction |
 | `ForwardVlpProvider` | Turns any forward model (outlet pressure from inlet pressure: pipes, valves, a process) into a provider by inverse solve |
 | `RecombinationFluidFactory` | Recombines surface gas, stock-tank liquid and water to the well stream for each coordinate |
 | `VfpTableBuilder` | Axes, evaluation, rate cap, sanity enforcement, deck text |
 | `VfpDeckReader` | Parses a `VFPPROD`/`VFPINJ` keyword back to numbers, for round-trip checks |
+
+`InjectionVlpProvider` validates its survey in both constructors and owns a cloned working fluid.
+It is not thread safe; use one provider per concurrent calculation. Implement `VlpProvider` for a
+custom injection model instead of subclassing this implementation.
 
 ## Gas well example
 

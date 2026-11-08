@@ -85,4 +85,15 @@ class InjectionVlpProviderTest {
     assertThrows(IllegalArgumentException.class,
         () -> new InjectionVlpProvider(water(), new double[] {0.0, 10.0}, new double[] {0.0, 10.0}, new double[] {}));
   }
+
+  /**
+   * Both constructors retain validation when partially constructed providers cannot be subclassed.
+   */
+  @Test
+  void invalidVerticalGeometryIsRejected() {
+    assertThrows(IllegalArgumentException.class, () -> new InjectionVlpProvider(water(), 0.0, 0.157));
+    assertThrows(IllegalArgumentException.class, () -> new InjectionVlpProvider(water(), -100.0, 0.157));
+    assertThrows(IllegalArgumentException.class, () -> new InjectionVlpProvider(water(), 3000.0, 0.0));
+    assertThrows(IllegalArgumentException.class, () -> new InjectionVlpProvider(water(), 3000.0, -0.157));
+  }
 }
