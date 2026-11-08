@@ -49,7 +49,7 @@ public class PSFlash extends QfuncFlash {
   private transient SystemInterface minorLiquidContinuationSeed;
 
   double Sspec = 0;
-  Flash tpFlash;
+  TPflash tpFlash;
   int type = 0;
 
   /**
@@ -255,8 +255,8 @@ public class PSFlash extends QfuncFlash {
     // A fresh operation is required so that bracket signs use independent cold roots.
     TPflash coldFlash = new TPflash(system);
     coldFlash.setConservativeHomogeneousRecoveryAllowed(true);
-    if (minorLiquidContinuationSeed == null && tpFlash instanceof TPflash) {
-      minorLiquidContinuationSeed = ((TPflash) tpFlash).getMinorLiquidContinuationSeed();
+    if (minorLiquidContinuationSeed == null) {
+      minorLiquidContinuationSeed = tpFlash.getMinorLiquidContinuationSeed();
     }
     coldFlash.setMinorLiquidContinuationSeed(minorLiquidContinuationSeed);
     tpFlash = coldFlash;
