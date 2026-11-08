@@ -1,9 +1,9 @@
 ---
 name: neqsim-jurisdiction-regulatory-basis
 calculation_basis: "advisory"
-version: "0.1.0"
-description: "Identifies the country and regulatory regime of the evaluated asset and records the authorities, governing laws, regulation families, recognised standards and fiscal basis that apply, with Norway, UK, US, Brazil and EU profiles. USE WHEN: any study, design, safety, emissions, layout, mechanical-design or economics task evaluates an asset in a specific country, or the country is not stated and must be asked or declared as an assumption."
-last_verified: "2026-11-07"
+version: "0.2.0"
+description: "Identifies the country and regulatory regime of the evaluated asset and records authorities, governing laws, regulation families, recognised standards and fiscal basis, with NO, GB, US, BR, AO, CA and EU profiles and a per-topic well and SURF register. USE WHEN: any study, design, safety, emissions, layout, well-planning, SURF or economics task evaluates an asset in a specific country, or the country is not stated and must be asked or declared as an assumption."
+last_verified: "2026-11-08"
 requires:
   python_packages: []
   java_packages: []
@@ -42,7 +42,47 @@ Engineering results are only acceptable in the country where the asset operates.
 6. **Verify at the source.** Fetch the current regulation text from the official source in the profile (for example lovdata.no, legislation.gov.uk, eCFR, gov.br/anp). Revision dates change; record the revision used.
 7. **Escalate.** Statements of legal compliance, permits and consents are for the responsible authority and qualified staff; list them as open points.
 
-Profiles shipped: `NO`, `GB`, `US`, `BR`, `EU` (EU is a baseline: add the member-state authority and transposition). Add other countries by extending `profiles.py` with a source for each entry.
+Profiles shipped: `NO`, `GB`, `US`, `BR`, `AO`, `CA`, `EU` (EU is a baseline: add the member-state authority and transposition; `AO` and `CA` are orientation profiles with lower confidence). Add other countries by extending `profiles.py` and `activity_register.py` with a source for each entry.
+
+## Well and SURF design basis
+
+`activity_basis(country, ("well", "surf"))` adds the instruments to check per design topic, so the design agents know which regulation family drives each decision before they choose a method.
+
+| Topic key | What it covers |
+| --- | --- |
+| `well_design_integrity` | well design, barrier envelopes, integrity management |
+| `well_control_bop` | BOP, well control, drilling and well facilities |
+| `subsea_equipment` | wellheads, trees, manifolds, controls, production safety systems |
+| `flowlines_pipelines` | rigid flowlines and pipelines |
+| `risers` | steel and flexible risers, riser-to-host connection |
+| `flexibles_umbilicals_cables` | flexible pipe, umbilicals, power cables |
+| `materials_sour_chemicals` | materials, sour service, chemical use |
+| `flaring_venting_discharges` | well test and process flaring, venting, discharges |
+| `decommissioning_pa` | plugging and abandonment, decommissioning |
+| `approvals_verification` | consents, notifications, safety case, independent verification |
+
+Each row has `layer` (`law`, `regulation`, `guidance`, `standard-referenced`, `contract`) and `status`: `verified-public-source` (title and structure read at the official source on `verified_on`; today the 30 CFR Part 250 subparts and the ANP regime description) or `orientation-verify`. Topics without a row appear in `coverage_gaps` and `data_gaps`; they are never filled from memory.
+
+How the regime changes the design method:
+
+- **Goal-setting regimes (Norway, UK, Brazil)** accept a justified code but demand a demonstrated barrier or risk argument; record the demonstration basis, not one pass/fail number.
+- **Prescriptive elements (US)** fix part of the design in law, for example internal-pressure wall thickness for lease pipelines and risers; a more permissive code (API RP 1111) needs the authority's alternate-compliance route.
+- **Contract-based regimes (Angola)** put technical requirements in the block contract and operator procedures; for a non-operated asset the operator design basis governs and the partner reviews against its own requirements.
+- **Ask the operator and authority interface early**: who operates, which consents precede spud and installation, and whether independent verification is statutory.
+
+```python
+from jurisdiction_basis import activity_basis
+
+basis = activity_basis("Brazil", ("well", "surf"), facility_scope="pre-salt FPSO tie-back", user_confirmed=True, operator="Equinor")
+results["jurisdiction"] = basis
+results["assumptions"].extend(basis["assumptions"])
+results["data_gaps"].extend(basis["data_gaps"])
+for topic, item in basis["activities"]["surf"].items():
+    for row in item["instruments"]:
+        print(topic, "|", row["layer"], "|", row["instrument"], "|", row["status"])
+```
+
+Company requirements (for example operator TR, GL and FR documents with country-specific sections) are not held here; enterprise overlays add them as the third layer. Well and SURF skills call this function in their scoping step: `neqsim-integrated-well-planning`, `neqsim-well-design-study`, `neqsim-surf-design-study`, `neqsim-surf-field-layout-design`.
 
 ## Python Usage Pattern
 
@@ -76,7 +116,7 @@ results["jurisdiction"] = block
 ## Limitations
 
 - Public orientation profiles only; no clause text, limits or legal advice.
-- Profiles cover five regimes. Other countries must be researched from the official source and recorded as an assumption.
+- Profiles cover seven regimes and the register is orientation data with few verified rows. Other countries must be researched from the official source and recorded as an assumption.
 - Regulation names and revisions change; the profile can lag the current text.
 
 ## Related NeqSim Functionality

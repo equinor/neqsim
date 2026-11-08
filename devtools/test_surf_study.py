@@ -379,3 +379,132 @@ def test_e2e_strict_mode_exits_nonzero_when_a_gate_fails(mini_run, tmp_path):
     assert {r["feasibility"] for r in ds["comparison"]["rows"]} == {"infeasible"}
     assert code in (0, 1)  # an infeasible concept set is a result, not a gate failure; strict fails only on validation FAIL
     assert ds["validation"]["status"] in ("PASS", "FAIL")
+
+
+# --- tuned fluids (pseudo-components, E300) and tubing wells ----------------------------------------
+def _spec_with_pseudo():
+    spec = load_demo()
+    for fid in ("prod_early", "prod_late"):
+        comps = spec["fluids"][fid]["components"]
+        heavy = comps.pop("n-heptane") + comps.pop("nC10")
+        spec["fluids"][fid]["pseudo_components"] = [{"name": "C7p", "mole_fraction": round(heavy, 10), "molar_mass_g_mol": 150.0, "density_g_cm3": 0.80}]
+    return spec
+
+
+def test_pseudo_component_fluid_is_accepted_and_counts_towards_the_mole_fraction_sum():
+    spec = _spec_with_pseudo()
+    findings, _model = surf_spec.check_spec(spec)
+    assert not codes(findings), findings
+    spec["fluids"]["prod_early"]["pseudo_components"][0]["mole_fraction"] += 0.05
+    assert "FLUID-SUM" in codes(surf_spec.check_spec(spec)[0])
+
+
+@pytest.mark.parametrize("field,value,code", [("molar_mass_g_mol", 5.0, "PSEUDO-MOLAR-MASS"), ("density_g_cm3", 3.0, "PSEUDO-DENSITY"), ("name", "methane", "PSEUDO-NAME"),
+                                              ("mole_fraction", -0.1, "PSEUDO-FRACTION")])
+def test_invalid_pseudo_components_are_rejected(field, value, code):
+    spec = _spec_with_pseudo()
+    spec["fluids"]["prod_early"]["pseudo_components"][0][field] = value
+    assert code in codes(surf_spec.check_spec(spec)[0])
+
+
+def test_e300_fluid_needs_an_existing_file_and_no_other_composition(tmp_path):
+    spec = load_demo()
+    spec["fluids"]["prod_early"] = {"role": "production", "e300_file": "missing.e300", "source": spec["fluids"]["prod_early"]["source"], "input_class": "specified"}
+    assert "FLUID-E300-FILE" in codes(surf_spec.check_spec(spec)[0])
+    (tmp_path / "fluid.e300").write_text("-- test\nEOS\nSRK /\n", encoding="utf-8")
+    surf_spec.SPEC_BASE_DIR = str(tmp_path)
+    try:
+        assert not ({"FLUID-E300-FILE", "FLUID-SUM"} & codes(surf_spec.check_spec(dict(spec, fluids=dict(spec["fluids"], prod_early=dict(spec["fluids"]["prod_early"], e300_file="fluid.e300"))))[0]))
+        mixed = dict(spec["fluids"]["prod_early"], e300_file="fluid.e300", components={"methane": 1.0})
+        assert "FLUID-E300-MIX" in codes(surf_spec.check_spec(dict(spec, fluids=dict(spec["fluids"], prod_early=mixed)))[0])
+        first = surf_spec.spec_hash(dict(spec, fluids=dict(spec["fluids"], prod_early=dict(spec["fluids"]["prod_early"], e300_file="fluid.e300"))))
+        (tmp_path / "fluid.e300").write_text("-- test\nEOS\nPR /\n", encoding="utf-8")
+        second = surf_spec.spec_hash(dict(spec, fluids=dict(spec["fluids"], prod_early=dict(spec["fluids"]["prod_early"], e300_file="fluid.e300"))))
+        assert first != second
+    finally:
+        surf_spec.SPEC_BASE_DIR = None
+
+
+def test_fluid_components_helper_marks_pseudo_components_and_e300_files():
+    assert surf_spec.fluid_components({"components": {"methane": 1.0}}) == {"methane": 1.0}
+    assert surf_spec.fluid_components({"components": {"methane": 0.9}, "pseudo_components": [{"name": "C7p", "mole_fraction": 0.1}]}) == {"methane": 0.9, "C7p (pseudo)": 0.1}
+    assert list(surf_spec.fluid_components({"e300_file": "a/b/fluid.e300"})) == ["E300 file fluid.e300"]
+
+
+def _tubing(**kw):
+    t = {"length_m": 2500.0, "id_mm": 100.0, "bottomhole_temperature_c": 100.0, "vlp_mode": "BEGGS_BRILL", "inclination_deg": 90.0}
+    t.update(kw)
+    return t
+
+
+def test_tubing_block_is_validated_and_carried_into_the_plan():
+    spec = load_demo()
+    node = next(n for n in spec["nodes"] if n["id"] == "P1")
+    node["well"]["tubing"] = _tubing()
+    findings, model = surf_spec.check_spec(spec)
+    assert not codes(findings), findings
+    plan = surf_model.build_plan(spec, model, "A", "BASE", "production")
+    wells = {o["node"]: o for o in plan if o["op"] == "well_production"}
+    assert wells["P1"]["tubing"]["id_mm"] == 100.0 and wells["P2"]["tubing"] is None
+    for bad, code in ((_tubing(id_mm=-1.0), "TUBING-FIELD"), (_tubing(vlp_mode="MAGIC"), "TUBING-VLP"), (_tubing(inclination_deg=120.0), "TUBING-INCLINATION")):
+        node["well"]["tubing"] = bad
+        assert code in codes(surf_spec.check_spec(spec)[0])
+
+
+def test_plan_carries_pseudo_components_into_the_fluid_definition():
+    spec = _spec_with_pseudo()
+    _f, model = surf_spec.check_spec(spec)
+    plan = surf_model.build_plan(spec, model, "A", "BASE", "production")
+    assert plan[0]["fluid"]["pseudo_components"][0]["name"] == "C7p"
+
+
+def _production_run(spec):
+    import surf_run
+
+    _f, model = surf_spec.check_spec(spec)
+    return surf_run.run_domain_case(spec, model, "A", "BASE", "production")
+
+
+def test_e2e_pseudo_component_fluid_and_tubing_well_solve():
+    pytest.importorskip("jpype")
+    try:
+        surf_model.start_jvm()
+    except surf_model.ModelError as exc:
+        pytest.skip(str(exc))
+    tuned = mini_spec()
+    for fid in ("prod_early", "prod_late"):
+        comps = tuned["fluids"][fid]["components"]
+        heavy = comps.pop("n-heptane") + comps.pop("nC10")
+        tuned["fluids"][fid]["pseudo_components"] = [{"name": "C7p", "mole_fraction": heavy, "molar_mass_g_mol": 150.0, "density_g_cm3": 0.80}]
+    with_tubing = copy.deepcopy(tuned)
+    for n in with_tubing["nodes"]:
+        if n["kind"] == "production_well":
+            n["well"]["tubing"] = _tubing(vlp_mode="SIMPLIFIED")
+    base = _production_run(tuned)
+    rec = _production_run(with_tubing)
+    assert base["coupling"]["converged"] and rec["coupling"]["converged"], rec["coupling"]
+    assert all(w["status"] == "FLOWING" for w in rec["wells"])
+    rate = sum(w["applied_rate_kg_s"] for w in rec["wells"])
+    rate_ref = sum(w["applied_rate_kg_s"] for w in base["wells"])
+    assert 0.0 < rate < rate_ref, "the tubing pressure drop must reduce the rate (%s against %s)" % (rate, rate_ref)
+    assert rec["nodes"]["P1"]["pressure_bara"] < base["nodes"]["P1"]["pressure_bara"]
+
+def test_e2e_e300_fluid_is_read_and_cloned(tmp_path):
+    pytest.importorskip("jpype")
+    try:
+        jp = surf_model.start_jvm()
+    except surf_model.ModelError as exc:
+        pytest.skip(str(exc))
+    C = surf_model.Classes(jp)
+    fluid = C("neqsim.thermo.system.SystemSrkEos")(273.15 + 100.0, 200.0)
+    for name, x in {"methane": 0.74, "ethane": 0.07, "propane": 0.04, "n-butane": 0.02, "n-pentane": 0.01, "n-heptane": 0.03, "nC10": 0.09}.items():
+        fluid.addComponent(name, x)
+    fluid.setMixingRule("classic")
+    path = str(tmp_path / "fluid.e300")
+    C("neqsim.thermo.util.readwrite.EclipseFluidReadWrite").write(fluid, path)
+    fdef = {"id": "prod_early", "eos": "E300", "mixing_rule": "classic", "components": {}, "multiphase_check": True, "e300_file": path}
+    a = surf_model.make_fluid(C, fdef, 80.0, 100.0)
+    b = surf_model.make_fluid(C, fdef, 60.0, 50.0)
+    assert int(a.getNumberOfComponents()) >= 7
+    assert abs(float(a.getTemperature()) - 353.15) < 1e-6 and abs(float(b.getTemperature()) - 333.15) < 1e-6
+    assert abs(float(a.getPressure()) - 100.0) < 1e-9 and abs(float(b.getPressure()) - 50.0) < 1e-9

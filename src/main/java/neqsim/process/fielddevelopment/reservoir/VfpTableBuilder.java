@@ -35,12 +35,13 @@ import neqsim.process.util.optimizer.EclipseVFPExporter;
  * }</pre>
  *
  * <p>
- * Sanity enforcement is applied in this order and every repair is counted and reported in the result warnings: flowing
- * pressure not below the outlet pressure, flowing pressure increasing with outlet pressure (slope at least
- * {@link #setMinThpSlope(double)}), and non-decreasing flowing pressure with rate above the minimum of each rate curve
- * (gas-well curves are J-shaped, so the loading side below the minimum is left alone). A rate limit is not
- * representable by a smooth VFP; {@link #setRateCap(RateCap, double)} replaces the pressure above the cap by a steep
- * penalty slope and records the cap in the deck header.
+ * Sanity enforcement is applied in this order and every repair is counted and reported in the result warnings:
+ * production flowing pressure not below the outlet pressure, flowing pressure increasing with outlet pressure (slope at
+ * least {@link #setMinThpSlope(double)}), and non-decreasing flowing pressure with rate above the minimum of each rate
+ * curve (production only: gas-well curves are J-shaped, so the loading side below the minimum is left alone). Injection
+ * pressure may fall below wellhead pressure and decrease with rate; neither production-only rule is applied to VFPINJ.
+ * A rate limit is not representable by a smooth VFP; {@link #setRateCap(RateCap, double)} replaces the pressure above
+ * the cap by a steep penalty slope and records the cap in the deck header.
  * </p>
  *
  * @author ESOL
@@ -394,7 +395,7 @@ public class VfpTableBuilder {
   }
 
   /**
-   * Limits the deliverable rate and replaces the pressure above the limit by a penalty slope.
+   * Limits the deliverable production rate and replaces the pressure above the limit by a penalty slope.
    *
    * <p>
    * For a coordinate with cap {@code Qc}, the flowing pressure at rate {@code Q > Qc} becomes
@@ -405,19 +406,24 @@ public class VfpTableBuilder {
    * @param cap rate cap function
    * @param penaltyBarPerUnitOverCap bar added per 100 percent of rate above the cap (for example 200)
    * @return this builder
+   * @throws IllegalArgumentException if a non-null rate cap is supplied for an injection table
    */
   public VfpTableBuilder setRateCap(RateCap cap, double penaltyBarPerUnitOverCap) {
+    if (injection && cap != null) {
+      throw new IllegalArgumentException("Rate-cap penalty shaping is production-only; trim the injection rate axis");
+    }
     this.rateCap = cap;
     this.capPenaltyBar = penaltyBarPerUnitOverCap;
     return this;
   }
 
   /**
-   * Limits the deliverable rate to a constant value.
+   * Limits the deliverable production rate to a constant value.
    *
    * @param maxRate rate cap in Sm3/day of the rate basis
    * @param penaltyBarPerUnitOverCap bar added per 100 percent of rate above the cap
    * @return this builder
+   * @throws IllegalArgumentException if this is an injection table
    * @see #setRateCap(RateCap, double)
    */
   public VfpTableBuilder setRateCap(final double maxRate, double penaltyBarPerUnitOverCap) {
@@ -463,7 +469,8 @@ public class VfpTableBuilder {
   }
 
   /**
-   * Enables or disables non-decreasing flowing pressure with rate above the curve minimum.
+   * Enables or disables non-decreasing production flowing pressure with rate above the curve minimum. This conditioning
+   * does not apply to injection tables.
    *
    * @param enforce true for {@link RateMonotoneMode#ABOVE_MINIMUM} (default), false for {@link RateMonotoneMode#OFF}
    * @return this builder
@@ -476,7 +483,8 @@ public class VfpTableBuilder {
   /**
    * Selects how the rate dependence of the flowing pressure is conditioned. OPM Flow can stall on a table that is
    * U-shaped in rate because the well flips between rate and THP control; use {@link RateMonotoneMode#FULL} for such
-   * decks and keep the raw curve for the minimum stable rate report.
+   * production decks and keep the raw curve for the minimum stable rate report. Injection tables retain the provider's
+   * rate dependence regardless of this setting.
    *
    * @param mode OFF, ABOVE_MINIMUM (default) or FULL
    * @return this builder
@@ -612,7 +620,8 @@ public class VfpTableBuilder {
     double w = wr < zeroRatioFloor ? zeroRatioFloor : wr;
     double g = gr < zeroRatioFloor ? zeroRatioFloor : gr;
     try {
-      return provider.bottomHolePressure(rate, thp, w, g, alq);
+      double pressure = provider.bottomHolePressure(rate, thp, w, g, alq);
+      return injection && !(pressure > 0.0) ? Double.NaN : pressure;
     } catch (RuntimeException ex) {
       logger.debug("VLP provider failed at rate {} thp {}: {}", rate, thp, ex.toString());
       return Double.NaN;
@@ -722,7 +731,12 @@ public class VfpTableBuilder {
         for (int w = 0; w < nw; w++) {
           for (int g = 0; g < ng; g++) {
             for (int a = 0; a < na; a++) {
-              if (bhp[f][t][w][g][a] < outletPressures[t]) {
+              if (injection && (!(bhp[f][t][w][g][a] > 0.0) || !Double.isFinite(bhp[f][t][w][g][a]))) {
+                throw new IllegalStateException(String.format(Locale.ROOT,
+                    "Infeasible injection VFP coordinate after repair: rate %.6g, outlet pressure %.6g, BHP %.6g",
+                    rates[f], outletPressures[t], bhp[f][t][w][g][a]));
+              }
+              if (!injection && bhp[f][t][w][g][a] < outletPressures[t]) {
                 floorMax = Math.max(floorMax, outletPressures[t] - bhp[f][t][w][g][a]);
                 bhp[f][t][w][g][a] = outletPressures[t];
                 floorCount++;
@@ -753,7 +767,7 @@ public class VfpTableBuilder {
           }
         }
       }
-      if (rateMonotoneMode != RateMonotoneMode.OFF) {
+      if (!injection && rateMonotoneMode != RateMonotoneMode.OFF) {
         for (int t = 0; t < nt; t++) {
           for (int w = 0; w < nw; w++) {
             for (int g = 0; g < ng; g++) {
