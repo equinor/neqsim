@@ -505,6 +505,28 @@ ordinary query costs 3.58–3.60 ms versus a 1.18–1.38 ms parent warm query.
 The full grid remains available, thread-safe and unchanged. These are measured
 workload tradeoffs requiring owner review, not general performance acceptance.
 
+The Carter–Tracy consumer evaluates the same recurrence using a dimensionless
+normalization and exponent-scaled numerator/denominator factors. It no longer
+freezes a valid positive influx when a dimensionless pressure denominator falls below an
+absolute cutoff, or loses a representable volume through an intermediate
+pressure/support product. Histories must be nonempty, finite and strictly
+increasing in nonnegative dimensionless time; total pressure drops are finite
+signed values and the aquifer constant is finite and nonnegative. Zero support
+returns zero influx. Invalid inputs raise `IllegalArgumentException`; a singular
+or unrepresentable transition raises `ArithmeticException` rather than returning
+a plausible frozen or nonfinite history. Input arrays are not modified.
+
+The existing nonnegative cumulative-influx projection is retained. A negative
+total boundary pressure drop can reduce cumulative influx to zero; this is not a
+water-mixing, recharge or negative-water-credit model. The current `scaling66/`
+receipt separates 100-digit evaluation of the original discrete recurrence on
+native influence values from analytic early-time step/ramp convergence and the
+original independent CT ODE references. Its bounded arithmetic controls cover
+radius ratios 3, 10 and 100 only, and do not qualify finite-radius physics or
+near-singular negative-intercept branches. Ordinary CT runtime remains within
+the frozen 20% parent ceiling; all cold and warm samples are retained without a
+general speedup claim.
+
 ---
 
 ## Decline-curve history matching

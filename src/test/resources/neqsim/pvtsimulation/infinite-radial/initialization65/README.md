@@ -1,5 +1,10 @@
 # Deferred radial-tail initialization — Run65
 
+This is the historical Run65 receipt. The current kernel retains its exact
+pressure/derivative bits, while [../scaling66/README.md](../scaling66/README.md)
+qualifies a scale-safe evaluation of the same CT recurrence. Historical CT
+bit-identity and cost statements below refer to Run65, not the later evaluation.
+
 Continues the sole draft #4924 from exact head
 `1b5a419b7fc67f3285829e1a7b464d00b4928eaa`, master
 `97c03ecf50d16a6dab7bd812364f49d5f4c5c444`. The parent tree

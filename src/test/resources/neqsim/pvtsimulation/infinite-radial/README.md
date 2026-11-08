@@ -1,7 +1,9 @@
 # Infinite radial influence qualification (issue #4740, Run63)
 
-Current numerical source includes **Run65 deferred initialization** with output-bit
-identity to Run64. Current evidence is in [initialization65/README.md](initialization65/README.md);
+Current source includes **Run66 scale-safe Carter–Tracy evaluation**:
+[scaling66/README.md](scaling66/README.md). The unchanged pressure/derivative kernel retains
+Run65 deferred initialization and its exact Run64 output bits. Historical evidence is in
+[initialization65/README.md](initialization65/README.md);
 [optimization64/README.md](optimization64/README.md) retains the positive-tail correction.
 The remainder of this file and `validation.json` retain the historical Run63
 receipt at exact head `04e78817a608b59aa5bd0bbe846b406ff18729c9`; its runtime and

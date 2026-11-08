@@ -1,0 +1,443 @@
+{
+  "claim": "mathematical infinite-acting CT recurrence/limiting-ODE qualification, not measured accuracy or exact pressure-step diffusion",
+  "equation": "dW/dt=(1-W*Pprime)/(P-t*Pprime), U=1 reservoir m3/bar, pressure step=1bar",
+  "earlyTimeCTtoExactPressureStepRatio": 1.0471975511965976,
+  "versions": {
+    "numpy": "2.3.5",
+    "scipy": "1.17.0"
+  },
+  "independentSpectrumMPComparisons": [
+    {
+      "time": 1e-12,
+      "pressure": 1.1283786670957946e-06,
+      "derivative": 564189.0835481795,
+      "pressureAbsoluteError": 0.0,
+      "derivativeAbsoluteError": 0.0,
+      "accepted": true
+    },
+    {
+      "time": 1e-08,
+      "pressure": 0.00011283291699162728,
+      "derivative": 5641.395877788031,
+      "pressureAbsoluteError": 2.710505431213761e-20,
+      "derivativeAbsoluteError": 9.094947017729282e-13,
+      "accepted": true
+    },
+    {
+      "time": 1e-06,
+      "pressure": 0.0011278794490029523,
+      "derivative": 563.6900063153134,
+      "pressureAbsoluteError": 0.0,
+      "derivativeAbsoluteError": 3.410605131648481e-13,
+      "accepted": true
+    },
+    {
+      "time": 3e-05,
+      "pressure": 0.006165433417251553,
+      "derivative": 102.50876032852372,
+      "pressureAbsoluteError": 7.806255641895632e-18,
+      "derivativeAbsoluteError": 1.9895196601282805e-13,
+      "accepted": true
+    },
+    {
+      "time": 0.0001,
+      "pressure": 0.011234071905417807,
+      "derivative": 55.92315264273774,
+      "pressureAbsoluteError": 1.734723475976807e-17,
+      "derivativeAbsoluteError": 1.3500311979441904e-13,
+      "accepted": true
+    },
+    {
+      "time": 0.003,
+      "pressure": 0.06034860715688439,
+      "derivative": 9.822754134928422,
+      "pressureAbsoluteError": 5.551115123125783e-17,
+      "derivativeAbsoluteError": 0.0,
+      "accepted": true
+    },
+    {
+      "time": 0.009999,
+      "pressure": 0.10809743504698266,
+      "derivative": 5.181073300051563,
+      "pressureAbsoluteError": 5.551115123125783e-17,
+      "derivativeAbsoluteError": 2.6645352591003757e-15,
+      "accepted": true
+    },
+    {
+      "time": 0.01,
+      "pressure": 0.10810261598011574,
+      "derivative": 5.180792973146803,
+      "pressureAbsoluteError": 5.551115123125783e-17,
+      "derivativeAbsoluteError": 2.6645352591003757e-15,
+      "accepted": true
+    },
+    {
+      "time": 0.010001,
+      "pressure": 0.10810779663294302,
+      "derivative": 5.180512688452581,
+      "pressureAbsoluteError": 5.551115123125783e-17,
+      "derivativeAbsoluteError": 1.7763568394002505e-15,
+      "accepted": true
+    },
+    {
+      "time": 0.3,
+      "pressure": 0.5024198142286725,
+      "derivative": 0.6876098695682472,
+      "pressureAbsoluteError": 2.220446049250313e-16,
+      "derivativeAbsoluteError": 0.0,
+      "accepted": true
+    },
+    {
+      "time": 1.0,
+      "pressure": 0.8021451666032984,
+      "derivative": 0.29263302760063314,
+      "pressureAbsoluteError": 2.220446049250313e-16,
+      "derivativeAbsoluteError": 1.6653345369377348e-16,
+      "accepted": true
+    },
+    {
+      "time": 7.5,
+      "pressure": 1.5283908267438706,
+      "derivative": 0.055907125714119786,
+      "pressureAbsoluteError": 2.220446049250313e-16,
+      "derivativeAbsoluteError": 0.0,
+      "accepted": true
+    },
+    {
+      "time": 100.0,
+      "pressure": 2.7228944431436983,
+      "derivative": 0.004868894228925256,
+      "pressureAbsoluteError": 4.440892098500626e-16,
+      "derivativeAbsoluteError": 2.6020852139652106e-18,
+      "accepted": true
+    },
+    {
+      "time": 199.999,
+      "pressure": 3.0624938476544026,
+      "derivative": 0.0024625512573119997,
+      "pressureAbsoluteError": 8.881784197001252e-16,
+      "derivativeAbsoluteError": 1.3010426069826053e-18,
+      "accepted": true
+    },
+    {
+      "time": 200.0,
+      "pressure": 3.0624963101995806,
+      "derivative": 0.0024625390984354227,
+      "pressureAbsoluteError": 8.881784197001252e-16,
+      "derivativeAbsoluteError": 1.3010426069826053e-18,
+      "accepted": true
+    },
+    {
+      "time": 200.001,
+      "pressure": 3.0624987727325994,
+      "derivative": 0.0024625269396790672,
+      "pressureAbsoluteError": 8.881784197001252e-16,
+      "derivativeAbsoluteError": 8.673617379884035e-19,
+      "accepted": true
+    },
+    {
+      "time": 8000.0,
+      "pressure": 4.898474999929173,
+      "derivative": 6.24617651723654e-05,
+      "pressureAbsoluteError": 1.7763568394002505e-15,
+      "derivativeAbsoluteError": 2.710505431213761e-20,
+      "accepted": true
+    },
+    {
+      "time": 10000.0,
+      "pressure": 5.009984924392852,
+      "derivative": 4.9974968575053244e-05,
+      "pressureAbsoluteError": 0.0,
+      "derivativeAbsoluteError": 2.0328790734103208e-20,
+      "accepted": true
+    },
+    {
+      "time": 100000000.0,
+      "pressure": 9.614879770659755,
+      "derivative": 4.999999519256077e-09,
+      "pressureAbsoluteError": 1.7763568394002505e-15,
+      "derivativeAbsoluteError": 3.308722450212111e-24,
+      "accepted": true
+    },
+    {
+      "time": 1000000000000.0,
+      "pressure": 14.220049906080812,
+      "derivative": 4.9999999999289e-13,
+      "pressureAbsoluteError": 1.7763568394002505e-15,
+      "derivativeAbsoluteError": 0.0,
+      "accepted": true
+    }
+  ],
+  "ctComparisons": [
+    {
+      "lastTime": 1e-08,
+      "odeStart1e14": 0.00011816882565142501,
+      "odeStart1e16": 0.00011816882568204098,
+      "startRefinementDifference": 3.0615971997188796e-14,
+      "meshes": [
+        {
+          "intervals": 32,
+          "influx": 0.000112795035963132,
+          "relativeError": 0.04547552781279496
+        },
+        {
+          "intervals": 64,
+          "influx": 0.00011540556080842446,
+          "relativeError": 0.0233840427681975
+        },
+        {
+          "intervals": 128,
+          "influx": 0.00011676906160923771,
+          "relativeError": 0.011845459787927837
+        },
+        {
+          "intervals": 256,
+          "influx": 0.00011746454743672857,
+          "relativeError": 0.005959932674692303
+        },
+        {
+          "intervals": 512,
+          "influx": 0.0001178156057011534,
+          "relativeError": 0.0029891130664020382
+        },
+        {
+          "intervals": 1024,
+          "influx": 0.0001179919478987392,
+          "relativeError": 0.001496822721905544
+        }
+      ]
+    },
+    {
+      "lastTime": 1e-06,
+      "odeStart1e14": 0.0011821593893810794,
+      "odeStart1e16": 0.0011821593893860624,
+      "startRefinementDifference": 4.982993184743378e-15,
+      "meshes": [
+        {
+          "intervals": 32,
+          "influx": 0.0011159557505189986,
+          "relativeError": 0.056002295004775715
+        },
+        {
+          "intervals": 64,
+          "influx": 0.0011478379038611065,
+          "relativeError": 0.02903287478246086
+        },
+        {
+          "intervals": 128,
+          "influx": 0.0011647112117111162,
+          "relativeError": 0.014759581348846362
+        },
+        {
+          "intervals": 256,
+          "influx": 0.0011733660306346113,
+          "relativeError": 0.007438386761042248
+        },
+        {
+          "intervals": 512,
+          "influx": 0.001177745741273847,
+          "relativeError": 0.0037335473979591693
+        },
+        {
+          "intervals": 1024,
+          "influx": 0.0011799483683789893,
+          "relativeError": 0.0018703239401763883
+        }
+      ]
+    },
+    {
+      "lastTime": 0.0001,
+      "odeStart1e14": 0.011868609844762058,
+      "odeStart1e16": 0.01186860984474971,
+      "startRefinementDifference": 1.2347761702002913e-14,
+      "meshes": [
+        {
+          "intervals": 32,
+          "influx": 0.011083267624646788,
+          "relativeError": 0.06616968881577412
+        },
+        {
+          "intervals": 64,
+          "influx": 0.01145796983340712,
+          "relativeError": 0.034598829746201876
+        },
+        {
+          "intervals": 128,
+          "influx": 0.011659078570697767,
+          "relativeError": 0.017654238937227618
+        },
+        {
+          "intervals": 256,
+          "influx": 0.011762834899237086,
+          "relativeError": 0.008912159629159588
+        },
+        {
+          "intervals": 512,
+          "influx": 0.011815476006318047,
+          "relativeError": 0.0044768375678949646
+        },
+        {
+          "intervals": 1024,
+          "influx": 0.011841982111645425,
+          "relativeError": 0.0022435427107804218
+        }
+      ]
+    },
+    {
+      "lastTime": 0.01,
+      "odeStart1e14": 0.1232967794973382,
+      "odeStart1e16": 0.12329677948565321,
+      "startRefinementDifference": 1.168498631187731e-11,
+      "meshes": [
+        {
+          "intervals": 32,
+          "influx": 0.113932537696888,
+          "relativeError": 0.0759487946711116
+        },
+        {
+          "intervals": 64,
+          "influx": 0.11835557623002844,
+          "relativeError": 0.04007568791526883
+        },
+        {
+          "intervals": 128,
+          "influx": 0.12076563422290879,
+          "relativeError": 0.020528883830570277
+        },
+        {
+          "intervals": 256,
+          "influx": 0.12201676030210354,
+          "relativeError": 0.010381610848956613
+        },
+        {
+          "intervals": 512,
+          "influx": 0.12265325451600322,
+          "relativeError": 0.00521931693864619
+        },
+        {
+          "intervals": 1024,
+          "influx": 0.12297415080180672,
+          "relativeError": 0.0026166837868140114
+        }
+      ]
+    },
+    {
+      "lastTime": 1.0,
+      "odeStart1e14": 1.636444785423753,
+      "odeStart1e16": 1.6364447854238975,
+      "startRefinementDifference": 1.4455103780619538e-13,
+      "meshes": [
+        {
+          "intervals": 32,
+          "influx": 1.4996373510793721,
+          "relativeError": 0.08360039737551384
+        },
+        {
+          "intervals": 64,
+          "influx": 1.5630980011414337,
+          "relativeError": 0.044820812126248666
+        },
+        {
+          "intervals": 128,
+          "influx": 1.598584968550037,
+          "relativeError": 0.023135407446120082
+        },
+        {
+          "intervals": 256,
+          "influx": 1.617227949232858,
+          "relativeError": 0.011743039766576424
+        },
+        {
+          "intervals": 512,
+          "influx": 1.6267660725699415,
+          "relativeError": 0.005914475660997565
+        },
+        {
+          "intervals": 1024,
+          "influx": 1.6315880492351549,
+          "relativeError": 0.002967858269342427
+        }
+      ]
+    },
+    {
+      "lastTime": 100.0,
+      "odeStart1e14": 44.01418935785249,
+      "odeStart1e16": 44.01418935782759,
+      "startRefinementDifference": 2.489741746103391e-11,
+      "meshes": [
+        {
+          "intervals": 32,
+          "influx": 40.80821299147468,
+          "relativeError": 0.07283960952430324
+        },
+        {
+          "intervals": 64,
+          "influx": 42.228210326553,
+          "relativeError": 0.04057734692680348
+        },
+        {
+          "intervals": 128,
+          "influx": 43.07358106686635,
+          "relativeError": 0.021370569461458322
+        },
+        {
+          "intervals": 256,
+          "influx": 43.53183107229452,
+          "relativeError": 0.01095915414030646
+        },
+        {
+          "intervals": 512,
+          "influx": 43.76998405952125,
+          "relativeError": 0.0055483311602309016
+        },
+        {
+          "intervals": 1024,
+          "influx": 43.89132899223511,
+          "relativeError": 0.0027913808566062404
+        }
+      ]
+    },
+    {
+      "lastTime": 10000.0,
+      "odeStart1e14": 2216.329350594548,
+      "odeStart1e16": 2216.32935059456,
+      "startRefinementDifference": 1.1823431123048067e-11,
+      "meshes": [
+        {
+          "intervals": 32,
+          "influx": 2101.4990980088364,
+          "relativeError": 0.05181100568600905
+        },
+        {
+          "intervals": 64,
+          "influx": 2150.5058732676107,
+          "relativeError": 0.02969932122646446
+        },
+        {
+          "intervals": 128,
+          "influx": 2181.1510739645073,
+          "relativeError": 0.015872314563995404
+        },
+        {
+          "intervals": 256,
+          "influx": 2198.15564542435,
+          "relativeError": 0.00819991178898316
+        },
+        {
+          "intervals": 512,
+          "influx": 2207.0943175385573,
+          "relativeError": 0.004166814401264429
+        },
+        {
+          "intervals": 1024,
+          "influx": 2211.6745478876915,
+          "relativeError": 0.002100230593264363
+        }
+      ]
+    }
+  ],
+  "failures": [],
+  "seconds": 0.07675356999970973,
+  "sourceSha256": "4a67b5beafdb835fd62ec8a7452c2183c0cfcc6c7d371720189670244ad462ee",
+  "nativeSha256": "9bf83f71260e613f8d75f74809859dfcac7daaa7182285ef5b8a52d18fc7468e"
+}

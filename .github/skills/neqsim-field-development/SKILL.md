@@ -240,7 +240,12 @@ approximation error. Mathematical references are not measured field acceptance. 
 `infinite-radial/initialization65/` fixture records initialization-only identity,
 concurrent first fallback and cold/warm/deferred runtime tradeoffs. Its parent
 `optimization64/` retains the positive-tail correction and complete numerical
-boundary controls. Preserve both; older receipts describe their exact revisions.
+boundary controls. The current `scaling66/` receipt qualifies normalized CT
+arithmetic across scales, analytic step/ramp limits, signed cumulative projection
+and explicit invalid/unrepresentable histories. Its bounded numerical controls
+do not admit finite-annulus physics. Preserve all historical receipts at their
+exact revisions; current CT values are checked against original independent
+criteria rather than claimed bit-identical to the earlier recurrence evaluation.
 
 ### Injection Strategy (Voidage Replacement)
 
