@@ -79,6 +79,7 @@ packages = [
     "neqsim_runner",
     "neqsim_runner.bootstrap",
     "neqsim_continuous",
+    "pvt_proxy",
     "task_template",
     "task_template.step1_scope_and_research",
     "task_template.step2_analysis",
@@ -105,6 +106,7 @@ surf_templates = ["*.yaml", "*.md"]
 "fa_examples.offshore_tieback" = ["*.yaml"]
 "fa_examples.single_flowline" = ["*.yaml"]
 pvt_examples = ["*.yaml", "*.json"]
+pvt_proxy = ["examples/*.yaml"]
 layout_templates = ["*.json"]
 layout_example_specs = ["*.yaml"]
 

@@ -16,6 +16,10 @@ Python::
     from process_overview import build_overview
     manifest = build_overview(data, "out/overview", case_id="A", title_block={...}, level="overview")
 
+Phase bands (TR2329 SR-15794, ISO 10628:1997 5.3.3): ``--bands`` (or ``bands=True`` / config ``"bands": true`` or a
+mapping ``{"gas": [section names], "oil": [...], "water": [...]}``) lays the A3 sheet out in three horizontal lanes,
+gas on top, oil / hydrocarbon liquid in the centre, water at the bottom, flow left to right; see :func:`ppo_graph.assign_bands`.
+
 Outputs (``out_dir``): ``process_graph.json`` (structured source data), ``overview_A3_colour.svg/.pdf/.png``,
 ``overview_A3_mono.svg/.pdf/.png``, ``overview_16x9.svg/.pdf/.png`` (+ ``_mono``), ``layout_A3.json`` and
 ``layout_16x9.json`` (geometry + ``neqsim.pfd_layout.v1`` spec), ``detail_sheets/`` (A3 PFD sheets of
@@ -45,6 +49,10 @@ STANDARDS_NOTE = ("Conventions: ISO 5457 sheet/frame, ISO 7200 title block, ISO 
                   "conformance not claimed). Schematic, not to scale.")
 
 
+#: Width (mm) kept free at the left of the drawing area for the phase-band lane labels.
+BAND_GUTTER = 10.0
+
+
 class OverviewError(Exception):
     """Raised for unusable input or impossible layouts."""
 
@@ -66,6 +74,42 @@ def _service_style(service, role, main, back, style, pal, mono):
     return color, sw, dash
 
 
+def _fit_text(fonts, candidates, pt, bold, room):
+    """First candidate that fits ``room`` mm; else the last one cut with an ellipsis; None when there is no room."""
+    for c in candidates:
+        if fonts.width(c, pt, bold) <= room:
+            return c
+    text = candidates[-1]
+    if room < fonts.width("Case ...", pt, bold):
+        return None
+    while len(text) > 4 and fonts.width(text + "...", pt, bold) > room:
+        text = text[:-1]
+    return text.rstrip() + "..."
+
+
+def _tint(color, k):
+    """``color`` (#RRGGBB) mixed with white; ``k`` is the colour share."""
+    c = color.lstrip("#")
+    rgb = [int(c[i:i + 2], 16) for i in (0, 2, 4)]
+    return "#%02X%02X%02X" % tuple(int(round(255 - (255 - v) * k)) for v in rgb)
+
+
+MONO_LANE_FILL = {"gas": "#EFEFEF", "oil": "#F7F7F7", "water": "#E6E6E6"}
+
+
+def _draw_bands(sc, L, fonts, style, pal, mono):
+    """Phase-band lane backgrounds with a lane label at the left edge (gas top, oil centre, water bottom)."""
+    sc.begin(id="phase_bands")
+    for b in L.bands:
+        fill = MONO_LANE_FILL[b["id"]] if mono else _tint(pal[b["id"]], 0.07)
+        sc.begin(data_band=b["id"])
+        sc.rect(b["x"], b["y"], b["w"], b["h"], fill, "none", 0.0)
+        sc.text(b["x"] + 1.5, b["y"] + fonts.cap(style["pt"]["zone"]) + 1.8, b["label"], style["pt"]["zone"], "start", True,
+                pal["grey"], kind="zone")
+        sc.end()
+    sc.end()
+
+
 def draw_sheet(L, graph, fonts, style, pal, mono, tb, kind="a3", sheet=(1, 1), refs=None, validation_note=None):
     """Compose the full page scene for a laid-out overview."""
     pg = style["page"]
@@ -81,11 +125,17 @@ def draw_sheet(L, graph, fonts, style, pal, mono, tb, kind="a3", sheet=(1, 1), r
         head = "%s  %s" % (tb["document_number"], tb["title"])
         yh = fr["top"] + pt["title"] * MM_PER_PT + 1.0
         sc.text(x0 + 2.0, yh, head, pt["title"], "start", True, pal["ink"], kind="title")
+        room = (x1 - x0) - 4.0 - fonts.width(head, pt["title"], True) - 6.0  # never let the right-hand text touch the title
         if tb.get("readiness_note"):
-            sc.text(x1 - 2.0, yh, tb["readiness_note"], pt["status"], "end", True, pal["status"], kind="status")
+            note = _fit_text(fonts, [tb["readiness_note"]], pt["status"], True, room)
+            if note:
+                sc.text(x1 - 2.0, yh, note, pt["status"], "end", True, pal["status"], kind="status")
         else:
-            sub = "Case %s: %s  |  level: %s  |  schematic - not to scale" % (graph["case"]["id"], graph["case"]["label"], graph["level"])
-            sc.text(x1 - 2.0, yh, sub, pt["desc"], "end", False, pal["grey"], kind="subtitle")
+            case = "Case %s: %s" % (graph["case"]["id"], graph["case"]["label"])
+            cands = ["%s  |  level: %s  |  schematic - not to scale" % (case, graph["level"]), "%s  |  schematic - not to scale" % case, case]
+            sub = _fit_text(fonts, cands, pt["desc"], False, room)
+            if sub:
+                sc.text(x1 - 2.0, yh, sub, pt["desc"], "end", False, pal["grey"], kind="subtitle")
         n_lines = int(style.get("notes_lines", 0))
         if n_lines:
             notes = _notes(L, graph, tb, refs_present=any(s.get("ref") for s in L.sections))
@@ -106,9 +156,11 @@ def draw_sheet(L, graph, fonts, style, pal, mono, tb, kind="a3", sheet=(1, 1), r
             tb["document_number"], tb["revision"], graph["case"]["id"], graph["case"]["label"], tb["issue_status"])
         sc.text(x0, bar_h - 2.2, sub, pt["desc"], "start", False, "#FFFFFF", kind="subtitle")
     # sections (a collapsed section is drawn as its block only; the frame would repeat the name)
+    if getattr(L, "bands", None):
+        _draw_bands(sc, L, fonts, style, pal, mono)
     sc.begin(id="sections")
     for s in L.sections:
-        if s["collapsed"]:
+        if s["collapsed"] or s.get("terminal"):
             continue
         fill = pal["section_fill"] if style["section"]["fill"] else "none"
         sc.begin(data_section=s["id"])
@@ -131,10 +183,10 @@ def draw_sheet(L, graph, fonts, style, pal, mono, tb, kind="a3", sheet=(1, 1), r
     arrow_l, arrow_w = style["arrow"]["l"], style["arrow"]["w"]
     for sid, edges in by_stream.items():
         st = sidx.get(sid, {})
-        color, sw, dash = _service_style(st.get("service", "unknown"), st.get("role"), st.get("main"),
-                                         any(e["back"] for e in edges), style, pal, mono)
         sc.begin(data_stream=sid)
         for e in edges:
+            role = "recycle" if (st.get("role") == "recycle" or e.get("role") == "recycle") else st.get("role")
+            color, sw, dash = _service_style(st.get("service", "unknown"), role, st.get("main"), e["back"], style, pal, mono)
             if len(e["pts"]) >= 2:
                 sc.line(e["pts"], sw, color, dash)
                 if e["arrow_end"]:
@@ -173,12 +225,15 @@ def draw_sheet(L, graph, fonts, style, pal, mono, tb, kind="a3", sheet=(1, 1), r
             sc.rect(n["x"] - n["w"] / 2.0, n["y"] - n["h"] / 2.0, n["w"], n["h"], pal["section_fill"], pal["section_title"],
                     style["line"]["symbol"] * 1.4, rx=2.0)
             lh = fonts.height(pt["tag"]) * 1.1
-            total = len(p["name_lines"]) * lh + fonts.height(pt["desc"]) * 1.1
+            sub_lines = p.get("sub_lines") or [p["sub"]]
+            total = len(p["name_lines"]) * lh + len(sub_lines) * fonts.height(pt["desc"]) * 1.1
             y = n["y"] - total / 2.0 + fonts.cap(pt["tag"]) + 0.5
             for t in p["name_lines"]:
                 sc.text(n["x"], y, t, pt["tag"], "middle", True, ink, kind="tag")
                 y += lh
-            sc.text(n["x"], y, p["sub"], pt["desc"], "middle", False, pal["grey"], kind="desc")
+            for t in sub_lines:
+                sc.text(n["x"], y, t, pt["desc"], "middle", False, pal["grey"], kind="desc")
+                y += fonts.height(pt["desc"]) * 1.1
             sc.end()
         elif n["kind"] in ("feed", "product") and not n["payload"].get("pseudo"):
             p = n["payload"]
@@ -413,6 +468,8 @@ def _notes(L, graph, tb, refs_present):
     notes = ["Case %s (%s): values are model results of this case, std. %s C / %s bara, no design ratings." % (
         graph["case"]["id"], graph["case"]["label"], sc.get("t_c"), sc.get("p_bara"))]
     notes.append(LEVEL_NOTES[graph["level"]] + " Mapping: process_graph.json.")
+    if getattr(L, "bands", None):
+        notes.append("Bands: gas top, oil centre, water bottom, flow left to right (TR2329 SR-15794).")
     m = graph["mapping"]
     if m["grouped_feeds"]:
         notes.append("Grouped feeds: " + "; ".join("%s = %d streams" % (k, v["count"]) for k, v in sorted(m["grouped_feeds"].items())) + ".")
@@ -454,10 +511,31 @@ def _draw_slide_footer(sc, L, graph, fonts, style, pal, mono, tb):
     sc.text(x1, y - 0.2, foot, pt["note"] - 1.0, "end", False, pal["grey"], kind="footer")
 
 
+def _band_merge_trials(graph, bopts, layout):
+    """Cumulative merge group lists for the phase-band layout: each step joins the widest adjacent pair of one band."""
+    width = {s["id"]: s["w"] for s in layout.sections}
+    seqs = {}
+    for sid in ppo_layout.section_order(graph):
+        seqs.setdefault(bopts["assign"][sid], []).append([sid])
+    trials = []
+    while True:
+        pick = None
+        for band, clusters in seqs.items():
+            for i in range(len(clusters) - 1):
+                w = sum(width.get(x, 0.0) for x in clusters[i] + clusters[i + 1])
+                if pick is None or w > pick[0]:
+                    pick = (w, band, i)
+        if pick is None:
+            return trials
+        _, band, i = pick
+        seqs[band][i:i + 2] = [seqs[band][i] + seqs[band][i + 1]]
+        trials.append([c for cl in seqs.values() for c in cl if len(c) > 1])
+
+
 # ---------------------------------------------------------------------------
 # fitting
 # ---------------------------------------------------------------------------
-def fit_layout(graph, fonts, style, refs, collapsed=(), max_collapse=None, log=None, annotate=None):
+def fit_layout(graph, fonts, style, refs, collapsed=(), max_collapse=None, log=None, annotate=None, bands=None):
     """Try symbol scales; when nothing fits, collapse the section whose block representation helps most, and repeat.
 
     Text sizes are never reduced below the readability target. Fallback order when the complete drawing does not fit:
@@ -468,6 +546,7 @@ def fit_layout(graph, fonts, style, refs, collapsed=(), max_collapse=None, log=N
     collapsed = list(collapsed)
     attempts = []
     annotate = list(graph["display"]["annotate"]) if annotate is None else list(annotate)
+    bopts = {"assign": ppo_graph.assign_bands(graph, bands), "gutter": BAND_GUTTER} if bands is not None else None
 
     def overflow(L):
         cw, ch = L.content_size
@@ -476,7 +555,7 @@ def fit_layout(graph, fonts, style, refs, collapsed=(), max_collapse=None, log=N
     while True:
         best = None
         for scale in style["scales"]:
-            L = ppo_layout.layout_overview(graph, fonts, style, area, scale=scale, collapsed=collapsed, refs=refs, annotate=annotate)
+            L = ppo_layout.layout_overview(graph, fonts, style, area, scale=scale, collapsed=collapsed, refs=refs, annotate=annotate, bands=bopts)
             attempts.append({"scale": scale, "collapsed": list(collapsed), "content_mm": [round(v, 1) for v in L.content_size],
                              "rows": L.rows, "fits": L.fits, "annotate": len(annotate)})
             if log:
@@ -499,7 +578,7 @@ def fit_layout(graph, fonts, style, refs, collapsed=(), max_collapse=None, log=N
             if any(a not in boundary for a in annotate):
                 if log:
                     log("bubble step: stream-number bubbles limited to boundary streams (table keeps all key streams)")
-                Lb = fit_layout(graph, fonts, style, refs, collapsed=collapsed, max_collapse=max_collapse, log=log,
+                Lb = fit_layout(graph, fonts, style, refs, collapsed=collapsed, max_collapse=max_collapse, log=log, bands=bands,
                                 annotate=[a for a in annotate if a in boundary])
                 Lb.attempts = attempts + getattr(Lb, "attempts", [])
                 return Lb
@@ -511,7 +590,7 @@ def fit_layout(graph, fonts, style, refs, collapsed=(), max_collapse=None, log=N
                 fonts_c = ppo_render.Fonts(style)
                 if log:
                     log("compact text step: %s" % ", ".join("%s %.1f pt" % kv for kv in sorted(compact.items())))
-                Lc = fit_layout(graph, fonts_c, style, refs, collapsed=collapsed, max_collapse=max_collapse, log=log, annotate=annotate)
+                Lc = fit_layout(graph, fonts_c, style, refs, collapsed=collapsed, max_collapse=max_collapse, log=log, annotate=annotate, bands=bands)
                 Lc.compact_text = True
                 Lc.attempts = attempts + getattr(Lc, "attempts", [])
                 return Lc
@@ -519,11 +598,15 @@ def fit_layout(graph, fonts, style, refs, collapsed=(), max_collapse=None, log=N
             # smallest reduction that fits wins
             n_sec = len(graph["sections"])
             if n_sec > 2 and not graph.get("mapping", {}).get("auto_merged") and (max_collapse is None or max_collapse > 0):
-                order_ids = ppo_layout.section_order(graph)
                 weights = {s["id"]: len(s["members"]) for s in graph["sections"]}
+                if bopts:  # phase bands: only sections of the same band are combined, widest pair first
+                    trials = [("%d merged" % len(g), g) for g in _band_merge_trials(graph, bopts, best)]
+                else:
+                    order_ids = ppo_layout.section_order(graph)
+                    trials = [("%d groups" % k, [g for g in ppo_layout.contiguous_groups(order_ids, weights, k) if len(g) > 1])
+                              for k in range(n_sec - 1, 1, -1)]
                 best_m = None
-                for k in range(n_sec - 1, 1, -1):
-                    groups = [g for g in ppo_layout.contiguous_groups(order_ids, weights, k) if len(g) > 1]
+                for label, groups in trials:
                     if not groups:
                         continue
                     merged = ppo_graph.merge_sections(graph, groups)
@@ -535,11 +618,16 @@ def fit_layout(graph, fonts, style, refs, collapsed=(), max_collapse=None, log=N
                             parts = [refs.get(i) for i in s["merged_from"] if refs.get(i)]
                             if parts:
                                 refs_m[s["id"]] = " / ".join(parts)
-                    Lm = fit_layout(merged, fonts, style, refs_m, collapsed=coll, max_collapse=0, log=None, annotate=annotate)
+                    bands_m = None
+                    if bopts:
+                        bands_m = {}
+                        for s in merged["sections"]:
+                            bands_m.setdefault(bopts["assign"][s["id"]], []).append(s["id"])
+                    Lm = fit_layout(merged, fonts, style, refs_m, collapsed=coll, max_collapse=0, log=None, annotate=annotate, bands=bands_m)
                     Lm.graph_used = merged
                     if log:
-                        log("merge step: %d groups -> %.0f x %.0f mm (%s)" % (k, Lm.content_size[0], Lm.content_size[1],
-                                                                             "fits" if Lm.fits else "too large"))
+                        log("merge step: %s -> %.0f x %.0f mm (%s)" % (label, Lm.content_size[0], Lm.content_size[1],
+                                                                     "fits" if Lm.fits else "too large"))
                     if Lm.fits:
                         Lm.attempts = attempts + getattr(Lm, "attempts", [])
                         return Lm
@@ -553,6 +641,19 @@ def fit_layout(graph, fonts, style, refs, collapsed=(), max_collapse=None, log=N
             best.warnings.append("overview does not fit the drawing area even with %d sections collapsed" % len(collapsed))
             return best
         # choose the section whose collapse reduces the overflow most (evaluated at the smallest scale)
+        if bopts and best.band_bounds:
+            # phase bands: the band row that overflows is relieved first, its widest (or, for a height overflow, tallest) section
+            wide = best.content_size[0] / area[2] >= best.content_size[1] / area[3] and best.row_widths
+            r = max(range(len(best.row_widths)), key=lambda i: best.row_widths[i]) if wide else \
+                max(range(len(best.band_bounds)), key=lambda i: best.band_bounds[i][1] - best.band_bounds[i][0])
+            in_band = [c for c in candidates if bopts["assign"].get(c) == best.band_bounds[r][2]]
+            dim = "w" if wide else "h"
+            size = {s["id"]: s[dim] for s in best.sections}
+            pick = max(in_band or candidates, key=lambda c: (size.get(c, 0.0), len(next(s for s in graph["sections"] if s["id"] == c)["members"])))
+            collapsed.append(pick)
+            if log:
+                log("collapse: %s (widest section of the %s band)" % (pick, bopts["assign"].get(pick)))
+            continue
         scored = []
         for c in candidates:
             Lc = ppo_layout.layout_overview(graph, fonts, style, area, scale=style["scales"][-1], collapsed=collapsed + [c], refs=refs)
@@ -667,7 +768,7 @@ def build_detail_sheets(data, out_dir, tb_detail, sections, log=None):
 
 def build_overview(data, out_dir, case_id=None, title_block=None, level="overview", config=None, detail_sheets="collapsed",
                    style_overrides=None, collapse_sections=(), source_path=None, embed_svg_font=True, png_dpi=150,
-                   mono=True, presentation=True, log=None, command=None, supporting_slides=True):
+                   mono=True, presentation=True, log=None, command=None, supporting_slides=True, bands=None):
     """Generate the A3 overview (colour + mono), the 16:9 presentation version, detail sheets and the validation record.
 
     Args:
@@ -688,6 +789,10 @@ def build_overview(data, out_dir, case_id=None, title_block=None, level="overvie
         presentation: also write the 16:9 presentation adaptation.
         supporting_slides: write validated detail slides for collapsed sections. Set False
             to keep only the main slides; this does not disable the A3 detail PFD sheets.
+        bands: phase-band layout of the A3 sheet (TR2329 SR-15794, ISO 10628:1997 5.3.3): ``True`` classifies the sections
+            automatically (:func:`ppo_graph.assign_bands`), a mapping ``{"gas": [section names], "oil": [...],
+            "water": [...]}`` fixes the band of the named sections. Default (None) falls back to ``config["bands"]``,
+            otherwise off. The 16:9 version is not banded.
         log: optional callable for progress lines.
         command: the command line that regenerates the output (recorded in the manifest).
 
@@ -715,7 +820,8 @@ def build_overview(data, out_dir, case_id=None, title_block=None, level="overvie
         else:
             log("collapse_sections: %r is not a section" % name)
     # first pass without references to find what must be collapsed
-    L0 = fit_layout(graph, fonts, style, {}, collapsed=forced, log=log)
+    bands_cfg = ppo_graph.bands_config(bands if bands is not None else (config or {}).get("bands"))
+    L0 = fit_layout(graph, fonts, style, {}, collapsed=forced, log=log, bands=bands_cfg)
     collapsed = list(L0.collapsed)
     detail_manifest, refs = None, {}
     if detail_sheets != "none":
@@ -729,7 +835,7 @@ def build_overview(data, out_dir, case_id=None, title_block=None, level="overvie
                          "readiness_note": tb.get("readiness_note", "")}
             detail_manifest, refs = build_detail_sheets(data, os.path.join(out_dir, "detail_sheets"), tb_detail, wanted, log=log)
             tb["ref_prefix"] = detail_manifest["ref_prefix"] if detail_manifest else ""
-    L = fit_layout(graph, fonts, style, refs, collapsed=collapsed, log=log) if refs else L0
+    L = fit_layout(graph, fonts, style, refs, collapsed=collapsed, log=log, bands=bands_cfg) if refs else L0
     if refs and L.collapsed != collapsed:
         log("note: layout with references needed %d collapsed sections" % len(L.collapsed))
     graph_full = graph
@@ -819,6 +925,7 @@ def build_overview(data, out_dir, case_id=None, title_block=None, level="overvie
         "validation": os.path.join(out_dir, "validation.json"), "validation_status": record["status"],
         "collapsed_sections": L.collapsed, "detail_sheet_refs": refs, "symbol_scale": L.scale, "fits": L.fits,
         "supporting_slides": supporting_slides,
+        "bands": {k: v for k, v in L.band_of.items() if not k.startswith("TERM-")} if L.bands else None,
         "detail_sheets": detail_manifest and {"pdf": detail_manifest["pdf"], "sheets": [(s["drawing_number"], s["title"]) for s in detail_manifest["sheets"]]},
         "warnings": list(L.warnings) + (["graph: " + p for p in problems]),
         "command": command, "seconds": round(time.time() - t0, 1),
@@ -885,6 +992,8 @@ def build_parser():
     p.add_argument("--style", default=None, help="style overrides (JSON: pt, line, section, font, 16x9)")
     p.add_argument("--detail-sheets", default="collapsed", choices=["collapsed", "all", "none"])
     p.add_argument("--collapse", action="append", default=[], help="section name forced to block representation (repeatable)")
+    p.add_argument("--bands", action="store_true", help="phase-band layout of the A3 sheet: gas top, oil centre, water bottom "
+                   "(TR2329 SR-15794); explicit section mapping: config key \"bands\"")
     p.add_argument("--no-mono", action="store_true", help="skip the monochrome variants")
     p.add_argument("--no-presentation", action="store_true", help="skip the 16:9 version")
     p.add_argument("--no-supporting-slides", action="store_true", help="keep main 16:9 overviews without supporting slides; A3 detail sheets unchanged")
@@ -906,7 +1015,7 @@ def main(argv=None):
                                   config=config, detail_sheets=args.detail_sheets, style_overrides=style, collapse_sections=args.collapse,
                                   source_path=os.path.abspath(args.source), embed_svg_font=not args.no_embed_font, png_dpi=args.dpi,
                                   mono=not args.no_mono, presentation=not args.no_presentation, log=log, command=cmd,
-                                  supporting_slides=not args.no_supporting_slides)
+                                  supporting_slides=not args.no_supporting_slides, bands=True if args.bands else None)
     except (OverviewError, ValueError, FileNotFoundError) as exc:
         print("process-overview: %s" % exc, file=sys.stderr)
         return 2

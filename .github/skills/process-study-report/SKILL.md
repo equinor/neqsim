@@ -224,6 +224,9 @@ with a 200 dpi crop.
 16:9 slide), run `neqsim process-overview <report>/data/process_data.json --case A --out <task>/deliverables/process_overview`
 (skill `professional-process-overview`, [docs/development/PROCESS_OVERVIEW.md](../../../docs/development/PROCESS_OVERVIEW.md)).
 It reuses this extraction and `psr_diagrams` for the detail sheets it references, so numbers and sheet numbers agree.
+For oil and gas facilities add `--bands` so the sheet follows Equinor TR2329 SR-15794 / ISO 10628:1997 5.3.3 (gas band on top,
+oil / liquid hydrocarbon in the middle, water at the bottom, flow left to right); when compressors and utilisation must be readable
+on the sheet, draw the one-sheet PFD with `PfdDiagram.phase_bands` (skill `neqsim-pfd-layout-review`, "Phase-band layout").
 
 ## Validation checks (all must be PASS or explained WARN)
 

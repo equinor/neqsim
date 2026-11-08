@@ -16,6 +16,8 @@ Usage:
     neqsim process-overview SRC --out DIR  One-sheet A3 process overview (colour + mono) and 16:9 presentation version
     neqsim flow-assurance-report DIR  Flow-assurance report + pipeline drawings
     neqsim pvt-study YAML     PVT samples, characterization, experiments, E300 and controlled report
+    neqsim pvt-proxy run CFG --out DIR  Fit ONE forward separator/scrubber P/T set reproducing a detailed
+                            (recycle) process over a fluid ensemble, for PVT-table generation
                             from a Python model, JSON definition, .neqsim file or process_data.json
     neqsim surf-study SPEC   SURF design study: generated NeqSim model, cases, drawings and report
     neqsim layout-study SPEC Physical plant layout: checked alternatives, CAD and study report
@@ -667,6 +669,9 @@ def main():
     if cmd in ("layout-study", "layout_study"):
         import layout_study
         sys.exit(layout_study.main(sys.argv[2:]))
+    if cmd in ("pvt-proxy", "pvt_proxy"):
+        from pvt_proxy.cli import main as pvt_proxy_main
+        sys.exit(pvt_proxy_main(sys.argv[2:]))
     if cmd in ("pfd-check", "pfd_check", "pfd-layout-check"):
         import pfd_layout_check
         sys.exit(pfd_layout_check.main(sys.argv[2:]))

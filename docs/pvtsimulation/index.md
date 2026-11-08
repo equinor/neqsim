@@ -8,6 +8,7 @@ keywords: "PVT, CME, CVD, differential liberation, separator test, swelling test
 
 - [Reservoir-fluid method qualification](pedersen_method_qualification.md)
 - [PVT and fluid-characterization study report](pvt_fluid_study_report.md)
+- [PVT forward-proxy surface process for PVT-table generation](pvt_forward_proxy.md)
 - [Reservoir material balance, compositional history replay and original/tuned PVT handoff](reservoir_material_balance.md)
 - [Finite-aquifer replay and discrete Bayesian uncertainty](reservoir_aquifer_uncertainty.md)
 - [Native CCE/CVD/DLE handoff, checked upper-dew reference, gas-only CVD continuation and bounded PVT conversion](depletion_pvt_generation.md)

@@ -83,6 +83,72 @@ public class AutoRecycleBuilderTest {
   }
 
   /**
+   * Several loops returning to the same mixer share one strongly connected component; each needs its own tear.
+   *
+   * <p>
+   * Separator gas is cooled and scrubbed twice in series (with compression in between) and both scrubber liquids return
+   * to the separator inlet mixer. After the first tear the component still contains the generated recycle, and the
+   * second loop must not be mistaken for closed: mass balance has to close at the requested tolerance.
+   * </p>
+   */
+  @Test
+  void testMakeRecyclesTearsEveryLoopIntoSharedMixer() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 60.0, 12.0);
+    fluid.addComponent("methane", 0.70);
+    fluid.addComponent("propane", 0.10);
+    fluid.addComponent("n-butane", 0.06);
+    fluid.addComponent("n-hexane", 0.06);
+    fluid.addComponent("n-decane", 0.08);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(1000.0, "kmol/hr");
+
+    Mixer mixer = new Mixer("separator inlet");
+    mixer.addStream(feed);
+    Separator separator = new Separator("separator", mixer.getOutletStream());
+    neqsim.process.equipment.heatexchanger.Heater cooler1 = new neqsim.process.equipment.heatexchanger.Heater(
+        "cooler 1", separator.getGasOutStream());
+    cooler1.setOutTemperature(273.15 + 18.0);
+    Separator scrubber1 = new Separator("scrubber 1", cooler1.getOutletStream());
+    neqsim.process.equipment.compressor.Compressor compressor = new neqsim.process.equipment.compressor.Compressor(
+        "compressor", scrubber1.getGasOutStream());
+    compressor.setOutletPressure(38.0);
+    neqsim.process.equipment.heatexchanger.Heater cooler2 = new neqsim.process.equipment.heatexchanger.Heater(
+        "cooler 2", compressor.getOutletStream());
+    cooler2.setOutTemperature(273.15 + 19.0);
+    Separator scrubber2 = new Separator("scrubber 2", cooler2.getOutletStream());
+    neqsim.process.equipment.valve.ThrottlingValve valve = new neqsim.process.equipment.valve.ThrottlingValve(
+        "return valve", scrubber2.getLiquidOutStream());
+    valve.setOutletPressure(12.0);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(mixer);
+    process.add(separator);
+    process.add(cooler1);
+    process.add(scrubber1);
+    process.add(compressor);
+    process.add(cooler2);
+    process.add(scrubber2);
+    process.add(valve);
+    process.run();
+
+    mixer.addStream(scrubber1.getLiquidOutStream());
+    mixer.addStream(valve.getOutletStream());
+    process.run();
+
+    List<Recycle> created = process.makeRecycles(1.0e-6);
+    assertEquals(2, created.size(), "both scrubber returns must be torn");
+    process.run();
+    assertTrue(process.solved());
+
+    double in = feed.getFlowRate("kg/hr");
+    double out = separator.getLiquidOutStream().getFlowRate("kg/hr") + scrubber2.getGasOutStream().getFlowRate("kg/hr");
+    assertEquals(0.0, (out - in) / in, 1.0e-4, "mass balance must close with every loop torn");
+    assertEquals(0, process.makeRecycles().size());
+  }
+
+  /**
    * With auto mode on, a single run() seeds and closes the loop without any extra call from the user.
    */
   @Test
