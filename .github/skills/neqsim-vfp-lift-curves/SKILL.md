@@ -178,6 +178,16 @@ exporter uses a placeholder correlation and logs a warning. The JSON face is `ne
 - **Oil wells with a CO2-rich fluid near the bubble point**: `HASAN_KABIR` returned NaN for flowing pressures near Pb (single-phase liquid side) while `BEGGS_BRILL` solved
   everywhere and `GRAY` was inconsistent at low THP; compare the correlations at 3-4 points before building (spread of 30-50 bar seen) and check the first rate point of every
   THP/ratio corner, because `FailurePolicy.EXTRAPOLATE_RATE` needs two valid points per rate curve. A thin wrapper that retries a NaN point with a +/-0.5 bar shift is acceptable if counted and reported.
+- **Flowline/riser "network branch" tables with `ForwardVlpProvider`** (BHP column = flowline inlet pressure, THP axis = host inlet pressure): the root finder needs a smooth,
+  monotone outlet-pressure response. When a pipe model collapses below a low inlet pressure (a `HydraulicDomainException` such as "Non-positive pipeline pressure: -4.3 bara"), call
+  `ForwardVlpProvider.setCollapsedProfileDrop(dropBar)`: a collapsed point becomes `min(p - drop, target - 1)`, so the solve moves up and never accepts it as a root
+  (`getCollapsedEvaluations()` counts them; report the count). A constant or NaN floor sent the bisection to the upper bound and filled 40 % of a table with the no-flow value.
+  Gas rates above the line's erosional capacity legitimately end as no-flow cells; list them as the line capacity, do not interpolate across them.
+- **Coarse GOR/WCT axes near a capacity cliff**: a 5 x 5 x 4 x 5 oil-well table interpolated 11-12 bar from a direct solve at mid-range points and more than 100 bar next to the no-flow
+  region. A 7 x 5 x 6 x 6 table (about 1 300 evaluations, 22-25 min for Beggs-Brill/Gray on a 5 km survey with three jobs in parallel) cut this to 2-4 bar, with 22 bar left next to the no-flow
+  region; the flowline table (6 x 3 x 4 x 6) was within 1-6 bar. Always run check 3 above before delivery and report the deviation; the 0.3 bar criterion is only realistic for gas wells.
+- **Injector tubing VFPINJ**: use `InjectionVlpProvider(template, md[], tvd[], id[])` (or `(template, tvd, id)` for a vertical well) with `VfpTableBuilder.injector(n, "WAT"/"GAS")`: it flashes the fluid per sub-segment and applies Darcy-Weisbach with Haaland friction on TVD head; rates are Sm3/d. Use `setDensityFactor` for salinity (about 1.026 for seawater). With the injector BHP below the hydrostatic head (late life) the wellhead is on vacuum: report it as choked operation, do not size the pump to a negative WHP.
+- **Erosional ratio definition**: `PipeBeggsAndBrills.getErosionalVelocity(c)` uses the no-slip mixture density and `getMaxErosionalVelocityRatio(c)` returns the maximum v/ve along the pipe, `v_e = C / sqrt(rho)` with C on an SI basis (122 for API 14E C = 100, 183 for C = 150). Earlier versions used the slip-holdup density and gave a 2x ratio mismatch.
 
 ## Related
 

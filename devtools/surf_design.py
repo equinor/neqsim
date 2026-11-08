@@ -34,7 +34,18 @@ def hydrate_curves(spec, fluid_ids, log=None):
     grid = spec["solver"]["hydrate_grid_bara"]
     out = {}
     for fid in fluid_ids:
-        comps = {k: v for k, v in spec["fluids"][fid]["components"].items() if k != "water"}
+        fd_spec = spec["fluids"][fid]
+        # hydrate fluid: light database components only; C7+ pseudo-components and E300 fluids need an explicit hydrate_components list
+        hyd = fd_spec.get("hydrate_components")
+        if isinstance(hyd, list):
+            hyd = {c["name"]: float(c["mole_fraction"]) for c in hyd}
+        comps = {k: v for k, v in (hyd or fd_spec.get("components") or {}).items() if k != "water"}
+        if not comps:
+            out[fid] = {"p_bara": [], "t_c": [], "n_available": 0, "n_requested": len(grid),
+                        "findings": ["fluid %s has no database components for the CPA hydrate curve; give fluids.%s.hydrate_components" % (fid, fid)]}
+            if log:
+                log("hydrate curve %s: unavailable (no hydrate_components)" % fid)
+            continue
         total = sum(comps.values())
         fd = {"id": fid, "components": [{"name": k, "mole_fraction": v / total} for k, v in comps.items()]}
         factory = fa_solver.FluidFactory(ns, fd)

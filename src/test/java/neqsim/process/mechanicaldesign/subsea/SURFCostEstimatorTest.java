@@ -427,4 +427,67 @@ class SURFCostEstimatorTest {
 
     assertEquals(expectedUValue, design.resolveOverallHeatTransferCoefficientWm2K(), 1.0e-12);
   }
+
+  /**
+   * The aggregate path adds a default export pipeline, which made it look as if the infield setters did not scale with
+   * length; with the export pipeline removed it must equal the route-segment path and scale with length.
+   */
+  @Test
+  void aggregateInfieldFlowlineMatchesRouteSegmentsWhenTheDefaultExportPipelineIsRemoved() {
+    SURFCostEstimator aggregate = new SURFCostEstimator(4, 96.0, SubseaCostEstimator.Region.NORWAY);
+    aggregate.setNumberOfManifolds(0);
+    aggregate.setNumberOfPLETs(0);
+    aggregate.setNumberOfJumpers(0);
+    aggregate.setNumberOfProductionRisers(0);
+    aggregate.setUmbilicalLengthKm(0.0);
+    aggregate.setInfieldFlowlineLengthKm(15.5);
+    aggregate.setInfieldFlowlineDiameterInches(12.0);
+    aggregate.setExportPipelineLengthKm(0.0);
+    aggregate.calculate();
+
+    SURFCostEstimator segments = new SURFCostEstimator(4, 96.0, SubseaCostEstimator.Region.NORWAY);
+    segments.setNumberOfManifolds(0);
+    segments.setNumberOfPLETs(0);
+    segments.setNumberOfJumpers(0);
+    segments.setNumberOfProductionRisers(0);
+    segments.setUmbilicalLengthKm(0.0);
+    segments.addLineSegment("flowline", SURFCostEstimator.LineCategory.INFIELD_FLOWLINE, 15500.0, 12.0);
+    segments.calculate();
+    assertEquals(segments.getFlowlineCostUSD(), aggregate.getFlowlineCostUSD(), 1.0);
+
+    aggregate.setInfieldFlowlineLengthKm(31.0);
+    aggregate.calculate();
+    assertTrue(aggregate.getFlowlineCostUSD() > 1.9 * segments.getFlowlineCostUSD());
+  }
+
+  @Test
+  void basisWarningsReportTheDefaultExportPipelineAndTheLibraryTreeRate() {
+    SURFCostEstimator est = new SURFCostEstimator(4, 96.0, SubseaCostEstimator.Region.NORWAY);
+    est.calculate();
+    List<String> warnings = est.getBasisWarnings();
+    assertTrue(warnings.get(0).contains("Class 5"));
+    assertTrue(warnings.toString().contains("export pipeline of 80.0 km"));
+    assertTrue(warnings.toString().contains("library rate"));
+    assertTrue(est.getCostBreakdown().containsKey("basisWarnings"));
+
+    est.setExportPipelineLengthKm(0.0);
+    est.setTreeUnitCostUSD(20.0e6);
+    assertTrue(!est.getBasisWarnings().toString().contains("export pipeline of"));
+    assertTrue(!est.getBasisWarnings().toString().contains("library rate"));
+  }
+
+  @Test
+  void projectTreeUnitCostReplacesTheLibraryRate() {
+    SURFCostEstimator est = new SURFCostEstimator(4, 96.0, SubseaCostEstimator.Region.NORWAY);
+    est.setNumberOfManifolds(0);
+    est.setNumberOfPLETs(0);
+    est.setNumberOfJumpers(0);
+    est.setNumberOfProductionRisers(0);
+    est.setUmbilicalLengthKm(0.0);
+    est.setInfieldFlowlineLengthKm(0.0);
+    est.setExportPipelineLengthKm(0.0);
+    est.setTreeUnitCostUSD(20.0e6);
+    est.calculate();
+    assertEquals(80.0e6, est.getSubseaCostUSD(), 1.0);
+  }
 }
