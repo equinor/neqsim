@@ -44,6 +44,39 @@ class TwoFluidPipeNetworkTest {
   }
 
   @Test
+  void mixedBranchSubcyclesRetainOneOuterSynchronizationBoundary() {
+    TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("mixed subcycle network");
+    network.addFixedPressureNode("source", 60.0e5);
+    network.addCompressibleNode("manifold", createVolume(55.0e5, 1000.0));
+    network.addFixedPressureNode("sink", 50.0e5);
+    network.addPipe("upstream", "source", "manifold", createPipe("subcycled upstream"));
+    network.addPipe("downstream", "manifold", "sink", createPipe("subcycled downstream"));
+    network.setBranchSubcycles("upstream", 4);
+    network.setBranchSubcycles("downstream", 2);
+
+    network.runTransient(0.01, UUID.randomUUID());
+
+    assertEquals(4, network.getBranchSubcycles("upstream"));
+    assertEquals(2, network.getBranchSubcycles("downstream"));
+    assertEquals(0.01, network.getSimulationTimeSeconds(), 0.0);
+    assertEquals(0.01, network.getPipe("upstream").getSimulationTime(), 1.0e-15);
+    assertEquals(0.01, network.getPipe("downstream").getSimulationTime(), 1.0e-15);
+    assertEquals(0.01, network.getPipe("upstream").getLastMassBalanceReport().getElapsedTimeSeconds(), 1.0e-15);
+    assertEquals(0.01, network.getPipe("downstream").getLastMassBalanceReport().getElapsedTimeSeconds(), 1.0e-15);
+    assertTrue(network.getPipe("upstream").getLastMassBalanceReport().getAcceptedSubsteps() >= 4);
+    assertTrue(network.getPipe("downstream").getLastMassBalanceReport().getAcceptedSubsteps() >= 2);
+    for (Phase phase : Phase.values()) {
+      assertTrue(network.getLastBalanceReport().getRelativeResidual(phase) < 1.0e-8);
+    }
+
+    TwoFluidPipeNetwork restored = SerializationUtils.clone(network);
+    assertEquals(4, restored.getBranchSubcycles("upstream"));
+    assertEquals(2, restored.getBranchSubcycles("downstream"));
+    assertThrows(IllegalArgumentException.class, () -> restored.setBranchSubcycles("upstream", 0));
+    assertThrows(IllegalArgumentException.class, () -> restored.getBranchSubcycles("missing"));
+  }
+
+  @Test
   void identicalSplitBranchesRemainSymmetric() {
     UpstreamCompressibleVolume splitter = createVolume(60.0e5, 1.0e5);
     TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("symmetric split");
@@ -74,6 +107,8 @@ class TwoFluidPipeNetworkTest {
     network.addFixedPressureNode("sink", 50.0e5);
     network.addPipe("upstream", "source", "manifold", upstream);
     network.addPipe("downstream", "manifold", "sink", downstream);
+    network.setBranchSubcycles("upstream", 3);
+    network.setBranchSubcycles("downstream", 2);
     network.initialize(UUID.randomUUID());
     TwoFluidSection[] upstreamBefore = upstream.getSectionSnapshots();
     TwoFluidSection[] downstreamBefore = downstream.getSectionSnapshots();
@@ -131,6 +166,11 @@ class TwoFluidPipeNetworkTest {
   void conservativeMergeClosesComponentsAndEnergyIndependentOfBranchOrder() {
     TwoFluidPipeNetwork first = createConservativeMerge(false);
     TwoFluidPipeNetwork reversed = createConservativeMerge(true);
+    for (TwoFluidPipeNetwork network : new TwoFluidPipeNetwork[] {first, reversed}) {
+      network.setBranchSubcycles("gas inlet", 3);
+      network.setBranchSubcycles("liquid inlet", 2);
+      network.setBranchSubcycles("outlet", 4);
+    }
     double initialMethaneFraction = first.getNodeComponentMassKg("manifold", "methane")
         / (first.getNodeComponentMassKg("manifold", "methane") + first.getNodeComponentMassKg("manifold", "n-heptane"));
 
@@ -145,6 +185,9 @@ class TwoFluidPipeNetworkTest {
           reversed.getNodeComponentMassKg("manifold", componentName), 1.0e-9);
     }
     assertTrue(report.getRelativeEnergyResidual() < 1.0e-7, "energy residual=" + report.getRelativeEnergyResidual());
+    assertEquals(0.005, first.getPipe("gas inlet").getLastComponentConservationReport().getElapsedTimeSeconds(),
+        1.0e-15);
+    assertEquals(0.005, first.getPipe("outlet").getLastConservativeEnergyReport().getElapsedTimeSeconds(), 1.0e-15);
     assertEquals(first.getNodeTemperatureK("manifold"), reversed.getNodeTemperatureK("manifold"), 1.0e-8);
     double finalMethaneFraction = first.getNodeComponentMassKg("manifold", "methane")
         / (first.getNodeComponentMassKg("manifold", "methane") + first.getNodeComponentMassKg("manifold", "n-heptane"));

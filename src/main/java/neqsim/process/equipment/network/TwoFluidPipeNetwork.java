@@ -34,9 +34,10 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <p>
  * Storage nodes provide explicit pressure inventory. Conservative algebraic zero-volume junctions may instead solve
  * common pressures and mixed thermodynamic donors from the exact signed branch ledgers. Multiple junctions use a global
- * finite-difference Newton pressure solve inside the same atomic branch transaction. Branch subcycling remains outside
- * the current scope. Component and total-energy mixing are available as an explicit opt-in on compressible nodes.
- * Signed outlet fallback is supported only when the downstream node or pipe owns an explicit thermodynamic donor.
+ * finite-difference Newton pressure solve inside the same atomic branch transaction. Branches may use different integer
+ * subcycle factors while retaining frozen outer-interval node states and one atomic publication boundary. Component and
+ * total-energy mixing are available as an explicit opt-in on compressible nodes. Signed outlet fallback is supported
+ * only when the downstream node or pipe owns an explicit thermodynamic donor.
  * </p>
  */
 public final class TwoFluidPipeNetwork implements Serializable {
@@ -232,6 +233,37 @@ public final class TwoFluidPipeNetwork implements Serializable {
   }
 
   /**
+   * Set the integer subcycle factor for one branch.
+   *
+   * <p>
+   * Each subcycle advances a detached pipe candidate with the node pressures and thermodynamic donors frozen at the
+   * current outer-interval trial. The network consumes one aggregate conservative ledger and publishes every branch and
+   * node once at the outer synchronization boundary. This is synchronous branch-local refinement, not asynchronous
+   * multirate boundary coupling.
+   * </p>
+   *
+   * @param branchName existing branch name
+   * @param subcycles positive number of equal detached subcycles per network interval
+   * @throws IllegalArgumentException if the branch does not exist or subcycles is not positive
+   */
+  public void setBranchSubcycles(String branchName, int subcycles) {
+    if (subcycles < 1) {
+      throw new IllegalArgumentException("Branch subcycles must be positive");
+    }
+    requireBranch(branchName).subcycles = subcycles;
+  }
+
+  /**
+   * Get the configured subcycle factor for one branch.
+   *
+   * @param branchName existing branch name
+   * @return positive number of equal detached subcycles per network interval
+   */
+  public int getBranchSubcycles(String branchName) {
+    return requireBranch(branchName).subcycles;
+  }
+
+  /**
    * Initialize each branch from its configured stream and the downstream node pressure.
    *
    * <p>
@@ -343,7 +375,7 @@ public final class TwoFluidPipeNetwork implements Serializable {
       TwoFluidPipe.TransientCandidate candidate = branchCandidates.get(branch);
       if (candidate == null) {
         configureTransientPressures(branch);
-        candidate = branch.pipe.prepareTransientCandidate(timeStepSeconds, id);
+        candidate = branch.pipe.prepareTransientCandidate(timeStepSeconds, id, branch.subcycles);
         branchCandidates.put(branch, candidate);
       }
       TwoFluidMassBalanceReport report = candidate.getMassBalanceReport();
@@ -648,7 +680,7 @@ public final class TwoFluidPipeNetwork implements Serializable {
       SystemInterface inletDonor = branch.fromNode.algebraic ? donors.get(branch.fromNode) : null;
       SystemInterface outletDonor = branch.toNode.algebraic ? donors.get(branch.toNode) : null;
       TwoFluidPipe.TransientCandidate candidate = branch.pipe.prepareTransientCandidate(timeStepSeconds, id,
-          inletPressurePa, outletPressurePa, inletDonor, outletDonor);
+          inletPressurePa, outletPressurePa, inletDonor, outletDonor, branch.subcycles);
       candidates.put(branch, candidate);
       TwoFluidComponentConservationReport components = candidate.getComponentConservationReport();
       TwoFluidConservativeEnergyReport energy = candidate.getConservativeEnergyReport();
@@ -817,7 +849,7 @@ public final class TwoFluidPipeNetwork implements Serializable {
       SystemInterface inletDonor = branch.fromNode == junction ? donor : null;
       SystemInterface outletDonor = branch.toNode == junction ? donor : null;
       TwoFluidPipe.TransientCandidate candidate = branch.pipe.prepareTransientCandidate(timeStepSeconds, id,
-          inletPressurePa, outletPressurePa, inletDonor, outletDonor);
+          inletPressurePa, outletPressurePa, inletDonor, outletDonor, branch.subcycles);
       candidates.put(branch, candidate);
       TwoFluidMassBalanceReport mass = candidate.getMassBalanceReport();
       TwoFluidComponentConservationReport components = candidate.getComponentConservationReport();
@@ -1914,6 +1946,7 @@ public final class TwoFluidPipeNetwork implements Serializable {
     private final NetworkNode fromNode;
     private final NetworkNode toNode;
     private final TwoFluidPipe pipe;
+    private int subcycles = 1;
 
     private NetworkBranch(String name, NetworkNode fromNode, NetworkNode toNode, TwoFluidPipe pipe) {
       this.name = name;

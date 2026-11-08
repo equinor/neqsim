@@ -136,6 +136,38 @@ class TwoFluidPipeTransactionalTest {
   }
 
   @Test
+  void detachedSubcyclesAggregateOuterLedgerAndPublishOnlyOnce() {
+    TwoFluidPipe pipe = createPipe(true);
+    TwoFluidPipe sequential = SerializationUtils.clone(pipe);
+    pipe.setTransactionalTransientEnabled(true);
+    sequential.setTransactionalTransientEnabled(true);
+    UUID id = UUID.randomUUID();
+    byte[] before = SerializationUtils.serialize(pipe);
+
+    TwoFluidPipe.TransientCandidate candidate = pipe.prepareTransientCandidate(4.0e-4, id, 4);
+
+    assertArrayEquals(before, SerializationUtils.serialize(pipe));
+    assertEquals(4.0e-4, candidate.getSimulationTimeSeconds(), 1.0e-15);
+    assertEquals(4.0e-4, candidate.getMassBalanceReport().getElapsedTimeSeconds(), 1.0e-15);
+    assertTrue(candidate.getMassBalanceReport().getAcceptedSubsteps() >= 4);
+    assertEquals(4.0e-4, candidate.getComponentConservationReport().getElapsedTimeSeconds(), 1.0e-15);
+    assertTrue(candidate.getComponentConservationReport().isConverged());
+    pipe.acceptTransientCandidate(candidate);
+    assertEquals(1, pipe.getComponentConservationHistory().size());
+    assertEquals(4.0e-4, pipe.getComponentConservationHistory().getSimulationTimeSeconds()[0], 1.0e-15);
+    for (int subcycle = 0; subcycle < 4; subcycle++) {
+      sequential.runTransient(1.0e-4, id);
+    }
+    TwoFluidSection[] expected = sequential.getSectionSnapshots();
+    TwoFluidSection[] actual = pipe.getSectionSnapshots();
+    for (int cell = 0; cell < expected.length; cell++) {
+      assertArrayEquals(expected[cell].getStateVector(), actual[cell].getStateVector(), 0.0);
+    }
+    assertEquals(sequential.getSimulationTime(), pipe.getSimulationTime(), 0.0);
+    assertThrows(IllegalArgumentException.class, () -> pipe.prepareTransientCandidate(1.0e-4, id, 0));
+  }
+
+  @Test
   void detachedPressureBoundaryTrialsLeaveOwnerAndConnectedInletUntouched() throws Exception {
     TwoFluidPipe pipe = createPipe(false);
     pipe.prepareConservativeEnergyTransientFromSteadyState();
