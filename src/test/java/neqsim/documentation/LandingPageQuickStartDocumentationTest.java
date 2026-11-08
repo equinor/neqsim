@@ -51,8 +51,7 @@ class LandingPageQuickStartDocumentationTest {
     assertTrue(source.contains("Runs a basic SRK TP-flash"));
     assertTrue(source.contains("@param args command-line arguments; unused"));
     assertTrue(source.contains("Double.isFinite(density) && density > 0.0 && density < 200.0"));
-    assertTrue(source.contains(
-        "Double.isFinite(compressibility) && compressibility > 0.0 && compressibility < 2.0"));
+    assertTrue(source.contains("Double.isFinite(compressibility) && compressibility > 0.0 && compressibility < 2.0"));
     assertTrue(source.contains("private static void require(boolean condition, String message)"));
 
     for (Path replica : REPLICAS) {
