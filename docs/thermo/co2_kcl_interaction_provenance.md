@@ -439,28 +439,43 @@ solubility remains 11.4-31.5% below the source values, and the 4.998/5.000 molal
 endpoints at 323.15, 348.15 and 363.15 K still show local salting-in. Those model
 deviations remain explicit evidence for the independent scientific review.
 
-### Burgass-Tohidi low-temperature observable diagnostic
+### Burgass-Tohidi KCl and mixed-brine observable diagnostic
 
-Tohidi's 1995 Heriot-Watt thesis, Table 6.4, preserves four experimental
-CO2-KCl states attributed to Burgass (1995): 7 and 14 mass percent KCl at 266.5
-and 273.2 K, with total pressures from 0.855 to 1.882 MPa. These points extend
-the dissolved-CO2 diagnostic below the He-Morse 273.15 K boundary but do not
-cover the exact Dholabhai K10/K15 recipes or their high-pressure endpoints.
+Tohidi's 1995 Heriot-Watt thesis preserves twenty experimental CO2-brine states
+attributed to Burgass (1995). Table 6.4 contains sixteen KCl states: twelve at
+5-20 mass percent KCl and 298.1-348.4 K plus four at 7/14 mass percent KCl and
+266.5/273.2 K. Table 6.5 contains four NaCl/KCl/CaCl2 states and is explicitly
+described as excluded from parameter optimization, making those states
+source-defined mixed-salt holdouts. Together they span 0.855-5.130 MPa. They
+extend the dissolved-CO2 diagnostic but do not cover the exact Dholabhai
+K10/K15 hydrate recipes or establish hydrate-model accuracy.
 
 The accessible table labels the dissolved quantity only as “mole %”; it does
-not state whether the denominator includes dissociated ions, one KCl formula
-unit, or excludes electrolyte. The new assessment therefore retains the source
+not state whether the denominator includes dissociated ions, salt formula
+units, or excludes electrolyte. The assessment therefore retains the source
 value and reports three non-equivalent model mappings plus CO2 molality. It does
 not choose a preferred mapping, fit a parameter, or impose an accuracy
 tolerance. The calculation uses reported total pressure, one final aqueous
 kilogram of water, a verified finite gas reservoir, mixing rule 10, and records
 water activity, CO2 partial pressure, inventory and fugacity residuals. See the
-[benchmark notes](../../src/test/resources/data/chemistry_benchmarks/co2_kcl_solubility_burgass_tohidi1995.md)
+[benchmark notes](../../src/test/resources/data/chemistry_benchmarks/co2_brine_solubility_burgass_tohidi1995.md)
 for the exact source and observable boundary.
 
 This corrects the assessment boundary conditions and failure reporting. It does
 not change production flash equations, interaction parameters, source values or
 experimental-accuracy criteria, and it does not establish model qualification.
+
+Local validation on OpenJDK 17 executed all twenty source rows plus the gas-
+reservoir regression (2 tests, no failures/errors/skips). All sixteen Table 6.4
+KCl states are underpredicted for every retained mole-percent mapping: residual
+ranges are -0.312 to -0.153 percentage points including ions, -0.232 to -0.084
+for the molecular-only mapping, and -0.270 to -0.120 for the pseudo-salt
+mapping. The four Table 6.5 holdouts bracket zero and have mean absolute
+residuals of 0.110, 0.135 and 0.124 percentage points, respectively. Water
+activity spans 0.8758-0.9721; component-balance and molecular log-fugacity
+residuals remain below 1.43e-14 mol and 6.64e-12. These are diagnostic results,
+not an accuracy gate, because the source mole-percent denominator remains
+unresolved.
 
 ## Retained numerical evidence
 
@@ -478,14 +493,14 @@ produced by tests selected for that shard:
 | Dholabhai K10/K15 plus pure-water and cross-salt controls | 28 |
 | Archer salt-only, pressure-only and CO2-addition sequence | 10 |
 | He–Morse dissolved CO2, complete five-temperature series | 26 |
-| Burgass-Tohidi low-temperature CO2 observable mappings | 4 |
+| Burgass-Tohidi KCl and mixed-brine CO2 observable mappings | 20 |
 | Yasunishi–Yoshida Ostwald coefficients | 7 |
 | Burgass saturated and finite-inventory NaCl controls | 12 |
 | Carroll evaluated salt-free CO2, three setup constructions | 57 |
 | Full Dholabhai family, all supported measured recipes | 110 |
 | Matched measured-state aqueous/guest partition, same Dholabhai recipes | 110 |
 
-The combined bundle has 360 diagnostic rows, not 360 independent measurements.
+The combined bundle has 380 diagnostic rows, not 380 independent measurements.
 The two 110-row assessments deliberately use the same 110 measured endpoints.
 
 The manifest records the actual checkout commit separately from the GitHub
@@ -505,7 +520,7 @@ complete evidence. Outputs from unselected tests and unrelated files under
 `target/` are not collected.
 
 `selected_evidence_complete` applies only to the selected assessments in that
-shard, not the full eight-assessment matrix or the rest of CI. A shard with no selected
+shard, not the full nine-assessment matrix or the rest of CI. A shard with no selected
 assessment has a count of zero. Check every producer across all shards and the
 original test results before using a combined matrix. Every manifest keeps
 `qualification` as `not_assessed`: artifact retention and structural validation
