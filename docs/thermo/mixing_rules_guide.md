@@ -1127,6 +1127,11 @@ outside the compiler uncertainty band, and two points are below the MEG alpha fi
 range. Gas-MEG predictions have no measured reverse comparator. These results do
 not qualify inhibitor partition, hydrates, ice/brine or extrapolation. The manual
 matched rule2/rule4 benchmark keeps model/solver cost distinct from code overhead.
+The independent replay rejects nonfinite or malformed references, changed units,
+component directions and retained observation/uncertainty coordinates before
+solving; invalid evidence cannot overwrite a report or the read-only fixture.
+Its admission guards are tested with normal and optimized Python. They do not
+establish experimental accuracy or resolve the remaining primary-source gaps.
 
 ### Staged CO2/water source configurations
 

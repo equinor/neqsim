@@ -120,3 +120,24 @@ pointwise native pressures and errors; the source observations/protocol remain
 in `../hv-meg-qualification/`. These pure pressures start at307.7K and do not
 validate low-temperature binary extrapolation or uniquely diagnose interaction
 fit errors. No new pure model or pressure fit is introduced.
+
+## Replay input admission repair
+
+The independent replay now rejects malformed or nonfinite reference numbers before
+solving. A mutation of the first MC liquid-reference prediction to `NaN` previously
+exited0 and wrote a report: comparisons with NaN could bypass the parity gate.
+The repair requires the exact unit/direction/alpha header, six ordered retained
+observation coordinates and compiler bands, eight finite decimal fields per row,
+and physical mole-fraction bounds. Both alpha controls and the existing numerical
+parity/refinement limits remain unchanged. Invalid solver endpoints/residuals also
+fail explicitly; JSON output rejects nonfinite numbers. Reports must be written
+outside this read-only fixture, and invalid inputs cannot overwrite a prior report.
+
+`devtools/test_huron_vidal_meg_methane_replay.py` covers nonfinite values in every
+column, malformed schemas/rows, changed/duplicate/reordered observations, invalid
+compiler bands, solver nonfinite output, CLI failure with/without Python assertions,
+read-only inputs and valid MC/Soave control reports. Successful normal/-O reports
+retain SHA256 `86b3d91ed8874477c60ddbe31c0efd607f841c8a5f874355cf1391d5d96b28a7`.
+This is an admission-integrity check on retained campaign data, not fresh primary
+source verification or empirical accuracy acceptance. No observation, compiler
+uncertainty, pure input, HV tuple, native checker, equation or timing value changes.
