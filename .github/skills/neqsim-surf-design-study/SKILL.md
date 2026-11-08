@@ -67,7 +67,7 @@ Exit codes: 0 ok, 1 strict validation failure, 2 input or usage error (nothing i
 
 ## Interview (ask only what cannot be found)
 
-Read the task folder, existing models (`@field-development`), P&IDs/STID evidence and prior studies first. Then ask once for: decision and maturity,
+Read the task folder, existing models (`@field-development`), P&IDs/STID evidence and prior studies first. **Resolve the country and the operator first** (`neqsim-jurisdiction-regulatory-basis`, `activity_basis(country, ("surf",))`): flowline, riser, flexible and umbilical rules, approvals and verification steps differ by regime (goal-setting in Norway, UK and Brazil; prescriptive elements in the US; contract-based in Angola), and on a partner-operated asset the operator's design basis governs. Enterprise users add the company layer from `enterprise-tr-gl-requirements-register` (`well_surf_requirements(country, ("surf",))`). Then ask once for: decision and maturity,
 host constraints, well/fluid basis, route and bathymetry (CRS, datums), line sizes and thermal layers, umbilical services, criteria and their sources,
 adopted standards and editions, cost basis, and the document number and author.
 
