@@ -700,6 +700,14 @@ def vscode_version():
         dirs.append(Path("/Applications/Visual Studio Code.app/Contents/Resources/app"))
     else:
         dirs += [Path("/usr/share/code/resources/app"), Path("/opt/visual-studio-code/resources/app")]
+    # VS Code 1.14x system installs keep resources/app under <install>/<commit-hash>/.
+    for d in list(dirs):
+        try:
+            base = d.parent.parent if d.name == "app" and d.parent.name == "resources" else d
+            dirs += sorted((p / "resources" / "app" for p in base.iterdir() if p.is_dir()),
+                           key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True)
+        except OSError:
+            pass
     for d in dirs:
         try:
             ver = json.loads((d / "package.json").read_text(encoding="utf-8")).get("version", "")
