@@ -189,24 +189,29 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
       new ThermodynamicOperations(fluid).TPflash();
       fluid.init(1);
 
-      assertEquals(2, fluid.getNumberOfPhases(), reference.pointId + " requires a CO2-rich and an aqueous phase");
+      assertTrue(fluid.getNumberOfPhases() >= 2, reference.pointId + " requires an aqueous and a non-aqueous phase");
       PhaseInterface aqueous = findIonRichPhase(fluid);
-      PhaseInterface gas = findCo2RichPhase(fluid, aqueous);
+      List<PhaseInterface> nonAqueous = nonAqueousPhases(fluid, aqueous);
+      PhaseInterface gas = mostCo2RichPhase(nonAqueous);
       double componentBalanceResidualMol = 0.0;
       double molecularLogFugacityResidual = 0.0;
       for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
-        String componentName = gas.getComponent(component).getComponentName();
+        String componentName = aqueous.getComponent(component).getComponentName();
         double feedMoles = feedMoles(componentName, co2FeedMoles, waterFeedMoles, naclMoles, kclMoles, cacl2Moles);
-        double gasMoles = gas.getComponent(component).getNumberOfMolesInPhase();
         double aqueousMoles = aqueous.getComponent(component).getNumberOfMolesInPhase();
-        componentBalanceResidualMol = Math.max(componentBalanceResidualMol,
-            Math.abs(gasMoles + aqueousMoles - feedMoles));
-        if (gas.getComponent(component).getIonicCharge() == 0) {
-          double fugacityRatio = gas.getFugacity(component) / aqueous.getFugacity(component);
-          molecularLogFugacityResidual = Math.max(molecularLogFugacityResidual, Math.abs(Math.log(fugacityRatio)));
-        } else {
-          assertEquals(0.0, gasMoles, 1.0e-40, reference.pointId + " ions must remain aqueous");
+        double nonAqueousMoles = 0.0;
+        for (PhaseInterface phase : nonAqueous) {
+          double phaseMoles = phase.getComponent(component).getNumberOfMolesInPhase();
+          nonAqueousMoles += phaseMoles;
+          if (phase.getComponent(component).getIonicCharge() == 0) {
+            double fugacityRatio = phase.getFugacity(component) / aqueous.getFugacity(component);
+            molecularLogFugacityResidual = Math.max(molecularLogFugacityResidual, Math.abs(Math.log(fugacityRatio)));
+          } else {
+            assertEquals(0.0, phaseMoles, 1.0e-40, reference.pointId + " ions must remain aqueous");
+          }
         }
+        componentBalanceResidualMol = Math.max(componentBalanceResidualMol,
+            Math.abs(nonAqueousMoles + aqueousMoles - feedMoles));
       }
       assertTrue(componentBalanceResidualMol < 1.0e-10, reference.pointId + " component inventory");
       // Reported, not gated: the molecular fugacity mismatch is itself a model diagnostic at high pressure.
@@ -274,21 +279,42 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
   }
 
   /**
-   * Returns the non-aqueous phase. At high pressure NeqSim may label the CO2-rich phase as oil or
-   * liquid rather than gas, so the phase is identified by position instead of by type label.
+   * Returns every phase other than the aqueous one. NeqSim may label the CO2-rich phase as oil or
+   * liquid rather than gas at high pressure, and a third phase can appear, so phases are identified
+   * by position instead of by type label.
    *
-   * @param fluid flashed two-phase system
+   * @param fluid flashed system
    * @param aqueous ion-rich aqueous phase
-   * @return CO2-rich phase
+   * @return non-aqueous phases, never empty
    */
-  private static PhaseInterface findCo2RichPhase(SystemInterface fluid, PhaseInterface aqueous) {
+  private static List<PhaseInterface> nonAqueousPhases(SystemInterface fluid, PhaseInterface aqueous) {
+    List<PhaseInterface> phases = new ArrayList<PhaseInterface>();
     for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
       PhaseInterface candidate = fluid.getPhase(phaseIndex);
       if (candidate != aqueous) {
-        return candidate;
+        phases.add(candidate);
       }
     }
-    throw new AssertionError("no non-aqueous phase found");
+    if (phases.isEmpty()) {
+      throw new AssertionError("no non-aqueous phase found");
+    }
+    return phases;
+  }
+
+  /**
+   * Selects the non-aqueous phase with the greatest CO2 mole fraction, used for the partial pressure.
+   *
+   * @param phases non-aqueous phases, never empty
+   * @return most CO2-rich phase
+   */
+  private static PhaseInterface mostCo2RichPhase(List<PhaseInterface> phases) {
+    PhaseInterface selected = phases.get(0);
+    for (PhaseInterface candidate : phases) {
+      if (candidate.getComponent("CO2").getx() > selected.getComponent("CO2").getx()) {
+        selected = candidate;
+      }
+    }
+    return selected;
   }
 
   /**
