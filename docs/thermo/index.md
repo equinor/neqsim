@@ -13,3 +13,4 @@ keywords: "thermodynamics, EOS, equation of state, SRK, Peng-Robinson, CPA, flas
 - [Petroleum and refinery characterization](./characterization/README.md)
 
 - [Pitzer barite mixing qualification](./pitzer_barite_qualification.md)
+- [Solid-gas reaction equilibrium (FeS to siderite and H2S)](./solid_gas_reaction_equilibrium.md)
