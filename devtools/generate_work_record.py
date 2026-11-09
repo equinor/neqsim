@@ -464,6 +464,24 @@ def _collect_scripts(task_dir: Path, config: dict) -> list:
     for name, entry in declared.items():
         if name in seen or Path(name).name in seen or name in optional_plan:
             continue
+        on_disk = task_dir / name
+        if on_disk.is_file():
+            # Declared scripts may live outside the scanned folders (for example a source-system pull
+            # kept with its data under step1_scope_and_research/references/); they exist, so list them.
+            outputs = entry.get("produces")
+            outputs = ([str(item).strip() for item in outputs] if isinstance(outputs, (list, tuple))
+                       else [item.strip() for item in str(outputs or "").split(",")])
+            rows.append({
+                "rel": name,
+                "kind": "notebook" if name.endswith(".ipynb") else "script",
+                "purpose": entry.get("purpose", "-") or "-",
+                "produces": ", ".join(item if glob.glob(str(task_dir / item)) else "{} (missing)".format(item)
+                                      for item in outputs if item) or "-",
+                "modified": _mtime(on_disk),
+                "status": "",
+                "declared": True,
+            })
+            continue
         rows.append({
             "rel": name,
             "kind": "notebook" if name.endswith(".ipynb") else "script",
@@ -838,7 +856,7 @@ def build_work_record(task_dir: Path, preserved: dict) -> str:
     out.append("```bash")
     if declared_order:
         for name in declared_order:
-            target = name if name.startswith("step2_analysis") \
+            target = name if name.startswith("step2_analysis") or (task_dir / name).is_file() \
                 else "step2_analysis/{}".format(name)
             out.append(_run_command(target))
     else:
