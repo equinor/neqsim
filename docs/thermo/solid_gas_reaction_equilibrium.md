@@ -1,7 +1,7 @@
 ---
 title: "Solid-gas reaction equilibrium (FeS to siderite and H2S)"
 description: "Standard-state equilibrium constants for heterogeneous mineral-water-gas reactions with condensed-phase pressure corrections and EOS fugacities, applied to FeS + H2O + CO2 = FeCO3 + H2S."
-keywords: "mineral reaction, equilibrium constant, troilite, siderite, H2S, CO2, fugacity, Poynting, IAPWS-IF97, JANAF, reservoir souring"
+keywords: "mineral reaction, equilibrium constant, troilite, siderite, pyrite, H2S, CO2, fugacity, Poynting, IAPWS-IF97, JANAF, reservoir souring, original reservoir H2S, mineral buffer, Haaland correlation"
 ---
 
 # Solid-gas reaction equilibrium
@@ -77,6 +77,57 @@ SolidGasReactionEquilibrium.GasExchangeResult result = reaction.solveGasExchange
 double h2sPpm = result.getProductMoleFraction() * 1.0e6;
 List<String> warnings = result.getWarnings();
 ```
+
+## Original H2S in reservoir fluids (mineral buffer)
+
+In clastic reservoirs with pyrite and an Fe-bearing carbonate, H2S is buffered by
+
+$$
+4\,\mathrm{FeS_2} + \mathrm{CH_4} + 3\,\mathrm{CO_2} + 6\,\mathrm{H_2O} \rightleftharpoons
+4\,\mathrm{FeCO_3} + 8\,\mathrm{H_2S}
+$$
+
+$$
+8 \ln f_{\mathrm{H_2S}} = \ln K(T,P) + \ln f_{\mathrm{CH_4}} + 3 \ln f_{\mathrm{CO_2}}
++ 6 \ln a_{\mathrm{H_2O}} - 4 \ln a_{\mathrm{FeCO_3}},
+\qquad y_{\mathrm{H_2S}} = \frac{f_{\mathrm{H_2S}}}{\varphi_{\mathrm{H_2S}} P}.
+$$
+
+The reaction enthalpy is about 55 kJ per mol H2S, matching the apparent enthalpy of the
+Håland et al. (1999) correlation of H2S versus temperature in Norwegian sandstone reservoirs
+(54 kJ/mol). Applied to 454 measured NCS reservoir-fluid compositions with SRK, the buffer gives
+0.61 times the correlation without fitting; an Fe-carbonate activity of 0.38 (Fe in ankerite or a
+carbonate solid solution) reproduces it within about 30 % from 60 to 180 °C. The phase rule
+excludes the alternatives: at NCS CO2 levels siderite, not magnetite, is the stable Fe phase, and
+pyrite, not pyrrhotite, is stable at the buffered H2S level.
+
+`MineralH2SBuffers` holds the balanced reactions (pyrite–siderite, pyrite–pyrrhotite,
+pyrite–magnetite, pyrrhotite–magnetite, pyrrhotite–siderite, anhydrite TSR and the
+siderite–magnetite boundary). `SolidGasReactionEquilibrium.solveForGas(fluid, "H2S")` solves any
+of them with the other gas fugacities from the fluid. `ReservoirH2SEstimator` wraps the
+pyrite–siderite buffer with the NCS-calibrated activity, the stability checks and warnings for the
+kinetic regime below about 70 °C and for thermochemical sulfate reduction.
+
+```java
+SystemInterface reservoirFluid = new SystemSrkEos(273.15 + 140.0, 550.0);
+reservoirFluid.addComponent("CO2", 0.03);
+reservoirFluid.addComponent("methane", 0.80);
+reservoirFluid.addComponent("ethane", 0.08);
+reservoirFluid.addComponent("propane", 0.04);
+reservoirFluid.addComponent("n-hexane", 0.05);
+reservoirFluid.setMixingRule("classic");
+
+ReservoirH2SEstimator estimator = new ReservoirH2SEstimator();
+estimator.setWaterActivity(0.97);
+ReservoirH2SEstimator.Estimate estimate = estimator.estimate(reservoirFluid);
+double originalH2sPpm = estimate.getH2SPpm();
+boolean consistent = estimate.isBufferConsistent();
+```
+
+The thermochemical data alone (siderite enthalpy ±5.5 kJ/mol) give a factor of about 2.3 per
+standard deviation in H2S; the composition spread of NCS fluids at a given temperature gives
+about a factor 1.4. Values are the original, pre-production level: seawater-injection souring
+(see `neqsim-reservoir-souring-correlation`) adds to it later.
 
 ## Verification
 

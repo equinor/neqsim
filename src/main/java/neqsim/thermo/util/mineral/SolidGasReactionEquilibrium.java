@@ -66,7 +66,12 @@ public class SolidGasReactionEquilibrium implements Serializable {
      * Reactant gas is converted to product gas so that their sum is conserved (closed system with excess solid);
      * requires equal gas coefficients.
      */
-    CONSERVE_GAS_SUM
+    CONSERVE_GAS_SUM,
+    /**
+     * Only the target gas amount is adjusted; all other gas species keep the fugacities given by the fluid (mineral
+     * buffer in a large fluid inventory).
+     */
+    FIXED_OTHERS
   }
 
   /** Reaction name. */
@@ -424,6 +429,140 @@ public class SolidGasReactionEquilibrium implements Serializable {
   }
 
   /**
+   * Solves for the amount of one gas that satisfies the reaction equilibrium while the fugacities of all other gas
+   * species in the reaction follow from the fluid itself.
+   *
+   * <p>
+   * This is the general form for mineral buffers with several gases, for example 4 FeS2 + CH4 + 2 H2O(l) = 4 FeS + 4
+   * H2S + CO2, where the CH4 and CO2 fugacities of a reservoir fluid set the buffered H2S fugacity. Only the target gas
+   * amount is changed; because the other gases are present in large amounts, their fugacities move only through the
+   * small composition change. Fugacities are equal in all phases at equilibrium and are read from phase 0.
+   * </p>
+   *
+   * @param fluid fluid containing every gas species of the reaction (target may start at a trace)
+   * @param targetGas component name of the gas to solve for, for example "H2S"
+   * @return equilibrium result; reactant fields refer to no partner gas and are NaN
+   * @throws IllegalArgumentException if a gas species is missing from the fluid or has zero amount
+   */
+  public GasExchangeResult solveForGas(SystemInterface fluid, String targetGas) {
+    double targetNu = gasCoefficient(targetGas);
+    List<String> gases = getGasSpeciesNames();
+    for (String gas : gases) {
+      if (!fluid.hasComponent(gas)) {
+        throw new IllegalArgumentException("Fluid must contain gas species " + gas + " of reaction " + name);
+      }
+      if (!gas.equals(targetGas) && !(fluid.getComponent(gas).getNumberOfmoles() > 0.0)) {
+        throw new IllegalArgumentException("Fluid must contain a positive amount of " + gas);
+      }
+    }
+    SystemInterface work = fluid.clone();
+    double temperature = work.getTemperature();
+    double pressure = work.getPressure();
+    double lnTarget = getLnEquilibriumGasFugacityQuotient(temperature, pressure);
+    double targetMoles = work.getComponent(targetGas).getNumberOfmoles();
+    if (!(targetMoles > 0.0)) {
+      double seed = 1.0e-9 * work.getTotalNumberOfMoles();
+      work.addComponent(targetGas, seed - targetMoles);
+      targetMoles = seed;
+    }
+    ThermodynamicOperations ops = new ThermodynamicOperations(work);
+    boolean converged = false;
+    int iteration = 0;
+    double lnQuotient = Double.NaN;
+    Map<String, Double> fugacities = new LinkedHashMap<String, Double>();
+    Map<String, Double> phis = new LinkedHashMap<String, Double>();
+    while (iteration < maxIterations) {
+      iteration++;
+      ops.TPflash();
+      work.init(1);
+      lnQuotient = readGasFugacities(work, gases, fugacities, phis);
+      double residual = lnTarget - lnQuotient;
+      if (Math.abs(residual) < tolerance) {
+        converged = true;
+        break;
+      }
+      double lnFactor = Math.max(-Math.log(1.0e3), Math.min(Math.log(1.0e3), residual / targetNu));
+      double newMoles = targetMoles * Math.exp(lnFactor);
+      work.addComponent(targetGas, newMoles - targetMoles);
+      targetMoles = newMoles;
+    }
+    if (!converged) {
+      logger.warn("Reaction {} did not converge in {} iterations", name, maxIterations);
+    }
+    Double targetPhi = phis.get(targetGas);
+    GasExchangeResult result = new GasExchangeResult(this, work, targetGas, null, temperature, pressure, lnTarget,
+        lnQuotient, targetPhi == null ? Double.NaN : targetPhi, Double.NaN, iteration, converged,
+        ExchangeMode.FIXED_OTHERS);
+    result.setGasFugacities(fugacities, phis);
+    return result;
+  }
+
+  /**
+   * Calculates the equilibrium fugacity of one gas from given fugacities of the other gas species.
+   *
+   * @param targetGas gas to solve for
+   * @param otherFugacities fugacities of the other gas species of the reaction [bar]
+   * @param temperature temperature [K]
+   * @param pressure pressure used for the condensed-phase correction [bara]
+   * @return natural logarithm of the target fugacity divided by 1 bar
+   * @throws IllegalArgumentException if a fugacity of another gas species is missing or not positive
+   */
+  public double getLnEquilibriumGasFugacity(String targetGas, Map<String, Double> otherFugacities, double temperature,
+      double pressure) {
+    double targetNu = gasCoefficient(targetGas);
+    double value = getLnEquilibriumGasFugacityQuotient(temperature, pressure);
+    for (String gas : getGasSpeciesNames()) {
+      if (gas.equals(targetGas)) {
+        continue;
+      }
+      Double f = otherFugacities.get(gas);
+      if (f == null || !(f > 0.0)) {
+        throw new IllegalArgumentException("Positive fugacity of " + gas + " required");
+      }
+      value -= getCoefficient(gas) * Math.log(f);
+    }
+    return value / targetNu;
+  }
+
+  /**
+   * Lists the gas species of the reaction.
+   *
+   * @return gas species names in insertion order
+   */
+  public List<String> getGasSpeciesNames() {
+    List<String> names = new ArrayList<String>();
+    for (StandardStateSpecies s : species) {
+      if (s.getPhase() == StandardStateSpecies.Phase.IDEAL_GAS) {
+        names.add(s.getName());
+      }
+    }
+    return names;
+  }
+
+  /**
+   * Reads the fugacities of the reaction gases from phase 0 and forms the gas fugacity quotient.
+   *
+   * @param fluid flashed fluid
+   * @param gases gas species names
+   * @param fugacities output map of fugacities [bar]
+   * @param phis output map of fugacity coefficients
+   * @return natural logarithm of the gas fugacity quotient
+   */
+  private double readGasFugacities(SystemInterface fluid, List<String> gases, Map<String, Double> fugacities,
+      Map<String, Double> phis) {
+    PhaseInterface phase = fluid.getPhase(0);
+    double lnQ = 0.0;
+    for (String gas : gases) {
+      double phi = phase.getComponent(gas).getFugacityCoefficient();
+      double f = phase.getComponent(gas).getx() * phi * phase.getPressure();
+      fugacities.put(gas, f);
+      phis.put(gas, phi);
+      lnQ += getCoefficient(gas) * Math.log(f);
+    }
+    return lnQ;
+  }
+
+  /**
    * Solves for the product-gas amount that satisfies the reaction equilibrium in a fluid.
    *
    * <p>
@@ -615,6 +754,10 @@ public class SolidGasReactionEquilibrium implements Serializable {
     private final ExchangeMode mode;
     /** Warnings. */
     private final List<String> warnings;
+    /** Fugacities of all reaction gases at the solution [bar]. */
+    private final Map<String, Double> gasFugacities = new LinkedHashMap<String, Double>();
+    /** Fugacity coefficients of all reaction gases at the solution. */
+    private final Map<String, Double> gasFugacityCoefficients = new LinkedHashMap<String, Double>();
 
     /**
      * Creates a result.
@@ -761,10 +904,48 @@ public class SolidGasReactionEquilibrium implements Serializable {
     /**
      * Gets the reactant-gas mole fraction of the whole fluid.
      *
-     * @return mole fraction
+     * @return mole fraction, NaN when the result has no partner gas ({@link ExchangeMode#FIXED_OTHERS})
      */
     public double getReactantMoleFraction() {
+      if (reactantGas == null) {
+        return Double.NaN;
+      }
       return equilibriumFluid.getComponent(reactantGas).getz();
+    }
+
+    /**
+     * Sets the fugacities and fugacity coefficients of all reaction gases at the solution.
+     *
+     * @param fugacities fugacities [bar]
+     * @param phis fugacity coefficients
+     */
+    void setGasFugacities(Map<String, Double> fugacities, Map<String, Double> phis) {
+      gasFugacities.clear();
+      gasFugacities.putAll(fugacities);
+      gasFugacityCoefficients.clear();
+      gasFugacityCoefficients.putAll(phis);
+    }
+
+    /**
+     * Gets the fugacity of a reaction gas at the solution (only for {@link ExchangeMode#FIXED_OTHERS}).
+     *
+     * @param gas gas component name
+     * @return fugacity [bar], NaN if not recorded
+     */
+    public double getGasFugacity(String gas) {
+      Double value = gasFugacities.get(gas);
+      return value == null ? Double.NaN : value;
+    }
+
+    /**
+     * Gets the fugacity coefficient of a reaction gas at the solution (only for {@link ExchangeMode#FIXED_OTHERS}).
+     *
+     * @param gas gas component name
+     * @return fugacity coefficient, NaN if not recorded
+     */
+    public double getGasFugacityCoefficient(String gas) {
+      Double value = gasFugacityCoefficients.get(gas);
+      return value == null ? Double.NaN : value;
     }
 
     /**

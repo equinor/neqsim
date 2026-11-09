@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -176,6 +178,29 @@ public class SolidGasReactionEquilibriumTest {
     assertTrue(result.isConverged());
     assertTrue(h2sPpm > 0.0);
     assertFalse(warnings.isEmpty());
+  }
+
+  /** The general FIXED_OTHERS solver reproduces FIXED_REACTANT and the analytic fugacity. */
+  @Test
+  public void testSolveForGasMatchesFixedReactant() {
+    SolidGasReactionEquilibrium reaction = SolidGasReactionEquilibrium.ironSulfideToSiderite();
+    SystemInterface fluid = gas(120.0, 400.0);
+    SolidGasReactionEquilibrium.GasExchangeResult fixed = reaction.solveGasExchange(fluid, "H2S", "CO2",
+        SolidGasReactionEquilibrium.ExchangeMode.FIXED_REACTANT);
+    SolidGasReactionEquilibrium.GasExchangeResult general = reaction.solveForGas(fluid, "H2S");
+    assertTrue(general.isConverged());
+    assertEquals(SolidGasReactionEquilibrium.ExchangeMode.FIXED_OTHERS, general.getMode());
+    assertEquals(fixed.getProductMoleFraction(), general.getProductMoleFraction(),
+        1e-6 * fixed.getProductMoleFraction());
+    assertTrue(Double.isNaN(general.getReactantMoleFraction()));
+
+    Map<String, Double> others = new HashMap<String, Double>();
+    others.put("CO2", general.getGasFugacity("CO2"));
+    double lnF = reaction.getLnEquilibriumGasFugacity("H2S", others, 393.15, 400.0);
+    assertEquals(general.getGasFugacity("H2S"), Math.exp(lnF), 1e-6 * general.getGasFugacity("H2S"));
+    assertEquals(general.getGasFugacity("H2S"),
+        general.getProductMoleFraction() * general.getGasFugacityCoefficient("H2S") * 400.0,
+        0.05 * general.getGasFugacity("H2S"));
   }
 
   /** Water activity below one lowers the equilibrium quotient in proportion. */
