@@ -4,8 +4,6 @@ description: "Standard-state equilibrium constants for heterogeneous mineral-wat
 keywords: "mineral reaction, equilibrium constant, troilite, siderite, pyrite, H2S, CO2, fugacity, Poynting, IAPWS-IF97, JANAF, reservoir souring, original reservoir H2S, mineral buffer, Haaland correlation"
 ---
 
-# Solid-gas reaction equilibrium
-
 `neqsim.thermo.util.mineral` calculates the thermodynamic limit of heterogeneous reactions
 between pure solids, liquid water and gases. The built-in case is
 
