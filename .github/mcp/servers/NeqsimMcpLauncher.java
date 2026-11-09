@@ -104,6 +104,14 @@ public class NeqsimMcpLauncher {
     }
 
     Path root = dir(opt.get("root"), System.getenv("PLUGIN_ROOT"), sourceRoot());
+    // A host-provided PLUGIN_ROOT (e.g. a synced VS Code agent-host plugin folder) may not hold
+    // the plugin files; fall back to the launcher's own folder in that case.
+    Path own = dir(sourceRoot());
+    if (own != null && opt.get("root") == null && root != null && !root.equals(own)
+        && !Files.exists(root.resolve("servers").resolve("neqsim-mcp-server.properties"))
+        && Files.exists(own.resolve("servers").resolve("neqsim-mcp-server.properties"))) {
+      root = own;
+    }
     if (root == null) {
       fail("plugin root unknown: pass --root DIR or set PLUGIN_ROOT");
     }
