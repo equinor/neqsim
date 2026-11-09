@@ -50,9 +50,41 @@ class PfdDiagram:
         self.bub_r = 1.7
         self.options = options or {}
         self.nodes, self.edges, self.notes, self.junctions = [], [], [], []
+        self.bands = []
         self._ids = {}
         self.waivers = []
         self._ax = self._fig = self._rend = None
+
+    # ---- phase bands --------------------------------------------------------------------------
+    def phase_bands(self, weights=(1.0, 1.0, 0.7), ids=("gas", "oil", "water"), labels=None, fluids=None, y0=None, y1=None):
+        """Split the drawing area into horizontal phase bands, top to bottom (default gas / oil / water).
+
+        TR2329 SR-15794 (three horizontal bands: gas flow at the top, equipment and liquid flow below; process flow left to
+        right) and ISO 10628:1997 5.3.3 (main flow left to right and top to bottom). ``weights`` set the relative band
+        heights. Returns ``{band_id: (y_top, y_bottom, y_centre)}``; pass ``band=<id>`` to :meth:`node` for every piece of
+        equipment so the checker verifies its position (BAND_NODE) and that streams of that phase run inside their band
+        (BAND_EDGE).
+        """
+        y0 = self.top if y0 is None else y0
+        y1 = self.content_bottom if y1 is None else y1
+        labels = labels or {"gas": "GAS", "oil": "OIL / LIQUID HC", "water": "WATER"}
+        fluids = fluids or {"gas": ["gas"], "oil": ["oil", "liquid", "condensate"], "water": ["water"]}
+        total = float(sum(weights))
+        out, y = {}, y0
+        self.bands = []
+        for bid, wgt in zip(ids, weights):
+            h = (y1 - y0) * wgt / total
+            self.bands.append({"id": bid, "label": labels.get(bid, str(bid).upper()), "fluids": list(fluids.get(bid, [bid])), "y0": y, "y1": y + h})
+            out[bid] = (y, y + h, y + h / 2.0)
+            y += h
+        return out
+
+    def band_of(self, y):
+        """Id of the band containing the canvas ordinate ``y`` (or None)."""
+        for b in self.bands:
+            if b["y0"] <= y <= b["y1"]:
+                return b["id"]
+        return None
 
     # ---- geometry helpers -------------------------------------------------------------------
     @property
@@ -101,11 +133,12 @@ class PfdDiagram:
         return abs(x1 - x0), abs(y1 - y0)
 
     # ---- building ---------------------------------------------------------------------------
-    def node(self, nid, text, x, y, w=None, h=None, kind="vessel", tag=None, fill=None, pt=None, tag_text=None, dashed=None, role=None):
+    def node(self, nid, text, x, y, w=None, h=None, kind="vessel", tag=None, fill=None, pt=None, tag_text=None, dashed=None, role=None, band=None):
         """Add a node centred at ``(x, y)``. ``w``/``h`` default to the text size plus padding.
 
         kinds: vessel, column (vertical), hx, pump (circle), compressor, tank, valve, boundary (dashed feed/product), note.
         ``tag`` is the equipment tag (checked); ``tag_text`` draws the tag above the box for pumps/valves.
+        ``band`` (``gas``/``oil``/``water``...) declares the phase band of the equipment when :meth:`phase_bands` is used.
         """
         pt = pt or self.font_pt
         if kind in ("pump", "valve") and text and not tag_text:
@@ -125,7 +158,7 @@ class PfdDiagram:
         if nid in self._ids:
             raise ValueError("duplicate node id %s" % nid)
         n = {"id": nid, "text": text, "x": float(x), "y": float(y), "w": float(w), "h": float(h), "kind": kind, "tag": tag, "fill": fill, "pt": pt,
-             "tag_text": tag_text, "dashed": dashed if dashed is not None else kind == "boundary", "role": role}
+             "tag_text": tag_text, "dashed": dashed if dashed is not None else kind == "boundary", "role": role, "band": band}
         self._ids[nid] = n
         self.nodes.append(n)
         return n
@@ -133,7 +166,7 @@ class PfdDiagram:
     def junction(self, jid, x, y):
         """Add a junction dot (tee) where streams split or merge."""
         n = {"id": jid, "text": "", "x": float(x), "y": float(y), "w": 1.6, "h": 1.6, "kind": "junction", "tag": None, "fill": None, "pt": self.font_pt,
-             "tag_text": None, "dashed": False, "role": None}
+             "tag_text": None, "dashed": False, "role": None, "band": None}
         self._ids[jid] = n
         self.nodes.append(n)
         return n
@@ -295,6 +328,8 @@ class PfdDiagram:
                   "style": {"shape": n["kind"], "fill": n["fill"] or "", "dash": "dashed" if n["dashed"] else ""}}
             if n["kind"] == "boundary":
                 nd["kind"] = "boundary"
+            if n.get("band"):
+                nd["band"] = n["band"]
             if n["role"] == "note":
                 nd["kind"] = "note"
             if n["text"] and n["kind"] != "pump":
@@ -344,6 +379,8 @@ class PfdDiagram:
                 "title": bool(self.title), "legend": legend["bbox"] and {"bbox": legend["bbox"]}, "footer": bool(self.footer), "flow_direction": self.flow,
                 "drawing_area": [0, self.top, self.W, self.content_bottom - self.top], "waivers": self.waivers, "options": self.options,
                 "y_axis": "down", "arrow_length": 1.6}
+        if self.bands:
+            spec["bands"] = [{"id": b["id"], "label": b["label"], "fluids": b["fluids"], "bbox": [0.0, b["y0"], self.W, b["y1"] - b["y0"]]} for b in self.bands]
         return spec
 
     def _footer_lines(self):
@@ -406,6 +443,10 @@ class PfdDiagram:
         ax.text(1.5, 2.2, self.title, fontsize=self.font_pt + 2.0, color=NAVY, fontweight="bold", ha="left", va="center")
         if self.subtitle:
             ax.text(1.5, 5.6, self.subtitle, fontsize=self.label_pt, color="#333333", ha="left", va="center")
+        band_tint = {"gas": "#FBEFEC", "oil": "#F8F3E8", "water": "#EAF2F8"}
+        for i, b in enumerate(self.bands):
+            ax.add_patch(Rectangle((0.6, b["y0"]), self.W - 1.2, b["y1"] - b["y0"], fc=band_tint.get(b["id"], "#F2F2F2"), ec="#B8B8B8", lw=0.6, ls="--", zorder=0))
+            ax.text(1.7, (b["y0"] + b["y1"]) / 2.0, b["label"], fontsize=self.label_pt, color="#7A7A7A", rotation=90, ha="center", va="center", fontweight="bold", zorder=1)
         for n in self.nodes:
             x, y, w, h, k = n["x"], n["y"], n["w"], n["h"], n["kind"]
             fc = n["fill"] or {"vessel": "#EAF0F7", "column": "#EAF0F7", "hx": "#E8F6F3", "pump": "#FEF9E7", "compressor": "#FBE9E7", "tank": "#F4ECF7",

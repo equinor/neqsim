@@ -82,21 +82,7 @@ public final class AutoRecycleBuilder {
     for (int round = 0; round < MAX_TEAR_ROUNDS; round++) {
       // Wiring a stream into an existing mixer does not mark the cached graph dirty.
       process.invalidateGraph();
-      ProcessGraph graph = process.buildGraph();
-      ProcessEdge tearEdge = null;
-      for (List<ProcessNode> loop : graph.findStronglyConnectedComponents().getRecycleLoops()) {
-        if (containsRecycle(loop) || unbreakable.contains(describe(loop))) {
-          continue;
-        }
-        tearEdge = selectTearEdge(loop);
-        if (tearEdge == null) {
-          unbreakable.add(describe(loop));
-          logger.warn("no rewireable inlet in recycle loop " + describe(loop)
-              + " - add a Mixer at the loop closure point or an explicit Recycle");
-          continue;
-        }
-        break;
-      }
+      ProcessEdge tearEdge = findTearEdge(process.buildGraph(), unbreakable);
       if (tearEdge == null) {
         return created;
       }
@@ -109,6 +95,38 @@ public final class AutoRecycleBuilder {
     }
     logger.warn("stopped after " + MAX_TEAR_ROUNDS + " tear rounds in " + process.getName());
     return created;
+  }
+
+  /**
+   * Finds the next edge to tear: one per cycle that no {@link Recycle} closes yet.
+   *
+   * <p>
+   * A Recycle already in a strongly connected component closes only the cycles that pass through it; several loops
+   * returning to the same unit share one component, so the search looks for cycles that remain without the recycles.
+   * Loops without a rewireable inlet are recorded in {@code unbreakable} and skipped from then on.
+   * </p>
+   *
+   * @param graph the current flowsheet graph
+   * @param unbreakable descriptions of loops that cannot be torn; updated in place
+   * @return the edge to tear, or null when every loop is closed or cannot be torn
+   */
+  private static ProcessEdge findTearEdge(ProcessGraph graph, Set<String> unbreakable) {
+    for (List<ProcessNode> component : graph.findStronglyConnectedComponents().getRecycleLoops()) {
+      for (List<ProcessNode> loop : cyclesWithoutRecycle(component)) {
+        String description = describe(loop);
+        if (unbreakable.contains(description)) {
+          continue;
+        }
+        ProcessEdge tearEdge = selectTearEdge(loop);
+        if (tearEdge != null) {
+          return tearEdge;
+        }
+        unbreakable.add(description);
+        logger.warn("no rewireable inlet in recycle loop " + description
+            + " - add a Mixer at the loop closure point or an explicit Recycle");
+      }
+    }
+    return null;
   }
 
   /**
@@ -193,18 +211,87 @@ public final class AutoRecycleBuilder {
   }
 
   /**
-   * Checks whether a loop already has a recycle controlling it.
+   * Finds the cycles of a strongly connected component that no {@link Recycle} closes.
    *
-   * @param loop the strongly connected component to inspect
-   * @return true when at least one member is a {@link Recycle}
+   * <p>
+   * The material edges of the component are kept, every {@link Recycle} node is removed, and the strongly connected
+   * components of what is left are returned. A cycle that runs through a recycle disappears; a cycle that bypasses all
+   * recycles - for example a second scrubber liquid returning to the same separator mixer - remains and still needs a
+   * tear.
+   * </p>
+   *
+   * @param component the strongly connected component to inspect
+   * @return the sub-components that still contain a cycle, empty when every cycle passes a recycle
    */
-  private static boolean containsRecycle(List<ProcessNode> loop) {
-    for (ProcessNode node : loop) {
-      if (node.getEquipment() instanceof Recycle) {
-        return true;
+  private static List<List<ProcessNode>> cyclesWithoutRecycle(List<ProcessNode> component) {
+    Set<ProcessNode> members = Collections.newSetFromMap(new IdentityHashMap<ProcessNode, Boolean>());
+    for (ProcessNode node : component) {
+      if (!(node.getEquipment() instanceof Recycle)) {
+        members.add(node);
       }
     }
-    return false;
+    Map<ProcessNode, Integer> index = new IdentityHashMap<ProcessNode, Integer>();
+    Map<ProcessNode, Integer> low = new IdentityHashMap<ProcessNode, Integer>();
+    Set<ProcessNode> onStack = Collections.newSetFromMap(new IdentityHashMap<ProcessNode, Boolean>());
+    List<ProcessNode> stack = new ArrayList<ProcessNode>();
+    List<List<ProcessNode>> result = new ArrayList<List<ProcessNode>>();
+    int[] counter = new int[1];
+    for (ProcessNode node : component) {
+      if (members.contains(node) && !index.containsKey(node)) {
+        strongConnect(node, members, index, low, onStack, stack, result, counter);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Tarjan step over the material edges between {@code members}; adds every component that holds a cycle.
+   *
+   * @param node the node to visit
+   * @param members the nodes that take part (recycles removed)
+   * @param index discovery index per visited node
+   * @param low lowest reachable discovery index per node
+   * @param onStack nodes currently on the Tarjan stack
+   * @param stack the Tarjan stack
+   * @param result the cyclic components found so far
+   * @param counter single-element discovery counter
+   */
+  private static void strongConnect(ProcessNode node, Set<ProcessNode> members, Map<ProcessNode, Integer> index,
+      Map<ProcessNode, Integer> low, Set<ProcessNode> onStack, List<ProcessNode> stack, List<List<ProcessNode>> result,
+      int[] counter) {
+    index.put(node, counter[0]);
+    low.put(node, counter[0]);
+    counter[0]++;
+    stack.add(node);
+    onStack.add(node);
+    boolean selfLoop = false;
+    for (ProcessEdge edge : node.getOutgoingEdges()) {
+      ProcessNode next = edge.getTarget();
+      if (edge.getEdgeType() != ProcessEdge.EdgeType.MATERIAL || !members.contains(next)) {
+        continue;
+      }
+      if (next == node) {
+        selfLoop = true;
+      }
+      if (!index.containsKey(next)) {
+        strongConnect(next, members, index, low, onStack, stack, result, counter);
+        low.put(node, Math.min(low.get(node), low.get(next)));
+      } else if (onStack.contains(next)) {
+        low.put(node, Math.min(low.get(node), index.get(next)));
+      }
+    }
+    if (low.get(node).intValue() == index.get(node).intValue()) {
+      List<ProcessNode> scc = new ArrayList<ProcessNode>();
+      ProcessNode member;
+      do {
+        member = stack.remove(stack.size() - 1);
+        onStack.remove(member);
+        scc.add(member);
+      } while (member != node);
+      if (scc.size() > 1 || selfLoop) {
+        result.add(scc);
+      }
+    }
   }
 
   /**

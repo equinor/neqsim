@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import math
 
+import ppo_graph as _ppo_graph
 import psr_diagrams as _psr
 from ppo_render import MM_PER_PT, make_symbol
 
@@ -51,6 +52,10 @@ class Layout:
         self.bundles = {}
         self.content_size = (0.0, 0.0)
         self.rows = 1
+        self.band_bounds = []  # phase-band mode: (top, bottom, band id) of each row's lane before the area is applied
+        self.bands = []  # phase-band lanes: dicts id, label, row, x, y, w, h
+        self.band_of = {}  # section id -> band id
+        self.row_widths = []  # width of every row of layers (mm), including its start offset
 
 
 # ---------------------------------------------------------------------------
@@ -174,16 +179,17 @@ def _unit_node(e, graph, fonts, style, scale):
     return node
 
 
-def _block_node(sec, graph, fonts, style, ref):
+def _block_node(sec, graph, fonts, style, ref, wrap_w=None):
     pt = style["pt"]
     name_lines = fonts.wrap(sec["name"], pt["tag"], 64.0, bold=True, max_lines=3)
     sub = "%d units - sheet %s" % (len(sec["members"]), ref) if ref else "%d units" % len(sec["members"])
-    w = max(max(fonts.width(t, pt["tag"], True) for t in name_lines), fonts.width(sub, pt["desc"])) + 8.0
+    sub_lines = fonts.wrap(sub, pt["desc"], wrap_w, max_lines=3) if wrap_w else [sub]
+    w = max(max(fonts.width(t, pt["tag"], True) for t in name_lines), max(fonts.width(t, pt["desc"]) for t in sub_lines)) + 8.0
     n_ports = max(len(sec.get("_in", [])), len(sec.get("_out", [])), 1)
-    h = max(16.0, len(name_lines) * fonts.height(pt["tag"]) * 1.1 + fonts.height(pt["desc"]) * 1.1 + 5.0,
+    h = max(16.0, len(name_lines) * fonts.height(pt["tag"]) * 1.1 + len(sub_lines) * fonts.height(pt["desc"]) * 1.1 + 5.0,
             (n_ports - 1) * 5.0 + 8.0)
     return _psr._Node("B:" + sec["id"], "block", w, h, h / 2.0 + 0.5, h / 2.0 + 0.5,
-                      payload={"section": sec["id"], "name_lines": name_lines, "sub": sub, "pitch": 5.0})
+                      payload={"section": sec["id"], "name_lines": name_lines, "sub": sub, "sub_lines": sub_lines, "pitch": 5.0})
 
 
 def _boundary_node(st, kind, fonts, style, annotated=False, level="overview"):
@@ -210,8 +216,13 @@ def _port_node(sid, kind):
 # ---------------------------------------------------------------------------
 # section-internal layout
 # ---------------------------------------------------------------------------
-def _section_internal(graph, sec, fonts, style, scale, collapsed, ref, annotate=(), skip=()):
-    """Layered layout of one section; returns (psr layout, node list). ``skip`` lists bundled streams not drawn."""
+def _section_internal(graph, sec, fonts, style, scale, collapsed, ref, annotate=(), skip=(), redirect=(), wrap_sub=None, port_rank=None):
+    """Layered layout of one section; returns (psr layout, node list). ``skip`` lists bundled streams not drawn.
+
+    ``redirect`` lists boundary product streams that leave through a section port instead of a product label (the
+    phase-band layout draws them as a terminal in the band of their phase); ``wrap_sub`` wraps the sub line of a block;
+    ``port_rank`` orders the ports of a block by the band row of the other end (upper rows first).
+    """
     sidx = {s["id"]: s for s in graph["streams"]}
     eidx = {e["id"]: e for e in graph["equipment"]}
     members = list(sec["members"])
@@ -236,12 +247,13 @@ def _section_internal(graph, sec, fonts, style, scale, collapsed, ref, annotate=
 
     if collapsed:
         skip = set(skip)
+        pr = port_rank or {}
         ins = sorted({s["id"] for s in graph["streams"] if any(t in mset for t in s["to"]) and (s["from"] not in mset)
-                      and s["id"] not in skip})
+                      and s["id"] not in skip}, key=lambda i: (pr.get(("in", i), 0), i))
         outs = sorted({s["id"] for s in graph["streams"] if s["from"] in mset and (any(t not in mset for t in s["to"]) or not s["to"])
-                       and s["id"] not in skip})
+                       and s["id"] not in skip}, key=lambda i: (pr.get(("out", i), 0), i))
         sec["_in"], sec["_out"] = ins, outs
-        blk = _block_node(sec, graph, fonts, style, ref)
+        blk = _block_node(sec, graph, fonts, style, ref, wrap_sub)
         nodes.append(blk)
         for sid in ins:
             st = sidx[sid]
@@ -251,7 +263,7 @@ def _section_internal(graph, sec, fonts, style, scale, collapsed, ref, annotate=
             add_edge(sid, src, blk)
         for sid in outs:
             st = sidx[sid]
-            if not st["to"]:
+            if not st["to"] and sid not in redirect:
                 dst = _boundary_node(st, "product", fonts, style, st["id"] in annotate, graph["level"])
                 nodes.append(dst)
             else:
@@ -269,9 +281,9 @@ def _section_internal(graph, sec, fonts, style, scale, collapsed, ref, annotate=
                 src = nmap[st["from"]]
                 for c in cons_here:
                     add_edge(sid, src, nmap[c])
-                if any(t not in mset for t in st["to"]):
+                if any(t not in mset for t in st["to"]) or sid in redirect:
                     add_edge(sid, src, port(sid, "product"))
-                if not st["to"]:
+                if not st["to"] and sid not in redirect:
                     dst = _boundary_node(st, "product", fonts, style, st["id"] in annotate, graph["level"])
                     nodes.append(dst)
                     add_edge(sid, src, dst)
@@ -293,6 +305,16 @@ def _section_internal(graph, sec, fonts, style, scale, collapsed, ref, annotate=
         if alt.crossings < lay.crossings:
             lay = alt
     return lay
+
+
+def _terminal_internal(graph, term, fonts, style, annotate=()):
+    """Layout of a band terminal: the boundary product label of one stream, entered through a section port."""
+    st = next(s for s in graph["streams"] if s["id"] == term["stream"])
+    pin = _port_node(st["id"], "feed")
+    dst = _boundary_node(st, "product", fonts, style, st["id"] in annotate, graph["level"])
+    edge = _psr._Edge("E:%s:0" % st["id"], st["id"], pin.id, dst.id)
+    cfg = {"stack_pitch": 0.0, "gap_base": style["layout"]["gap_base"], "ordering": "refined", "max_stretch": style["layout"]["max_stretch"]}
+    return _psr.compute_layout([pin, dst], [edge], cfg, target_w=None)
 
 
 def _clone_node(n):
@@ -359,6 +381,11 @@ def _section_layers(graph, sections):
             if a and b and a != b and a in ids and b in ids:
                 m = (st.get("values") or {}).get("mass_kg_h")
                 weight[(a, b)] = weight.get((a, b), 0.0) + (float(m) if m else 0.0) + 1.0
+    return _layers_from_weights(ids, weight)
+
+
+def _layers_from_weights(ids, weight):
+    """Layering of ``ids`` from ``{(src, dst): weight}``; returns ``(layer, back_pairs, preds, succs)``."""
     order = _fas_order(ids, [(a, b, w) for (a, b), w in weight.items()])
     pos = {i: k for k, i in enumerate(order)}
     back_pairs = {(a, b) for (a, b) in weight if pos[b] <= pos[a]}
@@ -468,45 +495,65 @@ def _partition(col_w, base_gap, k):
     return [r for r in rows if r]
 
 
-def _gkey(r, k):
-    """Physical gap key: the left-most gap of every row shares the same x range, other gaps are per row."""
-    return (-1, 0) if k == 0 else (r, k)
+def _gkey(r, k, shared=True):
+    """Physical gap key: the left-most gap of every row shares the same x range (unless rows start at different x)."""
+    return (-1, 0) if (k == 0 and shared) else (r, k)
 
 
 class _Grid:
-    """Positions of layers (columns) in rows, physical gaps and corridors."""
+    """Positions of layers (columns) in rows, physical gaps and corridors.
 
-    def __init__(self, rows, col_w, sst, gap_demand, lane_heights, row_h, margin_lanes):
+    ``anchors`` (phase-band layouts) maps a row to the layers in other rows it starts to the right of, so that the
+    stream leaving the source column rises or falls straight into the first column of the row; ``row_order`` is the
+    order in which the rows are positioned (a row only follows anchors already positioned).
+    """
+
+    def __init__(self, rows, col_w, sst, gap_demand, lane_heights, row_h, margin_lanes, anchors=None, row_order=None,
+                 corridor_extra=None):
         self.rows = rows
         self.row_of, self.pos_of = {}, {}
         for r, row in enumerate(rows):
             for k, L in enumerate(row):
                 self.row_of[L], self.pos_of[L] = r, k
         pitch = sst["channel_pitch"]
+        self.shared_left = anchors is None
+        self.banded = anchors is not None
         self.gap_x = {}  # gap key -> (left, right)
         self.col_x = {}
-        self.row_w = []
-        for r, row in enumerate(rows):
+        self.row_w = [0.0] * len(rows)
+        self.row_x0 = [0.0] * len(rows)
+        for r in (row_order if row_order is not None else range(len(rows))):
+            row = rows[r]
             x = 0.0
+            g0 = sst["gap_x"] * 0.5 + pitch * max(gap_demand.get(_gkey(r, 0, self.shared_left), 0) - 1, 0)
+            starts = []
+            for la in (anchors or {}).get(r, []):
+                ra = self.row_of[la]
+                if (ra, self.pos_of[la] + 1) in self.gap_x:
+                    lo, hi = self.gap_x[(ra, self.pos_of[la] + 1)]
+                    starts.append((lo + hi) / 2.0 - g0 / 2.0)
+            x = max(starts + [0.0])
+            self.row_x0[r] = x
             for k, L in enumerate(row):
-                g = sst["gap_x"] * (0.5 if k == 0 else 1.0) + pitch * max(gap_demand.get(_gkey(r, k), 0) - 1, 0)
-                self.gap_x[_gkey(r, k)] = (x, x + g)
+                g = sst["gap_x"] * (0.5 if k == 0 else 1.0) + pitch * max(gap_demand.get(_gkey(r, k, self.shared_left), 0) - 1, 0)
+                self.gap_x[_gkey(r, k, self.shared_left)] = (x, x + g)
                 x += g
                 self.col_x[L] = x
                 x += col_w[L]
             g = sst["gap_x"] * 0.5 + pitch * max(gap_demand.get((r, len(row)), 0) - 1, 0)
             self.gap_x[(r, len(row))] = (x, x + g)
-            self.row_w.append(x + g)
+            self.row_w[r] = x + g
         self.width = max(self.row_w) if self.row_w else 0.0
         # corridors: c = 0 above row 0, c = r between rows r-1 and r, c = n below the last row; lane heights may differ
         lp = sst["lane_pitch"]
         n = len(rows)
         self.lane_heights = {c: list(lane_heights.get(c, [])) for c in range(n + 1)}
+        self.extra = dict(corridor_extra or {})  # additional height of the corridors between rows (phase-band spreading)
         self.corridor_h = {}
         for c in range(n + 1):
             hs = self.lane_heights[c]
             inner = sum(hs) + (lp if hs else 0.0)
-            self.corridor_h[c] = inner + (sst.get("corridor_gap", sst["gap_y"]) if 0 < c < n else 0.0)
+            self.corridor_h[c] = inner + ((sst.get("corridor_gap", sst["gap_y"]) + self.extra.get(c, 0.0)) if 0 < c < n else 0.0)
         self.row_y = []
         y = self.corridor_h[0]
         for r in range(n):
@@ -536,7 +583,7 @@ class _Grid:
         top = self.row_y[c - 1] + self.row_h[c - 1]
         if c == n:
             return top + off
-        return top + self.corridor_gap / 2.0 + off
+        return top + (self.corridor_gap + self.extra.get(c, 0.0)) / 2.0 + off
 
     def corridor_mid(self, c):
         """Approximate y of corridor ``c`` (its centre), independent of lane assignment."""
@@ -549,7 +596,7 @@ class _Grid:
         return top + self.corridor_h[c] / 2.0
 
 
-def layout_overview(graph, fonts, style, area, scale=1.0, collapsed=(), refs=None, annotate=None, max_rows=None):
+def layout_overview(graph, fonts, style, area, scale=1.0, collapsed=(), refs=None, annotate=None, max_rows=None, bands=None):
     """Lay out the whole overview at one symbol scale.
 
     The sections are laid out internally once; the composition is then evaluated for 1..n rows of layers and the
@@ -564,7 +611,12 @@ def layout_overview(graph, fonts, style, area, scale=1.0, collapsed=(), refs=Non
         collapsed: section ids drawn as a single block.
         refs: ``{section id: drawing number}`` of detail sheets referenced by collapsed blocks / titles.
         annotate: stream ids that receive an annotation (their corridor lanes get room for a stream-number bubble).
-        max_rows: optional cap on the number of layer rows.
+        max_rows: optional cap on the number of layer rows (ignored in phase-band mode).
+        bands: phase-band mode: ``{"assign": {section id: "gas" | "oil" | "water"}, "gutter": mm}``. Every band is one
+            row (gas top, oil centre, water bottom; empty bands are not drawn), flow runs left to right inside a band,
+            a row starts to the right of the column that feeds it, and boundary product streams whose phase belongs to
+            another band end in a terminal label in that band. ``Layout.bands`` carries the lane rectangles
+            (``gutter`` mm at the left of ``area`` stay free for the lane labels).
 
     Returns:
         :class:`Layout`; ``fits`` tells whether the content fits ``area``.
@@ -574,53 +626,93 @@ def layout_overview(graph, fonts, style, area, scale=1.0, collapsed=(), refs=Non
     sections = [dict(s) for s in graph["sections"]]
     sec_index = {s["id"]: s for s in sections}
     layer, back_pairs, preds, succs = _section_layers(graph, sections)
-    order = _order_rows(sections, layer, preds, succs)
+    band_of, terminals, full_area = None, [], area
+    if bands:
+        band_of = dict(bands["assign"])
+        terminals = _band_terminals(graph, band_of)
+        for t in terminals:
+            sections.append(t)
+            sec_index[t["id"]] = t
+            band_of[t["id"]] = t["band"]
+        gutter = float(bands.get("gutter", 0.0))
+        area = (area[0] + gutter, area[1], area[2] - gutter, area[3])
+    else:
+        order = _order_rows(sections, layer, preds, succs)
+    redirect = {}
+    for t in terminals:
+        redirect.setdefault(t["section"], set()).add(t["stream"])
+    port_rank = {s["id"]: {} for s in sections}
+    if band_of:
+        rank = {b: i for i, b in enumerate(_ppo_graph.BAND_IDS)}
+        for sid, a, c in [(st["id"], st.get("section_from"), b) for st in graph["streams"] for b in st.get("sections_to") or []] + \
+                [(t["stream"], t["section"], t["id"]) for t in terminals]:
+            if a in band_of and c in band_of and a != c:
+                port_rank[c][("in", sid)] = rank[band_of[a]]
+                port_rank[a][("out", sid)] = min(rank[band_of[c]], port_rank[a].get(("out", sid), 9))
+    frameless = set(collapsed) | {t["id"] for t in terminals}
     sst = style["section"]
     # streams between two collapsed blocks are bundled into one drawn connection (count shown, members recorded)
     bundles = _bundle_block_streams(graph, set(collapsed))
     skip = {m for b in bundles.values() for m in b["members"][1:]}
     internals, warnings = {}, []
     for s in sections:
-        internals[s["id"]] = _section_internal(graph, s, fonts, style, scale, s["id"] in collapsed, refs.get(s["id"]), annotate, skip)
+        if s.get("terminal"):
+            internals[s["id"]] = _terminal_internal(graph, s, fonts, style, annotate)
+        else:
+            internals[s["id"]] = _section_internal(graph, s, fonts, style, scale, s["id"] in collapsed, refs.get(s["id"]), annotate, skip,
+                                                   redirect.get(s["id"], ()), 48.0 if band_of else None, port_rank.get(s["id"]))
         for w in internals[s["id"]].warnings:
             warnings.append("%s: %s" % (s["name"], w))
     title_h = sst["title_h"]
     size = {}
     for s in sections:
         lay = internals[s["id"]]
-        if s["id"] in collapsed:  # the block carries the name; no frame, title band or padding around it
+        if s["id"] in frameless:  # the block carries the name; no frame, title band or padding around it
             size[s["id"]] = (lay.width + 2.0, lay.height + 2.0)
             continue
         name_w = fonts.width(s["name"], style["pt"]["section"], True) + 6.0
         if refs.get(s["id"]):
             name_w += fonts.width("detail: " + refs[s["id"]], style["pt"]["desc"]) + 4.0
         size[s["id"]] = (max(lay.width + 2 * sst["pad_x"], name_w), lay.height + 2 * sst["pad_y"] + title_h)
-    n_layers = max(layer.values()) + 1 if layer else 1
+    ext = [(sid, a, b) for sid, a, b in _external_streams(graph, sec_index) if sid not in skip]
+    ext += [(t["stream"], t["section"], t["id"]) for t in terminals]
+    band_names, anchors, row_order = [], None, None
+    if band_of:
+        layer, order, rows, band_names, anchors, row_order = _band_rows(graph, sections, band_of, ext, layer, back_pairs)
+        n_layers = sum(len(r) for r in rows)
+    else:
+        n_layers = max(layer.values()) + 1 if layer else 1
     col_w = [max([size[s][0] for s in order.get(Lx, [])], default=0.0) for Lx in range(n_layers)]
     col_h = [sum(size[s][1] for s in order.get(Lx, [])) + sst["gap_y"] * max(len(order.get(Lx, [])) - 1, 0) for Lx in range(n_layers)]
-    ext = [(sid, a, b) for sid, a, b in _external_streams(graph, sec_index) if sid not in skip]
     if style["annotation"].get("style", "bubble") == "bubble":
         ann_h = style["annotation"].get("bubble_h", 4.8) + 1.4
     else:
         ann_h = fonts.height(style["pt"]["stream"]) * 1.05 + 2 * style["annotation"]["pad"] + sst["lane_pitch"] / 2.0 + 1.0
     ctx = {"graph": graph, "sections": sections, "sec_index": sec_index, "layer": layer, "order": order, "internals": internals,
            "size": size, "col_w": col_w, "col_h": col_h, "ext": ext, "ann_h": ann_h, "annotate": annotate, "sst": sst,
-           "style": style, "refs": refs, "collapsed": list(collapsed), "title_h": title_h, "bundles": bundles}
+           "style": style, "refs": refs, "collapsed": list(collapsed), "title_h": title_h, "bundles": bundles,
+           "frameless": frameless, "band_of": band_of, "band_names": band_names, "anchors": anchors, "row_order": row_order,
+           "back_pairs": back_pairs, "balance_h": area[3] if band_of else None}
     ax, ay, aw, ah = area
     best, best_score = None, None
-    kmax = n_layers if max_rows is None else max(1, min(max_rows, n_layers))
-    for k in range(1, kmax + 1):
-        rows = _partition(col_w, sst["gap_x"], k)
-        if len(rows) != k:
-            continue
-        L = _compose(ctx, rows)
-        cw, ch = L.content_size
-        L.fits = cw <= aw + 1e-6 and ch <= ah + 1e-6
-        score = (0 if L.fits else 1, max(cw / aw, ch / ah) if not L.fits else cw * ch / (aw * ah), k)
-        if best is None or score < best_score:
-            best, best_score = L, score
-        if L.fits:
-            break
+    if band_of:
+        best = _compose(ctx, rows)
+        cw, ch = best.content_size
+        best.fits = cw <= aw + 1e-6 and ch <= ah + 1e-6
+    else:
+        kmax = n_layers if max_rows is None else max(1, min(max_rows, n_layers))
+        for k in range(1, kmax + 1):
+            rows = _partition(col_w, sst["gap_x"], k)
+            if len(rows) != k:
+                continue
+            L = _compose(ctx, rows)
+            cw, ch = L.content_size
+            L.fits = cw <= aw + 1e-6 and ch <= ah + 1e-6
+            score = (0 if L.fits else 1, max(cw / aw, ch / ah) if not L.fits else cw * ch / (aw * ah), k)
+            if best is None or score < best_score:
+                best, best_score = L, score
+            if L.fits:
+                break
     L = best
     L.scale = scale
     L.collapsed = list(collapsed)
@@ -634,7 +726,81 @@ def layout_overview(graph, fonts, style, area, scale=1.0, collapsed=(), refs=Non
         dx, dy = ax - bx0, ay - by0
     _translate(L, dx, dy)
     L.bbox = (bx0 + dx, by0 + dy, bx1 + dx, by1 + dy)
+    if band_of:
+        _finish_bands(L, band_of, full_area)
     return L
+
+
+def _band_terminals(graph, band_of):
+    """Terminal pseudo sections for boundary product streams whose phase band differs from their section's band."""
+    out = []
+    for b in graph["boundaries"]:
+        sec, svc = b.get("section"), b.get("service")
+        if b["kind"] != "product" or sec not in band_of or svc not in _ppo_graph.BAND_IDS or svc == band_of[sec]:
+            continue
+        out.append({"id": "TERM-%s" % b["stream"], "name": b["label"], "members": [], "terminal": True, "stream": b["stream"],
+                    "section": sec, "band": svc, "model_area": None, "represents": None, "merged_from": None, "model_areas": None})
+    return out
+
+
+def _band_rows(graph, sections, band_of, ext, glayer, gback):
+    """Rows of layers for the phase bands.
+
+    Each band is one row; the sections of a band are layered by their own flow (:func:`_layers_from_weights`), so the
+    process reads left to right inside the band. Returns ``(layer, order, rows, band names, anchors, row order)``:
+    ``anchors[row]`` lists the layers in other rows that feed the first column of ``row`` (forward flow only), and
+    ``row_order`` positions the rows that start the process before the rows they feed.
+    """
+    sidx = {s["id"]: s for s in graph["streams"]}
+    names = [b for b in _ppo_graph.BAND_IDS if any(band_of[s["id"]] == b for s in sections)]
+    layer, order, rows = {}, {}, []
+    base = 0
+    for b in names:
+        secs = [s for s in sections if band_of[s["id"]] == b]
+        ids = [s["id"] for s in secs]
+        weight = {}
+        for sid, a, c in ext:
+            if a in ids and c in ids and a != c:
+                m = (sidx[sid].get("values") or {}).get("mass_kg_h")
+                weight[(a, c)] = weight.get((a, c), 0.0) + (float(m) if m else 0.0) + 1.0
+        loc, _, lpreds, lsuccs = _layers_from_weights(ids, weight)
+        lorder = _order_rows(secs, loc, lpreds, lsuccs)
+        nl = max(loc.values()) + 1 if loc else 1
+        for Lx in range(nl):
+            order[base + Lx] = lorder.get(Lx, [])
+        for i in ids:
+            layer[i] = base + loc[i]
+        rows.append(list(range(base, base + nl)))
+        base += nl
+    row_of = {Lx: r for r, row in enumerate(rows) for Lx in row}
+    anchors = {}
+    for r, row in enumerate(rows):
+        first = set(order[row[0]])
+        srcs = []
+        for sid, a, c in ext:
+            if c in first and row_of[layer[a]] != r and (a, c) not in gback and layer[a] not in srcs:
+                srcs.append(layer[a])
+        anchors[r] = srcs
+    rank = {}
+    for s in sections:
+        sid = s["id"]
+        rk = glayer.get(sid, glayer.get(s.get("section"), 0) + 0.5)
+        r = row_of[layer[sid]]
+        rank[r] = min(rank.get(r, rk), rk)
+    row_order = sorted(range(len(rows)), key=lambda r: (rank[r], r))
+    return layer, order, rows, names, anchors, row_order
+
+
+def _finish_bands(L, band_of, area):
+    """Lane rectangles of the phase bands (full drawing width, split halfway between the rows) and section bands."""
+    fx, fy, fw, fh = area
+    n = len(L.band_bounds)
+    L.band_of = dict(band_of)
+    L.bands = []
+    for i, (top, bottom, name) in enumerate(L.band_bounds):
+        y0 = min(fy, top) if i == 0 else top
+        y1 = max(fy + fh, bottom) if i == n - 1 else bottom
+        L.bands.append({"id": name, "label": _ppo_graph.BAND_LABELS[name], "row": i, "x": fx, "y": y0, "w": fw, "h": y1 - y0})
 
 
 def _place(ctx, grid, rows):
@@ -651,12 +817,13 @@ def _place(ctx, grid, rows):
             w, h = size[sid]
             bx = grid.col_x[Lx] + (col_w[Lx] - w) / 2.0
             lay = internals[sid]
-            coll = sid in ctx["collapsed"]
+            coll = sid in ctx["frameless"]
             offsets[sid] = (bx + (w - lay.width) / 2.0, y + (1.0 if coll else title_h + sst["pad_y"]))
             sections.append({"id": sid, "name": s["name"], "x": bx, "y": y, "w": w, "h": h, "layer": Lx, "row_index": r,
                              "row": order[Lx].index(sid), "collapsed": sid in ctx["collapsed"], "members": list(s["members"]),
                              "ref": ctx["refs"].get(sid), "represents": s.get("represents"), "model_area": s.get("model_area"),
-                             "model_areas": s.get("model_areas"), "merged_from": s.get("merged_from")})
+                             "model_areas": s.get("model_areas"), "merged_from": s.get("merged_from"),
+                             "terminal": bool(s.get("terminal")), "band": (ctx.get("band_of") or {}).get(sid)})
             y += h + sst["gap_y"]
     nodes, edges, dots = {}, [], []
     for sid, lay in internals.items():
@@ -692,18 +859,29 @@ def _compose(ctx, rows):
     L = Layout()
     L.rows = len(rows)
     row_h = [max([col_h[Lx] for Lx in row], default=0.0) for row in rows]
-    grid0 = _Grid(rows, col_w, sst, {}, {}, row_h, 0)
+    banded = bool(ctx.get("band_of"))
+    gk = {"anchors": ctx["anchors"], "row_order": ctx["row_order"]} if banded else {}
+    grid0 = _Grid(rows, col_w, sst, {}, {}, row_h, 0, **gk)
     _, nodes0, edges0, _ = _place(ctx, grid0, rows)
     _snap_port_legs_edges(edges0, nodes0)
     plan = _plan_routes(ctx["ext"], layer, grid0, nodes0, sst, ctx["annotate"], ctx["ann_h"])
-    grid = _Grid(rows, col_w, sst, plan["gap_demand"], plan["lane_heights"], row_h, plan["margin_lanes"])
+    grid = _Grid(rows, col_w, sst, plan["gap_demand"], plan["lane_heights"], row_h, plan["margin_lanes"], **gk)
     # second pass on the sized grid: gap widths change the x extents that decide track sharing
     _, nodes1, edges1, _ = _place(ctx, grid, rows)
     _snap_port_legs_edges(edges1, nodes1)
     plan = _plan_routes(ctx["ext"], layer, grid, nodes1, sst, ctx["annotate"], ctx["ann_h"])
-    grid = _Grid(rows, col_w, sst, plan["gap_demand"], plan["lane_heights"], row_h, plan["margin_lanes"])
+    grid = _Grid(rows, col_w, sst, plan["gap_demand"], plan["lane_heights"], row_h, plan["margin_lanes"], **gk)
+    if banded and ctx.get("balance_h") and len(rows) > 1:
+        # spread the rows over the drawing height: every band lane gets about the same share, its row centred in it
+        target = ctx["balance_h"] / len(rows)
+        extra = {c: max(0.0, target - (row_h[c - 1] + row_h[c]) / 2.0 - grid.corridor_h[c]) for c in range(1, len(rows))}
+        if any(extra.values()):
+            grid = _Grid(rows, col_w, sst, plan["gap_demand"], plan["lane_heights"], row_h, plan["margin_lanes"], corridor_extra=extra, **gk)
     grid.line_pos = "center" if ctx["style"]["annotation"].get("style", "bubble") == "bubble" else "bottom"
     L.sections, L.nodes, L.edges, L.dots = _place(ctx, grid, rows)
+    if banded:
+        for r in plan["routes"]:
+            r["banded_back"] = (r["a"], r["b"]) in ctx["back_pairs"]
     _snap_port_legs(L)
     _route_external(L, plan, grid, sst)
     xs = [p[0] for e in L.edges for p in e["pts"]] + [s["x"] for s in L.sections] + [s["x"] + s["w"] for s in L.sections]
@@ -712,6 +890,13 @@ def _compose(ctx, rows):
     by0, by1 = (min(ys), max(ys)) if ys else (0.0, 0.0)
     L.bbox = (bx0, by0, bx1, by1)
     L.content_size = (bx1 - bx0, by1 - by0)
+    L.row_widths = list(grid.row_w)
+    if banded:
+        n = len(rows)
+        for r, name in enumerate(ctx["band_names"]):
+            top = (grid.row_y[r - 1] + grid.row_h[r - 1] + grid.row_y[r]) / 2.0 if r else by0
+            bottom = (grid.row_y[r] + grid.row_h[r] + grid.row_y[r + 1]) / 2.0 if r < n - 1 else by1
+            L.band_bounds.append((top, bottom, name))
     return L
 
 
@@ -749,6 +934,7 @@ def _translate(L, dx, dy):
     for e in L.edges:
         e["pts"] = [(x + dx, y + dy) for x, y in e["pts"]]
     L.dots = [(x + dx, y + dy, k) for x, y, k in L.dots]
+    L.band_bounds = [(t + dy, b + dy, name) for t, b, name in L.band_bounds]
 
 
 def _colour_intervals(items, clearance):
@@ -786,7 +972,8 @@ def _plan_routes(ext, layer, grid, nodes, sst, annotate=(), ann_h=None):
         la, lb = layer[a], layer[b]
         ra, rb = grid.row_of[la], grid.row_of[lb]
         ka, kb = grid.pos_of[la] + 1, grid.pos_of[lb]
-        r = {"stream": sid, "a": a, "b": b, "la": la, "lb": lb, "ra": ra, "rb": rb, "gap_a": _gkey(ra, ka), "gap_b": _gkey(rb, kb),
+        r = {"stream": sid, "a": a, "b": b, "la": la, "lb": lb, "ra": ra, "rb": rb, "gap_a": _gkey(ra, ka, grid.shared_left),
+             "gap_b": _gkey(rb, kb, grid.shared_left),
              "p0": po["ports"].get(("in", sid), (po["x"], po["y"])), "p1": pi["ports"].get(("out", sid), (pi["x"], pi["y"])),
              "via_margin": False, "corridors": [], "annotated": sid in annotate}
         if ra == rb and lb == la + 1:
@@ -957,6 +1144,8 @@ def _route_pts(r, L, grid, plan, sst):
             yy = y_band if y_band is not None else ly[0]
             pts = [p0, (xa, p0[1]), (xa, yy), (xb, yy), (xb, p1[1]), p1]
         elif not r["via_margin"]:
+            if grid.banded and abs(xa - xb) < 3.0:  # a rise/fall between bands runs straight, without a small jog
+                xb = xa
             pts = [p0, (xa, p0[1]), (xa, ly[0]), (xb, ly[0]), (xb, p1[1]), p1]
         else:
             xl = grid.margin_x + sst["lane_pitch"] * r["margin_lane"]
@@ -1081,8 +1270,9 @@ def _route_external(L, plan, grid, sst):
         eid = "X:%s:%s:%s" % (r["stream"], r["a"], r["b"])
         L.edges.append({"id": eid, "stream": r["stream"], "src": "PO:%s@%s" % (r["stream"], r["a"]),
                         "dst": "PI:%s@%s" % (r["stream"], r["b"]), "pts": r["pts"], "external": True,
-                        "back": r["kind"] in ("back", "up"), "arrow_end": False, "sections": (r["a"], r["b"]),
-                        "role": "wrap" if r["kind"] in ("down", "up") else ""})
+                        "back": r["banded_back"] if "banded_back" in r else r["kind"] in ("back", "up"), "arrow_end": False,
+                        "sections": (r["a"], r["b"]),
+                        "role": "recycle" if r.get("banded_back") else ("wrap" if r["kind"] in ("down", "up") else "")})
         by_stream.setdefault(r["stream"], []).append(r["pts"])
     # junction dots where one stream fans out to several sections (shared leading run)
     for sid, plist in by_stream.items():
@@ -1306,9 +1496,13 @@ def to_layout_spec(L, graph, fonts, style, page, name, extra_bboxes=None, waiver
                 y += lh
             nodes.append({"id": n["payload"]["tag"], "kind": kind, "tag": n["payload"]["tag"],
                           "bbox": [n["x"] - sym.w / 2.0, n["y"] - sym.h / 2.0, sym.w, sym.h], "texts": texts})
+            if L.band_of.get(n["section"]):
+                nodes[-1]["band"] = L.band_of[n["section"]]
         elif n["kind"] == "block":
             nodes.append({"id": n["payload"]["section"], "kind": "block",
                           "bbox": [n["x"] - n["w"] / 2.0, n["y"] - n["h"] / 2.0, n["w"], n["h"]], "texts": []})
+            if L.band_of.get(n["section"]):
+                nodes[-1]["band"] = L.band_of[n["section"]]
         elif n["kind"] in ("feed", "product") and not n["payload"].get("pseudo"):
             tw = max(fonts.width(t, pt["desc"]) for t in n["payload"]["lines"])
             x0 = n["x"] - n["w"] / 2.0 if n["kind"] == "feed" else n["x"] + n["w"] / 2.0 - tw
@@ -1347,6 +1541,8 @@ def to_layout_spec(L, graph, fonts, style, page, name, extra_bboxes=None, waiver
             "junctions": [[x, y] for x, y, _ in L.dots], "waivers": list(waivers or []),
             "options": {"require_footer": False, "min_port_sep_frac": 4.0 / math.hypot(page["w"], page["h"])},
             "legend": {"present": True}}
+    if L.bands:
+        spec["bands"] = [{"id": b["id"], "label": b["label"], "fluids": [b["id"]], "bbox": [b["x"], b["y"], b["w"], b["h"]]} for b in L.bands]
     if extra_bboxes:
         for key in ("legend", "title_block"):
             if extra_bboxes.get(key):

@@ -54,6 +54,7 @@ DEFAULT_OPTIONS = {
     "feed_left_frac": 0.5,
     "product_left_frac": 0.3,
     "backward_edge_frac": 0.34,
+    "band_edge_frac": 0.6,
     "max_crossings": 0,
     "require_tags": None,  # None: PFD and P&ID sketches need tags, BFD does not
     "require_stream_ids": None,  # None: PFD and P&ID sketches need stream ids, BFD does not
@@ -483,6 +484,7 @@ def check_spec(spec, options=None, name=None):
     _crossings_and_overlaps(rep, s, edges, junction_pts, tol, attach_tol, o)
     _arrows(rep, s, edges, nodes, attach_tol)
     _direction_rules(rep, s, edges, nodes, real_nodes, W, H, o, attach_tol)
+    _bands(rep, s, edges, real_nodes, o, attach_tol)
     _ports(rep, s, edges, nodes, real_nodes, attach_tol, o, diag)
     _tags_and_streams(rep, s, real_nodes, edges, o, kind)
     _symbols(rep, s, real_nodes, edges, o)
@@ -744,6 +746,62 @@ def _direction_rules(rep, s, edges, nodes, real_nodes, W, H, o, attach_tol):
                 rep.add("PHASE_SIDE", WARN, "Gas enters column '%s' at the top (edge '%s')" % (dst["id"], e["id"]), "Gas enters a contactor/column at the bottom", [dst["id"], e["id"]], dstpt)
             if fc == "liquid" and sd == "b":
                 rep.add("PHASE_SIDE", WARN, "Liquid enters column '%s' at the bottom (edge '%s')" % (dst["id"], e["id"]), "Liquid (lean solvent) enters a contactor/column at the top", [dst["id"], e["id"]], dstpt)
+
+
+def _bands(rep, s, edges, real_nodes, o, attach_tol):
+    """Phase-band rules (TR2329 SR-15794, ISO 10628:1997 5.3.3): gas band on top, oil / liquid hydrocarbon in the middle, water at the bottom.
+
+    ``spec.bands`` = ``[{"id", "label", "fluids": [...], "bbox": [x, y, w, h]}]`` (top to bottom). Nodes may carry ``band``.
+    BAND_NODE (ERROR): equipment centre outside its declared band. BAND_EDGE (WARN): less than ``band_edge_frac`` of the horizontal
+    run of a gas / oil / water stream lies in the band of its phase (recycle, wrap and return lines are exempt).
+    BAND_ORDER (WARN): bands are not stacked gas above oil above water.
+    """
+    bands = s.get("bands") or []
+    if not bands:
+        return
+    by_id = {b["id"]: b for b in bands}
+    rep.metrics["bands"] = [b["id"] for b in bands]
+    ranks = {"gas": 0, "oil": 1, "water": 2}
+    seq = [ranks[b["id"]] for b in bands if b["id"] in ranks]
+    if seq != sorted(seq):
+        rep.add("BAND_ORDER", WARN, "Phase bands are stacked %s; TR2329 puts gas on top, oil / liquid hydrocarbon in the middle and water at the bottom" % " / ".join(b["id"] for b in bands),
+                "Order the bands gas, oil, water from top to bottom", [b["id"] for b in bands])
+
+    def inside(b, y):
+        return b["bbox"][1] - attach_tol <= y <= b["bbox"][1] + b["bbox"][3] + attach_tol
+
+    for n in real_nodes:
+        bid = n.get("band")
+        if not bid or n["kind"] in ("boundary", "connector"):
+            continue
+        b = by_id.get(bid)
+        cy = n["bbox"][1] + n["bbox"][3] / 2.0
+        if b is None:
+            rep.add("BAND_NODE", ERROR, "Equipment '%s' declares unknown band '%s'" % (n["id"], bid), "Use one of: %s" % ", ".join(by_id), [n["id"]])
+        elif not inside(b, cy):
+            where = next((x["id"] for x in bands if inside(x, cy)), "no band")
+            rep.add("BAND_NODE", ERROR, "Equipment '%s' belongs to the %s band but is drawn in the %s band" % (n["id"], bid, where),
+                    "Move '%s' into the %s band" % (n["id"], bid), [n["id"]], (n["bbox"][0], n["bbox"][1]))
+    fluid_band = {}
+    for b in bands:
+        for f in b.get("fluids", []):
+            fluid_band[str(f).lower()] = b
+    for e in edges:
+        if e.get("role") in ("wrap", "recycle", "return"):
+            continue
+        b = fluid_band.get(str(e.get("fluid") or "").lower())
+        if b is None:
+            continue
+        horiz = inside_len = 0.0
+        for (p, q) in _segments(e):
+            dx, dy = abs(q[0] - p[0]), abs(q[1] - p[1])
+            if dx >= dy and dx > attach_tol:
+                horiz += dx
+                if inside(b, (p[1] + q[1]) / 2.0):
+                    inside_len += dx
+        if horiz > 4.0 * attach_tol and inside_len / horiz < o["band_edge_frac"]:
+            rep.add("BAND_EDGE", WARN, "%s stream '%s' runs mostly outside the %s band (%.0f %% of its horizontal run inside)" % (e.get("fluid"), e["id"], b["id"], 100.0 * inside_len / horiz),
+                    "Route %s lines in the %s band (TR2329 SR-15794), or mark an intentional return line with role='recycle' / 'wrap'" % (e.get("fluid"), b["id"]), [e["id"]])
 
 
 def _ports(rep, s, edges, nodes, real_nodes, attach_tol, o, diag):

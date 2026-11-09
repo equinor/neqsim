@@ -803,3 +803,95 @@ def subgraph(graph, section_id):
     g["counts"] = dict(graph["counts"], equipment=len(g["equipment"]), streams=len(streams), sections=1)
     g["subgraph_of"] = section_id
     return g
+
+
+# ---------------------------------------------------------------------------
+# phase bands (TR2329 SR-15794, ISO 10628:1997 5.3.3): top gas, middle oil / hydrocarbon liquid, bottom water
+# ---------------------------------------------------------------------------
+BAND_IDS = ("gas", "oil", "water")
+BAND_LABELS = {"gas": "GAS", "oil": "OIL", "water": "WATER"}
+_BAND_WORDS = {
+    "gas": re.compile(r"\b(gas|compress\w*|fuel|flare|injection gas|lift)\b", re.I),
+    "water": re.compile(r"\b(water|aqueous|brine|pw)\b", re.I),
+    "oil": re.compile(r"\b(oil|condensate|crude|export oil|stabili[sz]\w*|liquid)\b", re.I),
+}
+
+
+def bands_config(value):
+    """Normalise the ``bands`` option: falsy -> None, ``True`` -> ``{}``, mapping ``{band: [section names]}`` checked."""
+    if not value:
+        return None
+    if value is True:
+        return {}
+    if not isinstance(value, dict):
+        raise ValueError("bands must be true or a mapping {gas|oil|water: [section names]}")
+    bad = [k for k in value if k not in BAND_IDS]
+    if bad:
+        raise ValueError("unknown band(s) %s (use %s)" % (bad, list(BAND_IDS)))
+    return {k: [str(n) for n in (v if isinstance(v, (list, tuple)) else [v])] for k, v in value.items()}
+
+
+def assign_bands(graph, spec=True):
+    """Phase band (``gas`` / ``oil`` / ``water``) of every section of ``graph``.
+
+    Rules, first match wins:
+
+    1. explicit mapping ``{band: [section id / name / model area]}`` (case-insensitive);
+    2. inlet / separation sections (a separator with at least two different gas / oil / water outlets, fed by a
+       multiphase stream, and no compressor in the section) are the centre (oil) band;
+    3. the dominant service of the streams produced in or fed into the section: more than half of the gas / oil /
+       water streams decides (multiphase, unknown and utility streams do not vote; a compressor adds a gas vote);
+    4. section / equipment / stream names (water, gas / compressor / fuel / flare, oil / export / condensate);
+    5. otherwise the centre (oil) band, which is where mixed-phase well fluid is handled.
+
+    Returns ``{section id: band}``.
+    """
+    spec = bands_config(spec) or {}
+    sidx = {s["id"]: s for s in graph["streams"]}
+    eq_by_sec = {}
+    for e in graph["equipment"]:
+        eq_by_sec.setdefault(e.get("section"), []).append(e)
+    explicit = {}
+    for band, names in spec.items():
+        for n in names:
+            explicit[str(n).lower()] = band
+    out = {}
+    for sec in graph["sections"]:
+        sid = sec["id"]
+        keys = {str(sec.get("id")).lower(), str(sec.get("name")).lower(), str(sec.get("model_area")).lower()}
+        keys.update(str(a).lower() for a in (sec.get("model_areas") or []))
+        hit = next((explicit[k] for k in keys if k in explicit), None)
+        if hit:
+            out[sid] = hit
+            continue
+        members = set(sec["members"])
+        eqs = eq_by_sec.get(sid, [])
+        mine = [s for s in graph["streams"] if s["from"] in members or (s["from"] is None and any(t in members for t in s["to"]))]
+        tally = {"gas": 0, "oil": 0, "water": 0}
+        for s in mine:
+            if s["service"] in tally:
+                tally[s["service"]] += 1
+        has_comp = any(e["category"] in ("compressor", "expander") for e in eqs)
+        if has_comp:
+            tally["gas"] += 1
+        inlet_sep = False
+        for e in eqs:
+            if e["category"] != "separator":
+                continue
+            outs = {sidx[i]["service"] for i in e["ports"]["out"] if i in sidx} & set(tally)
+            ins = {sidx[i]["service"] for i in e["ports"]["in"] if i in sidx}
+            if len(outs) >= 2 and ins - {"gas", "oil", "water"}:
+                inlet_sep = True
+        if inlet_sep and not has_comp:
+            out[sid] = "oil"
+            continue
+        total = sum(tally.values())
+        top = max(tally, key=lambda k: tally[k])
+        if total and tally[top] * 2 > total:
+            out[sid] = top
+            continue
+        text = " ".join([str(sec.get("name"))] + [str(e["label"]) for e in eqs] + [str(s["label"]) for s in mine])
+        words = {b: len(rx.findall(text)) for b, rx in _BAND_WORDS.items()}
+        best = max(BAND_IDS, key=lambda b: (words[b], b == "oil"))
+        out[sid] = best if words[best] else "oil"
+    return out

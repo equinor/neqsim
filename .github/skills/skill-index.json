@@ -1,4 +1,10 @@
 {
+ "pvt forward proxy": ["neqsim-pvt-forward-proxy"],
+ "pvt-proxy": ["neqsim-pvt-forward-proxy"],
+ "forward proxy surface process": ["neqsim-pvt-forward-proxy"],
+ "separator conditions for pvt tables": ["neqsim-pvt-forward-proxy"],
+ "sepcond separator test calibration": ["neqsim-pvt-forward-proxy"],
+ "recycle process as forward separator train": ["neqsim-pvt-forward-proxy"],
  "code health maintainability": ["neqsim-code-health"],
  "safe refactoring duplicate helpers": ["neqsim-safe-refactoring"],
  "independent source code review": ["neqsim-code-review"],

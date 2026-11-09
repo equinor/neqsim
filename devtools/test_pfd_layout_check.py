@@ -341,3 +341,71 @@ def test_pid_sensing_connection_needs_no_material_flow_arrow():
     spec["edges"][0]["fluid"] = "sensing"
     spec["kind"] = "pfd"
     assert "NO_ARROWHEAD" in codes(chk.check_spec(spec))
+
+
+def banded_spec():
+    """Gas separator -> compressor in the top band, oil pump in the middle band, water outlet in the bottom band."""
+    s = good_spec()
+    s["canvas"]["height"] = 90
+    s["bands"] = [{"id": "gas", "label": "GAS", "fluids": ["gas"], "bbox": [0, 0, 100, 30]},
+                  {"id": "oil", "label": "OIL", "fluids": ["oil", "liquid"], "bbox": [0, 30, 100, 30]},
+                  {"id": "water", "label": "WATER", "fluids": ["water"], "bbox": [0, 60, 100, 30]}]
+    s["nodes"] = [node("feed", 4, 10, 14, 8, "boundary", text="Feed gas"),
+                  node("v1", 36, 8, 16, 12, "vessel", text="20V0001\nseparator", tag="20V0001", band="gas"),
+                  node("k1", 74, 10, 14, 8, "compressor", text="23K0001\ncompressor", tag="23K0001", band="gas")]
+    s["edges"] = [edge("e1", [(18, 14), (36, 14)], "feed", "v1", stream="1", label=("30 bara", (22, 9.5, 10, 2.4))),
+                  edge("e2", [(52, 14), (74, 14)], "v1", "k1", stream="2", label=("28 bara", (56, 9.5, 10, 2.4)))]
+    s["labels"] = [{"text": "1", "bbox": [26, 13, 3.4, 3.4], "kind": "streamno", "owner_edge": "e1", "font_size": 2.0},
+                   {"text": "2", "bbox": [61, 13, 3.4, 3.4], "kind": "streamno", "owner_edge": "e2", "font_size": 2.0}]
+    return s
+
+
+def test_phase_bands_good_layout_passes():
+    rep = chk.check_spec(banded_spec())
+    assert not codes(rep) & {"BAND_NODE", "BAND_EDGE", "BAND_ORDER"}, rep.to_markdown()
+    assert rep.metrics["bands"] == ["gas", "oil", "water"]
+
+
+def test_phase_bands_node_in_wrong_band_is_error():
+    s = banded_spec()
+    s["nodes"][2]["bbox"][1] = 40
+    s["edges"][1]["points"] = [[52, 14], [74, 14]]
+    rep = chk.check_spec(s)
+    assert "BAND_NODE" in codes(rep, "ERROR")
+
+
+def test_phase_bands_gas_line_in_oil_band_and_order():
+    s = banded_spec()
+    s["edges"][1]["points"] = [[52, 44], [74, 44]]
+    assert "BAND_EDGE" in codes(chk.check_spec(s), "WARN")
+    s["edges"][1]["role"] = "recycle"
+    assert "BAND_EDGE" not in codes(chk.check_spec(s))
+    s = banded_spec()
+    s["bands"][0], s["bands"][2] = s["bands"][2], s["bands"][0]
+    assert "BAND_ORDER" in codes(chk.check_spec(s))
+
+
+def test_pfd_diagram_phase_bands_export_and_check(tmp_path):
+    import pfd_diagram
+
+    d = pfd_diagram.PfdDiagram("PFD - bands", width_in=11.0, height_in=7.8, footer="x")
+    b = d.phase_bands()
+    d.node("v", "20V0001\nseparator", 30, b["oil"][2], kind="vessel", tag="20V0001", band="oil")
+    d.node("k", "23K0001\ncompressor", 62, b["gas"][2], kind="compressor", tag="23K0001", band="gas")
+    d.node("w", "Produced\nwater", 62, b["water"][2], kind="boundary")
+    d.edge("v", "t", "k", "l", fluid="gas", stream="1", via="vh")
+    d.edge("v", "b", "w", "l", fluid="water", stream="2", via="vh")
+    rep = d.render(str(tmp_path / "bands.png"))
+    spec = json.load(open(str(tmp_path / "bands.layout.json")))
+    assert [x["id"] for x in spec["bands"]] == ["gas", "oil", "water"]
+    assert {n["id"]: n.get("band") for n in spec["nodes"]}["k"] == "gas"
+    assert not codes(rep) & {"BAND_NODE", "BAND_ORDER"}, rep.to_markdown()
+
+
+def test_band_example_passes(tmp_path):
+    """The shipped phase-band example (gas top, oil middle, water bottom) passes the layout gate."""
+    import pfd_band_example
+
+    rep = pfd_band_example.build().render(str(tmp_path / "band_example.png"))
+    assert rep.status == "PASS", rep.to_markdown()
+    assert rep.metrics["bands"] == ["gas", "oil", "water"]
