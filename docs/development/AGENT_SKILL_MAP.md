@@ -50,6 +50,7 @@ loaded with `read_file` at the start of an agent invocation.
 | `process-study-report.agent.md` | process-study-report | `process-study-report`, `neqsim-professional-reporting`, `neqsim-standards-lookup`, `neqsim-process-modeling`, `neqsim-troubleshooting` |
 | `production-chemistry.agent.md` | production-chemistry | `neqsim-production-chemistry`, `neqsim-flow-assurance`, `neqsim-electrolyte-systems`, `neqsim-wax-calculations`, `neqsim-standards-lookup`, `neqsim-professional-reporting`, `neqsim-produced-water-and-solids-separation` |
 | `pvt-fluid-study-report.agent.md` | pvt-fluid-study-report | `neqsim-pvt-fluid-study-report`, `neqsim-eos-regression`, `neqsim-phase-envelope`, `neqsim-thermodynamic-initialization`, `neqsim-professional-reporting`, `neqsim-standards-lookup` |
+| `pvt-forward-proxy.agent.md` | pvt-forward-proxy | `neqsim-pvt-forward-proxy`, `neqsim-process-modeling`, `neqsim-thermodynamic-initialization`, `neqsim-optimization-and-doe`, `neqsim-professional-reporting` |
 | `pvt-simulation.agent.md` | pvt-simulation | `neqsim-phase-envelope`, `neqsim-api-patterns`, `neqsim-eos-regression`, `neqsim-input-validation`, `neqsim-notebook-patterns`, `neqsim-professional-reporting`, `neqsim-pvt-fluid-study-report` |
 | `reaction-engineering.agent.md` | reaction-engineering | `neqsim-reaction-engineering`, `neqsim-self-heating-ignition`, `neqsim-api-patterns`, `neqsim-java8-rules`, `neqsim-standards-lookup`, `neqsim-troubleshooting`, `neqsim-sulfur-recovery` |
 | `refactor.agent.md` | refactor | `neqsim-safe-refactoring` |

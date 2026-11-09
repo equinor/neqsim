@@ -39,10 +39,11 @@ neqsim process-overview model.py --cases cases.yaml --case A --out out/overview
 #   --config cfg.json  --style style.json       graph / style overrides (see below)
 #   --no-mono  --no-presentation  --no-embed-font  --dpi 150  --quiet
 #   --no-supporting-slides                     keep main slides; A3 detail sheets unchanged
+#   --bands                                    phase bands on the A3 sheet: gas top, oil middle, water bottom (off by default)
 ```
 
 Without `neqsim` on PATH: `<python> -m neqsim_cli process-overview ...` (plugin install) or
-`<python> devtools/process_overview.py ...` (checkout). Python: `process_overview.build_overview(data, out_dir, ...)`.
+`<python> devtools/process_overview.py ...` (checkout). Python: `process_overview.build_overview(data, out_dir, ..., bands=...)`.
 
 ## Outputs (`--out` folder)
 
@@ -105,6 +106,22 @@ Without `neqsim` on PATH: `<python> -m neqsim_cli process-overview ...` (plugin 
 - **Colour** (project convention, Okabe-Ito palette, defined in the legend): gas vermilion, oil/condensate
   bluish green, produced water blue, multiphase black, utility grey dashed, recycle dashed. The mono variant
   encodes the service by dash pattern; the heavy line is the main path in both.
+- **Phase bands (`--bands`, config `"bands": true` or `{"gas": [...], "oil": [...], "water": [...]}` of section ids, names or
+  model areas; off by default, A3 sheet only)**: Equinor TR2329 SR-15794 (three horizontal bands, gas flow on top, liquid below,
+  process flow left to right) and ISO 10628:1997 5.3.3 (left to right and top to bottom). Lanes top to bottom GAS / OIL / WATER
+  (empty lanes are not drawn), light lane backgrounds with a label in a 10 mm gutter, sections flow left to right inside a lane, a
+  row starts to the right of the column that feeds it, a boundary product of another phase (produced water) ends in a terminal
+  label in its own lane, counter-flow recycles are dashed. Each section is classified: (1) explicit mapping; (2) a separator with
+  two or more different gas/oil/water outlets, fed by a multiphase stream, in a section without compressor -> oil band; (3) otherwise
+  the majority of the gas/oil/water streams produced in or fed into the section (multiphase, unknown and utility streams do not vote,
+  a compressor adds one gas vote); (4) name keywords (water; gas, compress, fuel, flare; oil, condensate, export); (5) oil band. When
+  a lane row does not fit, the widest section of that lane is collapsed first, then compact text, then adjacent sections of the
+  same band are merged (never across bands). The manifest records the resulting `bands` mapping; the spec carries `bands` and
+  `node["band"]` so `neqsim pfd-check` reports `BAND_NODE` / `BAND_EDGE`. Python: `ppo_graph.assign_bands`, `ppo_graph.bands_config`,
+  `ppo_layout.layout_overview(bands=...)`. Limits: lane labels are horizontal, the 16:9 version is not banded, name mappings do not
+  reach sections the fit merged automatically, and a 15-unit compression section still needs `--no-supporting-slides` for the slide
+  version. When the compressors and their utilisation must be visible on the sheet itself (debottlenecking), draw the one-sheet
+  PFD with `PfdDiagram.phase_bands` instead (skill `neqsim-pfd-layout-review`, section "Phase-band layout").
 
 ## Standards basis (document what is used, claim nothing unverified)
 
@@ -113,6 +130,8 @@ Without `neqsim` on PATH: `<python> -m neqsim_cli process-overview ...` (plugin 
 | Sheet | ISO 5457: A3 420 x 297 mm, frame with 20 mm filing margin left / 10 mm elsewhere, zone grid, centring marks | edition not verified against standard text |
 | Title block | ISO 7200 data fields: legal owner, identification number, title, revision, date, sheet, document type, status, creator/checker/approver, represented case | fields that have not happened read "not assigned" |
 | Content | ISO 10628-1 PFD level: equipment, main flows, recycles, utility interfaces where modelled | instrumentation only when it explains operation |
+| Layout | TR2329 v2.02 SR-15794 and Addendum 2.2.3.2: gas band on top, equipment / oil in the middle, liquid and water below, flow left to right; ISO 10628:1997 5.3.3 left to right and top to bottom | `--bands`; edition of ISO 10628 read: 1997 (the library copy), the 2014 parts are not verified |
+| Stream data | TR2329 SR-15755 / 15756: stream number on every line, heat and material table at the bottom or on a separate sheet | key streams table here, full table in the process report |
 | Symbols | ISO 10628-2 / ISO 14617 shapes shared with the process-study report | documented in `ppo_render.SYMBOL_LIBRARY` |
 
 Record the editions actually consulted in the task's standards register; the drawing note states

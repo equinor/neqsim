@@ -50,6 +50,11 @@ Use `--no-supporting-slides` (Python: `supporting_slides=False`) to generate the
 overviews without supporting presentation slides. A3 detail PFDs still follow `--detail-sheets`;
 use `--detail-sheets all` to keep a complete equipment drawing set.
 
+Use `--bands` (Python: `bands=True` or a mapping `{"gas": [...], "oil": [...], "water": [...]}`) to lay the A3 sheet out in phase
+bands: gas on top, oil / liquid hydrocarbon in the middle, water at the bottom, process flow left to right (Equinor TR2329 SR-15794,
+ISO 10628:1997 5.3.3). Sections are classified by their dominant stream phase unless mapped explicitly; the manifest records the
+mapping. The 16:9 version is not banded.
+
 ## Outputs
 
 | File | Content |
