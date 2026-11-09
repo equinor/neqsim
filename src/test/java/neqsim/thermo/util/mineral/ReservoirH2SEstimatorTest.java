@@ -50,6 +50,23 @@ public class ReservoirH2SEstimatorTest {
     assertTrue(high.getSideriteStabilityMargin() > 0.5);
   }
 
+  /**
+   * The equilibration temperature inverts the buffer; at fixed fluid composition doubling H2S corresponds to roughly 20
+   * K hotter (the NCS-wide apparent enthalpy is steeper because CO2 also rises with depth).
+   */
+  @Test
+  public void testEquilibrationTemperatureInvertsTheBuffer() {
+    ReservoirH2SEstimator est = new ReservoirH2SEstimator();
+    SystemInterface f = fluid(140.0, 500.0, 0.03);
+    double ppm = est.estimate(f).getH2SPpm();
+    assertEquals(413.15, est.equilibrationTemperature(f, ppm), 0.2);
+    double hotter = est.equilibrationTemperature(f, 2.0 * ppm);
+    assertTrue(hotter - 413.15 > 15.0 && hotter - 413.15 < 30.0, "doubling H2S: " + (hotter - 413.15));
+    assertTrue(Double.isNaN(est.equilibrationTemperature(f, 1.0e6)));
+    assertThrows(IllegalArgumentException.class, () -> est.equilibrationTemperature(f, 0.0));
+    assertThrows(IllegalArgumentException.class, () -> est.equilibrationTemperature(f, 1.0, 400.0, 300.0));
+  }
+
   /** Lower Fe-carbonate activity raises H2S as a^(-1/2); lower water activity lowers it as a_w^(3/4). */
   @Test
   public void testActivityScaling() {
