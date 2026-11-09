@@ -179,6 +179,7 @@ class BuildPluginTest(unittest.TestCase):
         compile(hook_py, "install_skill_packages.py", "exec")
         manifest = json.loads((plugin / "BUILD_MANIFEST.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["live_requirements"], 4)
+        self.assertTrue(all(not Path(source).is_absolute() for source in manifest["sources"]))
 
     def test_core_plugin_has_no_live_requirements(self):
         spec = bap.PluginSpec("core", "Core", self.spec.skills_roots, self.spec.agents_roots, [],

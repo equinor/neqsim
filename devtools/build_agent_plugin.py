@@ -1921,7 +1921,10 @@ def build_plugin(spec: PluginSpec, out_root: Path, known_skills: set, args) -> D
         "skills": skill_count,
         "agents": agent_count,
         "live_requirements": live_count,
-        "sources": [str(p) for p in spec.skills_roots + spec.agents_roots],
+        # Keep provenance portable: absolute checkout paths make a generated plugin
+        # unusable as a reproducible artifact on another machine.
+        "sources": [os.path.relpath(str(p), str(WORKSPACE)).replace(os.sep, "/")
+                    for p in spec.skills_roots + spec.agents_roots],
     }, indent=2) + "\n", encoding="utf-8")
 
     result = {"name": spec.name, "version": version, "skills": skill_count,
