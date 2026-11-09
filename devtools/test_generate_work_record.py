@@ -107,6 +107,26 @@ def test_glob_outputs_and_optional_notebook_plan_are_not_missing(task):
     assert "MISSING" not in text
 
 
+def test_declared_script_outside_scanned_folders_is_listed_not_missing(task):
+    config = (task / "study_config.yaml").read_text(encoding="utf-8")
+    config = config.replace(
+        "    - file: 01_pull.py\n",
+        "    - file: step1_scope_and_research/references/src/s01_pull.py\n"
+        "      purpose: Pull kept with its data.\n"
+        "      produces: step2_analysis/pull.json\n"
+        "    - file: 01_pull.py\n")
+    config = config.replace("      evidence: step2_analysis/absent.json", "      evidence: step2_analysis/pull.json")
+    (task / "study_config.yaml").write_text(config, encoding="utf-8")
+    pull = task / "step1_scope_and_research" / "references" / "src" / "s01_pull.py"
+    pull.parent.mkdir(parents=True)
+    pull.write_text('"""Pull."""\n', encoding="utf-8")
+    assert gwr.main([str(task)]) == 0
+    text = (task / "step3_report" / "WORK_RECORD.md").read_text(encoding="utf-8")
+    assert "MISSING" not in text
+    assert "python step1_scope_and_research/references/src/s01_pull.py" in text
+    assert "step2_analysis/step1_scope_and_research" not in text
+
+
 def test_comma_separated_outputs_are_checked_one_by_one(task):
     config = (task / "study_config.yaml").read_text(encoding="utf-8")
     config = config.replace(
