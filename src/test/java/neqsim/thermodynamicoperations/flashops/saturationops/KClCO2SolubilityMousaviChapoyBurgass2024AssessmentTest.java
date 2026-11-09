@@ -311,9 +311,8 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
   }
 
   /**
-   * Returns every phase other than the aqueous one. NeqSim may label the CO2-rich phase as oil or
-   * liquid rather than gas at high pressure, and a third phase can appear, so phases are identified
-   * by position instead of by type label.
+   * Returns every phase other than the aqueous one. NeqSim may label the CO2-rich phase as oil or liquid rather than
+   * gas at high pressure, and a third phase can appear, so phases are identified by position instead of by type label.
    *
    * @param fluid flashed system
    * @param aqueous ion-rich aqueous phase
