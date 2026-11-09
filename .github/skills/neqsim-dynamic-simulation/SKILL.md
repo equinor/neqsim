@@ -957,6 +957,9 @@ gas inventories with `PigMotion`, moving-volume work and the existing
 donor-mass fraction and pig-travel fraction controls, and inspect total mass,
 combined energy, contact impact and timestep-refinement evidence. This is two
 well-mixed calorically perfect gas chambers, not distributed pipe dynamics.
+Launcher/receiver contact uses `PigMotion.advanceToPosition`; that API finds the
+first crossing on either side of a stop/reversal and retains the analytical work
+ledger, but the caller still owns the physical response to other position events.
 The Hendrix 62 m/52 mm dimensions do not qualify synthetic pressures, friction
 or bypass parameters. Do not infer `TwoFluidPipe` moving boundaries, liquid
 sweeping, receiver surge capacity, physical restart, severe slugging, pig

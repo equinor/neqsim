@@ -58,6 +58,11 @@ class PigMotionPositionEventTest {
         new double[] {0.0}, new double[] {0.0});
     assertEquals(sampledPositions[firstCrossingSample], singleInterval.getPositionsM()[1], 1.0e-12);
     assertEquals(eventDerivedSpeedMps, singleInterval.getVelocitiesMps()[1], 0.0);
+    PigMotion.PositionEvent exactEvent = pig.advanceToPosition(0.0, eventDerivedSpeedMps, 0.0, 0.0,
+        publishedCrossingSeconds + samplePeriodSeconds, sensorSpacingM);
+    assertTrue(exactEvent.isReached());
+    assertEquals(publishedCrossingSeconds, exactEvent.getEventTimeSeconds(), 1.0e-12);
+    assertEquals(sensorSpacingM, exactEvent.getStep().getPositionM(), 1.0e-12);
     assertEquals(0.43, roundToTwoDecimals(eventDerivedSpeedMps), 0.0);
 
     double odometerSpeedMps = 5.70 / 12.53;

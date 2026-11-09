@@ -14,10 +14,11 @@ import java.io.Serializable;
  * </p>
  *
  * <p>
- * This stateless submodel does not solve fluid inventories, bypass, pressure waves, pig receipt, bends or changing
- * diameter. Callers must split steps at prescribed pressure/geometry changes. A future hydraulic coupling must balance
- * the pressure work and displaced volume on both sides of the pig; prescribing pressure here does not provide that
- * coupling.
+ * This stateless submodel does not solve fluid inventories, bypass, pressure waves, bends or changing diameter. The
+ * first-position-event API can locate launcher, receiver, sensor or geometry coordinates without prescribing what
+ * happens at contact; callers must still split steps and apply the physical boundary or geometry change. A hydraulic
+ * coupling must balance pressure work and displaced volume on both sides of the pig; prescribing pressure here does not
+ * provide that coupling.
  * </p>
  *
  * @author Even Solbraa
@@ -26,6 +27,7 @@ import java.io.Serializable;
 public final class PigMotion implements Serializable {
   private static final long serialVersionUID = 1L;
   private static final double GRAVITY = 9.80665;
+  private static final int POSITION_EVENT_BISECTION_ITERATIONS = 80;
   private final double massKg;
   private final double pressureAreaM2;
   private final double staticFrictionN;
@@ -139,6 +141,72 @@ public final class PigMotion implements Serializable {
     double kineticChange = 0.5 * massKg * (velocity - velocityMps) * (velocity + velocityMps);
     return new Step(durationSeconds, positionM + displacement, velocity, displacement, distance, movingSeconds,
         stopTime, pressureWork, gravityWork, frictionHeat, kineticChange);
+  }
+
+  /**
+   * Advances to the first crossing of a prescribed axial position, or to the interval endpoint.
+   *
+   * <p>
+   * A constant-input mechanical interval has at most two monotone legs, separated by the exact zero-velocity event
+   * already resolved by {@link #advance(double, double, double, double, double)}. Searching each leg separately avoids
+   * missing a target that is crossed before a later reversal returns the pig to the same side. The returned
+   * {@link Step} retains the original analytical work ledger and is never position-clipped.
+   * </p>
+   *
+   * @param positionM initial axial position in m
+   * @param velocityMps initial signed axial velocity in m/s
+   * @param differentialPressurePa upstream minus downstream pressure in Pa
+   * @param inclinationRadians pipe inclination in radians
+   * @param durationSeconds maximum interval duration in s, nonnegative
+   * @param targetPositionM axial event position in m
+   * @return first-crossing event and its truncated mechanical step, or the complete step when no crossing occurs
+   */
+  public PositionEvent advanceToPosition(double positionM, double velocityMps, double differentialPressurePa,
+      double inclinationRadians, double durationSeconds, double targetPositionM) {
+    requireFinite(targetPositionM, "targetPositionM");
+    Step complete = advance(positionM, velocityMps, differentialPressurePa, inclinationRadians, durationSeconds);
+    if (positionM == targetPositionM) {
+      return new PositionEvent(true, advance(positionM, velocityMps, differentialPressurePa, inclinationRadians, 0.0));
+    }
+    double stopTime = complete.getStopTimeSeconds();
+    double firstEndTime = stopTime >= 0.0 ? stopTime : durationSeconds;
+    Step firstEnd = stopTime >= 0.0
+        ? advance(positionM, velocityMps, differentialPressurePa, inclinationRadians, firstEndTime)
+        : complete;
+    if (containsPosition(positionM, firstEnd.getPositionM(), targetPositionM)) {
+      return new PositionEvent(true, positionEventStep(positionM, velocityMps, differentialPressurePa,
+          inclinationRadians, 0.0, firstEndTime, targetPositionM));
+    }
+    if (stopTime >= 0.0 && containsPosition(firstEnd.getPositionM(), complete.getPositionM(), targetPositionM)) {
+      return new PositionEvent(true, positionEventStep(positionM, velocityMps, differentialPressurePa,
+          inclinationRadians, stopTime, durationSeconds, targetPositionM));
+    }
+    return new PositionEvent(false, complete);
+  }
+
+  /** Locate one crossing on a monotone mechanical leg. */
+  private Step positionEventStep(double positionM, double velocityMps, double differentialPressurePa,
+      double inclinationRadians, double lowerTime, double upperTime, double targetPositionM) {
+    double lower = lowerTime;
+    double upper = upperTime;
+    double lowerPosition = advance(positionM, velocityMps, differentialPressurePa, inclinationRadians, lower)
+        .getPositionM();
+    for (int iteration = 0; iteration < POSITION_EVENT_BISECTION_ITERATIONS; iteration++) {
+      double middle = 0.5 * (lower + upper);
+      Step middleStep = advance(positionM, velocityMps, differentialPressurePa, inclinationRadians, middle);
+      if (containsPosition(lowerPosition, middleStep.getPositionM(), targetPositionM)) {
+        upper = middle;
+      } else {
+        lower = middle;
+        lowerPosition = middleStep.getPositionM();
+      }
+    }
+    return advance(positionM, velocityMps, differentialPressurePa, inclinationRadians, upper);
+  }
+
+  /** @return whether a position lies on a closed monotone interval */
+  private static boolean containsPosition(double first, double second, double target) {
+    return first <= second ? target >= first && target <= second : target <= first && target >= second;
   }
 
   /**
@@ -312,6 +380,39 @@ public final class PigMotion implements Serializable {
     /** @return kinetic change minus applied work plus friction heat in J; roundoff-level for this model */
     public double getEnergyResidualJ() {
       return kineticEnergyChangeJ - pressureWorkJ - gravityWorkJ + frictionHeatJ;
+    }
+  }
+
+  /** Immutable result of a first-position-event search under constant mechanical inputs. */
+  public static final class PositionEvent implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final boolean reached;
+    private final Step step;
+
+    /**
+     * Retains the immutable mechanical step ending at the event or search horizon.
+     *
+     * @param eventReached whether the target position was crossed
+     * @param resultStep truncated event step or complete horizon step
+     */
+    private PositionEvent(boolean eventReached, Step resultStep) {
+      reached = eventReached;
+      step = resultStep;
+    }
+
+    /** @return true when the target position was reached */
+    public boolean isReached() {
+      return reached;
+    }
+
+    /** @return immutable mechanical ledger ending at the event or search horizon */
+    public Step getStep() {
+      return step;
+    }
+
+    /** @return elapsed event time, or the complete search duration when the target was not reached */
+    public double getEventTimeSeconds() {
+      return step.getDurationSeconds();
     }
   }
 

@@ -34,7 +34,6 @@ public final class IdealGasPiggingModel implements Serializable {
   private static final long serialVersionUID = 1L;
   private static final double GAS_CONSTANT_J_MOL_K = 8.31446261815324;
   private static final double EVENT_POSITION_TOLERANCE_M = 1.0e-12;
-  private static final int EVENT_BISECTION_ITERATIONS = 80;
   private static final int MAX_INTERNAL_STEPS = 1000000;
 
   /** Discrete pig location used for launcher and receiver event handling. */
@@ -409,22 +408,12 @@ public final class IdealGasPiggingModel implements Serializable {
    * @return event duration in s
    */
   private double eventDuration(State state, Conditions conditions, double upperDuration, double boundaryM) {
-    double lower = 0.0;
-    double upper = upperDuration;
-    boolean receiver = boundaryM == pipeLengthM;
-    for (int i = 0; i < EVENT_BISECTION_ITERATIONS; i++) {
-      double middle = 0.5 * (lower + upper);
-      double position = mechanics
-          .advance(state.pigPositionM, state.pigVelocityMps,
-              conditions.upstreamPressurePa - conditions.downstreamPressurePa, inclinationRadians, middle)
-          .getPositionM();
-      if ((receiver && position >= boundaryM) || (!receiver && position <= boundaryM)) {
-        upper = middle;
-      } else {
-        lower = middle;
-      }
+    PigMotion.PositionEvent event = mechanics.advanceToPosition(state.pigPositionM, state.pigVelocityMps,
+        conditions.upstreamPressurePa - conditions.downstreamPressurePa, inclinationRadians, upperDuration, boundaryM);
+    if (!event.isReached()) {
+      throw new IllegalStateException("Predicted pig contact could not be located on its mechanical trajectory");
     }
-    return upper;
+    return event.getEventTimeSeconds();
   }
 
   /**

@@ -744,7 +744,9 @@ for (double qgMSm3d : gasRates) {
 > combined-energy residuals, timestep refinement, numerical safeguards and the
 > launcher/receiver ledger. The public 62 m/52 mm Hendrix geometry is
 > provenance, not experimental trajectory validation; other example inputs are
-> synthetic. Do not route it as distributed `TwoFluidPipe` coupling,
+> synthetic. `PigMotion.advanceToPosition` supplies reversal-safe first-crossing
+> timing for known launcher, receiver, sensor or geometry coordinates; it does not
+> define contact or geometry physics. Do not route it as distributed `TwoFluidPipe` coupling,
 > pressure-wave, swept-liquid, receiver-capacity, residual-film,
 > physical-restart, severe-slugging, pig-train or field/commercial evidence.
 >

@@ -119,7 +119,9 @@ entrainment or hydrocarbon evaporation. See the
 closure. It couples `PigMotion` to two conservative, well-mixed calorically
 perfect gas chambers and reuses the strict ideal-gas orifice model for signed
 choked/subcritical bypass. Its mass/energy/event/refinement evidence supports
-only that declared approximation. The public Hendrix 62 m/52 mm geometry is
+only that declared approximation. Launcher/receiver contact reuses
+`PigMotion.advanceToPosition`, whose first-crossing search separates both sides
+of a reversal and retains the analytical work ledger. The public Hendrix 62 m/52 mm geometry is
 provenance; synthetic pressure, friction and bypass inputs are not experimental
 trajectory validation. Distributed waves, multiphase moving boundaries,
 swept-liquid slugs, receiver liquid capacity, residual film, physical restart,

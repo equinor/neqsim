@@ -2,6 +2,7 @@ package neqsim.process.equipment.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
@@ -13,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Random;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.pipeline.PigMotion.PositionEvent;
 import neqsim.process.equipment.pipeline.PigMotion.Step;
 import neqsim.process.equipment.pipeline.PigMotion.Trajectory;
 
@@ -113,6 +115,51 @@ class PigMotionTest {
     assertEquals(0.0, step.getEnergyResidualJ(), 1.0e-12);
   }
 
+  /** Locates an accelerating first crossing without changing the analytical work ledger. */
+  @Test
+  void positionEventTruncatesAtAnalyticalForwardCrossing() {
+    PigMotion pig = new PigMotion(100.0, 0.01, 100.0, 50.0);
+    PositionEvent event = pig.advanceToPosition(0.0, 0.0, 20000.0, 0.0, 10.0, 3.0);
+
+    assertTrue(event.isReached());
+    assertEquals(2.0, event.getEventTimeSeconds(), 1.0e-12);
+    assertEquals(3.0, event.getStep().getPositionM(), 1.0e-12);
+    assertEquals(3.0, event.getStep().getVelocityMps(), 1.0e-12);
+    assertEquals(0.0, event.getStep().getEnergyResidualJ(), 1.0e-12);
+  }
+
+  /** Searches both monotone legs and returns the first crossing before or after reversal. */
+  @Test
+  void positionEventResolvesBothSidesOfReversal() {
+    PigMotion pig = new PigMotion(100.0, 0.01, 100.0, 50.0);
+    PositionEvent outward = pig.advanceToPosition(0.0, 2.0, -20000.0, 0.0, 2.0, 0.5);
+    PositionEvent returning = pig.advanceToPosition(0.0, 2.0, -20000.0, 0.0, 2.0, -0.1);
+
+    assertTrue(outward.isReached());
+    assertTrue(outward.getEventTimeSeconds() < 0.8);
+    assertEquals(0.5, outward.getStep().getPositionM(), 1.0e-12);
+    assertTrue(returning.isReached());
+    assertTrue(returning.getEventTimeSeconds() > 0.8);
+    assertTrue(returning.getEventTimeSeconds() < 2.0);
+    assertEquals(-0.1, returning.getStep().getPositionM(), 1.0e-12);
+    assertEquals(0.0, returning.getStep().getEnergyResidualJ(), 1.0e-12);
+  }
+
+  /** Returns the complete horizon when no crossing exists and zero time for initial contact. */
+  @Test
+  void positionEventReportsNoCrossingAndInitialContact() {
+    PigMotion pig = new PigMotion(100.0, 0.01, 100.0, 50.0);
+    PositionEvent absent = pig.advanceToPosition(0.0, 2.0, -20000.0, 0.0, 2.0, 1.0);
+    PositionEvent initial = pig.advanceToPosition(4.0, -2.0, 0.0, 0.0, 2.0, 4.0);
+
+    assertFalse(absent.isReached());
+    assertEquals(2.0, absent.getEventTimeSeconds(), 0.0);
+    assertEquals(-0.28, absent.getStep().getPositionM(), 1.0e-12);
+    assertTrue(initial.isReached());
+    assertEquals(0.0, initial.getEventTimeSeconds(), 0.0);
+    assertEquals(4.0, initial.getStep().getPositionM(), 0.0);
+  }
+
   /** Checks gravity sign, downhill motion and an exactly pressure-balanced vertical pig. */
   @Test
   void gravityAndPressureBalanceHaveCorrectSigns() {
@@ -180,17 +227,22 @@ class PigMotionTest {
     double[] pressures = {20000.0, 0.0, 25000.0};
     double[] angles = {0.0, 0.0, 0.0};
     Trajectory expected = original.simulate(0.0, 0.0, durations, pressures, angles);
+    PositionEvent expectedEvent = original.advanceToPosition(0.0, 0.0, 20000.0, 0.0, 4.0, 3.0);
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
       output.writeObject(original);
       output.writeObject(expected);
+      output.writeObject(expectedEvent);
     }
     try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
       PigMotion restored = (PigMotion) input.readObject();
       Trajectory saved = (Trajectory) input.readObject();
+      PositionEvent savedEvent = (PositionEvent) input.readObject();
       Trajectory replay = restored.simulate(0.0, 0.0, durations, pressures, angles);
       assertArrayEquals(expected.getPositionsM(), replay.getPositionsM(), 0.0);
       assertArrayEquals(expected.getVelocitiesMps(), saved.getVelocitiesMps(), 0.0);
+      assertTrue(savedEvent.isReached());
+      assertEquals(expectedEvent.getEventTimeSeconds(), savedEvent.getEventTimeSeconds(), 0.0);
     }
     durations[0] = 99.0;
     pressures[0] = 0.0;
