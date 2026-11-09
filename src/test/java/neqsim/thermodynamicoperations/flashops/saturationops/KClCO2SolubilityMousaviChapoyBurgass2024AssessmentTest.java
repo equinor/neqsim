@@ -39,6 +39,8 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
   private static final double KCL_MOLAR_MASS_KG_PER_MOL = 0.0745513;
   private static final double CACL2_MOLAR_MASS_KG_PER_MOL = 0.11098;
   private static final double CO2_FEED_MOLES = 10.0;
+  private static final int MAX_RESERVOIR_RETRIES = 5;
+  private static final double RESERVOIR_RETRY_FACTOR = 1.1;
   private static final double AQUEOUS_WATER_MASS_TOLERANCE_KG = 1.0e-10;
   private static final double SALT_MASS_PERCENT_CLOSURE_TOLERANCE = 2.0e-9;
 
@@ -152,7 +154,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
 
     return new Result(trial.co2PartialPressureBara, nativeMolePercent, molecularMolePercent, pseudoSaltMolePercent,
         co2Molality, waterActivity, actualNaclMassPercent, actualKclMassPercent, actualCacl2MassPercent, waterMassKg,
-        co2Moles, actualNaclMoles, actualKclMoles, actualCacl2Moles, co2FeedMoles, trial.phaseTypes,
+        co2Moles, actualNaclMoles, actualKclMoles, actualCacl2Moles, trial.co2FeedMoles, trial.phaseTypes,
         trial.componentBalanceResidualMol, trial.molecularLogFugacityResidual);
   }
 
@@ -170,24 +172,20 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
   private static Trial flashWithAqueousWaterBasis(Reference reference, double totalPressureBara, double co2FeedMoles,
       double naclMoles, double kclMoles, double cacl2Moles) {
     double waterFeedMoles = 1.0 / WATER_MOLAR_MASS_KG_PER_MOL;
+    double co2Feed = co2FeedMoles;
     for (int iteration = 0; iteration < 20; iteration++) {
-      SystemInterface fluid = new SystemElectrolyteCPAstatoil(reference.temperatureK, totalPressureBara);
-      fluid.addComponent("CO2", co2FeedMoles);
-      fluid.addComponent("water", waterFeedMoles);
-      if (naclMoles > 0.0) {
-        fluid.addComponent("Na+", naclMoles);
+      // The flash can return a spurious single phase for a feed that is a tiny step from a feed that splits
+      // correctly (for example 423.15 K, 385.31 bar, 15 wt% KCl). The saturated aqueous composition does not
+      // depend on the reservoir size, so retry with a larger CO2 reservoir; the feed used is reported.
+      SystemInterface fluid = null;
+      for (int attempt = 0; attempt <= MAX_RESERVOIR_RETRIES; attempt++) {
+        fluid = flashSystem(reference.temperatureK, totalPressureBara, co2Feed, waterFeedMoles, naclMoles, kclMoles,
+            cacl2Moles);
+        if (fluid.getNumberOfPhases() >= 2) {
+          break;
+        }
+        co2Feed *= RESERVOIR_RETRY_FACTOR;
       }
-      if (kclMoles > 0.0) {
-        fluid.addComponent("K+", kclMoles);
-      }
-      if (cacl2Moles > 0.0) {
-        fluid.addComponent("Ca++", cacl2Moles);
-      }
-      fluid.addComponent("Cl-", naclMoles + kclMoles + 2.0 * cacl2Moles);
-      fluid.setMixingRule(10);
-      fluid.setMultiPhaseCheck(true);
-      new ThermodynamicOperations(fluid).TPflash();
-      fluid.init(1);
 
       assertTrue(fluid.getNumberOfPhases() >= 2, reference.pointId + " requires an aqueous and a non-aqueous phase");
       PhaseInterface aqueous = findIonRichPhase(fluid);
@@ -197,7 +195,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
       double molecularLogFugacityResidual = 0.0;
       for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
         String componentName = aqueous.getComponent(component).getComponentName();
-        double feedMoles = feedMoles(componentName, co2FeedMoles, waterFeedMoles, naclMoles, kclMoles, cacl2Moles);
+        double feedMoles = feedMoles(componentName, co2Feed, waterFeedMoles, naclMoles, kclMoles, cacl2Moles);
         double aqueousMoles = aqueous.getComponent(component).getNumberOfMolesInPhase();
         double nonAqueousMoles = 0.0;
         for (PhaseInterface phase : nonAqueous) {
@@ -226,11 +224,45 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
         }
         double co2PartialPressureBara = gas.getComponent("CO2").getx() * fluid.getPressure();
         return new Trial(aqueous, co2PartialPressureBara, String.join("+", phases), componentBalanceResidualMol,
-            molecularLogFugacityResidual);
+            molecularLogFugacityResidual, co2Feed);
       }
       waterFeedMoles += waterCorrectionMoles;
     }
     throw new AssertionError(reference.pointId + " aqueous-water inventory iteration did not converge");
+  }
+
+  /**
+   * Builds and flashes one electrolyte system.
+   *
+   * @param temperatureK temperature in K
+   * @param pressureBara pressure in bara
+   * @param co2Moles CO2 inventory in mol
+   * @param waterMoles water inventory in mol
+   * @param naclMoles NaCl formula-unit inventory in mol
+   * @param kclMoles KCl formula-unit inventory in mol
+   * @param cacl2Moles CaCl2 formula-unit inventory in mol
+   * @return flashed system
+   */
+  private static SystemInterface flashSystem(double temperatureK, double pressureBara, double co2Moles,
+      double waterMoles, double naclMoles, double kclMoles, double cacl2Moles) {
+    SystemInterface fluid = new SystemElectrolyteCPAstatoil(temperatureK, pressureBara);
+    fluid.addComponent("CO2", co2Moles);
+    fluid.addComponent("water", waterMoles);
+    if (naclMoles > 0.0) {
+      fluid.addComponent("Na+", naclMoles);
+    }
+    if (kclMoles > 0.0) {
+      fluid.addComponent("K+", kclMoles);
+    }
+    if (cacl2Moles > 0.0) {
+      fluid.addComponent("Ca++", cacl2Moles);
+    }
+    fluid.addComponent("Cl-", naclMoles + kclMoles + 2.0 * cacl2Moles);
+    fluid.setMixingRule(10);
+    fluid.setMultiPhaseCheck(true);
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.init(1);
+    return fluid;
   }
 
   /**
@@ -435,6 +467,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
     private final String phaseTypes;
     private final double componentBalanceResidualMol;
     private final double molecularLogFugacityResidual;
+    private final double co2FeedMoles;
 
     /**
      * Creates a validated trial.
@@ -444,14 +477,16 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
      * @param phaseTypes joined phase labels
      * @param componentBalanceResidualMol maximum component balance residual in mol
      * @param molecularLogFugacityResidual maximum molecular log fugacity ratio
+     * @param co2FeedMoles CO2 reservoir actually used, which exceeds the requested one after a retry
      */
     private Trial(PhaseInterface aqueous, double co2PartialPressureBara, String phaseTypes,
-        double componentBalanceResidualMol, double molecularLogFugacityResidual) {
+        double componentBalanceResidualMol, double molecularLogFugacityResidual, double co2FeedMoles) {
       this.aqueous = aqueous;
       this.co2PartialPressureBara = co2PartialPressureBara;
       this.phaseTypes = phaseTypes;
       this.componentBalanceResidualMol = componentBalanceResidualMol;
       this.molecularLogFugacityResidual = molecularLogFugacityResidual;
+      this.co2FeedMoles = co2FeedMoles;
     }
   }
 

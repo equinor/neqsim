@@ -48,6 +48,13 @@ may label the CO2-rich phase as oil at high pressure (for example 40 MPa). The
 molecular log-fugacity residual is reported in the CSV rather than gated: at
 high pressure it is a model diagnostic, not a solver-tolerance check.
 
+The flash can return a spurious single phase for a feed that sits a tiny step
+from a feed that splits correctly (423.15 K, 38.531 MPa, 15 mass percent KCl
+is one such state). The saturated aqueous composition does not depend on the
+reservoir size, so the test retries with a 10 percent larger CO2 reservoir, up
+to five times. The reservoir actually used is written to the `co2_feed_moles`
+column, so a value above 10 flags a retried point.
+
 These high-temperature measurements are an independent dissolved-CO2
 diagnostic and were not used to fit NeqSim in this increment. They separate the
 aqueous CO2/water-activity path from hydrate guest occupancy, but do not replace
