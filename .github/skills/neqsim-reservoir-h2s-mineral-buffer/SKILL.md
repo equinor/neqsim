@@ -1,30 +1,42 @@
 ---
 name: neqsim-reservoir-h2s-mineral-buffer
-description: "Original (pre-souring) H2S in reservoir fluids from mineral buffering: pyrite + Fe-carbonate with the CH4/CO2 of the fluid fixes the H2S fugacity, which explains the exponential rise of H2S with reservoir temperature (Haaland 1999 correlation, about 54 kJ/mol). USE WHEN: a task asks what H2S to expect in a new reservoir or discovery, why H2S rises with temperature, whether a measured H2S is natural or souring, or which mineral reaction controls H2S."
-version: "0.1.0"
 calculation_basis: "neqsim-java"
-required_packages:
-  - "neqsim>=3.29.0 (neqsim.thermo.util.mineral: SolidGasReactionEquilibrium, MineralH2SBuffers, ReservoirH2SEstimator)"
+version: "0.1.0"
+description: "Original (pre-souring) H2S in reservoir fluids from mineral buffering: pyrite + Fe-carbonate with the CH4/CO2 of the fluid fixes the H2S fugacity, which explains the exponential rise of H2S with reservoir temperature (Haaland 1999 correlation, about 54 kJ/mol). USE WHEN: a task asks what H2S to expect in a new reservoir or discovery, why H2S rises with temperature, whether a measured H2S is natural or souring, or which mineral reaction controls H2S."
+last_verified: "2026-11-09"
+requires:
+  python_packages: ["neqsim"]
+  java_packages: ["neqsim.thermo.util.mineral (SolidGasReactionEquilibrium, MineralH2SBuffers, ReservoirH2SEstimator; equinor/neqsim#4945)"]
+  env: []
+  network: []
 ---
 
 # Original reservoir H2S from mineral buffering
 
-## When to use
+In clastic reservoirs with excess iron minerals, the H2S content of the reservoir fluid is set by equilibrium with the stable Fe minerals, not by how much sulfur was generated. Pyrite and an Fe-bearing carbonate (siderite or ankerite) buffer the H2S fugacity with the CH4/CO2 of the fluid as redox pair. The reaction enthalpy (about 55 kJ per mol H2S) is the same as the apparent enthalpy of the Håland et al. (1999) correlation of H2S versus reservoir temperature on the Norwegian shelf, which is why H2S doubles about every 18 °C.
 
-- Expected H2S in a new well, discovery or field before production (design basis, materials, scavenger sizing).
+## When to Use
+
+- Expected original H2S in a new well, discovery or field before production (design basis, materials screening, scavenger sizing).
 - Explaining why H2S in sandstone reservoirs rises from about 0.1 ppm at 50 °C to about 30 ppm at 190 °C.
-- Deciding whether a measured H2S is the natural level or souring from injection water: compare with the buffer at
-  the same temperature, pressure and CO2.
+- Deciding whether a measured H2S is the natural level or souring from injection water: compare with the buffer at the same temperature, pressure and CO2.
 - Testing a proposed mineral reaction (for example FeS + H2O + CO2 = FeCO3 + H2S) against the phase rule.
 
-Not for: production souring from seawater injection (use `neqsim-reservoir-souring-correlation`), separator-gas to
-wellstream conversion (use `neqsim-h2s-phase-partitioning`), or sour carbonate reservoirs with active thermochemical
-sulfate reduction (percent-level H2S, kinetically controlled).
+Not for: production souring from seawater injection (use `neqsim-reservoir-souring-correlation`), separator-gas to wellstream conversion (use `neqsim-h2s-phase-partitioning`), or sour carbonate reservoirs with active thermochemical sulfate reduction (percent-level H2S, kinetically controlled).
 
-## Physics
+## Inputs
 
-In clastic reservoirs with excess iron minerals, H2S is not set by how much sulfur was generated but by equilibrium
-with the stable Fe minerals. With CH4/CO2 as the redox pair of the fluid:
+- Reservoir-fluid composition (mol %, with C7+ as a TBP fraction: mole fraction, molar mass, density); CO2 and methane are required.
+- Reservoir temperature (°C) and pressure (bara).
+- Optional: formation-water activity (about 0.93-0.99 for brines), Fe-carbonate activity (1 for pure siderite; default 0.38 calibrated on the Norwegian shelf), whether sulfate minerals are present.
+
+## Outputs
+
+- H2S in the reservoir fluid (ppm mol) and its fugacity (bar); the equilibrated fluid for flashing to separator conditions.
+- Phase-rule margins: log10 CO2-fugacity margin over the siderite-magnetite boundary and log10 H2S margin over the pyrite-pyrrhotite boundary, plus `isBufferConsistent()`.
+- Warnings: extrapolated heat capacity, metastable 1-bar water reference, low-temperature kinetics, possible thermochemical sulfate reduction.
+
+## Engineering Method
 
 ```
 4 FeS2 + CH4 + 3 CO2 + 6 H2O = 4 FeCO3 + 8 H2S
@@ -32,19 +44,13 @@ with the stable Fe minerals. With CH4/CO2 as the redox pair of the fluid:
 y(H2S) = f(H2S) / (phi(H2S) P)
 ```
 
-- dH per mol H2S is about 55 kJ/mol, the same as the apparent enthalpy of the Håland et al. (1999) correlation
-  (ln ppm = 17.58 - 6478/T, digitized from the published curve, 70-190 °C). This is why H2S doubles about every 18 °C.
-- A second contribution is CO2, which itself rises with temperature (about 0.3 mol % at 80 °C to about 4 % at 160 °C
-  in Norwegian shelf fluids, Smith and Ehrenberg 1989). Higher pressure and lower phi(H2S) at depth partly offset it.
-  Typical split of the rise 80 to 160 °C (x55): K(T) +3.5, CO2 +1.6, pressure -0.9, phi -0.3 (ln units).
-- Phase rule: at shelf CO2 levels siderite is stable versus magnetite (median 1.6 log units margin) and pyrite versus
-  pyrrhotite, so pyrite + Fe-carbonate is the buffering pair. Reactions with pyrrhotite (troilite) or magnetite are
-  metastable: FeS + H2O + CO2 = FeCO3 + H2S gives about 10x too much H2S and too flat a trend.
-- Sulfate reduction (bacterial below about 80 °C, thermochemical above about 120 °C) supplies sulfur but its activation
-  energies (120-210 kJ/mol) are far too steep to set the ppm baseline; with iron in excess the minerals take up the
-  surplus. Without iron (carbonates) or with active TSR, H2S can exceed the buffer by orders of magnitude.
+- ln K(T) from phase-specific thermochemistry (USGS Bulletin 2131 minerals, NIST-JANAF gases) with condensed-phase pressure correction (constant solid volumes, IAPWS-IF97 water). Gas non-ideality enters only through the EOS fugacities of the actual fluid.
+- Slope: at fixed CH4 and CO2 fugacities, d ln f(H2S)/d(1/T) = -dH/(8R), dH/8 about 55 kJ/mol. The digitized Håland curve is ln ppm = 17.58 - 6478/T (70-190 °C).
+- CO2 is a second control: at given temperature y(H2S) is proportional to f(CO2)^(3/8). On the Norwegian shelf CO2 rises from about 0.3 % at 80 °C to about 4 % at 160 °C (Smith and Ehrenberg 1989). Split of the rise 80 to 160 °C (x55): K(T) +3.5, CO2 +1.6, pressure -0.9, phi(H2S) -0.3 (ln units).
+- Phase rule: at shelf CO2 levels siderite is stable versus magnetite (median 1.6 log units margin) and pyrite versus pyrrhotite, so pyrite + Fe-carbonate is the buffering pair. Reactions with pyrrhotite or magnetite are metastable; FeS + H2O + CO2 = FeCO3 + H2S gives about 10x too much H2S and too flat a trend.
+- Sulfate reduction supplies sulfur but its activation energies (120-210 kJ/mol) are far too steep to set the ppm baseline; with iron in excess the minerals take up the surplus.
 
-## Calculation (NeqSim Java, Python via jpype)
+## Python Usage Pattern
 
 ```python
 from neqsim import jneqsim
@@ -62,35 +68,37 @@ e = est.estimate(fluid)
 print(e.getH2SPpm(), e.isBufferConsistent(), list(e.getWarnings()))
 ```
 
-- Use the measured reservoir-fluid composition (with C7+ as a TBP fraction) at reservoir T and P; the estimate is ppm
-  mol in the whole reservoir fluid. Gas and oil follow the same fugacity law.
-- `setFeCarbonateActivity(1.0)` gives the pure-siderite, uncalibrated value (0.61x the correlation on shelf fluids).
-- Other buffers: `MineralH2SBuffers.all()` with `SolidGasReactionEquilibrium.solveForGas(fluid, "H2S")`.
+Other buffers: `MineralH2SBuffers.all()` with `SolidGasReactionEquilibrium.solveForGas(fluid, "H2S")`; `setFeCarbonateActivity(1.0)` gives the pure-siderite value (0.61x the correlation on shelf fluids).
 
-## Uncertainty and validation
+## Validation Checklist
 
-- Siderite dfH (±5.5 kJ/mol, USGS Bulletin 2131) dominates: about x2.3 per standard deviation in H2S. Fe-carbonate
-  activity 1 to 0.15: x0.6 to x1.6 around the calibrated value. Composition and pressure spread at one temperature:
-  about x1.4. Water activity and EOS (SRK vs PR, median +4 %): small.
-- Monte Carlo at 130-150 °C on shelf fluids: P10/P50/P90 about 2 / 7.5 / 24 ppm (correlation: 6.6 ppm).
-- Validate against measured wellsite (DST) H2S. Laboratory PVT compositions usually report H2S as 0 because ppm H2S is
-  lost to sample cylinders and steel; do not use them as H2S measurements.
+- [ ] Fluid composition is a reservoir fluid at reservoir T and P (not separator gas); CO2 and methane present.
+- [ ] `isBufferConsistent()` is true (siderite and pyrite stable); otherwise the buffer does not apply.
+- [ ] Temperature above about 70 °C, or the result is treated as an upper bound.
+- [ ] Compared with measured wellsite/DST H2S converted to the same basis (flash the equilibrated fluid to separator conditions).
+- [ ] Uncertainty reported: siderite dfH (±5.5 kJ/mol) gives about x2.3 per standard deviation; P10/P90 rather than a single value.
 
-## Gotchas
+## Common Mistakes
 
-| Gotcha | Handling |
+| Mistake | Correction |
 | --- | --- |
-| Below about 70 °C | Equilibrium is slow; measured H2S is often lower; the estimator warns. |
-| CO2 below the siderite-magnetite boundary | Buffer not valid (`isBufferConsistent()` false); magnetite/chlorite controls. |
-| Carbonate reservoir with anhydrite above about 120 °C | TSR can exceed the buffer; set `setSulfateMineralsPresent(true)` for the warning. |
-| Measured value after water injection | Natural baseline plus souring; subtract the buffer value before fitting souring. |
-| Units | Estimate is mol ppm in the reservoir fluid, not in separator gas; convert with `neqsim-h2s-phase-partitioning`. |
+| Using laboratory PVT H2S as data | ppm H2S is lost to cylinder steel; lab compositions usually report 0. Use wellsite measurements. |
+| Comparing reservoir-fluid ppm with separator-gas ppm | Flash the equilibrated fluid to separator conditions, or convert with `neqsim-h2s-phase-partitioning`. |
+| Writing the buffer with a fixed H2 fugacity | In a reservoir H2 is set by CH4/CO2/H2O; write the buffer with CH4 and CO2 (pyrite-pyrrhotite then has about 112 kJ per mol H2S, not 49). |
+| Ignoring CO2 | At a given temperature H2S scales with f(CO2)^(3/8); CO2-poor reservoirs sit below the temperature trend. |
+| Fitting souring correlations to total H2S | Subtract the buffer baseline first. |
+
+## Limitations
+
+- Calibrated for clastic reservoirs with pyrite and Fe-carbonate; carbonates with anhydrite and active TSR can exceed it by orders of magnitude.
+- Fe-carbonate activity is calibrated (0.38), not measured; petrography per field narrows it.
+- Troilite stands in for pyrrhotite; no mackinawite, Fe-chlorite or carbonate solid-solution model yet.
+- Constant solid molar volumes; below about 70 °C equilibrium is slow.
+- Validated on Norwegian shelf data (Håland curve, DST and well-report H2S for about 80 wellbores): median predicted/measured about 1.0, log10 RMSE 0.2-0.3; measured CO2 exponent at given temperature 0.48 (95 % CI 0.26-0.70) against 0.375 predicted.
 
 ## References
 
-- Håland, K., Barrufet, M.A., Rønningsen, H.P., Meisingset, K.K. (1999). An empirical correlation between reservoir
-  temperature and the concentration of hydrogen sulfide. SPE-50763-MS. https://doi.org/10.2118/50763-MS
-- Smith, J.T., Ehrenberg, S.N. (1989). Correlation of carbon dioxide abundance with temperature in clastic
-  hydrocarbon reservoirs: relationship to inorganic chemical equilibrium. Marine and Petroleum Geology 6, 129-135.
+- Håland, K., Barrufet, M.A., Rønningsen, H.P., Meisingset, K.K. (1999). An empirical correlation between reservoir temperature and the concentration of hydrogen sulfide. SPE-50763-MS. https://doi.org/10.2118/50763-MS
+- Smith, J.T., Ehrenberg, S.N. (1989). Correlation of carbon dioxide abundance with temperature in clastic hydrocarbon reservoirs: relationship to inorganic chemical equilibrium. Marine and Petroleum Geology 6, 129-135.
 - Robie, R.A., Hemingway, B.S. (1995). USGS Bulletin 2131. Chase, M.W. (1998). NIST-JANAF Thermochemical Tables.
-- Machel, H.G. (2001). Bacterial and thermochemical sulfate reduction in diagenetic settings. Sedimentary Geology 140.
+- Machel, H.G. (2001). Bacterial and thermochemical sulfate reduction in diagenetic settings. Sedimentary Geology 140, 143-175.
