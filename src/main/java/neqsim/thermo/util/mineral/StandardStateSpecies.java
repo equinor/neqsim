@@ -286,6 +286,78 @@ public final class StandardStateSpecies implements Serializable {
   }
 
   /**
+   * Pyrite, cubic FeS2, from Robie and Hemingway (1995) USGS Bulletin 2131: dfH298 of -171.5 +/- 1.7 kJ/mol, S298 of
+   * 52.9 +/- 0.1 J/(mol K), Cp fit 298-1015 K and molar volume of 23.94 cm3/mol.
+   *
+   * @return pyrite species
+   */
+  public static StandardStateSpecies pyrite() {
+    return robieHemingway("pyrite", Phase.SOLID, formula("Fe", 1.0, "S", 2.0), -171.5e3, 52.9,
+        new double[] {-20.32, 0.0503, -3.200e6, 1787.0, 0.0}, 298.15, 1015.0, PressureModel.CONSTANT_VOLUME, 23.94e-6,
+        1.7e3, 0.1, "Robie and Hemingway (1995), USGS Bulletin 2131, pyrite");
+  }
+
+  /**
+   * Magnetite, Fe3O4, from Robie and Hemingway (1995) USGS Bulletin 2131: dfH298 of -1115.7 +/- 2.1 kJ/mol, S298 of
+   * 146.1 +/- 0.4 J/(mol K), Cp fit 298-800 K (first segment) and molar volume of 44.52 cm3/mol.
+   *
+   * @return magnetite species
+   */
+  public static StandardStateSpecies magnetite() {
+    return robieHemingway("magnetite", Phase.SOLID, formula("Fe", 3.0, "O", 4.0), -1115.7e3, 146.1,
+        new double[] {2659.11, -2.5215, 2.0734e7, -36455.0, 0.0013677}, 298.15, 800.0, PressureModel.CONSTANT_VOLUME,
+        44.52e-6, 2.1e3, 0.4, "Robie and Hemingway (1995), USGS Bulletin 2131, magnetite");
+  }
+
+  /**
+   * Calcite, CaCO3, from Robie and Hemingway (1995) USGS Bulletin 2131: dfH298 of -1207.4 +/- 1.3 kJ/mol, S298 of 91.7
+   * +/- 0.2 J/(mol K), Cp fit 298-1200 K and molar volume of 36.93 cm3/mol.
+   *
+   * @return calcite species
+   */
+  public static StandardStateSpecies calcite() {
+    return robieHemingway("calcite", Phase.SOLID, formula("Ca", 1.0, "C", 1.0, "O", 3.0), -1207.4e3, 91.7,
+        new double[] {99.72, 0.02692, -2.158e6, 0.0, 0.0}, 298.15, 1200.0, PressureModel.CONSTANT_VOLUME, 36.93e-6,
+        1.3e3, 0.2, "Robie and Hemingway (1995), USGS Bulletin 2131, calcite");
+  }
+
+  /**
+   * Anhydrite, CaSO4, from Robie and Hemingway (1995) USGS Bulletin 2131: dfH298 of -1434.4 +/- 4.2 kJ/mol, S298 of
+   * 107.4 +/- 0.2 J/(mol K), Cp fit 298-1000 K and molar volume of 46.01 cm3/mol.
+   *
+   * @return anhydrite species
+   */
+  public static StandardStateSpecies anhydrite() {
+    return robieHemingway("anhydrite", Phase.SOLID, formula("Ca", 1.0, "S", 1.0, "O", 4.0), -1434.4e3, 107.4,
+        new double[] {372.8, -0.1574, 1.695e6, -4330.8, 7.99e-5}, 298.15, 1000.0, PressureModel.CONSTANT_VOLUME,
+        46.01e-6, 4.2e3, 0.2, "Robie and Hemingway (1995), USGS Bulletin 2131, anhydrite");
+  }
+
+  /**
+   * Methane ideal gas from NIST-JANAF (Chase, 1998), 298-1300 K. Named "methane" to match the NeqSim component.
+   *
+   * @return methane ideal-gas species
+   */
+  public static StandardStateSpecies methaneGas() {
+    return shomate("methane", Phase.IDEAL_GAS, formula("C", 1.0, "H", 4.0),
+        new double[][] {{-0.703029, 108.4773, -42.52157, 5.862788, 0.678565, -76.84376, 158.7163, -74.87310}},
+        new double[] {298.0}, new double[] {1300.0}, PressureModel.IDEAL_GAS, 0.0, Double.NaN, Double.NaN,
+        "NIST-JANAF, Chase (1998), ideal gas");
+  }
+
+  /**
+   * Hydrogen ideal gas from NIST-JANAF (Chase, 1998), 298-1000 K. Named "hydrogen" to match the NeqSim component.
+   *
+   * @return hydrogen ideal-gas species
+   */
+  public static StandardStateSpecies hydrogenGas() {
+    return shomate("hydrogen", Phase.IDEAL_GAS, formula("H", 2.0),
+        new double[][] {{33.066178, -11.363417, 11.432816, -2.772874, -0.158558, -9.980797, 172.707974, 0.0}},
+        new double[] {298.0}, new double[] {1000.0}, PressureModel.IDEAL_GAS, 0.0, Double.NaN, Double.NaN,
+        "NIST-JANAF, Chase (1998), ideal gas");
+  }
+
+  /**
    * Builds an element map from alternating symbol and count arguments.
    *
    * @param symbolsAndCounts alternating element symbol (String) and atom count (Double)
