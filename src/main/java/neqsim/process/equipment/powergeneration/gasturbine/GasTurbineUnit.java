@@ -72,6 +72,9 @@ public class GasTurbineUnit extends TwoPortEquipment {
   private double maxExhaustTemperatureK = 0.0;
   /** Fraction of site power lost per kelvin that the full-load exhaust temperature exceeds the limit. */
   private double exhaustLimitPowerLossPerKelvin = 0.01;
+  /** Installation pressure-loss correction parameters, replaced as a whole (immutable holder). */
+  private InstallationLosses installationLosses = new InstallationLosses(0.0, 0.0, 0.0, 0.0, 0.010, 0.004, 0.005,
+      0.005);
   /** Mean exhaust gas specific heat used for waste-heat duty [kJ/kg/K]. */
   private double exhaustCpKJPerKgK = 1.10;
   private boolean exhaustTemperatureLimited = false;
@@ -318,7 +321,8 @@ public class GasTurbineUnit extends TwoPortEquipment {
     double deliveredLoad = Math.min(1.0, this.loadFraction);
     double loadForMap = Math.max(performanceMap.getMinLoadFraction() * 0.5, deliveredLoad);
     double baseHeatRate = performanceMap.getHeatRate(spec.getHeatRateKJPerKWh(), loadForMap, ambientTemperatureK);
-    this.effectiveHeatRateKJPerKWh = baseHeatRate * (1.0 + degradation.getTotalHeatRatePenalty());
+    this.effectiveHeatRateKJPerKWh = baseHeatRate * (1.0 + degradation.getTotalHeatRatePenalty())
+        * getInstallationHeatRateFactor();
 
     // 5) Fuel mass flow from heat-rate definition (LHV basis)
     // heatRate [kJ/kWh] = fuel energy / shaft energy
@@ -415,7 +419,8 @@ public class GasTurbineUnit extends TwoPortEquipment {
     }
     GasTurbinePerformanceMap map = performanceMap != null ? performanceMap : GasTurbinePerformanceMap.fromSpec(spec);
     double derate = degradation != null ? degradation.getPowerDerateFactor() : 1.0;
-    double power = map.getAvailablePower(spec.getRatedPowerW(), ambientTemperatureK, ambientPressureBara) * derate;
+    double power = map.getAvailablePower(spec.getRatedPowerW(), ambientTemperatureK, ambientPressureBara) * derate
+        * getInstallationPowerFactor();
     if (maxExhaustTemperatureK > 0.0) {
       double excess = map.getFullLoadExhaustTemperature(spec.getExhaustTemperatureK(), ambientTemperatureK)
           - maxExhaustTemperatureK;
@@ -424,6 +429,109 @@ public class GasTurbineUnit extends TwoPortEquipment {
       }
     }
     return power;
+  }
+
+  /**
+   * Set installed inlet and exhaust duct pressure losses. The rating is corrected for the difference between these and
+   * the reference losses the OEM rating is based on (default 0, i.e. ISO rating without installation losses).
+   *
+   * @param inletLossKPa inlet filter/duct pressure loss [kPa], must be finite and non-negative
+   * @param exhaustLossKPa exhaust duct/stack pressure loss [kPa], must be finite and non-negative
+   */
+  public void setInstallationPressureLosses(double inletLossKPa, double exhaustLossKPa) {
+    requireNonNegative(inletLossKPa, "inletLossKPa");
+    requireNonNegative(exhaustLossKPa, "exhaustLossKPa");
+    InstallationLosses c = installationLosses;
+    installationLosses = new InstallationLosses(inletLossKPa, exhaustLossKPa, c.refInletKPa, c.refExhaustKPa,
+        c.inletPower, c.inletHeatRate, c.exhaustPower, c.exhaustHeatRate);
+  }
+
+  /**
+   * Set the pressure losses the supplied rating already includes.
+   *
+   * @param inletLossKPa reference inlet loss [kPa], finite and non-negative
+   * @param exhaustLossKPa reference exhaust loss [kPa], finite and non-negative
+   */
+  public void setReferencePressureLosses(double inletLossKPa, double exhaustLossKPa) {
+    requireNonNegative(inletLossKPa, "inletLossKPa");
+    requireNonNegative(exhaustLossKPa, "exhaustLossKPa");
+    InstallationLosses c = installationLosses;
+    installationLosses = new InstallationLosses(c.inletKPa, c.exhaustKPa, inletLossKPa, exhaustLossKPa, c.inletPower,
+        c.inletHeatRate, c.exhaustPower, c.exhaustHeatRate);
+  }
+
+  /**
+   * Set pressure-loss sensitivities (OEM correction curves linearised about the reference losses). Defaults are generic
+   * screening values, not OEM data.
+   *
+   * @param inletPowerPerKPa fractional power loss per kPa of inlet loss
+   * @param inletHeatRatePerKPa fractional heat-rate rise per kPa of inlet loss
+   * @param exhaustPowerPerKPa fractional power loss per kPa of exhaust loss
+   * @param exhaustHeatRatePerKPa fractional heat-rate rise per kPa of exhaust loss
+   */
+  public void setPressureLossSensitivities(double inletPowerPerKPa, double inletHeatRatePerKPa,
+      double exhaustPowerPerKPa, double exhaustHeatRatePerKPa) {
+    requireNonNegative(inletPowerPerKPa, "inletPowerPerKPa");
+    requireNonNegative(inletHeatRatePerKPa, "inletHeatRatePerKPa");
+    requireNonNegative(exhaustPowerPerKPa, "exhaustPowerPerKPa");
+    requireNonNegative(exhaustHeatRatePerKPa, "exhaustHeatRatePerKPa");
+    InstallationLosses c = installationLosses;
+    installationLosses = new InstallationLosses(c.inletKPa, c.exhaustKPa, c.refInletKPa, c.refExhaustKPa,
+        inletPowerPerKPa, inletHeatRatePerKPa, exhaustPowerPerKPa, exhaustHeatRatePerKPa);
+  }
+
+  /**
+   * Power multiplier for installed pressure losses relative to the rating basis.
+   *
+   * @return multiplier, floored at 0.5
+   */
+  public double getInstallationPowerFactor() {
+    InstallationLosses c = installationLosses;
+    double f = 1.0 - c.inletPower * (c.inletKPa - c.refInletKPa) - c.exhaustPower * (c.exhaustKPa - c.refExhaustKPa);
+    return Math.max(0.5, f);
+  }
+
+  /**
+   * Heat-rate multiplier for installed pressure losses relative to the rating basis.
+   *
+   * @return multiplier, floored at 0.5
+   */
+  public double getInstallationHeatRateFactor() {
+    InstallationLosses c = installationLosses;
+    double f = 1.0 + c.inletHeatRate * (c.inletKPa - c.refInletKPa)
+        + c.exhaustHeatRate * (c.exhaustKPa - c.refExhaustKPa);
+    return Math.max(0.5, f);
+  }
+
+  /** Immutable installation pressure-loss parameters (kPa and fractional sensitivities per kPa). */
+  private static final class InstallationLosses implements java.io.Serializable {
+    private static final long serialVersionUID = 1L;
+    final double inletKPa;
+    final double exhaustKPa;
+    final double refInletKPa;
+    final double refExhaustKPa;
+    final double inletPower;
+    final double inletHeatRate;
+    final double exhaustPower;
+    final double exhaustHeatRate;
+
+    InstallationLosses(double inletKPa, double exhaustKPa, double refInletKPa, double refExhaustKPa, double inletPower,
+        double inletHeatRate, double exhaustPower, double exhaustHeatRate) {
+      this.inletKPa = inletKPa;
+      this.exhaustKPa = exhaustKPa;
+      this.refInletKPa = refInletKPa;
+      this.refExhaustKPa = refExhaustKPa;
+      this.inletPower = inletPower;
+      this.inletHeatRate = inletHeatRate;
+      this.exhaustPower = exhaustPower;
+      this.exhaustHeatRate = exhaustHeatRate;
+    }
+  }
+
+  private static void requireNonNegative(double v, String name) {
+    if (!Double.isFinite(v) || v < 0.0) {
+      throw new IllegalArgumentException(name + " must be finite and non-negative");
+    }
   }
 
   /**
