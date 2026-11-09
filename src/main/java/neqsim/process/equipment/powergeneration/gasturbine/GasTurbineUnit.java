@@ -72,22 +72,9 @@ public class GasTurbineUnit extends TwoPortEquipment {
   private double maxExhaustTemperatureK = 0.0;
   /** Fraction of site power lost per kelvin that the full-load exhaust temperature exceeds the limit. */
   private double exhaustLimitPowerLossPerKelvin = 0.01;
-  /** Installed inlet duct/filter pressure loss [kPa]. */
-  private double inletPressureLossKPa = 0.0;
-  /** Installed exhaust duct/stack pressure loss [kPa]. */
-  private double exhaustPressureLossKPa = 0.0;
-  /** Inlet loss the rating is based on [kPa] (ISO rating: 0). */
-  private double referenceInletPressureLossKPa = 0.0;
-  /** Exhaust loss the rating is based on [kPa] (ISO rating: 0). */
-  private double referenceExhaustPressureLossKPa = 0.0;
-  /** Fractional power loss per kPa of inlet loss (screening default 1 % per kPa). */
-  private double inletLossPowerSensitivityPerKPa = 0.010;
-  /** Fractional heat-rate rise per kPa of inlet loss (screening default 0.4 % per kPa). */
-  private double inletLossHeatRateSensitivityPerKPa = 0.004;
-  /** Fractional power loss per kPa of exhaust loss (screening default 0.5 % per kPa). */
-  private double exhaustLossPowerSensitivityPerKPa = 0.005;
-  /** Fractional heat-rate rise per kPa of exhaust loss (screening default 0.5 % per kPa). */
-  private double exhaustLossHeatRateSensitivityPerKPa = 0.005;
+  /** Installation pressure-loss correction parameters, replaced as a whole (immutable holder). */
+  private InstallationLosses installationLosses = new InstallationLosses(0.0, 0.0, 0.0, 0.0, 0.010, 0.004, 0.005,
+      0.005);
   /** Mean exhaust gas specific heat used for waste-heat duty [kJ/kg/K]. */
   private double exhaustCpKJPerKgK = 1.10;
   private boolean exhaustTemperatureLimited = false;
@@ -454,8 +441,9 @@ public class GasTurbineUnit extends TwoPortEquipment {
   public void setInstallationPressureLosses(double inletLossKPa, double exhaustLossKPa) {
     requireNonNegative(inletLossKPa, "inletLossKPa");
     requireNonNegative(exhaustLossKPa, "exhaustLossKPa");
-    this.inletPressureLossKPa = inletLossKPa;
-    this.exhaustPressureLossKPa = exhaustLossKPa;
+    InstallationLosses c = installationLosses;
+    installationLosses = new InstallationLosses(inletLossKPa, exhaustLossKPa, c.refInletKPa, c.refExhaustKPa,
+        c.inletPower, c.inletHeatRate, c.exhaustPower, c.exhaustHeatRate);
   }
 
   /**
@@ -467,8 +455,9 @@ public class GasTurbineUnit extends TwoPortEquipment {
   public void setReferencePressureLosses(double inletLossKPa, double exhaustLossKPa) {
     requireNonNegative(inletLossKPa, "inletLossKPa");
     requireNonNegative(exhaustLossKPa, "exhaustLossKPa");
-    this.referenceInletPressureLossKPa = inletLossKPa;
-    this.referenceExhaustPressureLossKPa = exhaustLossKPa;
+    InstallationLosses c = installationLosses;
+    installationLosses = new InstallationLosses(c.inletKPa, c.exhaustKPa, inletLossKPa, exhaustLossKPa, c.inletPower,
+        c.inletHeatRate, c.exhaustPower, c.exhaustHeatRate);
   }
 
   /**
@@ -486,10 +475,9 @@ public class GasTurbineUnit extends TwoPortEquipment {
     requireNonNegative(inletHeatRatePerKPa, "inletHeatRatePerKPa");
     requireNonNegative(exhaustPowerPerKPa, "exhaustPowerPerKPa");
     requireNonNegative(exhaustHeatRatePerKPa, "exhaustHeatRatePerKPa");
-    this.inletLossPowerSensitivityPerKPa = inletPowerPerKPa;
-    this.inletLossHeatRateSensitivityPerKPa = inletHeatRatePerKPa;
-    this.exhaustLossPowerSensitivityPerKPa = exhaustPowerPerKPa;
-    this.exhaustLossHeatRateSensitivityPerKPa = exhaustHeatRatePerKPa;
+    InstallationLosses c = installationLosses;
+    installationLosses = new InstallationLosses(c.inletKPa, c.exhaustKPa, c.refInletKPa, c.refExhaustKPa,
+        inletPowerPerKPa, inletHeatRatePerKPa, exhaustPowerPerKPa, exhaustHeatRatePerKPa);
   }
 
   /**
@@ -498,8 +486,8 @@ public class GasTurbineUnit extends TwoPortEquipment {
    * @return multiplier, floored at 0.5
    */
   public double getInstallationPowerFactor() {
-    double f = 1.0 - inletLossPowerSensitivityPerKPa * (inletPressureLossKPa - referenceInletPressureLossKPa)
-        - exhaustLossPowerSensitivityPerKPa * (exhaustPressureLossKPa - referenceExhaustPressureLossKPa);
+    InstallationLosses c = installationLosses;
+    double f = 1.0 - c.inletPower * (c.inletKPa - c.refInletKPa) - c.exhaustPower * (c.exhaustKPa - c.refExhaustKPa);
     return Math.max(0.5, f);
   }
 
@@ -509,9 +497,35 @@ public class GasTurbineUnit extends TwoPortEquipment {
    * @return multiplier, floored at 0.5
    */
   public double getInstallationHeatRateFactor() {
-    double f = 1.0 + inletLossHeatRateSensitivityPerKPa * (inletPressureLossKPa - referenceInletPressureLossKPa)
-        + exhaustLossHeatRateSensitivityPerKPa * (exhaustPressureLossKPa - referenceExhaustPressureLossKPa);
+    InstallationLosses c = installationLosses;
+    double f = 1.0 + c.inletHeatRate * (c.inletKPa - c.refInletKPa)
+        + c.exhaustHeatRate * (c.exhaustKPa - c.refExhaustKPa);
     return Math.max(0.5, f);
+  }
+
+  /** Immutable installation pressure-loss parameters (kPa and fractional sensitivities per kPa). */
+  private static final class InstallationLosses implements java.io.Serializable {
+    private static final long serialVersionUID = 1L;
+    final double inletKPa;
+    final double exhaustKPa;
+    final double refInletKPa;
+    final double refExhaustKPa;
+    final double inletPower;
+    final double inletHeatRate;
+    final double exhaustPower;
+    final double exhaustHeatRate;
+
+    InstallationLosses(double inletKPa, double exhaustKPa, double refInletKPa, double refExhaustKPa, double inletPower,
+        double inletHeatRate, double exhaustPower, double exhaustHeatRate) {
+      this.inletKPa = inletKPa;
+      this.exhaustKPa = exhaustKPa;
+      this.refInletKPa = refInletKPa;
+      this.refExhaustKPa = refExhaustKPa;
+      this.inletPower = inletPower;
+      this.inletHeatRate = inletHeatRate;
+      this.exhaustPower = exhaustPower;
+      this.exhaustHeatRate = exhaustHeatRate;
+    }
   }
 
   private static void requireNonNegative(double v, String name) {
