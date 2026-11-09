@@ -171,6 +171,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Electrolyte CPA           | [docs/thermo/ElectrolyteCPAModel.md](thermo/ElectrolyteCPAModel.md)   | Electrolyte CPA model                                                                                                |
 | Pitzer Parameters         | [docs/thermo/pitzer_parameter_provenance.md](thermo/pitzer_parameter_provenance.md) | Pitzer dataset identity, provenance, mixed-ion coverage diagnostics, and adoption gates                              |
 | Pitzer Barite Qualification | [Barite mixing qualification](thermo/pitzer_barite_qualification.md) | Source gaps, frozen feeds and remaining independent precipitation evidence |
+| Solid-Gas Reaction Equilibrium | [docs/thermo/solid_gas_reaction_equilibrium.md](thermo/solid_gas_reaction_equilibrium.md) | Mineral-water-gas equilibrium constants with pressure corrections and EOS fugacities (FeS + H2O + CO2 = FeCO3 + H2S) |
 
 ### Chapter 7: Flash Calculations
 
