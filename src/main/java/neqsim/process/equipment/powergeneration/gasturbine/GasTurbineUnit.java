@@ -445,13 +445,13 @@ public class GasTurbineUnit extends TwoPortEquipment {
   }
 
   /**
-   * Set installed inlet and exhaust duct pressure losses. The rating is corrected for the difference between these
-   * and the reference losses the OEM rating is based on (default 0, i.e. ISO rating without installation losses).
+   * Set installed inlet and exhaust duct pressure losses. The rating is corrected for the difference between these and
+   * the reference losses the OEM rating is based on (default 0, i.e. ISO rating without installation losses).
    *
    * @param inletLossKPa inlet filter/duct pressure loss [kPa], must be finite and non-negative
    * @param exhaustLossKPa exhaust duct/stack pressure loss [kPa], must be finite and non-negative
    */
-  public void setInstallationPressureLosses(double inletLossKPa, double exhaustLossKPa) {
+  public synchronized void setInstallationPressureLosses(double inletLossKPa, double exhaustLossKPa) {
     requireNonNegative(inletLossKPa, "inletLossKPa");
     requireNonNegative(exhaustLossKPa, "exhaustLossKPa");
     this.inletPressureLossKPa = inletLossKPa;
@@ -464,7 +464,7 @@ public class GasTurbineUnit extends TwoPortEquipment {
    * @param inletLossKPa reference inlet loss [kPa], finite and non-negative
    * @param exhaustLossKPa reference exhaust loss [kPa], finite and non-negative
    */
-  public void setReferencePressureLosses(double inletLossKPa, double exhaustLossKPa) {
+  public synchronized void setReferencePressureLosses(double inletLossKPa, double exhaustLossKPa) {
     requireNonNegative(inletLossKPa, "inletLossKPa");
     requireNonNegative(exhaustLossKPa, "exhaustLossKPa");
     this.referenceInletPressureLossKPa = inletLossKPa;
@@ -480,7 +480,7 @@ public class GasTurbineUnit extends TwoPortEquipment {
    * @param exhaustPowerPerKPa fractional power loss per kPa of exhaust loss
    * @param exhaustHeatRatePerKPa fractional heat-rate rise per kPa of exhaust loss
    */
-  public void setPressureLossSensitivities(double inletPowerPerKPa, double inletHeatRatePerKPa,
+  public synchronized void setPressureLossSensitivities(double inletPowerPerKPa, double inletHeatRatePerKPa,
       double exhaustPowerPerKPa, double exhaustHeatRatePerKPa) {
     requireNonNegative(inletPowerPerKPa, "inletPowerPerKPa");
     requireNonNegative(inletHeatRatePerKPa, "inletHeatRatePerKPa");
