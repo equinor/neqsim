@@ -40,10 +40,13 @@ the source are not experimental residuals.
 
 Each state uses `SystemElectrolyteCPAstatoil`, mixing rule 10, the reported
 total pressure, a finite CO2 reservoir and one final aqueous kilogram of water.
-Feed water is compensated for evaporation. The assessment verifies gas and
-aqueous phase presence, ion confinement, component inventory, KCl mass
-fraction, molecular fugacity equality, the water basis, finite diagnostics and
-finite-reservoir independence.
+Feed water is compensated for evaporation. The assessment verifies two fluid
+phases with the ions confined to the aqueous phase, component inventory, salt
+mass fractions, the water basis, finite diagnostics and finite-reservoir
+independence. The non-aqueous phase is identified by position because NeqSim
+may label the CO2-rich phase as oil at high pressure (for example 40 MPa). The
+molecular log-fugacity residual is reported in the CSV rather than gated: at
+high pressure it is a model diagnostic, not a solver-tolerance check.
 
 These high-temperature measurements are an independent dissolved-CO2
 diagnostic and were not used to fit NeqSim in this increment. They separate the
