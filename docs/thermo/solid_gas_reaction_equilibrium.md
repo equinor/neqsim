@@ -127,6 +127,18 @@ standard deviation in H2S; the composition spread of NCS fluids at a given tempe
 about a factor 1.4. Values are the original, pre-production level: seawater-injection souring
 (see `neqsim-reservoir-souring-correlation`) adds to it later.
 
+### Equilibration temperature (H2S palaeothermometer)
+
+`equilibrationTemperature(fluid, measuredPpm)` inverts the buffer. It finds the temperature at
+which the buffered H2S of the fluid, at its present pressure and fixed composition, equals a
+measured value; an optional overload takes the search bounds in K. The difference from the
+present reservoir temperature tests whether the buffer kept the H2S of an earlier, hotter
+burial stage. At fixed composition, doubling H2S corresponds to roughly 20 K at 140 °C. That is
+about twice the step implied by the NCS-wide apparent enthalpy, because across the shelf CO2 also
+rises with depth. In an NCS study, uplifted Barents Sea wells gave only +6 °C, against +39 to +58 °C
+for a buffer frozen at maximum burial, so the buffer re-equilibrates on cooling. The method
+returns `NaN` when the measured value lies outside the buffered range between the bounds.
+
 ## Verification
 
 `SolidGasReactionEquilibriumTest` checks:

@@ -179,6 +179,77 @@ public class ReservoirH2SEstimator implements Serializable {
   }
 
   /**
+   * Finds the temperature at which the buffered H2S of the fluid equals a measured value (H2S palaeothermometer).
+   *
+   * <p>
+   * The buffered H2S rises monotonically with temperature at fixed composition and pressure. If the buffer equilibrated
+   * at an earlier, hotter burial stage and the reaction slowed on cooling, the measured H2S records that temperature;
+   * comparing the result with the present reservoir temperature gives the equilibration offset. The search uses
+   * bisection in temperature with the full equation-of-state buffer solution at each step.
+   * </p>
+   *
+   * @param fluid reservoir fluid at its present pressure (its temperature is not used); not modified
+   * @param measuredH2SPpm measured H2S in the reservoir fluid [ppm mol]
+   * @param lowTemperature lower bound of the search [K]
+   * @param highTemperature upper bound of the search [K]
+   * @return equilibration temperature [K], or {@code Double.NaN} if the measured value lies outside the buffered range
+   * between the bounds
+   * @throws IllegalArgumentException if the measured value is not positive or the bounds are not increasing
+   */
+  public double equilibrationTemperature(SystemInterface fluid, double measuredH2SPpm, double lowTemperature,
+      double highTemperature) {
+    if (!(measuredH2SPpm > 0.0)) {
+      throw new IllegalArgumentException("Measured H2S must be positive");
+    }
+    if (!(lowTemperature > 0.0 && highTemperature > lowTemperature)) {
+      throw new IllegalArgumentException("Temperature bounds must satisfy 0 < low < high");
+    }
+    double target = Math.log(measuredH2SPpm);
+    double lo = lowTemperature;
+    double hi = highTemperature;
+    double fLo = Math.log(bufferedPpmAt(fluid, lo)) - target;
+    double fHi = Math.log(bufferedPpmAt(fluid, hi)) - target;
+    if (fLo > 0.0 || fHi < 0.0) {
+      return Double.NaN;
+    }
+    for (int i = 0; i < 60 && hi - lo > 0.01; i++) {
+      double mid = 0.5 * (lo + hi);
+      double fMid = Math.log(bufferedPpmAt(fluid, mid)) - target;
+      if (fMid < 0.0) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
+    return 0.5 * (lo + hi);
+  }
+
+  /**
+   * Finds the equilibration temperature between 20 and 250 °C.
+   *
+   * @param fluid reservoir fluid at its present pressure; not modified
+   * @param measuredH2SPpm measured H2S in the reservoir fluid [ppm mol]
+   * @return equilibration temperature [K], or {@code Double.NaN} if outside the buffered range
+   * @throws IllegalArgumentException if the measured value is not positive
+   */
+  public double equilibrationTemperature(SystemInterface fluid, double measuredH2SPpm) {
+    return equilibrationTemperature(fluid, measuredH2SPpm, 293.15, 523.15);
+  }
+
+  /**
+   * Buffered H2S of a copy of the fluid at another temperature and the same pressure.
+   *
+   * @param fluid reservoir fluid; not modified
+   * @param temperature temperature [K]
+   * @return buffered H2S [ppm mol]
+   */
+  private double bufferedPpmAt(SystemInterface fluid, double temperature) {
+    SystemInterface work = fluid.clone();
+    work.setTemperature(temperature);
+    return estimate(work).getH2SPpm();
+  }
+
+  /**
    * Result of {@link ReservoirH2SEstimator#estimate(SystemInterface)}.
    *
    * @author esol

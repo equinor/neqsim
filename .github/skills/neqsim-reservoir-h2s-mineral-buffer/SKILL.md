@@ -70,6 +70,10 @@ print(e.getH2SPpm(), e.isBufferConsistent(), list(e.getWarnings()))
 
 Other buffers: `MineralH2SBuffers.all()` with `SolidGasReactionEquilibrium.solveForGas(fluid, "H2S")`; `setFeCarbonateActivity(1.0)` gives the pure-siderite value (0.61x the correlation on shelf fluids).
 
+Palaeothermometer: `est.equilibrationTemperature(fluid, measured_ppm)` returns the temperature (K) at which the buffer gives the measured H2S at the fluid's pressure and fixed composition (`NaN` outside 20-250 °C; an overload takes bounds). Compare it with the present temperature to test burial memory. At fixed composition, doubling H2S is about +20 K at 140 °C, twice the step of the shelf-wide apparent enthalpy, because shelf CO2 also rises with depth.
+
+Core mineralogy: the buffer needs pyrite and an Fe-carbonate (siderite or ankerite) to be present in the flow unit; their amount and the siderite/ankerite ratio do not change the value (phase rule). Use core XRD and thin sections as a presence screen. Count dolomite separately, because XRD does not resolve ankerite from Fe-poor red-bed dolocrete.
+
 ## Validation Checklist
 
 - [ ] Fluid composition is a reservoir fluid at reservoir T and P (not separator gas); CO2 and methane present.
@@ -87,6 +91,9 @@ Other buffers: `MineralH2SBuffers.all()` with `SolidGasReactionEquilibrium.solve
 | Writing the buffer with a fixed H2 fugacity | In a reservoir H2 is set by CH4/CO2/H2O; write the buffer with CH4 and CO2 (pyrite-pyrrhotite then has about 112 kJ per mol H2S, not 49). |
 | Ignoring CO2 | At a given temperature H2S scales with f(CO2)^(3/8); CO2-poor reservoirs sit below the temperature trend. |
 | Fitting souring correlations to total H2S | Subtract the buffer baseline first. |
+| Expecting more siderite in core to mean less H2S | Presence, not amount, sets the value; siderite-bearing wells give the calibrated activity 0.38 directly. |
+| Applying the buffer to continental red beds | Triassic red beds poor in pyrite and siderite measured 9-27x below the buffer; use it as a ceiling there. |
+| Predicting uplifted reservoirs at maximum burial temperature | The buffer re-equilibrates on cooling: uplifted wells kept only about +6 °C (about x1.4); use present temperature. |
 
 ## Limitations
 
@@ -94,7 +101,8 @@ Other buffers: `MineralH2SBuffers.all()` with `SolidGasReactionEquilibrium.solve
 - Fe-carbonate activity is calibrated (0.38), not measured; petrography per field narrows it.
 - Troilite stands in for pyrrhotite; no mackinawite, Fe-chlorite or carbonate solid-solution model yet.
 - Constant solid molar volumes; below about 70 °C equilibrium is slow.
-- Validated on Norwegian shelf data (Håland curve, DST and well-report H2S for about 80 wellbores): median predicted/measured about 1.0, log10 RMSE 0.2-0.3; measured CO2 exponent at given temperature 0.48 (95 % CI 0.26-0.70) against 0.375 predicted.
+- Validated on Norwegian shelf data (Håland curve, DST and well-report H2S for about 80 wellbores): median predicted/measured about 1.0, log10 RMSE 0.2-0.3; measured CO2 exponent at given temperature 0.48 (95 % CI 0.26-0.70) against 0.375 predicted. Marine and paralic sandstones alone: bias 0.00, RMSE 0.17 log10 (factor 1.5).
+- Siderite persists to above 150 °C in shelf cores although ankerite grows with burial; the full siderite-to-ankerite shift would change H2S by at most about 1.2x.
 
 ## References
 
