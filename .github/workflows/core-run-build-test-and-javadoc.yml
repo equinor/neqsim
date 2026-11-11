@@ -69,8 +69,10 @@ jobs:
     needs: test_javadoc
     # The full fast suite with JaCoCo reached the former 90-minute limit on Ubuntu
     # in PR #4421 while still completing tests without failures. Allow headroom
-    # for coverage instrumentation and hosted-runner variation.
-    timeout-minutes: 120
+    # for coverage instrumentation and hosted-runner variation. The suite later
+    # reached the 120-minute limit on a master push and was cancelled with no
+    # test failures, so the limit is raised again.
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix:
