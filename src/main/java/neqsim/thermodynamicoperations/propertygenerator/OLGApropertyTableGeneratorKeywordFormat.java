@@ -6,8 +6,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -95,6 +99,22 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
   private boolean[] needsLiquid;
   /** Fluid label written to the table and referenced by the OLGA BRANCH FLUID key. */
   private String fluidLabel = "NewFluid";
+  /** Pressure axis definition in bara. */
+  private final OlgaTableGrid pressureGrid = new OlgaTableGrid();
+  /** Temperature axis definition in K. */
+  private final OlgaTableGrid temperatureGrid = new OlgaTableGrid();
+  /** True to refine the grid around the phase envelope. */
+  private boolean envelopeRefinement = false;
+  /** Ratio of grid points inside to outside the phase envelope. */
+  private double gridFactor = 5.0;
+  /** True to insert the standard pressure and temperature into the grid. */
+  private boolean insertStandardConditions = false;
+  /** True to fill absent-phase nodes monotonically with the phase gradients. */
+  private boolean monotonicityCorrection = true;
+  /** Envelope extents of the water-free feed. */
+  private OlgaEnvelopeInfo envelope = null;
+  /** Phase-existence mask per column before absent nodes were filled. */
+  boolean[][][] columnPresent;
 
   /**
    * Set the fluid label written to the table.
@@ -235,6 +255,7 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
     boolean anyLiquid = anyTrue(liquidPresent);
     java.util.Map<String, double[][]> gasBranch = anyGas ? null : forcedPhaseBranch("gas");
     java.util.Map<String, double[][]> liquidBranch = anyLiquid ? null : forcedPhaseBranch("oil");
+    columnPresent = new boolean[nProps][][];
 
     for (int k = 0; k < nProps; k++) {
       if (needsGas[k] && needsLiquid[k]) {
@@ -244,16 +265,34 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
             both[i][j] = gasPresent[i][j] && liquidPresent[i][j];
           }
         }
+        columnPresent[k] = both;
         OlgaTableGridFiller.fillAbsentNodes(props[k], both, defaultFor(namesKeyword[k]));
       } else if (needsGas[k]) {
+        columnPresent[k] = gasPresent;
         applyBranch(k, gasBranch);
-        OlgaTableGridFiller.fillAbsentNodes(props[k], anyGas ? gasPresent : allTrue(), defaultFor(namesKeyword[k]));
+        OlgaTableGridFiller.fillAbsentNodes(props[k], anyGas ? fillMask(k, gasPresent) : allTrue(),
+            defaultFor(namesKeyword[k]));
       } else if (needsLiquid[k]) {
+        columnPresent[k] = liquidPresent;
         applyBranch(k, liquidBranch);
-        OlgaTableGridFiller.fillAbsentNodes(props[k], anyLiquid ? liquidPresent : allTrue(),
+        OlgaTableGridFiller.fillAbsentNodes(props[k], anyLiquid ? fillMask(k, liquidPresent) : allTrue(),
             defaultFor(namesKeyword[k]));
       }
     }
+  }
+
+  /**
+   * Apply the monotonic gradient fill when enabled.
+   *
+   * @param k property column index
+   * @param present phase-existence mask
+   * @return mask extended with the gradient-filled nodes
+   */
+  private boolean[][] fillMask(int k, boolean[][] present) {
+    if (!monotonicityCorrection) {
+      return present;
+    }
+    return OlgaTableGridFiller.monotonicFill(namesKeyword[k], namesKeyword, props, present, pressureLOG, temperatures);
   }
 
   /**
@@ -453,54 +492,224 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
   }
 
   /**
-   * setPressureRange.
+   * Set an equidistant pressure axis.
    *
-   * @param minPressure a double
-   * @param maxPressure a double
-   * @param numberOfSteps a int
+   * @param minPressure lowest pressure [bara]
+   * @param maxPressure highest pressure [bara]
+   * @param numberOfSteps number of pressure points
    */
   public void setPressureRange(double minPressure, double maxPressure, int numberOfSteps) {
-    pressures = new double[numberOfSteps];
-    pressureLOG = new double[numberOfSteps];
-    double step = (maxPressure - minPressure) / (numberOfSteps * 1.0 - 1.0);
-    for (int i = 0; i < numberOfSteps; i++) {
-      pressures[i] = minPressure + i * step;
-      pressureLOG[i] = pressures[i] * 1e5;
-    }
+    pressureGrid.setRange(minPressure, maxPressure, numberOfSteps);
+    setPressureAxis(OlgaTableGrid.uniform(minPressure, maxPressure, numberOfSteps));
   }
 
   /**
-   * setTemperatureRange.
+   * Set an equidistant temperature axis.
    *
-   * @param minTemperature a double
-   * @param maxTemperature a double
-   * @param numberOfSteps a int
+   * @param minTemperature lowest temperature [K]
+   * @param maxTemperature highest temperature [K]
+   * @param numberOfSteps number of temperature points
    */
   public void setTemperatureRange(double minTemperature, double maxTemperature, int numberOfSteps) {
-    temperatures = new double[numberOfSteps];
-    temperatureLOG = new double[numberOfSteps];
-    double step = (maxTemperature - minTemperature) / (numberOfSteps * 1.0 - 1.0);
-    for (int i = 0; i < numberOfSteps; i++) {
-      temperatures[i] = minTemperature + i * step;
-      temperatureLOG[i] = temperatures[i] - 273.15;
+    temperatureGrid.setRange(minTemperature, maxTemperature, numberOfSteps);
+    setTemperatureAxis(OlgaTableGrid.uniform(minTemperature, maxTemperature, numberOfSteps));
+  }
+
+  /**
+   * Set explicit table pressures, covering all combinations with the temperatures.
+   *
+   * @param pressuresBara pressures [bara], in any order
+   * @throws IllegalArgumentException if fewer than two distinct finite values are given
+   */
+  public void setPressures(double[] pressuresBara) {
+    setPressureAxis(pressureGrid.setValues(pressuresBara));
+  }
+
+  /**
+   * Set explicit table temperatures, covering all combinations with the pressures.
+   *
+   * @param temperaturesKelvin temperatures [K], in any order
+   * @throws IllegalArgumentException if fewer than two distinct finite values are given
+   */
+  public void setTemperatures(double[] temperaturesKelvin) {
+    setTemperatureAxis(temperatureGrid.setValues(temperaturesKelvin));
+  }
+
+  /**
+   * Store the pressure axis and its Pa values.
+   *
+   * @param axis pressures [bara]
+   */
+  private void setPressureAxis(double[] axis) {
+    pressures = axis;
+    pressureLOG = new double[axis.length];
+    for (int i = 0; i < axis.length; i++) {
+      pressureLOG[i] = axis[i] * 1e5;
     }
   }
 
   /**
-   * calcPhaseEnvelope.
+   * Store the temperature axis and its Celsius values.
+   *
+   * @param axis temperatures [K]
+   */
+  private void setTemperatureAxis(double[] axis) {
+    temperatures = axis;
+    temperatureLOG = new double[axis.length];
+    for (int i = 0; i < axis.length; i++) {
+      temperatureLOG[i] = axis[i] - 273.15;
+    }
+  }
+
+  /**
+   * Concentrate range-axis points inside the water-free phase envelope.
+   *
+   * <p>
+   * Along each axis whose envelope maximum (cricondenbar or cricondentherm) lies inside the range, a share
+   * gridFactor/(gridFactor+1) of the points is placed inside the envelope. Explicit axes are not changed.
+   * </p>
+   *
+   * @param enabled true to refine
+   * @param factor ratio of points inside to outside the envelope, 1 to 10
+   * @throws IllegalArgumentException if the factor is outside 1 to 10
+   */
+  public void setEnvelopeRefinement(boolean enabled, double factor) {
+    if (!Double.isFinite(factor) || factor < 1.0 || factor > 10.0) {
+      throw new IllegalArgumentException("Grid factor must be within 1-10, got " + factor);
+    }
+    this.envelopeRefinement = enabled;
+    this.gridFactor = factor;
+  }
+
+  /**
+   * Insert the standard pressure and temperature into the grid when they lie inside it. A range axis keeps its point
+   * count; an explicit axis gains one point.
+   *
+   * @param insert true to insert
+   */
+  public void setInsertStandardConditions(boolean insert) {
+    this.insertStandardConditions = insert;
+  }
+
+  /**
+   * Set the standard conditions for GOR and standard densities.
+   *
+   * @param temperature standard temperature [K]
+   * @param pressure standard pressure [bara]
+   * @throws IllegalArgumentException if either value is not positive and finite
+   */
+  public void setStandardConditions(double temperature, double pressure) {
+    if (!(temperature > 0.0) || !(pressure > 0.0) || Double.isInfinite(temperature) || Double.isInfinite(pressure)) {
+      throw new IllegalArgumentException("Standard temperature and pressure must be positive");
+    }
+    this.stdTemp = temperature;
+    this.stdPres = pressure;
+    this.stdPresATM = pressure / ThermodynamicConstantsInterface.referencePressure;
+  }
+
+  /**
+   * Fill absent-phase density, enthalpy and entropy with the phase gradients so they stay monotonic and continuous. On
+   * by default; when off, absent nodes take the nearest existing value.
+   *
+   * @param correct true to correct
+   */
+  public void setMonotonicityCorrection(boolean correct) {
+    this.monotonicityCorrection = correct;
+  }
+
+  /**
+   * Build the quality report of the generated table.
+   *
+   * @return quality report
+   * @throws IllegalStateException if {@link #run()} has not completed
+   */
+  public OlgaTableQualityReport getQualityReport() {
+    if (props == null || columnPresent == null) {
+      throw new IllegalStateException("Run the generator before requesting a quality report");
+    }
+    return new OlgaTableQualityReport(namesKeyword, props, pressures, temperatureLOG, columnPresent);
+  }
+
+  /**
+   * Build the engineering report of the generated table in Markdown: fluid, grid, standard ratios, water-free envelope
+   * and quality checks.
+   *
+   * @return report text
+   * @throws IllegalStateException if {@link #run()} has not completed
+   */
+  public String getTableReport() {
+    OlgaTableQualityReport quality = getQualityReport();
+    OlgaTableReportWriter report = new OlgaTableReportWriter();
+    report.title("OLGA PVT table report: " + fluidLabel);
+    report.paragraph("Two-phase keyword table (PHASE = TWO) generated with NeqSim. Phase properties are calculated"
+        + " by a TP flash at every grid node. Nodes where a phase does not exist are filled "
+        + (monotonicityCorrection ? "with the phase gradients (monotonicity correction)"
+            : "from the nearest node where the phase exists")
+        + "; OLGA does not use them where the phase mass fraction is zero.");
+    report.section("Fluid");
+    Map<String, String> fluid = new LinkedHashMap<String, String>();
+    fluid.put("Fluid label", fluidLabel);
+    fluid.put("Equation of state", thermoSystem.getModelName());
+    report.keyValues(fluid);
+    report.composition(components, molfracs, MW);
+    report.grid(pressures, pressureGrid.isDefined() ? pressureGrid.getLastMode() : "as set", temperatureLOG,
+        temperatureGrid.isDefined() ? temperatureGrid.getLastMode() : "as set");
+    report.section("Standard conditions and ratios");
+    Map<String, String> standard = new LinkedHashMap<String, String>();
+    standard.put("Standard temperature [K]", OlgaTableReportWriter.number(stdTemp));
+    standard.put("Standard pressure [bara]", OlgaTableReportWriter.number(stdPres));
+    standard.put("GOR [Sm3/Sm3]", OlgaTableReportWriter.number(GOR));
+    standard.put("Standard gas density [kg/m3]", OlgaTableReportWriter.number(stdGasDens));
+    standard.put("Standard liquid density [kg/m3]", OlgaTableReportWriter.number(stdLiqDens));
+    report.keyValues(standard);
+    report.envelope(envelope, envelopeRefinement, gridFactor);
+    return report.quality(quality).toString();
+  }
+
+  /**
+   * Write the engineering report of the generated table as Markdown.
+   *
+   * @param filename output file
+   * @throws IOException if the file cannot be written
+   * @throws IllegalStateException if {@link #run()} has not completed
+   */
+  public void writeTableReport(String filename) throws IOException {
+    OlgaTableReportWriter writer = new OlgaTableReportWriter();
+    writer.paragraph(getTableReport().trim());
+    writer.write(filename);
+  }
+
+  /**
+   * Calculate the critical point and envelope extents of the water-free feed.
    */
   public void calcPhaseEnvelope() {
-    try {
-      thermoOps.calcPTphaseEnvelope();
-      TCLOG = thermoSystem.getTC();
-      PCLOG = thermoSystem.getPC() * 0.986923267; // convert to ATM
-      TC = thermoSystem.getTC() - 273.15;
-      PC = thermoSystem.getPC() * 1e5;
-    } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
-    }
+    envelope = OlgaEnvelopeInfo.of(thermoSystem);
+    double criticalTemperature = Double.isFinite(envelope.criticalTemperature) ? envelope.criticalTemperature
+        : thermoSystem.getTC();
+    double criticalPressure = Double.isFinite(envelope.criticalPressure) ? envelope.criticalPressure
+        : thermoSystem.getPC();
+    TCLOG = criticalTemperature;
+    PCLOG = criticalPressure / ThermodynamicConstantsInterface.referencePressure;
+    TC = criticalTemperature - 273.15;
+    PC = criticalPressure * 1e5;
+  }
 
-    // thermoOps.ge
+  /**
+   * Trace the envelope and build the grid.
+   */
+  private void prepare() {
+    if (pressures == null || temperatures == null) {
+      throw new IllegalStateException("Set the pressure and temperature axes before running the generator");
+    }
+    calcPhaseEnvelope();
+    if (pressureGrid.isDefined()) {
+      setPressureAxis(pressureGrid.build(envelopeRefinement, gridFactor, envelope.minimumPressure,
+          envelope.cricondenbarPressure, insertStandardConditions, stdPres));
+    }
+    if (temperatureGrid.isDefined()) {
+      setTemperatureAxis(temperatureGrid.build(envelopeRefinement, gridFactor, envelope.minimumTemperature,
+          envelope.cricondenthermTemperature, insertStandardConditions, stdTemp));
+    }
   }
 
   /**
@@ -636,6 +845,7 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
   @Override
   public void run() {
     logger.info("Start creating arrays");
+    prepare();
 
     nProps = 18;
     props = new double[nProps][pressures.length][temperatures.length];
@@ -646,7 +856,6 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
     needsLiquid = new boolean[nProps];
     gasPresent = new boolean[pressures.length][temperatures.length];
     liquidPresent = new boolean[pressures.length][temperatures.length];
-    calcPhaseEnvelope();
     /*
      * ROG = new double[pressures.length][temperatures.length]; ROL = new double[pressures.length][temperatures.length];
      * CPG = new double[pressures.length][temperatures.length]; CPHL = new
