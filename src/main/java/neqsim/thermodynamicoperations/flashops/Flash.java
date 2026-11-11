@@ -228,7 +228,8 @@ public abstract class Flash extends BaseOperation {
    */
   public int findLowestGibbsEnergyPhase() {
     if (!findLowestGibbsPhaseIsChecked) {
-      minimumGibbsEnergySystem = system.clone();
+      // Trial system for the tangent-plane analysis: only its thermodynamic state is used.
+      minimumGibbsEnergySystem = system.cloneThermoOnly();
       minimumGibbsEnergySystem.init(0);
       if (minimumGibbsEnergySystem.getTotalNumberOfMoles() < 1e-20) {
         minimumGibbsEnergySystem.setTotalNumberOfMoles(1.0);

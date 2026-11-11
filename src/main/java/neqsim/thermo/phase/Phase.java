@@ -103,6 +103,42 @@ public abstract class Phase implements PhaseInterface {
     componentArray = new ComponentInterface[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
+  /** Per-thread nesting depth of thermodynamics-only clone operations. */
+  private static final ThreadLocal<int[]> THERMO_ONLY_CLONE_DEPTH = new ThreadLocal<int[]>() {
+    /** {@inheritDoc} */
+    @Override
+    protected int[] initialValue() {
+      return new int[1];
+    }
+  };
+
+  /**
+   * Marks the start of a thermodynamics-only clone on the calling thread. Phases cloned until the matching
+   * {@link #endThermoOnlyClone()} call do not copy their physical-property models.
+   */
+  public static void beginThermoOnlyClone() {
+    THERMO_ONLY_CLONE_DEPTH.get()[0]++;
+  }
+
+  /**
+   * Marks the end of a thermodynamics-only clone on the calling thread.
+   */
+  public static void endThermoOnlyClone() {
+    int[] depth = THERMO_ONLY_CLONE_DEPTH.get();
+    if (depth[0] > 0) {
+      depth[0]--;
+    }
+  }
+
+  /**
+   * Checks whether the calling thread is currently creating a thermodynamics-only clone.
+   *
+   * @return true if physical-property models shall not be copied
+   */
+  public static boolean isThermoOnlyCloneActive() {
+    return THERMO_ONLY_CLONE_DEPTH.get()[0] > 0;
+  }
+
   /** {@inheritDoc} */
   @Override
   public Phase clone() {
@@ -120,8 +156,14 @@ public abstract class Phase implements PhaseInterface {
     }
     // System.out.println("cloned length: " + componentArray.length);
     if (physicalPropertyHandler != null) {
-      clonedPhase.physicalPropertyHandler = this.physicalPropertyHandler.clone();
-      clonedPhase.physicalPropertyHandler.setPhase(clonedPhase);
+      if (isThermoOnlyCloneActive()) {
+        // Internal work copies used by the flash algorithms never read transport properties. The
+        // handler is recreated on demand if physical properties are requested from the copy.
+        clonedPhase.physicalPropertyHandler = null;
+      } else {
+        clonedPhase.physicalPropertyHandler = this.physicalPropertyHandler.clone();
+        clonedPhase.physicalPropertyHandler.setPhase(clonedPhase);
+      }
     }
 
     clonedPhase.componentNames = null;
@@ -491,6 +533,8 @@ public abstract class Phase implements PhaseInterface {
     this.setInitType(initType);
     this.numberOfComponents = numberOfComponents;
     for (int i = 0; i < numberOfComponents; i++) {
+      // Keep the per-component derivative arrays at the size of this phase so clones stay small.
+      componentArray[i].fitCompositionDerivativeArrays(numberOfComponents);
       componentArray[i].init(temperature, pressure, totalNumberOfMoles, beta, initType);
     }
   }
