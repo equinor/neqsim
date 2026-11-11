@@ -71,14 +71,12 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
   private SimpleMatrix hessianInvers = null;
   /**
    * Row-major LU factors (partial pivoting) of {@code hessianMatrix}. Reused for every right-hand side instead of an
-   * explicit inverse. The association Hessian is small (one row per association site), so the factorization works on
-   * a primitive array and allocates nothing in the molar-volume iteration.
+   * explicit inverse. The association Hessian is small (one row per association site), so the factorization works on a
+   * primitive array and allocates nothing in the molar-volume iteration.
    */
   private transient double[] hessianLU = null;
   /** Row interchanges of {@code hessianLU}: row {@code k} was swapped with row {@code hessianPivot[k]}. */
   private transient int[] hessianPivot = null;
-  /** Number of sites the current {@code hessianLU} was factored for, or -1 when no factorization is held. */
-  private transient int hessianLUSize = -1;
   /** Scratch vectors of the association solver, one entry per association site. */
   private transient double[] siteWorkA = null;
   private transient double[] siteWorkB = null;
@@ -141,7 +139,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     // Hessian if a derivative is requested before the clone next solves its association sites.
     clonedPhase.hessianLU = null;
     clonedPhase.hessianPivot = null;
-    clonedPhase.hessianLUSize = -1;
     clonedPhase.siteWorkA = null;
     clonedPhase.siteWorkB = null;
     clonedPhase.siteComps = null;
@@ -514,8 +511,8 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     SimpleMatrix QksiVksi = KlkVMatrix.scale(-1.0);
 
     dFCPAdVdVdV = -0.5 * QVVV.get(0, 0) + QVVksi.transpose().mult(XV).get(0, 0) * 3.0
-        + XVtranspose.mult(QksiVksi.mult(XV)).get(0, 0) * 3.0 + thirdOrderSiteTerm(QMatksiksiksi.getDDRM().data,
-            XV.getDDRM().data, totalNumberOfAccociationSites);
+        + XVtranspose.mult(QksiVksi.mult(XV)).get(0, 0) * 3.0
+        + thirdOrderSiteTerm(QMatksiksiksi.getDDRM().data, XV.getDDRM().data, totalNumberOfAccociationSites);
 
     // Differentiate the stationary association equations twice and three times
     // with respect to native EOS volume. Each derivative is another right-hand
@@ -714,7 +711,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
   private void initCPAVolumeDerivatives() {
     final int n = totalNumberOfAccociationSites;
     updateDeltaWithG();
-    if (hessianLUSize != n && hessianInvers != null) {
+    if (!hasHessianFactorization(n) && hessianInvers != null) {
       // State produced by the legacy explicit-inverse solver: no factorization to reuse.
       factorHessian(hessianMatrix.getDDRM().data, n);
     } else {
@@ -1225,7 +1222,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    */
   private SimpleMatrix applyHessianInv(SimpleMatrix rhs) {
     final int n = totalNumberOfAccociationSites;
-    if (hessianLUSize != n && hessianInvers != null) {
+    if (!hasHessianFactorization(n) && hessianInvers != null) {
       return hessianInvers.mult(rhs);
     }
     ensureHessianFactorized();
@@ -1256,10 +1253,21 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    */
   private void ensureHessianFactorized() {
     final int n = totalNumberOfAccociationSites;
-    if (hessianLUSize == n && hessianLU != null) {
+    if (hasHessianFactorization(n)) {
       return;
     }
     factorHessian(hessianMatrix.getDDRM().data, n);
+  }
+
+  /**
+   * Tells whether LU factors for the given number of association sites are held. A clone or a deserialized phase holds
+   * none until its first factorization.
+   *
+   * @param n number of association sites
+   * @return true if {@code hessianLU} can be used for back-substitution
+   */
+  private boolean hasHessianFactorization(int n) {
+    return hessianLU != null && hessianPivot != null && hessianLU.length == n * n;
   }
 
   /**
@@ -1275,7 +1283,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     }
     System.arraycopy(hessian, 0, hessianLU, 0, n * n);
     luFactor(hessianLU, hessianPivot, n);
-    hessianLUSize = n;
   }
 
   /**
@@ -1759,8 +1766,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       // below the resolution of B/V. Close to B/V = 1 the slope dh is 1e4-1e6, so rounding alone
       // keeps |h| above 1e-12 and the absolute test can never be met.
     } while ((Math.abs((BonV - BonVold) / BonV) > 1.0e-10
-        || (Math.abs(h) > 1e-12 && Math.abs(d1) > 1.0e-13 * Math.abs(BonV)))
-        && iterations < maxIterations);
+        || (Math.abs(h) > 1e-12 && Math.abs(d1) > 1.0e-13 * Math.abs(BonV))) && iterations < maxIterations);
 
     // System.out.println("h failed " + h + " Z" + Z + " iterations " + iterations +
     // " BonV " + BonV);

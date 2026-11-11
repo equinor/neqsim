@@ -2024,8 +2024,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
      */
     private double secondOrderKijTerm(ComponentEosInterface[] compArray, int k, int l, PhaseInterface phase,
         double temperature, int i, int j) {
-      double aij = -Math.sqrt(compArray[i].getaT() * compArray[j].getaT())
-          * getkijdndn(k, l, phase, temperature, i, j);
+      double aij = -Math.sqrt(compArray[i].getaT() * compArray[j].getaT()) * getkijdndn(k, l, phase, temperature, i, j);
       return compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase() * aij;
     }
 
