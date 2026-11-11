@@ -215,11 +215,13 @@ public class LBCViscosityMethodTest {
     logger.info("High pressure Methane+TBP mixture viscosities: frictionTheory=" + frictionVisc + " cP, LBC=" + lbcVisc
         + " cP, ratio=" + ratio);
 
-    // LBC tends to underpredict viscosity for heavy mixtures compared to Friction Theory
-    // without specific tuning. We accept a lower ratio here to ensure the test passes
-    // with the current implementation.
-    assertTrue(ratio > 0.5 && ratio < 1.5,
-        "LBC viscosity for high pressure Methane+TBP mixture should be within reasonable range of friction-theory reference");
+    // LBC with untuned Whitson critical volumes for the TBP fractions is a screening estimate, so only a
+    // plausibility band against friction theory is checked. With the pseudo-critical mixing of the reducing
+    // parameter (Lohrenz, Bray and Clark, JPT 1964; Eclipse E300) the ratio is about 2.45; the earlier band of
+    // 0.5-1.5 encoded the defective sum(x_i * xi_i^6) mixing.
+    assertTrue(ratio > 0.5 && ratio < 3.0,
+        "LBC viscosity for high pressure Methane+TBP mixture should be within reasonable range of friction-theory reference, ratio="
+            + ratio);
   }
 
   @Test

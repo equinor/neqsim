@@ -921,6 +921,8 @@ public class EclipseFluidReadWrite {
           throw new IllegalArgumentException("VCRITVIS currently requires METRIC input units");
         }
         applyLbcCriticalVolumes(fluid, VCRITVIS, names.size());
+      } else if (LBCCOEF.size() >= 5) {
+        applyVcritAsLbcCriticalVolumes(fluid, VCRIT, names.size(), unitSystem);
       }
 
       // Enable the multi-phase (VLLE) flash when the fluid contains water. A
@@ -1533,6 +1535,8 @@ public class EclipseFluidReadWrite {
           throw new IllegalArgumentException("VCRITVIS currently requires METRIC input units");
         }
         applyLbcCriticalVolumes(fluid, VCRITVIS, names.size());
+      } else if (LBCCOEF.size() >= 5) {
+        applyVcritAsLbcCriticalVolumes(fluid, VCRIT, names.size(), unitSystem);
       }
       for (String componentName : names) {
         if ("water".equals(mapE300ComponentName(componentName))) {
@@ -2176,6 +2180,35 @@ public class EclipseFluidReadWrite {
       }
     }
     throw new IllegalArgumentException("VCRITVIS must be terminated by a slash");
+  }
+
+  /**
+   * Use the thermodynamic VCRIT values as LBC critical volumes when a file has LBCCOEF but no VCRITVIS.
+   *
+   * <p>
+   * Eclipse E300 evaluates the LBC correlation with VCRIT unless VCRITVIS is given. Without this, NeqSim would estimate
+   * critical volumes of the (TBP) imported components from a correlation and ignore the file values. Only METRIC files
+   * with one positive finite value per source component are handled; other cases keep the default estimate.
+   * </p>
+   *
+   * @param fluid model containing one or more replicated component blocks
+   * @param vcritCm3PerMol VCRIT values already converted to cm3/mol, in source component order
+   * @param blockSize number of source components before optional replication
+   * @param unitSystem unit system keyword of the source file
+   */
+  private static void applyVcritAsLbcCriticalVolumes(SystemInterface fluid, List<Double> vcritCm3PerMol, int blockSize,
+      String unitSystem) {
+    if (!"METRIC".equals(unitSystem) || vcritCm3PerMol.size() != blockSize) {
+      return;
+    }
+    ArrayList<Double> metricVolumes = new ArrayList<Double>(blockSize);
+    for (Double value : vcritCm3PerMol) {
+      if (value == null || !Double.isFinite(value) || value <= 0.0) {
+        return;
+      }
+      metricVolumes.add(value / CM3_PER_MOL_PER_M3_PER_KMOL);
+    }
+    applyLbcCriticalVolumes(fluid, metricVolumes, blockSize);
   }
 
   /**

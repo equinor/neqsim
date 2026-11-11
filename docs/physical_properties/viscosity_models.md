@@ -109,6 +109,13 @@ where:
 - $\eta_r$ is a function of reduced density
 - $\xi$ is the inverse viscosity parameter
 
+The mixture viscosity-reducing parameter uses pseudo-critical (Kay) mixing, as in
+Lohrenz, Bray and Clark (JPT, 1964) and Eclipse E300:
+
+$$\xi_m = \frac{T_{pc}^{1/6}}{M^{1/2} P_{pc}^{2/3}}, \quad T_{pc} = \sum_i x_i T_{c,i}, \quad P_{pc} = \sum_i x_i P_{c,i}, \quad M = \sum_i x_i M_i$$
+
+with $T$ in K, $P$ in atm and $M$ in g/mol. The reduced density uses $V_{pc} = \sum_i x_i V_{c,i}$.
+
 The dense fluid contribution uses a polynomial:
 $$\eta_r = a_0 + a_1\rho_r + a_2\rho_r^2 + a_3\rho_r^3 + a_4\rho_r^4$$
 
