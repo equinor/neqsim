@@ -71,7 +71,7 @@ class PhaseSrkCPACloneIsolationTest {
 
     assertNotNull(field(copy, "hessianLU"));
     assertNotSame(field(source, "hessianLU"), field(copy, "hessianLU"));
-    assertNotSame(field(source, "hessianLUinput"), field(copy, "hessianLUinput"));
+    assertNotSame(field(source, "hessianPivot"), field(copy, "hessianPivot"));
     for (int component = 0; component < source.getNumberOfComponents(); component++) {
       ComponentSrkCPA first = (ComponentSrkCPA) source.getComponent(component);
       ComponentSrkCPA second = (ComponentSrkCPA) copy.getComponent(component);
@@ -114,8 +114,7 @@ class PhaseSrkCPACloneIsolationTest {
    * @return true for an owned array or matrix buffer
    */
   private boolean isOwnedBuffer(Field field) {
-    return !field.getName().equals("hessianLUinput")
-        && (field.getType().isArray() || field.getType() == SimpleMatrix.class || field.getType() == DMatrixRMaj.class);
+    return field.getType().isArray() || field.getType() == SimpleMatrix.class || field.getType() == DMatrixRMaj.class;
   }
 
   /**
