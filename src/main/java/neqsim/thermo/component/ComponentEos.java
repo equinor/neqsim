@@ -157,6 +157,68 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     return clonedComponent;
   }
 
+  /**
+   * Compares two work arrays whose allocated lengths may differ, treating missing trailing entries as zero.
+   *
+   * @param first first array
+   * @param second second array
+   * @return true if both arrays hold the same values
+   */
+  private static boolean equalsIgnoringTrailingZeros(double[] first, double[] second) {
+    if (first == second) {
+      return true;
+    }
+    if (first == null || second == null) {
+      return false;
+    }
+    int length = Math.max(first.length, second.length);
+    for (int i = 0; i < length; i++) {
+      double a = i < first.length ? first[i] : 0.0;
+      double b = i < second.length ? second[i] : 0.0;
+      if (Double.doubleToLongBits(a) != Double.doubleToLongBits(b)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void fitCompositionDerivativeArrays(int numberOfComponents) {
+    super.fitCompositionDerivativeArrays(numberOfComponents);
+    int size = Math.max(1, numberOfComponents);
+    if (Aij.length != size) {
+      Aij = java.util.Arrays.copyOf(Aij, size);
+    }
+    if (Bij.length != size) {
+      Bij = java.util.Arrays.copyOf(Bij, size);
+    }
+    if (dAdndn.length != size) {
+      dAdndn = java.util.Arrays.copyOf(dAdndn, size);
+    }
+    if (dBdndn.length != size) {
+      dBdndn = java.util.Arrays.copyOf(dBdndn, size);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected void ensureCompositionDerivativeCapacity(int numberOfComponents) {
+    super.ensureCompositionDerivativeCapacity(numberOfComponents);
+    if (Aij.length < numberOfComponents) {
+      Aij = java.util.Arrays.copyOf(Aij, numberOfComponents);
+    }
+    if (Bij.length < numberOfComponents) {
+      Bij = java.util.Arrays.copyOf(Bij, numberOfComponents);
+    }
+    if (dAdndn.length < numberOfComponents) {
+      dAdndn = java.util.Arrays.copyOf(dAdndn, numberOfComponents);
+    }
+    if (dBdndn.length < numberOfComponents) {
+      dBdndn = java.util.Arrays.copyOf(dBdndn, numberOfComponents);
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void init(double temp, double pres, double totMoles, double beta, int initType) {
@@ -186,6 +248,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
         / (-R * temp * phase.dFdVdV() - phase.getNumberOfMolesInPhase() * R * temp / (totVol * totVol));
 
     if (initType >= 3) {
+      ensureCompositionDerivativeCapacity(numberOfComponents);
       for (int j = 0; j < numberOfComponents; j++) {
         Aij[j] = phase.calcAij(componentNumber, j, phase, temp, pres, numberOfComponents);
         Bij[j] = phase.calcBij(componentNumber, j, phase, temp, pres, numberOfComponents);
@@ -334,13 +397,13 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   /** {@inheritDoc} */
   @Override
   public double getBij(int j) {
-    return Bij[j];
+    return j < Bij.length ? Bij[j] : 0.0;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getAij(int j) {
-    return Aij[j];
+    return j < Aij.length ? Aij[j] : 0.0;
   }
 
   /** {@inheritDoc} */
@@ -399,6 +462,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     double pressure = phase.getPressure();
     int numberOfComponents = phase.getNumberOfComponents();
     ComponentEosInterface[] comp_Array = (ComponentEosInterface[]) phase.getComponents();
+    ensureCompositionDerivativeCapacity(numberOfComponents);
 
     for (int i = 0; i < numberOfComponents; i++) {
       // System.out.println("dfdndn " + dFdNdN(i, phase, numberOfComponents,
@@ -437,6 +501,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     ComponentEosInterface[] comp_Array = (ComponentEosInterface[]) phase.getcomponentArray();
     vol = phase.getMolarVolume();
     voli = getVoli();
+    ensureCompositionDerivativeCapacity(Math.max(numberOfComponents, k + 1));
 
     dfugdn[k] = (this.dFdNdN(k, phase, numberOfComponents, temperature, pressure)
         + 1.0 / phase.getNumberOfMolesInPhase()
@@ -463,12 +528,15 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   /** {@inheritDoc} */
   @Override
   public double getdAdndn(int j) {
-    return dAdndn[j];
+    return j < dAdndn.length ? dAdndn[j] : 0.0;
   }
 
   /** {@inheritDoc} */
   @Override
   public void setdAdndn(int jComp, double val) {
+    if (jComp >= dAdndn.length) {
+      ensureCompositionDerivativeCapacity(jComp + 1);
+    }
     dAdndn[jComp] = val;
   }
 
@@ -526,12 +594,15 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   /** {@inheritDoc} */
   @Override
   public double getdBdndn(int j) {
-    return dBdndn[j];
+    return j < dBdndn.length ? dBdndn[j] : 0.0;
   }
 
   /** {@inheritDoc} */
   @Override
   public void setdBdndn(int jComp, double val) {
+    if (jComp >= dBdndn.length) {
+      ensureCompositionDerivativeCapacity(jComp + 1);
+    }
     dBdndn[jComp] = val;
   }
 
@@ -843,10 +914,10 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     result = result && Double.compare(aDerTn, other.aDerTn) == 0;
     result = result && Double.compare(bDern, other.bDern) == 0;
     result = result && Double.compare(bDerTn, other.bDerTn) == 0;
-    result = result && java.util.Arrays.equals(Aij, other.Aij);
-    result = result && java.util.Arrays.equals(Bij, other.Bij);
-    result = result && java.util.Arrays.equals(dAdndn, other.dAdndn);
-    result = result && java.util.Arrays.equals(dBdndn, other.dBdndn);
+    result = result && equalsIgnoringTrailingZeros(Aij, other.Aij);
+    result = result && equalsIgnoringTrailingZeros(Bij, other.Bij);
+    result = result && equalsIgnoringTrailingZeros(dAdndn, other.dAdndn);
+    result = result && equalsIgnoringTrailingZeros(dBdndn, other.dBdndn);
     result = result && (attractiveParameter == null ? other.attractiveParameter == null
         : attractiveParameter.equals(other.attractiveParameter));
     result = result && super.equals(obj);

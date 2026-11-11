@@ -1389,13 +1389,46 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public void fitCompositionDerivativeArrays(int numberOfComponents) {
+    int size = Math.max(1, numberOfComponents);
+    if (dfugdn.length != size) {
+      dfugdn = java.util.Arrays.copyOf(dfugdn, size);
+    }
+    if (dfugdx.length != size) {
+      dfugdx = java.util.Arrays.copyOf(dfugdx, size);
+    }
+  }
+
+  /**
+   * Makes sure the composition-derivative work arrays can hold at least the given number of components. Existing
+   * values are kept; the arrays are never shrunk by this method.
+   *
+   * @param numberOfComponents required number of entries
+   */
+  protected void ensureCompositionDerivativeCapacity(int numberOfComponents) {
+    if (dfugdn.length < numberOfComponents) {
+      dfugdn = java.util.Arrays.copyOf(dfugdn, numberOfComponents);
+    }
+    if (dfugdx.length < numberOfComponents) {
+      dfugdx = java.util.Arrays.copyOf(dfugdx, numberOfComponents);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setdfugdn(int i, double val) {
+    if (i >= dfugdn.length) {
+      ensureCompositionDerivativeCapacity(i + 1);
+    }
     dfugdn[i] = val;
   }
 
   /** {@inheritDoc} */
   @Override
   public void setdfugdx(int i, double val) {
+    if (i >= dfugdx.length) {
+      ensureCompositionDerivativeCapacity(i + 1);
+    }
     dfugdx[i] = val;
   }
 
@@ -1420,13 +1453,13 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getdfugdx(int i) {
-    return dfugdx[i];
+    return i < dfugdx.length ? dfugdx[i] : 0.0;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getdfugdn(int i) {
-    return dfugdn[i];
+    return i < dfugdn.length ? dfugdn[i] : 0.0;
   }
 
   /** {@inheritDoc} */

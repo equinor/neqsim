@@ -20,6 +20,18 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public interface ComponentInterface extends ThermodynamicConstantsInterface, Cloneable {
   /**
+   * Fits the per-component composition-derivative work arrays to the number of components in the owning phase.
+   *
+   * <p>
+   * The arrays are created with room for the maximum number of components. Fitting them to the actual component count
+   * makes fluid clones considerably smaller and faster; the arrays grow again on demand if components are added.
+   * </p>
+   *
+   * @param numberOfComponents number of components in the owning phase
+   */
+  public default void fitCompositionDerivativeArrays(int numberOfComponents) {}
+
+  /**
    * Helper function to create component. Typically called from constructors.
    *
    * @param name Name of component.

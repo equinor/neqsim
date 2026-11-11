@@ -273,6 +273,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * scheduling.
    */
   private boolean useOptimizedExecution = true;
+  /** Solve units downstream of all recycle loops once, after the loops have converged. */
+  private boolean deferPostRecycleUnits = !"false"
+      .equalsIgnoreCase(System.getProperty("neqsim.process.deferPostRecycleUnits", "true"));
 
   /** Cached task graph used by dataflow execution. */
   private static final class DataflowExecutionPlan {
@@ -292,11 +295,14 @@ public class ProcessSystem extends SimulationBaseClass {
   private static final class HybridExecutionPlan {
     private final List<List<List<ProcessNode>>> feedForwardLevelGroups;
     private final List<ProcessEquipmentInterface> iterativeSection;
+    /** Units downstream of every recycle loop; solved once after the loops have converged. */
+    private final List<ProcessEquipmentInterface> postRecycleSection;
 
     private HybridExecutionPlan(List<List<List<ProcessNode>>> feedForwardLevelGroups,
-        List<ProcessEquipmentInterface> iterativeSection) {
+        List<ProcessEquipmentInterface> iterativeSection, List<ProcessEquipmentInterface> postRecycleSection) {
       this.feedForwardLevelGroups = feedForwardLevelGroups;
       this.iterativeSection = iterativeSection;
+      this.postRecycleSection = postRecycleSection;
     }
   }
 
@@ -2124,8 +2130,121 @@ public class ProcessSystem extends SimulationBaseClass {
       iterativeSection = reorderRecyclesWithinSCCs(iterativeSection);
     }
 
-    cachedHybridPlan = new HybridExecutionPlan(feedForwardLevelGroups, iterativeSection);
+    List<ProcessEquipmentInterface> postRecycleSection = new ArrayList<>();
+    if (deferPostRecycleUnits && !iterativeSection.isEmpty()) {
+      postRecycleSection = findPostRecycleSection(graph, iterativeSection);
+      if (!postRecycleSection.isEmpty()) {
+        java.util.Set<ProcessEquipmentInterface> deferred = java.util.Collections
+            .newSetFromMap(new IdentityHashMap<ProcessEquipmentInterface, Boolean>());
+        deferred.addAll(postRecycleSection);
+        List<ProcessEquipmentInterface> loopSection = new ArrayList<>();
+        for (ProcessEquipmentInterface unit : iterativeSection) {
+          if (!deferred.contains(unit)) {
+            loopSection.add(unit);
+          }
+        }
+        iterativeSection = loopSection;
+      }
+    }
+
+    cachedHybridPlan = new HybridExecutionPlan(feedForwardLevelGroups, iterativeSection, postRecycleSection);
     return cachedHybridPlan;
+  }
+
+  /**
+   * Exact equipment classes that are known to exchange information only through their process streams. Only flowsheet
+   * sections built entirely from these classes are eligible for post-recycle deferral.
+   */
+  private static final java.util.Set<Class<?>> STREAM_ONLY_EQUIPMENT = new java.util.HashSet<Class<?>>(
+      java.util.Arrays.<Class<?>>asList(neqsim.process.equipment.stream.Stream.class,
+          neqsim.process.equipment.separator.Separator.class,
+          neqsim.process.equipment.separator.ThreePhaseSeparator.class,
+          neqsim.process.equipment.separator.GasScrubber.class, neqsim.process.equipment.mixer.Mixer.class,
+          neqsim.process.equipment.mixer.StaticMixer.class, neqsim.process.equipment.splitter.Splitter.class,
+          neqsim.process.equipment.valve.ThrottlingValve.class, neqsim.process.equipment.heatexchanger.Heater.class,
+          neqsim.process.equipment.heatexchanger.Cooler.class, neqsim.process.equipment.compressor.Compressor.class,
+          neqsim.process.equipment.pump.Pump.class, neqsim.process.equipment.expander.Expander.class));
+
+  /**
+   * Finds the units of the iterative section that lie downstream of every recycle loop.
+   *
+   * <p>
+   * A unit that has no path to a {@link Recycle} cannot influence any tear stream, so re-solving it on every recycle
+   * pass is wasted work: it only needs the converged loop state. Such units are returned in insertion order and are
+   * solved once after the loops have converged. The deferral is deliberately conservative: it is used only when every
+   * unit of the iterative section is a plain stream-connected equipment class (or a {@link Recycle}). Any controller,
+   * calculator, adjuster, energy-coupled or otherwise specialised unit disables it, because such units may read or
+   * write other equipment outside the stream topology.
+   * </p>
+   *
+   * @param graph process graph of this system
+   * @param iterativeSection units of the iterative section in execution order
+   * @return units that can be solved once after recycle convergence, empty if deferral is not applicable
+   */
+  private List<ProcessEquipmentInterface> findPostRecycleSection(ProcessGraph graph,
+      List<ProcessEquipmentInterface> iterativeSection) {
+    List<ProcessEquipmentInterface> result = new ArrayList<>();
+    java.util.Deque<ProcessNode> pending = new java.util.ArrayDeque<>();
+    java.util.Set<ProcessNode> upstreamOfRecycle = java.util.Collections
+        .newSetFromMap(new IdentityHashMap<ProcessNode, Boolean>());
+    for (ProcessEquipmentInterface unit : iterativeSection) {
+      if (unit instanceof Recycle) {
+        ProcessNode node = graph.getNode(unit);
+        if (node == null) {
+          return result;
+        }
+        if (upstreamOfRecycle.add(node)) {
+          pending.add(node);
+        }
+      } else if (!STREAM_ONLY_EQUIPMENT.contains(unit.getClass()) || graph.getNode(unit) == null) {
+        return result;
+      }
+    }
+    if (pending.isEmpty()) {
+      return result;
+    }
+    for (ProcessEdge edge : graph.getEdges()) {
+      if (edge.getEdgeType() != ProcessEdge.EdgeType.MATERIAL && edge.getEdgeType() != ProcessEdge.EdgeType.RECYCLE) {
+        return result;
+      }
+    }
+    while (!pending.isEmpty()) {
+      ProcessNode node = pending.poll();
+      for (ProcessEdge edge : node.getIncomingEdges()) {
+        ProcessNode source = edge.getSource();
+        if (source != null && upstreamOfRecycle.add(source)) {
+          pending.add(source);
+        }
+      }
+    }
+    for (ProcessEquipmentInterface unit : iterativeSection) {
+      if (!upstreamOfRecycle.contains(graph.getNode(unit))) {
+        result.add(unit);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Controls whether units located downstream of all recycle loops are solved once after recycle convergence instead
+   * of on every recycle pass.
+   *
+   * @param defer true (default) to solve post-recycle units once after the loops have converged
+   */
+  public void setDeferPostRecycleUnits(boolean defer) {
+    if (this.deferPostRecycleUnits != defer) {
+      this.deferPostRecycleUnits = defer;
+      cachedHybridPlan = null;
+    }
+  }
+
+  /**
+   * Returns whether units downstream of all recycle loops are solved once after recycle convergence.
+   *
+   * @return true if post-recycle deferral is enabled
+   */
+  public boolean isDeferPostRecycleUnits() {
+    return deferPostRecycleUnits;
   }
 
   /**
@@ -2412,6 +2531,19 @@ public class ProcessSystem extends SimulationBaseClass {
         }
       } while ((!isConverged || (iter < 2 && (requireRecycleConfirmation || hasAutoDeactivatedRecycle()))) && iter < 100
           && !Thread.currentThread().isInterrupted() && !loopBudget.checkStop(null));
+    }
+
+    // Units downstream of every recycle loop cannot change a tear stream; solve them once on the
+    // converged loop state instead of on every recycle pass.
+    for (ProcessEquipmentInterface unit : plan.postRecycleSection) {
+      if (Thread.currentThread().isInterrupted()) {
+        break;
+      }
+      try {
+        runUnitProfiled(unit, id);
+      } catch (Exception ex) {
+        throw createUnitRunException(unit, ex);
+      }
     }
 
     // Update calculation identifiers

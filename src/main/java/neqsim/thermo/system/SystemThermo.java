@@ -1595,8 +1595,12 @@ public abstract class SystemThermo implements SystemInterface {
     }
 
     if (interfaceProp != null) {
-      clonedSystem.interfaceProp = interfaceProp.clone();
-      clonedSystem.interfaceProp.init(clonedSystem);
+      if (neqsim.thermo.phase.Phase.isThermoOnlyCloneActive()) {
+        clonedSystem.interfaceProp = new InterfaceProperties(clonedSystem);
+      } else {
+        clonedSystem.interfaceProp = interfaceProp.clone();
+        clonedSystem.interfaceProp.init(clonedSystem);
+      }
     }
 
     if (chemicalReactionOperations != null) {
@@ -1604,6 +1608,17 @@ public abstract class SystemThermo implements SystemInterface {
     }
 
     return clonedSystem;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public SystemInterface cloneThermoOnly() {
+    neqsim.thermo.phase.Phase.beginThermoOnlyClone();
+    try {
+      return clone();
+    } finally {
+      neqsim.thermo.phase.Phase.endThermoOnlyClone();
+    }
   }
 
   /** {@inheritDoc} */

@@ -168,6 +168,7 @@ public class ComponentAmmoniaEos extends ComponentEos {
 
     double[] residual = new double[numberOfComponents];
     double sum = 0.0;
+    ensureCompositionDerivativeCapacity(numberOfComponents);
 
     for (int i = 0; i < numberOfComponents; i++) {
       double ideal = -1.0 / nTot;
