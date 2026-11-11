@@ -1889,6 +1889,8 @@ def _has_safety_context(results):
         str(results.get("approach", "")),
         str(results.get("conclusions", "")),
     ]).lower()
+    # Reservoir "gas-cap blowdown" / "gas blowdown" is a depletion phase, not a depressurisation study.
+    text = re.sub(r"\b(gas[- ]cap|gas|reservoir)[- ]blow-?down\b", " ", text)
     return any(token in text for token in ("safety", "rupture", "fire", "blowdown"))
 
 
