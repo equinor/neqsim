@@ -1741,4 +1741,31 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     Files.deleteIfExists(java.nio.file.Paths.get(outputFile));
   }
+
+  /**
+   * Case C rim oil and gas cap against native Eclipse E300 2026.1 INIT output. The file has LBCCOEF and VCRIT but no
+   * VCRITVIS, so E300 uses VCRIT for the LBC critical volumes and pseudo-critical mixing for the reducing parameter.
+   */
+  @Test
+  void testCaseCLbcViscosityMatchesE300() {
+    SystemInterface fluid = EclipseFluidReadWrite.read(file.getAbsolutePath() + "/case_c_lbc_rim.e300");
+
+    fluid.setPressure(336.0, "bara");
+    fluid.setTemperature(119.1, "C");
+    new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid).TPflash();
+    fluid.initProperties();
+    assertEquals(1, fluid.getNumberOfPhases(), "Rim oil is single phase at 336 bara");
+    assertEquals(0.2748, fluid.getPhase(0).getViscosity("cP"), 0.2748 * 0.01, "Rim oil LBC viscosity");
+    assertEquals(635.4, fluid.getPhase(0).getDensity("kg/m3"), 635.4 * 0.005, "Rim oil density");
+
+    SystemInterface gas = fluid.clone();
+    gas.setMolarComposition(new double[] {0.7150221, 0.1756687, 0.0532843, 0.0453746, 0.0092351, 0.0013289, 0.0000862});
+    gas.setPressure(334.14, "bara");
+    gas.setTemperature(117.34, "C");
+    new neqsim.thermodynamicoperations.ThermodynamicOperations(gas).TPflash();
+    gas.initProperties();
+    assertEquals(1, gas.getNumberOfPhases(), "Gas cap is single phase at 334.14 bara");
+    assertEquals(0.04357, gas.getPhase(0).getViscosity("cP"), 0.04357 * 0.02, "Gas cap LBC viscosity");
+    assertEquals(314.94, gas.getPhase(0).getDensity("kg/m3"), 314.94 * 0.01, "Gas cap density");
+  }
 }

@@ -523,7 +523,7 @@ public class TPmultiflash extends TPflash {
     // minimumGibbsEnergySystem = system.clone();
     // }
     minimumGibbsEnergySystem = system;
-    clonedSystem.add(system.clone());
+    clonedSystem.add(system.cloneThermoOnly());
     SystemInterface trialSystem = clonedSystem.get(0);
     /*
      * for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) { if
@@ -1127,7 +1127,7 @@ public class TPmultiflash extends TPflash {
     }
 
     // Clone system once - reuse for all tests
-    SystemInterface clonedSystem = system.clone();
+    SystemInterface clonedSystem = system.cloneThermoOnly();
 
     // Calculate Wilson K-values for each component once
     // K = (Pc/P) * exp(5.373 * (1 + omega) * (1 - Tc/T))
@@ -1425,7 +1425,7 @@ public class TPmultiflash extends TPflash {
     // minimumGibbsEnergySystem = system.clone();
     // }
     minimumGibbsEnergySystem = system;
-    clonedSystem.add(system.clone());
+    clonedSystem.add(system.cloneThermoOnly());
     /*
      * for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) { if
      * (system.getPhase(0).getComponent(i).getx() < 1e-100) { clonedSystem.add(null); continue; } double numb = 0;

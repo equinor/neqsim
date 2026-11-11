@@ -145,6 +145,7 @@ public class ComponentSolid extends ComponentSrk {
   @Override
   public double logfugcoefdNi(PhaseInterface phase, int component) {
     if (useSolidVaporPressure) {
+      ensureCompositionDerivativeCapacity(component + 1);
       dfugdn[component] = 0.0;
       dfugdx[component] = 0.0;
       return 0.0;

@@ -783,6 +783,22 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void clearAll();
 
   /**
+   * Clones the fluid for internal thermodynamic work (stability analysis, trial flashes) without copying its
+   * physical-property and interfacial-property models.
+   *
+   * <p>
+   * The copy carries the complete thermodynamic state and is considerably cheaper to create than {@link #clone()}.
+   * Transport properties requested from the copy are evaluated with default models, so the copy must not be handed out
+   * as a process result.
+   * </p>
+   *
+   * @return a thermodynamics-only copy of this fluid
+   */
+  public default SystemInterface cloneThermoOnly() {
+    return clone();
+  }
+
+  /**
    * Creates an independently mutable copy of this thermodynamic system.
    *
    * <p>
