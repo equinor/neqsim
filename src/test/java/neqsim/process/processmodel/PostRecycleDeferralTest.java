@@ -17,6 +17,9 @@ import neqsim.thermo.system.SystemSrkEos;
 /**
  * Verifies that units downstream of all recycle loops are solved once after recycle convergence and that this does not
  * change the converged flowsheet.
+ *
+ * @author NeqSim contributors
+ * @version 1.0
  */
 public class PostRecycleDeferralTest {
   /** Flowsheet under test together with the units the assertions read. */

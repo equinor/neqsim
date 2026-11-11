@@ -79,8 +79,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
   public double aDiffDiffT = 0;
 
-  public double[] Aij = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
-  public double[] Bij = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+  protected double[] Aij = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+  protected double[] Bij = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   protected double delta1 = 0;
 
   protected double delta2 = 0;

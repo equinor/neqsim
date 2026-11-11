@@ -165,7 +165,7 @@ public abstract class Component implements ComponentInterface {
   /* Derivative of fugacity wrt mole fraction (of each ) */
   protected double[] dfugdn = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   /* Derivative of fugacity wrt temperature */
-  public double[] dfugdx = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
+  protected double[] dfugdx = new double[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
 
   // Parameters for Antoine equation
   double AntoineA = 0;
@@ -1400,8 +1400,8 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * Makes sure the composition-derivative work arrays can hold at least the given number of components. Existing
-   * values are kept; the arrays are never shrunk by this method.
+   * Makes sure the composition-derivative work arrays can hold at least the given number of components. Existing values
+   * are kept; the arrays are never shrunk by this method.
    *
    * @param numberOfComponents required number of entries
    */

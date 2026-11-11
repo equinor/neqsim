@@ -9,6 +9,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Verifies that fitting the per-component derivative arrays to the component count keeps fluids fully functional.
+ *
+ * @author NeqSim contributors
+ * @version 1.0
  */
 public class FluidCloneFootprintTest {
   /**
@@ -32,8 +35,7 @@ public class FluidCloneFootprintTest {
     new ThermodynamicOperations(fluid).TPflash();
     fluid.init(3);
     ComponentEos component = (ComponentEos) fluid.getPhase(0).getComponent(0);
-    assertEquals(3, component.Aij.length);
-    assertEquals(3, component.dfugdx.length);
+    assertEquals(3, component.logfugcoefdN(fluid.getPhase(0)).length);
     // Entries beyond the fitted size read as zero and can still be written.
     assertEquals(0.0, component.getdfugdn(10), 0.0);
     component.setdfugdn(10, 1.5);

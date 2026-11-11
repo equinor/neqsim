@@ -274,7 +274,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   private boolean useOptimizedExecution = true;
   /** Solve units downstream of all recycle loops once, after the loops have converged. */
-  private boolean deferPostRecycleUnits = !"false"
+  private volatile boolean deferPostRecycleUnits = !"false"
       .equalsIgnoreCase(System.getProperty("neqsim.process.deferPostRecycleUnits", "true"));
 
   /** Cached task graph used by dataflow execution. */
@@ -2226,8 +2226,8 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Controls whether units located downstream of all recycle loops are solved once after recycle convergence instead
-   * of on every recycle pass.
+   * Controls whether units located downstream of all recycle loops are solved once after recycle convergence instead of
+   * on every recycle pass.
    *
    * @param defer true (default) to solve post-recycle units once after the loops have converged
    */

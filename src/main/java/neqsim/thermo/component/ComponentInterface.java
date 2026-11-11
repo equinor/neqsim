@@ -29,7 +29,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    *
    * @param numberOfComponents number of components in the owning phase
    */
-  public default void fitCompositionDerivativeArrays(int numberOfComponents) {}
+  public default void fitCompositionDerivativeArrays(int numberOfComponents) {
+  }
 
   /**
    * Helper function to create component. Typically called from constructors.
