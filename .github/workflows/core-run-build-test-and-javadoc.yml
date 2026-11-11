@@ -97,7 +97,7 @@ jobs:
           cache: 'maven'
       - name: Run fast tests and generate JaCoCo report
         if: matrix.verify_jacoco
-        run: mvn -B test -ntp -DskipITs
+        run: mvn -B test -ntp -DskipITs -Dsurefire.forkCount=3
       - name: Run fast tests, do not generate JaCoCo report
         if: ${{ !matrix.verify_jacoco }}
         # PR #4484: Temurin 21.0.12.1 on Windows crashed with an access violation

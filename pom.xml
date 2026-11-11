@@ -28,6 +28,7 @@
 		<!-- Exclude slow and benchmark tests by default. Run with -DexcludedTestGroups= to include all tests.
 		     "benchmark" marks assertion-free profiling classes that only emit reports; they are never run in CI. -->
 		<excludedTestGroups>slow,benchmark</excludedTestGroups>
+		<surefire.forkCount>1</surefire.forkCount>
 	</properties>
 	<licenses>
 		<license>
@@ -384,6 +385,10 @@
 					<argLine>@{argLine} -Xmx3g --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
 					<!-- Keep class execution order identical across filesystems and operating systems. -->
 					<runOrder>alphabetical</runOrder>
+					<!-- Test classes run in one JVM by default. CI sets -Dsurefire.forkCount=3 to run
+					     classes in parallel JVMs (each with its own static state); reuseForks keeps JVM start-up cost low. -->
+					<forkCount>${surefire.forkCount}</forkCount>
+					<reuseForks>true</reuseForks>
 					<!-- Exclude slow tests by default. Run with -DincludeSlow=true to include them -->
 					<excludedGroups>${excludedTestGroups}</excludedGroups>
 				</configuration>
