@@ -345,7 +345,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
   public OLGApropertyTableGeneratorWaterKeywordFormat(SystemInterface system) {
-    this.sourceSystem = system;
+    this.sourceSystem = system.clone();
     this.thermoSystem = system;
     thermoOps = new ThermodynamicOperations(thermoSystem);
   }
@@ -547,10 +547,10 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   /**
    * Get the fluid the table was generated from, including any produced water.
    *
-   * @return table fluid
+   * @return a copy of the table fluid
    */
   public SystemInterface getTableFluid() {
-    return thermoSystem;
+    return thermoSystem == null ? null : thermoSystem.clone();
   }
 
   /**

@@ -19,7 +19,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author Even Solbraa
  * @version 1.0
  */
-final class OlgaEnvelopeInfo {
+final class OlgaEnvelopeInfo implements java.io.Serializable {
+  private static final long serialVersionUID = 1000L;
+
   /** Logger object for class. */
   private static final Logger logger = LogManager.getLogger(OlgaEnvelopeInfo.class);
   /** Water mole fraction left when water cannot be removed. */

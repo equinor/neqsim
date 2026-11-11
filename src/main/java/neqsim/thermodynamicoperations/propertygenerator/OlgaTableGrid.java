@@ -17,7 +17,9 @@ import java.util.Arrays;
  * @author Even Solbraa
  * @version 1.0
  */
-final class OlgaTableGrid {
+final class OlgaTableGrid implements java.io.Serializable {
+  private static final long serialVersionUID = 1000L;
+
   /** Relative tolerance for treating a value as an existing node. */
   private static final double NODE_TOLERANCE = 1.0e-9;
 

@@ -3,7 +3,6 @@ package neqsim.thermodynamicoperations.propertygenerator;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -354,7 +353,7 @@ class OlgaTableGenerationOptionsTest {
     assertThrows(IllegalArgumentException.class, () -> rejected.setProducedWater(10.0, "vol%"));
   }
 
-  /** The table fluid is the source feed when no produced water is specified. */
+  /** The table fluid is a copy of the source feed when no produced water is specified. */
   @Test
   void tableFluidIsSourceWithoutProducedWater() {
     SystemInterface feed = wetCondensate();
@@ -362,7 +361,10 @@ class OlgaTableGenerationOptionsTest {
     generator.setPressureRange(20.0, 40.0, 2);
     generator.setTemperatureRange(293.15, 313.15, 2);
     generator.run();
-    assertSame(feed, generator.getTableFluid());
+    SystemInterface tableFluid = generator.getTableFluid();
+    assertEquals(feed.getNumberOfComponents(), tableFluid.getNumberOfComponents());
+    assertEquals(feed.getPhase(0).getComponent("water").getz(), tableFluid.getPhase(0).getComponent("water").getz(),
+        1.0e-12);
   }
 
   /** The table critical point comes from the water-free composition. */
