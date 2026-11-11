@@ -37,9 +37,9 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
 
   SystemInterface thermoSystem = null;
   ThermodynamicOperations thermoOps = null;
-  double stdPres = ThermodynamicConstantsInterface.referencePressure;
-  double stdPresATM = 1;
-  double stdTemp = 288.15;
+  volatile double stdPres = ThermodynamicConstantsInterface.referencePressure;
+  volatile double stdPresATM = 1;
+  volatile double stdTemp = 288.15;
   double[] molfracs;
   double[] MW;
   double[] dens;
@@ -121,21 +121,21 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   /** Temperature axis definition in K. */
   private final OlgaTableGrid temperatureGrid = new OlgaTableGrid();
   /** True to refine the grid around the phase envelope. */
-  private boolean envelopeRefinement = false;
+  private volatile boolean envelopeRefinement = false;
   /** Ratio of grid points inside to outside the phase envelope. */
-  private double gridFactor = 5.0;
+  private volatile double gridFactor = 5.0;
   /** True to insert the standard pressure and temperature into the grid. */
-  private boolean insertStandardConditions = false;
+  private volatile boolean insertStandardConditions = false;
   /** True to fill absent-phase nodes monotonically with the phase gradients. */
-  private boolean monotonicityCorrection = true;
+  private volatile boolean monotonicityCorrection = true;
   /** True to take aqueous properties from the IAPWS reference equations. */
-  private boolean referenceWaterProperties = false;
+  private volatile boolean referenceWaterProperties = false;
   /** Salt mass fraction of the aqueous phase. */
-  private double saltMassFraction = 0.0;
+  private volatile double saltMassFraction = 0.0;
   /** Normalized produced-water specification, or null when the feed is used as given. */
   private String producedWaterSpecification = null;
   /** Produced-water specification value. */
-  private double producedWaterValue = 0.0;
+  private volatile double producedWaterValue = 0.0;
   /** Envelope extents of the water-free feed. */
   private OlgaEnvelopeInfo envelope = null;
   /** Water mass fraction of the aqueous phase at each node. */
@@ -143,9 +143,9 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   /** Phase-existence mask per column before absent nodes were filled. */
   boolean[][][] columnPresent;
   /** Number of aqueous nodes evaluated with the reference equations. */
-  private int referenceWaterNodes = 0;
+  private volatile int referenceWaterNodes = 0;
   /** Number of aqueous nodes left on the equation of state because of purity or range. */
-  private int referenceWaterSkippedNodes = 0;
+  private volatile int referenceWaterSkippedNodes = 0;
 
   /**
    * Set the fluid label written to the table.
@@ -922,8 +922,8 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
    * Apply the reference water equations and the salinity correction at aqueous nodes.
    */
   private void applyWaterModels() {
-    referenceWaterNodes = 0;
-    referenceWaterSkippedNodes = 0;
+    int nodes = 0;
+    int skipped = 0;
     int rho = columnIndex("ROWT");
     int rhoP = columnIndex("DROWTDP");
     int rhoT = columnIndex("DROWTDT");
@@ -941,7 +941,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
           }
           if (waterPurity[i][j] < REFERENCE_WATER_MIN_PURITY
               || !LiquidWaterReference.isInRange(temperatures[j], pressures[i])) {
-            referenceWaterSkippedNodes++;
+            skipped++;
             continue;
           }
           LiquidWaterReference water = LiquidWaterReference.at(temperatures[j], pressures[i]);
@@ -957,10 +957,12 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
           props[enthalpy][i][j] = water.getEnthalpy() + offsets[0];
           props[entropy][i][j] = water.getEntropy() + offsets[1];
           props[conductivity][i][j] = water.getThermalConductivity();
-          referenceWaterNodes++;
+          nodes++;
         }
       }
     }
+    referenceWaterNodes = nodes;
+    referenceWaterSkippedNodes = skipped;
     if (saltMassFraction > 0.0) {
       for (int i = 0; i < pressures.length; i++) {
         for (int j = 0; j < temperatures.length; j++) {

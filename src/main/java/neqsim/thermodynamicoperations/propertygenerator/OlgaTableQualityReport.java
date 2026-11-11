@@ -87,13 +87,57 @@ public class OlgaTableQualityReport {
   public OlgaTableQualityReport(String[] keywords, double[][][] values, double[] pressuresBara, double[] temperaturesC,
       boolean[][][] present) {
     this.keywords = keywords.clone();
-    this.values = values;
+    this.values = copy(values);
     this.pressures = pressuresBara.clone();
     this.temperatures = temperaturesC.clone();
-    this.present = present;
+    this.present = copy(present);
     for (int k = 0; k < keywords.length; k++) {
       summaries.add(summarize(k));
     }
+  }
+
+  /**
+   * Deep-copies a three-dimensional value array.
+   *
+   * @param source array to copy, may be null
+   * @return independent copy with the same null entries
+   */
+  private static double[][][] copy(double[][][] source) {
+    if (source == null) {
+      return null;
+    }
+    double[][][] result = new double[source.length][][];
+    for (int k = 0; k < source.length; k++) {
+      if (source[k] != null) {
+        result[k] = new double[source[k].length][];
+        for (int i = 0; i < source[k].length; i++) {
+          result[k][i] = source[k][i] == null ? null : source[k][i].clone();
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Deep-copies a three-dimensional mask array.
+   *
+   * @param source array to copy, may be null
+   * @return independent copy with the same null entries
+   */
+  private static boolean[][][] copy(boolean[][][] source) {
+    if (source == null) {
+      return null;
+    }
+    boolean[][][] result = new boolean[source.length][][];
+    for (int k = 0; k < source.length; k++) {
+      if (source[k] != null) {
+        result[k] = new boolean[source[k].length][];
+        for (int i = 0; i < source[k].length; i++) {
+          result[k][i] = source[k][i] == null ? null : source[k][i].clone();
+        }
+      }
+    }
+    return result;
   }
 
   /**

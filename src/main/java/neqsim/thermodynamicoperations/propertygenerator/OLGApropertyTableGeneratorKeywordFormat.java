@@ -44,9 +44,9 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
 
   SystemInterface thermoSystem = null;
   ThermodynamicOperations thermoOps = null;
-  double stdPres = ThermodynamicConstantsInterface.referencePressure;
-  double stdPresATM = 1;
-  double stdTemp = 288.15;
+  volatile double stdPres = ThermodynamicConstantsInterface.referencePressure;
+  volatile double stdPresATM = 1;
+  volatile double stdTemp = 288.15;
   double[] molfracs;
   double[] MW;
   double[] dens;
@@ -104,13 +104,13 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
   /** Temperature axis definition in K. */
   private final OlgaTableGrid temperatureGrid = new OlgaTableGrid();
   /** True to refine the grid around the phase envelope. */
-  private boolean envelopeRefinement = false;
+  private volatile boolean envelopeRefinement = false;
   /** Ratio of grid points inside to outside the phase envelope. */
-  private double gridFactor = 5.0;
+  private volatile double gridFactor = 5.0;
   /** True to insert the standard pressure and temperature into the grid. */
-  private boolean insertStandardConditions = false;
+  private volatile boolean insertStandardConditions = false;
   /** True to fill absent-phase nodes monotonically with the phase gradients. */
-  private boolean monotonicityCorrection = true;
+  private volatile boolean monotonicityCorrection = true;
   /** Envelope extents of the water-free feed. */
   private OlgaEnvelopeInfo envelope = null;
   /** Phase-existence mask per column before absent nodes were filled. */
