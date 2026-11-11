@@ -39,7 +39,9 @@ public class LBCViscosityMethod extends Viscosity {
   @Override
   public double calcViscosity() {
     double volumeMixSum = 0.0;
-    double epsilonMixSum = 0.0;
+    double pseudoCriticalTemperature = 0.0;
+    double pseudoCriticalPressureAtm = 0.0;
+    double mixtureMolarMass = 0.0;
     double mixtureMolarMassSqrt = 0.0;
     double weightedGasViscosity = 0.0;
 
@@ -53,9 +55,9 @@ public class LBCViscosityMethod extends Viscosity {
       double tr = phase.getPhase().getTemperature() / tc;
       double pc = component.getPC(); // bar
       double pcAtm = pc / 1.01325;
-      double temp2Epsilon = Math.pow(tc, 1.0 / 6.0) / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pcAtm, 2.0 / 3.0));
-
-      epsilonMixSum += component.getx() * Math.pow(temp2Epsilon, 6.0);
+      pseudoCriticalTemperature += component.getx() * tc;
+      pseudoCriticalPressureAtm += component.getx() * pcAtm;
+      mixtureMolarMass += component.getx() * molarMass;
 
       double temp2Gas = Math.pow(tc, 1.0 / 6.0) / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pcAtm, 2.0 / 3.0));
       double lowPressureCorrelation = tr < 1.5 ? 34.0e-5 / temp2Gas * Math.pow(tr, 0.94)
@@ -72,7 +74,12 @@ public class LBCViscosityMethod extends Viscosity {
 
     double pseudoCriticalVolume = volumeMixSum; // cm3/mol
     double critDens = pseudoCriticalVolume > 0.0 ? 1.0 / pseudoCriticalVolume : 0.0; // mol/cm3
-    double epsilonMix = Math.pow(epsilonMixSum, 1.0 / 6.0);
+    // Lohrenz, Bray and Clark (JPT 1964) and Eclipse E300 use pseudo-critical (Kay) mixing for the
+    // viscosity-reducing parameter: xi_m = Tpc^(1/6) / (M^(1/2) * Ppc^(2/3)), Tpc in K, Ppc in atm.
+    double epsilonMix = mixtureMolarMass > 0.0 && pseudoCriticalPressureAtm > 0.0
+        ? Math.pow(pseudoCriticalTemperature, 1.0 / 6.0)
+            / (Math.sqrt(mixtureMolarMass) * Math.pow(pseudoCriticalPressureAtm, 2.0 / 3.0))
+        : 0.0;
     double reducedDensity = critDens > 0.0
         ? phase.getPhase().getPhysicalProperties().getDensity() / phase.getPhase().getMolarMass() / critDens / 1.0e6
         : 0.0;

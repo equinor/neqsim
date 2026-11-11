@@ -409,7 +409,10 @@ declared systems. Arrays must contain one positive finite value per source
 component. The replicated-fluid reader repeats that ordered source array for
 all named fluid blocks and initializes every allocated phase.
 
-Files without `VCRITVIS` retain the existing NeqSim LBC estimation behavior.
+Files without `VCRITVIS` but with `LBCCOEF` use the file's `VCRIT` values as the
+LBC critical volumes, as Eclipse E300 does. This applies to `METRIC` files with
+one positive finite `VCRIT` per source component; other files without `VCRITVIS`
+retain the existing NeqSim LBC estimation behavior.
 Explicit viscosity volumes take precedence over that estimate without changing
 component EOS properties. For a qualified delivery, compare the effective array,
 LBC coefficients and actual gas/oil viscosity over the declared replay grid;
