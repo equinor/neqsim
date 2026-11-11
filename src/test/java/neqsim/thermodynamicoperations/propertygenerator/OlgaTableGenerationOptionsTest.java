@@ -357,6 +357,8 @@ class OlgaTableGenerationOptionsTest {
   @Test
   void tableFluidIsSourceWithoutProducedWater() {
     SystemInterface feed = wetCondensate();
+    // The generator works on a private copy of the feed, so initialise the caller's feed to read its composition.
+    feed.init(0);
     OLGApropertyTableGeneratorWaterKeywordFormat generator = new OLGApropertyTableGeneratorWaterKeywordFormat(feed);
     generator.setPressureRange(20.0, 40.0, 2);
     generator.setTemperatureRange(293.15, 313.15, 2);
