@@ -19,14 +19,26 @@ import neqsim.thermo.system.SystemSrkEos;
  * change the converged flowsheet.
  */
 public class PostRecycleDeferralTest {
+  /** Flowsheet under test together with the units the assertions read. */
   private static final class Fixture {
+    /** Process containing one recycle loop and a downstream export train. */
     ProcessSystem process = new ProcessSystem("recompression");
+    /** Feed stream. */
     Stream feed;
+    /** First unit downstream of the recycle loop. */
     Compressor exportCompressor;
+    /** Last unit downstream of the recycle loop. */
     Cooler exportCooler;
+    /** Separator inside the recycle loop. */
     Separator inletSeparator;
   }
 
+  /**
+   * Builds a recompression loop with a liquid recycle followed by an export compressor and cooler.
+   *
+   * @param defer whether post-recycle units are solved once after recycle convergence
+   * @return the flowsheet and the units read by the tests
+   */
   private static Fixture build(boolean defer) {
     SystemInterface fluid = new SystemSrkEos(298.15, 30.0);
     fluid.addComponent("methane", 0.70);
@@ -90,6 +102,7 @@ public class PostRecycleDeferralTest {
     return fixture;
   }
 
+  /** Deferred and fully iterated runs must converge to the same flowsheet. */
   @Test
   public void deferredExportTrainMatchesFullIteration() {
     Fixture deferred = build(true);
@@ -111,6 +124,7 @@ public class PostRecycleDeferralTest {
         1.0e-6 * iterated.inletSeparator.getLiquidOutStream().getFlowRate("kg/hr"));
   }
 
+  /** Units downstream of the recycle are solved once per run and still follow feed changes. */
   @Test
   public void exportTrainIsSolvedOncePerRun() {
     Fixture deferred = build(true);

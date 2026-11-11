@@ -11,6 +11,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Verifies that fitting the per-component derivative arrays to the component count keeps fluids fully functional.
  */
 public class FluidCloneFootprintTest {
+  /**
+   * Creates a three-component SRK test fluid.
+   *
+   * @return the test fluid
+   */
   private static SystemInterface createFluid() {
     SystemInterface fluid = new SystemSrkEos(283.15, 50.0);
     fluid.addComponent("methane", 0.8);
@@ -20,6 +25,7 @@ public class FluidCloneFootprintTest {
     return fluid;
   }
 
+  /** Work arrays are fitted to the component count and stay readable and writable beyond it. */
   @Test
   public void derivativeArraysFollowComponentCount() {
     SystemInterface fluid = createFluid();
@@ -34,6 +40,7 @@ public class FluidCloneFootprintTest {
     assertEquals(1.5, component.getdfugdn(10), 0.0);
   }
 
+  /** A component can be added to a clone whose arrays were fitted to a smaller component count. */
   @Test
   public void componentCanBeAddedToInitializedClone() {
     SystemInterface fluid = createFluid();
@@ -56,6 +63,7 @@ public class FluidCloneFootprintTest {
         1.0e-12 * Math.abs(referenceDerivative));
   }
 
+  /** A thermodynamics-only clone carries the full thermodynamic state of its source. */
   @Test
   public void thermoOnlyCloneReproducesThermodynamicState() {
     SystemInterface fluid = createFluid();

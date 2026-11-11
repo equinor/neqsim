@@ -105,6 +105,7 @@ public abstract class Phase implements PhaseInterface {
 
   /** Per-thread nesting depth of thermodynamics-only clone operations. */
   private static final ThreadLocal<int[]> THERMO_ONLY_CLONE_DEPTH = new ThreadLocal<int[]>() {
+    /** {@inheritDoc} */
     @Override
     protected int[] initialValue() {
       return new int[1];
