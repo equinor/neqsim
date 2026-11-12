@@ -106,8 +106,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * <p>
    * Unless set explicitly, the tolerance is this fraction of the effective mass balance tolerance, but never below
    * {@link #MIN_DEFAULT_INTERNAL_FLOW_STATIONARITY_TOLERANCE}. A caller who loosens the material balance for speed
-   * therefore also loosens this check, while a very tight material balance does not make it unattainable for
-   * sequential sweeps. With the default mass balance tolerance of 0.016 it is 1e-3 of the total feed per sweep.
+   * therefore also loosens this check, while a very tight material balance does not make it unattainable for sequential
+   * sweeps. With the default mass balance tolerance of 0.016 it is 1e-3 of the total feed per sweep.
    * </p>
    */
   private static final double DEFAULT_INTERNAL_FLOW_STATIONARITY_TO_MASS_TOLERANCE_RATIO = 1.0 / 16.0;
@@ -198,9 +198,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** Tolerance for the throughput-weighted per-tray component material imbalance. */
   private double trayMaterialBalanceTolerance = DEFAULT_TRAY_MATERIAL_BALANCE_TOLERANCE;
   /** Explicit tolerance for the per-sweep internal tray traffic change relative to the total external feed. */
-  private double internalFlowStationarityTolerance = Double.NaN;
+  private volatile double internalFlowStationarityTolerance = Double.NaN;
   /** Whether {@link #internalFlowStationarityTolerance} was set explicitly. */
-  private boolean internalFlowStationarityToleranceCustomized = false;
+  private volatile boolean internalFlowStationarityToleranceCustomized = false;
   /** Scaled terminal product-draw residual convergence tolerance. */
   private double meshProductDrawResidualTolerance = DEFAULT_MESH_PRODUCT_DRAW_RESIDUAL_TOLERANCE;
   /** Maximum number of candidate cases allowed in tray optimization searches. */
@@ -814,17 +814,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Sum of absolute tray liquid and vapour outlet flow changes over the final sequential sweep, divided by the total
    * external feed flow. {@link Double#NaN} when the latest solve did not run the sequential solver.
    */
-  private double lastInternalFlowChange = Double.NaN;
+  private volatile double lastInternalFlowChange = Double.NaN;
   /**
    * Average per-sweep net change of total tray liquid and vapour outlet flow over the last sequential sweeps, divided
    * by the total external feed flow. Positive values mean internal traffic was still growing.
    */
-  private double lastInternalFlowGrowth = Double.NaN;
+  private volatile double lastInternalFlowGrowth = Double.NaN;
   /**
    * Net internal traffic growth over the last {@link #INTERNAL_FLOW_GROWTH_WINDOW} sweeps divided by that over the
    * window before. {@link Double#NaN} when fewer sweeps were run.
    */
-  private double lastInternalFlowGrowthRatio = Double.NaN;
+  private volatile double lastInternalFlowGrowthRatio = Double.NaN;
   /** Last recorded relative mass balance residual. */
   private double lastMassResidual = 0.0;
   /** Last recorded relative enthalpy residual. */
@@ -7474,8 +7474,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * <p>
    * The sequential solver only accepts a solution when the summed tray liquid and vapour outlet flow change over the
    * last sweep, relative to the total external feed, is at or below this value. When the solver stops without meeting
-   * it and internal traffic is still growing by more than this value per sweep without slowing down,
-   * {@link #solved()} returns {@code false}. Use {@link Double#POSITIVE_INFINITY} to switch both checks off.
+   * it and internal traffic is still growing by more than this value per sweep without slowing down, {@link #solved()}
+   * returns {@code false}. Use {@link Double#POSITIVE_INFINITY} to switch both checks off.
    * </p>
    *
    * @param tolerance positive relative tolerance

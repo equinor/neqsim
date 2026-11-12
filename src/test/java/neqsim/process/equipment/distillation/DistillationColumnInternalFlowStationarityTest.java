@@ -14,8 +14,8 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  * Verifies that a column whose specifications admit no steady state is not reported as solved.
  *
  * <p>
- * The case is the TEG regeneration still from GitHub issue 4961: fixed reboiler and condenser temperatures at about
- * 1.1 bara. The reboiler temperature fixes the water left in the lean TEG and the condenser temperature fixes how much
+ * The case is the TEG regeneration still from GitHub issue 4961: fixed reboiler and condenser temperatures at about 1.1
+ * bara. The reboiler temperature fixes the water left in the lean TEG and the condenser temperature fixes how much
  * water the overhead gas can carry. At a 95 C condenser more water enters than those two outlets can carry, so the
  * surplus circulates between reboiler and condenser and the internal reflux grows without bound. At 100 C the problem
  * is well-posed.
