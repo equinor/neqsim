@@ -192,6 +192,7 @@ neqsim.process.engineering.production
 neqsim.process.engineering.rotating
 neqsim.process.engineering.safety
 neqsim.process.engineering.safety.lifecycle
+neqsim.process.engineering.scd
 neqsim.process.engineering.validation
 neqsim.process.engineering.verticalslice
 neqsim.process.equipment
@@ -461,6 +462,7 @@ neqsim.thermo.util.humidair
 neqsim.thermo.util.hydrogen
 neqsim.thermo.util.jni
 neqsim.thermo.util.leachman
+neqsim.thermo.util.mineral
 neqsim.thermo.util.readwrite
 neqsim.thermo.util.referenceequations
 neqsim.thermo.util.solid
