@@ -270,6 +270,17 @@ are dropped and must be re-entered if needed. Changed equipment graphs and chang
 still change results, so test a representative archive before a NeqSim upgrade, keep the creating
 NeqSim version with the artifact, and retain a previous verified checkpoint.
 
+An archive also stores the component data of the version that wrote it: critical properties, EOS
+parameters and group-contribution assignments live inside the fluid objects and are not re-read from
+the component database on load. A loaded archive therefore reproduces the thermodynamics of its
+writer, including data that have since been corrected. For example, NeqSim 3.20 moved the `c-C7` and
+`c-C8` UMR-PRU UNIFAC groups from the alkane `CH2` group to the cyclic `cCH2` group; a pre-3.20
+archive keeps the old assignment, and in one lean gas model a fluid rebuilt with the current database
+gave 1.5 % less separator liquid and a 0.05 C lower dew point. To adopt current component data,
+rebuild the fluid from its composition, EOS and mixing rule, then compare against the archived result
+before replacing it. The writer version is recorded in `neqsim-meta.properties` and returned by
+`LoadReport.getWriterVersion()`.
+
 Lifecycle JSON is easier to inspect and migrate, but it is a selective state model rather than a
 lossless copy of every Java object. Record schema version, model version, provenance, units, and the
 base model definition used for `applyTo()`.
