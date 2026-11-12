@@ -3,7 +3,7 @@ name: neqsim-reservoir-h2s-mineral-buffer
 calculation_basis: "neqsim-java"
 version: "0.1.0"
 description: "Original (pre-souring) H2S in reservoir fluids from mineral buffering: pyrite + Fe-carbonate with the CH4/CO2 of the fluid fixes the H2S fugacity, which explains the exponential rise of H2S with reservoir temperature (Haaland 1999 correlation, about 54 kJ/mol). USE WHEN: a task asks what H2S to expect in a new reservoir or discovery, why H2S rises with temperature, whether a measured H2S is natural or souring, or which mineral reaction controls H2S."
-last_verified: "2026-11-09"
+last_verified: "2026-11-12"
 requires:
   python_packages: ["neqsim"]
   java_packages: ["neqsim.thermo.util.mineral (SolidGasReactionEquilibrium, MineralH2SBuffers, ReservoirH2SEstimator; equinor/neqsim#4945)"]
@@ -74,6 +74,19 @@ Palaeothermometer: `est.equilibrationTemperature(fluid, measured_ppm)` returns t
 
 Core mineralogy: the buffer needs pyrite and an Fe-carbonate (siderite or ankerite) to be present in the flow unit; their amount and the siderite/ankerite ratio do not change the value (phase rule). Use core XRD and thin sections as a presence screen. Count dolomite separately, because XRD does not resolve ankerite from Fe-poor red-bed dolocrete.
 
+## Depletion and pressure dependence
+
+At fixed composition the stoichiometry sets the ideal-gas pressure exponent beta in y(H2S) ~ P^beta: pyrite-siderite -0.5, pyrite-pyrrhotite, pyrite-magnetite and pyrrhotite-magnetite -1, pyrrhotite-siderite 0, anhydrite-TSR 0. With the real-gas fugacities of a reservoir gas at 400-500 bar the pyrite-siderite value is only about -0.15 (H2S rises x1.28 from 480 to 85 bar at 145 C, not x2.4), the other three H2-type buffers give about -0.55 and pyrrhotite-siderite +0.24. The fugacity coefficient of H2S, the CO2 and CH4 fugacities and the solid-volume term cancel about 85 % of the ideal-gas dilution effect. Judge a depletion trend with these effective exponents, never the ideal-gas ones.
+
+Workflow used on the Asgard H and J wells (task 2026-11-12):
+
+1. Build the gas-condensate fluid (plus fraction split, molar mass tuned to the measured dew pressure) and run a constant-volume depletion with `TPflash` stages; at each stage clone the template fluid, `setMolarComposition(gasMoles)`, set T and P and call `SolidGasReactionEquilibrium.solveForGas(fluid, "H2S")` or `ReservoirH2SEstimator.estimate`.
+2. Compare ratios, not levels: the level carries about a factor 3 from thermochemical data, the ratio between two pressures does not.
+3. Use CO2 and C1 of later gas samples as tracers against the depletion path: CO2 falling where depletion raises it means lean or CO2-poor gas (injection, recycle) or a CO2 sink. The equilibrium buffer then lowers H2S by about (CO2 ratio)^(3/8); frozen H2S is diluted in proportion to the lean-gas share. The two limits bracket the data and tell whether the buffer re-equilibrates.
+4. Test hypotheses jointly: pressure exponent, level, 2003-2024 ratio with a cluster bootstrap by test campaign, and a join of CO2 to every H2S reading (slope of ln H2S on ln CO2 near 0.375 in equilibrium).
+
+Code pitfalls: `getz()` of plus-fraction pseudo-components is zero until the fluid is initialised (use `getNumberOfmoles()`); pseudo-components are not in the database, so clone the template fluid instead of re-adding components; `dewPointPressureFlash` started at 300 bar can return a wrong root, so bisect the dew pressure on the phase count of `TPflash`.
+
 ## Validation Checklist
 
 - [ ] Fluid composition is a reservoir fluid at reservoir T and P (not separator gas); CO2 and methane present.
@@ -93,6 +106,7 @@ Core mineralogy: the buffer needs pyrite and an Fe-carbonate (siderite or ankeri
 | Fitting souring correlations to total H2S | Subtract the buffer baseline first. |
 | Expecting more siderite in core to mean less H2S | Presence, not amount, sets the value; siderite-bearing wells give the calibrated activity 0.38 directly. |
 | Applying the buffer to continental red beds | Triassic red beds poor in pyrite and siderite measured 9-27x below the buffer; use it as a ceiling there. |
+| Expecting H2S to double on depletion from 500 to 100 bar | Real-gas fugacities cut the effective exponent to about -0.15 (x1.3); a flat series is the expected result |
 | Predicting uplifted reservoirs at maximum burial temperature | The buffer re-equilibrates on cooling: uplifted wells kept only about +6 °C (about x1.4); use present temperature. |
 
 ## Limitations
