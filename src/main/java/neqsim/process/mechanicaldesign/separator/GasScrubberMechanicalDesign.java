@@ -221,6 +221,11 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     tantanLength = innerDiameter * 5;
     setInnerDiameter(innerDiameter);
 
+    // Vessel internal volume (m3) from the scrubber-sized geometry. super.calcDesign() set this
+    // from the base separator pass, so it must be refreshed after the scrubber re-sizing.
+    setVolumeTotal(
+        neqsim.thermo.ThermodynamicConstantsInterface.pi * Math.pow(innerDiameter / 2.0, 2.0) * tantanLength);
+
     setWeightElectroInstrument(electricalWeight);
 
     setWeightNozzle(externalNozzelsWeight);
