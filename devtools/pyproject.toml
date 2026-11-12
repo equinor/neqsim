@@ -61,7 +61,7 @@ py-modules = [
     "discovery_registry", "discipline_report_manifest",
     "ensure_on_path", "paperlab_install", "new_skill", "neqsim_doctor", "onboard",
     "neqsim_try", "neqsim_contribute", "java_locator", "doc_retriever", "stid_download",
-    "process_study_report", "psr_extract", "psr_balances", "psr_basis", "psr_diagrams", "psr_report", "psr_validate", "psr_demo",
+    "process_study_report", "psr_extract", "psr_handoff", "psr_balances", "psr_basis", "psr_diagrams", "psr_report", "psr_validate", "psr_demo",
     "process_report", "psr_draft", "psr_connectivity", "psr_wiring", "file_neqsim_issue",
     "unisim_reader", "unisim_writer", "unisim_neqsim_bridge", "unisim_batch_check",
     "unisim_run_generated", "unisim_probe_ops", "unisim_probe_column", "pdf_ocr",
