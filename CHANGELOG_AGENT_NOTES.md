@@ -9,6 +9,18 @@
 
 ---
 
+## 2026-11-12 — `.neqsim` files record the real NeqSim version; archives keep their writer's component data
+
+- **New `neqsim.util.NeqSimVersion.get()`:** `neqsim.version` system property, then manifest `Implementation-Version`,
+  then the packaged `META-INF/maven/com.equinor.neqsim/neqsim/pom.properties`, then `"development"`. Released JARs
+  carry no manifest version, so `NeqSimXtream` (#4630) wrote `neqsimVersion=unknown` into every file; it now writes
+  the release (for example `3.28.0`). `StatePersistenceRunner.getNeqSimVersion()` delegates to the same helper.
+- **Behaviour to know:** a `.neqsim` archive stores component data (critical properties, EOS and UNIFAC group
+  parameters) inside the fluid objects, so a loaded archive reproduces its writer's thermodynamics. Rebuild the fluid
+  to adopt database corrections such as the 3.20 `c-C7`/`c-C8` UMR-PRU `cCH2` group assignment (#3549).
+
+---
+
 ## 2026-11-06 — Conservative ideal-gas pig hydraulic coupling
 
 - Added transaction-safe `IdealGasPiggingModel` coupling `PigMotion` to conservative upstream/downstream calorically

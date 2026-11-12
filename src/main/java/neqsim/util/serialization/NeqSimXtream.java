@@ -256,22 +256,11 @@ public class NeqSimXtream {
   private static Properties createMetadata(Object javaobject) {
     Properties meta = new Properties();
     meta.setProperty("formatVersion", FORMAT_VERSION);
-    meta.setProperty("neqsimVersion", getNeqSimVersion());
+    meta.setProperty("neqsimVersion", neqsim.util.NeqSimVersion.get());
     meta.setProperty("javaVersion", System.getProperty("java.version", "unknown"));
     meta.setProperty("savedAtEpochMillis", Long.toString(System.currentTimeMillis()));
     meta.setProperty("rootClass", javaobject.getClass().getName());
     return meta;
-  }
-
-  /**
-   * Returns the NeqSim version from the JAR manifest.
-   *
-   * @return the implementation version, or "unknown" when not running from a packaged JAR
-   */
-  private static String getNeqSimVersion() {
-    Package pkg = NeqSimXtream.class.getPackage();
-    String version = pkg == null ? null : pkg.getImplementationVersion();
-    return version == null ? "unknown" : version;
   }
 
   /**

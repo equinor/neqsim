@@ -196,7 +196,8 @@ public class NeqSimXtreamLegacyCompatibilityTest {
     ProcessSystem reloaded = (ProcessSystem) NeqSimXtream.openNeqsim(resaved);
     NeqSimXtream.LoadReport report = NeqSimXtream.getLastLoadReport();
     assertFalse(report.isLegacyFormat());
-    assertNotNull(report.getWriterVersion());
+    assertEquals(neqsim.util.NeqSimVersion.get(), report.getWriterVersion());
+    assertFalse("unknown".equals(report.getWriterVersion()), "the writer version must be resolved");
     assertTrue(report.isClean(), report.toString());
     reloaded.run();
     assertEquals(scrubberLiquid,
