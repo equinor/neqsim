@@ -259,9 +259,10 @@ def finish_document(source, output, table_label="Table", overwrite=False):
             previous, following = paragraph._p.getprevious(), paragraph._p.getnext()
             if len(paragraph.text) < 120 and previous is not None and following is not None:
                 from docx.text.paragraph import Paragraph
-                if (previous.tag == qn("w:p") and following.tag == qn("w:p")
+                if (previous.tag == qn("w:p")
                         and Paragraph(previous, document).style.name.lower().startswith("heading")
-                        and Paragraph(following, document).style.name.lower().startswith("heading")):
+                        and following.tag == qn("w:p")):
+                    # A short hint line under a heading must travel with the text that follows it.
                     paragraph.paragraph_format.keep_with_next = True
     tables = [table for table in document.tables if table._tbl in body_set]
     warnings = []

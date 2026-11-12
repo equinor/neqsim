@@ -96,6 +96,24 @@ def test_body_tables_have_consistent_widths_headers_and_merged_cells(tmp_path):
     assert abs(merged.width - expected) < 635 * 3
 
 
+def test_hint_line_under_heading_stays_with_following_text(tmp_path):
+    source = tmp_path / "source.docx"
+    doc = Document()
+    doc.add_paragraph("Synthetic cover")
+    cover = doc.add_table(rows=1, cols=2)
+    cover.cell(0, 0).text = "Revision"
+    cover.cell(0, 1).text = "A"
+    doc.add_heading("Analysis", 1)
+    doc.add_heading("Open evidence", 2)
+    doc.add_paragraph("What the accepted explanation does not account for.")
+    doc.add_paragraph("A long body paragraph that follows the hint line. " * 5)
+    doc.save(source)
+    output = tmp_path / "pilot.docx"
+    design.finish_document(source, output)
+    hint = next(p for p in Document(output).paragraphs if p.text.startswith("What the accepted"))
+    assert hint.paragraph_format.keep_with_next
+
+
 def test_finishing_is_idempotent_for_captions_and_footer_fields(tmp_path):
     source = _report(tmp_path / "source.docx")
     first, second = tmp_path / "first.docx", tmp_path / "second.docx"
