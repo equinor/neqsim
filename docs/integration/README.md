@@ -88,7 +88,7 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 
 | Document | Description |
 |----------|-------------|
-| [olga_pvt_table_generation.md](olga_pvt_table_generation) | **Export any NeqSim fluid as an OLGA `.tab` PVT table and hydrate equilibrium curve - two-phase and three-phase generators, absent-phase handling, grid selection, hydrate curve export, and how to validate output by running it in OLGA** |
+| [olga_pvt_table_generation.md](olga_pvt_table_generation) | **Export any NeqSim fluid as an OLGA `.tab` PVT table and hydrate equilibrium curve - two-phase and three-phase generators, explicit and envelope-refined grids, standard-state insertion, produced water, salinity, IAPWS reference water properties, monotonic absent-phase fill, quality report and Markdown table report, hydrate curve export, and how to validate output by running it in OLGA** |
 
 ---
 

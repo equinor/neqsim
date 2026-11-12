@@ -6,12 +6,18 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.util.steam.BrineSalinityCorrection;
+import neqsim.thermo.util.steam.LiquidWaterReference;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -31,9 +37,9 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
 
   SystemInterface thermoSystem = null;
   ThermodynamicOperations thermoOps = null;
-  double stdPres = ThermodynamicConstantsInterface.referencePressure;
-  double stdPresATM = 1;
-  double stdTemp = 288.15;
+  volatile double stdPres = ThermodynamicConstantsInterface.referencePressure;
+  volatile double stdPresATM = 1;
+  volatile double stdTemp = 288.15;
   double[] molfracs;
   double[] MW;
   double[] dens;
@@ -105,6 +111,41 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   private static final double DEFAULT_WATER_DENSITY = 1000.0;
   /** OLGA sentinel for a standard gas/liquid ratio with no denominator phase. */
   private static final double NO_STANDARD_LIQUID = -999.0;
+  /** Smallest water mass fraction of the aqueous phase for which the reference water equations are used. */
+  private static final double REFERENCE_WATER_MIN_PURITY = 0.95;
+
+  /** Feed passed to the constructor; produced water is added to a copy of it. */
+  private final SystemInterface sourceSystem;
+  /** Pressure axis definition in bara. */
+  private final OlgaTableGrid pressureGrid = new OlgaTableGrid();
+  /** Temperature axis definition in K. */
+  private final OlgaTableGrid temperatureGrid = new OlgaTableGrid();
+  /** True to refine the grid around the phase envelope. */
+  private volatile boolean envelopeRefinement = false;
+  /** Ratio of grid points inside to outside the phase envelope. */
+  private volatile double gridFactor = 5.0;
+  /** True to insert the standard pressure and temperature into the grid. */
+  private volatile boolean insertStandardConditions = false;
+  /** True to fill absent-phase nodes monotonically with the phase gradients. */
+  private volatile boolean monotonicityCorrection = true;
+  /** True to take aqueous properties from the IAPWS reference equations. */
+  private volatile boolean referenceWaterProperties = false;
+  /** Salt mass fraction of the aqueous phase. */
+  private volatile double saltMassFraction = 0.0;
+  /** Normalized produced-water specification, or null when the feed is used as given. */
+  private String producedWaterSpecification = null;
+  /** Produced-water specification value. */
+  private volatile double producedWaterValue = 0.0;
+  /** Envelope extents of the water-free feed. */
+  private OlgaEnvelopeInfo envelope = null;
+  /** Water mass fraction of the aqueous phase at each node. */
+  private double[][] waterPurity;
+  /** Phase-existence mask per column before absent nodes were filled. */
+  boolean[][][] columnPresent;
+  /** Number of aqueous nodes evaluated with the reference equations. */
+  private volatile int referenceWaterNodes = 0;
+  /** Number of aqueous nodes left on the equation of state because of purity or range. */
+  private volatile int referenceWaterSkippedNodes = 0;
 
   /**
    * Set the fluid label written to the table.
@@ -221,10 +262,13 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
    * <p>
    * OLGA rejects a table containing a zero gas, oil or water density, so nodes outside a phase's existence region are
    * filled from the nearest node where it does exist, and a phase that exists nowhere falls back to a physical default.
-   * The phase mass fractions pin at zero there, so the extrapolated branch is never used in a flow calculation.
+   * The phase mass fractions pin at zero there, so the extrapolated branch is never used in a flow calculation. With
+   * the monotonicity correction, density, enthalpy and entropy are first filled with the phase gradients so they stay
+   * monotonic and continuous across the phase boundary.
    * </p>
    */
   private void fillAbsentPhaseNodes() {
+    columnPresent = new boolean[nProps][][];
     for (int k = 0; k < nProps; k++) {
       boolean[][] mask = null;
       if (needsGas[k] || needsOil[k] || needsWater[k]) {
@@ -236,8 +280,12 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
           }
         }
       }
+      columnPresent[k] = mask;
       if (mask != null) {
-        OlgaTableGridFiller.fillAbsentNodes(props[k], mask, defaultFor(namesKeyword[k]));
+        boolean[][] fillMask = monotonicityCorrection
+            ? OlgaTableGridFiller.monotonicFill(namesKeyword[k], namesKeyword, props, mask, pressureLOG, temperatures)
+            : mask;
+        OlgaTableGridFiller.fillAbsentNodes(props[k], fillMask, defaultFor(namesKeyword[k]));
       }
     }
   }
@@ -297,59 +345,364 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
   public OLGApropertyTableGeneratorWaterKeywordFormat(SystemInterface system) {
+    this.sourceSystem = system.clone();
     this.thermoSystem = system;
     thermoOps = new ThermodynamicOperations(thermoSystem);
   }
 
   /**
-   * setPressureRange.
+   * Set an equidistant pressure axis.
    *
-   * @param minPressure a double
-   * @param maxPressure a double
-   * @param numberOfSteps a int
+   * @param minPressure lowest pressure [bara]
+   * @param maxPressure highest pressure [bara]
+   * @param numberOfSteps number of pressure points
    */
   public void setPressureRange(double minPressure, double maxPressure, int numberOfSteps) {
-    pressures = new double[numberOfSteps];
-    pressureLOG = new double[numberOfSteps];
-    double step = (maxPressure - minPressure) / (numberOfSteps * 1.0 - 1.0);
-    for (int i = 0; i < numberOfSteps; i++) {
-      pressures[i] = minPressure + i * step;
-      pressureLOG[i] = pressures[i] * 1e5;
-    }
+    pressureGrid.setRange(minPressure, maxPressure, numberOfSteps);
+    setPressureAxis(OlgaTableGrid.uniform(minPressure, maxPressure, numberOfSteps));
   }
 
   /**
-   * setTemperatureRange.
+   * Set an equidistant temperature axis.
    *
-   * @param minTemperature a double
-   * @param maxTemperature a double
-   * @param numberOfSteps a int
+   * @param minTemperature lowest temperature [K]
+   * @param maxTemperature highest temperature [K]
+   * @param numberOfSteps number of temperature points
    */
   public void setTemperatureRange(double minTemperature, double maxTemperature, int numberOfSteps) {
-    temperatures = new double[numberOfSteps];
-    temperatureLOG = new double[numberOfSteps];
-    double step = (maxTemperature - minTemperature) / (numberOfSteps * 1.0 - 1.0);
-    for (int i = 0; i < numberOfSteps; i++) {
-      temperatures[i] = minTemperature + i * step;
-      temperatureLOG[i] = temperatures[i] - 273.15;
+    temperatureGrid.setRange(minTemperature, maxTemperature, numberOfSteps);
+    setTemperatureAxis(OlgaTableGrid.uniform(minTemperature, maxTemperature, numberOfSteps));
+  }
+
+  /**
+   * Set explicit table pressures, covering all combinations with the temperatures.
+   *
+   * @param pressuresBara pressures [bara], in any order
+   * @throws IllegalArgumentException if fewer than two distinct finite values are given
+   */
+  public void setPressures(double[] pressuresBara) {
+    setPressureAxis(pressureGrid.setValues(pressuresBara));
+  }
+
+  /**
+   * Set explicit table temperatures, covering all combinations with the pressures.
+   *
+   * @param temperaturesKelvin temperatures [K], in any order
+   * @throws IllegalArgumentException if fewer than two distinct finite values are given
+   */
+  public void setTemperatures(double[] temperaturesKelvin) {
+    setTemperatureAxis(temperatureGrid.setValues(temperaturesKelvin));
+  }
+
+  /**
+   * Store the pressure axis and its Pa values.
+   *
+   * @param axis pressures [bara]
+   */
+  private void setPressureAxis(double[] axis) {
+    pressures = axis;
+    pressureLOG = new double[axis.length];
+    for (int i = 0; i < axis.length; i++) {
+      pressureLOG[i] = axis[i] * 1e5;
     }
   }
 
   /**
-   * calcPhaseEnvelope.
+   * Store the temperature axis and its Celsius values.
+   *
+   * @param axis temperatures [K]
+   */
+  private void setTemperatureAxis(double[] axis) {
+    temperatures = axis;
+    temperatureLOG = new double[axis.length];
+    for (int i = 0; i < axis.length; i++) {
+      temperatureLOG[i] = axis[i] - 273.15;
+    }
+  }
+
+  /**
+   * Concentrate range-axis points inside the water-free phase envelope.
+   *
+   * <p>
+   * Along each axis whose envelope maximum (cricondenbar or cricondentherm) lies inside the range, a share
+   * gridFactor/(gridFactor+1) of the points is placed inside the envelope. Explicit axes are not changed.
+   * </p>
+   *
+   * @param enabled true to refine
+   * @param factor ratio of points inside to outside the envelope, 1 to 10
+   * @throws IllegalArgumentException if the factor is outside 1 to 10
+   */
+  public void setEnvelopeRefinement(boolean enabled, double factor) {
+    if (!Double.isFinite(factor) || factor < 1.0 || factor > 10.0) {
+      throw new IllegalArgumentException("Grid factor must be within 1-10, got " + factor);
+    }
+    this.envelopeRefinement = enabled;
+    this.gridFactor = factor;
+  }
+
+  /**
+   * Insert the standard pressure and temperature into the grid when they lie inside it. A range axis keeps its point
+   * count; an explicit axis gains one point.
+   *
+   * @param insert true to insert
+   */
+  public void setInsertStandardConditions(boolean insert) {
+    this.insertStandardConditions = insert;
+  }
+
+  /**
+   * Set the standard conditions for GOR, GLR, water cut and standard densities.
+   *
+   * @param temperature standard temperature [K]
+   * @param pressure standard pressure [bara]
+   * @throws IllegalArgumentException if either value is not positive and finite
+   */
+  public void setStandardConditions(double temperature, double pressure) {
+    if (!(temperature > 0.0) || !(pressure > 0.0) || Double.isInfinite(temperature) || Double.isInfinite(pressure)) {
+      throw new IllegalArgumentException("Standard temperature and pressure must be positive");
+    }
+    this.stdTemp = temperature;
+    this.stdPres = pressure;
+    this.stdPresATM = pressure / ThermodynamicConstantsInterface.referencePressure;
+  }
+
+  /**
+   * Fill absent-phase density, enthalpy and entropy with the phase gradients so they stay monotonic and continuous. On
+   * by default; when off, absent nodes take the nearest existing value.
+   *
+   * @param correct true to correct
+   */
+  public void setMonotonicityCorrection(boolean correct) {
+    this.monotonicityCorrection = correct;
+  }
+
+  /**
+   * Take aqueous density, its derivatives, heat capacity, enthalpy, entropy, viscosity and thermal conductivity from
+   * the IAPWS reference equations (IF97 Region 1, R12-08, R15-11) instead of the equation of state.
+   *
+   * <p>
+   * Applied at nodes where the aqueous phase is at least 95 wt% water and inside 253.15-623.15 K and up to 1000 bara;
+   * other nodes keep the equation-of-state values, so inhibitor-rich water is not treated as pure water. Enthalpy and
+   * entropy are shifted to the equation-of-state reference at standard conditions, keeping latent heats consistent with
+   * the gas phase. Interfacial tensions are not changed.
+   * </p>
+   *
+   * @param use true to use the reference equations
+   */
+  public void setUseReferenceWaterProperties(boolean use) {
+    this.referenceWaterProperties = use;
+  }
+
+  /**
+   * Set the salinity of the aqueous phase. Density, its derivatives and viscosity are corrected with the Batzle and
+   * Wang (1992) NaCl brine ratios; phase amounts and compositions are not affected. Not allowed for a feed that holds
+   * ionic components.
+   *
+   * @param value salinity value
+   * @param unit "mg/l" (of solution at standard conditions), "ppm" (mg/kg solution), "wt%" or "kg/kg"
+   * @throws IllegalArgumentException if the unit is unknown or the value is out of range
+   */
+  public void setWaterSalinity(double value, String unit) {
+    String normalized = unit == null ? "" : unit.trim().toLowerCase(java.util.Locale.ROOT);
+    double fraction;
+    if ("mg/l".equals(normalized)) {
+      fraction = BrineSalinityCorrection.massFractionFromConcentration(value, stdTemp, stdPres);
+    } else if ("ppm".equals(normalized)) {
+      fraction = value * 1.0e-6;
+    } else if ("wt%".equals(normalized)) {
+      fraction = value / 100.0;
+    } else if ("kg/kg".equals(normalized)) {
+      fraction = value;
+    } else {
+      throw new IllegalArgumentException("Salinity unit must be mg/l, ppm, wt% or kg/kg, got " + unit);
+    }
+    // Evaluated only to reject an out-of-range mass fraction.
+    BrineSalinityCorrection.densityRatio(stdTemp, stdPres, fraction);
+    this.saltMassFraction = fraction;
+  }
+
+  /**
+   * Get the salt mass fraction of the aqueous phase.
+   *
+   * @return salt mass fraction [kg/kg solution]
+   */
+  public double getWaterSaltMassFraction() {
+    return saltMassFraction;
+  }
+
+  /**
+   * Add produced water to a water-free feed before the table is generated. The feed passed to the constructor is not
+   * modified; the table fluid is available from {@link #getTableFluid()} after {@link #run()}.
+   *
+   * @param value specification value
+   * @param specification "watercut" (volume % of the standard liquid), "mol/mol" (mol water per mol feed), "mol%" or
+   * "wt%" of feed plus water
+   * @throws IllegalArgumentException if the specification or value is invalid
+   */
+  public void setProducedWater(double value, String specification) {
+    this.producedWaterSpecification = OlgaProducedWater.validate(specification, value);
+    this.producedWaterValue = value;
+  }
+
+  /**
+   * Get the fluid the table was generated from, including any produced water.
+   *
+   * @return a copy of the table fluid
+   */
+  public SystemInterface getTableFluid() {
+    return thermoSystem == null ? null : thermoSystem.clone();
+  }
+
+  /**
+   * Get the number of aqueous nodes evaluated with the reference water equations in the last run.
+   *
+   * @return node count
+   */
+  public int getReferenceWaterNodeCount() {
+    return referenceWaterNodes;
+  }
+
+  /**
+   * Get the number of aqueous nodes that kept equation-of-state values because the water was impure or the state was
+   * outside the reference range.
+   *
+   * @return node count
+   */
+  public int getReferenceWaterSkippedNodeCount() {
+    return referenceWaterSkippedNodes;
+  }
+
+  /**
+   * Build the quality report of the generated table.
+   *
+   * @return quality report
+   * @throws IllegalStateException if {@link #run()} has not completed
+   */
+  public OlgaTableQualityReport getQualityReport() {
+    if (props == null || columnPresent == null) {
+      throw new IllegalStateException("Run the generator before requesting a quality report");
+    }
+    return new OlgaTableQualityReport(namesKeyword, props, pressures, temperatureLOG, columnPresent);
+  }
+
+  /**
+   * Build the engineering report of the generated table in Markdown: fluid, grid, standard ratios, water-free envelope,
+   * water models and quality checks.
+   *
+   * @return report text
+   * @throws IllegalStateException if {@link #run()} has not completed
+   */
+  public String getTableReport() {
+    OlgaTableQualityReport quality = getQualityReport();
+    OlgaTableReportWriter report = new OlgaTableReportWriter();
+    report.title("OLGA PVT table report: " + fluidLabel);
+    report.paragraph("Three-phase keyword table (PHASE = THREE) generated with NeqSim. Phase properties are"
+        + " calculated by a TP flash at every grid node. Nodes where a phase does not exist are filled "
+        + (monotonicityCorrection ? "with the phase gradients (monotonicity correction)"
+            : "from the nearest node where the phase exists")
+        + "; OLGA does not use them where the phase mass fraction is zero.");
+    report.section("Fluid");
+    Map<String, String> fluid = new LinkedHashMap<String, String>();
+    fluid.put("Fluid label", fluidLabel);
+    fluid.put("Equation of state", thermoSystem.getModelName());
+    fluid.put("Produced water", producedWaterSpecification == null ? "as in the feed"
+        : OlgaTableReportWriter.number(producedWaterValue) + " " + producedWaterSpecification);
+    fluid.put("Total water mass fraction (TOTWATERFRACTION)", OlgaTableReportWriter.number(RSWTOB));
+    report.keyValues(fluid);
+    report.composition(components, molfracs, MW);
+    report.grid(pressures, pressureGrid.isDefined() ? pressureGrid.getLastMode() : "as set", temperatureLOG,
+        temperatureGrid.isDefined() ? temperatureGrid.getLastMode() : "as set");
+    report.section("Standard conditions and ratios");
+    Map<String, String> standard = new LinkedHashMap<String, String>();
+    standard.put("Standard temperature [K]", OlgaTableReportWriter.number(stdTemp));
+    standard.put("Standard pressure [bara]", OlgaTableReportWriter.number(stdPres));
+    standard.put("GOR [Sm3/Sm3]", OlgaTableReportWriter.number(GOR));
+    standard.put("GLR [Sm3/Sm3]", OlgaTableReportWriter.number(GLR));
+    standard.put("Water cut WC [-]", OlgaTableReportWriter.number(WC));
+    standard.put("Standard gas density [kg/m3]", OlgaTableReportWriter.number(stdGasDens));
+    standard.put("Standard oil density [kg/m3]", OlgaTableReportWriter.number(stdLiqDens));
+    standard.put("Standard water density [kg/m3]", OlgaTableReportWriter.number(stdWatDens));
+    report.keyValues(standard);
+    report.envelope(envelope, envelopeRefinement, gridFactor);
+    report.section("Water properties");
+    Map<String, String> water = new LinkedHashMap<String, String>();
+    water.put("Aqueous property model",
+        referenceWaterProperties ? "IAPWS reference equations (IF97 Region 1, R12-08 viscosity, R15-11 conductivity)"
+            : "equation of state and NeqSim physical-property models");
+    if (referenceWaterProperties) {
+      water.put("Nodes on reference equations", Integer.toString(referenceWaterNodes));
+      water.put("Nodes kept on equation of state (water below 95 wt% or out of range)",
+          Integer.toString(referenceWaterSkippedNodes));
+    }
+    water.put("Salt mass fraction [kg/kg]", OlgaTableReportWriter.number(saltMassFraction));
+    water.put("Salinity correction",
+        saltMassFraction > 0.0 ? "Batzle and Wang (1992) NaCl brine ratios on density, its derivatives and viscosity"
+            : "none");
+    report.keyValues(water);
+    return report.quality(quality).toString();
+  }
+
+  /**
+   * Write the engineering report of the generated table as Markdown.
+   *
+   * @param filename output file
+   * @throws IOException if the file cannot be written
+   * @throws IllegalStateException if {@link #run()} has not completed
+   */
+  public void writeTableReport(String filename) throws IOException {
+    OlgaTableReportWriter writer = new OlgaTableReportWriter();
+    writer.paragraph(getTableReport().trim());
+    writer.write(filename);
+  }
+
+  /**
+   * Calculate the critical point and envelope extents of the water-free feed.
    */
   public void calcPhaseEnvelope() {
-    try {
-      thermoOps.calcPTphaseEnvelope();
-      TCLOG = thermoSystem.getTC();
-      PCLOG = thermoSystem.getPC() * 0.986923267; // convert to ATM
-      TC = thermoSystem.getTC() - 273.15;
-      PC = thermoSystem.getPC() * 1e5;
-    } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
-    }
+    envelope = OlgaEnvelopeInfo.of(thermoSystem);
+    double criticalTemperature = Double.isFinite(envelope.criticalTemperature) ? envelope.criticalTemperature
+        : thermoSystem.getTC();
+    double criticalPressure = Double.isFinite(envelope.criticalPressure) ? envelope.criticalPressure
+        : thermoSystem.getPC();
+    TCLOG = criticalTemperature;
+    PCLOG = criticalPressure / ThermodynamicConstantsInterface.referencePressure;
+    TC = criticalTemperature - 273.15;
+    PC = criticalPressure * 1e5;
+  }
 
-    // thermoOps.ge
+  /**
+   * Prepare the table fluid, build the grid and check the water options.
+   */
+  private void prepare() {
+    if (producedWaterSpecification != null) {
+      thermoSystem = OlgaProducedWater.apply(sourceSystem, producedWaterSpecification, producedWaterValue, stdTemp,
+          stdPres, this::standardWaterDensity);
+      thermoSystem.setMultiPhaseCheck(true);
+      thermoOps = new ThermodynamicOperations(thermoSystem);
+    } else if (thermoSystem != sourceSystem) {
+      thermoSystem = sourceSystem;
+      thermoOps = new ThermodynamicOperations(thermoSystem);
+    }
+    if (saltMassFraction > 0.0) {
+      for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
+        if (thermoSystem.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+          throw new IllegalArgumentException("Salinity cannot be combined with ionic components in the feed: "
+              + thermoSystem.getPhase(0).getComponent(i).getComponentName());
+        }
+      }
+    }
+    if (pressures == null || temperatures == null) {
+      throw new IllegalStateException("Set the pressure and temperature axes before running the generator");
+    }
+    calcPhaseEnvelope();
+    if (pressureGrid.isDefined()) {
+      setPressureAxis(pressureGrid.build(envelopeRefinement, gridFactor, envelope.minimumPressure,
+          envelope.cricondenbarPressure, insertStandardConditions, stdPres));
+    }
+    if (temperatureGrid.isDefined()) {
+      setTemperatureAxis(temperatureGrid.build(envelopeRefinement, gridFactor, envelope.minimumTemperature,
+          envelope.cricondenthermTemperature, insertStandardConditions, stdTemp));
+    }
   }
 
   /**
@@ -502,9 +855,11 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
     PhaseInterface stdGas = thermoSystem.hasPhaseType("gas") ? thermoSystem.getPhaseOfType("gas") : null;
     PhaseInterface stdOil = thermoSystem.hasPhaseType("oil") ? thermoSystem.getPhaseOfType("oil") : null;
     PhaseInterface stdWater = thermoSystem.hasPhaseType("aqueous") ? thermoSystem.getPhaseOfType("aqueous") : null;
+    stdWatDens = stdWater != null ? standardWaterDensity(stdWater)
+        : representativeValue(props[2], DEFAULT_WATER_DENSITY);
     double gasVolume = standardVolume(stdGas);
     double oilVolume = standardVolume(stdOil);
-    double waterVolume = standardVolume(stdWater);
+    double waterVolume = stdWater == null ? 0.0 : stdWater.getMass() / stdWatDens;
     double liquidVolume = oilVolume + waterVolume;
 
     GOR = oilVolume > 0.0 ? gasVolume / oilVolume : NO_STANDARD_LIQUID;
@@ -515,8 +870,148 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
         : representativeValue(props[0], DEFAULT_GAS_DENSITY);
     stdLiqDens = stdOil != null ? stdOil.getPhysicalProperties().getDensity()
         : representativeValue(props[1], DEFAULT_OIL_DENSITY);
-    stdWatDens = stdWater != null ? stdWater.getPhysicalProperties().getDensity()
-        : representativeValue(props[2], DEFAULT_WATER_DENSITY);
+  }
+
+  /**
+   * Standard-condition aqueous density with the same water models as the table.
+   *
+   * @param water aqueous phase flashed at standard conditions
+   * @return density [kg/m3]
+   */
+  private double standardWaterDensity(PhaseInterface water) {
+    double density = water.getPhysicalProperties().getDensity();
+    if (referenceWaterProperties && LiquidWaterReference.isInRange(stdTemp, stdPres)
+        && purity(water) >= REFERENCE_WATER_MIN_PURITY) {
+      density = LiquidWaterReference.at(stdTemp, stdPres).getDensity();
+    }
+    if (saltMassFraction > 0.0) {
+      density *= BrineSalinityCorrection.densityRatio(stdTemp, stdPres, saltMassFraction);
+    }
+    return density;
+  }
+
+  /**
+   * Water mass fraction of an aqueous phase.
+   *
+   * @param water aqueous phase
+   * @return water mass fraction, zero without a water component
+   */
+  private double purity(PhaseInterface water) {
+    if (!water.hasComponent("water")) {
+      return 0.0;
+    }
+    return water.getComponent("water").getx() * water.getComponent("water").getMolarMass() / water.getMolarMass();
+  }
+
+  /**
+   * Find a column by keyword.
+   *
+   * @param keyword OLGA column keyword
+   * @return column index
+   */
+  private int columnIndex(String keyword) {
+    for (int k = 0; k < nProps; k++) {
+      if (keyword.equals(namesKeyword[k])) {
+        return k;
+      }
+    }
+    throw new IllegalStateException("Missing table column " + keyword);
+  }
+
+  /**
+   * Apply the reference water equations and the salinity correction at aqueous nodes.
+   */
+  private void applyWaterModels() {
+    int nodes = 0;
+    int skipped = 0;
+    int rho = columnIndex("ROWT");
+    int rhoP = columnIndex("DROWTDP");
+    int rhoT = columnIndex("DROWTDT");
+    int viscosity = columnIndex("VISWT");
+    if (referenceWaterProperties) {
+      int cp = columnIndex("CPWT");
+      int enthalpy = columnIndex("HWT");
+      int entropy = columnIndex("SEWT");
+      int conductivity = columnIndex("TCWT");
+      double[] offsets = referenceWaterOffsets();
+      for (int i = 0; i < pressures.length; i++) {
+        for (int j = 0; j < temperatures.length; j++) {
+          if (!waterPresent[i][j]) {
+            continue;
+          }
+          if (waterPurity[i][j] < REFERENCE_WATER_MIN_PURITY
+              || !LiquidWaterReference.isInRange(temperatures[j], pressures[i])) {
+            skipped++;
+            continue;
+          }
+          LiquidWaterReference water = LiquidWaterReference.at(temperatures[j], pressures[i]);
+          if (offsets == null) {
+            offsets = new double[] {props[enthalpy][i][j] - water.getEnthalpy(),
+                props[entropy][i][j] - water.getEntropy()};
+          }
+          props[rho][i][j] = water.getDensity();
+          props[rhoP][i][j] = water.getDensityPressureDerivative();
+          props[rhoT][i][j] = water.getDensityTemperatureDerivative();
+          props[viscosity][i][j] = water.getViscosity();
+          props[cp][i][j] = water.getHeatCapacityCp();
+          props[enthalpy][i][j] = water.getEnthalpy() + offsets[0];
+          props[entropy][i][j] = water.getEntropy() + offsets[1];
+          props[conductivity][i][j] = water.getThermalConductivity();
+          nodes++;
+        }
+      }
+    }
+    referenceWaterNodes = nodes;
+    referenceWaterSkippedNodes = skipped;
+    if (saltMassFraction > 0.0) {
+      for (int i = 0; i < pressures.length; i++) {
+        for (int j = 0; j < temperatures.length; j++) {
+          if (!waterPresent[i][j]) {
+            continue;
+          }
+          double fresh = props[rho][i][j];
+          double ratio = BrineSalinityCorrection.densityRatio(temperatures[j], pressures[i], saltMassFraction);
+          props[rho][i][j] = fresh * ratio;
+          props[rhoP][i][j] = props[rhoP][i][j] * ratio + fresh
+              * BrineSalinityCorrection.densityRatioPressureDerivative(temperatures[j], pressures[i], saltMassFraction);
+          props[rhoT][i][j] = props[rhoT][i][j] * ratio + fresh * BrineSalinityCorrection
+              .densityRatioTemperatureDerivative(temperatures[j], pressures[i], saltMassFraction);
+          props[viscosity][i][j] *= BrineSalinityCorrection.viscosityRatio(temperatures[j], saltMassFraction);
+        }
+      }
+    }
+  }
+
+  /**
+   * Shift that moves reference-water enthalpy and entropy onto the equation-of-state reference, anchored on the aqueous
+   * phase at standard conditions.
+   *
+   * @return enthalpy [J/kg] and entropy [J/(kg K)] offsets, or null when standard conditions give no usable water
+   */
+  private double[] referenceWaterOffsets() {
+    if (!LiquidWaterReference.isInRange(stdTemp, stdPres)) {
+      return null;
+    }
+    try {
+      SystemInterface standard = thermoSystem.clone();
+      standard.setTemperature(stdTemp);
+      standard.setPressure(stdPres);
+      new ThermodynamicOperations(standard).TPflash();
+      standard.init(3);
+      if (!standard.hasPhaseType("aqueous")) {
+        return null;
+      }
+      PhaseInterface water = standard.getPhaseOfType("aqueous");
+      if (purity(water) < REFERENCE_WATER_MIN_PURITY) {
+        return null;
+      }
+      LiquidWaterReference reference = LiquidWaterReference.at(stdTemp, stdPres);
+      return new double[] {specificEnthalpy(water) - reference.getEnthalpy(),
+          specificEntropy(water) - reference.getEntropy()};
+    } catch (Exception ex) {
+      logger.debug("Standard-condition water anchor failed: {}", ex.getMessage());
+      return null;
+    }
   }
 
   /**
@@ -563,6 +1058,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   @Override
   public void run() {
     logger.info("Start creating arrays");
+    prepare();
     calcRSWTOB();
     nProps = 29;
     props = new double[nProps][pressures.length][temperatures.length];
@@ -575,7 +1071,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
     gasPresent = new boolean[pressures.length][temperatures.length];
     oilPresent = new boolean[pressures.length][temperatures.length];
     waterPresent = new boolean[pressures.length][temperatures.length];
-    calcPhaseEnvelope();
+    waterPurity = new double[pressures.length][temperatures.length];
     /*
      * ROG = new double[pressures.length][temperatures.length]; ROL = new double[pressures.length][temperatures.length];
      * CPG = new double[pressures.length][temperatures.length]; CPHL = new
@@ -626,6 +1122,8 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
         gasPresent[i][j] = gas != null;
         oilPresent[i][j] = oil != null;
         waterPresent[i][j] = water != null;
+        waterPurity[i][j] = (water == null || !thermoSystem.hasComponent("water")) ? 0.0
+            : water.getComponent("water").getx() * water.getComponent("water").getMolarMass() / water.getMolarMass();
 
         int k = 0;
         props[k][i][j] = density(gas);
@@ -809,6 +1307,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
         k++;
       }
     }
+    applyWaterModels();
     fillAbsentPhaseNodes();
     // A wet multicomponent feed has no unambiguous bulk liquid bubble branch. These
     // headers are optional for mixtures; avoid both unreliable roots and unnecessary flashes.

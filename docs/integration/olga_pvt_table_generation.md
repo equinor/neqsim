@@ -1,6 +1,6 @@
 ---
 title: "OLGA PVT Table and Hydrate Curve Generation"
-description: "Generate OLGA .tab PVT property tables and hydrate equilibrium curves from any NeqSim fluid - dry gas, oil, gas condensate, three-phase gas/oil/water, dense-phase CO2 - including the phase-coverage rules OLGA enforces, the keyword format, grid selection, hydrate curve export, and how to validate output by running it in OLGA."
+description: "Generate OLGA .tab PVT property tables and hydrate equilibrium curves from any NeqSim fluid - dry gas, oil, gas condensate, three-phase gas/oil/water, dense-phase CO2. Covers the calculation stages and their configuration (explicit or envelope-refined grids, standard-condition insertion, produced water by water cut, salinity, IAPWS reference water properties, monotonic absent-phase fill), the quality report and Markdown table report, the phase-coverage rules OLGA enforces, and how to validate output by running it in OLGA."
 ---
 
 NeqSim can export a fluid as an OLGA `.tab` PVT property table and as an OLGA
@@ -68,6 +68,171 @@ OLGApropertyTableGeneratorWaterKeywordFormat generator =
     new OLGApropertyTableGeneratorWaterKeywordFormat(fluid);
 ```
 
+## Configuring the table
+
+The calculation has four stages, each configured on the generator before
+`run()`:
+
+1. **Fluid preparation** - optional produced water is added to a copy of the feed.
+2. **Grid construction** - the pressure and temperature axes are built from a
+   range or a list, optionally refined around the water-free phase envelope, and
+   optionally given the standard state as a node.
+3. **Node evaluation** - a TP flash at every node; each phase present is resolved
+   by type and its properties are written. Aqueous properties can come from the
+   IAPWS reference equations and be corrected for salinity.
+4. **Absent-phase fill and checks** - nodes where a phase does not exist are
+   filled, the standard ratios are calculated, and the quality report is built.
+
+Both keyword generators share the grid, fill and report settings; the water
+settings exist only on the three-phase generator.
+
+| Setting | Method | Notes |
+| --- | --- | --- |
+| Equidistant axes | `setPressureRange(min, max, n)` (bara), `setTemperatureRange(min, max, n)` (**K**) | Default construction |
+| Explicit axes | `setPressures(double[])`, `setTemperatures(double[])` | Sorted and de-duplicated; every combination is tabulated |
+| Envelope refinement | `setEnvelopeRefinement(true, gridFactor)` | Range axes only; `gridFactor` 1-10, see below |
+| Standard state on the grid | `setInsertStandardConditions(true)` | Off by default |
+| Standard conditions | `setStandardConditions(T_K, P_bara)` | Default 288.15 K and 1.01325 bara; used for GOR, GLR, WC and standard densities |
+| Absent-phase fill | `setMonotonicityCorrection(true)` | On by default; see *Absent phases* |
+| Produced water | `setProducedWater(value, "watercut" / "mol/mol" / "mol%" / "wt%")` | Three-phase only; feed must be water free |
+| Salinity | `setWaterSalinity(value, "mg/l" / "ppm" / "wt%" / "kg/kg")` | Three-phase only |
+| Reference water equations | `setUseReferenceWaterProperties(true)` | Three-phase only; off by default |
+| Fluid label | `setFluidLabel(label)` | Must equal the genkey `BRANCH FLUID=` |
+| Table fluid | `getTableFluid()` | Feed including produced water, after `run()` |
+| Checks and report | `getQualityReport()`, `writeTableReport(file)` | After `run()` |
+
+Not available: a fixed-format (non-keyword) table, emulsion viscosity models and
+GERG-2008 tables. Emulsion effects belong in the OLGA case (`WATEROPTIONS`).
+
+A three-phase table for a wellstream with 30 % water cut and 35 000 mg/l
+salinity:
+
+```java
+SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 40.0, 60.0);
+fluid.addComponent("methane", 0.80);
+fluid.addComponent("ethane", 0.06);
+fluid.addComponent("propane", 0.04);
+fluid.addComponent("n-heptane", 0.05);
+fluid.addComponent("nC10", 0.05);
+fluid.addComponent("water", 0.0);           // produced water is added by the generator
+fluid.setMixingRule(10);
+fluid.setMultiPhaseCheck(true);
+
+OLGApropertyTableGeneratorWaterKeywordFormat generator =
+    new OLGApropertyTableGeneratorWaterKeywordFormat(fluid);
+generator.setFluidLabel("WELLSTREAM");
+generator.setPressureRange(5.0, 250.0, 50);          // bara
+generator.setTemperatureRange(253.15, 393.15, 50);   // K
+generator.setEnvelopeRefinement(true, 5.0);
+generator.setInsertStandardConditions(true);
+generator.setProducedWater(30.0, "watercut");        // vol % of the standard liquid
+generator.setWaterSalinity(35000.0, "mg/l");
+generator.setUseReferenceWaterProperties(true);
+generator.run();
+generator.writeOLGAinpFile("wellstream.tab");
+generator.writeTableReport("wellstream_table_report.md");
+generator.getQualityReport().writeCsv("wellstream_table_qc.csv");
+```
+
+The feed passed to the constructor is not modified when produced water is added.
+The water component may be present with zero moles, as an E300 file read with
+added water has it; if it is absent the generator adds it and re-applies the
+mixing rule.
+
+### Produced water
+
+| Specification | Meaning |
+| --- | --- |
+| `watercut` | Volume % water of the total liquid (oil plus water) at standard conditions; solved iteratively by standard-condition flashes, with the aqueous density from the same water model as the table (reference equations, salinity). Requires oil at standard conditions |
+| `mol/mol` | Mol produced water per mol feed |
+| `mol%` | Mol % water of feed plus produced water |
+| `wt%` | Weight % water of feed plus produced water |
+
+Produced water is the total water, including water dissolved in the gas and oil.
+A feed that already contains water is rejected.
+
+### Reference water equations
+
+`setUseReferenceWaterProperties(true)` takes the aqueous columns (`ROWT`,
+`DROWTDP`, `DROWTDT`, `CPWT`, `HWT`, `SEWT`, `VISWT`, `TCWT`) from
+`neqsim.thermo.util.steam.LiquidWaterReference`:
+
+| Property | Reference |
+| --- | --- |
+| Density, its P and T derivatives, Cp, enthalpy, entropy | IAPWS-IF97 Region 1 Gibbs function, evaluated as a liquid at any pressure |
+| Viscosity | IAPWS R12-08, without the critical enhancement |
+| Thermal conductivity | IAPWS R15-11, without the critical enhancement |
+
+The equations are applied where the aqueous phase is at least 95 wt% water and
+the state lies within 253.15-623.15 K and up to 1000 bara. States below 273.15 K
+or below the saturation pressure are metastable extrapolations
+(`LiquidWaterReference.isMetastable()`). Inhibitor-rich water (MEG, methanol)
+keeps the equation-of-state values, because a pure-water reference is wrong
+there; `getReferenceWaterNodeCount()` and `getReferenceWaterSkippedNodeCount()`
+report the split. Enthalpy and entropy are shifted to the equation-of-state
+reference at standard conditions, so the latent heat between water vapour in the
+gas and liquid water stays consistent. Interfacial tensions are not changed:
+gas-water tension depends strongly on the gas pressure and is not a pure-water
+property.
+
+### Salinity
+
+`setWaterSalinity` corrects aqueous density, its pressure and temperature
+derivatives, and viscosity with the NaCl brine correlations of Batzle and Wang
+(1992), applied as brine/fresh-water ratios
+(`neqsim.thermo.util.steam.BrineSalinityCorrection`). The ratio approach keeps
+the accuracy of the underlying water model (equation of state or reference
+equations). Salinity does not change phase amounts or compositions, the standard
+water density includes it, and it cannot be combined with ionic components in the
+feed. A concentration in mg/l is converted to a mass fraction at standard
+conditions.
+
+### Grid construction
+
+**Envelope refinement.** `setEnvelopeRefinement(true, gridFactor)` traces the
+phase envelope of the water-free feed. Along the pressure axis, if the
+cricondenbar lies inside the range, the share
+$f = \text{gridFactor}/(\text{gridFactor}+1)$ of the points is placed between the
+lowest envelope pressure (or the range minimum) and the cricondenbar, and the rest
+outside; the temperature axis does the same with the cricondentherm. Each part is
+equidistant. An axis whose envelope maximum lies outside the range stays
+equidistant. With `gridFactor = 5` a 50-point axis gets 42 points inside the
+envelope. Use at least 50 points per axis so the outside part is not too coarse.
+
+**Standard state on the grid.** `setInsertStandardConditions(true)` makes the
+standard pressure and temperature grid nodes when they lie inside the range, so
+OLGA reads the standard state without interpolation. A range axis is rebuilt with
+one point fewer and the standard value inserted, keeping the point count; an
+explicit axis gains one point. A standard value outside the range is not added.
+
+**Water-free critical point.** `CRITICALPRESSURE`, `CRITICALTEMPERATURE` and the
+envelope used for refinement are taken from the **water-free** composition: water
+is removed when it is the last component and otherwise reduced to a trace. The
+water dew line of a wet feed would otherwise dominate the envelope and move the
+refined points away from the hydrocarbon two-phase region.
+
+### Quality report and table report
+
+`getQualityReport()` returns an `OlgaTableQualityReport` after `run()`:
+
+- `isLoadable()` - every value finite, and densities, compressibilities,
+  viscosities, heat capacities and conductivities positive;
+- per column: minimum, maximum, non-finite and non-positive counts, monotonicity
+  violations (density along pressure, enthalpy and entropy along temperature)
+  split into existing and extrapolated nodes, and the largest relative jump
+  between neighbouring nodes inside the phase region and across its boundary;
+- `toJson()` for a machine-readable record and `writeCsv(file)` with every node
+  (pressure, temperature, keyword, value, phase existence) for plotting.
+
+Violations at existing nodes can be physical: a retrograde condensate liquid
+becomes lighter with pressure as gas dissolves. They are reported, not changed.
+Violations at extrapolated nodes indicate a fill defect.
+
+`writeTableReport(file)` writes a Markdown engineering report with the fluid and
+composition, the grid and how each axis was built, standard ratios and densities,
+the water-free envelope, the water models with node counts, and the quality
+table. Attach it to the study next to the `.tab` file.
+
 ## What OLGA requires of a table
 
 These are the rules that actually cause OLGA to reject a file, in the order they
@@ -105,8 +270,8 @@ tend to bite:
 | `GLR` | Standard gas volume divided by standard oil plus aqueous volume |
 | `WC` | Standard aqueous volume divided by standard oil plus aqueous volume, as a fraction from 0 to 1 |
 
-The standard flash uses the written `STDPRESSURE` (1 atm) and `STDTEMPERATURE`
-(288.15 K). Volumes are calculated from phase mass and physical density, including
+The standard flash uses the written `STDPRESSURE` (1 atm by default) and
+`STDTEMPERATURE` (288.15 K by default; change both with `setStandardConditions`). Volumes are calculated from phase mass and physical density, including
 any volume correction. `GOR` is `-999` when there is no standard oil, and `GLR` is
 `-999` when there is no standard liquid. `WC` is zero when there is no standard
 liquid. A gas/water state with no oil has `RS = 1`; a state with no gas has
@@ -129,8 +294,16 @@ The generators therefore:
 
 1. resolve phases by **type** (`gas`, `oil`, `aqueous`) rather than by array
    position, so the gas column stays gas even at a single-phase node;
-2. fill nodes where a phase is absent by nearest-neighbour extrapolation, in grid
-   index space, from the nodes where it does exist;
+2. fill nodes where a phase is absent. With the monotonicity correction (the
+   default), density is filled along pressure and enthalpy and entropy along
+   temperature: a gap between two nodes where the phase exists is interpolated
+   linearly, and nodes beyond the last existing node are extrapolated with the
+   phase's own gradient there (`dRho/dP`, `Cp`, `Cp ln T`). The filled branch is
+   therefore monotonic, continuous at the phase boundary and consistent with the
+   `DRO*DP` and `CP*` columns. Remaining columns, and grid lines without any
+   existing node, use nearest-neighbour extrapolation in grid-index space. With
+   `setMonotonicityCorrection(false)` every column uses the nearest neighbour,
+   which holds enthalpy flat with temperature in the absent region;
 3. fall back to a forced single-phase evaluation of the whole composition when a
    phase exists nowhere on the grid, and to a documented physical default when
    even that has no usable root.
@@ -146,7 +319,8 @@ physically correct and is written as zero.
 | --- | --- |
 | Pressure range | From below the lowest arrival pressure to above the highest inlet pressure, with margin for the solver overshooting |
 | Temperature range | From below the coldest expected temperature (include JT cooling and seabed ambient) to above the hottest inlet |
-| Resolution | 30-50 pressures x 25-35 temperatures is usually enough; refine near the phase envelope rather than everywhere |
+| Resolution | 30-50 pressures x 25-35 temperatures is usually enough; refine near the phase envelope with `setEnvelopeRefinement(true, 5.0)` rather than everywhere |
+| Standard conditions | `setInsertStandardConditions(true)` puts 1 atm and 15 C on the grid so OLGA interpolates the standard state exactly |
 
 Use an **asymmetric** grid when testing generator changes: a square grid hides
 index transposition bugs.

@@ -850,6 +850,17 @@ for (double qgMSm3d : gasRates) {
 > `docs/integration/olga_pvt_table_generation.md` for the no-liquid conventions
 > and required pure-component saturation validation.
 >
+> **Configure the table for the study, then hand over the report.** For a
+> wellstream table set produced water on a water-free feed
+> (`setProducedWater(30.0, "watercut")`), salinity (`setWaterSalinity(35000.0,
+> "mg/l")`), IAPWS aqueous properties (`setUseReferenceWaterProperties(true)`,
+> applied only where the aqueous phase is >= 95 wt% water, so MEG-rich water stays
+> on the EOS), `setEnvelopeRefinement(true, 5.0)` with >= 50 points per axis and
+> `setInsertStandardConditions(true)`. After `run()`, require
+> `getQualityReport().isLoadable()` and attach `writeTableReport("x_report.md")`
+> and the `.tab` to the study. Retrograde liquid density falling with pressure at
+> existing nodes is physical and is reported, not an error.
+>
 > **Never build a volumetric phase fraction from `phase.getVolume()`.** With a
 > Peneloux volume shift active it disagrees with `getDensity()` by the shift —
 > +16.6% for oil and +31.7% for water on a typical SRK three-phase system, while
