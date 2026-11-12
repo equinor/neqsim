@@ -1081,8 +1081,14 @@ public class ColumnSpecificationTest {
         "A qualified warm base should not be replaced by another solver at the last continuation stage");
     assertTrue(column.getLastAutoSolverSummary()
         .contains("probe skipped: warmed base satisfies all active convergence gates"));
-    assertTrue(column.getLastIterationCount() <= 20,
+    // Before issue 4961 this stage stopped after about 10 sweeps, once the temperature step fell
+    // below the loosened 0.1 K tolerance while internal flows still changed by about three times
+    // the feed per sweep; the reported reboiler duty was then about 175 kW. Settling the internal
+    // flows takes about 50 sweeps and gives the steady-state duty of about 99 kW.
+    assertTrue(column.getLastIterationCount() <= 60,
         "The final continuation stage should retain the qualified warm base's bounded work");
+    assertEquals(99.0e3, column.getReboiler().getDuty(), 5.0e3,
+        "The accepted warm base should carry the steady-state reboiler duty");
     double feedMoles = feed.getFlowRate("mol/hr");
     double gasMoles = column.getGasOutStream().getFlowRate("mol/hr");
     double liquidMoles = column.getLiquidOutStream().getFlowRate("mol/hr");

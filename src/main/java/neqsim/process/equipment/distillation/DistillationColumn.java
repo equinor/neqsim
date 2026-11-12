@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -88,6 +89,48 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private static final double DEFAULT_TRAY_MATERIAL_BALANCE_TOLERANCE = 2.0e-2;
   /**
+   * Default ratio of the internal flow stationarity tolerance to the effective mass balance tolerance.
+   *
+   * <p>
+   * The internal flow stationarity tolerance limits the per-sweep change in internal tray traffic relative to the total
+   * external feed.
+   * </p>
+   *
+   * <p>
+   * The sequential solver's own mass residual compares each tray's inlet streams with that tray's mixed fluid, so it is
+   * zero whatever the internal flows do. When both column ends are temperature-fixed the tray temperatures are nearly
+   * fixed too, so the temperature residual can fall below tolerance while reflux and boil-up are still changing. The
+   * sequential solver therefore keeps sweeping until the internal flows have also settled.
+   * </p>
+   *
+   * <p>
+   * Unless set explicitly, the tolerance is this fraction of the effective mass balance tolerance, but never below
+   * {@link #MIN_DEFAULT_INTERNAL_FLOW_STATIONARITY_TOLERANCE}. A caller who loosens the material balance for speed
+   * therefore also loosens this check, while a very tight material balance does not make it unattainable for sequential
+   * sweeps. With the default mass balance tolerance of 0.016 it is 1e-3 of the total feed per sweep.
+   * </p>
+   */
+  private static final double DEFAULT_INTERNAL_FLOW_STATIONARITY_TO_MASS_TOLERANCE_RATIO = 1.0 / 16.0;
+  /** Lower bound of the default internal flow stationarity tolerance, relative to the total external feed. */
+  private static final double MIN_DEFAULT_INTERNAL_FLOW_STATIONARITY_TOLERANCE = 1.0e-3;
+  /**
+   * Number of sequential sweeps in each of the two windows used to tell accumulation from slow convergence.
+   *
+   * <p>
+   * A slowly converging column grows its internal traffic by geometrically shrinking amounts, so the net growth over
+   * the last window is clearly smaller than over the window before. A column whose specifications admit no steady state
+   * keeps circulating the surplus of a component between reboiler and condenser, and its internal traffic grows by a
+   * roughly constant amount every sweep. Twenty sweeps keep the two apart even when a single sweep moves against the
+   * trend.
+   * </p>
+   */
+  private static final int INTERNAL_FLOW_GROWTH_WINDOW = 20;
+  /**
+   * Ratio of net internal traffic growth over the last window to that over the window before, at or above which the
+   * growth is treated as sustained accumulation rather than convergence.
+   */
+  private static final double INTERNAL_FLOW_ACCUMULATION_RATIO = 0.8;
+  /**
    * Default product draw residual tolerance when MESH residual gating is enabled.
    */
   private static final double DEFAULT_MESH_PRODUCT_DRAW_RESIDUAL_TOLERANCE = 2.0e-2;
@@ -154,6 +197,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /** Tolerance for the throughput-weighted per-tray component material imbalance. */
   private double trayMaterialBalanceTolerance = DEFAULT_TRAY_MATERIAL_BALANCE_TOLERANCE;
+  /** Explicit tolerance for the per-sweep internal tray traffic change relative to the total external feed. */
+  private volatile double internalFlowStationarityTolerance = Double.NaN;
+  /** Whether {@link #internalFlowStationarityTolerance} was set explicitly. */
+  private volatile boolean internalFlowStationarityToleranceCustomized = false;
   /** Scaled terminal product-draw residual convergence tolerance. */
   private double meshProductDrawResidualTolerance = DEFAULT_MESH_PRODUCT_DRAW_RESIDUAL_TOLERANCE;
   /** Maximum number of candidate cases allowed in tray optimization searches. */
@@ -763,6 +810,21 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double lastTemperatureResidual = 0.0;
   /** Last average tray-temperature step applied by the sequential solver in Kelvin. */
   private double lastAppliedTemperatureStepResidual = Double.NaN;
+  /**
+   * Sum of absolute tray liquid and vapour outlet flow changes over the final sequential sweep, divided by the total
+   * external feed flow. {@link Double#NaN} when the latest solve did not run the sequential solver.
+   */
+  private volatile double lastInternalFlowChange = Double.NaN;
+  /**
+   * Average per-sweep net change of total tray liquid and vapour outlet flow over the last sequential sweeps, divided
+   * by the total external feed flow. Positive values mean internal traffic was still growing.
+   */
+  private volatile double lastInternalFlowGrowth = Double.NaN;
+  /**
+   * Net internal traffic growth over the last {@link #INTERNAL_FLOW_GROWTH_WINDOW} sweeps divided by that over the
+   * window before. {@link Double#NaN} when fewer sweeps were run.
+   */
+  private volatile double lastInternalFlowGrowthRatio = Double.NaN;
   /** Last recorded relative mass balance residual. */
   private double lastMassResidual = 0.0;
   /** Last recorded relative enthalpy residual. */
@@ -1333,6 +1395,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public void run(UUID id) {
     long runStartTime = System.nanoTime();
     lastAppliedTemperatureStepResidual = Double.NaN;
+    lastInternalFlowChange = Double.NaN;
+    lastInternalFlowGrowth = Double.NaN;
+    lastInternalFlowGrowthRatio = Double.NaN;
     lastInternalTrafficGuardReached = false;
     internalTrafficCapActive = false;
     lastSpecificationHomotopyStepCount = 0;
@@ -4226,6 +4291,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.lastIterationCount = candidate.lastIterationCount;
     this.lastTemperatureResidual = candidate.lastTemperatureResidual;
     this.lastAppliedTemperatureStepResidual = candidate.lastAppliedTemperatureStepResidual;
+    this.lastInternalFlowChange = candidate.lastInternalFlowChange;
+    this.lastInternalFlowGrowth = candidate.lastInternalFlowGrowth;
+    this.lastInternalFlowGrowthRatio = candidate.lastInternalFlowGrowthRatio;
     this.lastMassResidual = candidate.lastMassResidual;
     this.lastEnergyResidual = candidate.lastEnergyResidual;
     this.lastTopSpecificationResidual = candidate.lastTopSpecificationResidual;
@@ -6857,13 +6925,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       trays.get(firstFeedTrayNumber).run(id);
     }
 
-    // Compute total feed flow for divergence detection.
-    double totalFeedFlow = 0.0;
-    for (List<StreamInterface> feeds : feedStreams.values()) {
-      for (StreamInterface f : feeds) {
-        totalFeedFlow += Math.abs(f.getFlowRate("kg/hr"));
-      }
-    }
+    // Compute total feed flow for divergence detection. Feeds attached directly to trays are
+    // external feeds too; leaving them out scales the divergence guards from zero for a column fed
+    // only that way, so ordinary internal traffic is treated as divergence.
+    double totalFeedFlow = getTotalExternalFeedFlowKgPerHour();
     double divergenceThreshold = Math.max(totalFeedFlow * MAX_RELAXED_INTERNAL_TRAFFIC_TO_FEED_RATIO, 1.0e3);
     boolean divergenceRecoveryApplied = false;
 
@@ -6908,6 +6973,23 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     boolean polishing = false;
     boolean massEnergyEvaluated = false;
     int balanceCheckStride = Math.max(3, numberOfTrays / 2);
+
+    // Internal flow stationarity: tray temperatures can settle while reflux and boil-up keep
+    // changing, for example when both column ends are temperature-fixed and a component has no
+    // outlet that can carry it. Track the tray outlet flows from sweep to sweep so such a state is
+    // not accepted as converged. A finite connected material tolerance marks a seed for the guarded
+    // MESH recovery, whose result must pass the MESH residual, per-tray material and specification
+    // gates; those already reject moving internal flows, so the stationarity gate is only applied to
+    // primary sequential solves and does not change where a recovery seed hands over.
+    boolean enforceInternalFlowStationarity = !Double.isFinite(connectedMaterialTolerance);
+    double[] previousTrayLiquidFlow = new double[numberOfTrays];
+    double[] previousTrayVaporFlow = new double[numberOfTrays];
+    boolean trayFlowHistoryAvailable = hasBeenSolvedBefore
+        && readTrayOutletFlows(previousTrayLiquidFlow, previousTrayVaporFlow);
+    double internalFlowChange = Double.NaN;
+    double internalFlowGrowth = Double.NaN;
+    double[] internalTrafficHistory = new double[2 * INTERNAL_FLOW_GROWTH_WINDOW + 1];
+    int internalTrafficHistoryCount = 0;
 
     while (iter < iterationLimit && iter < maximumSweeps) {
       iter++;
@@ -6974,6 +7056,29 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       appliedTemperatureStepResidual /= Math.max(1, numberOfTrays);
       lastAppliedTemperatureStepResidual = appliedTemperatureStepResidual;
       err = temperatureResidual;
+
+      double[] currentTrayLiquidFlow = new double[numberOfTrays];
+      double[] currentTrayVaporFlow = new double[numberOfTrays];
+      if (readTrayOutletFlows(currentTrayLiquidFlow, currentTrayVaporFlow)) {
+        if (trayFlowHistoryAvailable) {
+          internalFlowChange = measureInternalFlowStep(previousTrayLiquidFlow, previousTrayVaporFlow,
+              currentTrayLiquidFlow, currentTrayVaporFlow, totalFeedFlow);
+        }
+        internalTrafficHistoryCount = recordInternalTraffic(internalTrafficHistory, internalTrafficHistoryCount,
+            currentTrayLiquidFlow, currentTrayVaporFlow);
+        internalFlowGrowth = averageInternalTrafficGrowth(internalTrafficHistory, internalTrafficHistoryCount,
+            totalFeedFlow);
+        System.arraycopy(currentTrayLiquidFlow, 0, previousTrayLiquidFlow, 0, numberOfTrays);
+        System.arraycopy(currentTrayVaporFlow, 0, previousTrayVaporFlow, 0, numberOfTrays);
+        trayFlowHistoryAvailable = true;
+      } else {
+        internalFlowChange = Double.NaN;
+        internalFlowGrowth = Double.NaN;
+        trayFlowHistoryAvailable = false;
+        internalTrafficHistoryCount = 0;
+      }
+      boolean internalFlowsSettled = !enforceInternalFlowStationarity
+          || isInternalFlowChangeAcceptable(internalFlowChange);
 
       boolean evaluateBalances = shouldEvaluateBalances(iter, iterationLimit, polishing, err, baseTempTolerance,
           balanceCheckStride);
@@ -7077,7 +7182,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           : 0.0;
       boolean connectedMaterialSatisfied = connectedMaterialResidual <= connectedMaterialTolerance;
       boolean withinBaseTolerance = err <= baseTempTolerance && massErr <= baseMassTolerance && energyWithinBase
-          && connectedMaterialSatisfied;
+          && connectedMaterialSatisfied && internalFlowsSettled;
 
       if (withinBaseTolerance) {
         boolean energyPolishingAvailable = enforceEnergyBalanceTolerance && polishEnergyTolerance < baseEnergyTolerance;
@@ -7102,7 +7207,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         }
       }
 
-      if (iter >= iterationLimit && err > baseTempTolerance && iterationLimit < maxIterationLimit) {
+      if (iter >= iterationLimit && (err > baseTempTolerance || !internalFlowsSettled)
+          && iterationLimit < maxIterationLimit) {
         iterationLimit = Math.min(maxIterationLimit, iterationLimit + overflowIncrement);
         continue;
       }
@@ -7115,6 +7221,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastSolveTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
     hasBeenSolvedBefore = true;
     lastTotalFeedFlow = totalFeedFlow;
+    lastInternalFlowChange = internalFlowChange;
+    lastInternalFlowGrowth = internalFlowGrowth;
+    lastInternalFlowGrowthRatio = internalTrafficGrowthRatio(internalTrafficHistory, internalTrafficHistoryCount,
+        INTERNAL_FLOW_GROWTH_WINDOW);
 
     // Compute full physical/transport properties once on the converged tray states
     // (skipped during iteration for speed) so that product streams cloned in
@@ -7161,6 +7271,245 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private int computeTrayBasedIterationLimit() {
     return (int) Math.ceil(Math.max(5.0, numberOfTrays * TRAY_ITERATION_FACTOR));
+  }
+
+  /**
+   * Read the liquid and vapour outlet flow of every tray in kg/hr.
+   *
+   * @param liquidFlows array receiving the tray liquid outlet flows, one entry per tray
+   * @param vaporFlows array receiving the tray vapour outlet flows, one entry per tray
+   * @return {@code true} when every flow could be read and is finite
+   */
+  private boolean readTrayOutletFlows(double[] liquidFlows, double[] vaporFlows) {
+    try {
+      for (int i = 0; i < numberOfTrays; i++) {
+        double liquid = trays.get(i).getLiquidOutStream().getFlowRate("kg/hr");
+        double vapor = trays.get(i).getGasOutStream().getFlowRate("kg/hr");
+        if (!Double.isFinite(liquid) || !Double.isFinite(vapor)) {
+          return false;
+        }
+        liquidFlows[i] = liquid;
+        vaporFlows[i] = vapor;
+      }
+      return true;
+    } catch (RuntimeException ex) {
+      logger.debug("Could not read tray outlet flows for the internal flow stationarity check", ex);
+      return false;
+    }
+  }
+
+  /**
+   * Measure how much the internal tray traffic changed over one sequential sweep.
+   *
+   * @param previousLiquid tray liquid outlet flows before the sweep in kg/hr
+   * @param previousVapor tray vapour outlet flows before the sweep in kg/hr
+   * @param currentLiquid tray liquid outlet flows after the sweep in kg/hr
+   * @param currentVapor tray vapour outlet flows after the sweep in kg/hr
+   * @param scale total external feed flow in kg/hr used to make the change relative
+   * @return summed absolute tray outlet flow change divided by the scale
+   */
+  static double measureInternalFlowStep(double[] previousLiquid, double[] previousVapor, double[] currentLiquid,
+      double[] currentVapor, double scale) {
+    double absoluteChange = 0.0;
+    for (int i = 0; i < currentLiquid.length; i++) {
+      absoluteChange += Math.abs(currentLiquid[i] - previousLiquid[i]) + Math.abs(currentVapor[i] - previousVapor[i]);
+    }
+    if (!(scale > 1.0e-12)) {
+      return absoluteChange > 0.0 ? Double.POSITIVE_INFINITY : 0.0;
+    }
+    return absoluteChange / scale;
+  }
+
+  /**
+   * Append the total internal tray traffic of the current sweep to a sliding history window.
+   *
+   * @param history window of total internal traffic in kg/hr, oldest entry first
+   * @param count number of valid entries in the window before this call
+   * @param liquidFlows tray liquid outlet flows of the current sweep in kg/hr
+   * @param vaporFlows tray vapour outlet flows of the current sweep in kg/hr
+   * @return number of valid entries in the window after this call
+   */
+  static int recordInternalTraffic(double[] history, int count, double[] liquidFlows, double[] vaporFlows) {
+    double total = 0.0;
+    for (int i = 0; i < liquidFlows.length; i++) {
+      total += liquidFlows[i] + vaporFlows[i];
+    }
+    if (count < history.length) {
+      history[count] = total;
+      return count + 1;
+    }
+    System.arraycopy(history, 1, history, 0, history.length - 1);
+    history[history.length - 1] = total;
+    return count;
+  }
+
+  /**
+   * Average per-sweep net change of total internal tray traffic over the most recent sweeps.
+   *
+   * <p>
+   * A single sweep can move against the trend, so the growth is averaged over up to
+   * {@link #INTERNAL_FLOW_GROWTH_WINDOW} sweeps.
+   * </p>
+   *
+   * @param history window of total internal traffic in kg/hr, oldest entry first
+   * @param count number of valid entries in the window
+   * @param scale total external feed flow in kg/hr used to make the change relative
+   * @return average net growth per sweep relative to the scale, or {@link Double#NaN} with fewer than two entries
+   */
+  static double averageInternalTrafficGrowth(double[] history, int count, double scale) {
+    if (count < 2 || !(scale > 1.0e-12)) {
+      return Double.NaN;
+    }
+    int span = Math.min(INTERNAL_FLOW_GROWTH_WINDOW, count - 1);
+    return (history[count - 1] - history[count - 1 - span]) / (span * scale);
+  }
+
+  /**
+   * Compare the net internal traffic growth over the last window with that over the window before.
+   *
+   * @param history window of total internal traffic in kg/hr, oldest entry first
+   * @param count number of valid entries in the window
+   * @param window number of sweeps in each of the two compared windows
+   * @return growth over the last window divided by growth over the window before; positive infinity when traffic grew
+   * only in the last window, or {@link Double#NaN} when fewer than {@code 2 * window + 1} entries are available or
+   * traffic did not grow in the last window
+   */
+  static double internalTrafficGrowthRatio(double[] history, int count, int window) {
+    if (window < 1 || count < 2 * window + 1) {
+      return Double.NaN;
+    }
+    double recent = history[count - 1] - history[count - 1 - window];
+    double previous = history[count - 1 - window] - history[count - 1 - 2 * window];
+    if (!(recent > 0.0)) {
+      return Double.NaN;
+    }
+    return previous > 0.0 ? recent / previous : Double.POSITIVE_INFINITY;
+  }
+
+  /**
+   * Check a per-sweep internal flow change against the stationarity tolerance.
+   *
+   * @param internalFlowChange relative per-sweep internal flow change, or {@link Double#NaN} when not measured
+   * @return {@code true} when the change was not measured or is within tolerance
+   */
+  private boolean isInternalFlowChangeAcceptable(double internalFlowChange) {
+    return Double.isNaN(internalFlowChange) || internalFlowChange <= getInternalFlowStationarityTolerance();
+  }
+
+  /**
+   * Check whether the latest sequential solve stopped with component inventory accumulating inside the column.
+   *
+   * <p>
+   * True when the internal flows had not settled, internal traffic was still growing by more than the stationarity
+   * tolerance per sweep, and that growth was not shrinking from one {@link #INTERNAL_FLOW_GROWTH_WINDOW}-sweep window
+   * to the next. A slowly converging column that ran out of iterations shows shrinking growth and is not flagged.
+   * </p>
+   *
+   * @return {@code true} when the latest sequential solve shows sustained internal inventory accumulation
+   */
+  public boolean isInternalInventoryAccumulating() {
+    return !isInternalFlowChangeAcceptable(lastInternalFlowChange)
+        && lastInternalFlowGrowth > getInternalFlowStationarityTolerance()
+        && lastInternalFlowGrowthRatio >= INTERNAL_FLOW_ACCUMULATION_RATIO;
+  }
+
+  /**
+   * Describe why the internal tray flows failed the stationarity check.
+   *
+   * @return explanation of the unsettled internal flows and their most likely cause
+   */
+  private String describeUnsettledInternalFlows() {
+    StringBuilder reason = new StringBuilder();
+    if (isInternalInventoryAccumulating()) {
+      reason.append("Internal reflux and boil-up were still growing when the solver stopped (")
+          .append(String.format(Locale.ROOT, "%.3g", lastInternalFlowChange))
+          .append(" of the total feed per sweep, tolerance ")
+          .append(String.format(Locale.ROOT, "%.3g", getInternalFlowStationarityTolerance()))
+          .append("). Component inventory is accumulating between the reboiler and the condenser, which usually ")
+          .append("means the specifications admit no steady state: with fixed reboiler and condenser temperatures, ")
+          .append("more of a component enters than the bottoms and overhead can carry at those temperatures (for ")
+          .append("example a condenser temperature below the dew point of the net overhead). Raise the condenser ")
+          .append("temperature, add stripping gas, or specify duty or reflux instead of both end temperatures");
+    } else {
+      reason.append("Internal tray flows had not settled when the solver stopped (")
+          .append(String.format(Locale.ROOT, "%.3g", lastInternalFlowChange))
+          .append(" of the total feed per sweep, tolerance ")
+          .append(String.format(Locale.ROOT, "%.3g", getInternalFlowStationarityTolerance()))
+          .append(") without sustained growth; the result may be approximate. Increase the iteration limit to ")
+          .append("tighten it");
+    }
+    return reason.toString();
+  }
+
+  /**
+   * Retrieve the internal tray traffic change over the final sweep of the latest sequential solve.
+   *
+   * <p>
+   * The value is the sum of absolute changes of every tray's liquid and vapour outlet flow over the last sweep, divided
+   * by the total external feed flow. A converged column has a value close to zero. A value that stays roughly constant
+   * from sweep to sweep means component inventory is accumulating inside the column.
+   * </p>
+   *
+   * @return relative per-sweep internal flow change, or {@link Double#NaN} when the latest solve did not run the
+   * sequential solver or could not measure it
+   */
+  public double getLastInternalFlowChange() {
+    return lastInternalFlowChange;
+  }
+
+  /**
+   * Retrieve the average net growth of internal tray traffic over the final sweeps of the latest sequential solve.
+   *
+   * <p>
+   * The value is the change in total tray liquid plus vapour outlet flow over up to the last twenty sweeps, divided by
+   * the number of sweeps and by the total external feed flow. A steadily positive value means component inventory is
+   * accumulating inside the column.
+   * </p>
+   *
+   * @return average relative net growth per sweep; positive when internal traffic was growing, or {@link Double#NaN}
+   * when not measured
+   */
+  public double getLastInternalFlowGrowth() {
+    return lastInternalFlowGrowth;
+  }
+
+  /**
+   * Set the tolerance for the per-sweep internal tray traffic change used by the sequential solver.
+   *
+   * <p>
+   * The sequential solver only accepts a solution when the summed tray liquid and vapour outlet flow change over the
+   * last sweep, relative to the total external feed, is at or below this value. When the solver stops without meeting
+   * it and internal traffic is still growing by more than this value per sweep without slowing down, {@link #solved()}
+   * returns {@code false}. Use {@link Double#POSITIVE_INFINITY} to switch both checks off.
+   * </p>
+   *
+   * @param tolerance positive relative tolerance
+   * @throws IllegalArgumentException if the tolerance is not positive
+   */
+  public void setInternalFlowStationarityTolerance(double tolerance) {
+    if (!(tolerance > 0.0)) {
+      throw new IllegalArgumentException("Internal flow stationarity tolerance must be positive, got " + tolerance);
+    }
+    internalFlowStationarityTolerance = tolerance;
+    internalFlowStationarityToleranceCustomized = true;
+  }
+
+  /**
+   * Get the tolerance for the per-sweep internal tray traffic change used by the sequential solver.
+   *
+   * <p>
+   * Unless set with {@link #setInternalFlowStationarityTolerance(double)}, this is one sixteenth of the effective mass
+   * balance tolerance but at least 1e-3 (1e-3 with the default mass balance tolerance).
+   * </p>
+   *
+   * @return relative internal flow stationarity tolerance
+   */
+  public double getInternalFlowStationarityTolerance() {
+    if (internalFlowStationarityToleranceCustomized) {
+      return internalFlowStationarityTolerance;
+    }
+    return Math.max(MIN_DEFAULT_INTERNAL_FLOW_STATIONARITY_TOLERANCE,
+        DEFAULT_INTERNAL_FLOW_STATIONARITY_TO_MASS_TOLERANCE_RATIO * getEffectiveMassBalanceTolerance());
   }
 
   /**
@@ -9622,7 +9971,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Check whether the current residual diagnostics satisfy all active rigorous convergence gates.
    *
    * @return {@code true} when temperature, mass, energy, internal traffic, MESH, and specification gates are all
-   * satisfied
+   * satisfied and internal inventory is not accumulating
    */
   private boolean residualConvergenceSatisfied() {
     // Gate on lastTemperatureResidual, not on the working field err. err is the live iteration
@@ -9653,7 +10002,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     boolean energySolved = !enforceEnergyBalanceTolerance
         || lastEnergyResidual <= getEffectiveEnthalpyBalanceTolerance();
     return temperatureSolved && massSolved && energySolved && internalTrafficSatisfied() && meshResidualsSatisfied()
-        && specificationsSatisfied();
+        && specificationsSatisfied() && !isInternalInventoryAccumulating();
   }
 
   /**
@@ -10358,6 +10707,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     diagnostics.append("    temperature: ").append(lastTemperatureResidual).append(" K (tolerance ")
         .append(getEffectiveTemperatureTolerance()).append(")\n");
     diagnostics.append("    applied temperature step: ").append(lastAppliedTemperatureStepResidual).append(" K\n");
+    diagnostics.append("    internal flow change per sweep: ").append(lastInternalFlowChange)
+        .append(" of total feed (tolerance ").append(getInternalFlowStationarityTolerance()).append(", growth ")
+        .append(lastInternalFlowGrowth).append(", growth ratio ").append(lastInternalFlowGrowthRatio)
+        .append(", accumulating=").append(isInternalInventoryAccumulating()).append(")\n");
     diagnostics.append("    mass: ").append(lastMassResidual).append(" (tolerance ")
         .append(getEffectiveMassBalanceTolerance()).append(")\n");
     diagnostics.append("    energy: ").append(lastEnergyResidual).append(" (tolerance ")
@@ -10456,6 +10809,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           .append(SolverType.NAPHTALI_SANDHOLM).append(" or ").append(SolverType.MESH_RESIDUAL)
           .append(" or inspect reflux, boilup, and product specifications before trusting the ")
           .append("product split.\n");
+      count++;
+    }
+    if (!isInternalFlowChangeAcceptable(lastInternalFlowChange)) {
+      diagnostics.append("    - ").append(describeUnsettledInternalFlows()).append(".\n");
       count++;
     }
     if (Double.isFinite(lastTrayMaterialBalanceError) && lastTrayMaterialBalanceError > trayMaterialBalanceTolerance) {
@@ -12942,6 +13299,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           "Available condenser liquid was insufficient for the fixed liquid reflux specification");
       return;
     }
+    if (isInternalInventoryAccumulating()) {
+      String reason = describeUnsettledInternalFlows();
+      setLastSolveStatus(SolveStatus.FAILED, reason);
+      logger.warn("Column {} did not converge: {}", getName(), reason);
+      return;
+    }
     if (!residualConvergenceSatisfied()) {
       setLastSolveStatus(SolveStatus.FAILED, "Residual convergence gates were not satisfied");
       return;
@@ -13943,6 +14306,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastIterationCount = 0;
     lastTemperatureResidual = 0.0;
     lastAppliedTemperatureStepResidual = Double.NaN;
+    lastInternalFlowChange = Double.NaN;
+    lastInternalFlowGrowth = Double.NaN;
+    lastInternalFlowGrowthRatio = Double.NaN;
     lastMassResidual = 0.0;
     lastEnergyResidual = 0.0;
     lastSolveTimeSeconds = 0.0;

@@ -1158,8 +1158,7 @@ public class DistillationColumnWarmStateCacheTest {
         "column reinitialization must not change the caller-owned feed temperature");
     assertEquals(baselineInitializationCount + 1, warmCase.column.getInitializationCount(),
         "a changed fixed reboiler temperature must rebuild the sequential initialization exactly once");
-    assertTrue(warmCase.column.getLastIterationCount() <= 30,
-        "the rebuilt solve should remain within the established cold-reference iteration budget");
+    int rebuiltIterationCount = warmCase.column.getLastIterationCount();
     assertPhysicalAndBalanced(warmCase);
 
     ColumnCase coldReference = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
@@ -1169,6 +1168,12 @@ public class DistillationColumnWarmStateCacheTest {
 
     assertTrue(coldReference.column.solved(), coldReference.column.getConvergenceDiagnostics());
     assertColdReferenceEquivalent(coldReference.column, warmCase.column);
+    // The budget is the cold solve itself rather than a fixed sweep count: the damped solver needs
+    // more sweeps once acceptance also requires settled internal flows (issue 4961), and a rebuild
+    // after a specification change must not cost more than starting cold.
+    assertTrue(rebuiltIterationCount <= coldReference.column.getLastIterationCount(),
+        "the rebuilt solve should remain within the established cold-reference iteration budget, rebuilt="
+            + rebuiltIterationCount + " cold=" + coldReference.column.getLastIterationCount());
     assertPhysicalAndBalanced(coldReference);
 
     int acceptedInitializationCount = warmCase.column.getInitializationCount();
