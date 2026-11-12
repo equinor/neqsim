@@ -58,6 +58,17 @@ public final class CoolingWaterTransport {
    */
   public static double waterViscosity(double temperature, double density) {
     validate(temperature, density);
+    return backgroundViscosity(temperature, density);
+  }
+
+  /**
+   * Evaluates IAPWS R12-08 Eqs. 11-12 (no critical enhancement) without range validation.
+   *
+   * @param temperature temperature [K]
+   * @param density pure-water density [kg/m3]
+   * @return dynamic viscosity [Pa s]
+   */
+  static double backgroundViscosity(double temperature, double density) {
     double t = temperature / 647.096;
     double r = density / 322.0;
     double dilute = 100.0 * Math.sqrt(t) / (1.67752 + 2.20462 / t + 0.6366564 / (t * t) - 0.241605 / (t * t * t));
@@ -78,6 +89,17 @@ public final class CoolingWaterTransport {
    */
   public static double waterConductivity(double temperature, double density) {
     validate(temperature, density);
+    return backgroundConductivity(temperature, density);
+  }
+
+  /**
+   * Evaluates IAPWS R15-11 Eqs. 16-17 (no critical enhancement) without range validation.
+   *
+   * @param temperature temperature [K]
+   * @param density pure-water density [kg/m3]
+   * @return thermal conductivity [W/(m K)]
+   */
+  static double backgroundConductivity(double temperature, double density) {
     double t = temperature / 647.096;
     double r = density / 322.0;
     double dilute = Math.sqrt(t) / (0.002443221 + 0.01323095 / t + 0.006770357 / (t * t) - 0.003454586 / (t * t * t)

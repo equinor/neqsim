@@ -1793,23 +1793,34 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       if (i == j) {
         return 0.0;
       }
-      double tot = phase.getComponent(i).getNumberOfMolesInPhase() + phase.getComponent(j).getNumberOfMolesInPhase();
+      neqsim.thermo.component.ComponentInterface[] comp = phase.getcomponentArray();
+      return mixedKij(comp[i].getNumberOfMolesInPhase(), comp[j].getNumberOfMolesInPhase(), temperature, i, j);
+    }
+
+    /**
+     * Composition-weighted kij of a pair from the mole numbers of its two components.
+     *
+     * @param ni moles of component i in the phase
+     * @param nj moles of component j in the phase
+     * @param temperature temperature in Kelvin
+     * @param i first component
+     * @param j second component, different from i
+     * @return binary interaction coefficient
+     */
+    private double mixedKij(double ni, double nj, double temperature, int i, int j) {
+      double tot = ni + nj;
       if (tot < 1e-100) {
         return 0.0;
       }
-      double intkijMix = (phase.getComponent(i).getNumberOfMolesInPhase() * intparamij[i][j]
-          + phase.getComponent(j).getNumberOfMolesInPhase() * intparamji[i][j]) / tot;
-      // System.out.println("kij " + intkijMix + " kijT " +(intkijMix +
-      // intparamT[i][j] * temperature));
+      final double kij = intparamij[i][j];
+      final double kji = intparamji[i][j];
+      // Most pairs are symmetric; their mole-weighted mean is the parameter itself.
+      double intkijMix = kij == kji ? kij : (ni * kij + nj * kji) / tot;
 
-      if (intparamTType[i][j] == 0) {
-        return intkijMix + intparamT[i][j] * temperature;
-      } else if (intparamTType[i][j] == 1) {
-        // System.out.println("kj mix " + (intkijMix +intparamT[i][j] / temperature));
+      if (intparamTType[i][j] == 1) {
         return intkijMix + intparamT[i][j] / temperature;
-      } else {
-        return intkijMix + intparamT[i][j] * temperature;
       }
+      return intkijMix + intparamT[i][j] * temperature;
     }
 
     public double getkijdn(int k, PhaseInterface phase, double temperature, int i, int j) {
@@ -1875,20 +1886,24 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       double aij = 0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
       double[] sqrtai = new double[numbcomp];
+      double[] moles = new double[numbcomp];
       for (int j = 0; j < numbcomp; j++) {
-        if (compArray[j].getNumberOfMolesInPhase() > 1e-100) {
-          sqrtai[j] = Math.sqrt(compArray[j].getaT());
+        moles[j] = compArray[j].getNumberOfMolesInPhase();
+        if (moles[j] > 1e-100) {
+          sqrtai[j] = ((neqsim.thermo.component.ComponentEos) compArray[j]).sqrtAT;
         }
       }
       double calculatedA = 0.0;
       for (int i = 0; i < numbcomp; i++) {
-        if (compArray[i].getNumberOfMolesInPhase() < 1e-100) {
+        if (moles[i] < 1e-100) {
           continue;
         }
         for (int j = 0; j < numbcomp; j++) {
-          if (compArray[j].getNumberOfMolesInPhase() > 1e-100) {
-            aij = sqrtai[i] * sqrtai[j] * (1.0 - getkij(phase, temperature, i, j));
-            calculatedA += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase() * aij;
+          if (moles[j] > 1e-100) {
+            // Through the overridable accessor, so subclasses that refine kij are honoured.
+            double kij = getkij(phase, temperature, i, j);
+            aij = sqrtai[i] * sqrtai[j] * (1.0 - kij);
+            calculatedA += moles[i] * moles[j] * aij;
           }
         }
       }
@@ -1900,34 +1915,32 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** {@inheritDoc} */
     @Override
     public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-      // if(Math.abs(intparamT[compNumb][numbcomp])<1e-10 &&
-      // Math.abs(intparamij[compNumb][numbcomp]-intparamij[numbcomp][compNumb])<1e-10){
-      // return super.calcAi(compNumb, phase, temperature, pressure, numbcomp);
-      // }
-      double aij = 0.0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
+      final double molesComp = compArray[compNumb].getNumberOfMolesInPhase();
+      if (molesComp < 1e-100) {
+        // A component absent from the phase has no attractive-term derivative in this mixing rule.
+        return 0.0;
+      }
+      final double sqrtaComp = molesComp > 1e-100 ? ((neqsim.thermo.component.ComponentEos) compArray[compNumb]).sqrtAT
+          : 0.0;
+      final double[] kijRow = intparamij[compNumb];
+      final double[] kjiRow = intparamji[compNumb];
       double A1 = 0.0;
-      double[] sqrtai = new double[numbcomp];
-      for (int j = 0; j < numbcomp; j++) {
-        if (compArray[j].getNumberOfMolesInPhase() > 1e-100) {
-          sqrtai[j] = Math.sqrt(compArray[j].getaT());
-        }
-      }
-      for (int j = 0; j < numbcomp; j++) {
-        if (compArray[j].getNumberOfMolesInPhase() > 1e-100) {
-          aij = sqrtai[compNumb] * sqrtai[j] * (1.0 - getkij(phase, temperature, compNumb, j));
-          A1 += compArray[j].getNumberOfMolesInPhase() * aij;
-        }
-      }
+      // kij(i,j) depends only on n_i and n_j, so only pairs that contain compNumb and have different
+      // kij and kji contribute to the composition derivative of kij (A2).
       double A2 = 0.0;
-      for (int i = 0; i < numbcomp; i++) {
-        if (compArray[i].getNumberOfMolesInPhase() < 1e-100) {
-          continue;
-        }
-        for (int j = 0; j < numbcomp; j++) {
-          if (compArray[j].getNumberOfMolesInPhase() > 1e-100 && (compNumb == j || compNumb == i) && i != j) {
-            aij = -sqrtai[i] * sqrtai[j] * getkijdn(compNumb, phase, temperature, i, j);
-            A2 += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase() * aij;
+      for (int j = 0; j < numbcomp; j++) {
+        final double molesj = compArray[j].getNumberOfMolesInPhase();
+        if (molesj > 1e-100) {
+          final double sqrtaj = ((neqsim.thermo.component.ComponentEos) compArray[j]).sqrtAT;
+          final double kij = getkij(phase, temperature, compNumb, j);
+          A1 += molesj * (sqrtaComp * sqrtaj * (1.0 - kij));
+          if (j != compNumb && Math.abs(kijRow[j] - kjiRow[j]) >= 1e-10) {
+            // Pair (compNumb, j) and its mirror (j, compNumb) of the full double sum.
+            double aij = -sqrtaComp * sqrtaj * getkijdn(compNumb, phase, temperature, compNumb, j);
+            A2 += molesComp * molesj * aij;
+            aij = -sqrtaj * sqrtaComp * getkijdn(compNumb, phase, temperature, j, compNumb);
+            A2 += molesj * molesComp * aij;
           }
         }
       }
@@ -1941,25 +1954,42 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       double aij = 0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
+      // kij(i,j) depends only on n_i and n_j. Its first derivative with respect to n_k is therefore
+      // zero unless k is i or j, and its second derivative with respect to n_k, n_l is zero unless
+      // both k and l are in {i,j}. Off-diagonal elements (compNumb != compNumbj) need O(1) work and
+      // diagonal elements O(n), instead of O(n^2) for every element. Terms are visited in the same
+      // order as the full loops, so the result is unchanged.
+      final boolean diagonal = compNumb == compNumbj;
+      final int jFirst = diagonal ? 0 : compNumbj;
+      final int jEnd = diagonal ? numbcomp : compNumbj + 1;
       double A1 = 0;
-      for (int j = 0; j < numbcomp; j++) {
+      for (int j = jFirst; j < jEnd; j++) {
         aij = -Math.sqrt(compArray[compNumb].getaT() * compArray[j].getaT())
             * getkijdn(compNumbj, phase, temperature, compNumb, j);
         A1 += compArray[j].getNumberOfMolesInPhase() * aij;
       }
-      for (int j = 0; j < numbcomp; j++) {
+      for (int j = jFirst; j < jEnd; j++) {
         aij = -Math.sqrt(compArray[compNumb].getaT() * compArray[j].getaT())
             * getkijdn(compNumbj, phase, temperature, j, compNumb);
         A1 += compArray[j].getNumberOfMolesInPhase() * aij;
       }
 
       double A2 = 0;
-      for (int i = 0; i < numbcomp; i++) {
-        for (int j = 0; j < numbcomp; j++) {
-          aij = -Math.sqrt(compArray[i].getaT() * compArray[j].getaT())
-              * getkijdndn(compNumb, compNumbj, phase, temperature, i, j);
-          A2 += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase() * aij;
+      if (diagonal) {
+        for (int i = 0; i < numbcomp; i++) {
+          if (i == compNumb) {
+            for (int j = 0; j < numbcomp; j++) {
+              A2 += secondOrderKijTerm(compArray, compNumb, compNumbj, phase, temperature, i, j);
+            }
+          } else {
+            A2 += secondOrderKijTerm(compArray, compNumb, compNumbj, phase, temperature, i, compNumb);
+          }
         }
+      } else {
+        final int lo = Math.min(compNumb, compNumbj);
+        final int hi = Math.max(compNumb, compNumbj);
+        A2 += secondOrderKijTerm(compArray, compNumb, compNumbj, phase, temperature, lo, hi);
+        A2 += secondOrderKijTerm(compArray, compNumb, compNumbj, phase, temperature, hi, lo);
       }
 
       double A4 = 0;
@@ -1967,16 +1997,36 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       A4 = 2.0 * Math.sqrt(compArray[compNumb].getaT() * compArray[compNumbj].getaT())
           * (1.0 - getkij(phase, temperature, compNumbj, compNumb));
 
-      for (int i = 0; i < numbcomp; i++) {
+      final int iFirst = diagonal ? 0 : compNumb;
+      final int iEnd = diagonal ? numbcomp : compNumb + 1;
+      for (int i = iFirst; i < iEnd; i++) {
         A4 += -compArray[i].getNumberOfMolesInPhase() * Math.sqrt(compArray[compNumbj].getaT() * compArray[i].getaT())
             * getkijdn(compNumb, phase, temperature, compNumbj, i);
       }
-      for (int i = 0; i < numbcomp; i++) {
+      for (int i = iFirst; i < iEnd; i++) {
         A4 += -compArray[i].getNumberOfMolesInPhase() * Math.sqrt(compArray[compNumbj].getaT() * compArray[i].getaT())
             * getkijdn(compNumb, phase, temperature, i, compNumbj);
       }
 
       return A1 + A2 + A4;
+    }
+
+    /**
+     * One term of the double sum over the second composition derivative of kij in calcAij.
+     *
+     * @param compArray components of the phase
+     * @param k first differentiation component
+     * @param l second differentiation component
+     * @param phase phase being evaluated
+     * @param temperature temperature in Kelvin
+     * @param i first component of the pair
+     * @param j second component of the pair
+     * @return n_i n_j times the derivative of a_ij with respect to n_k and n_l through kij
+     */
+    private double secondOrderKijTerm(ComponentEosInterface[] compArray, int k, int l, PhaseInterface phase,
+        double temperature, int i, int j) {
+      double aij = -Math.sqrt(compArray[i].getaT() * compArray[j].getaT()) * getkijdndn(k, l, phase, temperature, i, j);
+      return compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase() * aij;
     }
 
     /** {@inheritDoc} */
@@ -2009,8 +2059,10 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         if (compArray[i].getNumberOfMolesInPhase() < 1e-100) {
           continue;
         }
-        for (int j = 0; j < numbcomp; j++) {
-          if (compArray[j].getNumberOfMolesInPhase() > 1e-100 && (compNumb == j || compNumb == i) && i != j) {
+        final int jFirst = i == compNumb ? 0 : compNumb;
+        final int jEnd = i == compNumb ? numbcomp : compNumb + 1;
+        for (int j = jFirst; j < jEnd; j++) {
+          if (compArray[j].getNumberOfMolesInPhase() > 1e-100 && i != j) {
             aij3 = -0.5 / asqrt[i] / asqrt[j]
                 * (compArray[i].getaT() * compArray[j].getaDiffT() + compArray[j].getaT() * compArray[i].getaDiffT())
                 * getkijdn(compNumb, phase, temperature, i, j);

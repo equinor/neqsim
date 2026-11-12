@@ -5,8 +5,6 @@ import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
-import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
-import org.ejml.interfaces.linsol.LinearSolverDense;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
@@ -72,16 +70,20 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
   private SimpleMatrix hessianMatrix = null;
   private SimpleMatrix hessianInvers = null;
   /**
-   * Cached LU factorization of {@code hessianMatrix}. Reused by {@link #applyHessianInv} instead of multiplying by an
-   * explicit inverse when available. The solver is rebuilt when the number of association sites changes.
+   * Row-major LU factors (partial pivoting) of {@code hessianMatrix}. Reused for every right-hand side instead of an
+   * explicit inverse. The association Hessian is small (one row per association site), so the factorization works on a
+   * primitive array and allocates nothing in the molar-volume iteration.
    */
-  private transient LinearSolverDense<DMatrixRMaj> hessianLU = null;
-  /**
-   * Reusable scratch copy of {@code hessianMatrix.getMatrix()} passed into the LU solver. EJML factories may decompose
-   * in place, so we always feed the solver a copy to keep {@code hessianMatrix} readable by other call sites.
-   */
-  private transient DMatrixRMaj hessianLUinput = null;
-  private transient int hessianLUSize = -1;
+  private transient double[] hessianLU = null;
+  /** Row interchanges of {@code hessianLU}: row {@code k} was swapped with row {@code hessianPivot[k]}. */
+  private transient int[] hessianPivot = null;
+  /** Scratch vectors of the association solver, one entry per association site. */
+  private transient double[] siteWorkA = null;
+  private transient double[] siteWorkB = null;
+  /** Per-site scratch of the successive-substitution sweep: owning component, site fraction and moles. */
+  private transient ComponentSrkCPA[] siteComps = null;
+  private transient double[] siteX = null;
+  private transient double[] siteMoles = null;
   private SimpleMatrix KlkVMatrix = null;
   private DMatrixRMaj corr2Matrix = null;
   private DMatrixRMaj corr3Matrix = null;
@@ -136,8 +138,12 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     // Factorizations own mutable scratch and cannot be shared. Rebuild lazily from the copied
     // Hessian if a derivative is requested before the clone next solves its association sites.
     clonedPhase.hessianLU = null;
-    clonedPhase.hessianLUinput = null;
-    clonedPhase.hessianLUSize = -1;
+    clonedPhase.hessianPivot = null;
+    clonedPhase.siteWorkA = null;
+    clonedPhase.siteWorkB = null;
+    clonedPhase.siteComps = null;
+    clonedPhase.siteX = null;
+    clonedPhase.siteMoles = null;
     // Keep the configured CPA mixing-rule parameters shared, as in the EOS clone contract.
     // Concurrent mixing-rule reconfiguration is not supported.
 
@@ -370,6 +376,13 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       return;
     }
 
+    if (type == 1) {
+      // Only the volume derivatives are requested (molar-volume iteration).
+      initCPAVolumeDerivatives();
+      FCPA = calcFCPAfromSites();
+      return;
+    }
+
     int temp = 0;
     double tempVar1;
     double tempVar2;
@@ -499,11 +512,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
 
     dFCPAdVdVdV = -0.5 * QVVV.get(0, 0) + QVVksi.transpose().mult(XV).get(0, 0) * 3.0
         + XVtranspose.mult(QksiVksi.mult(XV)).get(0, 0) * 3.0
-        + XVtranspose.mult(QMatksiksiksi.mult(XVtranspose)).mult(XV).get(0, 0);
-
-    if (type == 1) {
-      return;
-    }
+        + thirdOrderSiteTerm(QMatksiksiksi.getDDRM().data, XV.getDDRM().data, totalNumberOfAccociationSites);
 
     // Differentiate the stationary association equations twice and three times
     // with respect to native EOS volume. Each derivative is another right-hand
@@ -613,6 +622,150 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       }
       // assSites += getComponent(p).getNumberOfAssociationSites();
     }
+  }
+
+  /**
+   * Limit a large proposed change of B/V in the molar-volume iteration.
+   *
+   * <p>
+   * The step keeps the proposed direction and is never shorter than one tenth of the proposal, which is what the
+   * iteration always took. When that would move B/V by less than ten percent, the step is extended to ten percent of
+   * the current B/V (still shorter than the proposal). A proposal of 15 percent therefore advances 10 percent instead
+   * of 1.5 percent, which removes the long sequence of creeping iterations from a distant starting value.
+   * </p>
+   *
+   * @param step proposed change of B/V
+   * @param bonV current B/V
+   * @return change of B/V to apply
+   */
+  private static double dampedVolumeStep(double step, double bonV) {
+    double damped = 0.1 * step;
+    double floor = 0.1 * Math.abs(bonV);
+    if (Math.abs(damped) < floor && Math.abs(step) > floor) {
+      return Math.copySign(floor, step);
+    }
+    return damped;
+  }
+
+  /**
+   * Refresh the association strengths for the current radial distribution function value. {@code deltaNog} depends on
+   * temperature only; the volume dependence enters through {@code gcpa}.
+   */
+  private void updateDeltaWithG() {
+    final int n = totalNumberOfAccociationSites;
+    final double g = gcpa;
+    for (int i = 0; i < n; i++) {
+      final double[] deltaRow = delta[i];
+      final double[] nogRow = deltaNog[i];
+      for (int j = 0; j < n; j++) {
+        deltaRow[j] = nogRow[j] * g;
+      }
+    }
+  }
+
+  /**
+   * Third-order term of the total volume derivative of the association Helmholtz function: the sum over sites of
+   * {@code d3Q/dX_i^3 * (dX_i/dV)^3}. The third derivative of Q with respect to site fractions is diagonal.
+   *
+   * @param qXXX diagonal third derivative {@code 2 m_i / X_i^3}
+   * @param xV site-fraction volume derivatives
+   * @param n number of association sites
+   * @return the contracted third-order term
+   */
+  private static double thirdOrderSiteTerm(double[] qXXX, double[] xV, int n) {
+    double sum = 0.0;
+    for (int i = 0; i < n; i++) {
+      final double x = xV[i];
+      sum += qXXX[i] * x * x * x;
+    }
+    return sum;
+  }
+
+  /**
+   * Association Helmholtz contribution from the site fractions held after the last {@link #solveX()}.
+   *
+   * @return reduced association Helmholtz energy F_CPA
+   */
+  private double calcFCPAfromSites() {
+    final int n = totalNumberOfAccociationSites;
+    final double[] m = mVector.getDDRM().data;
+    final double[] ksi = ksiMatrix.getDDRM().data;
+    final double[] udot = udotMatrix.getDDRM().data;
+    double sum = 0.0;
+    for (int i = 0; i < n; i++) {
+      final double x = ksi[i];
+      sum += m[i] * ((Math.log(x) - x + 1.0) - 0.5 * x * udot[i]);
+    }
+    return sum;
+  }
+
+  /**
+   * First, second and third volume derivative of the association Helmholtz function at converged site fractions.
+   *
+   * <p>
+   * Every volume derivative of the association matrix K is a scalar multiple of K, because K = m m' g(V) Delta0 / V.
+   * One product K X and one back-substitution with the factored Hessian therefore give all three derivatives without
+   * forming the derivative matrices. Used inside the molar-volume iteration, where it allocates nothing.
+   * </p>
+   */
+  private void initCPAVolumeDerivatives() {
+    final int n = totalNumberOfAccociationSites;
+    updateDeltaWithG();
+    if (!hasHessianFactorization(n) && hessianInvers != null) {
+      // State produced by the legacy explicit-inverse solver: no factorization to reuse.
+      factorHessian(hessianMatrix.getDDRM().data, n);
+    } else {
+      ensureHessianFactorized();
+    }
+    if (siteWorkA == null || siteWorkA.length != n) {
+      siteWorkA = new double[n];
+      siteWorkB = new double[n];
+    }
+    final double[] m = mVector.getDDRM().data;
+    final double[] ksi = ksiMatrix.getDDRM().data;
+    final double[] klk = KlkMatrix.getDDRM().data;
+    final double[] kx = siteWorkA;
+    final double[] xV = siteWorkB;
+
+    final double totalVolume = getTotalVolume();
+    final double invV = 1.0 / totalVolume;
+    final double gdv1 = getGcpav() - invV;
+    final double gvvTerm = gcpavv + invV * invV;
+    final double c2 = gdv1 * gdv1 + gvvTerm;
+    final double c3 = gdv1 * gdv1 * gdv1 + 3.0 * gdv1 * gvvTerm + (gcpavvv - 2.0 * invV * invV * invV);
+
+    double xKx = 0.0;
+    for (int i = 0; i < n; i++) {
+      final int in = i * n;
+      double sum = 0.0;
+      for (int j = 0; j < n; j++) {
+        sum += klk[in + j] * ksi[j];
+      }
+      kx[i] = sum;
+      xKx += ksi[i] * sum;
+      xV[i] = gdv1 * sum;
+    }
+    luSolve(hessianLU, hessianPivot, n, xV);
+
+    double kxXV = 0.0;
+    double xVKxV = 0.0;
+    for (int i = 0; i < n; i++) {
+      final int in = i * n;
+      double sum = 0.0;
+      for (int j = 0; j < n; j++) {
+        sum += klk[in + j] * xV[j];
+      }
+      final double x = ksi[i];
+      kxXV += kx[i] * xV[i];
+      xVKxV += xV[i] * sum;
+      // K X is no longer needed for this site; reuse the slot for d3Q/dX^3 = 2 m / X^3.
+      kx[i] = 2.0 * m[i] / (x * x * x);
+    }
+    final double third = thirdOrderSiteTerm(kx, xV, n);
+
+    dFCPAdV = -0.5 * gdv1 * xKx;
+    dFCPAdVdV = -0.5 * c2 * xKx - gdv1 * kxXV;
+    dFCPAdVdVdV = -0.5 * c3 * xKx - 3.0 * c2 * kxXV - 3.0 * gdv1 * xVKxV + third;
   }
 
   /**
@@ -1068,24 +1221,149 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * @return {@code H^{-1} * rhs} as a SimpleMatrix
    */
   private SimpleMatrix applyHessianInv(SimpleMatrix rhs) {
-    if ((hessianLU == null || hessianLUSize != totalNumberOfAccociationSites) && hessianInvers == null) {
-      int n = totalNumberOfAccociationSites;
-      LinearSolverDense<DMatrixRMaj> solver = LinearSolverFactory_DDRM.lu(n);
-      DMatrixRMaj input = hessianMatrix.getDDRM().copy();
-      if (!solver.setA(input)) {
-        throw new IllegalStateException("Unable to factor copied CPA association Hessian");
+    final int n = totalNumberOfAccociationSites;
+    if (!hasHessianFactorization(n) && hessianInvers != null) {
+      return hessianInvers.mult(rhs);
+    }
+    ensureHessianFactorized();
+    DMatrixRMaj rhsMat = rhs.getDDRM();
+    DMatrixRMaj out = rhsMat.copy();
+    final double[] data = out.data;
+    final int cols = out.numCols;
+    if (cols == 1) {
+      luSolve(hessianLU, hessianPivot, n, data);
+    } else {
+      final double[] column = new double[n];
+      for (int c = 0; c < cols; c++) {
+        for (int r = 0; r < n; r++) {
+          column[r] = data[r * cols + c];
+        }
+        luSolve(hessianLU, hessianPivot, n, column);
+        for (int r = 0; r < n; r++) {
+          data[r * cols + c] = column[r];
+        }
       }
-      hessianLU = solver;
-      hessianLUinput = input;
-      hessianLUSize = n;
     }
-    if (hessianLU != null && hessianLUSize == totalNumberOfAccociationSites) {
-      DMatrixRMaj rhsMat = rhs.getDDRM();
-      DMatrixRMaj out = new DMatrixRMaj(rhsMat.numRows, rhsMat.numCols);
-      hessianLU.solve(rhsMat, out);
-      return SimpleMatrix.wrap(out);
+    return SimpleMatrix.wrap(out);
+  }
+
+  /**
+   * Factor {@code hessianMatrix} unless a factorization for the current number of sites is already held. A clone keeps
+   * the Hessian values but no factorization, so its first derivative request lands here.
+   */
+  private void ensureHessianFactorized() {
+    final int n = totalNumberOfAccociationSites;
+    if (hasHessianFactorization(n)) {
+      return;
     }
-    return hessianInvers.mult(rhs);
+    factorHessian(hessianMatrix.getDDRM().data, n);
+  }
+
+  /**
+   * Tells whether LU factors for the given number of association sites are held. A clone or a deserialized phase holds
+   * none until its first factorization.
+   *
+   * @param n number of association sites
+   * @return true if {@code hessianLU} can be used for back-substitution
+   */
+  private boolean hasHessianFactorization(int n) {
+    return hessianLU != null && hessianPivot != null && hessianLU.length == n * n;
+  }
+
+  /**
+   * Copy and LU-factor the association Hessian.
+   *
+   * @param hessian row-major Hessian, left untouched
+   * @param n number of association sites
+   */
+  private void factorHessian(double[] hessian, int n) {
+    if (hessianLU == null || hessianLU.length != n * n) {
+      hessianLU = new double[n * n];
+      hessianPivot = new int[n];
+    }
+    System.arraycopy(hessian, 0, hessianLU, 0, n * n);
+    luFactor(hessianLU, hessianPivot, n);
+  }
+
+  /**
+   * In-place LU factorization with partial pivoting of a small dense row-major matrix.
+   *
+   * @param a matrix on entry; unit-lower and upper factors on exit
+   * @param pivot receives the row interchanged with row k at step k
+   * @param n matrix dimension
+   */
+  static void luFactor(double[] a, int[] pivot, int n) {
+    for (int k = 0; k < n; k++) {
+      final int kn = k * n;
+      int p = k;
+      double max = Math.abs(a[kn + k]);
+      for (int i = k + 1; i < n; i++) {
+        final double v = Math.abs(a[i * n + k]);
+        if (v > max) {
+          max = v;
+          p = i;
+        }
+      }
+      pivot[k] = p;
+      if (p != k) {
+        final int pn = p * n;
+        for (int j = 0; j < n; j++) {
+          final double t = a[kn + j];
+          a[kn + j] = a[pn + j];
+          a[pn + j] = t;
+        }
+      }
+      final double diag = a[kn + k];
+      if (diag == 0.0) {
+        continue;
+      }
+      final double inv = 1.0 / diag;
+      for (int i = k + 1; i < n; i++) {
+        final int in = i * n;
+        final double f = a[in + k] * inv;
+        a[in + k] = f;
+        if (f != 0.0) {
+          for (int j = k + 1; j < n; j++) {
+            a[in + j] -= f * a[kn + j];
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Solve with factors from {@link #luFactor}, overwriting the right-hand side with the solution.
+   *
+   * @param lu factors
+   * @param pivot row interchanges
+   * @param n matrix dimension
+   * @param b right-hand side on entry, solution on exit
+   */
+  static void luSolve(double[] lu, int[] pivot, int n, double[] b) {
+    for (int k = 0; k < n; k++) {
+      final int p = pivot[k];
+      if (p != k) {
+        final double t = b[k];
+        b[k] = b[p];
+        b[p] = t;
+      }
+    }
+    for (int i = 1; i < n; i++) {
+      final int in = i * n;
+      double sum = b[i];
+      for (int j = 0; j < i; j++) {
+        sum -= lu[in + j] * b[j];
+      }
+      b[i] = sum;
+    }
+    for (int i = n - 1; i >= 0; i--) {
+      final int in = i * n;
+      double sum = b[i];
+      for (int j = i + 1; j < n; j++) {
+        sum -= lu[in + j] * b[j];
+      }
+      b[i] = sum / lu[in + i];
+    }
   }
 
   /**
@@ -1094,135 +1372,121 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * @return a boolean
    */
   public boolean solveX() {
-    if (totalNumberOfAccociationSites == 0) {
+    final int n = totalNumberOfAccociationSites;
+    if (n == 0) {
       return true;
     }
 
     boolean solvedX = solveX2(15);
 
-    DMatrixRMaj mVectorMat = mVector.getMatrix();
-    DMatrixRMaj ksiMatrixMat = ksiMatrix.getMatrix();
-
-    // ksiMatrix.print();
-    // second order method not working correctly and not used t the moment b ecause of numerical
-    // stability
-    int temp = 0;
-    int iter = 0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-        mVectorMat.unsafe_set(temp + j, 0, componentArray[i].getNumberOfMolesInPhase());
-      }
-      temp += componentArray[i].getNumberOfAssociationSites();
+    // The matrices are tiny (one row per association site), so work directly on their row-major
+    // backing arrays. This keeps the SimpleMatrix fields current for the derivative code without
+    // per-element accessor calls or temporaries.
+    final double[] m = mVector.getDDRM().data;
+    final double[] ksi = ksiMatrix.getDDRM().data;
+    final double[] udot = udotMatrix.getDDRM().data;
+    final double[] udotTimesm = udotTimesmMatrix.getDDRM().data;
+    final double[] klk = KlkMatrix.getDDRM().data;
+    final double[] hessian = hessianMatrix.getDDRM().data;
+    if (siteWorkA == null || siteWorkA.length != n) {
+      siteWorkA = new double[n];
+      siteWorkB = new double[n];
     }
+    final double[] corr = siteWorkA;
 
-    DMatrixRMaj mat1 = KlkMatrix.getMatrix();
-    double Klk = 0.0;
-    double totvolume = getTotalVolume();
-    double tempVari;
-    double tempVarj;
-    for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
-      tempVari = mVectorMat.unsafe_get(i, 0);
-      for (int j = i; j < getTotalNumberOfAccociationSites(); j++) {
-        tempVarj = mVectorMat.unsafe_get(j, 0);
-        Klk = tempVari * tempVarj / totvolume * delta[i][j];
-        mat1.unsafe_set(i, j, Klk);
-        mat1.unsafe_set(j, i, Klk);
+    int iter = 0;
+    loadSiteScratch(n);
+    final ComponentSrkCPA[] comps = siteComps;
+    final int[] siteIdx = assSiteNumber;
+    System.arraycopy(siteMoles, 0, m, 0, n);
+
+    final double totvolume = getTotalVolume();
+    for (int i = 0; i < n; i++) {
+      final double mi = m[i];
+      final double[] deltaRow = delta[i];
+      for (int j = i; j < n; j++) {
+        final double Klk = mi * m[j] / totvolume * deltaRow[j];
+        klk[i * n + j] = Klk;
+        klk[j * n + i] = Klk;
       }
     }
     boolean solved = true;
-    // SimpleMatrix corrMatrix = null;
+    double norm;
     do {
       solved = true;
       iter++;
-      temp = 0;
-      double ksi = 0;
-
-      double temp1;
-      double temp2;
-      for (int i = 0; i < numberOfComponents; i++) {
-        temp1 = componentArray[i].getNumberOfMolesInPhase();
-        for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-          ksi = ((ComponentSrkCPA) componentArray[i]).getXsite()[j];
-          ksiMatrixMat.unsafe_set(temp + j, 0, ksi);
-          // ksiMatrix.getMatrix().unsafe_set(temp + j, 0,
-          // ksiMatrix.getMatrix().unsafe_get(temp + j, 0));
-          tempVari = 1.0 / ksi - 1.0;
-          udotMatrix.set(temp + j, 0, tempVari);
-          udotTimesmMatrix.set(temp + j, 0, temp1 * tempVari);
-        }
-        temp += componentArray[i].getNumberOfAssociationSites();
+      for (int k = 0; k < n; k++) {
+        final double x = comps[k].getXsite()[siteIdx[k]];
+        final double u = 1.0 / x - 1.0;
+        ksi[k] = x;
+        udot[k] = u;
+        udotTimesm[k] = m[k] * u;
       }
 
-      int krondelt;
-      for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
-        temp1 = mVectorMat.unsafe_get(i, 0);
-        temp2 = ksiMatrix.get(i, 0);
-        for (int j = i; j < getTotalNumberOfAccociationSites(); j++) {
-          krondelt = 0;
-          if (i == j) {
-            krondelt = 1;
-          }
-          tempVari = -temp1 / (temp2 * temp2) * krondelt - mat1.unsafe_get(i, j);
-          hessianMatrix.set(i, j, tempVari);
-          hessianMatrix.set(j, i, tempVari);
+      for (int i = 0; i < n; i++) {
+        final int in = i * n;
+        final double x = ksi[i];
+        hessian[in + i] = -m[i] / (x * x) - klk[in + i];
+        for (int j = i + 1; j < n; j++) {
+          final double v = -klk[in + j];
+          hessian[in + j] = v;
+          hessian[j * n + i] = v;
         }
       }
 
-      // ksiMatrix = new SimpleMatrix(ksi);
-      // SimpleMatrix hessianMatrix = new SimpleMatrix(hessian);
-      int n = totalNumberOfAccociationSites;
-      if (hessianLU == null || hessianLUSize != n) {
-        hessianLU = LinearSolverFactory_DDRM.lu(n);
-        hessianLUinput = new DMatrixRMaj(n, n);
-        hessianLUSize = n;
-      }
-      // Defensive copy: EJML's LU solver may decompose in place, which would corrupt
-      // hessianMatrix for any later reader. We keep hessianMatrix intact by feeding the
-      // solver a reusable scratch copy.
-      System.arraycopy(hessianMatrix.getDDRM().getData(), 0, hessianLUinput.getData(), 0, n * n);
-      if (!hessianLU.setA(hessianLUinput)) {
-        return false;
-      }
+      // Factor a copy so hessianMatrix stays readable by the derivative code.
+      factorHessian(hessian, n);
       hessianInvers = null;
       if (solvedX) {
-        // System.out.println("solvedX ");
         return true;
       }
 
-      DMatrixRMaj mat2 = ksiMatrix.getMatrix();
-      CommonOps_DDRM.mult(mat1, mat2, corr2Matrix);
-      CommonOps_DDRM.subtract(udotTimesmMatrix.getDDRM(), corr2Matrix, corr3Matrix);
-      hessianLU.solve(corr3Matrix, corr4Matrix);
-      // SimpleMatrix gMatrix = udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix));
-      // corrMatrix =
-      // hessianInvers.mult(udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix)));
-      // //.scale(-1.0);
-      temp = 0;
-      // System.out.println("print SimpleMatrix ...");
-      // corrMatrix.print(10, 10);
-      // SimpleMatrix simp = new SimpleMatrix(corr4Matrix);
-      // System.out.println("print CommonOps ...");
-      // simp.print(10,10);
-      double newX;
-      for (int i = 0; i < numberOfComponents; i++) {
-        for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-          newX = ksiMatrix.get(temp + j, 0) - corr4Matrix.unsafe_get((temp + j), 0);
-          if (newX < 0) {
-            newX = 1e-10;
-            solved = false;
-          }
-          ((ComponentCPAInterface) componentArray[i]).setXsite(j, newX);
+      // Newton step on the stationarity conditions of the association Q-function.
+      norm = 0.0;
+      for (int i = 0; i < n; i++) {
+        final int in = i * n;
+        double sum = 0.0;
+        for (int j = 0; j < n; j++) {
+          sum += klk[in + j] * ksi[j];
         }
-        temp += componentArray[i].getNumberOfAssociationSites();
+        corr[i] = udotTimesm[i] - sum;
       }
-      // System.out.println("corrmatrix error " );
-      // System.out.println("error " + NormOps_DDRM.normF(corr4Matrix));
-    } while ((NormOps_DDRM.normF(corr4Matrix) > 1e-12 || !solved) && iter < 100);
+      luSolve(hessianLU, hessianPivot, n, corr);
+      for (int i = 0; i < n; i++) {
+        norm += corr[i] * corr[i];
+      }
+      norm = Math.sqrt(norm);
 
-    // System.out.println("iter " + iter + " error " +
-    // NormOps_DDRM.normF(corr4Matrix)); // corrMatrix.print(10, 10);
-    // ksiMatrix.print(10, 10);
+      for (int k = 0; k < n; k++) {
+        double newX = ksi[k] - corr[k];
+        if (newX < 0) {
+          newX = 1e-10;
+          solved = false;
+        }
+        comps[k].setXsite(siteIdx[k], newX);
+      }
+    } while ((norm > 1e-12 || !solved) && iter < 100);
+
     return true;
+  }
+
+  /**
+   * Fill the per-site scratch (owning component, current site fraction, moles) from the components.
+   *
+   * @param n number of association sites
+   */
+  private void loadSiteScratch(int n) {
+    if (siteComps == null || siteComps.length != n) {
+      siteComps = new ComponentSrkCPA[n];
+      siteX = new double[n];
+      siteMoles = new double[n];
+    }
+    for (int k = 0; k < n; k++) {
+      ComponentSrkCPA c = (ComponentSrkCPA) componentArray[moleculeNumber[k]];
+      siteComps[k] = c;
+      siteX[k] = c.getXsite()[assSiteNumber[k]];
+      siteMoles[k] = c.getNumberOfMolesInPhase();
+    }
   }
 
   /**
@@ -1242,17 +1506,11 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     // Cache into primitive arrays to eliminate O(N^2) virtual calls, casts, and array
     // dereferences from the inner loop. Preserves Gauss-Seidel semantics: the site value
     // written in outer iteration i is visible to sites i+1..n-1 within the same sweep.
-    ComponentSrkCPA[] comps = new ComponentSrkCPA[n];
-    double[] xArr = new double[n];
-    double[] nMoles = new double[n];
-    int[] siteIdx = new int[n];
-    for (int k = 0; k < n; k++) {
-      ComponentSrkCPA c = (ComponentSrkCPA) componentArray[moleculeNumber[k]];
-      comps[k] = c;
-      siteIdx[k] = assSiteNumber[k];
-      xArr[k] = c.getXsite()[assSiteNumber[k]];
-      nMoles[k] = c.getNumberOfMolesInPhase();
-    }
+    loadSiteScratch(n);
+    final ComponentSrkCPA[] comps = siteComps;
+    final double[] xArr = siteX;
+    final double[] nMoles = siteMoles;
+    final int[] siteIdx = assSiteNumber;
 
     double err = 0.0;
     int iter = 0;
@@ -1433,6 +1691,10 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       gcpavvv = calc_lngVVV();
 
       if (totalNumberOfAccociationSites > 0) {
+        // The association strength follows the radial distribution function at the current
+        // volume. Refresh it before solving the site fractions so that the residual and its
+        // volume derivatives belong to the same state in every iteration.
+        updateDeltaWithG();
         solveX();
       }
 
@@ -1468,7 +1730,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         BonV += 0.5 * d1;
       }
       if (Math.abs((BonV - BonVold) / BonV) > 0.1) {
-        BonV = BonVold + 0.1 * (BonV - BonVold);
+        BonV = BonVold + dampedVolumeStep(BonV - BonVold, BonVold);
       }
       if (Double.isNaN(BonV)) {
         return molarVolumeChangePhase(pressure, temperature, A, B, pt);
@@ -1500,7 +1762,11 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
        */
       setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
       Z = pressure * getMolarVolume() / (R * temperature);
-    } while ((Math.abs((BonV - BonVold) / BonV) > 1.0e-10 || Math.abs(h) > 1e-12) && iterations < maxIterations);
+      // h is converged when it is below the absolute tolerance, or when its Newton correction is
+      // below the resolution of B/V. Close to B/V = 1 the slope dh is 1e4-1e6, so rounding alone
+      // keeps |h| above 1e-12 and the absolute test can never be met.
+    } while ((Math.abs((BonV - BonVold) / BonV) > 1.0e-10
+        || (Math.abs(h) > 1e-12 && Math.abs(d1) > 1.0e-13 * Math.abs(BonV))) && iterations < maxIterations);
 
     // System.out.println("h failed " + h + " Z" + Z + " iterations " + iterations +
     // " BonV " + BonV);
@@ -1587,6 +1853,9 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       gcpavv = calc_lngVV();
       gcpavvv = calc_lngVVV();
 
+      if (totalNumberOfAccociationSites > 0) {
+        updateDeltaWithG();
+      }
       solveX();
 
       initCPAMatrix(1);
