@@ -22,6 +22,7 @@ import psr_basis
 import psr_connectivity
 import psr_diagrams
 import psr_extract
+import psr_handoff
 import psr_report
 import psr_validate
 
@@ -174,9 +175,11 @@ def run_pipeline(data, basis, standards, out_dir, use_word=True, max_units_per_s
     if word_ok:
         final = psr_validate.validate_all(data, basis, standards, balances, diagrams, docx_path, facts_path, data_dir)
     jp, mp = psr_validate.write_validation(final, report_dir)
+    handoff = psr_handoff.write_handoff(out_dir, psr_handoff.build_process_basis(
+        data, basis, standards, balances, diagrams, final, out_dir, docx_path, pdf_path if word_ok else None), data)
     lap("validation_and_pdf")
     summary = {"docx": docx_path, "pdf": pdf_path if word_ok else None, "validation": final["status"], "validation_json": jp,
-               "validation_md": mp, "exports": exports, "diagrams": {"bfd": diagrams["bfd"]["svg"], "pfd_pdf": diagrams["pfd"]["pdf"],
+               "validation_md": mp, "exports": exports, "handoff": handoff, "diagrams": {"bfd": diagrams["bfd"]["svg"], "pfd_pdf": diagrams["pfd"]["pdf"],
                "pfd_sheets": [s["svg"] for s in diagrams["pfd"]["sheets"]], "pfd_spec": diagrams["pfd"]["spec"],
                             "crossings_total": diagrams["pfd"].get("crossings_total", 0),
                             "sparse_sheets": diagrams["pfd"].get("sparse_sheets", []),
@@ -207,6 +210,7 @@ def merge_into_results(results_path, summary, task_dir=None):
     block = {"skill": "process-study-report", "validation_status": summary["validation"], "report_docx": rel(summary["docx"]),
              "report_pdf": rel(summary.get("pdf")), "validation_report": rel(summary["validation_json"]),
              "exports": {k: rel(v) for k, v in summary["exports"].items()},
+             "handoff": {k: rel(v) for k, v in (summary.get("handoff") or {}).items()},
              "diagrams": {"bfd": rel(summary["diagrams"]["bfd"]), "pfd_pdf": rel(summary["diagrams"]["pfd_pdf"]),
                           "pfd_sheets": [rel(p) for p in summary["diagrams"]["pfd_sheets"]], "pfd_layout_spec": rel(summary["diagrams"]["pfd_spec"])},
              "balances_summary": summary["balances_summary"], "word_fields_updated": summary["word_updated"]}

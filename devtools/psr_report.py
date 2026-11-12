@@ -39,6 +39,12 @@ CATEGORY_TITLES = {"valve": "Valves", "mixer": "Mixers and headers", "splitter":
                    "cooler": "Coolers", "heater": "Heaters", "exchanger": "Heat exchangers", "compressor": "Compressors",
                    "pump": "Pumps", "expander": "Expanders", "ejector": "Ejectors", "recycle": "Recycle (convergence) elements",
                    "column": "Columns", "pipe": "Pipes", "reactor": "Reactors", "other": "Other units"}
+TOLERANCE_LABELS = {"mass_rel": "mass balance (relative)", "component_rel": "component balance (relative)",
+                    "energy_rel": "energy balance (relative)", "energy_abs_kw": "energy residual floor (kW)",
+                    "mass_abs_kg_h": "mass residual floor (kg/h)", "overall_mass_rel": "overall mass balance (relative)",
+                    "energy_dt_bookkeeping_k": "relaxed energy limit as temperature shift (K)",
+                    "energy_rel_bookkeeping": "relaxed energy limit without heat capacity (relative)",
+                    "recycle_mass_rel": "recycle tear mass residual (relative)"}
 
 
 def _fmt_optional(value, fmt):
@@ -560,7 +566,7 @@ class ReportBuilder:
         self.H("6 Simulation methodology", 1)
         self.H("6.1 Model and software", 2)
         rows = [("Model", m["name"]), ("Model version", m["version"]), ("Simulator", m["simulator"]),
-                ("Python library", self.data["meta"].get("neqsim_version", "unknown")),
+                ("Simulation library release", self.data["meta"].get("neqsim_version", "unknown")),
                 ("Equation of state (from model)", self.data["meta"].get("eos", "unknown")),
                 ("Equation of state (basis)", m["eos"]), ("Mixing rule", m["mixing_rule"]),
                 ("Convergence", m["convergence"])]
@@ -579,7 +585,8 @@ class ReportBuilder:
         self.H("6.3 Convergence and balance closure", 2)
         self.P("Mass, component and energy balances were recomputed from the extracted stream data. Tolerances: %s. "
                "Energy balance: sum(H_out) - sum(H_in) = Q + W with %s. Overall closure by case is given in Section 8.4." %
-               (", ".join("%s = %s" % (k, v) for k, v in self.balances["tolerances"].items()), self.balances["sign_convention"]))
+               (", ".join("%s %s" % (TOLERANCE_LABELS.get(k, k.replace("_", " ")), v) for k, v in self.balances["tolerances"].items()),
+                self.balances["sign_convention"]))
         self.H("6.4 Validation against measured data", 2)
         val = b.get("validation", {})
         self.P(val.get("statement", "No measured data comparison is part of this report."))
@@ -603,7 +610,7 @@ class ReportBuilder:
             self.P("The connectivity audit of the solved model found %d error(s) and %d warning(s). Drawings and stream tables show the "
                    "wiring that the model contains; units listed below are drawn with a 'not connected' note and their balances "
                    "are not meaningful until the connections are restored. The full list with repair candidates is in "
-                   "data/connectivity_audit.csv." % (s["n_error"], s["n_warning"]), bold=True)
+                   "the connectivity audit table of the data package." % (s["n_error"], s["n_warning"]), bold=True)
             rows = [(code, str(n), psr_connectivity.CODE_TEXT[code]) for code, n in sorted(s["by_code"].items())]
             self.table(["Finding", "Count", "Meaning"], rows, caption="Connectivity findings by type", font=7.5,
                        widths=[40, 14, 116], align=["left", "right", "left"])
@@ -665,6 +672,9 @@ class ReportBuilder:
         self.H("8.5 Case comparison", 2)
         self._case_comparison(figure_dir)
         self.H("8.6 Sensitivities", 2)
+        if not self.basis.get("sensitivities"):
+            self.P("No separate sensitivity study is part of this report; the operating cases compared in Section 8.5 are the only "
+                   "variations of the base flowsheet.")
         for sens in self.basis.get("sensitivities", []):
             wide = len(sens.get("columns") or []) >= 9          # wide tables go to a landscape page and back
             if wide:
@@ -677,6 +687,9 @@ class ReportBuilder:
             if wide:
                 self.section()
         self.H("8.7 Constraints and utilisation", 2)
+        if not self.basis.get("constraint_tables"):
+            self.P("No equipment constraint or utilisation table is part of this report; equipment limits are outside the screening "
+                   "flowsheet, and the duties and powers of Sections 8.2 and 8.3 are the process-side demands only.")
         for tab in self.basis.get("constraint_tables", []):
             wide = len(tab.get("columns") or []) >= 9
             if wide:
@@ -687,6 +700,9 @@ class ReportBuilder:
             if wide:
                 self.section()
         self.H("8.8 Engineering interpretation", 2)
+        if not self.basis.get("interpretation"):
+            self.P("No interpretation is added to the calculated results in this report; read them together with the case comparison "
+                   "(Section 8.5), the balances (Section 8.4) and the assumptions and data gaps of the basis chapters.")
         for block in self.basis.get("interpretation", []):
             self.P(block["topic"], bold=True)
             self.P(block["text"])
@@ -888,7 +904,8 @@ class ReportBuilder:
         self.H("Appendix B Stream tables", 1)
         self.P("B.1 Stream register; B.2 stream properties; B.3 phase table; B.4 overall composition (mole fraction); B.5 phase compositions "
                "of multiphase streams. Component flow rates (kmol/h, kg/h) and all values at full precision are in the machine-readable "
-               "exports (stream_components.csv, process_data.xlsx, process_data.json). Phase fractions are on a mole basis unless stated.")
+               "tables of the data package delivered with this report (stream components, workbook and structured data export). "
+               "Phase fractions are on a mole basis unless stated.")
         rows = [[s["id"], s["label"], s["name"], s["source"] or "boundary", s["destination"] or "boundary", s["area"], s["kind"]] for s in data["streams"]]
         self.table(["Stream", "Label", "Model name", "Source", "Destination", "Area", "Kind"], rows,
                    caption="B.1 Stream register (every material stream)", font=7, widths=[16, 62, 52, 52, 52, 36, 18], align=["left"] * 7)
@@ -1013,7 +1030,7 @@ class ReportBuilder:
         if not v:
             self.P("Validation report not yet available at this build stage.", italic=True)
             return
-        self.P("Overall result: %s. Checks run: %d; passed: %d; failed: %d; warnings: %d. Full machine-readable report: validation_report.json." %
+        self.P("Overall result: %s. Checks run: %d; passed: %d; failed: %d; warnings: %d. The full validation record is delivered with the data package." %
                (v["status"], v["n_checks"], v["n_pass"], v["n_fail"], v["n_warn"]), bold=True)
         rows = [[r["id"], r["description"], r["status"], r["detail"][:300]] for r in v["checks"]]
         self.table(["Check", "Description", "Result", "Detail"], rows, caption="Validation checks", font=7, widths=[26, 120, 16, 200], align=["left"] * 4)

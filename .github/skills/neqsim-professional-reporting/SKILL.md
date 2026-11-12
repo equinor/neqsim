@@ -661,6 +661,34 @@ curve at the operating pressure; do not quote the nearest row. The same trap
 applies to any monotonic property table used backwards (dew point, hydrate
 curve, wax appearance).
 
+## Document packages: structural rules for multi-report deliverables
+
+When several reports, registers or filled templates are produced as one package (for example a gate or
+design-basis package), these rules apply on top of the principles above. Each was a recurring cause of rework.
+
+1. **Depth minimums are structural, not editorial.** Per document type, define the minimum of numbered chapters,
+   tables, figures, registers and requirement-by-requirement rows. Encode it in the builder or the quality checker
+   (a count that fails the build), not in a reviewer's remark. A document that passes the layout checks but has fewer
+   chapters or tables than its type requires is not finished.
+2. **Authored chapters must be consumed by the builder.** Prose written as a separate input (sections file, chapter
+   JSON, hand-off) is worthless if the builder does not read it. After every build, compare the authored chapter list
+   with the headings of the produced document and fail on any authored chapter that is missing, empty or only in a
+   side file. Prefer one source per chapter; never paste text into the output after the build.
+3. **Verdict on the first page.** The first page after the cover carries the verdict (status, readiness, the three to
+   five headline numbers, the decisions asked for, the blocking open points), each traceable to a data source. A
+   reader must not have to reach chapter 8 to learn whether the package is usable.
+4. **No machine or tool-style wording in documents for human readers.** No schema names, field keys, file names,
+   `snake_case` identifiers, concept or case ids that are not defined in the document, tool or generator names,
+   "TO BE CONFIRMED"-style tokens without an owner, or serialized dictionaries. Translate to the reader's vocabulary;
+   keep identifiers in appendices that explain them. Scan the extracted text of the finished document for these
+   patterns as an automated check.
+5. **Table text size and over-printing.** Run an automated check of the rendered document: no table font below the
+   template minimum (about 8 pt at print size), no table wider than the text block, no text clipped or printed over
+   other text or drawings (title blocks, stamps, logos). Then view a first page, a table page and a figure page of
+   every document.
+6. **Machine-readable hand-offs, not scraping.** Every generator writes the structured results the next builder needs
+   (see `handoff/process_basis.json` of `process-study-report`). Downstream builders read the hand-off, not the Word file.
+
 ## Related Skills
 
 - [`neqsim-regression-baselines`](../neqsim-regression-baselines/SKILL.md) — locking baselines for traceability

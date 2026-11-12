@@ -131,7 +131,29 @@ Outputs: `OUT/data/` (`process_data.json`, `.xlsx`, `stream_properties.csv`, `st
 = component flows for every stream x component x case, `stream_phase_compositions.csv`, `equipment.csv`,
 `components.csv`, `balances.json`), `OUT/diagrams/{bfd,pfd}/` (SVG sheets, PDF set, PNG previews,
 `*_layout_spec.json` = editable source), `OUT/report/` (docx, PDF, `report_facts.json`,
-`validation_report.*`), `OUT/figures/`.
+`validation_report.*`), `OUT/figures/`, `OUT/handoff/` (see below).
+
+## Hand-off for downstream document builders
+
+Every run writes `OUT/handoff/process_basis.json` (schema `process_basis.v1`, code `devtools/psr_handoff.py`) and
+`OUT/handoff/stream_table.csv`. Package, register and design-basis builders read these files; they must not scrape the
+Word report. The schema is generic and carries no consumer-specific names:
+
+| Key | Content |
+|---|---|
+| `document`, `report` | title, number, revision, readiness; report paths and validation status per check |
+| `model` | model name, NeqSim version, EOS, mixing rules, standard conditions |
+| `design_cases` | case id, label, role, description, data source (from `operating_cases` of the basis) |
+| `components` | component names in model order |
+| `streams` | per stream: id, label, area, kind, source, destination (`boundary` when open) and per case T, P, mass and molar flow, actual and standard volume, density, enthalpy, state, mole fractions |
+| `equipment` | per unit: tag, area, class, category, inlet and outlet stream ids, design data, per case duty, power, dP and extras |
+| `diagrams` | BFD file, PFD sheets (number, title, drawing number, SVG), PDF and the layout-review status; paths relative to `OUT` |
+| `balances_summary`, `acceptance_criteria`, `assumptions`, `data_gaps`, `exclusions`, `standards` | copied from the run and the basis |
+
+The summary of the run (`run_summary.json`) and the `process_study_report` block of `results.json` list the same files
+under `handoff`. A consumer that needs an item the schema lacks adds it here (generic key plus test), not in a private
+parser. Document-package rules (depth minimums, authored chapters consumed, verdict first, reader wording) are in
+`neqsim-professional-reporting`.
 
 ## Conventions the toolkit enforces
 
@@ -265,4 +287,6 @@ generic report for the narrative of a task, this package as the controlled techn
 How-to page: [docs/development/PROCESS_STUDY_REPORT.md](../../../docs/development/PROCESS_STUDY_REPORT.md). Agent: `@process-study-report`.
 `neqsim-professional-reporting` (report hygiene and `results.json`), `neqsim-task-workflow` (phase
 6 report), `neqsim-standards-lookup`, `neqsim-pid-process-operations`,
-`neqsim-document-intelligence-extraction`, agents `solve-task`, `process-model`, `solve-process`.
+`neqsim-document-intelligence-extraction`, `neqsim-pfd-layout-review` (diagram gate and spec-vs-rendering
+reconciliation), `neqsim-report-design-and-visual-qa` (render checks), agents `solve-task`, `process-model`,
+`solve-process`, `pfd-layout-review`.

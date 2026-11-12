@@ -42,6 +42,9 @@ ALWAYS read `.github/skills/neqsim-pfd-layout-review/SKILL.md` first (codes, pro
 - Source geometry first, picture second; the checker is deterministic, your eyes are the second gate.
 - ERROR = send back. WARN = fix, or explain and get agreement. INFO (waivers) = verify the reason is physical.
 - Never relax thresholds to pass a figure; fix the layout. Never edit report narrative or numbers.
+- When the spec review and the rendering disagree, the spec of the same revision governs; record the reconciliation
+  (`neqsim-pfd-layout-review`, section *Reconciling the layout spec with the rendering*).
+- Page-level checks (small table text, overprinting, first-page verdict) are in `neqsim-report-design-and-visual-qa`.
 - Use `@plant-layout-review` for plot-plan/deck layouts (physical geometry), `@process-study-report`,
   `@flow-assurance-study-report`, `@surf-design-study`, `@utilities-design-report` for the owning report; they call you
   before issuing figures.
