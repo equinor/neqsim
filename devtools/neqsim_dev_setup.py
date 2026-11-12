@@ -20,6 +20,12 @@ import os
 import sys
 import types
 
+try:
+    import quiet_subprocess
+    quiet_subprocess.install()
+except ImportError:
+    pass
+
 
 # ── Project root detection ──
 # Priority order:

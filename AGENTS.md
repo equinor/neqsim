@@ -39,6 +39,13 @@
   missing input, runtime mismatch or new findings are not a pass. Keep `pom.xml` and
   `pomJava8.xml` coordinated and test dependency changes on actual Java 8. Never refresh the
   baseline merely to make a PR green. Record commands and exact-head results.
+- **Quiet by default (agents, skills, plugin):** no pop-up windows, no run-time installs, no surprise
+  sign-ins. Child processes use `creationflags=CREATE_NO_WINDOW` (toolkit entry points call
+  `quiet_subprocess.install()`); dependencies are declared in the skill `pyproject.toml` and installed
+  by the plugin in the background, never with `pip install` mid-task; tokens come silently from
+  `enterprise-sso-auth` (cached/`az` token, session warm-up), never `az login` or a browser unless every
+  silent route failed. Skill repos enforce it with `test_quiet_processes.py`; exceptions need
+  `# quiet-ok: <reason>`. Full rule: "Quiet by default" in each skills/agents repo's `CONTRIBUTING.md`.
 - **Agent/MCP coverage:** `src/main/resources/neqsim/mcp/engineering-coverage.json` is a generated snapshot,
   not a source of truth. After Java formatting or agent/skill mapping changes, regenerate it with
   `uv run --project devtools --locked devtools/build_engineering_coverage.py` and stage the output.

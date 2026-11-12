@@ -45,6 +45,12 @@ import urllib.request
 from pathlib import Path
 
 try:
+    import quiet_subprocess
+    quiet_subprocess.install()
+except ImportError:
+    pass
+
+try:
     import yaml
 except ImportError:
     yaml = None
