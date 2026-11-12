@@ -6977,7 +6977,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     // Internal flow stationarity: tray temperatures can settle while reflux and boil-up keep
     // changing, for example when both column ends are temperature-fixed and a component has no
     // outlet that can carry it. Track the tray outlet flows from sweep to sweep so such a state is
-    // not accepted as converged.
+    // not accepted as converged. A finite connected material tolerance marks a seed for the guarded
+    // MESH recovery, whose result must pass the MESH residual, per-tray material and specification
+    // gates; those already reject moving internal flows, so the stationarity gate is only applied to
+    // primary sequential solves and does not change where a recovery seed hands over.
+    boolean enforceInternalFlowStationarity = !Double.isFinite(connectedMaterialTolerance);
     double[] previousTrayLiquidFlow = new double[numberOfTrays];
     double[] previousTrayVaporFlow = new double[numberOfTrays];
     boolean trayFlowHistoryAvailable = hasBeenSolvedBefore
@@ -7073,7 +7077,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         trayFlowHistoryAvailable = false;
         internalTrafficHistoryCount = 0;
       }
-      boolean internalFlowsSettled = isInternalFlowChangeAcceptable(internalFlowChange);
+      boolean internalFlowsSettled = !enforceInternalFlowStationarity
+          || isInternalFlowChangeAcceptable(internalFlowChange);
 
       boolean evaluateBalances = shouldEvaluateBalances(iter, iterationLimit, polishing, err, baseTempTolerance,
           balanceCheckStride);
