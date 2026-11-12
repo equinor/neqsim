@@ -104,3 +104,14 @@ class NegativeValidationKeyTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@unittest.skipIf(GR is None, "python-docx not installed")
+class ReservoirBlowdownIsNotSafetyContextTest(unittest.TestCase):
+    def test_gas_cap_blowdown_does_not_trigger_safety_readiness(self):
+        results = {"approach": "Oil phase for 6 years, then gas-cap blowdown.", "conclusions": "Gas blowdown after the oil phase."}
+        self.assertFalse(GR._has_safety_context(results))
+        self.assertEqual(GR.format_safety_readiness_text(results), "")
+
+    def test_vessel_blowdown_still_triggers_safety_readiness(self):
+        self.assertTrue(GR._has_safety_context({"approach": "Separator blowdown to flare in 15 minutes."}))
