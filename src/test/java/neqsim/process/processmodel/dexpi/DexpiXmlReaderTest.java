@@ -1429,4 +1429,67 @@ public class DexpiXmlReaderTest extends NeqSimTest {
     }
     throw new AssertionError("Missing diagnostic " + expectedCode + " in " + result.toJson());
   }
+
+  /**
+   * Reads the DEXPI reference example C01V04, which uses the standard Proteus form where {@code <Equipment>} and
+   * {@code <PipingComponent>} carry their own ComponentClass (issue #4963).
+   *
+   * @throws Exception if reading fails
+   */
+  @Test
+  public void testReadsStandardProteusReferenceExampleC01V04() throws Exception {
+    File file = new File("src/test/resources/dexpi/C01V04-VER.EX01.xml");
+    DexpiXmlReader.ImportResult result = DexpiXmlReader.readWithDiagnostics(file);
+    ProcessSystem process = result.getProcessSystem();
+
+    String[][] expected = {{"H1007", "PlateHeatExchanger"}, {"H1008", "TubularHeatExchanger"},
+        {"P4711", "CentrifugalPump"}, {"P4712", "ReciprocatingPump"}, {"T4750", "Tank"}};
+    for (String[] item : expected) {
+      ProcessEquipmentInterface unit = process.getUnit(item[0]);
+      assertNotNull(unit, "Missing equipment " + item[0] + " in " + process.getAllUnitNames());
+      assertTrue(unit instanceof DexpiProcessUnit);
+      assertEquals(item[1], ((DexpiProcessUnit) unit).getDexpiClass());
+    }
+
+    int equipmentCount = 0;
+    int pipingCount = 0;
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (unit instanceof DexpiProcessUnit) {
+        String id = ((DexpiProcessUnit) unit).getDexpiId();
+        if (id != null && id.matches(".*(Valve|Reducer|Flange|Tee).*")) {
+          pipingCount++;
+        } else {
+          equipmentCount++;
+        }
+      }
+    }
+    assertEquals(5, equipmentCount, "Expected the five reference equipment items");
+    assertTrue(pipingCount > 0, "Expected piping components to be imported");
+
+    for (DexpiXmlReader.ImportDiagnostic diagnostic : result.getDiagnostics()) {
+      assertFalse("DEXPI_IMPORT_COMPONENT_CLASS_MISSING".equals(diagnostic.getCode()),
+          "Unexpected missing-class diagnostic: " + diagnostic.getElementName() + " " + diagnostic.getElementId());
+      if ("DEXPI_IMPORT_COMPONENT_UNSUPPORTED".equals(diagnostic.getCode())) {
+        assertFalse(Arrays.asList("Nozzle", "Label", "Chamber", "Impeller", "TubeBundle", "Displacer").contains(
+            diagnostic.getComponentClass()), "Sub-item reported as unsupported: " + diagnostic.getComponentClass());
+      }
+    }
+  }
+
+  /**
+   * Tests that a wrapper element and a standard-form item nested in it produce one unit, not two.
+   *
+   * @throws Exception if reading fails
+   */
+  @Test
+  public void testWrappedStandardFormItemIsImportedOnce() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><PlantModel><Equipment>"
+        + "<Equipment ComponentClass=\"CentrifugalPump\" ID=\"P-1\">" + "<Nozzle ComponentClass=\"Nozzle\" ID=\"N-1\"/>"
+        + "<Label ComponentClass=\"EquipmentTagNameLabel\" ID=\"L-1\"/>"
+        + "<Equipment ComponentClass=\"Impeller\" ID=\"I-1\"/>" + "</Equipment></Equipment></PlantModel>";
+    DexpiXmlReader.ImportResult result = DexpiXmlReader
+        .readWithDiagnostics(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    assertEquals(Collections.singletonList("P-1"), result.getProcessSystem().getAllUnitNames());
+    assertTrue(result.getDiagnostics().isEmpty(), result.toJson());
+  }
 }

@@ -317,38 +317,25 @@ public final class DexpiTopologyResolver {
    */
   private static void collectEquipmentAndNozzles(Document document, Map<String, String> nozzleToEquipment,
       Map<String, Element> equipmentElements) {
-    NodeList equipmentNodes = document.getElementsByTagName("Equipment");
-    for (int i = 0; i < equipmentNodes.getLength(); i++) {
-      Node eqNode = equipmentNodes.item(i);
-      if (eqNode.getNodeType() != Node.ELEMENT_NODE) {
+    // Supports both the standard Proteus form (the Equipment element is the item) and the wrapper form (the item is
+    // a child element). Nozzles, labels and nested sub-equipment are never collected as equipment.
+    for (Element item : DexpiPlantItems.findCandidates(document, "Equipment")) {
+      String componentClass = item.getAttribute("ComponentClass");
+      if (componentClass == null || componentClass.trim().isEmpty()) {
         continue;
       }
-      Element eqParent = (Element) eqNode;
-      // Equipment element is a wrapper; actual equipment is in child elements
-      NodeList children = eqParent.getChildNodes();
-      for (int j = 0; j < children.getLength(); j++) {
-        Node child = children.item(j);
-        if (child.getNodeType() != Node.ELEMENT_NODE) {
-          continue;
-        }
-        Element childElement = (Element) child;
-        String componentClass = childElement.getAttribute("ComponentClass");
-        if (componentClass == null || componentClass.trim().isEmpty()) {
-          continue;
-        }
-        // Skip sub-components like Chamber, TubeBundle, Impeller, etc
-        if (isSubComponent(componentClass)) {
-          continue;
-        }
-        String equipId = childElement.getAttribute("ID");
-        if (equipId == null || equipId.trim().isEmpty()) {
-          continue;
-        }
-        equipmentElements.put(equipId, childElement);
-
-        // Find nozzles owned by this equipment
-        collectNozzlesFrom(childElement, equipId, nozzleToEquipment);
+      // Skip sub-components like Chamber, TubeBundle, Impeller, etc
+      if (isSubComponent(componentClass)) {
+        continue;
       }
+      String equipId = item.getAttribute("ID");
+      if (equipId == null || equipId.trim().isEmpty()) {
+        continue;
+      }
+      equipmentElements.put(equipId, item);
+
+      // Find nozzles owned by this equipment (including nozzles on sub-equipment)
+      collectNozzlesFrom(item, equipId, nozzleToEquipment);
     }
     logger.debug("Found {} equipment items, {} nozzles", equipmentElements.size(), nozzleToEquipment.size());
   }
@@ -381,30 +368,16 @@ public final class DexpiTopologyResolver {
   }
 
   /**
-   * Collects all piping component IDs from PipingComponent wrapper elements.
+   * Collects all piping component IDs from PipingComponent elements (standard or wrapper form).
    *
    * @param document the XML document
    * @param pipingComponentIds set to populate with IDs
    */
   private static void collectPipingComponentIds(Document document, Set<String> pipingComponentIds) {
-    NodeList pipingNodes = document.getElementsByTagName("PipingComponent");
-    for (int i = 0; i < pipingNodes.getLength(); i++) {
-      Node pcNode = pipingNodes.item(i);
-      if (pcNode.getNodeType() != Node.ELEMENT_NODE) {
-        continue;
-      }
-      Element pcParent = (Element) pcNode;
-      NodeList children = pcParent.getChildNodes();
-      for (int j = 0; j < children.getLength(); j++) {
-        Node child = children.item(j);
-        if (child.getNodeType() != Node.ELEMENT_NODE) {
-          continue;
-        }
-        Element childElement = (Element) child;
-        String id = childElement.getAttribute("ID");
-        if (id != null && !id.trim().isEmpty()) {
-          pipingComponentIds.add(id);
-        }
+    for (Element item : DexpiPlantItems.findCandidates(document, "PipingComponent")) {
+      String id = item.getAttribute("ID");
+      if (id != null && !id.trim().isEmpty()) {
+        pipingComponentIds.add(id);
       }
     }
   }
@@ -638,8 +611,8 @@ public final class DexpiTopologyResolver {
    */
   private static boolean isSubComponent(String componentClass) {
     return "Chamber".equals(componentClass) || "TubeBundle".equals(componentClass) || "Impeller".equals(componentClass)
-        || "NozzleShape".equals(componentClass) || "TaggedPlantItemShape".equals(componentClass)
-        || "EquipmentShape".equals(componentClass) || "Shape".equals(componentClass)
-        || componentClass.endsWith("Shape");
+        || "Displacer".equals(componentClass) || "NozzleShape".equals(componentClass)
+        || "TaggedPlantItemShape".equals(componentClass) || "EquipmentShape".equals(componentClass)
+        || "Shape".equals(componentClass) || componentClass.endsWith("Shape");
   }
 }

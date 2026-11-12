@@ -385,6 +385,79 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     // Read it back — should not throw
     ProcessSystem readBack = DexpiXmlReader.read(tempFile);
     assertNotNull(readBack, "Round-trip should produce a valid ProcessSystem");
+
+    // The separator must come back as an imported plant item (issue #4963)
+    int placeholders = 0;
+    DexpiProcessUnit separatorUnit = null;
+    for (neqsim.process.equipment.ProcessEquipmentInterface unit : readBack.getUnitOperations()) {
+      if (unit instanceof DexpiProcessUnit) {
+        placeholders++;
+        separatorUnit = (DexpiProcessUnit) unit;
+      }
+    }
+    assertEquals(1, placeholders, "Round-trip should import exactly the separator");
+    assertEquals("Separator", separatorUnit.getDexpiClass());
+    assertEquals(neqsim.process.equipment.EquipmentEnum.Separator, separatorUnit.getMappedEquipment());
+
+    DexpiXmlReader.ImportResult result = DexpiXmlReader.readWithDiagnostics(tempFile, feed);
+    for (DexpiXmlReader.ImportDiagnostic diagnostic : result.getDiagnostics()) {
+      assertFalse(diagnostic.getCode().startsWith("DEXPI_IMPORT_COMPONENT_"),
+          "Nozzles, labels and attributes must not be reported as components: " + result.toJson());
+    }
+  }
+
+  /**
+   * Tests that a multi-unit process written by {@link DexpiXmlWriter} is read back with every equipment item and the
+   * valve, including a cooler written as {@code AirCoolingSystem}.
+   *
+   * @throws Exception if write or read fails
+   */
+  @Test
+  public void testRoundTripMultiUnitProcessImportsAllItems() throws Exception {
+    Stream feed = createFeedStream();
+    ThrottlingValve valve = new ThrottlingValve("XV-101", feed);
+    valve.setOutletPressure(40.0);
+    Separator sep = new Separator("V-101", valve.getOutletStream());
+    Compressor comp = new Compressor("K-101", sep.getGasOutStream());
+    comp.setOutletPressure(80.0);
+    Cooler cooler = new Cooler("E-101", comp.getOutletStream());
+    cooler.setOutTemperature(303.15);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(valve);
+    process.add(sep);
+    process.add(comp);
+    process.add(cooler);
+    process.run();
+
+    File tempFile = File.createTempFile("dexpi-roundtrip-multi", ".xml");
+    tempFile.deleteOnExit();
+    DexpiXmlWriter.write(process, tempFile);
+
+    DexpiXmlReader.ImportResult result = DexpiXmlReader.readWithDiagnostics(tempFile, feed);
+    Map<String, String> classes = new java.util.HashMap<String, String>();
+    for (neqsim.process.equipment.ProcessEquipmentInterface unit : result.getProcessSystem().getUnitOperations()) {
+      if (unit instanceof DexpiProcessUnit) {
+        DexpiProcessUnit dexpiUnit = (DexpiProcessUnit) unit;
+        classes.put(dexpiUnit.getDexpiClass(), dexpiUnit.getMappedEquipment().name());
+      }
+    }
+    assertEquals("Separator", classes.get("Separator"), result.toJson());
+    assertEquals("Compressor", classes.get("CentrifugalCompressor"), result.toJson());
+    assertEquals("Cooler", classes.get("AirCoolingSystem"), result.toJson());
+    assertTrue(classes.containsValue("ThrottlingValve"), "Valve should be imported: " + classes);
+    assertEquals(4, classes.size(), "Unexpected imported classes: " + classes);
+    for (DexpiXmlReader.ImportDiagnostic diagnostic : result.getDiagnostics()) {
+      assertFalse(diagnostic.getCode().startsWith("DEXPI_IMPORT_COMPONENT_"),
+          "Unexpected component diagnostic: " + result.toJson());
+    }
+
+    DexpiTopologyResolver.ResolvedTopology topology = DexpiTopologyResolver
+        .resolve(javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(tempFile));
+    assertEquals(3, topology.getEquipmentElements().size(),
+        "Only separator, compressor and cooler are equipment: " + topology.getEquipmentElements().keySet());
+    assertFalse(topology.getEdges().isEmpty(), "Topology should contain equipment edges");
   }
 
   /**

@@ -256,37 +256,24 @@ public final class DexpiXmlReader {
 
   private static void addUnits(Document document, ProcessSystem processSystem, String tagName,
       Map<String, EquipmentEnum> equipmentMap, String nameAttribute) {
-    NodeList parentNodes = document.getElementsByTagName(tagName);
-    logger.info("Found {} {} parent elements", parentNodes.getLength(), tagName);
+    // Supports both the standard Proteus form (the Equipment/PipingComponent element is the item) and the
+    // wrapper form (the item is a child element); nozzles, labels and sub-equipment are not items.
+    List<Element> candidates = neqsim.process.processmodel.dexpi.DexpiPlantItems.findCandidates(document, tagName);
+    logger.info("Found {} {} plant-item candidates", candidates.size(), tagName);
 
     int totalUnits = 0;
-    for (int i = 0; i < parentNodes.getLength(); i++) {
-      Node parentNode = parentNodes.item(i);
-      if (parentNode.getNodeType() != Node.ELEMENT_NODE) {
+    for (Element element : candidates) {
+      String componentClass = element.getAttribute("ComponentClass");
+      EquipmentEnum equipmentEnum = equipmentMap.get(componentClass);
+      if (equipmentEnum == null) {
+        logger.warn("Unsupported component class: {}", componentClass);
         continue;
       }
-      Element parentElement = (Element) parentNode;
 
-      // Look for all child elements of the parent (Equipment or PipingComponent)
-      NodeList childNodes = parentElement.getChildNodes();
-      for (int j = 0; j < childNodes.getLength(); j++) {
-        Node childNode = childNodes.item(j);
-        if (childNode.getNodeType() != Node.ELEMENT_NODE) {
-          continue;
-        }
-        Element element = (Element) childNode;
-        String componentClass = element.getAttribute("ComponentClass");
-        EquipmentEnum equipmentEnum = equipmentMap.get(componentClass);
-        if (equipmentEnum == null) {
-          logger.warn("Unsupported component class: {}", componentClass);
-          continue;
-        }
-
-        String baseName = firstNonEmpty(attributeValue(element, nameAttribute),
-            attributeValue(element, DexpiMetadata.TAG_NAME), element.getAttribute("ID"));
-        addDexpiUnit(processSystem, element, equipmentEnum, baseName, element.getAttribute("ComponentClass"));
-        totalUnits++;
-      }
+      String baseName = firstNonEmpty(attributeValue(element, nameAttribute),
+          attributeValue(element, DexpiMetadata.TAG_NAME), element.getAttribute("ID"));
+      addDexpiUnit(processSystem, element, equipmentEnum, baseName, element.getAttribute("ComponentClass"));
+      totalUnits++;
     }
     logger.info("Added {} units from {} elements", totalUnits, tagName);
   }
