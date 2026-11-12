@@ -286,4 +286,49 @@ public class DexpiTopologyResolverTest extends NeqSimTest {
     document.getDocumentElement().normalize();
     return document;
   }
+
+  /**
+   * Tests topology resolution on the standard Proteus form, where {@code <Equipment>} carries the ComponentClass and
+   * nozzles, labels and sub-equipment are its children (issue #4963).
+   *
+   * @throws Exception if XML parsing or topology resolution fails
+   */
+  @Test
+  public void testStandardProteusForm() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><PlantModel>"
+        + "<ShapeCatalogue><Equipment ComponentName=\"Shape\" ID=\"Shape-1\"/></ShapeCatalogue>"
+        + "<Equipment ComponentClass=\"Tank\" ID=\"T-1\">"
+        + "<Label ComponentClass=\"EquipmentTagNameLabel\" ID=\"L-1\"/>"
+        + "<Equipment ComponentClass=\"Chamber\" ID=\"C-1\"><Nozzle ComponentClass=\"Nozzle\" ID=\"N-1\"/>"
+        + "</Equipment></Equipment>" + "<Equipment ComponentClass=\"CentrifugalPump\" ID=\"P-1\">"
+        + "<Nozzle ComponentClass=\"Nozzle\" ID=\"N-2\"/><Nozzle ComponentClass=\"Nozzle\" ID=\"N-3\"/>"
+        + "</Equipment>" + "<PipingNetworkSystem ID=\"PNS-1\" ComponentClass=\"PipingNetworkSystem\">"
+        + "<PipingNetworkSegment ID=\"Seg-1\" ComponentClass=\"PipingNetworkSegment\">"
+        + "<PipingComponent ComponentClass=\"BallValve\" ID=\"BV-1\"><ConnectionPoints/></PipingComponent>"
+        + "<Connection FromID=\"N-1\" ToID=\"BV-1\"/><Connection FromID=\"BV-1\" ToID=\"N-2\"/>"
+        + "</PipingNetworkSegment></PipingNetworkSystem></PlantModel>";
+
+    ResolvedTopology topology = DexpiTopologyResolver.resolve(parseXml(xml));
+
+    assertEquals(2, topology.getEquipmentElements().size(), topology.getEquipmentElements().keySet().toString());
+    assertTrue(topology.getEquipmentElements().containsKey("T-1"));
+    assertTrue(topology.getEquipmentElements().containsKey("P-1"));
+    assertEquals(1, topology.getEdges().size());
+    assertEquals("T-1", topology.getEdges().get(0).getSourceEquipmentId());
+    assertEquals("P-1", topology.getEdges().get(0).getTargetEquipmentId());
+  }
+
+  /**
+   * Tests that the DEXPI reference example C01V04 resolves to its five equipment items with edges.
+   *
+   * @throws Exception if XML parsing or topology resolution fails
+   */
+  @Test
+  public void testReferenceExampleC01V04() throws Exception {
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    Document doc = factory.newDocumentBuilder().parse(new File("src/test/resources/dexpi/C01V04-VER.EX01.xml"));
+    ResolvedTopology topology = DexpiTopologyResolver.resolve(doc);
+    assertEquals(5, topology.getEquipmentElements().size(), topology.getEquipmentElements().keySet().toString());
+    assertFalse(topology.getEdges().isEmpty(), "C01V04 should resolve equipment edges");
+  }
 }

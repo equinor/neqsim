@@ -1945,45 +1945,41 @@ public final class DexpiXmlReader {
 
   private static void addUnits(Document document, ProcessSystem processSystem, String tagName,
       Map<String, EquipmentEnum> equipmentMap, String nameAttribute, List<ImportDiagnostic> diagnostics) {
-    NodeList parentNodes = document.getElementsByTagName(tagName);
-    logger.info("Found {} {} parent elements", parentNodes.getLength(), tagName);
+    // Supports both the standard Proteus form (the Equipment/PipingComponent element is the item) and the
+    // wrapper form (the item is a child element); nozzles, labels and sub-equipment are not items.
+    List<Element> candidates = DexpiPlantItems.findCandidates(document, tagName);
+    logger.info("Found {} {} plant-item candidates", candidates.size(), tagName);
 
     int totalUnits = 0;
-    for (int i = 0; i < parentNodes.getLength(); i++) {
-      Node parentNode = parentNodes.item(i);
-      if (parentNode.getNodeType() != Node.ELEMENT_NODE) {
+    for (Element element : candidates) {
+      String componentClass = element.getAttribute("ComponentClass");
+      EquipmentEnum equipmentEnum = equipmentMap.get(componentClass);
+      if (equipmentEnum == null && "PipingComponent".equals(componentClass)) {
+        // Generic placeholder piece (written by DexpiXmlWriter so every segment has an item); no process meaning.
+        if (diagnostics != null) {
+          diagnostics.add(new ImportDiagnostic(ImportDiagnosticSeverity.INFO, "DEXPI_IMPORT_GENERIC_PIPING_SKIPPED",
+              element.getAttribute("ID"), componentClass, element.getTagName(),
+              "Generic piping component without a specific class was treated as plain pipe"));
+        }
         continue;
       }
-      Element parentElement = (Element) parentNode;
-
-      // Look for all child elements of the parent (Equipment or PipingComponent)
-      NodeList childNodes = parentElement.getChildNodes();
-      for (int j = 0; j < childNodes.getLength(); j++) {
-        Node childNode = childNodes.item(j);
-        if (childNode.getNodeType() != Node.ELEMENT_NODE) {
-          continue;
+      if (equipmentEnum == null) {
+        logger.warn("Unsupported component class: {}", componentClass);
+        if (diagnostics != null) {
+          boolean missingClass = isBlank(componentClass);
+          diagnostics.add(new ImportDiagnostic(ImportDiagnosticSeverity.WARNING,
+              missingClass ? "DEXPI_IMPORT_COMPONENT_CLASS_MISSING" : "DEXPI_IMPORT_COMPONENT_UNSUPPORTED",
+              element.getAttribute("ID"), componentClass, element.getTagName(),
+              missingClass ? "Source object was skipped because ComponentClass is missing"
+                  : "Source object was skipped because its ComponentClass is not supported by this reader"));
         }
-        Element element = (Element) childNode;
-        String componentClass = element.getAttribute("ComponentClass");
-        EquipmentEnum equipmentEnum = equipmentMap.get(componentClass);
-        if (equipmentEnum == null) {
-          logger.warn("Unsupported component class: {}", componentClass);
-          if (diagnostics != null) {
-            boolean missingClass = isBlank(componentClass);
-            diagnostics.add(new ImportDiagnostic(ImportDiagnosticSeverity.WARNING,
-                missingClass ? "DEXPI_IMPORT_COMPONENT_CLASS_MISSING" : "DEXPI_IMPORT_COMPONENT_UNSUPPORTED",
-                element.getAttribute("ID"), componentClass, element.getTagName(),
-                missingClass ? "Source object was skipped because ComponentClass is missing"
-                    : "Source object was skipped because its ComponentClass is not supported by this reader"));
-          }
-          continue;
-        }
-
-        String baseName = firstNonEmpty(attributeValue(element, nameAttribute),
-            attributeValue(element, DexpiMetadata.TAG_NAME), element.getAttribute("ID"));
-        addDexpiUnit(processSystem, element, equipmentEnum, baseName, element.getAttribute("ComponentClass"));
-        totalUnits++;
+        continue;
       }
+
+      String baseName = firstNonEmpty(attributeValue(element, nameAttribute),
+          attributeValue(element, DexpiMetadata.TAG_NAME), element.getAttribute("ID"));
+      addDexpiUnit(processSystem, element, equipmentEnum, baseName, element.getAttribute("ComponentClass"));
+      totalUnits++;
     }
     logger.info("Added {} units from {} elements", totalUnits, tagName);
   }
