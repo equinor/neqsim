@@ -1900,7 +1900,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         }
         for (int j = 0; j < numbcomp; j++) {
           if (moles[j] > 1e-100) {
-            double kij = i == j ? 0.0 : mixedKij(moles[i], moles[j], temperature, i, j);
+            // Through the overridable accessor, so subclasses that refine kij are honoured.
+            double kij = getkij(phase, temperature, i, j);
             aij = sqrtai[i] * sqrtai[j] * (1.0 - kij);
             calculatedA += moles[i] * moles[j] * aij;
           }
@@ -1932,7 +1933,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         final double molesj = compArray[j].getNumberOfMolesInPhase();
         if (molesj > 1e-100) {
           final double sqrtaj = ((neqsim.thermo.component.ComponentEos) compArray[j]).sqrtAT;
-          final double kij = j == compNumb ? 0.0 : mixedKij(molesComp, molesj, temperature, compNumb, j);
+          final double kij = getkij(phase, temperature, compNumb, j);
           A1 += molesj * (sqrtaComp * sqrtaj * (1.0 - kij));
           if (j != compNumb && Math.abs(kijRow[j] - kjiRow[j]) >= 1e-10) {
             // Pair (compNumb, j) and its mirror (j, compNumb) of the full double sum.
