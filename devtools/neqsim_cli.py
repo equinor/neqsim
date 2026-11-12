@@ -51,6 +51,12 @@ import importlib
 import os
 import sys
 
+try:
+    import quiet_subprocess
+    quiet_subprocess.install()
+except ImportError:
+    pass
+
 
 DEVTOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(DEVTOOLS_DIR)

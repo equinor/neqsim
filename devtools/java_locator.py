@@ -23,6 +23,12 @@ import re
 import subprocess
 import sys
 
+try:
+    import quiet_subprocess
+    quiet_subprocess.install()
+except ImportError:
+    pass
+
 
 JavaInstall = collections.namedtuple(
     "JavaInstall", "home major is_jdk jvm_library source")

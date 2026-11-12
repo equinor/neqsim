@@ -21,6 +21,12 @@ import sysconfig
 import time
 from datetime import datetime
 
+try:
+    import quiet_subprocess
+    quiet_subprocess.install()
+except ImportError:
+    pass
+
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)

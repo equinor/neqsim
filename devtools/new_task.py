@@ -58,6 +58,12 @@ import sys
 from collections import OrderedDict
 from datetime import date
 
+try:
+    import quiet_subprocess
+    quiet_subprocess.install()
+except ImportError:
+    pass
+
 
 # ── Paths ────────────────────────────────────────────────
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))

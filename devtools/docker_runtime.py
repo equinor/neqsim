@@ -10,6 +10,12 @@ import subprocess
 import sys
 import time
 
+try:
+    import quiet_subprocess
+    quiet_subprocess.install()
+except ImportError:
+    pass
+
 
 class DockerRuntimeError(RuntimeError):
     """Docker is missing, inaccessible, or could not be started."""
