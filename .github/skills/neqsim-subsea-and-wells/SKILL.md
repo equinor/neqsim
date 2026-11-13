@@ -49,7 +49,7 @@ Reservoir → Wells → Subsea Trees → Jumpers → Manifold → Flowlines → 
 | Flowline | `SimpleFlowLine` | `process.equipment.subsea` |
 | Flexible riser | `FlexiblePipe` | `process.equipment.subsea` |
 | Steel/rigid riser | `SimpleFlowLine` | `process.equipment.subsea` |
-| Umbilical | `Umbilical` | `process.equipment.subsea` |
+| Umbilical | `Umbilical` (design and drawings: skill `neqsim-umbilical-design`) | `process.equipment.subsea` |
 | PLET | `PLET` | `process.equipment.subsea` |
 | PLEM | `PLEM` | `process.equipment.subsea` |
 | Floating production | `FloatingSubstructure` | `process.equipment.subsea` |

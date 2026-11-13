@@ -1,4 +1,9 @@
 {
+ "umbilical design": ["neqsim-umbilical-design", "neqsim-subsea-and-wells"],
+ "umbilical cross-section drawing": ["neqsim-umbilical-design"],
+ "chemical injection line friction drop in umbilical": ["neqsim-umbilical-design", "neqsim-flow-assurance"],
+ "hydraulic control line response time": ["neqsim-umbilical-design"],
+ "umbilical power cable charging current voltage drop": ["neqsim-umbilical-design"],
  "pvt forward proxy": ["neqsim-pvt-forward-proxy"],
  "pvt-proxy": ["neqsim-pvt-forward-proxy"],
  "forward proxy surface process": ["neqsim-pvt-forward-proxy"],
