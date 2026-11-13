@@ -123,8 +123,7 @@ current that can raise the receiving voltage at light load.
 The community skill `neqsim-umbilical-design` (agent `umbilical-design-agent`) turns the JSON into
 the cross-section drawing, the line hydraulics, tension and bend radius, power cable and design
 check charts, an "umbilical on a page", captions, key numbers and a `HANDOFF.md` with the evidence
-status of every input and the open items. The enterprise overlay `enterprise-umbilical-design`
-adds STID and governing-document evidence and a policy verdict.
+status of every input and the open items.
 
 ---
 

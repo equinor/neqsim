@@ -45,6 +45,18 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
   /** Maximum number of armour layers considered. */
   private static final int MAX_ARMOR_LAYERS = 12;
 
+  /** Single-mode fibre attenuation used for the optical budget in dB/km (screening default). */
+  private static final double OPTICAL_ATTENUATION_DB_PER_KM = 0.35;
+
+  /** Connector pairs in the optical budget (screening default). */
+  private static final int OPTICAL_CONNECTOR_PAIRS = 2;
+
+  /** Loss per connector pair in dB (screening default). */
+  private static final double OPTICAL_CONNECTOR_LOSS_DB = 0.5;
+
+  /** Ageing and repair margin in the optical budget in dB (screening default). */
+  private static final double OPTICAL_AGEING_MARGIN_DB = 3.0;
+
   /** Reference to umbilical equipment. */
   private Umbilical umbilical;
 
@@ -93,6 +105,12 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
 
   /** Calculated outer diameter in mm. */
   private double calculatedOuterDiameter = 0.0;
+
+  /** Weight in air (fluid filled) divided by the weight of displaced seawater. */
+  private double weightRatio = 0.0;
+
+  /** Optical loss budget of the fibre link in dB, 0 without fibres. */
+  private double opticalBudgetDb = 0.0;
 
   /** Highest tube collapse utilisation. */
   private double maxCollapseUtilization = 0.0;
@@ -163,6 +181,13 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
     evaluateChecks();
     totalCrossSection = umbilical.calculateTotalCrossSection();
     calculatedOuterDiameter = umbilical.getOverallDiameterMm();
+    // Weight ratio is a mass ratio (g cancels), so no gravity constant is involved
+    weightRatio = umbilical.getFilledWeightPerMeter() / (Math.PI / 4.0 * calculatedOuterDiameter
+        * calculatedOuterDiameter * 1.0e-6 * UmbilicalStructuralCalculator.SEAWATER_DENSITY);
+    opticalBudgetDb = umbilical.getFiberOpticCount() > 0
+        ? UmbilicalFunctionalDesign.opticalBudgetDb(umbilical.getLength() / 1000.0, OPTICAL_ATTENUATION_DB_PER_KM, 0,
+            0.0, OPTICAL_CONNECTOR_PAIRS, OPTICAL_CONNECTOR_LOSS_DB, OPTICAL_AGEING_MARGIN_DB)
+        : 0.0;
   }
 
   /**
@@ -332,6 +357,11 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
         r.put("acousticVelocityMs", resp.getAcousticVelocityMs());
         r.put("acousticTransitTimeS", resp.getTransitTimeS());
         r.put("time90PercentS", resp.getTimeToFractionS());
+        double fillVolumeM3 = UmbilicalFunctionalDesign.tubeVolumeM3(e.getInnerDiameterMm(), umbilical.getLength());
+        r.put("fillVolumeLitres", fillVolumeM3 * 1000.0);
+        if (e.getDesignFlowRateM3PerHr() > 0.0) {
+          r.put("displacementTimeHours", fillVolumeM3 / e.getDesignFlowRateM3PerHr());
+        }
       } else if ("electrical".equals(e.getElementType())) {
         r.put("cores", e.getNumberOfCores());
         r.put("voltageV", e.getVoltageRating());
@@ -537,6 +567,10 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
     results.addProperty("armorAxialStiffnessKN", armorAxialStiffnessKN);
     results.addProperty("totalCrossSectionMm2", totalCrossSection);
     results.addProperty("calculatedOuterDiameterMm", calculatedOuterDiameter);
+    results.addProperty("weightRatio", weightRatio);
+    if (umbilical.getFiberOpticCount() > 0) {
+      results.addProperty("opticalBudgetDb", opticalBudgetDb);
+    }
     jsonObj.add("calculatedResults", results);
 
     JsonArray lines = new JsonArray();
@@ -749,6 +783,41 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
    */
   public double getChemicalTubeWallThickness() {
     return chemicalTubeWallThickness;
+  }
+
+  /**
+   * Get the weight ratio: weight in air of the fluid-filled umbilical over the weight of displaced seawater.
+   *
+   * @return weight ratio
+   */
+  public double getWeightRatio() {
+    return weightRatio;
+  }
+
+  /**
+   * Get the optical loss budget of the fibre link (screening defaults: 0.35 dB/km, two connector pairs of 0.5 dB, 3 dB
+   * ageing margin).
+   *
+   * @return loss budget in dB, 0 without fibres
+   */
+  public double getOpticalBudgetDb() {
+    return opticalBudgetDb;
+  }
+
+  /**
+   * Get the longest time to displace a line volume at its design flow (control-fluid or chemical changeout).
+   *
+   * @return time in hours, 0 if no line has a design flow
+   */
+  public double getMaxDisplacementTimeHours() {
+    double max = 0.0;
+    for (Map<String, Object> r : elementResults) {
+      Object t = r.get("displacementTimeHours");
+      if (t instanceof Number) {
+        max = Math.max(max, ((Number) t).doubleValue());
+      }
+    }
+    return max;
   }
 
   /**

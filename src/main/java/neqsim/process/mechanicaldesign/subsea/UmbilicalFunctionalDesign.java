@@ -112,7 +112,9 @@ public final class UmbilicalFunctionalDesign {
 
   /**
    * Calculates the hydraulic time constant of a distributed laminar line, tau = R C / pi^2 with R the Hagen-Poiseuille
-   * resistance and C = V/K the fluid compliance.
+   * resistance and C = V/K the fluid compliance. This is the constant of a line whose far end is held at pressure; a
+   * line closed at the far end (pressure step into a sealed volume) is four times slower, which is what
+   * {@link UmbilicalHydraulicsCalculator#stepResponse} returns (and it adds the compliance of the tube wall).
    *
    * @param innerDiameterMm inner diameter in mm
    * @param lengthM tube length in m
@@ -194,7 +196,7 @@ public final class UmbilicalFunctionalDesign {
 
   /**
    * Calculates the weight ratio of a fluid-filled umbilical: weight in air divided by the weight of displaced seawater.
-   * TR1232 SR-45783 requires a ratio of at least 1.5.
+   * Specifications commonly require a minimum ratio (for example 1.5); the limit is applied by the caller.
    *
    * @param dryFilledWeightNPerM fluid-filled weight in air in N/m
    * @param outerDiameterMm outer diameter in mm

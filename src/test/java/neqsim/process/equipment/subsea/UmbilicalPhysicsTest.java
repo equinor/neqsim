@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 import neqsim.process.mechanicaldesign.subsea.UmbilicalElectricalCalculator;
+import neqsim.process.mechanicaldesign.subsea.UmbilicalFunctionalDesign;
 import neqsim.process.mechanicaldesign.subsea.UmbilicalHydraulicsCalculator;
 import neqsim.process.mechanicaldesign.subsea.UmbilicalMechanicalDesign;
 import neqsim.process.mechanicaldesign.subsea.UmbilicalStructuralCalculator;
@@ -339,6 +340,54 @@ public class UmbilicalPhysicsTest {
     assertTrue(voltageDropPercent > 0.0);
     assertTrue(design.isDesignAcceptable(), design.getDesignChecks().toString());
     assertTrue(design.toJson().contains("hydraulicCurves"));
+  }
+
+  @Test
+  void functionalDesignAndCalculatorsAgreeOnSharedPhysics() {
+    UmbilicalFluid fluid = UmbilicalFluid.waterGlycolHydraulic();
+    double tK = 277.15;
+    double mu = fluid.getViscosityPas(tK);
+
+    // Time constant: closed far end (stepResponse, rigid wall) is four times the pressure-held constant
+    double rigid = 1.0e18;
+    double closed = UmbilicalHydraulicsCalculator.stepResponse(fluid, 9.5, 5.0, rigid, 15000.0, tK, 0.9)
+        .getTimeConstantS();
+    double held = UmbilicalFunctionalDesign.hydraulicTimeConstantSeconds(9.5, 15000.0, mu, fluid.getBulkModulusPa());
+    assertEquals(4.0 * held, closed, 1.0e-6 * closed);
+
+    // Friction: laminar identical, turbulent within the spread of two explicit correlations
+    double laminar = UmbilicalFunctionalDesign.pressureDropBar(0.05, 9.5, 15000.0, fluid.getDensityKgM3(), mu, 0.002);
+    double laminarCalc = UmbilicalHydraulicsCalculator.calculate(fluid, 9.5, 15000.0, 0.05 / 3600.0, tK, 0.002, 0.0)
+        .getFrictionDropBar();
+    assertEquals(laminarCalc, laminar, 1.0e-9 * laminarCalc);
+    UmbilicalFluid methanol = UmbilicalFluid.methanol();
+    double muM = methanol.getViscosityPas(tK);
+    double turbulent = UmbilicalFunctionalDesign.pressureDropBar(10.0, 25.4, 10000.0, methanol.getDensityKgM3(), muM,
+        0.002);
+    double turbulentCalc = UmbilicalHydraulicsCalculator
+        .calculate(methanol, 25.4, 10000.0, 10.0 / 3600.0, tK, 0.002, 0.0).getFrictionDropBar();
+    assertEquals(turbulentCalc, turbulent, 0.05 * turbulentCalc);
+  }
+
+  @Test
+  void designReportsFunctionalChecks() {
+    Umbilical u = typicalUmbilical(450.0, 25000.0);
+    u.setInjectionRate("MEG", 0.2, "m3/hr");
+    UmbilicalMechanicalDesign design = u.getMechanicalDesign();
+    design.calcDesign();
+    String json = design.toJson();
+    assertTrue(json.contains("weightRatio") && json.contains("opticalBudgetDb"));
+    assertTrue(json.contains("fillVolumeLitres") && json.contains("displacementTimeHours"));
+    double od = u.getOverallDiameterMm();
+    double expected = u.getFilledWeightPerMeter() / (Math.PI / 4.0 * od * od * 1.0e-6 * 1025.0);
+    assertEquals(expected, design.getWeightRatio(), 1.0e-9);
+    // same ratio from the static helper when fed with its own gravity constant
+    assertEquals(UmbilicalFunctionalDesign.weightRatio(u.getFilledWeightPerMeter() * 9.81, od, 1025.0),
+        design.getWeightRatio(), 1.0e-9);
+    // 25.4 mm tube, 25 km: 12.67 m3 at 0.2 m3/h is about 63 h
+    assertEquals(UmbilicalFunctionalDesign.tubeVolumeM3(25.4, 25000.0) / 0.2, design.getMaxDisplacementTimeHours(),
+        1.0e-9);
+    assertEquals(25.0 * 0.35 + 2 * 0.5 + 3.0, design.getOpticalBudgetDb(), 1.0e-9);
   }
 
   @Test
