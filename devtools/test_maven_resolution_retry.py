@@ -128,7 +128,7 @@ class MavenResolutionRetryTest(unittest.TestCase):
                     result, calls, sleeps = self.run_step(job, pom, failure, 2)
                     self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                     self.assertEqual(calls, 2)
-                    self.assertEqual(sleeps, ["10"])
+                    self.assertEqual(sleeps, ["20"])
 
     def test_resolution_retries_are_bounded_and_preserve_exit_status(self):
         failures = (
@@ -140,10 +140,10 @@ class MavenResolutionRetryTest(unittest.TestCase):
         for job, pom in self.contexts():
             for failure in failures:
                 with self.subTest(job=job, pom=pom, failure=failure):
-                    result, calls, sleeps = self.run_step(job, pom, failure, 3)
+                    result, calls, sleeps = self.run_step(job, pom, failure, 5)
                     self.assertEqual(result.returncode, 17, result.stdout + result.stderr)
-                    self.assertEqual(calls, 2)
-                    self.assertEqual(sleeps, ["10"])
+                    self.assertEqual(calls, 4)
+                    self.assertEqual(sleeps, ["20", "40", "60"])
 
     def test_compilation_test_and_other_mojo_failures_do_not_retry(self):
         failures = (
