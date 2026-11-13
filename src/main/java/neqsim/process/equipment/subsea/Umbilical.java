@@ -493,7 +493,7 @@ public class Umbilical extends ProcessEquipmentBaseClass {
   private double overallDiameterMm = 150.0;
 
   /** Seawater (seabed) temperature in C. */
-  private double seawaterTemperatureC = 4.0;
+  private volatile double seawaterTemperatureC = 4.0;
 
   /** True for a dynamic (riser) section. */
   private boolean dynamicService = false;
@@ -516,25 +516,25 @@ public class Umbilical extends ProcessEquipmentBaseClass {
 
   // ============ Tube design basis ============
   /** SMYS of the tube material in MPa (super duplex). */
-  private double tubeSmysMPa = 550.0;
+  private volatile double tubeSmysMPa = 550.0;
 
   /** Young's modulus of the tube material in GPa. */
-  private double tubeYoungsModulusGPa = 200.0;
+  private volatile double tubeYoungsModulusGPa = 200.0;
 
   /** Allowable fraction of SMYS for hoop stress at design pressure. */
-  private double tubeUsageFactor = 0.6;
+  private volatile double tubeUsageFactor = 0.6;
 
   /** Initial ovality for collapse. */
-  private double tubeOvality = 0.005;
+  private volatile double tubeOvality = 0.005;
 
   /** Collapse safety factor. */
-  private double collapseSafetyFactor = 1.5;
+  private volatile double collapseSafetyFactor = 1.5;
 
   /** Minimum practical tube wall in mm. */
   private double minimumTubeWallMm = 1.0;
 
   /** Allowed friction drop at design flow as a fraction of the line design pressure. */
-  private double maxFrictionDropFraction = 0.5;
+  private volatile double maxFrictionDropFraction = 0.5;
 
   // ============ Outer Sheath and Armor ============
   /** Outer sheath material. */
@@ -547,7 +547,7 @@ public class Umbilical extends ProcessEquipmentBaseClass {
   private double innerSheathThicknessMm = 2.0;
 
   /** Diameter of the bundled functional elements in mm (set by the geometry update). */
-  private double bundleDiameterMm = 0.0;
+  private volatile double bundleDiameterMm = 0.0;
 
   /** Whether has armor wires. */
   private boolean hasArmorWires = true;
@@ -559,16 +559,16 @@ public class Umbilical extends ProcessEquipmentBaseClass {
   private int armorLayerCount = 2;
 
   /** Armour wire diameter in mm. */
-  private double armorWireDiameterMm = 4.0;
+  private volatile double armorWireDiameterMm = 4.0;
 
   /** Armour lay angle from the axis in degrees. */
-  private double armorLayAngleDeg = 15.0;
+  private volatile double armorLayAngleDeg = 15.0;
 
   /** Armour wire ultimate tensile strength in MPa. */
-  private double armorWireTensileStrengthMPa = 1400.0;
+  private volatile double armorWireTensileStrengthMPa = 1400.0;
 
   /** Allowable fraction of the armour wire tensile strength. */
-  private double armorAllowableFraction = 0.4;
+  private volatile double armorAllowableFraction = 0.4;
 
   // ============ Installation ============
   /** Installation method. */
@@ -581,33 +581,33 @@ public class Umbilical extends ProcessEquipmentBaseClass {
   private double maxInstallationTensionKN = 200.0;
 
   /** Horizontal distance from the top to touchdown in m, NaN for half the water depth. */
-  private double touchdownOffsetM = Double.NaN;
+  private volatile double touchdownOffsetM = Double.NaN;
 
   /** Tension amplification factor for installation and dynamic effects. */
-  private double tensionAmplificationFactor = 1.3;
+  private volatile double tensionAmplificationFactor = 1.3;
 
   // ============ Power transmission ============
   /** Active power delivered at the receiving end in MW. */
-  private double powerLoadMW = 0.0;
+  private volatile double powerLoadMW = 0.0;
 
   /** Load power factor. */
-  private double powerFactor = 0.9;
+  private volatile double powerFactor = 0.9;
 
   /** System frequency in Hz. */
-  private double frequencyHz = 50.0;
+  private volatile double frequencyHz = 50.0;
 
   /** Conductor temperature in C. */
-  private double conductorTemperatureC = 90.0;
+  private volatile double conductorTemperatureC = 90.0;
 
   /** Relative permittivity of the core insulation. */
   private double insulationPermittivity = 2.5;
 
   // ============ Weight ============
   /** Dry weight per meter (empty, in air) in kg/m. */
-  private double dryWeightPerMeter = 25.0;
+  private volatile double dryWeightPerMeter = 25.0;
 
   /** Weight per meter in air with line fluids in kg/m. */
-  private double filledWeightPerMeter = 25.0;
+  private volatile double filledWeightPerMeter = 25.0;
 
   /** Submerged weight per meter (fluid filled) in kg/m. */
   private double submergedWeightPerMeter = 15.0;
