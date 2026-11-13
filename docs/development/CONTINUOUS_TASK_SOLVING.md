@@ -93,7 +93,7 @@ continuous/
 
 | You need | Why | Check |
 |----------|-----|-------|
-| The shared Python environment (with `pyyaml`) | Runs the runner and stage scripts | `C:\appl\neqsim-venv\Scripts\python.exe -c "import yaml"` |
+| The shared Python environment (with `pyyaml`) | Runs the runner and stage scripts | `<python> -c "import yaml"` (the selected interpreter, else `NEQSIM_PYTHON`, else the one `neqsim doctor` reports) |
 | The `neqsim` CLI | All `task-*` commands | `neqsim task-status --help` |
 | A NeqSim source checkout | Runner code lives in `devtools/neqsim_continuous/` | `neqsim --show-task-root` |
 | Java (only for stages that call NeqSim) | NeqSim thermodynamics | `uv run --project devtools --locked devtools/java_locator.py` |
@@ -104,7 +104,7 @@ If `neqsim` is not on `PATH` in your shell, use the identical command through
 the interpreter:
 
 ```powershell
-C:\appl\neqsim-venv\Scripts\python.exe devtools\neqsim_cli.py task-status <task>
+<python> -m neqsim_cli task-status <task>
 ```
 
 Nothing else is needed for the reference case: it uses a CSV file drop and the

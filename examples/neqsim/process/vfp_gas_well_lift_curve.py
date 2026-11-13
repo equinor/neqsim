@@ -1,8 +1,9 @@
 """Generate a VFPPROD lift curve for a synthetic deviated gas well with NeqSim.
 
-Uses the workspace classes through devtools/neqsim_dev_setup.py. Run with the NeqSim interpreter, for example:
+Uses the workspace classes through devtools/neqsim_dev_setup.py. Run with the NeqSim interpreter (the selected one,
+else NEQSIM_PYTHON, else the interpreter that has neqsim installed), for example:
 
-    C:/appl/neqsim-venv/Scripts/python.exe examples/neqsim/process/vfp_gas_well_lift_curve.py
+    <python> examples/neqsim/process/vfp_gas_well_lift_curve.py
 
 The Java API is described in docs/process/optimization/vfp-lift-curve-builder.md and the method guide is the skill
 neqsim-vfp-lift-curves. The well, fluid and axes below are synthetic.

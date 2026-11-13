@@ -21,8 +21,9 @@ ALWAYS read these before running anything:
 - `.github/skills/neqsim-standards-lookup/SKILL.md` - how to verify standard editions and status
 - [docs/development/PROCESS_STUDY_REPORT.md](../../docs/development/PROCESS_STUDY_REPORT.md) - the how-to page (every snippet in it is test-verified)
 
-Interpreter and environment: the repository rules apply (`C:\appl\neqsim-venv\Scripts\python.exe`, never bare
-`python`/`pip`, never create environments). The command is `neqsim process-report`, or
+Interpreter and environment: the repository rules apply (the selected interpreter, else `NEQSIM_PYTHON`,
+else the one with `neqsim` installed; always an absolute path, never bare `python`/`pip`, never create
+environments). The command is `neqsim process-report`, or
 `<python> -m neqsim_cli process-report`.
 
 ## Workflow

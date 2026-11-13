@@ -21,8 +21,8 @@ ALWAYS read first:
 - `.github/skills/neqsim-flow-assurance/SKILL.md` - calculation patterns (consult for hydrate, wax, corrosion detail)
 - [docs/development/FLOW_ASSURANCE_STUDY_REPORT.md](../../docs/development/FLOW_ASSURANCE_STUDY_REPORT.md) - how-to page (snippets are test-verified)
 
-Interpreter: the repository rules apply (`C:\appl\neqsim-venv\Scripts\python.exe`, never bare `python`/`pip`, never
-create environments). Command: `neqsim flow-assurance-report`, or `<python> -m neqsim_cli flow-assurance-report`.
+Interpreter: the repository rules apply (the selected interpreter, else `NEQSIM_PYTHON`, else the one with
+`neqsim` installed; always an absolute path, never bare `python`/`pip`, never create environments). Command: `neqsim flow-assurance-report`, or `<python> -m neqsim_cli flow-assurance-report`.
 
 Distinct from `@flow-assurance` (calculations) and the community `flow-assurance-study-agent` (study
 coordination with OLGA comparison): this agent produces the deliverable package; it does not run transient or
