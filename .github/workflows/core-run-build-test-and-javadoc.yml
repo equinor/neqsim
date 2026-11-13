@@ -175,7 +175,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          for attempt in 1 2; do
+          for attempt in 1 2 3 4; do
             # -U also rechecks missing releases cached by a failed download.
             if mvn -B -U test -ntp -f ${{ matrix.pom }} -DskipITs -Djacoco.skip=true \
               "-Dtest=ModelSpec*Test,ComponentCorrelationSpecTest" \
@@ -188,15 +188,15 @@ jobs:
             # Surefire wraps provider-download failures in MojoExecutionException.
             # Include nested provider-POM descriptor errors (for example a Central HTTP 403).
             # Match resolution diagnostics, never generic execution or test failures.
-            if [ "$attempt" -eq 2 ] || ! grep -Eq \
+            if [ "$attempt" -eq 4 ] || ! grep -Eq \
               -e '^\[ERROR\] \[Help [0-9]+\] https?://[^ ]+/(PluginResolutionException|DependencyResolutionException)$' \
               -e '^\[ERROR\] Failed to execute goal org\.apache\.maven\.plugins:maven-surefire-plugin:[^ :]+:test .*: The following artifacts could not be resolved: org\.apache\.maven\.surefire:surefire-[[:alnum:]_-]+:jar:' \
               -e '^\[ERROR\] Failed to execute goal org\.apache\.maven\.plugins:maven-surefire-plugin:[^ :]+:test .*: Failed to collect dependencies at org\.apache\.maven\.surefire:surefire-[[:alnum:]_-]+:jar:[^ :]+: Failed to read artifact descriptor for org\.apache\.maven\.surefire:surefire-[[:alnum:]_-]+:jar:[^ :]+: The following artifacts could not be resolved: org\.apache\.maven\.surefire:surefire-[[:alnum:]_-]+:pom:' \
               "$RUNNER_TEMP/model-spec-maven-$attempt.log"; then
               exit "$status"
             fi
-            echo "Maven dependency resolution failed; retrying once in 10 seconds."
-            sleep 10
+            echo "Maven dependency resolution failed (attempt $attempt of 4); retrying in $((attempt * 20)) seconds."
+            sleep $((attempt * 20))
           done
       - name: Retain per-case evidence
         if: always()
@@ -311,7 +311,7 @@ jobs:
           printf '%s\n' "${selected[@]}" > "$RUNNER_TEMP/slow-selected-tests.txt"
           test_pattern=$(IFS=,; echo "${selected[*]}")
           set -o pipefail
-          for attempt in 1 2; do
+          for attempt in 1 2 3 4; do
             # -U also rechecks missing releases cached by a failed download.
             if mvn -B -U test -ntp -Dtest="$test_pattern" -Dgroups=slow \
               "-DexcludedTestGroups=" "-Djacoco.skip=true" \
@@ -323,15 +323,15 @@ jobs:
             # Surefire wraps provider-download failures in MojoExecutionException.
             # Include nested provider-POM descriptor errors (for example a Central HTTP 403).
             # Match resolution diagnostics, never generic execution or test failures.
-            if [ "$attempt" -eq 2 ] || ! grep -Eq \
+            if [ "$attempt" -eq 4 ] || ! grep -Eq \
               -e '^\[ERROR\] \[Help [0-9]+\] https?://[^ ]+/(PluginResolutionException|DependencyResolutionException)$' \
               -e '^\[ERROR\] Failed to execute goal org\.apache\.maven\.plugins:maven-surefire-plugin:[^ :]+:test .*: The following artifacts could not be resolved: org\.apache\.maven\.surefire:surefire-[[:alnum:]_-]+:jar:' \
               -e '^\[ERROR\] Failed to execute goal org\.apache\.maven\.plugins:maven-surefire-plugin:[^ :]+:test .*: Failed to collect dependencies at org\.apache\.maven\.surefire:surefire-[[:alnum:]_-]+:jar:[^ :]+: Failed to read artifact descriptor for org\.apache\.maven\.surefire:surefire-[[:alnum:]_-]+:jar:[^ :]+: The following artifacts could not be resolved: org\.apache\.maven\.surefire:surefire-[[:alnum:]_-]+:pom:' \
               "$RUNNER_TEMP/slow-test-maven-$SHARD_INDEX-$attempt.log"; then
               exit "$status"
             fi
-            echo "Maven dependency resolution failed; retrying once in 10 seconds."
-            sleep 10
+            echo "Maven dependency resolution failed (attempt $attempt of 4); retrying in $((attempt * 20)) seconds."
+            sleep $((attempt * 20))
           done
       - name: Retain slow-test reports
         if: always()
