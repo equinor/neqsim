@@ -116,6 +116,9 @@ class FluidFactory:
         if eos == "SRK-CPA":
             return s.SystemSrkCPAstatoil(300.0, 100.0)
         if self.char:
+            # characterisation.model: "PR78" (default) or "SRK" (e.g. an SRK + Peneloux fluid tuned elsewhere and carried over unchanged)
+            if str(self.char.get("model", "PR78")).upper().startswith("SRK"):
+                return s.SystemSrkEos(300.0, 100.0)
             return s.SystemPrEos1978(300.0, 100.0)
         return s.SystemSrkEos(300.0, 100.0)
 
@@ -129,7 +132,11 @@ class FluidFactory:
             if rec.get("db_name"):
                 f.addComponent(rec["db_name"], moles)
             else:
-                f.addTBPfraction(n, moles, float(rec["molar_mass_g_mol"]) * 1.0e-3, float(rec["density_g_cm3"]))
+                # seed density of the TBP fraction: the NeqSim E300-reader formula when the record gives none (a poor seed for light lumps spoils the ideal-gas cp)
+                dens = rec.get("density_g_cm3")
+                if dens is None:
+                    dens = 0.5046 * float(rec["molar_mass_g_mol"]) * 1.0e-3 + 0.668468
+                f.addTBPfraction(n, moles, float(rec["molar_mass_g_mol"]) * 1.0e-3, float(dens))
             names.append(n)
         has_water, has_inh = water_mol > 0, inh_mol > 0
         if has_water:
@@ -160,6 +167,9 @@ class FluidFactory:
                 if nj in self._water_bips:
                     f.setBinaryInteractionParameter(iw, j, self._water_bips[nj])
                     f.setBinaryInteractionParameter(j, iw, self._water_bips[nj])
+        if has_water and self.char.get("water_volume_shift") is not None:
+            for p in range(f.getMaxNumberOfPhases()):
+                f.getPhase(p).getComponent("water").setVolumeCorrectionConst(float(self.char["water_volume_shift"]))
         f.useVolumeCorrection(True)
         f.init(0)
         return f

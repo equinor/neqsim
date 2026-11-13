@@ -302,6 +302,23 @@ def test_characterised_fluid_with_pseudo_component_flashes():
     assert hyd.getNumberOfComponents() == 2      # methane + water: the C7+ lump is not in the hydrate fluid
 
 
+def test_characterised_fluid_srk_model_selects_srk_eos():
+    pytest.importorskip("jneqsim")
+    import fa_solver
+
+    ns = fa_solver.neqsim_handle()
+    char = {"model": "SRK", "components": [
+        {"name": "C1", "db_name": "methane", "molar_mass_g_mol": 16.043, "tc_k": 190.6, "pc_bara": 46.0, "acentric": 0.008, "tb_k": 111.7, "volume_shift": 0.0229},
+        {"name": "C10P", "db_name": None, "molar_mass_g_mol": 134.0, "tc_k": 640.0, "pc_bara": 20.6, "acentric": 0.45, "tb_k": 445.0, "volume_shift": 0.0, "density_g_cm3": 0.78}],
+        "bips": {}, "water_bips": {}, "water_volume_shift": 0.084004}
+    fd = {"id": "F", "components": [{"name": "C1", "mole_fraction": 0.9}, {"name": "C10P", "mole_fraction": 0.1}], "characterisation": char,
+          "hydrate_components": [{"name": "methane", "mole_fraction": 1.0}]}
+    f = fa_solver.FluidFactory(ns, fd).build(1.0, water_kg_s=0.2, t_c=40.0, p_bara=80.0)
+    assert "SystemSrkEos" in str(f.getClass().getSimpleName())
+    ns.thermodynamicoperations.ThermodynamicOperations(f).TPflash()
+    assert f.getNumberOfPhases() >= 2
+
+
 # --- CLI ---------------------------------------------------------------------------------------------
 def test_cli_init_writes_templates_and_no_results(tmp_path, capsys):
     rc = flow_assurance_report.main(["--init", str(tmp_path / "tpl")])
