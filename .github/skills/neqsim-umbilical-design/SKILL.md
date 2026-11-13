@@ -76,6 +76,7 @@ All physics is in NeqSim Java; the screening defaults are listed in the hand-off
 | Line response | distributed resistance-compliance line, `tau = 4 R C / pi^2`, exact series for the closed far end, acoustic transit `L/c` as a lower bound, tube-wall compliance included |
 | Power cable | exact long-line two-port, `R_ac = R_dc (1 + Ys)` (IEC 60287-1-1), coaxial capacitance, trefoil reactance; charging current and no-load voltage rise |
 | Tension and bend | free-hanging catenary with horizontal tangent at touchdown, `T_top = w (a + h)`, bend radius at touchdown `a = H / w`; armour layers chosen as the smallest count whose capacity covers the amplified tension including its own weight |
+| Functional checks | weight ratio (weight in air filled over displaced seawater), optical budget (0.35 dB/km, two connector pairs of 0.5 dB, 3 dB margin), line fill volume and the time to displace it at the design flow |
 | Checks | self-sinking, hoop stress, collapse, armour capacity, touchdown radius against minimum bend radius, vessel tension limit, line friction below half the line design pressure |
 
 The Python cross-section is an independent circle packing. `packing_ratio` (packed bundle diameter
@@ -161,8 +162,20 @@ u.setInjectionRate("MEG", 0.5, "m3/hr"); u.getMechanicalDesign().calcDesign();`.
 - `neqsim.process.mechanicaldesign.subsea.UmbilicalMechanicalDesign`,
   `UmbilicalHydraulicsCalculator`, `UmbilicalElectricalCalculator`,
   `UmbilicalStructuralCalculator`
-- `neqsim.process.mechanicaldesign.subsea.UmbilicalFunctionalDesign` - actuation time, optical budget,
-  weight ratio and J-tube pull-in tension checks
+- `neqsim.process.mechanicaldesign.subsea.UmbilicalFunctionalDesign` - static functional helpers: actuation
+  time, optical budget, weight ratio and J-tube pull-in tension
+
+Which layer answers which question:
+
+| Question | Use |
+| --- | --- |
+| Size and check a complete umbilical, get figures | `UmbilicalMechanicalDesign` through this skill |
+| Line friction, hydrostatic head, flow for a pressure budget | `UmbilicalHydraulicsCalculator` (also in the design result) |
+| Far-end response of a sealed control line to a pressure step | `UmbilicalHydraulicsCalculator.stepResponse`; its time constant is four times the pressure-held constant of `UmbilicalFunctionalDesign.hydraulicTimeConstantSeconds` |
+| Actuator stroke time, optical budget, weight ratio, one-off numbers | `UmbilicalFunctionalDesign` |
+| J-tube pull-in tension | `UmbilicalFunctionalDesign.jTubePullInTensionKN` (needs the J-tube geometry; not part of the design result) |
+| Single control or signal pair (lumped, single phase) | `UmbilicalFunctionalDesign.electricalLine` |
+| Three-phase power cable in the umbilical | `UmbilicalElectricalCalculator.threePhase` (through the design result) |
 - `neqsim.process.mechanicaldesign.subsea.SubseaCostEstimator#calculateUmbilicalCost` - cost
   estimate for the same umbilical
 
