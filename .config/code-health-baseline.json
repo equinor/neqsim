@@ -77174,6 +77174,55 @@
       "path": "src/main/java/neqsim/process/util/optimizer/SensitivityAnalysis.java",
       "evidence": "P2:Class:neqsim.process.util.optimizer.SensitivityAnalysis:::|Method:neqsim.process.util.optimizer.SensitivityAnalysis:run:()Lneqsim/process/util/optimizer/SensitivityAnalysis$SensitivityResult;:",
       "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "AT_NONATOMIC_64BIT_PRIMITIVE",
+      "path": "src/main/java/neqsim/process/equipment/subsea/Umbilical.java",
+      "evidence": "P2:Class:neqsim.process.equipment.subsea.Umbilical:::|Method:neqsim.process.equipment.subsea.Umbilical:updateGeometryAndWeights:()V:|Field:neqsim.process.equipment.subsea.Umbilical:overallDiameterMm:D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "AT_NONATOMIC_64BIT_PRIMITIVE",
+      "path": "src/main/java/neqsim/process/equipment/subsea/Umbilical.java",
+      "evidence": "P2:Class:neqsim.process.equipment.subsea.Umbilical:::|Method:neqsim.process.equipment.subsea.Umbilical:updateGeometryAndWeights:()V:|Field:neqsim.process.equipment.subsea.Umbilical:submergedWeightPerMeter:D:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "AT_NONATOMIC_OPERATIONS_ON_SHARED_VARIABLE",
+      "path": "src/main/java/neqsim/process/equipment/subsea/Umbilical.java",
+      "evidence": "P2:Class:neqsim.process.equipment.subsea.Umbilical:::|Method:neqsim.process.equipment.subsea.Umbilical:addChemicalLine:(Ljava/lang/String;DDLneqsim/process/equipment/subsea/UmbilicalFluid;)V:|Field:neqsim.process.equipment.subsea.Umbilical:chemicalLineCount:I:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "AT_NONATOMIC_OPERATIONS_ON_SHARED_VARIABLE",
+      "path": "src/main/java/neqsim/process/equipment/subsea/Umbilical.java",
+      "evidence": "P2:Class:neqsim.process.equipment.subsea.Umbilical:::|Method:neqsim.process.equipment.subsea.Umbilical:addHydraulicLine:(Ljava/lang/String;DDLneqsim/process/equipment/subsea/UmbilicalFluid;)V:|Field:neqsim.process.equipment.subsea.Umbilical:hydraulicLineCount:I:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "AT_STALE_THREAD_WRITE_OF_PRIMITIVE",
+      "path": "src/main/java/neqsim/process/equipment/subsea/Umbilical.java",
+      "evidence": "P2:Class:neqsim.process.equipment.subsea.Umbilical:::|Method:neqsim.process.equipment.subsea.Umbilical:setArmorLayerCount:(I)V:|Field:neqsim.process.equipment.subsea.Umbilical:armorLayerCount:I:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "AT_STALE_THREAD_WRITE_OF_PRIMITIVE",
+      "path": "src/main/java/neqsim/process/equipment/subsea/Umbilical.java",
+      "evidence": "P2:Class:neqsim.process.equipment.subsea.Umbilical:::|Method:neqsim.process.equipment.subsea.Umbilical:setDynamicService:(Z)V:|Field:neqsim.process.equipment.subsea.Umbilical:dynamicService:Z:",
+      "count": 1
+    },
+    {
+      "tool": "spotbugs",
+      "rule": "CT_CONSTRUCTOR_THROW",
+      "path": "src/main/java/neqsim/process/equipment/subsea/UmbilicalFluid.java",
+      "evidence": "P2:Class:neqsim.process.equipment.subsea.UmbilicalFluid:::|Method:neqsim.process.equipment.subsea.UmbilicalFluid:<init>:(Ljava/lang/String;DDDD)V:",
+      "count": 1
     }
   ],
   "analyzers": {
