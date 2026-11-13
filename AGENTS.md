@@ -90,8 +90,10 @@ and `@code-review` for independent code review. Commands and baseline policy liv
   `mcp_neqsim_*` tool (confirm fields with `getSchema`/`validateInput`), then `runCapability`
   (`search` → `inspectApi` → invoke). Write Python/Java only for loops, plotting, state,
   notebooks, reports, or inside `/solve-task`. If NeqSim lacks a capability, add it in Java + tests.
-- **Python:** use the selected interpreter, else `C:\appl\neqsim-venv\Scripts\python.exe`. Never
-  bare `python`/`pip`/`pytest`, never create/activate/select environments; children reuse
+- **Python:** use the interpreter selected by the user, the session hook or the parent workflow;
+  else `NEQSIM_PYTHON` if set; else the interpreter that already has `neqsim` and the task toolkit
+  installed (`neqsim doctor` names it). Always call it by absolute path (`<python>` in examples);
+  never bare `python`/`pip`/`pytest`, never create/activate/select environments; children reuse
   `sys.executable`. Missing package or interpreter = report the blocker.
 - **Task notebooks** load workspace classes through `devtools/neqsim_dev_setup.py`
   (`ns = neqsim_init(project_root=...)`, then `ns.*` / `ns.JClass`); never `from neqsim import jneqsim`.

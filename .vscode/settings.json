@@ -23,7 +23,7 @@
   },
   "java.format.settings.url": "${workspaceFolder}/.config/neqsim_formatter.xml",
   "java.format.settings.profile": "neqsim_formatter",
-  "java.checkstyle.version": "10.26.1",
+  "java.checkstyle.version": "10.26.1", // keep in sync with the checkstyle dependency pin in pom.xml
   "java.checkstyle.configuration": "${workspaceFolder}/.config/checkstyle_neqsim.xml",
   "java.test.defaultConfig": "default",
   "java.debug.settings.onBuildFailureProceed": true,
@@ -47,8 +47,8 @@
   "github.copilot.chat.confirmEditGeneration": false,
   "chat.agent.maxRequests": 2500,
   // ─── Python / Jupyter ───
-  // Default Python environment for this workspace (notebooks + terminals).
-  "python.defaultInterpreterPath": "C:\\appl\\neqsim-venv\\Scripts\\python.exe",
+  // No workspace-wide interpreter: select one per machine (Python: Select Interpreter) or set
+  // NEQSIM_PYTHON; see "Running calculations" in AGENTS.md.
   "python.terminal.activateEnvironment": true,
   "jupyter.notebookFileRoot": "${workspaceFolder}",
   // ─── Search Exclusions ───

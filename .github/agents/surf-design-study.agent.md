@@ -29,7 +29,7 @@ ALWAYS read first:
 - [docs/development/SURF_DESIGN_STUDY.md](../../docs/development/SURF_DESIGN_STUDY.md) - how-to (snippets are test-verified)
 - [docs/fielddevelopment/SURF_NETWORK_INTEGRATION.md](../../docs/fielddevelopment/SURF_NETWORK_INTEGRATION.md) - the solver, well and cost owners you reuse
 
-Interpreter: repository rules (`C:\appl\neqsim-venv\Scripts\python.exe`, never bare `python`/`pip`, never create environments). Command: `neqsim surf-study`, or `<python> -m neqsim_cli surf-study`.
+Interpreter: repository rules (the selected interpreter, else `NEQSIM_PYTHON`, else the one with `neqsim` installed; always an absolute path, never bare `python`/`pip`, never create environments). Command: `neqsim surf-study`, or `<python> -m neqsim_cli surf-study`.
 
 Distinct from `@flow-assurance-study-report` (single flowline/tieback FA package, Beggs-Brill chain), `@field-development` (concept economics and host capacity) and `@mechanical-design`
 (equipment design): this agent orchestrates them through explicit hand-offs and owns the integrated SURF deliverable. It never writes a report chapter by hand-typed results.

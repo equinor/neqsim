@@ -27,7 +27,7 @@ class PythonRuntimeInstructionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             agent_path = Path(temp_dir) / "example.agent.md"
             agent_path.write_text(
-                "Use C:\\appl\\neqsim-venv\\Scripts\\python.exe or sys.executable.\n"
+                "Use the selected absolute interpreter path, NEQSIM_PYTHON or sys.executable.\n"
                 "Never invoke bare python or activate a per-agent environment.\n"
                 "No `pip install neqsim` is allowed for repository notebooks.\n"
                 "The installed Python package provides the bridge.\n",

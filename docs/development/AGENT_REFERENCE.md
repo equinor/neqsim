@@ -127,9 +127,11 @@ mvnw.cmd install                          # Windows
 
 ### Python Environment Reuse
 
-Use the Python interpreter explicitly selected by the user or parent workflow. If
-none was selected, use `C:\appl\neqsim-venv\Scripts\python.exe`. In command examples,
-`<python-executable>` means that selected absolute path. Subagents and child
+Use the Python interpreter explicitly selected by the user, the session hook or the
+parent workflow. If none was selected, use `NEQSIM_PYTHON` when it is set, otherwise
+the interpreter that already has `neqsim` and the task toolkit installed (`neqsim doctor`
+reports it). The location differs per machine and OS; never hard-code a path. In command
+examples, `<python-executable>` means that resolved absolute path. Subagents and child
 processes must reuse it through the same absolute path or `sys.executable`; they
 must not open interpreter selection, invoke bare `python`/`py`/`pip`/`pytest`,
 create or activate separate environments, reinstall or reconfigure the shared
@@ -1802,7 +1804,7 @@ When writing documentation that includes Java or Python code examples:
 - **Data & Resources**: Component metadata lives under `src/main/resources`; heavy datasets (e.g., `neqsim_component_names.txt`) must remain synchronized with thermodynamic model expectations before publishing new components.
 - **Logging & Diagnostics (MANDATORY)**: log4j2 powers runtime logging, and all Java logging/output must use a logger (`org.apache.logging.log4j.Logger`). **NEVER** introduce `System.out.println` or `System.err.println` in Java code (including tests, examples, and generated snippets). Use parameterized logger calls such as `logger.info("message {}", value)`.
 - **Build & Test Workflow**: Use `./mvnw install` for a full build (Windows: `mvnw.cmd install`); run the entire suite with `./mvnw test` and checkstyle/spotbugs/pmd with `./mvnw checkstyle:check spotbugs:check pmd:check`.
-- **Python Runtime (MANDATORY)**: Use the Python interpreter explicitly selected by the user or parent workflow. If none was selected, use `C:\appl\neqsim-venv\Scripts\python.exe`. In agent command examples, `<python-executable>` means that selected absolute path. Child processes must reuse the same executable or `sys.executable`. Do not open interpreter selection, invoke bare `python`/`py`/`pip`/`pytest`, create or activate per-agent environments, reinstall or reconfigure the shared environment, or silently fall back to another interpreter. Report an unavailable executable or missing package as a blocker before changing runtimes.
+- **Python Runtime (MANDATORY)**: Use the Python interpreter explicitly selected by the user, the session hook or the parent workflow. If none was selected, use `NEQSIM_PYTHON` when set, otherwise the interpreter that already has `neqsim` and the task toolkit installed (`neqsim doctor` reports it); never hard-code a machine-specific path. In agent command examples, `<python-executable>` means that resolved absolute path. Child processes must reuse the same executable or `sys.executable`. Do not open interpreter selection, invoke bare `python`/`py`/`pip`/`pytest`, create or activate per-agent environments, reinstall or reconfigure the shared environment, or silently fall back to another interpreter. Report an unavailable executable or missing package as a blocker before changing runtimes.
 - **Focused Tests**: Use the Maven `-Dtest` flag to run individual classes or methods; this keeps solver regressions quick to triage.
 - **Style & Formatting**: Java code follows Google style with project overrides from `.config/checkstyle_neqsim.xml` and formatter profiles (`.config/neqsim_formatter.xml`); keep indentation at two spaces and respect existing comment minimalism.
 - **Code Formatting (Spotless) - MANDATORY**: AI-generated Java is NOT auto-formatted. After creating or editing ANY `.java` file, run `./mvnw spotless:apply` (Windows: `mvnw.cmd spotless:apply`) to reformat to the project style, then `git add` the changes before committing. CI runs `./mvnw spotless:check` and FAILS the build on any unformatted file. Do not rely on local pre-commit hooks being installed, and NEVER bypass the gate with `git commit --no-verify`.
