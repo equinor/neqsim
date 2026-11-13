@@ -1,9 +1,11 @@
 package neqsim.process.mechanicaldesign.subsea;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -15,7 +17,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
  * Mechanical design class for Umbilical equipment.
  *
  * <p>
- * Calculates tube design, cable sizing, and overall umbilical design per:
+ * Sizes tubes, armour and cross-section and checks the umbilical per:
  * </p>
  * <ul>
  * <li>API RP 17E - Specification for Subsea Umbilicals</li>
@@ -23,14 +25,25 @@ import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
  * <li>ISO 13628-5 - Subsea Umbilicals</li>
  * </ul>
  *
+ * <p>
+ * The design sequence is: tube wall thickness from internal design pressure and external collapse (per element), armour
+ * layers from the free-hanging catenary top tension (the smallest layer count whose capacity covers the amplified
+ * tension of the umbilical including that armour's own weight), touchdown bend radius against the minimum bend radius,
+ * and the hydraulic response of every fluid line. Safety factors and material values are screening defaults set on the
+ * {@link Umbilical}.
+ * </p>
+ *
  * @author ESOL
- * @version 1.0
+ * @version 2.0
  * @see Umbilical
  */
 public class UmbilicalMechanicalDesign extends MechanicalDesign {
 
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;
+
+  /** Maximum number of armour layers considered. */
+  private static final int MAX_ARMOR_LAYERS = 12;
 
   /** Reference to umbilical equipment. */
   private Umbilical umbilical;
@@ -45,8 +58,29 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
   /** Chemical tube wall thickness in mm. */
   private double chemicalTubeWallThickness = 0.0;
 
-  /** Maximum allowable tension in kN. */
+  /** Allowable tension of the armour in kN. */
   private double maxAllowableTension = 0.0;
+
+  /** Static top tension in kN. */
+  private double staticTopTensionKN = 0.0;
+
+  /** Design (amplified) top tension in kN. */
+  private double designTopTensionKN = 0.0;
+
+  /** Horizontal catenary tension in kN. */
+  private double horizontalTensionKN = 0.0;
+
+  /** Suspended length in m. */
+  private double suspendedLengthM = 0.0;
+
+  /** Top angle from vertical in degrees. */
+  private double topAngleDeg = 0.0;
+
+  /** Bend radius at touchdown in m. */
+  private double touchdownBendRadiusM = 0.0;
+
+  /** Armour axial stiffness in kN. */
+  private double armorAxialStiffnessKN = 0.0;
 
   /** Minimum bend radius in meters. */
   private double calculatedMinBendRadius = 0.0;
@@ -54,11 +88,29 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
   /** Required armor layers. */
   private int requiredArmorLayers = 2;
 
-  /** Total cross-section area in mm². */
+  /** Total cross-section area in mm2. */
   private double totalCrossSection = 0.0;
 
   /** Calculated outer diameter in mm. */
   private double calculatedOuterDiameter = 0.0;
+
+  /** Highest tube collapse utilisation. */
+  private double maxCollapseUtilization = 0.0;
+
+  /** Highest tube burst utilisation. */
+  private double maxBurstUtilization = 0.0;
+
+  /** True if the umbilical sinks under its own weight. */
+  private boolean selfSinking = true;
+
+  /** Result of the power cable calculation, null if no load is defined. */
+  private transient UmbilicalElectricalCalculator.PowerResult powerResult;
+
+  /** Per-element results. */
+  private List<Map<String, Object>> elementResults = new ArrayList<Map<String, Object>>();
+
+  /** Design checks (true = pass). */
+  private Map<String, Boolean> designChecks = new LinkedHashMap<String, Boolean>();
 
   // ============ Cost Estimation Fields ============
   /** Cost estimator. */
@@ -102,77 +154,123 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
       return;
     }
 
-    calculateTubeWallThickness();
-    calculateArmorRequirements();
+    umbilical.run(null);
+    calculateTubeDesign();
+    calculateArmorAndTension();
     calculateBendRadius();
-    calculateOverallDiameter();
-    calculateWeight();
+    calculatePower();
+    calculateElementResults();
+    evaluateChecks();
+    totalCrossSection = umbilical.calculateTotalCrossSection();
+    calculatedOuterDiameter = umbilical.getOverallDiameterMm();
   }
 
   /**
-   * Calculate tube wall thickness for hydraulic and chemical lines.
+   * Resolve tube wall thickness and utilisation for every fluid line.
    */
-  private void calculateTubeWallThickness() {
-    // Steel tube umbilical typically uses super duplex steel
-    // SMYS for super duplex ≈ 550 MPa
-    double smys = 550.0;
-    double designFactor = 0.6; // Conservative for umbilical service
-
-    // Get max design pressure from elements
-    double maxHydraulicPressure = 0.0;
-    double maxChemicalPressure = 0.0;
-
-    for (Umbilical.UmbilicalElement element : umbilical.getElements()) {
-      if ("hydraulic".equals(element.getElementType())) {
-        maxHydraulicPressure = Math.max(maxHydraulicPressure, element.getDesignPressureBar());
-      } else if ("chemical".equals(element.getElementType())) {
-        maxChemicalPressure = Math.max(maxChemicalPressure, element.getDesignPressureBar());
+  private void calculateTubeDesign() {
+    hydraulicTubeWallThickness = 0.0;
+    chemicalTubeWallThickness = 0.0;
+    maxCollapseUtilization = 0.0;
+    maxBurstUtilization = 0.0;
+    double pExt = UmbilicalStructuralCalculator.hydrostaticPressureMPa(umbilical.getWaterDepth());
+    for (Umbilical.UmbilicalElement e : umbilical.getElements()) {
+      if (!e.isFluidLine()) {
+        continue;
+      }
+      double wall = e.getWallThicknessMm();
+      if ("hydraulic".equals(e.getElementType())) {
+        hydraulicTubeWallThickness = Math.max(hydraulicTubeWallThickness, wall);
+      } else {
+        chemicalTubeWallThickness = Math.max(chemicalTubeWallThickness, wall);
+      }
+      if (e.isSteelTube() && wall > 0.0) {
+        double id = e.getInnerDiameterMm();
+        double pc = UmbilicalStructuralCalculator.collapsePressureMPa(id + 2.0 * wall, wall, umbilical.getTubeSmysMPa(),
+            umbilical.getTubeYoungsModulusGPa() * 1000.0, umbilical.getTubeOvality());
+        maxCollapseUtilization = Math.max(maxCollapseUtilization, pExt * umbilical.getCollapseSafetyFactor() / pc);
+        double p = e.getDesignPressureBar() / 10.0;
+        double hoop = p * (id / (2.0 * wall) + 1.0 - 0.4);
+        maxBurstUtilization = Math.max(maxBurstUtilization,
+            hoop / (umbilical.getTubeUsageFactor() * umbilical.getTubeSmysMPa()));
       }
     }
-
-    // Calculate hydraulic tube wall thickness
-    if (maxHydraulicPressure > 0) {
-      double pressureMPa = maxHydraulicPressure / 10.0;
-      double typicalID = 12.7; // 1/2 inch typical
-      hydraulicTubeWallThickness = (pressureMPa * typicalID) / (2 * smys * designFactor);
-      hydraulicTubeWallThickness = Math.max(hydraulicTubeWallThickness, 1.5); // Minimum 1.5mm
-    }
-
-    // Calculate chemical tube wall thickness
-    if (maxChemicalPressure > 0) {
-      double pressureMPa = maxChemicalPressure / 10.0;
-      double typicalID = 25.4; // 1 inch typical
-      chemicalTubeWallThickness = (pressureMPa * typicalID) / (2 * smys * designFactor);
-      chemicalTubeWallThickness = Math.max(chemicalTubeWallThickness, 2.0); // Minimum 2mm
-    }
   }
 
   /**
-   * Calculate armor requirements.
+   * Find the smallest number of armour layers whose capacity covers the amplified catenary top tension, including the
+   * weight of those layers.
    */
-  private void calculateArmorRequirements() {
-    double waterDepth = umbilical.getWaterDepth();
-    double length = umbilical.getLength();
+  private void calculateArmorAndTension() {
+    double g = UmbilicalStructuralCalculator.GRAVITY;
+    int layers = 0;
+    boolean armored = umbilical.hasArmorWires();
+    int first = armored ? 1 : 0;
+    int last = armored ? MAX_ARMOR_LAYERS : 0;
+    for (int n = first; n <= last; n++) {
+      if (armored) {
+        umbilical.setArmorLayerCount(n);
+      }
+      umbilical.run(null);
+      layers = n;
+      updateTension(g);
+      if (!armored || armorCapacityKN() >= designTopTensionKN) {
+        break;
+      }
+    }
+    requiredArmorLayers = layers;
+    maxAllowableTension = armored ? armorCapacityKN() : 0.0;
+    armorAxialStiffnessKN = armored
+        ? UmbilicalStructuralCalculator.armorAxialStiffnessKN(coreDiameterMm(), umbilical.getArmorWireDiameterMm(),
+            umbilical.getArmorLayAngleDeg(), layers, 200000.0)
+        : 0.0;
+  }
 
-    // Calculate catenary tension at surface
-    double submergedWeight = umbilical.getSubmergedWeightPerMeter();
-    double catSag = waterDepth * 1.2; // Approximate catenary sag
+  /**
+   * Update the catenary and tensions from the current submerged weight.
+   *
+   * @param g gravitational acceleration in m/s2
+   */
+  private void updateTension(double g) {
+    double w = umbilical.getSubmergedWeightPerMeter() * g;
+    selfSinking = w > 0.0;
+    if (!selfSinking) {
+      staticTopTensionKN = 0.0;
+      designTopTensionKN = 0.0;
+      horizontalTensionKN = 0.0;
+      suspendedLengthM = umbilical.getWaterDepth();
+      topAngleDeg = 0.0;
+      touchdownBendRadiusM = Double.POSITIVE_INFINITY;
+      return;
+    }
+    UmbilicalStructuralCalculator.CatenaryResult cat = UmbilicalStructuralCalculator.freeHangingCatenary(w,
+        umbilical.getWaterDepth(), umbilical.getTouchdownOffsetM());
+    staticTopTensionKN = cat.getTopTensionKN();
+    designTopTensionKN = staticTopTensionKN * umbilical.getTensionAmplificationFactor();
+    horizontalTensionKN = cat.getHorizontalTensionKN();
+    suspendedLengthM = cat.getSuspendedLengthM();
+    topAngleDeg = cat.getTopAngleFromVerticalDeg();
+    touchdownBendRadiusM = cat.getTouchdownBendRadiusM();
+  }
 
-    // Maximum tension at surface
-    double maxTension = submergedWeight * 9.81 * catSag / 1000; // kN
+  /**
+   * Diameter under the first armour layer.
+   *
+   * @return core diameter in mm
+   */
+  private double coreDiameterMm() {
+    return umbilical.getOverallDiameterMm() - 2.0 * umbilical.getOuterSheathThicknessMm()
+        - 2.0 * (umbilical.hasArmorWires() ? umbilical.getArmorLayerCount() : 0) * umbilical.getArmorWireDiameterMm();
+  }
 
-    // Add installation tension factor
-    maxTension *= 1.5;
-
-    maxAllowableTension = maxTension;
-
-    // Armor layer sizing
-    // Each armor layer contributes to tensile strength
-    double armorStrength = 200.0; // kN per layer per 100mm diameter
-    double od = umbilical.getOverallDiameterMm();
-
-    requiredArmorLayers = (int) Math.ceil(maxTension / (armorStrength * od / 100));
-    requiredArmorLayers = Math.max(requiredArmorLayers, 1);
+  /**
+   * Allowable axial capacity of the current armour.
+   *
+   * @return capacity in kN
+   */
+  private double armorCapacityKN() {
+    return UmbilicalStructuralCalculator.armorCapacityKN(coreDiameterMm(), umbilical.getArmorWireDiameterMm(),
+        umbilical.getArmorLayAngleDeg(), umbilical.getArmorLayerCount(), umbilical.getArmorAllowableStressMPa());
   }
 
   /**
@@ -193,34 +291,95 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate overall diameter.
+   * Solve the power cable when a load is defined.
    */
-  private void calculateOverallDiameter() {
-    totalCrossSection = umbilical.calculateTotalCrossSection();
-
-    // Add filler and sheath
-    double effectiveArea = totalCrossSection * 1.4; // 40% for filler
-
-    // Add armor layers
-    if (umbilical.hasArmorWires()) {
-      effectiveArea *= (1.0 + 0.15 * requiredArmorLayers);
+  private void calculatePower() {
+    powerResult = null;
+    if (umbilical.getPowerLoad() <= 0.0 || umbilical.getElectricalCableCount() == 0) {
+      return;
     }
-
-    // Calculate diameter
-    double innerDiameter = Math.sqrt(4 * effectiveArea / Math.PI);
-    calculatedOuterDiameter = innerDiameter + 2 * umbilical.getOuterSheathThicknessMm();
-
-    // Update umbilical
-    umbilical.setOverallDiameterMm(calculatedOuterDiameter);
+    try {
+      powerResult = umbilical.calculatePowerTransmission();
+    } catch (IllegalStateException ex) {
+      powerResult = null;
+    }
   }
 
   /**
-   * Calculate weight.
+   * Collect per-element geometry, utilisation and hydraulics.
    */
-  private void calculateWeight() {
-    // Weight calculation is done in Umbilical.run()
-    // This can be called to update
-    umbilical.run(null);
+  private void calculateElementResults() {
+    elementResults = new ArrayList<Map<String, Object>>();
+    for (Umbilical.UmbilicalElement e : umbilical.getElements()) {
+      Map<String, Object> r = new LinkedHashMap<String, Object>();
+      r.put("name", e.getName());
+      r.put("type", e.getElementType());
+      r.put("outerDiameterMm", e.getOuterDiameterMm());
+      r.put("emptyMassKgPerM", e.getEmptyMassKgPerM());
+      if (e.isFluidLine()) {
+        r.put("innerDiameterMm", e.getInnerDiameterMm());
+        r.put("wallThicknessMm", e.getWallThicknessMm());
+        r.put("designPressureBar", e.getDesignPressureBar());
+        r.put("fluid", e.getFluid() == null ? "" : e.getFluid().getName());
+        r.put("fluidMassKgPerM", e.getFluidMassKgPerM());
+        UmbilicalHydraulicsCalculator.LineResult line = umbilical.getLineHydraulics(e.getName());
+        r.put("designFlowM3PerHr", e.getDesignFlowRateM3PerHr());
+        r.put("velocityMs", line.getVelocityMs());
+        r.put("reynolds", line.getReynolds());
+        r.put("frictionDropBar", line.getFrictionDropBar());
+        r.put("hydrostaticHeadBar", line.getHydrostaticBar());
+        UmbilicalHydraulicsCalculator.ResponseResult resp = umbilical.calculateLineResponse(e.getName(), 0.9);
+        r.put("acousticVelocityMs", resp.getAcousticVelocityMs());
+        r.put("acousticTransitTimeS", resp.getTransitTimeS());
+        r.put("time90PercentS", resp.getTimeToFractionS());
+      } else if ("electrical".equals(e.getElementType())) {
+        r.put("cores", e.getNumberOfCores());
+        r.put("voltageV", e.getVoltageRating());
+        r.put("conductorAreaMm2", e.getConductorAreaMm2());
+        r.put("insulationThicknessMm", e.getInsulationThicknessMm());
+      }
+      elementResults.add(r);
+    }
+  }
+
+  /**
+   * Evaluate pass/fail design checks.
+   */
+  private void evaluateChecks() {
+    designChecks = new LinkedHashMap<String, Boolean>();
+    designChecks.put("selfSinking", selfSinking);
+    designChecks.put("tubeBurstUtilizationBelow1", maxBurstUtilization <= 1.0 + 1.0e-6);
+    designChecks.put("tubeCollapseUtilizationBelow1", maxCollapseUtilization <= 1.0 + 1.0e-6);
+    if (umbilical.hasArmorWires()) {
+      designChecks.put("armorCapacityCoversDesignTension", armorCapacityKN() >= designTopTensionKN);
+    }
+    designChecks.put("touchdownBendRadiusAboveMBR", touchdownBendRadiusM >= umbilical.getMinimumBendRadius());
+    designChecks.put("installationTensionWithinVesselLimit",
+        designTopTensionKN <= umbilical.getMaxInstallationTensionKN());
+    boolean dropOk = true;
+    for (Umbilical.UmbilicalElement e : umbilical.getElements()) {
+      if (e.isFluidLine() && e.getDesignFlowRateM3PerHr() > 0.0 && e.getFluid() != null) {
+        double drop = umbilical.calculatePressureDrop(e.getName());
+        if (drop > umbilical.getMaxFrictionDropFraction() * e.getDesignPressureBar()) {
+          dropOk = false;
+        }
+      }
+    }
+    designChecks.put("lineFrictionDropWithinPressureBudget", dropOk);
+  }
+
+  /**
+   * Check whether all design checks pass.
+   *
+   * @return true if every check passes
+   */
+  public boolean isDesignAcceptable() {
+    for (Boolean ok : designChecks.values()) {
+      if (!ok) {
+        return false;
+      }
+    }
+    return !designChecks.isEmpty();
   }
 
   /**
@@ -236,11 +395,9 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
     int hydraulicLines = umbilical.getHydraulicLineCount();
     int chemicalLines = umbilical.getChemicalLineCount();
     int electricalCables = umbilical.getElectricalCableCount() + umbilical.getFiberOpticCount();
-    // Check if umbilical type suggests dynamic application (not a specific enum value)
-    boolean isDynamic = false; // Default to static for cost calculation
 
     costEstimator.calculateUmbilicalCost(lengthKm, hydraulicLines, chemicalLines, electricalCables,
-        umbilical.getWaterDepth(), isDynamic);
+        umbilical.getWaterDepth(), umbilical.isDynamicService());
 
     totalCostUSD = costEstimator.getTotalCost();
     equipmentCostUSD = costEstimator.getEquipmentCost();
@@ -351,6 +508,7 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
     config.addProperty("umbilicalType", umbilical.getUmbilicalType().name());
     config.addProperty("lengthM", umbilical.getLength());
     config.addProperty("waterDepthM", umbilical.getWaterDepth());
+    config.addProperty("dynamicService", umbilical.isDynamicService());
     jsonObj.add("configuration", config);
 
     // Elements summary
@@ -365,15 +523,64 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
     JsonObject results = new JsonObject();
     results.addProperty("hydraulicTubeWallThicknessMm", hydraulicTubeWallThickness);
     results.addProperty("chemicalTubeWallThicknessMm", chemicalTubeWallThickness);
-    results.addProperty("maxAllowableTensionKN", maxAllowableTension);
+    results.addProperty("maxCollapseUtilization", maxCollapseUtilization);
+    results.addProperty("maxBurstUtilization", maxBurstUtilization);
+    results.addProperty("armorCapacityKN", maxAllowableTension);
+    results.addProperty("staticTopTensionKN", staticTopTensionKN);
+    results.addProperty("designTopTensionKN", designTopTensionKN);
+    results.addProperty("horizontalTensionKN", horizontalTensionKN);
+    results.addProperty("suspendedLengthM", suspendedLengthM);
+    results.addProperty("topAngleFromVerticalDeg", topAngleDeg);
+    results.addProperty("touchdownBendRadiusM", touchdownBendRadiusM);
     results.addProperty("calculatedMinBendRadiusM", calculatedMinBendRadius);
     results.addProperty("requiredArmorLayers", requiredArmorLayers);
+    results.addProperty("armorAxialStiffnessKN", armorAxialStiffnessKN);
     results.addProperty("totalCrossSectionMm2", totalCrossSection);
     results.addProperty("calculatedOuterDiameterMm", calculatedOuterDiameter);
     jsonObj.add("calculatedResults", results);
 
+    JsonArray lines = new JsonArray();
+    for (Map<String, Object> r : elementResults) {
+      JsonObject o = new JsonObject();
+      for (Map.Entry<String, Object> en : r.entrySet()) {
+        Object v = en.getValue();
+        if (v instanceof Number) {
+          o.addProperty(en.getKey(), (Number) v);
+        } else {
+          o.addProperty(en.getKey(), String.valueOf(v));
+        }
+      }
+      lines.add(o);
+    }
+    jsonObj.add("elementResults", lines);
+
+    if (powerResult != null) {
+      JsonObject p = new JsonObject();
+      p.addProperty("loadMW", umbilical.getPowerLoad());
+      p.addProperty("acResistanceOhmPerKm", powerResult.getAcResistanceOhmPerKm());
+      p.addProperty("reactanceOhmPerKm", powerResult.getReactanceOhmPerKm());
+      p.addProperty("capacitanceUfPerKm", powerResult.getCapacitanceUfPerKm());
+      p.addProperty("chargingCurrentA", powerResult.getChargingCurrentA());
+      p.addProperty("loadCurrentA", powerResult.getLoadCurrentA());
+      p.addProperty("sendingVoltageV", powerResult.getSendingVoltageV());
+      p.addProperty("sendingCurrentA", powerResult.getSendingCurrentA());
+      p.addProperty("lossMW", powerResult.getLossMW());
+      p.addProperty("voltageDropPercent", powerResult.getVoltageDropPercent());
+      p.addProperty("noLoadRisePercent", powerResult.getNoLoadRisePercent());
+      jsonObj.add("powerTransmission", p);
+    }
+
+    addVisualizationData(jsonObj);
+
+    JsonObject checks = new JsonObject();
+    for (Map.Entry<String, Boolean> en : designChecks.entrySet()) {
+      checks.addProperty(en.getKey(), en.getValue());
+    }
+    jsonObj.add("designChecks", checks);
+
     JsonObject weight = new JsonObject();
     weight.addProperty("dryWeightPerMeterKgM", umbilical.getDryWeightPerMeter());
+    weight.addProperty("filledWeightPerMeterKgM", umbilical.getFilledWeightPerMeter());
     weight.addProperty("submergedWeightPerMeterKgM", umbilical.getSubmergedWeightPerMeter());
     weight.addProperty("totalDryWeightTonnes", umbilical.getDryWeightPerMeter() * umbilical.getLength() / 1000);
     jsonObj.add("weight", weight);
@@ -406,11 +613,104 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
     result.put("umbilicalType", umbilical.getUmbilicalType().name());
     result.put("hydraulicTubeWallThicknessMm", hydraulicTubeWallThickness);
     result.put("chemicalTubeWallThicknessMm", chemicalTubeWallThickness);
-    result.put("maxAllowableTensionKN", maxAllowableTension);
+    result.put("armorCapacityKN", maxAllowableTension);
+    result.put("staticTopTensionKN", staticTopTensionKN);
+    result.put("designTopTensionKN", designTopTensionKN);
+    result.put("touchdownBendRadiusM", touchdownBendRadiusM);
     result.put("calculatedMinBendRadiusM", calculatedMinBendRadius);
     result.put("requiredArmorLayers", requiredArmorLayers);
     result.put("calculatedOuterDiameterMm", calculatedOuterDiameter);
+    result.put("designChecks", new LinkedHashMap<String, Boolean>(designChecks));
     return result;
+  }
+
+  /**
+   * Add the data that drawings and charts need: cross-section dimensions, friction-drop curves of every fluid line, the
+   * catenary profile and a power-cable length sweep.
+   *
+   * @param jsonObj JSON object to extend
+   */
+  private void addVisualizationData(JsonObject jsonObj) {
+    JsonObject xs = new JsonObject();
+    xs.addProperty("overallDiameterMm", umbilical.getOverallDiameterMm());
+    xs.addProperty("bundleDiameterMm", umbilical.getBundleDiameterMm());
+    xs.addProperty("innerSheathThicknessMm", umbilical.getInnerSheathThicknessMm());
+    xs.addProperty("outerSheathThicknessMm", umbilical.getOuterSheathThicknessMm());
+    xs.addProperty("armorLayers", umbilical.hasArmorWires() ? umbilical.getArmorLayerCount() : 0);
+    xs.addProperty("armorWireDiameterMm", umbilical.getArmorWireDiameterMm());
+    xs.addProperty("armorLayAngleDeg", umbilical.getArmorLayAngleDeg());
+    jsonObj.add("crossSection", xs);
+
+    JsonArray curves = new JsonArray();
+    double tK = umbilical.getSeawaterTemperatureC() + 273.15;
+    for (Umbilical.UmbilicalElement e : umbilical.getElements()) {
+      if (!e.isFluidLine() || e.getFluid() == null) {
+        continue;
+      }
+      double design = e.getDesignFlowRateM3PerHr();
+      double maxFlow = design > 0.0 ? 2.0 * design : umbilical.calculateMaxFlowM3PerHr(e.getName(), 20.0);
+      JsonArray flow = new JsonArray();
+      JsonArray drop = new JsonArray();
+      for (int i = 0; i <= 24; i++) {
+        double q = maxFlow * i / 24.0;
+        flow.add(q);
+        drop.add(UmbilicalHydraulicsCalculator.calculate(e.getFluid(), e.getInnerDiameterMm(), umbilical.getLength(),
+            q / 3600.0, tK, UmbilicalHydraulicsCalculator.DEFAULT_ROUGHNESS_MM, 0.0).getFrictionDropBar());
+      }
+      JsonObject c = new JsonObject();
+      c.addProperty("name", e.getName());
+      c.addProperty("designFlowM3PerHr", design);
+      c.add("flowM3PerHr", flow);
+      c.add("frictionDropBar", drop);
+      curves.add(c);
+    }
+    jsonObj.add("hydraulicCurves", curves);
+
+    if (selfSinking && umbilical.getSubmergedWeightPerMeter() > 0.0 && !Double.isInfinite(touchdownBendRadiusM)) {
+      double[][] p = UmbilicalStructuralCalculator.catenaryProfile(
+          umbilical.getSubmergedWeightPerMeter() * UmbilicalStructuralCalculator.GRAVITY, touchdownBendRadiusM,
+          umbilical.getWaterDepth(), 40);
+      JsonObject cat = new JsonObject();
+      cat.add("horizontalDistanceM", toJsonArray(p[0]));
+      cat.add("heightAboveSeabedM", toJsonArray(p[1]));
+      cat.add("tensionKN", toJsonArray(p[2]));
+      jsonObj.add("catenaryProfile", cat);
+    }
+
+    if (powerResult != null) {
+      JsonArray len = new JsonArray();
+      JsonArray drop = new JsonArray();
+      JsonArray loss = new JsonArray();
+      JsonArray charging = new JsonArray();
+      for (int i = 1; i <= 20; i++) {
+        double l = 1.5 * umbilical.getLength() * i / 20.0;
+        UmbilicalElectricalCalculator.PowerResult r = umbilical.calculatePowerTransmission(l);
+        len.add(l / 1000.0);
+        drop.add(r.getVoltageDropPercent());
+        loss.add(r.getLossMW());
+        charging.add(r.getChargingCurrentA());
+      }
+      JsonObject sweep = new JsonObject();
+      sweep.add("lengthKm", len);
+      sweep.add("voltageDropPercent", drop);
+      sweep.add("lossMW", loss);
+      sweep.add("chargingCurrentA", charging);
+      jsonObj.add("powerSweep", sweep);
+    }
+  }
+
+  /**
+   * Convert a double array to a JSON array.
+   *
+   * @param values values
+   * @return JSON array
+   */
+  private static JsonArray toJsonArray(double[] values) {
+    JsonArray a = new JsonArray();
+    for (double v : values) {
+      a.add(v);
+    }
+    return a;
   }
 
   // Getters
@@ -452,12 +752,75 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Get max allowable tension.
+   * Get the allowable axial tension of the armour.
    *
    * @return tension in kN
    */
   public double getMaxAllowableTension() {
     return maxAllowableTension;
+  }
+
+  /**
+   * Get the static top tension of the free-hanging catenary.
+   *
+   * @return tension in kN
+   */
+  public double getStaticTopTensionKN() {
+    return staticTopTensionKN;
+  }
+
+  /**
+   * Get the design top tension (static tension times the amplification factor).
+   *
+   * @return tension in kN
+   */
+  public double getDesignTopTensionKN() {
+    return designTopTensionKN;
+  }
+
+  /**
+   * Get the bend radius at the touchdown point.
+   *
+   * @return radius in m
+   */
+  public double getTouchdownBendRadiusM() {
+    return touchdownBendRadiusM;
+  }
+
+  /**
+   * Get the highest tube collapse utilisation (external pressure times safety factor over collapse pressure).
+   *
+   * @return utilisation, below 1 is acceptable
+   */
+  public double getMaxCollapseUtilization() {
+    return maxCollapseUtilization;
+  }
+
+  /**
+   * Get the highest tube burst utilisation (hoop stress at design pressure over allowable).
+   *
+   * @return utilisation, below 1 is acceptable
+   */
+  public double getMaxBurstUtilization() {
+    return maxBurstUtilization;
+  }
+
+  /**
+   * Get the power cable result.
+   *
+   * @return power result, null if no load is defined
+   */
+  public UmbilicalElectricalCalculator.PowerResult getPowerResult() {
+    return powerResult;
+  }
+
+  /**
+   * Get the design checks (true = pass).
+   *
+   * @return map of check name to result
+   */
+  public Map<String, Boolean> getDesignChecks() {
+    return new LinkedHashMap<String, Boolean>(designChecks);
   }
 
   /**
