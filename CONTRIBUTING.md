@@ -163,7 +163,7 @@ Install extensions [Language Support for Java(TM) by Red Hat](https://marketplac
   },
   "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
   "java.saveActions.organizeImports": true,
-  "java.checkstyle.version": "10.18.1",
+  "java.checkstyle.version": "14.4.0",
   "java.checkstyle.configuration": "${workspaceFolder}/.config/checkstyle_neqsim.xml",
   "java.debug.settings.hotCodeReplace": "never",
   "[xml]": {

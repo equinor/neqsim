@@ -23,6 +23,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<checkstyle.config.location>.config/checkstyle_neqsim.xml</checkstyle.config.location>
+		<!-- Keep in sync with java.checkstyle.version in .vscode/settings.json -->
+		<checkstyle.version>14.4.0</checkstyle.version>
 		<skipFlattening>false</skipFlattening>
 		<argLine></argLine>
 		<!-- Exclude slow and benchmark tests by default. Run with -DexcludedTestGroups= to include all tests.
@@ -421,6 +423,13 @@
 				<configuration>
 					<failsOnError>true</failsOnError>
 				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>com.puppycrawl.tools</groupId>
+						<artifactId>checkstyle</artifactId>
+						<version>${checkstyle.version}</version>
+					</dependency>
+				</dependencies>
 			</plugin>
 			<plugin>
 				<groupId>com.github.spotbugs</groupId>
