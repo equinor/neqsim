@@ -440,8 +440,9 @@ int mixedSteps = column.getLastAndersonAccelerationCount();
 
 Each equilibrium tray is a PH flash. On narrow-boiling tray mixtures almost all of $dH/dT$ is
 latent heat, so a temperature Newton step based on the fixed-composition heat capacity overshoots.
-`PHflash` therefore brackets the enthalpy root and switches to an Illinois regula-falsi step when
-the Newton step leaves the bracket. Before this safeguard, a 6-tray C4/C5/C6 debutanizer took
+`SimpleTray` opts in to a bracketed PH flash. It switches to an Illinois regula-falsi step when
+the Newton step leaves the bracket, and checks the enthalpy residual before accepting a solution.
+Before this safeguard, a 6-tray C4/C5/C6 debutanizer took
 20-110 s and failed with four solver types; it now converges in 0.1-0.5 s with all of them.
 
 The `NEWTON` backtracking search evaluates bounded step lengths down to 0.125. It retains the

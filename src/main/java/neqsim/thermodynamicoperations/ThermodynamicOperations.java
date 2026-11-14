@@ -476,7 +476,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Run a PH flash that may stop on a single enthalpy residual below a tolerance.
+   * Run a PH flash with optional temperature bracketing and single-residual convergence.
    *
    * <p>
    * Intended for callers that repeat the flash inside their own iteration. The specialized seawater and
@@ -485,8 +485,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    *
    * @param Hspec specified total enthalpy in J
    * @param type flash type, 0 for the standard temperature iteration
-   * @param singleResidualTolerance relative enthalpy residual that ends the temperature iteration without a confirming
-   * evaluation; zero or negative keeps the standard criterion
+   * @param singleResidualTolerance positive relative enthalpy tolerance enabling temperature bracketing and
+   * single-residual convergence; zero or negative keeps the standard PH flash
    */
   public void PHflash(double Hspec, int type, double singleResidualTolerance) {
     if (system instanceof neqsim.thermo.system.SystemSeawater || isPureComponentWithinEnthalpyRange(Hspec)) {

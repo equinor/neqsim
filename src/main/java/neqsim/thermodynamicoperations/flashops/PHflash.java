@@ -6,6 +6,7 @@
 
 package neqsim.thermodynamicoperations.flashops;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -43,9 +44,6 @@ public class PHflash extends Flash {
    */
   static final int BRACKET_TAKEOVER_ITERATIONS = 20;
 
-  /** Relative temperature bracket width below which the enthalpy root is resolved to machine precision. */
-  static final double BRACKET_COLLAPSE_RELATIVE_WIDTH = 1.0e-13;
-
   /** Number of Newton iterations used by the latest {@link #solveQ()} call. */
   private int lastIterationCount = 0;
 
@@ -66,7 +64,7 @@ public class PHflash extends Flash {
   }
 
   /**
-   * Constructor for a PH flash that may stop on one relative enthalpy residual below a tolerance.
+   * Constructor for a PH flash with optional bracketed iteration and single-residual convergence.
    *
    * <p>
    * By default the iteration stops when two consecutive residuals together are below 1e-8, so the accepted state is
@@ -77,9 +75,10 @@ public class PHflash extends Flash {
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Hspec specified total enthalpy in J
    * @param type flash type (0 = standard) or (1 = direct PH flash if not pure component)
-   * @param singleResidualTolerance relative enthalpy residual that ends the iteration on its own; zero or negative
-   * keeps the two-evaluation criterion
+   * @param singleResidualTolerance positive relative enthalpy tolerance enabling bracketing and a single-residual
+   * convergence criterion; zero or negative keeps the standard iteration
    */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The flash and its TP iterations must update the caller's thermodynamic system in place")
   public PHflash(SystemInterface system, double Hspec, int type, double singleResidualTolerance) {
     this.system = system;
     this.tpFlash = new TPflash(system);
@@ -145,8 +144,9 @@ public class PHflash extends Flash {
     // Enthalpy increases monotonically with temperature at fixed pressure, so one state on each
     // side of the specification brackets the root. [0]=low T, [1]=low residual, [2]=high T,
     // [3]=high residual, [4]=side of the latest update (-1 low, +1 high, 0 none).
-    double[] bracket = {Double.NaN, Double.NaN, Double.NaN, Double.NaN, 0.0};
-    boolean bracketCollapsed = false;
+    double[] bracket = singleResidualTolerance > 0.0
+        ? new double[] {Double.NaN, Double.NaN, Double.NaN, Double.NaN, 0.0}
+        : null;
     boolean tightlyConverged = false;
 
     do {
@@ -177,7 +177,6 @@ public class PHflash extends Flash {
       previousInverseTemperature = oldTemp;
       previousResidual = residual;
       nyTemp = oldTemp - newCorr;
-      updateTemperatureBracket(bracket, system.getTemperature(), residual);
 
       if (iterations > 150 && Math.abs(error) < 10.0) {
         nyTemp = 1.0
@@ -200,7 +199,7 @@ public class PHflash extends Flash {
       // oscillates across the root. Once both sides are known, a step that leaves the bracket (or
       // a Newton sequence that has not converged) is replaced by an Illinois regula-falsi step,
       // which contracts the bracket monotonically and converges superlinearly.
-      if (hasTemperatureBracket(bracket)) {
+      if (bracket != null && hasTemperatureBracket(bracket)) {
         double proposedTemperature = 1.0 / nyTemp;
         boolean insideBracket = proposedTemperature > bracket[0] && proposedTemperature < bracket[2];
         if (!insideBracket || iterations > BRACKET_TAKEOVER_ITERATIONS) {
@@ -234,9 +233,9 @@ public class PHflash extends Flash {
       system.init(2);
       errorOld = error;
       error = calcdQdT();
-      updateTemperatureBracket(bracket, system.getTemperature(), error);
-      bracketCollapsed = hasTemperatureBracket(bracket)
-          && bracket[2] - bracket[0] <= BRACKET_COLLAPSE_RELATIVE_WIDTH * bracket[2];
+      if (bracket != null) {
+        updateTemperatureBracket(bracket, system.getTemperature(), error);
+      }
 
       if (error > 0 && system.getTemperature() > maxTemperature) {
         maxTemperature = system.getTemperature();
@@ -256,7 +255,7 @@ public class PHflash extends Flash {
       // inside its own iteration can accept a single sufficiently small residual instead.
       tightlyConverged = singleResidualTolerance > 0.0 && iterations >= 3 && Math.abs(error) < singleResidualTolerance;
     } while (((Math.abs(error) + Math.abs(errorOld)) > 1e-8 || iterations < 3) && iterations < 200 && !stalled
-        && !bracketCollapsed && !tightlyConverged);
+        && !tightlyConverged);
     lastIterationCount = iterations;
     return 1.0 / nyTemp;
   }
