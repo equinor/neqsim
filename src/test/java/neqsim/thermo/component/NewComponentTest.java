@@ -1,6 +1,8 @@
 package neqsim.thermo.component;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
@@ -18,6 +20,33 @@ public class NewComponentTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(NewComponentTest.class);
 
   static SystemInterface thermoSystem = null;
+
+  /** Verifies that relabeling a cloned component refreshes its classifications and preserves the original. */
+  @Test
+  void classificationTracksTypeAndFlagChanges() {
+    Component original = new ComponentSrk("methane", 1.0, 1.0, 0);
+    assertTrue(original.isHydrocarbon());
+    assertFalse(original.isIsIon());
+
+    Component copy = original.clone();
+    copy.setComponentType("InErT");
+    assertTrue(copy.isInert());
+    assertFalse(copy.isHydrocarbon());
+
+    copy.setComponentType("IoN");
+    assertTrue(copy.isIsIon());
+    assertFalse(copy.isInert());
+    assertEquals("ion", copy.getComponentType());
+    copy.setIsIon(false);
+    assertTrue(copy.isIsIon(), "The stored ion label still takes precedence over the cleared flag");
+
+    copy.setIsNormalComponent(true);
+    assertEquals("normal", copy.getComponentType());
+    assertFalse(copy.isIsIon());
+    assertTrue(original.isHydrocarbon());
+    assertFalse(original.isInert());
+    assertFalse(original.isIsIon());
+  }
 
   @Test
   public void createComponentTest() {
