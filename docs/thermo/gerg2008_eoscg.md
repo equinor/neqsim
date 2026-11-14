@@ -52,6 +52,22 @@ GERG-2008 is the standard reference equation for **natural gas** transport, proc
 ### Supported Components (21)
 Methane, Nitrogen, Carbon Dioxide, Ethane, Propane, Butanes, Pentanes, Hexane, Heptane, Octane, Nonane, Decane, Hydrogen, Oxygen, Carbon Monoxide, Water, Helium, Argon.
 
+### Liquid density and phase envelopes
+
+GERG-2008 liquid density calculations bracket the high-density root, then use
+a local Chebyshev approximation to seed a safeguarded Newton solve. The
+accepted density closes the pressure equation of the original GERG model on a
+positive-slope branch. If the approximation is unsuitable, NeqSim refines the
+bracket by bisection. The approximation follows the proxy-and-polish approach
+of [Bell and Alpert (2018)](https://doi.org/10.1016/j.fluid.2018.04.026).
+It refines one bracketed root. Multi-root isolation and global phase selection
+are outside this density refinement.
+
+Phase-envelope tracing uses bisection for its nested finite differences and
+reuses density results at identical states. The cache is isolated by model,
+thread and phase branch. Fugacity perturbations evaluate the residual Helmholtz
+energy directly at the trial composition, leaving the original phase intact.
+
 ### Usage in NeqSim
 
 To use GERG-2008 in NeqSim, use the `SystemGERG2008Eos` class.
