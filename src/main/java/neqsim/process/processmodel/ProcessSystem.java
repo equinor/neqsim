@@ -7207,7 +7207,7 @@ public class ProcessSystem extends SimulationBaseClass {
     InPlaceInitialState inPlace = inPlaceInitialState;
     if (inPlace != null && inPlace.matches(this)) {
       try {
-        applyState(restored, false);
+        applyStateKeepingElements(restored);
         inPlace.restore(this);
         return;
       } catch (RuntimeException ex) {
@@ -7220,8 +7220,30 @@ public class ProcessSystem extends SimulationBaseClass {
           + " element does not support transient checkpoints). Equipment, controllers and measurement devices were"
           + " replaced by copies; fetch them again with getUnit(...) after reset().");
     }
-    applyState(restored, true);
+    applyState(restored);
     inPlaceInitialState = InPlaceInitialState.capture(this);
+  }
+
+  /**
+   * Applies the process-level state of {@code source} (time, settings, history) while keeping the current equipment,
+   * measurement-device and recycle-controller objects, whose state is restored separately in place.
+   *
+   * @param source copy of the stored initial state
+   */
+  private void applyStateKeepingElements(ProcessSystem source) {
+    List<ProcessEquipmentInterface> keptUnits = unitOperations;
+    List<MeasurementDeviceInterface> keptDevices = measurementDevices;
+    RecycleController keptRecycleController = recycleController;
+    Map<String, Integer> keptCounter = new HashMap<String, Integer>(equipmentCounter);
+    ProcessEquipmentInterface keptLastAddedUnit = lastAddedUnit;
+    applyState(source);
+    unitOperations = keptUnits;
+    measurementDevices = keptDevices;
+    recycleController = keptRecycleController;
+    equipmentCounter.clear();
+    equipmentCounter.putAll(keptCounter);
+    lastAddedUnit = keptLastAddedUnit;
+    alarmManager.applyFrom(source.alarmManager, measurementDevices);
   }
 
   /**
@@ -7256,7 +7278,7 @@ public class ProcessSystem extends SimulationBaseClass {
     }
   }
 
-  private synchronized void applyState(ProcessSystem source, boolean replaceElements) {
+  private void applyState(ProcessSystem source) {
     setName(source.getName());
     String tagName = source.getTagName();
     if (tagName != null) {
@@ -7267,25 +7289,21 @@ public class ProcessSystem extends SimulationBaseClass {
     setTime(source.getTime());
     surroundingTemperature = source.surroundingTemperature;
     timeStepNumber = source.timeStepNumber;
-    if (replaceElements) {
-      unitOperations = new ArrayList<>(source.unitOperations);
-      measurementDevices = new ArrayList<>(source.measurementDevices);
-    }
+    unitOperations = new ArrayList<>(source.unitOperations);
+    measurementDevices = new ArrayList<>(source.measurementDevices);
     if (source.alarmManager != null) {
       alarmManager.applyFrom(source.alarmManager, measurementDevices);
     } else {
       alarmManager = new ProcessAlarmManager();
       alarmManager.registerAll(measurementDevices);
     }
+    recycleController = source.recycleController;
     timeStep = source.timeStep;
     runStep = source.runStep;
     solveFullyInModelStep = source.solveFullyInModelStep;
-    if (replaceElements) {
-      recycleController = source.recycleController;
-      equipmentCounter.clear();
-      equipmentCounter.putAll(source.equipmentCounter);
-      lastAddedUnit = source.lastAddedUnit;
-    }
+    equipmentCounter.clear();
+    equipmentCounter.putAll(source.equipmentCounter);
+    lastAddedUnit = source.lastAddedUnit;
     measurementHistory = source.measurementHistory.copy();
     recordMeasurementHistory = source.recordMeasurementHistory;
     thisThread = null;
