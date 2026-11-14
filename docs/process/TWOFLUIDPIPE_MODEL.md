@@ -1811,6 +1811,28 @@ different positive integer counts, and a count of one follows the original candi
 This is synchronous branch-local numerical refinement. It is not asynchronous multirate boundary
 coupling, and it does not qualify the selected time step or hydraulic closures.
 
+`TwoFluidPipeNetworkRefinementStudy` provides a reproducible common-start/common-time harness for
+this numerical work. Construct it from an unadvanced network, register named outer-step and
+branch-subcycle configurations, and call `run(durationSeconds)`. Every configuration is restored
+from the same serialized canonical network and may change only those numerical controls. The result
+retains measured runtime, worst accepted mass/component/energy/junction diagnostics, final node
+pressures, and final pressure, temperature, holdup and gas/liquid velocity profiles for every
+branch. `getRelativeNodePressureDifference` and
+`getRelativeBranchOutletPressureDifference` compare two named cases without rebuilding topology.
+The duration must be an integer multiple of every outer step. Mesh refinement still requires an
+independently constructed network with the same physical definition because the harness deliberately
+does not mutate branch meshes, boundaries, physics or tolerances.
+
+The slow regression replays a direct tieback, a two-algebraic-junction daisy chain, and two finite
+conservative template inventories feeding a conservative-storage PLEM/export riser. It checks
+unchanged source definitions, conservative acceptance, finite complete profiles and nearby final
+pressures for 1 ms/factor-1, 1 ms/factor-2 and 0.5 ms/factor-2 cases at a common 1 ms endpoint.
+These short four-cell fixtures validate the harness and expose runtime; their 25% nearby-pressure
+screen is not a convergence rate, error band, field validation or time-step recommendation. A
+three-incident algebraic PLEM trial did not converge its donor state during development and was not
+made to pass by relaxing conservation tolerances; representative branched algebraic qualification
+therefore remains open.
+
 The whole-network report includes pipe and node inventories, fixed-boundary transfers, phase
 sources, and gas/oil/water/liquid/total residuals. Conservative storage nodes additionally retain
 named-component and internal-energy inventories. When an `UpstreamCompressibleVolume` has positive
@@ -1874,8 +1896,9 @@ junction and whole-network closure checks pass.
 The multi-junction contract supports the same frozen-boundary branch subcycling, but it does not yet
 provide asynchronous multirate coupling or an independently qualified predictive restart/refill
 model. Conservative storage and algebraic fixtures provide synthetic closure, reversal-order,
-subcycle-aggregation and serialization evidence only. Refine the common reporting interval, each
-branch subcycle factor and every branch mesh for the intended field case, and retain external
+subcycle-aggregation and serialization evidence only. Use the refinement-study harness for common-
+time outer-step/subcycle replay, independently rebuild every branch mesh for spatial refinement, and
+retain external
 physical/commercial comparison evidence before design use.
 
 ### Choosing Time Step, Sections, and Pipeline Length

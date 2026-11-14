@@ -1267,6 +1267,24 @@ public final class TwoFluidPipeNetwork implements Serializable {
     return name;
   }
 
+  /**
+   * Get node names in deterministic registration order.
+   *
+   * @return immutable node-name set
+   */
+  public Set<String> getNodeNames() {
+    return java.util.Collections.unmodifiableSet(new LinkedHashSet<String>(nodes.keySet()));
+  }
+
+  /**
+   * Get branch names in deterministic registration order.
+   *
+   * @return immutable branch-name set
+   */
+  public Set<String> getBranchNames() {
+    return java.util.Collections.unmodifiableSet(new LinkedHashSet<String>(branches.keySet()));
+  }
+
   public double getSimulationTimeSeconds() {
     return simulationTimeSeconds;
   }
