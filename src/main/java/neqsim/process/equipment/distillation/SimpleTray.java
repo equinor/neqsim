@@ -20,6 +20,9 @@ import neqsim.util.unit.TemperatureUnit;
 public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements TrayInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+
+  /** Relative enthalpy residual at which a tray enthalpy flash stops without a confirming evaluation. */
+  private static final double TRAY_ENTHALPY_SINGLE_RESIDUAL_TOLERANCE = 1.0e-10;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SimpleTray.class);
 
@@ -34,6 +37,9 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    * of standard VLE flash. Set via {@link DistillationColumn#setReactive(boolean)}.
    */
   private boolean useReactiveFlash = false;
+
+  /** Whether the column uses the standard PH iteration for its nonideal tray corrections. */
+  private volatile boolean useStandardEnthalpyFlash;
 
   /**
    * When {@code true}, only thermodynamic properties (init level 2: enthalpy, K-values, densities needed for the
@@ -246,6 +252,15 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     return useReactiveFlash;
   }
 
+  /**
+   * Selects the standard PH iteration for a column with nonideal Murphree stages.
+   *
+   * @param useStandard true to use the standard PH iteration
+   */
+  void setUseStandardEnthalpyFlash(boolean useStandard) {
+    useStandardEnthalpyFlash = useStandard;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
@@ -283,7 +298,13 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
       enthalpy = calcMixStreamEnthalpy();
       // System.out.println("temp guess " + guessTemperature());
       if (!isSetOutTemperature()) {
-        // mixedStream.getThermoSystem().setTemperature(guessTemperature());
+        // Start the enthalpy flash from the tray's latest temperature instead of the
+        // temperature inherited from the template inlet stream. The PH solution does not depend
+        // on the starting point, but the previous tray state is far closer to it than an inlet
+        // from a neighbouring stage, which removes several inner TP flashes per tray evaluation.
+        if (!Double.isNaN(temperature) && !Double.isInfinite(temperature) && temperature > 0.0) {
+          mixedStream.getThermoSystem().setTemperature(temperature);
+        }
       } else {
         mixedStream.setTemperature(getOutTemperature(), "K");
       }
@@ -301,10 +322,13 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
       initTrayProperties();
     } else {
       try {
+        double enthalpyTolerance = useStandardEnthalpyFlash ? 0.0 : TRAY_ENTHALPY_SINGLE_RESIDUAL_TOLERANCE;
         if (useReactiveFlash) {
-          testOps.reactivePHflash(enthalpy, 0);
+          testOps.reactivePHflash(enthalpy, 0, enthalpyTolerance);
         } else {
-          testOps.PHflash(enthalpy, 0);
+          // The column repeats this flash every sweep, so one residual two orders of magnitude
+          // below the nominal tolerance is accepted without a confirming equilibrium flash.
+          testOps.PHflash(enthalpy, 0, enthalpyTolerance);
         }
         initTrayProperties();
       } catch (Exception ex) {

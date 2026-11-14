@@ -431,8 +431,20 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param type flash type (0 = standard)
    */
   public void reactivePHflash(double Hspec, int type) {
-    operation = new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash(system, Hspec,
-        type);
+    reactivePHflash(Hspec, type, 0.0);
+  }
+
+  /**
+   * Runs a reactive PH flash with an optional tolerance for the delegated nonreactive PH flash.
+   *
+   * @param Hspec specified total enthalpy in J
+   * @param type flash type (0 = standard)
+   * @param singleResidualTolerance positive relative enthalpy tolerance enabling bracketing and single-residual
+   * convergence when the system delegates to the nonreactive PH flash
+   */
+  public void reactivePHflash(double Hspec, int type, double singleResidualTolerance) {
+    operation = new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash(system, Hspec, type,
+        singleResidualTolerance);
     getOperation().run();
   }
 
@@ -472,6 +484,28 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     } else {
       operation = new PHflash(system, Hspec, type);
     }
+    getOperation().run();
+  }
+
+  /**
+   * Run a PH flash with optional temperature bracketing and single-residual convergence.
+   *
+   * <p>
+   * Intended for callers that repeat the flash inside their own iteration. The specialized seawater and
+   * single-component flashes ignore the tolerance.
+   * </p>
+   *
+   * @param Hspec specified total enthalpy in J
+   * @param type flash type, 0 for the standard temperature iteration
+   * @param singleResidualTolerance positive relative enthalpy tolerance enabling temperature bracketing and
+   * single-residual convergence; zero or negative keeps the standard PH flash
+   */
+  public void PHflash(double Hspec, int type, double singleResidualTolerance) {
+    if (system instanceof neqsim.thermo.system.SystemSeawater || isPureComponentWithinEnthalpyRange(Hspec)) {
+      PHflash(Hspec, type);
+      return;
+    }
+    operation = new PHflash(system, Hspec, type, singleResidualTolerance);
     getOperation().run();
   }
 
