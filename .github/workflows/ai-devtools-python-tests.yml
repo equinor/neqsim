@@ -83,6 +83,7 @@ jobs:
             devtools/test_discovery_registry.py \
             devtools/test_verify_agent_skill_refs.py \
             devtools/test_fa_solver_runtime.py \
+            devtools/test_pvt_dle_mass.py \
             devtools/test_pvt_study.py \
             devtools/test_pvt_report.py \
             devtools/test_pvt_proxy.py \

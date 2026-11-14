@@ -35,6 +35,12 @@ dataset. The orchestrator is
 The input schema, shipped examples, supported limits and output paths are in the
 [study guide](../../../docs/pvtsimulation/pvt_fluid_study_report.md).
 
+For primary isothermal differential liberation, run
+`pvt_dle_mass.audit_dle_mass` on the source-identified stage intervals before
+admitting observations. Retain unavailable columns, residual-oil identity,
+and any unresolved standard gas basis in the evidence.
+See the [DLE audit](../../../docs/pvtsimulation/dle_mass_audit.md).
+
 ## One normalized evidence chain
 
 Retain sample, analysis, observation, experiment, model, parameter and export IDs
