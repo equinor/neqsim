@@ -40,10 +40,8 @@ the source are not experimental residuals.
 
 Each state uses `SystemElectrolyteCPAstatoil`, mixing rule 10, the reported
 total pressure, a finite CO2 reservoir and one final aqueous kilogram of water.
-Feed water is compensated for evaporation. The test skips the preliminary
-homogeneous TP-flash stability check because these saturation states require
-coexisting CO2-rich and aqueous phases. Multiphase stability analysis and
-phase-split calculation remain enabled. The assessment verifies two fluid
+Feed water is compensated for evaporation. The assessment uses the default
+TP-flash stability setting with multiphase checking enabled. It verifies two fluid
 phases with the ions confined to the aqueous phase, component inventory, salt
 mass fractions, the water basis, finite diagnostics and finite-reservoir
 independence. The non-aqueous phase is identified by position because NeqSim
