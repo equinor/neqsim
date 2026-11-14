@@ -1133,6 +1133,18 @@ solving; invalid evidence cannot overwrite a report or the read-only fixture.
 Its admission guards are tested with normal and optimized Python. They do not
 establish experimental accuracy or resolve the remaining primary-source gaps.
 
+### Bidirectional methane/water and methane/MEG screening
+
+The [Frost protocol](../../src/test/resources/neqsim/thermo/mixingrule/hv-frost/README.md)
+preserves separate thesis and journal compiler versions and assesses both
+phase endpoints against independent binary equations. It records the large
+aqueous methane error of the staged PR-HV water tuple and the gas-phase MEG
+error of the staged SRK-HV tuple, alongside numerical and equilibrium closure.
+An IAPWS pure-water pressure sensitivity leaves the aqueous methane error
+largely unchanged. The comparison is limited to the measured binary
+coordinates and declared pure profiles. The existing validated opt-in profiles
+remain available.
+
 ### Staged CO2/water source configurations
 
 The separate [CO2 fixture protocol](../../src/test/resources/neqsim/thermo/mixingrule/hv-co2-source/README.md)
