@@ -26,6 +26,7 @@ NeqSim provides a complete [DEXPI](https://dexpi.org/) integration that supports
 | `DexpiLayoutConfig` | Configurable layout parameters (spacing, fonts, colors, feature toggles) |
 | `DexpiMetadata` | Shared constants for `GenericAttribute` names used by both reader and writer |
 | `DexpiSimulationBuilder` | High-level builder: DEXPI XML to runnable `ProcessSystem` |
+| `Dexpi201DynamicBindingReader` | Fail-closed native DEXPI 2.0.1 identity check and executable binding restore |
 | `DexpiTopologyResolver` | Nozzle/connection graph, topological sort, cycle detection |
 | `DexpiEquipmentFactory` | Converts DEXPI placeholders to real NeqSim equipment with sizing |
 | `DexpiMappingLoader` | Thread-safe cached loader for equipment mapping `.properties` files |
@@ -152,6 +153,49 @@ does not infer loop membership, safety credit or executable control intent. This
 is a bounded instrument-inventory intake path: the existing runnable equipment,
 piping and topology reconstruction remains the documented Proteus-compatible
 supported subset, not a claim of full native DEXPI 2.0.1 process-model import.
+
+For native 2.0.1 `Object` records, the same structured import now retains the relationships emitted
+by the NeqSim controlled profile. `ProcessSignalGeneratingFunction/SensingLocation` becomes resolved
+measuring evidence, `SignalLineFunction/Source/Target` becomes exact source-target evidence, and
+`ActuatingFunction/Systems/OperatedValveReference/Valve` becomes exact final-element evidence. The
+records preserve native IDs and owning function tags; they do not invent a controller, process
+attachment, actuator, fail action, or safeguard classification.
+
+### Executable native DEXPI 2.0.1 binding intake
+
+Use `Dexpi201DynamicBindingReader` when a controlled native 2.0.1 P&ID, governed engineering model,
+and the companion `neqsim_pid_simulation_bindings.v1` artifact must be restored for a dynamic test.
+The DEXPI file proves the drawing-side identities and relationships. The binding artifact proves the
+explicit runtime names, Java types, project revision, P&ID fingerprint, and executable-topology
+fingerprint. Neither artifact is silently substituted for the other.
+
+```java
+Dexpi201DynamicBindingReader.Result intake =
+    Dexpi201DynamicBindingReader.read(
+        Paths.get("plant-pid.dexpi.xml"),
+        engineeringProject,
+        pidDesignModel,
+        Files.readString(Paths.get("pid-simulation-bindings.json")));
+
+PidSimulationSession session = new PidSimulationSession(
+    engineeringProject, pidDesignModel, intake.getBindings());
+DynamicSafetyScenarioResult result = session.runDynamicScenario(
+    scenario, Collections.singletonList("SDV-101"));
+```
+
+The intake accepts only the exact DEXPI 2.0.1 Plant profile and a conformant file. It then requires
+one exact native function for each bound measurement/controller, a resolved sensing location for
+each bound measurement, one exact physical object for each bound runtime equipment name, and an
+exact actuation-to-final-element relationship for each bound operated valve. Every functional
+connection declared by the governed P&ID must appear as the same native source-target tag pair.
+Duplicate, missing, unresolved, type-incompatible, stale-revision, stale-P&ID, or stale-runtime
+identities fail before a scenario can run.
+
+This path deliberately does not reconstruct an arbitrary third-party process model from a drawing,
+and it does not infer controller tuning, ranges, setpoints, alarm/trip limits, valve fail state, SIL,
+voting, thermodynamic state, or missing geometry. Those remain explicit model inputs and reviewed
+engineering decisions. `DexpiSimulationBuilder` remains a compatibility/scaffolding path; its
+category-based auto-instrument renaming is not the production binding contract.
 
 `ImportResult.getActuatingFunctions()` exposes source-ordered `ActuatingFunction` and
 `ActuatingElectricalFunction` occurrences as immutable `DexpiActuatingFunctionInfo` records. Each
