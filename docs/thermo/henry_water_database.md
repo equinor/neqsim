@@ -200,24 +200,24 @@ component name, CAS, formula, available InChIKey, source-record URL, source-type
 codes and a scientific admission boundary. It contains no Henry value, fitted
 slope, assumed pressure, uncertainty or validity range.
 
-The component-specific inventory is partitioned into four fail-closed groups:
+The component-specific inventory is partitioned into three fail-closed groups:
 
 - 125 hydrocarbons have source-code inventories but no selected type-L local
   expression or campaign-qualified measured/reference-only fact. Admission
   requires a primary or redistributable measured dataset with explicit
   intrinsic water convention, units, pressure and temperature conditions,
   uncertainty and finite validity range;
-- `TEG` and `DEG` are held at the glycol solvent-role boundary. Solute-in-water
-  evidence cannot be transferred silently into mixed-solvent glycol models;
-- the row named `glycerol` is an identity conflict, not evidence for glycerol.
-  Its stored CAS 112-27-6, formula C6H14O4 and InChIKey identify `TEG`; and
+- `TEG`, `DEG` and `glycerol` are held at the polyol solvent-role boundary.
+  Solute-in-water evidence cannot be transferred silently into mixed-solvent
+  glycol models. Glycerol carries its own identity (CAS 56-81-5, C3H8O3) since
+  issue #4069; its Sander source-type codes are left empty until they are
+  re-audited against the Sander archive for that CAS; and
 - 12 acids or reactive inorganic rows require species-resolved treatment of
   dissociation, hydrolysis, reaction, decomposition or molecular/allotrope
   identity before an intrinsic neutral-solute coefficient can be defined.
 
-Five duplicate-identity aliases are explicit: `glycerol`/`TEG`,
-`H2SO4`/`sulfuric acid`, `HNO3`/`nitric acid`, and the mojibake aliases for
-`NH2OH` and `N2H4`. Aliases provide no independent data. The audit requires
+Four duplicate-identity aliases are explicit: `H2SO4`/`sulfuric acid`,
+`HNO3`/`nitric acid`, and the mojibake aliases for `NH2OH` and `N2H4`. Aliases provide no independent data. The audit requires
 all 140 rows to match `COMP.csv` and the coverage inventory exactly, remain
 neutral, stay outside both numerical catalogs, and carry no numerical Henry
 fields.

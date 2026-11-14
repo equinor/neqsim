@@ -946,3 +946,49 @@ critical-property measurements are reported by
 but the accessible abstract does not expose the numerical property tables.
 Correct identity and mole/mass conversions do not establish validated DEA
 phase behavior. Keep #4382 open.
+
+## Glycerol identity and data reconstruction (#4069)
+
+Until #4069 the `glycerol` row in `COMP.csv` and `COMP_EXT.csv` was a copy of
+`TEG`: CAS 112-27-6, formula C6H14O4, molar mass 150.175 g/mol and TEG's
+vapour-pressure, caloric and transport correlations. Every mass-based result for
+a fluid with glycerol was 63 % wrong. The row now describes glycerol
+(propane-1,2,3-triol, CAS 56-81-5, C3H8O3, InChIKey
+`PEDCQBHIVMGVHV-UHFFFAOYSA-N`). Both database files carry the same values, and
+`GlycerolIdentityDataTest` checks the identity and mass bookkeeping in both
+database modes. Each field was either sourced, derived from sourced data, or
+disposed of as follows:
+
+| Field(s) | Value | Provenance |
+|---|---|---|
+| `MOLARMASS`, `MWAVG` | 92.0938 g/mol | C3H8O3 with IUPAC conventional atomic weights |
+| `TC`, `PC`, `CRITVOL`, `ACSFACT` | 850 K, 75.0 bar, 264 cm3/mol, 0.513 | Poling, Prausnitz & O'Connell, *Properties of Gases and Liquids* 5th ed., App. A |
+| `NORMBOIL` | 290.0 °C | Stull (1947), Ind. Eng. Chem. 39, 517 |
+| `ANTOINE*` (`exp`, bar, K) | A=11.62691, B=5160.667, C=-116.28 | Least-squares fit to Stull (1947), 1–760 mmHg (398–563 K); max deviation 6.7 % |
+| `LIQDENS`, `STDDENS` | 1.2613 g/cm3 | Liquid density at 20 °C |
+| `LIQUIDDENSITYCOEFS*` (DIPPR-105) | 0.92918, 0.2453, 850, 0.211 | Fitted so that C1/C2 = 1/Vc and the curve matches 1.2613 g/cm3 at 20 °C and a slope of -0.00064 g/cm3/K |
+| `CPA..CPD` (ideal gas) | 14.352, 0.3967, -2.338e-4, 5.34e-8 | Joback group contribution (2 -CH2-, 1 >CH-, 3 -OH); 113.3 J/mol/K at 298 K |
+| `ENTHALPYOFFORMATION` | -577.9 kJ/mol (gas) | NIST WebBook, Bastos et al. (1988); `FORMATIONENTHALPYSOURCE` = `NIST-Bastos-1988-C56815` |
+| `ABSOLUTEENTROPY`, `GIBBSENERGYOFFORMATION` | 386.55 J/mol/K, -440.4 kJ/mol (gas) | Derived from S°(liq) 206.3 J/mol/K, ΔvapH(298 K) 91.7 kJ/mol and Psat(25 °C) 1.68e-4 mmHg, with CODATA element entropies |
+| `HEATOFVAPORIZATIONCOEFS*` (DIPPR-106) | 1.0806e8 J/kmol, 0.38 | Watson exponent through ΔvapH(298 K) = 91.7 kJ/mol; agrees within 5 % with Clausius–Clapeyron on the Antoine fit at 450 K and Tb |
+| `MELTINGPOINTTEMPERATURE`, `TRIPLEPOINTTEMPERATURE`, `HEATOFFUSION` | 291.33 K, 18.28 kJ/mol | NIST WebBook phase-change data |
+| `TRIPLEPOINTPRESSURE` | 9.42e-8 bar | Clausius–Clapeyron from Psat(25 °C) with ΔvapH 91.7 kJ/mol |
+| `LIQVISC*` (model 3) | -152.022356, 23660.034, 0.353498374, -2.91518669e-4 | Fit to Segur & Oberstar (1951), Ind. Eng. Chem. 43, 2117, 0–100 °C; max deviation 3 %. Do not extrapolate far above 100 °C |
+| `PARACHOR`, `PARACHOR_CPA` | 206.03 | Sugden parachor from σ = 63.4 mN/m and ρ = 1.2613 g/cm3 at 20 °C |
+| `DIELECTRICPARAMETER*` | 0, 12671.4 (ε = b/T) | ε = 42.5 at 25 °C (CRC Handbook); assumes ε ∝ 1/T. The previous row held an unphysical cubic |
+| `LIQUIDCONDUCTIVITY*` | 0.287 W/m/K (constant) | CRC Handbook value near 25 °C; glycerol's conductivity depends only weakly on T |
+| `RACKETZ` | 0.25769 | Rackett Z fitted to 1.2613 g/cm3 at 20 °C |
+| `LJDIAMETER`, `LJEPS` | 5.19 Å, 675 K | Chung et al. estimate from Vc and Tc |
+| `CPliquid*`, `CPsolid*` | 218.9 J/mol/K (constant) | NIST liquid Cp at 298 K; also used for the solid, as in other glycol rows |
+| `SOLIDDENSITYCOEFS*` | 13.709 mol/L | Estimate: liquid molar density at the melting point |
+| CPA SRK/PR `a0`, `b`, `c1`, `ε`, `β` | 200204.3, 7.06, 1.32642, 14036, 0.025 | Glycerol-specific CPA set kept. a0 and c1 were re-expressed for Tc = 850 K so that a(T) is identical to the previous fit made with Tc = 766.1 K. That fit reproduces Stull (1947) to within 9 % |
+| `racketZCPA`, `volcorrCPA_T` | 0.288643, -0.00128033 | Peneloux shift fitted to liquid density at 0–100 °C; CPA density is within 0.05 % |
+| `MC1..MC3`, `Href` | 0 | Removed the TEG-specific Mathias–Copeman terms; zero falls back to the classic `m(ω)`. `Href` is not read by any model |
+
+`DIPOLEMOMENT`, `VISCFACT`, `TRIPLEPOINTDENSITY` and the hydrate Lennard-Jones
+fields keep their earlier values. These are generic glycol placeholders that
+are also shared by MEG, not TEG-specific data, and no reviewed glycerol source
+replaces them yet. SAFT, UMR-CPA and PR Mathias–Copeman fields stay zero. In
+the Henry-water audit, glycerol moves from the TEG identity-alias boundary to
+the polyol solvent-role boundary, with empty Sander source-type codes pending a
+re-audit of CAS 56-81-5.

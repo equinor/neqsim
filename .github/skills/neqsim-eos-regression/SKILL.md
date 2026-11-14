@@ -1,7 +1,7 @@
 ---
 name: neqsim-eos-regression
 description: "EOS parameter regression workflow for fitting equation-of-state models to experimental data. USE WHEN: tuning binary interaction parameters (kij), matching saturation pressures, fitting PVT data (CME, CVD, DL), characterizing C7+ fractions, or validating EOS predictions against lab measurements. Covers SRK, PR, CPA parameter fitting strategies."
-last_verified: "2026-10-12"
+last_verified: "2026-11-14"
 ---
 
 # EOS Parameter Regression Workflow
@@ -258,6 +258,14 @@ actually reads.
 4. **Compositional shift**: Parameters fitted to one composition may fail for depleted fluids
 5. **Forgetting `setMixingRule`**: Must call before accessing kij parameters
 6. **Wrong units**: MW in kg/mol (not g/mol) for `addTBPfraction`
+7. **Changing a CPA component's `TC` silently changes its fitted `a(T)`**: CPA uses
+   `a(T) = a0 (1 + c1 (1 - sqrt(T/Tc)))^2`, so correcting `TC` in `COMP.csv` breaks the vapour-pressure fit.
+   Because `sqrt(a)` is linear in `sqrt(T)`, re-express exactly: keep `K = sqrt(a0)(1+c1)` and
+   `S = sqrt(a0) c1 / sqrt(Tc)`, then `sqrt(a0') = K - S sqrt(Tc')` and `c1' = S sqrt(Tc') / sqrt(a0')`.
+   The Peneloux shift (`racketZCPA`) also scales with `Tc/Pc`, so refit it to liquid density afterwards.
+   This was applied and measured for glycerol on 2026-11-14 (#4069): vapour pressure was identical before and after,
+   and density was within 0.05 % at 0–100 °C. See the
+   [component database guide](../../../docs/thermo/component_database_guide.md#glycerol-identity-and-data-reconstruction-4069).
 
 ## Mechanics of Applying Tuning (read before writing a regression loop)
 
