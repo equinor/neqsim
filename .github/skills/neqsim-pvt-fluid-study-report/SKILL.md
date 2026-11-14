@@ -42,6 +42,11 @@ and any unresolved standard gas basis in the evidence. The cell Bg/Z route
 requires source evidence linking both quantities to the withdrawn gas and GOR basis.
 See the [DLE audit](../../../docs/pvtsimulation/dle_mass_audit.md).
 
+For a measured serial separator train, run `pvt_separator_mass.audit_separator_mass`
+before admitting measurements. Check the reported terminal stock-tank basis,
+independent standard gas density and per-stage balances. Review the whole train
+with the stage evidence. See the [separator audit](../../../docs/pvtsimulation/separator_mass_audit.md).
+
 ## One normalized evidence chain
 
 Retain sample, analysis, observation, experiment, model, parameter and export IDs
