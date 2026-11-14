@@ -73,22 +73,32 @@ public class JetFireModel implements Serializable {
   }
 
   /**
-   * Atmospheric transmissivity (Wayne 1991): simplified function of distance and humidity.
+   * Atmospheric transmissivity (Wayne 1991): simplified function of distance and humidity. Dry air has unit
+   * transmissivity in this approximation.
    *
    * @param distanceM distance from flame center in m
    * @return transmissivity τ in [0,1]
    */
   public double transmissivity(double distanceM) {
-    double pw = humidityRH * 1700.0; // partial pressure water (Pa) at 20°C, sat ≈ 2340
-    double xpw = pw * Math.max(distanceM, 1.0);
-    double tau = 1.006 - 0.01171 * Math.log10(xpw) - 0.02368 * Math.pow(Math.log10(xpw), 2);
-    if (tau < 0.0) {
-      tau = 0.0;
+    return atmosphericTransmissivity(humidityRH, distanceM);
+  }
+
+  /**
+   * Evaluate the water-vapour-dependent transmissivity used by the jet fire and BLEVE models.
+   *
+   * @param humidityRH relative humidity in [0,1]
+   * @param distanceM path length in m
+   * @return transmissivity in [0,1] for finite inputs
+   */
+  static double atmosphericTransmissivity(double humidityRH, double distanceM) {
+    if (humidityRH == 0.0) {
+      return 1.0;
     }
-    if (tau > 1.0) {
-      tau = 1.0;
-    }
-    return tau;
+    double xpw = humidityRH * 1700.0 * Math.max(distanceM, 1.0);
+    // Extend the fit continuously toward dry air on its low-absorption side.
+    double logXpw = Math.log10(Math.max(1.0, xpw));
+    double tau = 1.006 - 0.01171 * logXpw - 0.02368 * logXpw * logXpw;
+    return Math.max(0.0, Math.min(1.0, tau));
   }
 
   /**
