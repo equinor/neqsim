@@ -2877,7 +2877,6 @@ public class TPmultiflash extends TPflash {
     return removedPhase;
   }
 
-
   /**
    * Re-equilibrates molecular partitioning after the complete non-reactive ionic inventory is restored.
    *
@@ -2919,7 +2918,6 @@ public class TPmultiflash extends TPflash {
     ComponentInterface feedComponent = system.getPhase(0).getComponent(component);
     return feedComponent.getIonicCharge() != 0 || feedComponent.isIsIon();
   }
-
 
   /**
    * Checks whether the active full-species inventory contains a material ion.
@@ -2970,10 +2968,8 @@ public class TPmultiflash extends TPflash {
         ionicFraction += Math.max(getFlashOverallFraction(component), 0.0);
       }
     }
-    double maximumAqueousFraction =
-        1.0 - (system.getNumberOfPhases() - 1.0) * phaseFractionMinimumLimit;
-    double minimumAqueousFraction = Math.min(maximumAqueousFraction,
-        ionicFraction + NON_REACTIVE_ION_CAPACITY_MARGIN);
+    double maximumAqueousFraction = 1.0 - (system.getNumberOfPhases() - 1.0) * phaseFractionMinimumLimit;
+    double minimumAqueousFraction = Math.min(maximumAqueousFraction, ionicFraction + NON_REACTIVE_ION_CAPACITY_MARGIN);
     double currentAqueousFraction = system.getBeta(aqueousPhase);
     if (currentAqueousFraction >= minimumAqueousFraction) {
       return;
