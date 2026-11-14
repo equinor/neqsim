@@ -332,9 +332,14 @@ def render_pdf(document, pdf):
                                       ReadOnly=False, AddToRecentFiles=False)
             try:
                 doc.Repaginate()
+                # Caption numbers (SEQ) come after the front-matter lists in document
+                # order, so a second pass is needed for the lists to see them.
+                doc.Fields.Update()
                 doc.Fields.Update()
                 for toc in doc.TablesOfContents:
                     toc.Update()
+                for tof in doc.TablesOfFigures:
+                    tof.Update()
                 doc.Repaginate()
                 # Refresh page references after the contents has changed size.
                 for toc in doc.TablesOfContents:
