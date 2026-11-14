@@ -73,8 +73,8 @@ public final class Dexpi201DynamicBindingReader {
       bindings = verifiedBindings;
       sourceSha256 = sha256;
       verifiedTags = Collections.unmodifiableList(new ArrayList<String>(tags));
-      verifiedSignals = immutableRows(signals);
-      verifiedActuations = immutableRows(actuations);
+      verifiedSignals = Collections.unmodifiableList(copyEvidenceRows(signals));
+      verifiedActuations = Collections.unmodifiableList(copyEvidenceRows(actuations));
     }
 
     /** @return revision-bound bindings ready for the existing strict scenario preflight */
@@ -123,13 +123,13 @@ public final class Dexpi201DynamicBindingReader {
       return new GsonBuilder().setPrettyPrinting().create().toJson(toMap());
     }
 
-    /** Returns deeply immutable evidence rows. */
-    private static List<Map<String, String>> immutableRows(List<Map<String, String>> rows) {
+    /** Copies evidence rows into a new list with immutable entries. */
+    private static List<Map<String, String>> copyEvidenceRows(List<Map<String, String>> rows) {
       List<Map<String, String>> result = new ArrayList<Map<String, String>>();
       for (Map<String, String> row : rows) {
         result.add(Collections.unmodifiableMap(new LinkedHashMap<String, String>(row)));
       }
-      return Collections.unmodifiableList(result);
+      return result;
     }
   }
 
@@ -391,12 +391,10 @@ public final class Dexpi201DynamicBindingReader {
   /** Reads one direct native string property. */
   private static String stringData(Element object, String property) {
     for (Node node = object.getFirstChild(); node != null; node = node.getNextSibling()) {
-      if (!(node instanceof Element) || !"Data".equals(((Element) node).getTagName())
-          || !property.equals(((Element) node).getAttribute("property"))) {
-        continue;
+      if (node instanceof Element && "Data".equals(((Element) node).getTagName())
+          && property.equals(((Element) node).getAttribute("property"))) {
+        return node.getTextContent().trim();
       }
-      String value = ((Element) node).getTextContent().trim();
-      return value;
     }
     return "";
   }
