@@ -46,7 +46,7 @@ class CompressorMechanicalDesignDocumentationTest {
     assertFalse(source.contains("catch ("));
     assertTrue(source.contains("LogManager.getLogger(CompressorCasingDesignExample.class)"));
     assertTrue(source.contains("calculator.setDesignPressureBara(200.0)"));
-    assertTrue(source.contains("calculator.setMaterialGrade("Inconel-718")"));
+    assertTrue(source.contains("calculator.setMaterialGrade(\"Inconel-718\")"));
     assertTrue(source.contains("CompressorMechanicalDesign.CasingType.BARREL"));
     assertTrue(source.contains("calculator.setSourService(true)"));
     assertTrue(source.contains("calculator.setH2sPartialPressureKPa(5.0)"));
@@ -57,7 +57,7 @@ class CompressorMechanicalDesignDocumentationTest {
     assertTrue(source.contains("calculator.isHydroTestAcceptable()"));
     assertTrue(source.contains("calculator.isFlangeRatingAdequate()"));
     assertTrue(source.contains("calculator.getBarrelEndCoverBoltCount() < 12"));
-    assertTrue(source.contains(""COMPLIANT".equals(calculator.getNaceComplianceStatus())"));
+    assertTrue(source.contains("\"COMPLIANT\".equals(calculator.getNaceComplianceStatus())"));
 
     try (URLClassLoader loader = compile("CompressorCasingDesignExample", source)) {
       Class<?> example = loader.loadClass("CompressorCasingDesignExample");
@@ -73,14 +73,16 @@ class CompressorMechanicalDesignDocumentationTest {
    */
   private String exampleSource() throws IOException {
     String markdown = new String(Files.readAllBytes(GUIDE), StandardCharsets.UTF_8);
-    assertEquals(markdown.indexOf(MARKER), markdown.lastIndexOf(MARKER),
-        "Compressor casing example marker must be unique");
+    int markerIndex = markdown.indexOf(MARKER);
+    assertTrue(markerIndex >= 0, "Compressor casing example marker is missing");
+    assertEquals(markerIndex, markdown.lastIndexOf(MARKER), "Compressor casing example marker must be unique");
     assertFalse(markdown.contains("System.out.println"));
-    assertTrue(markdown.contains("preliminary screening calculation"));
-    assertTrue(markdown.contains("does not replace a certified pressure-vessel design"));
-    assertTrue(markdown.contains("Treat the hard-coded conditions as example inputs"));
+    String prose = markdown.replaceAll("\\s+", " ");
+    assertTrue(prose.contains("preliminary screening calculation"));
+    assertTrue(prose.contains("does not replace a certified pressure-vessel design"));
+    assertTrue(prose.contains("Treat the hard-coded conditions as example inputs"));
 
-    String markedTail = markdown.substring(markdown.indexOf(MARKER) + MARKER.length());
+    String markedTail = markdown.substring(markerIndex + MARKER.length());
     Matcher fenceMatcher = JAVA_FENCE.matcher(markedTail);
     assertTrue(fenceMatcher.find(), "Marked compressor casing Java fence is missing");
     String source = fenceMatcher.group(1).trim();
