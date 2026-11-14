@@ -1180,6 +1180,19 @@ film-constrained gates are unchanged. The option is disabled by default and is n
 continuation evidence, not a countercurrent model validation.
 The separate coupled-predictor repair restores the legacy five-second pressure regressions;
 it does not qualify the remaining unsplit transitions or the 600 s experiment.
+
+The transactional unsplit route now gives passive wall and interphase friction a
+single conservative post-transport owner whenever transient pressure
+interpolation is off. Each prepared step exposes the accepted gas/oil/water
+momentum impulse per pipe length, and complete intervals sum it without rejected
+trials. Phase mass and total energy are unchanged, and the independently checked
+rate ledger includes the exact impulse. The unchanged five-second matrix now
+passes all three midpoint/no-interpolation lanes. Its backward-Euler/
+pressure-interpolated lanes still reject at 1.4000, 1.8125 and 0.9750 s, so the
+complete gate remains failed. Pressure interpolation keeps its existing
+friction ownership because combining the operators regresses the unresolved
+trace-phase/donor event; no limiter, phase floor or relaxed tolerance replaces
+that missing formulation.
 See the [transaction and execution contract](../process/TWOFLUIDPIPE_MODEL.md#complete-transient-transactions-and-experimental-unsplit-execution)
 and [current transition evidence](../process/TWOFLUIDPIPE_MODEL.md#inclined-film-eligibility-and-trace-phase-derivatives).
 

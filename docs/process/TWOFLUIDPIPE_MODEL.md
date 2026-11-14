@@ -2832,6 +2832,41 @@ the coarse-gas case and promotes it to ordinary CI; the fifteen riser gates stil
 reported above. The subsequent coupled-predictor repair is separate evidence; focused
 regression success is not a full-suite or general-flow qualification claim.
 
+#### Conservative passive-friction ownership in unsplit preparation
+
+The transactional unsplit integrator now removes wall, gas/liquid and oil/water
+friction from the nonlinear transport residual and advances the existing
+frozen-resistance conservative source exactly once after a transport candidate
+converges. The source step preserves every phase mass and total energy, cannot
+increase phase kinetic energy, and returns its exact gas/oil/water momentum
+impulse per pipe length through
+`PreparedStep.getConservativeFrictionImpulsePerLength()`. `PreparedInterval`
+sums the same accepted impulses without including rejected trials. The impulse
+is also converted to an equivalent conservative rate in the independently
+verified step and interval ledgers; shared equation configuration and published
+diagnostics are restored after every trial.
+
+This first-order source ownership is automatic for unsplit preparation when
+transient pressure interpolation is off. The pressure-interpolated route retains
+its existing unsplit friction ownership: combining the two changes moved or
+worsened its exact trace-phase/donor event, so that combination is deliberately
+split until a conservative pressure-face phase-presence formulation is
+qualified. No phase mass is clipped, no donor is smeared, and no nonlinear or
+conservation tolerance is changed.
+
+On current master `baf00059f4453eb82a84ead56fa00aacf9783996`, the unchanged
+five-second Tengesdal matrix was first reproduced. With this source ownership,
+all three midpoint/no-interpolation lanes (16 cells / 0.1 s, 16 / 0.05 s and
+24 / 0.05 s maximum step) complete the full five seconds. All six ordinary
+0.1 s handoffs also pass. The three backward-Euler/pressure-interpolated lanes
+remain negative evidence at the unchanged gates: 16 / 0.1 s stops at 1.4000 s
+by line-search failure, 16 / 0.05 s at 1.8125 s by the iteration limit, and
+24 / 0.05 s at 0.9750 s by line-search failure. Their attempted terminal steps
+are 0.000390625, 0.0001953125 and 0.0001953125 s. Thus the matrix improves from
+zero to three of six five-second lanes, but it does not pass as a whole and does
+not authorize the 180/600 s sequence, physical restart, severe slugging or
+hydraulic pigging.
+
 ### Standing benchmark acceptance metrics
 
 Use `TwoFluidBenchmarkMetrics` to compare a rate sweep, a section profile, mesh realizations, and

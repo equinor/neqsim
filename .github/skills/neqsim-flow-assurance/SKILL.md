@@ -1235,6 +1235,14 @@ commercial-simulator comparison.
   unchanged five-second cases still stop at 0.63125--1.83515625 s and the complete
   fifteen-case riser matrix remains failed. Require that entire matrix before progressing to 180/600 s,
   physical restart, swept-liquid, receiver-surge or hydraulic-pigging claims.
+- The current no-pressure-interpolation unsplit preparer advances passive wall
+  and interphase friction once with the conservative frozen-resistance source.
+  Audit the accepted per-cell phase impulse from `PreparedStep`/`PreparedInterval`.
+  The three midpoint five-second lanes now pass; the pressure-interpolated lanes
+  still stop at 1.4000/1.8125/0.9750 s and retain their prior friction owner
+  because the combined operator regresses the trace-phase/donor event. This is
+  numerical source evidence only, not restart, severe-slugging or pigging
+  qualification.
 - Do not over-constrain `setOutletPressure` with a measured pressure drop the
   modelled geometry cannot produce. Investigate valves, fittings, elevations, and
   boundary consistency separately.
