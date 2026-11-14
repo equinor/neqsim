@@ -325,7 +325,7 @@ transport properties (viscosity, thermal conductivity, density).
 | `DeclineCurveAnalysis` | Arps + Duong (2011) decline; forward rate/EUR and least-squares history matching (`fitArps`, `fitDuong`) | `pvtsimulation.util` |
 | `GasMaterialBalance` | Gas P/Z straight line (OGIP), Cole plot aquifer diagnostic, Havlena-Odeh | `pvtsimulation.reservoirproperties.materialbalance` |
 | `OilMaterialBalance` | Havlena-Odeh oil balance (OOIP, gas-cap ratio m, water drive, Pirson drive indices) | `pvtsimulation.reservoirproperties.materialbalance` |
-| `VanEverdingenHurstAquifer` | Radial aquifer influence functions, Carter-Tracy cumulative influx, ECLIPSE AQUTAB export | `pvtsimulation.reservoirproperties.materialbalance` |
+| `VanEverdingenHurstAquifer`, `FiniteRadialAquiferInfluence` | Infinite radial and opt-in sealed-annulus rate influence, Carter–Tracy cumulative influx and ECLIPSE AQUTAB export. The prepared response supports outer/inner radius ratios 2–10. | `pvtsimulation.reservoirproperties.materialbalance` |
 
 ### Flow Assurance (PVT module)
 

@@ -1,5 +1,6 @@
 package neqsim.process.equipment.pipeline.twophasepipe.numerics;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import static neqsim.util.util.ArrayUtils.copyMatrixArray;
 
 import java.io.Serializable;
@@ -86,6 +87,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
   private final PhaseDensityModel densityModel;
   private final ActiveSetController activeSetController;
   private final double pressureInterpolationTimeScale;
+  private final boolean conservativeFrictionSplitEnabled;
 
   /**
    * Create a transactional adapter.
@@ -129,6 +131,23 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
   }
 
   /**
+   * Create an adapter with pressure interpolation and an optional conservative friction source split.
+   *
+   * @param equations configured finite-volume operator
+   * @param acceptedTemplates accepted section state used as the trial template
+   * @param spatialStep representative cell size in m
+   * @param densityModel pressure-dependent phase density model
+   * @param pressureInterpolationTimeScale zero to disable, or the temporal end-state weight times the attempted step
+   * @param conservativeFrictionSplitEnabled true to integrate passive friction after the transport solve
+   */
+  public TwoFluidUnsplitModelAdapter(TwoFluidConservationEquations equations, TwoFluidSection[] acceptedTemplates,
+      double spatialStep, PhaseDensityModel densityModel, double pressureInterpolationTimeScale,
+      boolean conservativeFrictionSplitEnabled) {
+    this(equations, acceptedTemplates, spatialStep, densityModel, SMOOTH_ACTIVE_SET, pressureInterpolationTimeScale,
+        conservativeFrictionSplitEnabled);
+  }
+
+  /**
    * Create a transactional adapter with explicit active choices and pressure interpolation.
    *
    * @param equations configured finite-volume operator
@@ -141,6 +160,27 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
   public TwoFluidUnsplitModelAdapter(TwoFluidConservationEquations equations, TwoFluidSection[] acceptedTemplates,
       double spatialStep, PhaseDensityModel densityModel, ActiveSetController activeSetController,
       double pressureInterpolationTimeScale) {
+    this(equations, acceptedTemplates, spatialStep, densityModel, activeSetController, pressureInterpolationTimeScale,
+        false);
+  }
+
+  /**
+   * Create a transactional adapter with a separately integrated conservative friction source. The configured operator
+   * is shared with the integrator. Trial evaluations hold its monitor and restore its state.
+   *
+   * @param equations configured finite-volume operator
+   * @param acceptedTemplates accepted section state used as the trial template
+   * @param spatialStep representative cell size in m
+   * @param densityModel pressure-dependent phase density model
+   * @param activeSetController donor, regime and phase-presence active-set owner
+   * @param pressureInterpolationTimeScale zero to disable, or the temporal end-state weight times the attempted step
+   * @param conservativeFrictionSplitEnabled true to remove friction from the nonlinear transport residual and apply the
+   * conservative passive source once after transport convergence
+   */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The integrator and adapter share the configured operator and synchronize transactional probes on that operator")
+  public TwoFluidUnsplitModelAdapter(TwoFluidConservationEquations equations, TwoFluidSection[] acceptedTemplates,
+      double spatialStep, PhaseDensityModel densityModel, ActiveSetController activeSetController,
+      double pressureInterpolationTimeScale, boolean conservativeFrictionSplitEnabled) {
     if (equations == null || densityModel == null) {
       throw new IllegalArgumentException("Equations and density model cannot be null");
     }
@@ -174,6 +214,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     this.densityModel = densityModel;
     this.activeSetController = activeSetController;
     this.pressureInterpolationTimeScale = pressureInterpolationTimeScale;
+    this.conservativeFrictionSplitEnabled = conservativeFrictionSplitEnabled;
   }
 
   @Override
@@ -220,13 +261,16 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     synchronized (equations) {
       double savedOutletPressure = equations.getOutletBoundaryPressure();
       double savedInterpolationTimeScale = equations.getPressureInterpolationTimeScale();
+      boolean savedConservativeFriction = equations.isConservativeFrictionEnabled();
       try {
         equations.setOutletBoundaryPressure(outletPressureFixed ? outletPressure : Double.NaN);
         equations.setPressureInterpolationTimeScale(pressureInterpolationTimeScale);
+        equations.setConservativeFrictionEnabled(conservativeFrictionSplitEnabled);
         transport = equations.evaluateTransactional(trialSections, spatialStep);
       } finally {
         equations.setOutletBoundaryPressure(savedOutletPressure);
         equations.setPressureInterpolationTimeScale(savedInterpolationTimeScale);
+        equations.setConservativeFrictionEnabled(savedConservativeFriction);
       }
     }
     double[] cellLengthsM = new double[trialSections.length];
@@ -312,13 +356,16 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
       validatePreparedOperator();
       double savedOutletPressure = equations.getOutletBoundaryPressure();
       double savedInterpolationTimeScale = equations.getPressureInterpolationTimeScale();
+      boolean savedConservativeFriction = equations.isConservativeFrictionEnabled();
       try {
         equations.setOutletBoundaryPressure(outletPressureFixed ? outletPressure : Double.NaN);
         equations.setPressureInterpolationTimeScale(pressureInterpolationTimeScale);
+        equations.setConservativeFrictionEnabled(conservativeFrictionSplitEnabled);
         evaluation = equations.evaluateTransactional(midpoint, spatialStep);
       } finally {
         equations.setOutletBoundaryPressure(savedOutletPressure);
         equations.setPressureInterpolationTimeScale(savedInterpolationTimeScale);
+        equations.setConservativeFrictionEnabled(savedConservativeFriction);
       }
     }
     double[][] rates = evaluation.getRates();
@@ -330,6 +377,33 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
       }
       rates = SignedFaceComplementarity.replaceInternalFluxes(rates, cellLengths,
           evaluation.getDirectionalPhaseFaceFluxes(), solvedFaces);
+    }
+    double[][] conservativeFrictionImpulsePerLength = new double[endpointState.length][PHASE_COUNT];
+    if (conservativeFrictionSplitEnabled) {
+      double[][] transportEndpointState = copyMatrixArray(endpointState);
+      synchronized (equations) {
+        boolean savedConservativeFriction = equations.isConservativeFrictionEnabled();
+        try {
+          equations.setConservativeFrictionEnabled(true);
+          endpointState = equations.applyConservativeFriction(endpointState, midpoint, timeStep);
+        } finally {
+          equations.setConservativeFrictionEnabled(savedConservativeFriction);
+        }
+      }
+      double[][] corrections = new double[endpointState.length][STATE_SIZE];
+      for (int cell = 0; cell < endpointState.length; cell++) {
+        for (int phase = 0; phase < PHASE_COUNT; phase++) {
+          conservativeFrictionImpulsePerLength[cell][phase] = endpointState[cell][phase + PHASE_COUNT]
+              - transportEndpointState[cell][phase + PHASE_COUNT];
+          corrections[cell][phase + PHASE_COUNT] = (endpointState[cell][phase + PHASE_COUNT]
+              - transportEndpointState[cell][phase + PHASE_COUNT]) / timeStep;
+          rates[cell][phase + PHASE_COUNT] += corrections[cell][phase + PHASE_COUNT];
+        }
+      }
+      evaluation = evaluation.withRateCorrections(corrections);
+      for (int cell = 0; cell < endpoint.length; cell++) {
+        endpoint[cell].setConservativeEndpoint(endpointState[cell], relativeTolerance);
+      }
     }
     double maximumResidual = 0.0;
     for (int cell = 0; cell < endpoint.length; cell++) {
@@ -347,7 +421,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
           + maximumResidual + ", tolerance=" + relativeTolerance);
     }
     return new PreparedStep(endpoint, acceptedTemplates, evaluation, solvedFaces, timeStep, startTime, maximumResidual,
-        timeWeight, pressureInterpolationTimeScale);
+        timeWeight, pressureInterpolationTimeScale, conservativeFrictionImpulsePerLength);
   }
 
   /** Fail unsupported configurations before an interval controller starts nonlinear attempts. */
@@ -373,12 +447,14 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     private final double maximumScaledResidual;
     private final double timeIntegrationWeight;
     private final double pressureInterpolationTimeScale;
+    private final double[][] conservativeFrictionImpulsePerLength;
     private final double[] initialMassKg = new double[PHASE_COUNT];
     private final double[] finalMassKg = new double[PHASE_COUNT];
 
     private PreparedStep(TwoFluidSection[] endpoint, TwoFluidSection[] previous, TransactionalEvaluation evaluation,
         DirectionalPhaseFaceFlux[][] solvedDirectionalPhaseFaceFluxes, double timeStep, double startTime,
-        double maximumScaledResidual, double timeIntegrationWeight, double pressureInterpolationTimeScale) {
+        double maximumScaledResidual, double timeIntegrationWeight, double pressureInterpolationTimeScale,
+        double[][] conservativeFrictionImpulsePerLength) {
       endpointSections = cloneSections(endpoint);
       midpointEvaluation = evaluation;
       this.solvedDirectionalPhaseFaceFluxes = copyMatrixArray(solvedDirectionalPhaseFaceFluxes);
@@ -387,6 +463,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
       this.maximumScaledResidual = maximumScaledResidual;
       this.timeIntegrationWeight = timeIntegrationWeight;
       this.pressureInterpolationTimeScale = pressureInterpolationTimeScale;
+      this.conservativeFrictionImpulsePerLength = copyMatrixArray(conservativeFrictionImpulsePerLength);
       for (int cell = 0; cell < endpoint.length; cell++) {
         double[] before = previous[cell].getStateVector();
         double[] after = endpoint[cell].getStateVector();
@@ -448,6 +525,16 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     /** @return pressure-interpolation mobility time in s, or zero when disabled */
     public double getPressureInterpolationTimeScale() {
       return pressureInterpolationTimeScale;
+    }
+
+    /**
+     * Return the separately integrated passive-friction momentum impulse for every cell and phase.
+     *
+     * @return defensive gas/oil/water impulse per pipe length in N s/m; all zero when the split is disabled
+     */
+    public double[][] getConservativeFrictionImpulsePerLength() {
+      return conservativeFrictionImpulsePerLength == null ? new double[endpointSections.length][PHASE_COUNT]
+          : copyMatrixArray(conservativeFrictionImpulsePerLength);
     }
 
     /** @return prepared duration in s; no clock is advanced */

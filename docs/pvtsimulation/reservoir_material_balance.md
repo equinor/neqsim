@@ -442,7 +442,7 @@ together with the Carter-Tracy (1960) cumulative water-influx method.
 import neqsim.pvtsimulation.reservoirproperties.materialbalance.VanEverdingenHurstAquifer;
 
 double u = VanEverdingenHurstAquifer.aquiferConstant(
-    0.20, 1.0e-4, 30.0, 3000.0, 180.0);  // phi, ct (1/bar), h (m), re (m), angle (deg)
+    0.20, 1.0e-4, 30.0, 3000.0, 180.0);  // phi, ct (1/bar), h (m), inner radius (m), angle (deg)
 
 // tD (dimensionless time), deltaP = p_i - p (bar), reD = dimensionless outer radius
 double[] we = VanEverdingenHurstAquifer.cumulativeInfluxCarterTracy(
@@ -454,8 +454,8 @@ String aqutab = VanEverdingenHurstAquifer.exportAqutab(tD, Double.POSITIVE_INFIN
 
 The returned `We` array is the aquifer term consumed by
 `GasMaterialBalance.fitHavlenaOdeh` and `OilMaterialBalance.fitWaterDrive`. Use
-`Double.POSITIVE_INFINITY` for an infinite-acting aquifer or a finite `reD` for a
-bounded (no-flow outer boundary) aquifer.
+`Double.POSITIVE_INFINITY` for an infinite-acting aquifer or the prepared
+`FiniteRadialAquiferInfluence` for a sealed annulus in the supported radius range.
 
 Physical input conversion uses the **inner reservoir/aquifer radius** in metres;
 the outer/inner radius ratio is a separate influence-function argument.
@@ -494,14 +494,47 @@ and nonnegative. Zero-time pressure/derivative values are bookkeeping convention
 the physical derivative diverges toward zero time. Negative/non-finite times and
 a NaN radius argument are rejected.
 
-**Finite-radius limitation:** the finite `reD` option retains the legacy maximum
-of infinite-acting pressure and a pseudo-steady expression. Its shared infinite
-branch changes with this correction, and its derivative selects the active
-branch, but it remains an unqualified finite-annulus transient approximation.
-It can have an incorrect nonzero initial right limit and an inaccurate
-finite-radius late intercept. Do not use the bounded option as independently
-validated radial support for volume matching. Its replacement is separate work
-under #4740.
+### Sealed annulus response
+
+Prepare a `FiniteRadialAquiferInfluence` for an outer/inner radius ratio from 2
+through 10. The homogeneous radial domain starts from constant pressure. A unit
+rate at the inner wall produces a pressure perturbation against the sealed
+outer wall. Pressure and time are dimensionless. The finite storage per unit
+inner flux is $C=(R^2-1)/2$. At late time the wall pressure tends to
+$t_D/C + B$, where
+$B=R^4\ln(R)/(R^2-1)^2-(3R^2-1)/(4(R^2-1))$ is the wall excess over the mean.
+
+```java
+import neqsim.pvtsimulation.reservoirproperties.materialbalance.FiniteRadialAquiferInfluence;
+import neqsim.pvtsimulation.reservoirproperties.materialbalance.VanEverdingenHurstAquifer;
+
+FiniteRadialAquiferInfluence annulus = new FiniteRadialAquiferInfluence(3.5);
+double[] times = {0.01, 0.1, 1.0, 10.0, 100.0};
+double[] pressureDrops = {0.0, 1.0, 2.0, 3.0, 4.0}; // bar
+double aquiferConstant = 12.5; // reservoir m3/bar
+double[] pressures = VanEverdingenHurstAquifer.influenceTable(times, annulus);
+double[] cumulativeInflux =
+    VanEverdingenHurstAquifer.cumulativeInfluxCarterTracy(times, pressureDrops, aquiferConstant, annulus);
+String aqutab = VanEverdingenHurstAquifer.exportAqutab(times, annulus);
+```
+
+Use the scalar methods to read pressure and its dimensionless time derivative.
+The derivative has a zero bookkeeping value at the origin and a divergent
+physical right limit. Reuse the prepared object for any history with the same
+radius ratio. Use a positive starting time and a grid resolved at the AQUTAB
+export's six-decimal time precision. The finite `double reD` overload retains
+the legacy maximum policy with an incorrect initial right limit at some radii
+and an inaccurate late intercept.
+
+The [finite radial qualification](../../src/test/resources/neqsim/pvtsimulation/finite-radial/README.md)
+compares pressure and derivative with independent inverse-Laplace values and
+pressure with a conservative finite-volume reference. The reference uses
+analytical diffusion and synthetic histories. The prepared response uses the
+infinite radial solution through $(R-1)^2/64$ where the early outer wall
+reflection is bounded, then 16 positive annular modes and the storage mode.
+The caller is responsible for justifying the geometry, constant properties
+and pressure history. This API covers a sealed outer wall and the stated
+radius interval.
 
 Carter–Tracy is an approximate recurrence. Separate its timestep error and its
 intrinsic approximation error from pressure-kernel error; refining a history

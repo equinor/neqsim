@@ -29,7 +29,8 @@ import java.math.RoundingMode;
  * $P_D = 2 t_D/(r_{eD}^2 - 1) + \ln r_{eD} - 3/4$. This legacy bounded policy is not a qualified finite-annulus
  * transient solution: it can have a nonzero right limit at time zero and an inaccurate finite-radius intercept. Its
  * derivative selects the active branch; it does not establish bounded radial accuracy. The infinite-acting correction
- * does not resolve that separate physical-domain limitation.
+ * does not resolve that separate physical-domain limitation. For a sealed annulus with outer/inner radius ratio 2
+ * through 10, supply a prepared {@link FiniteRadialAquiferInfluence} to the finite-radius overloads.
  * </p>
  *
  * <h2>Units</h2>
@@ -331,6 +332,46 @@ public final class VanEverdingenHurstAquifer implements Serializable {
    * @throws ArithmeticException if the selected influence or a transition cannot be represented finitely
    */
   public static double[] cumulativeInfluxCarterTracy(double[] tD, double[] deltaP, double aquiferConstant, double reD) {
+    return cumulativeInflux(tD, deltaP, aquiferConstant, reD, null);
+  }
+
+  /**
+   * Applies the Carter–Tracy recurrence with the prepared sealed-annulus pressure response.
+   *
+   * <p>
+   * The finite storage mode is canceled analytically in the recurrence denominator. The result depends on the
+   * pressure-history time grid and the Carter–Tracy approximation. The zero-influx origin and nonnegative projection
+   * have the same semantics as the legacy overload.
+   * </p>
+   *
+   * @param tD nonempty finite nonnegative dimensionless times, strictly increasing
+   * @param deltaP finite signed total pressure drops (bar), aligned with times
+   * @param aquiferConstant finite nonnegative storage constant (reservoir m^3 per bar)
+   * @param annulus prepared sealed-annulus response
+   * @return cumulative influx (reservoir m^3), initially zero
+   * @throws IllegalArgumentException if the history or aquifer inputs are invalid or the response is null
+   * @throws ArithmeticException if a transition cannot be represented finitely
+   */
+  public static double[] cumulativeInfluxCarterTracy(double[] tD, double[] deltaP, double aquiferConstant,
+      FiniteRadialAquiferInfluence annulus) {
+    if (annulus == null) {
+      throw new IllegalArgumentException("Prepared sealed radial response must not be null");
+    }
+    return cumulativeInflux(tD, deltaP, aquiferConstant, 0.0, annulus);
+  }
+
+  /**
+   * Evaluates the common Carter–Tracy recurrence using the selected influence.
+   *
+   * @param tD nonnegative dimensionless history times, strictly increasing
+   * @param deltaP aligned total pressure drops in bar
+   * @param aquiferConstant aquifer storage constant in reservoir m^3 per bar
+   * @param reD legacy radius argument
+   * @param annulus prepared sealed-annulus response, or null for the legacy radius path
+   * @return cumulative reservoir-volume influx
+   */
+  private static double[] cumulativeInflux(double[] tD, double[] deltaP, double aquiferConstant, double reD,
+      FiniteRadialAquiferInfluence annulus) {
     if (tD == null || deltaP == null || tD.length != deltaP.length || tD.length == 0) {
       throw new IllegalArgumentException("tD and deltaP must be nonempty and of equal length");
     }
@@ -347,21 +388,33 @@ public final class VanEverdingenHurstAquifer implements Serializable {
       return we;
     }
     for (int i = 1; i < tD.length; i++) {
-      double[] response = influence(tD[i], reD);
+      double[] response = annulus == null ? influence(tD[i], reD) : annulus.evaluate(tD[i]);
       double pd = response[0];
       double pdPrime = response[1];
       if (!Double.isFinite(pd) || pd <= 0.0 || !Double.isFinite(pdPrime)) {
         throw new ArithmeticException("Carter-Tracy influence is not finite and positive at index " + i);
       }
-      // Normalize the SAME recurrence by P. Multiplying time by its derivative first avoids tiny-time overflow.
-      double elasticity = (tD[i] * pdPrime) / pd;
-      double denominator = 1.0 - (tD[i - 1] / tD[i]) * elasticity;
-      double retained = (1.0 - elasticity) / denominator;
-      if (denominator == 0.0 || !Double.isFinite(retained)) {
+      double interval = tD[i] - tD[i - 1];
+      double pressureDivisor = pd;
+      double normalizedDivisor;
+      double retained;
+      if (annulus == null) {
+        // Keep the evaluation order of the legacy normalized recurrence.
+        double elasticity = (tD[i] * pdPrime) / pd;
+        normalizedDivisor = 1.0 - (tD[i - 1] / tD[i]) * elasticity;
+        retained = (1.0 - elasticity) / normalizedDivisor;
+      } else {
+        // P - t P' remains positive as storage dominates. Reusing it avoids cancellation near the late limit.
+        double excess = response[2];
+        pressureDivisor = excess + interval * pdPrime;
+        normalizedDivisor = 1.0;
+        retained = excess / pressureDivisor;
+      }
+      if (pressureDivisor == 0.0 || normalizedDivisor == 0.0 || !Double.isFinite(retained)) {
         throw new ArithmeticException("Carter-Tracy transition is singular or unrepresentable at index " + i);
       }
       double next = retained * we[i - 1]
-          + scaledProductRatio(tD[i] - tD[i - 1], aquiferConstant, deltaP[i], pd, denominator);
+          + scaledProductRatio(interval, aquiferConstant, deltaP[i], pressureDivisor, normalizedDivisor);
       // Preserve the existing nonnegative cumulative-influx projection, including pressure recovery.
       if (next < 0.0) {
         next = 0.0;
@@ -420,6 +473,25 @@ public final class VanEverdingenHurstAquifer implements Serializable {
   }
 
   /**
+   * Builds a dimensionless wall-pressure table with a prepared sealed-annulus response.
+   *
+   * @param tD array of nonnegative finite dimensionless times
+   * @param annulus prepared sealed-annulus response
+   * @return wall pressures in the order of the input times
+   * @throws IllegalArgumentException if the time array or response is null or a time is invalid
+   */
+  public static double[] influenceTable(double[] tD, FiniteRadialAquiferInfluence annulus) {
+    if (tD == null || annulus == null) {
+      throw new IllegalArgumentException("Times and prepared sealed radial response must not be null");
+    }
+    double[] pressure = new double[tD.length];
+    for (int i = 0; i < tD.length; i++) {
+      pressure[i] = annulus.dimensionlessPressure(tD[i]);
+    }
+    return pressure;
+  }
+
+  /**
    * Export an ECLIPSE {@code AQUTAB} include file body for a Carter-Tracy aquifer influence table.
    *
    * <p>
@@ -435,12 +507,42 @@ public final class VanEverdingenHurstAquifer implements Serializable {
     if (tD == null || tD.length == 0) {
       throw new IllegalArgumentException("tD must be non-null and non-empty");
     }
+    return formatAqutab(tD, reD, null);
+  }
+
+  /**
+   * Exports a prepared sealed-annulus influence table as an ECLIPSE {@code AQUTAB} include body.
+   *
+   * @param tD nonempty array of dimensionless times (should start above zero)
+   * @param annulus prepared sealed-annulus response
+   * @return ECLIPSE {@code AQUTAB} include-file text
+   * @throws IllegalArgumentException if the times or response are invalid
+   */
+  public static String exportAqutab(double[] tD, FiniteRadialAquiferInfluence annulus) {
+    if (tD == null || tD.length == 0) {
+      throw new IllegalArgumentException("tD must be non-null and non-empty");
+    }
+    if (annulus == null) {
+      throw new IllegalArgumentException("Prepared sealed radial response must not be null");
+    }
+    return formatAqutab(tD, 0.0, annulus);
+  }
+
+  /**
+   * Computes and formats pressures using the shared ECLIPSE include layout.
+   *
+   * @param tD dimensionless table times
+   * @param reD legacy radius argument
+   * @param annulus prepared sealed-annulus response, or null for the legacy radius path
+   * @return formatted include-file text
+   */
+  private static String formatAqutab(double[] tD, double reD, FiniteRadialAquiferInfluence annulus) {
     StringBuilder sb = new StringBuilder();
     sb.append("AQUTAB\n");
     sb.append("-- Constant-terminal-rate influence function (Van Everdingen-Hurst)\n");
     sb.append("--    tD            PD\n");
     for (int i = 0; i < tD.length; i++) {
-      double pd = dimensionlessPressure(tD[i], reD);
+      double pd = annulus == null ? dimensionlessPressure(tD[i], reD) : annulus.dimensionlessPressure(tD[i]);
       sb.append(String.format(java.util.Locale.ROOT, "  %12.6f  %12.6f%n", tD[i], pd));
     }
     sb.append("/\n");

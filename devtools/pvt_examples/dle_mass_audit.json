@@ -1,0 +1,87 @@
+{
+  "protocol": "DLE",
+  "sample_reference": "synthetic hydrocarbon",
+  "experiment_reference": "synthetic isothermal DLE",
+  "source_reference": "test_pvt_dle_mass.py",
+  "data_use_reference": "original synthetic numbers",
+  "residual_oil_reference": "final differential residual oil at declared reference",
+  "bounds_reference": "declared synthetic closed bounds",
+  "experiment_temperature": {
+    "unit": "K",
+    "lower": "380",
+    "upper": "380"
+  },
+  "standard_gas": {
+    "temperature": {
+      "unit": "K",
+      "lower": "299.9999",
+      "upper": "300.0001"
+    },
+    "pressure": {
+      "unit": "Pa",
+      "lower": "99999.999",
+      "upper": "100000.001"
+    },
+    "source_reference": "explicit synthetic standard basis"
+  },
+  "stages": [
+    {
+      "id": "Pb",
+      "source_reference": "initial",
+      "pressure": {
+        "unit": "bara",
+        "lower": "200",
+        "upper": "200"
+      },
+      "oil_volume_ratio": {
+        "unit": "m3/m3 residual oil",
+        "lower": "1.24999",
+        "upper": "1.25001"
+      },
+      "oil_density": {
+        "unit": "kg/m3",
+        "lower": "799.99",
+        "upper": "800.01"
+      },
+      "solution_gor": {
+        "unit": "Sm3/m3 residual oil",
+        "lower": "27.448949069013748",
+        "upper": "27.449149069013748"
+      }
+    },
+    {
+      "id": "D1",
+      "source_reference": "withdrawal",
+      "pressure": {
+        "unit": "bara",
+        "lower": "180",
+        "upper": "180"
+      },
+      "oil_volume_ratio": {
+        "unit": "m3/m3 residual oil",
+        "lower": "1.22499",
+        "upper": "1.22501"
+      },
+      "oil_density": {
+        "unit": "kg/m3",
+        "lower": "799.99",
+        "upper": "800.01"
+      },
+      "solution_gor": {
+        "unit": "Sm3/m3 residual oil",
+        "lower": "4.9999",
+        "upper": "5.0001"
+      },
+      "released_gas_molar_mass": {
+        "unit": "kg/mol",
+        "lower": "0.0199999",
+        "upper": "0.0200001"
+      },
+      "standard_gas_z": {
+        "unit": "1",
+        "lower": "0.899999",
+        "upper": "0.900001"
+      }
+    }
+  ]
+}

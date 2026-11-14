@@ -1550,6 +1550,39 @@ public class TwoFluidConservationEquations implements Serializable {
       return copyMatrixArray(rates);
     }
 
+    /**
+     * Return the same immutable transport ledger with additive conservative-rate corrections.
+     *
+     * <p>
+     * This is used by separately integrated conservative source owners. Boundary, mass-source and face ledgers remain
+     * unchanged; the caller owns the physical provenance and conservation proof for every supplied correction.
+     * </p>
+     *
+     * @param corrections additive rates with the same cell and seven-variable shape as {@link #getRates()}
+     * @return independent evaluation carrying the corrected conservative rates
+     */
+    public TransactionalEvaluation withRateCorrections(double[][] corrections) {
+      if (corrections == null || corrections.length != rates.length) {
+        throw new IllegalArgumentException("Rate corrections must cover every evaluation cell");
+      }
+      double[][] corrected = copyMatrixArray(rates);
+      for (int cell = 0; cell < corrected.length; cell++) {
+        if (corrections[cell] == null || corrections[cell].length != corrected[cell].length) {
+          throw new IllegalArgumentException("Rate corrections must match every conservative variable");
+        }
+        for (int variable = 0; variable < corrected[cell].length; variable++) {
+          if (!Double.isFinite(corrections[cell][variable])) {
+            throw new IllegalArgumentException("Rate corrections must be finite");
+          }
+          corrected[cell][variable] += corrections[cell][variable];
+        }
+      }
+      return new TransactionalEvaluation(corrected, massBalanceRate, phaseMassFaceFluxes, energyFaceFluxes,
+          boundaryPhaseMomentumFluxes, boundaryPhasePressureForces, directionalPhaseFaceFluxes,
+          phaseMassSourcesPerLength, momentumSourceForcesPerLength, stratifiedHydrostaticPressureForces,
+          outletBackflowClamped);
+    }
+
     /** @return immutable external boundary and domain source rates in kg/s */
     public MassBalanceRate getMassBalanceRate() {
       return massBalanceRate;
