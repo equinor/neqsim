@@ -193,6 +193,17 @@ Full rules: AGENT_REFERENCE.md Part B.
 
 ## Continuous improvement
 
-Improving the agents and skills used — and their hand-offs — is part of every task. Fix missing
-patterns, API signatures and gotchas in the owning `SKILL.md`/`*.agent.md`, add cross-references
-both ways, and keep site-specific detail in the enterprise repos.
+Improving the docs, agents and skills used — and their hand-offs — is part of every task, not a
+follow-up. Fix missing patterns, API signatures and gotchas in the owning `SKILL.md`/`*.agent.md`,
+add cross-references both ways, and keep site-specific detail in the enterprise repos.
+
+A change is not done until, in the same branch and PR:
+
+- the `docs/` page for every class whose behaviour, defaults or public API changed says what the
+  code now does, with its snippets covered by a test;
+- the owning skill and any agent that recommends the changed API give the new recommendation and
+  bump `last_verified`;
+- a recommendation between alternatives (solver, EOS, method) states the measurement behind it:
+  cases, what was compared, date. Replace it when a new measurement disagrees; do not stack advice.
+
+If nothing needed updating, say so in the PR description.

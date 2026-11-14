@@ -198,6 +198,12 @@ public class NaphtaliSandholmSolver {
   /** Reference thermo system cloned from the feed for flash calculations. */
   private SystemInterface referenceSystem;
 
+  /** Reusable thermodynamics-only copy of {@link #referenceSystem} for single-phase property evaluations. */
+  private SystemInterface singlePhaseWorkSystem;
+
+  /** Reference system instance that {@link #singlePhaseWorkSystem} was copied from. */
+  private SystemInterface singlePhaseWorkSource;
+
   /**
    * Enable Boston-Sullivan inside-out refinement of the seed when at least one tray temperature is pinned (e.g. T-spec
    * reboiler). The smooth Wilson BP seed misses sharp T-pinches; B-S inner loop (per-component tridiag MB + bubble-T)
@@ -4456,7 +4462,11 @@ public class NaphtaliSandholmSolver {
   private boolean computeSinglePhaseFugacityCoefficients(double[] composition, double tempK, double pressBar,
       boolean isVapor, double[] phiOut, double[][] compositionDerivatives) {
     try {
-      SystemInterface sys = referenceSystem.clone();
+      // Only fugacities and their derivatives are read, so the work copy does not need the
+      // transport and interfacial property models of the reference fluid. A state that is kept
+      // for the K-value predictor needs its own copy; every other evaluation reuses one.
+      SystemInterface sys = compositionDerivatives == null ? getSinglePhaseWorkSystem()
+          : referenceSystem.cloneThermoOnly();
       sys.setTemperature(tempK);
       sys.setPressure(pressBar);
       sys.setTotalNumberOfMoles(1.0);
@@ -4608,9 +4618,38 @@ public class NaphtaliSandholmSolver {
     return (Pc / pressBar) * Math.exp(5.37 * (1.0 + omega) * (1.0 - Tc / tempK));
   }
 
+  /**
+   * Get the reusable work copy for forced single-phase property evaluations.
+   *
+   * <p>
+   * Each evaluation sets temperature, pressure and composition and reinitializes the fluid from scratch, so the result
+   * does not depend on the state left by the previous evaluation. Reusing one thermodynamics-only copy removes a full
+   * fluid clone, the dominant cost of a residual or Jacobian evaluation, from every call.
+   * </p>
+   *
+   * @return work copy of the current reference system without transport-property models
+   */
+  private SystemInterface getSinglePhaseWorkSystem() {
+    if (singlePhaseWorkSystem == null || singlePhaseWorkSource != referenceSystem) {
+      singlePhaseWorkSystem = referenceSystem.cloneThermoOnly();
+      singlePhaseWorkSource = referenceSystem;
+    }
+    return singlePhaseWorkSystem;
+  }
+
+  /**
+   * Evaluate the molar enthalpy of a forced single phase.
+   *
+   * @param composition normalized phase composition
+   * @param tempK temperature in kelvin
+   * @param pressBar absolute pressure in bar
+   * @param isVapor whether the gas root is requested
+   * @return molar enthalpy in J/mol, or zero when the phase calculation fails
+   */
   private double computeSinglePhaseEnthalpy(double[] composition, double tempK, double pressBar, boolean isVapor) {
     try {
-      SystemInterface sys = referenceSystem.clone();
+      // Only the phase enthalpy is read, so the reusable thermodynamics-only work copy suffices.
+      SystemInterface sys = getSinglePhaseWorkSystem();
       sys.setTemperature(tempK);
       sys.setPressure(pressBar);
       sys.setTotalNumberOfMoles(1.0);
