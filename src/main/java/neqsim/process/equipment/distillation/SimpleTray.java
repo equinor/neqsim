@@ -39,7 +39,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   private boolean useReactiveFlash = false;
 
   /** Whether the column uses the standard PH iteration for its nonideal tray corrections. */
-  private boolean useStandardEnthalpyFlash;
+  private volatile boolean useStandardEnthalpyFlash;
 
   /**
    * When {@code true}, only thermodynamic properties (init level 2: enthalpy, K-values, densities needed for the
