@@ -33,7 +33,7 @@ class CompressorMechanicalDesignDocumentationTest {
   private static final String MARKER =
       "<!-- compressor-mechanical-design-example: sour-service-barrel -->";
   private static final Pattern JAVA_FENCE =
-      Pattern.compile("`java\r?\n(.*?)\r?\n`", Pattern.DOTALL);
+      Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
 
   @TempDir
   Path temporaryDirectory;
