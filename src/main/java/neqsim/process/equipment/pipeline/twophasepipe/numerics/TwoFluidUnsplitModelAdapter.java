@@ -1,5 +1,6 @@
 package neqsim.process.equipment.pipeline.twophasepipe.numerics;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import static neqsim.util.util.ArrayUtils.copyMatrixArray;
 
 import java.io.Serializable;
@@ -164,7 +165,8 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
   }
 
   /**
-   * Create a transactional adapter with a separately integrated conservative friction source.
+   * Create a transactional adapter with a separately integrated conservative friction source. The configured operator
+   * is shared with the integrator. Trial evaluations hold its monitor and restore its state.
    *
    * @param equations configured finite-volume operator
    * @param acceptedTemplates accepted section state used as the trial template
@@ -175,6 +177,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
    * @param conservativeFrictionSplitEnabled true to remove friction from the nonlinear transport residual and apply the
    * conservative passive source once after transport convergence
    */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The integrator and adapter share the configured operator and synchronize transactional probes on that operator")
   public TwoFluidUnsplitModelAdapter(TwoFluidConservationEquations equations, TwoFluidSection[] acceptedTemplates,
       double spatialStep, PhaseDensityModel densityModel, ActiveSetController activeSetController,
       double pressureInterpolationTimeScale, boolean conservativeFrictionSplitEnabled) {
