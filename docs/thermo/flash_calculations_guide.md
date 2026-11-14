@@ -109,7 +109,11 @@ For non-reactive brines with multiphase checking enabled, if the initial iterati
 has an aqueous split and the ordinary tangent-plane trials find no instability,
 the solver carries that estimate into the ion-aware multiphase analysis. This
 avoids seeding a trial phase from a single ion and allows the multiphase solver
-to assess additional phases.
+to assess additional phases. Phase discovery first uses a normalized molecular
+feed. The solver then restores the complete ionic inventory to the aqueous phase
+and re-equilibrates molecular partitioning under the resulting salt activity,
+with ions excluded from gas and oil. If that bounded refinement cannot converge,
+the conservative pre-refinement endpoint is retained.
 
 For an already-equilibrated neutral two-phase endpoint containing at least 1 mol% water,
 TP flash can remove roundoff in the phase amounts by recovering the unique lever-rule
