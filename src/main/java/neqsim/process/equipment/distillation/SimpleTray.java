@@ -20,6 +20,9 @@ import neqsim.util.unit.TemperatureUnit;
 public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements TrayInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+
+  /** Relative enthalpy residual at which a tray enthalpy flash stops without a confirming evaluation. */
+  private static final double TRAY_ENTHALPY_SINGLE_RESIDUAL_TOLERANCE = 1.0e-10;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SimpleTray.class);
 
@@ -310,7 +313,9 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
         if (useReactiveFlash) {
           testOps.reactivePHflash(enthalpy, 0);
         } else {
-          testOps.PHflash(enthalpy, 0);
+          // The column repeats this flash every sweep, so one residual two orders of magnitude
+          // below the nominal tolerance is accepted without a confirming equilibrium flash.
+          testOps.PHflash(enthalpy, 0, TRAY_ENTHALPY_SINGLE_RESIDUAL_TOLERANCE);
         }
         initTrayProperties();
       } catch (Exception ex) {
