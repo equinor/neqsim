@@ -85,6 +85,7 @@ jobs:
             devtools/test_fa_solver_runtime.py \
             devtools/test_pvt_dle_mass.py \
             devtools/test_pvt_separator_mass.py \
+            devtools/test_reservoir_history_intake.py \
             devtools/test_pvt_study.py \
             devtools/test_pvt_report.py \
             devtools/test_pvt_proxy.py \

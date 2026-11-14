@@ -47,6 +47,9 @@ before admitting measurements. Check the reported terminal stock-tank basis,
 independent standard gas density and per-stage balances. Review the whole train
 with the stage evidence. See the [separator audit](../../../docs/pvtsimulation/separator_mass_audit.md).
 
+For a laboratory-to-field handoff, use the [reservoir history source intake](../../../docs/pvtsimulation/reservoir_history_intake.md)
+to screen cumulative production, injection and field-average pressure separately from laboratory calibration.
+
 ## One normalized evidence chain
 
 Retain sample, analysis, observation, experiment, model, parameter and export IDs
