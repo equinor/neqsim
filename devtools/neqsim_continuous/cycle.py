@@ -336,6 +336,8 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
             continuous_dir(task_dir)):
         from .living_report import update
         update(task_dir, event="cycle")
+        from . import daily_report
+        daily_report.update(task_dir)
     return manifest
 
 

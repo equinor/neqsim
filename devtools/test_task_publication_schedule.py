@@ -80,7 +80,7 @@ def test_daily_and_interval_are_mutually_exclusive(tmp_path):
 def test_daily_interval_and_spaced_windows_path(tmp_path):
     spec = schedule.build(tmp_path / "task with spaces", every_hours=24)
     assert spec["cron"].startswith("0 0 * * * ")
-    assert spec["windows"][spec["windows"].index("/TR") + 1] == '"' + spec["wrapper_path"] + '"'
+    assert spec["windows"][spec["windows"].index("/TR") + 1] == 'conhost.exe --headless "' + spec["wrapper_path"] + '"'
     assert spec["windows"][spec["windows"].index("/ST") + 1] == "00:00"
 
 

@@ -61,7 +61,7 @@ except ImportError:
 DEVTOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(DEVTOOLS_DIR)
 CONTINUOUS_COMMANDS = ("living", "cycle", "solve", "resume", "update", "backtest", "schedule", "loop", "promote",
-                       "ledger", "status", "report", "reference-case", "note")
+                       "ledger", "status", "report", "reference-case", "note", "daily", "drift")
 
 COMMANDS = {
     "report-design": {
@@ -182,6 +182,8 @@ def _print_usage():
     print("  task-ledger TASK         List or update the improvement ledger")
     print("  task-status [PATH]       Status of a living task, or all living tasks (default: task root)")
     print("  task-report TASK         Rebuild Living Report; --formal current-best; --final reviewed delivery")
+    print("  task-daily TASK          Daily engineering update (Word, newest day first); --template, --validate")
+    print("  task-drift TASK          Show drift alarms; --reset restarts charts after an intervention")
     print("  task-reference-case [DIR] Create the public reference task (default: task root)")
     print("  (TASK is a folder path, or a folder name inside the task root)")
     print()

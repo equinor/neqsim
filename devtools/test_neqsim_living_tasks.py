@@ -500,7 +500,7 @@ def test_schedule_build_uses_shared_python(reference):
     assert spec["cron"].startswith("30 5 * * *")
     # /TR always points at a short wrapper script (schtasks caps /TR at 261 chars,
     # which long OneDrive-style task paths can exceed).
-    assert spec["windows"][spec["windows"].index("/TR") + 1] == '"' + spec["wrapper_path"] + '"'
+    assert spec["windows"][spec["windows"].index("/TR") + 1] == 'conhost.exe --headless "' + spec["wrapper_path"] + '"'
     assert spec["command"] in spec["wrapper_script"]
 
 

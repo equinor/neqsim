@@ -14,6 +14,8 @@
     neqsim task-note <task> [TEXT] [--by NAME] [--expires DATE] [effect options] | --list | --resolve ID
     neqsim task-status [task-or-task-root]
     neqsim task-report <task> [--formal | --final --reviewer NAME [--note TEXT] [--pdf]]
+    neqsim task-daily <task> [--template [DATE]] [--validate]
+    neqsim task-drift <task> [--reset [SIGNAL ...]]
     neqsim task-reference-case [parent-folder]
 
 A <task> that is not an existing folder is looked up in the task root used for new tasks
@@ -27,7 +29,7 @@ import os
 import sys
 
 COMMANDS = ("living", "cycle", "solve", "resume", "update", "backtest", "schedule", "loop", "promote", "ledger",
-            "status", "report", "reference-case", "note")
+            "status", "report", "reference-case", "note", "daily", "drift")
 
 
 def _print(data):
@@ -183,6 +185,16 @@ def main(argv=None):
     p.add_argument("--margin", type=float)
     p.add_argument("--setting", action="append", metavar="KEY=VALUE", help="set a plan value, e.g. production.rvp_bias_bara=0.05")
 
+    p = sub.add_parser("daily", help="build the daily engineering update (Word, newest day first)")
+    p.add_argument("task")
+    p.add_argument("--template", nargs="?", const="today", metavar="DATE",
+                   help="print an empty daily entry (YYYY-MM-DD, default today) instead of building")
+    p.add_argument("--validate", action="store_true", help="check the daily entries and exit non-zero on problems")
+
+    p = sub.add_parser("drift", help="show drift alarms, or restart the charts after a known intervention")
+    p.add_argument("task")
+    p.add_argument("--reset", nargs="*", metavar="SIGNAL", help="restart these signals (none given: all alarming ones)")
+
     p = sub.add_parser("reference-case", help="create the public reference task")
     p.add_argument("parent", nargs="?", help="parent folder (default: the task root)")
 
@@ -321,6 +333,32 @@ def main(argv=None):
             if args.formal:
                 code = regenerate_formal(args.task)
                 print("formal report {}".format("written" if code == 0 else "FAILED (exit {})".format(code)))
+    elif args.command == "drift":
+        from .drift import DriftMonitor
+        path = os.path.join(args.task, "continuous", "drift_state.json")
+        monitor = DriftMonitor.load(path)
+        if args.reset is not None:
+            names = args.reset or [n for n, v in monitor.state.items() if v.get("alarm")]
+            for name in names:
+                monitor.reset(name)
+            monitor.save(path)
+            _print({"reset": names})
+        else:
+            _print({n: {"alarm": v.get("alarm"), "streak": v.get("streak"), "alarms_total": v.get("alarms")}
+                    for n, v in sorted(monitor.state.items())})
+    elif args.command == "daily":
+        from . import daily_report
+        if args.template:
+            from datetime import date
+            _print(daily_report.template(date.today().isoformat() if args.template == "today" else args.template))
+        elif args.validate:
+            found = {d: daily_report.validate_entry(e) for d, e in daily_report.load_entries(args.task).items()}
+            _print({d: p for d, p in found.items() if p} or "all daily entries valid")
+            if any(found.values()):
+                raise SystemExit(1)
+        else:
+            path = daily_report.build(args.task)
+            print(path or "ERROR: daily report not written (python-docx missing, or no cycles and no daily entries)")
     elif args.command == "note":
         from . import user_input
         from .living_report import update

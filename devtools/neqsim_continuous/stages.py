@@ -496,19 +496,28 @@ def agent(ctx, spec):
     if not triggers or not config.get("enabled"):
         ctx.agent_run = {"requested": bool(triggers), "ran": False}
         return StageResult("agent", "ok", message="not requested")
-    argv = agent_launch.build_command(ctx.task_dir, ctx.cycle_dir,
-                                      agent_launch.triage_prompt(ctx.cycle_id, triggers),
-                                      agent=config.get("agent", "continuous-improvement"),
-                                      executable=config.get("executable", "copilot"),
-                                      deny=config.get("deny"))
+    daily = bool((ctx.plan.get("daily_report") or {}).get("enabled"))
+    prompt = agent_launch.triage_prompt(ctx.cycle_id, triggers, daily=daily)
+    first = agent_launch.build_command(ctx.task_dir, ctx.cycle_dir, prompt,
+                                       agent=config.get("agent", "continuous-improvement"),
+                                       executable=config.get("executable", "copilot"),
+                                       deny=config.get("deny"), model=config.get("model"))
     if ctx.no_agent or ctx.dry_run or ctx.mode == "backtest":
-        ctx.agent_run = {"requested": True, "ran": False, "command": argv, "status": "suppressed"}
+        ctx.agent_run = {"requested": True, "ran": False, "command": first, "status": "suppressed"}
         return StageResult("agent", "ok", message="suppressed")
-    result = agent_launch.launch(argv, timeout=int(config.get("timeout_s", 1800)), cwd=ctx.task_dir)
-    ctx.agent_run = dict(result, requested=True, ran=result.get("status") == "ok", command=argv)
-    return StageResult("agent", "ok" if result.get("status") == "ok" else "warn",
-                       message=result.get("status", ""))
-
+    review = os.path.join(ctx.cycle_dir, "agent_review.md")
+    result = agent_launch.run_with_fallback(
+        ctx.task_dir, ctx.cycle_dir, prompt, config, success=lambda: os.path.isfile(review))
+    ctx.agent_run = dict(result, requested=True, ran=result.get("status") == "ok")
+    if result.get("status") == "ok":
+        return StageResult("agent", "ok", outputs=["agent_review.md"],
+                           message="review written (model {})".format(result.get("model")))
+    # A silent loss of the review hides weeks of monitoring: raise a trigger so the digest shows it.
+    reason = result.get("reason") or result.get("status", "")
+    return StageResult("agent", "warn", triggers=["monitor:agent_failed"],
+                       message="agent review FAILED ({}); attempts: {}".format(
+                           reason, ", ".join("{}={}".format(a["model"], a["reason"] or a["status"])
+                                             for a in result.get("attempts", []))))
 
 for _name, _stage in (("sense", sense), ("evidence", evidence), ("refresh", refresh),
                       ("script", script), ("kpis", kpis),
