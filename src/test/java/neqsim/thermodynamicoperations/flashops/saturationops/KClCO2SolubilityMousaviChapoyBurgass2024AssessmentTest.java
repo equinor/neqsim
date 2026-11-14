@@ -260,6 +260,10 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
     fluid.addComponent("Cl-", naclMoles + kclMoles + 2.0 * cacl2Moles);
     fluid.setMixingRule(10);
     fluid.setMultiPhaseCheck(true);
+    // The fixture requires coexisting CO2-rich and aqueous phases. Skip the preliminary homogeneous
+    // stability check, which can send these feeds through repeated CPA volume-root scans. The
+    // multiphase flash still performs phase stability analysis and determines the phase split.
+    fluid.checkStability(false);
     new ThermodynamicOperations(fluid).TPflash();
     fluid.init(1);
     return fluid;
