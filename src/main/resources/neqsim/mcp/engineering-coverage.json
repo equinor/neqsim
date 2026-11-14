@@ -1846,6 +1846,34 @@
       }
     },
     {
+      "id": "sealed-radial-aquifer-influence",
+      "title": "Prepared sealed radial aquifer influence and Carter\u2013Tracy influx",
+      "domain": "reservoir",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.reservoirproperties.materialbalance.FiniteRadialAquiferInfluence",
+        "neqsim.pvtsimulation.reservoirproperties.materialbalance.VanEverdingenHurstAquifer"
+      ],
+      "skills": [
+        "neqsim-integrated-production-and-lifecycle",
+        "neqsim-capability-map"
+      ],
+      "agents": [
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/FiniteRadialAquiferInfluenceTest.java",
+        "src/test/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/VanEverdingenHurstAquiferTest.java"
+      ],
+      "limitations": "Discovery and inspectApi only; prepare one immutable Java/Python response per radius ratio in [2, 10]. Constant terminal rate at the inner wall, initially uniform homogeneous aquifer, sealing outer boundary, slightly compressible fixed properties. Dimensionless pressure and derivative, pressure table and AQUTAB export, and approximate Carter\u2013Tracy withdrawal-history influx on a reservoir m3 basis. Independent Laplace and conservative finite-volume mathematical references. The legacy finite double-radius overload uses a separate unqualified maximum policy. Field accuracy, unit-pressure convolution equivalence, water mixing, compositional coupling and recoverable reserves remain outside this model.",
+      "evidence": {
+        "route": "declared",
+        "testSources": "present",
+        "execution": "not_recorded",
+        "engineeringQualification": "not_assessed"
+      }
+    },
+    {
       "id": "separator-energy-diagnostics",
       "title": "Opt-in separator cumulative energy accounting",
       "domain": "dynamics",
@@ -5231,10 +5259,11 @@
     {"id":"neqsim.pvtsimulation.regression.ViscosityDataPoint","kind":"class","source":"src/main/java/neqsim/pvtsimulation/regression/ViscosityDataPoint.java","sourceDigest":"d0d0aab8b29abdf3256ec0ab1a635025461ab1838928ab5a7f4ec9d44b01df14","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.reservoirproperties.CompositionEstimation","kind":"class","source":"src/main/java/neqsim/pvtsimulation/reservoirproperties/CompositionEstimation.java","sourceDigest":"2382fb498c62804b65f792a645913c9a74c2c5e3665fd41f9b715aa3d9b9bcb9","domain":"pvtsimulation","skills":["neqsim-capability-map"],"agents":["capability-scout","engineering-deliverables","mechanical-design","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.reservoirproperties.materialbalance.FetkovichAquifer","kind":"class","source":"src/main/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/FetkovichAquifer.java","sourceDigest":"fb023181e9be46a74618cd47baa623d9932ac3a1019450755af486cd48598984","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":["finite-aquifer-reservoir-history"],"disposition":"registered_anchor"},
+    {"id":"neqsim.pvtsimulation.reservoirproperties.materialbalance.FiniteRadialAquiferInfluence","kind":"class","source":"src/main/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/FiniteRadialAquiferInfluence.java","sourceDigest":"af417b89746707566c3ede8a2c1b1fbac37ea3a19c713a920fe3d8185f94dc5b","domain":"pvtsimulation","skills":["neqsim-capability-map"],"agents":["capability-scout","engineering-deliverables","mechanical-design","solve-task"],"capabilities":["sealed-radial-aquifer-influence"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.reservoirproperties.materialbalance.GasMaterialBalance","kind":"class","source":"src/main/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/GasMaterialBalance.java","sourceDigest":"13c56d0ee9ce9e7982ee69ddc323b70ebcf88fd85fcd056669fc6fef1c4a767e","domain":"pvtsimulation","skills":["neqsim-capability-map","neqsim-field-development","neqsim-production-optimization"],"agents":["capability-scout","engineering-deliverables","field-development","mechanical-design","solve-task","surf-design-study"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.reservoirproperties.materialbalance.GeneralizedMaterialBalance","kind":"class","source":"src/main/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/GeneralizedMaterialBalance.java","sourceDigest":"a2a3da2e02734b472042e3fce97bee62333c947466b17aa3179a138614820655","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":["generalized-reservoir-material-balance"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.reservoirproperties.materialbalance.OilMaterialBalance","kind":"class","source":"src/main/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/OilMaterialBalance.java","sourceDigest":"ff4e7e2ddc0d309ffc25319a90d59fbee94504de3a8e5c24a1c7e219de33b2e0","domain":"pvtsimulation","skills":["neqsim-capability-map","neqsim-field-development","neqsim-production-optimization"],"agents":["capability-scout","engineering-deliverables","field-development","mechanical-design","solve-task","surf-design-study"],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.pvtsimulation.reservoirproperties.materialbalance.VanEverdingenHurstAquifer","kind":"class","source":"src/main/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/VanEverdingenHurstAquifer.java","sourceDigest":"f08785522867a72b4b22b1e40b4406aa9e5ad44f92ea8de2508e47fe2e8ad88f","domain":"pvtsimulation","skills":["neqsim-capability-map","neqsim-field-development","neqsim-production-optimization"],"agents":["capability-scout","engineering-deliverables","field-development","mechanical-design","solve-task","surf-design-study"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.pvtsimulation.reservoirproperties.materialbalance.VanEverdingenHurstAquifer","kind":"class","source":"src/main/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/VanEverdingenHurstAquifer.java","sourceDigest":"c6edd891be7c777a3786d53c2fba567dc4b8cbeeef2f666d63102458eda22770","domain":"pvtsimulation","skills":["neqsim-capability-map","neqsim-field-development","neqsim-production-optimization"],"agents":["capability-scout","engineering-deliverables","field-development","mechanical-design","solve-task","surf-design-study"],"capabilities":["sealed-radial-aquifer-influence"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.reservoirproperties.relpermeability.RelPermModelFamily","kind":"enum","source":"src/main/java/neqsim/pvtsimulation/reservoirproperties/relpermeability/RelPermModelFamily.java","sourceDigest":"80f825cd11a0a6f5543c8be911fb72e8f2f7326cd474b2b35255ac2c4c7ba69c","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.reservoirproperties.relpermeability.RelPermTableType","kind":"enum","source":"src/main/java/neqsim/pvtsimulation/reservoirproperties/relpermeability/RelPermTableType.java","sourceDigest":"8f1047dbf5ce98bbcd30dd91fa0d3476e0b5f085439c39ca12b5d11d02fa3937","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.reservoirproperties.relpermeability.RelativePermeabilityGenerator","kind":"class","source":"src/main/java/neqsim/pvtsimulation/reservoirproperties/relpermeability/RelativePermeabilityGenerator.java","sourceDigest":"165cbffdbbf57ba9ed749a6047740d78fa4b7c656450fec19cfe6c59061b41a5","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},

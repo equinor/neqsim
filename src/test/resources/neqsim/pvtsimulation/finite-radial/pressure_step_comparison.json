@@ -1,0 +1,461 @@
+{
+  "radialModel": "Unit terminal rate influence for sealed annulus, used in the Carter\u2013Tracy recurrence",
+  "referenceModel": "Run70 exact unit-pressure-step influx for sealed annulus from Laplace inversion",
+  "timeGrid": "Logarithmic t=10^(-6+j/m) with j=0..10m followed in order, preceded by initialized time zero",
+  "stepsPerDecade": [
+    4,
+    16,
+    64
+  ],
+  "startupControl": "Independent replay of recurrence with W(1e-6)=(2 sqrt(pi)/3) sqrt(1e-6), the early-time continuum CT asymptote",
+  "differences": "Signed fractions with exact unit-pressure-step reference as denominator",
+  "interpretation": "Compare approximation and mesh sensitivity. No comparison tolerance is assigned to the CT discrepancy.",
+  "diagnosticSha256": "65d5c2fbdb986147f7754405f71cf9d20a83a741610bf9a39698f94523e965b2",
+  "referenceSha256": "95d4953105fda091d4ef574ed3784d4defbba35f8ba68730ce0deb9d4472c174",
+  "rows": [
+    {
+      "radius": 2.0,
+      "time": 1e-06,
+      "unitPressureReference": "0.0011288790731263566138068731212890592",
+      "zeroOrigin": {
+        "influx": [
+          0.0008866195770159678,
+          0.0008866195770159678,
+          0.0008866195770159678
+        ],
+        "relativeDifferenceFromReference": [
+          -0.2146018133186463,
+          -0.2146018133186463,
+          -0.2146018133186463
+        ],
+        "relativeRefinementDifferences": [
+          0.0,
+          0.0
+        ]
+      },
+      "shortTimeCtStartup": {
+        "influx": [
+          0.0011816359006036772,
+          0.0011816359006036772,
+          0.0011816359006036772
+        ],
+        "relativeDifferenceFromReference": [
+          0.04673381652050114,
+          0.04673381652050114,
+          0.04673381652050114
+        ],
+        "relativeRefinementDifferences": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "radius": 2.0,
+      "time": 0.0001,
+      "unitPressureReference": "0.011333698258547713624201640583629754",
+      "zeroOrigin": {
+        "influx": [
+          0.0113155019684214,
+          0.011722923243454832,
+          0.011829654209877239
+        ],
+        "relativeDifferenceFromReference": [
+          -0.0016055033150887048,
+          0.034342275224556136,
+          0.043759410213297496
+        ],
+        "relativeRefinementDifferences": [
+          0.03594777853964484,
+          0.00941713498874136
+        ]
+      },
+      "shortTimeCtStartup": {
+        "influx": [
+          0.01133182458897402,
+          0.011728264608008323,
+          0.011833169013381046
+        ],
+        "relativeDifferenceFromReference": [
+          -0.00016531846277815485,
+          0.034813556921989904,
+          0.04406952994858829
+        ],
+        "relativeRefinementDifferences": [
+          0.034978875384768064,
+          0.009255973026598379
+        ]
+      }
+    },
+    {
+      "radius": 2.0,
+      "time": 0.01,
+      "unitPressureReference": "0.11774960726927617890816142939540742",
+      "zeroOrigin": {
+        "influx": [
+          0.11768978385605006,
+          0.12183612031013608,
+          0.12292815466492846
+        ],
+        "relativeDifferenceFromReference": [
+          -0.0005080561592813901,
+          0.03470510972928036,
+          0.04397931777224274
+        ],
+        "relativeRefinementDifferences": [
+          0.03521316588856176,
+          0.009274208042962372
+        ]
+      },
+      "shortTimeCtStartup": {
+        "influx": [
+          0.11769076396478642,
+          0.12183622875793283,
+          0.12292820229608327
+        ],
+        "relativeDifferenceFromReference": [
+          -0.000499732490446356,
+          0.03470603073274927,
+          0.043979722284460794
+        ],
+        "relativeRefinementDifferences": [
+          0.03520576322319562,
+          0.00927369155171153
+        ]
+      }
+    },
+    {
+      "radius": 2.0,
+      "time": 1.0,
+      "unitPressureReference": "1.2951060470750580992430141560738574",
+      "zeroOrigin": {
+        "influx": [
+          1.2489313204621433,
+          1.3101327878305205,
+          1.328078063461742
+        ],
+        "relativeDifferenceFromReference": [
+          -0.03565323991591155,
+          0.011602710673307055,
+          0.025458931692234534
+        ],
+        "relativeRefinementDifferences": [
+          0.0472559505892186,
+          0.01385622101892748
+        ]
+      },
+      "shortTimeCtStartup": {
+        "influx": [
+          1.2489313724139341,
+          1.3101327900507431,
+          1.3280780641466525
+        ],
+        "relativeDifferenceFromReference": [
+          -0.035653199801983435,
+          0.011602712387624333,
+          0.0254589322210797
+        ],
+        "relativeRefinementDifferences": [
+          0.04725591218960777,
+          0.013856219833455368
+        ]
+      }
+    },
+    {
+      "radius": 2.0,
+      "time": 100.0,
+      "unitPressureReference": "1.5",
+      "zeroOrigin": {
+        "influx": [
+          1.4999999998540674,
+          1.5000000000000002,
+          1.5
+        ],
+        "relativeDifferenceFromReference": [
+          -9.728839955869262e-11,
+          1.4802973661668753e-16,
+          0.0
+        ],
+        "relativeRefinementDifferences": [
+          9.728854758842924e-11,
+          -1.4802973661668753e-16
+        ]
+      },
+      "shortTimeCtStartup": {
+        "influx": [
+          1.4999999998540674,
+          1.5000000000000002,
+          1.5
+        ],
+        "relativeDifferenceFromReference": [
+          -9.728839955869262e-11,
+          1.4802973661668753e-16,
+          0.0
+        ],
+        "relativeRefinementDifferences": [
+          9.728854758842924e-11,
+          -1.4802973661668753e-16
+        ]
+      }
+    },
+    {
+      "radius": 2.0,
+      "time": 10000.0,
+      "unitPressureReference": "1.5",
+      "zeroOrigin": {
+        "influx": [
+          1.5,
+          1.5,
+          1.5
+        ],
+        "relativeDifferenceFromReference": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "relativeRefinementDifferences": [
+          0.0,
+          0.0
+        ]
+      },
+      "shortTimeCtStartup": {
+        "influx": [
+          1.5,
+          1.5,
+          1.5
+        ],
+        "relativeDifferenceFromReference": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "relativeRefinementDifferences": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "radius": 10.0,
+      "time": 1e-06,
+      "unitPressureReference": "0.0011288790731263566138068731212890592",
+      "zeroOrigin": {
+        "influx": [
+          0.0008866195770159678,
+          0.0008866195770159678,
+          0.0008866195770159678
+        ],
+        "relativeDifferenceFromReference": [
+          -0.2146018133186463,
+          -0.2146018133186463,
+          -0.2146018133186463
+        ],
+        "relativeRefinementDifferences": [
+          0.0,
+          0.0
+        ]
+      },
+      "shortTimeCtStartup": {
+        "influx": [
+          0.0011816359006036772,
+          0.0011816359006036772,
+          0.0011816359006036772
+        ],
+        "relativeDifferenceFromReference": [
+          0.04673381652050114,
+          0.04673381652050114,
+          0.04673381652050114
+        ],
+        "relativeRefinementDifferences": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "radius": 10.0,
+      "time": 0.0001,
+      "unitPressureReference": "0.011333698258547713624201640583629754",
+      "zeroOrigin": {
+        "influx": [
+          0.0113155019684214,
+          0.011722923243454832,
+          0.011829654209877239
+        ],
+        "relativeDifferenceFromReference": [
+          -0.0016055033150887048,
+          0.034342275224556136,
+          0.043759410213297496
+        ],
+        "relativeRefinementDifferences": [
+          0.03594777853964484,
+          0.00941713498874136
+        ]
+      },
+      "shortTimeCtStartup": {
+        "influx": [
+          0.01133182458897402,
+          0.011728264608008323,
+          0.011833169013381046
+        ],
+        "relativeDifferenceFromReference": [
+          -0.00016531846277815485,
+          0.034813556921989904,
+          0.04406952994858829
+        ],
+        "relativeRefinementDifferences": [
+          0.034978875384768064,
+          0.009255973026598379
+        ]
+      }
+    },
+    {
+      "radius": 10.0,
+      "time": 0.01,
+      "unitPressureReference": "0.11774960726927617890816142939540742",
+      "zeroOrigin": {
+        "influx": [
+          0.11768978385605006,
+          0.12183612031013608,
+          0.12292815466492846
+        ],
+        "relativeDifferenceFromReference": [
+          -0.0005080561592813901,
+          0.03470510972928036,
+          0.04397931777224274
+        ],
+        "relativeRefinementDifferences": [
+          0.03521316588856176,
+          0.009274208042962372
+        ]
+      },
+      "shortTimeCtStartup": {
+        "influx": [
+          0.11769076396478642,
+          0.12183622875793283,
+          0.12292820229608327
+        ],
+        "relativeDifferenceFromReference": [
+          -0.000499732490446356,
+          0.03470603073274927,
+          0.043979722284460794
+        ],
+        "relativeRefinementDifferences": [
+          0.03520576322319562,
+          0.00927369155171153
+        ]
+      }
+    },
+    {
+      "radius": 10.0,
+      "time": 1.0,
+      "unitPressureReference": "1.5682920539381446245828394750031181",
+      "zeroOrigin": {
+        "influx": [
+          1.5630979187976688,
+          1.6172279447755182,
+          1.6315880477512281
+        ],
+        "relativeDifferenceFromReference": [
+          -0.003311969302804811,
+          0.03120330216204978,
+          0.040359825616753366
+        ],
+        "relativeRefinementDifferences": [
+          0.03451527146485459,
+          0.009156523454703589
+        ]
+      },
+      "shortTimeCtStartup": {
+        "influx": [
+          1.5630980192720902,
+          1.617227949446272,
+          1.6315880492504522
+        ],
+        "relativeDifferenceFromReference": [
+          -0.0033119052366627952,
+          0.031203305140292112,
+          0.040359826572713114
+        ],
+        "relativeRefinementDifferences": [
+          0.03451521037695491,
+          0.009156521432421006
+        ]
+      }
+    },
+    {
+      "radius": 10.0,
+      "time": 100.0,
+      "unitPressureReference": "35.43798239393348168645703617824765",
+      "zeroOrigin": {
+        "influx": [
+          33.49398082778288,
+          35.374340363764176,
+          35.93233665984843
+        ],
+        "relativeDifferenceFromReference": [
+          -0.054856440317081694,
+          -0.0017958705848953667,
+          0.013949842302522759
+        ],
+        "relativeRefinementDifferences": [
+          0.05306056973218633,
+          0.015745712887418127
+        ]
+      },
+      "shortTimeCtStartup": {
+        "influx": [
+          33.493980845920056,
+          35.37434036431499,
+          35.93233666000145
+        ],
+        "relativeDifferenceFromReference": [
+          -0.05485643980528114,
+          -0.001795870569352362,
+          0.013949842306840593
+        ],
+        "relativeRefinementDifferences": [
+          0.05306056923592878,
+          0.015745712876192957
+        ]
+      }
+    },
+    {
+      "radius": 10.0,
+      "time": 10000.0,
+      "unitPressureReference": "49.5",
+      "zeroOrigin": {
+        "influx": [
+          49.49999970333237,
+          49.5,
+          49.5
+        ],
+        "relativeDifferenceFromReference": [
+          -5.993285436957332e-09,
+          0.0,
+          0.0
+        ],
+        "relativeRefinementDifferences": [
+          5.993285436957332e-09,
+          0.0
+        ]
+      },
+      "shortTimeCtStartup": {
+        "influx": [
+          49.49999970333237,
+          49.5,
+          49.5
+        ],
+        "relativeDifferenceFromReference": [
+          -5.993285436957332e-09,
+          0.0,
+          0.0
+        ],
+        "relativeRefinementDifferences": [
+          5.993285436957332e-09,
+          0.0
+        ]
+      }
+    }
+  ]
+}

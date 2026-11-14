@@ -2075,6 +2075,28 @@
       "limitations": "Discovery and inspectApi only; Java/Python object workflow, no new static MCP operation. Constant-property Fetkovich reservoir-volume storage, exact prescribed linear-pressure integration, implicit fixed-pore-volume EOS coupling through segregated immiscible water. Aquifer water cannot mix or be produced through component schedules; interval minimum/maximum water volumes bound admissible roots. Known aquifer properties may be supplied for bounded volume fitting. No rock/thermal/spatial behavior, continuous joint identifiability, independent field qualification or recoverable reserves. Independent 60-digit ODE fixtures check prescribed-linear-pressure endpoint/extrema arithmetic and sixteen-subinterval consistency, including small-exposure boundaries; this is numerical qualification, not measured or radial-transient accuracy."
     },
     {
+      "id": "sealed-radial-aquifer-influence",
+      "title": "Prepared sealed radial aquifer influence and Carter–Tracy influx",
+      "domain": "reservoir",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.reservoirproperties.materialbalance.FiniteRadialAquiferInfluence",
+        "neqsim.pvtsimulation.reservoirproperties.materialbalance.VanEverdingenHurstAquifer"
+      ],
+      "skills": [
+        "neqsim-integrated-production-and-lifecycle",
+        "neqsim-capability-map"
+      ],
+      "agents": [
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/FiniteRadialAquiferInfluenceTest.java",
+        "src/test/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/VanEverdingenHurstAquiferTest.java"
+      ],
+      "limitations": "Discovery and inspectApi only; prepare one immutable Java/Python response per radius ratio in [2, 10]. Constant terminal rate at the inner wall, initially uniform homogeneous aquifer, sealing outer boundary, slightly compressible fixed properties. Dimensionless pressure and derivative, pressure table and AQUTAB export, and approximate Carter–Tracy withdrawal-history influx on a reservoir m3 basis. Independent Laplace and conservative finite-volume mathematical references. The legacy finite double-radius overload uses a separate unqualified maximum policy. Field accuracy, unit-pressure convolution equivalence, water mixing, compositional coupling and recoverable reserves remain outside this model."
+    },
+    {
       "id": "reservoir-history-discrete-posterior",
       "title": "Discrete joint Bayesian pressure-history hypotheses",
       "domain": "reservoir",
