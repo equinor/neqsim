@@ -442,6 +442,8 @@ Each equilibrium tray is a PH flash. On narrow-boiling tray mixtures almost all 
 latent heat, so a temperature Newton step based on the fixed-composition heat capacity overshoots.
 `SimpleTray` opts in to a bracketed PH flash. It switches to an Illinois regula-falsi step when
 the Newton step leaves the bracket, and checks the enthalpy residual before accepting a solution.
+When the reactive flash delegates to ordinary vapor-liquid equilibrium in a system with no
+independent reactions, it uses the same tray flash settings.
 Before this safeguard, a 6-tray C4/C5/C6 debutanizer took
 20-110 s and failed with four solver types; it now converges in 0.1-0.5 s with all of them.
 

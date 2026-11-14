@@ -431,8 +431,20 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param type flash type (0 = standard)
    */
   public void reactivePHflash(double Hspec, int type) {
-    operation = new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash(system, Hspec,
-        type);
+    reactivePHflash(Hspec, type, 0.0);
+  }
+
+  /**
+   * Runs a reactive PH flash with an optional tolerance for the delegated nonreactive PH flash.
+   *
+   * @param Hspec specified total enthalpy in J
+   * @param type flash type (0 = standard)
+   * @param singleResidualTolerance positive relative enthalpy tolerance enabling bracketing and single-residual
+   * convergence when the system delegates to the nonreactive PH flash
+   */
+  public void reactivePHflash(double Hspec, int type, double singleResidualTolerance) {
+    operation = new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash(system, Hspec, type,
+        singleResidualTolerance);
     getOperation().run();
   }
 

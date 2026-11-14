@@ -311,7 +311,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     } else {
       try {
         if (useReactiveFlash) {
-          testOps.reactivePHflash(enthalpy, 0);
+          testOps.reactivePHflash(enthalpy, 0, TRAY_ENTHALPY_SINGLE_RESIDUAL_TOLERANCE);
         } else {
           // The column repeats this flash every sweep, so one residual two orders of magnitude
           // below the nominal tolerance is accepted without a confirming equilibrium flash.
