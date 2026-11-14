@@ -105,7 +105,8 @@ evidence remains `UNQUALIFIED` under the [dynamic capability contract](../dynami
 `NonEquilibriumReleaseInventory` is a separate opt-in model for exactly one gas and one oil,
 generic-liquid or aqueous phase. It does not call a TP or VU equilibrium flash after a component
 transfer. Instead, it retains gas and liquid component masses separately and evaluates forced
-homogeneous EOS phases at one common pressure and temperature. A coupled Newton solve enforces
+homogeneous EOS phases. Existing constructors retain the common-pressure/common-temperature
+boundary. A coupled Newton solve enforces
 
 $$V_g(P,T,\mathbf{m}_g)+V_l(P,T,\mathbf{m}_l)=V_{vessel}$$
 
@@ -132,12 +133,27 @@ provenance. It is an internal diagnostic, not an energy source: the total-energy
 retains the complete thermodynamic effect and the global balance remains
 $U+H_{released}-Q_{external}=U_0$.
 
-The model assumes thermal equilibrium between phases, prescribed film coefficients and one live
-cylindrical interface. It fails closed on phase disappearance, an opening inside the exclusion
-band, an unsupported phase assemblage, invalid fugacity/property data or a non-converged state
-solve. It does not predict separate phase temperatures, interfacial heat-transfer coefficients,
-nucleation delay, wall inertia, entrainment, droplets, population balance, pipe waves or solids.
-Its current evidence level is `UNQUALIFIED`.
+An additional constructor ending in `ReleaseInventoryInterphaseHeatTransfer` activates separate
+phase energies and temperatures while retaining one mechanical pressure. For target gas and liquid
+energies, the nonlinear solve enforces
+
+$$V_g(P,T_g,\mathbf{m}_g)+V_l(P,T_l,\mathbf{m}_l)=V_{vessel},\qquad
+U_g(P,T_g,\mathbf{m}_g)=U_{g,target},\qquad
+U_l(P,T_l,\mathbf{m}_l)=U_{l,target}$$
+
+`linearConductance(UA, provenance)` applies
+$\dot Q_{g\leftarrow l}=UA(T_l-T_g)$, with equal and opposite phase-energy updates. Component
+transfer carries the donor phase's beginning-of-substep bulk enthalpy. Release removes the selected
+phase enthalpy, and the existing external heat boundary is allocated explicitly to that selected
+phase. The immutable balance exposes both phase energies and temperatures plus cumulative signed
+interfacial heat entering the gas. The common-temperature constructors and their source-frame basis
+remain unchanged.
+
+Both thermal forms use prescribed coefficients and one live cylindrical interface. They fail closed
+on phase disappearance, an opening inside the exclusion band, an unsupported phase assemblage,
+invalid fugacity/property data or a non-converged state solve. They do not predict mass- or
+heat-transfer coefficients, nucleation delay, wall inertia, entrainment, droplets, population
+balance, pipe waves or solids. Their current evidence level is `UNQUALIFIED`.
 
 The executable construction and both process-container paths are covered by
 `NonEquilibriumReleaseInventoryTest`:
@@ -162,6 +178,26 @@ SourceTermFrame frame = session.runSteadyState().get(0);
 frame = session.step(0.10).get(0);
 NonEquilibriumReleaseInventory.Balance balance = finiteRate.getBalance();
 ```
+
+To activate independent phase energies, add explicit external and interfacial heat closures:
+
+```java
+ReleaseInventoryHeatTransfer external = ReleaseInventoryHeatTransfer.constantPower(
+    200.0, "assessed-heater-duty:v1"); // W into selected withdrawal phase
+ReleaseInventoryInterphaseHeatTransfer interfaceHeat =
+    ReleaseInventoryInterphaseHeatTransfer.linearConductance(
+        15.0, "assessed-interface-UA:v1"); // W/K
+NonEquilibriumReleaseInventory separateEnergy = new NonEquilibriumReleaseInventory(
+    "separate-energy-inventory", flashedFluid, vesselVolumeM3,
+    openingDiameterM, 0.70, receiverPressurePa, 0.0, 0.0,
+    selectedReleaseModel, maximumSubstepS, PhaseType.GAS,
+    vesselGeometry, film, external, interfaceHeat);
+```
+
+`NonEquilibriumReleaseInventoryTest` exercises combined component/energy conservation, heat-flow
+direction, exact phase-energy summation, four-level timestep refinement, deterministic frames and
+both native process containers. These are numerical and conservation tests, not independent
+qualification of a conductance or applicability envelope.
 
 `getThermoSystem()` returns a defensive clone of the selected withdrawal phase because a single
 `SystemInterface` cannot represent two retained compositions without reflashing them. Whole-

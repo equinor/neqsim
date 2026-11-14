@@ -19,20 +19,21 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <p>
  * Unlike {@link ReleaseInventory}, this unit never reflashes the committed component partition. It retains separate gas
- * and liquid component masses, evaluates each as a forced homogeneous EOS phase, and solves one common pressure and
- * temperature from total rigid volume and total internal energy. A provenance-required
- * {@link ReleaseInventoryInterphaseTransfer} moves components in either direction across the live geometry area with
- * donor limits. The phase-enthalpy difference is retained as a latent-energy diagnostic while the volume/internal-
- * energy solve enforces the complete closed-system energy effect. Release withdrawal removes the selected phase
- * composition and stagnation enthalpy. Candidate calls are committed atomically only after component, total-mass,
- * volume and energy closure checks pass.
+ * and liquid component masses and evaluates each as a forced homogeneous EOS phase. The default constructors solve one
+ * common pressure and temperature from total rigid volume and total internal energy. An explicit
+ * {@link ReleaseInventoryInterphaseHeatTransfer} instead activates separate gas and liquid energy inventories and
+ * temperatures at a common mechanical pressure. A provenance-required {@link ReleaseInventoryInterphaseTransfer} moves
+ * components in either direction across the live geometry area with donor limits. The phase-enthalpy difference is
+ * retained as a latent-energy diagnostic while the volume/internal- energy solve enforces the complete closed-system
+ * energy effect. Release withdrawal removes the selected phase composition and stagnation enthalpy. Candidate calls are
+ * committed atomically only after component, total-mass, volume and energy closure checks pass.
  * </p>
  *
  * <p>
- * The initial implementation assumes thermal equilibrium between exactly one gas phase and exactly one oil, generic
- * liquid or aqueous phase. It does not predict separate phase temperatures, nucleation delay, entrainment, population
- * balance, wall thermal inertia, pipe waves or solid transport. Coefficients are prescribed sensitivity inputs and do
- * not confer engineering qualification.
+ * Exactly one gas phase and exactly one oil, generic liquid or aqueous phase are retained. The implementation does not
+ * predict heat- or mass-transfer coefficients, nucleation delay, entrainment, population balance, wall thermal inertia,
+ * pipe waves or solid transport. Coefficients are prescribed sensitivity inputs and do not confer engineering
+ * qualification.
  * </p>
  *
  * @author esol
@@ -62,6 +63,7 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
   private final ReleaseInventoryPhaseGeometry geometry;
   private final ReleaseInventoryInterphaseTransfer interphaseTransfer;
   private final ReleaseInventoryHeatTransfer heatTransfer;
+  private final ReleaseInventoryInterphaseHeatTransfer interphaseHeatTransfer;
   private final SystemInterface template;
   private final String[] componentNames;
   private final double[] componentMolarMassKgMol;
@@ -75,6 +77,7 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
   private double releasedEnergyJ;
   private double heatTransferEnergyJ;
   private double interphaseLatentEnergyJ;
+  private double interphaseHeatTransferEnergyJ;
   private double interphaseTransferredMassKg;
   private int donorLimitedComponents;
   private int lastSubsteps;
@@ -104,7 +107,8 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
       PhaseType withdrawalPhaseType, ReleaseInventoryPhaseGeometry geometry,
       ReleaseInventoryInterphaseTransfer interphaseTransfer) {
     this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, 0.0, 0.0, releaseModel,
-        maxSubstepS, withdrawalPhaseType, geometry, interphaseTransfer, ReleaseInventoryHeatTransfer.adiabatic());
+        maxSubstepS, withdrawalPhaseType, geometry, interphaseTransfer, ReleaseInventoryHeatTransfer.adiabatic(), null,
+        false);
   }
 
   /**
@@ -130,6 +134,71 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
       ReleaseFlowModel releaseModel, double maxSubstepS, PhaseType withdrawalPhaseType,
       ReleaseInventoryPhaseGeometry geometry, ReleaseInventoryInterphaseTransfer interphaseTransfer,
       ReleaseInventoryHeatTransfer heatTransfer) {
+    this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, flowPathLengthM,
+        darcyFrictionFactor, releaseModel, maxSubstepS, withdrawalPhaseType, geometry, interphaseTransfer, heatTransfer,
+        null, false);
+  }
+
+  /**
+   * Creates an independently owned inventory with separate phase energies and temperatures.
+   *
+   * <p>
+   * The external heat boundary is applied to the selected withdrawal phase. Interfacial heat is equal and opposite
+   * between phases.
+   * </p>
+   *
+   * @param name unique process-equipment name
+   * @param initialFluid equilibrium initial fluid containing exactly one gas and one supported liquid phase
+   * @param volumeM3 fixed vessel volume in m3; must equal the cylindrical geometry capacity
+   * @param diameterM physical opening or pipe diameter in m
+   * @param dischargeCoefficient discharge coefficient or full-bore area factor in (0, 1]
+   * @param backPressurePa constant absolute receiving pressure in Pa
+   * @param flowPathLengthM constant-area release path length in m; zero selects a short opening
+   * @param darcyFrictionFactor caller-specified Darcy factor; zero selects a short opening
+   * @param releaseModel caller-selected release model; screening results are rejected
+   * @param maxSubstepS largest explicit substep in s
+   * @param withdrawalPhaseType explicit GAS, OIL, LIQUID or AQUEOUS release phase
+   * @param geometry live cylindrical level/interface/opening geometry
+   * @param interphaseTransfer prescribed two-way component-film closure
+   * @param heatTransfer explicit external heat boundary applied to the withdrawal phase
+   * @param interphaseHeatTransfer prescribed interfacial heat-transfer closure
+   */
+  public NonEquilibriumReleaseInventory(String name, SystemInterface initialFluid, double volumeM3, double diameterM,
+      double dischargeCoefficient, double backPressurePa, double flowPathLengthM, double darcyFrictionFactor,
+      ReleaseFlowModel releaseModel, double maxSubstepS, PhaseType withdrawalPhaseType,
+      ReleaseInventoryPhaseGeometry geometry, ReleaseInventoryInterphaseTransfer interphaseTransfer,
+      ReleaseInventoryHeatTransfer heatTransfer, ReleaseInventoryInterphaseHeatTransfer interphaseHeatTransfer) {
+    this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, flowPathLengthM,
+        darcyFrictionFactor, releaseModel, maxSubstepS, withdrawalPhaseType, geometry, interphaseTransfer, heatTransfer,
+        Objects.requireNonNull(interphaseHeatTransfer, "interphaseHeatTransfer"), true);
+  }
+
+  /**
+   * Creates the common- or separate-temperature implementation.
+   *
+   * @param name unique process-equipment name
+   * @param initialFluid initial equilibrium fluid
+   * @param volumeM3 fixed volume in m3
+   * @param diameterM opening diameter in m
+   * @param dischargeCoefficient opening coefficient
+   * @param backPressurePa receiving pressure in Pa
+   * @param flowPathLengthM flow-path length in m
+   * @param darcyFrictionFactor Darcy factor
+   * @param releaseModel release model
+   * @param maxSubstepS maximum substep in s
+   * @param withdrawalPhaseType selected phase
+   * @param geometry phase geometry
+   * @param interphaseTransfer component transfer closure
+   * @param heatTransfer external heat boundary
+   * @param interphaseHeatTransfer optional interfacial heat closure
+   * @param separatePhaseEnergy true only for the explicit separate-energy constructor
+   */
+  private NonEquilibriumReleaseInventory(String name, SystemInterface initialFluid, double volumeM3, double diameterM,
+      double dischargeCoefficient, double backPressurePa, double flowPathLengthM, double darcyFrictionFactor,
+      ReleaseFlowModel releaseModel, double maxSubstepS, PhaseType withdrawalPhaseType,
+      ReleaseInventoryPhaseGeometry geometry, ReleaseInventoryInterphaseTransfer interphaseTransfer,
+      ReleaseInventoryHeatTransfer heatTransfer, ReleaseInventoryInterphaseHeatTransfer interphaseHeatTransfer,
+      boolean separatePhaseEnergy) {
     super(name);
     this.volumeM3 = ReleaseFlowRequest.positive(volumeM3, "volumeM3");
     this.maxSubstepS = ReleaseFlowRequest.positive(maxSubstepS, "maxSubstepS");
@@ -138,6 +207,9 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
     this.geometry = Objects.requireNonNull(geometry, "geometry");
     this.interphaseTransfer = Objects.requireNonNull(interphaseTransfer, "interphaseTransfer");
     this.heatTransfer = Objects.requireNonNull(heatTransfer, "heatTransfer");
+    this.interphaseHeatTransfer = separatePhaseEnergy
+        ? Objects.requireNonNull(interphaseHeatTransfer, "interphaseHeatTransfer")
+        : null;
     geometry.requireCapacity(this.volumeM3);
     ReleaseFlowRequest configuration = new ReleaseFlowRequest(initialFluid, diameterM, dischargeCoefficient,
         backPressurePa, flowPathLengthM, darcyFrictionFactor);
@@ -179,7 +251,6 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
     this.state = evaluate(phaseComponentMassKg, scaled.getPressure() * 1.0e5, scaled.getTemperature());
     close(state.volumeM3, volumeM3, volumeM3, "INVENTORY_VOLUME_CLOSURE_FAILED");
     requireGeometry(state);
-    selectedState(state);
     this.initialComponentMassKg = totalComponentMasses(phaseComponentMassKg);
     this.initialEnergyJ = state.internalEnergyJ;
     this.releasedComponentMassKg = zeroComponentMap();
@@ -226,6 +297,7 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
     double energyLoss = releasedEnergyJ;
     double heatInput = heatTransferEnergyJ;
     double latent = interphaseLatentEnergyJ;
+    double interphaseHeat = interphaseHeatTransferEnergyJ;
     double transferred = interphaseTransferredMassKg;
     int limited = donorLimitedComponents;
     int solves = 0;
@@ -248,7 +320,8 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
       }
       Step step = advance(candidateMass, candidateState, releaseRateKgS, heatRateW, duration);
       solves += step.stateSolves;
-      if (releaseRateKgS == 0.0 && heatRateW == 0.0 && step.absoluteTransferredMassKg == 0.0) {
+      if (releaseRateKgS == 0.0 && heatRateW == 0.0 && step.absoluteTransferredMassKg == 0.0
+          && step.interphaseHeatTransferEnergyJ == 0.0) {
         break;
       }
       double pressureTolerance = Math.max(1.0e-3, backPressurePa * PRESSURE_EVENT_RELATIVE_TOLERANCE);
@@ -270,12 +343,14 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
       energyLoss += step.outflowEnergyJ;
       heatInput += step.heatTransferEnergyJ;
       latent += step.interphaseLatentEnergyJ;
+      interphaseHeat += step.interphaseHeatTransferEnergyJ;
       transferred += step.absoluteTransferredMassKg;
       limited += step.donorLimitedComponents;
       elapsed += step.durationS;
       candidateMass = step.phaseComponentMassKg;
       candidateState = step.state;
-      if (pressureEvent && !heatTransfer.isActive()) {
+      if (pressureEvent && !heatTransfer.isActive()
+          && (interphaseHeatTransfer == null || !interphaseHeatTransfer.isActive())) {
         break;
       }
     }
@@ -294,6 +369,7 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
     releasedEnergyJ = energyLoss;
     heatTransferEnergyJ = heatInput;
     interphaseLatentEnergyJ = latent;
+    interphaseHeatTransferEnergyJ = interphaseHeat;
     interphaseTransferredMassKg = transferred;
     donorLimitedComponents = limited;
     lastSubsteps = steps;
@@ -325,11 +401,14 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
         componentMap(beforeMass[GAS]), componentMap(beforeMass[LIQUID]), geometryAssessment.getInterfacialAreaM2(),
         durationS);
     double absoluteTransferredMass = 0.0;
+    double gasMassTransferEnergy = 0.0;
     for (int component = 0; component < componentNames.length; component++) {
       double amount = transfer.getGasDirectedComponentMassKg().get(componentNames[component]);
       nextMass[GAS][component] += amount;
       nextMass[LIQUID][component] -= amount;
       absoluteTransferredMass += Math.abs(amount);
+      gasMassTransferEnergy += amount
+          * (amount >= 0.0 ? beforeState.liquid.getEnthalpy("J/kg") : beforeState.gas.getEnthalpy("J/kg"));
     }
     double removedMass = releaseRateKgS * durationS;
     double withdrawalMass = phaseMass(beforeMass, withdrawal);
@@ -345,8 +424,30 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
     requirePositivePhases(nextMass);
     double outflowEnergy = removedMass * selectedState(beforeState).getEnthalpy("J/kg");
     double heatEnergy = heatRateW * durationS;
+    double interphaseHeatEnergy = interphaseHeatTransfer == null ? 0.0
+        : interphaseHeatTransfer.getGasHeatTransferRateW(beforeState.gasTemperatureK, beforeState.liquidTemperatureK)
+            * durationS;
     double targetEnergy = beforeState.internalEnergyJ - outflowEnergy + heatEnergy;
-    SolveResult solved = solve(nextMass, targetEnergy, beforeState.pressurePa, beforeState.temperatureK);
+    SolveResult solved;
+    if (interphaseHeatTransfer == null) {
+      solved = solve(nextMass, targetEnergy, beforeState.pressurePa, beforeState.gasTemperatureK);
+    } else {
+      double targetGasEnergy = beforeState.gasInternalEnergyJ + gasMassTransferEnergy + interphaseHeatEnergy;
+      double targetLiquidEnergy = beforeState.liquidInternalEnergyJ - gasMassTransferEnergy - interphaseHeatEnergy;
+      if (withdrawal == GAS) {
+        targetGasEnergy += heatEnergy - outflowEnergy;
+      } else {
+        targetLiquidEnergy += heatEnergy - outflowEnergy;
+      }
+      solved = solveSeparate(nextMass, targetGasEnergy, targetLiquidEnergy, beforeState.pressurePa,
+          beforeState.gasTemperatureK, beforeState.liquidTemperatureK);
+      close(solved.state.gasInternalEnergyJ, targetGasEnergy,
+          Math.max(Math.abs(beforeState.gasInternalEnergyJ), Math.abs(targetGasEnergy)),
+          "INVENTORY_GAS_ENERGY_CLOSURE_FAILED");
+      close(solved.state.liquidInternalEnergyJ, targetLiquidEnergy,
+          Math.max(Math.abs(beforeState.liquidInternalEnergyJ), Math.abs(targetLiquidEnergy)),
+          "INVENTORY_LIQUID_ENERGY_CLOSURE_FAILED");
+    }
     requireGeometry(solved.state);
     close(solved.state.volumeM3, volumeM3, volumeM3, "INVENTORY_VOLUME_CLOSURE_FAILED");
     close(solved.state.internalEnergyJ, targetEnergy,
@@ -361,8 +462,8 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
           "INVENTORY_COMPONENT_CLOSURE_FAILED");
     }
     return new Step(nextMass, solved.state, removed, removedMass, outflowEnergy, heatEnergy,
-        transfer.getLatentEnergyJ(), absoluteTransferredMass, transfer.getDonorLimitedComponents(), durationS,
-        solved.evaluations);
+        transfer.getLatentEnergyJ(), interphaseHeatEnergy, absoluteTransferredMass,
+        transfer.getDonorLimitedComponents(), durationS, solved.evaluations);
   }
 
   /**
@@ -468,6 +569,175 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
   }
 
   /**
+   * Solves common pressure and independent phase temperatures for fixed phase energies.
+   *
+   * @param masses retained phase/component masses
+   * @param targetGasEnergyJ gas internal-energy target in J
+   * @param targetLiquidEnergyJ liquid internal-energy target in J
+   * @param initialPressurePa initial pressure iterate in Pa
+   * @param initialGasTemperatureK initial gas-temperature iterate in K
+   * @param initialLiquidTemperatureK initial liquid-temperature iterate in K
+   * @return converged state and evaluation count
+   */
+  private SolveResult solveSeparate(double[][] masses, double targetGasEnergyJ, double targetLiquidEnergyJ,
+      double initialPressurePa, double initialGasTemperatureK, double initialLiquidTemperatureK) {
+    double pressure = initialPressurePa;
+    double gasTemperature = initialGasTemperatureK;
+    double liquidTemperature = initialLiquidTemperatureK;
+    double gasScale = Math.max(1.0, Math.abs(targetGasEnergyJ));
+    double liquidScale = Math.max(1.0, Math.abs(targetLiquidEnergyJ));
+    int evaluations = 0;
+    for (int iteration = 0; iteration < MAX_SOLVER_ITERATIONS; iteration++) {
+      State current = evaluateSeparate(masses, pressure, gasTemperature, liquidTemperature);
+      evaluations++;
+      double[] residual = separateResidual(current, targetGasEnergyJ, targetLiquidEnergyJ, gasScale, liquidScale);
+      double norm = maximumAbsolute(residual);
+      if (norm <= SOLVER_TOLERANCE) {
+        return new SolveResult(current, evaluations);
+      }
+      double dPressure = Math.max(10.0, 1.0e-4 * pressure);
+      double dGasTemperature = Math.max(1.0e-3, 1.0e-4 * gasTemperature);
+      double dLiquidTemperature = Math.max(1.0e-3, 1.0e-4 * liquidTemperature);
+      State pressureProbe = evaluateSeparate(masses, pressure + dPressure, gasTemperature, liquidTemperature);
+      State gasProbe = evaluateSeparate(masses, pressure, gasTemperature + dGasTemperature, liquidTemperature);
+      State liquidProbe = evaluateSeparate(masses, pressure, gasTemperature, liquidTemperature + dLiquidTemperature);
+      evaluations += 3;
+      double[][] jacobian = new double[3][3];
+      fillDerivative(jacobian, 0, residual,
+          separateResidual(pressureProbe, targetGasEnergyJ, targetLiquidEnergyJ, gasScale, liquidScale), dPressure);
+      fillDerivative(jacobian, 1, residual,
+          separateResidual(gasProbe, targetGasEnergyJ, targetLiquidEnergyJ, gasScale, liquidScale), dGasTemperature);
+      fillDerivative(jacobian, 2, residual,
+          separateResidual(liquidProbe, targetGasEnergyJ, targetLiquidEnergyJ, gasScale, liquidScale),
+          dLiquidTemperature);
+      double[] delta = solveThreeByThree(jacobian, new double[] {-residual[0], -residual[1], -residual[2]});
+      boolean accepted = false;
+      for (int lineSearch = 0; lineSearch < 20; lineSearch++) {
+        double damping = Math.scalb(1.0, -lineSearch);
+        double trialPressure = pressure + damping * delta[0];
+        double trialGasTemperature = gasTemperature + damping * delta[1];
+        double trialLiquidTemperature = liquidTemperature + damping * delta[2];
+        if (!(trialPressure > 1000.0) || !(trialGasTemperature > 50.0) || !(trialLiquidTemperature > 50.0)
+            || !Double.isFinite(trialPressure) || !Double.isFinite(trialGasTemperature)
+            || !Double.isFinite(trialLiquidTemperature)) {
+          continue;
+        }
+        State trial = evaluateSeparate(masses, trialPressure, trialGasTemperature, trialLiquidTemperature);
+        evaluations++;
+        double trialNorm = maximumAbsolute(
+            separateResidual(trial, targetGasEnergyJ, targetLiquidEnergyJ, gasScale, liquidScale));
+        if (trialNorm < norm) {
+          pressure = trialPressure;
+          gasTemperature = trialGasTemperature;
+          liquidTemperature = trialLiquidTemperature;
+          accepted = true;
+          break;
+        }
+      }
+      if (!accepted) {
+        throw new IllegalStateException("INVENTORY_SEPARATE_ENERGY_LINE_SEARCH_FAILED");
+      }
+    }
+    throw new IllegalStateException("INVENTORY_SEPARATE_ENERGY_STATE_SOLVE_FAILED");
+  }
+
+  /**
+   * Returns scaled volume and phase-energy residuals.
+   *
+   * @param candidate evaluated state
+   * @param targetGasEnergyJ gas-energy target in J
+   * @param targetLiquidEnergyJ liquid-energy target in J
+   * @param gasScale gas-energy scale in J
+   * @param liquidScale liquid-energy scale in J
+   * @return three scaled residuals
+   */
+  private double[] separateResidual(State candidate, double targetGasEnergyJ, double targetLiquidEnergyJ,
+      double gasScale, double liquidScale) {
+    return new double[] {(candidate.volumeM3 - volumeM3) / volumeM3,
+        (candidate.gasInternalEnergyJ - targetGasEnergyJ) / gasScale,
+        (candidate.liquidInternalEnergyJ - targetLiquidEnergyJ) / liquidScale};
+  }
+
+  /**
+   * Fills one finite-difference Jacobian column.
+   *
+   * @param jacobian destination matrix
+   * @param column destination column
+   * @param base base residual
+   * @param probe perturbed residual
+   * @param increment variable increment
+   */
+  private static void fillDerivative(double[][] jacobian, int column, double[] base, double[] probe, double increment) {
+    for (int row = 0; row < 3; row++) {
+      jacobian[row][column] = (probe[row] - base[row]) / increment;
+    }
+  }
+
+  /**
+   * Solves one three-by-three linear system with scaled partial pivoting.
+   *
+   * @param matrix coefficient matrix
+   * @param rightHandSide right-hand side
+   * @return solution vector
+   */
+  private static double[] solveThreeByThree(double[][] matrix, double[] rightHandSide) {
+    double[][] augmented = new double[3][4];
+    for (int row = 0; row < 3; row++) {
+      System.arraycopy(matrix[row], 0, augmented[row], 0, 3);
+      augmented[row][3] = rightHandSide[row];
+    }
+    for (int column = 0; column < 3; column++) {
+      int pivot = column;
+      double largest = Math.abs(augmented[column][column]);
+      for (int row = column + 1; row < 3; row++) {
+        double candidate = Math.abs(augmented[row][column]);
+        if (candidate > largest) {
+          largest = candidate;
+          pivot = row;
+        }
+      }
+      if (!(largest > 1.0e-20) || !Double.isFinite(largest)) {
+        throw new IllegalStateException("INVENTORY_SEPARATE_ENERGY_JACOBIAN_SINGULAR");
+      }
+      double[] swap = augmented[column];
+      augmented[column] = augmented[pivot];
+      augmented[pivot] = swap;
+      for (int row = column + 1; row < 3; row++) {
+        double factor = augmented[row][column] / augmented[column][column];
+        for (int entry = column; entry < 4; entry++) {
+          augmented[row][entry] -= factor * augmented[column][entry];
+        }
+      }
+    }
+    double[] solution = new double[3];
+    for (int row = 2; row >= 0; row--) {
+      double value = augmented[row][3];
+      for (int column = row + 1; column < 3; column++) {
+        value -= augmented[row][column] * solution[column];
+      }
+      solution[row] = value / augmented[row][row];
+      if (!Double.isFinite(solution[row])) {
+        throw new IllegalStateException("INVENTORY_SEPARATE_ENERGY_JACOBIAN_SINGULAR");
+      }
+    }
+    return solution;
+  }
+
+  /**
+   * Returns the maximum absolute vector entry.
+   *
+   * @param values finite values
+   * @return maximum absolute value
+   */
+  private static double maximumAbsolute(double[] values) {
+    double maximum = 0.0;
+    for (double value : values) {
+      maximum = Math.max(maximum, Math.abs(value));
+    }
+    return maximum;
+  }
+
+  /**
    * Evaluates forced homogeneous phases for one common pressure and temperature.
    *
    * @param masses retained phase/component masses
@@ -483,7 +753,30 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
     if (!(volume > 0.0) || !Double.isFinite(volume) || !Double.isFinite(energy)) {
       throw new IllegalStateException("INVENTORY_NON_EQUILIBRIUM_STATE_INVALID");
     }
-    return new State(gas, liquid, pressurePa, temperatureK, volume, energy);
+    return new State(gas, liquid, pressurePa, temperatureK, temperatureK, volume, gas.getInternalEnergy("J"),
+        liquid.getInternalEnergy("J"));
+  }
+
+  /**
+   * Evaluates forced homogeneous phases at one pressure and independent temperatures.
+   *
+   * @param masses retained phase/component masses
+   * @param pressurePa common absolute pressure in Pa
+   * @param gasTemperatureK gas temperature in K
+   * @param liquidTemperatureK liquid temperature in K
+   * @return immutable evaluated state
+   */
+  private State evaluateSeparate(double[][] masses, double pressurePa, double gasTemperatureK,
+      double liquidTemperatureK) {
+    SystemInterface gas = createPhaseState(masses[GAS], PhaseType.GAS, pressurePa, gasTemperatureK);
+    SystemInterface liquid = createPhaseState(masses[LIQUID], liquidPhaseType, pressurePa, liquidTemperatureK);
+    double volume = gas.getVolume("m3") + liquid.getVolume("m3");
+    double gasEnergy = gas.getInternalEnergy("J");
+    double liquidEnergy = liquid.getInternalEnergy("J");
+    if (!(volume > 0.0) || !Double.isFinite(volume) || !Double.isFinite(gasEnergy) || !Double.isFinite(liquidEnergy)) {
+      throw new IllegalStateException("INVENTORY_NON_EQUILIBRIUM_STATE_INVALID");
+    }
+    return new State(gas, liquid, pressurePa, gasTemperatureK, liquidTemperatureK, volume, gasEnergy, liquidEnergy);
   }
 
   /**
@@ -544,7 +837,8 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
     }
     ReleaseState upstream = result.getStations().get(Station.UPSTREAM_STAGNATION);
     close(upstream.getPressurePa(), current.pressurePa, current.pressurePa, "RELEASE_STATE_MISMATCH");
-    close(upstream.getTemperatureK(), current.temperatureK, current.temperatureK, "RELEASE_STATE_MISMATCH");
+    close(upstream.getTemperatureK(), selectedTemperatureK(current), selectedTemperatureK(current),
+        "RELEASE_STATE_MISMATCH");
     close(upstream.getEnthalpyJkg(), withdrawal.getEnthalpy("J/kg"), Math.abs(withdrawal.getEnthalpy("J/kg")),
         "RELEASE_ENERGY_MISMATCH");
     ReleaseState exit = result.getStations().get(Station.ORIFICE_EXIT);
@@ -588,6 +882,16 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
    */
   private SystemInterface selectedState(State current) {
     return withdrawalIndex() == GAS ? current.gas : current.liquid;
+  }
+
+  /**
+   * Returns the selected phase temperature.
+   *
+   * @param current evaluated state
+   * @return selected phase temperature in K
+   */
+  private double selectedTemperatureK(State current) {
+    return withdrawalIndex() == GAS ? current.gasTemperatureK : current.liquidTemperatureK;
   }
 
   /**
@@ -850,7 +1154,8 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
   /** {@inheritDoc} */
   @Override
   public String getReleaseBasis() {
-    return "COUPLED_RIGID_THERMAL_EQUILIBRIUM_FINITE_RATE_PHASE_INVENTORY";
+    return interphaseHeatTransfer == null ? "COUPLED_RIGID_THERMAL_EQUILIBRIUM_FINITE_RATE_PHASE_INVENTORY"
+        : "COUPLED_RIGID_SEPARATE_PHASE_ENERGY_FINITE_RATE_PHASE_INVENTORY";
   }
 
   /** {@inheritDoc} */
@@ -861,7 +1166,9 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
     provenance.put("inventoryTimeS", Double.toString(getTime()));
     provenance.put("inventoryVolumeM3", Double.toString(volumeM3));
     provenance.put("inventoryPressurePa", Double.toString(state.pressurePa));
-    provenance.put("inventoryTemperatureK", Double.toString(state.temperatureK));
+    provenance.put("inventoryTemperatureK", Double.toString(selectedTemperatureK(state)));
+    provenance.put("inventoryGasTemperatureK", Double.toString(state.gasTemperatureK));
+    provenance.put("inventoryLiquidTemperatureK", Double.toString(state.liquidTemperatureK));
     provenance.put("inventoryGasMassKg", Double.toString(state.gas.getMass("kg")));
     provenance.put("inventoryLiquidMassKg", Double.toString(state.liquid.getMass("kg")));
     provenance.put("inventoryLiquidPhaseType", liquidPhaseType.name());
@@ -874,18 +1181,30 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
         Double.toString(interphaseTransfer.getMaximumDonorFraction()));
     provenance.put("inventoryCumulativeInterphaseTransferredMassKg", Double.toString(interphaseTransferredMassKg));
     provenance.put("inventoryCumulativeInterphaseLatentEnergyJ", Double.toString(interphaseLatentEnergyJ));
+    provenance.put("inventoryCumulativeInterphaseHeatTransferToGasJ", Double.toString(interphaseHeatTransferEnergyJ));
     provenance.put("inventoryDonorLimitedComponentEvents", Integer.toString(donorLimitedComponents));
     provenance.put("inventoryHeatTransferType", heatTransfer.getType().name());
     provenance.put("inventoryHeatTransferProvenance", heatTransfer.getProvenance());
     provenance.put("inventoryCumulativeReleasedMassKg", Double.toString(releasedMassKg));
     provenance.put("inventoryCumulativeReleasedEnthalpyJ", Double.toString(releasedEnergyJ));
     provenance.put("inventoryCumulativeExternalHeatTransferJ", Double.toString(heatTransferEnergyJ));
-    provenance.put("inventoryIntegrator", "EXPLICIT_EULER_RETAINED_PHASE_COMPONENT_VU_V1");
+    provenance.put("inventoryIntegrator",
+        interphaseHeatTransfer == null ? "EXPLICIT_EULER_RETAINED_PHASE_COMPONENT_VU_V1"
+            : "EXPLICIT_EULER_RETAINED_PHASE_COMPONENT_VUGUL_V1");
     provenance.put("inventoryMaximumSubstepS", Double.toString(maxSubstepS));
     provenance.put("inventoryLastSubsteps", Integer.toString(lastSubsteps));
     provenance.put("inventoryLastStateEvaluations", Integer.toString(lastStateSolves));
     provenance.put("inventoryPressureEquilibrationEvent", Boolean.toString(lastPressureEquilibrationEvent));
-    provenance.put("inventoryThermalBoundary", "COMMON_PHASE_TEMPERATURE");
+    provenance.put("inventoryThermalBoundary",
+        interphaseHeatTransfer == null ? "COMMON_PHASE_TEMPERATURE" : "SEPARATE_PHASE_ENERGY");
+    provenance.put("inventoryExternalHeatAllocation",
+        interphaseHeatTransfer == null ? "WHOLE_INVENTORY" : "WITHDRAWAL_PHASE");
+    provenance.put("inventoryInterphaseHeatTransferType",
+        interphaseHeatTransfer == null ? "NOT_APPLICABLE" : interphaseHeatTransfer.getType().name());
+    provenance.put("inventoryInterphaseHeatTransferProvenance",
+        interphaseHeatTransfer == null ? "not-applicable:common-temperature" : interphaseHeatTransfer.getProvenance());
+    provenance.put("inventoryInterphaseHeatConductanceWK",
+        interphaseHeatTransfer == null ? "0.0" : Double.toString(interphaseHeatTransfer.getConductanceWK()));
     provenance.put("inventoryPhaseLifecycle", "PHASE_DISAPPEARANCE_FAILS_CLOSED");
     provenance.put("rateTimeBasis", "INSTANTANEOUS_AT_FRAME_TIME");
     return Collections.unmodifiableMap(provenance);
@@ -894,9 +1213,10 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
   /** @return immutable accounting and retained phase-component snapshot */
   public synchronized Balance getBalance() {
     return new Balance(getTime(), volumeM3, initialEnergyJ, state.internalEnergyJ, releasedEnergyJ, heatTransferEnergyJ,
-        interphaseLatentEnergyJ, releasedMassKg, interphaseTransferredMassKg, initialComponentMassKg,
-        totalComponentMasses(phaseComponentMassKg), releasedComponentMassKg, componentMap(phaseComponentMassKg[GAS]),
-        componentMap(phaseComponentMassKg[LIQUID]), lastSubsteps);
+        interphaseLatentEnergyJ, interphaseHeatTransferEnergyJ, state.gasInternalEnergyJ, state.liquidInternalEnergyJ,
+        state.gasTemperatureK, state.liquidTemperatureK, releasedMassKg, interphaseTransferredMassKg,
+        initialComponentMassKg, totalComponentMasses(phaseComponentMassKg), releasedComponentMassKg,
+        componentMap(phaseComponentMassKg[GAS]), componentMap(phaseComponentMassKg[LIQUID]), lastSubsteps);
   }
 
   /** Immutable accounting snapshot with explicit SI units. */
@@ -909,6 +1229,11 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
     private final double releasedEnergyJ;
     private final double heatTransferEnergyJ;
     private final double interphaseLatentEnergyJ;
+    private final double interphaseHeatTransferEnergyJ;
+    private final double gasInternalEnergyJ;
+    private final double liquidInternalEnergyJ;
+    private final double gasTemperatureK;
+    private final double liquidTemperatureK;
     private final double releasedMassKg;
     private final double interphaseTransferredMassKg;
     private final Map<String, Double> initialComponentMassKg;
@@ -928,6 +1253,11 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
      * @param releasedEnergyJ cumulative released enthalpy in J
      * @param heatTransferEnergyJ cumulative external heat input in J
      * @param interphaseLatentEnergyJ cumulative signed latent-energy diagnostic in J
+     * @param interphaseHeatTransferEnergyJ cumulative signed interfacial heat entering gas in J
+     * @param gasInternalEnergyJ gas internal energy in J
+     * @param liquidInternalEnergyJ liquid internal energy in J
+     * @param gasTemperatureK gas temperature in K
+     * @param liquidTemperatureK liquid temperature in K
      * @param releasedMassKg cumulative released mass in kg
      * @param interphaseTransferredMassKg cumulative absolute interphase component transfer in kg
      * @param initial initial component masses in kg
@@ -938,9 +1268,11 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
      * @param substeps accepted substeps in the last call
      */
     private Balance(double timeS, double volumeM3, double initialEnergyJ, double internalEnergyJ,
-        double releasedEnergyJ, double heatTransferEnergyJ, double interphaseLatentEnergyJ, double releasedMassKg,
-        double interphaseTransferredMassKg, Map<String, Double> initial, Map<String, Double> remaining,
-        Map<String, Double> released, Map<String, Double> gas, Map<String, Double> liquid, int substeps) {
+        double releasedEnergyJ, double heatTransferEnergyJ, double interphaseLatentEnergyJ,
+        double interphaseHeatTransferEnergyJ, double gasInternalEnergyJ, double liquidInternalEnergyJ,
+        double gasTemperatureK, double liquidTemperatureK, double releasedMassKg, double interphaseTransferredMassKg,
+        Map<String, Double> initial, Map<String, Double> remaining, Map<String, Double> released,
+        Map<String, Double> gas, Map<String, Double> liquid, int substeps) {
       this.timeS = timeS;
       this.volumeM3 = volumeM3;
       this.initialEnergyJ = initialEnergyJ;
@@ -948,6 +1280,11 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
       this.releasedEnergyJ = releasedEnergyJ;
       this.heatTransferEnergyJ = heatTransferEnergyJ;
       this.interphaseLatentEnergyJ = interphaseLatentEnergyJ;
+      this.interphaseHeatTransferEnergyJ = interphaseHeatTransferEnergyJ;
+      this.gasInternalEnergyJ = gasInternalEnergyJ;
+      this.liquidInternalEnergyJ = liquidInternalEnergyJ;
+      this.gasTemperatureK = gasTemperatureK;
+      this.liquidTemperatureK = liquidTemperatureK;
       this.releasedMassKg = releasedMassKg;
       this.interphaseTransferredMassKg = interphaseTransferredMassKg;
       this.initialComponentMassKg = immutable(initial);
@@ -1003,6 +1340,31 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
       return interphaseLatentEnergyJ;
     }
 
+    /** @return cumulative signed interfacial heat entering gas in J */
+    public double getInterphaseHeatTransferEnergyJ() {
+      return interphaseHeatTransferEnergyJ;
+    }
+
+    /** @return current gas internal energy in J */
+    public double getGasInternalEnergyJ() {
+      return gasInternalEnergyJ;
+    }
+
+    /** @return current liquid internal energy in J */
+    public double getLiquidInternalEnergyJ() {
+      return liquidInternalEnergyJ;
+    }
+
+    /** @return current gas temperature in K */
+    public double getGasTemperatureK() {
+      return gasTemperatureK;
+    }
+
+    /** @return current liquid temperature in K */
+    public double getLiquidTemperatureK() {
+      return liquidTemperatureK;
+    }
+
     /** @return cumulative released mass in kg */
     public double getReleasedMassKg() {
       return releasedMassKg;
@@ -1044,14 +1406,17 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
     }
   }
 
-  /** Immutable evaluated common-pressure/common-temperature state. */
+  /** Immutable evaluated common-pressure state. */
   private static final class State implements Serializable {
     private static final long serialVersionUID = 1L;
     private final SystemInterface gas;
     private final SystemInterface liquid;
     private final double pressurePa;
-    private final double temperatureK;
+    private final double gasTemperatureK;
+    private final double liquidTemperatureK;
     private final double volumeM3;
+    private final double gasInternalEnergyJ;
+    private final double liquidInternalEnergyJ;
     private final double internalEnergyJ;
 
     /**
@@ -1060,18 +1425,23 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
      * @param gas forced gas phase
      * @param liquid forced liquid phase
      * @param pressurePa common absolute pressure in Pa
-     * @param temperatureK common temperature in K
+     * @param gasTemperatureK gas temperature in K
+     * @param liquidTemperatureK liquid temperature in K
      * @param volumeM3 total phase volume in m3
-     * @param internalEnergyJ total phase internal energy in J
+     * @param gasInternalEnergyJ gas internal energy in J
+     * @param liquidInternalEnergyJ liquid internal energy in J
      */
-    private State(SystemInterface gas, SystemInterface liquid, double pressurePa, double temperatureK, double volumeM3,
-        double internalEnergyJ) {
+    private State(SystemInterface gas, SystemInterface liquid, double pressurePa, double gasTemperatureK,
+        double liquidTemperatureK, double volumeM3, double gasInternalEnergyJ, double liquidInternalEnergyJ) {
       this.gas = gas;
       this.liquid = liquid;
       this.pressurePa = pressurePa;
-      this.temperatureK = temperatureK;
+      this.gasTemperatureK = gasTemperatureK;
+      this.liquidTemperatureK = liquidTemperatureK;
       this.volumeM3 = volumeM3;
-      this.internalEnergyJ = internalEnergyJ;
+      this.gasInternalEnergyJ = gasInternalEnergyJ;
+      this.liquidInternalEnergyJ = liquidInternalEnergyJ;
+      this.internalEnergyJ = gasInternalEnergyJ + liquidInternalEnergyJ;
     }
   }
 
@@ -1101,6 +1471,7 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
     private final double outflowEnergyJ;
     private final double heatTransferEnergyJ;
     private final double interphaseLatentEnergyJ;
+    private final double interphaseHeatTransferEnergyJ;
     private final double absoluteTransferredMassKg;
     private final int donorLimitedComponents;
     private final double durationS;
@@ -1116,6 +1487,7 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
      * @param outflowEnergyJ released enthalpy
      * @param heatTransferEnergyJ external heat
      * @param interphaseLatentEnergyJ latent diagnostic
+     * @param interphaseHeatTransferEnergyJ signed interfacial heat entering gas in J
      * @param absoluteTransferredMassKg absolute component transfer
      * @param donorLimitedComponents donor-limit count
      * @param durationS duration
@@ -1123,7 +1495,8 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
      */
     private Step(double[][] phaseComponentMassKg, State state, Map<String, Double> removedComponentMassKg,
         double removedMassKg, double outflowEnergyJ, double heatTransferEnergyJ, double interphaseLatentEnergyJ,
-        double absoluteTransferredMassKg, int donorLimitedComponents, double durationS, int stateSolves) {
+        double interphaseHeatTransferEnergyJ, double absoluteTransferredMassKg, int donorLimitedComponents,
+        double durationS, int stateSolves) {
       this.phaseComponentMassKg = phaseComponentMassKg;
       this.state = state;
       this.removedComponentMassKg = removedComponentMassKg;
@@ -1131,6 +1504,7 @@ public final class NonEquilibriumReleaseInventory extends ProcessEquipmentBaseCl
       this.outflowEnergyJ = outflowEnergyJ;
       this.heatTransferEnergyJ = heatTransferEnergyJ;
       this.interphaseLatentEnergyJ = interphaseLatentEnergyJ;
+      this.interphaseHeatTransferEnergyJ = interphaseHeatTransferEnergyJ;
       this.absoluteTransferredMassKg = absoluteTransferredMassKg;
       this.donorLimitedComponents = donorLimitedComponents;
       this.durationS = durationS;

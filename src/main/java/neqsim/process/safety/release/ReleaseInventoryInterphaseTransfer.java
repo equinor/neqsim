@@ -12,11 +12,12 @@ import neqsim.thermo.system.SystemInterface;
  * Immutable, provenance-required two-way film transfer for a lumped gas/liquid release inventory.
  *
  * <p>
- * Each caller-selected coefficient has units m/s. At the common inventory pressure and temperature, the gas-directed
- * component mass flux is {@code k c_g M_i (x_i phi_i^l / phi_i^g - y_i)}. Positive mass therefore evaporates from
- * liquid to gas and negative mass condenses from gas to liquid. Each explicit step is bounded to the configured
- * fraction of its donor component; no absent component, equilibrium fallback or inferred coefficient is used. The
- * closure is a sensitivity model with prescribed coefficients, not an independently qualified predictive correlation.
+ * Each caller-selected coefficient has units m/s. At the common inventory pressure, the gas-directed component mass
+ * flux is {@code k c_g M_i (x_i phi_i^l / phi_i^g - y_i)}. The phases share mechanical pressure but may have separate
+ * temperatures. Positive mass therefore evaporates from liquid to gas and negative mass condenses from gas to liquid.
+ * Each explicit step is bounded to the configured fraction of its donor component; no absent component, equilibrium
+ * fallback or inferred coefficient is used. The closure is a sensitivity model with prescribed coefficients, not an
+ * independently qualified predictive correlation.
  * </p>
  *
  * @author esol
@@ -62,8 +63,8 @@ public final class ReleaseInventoryInterphaseTransfer implements Serializable {
   /**
    * Evaluates one donor-limited transfer step without mutating either phase.
    *
-   * @param gas forced single gas phase at the common pressure and temperature
-   * @param liquid forced single liquid phase at the common pressure and temperature
+   * @param gas forced single gas phase at the common pressure
+   * @param liquid forced single liquid phase at the common pressure
    * @param gasComponentMassKg current gas-held component masses in kg
    * @param liquidComponentMassKg current liquid-held component masses in kg
    * @param interfacialAreaM2 live gas/liquid interface area in m2
@@ -125,7 +126,7 @@ public final class ReleaseInventoryInterphaseTransfer implements Serializable {
   }
 
   /**
-   * Verifies phase identities and common intensive state.
+   * Verifies phase identities and common mechanical pressure.
    *
    * @param gas candidate gas phase
    * @param liquid candidate liquid phase
@@ -135,9 +136,8 @@ public final class ReleaseInventoryInterphaseTransfer implements Serializable {
         || !gas.hasPhaseType("gas") || gas.hasPhaseType("oil") || gas.hasPhaseType("aqueous")
         || liquid.hasPhaseType("gas")
         || (!liquid.hasPhaseType("oil") && !liquid.hasPhaseType("liquid") && !liquid.hasPhaseType("aqueous"))
-        || Math.abs(gas.getPressure() - liquid.getPressure()) > 1.0e-8
-        || Math.abs(gas.getTemperature() - liquid.getTemperature()) > 1.0e-8) {
-      throw new IllegalArgumentException("INVENTORY_INTERPHASE_COMMON_PT_REQUIRED");
+        || Math.abs(gas.getPressure() - liquid.getPressure()) > 1.0e-8) {
+      throw new IllegalArgumentException("INVENTORY_INTERPHASE_COMMON_PRESSURE_REQUIRED");
     }
   }
 
