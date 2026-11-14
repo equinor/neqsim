@@ -12,7 +12,6 @@ neqsim.thermo.phase.PhaseEOSCGEos	PHASE	DEBT	-	-	not-qualified	https://github.co
 neqsim.thermo.phase.PhaseElectrolyteCPA	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.phase.PhaseElectrolyteCPAAdvanced	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.phase.PhaseElectrolyteCPAMM	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
-neqsim.thermo.phase.PhaseElectrolyteCPAOld	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.phase.PhaseElectrolyteCPAstatoil	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.phase.PhaseGENRTL	PHASE	PARTIAL	NRTL_PHASE	GAMMA;LN_GAMMA;GEX	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming fitted mixtures, database parameters or additional properties
 neqsim.thermo.phase.PhaseGENRTLmodifiedHV	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
