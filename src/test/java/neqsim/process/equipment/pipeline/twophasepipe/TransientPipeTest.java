@@ -641,20 +641,19 @@ class TransientPipeTest {
     process.add(inlet);
     process.add(pipe);
 
-    // Run initial steady state
+    // Run the initial simulation and verify all cells, including the interior.
     process.run();
-
-    // Verify initial state
     assertNotNull(pipe.getOutletStream(), "Outlet stream should be created after run()");
-    assertTrue(pipe.getSimulationTime() > 0, "Simulation should have advanced");
+    assertTrue(pipe.getSimulationTime() >= 100.0, "Initial simulation should reach its requested duration");
+    assertFinitePositivePressures(pipe);
 
-    // Get outlet conditions after steady state
-    double outletPressure1 = pipe.getOutletStream().getPressure();
-
-    // Run transient loop using ProcessSystem
+    // Continue the transient through the ProcessSystem integration.
+    double initialTime = pipe.getSimulationTime();
     for (int i = 0; i < 3; i++) {
       process.runTransient(1.0, java.util.UUID.randomUUID());
+      assertFinitePositivePressures(pipe);
     }
+    assertEquals(initialTime + 3.0, pipe.getSimulationTime(), 1.0e-9);
 
     // Verify process continued running without errors
     double outletPressure2 = pipe.getOutletStream().getPressure();
@@ -662,6 +661,20 @@ class TransientPipeTest {
 
     // Verify time tracking
     assertTrue(process.getTime() > 0, "Process time should have advanced");
+  }
+
+  /**
+   * Check every section for a physically valid absolute pressure.
+   *
+   * @param pipe pipe whose current pressure profile is checked
+   */
+  private static void assertFinitePositivePressures(TransientPipe pipe) {
+    double[] pressures = pipe.getPressureProfile();
+    for (int section = 0; section < pressures.length; section++) {
+      double pressure = pressures[section];
+      assertTrue(Double.isFinite(pressure) && pressure > 0.0,
+          "Section " + section + " pressure at " + pipe.getSimulationTime() + " s: " + pressure + " Pa");
+    }
   }
 
   /**
