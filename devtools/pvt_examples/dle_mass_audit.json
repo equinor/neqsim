@@ -81,7 +81,18 @@
         "unit": "1",
         "lower": "0.899999",
         "upper": "0.900001"
-      }
+      },
+      "cell_gas_z": {
+        "unit": "1",
+        "lower": "0.899999",
+        "upper": "0.900001"
+      },
+      "gas_volume_factor": {
+        "unit": "m3 cell/Sm3 gas",
+        "lower": "0.007037027037037037037037037037",
+        "upper": "0.007037047037037037037037037037"
+      },
+      "cell_gas_basis_reference": "withdrawn gas at reported isothermal cell state; same Sm3 as GOR"
     }
   ]
 }
