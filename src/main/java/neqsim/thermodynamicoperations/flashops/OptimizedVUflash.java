@@ -69,7 +69,7 @@ public class OptimizedVUflash extends Flash {
   /** Scaled internal-energy tolerance of the equilibrium polish stage. */
   private static final double POLISH_ENERGY_TOL = 1.0e-9;
   /** Whether the most recent run needed the equilibrium polish stage. */
-  private boolean equilibriumPolishUsed = false;
+  private volatile boolean equilibriumPolishUsed = false;
 
   /**
    * Constructor for OptimizedVUflash.

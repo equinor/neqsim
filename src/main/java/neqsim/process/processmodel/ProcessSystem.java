@@ -126,9 +126,9 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   private Boolean automaticTransientSubstepping = Boolean.TRUE;
   /** User cap on the transient sub-step length in seconds; non-positive or non-finite means no cap. */
-  private double maxTransientSubstepSeconds = 0.0;
+  private volatile double maxTransientSubstepSeconds = 0.0;
   /** Upper bound on sub-steps per requested step; non-positive means {@link #DEFAULT_MAX_TRANSIENT_SUBSTEPS}. */
-  private int maxTransientSubstepsPerStep = 0;
+  private volatile int maxTransientSubstepsPerStep = 0;
   /** Default upper bound on sub-steps per requested transient step. */
   public static final int DEFAULT_MAX_TRANSIENT_SUBSTEPS = 1000;
   /** Number of integration sub-steps used by the most recent {@link #runTransient(double, UUID)} call. */
@@ -7256,7 +7256,7 @@ public class ProcessSystem extends SimulationBaseClass {
     }
   }
 
-  private void applyState(ProcessSystem source, boolean replaceElements) {
+  private synchronized void applyState(ProcessSystem source, boolean replaceElements) {
     setName(source.getName());
     String tagName = source.getTagName();
     if (tagName != null) {
@@ -8427,23 +8427,13 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     private static byte[] serialize(Object value, List<Object> liveObjects) {
-      final IdentityHashMap<Object, Integer> indices = new IdentityHashMap<Object, Integer>();
+      IdentityHashMap<Object, Integer> indices = new IdentityHashMap<Object, Integer>();
       for (int i = 0; i < liveObjects.size(); i++) {
         indices.put(liveObjects.get(i), Integer.valueOf(i));
       }
       try {
         ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-        try (ObjectOutputStream out = new ObjectOutputStream(byteOut) {
-          {
-            enableReplaceObject(true);
-          }
-
-          @Override
-          protected Object replaceObject(Object obj) throws java.io.IOException {
-            Integer index = indices.get(obj);
-            return index == null ? obj : new LiveObjectToken(index.intValue());
-          }
-        }) {
+        try (LiveObjectOutputStream out = new LiveObjectOutputStream(byteOut, indices)) {
           out.writeObject(value);
         }
         return byteOut.toByteArray();
@@ -8452,24 +8442,65 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     }
 
-    private static Object deserialize(byte[] bytes, final List<Object> liveObjects) {
-      try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes)) {
-        {
-          enableResolveObject(true);
-        }
-
-        @Override
-        protected Object resolveObject(Object obj) throws java.io.IOException {
-          if (obj instanceof LiveObjectToken) {
-            return liveObjects.get(((LiveObjectToken) obj).index);
-          }
-          return obj;
-        }
-      }) {
+    private static Object deserialize(byte[] bytes, List<Object> liveObjects) {
+      try (LiveObjectInputStream in = new LiveObjectInputStream(new ByteArrayInputStream(bytes), liveObjects)) {
         return in.readObject();
       } catch (java.io.IOException | ClassNotFoundException ex) {
         throw new IllegalStateException("Could not restore transient checkpoint", ex);
       }
+    }
+  }
+
+  /** Object stream that writes live process objects as {@code LiveObjectToken} placeholders. */
+  private static final class LiveObjectOutputStream extends ObjectOutputStream {
+    private final IdentityHashMap<Object, Integer> indices;
+
+    /**
+     * Creates the stream.
+     *
+     * @param out target stream
+     * @param indices live object to token index
+     * @throws java.io.IOException if the stream header cannot be written
+     */
+    LiveObjectOutputStream(java.io.OutputStream out, IdentityHashMap<Object, Integer> indices)
+        throws java.io.IOException {
+      super(out);
+      this.indices = indices;
+      enableReplaceObject(true);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    protected Object replaceObject(Object obj) throws java.io.IOException {
+      Integer index = indices.get(obj);
+      return index == null ? obj : new InPlaceInitialState.LiveObjectToken(index.intValue());
+    }
+  }
+
+  /** Object stream that resolves {@code LiveObjectToken} placeholders back to the live process objects. */
+  private static final class LiveObjectInputStream extends ObjectInputStream {
+    private final List<Object> liveObjects;
+
+    /**
+     * Creates the stream.
+     *
+     * @param in source stream
+     * @param liveObjects live objects by token index
+     * @throws java.io.IOException if the stream header cannot be read
+     */
+    LiveObjectInputStream(java.io.InputStream in, List<Object> liveObjects) throws java.io.IOException {
+      super(in);
+      this.liveObjects = liveObjects;
+      enableResolveObject(true);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    protected Object resolveObject(Object obj) throws java.io.IOException {
+      if (obj instanceof InPlaceInitialState.LiveObjectToken) {
+        return liveObjects.get(((InPlaceInitialState.LiveObjectToken) obj).index);
+      }
+      return obj;
     }
   }
 
