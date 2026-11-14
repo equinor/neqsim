@@ -119,6 +119,24 @@ public class ProcessSystem extends SimulationBaseClass {
    * historical enabled default when deserializing process models written before this setting existed.
    */
   private volatile Boolean recordMeasurementHistory = Boolean.TRUE;
+  /**
+   * Whether {@link #runTransient(double, UUID)} splits a step into sub-steps no longer than the smallest
+   * {@link ProcessEquipmentInterface#getMaxStableTransientTimeStep()} of the units. Boxed so that models serialized
+   * before this setting existed deserialize with the enabled default ({@code null} means enabled).
+   */
+  private Boolean automaticTransientSubstepping = Boolean.TRUE;
+  /** User cap on the transient sub-step length in seconds; non-positive or non-finite means no cap. */
+  private double maxTransientSubstepSeconds = 0.0;
+  /** Upper bound on sub-steps per requested step; non-positive means {@link #DEFAULT_MAX_TRANSIENT_SUBSTEPS}. */
+  private int maxTransientSubstepsPerStep = 0;
+  /** Default upper bound on sub-steps per requested transient step. */
+  public static final int DEFAULT_MAX_TRANSIENT_SUBSTEPS = 1000;
+  /** Number of integration sub-steps used by the most recent {@link #runTransient(double, UUID)} call. */
+  private transient int lastTransientSubstepCount = 0;
+  /** True while an intermediate sub-step runs, so only the final sub-step appends a measurement-history row. */
+  private transient boolean intermediateTransientSubstep = false;
+  /** Identity-preserving checkpoint of the initial state used by {@link #reset()}; null when unavailable. */
+  private transient InPlaceInitialState inPlaceInitialState;
   private double surroundingTemperature = 288.15;
   private int timeStepNumber = 0;
   /**
@@ -5295,7 +5313,198 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   @Override
   public synchronized void runTransient(double dt, UUID id) {
-    runTransientInternal(dt, id, true);
+    validateTransientTimestep(dt);
+    double limit = transientSubstepLimit();
+    if (limit == Double.POSITIVE_INFINITY) {
+      // No unit constrains the step: one plain integration step, no checkpointing overhead.
+      lastTransientSubstepCount = 1;
+      runTransientInternal(dt, id, true);
+      return;
+    }
+    // A finite limit marks stiffness potential. Even when the pre-step limit allows the whole step, it is checked
+    // afterwards: the limit is estimated from the previous state, and the first dynamic step or a controller action
+    // can raise the boundary flows far above it.
+    int maxSubsteps = getMaxTransientSubstepsPerStep();
+    double minimumSubstep = dt / maxSubsteps;
+    boolean retryable = (activeTransientStepTransaction == null || !activeTransientStepTransaction.isOpen())
+        && isTransientSubstepRollbackAvailable();
+    double remaining = dt;
+    int count = 0;
+    try {
+      while (true) {
+        double h = Math.max(Math.min(limit, remaining), minimumSubstep);
+        int pieces = (int) Math.ceil(remaining / h - 1.0e-9);
+        // At the sub-step cap the final sub-step covers the remaining time and cannot be shortened by a retry.
+        boolean forced = count + 1 >= maxSubsteps;
+        boolean last = pieces <= 1 || forced;
+        h = last ? remaining : remaining / pieces;
+        boolean shortenable = !forced && h > minimumSubstep * (1.0 + 1.0e-9);
+        intermediateTransientSubstep = !last;
+        UUID substepId = last ? id : UUID.randomUUID();
+        if (!retryable) {
+          count++;
+          runTransientInternal(h, substepId, true);
+        } else {
+          TransientStepTransaction transaction = beginTransientStepTransaction();
+          double nextLimit;
+          try {
+            runTransientInternal(h, substepId, true);
+            nextLimit = transientSubstepLimit();
+          } catch (RuntimeException ex) {
+            transaction.rollback();
+            if (!shortenable) {
+              throw ex;
+            }
+            limit = Math.max(h * 0.25, minimumSubstep);
+            continue;
+          }
+          if (shortenable && h > TRANSIENT_SUBSTEP_REJECT_RATIO * nextLimit) {
+            // The step changed the state (e.g. a controller opened a valve) so much that it was far longer than the
+            // limit of the new state: discard it and retry with the new limit.
+            transaction.rollback();
+            limit = Math.max(nextLimit, minimumSubstep);
+            continue;
+          }
+          transaction.commit();
+          count++;
+          limit = nextLimit;
+        }
+        if (last) {
+          break;
+        }
+        remaining -= h;
+        if (!retryable) {
+          limit = transientSubstepLimit();
+        }
+      }
+    } finally {
+      intermediateTransientSubstep = false;
+      lastTransientSubstepCount = count;
+      setTimeStep(dt);
+    }
+  }
+
+  /**
+   * Ratio between an accepted sub-step and the stability limit of the state it produced above which the sub-step is
+   * rolled back and retried. With the separator factor of 0.1 this rejects steps longer than 0.4 gas-cap inventory time
+   * constants of the new state.
+   */
+  private static final double TRANSIENT_SUBSTEP_REJECT_RATIO = 4.0;
+
+  /**
+   * Returns whether automatic sub-steps can be rolled back and retried, which requires complete transient transaction
+   * coverage.
+   *
+   * @return true when every process element supports transient checkpoints
+   */
+  private boolean isTransientSubstepRollbackAvailable() {
+    try {
+      return getTransientTransactionCoverage().isComplete();
+    } catch (RuntimeException ex) {
+      return false;
+    }
+  }
+
+  /**
+   * Returns the largest sub-step allowed by the user cap and, when automatic sub-stepping is enabled, by the stability
+   * estimates of the active units.
+   *
+   * @return sub-step limit in seconds, or positive infinity when unconstrained
+   */
+  private double transientSubstepLimit() {
+    double limit = Double.POSITIVE_INFINITY;
+    if (maxTransientSubstepSeconds > 0.0 && Double.isFinite(maxTransientSubstepSeconds)) {
+      limit = maxTransientSubstepSeconds;
+    }
+    if (isAutomaticTransientSubstepping()) {
+      for (int i = 0; i < unitOperations.size(); i++) {
+        ProcessEquipmentInterface unit = unitOperations.get(i);
+        if (unit == null || unit.isLockedInactive() || !unit.isActive()) {
+          continue;
+        }
+        double unitLimit;
+        try {
+          unitLimit = unit.getMaxStableTransientTimeStep();
+        } catch (RuntimeException ex) {
+          continue;
+        }
+        if (unitLimit > 0.0 && unitLimit < limit) {
+          limit = unitLimit;
+        }
+      }
+    }
+    return limit;
+  }
+
+  /**
+   * Enables or disables automatic transient sub-stepping. When enabled (the default), each
+   * {@link #runTransient(double, UUID)} call is split into equal sub-steps no longer than the smallest
+   * {@link ProcessEquipmentInterface#getMaxStableTransientTimeStep()} reported by the active units, for example a
+   * dynamic {@link neqsim.process.equipment.separator.Separator} whose gas cap would otherwise overshoot. The process
+   * clock still advances by the requested step, only one measurement-history row is stored per call, and the process
+   * time step is restored to the requested value afterwards.
+   *
+   * @param enabled true to enable automatic sub-stepping
+   */
+  public void setAutomaticTransientSubstepping(boolean enabled) {
+    automaticTransientSubstepping = Boolean.valueOf(enabled);
+  }
+
+  /**
+   * Returns whether automatic transient sub-stepping is enabled.
+   *
+   * @return true when enabled (the default)
+   */
+  public boolean isAutomaticTransientSubstepping() {
+    return automaticTransientSubstepping == null || automaticTransientSubstepping.booleanValue();
+  }
+
+  /**
+   * Sets a fixed upper limit on the transient sub-step length. It applies whether or not automatic sub-stepping is
+   * enabled.
+   *
+   * @param seconds largest sub-step in seconds; zero, negative or non-finite removes the cap
+   */
+  public void setMaxTransientSubstep(double seconds) {
+    maxTransientSubstepSeconds = seconds;
+  }
+
+  /**
+   * Returns the fixed upper limit on the transient sub-step length.
+   *
+   * @return largest sub-step in seconds, or positive infinity when no cap is set
+   */
+  public double getMaxTransientSubstep() {
+    return maxTransientSubstepSeconds > 0.0 && Double.isFinite(maxTransientSubstepSeconds) ? maxTransientSubstepSeconds
+        : Double.POSITIVE_INFINITY;
+  }
+
+  /**
+   * Sets the largest number of sub-steps one {@link #runTransient(double, UUID)} call may use. When the stability limit
+   * would need more, the sub-step is lengthened to {@code dt / maxSubsteps}.
+   *
+   * @param maxSubsteps maximum sub-steps per call; non-positive restores {@link #DEFAULT_MAX_TRANSIENT_SUBSTEPS}
+   */
+  public void setMaxTransientSubstepsPerStep(int maxSubsteps) {
+    maxTransientSubstepsPerStep = maxSubsteps;
+  }
+
+  /**
+   * Returns the largest number of sub-steps one transient call may use.
+   *
+   * @return maximum sub-steps per call
+   */
+  public int getMaxTransientSubstepsPerStep() {
+    return maxTransientSubstepsPerStep > 0 ? maxTransientSubstepsPerStep : DEFAULT_MAX_TRANSIENT_SUBSTEPS;
+  }
+
+  /**
+   * Returns the number of integration sub-steps used by the most recent {@link #runTransient(double, UUID)} call.
+   *
+   * @return sub-step count, or 0 before the first transient call
+   */
+  public int getLastTransientSubstepCount() {
+    return lastTransientSubstepCount;
   }
 
   /**
@@ -5427,7 +5636,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
     timeStepNumber++;
     String[] row = null;
-    if (isMeasurementHistoryRecordingEnabled()) {
+    if (isMeasurementHistoryRecordingEnabled() && !intermediateTransientSubstep) {
       row = new String[1 + 3 * measurementDevices.size()];
       row[0] = Double.toString(time);
     }
@@ -6249,6 +6458,7 @@ public class ProcessSystem extends SimulationBaseClass {
     private final double capturedPreviousTotalMass = previousTotalMass;
     private final double capturedMassBalanceError = massBalanceError;
     private final ProcessSystem capturedInitialStateSnapshot = initialStateSnapshot;
+    private final InPlaceInitialState capturedInPlaceInitialState = inPlaceInitialState;
     private final RecycleController capturedRecycleController;
     private final RecycleController.Snapshot capturedRecycleControllerSnapshot;
     private final EventScheduler capturedEventScheduler;
@@ -6350,6 +6560,7 @@ public class ProcessSystem extends SimulationBaseClass {
           previousTotalMass = capturedPreviousTotalMass;
           massBalanceError = capturedMassBalanceError;
           initialStateSnapshot = capturedInitialStateSnapshot;
+          inPlaceInitialState = capturedInPlaceInitialState;
           eventScheduler = capturedEventScheduler;
           if (capturedEventScheduler != null) {
             capturedEventScheduler.restore(capturedEventSchedulerSnapshot);
@@ -6993,7 +7204,35 @@ public class ProcessSystem extends SimulationBaseClass {
       throw new IllegalStateException("Initial state has not been stored. Call storeInitialState() before reset().");
     }
     ProcessSystem restored = initialStateSnapshot.copy();
-    applyState(restored);
+    InPlaceInitialState inPlace = inPlaceInitialState;
+    if (inPlace != null && inPlace.matches(this)) {
+      try {
+        applyState(restored, false);
+        inPlace.restore(this);
+        return;
+      } catch (RuntimeException ex) {
+        logger.warn("In-place reset of process system '" + getName()
+            + "' failed; replacing equipment with copies of the initial state. References to equipment, controllers"
+            + " and measurement devices obtained before reset() must be fetched again.", ex);
+      }
+    } else {
+      logger.info("Process system '" + getName() + "' could not be reset in place (the structure changed or some"
+          + " element does not support transient checkpoints). Equipment, controllers and measurement devices were"
+          + " replaced by copies; fetch them again with getUnit(...) after reset().");
+    }
+    applyState(restored, true);
+    inPlaceInitialState = InPlaceInitialState.capture(this);
+  }
+
+  /**
+   * Returns whether {@link #reset()} can restore the stored initial state into the existing equipment, controller and
+   * measurement-device objects. When false, {@code reset()} replaces them with copies and references obtained earlier
+   * must be fetched again with {@link #getUnit(String)}.
+   *
+   * @return true when an identity-preserving reset is available
+   */
+  public boolean isInPlaceResetAvailable() {
+    return initialStateSnapshot != null && inPlaceInitialState != null && inPlaceInitialState.matches(this);
   }
 
   private void ensureInitialStateSnapshot() {
@@ -7010,13 +7249,14 @@ public class ProcessSystem extends SimulationBaseClass {
       initialStateSnapshot = null;
       ProcessSystem snapshot = deepCopy();
       initialStateSnapshot = snapshot;
+      inPlaceInitialState = InPlaceInitialState.capture(this);
     } catch (RuntimeException ex) {
       initialStateSnapshot = previousSnapshot;
       throw ex;
     }
   }
 
-  private void applyState(ProcessSystem source) {
+  private void applyState(ProcessSystem source, boolean replaceElements) {
     setName(source.getName());
     String tagName = source.getTagName();
     if (tagName != null) {
@@ -7027,21 +7267,25 @@ public class ProcessSystem extends SimulationBaseClass {
     setTime(source.getTime());
     surroundingTemperature = source.surroundingTemperature;
     timeStepNumber = source.timeStepNumber;
-    unitOperations = new ArrayList<>(source.unitOperations);
-    measurementDevices = new ArrayList<>(source.measurementDevices);
+    if (replaceElements) {
+      unitOperations = new ArrayList<>(source.unitOperations);
+      measurementDevices = new ArrayList<>(source.measurementDevices);
+    }
     if (source.alarmManager != null) {
       alarmManager.applyFrom(source.alarmManager, measurementDevices);
     } else {
       alarmManager = new ProcessAlarmManager();
       alarmManager.registerAll(measurementDevices);
     }
-    recycleController = source.recycleController;
     timeStep = source.timeStep;
     runStep = source.runStep;
     solveFullyInModelStep = source.solveFullyInModelStep;
-    equipmentCounter.clear();
-    equipmentCounter.putAll(source.equipmentCounter);
-    lastAddedUnit = source.lastAddedUnit;
+    if (replaceElements) {
+      recycleController = source.recycleController;
+      equipmentCounter.clear();
+      equipmentCounter.putAll(source.equipmentCounter);
+      lastAddedUnit = source.lastAddedUnit;
+    }
     measurementHistory = source.measurementHistory.copy();
     recordMeasurementHistory = source.recordMeasurementHistory;
     thisThread = null;
@@ -8041,6 +8285,191 @@ public class ProcessSystem extends SimulationBaseClass {
     } catch (NoSuchMethodException ignored) {
     } catch (Exception e) {
       logger.error("Error in autoConnect: " + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Identity-preserving checkpoint of the initial state. Every unique process element's transient snapshot, and the
+   * recycle controller's state, are serialized together so that each {@link #reset()} restores a fresh copy into the
+   * same objects. References from a snapshot to live process objects (elements, their streams and controllers) are
+   * written as tokens and resolved back to the same live objects, matching the semantics of a transient step
+   * transaction. Only built when the transient transaction coverage of the process system is complete.
+   */
+  private static final class InPlaceInitialState {
+    private final List<ProcessElementInterface> elements;
+    private final List<TransientStateParticipant<?>> participants;
+    private final RecycleController recycleController;
+    private final List<Object> liveObjects;
+    private final byte[] snapshotBytes;
+
+    private InPlaceInitialState(List<ProcessElementInterface> elements, List<TransientStateParticipant<?>> participants,
+        RecycleController recycleController, List<Object> liveObjects, byte[] snapshotBytes) {
+      this.elements = elements;
+      this.participants = participants;
+      this.recycleController = recycleController;
+      this.liveObjects = liveObjects;
+      this.snapshotBytes = snapshotBytes;
+    }
+
+    /**
+     * Captures the checkpoint, or returns null when the process system cannot be checkpointed in place.
+     *
+     * @param process process system to capture
+     * @return checkpoint, or null
+     */
+    static InPlaceInitialState capture(ProcessSystem process) {
+      try {
+        if (!process.getTransientTransactionCoverage().isComplete()) {
+          return null;
+        }
+        List<ProcessElementInterface> elements = process.getUniqueTransientElements();
+        List<TransientStateParticipant<?>> participants = new ArrayList<TransientStateParticipant<?>>(elements.size());
+        Object[] snapshots = new Object[elements.size() + 1];
+        for (int i = 0; i < elements.size(); i++) {
+          TransientStateParticipant<?> participant = (TransientStateParticipant<?>) elements.get(i);
+          participants.add(participant);
+          snapshots[i] = captureParticipantSnapshot(participant);
+        }
+        RecycleController controller = process.recycleController;
+        snapshots[elements.size()] = controller == null ? null : controller.captureTransientState();
+        List<Object> liveObjects = collectLiveObjects(process, elements);
+        return new InPlaceInitialState(elements, participants, controller, liveObjects,
+            serialize(snapshots, liveObjects));
+      } catch (RuntimeException ex) {
+        logger
+            .debug("In-place initial-state checkpoint unavailable for '" + process.getName() + "': " + ex.getMessage());
+        return null;
+      }
+    }
+
+    /**
+     * Collects the live objects that snapshots may reference by identity: process elements, unit operations, their
+     * inlet and outlet streams, attached controllers and measurement devices.
+     *
+     * @param process process system
+     * @param elements unique transient elements
+     * @return live objects in a deterministic order, without duplicates
+     */
+    private static List<Object> collectLiveObjects(ProcessSystem process, List<ProcessElementInterface> elements) {
+      java.util.Set<Object> seen = Collections.newSetFromMap(new IdentityHashMap<Object, Boolean>());
+      List<Object> live = new ArrayList<Object>();
+      List<Object> candidates = new ArrayList<Object>(elements);
+      candidates.addAll(process.getUnitOperations());
+      candidates.addAll(process.measurementDevices);
+      for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+        try {
+          candidates.addAll(unit.getInletStreams());
+          candidates.addAll(unit.getOutletStreams());
+          candidates.addAll(unit.getControllers());
+        } catch (RuntimeException ex) {
+          // A unit without stream or controller introspection only contributes itself.
+        }
+      }
+      for (Object candidate : candidates) {
+        if (candidate != null && seen.add(candidate)) {
+          live.add(candidate);
+        }
+      }
+      return live;
+    }
+
+    /**
+     * Returns whether the process still has exactly the captured elements, in the same order.
+     *
+     * @param process process system to check
+     * @return true when the checkpoint can be restored in place
+     */
+    boolean matches(ProcessSystem process) {
+      if (process.recycleController != recycleController) {
+        return false;
+      }
+      List<ProcessElementInterface> current;
+      try {
+        current = process.getUniqueTransientElements();
+      } catch (RuntimeException ex) {
+        return false;
+      }
+      if (current.size() != elements.size()) {
+        return false;
+      }
+      for (int i = 0; i < current.size(); i++) {
+        if (current.get(i) != elements.get(i)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    /**
+     * Restores every participant from a fresh copy of its captured snapshot.
+     *
+     * @param process process system being reset
+     */
+    void restore(ProcessSystem process) {
+      Object[] snapshots = (Object[]) deserialize(snapshotBytes, liveObjects);
+      for (int i = participants.size() - 1; i >= 0; i--) {
+        restoreParticipantSnapshot(participants.get(i), (Serializable) snapshots[i]);
+      }
+      Object recycleSnapshot = snapshots[participants.size()];
+      if (recycleController != null && recycleSnapshot != null) {
+        recycleController.restoreTransientState((RecycleController.Snapshot) recycleSnapshot);
+      }
+    }
+
+    /** Serialized placeholder for a live process object. */
+    private static final class LiveObjectToken implements Serializable {
+      private static final long serialVersionUID = 1L;
+      private final int index;
+
+      private LiveObjectToken(int index) {
+        this.index = index;
+      }
+    }
+
+    private static byte[] serialize(Object value, List<Object> liveObjects) {
+      final IdentityHashMap<Object, Integer> indices = new IdentityHashMap<Object, Integer>();
+      for (int i = 0; i < liveObjects.size(); i++) {
+        indices.put(liveObjects.get(i), Integer.valueOf(i));
+      }
+      try {
+        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+        try (ObjectOutputStream out = new ObjectOutputStream(byteOut) {
+          {
+            enableReplaceObject(true);
+          }
+
+          @Override
+          protected Object replaceObject(Object obj) throws java.io.IOException {
+            Integer index = indices.get(obj);
+            return index == null ? obj : new LiveObjectToken(index.intValue());
+          }
+        }) {
+          out.writeObject(value);
+        }
+        return byteOut.toByteArray();
+      } catch (java.io.IOException ex) {
+        throw new IllegalStateException("Could not serialize transient checkpoint", ex);
+      }
+    }
+
+    private static Object deserialize(byte[] bytes, final List<Object> liveObjects) {
+      try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes)) {
+        {
+          enableResolveObject(true);
+        }
+
+        @Override
+        protected Object resolveObject(Object obj) throws java.io.IOException {
+          if (obj instanceof LiveObjectToken) {
+            return liveObjects.get(((LiveObjectToken) obj).index);
+          }
+          return obj;
+        }
+      }) {
+        return in.readObject();
+      } catch (java.io.IOException | ClassNotFoundException ex) {
+        throw new IllegalStateException("Could not restore transient checkpoint", ex);
+      }
     }
   }
 

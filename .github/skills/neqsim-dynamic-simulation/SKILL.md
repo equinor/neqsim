@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-10-27"
+last_verified: "2026-11-14"
 ---
 
 # Dynamic Simulation Guidance
@@ -975,13 +975,25 @@ sweeping, receiver surge capacity, physical restart, severe slugging, pig
 trains or experimental/field validation.
 
 1. **Always run steady state first**: Call `process.run()` before `runTransient()`
-2. **Timestep size**: Start with 1.0 s, reduce if oscillating (0.1-0.5 s)
+2. **Timestep size**: `ProcessSystem.runTransient` sub-steps automatically below the smallest unit
+   `getMaxStableTransientTimeStep()` (dynamic separators: 0.1 x gas mass / max boundary mass flow), so a
+   long control-interval step such as 100 s is safe; the clock advances by the requested step and one
+   history row is kept per call. Check `getLastTransientSubstepCount()` for cost. Turning it off with
+   `setAutomaticTransientSubstepping(false)` restores one explicit step per call: then keep `dt` below the
+   separator's stable step yourself (measured on the discussion-1574 separator, 2026-11-14: 100 s steps
+   overshot to 25-28 bara from a 9 bara feed and failed; 10 s oscillated; sub-stepped 100 s matched a 1 s
+   reference within 0.01 bara after 2000 s at 2.7x its speed). A `rejected transient VU state` error means the step was too long, or, when it says the
+   vessel is liquid-full, that level control cannot make the liquid outflow exceed the inflow.
 3. **Liquid-outlet level-controller direction**: use `setReverseActing(false)` so level up drives the outlet valve further open. Reverse acting on this configuration drives the loop the wrong way.
 4. **Controller windup**: Large setpoint changes can cause integral windup
 5. **Separator dimensions**: Must set `setInternalDiameter()` and `setSeparatorLength()` for meaningful level dynamics. For dynamic simulation, set directly on the separator; for design purposes, configure via `SeparatorMechanicalDesign` (see neqsim-api-patterns skill)
 6. **Measurement range**: Set min/max on transmitters to match process range
 7. **Enable dynamic (inventory) mode for level loops**: after `process.run()` (steady), call `setCalculateSteadyState(false)` on the separator AND every valve, then `separator.setLiquidLevel(startFraction)`, before `runTransient`. If steady-state mode is left on, the separator liquid level stays pinned at its default (0.5) and the level controller never acts. The valve `Cv` is auto-derived from the steady solve. A **liquid-outlet** level valve is `setReverseActing(false)` (level up -> valve opens); put a pressure controller on the gas-outlet valve so the vessel pressure is held and the level loop is isolated.
 8. **Physical-step UUIDs**: never reuse one non-null UUID across multiple outer timesteps. Reuse is reserved for refinement/evaluation of one physical step.
+9. **Restarting episodes**: `process.storeInitialState()` after `run()`, then `process.reset()` per episode (RL /
+   Gymnasium loops). With complete transient checkpoint coverage (`isInPlaceResetAvailable()`), reset restores
+   into the existing objects, so held references to separators, valves and controllers stay valid; otherwise it
+   swaps in copies and they must be re-fetched with `getUnit(name)`. `setHistoryCapacity(n)` bounds the history.
 
 ## Pluggable Integrator Strategies
 

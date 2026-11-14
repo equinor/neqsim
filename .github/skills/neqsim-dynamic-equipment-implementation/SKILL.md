@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-equipment-implementation
 description: "Implement and test NeqSim process-equipment runTransient support. USE WHEN: adding dynamic simulation behavior to any ProcessEquipmentInterface class, including inventory volume, pressure/level/temperature state, controller response, and JUnit regression tests for transient timesteps."
-last_verified: "2026-06-25"
+last_verified: "2026-11-14"
 ---
 
 # Dynamic Equipment Implementation
@@ -53,6 +53,12 @@ For any new transient implementation:
    - Clamp tiny negative mole inventories to zero; do not allow negative total volume, negative pressure, or invalid phase amounts.
 8. Re-flash the updated inventory with the appropriate flash operation (`TPflash`, `TVflash`, `PHflash`, or `VUflash`) and call `initProperties()` or the class-equivalent physical-property initialization before reading transport properties.
 9. Update every outlet stream from the new state and preserve mass/energy consistency.
+10. For explicit inventory integration, override `getMaxStableTransientTimeStep()` (from `ProcessEquipmentInterface`,
+    default positive infinity) with the largest stable step for the current state, valid before and after transient
+    initialization. `Separator` returns `0.1 * gasDensity * gasVolume / max(inletMassFlow, outletMassFlow)`.
+    `ProcessSystem.runTransient` splits each requested step below the smallest unit value and, with complete
+    `TransientStateParticipant` coverage, rolls back and retries sub-steps that throw or that end in a state whose
+    limit is under 25 % of the step taken. Units without a limit are never sub-stepped on their own account.
 10. Call `increaseTime(dt)` and set the calculation identifier before returning.
 
 ## Equipment Configuration Guidance
