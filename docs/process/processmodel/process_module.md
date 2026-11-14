@@ -1,335 +1,119 @@
 ---
 title: ProcessModule Class
-description: Documentation for modular process units in NeqSim.
+description: Compose and run ProcessSystem instances and nested ProcessModule objects in NeqSim.
 ---
 
-Documentation for modular process units in NeqSim.
+`ProcessModule` groups complete `ProcessSystem` instances and other `ProcessModule` objects into one ordered simulation. It is an orchestration container: add equipment to a `ProcessSystem`, then add that system to a module. `ProcessModule` does not accept equipment directly.
 
-## Table of Contents
-- [Overview](#overview)
-- [Creating Modules](#creating-modules)
-- [Module Interface](#module-interface)
-- [Built-in Modules](#built-in-modules)
-- [Custom Modules](#custom-modules)
-- [Usage Examples](#usage-examples)
+## Ownership model
 
----
+The containment hierarchy is:
 
-## Overview
+1. Equipment such as `Stream` and `Heater` belongs to a `ProcessSystem`.
+2. A `ProcessSystem` belongs to a `ProcessModule` through `add(ProcessSystem)`.
+3. A nested module belongs to its parent through `add(ProcessModule)`.
 
-**Location:** `neqsim.process.processmodel.ProcessModule`
+There is no separate module interface, alternate add method, or catalog of built-in domain-specific module classes. Build reusable process sections by composing the real `ProcessSystem` and `ProcessModule` types.
 
-Process modules encapsulate complex process subsystems into reusable units. Benefits include:
-- Reusability across different simulations
-- Simplified flowsheet construction
-- Better organization of large processes
-- Easier maintenance and testing
+## Complete example
 
----
+This Java 8 program creates one process system, nests it inside two modules, runs the root module, and checks the recursive lookup and calculated outlet state. The checks are broad execution contracts, not design-acceptance limits.
 
-## Creating Modules
-
-### Basic Module
-
+<!-- process-module-example: nested-process-systems -->
 ```java
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessModule;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-// Create module
-ProcessModule module = new ProcessModule("Compression Train");
+/** Demonstrates the supported ProcessModule containment and execution contract. */
+public final class ProcessModuleExample {
+  private static final Logger LOGGER = LogManager.getLogger(ProcessModuleExample.class);
 
-// Add equipment to module
-module.add(scrubber);
-module.add(compressor);
-module.add(cooler);
+  /** Utility class; do not instantiate. */
+  private ProcessModuleExample() {}
 
-// Set inlet/outlet
-module.setInletStream(gasIn);
-module.setOutletStream(cooler.getOutletStream());
-```
+  /**
+   * Builds and executes a nested process module.
+   *
+   * @param args command-line arguments; unused
+   */
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.10);
+    fluid.setMixingRule("classic");
 
-### Adding to Process
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(50.0, "bara");
 
-```java
-ProcessSystem process = new ProcessSystem();
+    Heater heater = new Heater("heater", feed);
+    heater.setOutletTemperature(330.15, "K");
 
-// Add module to process
-process.addModule(module);
+    ProcessSystem heatingSystem = new ProcessSystem("heating system");
+    heatingSystem.add(feed);
+    heatingSystem.add(heater);
 
-// Connect to other equipment
-module.setInletStream(feedStream);
-Stream compressed = module.getOutletStream();
-process.add(downstream equipment);
-```
+    ProcessModule heatingArea = new ProcessModule("heating area");
+    heatingArea.add(heatingSystem);
 
----
+    ProcessModule facility = new ProcessModule("facility");
+    facility.add(heatingArea);
+    facility.run();
 
-## Module Interface
+    double outletTemperatureK = heater.getOutletStream().getTemperature("K");
+    require(facility.solved(), "Facility module did not finish");
+    require(facility.getSubSystemCount() == 1, "Expected one direct child module");
+    require(facility.getAllProcessSystems().size() == 1, "Expected one recursive process system");
+    require(facility.getUnit("heater") == heater, "Recursive equipment lookup failed");
+    require(Double.isFinite(outletTemperatureK), "Outlet temperature is not finite");
+    require(outletTemperatureK > 329.0 && outletTemperatureK < 331.0,
+        "Outlet temperature is outside the execution check");
 
-### ModuleInterface Methods
+    LOGGER.info("Nested module outlet temperature: {} K", outletTemperatureK);
+  }
 
-```java
-public interface ModuleInterface {
-    // Identification
-    String getName();
-    void setName(String name);
-    
-    // Streams
-    void setInletStream(StreamInterface stream);
-    StreamInterface getInletStream();
-    StreamInterface getOutletStream();
-    
-    // Execution
-    void run();
-    void runTransient(double dt);
-    
-    // Initialization
-    void initializeModule();
-    
-    // Equipment access
-    ProcessEquipmentInterface getUnit(String name);
-    List<ProcessEquipmentInterface> getUnits();
+  /**
+   * Fails closed when an execution contract is not satisfied.
+   *
+   * @param condition condition that must be true
+   * @param message diagnostic message
+   */
+  private static void require(boolean condition, String message) {
+    if (!condition) {
+      throw new IllegalStateException(message);
+    }
+  }
 }
 ```
 
----
+## Core operations
 
-## Built-in Modules
+| Operation | Meaning |
+|---|---|
+| `add(ProcessSystem)` | Adds a complete process system at the next execution position. |
+| `add(ProcessModule)` | Adds a nested module at the next execution position. |
+| `run()` / `run(UUID)` | Executes children in insertion order and resolves module-level recycles when present. |
+| `runAsTask()` | Submits execution to the shared NeqSim thread pool and returns a `Future<?>`. |
+| `getUnit(String)` | Searches contained systems and nested modules recursively; the return type is `Object`. |
+| `getAllProcessSystems()` | Returns every contained `ProcessSystem`, including systems below nested modules. |
+| `getSubSystemCount()` | Counts only the systems and modules added directly to this module. |
+| `solved()` | Reports whether the module run has completed. |
+| `validateStructure()` | Reports structural issues such as an empty module or disconnected sub-systems. |
+| `buildModelGraph()` | Builds the graph used by calculation-order and recycle-loop inspection methods. |
 
-### Compressor Train Module
-
-```java
-// Multi-stage compression with intercooling
-CompressorTrainModule compTrain = new CompressorTrainModule("HP Compression");
-compTrain.setNumberOfStages(3);
-compTrain.setOutletPressure(150.0, "bara");
-compTrain.setIntercoolerTemperature(40.0, "C");
-compTrain.setIsentropicEfficiency(0.78);
-
-compTrain.setInletStream(feedGas);
-process.addModule(compTrain);
-```
-
-### Separation Train Module
-
-```java
-// Multi-stage separation
-SeparationTrainModule sepTrain = new SeparationTrainModule("Separation");
-sepTrain.addStage(50.0, "bara");  // HP stage
-sepTrain.addStage(15.0, "bara");  // MP stage
-sepTrain.addStage(3.0, "bara");   // LP stage
-
-sepTrain.setInletStream(wellFluid);
-process.addModule(sepTrain);
-
-// Get products
-Stream exportGas = sepTrain.getGasOutStream();
-Stream exportOil = sepTrain.getOilOutStream();
-Stream prodWater = sepTrain.getWaterOutStream();
-```
-
-### Dehydration Module
-
-```java
-// TEG dehydration unit
-DehydrationModule dehy = new DehydrationModule("Gas Dehy");
-dehy.setWaterDewPoint(-20.0, "C");
-dehy.setSolventType("TEG");
-
-dehy.setInletStream(wetGas);
-process.addModule(dehy);
-
-Stream dryGas = dehy.getOutletStream();
-```
-
----
-
-## Custom Modules
-
-### Creating Custom Module
-
-```java
-public class MyCustomModule extends ProcessModule {
-    
-    private Separator inlet Scrubber;
-    private HeatExchanger heatEx;
-    private Compressor compressor;
-    
-    public MyCustomModule(String name) {
-        super(name);
-        initializeEquipment();
-    }
-    
-    private void initializeEquipment() {
-        inletScrubber = new Separator("Inlet Scrubber");
-        add(inletScrubber);
-        
-        heatEx = new HeatExchanger("Feed/Effluent HX");
-        add(heatEx);
-        
-        compressor = new Compressor("Main Compressor");
-        add(compressor);
-    }
-    
-    @Override
-    public void setInletStream(StreamInterface stream) {
-        super.setInletStream(stream);
-        inletScrubber.setInletStream(stream);
-    }
-    
-    @Override
-    public StreamInterface getOutletStream() {
-        return compressor.getOutletStream();
-    }
-    
-    public void setOutletPressure(double pressure, String unit) {
-        compressor.setOutletPressure(pressure, unit);
-    }
-}
-```
-
-### Using Custom Module
-
-```java
-MyCustomModule customModule = new MyCustomModule("My Unit");
-customModule.setInletStream(feed);
-customModule.setOutletPressure(80.0, "bara");
-
-process.addModule(customModule);
-process.run();
-```
-
----
-
-## Module Communication
-
-### Multiple Inlets
-
-```java
-public class TwoInletModule extends ProcessModule {
-    private Mixer inletMixer;
-    
-    public void setInletStream1(StreamInterface stream) {
-        inletMixer.addStream(stream);
-    }
-    
-    public void setInletStream2(StreamInterface stream) {
-        inletMixer.addStream(stream);
-    }
-}
-```
-
-### Multiple Outlets
-
-```java
-public class TwoOutletModule extends ProcessModule {
-    private Splitter outletSplitter;
-    
-    public StreamInterface getOutletStream1() {
-        return outletSplitter.getOutletStream(0);
-    }
-    
-    public StreamInterface getOutletStream2() {
-        return outletSplitter.getOutletStream(1);
-    }
-}
-```
-
----
-
-## Usage Examples
-
-### LNG Train Module
-
-```java
-public class LNGTrainModule extends ProcessModule {
-    
-    private Cooler precooler;
-    private HeatExchanger mainCryoExchanger;
-    private Expander jt Expander;
-    private Separator lngSeparator;
-    
-    public LNGTrainModule(String name) {
-        super(name);
-        
-        precooler = new Cooler("Precooler");
-        add(precooler);
-        
-        mainCryoExchanger = new HeatExchanger("MCHE");
-        add(mainCryoExchanger);
-        
-        jtExpander = new Expander("JT Expander");
-        add(jtExpander);
-        
-        lngSeparator = new Separator("LNG Separator");
-        add(lngSeparator);
-    }
-    
-    @Override
-    public void setInletStream(StreamInterface stream) {
-        super.setInletStream(stream);
-        precooler.setInletStream(stream);
-    }
-    
-    public void setLNGTemperature(double temp, String unit) {
-        // Configure for target LNG temperature
-    }
-    
-    public StreamInterface getLNGStream() {
-        return lngSeparator.getLiquidOutStream();
-    }
-    
-    public StreamInterface getBoilOffGas() {
-        return lngSeparator.getGasOutStream();
-    }
-}
-
-// Usage
-LNGTrainModule lngTrain = new LNGTrainModule("LNG Production");
-lngTrain.setInletStream(treatedGas);
-lngTrain.setLNGTemperature(-162.0, "C");
-
-process.addModule(lngTrain);
-process.run();
-
-Stream lng = lngTrain.getLNGStream();
-System.out.println("LNG production: " + lng.getFlowRate("tonne/day") + " t/d");
-```
-
-### FPSO Topsides Module
-
-```java
-// Complete FPSO processing
-ProcessSystem fpso = new ProcessSystem("FPSO Topsides");
-
-// Separation module
-SeparationTrainModule separation = new SeparationTrainModule("Separation");
-separation.setInletStream(wellFluid);
-fpso.addModule(separation);
-
-// Gas compression
-CompressorTrainModule gasComp = new CompressorTrainModule("Gas Compression");
-gasComp.setInletStream(separation.getGasOutStream());
-gasComp.setOutletPressure(200.0, "bara");
-fpso.addModule(gasComp);
-
-// Gas dehydration
-DehydrationModule dehy = new DehydrationModule("Dehydration");
-dehy.setInletStream(gasComp.getOutletStream());
-fpso.addModule(dehy);
-
-// Water treatment
-WaterTreatmentModule waterTreat = new WaterTreatmentModule("Water Treatment");
-waterTreat.setInletStream(separation.getWaterOutStream());
-fpso.addModule(waterTreat);
-
-fpso.run();
-```
-
----
+Progress listeners attached with `setProgressListener(...)` propagate to child systems and nested modules.
 
 ## Capacity Constraints in ProcessModule
 
-ProcessModule supports the same capacity constraint methods as ProcessSystem, enabling bottleneck detection and capacity monitoring across all nested systems and modules.
+Capacity methods traverse all contained process systems, including those below nested modules.
+Only equipment implementing the capacity contract contributes to the results.
 
 ### Available Methods
 
@@ -408,7 +192,7 @@ List<CapacityConstrainedEquipment> allConstrained = facilityModule.getConstraine
 BottleneckResult bottleneck = facilityModule.findBottleneck();
 ```
 
-For detailed constraint management, see [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK).
+For detailed constraint management, see [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md).
 
 ---
 
@@ -513,20 +297,10 @@ status is `AUTO_SIZED`, not `OPTIMIZED`, because no search was performed. Config
 through `DesignOptimizer` currently requires a single `ProcessSystem`; use
 `ProductionOptimizer` with `ProcessModelOptimizationView` for whole-module optimization.
 
----
 
-## Best Practices
+## Related documentation
 
-1. **Self-Contained**: Modules should be self-contained with clear interfaces
-2. **Documented Interfaces**: Document inlet/outlet requirements
-3. **Reasonable Defaults**: Provide sensible default values
-4. **Error Handling**: Validate inputs and provide clear error messages
-5. **Testing**: Create unit tests for each module
-
----
-
-## Related Documentation
-
-- [ProcessSystem](process_system) - Process system management
-- [Graph Simulation](graph_simulation) - Graph-based execution
-- [Equipment Overview](../equipment/) - Process equipment
+- [ProcessSystem](process_system.md) explains equipment ownership and execution within one system.
+- [Graph Simulation](graph_simulation.md) covers graph-based inspection and execution.
+- [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) describes capacity contracts used by module-level summaries.
+- [Equipment Overview](../equipment/) lists process equipment that can be added to a `ProcessSystem`.
