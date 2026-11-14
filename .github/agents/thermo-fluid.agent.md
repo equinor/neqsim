@@ -53,6 +53,10 @@ must not be labeled as reviewed ideal-gas enthalpies through `FORMATIONENTHALPYS
 retain their source in model documentation. See the
 [component database guide](../../docs/thermo/component_database_guide.md#adding-custom-components)
 and `BisulfateDatabaseTest` for the identity and reference-boundary regression.
+When correcting an existing component's identity (for example glycerol, which was a TEG copy until #4069), update
+`COMP.csv` and `COMP_EXT.csv` together. Also update `src/test/resources/data/comp_known_issues.tsv` and the Henry-water
+dispositions with `devtools/check_henry_water_data.py`, and re-express CPA `a0`/`c1` if `TC` changes (see the
+`neqsim-eos-regression` skill). `GlycerolIdentityDataTest` shows the regression pattern.
 
 ## CPA water-related onset requests
 

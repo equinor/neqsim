@@ -19,10 +19,6 @@
       "definition_assessment": "The estimate or other-source leads do not qualify an intrinsic infinite-dilution coefficient for the solute in water and cannot be transferred silently to mixed-solvent glycol solvent-role models.",
       "required_evidence": "A primary or redistributable measured dilute-solute-in-water dataset with explicit convention, units, pressure basis, uncertainty and range, followed by separate validation before any mixed-solvent glycol-model use."
     },
-    "database_identity_alias_requires_correction": {
-      "definition_assessment": "No Henry definition can be assigned while the component name conflicts with the stored TEG identity; the duplicate estimate inventory is not admissible evidence.",
-      "required_evidence": "Correct the database identity first, then qualify a primary or redistributable measured water dataset for the corrected species with explicit Henry convention, units, conditions, uncertainty and finite validity scope."
-    },
     "reactive_inorganic_or_acid_speciation": {
       "definition_assessment": "Effective aqueous uptake may include dissociation, hydrolysis, reaction, decomposition or unresolved molecular form and is not an intrinsic infinite-dilution neutral-species Henry constant.",
       "required_evidence": "Species-resolved primary measurements or a redistributable dataset with reaction/speciation model, pH or composition, Henry convention, units, conditions, uncertainty and finite validity range, while preserving existing reactive-model benchmarks."
@@ -461,15 +457,13 @@
     },
     {
       "name": "glycerol",
-      "cas": "112-27-6",
-      "formula": "C6H14O4",
-      "inchikey": "ZIBGPFATKBEMQZ-UHFFFAOYSA-N",
-      "source_record_url": "https://www.henrys-law.org/henry/casrn/112-27-6",
-      "source_types": "E Q",
-      "boundary": "database_identity_alias_requires_correction",
-      "coverage_status": "estimate_or_other_source_requires_review",
-      "alias_of": "TEG",
-      "identity_conflict": "The name glycerol conflicts with the stored TEG CAS, formula and InChIKey; this is not an independent chemical identity."
+      "cas": "56-81-5",
+      "formula": "C3H8O3",
+      "inchikey": "PEDCQBHIVMGVHV-UHFFFAOYSA-N",
+      "source_record_url": "https://www.henrys-law.org/henry/casrn/56-81-5",
+      "source_types": "",
+      "boundary": "solvent_role_polyol_nonempirical",
+      "coverage_status": "estimate_or_other_source_requires_review"
     },
     {
       "name": "cis-14-DM-cy-C6",

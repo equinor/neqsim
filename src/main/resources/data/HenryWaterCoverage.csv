@@ -182,7 +182,7 @@ nC26,630-01-3,estimate_or_other_source_requires_review,Q V
 nC28,630-02-4,estimate_or_other_source_requires_review,Q
 nC29,630-03-5,estimate_or_other_source_requires_review,Q
 Hg++,0-0-0-0,ionic_not_a_neutral_Henry_solute,
-glycerol,112-27-6,estimate_or_other_source_requires_review,E Q
+glycerol,56-81-5,estimate_or_other_source_requires_review,
 sulfur(S8),10544-50-0,no_exact_CAS_match_in_source_archive,
 seawater,7732-18-5,no_exact_CAS_match_in_source_archive,
 naphthalene,91-20-3,imported_local_temperature_expression,? C L M Q T V X
