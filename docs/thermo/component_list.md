@@ -328,6 +328,7 @@ ComponentNameResolver.isKnownName("isooctane");
 | `TEG` | C₆H₁₄O₄ | 112-27-6 | 150.17 | Triethylene glycol (gas dehydration) |
 | `DEG` | C₄H₁₀O₃ | 111-46-6 | 106.12 | Diethylene glycol |
 | `PG` | C₃H₈O₂ | 57-55-6 | 76.09 | Propylene glycol |
+| `glycerol` | C₃H₈O₃ | 56-81-5 | 92.09 | Glycerol (propane-1,2,3-triol); CPA 4C |
 
 ## Amines (Gas Sweetening)
 

@@ -2,7 +2,7 @@
 name: neqsim-consequence-analysis
 version: "1.0.0"
 description: "Quantitative consequence analysis - jet/pool fire, VCE, BLEVE, Gaussian and heavy-gas dispersion, probit fatality, individual and societal risk. USE WHEN: a task requires fire-radiation contours, dispersion to LFL/IDLH/ERPG, BLEVE thermal/missile assessment, or QRA-style integration of release outcomes. Anchors on neqsim.process.safety.fire, .dispersion and .qra."
-last_verified: "2026-04-26"
+last_verified: "2026-11-14"
 requires:
   java_packages:
     - neqsim.process.safety.fire
@@ -238,6 +238,10 @@ PfpDemandResult.PfpRating rating = pfp.getRating(); // NONE / H60 / J120 ...
 
 Determines whether unprotected steel reaches its critical temperature before the
 required survival time, and if so the intumescent thickness and H/J rating.
+For custom temperatures, supply finite values in kelvin. The critical steel
+temperature must exceed the positive initial steel temperature, and the
+effective fire temperature must exceed their arithmetic mean. See the
+[PFP demand guide](../../../docs/safety/flare_flame_hazardous_area_pfp.md).
 
 ## Source Term for External CFD
 

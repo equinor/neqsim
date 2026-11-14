@@ -1,5 +1,6 @@
 package neqsim.thermodynamicoperations.phaseenvelopeops;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,16 @@ public class PhaseEnvelopeZeroCheckTest {
     double[] cricondentherm = ops.get("cricondentherm");
     double[] dewT = ops.get("dewT");
     double[] dewP = ops.get("dewP");
+    double[] bubbleT = ops.get("bubT");
+    double[] bubbleP = ops.get("bubP");
+    assertTrue(Arrays.stream(dewT).filter(Double::isFinite).count() >= 3, "GERG dew branch is incomplete");
+    assertTrue(Arrays.stream(bubbleT).filter(Double::isFinite).count() >= 3, "GERG bubble branch is incomplete");
+    assertEquals(bubbleT.length, bubbleP.length);
+    // Preserve the extrema from the pre-optimization trace for this mixture.
+    assertEquals(212.09465, cricondenbar[0], 0.03);
+    assertEquals(59.53587, cricondenbar[1], 0.03);
+    assertEquals(215.42640, cricondentherm[0], 0.03);
+    assertEquals(52.30083, cricondentherm[1], 0.06);
     assertTrue(cricondenbar[0] > 0.0 && cricondenbar[1] > 0.0, "cricondenbar should be calculated");
     assertTrue(cricondentherm[0] > 0.0 && cricondentherm[1] > 0.0, "cricondentherm should be calculated");
     assertTrue(Arrays.stream(dewT).noneMatch(t -> t == 0.0), "dewT should not contain zeros");

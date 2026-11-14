@@ -52,6 +52,25 @@ GERG-2008 is the standard reference equation for **natural gas** transport, proc
 ### Supported Components (21)
 Methane, Nitrogen, Carbon Dioxide, Ethane, Propane, Butanes, Pentanes, Hexane, Heptane, Octane, Nonane, Decane, Hydrogen, Oxygen, Carbon Monoxide, Water, Helium, Argon.
 
+### Liquid density and phase envelopes
+
+GERG-2008 liquid density calculations bracket the high-density root, then use
+a local Chebyshev approximation to seed a safeguarded Newton solve. The
+accepted density closes the pressure equation of the original GERG model on a
+positive-slope branch. If the approximation is unsuitable, NeqSim refines the
+bracket by bisection. During the scan, a negative-to-positive pressure slope
+can reveal a pressure minimum even when both endpoint pressures exceed the
+target. NeqSim checks that interval for a higher positive-slope root before
+continuing to lower densities. The approximation follows the proxy-and-polish approach
+of [Bell and Alpert (2018)](https://doi.org/10.1016/j.fluid.2018.04.026).
+The scope is the requested liquid branch. Certification of all density roots
+and global phase stability require additional calculations.
+
+Phase-envelope tracing uses bisection for its nested finite differences and
+reuses density results at identical states. The cache is isolated by model,
+thread and phase branch. Fugacity perturbations evaluate the residual Helmholtz
+energy directly at the trial composition, leaving the original phase intact.
+
 ### Usage in NeqSim
 
 To use GERG-2008 in NeqSim, use the `SystemGERG2008Eos` class.
@@ -258,6 +277,12 @@ document the initialization-order repair for issue #3702. With that repair, the
 95 mol% CO2 / 5 mol% SO2 flash at 298.15 K and 50 bara converges to gas and liquid;
 the earlier density-root limitation applies to versions without this repair.
 The linked example checks each phase's pressure and the component inventories.
+
+For a requested liquid density, EOS-CG uses the same Chebyshev refinement as
+GERG-2008, with pressure and slope evaluated by the EOS-CG kernel. A positive-
+slope crossing is a candidate density for the requested branch. The TP flash
+still determines the phase split through the fugacity and stability equations.
+The phase-envelope finite differences retain their original root refinement.
 
 For pure-component EOS-CG volume–energy flashes, the saturation-volume stability
 check requires distinct, physically ordered roots: vapor molar volume must exceed
