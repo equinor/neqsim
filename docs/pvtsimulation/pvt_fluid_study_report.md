@@ -19,6 +19,9 @@ and delegates experiment or regression detail to `@pvt-simulation`.
 For measured differential-liberation input, the optional
 [DLE mass audit](dle_mass_audit.md) records compatible, incompatible and
 unresolved source observations before the study starts.
+For measured serial separator tests, use the optional
+[separator-train mass audit](separator_mass_audit.md) to check directly
+reported gas releases, terminal stock-tank normalization and mass closure.
 
 ## Run the workflow
 

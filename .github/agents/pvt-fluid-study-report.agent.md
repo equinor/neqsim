@@ -40,6 +40,9 @@ interpreter, Java 8, formatting and confidentiality rules.
    For primary differential liberation use the
    [DLE mass audit](../../docs/pvtsimulation/dle_mass_audit.md). Keep missing
    standard gas basis and incomplete endpoint observations visible.
+   For measured serial separator tests use the
+   [separator-train mass audit](../../docs/pvtsimulation/separator_mass_audit.md).
+   Keep stock-tank normalization conflicts and absent gas properties visible.
 4. Run `neqsim pvt-study study.yaml --out <task-directory> --strict`. Use stage
    stops for inspection and `--resume` only through its identity-checked route.
    Fix failed input, closure, convergence or export checks in the owning model

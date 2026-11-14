@@ -1746,7 +1746,7 @@
         "src/test/java/neqsim/pvtsimulation/util/PVTFluidStudyTest.java",
         "src/test/java/neqsim/thermo/util/readwrite/LbcFluidRoundTripTest.java"
       ],
-      "limitations": "Discovery and inspectApi route only; execute the complete study through neqsim pvt-study or the documented Python/Java adapter. Bounded plain cubic hydrocarbon models, classic mixing and CCE relative-volume BIP fitting only. Synthetic examples establish numerical workflow/replay, not independent experimental accuracy or target-simulator compatibility.",
+      "limitations": "Discovery and inspectApi route only; execute the complete study through neqsim pvt-study or the documented Python/Java adapter. Bounded plain cubic hydrocarbon models, classic mixing and CCE relative-volume BIP fitting only. Standalone Python DLE and serial separator mass audits screen primary observations before admission, without fitting EOS parameters. Synthetic examples establish numerical workflow/replay, not independent experimental accuracy or target-simulator compatibility.",
       "evidence": {
         "route": "declared",
         "testSources": "present",
