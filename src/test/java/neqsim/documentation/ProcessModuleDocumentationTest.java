@@ -72,8 +72,7 @@ class ProcessModuleDocumentationTest {
    */
   private String exampleSource() throws IOException {
     String markdown = new String(Files.readAllBytes(GUIDE), StandardCharsets.UTF_8);
-    assertEquals(markdown.indexOf(MARKER), markdown.lastIndexOf(MARKER),
-        "ProcessModule example marker must be unique");
+    assertEquals(markdown.indexOf(MARKER), markdown.lastIndexOf(MARKER), "ProcessModule example marker must be unique");
     assertFalse(markdown.contains("addModule"));
     assertFalse(markdown.contains("ModuleInterface"));
     assertFalse(markdown.contains("CompressorTrainModule"));
