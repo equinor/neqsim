@@ -40,6 +40,10 @@ def triage_prompt(cycle_id, triggers, daily=False):
                  "continuous/daily/<YYYY-MM-DD>.json (schema: `neqsim task-daily <task> --template`) "
                  "and continuous/daily/_standing.json; the Word daily report is built from them. "
                  "Answer first, plain language, numbers with units, second-hand information marked unverified.")
+    text += (" If continuous/hypotheses.yaml exists, never set cause confidences by hand: append each new piece of "
+             "evidence once as an observation with P(observation | each cause), a reliability and, for a repeat of "
+             "the same mechanism, a family; then run `neqsim task-hypotheses <task>` and report its posterior and "
+             "its ranked next test.")
     return text
 
 def critic_prompt(state, reason):

@@ -912,6 +912,34 @@ wake*, battery-safe and a 3 h limit (so a laptop sleeping at 06:30 still runs th
 intervention, so the monitor does not stay in alarm for weeks; bulk evidence changes (a re-organised
 document folder) appear as one row in the Living Report.
 
+### 13.1c Evidence-weighted root cause and the next best test
+
+For a root-cause question, keep `continuous/hypotheses.yaml` instead of writing confidence numbers by hand
+(`neqsim task-hypotheses <task> --template` prints a commented example):
+
+- `hypotheses` with priors (and optional `short` labels), optional `decision_groups` such as
+  `gas_dry: [...]` / `gas_wet: [...]`;
+- `observations`, each entered once with `likelihood` = $P(\text{observation} \mid \text{cause})$ for every
+  cause, a `reliability` (1 verified, about 0.6 second-hand) and a `family` for repeats of the same
+  mechanism;
+- `tests` with discrete `outcomes`, each a row of $P(\text{outcome} \mid \text{cause})$ summing to 1 per
+  cause, an `owner` and a `cost`.
+
+`neqsim task-hypotheses <task>` applies Bayes' rule in date order. An unreliable observation is mixed with
+"no information", and the $n$-th repeat in a family counts with weight `family_decay`$^n$. It prints the
+probability of each cause and decision group, the observation the answer depends on most (leave-one-out),
+and the tests ranked by expected information gain (bits) per unit cost:
+
+$$
+\mathrm{EIG} = H(P) - \sum_{o} P(o)\, H(P \mid o), \qquad P(o) = \sum_h P(o \mid h)\, P(h)
+$$
+
+With `rank_by: auto` the ranking uses the decision groups until one exceeds 0.9, then the causes. The
+`floor` is a reporting threshold only (shown as "< 2 %, not ruled out"). The state is written to
+`continuous/hypotheses_state.json` after every cycle, and the daily Word report shows the evidence-weighted
+causes, the evidence that moved them most, the ranked tests and the next test in "Today". The likelihoods
+remain engineering judgements; the method makes them explicit, consistent and open to challenge.
+
 ### 13.2 Triage a triggered cycle
 
 Open `continuous/cycles/<id>/`:

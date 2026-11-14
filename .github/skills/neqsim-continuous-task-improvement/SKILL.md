@@ -362,6 +362,17 @@ and was hard to read. Do this from day one:
   alarming signals; otherwise the alarm stays on for weeks and carries no information.
 - **Floor hypothesis confidences** (about 0.03) unless a cause is physically excluded; log the revision
   note trigger (a hypothesis moved by 0.1, a criterion met) in the day's entry.
+- **Weigh causes by the evidence, not by hand** (`continuous/hypotheses.yaml`, `neqsim task-hypotheses <task>`,
+  module `hypotheses.py`; start from `--template`). Each observation is entered once with
+  `P(observation | cause)` for every cause, a `reliability` (second-hand about 0.6) and a `family` for repeats
+  of the same mechanism (tempered `family_decay**n`, default 0.5 — without it ten repeats of one fingerprint
+  read as ten proofs and the posterior goes to 99.99 %). Decision groups (for example gas dry / gas wet) give
+  the decision probability. Candidate tests with outcome rows (summing to 1 per cause) are ranked by expected
+  information gain in bits per unit effort; `rank_by: auto` ranks on the decision until it is settled
+  (>= 0.9), then on the cause. The floor is a reporting threshold ("< 2 %, not ruled out"), never applied
+  inside the update (a floor in the update caps the leader and makes every test look useless). A leave-one-out
+  check names the observation the answer depends on most. Runs after every cycle when the file exists, and the
+  daily Word report adds the evidence-weighted section, the strongest evidence and the next test.
 - **Read the decisive attachments.** When a work order or action lists a service report or datasheet, read it
   the same day (read-only) and report its findings; monitoring that only watches titles and timestamps misses
   the best evidence.

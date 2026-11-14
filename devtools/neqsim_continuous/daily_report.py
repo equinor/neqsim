@@ -19,6 +19,7 @@ Output: ``continuous/DAILY_REPORT.docx`` (overwritten after every cycle that has
 
 import csv
 import json
+import math
 import os
 import re
 from collections import OrderedDict
@@ -234,7 +235,7 @@ def _csv_points(task_dir, spec):
     return points
 
 
-def _charts(task_dir, config, series, entries, out_dir, days=14):
+def _charts(task_dir, config, series, entries, out_dir, days=14, bayes=None):
     """Return ([(title, path)], events) for trend charts with key-event markers and the hypothesis trajectories.
 
     A chart series is either a KPI name from kpi_history.csv (one point per cycle) or a CSV file with
@@ -290,29 +291,112 @@ def _charts(task_dir, config, series, entries, out_dir, days=14):
         plt.close(fig)
         made.append((chart.get("title", "KPI trend"), path))
     names, track = OrderedDict(), OrderedDict()
-    for date, entry in entries.items():
-        for hyp in entry.get("hypotheses") or []:
-            if isinstance(hyp, dict) and isinstance(hyp.get("new"), (int, float)):
-                names[hyp.get("id", hyp.get("name"))] = hyp.get("name", hyp.get("id"))
-                track.setdefault(hyp.get("id", hyp.get("name")), []).append((date, hyp["new"]))
+    if bayes:
+        # Exact trajectory from the hypotheses file: one point per observation date (last value of the day).
+        names = OrderedDict(bayes.get("short") or bayes["names"])
+        by_date = OrderedDict()
+        for step in bayes["history"]:
+            if step.get("date"):
+                by_date[str(step["date"])] = step["probabilities"]
+        for date, probs in by_date.items():
+            for key, value in probs.items():
+                track.setdefault(key, []).append((date, value))
+    else:
+        for date, entry in entries.items():
+            for hyp in entry.get("hypotheses") or []:
+                if isinstance(hyp, dict) and isinstance(hyp.get("new"), (int, float)):
+                    names[hyp.get("id", hyp.get("name"))] = hyp.get("name", hyp.get("id"))
+                    track.setdefault(hyp.get("id", hyp.get("name")), []).append((date, hyp["new"]))
     if len(next(iter(track.values()), [])) >= 2:
-        fig, ax = plt.subplots(figsize=(7.2, 3.3))
+        fig, ax = plt.subplots(figsize=(7.2, 4.0))
         for key, points in track.items():
             ax.plot([datetime.strptime(d, "%Y-%m-%d") for d, _ in points], [v for _, v in points],
                     marker="o", markersize=3, linewidth=1.4, label=names[key])
         ax.set_ylim(0, 1.0)
-        ax.set_ylabel("Confidence (sums to 1)")
-        ax.set_title("How the confidence in each cause changed", fontsize=10)
+        ax.set_ylabel("Probability (sums to 1)" if bayes else "Confidence (sums to 1)")
+        ax.set_title("Probability of each candidate cause" + (", weighted by the evidence" if bayes else ""), fontsize=10)
         ax.grid(alpha=0.3)
-        ax.legend(fontsize=6.5, loc="center left", bbox_to_anchor=(1.0, 0.5))
+        ax.legend(fontsize=7, loc="upper center", bbox_to_anchor=(0.5, -0.16), ncol=2, frameon=False)
+        ax.xaxis.set_major_locator(mdates.DayLocator(interval=2))
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%d.%m"))
-        fig.autofmt_xdate()
         fig.tight_layout()
         path = os.path.join(out_dir, "daily_hypotheses.png")
         fig.savefig(path, dpi=170)
         plt.close(fig)
-        made.append(("How the confidence in each cause changed", path))
+        made.append(("How the probability of each cause changed", path))
     return made, [(stamp, text) for stamp, text in events]
+
+
+def _pretty(identifier):
+    return str(identifier).replace("_", " ")
+
+
+def _next_test_line(bayes):
+    """One sentence naming the next most informative test and what its outcomes would do."""
+    if not bayes or not bayes.get("tests"):
+        return ""
+    from .hypotheses import format_probability
+    test = bayes["tests"][0]
+    names = bayes.get("short") or bayes["names"]
+    parts = ["if {} ({:.0%} likely), the leading cause would be {} at {}".format(
+        _pretty(o["outcome"]), o["chance"], names.get(o["leader"], o["leader"]),
+        format_probability(o["leader_probability"])) for o in test["outcomes"]]
+    return "{} (owner {}). {}.".format(test["name"], test["owner"] or "-", "; ".join(parts).capitalize())
+
+
+def _write_bayes(doc, bayes, problems):
+    """Evidence-weighted candidate causes, the evidence that moved them, and the next most informative test."""
+    from docx.shared import Pt
+    from .hypotheses import format_probability
+    para = doc.add_paragraph()
+    para.add_run("Candidate causes, weighted by the evidence").bold = True
+    para.paragraph_format.keep_with_next = True
+    if problems:
+        _callout(doc, "The hypotheses file has problems and was not computed", problems[:8], color="FCE4D6")
+        return
+    names, short, floor = bayes["names"], bayes.get("short") or bayes["names"], bayes.get("floor", 0.0)
+    note = doc.add_paragraph()
+    run = note.add_run(
+        "Each observation is entered once with how likely it would be under every candidate cause; the probabilities "
+        "below follow from these judgements by Bayes' rule. Second-hand information counts less, and repeats of the same "
+        "mechanism count progressively less. A cause shown as '< {:.0%}' is unlikely on the evidence, not ruled out.".format(
+            floor or 0.01))
+    run.font.size = Pt(9)
+    run.italic = True
+    rows = [(names.get(h, h), format_probability(p, floor)) for h, p in
+            sorted(bayes["posterior"].items(), key=lambda item: -item[1])]
+    _table(doc, ("Candidate cause", "Probability now"), rows, (13.0, 4.0))
+    if bayes.get("group_posterior"):
+        doc.add_paragraph("Decision: " + ";  ".join(
+            "{} {}".format(_pretty(g), format_probability(p, floor)) for g, p in bayes["group_posterior"].items()) + ".")
+    if bayes.get("robustness"):
+        from .hypotheses import robustness_text
+        doc.add_paragraph("Robustness: " + robustness_text(bayes))
+    strong = sorted(bayes.get("weights") or [], key=lambda w: -abs(math.log(max(w["odds_factor"], 1e-9))))[:8]
+    if strong:
+        para = doc.add_paragraph()
+        para.add_run("Evidence that moved the answer most").bold = True
+        para.paragraph_format.keep_with_next = True
+        label = _pretty(strong[0]["odds_for"])
+        _table(doc, ("Date", "Observation", "Odds for '{}'".format(label), "Counted as"),
+               [(w.get("date") or "", w["description"], "x {:.2f}".format(w["odds_factor"]),
+                 "{}{}".format("second-hand ({:.0%})".format(w["reliability"]) if w["reliability"] < 1 else "verified",
+                               ", repeat x{:.2f}".format(w["weight"]) if w["weight"] < 1 else ""))
+                for w in sorted(strong, key=lambda w: str(w.get("date")))], (2.2, 9.0, 2.6, 3.2), font=8.5)
+    if bayes.get("tests"):
+        para = doc.add_paragraph()
+        basis = "decision" if bayes["rank_by"] == "info_decision_bits" else "cause"
+        para.add_run("Next most informative tests (ranked by information on the {} per unit of effort)".format(basis)).bold = True
+        para.paragraph_format.keep_with_next = True
+        rows = []
+        for test in bayes["tests"][:5]:
+            outcomes = "; ".join("{} ({:.0%}): {} {}".format(
+                _pretty(o["outcome"]), o["chance"], short.get(o["leader"], o["leader"]),
+                format_probability(o["leader_probability"])) for o in test["outcomes"])
+            rows.append((test["name"], test["owner"], "{:g} {}".format(test["cost"], test["cost_unit"]).strip(),
+                         "{:.2f} / {:.2f}".format(test["info_decision_bits"], test["info_cause_bits"]), outcomes))
+        _table(doc, ("Test", "Owner", "Effort", "Bits: decision / cause", "Outcome (chance): leading cause after"),
+               rows, (4.6, 2.4, 1.6, 2.0, 6.4), font=8)
 
 
 def _snapshot(config, cycles, date):
@@ -464,12 +548,22 @@ def _style_document(doc):
         style.font.color.rgb = RGBColor.from_string(_BLUE)
 
 
-def _hyp_rows(hypotheses):
+def _hyp_rows(hypotheses, floor=0.02):
+    """Rows for the day's cause table; a live value below ``floor`` reads '< floor', never a false 0.00."""
+    def show(value):
+        if isinstance(value, (int, float)) and value < floor:
+            return "< {:.2f}".format(floor)
+        return _fmt(value, 2)
+
     rows = []
     for hyp in hypotheses:
         old, new = hyp.get("old"), hyp.get("new")
-        change = _signed(new - old, 2) if isinstance(old, (int, float)) and isinstance(new, (int, float)) else "-"
-        rows.append((hyp.get("name", hyp.get("id", "")), _fmt(old, 2), _fmt(new, 2), change, hyp.get("why", "")))
+        both_low = all(isinstance(v, (int, float)) and v < floor for v in (old, new))
+        if both_low or not (isinstance(old, (int, float)) and isinstance(new, (int, float))):
+            change = "-"
+        else:
+            change = _signed(new - old, 2)
+        rows.append((hyp.get("name", hyp.get("id", "")), show(old), show(new), change, hyp.get("why", "")))
     return rows
 
 
@@ -557,7 +651,11 @@ def build(task_dir, output=None):
     title = config.get("title") or os.path.basename(os.path.normpath(str(task_dir)))
     latest = days[0]
     out_dir = os.path.join(continuous_dir(task_dir), "report", "daily")
-    charts, marks = _charts(task_dir, config, series, entries, out_dir) or ([], [])
+    bayes, bayes_problems = None, []
+    from . import hypotheses
+    if hypotheses.load(task_dir) is not None:
+        bayes, bayes_problems = hypotheses.run(task_dir)
+    charts, marks = _charts(task_dir, config, series, entries, out_dir, bayes=bayes) or ([], [])
 
     doc = Document()
     _style_document(doc)
@@ -581,6 +679,10 @@ def build(task_dir, output=None):
     latest_entry = entries.get(latest) or _auto_entry(latest, cycles, config)
     _heading(doc, "1. Today", 1)
     _write_day(doc, latest, latest_entry, cycles, snapshot=_snapshot(config, cycles, latest), full=True)
+    if bayes and bayes.get("tests"):
+        para = doc.add_paragraph()
+        para.add_run("Next most informative test: ").bold = True
+        para.add_run(_next_test_line(bayes))
 
     _heading(doc, "2. Where we stand", 1)
     if standing:
@@ -603,6 +705,8 @@ def build(task_dir, output=None):
                    [(i.get("item", ""), i.get("value", ""), i.get("status", "")) for i in standing["limits"]], (7.0, 4.0, 6.0))
     else:
         doc.add_paragraph("No standing summary has been written (continuous/daily/_standing.json).")
+    if bayes or bayes_problems:
+        _write_bayes(doc, bayes, bayes_problems)
     for caption, path in charts:
         doc.add_picture(path, width=Cm(16.0))
         cap = doc.add_paragraph()
