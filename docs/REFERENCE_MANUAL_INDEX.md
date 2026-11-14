@@ -804,6 +804,7 @@ See the [property method alignment audit](physical_properties/method_alignment_a
 | API 14C SAFE / NORSOK P-002 | [docs/safety/api14c_norsok_p002.md](safety/api14c_norsok_p002.md)                    | API RP 14C SAFE chart, NORSOK P-002 flare/blowdown/vent screening, coupled blowdown |
 | MAH Bow-Tie / EI AVIFF FIV | [docs/safety/mah_bowtie_fiv_screening.md](safety/mah_bowtie_fiv_screening.md)         | ISO 17776 major-accident-hazard bow-tie and EI AVIFF flow-induced-vibration screening |
 | Flare Flame / Hazardous Area / PFP | [docs/safety/flare_flame_hazardous_area_pfp.md](safety/flare_flame_hazardous_area_pfp.md) | API 537 flare flame/radiation/noise, IEC 60079-10-1 zoning, API 521 PFP demand |
+| Firewater supply assessment | [docs/safety/README.md](safety/README.md#firewater-supply-assessment) | Coverage, spare flow, pressure margin, and missing-data verdicts |
 
 ### Chapter 35: Risk Simulation Framework
 

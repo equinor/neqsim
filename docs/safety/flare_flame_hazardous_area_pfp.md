@@ -47,6 +47,10 @@ With zero wind the flame is vertical (`flameTiltRad() == 0`); increasing wind
 tilts it downwind. The flux thresholds `FLUX_1_58_KW`, `FLUX_4_73_KW`, and
 `FLUX_9_46_KW` correspond to the API 521 / API 537 personnel-exposure limits.
 
+`setStackHeightM` and `setWindSpeedMPerS` require finite values of zero or
+greater. `setTransmissivity` requires a finite fraction from 0 to 1 inclusive.
+Values outside these ranges throw `IllegalArgumentException`.
+
 ## IEC 60079-10-1 hazardous-area classification
 
 `HazardousAreaCalculator` estimates the hazardous distance from a gas release

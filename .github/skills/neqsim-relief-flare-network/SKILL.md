@@ -2,7 +2,7 @@
 name: neqsim-relief-flare-network
 version: "1.0.0"
 description: "Relief and flare design - PSV sizing per API 520 (gas/liquid/two-phase, fire), API 521 fire heat input, flare load summation, tip sizing, radiation contours, header back-pressure and Mach, and the TR3001 overpressure-study engine. USE WHEN: PSV sizing, relief contingency analysis, thermal relief of trapped liquid, flare hydraulics or radiation, PSV-to-flare integration, or a TR3001/API 521 study. Anchors on ReliefValveSizing, safety.overpressure, Flare, SafetyValve."
-last_verified: "2026-06-27"
+last_verified: "2026-11-14"
 requires:
   java_packages: [neqsim.process.util.fire, neqsim.process.safety.overpressure, neqsim.process.equipment.flare, neqsim.process.equipment.valve]
 ---
@@ -279,6 +279,8 @@ double spl    = flame.soundPressureLevelDb(100.0);
 
 Verified by `Api537FlareFlameModelTest`. Radii are nested (lower flux reaches
 further); flame tilts downwind and the tip moves horizontally with wind speed.
+Height and wind speed must be finite and nonnegative. Transmissivity must be a
+finite fraction in [0, 1]. Invalid values throw `IllegalArgumentException`.
 
 ## Pattern 6 — Plant Load Summation
 

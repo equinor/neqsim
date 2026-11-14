@@ -27,6 +27,10 @@ import com.google.gson.JsonObject;
  * margin in hand points at simply extending the nozzle net.
  * </p>
  *
+ * <p>
+ * A hydraulic verdict requires both a finite spare supply flow and a finite worst-case pressure margin.
+ * </p>
+ *
  * @author esol
  * @version 1.0
  */
@@ -45,7 +49,9 @@ public class FireWaterCoverageAssessment implements Serializable {
     /** Pressure margin at the serving skid is insufficient or negative in a design case. */
     SUPPLY_PRESSURE_DEFICIT,
     /** Both flow and pressure are short; a stand-alone supply is required. */
-    DEDICATED_SUPPLY_REQUIRED
+    DEDICATED_SUPPLY_REQUIRED,
+    /** The spare supply flow or worst-case pressure margin is unavailable. */
+    SUPPLY_DATA_INCOMPLETE
   }
 
   private final double requiredFlowLpm;
@@ -103,7 +109,8 @@ public class FireWaterCoverageAssessment implements Serializable {
   }
 
   /**
-   * Set the spare pump and ring-main flow available on top of the governing simultaneous case.
+   * Set the spare pump and ring-main flow available on top of the governing simultaneous case. A non-finite value marks
+   * the flow as unavailable.
    *
    * @param flowLpm spare flow in l/min; may be negative when the governing case already exceeds the installed capacity
    * @return this assessment, for chaining
@@ -114,7 +121,8 @@ public class FireWaterCoverageAssessment implements Serializable {
   }
 
   /**
-   * Set the pressure margin at the serving deluge section in its worst design case.
+   * Set the pressure margin at the serving deluge section in its worst design case. A non-finite value marks the margin
+   * as unavailable.
    *
    * @param marginBar available pressure minus required pressure in bar; negative means the existing section already
    * fails to make its design pressure in that case
@@ -174,49 +182,43 @@ public class FireWaterCoverageAssessment implements Serializable {
   /**
    * Whether the supply has enough spare flow for the deficit.
    *
-   * @return true when spare flow is unknown or covers the deficit
+   * @return true when a finite spare flow covers the deficit
    */
   public boolean isFlowFeasible() {
-    if (Double.isNaN(spareSupplyFlowLpm)) {
-      return true;
-    }
-    return spareSupplyFlowLpm >= flowDeficitLpm();
+    return Double.isFinite(spareSupplyFlowLpm) && spareSupplyFlowLpm >= flowDeficitLpm();
   }
 
   /**
    * Whether the serving section has the required residual pressure margin.
    *
-   * @return true when the margin is unknown or at or above the required residual margin
+   * @return true when a finite pressure margin meets the required residual margin
    */
   public boolean isPressureFeasible() {
-    if (Double.isNaN(worstCasePressureMarginBar)) {
-      return true;
-    }
-    return worstCasePressureMarginBar >= requiredPressureMarginBar;
+    return Double.isFinite(worstCasePressureMarginBar) && worstCasePressureMarginBar >= requiredPressureMarginBar;
   }
 
   /**
    * Screening verdict.
    *
-   * @return the verdict
+   * @return the verdict, or {@link Verdict#SUPPLY_DATA_INCOMPLETE} when either hydraulic input is unavailable
    */
   public Verdict verdict() {
-    boolean gap = coverageGapM2() > 0.0 || flowDeficitLpm() > 0.0;
-    boolean flowOk = isFlowFeasible();
-    boolean pressOk = isPressureFeasible();
-    if (!gap) {
-      return Verdict.COMPLIANT;
+    if (!Double.isFinite(spareSupplyFlowLpm) || !Double.isFinite(worstCasePressureMarginBar)) {
+      return Verdict.SUPPLY_DATA_INCOMPLETE;
     }
-    if (!flowOk && !pressOk) {
+    boolean flowOk = isFlowFeasible();
+    boolean pressureOk = isPressureFeasible();
+    if (!flowOk && !pressureOk) {
       return Verdict.DEDICATED_SUPPLY_REQUIRED;
     }
-    if (!pressOk) {
+    if (!pressureOk) {
       return Verdict.SUPPLY_PRESSURE_DEFICIT;
     }
     if (!flowOk) {
       return Verdict.SUPPLY_FLOW_DEFICIT;
     }
-    return Verdict.COVERAGE_GAP_SUPPLY_ADEQUATE;
+    boolean gap = coverageGapM2() > 0.0 || flowDeficitLpm() > 0.0;
+    return gap ? Verdict.COVERAGE_GAP_SUPPLY_ADEQUATE : Verdict.COMPLIANT;
   }
 
   /**
@@ -226,6 +228,8 @@ public class FireWaterCoverageAssessment implements Serializable {
    */
   public String recommendation() {
     switch (verdict()) {
+    case SUPPLY_DATA_INCOMPLETE:
+      return "Provide the spare supply flow and worst-case pressure margin to complete the assessment.";
     case COMPLIANT:
       return "No modification required on coverage or hydraulic grounds.";
     case COVERAGE_GAP_SUPPLY_ADEQUATE:
@@ -245,7 +249,7 @@ public class FireWaterCoverageAssessment implements Serializable {
   }
 
   /**
-   * Serialise the assessment to JSON.
+   * Serialise the assessment to JSON. Unavailable supply inputs are represented by JSON null values.
    *
    * @return pretty-printed JSON document
    */
@@ -259,14 +263,17 @@ public class FireWaterCoverageAssessment implements Serializable {
     root.addProperty("requiredFlowLpm", requiredFlowLpm);
     root.addProperty("existingDeliveredFlowLpm", existingDeliveredFlowLpm);
     root.addProperty("flowDeficitLpm", flowDeficitLpm());
-    root.addProperty("spareSupplyFlowLpm", spareSupplyFlowLpm);
-    root.addProperty("servingSection", servingSection);
-    root.addProperty("worstCasePressureMarginBar", worstCasePressureMarginBar);
+    root.addProperty("spareSupplyFlowLpm", Double.isFinite(spareSupplyFlowLpm) ? spareSupplyFlowLpm : null);
+    if (servingSection != null) {
+      root.addProperty("servingSection", servingSection);
+    }
+    root.addProperty("worstCasePressureMarginBar",
+        Double.isFinite(worstCasePressureMarginBar) ? worstCasePressureMarginBar : null);
     root.addProperty("requiredPressureMarginBar", requiredPressureMarginBar);
     root.addProperty("flowFeasible", isFlowFeasible());
     root.addProperty("pressureFeasible", isPressureFeasible());
     root.addProperty("verdict", verdict().name());
     root.addProperty("recommendation", recommendation());
-    return new GsonBuilder().setPrettyPrinting().create().toJson(root);
+    return new GsonBuilder().serializeNulls().setPrettyPrinting().create().toJson(root);
   }
 }

@@ -192,6 +192,10 @@ s.rankedMeasures();
 Validated by `FireWaterDesignTest` (orifice law, both nozzle-count criteria, wind-drift
 model, verdict routing, JSON contract).
 
+Supply both finite hydraulic inputs to `FireWaterCoverageAssessment`. If either
+input is unavailable, the verdict is `SUPPLY_DATA_INCOMPLETE` and JSON reports
+`null` for that input. Finite negative inputs indicate a shortfall.
+
 ## Application Rates
 
 | Basis | Applies to | Rate |
