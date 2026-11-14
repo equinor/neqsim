@@ -87,8 +87,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
           reference.pointId + " constrained molecular fugacity closure");
       if ("MCB-KCL10-323-P400".equals(reference.pointId) || "MCB-KCL10-323-P538".equals(reference.pointId)
           || "MCB-KCL15-323-P538".equals(reference.pointId)) {
-        assertTrue(result.componentBalanceResidualMol <= 1.0e-10,
-            reference.pointId + " default component balance");
+        assertTrue(result.componentBalanceResidualMol <= 1.0e-10, reference.pointId + " default component balance");
         assertTrue(result.molecularLogFugacityResidual < 1.0e-8,
             reference.pointId + " default molecular fugacity closure");
         assertEquals(constrained.phaseTypes, result.phaseTypes, reference.pointId + " phase identity");
