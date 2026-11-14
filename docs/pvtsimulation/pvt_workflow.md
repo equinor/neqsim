@@ -52,6 +52,13 @@ Keep raw observations immutable. Perform unit conversion, filtering, and derived
 calculation in a traceable preparation layer. Do not silently replace missing observations with
 illustrative values.
 
+### Screen primary differential-liberation data
+
+Use the [DLE mass audit](dle_mass_audit.md) before admitting a laboratory series
+with adjacent oil formation volume factors, oil densities, solution GOR and
+liberated gas molecular masses. Keep the final differential residual-oil basis
+with the report and the source precision or measured uncertainty with each row.
+
 ## 2. Construct and qualify the base fluid
 
 Build the untuned fluid from the approved composition and characterization basis. Document the

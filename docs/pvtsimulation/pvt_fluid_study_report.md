@@ -16,6 +16,10 @@ file.” The agent uses the
 [neqsim-pvt-fluid-study-report skill](../../.github/skills/neqsim-pvt-fluid-study-report/SKILL.md)
 and delegates experiment or regression detail to `@pvt-simulation`.
 
+For measured differential-liberation input, the optional
+[DLE mass audit](dle_mass_audit.md) records compatible, incompatible and
+unresolved source observations before the study starts.
+
 ## Run the workflow
 
 The toolkit is installed through the existing `devtools` project. Use the
