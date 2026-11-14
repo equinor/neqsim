@@ -798,5 +798,23 @@
     "inputs": "SRK Folas6.2 tuple plus Derawi MEG MC and declared library methane; source-author methane inputs unresolved",
     "qualification": "Native unit-basis all-five/checkNumerically, independent fixed-root T stencils, amount/order/history, CLASSICAL remainder and independent binary prediction parity; physical acceptance pending",
     "limits": "First liquid point outside compiler U95; two points below MEG alpha fit range; no PR transfer/reverse partition/hydrate/ice/brine qualification"
+  },
+  "frost_methane_bidirectional": {
+    "status": "Staged bidirectional assessment only",
+    "source": "Frost 2014 DTU thesis Tables 2.6 and 2.9; journal DOI 10.1021/je400684k compiler datasets 1 and 2",
+    "versions": "23 thesis water pairs and 22 pressure-matched journal pairs are retained separately; 11 thesis MEG liquid values and eight gas values",
+    "T_K": [
+      283,
+      323.56
+    ],
+    "P_bara": [
+      46,
+      195
+    ],
+    "profiles": "Existing water-first PR 2016 methane tuple with declared library pure inputs; separate Folas SRK MEG-first tuple with Derawi Mathias-Copeman and Soave control",
+    "uncertainty": "Separate compiler pressure and gas-water U95 fields. Table 2.9 pointwise uncertainties unestablished; three absent gas observations retained as missing",
+    "test": "HuronVidalFrostAssessmentTest",
+    "resource": "hv-frost/",
+    "boundary": "No activation, fit or extension to gas/oil/water, ice, hydrates or brine. Original source-author pure profiles still unresolved"
   }
 }
