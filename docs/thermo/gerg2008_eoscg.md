@@ -58,10 +58,13 @@ GERG-2008 liquid density calculations bracket the high-density root, then use
 a local Chebyshev approximation to seed a safeguarded Newton solve. The
 accepted density closes the pressure equation of the original GERG model on a
 positive-slope branch. If the approximation is unsuitable, NeqSim refines the
-bracket by bisection. The approximation follows the proxy-and-polish approach
+bracket by bisection. During the scan, a negative-to-positive pressure slope
+can reveal a pressure minimum even when both endpoint pressures exceed the
+target. NeqSim checks that interval for a higher positive-slope root before
+continuing to lower densities. The approximation follows the proxy-and-polish approach
 of [Bell and Alpert (2018)](https://doi.org/10.1016/j.fluid.2018.04.026).
-It refines one bracketed root. Multi-root isolation and global phase selection
-are outside this density refinement.
+The scope is the requested liquid branch. Certification of all density roots
+and global phase stability require additional calculations.
 
 Phase-envelope tracing uses bisection for its nested finite differences and
 reuses density results at identical states. The cache is isolated by model,

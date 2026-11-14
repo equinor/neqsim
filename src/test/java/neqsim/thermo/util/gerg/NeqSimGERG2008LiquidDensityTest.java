@@ -86,6 +86,28 @@ public class NeqSimGERG2008LiquidDensityTest {
     assertTrue(candidateEvaluations < baselineEvaluations * 0.7, "Refinement should cut exact EOS calls");
   }
 
+  /** Recover the higher liquid-pressure root when both sampled interval endpoints are above the target. */
+  @Test
+  void recoversMethaneEthaneLiquidRootHiddenBetweenScanNodes() {
+    GERG2008 model = new GERG2008();
+    model.SetupGERG();
+    double[] composition = new double[23];
+    composition[1] = composition[4] = 0.5;
+    doubleW pressure = new doubleW(0.0);
+    doubleW compressibility = new doubleW(0.0);
+    double target = 1800.0;
+    DoubleUnaryOperator exactPressure = density -> {
+      model.PressureGERG(230.0, density, composition, pressure, compressibility);
+      return pressure.val;
+    };
+
+    assertTrue(ReferenceEosLiquidDensitySolver.solve(target, exactPressure) < 2.0);
+    double density = ReferenceEosLiquidDensitySolver.solve(target, exactPressure, () -> model.dPdDsave);
+    assertTrue(density > 13.65 && density < 13.675);
+    assertEquals(target, exactPressure.applyAsDouble(density), target * 1e-11);
+    assertTrue(model.dPdDsave > 0.0);
+  }
+
   /** Verify that unrelated fluids evaluated on different workers do not share the mutable kernel state. */
   @Test
   void independentWorkersProduceTheSameDensitiesAsSerialEvaluation() {

@@ -10,6 +10,7 @@ final class ReferenceEosLiquidDensitySolver {
   private static final double SEARCH_FACTOR = 0.9;
   private static final int MAX_SEARCH_ITERATIONS = 80;
   private static final int MAX_BISECTION_ITERATIONS = 60;
+  private static final double CHEBYSHEV_NODE_OFFSET = Math.sqrt(0.5);
 
   /** Utility class. */
   private ReferenceEosLiquidDensitySolver() {
@@ -44,12 +45,14 @@ final class ReferenceEosLiquidDensitySolver {
   static double solve(double targetPressure, DoubleUnaryOperator pressureFunction, DoubleSupplier pressureSlope) {
     double upperDensity = MAX_DENSITY;
     double upperResidual = residual(targetPressure, upperDensity, pressureFunction);
+    double upperSlope = pressureSlope == null ? Double.NaN : pressureSlope.getAsDouble();
     for (int iteration = 0; iteration < MAX_SEARCH_ITERATIONS; iteration++) {
       double lowerDensity = upperDensity * SEARCH_FACTOR;
       if (lowerDensity < MIN_DENSITY) {
         break;
       }
       double lowerResidual = residual(targetPressure, lowerDensity, pressureFunction);
+      double lowerSlope = pressureSlope == null ? Double.NaN : pressureSlope.getAsDouble();
       if (isBracket(lowerResidual, upperResidual)) {
         if (pressureSlope != null) {
           double density = chebyshevRoot(targetPressure, pressureFunction, pressureSlope, lowerDensity, upperDensity,
@@ -60,8 +63,73 @@ final class ReferenceEosLiquidDensitySolver {
         }
         return bisect(targetPressure, lowerDensity, upperDensity, pressureFunction);
       }
+      // A negative-to-positive slope interval can hide two crossings even if both endpoint pressures are above target.
+      if (lowerResidual > 0.0 && upperResidual > 0.0 && lowerSlope < 0.0 && upperSlope > 0.0) {
+        double recovered = recoverHiddenRoot(targetPressure, pressureFunction, pressureSlope, lowerDensity,
+            upperDensity, lowerSlope, upperSlope);
+        if (Double.isFinite(recovered)) {
+          return recovered;
+        }
+      }
       upperDensity = lowerDensity;
       upperResidual = lowerResidual;
+      upperSlope = lowerSlope;
+    }
+    return Double.NaN;
+  }
+
+  /**
+   * Check for a pressure minimum between two above-target endpoints, using a quadratic Chebyshev proxy for the pressure
+   * slope to seed a bracketed search. Any recovered density is checked against the exact EOS.
+   *
+   * @param targetPressure target pressure in kPa
+   * @param pressureFunction exact pressure evaluator
+   * @param pressureSlope derivative of the last exact pressure evaluation
+   * @param lower lower bracket density in mol/L
+   * @param upper upper bracket density in mol/L
+   * @param lowerSlope slope at the lower density
+   * @param upperSlope slope at the upper density
+   * @return recovered positive-slope density root, or NaN
+   */
+  private static double recoverHiddenRoot(double targetPressure, DoubleUnaryOperator pressureFunction,
+      DoubleSupplier pressureSlope, double lower, double upper, double lowerSlope, double upperSlope) {
+    double center = 0.5 * (lower + upper);
+    double halfWidth = 0.5 * (upper - lower);
+    double atCenter = residual(targetPressure, center, pressureFunction);
+    double centerSlope = pressureSlope.getAsDouble();
+    double linear = 0.5 * (upperSlope - lowerSlope);
+    double quadratic = 0.5 * (upperSlope + lowerSlope) - centerSlope;
+    double discriminant = linear * linear - 4.0 * quadratic * centerSlope;
+    double proxyZero = -2.0 * centerSlope / (linear + Math.sqrt(discriminant));
+    double trial = Math.abs(proxyZero) < 1.0 ? center + halfWidth * proxyZero : center;
+
+    double lo = lower;
+    double hi = upper;
+    for (int iteration = 0; iteration < 32; iteration++) {
+      double atTrial = trial == center ? atCenter : residual(targetPressure, trial, pressureFunction);
+      double slope = trial == center ? centerSlope : pressureSlope.getAsDouble();
+      if (!Double.isFinite(atTrial) || !Double.isFinite(slope)) {
+        return Double.NaN;
+      }
+      if (atTrial <= 0.0) {
+        double density = bisect(targetPressure, trial, upper, pressureFunction);
+        if (Double.isFinite(density)) {
+          double closure = residual(targetPressure, density, pressureFunction);
+          if (Math.abs(closure) <= pressureTolerance(targetPressure) && pressureSlope.getAsDouble() > 0.0) {
+            return density;
+          }
+        }
+        return Double.NaN;
+      }
+      if (slope < 0.0) {
+        lo = trial;
+      } else {
+        hi = trial;
+      }
+      trial = 0.5 * (lo + hi);
+      if (trial == lo || trial == hi) {
+        break;
+      }
     }
     return Double.NaN;
   }
@@ -83,7 +151,7 @@ final class ReferenceEosLiquidDensitySolver {
       DoubleSupplier pressureSlope, double lower, double upper, double left, double right) {
     double middle = 0.5 * (lower + upper);
     double halfWidth = 0.5 * (upper - lower);
-    double nodeOffset = Math.sqrt(0.5);
+    double nodeOffset = CHEBYSHEV_NODE_OFFSET;
     double innerLeft = residual(targetPressure, middle - halfWidth * nodeOffset, pressureFunction);
     double atMiddle = residual(targetPressure, middle, pressureFunction);
     double innerRight = residual(targetPressure, middle + halfWidth * nodeOffset, pressureFunction);
