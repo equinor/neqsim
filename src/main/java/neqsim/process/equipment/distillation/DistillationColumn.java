@@ -648,9 +648,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private double relaxationFactor = 0.5;
   /** Whether sequential substitution applies Anderson mixing to the tray outlet states. */
-  private boolean andersonAccelerationEnabled = true;
+  private volatile boolean andersonAccelerationEnabled = true;
   /** Number of Anderson-mixed states used by the latest sequential solve. */
-  private int lastAndersonAccelerationCount = 0;
+  private volatile int lastAndersonAccelerationCount = 0;
   /** Number of residual differences combined by one Anderson step. */
   private static final int ANDERSON_DEPTH = 5;
   /** Damped sweeps run before the first mixing phase; multiplied up after each rejected phase. */
@@ -7038,7 +7038,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int sweepsSinceBestResidual = 0;
     StreamInterface[] bestGasOutlets = new StreamInterface[numberOfTrays];
     StreamInterface[] bestLiquidOutlets = new StreamInterface[numberOfTrays];
-    lastAndersonAccelerationCount = 0;
+    int andersonSteps = 0;
+    lastAndersonAccelerationCount = andersonSteps;
 
     while (iter < iterationLimit && iter < maximumSweeps) {
       mixedTrayTemperatures = restoredTrayTemperatures;
@@ -7068,7 +7069,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           StreamInterface[] startLiquid = new StreamInterface[numberOfTrays];
           if (mixedState != null && buildTrayOutletStreams(mixedState, startGas, startLiquid)) {
             sweepInputState = mixedState;
-            lastAndersonAccelerationCount++;
+            andersonSteps++;
+            lastAndersonAccelerationCount = andersonSteps;
           } else {
             for (int i = 0; i < numberOfTrays; i++) {
               startGas[i] = trays.get(i).getGasOutStream();

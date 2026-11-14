@@ -36,7 +36,7 @@ public class PHflash extends Flash {
    * Relative enthalpy residual that ends the iteration without a second confirming evaluation; zero keeps the nominal
    * two-evaluation criterion.
    */
-  private double singleResidualTolerance = 0.0;
+  private final double singleResidualTolerance;
 
   /**
    * Iteration count after which an available temperature bracket takes over from the damped Newton step.
@@ -62,10 +62,30 @@ public class PHflash extends Flash {
    * @param type a int, flash type (0 = standard) or (1 = direct PH flash if not pure component)
    */
   public PHflash(SystemInterface system, double Hspec, int type) {
+    this(system, Hspec, type, 0.0);
+  }
+
+  /**
+   * Constructor for a PH flash that may stop on one relative enthalpy residual below a tolerance.
+   *
+   * <p>
+   * By default the iteration stops when two consecutive residuals together are below 1e-8, so the accepted state is
+   * confirmed by one more equilibrium flash. An outer iteration that repeats this flash many times, such as a
+   * distillation tray sweep, does not need that confirmation.
+   * </p>
+   *
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param Hspec specified total enthalpy in J
+   * @param type flash type (0 = standard) or (1 = direct PH flash if not pure component)
+   * @param singleResidualTolerance relative enthalpy residual that ends the iteration on its own; zero or negative
+   * keeps the two-evaluation criterion
+   */
+  public PHflash(SystemInterface system, double Hspec, int type, double singleResidualTolerance) {
     this.system = system;
     this.tpFlash = new TPflash(system);
     this.Hspec = Hspec;
     this.type = type;
+    this.singleResidualTolerance = singleResidualTolerance;
   }
 
   /**
@@ -234,8 +254,7 @@ public class PHflash extends Flash {
       // The nominal criterion needs two consecutive small residuals, which costs one extra
       // equilibrium flash after the root is already resolved. A caller that repeats the flash
       // inside its own iteration can accept a single sufficiently small residual instead.
-      tightlyConverged = singleResidualTolerance > 0.0 && iterations >= 3
-          && Math.abs(error) < singleResidualTolerance;
+      tightlyConverged = singleResidualTolerance > 0.0 && iterations >= 3 && Math.abs(error) < singleResidualTolerance;
     } while (((Math.abs(error) + Math.abs(errorOld)) > 1e-8 || iterations < 3) && iterations < 200 && !stalled
         && !bracketCollapsed && !tightlyConverged);
     lastIterationCount = iterations;
@@ -310,21 +329,6 @@ public class PHflash extends Flash {
       temperature = bracket[0] + 0.5 * width;
     }
     return temperature;
-  }
-
-  /**
-   * Allow the temperature iteration to stop on one relative enthalpy residual below a tolerance.
-   *
-   * <p>
-   * By default the iteration stops when two consecutive residuals together are below 1e-8, so the accepted state is
-   * confirmed by one more equilibrium flash. An outer iteration that repeats this flash many times, such as a
-   * distillation tray sweep, does not need that confirmation.
-   * </p>
-   *
-   * @param tolerance relative enthalpy residual that ends the iteration on its own; zero or negative disables it
-   */
-  public void setSingleResidualTolerance(double tolerance) {
-    this.singleResidualTolerance = tolerance;
   }
 
   /**

@@ -7,8 +7,8 @@ package neqsim.process.equipment.distillation;
  * Plain substitution uses only the latest evaluation and converges at the rate of the slowest mode of {@code G}.
  * Anderson mixing keeps the last few input/output pairs and returns the affine combination of the outputs whose
  * combined residual {@code G(x) - x} is smallest in a weighted least-squares sense. For a linear map this is equivalent
- * to GMRES on the residual equation, so several slow or oscillating modes are removed together instead of one at a
- * time (Walker and Ni, SIAM J. Numer. Anal. 49, 2011).
+ * to GMRES on the residual equation, so several slow or oscillating modes are removed together instead of one at a time
+ * (Walker and Ni, SIAM J. Numer. Anal. 49, 2011).
  * </p>
  *
  * @author esol
@@ -107,27 +107,32 @@ final class AndersonMixer {
    * degenerate
    */
   double[] mix() {
-    for (int first = 0; first < size - 1; first++) {
-      double[] coefficients = solveCoefficients(first);
+    // Use the longest usable history; drop the oldest pair while the coefficients are degenerate.
+    double[] coefficients = null;
+    int first = 0;
+    while (first < size - 1 && coefficients == null) {
+      coefficients = solveCoefficients(first);
       if (coefficients == null) {
-        continue;
+        first++;
       }
-      double[] mixed = outputs[size - 1].clone();
-      for (int j = 0; j < coefficients.length; j++) {
-        double[] newer = outputs[first + j + 1];
-        double[] older = outputs[first + j];
-        for (int i = 0; i < mixed.length; i++) {
-          mixed[i] -= coefficients[j] * (newer[i] - older[i]);
-        }
-      }
-      for (double value : mixed) {
-        if (Double.isNaN(value) || Double.isInfinite(value)) {
-          return null;
-        }
-      }
-      return mixed;
     }
-    return null;
+    if (coefficients == null) {
+      return null;
+    }
+    double[] mixed = outputs[size - 1].clone();
+    for (int j = 0; j < coefficients.length; j++) {
+      double[] newer = outputs[first + j + 1];
+      double[] older = outputs[first + j];
+      for (int i = 0; i < mixed.length; i++) {
+        mixed[i] -= coefficients[j] * (newer[i] - older[i]);
+      }
+    }
+    for (double value : mixed) {
+      if (Double.isNaN(value) || Double.isInfinite(value)) {
+        return null;
+      }
+    }
+    return mixed;
   }
 
   /**

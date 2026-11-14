@@ -493,9 +493,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       PHflash(Hspec, type);
       return;
     }
-    PHflash flash = new PHflash(system, Hspec, type);
-    flash.setSingleResidualTolerance(singleResidualTolerance);
-    operation = flash;
+    operation = new PHflash(system, Hspec, type, singleResidualTolerance);
     getOperation().run();
   }
 

@@ -2933,9 +2933,9 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    *
    * <p>
    * Adding a component that the gas model does not contain reads its parameters from the component database and
-   * rebuilds the mixing-rule matrices. That is needed once per pair of component lists, not for every segment of
-   * every iteration, so the combined model is built on first use and later calls copy it and only set the
-   * temperature, pressure and component amounts of the current gas and liquid.
+   * rebuilds the mixing-rule matrices. That is needed once per pair of component lists, not for every segment of every
+   * iteration, so the combined model is built on first use and later calls copy it and only set the temperature,
+   * pressure and component amounts of the current gas and liquid.
    * </p>
    *
    * @param gas gas system supplying the thermodynamic model, temperature and pressure
