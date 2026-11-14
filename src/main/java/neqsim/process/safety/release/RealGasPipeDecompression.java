@@ -23,16 +23,18 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * A first-order local Lax-Friedrichs finite-volume scheme advances mass, momentum and total energy. Every conservative
  * cell state is recovered with the caller-selected NeqSim EOS by a volume/internal-energy flash, so pressure,
  * temperature, density and acoustic speed evolve with the decompression. The pipe is rigid and adiabatic, initially
- * uniform, closed at its upstream end and connected at its downstream end to a constant-pressure receiver. Specified
- * Darcy friction acts only on momentum. The exact outlet mass and total-enthalpy flux is committed to the inventory and
- * exported to the source-term frame.
+ * uniform, and connected at its downstream end to a constant-pressure receiver. The upstream end is either closed or
+ * coupled to an optional rigid, adiabatic, well-mixed gas vessel. Specified Darcy friction acts only on momentum. The
+ * exact vessel/pipe interface flux and outlet mass/total-enthalpy flux are committed to the inventory, while the outlet
+ * flux is exported to the source-term frame.
  * </p>
  *
  * <p>
  * The model requires one equilibrium gas phase with fixed composition. Phase appearance, reactions, forced phases,
- * solids and hydrate calculations fail closed. Heat transfer, pipe elasticity, upstream-vessel and two-sided-rupture
- * coupling, non-equilibrium slip, entrainment and solid-bearing transport are outside this model. Numerical validation
- * is not facility qualification.
+ * solids and hydrate calculations fail closed. Heat transfer, pipe elasticity, two-sided-rupture coupling,
+ * non-equilibrium slip, entrainment and solid-bearing transport are outside this model. The optional upstream vessel is
+ * a lumped boundary, not a vessel nozzle, internal-wave or phase-separation model. Numerical validation is not facility
+ * qualification.
  * </p>
  */
 public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass implements CoupledReleaseSource {
@@ -46,6 +48,7 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
   private final double diameterM;
   private final double areaM2;
   private final double cellVolumeM3;
+  private final double upstreamVesselVolumeM3;
   private final double dischargeCoefficient;
   private final double backPressurePa;
   private final double darcyFrictionFactor;
@@ -57,6 +60,8 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
   private double[] energy;
   private final double initialMassKg;
   private final double initialEnergyJ;
+  private double upstreamVesselMassKg;
+  private double upstreamVesselEnergyJ;
   private double releasedMassKg;
   private double releasedEnergyJ;
   private double lastMassFlowKgS;
@@ -82,6 +87,33 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
    */
   public RealGasPipeDecompression(String name, SystemInterface initialGas, double lengthM, double diameterM,
       double dischargeCoefficient, double backPressurePa, double darcyFrictionFactor, int cells, double cfl) {
+    this(name, initialGas, lengthM, diameterM, dischargeCoefficient, backPressurePa, darcyFrictionFactor, 0.0, cells,
+        cfl);
+  }
+
+  /**
+   * Creates a one-sided EOS-backed transient pipe with a finite upstream gas vessel.
+   *
+   * <p>
+   * The vessel is rigid, adiabatic and perfectly mixed, starts at the same thermodynamic state and composition as the
+   * pipe, and exchanges the exact conservative interface mass and total-energy flux with the first pipe cell. A
+   * positive volume is required; use the legacy constructor for a closed upstream end.
+   * </p>
+   *
+   * @param name unique process-equipment name
+   * @param initialGas initial uniform equilibrium gas and selected EOS
+   * @param lengthM pipe length in m
+   * @param diameterM internal diameter in m
+   * @param dischargeCoefficient effective full-bore area factor in (0,1]
+   * @param backPressurePa constant absolute receiver pressure in Pa
+   * @param darcyFrictionFactor specified Darcy friction factor in [0,1]
+   * @param upstreamVesselVolumeM3 rigid upstream vessel volume in m3; zero retains the closed upstream end
+   * @param cells finite-volume cell count, at least 8
+   * @param cfl Courant number in (0,0.7]
+   */
+  public RealGasPipeDecompression(String name, SystemInterface initialGas, double lengthM, double diameterM,
+      double dischargeCoefficient, double backPressurePa, double darcyFrictionFactor, double upstreamVesselVolumeM3,
+      int cells, double cfl) {
     super(name);
     Objects.requireNonNull(initialGas, "initialGas");
     this.lengthM = ReleaseFlowRequest.positive(lengthM, "lengthM");
@@ -89,10 +121,11 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     this.dischargeCoefficient = ReleaseFlowRequest.positive(dischargeCoefficient, "dischargeCoefficient");
     this.backPressurePa = ReleaseFlowRequest.positive(backPressurePa, "backPressurePa");
     this.darcyFrictionFactor = ReleaseFlowRequest.nonnegative(darcyFrictionFactor, "darcyFrictionFactor");
-    if (dischargeCoefficient > 1.0 || darcyFrictionFactor > 1.0 || cells < 8 || cells > 400 || !Double.isFinite(cfl)
-        || cfl <= 0.0 || cfl > 0.7) {
+    if (!Double.isFinite(upstreamVesselVolumeM3) || upstreamVesselVolumeM3 < 0.0 || dischargeCoefficient > 1.0
+        || darcyFrictionFactor > 1.0 || cells < 8 || cells > 400 || !Double.isFinite(cfl) || cfl <= 0.0 || cfl > 0.7) {
       throw new IllegalArgumentException("Invalid decompression discretization or geometry");
     }
+    this.upstreamVesselVolumeM3 = upstreamVesselVolumeM3;
     this.cfl = cfl;
     compositionReference = initialGas.clone();
     new ThermodynamicOperations(compositionReference).TPflash();
@@ -111,10 +144,13 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     double initialInternalEnergy = finite(compositionReference.getInternalEnergy("J/kg"), "initial internal energy");
     Arrays.fill(density, initialDensity);
     Arrays.fill(energy, initialDensity * initialInternalEnergy);
+    upstreamVesselMassKg = initialDensity * upstreamVesselVolumeM3;
+    upstreamVesselEnergyJ = initialDensity * initialInternalEnergy * upstreamVesselVolumeM3;
     massFractions = componentMassFractions(compositionReference);
-    initialMassKg = totalMass(density);
-    initialEnergyJ = totalEnergy(energy);
-    currentResult = result(cellStates(density, momentum, energy), 0.0);
+    initialMassKg = totalMass(density) + upstreamVesselMassKg;
+    initialEnergyJ = totalEnergy(energy) + upstreamVesselEnergyJ;
+    CellState[] states = cellStates(density, momentum, energy);
+    currentResult = result(states, upstreamState(upstreamVesselMassKg, upstreamVesselEnergyJ, states[0]), 0.0);
     setCalculateSteadyState(false);
   }
 
@@ -126,7 +162,7 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     Flux outlet = boundaryFlux(states[states.length - 1]);
     lastMassFlowKgS = outlet.mass * areaM2;
     lastEnergyFlowW = outlet.energy * areaM2;
-    currentResult = result(states, outlet.mass);
+    currentResult = result(states, upstreamState(upstreamVesselMassKg, upstreamVesselEnergyJ, states[0]), outlet.mass);
     setCalculationIdentifier(id);
   }
 
@@ -154,9 +190,12 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     double[] candidateEnergy = energy.clone();
     double candidateReleasedMass = releasedMassKg;
     double candidateReleasedEnergy = releasedEnergyJ;
+    double candidateUpstreamMass = upstreamVesselMassKg;
+    double candidateUpstreamEnergy = upstreamVesselEnergyJ;
     double elapsed = 0.0;
     int substeps = 0;
     CellState[] states = cellStates(candidateDensity, candidateMomentum, candidateEnergy);
+    CellState upstream = upstreamState(candidateUpstreamMass, candidateUpstreamEnergy, states[0]);
     Flux outlet = boundaryFlux(states[states.length - 1]);
     while (elapsed < dt) {
       if (Thread.currentThread().isInterrupted()) {
@@ -165,28 +204,34 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
       if (++substeps > MAX_SUBSTEPS) {
         throw new IllegalStateException("REAL_GAS_PIPE_DECOMPRESSION_SUBSTEP_LIMIT");
       }
-      double step = Math.min(dt - elapsed, stableStep(states));
+      double step = Math.min(dt - elapsed, stableStep(states, upstream, candidateUpstreamMass));
       if (!(step > 0.0) || elapsed + step <= elapsed) {
         throw new IllegalStateException("REAL_GAS_PIPE_DECOMPRESSION_TIMESTEP_UNREPRESENTABLE");
       }
-      Step next = advance(candidateDensity, candidateMomentum, candidateEnergy, states, step);
+      Step next = advance(candidateDensity, candidateMomentum, candidateEnergy, states, upstream, candidateUpstreamMass,
+          candidateUpstreamEnergy, step);
       candidateDensity = next.density;
       candidateMomentum = next.momentum;
       candidateEnergy = next.energy;
+      candidateUpstreamMass = next.upstreamMass;
+      candidateUpstreamEnergy = next.upstreamEnergy;
       candidateReleasedMass += next.outlet.mass * areaM2 * step;
       candidateReleasedEnergy += next.outlet.energy * areaM2 * step;
       outlet = next.outlet;
       states = next.states;
+      upstream = next.upstream;
       elapsed += step;
     }
-    close(totalMass(candidateDensity) + candidateReleasedMass, initialMassKg, initialMassKg,
+    close(totalMass(candidateDensity) + candidateUpstreamMass + candidateReleasedMass, initialMassKg, initialMassKg,
         "REAL_GAS_PIPE_TOTAL_MASS_CLOSURE_FAILED");
-    close(totalEnergy(candidateEnergy) + candidateReleasedEnergy, initialEnergyJ, initialEnergyJ,
-        "REAL_GAS_PIPE_TOTAL_ENERGY_CLOSURE_FAILED");
-    ReleaseFlowResult candidateResult = result(states, outlet.mass);
+    close(totalEnergy(candidateEnergy) + candidateUpstreamEnergy + candidateReleasedEnergy, initialEnergyJ,
+        initialEnergyJ, "REAL_GAS_PIPE_TOTAL_ENERGY_CLOSURE_FAILED");
+    ReleaseFlowResult candidateResult = result(states, upstream, outlet.mass);
     density = candidateDensity;
     momentum = candidateMomentum;
     energy = candidateEnergy;
+    upstreamVesselMassKg = candidateUpstreamMass;
+    upstreamVesselEnergyJ = candidateUpstreamEnergy;
     releasedMassKg = candidateReleasedMass;
     releasedEnergyJ = candidateReleasedEnergy;
     lastMassFlowKgS = outlet.mass * areaM2;
@@ -199,10 +244,11 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     setCalculationIdentifier(id);
   }
 
-  private Step advance(double[] rho, double[] mom, double[] totalEnergy, CellState[] states, double dt) {
+  private Step advance(double[] rho, double[] mom, double[] totalEnergy, CellState[] states, CellState upstream,
+      double upstreamMass, double upstreamEnergy, double dt) {
     int cells = rho.length;
     Flux[] faces = new Flux[cells + 1];
-    faces[0] = flux(states[0].reflected(), states[0]);
+    faces[0] = hasUpstreamVessel() ? flux(upstream, states[0]) : flux(states[0].reflected(), states[0]);
     for (int face = 1; face < cells; face++) {
       faces[face] = flux(states[face - 1], states[face]);
     }
@@ -219,15 +265,48 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
       nextMom[cell] -= dt * darcyFrictionFactor * nextRho[cell] * velocity * Math.abs(velocity) / (2.0 * diameterM);
     }
     CellState[] nextStates = cellStates(nextRho, nextMom, nextEnergy);
-    return new Step(nextRho, nextMom, nextEnergy, nextStates, faces[cells]);
+    double nextUpstreamMass = upstreamMass;
+    double nextUpstreamEnergy = upstreamEnergy;
+    CellState nextUpstream = nextStates[0];
+    if (hasUpstreamVessel()) {
+      nextUpstreamMass -= faces[0].mass * areaM2 * dt;
+      nextUpstreamEnergy -= faces[0].energy * areaM2 * dt;
+      nextUpstream = upstreamState(nextUpstreamMass, nextUpstreamEnergy, nextStates[0]);
+    }
+    return new Step(nextRho, nextMom, nextEnergy, nextStates, nextUpstream, nextUpstreamMass, nextUpstreamEnergy,
+        faces[cells]);
   }
 
-  private double stableStep(CellState[] states) {
+  private double stableStep(CellState[] states, CellState upstream, double upstreamMass) {
     double maximumSignal = 0.0;
     for (CellState state : states) {
       maximumSignal = Math.max(maximumSignal, Math.abs(state.velocity) + state.soundSpeed);
     }
-    return cfl * lengthM / states.length / ReleaseFlowRequest.positive(maximumSignal, "maximum signal speed");
+    if (hasUpstreamVessel()) {
+      maximumSignal = Math.max(maximumSignal, upstream.soundSpeed);
+    }
+    double step = cfl * lengthM / states.length / ReleaseFlowRequest.positive(maximumSignal, "maximum signal speed");
+    if (hasUpstreamVessel()) {
+      Flux inlet = flux(upstream, states[0]);
+      if (inlet.mass > 0.0) {
+        step = Math.min(step, 0.2 * upstreamMass / (inlet.mass * areaM2));
+      }
+    }
+    return step;
+  }
+
+  private boolean hasUpstreamVessel() {
+    return upstreamVesselVolumeM3 > 0.0;
+  }
+
+  private CellState upstreamState(double massKg, double energyJ, CellState closedEndState) {
+    if (!hasUpstreamVessel()) {
+      return closedEndState;
+    }
+    if (!Double.isFinite(massKg) || massKg <= 0.0 || !Double.isFinite(energyJ)) {
+      throw new IllegalStateException("REAL_GAS_UPSTREAM_VESSEL_NONPHYSICAL_STATE");
+    }
+    return cellState(massKg / upstreamVesselVolumeM3, 0.0, energyJ / upstreamVesselVolumeM3);
   }
 
   private Flux boundaryFlux(CellState inside) {
@@ -293,7 +372,7 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     return new CellState(rho, mom, totalEnergy, velocity, pressurePa, temperatureK, soundSpeed, fluid);
   }
 
-  private ReleaseFlowResult result(CellState[] states, double outletMassFlux) {
+  private ReleaseFlowResult result(CellState[] states, CellState upstream, double outletMassFlux) {
     for (int cell = 0; cell < states.length; cell++) {
       ReleaseSolidRiskAssessment assessment = ReleaseSolidRiskAssessment.assess(states[cell].fluid);
       if (assessment.getStatus() == ReleaseSolidRiskAssessment.Status.UNRESOLVED) {
@@ -305,7 +384,18 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
             assessment.getStatus().name() + " in pipe cell " + cell + ": " + assessment.getMessage());
       }
     }
-    CellState inlet = states[0];
+    if (hasUpstreamVessel()) {
+      ReleaseSolidRiskAssessment vesselAssessment = ReleaseSolidRiskAssessment.assess(upstream.fluid);
+      if (vesselAssessment.getStatus() == ReleaseSolidRiskAssessment.Status.UNRESOLVED) {
+        throw new IllegalStateException(
+            "SOLID_RISK_ASSESSMENT_FAILED in upstream vessel: " + vesselAssessment.getMessage());
+      }
+      if (!vesselAssessment.isClear()) {
+        throw new UnsupportedOperationException(
+            vesselAssessment.getStatus().name() + " in upstream vessel: " + vesselAssessment.getMessage());
+      }
+    }
+    CellState inlet = hasUpstreamVessel() ? upstream : states[0];
     CellState exit = states[states.length - 1];
     double positiveFlux = releaseEnabled ? Math.max(0.0, outletMassFlux) : 0.0;
     double boundaryVelocity = positiveFlux / exit.density;
@@ -315,12 +405,14 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     stations.put(Station.THROAT_CRITICAL, opening);
     stations.put(Station.ORIFICE_EXIT, opening);
     List<Diagnostic> diagnostics = new ArrayList<Diagnostic>();
-    diagnostics.add(new Diagnostic("REAL_GAS_TRANSIENT_PIPE_ASSUMPTIONS",
-        "One-dimensional rigid adiabatic equilibrium gas; closed upstream end and constant-pressure receiver"));
+    diagnostics.add(new Diagnostic("REAL_GAS_TRANSIENT_PIPE_ASSUMPTIONS", hasUpstreamVessel()
+        ? "One-dimensional rigid adiabatic equilibrium gas; lumped rigid upstream vessel and constant-pressure receiver"
+        : "One-dimensional rigid adiabatic equilibrium gas; closed upstream end and constant-pressure receiver"));
     diagnostics.add(new Diagnostic("EOS_FINITE_VOLUME_LINE_PACKING", "EOS=" + compositionReference.getModelName()
         + ", cells=" + states.length + ", CFL=" + cfl + ", Darcy friction=" + darcyFrictionFactor));
-    diagnostics.add(new Diagnostic("SOLID_RISK_ASSESSED",
-        "Mixture-specific equilibrium-solid and hydrate checks passed for all " + states.length + " cells"));
+    diagnostics.add(
+        new Diagnostic("SOLID_RISK_ASSESSED", "Mixture-specific equilibrium-solid and hydrate checks passed for all "
+            + states.length + " cells" + (hasUpstreamVessel() ? " and the upstream vessel" : "")));
     diagnostics.add(new Diagnostic("TRANSIENT_MODEL_UNQUALIFIED",
         "Conservation, dilute-limit and refinement evidence do not establish facility qualification"));
     return ReleaseFlowResult.success(releaseModel, positiveFlux * areaM2, boundaryVelocity >= exit.soundSpeed * 0.999,
@@ -425,7 +517,8 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
   /** @return stable frame provenance basis */
   @Override
   public String getReleaseBasis() {
-    return "COUPLED_1D_REAL_GAS_PIPE_DECOMPRESSION_LINE_PACKING";
+    return hasUpstreamVessel() ? "COUPLED_1D_REAL_GAS_VESSEL_PIPE_DECOMPRESSION"
+        : "COUPLED_1D_REAL_GAS_PIPE_DECOMPRESSION_LINE_PACKING";
   }
 
   /** @return immutable SI accounting and discretization provenance */
@@ -434,13 +527,25 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     Map<String, String> provenance = new LinkedHashMap<String, String>();
     provenance.put("pipeLengthM", Double.toString(lengthM));
     provenance.put("pipeDiameterM", Double.toString(diameterM));
+    provenance.put("pipeVolumeM3", Double.toString(areaM2 * lengthM));
     provenance.put("pipeCells", Integer.toString(density.length));
     provenance.put("pipeCfl", Double.toString(cfl));
     provenance.put("pipeDarcyFrictionFactor", Double.toString(darcyFrictionFactor));
-    provenance.put("pipeIntegrator", "EOS_VU_FINITE_VOLUME_LOCAL_LAX_FRIEDRICHS_V1");
+    provenance.put("pipeIntegrator", hasUpstreamVessel() ? "EOS_VU_LUMPED_VESSEL_FINITE_VOLUME_PIPE_LLF_V1"
+        : "EOS_VU_FINITE_VOLUME_LOCAL_LAX_FRIEDRICHS_V1");
     provenance.put("pipeThermodynamicModel", compositionReference.getModelName());
     provenance.put("inventoryTimeS", Double.toString(getTime()));
-    provenance.put("inventoryVolumeM3", Double.toString(areaM2 * lengthM));
+    provenance.put("inventoryVolumeM3", Double.toString(areaM2 * lengthM + upstreamVesselVolumeM3));
+    provenance.put("upstreamBoundary", hasUpstreamVessel() ? "RIGID_ADIABATIC_WELL_MIXED_GAS_VESSEL" : "CLOSED_END");
+    if (hasUpstreamVessel()) {
+      CellState upstream = upstreamState(upstreamVesselMassKg, upstreamVesselEnergyJ,
+          cellStates(density, momentum, energy)[0]);
+      provenance.put("upstreamVesselVolumeM3", Double.toString(upstreamVesselVolumeM3));
+      provenance.put("upstreamVesselMassKg", Double.toString(upstreamVesselMassKg));
+      provenance.put("upstreamVesselInternalEnergyJ", Double.toString(upstreamVesselEnergyJ));
+      provenance.put("upstreamVesselPressurePa", Double.toString(upstream.pressurePa));
+      provenance.put("upstreamVesselTemperatureK", Double.toString(upstream.temperatureK));
+    }
     provenance.put("cumulativeReleasedMassKg", Double.toString(releasedMassKg));
     provenance.put("cumulativeReleasedTotalEnergyJ", Double.toString(releasedEnergyJ));
     provenance.put("instantaneousMassFlowKgS", Double.toString(lastMassFlowKgS));
@@ -457,7 +562,41 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
 
   /** @return current finite-volume line-pack mass in kg */
   public synchronized double getRemainingMassKg() {
+    return totalMass(density) + upstreamVesselMassKg;
+  }
+
+  /** @return current finite-volume pipe line-pack mass in kg, excluding the upstream vessel */
+  public synchronized double getRemainingPipeMassKg() {
     return totalMass(density);
+  }
+
+  /** @return true when a finite rigid upstream gas vessel is coupled to the first pipe cell */
+  public boolean hasFiniteUpstreamVessel() {
+    return hasUpstreamVessel();
+  }
+
+  /** @return configured upstream vessel volume in m3, or zero for the legacy closed end */
+  public double getUpstreamVesselVolumeM3() {
+    return upstreamVesselVolumeM3;
+  }
+
+  /** @return current upstream vessel mass in kg, or zero for the legacy closed end */
+  public synchronized double getUpstreamVesselMassKg() {
+    return upstreamVesselMassKg;
+  }
+
+  /** @return current upstream vessel internal energy in J, or zero for the legacy closed end */
+  public synchronized double getUpstreamVesselEnergyJ() {
+    return upstreamVesselEnergyJ;
+  }
+
+  /** @return defensive current upstream-vessel EOS snapshot, or null for the legacy closed end */
+  public synchronized SystemInterface getUpstreamVesselFluid() {
+    if (!hasUpstreamVessel()) {
+      return null;
+    }
+    CellState[] states = cellStates(density, momentum, energy);
+    return upstreamState(upstreamVesselMassKg, upstreamVesselEnergyJ, states[0]).fluid.clone();
   }
 
   /** @return cumulative discharged mass in kg */
@@ -472,6 +611,11 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
 
   /** @return current conservative line-pack total energy in J */
   public synchronized double getRemainingEnergyJ() {
+    return totalEnergy(energy) + upstreamVesselEnergyJ;
+  }
+
+  /** @return current conservative pipe total energy in J, excluding the upstream vessel */
+  public synchronized double getRemainingPipeEnergyJ() {
     return totalEnergy(energy);
   }
 
@@ -549,13 +693,20 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     private final double[] momentum;
     private final double[] energy;
     private final CellState[] states;
+    private final CellState upstream;
+    private final double upstreamMass;
+    private final double upstreamEnergy;
     private final Flux outlet;
 
-    private Step(double[] density, double[] momentum, double[] energy, CellState[] states, Flux outlet) {
+    private Step(double[] density, double[] momentum, double[] energy, CellState[] states, CellState upstream,
+        double upstreamMass, double upstreamEnergy, Flux outlet) {
       this.density = density;
       this.momentum = momentum;
       this.energy = energy;
       this.states = states;
+      this.upstream = upstream;
+      this.upstreamMass = upstreamMass;
+      this.upstreamEnergy = upstreamEnergy;
       this.outlet = outlet;
     }
   }
@@ -570,7 +721,7 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
 
     @Override
     public String getModelVersion() {
-      return "1.0.0";
+      return "1.1.0";
     }
 
     @Override
@@ -581,11 +732,13 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
 
     @Override
     public ReleaseModelEvidence getEvidence() {
-      return new ReleaseModelEvidence("real-gas-pipe-decompression:1.0.0",
+      return new ReleaseModelEvidence("real-gas-pipe-decompression:1.1.0",
           Arrays.asList("ONE_DIMENSIONAL_PIPE", "SINGLE_EQUILIBRIUM_GAS", "EOS_PROPERTY_EVOLUTION",
-              "TRANSIENT_LINE_PACKING", "CONSERVATIVE_MASS_MOMENTUM_TOTAL_ENERGY", "MIXTURE_SOLID_RISK_ASSESSED"),
-          Arrays.asList("NO_HEAT_TRANSFER", "NO_PIPE_ELASTICITY", "NO_UPSTREAM_VESSEL", "NO_MULTIPHASE_SLIP",
-              "NO_SOLID_BEARING_FLOW", "NO_EXPERIMENTAL_QUALIFICATION"),
+              "TRANSIENT_LINE_PACKING", "OPTIONAL_LUMPED_UPSTREAM_GAS_VESSEL",
+              "CONSERVATIVE_MASS_MOMENTUM_TOTAL_ENERGY", "MIXTURE_SOLID_RISK_ASSESSED"),
+          Arrays.asList("NO_HEAT_TRANSFER", "NO_PIPE_ELASTICITY", "NO_TWO_SIDED_RUPTURE",
+              "NO_VESSEL_INTERNAL_WAVES_OR_PHASE_SEPARATION", "NO_MULTIPHASE_SLIP", "NO_SOLID_BEARING_FLOW",
+              "NO_EXPERIMENTAL_QUALIFICATION"),
           Arrays.asList(
               new ReleaseModelEvidence.Record("real-gas-pipe-conservation", ReleaseModelEvidence.Type.CONSERVATION,
                   "src/test/java/neqsim/process/safety/release/RealGasPipeDecompressionTest.java",
@@ -596,7 +749,15 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
                   "EOS wave and discharge results approach the perfect-gas implementation at dilute conditions", false),
               new ReleaseModelEvidence.Record("real-gas-pipe-refinement", ReleaseModelEvidence.Type.NUMERICAL,
                   "src/test/java/neqsim/process/safety/release/RealGasPipeDecompressionTest.java",
-                  "Discharged mass and closed-end pressure are checked under spatial refinement", false)));
+                  "Discharged mass and closed-end pressure are checked under spatial refinement", false),
+              new ReleaseModelEvidence.Record("real-gas-vessel-pipe-conservation",
+                  ReleaseModelEvidence.Type.CONSERVATION,
+                  "src/test/java/neqsim/process/safety/release/RealGasPipeDecompressionTest.java",
+                  "Lumped upstream vessel plus pipe line pack plus discharge close mass and total energy", false),
+              new ReleaseModelEvidence.Record("real-gas-vessel-pipe-refinement", ReleaseModelEvidence.Type.NUMERICAL,
+                  "src/test/java/neqsim/process/safety/release/RealGasPipeDecompressionTest.java",
+                  "Vessel pressure and discharged mass are checked under CFL refinement and nearby vessel volumes",
+                  false)));
     }
   }
 }
