@@ -8,12 +8,14 @@ import java.io.Serializable;
  * Compressed signed-face complementarity block for conservative phase transport.
  *
  * <p>
- * Every internal gas, oil and water face owns three auxiliary variables: nonnegative signed-direction mass-flow
- * magnitude, advective momentum flux and a nonnegative donor-presence multiplier. The direction and the active donor
- * row are frozen while a Jacobian is assembled, then refreshed from the unmodified free flux between Newton
- * linearizations. A present donor uses the normalized conservative relation between mass and momentum transport; an
- * absent donor pins advective momentum to zero exactly. Replacing the free internal flux in both adjacent cells
- * preserves total mass and momentum without clipping either cell inventory.
+ * Every internal gas, oil and water face owns two one-sided donor streams. Each stream has a nonnegative mass-flow
+ * magnitude, advective momentum flux and a nonnegative donor-presence multiplier. The active donor rows are frozen
+ * while a Jacobian is assembled, then refreshed from the unmodified endpoint state and free directional flux between
+ * Newton linearizations. A present donor uses the normalized conservative relation between mass and momentum transport;
+ * an absent donor pins advective momentum to zero exactly. Replacing the free internal flux in both adjacent cells
+ * preserves total mass and momentum without clipping either cell inventory. Retaining the two streams independently
+ * also preserves counter-transport created by pressure interpolation instead of switching the complete face flux to
+ * whichever donor owns the net signed flow.
  * </p>
  *
  * <p>
@@ -27,20 +29,23 @@ import java.io.Serializable;
 final class SignedFaceComplementarity implements Serializable {
   private static final long serialVersionUID = 1L;
   static final int PHASE_COUNT = 3;
-  static final int VARIABLES_PER_PHASE_FACE = 3;
+  static final int FORWARD = 0;
+  static final int REVERSE = 1;
+  static final int VARIABLES_PER_DIRECTION = 3;
+  static final int VARIABLES_PER_PHASE_FACE = 2 * VARIABLES_PER_DIRECTION;
   static final int VARIABLES_PER_FACE = PHASE_COUNT * VARIABLES_PER_PHASE_FACE;
   static final int MASS_FLOW = 0;
   static final int ADVECTIVE_MOMENTUM = 1;
   static final int MULTIPLIER = 2;
   static final int CELL_COLOR_COUNT = 35;
-  static final int TOTAL_COLOR_COUNT = 53;
+  static final int TOTAL_COLOR_COUNT = CELL_COLOR_COUNT + 2 * VARIABLES_PER_FACE;
 
-  /** Frozen directions, active rows, unknowns and physical scales for one nonlinear iterate. */
+  /** Frozen active rows, unknowns and physical scales for one nonlinear iterate. */
   static final class State implements Serializable {
     private static final long serialVersionUID = 1L;
     private final int cellCount;
-    private final int[] direction;
     private final boolean[] constrained;
+    private final boolean[] anchor;
     private final double[] values;
     private final double[] scales;
     private final double[] donorMassScales;
@@ -49,34 +54,36 @@ final class SignedFaceComplementarity implements Serializable {
     private State(int cellCount, DirectionalPhaseFaceFlux[][] faces, double[][] endpointState) {
       this.cellCount = cellCount;
       int phaseFaceCount = Math.max(0, cellCount - 1) * PHASE_COUNT;
-      direction = new int[phaseFaceCount];
-      constrained = new boolean[phaseFaceCount];
+      constrained = new boolean[phaseFaceCount * 2];
+      anchor = new boolean[constrained.length];
       values = new double[phaseFaceCount * VARIABLES_PER_PHASE_FACE];
       scales = new double[values.length];
-      donorMassScales = new double[phaseFaceCount];
+      donorMassScales = new double[constrained.length];
       for (int face = 0; face < faces.length; face++) {
         for (int phase = 0; phase < PHASE_COUNT; phase++) {
-          int phaseFace = phaseFace(face, phase);
-          int offset = variableOffset(face, phase);
           DirectionalPhaseFaceFlux free = faces[face][phase];
-          if (free.getForwardMassFlowKgPerSecond() > 0.0 && free.getReverseMassFlowKgPerSecond() > 0.0) {
-            throw new IllegalStateException("Signed-face complementarity owns one donor direction per phase face and "
-                + "cannot represent simultaneous two-sided numerical transport");
-          }
-          double signed = free.getSignedMassFlowKgPerSecond();
-          direction[phaseFace] = signed < 0.0 ? -1 : 1;
-          values[offset + MASS_FLOW] = Math.abs(signed);
-          values[offset + ADVECTIVE_MOMENTUM] = free.getAdvectiveMomentumN();
-          values[offset + MULTIPLIER] = 0.0;
-          scales[offset + MASS_FLOW] = Math.max(1.0, Math.abs(signed));
-          scales[offset + ADVECTIVE_MOMENTUM] = Math.max(1.0, Math.abs(free.getAdvectiveMomentumN()));
-          scales[offset + MULTIPLIER] = scales[offset + MASS_FLOW];
-          int donorCell = direction[phaseFace] > 0 ? face : face + 1;
-          donorMassScales[phaseFace] = Math.max(1.0, Math.abs(endpointState[donorCell][phase]));
-          constrained[phaseFace] = endpointState[donorCell][phase] == 0.0
-              || donorMass(free, direction[phaseFace]) == 0.0;
+          initializeDirection(face, phase, FORWARD, free.getForwardMassFlowKgPerSecond(),
+              free.getForwardAdvectiveMomentumN(), free.getLeftDonorMassKgPerM(), endpointState[face][phase]);
+          initializeDirection(face, phase, REVERSE, free.getReverseMassFlowKgPerSecond(),
+              free.getReverseAdvectiveMomentumN(), free.getRightDonorMassKgPerM(), endpointState[face + 1][phase]);
         }
       }
+      assignAnchors(endpointState);
+    }
+
+    /** Initialize one directional stream and its donor-presence row. */
+    private void initializeDirection(int face, int phase, int direction, double massFlow, double momentum,
+        double freeDonorMass, double endpointDonorMass) {
+      int offset = directionalOffset(face, phase, direction);
+      int stream = stream(face, phase, direction);
+      values[offset + MASS_FLOW] = massFlow;
+      values[offset + ADVECTIVE_MOMENTUM] = momentum;
+      values[offset + MULTIPLIER] = 0.0;
+      scales[offset + MASS_FLOW] = Math.max(1.0, Math.abs(massFlow));
+      scales[offset + ADVECTIVE_MOMENTUM] = Math.max(1.0, Math.abs(momentum));
+      scales[offset + MULTIPLIER] = scales[offset + MASS_FLOW];
+      donorMassScales[stream] = Math.max(1.0, Math.abs(endpointDonorMass));
+      constrained[stream] = endpointDonorMass == 0.0 || freeDonorMass == 0.0;
     }
 
     /**
@@ -86,8 +93,8 @@ final class SignedFaceComplementarity implements Serializable {
      */
     private State(State source) {
       cellCount = source.cellCount;
-      direction = source.direction.clone();
       constrained = source.constrained.clone();
+      anchor = source.anchor.clone();
       values = source.values.clone();
       scales = source.scales.clone();
       donorMassScales = source.donorMassScales.clone();
@@ -121,45 +128,64 @@ final class SignedFaceComplementarity implements Serializable {
       System.arraycopy(candidate, 0, values, 0, values.length);
     }
 
-    /** @return frozen signed direction for one phase face */
-    int getDirection(int face, int phase) {
-      return direction[phaseFace(face, phase)];
-    }
-
     /** @return whether the donor-presence constraint row is active */
-    boolean isConstrained(int face, int phase) {
-      return constrained[phaseFace(face, phase)];
+    boolean isConstrained(int face, int phase, int direction) {
+      return constrained[stream(face, phase, direction)];
     }
 
     /** Activate an exact donor-presence row. */
-    void constrain(int face, int phase) {
-      constrained[phaseFace(face, phase)] = true;
+    void constrain(int face, int phase, int direction) {
+      constrained[stream(face, phase, direction)] = true;
     }
 
     /** Release a donor-presence row. */
-    void release(int face, int phase) {
-      constrained[phaseFace(face, phase)] = false;
+    void release(int face, int phase, int direction) {
+      constrained[stream(face, phase, direction)] = false;
+    }
+
+    /** @return whether this row is the unique exact-presence anchor for its donor cell and phase */
+    boolean isAnchor(int face, int phase, int direction) {
+      return anchor[stream(face, phase, direction)];
+    }
+
+    /** @return fixed donor-mass scale for an exact-presence anchor */
+    double getDonorMassScale(int face, int phase, int direction) {
+      return donorMassScales[stream(face, phase, direction)];
     }
 
     /**
-     * Select a new signed donor direction and its physical mass scale.
+     * Assign at most one endpoint-mass row to each absent cell phase. Other constrained outgoing streams use exact
+     * zero-flow rows, avoiding duplicate constraints across a phase-free region.
      *
-     * @param face internal face index
-     * @param phase phase index
-     * @param selectedDirection positive for left-to-right or negative for right-to-left
-     * @param endpointState endpoint conservative state
+     * @return true when an anchor choice changed
      */
-    void selectDirection(int face, int phase, int selectedDirection, double[][] endpointState) {
-      int phaseFace = phaseFace(face, phase);
-      direction[phaseFace] = selectedDirection;
-      int donorCell = selectedDirection > 0 ? face : face + 1;
-      donorMassScales[phaseFace] = Math.max(1.0, Math.abs(endpointState[donorCell][phase]));
+    boolean assignAnchors(double[][] endpointState) {
+      boolean[] selected = new boolean[anchor.length];
+      boolean[][] assigned = new boolean[cellCount][PHASE_COUNT];
+      boolean[][] faceAssigned = new boolean[Math.max(0, cellCount - 1)][PHASE_COUNT];
+      for (int face = 0; face < cellCount - 1; face++) {
+        for (int phase = 0; phase < PHASE_COUNT; phase++) {
+          for (int direction = FORWARD; direction <= REVERSE; direction++) {
+            int donorCell = direction == FORWARD ? face : face + 1;
+            int stream = stream(face, phase, direction);
+            if (constrained[stream] && endpointState[donorCell][phase] == 0.0 && !assigned[donorCell][phase]
+                && !faceAssigned[face][phase]) {
+              selected[stream] = true;
+              assigned[donorCell][phase] = true;
+              faceAssigned[face][phase] = true;
+              donorMassScales[stream] = Math.max(1.0, Math.abs(endpointState[donorCell][phase]));
+            }
+          }
+        }
+      }
+      boolean changed = false;
+      for (int stream = 0; stream < anchor.length; stream++) {
+        changed |= anchor[stream] != selected[stream];
+        anchor[stream] = selected[stream];
+      }
+      return changed;
     }
 
-    /** @return endpoint donor-mass scale for one phase face */
-    double getDonorMassScale(int face, int phase) {
-      return donorMassScales[phaseFace(face, phase)];
-    }
   }
 
   /** Corrected conservative rates, face residuals and solved directional ledgers. */
@@ -209,7 +235,7 @@ final class SignedFaceComplementarity implements Serializable {
   }
 
   /**
-   * Replace free internal transport by the signed unknowns and evaluate the frozen KKT rows.
+   * Replace free internal transport by the two directional unknown streams and evaluate the frozen KKT rows.
    *
    * @param evaluation validated free model evaluation
    * @param endpointState candidate endpoint conservative state
@@ -228,13 +254,15 @@ final class SignedFaceComplementarity implements Serializable {
     DirectionalPhaseFaceFlux[][] solved = new DirectionalPhaseFaceFlux[freeFaces.length][PHASE_COUNT];
     for (int face = 0; face < freeFaces.length; face++) {
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
-        int offset = variableOffset(face, phase);
-        int direction = state.getDirection(face, phase);
-        double magnitude = values[offset + MASS_FLOW];
-        double momentum = values[offset + ADVECTIVE_MOMENTUM];
-        double multiplier = values[offset + MULTIPLIER];
         DirectionalPhaseFaceFlux free = freeFaces[face][phase];
-        double signedMass = direction * magnitude;
+        int forwardOffset = directionalOffset(face, phase, FORWARD);
+        int reverseOffset = directionalOffset(face, phase, REVERSE);
+        double forwardMass = values[forwardOffset + MASS_FLOW];
+        double reverseMass = values[reverseOffset + MASS_FLOW];
+        double forwardMomentum = values[forwardOffset + ADVECTIVE_MOMENTUM];
+        double reverseMomentum = values[reverseOffset + ADVECTIVE_MOMENTUM];
+        double signedMass = forwardMass - reverseMass;
+        double momentum = forwardMomentum + reverseMomentum;
         double massCorrection = signedMass - free.getSignedMassFlowKgPerSecond();
         double momentumCorrection = momentum - free.getAdvectiveMomentumN();
         corrected[face][phase] -= massCorrection / lengths[face];
@@ -242,21 +270,11 @@ final class SignedFaceComplementarity implements Serializable {
         corrected[face][phase + PHASE_COUNT] -= momentumCorrection / lengths[face];
         corrected[face + 1][phase + PHASE_COUNT] += momentumCorrection / lengths[face + 1];
 
-        double massScale = state.scales[offset + MASS_FLOW];
-        double momentumScale = state.scales[offset + ADVECTIVE_MOMENTUM];
-        residual[offset + MASS_FLOW] = (magnitude - Math.abs(free.getSignedMassFlowKgPerSecond()) + multiplier)
-            / massScale;
-        double donorMass = donorMass(free, direction);
-        double donorMomentum = donorMomentum(free, direction);
-        residual[offset + ADVECTIVE_MOMENTUM] = donorMass == 0.0 ? momentum / momentumScale
-            : (momentum - signedMass * donorMomentum / donorMass) / momentumScale;
-        int donorCell = direction > 0 ? face : face + 1;
-        residual[offset + MULTIPLIER] = state.isConstrained(face, phase)
-            ? endpointState[donorCell][phase] / state.getDonorMassScale(face, phase)
-            : multiplier / massScale;
-        solved[face][phase] = new DirectionalPhaseFaceFlux(signedMass, momentum, free.getPressureTractionN(),
-            free.getLeftDonorMassKgPerM(), free.getRightDonorMassKgPerM(), free.getLeftDonorMomentumKgPerSecond(),
-            free.getRightDonorMomentumKgPerSecond());
+        evaluateDirection(residual, values, state, endpointState, free, face, phase, FORWARD);
+        evaluateDirection(residual, values, state, endpointState, free, face, phase, REVERSE);
+        solved[face][phase] = new DirectionalPhaseFaceFlux(forwardMass, reverseMass, forwardMomentum, reverseMomentum,
+            free.getPressureTractionN(), free.getLeftDonorMassKgPerM(), free.getRightDonorMassKgPerM(),
+            free.getLeftDonorMomentumKgPerSecond(), free.getRightDonorMomentumKgPerSecond());
       }
     }
     return new Evaluation(corrected, residual, solved);
@@ -299,7 +317,7 @@ final class SignedFaceComplementarity implements Serializable {
   }
 
   /**
-   * Refresh signed donor directions and exact donor-presence rows without using an inventory floor.
+   * Refresh both exact donor-presence rows without using an inventory floor.
    *
    * @param evaluation current free model evaluation
    * @param endpointState current endpoint state
@@ -311,25 +329,11 @@ final class SignedFaceComplementarity implements Serializable {
     boolean changed = false;
     for (int face = 0; face < faces.length; face++) {
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
-        double signedFreeFlow = faces[face][phase].getSignedMassFlowKgPerSecond();
-        int direction = state.getDirection(face, phase);
-        int selectedDirection = signedFreeFlow == 0.0 ? direction : signedFreeFlow < 0.0 ? -1 : 1;
-        if (selectedDirection != direction) {
-          state.selectDirection(face, phase, selectedDirection, endpointState);
-          direction = selectedDirection;
-          changed = true;
-        }
-        int donorCell = direction > 0 ? face : face + 1;
-        boolean absent = endpointState[donorCell][phase] == 0.0 || donorMass(faces[face][phase], direction) == 0.0;
-        if (absent && !state.isConstrained(face, phase)) {
-          state.constrain(face, phase);
-          changed = true;
-        } else if (!absent && state.isConstrained(face, phase)) {
-          state.release(face, phase);
-          changed = true;
-        }
+        changed |= refreshDirection(faces[face][phase], endpointState, state, face, phase, FORWARD);
+        changed |= refreshDirection(faces[face][phase], endpointState, state, face, phase, REVERSE);
       }
     }
+    changed |= state.assignAnchors(endpointState);
     return changed;
   }
 
@@ -353,7 +357,7 @@ final class SignedFaceComplementarity implements Serializable {
    *
    * @param cellCount cell count
    * @param column global nonlinear column
-   * @return color in the minimum 53-color structural schedule
+   * @return color in the minimum 71-color structural schedule
    */
   static int color(int cellCount, int column) {
     int cellDimension = auxiliaryOffset(cellCount);
@@ -381,14 +385,62 @@ final class SignedFaceComplementarity implements Serializable {
     return phaseFace(face, phase) * VARIABLES_PER_PHASE_FACE;
   }
 
-  /** @return donor mass per length selected by a frozen direction */
-  private static double donorMass(DirectionalPhaseFaceFlux face, int direction) {
-    return direction > 0 ? face.getLeftDonorMassKgPerM() : face.getRightDonorMassKgPerM();
+  /** @return local variable offset for one donor direction */
+  private static int directionalOffset(int face, int phase, int direction) {
+    return variableOffset(face, phase) + direction * VARIABLES_PER_DIRECTION;
   }
 
-  /** @return donor momentum per length selected by a frozen direction */
-  private static double donorMomentum(DirectionalPhaseFaceFlux face, int direction) {
-    return direction > 0 ? face.getLeftDonorMomentumKgPerSecond() : face.getRightDonorMomentumKgPerSecond();
+  /** @return local stream index for one donor direction */
+  private static int stream(int face, int phase, int direction) {
+    return phaseFace(face, phase) * 2 + direction;
+  }
+
+  /** Evaluate one directional mass, momentum and donor-presence row. */
+  private static void evaluateDirection(double[] residual, double[] values, State state, double[][] endpointState,
+      DirectionalPhaseFaceFlux free, int face, int phase, int direction) {
+    int offset = directionalOffset(face, phase, direction);
+    double massFlow = values[offset + MASS_FLOW];
+    double momentum = values[offset + ADVECTIVE_MOMENTUM];
+    double multiplier = values[offset + MULTIPLIER];
+    double freeMassFlow = direction == FORWARD ? free.getForwardMassFlowKgPerSecond()
+        : free.getReverseMassFlowKgPerSecond();
+    double donorMass = direction == FORWARD ? free.getLeftDonorMassKgPerM() : free.getRightDonorMassKgPerM();
+    double donorMomentum = direction == FORWARD ? free.getLeftDonorMomentumKgPerSecond()
+        : free.getRightDonorMomentumKgPerSecond();
+    double massScale = state.scales[offset + MASS_FLOW];
+    double momentumScale = state.scales[offset + ADVECTIVE_MOMENTUM];
+    residual[offset + MASS_FLOW] = (massFlow - freeMassFlow + multiplier) / massScale;
+    if (donorMass == 0.0) {
+      residual[offset + ADVECTIVE_MOMENTUM] = momentum / momentumScale;
+    } else {
+      double donorRelation = direction == FORWARD ? momentum - massFlow * donorMomentum / donorMass
+          : momentum + massFlow * donorMomentum / donorMass;
+      residual[offset + ADVECTIVE_MOMENTUM] = donorRelation / momentumScale;
+    }
+    if (state.isAnchor(face, phase, direction)) {
+      int donorCell = direction == FORWARD ? face : face + 1;
+      residual[offset + MULTIPLIER] = endpointState[donorCell][phase] / state.getDonorMassScale(face, phase, direction);
+    } else {
+      residual[offset + MULTIPLIER] = state.isConstrained(face, phase, direction) ? massFlow / massScale
+          : multiplier / massScale;
+    }
+  }
+
+  /** Refresh one directional donor-presence row. */
+  private static boolean refreshDirection(DirectionalPhaseFaceFlux free, double[][] endpointState, State state,
+      int face, int phase, int direction) {
+    int donorCell = direction == FORWARD ? face : face + 1;
+    double donorMass = direction == FORWARD ? free.getLeftDonorMassKgPerM() : free.getRightDonorMassKgPerM();
+    boolean absent = endpointState[donorCell][phase] == 0.0 || donorMass == 0.0;
+    if (absent && !state.isConstrained(face, phase, direction)) {
+      state.constrain(face, phase, direction);
+      return true;
+    }
+    if (!absent && state.isConstrained(face, phase, direction)) {
+      state.release(face, phase, direction);
+      return true;
+    }
+    return false;
   }
 
   /** Require the complete face ledger. */

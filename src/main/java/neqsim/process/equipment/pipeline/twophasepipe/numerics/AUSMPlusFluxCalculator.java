@@ -205,10 +205,11 @@ public class AUSMPlusFluxCalculator implements Serializable {
    * Calculate a phase flux with an additional collocated face-velocity interpolation.
    *
    * <p>
-   * The correction is added to the advective face velocity before selecting its donor. Mass, advective momentum and
-   * enthalpy therefore all use the same signed face transport and donor state. Pressure traction and its reported
-   * interface pressure/holdup are unchanged. An exactly absent donor contributes no advected phase inventory. A zero
-   * correction preserves the original flux bit for bit.
+   * The physical AUSM transport and the pressure-interpolation correction retain separate one-sided donors. Their
+   * signed mass, advective momentum, enthalpy and holdup transports are added conservatively at the face. This avoids
+   * replacing the complete physical donor when a pressure correction crosses zero, and it lets an absent donor disable
+   * only its own outgoing stream while the opposite present donor can still fill the phase. Pressure traction and its
+   * reported interface pressure/holdup are unchanged. A zero correction preserves the original flux bit for bit.
    * </p>
    *
    * @param left left phase state
@@ -244,9 +245,6 @@ public class AUSMPlusFluxCalculator implements Serializable {
     double Mminus = calcMachMinus(MR);
     double Mhalf = Mplus + Mminus;
     double faceVelocity = cHalf * Mhalf;
-    if (faceVelocityCorrection != 0.0) {
-      faceVelocity += faceVelocityCorrection;
-    }
 
     // Split pressures. A single interface holdup is used so that the holdup-gradient
     // momentum source can difference the same values and cancel the spurious force exactly.
@@ -255,8 +253,9 @@ public class AUSMPlusFluxCalculator implements Serializable {
         : calcPressurePlus(ML) * left.pressure + calcPressureMinus(MR) * right.pressure;
     double Phalf = alphaHalf * pHalf;
 
-    // The corrected advective velocity owns every donor, independently of pressure traction.
-    boolean donorLeft = faceVelocityCorrection == 0.0 ? Mhalf >= 0.0 : faceVelocity >= 0.0;
+    // A zero correction retains the historical arithmetic and bit pattern. A nonzero
+    // correction is a second signed donor stream; it must not switch the physical AUSM donor.
+    boolean donorLeft = Mhalf >= 0.0;
     double rho, v, H, alpha;
     if (donorLeft) {
       rho = left.density;
@@ -277,23 +276,39 @@ public class AUSMPlusFluxCalculator implements Serializable {
     flux.massFlux = mDot * area;
     flux.momentumFlux = mDot * v * area + Phalf * area;
     flux.energyFlux = mDot * H * area;
-    if (flux.massFlux >= 0.0) {
-      flux.forwardMassFlux = flux.massFlux;
-      flux.forwardAdvectiveMomentumFlux = flux.massFlux * v;
-      flux.forwardAdvectiveEnergyFlux = flux.energyFlux;
-    } else {
-      flux.reverseMassFlux = -flux.massFlux;
-      flux.reverseAdvectiveMomentumFlux = flux.massFlux * v;
-      flux.reverseAdvectiveEnergyFlux = flux.energyFlux;
+    addDirectionalAdvection(flux, flux.massFlux, v, H);
+    if (faceVelocityCorrection != 0.0) {
+      PhaseState correctionDonor = faceVelocityCorrection > 0.0 ? left : right;
+      double correctionMassFlow = faceVelocityCorrection * correctionDonor.holdup * correctionDonor.density * area;
+      flux.massFlux += correctionMassFlow;
+      flux.momentumFlux += correctionMassFlow * correctionDonor.velocity;
+      flux.energyFlux += correctionMassFlow * correctionDonor.enthalpy;
+      addDirectionalAdvection(flux, correctionMassFlow, correctionDonor.velocity, correctionDonor.enthalpy);
     }
     flux.directionalAdvectionAvailable = true;
-    flux.holdupFlux = faceVelocityCorrection == 0.0
-        ? (Mhalf >= 0 ? left.holdup * left.velocity : right.holdup * right.velocity)
-        : alpha * faceVelocity;
+    flux.holdupFlux = Mhalf >= 0 ? left.holdup * left.velocity : right.holdup * right.velocity;
+    if (faceVelocityCorrection != 0.0) {
+      PhaseState correctionDonor = faceVelocityCorrection > 0.0 ? left : right;
+      flux.holdupFlux += correctionDonor.holdup * faceVelocityCorrection;
+    }
     flux.interfaceHoldup = alphaHalf;
     flux.interfacePressure = pHalf;
 
     return flux;
+  }
+
+  /** Add one signed donor stream without cancelling an opposing stream at the same face. */
+  private static void addDirectionalAdvection(PhaseFlux flux, double massFlow, double donorVelocity,
+      double donorEnthalpy) {
+    if (massFlow >= 0.0) {
+      flux.forwardMassFlux += massFlow;
+      flux.forwardAdvectiveMomentumFlux += massFlow * donorVelocity;
+      flux.forwardAdvectiveEnergyFlux += massFlow * donorEnthalpy;
+    } else {
+      flux.reverseMassFlux -= massFlow;
+      flux.reverseAdvectiveMomentumFlux += massFlow * donorVelocity;
+      flux.reverseAdvectiveEnergyFlux += massFlow * donorEnthalpy;
+    }
   }
 
   /**

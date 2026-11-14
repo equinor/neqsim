@@ -604,7 +604,7 @@ public final class UnsplitTransientSolver implements Serializable {
         activeSetStable, converged, terminationReason, timeWeight, null);
   }
 
-  /** Solve the opt-in augmented cell/face system with frozen signed donor rows. */
+  /** Solve the opt-in augmented cell/face system with frozen one-sided donor-presence rows. */
   private Result solveDirectional(double[][] previousState, double[] previousPressure, double[] cellAreas,
       double timeStep, double startTime, double outletPressure, boolean outletPressureFixed, Model model) {
     double timeWeight = getTimeIntegrationMethod().weight;
@@ -649,7 +649,10 @@ public final class UnsplitTransientSolver implements Serializable {
       }
       double[] normalizedUpdate;
       try {
-        normalizedUpdate = solveDense(jacobian, rightHandSide);
+        // The augmented KKT ordering deliberately couples zero-residual face rows to cell variables with different
+        // indices. The cell-only homogeneous-block shortcut assumes identical row/column partitions and can therefore
+        // report a singular subblock even when the complete complementarity Jacobian is nonsingular.
+        normalizedUpdate = solveDenseDirect(jacobian, rightHandSide);
       } catch (IllegalStateException singular) {
         terminationReason = TerminationReason.SINGULAR_JACOBIAN;
         break;
@@ -820,7 +823,7 @@ public final class UnsplitTransientSolver implements Serializable {
     return result;
   }
 
-  /** Build the exact 53-color augmented finite-difference Jacobian. */
+  /** Build the exact 71-color augmented finite-difference Jacobian. */
   private double[][] approximateDirectionalJacobian(double[][] previousState, double[] previousPressure,
       double[][] candidateState, double[] candidatePressure, double[] auxiliary,
       SignedFaceComplementarity.State faceState, double[] cellAreas, double[] variableScale,
@@ -971,7 +974,8 @@ public final class UnsplitTransientSolver implements Serializable {
     int offset = state.length * BLOCK_SIZE;
     for (int variable = 0; variable < auxiliary.length; variable++) {
       int localVariable = variable % SignedFaceComplementarity.VARIABLES_PER_PHASE_FACE;
-      if (localVariable != SignedFaceComplementarity.ADVECTIVE_MOMENTUM && auxiliary[variable] == 0.0
+      int directionalVariable = localVariable % SignedFaceComplementarity.VARIABLES_PER_DIRECTION;
+      if (directionalVariable != SignedFaceComplementarity.ADVECTIVE_MOMENTUM && auxiliary[variable] == 0.0
           && variableScale[offset + variable] * normalizedUpdate[offset + variable] < 0.0) {
         normalizedUpdate[offset + variable] = 0.0;
       }
@@ -1007,7 +1011,8 @@ public final class UnsplitTransientSolver implements Serializable {
     int offset = state.length * BLOCK_SIZE;
     for (int variable = 0; variable < auxiliary.length; variable++) {
       int localVariable = variable % SignedFaceComplementarity.VARIABLES_PER_PHASE_FACE;
-      if (localVariable == SignedFaceComplementarity.ADVECTIVE_MOMENTUM) {
+      int directionalVariable = localVariable % SignedFaceComplementarity.VARIABLES_PER_DIRECTION;
+      if (directionalVariable == SignedFaceComplementarity.ADVECTIVE_MOMENTUM) {
         continue;
       }
       double change = variableScale[offset + variable] * normalizedUpdate[offset + variable];
@@ -1038,7 +1043,8 @@ public final class UnsplitTransientSolver implements Serializable {
       double change = variableScale[offset + variable] * normalizedUpdate[offset + variable];
       auxiliary[variable] += stepLength * change;
       int localVariable = variable % SignedFaceComplementarity.VARIABLES_PER_PHASE_FACE;
-      if (localVariable != SignedFaceComplementarity.ADVECTIVE_MOMENTUM && change < 0.0
+      int directionalVariable = localVariable % SignedFaceComplementarity.VARIABLES_PER_DIRECTION;
+      if (directionalVariable != SignedFaceComplementarity.ADVECTIVE_MOMENTUM && change < 0.0
           && stepLength == originalAuxiliary[variable] / -change) {
         auxiliary[variable] = 0.0;
       }
@@ -1403,7 +1409,7 @@ public final class UnsplitTransientSolver implements Serializable {
         }
       }
       if (!(pivotMagnitude > 1.0e-14) || !Double.isFinite(pivotMagnitude)) {
-        throw new IllegalStateException("Unsplit transient Jacobian is singular");
+        throw new IllegalStateException("Unsplit transient Jacobian is singular at pivot " + pivot);
       }
       if (pivotRow != pivot) {
         double[] row = coefficients[pivot];
