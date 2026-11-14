@@ -99,7 +99,9 @@ Rules that follow from the measurements:
 - **Anderson mixing** in the sequential solvers is on by default for cold solves and off for warm
   restarts, side-draw/pumparound/specification loops, Murphree efficiency below one and a
   user-set iteration cap. `column.setAndersonAccelerationEnabled(false)` gives plain damped
-  substitution; `getLastAndersonAccelerationCount()` reports whether it was used.
+  substitution; `getLastAndersonAccelerationCount()` reports whether it was used and
+  `getLastAndersonRejectionCount()` how many mixing phases were rolled back (nonzero means it
+  cost sweeps without helping; disable it for that column).
 - This evidence does not cover CPA or other associating fluids, absorbers without reboiler, side
   draws or pumparounds. Measure before recommending a solver there, and add the result here.
 

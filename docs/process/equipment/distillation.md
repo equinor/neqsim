@@ -421,7 +421,8 @@ contract and the sweep temperature step is within 20 times the temperature toler
 phase the sweeps are undamped and start from a state in which every inter-tray inlet equals the
 neighbouring outlet. A phase whose residual grows threefold or stops improving is rejected: the best
 state is restored, damped substitution resumes, and the rejected sweeps are not charged to the
-iteration limit.
+iteration limit. A rollback restores tray inlets and outlets only, so convergence is never accepted
+on the sweep that triggered it; the next sweep evaluates the restored state first.
 
 Mixing cut the 5-tray deethanizer from 122 to 31 sweeps and the 10-tray one from 212 to 60. It does
 not help the 20-tray column, whose sweeps spend most of the solve moving the composition front one
@@ -434,7 +435,11 @@ iteration cap.
 ```java
 column.setAndersonAccelerationEnabled(false); // plain damped substitution
 int mixedSteps = column.getLastAndersonAccelerationCount();
+int rejectedPhases = column.getLastAndersonRejectionCount();
 ```
+
+A nonzero `getLastAndersonRejectionCount()` means mixing cost sweeps without helping that solve.
+Report it together with the solver and status when a column result is unexpectedly slow.
 
 ### Tray enthalpy flash
 

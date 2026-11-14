@@ -651,6 +651,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private volatile boolean andersonAccelerationEnabled = true;
   /** Number of Anderson-mixed states used by the latest sequential solve. */
   private volatile int lastAndersonAccelerationCount = 0;
+  /** Number of Anderson mixing phases rejected by the latest sequential solve. */
+  private volatile int lastAndersonRejectionCount = 0;
+  /** Sweeps run after the last rejected mixing phase of the latest sequential solve; -1 without a rejection. */
+  private volatile int lastSweepsAfterAndersonRejection = -1;
+  /** Sweeps of a mixing phase without a ten percent residual improvement that reject the phase. */
+  private volatile int andersonStagnationSweeps = ANDERSON_STAGNATION_SWEEPS;
   /** Number of residual differences combined by one Anderson step. */
   private static final int ANDERSON_DEPTH = 5;
   /** Damped sweeps run before the first mixing phase; multiplied up after each rejected phase. */
@@ -7041,7 +7047,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     StreamInterface[] bestGasOutlets = new StreamInterface[numberOfTrays];
     StreamInterface[] bestLiquidOutlets = new StreamInterface[numberOfTrays];
     int andersonSteps = 0;
+    int lastRejectionSweep = -1;
     lastAndersonAccelerationCount = andersonSteps;
+    lastAndersonRejectionCount = 0;
+    lastSweepsAfterAndersonRejection = -1;
 
     while (iter < iterationLimit && iter < maximumSweeps) {
       mixedTrayTemperatures = restoredTrayTemperatures;
@@ -7267,7 +7276,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           double sweepResidual = andersonMixer.latestResidualNorm();
           sweepsSinceBestResidual++;
           if (bestGasOutlets[0] != null && (!(sweepResidual <= ANDERSON_REJECTION_GROWTH * bestSweepResidual)
-              || sweepsSinceBestResidual > ANDERSON_STAGNATION_SWEEPS)) {
+              || sweepsSinceBestResidual > andersonStagnationSweeps)) {
             // The mixed state moved away from the fixed point or stopped approaching it: the
             // stored sweeps no longer describe one linear map. Return to the best state of this
             // phase and continue with damped substitution.
@@ -7286,6 +7295,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
             andersonMixer.reset();
             andersonActive = false;
             andersonRejections++;
+            lastAndersonRejectionCount = andersonRejections;
+            lastRejectionSweep = iter;
             andersonFirstSweep = iter + ANDERSON_PLAIN_SWEEPS * (1 + andersonRejections);
             plainSweepsContracting = false;
             previousStepResidual = Double.POSITIVE_INFINITY;
@@ -7345,8 +7356,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           ? ColumnMeshResidualEvaluator.evaluateMaxTrayMaterialImbalance(this)
           : 0.0;
       boolean connectedMaterialSatisfied = connectedMaterialResidual <= connectedMaterialTolerance;
+      // A rejected mixing phase has just replaced the tray inlets and outlet caches with its best
+      // state, while err, the balances and the tray fluids still describe the rejected sweep.
+      // Convergence is not judged on that mixture: the next sweep evaluates the restored state.
+      boolean restoredStateNotEvaluated = restoredTrayTemperatures != null;
+      lastSweepsAfterAndersonRejection = lastRejectionSweep < 0 ? -1 : iter - lastRejectionSweep;
       boolean withinBaseTolerance = err <= baseTempTolerance && massErr <= baseMassTolerance && energyWithinBase
-          && connectedMaterialSatisfied && internalFlowsSettled;
+          && connectedMaterialSatisfied && internalFlowsSettled && !restoredStateNotEvaluated;
 
       if (withinBaseTolerance) {
         boolean energyPolishingAvailable = enforceEnergyBalanceTolerance && polishEnergyTolerance < baseEnergyTolerance;
@@ -7634,6 +7650,41 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public boolean isAndersonAccelerationEnabled() {
     return andersonAccelerationEnabled;
+  }
+
+  /**
+   * Get the number of Anderson mixing phases the latest sequential solve rejected and rolled back.
+   *
+   * @return rejected mixing phase count
+   */
+  public int getLastAndersonRejectionCount() {
+    return lastAndersonRejectionCount;
+  }
+
+  /**
+   * Get the number of sweeps the latest sequential solve ran after its last rejected mixing phase.
+   *
+   * <p>
+   * A rollback restores tray inlets and outlets only, so at least one sweep must follow it before a result is accepted.
+   * </p>
+   *
+   * @return sweeps after the last rollback, or -1 when no phase was rejected
+   */
+  int getLastSweepsAfterAndersonRejection() {
+    return lastSweepsAfterAndersonRejection;
+  }
+
+  /**
+   * Set how many mixing-phase sweeps without a ten percent residual improvement reject the phase.
+   *
+   * <p>
+   * Package-private so tests can force the rejection and rollback path; zero rejects every phase on its second sweep.
+   * </p>
+   *
+   * @param sweeps stagnation limit in sweeps
+   */
+  void setAndersonStagnationSweeps(int sweeps) {
+    this.andersonStagnationSweeps = sweeps;
   }
 
   /**

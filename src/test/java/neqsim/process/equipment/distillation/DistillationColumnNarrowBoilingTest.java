@@ -64,6 +64,20 @@ public class DistillationColumnNarrowBoilingTest {
     assertEquals(250.0, products, 250.0 * 1.0e-6);
   }
 
+  /** The residual-audited solver must reach a rigorous state, not reconciled products. */
+  @Test
+  @Timeout(value = 60, unit = TimeUnit.SECONDS)
+  public void meshResidualReachesRigorousConvergence() {
+    DistillationColumn column = createDebutanizer(SolverType.MESH_RESIDUAL);
+    column.run();
+
+    assertTrue(column.solved());
+    assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, column.getLastSolveStatus());
+    assertTrue(column.getLastMassResidual() < 1.0e-8, "Mass residual " + column.getLastMassResidual());
+    double products = column.getGasOutStream().getFlowRate("kg/hr") + column.getLiquidOutStream().getFlowRate("kg/hr");
+    assertEquals(250.0, products, 250.0 * 1.0e-8);
+  }
+
   /** Sequential substitution and the simultaneous solver must agree on the product split. */
   @Test
   @Timeout(value = 60, unit = TimeUnit.SECONDS)

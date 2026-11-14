@@ -106,7 +106,9 @@ public class DistillationSolverSelectionDocExampleTest {
 
     assertTrue(mixed.solved());
     assertTrue(plain.solved());
+    int rejectedPhases = mixed.getLastAndersonRejectionCount();
     assertTrue(mixedSteps > 0);
+    assertEquals(0, rejectedPhases);
     assertEquals(0, plain.getLastAndersonAccelerationCount());
     assertTrue(mixed.getLastIterationCount() < plain.getLastIterationCount());
   }
