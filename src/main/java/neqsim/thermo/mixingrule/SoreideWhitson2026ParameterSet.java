@@ -6,24 +6,37 @@ import java.util.Locale;
  * Burgoyne-Nielsen (2026) drop-in binary-interaction parameters for the Soreide-Whitson model.
  *
  * <p>
- * The correlations use the original Soreide-Whitson water alpha function. Reduced temperatures are calculated with the
- * fixed critical temperatures used for the published regressions, rather than the active NeqSim component data. See M.
- * Burgoyne and M. H. Nielsen, Fluid Phase Equilibria 114824 (2026), doi:10.1016/j.fluid.2026.114824.
+ * The aqueous coefficients use the authors' November 2026 coupled-equilibrium refit (procedure 1). The correlations use
+ * the original Soreide-Whitson water alpha function and the regression's fixed critical temperatures for reduced
+ * temperature. The published non-aqueous BIPs are from Fluid Phase Equilibria 114824 (2026),
+ * doi:10.1016/j.fluid.2026.114824. See <a href=
+ * "https://github.com/mwburgoyne/SW_Framework_Refresh/blob/procedure1-2026-11/procedure1_refit/results/p1_params.json">
+ * the tagged coefficient source</a>.
  * </p>
  */
 final class SoreideWhitson2026ParameterSet {
+  private static final double CO2_LINEAR = 0.009322719516912797;
+  private static final double CO2_QUADRATIC = -1.977702057788579e-5;
+  private static final double CO2_CUBIC = 1.527732067553674e-8;
+  private static final double H2S_INVERSE_TEMPERATURE = -82.78098013402487;
+  private static final double H2S_EXPONENTIAL_SCALE = 1739490.5143550164;
+  private static final double H2S_EXPONENTIAL_TEMPERATURE = 8585.063329478664;
+  private static final double N2_SLOPE = 0.003295272503921554;
+
   private SoreideWhitson2026ParameterSet() {
   }
 
   /** Supported water-gas pairs and their salinity and non-aqueous parameters. */
   private enum Gas {
-    CO2(304.20, 0.0409, -0.0807, 0.0526, 0.0079, -0.0085, 0.1896),
-    H2S(373.20, 0.0341, -0.0655, 0.0376, 0.0, 0.0, 0.1610), METHANE(190.60, 0.1304, -0.1295, 0.0394, 0.0, 0.0, 0.4850),
-    NITROGEN(126.10, 0.2173, -0.1468, 0.0302, 0.0, 0.0, 0.4778),
-    HYDROGEN(33.145, 0.3658, -0.0625, 0.0030, 0.0, 0.0, 0.4680),
-    ETHANE(305.40, 0.0813, -0.1287, 0.0646, 0.0, 0.0, 0.4920),
-    PROPANE(369.80, 0.0606, -0.1165, 0.0772, 0.0, 0.0, 0.5525),
-    N_BUTANE(425.20, 0.0488, -0.1072, 0.0836, 0.0, 0.0, 0.5091);
+    CO2(304.20, 0.0408481264767325, -0.07898609940571702, 0.050275716341630625, 0.006766107309550113,
+        -0.007355686498441823, 0.1896),
+    H2S(373.20, 0.04743797774228006, -0.09161393978798885, 0.049823955842864476, 0.0, 0.0, 0.1610),
+    METHANE(190.60, 0.1343908999845734, -0.13425828898747677, 0.040842761446578946, 0.0, 0.0, 0.4850),
+    NITROGEN(126.10, 0.2194835079768253, -0.14859950898753865, 0.030616725180758284, 0.0, 0.0, 0.4778),
+    HYDROGEN(33.145, 0.37671225100706046, -0.06473044235781623, 0.0031554140401859033, 0.0, 0.0, 0.4680),
+    ETHANE(305.40, 0.07776955167556454, -0.12336029130715784, 0.06258661601243726, 0.0, 0.0, 0.4920),
+    PROPANE(369.80, 0.05805669163435654, -0.11105470117150809, 0.0692266175055278, 0.0, 0.0, 0.5525),
+    N_BUTANE(425.20, 0.04564160593297639, -0.10008931089682649, 0.07292670218334689, 0.0, 0.0, 0.5091);
 
     private final double criticalTemperature;
     private final double salinityA0;
@@ -81,20 +94,21 @@ final class SoreideWhitson2026ParameterSet {
     double reducedTemperature = temperature / gas.criticalTemperature;
     switch (gas) {
     case CO2:
-      return -1.5893 + 9.8873e-3 * temperature - 2.2188e-5 * temperature * temperature
-          + 1.8499e-8 * temperature * temperature * temperature;
+      return -1.5502105835458762 + CO2_LINEAR * temperature + CO2_QUADRATIC * temperature * temperature
+          + CO2_CUBIC * temperature * temperature * temperature;
     case H2S:
-      return -74.6914 / temperature + 1348.9615 * Math.exp(-4504.96 / temperature) + 0.22598;
+      return H2S_INVERSE_TEMPERATURE / temperature
+          + H2S_EXPONENTIAL_SCALE * Math.exp(-H2S_EXPONENTIAL_TEMPERATURE / temperature) + 0.2518306228082515;
     case METHANE:
-      return rational(reducedTemperature, -2.1756, 1.0388, 0.6436);
+      return rational(reducedTemperature, -2.1976782374118784, 0.7150153669761119, 0.8945029639230546);
     case NITROGEN:
-      return -1.6689 + 3.441589e-3 * temperature;
+      return -1.6210963967981318 + N2_SLOPE * temperature;
     case HYDROGEN:
-      return rational(reducedTemperature, -14.9412, 2.2832, 0.3893);
+      return rational(reducedTemperature, -16.019825767516267, 0.7312362834651882, 0.6813619680172914);
     case ETHANE:
-      return rational(reducedTemperature, -1.2669, 0.1526, 1.4335);
+      return rational(reducedTemperature, -1.271347888293827, -0.02927136624699385, 1.6371834535180028);
     case PROPANE:
-      return rational(reducedTemperature, -1.1460, 0.5760, 1.3107);
+      return rational(reducedTemperature, -1.1567778736282177, 0.2089459674695665, 1.81066287107836);
     case N_BUTANE:
       double omega = 0.1931;
       double a0 = 1.1120 - 1.7369 * Math.pow(omega, -0.1);
@@ -110,20 +124,25 @@ final class SoreideWhitson2026ParameterSet {
     double reducedTemperature = temperature / gas.criticalTemperature;
     switch (gas) {
     case CO2:
-      return 9.8873e-3 - 2.0 * 2.2188e-5 * temperature + 3.0 * 1.8499e-8 * temperature * temperature;
+      return CO2_LINEAR + 2.0 * CO2_QUADRATIC * temperature + 3.0 * CO2_CUBIC * temperature * temperature;
     case H2S:
-      return 74.6914 / (temperature * temperature)
-          + 1348.9615 * Math.exp(-4504.96 / temperature) * 4504.96 / (temperature * temperature);
+      return -H2S_INVERSE_TEMPERATURE / (temperature * temperature)
+          + H2S_EXPONENTIAL_SCALE * Math.exp(-H2S_EXPONENTIAL_TEMPERATURE / temperature) * H2S_EXPONENTIAL_TEMPERATURE
+              / (temperature * temperature);
     case METHANE:
-      return rationalFirstDerivative(reducedTemperature, -2.1756, 1.0388, 0.6436) / gas.criticalTemperature;
+      return rationalFirstDerivative(reducedTemperature, -2.1976782374118784, 0.7150153669761119, 0.8945029639230546)
+          / gas.criticalTemperature;
     case NITROGEN:
-      return 3.441589e-3;
+      return N2_SLOPE;
     case HYDROGEN:
-      return rationalFirstDerivative(reducedTemperature, -14.9412, 2.2832, 0.3893) / gas.criticalTemperature;
+      return rationalFirstDerivative(reducedTemperature, -16.019825767516267, 0.7312362834651882, 0.6813619680172914)
+          / gas.criticalTemperature;
     case ETHANE:
-      return rationalFirstDerivative(reducedTemperature, -1.2669, 0.1526, 1.4335) / gas.criticalTemperature;
+      return rationalFirstDerivative(reducedTemperature, -1.271347888293827, -0.02927136624699385, 1.6371834535180028)
+          / gas.criticalTemperature;
     case PROPANE:
-      return rationalFirstDerivative(reducedTemperature, -1.1460, 0.5760, 1.3107) / gas.criticalTemperature;
+      return rationalFirstDerivative(reducedTemperature, -1.1567778736282177, 0.2089459674695665, 1.81066287107836)
+          / gas.criticalTemperature;
     case N_BUTANE:
       double omega = 0.1931;
       double a1 = 1.1001 + 0.8360 * omega;
@@ -138,24 +157,25 @@ final class SoreideWhitson2026ParameterSet {
     double reducedTemperature = temperature / gas.criticalTemperature;
     switch (gas) {
     case CO2:
-      return -2.0 * 2.2188e-5 + 6.0 * 1.8499e-8 * temperature;
+      return 2.0 * CO2_QUADRATIC + 6.0 * CO2_CUBIC * temperature;
     case H2S:
-      double exponential = Math.exp(-4504.96 / temperature);
-      return -2.0 * 74.6914 / (temperature * temperature * temperature) + 1348.9615 * exponential
-          * (4504.96 * 4504.96 / Math.pow(temperature, 4.0) - 2.0 * 4504.96 / Math.pow(temperature, 3.0));
+      double exponential = Math.exp(-H2S_EXPONENTIAL_TEMPERATURE / temperature);
+      return 2.0 * H2S_INVERSE_TEMPERATURE / (temperature * temperature * temperature) + H2S_EXPONENTIAL_SCALE
+          * exponential * (H2S_EXPONENTIAL_TEMPERATURE * H2S_EXPONENTIAL_TEMPERATURE / Math.pow(temperature, 4.0)
+              - 2.0 * H2S_EXPONENTIAL_TEMPERATURE / Math.pow(temperature, 3.0));
     case METHANE:
-      return rationalSecondDerivative(reducedTemperature, -2.1756, 1.0388, 0.6436)
+      return rationalSecondDerivative(reducedTemperature, -2.1976782374118784, 0.7150153669761119, 0.8945029639230546)
           / (gas.criticalTemperature * gas.criticalTemperature);
     case NITROGEN:
       return 0.0;
     case HYDROGEN:
-      return rationalSecondDerivative(reducedTemperature, -14.9412, 2.2832, 0.3893)
+      return rationalSecondDerivative(reducedTemperature, -16.019825767516267, 0.7312362834651882, 0.6813619680172914)
           / (gas.criticalTemperature * gas.criticalTemperature);
     case ETHANE:
-      return rationalSecondDerivative(reducedTemperature, -1.2669, 0.1526, 1.4335)
+      return rationalSecondDerivative(reducedTemperature, -1.271347888293827, -0.02927136624699385, 1.6371834535180028)
           / (gas.criticalTemperature * gas.criticalTemperature);
     case PROPANE:
-      return rationalSecondDerivative(reducedTemperature, -1.1460, 0.5760, 1.3107)
+      return rationalSecondDerivative(reducedTemperature, -1.1567778736282177, 0.2089459674695665, 1.81066287107836)
           / (gas.criticalTemperature * gas.criticalTemperature);
     case N_BUTANE:
       double a2 = -0.15742 - 1.0988 * 0.1931;
