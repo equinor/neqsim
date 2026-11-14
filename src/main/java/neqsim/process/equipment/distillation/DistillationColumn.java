@@ -9138,6 +9138,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int iterationLimit = Math.max(baseIterationLimit, maxNumberOfIterations);
     int maxIterationLimit = iterationLimit + Math.max(numberOfTrays, 3) * ITERATION_OVERFLOW_MULTIPLIER;
 
+    // The sweeps only read enthalpies and phase splits. Transport and interfacial properties are
+    // evaluated once on the converged trays by finalizeTrayProperties() below.
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i).setSkipPhysicalPropertiesDuringSolve(true);
+    }
+
     // Warm-up: run a few direct substitution iterations to establish a reasonable
     // profile
     int warmUpIterations = Math.min(3, iterationLimit / 3);
@@ -9412,6 +9418,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     massErr = getMassBalanceError();
     energyErr = getEnergyBalanceError();
 
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i).finalizeTrayProperties();
+    }
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
   }
 
@@ -12812,7 +12821,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (ignoreZeroFlow) {
       // Phase extraction can leave enthalpy properties uninitialized. Read an initialized clone
       // so diagnostics do not change the cached state consumed by the adaptive controller.
-      return SimpleTray.getMaterialStreamEnthalpy(stream.clone());
+      double flow = stream.getFlowRate("kg/hr");
+      if (!Double.isFinite(flow)) {
+        return Double.NaN;
+      }
+      if (Math.abs(flow) <= 1.0e-12) {
+        return 0.0;
+      }
+      // Only the fluid state is read, so clone the fluid rather than the whole stream object.
+      SystemInterface fluid = stream.getThermoSystem().clone();
+      fluid.init(2);
+      return fluid.getEnthalpy();
     }
     double enthalpy = stream.getFluid().getEnthalpy();
     if (Double.isFinite(enthalpy)) {
@@ -12973,7 +12992,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         capStreamFlow(relaxed, maximumInternalFlow);
       }
       if (requiresReflash || !skipUnchangedReflash) {
-        relaxed.run();
+        flashRelaxedTearStream(relaxed);
       }
       return relaxed;
     }
@@ -13000,7 +13019,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double totalMolesCurr = current.getThermoSystem().getTotalNumberOfMoles();
 
     if (!canRelaxMolarComposition(previous, current, relaxed, zPrev, zCurr)) {
-      relaxed.run();
+      flashRelaxedTearStream(relaxed);
       return relaxed;
     }
 
@@ -13026,9 +13045,37 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       relaxed.getThermoSystem().setMolarComposition(zMixed);
     }
 
-    relaxed.run();
+    flashRelaxedTearStream(relaxed);
 
     return relaxed;
+  }
+
+  /**
+   * Equilibrate a private internal tear stream at its current temperature, pressure and composition.
+   *
+   * <p>
+   * A tear stream is consumed only by the tray it enters, which reads component moles and enthalpy. The stream is
+   * already a private clone, so the equilibrium flash runs on its own fluid instead of {@link StreamInterface#run()},
+   * which would clone the fluid a second time and evaluate transport and interfacial properties that no tray balance
+   * reads. The flash input, and therefore the resulting phase split and enthalpy, are identical.
+   * </p>
+   *
+   * @param relaxed private tear stream to equilibrate in place
+   */
+  private void flashRelaxedTearStream(StreamInterface relaxed) {
+    SystemInterface fluid = relaxed.getThermoSystem();
+    boolean plainTemperaturePressureStream = relaxed.getClass() == Stream.class && fluid != null
+        && "TP".equals(relaxed.getSpecification()) && fluid.getNumberOfComponents() > 1;
+    double flow = plainTemperaturePressureStream ? relaxed.getFlowRate("kg/hr") : Double.NaN;
+    if (!plainTemperaturePressureStream || !Double.isFinite(flow) || flow < relaxed.getMinimumFlow()) {
+      relaxed.run();
+      return;
+    }
+    if (!fluid.isInitialized()) {
+      fluid.init(0);
+    }
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.init(2);
   }
 
   /**

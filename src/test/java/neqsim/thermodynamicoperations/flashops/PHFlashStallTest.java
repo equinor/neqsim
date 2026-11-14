@@ -105,7 +105,9 @@ class PHFlashStallTest {
     flash.solveQ();
 
     assertEquals(0.0, flash.calcdQdT(), 0.0, "The returned iterate must satisfy the enthalpy target");
-    assertEquals(21, flash.completedTpFlashes, "The solver must continue until the sequence converges");
+    // The first residual below the tight single-evaluation tolerance ends the iteration; the
+    // confirming flash at index 21 is no longer needed.
+    assertEquals(20, flash.completedTpFlashes, "The solver must continue until the sequence converges");
     assertTrue(flash.getLastIterationCount() < 200);
   }
 

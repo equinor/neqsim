@@ -2,6 +2,7 @@ package neqsim.process.equipment.distillation;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -44,6 +45,9 @@ import neqsim.util.validation.ValidationResult;
 public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;
+
+  /** Combined gas-liquid fluid models built during the current run, keyed by both component lists. */
+  private transient Map<String, SystemInterface> mixedSystemTemplates;
 
   /** Minimum finite gas diffusivity used when a physical-property model is unavailable. */
   private static final double MIN_GAS_DIFFUSIVITY = 1.0e-7;
@@ -933,6 +937,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   public void run(UUID id) {
     isSolved = false;
     validateRuntimeSetup();
+    // Model parameters may have been changed between runs, so combined-fluid templates live for one run.
+    mixedSystemTemplates = new HashMap<String, SystemInterface>();
     SystemInterface gasIn = gasInStream.getThermoSystem().clone();
     SystemInterface liquidIn = liquidInStream.getThermoSystem().clone();
     flashAndInitialize(gasIn);
@@ -2339,8 +2345,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     Map<String, Double> ratios = new LinkedHashMap<String, Double>();
     Map<String, Double> gasMolarEnthalpies = new LinkedHashMap<String, Double>();
     Map<String, Double> liquidMolarEnthalpies = new LinkedHashMap<String, Double>();
-    SystemInterface mixed = gas.clone();
-    addSystemComponents(mixed, liquid);
+    SystemInterface mixed = createMixedSystem(gas, liquid);
     mixed.setTemperature(snapshot.interfaceTemperatureK);
     mixed.setPressure(0.5 * (gas.getPressure() + liquid.getPressure()));
     PhaseInterface gasPhase;
@@ -2904,8 +2909,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    * @return surface tension in N/m
    */
   private double estimateSurfaceTension(SystemInterface gas, SystemInterface liquid) {
-    SystemInterface mixed = gas.clone();
-    addSystemComponents(mixed, liquid);
+    SystemInterface mixed = createMixedSystem(gas, liquid);
     flashAndInitialize(mixed);
     try {
       if (mixed.hasPhaseType(PhaseType.GAS) && mixed.getNumberOfPhases() > 1) {
@@ -2922,6 +2926,64 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       return DEFAULT_SURFACE_TENSION;
     }
     return DEFAULT_SURFACE_TENSION;
+  }
+
+  /**
+   * Create a fluid holding the gas inventory plus every positive-mole liquid component.
+   *
+   * <p>
+   * Adding a component that the gas model does not contain reads its parameters from the component database and
+   * rebuilds the mixing-rule matrices. That is needed once per pair of component lists, not for every segment of
+   * every iteration, so the combined model is built on first use and later calls copy it and only set the
+   * temperature, pressure and component amounts of the current gas and liquid.
+   * </p>
+   *
+   * @param gas gas system supplying the thermodynamic model, temperature and pressure
+   * @param liquid liquid system whose positive-mole components are added
+   * @return new mixed system that the caller may modify
+   */
+  private SystemInterface createMixedSystem(SystemInterface gas, SystemInterface liquid) {
+    List<String> gasComponents = getComponentNames(gas);
+    List<String> liquidComponents = getComponentNames(liquid);
+    StringBuilder key = new StringBuilder(gas.getClass().getName()).append('|').append(gas.getMixingRuleName())
+        .append('|').append(gas.getMaxNumberOfPhases()).append('|').append(gasComponents).append('|');
+    double[] addedMoles = new double[liquidComponents.size()];
+    boolean addsComponent = false;
+    for (int i = 0; i < liquidComponents.size(); i++) {
+      addedMoles[i] = componentMoles(liquid, liquidComponents.get(i));
+      if (addedMoles[i] > 0.0) {
+        key.append(liquidComponents.get(i)).append(',');
+        addsComponent = addsComponent || !gasComponents.contains(liquidComponents.get(i));
+      }
+    }
+    if (mixedSystemTemplates == null) {
+      mixedSystemTemplates = new HashMap<String, SystemInterface>();
+    }
+    SystemInterface template = addsComponent ? mixedSystemTemplates.get(key.toString()) : null;
+    if (template == null) {
+      SystemInterface mixed = gas.clone();
+      addSystemComponents(mixed, liquid);
+      if (addsComponent) {
+        mixedSystemTemplates.put(key.toString(), mixed.clone());
+      }
+      return mixed;
+    }
+    SystemInterface mixed = template.clone();
+    double[] moles = new double[mixed.getNumberOfComponents()];
+    for (int i = 0; i < moles.length; i++) {
+      String component = mixed.getPhase(0).getComponent(i).getComponentName();
+      if (gas.getPhase(0).hasComponent(component)) {
+        moles[i] = gas.getPhase(0).getComponent(component).getNumberOfmoles();
+      }
+      int liquidIndex = liquidComponents.indexOf(component);
+      if (liquidIndex >= 0 && addedMoles[liquidIndex] > 0.0) {
+        moles[i] += addedMoles[liquidIndex];
+      }
+    }
+    mixed.setTemperature(gas.getTemperature());
+    mixed.setPressure(gas.getPressure());
+    mixed.setMolarFlowRates(moles);
+    return mixed;
   }
 
   /**

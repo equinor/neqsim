@@ -283,7 +283,13 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
       enthalpy = calcMixStreamEnthalpy();
       // System.out.println("temp guess " + guessTemperature());
       if (!isSetOutTemperature()) {
-        // mixedStream.getThermoSystem().setTemperature(guessTemperature());
+        // Start the enthalpy flash from the tray's latest temperature instead of the
+        // temperature inherited from the template inlet stream. The PH solution does not depend
+        // on the starting point, but the previous tray state is far closer to it than an inlet
+        // from a neighbouring stage, which removes several inner TP flashes per tray evaluation.
+        if (!Double.isNaN(temperature) && !Double.isInfinite(temperature) && temperature > 0.0) {
+          mixedStream.getThermoSystem().setTemperature(temperature);
+        }
       } else {
         mixedStream.setTemperature(getOutTemperature(), "K");
       }
