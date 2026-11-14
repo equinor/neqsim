@@ -574,3 +574,15 @@ from hydrate guest occupancy. It does not replace the Dholabhai K10/K15 hydrate
 matrix or establish how the 1995 Burgass MSc converted its measurements. See
 the [source and reproduction notes](../../src/test/resources/data/chemistry_benchmarks/co2_kcl_solubility_mousavi_chapoy_burgass2024.md).
 
+## Dense-CO2 root-selection discriminator
+
+The 26-state Mousavi–Chapoy–Burgass assessment evaluates every conserved feed twice without changing model parameters.
+The default `TPflash` result remains the reported production-path diagnostic. A parallel
+`CO2BrinePhaseEquilibrium` calculation evaluates explicit GAS and OIL EOS roots, confines ions to the aqueous phase,
+selects the lower qualified Gibbs-energy split, and requires the existing `1e-8` molecular log-fugacity gate.
+
+The paired columns separate numerical phase/root selection from aqueous-model response. Closure of the constrained
+result does not establish experimental accuracy: dissolved CO2, water activity, source residuals and the Dholabhai
+hydrate contribution remain independent scientific checks. The assessment does not route ordinary user flashes through
+the constrained solver, alter hydrate calculations, fit an interaction parameter, relax a tolerance or apply a
+temperature offset.

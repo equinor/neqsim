@@ -22,6 +22,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.flashops.CO2BrinePhaseEquilibrium;
 
 /**
  * No-fit CO2-in-KCl diagnostic from the explicit salt-free Mousavi-Chapoy-Burgass measurements.
@@ -64,19 +65,30 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
         + "model_co2_molality_mol_per_kg_water,water_activity_proxy,actual_nacl_mass_fraction_percent,"
         + "actual_kcl_mass_fraction_percent,actual_cacl2_mass_fraction_percent,aqueous_water_mass_kg,"
         + "aqueous_co2_moles,nacl_formula_moles,kcl_formula_moles,cacl2_formula_moles,co2_feed_moles,fluid_phases,"
-        + "component_balance_residual_mol,molecular_log_fugacity_residual");
+        + "component_balance_residual_mol,molecular_log_fugacity_residual,"
+        + "constrained_fluid_phases,constrained_model_co2_mole_percent_molecular_only,"
+        + "constrained_minus_default_molecular_percentage_points,constrained_water_activity_proxy,"
+        + "constrained_minus_default_water_activity,constrained_molecular_log_fugacity_residual");
     Files.createDirectories(Paths.get("target"));
     Files.write(Paths.get(OUTPUT), report, StandardCharsets.UTF_8);
 
     for (Reference reference : references) {
       Result result = calculate(reference, CO2_FEED_MOLES);
-      String row = result.toCsv(reference);
+      Result constrained = calculate(reference, CO2_FEED_MOLES, true);
+      String row = result.toCsv(reference, constrained);
       report.add(row);
       Files.write(Paths.get(OUTPUT), Collections.singletonList(row), StandardCharsets.UTF_8, StandardOpenOption.APPEND);
       if ("MCB-KCL15-373-P281".equals(reference.pointId)) {
         // The preliminary stability check previously led to a third phase with unequal fugacities.
         assertEquals("GAS+AQUEOUS", result.phaseTypes, reference.pointId + " phase split");
         assertTrue(result.molecularLogFugacityResidual < 1.0e-8, reference.pointId + " molecular fugacity closure");
+      }
+      assertTrue(constrained.molecularLogFugacityResidual < 1.0e-8,
+          reference.pointId + " constrained molecular fugacity closure");
+      if ("MCB-KCL10-323-P400".equals(reference.pointId) || "MCB-KCL10-323-P538".equals(reference.pointId)
+          || "MCB-KCL15-323-P538".equals(reference.pointId)) {
+        assertTrue(constrained.molecularLogFugacityResidual <= result.molecularLogFugacityResidual + 1.0e-12,
+            reference.pointId + " constrained root must not weaken fugacity closure");
       }
     }
 
@@ -108,6 +120,18 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
    * @return calculated diagnostics
    */
   private static Result calculate(Reference reference, double co2FeedMoles) {
+    return calculate(reference, co2FeedMoles, false);
+  }
+
+  /**
+   * Calculates one source state with either the default or constrained CO2/brine phase solver.
+   *
+   * @param reference source state
+   * @param co2FeedMoles finite CO2 reservoir in mol, exceeding the dissolved inventory
+   * @param constrainedPhaseSolver whether to compare the explicit GAS/OIL root candidates
+   * @return calculated diagnostics
+   */
+  private static Result calculate(Reference reference, double co2FeedMoles, boolean constrainedPhaseSolver) {
     double saltFreeMassPercent = 100.0 - reference.totalSaltMassFractionPercent();
     double naclMassKg = reference.naclMassFractionPercent / saltFreeMassPercent;
     double kclMassKg = reference.kclMassFractionPercent / saltFreeMassPercent;
@@ -117,7 +141,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
     double cacl2Moles = cacl2MassKg / CACL2_MOLAR_MASS_KG_PER_MOL;
     double totalPressureBara = 10.0 * reference.totalPressureMpa;
     Trial trial = flashWithAqueousWaterBasis(reference, totalPressureBara, co2FeedMoles, naclMoles, kclMoles,
-        cacl2Moles);
+        cacl2Moles, constrainedPhaseSolver);
     PhaseInterface aqueous = trial.aqueous;
 
     double waterMoles = aqueous.getComponent("water").getNumberOfMolesInPhase();
@@ -172,10 +196,11 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
    * @param naclMoles NaCl formula-unit inventory in mol
    * @param kclMoles KCl formula-unit inventory in mol
    * @param cacl2Moles CaCl2 formula-unit inventory in mol
+   * @param constrainedPhaseSolver whether to compare the explicit GAS/OIL root candidates
    * @return converged and validated state
    */
   private static Trial flashWithAqueousWaterBasis(Reference reference, double totalPressureBara, double co2FeedMoles,
-      double naclMoles, double kclMoles, double cacl2Moles) {
+      double naclMoles, double kclMoles, double cacl2Moles, boolean constrainedPhaseSolver) {
     double waterFeedMoles = 1.0 / WATER_MOLAR_MASS_KG_PER_MOL;
     double co2Feed = co2FeedMoles;
     for (int iteration = 0; iteration < 20; iteration++) {
@@ -185,7 +210,7 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
       SystemInterface fluid = null;
       for (int attempt = 0; attempt <= MAX_RESERVOIR_RETRIES; attempt++) {
         fluid = flashSystem(reference.temperatureK, totalPressureBara, co2Feed, waterFeedMoles, naclMoles, kclMoles,
-            cacl2Moles);
+            cacl2Moles, constrainedPhaseSolver);
         if (fluid.getNumberOfPhases() >= 2) {
           break;
         }
@@ -246,10 +271,11 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
    * @param naclMoles NaCl formula-unit inventory in mol
    * @param kclMoles KCl formula-unit inventory in mol
    * @param cacl2Moles CaCl2 formula-unit inventory in mol
+   * @param constrainedPhaseSolver whether to compare the explicit GAS/OIL root candidates
    * @return flashed system
    */
   private static SystemInterface flashSystem(double temperatureK, double pressureBara, double co2Moles,
-      double waterMoles, double naclMoles, double kclMoles, double cacl2Moles) {
+      double waterMoles, double naclMoles, double kclMoles, double cacl2Moles, boolean constrainedPhaseSolver) {
     SystemInterface fluid = new SystemElectrolyteCPAstatoil(temperatureK, pressureBara);
     fluid.addComponent("CO2", co2Moles);
     fluid.addComponent("water", waterMoles);
@@ -265,7 +291,11 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
     fluid.addComponent("Cl-", naclMoles + kclMoles + 2.0 * cacl2Moles);
     fluid.setMixingRule(10);
     fluid.setMultiPhaseCheck(true);
-    new ThermodynamicOperations(fluid).TPflash();
+    if (constrainedPhaseSolver) {
+      new CO2BrinePhaseEquilibrium(fluid).run();
+    } else {
+      new ThermodynamicOperations(fluid).TPflash();
+    }
     fluid.init(1);
     return fluid;
   }
@@ -571,9 +601,10 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
      * Serializes this result with the explicit salt-free mapping and representation controls.
      *
      * @param reference source state
+     * @param constrained same feed evaluated with explicit GAS/OIL root candidates
      * @return one CSV row
      */
-    private String toCsv(Reference reference) {
+    private String toCsv(Reference reference, Result constrained) {
       return reference.pointId + "," + reference.sourceTable + "," + reference.naclMassFractionPercent + ","
           + reference.kclMassFractionPercent + "," + reference.cacl2MassFractionPercent + "," + reference.temperatureK
           + "," + reference.totalPressureMpa + "," + reference.sourceCo2MolePercent + ","
@@ -584,7 +615,10 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
           + (pseudoSaltMolePercent - reference.sourceCo2MolePercent) + "," + co2Molality + "," + waterActivity + ","
           + actualNaclMassPercent + "," + actualKclMassPercent + "," + actualCacl2MassPercent + "," + waterMassKg + ","
           + co2Moles + "," + naclMoles + "," + kclMoles + "," + cacl2Moles + "," + co2FeedMoles + "," + phaseTypes + ","
-          + componentBalanceResidualMol + "," + molecularLogFugacityResidual;
+          + componentBalanceResidualMol + "," + molecularLogFugacityResidual + "," + constrained.phaseTypes + ","
+          + constrained.molecularMolePercent + "," + (constrained.molecularMolePercent - molecularMolePercent) + ","
+          + constrained.waterActivity + "," + (constrained.waterActivity - waterActivity) + ","
+          + constrained.molecularLogFugacityResidual;
     }
   }
 }
