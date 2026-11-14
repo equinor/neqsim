@@ -101,13 +101,14 @@ final class ReferenceEosLiquidDensitySolver {
     double quadratic = 0.5 * (upperSlope + lowerSlope) - centerSlope;
     double discriminant = linear * linear - 4.0 * quadratic * centerSlope;
     double proxyZero = -2.0 * centerSlope / (linear + Math.sqrt(discriminant));
-    double trial = Math.abs(proxyZero) < 1.0 ? center + halfWidth * proxyZero : center;
+    boolean useProxy = Math.abs(proxyZero) < 1.0;
+    double trial = useProxy ? center + halfWidth * proxyZero : center;
+    double atTrial = useProxy ? residual(targetPressure, trial, pressureFunction) : atCenter;
+    double slope = useProxy ? pressureSlope.getAsDouble() : centerSlope;
 
     double lo = lower;
     double hi = upper;
     for (int iteration = 0; iteration < 32; iteration++) {
-      double atTrial = trial == center ? atCenter : residual(targetPressure, trial, pressureFunction);
-      double slope = trial == center ? centerSlope : pressureSlope.getAsDouble();
       if (!Double.isFinite(atTrial) || !Double.isFinite(slope)) {
         return Double.NaN;
       }
@@ -127,9 +128,11 @@ final class ReferenceEosLiquidDensitySolver {
         hi = trial;
       }
       trial = 0.5 * (lo + hi);
-      if (trial == lo || trial == hi) {
+      if (!(lo < trial && trial < hi)) {
         break;
       }
+      atTrial = residual(targetPressure, trial, pressureFunction);
+      slope = pressureSlope.getAsDouble();
     }
     return Double.NaN;
   }
