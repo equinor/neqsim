@@ -15,8 +15,6 @@ package neqsim.pvtsimulation.reservoirproperties.materialbalance;
  * @version 1.0
  */
 final class RadialInfiniteInfluence {
-  /** Euler's constant in the small-frequency integral. */
-  private static final double EULER = 0.5772156649015328606;
   /** Lower logarithmic frequency. */
   private static final double LOWER_LOG = -40.0;
   /** Upper frequency for the numerical integral. */
@@ -171,7 +169,7 @@ final class RadialInfiniteInfluence {
     for (int i = 0; i < result[0].length; i++) {
       double u = Math.exp(result[0][i]);
       result[0][i] = u * u;
-      result[1][i] *= 4.0 / (Math.PI * Math.PI * u * u * modulusSquared(u));
+      result[1][i] *= 4.0 / (Math.PI * Math.PI * u * u * RadialBessel.modulusSquared(u));
     }
     return result;
   }
@@ -244,47 +242,4 @@ final class RadialInfiniteInfluence {
     return result;
   }
 
-  /**
-   * Evaluates J1(u)^2+Y1(u)^2 using convergent small-argument series or the nonoscillatory modulus.
-   *
-   * @param u positive frequency
-   * @return positive squared Bessel modulus
-   */
-  private static double modulusSquared(double u) {
-    if (u < 12.0) {
-      double term = 0.5 * u;
-      double j = term;
-      double harmonic = 0.0;
-      double sum = term * (1.0 - 2.0 * EULER);
-      for (int k = 1; k < 100; k++) {
-        term *= -0.25 * u * u / (k * (k + 1.0));
-        harmonic += 1.0 / k;
-        j += term;
-        sum += term * (2.0 * harmonic + 1.0 / (k + 1.0) - 2.0 * EULER);
-        if (Math.abs(term) < 1.0e-20) {
-          double y = (2.0 * Math.log(0.5 * u) * j - 2.0 / u - sum) / Math.PI;
-          return j * j + y * y;
-        }
-      }
-      throw new IllegalStateException("Aquifer Bessel modulus series did not converge");
-    }
-    double p = 1.0;
-    double q = 0.0;
-    double term = 1.0;
-    double previous = 1.0;
-    for (int k = 1; k <= 64; k++) {
-      term *= (4.0 - (2.0 * k - 1.0) * (2.0 * k - 1.0)) / (8.0 * k * u);
-      if (Math.abs(term) > previous) {
-        break;
-      }
-      double signed = (k / 2) % 2 == 0 ? term : -term;
-      if (k % 2 == 0) {
-        p += signed;
-      } else {
-        q += signed;
-      }
-      previous = Math.abs(term);
-    }
-    return 2.0 / (Math.PI * u) * (p * p + q * q);
-  }
 }
