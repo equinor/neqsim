@@ -42,6 +42,12 @@ class RealGasPipeDecompressionTest extends neqsim.NeqSimTest {
         vesselVolumeM3, cells, cfl);
   }
 
+  private static RealGasPipeDecompression heatedPipe(double heatTransferCoefficientWPerM2K, double externalTemperatureK,
+      int cells, double cfl) {
+    return new RealGasPipeDecompression("real-heated-linepack", gas(80.0), 40.0, 0.15, 1.0, 101325.0, 0.01, 0.20,
+        heatTransferCoefficientWPerM2K, externalTemperatureK, cells, cfl);
+  }
+
   @Test
   void eosStateEvolutionConservesMassEnergyAndComposition() {
     RealGasPipeDecompression pipe = pipe(12);
@@ -174,6 +180,95 @@ class RealGasPipeDecompressionTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void distributedWallHeatClosesEnergyAndRetainsPhysicalDirection() {
+    RealGasPipeDecompression heated = heatedPipe(50.0, 360.0, 12, 0.30);
+    RealGasPipeDecompression adiabatic = vesselPipe(0.20, 12, 0.30);
+    RealGasPipeDecompression cooled = heatedPipe(50.0, 250.0, 12, 0.30);
+    heated.runTransient(0.20, UUID.randomUUID());
+    adiabatic.runTransient(0.20, UUID.randomUUID());
+    cooled.runTransient(0.20, UUID.randomUUID());
+
+    assertTrue(heated.hasDistributedWallHeatTransfer());
+    assertFalse(adiabatic.hasDistributedWallHeatTransfer());
+    assertTrue(heated.getCumulativeHeatTransferJ() > 0.0);
+    assertTrue(cooled.getCumulativeHeatTransferJ() < 0.0);
+    assertTrue(mean(heated.getTemperatureProfileK()) > mean(adiabatic.getTemperatureProfileK()));
+    assertTrue(mean(adiabatic.getTemperatureProfileK()) > mean(cooled.getTemperatureProfileK()));
+    assertEquals(heated.getInitialEnergyJ() + heated.getCumulativeHeatTransferJ(),
+        heated.getRemainingEnergyJ() + heated.getReleasedEnergyJ(), Math.abs(heated.getInitialEnergyJ()) * 3.0e-10);
+    assertEquals(cooled.getInitialEnergyJ() + cooled.getCumulativeHeatTransferJ(),
+        cooled.getRemainingEnergyJ() + cooled.getReleasedEnergyJ(), Math.abs(cooled.getInitialEnergyJ()) * 3.0e-10);
+  }
+
+  @Test
+  void distributedWallHeatCflRefinementAndZeroCoefficientIdentity() throws Exception {
+    RealGasPipeDecompression legacy = vesselPipe(0.20, 12, 0.30);
+    RealGasPipeDecompression explicitAdiabatic = heatedPipe(0.0, 0.0, 12, 0.30);
+    UUID legacyId = UUID.randomUUID();
+    legacy.runTransient(0.20, legacyId);
+    explicitAdiabatic.runTransient(0.20, legacyId);
+    assertEquals(legacy.getReleasedMassKg(), explicitAdiabatic.getReleasedMassKg(), 0.0);
+    assertEquals(legacy.getReleasedEnergyJ(), explicitAdiabatic.getReleasedEnergyJ(), 0.0);
+    assertArrayEquals(legacy.getTemperatureProfileK(), explicitAdiabatic.getTemperatureProfileK(), 0.0);
+
+    double[] cfls = new double[] {0.45, 0.30, 0.20};
+    double[] heat = new double[cfls.length];
+    double[] meanTemperature = new double[cfls.length];
+    StringBuilder receipt = new StringBuilder("cfl,heat_transfer_J,mean_temperature_K\n");
+    for (int i = 0; i < cfls.length; i++) {
+      RealGasPipeDecompression pipe = heatedPipe(50.0, 360.0, 12, cfls[i]);
+      pipe.runTransient(0.20, UUID.randomUUID());
+      heat[i] = pipe.getCumulativeHeatTransferJ();
+      meanTemperature[i] = mean(pipe.getTemperatureProfileK());
+      receipt.append(cfls[i]).append(',').append(heat[i]).append(',').append(meanTemperature[i]).append('\n');
+    }
+    assertTrue(Math.abs(heat[2] - heat[1]) < Math.abs(heat[1] - heat[0]), receipt.toString());
+    assertTrue(Math.abs(meanTemperature[2] - meanTemperature[1]) < Math.abs(meanTemperature[1] - meanTemperature[0]),
+        receipt.toString());
+    write("source-term-benchmarks", "real-gas-pipe-heat-cfl-refinement.csv", receipt.toString());
+  }
+
+  @Test
+  void distributedWallHeatFramesAreSchemaValidForBothProcessContainers() throws Exception {
+    for (boolean useModel : new boolean[] {false, true}) {
+      RealGasPipeDecompression pipe = heatedPipe(50.0, 360.0, 8, 0.30);
+      ProcessSystem process = new ProcessSystem();
+      process.add(pipe);
+      SourceTermSession session;
+      if (useModel) {
+        ProcessModel model = new ProcessModel();
+        model.add("pipeline", process);
+        session = new SourceTermSession("real-heated-linepack", model);
+        session.addInventorySource("rupture", "pipeline", "real-heated-linepack");
+      } else {
+        session = new SourceTermSession("real-heated-linepack", process);
+        session.addInventorySource("rupture", "real-heated-linepack");
+      }
+      session.runSteadyState();
+      SourceTermFrame frame = session.step(0.20).get(0);
+      SourceTermFrame.verifyEnvelope(frame.toJson());
+      JsonObject provenance = JsonParser.parseString(frame.toJson()).getAsJsonObject().getAsJsonObject("provenance");
+      assertEquals("CONSTANT_U_FIXED_EXTERNAL_TEMPERATURE", provenance.get("pipeHeatTransferBoundary").getAsString());
+      assertEquals(50.0, provenance.get("pipeHeatTransferCoefficientWPerM2K").getAsDouble(), 0.0);
+      assertEquals(360.0, provenance.get("pipeExternalTemperatureK").getAsDouble(), 0.0);
+      assertTrue(provenance.get("cumulativePipeHeatTransferJ").getAsDouble() > 0.0);
+      write("source-term-contract-fixtures", "real-gas-heated-pipe-" + useModel + ".json", frame.toJson());
+    }
+  }
+
+  @Test
+  void documentedDistributedHeatConstructorIsExecutable() {
+    SystemInterface fluid = gas(80.0);
+    ProcessSystem process = new ProcessSystem();
+    RealGasPipeDecompression heatedVesselAndPipe = new RealGasPipeDecompression("heated-vessel-fed-rupture", fluid,
+        40.0, 0.15, 1.0, 101325.0, 0.01, 0.20, 25.0, 285.0, 12, 0.30);
+    process.add(heatedVesselAndPipe);
+    heatedVesselAndPipe.runTransient(0.02, UUID.randomUUID());
+    assertTrue(heatedVesselAndPipe.hasDistributedWallHeatTransfer());
+    assertTrue(Double.isFinite(heatedVesselAndPipe.getCumulativeHeatTransferJ()));
+  }
+
+  @Test
   void legacyClosedEndAndInvalidVesselConfigurationRemainExplicit() {
     RealGasPipeDecompression legacy = pipe(8);
     assertFalse(legacy.hasFiniteUpstreamVessel());
@@ -181,6 +276,9 @@ class RealGasPipeDecompressionTest extends neqsim.NeqSimTest {
     assertEquals(0.0, legacy.getUpstreamVesselMassKg(), 0.0);
     assertThrows(IllegalArgumentException.class, () -> vesselPipe(Double.NaN, 8, 0.30));
     assertThrows(IllegalArgumentException.class, () -> vesselPipe(-0.10, 8, 0.30));
+    assertThrows(IllegalArgumentException.class, () -> heatedPipe(-1.0, 300.0, 8, 0.30));
+    assertThrows(IllegalArgumentException.class, () -> heatedPipe(50.0, 0.0, 8, 0.30));
+    assertThrows(IllegalArgumentException.class, () -> heatedPipe(0.0, 300.0, 8, 0.30));
   }
 
   @Test
@@ -242,5 +340,13 @@ class RealGasPipeDecompressionTest extends neqsim.NeqSimTest {
     Path directory = Paths.get("target", directoryName);
     Files.createDirectories(directory);
     Files.write(directory.resolve(filename), value.getBytes(StandardCharsets.UTF_8));
+  }
+
+  private static double mean(double[] values) {
+    double sum = 0.0;
+    for (double value : values) {
+      sum += value;
+    }
+    return sum / values.length;
   }
 }
