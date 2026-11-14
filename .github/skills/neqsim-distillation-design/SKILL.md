@@ -1,7 +1,7 @@
 ---
 name: neqsim-distillation-design
 description: "Distillation column design rules for NeqSim. USE WHEN: setting up distillation columns, troubleshooting convergence, selecting internals (trays/packing), sizing columns, or analyzing column performance. Covers DistillationColumn setup, solver selection, feed tray optimization, reflux ratio, and internals selection per industry standards."
-last_verified: "2026-07-04"
+last_verified: "2026-11-14"
 ---
 
 # Distillation Design Rules
@@ -46,11 +46,70 @@ column.run();
 
 ## Solver Selection
 
+### Default set-up for agent work (measured)
+
+Use `NEWTON` as the first solver, check the result, and fall back explicitly. Do not use `AUTO` as
+the default: on the benchmark below it was neither faster nor more robust than a fixed choice.
+
 ```java
-// Direct substitution (default) - robust sequential tray sweeps
+column.setSolverType(DistillationColumn.SolverType.NEWTON);
+column.run();
+if (!column.solved()) {
+  // MESH_RESIDUAL either returns a residual-verified state or fails; it never hands back
+  // reconciled products as a converged answer.
+  column.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
+  column.run();
+}
+if (!column.solved()) {
+  throw new IllegalStateException(column.getConvergenceDiagnostics());
+}
+DistillationColumn.SolveStatus status = column.getLastSolveStatus(); // report it with the result
+DistillationColumn.SolverType used = column.getLastSolverTypeUsed(); // may differ after a fallback
+```
+
+Evidence (2026-11, seven SRK light-hydrocarbon columns of 5-20 trays, each solver on the nominal
+case plus 21 perturbed feeds/pressures/duties; see `docs/process/equipment/distillation.md`,
+"Choosing a solver"):
+
+| Solver | Failures in 21 perturbed runs | Time for the 21 runs | Use it for |
+|--------|-------------------------------|----------------------|------------|
+| `NEWTON` | 0 | 59 s | **Default.** Fastest of the solvers with no failures |
+| `MATRIX_INSIDE_OUT` | 0 | 66 s | Equivalent alternative |
+| `INSIDE_OUT` | 0 | 134 s | Same answers as `NEWTON`, slower |
+| `MESH_RESIDUAL` | 2 (fails instead of reconciling) | 121 s | Verification; fastest on condenser + reboiler columns with a reflux specification |
+| `NAPHTALI_SANDHOLM` | 1 | 2-3x slower on 10+ trays | Residual-driven cross-check |
+| `DIRECT_SUBSTITUTION`, `DAMPED_SUBSTITUTION`, `WEGSTEIN` | 2 | 42-48 s | Short reboiled columns (10 trays or fewer): fastest there since Anderson mixing |
+| `SUM_RATES` | 2 | 25 s | Reboiler-only strippers and absorbers |
+| `AUTO` | 2 | 49 s | Not as a default; failed the 15-tray stabiliser after 14 s where `NEWTON` solved it in 2.4 s |
+
+Rules that follow from the measurements:
+
+- **`NEWTON` can finish as `RECONCILED_PRODUCTS`.** On the 5-tray deethanizer its products then
+  closed the feed to 0.014 %, not to machine precision. If the status is not `RIGOROUS_CONVERGED`
+  and the result feeds a material balance or a guarantee, rerun with `MESH_RESIDUAL`.
+- **15 trays or more:** never start with `DIRECT_SUBSTITUTION`, `DAMPED_SUBSTITUTION`, `WEGSTEIN`
+  or `NAPHTALI_SANDHOLM`; they were 2-3x slower than `NEWTON` and the sequential ones did not
+  converge the stabiliser.
+- **Solvers do not agree to more than about 0.1-0.3 % on product rates at default tolerances.**
+  Sequential substitution stops on the sweep step, not on the distance to the solution. Quote the
+  solver and `getLastSolveStatus()` with every result, and cross-check a result that feeds a
+  decision with a second solver family (`NEWTON` vs `MESH_RESIDUAL`).
+- **Narrow-boiling mixtures** (for example C4/C5/C6 debutanizer trays) need a build that contains
+  the bracketed tray PH flash (PR #4981). Before it, several solvers failed after 20-70 s.
+- **Anderson mixing** in the sequential solvers is on by default for cold solves and off for warm
+  restarts, side-draw/pumparound/specification loops, Murphree efficiency below one and a
+  user-set iteration cap. `column.setAndersonAccelerationEnabled(false)` gives plain damped
+  substitution; `getLastAndersonAccelerationCount()` reports whether it was used.
+- This evidence does not cover CPA or other associating fluids, absorbers without reboiler, side
+  draws or pumparounds. Measure before recommending a solver there, and add the result here.
+
+### All solver types
+
+```java
+// Direct substitution (default) - sequential tray sweeps with Anderson mixing on cold solves
 column.setSolverType(DistillationColumn.SolverType.DIRECT_SUBSTITUTION);
 
-// Inside-Out — faster for ideal/near-ideal systems
+// Inside-Out — flow correction with K-value tracking
 column.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
 
 // Adaptive matrix inside-out — bypasses matrix setup on small columns,
@@ -138,8 +197,10 @@ duties or a tray profile.
 
 | System Type | Recommended Solver | Notes |
 |------------|-------------------|-------|
-| Ideal HC (demethanizer, deethanizer) | `INSIDE_OUT` | Fast, robust |
-| Larger HC fractionators | `MATRIX_INSIDE_OUT` | Adaptive: small columns bypass matrix overhead; larger columns try the matrix warm start before rigorous inside-out polishing |
+| Any hydrocarbon column, first attempt | `NEWTON` | Measured default, see "Default set-up for agent work" |
+| Short reboiled HC column (10 trays or fewer), cold solve | `DIRECT_SUBSTITUTION` | Fastest there with Anderson mixing; status may be `RECONCILED_PRODUCTS` |
+| Condenser + reboiler with reflux specification | `MESH_RESIDUAL` | Fastest and residual-verified on the depropanizer/debutanizer cases |
+| Larger HC fractionators | `MATRIX_INSIDE_OUT` or `NEWTON` | Adaptive: small columns bypass matrix overhead; larger columns try the matrix warm start before rigorous inside-out polishing |
 | Non-ideal (alcohols, water) | `DAMPED_SUBSTITUTION` or `DIRECT_SUBSTITUTION` | More conservative for non-ideal K-values |
 | Absorbers (no condenser/reboiler) | `SUM_RATES` or `DIRECT_SUBSTITUTION` | Flow-corrected updates can help absorber/stripper cases |
 | Wide-boiling (C1 to C20+) | `DAMPED_SUBSTITUTION` | Increase iterations and monitor residuals |
@@ -245,7 +306,7 @@ $$
 
 | Problem | Solution |
 |---------|----------|
-| Column does not converge | Increase max iterations to 200-500 |
+| Column does not converge | Switch solver first (`NEWTON`, then `MESH_RESIDUAL`); only then increase max iterations to 200-500 |
 | Oscillating temperature profile | Reduce condenser/reboiler specs, use `DAMPED_SUBSTITUTION`; audit with `MESH_RESIDUAL` before trying `NAPHTALI_SANDHOLM` |
 | Wrong product split | Check feed tray location and specifications |
 | Negative flows on stages | Too many stages or wrong specifications |

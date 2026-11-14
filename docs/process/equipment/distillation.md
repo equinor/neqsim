@@ -344,7 +344,7 @@ top reflux-ratio specification.
 
 | Solver type | Strategy | Typical use |
 |-------------|----------|-------------|
-| `DIRECT_SUBSTITUTION` | Classic tray-by-tray substitution. | Default for simple, well-posed columns. |
+| `DIRECT_SUBSTITUTION` | Classic tray-by-tray substitution, with Anderson mixing of the tray outlet states on cold solves. | Default for simple, well-posed columns; fastest choice for short reboiled columns. |
 | `DAMPED_SUBSTITUTION` | Sequential substitution with an initial fixed relaxation factor. | Stiffer cases where direct substitution overshoots. |
 | `INSIDE_OUT` | Inside-out style flow correction with K-value tracking and polishing. | General deethanizer/depropanizer and multi-feed work. |
 | `MATRIX_INSIDE_OUT` | Adaptive matrix warm start plus rigorous inside-out polishing. | Larger hydrocarbon fractionators where matrix setup cost is justified. |
@@ -354,6 +354,95 @@ top reflux-ratio specification.
 | `NAPHTALI_SANDHOLM` | Guarded simultaneous correction of MESH blocks after inside-out warm start, with early return to coordinated fallback after repeated non-descent steps. | Residual-driven hydrocarbon fractionators. |
 | `MESH_RESIDUAL` | Inside-out initialization plus full residual auditing. | Material, equilibrium, summation, energy, product-draw, and spec residual checks. |
 | `AUTO` | Runs a feasibility pre-screen and copy-based candidate probes. Fixed-specification reboiler-only strippers try native `SUM_RATES` first; other configurations retain the relaxed damped base and guarded fallback ladder. | Agent workflows and uncertain cases where robust automatic selection and diagnostics are useful. |
+
+### Choosing a solver
+
+Measured on seven SRK light-hydrocarbon columns (deethanizers with 5, 10 and 20 trays, a
+depropanizer and a debutanizer with condenser and reflux specification, a 7-tray demethanizer and a
+15-tray condensate stabiliser). Every solver ran the nominal case and 21 cases with perturbed feed
+temperature, pressure, reboiler temperature and composition. Times are single-threaded on a shared
+2-core machine and are only comparable with each other.
+
+| Solver | Nominal cases converged (of 7) | Failures in 21 perturbed runs | Time for the 21 runs |
+|--------|--------------------------------|-------------------------------|----------------------|
+| `NEWTON` | 7 | 0 | 59 s |
+| `MATRIX_INSIDE_OUT` | 7 | 0 | 66 s |
+| `INSIDE_OUT` | 7 | 0 | 134 s |
+| `MESH_RESIDUAL` | 7 | 2 | 121 s |
+| `NAPHTALI_SANDHOLM` | 6 | 1 | not comparable (the run was not timed alone) |
+| `DIRECT_SUBSTITUTION` | 6 | 2 | 43 s |
+| `DAMPED_SUBSTITUTION` | 6 | 2 | 42 s |
+| `WEGSTEIN` | 6 | 2 | 48 s |
+| `SUM_RATES` | 6 | 2 | 25 s |
+| `AUTO` | 6 | 2 | 49 s |
+
+Recommended set-up for scripted and agent-driven work:
+
+```java
+column.setSolverType(DistillationColumn.SolverType.NEWTON);
+column.run();
+if (!column.solved()) {
+  column.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
+  column.run();
+}
+if (!column.solved()) {
+  throw new IllegalStateException(column.getConvergenceDiagnostics());
+}
+DistillationColumn.SolveStatus status = column.getLastSolveStatus();
+DistillationColumn.SolverType used = column.getLastSolverTypeUsed();
+```
+
+- `NEWTON` is the fastest solver that converged every nominal and perturbed case.
+  `MATRIX_INSIDE_OUT` is equivalent within the noise of the measurement.
+- `NEWTON`, like the other sequential-family solvers, can finish as `RECONCILED_PRODUCTS`. On the
+  5-tray deethanizer its products then closed the feed to 0.014 %. Rerun with `MESH_RESIDUAL` when
+  the status is not `RIGOROUS_CONVERGED` and the result feeds a material balance.
+- `MESH_RESIDUAL` never returned a non-rigorous status: it either passes its residual gates or
+  fails. That makes it the verification solver. It was also the fastest solver on the two columns
+  with a condenser and a reflux specification (0.03 s and 0.14 s).
+- The sequential solvers are the fastest choice for reboiled columns of ten trays or fewer
+  (0.2 s and 0.7 s on the 5- and 10-tray deethanizers), and two to three times slower than
+  `NEWTON` on the 20-tray column. None of them converged the nominal stabiliser.
+- `NAPHTALI_SANDHOLM` was two to three times slower than `NEWTON` on columns of ten trays or more.
+- `AUTO` failed the nominal stabiliser after 14 s, where `NEWTON` converged in 2.4 s.
+- Product rates from different solver families agree to about 0.1-0.3 % at default tolerances,
+  not better. Sequential substitution stops on the size of the sweep step, which is smaller than
+  the distance to the solution by the factor $\lambda / (1 - \lambda)$ for a sweep contraction
+  ratio $\lambda$ (about 0.99 on the deethanizers).
+
+The measurements do not cover CPA or other associating fluids, absorbers without a reboiler, side
+draws or pumparounds.
+
+### Anderson mixing in the sequential solvers
+
+`DIRECT_SUBSTITUTION`, `DAMPED_SUBSTITUTION` and the `WEGSTEIN` fallback mix the tray outlet states
+of the latest sweeps (Anderson acceleration, depth 5). A mixing phase starts once the damped sweeps
+contract and the sweep temperature step is within 20 times the temperature tolerance. Inside a
+phase the sweeps are undamped and start from a state in which every inter-tray inlet equals the
+neighbouring outlet. A phase whose residual grows threefold or stops improving is rejected: the best
+state is restored, damped substitution resumes, and the rejected sweeps are not charged to the
+iteration limit.
+
+Mixing cut the 5-tray deethanizer from 122 to 31 sweeps and the 10-tray one from 212 to 60. It does
+not help the 20-tray column, whose sweeps spend most of the solve moving the composition front one
+tray at a time.
+
+It runs only on cold solves and is skipped for warm restarts, columns with side-draw, pumparound or
+hydraulic outer loops, adjusted specifications, Murphree efficiency below one, and a user-set
+iteration cap.
+
+```java
+column.setAndersonAccelerationEnabled(false); // plain damped substitution
+int mixedSteps = column.getLastAndersonAccelerationCount();
+```
+
+### Tray enthalpy flash
+
+Each equilibrium tray is a PH flash. On narrow-boiling tray mixtures almost all of $dH/dT$ is
+latent heat, so a temperature Newton step based on the fixed-composition heat capacity overshoots.
+`PHflash` therefore brackets the enthalpy root and switches to an Illinois regula-falsi step when
+the Newton step leaves the bracket. Before this safeguard, a 6-tray C4/C5/C6 debutanizer took
+20-110 s and failed with four solver types; it now converges in 0.1-0.5 s with all of them.
 
 The `NEWTON` backtracking search evaluates bounded step lengths down to 0.125. It retains the
 trial with the lowest finite temperature residual, even if no trial is a descent step, and then
@@ -738,7 +827,8 @@ solvers.
    stream.
 2. Initialize with `ShortcutDistillationColumn` or `initializeFromShortcut` when light and heavy
    keys are known.
-3. Run `INSIDE_OUT` or `AUTO` first; use `MESH_RESIDUAL` or `NAPHTALI_SANDHOLM` for residual audit.
+3. Run `NEWTON` first and fall back to `MESH_RESIDUAL` (see "Choosing a solver"); use
+   `MESH_RESIDUAL` or `NAPHTALI_SANDHOLM` for residual audit.
 4. Add product purity or component recovery specs.
 5. Rate internals and enable hydraulic pressure-drop coupling only after a stable base case exists.
 
@@ -771,7 +861,7 @@ or bubble-point boundary from opposite sides. Material phase fractions above `1e
 
 | Symptom | Recommended checks |
 |---------|--------------------|
-| No convergence | Verify tray numbering, feed condition, endpoint temperatures, pressure profile, and component list. Start with `DIRECT_SUBSTITUTION`, `DAMPED_SUBSTITUTION`, or `AUTO`, then inspect `getConvergenceDiagnostics()`. |
+| No convergence | Verify tray numbering, feed condition, endpoint temperatures, pressure profile, and component list. Start with `NEWTON`, then `MESH_RESIDUAL` (see "Choosing a solver"), then inspect `getConvergenceDiagnostics()`. |
 | Oscillation | Reduce aggressive condenser/reboiler specs, set a lower relaxation factor, or use `DAMPED_SUBSTITUTION`. |
 | Specification does not close | Check `getLastTopSpecificationResidual()`, `getLastBottomSpecificationResidual()`, feasible product split, and whether the required condenser/reboiler exists. For sharp purity, recovery, or product-flow targets, use `setSpecificationHomotopySteps(steps)` or `AUTO`. |
 | Side-draw spec reports non-converged | The target may exceed available tray traffic or feed component inventory. Inspect `getSideDrawStream(...)`, side-draw fraction, and `getLastColumnTearResidual()`. |

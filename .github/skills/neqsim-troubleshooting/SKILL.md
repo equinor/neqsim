@@ -1,7 +1,7 @@
 ---
 name: neqsim-troubleshooting
 description: "Troubleshooting playbook for common NeqSim failures. USE WHEN: a simulation fails to converge, produces unexpected results, throws exceptions, or gives zero/NaN values. Covers flash non-convergence, recycle divergence, equipment errors, phase identification issues, and numerical problems."
-last_verified: "2026-07-04"
+last_verified: "2026-11-14"
 ---
 
 # NeqSim Troubleshooting Playbook
@@ -188,7 +188,7 @@ margins, cooldown times and arrival temperatures all look pessimistic and insens
 
 | Step | Action | Why It Helps |
 |------|--------|-------------|
-| 1 | Try different solver: `column.setSolverType(DistillationColumn.SolverType.INSIDE_OUT)` | Inside-out solver is more robust than standard for many columns |
+| 1 | Try a different solver: `NEWTON` first, then `MESH_RESIDUAL` (`column.setSolverType(DistillationColumn.SolverType.NEWTON)`) | `NEWTON`, `MATRIX_INSIDE_OUT` and `INSIDE_OUT` had no failures in the 2026-11 solver benchmark; sequential substitution and `AUTO` did. See `neqsim-distillation-design`, "Default set-up for agent work" |
 | 2 | Reduce number of stages and increase back | Start simple, validate, then refine |
 | 3 | Check feed stage location — feed too high or low destabilizes | Rule of thumb: feed at ~40-60% of total stages from top |
 | 4 | Adjust reflux ratio — start with a high ratio (>2x minimum) and reduce | High reflux is easier to converge |
