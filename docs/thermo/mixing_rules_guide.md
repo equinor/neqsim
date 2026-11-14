@@ -1141,7 +1141,10 @@ phase endpoints against independent binary equations. It records the large
 aqueous methane error of the staged PR-HV water tuple and the gas-phase MEG
 error of the staged SRK-HV tuple, alongside numerical and equilibrium closure.
 An IAPWS pure-water pressure sensitivity leaves the aqueous methane error
-largely unchanged. The comparison is limited to the measured binary
+largely unchanged. An independent dilute-limit comparison finds the declared
+PR-HV methane Henry constant is 43–57 times the IAPWS correlation across
+the four Frost journal temperatures. The same liquid-direction bias persists
+in an additional measured low-pressure dataset. The comparison is limited to the measured binary
 coordinates and declared pure profiles. The existing validated opt-in profiles
 remain available.
 

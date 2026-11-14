@@ -95,3 +95,40 @@ log-fugacity errors were 1.12e-16, 2.23e-16 and 2.01e-11. The PR flash example
 at 323.76 K and 84.8 bara had gas water 0.001513 under rule2 and 0.001803
 under rule4, and liquid methane 2.89e-7 and 2.15e-5 respectively. Flash timing
 therefore includes differences in the equilibrium and solver work.
+
+## Dilute methane and measured-state fugacity
+
+The 2016 PR-HV source chose its parameters to reproduce **water in the vapor**.
+Its fit emphasized 323.15–423.15 K and 25–700 bara. A fit with that objective
+does not establish the dilute liquid methane chemical potential. The authors'
+exact pure-component inputs have yet to be established.
+
+At the water saturation pressure given by [IAPWS G7-04][henry], the staged
+model's limiting methane fugacity divided by its liquid mole fraction is
+43–57 times the IAPWS Henry constant across the four Frost journal
+temperatures. The factor rises to 94 at 423.15 K. The calculation checks
+the IAPWS Table 6 values and successively lowers methane mole fraction from
+1e-5 to 1e-7. At the 22 measured Frost phase compositions the model
+log(f_gas/f_liquid) ranges from -4.05 to -3.59 for methane and -0.048 to
+0.428 for water. This comparison evaluates the measured compositions directly
+on the two cubic roots, without a flash or measured overall feed. It identifies
+a large liquid-direction mismatch within the declared profile.
+
+An additional 18-point VLE dataset from DOI 10.1021/je9007958 measures dissolved
+methane at 303.2–323.2 K and 1.115–6.383 bara. These pressures are below the
+original fitting emphasis. The staged profile gives 98.48% liquid methane AARD
+and falls outside all 18 compiler expanded uncertainty bands. The maximum
+calculated equilibrium log-fugacity residual is 3.74e-14. The dataset has no
+gas-water observations, so the predicted vapor composition is retained only
+as a calculated value. The IAPWS comparison is a correlation check at solvent
+saturation, with no implied uncertainty interval for the Frost data.
+
+Run `python3 devtools/audit_huron_vidal_frost_dilute.py PATH_TO_NIST_JSON`
+using the [10.1021/je9007958 JSON][low-p]. The executable validates the source
+hash and dataset, reports both measured-state residuals and the dilute
+benchmark, and reproduces [the archived output](dilute-assessment.txt). Treat
+these checks as evidence about the declared inputs and fit objective. They
+do not identify a replacement tuple.
+
+[henry]: https://iapws.org/technical-guidance/release/HenGuide
+[low-p]: https://trc.nist.gov/ThermoML/10.1021/je9007958.json
