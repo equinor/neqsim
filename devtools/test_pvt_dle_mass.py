@@ -158,3 +158,113 @@ def test_documented_example():
     path = Path(__file__).with_name("pvt_examples") / "dle_mass_audit.json"
     report = audit_dle_mass(json.loads(path.read_text(encoding="utf-8")))
     assert [row["status"] for row in report["transitions"]] == ["compatible"]
+
+
+def cell_gas_volume(study, bg):
+    """Attach independently specified cell gas quantities and their shared basis."""
+    stage = study["stages"][1]
+    stage.update(cell_gas_z=measured("0.9", UNITS["cell_gas_z"], "0.000001"),
+                 gas_volume_factor=measured(bg, UNITS["gas_volume_factor"], "0.00000001"),
+                 cell_gas_basis_reference="withdrawn gas at reported isothermal cell state; same Sm3 as GOR")
+    return stage
+
+
+def matching_bg():
+    """Return nominal Bg for the independent synthetic cell and standard states."""
+    return str(Decimal("380") / Decimal("54000"))
+
+
+@pytest.mark.parametrize("keep_standard", (False, True))
+@pytest.mark.parametrize("temperature", ("360", "380", "425", "470"))
+def test_cell_gas_basis_and_joint_mass_bounds(keep_standard, temperature):
+    study = example(None)
+    study["experiment_temperature"] = measured(temperature, "K", "0.00001")
+    stage = cell_gas_volume(study, str(Decimal(temperature) / Decimal("54000")))
+    exact_standard = reference(study)
+    if not keep_standard:
+        del stage["standard_gas_z"]
+        del study["standard_gas"]
+    result = audit_dle_mass(study)["transitions"][0]
+    assert result["status"] == "compatible"
+    def values(record, key):
+        return [Fraction(record[key][end]) for end in ("lower", "upper")]
+    cell = [Fraction("8.31446261815324")*z*t/(p*100000*b)
+            for z in values(stage, "cell_gas_z") for t in values(study, "experiment_temperature")
+            for p in values(stage, "pressure") for b in values(stage, "gas_volume_factor")]
+    lo, hi = min(cell), max(cell)
+    if keep_standard:
+        standard = study["standard_gas"]
+        prior = [Fraction("8.31446261815324")*t*z/p
+                 for t in values(standard, "temperature") for z in values(stage, "standard_gas_z")
+                 for p in values(standard, "pressure")]
+        lo, hi = max(lo, min(prior)), min(hi, max(prior))
+    bounds = [lo, hi]
+    losses = exact_standard["oil_mass_loss_kg_per_m3_reference"]
+    releases = exact_standard["released_gas_sm3_per_m3_reference"]
+    masses = [loss - gas*mol/volume for loss in losses for gas in releases
+              for mol in values(stage, "released_gas_molar_mass") for volume in bounds]
+    for key, (low, high) in (
+        ("resolved_standard_molar_volume_m3_per_mol", bounds),
+        ("mass_residual_kg_per_m3_reference", (min(masses), max(masses))),
+    ):
+        a, b = map(Fraction, result[key])
+        assert a <= low <= high <= b
+        assert max(low-a, b-high)/max(abs(low), abs(high)) < Fraction("1e-24")
+
+
+def test_disjoint_routes_can_fail_even_with_standard_route_mass_compatibility():
+    study = example(None)
+    assert audit_dle_mass(study)["transitions"][0]["status"] == "compatible"
+    cell_gas_volume(study, "0.008")
+    row = audit_dle_mass(study)["transitions"][0]
+    assert row["reason"] == "standard_molar_volume_routes_disagree"
+    assert row["status"] == "incompatible"
+    assert len(row["standard_molar_volume_routes_m3_per_mol"]) == 2
+    assert "implied_standard_molar_volume_m3_per_mol" in row
+    assert "mass_residual_kg_per_m3_reference" not in row
+
+
+def test_cell_basis_partial_and_missing_mass_are_distinct():
+    study = example(None)
+    stage = cell_gas_volume(study, matching_bg())
+    del stage["standard_gas_z"]
+    del study["standard_gas"]
+    z = stage.pop("cell_gas_z")
+    row = audit_dle_mass(study)["transitions"][0]
+    assert row["reason"] == "incomplete_cell_gas_volume_basis"
+    stage["cell_gas_z"] = z
+    del stage["solution_gor"]
+    row = audit_dle_mass(study)["transitions"][0]
+    assert row["reason"] == "missing_transition_input"
+    assert "resolved_standard_molar_volume_m3_per_mol" in row
+
+
+def test_cell_only_can_reject_nonclosing_mass():
+    study = example("30")
+    stage = cell_gas_volume(study, matching_bg())
+    stage.pop("standard_gas_z")
+    study.pop("standard_gas")
+    row = audit_dle_mass(study)["transitions"][0]
+    assert row["status"] == "incompatible"
+    assert row["reason"] == "mass_residual_excludes_zero"
+
+
+@pytest.mark.parametrize("mutate,match", [
+    (lambda stage: stage.pop("cell_gas_basis_reference"), "cell_gas_basis_reference"),
+    (lambda stage: stage["gas_volume_factor"].update(unit="1"), "m3 cell/Sm3 gas"),
+    (lambda stage: stage["cell_gas_z"].update(lower="0"), "sign"),
+])
+def test_cell_gas_basis_requires_valid_data_and_provenance(mutate, match):
+    study = example(None)
+    mutate(cell_gas_volume(study, matching_bg()))
+    with pytest.raises(PVTStudyError, match=match):
+        audit_dle_mass(study)
+
+def test_disagreement_retains_missing_transition_fields():
+    study = example(None)
+    stage = cell_gas_volume(study, "0.008")
+    del stage["solution_gor"]
+    row = audit_dle_mass(study)["transitions"][0]
+    assert row["status"] == "incompatible"
+    assert row["reason"] == "standard_molar_volume_routes_disagree"
+    assert row["missing"] == ["current.solution_gor"]

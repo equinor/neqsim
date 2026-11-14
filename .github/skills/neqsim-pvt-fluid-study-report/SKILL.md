@@ -38,7 +38,8 @@ The input schema, shipped examples, supported limits and output paths are in the
 For primary isothermal differential liberation, run
 `pvt_dle_mass.audit_dle_mass` on the source-identified stage intervals before
 admitting observations. Retain unavailable columns, residual-oil identity,
-and any unresolved standard gas basis in the evidence.
+and any unresolved standard gas basis in the evidence. The cell Bg/Z route
+requires source evidence linking both quantities to the withdrawn gas and GOR basis.
 See the [DLE audit](../../../docs/pvtsimulation/dle_mass_audit.md).
 
 ## One normalized evidence chain

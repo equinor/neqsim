@@ -13,10 +13,13 @@ UNITS = {
     "solution_gor": "Sm3/m3 residual oil",
     "released_gas_molar_mass": "kg/mol",
     "standard_gas_z": "1",
+    "cell_gas_z": "1",
+    "gas_volume_factor": "m3 cell/Sm3 gas",
 }
 UP = Context(prec=34, rounding=ROUND_CEILING)
 DOWN = Context(prec=34, rounding=ROUND_FLOOR)
 GAS_CONSTANT = Decimal("8.31446261815324")
+PA_PER_BAR = (Decimal("100000"), Decimal("100000"))
 
 
 def _required_text(record, names):
@@ -71,15 +74,34 @@ def _serialize(interval):
     return [str(endpoint) for endpoint in interval]
 
 
-def _transition(previous, current, standard_volume):
+def _transition(previous, current, standard_volume, cell_temperature):
     """Evaluate one observed differential withdrawal."""
     result = {"status": "unresolved"}
+    volume = None
+    routes = {}
+    if standard_volume is not None and current["standard_gas_z"] is not None:
+        routes["standard_state"] = _product(standard_volume, current["standard_gas_z"])
+    if current["cell_gas_z"] is not None and current["gas_volume_factor"] is not None:
+        ideal_volume = _product((GAS_CONSTANT, GAS_CONSTANT), cell_temperature)
+        gas_volume = _product(current["cell_gas_z"], ideal_volume)
+        cell_pressure = _product(current["pressure"], PA_PER_BAR)
+        routes["cell_gas_volume_factor"] = _divide(gas_volume, _product(cell_pressure, current["gas_volume_factor"]))
+    if "cell_gas_volume_factor" in routes:
+        result["standard_molar_volume_routes_m3_per_mol"] = {name: _serialize(bounds) for name, bounds in routes.items()}
+    if routes:
+        volume = max(bounds[0] for bounds in routes.values()), min(bounds[1] for bounds in routes.values())
+        if volume[0] <= volume[1] and "cell_gas_volume_factor" in routes:
+            result["resolved_standard_molar_volume_m3_per_mol"] = _serialize(volume)
+
     missing = [side + "." + key for side, state, keys in (
         ("previous", previous, ("oil_volume_ratio", "oil_density", "solution_gor")),
         ("current", current, ("oil_volume_ratio", "oil_density", "solution_gor", "released_gas_molar_mass")),
     ) for key in keys if state[key] is None]
     if missing:
-        result.update(reason="missing_transition_input", missing=missing)
+        if volume is not None and volume[0] > volume[1]:
+            result.update(status="incompatible", reason="standard_molar_volume_routes_disagree", missing=missing)
+        else:
+            result.update(reason="missing_transition_input", missing=missing)
         return result
 
     oil_loss = _subtract(_product(previous["oil_volume_ratio"], previous["oil_density"]),
@@ -94,14 +116,19 @@ def _transition(previous, current, standard_volume):
         implied = _divide(_product(gas_release, current["released_gas_molar_mass"]), oil_loss)
         result["implied_standard_molar_volume_m3_per_mol"] = _serialize(implied)
 
-    if standard_volume is None or current["standard_gas_z"] is None:
-        result["reason"] = "missing_standard_state_or_stage_z"
+    if volume is not None and volume[0] > volume[1]:
+        result.update(status="incompatible", reason="standard_molar_volume_routes_disagree")
+        return result
+    if volume is None:
+        if current["cell_gas_z"] is not None or current["gas_volume_factor"] is not None:
+            result["reason"] = "incomplete_cell_gas_volume_basis"
+        else:
+            result["reason"] = "missing_standard_state_or_stage_z"
         return result
     if gas_release[0] < 0:
         # At least zero release remains possible. Use the physical intersection for the mass check.
         gas_release = (Decimal(0), gas_release[1])
-    gas_mass = _divide(_product(gas_release, current["released_gas_molar_mass"]),
-                       _product(standard_volume, current["standard_gas_z"]))
+    gas_mass = _divide(_product(gas_release, current["released_gas_molar_mass"]), volume)
     residual = _subtract(oil_loss, gas_mass)
     result["mass_residual_kg_per_m3_reference"] = _serialize(residual)
     if residual[0] > 0 or residual[1] < 0:
@@ -118,14 +145,16 @@ def audit_dle_mass(study):
 
     Amounts are per cubic metre of the declared final residual oil. Molecular
     mass and optional standard-state Z belong to the gas removed at the current
-    stage. Return a source-identified JSON-ready report with signed residuals.
+    stage. A stated cell gas Z and formation volume factor on the same gas
+    and standard-volume basis provide another route to standard molar volume.
+    Return a source-identified JSON-ready report with signed residuals.
     """
     if not isinstance(study, dict) or study.get("protocol") != "DLE":
         raise PVTStudyError("DLE mass audit requires a DLE protocol mapping")
     _required_text(study, ("sample_reference", "experiment_reference", "source_reference",
                            "data_use_reference", "residual_oil_reference", "bounds_reference"))
-    _interval(study.get("experiment_temperature"), "K")  # Retained as the shared isothermal basis.
-    if study.get("experiment_temperature") is None:
+    cell_temperature = _interval(study.get("experiment_temperature"), "K")
+    if cell_temperature is None:
         raise PVTStudyError("DLE experiment temperature is required")
 
     standard = study.get("standard_gas")
@@ -159,8 +188,12 @@ def audit_dle_mass(study):
             raise PVTStudyError("DLE pressure intervals must decrease without overlap")
         if data["standard_gas_z"] is not None and standard_volume is None:
             raise PVTStudyError("Stage standard gas Z requires the standard gas state")
+        if data["cell_gas_z"] is not None or data["gas_volume_factor"] is not None:
+            _required_text(state, ("cell_gas_basis_reference",))
+            if previous is None:
+                raise PVTStudyError("Cell gas data require a differential withdrawal stage")
         if previous is not None:
-            result = _transition(previous, data, standard_volume)
+            result = _transition(previous, data, standard_volume, cell_temperature)
             result.update(previous_stage=previous_id, current_stage=stage_id)
             transitions.append(result)
         previous, previous_id = data, stage_id
