@@ -5,7 +5,6 @@ import neqsim.process.ProcessElementInterface;
 import neqsim.process.alarm.AlarmConfig;
 import neqsim.process.alarm.AlarmEvent;
 import neqsim.process.alarm.AlarmState;
-import neqsim.process.measurementdevice.online.OnlineSignal;
 
 /**
  * MeasurementDeviceInterface interface.
@@ -35,18 +34,6 @@ public interface MeasurementDeviceInterface extends ProcessElementInterface {
    * @return a double
    */
   public double getMeasuredValue(String unit);
-
-  /**
-   * getOnlineSignal.
-   *
-   * @return a {@link neqsim.process.measurementdevice.online.OnlineSignal} object
-   * @deprecated Since 3.25.0. Acquire historian samples in the application integration layer. Implementations based on
-   * {@link MeasurementDeviceBaseClass} can receive condition-analysis values through
-   * {@link MeasurementDeviceBaseClass#setOnlineMeasurementValue(double, String)}. That input is separate from the
-   * legacy online-signal getter.
-   */
-  @Deprecated
-  public OnlineSignal getOnlineSignal();
 
   /**
    * getMeasuredPercentValue.
@@ -110,32 +97,6 @@ public interface MeasurementDeviceInterface extends ProcessElementInterface {
    * @param logging a boolean
    */
   public void setLogging(boolean logging);
-
-  /**
-   * getOnlineValue.
-   *
-   * @return a double
-   * @deprecated Since 3.25.0. Acquire historian samples in the application integration layer. Implementations based on
-   * {@link MeasurementDeviceBaseClass} can receive condition-analysis values through
-   * {@link MeasurementDeviceBaseClass#setOnlineMeasurementValue(double, String)}. That input is separate from the
-   * legacy online-signal getter.
-   */
-  @Deprecated
-  public default double getOnlineValue() {
-    return getOnlineSignal().getValue();
-  }
-
-  /**
-   * isOnlineSignal.
-   *
-   * @return a boolean
-   * @deprecated Since 3.25.0. Acquire historian samples in the application integration layer. Implementations based on
-   * {@link MeasurementDeviceBaseClass} can receive condition-analysis values through
-   * {@link MeasurementDeviceBaseClass#setOnlineMeasurementValue(double, String)}. That input is separate from the
-   * legacy online-signal getter.
-   */
-  @Deprecated
-  public boolean isOnlineSignal();
 
   /**
    * Associates an alarm configuration with the measurement device.

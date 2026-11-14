@@ -203,13 +203,6 @@ class FireGasDetectorTransientStateTransactionTest extends neqsim.NeqSimTest {
       assertTrue(issue.contains("subclass-owned mutable state"));
     }
 
-    GasDetector onlineGas = new GasDetector("online gas");
-    onlineGas.setIsOnlineSignal(true, "plant", "GD-ONLINE");
-    ProcessSystem onlineProcess = new ProcessSystem("online detector blocker");
-    onlineProcess.add(onlineGas);
-    assertFalse(onlineProcess.getTransientTransactionCoverage().isComplete());
-    assertTrue(onlineProcess.getTransientTransactionCoverage().getBlockingIssues().get(0).contains("external I/O"));
-
     GasDetector firstGas = new GasDetector("first gas");
     GasDetector secondGas = new GasDetector("second gas");
     assertThrows(IllegalArgumentException.class,

@@ -11,7 +11,6 @@ import neqsim.process.alarm.AlarmEvent;
 import neqsim.process.alarm.AlarmState;
 import neqsim.process.measurementdevice.InstrumentTagRole;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
-import neqsim.process.measurementdevice.online.OnlineSignal;
 
 /**
  * Tests for {@link TransferFunctionBlock}.
@@ -41,11 +40,6 @@ class TransferFunctionBlockTest {
     @Override
     public double getMeasuredValue(String unit) {
       return value;
-    }
-
-    @Override
-    public OnlineSignal getOnlineSignal() {
-      return null;
     }
 
     @Override
@@ -87,11 +81,6 @@ class TransferFunctionBlockTest {
 
     @Override
     public void setLogging(boolean logging) {
-    }
-
-    @Override
-    public boolean isOnlineSignal() {
-      return false;
     }
 
     @Override

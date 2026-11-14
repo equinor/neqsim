@@ -189,13 +189,6 @@ class StatefulDerivedInstrumentTransientStateTransactionTest extends neqsim.NeqS
       assertTrue(issue.contains("subclass-owned mutable state"));
     }
 
-    SoftSensor online = new SoftSensor("online soft sensor", softStream, PropertyType.DENSITY);
-    online.setIsOnlineSignal(true, "plant", "tag");
-    ProcessSystem onlineProcess = new ProcessSystem("online derived instrument");
-    onlineProcess.add(online);
-    assertFalse(onlineProcess.getTransientTransactionCoverage().isComplete());
-    assertTrue(onlineProcess.getTransientTransactionCoverage().getBlockingIssues().get(0).contains("external I/O"));
-
     pHProbe firstProbe = new pHProbe(phStream);
     pHProbe secondProbe = new pHProbe(phStream);
     assertThrows(IllegalArgumentException.class,

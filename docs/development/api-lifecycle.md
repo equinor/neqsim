@@ -78,27 +78,32 @@ deprecated public contract.
 
 ## Legacy Aspen IP.21 historian integration
 
-Since NeqSim 3.25.0, `AspenIP21Database`, `OnlineSignal`, and the measurement-device
-methods that expose or configure the legacy signal are deprecated (issue
-[#4186](https://github.com/equinor/neqsim/issues/4186)). Constructors, method
-signatures, serialized field layouts and `serialVersionUID` values are retained.
-Existing connection attempts and read/failure behavior are unchanged. Deprecation
-does not certify the legacy JDBC/ODBC path on current JVMs or provide a new
-historian connector.
+`AspenIP21Database`, `OnlineSignal`, and the measurement-device methods that
+exposed or configured the legacy signal (`getOnlineSignal()`, `setOnlineSignal(...)`,
+`isOnlineSignal()`, `setIsOnlineSignal(...)`, `getOnlineValue()`) were deprecated in
+NeqSim 3.25.0 (issue [#4186](https://github.com/equinor/neqsim/issues/4186)), first
+published in 3.26.0, and are removed in 3.30.0 after the required minor-release
+deprecation period. The legacy path used the removed `sun.jdbc.odbc` bridge driver and a
+placeholder connection string, so no working integration is lost.
 
 Move historian acquisition, authentication, tag mapping, sample quality and
 freshness checks into the application integration layer using a supported client
 for the chosen historian. For NeqSim condition analysis, pass the checked numeric
 sample and engineering unit to
 `MeasurementDeviceBaseClass.setOnlineMeasurementValue(double, String)` and read it
-with `getOnlineMeasurementValue()`. This input does not populate `OnlineSignal`,
-implement its timestamp/connection behavior, or change the legacy `getOnlineValue()`
-method. Applications using that method must migrate their acquisition/read path
-explicitly. Offline calculated measurements remain available through
-`getMeasuredValue(...)`.
+with `getOnlineMeasurementValue()`. Offline calculated measurements remain available
+through `getMeasuredValue(...)`.
 
-No replacement JDBC query API or automatic sample adapter is introduced. Retain
-existing integrations during migration and qualify the application's sample
-mapping separately. Deleting these public types or methods requires the release
-period and breaking-change process above; this deprecation does not schedule
-removal in a patch release.
+Compatibility notes for 3.30.0:
+
+- `serialVersionUID` values of the measurement-device classes are unchanged. Serialized
+  models whose `onlineSignal` field was `null` (every model that never called
+  `setIsOnlineSignal`) still deserialize; the removed field is skipped. A stream that
+  contains a non-null `OnlineSignal` instance fails with `ClassNotFoundException` and
+  must be recreated from its model inputs.
+- The `onlineSignal` key is no longer written to the native instrument configuration of
+  P&ID engineering packages (`PidNativeControlSystem`). Packages exported earlier with
+  `onlineSignal: false` still validate and apply; a package declaring `onlineSignal: true`
+  is rejected because that state can no longer be represented.
+- Custom `MeasurementDeviceInterface` implementations must drop their `getOnlineSignal()`
+  and `isOnlineSignal()` overrides.

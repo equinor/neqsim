@@ -203,13 +203,6 @@ class ModelPredictiveControllerTransientStateTransactionTest extends neqsim.NeqS
     ModelPredictiveController second = configuredSingleInput("second", new MutableMeasurement("second", "C", 1.0));
     assertThrows(IllegalArgumentException.class, () -> first.restoreTransientState(second.captureTransientState()));
     assertThrows(IllegalArgumentException.class, () -> first.restoreTransientState(null));
-
-    MutableMeasurement online = new MutableMeasurement("online", "C", 1.0);
-    online.setIsOnlineSignal(true, "plant", "TT-1");
-    ProcessSystem onlineProcess = new ProcessSystem("online MPC");
-    onlineProcess.add(configuredSingleInput("online controller", online));
-    assertFalse(onlineProcess.getTransientTransactionCoverage().isComplete());
-    assertTrue(onlineProcess.getTransientTransactionCoverage().getBlockingIssues().get(0).contains("external I/O"));
   }
 
   private static ModelPredictiveController configuredSingleInput(String name, MutableMeasurement measurement) {

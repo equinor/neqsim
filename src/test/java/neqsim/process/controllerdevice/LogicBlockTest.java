@@ -12,7 +12,6 @@ import neqsim.process.alarm.AlarmEvent;
 import neqsim.process.alarm.AlarmState;
 import neqsim.process.measurementdevice.InstrumentTagRole;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
-import neqsim.process.measurementdevice.online.OnlineSignal;
 
 /**
  * Tests for {@link LogicBlock}.
@@ -43,11 +42,6 @@ class LogicBlockTest {
     @Override
     public double getMeasuredValue(String unit) {
       return value;
-    }
-
-    @Override
-    public OnlineSignal getOnlineSignal() {
-      return null;
     }
 
     @Override
@@ -89,11 +83,6 @@ class LogicBlockTest {
 
     @Override
     public void setLogging(boolean logging) {
-    }
-
-    @Override
-    public boolean isOnlineSignal() {
-      return false;
     }
 
     @Override

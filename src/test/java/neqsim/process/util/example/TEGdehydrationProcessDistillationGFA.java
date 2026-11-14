@@ -510,8 +510,7 @@ public class TEGdehydrationProcessDistillationGFA {
      * logger.info("water dew point of dry gas  " + waterDewPointAnalyser.getMeasuredValue("C"));
      *
      * //double dewT = ((WaterDewPointAnalyser)operations.getMeasurementDevice("water dew point analyser")).
-     * getMeasuredValue("C"); //waterDewPointAnalyser.setOnlineValue(measured, unit)
-     * //waterDewPointAnalyser.setOnlineSignal(isOnlineSignal, plantName, transmitterame);
+     * getMeasuredValue("C");
      *
      * //Heat exchanger test
      *

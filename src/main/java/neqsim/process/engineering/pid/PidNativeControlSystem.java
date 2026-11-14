@@ -804,7 +804,6 @@ public final class PidNativeControlSystem {
     values.put("delaySteps", Integer.valueOf(sensor.getDelaySteps()));
     values.put("faultType", sensor.getFaultType().name());
     values.put("faultParameter", Double.valueOf(sensor.getFaultParameter()));
-    values.put("onlineSignal", Boolean.valueOf(sensor.isOnlineSignal()));
     values.put("sampleAndHold", Boolean.valueOf(measurement instanceof TransientMeasurementDevice
         && ((TransientMeasurementDevice) measurement).isTransientSamplingEnabled()));
     return values;
@@ -818,9 +817,8 @@ public final class PidNativeControlSystem {
    */
   private static void applySensor(MeasurementDeviceInterface measurement, Map<String, Object> values) {
     sameKeys(sensorConfiguration(measurement), values);
-    if (!measurement.getClass().getName().equals(values.get("nativeClass"))
-        || Boolean.TRUE.equals(values.get("onlineSignal"))) {
-      throw new IllegalArgumentException("Instrument class changed or external online state is unsupported");
+    if (!measurement.getClass().getName().equals(values.get("nativeClass"))) {
+      throw new IllegalArgumentException("Instrument class changed");
     }
     MeasurementDeviceBaseClass sensor = (MeasurementDeviceBaseClass) measurement;
     measurement.setUnit(String.valueOf(values.get("unit")));
@@ -1070,11 +1068,16 @@ public final class PidNativeControlSystem {
     }
   }
 
+  /** Legacy instrument configuration key emitted before the Aspen IP.21 online-signal path was removed. */
+  private static final String LEGACY_ONLINE_SIGNAL_KEY = "onlineSignal";
+
   /**
-   * Returns one declared canonical configuration as detached JSON values.
+   * Returns one declared canonical configuration as detached JSON values. A legacy {@code onlineSignal=false} entry on
+   * instrument elements is dropped so that packages exported before NeqSim 3.30.0 still validate.
    *
    * @param element governed element
    * @return static configuration
+   * @throws IllegalArgumentException if the element lacks a configuration or declares the removed online-signal state
    */
   @SuppressWarnings("unchecked")
   private static Map<String, Object> configuration(PidElement element) {
@@ -1082,7 +1085,16 @@ public final class PidNativeControlSystem {
     if (!(value instanceof Map)) {
       throw new IllegalArgumentException("Canonical element lacks native configuration: " + element.getTag());
     }
-    return GSON.fromJson(GSON.toJson(value), Map.class);
+    Map<String, Object> values = GSON.fromJson(GSON.toJson(value), Map.class);
+    if ((element.getType() == PidElementType.MEASUREMENT || element.getType() == PidElementType.INDICATOR)
+        && values.containsKey(LEGACY_ONLINE_SIGNAL_KEY)) {
+      if (Boolean.TRUE.equals(values.get(LEGACY_ONLINE_SIGNAL_KEY))) {
+        throw new IllegalArgumentException(
+            "Legacy external online signal is no longer supported for instrument " + element.getTag());
+      }
+      values.remove(LEGACY_ONLINE_SIGNAL_KEY);
+    }
+    return values;
   }
 
   /**

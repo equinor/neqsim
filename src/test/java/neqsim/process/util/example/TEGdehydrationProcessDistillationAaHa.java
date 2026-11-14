@@ -358,8 +358,6 @@ public class TEGdehydrationProcessDistillationAaHa {
      *
      * //double dewT = ((WaterDewPointAnalyser)operations.
      * getMeasurementDevice("water dew point analyser")).getMeasuredValue("C");
-     * //waterDewPointAnalyser.setOnlineValue(measured, unit) //waterDewPointAnalyser.setOnlineSignal(isOnlineSignal,
-     * plantName, transmitterame);
      *
      * //Heat echanger test
      *
