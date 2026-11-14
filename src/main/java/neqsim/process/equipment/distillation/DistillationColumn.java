@@ -1282,6 +1282,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (!isDoInitializion()) {
       return;
     }
+    configureTrayEnthalpyFlash();
     setDoInitializion(false);
     List<SystemInterface> pumparoundReturnSystems = snapshotPumparoundReturnSystems();
 
@@ -1416,6 +1417,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   @Override
   public void run(UUID id) {
     long runStartTime = System.nanoTime();
+    configureTrayEnthalpyFlash();
     lastAppliedTemperatureStepResidual = Double.NaN;
     lastInternalFlowChange = Double.NaN;
     lastInternalFlowGrowth = Double.NaN;
@@ -7020,7 +7022,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     // Mixing is limited to cold solves of columns without outer tear variables or adjusted
     // specifications. A warm restart must reproduce the accepted state it starts from, and an
     // outer loop compares candidate solves that have to follow one deterministic damped path.
-    boolean andersonAllowed = andersonAccelerationEnabled && murphreeEfficiency >= 1.0 && numberOfTrays >= 3
+    boolean andersonAllowed = andersonAccelerationEnabled && !hasNonidealMurphreeStages() && numberOfTrays >= 3
         && !hasBeenSolvedBefore && !hasActiveColumnTearVariables() && !hasAdjustableSpecifications()
         && !hardIterationCap && maximumSweeps == Integer.MAX_VALUE;
     int andersonPhaseStartSweep = 0;
@@ -13268,6 +13270,29 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (convergenceHistory != null && convergenceHistory.size() < MAX_CONVERGENCE_HISTORY) {
       convergenceHistory.add(entry);
     }
+  }
+
+  /** Selects one PH iteration policy for the connected column stages. */
+  private void configureTrayEnthalpyFlash() {
+    boolean useStandard = hasNonidealMurphreeStages();
+    for (SimpleTray tray : trays) {
+      tray.setUseStandardEnthalpyFlash(useStandard);
+    }
+  }
+
+  /**
+   * Checks the effective efficiencies of stages eligible for the Murphree vapor correction.
+   *
+   * @return true if a stage can apply the nonideal correction
+   */
+  private boolean hasNonidealMurphreeStages() {
+    int end = hasCondenser ? numberOfTrays - 1 : numberOfTrays;
+    for (int stage = 1; stage < end; stage++) {
+      if (getEffectiveMurphreeEfficiency(stage) < 1.0 - 1e-10) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

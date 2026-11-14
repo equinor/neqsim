@@ -38,6 +38,9 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    */
   private boolean useReactiveFlash = false;
 
+  /** Whether the column uses the standard PH iteration for its nonideal tray corrections. */
+  private boolean useStandardEnthalpyFlash;
+
   /**
    * When {@code true}, only thermodynamic properties (init level 2: enthalpy, K-values, densities needed for the
    * balances) are initialized after each tray flash and the expensive physical/transport properties (viscosity, thermal
@@ -249,6 +252,15 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     return useReactiveFlash;
   }
 
+  /**
+   * Selects the standard PH iteration for a column with nonideal Murphree stages.
+   *
+   * @param useStandard true to use the standard PH iteration
+   */
+  void setUseStandardEnthalpyFlash(boolean useStandard) {
+    useStandardEnthalpyFlash = useStandard;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
@@ -310,12 +322,13 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
       initTrayProperties();
     } else {
       try {
+        double enthalpyTolerance = useStandardEnthalpyFlash ? 0.0 : TRAY_ENTHALPY_SINGLE_RESIDUAL_TOLERANCE;
         if (useReactiveFlash) {
-          testOps.reactivePHflash(enthalpy, 0, TRAY_ENTHALPY_SINGLE_RESIDUAL_TOLERANCE);
+          testOps.reactivePHflash(enthalpy, 0, enthalpyTolerance);
         } else {
           // The column repeats this flash every sweep, so one residual two orders of magnitude
           // below the nominal tolerance is accepted without a confirming equilibrium flash.
-          testOps.PHflash(enthalpy, 0, TRAY_ENTHALPY_SINGLE_RESIDUAL_TOLERANCE);
+          testOps.PHflash(enthalpy, 0, enthalpyTolerance);
         }
         initTrayProperties();
       } catch (Exception ex) {

@@ -444,6 +444,8 @@ latent heat, so a temperature Newton step based on the fixed-composition heat ca
 the Newton step leaves the bracket, and checks the enthalpy residual before accepting a solution.
 When the reactive flash delegates to ordinary vapor-liquid equilibrium in a system with no
 independent reactions, it uses the same tray flash settings.
+Columns with nonideal Murphree stages use the standard PH iteration for the connected tray
+sweeps, including when a stage-level efficiency overrides the column default.
 Before this safeguard, a 6-tray C4/C5/C6 debutanizer took
 20-110 s and failed with four solver types; it now converges in 0.1-0.5 s with all of them.
 
