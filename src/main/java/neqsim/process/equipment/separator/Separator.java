@@ -417,6 +417,15 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
   /** Relative volume residual accepted for a transient VU state. */
   protected static final double TRANSIENT_VU_VOLUME_TOLERANCE = 1.0e-3;
+
+  /**
+   * Fraction of the gas-cap inventory time constant (gas mass divided by the largest boundary mass flow) used as the
+   * largest explicit transient step. See {@link #getMaxStableTransientTimeStep()}. Measured on the controlled separator
+   * of GitHub discussion 1574 (2026-11-14): 0.4 is stable for the open-loop vessel but let the pressure loop drift to
+   * 4.2 bara against a 5.0 bara reference after 2000 s; 0.1 matched the 1 s reference within 0.01 bara at 2.7 times its
+   * speed.
+   */
+  protected static final double TRANSIENT_STABILITY_FACTOR = 0.1;
   /** Relative internal-energy residual accepted for a transient VU state. */
   protected static final double TRANSIENT_VU_ENERGY_TOLERANCE = 1.0e-3;
 
@@ -886,10 +895,59 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
           "Separator '%s' rejected transient VU state: operation=%s, converged=%s, volumeResidual=%.12g,"
               + " energyResidual=%.12g, volumeTolerance=%.12g, energyTolerance=%.12g",
           getName(), operation == null ? "unknown" : operation.getClass().getSimpleName(), operationConverged,
-          volumeResidual, energyResidual, TRANSIENT_VU_VOLUME_TOLERANCE, TRANSIENT_VU_ENERGY_TOLERANCE));
+          volumeResidual, energyResidual, TRANSIENT_VU_VOLUME_TOLERANCE, TRANSIENT_VU_ENERGY_TOLERANCE)
+          + (thermoSystem.hasPhaseType("gas")
+              ? ". The vessel inventory is usually non-physical after a too-large explicit step: reduce the time"
+                  + " step or keep ProcessSystem automatic transient sub-stepping enabled (largest stable step for"
+                  + " this separator is about "
+                  + String.format(java.util.Locale.ROOT, "%.3g", getMaxStableTransientTimeStep()) + " s)."
+              : ". The vessel has no gas cap left, i.e. it is liquid-full: more liquid has entered than has left."
+                  + " Liquid overfill and carry-over into the gas outlet are not modelled. Check that the level"
+                  + " control can make the liquid outflow exceed the inflow (setpoint below the maximum level,"
+                  + " inlet valve minimum opening, liquid outlet capacity)."));
     }
     if (transientEnergyBalanceTracker != null) {
       transientEnergyBalanceTracker.recordAcceptedVu(specifiedVolumeM3, actualEnergyJ, actualVolumeM3);
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * The separator inventory is integrated explicitly while the inlet and outlet valve flows are evaluated at the
+   * pressure of the previous step. When the boundary mass flow is large compared with the gas-cap inventory, a long
+   * step overshoots the pressure (it can rise above the upstream pressure) and the next VU flash has no physical
+   * solution. The estimate is {@link #TRANSIENT_STABILITY_FACTOR} times the gas-cap time constant: gas mass (gas
+   * density times gas-cap volume) divided by the larger of the inlet and the total outlet mass flow. It is valid both
+   * before and after the transient inventory is initialized. Steady-state separators, liquid-full vessels and vessels
+   * without flow return positive infinity.
+   * </p>
+   */
+  @Override
+  public double getMaxStableTransientTimeStep() {
+    if (getCalculateSteadyState() || thermoSystem == null || gasOutStream == null || inletStreamMixer == null
+        || !thermoSystem.hasPhaseType("gas")) {
+      return Double.POSITIVE_INFINITY;
+    }
+    try {
+      double gasVolumeM3 = getSeparatorVolume() - calcLiquidVolume();
+      double gasMassKg = thermoSystem.getPhase("gas").getDensity("kg/m3") * gasVolumeM3;
+      double inletKgPerSec = inletStreamMixer.getOutletStream().getFlowRate("kg/sec");
+      double outletKgPerSec = gasOutStream.getFlowRate("kg/sec");
+      if (liquidOutStream != null && liquidOutStream.getThermoSystem() != null
+          && liquidOutStream.getThermoSystem().getTotalNumberOfMoles() > 0.0) {
+        outletKgPerSec += liquidOutStream.getFlowRate("kg/sec");
+      }
+      double boundaryKgPerSec = Math.max(inletKgPerSec, outletKgPerSec);
+      if (!(gasMassKg > 0.0) || !(boundaryKgPerSec > 1.0e-12)) {
+        return Double.POSITIVE_INFINITY;
+      }
+      double stableStep = TRANSIENT_STABILITY_FACTOR * gasMassKg / boundaryKgPerSec;
+      return Double.isFinite(stableStep) && stableStep > 0.0 ? stableStep : Double.POSITIVE_INFINITY;
+    } catch (RuntimeException ex) {
+      logger.debug("Could not estimate stable transient step for separator " + getName() + ": " + ex.getMessage());
+      return Double.POSITIVE_INFINITY;
     }
   }
 

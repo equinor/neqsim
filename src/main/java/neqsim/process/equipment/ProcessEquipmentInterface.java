@@ -36,6 +36,18 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   public String[][] reportResults();
 
   /**
+   * Returns the largest transient time step, in seconds, that this unit can integrate stably with its explicit scheme
+   * in the current state. {@link neqsim.process.processmodel.ProcessSystem#runTransient(double, java.util.UUID)} splits
+   * a requested step into equal sub-steps no longer than the smallest value reported by its units when automatic
+   * transient sub-stepping is enabled. The default is positive infinity (no limit).
+   *
+   * @return largest stable transient step in seconds, or {@link Double#POSITIVE_INFINITY} when unconstrained
+   */
+  default double getMaxStableTransientTimeStep() {
+    return Double.POSITIVE_INFINITY;
+  }
+
+  /**
    * Initialize a <code>initMechanicalDesign</code> for the equipment.
    */
   default void initMechanicalDesign() {
