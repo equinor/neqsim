@@ -77,6 +77,36 @@ against the [NIST Antoine correlation][propane-psat] found the ordinary
 PR saturation pressure 0.12–0.53% higher at 310.93, 329.26, 349.82
 and 360.80 K. These temperatures fall within the correlation's range.
 
+## Independent aqueous propane experiment
+
+Azarnoosh and McKetta (*Petroleum Refiner* 37, 275–278, 1958) measured
+aqueous propane using an equilibrated sample, reflux and volumetric gas
+collection. The [IUPAC compiler PDF][compilation], printed page 42 (file
+page 4), reproduces original measurements. The
+[observation file](azarnoosh-mcketta-observations.csv) retains all nine
+original rows within the nominal fit T/P window (377.594 and 410.928 K,
+26.903–35.280 bara). These rows were transcribed from the rendered table
+using the reported Fahrenheit temperature, total psia and mole fraction.
+The 511.7 psia row has no compiled partial pressure and has both original
+coordinates and measured mole fraction. Pages 43–44 contain smoothed
+values. Page 39 classifies the experiment as tentative and recommends no
+dataset because overlap between experiments is limited.
+
+Add `--dataset azarnoosh-mcketta` to the commands above to reproduce the
+[declared-input assessment](azarnoosh-mcketta-assessment.csv), the
+[pure-water pressure control](azarnoosh-mcketta-water-pressure-control.csv)
+and the input sensitivity. With declared inputs, all nine predictions are
+10.06–17.89% low (14.18% AARD). Matching local pure-water saturation
+pressure gives 13.30% AARD. Page 40 gives 1% pressure and 2% compiler
+aqueous mole-fraction error estimates. At fixed reported temperature,
+the prediction stays below the lower composition estimate at both pressure
+offsets for all nine rows. The table gives no temperature error or point
+confidence intervals. The [native receipt](azarnoosh-mcketta-native-assessment.csv)
+uses the same feed, fresh/repeated/reordered checks and acceptance tolerances
+as above. The nine pairs of flashes passed all six model assertions and
+matched both independent endpoints. Maximum balance, normalization and
+log-fugacity residuals were 1.85 × 10⁻¹⁵, 1.11 × 10⁻¹⁶ and 9.91 × 10⁻¹².
+
 The comparison supports keeping the tuple staged. The publisher's
 original propane vapor-water table and its point uncertainty remain
 missing. [Alassi et al.][alassi] provides liquid-propane experiments,

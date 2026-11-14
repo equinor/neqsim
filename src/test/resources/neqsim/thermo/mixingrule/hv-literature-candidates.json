@@ -808,6 +808,16 @@
     "within_nominal_fitted_TP": 5,
     "aqueous_AARD_percent": 12.619052294175315,
     "aqueous_AARD_with_local_water_pressure_control_percent": 11.657682695786658,
+    "independent_aqueous_experiment": {
+      "source": "Azarnoosh and McKetta, Petroleum Refiner 37, 275–278 (1958), original measurements reproduced on IUPAC SDS-24 printed page 42, PDF page 4",
+      "observations": 9,
+      "temperature_K": [377.59444444444443, 410.92777777777775],
+      "absolute_pressure_bar": [26.903342957941533, 35.280473069140655],
+      "aqueous_AARD_percent": 14.176135307965618,
+      "aqueous_AARD_with_local_water_pressure_control_percent": 13.303991794084759,
+      "uncertainty": "IUPAC page 40 estimates 1% pressure and 2% relative aqueous composition error. Temperature error and point confidence intervals are unavailable. IUPAC evaluation classifies the dataset as tentative.",
+      "observations_file": "hv-water-propane/azarnoosh-mcketta-observations.csv"
+    },
     "vapor_water": "calculated endpoint only; primary measured values and uncertainty unresolved",
     "protocol": "hv-water-propane/README.md"
   },

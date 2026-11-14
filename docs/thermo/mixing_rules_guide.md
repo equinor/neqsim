@@ -1103,7 +1103,9 @@ compares the recovered tuple against 18 aqueous propane measurements. With
 declared NeqSim pure inputs, the five points within the paper’s nominal T/P
 window have 12.62% aqueous AARD. Matching pure-water saturation pressure
 locally gives 11.66% AARD. The associated vapor-water predictions still need
-measured validation. The profile remains staged.
+measured validation. A separate set of nine in-window Azarnoosh–McKetta
+aqueous measurements gives 14.18% AARD with the same inputs, or 13.30%
+with the local pure-water pressure control. The profile remains staged.
 
 
 The [nitrogen/water source-version audit](../../src/test/resources/neqsim/thermo/mixingrule/hv-water-nitrogen/thesis-2004/README.md)

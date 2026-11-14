@@ -13,6 +13,12 @@ sys.path.insert(0, str(FIXTURES / "hv-meg-methane"))
 import binary_solver as model
 
 ATTRACTION_STEP = Decimal("1e-10")
+DATASETS = {
+    "kobayashi-katz": ("observations.csv", 18),
+    "azarnoosh-mcketta": ("azarnoosh-mcketta-observations.csv", 9),
+}
+TEMPERATURE_ERROR_K = {"kobayashi-katz": (-.3, .3), "azarnoosh-mcketta": (0.,)}
+RELATIVE_COMPOSITION_ERROR = {"kobayashi-katz": .03, "azarnoosh-mcketta": .02}
 
 
 def configure():
@@ -55,19 +61,22 @@ def match_water_pressure(temperature):
 def main():
     """Compare both calculated phase endpoints, retaining measured aqueous observations."""
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--dataset", choices=DATASETS, default="kobayashi-katz",
+                        help="Select the aqueous propane experiment")
     parser.add_argument("--uncertainty-envelope", action="store_true",
-                        help="Scan compiler temperature and pressure error bounds on in-window points")
+                        help="Scan reported input error bounds on in-window points")
     parser.add_argument("--match-water-pressure", action="store_true",
-                        help="Run the local pure-pressure sensitivity at the five in-window points")
+                        help="Run the local pure-pressure sensitivity at the in-window points")
     args = parser.parse_args()
     if args.match_water_pressure and args.uncertainty_envelope:
         parser.error("Choose one sensitivity per run")
     configure()
-    with (FIXTURES / "hv-water-propane/observations.csv").open() as observations:
+    filename, expected_count = DATASETS[args.dataset]
+    with (FIXTURES / "hv-water-propane" / filename).open() as observations:
         fields = ("temperature_degF", "total_pressure_psia", "aqueous_propane_x_times_1e5")
         rows = [tuple(float(row[field]) for field in fields) for row in csv.DictReader(observations)]
-    if len(rows) != 18 or len({(row[0], row[1]) for row in rows}) != 18:
-        raise ValueError("Expected 18 distinct measured aqueous coordinates")
+    if len(rows) != expected_count or len({(row[0], row[1]) for row in rows}) != expected_count:
+        raise ValueError(f"Expected {expected_count} distinct measured aqueous coordinates")
 
     writer = csv.writer(sys.stdout, lineterminator="\n")
     if not args.uncertainty_envelope:
@@ -82,9 +91,9 @@ def main():
             if inside:
                 neighbors = [
                     model.solve(temperature + offset, pressure * scale, ATTRACTION_STEP)[0][1]
-                    for offset in (-.3, .3) for scale in (.99, 1.01)
+                    for offset in TEMPERATURE_ERROR_K[args.dataset] for scale in (.99, 1.01)
                 ]
-                lower_estimate = scaled_x * 1e-5 * .97
+                lower_estimate = scaled_x * 1e-5 * (1 - RELATIVE_COMPOSITION_ERROR[args.dataset])
                 if max(neighbors) >= lower_estimate:
                     raise ValueError("Propane prediction overlaps the compiler error screen")
                 print(temperature, pressure, min(neighbors), max(neighbors), lower_estimate, file=sys.stderr)
