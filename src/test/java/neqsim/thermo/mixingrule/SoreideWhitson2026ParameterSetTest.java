@@ -13,17 +13,19 @@ class SoreideWhitson2026ParameterSetTest {
   private static final String[] GASES = {"CO2", "H2S", "methane", "nitrogen", "hydrogen", "ethane", "propane",
       "n-butane"};
 
-  /** Reference values generated with the authors' drop-in implementation. */
+  /** Reference values evaluated from the authors' tagged procedure-1 refit. */
   @Test
-  void reproducesAuthorsDropInReferenceValues() {
-    double[][] conditions = {{280.0, 0.0}, {320.0, 2.0}, {400.0, 4.0}};
+  void reproducesAuthorsCoupledRefitReferenceValues() {
+    double[][] conditions = {{353.15, 0.0}, {423.15, 0.0}, {353.15, 2.0}, {473.15, 4.0}};
     double[][] expected = {
-        {-0.15430515199999989, -0.040636141140641707, -0.35607665803427202, -0.70525508000000003, -1.1653958207557671,
-            -0.23864970725296367, -0.24791483046230281, -0.26490810114410868},
-        {-0.066977075883884005, 0.0047695414544906556, -0.18628176263909707, -0.48908940185930494, -0.79098165279971333,
-            -0.09766949672946576, -0.12892229757704116, -0.16434934114272814},
-        {0.049975792300732402, 0.084943486799094026, 0.096410431980090763, -0.070208107931660546, -0.21768059796366851,
-            0.11532368474101742, 0.067371881402650893, 0.012057774238313251}};
+        {-0.05152159630824915, 0.017471369354653155, -0.14535827383779654, -0.457370912038235, -0.6714009498253152,
+            -0.061696555426724864, -0.1041245441287401, -0.14255971679421342},
+        {0.011030118305995984, 0.05888719607456824, 0.008299541224991313, -0.22670183676372635, -0.34498592439591447,
+            0.051006997387999915, -0.00548515798352306, -0.045964774759741645},
+        {-0.024795025825220092, 0.028191730413884494, -0.09366725165127932, -0.37046550334660233, -0.5809215266095247,
+            -0.02407789664986079, -0.0738538587129132, -0.11692322685069857},
+        {0.13527130028086048, 0.14529522951918458, 0.30818110294873335, 0.3099013676579756, 0.2159123889189739,
+            0.25835247563869634, 0.1657521650635497, 0.10903487388860506}};
 
     for (int conditionIndex = 0; conditionIndex < conditions.length; conditionIndex++) {
       for (int gasIndex = 0; gasIndex < GASES.length; gasIndex++) {
@@ -88,7 +90,7 @@ class SoreideWhitson2026ParameterSetTest {
 
     EosMixingRuleHandler handler = new EosMixingRuleHandler();
     EosMixingRuleHandler.WhitsonSoreideMixingRule mixingRule = handler.new WhitsonSoreideMixingRule();
-    assertEquals(0.0047695414544906556, mixingRule.getkijWhitsonSoreideAqueous(components, 2.0, 320.0, h2sIndex,
+    assertEquals(0.004174350745102501, mixingRule.getkijWhitsonSoreideAqueous(components, 2.0, 320.0, h2sIndex,
         waterIndex, SoreideWhitsonParameterization.BURGOYNE_NIELSEN_2026), 2.0e-15);
     assertEquals(0.1610, mixingRule.getkijWhitsonSoreideNonAqueous(components, 320.0, h2sIndex, waterIndex,
         SoreideWhitsonParameterization.BURGOYNE_NIELSEN_2026), 0.0);

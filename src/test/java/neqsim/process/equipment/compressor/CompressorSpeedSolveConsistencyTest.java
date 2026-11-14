@@ -80,8 +80,10 @@ class CompressorSpeedSolveConsistencyTest extends NeqSimTest {
     Compressor forward = createCompressor();
     forward.setSpeed(compressor.getSpeed());
     forward.run();
+    // A converged speed replay may accept the exact target within the head inversion's tolerance.
+    double pressureTolerance = compressor.isSpeedSolveConverged() ? 1.0e-6 : 1.0e-9;
     assertEquals(forward.getOutletStream().getPressure("bara"), compressor.getOutletStream().getPressure("bara"),
-        1.0e-9);
+        pressureTolerance);
     assertEquals(forward.getPower(), compressor.getPower(), 1.0e-6);
     assertEquals(forward.getOutletStream().getTemperature(), compressor.getOutletStream().getTemperature(), 1.0e-7);
     assertEquals(target == 14.0, compressor.isSpeedSolveConverged());

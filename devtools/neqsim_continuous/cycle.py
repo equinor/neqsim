@@ -336,6 +336,15 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
             continuous_dir(task_dir)):
         from .living_report import update
         update(task_dir, event="cycle")
+        from . import hypotheses
+        try:
+            if hypotheses.load(task_dir) is not None:
+                hypotheses.run(task_dir)
+        except Exception as error:  # a bad hypotheses file must not fail the monitoring cycle
+            manifest.setdefault("warnings", []).append("hypotheses: {}".format(error))
+            write_json(os.path.join(cycle_dir, "cycle.json"), manifest)
+        from . import daily_report
+        daily_report.update(task_dir)
     return manifest
 
 

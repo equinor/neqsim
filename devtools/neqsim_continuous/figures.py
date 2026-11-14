@@ -127,9 +127,19 @@ def input_summary(data):
     changes = []
     for cycle in data["cycles"]:
         when = str(cycle.get("now", ""))[:19]
+        grouped = {}
         for item in (cycle.get("evidence") or {}).get("changes") or []:
-            changes.append({"cycle": cycle.get("cycle_id"), "time": when, "what": item.get("path"),
-                            "change": item.get("change"), "kind": item.get("kind") or "file"})
+            grouped.setdefault((item.get("change"), item.get("kind") or "file"), []).append(item.get("path"))
+        for (change, kind), paths in grouped.items():
+            # A bulk change (for example a document folder re-organised) is one row, not hundreds.
+            what = paths[0] if len(paths) <= 3 else "{} files, e.g. {}".format(len(paths), paths[0])
+            if len(paths) <= 3:
+                for path in paths:
+                    changes.append({"cycle": cycle.get("cycle_id"), "time": when, "what": path,
+                                    "change": change, "kind": kind})
+            else:
+                changes.append({"cycle": cycle.get("cycle_id"), "time": when, "what": what,
+                                "change": change, "kind": kind})
         for trigger in cycle.get("triggers", []):
             if trigger in ("brief_changed", "neqsim_changed"):
                 changes.append({"cycle": cycle.get("cycle_id"), "time": when,
