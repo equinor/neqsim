@@ -3,6 +3,7 @@ package neqsim.process.safety.release;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -34,6 +35,11 @@ class RealGasPipeDecompressionTest extends neqsim.NeqSimTest {
 
   private static RealGasPipeDecompression pipe(int cells) {
     return new RealGasPipeDecompression("real-linepack", gas(80.0), 40.0, 0.15, 1.0, 101325.0, 0.01, cells, 0.35);
+  }
+
+  private static RealGasPipeDecompression vesselPipe(double vesselVolumeM3, int cells, double cfl) {
+    return new RealGasPipeDecompression("real-vessel-linepack", gas(80.0), 40.0, 0.15, 1.0, 101325.0, 0.01,
+        vesselVolumeM3, cells, cfl);
   }
 
   @Test
@@ -87,6 +93,94 @@ class RealGasPipeDecompressionTest extends neqsim.NeqSimTest {
     assertTrue((released[0] - released[2]) / released[2] < 0.06, receipt.toString());
     assertEquals(closedPressure[0], closedPressure[1], closedPressure[0] * 1.0e-10, receipt.toString());
     assertEquals(closedPressure[1], closedPressure[2], closedPressure[1] * 1.0e-10, receipt.toString());
+  }
+
+  @Test
+  void finiteUpstreamVesselFeedsPipeAndClosesCombinedMassAndEnergy() {
+    RealGasPipeDecompression pipe = vesselPipe(0.20, 12, 0.30);
+    double initialVesselMass = pipe.getUpstreamVesselMassKg();
+    double initialPipeMass = pipe.getRemainingPipeMassKg();
+    pipe.runTransient(0.20, UUID.randomUUID());
+
+    assertTrue(pipe.hasFiniteUpstreamVessel());
+    assertEquals(0.20, pipe.getUpstreamVesselVolumeM3(), 0.0);
+    assertTrue(pipe.getUpstreamVesselMassKg() < initialVesselMass);
+    assertTrue(pipe.getRemainingPipeMassKg() < initialPipeMass);
+    assertTrue(pipe.getReleasedMassKg() > 0.0);
+    assertEquals(pipe.getInitialMassKg(), pipe.getRemainingMassKg() + pipe.getReleasedMassKg(),
+        pipe.getInitialMassKg() * 3.0e-10);
+    assertEquals(pipe.getInitialEnergyJ(), pipe.getRemainingEnergyJ() + pipe.getReleasedEnergyJ(),
+        Math.abs(pipe.getInitialEnergyJ()) * 3.0e-10);
+    SystemInterface snapshot = pipe.getUpstreamVesselFluid();
+    assertNotNull(snapshot);
+    double pressure = snapshot.getPressure("Pa");
+    snapshot.setPressure(1.0, "bara");
+    assertEquals(pressure, pipe.getUpstreamVesselFluid().getPressure("Pa"), pressure * 1.0e-12);
+  }
+
+  @Test
+  void upstreamVesselCflRefinementAndNearbyVolumesRemainPhysical() throws Exception {
+    double[] cfls = new double[] {0.45, 0.30, 0.20};
+    double[] released = new double[cfls.length];
+    double[] vesselPressure = new double[cfls.length];
+    StringBuilder receipt = new StringBuilder("cfl,released_mass_kg,vessel_pressure_Pa\n");
+    for (int i = 0; i < cfls.length; i++) {
+      RealGasPipeDecompression pipe = vesselPipe(0.20, 12, cfls[i]);
+      pipe.runTransient(0.20, UUID.randomUUID());
+      released[i] = pipe.getReleasedMassKg();
+      vesselPressure[i] = pipe.getUpstreamVesselFluid().getPressure("Pa");
+      receipt.append(cfls[i]).append(',').append(released[i]).append(',').append(vesselPressure[i]).append('\n');
+    }
+    assertTrue(Math.abs(released[2] - released[1]) < Math.abs(released[1] - released[0]), receipt.toString());
+    assertTrue(Math.abs(vesselPressure[2] - vesselPressure[1]) < Math.abs(vesselPressure[1] - vesselPressure[0]),
+        receipt.toString());
+    write("source-term-benchmarks", "real-gas-vessel-pipe-cfl-refinement.csv", receipt.toString());
+
+    double previousPressure = 0.0;
+    for (double volume : new double[] {0.10, 0.20, 0.40}) {
+      RealGasPipeDecompression pipe = vesselPipe(volume, 12, 0.30);
+      pipe.runTransient(0.20, UUID.randomUUID());
+      double pressure = pipe.getUpstreamVesselFluid().getPressure("Pa");
+      assertTrue(pressure > previousPressure);
+      previousPressure = pressure;
+    }
+  }
+
+  @Test
+  void upstreamVesselFramesAreSchemaValidForBothProcessContainers() throws Exception {
+    for (boolean useModel : new boolean[] {false, true}) {
+      RealGasPipeDecompression pipe = vesselPipe(0.20, 8, 0.30);
+      ProcessSystem process = new ProcessSystem();
+      process.add(pipe);
+      SourceTermSession session;
+      if (useModel) {
+        ProcessModel model = new ProcessModel();
+        model.add("pipeline", process);
+        session = new SourceTermSession("real-vessel-linepack", model);
+        session.addInventorySource("rupture", "pipeline", "real-vessel-linepack");
+      } else {
+        session = new SourceTermSession("real-vessel-linepack", process);
+        session.addInventorySource("rupture", "real-vessel-linepack");
+      }
+      session.runSteadyState();
+      SourceTermFrame frame = session.step(0.20).get(0);
+      SourceTermFrame.verifyEnvelope(frame.toJson());
+      JsonObject provenance = JsonParser.parseString(frame.toJson()).getAsJsonObject().getAsJsonObject("provenance");
+      assertEquals("COUPLED_1D_REAL_GAS_VESSEL_PIPE_DECOMPRESSION", provenance.get("releaseBasis").getAsString());
+      assertEquals("RIGID_ADIABATIC_WELL_MIXED_GAS_VESSEL", provenance.get("upstreamBoundary").getAsString());
+      assertEquals(0.20, provenance.get("upstreamVesselVolumeM3").getAsDouble(), 0.0);
+      write("source-term-contract-fixtures", "real-gas-vessel-pipe-" + useModel + ".json", frame.toJson());
+    }
+  }
+
+  @Test
+  void legacyClosedEndAndInvalidVesselConfigurationRemainExplicit() {
+    RealGasPipeDecompression legacy = pipe(8);
+    assertFalse(legacy.hasFiniteUpstreamVessel());
+    assertEquals(0.0, legacy.getUpstreamVesselVolumeM3(), 0.0);
+    assertEquals(0.0, legacy.getUpstreamVesselMassKg(), 0.0);
+    assertThrows(IllegalArgumentException.class, () -> vesselPipe(Double.NaN, 8, 0.30));
+    assertThrows(IllegalArgumentException.class, () -> vesselPipe(-0.10, 8, 0.30));
   }
 
   @Test
