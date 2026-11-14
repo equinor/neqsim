@@ -73,6 +73,11 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
       String row = result.toCsv(reference);
       report.add(row);
       Files.write(Paths.get(OUTPUT), Collections.singletonList(row), StandardCharsets.UTF_8, StandardOpenOption.APPEND);
+      if ("MCB-KCL15-373-P281".equals(reference.pointId)) {
+        // The preliminary stability check previously led to a third phase with unequal fugacities.
+        assertEquals("GAS+AQUEOUS", result.phaseTypes, reference.pointId + " phase split");
+        assertTrue(result.molecularLogFugacityResidual < 1.0e-8, reference.pointId + " molecular fugacity closure");
+      }
     }
 
     assertEquals(26, references.size());
