@@ -398,12 +398,44 @@ adiabatic or `CONSTANT_U_FIXED_EXTERNAL_TEMPERATURE` boundary, $U$, external tem
 external area, cumulative heat in J and instantaneous heat rate in W. Pass zero for both thermal
 inputs to recover the adiabatic constructor exactly; incomplete or nonphysical pairs are rejected.
 
+For finite wall thermal inertia, use the typed boundary instead of the massless constant-$U$
+overload:
+
+```java
+RealGasPipeDecompression.WallThermalBoundary wall =
+    RealGasPipeDecompression.WallThermalBoundary.capacitive(
+        80.0, 35.0, 45000.0, 330.0, 360.0);
+RealGasPipeDecompression wallCoupled = new RealGasPipeDecompression(
+    "wall-coupled-rupture", gas, 40.0, 0.15, 1.0, 101325.0,
+    0.01, 0.20, wall, 12, 0.30);
+// Gas-wall U_i and wall-environment U_o: W/(m2 K)
+// Wall areal heat capacity: J/(m2 K); temperatures: K.
+```
+
+Each cell retains one wall temperature. With wall heat capacity $C_{w,A}$ per external area,
+
+$$\dot Q_{g,i}=U_iA_{w,i}(T_{w,i}-T_{g,i})$$
+
+$$\dot Q_{e,i}=U_oA_{w,i}(T_{ext}-T_{w,i}),\qquad
+C_{w,A}A_{w,i}\frac{dT_{w,i}}{dt}=\dot Q_{e,i}-\dot Q_{g,i}$$
+
+The gas receives $\dot Q_g$ and the wall receives the opposite internal transfer plus
+$\dot Q_e$. The atomic integrated closure becomes
+
+$$E_{g,0}+E_{w,0}+Q_{environment}
+=E_{vessel}+E_{pipe\ gas}+E_{wall}+E_{released}$$
+
+Frames retain the two coefficients, wall areal heat capacity, initial/mean wall temperature,
+stored wall energy, environment heat and gas--wall heat separately. Explicit thermal stability
+limits supplement the acoustic CFL and vessel-donor limits. The original adiabatic and massless
+constant-$U$ constructors are unchanged.
+
 This adds finite upstream storage, pressure feedback and optional distributed constant-$U$ wall
-heat exchange. It does not predict $U$, external temperature, fire/ambient/soil/seawater heat
-transfer, wall thermal capacitance, vessel nozzle loss, internal vessel waves, phase separation,
-wall elasticity, a second rupture end, non-equilibrium multiphase transport, solids, or
-qualification. The vessel and every pipe cell must remain one equilibrium gas phase; otherwise the
-whole caller step fails closed.
+heat exchange or a prescribed finite-capacitance wall. It does not predict either coefficient,
+wall material/capacity, external temperature, fire/ambient/soil/seawater heat transfer, radial wall
+conduction, vessel nozzle loss, internal vessel waves, phase separation, wall elasticity, a second
+rupture end, non-equilibrium multiphase transport, solids, or qualification. The vessel and every
+pipe cell must remain one equilibrium gas phase; otherwise the whole caller step fails closed.
 
 Compatibility frames carry `releaseBasis=COUPLED_RIGID_ADIABATIC_GAS_INVENTORY`.
 Explicit phase-selected frames carry

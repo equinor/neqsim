@@ -48,6 +48,13 @@ class RealGasPipeDecompressionTest extends neqsim.NeqSimTest {
         heatTransferCoefficientWPerM2K, externalTemperatureK, cells, cfl);
   }
 
+  private static RealGasPipeDecompression capacitiveWallPipe(int cells, double cfl) {
+    RealGasPipeDecompression.WallThermalBoundary boundary = RealGasPipeDecompression.WallThermalBoundary
+        .capacitive(80.0, 35.0, 45000.0, 330.0, 360.0);
+    return new RealGasPipeDecompression("real-capacitive-wall-linepack", gas(80.0), 40.0, 0.15, 1.0, 101325.0, 0.01,
+        0.20, boundary, cells, cfl);
+  }
+
   @Test
   void eosStateEvolutionConservesMassEnergyAndComposition() {
     RealGasPipeDecompression pipe = pipe(12);
@@ -257,6 +264,74 @@ class RealGasPipeDecompressionTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void finiteCapacitanceWallClosesCombinedEnergyAndRetainsHeatDirections() {
+    RealGasPipeDecompression pipe = capacitiveWallPipe(12, 0.30);
+    RealGasPipeDecompression adiabatic = vesselPipe(0.20, 12, 0.30);
+    double initialWallEnergy = pipe.getWallStoredEnergyJ();
+    double initialWallTemperature = mean(pipe.getWallTemperatureProfileK());
+    pipe.runTransient(0.20, UUID.randomUUID());
+    adiabatic.runTransient(0.20, UUID.randomUUID());
+
+    assertTrue(pipe.hasFiniteWallThermalCapacitance());
+    assertTrue(pipe.getCumulativeHeatTransferJ() > 0.0);
+    assertTrue(pipe.getCumulativeGasWallHeatTransferJ() > 0.0);
+    assertTrue(pipe.getWallStoredEnergyJ() < initialWallEnergy);
+    assertTrue(mean(pipe.getTemperatureProfileK()) > mean(adiabatic.getTemperatureProfileK()));
+    assertTrue(mean(pipe.getWallTemperatureProfileK()) < initialWallTemperature);
+    assertEquals(pipe.getInitialEnergyJ() + pipe.getCumulativeHeatTransferJ(),
+        pipe.getRemainingEnergyJ() + pipe.getReleasedEnergyJ(), Math.abs(pipe.getInitialEnergyJ()) * 3.0e-10);
+  }
+
+  @Test
+  void finiteCapacitanceWallCflRefinementIsConvergent() throws Exception {
+    double[] cfls = new double[] {0.45, 0.30, 0.20};
+    double[] environmentHeat = new double[cfls.length];
+    double[] wallTemperature = new double[cfls.length];
+    StringBuilder receipt = new StringBuilder("cfl,environment_heat_J,mean_wall_temperature_K\n");
+    for (int i = 0; i < cfls.length; i++) {
+      RealGasPipeDecompression pipe = capacitiveWallPipe(12, cfls[i]);
+      pipe.runTransient(0.20, UUID.randomUUID());
+      environmentHeat[i] = pipe.getCumulativeHeatTransferJ();
+      wallTemperature[i] = mean(pipe.getWallTemperatureProfileK());
+      receipt.append(cfls[i]).append(',').append(environmentHeat[i]).append(',').append(wallTemperature[i])
+          .append('\n');
+    }
+    assertTrue(Math.abs(environmentHeat[2] - environmentHeat[1]) < Math.abs(environmentHeat[1] - environmentHeat[0]),
+        receipt.toString());
+    assertTrue(Math.abs(wallTemperature[2] - wallTemperature[1]) < Math.abs(wallTemperature[1] - wallTemperature[0]),
+        receipt.toString());
+    write("source-term-benchmarks", "real-gas-pipe-capacitive-wall-cfl-refinement.csv", receipt.toString());
+  }
+
+  @Test
+  void finiteCapacitanceWallFramesAreSchemaValidForBothProcessContainers() throws Exception {
+    for (boolean useModel : new boolean[] {false, true}) {
+      RealGasPipeDecompression pipe = capacitiveWallPipe(8, 0.30);
+      ProcessSystem process = new ProcessSystem();
+      process.add(pipe);
+      SourceTermSession session;
+      if (useModel) {
+        ProcessModel model = new ProcessModel();
+        model.add("pipeline", process);
+        session = new SourceTermSession("real-capacitive-wall-linepack", model);
+        session.addInventorySource("rupture", "pipeline", "real-capacitive-wall-linepack");
+      } else {
+        session = new SourceTermSession("real-capacitive-wall-linepack", process);
+        session.addInventorySource("rupture", "real-capacitive-wall-linepack");
+      }
+      session.runSteadyState();
+      SourceTermFrame frame = session.step(0.20).get(0);
+      SourceTermFrame.verifyEnvelope(frame.toJson());
+      JsonObject provenance = JsonParser.parseString(frame.toJson()).getAsJsonObject().getAsJsonObject("provenance");
+      assertEquals("FINITE_CAPACITANCE_WALL_FIXED_ENVIRONMENT",
+          provenance.get("pipeHeatTransferBoundary").getAsString());
+      assertEquals(45000.0, provenance.get("pipeWallArealHeatCapacityJPerM2K").getAsDouble(), 0.0);
+      assertTrue(provenance.get("cumulativePipeGasWallHeatTransferJ").getAsDouble() > 0.0);
+      write("source-term-contract-fixtures", "real-gas-capacitive-wall-pipe-" + useModel + ".json", frame.toJson());
+    }
+  }
+
+  @Test
   void documentedDistributedHeatConstructorIsExecutable() {
     SystemInterface fluid = gas(80.0);
     ProcessSystem process = new ProcessSystem();
@@ -279,6 +354,10 @@ class RealGasPipeDecompressionTest extends neqsim.NeqSimTest {
     assertThrows(IllegalArgumentException.class, () -> heatedPipe(-1.0, 300.0, 8, 0.30));
     assertThrows(IllegalArgumentException.class, () -> heatedPipe(50.0, 0.0, 8, 0.30));
     assertThrows(IllegalArgumentException.class, () -> heatedPipe(0.0, 300.0, 8, 0.30));
+    assertThrows(IllegalArgumentException.class,
+        () -> RealGasPipeDecompression.WallThermalBoundary.capacitive(0.0, 35.0, 45000.0, 330.0, 360.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> RealGasPipeDecompression.WallThermalBoundary.capacitive(80.0, 35.0, -1.0, 330.0, 360.0));
   }
 
   @Test
