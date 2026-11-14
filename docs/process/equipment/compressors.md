@@ -96,8 +96,12 @@ pressure at which the selected method reproduces the chart head and efficiency.
 The pressure solve uses bracketed interpolation with periodic bisection, retaining
 the same head-residual criterion while reducing repeated thermodynamic flashes.
 During Schultz speed solving, the target-pressure isentropic state is evaluated
-once and reused as efficiency changes. Each accepted speed is still checked
-through the forward chart calculation. Finite pressure rises below one microbar
+once and reused as efficiency changes. During the forward replay, NeqSim uses
+the requested pressure directly if the selected speed's chart head matches the
+Schultz head within the pressure inversion's head tolerance. The replay still
+flashes the outlet at the chart duty. If the head check fails, NeqSim solves for
+the actual fixed-speed discharge pressure and reports the pressure residual.
+Finite pressure rises below one microbar
 remain part of the polytropic forward calculation, allowing small nonzero shaft
 duties to be inverted without a zero-head interval. For
 $0 < \Delta P/P_\mathrm{in} \leq 10^{-7}\eta_p$, the differential limit
