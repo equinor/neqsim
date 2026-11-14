@@ -44,6 +44,16 @@ public abstract class Component implements ComponentInterface {
    */
   private String componentType = "Component";
 
+  /** Classification of the stored type string, rebuilt lazily for legacy serialized components. */
+  private transient ComponentClassification componentClassification;
+
+  /**
+   * Component categories queried repeatedly during phase initialization.
+   */
+  private enum ComponentClassification {
+    HYDROCARBON, INERT, ION, OTHER
+  }
+
   /** Mole fraction of Component in System. */
   protected double z;
   /** Mole fraction of Component in Phase. */
@@ -2219,7 +2229,7 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public boolean isHydrocarbon() {
-    return isIsTBPfraction() || isPlusFraction || componentType.equalsIgnoreCase("HC");
+    return isIsTBPfraction() || isPlusFraction || classifyComponentType() == ComponentClassification.HYDROCARBON;
   }
 
   /** {@inheritDoc} */
@@ -2261,7 +2271,7 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public boolean isInert() {
-    return componentType.equalsIgnoreCase("inert");
+    return classifyComponentType() == ComponentClassification.INERT;
   }
 
   /** {@inheritDoc} */
@@ -2274,7 +2284,7 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public boolean isIsIon() {
-    if (componentType.equalsIgnoreCase("ion")) {
+    if (classifyComponentType() == ComponentClassification.ION) {
       setIsIon(true);
     }
     return isIon;
@@ -2349,14 +2359,38 @@ public abstract class Component implements ComponentInterface {
   public java.lang.String getComponentType() {
     if (isTBPfraction) {
       componentType = "TBP";
+      componentClassification = ComponentClassification.OTHER;
     } else if (isPlusFraction) {
       componentType = "plus";
+      componentClassification = ComponentClassification.OTHER;
     } else if (isNormalComponent) {
       componentType = "normal";
+      componentClassification = ComponentClassification.OTHER;
     } else if (isIon) {
       componentType = "ion";
+      componentClassification = ComponentClassification.ION;
     }
     return componentType;
+  }
+
+  /**
+   * Classifies the stored label independently of the mutable component flags.
+   *
+   * @return cached classification of the current label
+   */
+  private ComponentClassification classifyComponentType() {
+    if (componentClassification == null) {
+      if (componentType.equalsIgnoreCase("HC")) {
+        componentClassification = ComponentClassification.HYDROCARBON;
+      } else if (componentType.equalsIgnoreCase("inert")) {
+        componentClassification = ComponentClassification.INERT;
+      } else if (componentType.equalsIgnoreCase("ion")) {
+        componentClassification = ComponentClassification.ION;
+      } else {
+        componentClassification = ComponentClassification.OTHER;
+      }
+    }
+    return componentClassification;
   }
 
   /** {@inheritDoc} */
@@ -2703,6 +2737,7 @@ public abstract class Component implements ComponentInterface {
   @Override
   public void setComponentType(String componentType) {
     this.componentType = componentType;
+    componentClassification = null;
     if (componentType.equalsIgnoreCase("TBP")) {
       setIsTBPfraction(true);
     }
