@@ -1023,7 +1023,50 @@ public final class DexpiXmlReader {
           location != null, elementName(location), explicitAttribute(location, "ComponentClass"),
           explicitAttribute(location, "ComponentName"), explicitTagName(location)));
     }
+    parseNative201ActuatingFunctions(document, result);
     return result;
+  }
+
+  /** Adds native DEXPI 2.0.1 actuation relationships without inferring actuator design. */
+  private static void parseNative201ActuatingFunctions(Document document, List<DexpiActuatingFunctionInfo> result) {
+    Map<String, Element> objectsById = native201ObjectsById(document);
+    for (Element actuating : objectsById.values()) {
+      String type = actuating.getAttribute("type");
+      DexpiActuatingFunctionInfo.Kind kind;
+      if ("Plant/Instrumentation.ActuatingFunction".equals(type)) {
+        kind = DexpiActuatingFunctionInfo.Kind.ACTUATING_FUNCTION;
+      } else if ("Plant/Instrumentation.ActuatingElectricalFunction".equals(type)) {
+        kind = DexpiActuatingFunctionInfo.Kind.ACTUATING_ELECTRICAL_FUNCTION;
+      } else {
+        continue;
+      }
+      Element owner = native201InstrumentationOwner(actuating);
+      String systemId = native201Reference(actuating, "Systems");
+      Element system = objectsById.get(systemId);
+      String finalElementId = "";
+      if (system != null) {
+        NodeList descendants = system.getElementsByTagName("Object");
+        for (int index = 0; index < descendants.getLength(); index++) {
+          Element candidate = (Element) descendants.item(index);
+          if ("Plant/Instrumentation.OperatedValveReference".equals(candidate.getAttribute("type"))) {
+            finalElementId = native201Reference(candidate, "Valve");
+            if (!finalElementId.isEmpty()) {
+              break;
+            }
+          }
+        }
+      }
+      String locationId = native201Reference(actuating, "ActuatingLocation");
+      Element finalElement = objectsById.get(finalElementId);
+      Element location = objectsById.get(locationId);
+      result.add(new DexpiActuatingFunctionInfo(actuating.getAttribute("id"), kind, type,
+          native201StringData(actuating, "ActuatingFunctionNumber"), owner == null ? "" : owner.getAttribute("id"),
+          owner != null, owner == null ? "" : owner.getAttribute("type"), finalElementId, finalElement != null,
+          finalElement == null ? "" : finalElement.getAttribute("type"),
+          finalElement == null ? "" : finalElement.getAttribute("type"), "", native201ObjectTag(finalElement),
+          locationId, location != null, location == null ? "" : location.getAttribute("type"),
+          location == null ? "" : location.getAttribute("type"), "", native201ObjectTag(location)));
+    }
   }
 
   private static String explicitAttribute(Element element, String attributeName) {
@@ -1092,7 +1135,103 @@ public final class DexpiXmlReader {
           explicitAttribute(attachmentElement, "ComponentClass"), explicitAttribute(attachmentElement, "ComponentName"),
           explicitTagName(attachmentElement), getGenericAttribute(element, "SignalConveyingTypeSpecialization")));
     }
+    parseNative201InformationFlows(document, result);
     return result;
+  }
+
+  /** Adds native DEXPI 2.0.1 signal and sensing relationships as explicit source evidence. */
+  private static void parseNative201InformationFlows(Document document, List<DexpiInformationFlowInfo> result) {
+    Map<String, Element> objectsById = native201ObjectsById(document);
+    for (Element flow : objectsById.values()) {
+      String type = flow.getAttribute("type");
+      if ("Plant/Instrumentation.SignalLineFunction".equals(type)) {
+        String sourceId = native201Reference(flow, "Source");
+        String targetId = native201Reference(flow, "Target");
+        Element source = objectsById.get(sourceId);
+        Element target = objectsById.get(targetId);
+        result.add(new DexpiInformationFlowInfo(flow.getAttribute("id"), DexpiInformationFlowInfo.Kind.SIGNAL_LINE,
+            type, sourceId, source != null, source == null ? "" : source.getAttribute("type"),
+            source == null ? "" : source.getAttribute("type"), "", native201FunctionalTag(source), targetId,
+            target != null, target == null ? "" : target.getAttribute("type"),
+            target == null ? "" : target.getAttribute("type"), "", native201FunctionalTag(target), "", false, "", "",
+            "", "", firstNonEmpty(native201StringData(flow, "SignalConveyingTypeSpecialization"), "")));
+      } else if ("Plant/Instrumentation.ProcessSignalGeneratingFunction".equals(type)) {
+        String attachmentId = native201Reference(flow, "SensingLocation");
+        Element attachment = objectsById.get(attachmentId);
+        Element owner = native201InstrumentationOwner(flow);
+        String ownerId = owner == null ? "" : owner.getAttribute("id");
+        result.add(new DexpiInformationFlowInfo(flow.getAttribute("id"), DexpiInformationFlowInfo.Kind.MEASURING_LINE,
+            type, flow.getAttribute("id"), true, type, type, "", native201FunctionalTag(flow), ownerId, owner != null,
+            owner == null ? "" : owner.getAttribute("type"), owner == null ? "" : owner.getAttribute("type"), "",
+            native201FunctionalTag(owner), attachmentId, attachment != null,
+            attachment == null ? "" : attachment.getAttribute("type"),
+            attachment == null ? "" : attachment.getAttribute("type"), "", native201ObjectTag(attachment), ""));
+      }
+    }
+  }
+
+  /** Returns native DEXPI 2.0.1 objects keyed by exact source identity in document order. */
+  private static Map<String, Element> native201ObjectsById(Document document) {
+    Map<String, Element> result = new LinkedHashMap<String, Element>();
+    NodeList objects = document.getElementsByTagName("Object");
+    for (int index = 0; index < objects.getLength(); index++) {
+      Element object = (Element) objects.item(index);
+      String id = object.getAttribute("id");
+      if (!isBlank(id) && !result.containsKey(id)) {
+        result.put(id, object);
+      }
+    }
+    return result;
+  }
+
+  /** Reads one direct native DEXPI 2.0.1 object reference without resolving it. */
+  private static String native201Reference(Element object, String property) {
+    if (object == null) {
+      return "";
+    }
+    for (Element reference : directChildElements(object, "References")) {
+      if (property.equals(reference.getAttribute("property"))) {
+        String value = reference.getAttribute("objects").trim();
+        return value.startsWith("#") ? value.substring(1) : value;
+      }
+    }
+    return "";
+  }
+
+  /** Finds the containing native process instrumentation or safety function. */
+  private static Element native201InstrumentationOwner(Element element) {
+    for (Node node = element == null ? null : element.getParentNode(); node != null; node = node.getParentNode()) {
+      if (!(node instanceof Element) || !"Object".equals(((Element) node).getTagName())) {
+        continue;
+      }
+      String type = ((Element) node).getAttribute("type");
+      if ("Plant/Instrumentation.ProcessInstrumentationFunction".equals(type)
+          || "Plant/Instrumentation.ProcessSafetyFunction".equals(type)) {
+        return (Element) node;
+      }
+    }
+    return null;
+  }
+
+  /** Returns the exact owning function tag for a native functional endpoint. */
+  private static String native201FunctionalTag(Element element) {
+    Element owner = element;
+    String type = owner == null ? "" : owner.getAttribute("type");
+    if (!"Plant/Instrumentation.ProcessInstrumentationFunction".equals(type)
+        && !"Plant/Instrumentation.ProcessSafetyFunction".equals(type)) {
+      owner = native201InstrumentationOwner(element);
+    }
+    return owner == null ? ""
+        : firstNonEmpty(native201StringData(owner, "ProcessInstrumentationFunctionNumber"),
+            native201StringData(owner, "TagName"), owner.getAttribute("id"));
+  }
+
+  /** Returns the exact tag property carried by a native object, if any. */
+  private static String native201ObjectTag(Element object) {
+    return object == null ? ""
+        : firstNonEmpty(native201StringData(object, "TagName"), native201StringData(object, "PipingComponentNumber"),
+            native201StringData(object, "PositionNumber"), native201StringData(object, "PipeConnectorNumber"),
+            native201StringData(object, "SubTagName"), "");
   }
 
   private static String associationItemId(Element element, String associationType) {
