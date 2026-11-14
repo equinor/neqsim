@@ -36,7 +36,7 @@
  * <li>{@link neqsim.process.safety.release.IdealGasPipeDecompression} - Conservative one-dimensional perfect-gas
  * transient decompression and line packing</li>
  * <li>{@link neqsim.process.safety.release.RealGasPipeDecompression} - Conservative one-dimensional EOS-backed
- * single-gas transient decompression and line packing</li>
+ * single-gas transient decompression and line packing with optional finite upstream gas-vessel coupling</li>
  * </ul>
  *
  * <p>

@@ -354,9 +354,30 @@ histories before using a result even inside this applicability boundary.
 `RealGasPipeDecompression` uses the same geometry, process-container registration and conservative
 accounting, but recovers each cell through a NeqSim volume/internal-energy flash. Pressure,
 temperature and acoustic speed therefore evolve with the selected EOS. It fails the whole caller
-step atomically if any cell or the receiver boundary ceases to be one equilibrium gas phase. This
-adds real-gas transient property evolution, not heat transfer, wall elasticity, finite upstream
-vessel or two-sided coupling, non-equilibrium multiphase transport, solids, or qualification.
+step atomically if any cell or the receiver boundary ceases to be one equilibrium gas phase.
+
+An additive constructor couples the first pipe cell to a finite rigid, adiabatic, perfectly mixed
+upstream gas vessel:
+
+```java
+RealGasPipeDecompression vesselAndPipe = new RealGasPipeDecompression(
+    "vessel-fed-rupture", gas, 40.0, 0.15, 1.0, 101325.0,
+    0.01, 0.20, 12, 0.30);
+// Darcy friction, upstream-vessel volume (m3), cells and CFL are the final four inputs.
+```
+
+The vessel starts at the same EOS state and composition as the pipe. Each accepted CFL substep
+uses the same local Lax--Friedrichs face flux at the vessel/pipe interface, subtracts that mass and
+total energy from the vessel, and adds it to the pipe. The closure inventory is therefore vessel
+plus pipe plus downstream discharge. Reverse vessel/pipe exchange is retained rather than clipped.
+The complete caller step is atomic, and frames from both process containers carry vessel volume,
+mass, internal energy, pressure, temperature, boundary identity and the combined inventory volume.
+The legacy constructor retains the closed upstream end and its existing provenance.
+
+This adds finite upstream storage and pressure feedback, not vessel nozzle loss, internal vessel
+waves, phase separation, heat transfer, wall elasticity, a second rupture end, non-equilibrium
+multiphase transport, solids, or qualification. The vessel and every pipe cell must remain one
+equilibrium gas phase; otherwise the whole caller step fails closed.
 
 Compatibility frames carry `releaseBasis=COUPLED_RIGID_ADIABATIC_GAS_INVENTORY`.
 Explicit phase-selected frames carry
