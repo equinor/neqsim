@@ -43,7 +43,15 @@ notify:
   channels: [file]
 #   - {type: email, host: smtp.example.com, to: [you@example.com], user: you, password_env: NEQSIM_SMTP_PASSWORD, when: [needs_decision]}
 #   - {type: teams, url_env: NEQSIM_TEAMS_WEBHOOK, when: [needs_decision, stop_state]}
-agent: {enabled: false, agent: continuous-improvement, executable: copilot}
+# Pin the model: an unpinned scheduled run stops with exit code 1 when the CLI default model is withdrawn.
+agent: {enabled: false, agent: continuous-improvement, executable: copilot, model: null, fallback_models: [claude-sonnet-5, gpt-5.6-sol], timeout_s: 1500}
+# One Word document for engineers, newest day on top (neqsim task-daily <task>); entries live in continuous/daily/.
+daily_report:
+  enabled: false
+  title: ""
+  expected_cycles_per_day: 1
+  kpis: []        # [{name: KPI, label: "Readable name", unit: "C", digits: 1}]
+  charts: []      # [{title, ylabel, hline, kpis: [{name: KPI} or {file: path/to.csv, label}]}]
 solve: {}
 #  stages: [sense, evidence, refresh, "script:solver", kpis, goal, diff, ledger, digest]
 #  max_rounds: 12
@@ -110,7 +118,15 @@ stages: [sense, evidence, inputs, refresh, "script:model_update", "script:optimi
          drift, goal, diff, outcome, ledger, digest, notify, agent]
 notify:
   channels: [file]
-agent: {enabled: false, agent: continuous-improvement, executable: copilot}
+# Pin the model: an unpinned scheduled run stops with exit code 1 when the CLI default model is withdrawn.
+agent: {enabled: false, agent: continuous-improvement, executable: copilot, model: null, fallback_models: [claude-sonnet-5, gpt-5.6-sol], timeout_s: 1500}
+# One Word document for engineers, newest day on top (neqsim task-daily <task>); entries live in continuous/daily/.
+daily_report:
+  enabled: false
+  title: ""
+  expected_cycles_per_day: 1
+  kpis: []        # [{name: KPI, label: "Readable name", unit: "C", digits: 1}]
+  charts: []      # [{title, ylabel, hline, kpis: [{name: KPI} or {file: path/to.csv, label}]}]
 solve: {}
 backtest: {}
 report: {formal: never}
@@ -232,6 +248,12 @@ def make_living(task_dir, brief=None, template=None):
             yaml.safe_dump(goal, f, sort_keys=False)
 
     _write(os.path.join(cont, GOAL_FILE), _goal)
+    def _standing(path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        write_json(path, {"question": "", "answer": "", "confidence": "", "proven_by": [], "not_proven": [],
+                          "ruled_out": [], "limits": [], "glossary": []})
+
+    _write(os.path.join(cont, "daily", "_standing.json"), _standing)
 
     def _user_input(path):
         from .user_input import HEADER

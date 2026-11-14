@@ -16,6 +16,11 @@ def task_name(task_dir):
         os.path.abspath(str(task_dir))))[:180]
 
 
+def scheduled_target(wrapper_path):
+    """Return the /TR command that runs the wrapper in a headless console (no pop-up window)."""
+    return 'conhost.exe --headless "{}"'.format(wrapper_path)
+
+
 def build(task_dir, daily=None, mode="monitor", python=None,
           standard_first=True, every_hours=None, weekly=None):
     """Return the scheduled command for Windows and a cron line for Linux servers.
@@ -40,7 +45,7 @@ def build(task_dir, daily=None, mode="monitor", python=None,
             raise ValueError("every_hours must be one of 1, 2, 3, 4, 6, 8, 12, 24")
         modifier = int(every_hours)
         windows = ["schtasks", "/Create", "/F", "/SC", "HOURLY", "/MO", str(modifier),
-                   "/TN", name, "/TR", '"{}"'.format(wrapper_path), "/ST", "00:00"]
+                   "/TN", name, "/TR", scheduled_target(wrapper_path), "/ST", "00:00"]
         hour_field = "0" if modifier == 24 else "*/{}".format(modifier)
         cron = "0 {} * * * {}".format(hour_field, command)
     else:
@@ -53,12 +58,12 @@ def build(task_dir, daily=None, mode="monitor", python=None,
             if day not in WEEKDAYS:
                 raise ValueError("weekly must be one of " + ", ".join(WEEKDAYS))
             windows = ["schtasks", "/Create", "/F", "/SC", "WEEKLY", "/D", day, "/TN", name,
-                       "/TR", '"{}"'.format(wrapper_path), "/ST", daily]
+                       "/TR", scheduled_target(wrapper_path), "/ST", daily]
             cron = "{} {} * * {} {}".format(int(minute), int(hour), WEEKDAYS.index(day) + 1, command)
             return {"name": name, "command": command, "windows": windows, "cron": cron,
                     "wrapper_path": wrapper_path, "wrapper_script": wrapper_script}
         windows = ["schtasks", "/Create", "/F", "/SC", "DAILY", "/TN", name,
-                   "/TR", '"{}"'.format(wrapper_path), "/ST", daily]
+                   "/TR", scheduled_target(wrapper_path), "/ST", daily]
         cron = "{} {} * * * {}".format(int(minute), int(hour), command)
     return {"name": name, "command": command, "windows": windows, "cron": cron,
             "wrapper_path": wrapper_path, "wrapper_script": wrapper_script}
@@ -76,8 +81,31 @@ def install(spec):
         with open(spec["wrapper_path"], "w", encoding="utf-8", newline="") as f:
             f.write(spec["wrapper_script"])
     completed = subprocess.run(spec["windows"], capture_output=True, text=True)
-    return {"status": "ok" if completed.returncode == 0 else "fail",
-            "message": (completed.stdout or completed.stderr).strip()}
+    message = (completed.stdout or completed.stderr).strip()
+    if completed.returncode == 0:
+        message += " | " + harden(spec["name"])
+    return {"status": "ok" if completed.returncode == 0 else "fail", "message": message}
+
+
+def harden_command(name):
+    """PowerShell that makes a scheduled cycle survive laptops: run missed cycles after wake or login,
+    keep running on battery and stop only after a generous limit. ``schtasks /Create`` cannot set these."""
+    quoted = name.replace("'", "''")
+    return ("$s = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries "
+            "-DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Hours 3) "
+            "-MultipleInstances IgnoreNew; Set-ScheduledTask -TaskName '{}' -Settings $s | Out-Null".format(quoted))
+
+
+def harden(name):
+    """Apply :func:`harden_command`; failure is reported, not raised (the schedule itself is installed)."""
+    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    try:
+        done = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", harden_command(name)],
+                              capture_output=True, text=True, timeout=60, creationflags=flags)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        return "settings not hardened: {}".format(error)
+    return "settings: run missed cycles after wake" if done.returncode == 0 else \
+        "settings not hardened: {}".format((done.stderr or done.stdout).strip()[:200])
 
 
 def remove(task_dir):

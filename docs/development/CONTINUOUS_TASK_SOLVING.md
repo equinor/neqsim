@@ -681,7 +681,8 @@ option; daily times must be between 00:00 and 23:59. These are local wall-clock
 schedules, so daylight-saving transitions may change elapsed spacing.
 
 Windows runs a quoted `continuous/run_cycle.cmd` wrapper to support paths with
-spaces. If the wrapper path itself exceeds the Task Scheduler command limit,
+spaces, started through `conhost.exe --headless` so no console window pops up
+when a cycle runs. If the wrapper path itself exceeds the Task Scheduler command limit,
 installation reports a failure and asks for a shorter task path.
 
 `task-schedule` prints the cron line instead of installing it:
@@ -866,6 +867,78 @@ For all living tasks in a folder at once:
 ```powershell
 neqsim task-status C:\path\to\task-root
 ```
+
+### 13.1b Daily engineering update (Word, newest day first)
+
+For a task that runs for weeks the cycle folders are too fine-grained for engineers. Enable one
+document that is rebuilt after every cycle and has the newest day on top:
+
+```yaml
+# cycle_plan.yaml
+daily_report:
+  enabled: true
+  title: "Short task title"
+  expected_cycles_per_day: 2
+  chart_days: 12
+  kpis:            # snapshot table: now, previous day, change
+    - {name: dp_A_last_C, label: "Train A dew point", unit: "C", digits: 1}
+  charts:          # series are KPI names or finer CSV files; key events become numbered markers
+    - {title: "...", ylabel: "...", hline: -10,
+       kpis: [{file: "step2_analysis/plant_data/raw/live_m5/24-MI-0170.csv", label: "A", color: "#1f77b4"}]}
+live_agent: {model: claude-sonnet-5, fallback_models: [gpt-5.6-sol]}   # pin the model, see below
+```
+
+The content is one JSON entry per local day in `continuous/daily/<YYYY-MM-DD>.json` (headline,
+verdict, what changed, events, new evidence, candidate causes with old/new confidence, decisions with
+owner, open points) plus `continuous/daily/_standing.json` (question, current answer, what supports it,
+limits, glossary). The reviewing agent writes and merges them each cycle; `neqsim task-daily <task>
+--template` prints an empty entry and `--validate` checks them (including confidence sums).
+`neqsim task-daily <task>` rebuilds `continuous/DAILY_REPORT.docx`: today, where we stand, charts,
+earlier days, a **monitoring health** table (cycles per day, written reviews, failed or interrupted
+cycles) and a glossary. A day without an entry appears with a visible "No written review" flag, so a
+silent agent failure cannot hide.
+
+Pin the agent model (`live_agent.model` / `agent.model`) and give fallbacks (`fallback_models`; a default
+list is used when omitted): a scheduled run that uses
+the interactive default stops with exit code 1 when that model is withdrawn, and every later cycle loses
+its review while the cycle itself still reports complete. `agent_launch.run_with_fallback` retries the next
+model only when the CLI reports the model unavailable, and a failed review raises the trigger
+`monitor:agent_failed`. `agent_launch.launch` returns the failure
+reason (`model_unavailable`, `not_authenticated`, `quota_or_rate_limit`) and the last output lines.
+
+Other long-running-task safeguards: `neqsim task-schedule --install` now also sets *run missed cycles after
+wake*, battery-safe and a 3 h limit (so a laptop sleeping at 06:30 still runs the cycle when it wakes);
+`neqsim task-drift <task>` lists drift alarms and `--reset` restarts the charts after a known
+intervention, so the monitor does not stay in alarm for weeks; bulk evidence changes (a re-organised
+document folder) appear as one row in the Living Report.
+
+### 13.1c Evidence-weighted root cause and the next best test
+
+For a root-cause question, keep `continuous/hypotheses.yaml` instead of writing confidence numbers by hand
+(`neqsim task-hypotheses <task> --template` prints a commented example):
+
+- `hypotheses` with priors (and optional `short` labels), optional `decision_groups` such as
+  `gas_dry: [...]` / `gas_wet: [...]`;
+- `observations`, each entered once with `likelihood` = $P(\text{observation} \mid \text{cause})$ for every
+  cause, a `reliability` (1 verified, about 0.6 second-hand) and a `family` for repeats of the same
+  mechanism;
+- `tests` with discrete `outcomes`, each a row of $P(\text{outcome} \mid \text{cause})$ summing to 1 per
+  cause, an `owner` and a `cost`.
+
+`neqsim task-hypotheses <task>` applies Bayes' rule in date order. An unreliable observation is mixed with
+"no information", and the $n$-th repeat in a family counts with weight `family_decay`$^n$. It prints the
+probability of each cause and decision group, the observation the answer depends on most (leave-one-out),
+and the tests ranked by expected information gain (bits) per unit cost:
+
+$$
+\mathrm{EIG} = H(P) - \sum_{o} P(o)\, H(P \mid o), \qquad P(o) = \sum_h P(o \mid h)\, P(h)
+$$
+
+With `rank_by: auto` the ranking uses the decision groups until one exceeds 0.9, then the causes. The
+`floor` is a reporting threshold only (shown as "< 2 %, not ruled out"). The state is written to
+`continuous/hypotheses_state.json` after every cycle, and the daily Word report shows the evidence-weighted
+causes, the evidence that moved them most, the ranked tests and the next test in "Today". The likelihoods
+remain engineering judgements; the method makes them explicit, consistent and open to challenge.
 
 ### 13.2 Triage a triggered cycle
 
