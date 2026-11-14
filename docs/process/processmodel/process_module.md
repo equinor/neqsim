@@ -108,7 +108,195 @@ public final class ProcessModuleExample {
 | `validateStructure()` | Reports structural issues such as an empty module or disconnected sub-systems. |
 | `buildModelGraph()` | Builds the graph used by calculation-order and recycle-loop inspection methods. |
 
-Progress listeners can be attached with `setProgressListener(...)`; they propagate to child systems and nested modules. Capacity helpers such as `findBottleneck()`, `isAnyEquipmentOverloaded()`, and `getCapacityUtilizationSummary()` traverse the hierarchy but depend on equipment that implements NeqSim's capacity contracts.
+Progress listeners attached with `setProgressListener(...)` propagate to child systems and nested modules.
+
+## Capacity Constraints in ProcessModule
+
+Capacity methods traverse all contained process systems, including those below nested modules.
+Only equipment implementing the capacity contract contributes to the results.
+
+### Available Methods
+
+| Method | Description |
+|--------|-------------|
+| `getConstrainedEquipment()` | Get all capacity-constrained equipment from all systems |
+| `findBottleneck()` | Find equipment with highest utilization |
+| `isAnyEquipmentOverloaded()` | Check if any equipment exceeds design capacity |
+| `isAnyHardLimitExceeded()` | Check if any HARD limits are exceeded |
+| `getCapacityUtilizationSummary()` | Get utilization map for all equipment |
+| `getEquipmentNearCapacityLimit()` | Get equipment near warning threshold |
+
+### Usage Example
+
+Use configured `inletSystem`, `compressionSystem`, and `exportSystem`; the example logs
+with a class-level Log4j2 `logger`. Import `java.util.List`, `java.util.Map`, and
+`neqsim.process.equipment.capacity.CapacityConstrainedEquipment`.
+
+```java
+import neqsim.process.processmodel.ProcessModule;
+import neqsim.process.equipment.capacity.BottleneckResult;
+
+// Create module with multiple systems
+ProcessModule module = new ProcessModule("Production Module");
+module.add(inletSystem);
+module.add(compressionSystem);
+module.add(exportSystem);
+module.run();
+
+// Get all constrained equipment across all systems
+List<CapacityConstrainedEquipment> constrained = module.getConstrainedEquipment();
+logger.info("Found " + constrained.size() + " constrained equipment");
+
+// Find bottleneck across entire module
+BottleneckResult bottleneck = module.findBottleneck();
+if (bottleneck.hasBottleneck()) {
+    logger.info("Bottleneck: " + bottleneck.getEquipmentName());
+    logger.info("Constraint: " + bottleneck.getConstraintName());
+    logger.info("Utilization: " + bottleneck.getUtilizationPercent() + "%");
+}
+
+// Check for overloaded equipment
+if (module.isAnyEquipmentOverloaded()) {
+    logger.info("Warning: Equipment exceeds design capacity!");
+}
+
+// Get utilization summary
+Map<String, Double> utilization = module.getCapacityUtilizationSummary();
+for (Map.Entry<String, Double> entry : utilization.entrySet()) {
+    logger.info(String.format("%s: %.1f%%%n", entry.getKey(), entry.getValue()));
+}
+```
+
+### Nested Module Support
+
+Capacity constraint methods work recursively across nested modules:
+
+```java
+// Inner modules
+ProcessModule gatheringModule = new ProcessModule("Gathering");
+gatheringModule.add(manifoldSystem);
+
+ProcessModule compressionModule = new ProcessModule("Compression");
+compressionModule.add(compressorSystem);
+
+// Outer module containing both
+ProcessModule facilityModule = new ProcessModule("Facility");
+facilityModule.add(gatheringModule);
+facilityModule.add(compressionModule);
+facilityModule.run();
+
+// This will find constrained equipment from BOTH inner modules
+List<CapacityConstrainedEquipment> allConstrained = facilityModule.getConstrainedEquipment();
+
+// Bottleneck detection spans all nested modules
+BottleneckResult bottleneck = facilityModule.findBottleneck();
+```
+
+For detailed constraint management, see [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md).
+
+---
+
+## Optimization with ProcessModule
+
+`ProcessOptimizationEngine` accepts `ProcessModule`. `DesignOptimizer` supports module
+validation and sizing; its bounded search currently requires a single `ProcessSystem`.
+The following snippets require a configured, connected `facilityModule`, with unique
+stream names `Well Feed` and `Export Gas`. Use the result type belonging to each optimizer.
+
+### ProcessOptimizationEngine
+
+```java
+import neqsim.process.util.optimizer.ProcessOptimizationEngine;
+import neqsim.process.processmodel.ProcessSystem;
+
+org.apache.logging.log4j.Logger logger =
+    org.apache.logging.log4j.LogManager.getLogger("ModuleOptimization");
+
+// Create engine with ProcessModule
+ProcessOptimizationEngine engine = new ProcessOptimizationEngine(facilityModule);
+engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.BINARY_SEARCH);
+engine.setTolerance(1.0); // kg/hr resolution for this throughput search
+
+// Set feed stream (searches across ALL systems in module)
+engine.setFeedStreamName("Well Feed");
+
+// Set outlet stream to monitor (searches across ALL systems in module)
+engine.setOutletStreamName("Export Gas");
+
+// Find maximum throughput
+ProcessOptimizationEngine.OptimizationResult result = engine.findMaximumThroughput(
+    85.0,      // inlet pressure (bara)
+    40.0,      // outlet pressure (bara)
+    5000.0,    // min flow (kg/hr)
+    200000.0   // max flow (kg/hr)
+);
+
+if (!result.isConverged() || !result.getConstraintViolations().isEmpty()) {
+    throw new IllegalStateException("Search failed or returned constraint violations");
+}
+logger.info("Selected feed rate: {} kg/hr", result.getOptimalValue());
+
+// Replay the selected flow before reading the current outlet conditions.
+// Use the actual connected feed from the module when applying this setpoint.
+for (ProcessSystem system : facilityModule.getAllProcessSystems()) {
+    for (neqsim.process.equipment.ProcessEquipmentInterface unit : system.getUnitOperations()) {
+        if (unit instanceof neqsim.process.equipment.stream.StreamInterface
+                && unit.getName().equals("Well Feed")) {
+            ((neqsim.process.equipment.stream.StreamInterface) unit)
+                .setFlowRate(result.getOptimalValue(), "kg/hr");
+        }
+    }
+}
+facilityModule.run();
+
+// Get outlet conditions from the configured outlet stream
+double outletTemp = engine.getOutletTemperature("C");
+double outletFlow = engine.getOutletFlowRate("MSm3/day");
+logger.info("Export temperature: " + outletTemp + " °C");
+logger.info("Export flow: " + outletFlow + " MSm3/day");
+```
+
+### Stream Configuration Methods
+
+| Method | Description |
+|--------|-------------|
+| `setFeedStreamName(String)` | Set which stream to vary during optimization |
+| `getFeedStreamName()` | Get the feed stream name |
+| `setOutletStreamName(String)` | Set which stream to monitor for outlet conditions |
+| `getOutletStreamName()` | Get the outlet stream name |
+| `getOutletTemperature(String)` | Get outlet temperature in specified unit |
+| `getOutletFlowRate(String)` | Get outlet flow rate in specified unit |
+
+### DesignOptimizer
+
+```java
+import neqsim.process.design.DesignOptimizer;
+import neqsim.process.design.DesignResult;
+
+// Create optimizer from ProcessModule
+DesignOptimizer optimizer = DesignOptimizer.forProcess(facilityModule);
+
+// Check mode
+if (optimizer.isModuleMode()) {
+    logger.info("Optimizing module: " + optimizer.getModule().getName());
+}
+
+// Configure validation and auto-sizing across the module
+optimizer
+    .autoSizeEquipment(1.2)
+    .applyDefaultConstraints();
+
+DesignResult result = optimizer.optimize();
+```
+
+The methods above only assess configured constraints and the selected search; independently
+check complete-model convergence, mass/energy balance, and installed capacity coverage.
+
+Constraints are evaluated across **all nested ProcessSystems** in the module hierarchy. The result
+status is `AUTO_SIZED`, not `OPTIMIZED`, because no search was performed. Configured bounded search
+through `DesignOptimizer` currently requires a single `ProcessSystem`; use
+`ProductionOptimizer` with `ProcessModelOptimizationView` for whole-module optimization.
+
 
 ## Related documentation
 
