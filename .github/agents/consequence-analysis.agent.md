@@ -39,9 +39,9 @@ referenced output suitable for facility siting (API 752), HSE-case justification
 
 | User asks for                                         | Use                                                            |
 | ----------------------------------------------------- | -------------------------------------------------------------- |
-| Thermal radiation contour                             | `JetFireModel` / `PoolFireModel.radiationFluxAt(d)`            |
-| Distance to 12.5 / 4.7 / 1.6 kW/m²                    | `*.distanceForFlux(target)`                                    |
-| Overpressure (VCE) at distance                        | `VCEModel.overpressureAt(d)`                                   |
+| Thermal radiation contour                             | `JetFireModel` / `PoolFireModel.incidentHeatFlux(d)`            |
+| Distance to 12.5 / 4.7 / 1.6 kW/m²                    | `*.distanceToFlux(target)`                                    |
+| Overpressure (VCE) at distance                        | `VCEModel.overpressurePa(d)`                                   |
 | BLEVE fireball / thermal dose                         | `BLEVECalculator`                                              |
 | Distance to LFL / IDLH / ERPG                         | `GaussianPlume.distanceToConcentration(thresh)`                |
 | Heavy gas (CO₂, LPG) near-field                       | `HeavyGasDispersion`                                           |
