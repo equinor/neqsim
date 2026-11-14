@@ -32,7 +32,7 @@ public final class HuronVidalMegMethanePerformanceBenchmark {
    * @throws IOException if results cannot be written
    */
   public static void main(String[] args) throws IOException {
-    if (args.length != 4) {
+    if (args.length != 4 && args.length != 5) {
       throw new IllegalArgumentException("Expected profile, rule, scenario and output path");
     }
     int profile = Integer.parseInt(args[0]);
@@ -42,7 +42,17 @@ public final class HuronVidalMegMethanePerformanceBenchmark {
         || !("init1".equals(scenario) || "init3".equals(scenario) || "flash".equals(scenario))) {
       throw new IllegalArgumentException("Invalid profile, rule or scenario");
     }
-    SystemInterface fluid = HuronVidalMegMethaneDiagnosticTest.fluid(298.25, 100.2, 0.5, 0.5, false, profile == 0);
+    String frost = args.length == 5 ? args[4] : null;
+    boolean water = "water_journal".equals(frost);
+    if (frost != null && !water && !"meg_mc".equals(frost)) {
+      throw new IllegalArgumentException("Expected water_journal or meg_mc for a Frost benchmark");
+    }
+    double temperature = frost == null ? 298.25 : water ? 323.56 : 323.0;
+    double pressure = frost == null ? 100.2 : water ? 84.8 : 85.0;
+    String polar = water ? "water" : "MEG";
+    SystemInterface fluid = frost == null
+        ? HuronVidalMegMethaneDiagnosticTest.fluid(temperature, pressure, 0.5, 0.5, false, profile == 0)
+        : HuronVidalFrostAssessmentTest.fluid(frost, temperature, pressure, false);
     double[] originalPure = pureInputs(fluid);
     if (rule == 2) {
       fluid.setMixingRule(2);
@@ -56,15 +66,16 @@ public final class HuronVidalMegMethanePerformanceBenchmark {
     int warmup = "flash".equals(scenario) ? 3000 : 100000;
     int repetitions = "flash".equals(scenario) ? 100 : 10000;
     for (int i = 0; i < warmup; i++) {
-      operation(fluid, operations, scenario, i);
+      operation(fluid, operations, scenario, temperature, i);
     }
     try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(Paths.get(args[3]), StandardCharsets.UTF_8))) {
       out.println(
-          "profile,rule,scenario,round,operations,elapsed_ns,T_K,P_bara,topology,beta0,balance,normalization,log_fugacity,predicted_gas_MEG,predicted_liquid_CH4");
+          "profile,rule,scenario,round,operations,elapsed_ns,T_K,P_bara,topology,beta0,balance,normalization,log_fugacity,predicted_gas_"
+              + polar + ",predicted_liquid_CH4");
       for (int round = 0; round < 10; round++) {
         long start = System.nanoTime();
         for (int i = 0; i < repetitions; i++) {
-          operation(fluid, operations, scenario, i);
+          operation(fluid, operations, scenario, temperature, i);
         }
         long elapsed = System.nanoTime() - start;
         fluid.init(3);
@@ -75,7 +86,7 @@ public final class HuronVidalMegMethanePerformanceBenchmark {
         out.printf(Locale.ROOT, "%d,%d,%s,%d,%d,%d,%.17g,%.17g,%s/%s,%.17g,%.17g,%.17g,%.17g,%.17g,%.17g%n", profile,
             rule, scenario, round, repetitions, elapsed, fluid.getTemperature(), fluid.getPressure(),
             fluid.getPhase(0).getType(), fluid.getPhase(1).getType(), fluid.getBeta(0), errors[0], errors[1], errors[2],
-            fluid.getPhase(rich).getComponent("MEG").getx(), fluid.getPhase(1 - rich).getComponent("methane").getx());
+            fluid.getPhase(rich).getComponent(polar).getx(), fluid.getPhase(1 - rich).getComponent("methane").getx());
       }
       if (out.checkError()) {
         throw new IOException("Benchmark result write failed");
@@ -146,12 +157,13 @@ public final class HuronVidalMegMethanePerformanceBenchmark {
    * @param fluid independently configured fluid
    * @param operations corresponding flash operations
    * @param scenario init1, init3 or flash
+   * @param temperature base temperature in kelvin
    * @param iteration alternating nearby-temperature index
    */
   private static void operation(SystemInterface fluid, ThermodynamicOperations operations, String scenario,
-      int iteration) {
+      double temperature, int iteration) {
     if ("flash".equals(scenario)) {
-      fluid.setTemperature(298.25 + .2 * (iteration % 2));
+      fluid.setTemperature(temperature + .2 * (iteration % 2));
       operations.TPflash();
       fluid.init(3);
     } else {
