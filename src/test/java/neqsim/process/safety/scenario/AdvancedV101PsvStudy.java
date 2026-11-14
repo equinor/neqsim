@@ -394,6 +394,31 @@ public final class AdvancedV101PsvStudy {
     }
 
     /**
+     * Executes independent case bundles against their common source and records their native results.
+     *
+     * @param cases ordered bundles sharing one canonical source
+     * @param workers maximum number of concurrent scenarios
+     */
+    static void runStrictBatch(List<CaseBundle> cases, int workers) {
+      if (cases.isEmpty()) {
+        return;
+      }
+      ProcessSystem commonSource = cases.get(0).source;
+      List<DynamicSafetyScenario> scenarios = new ArrayList<DynamicSafetyScenario>(cases.size());
+      for (CaseBundle bundle : cases) {
+        if (bundle.source != commonSource) {
+          throw new IllegalArgumentException("Study cases must share a canonical source");
+        }
+        scenarios.add(bundle.scenario);
+      }
+      List<DynamicSafetyScenarioResult> results = DynamicSafetyScenarioRunner.runStrictBatch(commonSource, scenarios,
+          workers);
+      for (int index = 0; index < cases.size(); index++) {
+        cases.get(index).nativeResult = results.get(index);
+      }
+    }
+
+    /**
      * @param process actual copied source
      * @return native coordinating logic
      */

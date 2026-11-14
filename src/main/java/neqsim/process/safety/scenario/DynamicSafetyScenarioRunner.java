@@ -1,10 +1,18 @@
 package neqsim.process.safety.scenario;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,6 +21,7 @@ import neqsim.process.dynamics.TransientStepIdentifier;
 import neqsim.process.logic.ProcessLogic;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.ThermodynamicModelSettings;
 
 /** Executes initiating events and protection logic against an isolated transient process copy. */
 public final class DynamicSafetyScenarioRunner {
@@ -54,6 +63,79 @@ public final class DynamicSafetyScenarioRunner {
   public static DynamicSafetyScenarioResult runStrict(ProcessSystem baseProcess, DynamicSafetyScenario scenario) {
     requireTarget(scenario, DynamicSafetyScenario.ExecutionTarget.PROCESS_SYSTEM);
     return runConfigured(baseProcess, scenario, true);
+  }
+
+  /**
+   * Runs independent strict process-system scenarios and returns results in input order.
+   *
+   * <p>
+   * Each scenario is initialized and stepped on its own process copy. Parallelism applies only across scenarios. Use
+   * one worker when callbacks rely on shared mutable state or a model uses global mutable configuration. For parallel
+   * execution, each case configuration, initiating event, logic factory and criterion must only mutate its own case
+   * state and process copy and must not change global calculation settings. Treat the source process as read-only
+   * throughout the batch. A scenario whose physical acceptance criteria fail still returns its normal result, just as
+   * when calling {@link #runStrict(ProcessSystem, DynamicSafetyScenario)}.
+   * </p>
+   *
+   * @param baseProcess source process shared for copying
+   * @param scenarios ordered list of distinct process-system scenario objects
+   * @param parallelism maximum number of scenarios running simultaneously, at least one
+   * @return strict results in the same order as the supplied scenarios
+   * @throws IllegalArgumentException for invalid inputs, including a repeated scenario instance
+   * @throws IllegalStateException if batch execution is interrupted or a parallel case throws
+   */
+  public static List<DynamicSafetyScenarioResult> runStrictBatch(ProcessSystem baseProcess,
+      List<DynamicSafetyScenario> scenarios, int parallelism) {
+    if (baseProcess == null || scenarios == null || parallelism < 1) {
+      throw new IllegalArgumentException("A source process, scenario list and positive parallelism are required");
+    }
+    List<DynamicSafetyScenario> cases = new ArrayList<DynamicSafetyScenario>(scenarios);
+    Set<DynamicSafetyScenario> seen = Collections.newSetFromMap(new IdentityHashMap<DynamicSafetyScenario, Boolean>());
+    for (DynamicSafetyScenario scenario : cases) {
+      if (scenario == null) {
+        throw new IllegalArgumentException("Scenario list contains a null entry");
+      }
+      requireTarget(scenario, DynamicSafetyScenario.ExecutionTarget.PROCESS_SYSTEM);
+      if (!seen.add(scenario)) {
+        throw new IllegalArgumentException("Repeated scenario instance: " + scenario.getId());
+      }
+    }
+
+    List<DynamicSafetyScenarioResult> results = new ArrayList<DynamicSafetyScenarioResult>(cases.size());
+    if (parallelism == 1 || cases.size() < 2) {
+      for (DynamicSafetyScenario scenario : cases) {
+        results.add(runStrict(baseProcess, scenario));
+      }
+      return results;
+    }
+
+    boolean warmStart = ThermodynamicModelSettings.isUseWarmStartKValues();
+    List<Callable<DynamicSafetyScenarioResult>> tasks = new ArrayList<Callable<DynamicSafetyScenarioResult>>(
+        cases.size());
+    for (DynamicSafetyScenario scenario : cases) {
+      tasks.add(() -> {
+        ThermodynamicModelSettings.setUseWarmStartKValues(warmStart);
+        return runStrict(baseProcess, scenario);
+      });
+    }
+    ExecutorService workers = Executors.newFixedThreadPool(Math.min(parallelism, cases.size()));
+    try {
+      List<Future<DynamicSafetyScenarioResult>> completed = workers.invokeAll(tasks);
+      for (int index = 0; index < completed.size(); index++) {
+        try {
+          results.add(completed.get(index).get());
+        } catch (ExecutionException failure) {
+          throw new IllegalStateException("Dynamic safety scenario failed: " + cases.get(index).getId(),
+              failure.getCause());
+        }
+      }
+      return results;
+    } catch (InterruptedException failure) {
+      Thread.currentThread().interrupt();
+      throw new IllegalStateException("Dynamic safety scenario batch interrupted", failure);
+    } finally {
+      workers.shutdownNow();
+    }
   }
 
   /**

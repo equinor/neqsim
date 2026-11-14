@@ -1,14 +1,19 @@
 package neqsim.process.safety.scenario;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.logic.LogicState;
 import neqsim.process.logic.ProcessLogic;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import org.junit.jupiter.api.Test;
@@ -54,6 +59,55 @@ class DynamicSafetyScenarioRunnerTest {
     assertEquals(originalPressure, ((Stream) base.getUnit("FEED")).getPressure("bara"), 1.0e-10);
   }
 
+  /** Checks ordered results, isolation, and retention of a failed physical criterion in a batch. */
+  @Test
+  void strictBatchMatchesIndependentSerialRuns() {
+    ProcessSystem base = process();
+    DynamicSafetyScenario passing = pressureScenario("PASSING", 40.0);
+    DynamicSafetyScenario failing = pressureScenario("FAILING", 60.0);
+    List<DynamicSafetyScenario> scenarios = Arrays.asList(failing, passing);
+    boolean originalWarmStart = ThermodynamicModelSettings.isUseWarmStartKValues();
+    List<DynamicSafetyScenarioResult> parallel;
+    List<DynamicSafetyScenarioResult> serial;
+    try {
+      ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      parallel = DynamicSafetyScenarioRunner.runStrictBatch(base, scenarios, 2);
+      serial = DynamicSafetyScenarioRunner.runStrictBatch(base, scenarios, 1);
+    } finally {
+      ThermodynamicModelSettings.setUseWarmStartKValues(originalWarmStart);
+    }
+    assertFalse(parallel.get(0).isPassed());
+    assertTrue(parallel.get(1).isPassed());
+    for (int index = 0; index < serial.size(); index++) {
+      assertEquals(serial.get(index).toMap(), parallel.get(index).toMap());
+    }
+    assertEquals(50.0, ((Stream) base.getUnit("FEED")).getPressure("bara"));
+    assertTrue(DynamicSafetyScenarioRunner.runStrictBatch(base, Collections.emptyList(), 2).isEmpty());
+    assertThrows(IllegalArgumentException.class,
+        () -> DynamicSafetyScenarioRunner.runStrictBatch(base, Arrays.asList(passing, passing), 2));
+    assertThrows(IllegalArgumentException.class,
+        () -> DynamicSafetyScenarioRunner.runStrictBatch(base, Arrays.asList(failing, null), 2));
+  }
+
+  /**
+   * Builds a deterministic scenario with a criterion that passes at or below 50 bara.
+   *
+   * @param name scenario identifier
+   * @param pressure event pressure in bara
+   * @return isolated event and criterion definition
+   */
+  private static DynamicSafetyScenario pressureScenario(String name, double pressure) {
+    return DynamicSafetyScenario.builder(name, name).durationSeconds(0.2).timeStepSeconds(0.1).triggerTimeSeconds(0.0)
+        .eventExactTiming(true).initiatingEvent("MARK-DEMAND", model -> {
+        }).addLogic("PRESSURE-RESPONSE", model -> new PressureTripLogic((Stream) model.getUnit("FEED"), pressure))
+        .addCriterion(DynamicScenarioCriterion
+            .builder("PRESSURE", "Feed pressure", "bara", "READ-FEED-PRESSURE",
+                model -> ((Stream) model.getUnit("FEED")).getPressure("bara"))
+            .acceptanceRange(0.0, 50.0).evaluationMode(DynamicScenarioCriterion.EvaluationMode.MAINTAIN_BOUNDS)
+            .deadlineSeconds(0.2).build())
+        .build();
+  }
+
   private ProcessSystem process() {
     SystemInterface fluid = new SystemSrkEos(300.0, 50.0);
     fluid.addComponent("methane", 1.0);
@@ -69,10 +123,22 @@ class DynamicSafetyScenarioRunnerTest {
   private static final class PressureTripLogic implements ProcessLogic {
     private static final long serialVersionUID = 1000L;
     private final Stream stream;
+    private final double responsePressure;
     private LogicState state = LogicState.IDLE;
 
     private PressureTripLogic(Stream stream) {
+      this(stream, 5.0);
+    }
+
+    /**
+     * Creates isolated test logic bound to a copied process stream.
+     *
+     * @param stream copied feed stream
+     * @param responsePressure pressure to publish in bara
+     */
+    private PressureTripLogic(Stream stream, double responsePressure) {
       this.stream = stream;
+      this.responsePressure = responsePressure;
     }
 
     @Override
@@ -103,7 +169,7 @@ class DynamicSafetyScenarioRunnerTest {
 
     @Override
     public void execute(double timeStep) {
-      stream.setPressure(5.0, "bara");
+      stream.setPressure(responsePressure, "bara");
       state = LogicState.COMPLETED;
     }
 

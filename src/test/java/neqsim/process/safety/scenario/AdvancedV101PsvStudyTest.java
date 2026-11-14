@@ -6,9 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.process.dynamics.TransientStepTransaction;
 import neqsim.process.equipment.splitter.Splitter;
@@ -27,6 +30,29 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 class AdvancedV101PsvStudyTest {
+  private static final Map<String, CaseBundle> casesById = new LinkedHashMap<String, CaseBundle>();
+
+  /**
+   * Runs each unique case once with an isolated process copy. The replay test still executes an independent run.
+   */
+  @BeforeAll
+  static void runIndependentCases() {
+    Map<String, Double> settings = AdvancedV101PsvStudy.defaultSettings();
+    ProcessSystem source = AdvancedV101PsvStudy.buildSource(settings);
+    List<CaseBundle> cases = new ArrayList<CaseBundle>();
+    for (String mode : new String[] {"PSV_NORMAL", "SIS_STANDBY", "PSV_RELIEF", "HIPPS_FAILED_PSV", "PSV_FAILED_CLOSED",
+        "PSV_STUCK_OPEN", "PSV_UNDERSIZED", "PSV_HIGH_BACKPRESSURE", "PSV_SLOW", "PSV_CYCLE"}) {
+      cases.add(AdvancedV101PsvStudy.createCase(source, settings, mode, 0.1));
+    }
+    cases.add(AdvancedV101PsvStudy.createCase(source, settings, "PSV_RELIEF", 0.05));
+    int workers = Integer.getInteger("neqsim.psvStudy.parallelism",
+        Math.min(4, Runtime.getRuntime().availableProcessors()));
+    CaseBundle.runStrictBatch(cases, workers);
+    for (CaseBundle bundle : cases) {
+      casesById.put(bundle.getScenario().getId(), bundle);
+    }
+  }
+
   /**
    * Functioning upstream shutdown contains demand while the PSV remains physically closed throughout the sampled
    * window.
@@ -191,10 +217,9 @@ class AdvancedV101PsvStudyTest {
    * @throws IOException if requested export fails
    */
   private static CaseBundle run(String mode, double dt) throws IOException {
-    Map<String, Double> settings = AdvancedV101PsvStudy.defaultSettings();
-    CaseBundle result = AdvancedV101PsvStudy.createCase(AdvancedV101PsvStudy.buildSource(settings), settings, mode, dt);
-    DynamicSafetyScenarioResult nativeResult = result.runStrict();
-    assertTrue(((List<?>) nativeResult.toMap().get("errors")).isEmpty(), nativeResult.toJson());
+    CaseBundle result = casesById.get("ADV-PSV-" + mode + "-DT-" + Double.toString(dt));
+    Map<?, ?> nativeResult = (Map<?, ?>) result.toMap().get("nativeResult");
+    assertTrue(((List<?>) nativeResult.get("errors")).isEmpty(), nativeResult::toString);
     for (String tag : new String[] {"20-ESDV-001", "20-HIPPS-XV-001", "20-PCV-001", "20-PSV-001"}) {
       assertTrue(((ThrottlingValve) result.getConfiguredProcess().getUnit(tag)).isAllowChoked());
     }

@@ -59,6 +59,22 @@ assessment. Those lifecycle activities remain controlled engineering decisions u
 6. Dynamic criteria observe the physical process and final elements until their deadlines.
 7. The result records channel traces, vote time, actuation time, final state, and criteria verdicts.
 
+## Independent scenario batches
+
+Use `DynamicSafetyScenarioRunner.runStrictBatch` for a set of independent
+`ProcessSystem` scenarios sharing a read-only source. Supply the scenarios in the
+desired report order and set the maximum number of workers. Each worker uses an
+isolated process copy and completes the normal strict preflight, transient steps,
+and result checks. Results follow input order, including scenarios whose physical
+criteria fail.
+
+Each parallel scenario must own its callback state and keep any writes local to
+its own process copy and case data. Use one worker for callbacks or component
+models that share mutable state or modify global calculation settings. Increasing
+the worker count reduces batch elapsed time when CPU capacity is available.
+The PSV regression study defaults to at most four workers and accepts
+`-Dneqsim.psvStudy.parallelism=1` for a serial comparison.
+
 ## Event-exact timing policy
 
 The default runner policy remains `LEGACY_FIXED_SCAN` for compatibility. For quantitative response-time
