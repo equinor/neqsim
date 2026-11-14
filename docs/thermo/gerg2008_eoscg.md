@@ -278,6 +278,12 @@ document the initialization-order repair for issue #3702. With that repair, the
 the earlier density-root limitation applies to versions without this repair.
 The linked example checks each phase's pressure and the component inventories.
 
+For a requested liquid density, EOS-CG uses the same Chebyshev refinement as
+GERG-2008, with pressure and slope evaluated by the EOS-CG kernel. A positive-
+slope crossing is a candidate density for the requested branch. The TP flash
+still determines the phase split through the fugacity and stability equations.
+The phase-envelope finite differences retain their original root refinement.
+
 For pure-component EOS-CG volume–energy flashes, the saturation-volume stability
 check requires distinct, physically ordered roots: vapor molar volume must exceed
 liquid molar volume. Inverted or coalesced numerical roots cannot establish a

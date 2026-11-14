@@ -4,7 +4,7 @@ import java.util.function.DoubleSupplier;
 import java.util.function.DoubleUnaryOperator;
 
 /** Safeguarded high-density root finder for multiparameter reference equations of state. */
-final class ReferenceEosLiquidDensitySolver {
+public final class ReferenceEosLiquidDensitySolver {
   private static final double MIN_DENSITY = 0.02;
   private static final double MAX_DENSITY = 60.0;
   private static final double SEARCH_FACTOR = 0.9;
@@ -43,13 +43,31 @@ final class ReferenceEosLiquidDensitySolver {
    * @return liquid molar density in mol/L, or {@link Double#NaN} when the scan cannot bracket a root
    */
   static double solve(double targetPressure, DoubleUnaryOperator pressureFunction, DoubleSupplier pressureSlope) {
-    double upperDensity = MAX_DENSITY;
+    return solve(targetPressure, pressureFunction, pressureSlope, MIN_DENSITY, MAX_DENSITY);
+  }
+
+  /**
+   * Locate a mechanically stable high-density root within model-specific bounds.
+   *
+   * @param targetPressure pressure to match in kPa
+   * @param pressureFunction EOS pressure in kPa at a trial density
+   * @param pressureSlope slope at the preceding trial density, in kPa per mol/L
+   * @param minimumDensity lower density bound in mol/L
+   * @param maximumDensity upper density bound in mol/L
+   * @return density in mol/L, or NaN if the solver did not find a root
+   */
+  public static double solve(double targetPressure, DoubleUnaryOperator pressureFunction, DoubleSupplier pressureSlope,
+      double minimumDensity, double maximumDensity) {
+    double upperDensity = maximumDensity;
     double upperResidual = residual(targetPressure, upperDensity, pressureFunction);
     double upperSlope = pressureSlope == null ? Double.NaN : pressureSlope.getAsDouble();
     for (int iteration = 0; iteration < MAX_SEARCH_ITERATIONS; iteration++) {
       double lowerDensity = upperDensity * SEARCH_FACTOR;
-      if (lowerDensity < MIN_DENSITY) {
-        break;
+      if (lowerDensity < minimumDensity) {
+        if (minimumDensity <= MIN_DENSITY || upperDensity <= minimumDensity) {
+          break;
+        }
+        lowerDensity = minimumDensity;
       }
       double lowerResidual = residual(targetPressure, lowerDensity, pressureFunction);
       double lowerSlope = pressureSlope == null ? Double.NaN : pressureSlope.getAsDouble();

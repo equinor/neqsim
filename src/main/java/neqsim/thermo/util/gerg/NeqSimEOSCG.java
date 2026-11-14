@@ -4,6 +4,7 @@ import java.util.Arrays;
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
+import neqsim.thermo.phase.PhaseGERG2008Eos;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
@@ -17,12 +18,8 @@ import neqsim.thermo.phase.PhaseType;
  * </p>
  */
 public class NeqSimEOSCG {
-  /**
-   * Cached EOS-CG model instance. The setup() method initializes constant parameters, so caching provides significant
-   * performance improvement for repeated calculations.
-   */
-  private static volatile EOSCG cachedModel = null;
-  private static final Object CACHE_LOCK = new Object();
+  /** Each thread owns the kernel's mutable coefficient caches and pressure slope. */
+  private static volatile ThreadLocal<EOSCG> models = ThreadLocal.withInitial(NeqSimEOSCG::createModel);
 
   double[] normalizedComposition = new double[28 + 1];
   double[] notNormalizedComposition = new double[28 + 1];
@@ -33,7 +30,6 @@ public class NeqSimEOSCG {
    * Default constructor.
    */
   public NeqSimEOSCG() {
-    this.eosCG = getCachedModel();
   }
 
   /**
@@ -42,37 +38,32 @@ public class NeqSimEOSCG {
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   public NeqSimEOSCG(PhaseInterface phase) {
-    this.eosCG = getCachedModel();
     this.setPhase(phase);
   }
 
   /**
-   * Gets a cached and initialized EOS-CG model instance. If no cached instance exists, creates one and initializes it
-   * with setup(). This method is thread-safe.
+   * Initialize an EOS-CG kernel for a worker.
    *
-   * @return a cached, initialized EOSCG instance
+   * @return initialized kernel
    */
-  private static EOSCG getCachedModel() {
-    if (cachedModel == null) {
-      synchronized (CACHE_LOCK) {
-        if (cachedModel == null) {
-          EOSCG model = new EOSCG();
-          model.setup();
-          cachedModel = model;
-        }
-      }
-    }
-    return cachedModel;
+  private static EOSCG createModel() {
+    EOSCG model = new EOSCG();
+    model.setup();
+    return model;
   }
 
   /**
-   * Clears the cached EOS-CG model instance. This is primarily useful for testing or when parameters need to be
-   * reloaded.
+   * Resolve the kernel for the current worker or the instance override.
+   *
+   * @return EOS-CG kernel
    */
+  private EOSCG kernel() {
+    return eosCG == null ? models.get() : eosCG;
+  }
+
+  /** Clear cached EOS-CG kernels. */
   public static void clearCache() {
-    synchronized (CACHE_LOCK) {
-      cachedModel = null;
-    }
+    models = ThreadLocal.withInitial(NeqSimEOSCG::createModel);
   }
 
   public double getMolarDensity(PhaseInterface phase) {
@@ -106,13 +97,13 @@ public class NeqSimEOSCG {
     }
     doubleW P = new doubleW(0.0);
     doubleW Z = new doubleW(0.0);
-    eosCG.pressure(phase.getTemperature(), molarDensityMolPerL, normalizedComposition, P, Z);
+    kernel().pressure(phase.getTemperature(), molarDensityMolPerL, normalizedComposition, P, Z);
     return P.val;
   }
 
   public double getMolarMass() {
     doubleW mm = new doubleW(0.0);
-    eosCG.molarMass(normalizedComposition, mm);
+    kernel().molarMass(normalizedComposition, mm);
     return mm.val / 1.0e3;
   }
 
@@ -134,18 +125,20 @@ public class NeqSimEOSCG {
     StringW herr = new StringW("");
     doubleW D = new doubleW(0.0);
     double pressure = phase.getPressure() * 1.0e2;
+    EOSCG model = kernel();
     if (liquidRoot) {
+      doubleW calculatedPressure = new doubleW(0.0);
+      doubleW compressibility = new doubleW(0.0);
+      boolean envelope = phase instanceof PhaseGERG2008Eos && ((PhaseGERG2008Eos) phase).isPhaseEnvelopeCalculation();
       double liquidDensity = ReferenceEosLiquidDensitySolver.solve(pressure, density -> {
-        doubleW calculatedPressure = new doubleW(0.0);
-        doubleW compressibility = new doubleW(0.0);
-        eosCG.pressure(phase.getTemperature(), density, normalizedComposition, calculatedPressure, compressibility);
+        model.pressure(phase.getTemperature(), density, normalizedComposition, calculatedPressure, compressibility);
         return calculatedPressure.val;
-      });
+      }, envelope ? null : model::pressureSlope);
       if (Double.isFinite(liquidDensity)) {
         return liquidDensity;
       }
     }
-    eosCG.density(flag, phase.getTemperature(), pressure, normalizedComposition, D, ierr, herr);
+    model.density(flag, phase.getTemperature(), pressure, normalizedComposition, D, ierr, herr);
     if (ierr.val != 0 || !Double.isFinite(D.val) || D.val <= 0.0) {
       throw new IllegalStateException("EOS-CG density calculation failed for phase type " + phaseType + " at "
           + phase.getTemperature() + " K and " + phase.getPressure() + " bar: " + herr.val);
@@ -209,7 +202,7 @@ public class NeqSimEOSCG {
     doubleW jt = new doubleW(0.0);
     doubleW kappa = new doubleW(0.0);
     doubleW A = new doubleW(0.0);
-    eosCG.properties(phase.getTemperature(), molarDensityMolPerL, normalizedComposition, p, z, dpdd, d2pdd2, d2pdtd,
+    kernel().properties(phase.getTemperature(), molarDensityMolPerL, normalizedComposition, p, z, dpdd, d2pdd2, d2pdtd,
         dpdt, u, h, s, cv, cp, w, g, jt, kappa, A);
     return new double[] {p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val, u.val, h.val, s.val, cv.val, cp.val,
         w.val, g.val, jt.val, kappa.val};
@@ -369,7 +362,7 @@ public class NeqSimEOSCG {
     for (int i = 0; i < rows; i++) {
       a0[i] = new doubleW(0.0);
     }
-    eosCG.alpha0(temperature, molarDensityMolPerL, normalizedComposition, a0);
+    kernel().alpha0(temperature, molarDensityMolPerL, normalizedComposition, a0);
     return a0;
   }
 
@@ -395,7 +388,7 @@ public class NeqSimEOSCG {
       }
     }
 
-    eosCG.alphar(2, 3, temperature, molarDensityMolPerL, normalizedComposition, ar);
+    kernel().alphar(2, 3, temperature, molarDensityMolPerL, normalizedComposition, ar);
     return ar;
   }
 
@@ -418,7 +411,7 @@ public class NeqSimEOSCG {
         residualHelmholtz[i][j] = new doubleW(0.0);
       }
     }
-    eosCG.alphar(1, 0, temperature, molarDensity, normalizedComposition, residualHelmholtz);
+    kernel().alphar(1, 0, temperature, molarDensity, normalizedComposition, residualHelmholtz);
     return residualHelmholtz[0][0].val;
   }
 }
