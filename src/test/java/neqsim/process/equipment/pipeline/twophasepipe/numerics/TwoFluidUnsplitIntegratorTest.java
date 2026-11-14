@@ -3,6 +3,7 @@ package neqsim.process.equipment.pipeline.twophasepipe.numerics;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -85,12 +86,29 @@ class TwoFluidUnsplitIntegratorTest {
     double duration = 1.0 / 512.0;
     double outlet = 4.999e6;
 
-    TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, accepted, 10.0, densityModel());
+    TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, accepted, 10.0, densityModel(),
+        0.0, true);
     UnsplitTransientSolver.Result candidate = solver.solve(states(accepted), pressures(accepted), areas(accepted),
         duration, start, outlet, true, adapter);
     assertTrue(candidate.isConverged(),
         () -> candidate.getTerminationReason() + ": " + candidate.getMaximumScaledResidual());
     PreparedStep direct = adapter.prepareStep(candidate, duration, start, outlet, true, 1.0e-8);
+    assertNotEquals(candidate.getState()[0][3], direct.getEndpointSections()[0].getGasMomentumPerLength(),
+        "The verified endpoint must include the separately integrated passive friction impulse");
+    double[][] directImpulse = direct.getConservativeFrictionImpulsePerLength();
+    for (int cell = 0; cell < accepted.length; cell++) {
+      assertArrayEquals(
+          new double[] {candidate.getState()[cell][0], candidate.getState()[cell][1], candidate.getState()[cell][2]},
+          java.util.Arrays.copyOf(direct.getEndpointSections()[cell].getStateVector(), 3), 0.0,
+          "The source split must not alter phase mass");
+      for (int phase = 0; phase < 3; phase++) {
+        assertEquals(
+            direct.getEndpointSections()[cell].getStateVector()[phase + 3] - candidate.getState()[cell][phase + 3],
+            directImpulse[cell][phase], 0.0);
+      }
+    }
+    assertTrue(direct.getMaximumScaledResidual() <= 1.0e-8);
+    assertTrue(!equations.isConservativeFrictionEnabled(), "Preparation must restore the shared equation owner");
 
     TwoFluidUnsplitIntegrator integrator = new TwoFluidUnsplitIntegrator(equations, densityModel(), solver, 0, 1);
     PreparedInterval interval = integrator.prepareInterval(accepted, 10.0, duration, start, outlet, true, 1.0e-8);
@@ -103,6 +121,7 @@ class TwoFluidUnsplitIntegratorTest {
     assertEquals(start + duration, interval.getEndTimeSeconds(), 0.0);
     assertEquals(duration, interval.getSubsteps().get(0).getTimeStepSeconds(), 0.0);
     assertSectionsEqual(direct.getEndpointSections(), interval.getEndpointSections());
+    assertMatrixEquals(directImpulse, interval.getConservativeFrictionImpulsePerLength());
     assertSectionsEqual(original, accepted);
     published.assertUnchanged(equations);
 

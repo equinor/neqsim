@@ -178,7 +178,7 @@ public final class TwoFluidUnsplitIntegrator {
           .getTimeIntegrationMethod() == UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER ? 1.0 : 0.5;
       double interpolationTimeScale = pressureInterpolationEnabled ? timeWeight * dt : 0.0;
       TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, local, spatialStep, densityModel,
-          interpolationTimeScale);
+          interpolationTimeScale, !pressureInterpolationEnabled);
       double[][] state = new double[local.length][];
       double[] pressure = new double[local.length];
       double[] area = new double[local.length];
@@ -277,6 +277,7 @@ public final class TwoFluidUnsplitIntegrator {
     private final long modelEvaluations;
     private final double[][] phaseMassFaceTransferKg;
     private final double[][] phaseMassSourceTransferKg;
+    private final double[][] conservativeFrictionImpulsePerLength;
     private final double maximumScaledResidual;
 
     private PreparedInterval(List<PreparedStep> steps, TwoFluidSection[] initial, double startTime, double endTime,
@@ -289,12 +290,14 @@ public final class TwoFluidUnsplitIntegrator {
       TwoFluidSection[] endpoint = steps.get(steps.size() - 1).getEndpointSections();
       phaseMassFaceTransferKg = new double[endpoint.length + 1][3];
       phaseMassSourceTransferKg = new double[endpoint.length][3];
+      conservativeFrictionImpulsePerLength = new double[endpoint.length][3];
       double[][] momentumChanges = new double[endpoint.length][3];
       for (PreparedStep step : steps) {
         double dt = step.getTimeStepSeconds();
         double[][] faces = step.getEvaluation().getPhaseMassFaceFluxes();
         double[][] sources = step.getEvaluation().getPhaseMassSourcesPerLength();
         double[][] rates = step.getEvaluation().getRates();
+        double[][] frictionImpulse = step.getConservativeFrictionImpulsePerLength();
         for (int face = 0; face < faces.length; face++) {
           for (int phase = 0; phase < 3; phase++) {
             phaseMassFaceTransferKg[face][phase] += dt * faces[face][phase];
@@ -304,6 +307,7 @@ public final class TwoFluidUnsplitIntegrator {
           for (int phase = 0; phase < 3; phase++) {
             phaseMassSourceTransferKg[cell][phase] += dt * sources[cell][phase] * endpoint[cell].getLength();
             momentumChanges[cell][phase] += dt * rates[cell][phase + 3];
+            conservativeFrictionImpulsePerLength[cell][phase] += frictionImpulse[cell][phase];
           }
         }
       }
@@ -376,6 +380,16 @@ public final class TwoFluidUnsplitIntegrator {
     /** @return defensive gas/oil/water source transfers per cell in kg, including actual cell lengths */
     public double[][] getPhaseMassSourceTransferKg() {
       return copyMatrixArray(phaseMassSourceTransferKg);
+    }
+
+    /**
+     * Return the accepted passive-friction momentum impulse summed over all prepared substeps.
+     *
+     * @return defensive gas/oil/water impulse per pipe length in N s/m for every cell
+     */
+    public double[][] getConservativeFrictionImpulsePerLength() {
+      return conservativeFrictionImpulsePerLength == null ? new double[getEndpointSections().length][3]
+          : copyMatrixArray(conservativeFrictionImpulsePerLength);
     }
 
     /** @return gas/oil/water inventory residuals in kg against the exact accepted face and source transfers */

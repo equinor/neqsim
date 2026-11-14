@@ -770,6 +770,15 @@ and opposite-donor unit cases pass, but the directly affected nine unchanged fiv
 still fail line search at 0.63125--1.83515625 s and the complete 15-case gate remains failed. Retain
 all five-second, 180 s and 600 s gates.
 
+For current unsplit preparation without transient pressure interpolation, passive wall and
+interphase friction is advanced once by the conservative frozen-resistance source after transport
+converges. Inspect `PreparedStep.getConservativeFrictionImpulsePerLength()` and the interval sum
+alongside phase-mass and residual ledgers. All three unchanged midpoint five-second Tengesdal lanes
+now complete, but the pressure-interpolated lanes still fail at 1.4000/1.8125/0.9750 s. Keep that
+operator on its existing friction owner: combining the two currently regresses the exact
+trace-phase/donor event. This is numerical source qualification, not severe-slugging, restart or
+pigging evidence.
+
 Make every cycle-count assertion feasible for its sampled window. A detector that reports `N`
 completed intervals needs `N + 1` events, so the settled window must span at least `N` times the
 largest admissible cycle period, plus phase and boundary margin. Keep shorter runs as numerical
