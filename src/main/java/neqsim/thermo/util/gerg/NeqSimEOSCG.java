@@ -24,12 +24,13 @@ public class NeqSimEOSCG {
   double[] normalizedComposition = new double[28 + 1];
   double[] notNormalizedComposition = new double[28 + 1];
   PhaseInterface phase = null;
-  EOSCG eosCG;
+  private final EOSCG kernelOverride;
 
   /**
    * Default constructor.
    */
   public NeqSimEOSCG() {
+    kernelOverride = null;
   }
 
   /**
@@ -38,7 +39,18 @@ public class NeqSimEOSCG {
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   public NeqSimEOSCG(PhaseInterface phase) {
-    this.setPhase(phase);
+    this(phase, null);
+  }
+
+  /**
+   * Construct a wrapper with an optional explicitly owned kernel.
+   *
+   * @param phase thermodynamic phase
+   * @param kernelOverride explicit kernel, or null to use the worker's default kernel
+   */
+  NeqSimEOSCG(PhaseInterface phase, EOSCG kernelOverride) {
+    this.kernelOverride = kernelOverride;
+    setPhase(phase);
   }
 
   /**
@@ -58,7 +70,7 @@ public class NeqSimEOSCG {
    * @return EOS-CG kernel
    */
   private EOSCG kernel() {
-    return eosCG == null ? models.get() : eosCG;
+    return kernelOverride == null ? models.get() : kernelOverride;
   }
 
   /** Clear cached EOS-CG kernels. */
