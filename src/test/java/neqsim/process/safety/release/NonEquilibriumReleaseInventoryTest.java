@@ -125,6 +125,23 @@ class NonEquilibriumReleaseInventoryTest extends neqsim.NeqSimTest {
   }
 
   /**
+   * Creates an opt-in separate-phase-energy inventory.
+   *
+   * @param maxSubstepS explicit maximum substep in s
+   * @param coefficientMS prescribed component-film coefficient in m/s
+   * @param powerW signed external heat applied to the gas withdrawal phase in W
+   * @param conductanceWK prescribed gas/liquid interfacial conductance in W/K
+   * @return configured inventory
+   */
+  private static NonEquilibriumReleaseInventory separateEnergyInventory(double maxSubstepS, double coefficientMS,
+      double powerW, double conductanceWK) {
+    return new NonEquilibriumReleaseInventory("separate-energy-inventory", twoPhaseFluid(), VOLUME_M3, 0.005, 0.7,
+        100000.0, 0.0, 0.0, fixedRelease(2.0e-4), maxSubstepS, PhaseType.GAS, geometry(), transfer(coefficientMS),
+        ReleaseInventoryHeatTransfer.constantPower(powerW, "synthetic-gas-heater:v1"),
+        ReleaseInventoryInterphaseHeatTransfer.linearConductance(conductanceWK, "synthetic-interface-conductance:v1"));
+  }
+
+  /**
    * Verifies complete component, mass, volume and energy accounting.
    *
    * @param inventory tested inventory
@@ -174,6 +191,23 @@ class NonEquilibriumReleaseInventoryTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void interphaseHeatConfigurationIsImmutableAndFailClosed() {
+    ReleaseInventoryInterphaseHeatTransfer closure = ReleaseInventoryInterphaseHeatTransfer.linearConductance(12.0,
+        "synthetic-interface-conductance:v1");
+    assertEquals(12.0, closure.getConductanceWK(), 0.0);
+    assertEquals(0.0, closure.getGasHeatTransferRateW(250.0, 250.0), 0.0);
+    assertEquals(-120.0, closure.getGasHeatTransferRateW(260.0, 250.0), 0.0);
+    assertThrows(IllegalArgumentException.class,
+        () -> ReleaseInventoryInterphaseHeatTransfer.linearConductance(0.0, "source"));
+    assertThrows(IllegalArgumentException.class,
+        () -> ReleaseInventoryInterphaseHeatTransfer.linearConductance(1.0, " "));
+    assertThrows(NullPointerException.class,
+        () -> new NonEquilibriumReleaseInventory("missing-thermal-closure", twoPhaseFluid(), VOLUME_M3, 0.005, 0.7,
+            100000.0, 0.0, 0.0, fixedRelease(2.0e-4), 0.02, PhaseType.GAS, geometry(), transfer(0.0),
+            ReleaseInventoryHeatTransfer.adiabatic(), null));
+  }
+
+  @Test
   void transferMovesBothDirectionsAndLimitsEachDonor() {
     NonEquilibriumReleaseInventory vessel = inventory(0.02, 1.0e-3);
     SystemInterface gas = vessel.getGasPhase();
@@ -219,6 +253,51 @@ class NonEquilibriumReleaseInventoryTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void separatePhaseEnergyConservesAndTransfersHeatDownGradient() {
+    NonEquilibriumReleaseInventory vessel = separateEnergyInventory(0.01, 1.0e-3, 200.0, 15.0);
+    vessel.setReleaseEnabled(false);
+
+    vessel.runTransient(0.40, UUID.randomUUID());
+
+    NonEquilibriumReleaseInventory.Balance balance = vessel.getBalance();
+    assertEquals(80.0, balance.getHeatTransferEnergyJ(), 1.0e-10);
+    assertTrue(balance.getGasTemperatureK() > balance.getLiquidTemperatureK());
+    assertTrue(balance.getInterphaseHeatTransferEnergyJ() < 0.0);
+    assertEquals(balance.getInternalEnergyJ(), balance.getGasInternalEnergyJ() + balance.getLiquidInternalEnergyJ(),
+        Math.max(1.0, Math.abs(balance.getInternalEnergyJ())) * 1.0e-12);
+    assertEquals("SEPARATE_PHASE_ENERGY", vessel.getReleaseProvenance().get("inventoryThermalBoundary"));
+    assertEquals("WITHDRAWAL_PHASE", vessel.getReleaseProvenance().get("inventoryExternalHeatAllocation"));
+    assertEquals("LINEAR_CONDUCTANCE", vessel.getReleaseProvenance().get("inventoryInterphaseHeatTransferType"));
+    assertEquals("COUPLED_RIGID_SEPARATE_PHASE_ENERGY_FINITE_RATE_PHASE_INVENTORY", vessel.getReleaseBasis());
+    balanced(vessel);
+  }
+
+  @Test
+  void separatePhaseEnergyTimestepRefinementConverges() {
+    double[] steps = {0.04, 0.02, 0.01, 0.005};
+    double[] gasTemperature = new double[steps.length];
+    double[] liquidTemperature = new double[steps.length];
+    for (int i = 0; i < steps.length; i++) {
+      NonEquilibriumReleaseInventory vessel = separateEnergyInventory(steps[i], 1.0e-3, 200.0, 15.0);
+      vessel.setReleaseEnabled(false);
+      vessel.runTransient(0.40, UUID.randomUUID());
+      NonEquilibriumReleaseInventory.Balance balance = vessel.getBalance();
+      gasTemperature[i] = balance.getGasTemperatureK();
+      liquidTemperature[i] = balance.getLiquidTemperatureK();
+      assertTrue(gasTemperature[i] > liquidTemperature[i]);
+      balanced(vessel);
+    }
+    double coarseGas = Math.abs(gasTemperature[0] - gasTemperature[1]);
+    double fineGas = Math.abs(gasTemperature[2] - gasTemperature[3]);
+    double coarseLiquid = Math.abs(liquidTemperature[0] - liquidTemperature[1]);
+    double fineLiquid = Math.abs(liquidTemperature[2] - liquidTemperature[3]);
+    assertTrue(coarseGas > 0.0);
+    assertTrue(fineGas < coarseGas);
+    assertTrue(coarseLiquid > 0.0);
+    assertTrue(fineLiquid < coarseLiquid);
+  }
+
+  @Test
   void bothProcessContainersEmitDeterministicFiniteRateFrames() throws Exception {
     for (boolean useModel : new boolean[] {false, true}) {
       NonEquilibriumReleaseInventory vessel = inventory(0.02, 1.0e-3);
@@ -251,6 +330,33 @@ class NonEquilibriumReleaseInventoryTest extends neqsim.NeqSimTest {
       balanced(vessel);
       vessel.setReleaseEnabled(false);
       assertEquals(DynamicCapability.DYNAMIC_LUMPED, vessel.getDynamicCapability());
+    }
+  }
+
+  @Test
+  void bothProcessContainersEmitSeparateEnergyFrames() throws Exception {
+    for (boolean useModel : new boolean[] {false, true}) {
+      NonEquilibriumReleaseInventory vessel = separateEnergyInventory(0.01, 1.0e-3, 100.0, 10.0);
+      ProcessSystem process = new ProcessSystem();
+      process.add(vessel);
+      SourceTermSession session;
+      if (useModel) {
+        ProcessModel model = new ProcessModel();
+        model.add("release-area", process);
+        session = new SourceTermSession("separate-energy-study", model, CLOCK);
+        session.addInventorySource("opening", "release-area", vessel.getName());
+      } else {
+        session = new SourceTermSession("separate-energy-study", process, CLOCK);
+        session.addInventorySource("opening", vessel.getName());
+      }
+      assertEquals(SourceTermFrame.Status.VALID, session.runSteadyState().get(0).getStatus());
+      SourceTermFrame frame = session.step(0.05).get(0);
+      assertEquals(SourceTermFrame.Status.VALID, frame.getStatus(), frame.toJson());
+      assertTrue(frame.toJson().contains("COUPLED_RIGID_SEPARATE_PHASE_ENERGY_FINITE_RATE_PHASE_INVENTORY"));
+      assertTrue(frame.toJson().contains("inventoryGasTemperatureK"));
+      assertTrue(frame.toJson().contains("inventoryLiquidTemperatureK"));
+      assertEquals(frame.toJson(), frame.toJson());
+      balanced(vessel);
     }
   }
 

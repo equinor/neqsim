@@ -17,6 +17,8 @@
  * inventory with finite-rate two-way transfer and rigid volume/energy closure</li>
  * <li>{@link neqsim.process.safety.release.ReleaseInventoryInterphaseTransfer} - Provenance-required prescribed
  * component-film coefficients with donor limits</li>
+ * <li>{@link neqsim.process.safety.release.ReleaseInventoryInterphaseHeatTransfer} - Provenance-required prescribed
+ * equal-and-opposite interfacial heat transfer for separate phase-energy inventories</li>
  * <li>{@link neqsim.process.safety.release.DriftFluxHomogeneousEquilibriumReleaseModel} - Bounded vertical-upward
  * gas/liquid drift-flux short-opening screening</li>
  * <li>{@link neqsim.process.safety.release.FiniteRateDriftFluxReleaseModel} - Caller-parameterized first-order
@@ -64,8 +66,9 @@
  * closure; none predicts interfacial heat transfer, entrainment, annular jets or solid-bearing flow. Both real-gas pipe
  * models fail closed if an equilibrium phase appears. The inventory heat boundary accepts caller-imposed power or
  * conductance with provenance; it does not predict fire heat flux or wall inertia. The opt-in non-equilibrium inventory
- * retains gas/liquid component partitions and thermodynamic latent-energy effects, but assumes one common phase
- * temperature and prescribed film coefficients; it does not predict nucleation, entrainment or population balance.
+ * retains gas/liquid component partitions and thermodynamic latent-energy effects. Its default path assumes one common
+ * phase temperature; an explicit sensitivity path retains separate phase energies and temperatures with prescribed
+ * interfacial conductance. Neither path predicts coefficients, nucleation, entrainment or population balance.
  *
  * <p>
  * Example usage:
