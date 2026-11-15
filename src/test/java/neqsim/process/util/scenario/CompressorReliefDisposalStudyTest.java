@@ -34,6 +34,7 @@ class CompressorReliefDisposalStudyTest {
     Map<String, Object> report = result.toMap();
     Map<String, Object> metrics = (Map<String, Object>) report.get("metrics");
     Map<String, Object> frozenDesign = (Map<String, Object>) report.get("design");
+    Map<String, String> inputUnits = (Map<String, String>) report.get("inputUnits");
 
     assertEquals(EngineeringCalculationResult.Status.CALCULATED_REVIEW_REQUIRED,
         result.getCalculationResult().getStatus());
@@ -46,6 +47,8 @@ class CompressorReliefDisposalStudyTest {
     assertTrue(Math.abs(((Number) metrics.get("massClosureErrorKg")).doubleValue()) < 1.0e-6);
     assertEquals(Boolean.TRUE, metrics.get("headerMachAcceptable"));
     assertEquals(1.0, ((Number) frozenDesign.get("timeStepSeconds")).doubleValue(), 0.0);
+    assertEquals("bara absolute", inputUnits.get("reliefSetPressureBara"));
+    assertEquals("kg/s", inputUnits.get("flareDesignMassFlowKgPerSecond"));
     assertEquals(Boolean.FALSE, report.get("sourceTrainMutated"));
     assertEquals(before, new Gson().toJson(compressor.toMap()));
     assertTrue(new Gson().toJson(report).contains("Vendor BDV, PSV, flare-network, MDMT"));

@@ -29,9 +29,11 @@ import com.google.gson.stream.JsonToken;
 import neqsim.process.controllerdevice.AntiSurgeController;
 import neqsim.process.engineering.pid.PidDesignModel;
 import neqsim.process.engineering.pid.PidElement;
+import neqsim.process.util.scenario.CompressorAutomationStudy;
 import neqsim.process.util.scenario.CompressorAutomationStudy.CaseDefinition;
 import neqsim.process.util.scenario.CompressorAutomationStudy.Design;
 import neqsim.process.util.scenario.CompressorAutomationStudy.Profile;
+import neqsim.process.util.scenario.CompressorReliefDisposalStudy;
 
 /**
  * Verifies the public agent input, native execution, canonical rerun and artifact handoff contract.
@@ -163,6 +165,71 @@ public class CompressorAutomationWorkflowTest {
       }
     }
     assertNotNull(read(second.resolve("dynamic-pid-feedback.json")).getAsJsonArray("safetyFunctionResults"));
+  }
+
+  /**
+   * Binds the actual blocked-outlet result to relief/disposal evidence and preserves deterministic traceability.
+   *
+   * @throws IOException if actual artifacts cannot be written or read
+   */
+  @Test
+  @SuppressWarnings("unchecked")
+  void integratedBlockedOutletStudyRetainsPhysicalAndTraceableEvidence() throws IOException {
+    Design design = new Design();
+    CaseDefinition blocked = new CaseDefinition(Profile.BLOCKED_OUTLET, 0.1, 12.0, 1.0);
+    CompressorReliefDisposalStudy.Design relief = new CompressorReliefDisposalStudy.Design().setTimeStepSeconds(1.0)
+        .setMaximumTimeSeconds(300.0).addEvidenceReference("SYNTHETIC-DYN-C040");
+    Path first = temporary.resolve("integrated-first");
+    Map<String, Object> status = CompressorAutomationWorkflow.run(design, null, Arrays.asList(blocked), relief, first);
+
+    assertEquals(Boolean.TRUE, status.get("reliefDisposalEnabled"));
+    assertEquals(1, ((Number) status.get("integratedReliefStudyCount")).intValue());
+    assertEquals(status.get("integratedSafetyStudySha256"),
+        sha256(Files.readAllBytes(first.resolve("integrated-safety-study.json"))));
+    JsonObject crosswalk = read(first.resolve("native-evidence-crosswalk.json")).getAsJsonArray("cases").get(0)
+        .getAsJsonObject();
+    assertEquals("REQ-COMPRESSOR-BLOCKED_OUTLET", crosswalk.getAsJsonArray("requirementIds").get(0).getAsString());
+    Path reliefFile = first.resolve(crosswalk.get("reliefDisposalFile").getAsString());
+    assertEquals(crosswalk.get("reliefDisposalFileSha256").getAsString(), sha256(Files.readAllBytes(reliefFile)));
+    JsonObject integrated = read(first.resolve("integrated-safety-study.json")).getAsJsonArray("studies").get(0)
+        .getAsJsonObject();
+    JsonObject integratedRelief = integrated.getAsJsonObject("reliefDisposal");
+    JsonObject integratedMetrics = integratedRelief.getAsJsonObject("metrics");
+    assertEquals("PASS", integratedMetrics.get("status").getAsString());
+    assertEquals("bara absolute",
+        integratedRelief.getAsJsonObject("inputUnits").get("reliefSetPressureBara").getAsString());
+    assertEquals(Boolean.FALSE, integratedRelief.get("sourceTrainMutated").getAsBoolean());
+
+    CompressorAutomationStudy.Result directCompressor = CompressorAutomationStudy
+        .run(CompressorAutomationStudy.create(design), blocked);
+    Map<String, Object> directReport = CompressorReliefDisposalStudy.run(directCompressor, relief).toMap();
+    Map<String, Object> directMetrics = (Map<String, Object>) directReport.get("metrics");
+    assertEquals(((Number) directMetrics.get("releasedMassKg")).doubleValue(),
+        integratedMetrics.get("releasedMassKg").getAsDouble(), 0.0);
+    assertEquals(((Number) directMetrics.get("minimumFluidTemperatureK")).doubleValue(),
+        integratedMetrics.get("minimumFluidTemperatureK").getAsDouble(), 0.0);
+
+    Path second = temporary.resolve("integrated-second");
+    Map<String, Object> repeated = CompressorAutomationWorkflow.run(design, null, Arrays.asList(blocked), relief,
+        second);
+    assertEquals(text(reliefFile), text(second.resolve("case-BLOCKED_OUTLET-dt-0.1/relief-disposal.json")));
+    assertEquals(status.get("integratedSafetyStudySha256"), repeated.get("integratedSafetyStudySha256"));
+    assertStrictJson(text(first.resolve("integrated-safety-study.json")));
+
+    Path changed = temporary.resolve("integrated-changed-source");
+    CaseDefinition shorterBlocked = new CaseDefinition(Profile.BLOCKED_OUTLET, 0.1, 10.0, 1.0);
+    Map<String, Object> changedStatus = CompressorAutomationWorkflow.run(design, null, Arrays.asList(shorterBlocked),
+        relief, changed);
+    JsonObject changedStudy = read(changed.resolve("integrated-safety-study.json")).getAsJsonArray("studies").get(0)
+        .getAsJsonObject();
+    assertFalse(integrated.get("nativeResultFingerprint").getAsString()
+        .equals(changedStudy.get("nativeResultFingerprint").getAsString()));
+    assertFalse(status.get("integratedSafetyStudySha256").equals(changedStatus.get("integratedSafetyStudySha256")));
+
+    Path rejected = temporary.resolve("rejected-relief-source");
+    assertThrows(IllegalArgumentException.class, () -> CompressorAutomationWorkflow.run(design, null,
+        Arrays.asList(new CaseDefinition(Profile.NORMAL, 0.1, 12.0, 1.0)), relief, rejected));
+    assertFalse(Files.exists(rejected));
   }
 
   /**
