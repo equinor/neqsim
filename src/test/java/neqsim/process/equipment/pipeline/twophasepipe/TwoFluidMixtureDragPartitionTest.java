@@ -71,6 +71,7 @@ class TwoFluidMixtureDragPartitionTest {
     assertEquals(-reverseForce[3], reverseForce[4] + reverseForce[5], 1.0e-13);
   }
 
+  /** Check the gas/bulk-liquid eigenvalue with the independent internal liquid shear removed. */
   @Test
   void linearDragRelaxationUsesTotalLiquidMassAcrossBothTraceLimits() throws Exception {
     double coefficient = 7.0;
@@ -79,13 +80,12 @@ class TwoFluidMixtureDragPartitionTest {
       for (double fraction : new double[] {0.0, 1.0e-24, 1.0e-16, 1.0e-10, 0.01, 0.5}) {
         double oil = 0.6 * (traceWater ? 1.0 - fraction : fraction);
         double water = 0.6 * (traceWater ? fraction : 1.0 - fraction);
-        TwoFluidSection section = section(oil, water, 2.0, 1.0, 1.0);
+        TwoFluidSection section = configureSection(new ZeroOilWaterShearSection(), oil, water, 2.0, 1.0, 1.0);
         double[] state = section.getStateVector();
         // The independent two-body linear-drag eigenvalue uses gas and total liquid inertia.
         double expectedRate = coefficient * (1.0 / state[0] + 1.0 / (state[1] + state[2]));
         double timeStep = equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] {section});
         assertTrue(Double.isFinite(timeStep) && timeStep > 0.0);
-        // Centered probes of the zero-slip quadratic oil-water law leave an O(1e-6) derivative residue.
         assertEquals(1.0 / expectedRate, timeStep, 1.0e-7 / expectedRate);
         assertArrayEquals(state, section.getStateVector(), 0.0);
         assertBulkVelocity(section);
@@ -138,7 +138,23 @@ class TwoFluidMixtureDragPartitionTest {
   /** Build a strict conservative state directly so a trace oil phase is not lost through 1-waterCut cancellation. */
   private static TwoFluidSection section(double oil, double water, double gasVelocity, double oilVelocity,
       double waterVelocity) {
-    TwoFluidSection section = new TwoFluidSection(0.5, 1.0, 0.2, 0.0);
+    return configureSection(new TwoFluidSection(0.5, 1.0, 0.2, 0.0), oil, water, gasVelocity, oilVelocity,
+        waterVelocity);
+  }
+
+  /**
+   * Populate a test section with a conservative inventory.
+   *
+   * @param section empty test section
+   * @param oil oil holdup
+   * @param water water holdup
+   * @param gasVelocity gas velocity in m/s
+   * @param oilVelocity oil velocity in m/s
+   * @param waterVelocity water velocity in m/s
+   * @return initialized section
+   */
+  private static TwoFluidSection configureSection(TwoFluidSection section, double oil, double water, double gasVelocity,
+      double oilVelocity, double waterVelocity) {
     section.setPressure(1.0e5);
     section.setGasDensity(30.0);
     section.setOilDensity(800.0);
@@ -164,6 +180,27 @@ class TwoFluidMixtureDragPartitionTest {
     section.setInterfacialWidth(0.125);
     assertBulkVelocity(section);
     return section;
+  }
+
+  /**
+   * Isolate gas/liquid drag even when the finite-difference probes create oil-water slip.
+   *
+   * @author EvenSol
+   * @version 1.0
+   */
+  private static final class ZeroOilWaterShearSection extends TwoFluidSection {
+    private static final long serialVersionUID = 1L;
+
+    /** Create a section with the shared drag-test geometry. */
+    private ZeroOilWaterShearSection() {
+      super(0.5, 1.0, 0.2, 0.0);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public double calcOilWaterInterfacialShear() {
+      return 0.0;
+    }
   }
 
   private static void assertBulkVelocity(TwoFluidSection section) {

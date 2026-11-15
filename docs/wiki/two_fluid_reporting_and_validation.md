@@ -277,11 +277,13 @@ interior response.
 
 With an explicit cell-face elevation profile, steady and legacy transient pressure marching
 use the same two half-cell gradients between neighboring midpoints, including nonuniform
-lengths and changing inclinations. For the coupled split solver with a prescribed pressure and explicit face geometry,
-pressure traction acts on the external outlet face. The acoustic correction recovers the
-last cell-centre pressure from its volume equation. It does not project the last-cell
-inventory to enforce the face pressure. With outlet backflow disabled, the explicit
-advection therefore owns the nonnegative accepted outlet phase transfers.
+lengths and changing inclinations. In the coupled split solver with phase transfer
+disabled, prescribed pressure acts on the external outlet face and the acoustic
+correction recovers the last cell-centre pressure from its volume equation. With
+outlet backflow disabled, explicit advection owns the nonnegative accepted outlet
+phase transfers. With phase transfer enabled, the coupled split solver retains the
+existing last-cell acoustic pressure constraint. This is the route exercised by the
+rich-gas depressurization regression through first condensate appearance.
 
 An explicit inlet face carries the prescribed stream or constant mass flow in
 both the coupled split and legacy time integrators. Each Runge–Kutta stage then

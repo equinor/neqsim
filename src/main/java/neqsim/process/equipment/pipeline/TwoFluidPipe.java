@@ -1599,22 +1599,8 @@ public class TwoFluidPipe extends Pipeline {
     // Fix inlet section pressure to boundary condition
     sections[0].setPressure(P_inlet);
 
-    // The steady primitive state must satisfy the phase balances that the transient will
-    // advance. Without phase-transfer sources, the prescribed feed phase rates are constant
-    // along the line; an equilibrium flash may still update local properties, but it must not
-    // silently repartition transported mass between phases.
-    SystemInterface steadyInletPhaseState = getInletStream().getFluid();
-    if (referenceFluid != null) {
-      steadyInletPhaseState = steadyInletPhaseState.clone();
-      steadyInletPhaseState.setPressure(P_inlet / 1.0e5, "bara");
-      steadyInletPhaseState.setTemperature(sections[0].getTemperature(), "K");
-      ThermodynamicOperations inletEquilibriumOperations = new ThermodynamicOperations(steadyInletPhaseState);
-      inletEquilibriumOperations.TPflash();
-      steadyInletPhaseState.initProperties();
-    }
-    double[] inletPhaseMassFractions = calculateInletPhaseMassFractions(steadyInletPhaseState);
-    double sourceFreeOilMassFlow = massFlow * inletPhaseMassFractions[1];
-    double sourceFreeWaterMassFlow = massFlow * inletPhaseMassFractions[2];
+    double sourceFreeOilMassFlow = 0.0;
+    double sourceFreeWaterMassFlow = 0.0;
     double mDotGas;
     double mDotLiq;
     if (includeMassTransfer) {
@@ -1629,6 +1615,18 @@ public class TwoFluidPipe extends Pipeline {
       mDotGas = massFlow * gasQualityInlet;
       mDotLiq = massFlow * (1.0 - gasQualityInlet);
     } else {
+      // Without phase-transfer sources, the inlet phase rates are constant along the line.
+      SystemInterface steadyInletPhaseState = getInletStream().getFluid();
+      if (referenceFluid != null) {
+        steadyInletPhaseState = steadyInletPhaseState.clone();
+        steadyInletPhaseState.setPressure(P_inlet / 1.0e5, "bara");
+        steadyInletPhaseState.setTemperature(sections[0].getTemperature(), "K");
+        new ThermodynamicOperations(steadyInletPhaseState).TPflash();
+      }
+      // Phase mass rates use the flashed mole inventory and molar masses.
+      double[] inletPhaseMassFractions = calculateInletPhaseMassFractions(steadyInletPhaseState);
+      sourceFreeOilMassFlow = massFlow * inletPhaseMassFractions[1];
+      sourceFreeWaterMassFlow = massFlow * inletPhaseMassFractions[2];
       mDotGas = massFlow * inletPhaseMassFractions[0];
       mDotLiq = sourceFreeOilMassFlow + sourceFreeWaterMassFlow;
     }
@@ -8324,13 +8322,13 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Checks how the coupled split solver applies a constant-pressure outlet.
+   * Checks whether the source-free coupled split solver applies pressure at the physical outlet face.
    *
-   * @return true if explicit face geometry and a prescribed pressure place the constraint at the face
+   * @return true when the prescribed pressure acts at the explicit outlet face
    */
   private boolean usesCoupledOutletFacePressure() {
-    return coupledPressureMomentumEnabled && !useConservativeEnergyRecovery && cellFaceElevationProfile != null
-        && outletPressureSet;
+    return coupledPressureMomentumEnabled && !useConservativeEnergyRecovery && !includeMassTransfer
+        && cellFaceElevationProfile != null && outletPressureSet;
   }
 
   /**
