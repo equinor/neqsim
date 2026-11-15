@@ -231,16 +231,26 @@ for the mixed-brine regression scope.
 #### CO2/brine phase-state diagnostics
 
 For water-rich, non-reactive `SystemElectrolyteCPAstatoil` fluids containing only
-CO2, water and optional explicit ions, the temperature operation uses
+CO2, water, optional explicit ions and MEG when ions are present, the
+temperature operation uses
 `CO2BrinePhaseEquilibrium` for each fluid evaluation, including the independent
 verification on a copy of the starting feed. It initializes independent
 vapour and liquid CO2 trials, confines ions to the aqueous phase, and solves the
 constrained component balances and molecular fugacity equations. Conserved
 candidate states are ranked by Gibbs energy. A single aqueous result is accepted
 only when both normalized CO2 stability trials are non-negative within numerical
-tolerance. This path uses the existing EOS and hydrate parameters. Other gases,
-MEG/methanol mixtures, prescribed phase types and solid-phase
-calculations retain their existing fluid solver.
+tolerance. MEG partitions between the material phases and its inhibition enters
+through the aqueous water fugacity. This path uses the existing EOS and hydrate
+parameters. Other gases, methanol-containing mixtures, prescribed phase types
+and solid-phase calculations use their existing fluid solver.
+
+The 44 bara regression uses 10 mol CO2, 1 kg water, 100 g NaCl and 50 g MEG.
+The NaCl and MEG dosages are percentages of the water mass. The numerical
+hydrate onset is approximately 2.71 °C. Using 10 wt% NaCl in water plus salt
+and 5 wt% MEG in water plus glycol instead gives 111.11 g NaCl and 52.63 g MEG
+per kilogram of water and approximately 1.90 °C. These calculated values
+describe incipient hydrate equilibrium and have no experimental calibration
+for this combined-inhibitor recipe.
 
 Water-rich reactive `SystemElectrolyteCPAstatoil` fluids with CO2 and water as
 their only molecular components use `ReactiveCO2BrinePhaseEquilibrium` during

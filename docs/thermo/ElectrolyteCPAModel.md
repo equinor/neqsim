@@ -586,14 +586,15 @@ equivalent salt-addition orders and repeated calculations. These are numerical
 conservation checks, not experimental qualification of mixed-salt hydrate
 temperatures.
 
-For the CO2/water/explicit-ion subset, hydrate-temperature calculations also
-compare independently initialized vapour and liquid CO2 trials with a conserved
+For the CO2/water/explicit-ion subset, including brines with MEG,
+hydrate-temperature calculations also compare independently initialized vapour and liquid CO2 trials with a conserved
 aqueous feed. The constrained solver keeps ions in water, checks molecular
 fugacity equality for both gas/aqueous and liquid-CO2/aqueous splits, and accepts
 a single aqueous phase only after CO2 stability testing. This addresses the
 phase-state failures in [issue #3584](https://github.com/equinor/neqsim/issues/3584).
-It is a hydrate-temperature fluid-evaluation path; the generic `TPflash()` API
-and mixed-inhibitor/chemical paths are unchanged.
+The hydrate-temperature calculation includes MEG in the molecular fugacity and
+material balances for this brine subset. The generic `TPflash()` API continues
+to use the ordinary fluid solver.
 
 Use the operation's `getDiagnostics()` snapshot to distinguish a numerically
 converged finite-inventory result from a saturated CO2 boundary. The

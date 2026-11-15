@@ -6,13 +6,14 @@ import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Constrained fluid equilibrium for non-reactive CO2/water/electrolyte-CPA hydrate calculations.
+ * Constrained fluid equilibrium for non-reactive CO2/brine electrolyte-CPA hydrate calculations.
  *
  * <p>
  * Independent vapour and liquid CO2 trials are compared with a conserved aqueous feed. Ions have zero partition
- * coefficients. An absent CO2 phase must pass a normalized tangent-plane trial; an interior split must close component
- * balances and molecular fugacities. Only accepted states are copied to the caller. This uses the existing EOS
- * parameters, without hydrate or salt-solid material phases, and does not establish experimental model accuracy.
+ * coefficients, while MEG can partition between the material phases. An absent CO2 phase must pass a normalized
+ * tangent-plane trial; an interior split must close component balances and molecular fugacities. Only accepted states
+ * are copied to the caller. This uses the existing EOS parameters, without hydrate or salt-solid material phases, and
+ * does not establish experimental model accuracy.
  * </p>
  */
 public final class CO2BrinePhaseEquilibrium {
@@ -25,20 +26,20 @@ public final class CO2BrinePhaseEquilibrium {
   /**
    * Creates a fluid-phase calculation without modifying the supplied system.
    *
-   * @param system non-reactive electrolyte-CPA CO2/water feed
+   * @param system non-reactive electrolyte-CPA CO2/water feed, optionally containing ions and brine MEG
    */
   public CO2BrinePhaseEquilibrium(SystemInterface system) {
     this.system = system;
   }
 
   /**
-   * Checks the composition/model scope of this constrained two-molecular-component calculation.
+   * Checks the composition and model scope of this constrained fluid calculation.
    *
    * @param fluid system to inspect
-   * @return true for water-rich, non-reactive electrolyte-CPA CO2/water with optional explicit ions
+   * @return true for water-rich, non-reactive electrolyte-CPA CO2/water with optional explicit ions and MEG in brine
    */
   public static boolean isApplicable(SystemInterface fluid) {
-    return !fluid.isChemicalSystem() && hasSupportedComposition(fluid);
+    return !fluid.isChemicalSystem() && hasSupportedComposition(fluid, true);
   }
 
   /**
@@ -48,6 +49,17 @@ public final class CO2BrinePhaseEquilibrium {
    * @return whether only CO2, water and aqueous ions are present in the supported model
    */
   static boolean hasSupportedComposition(SystemInterface fluid) {
+    return hasSupportedComposition(fluid, false);
+  }
+
+  /**
+   * Checks the feed for the constrained aqueous and CO2-rich phase search.
+   *
+   * @param fluid system to inspect
+   * @param allowMeg whether MEG is supported in this calculation
+   * @return true if the molecular feed is supported
+   */
+  private static boolean hasSupportedComposition(SystemInterface fluid, boolean allowMeg) {
     if (!(fluid instanceof SystemElectrolyteCPAstatoil) || fluid.doSolidPhaseCheck() || fluid.isForcePhaseTypes()
         || !fluid.getPhase(0).hasComponent("CO2") || !fluid.getPhase(0).hasComponent("water")) {
       return false;
@@ -59,8 +71,9 @@ public final class CO2BrinePhaseEquilibrium {
     }
     for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
       ComponentInterface species = fluid.getPhase(0).getComponent(component);
-      if (!isIon(species) && !"CO2".equals(species.getComponentName()) && !"water".equals(species.getComponentName())
-          && species.getNumberOfmoles() > 0.0) {
+      String name = species.getComponentName();
+      if (species.getNumberOfmoles() > 0.0 && !isIon(species) && !"CO2".equals(name) && !"water".equals(name)
+          && !(allowMeg && "MEG".equals(name) && fluid.hasIons())) {
         return false;
       }
     }
