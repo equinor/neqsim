@@ -63,6 +63,13 @@ class RealGasPipeDecompressionTest extends neqsim.NeqSimTest {
         boundary, cells, cfl);
   }
 
+  private static RealGasPipeDecompression radialWallPipe(int cells, double cfl) {
+    RealGasPipeDecompression.WallThermalBoundary boundary = RealGasPipeDecompression.WallThermalBoundary
+        .cylindricalTwoNodeWall(0.15, 0.01, 7850.0, 500.0, 45.0, 80.0, 35.0, 330.0, 360.0);
+    return new RealGasPipeDecompression("real-radial-wall-linepack", gas(80.0), 40.0, 0.15, 1.0, 101325.0, 0.01, 0.20,
+        boundary, cells, cfl);
+  }
+
   @Test
   void eosStateEvolutionConservesMassEnergyAndComposition() {
     RealGasPipeDecompression pipe = pipe(12);
@@ -402,6 +409,81 @@ class RealGasPipeDecompressionTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void cylindricalTwoNodeWallClosesEnergyAndConvergesWithPhysicalRadialDirection() throws Exception {
+    double[] cfls = new double[] {0.45, 0.30, 0.20};
+    double[] environmentHeat = new double[cfls.length];
+    double[] radialDifference = new double[cfls.length];
+    StringBuilder receipt = new StringBuilder(
+        "cfl,environment_heat_J,mean_inner_wall_temperature_K,mean_outer_wall_temperature_K,energy_residual_J\n");
+    for (int i = 0; i < cfls.length; i++) {
+      RealGasPipeDecompression pipe = radialWallPipe(12, cfls[i]);
+      Map<String, String> provenance = pipe.getReleaseProvenance();
+      double innerRadius = 0.075;
+      double outerRadius = 0.085;
+      double splitRadius = Math.sqrt((innerRadius * innerRadius + outerRadius * outerRadius) / 2.0);
+      double innerNodeRadius = Math.sqrt((innerRadius * innerRadius + splitRadius * splitRadius) / 2.0);
+      double outerNodeRadius = Math.sqrt((splitRadius * splitRadius + outerRadius * outerRadius) / 2.0);
+      double expectedNodeCapacity = 7850.0 * 500.0 * (splitRadius * splitRadius - innerRadius * innerRadius)
+          / (2.0 * outerRadius);
+      double expectedConductance = 45.0 / (outerRadius * Math.log(outerNodeRadius / innerNodeRadius));
+      assertEquals(2, Integer.parseInt(provenance.get("pipeWallRadialNodes")));
+      assertEquals(expectedNodeCapacity,
+          Double.parseDouble(provenance.get("pipeWallInnerNodeArealHeatCapacityJPerM2K")), 1.0e-9);
+      assertEquals(expectedNodeCapacity,
+          Double.parseDouble(provenance.get("pipeWallOuterNodeArealHeatCapacityJPerM2K")), 1.0e-9);
+      assertEquals(expectedConductance, Double.parseDouble(provenance.get("pipeWallRadialConductanceWPerM2K")), 1.0e-9);
+
+      pipe.runTransient(0.20, UUID.randomUUID());
+      assertTrue(pipe.hasTwoNodeRadialWallConduction());
+      double innerTemperature = mean(pipe.getWallTemperatureProfileK());
+      double outerTemperature = mean(pipe.getOuterWallTemperatureProfileK());
+      assertTrue(outerTemperature > innerTemperature);
+      environmentHeat[i] = pipe.getCumulativeHeatTransferJ();
+      radialDifference[i] = outerTemperature - innerTemperature;
+      double residual = pipe.getRemainingEnergyJ() + pipe.getReleasedEnergyJ() - pipe.getInitialEnergyJ()
+          - pipe.getCumulativeHeatTransferJ();
+      assertEquals(0.0, residual, Math.abs(pipe.getInitialEnergyJ()) * 3.0e-10);
+      receipt.append(cfls[i]).append(',').append(environmentHeat[i]).append(',').append(innerTemperature).append(',')
+          .append(outerTemperature).append(',').append(residual).append('\n');
+    }
+    assertTrue(Math.abs(environmentHeat[2] - environmentHeat[1]) < Math.abs(environmentHeat[1] - environmentHeat[0]),
+        receipt.toString());
+    assertTrue(
+        Math.abs(radialDifference[2] - radialDifference[1]) < Math.abs(radialDifference[1] - radialDifference[0]),
+        receipt.toString());
+    write("source-term-benchmarks", "real-gas-pipe-two-node-wall-cfl-refinement.csv", receipt.toString());
+  }
+
+  @Test
+  void cylindricalTwoNodeWallFramesAreSchemaValidForBothProcessContainers() throws Exception {
+    for (boolean useModel : new boolean[] {false, true}) {
+      RealGasPipeDecompression pipe = radialWallPipe(8, 0.30);
+      ProcessSystem process = new ProcessSystem();
+      process.add(pipe);
+      SourceTermSession session;
+      if (useModel) {
+        ProcessModel model = new ProcessModel();
+        model.add("pipeline", process);
+        session = new SourceTermSession("real-radial-wall-linepack", model);
+        session.addInventorySource("rupture", "pipeline", "real-radial-wall-linepack");
+      } else {
+        session = new SourceTermSession("real-radial-wall-linepack", process);
+        session.addInventorySource("rupture", "real-radial-wall-linepack");
+      }
+      session.runSteadyState();
+      SourceTermFrame frame = session.step(0.20).get(0);
+      SourceTermFrame.verifyEnvelope(frame.toJson());
+      JsonObject provenance = JsonParser.parseString(frame.toJson()).getAsJsonObject().getAsJsonObject("provenance");
+      assertEquals("CYLINDRICAL_TWO_NODE_MATERIAL_WALL_FIXED_ENVIRONMENT",
+          provenance.get("pipeHeatTransferBoundary").getAsString());
+      assertEquals(2, provenance.get("pipeWallRadialNodes").getAsInt());
+      assertTrue(provenance.get("pipeMeanOuterWallTemperatureK").getAsDouble() > provenance
+          .get("pipeMeanInnerWallTemperatureK").getAsDouble());
+      write("source-term-contract-fixtures", "real-gas-radial-wall-pipe-" + useModel + ".json", frame.toJson());
+    }
+  }
+
+  @Test
   void documentedDistributedHeatConstructorIsExecutable() {
     SystemInterface fluid = gas(80.0);
     ProcessSystem process = new ProcessSystem();
@@ -432,10 +514,17 @@ class RealGasPipeDecompressionTest extends neqsim.NeqSimTest {
         .cylindricalLumpedWall(0.15, 0.01, 7850.0, 500.0, 0.0, 80.0, 35.0, 330.0, 360.0));
     assertThrows(IllegalArgumentException.class, () -> RealGasPipeDecompression.WallThermalBoundary
         .cylindricalLumpedWall(0.15, 0.02, 7850.0, 500.0, 1.0, 1000.0, 35.0, 330.0, 360.0));
+    assertThrows(IllegalArgumentException.class, () -> RealGasPipeDecompression.WallThermalBoundary
+        .cylindricalTwoNodeWall(0.15, 0.01, 7850.0, 500.0, 0.0, 80.0, 35.0, 330.0, 360.0));
+    RealGasPipeDecompression.WallThermalBoundary radial = RealGasPipeDecompression.WallThermalBoundary
+        .cylindricalTwoNodeWall(0.15, 0.02, 7850.0, 500.0, 1.0, 1000.0, 35.0, 330.0, 360.0);
+    assertNotNull(radial);
     RealGasPipeDecompression.WallThermalBoundary mismatched = RealGasPipeDecompression.WallThermalBoundary
         .cylindricalLumpedWall(0.15, 0.01, 7850.0, 500.0, 45.0, 80.0, 35.0, 330.0, 360.0);
     assertThrows(IllegalArgumentException.class, () -> new RealGasPipeDecompression("mismatched-wall", gas(80.0), 40.0,
         0.16, 1.0, 101325.0, 0.01, 0.20, mismatched, 8, 0.30));
+    assertThrows(IllegalArgumentException.class, () -> new RealGasPipeDecompression("mismatched-radial-wall", gas(80.0),
+        40.0, 0.16, 1.0, 101325.0, 0.01, 0.20, radial, 8, 0.30));
   }
 
   @Test

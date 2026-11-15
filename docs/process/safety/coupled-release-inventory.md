@@ -462,13 +462,51 @@ Geometry, material inputs, effective coefficients, $L_c$ and $Bi$ are retained i
 provenance. The guard only establishes applicability of one uniform radial wall temperature; it
 does not solve radial conduction or validate the supplied material/film properties.
 
+When a uniform radial wall temperature is not acceptable, select the explicit two-node material
+boundary with the same SI inputs:
+
+```java
+RealGasPipeDecompression.WallThermalBoundary radialWall =
+    RealGasPipeDecompression.WallThermalBoundary.cylindricalTwoNodeWall(
+        0.15, 0.01, 7850.0, 500.0, 45.0,
+        80.0, 35.0, 330.0, 360.0);
+RealGasPipeDecompression radialWallCoupled = new RealGasPipeDecompression(
+    "radial-wall-coupled-rupture", gas, 40.0, 0.15, 1.0, 101325.0,
+    0.01, 0.20, radialWall, 12, 0.30);
+```
+
+With inner and outer radii $r_i$ and $r_o$, the control-volume split radius is chosen so the two
+annular nodes have equal material volume:
+
+$$r_s=\sqrt{\frac{r_i^2+r_o^2}{2}}$$
+
+The two node-centroid radii are
+
+$$r_1=\sqrt{\frac{r_i^2+r_s^2}{2}},\qquad r_2=\sqrt{\frac{r_s^2+r_o^2}{2}}$$
+
+and the exact cylindrical conductance between those centroids, on the outer-area basis, is
+
+$$U_{12,o}=\frac{k_w}{r_o\ln(r_2/r_1)}$$
+
+The inner and outer areal capacities are derived from their annular volumes. Each axial cell
+retains $T_1$ and $T_2$ and advances the conservative balances
+
+$$\begin{aligned}C_{1,A_o}A_o\frac{dT_1}{dt}&=U_{12,o}A_o(T_2-T_1)-U_{i,o}A_o(T_1-T_g)\\C_{2,A_o}A_o\frac{dT_2}{dt}&=h_oA_o(T_e-T_2)-U_{12,o}A_o(T_2-T_1)\end{aligned}$$
+
+The internal conduction term cancels exactly from total wall energy. Separate explicit stability
+limits protect the gas, inner node and outer node. Frames retain both node capacities, centroid and
+split radii, radial conductance, node temperatures, total wall energy and environment/gas heat
+transactions. This is a two-node finite-volume screening model, not a converged radial mesh or an
+independent wall-temperature qualification.
+
 This adds finite upstream storage, pressure feedback and optional distributed constant-$U$ wall
-heat exchange or a finite-capacitance wall. The cylindrical adapter derives capacity and area
-conversion from caller-supplied geometry/material properties but does not predict either film
-coefficient, material properties, external temperature, fire/ambient/soil/seawater heat transfer, radial wall
-conduction, vessel nozzle loss, internal vessel waves, phase separation, wall elasticity, a second
-rupture end, non-equilibrium multiphase transport, solids, or qualification. The vessel and every
-pipe cell must remain one equilibrium gas phase; otherwise the whole caller step fails closed.
+heat exchange or a finite-capacitance wall. The cylindrical adapters derive capacity and area
+conversion from caller-supplied geometry/material properties; the two-node option additionally
+resolves one conservative radial temperature gradient. Neither predicts film coefficients,
+material properties, external temperature, fire/ambient/soil/seawater heat transfer, higher-order
+radial conduction, vessel nozzle loss, internal vessel waves, phase separation, wall elasticity, a
+second rupture end, non-equilibrium multiphase transport, solids, or qualification. The vessel and
+every pipe cell must remain one equilibrium gas phase; otherwise the whole caller step fails closed.
 
 Compatibility frames carry `releaseBasis=COUPLED_RIGID_ADIABATIC_GAS_INVENTORY`.
 Explicit phase-selected frames carry
