@@ -1,9 +1,29 @@
 # Contributing
 
-When contributing to this repository, please first discuss the change you wish to make via issue,
-email, or any other method with the owners of this repository before making a change.
+Please follow the project's [Code of Conduct](CODE_OF_CONDUCT.md) in all project interactions.
 
-Please note we have a code of conduct, please follow it in all your interactions with the project.
+## Your first contribution
+
+You can open an issue, submit a pull request from a fork, or leave review feedback without a
+repository invitation.
+
+- **Report a bug.** Search for an existing issue before opening one. Include your NeqSim version,
+  the smallest example that reproduces the problem, and what you expected to happen. For a
+  calculation discrepancy, include the inputs, units, and any reference results you can share.
+  [NeqSim issues](https://github.com/equinor/neqsim/issues)
+- **Submit a fix.** Small bug fixes, documentation corrections, and focused tests can go straight
+  to a pull request. Fork the repository, create a branch for your change, and open a pull request
+  from that branch targeting `equinor/neqsim:master`. Describe what changed, link any related issue,
+  and list the checks you ran.
+  [GitHub's guide to contributing from a fork](https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-a-project)
+- **Review a proposed fix.** Open the pull request and select **Files changed** to leave comments on
+  the relevant lines. If you start a review, submit it with **Comment** to share your feedback.
+  If you reported the issue, try your original example with the proposed fix and share the result.
+  [GitHub's guide to reviewing a pull request](https://docs.github.com/en/pull-requests/get-started/reviewing-pull-requests-quickstart)
+
+Start a discussion in an issue before changing a public API, introducing or substantially changing
+an engineering model, or making a change that spans several subsystems. For a major design change,
+see the [NeqSim Request for Comments process](docs/development/rfc-process.md).
 
 ## Getting Started
 
@@ -54,7 +74,8 @@ Run these from the repository root (use `./mvnw` on Linux/macOS, `mvnw.cmd` on W
 ./mvnw spotless:check      # verify formatting — must exit 0 before pushing
 ```
 
-Always run `spotless:apply`, then commit the changes, **before** opening or updating a PR:
+After editing Java, run `spotless:apply` and commit the formatted changes before opening or
+updating a pull request:
 
 ```bash
 ./mvnw spotless:apply
