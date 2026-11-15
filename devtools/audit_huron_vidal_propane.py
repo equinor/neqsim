@@ -1,4 +1,4 @@
-"""Reproduce the staged PR-HV aqueous propane assessment and pure-pressure control."""
+"""Reproduce the staged PR-HV propane–water assessments and pure-pressure controls."""
 
 import argparse
 import csv
@@ -13,6 +13,7 @@ sys.path.insert(0, str(FIXTURES / "hv-meg-methane"))
 import binary_solver as model
 
 ATTRACTION_STEP = Decimal("1e-10")
+PSIA_TO_BARA = .06894757293168
 DATASETS = {
     "kobayashi-katz": ("observations.csv", 18),
     "azarnoosh-mcketta": ("azarnoosh-mcketta-observations.csv", 9),
@@ -58,11 +59,53 @@ def match_water_pressure(temperature):
         raise ValueError("Pure-water saturation fugacities do not close")
 
 
+def rich_phase_assessment(match_pressure, thesis_propane):
+    """Compare the water content of the reported propane-rich phase in mole units."""
+    if thesis_propane:
+        model.PURE[1] = ("369.80", "42.46", ".1524")
+    filename = FIXTURES / "hv-water-propane/kobayashi-katz-rich-observations.csv"
+    with filename.open() as observations:
+        rows = list(csv.DictReader(observations))
+    if len(rows) != 22:
+        raise ValueError("Expected all 22 reported rich-phase observations at 230–300 °F")
+
+    writer = csv.writer(sys.stdout, lineterminator="\n")
+    writer.writerow(("F", "psia", "T_K", "P_bar", "y_obs", "y_pr", "x_pr",
+                     "Z_rich", "Z_aq", "error_pct", "logf", "pressure_error"))
+    in_window_errors = []
+    for row in rows:
+        observed = Decimal(row["rich_water_mole_fraction"])
+        if observed + Decimal(row["rich_propane_ppm"]) * Decimal("1e-6") != 1:
+            raise ValueError("Transcribed rich-phase fractions do not sum to unity")
+        fahrenheit = float(row["temperature_degF"])
+        psia = float(row["total_pressure_psia"])
+        temperature = (fahrenheit - 32) * 5 / 9 + 273.15
+        pressure = psia * PSIA_TO_BARA
+        if match_pressure:
+            match_water_pressure(temperature)
+        state, residual, _ = model.solve(temperature, pressure, ATTRACTION_STEP)
+        refined, refined_residual, _ = model.solve(temperature, pressure, ATTRACTION_STEP / 2)
+        if max(residual, refined_residual) >= 1e-10 or max(abs(a - b) for a, b in zip(state[:4], refined[:4])) >= 1e-9:
+            raise ValueError("Independent rich-phase solution did not pass refinement")
+        water, propane, rich_z, aqueous_z, pressure_error = state
+        if rich_z <= aqueous_z or temperature <= max(369.83, 369.80):
+            raise ValueError("Expected distinct rich/aqueous roots above pure propane's critical temperature")
+        error = 100 * (water / float(observed) - 1)
+        writer.writerow((fahrenheit, psia, temperature, pressure, observed, water, propane,
+                         rich_z, aqueous_z, error, residual, pressure_error))
+        if 323.15 <= temperature <= 423.15 and 25 <= pressure <= 700:
+            in_window_errors.append(error)
+    print("inside", len(in_window_errors), mean(map(abs, in_window_errors)),
+          min(in_window_errors), max(in_window_errors), file=sys.stderr)
+
+
 def main():
     """Compare both calculated phase endpoints, retaining measured aqueous observations."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dataset", choices=DATASETS, default="kobayashi-katz",
-                        help="Select the aqueous propane experiment")
+    parser.add_argument("--dataset", choices=(*DATASETS, "kobayashi-katz-rich"), default="kobayashi-katz",
+                        help="Select an aqueous or propane-rich experiment")
+    parser.add_argument("--thesis-propane", action="store_true",
+                        help="Use the Yushchenko thesis propane properties for the rich-phase comparison")
     parser.add_argument("--uncertainty-envelope", action="store_true",
                         help="Scan reported input error bounds on in-window points")
     parser.add_argument("--match-water-pressure", action="store_true",
@@ -70,7 +113,14 @@ def main():
     args = parser.parse_args()
     if args.match_water_pressure and args.uncertainty_envelope:
         parser.error("Choose one sensitivity per run")
+    if args.thesis_propane and args.dataset != "kobayashi-katz-rich":
+        parser.error("The thesis propane control applies to the rich-phase dataset")
     configure()
+    if args.dataset == "kobayashi-katz-rich":
+        if args.uncertainty_envelope:
+            parser.error("No phase-specific experimental uncertainty is available for these rich-phase data")
+        rich_phase_assessment(args.match_water_pressure, args.thesis_propane)
+        return
     filename, expected_count = DATASETS[args.dataset]
     with (FIXTURES / "hv-water-propane" / filename).open() as observations:
         fields = ("temperature_degF", "total_pressure_psia", "aqueous_propane_x_times_1e5")
@@ -85,7 +135,7 @@ def main():
     errors = {True: [], False: []}
     for fahrenheit, psia, scaled_x in rows:
         temperature = (fahrenheit - 32) * 5 / 9 + 273.15
-        pressure = psia * .06894757293168
+        pressure = psia * PSIA_TO_BARA
         inside = 323.15 <= temperature <= 423.15 and 25 <= pressure <= 700
         if args.uncertainty_envelope:
             if inside:
