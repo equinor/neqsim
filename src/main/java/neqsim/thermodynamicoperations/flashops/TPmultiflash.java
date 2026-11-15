@@ -60,7 +60,7 @@ public class TPmultiflash extends TPflash {
   /** Normalized reaction-adjusted species fractions used by the multiphase beta equations. */
   private transient double[] reactiveOverallFractions;
   /** True only while refining an existing split on the restored non-reactive ionic inventory. */
-  private transient boolean refiningRestoredNonReactiveIons;
+  private transient volatile boolean refiningRestoredNonReactiveIons;
   /** Positive floor for reaction products introduced at trace level. */
   private static final double MINIMUM_REACTIVE_COMPONENT_MOLES = 1.0e-45;
   /** Margin by which both Rachford-Rice sums must exceed unity before a vapour phase is sought. */
@@ -353,6 +353,7 @@ public class TPmultiflash extends TPflash {
    * @return a double
    */
   public double solveBeta() {
+    boolean refineRestoredIons = refiningRestoredNonReactiveIons;
     int numberOfPhases = system.getNumberOfPhases();
     DMatrixRMaj betaGradient = new DMatrixRMaj(numberOfPhases, 1);
     DMatrixRMaj betaHessian = new DMatrixRMaj(numberOfPhases, numberOfPhases);
@@ -394,7 +395,7 @@ public class TPmultiflash extends TPflash {
       // transposed, scaled, and subtracted temporary matrices in every beta iteration.
       double proposedScale = iter / (iter + 3.0);
       double ionicFraction = getNonReactiveIonicFraction();
-      double betaStepScale = refiningRestoredNonReactiveIons && ionicFraction > 0.0
+      double betaStepScale = refineRestoredIons && ionicFraction > 0.0
           && isSmallIonicBetaStep(proposedScale, betaCorrection, ionicFraction) ? proposedScale
               : limitBetaStepScale(proposedScale);
       removePhase = false;
