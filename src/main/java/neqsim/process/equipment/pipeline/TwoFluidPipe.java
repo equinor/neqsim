@@ -478,7 +478,7 @@ public class TwoFluidPipe extends Pipeline {
   private boolean includeEnergyEquation = false;
 
   /** Include mass transfer (flash/condensation). */
-  private boolean includeMassTransfer = false;
+  private volatile boolean includeMassTransfer = false;
 
   /** Enable heat transfer from surroundings. */
   private boolean enableHeatTransfer = false;
@@ -2428,8 +2428,8 @@ public class TwoFluidPipe extends Pipeline {
           sec.setWaterHoldup(sec.getLiquidHoldup());
           sec.setOilHoldup(0.0);
         }
-      } catch (Exception e) {
-        logger.warn("Flash calculation failed for section {} at position {}", i, sec.getPosition());
+      } catch (RuntimeException exception) {
+        logger.warn("Flash calculation failed for section {} at position {}", i, sec.getPosition(), exception);
       }
     }
   }
@@ -11390,11 +11390,11 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @param include true to include mass transfer
    */
-  public void setIncludeMassTransfer(boolean include) {
-    this.includeMassTransfer = include;
+  public synchronized void setIncludeMassTransfer(boolean include) {
     if (equations != null) {
       equations.setIncludeMassTransfer(include);
     }
+    this.includeMassTransfer = include;
   }
 
   /**
