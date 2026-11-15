@@ -31,7 +31,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import neqsim.process.engineering.pid.PidDesignModel;
-import neqsim.process.engineering.pid.PidElement;
 import neqsim.process.engineering.pid.PidNativeControlSystem;
 import neqsim.process.engineering.pid.PidSafetyFunctionImporter;
 import neqsim.process.engineering.pid.PidSafetyFunctionValidator;
@@ -52,6 +51,7 @@ import neqsim.process.util.scenario.CompressorAutomationStudy.CaseDefinition;
 import neqsim.process.util.scenario.CompressorAutomationStudy.Design;
 import neqsim.process.util.scenario.CompressorAutomationStudy.Profile;
 import neqsim.process.util.scenario.CompressorAutomationStudy.Train;
+import neqsim.process.util.scenario.CompressorReliefDisposalStudy;
 
 /**
  * Runs the public compressor model, canonical instrumentation, native acceptance cases and professional export.
@@ -106,6 +106,31 @@ public final class CompressorAutomationWorkflow {
    */
   public static Map<String, Object> run(Design design, PidDesignModel canonicalProposal,
       List<CaseDefinition> definitions, Path directory) throws IOException {
+    return run(design, canonicalProposal, definitions, null, directory);
+  }
+
+  /**
+   * Executes the governed compressor cases and optionally binds one blocked-outlet result to physical relief and
+   * disposal evidence.
+   *
+   * <p>
+   * A relief design is accepted only with exactly one selected blocked-outlet case. The legacy overload passes null and
+   * retains its existing output and execution cost. The connected calculation consumes the actual completed isolated
+   * case and never reconstructs its receiver state from a report.
+   * </p>
+   *
+   * @param design design assumptions copied before use
+   * @param canonicalProposal optional edited canonical graph, or null to import actual native objects
+   * @param definitions explicit case definitions; the output records whether the selection is a subset
+   * @param reliefDesign optional explicit relief, blowdown and flare connection basis
+   * @param directory new output directory, never overwritten
+   * @return detached status map
+   * @throws IOException if artifact publication fails
+   * @throws IllegalArgumentException if input, canonical policy, relief source or output identity is invalid
+   */
+  public static Map<String, Object> run(Design design, PidDesignModel canonicalProposal,
+      List<CaseDefinition> definitions, CompressorReliefDisposalStudy.Design reliefDesign, Path directory)
+      throws IOException {
     if (design == null || definitions == null || definitions.isEmpty() || directory == null) {
       throw new IllegalArgumentException("A design, nonempty case selection and new output directory are required");
     }
@@ -120,10 +145,18 @@ public final class CompressorAutomationWorkflow {
     Design accepted = designFromJson(GSON.toJson(design));
     List<CaseDefinition> cases = new ArrayList<CaseDefinition>(definitions);
     Set<String> caseKeys = new LinkedHashSet<String>();
+    int blockedOutletCases = 0;
     for (CaseDefinition definition : cases) {
       if (definition == null || !caseKeys.add(caseKey(definition))) {
         throw new IllegalArgumentException("Case definitions must be nonnull and have unique profile/timestep IDs");
       }
+      blockedOutletCases += definition.getProfile() == Profile.BLOCKED_OUTLET ? 1 : 0;
+    }
+    if (reliefDesign != null && blockedOutletCases != 1) {
+      throw new IllegalArgumentException("An integrated relief design requires exactly one BLOCKED_OUTLET case");
+    }
+    if (reliefDesign != null) {
+      reliefDesign.validate();
     }
     Train original = CompressorAutomationStudy.create(accepted);
     original.getProcess().run();
@@ -151,6 +184,7 @@ public final class CompressorAutomationWorkflow {
     status.put("fitnessForConstruction", Boolean.FALSE);
     status.put("projectId", project.getProjectId());
     status.put("acceptedDesign", GSON.fromJson(GSON.toJson(accepted), Map.class));
+    status.put("reliefDisposalEnabled", Boolean.valueOf(reliefDesign != null));
     try {
       status.put("runtimeClasses", runtimeClasses(governed));
       write(output.resolve("workflow-status.json"), status);
@@ -161,6 +195,7 @@ public final class CompressorAutomationWorkflow {
       write(output.resolve("automation-registers.json"),
           PidNativeControlSystem.automationRegisters(project, canonical, bindings));
       List<CaseExecution> executions = new ArrayList<CaseExecution>();
+      Set<String> registeredScenarioRequirements = new LinkedHashSet<String>();
       for (CaseDefinition requested : cases) {
         Train prototype = governed.copy();
         prototype.initializeDynamics();
@@ -176,12 +211,20 @@ public final class CompressorAutomationWorkflow {
         }
         ReceiptObserver observer = new ReceiptObserver(project, canonical, bindings, control, functions);
         CaseBundle bundle = CompressorAutomationStudy.createCase(governed, declared, observer);
+        String requirementId = CompressorAutomationStudy.requirementId(requested.getProfile());
+        if (registeredScenarioRequirements.add(requirementId)) {
+          project.addRequirement(new EngineeringRequirement(requirementId, governed.getCompressor().getName(),
+              EngineeringRequirement.Type.ENGINEERING_ASSESSMENT,
+              "Execute the synthetic " + requested.getProfile().name() + " compressor acceptance case",
+              "Retain configured dynamic response, explicit failures and accountable engineering review."));
+        }
         project.addDynamicSafetyScenario(bundle.getScenario());
         executions.add(new CaseExecution(declared, bundle, control, functions));
       }
       EngineeringSimulationResult simulation = EngineeringSimulationRunner.runStrict(project);
       List<Map<String, Object>> feedback = new ArrayList<Map<String, Object>>();
       List<Map<String, Object>> crosswalk = new ArrayList<Map<String, Object>>();
+      List<Map<String, Object>> integratedStudies = new ArrayList<Map<String, Object>>();
       int passed = 0;
       int errors = 0;
       if (simulation.getDynamicScenarioResults().size() != executions.size()) {
@@ -215,6 +258,8 @@ public final class CompressorAutomationWorkflow {
         write(caseDirectory.resolve("configuration.json"), configuration);
         Map<String, Object> row = new LinkedHashMap<String, Object>();
         row.put("scenarioId", nativeResult.getScenarioId());
+        row.put("requirementIds", new ArrayList<String>(nativeResult.getRequirementIds()));
+        row.put("equipmentTags", new ArrayList<String>(nativeResult.getEquipmentTags()));
         row.put("caseDirectory", output.relativize(caseDirectory).toString());
         row.put("nativeResultFingerprint", sha256(nativeBytes));
         row.put("rawNativeTextSha256", sha256(Files.readAllBytes(caseDirectory.resolve("native-result.raw.txt"))));
@@ -225,6 +270,29 @@ public final class CompressorAutomationWorkflow {
         row.put("nativeRequiredCriteriaPassed", Boolean.valueOf(nativeResult.isPassed()));
         List<?> nativeErrors = (List<?>) nativeResult.toMap().get("errors");
         row.put("nativeErrors", new ArrayList<Object>(nativeErrors));
+        if (reliefDesign != null && execution.definition.getProfile() == Profile.BLOCKED_OUTLET) {
+          CompressorReliefDisposalStudy.Result reliefResult = CompressorReliefDisposalStudy.run(result, reliefDesign);
+          Map<String, Object> reliefMap = reliefResult.toMap();
+          Path reliefFile = caseDirectory.resolve("relief-disposal.json");
+          write(reliefFile, reliefMap);
+          String reliefHash = sha256(Files.readAllBytes(reliefFile));
+          Map<?, ?> reliefMetrics = (Map<?, ?>) reliefMap.get("metrics");
+          row.put("reliefDisposalStatus", reliefMetrics.get("status"));
+          row.put("reliefDisposalFile", output.relativize(reliefFile).toString());
+          row.put("reliefDisposalFileSha256", reliefHash);
+          Map<String, Object> study = new LinkedHashMap<String, Object>();
+          study.put("scenarioId", nativeResult.getScenarioId());
+          study.put("requirementIds", new ArrayList<String>(nativeResult.getRequirementIds()));
+          study.put("equipmentTags", new ArrayList<String>(nativeResult.getEquipmentTags()));
+          study.put("nativeResultFingerprint", row.get("nativeResultFingerprint"));
+          study.put("reliefDisposalFile", row.get("reliefDisposalFile"));
+          study.put("reliefDisposalFileSha256", reliefHash);
+          study.put("reliefDisposal", reliefMap);
+          study.put("reviewState", "CALCULATED_REVIEW_REQUIRED");
+          integratedStudies.add(study);
+        } else {
+          row.put("reliefDisposalStatus", reliefDesign == null ? "NOT_REQUESTED" : "NOT_APPLICABLE");
+        }
         crosswalk.add(row);
         passed += nativeResult.isPassed() ? 1 : 0;
         errors += nativeErrors.isEmpty() ? 0 : 1;
@@ -232,6 +300,17 @@ public final class CompressorAutomationWorkflow {
       write(output.resolve("engineering-simulation-results.json"), simulation.toMap());
       write(output.resolve("dynamic-pid-feedback.json"), map("safetyFunctionResults", feedback));
       write(output.resolve("native-evidence-crosswalk.json"), map("cases", crosswalk));
+      if (reliefDesign != null) {
+        Map<String, Object> integrated = new LinkedHashMap<String, Object>();
+        integrated.put("schemaVersion", "neqsim_compressor_integrated_safety_study.v1");
+        integrated.put("projectId", project.getProjectId());
+        integrated.put("projectRevision", project.getRevision());
+        integrated.put("source", "ACTUAL_CONFIGURED_BLOCKED_OUTLET_RESULT_AND_DECLARED_RELIEF_DESIGN");
+        integrated.put("qualification", QUALIFICATION);
+        integrated.put("fitnessForConstruction", Boolean.FALSE);
+        integrated.put("studies", integratedStudies);
+        write(output.resolve("integrated-safety-study.json"), integrated);
+      }
       EngineeringEvidenceRecord evidence = new EngineeringEvidenceRecord("COMPRESSOR-NATIVE-EXECUTED-FEEDBACK",
           "ACTUAL_CONFIGURED_COMPRESSOR_SCENARIO_RESULTS", project.getRevision())
           .setTitle("Canonical control and safety settings with actual native case results")
@@ -264,6 +343,12 @@ public final class CompressorAutomationWorkflow {
       status.put("sourceRef", System.getProperty("neqsim.sourceRef", "UNPINNED_WORKSPACE_BUILD"));
       status.put("javaVersion", System.getProperty("java.version"));
       status.put("canonicalControlEditsApplied", Boolean.valueOf(canonicalProposal != null));
+      status.put("integratedReliefStudyCount", Integer.valueOf(integratedStudies.size()));
+      if (reliefDesign != null) {
+        status.put("integratedSafetyStudy", "integrated-safety-study.json");
+        status.put("integratedSafetyStudySha256",
+            sha256(Files.readAllBytes(output.resolve("integrated-safety-study.json"))));
+      }
       write(output.resolve("workflow-status.json"), status);
       logger.info("Compressor automation workflow completed at {} with {} native PASS and {} native FAIL cases", output,
           passed, executions.size() - passed);
@@ -518,6 +603,8 @@ public final class CompressorAutomationWorkflow {
     Set<String> recognized = new LinkedHashSet<String>();
     recognized.add("profile");
     recognized.add("driverCommandAvailable");
+    recognized.add("exportOutletBlocked");
+    recognized.add("controlAirAvailable");
     fault(result, declared, recognized, "asvOpeningTravelSeconds", train.getAntiSurgeValve().getName(),
         "openingTravelSeconds");
     fault(result, declared, recognized, "asvActuatorAvailable", train.getAntiSurgeValve().getName(),

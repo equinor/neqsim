@@ -104,6 +104,8 @@ on the same process graph. Coordinate configuration and execution with one owner
 | `case-*/result.json`, `full-trace.json` | Native case output, quantitative metrics and actual ordered configured-copy physical samples |
 | `case-*/native-result.raw.txt` | Exact native result text, preserved independently from strict JSON normalization |
 | `native-evidence-crosswalk.json` | Native-result fingerprint and separate strict output-file SHA-256 values |
+| `case-BLOCKED_OUTLET-*/relief-disposal.json` | Optional physical receiver depressurization and disposal result from the exact completed blocked-outlet copy |
+| `integrated-safety-study.json` | Optional requirement/tag/scenario/native-result/relief-result/review crosswalk with strict file checksums |
 | `dynamic-pid-feedback.json` | Current per-function demand/no-demand/failed/incomplete evidence without SIL credit |
 | `engineering-simulation-results.json` | The coordinated strict runner's typed results; failures remain failures |
 | `native-pid-package/` | DEXPI 2.0.1, professional native P&IDs/PFD, registers and governed runnable process |
@@ -167,6 +169,30 @@ controlled standards editions are not reviewed project evidence. Simulation PASS
 SIL/IPL/SRS, relief design or construction approval. API 520/521-related routines are existing
 screening implementations; this proof adds no clause-derived rule and claims no standards
 certification.
+
+### Integrated blocked-outlet safety-study package
+
+The additive five-argument workflow overload accepts an explicit
+`CompressorReliefDisposalStudy.Design`. The legacy overload passes no relief design and retains its
+existing execution cost and artifacts. An integrated run requires exactly one selected
+`BLOCKED_OUTLET` case and rejects a missing or duplicate source before creating the output
+directory. The relief design is validated before any process execution.
+
+The integrated path writes the physical result beside the originating case and records its strict
+file checksum in both the native evidence crosswalk and `integrated-safety-study.json`. Each public
+compressor scenario now carries one stable synthetic requirement identity of the form
+`REQ-COMPRESSOR-<PROFILE>` plus the actual ordered equipment tags. The integrated study joins those
+identities to the exact native-result fingerprint, declared relief input units, calculated metrics,
+review-required state and relief-result checksum. A changed scenario result, connection basis or
+output file therefore changes the corresponding evidence fingerprint instead of silently retaining
+approval.
+
+The join does not turn the modeled response into an approved requirement, HAZOP decision, SRS or
+relief basis. Project requirement identities, controlled clauses, actual pipe routes/elevations,
+isolation inventory, vendor data, concurrency, MDMT and accountable reviews remain supplied
+evidence or explicit blockers. The integrated package only proves that the declared synthetic
+blocked-outlet result and the declared physical relief/disposal calculation were executed and
+linked without reconstructing or mutating the source train.
 
 The wrapper does not grant layout approval. Run the repository's strict external PFD/layout checks,
 native P&ID QC and independent visual inspection on every generated sheet. Check actual port/line/

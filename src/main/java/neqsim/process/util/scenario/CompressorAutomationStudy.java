@@ -99,6 +99,19 @@ public final class CompressorAutomationStudy {
   }
 
   /**
+   * Returns the stable synthetic acceptance-requirement identity for a public profile.
+   *
+   * @param profile public compressor scenario profile
+   * @return stable requirement identifier
+   */
+  public static String requirementId(Profile profile) {
+    if (profile == null) {
+      throw new IllegalArgumentException("A compressor profile is required");
+    }
+    return "REQ-COMPRESSOR-" + profile.name();
+  }
+
+  /**
    * Immutable fixed-step acceptance case definition; fault overrides are separate from healthy design settings.
    *
    * @author NeqSim
@@ -348,6 +361,7 @@ public final class CompressorAutomationStudy {
       for (String reference : definition.evidenceReferences) {
         builder.addEvidenceReference(reference);
       }
+      builder.addRequirementId(requirementId(definition.profile));
       for (ProcessEquipmentInterface unit : source.process.getUnitOperations()) {
         builder.addEquipmentTag(unit.getName());
       }

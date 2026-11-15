@@ -440,7 +440,43 @@ public final class CompressorReliefDisposalStudy {
       return Collections.unmodifiableMap(map);
     }
 
-    private void validate() {
+    /**
+     * Returns the explicit engineering units for every dimensional design input.
+     *
+     * @return immutable ordered input-unit map
+     */
+    public Map<String, String> getInputUnits() {
+      Map<String, String> units = new LinkedHashMap<String, String>();
+      units.put("maximumAllowablePressureBara", "bara absolute");
+      units.put("reliefSetPressureBara", "bara absolute");
+      units.put("blowdownOrificeDiameterM", "m");
+      units.put("backPressureBara", "bara absolute");
+      units.put("stopPressureBara", "bara absolute");
+      units.put("fireHeatInputW", "W");
+      units.put("wallMassKg", "kg");
+      units.put("wallAreaM2", "m2");
+      units.put("wallSpecificHeatJPerKgK", "J/(kg K)");
+      units.put("wallHeatTransferCoefficientWPerM2K", "W/(m2 K)");
+      units.put("headerDiameterM", "m");
+      units.put("headerPressureBara", "bara absolute");
+      units.put("headerTemperatureK", "K");
+      units.put("headerMolarMassKgPerMol", "kg/mol");
+      units.put("flareTipDiameterM", "m");
+      units.put("flareFlameHeightM", "m");
+      units.put("flareDesignHeatDutyW", "W");
+      units.put("flareDesignMassFlowKgPerSecond", "kg/s");
+      units.put("flareDesignMolarFlowMolPerSecond", "mol/s");
+      units.put("timeStepSeconds", "s");
+      units.put("maximumTimeSeconds", "s");
+      return Collections.unmodifiableMap(units);
+    }
+
+    /**
+     * Fails closed when the declared connection, capacity or numerical basis is invalid.
+     *
+     * @throws IllegalArgumentException when identities, values or physical ordering are invalid
+     */
+    public void validate() {
       for (String text : new String[] {studyId, designCaseId, sourceId, protectedEquipmentTag, concurrencyGroup}) {
         if (text == null || text.trim().isEmpty()) {
           throw new IllegalArgumentException("Stable study and equipment identities are required");
@@ -469,6 +505,7 @@ public final class CompressorReliefDisposalStudy {
   public static final class Result implements Serializable {
     private static final long serialVersionUID = 1L;
     private final Map<String, Object> designSnapshot;
+    private final Map<String, String> inputUnits;
     private final Map<String, Object> compressorFingerprint;
     private final double protectedVolumeM3;
     private final double initialPressureBara;
@@ -479,6 +516,7 @@ public final class CompressorReliefDisposalStudy {
         double initialPressureBara, double initialTemperatureK,
         EngineeringCalculationResult<CoupledReliefBlowdownFlareResult> calculationResult) {
       this.designSnapshot = Collections.unmodifiableMap(new LinkedHashMap<String, Object>(design.toMap()));
+      this.inputUnits = Collections.unmodifiableMap(new LinkedHashMap<String, String>(design.getInputUnits()));
       this.compressorFingerprint = compressorFingerprint(compressorResult);
       this.protectedVolumeM3 = protectedVolumeM3;
       this.initialPressureBara = initialPressureBara;
@@ -496,6 +534,7 @@ public final class CompressorReliefDisposalStudy {
       Map<String, Object> map = new LinkedHashMap<String, Object>();
       map.put("schemaVersion", "neqsim_compressor_relief_disposal_study.v1");
       map.put("design", new LinkedHashMap<String, Object>(designSnapshot));
+      map.put("inputUnits", new LinkedHashMap<String, String>(inputUnits));
       map.put("compressorCase", new LinkedHashMap<String, Object>(compressorFingerprint));
       map.put("protectedVolumeM3", Double.valueOf(protectedVolumeM3));
       map.put("initialPressureBara", Double.valueOf(initialPressureBara));

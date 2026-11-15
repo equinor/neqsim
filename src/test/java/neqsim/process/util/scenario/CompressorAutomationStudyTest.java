@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -159,6 +160,7 @@ class CompressorAutomationStudyTest {
     design.setMetricSettlingHoldSeconds(2.0);
     CompressorAutomationStudy.Result blocked = CompressorAutomationStudy.run(CompressorAutomationStudy.create(design),
         new CompressorAutomationStudy.CaseDefinition(CompressorAutomationStudy.Profile.BLOCKED_OUTLET, 0.1, 12.0, 1.0));
+    assertEquals(Arrays.asList("REQ-COMPRESSOR-BLOCKED_OUTLET"), blocked.getNativeResult().getRequirementIds());
     assertEquals(0.0, blocked.getConfiguredTrain().getExportValve().getPercentValveOpening(), 0.1);
     Map<String, Object> blockedMap = blocked.toMap();
     Map<String, Object> metrics = (Map<String, Object>) blockedMap.get("quantitativeMetrics");
