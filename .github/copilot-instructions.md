@@ -17,3 +17,5 @@ read it whole). Repeated below for tools that read only this file (e.g. code rev
 - After a flash, call `fluid.initProperties()` before reading transport properties; always set a mixing rule.
 - **Every flow diagram (PFD/BFD/P&ID sketch) must pass `pfd-layout-review` (`neqsim pfd-check`) before it is used.**
 - **Quiet by default:** child processes use `CREATE_NO_WINDOW`; no run-time `pip install`; silent token auth via `enterprise-sso-auth`, never `az login`/browser first (see AGENTS.md).
+- **Placement:** this repo takes only NeqSim Java functionality (plus `.github/` skills/agents that call it).
+  Other public skills/agents/helpers go in `neqsim-community-*`; Equinor/company-specific content in `neqsim-enterprise-*`.
