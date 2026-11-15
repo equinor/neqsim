@@ -586,3 +586,44 @@ result does not establish experimental accuracy: dissolved CO2, water activity, 
 hydrate contribution remain independent scientific checks. The assessment does not route ordinary user flashes through
 the constrained solver, alter hydrate calculations, fit an interaction parameter, relax a tolerance or apply a
 temperature offset.
+
+## Matched pure-water CO2 fugacity decomposition
+
+The same 26-state Mousavi-Chapoy-Burgass producer now also calculates a
+model-only no-salt comparator at each source temperature and total pressure.
+The comparator retains the same final aqueous water basis and finite CO2
+reservoir as the corresponding brine state. It is not an additional measurement
+and does not replace the salt-free Carroll partial-pressure benchmark.
+
+For the brine and matched pure-water states, let $x$ be the molecular
+water-plus-CO2 aqueous mole fraction, $f$ the CO2 fugacity in the most
+CO2-rich phase in bara, and $H_{\mathrm{eff}}=f/x$. The report retains the
+exact identity
+
+$
+\ln\left(\frac{x_{\mathrm{brine}}}{x_{\mathrm{water}}}\right)
+=
+\ln\left(\frac{f_{\mathrm{brine}}}{f_{\mathrm{water}}}\right)
+-
+\ln\left(\frac{H_{\mathrm{eff,brine}}}{H_{\mathrm{eff,water}}}\right).
+$
+
+This separates the modeled change in CO2-rich-phase fugacity exposure from the
+effective aqueous salting response at the same total pressure. Because these
+are finite-composition dense-CO2 states, $H_{\mathrm{eff}}$ is an endpoint
+diagnostic with units of bara, not a dilute-limit Henry constant. Neither term
+is independently measured or a unique parameter attribution.
+
+Every matched state must retain one aqueous kilogram of water, component
+balance at or below $10^{-10}$ mol, molecular log-fugacity residual below
+$10^{-8}$, and log-identity residual below $10^{-12}$. The CSV also retains
+both water activities and their difference. These are numerical-consistency
+gates, not experimental-accuracy tolerances.
+
+The source values remain the CC BY Mousavi, Chapoy and Burgass (2024) Tables
+A11-A13 data already pinned by the fixture and reproduction notes. This
+decomposition changes no production equation, interaction parameter, source
+value, hydrate equation, phase-equilibrium tolerance, or empirical temperature
+offset. It remains diagnostic evidence only; physical qualification still
+requires independent review and supporting mixed-brine activity/solubility
+evidence.
