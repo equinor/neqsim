@@ -9,6 +9,8 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.stream.Stream;
@@ -2733,9 +2735,15 @@ class TwoFluidVsBeggsBrillComparisonTest {
     }
   }
 
-  @Test
+  /**
+   * Check that uphill water-oil slip preserves the specified phase rates in both transfer modes.
+   *
+   * @param includeMassTransfer whether local phase rates follow equilibrium along the pipe
+   */
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
   @DisplayName("Water-oil velocity slip in uphill flow")
-  void testWaterOilVelocitySlipInUphillFlow() {
+  void testWaterOilVelocitySlipInUphillFlow(boolean includeMassTransfer) {
     logger.info("\n=== Water-Oil Velocity Slip in Uphill Flow ===");
     logger.info("Testing that water flows slower than oil in uphill sections\n");
     logger.info("Using 7-equation model with separate oil/water momentum\n");
@@ -2777,6 +2785,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     pipe.setRoughness(4.5e-5);
     pipe.setElevationProfile(elevations);
     pipe.setEnableWaterOilSlip(true);
+    pipe.setIncludeMassTransfer(includeMassTransfer);
     pipe.run();
 
     assertTrue(pipe.isSteadyStateConverged(), "The three-phase uphill case must converge");
@@ -2866,16 +2875,20 @@ class TwoFluidVsBeggsBrillComparisonTest {
         assertTrue(oilVel[i] >= 0, "Oil velocity should be positive at section " + i);
         assertTrue(waterVel[i] >= 0, "Water velocity should be positive at section " + i);
       }
-      SystemInterface localFluid = inlet.getFluid().clone();
-      localFluid.setPressure(pressure[i], "Pa");
-      localFluid.setTemperature(temperature[i], "K");
-      new ThermodynamicOperations(localFluid).TPflash();
+      SystemInterface referenceFluid = inlet.getFluid();
+      if (includeMassTransfer) {
+        referenceFluid = referenceFluid.clone();
+        referenceFluid.setPressure(pressure[i], "Pa");
+        referenceFluid.setTemperature(temperature[i], "K");
+        new ThermodynamicOperations(referenceFluid).TPflash();
+      }
       for (int phase = 0; phase < phaseNames.length; phase++) {
-        assertTrue(localFluid.hasPhaseType(phaseNames[phase]),
-            "The independent equilibrium state must contain " + phaseNames[phase] + " at section " + i);
-        double expectedMassFlow = 8.0 * localFluid.getPhase(phaseNames[phase]).getMass() / localFluid.getMass("kg");
+        assertTrue(referenceFluid.hasPhaseType(phaseNames[phase]),
+            "The reference state must contain " + phaseNames[phase] + " at section " + i);
+        double expectedMassFlow = 8.0 * referenceFluid.getPhase(phaseNames[phase]).getMass()
+            / referenceFluid.getMass("kg");
         assertEquals(expectedMassFlow, phaseMassFlow[phase][i], 1.0e-4 * 8.0,
-            "Slip must preserve the local equilibrium " + phaseNames[phase] + " mass flow at section " + i);
+            "Slip must preserve the " + phaseNames[phase] + " mass flow in the selected transfer mode at section " + i);
       }
     }
 

@@ -286,11 +286,19 @@ class TwoFluidPipeDynamicPhaseEnvelopeRegressionTest {
     return (TwoFluidSection[]) field.get(pipe);
   }
 
+  /**
+   * Refresh steady properties in the equilibrium phase-transfer mode exercised by the flash tests.
+   *
+   * @param pipe initialized test pipe
+   * @throws Exception if reflective invocation fails
+   */
   private static void refreshSteadyThermodynamics(TwoFluidPipe pipe) throws Exception {
+    pipe.setIncludeMassTransfer(true);
     Method refresh = TwoFluidPipe.class.getDeclaredMethod("updateThermodynamicsWithCondensation", double.class,
-        double[].class, double[].class);
+        double[].class, double[].class, double.class, double.class);
     refresh.setAccessible(true);
-    refresh.invoke(pipe, INITIAL_MASS_FLOW, new double[4], new double[4]);
+    int sectionCount = sections(pipe).length;
+    refresh.invoke(pipe, INITIAL_MASS_FLOW, new double[sectionCount], new double[sectionCount], 0.0, 0.0);
   }
 
   private static SystemInterface localEquilibriumState(TwoFluidPipe pipe, TwoFluidSection section) {
