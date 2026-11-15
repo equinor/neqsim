@@ -2,6 +2,7 @@ package neqsim.physicalproperties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.BnsLbcViscosityMethod;
 import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.physicalproperties.system.commonphasephysicalproperties.DefaultPhysicalProperties;
@@ -13,6 +14,7 @@ import neqsim.physicalproperties.system.liquidphysicalproperties.LiquidPhysicalP
 import neqsim.physicalproperties.system.liquidphysicalproperties.SaltWaterPhysicalProperties;
 import neqsim.physicalproperties.system.liquidphysicalproperties.WaterPhysicalProperties;
 import neqsim.physicalproperties.system.solidphysicalproperties.SolidPhysicalProperties;
+import neqsim.thermo.phase.PhaseBNS;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -87,6 +89,10 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
       logger.error("error selecting physical properties model.\n Continue using default model...");
       setPhysicalProperties(phase, PhysicalPropertyModel.DEFAULT);
       break;
+    }
+    if (phase instanceof PhaseBNS && ppm != PhysicalPropertyModel.BASIC) {
+      gasPhysicalProperties.viscosityCalc = new BnsLbcViscosityMethod(gasPhysicalProperties);
+      oilPhysicalProperties.viscosityCalc = new BnsLbcViscosityMethod(oilPhysicalProperties);
     }
     solidPhysicalProperties = new SolidPhysicalProperties(phase);
     mixingRule = new neqsim.physicalproperties.mixingrule.PhysicalPropertyMixingRule();

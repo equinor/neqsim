@@ -10,6 +10,7 @@ This guide documents the viscosity calculation methods available in NeqSim for g
 - [Overview](#overview)
 - [Available Models](#available-models)
   - [LBC (Lohrenz-Bray-Clark)](#lbc-lohrenz-bray-clark)
+  - [BNS gas viscosity](#bns-gas-viscosity)
   - [Friction Theory](#friction-theory)
   - [PFCT (Pedersen)](#pfct-pedersen)
   - [Polynomial Correlation](#polynomial-correlation)
@@ -134,6 +135,18 @@ $$\eta_r = a_0 + a_1\rho_r + a_2\rho_r^2 + a_3\rho_r^3 + a_4\rho_r^4$$
 fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("LBC");
 fluid.getPhase("oil").initPhysicalProperties();
 ```
+
+---
+
+### BNS gas viscosity
+
+`SystemBnsEos` selects the BNS calibration of LBC for its gas and dense fluid phases.
+It combines Stiel–Thodos dilute-gas viscosity and Herning–Zipperer mixing with the
+SPE-229932-MS dense-fluid polynomial. The BNS critical volumes for viscosity include
+a molar-mass-dependent hydrocarbon volume and the fitted 2026 helium value. The reduced
+density comes from the BNS EOS with its current volume-correction setting. See
+[BNS fluid creation](../thermo/fluid_creation_guide.md#53-other-reference-equations)
+for setting the composition and initializing physical properties.
 
 ---
 
