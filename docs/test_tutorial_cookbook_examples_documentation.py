@@ -1,5 +1,6 @@
 """Contracts for tutorials, cookbook, troubleshooting, and examples."""
 
+import json
 from pathlib import Path
 import re
 import unittest
@@ -65,6 +66,18 @@ INDEX_PAGES = (
     DOCS / "troubleshooting/index.md",
     DOCS / "tutorials/index.md",
 )
+
+
+CO2_KINETICS_ASSETS = (
+    DOCS / "tutorials/CO2_CSTR_Experiment_Tutorial.ipynb",
+    DOCS / "tutorials/CO2_Impurity_Kinetics_Tutorial.ipynb",
+    DOCS / "tutorials/neqsim_co2_kinetics.py",
+    DOCS / "tutorials/run_master_long_experiment_960h.py",
+    DOCS / "tutorials/run_stepwise_10ppm_every100h.py",
+    DOCS / "tutorials/run_user_20bar_minus24C_experiment.py",
+)
+CO2_KINETICS_NOTEBOOKS = CO2_KINETICS_ASSETS[:2]
+TUTORIAL_INDEX = DOCS / "tutorials/index.md"
 
 TASK_SOLVING_TUTORIAL = DOCS / "tutorials/solve-engineering-task.md"
 PYTHON_QUICKSTART = DOCS / "quickstart/python-quickstart.md"
@@ -370,6 +383,43 @@ class TutorialCookbookExamplesDocumentationContractTest(unittest.TestCase):
         for marker in link_markers:
             with self.subTest(link_marker=marker):
                 self.assertIn(marker, page)
+
+
+    def test_co2_kinetics_tutorial_assets_are_discoverable_and_executed(self):
+        index = TUTORIAL_INDEX.read_text(encoding="utf-8")
+        section = section_after_heading(
+            index, "## CO2 Impurity Kinetics Tutorials"
+        )
+
+        self.assertIn("experimental screening", section)
+        self.assertIn("uncalibrated", section)
+        self.assertIn("not a current-`master` rerun", section)
+        for asset in CO2_KINETICS_ASSETS:
+            with self.subTest(asset=asset.name):
+                self.assertTrue(asset.is_file())
+                self.assertEqual(1, section.count(f"({asset.name})"))
+
+        for notebook_path in CO2_KINETICS_NOTEBOOKS:
+            with self.subTest(notebook=notebook_path.name):
+                notebook = json.loads(notebook_path.read_text(encoding="utf-8"))
+                code_cells = [
+                    cell for cell in notebook["cells"] if cell["cell_type"] == "code"
+                ]
+                self.assertTrue(code_cells)
+                self.assertTrue(
+                    all(cell.get("execution_count") is not None for cell in code_cells)
+                )
+                outputs = [
+                    output
+                    for cell in code_cells
+                    for output in cell.get("outputs", [])
+                ]
+                self.assertFalse(
+                    any(output.get("output_type") == "error" for output in outputs)
+                )
+                self.assertFalse(
+                    any(output.get("name") == "stderr" for output in outputs)
+                )
 
     def test_frozen_scope_exists(self):
         self.assertEqual(48, len(SCOPE_PAGES))
