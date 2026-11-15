@@ -82,7 +82,9 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
     for (Reference reference : references) {
       Result result = calculate(reference, CO2_FEED_MOLES);
       Result constrained = calculate(reference, CO2_FEED_MOLES, true);
-      Result pureWater = calculate(reference.withoutSalt(), CO2_FEED_MOLES);
+      Result pureWater = calculate(reference.withoutSalt(), result.co2FeedMoles);
+      assertEquals(result.co2FeedMoles, pureWater.co2FeedMoles, 0.0,
+          reference.pointId + " matched pure-water CO2 reservoir");
       assertTrue(pureWater.componentBalanceResidualMol <= 1.0e-10,
           reference.pointId + " matched pure-water component balance");
       assertTrue(pureWater.molecularLogFugacityResidual < 1.0e-8,
