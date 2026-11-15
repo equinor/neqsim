@@ -422,6 +422,28 @@ class TwoFluidPipeNetworkTest {
   }
 
   @Test
+  void finiteStorageTemplatesFeedAlgebraicPlemWithRelaxedDonorState() {
+    TwoFluidPipeNetwork ordered = createFiniteTemplateAlgebraicPlem(false);
+    TwoFluidPipeNetwork reversed = createFiniteTemplateAlgebraicPlem(true);
+
+    ordered.runTransient(0.001, UUID.fromString("00000000-0000-0000-0000-000000000001"));
+    reversed.runTransient(0.001, UUID.fromString("00000000-0000-0000-0000-000000000001"));
+
+    TwoFluidPipeNetwork.AlgebraicJunctionReport report = ordered.getLastAlgebraicJunctionReport("PLEM");
+    assertTrue(report.getThermodynamicIterations() > 1);
+    assertTrue(report.getThermodynamicIterations() < 128);
+    assertTrue(report.getPressurePa() > 50.0e5 && report.getPressurePa() < 61.0e5);
+    assertTrue(report.getMaximumRelativePhaseResidual() < 1.0e-8);
+    assertTrue(report.getMaximumRelativeComponentResidual() < 1.0e-8);
+    assertTrue(report.getRelativeEnergyResidual() < 1.0e-7);
+    double methaneFraction = ordered.getAlgebraicNodeComponentMassFraction("PLEM", "methane");
+    assertTrue(Double.isFinite(methaneFraction) && methaneFraction > 0.0 && methaneFraction < 1.0);
+    assertEquals(ordered.getNodePressurePa("PLEM"), reversed.getNodePressurePa("PLEM"), 1.0e-2);
+    assertEquals(ordered.getNodeTemperatureK("PLEM"), reversed.getNodeTemperatureK("PLEM"), 1.0e-8);
+    assertEquals(methaneFraction, reversed.getAlgebraicNodeComponentMassFraction("PLEM", "methane"), 1.0e-10);
+  }
+
+  @Test
   void coupledAlgebraicJunctionsSolveGloballyIndependentOfBranchOrderAndSerialize() {
     TwoFluidPipeNetwork ordered = createCoupledAlgebraicDaisy(false);
     TwoFluidPipeNetwork reversed = createCoupledAlgebraicDaisy(true);
@@ -523,6 +545,24 @@ class TwoFluidPipeNetworkTest {
       network.addPipe("rich inlet", "rich source", "zero-volume manifold", createPipe("rich inlet", 0.99, 0.01));
       network.addPipe("lean inlet", "lean source", "zero-volume manifold", createPipe("lean inlet", 0.90, 0.10));
       network.addPipe("outlet", "zero-volume manifold", "sink", createPipe("outlet", 0.95, 0.05));
+    }
+    return network;
+  }
+
+  private static TwoFluidPipeNetwork createFiniteTemplateAlgebraicPlem(boolean reverseBranchOrder) {
+    TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("finite template algebraic PLEM");
+    network.addConservativeCompressibleNode("template A", createVolume(63.0e5, 5000.0), createFluid(0.98, 0.02));
+    network.addConservativeCompressibleNode("template B", createVolume(61.0e5, 5000.0), createFluid(0.90, 0.10));
+    network.addAlgebraicJunction("PLEM", 56.0e5, createFluid(0.95, 0.05));
+    network.addFixedPressureNode("host", 50.0e5, createFluid(0.95, 0.05));
+    if (reverseBranchOrder) {
+      network.addPipe("export riser", "PLEM", "host", createPipe("export riser", 0.95, 0.05));
+      network.addPipe("template B flowline", "template B", "PLEM", createPipe("template B flowline", 0.90, 0.10));
+      network.addPipe("template A flowline", "template A", "PLEM", createPipe("template A flowline", 0.98, 0.02));
+    } else {
+      network.addPipe("template A flowline", "template A", "PLEM", createPipe("template A flowline", 0.98, 0.02));
+      network.addPipe("template B flowline", "template B", "PLEM", createPipe("template B flowline", 0.90, 0.10));
+      network.addPipe("export riser", "PLEM", "host", createPipe("export riser", 0.95, 0.05));
     }
     return network;
   }

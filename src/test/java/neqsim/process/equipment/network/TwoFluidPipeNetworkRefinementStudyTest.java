@@ -30,7 +30,7 @@ class TwoFluidPipeNetworkRefinementStudyTest {
   void replaysRepresentativeTopologiesAtCommonPhysicalTime() {
     assertStudy(createDirectTieback(), "source", "tieback");
     assertStudy(createDaisyChain(), "upstream manifold", "export");
-    assertStudy(createBranchedMultiTemplate(), "template A", "export riser");
+    assertStudy(createBranchedMultiTemplate(), "PLEM", "export riser");
   }
 
   /** Reject invalid configurations without changing the captured network. */
@@ -155,18 +155,18 @@ class TwoFluidPipeNetworkRefinementStudyTest {
   }
 
   /**
-   * Create two finite conservative templates feeding one conservative PLEM and export riser.
+   * Create two finite conservative templates feeding one algebraic PLEM and export riser.
    *
    * @return unadvanced topology
    */
   private static TwoFluidPipeNetwork createBranchedMultiTemplate() {
     TwoFluidPipeNetwork network = new TwoFluidPipeNetwork("branched multi-template refinement");
-    network.addConservativeCompressibleNode("template A", createVolume(63.0e5, 5000.0), createFluid(0.95, 0.05));
-    network.addConservativeCompressibleNode("template B", createVolume(61.0e5, 5000.0), createFluid(0.95, 0.05));
-    network.addConservativeCompressibleNode("PLEM", createVolume(56.0e5, 10000.0), createFluid(0.95, 0.05));
+    network.addConservativeCompressibleNode("template A", createVolume(63.0e5, 5000.0), createFluid(0.98, 0.02));
+    network.addConservativeCompressibleNode("template B", createVolume(61.0e5, 5000.0), createFluid(0.90, 0.10));
+    network.addAlgebraicJunction("PLEM", 56.0e5, createFluid(0.95, 0.05));
     network.addFixedPressureNode("host", 50.0e5, createFluid(0.95, 0.05));
-    network.addPipe("template A flowline", "template A", "PLEM", createPipe("template A flowline", 0.95, 0.05));
-    network.addPipe("template B flowline", "template B", "PLEM", createPipe("template B flowline", 0.95, 0.05));
+    network.addPipe("template A flowline", "template A", "PLEM", createPipe("template A flowline", 0.98, 0.02));
+    network.addPipe("template B flowline", "template B", "PLEM", createPipe("template B flowline", 0.90, 0.10));
     network.addPipe("export riser", "PLEM", "host", createPipe("export riser", 0.95, 0.05));
     return network;
   }
