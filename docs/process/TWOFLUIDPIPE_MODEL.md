@@ -2093,29 +2093,37 @@ and gas/oil/water phase. Each entry separates nonnegative forward and reverse ma
 advective momentum, and pressure traction, while retaining the left and right donor mass and
 momentum used by the accepted free-flux evaluation. `UnsplitTransientSolver` can now opt into a
 compressed mixed system through `setDirectionalComplementarityEnabled(true)`. The system adds
-signed-direction mass magnitude, advective momentum and a donor-presence multiplier per phase
-face, uses a normalized donor relation for present phases, and pins advective momentum exactly to
-zero for an absent donor. Its 53-color finite-difference schedule covers the existing five-cell
-stencil plus two adjacent nine-variable face blocks. Solved internal fluxes replace the free flux
+mass magnitude, advective momentum and a donor-presence multiplier for each one-sided donor stream,
+uses a normalized donor relation for present phases, and pins advective momentum exactly to zero for
+an absent donor. The physical AUSM stream and the pressure-interpolation correction retain their own
+donors instead of switching the complete face flux when their signed sum crosses zero; zero
+correction remains bit-for-bit compatible. Its 71-color finite-difference schedule covers the
+existing five-cell stencil plus two adjacent eighteen-variable face blocks. Solved internal fluxes replace the free flux
 equal-and-oppositely in adjacent cells and are independently rechecked by
 `TwoFluidUnsplitModelAdapter.prepareStep`; no cell mass is clipped and pressure traction remains in
 the cell operator exactly once.
 
 This remains an experimental opt-in numerical path. All six unchanged 0.1 s historical and
 pressure-interpolated Tengesdal lanes pass at 16/24 cells, and exact-bound regressions now cover an
-initially absent donor, disappearance after transporting only the available mass, and reversal to a
-present opposite donor. Nonnegative phase masses and face variables may land exactly on zero; an
+initially absent donor, disappearance after transporting only the available mass, simultaneous
+opposing donor streams, and a multi-cell phase-free region. A conflict-free anchor selection keeps
+at most one exact phase-presence row per donor cell and per face; other constrained outgoing
+streams use exact zero-flow rows, and conservation closes the remaining cell in a connected
+phase-free region. This avoids a singular duplicate constraint without an inventory threshold.
+Nonnegative phase masses and face variables may land exactly on zero; an
 outward Newton component at an already active zero bound is projected onto the feasible tangent
-cone before a trial is formed. Between Jacobians, the unmodified signed free flux selects direction
-and the exact donor row can activate or release. Line-search trials use reversible copies of those
-choices, so a rejected trial cannot mutate the accepted active set. None of these operations clips
+cone before a trial is formed. Between Jacobians, each exact donor row can activate or release
+independently. Line-search trials use reversible copies of those choices, so a rejected trial cannot mutate the
+accepted active set. None of these operations clips
 accepted mass or introduces an inventory tolerance.
 
-The directly affected unchanged nine five-second historical/pressure-interpolated/explicit-face
-cases still fail line search. Their last local times are 0.63125--1.83515625 s: materially beyond
-the earlier 0.1251953125--0.831640625 s envelope for several lanes, but short of the required 5 s.
-Therefore the full unchanged 15-case matrix remains failed. This increment establishes exact phase
-disappearance and donor-transition mechanics only; it does not qualify reappearance in the public
+In the unchanged five-second 16/24-cell matrix, all three no-pressure-interpolation lanes complete
+both with and without the augmented face system. The three baseline pressure-interpolated lanes
+still stop at 1.401953125/1.83203125/1.075 s; the two-stream augmented lanes stop at
+1.35078125/1.8427734375/1.74375 s. The 24-cell evidence improves materially, but none of the three
+pressure-interpolated lanes completes 5 s, and the augmented run is substantially more expensive.
+Therefore the full unchanged matrix remains failed. This increment establishes exact phase
+disappearance and two-donor transport mechanics only; it does not qualify reappearance in the public
 riser, severe slugging, restart or hydraulic pigging, and no 180 s or 600 s run is justified.
 
 `TwoFluidUnsplitModelAdapter.prepareStep` independently re-evaluates a converged, active-set-stable
