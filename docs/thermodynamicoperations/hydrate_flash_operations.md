@@ -239,7 +239,11 @@ vapour and liquid CO2 trials, confines ions to the aqueous phase, and solves the
 constrained component balances and molecular fugacity equations. Conserved
 candidate states are ranked by Gibbs energy. A single aqueous result is accepted
 only when both normalized CO2 stability trials are non-negative within numerical
-tolerance. MEG partitions between the material phases and its inhibition enters
+tolerance. Between the initial and final checks of each stability trial, only the
+CO2-rich phase is reinitialized because the aqueous composition and fraction
+stay fixed. Both EOS roots and the full phase-split checks are evaluated.
+
+MEG partitions between the material phases and its inhibition enters
 through the aqueous water fugacity. This path uses the existing EOS and hydrate
 parameters. Other gases, methanol-containing mixtures, prescribed phase types
 and solid-phase calculations use their existing fluid solver.

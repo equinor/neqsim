@@ -42,7 +42,7 @@ class CO2BrineMegHydrateTest {
    */
   @Tag("slow")
   @ParameterizedTest
-  @CsvSource({"40.0", "44.0", "48.0", "100.0"})
+  @CsvSource({"37.0", "40.0", "44.0", "48.0", "100.0"})
   void nearReportedConditionsAreIndependentOfStartAndComponentOrder(double pressure) throws Exception {
     SystemInterface normalOrder = mixture(pressure, 100.0, 50.0, 10.0, false);
     SystemInterface ionsFirst = mixture(pressure, 100.0, 50.0, 10.0, true);

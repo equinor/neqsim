@@ -212,7 +212,12 @@ public final class CO2BrinePhaseEquilibrium {
     double[] weights = new double[count];
     double distance = Double.NaN;
     for (int iteration = 0; iteration < 100; iteration++) {
-      trial.init(1);
+      if (iteration == 0) {
+        trial.init(1);
+      } else {
+        // Only the CO2-rich composition changes during this stability trial.
+        trial.init(1, 0);
+      }
       double sum = 0.0;
       for (int component = 0; component < count; component++) {
         ComponentInterface species = trial.getPhase(0).getComponent(component);
