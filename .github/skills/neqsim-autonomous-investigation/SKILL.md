@@ -226,6 +226,10 @@ Lessons from a solved export-compressor-inlet oscillation study (cross-spectral 
 5. **Phasor mass budget:** `F_in = m_out + V rho' dP/dt` at the peak frequency for a range of V; its phase against P gives the delay of a feedback path (`tau_d = (180 deg - phase) / (360 deg * f)` for negative feedback). It is a consistency test, not proof; state it that way.
 6. **Anti-surge on one train:** a mean valve position of several percent with a mass-versus-volume flow discrepancy (IOC net flow vs transmitter volume times NeqSim density) indicates permanent recycle that costs power on a power-limited machine.
 
+## Identified Dynamics from Plant Data (TimeSeriesAnalysis)
+
+After `RelationshipGraph` proposes lead-lag pairs, quantify the strongest candidates with `neqsim-dynamic-model-identification` (community skill; equinor/TimeSeriesAnalysis through pythonnet): identified gain, time constant and delay with a usability verdict. Where a NeqSim model of the unit exists, add physics residuals so the investigation separates equipment change from instrument fault. Worked example: [NeqSim x TimeSeriesAnalysis notebook](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/advanced_analytics/neqsim_timeseriesanalysis_large_process.ipynb).
+
 ## Limitations
 
 - Correlation and lead-lag are **screening** signals, not proof of causation.

@@ -992,3 +992,14 @@ result = json.loads(str(RootCauseRunner.run(json.dumps(rca_input))))
   report links each evidence item to the original historian tag
 - **Reproducibility**: always save the historian export CSV to
   `step1_scope_and_research/references/` so the analysis can be rerun offline
+
+## Identified Dynamics from Plant Data (TimeSeriesAnalysis)
+
+A steady NeqSim model has no time constants, and a historian trend has no thermodynamics. `neqsim-dynamic-model-identification` (community skill; equinor/TimeSeriesAnalysis through pythonnet) joins them:
+
+- **Identification:** gain, time constant and delay, PID tuning and closed-loop disturbance from historian windows, with a usability verdict per result. Read raw windows with excitation; hourly averages do not resolve loop dynamics.
+- **Exception-stored data:** set `hold` on raw tags from exception-stored historians (a gap means "unchanged within the deadband") and on setpoints.
+- **Physics residuals:** `neqsim_bridge.automation_evaluator` reuses the `automation_address` values of the `OperationalTagMap`. `physics_residuals` compares each `BENCHMARK` tag with NeqSim at the same observed inputs. `two_residual_diagnosis` separates equipment change from instrument fault using two independent tags.
+- **Gain check:** `steady_gains` and `compare_gains` check identified gains against the model; a mismatch points to tag, unit or flow-basis errors first.
+
+Worked example: [NeqSim x TimeSeriesAnalysis notebook](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/advanced_analytics/neqsim_timeseriesanalysis_large_process.ipynb).

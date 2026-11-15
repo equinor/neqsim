@@ -729,3 +729,12 @@ print(str(plan.toTextReport()))
 - **Equipment-specific actions**: auto-selects restart actions by equipment type (compressor, separator, pump, HX, valve, column, pipe)
 - **Output**: `RestartPlan` with `toJson()`, `toTextReport()`
 - **Plan structure**: Safety check → Root cause verification → Utilities → Equipment (upstream-first) → System verification
+
+## Identified Dynamics from Plant Data (TimeSeriesAnalysis)
+
+Two kinds of evidence from `neqsim-dynamic-model-identification` (community skill; equinor/TimeSeriesAnalysis through pythonnet) strengthen or weaken a hypothesis:
+
+- **Identified relationships:** a usable gain with the physically expected sign and delay, between a candidate driver and the symptom, in a window with excitation. Timing alone does not.
+- **Physics residuals:** measured minus NeqSim-expected values at each observed operating point, calibrated on a healthy window. Two independent residuals moving together (for example compressor power and discharge temperature) point to an equipment change. One moving alone points to an instrument or model fault.
+
+Worked example: [NeqSim x TimeSeriesAnalysis notebook](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/advanced_analytics/neqsim_timeseriesanalysis_large_process.ipynb).

@@ -157,6 +157,10 @@ mpc.applyMoves()
 - Run steady-state detection on selected, quality-screened signals; reconcile only after the feed/product balance equations, sigmas, degrees of freedom, and gross-error flags have been reviewed.
 - For plant-data calibration and historian comparison, follow `neqsim-model-calibration-and-data-reconciliation` and `neqsim-plant-data` rather than folding data acquisition into this controller layer.
 
+## Identified Dynamics from Plant Data (TimeSeriesAnalysis)
+
+Identified step-response models (gain, time constant, delay) from plant data, from `neqsim-dynamic-model-identification` (community skill; equinor/TimeSeriesAnalysis through pythonnet), can seed or check the models used here. Compare them with `ProcessLinearizer` gains before use, since closed-loop data biases open-loop fits. Worked example: [NeqSim x TimeSeriesAnalysis notebook](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/advanced_analytics/neqsim_timeseriesanalysis_large_process.ipynb).
+
 ## Related skills
 
 - `neqsim-dynamic-simulation`

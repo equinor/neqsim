@@ -220,6 +220,16 @@ Add a calibration block to the task `results.json`:
 - [ ] Any excluded tags/windows have a documented reason.
 - [ ] Final recommendations include applicability range and limitations.
 
+## Identified Dynamics from Plant Data (TimeSeriesAnalysis)
+
+Calibration fits steady parameters; `neqsim-dynamic-model-identification` (community skill; equinor/TimeSeriesAnalysis through pythonnet) supplies the dynamics and a cross-check:
+
+- identified gains compared with NeqSim `steady_gains` (`compare_gains`);
+- physics residuals after calibration to watch for drift;
+- chronological train and hold-out windows with `simulate_unit`.
+
+Keep the calibration window and the residual baseline window the same healthy period, and never shuffle time-series rows into training and test. Worked example: [NeqSim x TimeSeriesAnalysis notebook](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/advanced_analytics/neqsim_timeseriesanalysis_large_process.ipynb).
+
 ## References
 
 - ISO 5725 (accuracy and trueness concepts for measurement quality).

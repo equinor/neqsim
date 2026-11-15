@@ -1180,3 +1180,8 @@ complementarity route reject this option. Apply a wave-speed Courant bound and i
 phase, total-energy and rollback reports.
 Do not use it as proof of dry/wet fronts, terrain pools, refill or physical evaporation.
 
+## Identified Dynamics from Plant Data (TimeSeriesAnalysis)
+
+Dynamic parameters should come from data where data exists. `neqsim-dynamic-model-identification` (community skill; equinor/TimeSeriesAnalysis through pythonnet) identifies time constants, delays and PID tuning from historian windows. NeqSim `steady_gains` checks the identified gains, and `simulate_unit` replays the identified reduced model.
+
+Use reduced models for stable regimes with identifiable dominant dynamics. Use the native NeqSim dynamic equipment in this skill for inventory, phase redistribution, network hydraulics and slugging. Calling a steady process repeatedly does not make a transient model. Worked example: [NeqSim x TimeSeriesAnalysis notebook](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/advanced_analytics/neqsim_timeseriesanalysis_large_process.ipynb).

@@ -314,6 +314,16 @@ Live Digital Twin             — Continuous self-tuning model
 9. **Temperature units**: NeqSim constructors use Kelvin, setters can use `"C"` unit string
 10. **Clone fluids** before branching process flows — `system.clone()`
 
+## Identified Dynamics and Physics Residuals
+
+For dynamics (time constants, delays, PID tuning) and for monitoring against physics, use `neqsim-dynamic-model-identification` (community skill; equinor/TimeSeriesAnalysis through pythonnet) on raw historian windows, with `hold` on exception-stored tags and setpoints. With the NeqSim model it gives:
+
+- physics residuals at each observed operating point, reusing the `OperationalTagMap` automation addresses;
+- identified gains checked against NeqSim `steady_gains`;
+- a two-residual diagnosis that separates equipment change from instrument fault.
+
+Worked example: [NeqSim x TimeSeriesAnalysis notebook](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/advanced_analytics/neqsim_timeseriesanalysis_large_process.ipynb).
+
 ## Related Documentation
 
 - [Plant Data & Tagreader Guide](../docs/process/plant-data-tagreader.md) — Full documentation guide

@@ -230,6 +230,10 @@ implemented and proposed scope; it does not grant SRS/SIL or PLC deployment appr
 | NORSOK I-002 | Safety and automation system (SAS) |
 | API 554 | Process instrumentation and control |
 
+## Tuning from Plant Data
+
+When the loop exists in operation, identify the process gain, time constant and delay, and the PID tuning in use, from historian windows with `neqsim-dynamic-model-identification` (community skill; equinor/TimeSeriesAnalysis through pythonnet). Check the identified gain against the NeqSim flowsheet's `steady_gains` before tuning. Do not tune on results marked unusable or on closed-loop data fitted as open loop. Worked example: [NeqSim x TimeSeriesAnalysis notebook](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/advanced_analytics/neqsim_timeseriesanalysis_large_process.ipynb).
+
 ## Common Pitfalls
 
 1. **Control direction**: Verify the native sign using the actual process perturbation and manipulated element; generic direct/reverse labels are insufficient
