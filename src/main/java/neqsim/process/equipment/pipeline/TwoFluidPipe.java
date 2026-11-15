@@ -433,8 +433,8 @@ public class TwoFluidPipe extends Pipeline {
   /** Inlet boundary condition type. */
   private BoundaryCondition inletBCType = BoundaryCondition.STREAM_CONNECTED;
 
-  /** Outlet boundary condition type. */
-  private BoundaryCondition outletBCType = BoundaryCondition.CONSTANT_PRESSURE;
+  /** Outlet boundary mode shared by the configuration methods and transient steps. */
+  private volatile BoundaryCondition outletBCType = BoundaryCondition.CONSTANT_PRESSURE;
 
   /** Outlet pressure (Pa). */
   private double outletPressure;
@@ -6758,15 +6758,15 @@ public class TwoFluidPipe extends Pipeline {
     lagrangianSlugTracker = candidate.lagrangianSlugTracker;
     slugTrackingMode = candidate.slugTrackingMode;
     inletBCType = candidate.inletBCType;
-    outletBCType = candidate.outletBCType;
     outletPressure = candidate.outletPressure;
+    outletPressureSet = candidate.outletPressureSet;
     outletBoundaryFluid = candidate.outletBoundaryFluid;
+    outletBCType = candidate.outletBCType;
     inletBoundaryFluid = candidate.inletBoundaryFluid;
     activeInletBoundaryFluid = candidate.activeInletBoundaryFluid;
     pressureInletReservoirCache = null;
     pressureInletReservoirCachePressure = Double.NaN;
     pressureInletFlashCount = candidate.pressureInletFlashCount;
-    outletPressureSet = candidate.outletPressureSet;
     inletPressure = candidate.inletPressure;
     inletPressureSet = candidate.inletPressureSet;
     inletMassFlow = candidate.inletMassFlow;
@@ -10904,10 +10904,10 @@ public class TwoFluidPipe extends Pipeline {
    * setOutletPressure(), or defaults to 1 bara if not set.
    */
   public void openOutlet() {
-    this.outletBCType = BoundaryCondition.CONSTANT_PRESSURE;
     if (!outletPressureSet) {
       this.outletPressure = 1e5; // Default to 1 bara
     }
+    this.outletBCType = BoundaryCondition.CONSTANT_PRESSURE;
   }
 
   /**
