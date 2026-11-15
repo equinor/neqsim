@@ -6972,7 +6972,8 @@ public class TwoFluidPipe extends Pipeline {
     boolean useImplicitVoidWave = equations.isEnableInterfacialPressure() && implicitInterfacialPressureCoupling;
     equations.setImplicitInterfacialPressure(useImplicitVoidWave);
 
-    if (steadyConsistentTransient && !steadyConsistencyCalibrated && !coupledPressureMomentumEnabled) {
+    if (steadyConsistentTransient && !steadyConsistencyCalibrated
+        && (!coupledPressureMomentumEnabled || hasCoupledPhysicalOutletFace() && isSteadyStateConverged())) {
       // Calibrate only while the boundaries still carry the steady state; a boundary change made
       // before the first step is the disturbance to simulate, not part of the steady residual.
       boolean steadyBoundaries = inletBCType != BoundaryCondition.CLOSED && outletBCType != BoundaryCondition.CLOSED
@@ -7237,8 +7238,11 @@ public class TwoFluidPipe extends Pipeline {
         }
         timeIntegrator.setImplicitVoidWaveProperties(voidWaveSpeeds, voidWaveSlipCoefficients, areas, gasDensities,
             oilDensities, waterDensities, dx, useImplicitVoidWave);
-        boolean outletFixed = !useConservativeEnergyRecovery && (outletBCType == BoundaryCondition.CONSTANT_PRESSURE
-            || outletBCType == BoundaryCondition.CHARACTERISTIC);
+        // An explicit fixed-pressure outlet already supplies boundary traction. Pinning the last cell
+        // as well makes its remaining EOS volume error appear as fictitious outlet phase transfer.
+        boolean outletFixed = !useConservativeEnergyRecovery && !hasCoupledPhysicalOutletFace()
+            && (outletBCType == BoundaryCondition.CONSTANT_PRESSURE
+                || outletBCType == BoundaryCondition.CHARACTERISTIC);
         timeIntegrator.setCoupledPressureMomentumProperties(pressures, areas, lengths, gasDensities, oilDensities,
             waterDensities, gasSoundSpeeds, oilSoundSpeeds, waterSoundSpeeds, transientOutletCellPressure(),
             outletFixed, coupledPressureMomentumEnabled);
@@ -8265,6 +8269,16 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Checks whether the prescribed outlet traction acts directly on the physical face in the coupled split solver.
+   *
+   * @return true for an explicitly prescribed pressure on a pipe with explicit face geometry
+   */
+  private boolean hasCoupledPhysicalOutletFace() {
+    return coupledPressureMomentumEnabled && !useConservativeEnergyRecovery && cellFaceElevationProfile != null
+        && outletBCType == BoundaryCondition.CONSTANT_PRESSURE && outletPressureSet;
+  }
+
+  /**
    * Apply boundary conditions.
    */
   private void applyBoundaryConditions() {
@@ -8479,7 +8493,7 @@ public class TwoFluidPipe extends Pipeline {
         outletFace.setPressure(outletPressureSet ? outletPressure : outletBoundaryFluid.getPressure("Pa"));
         equations.setOutletBoundaryState(outletFace);
       }
-      if (!(isTransientMode && useConservativeEnergyRecovery)) {
+      if (!(isTransientMode && (useConservativeEnergyRecovery || hasCoupledPhysicalOutletFace()))) {
         outlet.setPressure(transientOutletCellPressure());
       }
     } else if (outletBCType == BoundaryCondition.CLOSED && !(isTransientMode && coupledPressureMomentumEnabled)) {
@@ -12111,7 +12125,8 @@ public class TwoFluidPipe extends Pipeline {
    * in an hour on a 5 km gas-oil slug line; a 7 per cent outlet-flow deficit on a gas-condensate line). The correction
    * is calibrated once, at the first transient step after {@link #run(UUID)} that still carries the steady boundary
    * conditions, and scales with the square of the inlet mass flow relative to calibration, as a friction force does. It
-   * is not applied with the coupled pressure-momentum solver.
+   * is also applied to converged coupled split states with an explicitly prescribed pressure at the physical outlet
+   * face. Other coupled solver routes retain their own initialization.
    * </p>
    *
    * <p>

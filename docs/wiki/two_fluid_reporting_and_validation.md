@@ -277,10 +277,15 @@ interior response.
 
 With an explicit cell-face elevation profile, steady and legacy transient pressure marching
 use the same two half-cell gradients between neighboring midpoints, including nonuniform
-lengths and changing inclinations. The prescribed outlet-face pressure is also used during
-legacy momentum-consistency calibration, not just during time-integration stages. Calibrating
-against an extrapolated pressure and then stepping against a prescribed pressure creates an
-artificial outlet acceleration with unchanged boundaries.
+lengths and changing inclinations. For the coupled split solver with a prescribed pressure and explicit face geometry,
+pressure traction acts on the external outlet face. The acoustic correction recovers the
+last cell-centre pressure from its volume equation. It does not project the last-cell
+inventory to enforce the face pressure. With outlet backflow disabled, the explicit
+advection therefore owns the nonnegative accepted outlet phase transfers.
+
+Steady momentum calibration uses that same pressure traction. Calibrating against an
+extrapolated pressure and then stepping against a prescribed pressure would introduce
+an outlet acceleration with unchanged boundaries.
 
 For explicitly enabled reversed outlet flow, the external thermodynamic donor supplies
 advected phase mass, composition and enthalpy. Pressure traction uses the pipe-side phase
@@ -289,10 +294,16 @@ fractions into that force creates an artificial momentum impulse at flow reversa
 especially when a phase in the pipe is absent or present only as a trace.
 
 `setLiquidHoldupMultiplier(...)` changes the **steady** closure. It does not multiply the
-holdup recovered from transient conserved phase masses. Likewise,
-`setSteadyConsistentTransient(true)` balances the initial legacy momentum residual, not the
-complete phase-mass and thermal operator, and is not applied on the coupled-pressure route.
-Neither option qualifies a fitted steady state for transient operation.
+holdup recovered from transient conserved phase masses. With unchanged startup boundaries, `setSteadyConsistentTransient(true)` balances
+the initial momentum residual on the legacy route and on a converged coupled split
+route with a prescribed pressure on an explicit outlet face. This momentum correction
+does not balance the complete phase-mass or thermal operator.
+
+On the synthetic 5.4 km gas–oil–water riser case, the coupled split route kept all three
+outlet phase transfers forward for the first 10 s on 60 and 120 cells. In the extended
+60-cell run, water stopped leaving the pipe by 50 s. This case qualifies the initial
+handoff and short opening response. A sustained slug-control run still requires
+qualification of the phase through-flow after startup.
 
 For external-simulator comparisons, distinguish phase-fraction or PVT tuning from hydraulic
 holdup tuning. Matching pressure with a holdup multiplier does not establish matching free-gas
