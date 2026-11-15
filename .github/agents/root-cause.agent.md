@@ -207,6 +207,10 @@ Plant Historian (PI/IP.21)         STID / Vendor Docs
 Each evidence item carries a `sourceReference` linking to the original
 historian tag or STID document, making the diagnosis fully auditable.
 
+## Identified Dynamics as Evidence
+
+Use `neqsim-dynamic-model-identification` (community skill; equinor/TimeSeriesAnalysis through pythonnet) to turn a suspected driver into evidence: an identified gain and delay between driver and symptom, with a usability verdict. Where the unit has a NeqSim model, add physics residuals: two independent signals moving together suggest an equipment change, one alone an instrument fault. Worked example: [NeqSim x TimeSeriesAnalysis notebook](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/advanced_analytics/neqsim_timeseriesanalysis_large_process.ipynb).
+
 ## Common Pitfalls
 
 - **Insufficient data**: Need at least 50 data points for meaningful trend analysis
