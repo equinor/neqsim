@@ -108,6 +108,17 @@ public abstract class MultiphaseChokeFlow implements Serializable {
   public abstract double calculateCriticalPressureRatio(double gasQuality, double specificHeatRatio);
 
   /**
+   * Calculates the critical pressure ratio for the actual upstream fluid state.
+   *
+   * @param fluid upstream thermodynamic state
+   * @param upstreamPressure upstream pressure in Pa
+   * @return critical pressure ratio
+   */
+  protected double calculateFluidCriticalPressureRatio(SystemInterface fluid, double upstreamPressure) {
+    return calculateCriticalPressureRatio(calculateGasQuality(fluid), fluid.getGamma2());
+  }
+
+  /**
    * Determines the flow regime (critical or subcritical).
    *
    * @param fluid the thermodynamic system
@@ -116,9 +127,7 @@ public abstract class MultiphaseChokeFlow implements Serializable {
    * @return the flow regime
    */
   public FlowRegime determineFlowRegime(SystemInterface fluid, double upstreamPressure, double downstreamPressure) {
-    double gasQuality = calculateGasQuality(fluid);
-    double gamma = fluid.getGamma2();
-    double criticalRatio = calculateCriticalPressureRatio(gasQuality, gamma);
+    double criticalRatio = calculateFluidCriticalPressureRatio(fluid, upstreamPressure);
     double actualRatio = downstreamPressure / upstreamPressure;
 
     if (actualRatio <= criticalRatio) {
@@ -220,8 +229,7 @@ public abstract class MultiphaseChokeFlow implements Serializable {
     Map<String, Object> results = new HashMap<>();
 
     double gasQuality = calculateGasQuality(fluid);
-    double gamma = fluid.getGamma2();
-    double criticalRatio = calculateCriticalPressureRatio(gasQuality, gamma);
+    double criticalRatio = calculateFluidCriticalPressureRatio(fluid, upstreamPressure);
     double actualRatio = downstreamPressure / upstreamPressure;
     FlowRegime regime = determineFlowRegime(fluid, upstreamPressure, downstreamPressure);
     double massFlow = calculateMassFlowRate(fluid, upstreamPressure, downstreamPressure);

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
@@ -79,6 +80,34 @@ public class ThrottlingValveMultiphaseChokeTest {
         choke.getOutletStream().getPressure("bara"));
     logger.printf(org.apache.logging.log4j.Level.INFO, "Flow Rate: %.1f kg/hr\n",
         choke.getOutletStream().getFlowRate("kg/hr"));
+  }
+
+  /**
+   * A fixed-opening production choke responds to increasing downstream pressure on consecutive physical steps.
+   */
+  @Test
+  void sachdevaTransientBackpressureReducesFlowAndCanReopenAfterEqualization() {
+    ThrottlingValve choke = new ThrottlingValve("Production choke", inletStream);
+    choke.setOutletPressure(85.0, "bara");
+    ValveMechanicalDesign design = choke.getMechanicalDesign();
+    design.setValveSizingStandard("Sachdeva");
+    design.setChokeDiameter(0.5, "in");
+    choke.run();
+    choke.setCalculateSteadyState(false);
+    choke.setPercentValveOpening(65.0);
+    double previousFlow = Double.POSITIVE_INFINITY;
+    for (double pressure : new double[] {85.0, 90.0, 95.0, 99.0, 100.0}) {
+      choke.getOutletStream().setPressure(pressure, "bara");
+      choke.runTransient(0.25, UUID.randomUUID());
+      double flow = choke.getOutletStream().getFlowRate("kg/sec");
+      assertEquals(pressure, choke.getOutletStream().getPressure("bara"), 1.0e-8);
+      assertTrue(flow < previousFlow);
+      previousFlow = flow;
+    }
+    assertEquals(0.0, previousFlow, 1.0e-12);
+    choke.getOutletStream().setPressure(90.0, "bara");
+    choke.runTransient(0.25, UUID.randomUUID());
+    assertTrue(choke.getOutletStream().getFlowRate("kg/sec") > 0.0);
   }
 
   @Test
