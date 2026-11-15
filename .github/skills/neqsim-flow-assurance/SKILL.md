@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
 description: "Flow assurance patterns for NeqSim. USE WHEN: predicting hydrate, wax, asphaltene, CO2/H2S corrosion (NORSOK M-506), mineral scale and brine mixing, valve scale drift and remediation, sulfur S8 deposition, metal-loss screening, pipeline hydraulics, DNV-RP-F109/F105/F104/F110/F114 screening, water hammer, slug flow, thermal analysis or inhibitor dosing. Code patterns plus the governing standards for every threat."
-last_verified: "2026-09-07"
+last_verified: "2026-11-15"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -610,9 +610,10 @@ for (double qgMSm3d : gasRates) {
 > within 0.4%). Terrain response is solved, not tuned: the annular film balance
 > carries `tau_i = tau_wL + rhoL*g*sin(theta)*delta`, so holdup responds to
 > inclination and scales with `sin(theta)`. The compact public 3 km,
-> 10-degree uphill gas/oil/water fixture now converges on 30 and 60 cells, with
-> 0.538% arrival-pressure and 0.983% mean-liquid-holdup sensitivity and every
-> final report residual below `1e-4`. This is numerical verification, not
+> 10-degree uphill gas/oil/water fixture is annular with dispersed oil and water
+> and converges on 30 and 60 cells without oil-water slip, with 0.922%
+> arrival-pressure and 0.138% mean-liquid-holdup sensitivity (rerun 2026-11-15)
+> and every final report residual below `1e-4`. This is numerical verification, not
 > experimental qualification. The historical 73.8 km / 15 m3/hr free-water
 > input is unavailable, so the earlier 4,078-iteration / 1,200 s report cannot
 > be reproduced or claimed fixed. Never generalize the compact result to that
@@ -698,7 +699,9 @@ for (double qgMSm3d : gasRates) {
 > disabled, its steady gas/oil/water mass-flow profiles are flat, dispersed oil-water drag uses
 > Hinze droplet area, and the unchanged-boundary 60 s replay keeps accepted phase outlet transfer
 > nonnegative on 60/120 cells and 0.25/0.125 s reporting steps. Check the phase profiles and
-> inventory ledger before applying a choke move. Do not generalize this numerical initialization
+> inventory ledger before applying a choke move. A pressure-coupled 65% to 58% choke step now keeps
+> riser water outflow positive for 150 s; the earlier zero-water intervals came from an oil-water
+> regime flip, not from physical redistribution (`neqsim-dynamic-simulation`, equinor/neqsim#5046). Do not generalize this numerical initialization
 > result to slug statistics, separator control or field validation.
 >
 > **Finite-rate hydrocarbon pool transfer is parameterized screening.** On the
@@ -826,8 +829,14 @@ for (double qgMSm3d : gasRates) {
 >
 > **Three-phase (gas/oil/water) steady state is fixed.** The oil/water slip
 > ratio uses `S = 1 + 1.75·max(0, 1 − (Fr/3)²)`, a stratified plateau that rolls
-> off to no slip once the liquid disperses above a liquid Froude number of about
+> off to no slip once the liquid disperses above a mixing Froude number of about
 > 3; the previous form cut off at Fr = 2 and under-predicted water holdup badly.
+> The Froude velocity is the bulk liquid velocity in stratified and slug flow
+> and the total volumetric flux in annular, churn, bubbly and mist flow, the
+> same mixing velocity the oil-water regime detector uses. Gas-sheared liquids
+> therefore carry no stratified slip into a transient that treats them as
+> dispersed (equinor/neqsim#5046, 2026-11-15; the horizontal in-situ water
+> benchmark, 0.1337, still passes).
 > One gap remains open: the pressure drop is over-predicted in this liquid-rich
 > regime, far more than on a gas-dominated line.
 >

@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-11-14"
+last_verified: "2026-11-15"
 ---
 
 # Dynamic Simulation Guidance
@@ -721,6 +721,18 @@ regime detector's Hinze droplet size through
 The 5.4 km synthetic riser fixture is numerically verified for 60 s on 60/120 cells and 0.25/0.125 s
 reporting steps with nonnegative accepted phase outlet transfer and less than 0.1% phase-inventory
 drift. This is a fixed-boundary initialization gate, not severe-slugging or experimental evidence.
+
+Before a choke move on a three-phase riser, check `getOilWaterFlowRegimeProfile()` against the
+gas-liquid regime. Annular, churn, bubbly and mist cells must report a dispersed oil-water state:
+gas shear sets the mixing scale (`TwoFluidSection.calcOilWaterMixingVelocity()`), and the steady
+slip split uses the same velocity. If a stepped run shows water falling against rising oil in the
+riser, check for an oil-water regime flip. The steady-consistency correction now drops its relative
+oil-water force on such a flip and keeps only the combined liquid force. Measured 2026-11-15 on the
+5.4 km fixture with a pressure-coupled choke stepped 65% to 58%: water outflow formerly stopped at
+13 s on 60 cells, 0.25 s steps (12.75 s at 0.125 s, 13.25 s on 120 cells). It now stays positive
+through 150 s (about 1.0 kg/s on 60 cells, 0.85 kg/s on 120) while the riser gains about 400-520 kg
+of liquid as gas slows. Regression: `TwoFluidPipeThreePhaseChokeStepTest`
+(equinor/neqsim#5046).
 
 For a liquid-rich pressure outlet that physically permits phase fallback, the coupled path requires
 all four options. Keep the nonlinear controls explicit in reproducible studies:

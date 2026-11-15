@@ -10,6 +10,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.BubbleSizeClosure;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator.StratifiedPressureMoments;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterFlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.SlugForceBalance;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.WallFriction;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.AUSMPlusFluxCalculator;
@@ -570,6 +571,12 @@ public class TwoFluidConservationEquations implements Serializable {
   /** Flow regime of each cell at calibration; the correction only holds while a cell keeps it. */
   private PipeSection.FlowRegime[] steadyMomentumRegime;
 
+  /**
+   * Oil-water regime of each cell at calibration; the relative oil-water part of the correction only holds while a cell
+   * keeps it. Null entries mean that no oil-water closure was active.
+   */
+  private OilWaterFlowRegime[] steadyMomentumOilWaterRegime;
+
   /** Multiplier applied to the calibrated correction, set by the owner from the boundary flow. */
   private double steadyMomentumCorrectionScale = 1.0;
 
@@ -600,6 +607,14 @@ public class TwoFluidConservationEquations implements Serializable {
    * regime's closures, so a cell drops it once its flow regime differs from the regime at calibration.
    * </p>
    *
+   * <p>
+   * The oil and water forces also contain a relative part that balances the oil-water drag closure at calibration. That
+   * drag changes by orders of magnitude between a dispersed and a stratified oil-water regime, so once a cell's
+   * oil-water regime differs from calibration only the combined liquid force is retained, partitioned by the current
+   * oil and water masses. Keeping the relative part after the drag it balanced has gone drives an unbalanced oil-water
+   * counterflow (equinor/neqsim#5046).
+   * </p>
+   *
    * @param sections steady sections; the caller must pass defensive copies
    * @param dx representative cell size in m
    */
@@ -607,14 +622,17 @@ public class TwoFluidConservationEquations implements Serializable {
     steadyMomentumCorrection = null;
     steadyMomentumReference = null;
     steadyMomentumRegime = null;
+    steadyMomentumOilWaterRegime = null;
     double[][] rates = calcRHSTransactional(sections, dx);
     double[][] correction = new double[sections.length][3];
     double[][] reference = new double[sections.length][3];
     PipeSection.FlowRegime[] regimes = new PipeSection.FlowRegime[sections.length];
+    OilWaterFlowRegime[] oilWaterRegimes = new OilWaterFlowRegime[sections.length];
     int[] momentumIndex = {IDX_GAS_MOMENTUM, IDX_OIL_MOMENTUM, IDX_WATER_MOMENTUM};
     for (int cell = 0; cell < sections.length; cell++) {
       double[] state = sections[cell].getStateVector();
       regimes[cell] = sections[cell].getFlowRegime();
+      oilWaterRegimes[cell] = sections[cell].getOilWaterFlowRegime();
       for (int phase = 0; phase < 3; phase++) {
         double rate = rates[cell][momentumIndex[phase]];
         reference[cell][phase] = state[momentumIndex[phase]];
@@ -624,6 +642,7 @@ public class TwoFluidConservationEquations implements Serializable {
     steadyMomentumCorrection = correction;
     steadyMomentumReference = reference;
     steadyMomentumRegime = regimes;
+    steadyMomentumOilWaterRegime = oilWaterRegimes;
     steadyMomentumCorrectionScale = 1.0;
   }
 
@@ -632,6 +651,7 @@ public class TwoFluidConservationEquations implements Serializable {
     steadyMomentumCorrection = null;
     steadyMomentumReference = null;
     steadyMomentumRegime = null;
+    steadyMomentumOilWaterRegime = null;
   }
 
   /** @return whether a steady-consistency momentum correction is active */
@@ -655,14 +675,41 @@ public class TwoFluidConservationEquations implements Serializable {
         continue;
       }
       double[] state = sections[cell].getStateVector();
+      double[] correction = steadyMomentumCorrection[cell].clone();
+      if (steadyMomentumOilWaterRegime != null
+          && sections[cell].getOilWaterFlowRegime() != steadyMomentumOilWaterRegime[cell]) {
+        correction = retainCombinedLiquidCorrection(correction, state);
+      }
       for (int phase = 0; phase < 3; phase++) {
-        double correction = steadyMomentumCorrection[cell][phase];
-        if (correction == 0.0 || state[phase] <= 0.0) {
+        if (correction[phase] == 0.0 || state[phase] <= 0.0) {
           continue;
         }
-        dUdt[cell][momentumIndex[phase]] += correction * steadyMomentumCorrectionScale;
+        dUdt[cell][momentumIndex[phase]] += correction[phase] * steadyMomentumCorrectionScale;
       }
     }
+  }
+
+  /**
+   * Remove the relative oil-water part of a calibrated correction and keep the combined liquid force.
+   *
+   * <p>
+   * The combined liquid force is partitioned by the current oil and water masses, which gives both liquids the same
+   * correction acceleration. Gas is unchanged. A cell without both liquids keeps its correction unchanged.
+   * </p>
+   *
+   * @param correction calibrated gas, oil and water forces in N/m
+   * @param state current conservative state
+   * @return corrected gas, oil and water forces in N/m
+   */
+  static double[] retainCombinedLiquidCorrection(double[] correction, double[] state) {
+    double oilMass = state[IDX_OIL_MASS];
+    double waterMass = state[IDX_WATER_MASS];
+    if (!(oilMass > 0.0) || !(waterMass > 0.0)) {
+      return correction;
+    }
+    double liquidForce = correction[1] + correction[2];
+    double[] split = partitionLiquidMixtureForce(liquidForce, oilMass, waterMass);
+    return new double[] {correction[0], split[0], split[1]};
   }
 
   /** Most recent phase-resolved boundary and source rates calculated by {@link #calcRHS}. */
@@ -2373,11 +2420,17 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   private void updateClosureRelations(TwoFluidSection[] sections) {
     for (TwoFluidSection sec : sections) {
+      boolean wasGasAgitated = TwoFluidSection.isGasAgitatedLiquid(sec.getFlowRegime());
       sec.updateThreePhaseProperties();
 
       // Classify once so transient sources consume the same continuous transition
       // weights as the steady hold-up calculation.
       flowRegimeDetector.classify(sec);
+      if (TwoFluidSection.isGasAgitatedLiquid(sec.getFlowRegime()) != wasGasAgitated) {
+        // The oil-water mixing scale depends on the gas-liquid regime just classified. Re-detect so the oil-water
+        // drag of this evaluation uses the regime its other closures use, not the previous one (#5046).
+        sec.updateThreePhaseProperties();
+      }
       Map<PipeSection.FlowRegime, Double> regimeWeights = sec.getRegimeWeights();
 
       // A non-zero stratified share uses the same segment geometry on both sides

@@ -706,7 +706,12 @@ a_{ow}=\frac{6 A \alpha_d}{d_{max}},
 $$
 
 where $A$ is pipe area and $\alpha_d$ is dispersed-phase holdup. Stratified states retain a
-line-scale interface. The same area is used by the explicit source, its timestep derivative and
+line-scale interface. In annular, churn, bubbly and mist gas-liquid flow the detector judges
+dispersion by the larger of the bulk liquid velocity and the total volumetric flux
+$j=\alpha_g u_g+\alpha_l u_l$, since gas shear mixes the liquids there; stratified and slug flow keep
+the liquid velocity. Without this, a modest rate cut in a gas-agitated riser reclassified the
+liquids as stratified, collapsed $a_{ow}$ by orders of magnitude and let water fall back against
+rising oil (equinor/neqsim#5046). The same area is used by the explicit source, its timestep derivative and
 the opt-in conservative friction split, so the force cannot silently change with the integrator.
 The shear stress remains regime dependent:
 
@@ -2281,10 +2286,10 @@ measured on a 73.8 km subsea gas-condensate export line at 200 bara inlet (see
   did not converge. This long case has not been rerun for the pressure-boundary and split
   corrections described here; the compact regressions do not establish that it is resolved.
   Always check `isSteadyStateConverged()` on a water-bearing line.
-- The reproducible 3 km, 10-degree uphill gas/oil/water fixture converges on 30 and 60 cells with
-  positive oil-over-water slip, closed phase volumes and closed phase mass flow. Refinement changes
-  arrival pressure from 13.327868 bar to 13.250389 bar (0.585%) and mean liquid holdup from 0.237521
-  to 0.236780 (0.313%). This replay uses the calculated 13.5265 mN/m gas-oil tension instead of
+- The reproducible 3 km, 10-degree uphill gas/oil/water fixture is annular with dispersed oil and
+  water, and converges on 30 and 60 cells without oil-water slip, with closed phase volumes and
+  closed phase mass flow. Refinement changes arrival pressure from 15.840032 bar to 15.694024 bar
+  (0.922%) and mean liquid holdup from 0.228349 to 0.228033 (0.138%) (rerun 2026-11-15). This replay uses the calculated 13.5265 mN/m gas-oil tension instead of
   an initialization-error fallback of 20 mN/m. The annular film closure approaches intermittent
   holdup continuously over film holdups 0.16–0.24, reaching the full intermittent closure at
   the unchanged 0.24 blockage limit. This is numerical evidence for the compact synthetic fixture, not

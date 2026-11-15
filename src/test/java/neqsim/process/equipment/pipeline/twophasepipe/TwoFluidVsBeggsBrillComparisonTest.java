@@ -13,6 +13,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterFlowRegime;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -2853,8 +2854,14 @@ class TwoFluidVsBeggsBrillComparisonTest {
       logger.info("  Water slipping back leads to lower water cut at outlet");
     }
 
-    // Preserve the original forward-flow checks and require the intended slipping three-phase solution.
-    assertTrue(avgSlip > 0.001, "Uphill gravity must retard the denser water in the separated-flow sections");
+    // Preserve the original forward-flow checks. This 10-degree line is annular: gas shear disperses oil and water,
+    // the oil-water detector reports a dispersed state and the steady split must not carry a stratified slip (#5046).
+    for (int i = 0; i < nSections; i++) {
+      OilWaterFlowRegime oilWater = pipe.getSectionSnapshots()[i].getOilWaterFlowRegime();
+      assertTrue(oilWater == OilWaterFlowRegime.DISPERSED_WATER_IN_OIL
+          || oilWater == OilWaterFlowRegime.DISPERSED_OIL_IN_WATER, "section " + i + " is " + oilWater);
+    }
+    assertEquals(0.0, avgSlip, 1.0e-9, "Dispersed annular liquids must not slip");
     double[] pressure = pipe.getPressureProfile();
     double[] temperature = pipe.getTemperatureProfile();
     double[] oilHoldup = pipe.getOilHoldupProfile();

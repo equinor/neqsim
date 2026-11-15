@@ -422,7 +422,9 @@ class TwoFluidPipeBoundaryConditionTest {
   @DisplayName("Steady-state handoff preserves inventory and avoids an O(1) hydraulic jump")
   void testSteadyStateToTransientHandoffIsContinuous() {
     assertSteadyStateToTransientHandoffIsContinuous("two-phase", createTwoPhaseFluid(), 6.0, 75.0, 58.0);
-    assertSteadyStateToTransientHandoffIsContinuous("three-phase", createThreePhaseFluid(), 6.0, 80.0, 60.0);
+    // 1.5 kg/s keeps the gas-liquid flow stratified, so the oil and water layers slip. At 6 kg/s the flow is annular;
+    // gas agitation then disperses the liquids and the steady split correctly has no oil/water slip (#5046).
+    assertSteadyStateToTransientHandoffIsContinuous("three-phase", createThreePhaseFluid(), 1.5, 80.0, 60.0);
   }
 
   // =====================================================================

@@ -5266,10 +5266,13 @@ public class TwoFluidPipe extends Pipeline {
     // ratio S = v_oil / v_water >= 1, so the holdup split can be closed on the phase mass
     // balance instead of by scaling the water cut directly (which creates water).
 
-    // Calculate liquid Froude number for stratification assessment
-    // Fr_L = v_L / sqrt(g * D * Δρ/ρ_L)
+    // Mixing Froude number for stratification assessment: Fr = v_mix / sqrt(g * D * Δρ/ρ_L). Stratified and slug
+    // flow mix the liquids at the bulk liquid velocity; gas-agitated regimes (annular, churn, bubbly, mist) mix
+    // them at the total volumetric flux. The transient oil-water regime detector uses the same velocity, so the
+    // steady split handed to the transient is not a slip the transient drag closure cannot sustain (#5046).
     double effectiveRhoL = lambdaW * rhoWater + (1.0 - lambdaW) * rhoOil;
-    double liquidFroude = vL / Math.sqrt(g * diameter * Math.abs(deltaRho) / effectiveRhoL + 1e-10);
+    double liquidFroude = sec.calcOilWaterMixingVelocity()
+        / Math.sqrt(g * diameter * Math.abs(deltaRho) / effectiveRhoL + 1e-10);
 
     // Oil-over-water slip ratio S = v_oil / v_water. The ratio plateaus near 2.75 while the
     // liquid is stratified and rolls off to 1 once it disperses above a liquid Froude number
