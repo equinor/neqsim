@@ -49,8 +49,8 @@ class TwoFluidImplicitSlugSourceTimeStepTest {
     double slip = section.getOilVelocity() - section.getWaterVelocity();
     assertTrue(Math.abs(slip) > 0.0);
     double shearDerivative = 2.0 * Math.abs(section.calcOilWaterInterfacialShear() / slip);
-    double interfacialLength = 0.5 * section.getDiameter() * section.getLiquidHoldup();
-    double rate = shearDerivative * interfacialLength
+    double interfacialAreaPerLength = section.calcOilWaterInterfacialAreaPerLength();
+    double rate = shearDerivative * interfacialAreaPerLength
         * (1.0 / section.getOilMassPerLength() + 1.0 / section.getWaterMassPerLength());
     assertTrue(Double.isFinite(rate) && rate > 0.0);
     assertEquals(1.0 / rate, equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] {section}), 1e-7 / rate,

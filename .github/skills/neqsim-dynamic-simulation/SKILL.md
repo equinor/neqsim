@@ -712,6 +712,16 @@ completed time loop whose sticky coupled-solver diagnostics fire.
 
 ## TwoFluidPipe Coupled Pressure-Momentum Gate
 
+For a source-free steady-to-transient handoff, first verify that
+`getGasMassFlowProfile()`, `getOilMassFlowProfile()` and `getWaterMassFlowProfile()` are each
+flat. Local steady flashes may refresh properties but must not repartition transported phase mass
+unless the transient phase-transfer sources are enabled. In dispersed oil-water flow, use the
+regime detector's Hinze droplet size through
+`calcOilWaterInterfacialAreaPerLength()`; a pipe-scale line interface under-resolves droplet drag.
+The 5.4 km synthetic riser fixture is numerically verified for 60 s on 60/120 cells and 0.25/0.125 s
+reporting steps with nonnegative accepted phase outlet transfer and less than 0.1% phase-inventory
+drift. This is a fixed-boundary initialization gate, not severe-slugging or experimental evidence.
+
 For a liquid-rich pressure outlet that physically permits phase fallback, the coupled path requires
 all four options. Keep the nonlinear controls explicit in reproducible studies:
 

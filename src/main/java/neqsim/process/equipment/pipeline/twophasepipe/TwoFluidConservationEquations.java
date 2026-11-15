@@ -960,7 +960,7 @@ public class TwoFluidConservationEquations implements Serializable {
       double waterMass = updated[IDX_WATER_MASS];
       if (enableWaterOilSlip && oilMass > 0.0 && waterMass > 0.0) {
         double oldSlip = updated[IDX_OIL_MOMENTUM] / oilMass - updated[IDX_WATER_MOMENTUM] / waterMass;
-        double force = probe.calcOilWaterInterfacialShear() * probe.getDiameter() * 0.5 * probe.getLiquidHoldup();
+        double force = probe.calcOilWaterInterfacialShear() * probe.calcOilWaterInterfacialAreaPerLength();
         double slip = relaxedSlip(oilMass, waterMass, oldSlip, force, dt);
         preserveLiquidSlipAtMomentum(updated, updated[IDX_OIL_MOMENTUM] + updated[IDX_WATER_MOMENTUM], slip);
       }
@@ -3231,7 +3231,7 @@ public class TwoFluidConservationEquations implements Serializable {
         double plus = probe.calcOilWaterInterfacialShear();
         probe.setOilVelocity(oilVelocity - perturbation);
         double minus = probe.calcOilWaterInterfacialShear();
-        double areaPerLength = section.getDiameter() * 0.5 * section.getLiquidHoldup();
+        double areaPerLength = section.calcOilWaterInterfacialAreaPerLength();
         double dragDerivative = Math.abs(plus - minus) * areaPerLength / (2.0 * perturbation);
         rate += dragDerivative * (1.0 / oilMass + 1.0 / waterMass);
       }
@@ -3478,8 +3478,7 @@ public class TwoFluidConservationEquations implements Serializable {
         // Oil-water interfacial shear (from TwoFluidSection calculation)
         double tau_ow = conservativeFrictionEnabled ? 0.0 : sec.calcOilWaterInterfacialShear();
 
-        // Estimate oil-water interface length (simplified as fraction of diameter)
-        double S_ow = sec.getDiameter() * 0.5 * alphaL;
+        double S_ow = sec.calcOilWaterInterfacialAreaPerLength();
 
         // Force on oil from oil-water interface (negative = retarded by water)
         double F_ow_oil = -tau_ow * S_ow;

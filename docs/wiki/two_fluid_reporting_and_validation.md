@@ -109,6 +109,11 @@ After `pipe.run()`, the following methods provide one value per pipe section:
 | `getHeatTransferProfile()` | W/(m2 K) | Heat-transfer coefficient profile, when configured |
 | `getSurfaceTemperatureProfile()` | K | Ambient/surface temperature profile, when configured |
 
+With explicit cell-face elevations, `getOutletPressure()` returns the published outlet
+face pressure in bara, as does `getOutletPressure("bara")`. The final element of
+`getPressureProfile()` reports the last cell midpoint pressure in Pa. Use the outlet
+pressure for the downstream connection and the profile for comparisons at cell locations.
+
 Example Java extraction:
 
 ```java
@@ -272,10 +277,24 @@ interior response.
 
 With an explicit cell-face elevation profile, steady and legacy transient pressure marching
 use the same two half-cell gradients between neighboring midpoints, including nonuniform
-lengths and changing inclinations. The prescribed outlet-face pressure is also used during
-legacy momentum-consistency calibration, not just during time-integration stages. Calibrating
-against an extrapolated pressure and then stepping against a prescribed pressure creates an
-artificial outlet acceleration with unchanged boundaries.
+lengths and changing inclinations. For the coupled split solver with a prescribed pressure and explicit face geometry,
+pressure traction acts on the external outlet face. The acoustic correction recovers the
+last cell-centre pressure from its volume equation. It does not project the last-cell
+inventory to enforce the face pressure. With outlet backflow disabled, the explicit
+advection therefore owns the nonnegative accepted outlet phase transfers.
+
+An explicit inlet face carries the prescribed stream or constant mass flow in
+both the coupled split and legacy time integrators. Each Runge–Kutta stage then
+sees the specified rate while the first physical cell retains its conservative
+inventory.
+
+Steady momentum calibration uses that same pressure traction. Calibrating against an
+extrapolated pressure and then stepping against a prescribed pressure would introduce
+an outlet acceleration with unchanged boundaries. When transient phase transfer is disabled,
+the steady solve also retains the equilibrium inlet gas, oil and water mass rates along the
+line. Local flashes update density and transport properties without silently repartitioning
+the transported phase mass. Enabling phase transfer retains the equilibrium repartitioning
+route and requires its conservative transient sources.
 
 For explicitly enabled reversed outlet flow, the external thermodynamic donor supplies
 advected phase mass, composition and enthalpy. Pressure traction uses the pipe-side phase
@@ -284,10 +303,34 @@ fractions into that force creates an artificial momentum impulse at flow reversa
 especially when a phase in the pipe is absent or present only as a trace.
 
 `setLiquidHoldupMultiplier(...)` changes the **steady** closure. It does not multiply the
-holdup recovered from transient conserved phase masses. Likewise,
-`setSteadyConsistentTransient(true)` balances the initial legacy momentum residual, not the
-complete phase-mass and thermal operator, and is not applied on the coupled-pressure route.
-Neither option qualifies a fitted steady state for transient operation.
+holdup recovered from transient conserved phase masses. With unchanged startup boundaries, `setSteadyConsistentTransient(true)` balances
+the initial momentum residual on the legacy route and on a converged coupled split
+route with prescribed inlet flow, explicit outlet-face pressure, and the phase-transfer
+and energy equations disabled. This momentum correction does not balance the complete
+phase-mass or thermal operator.
+
+Dispersed oil-water flow uses the detected continuous phase and the existing Hinze maximum
+stable droplet diameter. Its interfacial area per pipe length is
+`6 * pipeArea * dispersedHoldup / dropletDiameter`; stratified states retain the line-scale
+interface. Using a pipe-scale interface for dispersed droplets underestimates exchange and
+allows unphysical water reversal in a rising outlet.
+
+The source-free synthetic 5.4 km gas-oil-water flowline/riser replay was run for 60 s with
+unchanged 20 kg/s inlet flow and 56.40099362 bara outlet-face pressure. The table is numerical
+verification, not experimental validation. Rates are the final accepted interval in kg/s;
+inventory drift is the largest absolute gas/oil/water inventory change divided by that phase's
+initial inventory.
+
+| Cells | Reporting step (s) | Total outlet | Gas / oil / water outlet | Inlet face (bara) | Max phase inventory drift |
+| ---: | ---: | ---: | --- | ---: | ---: |
+| 60 | 0.25 | 20.671 | 4.050 / 13.005 / 3.616 | 70.144 | 0.067% |
+| 60 | 0.125 | 20.662 | 4.048 / 13.001 / 3.612 | 70.147 | 0.067% |
+| 120 | 0.25 | 20.148 | 4.004 / 12.717 / 3.426 | 70.256 | 0.051% |
+
+All accepted outlet phase transfers remain nonnegative and each interval's phase ledger closes
+to `1e-8 kg`. This qualifies the fixed-boundary, source-free handoff and the bounded choke-opening
+regression on this synthetic fixture. It does not validate slug frequency, separator response,
+phase-transfer kinetics, or field/commercial parity.
 
 For external-simulator comparisons, distinguish phase-fraction or PVT tuning from hydraulic
 holdup tuning. Matching pressure with a holdup multiplier does not establish matching free-gas
