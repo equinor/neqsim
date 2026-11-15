@@ -27,13 +27,13 @@ public class SystemBnsEosJTTest {
   public void testLowPressureJT() {
     SystemBnsEos sys = createSystem(1.0);
     double jt = sys.getPhase(0).getJouleThomsonCoefficient() * 10.0;
-    assertEquals(5.515119413490732, jt, 0.2);
+    assertEquals(5.371536346, jt, 0.002);
   }
 
   @Test
   public void testHighPressureJT() {
     SystemBnsEos sys = createSystem(300.0);
     double jt = sys.getPhase(0).getJouleThomsonCoefficient() * 10.0;
-    assertEquals(0.5560838462776915, jt, 0.05);
+    assertEquals(0.459925779, jt, 0.002);
   }
 }

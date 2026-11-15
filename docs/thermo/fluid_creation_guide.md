@@ -272,6 +272,24 @@ fluid.addComponent("oxygen", 0.02);
 | `SystemBWRSEos` | Benedict-Webb-Rubin-Starling |
 | `SystemBnsEos` | Burgoyne-Nielsen-Stanko Peng-Robinson correlation |
 
+For BNS gas calculations, set the overall specific gravity relative to air, the mole fractions of
+CO₂, H₂S, N₂, H₂ and optionally He, and the associated-gas flag. The hydrocarbon fraction is the
+balance. The temperature-dependent mixing rule (`EosMixingRuleType.CLASSIC_T2`, or 12) is the
+default. The `setComposition(sg, yCO2, yH2S, yN2, yH2, yHe, associatedGas)` overload
+accepts helium. The existing overloads set helium to zero. If the supplied specific gravity implies
+a hydrocarbon molar mass below methane, the model uses methane's molar mass.
+
+Volume correction is enabled by default. The constant Peneloux shift applies to density,
+`getZvolcorr()`, enthalpy, fugacity coefficients and the Joule–Thomson coefficient. `getZ()` continues
+to report the untranslated cubic root. Enthalpy uses NeqSim's usual reference convention.
+The fitted BNS Lohrenz–Bray–Clark viscosity is selected for BNS gas and dense fluid phases. Use
+`initProperties()` after the flash before reading density and viscosity.
+
+The helium extension uses an effective critical temperature of 6.35 °R fitted together with the
+acentric factor, volume shift and viscosity critical volume. The parameter set comes from Mark W.
+Burgoyne's [MIT-licensed BNS reference implementation](https://github.com/mwburgoyne/5_Component_PengRobinson_Z-Factor/tree/90b802abd25789b0e5383dd8f7936479a21d505e)
+and extends the correlation in SPE-229932-MS.
+
 ---
 
 ## 6. Activity Coefficient Models

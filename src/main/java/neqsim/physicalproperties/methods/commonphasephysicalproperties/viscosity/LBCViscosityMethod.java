@@ -18,7 +18,7 @@ public class LBCViscosityMethod extends Viscosity {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(LBCViscosityMethod.class);
-  private static final double FT3_PER_LBMOL_TO_CM3_PER_MOL = 62.42796;
+  protected static final double FT3_PER_LBMOL_TO_CM3_PER_MOL = 62.42796;
   private static final double[] DEFAULT_DENSE_CONTRIBUTION_PARAMETERS = {0.10230, 0.023364, 0.058533, -0.040758,
       0.0093324};
 
@@ -60,7 +60,7 @@ public class LBCViscosityMethod extends Viscosity {
       mixtureMolarMass += component.getx() * molarMass;
 
       double temp2Gas = Math.pow(tc, 1.0 / 6.0) / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pcAtm, 2.0 / 3.0));
-      double lowPressureCorrelation = tr < 1.5 ? 34.0e-5 / temp2Gas * Math.pow(tr, 0.94)
+      double lowPressureCorrelation = useLowTemperatureBranch(tr) ? 34.0e-5 / temp2Gas * Math.pow(tr, 0.94)
           : 17.78e-5 / temp2Gas * Math.pow(4.58 * tr - 1.67, 5.0 / 8.0);
       lowPressureCorrelation *= 1.0e4; // cP -> micropoise
 
@@ -80,9 +80,7 @@ public class LBCViscosityMethod extends Viscosity {
         ? Math.pow(pseudoCriticalTemperature, 1.0 / 6.0)
             / (Math.sqrt(mixtureMolarMass) * Math.pow(pseudoCriticalPressureAtm, 2.0 / 3.0))
         : 0.0;
-    double reducedDensity = critDens > 0.0
-        ? phase.getPhase().getPhysicalProperties().getDensity() / phase.getPhase().getMolarMass() / critDens / 1.0e6
-        : 0.0;
+    double reducedDensity = critDens > 0.0 ? getMolarDensity() / critDens : 0.0;
 
     PhaseType phaseType = phase.getPhase().getType();
     double denseContribution = 0.0;
@@ -96,6 +94,25 @@ public class LBCViscosityMethod extends Viscosity {
     }
 
     return (denseContribution + lowPressureViscosityMicropoise) / 1.0e7;
+  }
+
+  /**
+   * Selects the Stiel-Thodos branch at a given reduced temperature.
+   *
+   * @param reducedTemperature absolute temperature divided by the component critical temperature
+   * @return whether to use the low-temperature branch
+   */
+  protected boolean useLowTemperatureBranch(double reducedTemperature) {
+    return reducedTemperature < 1.5;
+  }
+
+  /**
+   * Returns the molar density used by the dense-fluid contribution.
+   *
+   * @return molar density in mol/cm3
+   */
+  protected double getMolarDensity() {
+    return phase.getDensity() / phase.getPhase().getMolarMass() / 1.0e6;
   }
 
   private double selectReferenceViscosity(double weightedGasViscosity, double mixtureMolarMassSqrt) {
