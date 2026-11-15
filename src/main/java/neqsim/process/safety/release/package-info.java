@@ -37,7 +37,7 @@
  * transient decompression and line packing</li>
  * <li>{@link neqsim.process.safety.release.RealGasPipeDecompression} - Conservative one-dimensional EOS-backed
  * single-gas transient decompression and line packing with optional finite upstream gas-vessel coupling and prescribed
- * distributed constant-U wall heat exchange</li>
+ * distributed constant-U or finite-capacitance wall heat exchange</li>
  * </ul>
  *
  * <p>
@@ -55,8 +55,9 @@
  * homogeneous-equilibrium model assesses its resolved stations for equilibrium solids and hydrate risk, but does not
  * calculate solid-bearing release flow. The quasi-steady finite-pipe models exclude transient decompression waves. The
  * separate perfect-gas transient model resolves waves and line packing but excludes heat transfer. The EOS-backed
- * transient model optionally applies prescribed distributed constant-U wall heat exchange while excluding predictive
- * thermal boundaries, wall capacitance, pipe elasticity and solid-bearing transport. Separate short-opening models can
+ * transient model optionally applies prescribed distributed constant-U wall heat exchange or retains a cell-resolved
+ * finite-capacitance wall with separate prescribed gas/environment coefficients while excluding predictive thermal
+ * correlations, radial wall conduction, pipe elasticity and solid-bearing transport. Separate short-opening models can
  * either apply a caller-declared gas/liquid velocity ratio or predict vertical-upward bubbly/dispersed slip with a
  * bounded Zuber-Findlay/Harmathy closure. A third model applies caller-parameterized first-order phase-split relaxation
  * before the same drift-flux closure. A fourth resolves component-specific phase-partition relaxation and emits phase
