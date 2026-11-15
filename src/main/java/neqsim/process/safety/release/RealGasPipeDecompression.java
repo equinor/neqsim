@@ -34,11 +34,12 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <p>
  * The model requires one equilibrium gas phase with fixed composition. Phase appearance, reactions, forced phases,
- * solids and hydrate calculations fail closed. All thermal coefficients, wall capacity and boundary temperatures are
- * prescribed; predictive fire/ambient correlations, radial wall conduction, pipe elasticity, two-sided-rupture
- * coupling, non-equilibrium slip, entrainment and solid-bearing transport are outside this model. The optional upstream
- * vessel is a lumped boundary, not a vessel nozzle, internal-wave or phase-separation model. Numerical validation is
- * not facility qualification.
+ * solids and hydrate calculations fail closed. All thermal coefficients and boundary temperatures are prescribed. Wall
+ * capacity is either prescribed directly or derived from explicit cylindrical geometry, density and specific heat under
+ * a fail-closed lumped-Biot guard. Predictive fire/ambient correlations, radial wall conduction, pipe elasticity,
+ * two-sided-rupture coupling, non-equilibrium slip, entrainment and solid-bearing transport are outside this model. The
+ * optional upstream vessel is a lumped boundary, not a vessel nozzle, internal-wave or phase-separation model.
+ * Numerical validation is not facility qualification.
  * </p>
  */
 public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass implements CoupledReleaseSource {
@@ -62,6 +63,7 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
   private final double initialWallTemperatureK;
   private final double externalTemperatureK;
   private final double cellExternalAreaM2;
+  private final WallThermalBoundary wallThermalBoundary;
   private final double cfl;
   private final double[] massFractions;
   private final TransientBoundaryModel releaseModel = new TransientBoundaryModel();
@@ -201,12 +203,17 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     this.wallToEnvironmentCoefficientWPerM2K = thermalBoundary.wallToEnvironmentCoefficientWPerM2K;
     this.wallArealHeatCapacityJPerM2K = thermalBoundary.wallArealHeatCapacityJPerM2K;
     this.initialWallTemperatureK = thermalBoundary.initialWallTemperatureK;
+    this.wallThermalBoundary = thermalBoundary;
     if (!Double.isFinite(upstreamVesselVolumeM3) || upstreamVesselVolumeM3 < 0.0 || dischargeCoefficient > 1.0
         || darcyFrictionFactor > 1.0 || cells < 8 || cells > 400 || !Double.isFinite(cfl) || cfl <= 0.0 || cfl > 0.7) {
       throw new IllegalArgumentException("Invalid decompression discretization or geometry");
     }
     this.upstreamVesselVolumeM3 = upstreamVesselVolumeM3;
     this.externalTemperatureK = thermalBoundary.externalTemperatureK;
+    if (thermalBoundary.hasMaterialGeometry()
+        && Math.abs(thermalBoundary.innerDiameterM - diameterM) > 1.0e-12 * diameterM) {
+      throw new IllegalArgumentException("Wall inner diameter must match the pipe internal diameter");
+    }
     this.cfl = cfl;
     compositionReference = initialGas.clone();
     new ThermodynamicOperations(compositionReference).TPflash();
@@ -218,7 +225,7 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     }
     areaM2 = Math.PI * diameterM * diameterM / 4.0;
     cellVolumeM3 = areaM2 * lengthM / cells;
-    cellExternalAreaM2 = Math.PI * diameterM * lengthM / cells;
+    cellExternalAreaM2 = Math.PI * thermalBoundary.heatTransferAreaDiameterM(diameterM) * lengthM / cells;
     density = new double[cells];
     momentum = new double[cells];
     energy = new double[cells];
@@ -574,10 +581,12 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     stations.put(Station.THROAT_CRITICAL, opening);
     stations.put(Station.ORIFICE_EXIT, opening);
     List<Diagnostic> diagnostics = new ArrayList<Diagnostic>();
-    String thermalBoundary = hasCapacitiveWall()
-        ? "distributed finite-capacitance wall with prescribed gas-side and environment-side coefficients"
-        : hasDistributedHeatTransfer() ? "distributed constant-U heat exchange to a fixed external temperature"
-            : "adiabatic pipe wall";
+    String thermalBoundary = wallThermalBoundary.hasMaterialGeometry()
+        ? "distributed material-derived cylindrical lumped wall within a fail-closed Biot limit"
+        : hasCapacitiveWall()
+            ? "distributed finite-capacitance wall with prescribed gas-side and environment-side coefficients"
+            : hasDistributedHeatTransfer() ? "distributed constant-U heat exchange to a fixed external temperature"
+                : "adiabatic pipe wall";
     diagnostics.add(new Diagnostic("REAL_GAS_TRANSIENT_PIPE_ASSUMPTIONS",
         hasUpstreamVessel()
             ? "One-dimensional rigid equilibrium gas; " + thermalBoundary
@@ -726,8 +735,10 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     provenance.put("pipeCells", Integer.toString(density.length));
     provenance.put("pipeCfl", Double.toString(cfl));
     provenance.put("pipeDarcyFrictionFactor", Double.toString(darcyFrictionFactor));
-    provenance.put("pipeHeatTransferBoundary", hasCapacitiveWall() ? "FINITE_CAPACITANCE_WALL_FIXED_ENVIRONMENT"
-        : hasDistributedHeatTransfer() ? "CONSTANT_U_FIXED_EXTERNAL_TEMPERATURE" : "ADIABATIC");
+    provenance.put("pipeHeatTransferBoundary",
+        wallThermalBoundary.hasMaterialGeometry() ? "CYLINDRICAL_LUMPED_MATERIAL_WALL_FIXED_ENVIRONMENT"
+            : hasCapacitiveWall() ? "FINITE_CAPACITANCE_WALL_FIXED_ENVIRONMENT"
+                : hasDistributedHeatTransfer() ? "CONSTANT_U_FIXED_EXTERNAL_TEMPERATURE" : "ADIABATIC");
     provenance.put("pipeHeatTransferCoefficientWPerM2K", Double.toString(heatTransferCoefficientWPerM2K));
     provenance.put("pipeExternalAreaM2", Double.toString(cellExternalAreaM2 * density.length));
     if (hasDistributedHeatTransfer()) {
@@ -739,6 +750,22 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
       provenance.put("pipeInitialWallTemperatureK", Double.toString(initialWallTemperatureK));
       provenance.put("pipeMeanWallTemperatureK", Double.toString(mean(wallTemperatureK)));
       provenance.put("pipeWallStoredEnergyJ", Double.toString(wallEnergy(wallTemperatureK)));
+      if (wallThermalBoundary.hasMaterialGeometry()) {
+        provenance.put("pipeWallInnerDiameterM", Double.toString(wallThermalBoundary.innerDiameterM));
+        provenance.put("pipeWallOuterDiameterM", Double.toString(wallThermalBoundary.outerDiameterM));
+        provenance.put("pipeWallThicknessM", Double.toString(wallThermalBoundary.wallThicknessM));
+        provenance.put("pipeWallDensityKgPerM3", Double.toString(wallThermalBoundary.wallDensityKgPerM3));
+        provenance.put("pipeWallSpecificHeatJPerKgK", Double.toString(wallThermalBoundary.wallSpecificHeatJPerKgK));
+        provenance.put("pipeWallConductivityWPerMK", Double.toString(wallThermalBoundary.wallConductivityWPerMK));
+        provenance.put("pipeWallInnerFilmCoefficientWPerM2K",
+            Double.toString(wallThermalBoundary.innerFilmCoefficientWPerM2K));
+        provenance.put("pipeWallOuterFilmCoefficientWPerM2K",
+            Double.toString(wallThermalBoundary.outerFilmCoefficientWPerM2K));
+        provenance.put("pipeWallLumpedCharacteristicLengthM",
+            Double.toString(wallThermalBoundary.lumpedCharacteristicLengthM));
+        provenance.put("pipeWallLumpedBiotNumber", Double.toString(wallThermalBoundary.lumpedBiotNumber));
+        provenance.put("pipeWallLumpedBiotLimit", Double.toString(WallThermalBoundary.MAX_LUMPED_BIOT_NUMBER));
+      }
     }
     provenance.put("pipeIntegrator", hasUpstreamVessel() ? "EOS_VU_LUMPED_VESSEL_FINITE_VOLUME_PIPE_LLF_V1"
         : "EOS_VU_FINITE_VOLUME_LOCAL_LAX_FRIEDRICHS_V1");
@@ -915,19 +942,77 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
   /** Immutable prescribed thermal boundary for the finite-volume pipe wall. */
   public static final class WallThermalBoundary implements Serializable {
     private static final long serialVersionUID = 1L;
+    private static final double MAX_LUMPED_BIOT_NUMBER = 0.1;
     private final double gasToWallCoefficientWPerM2K;
     private final double wallToEnvironmentCoefficientWPerM2K;
     private final double wallArealHeatCapacityJPerM2K;
     private final double initialWallTemperatureK;
     private final double externalTemperatureK;
+    private final double innerDiameterM;
+    private final double outerDiameterM;
+    private final double wallThicknessM;
+    private final double wallDensityKgPerM3;
+    private final double wallSpecificHeatJPerKgK;
+    private final double wallConductivityWPerMK;
+    private final double innerFilmCoefficientWPerM2K;
+    private final double outerFilmCoefficientWPerM2K;
+    private final double lumpedCharacteristicLengthM;
+    private final double lumpedBiotNumber;
 
+    /**
+     * Creates a boundary without material-geometry provenance.
+     *
+     * @param gasToWallCoefficientWPerM2K gas coefficient on the heat-transfer area basis in W/(m2 K)
+     * @param wallToEnvironmentCoefficientWPerM2K environment coefficient in W/(m2 K)
+     * @param wallArealHeatCapacityJPerM2K wall heat capacity per heat-transfer area in J/(m2 K)
+     * @param initialWallTemperatureK initial wall temperature in K
+     * @param externalTemperatureK fixed environment temperature in K
+     */
     private WallThermalBoundary(double gasToWallCoefficientWPerM2K, double wallToEnvironmentCoefficientWPerM2K,
         double wallArealHeatCapacityJPerM2K, double initialWallTemperatureK, double externalTemperatureK) {
+      this(gasToWallCoefficientWPerM2K, wallToEnvironmentCoefficientWPerM2K, wallArealHeatCapacityJPerM2K,
+          initialWallTemperatureK, externalTemperatureK, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    }
+
+    /**
+     * Creates a boundary including optional material-geometry provenance.
+     *
+     * @param gasToWallCoefficientWPerM2K gas coefficient on the heat-transfer area basis in W/(m2 K)
+     * @param wallToEnvironmentCoefficientWPerM2K environment coefficient in W/(m2 K)
+     * @param wallArealHeatCapacityJPerM2K wall heat capacity per heat-transfer area in J/(m2 K)
+     * @param initialWallTemperatureK initial wall temperature in K
+     * @param externalTemperatureK fixed environment temperature in K
+     * @param innerDiameterM pipe internal diameter in m, or zero without material geometry
+     * @param outerDiameterM wall outer diameter in m, or zero without material geometry
+     * @param wallThicknessM wall thickness in m, or zero without material geometry
+     * @param wallDensityKgPerM3 wall density in kg/m3, or zero without material geometry
+     * @param wallSpecificHeatJPerKgK wall specific heat in J/(kg K), or zero without material geometry
+     * @param wallConductivityWPerMK wall conductivity in W/(m K), or zero without material geometry
+     * @param innerFilmCoefficientWPerM2K inner-area film coefficient in W/(m2 K), or zero without material geometry
+     * @param outerFilmCoefficientWPerM2K outer-area film coefficient in W/(m2 K), or zero without material geometry
+     * @param lumpedCharacteristicLengthM lumped characteristic length in m, or zero without material geometry
+     * @param lumpedBiotNumber lumped Biot number, or zero without material geometry
+     */
+    private WallThermalBoundary(double gasToWallCoefficientWPerM2K, double wallToEnvironmentCoefficientWPerM2K,
+        double wallArealHeatCapacityJPerM2K, double initialWallTemperatureK, double externalTemperatureK,
+        double innerDiameterM, double outerDiameterM, double wallThicknessM, double wallDensityKgPerM3,
+        double wallSpecificHeatJPerKgK, double wallConductivityWPerMK, double innerFilmCoefficientWPerM2K,
+        double outerFilmCoefficientWPerM2K, double lumpedCharacteristicLengthM, double lumpedBiotNumber) {
       this.gasToWallCoefficientWPerM2K = gasToWallCoefficientWPerM2K;
       this.wallToEnvironmentCoefficientWPerM2K = wallToEnvironmentCoefficientWPerM2K;
       this.wallArealHeatCapacityJPerM2K = wallArealHeatCapacityJPerM2K;
       this.initialWallTemperatureK = initialWallTemperatureK;
       this.externalTemperatureK = externalTemperatureK;
+      this.innerDiameterM = innerDiameterM;
+      this.outerDiameterM = outerDiameterM;
+      this.wallThicknessM = wallThicknessM;
+      this.wallDensityKgPerM3 = wallDensityKgPerM3;
+      this.wallSpecificHeatJPerKgK = wallSpecificHeatJPerKgK;
+      this.wallConductivityWPerMK = wallConductivityWPerMK;
+      this.innerFilmCoefficientWPerM2K = innerFilmCoefficientWPerM2K;
+      this.outerFilmCoefficientWPerM2K = outerFilmCoefficientWPerM2K;
+      this.lumpedCharacteristicLengthM = lumpedCharacteristicLengthM;
+      this.lumpedBiotNumber = lumpedBiotNumber;
     }
 
     /** @return an adiabatic boundary with no wall state */
@@ -978,6 +1063,69 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
           ReleaseFlowRequest.positive(wallArealHeatCapacityJPerM2K, "wallArealHeatCapacityJPerM2K"),
           ReleaseFlowRequest.positive(initialWallTemperatureK, "initialWallTemperatureK"),
           ReleaseFlowRequest.positive(externalTemperatureK, "externalTemperatureK"));
+    }
+
+    /**
+     * Derives a lumped cylindrical wall boundary from explicit geometry and material properties.
+     *
+     * <p>
+     * The heat-transfer area is the cylinder outer area. The supplied inner film coefficient is converted to that area,
+     * and the wall heat capacity is derived from the annular material volume. The lumped temperature approximation is
+     * accepted only when {@code max(hInner, hOuter) * (outerDiameter - innerDiameter) / (4 * conductivity) < 0.1}. This
+     * fail-closed check is an applicability guard, not a radial-conduction solution or material-property database.
+     * </p>
+     *
+     * @param innerDiameterM pipe internal diameter in m
+     * @param wallThicknessM wall thickness in m
+     * @param wallDensityKgPerM3 wall material density in kg/m3
+     * @param wallSpecificHeatJPerKgK wall material specific heat in J/(kg K)
+     * @param wallConductivityWPerMK wall material conductivity in W/(m K)
+     * @param innerFilmCoefficientWPerM2K gas-side film coefficient on inner area in W/(m2 K)
+     * @param outerFilmCoefficientWPerM2K environment-side film coefficient on outer area in W/(m2 K)
+     * @param initialWallTemperatureK initial uniform wall temperature in K
+     * @param externalTemperatureK fixed environment temperature in K
+     * @return immutable material-derived lumped wall boundary
+     */
+    public static WallThermalBoundary cylindricalLumpedWall(double innerDiameterM, double wallThicknessM,
+        double wallDensityKgPerM3, double wallSpecificHeatJPerKgK, double wallConductivityWPerMK,
+        double innerFilmCoefficientWPerM2K, double outerFilmCoefficientWPerM2K, double initialWallTemperatureK,
+        double externalTemperatureK) {
+      double innerDiameter = ReleaseFlowRequest.positive(innerDiameterM, "innerDiameterM");
+      double thickness = ReleaseFlowRequest.positive(wallThicknessM, "wallThicknessM");
+      double density = ReleaseFlowRequest.positive(wallDensityKgPerM3, "wallDensityKgPerM3");
+      double specificHeat = ReleaseFlowRequest.positive(wallSpecificHeatJPerKgK, "wallSpecificHeatJPerKgK");
+      double conductivity = ReleaseFlowRequest.positive(wallConductivityWPerMK, "wallConductivityWPerMK");
+      double innerFilm = ReleaseFlowRequest.positive(innerFilmCoefficientWPerM2K, "innerFilmCoefficientWPerM2K");
+      double outerFilm = ReleaseFlowRequest.positive(outerFilmCoefficientWPerM2K, "outerFilmCoefficientWPerM2K");
+      double outerDiameter = ReleaseFlowRequest.positive(innerDiameter + 2.0 * thickness, "outerDiameterM");
+      double characteristicLength = (outerDiameter - innerDiameter) / 4.0;
+      double biotNumber = Math.max(innerFilm, outerFilm) * characteristicLength / conductivity;
+      if (!Double.isFinite(biotNumber) || biotNumber >= MAX_LUMPED_BIOT_NUMBER) {
+        throw new IllegalArgumentException(
+            "Lumped cylindrical wall requires Biot number below 0.1; calculated " + biotNumber);
+      }
+      double gasCoefficientOnOuterArea = innerFilm * innerDiameter / outerDiameter;
+      double arealHeatCapacity = density * specificHeat
+          * (outerDiameter * outerDiameter - innerDiameter * innerDiameter) / (4.0 * outerDiameter);
+      return new WallThermalBoundary(gasCoefficientOnOuterArea, outerFilm,
+          ReleaseFlowRequest.positive(arealHeatCapacity, "wallArealHeatCapacityJPerM2K"),
+          ReleaseFlowRequest.positive(initialWallTemperatureK, "initialWallTemperatureK"),
+          ReleaseFlowRequest.positive(externalTemperatureK, "externalTemperatureK"), innerDiameter, outerDiameter,
+          thickness, density, specificHeat, conductivity, innerFilm, outerFilm, characteristicLength, biotNumber);
+    }
+
+    private boolean hasMaterialGeometry() {
+      return outerDiameterM > 0.0;
+    }
+
+    /**
+     * Resolves the cylindrical area-basis diameter.
+     *
+     * @param defaultDiameterM pipe diameter in m for boundaries without explicit wall geometry
+     * @return outer wall diameter for material geometry, otherwise the default diameter
+     */
+    private double heatTransferAreaDiameterM(double defaultDiameterM) {
+      return hasMaterialGeometry() ? outerDiameterM : defaultDiameterM;
     }
   }
 
@@ -1060,7 +1208,7 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
 
     @Override
     public String getModelVersion() {
-      return "1.3.0";
+      return "1.4.0";
     }
 
     @Override
@@ -1071,13 +1219,14 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
 
     @Override
     public ReleaseModelEvidence getEvidence() {
-      return new ReleaseModelEvidence("real-gas-pipe-decompression:1.3.0",
+      return new ReleaseModelEvidence("real-gas-pipe-decompression:1.4.0",
           Arrays.asList("ONE_DIMENSIONAL_PIPE", "SINGLE_EQUILIBRIUM_GAS", "EOS_PROPERTY_EVOLUTION",
               "TRANSIENT_LINE_PACKING", "OPTIONAL_LUMPED_UPSTREAM_GAS_VESSEL",
               "OPTIONAL_DISTRIBUTED_CONSTANT_U_HEAT_TRANSFER", "OPTIONAL_FINITE_CAPACITANCE_WALL",
-              "CONSERVATIVE_MASS_MOMENTUM_TOTAL_ENERGY", "MIXTURE_SOLID_RISK_ASSESSED"),
+              "OPTIONAL_CYLINDRICAL_LUMPED_MATERIAL_WALL", "CONSERVATIVE_MASS_MOMENTUM_TOTAL_ENERGY",
+              "MIXTURE_SOLID_RISK_ASSESSED"),
           Arrays.asList("NO_PREDICTIVE_FIRE_OR_AMBIENT_CORRELATION", "NO_RADIAL_WALL_CONDUCTION",
-              "NO_DERIVED_WALL_MATERIAL_PROPERTIES", "NO_PIPE_ELASTICITY", "NO_TWO_SIDED_RUPTURE",
+              "NO_PREDICTIVE_WALL_MATERIAL_DATABASE", "NO_PIPE_ELASTICITY", "NO_TWO_SIDED_RUPTURE",
               "NO_VESSEL_INTERNAL_WAVES_OR_PHASE_SEPARATION", "NO_MULTIPHASE_SLIP", "NO_SOLID_BEARING_FLOW",
               "NO_EXPERIMENTAL_QUALIFICATION"),
           Arrays.asList(
@@ -1114,7 +1263,12 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
               new ReleaseModelEvidence.Record("real-gas-pipe-capacitive-wall-refinement",
                   ReleaseModelEvidence.Type.NUMERICAL,
                   "src/test/java/neqsim/process/safety/release/RealGasPipeDecompressionTest.java",
-                  "Wall temperature and environment heat are checked under CFL refinement", false)));
+                  "Wall temperature and environment heat are checked under CFL refinement", false),
+              new ReleaseModelEvidence.Record("real-gas-pipe-cylindrical-wall-geometry",
+                  ReleaseModelEvidence.Type.ANALYTICAL,
+                  "src/test/java/neqsim/process/safety/release/RealGasPipeDecompressionTest.java",
+                  "Annular volume, outer-area conversion and fail-closed lumped Biot applicability are checked",
+                  false)));
     }
   }
 }
