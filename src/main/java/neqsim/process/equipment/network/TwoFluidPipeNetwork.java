@@ -56,7 +56,8 @@ public final class TwoFluidPipeNetwork implements Serializable {
   private static final double ALGEBRAIC_TRANSFER_TOLERANCE = 1.0e-8;
   private static final double ALGEBRAIC_JACOBIAN_RELATIVE_STEP = 1.0e-6;
   private static final int ALGEBRAIC_MAXIMUM_LINE_SEARCH_ITERATIONS = 10;
-  private static final double ALGEBRAIC_DONOR_RELAXATION = 1.0;
+  private static final double ALGEBRAIC_SCALAR_DONOR_RELAXATION = 0.5;
+  private static final double ALGEBRAIC_COUPLED_DONOR_RELAXATION = 1.0;
 
   private final String name;
   private final Map<String, NetworkNode> nodes = new LinkedHashMap<String, NetworkNode>();
@@ -547,7 +548,8 @@ public final class TwoFluidPipeNetwork implements Serializable {
       boolean ledgersClose = true;
       for (NetworkNode junction : junctions) {
         SystemInterface recovered = mixAlgebraicDonor(junction, donors.get(junction), trial.nodeTrials.get(junction));
-        SystemInterface mixed = relaxAlgebraicDonor(donors.get(junction), recovered);
+        SystemInterface mixed = relaxAlgebraicDonor(donors.get(junction), recovered,
+            ALGEBRAIC_COUPLED_DONOR_RELAXATION);
         donorConverged &= algebraicDonorConverged(donors.get(junction), mixed);
         ledgersClose &= trial.nodeTrials.get(junction).closes();
         mixedDonors.put(junction, mixed);
@@ -747,7 +749,8 @@ public final class TwoFluidPipeNetwork implements Serializable {
     for (; thermodynamicIterations < ALGEBRAIC_MAXIMUM_THERMODYNAMIC_ITERATIONS; thermodynamicIterations++) {
       trial = solveAlgebraicPressure(junction, incident, donor, minimumAdjacentPressurePa, maximumAdjacentPressurePa,
           timeStepSeconds, id);
-      SystemInterface mixed = mixAlgebraicDonor(junction, donor, trial);
+      SystemInterface recovered = mixAlgebraicDonor(junction, donor, trial);
+      SystemInterface mixed = relaxAlgebraicDonor(donor, recovered, ALGEBRAIC_SCALAR_DONOR_RELAXATION);
       boolean donorConverged = algebraicDonorConverged(donor, mixed);
       donor = mixed;
       if (donorConverged && trial.closes()) {
@@ -969,8 +972,9 @@ public final class TwoFluidPipeNetwork implements Serializable {
         && relativeEnthalpyDifference <= ALGEBRAIC_TRANSFER_TOLERANCE;
   }
 
-  /** Under-relax one coupled donor update to avoid composition/enthalpy exchange oscillation. */
-  private static SystemInterface relaxAlgebraicDonor(SystemInterface previous, SystemInterface recovered) {
+  /** Under-relax one donor update to avoid composition/enthalpy exchange oscillation. */
+  private static SystemInterface relaxAlgebraicDonor(SystemInterface previous, SystemInterface recovered,
+      double relaxation) {
     SystemInterface relaxed = SerializationUtils.clone(previous);
     double previousTotalMass = 0.0;
     double recoveredTotalMass = 0.0;
@@ -986,16 +990,16 @@ public final class TwoFluidPipeNetwork implements Serializable {
     }
     double[] molarFlow = new double[previousMass.length];
     for (int index = 0; index < molarFlow.length; index++) {
-      double massFraction = (1.0 - ALGEBRAIC_DONOR_RELAXATION) * previousMass[index] / previousTotalMass
-          + ALGEBRAIC_DONOR_RELAXATION * recoveredMass[index] / recoveredTotalMass;
+      double massFraction = (1.0 - relaxation) * previousMass[index] / previousTotalMass
+          + relaxation * recoveredMass[index] / recoveredTotalMass;
       molarFlow[index] = massFraction / relaxed.getComponent(index).getMolarMass();
     }
     relaxed.setMolarFlowRates(molarFlow);
     relaxed.setPressure(recovered.getPressure("Pa"), "Pa");
     ThermodynamicOperations operations = new ThermodynamicOperations(relaxed);
     operations.TPflash();
-    double enthalpyJPerKg = (1.0 - ALGEBRAIC_DONOR_RELAXATION) * previous.getEnthalpy("J/kg")
-        + ALGEBRAIC_DONOR_RELAXATION * recovered.getEnthalpy("J/kg");
+    double enthalpyJPerKg = (1.0 - relaxation) * previous.getEnthalpy("J/kg")
+        + relaxation * recovered.getEnthalpy("J/kg");
     operations.PHflash(enthalpyJPerKg, "J/kg");
     relaxed.initProperties();
     return relaxed;
