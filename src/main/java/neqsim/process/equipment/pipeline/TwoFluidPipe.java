@@ -6974,8 +6974,9 @@ public class TwoFluidPipe extends Pipeline {
 
     boolean prescribedInletFlow = inletBCType == BoundaryCondition.STREAM_CONNECTED
         || inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet;
-    boolean calibrateCoupledMomentum = hasCoupledPhysicalOutletFace() && isSteadyStateConverged() && prescribedInletFlow
-        && !includeMassTransfer && !includeEnergyEquation;
+    boolean calibrateCoupledMomentum = outletBCType == BoundaryCondition.CONSTANT_PRESSURE
+        && usesCoupledOutletFacePressure() && isSteadyStateConverged() && prescribedInletFlow && !includeMassTransfer
+        && !includeEnergyEquation;
     double boundaryMassFlow = inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet ? inletMassFlow
         : getInletStream().getFlowRate("kg/sec");
     if (steadyConsistentTransient && !steadyConsistencyCalibrated
@@ -7245,9 +7246,8 @@ public class TwoFluidPipe extends Pipeline {
             oilDensities, waterDensities, dx, useImplicitVoidWave);
         // An explicit fixed-pressure outlet already supplies boundary traction. Pinning the last cell
         // as well makes its remaining EOS volume error appear as fictitious outlet phase transfer.
-        boolean outletFixed = !useConservativeEnergyRecovery && !hasCoupledPhysicalOutletFace()
-            && (outletBCType == BoundaryCondition.CONSTANT_PRESSURE
-                || outletBCType == BoundaryCondition.CHARACTERISTIC);
+        boolean outletFixed = !useConservativeEnergyRecovery && (outletBCType == BoundaryCondition.CHARACTERISTIC
+            || outletBCType == BoundaryCondition.CONSTANT_PRESSURE && !usesCoupledOutletFacePressure());
         timeIntegrator.setCoupledPressureMomentumProperties(pressures, areas, lengths, gasDensities, oilDensities,
             waterDensities, gasSoundSpeeds, oilSoundSpeeds, waterSoundSpeeds, transientOutletCellPressure(),
             outletFixed, coupledPressureMomentumEnabled);
@@ -8274,13 +8274,13 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Checks whether the prescribed outlet traction acts directly on the physical face in the coupled split solver.
+   * Checks how the coupled split solver applies a constant-pressure outlet.
    *
-   * @return true for an explicitly prescribed pressure on a pipe with explicit face geometry
+   * @return true if explicit face geometry and a prescribed pressure place the constraint at the face
    */
-  private boolean hasCoupledPhysicalOutletFace() {
+  private boolean usesCoupledOutletFacePressure() {
     return coupledPressureMomentumEnabled && !useConservativeEnergyRecovery && cellFaceElevationProfile != null
-        && outletBCType == BoundaryCondition.CONSTANT_PRESSURE && outletPressureSet;
+        && outletPressureSet;
   }
 
   /**
@@ -8499,7 +8499,7 @@ public class TwoFluidPipe extends Pipeline {
         outletFace.setPressure(outletPressureSet ? outletPressure : outletBoundaryFluid.getPressure("Pa"));
         equations.setOutletBoundaryState(outletFace);
       }
-      if (!(isTransientMode && (useConservativeEnergyRecovery || hasCoupledPhysicalOutletFace()))) {
+      if (!(isTransientMode && (useConservativeEnergyRecovery || usesCoupledOutletFacePressure()))) {
         outlet.setPressure(transientOutletCellPressure());
       }
     } else if (outletBCType == BoundaryCondition.CLOSED && !(isTransientMode && coupledPressureMomentumEnabled)) {
