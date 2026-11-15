@@ -6972,12 +6972,18 @@ public class TwoFluidPipe extends Pipeline {
     boolean useImplicitVoidWave = equations.isEnableInterfacialPressure() && implicitInterfacialPressureCoupling;
     equations.setImplicitInterfacialPressure(useImplicitVoidWave);
 
+    boolean prescribedInletFlow = inletBCType == BoundaryCondition.STREAM_CONNECTED
+        || inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet;
+    boolean calibrateCoupledMomentum = hasCoupledPhysicalOutletFace() && isSteadyStateConverged() && prescribedInletFlow
+        && !includeMassTransfer && !includeEnergyEquation;
+    double boundaryMassFlow = inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet ? inletMassFlow
+        : getInletStream().getFlowRate("kg/sec");
     if (steadyConsistentTransient && !steadyConsistencyCalibrated
-        && (!coupledPressureMomentumEnabled || hasCoupledPhysicalOutletFace() && isSteadyStateConverged())) {
+        && (!coupledPressureMomentumEnabled || calibrateCoupledMomentum)) {
       // Calibrate only while the boundaries still carry the steady state; a boundary change made
       // before the first step is the disturbance to simulate, not part of the steady residual.
       boolean steadyBoundaries = inletBCType != BoundaryCondition.CLOSED && outletBCType != BoundaryCondition.CLOSED
-          && Math.abs(getInletStream().getFlowRate("kg/sec") - steadyCalibrationInletFlow) <= 1.0e-9
+          && Math.abs(boundaryMassFlow - steadyCalibrationInletFlow) <= 1.0e-9
               * Math.max(1.0, Math.abs(steadyCalibrationInletFlow))
           && Math.abs(outletPressure - steadyCalibrationOutletPressure) <= 1.0e-9
               * Math.max(1.0, Math.abs(steadyCalibrationOutletPressure));
@@ -6987,8 +6993,7 @@ public class TwoFluidPipe extends Pipeline {
       steadyConsistencyCalibrated = true;
     }
     if (equations.hasSteadyMomentumCorrection() && steadyCalibrationInletFlow > 0.0) {
-      double flowRatio = Math.min(3.0,
-          Math.max(0.0, getInletStream().getFlowRate("kg/sec") / steadyCalibrationInletFlow));
+      double flowRatio = Math.min(3.0, Math.max(0.0, boundaryMassFlow / steadyCalibrationInletFlow));
       equations.setSteadyMomentumCorrectionScale(flowRatio * flowRatio);
     }
 
@@ -8295,10 +8300,11 @@ public class TwoFluidPipe extends Pipeline {
     }
     equations.setInletBoundaryState(null);
     equations.setOutletBoundaryState(null);
-    if (isTransientMode && coupledPressureMomentumEnabled && (inletBCType == BoundaryCondition.STREAM_CONNECTED
-        || inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet)) {
-      // A prescribed feed belongs on an external face. Replacing the evolving cell's
-      // density by feed-pressure density repeatedly creates a false volume deficit.
+    if (isTransientMode && (coupledPressureMomentumEnabled || cellFaceElevationProfile != null)
+        && (inletBCType == BoundaryCondition.STREAM_CONNECTED
+            || inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet)) {
+      // The external face carries the prescribed feed. Editing the first cell instead can
+      // change its inventory-derived flux and miss the specified rate at individual RK stages.
       double feedMassFlow = inletBCType == BoundaryCondition.CONSTANT_FLOW ? inletMassFlow
           : getInletStream().getFlowRate("kg/sec");
       equations.setInletBoundaryState(createPrescribedInletFace(inlet, feedMassFlow));
@@ -12125,8 +12131,8 @@ public class TwoFluidPipe extends Pipeline {
    * in an hour on a 5 km gas-oil slug line; a 7 per cent outlet-flow deficit on a gas-condensate line). The correction
    * is calibrated once, at the first transient step after {@link #run(UUID)} that still carries the steady boundary
    * conditions, and scales with the square of the inlet mass flow relative to calibration, as a friction force does. It
-   * is also applied to converged coupled split states with an explicitly prescribed pressure at the physical outlet
-   * face. Other coupled solver routes retain their own initialization.
+   * is also applied to converged coupled split states with prescribed inlet flow and outlet-face pressure, without
+   * phase-transfer or energy sources. Other coupled solver routes retain their own initialization.
    * </p>
    *
    * <p>

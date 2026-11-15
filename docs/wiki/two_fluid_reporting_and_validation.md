@@ -283,6 +283,11 @@ last cell-centre pressure from its volume equation. It does not project the last
 inventory to enforce the face pressure. With outlet backflow disabled, the explicit
 advection therefore owns the nonnegative accepted outlet phase transfers.
 
+An explicit inlet face carries the prescribed stream or constant mass flow in
+both the coupled split and legacy time integrators. Each Runge–Kutta stage then
+sees the specified rate while the first physical cell retains its conservative
+inventory.
+
 Steady momentum calibration uses that same pressure traction. Calibrating against an
 extrapolated pressure and then stepping against a prescribed pressure would introduce
 an outlet acceleration with unchanged boundaries.
@@ -296,8 +301,9 @@ especially when a phase in the pipe is absent or present only as a trace.
 `setLiquidHoldupMultiplier(...)` changes the **steady** closure. It does not multiply the
 holdup recovered from transient conserved phase masses. With unchanged startup boundaries, `setSteadyConsistentTransient(true)` balances
 the initial momentum residual on the legacy route and on a converged coupled split
-route with a prescribed pressure on an explicit outlet face. This momentum correction
-does not balance the complete phase-mass or thermal operator.
+route with prescribed inlet flow, explicit outlet-face pressure, and the phase-transfer
+and energy equations disabled. This momentum correction does not balance the complete
+phase-mass or thermal operator.
 
 On the synthetic 5.4 km gas–oil–water riser case, the coupled split route kept all three
 outlet phase transfers forward for the first 10 s on 60 and 120 cells. In the extended

@@ -31,6 +31,22 @@ class TwoFluidPipeThreePhaseHandoffTest {
     assertEquals(coarse, fixedBoundaryReplay(1, 0.125), 0.05);
   }
 
+  /** A prescribed physical inlet face delivers the specified feed at every legacy RK4 stage. */
+  @Test
+  void legacyRk4RetainsPrescribedThreePhaseInletRate() {
+    TwoFluidPipe pipe = configure(TwoFluidPipeThreePhaseFlowlineBenchmark.createInlet(), 1);
+    pipe.setEnableCoupledPressureMomentum(false);
+    pipe.setTimeIntegrationMethod(TimeIntegrator.Method.RK4);
+    pipe.run();
+    assertTrue(pipe.isSteadyStateConverged());
+    for (int step = 0; step < 4; step++) {
+      pipe.runTransient(0.5, UUID.randomUUID());
+      TwoFluidMassBalanceReport report = checkAcceptedInterval(pipe, 0.5);
+      assertEquals(20.0, report.getInletMassKg(Phase.TOTAL) / 0.5, 1.0e-8);
+      assertEquals(20.0, report.getOutletMassKg(Phase.TOTAL) / 0.5, 0.1);
+    }
+  }
+
   /** Checks that a small choke move changes inlet rate without reversing the riser outlet phase flux. */
   @Test
   void respondsToBackpressureCoupledChokeOpening() {
