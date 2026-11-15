@@ -195,6 +195,8 @@ double spl  = flame.soundPressureLevelDb(100.0);     // dB at 100 m
 
 Use this instead of the point-source jet-fire form when the source is an elevated
 flare tip (it accounts for stack height, wind tilt, and flame geometry).
+Height and wind speed must be finite and nonnegative. Transmissivity must be a
+finite fraction in [0, 1]. Invalid values throw `IllegalArgumentException`.
 
 ## Method 10 — Hazardous-Area Zone Classification (IEC 60079-10-1)
 

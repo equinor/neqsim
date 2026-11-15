@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import neqsim.process.safety.firewater.ActiveFireProtectionScreening.FireScenario;
 import neqsim.process.safety.firewater.FireWaterCoverageAssessment.Verdict;
 
@@ -130,6 +132,61 @@ public class FireWaterDesignTest {
         .setLineOfSightObstructed(true);
     assertTrue(mon.meetsDensityStillAir());
     assertTrue(mon.verdict().startsWith("NOT SUITABLE"));
+  }
+
+  /** Require both hydraulic inputs before publishing a supply verdict. */
+  @Test
+  void unsetOrPartialSupplyDataIsIncomplete() {
+    FireWaterCoverageAssessment assessment = new FireWaterCoverageAssessment(510.0, 5100.0);
+    assertFalse(assessment.isFlowFeasible());
+    assertFalse(assessment.isPressureFeasible());
+    assertEquals(Verdict.SUPPLY_DATA_INCOMPLETE, assessment.verdict());
+    assertTrue(assessment.recommendation().contains("spare supply flow and worst-case pressure margin"));
+
+    assessment.setSpareSupplyFlowLpm(5100.0);
+    assertTrue(assessment.isFlowFeasible());
+    assertFalse(assessment.isPressureFeasible());
+    assertEquals(Verdict.SUPPLY_DATA_INCOMPLETE, assessment.verdict());
+
+    assessment.setWorstCasePressureMarginBar(0.0, "A");
+    assertTrue(assessment.isPressureFeasible());
+    assertEquals(Verdict.COVERAGE_GAP_SUPPLY_ADEQUATE, assessment.verdict());
+
+    assessment.setSpareSupplyFlowLpm(Double.NaN);
+    assertFalse(assessment.isFlowFeasible());
+    assertTrue(assessment.isPressureFeasible());
+    assertEquals(Verdict.SUPPLY_DATA_INCOMPLETE, assessment.verdict());
+  }
+
+  /** Export unavailable hydraulic inputs as null and use the incomplete verdict in JSON. */
+  @Test
+  void nonFiniteSupplyDataIsUnavailableInJson() {
+    FireWaterCoverageAssessment assessment = new FireWaterCoverageAssessment(510.0, 5100.0);
+    for (double unavailable : new double[] {Double.NaN, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY}) {
+      assessment.setSpareSupplyFlowLpm(unavailable).setWorstCasePressureMarginBar(unavailable, "A");
+      JsonObject json = JsonParser.parseString(assessment.toJson()).getAsJsonObject();
+      assertTrue(json.get("spareSupplyFlowLpm").isJsonNull());
+      assertTrue(json.get("worstCasePressureMarginBar").isJsonNull());
+      assertFalse(json.get("flowFeasible").getAsBoolean());
+      assertFalse(json.get("pressureFeasible").getAsBoolean());
+      assertEquals(Verdict.SUPPLY_DATA_INCOMPLETE.name(), json.get("verdict").getAsString());
+    }
+  }
+
+  /** Complete coverage still requires evidence that supply flow and pressure are adequate. */
+  @Test
+  void fullyCoveredAreaStillRequiresAdequateSupply() {
+    FireWaterCoverageAssessment assessment = new FireWaterCoverageAssessment(510.0, 5100.0).setCoveredAreaM2(510.0)
+        .setExistingDeliveredFlowLpm(5100.0);
+    assertEquals(Verdict.SUPPLY_DATA_INCOMPLETE, assessment.verdict());
+
+    assessment.setSpareSupplyFlowLpm(0.0).setWorstCasePressureMarginBar(-0.1, "A");
+    assertEquals(Verdict.SUPPLY_PRESSURE_DEFICIT, assessment.verdict());
+    assessment.setSpareSupplyFlowLpm(-1.0).setWorstCasePressureMarginBar(0.0, "A");
+    assertEquals(Verdict.SUPPLY_FLOW_DEFICIT, assessment.verdict());
+
+    assessment.setSpareSupplyFlowLpm(0.0);
+    assertEquals(Verdict.COMPLIANT, assessment.verdict());
   }
 
   @Test
