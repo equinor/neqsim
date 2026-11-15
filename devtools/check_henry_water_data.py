@@ -172,8 +172,8 @@ def main():
             f"Missing estimate/other manifest {field}")
 
     expected_estimate_groups = {
-        "solvent_role_polyol_nonempirical": {"TEG", "DEG"},
-        "database_identity_alias_requires_correction": {"glycerol"},
+        # glycerol carries its own identity (CAS 56-81-5) since issue #4069.
+        "solvent_role_polyol_nonempirical": {"TEG", "DEG", "glycerol"},
         "reactive_inorganic_or_acid_speciation": {
             "hydrochloric acid", "sulfuric acid", "nitric acid", "N2O5",
             "NHÃ¢â€šâ€šOH", "NÃ¢â€šâ€šHÃ¢â€šâ€ž", "S", "SO3", "NH2OH",
@@ -186,8 +186,7 @@ def main():
     assert {
         group: len(names) for group, names in expected_estimate_groups.items()
     } == {
-        "solvent_role_polyol_nonempirical": 2,
-        "database_identity_alias_requires_correction": 1,
+        "solvent_role_polyol_nonempirical": 3,
         "reactive_inorganic_or_acid_speciation": 12,
         "unqualified_hydrocarbon_source_inventory": 125,
     }
@@ -235,7 +234,6 @@ def main():
                 f"Numerical estimate field admitted: {name}")
 
     expected_estimate_aliases = {
-        "glycerol": "TEG",
         "H2SO4": "sulfuric acid",
         "HNO3": "nitric acid",
         "NHÃ¢â€šâ€šOH": "NH2OH",
@@ -253,7 +251,8 @@ def main():
         for field in ("CASnumber", "FORMULA", "InChIKey"):
             assert alias_row[field] == canonical_row[field], (
                 f"Estimate alias identity mismatch: {alias_name}")
-    assert estimate_dispositions["glycerol"]["identity_conflict"].strip()
+    assert component_rows["glycerol"]["CASnumber"] == "56-81-5"
+    assert component_rows["glycerol"]["CASnumber"] != component_rows["TEG"]["CASnumber"]
     for name in expected_estimate_groups[
             "reactive_inorganic_or_acid_speciation"]:
         assert estimate_dispositions[name]["species_risk"].strip(), name

@@ -22,16 +22,18 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <p>
  * A first-order local Lax-Friedrichs finite-volume scheme advances mass, momentum and total energy. Every conservative
  * cell state is recovered with the caller-selected NeqSim EOS by a volume/internal-energy flash, so pressure,
- * temperature, density and acoustic speed evolve with the decompression. The pipe is rigid and adiabatic, initially
- * uniform, and connected at its downstream end to a constant-pressure receiver. The upstream end is either closed or
- * coupled to an optional rigid, adiabatic, well-mixed gas vessel. Specified Darcy friction acts only on momentum. The
- * exact vessel/pipe interface flux and outlet mass/total-enthalpy flux are committed to the inventory, while the outlet
- * flux is exported to the source-term frame.
+ * temperature, density and acoustic speed evolve with the decompression. The pipe is rigid, initially uniform, and
+ * connected at its downstream end to a constant-pressure receiver. The upstream end is either closed or coupled to an
+ * optional rigid, adiabatic, well-mixed gas vessel. The default pipe wall is adiabatic; an explicit opt-in boundary
+ * applies a constant overall heat-transfer coefficient to a fixed external temperature over every cell. Specified Darcy
+ * friction acts only on momentum. The exact vessel/pipe interface flux, distributed wall heat and outlet
+ * mass/total-enthalpy flux are committed to the inventory, while the outlet flux is exported to the source-term frame.
  * </p>
  *
  * <p>
  * The model requires one equilibrium gas phase with fixed composition. Phase appearance, reactions, forced phases,
- * solids and hydrate calculations fail closed. Heat transfer, pipe elasticity, two-sided-rupture coupling,
+ * solids and hydrate calculations fail closed. The heat-transfer coefficient and external temperature are prescribed;
+ * pipe-wall thermal capacitance, predictive fire/ambient correlations, pipe elasticity, two-sided-rupture coupling,
  * non-equilibrium slip, entrainment and solid-bearing transport are outside this model. The optional upstream vessel is
  * a lumped boundary, not a vessel nozzle, internal-wave or phase-separation model. Numerical validation is not facility
  * qualification.
@@ -52,6 +54,9 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
   private final double dischargeCoefficient;
   private final double backPressurePa;
   private final double darcyFrictionFactor;
+  private final double heatTransferCoefficientWPerM2K;
+  private final double externalTemperatureK;
+  private final double cellExternalAreaM2;
   private final double cfl;
   private final double[] massFractions;
   private final TransientBoundaryModel releaseModel = new TransientBoundaryModel();
@@ -64,8 +69,10 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
   private double upstreamVesselEnergyJ;
   private double releasedMassKg;
   private double releasedEnergyJ;
+  private double cumulativeHeatTransferJ;
   private double lastMassFlowKgS;
   private double lastEnergyFlowW;
+  private double lastHeatTransferRateW;
   private int lastSubsteps;
   private boolean releaseEnabled = true;
   private UUID lastTransientId;
@@ -114,6 +121,37 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
   public RealGasPipeDecompression(String name, SystemInterface initialGas, double lengthM, double diameterM,
       double dischargeCoefficient, double backPressurePa, double darcyFrictionFactor, double upstreamVesselVolumeM3,
       int cells, double cfl) {
+    this(name, initialGas, lengthM, diameterM, dischargeCoefficient, backPressurePa, darcyFrictionFactor,
+        upstreamVesselVolumeM3, 0.0, 0.0, cells, cfl);
+  }
+
+  /**
+   * Creates a one-sided EOS-backed transient pipe with optional vessel and distributed wall heat transfer.
+   *
+   * <p>
+   * Positive heat is transferred into the pipe according to
+   * {@code U * pi * diameter * cellLength * (externalTemperature - cellTemperature)}. The coefficient and fixed
+   * external temperature are explicit sensitivity inputs, not a wall, soil, seawater, fire or ambient correlation. Pass
+   * zero for both thermal inputs to retain the adiabatic model. The optional upstream vessel remains adiabatic.
+   * </p>
+   *
+   * @param name unique process-equipment name
+   * @param initialGas initial uniform equilibrium gas and selected EOS
+   * @param lengthM pipe length in m
+   * @param diameterM internal diameter in m
+   * @param dischargeCoefficient effective full-bore area factor in (0,1]
+   * @param backPressurePa constant absolute receiver pressure in Pa
+   * @param darcyFrictionFactor specified Darcy friction factor in [0,1]
+   * @param upstreamVesselVolumeM3 rigid upstream vessel volume in m3; zero retains the closed upstream end
+   * @param heatTransferCoefficientWPerM2K prescribed overall pipe-to-environment coefficient in W/(m2 K); zero is
+   * adiabatic
+   * @param externalTemperatureK fixed external-boundary temperature in K; zero is required for the adiabatic mode
+   * @param cells finite-volume cell count, at least 8
+   * @param cfl Courant number in (0,0.7]
+   */
+  public RealGasPipeDecompression(String name, SystemInterface initialGas, double lengthM, double diameterM,
+      double dischargeCoefficient, double backPressurePa, double darcyFrictionFactor, double upstreamVesselVolumeM3,
+      double heatTransferCoefficientWPerM2K, double externalTemperatureK, int cells, double cfl) {
     super(name);
     Objects.requireNonNull(initialGas, "initialGas");
     this.lengthM = ReleaseFlowRequest.positive(lengthM, "lengthM");
@@ -121,11 +159,19 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     this.dischargeCoefficient = ReleaseFlowRequest.positive(dischargeCoefficient, "dischargeCoefficient");
     this.backPressurePa = ReleaseFlowRequest.positive(backPressurePa, "backPressurePa");
     this.darcyFrictionFactor = ReleaseFlowRequest.nonnegative(darcyFrictionFactor, "darcyFrictionFactor");
+    this.heatTransferCoefficientWPerM2K = ReleaseFlowRequest.nonnegative(heatTransferCoefficientWPerM2K,
+        "heatTransferCoefficientWPerM2K");
     if (!Double.isFinite(upstreamVesselVolumeM3) || upstreamVesselVolumeM3 < 0.0 || dischargeCoefficient > 1.0
         || darcyFrictionFactor > 1.0 || cells < 8 || cells > 400 || !Double.isFinite(cfl) || cfl <= 0.0 || cfl > 0.7) {
       throw new IllegalArgumentException("Invalid decompression discretization or geometry");
     }
+    if ((heatTransferCoefficientWPerM2K == 0.0 && externalTemperatureK != 0.0) || (heatTransferCoefficientWPerM2K > 0.0
+        && (!Double.isFinite(externalTemperatureK) || externalTemperatureK <= 0.0))) {
+      throw new IllegalArgumentException(
+          "Heat-transfer coefficient and external temperature must both define a boundary");
+    }
     this.upstreamVesselVolumeM3 = upstreamVesselVolumeM3;
+    this.externalTemperatureK = externalTemperatureK;
     this.cfl = cfl;
     compositionReference = initialGas.clone();
     new ThermodynamicOperations(compositionReference).TPflash();
@@ -137,6 +183,7 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     }
     areaM2 = Math.PI * diameterM * diameterM / 4.0;
     cellVolumeM3 = areaM2 * lengthM / cells;
+    cellExternalAreaM2 = Math.PI * diameterM * lengthM / cells;
     density = new double[cells];
     momentum = new double[cells];
     energy = new double[cells];
@@ -162,6 +209,7 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     Flux outlet = boundaryFlux(states[states.length - 1]);
     lastMassFlowKgS = outlet.mass * areaM2;
     lastEnergyFlowW = outlet.energy * areaM2;
+    lastHeatTransferRateW = nextHeatTransferRate(states);
     currentResult = result(states, upstreamState(upstreamVesselMassKg, upstreamVesselEnergyJ, states[0]), outlet.mass);
     setCalculationIdentifier(id);
   }
@@ -190,6 +238,7 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     double[] candidateEnergy = energy.clone();
     double candidateReleasedMass = releasedMassKg;
     double candidateReleasedEnergy = releasedEnergyJ;
+    double candidateHeatTransfer = cumulativeHeatTransferJ;
     double candidateUpstreamMass = upstreamVesselMassKg;
     double candidateUpstreamEnergy = upstreamVesselEnergyJ;
     double elapsed = 0.0;
@@ -217,6 +266,7 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
       candidateUpstreamEnergy = next.upstreamEnergy;
       candidateReleasedMass += next.outlet.mass * areaM2 * step;
       candidateReleasedEnergy += next.outlet.energy * areaM2 * step;
+      candidateHeatTransfer += next.heatTransferJ;
       outlet = next.outlet;
       states = next.states;
       upstream = next.upstream;
@@ -224,8 +274,9 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     }
     close(totalMass(candidateDensity) + candidateUpstreamMass + candidateReleasedMass, initialMassKg, initialMassKg,
         "REAL_GAS_PIPE_TOTAL_MASS_CLOSURE_FAILED");
-    close(totalEnergy(candidateEnergy) + candidateUpstreamEnergy + candidateReleasedEnergy, initialEnergyJ,
-        initialEnergyJ, "REAL_GAS_PIPE_TOTAL_ENERGY_CLOSURE_FAILED");
+    close(totalEnergy(candidateEnergy) + candidateUpstreamEnergy + candidateReleasedEnergy,
+        initialEnergyJ + candidateHeatTransfer, initialEnergyJ + candidateHeatTransfer,
+        "REAL_GAS_PIPE_TOTAL_ENERGY_CLOSURE_FAILED");
     ReleaseFlowResult candidateResult = result(states, upstream, outlet.mass);
     density = candidateDensity;
     momentum = candidateMomentum;
@@ -234,8 +285,10 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     upstreamVesselEnergyJ = candidateUpstreamEnergy;
     releasedMassKg = candidateReleasedMass;
     releasedEnergyJ = candidateReleasedEnergy;
+    cumulativeHeatTransferJ = candidateHeatTransfer;
     lastMassFlowKgS = outlet.mass * areaM2;
     lastEnergyFlowW = outlet.energy * areaM2;
+    lastHeatTransferRateW = substeps == 0 ? 0.0 : nextHeatTransferRate(states);
     lastSubsteps = substeps;
     lastTransientId = id;
     lastTransientDurationS = dt;
@@ -261,6 +314,7 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
       nextRho[cell] = rho[cell] - scale * (faces[cell + 1].mass - faces[cell].mass);
       nextMom[cell] = mom[cell] - scale * (faces[cell + 1].momentum - faces[cell].momentum);
       nextEnergy[cell] = totalEnergy[cell] - scale * (faces[cell + 1].energy - faces[cell].energy);
+      nextEnergy[cell] += dt * heatTransferRate(states[cell]) / cellVolumeM3;
       double velocity = nextMom[cell] / nextRho[cell];
       nextMom[cell] -= dt * darcyFrictionFactor * nextRho[cell] * velocity * Math.abs(velocity) / (2.0 * diameterM);
     }
@@ -273,8 +327,12 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
       nextUpstreamEnergy -= faces[0].energy * areaM2 * dt;
       nextUpstream = upstreamState(nextUpstreamMass, nextUpstreamEnergy, nextStates[0]);
     }
+    double heatTransferRate = 0.0;
+    for (CellState state : states) {
+      heatTransferRate += heatTransferRate(state);
+    }
     return new Step(nextRho, nextMom, nextEnergy, nextStates, nextUpstream, nextUpstreamMass, nextUpstreamEnergy,
-        faces[cells]);
+        faces[cells], heatTransferRate * dt);
   }
 
   private double stableStep(CellState[] states, CellState upstream, double upstreamMass) {
@@ -292,7 +350,36 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
         step = Math.min(step, 0.2 * upstreamMass / (inlet.mass * areaM2));
       }
     }
+    if (hasDistributedHeatTransfer()) {
+      for (CellState state : states) {
+        double heatRate = Math.abs(heatTransferRate(state));
+        if (heatRate > 0.0) {
+          double thermalCapacity = state.density * cellVolumeM3
+              * ReleaseFlowRequest.positive(state.fluid.getCv("J/kgK"), "EOS constant-volume heat capacity")
+              * state.temperatureK;
+          step = Math.min(step, 0.1 * thermalCapacity / heatRate);
+        }
+      }
+    }
     return step;
+  }
+
+  private double heatTransferRate(CellState state) {
+    return hasDistributedHeatTransfer()
+        ? heatTransferCoefficientWPerM2K * cellExternalAreaM2 * (externalTemperatureK - state.temperatureK)
+        : 0.0;
+  }
+
+  private double nextHeatTransferRate(CellState[] states) {
+    double sum = 0.0;
+    for (CellState state : states) {
+      sum += heatTransferRate(state);
+    }
+    return sum;
+  }
+
+  private boolean hasDistributedHeatTransfer() {
+    return heatTransferCoefficientWPerM2K > 0.0;
   }
 
   private boolean hasUpstreamVessel() {
@@ -405,9 +492,15 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     stations.put(Station.THROAT_CRITICAL, opening);
     stations.put(Station.ORIFICE_EXIT, opening);
     List<Diagnostic> diagnostics = new ArrayList<Diagnostic>();
-    diagnostics.add(new Diagnostic("REAL_GAS_TRANSIENT_PIPE_ASSUMPTIONS", hasUpstreamVessel()
-        ? "One-dimensional rigid adiabatic equilibrium gas; lumped rigid upstream vessel and constant-pressure receiver"
-        : "One-dimensional rigid adiabatic equilibrium gas; closed upstream end and constant-pressure receiver"));
+    String thermalBoundary = hasDistributedHeatTransfer()
+        ? "distributed constant-U heat exchange to a fixed external temperature"
+        : "adiabatic pipe wall";
+    diagnostics.add(new Diagnostic("REAL_GAS_TRANSIENT_PIPE_ASSUMPTIONS",
+        hasUpstreamVessel()
+            ? "One-dimensional rigid equilibrium gas; " + thermalBoundary
+                + "; lumped rigid adiabatic upstream vessel and constant-pressure receiver"
+            : "One-dimensional rigid equilibrium gas; " + thermalBoundary
+                + "; closed upstream end and constant-pressure receiver"));
     diagnostics.add(new Diagnostic("EOS_FINITE_VOLUME_LINE_PACKING", "EOS=" + compositionReference.getModelName()
         + ", cells=" + states.length + ", CFL=" + cfl + ", Darcy friction=" + darcyFrictionFactor));
     diagnostics.add(
@@ -531,6 +624,13 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     provenance.put("pipeCells", Integer.toString(density.length));
     provenance.put("pipeCfl", Double.toString(cfl));
     provenance.put("pipeDarcyFrictionFactor", Double.toString(darcyFrictionFactor));
+    provenance.put("pipeHeatTransferBoundary",
+        hasDistributedHeatTransfer() ? "CONSTANT_U_FIXED_EXTERNAL_TEMPERATURE" : "ADIABATIC");
+    provenance.put("pipeHeatTransferCoefficientWPerM2K", Double.toString(heatTransferCoefficientWPerM2K));
+    provenance.put("pipeExternalAreaM2", Double.toString(cellExternalAreaM2 * density.length));
+    if (hasDistributedHeatTransfer()) {
+      provenance.put("pipeExternalTemperatureK", Double.toString(externalTemperatureK));
+    }
     provenance.put("pipeIntegrator", hasUpstreamVessel() ? "EOS_VU_LUMPED_VESSEL_FINITE_VOLUME_PIPE_LLF_V1"
         : "EOS_VU_FINITE_VOLUME_LOCAL_LAX_FRIEDRICHS_V1");
     provenance.put("pipeThermodynamicModel", compositionReference.getModelName());
@@ -548,6 +648,8 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     }
     provenance.put("cumulativeReleasedMassKg", Double.toString(releasedMassKg));
     provenance.put("cumulativeReleasedTotalEnergyJ", Double.toString(releasedEnergyJ));
+    provenance.put("cumulativePipeHeatTransferJ", Double.toString(cumulativeHeatTransferJ));
+    provenance.put("instantaneousPipeHeatTransferW", Double.toString(lastHeatTransferRateW));
     provenance.put("instantaneousMassFlowKgS", Double.toString(lastMassFlowKgS));
     provenance.put("instantaneousTotalEnergyFlowW", Double.toString(lastEnergyFlowW));
     provenance.put("inventoryLastSubsteps", Integer.toString(lastSubsteps));
@@ -624,6 +726,31 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     return releasedEnergyJ;
   }
 
+  /** @return true when the pipe has a prescribed distributed wall heat-transfer boundary */
+  public boolean hasDistributedWallHeatTransfer() {
+    return hasDistributedHeatTransfer();
+  }
+
+  /** @return prescribed overall heat-transfer coefficient in W/(m2 K), or zero for adiabatic */
+  public double getHeatTransferCoefficientWPerM2K() {
+    return heatTransferCoefficientWPerM2K;
+  }
+
+  /** @return fixed external-boundary temperature in K, or zero for adiabatic */
+  public double getExternalTemperatureK() {
+    return externalTemperatureK;
+  }
+
+  /** @return cumulative heat transferred into the pipe in J; cooling is negative */
+  public synchronized double getCumulativeHeatTransferJ() {
+    return cumulativeHeatTransferJ;
+  }
+
+  /** @return latest distributed heat-transfer rate into the pipe in W; cooling is negative */
+  public synchronized double getLastHeatTransferRateW() {
+    return lastHeatTransferRateW;
+  }
+
   /** @return current cell-centre absolute pressures in Pa, ordered closed end to release end */
   public synchronized double[] getPressureProfilePa() {
     CellState[] states = cellStates(density, momentum, energy);
@@ -697,9 +824,10 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
     private final double upstreamMass;
     private final double upstreamEnergy;
     private final Flux outlet;
+    private final double heatTransferJ;
 
     private Step(double[] density, double[] momentum, double[] energy, CellState[] states, CellState upstream,
-        double upstreamMass, double upstreamEnergy, Flux outlet) {
+        double upstreamMass, double upstreamEnergy, Flux outlet, double heatTransferJ) {
       this.density = density;
       this.momentum = momentum;
       this.energy = energy;
@@ -708,6 +836,7 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
       this.upstreamMass = upstreamMass;
       this.upstreamEnergy = upstreamEnergy;
       this.outlet = outlet;
+      this.heatTransferJ = heatTransferJ;
     }
   }
 
@@ -721,7 +850,7 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
 
     @Override
     public String getModelVersion() {
-      return "1.1.0";
+      return "1.2.0";
     }
 
     @Override
@@ -732,13 +861,14 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
 
     @Override
     public ReleaseModelEvidence getEvidence() {
-      return new ReleaseModelEvidence("real-gas-pipe-decompression:1.1.0",
+      return new ReleaseModelEvidence("real-gas-pipe-decompression:1.2.0",
           Arrays.asList("ONE_DIMENSIONAL_PIPE", "SINGLE_EQUILIBRIUM_GAS", "EOS_PROPERTY_EVOLUTION",
               "TRANSIENT_LINE_PACKING", "OPTIONAL_LUMPED_UPSTREAM_GAS_VESSEL",
-              "CONSERVATIVE_MASS_MOMENTUM_TOTAL_ENERGY", "MIXTURE_SOLID_RISK_ASSESSED"),
-          Arrays.asList("NO_HEAT_TRANSFER", "NO_PIPE_ELASTICITY", "NO_TWO_SIDED_RUPTURE",
-              "NO_VESSEL_INTERNAL_WAVES_OR_PHASE_SEPARATION", "NO_MULTIPHASE_SLIP", "NO_SOLID_BEARING_FLOW",
-              "NO_EXPERIMENTAL_QUALIFICATION"),
+              "OPTIONAL_DISTRIBUTED_CONSTANT_U_HEAT_TRANSFER", "CONSERVATIVE_MASS_MOMENTUM_TOTAL_ENERGY",
+              "MIXTURE_SOLID_RISK_ASSESSED"),
+          Arrays.asList("NO_PIPE_WALL_THERMAL_CAPACITANCE", "NO_PREDICTIVE_FIRE_OR_AMBIENT_CORRELATION",
+              "NO_PIPE_ELASTICITY", "NO_TWO_SIDED_RUPTURE", "NO_VESSEL_INTERNAL_WAVES_OR_PHASE_SEPARATION",
+              "NO_MULTIPHASE_SLIP", "NO_SOLID_BEARING_FLOW", "NO_EXPERIMENTAL_QUALIFICATION"),
           Arrays.asList(
               new ReleaseModelEvidence.Record("real-gas-pipe-conservation", ReleaseModelEvidence.Type.CONSERVATION,
                   "src/test/java/neqsim/process/safety/release/RealGasPipeDecompressionTest.java",
@@ -757,7 +887,15 @@ public final class RealGasPipeDecompression extends ProcessEquipmentBaseClass im
               new ReleaseModelEvidence.Record("real-gas-vessel-pipe-refinement", ReleaseModelEvidence.Type.NUMERICAL,
                   "src/test/java/neqsim/process/safety/release/RealGasPipeDecompressionTest.java",
                   "Vessel pressure and discharged mass are checked under CFL refinement and nearby vessel volumes",
-                  false)));
+                  false),
+              new ReleaseModelEvidence.Record("real-gas-pipe-distributed-heat-conservation",
+                  ReleaseModelEvidence.Type.CONSERVATION,
+                  "src/test/java/neqsim/process/safety/release/RealGasPipeDecompressionTest.java",
+                  "Pipe plus vessel plus discharge energy closes against accumulated distributed wall heat", false),
+              new ReleaseModelEvidence.Record("real-gas-pipe-distributed-heat-refinement",
+                  ReleaseModelEvidence.Type.NUMERICAL,
+                  "src/test/java/neqsim/process/safety/release/RealGasPipeDecompressionTest.java",
+                  "Heating and cooling signs, zero-coefficient identity and CFL refinement are checked", false)));
     }
   }
 }

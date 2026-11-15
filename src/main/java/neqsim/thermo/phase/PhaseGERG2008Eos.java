@@ -92,6 +92,9 @@ public class PhaseGERG2008Eos extends PhaseEos {
    * @param modelType the GERG model type to use
    */
   public void setGergModelType(GERG2008Type modelType) {
+    if (gergModelType != modelType) {
+      invalidateCache();
+    }
     this.gergModelType = modelType;
     if (modelType == GERG2008Type.HYDROGEN_ENHANCED) {
       thermoPropertyModelName = "GERG2008-H2 Eos";
@@ -371,12 +374,8 @@ public class PhaseGERG2008Eos extends PhaseEos {
    * @return dimensionless residual Helmholtz energy
    */
   protected double residualHelmholtzEnergy(double molarDensity, double[] composition) {
-    PhaseGERG2008Eos evaluationPhase = clone();
-    for (int i = 0; i < composition.length; i++) {
-      evaluationPhase.getComponent(i).setx(composition[i]);
-    }
-    NeqSimGERG2008 gerg = new NeqSimGERG2008(evaluationPhase, gergModelType);
-    return gerg.getResidualHelmholtzEnergy(temperature, molarDensity);
+    NeqSimGERG2008 gerg = new NeqSimGERG2008(this, gergModelType);
+    return gerg.getResidualHelmholtzEnergy(temperature, molarDensity, composition);
   }
 
   /** {@inheritDoc} */

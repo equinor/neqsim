@@ -62,6 +62,14 @@ public class OptimizedVUflash extends Flash {
   private boolean lastRunConverged = false;
   /** Whether the most recent warm-initialized run required a cold retry. */
   private boolean coldFallbackUsed = false;
+  /** Maximum temperature iterations of the equilibrium polish stage. */
+  private static final int POLISH_MAX_ITERATIONS = 30;
+  /** Scaled volume tolerance of the equilibrium polish stage. */
+  private static final double POLISH_VOLUME_TOL = 1.0e-9;
+  /** Scaled internal-energy tolerance of the equilibrium polish stage. */
+  private static final double POLISH_ENERGY_TOL = 1.0e-9;
+  /** Whether the most recent run needed the equilibrium polish stage. */
+  private volatile boolean equilibriumPolishUsed = false;
 
   /**
    * Constructor for OptimizedVUflash.
@@ -360,6 +368,7 @@ public class OptimizedVUflash extends Flash {
     double startPressure = system.getPressure();
     double startTemperature = system.getTemperature();
     coldFallbackUsed = false;
+    equilibriumPolishUsed = false;
     try {
       // Every Newton-loop TP flash may reuse K-values. The initialization flash does so only when
       // the caller identifies the state as the previous point on a continuous dynamic trajectory.
@@ -372,6 +381,15 @@ public class OptimizedVUflash extends Flash {
         system.setPressure(startPressure);
         system.setTemperature(startTemperature);
         solveFromCurrentState(false, true);
+        solutionAcceptable = isSolutionAcceptable();
+      }
+      if (!solutionAcceptable && isFiniteState()) {
+        // The Q-function Newton step uses frozen-composition derivatives. Close to a bubble point (a small gas cap
+        // in a liquid-filled vessel) these understate dV/dP several-fold because they ignore evaporation, so the
+        // damped iteration oscillates and stalls a few per mille from the solution, or jumps into the single-phase
+        // region where V(P) is almost flat. Polish from the last iterate along the constant-volume path.
+        equilibriumPolishUsed = true;
+        polishOnConstantVolumePath();
         solutionAcceptable = isSolutionAcceptable();
       }
       lastRunConverged = solutionAcceptable;
@@ -399,6 +417,184 @@ public class OptimizedVUflash extends Flash {
    */
   public boolean isLastRunConverged() {
     return lastRunConverged;
+  }
+
+  /**
+   * Returns whether the most recent run needed the equilibrium polish stage after the Q-function Newton iteration (and
+   * its cold retry) missed the specification.
+   *
+   * @return true when the polish stage ran
+   */
+  public boolean wasEquilibriumPolishUsed() {
+    return equilibriumPolishUsed;
+  }
+
+  /**
+   * Flashes the system at the given pressure and temperature.
+   *
+   * @param pressure pressure in bara
+   * @param temperature temperature in K
+   * @return scaled volume residual {@code (V - Vspec)/Vspec}, NaN when the state is not finite
+   */
+  private double flashVolumeResidual(double pressure, double temperature) {
+    system.setPressure(pressure);
+    system.setTemperature(temperature);
+    tpFlash.run();
+    system.init(2);
+    return (system.getVolume() - Vspec) / Vspec;
+  }
+
+  /**
+   * Returns the scaled internal-energy residual of the state currently held by the system.
+   *
+   * @return {@code (U - Uspec)/max(|Uspec|, 1)} with {@code U = H - PV}
+   */
+  private double currentEnergyResidual() {
+    double energy = system.getEnthalpy() - system.getPressure() * system.getVolume();
+    return (energy - Uspec) / Math.max(Math.abs(Uspec), 1.0);
+  }
+
+  /**
+   * Solves {@code V(P, T) = Vspec} for pressure at fixed temperature. Volume falls monotonically with pressure, also
+   * across phase boundaries, so the root is bracketed by geometric expansion and refined by Illinois false position.
+   * Leaves the system flashed at the returned pressure.
+   *
+   * @param temperature temperature in K
+   * @param pressureGuess starting pressure in bara
+   * @return pressure in bara, or NaN when no root could be bracketed
+   */
+  private double solvePressureForVolume(double temperature, double pressureGuess) {
+    double pA = Math.max(MIN_PRESSURE, Math.min(MAX_PRESSURE, pressureGuess));
+    double fA = flashVolumeResidual(pA, temperature);
+    if (!Double.isFinite(fA)) {
+      return Double.NaN;
+    }
+    if (Math.abs(fA) < POLISH_VOLUME_TOL) {
+      return pA;
+    }
+    double factor = 1.02;
+    double pB = pA;
+    double fB = fA;
+    boolean bracketed = false;
+    for (int k = 0; k < 80; k++) {
+      double next = fA > 0.0 ? pB * factor : pB / factor;
+      next = Math.max(MIN_PRESSURE, Math.min(MAX_PRESSURE, next));
+      if (next == pB) {
+        return Double.NaN;
+      }
+      pB = next;
+      fB = flashVolumeResidual(pB, temperature);
+      if (!Double.isFinite(fB)) {
+        return Double.NaN;
+      }
+      if (Math.abs(fB) < POLISH_VOLUME_TOL) {
+        return pB;
+      }
+      if ((fB > 0.0) != (fA > 0.0)) {
+        bracketed = true;
+        break;
+      }
+      pA = pB;
+      fA = fB;
+      factor = Math.min(factor * 1.5, 2.0);
+    }
+    if (!bracketed) {
+      return Double.NaN;
+    }
+    double pC = pB;
+    int side = 0;
+    for (int k = 0; k < 100; k++) {
+      pC = (pA * fB - pB * fA) / (fB - fA);
+      if (!(pC > Math.min(pA, pB) && pC < Math.max(pA, pB))) {
+        pC = 0.5 * (pA + pB);
+      }
+      double fC = flashVolumeResidual(pC, temperature);
+      if (!Double.isFinite(fC)) {
+        return Double.NaN;
+      }
+      if (Math.abs(fC) < POLISH_VOLUME_TOL || Math.abs(pB - pA) < 1.0e-12 * pC) {
+        return pC;
+      }
+      if ((fC > 0.0) == (fB > 0.0)) {
+        pB = pC;
+        fB = fC;
+        if (side == -1) {
+          fA *= 0.5;
+        }
+        side = -1;
+      } else {
+        pA = pC;
+        fA = fC;
+        if (side == 1) {
+          fB *= 0.5;
+        }
+        side = 1;
+      }
+    }
+    flashVolumeResidual(pC, temperature);
+    return pC;
+  }
+
+  /**
+   * Robust fallback that meets both specifications from the last Newton iterate. The volume specification is solved
+   * exactly for pressure at each trial temperature ({@link #solvePressureForVolume(double, double)}); along that
+   * constant-volume path the internal energy rises monotonically with temperature, so a guarded secant iteration on
+   * temperature meets the energy specification. Unlike the Q-function Newton step this uses equilibrium (not
+   * frozen-composition) behaviour, so it also converges next to a bubble point and when the iterate has left the
+   * two-phase region. Leaves the system at the best state found.
+   */
+  private void polishOnConstantVolumePath() {
+    try {
+      double t0 = system.getTemperature();
+      double p = solvePressureForVolume(t0, system.getPressure());
+      if (!Double.isFinite(p)) {
+        return;
+      }
+      double h0 = currentEnergyResidual();
+      if (Math.abs(h0) < POLISH_ENERGY_TOL) {
+        return;
+      }
+      double t1 = Math.max(MIN_TEMPERATURE, Math.min(MAX_TEMPERATURE, t0 + (h0 > 0.0 ? -0.05 : 0.05)));
+      double p1 = solvePressureForVolume(t1, p);
+      if (!Double.isFinite(p1)) {
+        solvePressureForVolume(t0, p);
+        return;
+      }
+      double h1 = currentEnergyResidual();
+      for (int k = 0; k < POLISH_MAX_ITERATIONS && Math.abs(h1) >= POLISH_ENERGY_TOL; k++) {
+        double slope = (h1 - h0) / (t1 - t0);
+        if (!(slope > 0.0) || !Double.isFinite(slope)) {
+          break;
+        }
+        double t2 = t1 - h1 / slope;
+        t2 = Math.max(t1 - 10.0, Math.min(t1 + 10.0, t2));
+        t2 = Math.max(MIN_TEMPERATURE, Math.min(MAX_TEMPERATURE, t2));
+        double p2 = solvePressureForVolume(t2, p1);
+        if (!Double.isFinite(p2)) {
+          break;
+        }
+        t0 = t1;
+        h0 = h1;
+        t1 = t2;
+        p1 = p2;
+        h1 = currentEnergyResidual();
+      }
+      // Leave the system flashed at the last (best) constant-volume point.
+      solvePressureForVolume(t1, p1);
+    } catch (RuntimeException ex) {
+      logger.warn("OptimizedVUflash equilibrium polish failed: " + ex.getMessage());
+    }
+  }
+
+  /**
+   * Returns whether the system holds a finite, positive pressure and temperature to continue from.
+   *
+   * @return true when continuation from the current iterate is meaningful
+   */
+  private boolean isFiniteState() {
+    double pressure = system.getPressure();
+    double temperature = system.getTemperature();
+    return Double.isFinite(pressure) && Double.isFinite(temperature) && pressure > 0.0 && temperature > 0.0;
   }
 
   /**

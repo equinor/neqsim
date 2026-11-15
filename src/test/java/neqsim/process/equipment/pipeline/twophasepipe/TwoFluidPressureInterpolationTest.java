@@ -36,25 +36,28 @@ class TwoFluidPressureInterpolationTest {
   }
 
   @Test
-  void correctedVelocitySelectsTheSameSignedDonorForMassMomentumAndEnergy() {
+  void physicalAndPressureCorrectionTransportRetainTheirOwnDonors() {
     AUSMPlusFluxCalculator calculator = new AUSMPlusFluxCalculator();
     PhaseState left = new PhaseState(2.0, 1.0, 1.2e5, 10.0, 100.0, 0.25);
     PhaseState right = new PhaseState(5.0, 1.0, 1.0e5, 10.0, 700.0, 0.75);
     double area = 0.2;
     PhaseFlux original = calculator.calcPhaseFlux(left, right, area);
-    double initialFaceVelocity = original.massFlux / (left.holdup * left.density * area);
     for (double correction : new double[] {-3.0, 3.0}) {
-      double faceVelocity = initialFaceVelocity + correction;
-      PhaseState donor = faceVelocity >= 0.0 ? left : right;
+      PhaseState correctionDonor = correction > 0.0 ? left : right;
+      double correctionMass = correction * correctionDonor.holdup * correctionDonor.density * area;
       PhaseFlux corrected = calculator.calcPhaseFlux(left, right, area, correction);
-      double expectedMass = donor.holdup * donor.density * faceVelocity * area;
-      assertEquals(expectedMass, corrected.massFlux, 1.0e-14);
-      assertEquals(expectedMass * donor.velocity + original.interfaceHoldup * original.interfacePressure * area,
-          corrected.momentumFlux, 1.0e-12);
-      assertEquals(expectedMass * donor.enthalpy, corrected.energyFlux, 1.0e-10);
-      assertEquals(donor.holdup * faceVelocity, corrected.holdupFlux, 1.0e-14);
+      assertEquals(original.massFlux + correctionMass, corrected.massFlux, 1.0e-14);
+      assertEquals(original.momentumFlux + correctionMass * correctionDonor.velocity, corrected.momentumFlux, 1.0e-12);
+      assertEquals(original.energyFlux + correctionMass * correctionDonor.enthalpy, corrected.energyFlux, 1.0e-10);
+      assertEquals(original.holdupFlux + correctionDonor.holdup * correction, corrected.holdupFlux, 1.0e-14);
       assertEquals(original.interfacePressure, corrected.interfacePressure, 0.0);
       assertEquals(original.interfaceHoldup, corrected.interfaceHoldup, 0.0);
+      assertEquals(original.forwardMassFlux + Math.max(0.0, correctionMass), corrected.forwardMassFlux, 1.0e-14);
+      assertEquals(original.reverseMassFlux + Math.max(0.0, -correctionMass), corrected.reverseMassFlux, 1.0e-14);
+      assertEquals(original.forwardAdvectiveMomentumFlux + Math.max(0.0, correctionMass) * correctionDonor.velocity,
+          corrected.forwardAdvectiveMomentumFlux, 1.0e-14);
+      assertEquals(original.reverseAdvectiveMomentumFlux + Math.min(0.0, correctionMass) * correctionDonor.velocity,
+          corrected.reverseAdvectiveMomentumFlux, 1.0e-14);
 
       PhaseState reversedLeft = new PhaseState(right.density, -right.velocity, right.pressure, right.soundSpeed,
           right.enthalpy, right.holdup);

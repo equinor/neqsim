@@ -1,5 +1,6 @@
 package neqsim.thermo.util.gerg;
 
+import java.util.Arrays;
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
@@ -64,6 +65,84 @@ public class GERG2008 {
   double[][] taup = new double[MaxFlds + 1][MaxTrmP + 1];
   double[][] taupijk = new double[MaxFlds + 1][MaxTrmM + 1];
   double dPdDsave;
+  private final doubleW[][] pressureWork = newDerivativeArray();
+  private final doubleW[][] energyWork = newDerivativeArray();
+  private final double[][] densityCompositions = new double[2][MaxFlds + 1];
+  private final double[] densityTemperatures = {Double.NaN, Double.NaN};
+  private final double[] densityPressures = new double[2];
+  private final double[] phaseDensities = new double[2];
+  private final boolean[] densityLegacyRefinement = new boolean[2];
+
+  /**
+   * Allocate the fixed derivative workspace required by the GERG kernel.
+   *
+   * @return initialized derivative workspace
+   */
+  private static doubleW[][] newDerivativeArray() {
+    doubleW[][] work = new doubleW[4][4];
+    for (int i = 0; i < work.length; i++) {
+      for (int j = 0; j < work[i].length; j++) {
+        work[i][j] = new doubleW(0.0);
+      }
+    }
+    return work;
+  }
+
+  /**
+   * Evaluates the residual Helmholtz energy at explicit density and composition.
+   *
+   * @param temperature temperature in K
+   * @param density density in mol/L
+   * @param composition normalized GERG mole fractions
+   * @return dimensionless molar residual Helmholtz energy
+   */
+  double residualEnergy(double temperature, double density, double[] composition) {
+    AlpharGERG(1, 0, temperature, density, composition, energyWork);
+    return energyWork[0][0].val;
+  }
+
+  /**
+   * Solve and cache the requested phase branch for an exact repeated state.
+   *
+   * @param flag GERG density flag, 0 for vapor or 2 for liquid
+   * @param temperature temperature in K
+   * @param pressure pressure in kPa
+   * @param composition normalized GERG mole fractions
+   * @param legacyRefinement retain the baseline root-refinement sequence for envelope finite differences
+   * @return density in mol/L
+   */
+  double phaseDensity(int flag, double temperature, double pressure, double[] composition, boolean legacyRefinement) {
+    int branch = flag / 2;
+    // A cache hit must also leave the kernel at the same T and x as a fresh solve. The reducing-function
+    // evaluator can otherwise follow a different numerical history during nested envelope differences.
+    if (temperature == Told && temperature == densityTemperatures[branch] && pressure == densityPressures[branch]
+        && legacyRefinement == densityLegacyRefinement[branch] && Arrays.equals(composition, xold)
+        && Arrays.equals(composition, densityCompositions[branch])) {
+      return phaseDensities[branch];
+    }
+    doubleW density = new doubleW(0.0);
+    intW error = new intW(0);
+    if (flag == 2 && pressure > epsilon) {
+      doubleW calculatedPressure = new doubleW(0.0);
+      doubleW compressibility = new doubleW(0.0);
+      density.val = ReferenceEosLiquidDensitySolver.solve(pressure, trialDensity -> {
+        PressureGERG(temperature, trialDensity, composition, calculatedPressure, compressibility);
+        return calculatedPressure.val;
+      }, legacyRefinement ? null : () -> dPdDsave);
+    }
+    if (!(density.val > 0.0) || !Double.isFinite(density.val)) {
+      density.val = 0.0;
+      DensityGERG(flag, temperature, pressure, composition, density, error, new StringW(""));
+    }
+    if (error.val == 0 && Double.isFinite(density.val)) {
+      densityTemperatures[branch] = temperature;
+      densityPressures[branch] = pressure;
+      phaseDensities[branch] = density.val;
+      densityLegacyRefinement[branch] = legacyRefinement;
+      System.arraycopy(composition, 0, densityCompositions[branch], 0, composition.length);
+    }
+    return density.val;
+  }
 
   /**
    * MolarMassGERG.
@@ -125,12 +204,7 @@ public class GERG2008 {
     // - This variable is cached in the common variables for use in the iterative
     // density solver, but not returned as an argument.
 
-    doubleW[][] ar = new doubleW[4][4];
-    for (int i = 0; i < 4; i++) {
-      for (int j = 0; j < 4; j++) {
-        ar[i][j] = new doubleW(0.0d);
-      }
-    }
+    doubleW[][] ar = pressureWork;
     AlpharGERG(0, 0, T, D, x, ar);
 
     Z.val = 1 + ar[0][1].val;
@@ -838,6 +912,7 @@ public class GERG2008 {
     for (int i = 1; i <= MaxFlds; ++i) {
       xold[i] = 0;
     }
+    Arrays.fill(densityTemperatures, Double.NaN);
     Told = 0;
 
     // Molar masses [g/mol]

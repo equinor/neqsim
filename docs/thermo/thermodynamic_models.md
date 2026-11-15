@@ -435,6 +435,12 @@ double density = fluid.getPhase(0).getDensity_EOSCG();
 | `SystemVegaEos` | Vega equation | Specialized applications |
 | `SystemAmmoniaEos` | Gao 2020 Helmholtz reference equation | Pure ammonia |
 
+For subcritical liquid hydrogen with the Leachman EOS, NeqSim checks the
+dense-root interval above the isomer's critical density using Chebyshev
+refinement. The exact Leachman pressure and pressure slope qualify the root.
+A finer scan and bisection handle cases where the faster search cannot close
+the pressure equation.
+
 `PhaseSpanWagnerEos` caches its pure-CO2 reference-EOS state. Repeating initialization at
 unchanged temperature, pressure and effective phase selection republishes the same coherent
 density, molar volume, Z, fugacity, caloric state and pressure derivatives. Changing any of

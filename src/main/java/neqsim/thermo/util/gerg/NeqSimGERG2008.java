@@ -1,9 +1,9 @@
 package neqsim.thermo.util.gerg;
 
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
-import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
-import org.netlib.util.intW;
+import neqsim.thermo.phase.PhaseGERG2008Eos;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -26,22 +26,19 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class NeqSimGERG2008 {
   /**
-   * Cache of initialized GERG-2008 model instances by type. The SetupGERG() method initializes ~3000 lines of constant
-   * parameters, so caching provides significant performance improvement for repeated calculations.
+   * Each worker owns its GERG kernel. The kernel stores mutable reducing-function and derivative work data.
    */
-  private static final ConcurrentHashMap<GERG2008Type, GERG2008> MODEL_CACHE = new ConcurrentHashMap<>();
+  private static final ConcurrentHashMap<GERG2008Type, ThreadLocal<GERG2008>> MODEL_CACHE = new ConcurrentHashMap<>();
 
   double[] normalizedGERGComposition = new double[22 + 1];
   double[] notNormalizedGERGComposition = new double[22 + 1];
   PhaseInterface phase = null;
-  GERG2008 GERG2008;
   private GERG2008Type modelType = GERG2008Type.STANDARD;
 
   /**
    * Constructor for NeqSimGERG2008.
    */
   public NeqSimGERG2008() {
-    this.GERG2008 = getCachedModel(GERG2008Type.STANDARD);
   }
 
   /**
@@ -61,30 +58,20 @@ public class NeqSimGERG2008 {
    */
   public NeqSimGERG2008(PhaseInterface phase, GERG2008Type modelType) {
     this.modelType = modelType;
-    this.GERG2008 = getCachedModel(modelType);
     this.setPhase(phase);
   }
 
   /**
-   * Gets a cached and initialized GERG-2008 model instance for the specified type. If no cached instance exists,
-   * creates one and initializes it with SetupGERG(). This method is thread-safe.
+   * Gets the current thread's initialized GERG kernel for this wrapper's model.
    *
-   * <p>
-   * Performance note: The SetupGERG() method initializes approximately 3000 lines of constant parameters for the
-   * GERG-2008 equation of state. Caching these initialized models provides significant performance improvement for
-   * applications that make repeated property calculations, such as compressor performance estimation where hundreds of
-   * flash calculations may be required.
-   * </p>
-   *
-   * @param type the GERG-2008 model variant (STANDARD or HYDROGEN_ENHANCED)
-   * @return a cached, initialized GERG2008 instance
+   * @return initialized thread-confined GERG kernel
    */
-  private static GERG2008 getCachedModel(GERG2008Type type) {
-    return MODEL_CACHE.computeIfAbsent(type, t -> {
-      GERG2008 model = createNewModel(t);
+  private GERG2008 kernel() {
+    return MODEL_CACHE.computeIfAbsent(modelType, type -> ThreadLocal.withInitial(() -> {
+      GERG2008 model = createNewModel(type);
       model.SetupGERG();
       return model;
-    });
+    })).get();
   }
 
   /**
@@ -128,10 +115,7 @@ public class NeqSimGERG2008 {
    * @param modelType the GERG-2008 model variant to use
    */
   public void setModelType(GERG2008Type modelType) {
-    if (this.modelType != modelType) {
-      this.modelType = modelType;
-      this.GERG2008 = getCachedModel(modelType);
-    }
+    this.modelType = modelType;
   }
 
   /**
@@ -176,7 +160,7 @@ public class NeqSimGERG2008 {
     double moldens = getMolarDensity();
     doubleW P = new doubleW(0.0);
     doubleW Z = new doubleW(0.0);
-    GERG2008.PressureGERG(phase.getTemperature(), moldens, normalizedGERGComposition, P, Z);
+    kernel().PressureGERG(phase.getTemperature(), moldens, normalizedGERGComposition, P, Z);
     return P.val;
   }
 
@@ -187,7 +171,7 @@ public class NeqSimGERG2008 {
    */
   public double getMolarMass() {
     doubleW mm = new doubleW(0.0);
-    GERG2008.MolarMassGERG(normalizedGERGComposition, mm);
+    kernel().MolarMassGERG(normalizedGERGComposition, mm);
     return mm.val / 1.0e3;
   }
 
@@ -204,24 +188,10 @@ public class NeqSimGERG2008 {
         flag = 2; // search for high density root
       }
     }
-    intW ierr = new intW(0);
-    StringW herr = new StringW("");
-    doubleW D = new doubleW(0.0);
-    double pressure = phase.getPressure() * 100.0;
-    if (flag == 2) {
-      double liquidDensity = ReferenceEosLiquidDensitySolver.solve(pressure, density -> {
-        doubleW calculatedPressure = new doubleW(0.0);
-        doubleW compressibility = new doubleW(0.0);
-        GERG2008.PressureGERG(phase.getTemperature(), density, normalizedGERGComposition, calculatedPressure,
-            compressibility);
-        return calculatedPressure.val;
-      });
-      if (Double.isFinite(liquidDensity)) {
-        return liquidDensity;
-      }
-    }
-    GERG2008.DensityGERG(flag, phase.getTemperature(), pressure, normalizedGERGComposition, D, ierr, herr);
-    return D.val;
+    GERG2008 model = kernel();
+    boolean envelope = phase instanceof PhaseGERG2008Eos && ((PhaseGERG2008Eos) phase).isPhaseEnvelopeCalculation();
+    return model.phaseDensity(flag, phase.getTemperature(), phase.getPressure() * 100.0, normalizedGERGComposition,
+        envelope);
   }
 
   /**
@@ -292,7 +262,7 @@ public class NeqSimGERG2008 {
     double dens = getMolarDensity();
     // neqsim.thermo.GERG.Densitygerg.densitygerg(0, 0, 0, arg3, 0, arg5, arg6,
     // arg7);
-    GERG2008.PropertiesGERG(phase.getTemperature(), dens, normalizedGERGComposition, p, z, dpdd, d2pdd2, d2pdtd, dpdt,
+    kernel().PropertiesGERG(phase.getTemperature(), dens, normalizedGERGComposition, p, z, dpdd, d2pdd2, d2pdtd, dpdt,
         u, h, s, cv, cp, w, g, jt, kappa, A);
     double[] properties = new double[] {p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val, u.val, h.val, s.val,
         cv.val, cp.val, w.val, g.val, jt.val, kappa.val};
@@ -306,124 +276,146 @@ public class NeqSimGERG2008 {
    */
   public void setPhase(PhaseInterface phase) {
     this.phase = phase;
+    mapComposition(null, notNormalizedGERGComposition);
+    normalizeComposition();
+  }
+
+  /**
+   * Map phase components to GERG slots before normalization.
+   *
+   * @param composition optional mole fractions in phase component order
+   * @param mapped destination in GERG component order
+   */
+  private void mapComposition(double[] composition, double[] mapped) {
+    Arrays.fill(mapped, 0.0);
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
       String componentName = phase.getComponent(i).getComponentName();
 
+      double fraction = composition == null ? phase.getComponent(i).getx() : composition[i];
       switch (componentName) {
       case "methane":
-        notNormalizedGERGComposition[1] = phase.getComponent(i).getx();
+        mapped[1] = fraction;
         break;
       case "nitrogen":
-        notNormalizedGERGComposition[2] = phase.getComponent(i).getx();
+        mapped[2] = fraction;
         break;
       case "CO2":
-        notNormalizedGERGComposition[3] = phase.getComponent(i).getx();
+        mapped[3] = fraction;
         break;
       case "ethane":
-        notNormalizedGERGComposition[4] = phase.getComponent(i).getx();
+        mapped[4] = fraction;
         break;
       case "propane":
-        notNormalizedGERGComposition[5] = phase.getComponent(i).getx();
+        mapped[5] = fraction;
         break;
       case "i-butane":
-        notNormalizedGERGComposition[6] = phase.getComponent(i).getx();
+        mapped[6] = fraction;
         break;
       case "n-butane":
-        notNormalizedGERGComposition[7] = phase.getComponent(i).getx();
+        mapped[7] = fraction;
         break;
       case "i-pentane":
-        notNormalizedGERGComposition[8] = phase.getComponent(i).getx();
+        mapped[8] = fraction;
         break;
       case "n-pentane":
-        notNormalizedGERGComposition[9] = phase.getComponent(i).getx();
+        mapped[9] = fraction;
         break;
       case "n-hexane":
-        notNormalizedGERGComposition[10] = phase.getComponent(i).getx();
+        mapped[10] = fraction;
         break;
       case "n-heptane":
-        notNormalizedGERGComposition[11] = phase.getComponent(i).getx();
+        mapped[11] = fraction;
         break;
       case "n-octane":
-        notNormalizedGERGComposition[12] = phase.getComponent(i).getx();
+        mapped[12] = fraction;
         break;
       case "n-nonane":
-        notNormalizedGERGComposition[13] = phase.getComponent(i).getx();
+        mapped[13] = fraction;
         break;
       case "nC10":
-        notNormalizedGERGComposition[14] = phase.getComponent(i).getx();
+        mapped[14] = fraction;
         break;
       case "hydrogen":
-        notNormalizedGERGComposition[15] = phase.getComponent(i).getx();
+        mapped[15] = fraction;
         break;
       case "oxygen":
-        notNormalizedGERGComposition[16] = phase.getComponent(i).getx();
+        mapped[16] = fraction;
         break;
       case "CO":
-        notNormalizedGERGComposition[17] = phase.getComponent(i).getx();
+        mapped[17] = fraction;
         break;
       case "water":
-        notNormalizedGERGComposition[18] = phase.getComponent(i).getx();
+        mapped[18] = fraction;
         break;
       case "H2S":
-        notNormalizedGERGComposition[19] = phase.getComponent(i).getx();
+        mapped[19] = fraction;
         break;
       case "helium":
-        notNormalizedGERGComposition[20] = phase.getComponent(i).getx();
+        mapped[20] = fraction;
         break;
       case "argon":
-        notNormalizedGERGComposition[21] = phase.getComponent(i).getx();
+        mapped[21] = fraction;
         break;
       case "ammonia":
-        notNormalizedGERGComposition[22] = phase.getComponent(i).getx();
+        mapped[22] = fraction;
         break;
 
       default:
         double molarMass = phase.getComponent(i).getMolarMass();
         if (molarMass > 44.096759796142 / 1000.0 && molarMass < 58.1236991882324 / 1000.0) {
-          notNormalizedGERGComposition[7] += phase.getComponent(i).getx();
+          mapped[7] += fraction;
         }
         if (molarMass > 58.1236991882324 / 1000.0 && molarMass < 72.15064 / 1000.0) {
-          notNormalizedGERGComposition[8] += phase.getComponent(i).getx();
+          mapped[8] += fraction;
         }
         if (molarMass > 72.15064 / 1000.0 && molarMass < 86.2 / 1000.0) {
-          notNormalizedGERGComposition[10] += phase.getComponent(i).getx();
+          mapped[10] += fraction;
         }
         if (molarMass > 86.2 / 1000.0 && molarMass < 100.204498291016 / 1000.0) {
-          notNormalizedGERGComposition[11] += phase.getComponent(i).getx();
+          mapped[11] += fraction;
         }
         if (molarMass > 100.204498291016 / 1000.0 && molarMass < 107.0 / 1000.0) {
-          notNormalizedGERGComposition[12] += phase.getComponent(i).getx();
+          mapped[12] += fraction;
         }
         if (molarMass > 107.0 / 1000.0 && molarMass < 121.0 / 1000.0) {
-          notNormalizedGERGComposition[13] += phase.getComponent(i).getx();
+          mapped[13] += fraction;
         }
         if (molarMass > 121.0 / 1000.0) {
-          notNormalizedGERGComposition[14] += phase.getComponent(i).getx();
+          mapped[14] += fraction;
         }
         break;
       }
     }
-    normalizeComposition();
   }
 
   /**
    * normalizeComposition.
    */
   public void normalizeComposition() {
+    normalizeComposition(notNormalizedGERGComposition, normalizedGERGComposition);
+  }
+
+  /**
+   * Normalize GERG mole fractions.
+   *
+   * @param input mapped GERG fractions before normalization
+   * @param output normalized GERG fractions
+   */
+  private static void normalizeComposition(double[] input, double[] output) {
     double result = 0;
-    for (double value : notNormalizedGERGComposition) {
+    for (double value : input) {
       result += value;
     }
     // Handle case where sum is zero or near-zero to avoid NaN
     if (result < 1e-30) {
       // Set all normalized fractions to zero to avoid NaN
-      for (int k = 0; k < normalizedGERGComposition.length; k++) {
-        normalizedGERGComposition[k] = 0.0;
+      for (int k = 0; k < output.length; k++) {
+        output[k] = 0.0;
       }
       return;
     }
-    for (int k = 0; k < normalizedGERGComposition.length; k++) {
-      normalizedGERGComposition[k] = notNormalizedGERGComposition[k] / result;
+    for (int k = 0; k < output.length; k++) {
+      output[k] = input[k] / result;
     }
   }
 
@@ -448,7 +440,7 @@ public class NeqSimGERG2008 {
 
     // Call the GERG2008 function to fill in the ar array.
     // The first two parameters (itau and idelta) are set to 0.
-    GERG2008.Alpha0GERG(temperature, molarDensity, normalizedGERGComposition, a0);
+    kernel().Alpha0GERG(temperature, molarDensity, normalizedGERGComposition, a0);
 
     // Return the computed dimensionless residual Helmholtz free energy.
     // This is equivalent to alpha_res = A^r/(RT)
@@ -491,7 +483,7 @@ public class NeqSimGERG2008 {
     // derivatives as well as up to third-order volume derivatives, so request
     // \u03c4-derivatives up to second order and \u03b4-derivatives up to third
     // order.
-    GERG2008.AlpharGERG(2, 3, temperature, molarDensity, normalizedGERGComposition, ar);
+    kernel().AlpharGERG(2, 3, temperature, molarDensity, normalizedGERGComposition, ar);
 
     // Return the computed dimensionless residual Helmholtz free energy.
     // This is equivalent to alpha_res = A^r/(RT)
@@ -511,14 +503,23 @@ public class NeqSimGERG2008 {
    * @return dimensionless residual Helmholtz energy, {@code alphaR = Ares/(nRT)}
    */
   public double getResidualHelmholtzEnergy(double temperature, double molarDensity) {
-    doubleW[][] residualHelmholtz = new doubleW[4][4];
-    for (int i = 0; i < residualHelmholtz.length; i++) {
-      for (int j = 0; j < residualHelmholtz[i].length; j++) {
-        residualHelmholtz[i][j] = new doubleW(0.0);
-      }
-    }
-    GERG2008.AlpharGERG(1, 0, temperature, molarDensity, normalizedGERGComposition, residualHelmholtz);
-    return residualHelmholtz[0][0].val;
+    return kernel().residualEnergy(temperature, molarDensity, normalizedGERGComposition);
+  }
+
+  /**
+   * Evaluate a trial phase composition at a specified density without changing the phase or this wrapper's reference
+   * composition.
+   *
+   * @param temperature temperature in K
+   * @param molarDensity molar density in mol/L
+   * @param composition trial mole fractions in phase component order
+   * @return dimensionless residual Helmholtz energy
+   */
+  public double getResidualHelmholtzEnergy(double temperature, double molarDensity, double[] composition) {
+    double[] mapped = new double[normalizedGERGComposition.length];
+    mapComposition(composition, mapped);
+    normalizeComposition(mapped, mapped);
+    return kernel().residualEnergy(temperature, molarDensity, mapped);
   }
 
   /**

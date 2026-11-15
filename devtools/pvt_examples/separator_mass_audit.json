@@ -1,0 +1,52 @@
+{
+  "protocol": "SEPARATOR",
+  "sample_reference": "Synthetic oil feed",
+  "experiment_reference": "Synthetic two-stage pressure and temperature schedule",
+  "source_reference": "Exact conservation example",
+  "data_use_reference": "Original synthetic data",
+  "stock_tank_oil_reference": "Final oil from this train at the last stage only",
+  "bounds_reference": "Exact synthetic values unless the interval has an explicit width",
+  "standard_gas": {
+    "source_reference": "Synthetic common reporting condition for both gas cuts",
+    "temperature": {"unit": "K", "lower": "288.15", "upper": "288.15"},
+    "pressure": {"unit": "Pa", "lower": "101325", "upper": "101325"}
+  },
+  "stages": [
+    {
+      "id": "feed",
+      "source_reference": "Synthetic incoming oil",
+      "oil_density_reference": "Prescribed feed oil density",
+      "temperature": {"unit": "K", "lower": "380", "upper": "380"},
+      "pressure": {"unit": "bara", "lower": "200", "upper": "200"},
+      "oil_volume_ratio": {"unit": "m3/m3 stock tank oil", "lower": "1.2", "upper": "1.2"},
+      "oil_density": {"unit": "kg/m3", "lower": "750", "upper": "750"},
+      "solution_gor": {"unit": "Sm3/m3 stock tank oil", "lower": "100", "upper": "100"}
+    },
+    {
+      "id": "separator",
+      "source_reference": "Synthetic intermediate oil and gas",
+      "oil_density_reference": "Prescribed stage-1 oil density",
+      "standard_gas_property_reference": "Synthetic independently reported stage-1 gas density at the standard state",
+      "temperature": {"unit": "K", "lower": "315", "upper": "315"},
+      "pressure": {"unit": "bara", "lower": "30", "upper": "30"},
+      "oil_volume_ratio": {"unit": "m3/m3 stock tank oil", "lower": "1.05", "upper": "1.05"},
+      "oil_density": {"unit": "kg/m3", "lower": "800", "upper": "800"},
+      "solution_gor": {"unit": "Sm3/m3 stock tank oil", "lower": "40", "upper": "40"},
+      "released_gas": {"unit": "Sm3/m3 stock tank oil", "lower": "60", "upper": "60"},
+      "standard_gas_density": {"unit": "kg/Sm3", "lower": "1", "upper": "1"}
+    },
+    {
+      "id": "stock-tank",
+      "source_reference": "Synthetic final oil and gas",
+      "oil_density_reference": "Prescribed final oil density",
+      "standard_gas_property_reference": "Synthetic independently reported stage-2 gas density at the standard state",
+      "temperature": {"unit": "K", "lower": "288.15", "upper": "288.15"},
+      "pressure": {"unit": "bara", "lower": "1.01325", "upper": "1.01325"},
+      "oil_volume_ratio": {"unit": "m3/m3 stock tank oil", "lower": "0.999", "upper": "1.001"},
+      "oil_density": {"unit": "kg/m3", "lower": "800", "upper": "800"},
+      "solution_gor": {"unit": "Sm3/m3 stock tank oil", "lower": "0", "upper": "0.001"},
+      "released_gas": {"unit": "Sm3/m3 stock tank oil", "lower": "40", "upper": "40"},
+      "standard_gas_density": {"unit": "kg/Sm3", "lower": "1", "upper": "1"}
+    }
+  ]
+}

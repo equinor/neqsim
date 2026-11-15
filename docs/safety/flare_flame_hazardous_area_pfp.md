@@ -96,6 +96,13 @@ short required survival time may not need PFP at all
 (`isPfpRequired() == false`, rating `NONE`). Longer jet-fire durations escalate
 the rating (e.g. a 120 min jet-fire case yields `J120`).
 
+The steel temperatures must be finite and satisfy $0 < T_\mathrm{initial} < T_\mathrm{critical}$
+in kelvin. Both `bareSteelTimeToCriticalS()` and `evaluate(...)` throw
+`IllegalArgumentException` for invalid steel temperatures. `evaluate(...)` also
+requires a finite effective fire temperature strictly above the arithmetic mean
+of the initial and critical steel temperatures. When PFP is required, the
+thickness uses the actual temperature difference, including differences below 1 K.
+
 ## Verification
 
 ```bash

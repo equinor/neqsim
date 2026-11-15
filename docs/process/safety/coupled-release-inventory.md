@@ -374,10 +374,36 @@ The complete caller step is atomic, and frames from both process containers carr
 mass, internal energy, pressure, temperature, boundary identity and the combined inventory volume.
 The legacy constructor retains the closed upstream end and its existing provenance.
 
-This adds finite upstream storage and pressure feedback, not vessel nozzle loss, internal vessel
-waves, phase separation, heat transfer, wall elasticity, a second rupture end, non-equilibrium
-multiphase transport, solids, or qualification. The vessel and every pipe cell must remain one
-equilibrium gas phase; otherwise the whole caller step fails closed.
+An additional overload applies a distributed pipe-wall sensitivity boundary while retaining the
+same conservative vessel, pipe and discharge transaction:
+
+```java
+RealGasPipeDecompression heatedVesselAndPipe = new RealGasPipeDecompression(
+    "heated-vessel-fed-rupture", gas, 40.0, 0.15, 1.0, 101325.0,
+    0.01, 0.20, 25.0, 285.0, 12, 0.30);
+// Final inputs: Darcy friction, vessel volume (m3), U (W/(m2 K)),
+// fixed external temperature (K), cells and CFL.
+```
+
+For cell $i$ with external wall area $A_{w,i}$, the signed heat rate into the gas is
+$\dot Q_i=U A_{w,i}(T_{ext}-T_i)$. Each accepted substep adds
+$\dot Q_i\Delta t$ to that cell's conservative total energy and to the cumulative heat ledger.
+The exact integrated balance is
+
+$$E_0+Q_{wall}=E_{vessel}+E_{pipe}+E_{released}$$
+
+where the upstream vessel remains adiabatic. A thermal step limiter bounds the explicit cell
+temperature change in addition to the acoustic CFL and vessel-donor limits. Frames expose the
+adiabatic or `CONSTANT_U_FIXED_EXTERNAL_TEMPERATURE` boundary, $U$, external temperature, pipe
+external area, cumulative heat in J and instantaneous heat rate in W. Pass zero for both thermal
+inputs to recover the adiabatic constructor exactly; incomplete or nonphysical pairs are rejected.
+
+This adds finite upstream storage, pressure feedback and optional distributed constant-$U$ wall
+heat exchange. It does not predict $U$, external temperature, fire/ambient/soil/seawater heat
+transfer, wall thermal capacitance, vessel nozzle loss, internal vessel waves, phase separation,
+wall elasticity, a second rupture end, non-equilibrium multiphase transport, solids, or
+qualification. The vessel and every pipe cell must remain one equilibrium gas phase; otherwise the
+whole caller step fails closed.
 
 Compatibility frames carry `releaseBasis=COUPLED_RIGID_ADIABATIC_GAS_INVENTORY`.
 Explicit phase-selected frames carry
