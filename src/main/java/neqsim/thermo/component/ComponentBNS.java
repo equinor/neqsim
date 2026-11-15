@@ -64,7 +64,7 @@ public class ComponentBNS extends ComponentPR {
 
   /** Classifies the supported species so dense BNS phases are treated as nonaqueous. */
   private void setBnsComponentType() {
-    setComponentType("HC".equals(componentName) || "methane".equals(componentName) ? "HC" : "inert");
+    super.setComponentType("HC".equals(componentName) || "methane".equals(componentName) ? "HC" : "inert");
   }
 
   /** {@inheritDoc} */
