@@ -2964,6 +2964,18 @@ Algorithm per macro-step:
 
 ### Steady-State Solver Tuning
 
+The circular-segment inversion in the slug-film closure solves for the smaller
+phase segment with a safeguarded Newton step and a small-angle series. The
+underlying circular-segment geometry and steady convergence tolerances are
+unchanged.
+
+The synthetic three-phase flowline benchmark is the
+`neqsim.process.equipment.pipeline.TwoFluidPipeThreePhaseFlowlineBenchmark`
+test-classpath entry point. It runs two warm-up and five timed fresh-pipe solves
+at 60 and 120 cells with the same flashed feed. Launch it in a separate JVM with
+the benchmark logger at INFO. Compare the median and individual times with the
+reported arrival pressure, phase holdups, phase flows and steady residuals.
+
 The initial steady-state solve iterates between the hydraulic pressure/holdup sweep and thermodynamic flashes
 until convergence. Four parameters control this:
 

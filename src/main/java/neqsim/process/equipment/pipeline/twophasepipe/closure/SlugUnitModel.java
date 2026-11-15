@@ -482,25 +482,56 @@ public final class SlugUnitModel implements Serializable {
    * @param holdup segment area divided by bore area
    * @return central angle, radians
    */
-  private static double centralAngle(double holdup) {
+  static double centralAngle(double holdup) {
     if (holdup <= 0.0) {
       return 0.0;
     }
     if (holdup >= 1.0) {
       return 2.0 * Math.PI;
     }
-    double target = 2.0 * Math.PI * holdup;
-    double low = 0.0;
-    double high = 2.0 * Math.PI;
-    for (int iteration = 0; iteration < 60; iteration++) {
-      double middle = 0.5 * (low + high);
-      if (middle - Math.sin(middle) < target) {
-        low = middle;
-      } else {
-        high = middle;
-      }
+
+    // Solve on the smaller segment, where the area is convex in the angle.
+    boolean complement = holdup > 0.5;
+    double smallerHoldup = complement ? 1.0 - holdup : holdup;
+    if (smallerHoldup < 1.0e-24) {
+      // The first correction to the cubic limit is below floating-point precision here.
+      return Math.cbrt(12.0 * Math.PI) * Math.cbrt(smallerHoldup);
     }
-    return 0.5 * (low + high);
+    double target = 2.0 * Math.PI * smallerHoldup;
+    double low = Math.cbrt(6.0 * target);
+    double high = Math.PI;
+    double angle = Math.min(high, 1.2 * low);
+    for (int iteration = 0; iteration < 60; iteration++) {
+      double residual = segmentAreaNumerator(angle) - target;
+      double sineHalfAngle = Math.sin(0.5 * angle);
+      double step = residual / (2.0 * sineHalfAngle * sineHalfAngle);
+      if (Math.abs(step) <= 4.0 * Math.ulp(angle)) {
+        break;
+      }
+      if (residual < 0.0) {
+        low = angle;
+      } else {
+        high = angle;
+      }
+      double next = angle - step;
+      angle = next > low && next < high ? next : 0.5 * (low + high);
+    }
+    return complement ? 2.0 * Math.PI - angle : angle;
+  }
+
+  /**
+   * Evaluates the circular-segment area numerator without small-angle cancellation.
+   *
+   * @param angle central angle of the smaller segment, radians
+   * @return angle minus sine of angle
+   */
+  private static double segmentAreaNumerator(double angle) {
+    if (angle >= 0.125) {
+      return angle - Math.sin(angle);
+    }
+    double angleSquared = angle * angle;
+    double series = 1.0 / 6.0 + angleSquared * (-1.0 / 120.0 + angleSquared * (1.0 / 5040.0 - angleSquared / 362880.0));
+    return angle * (angleSquared * series);
   }
 
   /**
