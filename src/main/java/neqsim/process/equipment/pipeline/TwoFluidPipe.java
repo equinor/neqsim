@@ -8324,13 +8324,13 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Checks how the coupled split solver applies a constant-pressure outlet.
+   * Checks whether the source-free coupled split solver applies pressure at the physical outlet face.
    *
-   * @return true if explicit face geometry and a prescribed pressure place the constraint at the face
+   * @return true when the prescribed pressure acts at the explicit outlet face
    */
   private boolean usesCoupledOutletFacePressure() {
-    return coupledPressureMomentumEnabled && !useConservativeEnergyRecovery && cellFaceElevationProfile != null
-        && outletPressureSet;
+    return coupledPressureMomentumEnabled && !useConservativeEnergyRecovery && !includeMassTransfer
+        && cellFaceElevationProfile != null && outletPressureSet;
   }
 
   /**

@@ -23,8 +23,20 @@ class TwoFluidPipeThreePhaseHandoffTest {
   private static final double OUTLET_PRESSURE_BARA = 56.40099362;
   private static final Phase[] PHASES = {Phase.GAS, Phase.OIL, Phase.WATER};
 
-  private record ReplayResult(double outletMassFlow, double[] phaseOutletMassFlow, double inletPressureBara,
-      double[] fractionalInventoryChange) {
+  /** Final measurements from one fixed-boundary replay. */
+  private static final class ReplayResult {
+    private final double outletMassFlow;
+    private final double[] phaseOutletMassFlow;
+    private final double inletPressureBara;
+    private final double[] fractionalInventoryChange;
+
+    private ReplayResult(double outletMassFlow, double[] phaseOutletMassFlow, double inletPressureBara,
+        double[] fractionalInventoryChange) {
+      this.outletMassFlow = outletMassFlow;
+      this.phaseOutletMassFlow = phaseOutletMassFlow;
+      this.inletPressureBara = inletPressureBara;
+      this.fractionalInventoryChange = fractionalInventoryChange;
+    }
   }
 
   /** Checks the fixed-boundary transient at common time across mesh and reporting-step refinement. */
@@ -33,21 +45,21 @@ class TwoFluidPipeThreePhaseHandoffTest {
     ReplayResult coarse = fixedBoundaryReplay(1, 0.25);
     ReplayResult refinedMesh = fixedBoundaryReplay(2, 0.25);
     ReplayResult refinedStep = fixedBoundaryReplay(1, 0.125);
-    assertEquals(coarse.outletMassFlow(), refinedMesh.outletMassFlow(), 0.75);
-    assertEquals(coarse.outletMassFlow(), refinedStep.outletMassFlow(), 0.02);
-    assertEquals(coarse.inletPressureBara(), refinedMesh.inletPressureBara(), 0.15);
-    assertEquals(coarse.inletPressureBara(), refinedStep.inletPressureBara(), 0.01);
+    assertEquals(coarse.outletMassFlow, refinedMesh.outletMassFlow, 0.75);
+    assertEquals(coarse.outletMassFlow, refinedStep.outletMassFlow, 0.02);
+    assertEquals(coarse.inletPressureBara, refinedMesh.inletPressureBara, 0.15);
+    assertEquals(coarse.inletPressureBara, refinedStep.inletPressureBara, 0.01);
     for (int phase = 0; phase < PHASES.length; phase++) {
-      assertEquals(coarse.phaseOutletMassFlow()[phase], refinedMesh.phaseOutletMassFlow()[phase], 0.4,
+      assertEquals(coarse.phaseOutletMassFlow[phase], refinedMesh.phaseOutletMassFlow[phase], 0.4,
           PHASES[phase].name());
-      assertEquals(coarse.phaseOutletMassFlow()[phase], refinedStep.phaseOutletMassFlow()[phase], 0.01,
+      assertEquals(coarse.phaseOutletMassFlow[phase], refinedStep.phaseOutletMassFlow[phase], 0.01,
           PHASES[phase].name());
-      assertTrue(coarse.fractionalInventoryChange()[phase] < 1.0e-3, PHASES[phase].name());
-      assertTrue(refinedMesh.fractionalInventoryChange()[phase] < 1.0e-3, PHASES[phase].name());
-      assertTrue(refinedStep.fractionalInventoryChange()[phase] < 1.0e-3, PHASES[phase].name());
-      assertEquals(coarse.fractionalInventoryChange()[phase], refinedMesh.fractionalInventoryChange()[phase], 5.0e-4,
+      assertTrue(coarse.fractionalInventoryChange[phase] < 1.0e-3, PHASES[phase].name());
+      assertTrue(refinedMesh.fractionalInventoryChange[phase] < 1.0e-3, PHASES[phase].name());
+      assertTrue(refinedStep.fractionalInventoryChange[phase] < 1.0e-3, PHASES[phase].name());
+      assertEquals(coarse.fractionalInventoryChange[phase], refinedMesh.fractionalInventoryChange[phase], 5.0e-4,
           PHASES[phase].name());
-      assertEquals(coarse.fractionalInventoryChange()[phase], refinedStep.fractionalInventoryChange()[phase], 1.0e-5,
+      assertEquals(coarse.fractionalInventoryChange[phase], refinedStep.fractionalInventoryChange[phase], 1.0e-5,
           PHASES[phase].name());
     }
   }
