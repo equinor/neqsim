@@ -262,6 +262,8 @@ fluid.setMultiPhaseCheck(True)
 The following program uses the repository regression fluid to demonstrate a bounded numerical
 WAT and unsmoothed wax-fraction screen. Replace the synthetic composition and heavy-end
 characterization with representative fluid data before engineering use.
+The synthetic TBP and plus fractions need temporary component registration during wax setup.
+The example restores the previous database setting once the fluid is initialized.
 
 <!-- wax-characterization-example: complete-screen -->
 ```java
@@ -271,6 +273,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.pvtsimulation.flowassurance.WaxCurveCalculator;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.database.NeqSimDataBase;
 
 public final class WaxCharacterizationScreeningExample {
   private static final Logger logger =
@@ -279,13 +282,19 @@ public final class WaxCharacterizationScreeningExample {
   private WaxCharacterizationScreeningExample() {}
 
   private static SystemInterface createFluid() {
-    SystemInterface fluid = new SystemSrkEos(298.0, 10.0);
-    fluid.addComponent("methane", 6.78);
-    fluid.addTBPfraction("C19", 10.13, 0.170, 0.7814);
-    fluid.addPlusFraction("C20", 10.62, 0.381, 0.850871882888);
-    fluid.setMixingRule(2);
-    fluid.enableWaxModel("Pedersen");
-    return fluid;
+    boolean previousTemporaryTables = NeqSimDataBase.createTemporaryTables();
+    NeqSimDataBase.setCreateTemporaryTables(true);
+    try {
+      SystemInterface fluid = new SystemSrkEos(298.0, 10.0);
+      fluid.addComponent("methane", 6.78);
+      fluid.addTBPfraction("C19", 10.13, 0.170, 0.7814);
+      fluid.addPlusFraction("C20", 10.62, 0.381, 0.850871882888);
+      fluid.setMixingRule(2);
+      fluid.enableWaxModel("Pedersen");
+      return fluid;
+    } finally {
+      NeqSimDataBase.setCreateTemporaryTables(previousTemporaryTables);
+    }
   }
 
   public static void main(String[] args) {
