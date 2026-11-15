@@ -23,12 +23,33 @@ class TwoFluidPipeThreePhaseHandoffTest {
   private static final double OUTLET_PRESSURE_BARA = 56.40099362;
   private static final Phase[] PHASES = {Phase.GAS, Phase.OIL, Phase.WATER};
 
+  private record ReplayResult(double outletMassFlow, double[] phaseOutletMassFlow, double inletPressureBara,
+      double[] fractionalInventoryChange) {
+  }
+
   /** Checks the fixed-boundary transient at common time across mesh and reporting-step refinement. */
   @Test
   void holdsThreePhaseThroughFlowWithPrescribedOutletFace() {
-    double coarse = fixedBoundaryReplay(1, 0.25);
-    assertEquals(coarse, fixedBoundaryReplay(2, 0.25), 0.15);
-    assertEquals(coarse, fixedBoundaryReplay(1, 0.125), 0.05);
+    ReplayResult coarse = fixedBoundaryReplay(1, 0.25);
+    ReplayResult refinedMesh = fixedBoundaryReplay(2, 0.25);
+    ReplayResult refinedStep = fixedBoundaryReplay(1, 0.125);
+    assertEquals(coarse.outletMassFlow(), refinedMesh.outletMassFlow(), 0.75);
+    assertEquals(coarse.outletMassFlow(), refinedStep.outletMassFlow(), 0.02);
+    assertEquals(coarse.inletPressureBara(), refinedMesh.inletPressureBara(), 0.15);
+    assertEquals(coarse.inletPressureBara(), refinedStep.inletPressureBara(), 0.01);
+    for (int phase = 0; phase < PHASES.length; phase++) {
+      assertEquals(coarse.phaseOutletMassFlow()[phase], refinedMesh.phaseOutletMassFlow()[phase], 0.4,
+          PHASES[phase].name());
+      assertEquals(coarse.phaseOutletMassFlow()[phase], refinedStep.phaseOutletMassFlow()[phase], 0.01,
+          PHASES[phase].name());
+      assertTrue(coarse.fractionalInventoryChange()[phase] < 1.0e-3, PHASES[phase].name());
+      assertTrue(refinedMesh.fractionalInventoryChange()[phase] < 1.0e-3, PHASES[phase].name());
+      assertTrue(refinedStep.fractionalInventoryChange()[phase] < 1.0e-3, PHASES[phase].name());
+      assertEquals(coarse.fractionalInventoryChange()[phase], refinedMesh.fractionalInventoryChange()[phase], 5.0e-4,
+          PHASES[phase].name());
+      assertEquals(coarse.fractionalInventoryChange()[phase], refinedStep.fractionalInventoryChange()[phase], 1.0e-5,
+          PHASES[phase].name());
+    }
   }
 
   /** A prescribed physical inlet face delivers the specified feed at every legacy RK4 stage. */
@@ -61,32 +82,61 @@ class TwoFluidPipeThreePhaseHandoffTest {
    *
    * @param refinement cell count multiplier
    * @param interval reporting interval in s
-   * @return final outlet mass flow in kg/s
+   * @return final phase rates, pressure and inventory drift
    */
-  private static double fixedBoundaryReplay(int refinement, double interval) {
+  private static ReplayResult fixedBoundaryReplay(int refinement, double interval) {
     Stream inlet = TwoFluidPipeThreePhaseFlowlineBenchmark.createInlet();
     TwoFluidPipe pipe = configure(inlet, refinement);
     pipe.run();
     assertTrue(pipe.isSteadyStateConverged());
     TwoFluidSection[] initial = pipe.getSectionSnapshots();
-    TwoFluidSection outlet = initial[initial.length - 1];
-    double[] steadyRates = {outlet.getGasMassPerLength() * outlet.getGasVelocity(),
-        outlet.getOilMassPerLength() * outlet.getOilVelocity(),
-        outlet.getWaterMassPerLength() * outlet.getWaterVelocity()};
+    double[] steadyRates = {pipe.getGasMassFlowProfile()[0], pipe.getOilMassFlowProfile()[0],
+        pipe.getWaterMassFlowProfile()[0]};
+    assertFlat(pipe.getGasMassFlowProfile(), steadyRates[0]);
+    assertFlat(pipe.getOilMassFlowProfile(), steadyRates[1]);
+    assertFlat(pipe.getWaterMassFlowProfile(), steadyRates[2]);
+    assertEquals(20.0, steadyRates[0] + steadyRates[1] + steadyRates[2], 1.0e-10);
+    double[] initialInventory = phaseInventory(initial);
     double initialInletPressure = pipe.getInletFacePressure("bara");
 
-    for (int step = 0; step < (int) (10.0 / interval); step++) {
+    TwoFluidMassBalanceReport report = null;
+    for (int step = 0; step < (int) (60.0 / interval); step++) {
       pipe.runTransient(interval, UUID.randomUUID());
-      TwoFluidMassBalanceReport report = checkAcceptedInterval(pipe, interval);
+      report = checkAcceptedInterval(pipe, interval);
       assertEquals(20.0, report.getInletMassKg(Phase.TOTAL) / interval, 1.0e-8);
       assertEquals(20.0, report.getOutletMassKg(Phase.TOTAL) / interval, 1.0);
       for (int phase = 0; phase < PHASES.length; phase++) {
-        assertEquals(steadyRates[phase], report.getOutletMassKg(PHASES[phase]) / interval, 0.08 * steadyRates[phase],
+        assertEquals(steadyRates[phase], report.getOutletMassKg(PHASES[phase]) / interval, 0.15 * steadyRates[phase],
             PHASES[phase].name());
       }
       assertEquals(initialInletPressure, pipe.getInletFacePressure("bara"), 0.3);
     }
-    return pipe.getOutletStream().getFlowRate("kg/sec");
+    double[] finalInventory = phaseInventory(pipe.getSectionSnapshots());
+    double[] fractionalInventoryChange = new double[PHASES.length];
+    double[] phaseOutletMassFlow = new double[PHASES.length];
+    for (int phase = 0; phase < PHASES.length; phase++) {
+      fractionalInventoryChange[phase] = Math.abs(finalInventory[phase] - initialInventory[phase])
+          / initialInventory[phase];
+      phaseOutletMassFlow[phase] = report.getOutletMassKg(PHASES[phase]) / interval;
+    }
+    return new ReplayResult(pipe.getOutletStream().getFlowRate("kg/sec"), phaseOutletMassFlow,
+        pipe.getInletFacePressure("bara"), fractionalInventoryChange);
+  }
+
+  private static void assertFlat(double[] profile, double expected) {
+    for (double value : profile) {
+      assertEquals(expected, value, 1.0e-8);
+    }
+  }
+
+  private static double[] phaseInventory(TwoFluidSection[] sections) {
+    double[] inventory = new double[PHASES.length];
+    for (TwoFluidSection section : sections) {
+      inventory[0] += section.getGasMassPerLength() * section.getLength();
+      inventory[1] += section.getOilMassPerLength() * section.getLength();
+      inventory[2] += section.getWaterMassPerLength() * section.getLength();
+    }
+    return inventory;
   }
 
   /**

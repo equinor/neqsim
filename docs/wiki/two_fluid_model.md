@@ -697,7 +697,18 @@ double interfacialArea = result.interfacialAreaPerLength;  // m²/m
 
 ### Oil-Water Interfacial Friction (Three-Phase)
 
-For three-phase gas-oil-water systems, the `ThreeFluidConservationEquations` uses a simplified Froude-based correlation for oil-water interfaces:
+For three-phase gas-oil-water systems, the oil-water regime detector supplies the continuous
+phase and Hinze maximum stable droplet diameter. Dispersed states use the spherical-droplet
+interfacial area per pipe length
+
+$$
+a_{ow}=\frac{6 A \alpha_d}{d_{max}},
+$$
+
+where $A$ is pipe area and $\alpha_d$ is dispersed-phase holdup. Stratified states retain a
+line-scale interface. The same area is used by the explicit source, its timestep derivative and
+the opt-in conservative friction split, so the force cannot silently change with the integrator.
+The shear stress remains regime dependent:
 
 ```java
 // Froude number based on relative velocity
@@ -1456,12 +1467,16 @@ explicit inlet pressure is included in the iteration when it supplies the pressu
 Friction, holdup, slip and terrain closure defaults are retained; previously inconsistent results
 at an explicit pressure boundary can change and must be rechecked on the tested revision.
 
-Periodic steady flashes refresh transported oil/water volume fractions while preserving the
-hydraulic in-situ split. Only a newly appearing second liquid is seeded from the flash. If one
-liquid disappears, the remaining liquid retains the total hydraulic holdup for the next closure
-update. The slip calculation first recovers the prescribed liquid mass flux, splits its transported
-volume flow into oil and water, and synchronizes bulk liquid velocity and momentum with the phase
-momenta. This keeps the phase split consistent with the specified liquid throughput.
+Periodic steady flashes refresh properties while preserving the hydraulic in-situ split. With
+phase transfer disabled, the equilibrium inlet gas, oil and water mass rates remain constant along
+the line; local density changes update the transported oil/water volume fraction without changing
+phase mass. With phase transfer enabled, the flash may repartition local phase rates and the
+transient must carry the corresponding conservative sources. Only a newly appearing second liquid
+is seeded from the flash. If one liquid disappears, the remaining liquid retains the total
+hydraulic holdup for the next closure update. The slip calculation first recovers the prescribed
+liquid mass flux, splits its transported volume flow into oil and water, and synchronizes bulk
+liquid velocity and momentum with the phase momenta. This keeps the phase split consistent with the
+specified liquid throughput.
 
 For positive flow, the connected outlet retains the feed's total and component flow rates and is
 TP-flashed at the final section pressure and temperature **after** flow normalization. Thermodynamic

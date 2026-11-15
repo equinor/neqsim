@@ -884,6 +884,43 @@ public class TwoFluidSection extends PipeSection {
     return tau_ow;
   }
 
+  /**
+   * Calculate oil-water interfacial area per unit pipe length.
+   *
+   * <p>
+   * Stratified phases share a line-scale interface. A dispersed phase instead exposes the surface of its droplets. For
+   * spherical droplets, interfacial area per mixture volume is {@code 6 alpha_d / d}; multiplying by pipe area gives
+   * area per pipe length. The existing Hinze maximum-stable-droplet result supplies {@code d} and the detected
+   * continuous phase selects the dispersed holdup.
+   * </p>
+   *
+   * @return oil-water interfacial area per pipe length in m2/m
+   */
+  public double calcOilWaterInterfacialAreaPerLength() {
+    double liquidHoldup = oilHoldup + waterHoldup;
+    if (oilHoldup <= 0.0 || waterHoldup <= 0.0 || liquidHoldup <= 0.0) {
+      return 0.0;
+    }
+    if (oilWaterResult != null) {
+      switch (oilWaterResult.regime) {
+      case DISPERSED_OIL_IN_WATER:
+      case DISPERSED_WATER_IN_OIL:
+      case DUAL_DISPERSION:
+        double dropletDiameter = oilWaterResult.maxDropletDiameter;
+        if (Double.isFinite(dropletDiameter) && dropletDiameter > 0.0) {
+          double dispersedHoldup = oilWaterResult.regime == OilWaterFlowRegime.DUAL_DISPERSION
+              ? Math.min(oilHoldup, waterHoldup)
+              : oilWaterResult.oilContinuous ? waterHoldup : oilHoldup;
+          return 6.0 * getArea() * dispersedHoldup / Math.min(dropletDiameter, getDiameter());
+        }
+        break;
+      default:
+        break;
+      }
+    }
+    return getDiameter() * 0.5 * liquidHoldup;
+  }
+
   public double getGasMassSource() {
     return gasMassSource;
   }

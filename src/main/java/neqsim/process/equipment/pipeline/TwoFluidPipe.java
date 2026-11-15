@@ -1599,17 +1599,39 @@ public class TwoFluidPipe extends Pipeline {
     // Fix inlet section pressure to boundary condition
     sections[0].setPressure(P_inlet);
 
-    // Get inlet phase fractions from first section (initial estimate)
-    double inletAlphaL = sections[0].getLiquidHoldup();
-    double inletAlphaG = sections[0].getGasHoldup();
-    double inletRhoG = sections[0].getGasDensity();
-    double inletRhoL = sections[0].getLiquidDensity();
-
-    // Calculate INITIAL phase mass flow rates from inlet (may change with condensation)
-    double rhoMixInlet = inletAlphaG * inletRhoG + inletAlphaL * inletRhoL;
-    double gasQualityInlet = inletAlphaG * inletRhoG / rhoMixInlet;
-    double mDotGas = massFlow * gasQualityInlet;
-    double mDotLiq = massFlow * (1.0 - gasQualityInlet);
+    // The steady primitive state must satisfy the phase balances that the transient will
+    // advance. Without phase-transfer sources, the prescribed feed phase rates are constant
+    // along the line; an equilibrium flash may still update local properties, but it must not
+    // silently repartition transported mass between phases.
+    SystemInterface steadyInletPhaseState = getInletStream().getFluid();
+    if (referenceFluid != null) {
+      steadyInletPhaseState = steadyInletPhaseState.clone();
+      steadyInletPhaseState.setPressure(P_inlet / 1.0e5, "bara");
+      steadyInletPhaseState.setTemperature(sections[0].getTemperature(), "K");
+      ThermodynamicOperations inletEquilibriumOperations = new ThermodynamicOperations(steadyInletPhaseState);
+      inletEquilibriumOperations.TPflash();
+      steadyInletPhaseState.initProperties();
+    }
+    double[] inletPhaseMassFractions = calculateInletPhaseMassFractions(steadyInletPhaseState);
+    double sourceFreeOilMassFlow = massFlow * inletPhaseMassFractions[1];
+    double sourceFreeWaterMassFlow = massFlow * inletPhaseMassFractions[2];
+    double mDotGas;
+    double mDotLiq;
+    if (includeMassTransfer) {
+      // Retain the equilibrium-transfer initialization. Subsequent flashes may change these
+      // local rates through explicit conservative sources in the transient model.
+      double inletAlphaL = sections[0].getLiquidHoldup();
+      double inletAlphaG = sections[0].getGasHoldup();
+      double inletRhoG = sections[0].getGasDensity();
+      double inletRhoL = sections[0].getLiquidDensity();
+      double rhoMixInlet = inletAlphaG * inletRhoG + inletAlphaL * inletRhoL;
+      double gasQualityInlet = inletAlphaG * inletRhoG / rhoMixInlet;
+      mDotGas = massFlow * gasQualityInlet;
+      mDotLiq = massFlow * (1.0 - gasQualityInlet);
+    } else {
+      mDotGas = massFlow * inletPhaseMassFractions[0];
+      mDotLiq = sourceFreeOilMassFlow + sourceFreeWaterMassFlow;
+    }
 
     // Store local mass flow arrays for condensation tracking
     double[] localMDotGas = new double[numberOfSections];
@@ -1839,7 +1861,8 @@ public class TwoFluidPipe extends Pipeline {
           propertiesBefore[i][5] = sections[i].getLiquidViscosity();
           propertiesBefore[i][6] = sections[i].getSurfaceTension();
         }
-        updateThermodynamicsWithCondensation(massFlow, localMDotGas, localMDotLiq);
+        updateThermodynamicsWithCondensation(massFlow, localMDotGas, localMDotLiq, sourceFreeOilMassFlow,
+            sourceFreeWaterMassFlow);
         double maxPropertyChange = 0.0;
         for (int i = 0; i < numberOfSections; i++) {
           double[] densities = {sections[i].getGasDensity(), sections[i].getOilDensity(),
@@ -1935,7 +1958,7 @@ public class TwoFluidPipe extends Pipeline {
         // tolerance, use the reconciled state as the next iterate instead of returning a false
         // positive and handing a different state to the transient solver.
         double[] finalConsistencyResiduals = reconcileSteadyThermodynamicsAndHoldup(massFlow, localMDotGas,
-            localMDotLiq, area);
+            localMDotLiq, sourceFreeOilMassFlow, sourceFreeWaterMassFlow, area);
         thermodynamicResidual = finalConsistencyResiduals[0];
         liquidHoldupResidual = Math.max(liquidHoldupResidual, finalConsistencyResiduals[1]);
         liquidSplitResidual = Math.max(liquidSplitResidual, finalConsistencyResiduals[2]);
@@ -1968,7 +1991,7 @@ public class TwoFluidPipe extends Pipeline {
     // solve, but keep its residuals visible and never promote it to convergence after the loop.
     if (!ssConverged) {
       double[] finalConsistencyResiduals = reconcileSteadyThermodynamicsAndHoldup(massFlow, localMDotGas, localMDotLiq,
-          area);
+          sourceFreeOilMassFlow, sourceFreeWaterMassFlow, area);
       thermodynamicResidual = finalConsistencyResiduals[0];
       liquidHoldupResidual = Math.max(liquidHoldupResidual, finalConsistencyResiduals[1]);
       liquidSplitResidual = Math.max(liquidSplitResidual, finalConsistencyResiduals[2]);
@@ -2031,15 +2054,18 @@ public class TwoFluidPipe extends Pipeline {
    * @param massFlow total pipe mass flow in kg/s
    * @param localMDotGas local gas mass-flow profile in kg/s
    * @param localMDotLiq local liquid mass-flow profile in kg/s
+   * @param sourceFreeOilMassFlow inlet oil mass flow retained when phase transfer is disabled, kg/s
+   * @param sourceFreeWaterMassFlow inlet water mass flow retained when phase transfer is disabled, kg/s
    * @param area internal pipe area in m2
    * @return thermodynamic, total-liquid-holdup, and water-holdup residuals
    */
   private double[] reconcileSteadyThermodynamicsAndHoldup(double massFlow, double[] localMDotGas, double[] localMDotLiq,
-      double area) {
+      double sourceFreeOilMassFlow, double sourceFreeWaterMassFlow, double area) {
     double thermodynamicResidual = 0.0;
     if (referenceFluid != null) {
       double[][] propertiesBefore = snapshotSteadyThermodynamicProperties(localMDotGas);
-      updateThermodynamicsWithCondensation(massFlow, localMDotGas, localMDotLiq);
+      updateThermodynamicsWithCondensation(massFlow, localMDotGas, localMDotLiq, sourceFreeOilMassFlow,
+          sourceFreeWaterMassFlow);
       thermodynamicResidual = calculateSteadyThermodynamicResidual(propertiesBefore, localMDotGas, massFlow);
     }
 
@@ -2201,8 +2227,11 @@ public class TwoFluidPipe extends Pipeline {
    * @param massFlow Total mass flow rate [kg/s]
    * @param localMDotGas Array to store local gas mass flow rates [kg/s]
    * @param localMDotLiq Array to store local liquid mass flow rates [kg/s]
+   * @param sourceFreeOilMassFlow inlet oil mass flow retained when phase transfer is disabled [kg/s]
+   * @param sourceFreeWaterMassFlow inlet water mass flow retained when phase transfer is disabled [kg/s]
    */
-  private void updateThermodynamicsWithCondensation(double massFlow, double[] localMDotGas, double[] localMDotLiq) {
+  private void updateThermodynamicsWithCondensation(double massFlow, double[] localMDotGas, double[] localMDotLiq,
+      double sourceFreeOilMassFlow, double sourceFreeWaterMassFlow) {
     for (int i = 0; i < numberOfSections; i++) {
       TwoFluidSection sec = sections[i];
       try {
@@ -2283,8 +2312,10 @@ public class TwoFluidPipe extends Pipeline {
           sec.setWaterViscosity(flash.getPhase("aqueous").getViscosity("kg/msec"));
         }
 
-        // Calculate mass fractions and update local mass flow rates
-        if (totalMassWeighted > 0) {
+        // Calculate mass fractions and update local mass flow rates only when the
+        // transient owns matching conservative phase-transfer sources. Otherwise the
+        // local flash supplies properties while the inlet phase rates remain invariant.
+        if (includeMassTransfer && totalMassWeighted > 0) {
           gasMassFraction = gasMassContrib / totalMassWeighted;
           liqMassFraction = liqMassContrib / totalMassWeighted;
 
@@ -2301,21 +2332,40 @@ public class TwoFluidPipe extends Pipeline {
         //
         // Instead, only update the water/oil SPLIT within the liquid phase,
         // preserving the total liquid holdup from momentum balance.
-        if (volTotal > 0 && volLiq > 0) {
+        if (!includeMassTransfer) {
+          // A source-free transient transports the inlet oil and water masses even when
+          // an equilibrium property flash would locally remove one of those phases. Use
+          // their density-consistent transported volumes without changing phase presence.
+          double volOil = sourceFreeOilMassFlow / Math.max(sec.getOilDensity(), 1.0e-12);
+          double volWater = sourceFreeWaterMassFlow / Math.max(sec.getWaterDensity(), 1.0e-12);
+          double transportedLiquidVolume = volOil + volWater;
+          double transportedWaterFraction = transportedLiquidVolume > 0.0 ? volWater / transportedLiquidVolume : 0.0;
+          sec.setInputWaterVolumeFraction(transportedWaterFraction);
+          double waterCut = sec.getWaterCut();
+          if (!Double.isFinite(waterCut) || waterCut <= 0.0 && transportedWaterFraction > 0.0
+              || waterCut >= 1.0 && transportedWaterFraction < 1.0) {
+            sec.setWaterCut(transportedWaterFraction);
+            sec.setOilFractionInLiquid(1.0 - transportedWaterFraction);
+            double existingAlphaL = sec.getLiquidHoldup();
+            sec.setWaterHoldup(existingAlphaL * transportedWaterFraction);
+            sec.setOilHoldup(existingAlphaL * (1.0 - transportedWaterFraction));
+          }
+        } else if (volTotal > 0 && volLiq > 0) {
           // Update water/oil split if both are present (preserve total liquid holdup)
           if (hasOil && hasWater) {
             double volOil = phaseVolumetricFlow(flash, "oil");
             double volWater = phaseVolumetricFlow(flash, "aqueous");
             // Transported fraction. The in-situ split is closed against it in
             // updateWaterOilHoldups, which may differ from it through slip.
-            sec.setInputWaterVolumeFraction(volWater / (volOil + volWater));
+            double transportedLiquidVolume = volOil + volWater;
+            sec.setInputWaterVolumeFraction(transportedLiquidVolume > 0.0 ? volWater / transportedLiquidVolume : 0.0);
             // The flash provides a transported composition, not the in-situ slip split.
             // Resetting an interior split on every flash prevents the hydraulic fixed point
             // from converging. Seed only a newly appearing second liquid; its split is then
             // closed by the next momentum sweep and included in the convergence residual.
             double waterCut = sec.getWaterCut();
             if (!Double.isFinite(waterCut) || waterCut <= 0.0 || waterCut >= 1.0) {
-              waterCut = volWater / volLiq;
+              waterCut = transportedLiquidVolume > 0.0 ? volWater / transportedLiquidVolume : 0.0;
               sec.setWaterCut(waterCut);
               sec.setOilFractionInLiquid(1.0 - waterCut);
               double existingAlphaL = sec.getLiquidHoldup();

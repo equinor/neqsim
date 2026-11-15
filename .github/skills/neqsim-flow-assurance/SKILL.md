@@ -694,6 +694,13 @@ for (double qgMSm3d : gasRates) {
 > analytical `SevereSluggingBenchmarkHarnessTest` screen and the public Tengesdal
 > evidence until the dynamic qualification gates below pass.
 >
+> **The synthetic three-phase riser handoff is a narrower qualified lane.** With phase transfer
+> disabled, its steady gas/oil/water mass-flow profiles are flat, dispersed oil-water drag uses
+> Hinze droplet area, and the unchanged-boundary 60 s replay keeps accepted phase outlet transfer
+> nonnegative on 60/120 cells and 0.25/0.125 s reporting steps. Check the phase profiles and
+> inventory ledger before applying a choke move. Do not generalize this numerical initialization
+> result to slug statistics, separator control or field validation.
+>
 > **Finite-rate hydrocarbon pool transfer is parameterized screening.** On the
 > conservative-energy Euler route, `HydrocarbonPoolTransfer` accepts explicit
 > component transfer coefficients, evaporation enthalpies, interface width and
