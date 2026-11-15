@@ -2928,8 +2928,7 @@ public class TPmultiflash extends TPflash {
       double phaseSum = 0.0;
       for (int component = 0; component < system.getPhase(phase).getNumberOfComponents(); component++) {
         double overallFraction = getFlashOverallFraction(component);
-        double phaseFraction =
-            overallFraction * inverseFugacityCoefficient(phase, component) / Erow[component];
+        double phaseFraction = overallFraction * inverseFugacityCoefficient(phase, component) / Erow[component];
         if (!Double.isFinite(phaseFraction) || phaseFraction < -1.0e-12) {
           throw new IllegalStateException("Invalid full-inventory phase fraction for "
               + system.getPhase(phase).getComponent(component).getComponentName() + ": " + phaseFraction);
@@ -2941,8 +2940,7 @@ public class TPmultiflash extends TPflash {
       maximumPhaseResidual = Math.max(maximumPhaseResidual, Math.abs(phaseSum - 1.0));
     }
     if (maximumPhaseResidual > 1.0e-8) {
-      throw new IllegalStateException(
-          "Full-inventory phase compositions are not normalized: " + maximumPhaseResidual);
+      throw new IllegalStateException("Full-inventory phase compositions are not normalized: " + maximumPhaseResidual);
     }
 
     system.init(1);
@@ -2950,8 +2948,7 @@ public class TPmultiflash extends TPflash {
     for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
       double recoveredFraction = 0.0;
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-        recoveredFraction +=
-            system.getBeta(phase) * system.getPhase(phase).getComponent(component).getx();
+        recoveredFraction += system.getBeta(phase) * system.getPhase(phase).getComponent(component).getx();
       }
       maximumInventoryResidual = Math.max(maximumInventoryResidual,
           Math.abs(recoveredFraction - getFlashOverallFraction(component)));
