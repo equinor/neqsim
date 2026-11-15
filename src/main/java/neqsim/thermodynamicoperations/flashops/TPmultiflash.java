@@ -59,11 +59,13 @@ public class TPmultiflash extends TPflash {
   private transient double[] reactiveOverallMoles;
   /** Normalized reaction-adjusted species fractions used by the multiphase beta equations. */
   private transient double[] reactiveOverallFractions;
+  /** True only while refining an existing split on the restored non-reactive ionic inventory. */
+  private transient boolean refiningRestoredNonReactiveIons;
   /** Positive floor for reaction products introduced at trace level. */
   private static final double MINIMUM_REACTIVE_COMPONENT_MOLES = 1.0e-45;
   /** Margin by which both Rachford-Rice sums must exceed unity before a vapour phase is sought. */
   private static final double WILSON_TWO_PHASE_SCREEN_TOLERANCE = 1.0e-3;
-  /** Maximum common beta-Newton step scale while a restored ionic inventory is equilibrated. */
+  /** Common beta-Newton step cap when the proposed ionic phase change is large. */
   private static final double NON_REACTIVE_IONIC_BETA_STEP_SCALE = 0.1;
   /** Extra aqueous phase-fraction capacity retained above the conserved ionic inventory. */
   private static final double NON_REACTIVE_ION_CAPACITY_MARGIN = 100.0 * phaseFractionMinimumLimit;
@@ -197,11 +199,12 @@ public class TPmultiflash extends TPflash {
    * calcE.
    */
   public void calcE() {
-    // E = new double[system.getPhase(0).getNumberOfComponents()];
+    boolean confineIonsToAqueousPhase = shouldConfineIonsToAqueousPhase();
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       Erow[i] = 0.0;
+      boolean confinedIon = confineIonsToAqueousPhase && isIon(i);
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
-        Erow[i] += system.getPhase(k).getBeta() * inverseFugacityCoefficient(k, i);
+        Erow[i] += system.getPhase(k).getBeta() * inverseFugacityCoefficient(k, i, confinedIon);
       }
       if (Erow[i] < 1e-100) {
         Erow[i] = 1e-100;
@@ -278,11 +281,13 @@ public class TPmultiflash extends TPflash {
    * </p>
    */
   private void calcEAndCacheFugacityCoefficients() {
+    boolean confineIonsToAqueousPhase = shouldConfineIonsToAqueousPhase();
     for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
       // Removed ions must not enter the molecular beta equations. In particular, the
       // divalent-ion coefficient can underflow on the ion-free trial and make its
       // nominally negligible Hessian contribution evaluate as 0 / 0.
-      if (isIon(component) && getFlashOverallFraction(component) <= 1.0e-100) {
+      boolean ionicComponent = isIon(component);
+      if (ionicComponent && getFlashOverallFraction(component) <= 1.0e-100) {
         Erow[component] = 1.0;
         for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
           fugacityCoefficients[phase][component] = 1.0;
@@ -290,10 +295,10 @@ public class TPmultiflash extends TPflash {
         continue;
       }
       Erow[component] = 0.0;
+      boolean confinedIon = confineIonsToAqueousPhase && ionicComponent;
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
         double fugacityCoefficient = system.getPhase(phase).getComponent(component).getFugacityCoefficient();
-        if (shouldConfineIonsToAqueousPhase() && isIon(component)
-            && system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
+        if (confinedIon && system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
           fugacityCoefficient = Double.POSITIVE_INFINITY;
         }
         fugacityCoefficients[phase][component] = fugacityCoefficient;
@@ -326,16 +331,16 @@ public class TPmultiflash extends TPflash {
    * Return an allowed inverse fugacity coefficient.
    *
    * <p>
-   * Reactive ions are excluded exactly from gas and oil phases instead of relying on a large finite fugacity penalty.
+   * Confined ions have a zero inverse coefficient in each non-aqueous phase.
    * </p>
    *
    * @param phase phase index
    * @param component component index
+   * @param confinedIon whether the component is an ion confined to aqueous phases
    * @return inverse fugacity coefficient, or zero when an ion is excluded from the phase
    */
-  private double inverseFugacityCoefficient(int phase, int component) {
-    if (shouldConfineIonsToAqueousPhase() && isIon(component)
-        && system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
+  private double inverseFugacityCoefficient(int phase, int component, boolean confinedIon) {
+    if (confinedIon && system.getPhase(phase).getType() != PhaseType.AQUEOUS) {
       return 0.0;
     }
     double fugacityCoefficient = system.getPhase(phase).getComponent(component).getFugacityCoefficient();
@@ -387,7 +392,11 @@ public class TPmultiflash extends TPflash {
 
       // The linear solve already returns a column vector. Apply it directly to avoid allocating
       // transposed, scaled, and subtracted temporary matrices in every beta iteration.
-      double betaStepScale = limitBetaStepScale(iter / (iter + 3.0));
+      double proposedScale = iter / (iter + 3.0);
+      double ionicFraction = getNonReactiveIonicFraction();
+      double betaStepScale = refiningRestoredNonReactiveIons && ionicFraction > 0.0
+          && isSmallIonicBetaStep(proposedScale, betaCorrection, ionicFraction) ? proposedScale
+              : limitBetaStepScale(proposedScale);
       removePhase = false;
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
         double currBeta = system.getPhase(k).getBeta() - betaCorrection.get(k, 0) * betaStepScale;
@@ -408,7 +417,9 @@ public class TPmultiflash extends TPflash {
         }
       }
       system.normalizeBeta();
-      enforceNonReactiveIonicAqueousCapacity();
+      if (ionicFraction > 0.0) {
+        enforceNonReactiveIonicAqueousCapacity(ionicFraction);
+      }
       system.init(1);
       calcE();
       setXY();
@@ -435,6 +446,38 @@ public class TPmultiflash extends TPflash {
       return Math.min(proposedScale, NON_REACTIVE_IONIC_BETA_STEP_SCALE);
     }
     return proposedScale;
+  }
+
+  /**
+   * Allows the ordinary Newton scale when both fluid phases have room for the proposed correction.
+   *
+   * <p>
+   * Keep at least half the available fraction in each phase in one step. The aqueous phase reserves the complete ionic
+   * inventory before computing this allowance. Large corrections and three-phase splits retain the damped step.
+   * </p>
+   *
+   * @param scale proposed common beta step scale
+   * @param correction proposed unscaled beta correction
+   * @param ionicFraction conserved ionic overall mole fraction
+   * @return true when both phases are comfortably inside the feasible split after the proposed correction
+   */
+  private boolean isSmallIonicBetaStep(double scale, DMatrixRMaj correction, double ionicFraction) {
+    if (system.getNumberOfPhases() != 2) {
+      return false;
+    }
+    int aqueousPhase = findPreferredAqueousPhase();
+    if (aqueousPhase < 0) {
+      return false;
+    }
+    int otherPhase = 1 - aqueousPhase;
+    if (system.getPhase(otherPhase).getType() == PhaseType.AQUEOUS) {
+      return false;
+    }
+    double availableAqueous = system.getPhase(aqueousPhase).getBeta() - ionicFraction
+        - NON_REACTIVE_ION_CAPACITY_MARGIN;
+    double availableOther = system.getPhase(otherPhase).getBeta() - phaseFractionMinimumLimit;
+    return 2.0 * Math.abs(scale * correction.get(aqueousPhase, 0)) < availableAqueous
+        && 2.0 * Math.abs(scale * correction.get(otherPhase, 0)) < availableOther;
   }
 
   /**
@@ -2893,6 +2936,7 @@ public class TPmultiflash extends TPflash {
       return;
     }
     PhaseSplitSnapshot restoredState = new PhaseSplitSnapshot(system);
+    refiningRestoredNonReactiveIons = true;
     try {
       double residual = Double.POSITIVE_INFINITY;
       setDoubleArrays();
@@ -2906,6 +2950,8 @@ public class TPmultiflash extends TPflash {
       logger.debug("Restored non-reactive ionic phase split did not converge; retaining conservative fallback");
     } catch (Exception ex) {
       logger.debug("Restored non-reactive ionic phase refinement failed: {}", ex.getMessage());
+    } finally {
+      refiningRestoredNonReactiveIons = false;
     }
     restorePhaseSplit(restoredState);
   }
@@ -2924,12 +2970,15 @@ public class TPmultiflash extends TPflash {
    */
   private double applyConservativeNonReactiveIonicCompositions() {
     calcE();
+    boolean confineIonsToAqueousPhase = shouldConfineIonsToAqueousPhase();
     double maximumPhaseResidual = 0.0;
     for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
       double phaseSum = 0.0;
       for (int component = 0; component < system.getPhase(phase).getNumberOfComponents(); component++) {
         double overallFraction = getFlashOverallFraction(component);
-        double phaseFraction = overallFraction * inverseFugacityCoefficient(phase, component) / Erow[component];
+        boolean confinedIon = confineIonsToAqueousPhase && isIon(component);
+        double phaseFraction = overallFraction * inverseFugacityCoefficient(phase, component, confinedIon)
+            / Erow[component];
         if (!Double.isFinite(phaseFraction) || phaseFraction < -1.0e-12) {
           throw new IllegalStateException("Invalid full-inventory phase fraction for "
               + system.getPhase(phase).getComponent(component).getComponentName() + ": " + phaseFraction);
@@ -2993,6 +3042,27 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
+   * Sums the ionic inventory used for beta damping and aqueous capacity in the current iteration.
+   *
+   * @return the total ionic overall mole fraction, or zero for a reactive or ion-free inventory
+   */
+  private double getNonReactiveIonicFraction() {
+    if (system.isChemicalSystem()) {
+      return 0.0;
+    }
+    double ionicFraction = 0.0;
+    boolean hasMaterialIon = false;
+    for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
+      if (isIon(component)) {
+        double fraction = getFlashOverallFraction(component);
+        ionicFraction += Math.max(fraction, 0.0);
+        hasMaterialIon |= fraction > 1.0e-30;
+      }
+    }
+    return hasMaterialIon ? ionicFraction : 0.0;
+  }
+
+  /**
    * Keeps the aqueous phase fraction large enough to hold the conserved non-reactive ionic inventory.
    *
    * <p>
@@ -3001,9 +3071,11 @@ public class TPmultiflash extends TPflash {
    * Projecting that proposal back onto the admissible simplex preserves the Newton direction among non-aqueous phases
    * and prevents invalid aqueous compositions without changing an already feasible iterate.
    * </p>
+   *
+   * @param ionicFraction the conserved ionic overall mole fraction
    */
-  private void enforceNonReactiveIonicAqueousCapacity() {
-    if (system.isChemicalSystem() || !hasPositiveIonicOverallFraction() || system.getNumberOfPhases() < 2) {
+  private void enforceNonReactiveIonicAqueousCapacity(double ionicFraction) {
+    if (system.getNumberOfPhases() < 2) {
       return;
     }
     int aqueousPhase = findPreferredAqueousPhase();
@@ -3011,12 +3083,6 @@ public class TPmultiflash extends TPflash {
       return;
     }
 
-    double ionicFraction = 0.0;
-    for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
-      if (isIon(component)) {
-        ionicFraction += Math.max(getFlashOverallFraction(component), 0.0);
-      }
-    }
     double maximumAqueousFraction = 1.0 - (system.getNumberOfPhases() - 1.0) * phaseFractionMinimumLimit;
     double minimumAqueousFraction = Math.min(maximumAqueousFraction, ionicFraction + NON_REACTIVE_ION_CAPACITY_MARGIN);
     double currentAqueousFraction = system.getBeta(aqueousPhase);
