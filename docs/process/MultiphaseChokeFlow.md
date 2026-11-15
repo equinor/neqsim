@@ -139,7 +139,18 @@ if (regime == MultiphaseChokeFlow.FlowRegime.CRITICAL) {
 
 ## Critical Pressure Ratio
 
-For two-phase flow, the critical pressure ratio varies with gas quality:
+Sachdeva computes the gas–liquid critical pressure ratio at the maximum homogeneous
+throat mass flux for the actual upstream phase densities and gas expansion exponent.
+The subcritical flux follows the pressure-work equation in SPE 15657. It decreases to
+zero as downstream pressure approaches upstream pressure. Below the critical ratio,
+the rate remains at the critical capacity. The inverse calculation returns the
+subcritical pressure for an achievable rate, and the critical pressure at capacity.
+
+The published throat relation neglects upstream kinetic energy. The liquid-only
+branch uses incompressible orifice flow without a sonic plateau. Sizing results and
+regime classification use the fluid-specific ratio. The overload accepting only gas
+quality and heat-capacity ratio retains the legacy estimate for screening without
+phase densities:
 
 | Gas Quality (x_g) | Critical Ratio (y_c) |
 |-------------------|---------------------|
@@ -216,7 +227,7 @@ for key, value in results.items():
 
 ## References
 
-1. Sachdeva, R., Schmidt, Z., Brill, J.P., and Blais, R.M. (1986). "Two-Phase Flow Through Chokes." SPE 15657.
+1. Sachdeva, R., Schmidt, Z., Brill, J.P., and Blais, R.M. (1986). [Two-Phase Flow Through Chokes](https://doi.org/10.2118/15657-MS). SPE 15657.
 2. Gilbert, W.E. (1954). "Flowing and Gas-Lift Well Performance." API Drilling and Production Practice.
 3. Baxendell, P.B. (1958). "Bean Performance - Lake Wells." Shell Internal Report.
 4. Ros, N.C.J. (1960). "An Analysis of Critical Simultaneous Gas/Liquid Flow Through a Restriction and Its Application to Flow Metering." Applied Scientific Research.

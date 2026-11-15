@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Tests for the Sachdeva multiphase choke flow model.
@@ -130,14 +131,58 @@ public class SachdevaChokeFlowTest {
     assertTrue(massFlow_higher >= massFlow, "Flow should increase with larger pressure drop");
   }
 
+  /**
+   * Checks the SI form of the homogeneous throat mass-flux equation against the gas-oil issue fixture.
+   */
+  @Test
+  void subcriticalRateMatchesPressureWorkAndInvertsToTheDownstreamPressure() {
+    SystemInterface fluid = new SystemSrkEos(308.15, 80.0);
+    fluid.addComponent("methane", 0.75);
+    fluid.addComponent("n-heptane", 0.25);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.initProperties();
+
+    double inlet = 8.0e6;
+    double gasQuality = chokeModel.calculateGasQuality(fluid);
+    assertTrue(gasQuality > 0.001 && gasQuality < 0.999);
+    double gasVolume = gasQuality / fluid.getPhase("gas").getDensity("kg/m3");
+    double liquidVolume = (1.0 - gasQuality) / fluid.getPhase("oil").getDensity("kg/m3");
+    double exponent = chokeModel.getPolytropicExponent();
+    double previous = Double.POSITIVE_INFINITY;
+    for (double backpressure : new double[] {6.9e6, 7.0e6, 7.1e6, 7.9e6, 7.9999e6}) {
+      double ratio = backpressure / inlet;
+      double throatGasVolume = gasVolume * Math.pow(ratio, -1.0 / exponent);
+      double pressureWork = liquidVolume * (1.0 - ratio)
+          + exponent / (exponent - 1.0) * (gasVolume - ratio * throatGasVolume);
+      double reference = chokeModel.getDischargeCoefficient() * chokeModel.getChokeArea()
+          * Math.sqrt(2.0 * inlet * pressureWork) / (throatGasVolume + liquidVolume);
+      double actual = chokeModel.calculateMassFlowRate(fluid, inlet, backpressure);
+      assertEquals(reference, actual, 1.0e-9);
+      assertTrue(actual < previous);
+      assertEquals(backpressure, chokeModel.calculateDownstreamPressure(fluid, inlet, actual), 1.0e-6);
+      previous = actual;
+    }
+    assertEquals(0.0, chokeModel.calculateMassFlowRate(fluid, inlet, inlet));
+    assertEquals(0.0, chokeModel.calculateMassFlowRate(fluid, inlet, inlet + 1.0));
+    assertEquals(inlet, chokeModel.calculateDownstreamPressure(fluid, inlet, 0.0));
+
+    double critical = chokeModel.calculateFluidCriticalPressureRatio(fluid, inlet);
+    double plateau = chokeModel.calculateMassFlowRate(fluid, inlet, inlet * critical);
+    assertEquals(plateau, chokeModel.calculateMassFlowRate(fluid, inlet, inlet * critical * 0.9), 1.0e-12);
+    double nearCritical = chokeModel.calculateMassFlowRate(fluid, inlet, inlet * (critical + 1.0e-4));
+    assertTrue(nearCritical < plateau);
+    assertEquals(plateau, nearCritical, 1.0e-6);
+    assertEquals(inlet * critical, chokeModel.calculateDownstreamPressure(fluid, inlet, plateau * 1.01), 1.0e-6);
+  }
+
   @Test
   void testFlowRegimeDetermination() {
     double P1 = 100.0e5;
 
     // Get the critical pressure ratio for this fluid
-    double gasQuality = chokeModel.calculateGasQuality(twoPhaseFluid);
-    double gamma = twoPhaseFluid.getGamma2();
-    double criticalRatio = chokeModel.calculateCriticalPressureRatio(gasQuality, gamma);
+    double criticalRatio = chokeModel.calculateFluidCriticalPressureRatio(twoPhaseFluid, P1);
 
     // Test subcritical: pressure ratio above critical ratio
     double P2_subcritical = P1 * (criticalRatio + 0.15); // Above critical
@@ -158,8 +203,7 @@ public class SachdevaChokeFlowTest {
     double P1 = 100.0e5;
 
     // Get critical pressure
-    double gasQuality = chokeModel.calculateGasQuality(twoPhaseFluid);
-    double criticalRatio = chokeModel.calculateCriticalPressureRatio(gasQuality, 1.3);
+    double criticalRatio = chokeModel.calculateFluidCriticalPressureRatio(twoPhaseFluid, P1);
     double P_critical = P1 * criticalRatio;
 
     // Calculate flow at critical condition
@@ -200,9 +244,7 @@ public class SachdevaChokeFlowTest {
     double P1 = 100.0e5;
 
     // Get critical pressure for this fluid
-    double gasQuality = chokeModel.calculateGasQuality(twoPhaseFluid);
-    double gamma = twoPhaseFluid.getGamma2();
-    double criticalRatio = chokeModel.calculateCriticalPressureRatio(gasQuality, gamma);
+    double criticalRatio = chokeModel.calculateFluidCriticalPressureRatio(twoPhaseFluid, P1);
     double P_critical = P1 * criticalRatio;
 
     // Test in subcritical range - use a pressure well above critical

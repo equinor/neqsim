@@ -333,7 +333,7 @@ public class ControlValveSizing_MultiphaseChoke implements ControlValveSizingInt
     SystemInterface fluid = inletStream.getThermoSystem();
     double P1 = fluid.getPressure("Pa");
 
-    // Calculate target mass flow from Kv
+    // Apply the selected Kv to the effective throat area.
     double maxKv = valveMechanicalDesign.getValveCvMax() * 0.865;
     if (maxKv > 0) {
       double openingFraction = Math.min(1.0, actualKv / maxKv);
@@ -341,15 +341,7 @@ public class ControlValveSizing_MultiphaseChoke implements ControlValveSizingInt
       chokeModel.setChokeDiameter(effectiveDiameter);
     }
 
-    // For choke models, if we're in critical flow, P2 is the critical pressure
-    // Otherwise, we need flow rate info to determine P2
-    double gasQuality = chokeModel.calculateGasQuality(fluid);
-    double gamma = fluid.getGamma2();
-    double criticalRatio = chokeModel.calculateCriticalPressureRatio(gasQuality, gamma);
-
-    // Return critical pressure as a conservative estimate
-    // (actual P2 depends on downstream conditions)
-    return P1 * criticalRatio;
+    return chokeModel.calculateDownstreamPressure(fluid, P1, fluid.getFlowRate("kg/sec"));
   }
 
   /** {@inheritDoc} */
