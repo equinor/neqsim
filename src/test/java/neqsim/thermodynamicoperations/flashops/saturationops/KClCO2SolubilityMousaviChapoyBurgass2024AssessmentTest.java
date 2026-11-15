@@ -187,8 +187,8 @@ class KClCO2SolubilityMousaviChapoyBurgass2024AssessmentTest {
     assertEquals(naclMoles, actualNaclMoles, 1.0e-12, reference.pointId + " sodium inventory");
     assertEquals(kclMoles, actualKclMoles, 1.0e-12, reference.pointId + " potassium inventory");
     assertEquals(cacl2Moles, actualCacl2Moles, 1.0e-12, reference.pointId + " calcium inventory");
-    assertEquals(naclMoles + kclMoles + 2.0 * cacl2Moles, aqueous.getComponent("Cl-").getNumberOfMolesInPhase(),
-        1.0e-12, reference.pointId + " chloride inventory");
+    assertEquals(naclMoles + kclMoles + 2.0 * cacl2Moles, componentMoles(aqueous, "Cl-"), 1.0e-12,
+        reference.pointId + " chloride inventory");
     assertEquals(reference.naclMassFractionPercent, actualNaclMassPercent, SALT_MASS_PERCENT_CLOSURE_TOLERANCE,
         reference.pointId + " NaCl mass fraction");
     assertEquals(reference.kclMassFractionPercent, actualKclMassPercent, SALT_MASS_PERCENT_CLOSURE_TOLERANCE,
