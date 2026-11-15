@@ -28,12 +28,9 @@ import org.junit.jupiter.api.io.TempDir;
  * @version 1.0
  */
 class WaxCharacterizationDocumentationTest {
-  private static final Path GUIDE =
-      Paths.get("docs", "thermo", "characterization", "wax_characterization.md");
-  private static final String MARKER =
-      "<!-- wax-characterization-example: complete-screen -->";
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
+  private static final Path GUIDE = Paths.get("docs", "thermo", "characterization", "wax_characterization.md");
+  private static final String MARKER = "<!-- wax-characterization-example: complete-screen -->";
+  private static final Pattern JAVA_FENCE = Pattern.compile("```java\\r?\\n(.*?)\\r?\\n```", Pattern.DOTALL);
 
   @TempDir
   Path temporaryDirectory;
@@ -47,8 +44,7 @@ class WaxCharacterizationDocumentationTest {
     assertFalse(source.contains("System.err"));
     assertFalse(source.contains("printStackTrace"));
     assertFalse(source.contains("catch ("));
-    assertTrue(source.contains(
-        "LogManager.getLogger(WaxCharacterizationScreeningExample.class)"));
+    assertTrue(source.contains("LogManager.getLogger(WaxCharacterizationScreeningExample.class)"));
     assertTrue(source.contains("fluid.enableWaxModel(\"Pedersen\")"));
     assertTrue(source.contains("calculator.setEnforceMonotonicity(false)"));
     assertTrue(source.contains("calculator.calculateWAT()"));
@@ -58,8 +54,7 @@ class WaxCharacterizationDocumentationTest {
     assertTrue(source.contains("calculator.calculateAtMultiplePressures("));
     assertTrue(source.contains("Double.isFinite(waxMassFraction)"));
 
-    try (URLClassLoader loader =
-        compile("WaxCharacterizationScreeningExample", source)) {
+    try (URLClassLoader loader = compile("WaxCharacterizationScreeningExample", source)) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = loader.loadClass("WaxCharacterizationScreeningExample");
       example.getMethod("main", String[].class).invoke(null, (Object) new String[0]);
@@ -76,16 +71,14 @@ class WaxCharacterizationDocumentationTest {
     String markdown = new String(Files.readAllBytes(GUIDE), StandardCharsets.UTF_8);
     int markerIndex = markdown.indexOf(MARKER);
     assertTrue(markerIndex >= 0, "Wax-screening example marker is missing");
-    assertEquals(markerIndex, markdown.lastIndexOf(MARKER),
-        "Wax-screening example marker must be unique");
+    assertEquals(markerIndex, markdown.lastIndexOf(MARKER), "Wax-screening example marker must be unique");
     assertFalse(markdown.contains("System.out.println"));
     assertFalse(markdown.contains("String risk"));
 
     String prose = markdown.replaceAll("\\s+", " ");
-    assertTrue(prose.contains(
-        "they do not by themselves assign a deposition or plugging risk class"));
-    assertTrue(prose.contains(
-        "Equilibrium wax amount does not establish a deposition rate, location, or plugging time"));
+    assertTrue(prose.contains("they do not by themselves assign a deposition or plugging risk class"));
+    assertTrue(
+        prose.contains("Equilibrium wax amount does not establish a deposition rate, location, or plugging time"));
     assertTrue(prose.contains("laboratory WAT and wax-fraction data"));
     assertTrue(prose.contains("treat any `NaN` as a failed point, not zero wax"));
 
@@ -112,20 +105,15 @@ class WaxCharacterizationDocumentationTest {
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "A JDK is required to validate documentation examples");
-    String classpath = System.getProperty("surefire.test.class.path",
-        System.getProperty("java.class.path"));
+    String classpath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
     StringWriter diagnostics = new StringWriter();
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
       Boolean successful = compiler
-          .getTask(diagnostics, manager, null,
-              Arrays.asList("-source", "8", "-target", "8", "-proc:none",
-                  "-classpath", classpath, "-d", classes.toString()),
-              null, manager.getJavaFileObjects(javaFile.toFile()))
+          .getTask(diagnostics, manager, null, Arrays.asList("-source", "8", "-target", "8", "-proc:none", "-classpath",
+              classpath, "-d", classes.toString()), null, manager.getJavaFileObjects(javaFile.toFile()))
           .call();
       assertTrue(successful, diagnostics.toString());
     }
-    return new URLClassLoader(new URL[] {classes.toUri().toURL()},
-        getClass().getClassLoader());
+    return new URLClassLoader(new URL[] {classes.toUri().toURL()}, getClass().getClassLoader());
   }
 }
