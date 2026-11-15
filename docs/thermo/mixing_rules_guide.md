@@ -1098,6 +1098,15 @@ not establish experimental accuracy or throughput acceptance. See the
 The other six cataloged PR pairs, inhibitors, brines, ice and hydrate dissociation
 remain outside this assessment. No source-fit error becomes a test tolerance.
 
+The [staged PR water/propane assessment](../../src/test/resources/neqsim/thermo/mixingrule/hv-water-propane/README.md)
+compares the recovered tuple against 18 aqueous propane measurements. With
+declared NeqSim pure inputs, the five points within the paper’s nominal T/P
+window have 12.62% aqueous AARD. Matching pure-water saturation pressure
+locally gives 11.66% AARD. The associated vapor-water predictions still need
+measured validation. A separate set of nine in-window Azarnoosh–McKetta
+aqueous measurements gives 14.18% AARD with the same inputs, or 13.30%
+with the local pure-water pressure control. The profile remains staged.
+
 
 The [nitrogen/water source-version audit](../../src/test/resources/neqsim/thermo/mixingrule/hv-water-nitrogen/thesis-2004/README.md)
 preserves 87 image-transcribed primary-thesis observations alongside the unchanged
@@ -1132,6 +1141,21 @@ component directions and retained observation/uncertainty coordinates before
 solving; invalid evidence cannot overwrite a report or the read-only fixture.
 Its admission guards are tested with normal and optimized Python. They do not
 establish experimental accuracy or resolve the remaining primary-source gaps.
+
+### Bidirectional methane/water and methane/MEG screening
+
+The [Frost protocol](../../src/test/resources/neqsim/thermo/mixingrule/hv-frost/README.md)
+preserves separate thesis and journal compiler versions and assesses both
+phase endpoints against independent binary equations. It records the large
+aqueous methane error of the staged PR-HV water tuple and the gas-phase MEG
+error of the staged SRK-HV tuple, alongside numerical and equilibrium closure.
+An IAPWS pure-water pressure sensitivity leaves the aqueous methane error
+largely unchanged. An independent dilute-limit comparison finds the declared
+PR-HV methane Henry constant is 43–57 times the IAPWS correlation across
+the four Frost journal temperatures. The same liquid-direction bias persists
+in an additional measured low-pressure dataset. The comparison is limited to the measured binary
+coordinates and declared pure profiles. The existing validated opt-in profiles
+remain available.
 
 ### Staged CO2/water source configurations
 

@@ -70,7 +70,7 @@ public final class TwoFluidComponentTransport implements Serializable {
       SystemInterface localFluid = prepared.clone();
       localFluid.setPressure(sections[cell].getPressure() / 1.0e5, "bara");
       localFluid.setTemperature(sections[cell].getTemperature(), "K");
-      localFluid = prepareFluid(localFluid, "initial component state for cell " + cell);
+      localFluid = flashOwnedFluid(localFluid, "initial component state for cell " + cell);
       double[][] initialPhaseFractions = phaseMassFractions(localFluid);
       if (aqueousFluid != null) {
         validateComponentSlate(aqueousFluid);
@@ -1138,7 +1138,7 @@ public final class TwoFluidComponentTransport implements Serializable {
       carrier.setTotalFlowRate(1.0, "mol/sec");
       carrier.setPressure(pressurePa / 1.0e5, "bara");
       carrier.setTemperature(temperatureK, "K");
-      outlet = prepareFluid(carrier, "closed component outlet");
+      outlet = flashOwnedFluid(carrier, "closed component outlet");
     }
     outlet.setTotalFlowRate(massFlow, "kg/sec");
     return outlet;
@@ -1427,7 +1427,7 @@ public final class TwoFluidComponentTransport implements Serializable {
     fluid.setMolarComposition(templateComposition);
     fluid.setPressure(pressurePa / 1.0e5, "bara");
     fluid.setTemperature(temperatureK, "K");
-    return prepareFluid(fluid, context);
+    return flashOwnedFluid(fluid, context);
   }
 
   private double[][] phaseMassFractions(SystemInterface fluid) {
@@ -1550,7 +1550,17 @@ public final class TwoFluidComponentTransport implements Serializable {
     if (source == null) {
       throw new IllegalArgumentException("Fluid cannot be null for " + context);
     }
-    SystemInterface fluid = source.clone();
+    return flashOwnedFluid(source.clone(), context);
+  }
+
+  /**
+   * Flash a working fluid already owned by this calculation and initialize its properties.
+   *
+   * @param fluid independent working fluid to update
+   * @param context location of the calculation for error reporting
+   * @return the flashed working fluid
+   */
+  private static SystemInterface flashOwnedFluid(SystemInterface fluid, String context) {
     try {
       ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
       operations.TPflash();

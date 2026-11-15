@@ -9,6 +9,25 @@
 
 ---
 
+## 2026-11-14 — Remove unused legacy CPA phase methods (breaking API change)
+
+- Removed `solveXOld()`, `solveX2Old(int)`, `initOld2(...)`, `initCPAMatrixOld(int)`,
+  and `molarVolumeOld(...)` from `PhaseSrkCPA` and `PhaseUMRCPA`, including inherited
+  access through their subclasses. No in-repository callers used these methods.
+  Their public removal is an explicitly accepted API break for this cleanup, not
+  a backwards-compatible patch; release approval remains subject to the
+  [API lifecycle policy](docs/development/api-lifecycle.md).
+- Migrate external callers to `solveX()`, `solveX2(int)`, `init(...)`,
+  `initCPAMatrix(int)`, and `molarVolume(...)`, respectively. These select the
+  active implementations, not numerically identical legacy algorithms.
+- Removed only the unused SRK correction buffers and their allocations/clone
+  copies. UMR still uses its buffers. Active solver equations, convergence
+  thresholds, and initialization levels are unchanged.
+- Retained `PhaseElectrolyteCPAOld` and its component class; whole-class retirement
+  is separate. Agent/skill guidance should use the active methods above.
+
+---
+
 ## 2026-11-12 — `.neqsim` files record the real NeqSim version; archives keep their writer's component data
 
 - **New `neqsim.util.NeqSimVersion.get()`:** `neqsim.version` system property, then manifest `Implementation-Version`,

@@ -6,7 +6,7 @@ description: Delivered capabilities, evidence boundaries and remaining acceptanc
 # Source-term platform implementation status
 
 Tracking issue: [#3860](https://github.com/equinor/neqsim/issues/3860).
-Implementation scope and consumer validation as of 2026-11-02; this does not confer qualification or replace domain review.
+Implementation scope and consumer validation as of 2026-11-14; this does not confer qualification or replace domain review.
 
 ## Delivered foundations
 
@@ -79,11 +79,13 @@ The current implementation includes:
 - A separate opt-in retained-phase inventory keeps gas and liquid component masses independent,
   applies provenance-required two-way fugacity-film transfer over the live cylindrical interface,
   limits every donor component, withdraws the selected phase composition/enthalpy, and solves common
-  pressure/temperature from rigid volume and total internal energy without reflashing the committed
-  partition. It retains latent-energy and component-transfer diagnostics, atomic rollback,
-  receiving-pressure events, both process-container paths and timestep-refinement evidence. The
-  coefficients remain prescribed sensitivity inputs; the model assumes phase thermal equilibrium,
-  fails closed on phase disappearance and is not predictive entrainment or experimental qualification.
+  pressure from rigid volume without reflashing the committed partition. The compatibility path solves
+  one common temperature from total energy; an explicit sensitivity path solves separate gas/liquid
+  temperatures from independently conserved phase energies and equal-and-opposite prescribed interfacial
+  heat transfer. It retains phase-energy, latent-energy and component-transfer diagnostics, atomic
+  rollback, receiving-pressure events, both process-container paths and timestep-refinement evidence.
+  The coefficients remain prescribed inputs; the model fails closed on phase disappearance and is not
+  predictive heat/mass transfer, entrainment or experimental qualification.
 - CPA inventory consumer regressions add gas/aqueous withdrawal, caller/export isolation,
   rejected-substep rollback and replay, nearby-temperature timestep refinement, and both native
   process-container paths. A prescribed test flux isolates bookkeeping; it does not qualify
@@ -116,8 +118,18 @@ The current implementation includes:
   boundary while recovering cell pressure, temperature, phase state and acoustic speed through
   NeqSim volume/internal-energy flashes. It retains exact pipe-plus-discharge mass and total-energy
   accounting, both process-container paths, dilute-limit and grid-refinement evidence, and fails
-  closed on phase appearance or detected/unresolved solid risk. It remains unqualified and excludes heat transfer, elasticity,
-  upstream-vessel/two-sided coupling and non-equilibrium multiphase physics.
+  closed on phase appearance or detected/unresolved solid risk. An additive boundary couples a
+  finite rigid, adiabatic, perfectly mixed upstream gas vessel to the first pipe cell with the same
+  conservative interface flux. Vessel plus pipe plus discharge mass and total energy close, and
+  provenance, nearby-volume and CFL-refinement evidence are retained. It remains unqualified and
+  includes an optional distributed constant-$U$ heat boundary to a fixed external temperature and
+  a typed finite-capacitance wall with separate prescribed gas-side and environment-side
+  coefficients. Gas, wall, vessel plus discharge energy closes against accumulated environment
+  heat; internal gas--wall heat, wall storage, thermal direction, compatibility, provenance and
+  CFL refinement are tested in both process containers. These are caller-prescribed sensitivities,
+  not predictive fire, ambient, soil or seawater models, and they exclude radial wall conduction,
+  elasticity, two-sided rupture, vessel internal waves/phase separation and non-equilibrium
+  multiphase physics.
 - Immutable per-model evidence manifests now retain stable applicability and limitation codes,
   typed analytical/conservation/numerical/experimental references, and an explicit independent-
   evidence flag in schema-validated frames. Current built-in manifests truthfully remain
@@ -138,8 +150,8 @@ caller-owned; no phase-count rule silently changes the requested physics.
 
 | Work item | Current boundary | Completion evidence required |
 |---|---|---|
-| Broader transient inventory regimes | Rigid equilibrium inventory supports explicit phase-selected withdrawal, ordered phase-exhaustion transitions, conservative receiving-pressure events, external heat boundaries and balance/refinement tests. The opt-in retained-phase inventory adds two-way component film transfer, donor limits, thermodynamic latent-energy accounting, live interface area and inventory feedback without reflashing the committed partition. It assumes one gas/one liquid at a common temperature, prescribed coefficients and fail-closed phase disappearance. | Predictive/validated coefficient and interfacial heat-transfer models; separate phase-energy/temperature dynamics where required; predictive entrainment beyond the fail-closed interface band; qualified fire/wall boundary models rather than caller-imposed duties. |
-| Full-bore/long-pipe and non-equilibrium regimes | Bounded ideal-gas and EOS-backed real-gas Fanno models cover quasi-steady one-sided constant-area single-gas pipe flow. Conservative perfect-gas and EOS-backed single-gas finite-volume units cover one-sided transient waves and line packing. Short-opening prescribed-slip, bounded vertical drift-flux and finite-rate phase-partition models cover one gas and one liquid within explicit screening limits. A predictive spherical-bubble transfer-zone adapter supplies bounded bubble size, phase-relative speed and residence time to Ranz-Marshall but deliberately rejects liquid-droplet hydrodynamics. | Pipe heat transfer/elasticity and upstream-vessel/two-sided coupling; measured or predictive population-balance, breakup/coalescence and entrainment models; liquid-droplet, annular/high-Weber and solid-bearing transport; independent dense-gas and multiphase validation data. The inventory's lumped external heat boundary is not distributed pipe heat transfer. |
+| Broader transient inventory regimes | Rigid equilibrium inventory supports explicit phase-selected withdrawal, ordered phase-exhaustion transitions, conservative receiving-pressure events, external heat boundaries and balance/refinement tests. The opt-in retained-phase inventory adds two-way component film transfer, donor limits, thermodynamic latent-energy accounting, live interface area and inventory feedback without reflashing the committed partition. Its explicit separate-energy path conserves gas/liquid energies and solves independent temperatures with prescribed equal-and-opposite interfacial heat transfer. Both paths retain one gas/one liquid, prescribed coefficients and fail-closed phase disappearance. | Predictive and independently validated mass/heat-transfer coefficients; predictive entrainment beyond the fail-closed interface band; qualified fire/wall boundary models rather than caller-imposed duties. |
+| Full-bore/long-pipe and non-equilibrium regimes | Bounded ideal-gas and EOS-backed real-gas Fanno models cover quasi-steady one-sided constant-area single-gas pipe flow. Conservative perfect-gas and EOS-backed single-gas finite-volume units cover one-sided transient waves and line packing. The EOS-backed unit optionally includes a conservative rigid, adiabatic, well-mixed upstream gas vessel, prescribed distributed constant-$U$ heat exchange, or a cell-resolved finite-capacitance wall with separate prescribed gas/environment coefficients, exact total-energy accounting and refinement evidence. Short-opening prescribed-slip, bounded vertical drift-flux and finite-rate phase-partition models cover one gas and one liquid within explicit screening limits. A predictive spherical-bubble transfer-zone adapter supplies bounded bubble size, phase-relative speed and residence time to Ranz-Marshall but deliberately rejects liquid-droplet hydrodynamics. | Predictive/qualified pipe-wall, fire, ambient, soil or seawater thermal correlations and radial wall conduction/material models; pipe elasticity and two-sided rupture; vessel nozzle loss, internal waves and phase separation; measured or predictive population-balance, breakup/coalescence and entrainment models; liquid-droplet, annular/high-Weber and solid-bearing transport; independent dense-gas and multiphase validation data. |
 | Independent qualification and dense-fluid accuracy | Machine-readable evidence records distinguish applicability, limitations, evidence type and independence. The Fanno manifest retains one external analytical case with explicit error bounds; frames remain `UNQUALIFIED`. | Add independent experimental/dense-fluid datasets with range and uncertainty analysis, then obtain accountable domain review. |
 | Solid-formation applicability | Mixture-specific solid/hydrate station assessment now fails closed and retains machine-readable diagnostics. | Assessed solid-bearing release physics where supported, plus independent mixture validation. |
 | Multicomponent flashing qualification | The documented 80/20 propane/butane entropy root and nearby cases now close with guarded continuation; a separate same-EOS saturation path checks the maximum. Acoustic warnings remain explicit. | Independent experimental benchmarks and domain review; broader mixtures are not qualified by the regression matrix. |

@@ -1845,6 +1845,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
         ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
         ops.TPflash();
+        fluid.initProperties();
 
         if (fluid.hasPhaseType("gas")) {
           section.setGasDensity(fluid.getPhase("gas").getDensity("kg/m3"));

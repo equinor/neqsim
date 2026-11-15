@@ -92,6 +92,17 @@ accountable review remain mandatory.
 | [Vessel thermomechanical safety](vessel_thermomechanical_safety) | Dynamic PSV screening and thermomechanical response |
 | [Trapped liquid fire rupture](trapped_liquid_fire_rupture) | Blocked-in liquid fire and rupture screening |
 
+### Firewater supply assessment
+
+`FireWaterCoverageAssessment` requires a finite spare supply flow in L/min and
+a finite worst-case pressure margin in bar before returning a hydraulic verdict.
+Supply both using `setSpareSupplyFlowLpm` and `setWorstCasePressureMarginBar`.
+If either value is unavailable, `verdict()` returns `SUPPLY_DATA_INCOMPLETE`.
+The corresponding feasibility check returns `false`, and `toJson()` writes
+`null` for the unavailable input. Finite negative margins remain valid inputs
+and indicate a shortfall. Full coverage is compliant only when the supplied flow
+and pressure also satisfy the assessment.
+
 ## Alarms and architecture
 
 | Document | Description |

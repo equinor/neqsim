@@ -105,7 +105,8 @@ evidence remains `UNQUALIFIED` under the [dynamic capability contract](../dynami
 `NonEquilibriumReleaseInventory` is a separate opt-in model for exactly one gas and one oil,
 generic-liquid or aqueous phase. It does not call a TP or VU equilibrium flash after a component
 transfer. Instead, it retains gas and liquid component masses separately and evaluates forced
-homogeneous EOS phases at one common pressure and temperature. A coupled Newton solve enforces
+homogeneous EOS phases. Existing constructors retain the common-pressure/common-temperature
+boundary. A coupled Newton solve enforces
 
 $$V_g(P,T,\mathbf{m}_g)+V_l(P,T,\mathbf{m}_l)=V_{vessel}$$
 
@@ -132,12 +133,27 @@ provenance. It is an internal diagnostic, not an energy source: the total-energy
 retains the complete thermodynamic effect and the global balance remains
 $U+H_{released}-Q_{external}=U_0$.
 
-The model assumes thermal equilibrium between phases, prescribed film coefficients and one live
-cylindrical interface. It fails closed on phase disappearance, an opening inside the exclusion
-band, an unsupported phase assemblage, invalid fugacity/property data or a non-converged state
-solve. It does not predict separate phase temperatures, interfacial heat-transfer coefficients,
-nucleation delay, wall inertia, entrainment, droplets, population balance, pipe waves or solids.
-Its current evidence level is `UNQUALIFIED`.
+An additional constructor ending in `ReleaseInventoryInterphaseHeatTransfer` activates separate
+phase energies and temperatures while retaining one mechanical pressure. For target gas and liquid
+energies, the nonlinear solve enforces
+
+$$V_g(P,T_g,\mathbf{m}_g)+V_l(P,T_l,\mathbf{m}_l)=V_{vessel},\qquad
+U_g(P,T_g,\mathbf{m}_g)=U_{g,target},\qquad
+U_l(P,T_l,\mathbf{m}_l)=U_{l,target}$$
+
+`linearConductance(UA, provenance)` applies
+$\dot Q_{g\leftarrow l}=UA(T_l-T_g)$, with equal and opposite phase-energy updates. Component
+transfer carries the donor phase's beginning-of-substep bulk enthalpy. Release removes the selected
+phase enthalpy, and the existing external heat boundary is allocated explicitly to that selected
+phase. The immutable balance exposes both phase energies and temperatures plus cumulative signed
+interfacial heat entering the gas. The common-temperature constructors and their source-frame basis
+remain unchanged.
+
+Both thermal forms use prescribed coefficients and one live cylindrical interface. They fail closed
+on phase disappearance, an opening inside the exclusion band, an unsupported phase assemblage,
+invalid fugacity/property data or a non-converged state solve. They do not predict mass- or
+heat-transfer coefficients, nucleation delay, wall inertia, entrainment, droplets, population
+balance, pipe waves or solids. Their current evidence level is `UNQUALIFIED`.
 
 The executable construction and both process-container paths are covered by
 `NonEquilibriumReleaseInventoryTest`:
@@ -162,6 +178,26 @@ SourceTermFrame frame = session.runSteadyState().get(0);
 frame = session.step(0.10).get(0);
 NonEquilibriumReleaseInventory.Balance balance = finiteRate.getBalance();
 ```
+
+To activate independent phase energies, add explicit external and interfacial heat closures:
+
+```java
+ReleaseInventoryHeatTransfer external = ReleaseInventoryHeatTransfer.constantPower(
+    200.0, "assessed-heater-duty:v1"); // W into selected withdrawal phase
+ReleaseInventoryInterphaseHeatTransfer interfaceHeat =
+    ReleaseInventoryInterphaseHeatTransfer.linearConductance(
+        15.0, "assessed-interface-UA:v1"); // W/K
+NonEquilibriumReleaseInventory separateEnergy = new NonEquilibriumReleaseInventory(
+    "separate-energy-inventory", flashedFluid, vesselVolumeM3,
+    openingDiameterM, 0.70, receiverPressurePa, 0.0, 0.0,
+    selectedReleaseModel, maximumSubstepS, PhaseType.GAS,
+    vesselGeometry, film, external, interfaceHeat);
+```
+
+`NonEquilibriumReleaseInventoryTest` exercises combined component/energy conservation, heat-flow
+direction, exact phase-energy summation, four-level timestep refinement, deterministic frames and
+both native process containers. These are numerical and conservation tests, not independent
+qualification of a conductance or applicability envelope.
 
 `getThermoSystem()` returns a defensive clone of the selected withdrawal phase because a single
 `SystemInterface` cannot represent two retained compositions without reflashing them. Whole-
@@ -318,9 +354,88 @@ histories before using a result even inside this applicability boundary.
 `RealGasPipeDecompression` uses the same geometry, process-container registration and conservative
 accounting, but recovers each cell through a NeqSim volume/internal-energy flash. Pressure,
 temperature and acoustic speed therefore evolve with the selected EOS. It fails the whole caller
-step atomically if any cell or the receiver boundary ceases to be one equilibrium gas phase. This
-adds real-gas transient property evolution, not heat transfer, wall elasticity, finite upstream
-vessel or two-sided coupling, non-equilibrium multiphase transport, solids, or qualification.
+step atomically if any cell or the receiver boundary ceases to be one equilibrium gas phase.
+
+An additive constructor couples the first pipe cell to a finite rigid, adiabatic, perfectly mixed
+upstream gas vessel:
+
+```java
+RealGasPipeDecompression vesselAndPipe = new RealGasPipeDecompression(
+    "vessel-fed-rupture", gas, 40.0, 0.15, 1.0, 101325.0,
+    0.01, 0.20, 12, 0.30);
+// Darcy friction, upstream-vessel volume (m3), cells and CFL are the final four inputs.
+```
+
+The vessel starts at the same EOS state and composition as the pipe. Each accepted CFL substep
+uses the same local Lax--Friedrichs face flux at the vessel/pipe interface, subtracts that mass and
+total energy from the vessel, and adds it to the pipe. The closure inventory is therefore vessel
+plus pipe plus downstream discharge. Reverse vessel/pipe exchange is retained rather than clipped.
+The complete caller step is atomic, and frames from both process containers carry vessel volume,
+mass, internal energy, pressure, temperature, boundary identity and the combined inventory volume.
+The legacy constructor retains the closed upstream end and its existing provenance.
+
+An additional overload applies a distributed pipe-wall sensitivity boundary while retaining the
+same conservative vessel, pipe and discharge transaction:
+
+```java
+RealGasPipeDecompression heatedVesselAndPipe = new RealGasPipeDecompression(
+    "heated-vessel-fed-rupture", gas, 40.0, 0.15, 1.0, 101325.0,
+    0.01, 0.20, 25.0, 285.0, 12, 0.30);
+// Final inputs: Darcy friction, vessel volume (m3), U (W/(m2 K)),
+// fixed external temperature (K), cells and CFL.
+```
+
+For cell $i$ with external wall area $A_{w,i}$, the signed heat rate into the gas is
+$\dot Q_i=U A_{w,i}(T_{ext}-T_i)$. Each accepted substep adds
+$\dot Q_i\Delta t$ to that cell's conservative total energy and to the cumulative heat ledger.
+The exact integrated balance is
+
+$$E_0+Q_{wall}=E_{vessel}+E_{pipe}+E_{released}$$
+
+where the upstream vessel remains adiabatic. A thermal step limiter bounds the explicit cell
+temperature change in addition to the acoustic CFL and vessel-donor limits. Frames expose the
+adiabatic or `CONSTANT_U_FIXED_EXTERNAL_TEMPERATURE` boundary, $U$, external temperature, pipe
+external area, cumulative heat in J and instantaneous heat rate in W. Pass zero for both thermal
+inputs to recover the adiabatic constructor exactly; incomplete or nonphysical pairs are rejected.
+
+For finite wall thermal inertia, use the typed boundary instead of the massless constant-$U$
+overload:
+
+```java
+RealGasPipeDecompression.WallThermalBoundary wall =
+    RealGasPipeDecompression.WallThermalBoundary.capacitive(
+        80.0, 35.0, 45000.0, 330.0, 360.0);
+RealGasPipeDecompression wallCoupled = new RealGasPipeDecompression(
+    "wall-coupled-rupture", gas, 40.0, 0.15, 1.0, 101325.0,
+    0.01, 0.20, wall, 12, 0.30);
+// Gas-wall U_i and wall-environment U_o: W/(m2 K)
+// Wall areal heat capacity: J/(m2 K); temperatures: K.
+```
+
+Each cell retains one wall temperature. With wall heat capacity $C_{w,A}$ per external area,
+
+$$\dot Q_{g,i}=U_iA_{w,i}(T_{w,i}-T_{g,i})$$
+
+$$\dot Q_{e,i}=U_oA_{w,i}(T_{ext}-T_{w,i}),\qquad
+C_{w,A}A_{w,i}\frac{dT_{w,i}}{dt}=\dot Q_{e,i}-\dot Q_{g,i}$$
+
+The gas receives $\dot Q_g$ and the wall receives the opposite internal transfer plus
+$\dot Q_e$. The atomic integrated closure becomes
+
+$$E_{g,0}+E_{w,0}+Q_{environment}
+=E_{vessel}+E_{pipe\ gas}+E_{wall}+E_{released}$$
+
+Frames retain the two coefficients, wall areal heat capacity, initial/mean wall temperature,
+stored wall energy, environment heat and gas--wall heat separately. Explicit thermal stability
+limits supplement the acoustic CFL and vessel-donor limits. The original adiabatic and massless
+constant-$U$ constructors are unchanged.
+
+This adds finite upstream storage, pressure feedback and optional distributed constant-$U$ wall
+heat exchange or a prescribed finite-capacitance wall. It does not predict either coefficient,
+wall material/capacity, external temperature, fire/ambient/soil/seawater heat transfer, radial wall
+conduction, vessel nozzle loss, internal vessel waves, phase separation, wall elasticity, a second
+rupture end, non-equilibrium multiphase transport, solids, or qualification. The vessel and every
+pipe cell must remain one equilibrium gas phase; otherwise the whole caller step fails closed.
 
 Compatibility frames carry `releaseBasis=COUPLED_RIGID_ADIABATIC_GAS_INVENTORY`.
 Explicit phase-selected frames carry

@@ -26,10 +26,12 @@ class FormationEnthalpyDatabaseTest {
             assertEquals(rows.getString("FORMATIONENTHALPYSOURCE"), component.getFormationEnthalpySource());
             reviewed++;
           }
-          assertEquals(13, reviewed);
+          assertEquals(14, reviewed);
         }
         assertEquals(0.0, new ComponentSrk("helium", 1.0, 1.0, 0).getHID(298.15, true), 1.0e-8);
         assertEquals(-241826.4, new ComponentSrk("water", 1.0, 1.0, 0).getHID(298.15, true), 1.0e-8);
+        // Glycerol gas, NIST WebBook citing Bastos et al. (1988); issue #4069.
+        assertEquals(-577900.0, new ComponentSrk("glycerol", 1.0, 1.0, 0).getHID(298.15, true), 1.0e-8);
         assertFalse(new ComponentSrk("default", 1.0, 1.0, 0).hasIdealGasEnthalpyOfFormation());
       }
     } finally {

@@ -291,8 +291,25 @@ branch-order/restart regression verifies deterministic insertion-order behavior,
 a second accepted interval. The coupled daisy-chain regression adds two zero-volume nodes connected
 by one two-fluid branch, checks both pressure roots, per-junction component/energy closure, report
 identity, branch-order reversal and serialized continuation. This is synthetic software conservation
-evidence only. Branch-local subcycling, representative large-field runtime, mesh/time-step refinement
-and independent field data remain open work.
+evidence only.
+
+`TwoFluidPipeNetworkRefinementStudy` now snapshots one unadvanced canonical network and replays named
+outer-step/subcycle configurations from that exact serialized state to one common physical time. It
+retains measured runtime, worst accepted conservation/junction diagnostics, every final node pressure,
+and complete pressure, temperature, liquid-holdup and phase-velocity branch profiles. The slow
+acceptance test covers a direct tieback, a two-junction daisy chain and two finite conservative
+template inventories feeding a conservative PLEM and export riser. The source network remains
+unadvanced; 1 ms/factor-1, 1 ms/factor-2 and 0.5 ms/factor-2 cases retain finite profiles and nearby
+final pressures at the common 1 ms endpoint. The branched fixture now uses the same three-incident
+algebraic PLEM contract as the network solver. Its scalar composition/enthalpy fixed point applies a
+50% donor-state update; the coupled-junction path retains its established full update. A retained
+finite-template regression requires donor convergence, exact component/energy closure and
+branch-order-independent pressure, temperature and composition without relaxing any conservation
+tolerance. These four-cell synthetic fixtures qualify the replay and numerical conservation contract
+only. Their 25% nearby-pressure screen is not a convergence rate, field error band or time-step
+recommendation. Mesh refinement still requires an independently rebuilt but physically identical
+network, longer field trajectories remain open, and independent field/commercial comparison remains
+open.
 
 ## Typed field and equipment identity
 
@@ -1071,8 +1088,12 @@ second transition detector or interpret a heuristic `OPTIMAL` status as operatin
    close storage-node intervals before publication. The algebraic coordinator solves one or more
    coupled common pressures plus per-junction component/enthalpy donors and reports equilibrium
    interphase transfer. Positive integer branch-local subcycles now aggregate mass, component and
-   energy ledgers inside the unchanged frozen whole-network transaction. Next complete representative
-   runtime, mesh/time-step/subcycle refinement and independent field/commercial comparisons; only then
+   energy ledgers inside the unchanged frozen whole-network transaction. A common-start/common-time
+   harness now records direct-tieback, daisy-chain and branched multi-template runtime, accepted
+   conservation and complete profiles while varying outer step and subcycles. Its multi-template
+   case uses a three-incident algebraic PLEM, with a retained donor-convergence regression and no
+   relaxed conservation tolerance. Next complete spatial mesh refinement, longer representative
+   field trajectories and independent field/commercial comparisons; only then
    consider asynchronous multirate boundary coupling. Enable dynamics only within the quantitatively
    tested scope.
 4. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export

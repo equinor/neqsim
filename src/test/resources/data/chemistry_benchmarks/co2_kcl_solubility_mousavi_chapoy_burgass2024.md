@@ -40,20 +40,23 @@ the source are not experimental residuals.
 
 Each state uses `SystemElectrolyteCPAstatoil`, mixing rule 10, the reported
 total pressure, a finite CO2 reservoir and one final aqueous kilogram of water.
-Feed water is compensated for evaporation. The assessment verifies two fluid
+Feed water is compensated for evaporation. The assessment uses the default
+TP-flash stability setting with multiphase checking enabled. It verifies two fluid
 phases with the ions confined to the aqueous phase, component inventory, salt
 mass fractions, the water basis, finite diagnostics and finite-reservoir
 independence. The non-aqueous phase is identified by position because NeqSim
 may label the CO2-rich phase as oil at high pressure (for example 40 MPa). The
-molecular log-fugacity residual is reported in the CSV rather than gated: at
-high pressure it is a model diagnostic, not a solver-tolerance check.
+molecular log-fugacity residual is reported in the CSV as a model diagnostic.
+For MCB-KCL15-373-P281, the assessment also requires a gas–aqueous split and
+a residual below 1e-8 to catch the earlier three-phase result with unequal
+molecular fugacities.
 
-The flash can return a spurious single phase for a feed that sits a tiny step
-from a feed that splits correctly (423.15 K, 38.531 MPa, 15 mass percent KCl
-is one such state). The saturated aqueous composition does not depend on the
-reservoir size, so the test retries with a 10 percent larger CO2 reservoir, up
-to five times. The reservoir actually used is written to the `co2_feed_moles`
-column, so a value above 10 flags a retried point.
+The original flash path could return a spurious single phase at 423.15 K,
+38.531 MPa and 15 mass percent KCl. If a flash returns a single phase, the
+assessment retries with a 10 percent larger CO2 reservoir, up to five times.
+The saturated aqueous composition is independent of reservoir size in the
+tested range. The `co2_feed_moles` column records the reservoir actually used,
+so a value above 10 flags a retried point.
 
 These high-temperature measurements are an independent dissolved-CO2
 diagnostic and were not used to fit NeqSim in this increment. They separate the

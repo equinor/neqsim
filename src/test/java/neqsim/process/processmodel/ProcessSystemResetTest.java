@@ -2,6 +2,7 @@ package neqsim.process.processmodel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -83,6 +84,61 @@ public class ProcessSystemResetTest extends neqsim.NeqSimTest {
 
     assertFalse(process.isMeasurementHistoryRecordingEnabled());
     assertEquals(0, process.getHistorySize());
+  }
+
+  @Test
+  public void resetRestoresStateIntoExistingObjects() {
+    SeparatorControlFlowsheet sheet = new SeparatorControlFlowsheet();
+    ProcessSystem process = sheet.process;
+    process.setTimeStep(2.0);
+    process.storeInitialState();
+    assertTrue(process.isInPlaceResetAvailable());
+    double initialLevel = sheet.separator.getLiquidLevel();
+    double initialPressure = sheet.pressureBara();
+
+    double[] firstRun = new double[30];
+    for (int i = 0; i < firstRun.length; i++) {
+      process.runTransient();
+      firstRun[i] = sheet.separator.getLiquidLevel();
+    }
+    double inletOpeningAfterRun = sheet.inletValve.getPercentValveOpening();
+
+    process.reset();
+
+    // References held by the caller (e.g. a Python or Gymnasium environment) still drive the model.
+    assertSame(sheet.separator, process.getUnit("V-001"));
+    assertSame(sheet.inletValve, process.getUnit("LCV-00"));
+    assertSame(sheet.levelController, sheet.inletValve.getController());
+    assertEquals(initialLevel, sheet.separator.getLiquidLevel(), 1.0e-12);
+    assertEquals(initialPressure, sheet.pressureBara(), 1.0e-9);
+    assertEquals(0.0, process.getTime(), 0.0);
+    assertEquals(0, process.getHistorySize());
+    assertTrue(Math.abs(sheet.inletValve.getPercentValveOpening() - inletOpeningAfterRun) > 1.0e-6);
+
+    for (int i = 0; i < firstRun.length; i++) {
+      process.runTransient();
+      assertEquals(firstRun[i], sheet.separator.getLiquidLevel(), 1.0e-9, "level differs at step " + i);
+    }
+
+    // Reset can be repeated; each reset restores a fresh copy of the stored state.
+    process.reset();
+    assertEquals(initialLevel, sheet.separator.getLiquidLevel(), 1.0e-12);
+  }
+
+  @Test
+  public void resetAfterStructureChangeReplacesObjects() {
+    SeparatorControlFlowsheet sheet = new SeparatorControlFlowsheet();
+    ProcessSystem process = sheet.process;
+    process.storeInitialState();
+    process.add(new neqsim.process.equipment.stream.Stream("extra", sheet.separator.getGasOutStream()));
+    assertFalse(process.isInPlaceResetAvailable());
+
+    process.reset();
+
+    // The stored copy is restored; the caller must fetch equipment again.
+    assertTrue(process.getUnit("V-001") != sheet.separator);
+    assertTrue(process.getUnit("extra") == null);
+    assertTrue(process.isInPlaceResetAvailable());
   }
 
   private static final class CountingMeasurement extends MeasurementDeviceBaseClass {

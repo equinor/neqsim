@@ -425,6 +425,69 @@ branches. Recycle and other iterative transient couplings still require their ow
 semantics. Event-driven actions are configured through the process event scheduler; they are not a
 callback argument to `runTransient`.
 
+### Automatic transient sub-stepping
+
+Equipment is integrated explicitly: a separator integrates its inventory with valve flows evaluated at
+the pressure of the previous step. When a requested step is long compared with the vessel's gas-cap
+inventory time constant, the pressure overshoots (it can rise above the upstream pressure) and the
+next VU flash has no physical solution. Each unit therefore reports
+`getMaxStableTransientTimeStep()` (positive infinity by default; a dynamic `Separator` returns
+`0.1 * gasMass / max(inletMassFlow, outletMassFlow)`), and `runTransient(dt, id)` splits `dt` into equal
+sub-steps no longer than the smallest of these values. This is on by default.
+
+- The process clock advances by exactly `dt`, `getTimeStep()` is `dt` afterwards, and one
+  measurement-history row is stored per call. Controllers, alarms and events run every sub-step.
+- When every element supports transient checkpoints (`getTransientTransactionCoverage().isComplete()`)
+  and no outer transaction is open, each sub-step is a transaction. A sub-step that throws, or that
+  changed the state so much that it was longer than one inventory time constant of the new state
+  (for example a controller opened a valve within it), is rolled back and retried shorter.
+- At most `DEFAULT_MAX_TRANSIENT_SUBSTEPS` (1000) sub-steps are used per call; beyond that the sub-step
+  is lengthened to `dt / 1000`.
+
+```java
+process.setTimeStep(100.0);           // long control-interval steps are fine
+process.runTransient();
+int substeps = process.getLastTransientSubstepCount();
+
+process.setMaxTransientSubstep(2.0);  // optional fixed cap in seconds; 0 removes it
+process.setMaxTransientSubstepsPerStep(200);
+process.setAutomaticTransientSubstepping(false); // restore one integration step per call
+```
+
+Measured on the dynamic separator flowsheet from GitHub discussion 1574 (horizontal 1 m x 5 m vessel,
+Cv 120 inlet valve, level/pressure/flow control, 2026-11-14): with sub-stepping off, a 100 s step drove
+the separator from 8 to 25-28 bara (feed 9 bara) and the next step failed; 10 s steps oscillated
+between 0.8 and 9.9 bara. With sub-stepping on, 100 s steps used about 200 sub-steps for the start-up
+step and 10-20 afterwards, and after 2000 s matched a fixed 1 s step reference within 0.01 bara and
+0.001 in level, 2.7 times faster. A separator stability factor of 0.4 instead of 0.1 was stable but let
+the pressure loop drift to 4.2 bara against the 5.0 bara reference, because the closed pressure-control
+loop is faster than the open-loop gas cap. Covered by `TransientSubsteppingTest`.
+
+### Returning to the initial state
+
+`storeInitialState()` snapshots the process (it is also captured automatically on the first transient
+step) and `reset()` restores it, including time, measurement history and controller state, so long
+transient runs or reinforcement-learning episodes can restart without rebuilding the model.
+
+```java
+process.run();
+process.storeInitialState();
+for (int i = 0; i < 1000; i++) {
+  process.runTransient();
+}
+process.reset();                       // back to the stored state; time = 0, history cleared
+```
+
+When every element supports transient checkpoints (`isInPlaceResetAvailable()` is true), `reset()`
+restores the state into the existing equipment, controller and measurement-device objects, so
+references held by the caller (for example in a Python or Gymnasium environment) stay valid and can be
+reset any number of times. If units were added or removed after the snapshot, or some element does not
+support checkpoints, `reset()` replaces the equipment with copies of the snapshot; fetch them again
+with `getUnit(name)`. Covered by `ProcessSystemResetTest`.
+
+Use `setHistoryCapacity(n)` to keep only the latest `n` history rows, or
+`setMeasurementHistoryRecordingEnabled(false)` when an external historian records the measurements.
+
 ---
 
 ## Execution Strategy Analysis

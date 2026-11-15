@@ -1006,21 +1006,26 @@ the equations instance.
 Every internal gas/oil/water face also has an immutable directional transport entry. It keeps
 forward and reverse mass transport nonnegative, separates advective momentum from pressure traction,
 and records the two donor masses and momenta used by the free flux. The experimental opt-in
-`UnsplitTransientSolver` complementarity path augments the cell state with signed-direction mass,
-advective momentum and donor multiplier variables for those faces. Present donors use the
+`UnsplitTransientSolver` complementarity path augments the cell state with mass, advective momentum
+and donor multiplier variables for both one-sided donor streams at those faces. Present donors use the
 normalized conservative advection row; an exactly absent donor uses an exact zero-momentum and
-donor-presence row without an inventory floor. The solved flux replaces the free internal flux in
+donor-presence row without an inventory floor. Physical AUSM transport and pressure-interpolation
+transport keep separate donors; zero pressure correction retains the legacy flux bit for bit. The solved flux replaces the free internal flux in
 both neighboring cells and is carried into independent prepared-step verification.
 
 This is a numerical foundation, not a physical qualification. Exact-bound regressions now cover
-phase disappearance after transporting only the available mass, an initially absent donor, and
-reversal to a present opposite donor. Nonnegative variables may land exactly on zero, and the
-signed free flux refreshes the donor direction between frozen Jacobians; rejected line-search
+phase disappearance after transporting only the available mass, an initially absent donor,
+simultaneous opposing donor streams, and a multi-cell phase-free region. Conflict-free exact-presence
+anchors assign at most one presence row per absent donor cell and per face; other constrained
+streams use exact zero-flow rows, while conservation closes the remaining cell in a connected
+phase-free region.
+Nonnegative variables may land exactly on zero, and rejected line-search
 trials cannot mutate the accepted choices. No inventory threshold or accepted-mass clipping is
-used. Six unchanged 0.1 s Tengesdal lanes pass, but the directly affected nine unchanged
-five-second cases still fail line search at 0.63125--1.83515625 s. The full 15-case gate therefore
-remains failed. Do not infer 180/600 s severe-slugging, restart or coupled-pigging capability from
-the augmented short-step regressions.
+used. Six unchanged 0.1 s Tengesdal lanes pass. All no-pressure-interpolation five-second lanes pass,
+but the pressure-interpolated baseline stops at 1.401953125/1.83203125/1.075 s and the augmented
+two-stream route stops at 1.35078125/1.8427734375/1.74375 s. The full gate therefore remains failed.
+Do not infer 180/600 s severe-slugging, restart or coupled-pigging capability from the augmented
+short-step regressions.
 
 `TwoFluidUnsplitModelAdapter.prepareStep` checks a converged candidate independently against the
 current selected-time operator and endpoint volume closure, then returns defensive endpoint clones and
@@ -1180,6 +1185,19 @@ film-constrained gates are unchanged. The option is disabled by default and is n
 continuation evidence, not a countercurrent model validation.
 The separate coupled-predictor repair restores the legacy five-second pressure regressions;
 it does not qualify the remaining unsplit transitions or the 600 s experiment.
+
+The transactional unsplit route now gives passive wall and interphase friction a
+single conservative post-transport owner whenever transient pressure
+interpolation is off. Each prepared step exposes the accepted gas/oil/water
+momentum impulse per pipe length, and complete intervals sum it without rejected
+trials. Phase mass and total energy are unchanged, and the independently checked
+rate ledger includes the exact impulse. The unchanged five-second matrix now
+passes all three midpoint/no-interpolation lanes. Its backward-Euler/
+pressure-interpolated lanes still reject at 1.4000, 1.8125 and 0.9750 s, so the
+complete gate remains failed. Pressure interpolation keeps its existing
+friction ownership because combining the operators regresses the unresolved
+trace-phase/donor event; no limiter, phase floor or relaxed tolerance replaces
+that missing formulation.
 See the [transaction and execution contract](../process/TWOFLUIDPIPE_MODEL.md#complete-transient-transactions-and-experimental-unsplit-execution)
 and [current transition evidence](../process/TWOFLUIDPIPE_MODEL.md#inclined-film-eligibility-and-trace-phase-derivatives).
 

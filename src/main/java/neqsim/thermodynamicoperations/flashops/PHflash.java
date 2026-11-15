@@ -6,6 +6,7 @@
 
 package neqsim.thermodynamicoperations.flashops;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -32,6 +33,17 @@ public class PHflash extends Flash {
    */
   static final int STALL_ITERATIONS_WITHOUT_IMPROVEMENT = 15;
 
+  /**
+   * Relative enthalpy residual that ends the iteration without a second confirming evaluation; zero keeps the nominal
+   * two-evaluation criterion.
+   */
+  private final double singleResidualTolerance;
+
+  /**
+   * Iteration count after which an available temperature bracket takes over from the damped Newton step.
+   */
+  static final int BRACKET_TAKEOVER_ITERATIONS = 20;
+
   /** Number of Newton iterations used by the latest {@link #solveQ()} call. */
   private int lastIterationCount = 0;
 
@@ -48,10 +60,31 @@ public class PHflash extends Flash {
    * @param type a int, flash type (0 = standard) or (1 = direct PH flash if not pure component)
    */
   public PHflash(SystemInterface system, double Hspec, int type) {
+    this(system, Hspec, type, 0.0);
+  }
+
+  /**
+   * Constructor for a PH flash with optional bracketed iteration and single-residual convergence.
+   *
+   * <p>
+   * By default the iteration stops when two consecutive residuals together are below 1e-8, so the accepted state is
+   * confirmed by one more equilibrium flash. An outer iteration that repeats this flash many times, such as a
+   * distillation tray sweep, does not need that confirmation.
+   * </p>
+   *
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param Hspec specified total enthalpy in J
+   * @param type flash type (0 = standard) or (1 = direct PH flash if not pure component)
+   * @param singleResidualTolerance positive relative enthalpy tolerance enabling bracketing and a single-residual
+   * convergence criterion; zero or negative keeps the standard iteration
+   */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The flash and its TP iterations must update the caller's thermodynamic system in place")
+  public PHflash(SystemInterface system, double Hspec, int type, double singleResidualTolerance) {
     this.system = system;
     this.tpFlash = new TPflash(system);
     this.Hspec = Hspec;
     this.type = type;
+    this.singleResidualTolerance = singleResidualTolerance;
   }
 
   /**
@@ -108,6 +141,13 @@ public class PHflash extends Flash {
     double bestError = Double.MAX_VALUE;
     int iterationsWithoutImprovement = 0;
     boolean stalled = false;
+    // Enthalpy increases monotonically with temperature at fixed pressure, so one state on each
+    // side of the specification brackets the root. [0]=low T, [1]=low residual, [2]=high T,
+    // [3]=high residual, [4]=side of the latest update (-1 low, +1 high, 0 none).
+    double[] bracket = singleResidualTolerance > 0.0
+        ? new double[] {Double.NaN, Double.NaN, Double.NaN, Double.NaN, 0.0}
+        : null;
+    boolean tightlyConverged = false;
 
     do {
       if (Math.abs(error) > Math.abs(errorOld) && factor > 0.1 && correctFactor) {
@@ -154,6 +194,19 @@ public class PHflash extends Flash {
       } else {
         correctFactor = true;
       }
+      // The fixed-composition heat capacity ignores latent heat. In a narrow-boiling two-phase
+      // region it underestimates dH/dT by orders of magnitude, so the Newton step overshoots and
+      // oscillates across the root. Once both sides are known, a step that leaves the bracket (or
+      // a Newton sequence that has not converged) is replaced by an Illinois regula-falsi step,
+      // which contracts the bracket monotonically and converges superlinearly.
+      if (bracket != null && hasTemperatureBracket(bracket)) {
+        double proposedTemperature = 1.0 / nyTemp;
+        boolean insideBracket = proposedTemperature > bracket[0] && proposedTemperature < bracket[2];
+        if (!insideBracket || iterations > BRACKET_TAKEOVER_ITERATIONS) {
+          nyTemp = 1.0 / bracketedTemperature(bracket);
+          correctFactor = false;
+        }
+      }
       system.setTemperature(1.0 / nyTemp);
       if (system.getTemperature() > maxTemperature) {
         system.setTemperature(maxTemperature - 0.1);
@@ -180,6 +233,9 @@ public class PHflash extends Flash {
       system.init(2);
       errorOld = error;
       error = calcdQdT();
+      if (bracket != null) {
+        updateTemperatureBracket(bracket, system.getTemperature(), error);
+      }
 
       if (error > 0 && system.getTemperature() > maxTemperature) {
         maxTemperature = system.getTemperature();
@@ -194,9 +250,84 @@ public class PHflash extends Flash {
       }
       stalled = iterationsWithoutImprovement >= STALL_ITERATIONS_WITHOUT_IMPROVEMENT && Double.isFinite(error)
           && Math.abs(error) < STALL_RELATIVE_ENTHALPY_TOLERANCE;
-    } while (((Math.abs(error) + Math.abs(errorOld)) > 1e-8 || iterations < 3) && iterations < 200 && !stalled);
+      // The nominal criterion needs two consecutive small residuals, which costs one extra
+      // equilibrium flash after the root is already resolved. A caller that repeats the flash
+      // inside its own iteration can accept a single sufficiently small residual instead.
+      tightlyConverged = singleResidualTolerance > 0.0 && iterations >= 3 && Math.abs(error) < singleResidualTolerance;
+    } while (((Math.abs(error) + Math.abs(errorOld)) > 1e-8 || iterations < 3) && iterations < 200 && !stalled
+        && !tightlyConverged);
     lastIterationCount = iterations;
     return 1.0 / nyTemp;
+  }
+
+  /**
+   * Check whether both sides of the enthalpy root have been located.
+   *
+   * @param bracket bracket state {lowT, lowResidual, highT, highResidual, lastSide}
+   * @return {@code true} when a finite low and high temperature bound are available
+   */
+  private static boolean hasTemperatureBracket(double[] bracket) {
+    return !Double.isNaN(bracket[0]) && !Double.isNaN(bracket[2]) && bracket[2] > bracket[0];
+  }
+
+  /**
+   * Tighten the temperature bracket with a newly evaluated equilibrium state.
+   *
+   * <p>
+   * A negative residual means the enthalpy is below the specification, so the temperature is a lower bound; a positive
+   * residual gives an upper bound. When the same side is updated twice in a row the residual stored for the opposite
+   * side is halved (Illinois modification), which prevents the one-sided stagnation of plain regula falsi on the kinked
+   * enthalpy curve of a phase boundary.
+   * </p>
+   *
+   * @param bracket bracket state {lowT, lowResidual, highT, highResidual, lastSide}, updated in place
+   * @param temperature temperature of the evaluated state in Kelvin
+   * @param residual relative enthalpy residual of the evaluated state
+   */
+  private static void updateTemperatureBracket(double[] bracket, double temperature, double residual) {
+    if (Double.isNaN(residual) || Double.isInfinite(residual) || Double.isNaN(temperature) || residual == 0.0) {
+      return;
+    }
+    if (residual < 0.0) {
+      if (Double.isNaN(bracket[0]) || temperature > bracket[0]) {
+        if (!Double.isNaN(bracket[2]) && temperature >= bracket[2]) {
+          return;
+        }
+        bracket[0] = temperature;
+        bracket[1] = residual;
+        if (bracket[4] < 0.0 && !Double.isNaN(bracket[3])) {
+          bracket[3] *= 0.5;
+        }
+        bracket[4] = -1.0;
+      }
+    } else {
+      if (Double.isNaN(bracket[2]) || temperature < bracket[2]) {
+        if (!Double.isNaN(bracket[0]) && temperature <= bracket[0]) {
+          return;
+        }
+        bracket[2] = temperature;
+        bracket[3] = residual;
+        if (bracket[4] > 0.0 && !Double.isNaN(bracket[1])) {
+          bracket[1] *= 0.5;
+        }
+        bracket[4] = 1.0;
+      }
+    }
+  }
+
+  /**
+   * Calculate the next trial temperature inside an established bracket.
+   *
+   * @param bracket bracket state {lowT, lowResidual, highT, highResidual, lastSide}
+   * @return regula-falsi temperature in Kelvin, or the bracket midpoint when the interpolation is not strictly interior
+   */
+  private static double bracketedTemperature(double[] bracket) {
+    double width = bracket[2] - bracket[0];
+    double temperature = bracket[0] - bracket[1] * width / (bracket[3] - bracket[1]);
+    if (Double.isNaN(temperature) || temperature <= bracket[0] || temperature >= bracket[2]) {
+      temperature = bracket[0] + 0.5 * width;
+    }
+    return temperature;
   }
 
   /**

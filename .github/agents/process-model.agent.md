@@ -200,10 +200,22 @@ column.getCondenser().setRefluxRatio(1.5);
 column.setTopPressure(25.0);
 column.setBottomPressure(26.0);
 
-// Solver selection — use INSIDE_OUT for better convergence on most columns
-column.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
+// Solver selection — NEWTON is the measured default (no failures, fastest of the robust
+// solvers); fall back to MESH_RESIDUAL and always check the result. Details and evidence:
+// neqsim-distillation-design skill, "Default set-up for agent work".
+column.setSolverType(DistillationColumn.SolverType.NEWTON);
 column.run();
+if (!column.solved()) {
+  column.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
+  column.run();
+}
+if (!column.solved()) {
+  throw new IllegalStateException(column.getConvergenceDiagnostics());
+}
 ```
+
+Report `column.getLastSolveStatus()` and `column.getLastSolverTypeUsed()` with every column result.
+Do not use `SolverType.AUTO` as the default.
 
 ## Power Generation Equipment
 For gas turbines, steam turbines, HRSG, and combined cycles:

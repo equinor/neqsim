@@ -93,6 +93,22 @@ public class TransientSeparatorVUFlashTest {
   @Test
   @DisplayName("Test transient separator simulation with VU flash calculations")
   void testTransientSeparatorWithVUFlash() {
+    runControlledSeparatorScenario(true);
+  }
+
+  @Test
+  @DisplayName("Sub-stepped controlled separator run matches a fine-step reference (GitHub discussion 1574)")
+  void substeppedRunMatchesFineStepReference() {
+    runControlledSeparatorScenario(false);
+  }
+
+  /**
+   * Runs the controlled separator flowsheet of GitHub discussion equinor/neqsim#1574.
+   *
+   * @param expectRejection true to disable automatic sub-stepping and take 100 s explicit steps until a VU iterate is
+   * rejected and rolled back; false to run 10 s steps with the default sub-stepping to completion
+   */
+  private void runControlledSeparatorScenario(boolean expectRejection) {
     // Construct the process
 
     // Well stream
@@ -204,12 +220,38 @@ public class TransientSeparatorVUFlashTest {
     List<Double> liquidVolumeData = new ArrayList<>();
     List<Double> valveOpeningData = new ArrayList<>();
 
-    // Setup transient simulation
-    oilProcess.setTimeStep(TIME_STEP);
+    // Setup transient simulation. Automatic sub-stepping is disabled and a 100 s explicit step is used: the separator
+    // pressure overshoots above the feed pressure and the following VU iterate has no physical solution, so it must
+    // be rejected and rolled back. substeppedRunStaysPhysical covers the default (sub-stepped) behaviour.
+    if (!expectRejection) {
+      // Reference: the same flowsheet integrated with plain 0.5 s explicit steps.
+      ProcessSystem reference = oilProcess.copy();
+      reference.setAutomaticTransientSubstepping(false);
+      Separator referenceSeparator = (Separator) reference.getUnit("V-001");
+      oilProcess.setTimeStep(TIME_STEP);
+      // The inlet valve passes about eight times the outlet capacity, so this vessel overfills after about 110 s;
+      // compare the first 50 s of the gas-cap phase.
+      for (int i = 0; i < 5; i++) {
+        oilProcess.runTransient();
+        for (int k = 0; k < (int) (TIME_STEP / 0.5); k++) {
+          reference.runTransient(0.5, UUID.randomUUID());
+        }
+        double pressure = v001.getThermoSystem().getPressure("bara");
+        assertEquals(referenceSeparator.getThermoSystem().getPressure("bara"), pressure, 0.02, "pressure at step " + i);
+        assertEquals(referenceSeparator.getLiquidLevel(), v001.getLiquidLevel(), 2.0e-3, "level at step " + i);
+        assertTrue(pressure > 1.0 && pressure < P_WELL, "pressure " + pressure + " bara at step " + i);
+      }
+      assertTrue(oilProcess.getLastTransientSubstepCount() > 1);
+      assertEquals(5 * TIME_STEP, oilProcess.getTime(), 1.0e-6);
+      return;
+    }
+    final double rejectedStep = 100.0;
+    oilProcess.setAutomaticTransientSubstepping(false);
+    oilProcess.setTimeStep(rejectedStep);
     oilProcess.runTransient();
 
-    // Run until the historically accepted rejected VU iterate is reached.
-    int steps = (int) (TOTAL_TIME / TIME_STEP);
+    // Run until the rejected VU iterate is reached.
+    int steps = 30;
     for (int i = 0; i < steps; i++) {
       double currentTime = oilProcess.getTime();
       double currentLevel = v001.getLiquidLevel();
@@ -252,7 +294,7 @@ public class TransientSeparatorVUFlashTest {
       SystemInterface liquidOutletBeforeStep = liquidOutletIdentity.getThermoSystem().clone();
 
       try {
-        oilProcess.runTransient(TIME_STEP);
+        oilProcess.runTransient(rejectedStep);
       } catch (IllegalStateException expected) {
         assertTrue(expected.getMessage().contains("rejected transient VU state"));
         assertTrue(expected.getMessage().contains("volumeResidual="));

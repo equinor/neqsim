@@ -130,29 +130,13 @@ public class VCEModel implements Serializable {
   }
 
   /**
-   * Distance to a target side-on overpressure threshold (e.g. 6.9 kPa window damage, 20.7 kPa structural damage, 100
-   * kPa fatality).
+   * Find the outer distance of a target side-on overpressure contour by bisection. Searches from 0.1 m to 50000 m.
    *
    * @param targetDpPa target side-on overpressure in Pa
-   * @return distance in m
+   * @return distance in m, or {@code Double.NaN} if the target is not bracketed in the search range
+   * @throws IllegalArgumentException if the target is non-positive or non-finite
    */
   public double distanceToOverpressure(double targetDpPa) {
-    if (targetDpPa <= 0.0) {
-      throw new IllegalArgumentException("targetDp must be positive");
-    }
-    double lo = 0.1;
-    double hi = 50000.0;
-    if (overpressurePa(lo) < targetDpPa) {
-      return lo;
-    }
-    for (int i = 0; i < 80; i++) {
-      double mid = 0.5 * (lo + hi);
-      if (overpressurePa(mid) > targetDpPa) {
-        lo = mid;
-      } else {
-        hi = mid;
-      }
-    }
-    return 0.5 * (lo + hi);
+    return ConsequenceContour.findDistance(this::overpressurePa, targetDpPa, 0.1, 50000.0);
   }
 }

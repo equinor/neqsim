@@ -150,6 +150,9 @@ public class Compressor extends TwoPortEquipment
   private boolean speedSolveConverged = false;
   /** Achieved minus requested pressure in bar for the latest speed solve. */
   private double speedSolvePressureResidual = Double.NaN;
+
+  /** Schultz head relation at the requested pressure, consumed only by the immediate speed replay. */
+  private transient DoubleUnaryOperator speedReplaySchultzHead;
   /** Absolute pressure tolerance for the speed solver, in bar. */
   private static final double SPEED_SOLVE_PRESSURE_TOLERANCE = 1.0e-3;
   public double pressure = 0.0;
@@ -1281,6 +1284,8 @@ public class Compressor extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    DoubleUnaryOperator targetPressureSchultzHead = speedReplaySchultzHead;
+    speedReplaySchultzHead = null;
     speedSolveConverged = false;
     speedSolvePressureResidual = Double.NaN;
     thermoSystem = inStream.getThermoSystem().clone();
@@ -1745,7 +1750,15 @@ public class Compressor extends TwoPortEquipment
           throw new SpeedSolveException(getName());
         }
         setSpeed(bestSpeed);
-        runAtSolvedSpeed(id, targetPressure);
+        // Keep specialized run implementations on the full fixed-speed replay.
+        if (getClass() == Compressor.class) {
+          speedReplaySchultzHead = schultzHead;
+        }
+        try {
+          runAtSolvedSpeed(id, targetPressure);
+        } finally {
+          speedReplaySchultzHead = null;
+        }
         return;
       } else {
         do {
@@ -1813,8 +1826,17 @@ public class Compressor extends TwoPortEquipment
                   + (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW))
                   / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW),
               n / (n - 1.0));
-          setOutletPressure(chartPressureForHead(polytropicFluidHead, polytropEff / 100.0,
-              thermoSystem.getPressure() * pressureRatio), "bara");
+          // Recheck the selected speed's actual map head and efficiency at the pressure target before
+          // accepting it. A missed target still needs the fixed-speed pressure inversion.
+          double headTolerance = chartHeadTolerance(polytropicFluidHead);
+          boolean targetMatchesHead = targetPressureSchultzHead != null && !useCompressionRatio
+              && !getAntiSurge().isActive() && pressure - presinn > 1.0e-7 * presinn
+              && Math.abs(targetPressureSchultzHead.applyAsDouble(getPolytropicEfficiency())
+                  - polytropicFluidHead) <= headTolerance;
+          if (!targetMatchesHead) {
+            setOutletPressure(chartPressureForHead(polytropicFluidHead, polytropEff / 100.0,
+                thermoSystem.getPressure() * pressureRatio), "bara");
+          }
           if (getAntiSurge().isActive()) {
             logger.info("surge flow " + getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead) + " m3/hr");
             surgeCheck = isSurge(polytropicHead, actualFlowRate);
@@ -2268,7 +2290,7 @@ public class Compressor extends TwoPortEquipment
         : Math.log(2.0);
     // Scale convergence to the requested head: an absolute 1e-8 kJ/kg tolerance can
     // accept a sizeable relative error for sub-watt compressor duties.
-    double tolerance = Math.max(1.0e-12, 1.0e-8 * head);
+    double tolerance = chartHeadTolerance(head);
     double upperResidual = polytropicHeadResidual(reference, inletPressure * Math.exp(upper), head);
     for (int expansion = 0; upperResidual < 0.0 && expansion < 12; expansion++) {
       lower = upper;
@@ -2307,6 +2329,16 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
+   * Returns the residual tolerance shared by chart pressure inversion and speed replay.
+   *
+   * @param head requested chart head in kJ/kg
+   * @return accepted head residual in kJ/kg
+   */
+  private static double chartHeadTolerance(double head) {
+    return Math.max(1.0e-12, 1.0e-8 * head);
+  }
+
+  /**
    * Creates an isolated chart-free evaluator with this compressor's polytropic and property models.
    *
    * @return pressure-specified polytropic reference compressor
@@ -2326,7 +2358,7 @@ public class Compressor extends TwoPortEquipment
   /**
    * Builds the Schultz head relation for a fixed discharge pressure. The isentropic endpoint does not depend on
    * polytropic efficiency, so one pressure-entropy flash supplies every efficiency trial in a speed solve. The accepted
-   * speed is still replayed through the complete chart calculation.
+   * speed is replayed through the chart calculation with the same head residual check as fixed-speed inversion.
    *
    * @param outletPressure requested absolute discharge pressure in bara
    * @param entropy selected-model inlet entropy in J/K

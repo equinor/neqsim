@@ -5,12 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import neqsim.process.equipment.mixer.StaticMixer;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.mixingrule.EosMixingRuleHandler;
 import neqsim.thermo.mixingrule.SoreideWhitsonParameterization;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseSoreideWhitson;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -238,6 +241,60 @@ public class SoreideWhitsonSystemTest {
 
     system.clearAll();
     assertEquals(SoreideWhitsonParameterization.BURGOYNE_NIELSEN_2026, system.getSoreideWhitsonParameterization());
+  }
+
+  /**
+   * Check the binary TP flash against the authors' tagged procedure-1 check values.
+   *
+   * @param gas NeqSim gas component name
+   * @param temperatureC check temperature in degrees Celsius
+   * @param pressureBara check pressure in bara
+   * @param molality check NaCl molality in mol/kg
+   * @param expectedAqueousGas dissolved-gas mole fraction from the reference solver
+   * @param expectedVapourWater vapour water mole fraction from the reference solver
+   */
+  @ParameterizedTest
+  @CsvSource({"CO2, 80, 100, 0.0, 1.502273e-02, 1.029166e-02", "CO2, 150, 300, 0.0, 2.676163e-02, 5.808266e-02",
+      "CO2, 80, 100, 2.0, 9.929649e-03, 9.600217e-03", "H2S, 80, 100, 0.0, 4.344899e-02, 3.170066e-02",
+      "H2S, 150, 300, 0.0, 8.570484e-02, 1.066951e-01", "H2S, 80, 100, 2.0, 3.264386e-02, 3.005893e-02",
+      "methane, 80, 100, 0.0, 1.243985e-03, 6.248312e-03", "methane, 150, 300, 0.0, 3.812144e-03, 2.612455e-02",
+      "methane, 80, 100, 2.0, 7.444597e-04, 5.781603e-03", "nitrogen, 80, 100, 0.0, 7.441271e-04, 5.895154e-03",
+      "nitrogen, 150, 300, 0.0, 2.444649e-03, 2.328153e-02", "nitrogen, 80, 100, 2.0, 4.361799e-04, 5.449174e-03",
+      "hydrogen, 80, 100, 0.0, 1.343956e-03, 5.512070e-03", "hydrogen, 150, 300, 0.0, 5.964519e-03, 2.147956e-02",
+      "hydrogen, 80, 100, 2.0, 9.657500e-04, 5.092664e-03", "ethane, 80, 100, 0.0, 7.365275e-04, 5.586771e-03",
+      "ethane, 150, 300, 0.0, 1.866783e-03, 2.631329e-02", "ethane, 80, 100, 2.0, 3.801125e-04, 5.186435e-03",
+      "propane, 80, 100, 0.0, 2.504517e-04, 3.244081e-03", "propane, 150, 300, 0.0, 7.629749e-04, 1.954148e-02",
+      "propane, 80, 100, 2.0, 1.180524e-04, 3.021930e-03"})
+  void testCoupledRefitBinaryFlash(String gas, double temperatureC, double pressureBara, double molality,
+      double expectedAqueousGas, double expectedVapourWater) {
+    SystemSoreideWhitson system = new SystemSoreideWhitson(temperatureC + 273.15, pressureBara);
+    system.addComponent(gas, 1.0, "mole/sec");
+    system.addComponent("water", 1.0, "mole/sec");
+    system.setSoreideWhitsonParameterization(SoreideWhitsonParameterization.BURGOYNE_NIELSEN_2026);
+    system.setTotalFlowRate(2.0, "mole/sec");
+    system.createDatabase(true);
+    system.setMixingRule(11);
+    system.init(0);
+    system.init(1);
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+    operations.TPflash();
+    PhaseSoreideWhitson aqueous = (PhaseSoreideWhitson) system.getPhase(PhaseType.AQUEOUS);
+    // Match the reference phase molality through NeqSim's salt-flow input.
+    for (int iteration = 0; molality > 0.0 && iteration < 6; iteration++) {
+      double aqueousMassFlow = aqueous.getNumberOfMolesInPhase() * aqueous.getMolarMass();
+      system.setSalinity(molality * aqueousMassFlow, "mole/sec");
+      operations.TPflash();
+      aqueous = (PhaseSoreideWhitson) system.getPhase(PhaseType.AQUEOUS);
+    }
+    assertEquals(2, system.getNumberOfPhases());
+    assertEquals(molality, aqueous.getSalinityConcentration(), 2.0e-6);
+    PhaseInterface vapour = system.getPhase(1 - system.getPhaseNumberOfPhase(PhaseType.AQUEOUS));
+    // NeqSim retains its own EOS pure-component properties, which differ from the reference solver inputs.
+    assertEquals(expectedAqueousGas, aqueous.getComponent(gas).getx(), expectedAqueousGas * 0.05,
+        "aqueous gas mole fraction");
+    assertEquals(expectedVapourWater, vapour.getComponent("water").getx(), expectedVapourWater * 0.01,
+        "vapour water mole fraction");
   }
 
   @Test

@@ -47,6 +47,8 @@ Your default output is code and tests. Avoid stopping at design notes unless the
 - Do not change public APIs unrelated to the target equipment unless required by the dynamic model.
 - Preserve the standard stream contract: all live external streams appear in `getInletStreams()` / `getOutletStreams()`, phase-separated products retain conventional gas/liquid accessors, domain aliases return the same objects, and outlet identity survives steady and transient updates.
 - Add direct, documented dynamic-configuration setters when the transient model needs volume, residence time, metal mass, stroke time, inertia, or similar capacity data.
+- If the unit integrates an inventory explicitly from boundary flows evaluated at the previous state (vessels, tanks, accumulators), override `getMaxStableTransientTimeStep()` with the largest stable step for the current state, e.g. a fraction of inventory mass over boundary mass flow as in `Separator`. `ProcessSystem.runTransient` sub-steps below it automatically; the default (positive infinity) means unconstrained. See `docs/process/processmodel/process_system.md#automatic-transient-sub-stepping`.
+- Support transient checkpoints (`TransientStateParticipant`) for every new dynamic state: rolled-back sub-steps and the identity-preserving `ProcessSystem.reset()` depend on complete coverage.
 - Keep all Java Java 8 compatible.
 - Use Log4j2 for Java logging; never add `System.out.println` or `System.err.println`.
 - Add complete JavaDoc for new classes and methods, including private helpers.

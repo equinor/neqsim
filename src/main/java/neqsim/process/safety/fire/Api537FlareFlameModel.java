@@ -81,10 +81,14 @@ public class Api537FlareFlameModel implements Serializable {
   /**
    * Set the flare-tip elevation above grade (default 30 m).
    *
-   * @param stackHeightM stack height in m
+   * @param stackHeightM finite stack height in m, zero or greater
    * @return this model for chaining
+   * @throws IllegalArgumentException if the height is negative or non-finite
    */
   public Api537FlareFlameModel setStackHeightM(double stackHeightM) {
+    if (!Double.isFinite(stackHeightM) || stackHeightM < 0.0) {
+      throw new IllegalArgumentException("stackHeightM must be finite and >= 0, got " + stackHeightM);
+    }
     this.stackHeightM = stackHeightM;
     return this;
   }
@@ -92,22 +96,30 @@ public class Api537FlareFlameModel implements Serializable {
   /**
    * Set the cross-wind speed at the flare tip (default 0 m/s, i.e. vertical flame).
    *
-   * @param windSpeedMPerS wind speed in m/s
+   * @param windSpeedMPerS finite wind speed in m/s, zero or greater
    * @return this model for chaining
+   * @throws IllegalArgumentException if the speed is negative or non-finite
    */
   public Api537FlareFlameModel setWindSpeedMPerS(double windSpeedMPerS) {
-    this.windSpeedMPerS = Math.max(0.0, windSpeedMPerS);
+    if (!Double.isFinite(windSpeedMPerS) || windSpeedMPerS < 0.0) {
+      throw new IllegalArgumentException("windSpeedMPerS must be finite and >= 0, got " + windSpeedMPerS);
+    }
+    this.windSpeedMPerS = windSpeedMPerS;
     return this;
   }
 
   /**
    * Set atmospheric transmissivity used in the radiation calculation (default 1.0).
    *
-   * @param tau transmissivity in [0,1]
+   * @param tau finite transmissivity in [0, 1]
    * @return this model for chaining
+   * @throws IllegalArgumentException if the transmissivity is non-finite or outside [0, 1]
    */
   public Api537FlareFlameModel setTransmissivity(double tau) {
-    this.transmissivity = Math.max(0.0, Math.min(1.0, tau));
+    if (!Double.isFinite(tau) || tau < 0.0 || tau > 1.0) {
+      throw new IllegalArgumentException("transmissivity must be finite and in [0, 1], got " + tau);
+    }
+    this.transmissivity = tau;
     return this;
   }
 

@@ -6,8 +6,8 @@ import java.io.Serializable;
  * Pool-fire thermal radiation model for liquid hydrocarbon fires (API 521 / Mudan).
  *
  * <p>
- * Computes burn rate (mass-burning velocity), pool diameter (steady or growing), flame height (Thomas correlation),
- * surface emissive power (SEP), and view-factor-weighted incident heat flux at a receiver.
+ * Computes total burn rate, flame height (Thomas correlation), surface emissive power (SEP), and view-factor-weighted
+ * incident heat flux for a prescribed pool diameter and mass burning rate per unit area.
  *
  * <p>
  * <b>References:</b>
@@ -26,10 +26,7 @@ public class PoolFireModel implements Serializable {
 
   private final double poolDiameterM;
   private final double burnRateKgPerM2PerS;
-  private final double heatOfCombustionJPerKg;
-  private final double liquidDensityKgPerM3;
-  private final double radiativeFraction;
-  private double airDensityKgPerM3 = 1.20;
+  private double airDensityKgPerM3;
 
   /**
    * Construct a pool-fire model.
@@ -37,20 +34,56 @@ public class PoolFireModel implements Serializable {
    * @param poolDiameterM equivalent circular pool diameter in m
    * @param burnRateKgPerM2PerS mass burning rate per unit area, kg/(m²·s) (typical 0.04 LNG, 0.055 gasoline, 0.078
    * crude oil)
-   * @param heatOfCombustionJPerKg ΔHc lower heating value of fuel, J/kg
-   * @param liquidDensityKgPerM3 liquid density, kg/m³
-   * @param radiativeFraction fraction of combustion heat radiated (0.20 – 0.40)
+   * @throws IllegalArgumentException if the diameter or burning rate is non-positive
    */
-  public PoolFireModel(double poolDiameterM, double burnRateKgPerM2PerS, double heatOfCombustionJPerKg,
-      double liquidDensityKgPerM3, double radiativeFraction) {
-    if (poolDiameterM <= 0.0 || burnRateKgPerM2PerS <= 0.0) {
-      throw new IllegalArgumentException("Pool diameter and burn rate must be positive");
-    }
+  public PoolFireModel(double poolDiameterM, double burnRateKgPerM2PerS) {
+    this(requirePositive(poolDiameterM, "Pool diameter"), requirePositive(burnRateKgPerM2PerS, "Burning rate"), 1.20);
+  }
+
+  /**
+   * Initialize a pool-fire model after checking its prescribed inputs.
+   *
+   * @param poolDiameterM equivalent circular pool diameter in m
+   * @param burnRateKgPerM2PerS mass burning rate per unit area, kg/(m²·s)
+   * @param airDensityKgPerM3 ambient air density in kg/m³
+   */
+  private PoolFireModel(double poolDiameterM, double burnRateKgPerM2PerS, double airDensityKgPerM3) {
     this.poolDiameterM = poolDiameterM;
     this.burnRateKgPerM2PerS = burnRateKgPerM2PerS;
-    this.heatOfCombustionJPerKg = heatOfCombustionJPerKg;
-    this.liquidDensityKgPerM3 = liquidDensityKgPerM3;
-    this.radiativeFraction = radiativeFraction;
+    this.airDensityKgPerM3 = airDensityKgPerM3;
+  }
+
+  /**
+   * Check a prescribed pool parameter before creating the model.
+   *
+   * @param value parameter value
+   * @param name parameter name for the diagnostic
+   * @return checked parameter value
+   * @throws IllegalArgumentException if the value is non-positive
+   */
+  private static double requirePositive(double value, String name) {
+    if (value <= 0.0) {
+      throw new IllegalArgumentException(name + " must be positive");
+    }
+    return value;
+  }
+
+  /**
+   * Construct a pool-fire model using the legacy signature. Mudan's smoke-corrected surface emissive power is a
+   * function of the pool diameter.
+   *
+   * @param poolDiameterM equivalent circular pool diameter in m
+   * @param burnRateKgPerM2PerS mass burning rate per unit area, kg/(m²·s)
+   * @param heatOfCombustionJPerKg unused legacy parameter, J/kg
+   * @param liquidDensityKgPerM3 unused legacy parameter, kg/m³
+   * @param radiativeFraction unused legacy parameter
+   * @throws IllegalArgumentException if the diameter or burning rate is non-positive
+   * @deprecated Use {@link #PoolFireModel(double, double)} with the two inputs used by the correlation.
+   */
+  @Deprecated
+  public PoolFireModel(double poolDiameterM, double burnRateKgPerM2PerS, double heatOfCombustionJPerKg,
+      double liquidDensityKgPerM3, double radiativeFraction) {
+    this(poolDiameterM, burnRateKgPerM2PerS);
   }
 
   /**
@@ -135,25 +168,14 @@ public class PoolFireModel implements Serializable {
   }
 
   /**
-   * Distance to a target heat-flux contour by simple bisection.
+   * Find the outer distance of a target heat-flux contour by bisection. Searches from the pool radius plus 0.1 m to
+   * 1000 m.
    *
    * @param targetFluxWperM2 target heat flux in W/m²
-   * @return distance in m
+   * @return distance in m, or {@code Double.NaN} if the target is not bracketed in the search range
+   * @throws IllegalArgumentException if the target is non-positive or non-finite
    */
   public double distanceToFlux(double targetFluxWperM2) {
-    double lo = poolDiameterM / 2.0 + 0.1;
-    double hi = 1000.0;
-    if (incidentHeatFlux(lo) < targetFluxWperM2) {
-      return lo;
-    }
-    for (int i = 0; i < 60; i++) {
-      double mid = 0.5 * (lo + hi);
-      if (incidentHeatFlux(mid) > targetFluxWperM2) {
-        lo = mid;
-      } else {
-        hi = mid;
-      }
-    }
-    return 0.5 * (lo + hi);
+    return ConsequenceContour.findDistance(this::incidentHeatFlux, targetFluxWperM2, poolDiameterM / 2.0 + 0.1, 1000.0);
   }
 }

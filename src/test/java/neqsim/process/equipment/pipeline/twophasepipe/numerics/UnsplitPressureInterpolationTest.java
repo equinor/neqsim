@@ -30,7 +30,9 @@ class UnsplitPressureInterpolationTest {
   @ParameterizedTest
   @EnumSource(TimeIntegrationMethod.class)
   void openSinglePhaseOutletJacobianAgreesWithAVolumePreservingDirection(TimeIntegrationMethod method) {
-    TwoFluidSection[] accepted = sections(4, false, 0.0, false);
+    // A nonzero smooth pressure mode avoids asking a finite-difference Jacobian for an arbitrary derivative at the
+    // exact zero-correction donor switch. The zero-correction transport contract is verified independently.
+    TwoFluidSection[] accepted = sections(4, false, 10.0, false);
     for (TwoFluidSection section : accepted) {
       section.setGasVelocity(0.2);
       section.updateConservativeVariables();
@@ -276,6 +278,10 @@ class UnsplitPressureInterpolationTest {
       assertEquals(weight, step.getTimeIntegrationWeight(), 0.0);
       assertEquals(weight * dt, step.getPressureInterpolationTimeScale(), 0.0);
       assertEquals(time + weight * dt, step.getEvaluationTimeSeconds(), 0.0);
+      for (double[] impulse : step.getConservativeFrictionImpulsePerLength()) {
+        assertArrayEquals(new double[3], impulse, 0.0,
+            "Pressure interpolation retains its existing unsplit friction owner until the phase event is solved");
+      }
       assertStrictEndpointAndCellLedger(previous, step);
       double[][] faces = step.getEvaluation().getPhaseMassFaceFluxes();
       double[][] sources = step.getEvaluation().getPhaseMassSourcesPerLength();
@@ -313,7 +319,7 @@ class UnsplitPressureInterpolationTest {
   }
 
   @Test
-  void zeroImpulseAndDisabledIntervalReproduceTheExistingConstructorExactly() {
+  void zeroInterpolationConstructorsMatchAndDisabledIntervalUsesTheConservativeSourceSplit() {
     TwoFluidSection[] accepted = sections(5, true, 0.1, false);
     TwoFluidConservationEquations equations = closedEquations();
     PublishedDiagnostics published = publishDiagnostics(equations, accepted);
@@ -334,7 +340,11 @@ class UnsplitPressureInterpolationTest {
     assertMatrixEquals(baseline.getState(), zero.getState(), 0.0);
     assertArrayEquals(baseline.getPressure(), zero.getPressure(), 0.0);
     assertEquals(baseline.getModelEvaluations(), zero.getModelEvaluations());
-    PreparedStep direct = original.prepareStep(baseline, dt, 0.0, Double.NaN, false, 1.0e-8);
+    TwoFluidUnsplitModelAdapter sourceSplit = new TwoFluidUnsplitModelAdapter(equations, accepted, 1.0, densityModel(),
+        0.0, true);
+    Result sourceCandidate = solve(solver, sourceSplit, accepted, dt, 0.0);
+    assertConverged(sourceCandidate);
+    PreparedStep direct = sourceSplit.prepareStep(sourceCandidate, dt, 0.0, Double.NaN, false, 1.0e-8);
     assertEquals(0.0, direct.getPressureInterpolationTimeScale(), 0.0);
 
     TwoFluidUnsplitIntegrator integrator = new TwoFluidUnsplitIntegrator(equations, densityModel(), solver, 0, 1);
@@ -345,7 +355,7 @@ class UnsplitPressureInterpolationTest {
     assertEquals(1, interval.getSubsteps().size());
     assertEquals(0.0, interval.getSubsteps().get(0).getPressureInterpolationTimeScale(), 0.0);
     assertSectionsEqual(direct.getEndpointSections(), interval.getEndpointSections());
-    assertEquals(baseline.getModelEvaluations(), interval.getModelEvaluations());
+    assertEquals(sourceCandidate.getModelEvaluations(), interval.getModelEvaluations());
     assertMatrixEquals(direct.getEvaluation().getPhaseMassFaceFluxes(),
         interval.getSubsteps().get(0).getEvaluation().getPhaseMassFaceFluxes(), 0.0);
     published.assertUnchanged(equations);

@@ -91,6 +91,9 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
   /** Specified enthalpy (J). */
   private double enthalpySpec;
 
+  /** Relative residual tolerance used only when delegating to the nonreactive PH flash. */
+  private double singleResidualTolerance;
+
   /** Specified thermochemical enthalpy including ideal-gas formation enthalpies (J). */
   private double thermochemicalEnthalpySpec;
 
@@ -150,6 +153,20 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
     this(system, enthalpySpec);
   }
 
+  /**
+   * Creates a reactive PH flash with an optional tolerance for the delegated nonreactive flash.
+   *
+   * @param system the thermodynamic system
+   * @param enthalpySpec the specified total enthalpy in J
+   * @param type flash type (0 = standard, currently unused)
+   * @param singleResidualTolerance positive relative enthalpy tolerance enabling bracketing in the delegated flash
+   */
+  public ReactiveMultiphasePHflash(SystemInterface system, double enthalpySpec, int type,
+      double singleResidualTolerance) {
+    this(system, enthalpySpec, type);
+    this.singleResidualTolerance = singleResidualTolerance;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run() {
@@ -176,7 +193,7 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
           psFlash.run();
         } else {
           neqsim.thermodynamicoperations.flashops.PHflash phFlash = new neqsim.thermodynamicoperations.flashops.PHflash(
-              system, enthalpySpec, 0);
+              system, enthalpySpec, 0, singleResidualTolerance);
           phFlash.run();
         }
         converged = true;

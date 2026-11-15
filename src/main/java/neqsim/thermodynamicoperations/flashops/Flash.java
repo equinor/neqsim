@@ -6,6 +6,7 @@
 
 package neqsim.thermodynamicoperations.flashops;
 
+import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -15,6 +16,7 @@ import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.BaseOperation;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -1213,6 +1215,10 @@ public abstract class Flash extends BaseOperation {
         recordTangentPlaneDistances();
       }
     }
+    if (tm[0] > tmLimit && tm[1] > tmLimit && shouldRetainIonicPhaseEstimate()) {
+      recordStabilityOutcome("deferred to ionic multiphase stability");
+      return false;
+    }
     if (tm[0] > tmLimit && tm[1] > tmLimit && !system.isChemicalSystem()
         || system.getPhase(0).getNumberOfComponents() == 1) {
       // Standard analysis declares stable. Try supplementary stability trials.
@@ -1330,6 +1336,35 @@ public abstract class Flash extends BaseOperation {
     }
 
     return stable;
+  }
+
+  /**
+   * Preserves an interior aqueous split for the ion-aware multiphase flash.
+   *
+   * <p>
+   * The ordinary tangent-plane trials have not established an instability of the homogeneous reference. For
+   * non-reactive electrolyte CPA, the supplementary pure-component trials can treat ions as independent species,
+   * replacing a useful two-phase estimate with K-values that do not respect aqueous ion confinement. Continue the
+   * two-phase iteration from the current estimate so that the multiphase solver can assess additional phases and
+   * restore the conserved ion inventory. The existing homogeneous and specialized flash paths retain their
+   * phase-selection logic.
+   * </p>
+   *
+   * @return true when the current estimate is an interior aqueous split with multiphase checking enabled
+   */
+  private boolean shouldRetainIonicPhaseEstimate() {
+    if (!(system instanceof SystemElectrolyteCPAstatoil) || !system.doMultiPhaseCheck() || system.isChemicalSystem()
+        || !system.hasIons() || system.isForcePhaseTypes() || !system.allowPhaseShift() || solidCheck
+        || system.doSolidPhaseCheck() || system.getHydrateCheck() || system.isMultiphaseWaxCheck()
+        || system.getNumberOfPhases() != 2) {
+      return false;
+    }
+    PhaseType first = system.getPhase(0).getType();
+    PhaseType second = system.getPhase(1).getType();
+    double beta = system.getBeta();
+    double minimumBeta = 1.1 * phaseFractionMinimumLimit;
+    return (first == PhaseType.AQUEOUS) != (second == PhaseType.AQUEOUS) && beta > minimumBeta
+        && beta < 1.0 - minimumBeta;
   }
 
   /** {@inheritDoc} */

@@ -1,9 +1,11 @@
 package neqsim.thermo.system;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.ThermodynamicModelTest;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -28,7 +30,7 @@ public class SystemBnsEosModelTest {
     system.init(0);
     system.init(3);
     modelTest = new ThermodynamicModelTest(system);
-    modelTest.setMaxError(2.02e-1);
+    modelTest.setMaxError(1e-8);
     system.initProperties();
   }
 
@@ -39,7 +41,12 @@ public class SystemBnsEosModelTest {
 
   @Test
   public void testFugacityCoefficientsDP() {
-    assertTrue(modelTest.checkFugacityCoefficientsDP());
+    PhaseInterface phase = system.getPhase(0);
+    double derivative = 0.0;
+    for (int i = 0; i < phase.getNumberOfComponents(); i++) {
+      derivative += phase.getComponent(i).getx() * phase.getComponent(i).getdfugdp();
+    }
+    assertEquals((phase.getZvolcorr() - 1.0) / phase.getPressure(), derivative, 1e-10);
   }
 
   @Test

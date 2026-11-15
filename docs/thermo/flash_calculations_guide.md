@@ -104,6 +104,21 @@ System.out.println("Pressure: " + fluid.getPressure("bara") + " bara");
 
 The most common flash type. Given temperature and pressure, find phase split and compositions. NeqSim implements the classical Michelsen flash algorithm with stability analysis.
 
+With `SystemElectrolyteCPAstatoil`, keep the default TP-flash stability check enabled.
+For non-reactive brines with multiphase checking enabled, if the initial iteration
+has an aqueous split and the ordinary tangent-plane trials find no instability,
+the solver carries that estimate into the ion-aware multiphase analysis. This
+avoids seeding a trial phase from a single ion and allows the multiphase solver
+to assess additional phases. Phase discovery first uses a normalized molecular
+feed. The solver then restores the complete ionic inventory to the aqueous phase
+and re-equilibrates molecular partitioning under the resulting salt activity,
+with ions excluded from gas and oil. Refinement uses larger steps when a
+two-phase split has room for the correction after reserving the aqueous ion
+inventory. Large corrections and three-phase splits use damped steps. Hydrate
+checks use the conservative ion-restored fluid split during temperature
+iterations. An ordinary TP flash also retains that split if the bounded
+refinement fails to converge.
+
 For an already-equilibrated neutral two-phase endpoint containing at least 1 mol% water,
 TP flash can remove roundoff in the phase amounts by recovering the unique lever-rule
 fractions from the converged compositions and original feed. The correction is limited

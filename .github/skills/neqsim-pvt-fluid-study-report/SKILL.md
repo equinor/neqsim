@@ -35,6 +35,21 @@ dataset. The orchestrator is
 The input schema, shipped examples, supported limits and output paths are in the
 [study guide](../../../docs/pvtsimulation/pvt_fluid_study_report.md).
 
+For primary isothermal differential liberation, run
+`pvt_dle_mass.audit_dle_mass` on the source-identified stage intervals before
+admitting observations. Retain unavailable columns, residual-oil identity,
+and any unresolved standard gas basis in the evidence. The cell Bg/Z route
+requires source evidence linking both quantities to the withdrawn gas and GOR basis.
+See the [DLE audit](../../../docs/pvtsimulation/dle_mass_audit.md).
+
+For a measured serial separator train, run `pvt_separator_mass.audit_separator_mass`
+before admitting measurements. Check the reported terminal stock-tank basis,
+independent standard gas density and per-stage balances. Review the whole train
+with the stage evidence. See the [separator audit](../../../docs/pvtsimulation/separator_mass_audit.md).
+
+For a laboratory-to-field handoff, use the [reservoir history source intake](../../../docs/pvtsimulation/reservoir_history_intake.md)
+to screen cumulative production, injection and field-average pressure separately from laboratory calibration.
+
 ## One normalized evidence chain
 
 Retain sample, analysis, observation, experiment, model, parameter and export IDs

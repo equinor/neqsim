@@ -1811,6 +1811,28 @@ different positive integer counts, and a count of one follows the original candi
 This is synchronous branch-local numerical refinement. It is not asynchronous multirate boundary
 coupling, and it does not qualify the selected time step or hydraulic closures.
 
+`TwoFluidPipeNetworkRefinementStudy` provides a reproducible common-start/common-time harness for
+this numerical work. Construct it from an unadvanced network, register named outer-step and
+branch-subcycle configurations, and call `run(durationSeconds)`. Every configuration is restored
+from the same serialized canonical network and may change only those numerical controls. The result
+retains measured runtime, worst accepted mass/component/energy/junction diagnostics, final node
+pressures, and final pressure, temperature, holdup and gas/liquid velocity profiles for every
+branch. `getRelativeNodePressureDifference` and
+`getRelativeBranchOutletPressureDifference` compare two named cases without rebuilding topology.
+The duration must be an integer multiple of every outer step. Mesh refinement still requires an
+independently constructed network with the same physical definition because the harness deliberately
+does not mutate branch meshes, boundaries, physics or tolerances.
+
+The slow regression replays a direct tieback, a two-algebraic-junction daisy chain, and two finite
+conservative template inventories feeding a conservative-storage PLEM/export riser. It checks
+unchanged source definitions, conservative acceptance, finite complete profiles and nearby final
+pressures for 1 ms/factor-1, 1 ms/factor-2 and 0.5 ms/factor-2 cases at a common 1 ms endpoint.
+These short four-cell fixtures validate the harness and expose runtime; their 25% nearby-pressure
+screen is not a convergence rate, error band, field validation or time-step recommendation. A
+three-incident algebraic PLEM trial did not converge its donor state during development and was not
+made to pass by relaxing conservation tolerances; representative branched algebraic qualification
+therefore remains open.
+
 The whole-network report includes pipe and node inventories, fixed-boundary transfers, phase
 sources, and gas/oil/water/liquid/total residuals. Conservative storage nodes additionally retain
 named-component and internal-energy inventories. When an `UpstreamCompressibleVolume` has positive
@@ -1874,8 +1896,9 @@ junction and whole-network closure checks pass.
 The multi-junction contract supports the same frozen-boundary branch subcycling, but it does not yet
 provide asynchronous multirate coupling or an independently qualified predictive restart/refill
 model. Conservative storage and algebraic fixtures provide synthetic closure, reversal-order,
-subcycle-aggregation and serialization evidence only. Refine the common reporting interval, each
-branch subcycle factor and every branch mesh for the intended field case, and retain external
+subcycle-aggregation and serialization evidence only. Use the refinement-study harness for common-
+time outer-step/subcycle replay, independently rebuild every branch mesh for spatial refinement, and
+retain external
 physical/commercial comparison evidence before design use.
 
 ### Choosing Time Step, Sections, and Pipeline Length
@@ -2070,29 +2093,37 @@ and gas/oil/water phase. Each entry separates nonnegative forward and reverse ma
 advective momentum, and pressure traction, while retaining the left and right donor mass and
 momentum used by the accepted free-flux evaluation. `UnsplitTransientSolver` can now opt into a
 compressed mixed system through `setDirectionalComplementarityEnabled(true)`. The system adds
-signed-direction mass magnitude, advective momentum and a donor-presence multiplier per phase
-face, uses a normalized donor relation for present phases, and pins advective momentum exactly to
-zero for an absent donor. Its 53-color finite-difference schedule covers the existing five-cell
-stencil plus two adjacent nine-variable face blocks. Solved internal fluxes replace the free flux
+mass magnitude, advective momentum and a donor-presence multiplier for each one-sided donor stream,
+uses a normalized donor relation for present phases, and pins advective momentum exactly to zero for
+an absent donor. The physical AUSM stream and the pressure-interpolation correction retain their own
+donors instead of switching the complete face flux when their signed sum crosses zero; zero
+correction remains bit-for-bit compatible. Its 71-color finite-difference schedule covers the
+existing five-cell stencil plus two adjacent eighteen-variable face blocks. Solved internal fluxes replace the free flux
 equal-and-oppositely in adjacent cells and are independently rechecked by
 `TwoFluidUnsplitModelAdapter.prepareStep`; no cell mass is clipped and pressure traction remains in
 the cell operator exactly once.
 
 This remains an experimental opt-in numerical path. All six unchanged 0.1 s historical and
 pressure-interpolated Tengesdal lanes pass at 16/24 cells, and exact-bound regressions now cover an
-initially absent donor, disappearance after transporting only the available mass, and reversal to a
-present opposite donor. Nonnegative phase masses and face variables may land exactly on zero; an
+initially absent donor, disappearance after transporting only the available mass, simultaneous
+opposing donor streams, and a multi-cell phase-free region. A conflict-free anchor selection keeps
+at most one exact phase-presence row per donor cell and per face; other constrained outgoing
+streams use exact zero-flow rows, and conservation closes the remaining cell in a connected
+phase-free region. This avoids a singular duplicate constraint without an inventory threshold.
+Nonnegative phase masses and face variables may land exactly on zero; an
 outward Newton component at an already active zero bound is projected onto the feasible tangent
-cone before a trial is formed. Between Jacobians, the unmodified signed free flux selects direction
-and the exact donor row can activate or release. Line-search trials use reversible copies of those
-choices, so a rejected trial cannot mutate the accepted active set. None of these operations clips
+cone before a trial is formed. Between Jacobians, each exact donor row can activate or release
+independently. Line-search trials use reversible copies of those choices, so a rejected trial cannot mutate the
+accepted active set. None of these operations clips
 accepted mass or introduces an inventory tolerance.
 
-The directly affected unchanged nine five-second historical/pressure-interpolated/explicit-face
-cases still fail line search. Their last local times are 0.63125--1.83515625 s: materially beyond
-the earlier 0.1251953125--0.831640625 s envelope for several lanes, but short of the required 5 s.
-Therefore the full unchanged 15-case matrix remains failed. This increment establishes exact phase
-disappearance and donor-transition mechanics only; it does not qualify reappearance in the public
+In the unchanged five-second 16/24-cell matrix, all three no-pressure-interpolation lanes complete
+both with and without the augmented face system. The three baseline pressure-interpolated lanes
+still stop at 1.401953125/1.83203125/1.075 s; the two-stream augmented lanes stop at
+1.35078125/1.8427734375/1.74375 s. The 24-cell evidence improves materially, but none of the three
+pressure-interpolated lanes completes 5 s, and the augmented run is substantially more expensive.
+Therefore the full unchanged matrix remains failed. This increment establishes exact phase
+disappearance and two-donor transport mechanics only; it does not qualify reappearance in the public
 riser, severe slugging, restart or hydraulic pigging, and no 180 s or 600 s run is justified.
 
 `TwoFluidUnsplitModelAdapter.prepareStep` independently re-evaluates a converged, active-set-stable
@@ -2831,6 +2862,41 @@ separately and were not part of the passing total. The later outlet-consistency 
 the coarse-gas case and promotes it to ordinary CI; the fifteen riser gates still fail as
 reported above. The subsequent coupled-predictor repair is separate evidence; focused
 regression success is not a full-suite or general-flow qualification claim.
+
+#### Conservative passive-friction ownership in unsplit preparation
+
+The transactional unsplit integrator now removes wall, gas/liquid and oil/water
+friction from the nonlinear transport residual and advances the existing
+frozen-resistance conservative source exactly once after a transport candidate
+converges. The source step preserves every phase mass and total energy, cannot
+increase phase kinetic energy, and returns its exact gas/oil/water momentum
+impulse per pipe length through
+`PreparedStep.getConservativeFrictionImpulsePerLength()`. `PreparedInterval`
+sums the same accepted impulses without including rejected trials. The impulse
+is also converted to an equivalent conservative rate in the independently
+verified step and interval ledgers; shared equation configuration and published
+diagnostics are restored after every trial.
+
+This first-order source ownership is automatic for unsplit preparation when
+transient pressure interpolation is off. The pressure-interpolated route retains
+its existing unsplit friction ownership: combining the two changes moved or
+worsened its exact trace-phase/donor event, so that combination is deliberately
+split until a conservative pressure-face phase-presence formulation is
+qualified. No phase mass is clipped, no donor is smeared, and no nonlinear or
+conservation tolerance is changed.
+
+On current master `baf00059f4453eb82a84ead56fa00aacf9783996`, the unchanged
+five-second Tengesdal matrix was first reproduced. With this source ownership,
+all three midpoint/no-interpolation lanes (16 cells / 0.1 s, 16 / 0.05 s and
+24 / 0.05 s maximum step) complete the full five seconds. All six ordinary
+0.1 s handoffs also pass. The three backward-Euler/pressure-interpolated lanes
+remain negative evidence at the unchanged gates: 16 / 0.1 s stops at 1.4000 s
+by line-search failure, 16 / 0.05 s at 1.8125 s by the iteration limit, and
+24 / 0.05 s at 0.9750 s by line-search failure. Their attempted terminal steps
+are 0.000390625, 0.0001953125 and 0.0001953125 s. Thus the matrix improves from
+zero to three of six five-second lanes, but it does not pass as a whole and does
+not authorize the 180/600 s sequence, physical restart, severe slugging or
+hydraulic pigging.
 
 ### Standing benchmark acceptance metrics
 

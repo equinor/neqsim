@@ -647,6 +647,34 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Relaxation factor used when {@link SolverType#DAMPED_SUBSTITUTION} is active.
    */
   private double relaxationFactor = 0.5;
+  /** Whether sequential substitution applies Anderson mixing to the tray outlet states. */
+  private volatile boolean andersonAccelerationEnabled = true;
+  /** Number of Anderson-mixed states used by the latest sequential solve. */
+  private volatile int lastAndersonAccelerationCount = 0;
+  /** Number of Anderson mixing phases rejected by the latest sequential solve. */
+  private volatile int lastAndersonRejectionCount = 0;
+  /** Sweeps run after the last rejected mixing phase of the latest sequential solve; -1 without a rejection. */
+  private volatile int lastSweepsAfterAndersonRejection = -1;
+  /** Sweeps of a mixing phase without a ten percent residual improvement that reject the phase. */
+  private volatile int andersonStagnationSweeps = ANDERSON_STAGNATION_SWEEPS;
+  /** Number of residual differences combined by one Anderson step. */
+  private static final int ANDERSON_DEPTH = 5;
+  /** Damped sweeps run before the first mixing phase; multiplied up after each rejected phase. */
+  private static final int ANDERSON_PLAIN_SWEEPS = 3;
+  /** Sweep temperature change, in multiples of the tolerance, below which a mixing phase may start. */
+  private static final double ANDERSON_START_TOLERANCE_MULTIPLE = 20.0;
+  /** Residual growth over the best state of a mixing phase that rejects the phase. */
+  private static final double ANDERSON_REJECTION_GROWTH = 3.0;
+  /** Rejected mixing phases after which a solve continues with damped substitution only. */
+  private static final int ANDERSON_MAX_REJECTIONS = 3;
+  /** Sweeps of a mixing phase without a ten percent residual improvement that reject the phase. */
+  private static final int ANDERSON_STAGNATION_SWEEPS = 8;
+  /** Largest tear-stream temperature change of one Anderson step in Kelvin. */
+  private static final double ANDERSON_MAX_TEMPERATURE_STEP = 10.0;
+  /** Smallest fraction of an Anderson step worth taking after the physical bounds are applied. */
+  private static final double ANDERSON_MIN_STEP_FRACTION = 0.05;
+  /** Residual weight of one Kelvin relative to a flow change equal to the largest tray outlet flow. */
+  private static final double ANDERSON_TEMPERATURE_WEIGHT = 3.0e-3;
   /**
    * Minimum relaxation factor used when adaptive damping scales down the sequential step.
    */
@@ -1260,6 +1288,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (!isDoInitializion()) {
       return;
     }
+    configureTrayEnthalpyFlash();
     setDoInitializion(false);
     List<SystemInterface> pumparoundReturnSystems = snapshotPumparoundReturnSystems();
 
@@ -1394,6 +1423,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   @Override
   public void run(UUID id) {
     long runStartTime = System.nanoTime();
+    configureTrayEnthalpyFlash();
     lastAppliedTemperatureStepResidual = Double.NaN;
     lastInternalFlowChange = Double.NaN;
     lastInternalFlowGrowth = Double.NaN;
@@ -6991,11 +7021,92 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double[] internalTrafficHistory = new double[2 * INTERNAL_FLOW_GROWTH_WINDOW + 1];
     int internalTrafficHistoryCount = 0;
 
+    // Anderson mixing of the tray outlet states. One sweep maps the set of tray outlet streams
+    // onto a new set; substitution alone approaches the fixed point of that map at the rate of its
+    // slowest mode. The mixer combines the latest sweep results so that the combined sweep
+    // residual is smallest, and the mixed state replaces the tray outlets before the next sweep.
+    // Mixing is limited to cold solves of columns without outer tear variables or adjusted
+    // specifications. A warm restart must reproduce the accepted state it starts from, and an
+    // outer loop compares candidate solves that have to follow one deterministic damped path.
+    boolean andersonAllowed = andersonAccelerationEnabled && !hasNonidealMurphreeStages() && numberOfTrays >= 3
+        && !hasBeenSolvedBefore && !hasActiveColumnTearVariables() && !hasAdjustableSpecifications()
+        && !hardIterationCap && maximumSweeps == Integer.MAX_VALUE;
+    int andersonPhaseStartSweep = 0;
+    AndersonMixer andersonMixer = new AndersonMixer(ANDERSON_DEPTH);
+    double[] andersonWeights = null;
+    double[] sweepInputState = null;
+    double[] mixedTrayTemperatures = null;
+    boolean andersonActive = false;
+    int andersonRejections = 0;
+    int andersonFirstSweep = ANDERSON_PLAIN_SWEEPS;
+    double bestSweepResidual = Double.POSITIVE_INFINITY;
+    double previousStepResidual = Double.POSITIVE_INFINITY;
+    double[] restoredTrayTemperatures = null;
+    boolean plainSweepsContracting = false;
+    int sweepsSinceBestResidual = 0;
+    StreamInterface[] bestGasOutlets = new StreamInterface[numberOfTrays];
+    StreamInterface[] bestLiquidOutlets = new StreamInterface[numberOfTrays];
+    int andersonSteps = 0;
+    int lastRejectionSweep = -1;
+    lastAndersonAccelerationCount = andersonSteps;
+    lastAndersonRejectionCount = 0;
+    lastSweepsAfterAndersonRejection = -1;
+
     while (iter < iterationLimit && iter < maximumSweeps) {
+      mixedTrayTemperatures = restoredTrayTemperatures;
+      restoredTrayTemperatures = null;
+      sweepInputState = null;
+      if (andersonAllowed && !divergenceRecoveryApplied && !internalTrafficCapActive) {
+        // A sweep step already inside the tolerance leaves nothing to accelerate; mixing there
+        // would only perturb a converged warm start.
+        boolean nearLinearRegime = err <= ANDERSON_START_TOLERANCE_MULTIPLE * baseTempTolerance
+            && err > baseTempTolerance;
+        if (!andersonActive && iter >= andersonFirstSweep && plainSweepsContracting && nearLinearRegime) {
+          // Start a mixing phase. All mixed evaluations must come from one map, so the phase uses
+          // undamped sweeps that each start from a state in which every inter-tray inlet equals
+          // the neighbouring outlet, and the history of the damped sweeps is discarded.
+          andersonActive = true;
+          andersonPhaseStartSweep = iter;
+          andersonMixer.reset();
+          relaxation = 1.0;
+          sweepsSinceBestResidual = 0;
+          bestSweepResidual = Double.POSITIVE_INFINITY;
+        }
+        if (andersonActive) {
+          double[] latestState = collectTrayOutletState();
+          double[] mixedState = andersonMixer.size() >= 2 ? boundTrayOutletState(andersonMixer.mix(), latestState)
+              : null;
+          StreamInterface[] startGas = new StreamInterface[numberOfTrays];
+          StreamInterface[] startLiquid = new StreamInterface[numberOfTrays];
+          if (mixedState != null && buildTrayOutletStreams(mixedState, startGas, startLiquid)) {
+            sweepInputState = mixedState;
+            andersonSteps++;
+            lastAndersonAccelerationCount = andersonSteps;
+          } else {
+            for (int i = 0; i < numberOfTrays; i++) {
+              startGas[i] = trays.get(i).getGasOutStream();
+              startLiquid[i] = trays.get(i).getLiquidOutStream();
+            }
+            sweepInputState = latestState;
+          }
+          if (sweepInputState != null) {
+            installTrayOutletStates(startGas, startLiquid, previousGasStreams, previousLiquidStreams);
+            mixedTrayTemperatures = new double[numberOfTrays];
+            for (int i = 0; i < numberOfTrays; i++) {
+              mixedTrayTemperatures[i] = startGas[i].getThermoSystem().getTemperature();
+            }
+          }
+        }
+      }
+
       iter++;
 
       for (int i = 0; i < numberOfTrays; i++) {
         oldtemps[i] = trays.get(i).getThermoSystem().getTemperature();
+      }
+      if (mixedTrayTemperatures != null) {
+        // The sweep starts from the mixed state, so its temperature change is measured from there.
+        System.arraycopy(mixedTrayTemperatures, 0, oldtemps, 0, numberOfTrays);
       }
 
       for (int i = firstFeedTrayNumber; i > 1; i--) {
@@ -7099,7 +7210,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         combinedResidual = Math.max(combinedResidual, Math.min(energyScaled, maxEnergyRelaxationWeight));
       }
 
-      if (combinedResidual > previousCombinedResidual * 1.05) {
+      if (andersonActive) {
+        // Anderson mixing assumes one sweep map; changing the tear relaxation between sweeps
+        // would mix evaluations of different maps. Mixing also removes the oscillating modes
+        // that the adaptive factor exists to damp.
+        combinedResidual = Double.POSITIVE_INFINITY;
+      } else if (combinedResidual > previousCombinedResidual * 1.05) {
         relaxation = Math.max(minSequentialRelaxation, relaxation * relaxationDecreaseFactor);
       } else if (combinedResidual < previousCombinedResidual * 0.98) {
         relaxation = Math.min(maxAdaptiveRelaxation, relaxation * relaxationIncreaseFactor);
@@ -7143,6 +7259,65 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         }
       }
 
+      if (andersonAllowed) {
+        double[] sweepOutputState = sweepInputState == null ? null : collectTrayOutletState();
+        double stepResidual = err / Math.max(1.0e-3, Math.min(1.0, relaxation));
+        if (!andersonActive) {
+          plainSweepsContracting = stepResidual < previousStepResidual;
+          previousStepResidual = stepResidual;
+        } else if (sweepOutputState == null || sweepOutputState.length != sweepInputState.length) {
+          andersonAllowed = false;
+          andersonActive = false;
+        } else {
+          if (andersonWeights == null || andersonWeights.length != sweepOutputState.length) {
+            andersonWeights = createTrayOutletStateWeights(sweepOutputState);
+          }
+          andersonMixer.add(sweepInputState, sweepOutputState, andersonWeights);
+          double sweepResidual = andersonMixer.latestResidualNorm();
+          sweepsSinceBestResidual++;
+          if (bestGasOutlets[0] != null && (!(sweepResidual <= ANDERSON_REJECTION_GROWTH * bestSweepResidual)
+              || sweepsSinceBestResidual > andersonStagnationSweeps)) {
+            // The mixed state moved away from the fixed point or stopped approaching it: the
+            // stored sweeps no longer describe one linear map. Return to the best state of this
+            // phase and continue with damped substitution.
+            installTrayOutletStates(bestGasOutlets, bestLiquidOutlets, previousGasStreams, previousLiquidStreams);
+            restoredTrayTemperatures = new double[numberOfTrays];
+            for (int i = 0; i < numberOfTrays; i++) {
+              restoredTrayTemperatures[i] = bestGasOutlets[i].getThermoSystem().getTemperature();
+              bestGasOutlets[i] = null;
+            }
+            // The sweeps of a rejected phase did not advance the damped iteration, so they are
+            // not charged to its iteration budget.
+            int rejectedSweeps = iter - andersonPhaseStartSweep;
+            iterationLimit += rejectedSweeps;
+            polishIterationLimit += rejectedSweeps;
+            maxIterationLimit += rejectedSweeps;
+            andersonMixer.reset();
+            andersonActive = false;
+            andersonRejections++;
+            lastAndersonRejectionCount = andersonRejections;
+            lastRejectionSweep = iter;
+            andersonFirstSweep = iter + ANDERSON_PLAIN_SWEEPS * (1 + andersonRejections);
+            plainSweepsContracting = false;
+            previousStepResidual = Double.POSITIVE_INFINITY;
+            relaxation = minSequentialRelaxation;
+            previousCombinedResidual = Double.POSITIVE_INFINITY;
+            if (andersonRejections >= ANDERSON_MAX_REJECTIONS) {
+              andersonAllowed = false;
+            }
+          } else if (sweepResidual < bestSweepResidual) {
+            if (sweepResidual < 0.9 * bestSweepResidual) {
+              sweepsSinceBestResidual = 0;
+            }
+            bestSweepResidual = sweepResidual;
+            for (int i = 0; i < numberOfTrays; i++) {
+              bestGasOutlets[i] = trays.get(i).getGasOutStream();
+              bestLiquidOutlets[i] = trays.get(i).getLiquidOutStream();
+            }
+          }
+        }
+      }
+
       // Absolute flow magnitude check: if tray flows are vastly larger than
       // the total feed, the solver has diverged beyond recovery. Break early
       // and report a large mass residual so callers can detect the failure.
@@ -7181,8 +7356,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           ? ColumnMeshResidualEvaluator.evaluateMaxTrayMaterialImbalance(this)
           : 0.0;
       boolean connectedMaterialSatisfied = connectedMaterialResidual <= connectedMaterialTolerance;
+      // A rejected mixing phase has just replaced the tray inlets and outlet caches with its best
+      // state, while err, the balances and the tray fluids still describe the rejected sweep.
+      // Convergence is not judged on that mixture: the next sweep evaluates the restored state.
+      boolean restoredStateNotEvaluated = restoredTrayTemperatures != null;
+      lastSweepsAfterAndersonRejection = lastRejectionSweep < 0 ? -1 : iter - lastRejectionSweep;
       boolean withinBaseTolerance = err <= baseTempTolerance && massErr <= baseMassTolerance && energyWithinBase
-          && connectedMaterialSatisfied && internalFlowsSettled;
+          && connectedMaterialSatisfied && internalFlowsSettled && !restoredStateNotEvaluated;
 
       if (withinBaseTolerance) {
         boolean energyPolishingAvailable = enforceEnergyBalanceTolerance && polishEnergyTolerance < baseEnergyTolerance;
@@ -7235,6 +7415,285 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
     commitSequentialWarmState();
+  }
+
+  /**
+   * Collect the component flows and temperature of every tray outlet stream.
+   *
+   * <p>
+   * The layout is, per tray, the gas outlet component moles followed by its temperature and then the same for the
+   * liquid outlet. This is the state that one sequential sweep maps onto itself at convergence.
+   * </p>
+   *
+   * @return state vector, or {@code null} when the trays do not share one component list
+   */
+  private double[] collectTrayOutletState() {
+    int numberOfComponents = trays.get(0).getThermoSystem().getNumberOfComponents();
+    int block = numberOfComponents + 1;
+    double[] state = new double[2 * numberOfTrays * block];
+    for (int i = 0; i < numberOfTrays; i++) {
+      for (int side = 0; side < 2; side++) {
+        StreamInterface stream = side == 0 ? trays.get(i).getGasOutStream() : trays.get(i).getLiquidOutStream();
+        SystemInterface fluid = stream == null ? null : stream.getThermoSystem();
+        if (fluid == null || fluid.getNumberOfComponents() != numberOfComponents) {
+          return null;
+        }
+        int offset = (2 * i + side) * block;
+        for (int c = 0; c < numberOfComponents; c++) {
+          double moles = fluid.getComponent(c).getNumberOfmoles();
+          if (Double.isNaN(moles) || Double.isInfinite(moles)) {
+            return null;
+          }
+          state[offset + c] = Math.max(0.0, moles);
+        }
+        state[offset + numberOfComponents] = fluid.getTemperature();
+        if (Double.isNaN(state[offset + numberOfComponents])) {
+          return null;
+        }
+      }
+    }
+    return state;
+  }
+
+  /**
+   * Create residual weights that make flow and temperature entries of a tray outlet state comparable.
+   *
+   * @param state representative tray outlet state
+   * @return weight per state entry
+   */
+  private double[] createTrayOutletStateWeights(double[] state) {
+    int numberOfComponents = trays.get(0).getThermoSystem().getNumberOfComponents();
+    int block = numberOfComponents + 1;
+    double largestFlow = 0.0;
+    for (int stream = 0; stream < 2 * numberOfTrays; stream++) {
+      double total = 0.0;
+      for (int c = 0; c < numberOfComponents; c++) {
+        total += state[stream * block + c];
+      }
+      largestFlow = Math.max(largestFlow, total);
+    }
+    double flowWeight = largestFlow > 0.0 ? 1.0 / largestFlow : 1.0;
+    double[] weights = new double[state.length];
+    for (int stream = 0; stream < 2 * numberOfTrays; stream++) {
+      for (int c = 0; c < numberOfComponents; c++) {
+        weights[stream * block + c] = flowWeight;
+      }
+      weights[stream * block + numberOfComponents] = ANDERSON_TEMPERATURE_WEIGHT;
+    }
+    return weights;
+  }
+
+  /**
+   * Shorten a proposed tray outlet state towards the latest sweep result until it is physically bounded.
+   *
+   * <p>
+   * A mixed state is an affine combination of sweep results with coefficients of either sign, so it can leave the
+   * region where the sweeps are a good linear model. The step from the latest result is scaled by one common factor so
+   * that no stream temperature moves more than {@link #ANDERSON_MAX_TEMPERATURE_STEP} and no significant component flow
+   * leaves the range from one fifth to five times its latest value. Trace components are bounded individually.
+   * </p>
+   *
+   * @param proposed proposed state, may be {@code null}
+   * @param latest latest sweep result
+   * @return bounded state, or {@code null} when no useful step remains
+   */
+  private double[] boundTrayOutletState(double[] proposed, double[] latest) {
+    if (proposed == null || latest == null || proposed.length != latest.length) {
+      return null;
+    }
+    int numberOfComponents = trays.get(0).getThermoSystem().getNumberOfComponents();
+    int block = numberOfComponents + 1;
+    double fraction = 1.0;
+    for (int stream = 0; stream < 2 * numberOfTrays; stream++) {
+      int offset = stream * block;
+      double total = 0.0;
+      for (int c = 0; c < numberOfComponents; c++) {
+        total += latest[offset + c];
+      }
+      double temperatureStep = Math.abs(proposed[offset + numberOfComponents] - latest[offset + numberOfComponents]);
+      if (temperatureStep * fraction > ANDERSON_MAX_TEMPERATURE_STEP) {
+        fraction = ANDERSON_MAX_TEMPERATURE_STEP / temperatureStep;
+      }
+      for (int c = 0; c < numberOfComponents; c++) {
+        double current = latest[offset + c];
+        double step = proposed[offset + c] - current;
+        if (current <= 1.0e-6 * total || step == 0.0) {
+          continue;
+        }
+        double limit = step < 0.0 ? 0.8 * current / -step : 4.0 * current / step;
+        fraction = Math.min(fraction, limit);
+      }
+    }
+    if (!(fraction >= ANDERSON_MIN_STEP_FRACTION)) {
+      return null;
+    }
+    double[] bounded = new double[latest.length];
+    for (int stream = 0; stream < 2 * numberOfTrays; stream++) {
+      int offset = stream * block;
+      for (int c = 0; c < numberOfComponents; c++) {
+        double current = latest[offset + c];
+        double value = current + fraction * (proposed[offset + c] - current);
+        bounded[offset + c] = Math.max(0.2 * current, Math.min(5.0 * current, value));
+      }
+      int temperatureIndex = offset + numberOfComponents;
+      bounded[temperatureIndex] = latest[temperatureIndex]
+          + fraction * (proposed[temperatureIndex] - latest[temperatureIndex]);
+    }
+    return bounded;
+  }
+
+  /**
+   * Create equilibrated outlet streams for every tray from a tray outlet state.
+   *
+   * @param state tray outlet state in the layout of {@link #collectTrayOutletState()}
+   * @param gasOutlets receives one gas outlet stream per tray
+   * @param liquidOutlets receives one liquid outlet stream per tray
+   * @return {@code true} when every stream could be formed
+   */
+  private boolean buildTrayOutletStreams(double[] state, StreamInterface[] gasOutlets,
+      StreamInterface[] liquidOutlets) {
+    int numberOfComponents = trays.get(0).getThermoSystem().getNumberOfComponents();
+    int block = numberOfComponents + 1;
+    try {
+      for (int i = 0; i < numberOfTrays; i++) {
+        for (int side = 0; side < 2; side++) {
+          StreamInterface latest = side == 0 ? trays.get(i).getGasOutStream() : trays.get(i).getLiquidOutStream();
+          StreamInterface stream = latest.clone();
+          int offset = (2 * i + side) * block;
+          double totalMoles = 0.0;
+          for (int c = 0; c < numberOfComponents; c++) {
+            totalMoles += state[offset + c];
+          }
+          double temperature = state[offset + numberOfComponents];
+          if (!Double.isFinite(totalMoles) || !Double.isFinite(temperature) || temperature <= 0.0) {
+            return false;
+          }
+          // A vanished phase carries no material; its latest zero-flow stream is kept as it is.
+          if (totalMoles > 1.0e-100 && latest.getThermoSystem().getTotalNumberOfMoles() > 1.0e-100) {
+            double[] composition = new double[numberOfComponents];
+            for (int c = 0; c < numberOfComponents; c++) {
+              composition[c] = state[offset + c] / totalMoles;
+            }
+            SystemInterface fluid = stream.getThermoSystem();
+            fluid.setMolarComposition(composition);
+            fluid.setTotalNumberOfMoles(totalMoles);
+            fluid.setTemperature(temperature);
+            fluid.init(0);
+            flashRelaxedTearStream(stream);
+          }
+          if (side == 0) {
+            gasOutlets[i] = stream;
+          } else {
+            liquidOutlets[i] = stream;
+          }
+        }
+      }
+    } catch (RuntimeException ex) {
+      logger.debug("Could not form the mixed tray outlet state: {}", ex.getMessage());
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Make a set of tray outlet states the starting point of the next sequential sweep.
+   *
+   * <p>
+   * A sweep reads each tray's outlet streams and the inlet streams installed by the previous sweep. Both are replaced,
+   * so the next sweep starts from one consistent state in which every inter-tray inlet equals the neighbouring outlet.
+   * </p>
+   *
+   * @param gasOutlets gas outlet state per tray
+   * @param liquidOutlets liquid outlet state per tray
+   * @param previousGas previous-iterate gas tear streams used by damped sweeps, updated in place
+   * @param previousLiquid previous-iterate liquid tear streams used by damped sweeps, updated in place
+   */
+  private void installTrayOutletStates(StreamInterface[] gasOutlets, StreamInterface[] liquidOutlets,
+      StreamInterface[] previousGas, StreamInterface[] previousLiquid) {
+    for (int i = 0; i < numberOfTrays; i++) {
+      SimpleTray tray = trays.get(i);
+      int numberOfInputs = tray.getNumberOfInputStreams();
+      boolean topTray = i == numberOfTrays - 1;
+      if (!topTray) {
+        tray.replaceStream(numberOfInputs - 1, liquidOutlets[i + 1].clone());
+      }
+      if (i >= 1) {
+        tray.replaceStream(topTray ? numberOfInputs - 1 : numberOfInputs - 2, gasOutlets[i - 1].clone());
+      }
+    }
+    for (int i = 0; i < numberOfTrays; i++) {
+      SimpleTray tray = trays.get(i);
+      tray.setCachedGasOutStream(gasOutlets[i]);
+      tray.setCachedLiquidOutStream(liquidOutlets[i]);
+      if (previousGas[i] != null) {
+        previousGas[i] = gasOutlets[i];
+      }
+      if (previousLiquid[i] != null) {
+        previousLiquid[i] = liquidOutlets[i];
+      }
+    }
+  }
+
+  /**
+   * Enable or disable Anderson mixing in the sequential substitution solvers.
+   *
+   * @param enabled {@code true} to mix the latest sweep results, {@code false} for plain relaxed substitution
+   */
+  public void setAndersonAccelerationEnabled(boolean enabled) {
+    this.andersonAccelerationEnabled = enabled;
+  }
+
+  /**
+   * Check whether the sequential substitution solvers use Anderson mixing.
+   *
+   * @return {@code true} when Anderson mixing is enabled
+   */
+  public boolean isAndersonAccelerationEnabled() {
+    return andersonAccelerationEnabled;
+  }
+
+  /**
+   * Get the number of Anderson mixing phases the latest sequential solve rejected and rolled back.
+   *
+   * @return rejected mixing phase count
+   */
+  public int getLastAndersonRejectionCount() {
+    return lastAndersonRejectionCount;
+  }
+
+  /**
+   * Get the number of sweeps the latest sequential solve ran after its last rejected mixing phase.
+   *
+   * <p>
+   * A rollback restores tray inlets and outlets only, so at least one sweep must follow it before a result is accepted.
+   * </p>
+   *
+   * @return sweeps after the last rollback, or -1 when no phase was rejected
+   */
+  int getLastSweepsAfterAndersonRejection() {
+    return lastSweepsAfterAndersonRejection;
+  }
+
+  /**
+   * Set how many mixing-phase sweeps without a ten percent residual improvement reject the phase.
+   *
+   * <p>
+   * Package-private so tests can force the rejection and rollback path; zero rejects every phase on its second sweep.
+   * </p>
+   *
+   * @param sweeps stagnation limit in sweeps
+   */
+  void setAndersonStagnationSweeps(int sweeps) {
+    this.andersonStagnationSweeps = sweeps;
+  }
+
+  /**
+   * Get the number of Anderson-mixed states used by the latest sequential solve.
+   *
+   * @return accepted Anderson step count
+   */
+  public int getLastAndersonAccelerationCount() {
+    return lastAndersonAccelerationCount;
   }
 
   /**
@@ -9138,6 +9597,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int iterationLimit = Math.max(baseIterationLimit, maxNumberOfIterations);
     int maxIterationLimit = iterationLimit + Math.max(numberOfTrays, 3) * ITERATION_OVERFLOW_MULTIPLIER;
 
+    // The sweeps only read enthalpies and phase splits. Transport and interfacial properties are
+    // evaluated once on the converged trays by finalizeTrayProperties() below.
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i).setSkipPhysicalPropertiesDuringSolve(true);
+    }
+
     // Warm-up: run a few direct substitution iterations to establish a reasonable
     // profile
     int warmUpIterations = Math.min(3, iterationLimit / 3);
@@ -9412,6 +9877,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     massErr = getMassBalanceError();
     energyErr = getEnergyBalanceError();
 
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i).finalizeTrayProperties();
+    }
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
   }
 
@@ -12812,7 +13280,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (ignoreZeroFlow) {
       // Phase extraction can leave enthalpy properties uninitialized. Read an initialized clone
       // so diagnostics do not change the cached state consumed by the adaptive controller.
-      return SimpleTray.getMaterialStreamEnthalpy(stream.clone());
+      double flow = stream.getFlowRate("kg/hr");
+      if (!Double.isFinite(flow)) {
+        return Double.NaN;
+      }
+      if (Math.abs(flow) <= 1.0e-12) {
+        return 0.0;
+      }
+      // Only the fluid state is read, so clone the fluid rather than the whole stream object.
+      SystemInterface fluid = stream.getThermoSystem().clone();
+      fluid.init(2);
+      return fluid.getEnthalpy();
     }
     double enthalpy = stream.getFluid().getEnthalpy();
     if (Double.isFinite(enthalpy)) {
@@ -12843,6 +13321,29 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (convergenceHistory != null && convergenceHistory.size() < MAX_CONVERGENCE_HISTORY) {
       convergenceHistory.add(entry);
     }
+  }
+
+  /** Selects one PH iteration policy for the connected column stages. */
+  private void configureTrayEnthalpyFlash() {
+    boolean useStandard = hasNonidealMurphreeStages();
+    for (SimpleTray tray : trays) {
+      tray.setUseStandardEnthalpyFlash(useStandard);
+    }
+  }
+
+  /**
+   * Checks the effective efficiencies of stages eligible for the Murphree vapor correction.
+   *
+   * @return true if a stage can apply the nonideal correction
+   */
+  private boolean hasNonidealMurphreeStages() {
+    int end = hasCondenser ? numberOfTrays - 1 : numberOfTrays;
+    for (int stage = 1; stage < end; stage++) {
+      if (getEffectiveMurphreeEfficiency(stage) < 1.0 - 1e-10) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -12973,7 +13474,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         capStreamFlow(relaxed, maximumInternalFlow);
       }
       if (requiresReflash || !skipUnchangedReflash) {
-        relaxed.run();
+        flashRelaxedTearStream(relaxed);
       }
       return relaxed;
     }
@@ -13000,7 +13501,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double totalMolesCurr = current.getThermoSystem().getTotalNumberOfMoles();
 
     if (!canRelaxMolarComposition(previous, current, relaxed, zPrev, zCurr)) {
-      relaxed.run();
+      flashRelaxedTearStream(relaxed);
       return relaxed;
     }
 
@@ -13026,9 +13527,37 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       relaxed.getThermoSystem().setMolarComposition(zMixed);
     }
 
-    relaxed.run();
+    flashRelaxedTearStream(relaxed);
 
     return relaxed;
+  }
+
+  /**
+   * Equilibrate a private internal tear stream at its current temperature, pressure and composition.
+   *
+   * <p>
+   * A tear stream is consumed only by the tray it enters, which reads component moles and enthalpy. The stream is
+   * already a private clone, so the equilibrium flash runs on its own fluid instead of {@link StreamInterface#run()},
+   * which would clone the fluid a second time and evaluate transport and interfacial properties that no tray balance
+   * reads. The flash input, and therefore the resulting phase split and enthalpy, are identical.
+   * </p>
+   *
+   * @param relaxed private tear stream to equilibrate in place
+   */
+  private void flashRelaxedTearStream(StreamInterface relaxed) {
+    SystemInterface fluid = relaxed.getThermoSystem();
+    boolean plainTemperaturePressureStream = relaxed.getClass() == Stream.class && fluid != null
+        && "TP".equals(relaxed.getSpecification()) && fluid.getNumberOfComponents() > 1;
+    double flow = plainTemperaturePressureStream ? relaxed.getFlowRate("kg/hr") : Double.NaN;
+    if (!plainTemperaturePressureStream || !Double.isFinite(flow) || flow < relaxed.getMinimumFlow()) {
+      relaxed.run();
+      return;
+    }
+    if (!fluid.isInitialized()) {
+      fluid.init(0);
+    }
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.init(2);
   }
 
   /**

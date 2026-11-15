@@ -5,6 +5,7 @@ import org.netlib.util.doubleW;
 import org.netlib.util.intW;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseLeachmanEos;
+import neqsim.thermo.util.gerg.ReferenceEosLiquidDensitySolver;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -131,6 +132,17 @@ public class NeqSimLeachman {
   private double getLiquidMolarDensity(double temperature, double targetPressure) {
     double minimumDensity = Leachman.Dc * (1.0 + 1.0e-8);
     double maximumDensity = Math.max(4.0 * Leachman.Dc, 1.5 * LIQUID_DENSITY_INITIAL_GUESS);
+    doubleW pressure = new doubleW(0.0);
+    doubleW compressibility = new doubleW(0.0);
+    double candidate = ReferenceEosLiquidDensitySolver.solve(targetPressure, density -> {
+      Leachman.PressureLeachman(temperature, density, pressure, compressibility);
+      return pressure.val;
+    }, () -> Leachman.dPdDsave, minimumDensity, maximumDensity);
+    if (Double.isFinite(candidate) && Math.abs(pressureResidual(temperature, candidate, targetPressure)) <= Math
+        .max(1.0e-10, Math.abs(targetPressure) * 1.0e-10) && Leachman.dPdDsave > 0.0) {
+      return candidate;
+    }
+
     double densityStep = (maximumDensity - minimumDensity) / LIQUID_ROOT_SCAN_INTERVALS;
     double upperDensity = maximumDensity;
     double upperResidual = pressureResidual(temperature, upperDensity, targetPressure);

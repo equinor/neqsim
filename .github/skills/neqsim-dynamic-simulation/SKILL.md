@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-10-27"
+last_verified: "2026-11-14"
 ---
 
 # Dynamic Simulation Guidance
@@ -757,18 +757,28 @@ refinement.
 The unsplit transactional callback exposes directional gas/oil/water face diagnostics: separate
 forward/reverse mass transport, donor advective momentum, pressure traction, physical cell lengths,
 and phase mass sources. The experimental directional-complementarity option augments the nonlinear
-vector with signed mass magnitude, advective momentum and a donor multiplier per internal phase
-face, conservatively replaces the free flux, and carries solved faces into prepared-step
-verification. Exactly absent donors use exact donor-presence and zero-momentum rows; do not add an
+vector with nonnegative mass magnitude, advective momentum and a donor multiplier per internal
+phase face and direction, conservatively replaces the free flux, and carries solved faces into prepared-step
+verification. Physical AUSM transport and pressure correction retain separate donors. Exactly absent donors use
+conflict-free exact donor-presence anchors, zero-flow rows and zero-momentum rows; do not add an
 inventory floor. This is not yet a qualified phase-transition path: the six unchanged 0.1 s lanes
 pass. The nonlinear path may now land exactly on a zero phase/face bound, project only outward
-search components at an already active exact bound, select the donor from the unmodified signed
-free flux between frozen Jacobians, and release an exact donor row when the selected donor is
-present. Rejected line-search trials use independent active-set copies. These are conservative
-transition mechanics, not a tolerance, inventory clip, or fitted donor smear. Exact disappearance
-and opposite-donor unit cases pass, but the directly affected nine unchanged five-second lanes
-still fail line search at 0.63125--1.83515625 s and the complete 15-case gate remains failed. Retain
+search components at an already active exact bound, and release each donor row independently.
+Rejected line-search trials use independent active-set copies. These are conservative transition
+mechanics, not a tolerance, inventory clip, or fitted donor smear. Exact disappearance, simultaneous
+opposing streams and phase-free multi-cell cases pass. All no-pressure-interpolation five-second lanes
+complete; pressure-interpolated baseline and augmented lanes still stop at 1.075--1.8427734375 s, so
+the complete gate remains failed. Retain
 all five-second, 180 s and 600 s gates.
+
+For current unsplit preparation without transient pressure interpolation, passive wall and
+interphase friction is advanced once by the conservative frozen-resistance source after transport
+converges. Inspect `PreparedStep.getConservativeFrictionImpulsePerLength()` and the interval sum
+alongside phase-mass and residual ledgers. All three unchanged midpoint five-second Tengesdal lanes
+now complete, but the pressure-interpolated lanes still fail at 1.4000/1.8125/0.9750 s. Keep that
+operator on its existing friction owner: combining the two currently regresses the exact
+trace-phase/donor event. This is numerical source qualification, not severe-slugging, restart or
+pigging evidence.
 
 Make every cycle-count assertion feasible for its sampled window. A detector that reports `N`
 completed intervals needs `N + 1` events, so the settled window must span at least `N` times the
@@ -966,13 +976,25 @@ sweeping, receiver surge capacity, physical restart, severe slugging, pig
 trains or experimental/field validation.
 
 1. **Always run steady state first**: Call `process.run()` before `runTransient()`
-2. **Timestep size**: Start with 1.0 s, reduce if oscillating (0.1-0.5 s)
+2. **Timestep size**: `ProcessSystem.runTransient` sub-steps automatically below the smallest unit
+   `getMaxStableTransientTimeStep()` (dynamic separators: 0.1 x gas mass / max boundary mass flow), so a
+   long control-interval step such as 100 s is safe; the clock advances by the requested step and one
+   history row is kept per call. Check `getLastTransientSubstepCount()` for cost. Turning it off with
+   `setAutomaticTransientSubstepping(false)` restores one explicit step per call: then keep `dt` below the
+   separator's stable step yourself (measured on the discussion-1574 separator, 2026-11-14: 100 s steps
+   overshot to 25-28 bara from a 9 bara feed and failed; 10 s oscillated; sub-stepped 100 s matched a 1 s
+   reference within 0.01 bara after 2000 s at 2.7x its speed). A `rejected transient VU state` error means the step was too long, or, when it says the
+   vessel is liquid-full, that level control cannot make the liquid outflow exceed the inflow.
 3. **Liquid-outlet level-controller direction**: use `setReverseActing(false)` so level up drives the outlet valve further open. Reverse acting on this configuration drives the loop the wrong way.
 4. **Controller windup**: Large setpoint changes can cause integral windup
 5. **Separator dimensions**: Must set `setInternalDiameter()` and `setSeparatorLength()` for meaningful level dynamics. For dynamic simulation, set directly on the separator; for design purposes, configure via `SeparatorMechanicalDesign` (see neqsim-api-patterns skill)
 6. **Measurement range**: Set min/max on transmitters to match process range
 7. **Enable dynamic (inventory) mode for level loops**: after `process.run()` (steady), call `setCalculateSteadyState(false)` on the separator AND every valve, then `separator.setLiquidLevel(startFraction)`, before `runTransient`. If steady-state mode is left on, the separator liquid level stays pinned at its default (0.5) and the level controller never acts. The valve `Cv` is auto-derived from the steady solve. A **liquid-outlet** level valve is `setReverseActing(false)` (level up -> valve opens); put a pressure controller on the gas-outlet valve so the vessel pressure is held and the level loop is isolated.
 8. **Physical-step UUIDs**: never reuse one non-null UUID across multiple outer timesteps. Reuse is reserved for refinement/evaluation of one physical step.
+9. **Restarting episodes**: `process.storeInitialState()` after `run()`, then `process.reset()` per episode (RL /
+   Gymnasium loops). With complete transient checkpoint coverage (`isInPlaceResetAvailable()`), reset restores
+   into the existing objects, so held references to separators, valves and controllers stay valid; otherwise it
+   swaps in copies and they must be re-fetched with `getUnit(name)`. `setHistoryCapacity(n)` bounds the history.
 
 ## Pluggable Integrator Strategies
 

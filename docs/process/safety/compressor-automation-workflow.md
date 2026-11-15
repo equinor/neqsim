@@ -117,10 +117,15 @@ file hashes are separate quantities and must not be described as byte-identical 
 Each result computes peak/minimum, overshoot, undershoot, integral absolute error and sustained
 settling time from accepted-step samples using the declared policy. It also reports sampled
 constraint violations, first native SIF vote, final-element actuation delay, sustained complete
-safe-state time, and integrated export/recycle routing after the event. The template has no
+safe-state time, and integrated export/recycle routing after the event. The base template has no
 connected PSV, blowdown or flare model: relief mass and disposal load are therefore explicitly
-`NOT_EVALUATED`, never substituted with zero. Continuous-time peaks between samples remain outside
-this fixed-step evidence.
+`NOT_EVALUATED`, never substituted with zero. Call
+`CompressorReliefDisposalStudy.run(result, design)` to opt into the separate governed connection.
+That study copies the actual executed discharge-scrubber fluid, uses the declared cylindrical
+receiver geometry, extracts the actual gas phase for blocked-outlet PSV screening, and sends the
+whole multiphase receiver inventory through the existing dynamic blowdown/flare calculation. It
+does not mutate the compressor result or introduce a second source-term correlation. Continuous-
+time peaks between samples remain outside this fixed-step evidence.
 
 For the default synthetic design, accepted-step runs at 0.1 s gave the following new-profile
 evidence. The event was at 1.0 s; blocked export ran to 12.0 s and control-air loss to 6.2 s.
@@ -131,8 +136,37 @@ evidence. The event was at 1.0 s; blocked export ran to 12.0 s and control-air l
 | Control-air loss | FAIL (`SHAFT_STOP`) | 59.9984 bara | 7.22064 bar·s | 4.29857 K | 48.7147 kg | Not achieved |
 
 Neither run sampled a declared pressure/temperature/level/surge constraint violation. That does not
-qualify the missing connected relief/disposal model, continuous peaks, control-air architecture,
-driver shutdown wiring or vendor machinery response.
+qualify continuous peaks, control-air architecture, driver shutdown wiring or vendor machinery
+response.
+
+### Synthetic connected relief and disposal proof
+
+The public DYN-C039 proof connects the completed blocked-outlet case above to one declared
+synthetic BDV/PSV/header/flare basis. The protected volume is 7.06858 m³ from the existing 1.5 m
+diameter by 4.0 m tangent-length receiver. Declared screening inputs are a 25 mm equivalent BDV
+orifice with Cd 0.72, 1.5 bara backpressure, a 300 mm header with Mach limit 0.5, and a 500 kg/s /
+500 MW flare capacity. These are public test assumptions, not vendor or site values. Fire input is
+zero for this blocked-outlet/depressuring case; the configured wall inventory is retained for cold
+blowdown screening.
+
+| Physical timestep | Initial inventory | Released mass at 300 s | Peak disposal load | Half-pressure time | 7 barg time | Minimum fluid / wall temperature | Header Mach | Flare heat utilization |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1.0 s | 1183.9332 kg | 420.2962 kg | 4.78701 kg/s | 61.2530 s | 200.5485 s | 267.980 / 298.918 K | 0.13705 | 44.653% |
+| 0.5 s | 1183.9332 kg | 420.1142 kg | 4.78701 kg/s | 61.4380 s | 201.1106 s | 268.003 / 298.920 K | 0.13705 | 44.653% |
+
+Both runs close the source inventory balance to the reported double precision (0.0 kg residual),
+meet the configured half-pressure and 7 barg screening criteria, remain below the declared header
+Mach and flare capacities, and reproduce identically on repeated execution. Halving the timestep
+changes released mass by 0.0433%, half-pressure time by 0.301% and 7 barg time by 0.280%.
+The flare-load time-grid integration remains a separate quantity: at 1.0 s it is 0.3069 kg below
+the source discharged mass (0.0730%), and is reported rather than clipped into closure.
+
+The calculation verdict is `CALCULATED_REVIEW_REQUIRED` because scenario credibility/concurrency,
+detailed diagrams and line lists, vendor BDV/PSV data, MDMT, detailed flare-network hydraulics and
+controlled standards editions are not reviewed project evidence. Simulation PASS is not HAZOP,
+SIL/IPL/SRS, relief design or construction approval. API 520/521-related routines are existing
+screening implementations; this proof adds no clause-derived rule and claims no standards
+certification.
 
 The wrapper does not grant layout approval. Run the repository's strict external PFD/layout checks,
 native P&ID QC and independent visual inspection on every generated sheet. Check actual port/line/

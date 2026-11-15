@@ -92,6 +92,33 @@ class TPflashIonicGasAqueousConsistencyTest {
     }
   }
 
+  /**
+   * Preserves molecular equilibrium when the preliminary stability analysis sees an interior KCl brine split.
+   */
+  @Test
+  void concentratedHotKclBrineUsesDefaultStabilityCheck() {
+    SystemInterface system = new SystemElectrolyteCPAstatoil(373.15, 281.38);
+    double saltMoles = (15.0 / 85.0) / 0.0745513;
+    system.addComponent("CO2", 10.0);
+    system.addComponent("water", 1.0 / 0.01801528);
+    system.addComponent("K+", saltMoles);
+    system.addComponent("Cl-", saltMoles);
+    system.setMixingRule(10);
+    system.setMultiPhaseCheck(true);
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+
+    operations.TPflash();
+    assertTrue(system.checkStability());
+    assertValidIonicGasAqueousEndpoint(system);
+    assertEquals(0.0151460384633, system.getPhase(PhaseType.AQUEOUS).getComponent("CO2").getx(), 1.0e-10);
+
+    SystemInterface reference = system.clone();
+    operations.TPflash();
+    assertTrue(system.checkStability());
+    assertValidIonicGasAqueousEndpoint(system);
+    assertEquivalentEndpoint(reference, system);
+  }
+
   private SystemInterface createAndFlash(double temperature, double pressure, boolean multiphaseCheck,
       boolean poorBeta) {
     SystemInterface system = new SystemElectrolyteCPAstatoil(temperature, pressure);

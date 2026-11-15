@@ -855,6 +855,27 @@ for (int i = 0; i < 100; i++) {
 }
 ```
 
+### Time step and stability
+
+The separator integrates its inventory explicitly and solves a VU flash for pressure and temperature
+each step. A step longer than the gas-cap inventory time constant (gas mass divided by the largest
+boundary mass flow) overshoots the pressure, and the next VU flash is rejected with
+`IllegalStateException: Separator '...' rejected transient VU state`. `getMaxStableTransientTimeStep()`
+returns `0.1` times that time constant, and `ProcessSystem.runTransient` sub-steps automatically to stay
+below it (see [ProcessSystem: Automatic transient sub-stepping](../processmodel/process_system.md#automatic-transient-sub-stepping)).
+When calling `separator.runTransient(dt, id)` directly, keep `dt` below that value yourself.
+
+Near the bubble point (a small gas cap in an almost liquid-filled vessel) the VU flash falls back to an
+equilibrium polish stage (`OptimizedVUflash.wasEquilibriumPolishUsed()`), which solves the volume
+specification for pressure along a constant-volume path; this keeps high-level operation converging.
+
+The reported level stops at the minimum headspace (5 % of the vessel volume, a level of about 0.90 for
+a horizontal vessel and 0.95 for a vertical one). A vessel that keeps receiving more liquid than it
+discharges becomes liquid-full; liquid overfill and carry-over into the gas outlet are not modelled,
+and the separator then rejects the step with a message saying the vessel is liquid-full. Make sure the
+level control can make the liquid outflow exceed the inflow: setpoint below the maximum level, an inlet
+valve minimum opening that passes less than the liquid outlet capacity.
+
 ---
 
 ## Separation Efficiency

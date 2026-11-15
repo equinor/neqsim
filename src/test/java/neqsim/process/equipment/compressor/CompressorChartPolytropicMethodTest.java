@@ -119,11 +119,35 @@ class CompressorChartPolytropicMethodTest extends NeqSimTest {
     compressor.setSolveSpeed(true);
     compressor.run();
     assertTrue(compressor.isSpeedSolveConverged());
-    assertEquals(100.0, compressor.getOutletStream().getPressure("bara"), 1.0e-3);
+    assertEquals(100.0, compressor.getOutletStream().getPressure("bara"), 0.0);
     assertSameBasis(compressor);
     compressor.run();
     assertTrue(compressor.isSpeedSolveConverged());
     assertSameBasis(compressor);
+  }
+
+  /** A speed-limited replay still computes its actual discharge state when the target cannot be reached. */
+  @Test
+  void schultzSpeedLimitReplaysActualDischargePressure() {
+    Compressor compressor = chart("schultz", "kJ/kg");
+    compressor.setMaximumSpeed(9000.0);
+    compressor.setLimitSpeed(true);
+    compressor.run();
+    double limitedPressure = compressor.getOutletStream().getPressure("bara");
+    double limitedTemperature = compressor.getOutletStream().getTemperature();
+    double limitedPower = compressor.getPower();
+    double targetPressure = limitedPressure + 15.0;
+
+    compressor.setOutletPressure(targetPressure, "bara");
+    compressor.setSolveSpeed(true);
+    compressor.run();
+
+    assertFalse(compressor.isSpeedSolveConverged());
+    assertEquals(9000.0, compressor.getSpeed(), 0.0);
+    assertEquals(limitedPressure, compressor.getOutletStream().getPressure("bara"), 1.0e-8);
+    assertEquals(limitedTemperature, compressor.getOutletStream().getTemperature(), 1.0e-8);
+    assertEquals(limitedPower, compressor.getPower(), 1.0e-5);
+    assertEquals(limitedPressure - targetPressure, compressor.getSpeedSolvePressureResidual(), 1.0e-8);
   }
 
   /**

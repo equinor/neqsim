@@ -96,6 +96,22 @@ class SystemEOSCGEosCO2SO2Test extends neqsim.NeqSimTest {
     assertEquals(0.05, fluid.getPhase(0).getComponent("SO2").getx(), 1.0e-12);
   }
 
+  /** Check the dense pressure crossing missed by the original EOS-CG density scan. */
+  @Test
+  void liquidRootSearchFindsDenseCrossingBetweenScanSamples() {
+    SystemInterface fluid = new SystemEOSCGEos(287.5, 13.0);
+    fluid.addComponent("CO2", 0.95);
+    fluid.addComponent("SO2", 0.05);
+    fluid.init(0);
+    NeqSimEOSCG eos = new NeqSimEOSCG(fluid.getPhase(0));
+    double gasDensity = eos.getMolarDensity(PhaseType.GAS);
+    double liquidDensity = eos.getMolarDensity(PhaseType.LIQUID);
+    assertTrue(gasDensity < 1.0);
+    assertTrue(liquidDensity > 16.80 && liquidDensity < 16.825);
+    assertEquals(1300.0, eos.getPressure(liquidDensity), 1.3e-8);
+    assertTrue(eos.getPressure(liquidDensity + 1e-5) > eos.getPressure(liquidDensity - 1e-5));
+  }
+
   @Test
   void documentedMixtureProgramCompilesAndRuns(@TempDir Path directory) throws Exception {
     Path guide = Paths.get(System.getProperty("basedir", "."), "docs/thermo/eoscg_co2_so2.md");

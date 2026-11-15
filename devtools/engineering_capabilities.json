@@ -112,7 +112,7 @@
         "src/test/java/neqsim/pvtsimulation/util/PVTFluidStudyTest.java",
         "src/test/java/neqsim/thermo/util/readwrite/LbcFluidRoundTripTest.java"
       ],
-      "limitations": "Discovery and inspectApi route only; execute the complete study through neqsim pvt-study or the documented Python/Java adapter. Bounded plain cubic hydrocarbon models, classic mixing and CCE relative-volume BIP fitting only. Synthetic examples establish numerical workflow/replay, not independent experimental accuracy or target-simulator compatibility."
+      "limitations": "Discovery and inspectApi route only; execute the complete study through neqsim pvt-study or the documented Python/Java adapter. Bounded plain cubic hydrocarbon models, classic mixing and CCE relative-volume BIP fitting only. Standalone Python DLE and serial separator mass audits screen primary observations before admission, without fitting EOS parameters. Synthetic examples establish numerical workflow/replay, not independent experimental accuracy or target-simulator compatibility."
     },
     {
       "id": "process-separation",
@@ -397,6 +397,7 @@
       "apis": [
         "neqsim.process.engineering.CompressorAutomationWorkflow",
         "neqsim.process.util.scenario.CompressorAutomationStudy",
+        "neqsim.process.util.scenario.CompressorReliefDisposalStudy",
         "neqsim.process.engineering.pid.PidNativeControlSystem",
         "neqsim.process.equipment.compressor.CompressorAntiSurgeApplication",
         "neqsim.process.engineering.pid.PidSafetyFunctionImporter",
@@ -418,10 +419,11 @@
       ],
       "testSources": [
         "src/test/java/neqsim/process/util/scenario/CompressorAutomationStudyTest.java",
+        "src/test/java/neqsim/process/util/scenario/CompressorReliefDisposalStudyTest.java",
         "src/test/java/neqsim/process/engineering/pid/PidNativeControlSystemTest.java",
         "src/test/java/neqsim/process/engineering/CompressorAutomationWorkflowTest.java"
       ],
-      "limitations": "Public packaged Java CLI plus Java/JPype object workflow, with inspectApi discovery only; no new curated MCP runDynamic execution option or PLC application generator. CompressorAutomationWorkflow accepts strict design JSON or public defaults, a new output directory and an optional canonical proposal; supported controls are freshly applied/read back, unsupported SIF-policy edits fail closed, subsets are disclosed, and raw native fingerprints remain distinct from strict normalized-file hashes. The compressor train uses a declared thermodynamic/map/capacity basis, actual recycle gas-Cv hydraulics and finite suction and discharge inventories within its supported execution contract. Quasi-steady compressor maps and explicit driver profile/rate do not establish rotor-inertia, reverse-flow, mechanical/acoustic surge or a complete utility network. Generated maps, assumed valves and study limits remain synthetic until supplied and qualified. Canonical control settings must be applied/read back on an isolated native copy and fresh scenario evidence must match current source/configuration fingerprints. Proposed instrumentation and direct model-derived anti-surge inputs are not executed measurement chains. Expected physical FAILs, no-demand outcomes and numerical/conservation/timestep limits remain separate from software-test success. Agent/skill routing and source/test references are discovery evidence, not standards, vendor, SRS/SIL/IPL, installed independence, receiving-tool or construction qualification."
+      "limitations": "Public packaged Java CLI plus Java/JPype object workflow, with inspectApi discovery only; no new curated MCP runDynamic execution option or PLC application generator. CompressorAutomationWorkflow accepts strict design JSON or public defaults, a new output directory and an optional canonical proposal; supported controls are freshly applied/read back, unsupported SIF-policy edits fail closed, subsets are disclosed, and raw native fingerprints remain distinct from strict normalized-file hashes. The compressor train uses a declared thermodynamic/map/capacity basis, actual recycle gas-Cv hydraulics and finite suction and discharge inventories within its supported execution contract. The opt-in CompressorReliefDisposalStudy copies the executed discharge receiver into the existing governed relief/blowdown/flare calculation and reports mass closure, pressure decay, cooling, header and flare capacity without changing the source case. Quasi-steady compressor maps and explicit driver profile/rate do not establish rotor-inertia, reverse-flow, mechanical/acoustic surge or a complete utility network. Generated maps, assumed valves, BDV/PSV geometry, flare capacities and study limits remain synthetic until supplied and qualified. Canonical control settings must be applied/read back on an isolated native copy and fresh scenario evidence must match current source/configuration fingerprints. Proposed instrumentation and direct model-derived anti-surge inputs are not executed measurement chains. Expected physical FAILs, no-demand outcomes and numerical/conservation/timestep limits remain separate from software-test success. Agent/skill routing and source/test references are discovery evidence, not standards, vendor, HAZOP/SRS/SIL/IPL, MDMT, detailed flare-hydraulics, installed independence, receiving-tool or construction qualification."
     },
     {
       "id": "instrumented-heat-exchanger-automation",
@@ -2073,6 +2075,28 @@
         "src/test/java/neqsim/pvtsimulation/util/CompositionalReservoirAquiferRefinementTest.java"
       ],
       "limitations": "Discovery and inspectApi only; Java/Python object workflow, no new static MCP operation. Constant-property Fetkovich reservoir-volume storage, exact prescribed linear-pressure integration, implicit fixed-pore-volume EOS coupling through segregated immiscible water. Aquifer water cannot mix or be produced through component schedules; interval minimum/maximum water volumes bound admissible roots. Known aquifer properties may be supplied for bounded volume fitting. No rock/thermal/spatial behavior, continuous joint identifiability, independent field qualification or recoverable reserves. Independent 60-digit ODE fixtures check prescribed-linear-pressure endpoint/extrema arithmetic and sixteen-subinterval consistency, including small-exposure boundaries; this is numerical qualification, not measured or radial-transient accuracy."
+    },
+    {
+      "id": "sealed-radial-aquifer-influence",
+      "title": "Prepared sealed radial aquifer influence and Carter–Tracy influx",
+      "domain": "reservoir",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.reservoirproperties.materialbalance.FiniteRadialAquiferInfluence",
+        "neqsim.pvtsimulation.reservoirproperties.materialbalance.VanEverdingenHurstAquifer"
+      ],
+      "skills": [
+        "neqsim-integrated-production-and-lifecycle",
+        "neqsim-capability-map"
+      ],
+      "agents": [
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/FiniteRadialAquiferInfluenceTest.java",
+        "src/test/java/neqsim/pvtsimulation/reservoirproperties/materialbalance/VanEverdingenHurstAquiferTest.java"
+      ],
+      "limitations": "Discovery and inspectApi only; prepare one immutable Java/Python response per radius ratio in [2, 10]. Constant terminal rate at the inner wall, initially uniform homogeneous aquifer, sealing outer boundary, slightly compressible fixed properties. Dimensionless pressure and derivative, pressure table and AQUTAB export, and approximate Carter–Tracy withdrawal-history influx on a reservoir m3 basis. Independent Laplace and conservative finite-volume mathematical references. The legacy finite double-radius overload uses a separate unqualified maximum policy. Field accuracy, unit-pressure convolution equivalence, water mixing, compositional coupling and recoverable reserves remain outside this model."
     },
     {
       "id": "reservoir-history-discrete-posterior",
