@@ -329,6 +329,9 @@ software behavior; they are not a field or laboratory validation.
 
 ## Compositional measured-history replay
 
+Before building compositional replay steps, use the [reservoir history source intake](reservoir_history_intake.md)
+to check source dates, named cumulative increments, pressure datum and uncertainty.
+
 `CompositionalReservoirHistory` replays measured production and injection using
 `SimpleReservoir` component inventories and its isothermal, fixed-volume TV flash.
 Each trial restores the accepted `CalibratedPvtModel` tuned checkpoint at the supplied

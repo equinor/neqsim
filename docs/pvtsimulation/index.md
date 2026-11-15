@@ -10,6 +10,7 @@ keywords: "PVT, CME, CVD, differential liberation, separator test, swelling test
 - [PVT and fluid-characterization study report](pvt_fluid_study_report.md)
 - [Laboratory differential liberation mass audit](dle_mass_audit.md)
 - [Laboratory separator-train mass audit](separator_mass_audit.md)
+- [Reservoir history source intake](reservoir_history_intake.md)
 - [PVT forward-proxy surface process for PVT-table generation](pvt_forward_proxy.md)
 - [Reservoir material balance, compositional history replay and original/tuned PVT handoff](reservoir_material_balance.md)
 - [Finite-aquifer replay and discrete Bayesian uncertainty](reservoir_aquifer_uncertainty.md)
