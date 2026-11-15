@@ -595,28 +595,28 @@ The comparator retains the same final aqueous water basis and finite CO2
 reservoir as the corresponding brine state. It is not an additional measurement
 and does not replace the salt-free Carroll partial-pressure benchmark.
 
-For the brine and matched pure-water states, let \(x\) be the molecular
-water-plus-CO2 aqueous mole fraction, \(f\) the CO2 fugacity in the most
-CO2-rich phase in bara, and \(H_{\mathrm{eff}}=f/x\). The report retains the
+For the brine and matched pure-water states, let $x$ be the molecular
+water-plus-CO2 aqueous mole fraction, $f$ the CO2 fugacity in the most
+CO2-rich phase in bara, and $H_{\mathrm{eff}}=f/x$. The report retains the
 exact identity
 
-\[
+$
 \ln\left(\frac{x_{\mathrm{brine}}}{x_{\mathrm{water}}}\right)
 =
 \ln\left(\frac{f_{\mathrm{brine}}}{f_{\mathrm{water}}}\right)
 -
 \ln\left(\frac{H_{\mathrm{eff,brine}}}{H_{\mathrm{eff,water}}}\right).
-\]
+$
 
 This separates the modeled change in CO2-rich-phase fugacity exposure from the
 effective aqueous salting response at the same total pressure. Because these
-are finite-composition dense-CO2 states, \(H_{\mathrm{eff}}\) is an endpoint
+are finite-composition dense-CO2 states, $H_{\mathrm{eff}}$ is an endpoint
 diagnostic with units of bara, not a dilute-limit Henry constant. Neither term
 is independently measured or a unique parameter attribution.
 
 Every matched state must retain one aqueous kilogram of water, component
-balance at or below \(10^{-10}\) mol, molecular log-fugacity residual below
-\(10^{-8}\), and log-identity residual below \(10^{-12}\). The CSV also retains
+balance at or below $10^{-10}$ mol, molecular log-fugacity residual below
+$10^{-8}$, and log-identity residual below $10^{-12}$. The CSV also retains
 both water activities and their difference. These are numerical-consistency
 gates, not experimental-accuracy tolerances.
 
